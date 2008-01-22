@@ -1,0 +1,231 @@
+/*
+ * Copyright (c) 2007 GeNUA mbH <info@genua.de>
+ *
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
+ * TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <sys/un.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <check.h>
+#include <string.h>
+
+#include "anoubischat.h"
+
+START_TEST(tc_core_creation)
+{
+	struct achat_channel	*c  = NULL;
+	achat_rc		 rc = ACHAT_RC_ERROR;
+
+	c = acc_create();
+	fail_if(c == NULL, "pointer empty");
+	fail_if(c->sockfd != -1, "not correctly initialized @sockfd");
+	mark_point();
+
+	rc = acc_destroy(NULL);
+	fail_if(rc != ACHAT_RC_INVALPARAM,
+	    "destroy expected to fail with rc=%d but returned rc=%d",
+	    ACHAT_RC_INVALPARAM, rc);
+	mark_point();
+
+	rc = acc_destroy(c);
+	fail_if(rc != ACHAT_RC_OK, "destroy failed with rc=%d", rc);
+}
+END_TEST
+
+START_TEST(tc_core_tail)
+{
+	struct achat_channel    *c  = NULL;
+	achat_rc                 rc = ACHAT_RC_ERROR;
+
+	c = acc_create();
+	fail_if(c == NULL, "couldn't create channel");
+	mark_point();
+
+	rc = acc_settail(NULL, ACC_TAIL_NONE);
+	fail_if(rc != ACHAT_RC_INVALPARAM,
+	    "settail expected to fail with rc=%d but returned rc=%d",
+	    ACHAT_RC_INVALPARAM, rc);
+	mark_point();
+
+	rc = acc_settail(c, 1024);
+	fail_if(rc != ACHAT_RC_INVALPARAM,
+	    "settail expected to fail with rc=%d but returned rc=%d",
+	    ACHAT_RC_INVALPARAM, rc);
+	mark_point();
+
+	rc = acc_settail(c, ACC_TAIL_SERVER);
+	fail_if(rc != ACHAT_RC_OK, "settail failed with rc=%d", rc);
+	fail_if(c->tail != ACC_TAIL_SERVER, "tail not set correctly");
+	mark_point();
+
+	rc = acc_destroy(c);
+	fail_if(rc != ACHAT_RC_OK, "destroy failed with rc=%d", rc);
+}
+END_TEST
+
+START_TEST(tc_core_sslmode)
+{
+	struct achat_channel    *c  = NULL;
+	achat_rc                 rc = ACHAT_RC_ERROR;
+
+	c = acc_create();
+	fail_if(c == NULL, "couldn't create channel");
+	mark_point();
+
+	rc = acc_setsslmode(NULL, ACC_SSLMODE_NONE);
+	fail_if(rc != ACHAT_RC_INVALPARAM,
+	    "setsslmode expected to fail with rc=%d but returned rc=%d",
+	    ACHAT_RC_INVALPARAM, rc);
+	mark_point();
+
+	rc = acc_setsslmode(c, 1024);
+	fail_if(rc != ACHAT_RC_INVALPARAM,
+	    "setsslmode expected to fail with rc=%d but returned rc=%d",
+	    ACHAT_RC_INVALPARAM, rc);
+	mark_point();
+
+	rc = acc_setsslmode(c, ACC_SSLMODE_CLEAR);
+	fail_if(rc != ACHAT_RC_OK, "setsslmode failed with rc=%d", rc);
+	fail_if(c->sslmode != ACC_SSLMODE_CLEAR, "sslmode not set correctly");
+	mark_point();
+
+	rc = acc_destroy(c);
+	fail_if(rc != ACHAT_RC_OK, "destroy failed with rc=%d", rc);
+}
+END_TEST
+
+START_TEST(tc_core_addr)
+{
+	struct achat_channel    *c = NULL;
+	struct sockaddr_storage	 sa;
+	struct sockaddr_un	*sa_un = (struct sockaddr_un *)&sa;
+	struct sockaddr_in	*sa_in = (struct sockaddr_in *)&sa;
+	char			 testpath[] = "The road goes ever on and on";
+	achat_rc                 rc = ACHAT_RC_ERROR;
+
+	c = acc_create();
+	fail_if(c == NULL, "couldn't create channel");
+	mark_point();
+
+	rc = acc_setaddr(NULL, NULL);
+	fail_if(rc != ACHAT_RC_INVALPARAM,
+	    "setaddr expected to fail with rc=%d but returned rc=%d",
+	    ACHAT_RC_INVALPARAM, rc);
+	mark_point();
+
+	rc = acc_setaddr(c, NULL);
+	fail_if(rc != ACHAT_RC_INVALPARAM,
+	    "setaddr expected to fail with rc=%d but returned rc=%d",
+	    ACHAT_RC_INVALPARAM, rc);
+	mark_point();
+
+	bzero(&sa, sizeof(sa));
+	sa_un->sun_family = AF_UNIX;
+	strncpy(sa_un->sun_path, testpath, sizeof(sa_un->sun_path) - 1);
+	sa_un->sun_path[sizeof(sa_un->sun_path) - 1] = '\0';
+	rc = acc_setaddr(c, &sa);
+	fail_if(rc != ACHAT_RC_OK, "setaddr failed with rc=%d", rc);
+	if (memcmp(&c->addr, &sa, sizeof(sa)) != 0)
+		fail("socket address not set correctly");
+	mark_point();
+
+	bzero(&sa, sizeof(sa));
+	sa_in->sin_family = AF_INET;
+	sa_in->sin_port = htons(ACHAT_SERVER_PORT);
+	inet_aton("127.0.0.1", &(sa_in->sin_addr));
+	rc = acc_setaddr(c, &sa);
+	fail_if(rc != ACHAT_RC_OK, "setaddr failed with rc=%d", rc);
+	if (memcmp(&c->addr, &sa, sizeof(sa)) != 0)
+		fail("socket address not set correctly");
+	mark_point();
+
+	/* XXX by ch: test of AF_INET6 is missing here */
+
+	rc = acc_destroy(c);
+	fail_if(rc != ACHAT_RC_OK, "destroy failed with rc=%d", rc);
+}
+END_TEST
+
+START_TEST(tc_core_state_initialised)
+{
+	struct achat_channel    *c = NULL;
+	struct sockaddr_storage	 sa;
+	struct sockaddr_in	*sa_in = (struct sockaddr_in *)&sa;
+	achat_rc                 rc = ACHAT_RC_ERROR;
+
+	c = acc_create();
+	fail_if(c == NULL, "couldn't create channel");
+	mark_point();
+
+	bzero(&sa, sizeof(sa));
+	sa_in->sin_family = AF_INET;
+	sa_in->sin_port = htons(ACHAT_SERVER_PORT);
+	inet_aton("127.0.0.1", &(sa_in->sin_addr));
+
+	rc = acc_setaddr(c, &sa);
+	fail_if(rc != ACHAT_RC_OK, "setaddr failed with rc=%d", rc);
+	if (memcmp(&c->addr, &sa, sizeof(sa)) != 0)
+		fail("socket address not set correctly");
+	if (c->state != ACC_STATE_NONE)
+		fail("tainted state by setaddr: expect %d got %d",
+		    ACC_STATE_NONE, c->state);
+	mark_point();
+
+	rc = acc_settail(c, ACC_TAIL_SERVER);
+	fail_if(rc != ACHAT_RC_OK, "settail failed with rc=%d", rc);
+	fail_if(c->tail != ACC_TAIL_SERVER, "tail not set correctly");
+	if (c->state != ACC_STATE_NONE)
+		fail("tainted state by settail: expect %d got %d",
+		    ACC_STATE_NONE, c->state);
+	mark_point();
+
+	rc = acc_setsslmode(c, ACC_SSLMODE_CLEAR);
+	fail_if(rc != ACHAT_RC_OK, "setsslmode failed with rc=%d", rc);
+	fail_if(c->sslmode != ACC_SSLMODE_CLEAR, "sslmode not set correctly");
+	if (c->state != ACC_STATE_INITIALISED)
+		fail("state not set correctly: expect %d got %d",
+		    ACC_STATE_INITIALISED, c->state);
+
+	rc = acc_destroy(c);
+	fail_if(rc != ACHAT_RC_OK, "destroy failed with rc=%d", rc);
+}
+END_TEST
+
+TCase *
+libanoubischat_testcase_core(void)
+{
+	/* Core test case */
+	TCase *tc_core = tcase_create("Core");
+
+	tcase_add_test(tc_core, tc_core_creation);
+	tcase_add_test(tc_core, tc_core_tail);
+	tcase_add_test(tc_core, tc_core_sslmode);
+	tcase_add_test(tc_core, tc_core_addr);
+	tcase_add_test(tc_core, tc_core_state_initialised);
+
+	return (tc_core);
+}

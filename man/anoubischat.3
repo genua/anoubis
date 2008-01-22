@@ -1,0 +1,307 @@
+.\"	$OpenBSD: mdoc.template,v 1.9 2004/07/02 10:36:57 jmc Exp $
+.\"
+.\" Copyright (c) 2007 GeNUA mbH <info@genua.de>
+.\"
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+.\" "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+.\" LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+.\" A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+.\" OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+.\" SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
+.\" TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+.\" PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+.\" LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+.\" NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+.\" SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd October 18, 2007
+.Dt ANOUBISCHAT 3
+.Os Anoubis
+.Sh NAME
+.Nm acc_create ,
+.Nm acc_destroy ,
+.Nm acc_clear ,
+.Nm acc_settail ,
+.Nm acc_setsslmode ,
+.Nm acc_setaddr ,
+.Nm acc_prepare ,
+.Nm acc_open ,
+.Nm acc_close ,
+.Nm acc_sendmsg ,
+.Nm acc_receivemsg
+.Nd a communiction library for anoubis security suite
+.Sh SYNOPSIS
+.In anoubischat.h
+.Ft "struct achat_channel *"
+.Fn "acc_create" "void"
+.Ft "achat_rc"
+.Fn "acc_clear" "struct achat_channel *"
+.Ft "achat_rc"
+.Fn "acc_destroy" "struct achat_channel *"
+.Ft "achat_rc"
+.Fn "acc_settail" "struct achat_channel *" "enum acc_tail"
+.Ft "achat_rc"
+.Fn "acc_setsslmode" "struct achat_channel *" "enum acc_tail"
+.Ft "achat_rc"
+.Fn "acc_setaddr" "struct achat_channel *" "sockaddr *"
+.Ft "achat_rc"
+.Fn "acc_prepare" "struct achat_channel *"
+.Ft "achat_rc"
+.Fn "acc_open" "struct achat_channel *"
+.Ft "achat_rc"
+.Fn "acc_close" "struct achat_channel *"
+.Ft "achat_rc"
+.Fn "acc_sendmsg" "struct achat_channel *" "const char *" "size_t"
+.Ft "achat_rc"
+.Fn "acc_receivemsg" "struct achat_channel *" "char *" "size_t"
+.Sh DESCRIPTION
+The
+.Nm anoubischat
+library offers inter process communication facilities. Just throw in some
+data like a socket address and a corresponding socket will be created.
+All errors, occured during system calls like
+.Xr accept 2
+and reported by
+.Xr errno 3 ,
+will not been altered and are accessable for the caller of the methods
+provided by this library.
+.Pp
+Use
+.Fn acc_create
+to create a communication channel.
+Needed memory will be allocated.
+After creation, an included call to
+.Fn acc_clear
+initializes the new channel.
+.Pp
+Use
+.Fn "acc_destroy" "struct achat_channel *"
+to get rid of an used channel.
+All allocated resources for the given channel will be freed.
+.Pp
+Use
+.Fn acc_clear "struct achat_channel *"
+to wipe all information from a given channel.
+.Pp
+Use
+.Fn acc_settail "struct achat_channel *" "enum acc_tail newtail"
+to set a new tail
+.Fa newtail
+for a given channel.
+This specifies the type of service
+.Po
+.Fa ACC_TAIL_SERVER
+or
+.Fa ACC_TAIL_CLIENT
+.Pc
+been offered by your side of the communication channel.
+.Pp
+Use
+.Fn acc_setsslmode "struct achat_channel *" "enum acc_tail newsslmode"
+to set a new sslmode
+.Fa newmode
+for a given channel.
+This is the switch to turn encryption on.
+Allowed values are
+.Fa ACC_SSLMODE_CLEAR
+and
+.Fa ACC_SSLMODE_ENCIPHERED
+.Pp
+Use
+.Fn acc_setaddr "struct achat_channel *" "sockaddr *"
+to specify where to listen or where to connect to.
+Remember to use
+.Xr htons 3
+e.g for setting the port number in the correct byteorder.
+.Pp
+After you have specified all concerning settings you may call
+.Fn acc_prepare "struct achat_channel *"
+to prepare the channel.
+Technically this will create the socket(s) via
+.Xr socket 2
+and uses
+.Xr bind 2
+and
+.Xr listen 2
+for setting it up.
+.Pp
+After preparing the channel with
+.Fn acc_prepare "struct achat_channel *"
+you may call
+.Fn acc_open "struct achat_channel *"
+to establish the connection.
+.Bl -bullet
+.It
+In case of a client end of your channel
+.Po
+you specified it with
+.Fn acc_settail "<your channel>" ACC_TAIL_CLIENT
+.Pc
+this will just call
+.Xr connect 2 .
+.Fn acc_open "struct achat_channel *"
+is going to retry (on error EINTR) until a connection is successfully
+established. All other errors cause
+.Fn acc_open "struct achat_channel *"
+to fail and are visible for it's caller by inspecting
+.Xr errno 3 .
+.It
+If you had specified a server end of your channel
+.Po
+done by
+.Fn acc_settail "<your channel>" "ACC_TAIL_SERVER"
+.Pc
+a call to
+.Xr accept 2
+is performed.
+.Fn acc_open "struct achat_channel *"
+is going to retry (on error EINTR) until a client connected successfully.
+All other errors cause
+.Fn acc_open "struct achat_channel *"
+to fail and are visible for it's caller by inspecting
+.Xr errno 3 .
+.El
+.Pp
+When the connection has been established, you may proceed and send or
+receive data using the functions
+.Fn "acc_sendmsg" "struct achat_channel *" "const char *" "size_t"
+and
+.Fn "acc_receivemsg" "struct achat_channel *" "char *" "size_t" .
+The last argument for
+.Fn "acc_sendmsg" "struct achat_channel *" "const char *" "size_t"
+specifies the length of the message you want to send.
+The argument
+.Fa "size_t"
+for
+.Fn "acc_receivemsg" "struct achat_channel *" "char *" "size_t"
+specifies the size of your buffer
+.Po
+.Fa "char *"
+.Pc
+which will be filled with the received messages.
+.Sh EXAMPLES
+.Pp
+The following example code may give you an idea of using the communication
+library
+.Nm anoubischat
+for a client application connecting to a server.
+A UNIX domain socket is used.
+You have to find own values for SOCKETDIR, SOCKETPREFIX, SERVERSOCKET.
+.Bd -literal -offset indent-two
+struct sockaddr_un       sun;
+struct achat_channel    *c  = NULL;
+achat_rc                 rc = ACHAT_RC_ERROR;
+char			 buffer[32];
+
+ ...
+
+c = acc_create();
+if (c == NULL)
+	...
+
+rc = acc_settail(c, ACC_TAIL_CLIENT);
+if(rc != ACHAT_RC_OK)
+	...
+rc = acc_setsslmode(c, ACC_SSLMODE_CLEAR);
+if(rc != ACHAT_RC_OK)
+	...
+
+bzero(&sun, sizeof(sun));
+sun.sun_family = AF_UNIX;
+snprintf(sun.sun_path, sizeof(sun.sun_path), SERVERSOCKET);
+rc = acc_seteaddr(c, (struct sockaddr *)&sun);
+if (rc != ACHAT_RC_OK)
+	...
+
+rc = acc_prepare(c);
+if(rc != ACHAT_RC_OK)
+	...
+rc = acc_open(c);
+if (rc != ACHAT_RC_OK)
+	...
+
+/* do your communication bussines here */
+bzero(buffer, sizeof(buffer));
+/* fill buffer with your message */
+
+rc = acc_sendmsg(c, buffer, sizeof(message));
+if (rc != ACHAT_RC_OK)
+	...
+
+rc = acc_close(c);
+if (rc != ACHAT_RC_OK)
+	...
+rc = acc_destroy(c);
+if (rc != ACHAT_RC_OK)
+	...
+.Ed
+.Pp
+The following example code show the concerning server code.
+An internet socket on
+.Qq localhost
+is used.
+.Bd -literal -offset indent-two
+struct sockaddr_in       sin;
+struct achat_channel    *s  = NULL;
+achat_rc                 rc = ACHAT_RC_ERROR;
+char			 buffer[32];
+
+ ...
+
+s = acc_create();
+if (s == NULL)
+	...
+rc = acc_settail(s, ACC_TAIL_SERVER);
+if (rc != ACHAT_RC_OK)
+	...
+rc = acc_setsslmode(s, ACC_SSLMODE_CLEAR);
+if (rc != ACHAT_RC_OK)
+	...
+
+bzero(&sin, sizeof(sin));
+sin.sin_family = AF_INET;
+sin.sin_port = htons(ACHAT_SERVER_PORT);
+inet_aton("127.0.0.1", &(sin.sin_addr));
+rc = acc_setaddr(s, (struct sockaddr *)&sin);
+if (rc != ACHAT_RC_OK)
+	...
+
+rc = acc_prepare(s);
+if (rc != ACHAT_RC_OK)
+	...
+rc = acc_open(s);
+if (rc != ACHAT_RC_OK)
+	...
+
+/* a client has connected - do your service */
+bzero(buffer, sizeof(buffer));
+rc = acc_receivemsg(s, buffer, sizeof(buffer));
+if (rc != ACHAT_RC_OK)
+	...
+
+rc = acc_close(c);
+if (rc != ACHAT_RC_OK)
+	...
+rc = acc_destroy(s);
+if (rc != ACHAT_RC_OK)
+	...
+.Ed
+.Sh SEE ALSO
+.Xr socket 2 ,
+.Xr bind 2 ,
+.Xr listen 2 ,
+.Xr accept 2 ,
+.Xr connect 2
+.Sh AUTHORS
+Christian Hiesl

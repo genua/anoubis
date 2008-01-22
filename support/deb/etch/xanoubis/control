@@ -1,0 +1,14 @@
+Source:	%%NAME%%
+Section: x11
+Priority: optional
+Maintainer: Christian Hiesl <hiesl@genua.de>
+Build-Depends: debhelper (>= 5), autotools-dev, libx11-dev, libwxgtk2.8-dev, libanoubischat, check, pkg-config (>= 0.18)
+Standards-Version: 3.7.2
+
+Package: %%NAME%%
+Architecture: any
+Depends: ${shlibs:Depends}
+Description: xanoubis is the central GUI component of the
+ Anoubis Security Suite.
+ XXX the package still needs a long description explaining
+ why the system administrator should install this package

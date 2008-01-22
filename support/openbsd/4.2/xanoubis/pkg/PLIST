@@ -1,0 +1,12 @@
+@comment $OpenBSD$
+bin/xanoubis
+@man man/man1/xanoubis.1
+@comment share/nls/pl_PL.ISO_8859-2/
+share/xanoubis/
+share/xanoubis/icons/
+share/xanoubis/icons/ModALF.png
+share/xanoubis/icons/ModAnoubis.png
+share/xanoubis/icons/ModOverview.png
+share/xanoubis/icons/tray.gif
+share/xanoubis/icons/tray_msgByHand.png
+share/xanoubis/icons/tray_normal.png

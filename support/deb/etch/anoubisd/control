@@ -1,0 +1,13 @@
+Source:	%%NAME%%
+Section: security
+Priority: extra
+Maintainer: Hans-Joerg Hoexer <hshoexer@genua.de>
+Build-Depends: debhelper (>= 5), autotools-dev
+Standards-Version: 3.7.2
+
+Package: %%NAME%%
+Architecture: any
+Depends: adduser, ${shlibs:Depends}
+Description: anoubisd is the central daemon
+ XXX the package still needs a long description explaining
+ why the system administrator should install this package

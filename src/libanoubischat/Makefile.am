@@ -1,0 +1,105 @@
+# Copyright (c) 2007 GeNUA mbH <info@genua.de>
+#
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+# OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
+# TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+# PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+# LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+
+lib_LIBRARIES = libanoubischat.a
+
+include_HEADERS = anoubischat.h
+
+libanoubischat_a_SOURCES = \
+	accsetup.c  \
+	acctransmission.c \
+	accconnect.c \
+	accutils.c \
+	accutils.h \
+	accbuffer.c \
+	accbuffer.h \
+	$(include_HEADERS)
+
+libanoubischat_a_SOURCES_lint = \
+	accsetup.c_lint  \
+	acctransmission.c_lint \
+	accconnect.c_lint \
+	accutils.c_lint \
+	accutils.h_lint \
+	accbuffer.c_lint \
+	accbuffer.h_lint
+
+libanoubischat_a_SOURCES_splint = \
+	accsetup.c_splint  \
+	acctransmission.c_splint \
+	accconnect.c_splint \
+	accutils.c_splint \
+	accutils.h_splint \
+	accbuffer.c_splint \
+	accbuffer.h_splint
+
+libanoubischat_a_SOURCES_flawfinder = \
+	accsetup.c_flawfinder  \
+	acctransmission.c_flawfinder \
+	accconnect.c_flawfinder \
+	accutils.c_flawfinder \
+	accutils.h_flawfinder \
+	accbuffer.c_flawfinder \
+	accbuffer.h_flawfinder
+
+# lint: $(libanoubischat_a_SOURCES_lint) $(libanoubischat_a_SOURCES_splint) \
+#	$(libanoubischat_a_SOURCES_flawfinder)
+
+flawfinder_FLAGS=--minlevel=4 --allowlink --context
+splint_FLAGS=+posixlib
+lint_FLAGS=""
+
+
+lint:		$(libanoubischat_a_SOURCES_lint)
+splint:		$(libanoubischat_a_SOURCES_splint)
+flawfinder:	$(libanoubischat_a_SOURCES_flawfinder)
+
+# in some cases, flawfinder terminates with internal errors on openbsd.
+# Don't fail the build for now in this case.
+.c.c_flawfinder .h.h_flawfinder:
+	-flawfinder $(flawfinder_FLAGS) $< > $@
+
+.SUFFIXES= .lint
+
+.c.c_lint .h.h_lint:
+	@if expr $(build_os) : "openbsd" >/dev/null; then \
+		lint $< > $@; \
+		echo [lint] $<; \
+	else \
+		touch $@; \
+	fi
+
+# splint returns an bad exitcode on every source code hit. We need to
+# ignore these exits for a successful build
+.c.c_splint .h.h_splint:
+	@echo splint stub
+	-splint $(splint_FLAGS) $< > $@
+
+
+clean-local:
+	@rm -f $(libanoubischat_a_SOURCES_lint)
+	@rm -f $(libanoubischat_a_SOURCES_splint)
+	@rm -f $(libanoubischat_a_SOURCES_flawfinder)

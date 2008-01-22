@@ -1,0 +1,64 @@
+/*
+ * Copyright (c) 2007 GeNUA mbH <info@genua.de>
+ *
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
+ * TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/*
+ * XXX: MG: Temporary file until we have shared kernel/userspace headers for
+ * our security modules
+ */
+
+#ifndef _ANOUBIS_H_
+#define _ANOUBIS_H_
+
+enum alf_ops {
+	ALF_CONNECT = 1,
+	ALF_ACCEPT = 2,
+	ALF_SENDMSG = 3,
+	ALF_RECVMSG = 4
+};
+
+struct alf_event {
+	struct eventdev_hdr hdr;
+	union
+	{
+		struct sockaddr_in	in_addr;
+		struct sockaddr_in6	in6_addr;
+	} local;
+	union
+	{
+		struct sockaddr_in	in_addr;
+		struct sockaddr_in6	in6_addr;
+	} peer;
+	unsigned short family;
+	unsigned short type;
+	unsigned short protocol;
+
+	unsigned short op;
+	pid_t	pid;
+	uid_t	uid;
+};
+
+#endif	/* _ANOUBIS_H_ */
