@@ -90,6 +90,13 @@ MainFrame::addModules(Module* modules[ANOUBIS_MODULESNO])
 }
 
 void
+MainFrame::setRuleEditorVisability(bool visible)
+{
+	an_statusbar->setRuleEditorVisability(visible);
+	an_menubar->Check(ID_MITOOLSRULEEDITOR, visible);
+}
+
+void
 MainFrame::OnTbModuleSelect(wxCommandEvent& event)
 {
 	int id;
@@ -124,6 +131,12 @@ MainFrame::OnMbFileQuitSelect(wxCommandEvent& event)
 		this->Close(true);
 		(wxGetApp()).close();
 	}
+}
+
+void
+MainFrame::OnMbToolsRuleEditorSelect(wxCommandEvent& event)
+{
+	wxGetApp().setRuleEditorVisability(event.IsChecked());
 }
 
 void

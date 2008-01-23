@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 GeNUA mbH <info@genua.de>
+ * Copyright (c) 2008 GeNUA mbH <info@genua.de>
  *
  * All rights reserved.
  *
@@ -25,52 +25,28 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __MAIN_H__
-#define __MAIN_H__
+#ifndef __DlgRuleEditor__
+#define __DlgRuleEditor__
 
 #ifdef HAVE_CONFIG_H
-#  include "config.h"
+#include "config.h"
 #endif
 
-#include <wx/app.h>
+#include "AnShortcuts.h"
+#include "DlgRuleEditorBase.h"
 
-#include "Communicator.h"
-#include "ctassert.h"
-#include "DlgRuleEditor.h"
-#include "MainFrame.h"
-#include "Module.h"
-#include "TrayIcon.h"
-
-enum moduleIdx {
-	OVERVIEW = 0,
-	ALF,
-	ANOUBIS,
-	LAST_MODULE_INDEX
-};
-
-compile_time_assert((LAST_MODULE_INDEX == ANOUBIS_MODULESNO), \
-    MODULE_INDEX_mismatch_ANOUBIS_MODULESNO);
-
-class AnoubisGuiApp : public wxApp
+class DlgRuleEditor : public DlgRuleEditorBase
 {
-	private:
-		MainFrame	*mainFrame;
-		DlgRuleEditor	*ruleEditor_;
-		Communicator	*com;
-		TrayIcon	*trayIcon;
-		Module		*modules_[ANOUBIS_MODULESNO];
+	protected:
+		wxPanel		*alfPanel_;
+		wxPanel		*sfsPanel_;
+		AnShortcuts	*shortcuts_;
+
+		void OnModSelected(wxCommandEvent&);
 
 	public:
-		AnoubisGuiApp(void);
-		~AnoubisGuiApp(void);
-
-		bool OnInit(void);
-		void close(void);
-
-		void setRuleEditorVisability(bool);
-		void toggleRuleEditorVisability(void);
+		DlgRuleEditor(wxWindow *);
+		~DlgRuleEditor(void);
 };
 
-DECLARE_APP(AnoubisGuiApp)
-
-#endif /* __MAIN_H__ */
+#endif /* __DlgRuleEditor__ */

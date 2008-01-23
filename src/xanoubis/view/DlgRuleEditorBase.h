@@ -31,74 +31,70 @@
 // PLEASE DO "NOT" EDIT THIS FILE!
 ///////////////////////////////////////////////////////////////////////////
 
-#ifndef __MainFrameBase__
-#define __MainFrameBase__
+#ifndef __DlgRuleEditorBase__
+#define __DlgRuleEditorBase__
 
 #include <wx/string.h>
-#include <wx/bitmap.h>
-#include <wx/image.h>
-#include <wx/menu.h>
+#include <wx/radiobox.h>
 #include <wx/gdicmn.h>
 #include <wx/font.h>
 #include <wx/colour.h>
 #include <wx/settings.h>
-#include <wx/stattext.h>
 #include <wx/sizer.h>
 #include <wx/statbox.h>
 #include <wx/panel.h>
-#include <wx/statline.h>
-#include <wx/toolbar.h>
-#include <wx/scrolwin.h>
-#include <wx/frame.h>
+#include <wx/dialog.h>
 
 ///////////////////////////////////////////////////////////////////////////
 
-#define ID_MAINFRAME 1500
-#define ID_MENUBAR 1501
-#define ID_MIFILECONNECT 1502
-#define ID_MIFILEQUIT 1503
-#define ID_MIEDITPREFERENCES 1504
-#define ID_MITOOLSRULEEDITOR 1505
-#define ID_MIHELPHELP 1506
-#define ID_MIHELPABOUT 1507
-#define ID_TOOLBAR 1508
 
 ///////////////////////////////////////////////////////////////////////////////
-/// Class MainFrameBase
+/// Class DlgRuleEditorBase
 ///////////////////////////////////////////////////////////////////////////////
-class MainFrameBase : public wxFrame 
+class DlgRuleEditorBase : public wxDialog 
 {
 	private:
 	
 	protected:
-		wxMenuBar* an_menubar;
-		wxMenu* me_menubarFile;
-		wxMenu* me_menubarEdit;
-		wxMenu* me_menubarTools;
-		wxMenu* me_menubarHelp;
-		wxBoxSizer* sz_mainframeMain;
-		wxPanel* pa_MainLeftStatus;
-		wxStaticText* tx_messages;
-		
-		wxStaticText* tx_connected;
-		wxStaticLine* li_MainLineLeft;
-		wxScrolledWindow* sw_MainLeftToolbar;
-		wxToolBar* tb_LeftToolbarModule;
-		
-		wxStaticLine* li_MainLineRight;
+		wxRadioBox* rb_modSelector;
+		wxPanel* pa_common;
 		
 		// Virtual event handlers, overide them in your derived class
-		virtual void OnMbFileConnectSelect( wxCommandEvent& event ){ event.Skip(); }
-		virtual void OnMbFileQuitSelect( wxCommandEvent& event ){ event.Skip(); }
-		virtual void OnMbEditPreferencesSelect( wxCommandEvent& event ){ event.Skip(); }
-		virtual void OnMbToolsRuleEditorSelect( wxCommandEvent& event ){ event.Skip(); }
-		virtual void OnMbHelpHelpSelect( wxCommandEvent& event ){ event.Skip(); }
-		virtual void OnMbHelpAboutSelect( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnKeyPressed( wxKeyEvent& event ){ event.Skip(); }
+		virtual void OnModSelected( wxCommandEvent& event ){ event.Skip(); }
 		
 	
 	public:
-		MainFrameBase( wxWindow* parent, wxWindowID id = ID_MAINFRAME, const wxString& title = _("Anoubis"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 950,700 ), long style = wxDEFAULT_FRAME_STYLE|wxTAB_TRAVERSAL );
+		DlgRuleEditorBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxT("Rule Editor"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 250,300 ), long style = wxDEFAULT_DIALOG_STYLE, const wxString& name = wxT("DlgRuleEditor") );
 	
 };
 
-#endif //__MainFrameBase__
+///////////////////////////////////////////////////////////////////////////////
+/// Class DlgRuleEditorAlfPanelBase
+///////////////////////////////////////////////////////////////////////////////
+class DlgRuleEditorAlfPanelBase : public wxPanel 
+{
+	private:
+	
+	protected:
+	
+	public:
+		DlgRuleEditorAlfPanelBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 200,100 ), long style = wxTAB_TRAVERSAL );
+	
+};
+
+///////////////////////////////////////////////////////////////////////////////
+/// Class DlgRuleEditorSfsPanelBase
+///////////////////////////////////////////////////////////////////////////////
+class DlgRuleEditorSfsPanelBase : public wxPanel 
+{
+	private:
+	
+	protected:
+	
+	public:
+		DlgRuleEditorSfsPanelBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 200,100 ), long style = wxTAB_TRAVERSAL );
+	
+};
+
+#endif //__DlgRuleEditorBase__

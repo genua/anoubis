@@ -53,6 +53,7 @@ class MainFrame : public MainFrameBase
 		void OnMbFileQuitSelect(wxCommandEvent&);
 		void OnMbFileConnectSelect(wxCommandEvent&);
 		void OnMbEditPreferencesSelect(wxCommandEvent&);
+		void OnMbToolsRuleEditorSelect(wxCommandEvent&);
 		void OnMbHelpHelpSelect(wxCommandEvent&);
 		void OnTbModuleSelect(wxCommandEvent&);
 
@@ -62,6 +63,8 @@ class MainFrame : public MainFrameBase
 
 		void OnInit(void);
 		void addModules(Module* []);
+
+		void setRuleEditorVisability(bool);
 
 		void OnSbLogToggle(wxCommandEvent&);
 		void OnSbRuleeditToggle(wxCommandEvent&);

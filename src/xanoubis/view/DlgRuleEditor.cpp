@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 GeNUA mbH <info@genua.de>
+ * Copyright (c) 2008 GeNUA mbH <info@genua.de>
  *
  * All rights reserved.
  *
@@ -25,52 +25,56 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __MAIN_H__
-#define __MAIN_H__
-
 #ifdef HAVE_CONFIG_H
-#  include "config.h"
+#include "config.h"
 #endif
 
-#include <wx/app.h>
-
-#include "Communicator.h"
-#include "ctassert.h"
+#include "AnShortcuts.h"
 #include "DlgRuleEditor.h"
-#include "MainFrame.h"
-#include "Module.h"
-#include "TrayIcon.h"
 
-enum moduleIdx {
-	OVERVIEW = 0,
-	ALF,
-	ANOUBIS,
-	LAST_MODULE_INDEX
-};
-
-compile_time_assert((LAST_MODULE_INDEX == ANOUBIS_MODULESNO), \
-    MODULE_INDEX_mismatch_ANOUBIS_MODULESNO);
-
-class AnoubisGuiApp : public wxApp
+DlgRuleEditor::DlgRuleEditor(wxWindow* parent) : DlgRuleEditorBase(parent)
 {
-	private:
-		MainFrame	*mainFrame;
-		DlgRuleEditor	*ruleEditor_;
-		Communicator	*com;
-		TrayIcon	*trayIcon;
-		Module		*modules_[ANOUBIS_MODULESNO];
+	alfPanel_ = new DlgRuleEditorAlfPanelBase(this);
+	sfsPanel_ = new DlgRuleEditorSfsPanelBase(this);
+	shortcuts_  = new AnShortcuts(this);
 
-	public:
-		AnoubisGuiApp(void);
-		~AnoubisGuiApp(void);
+	alfPanel_->Show();
+	sfsPanel_->Hide();
 
-		bool OnInit(void);
-		void close(void);
+	this->GetSizer()->Add(alfPanel_, 1, wxALL|wxEXPAND, 5);
+	this->GetSizer()->Layout();
+}
 
-		void setRuleEditorVisability(bool);
-		void toggleRuleEditorVisability(void);
-};
+DlgRuleEditor::~DlgRuleEditor(void)
+{
+	delete alfPanel_;
+	delete sfsPanel_;
+	delete shortcuts_;
+}
 
-DECLARE_APP(AnoubisGuiApp)
+void
+DlgRuleEditor::OnModSelected(wxCommandEvent& event)
+{
+	wxPanel *modulePanel;
+	wxSizer *mainSizer;
 
-#endif /* __MAIN_H__ */
+	mainSizer = this->GetSizer();
+	mainSizer->GetItem(2)->GetWindow()->Hide();
+	mainSizer->Detach(2);
+
+	switch (this->rb_modSelector->GetSelection()) {
+	default:
+		fprintf(stderr, "INTERNAL ERROR: default for modSelector\n");
+		/* FALLTHROUGH */
+	case 0:
+		modulePanel = alfPanel_;
+		break;
+	case 1:
+		modulePanel = sfsPanel_;
+		break;
+	}
+	mainSizer->Add(modulePanel, 1, wxALL|wxEXPAND, 5);
+	modulePanel->Show();
+	mainSizer->Layout();
+	event.Skip();
+}

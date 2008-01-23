@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 GeNUA mbH <info@genua.de>
+ * Copyright (c) 2008 GeNUA mbH <info@genua.de>
  *
  * All rights reserved.
  *
@@ -23,8 +23,7 @@
  * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
-
+ */
 ///////////////////////////////////////////////////////////////////////////
 // C++ code generated with wxFormBuilder (version Sep 28 2007)
 // http://www.wxformbuilder.org/
@@ -54,6 +53,11 @@ MainFrameBase::MainFrameBase( wxWindow* parent, wxWindowID id, const wxString& t
 	wxMenuItem* mi_mbEditPreferences = new wxMenuItem( me_menubarEdit, ID_MIEDITPREFERENCES, wxString( _("Preferences") ) , wxEmptyString, wxITEM_NORMAL );
 	me_menubarEdit->Append( mi_mbEditPreferences );
 	an_menubar->Append( me_menubarEdit, _("Edit") );
+	
+	me_menubarTools = new wxMenu();
+	wxMenuItem* mi_mbToolsRuleEditor = new wxMenuItem( me_menubarTools, ID_MITOOLSRULEEDITOR, wxString( _("Rule Editor") ) , wxEmptyString, wxITEM_CHECK );
+	me_menubarTools->Append( mi_mbToolsRuleEditor );
+	an_menubar->Append( me_menubarTools, _("Tools") );
 	
 	me_menubarHelp = new wxMenu();
 	wxMenuItem* mi_mbHelpHelp = new wxMenuItem( me_menubarHelp, ID_MIHELPHELP, wxString( _("Help") ) , wxEmptyString, wxITEM_NORMAL );
@@ -132,6 +136,7 @@ MainFrameBase::MainFrameBase( wxWindow* parent, wxWindowID id, const wxString& t
 	this->Connect( mi_mbFileConnect->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnMbFileConnectSelect ) );
 	this->Connect( mi_mbFileQuit->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnMbFileQuitSelect ) );
 	this->Connect( mi_mbEditPreferences->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnMbEditPreferencesSelect ) );
+	this->Connect( mi_mbToolsRuleEditor->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnMbToolsRuleEditorSelect ) );
 	this->Connect( mi_mbHelpHelp->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnMbHelpHelpSelect ) );
 	this->Connect( mi_mbHelpAbout->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnMbHelpAboutSelect ) );
 }

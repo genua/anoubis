@@ -61,6 +61,10 @@ xanoubis_SOURCES= \
 	control/Communicator.h \
 	view/AnStatusBar.cpp \
 	view/AnStatusBar.h \
+	view/DlgRuleEditor.cpp \
+	view/DlgRuleEditor.h \
+	view/DlgRuleEditorBase.cpp \
+	view/DlgRuleEditorBase.h \
 	view/MainFrameBase.cpp \
 	view/MainFrameBase.h \
 	view/MainFrame.cpp \
@@ -104,6 +108,10 @@ xanoubis_SOURCES_flawfinder= \
 	control/Communicator.h_flawfinder \
 	view/AnStatusBar.cpp_flawfinder \
 	view/AnStatusBar.h_flawfinder \
+	view/DlgRuleEditor.cpp_flawfinder \
+	view/DlgRuleEditor.h_flawfinder \
+	view/DlgRuleEditorBase.cpp_flawfinder \
+	view/DlgRuleEditorBase.h_flawfinder \
 	view/MainFrameBase.cpp_flawfinder \
 	view/MainFrameBase.h_flawfinder \
 	view/MainFrame.cpp_flawfinder \
@@ -147,6 +155,10 @@ xanoubis_SOURCES_lint= \
 	control/Communicator.h_lint \
 	view/AnStatusBar.cpp_lint \
 	view/AnStatusBar.h_lint \
+	view/DlgRuleEditor.cpp_lint \
+	view/DlgRuleEditor.h_lint \
+	view/DlgRuleEditorBase.cpp_lint \
+	view/DlgRuleEditorBase.h_lint \
 	view/MainFrameBase.cpp_lint \
 	view/MainFrameBase.h_lint \
 	view/MainFrame.cpp_lint \
@@ -190,6 +202,10 @@ xanoubis_SOURCES_splint= \
 	control/Communicator.h_splint \
 	view/AnStatusBar.cpp_splint \
 	view/AnStatusBar.h_splint \
+	view/DlgRuleEditor.cpp_splint \
+	view/DlgRuleEditor.h_splint \
+	view/DlgRuleEditorBase.cpp_splint \
+	view/DlgRuleEditorBase.h_splint \
 	view/MainFrameBase.cpp_splint \
 	view/MainFrameBase.h_splint \
 	view/MainFrame.cpp_splint \

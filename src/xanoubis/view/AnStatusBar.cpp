@@ -37,11 +37,12 @@
 #include <wx/stattext.h>
 
 #include "AnStatusBar.h"
+#include "main.h"
 
 /*
  * This macro calculates the (maybe) new position (x,y) within a given
  * field rectangle and panel size. Additionally 2 pixels are added to
- * every panels y value due corfieldRectangle placement.
+ * every panels y value due accurate Rectangle placement.
  */
 #define computePanelPosition(newx, newy, field, panel) \
 	do { \
@@ -312,7 +313,7 @@ void
 AnStatusBar::OnRuleEditorClick(wxMouseEvent& event)
 {
 	isRuleEditorPressed_ = !isRuleEditorPressed_;
-	redrawRuleEditorPanel();
+	wxGetApp().setRuleEditorVisability(isRuleEditorPressed_);
 	event.Skip();
 }
 
