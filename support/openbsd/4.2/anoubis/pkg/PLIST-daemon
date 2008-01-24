@@ -1,0 +1,3 @@
+@comment $OpenBSD$
+@man man/man8/anoubisd.8
+sbin/anoubisd

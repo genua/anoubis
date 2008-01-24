@@ -1,7 +1,9 @@
 @comment $OpenBSD$
 bin/xanoubis
+@comment include/anoubischat.h
+@comment lib/libanoubischat.a
 @man man/man1/xanoubis.1
-@comment share/nls/pl_PL.ISO_8859-2/
+@comment @man man/man3/anoubischat.3
 share/xanoubis/
 share/xanoubis/icons/
 share/xanoubis/icons/ModALF.png

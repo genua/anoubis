@@ -1,5 +1,0 @@
-@comment $OpenBSD$
-@newgroup _anoubisd:593
-@newuser _anoubisd:593:_anoubisd:daemon:anoubisd user:/nonexistent:/sbin/nologin
-sbin/anoubisd
-@man man/man8/anoubisd.8

@@ -1,4 +1,0 @@
-@comment $OpenBSD$
-include/anoubischat.h
-lib/libanoubischat.a
-@man man/man3/anoubischat.3

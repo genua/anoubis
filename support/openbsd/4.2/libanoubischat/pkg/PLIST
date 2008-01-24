@@ -1,7 +1,0 @@
-@comment $OpenBSD$
-include/anoubischat.h
-lib/libanoubischat.a
-lib/pkgconfig/
-lib/pkgconfig/anoubischat.pc
-@man man/man3/anoubischat.3
-@comment share/nls/pl_PL.ISO_8859-2/
