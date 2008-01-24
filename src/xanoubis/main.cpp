@@ -26,6 +26,7 @@
  */
 
 #include "Communicator.h"
+#include "DlgLogViewer.h"
 #include "DlgRuleEditor.h"
 #include "main.h"
 #include "MainFrame.h"
@@ -40,6 +41,7 @@ IMPLEMENT_APP(AnoubisGuiApp)
 AnoubisGuiApp::AnoubisGuiApp(void)
 {
 	mainFrame = NULL;
+	logViewer_ = NULL;
 	ruleEditor_ = NULL;
 	com = NULL;
 	trayIcon = NULL;
@@ -65,6 +67,7 @@ AnoubisGuiApp::close(void)
 bool AnoubisGuiApp::OnInit()
 {
 	mainFrame = new MainFrame((wxWindow*)NULL);
+	logViewer_ = new DlgLogViewer(mainFrame);
 	ruleEditor_ = new DlgRuleEditor(mainFrame);
 	com = new Communicator();
 	trayIcon = new TrayIcon();
@@ -96,4 +99,17 @@ void
 AnoubisGuiApp::toggleRuleEditorVisability(void)
 {
 	setRuleEditorVisability(!ruleEditor_->IsShown());
+}
+
+void
+AnoubisGuiApp::setLogViewerVisability(bool visable)
+{
+	logViewer_->Show(visable);
+	mainFrame->setLogViewerVisability(visable);
+}
+
+void
+AnoubisGuiApp::toggleLogViewerVisability(void)
+{
+	setLogViewerVisability(!logViewer_->IsShown());
 }

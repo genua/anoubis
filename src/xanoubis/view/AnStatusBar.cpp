@@ -52,10 +52,10 @@
 
 AnStatusBar::AnStatusBar(wxWindow *parent) : wxStatusBar(parent, ID_STATUSBAR)
 {
-	wxBoxSizer	*raisedLogSizer;
-	wxBoxSizer	*sunkenLogSizer;
-	wxStaticText	*raisedLogLabel;
-	wxStaticText	*sunkenLogLabel;
+	wxBoxSizer	*raisedLogViewerSizer;
+	wxBoxSizer	*sunkenLogViewerSizer;
+	wxStaticText	*raisedLogViewerLabel;
+	wxStaticText	*sunkenLogViewerLabel;
 	wxBoxSizer	*raisedRuleEditorSizer;
 	wxBoxSizer	*sunkenRuleEditorSizer;
 	wxStaticText	*raisedRuleEditorLabel;
@@ -72,38 +72,40 @@ AnStatusBar::AnStatusBar(wxWindow *parent) : wxStatusBar(parent, ID_STATUSBAR)
 	SetStatusWidths(FIELD_IDX_LAST, fieldWidths);
 
 	/*
-	 * setup Log panels (aka toggle button)
+	 * setup LogViewer panels (aka toggle button)
 	 */
-	raisedLogPanel_ = new wxPanel(this, wxID_ANY, wxDefaultPosition,
+	raisedLogViewerPanel_ = new wxPanel(this, wxID_ANY, wxDefaultPosition,
 	    wxSize(70, 18), wxRAISED_BORDER);
-	sunkenLogPanel_ = new wxPanel(this, wxID_ANY, wxDefaultPosition,
+	sunkenLogViewerPanel_ = new wxPanel(this, wxID_ANY, wxDefaultPosition,
 	    wxSize(70, 18), wxSUNKEN_BORDER);
 
-	raisedLogLabel = new wxStaticText(raisedLogPanel_, wxID_ANY, _("Log"));
-	raisedLogLabel->Wrap(-1);
-	raisedLogLabel->SetFont(panelFont);
-	sunkenLogLabel = new wxStaticText(sunkenLogPanel_, wxID_ANY, _("Log"));
-	sunkenLogLabel->Wrap(-1);
-	sunkenLogLabel->SetFont(panelFont);
+	raisedLogViewerLabel = new wxStaticText(raisedLogViewerPanel_,
+	    wxID_ANY, _("LogViewer"));
+	raisedLogViewerLabel->Wrap(-1);
+	raisedLogViewerLabel->SetFont(panelFont);
+	sunkenLogViewerLabel = new wxStaticText(sunkenLogViewerPanel_,
+	    wxID_ANY, _("LogViewer"));
+	sunkenLogViewerLabel->Wrap(-1);
+	sunkenLogViewerLabel->SetFont(panelFont);
 
-	raisedLogSizer = new wxBoxSizer(wxVERTICAL);
-	raisedLogSizer->AddStretchSpacer();
-	raisedLogSizer->Add(raisedLogLabel, 0, wxALIGN_CENTER, 1);
-	raisedLogSizer->AddStretchSpacer();
+	raisedLogViewerSizer = new wxBoxSizer(wxVERTICAL);
+	raisedLogViewerSizer->AddStretchSpacer();
+	raisedLogViewerSizer->Add(raisedLogViewerLabel, 0, wxALIGN_CENTER, 1);
+	raisedLogViewerSizer->AddStretchSpacer();
 
-	sunkenLogSizer = new wxBoxSizer(wxVERTICAL);
-	sunkenLogSizer->AddStretchSpacer();
-	sunkenLogSizer->Add(sunkenLogLabel, 0, wxALIGN_CENTER, 1);
-	sunkenLogSizer->AddStretchSpacer();
+	sunkenLogViewerSizer = new wxBoxSizer(wxVERTICAL);
+	sunkenLogViewerSizer->AddStretchSpacer();
+	sunkenLogViewerSizer->Add(sunkenLogViewerLabel, 0, wxALIGN_CENTER, 1);
+	sunkenLogViewerSizer->AddStretchSpacer();
 
-	raisedLogPanel_->SetSizer(raisedLogSizer);
-	raisedLogPanel_->Layout();
-	sunkenLogPanel_->SetSizer(sunkenLogSizer);
-	sunkenLogPanel_->Layout();
+	raisedLogViewerPanel_->SetSizer(raisedLogViewerSizer);
+	raisedLogViewerPanel_->Layout();
+	sunkenLogViewerPanel_->SetSizer(sunkenLogViewerSizer);
+	sunkenLogViewerPanel_->Layout();
 
-	isLogPressed_ = false;
-	enterLogPanel(false);
-	redrawLogPanel();
+	isLogViewerPressed_ = false;
+	enterLogViewerPanel(false);
+	redrawLogViewerPanel();
 
 	/*
 	 * setup RuleEditor panels (aka toggle button)
@@ -151,24 +153,24 @@ AnStatusBar::AnStatusBar(wxWindow *parent) : wxStatusBar(parent, ID_STATUSBAR)
 	 * We need to connect both the panel and the static text
 	 * to make the whole field clickable
 	 */
-	raisedLogPanel_->Connect(wxEVT_LEFT_DOWN,
-	    wxMouseEventHandler(AnStatusBar::OnLogClick), NULL, this);
-	raisedLogLabel->Connect(wxEVT_LEFT_DOWN,
-	    wxMouseEventHandler(AnStatusBar::OnLogClick), NULL, this);
-	sunkenLogPanel_->Connect(wxEVT_LEFT_DOWN,
-	    wxMouseEventHandler(AnStatusBar::OnLogClick), NULL, this);
-	sunkenLogLabel->Connect(wxEVT_LEFT_DOWN,
-	    wxMouseEventHandler(AnStatusBar::OnLogClick), NULL, this);
+	raisedLogViewerPanel_->Connect(wxEVT_LEFT_DOWN,
+	    wxMouseEventHandler(AnStatusBar::OnLogViewerClick), NULL, this);
+	raisedLogViewerLabel->Connect(wxEVT_LEFT_DOWN,
+	    wxMouseEventHandler(AnStatusBar::OnLogViewerClick), NULL, this);
+	sunkenLogViewerPanel_->Connect(wxEVT_LEFT_DOWN,
+	    wxMouseEventHandler(AnStatusBar::OnLogViewerClick), NULL, this);
+	sunkenLogViewerLabel->Connect(wxEVT_LEFT_DOWN,
+	    wxMouseEventHandler(AnStatusBar::OnLogViewerClick), NULL, this);
 
-	raisedLogPanel_->Connect(wxEVT_ENTER_WINDOW,
-	    wxMouseEventHandler(AnStatusBar::OnLogEnter), NULL, this);
-	raisedLogPanel_->Connect(wxEVT_LEAVE_WINDOW,
-	    wxMouseEventHandler(AnStatusBar::OnLogEnter), NULL, this);
+	raisedLogViewerPanel_->Connect(wxEVT_ENTER_WINDOW,
+	    wxMouseEventHandler(AnStatusBar::OnLogViewerEnter), NULL, this);
+	raisedLogViewerPanel_->Connect(wxEVT_LEAVE_WINDOW,
+	    wxMouseEventHandler(AnStatusBar::OnLogViewerEnter), NULL, this);
 
-	sunkenLogPanel_->Connect(wxEVT_ENTER_WINDOW,
-	    wxMouseEventHandler(AnStatusBar::OnLogEnter), NULL, this);
-	sunkenLogPanel_->Connect(wxEVT_LEAVE_WINDOW,
-	    wxMouseEventHandler(AnStatusBar::OnLogEnter), NULL, this);
+	sunkenLogViewerPanel_->Connect(wxEVT_ENTER_WINDOW,
+	    wxMouseEventHandler(AnStatusBar::OnLogViewerEnter), NULL, this);
+	sunkenLogViewerPanel_->Connect(wxEVT_LEAVE_WINDOW,
+	    wxMouseEventHandler(AnStatusBar::OnLogViewerEnter), NULL, this);
 
 	raisedRuleEditorPanel_->Connect(wxEVT_LEFT_DOWN,
 	    wxMouseEventHandler(AnStatusBar::OnRuleEditorClick), NULL, this);
@@ -192,14 +194,14 @@ AnStatusBar::AnStatusBar(wxWindow *parent) : wxStatusBar(parent, ID_STATUSBAR)
 
 AnStatusBar::~AnStatusBar(void)
 {
-	delete raisedLogPanel_;
-	delete sunkenLogPanel_;
+	delete raisedLogViewerPanel_;
+	delete sunkenLogViewerPanel_;
 	delete raisedRuleEditorPanel_;
 	delete sunkenRuleEditorPanel_;
 }
 
 void
-AnStatusBar::enterLogPanel(bool isInside)
+AnStatusBar::enterLogViewerPanel(bool isInside)
 {
 	wxColour highlight, normal, active;
 
@@ -208,23 +210,23 @@ AnStatusBar::enterLogPanel(bool isInside)
 	active = wxSystemSettings::GetColour(wxSYS_COLOUR_ACTIVECAPTION);
 
 	if (isInside) {
-		raisedLogPanel_->SetBackgroundColour(highlight);
-		sunkenLogPanel_->SetBackgroundColour(highlight);
+		raisedLogViewerPanel_->SetBackgroundColour(highlight);
+		sunkenLogViewerPanel_->SetBackgroundColour(highlight);
 	} else {
-		raisedLogPanel_->SetBackgroundColour(normal);
-		sunkenLogPanel_->SetBackgroundColour(active);
+		raisedLogViewerPanel_->SetBackgroundColour(normal);
+		sunkenLogViewerPanel_->SetBackgroundColour(active);
 	}
 }
 
 void
-AnStatusBar::redrawLogPanel(void)
+AnStatusBar::redrawLogViewerPanel(void)
 {
-	if (isLogPressed_) {
-		raisedLogPanel_->Hide();
-		sunkenLogPanel_->Show();
+	if (isLogViewerPressed_) {
+		raisedLogViewerPanel_->Hide();
+		sunkenLogViewerPanel_->Show();
 	} else {
-		sunkenLogPanel_->Hide();
-		raisedLogPanel_->Show();
+		sunkenLogViewerPanel_->Hide();
+		raisedLogViewerPanel_->Show();
 	}
 }
 
@@ -269,16 +271,16 @@ AnStatusBar::OnSize(wxSizeEvent& event)
 	wxSize panelSize;
 	int x, y;
 
-	/* placing 'Log' panels */
+	/* placing 'LogViewer' panels */
 	GetFieldRect(FIELD_IDX_LOG, fieldRectangle);
 
-	panelSize = raisedLogPanel_->GetSize();
+	panelSize = raisedLogViewerPanel_->GetSize();
 	computePanelPosition(x, y, fieldRectangle, panelSize);
-	raisedLogPanel_->Move(x, y);
+	raisedLogViewerPanel_->Move(x, y);
 
-	panelSize = sunkenLogPanel_->GetSize();
+	panelSize = sunkenLogViewerPanel_->GetSize();
 	computePanelPosition(x, y, fieldRectangle, panelSize);
-	sunkenLogPanel_->Move(x, y);
+	sunkenLogViewerPanel_->Move(x, y);
 
 	/* placing 'Rule Editor' panels */
 	GetFieldRect(FIELD_IDX_RULEEDITOR, fieldRectangle);
@@ -295,17 +297,17 @@ AnStatusBar::OnSize(wxSizeEvent& event)
 }
 
 void
-AnStatusBar::OnLogClick(wxMouseEvent& event)
+AnStatusBar::OnLogViewerClick(wxMouseEvent& event)
 {
-	isLogPressed_ = !isLogPressed_;
-	redrawLogPanel();
+	isLogViewerPressed_ = !isLogViewerPressed_;
+	wxGetApp().setLogViewerVisability(isLogViewerPressed_);
 	event.Skip();
 }
 
 void
-AnStatusBar::OnLogEnter(wxMouseEvent& event)
+AnStatusBar::OnLogViewerEnter(wxMouseEvent& event)
 {
-	enterLogPanel(event.Entering());
+	enterLogViewerPanel(event.Entering());
 	event.Skip();
 }
 
@@ -325,10 +327,10 @@ AnStatusBar::OnRuleEditorEnter(wxMouseEvent& event)
 }
 
 void
-AnStatusBar::setLogVisability(bool visible)
+AnStatusBar::setLogViewerVisability(bool visible)
 {
-	isLogPressed_ = visible;
-	redrawLogPanel();
+	isLogViewerPressed_ = visible;
+	redrawLogViewerPanel();
 }
 
 void

@@ -67,6 +67,7 @@ AnShortcuts::~AnShortcuts()
 void
 AnShortcuts::OnKeyPressed(wxKeyEvent &event)
 {
+	KEY_ALT(event, 'l', wxGetApp().toggleLogViewerVisability());
 	KEY_ALT(event, 'e', wxGetApp().toggleRuleEditorVisability());
 	event.Skip();
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 GeNUA mbH <info@genua.de>
+ * Copyright (c) 2008 GeNUA mbH <info@genua.de>
  *
  * All rights reserved.
  *
@@ -24,49 +24,45 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+///////////////////////////////////////////////////////////////////////////
+// C++ code generated with wxFormBuilder (version Sep 28 2007)
+// http://www.wxformbuilder.org/
+//
+// PLEASE DO "NOT" EDIT THIS FILE!
+///////////////////////////////////////////////////////////////////////////
 
-#ifndef __MAINFRAME_H__
-#define __MAINFRAME_H__
+#ifndef __DlgLogViewerBase__
+#define __DlgLogViewerBase__
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <wx/string.h>
+#include <wx/stattext.h>
+#include <wx/gdicmn.h>
+#include <wx/font.h>
+#include <wx/colour.h>
+#include <wx/settings.h>
+#include <wx/sizer.h>
+#include <wx/dialog.h>
 
-#include "AnShortcuts.h"
-#include "AnStatusBar.h"
-#include "MainFrameBase.h"
-#include "Module.h"
+///////////////////////////////////////////////////////////////////////////
 
-class MainFrame : public MainFrameBase
+
+///////////////////////////////////////////////////////////////////////////////
+/// Class DlgLogViewerBase
+///////////////////////////////////////////////////////////////////////////////
+class DlgLogViewerBase : public wxDialog 
 {
 	private:
-		/*
-		 * In wxGTK, frames can't get the focus and thus will not
-		 * receive key events; but a (this) panel can.
-		 */
-		AnShortcuts *shortcuts_;
-
+	
 	protected:
-		AnStatusBar *an_statusbar;
-
-		void OnMbHelpAboutSelect(wxCommandEvent&);
-		void OnMbFileQuitSelect(wxCommandEvent&);
-		void OnMbFileConnectSelect(wxCommandEvent&);
-		void OnMbEditPreferencesSelect(wxCommandEvent&);
-		void OnMbToolsRuleEditorSelect(wxCommandEvent&);
-		void OnMbToolsLogViewerSelect(wxCommandEvent&);
-		void OnMbHelpHelpSelect(wxCommandEvent&);
-		void OnTbModuleSelect(wxCommandEvent&);
-
+		wxStaticText* m_staticText1;
+		
+		// Virtual event handlers, overide them in your derived class
+		virtual void OnKeyPressed( wxKeyEvent& event ){ event.Skip(); }
+		
+	
 	public:
-		MainFrame(wxWindow*);
-		~MainFrame();
-
-		void OnInit(void);
-		void addModules(Module* []);
-
-		void setLogViewerVisability(bool);
-		void setRuleEditorVisability(bool);
+		DlgLogViewerBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxT("Log Viewer"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 250,300 ), long style = wxDEFAULT_DIALOG_STYLE, const wxString& name = wxT("DlgLogViewer") );
+	
 };
 
-#endif /* __MAINFRAME_H__ */
+#endif //__DlgLogViewerBase__

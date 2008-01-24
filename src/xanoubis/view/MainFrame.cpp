@@ -97,6 +97,13 @@ MainFrame::setRuleEditorVisability(bool visible)
 }
 
 void
+MainFrame::setLogViewerVisability(bool visible)
+{
+	an_statusbar->setLogViewerVisability(visible);
+	an_menubar->Check(ID_MITOOLSLOGVIEWER, visible);
+}
+
+void
 MainFrame::OnTbModuleSelect(wxCommandEvent& event)
 {
 	int id;
@@ -140,6 +147,12 @@ MainFrame::OnMbToolsRuleEditorSelect(wxCommandEvent& event)
 }
 
 void
+MainFrame::OnMbToolsLogViewerSelect(wxCommandEvent& event)
+{
+	wxGetApp().setLogViewerVisability(event.IsChecked());
+}
+
+void
 MainFrame::OnMbHelpHelpSelect(wxCommandEvent& event)
 {
 	printf("Menu Item Help->Help selected\n");
@@ -155,16 +168,4 @@ void
 MainFrame::OnMbEditPreferencesSelect(wxCommandEvent& event)
 {
 	printf("Menu Item Edit->Preferences selected\n");
-}
-
-void
-MainFrame::OnSbLogToggle(wxCommandEvent& event)
-{
-	printf("Statusbar Log Button toggled\n");
-}
-
-void
-MainFrame::OnSbRuleeditToggle(wxCommandEvent& event)
-{
-	printf("Statusbar Ruleedit Button toggled\n");
 }

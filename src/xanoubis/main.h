@@ -36,6 +36,7 @@
 
 #include "Communicator.h"
 #include "ctassert.h"
+#include "DlgLogViewer.h"
 #include "DlgRuleEditor.h"
 #include "MainFrame.h"
 #include "Module.h"
@@ -55,6 +56,7 @@ class AnoubisGuiApp : public wxApp
 {
 	private:
 		MainFrame	*mainFrame;
+		DlgLogViewer	*logViewer_;
 		DlgRuleEditor	*ruleEditor_;
 		Communicator	*com;
 		TrayIcon	*trayIcon;
@@ -66,7 +68,8 @@ class AnoubisGuiApp : public wxApp
 
 		bool OnInit(void);
 		void close(void);
-
+		void setLogViewerVisability(bool);
+		void toggleLogViewerVisability(void);
 		void setRuleEditorVisability(bool);
 		void toggleRuleEditorVisability(void);
 };

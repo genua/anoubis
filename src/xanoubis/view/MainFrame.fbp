@@ -213,6 +213,20 @@
                         <event name="OnMenuSelection">OnMbToolsRuleEditorSelect</event>
                         <event name="OnUpdateUI"></event>
                     </object>
+                    <object class="wxMenuItem" expanded="1">
+                        <property name="bitmap"></property>
+                        <property name="checked">0</property>
+                        <property name="enabled">1</property>
+                        <property name="help"></property>
+                        <property name="id">ID_MITOOLSLOGVIEWER</property>
+                        <property name="kind">wxITEM_CHECK</property>
+                        <property name="label">Log Viewer</property>
+                        <property name="name">mi_mbToolsLogViewer</property>
+                        <property name="shortcut"></property>
+                        <property name="unchecked_bitmap"></property>
+                        <event name="OnMenuSelection">OnMbToolsLogViewerSelect</event>
+                        <event name="OnUpdateUI"></event>
+                    </object>
                 </object>
                 <object class="wxMenu" expanded="0">
                     <property name="label">Help</property>

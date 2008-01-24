@@ -48,21 +48,21 @@ enum FIELD_IDX {
 class AnStatusBar : public wxStatusBar
 {
 	private:
-		bool	 isLogPressed_;
+		bool	 isLogViewerPressed_;
 		bool	 isRuleEditorPressed_;
-		wxPanel *raisedLogPanel_;
-		wxPanel *sunkenLogPanel_;
+		wxPanel *raisedLogViewerPanel_;
+		wxPanel *sunkenLogViewerPanel_;
 		wxPanel *raisedRuleEditorPanel_;
 		wxPanel *sunkenRuleEditorPanel_;
 
-		void enterLogPanel(bool);
-		void redrawLogPanel(void);
+		void enterLogViewerPanel(bool);
+		void redrawLogViewerPanel(void);
 		void enterRuleEditorPanel(bool);
 		void redrawRuleEditorPanel(void);
 
 		void OnSize(wxSizeEvent&);
-		void OnLogClick(wxMouseEvent&);
-		void OnLogEnter(wxMouseEvent&);
+		void OnLogViewerClick(wxMouseEvent&);
+		void OnLogViewerEnter(wxMouseEvent&);
 		void OnRuleEditorClick(wxMouseEvent&);
 		void OnRuleEditorEnter(wxMouseEvent&);
 
@@ -70,7 +70,7 @@ class AnStatusBar : public wxStatusBar
 		AnStatusBar(wxWindow *);
 		~AnStatusBar(void);
 
-		void setLogVisability(bool);
+		void setLogViewerVisability(bool);
 		void setRuleEditorVisability(bool);
 };
 

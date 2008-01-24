@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 GeNUA mbH <info@genua.de>
+ * Copyright (c) 2008 GeNUA mbH <info@genua.de>
  *
  * All rights reserved.
  *
@@ -25,48 +25,24 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __MAINFRAME_H__
-#define __MAINFRAME_H__
+#ifndef __DlgLogViewer__
+#define __DlgLogViewer__
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
 #include "AnShortcuts.h"
-#include "AnStatusBar.h"
-#include "MainFrameBase.h"
-#include "Module.h"
+#include "DlgLogViewerBase.h"
 
-class MainFrame : public MainFrameBase
+class DlgLogViewer : public DlgLogViewerBase
 {
-	private:
-		/*
-		 * In wxGTK, frames can't get the focus and thus will not
-		 * receive key events; but a (this) panel can.
-		 */
-		AnShortcuts *shortcuts_;
-
 	protected:
-		AnStatusBar *an_statusbar;
-
-		void OnMbHelpAboutSelect(wxCommandEvent&);
-		void OnMbFileQuitSelect(wxCommandEvent&);
-		void OnMbFileConnectSelect(wxCommandEvent&);
-		void OnMbEditPreferencesSelect(wxCommandEvent&);
-		void OnMbToolsRuleEditorSelect(wxCommandEvent&);
-		void OnMbToolsLogViewerSelect(wxCommandEvent&);
-		void OnMbHelpHelpSelect(wxCommandEvent&);
-		void OnTbModuleSelect(wxCommandEvent&);
+		AnShortcuts	*shortcuts_;
 
 	public:
-		MainFrame(wxWindow*);
-		~MainFrame();
-
-		void OnInit(void);
-		void addModules(Module* []);
-
-		void setLogViewerVisability(bool);
-		void setRuleEditorVisability(bool);
+		DlgLogViewer(wxWindow *);
+		~DlgLogViewer(void);
 };
 
-#endif /* __MAINFRAME_H__ */
+#endif /* __DlgLogViewer__ */
