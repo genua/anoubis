@@ -33,6 +33,7 @@
 #include "Module.h"
 #include "ModOverview.h"
 #include "ModAlf.h"
+#include "ModSfs.h"
 #include "ModAnoubis.h"
 #include "TrayIcon.h"
 
@@ -74,6 +75,7 @@ bool AnoubisGuiApp::OnInit()
 
 	modules_[OVERVIEW] = new ModOverview(mainFrame);
 	modules_[ALF]      = new ModAlf(mainFrame);
+	modules_[SFS]      = new ModSfs(mainFrame);
 	modules_[ANOUBIS]  = new ModAnoubis(mainFrame);
 
 	trayIcon->SetMessageByHand(0);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 GeNUA mbH <info@genua.de>
+ * Copyright (c) 2008 GeNUA mbH <info@genua.de>
  *
  * All rights reserved.
  *
@@ -25,56 +25,10 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __MAIN_H__
-#define __MAIN_H__
+#include "ModSfsOverviewPanelImpl.h"
 
-#ifdef HAVE_CONFIG_H
-#  include "config.h"
-#endif
-
-#include <wx/app.h>
-
-#include "Communicator.h"
-#include "ctassert.h"
-#include "DlgLogViewer.h"
-#include "DlgRuleEditor.h"
-#include "MainFrame.h"
-#include "Module.h"
-#include "TrayIcon.h"
-
-enum moduleIdx {
-	OVERVIEW = 0,
-	ALF,
-	SFS,
-	ANOUBIS,
-	LAST_MODULE_INDEX
-};
-
-compile_time_assert((LAST_MODULE_INDEX == ANOUBIS_MODULESNO), \
-    MODULE_INDEX_mismatch_ANOUBIS_MODULESNO);
-
-class AnoubisGuiApp : public wxApp
+ModSfsOverviewPanelImpl::ModSfsOverviewPanelImpl(wxWindow* parent,
+    wxWindowID id) : ModSfsOverviewPanelBase(parent, id)
 {
-	private:
-		MainFrame	*mainFrame;
-		DlgLogViewer	*logViewer_;
-		DlgRuleEditor	*ruleEditor_;
-		Communicator	*com;
-		TrayIcon	*trayIcon;
-		Module		*modules_[ANOUBIS_MODULESNO];
 
-	public:
-		AnoubisGuiApp(void);
-		~AnoubisGuiApp(void);
-
-		bool OnInit(void);
-		void close(void);
-		void setLogViewerVisability(bool);
-		void toggleLogViewerVisability(void);
-		void setRuleEditorVisability(bool);
-		void toggleRuleEditorVisability(void);
-};
-
-DECLARE_APP(AnoubisGuiApp)
-
-#endif /* __MAIN_H__ */
+}

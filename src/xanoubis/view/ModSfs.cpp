@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 GeNUA mbH <info@genua.de>
+ * Copyright (c) 2008 GeNUA mbH <info@genua.de>
  *
  * All rights reserved.
  *
@@ -25,56 +25,43 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __MAIN_H__
-#define __MAIN_H__
+#include <wx/stdpaths.h>
+#include <wx/string.h>
 
-#ifdef HAVE_CONFIG_H
-#  include "config.h"
-#endif
-
-#include <wx/app.h>
-
-#include "Communicator.h"
-#include "ctassert.h"
-#include "DlgLogViewer.h"
-#include "DlgRuleEditor.h"
-#include "MainFrame.h"
 #include "Module.h"
-#include "TrayIcon.h"
+#include "ModSfs.h"
+#include "ModSfsMainPanelImpl.h"
+#include "ModSfsOverviewPanelImpl.h"
 
-enum moduleIdx {
-	OVERVIEW = 0,
-	ALF,
-	SFS,
-	ANOUBIS,
-	LAST_MODULE_INDEX
-};
-
-compile_time_assert((LAST_MODULE_INDEX == ANOUBIS_MODULESNO), \
-    MODULE_INDEX_mismatch_ANOUBIS_MODULESNO);
-
-class AnoubisGuiApp : public wxApp
+ModSfs::ModSfs(wxWindow *parent) : Module()
 {
-	private:
-		MainFrame	*mainFrame;
-		DlgLogViewer	*logViewer_;
-		DlgRuleEditor	*ruleEditor_;
-		Communicator	*com;
-		TrayIcon	*trayIcon;
-		Module		*modules_[ANOUBIS_MODULESNO];
+	name_ = wxString(_("Secure File System"));
+	nick_ = wxString(_("SFS"));
+	mainPanel_ = new ModSfsMainPanelImpl(parent,
+	    MODSFS_ID_MAINPANEL);
+	overviewPanel_ = new ModSfsOverviewPanelImpl(parent,
+	    MODSFS_ID_OVERVIEWPANEL);
 
-	public:
-		AnoubisGuiApp(void);
-		~AnoubisGuiApp(void);
+	loadIcon(_T("ModSFS.png"));
+	mainPanel_->Hide();
+	overviewPanel_->Hide();
+}
 
-		bool OnInit(void);
-		void close(void);
-		void setLogViewerVisability(bool);
-		void toggleLogViewerVisability(void);
-		void setRuleEditorVisability(bool);
-		void toggleRuleEditorVisability(void);
-};
+ModSfs::~ModSfs(void)
+{
+	delete mainPanel_;
+	delete overviewPanel_;
+	delete icon_;
+}
 
-DECLARE_APP(AnoubisGuiApp)
+int
+ModSfs::getBaseId(void)
+{
+	return (MODSFS_ID_BASE);
+}
 
-#endif /* __MAIN_H__ */
+int
+ModSfs::getToolbarId(void)
+{
+	return (MODSFS_ID_TOOLBAR);
+}

@@ -47,6 +47,7 @@ icondir = $(datadir)/$(bin_PROGRAMS)/icons
 dist_icon_DATA = \
 	icons/ModALF.png \
 	icons/ModAnoubis.png \
+	icons/ModSFS.png \
 	icons/ModOverview.png \
 	icons/tray.gif \
 	icons/tray_msgByHand.png \
@@ -89,6 +90,14 @@ xanoubis_SOURCES= \
 	view/ModAnoubisOverviewPanelImpl.h \
 	view/ModAnoubisPanelsBase.cpp \
 	view/ModAnoubisPanelsBase.h \
+	view/ModSfs.cpp \
+	view/ModSfs.h \
+	view/ModSfsMainPanelImpl.cpp \
+	view/ModSfsMainPanelImpl.h \
+	view/ModSfsOverviewPanelImpl.cpp \
+	view/ModSfsOverviewPanelImpl.h \
+	view/ModSfsPanelsBase.cpp \
+	view/ModSfsPanelsBase.h \
 	view/ModOverview.cpp \
 	view/ModOverview.h \
 	view/ModOverviewMainPanelImpl.cpp \
@@ -140,6 +149,14 @@ xanoubis_SOURCES_flawfinder= \
 	view/ModAnoubisOverviewPanelImpl.h_flawfinder \
 	view/ModAnoubisPanelsBase.cpp_flawfinder \
 	view/ModAnoubisPanelsBase.h_flawfinder \
+	view/ModSfs.cpp_flawfinder \
+	view/ModSfs.h_flawfinder \
+	view/ModSfsMainPanelImpl.cpp_flawfinder \
+	view/ModSfsMainPanelImpl.h_flawfinder \
+	view/ModSfsOverviewPanelImpl.cpp_flawfinder \
+	view/ModSfsOverviewPanelImpl.h_flawfinder \
+	view/ModSfsPanelsBase.cpp_flawfinder \
+	view/ModSfsPanelsBase.h_flawfinder \
 	view/ModOverview.cpp_flawfinder \
 	view/ModOverview.h_flawfinder \
 	view/ModOverviewMainPanelImpl.cpp_flawfinder \
@@ -191,6 +208,14 @@ xanoubis_SOURCES_lint= \
 	view/ModAnoubisOverviewPanelImpl.h_lint \
 	view/ModAnoubisPanelsBase.cpp_lint \
 	view/ModAnoubisPanelsBase.h_lint \
+	view/ModSfs.cpp_lint \
+	view/ModSfs.h_lint \
+	view/ModSfsMainPanelImpl.cpp_lint \
+	view/ModSfsMainPanelImpl.h_lint \
+	view/ModSfsOverviewPanelImpl.cpp_lint \
+	view/ModSfsOverviewPanelImpl.h_lint \
+	view/ModSfsPanelsBase.cpp_lint \
+	view/ModSfsPanelsBase.h_lint \
 	view/ModOverview.cpp_lint \
 	view/ModOverview.h_lint \
 	view/ModOverviewMainPanelImpl.cpp_lint \
@@ -242,6 +267,14 @@ xanoubis_SOURCES_splint= \
 	view/ModAnoubisOverviewPanelImpl.h_splint \
 	view/ModAnoubisPanelsBase.cpp_splint \
 	view/ModAnoubisPanelsBase.h_splint \
+	view/ModSfs.cpp_splint \
+	view/ModSfs.h_splint \
+	view/ModSfsMainPanelImpl.cpp_splint \
+	view/ModSfsMainPanelImpl.h_splint \
+	view/ModSfsOverviewPanelImpl.cpp_splint \
+	view/ModSfsOverviewPanelImpl.h_splint \
+	view/ModSfsPanelsBase.cpp_splint \
+	view/ModSfsPanelsBase.h_splint \
 	view/ModOverview.cpp_splint \
 	view/ModOverview.h_splint \
 	view/ModOverviewMainPanelImpl.cpp_splint \
