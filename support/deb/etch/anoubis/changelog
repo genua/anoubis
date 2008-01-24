@@ -1,0 +1,5 @@
+%%NAME%% (%%VERSION%%) unstable; urgency=low
+
+  * Automatic build of %%NAME%%
+
+ -- Stefan Fritsch <fritsch@genua.de>  %%FULLDATE%%
