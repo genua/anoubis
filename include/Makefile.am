@@ -1,4 +1,5 @@
-# Copyright (c) 2007 GeNUA mbH <info@genua.de>
+##########################################################################
+# Copyright (c) 2008 GeNUA mbH <info@genua.de>
 #
 # All rights reserved.
 #
@@ -22,28 +23,11 @@
 # LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+##########################################################################
 
-SUBDIRS = src test include
+SUBDIRS = linux dev
 
-# the following is needed to add man pages to the dist file
-man_MANS = man/anoubisd.8 man/xanoubis.1 man/anoubischat.3
-EXTRA_DIST = $(man_MANS) @WXFB_PROJECT_FILES@
-
-MAINTAINERCLEANFILES= \
-	aclocal.m4 \
-	Makefile.in\
-	configure \
-	config.log \
-	config.guess \
-	config.sub
-
+# targets must exist, but need not to do anything
 flawfinder:
-	for t in $(SUBDIRS); do cd $$t && make $@ && cd ..; done
-
 lint:
-	for t in $(SUBDIRS); do cd $$t && make $@ && cd ..; done
-
 splint:
-	for t in $(SUBDIRS); do cd $$t && make $@ && cd ..; done
-
-linting: flawfinder lint splint

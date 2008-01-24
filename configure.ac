@@ -72,6 +72,9 @@ AC_CONFIG_FILES([
 	test/Makefile
 	test/libanoubischat/Makefile
 	test/xanoubis/Makefile
+	include/Makefile
+	include/linux/Makefile
+	include/dev/Makefile
 ])
 
 dnl on some systems like openbsd, anoubisd must by linked statically
