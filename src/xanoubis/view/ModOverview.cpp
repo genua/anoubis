@@ -72,6 +72,7 @@ ModOverview::addModules(Module* modules[ANOUBIS_MODULESNO])
 {
 	int		 i;
 	wxBoxSizer	*sz_v;
+	wxSize		 length;
 
 	sz_v = new wxBoxSizer(wxVERTICAL);
 
@@ -82,10 +83,10 @@ ModOverview::addModules(Module* modules[ANOUBIS_MODULESNO])
 		wxBoxSizer *sz_h = new wxBoxSizer(wxHORIZONTAL);
 
 		wxStaticText *tx_modLabel = new wxStaticText(mainPanel_,
-		    wxID_ANY, modules[i]->getName(), wxDefaultPosition,
-		    wxDefaultSize, 0 );
+		    wxID_ANY, modules[i]->getName());
+		length.SetWidth(750 - (tx_modLabel->GetSize()).GetWidth());
 		wxStaticLine *sl_line = new wxStaticLine(mainPanel_, wxID_ANY,
-		    wxDefaultPosition, wxSize(700,5), wxLI_HORIZONTAL|wxEXPAND);
+		    wxDefaultPosition, length, wxLI_HORIZONTAL|wxEXPAND);
 
 		sz_h->Add(tx_modLabel, 0, wxFIXED_MINSIZE|wxLEFT|wxRIGHT|wxTOP,
 		     5);
@@ -93,6 +94,9 @@ ModOverview::addModules(Module* modules[ANOUBIS_MODULESNO])
 
 		sz_v->Add(sz_h);
 		sz_v->Add(modules[i]->getOverviewPanel(), 1, wxEXPAND, 5);
+
+		modules[i]->getOverviewPanel()->Reparent(mainPanel_);
+		modules[i]->getOverviewPanel()->Show(true);
 	}
 
 	mainPanel_->GetSizer()->Add(sz_v);
