@@ -24,6 +24,9 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+BUILT_SOURCES = parse.h
+AM_YFLAGS = -d
+
 sbin_PROGRAMS = anoubisd
 
 if STATIC_LINKING
@@ -38,7 +41,8 @@ anoubisd_SOURCES= \
 	printconf.c \
 	session.c \
 	anoubisd.h \
-	anoubis_alf.h
+	anoubis_alf.h \
+	parse.y
 
 anoubisd_SOURCES_flawfinder= \
 	main.c_flawfinder \

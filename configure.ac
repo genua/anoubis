@@ -44,6 +44,7 @@ dnl checks for programs
 AC_PROG_CC
 AC_PROG_CXX
 AC_PROG_RANLIB
+AC_PROG_YACC
 
 dnl checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
