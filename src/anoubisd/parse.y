@@ -78,9 +78,8 @@ typedef struct {
 	} v;
 	int lineno;
 } YYSTYPE;
-#ifdef LINUX
+/* XXX HJH:  Needed for GNU yacc */
 #define YYSTYPE_IS_DECLARED
-#endif
 
 %}
 
