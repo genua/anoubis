@@ -24,7 +24,7 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-BUILT_SOURCES = parse.h
+BUILT_SOURCES = parse.h parse.c
 AM_YFLAGS = -d
 
 sbin_PROGRAMS = anoubisd
@@ -99,3 +99,8 @@ clean-local:
 	@rm -f $(anoubisd_SOURCES_lint)
 	@rm -f $(anoubisd_SOURCES_splint)
 	@rm -f $(anoubisd_SOURCES_flawfinder)
+
+# As we're in maintainer mode we have to remove generated source files
+# manually.
+dist-hook:
+	$(MAKE) maintainer-clean-generic
