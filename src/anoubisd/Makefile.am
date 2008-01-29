@@ -42,7 +42,8 @@ anoubisd_SOURCES= \
 	session.c \
 	anoubisd.h \
 	anoubis_alf.h \
-	parse.y
+	parse.y \
+	queue.h
 
 anoubisd_SOURCES_flawfinder= \
 	main.c_flawfinder \
