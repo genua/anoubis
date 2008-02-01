@@ -1,6 +1,6 @@
 #!/bin/sh
 # a quick hack script to generate needed autotools files
-# $Id: 2309b5,v 1.8 2008/01/22 15:48:08 hshoexer Exp $
+# $Id: 2309b5,v 1.9 2008/01/31 15:56:59 hshoexer Exp $
 
 # map used commands
 : ${ACLOCAL=aclocal}

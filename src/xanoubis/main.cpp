@@ -25,6 +25,14 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#include <wx/icon.h>
+#include <wx/stdpaths.h>
+#include <wx/string.h>
+
 #include "Communicator.h"
 #include "DlgLogViewer.h"
 #include "DlgRuleEditor.h"
@@ -48,6 +56,8 @@ AnoubisGuiApp::AnoubisGuiApp(void)
 	trayIcon = NULL;
 
 	wxInitAllImageHandlers();
+
+	paths_.SetInstallPrefix(wxT(GENERALPREFIX));
 }
 
 AnoubisGuiApp::~AnoubisGuiApp(void)
@@ -114,4 +124,28 @@ void
 AnoubisGuiApp::toggleLogViewerVisability(void)
 {
 	setLogViewerVisability(!logViewer_->IsShown());
+}
+
+wxIcon *
+AnoubisGuiApp::loadIcon(wxString iconName)
+{
+	wxString iconFileName;
+
+	iconFileName = paths_.GetDataDir() + _T("/icons/") + iconName;
+	if (!::wxFileExists(iconFileName)) {
+		/*
+		 * We didn't find our icon (where --prefix told us)!
+		 * Try to take executable path into account. This should
+		 * fix a missing --prefix as the matter in our build and test
+		 * environment with aegis.
+		 */
+		iconFileName  = ::wxPathOnly(paths_.GetExecutablePath()) +
+		    _T("/../../..") + iconFileName;
+	}
+	/*
+	 * XXX: by ch: No error check is done, 'cause wxIcon will open a error
+	 * dialog, complaining about missing icons itself. But maybe a logging
+	 * message should be generated when logging will been implemented.
+	 */
+	return (new wxIcon(iconFileName, wxBITMAP_TYPE_PNG));
 }

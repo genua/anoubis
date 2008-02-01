@@ -123,6 +123,11 @@ CXXFLAGS="$CXXFLAGS $WX_CPPFLAGS"
 AC_SUBST(WX_LIBS)
 AC_SUBST(WX_CPPFLAGS)
 
+dnl Configured prefix has to be propagated to wxStandardPaths::SetInstallPrefix
+AS_IF([test "$prefix" = "NONE"],
+	[generalprefix=$ac_default_prefix],
+	[generalprefix=$prefix])
+AC_DEFINE_UNQUOTED(GENERALPREFIX, ["$generalprefix"], "configured prefix")
 
 AC_MSG_CHECKING([for number of anoubis modules])
 WXFB_PROJECT_FILES=`ls -1 ${srcdir}/src/xanoubis/view/*.fbp`

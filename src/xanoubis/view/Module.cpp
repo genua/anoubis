@@ -25,9 +25,10 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <wx/stdpaths.h>
+#include <wx/icon.h>
 #include <wx/string.h>
 
+#include "main.h"
 #include "Module.h"
 
 Module::Module(void)
@@ -82,13 +83,5 @@ Module::getIcon(void)
 void
 Module::loadIcon(wxString iconName)
 {
-	wxString	iconFileName;
-	wxStandardPaths	paths;
-
-	iconFileName = paths.GetDataDir();
-	if (!::wxDirExists(iconFileName))
-		iconFileName = ::wxPathOnly(paths.GetExecutablePath());
-	iconFileName += _T("/icons/") + iconName;
-
-	icon_ = new wxIcon(iconFileName, wxBITMAP_TYPE_PNG);
+	icon_ = wxGetApp().loadIcon(iconName);
 }

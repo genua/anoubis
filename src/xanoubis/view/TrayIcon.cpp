@@ -26,27 +26,15 @@
  */
 
 #include <wx/icon.h>
-#include <wx/stdpaths.h>
 #include <wx/string.h>
 
+#include "main.h"
 #include "TrayIcon.h"
 
 TrayIcon::TrayIcon(void)
 {
-	wxString	iconFileName;
-	wxStandardPaths paths;
-
-	iconFileName = paths.GetDataDir();
-	if (!::wxDirExists(iconFileName))
-		iconFileName = ::wxPathOnly(paths.GetExecutablePath());
-	iconFileName += _T("/icons/tray_normal.png");
-	iconNormal_ = new wxIcon(iconFileName, wxBITMAP_TYPE_PNG);
-
-	iconFileName = paths.GetDataDir();
-	if (!::wxDirExists(iconFileName))
-		iconFileName = ::wxPathOnly(paths.GetExecutablePath());
-	iconFileName += _T("/icons/tray_msgByHand.png");
-	iconMsgByHand_ = new wxIcon(iconFileName, wxBITMAP_TYPE_PNG);
+	iconNormal_    = wxGetApp().loadIcon(_T("tray_normal.png"));
+	iconMsgByHand_ = wxGetApp().loadIcon(_T("tray_msgByHand.png"));
 
 	messageByHandNo_ = 0;
 	update();

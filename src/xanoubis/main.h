@@ -29,10 +29,13 @@
 #define __MAIN_H__
 
 #ifdef HAVE_CONFIG_H
-#  include "config.h"
+#include "config.h"
 #endif
 
 #include <wx/app.h>
+#include <wx/icon.h>
+#include <wx/stdpaths.h>
+#include <wx/string.h>
 
 #include "Communicator.h"
 #include "ctassert.h"
@@ -62,6 +65,7 @@ class AnoubisGuiApp : public wxApp
 		Communicator	*com;
 		TrayIcon	*trayIcon;
 		Module		*modules_[ANOUBIS_MODULESNO];
+		wxStandardPaths	 paths_;
 
 	public:
 		AnoubisGuiApp(void);
@@ -73,6 +77,7 @@ class AnoubisGuiApp : public wxApp
 		void toggleLogViewerVisability(void);
 		void setRuleEditorVisability(bool);
 		void toggleRuleEditorVisability(void);
+		wxIcon *loadIcon(wxString);
 };
 
 DECLARE_APP(AnoubisGuiApp)
