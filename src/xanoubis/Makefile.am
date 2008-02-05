@@ -54,237 +54,237 @@ dist_icon_DATA = \
 	icons/tray_normal.png
 
 xanoubis_SOURCES= \
-	control/AnShortcuts.cpp \
-	control/AnShortcuts.h \
-	control/Communicator.cpp \
-	control/CommunicatorException.cpp \
-	control/CommunicatorException.h \
-	control/Communicator.h \
+	model/ModAlf.cpp \
+	model/ModAlf.h \
+	model/ModAnoubis.cpp \
+	model/ModAnoubis.h \
+	model/ModOverview.cpp \
+	model/ModOverview.h \
+	model/ModSfs.cpp \
+	model/ModSfs.h \
+	model/Module.cpp \
+	model/Module.h \
 	view/AnStatusBar.cpp \
 	view/AnStatusBar.h \
 	view/DlgLogViewerBase.cpp \
 	view/DlgLogViewerBase.h \
 	view/DlgLogViewer.cpp \
 	view/DlgLogViewer.h \
-	view/DlgRuleEditor.cpp \
-	view/DlgRuleEditor.h \
 	view/DlgRuleEditorBase.cpp \
 	view/DlgRuleEditorBase.h \
+	view/DlgRuleEditor.cpp \
+	view/DlgRuleEditor.h \
 	view/MainFrameBase.cpp \
 	view/MainFrameBase.h \
 	view/MainFrame.cpp \
 	view/MainFrame.h \
-	view/ModAlf.cpp \
-	view/ModAlf.h \
 	view/ModAlfMainPanelImpl.cpp \
 	view/ModAlfMainPanelImpl.h \
 	view/ModAlfOverviewPanelImpl.cpp \
 	view/ModAlfOverviewPanelImpl.h \
 	view/ModAlfPanelsBase.cpp \
 	view/ModAlfPanelsBase.h \
-	view/ModAnoubis.cpp \
-	view/ModAnoubis.h \
 	view/ModAnoubisMainPanelImpl.cpp \
 	view/ModAnoubisMainPanelImpl.h \
 	view/ModAnoubisOverviewPanelImpl.cpp \
 	view/ModAnoubisOverviewPanelImpl.h \
 	view/ModAnoubisPanelsBase.cpp \
 	view/ModAnoubisPanelsBase.h \
-	view/ModSfs.cpp \
-	view/ModSfs.h \
+	view/ModOverviewMainPanelImpl.cpp \
+	view/ModOverviewMainPanelImpl.h \
+	view/ModOverviewPanelsBase.cpp \
+	view/ModOverviewPanelsBase.h \
 	view/ModSfsMainPanelImpl.cpp \
 	view/ModSfsMainPanelImpl.h \
 	view/ModSfsOverviewPanelImpl.cpp \
 	view/ModSfsOverviewPanelImpl.h \
 	view/ModSfsPanelsBase.cpp \
 	view/ModSfsPanelsBase.h \
-	view/ModOverview.cpp \
-	view/ModOverview.h \
-	view/ModOverviewMainPanelImpl.cpp \
-	view/ModOverviewMainPanelImpl.h \
-	view/ModOverviewPanelsBase.cpp \
-	view/ModOverviewPanelsBase.h \
-	view/Module.cpp \
-	view/Module.h \
 	view/TrayIcon.cpp \
 	view/TrayIcon.h \
+	control/AnShortcuts.cpp \
+	control/AnShortcuts.h \
+	control/Communicator.cpp \
+	control/CommunicatorException.cpp \
+	control/CommunicatorException.h \
+	control/Communicator.h \
 	ctassert.h \
 	main.cpp \
 	main.h
 
 xanoubis_SOURCES_flawfinder= \
-	control/AnShortcuts.cpp_flawfinder \
-	control/AnShortcuts.h_flawfinder \
-	control/Communicator.cpp_flawfinder \
-	control/CommunicatorException.cpp_flawfinder \
-	control/CommunicatorException.h_flawfinder \
-	control/Communicator.h_flawfinder \
+	model/ModAlf.cpp_flawfinder \
+	model/ModAlf.h_flawfinder \
+	model/ModAnoubis.cpp_flawfinder \
+	model/ModAnoubis.h_flawfinder \
+	model/ModOverview.cpp_flawfinder \
+	model/ModOverview.h_flawfinder \
+	model/ModSfs.cpp_flawfinder \
+	model/ModSfs.h_flawfinder \
+	model/Module.cpp_flawfinder \
+	model/Module.h_flawfinder \
 	view/AnStatusBar.cpp_flawfinder \
 	view/AnStatusBar.h_flawfinder \
 	view/DlgLogViewerBase.cpp_flawfinder \
 	view/DlgLogViewerBase.h_flawfinder \
 	view/DlgLogViewer.cpp_flawfinder \
 	view/DlgLogViewer.h_flawfinder \
-	view/DlgRuleEditor.cpp_flawfinder \
-	view/DlgRuleEditor.h_flawfinder \
 	view/DlgRuleEditorBase.cpp_flawfinder \
 	view/DlgRuleEditorBase.h_flawfinder \
+	view/DlgRuleEditor.cpp_flawfinder \
+	view/DlgRuleEditor.h_flawfinder \
 	view/MainFrameBase.cpp_flawfinder \
 	view/MainFrameBase.h_flawfinder \
 	view/MainFrame.cpp_flawfinder \
 	view/MainFrame.h_flawfinder \
-	view/ModAlf.cpp_flawfinder \
-	view/ModAlf.h_flawfinder \
 	view/ModAlfMainPanelImpl.cpp_flawfinder \
 	view/ModAlfMainPanelImpl.h_flawfinder \
 	view/ModAlfOverviewPanelImpl.cpp_flawfinder \
 	view/ModAlfOverviewPanelImpl.h_flawfinder \
 	view/ModAlfPanelsBase.cpp_flawfinder \
 	view/ModAlfPanelsBase.h_flawfinder \
-	view/ModAnoubis.cpp_flawfinder \
-	view/ModAnoubis.h_flawfinder \
 	view/ModAnoubisMainPanelImpl.cpp_flawfinder \
 	view/ModAnoubisMainPanelImpl.h_flawfinder \
 	view/ModAnoubisOverviewPanelImpl.cpp_flawfinder \
 	view/ModAnoubisOverviewPanelImpl.h_flawfinder \
 	view/ModAnoubisPanelsBase.cpp_flawfinder \
 	view/ModAnoubisPanelsBase.h_flawfinder \
-	view/ModSfs.cpp_flawfinder \
-	view/ModSfs.h_flawfinder \
+	view/ModOverviewMainPanelImpl.cpp_flawfinder \
+	view/ModOverviewMainPanelImpl.h_flawfinder \
+	view/ModOverviewPanelsBase.cpp_flawfinder \
+	view/ModOverviewPanelsBase.h_flawfinder \
 	view/ModSfsMainPanelImpl.cpp_flawfinder \
 	view/ModSfsMainPanelImpl.h_flawfinder \
 	view/ModSfsOverviewPanelImpl.cpp_flawfinder \
 	view/ModSfsOverviewPanelImpl.h_flawfinder \
 	view/ModSfsPanelsBase.cpp_flawfinder \
 	view/ModSfsPanelsBase.h_flawfinder \
-	view/ModOverview.cpp_flawfinder \
-	view/ModOverview.h_flawfinder \
-	view/ModOverviewMainPanelImpl.cpp_flawfinder \
-	view/ModOverviewMainPanelImpl.h_flawfinder \
-	view/ModOverviewPanelsBase.cpp_flawfinder \
-	view/ModOverviewPanelsBase.h_flawfinder \
-	view/Module.cpp_flawfinder \
-	view/Module.h_flawfinder \
 	view/TrayIcon.cpp_flawfinder \
 	view/TrayIcon.h_flawfinder \
+	control/AnShortcuts.cpp_flawfinder \
+	control/AnShortcuts.h_flawfinder \
+	control/Communicator.cpp_flawfinder \
+	control/CommunicatorException.cpp_flawfinder \
+	control/CommunicatorException.h_flawfinder \
+	control/Communicator.h_flawfinder \
 	ctassert.h_flawfinder \
 	main.cpp_flawfinder \
 	main.h_flawfinder
 
 xanoubis_SOURCES_lint= \
-	control/AnShortcuts.cpp_lint \
-	control/AnShortcuts.h_lint \
-	control/Communicator.cpp_lint \
-	control/CommunicatorException.cpp_lint \
-	control/CommunicatorException.h_lint \
-	control/Communicator.h_lint \
+	model/ModAlf.cpp_lint \
+	model/ModAlf.h_lint \
+	model/ModAnoubis.cpp_lint \
+	model/ModAnoubis.h_lint \
+	model/ModOverview.cpp_lint \
+	model/ModOverview.h_lint \
+	model/ModSfs.cpp_lint \
+	model/ModSfs.h_lint \
+	model/Module.cpp_lint \
+	model/Module.h_lint \
 	view/AnStatusBar.cpp_lint \
 	view/AnStatusBar.h_lint \
 	view/DlgLogViewerBase.cpp_lint \
 	view/DlgLogViewerBase.h_lint \
 	view/DlgLogViewer.cpp_lint \
 	view/DlgLogViewer.h_lint \
-	view/DlgRuleEditor.cpp_lint \
-	view/DlgRuleEditor.h_lint \
 	view/DlgRuleEditorBase.cpp_lint \
 	view/DlgRuleEditorBase.h_lint \
+	view/DlgRuleEditor.cpp_lint \
+	view/DlgRuleEditor.h_lint \
 	view/MainFrameBase.cpp_lint \
 	view/MainFrameBase.h_lint \
 	view/MainFrame.cpp_lint \
 	view/MainFrame.h_lint \
-	view/ModAlf.cpp_lint \
-	view/ModAlf.h_lint \
 	view/ModAlfMainPanelImpl.cpp_lint \
 	view/ModAlfMainPanelImpl.h_lint \
 	view/ModAlfOverviewPanelImpl.cpp_lint \
 	view/ModAlfOverviewPanelImpl.h_lint \
 	view/ModAlfPanelsBase.cpp_lint \
 	view/ModAlfPanelsBase.h_lint \
-	view/ModAnoubis.cpp_lint \
-	view/ModAnoubis.h_lint \
 	view/ModAnoubisMainPanelImpl.cpp_lint \
 	view/ModAnoubisMainPanelImpl.h_lint \
 	view/ModAnoubisOverviewPanelImpl.cpp_lint \
 	view/ModAnoubisOverviewPanelImpl.h_lint \
 	view/ModAnoubisPanelsBase.cpp_lint \
 	view/ModAnoubisPanelsBase.h_lint \
-	view/ModSfs.cpp_lint \
-	view/ModSfs.h_lint \
+	view/ModOverviewMainPanelImpl.cpp_lint \
+	view/ModOverviewMainPanelImpl.h_lint \
+	view/ModOverviewPanelsBase.cpp_lint \
+	view/ModOverviewPanelsBase.h_lint \
 	view/ModSfsMainPanelImpl.cpp_lint \
 	view/ModSfsMainPanelImpl.h_lint \
 	view/ModSfsOverviewPanelImpl.cpp_lint \
 	view/ModSfsOverviewPanelImpl.h_lint \
 	view/ModSfsPanelsBase.cpp_lint \
 	view/ModSfsPanelsBase.h_lint \
-	view/ModOverview.cpp_lint \
-	view/ModOverview.h_lint \
-	view/ModOverviewMainPanelImpl.cpp_lint \
-	view/ModOverviewMainPanelImpl.h_lint \
-	view/ModOverviewPanelsBase.cpp_lint \
-	view/ModOverviewPanelsBase.h_lint \
-	view/Module.cpp_lint \
-	view/Module.h_lint \
 	view/TrayIcon.cpp_lint \
 	view/TrayIcon.h_lint \
+	control/AnShortcuts.cpp_lint \
+	control/AnShortcuts.h_lint \
+	control/Communicator.cpp_lint \
+	control/CommunicatorException.cpp_lint \
+	control/CommunicatorException.h_lint \
+	control/Communicator.h_lint \
 	ctassert.h_lint \
 	main.cpp_lint \
 	main.h_lint
 
 xanoubis_SOURCES_splint= \
-	control/AnShortcuts.cpp_splint \
-	control/AnShortcuts.h_splint \
-	control/Communicator.cpp_splint \
-	control/CommunicatorException.cpp_splint \
-	control/CommunicatorException.h_splint \
-	control/Communicator.h_splint \
+	model/ModAlf.cpp_splint \
+	model/ModAlf.h_splint \
+	model/ModAnoubis.cpp_splint \
+	model/ModAnoubis.h_splint \
+	model/ModOverview.cpp_splint \
+	model/ModOverview.h_splint \
+	model/ModSfs.cpp_splint \
+	model/ModSfs.h_splint \
+	model/Module.cpp_splint \
+	model/Module.h_splint \
 	view/AnStatusBar.cpp_splint \
 	view/AnStatusBar.h_splint \
 	view/DlgLogViewerBase.cpp_splint \
 	view/DlgLogViewerBase.h_splint \
 	view/DlgLogViewer.cpp_splint \
 	view/DlgLogViewer.h_splint \
-	view/DlgRuleEditor.cpp_splint \
-	view/DlgRuleEditor.h_splint \
 	view/DlgRuleEditorBase.cpp_splint \
 	view/DlgRuleEditorBase.h_splint \
+	view/DlgRuleEditor.cpp_splint \
+	view/DlgRuleEditor.h_splint \
 	view/MainFrameBase.cpp_splint \
 	view/MainFrameBase.h_splint \
 	view/MainFrame.cpp_splint \
 	view/MainFrame.h_splint \
-	view/ModAlf.cpp_splint \
-	view/ModAlf.h_splint \
 	view/ModAlfMainPanelImpl.cpp_splint \
 	view/ModAlfMainPanelImpl.h_splint \
 	view/ModAlfOverviewPanelImpl.cpp_splint \
 	view/ModAlfOverviewPanelImpl.h_splint \
 	view/ModAlfPanelsBase.cpp_splint \
 	view/ModAlfPanelsBase.h_splint \
-	view/ModAnoubis.cpp_splint \
-	view/ModAnoubis.h_splint \
 	view/ModAnoubisMainPanelImpl.cpp_splint \
 	view/ModAnoubisMainPanelImpl.h_splint \
 	view/ModAnoubisOverviewPanelImpl.cpp_splint \
 	view/ModAnoubisOverviewPanelImpl.h_splint \
 	view/ModAnoubisPanelsBase.cpp_splint \
 	view/ModAnoubisPanelsBase.h_splint \
-	view/ModSfs.cpp_splint \
-	view/ModSfs.h_splint \
+	view/ModOverviewMainPanelImpl.cpp_splint \
+	view/ModOverviewMainPanelImpl.h_splint \
+	view/ModOverviewPanelsBase.cpp_splint \
+	view/ModOverviewPanelsBase.h_splint \
 	view/ModSfsMainPanelImpl.cpp_splint \
 	view/ModSfsMainPanelImpl.h_splint \
 	view/ModSfsOverviewPanelImpl.cpp_splint \
 	view/ModSfsOverviewPanelImpl.h_splint \
 	view/ModSfsPanelsBase.cpp_splint \
 	view/ModSfsPanelsBase.h_splint \
-	view/ModOverview.cpp_splint \
-	view/ModOverview.h_splint \
-	view/ModOverviewMainPanelImpl.cpp_splint \
-	view/ModOverviewMainPanelImpl.h_splint \
-	view/ModOverviewPanelsBase.cpp_splint \
-	view/ModOverviewPanelsBase.h_splint \
-	view/Module.cpp_splint \
-	view/Module.h_splint \
 	view/TrayIcon.cpp_splint \
 	view/TrayIcon.h_splint \
+	control/AnShortcuts.cpp_splint \
+	control/AnShortcuts.h_splint \
+	control/Communicator.cpp_splint \
+	control/CommunicatorException.cpp_splint \
+	control/CommunicatorException.h_splint \
+	control/Communicator.h_splint \
 	ctassert.h_splint \
 	main.cpp_splint \
 	main.h_splint
