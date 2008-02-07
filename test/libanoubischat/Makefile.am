@@ -27,13 +27,13 @@
 TESTS = test_libanoubischat
 
 anoubischatdir = src/libanoubischat
-libanoubischat = $(top_builddir)/$(anoubischatdir)/libanoubischat.a
+libanoubischat = $(top_builddir)/$(anoubischatdir)/libanoubischat.so
 
 noinst_PROGRAMS = test_libanoubischat
 INCLUDES = -I$(top_srcdir)/$(anoubischatdir)
 
-AM_CFLAGS  = -g -O0
-LDADD = @CHECK_LIBS@ $(libanoubischat)
+AM_LDFLAGS = -L$(top_builddir)/$(anoubischatdir) -dynamic
+LDADD = @CHECK_LIBS@ -lanoubischat
 
 test_libanoubischat_DEPENDENCIES = $(libanoubischat)
 test_libanoubischat_SOURCES = \

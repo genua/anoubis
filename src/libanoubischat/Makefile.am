@@ -38,6 +38,14 @@ libanoubischat_a_SOURCES = \
 	accbuffer.h \
 	$(include_HEADERS)
 
+# For testing with aegis (especially against the baseline) we need to run
+# the test-binary (containing the current tests), operating on the old/baseline
+# library. Thus we build a dynamic link-able library for testing purpose only.
+noinst_PROGRAMS = libanoubischat.so
+libanoubischat_so_SOURCES = $(libanoubischat_a_SOURCES)
+libanoubischat_so_CFLAGS = -fPIC -shared
+libanoubischat_so_LDFLAGS = -nostartfiles -shared
+
 libanoubischat_a_SOURCES_lint = \
 	accsetup.c_lint  \
 	acctransmission.c_lint \
