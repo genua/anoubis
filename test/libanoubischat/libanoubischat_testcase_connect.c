@@ -191,7 +191,7 @@ START_TEST(tc_connect_localunixdomain)
 		fail("couldn't fork");
 		break;
 	case 0:
-		/* child / clinet */
+		/* child / client */
 		tc_connect_lud_client(sockname);
 		break;
 	default:
@@ -199,11 +199,11 @@ START_TEST(tc_connect_localunixdomain)
 		tc_connect_lud_server(sockname);
 		break;
 	}
-	/* cleanup childs */
+	/* cleanup child(ren) */
 	do {
 		if ((pid = wait(NULL)) == -1 &&
 		    errno != EINTR && errno != ECHILD)
-			fail("errors while cleanup childs (wait)");
+			fail("errors while cleanup child(ren) (wait)");
 	} while (pid != -1 || (pid == -1 && errno == EINTR));
 	if (access(sockname, F_OK) == 0)
 		fail("unix domain test: socket not removed!");
@@ -213,8 +213,8 @@ END_TEST
 
 /*
  * This is the same test as tc_connect_localunixdomain, but "swap"
- * order of execution of server and clinet. In the past this happended
- * sporadically and triggerd bug #279.
+ * order of execution of server and client. In the past this happened
+ * sporadically and triggered bug #279.
  */
 START_TEST(tc_connect_localunixdomain_swapped)
 {
@@ -230,7 +230,7 @@ START_TEST(tc_connect_localunixdomain_swapped)
 		fail("couldn't fork");
 		break;
 	case 0:
-		/* child / clinet */
+		/* child / client */
 		sleep(2);
 		tc_connect_lud_client(sockname);
 		break;
@@ -239,12 +239,93 @@ START_TEST(tc_connect_localunixdomain_swapped)
 		tc_connect_lud_server(sockname);
 		break;
 	}
-	/* cleanup childs */
+	/* cleanup child(ren) */
 	do {
 		if ((pid = wait(NULL)) == -1 &&
 		    errno != EINTR && errno != ECHILD)
-			fail("errors while cleanup childs (wait)");
+			fail("errors while cleanup child(ren) (wait)");
 	} while (pid != -1 || (pid == -1 && errno == EINTR));
+	if (access(sockname, F_OK) == 0)
+		fail("unix domain test: socket not removed!");
+}
+END_TEST
+
+
+/*
+ * This test prepares the client and server unix domain socket and run
+ * a destroy on the client first. This should check/trigger bug #334 or
+ * verify it's solution: the client may not unlink the server socket.
+ */
+START_TEST(tc_connect_localunixdomain_clientclose)
+{
+	char sockname[FILENAME_MAX];
+	struct sockaddr_storage	 ss;
+	struct sockaddr_un	*ss_sun = (struct sockaddr_un *)&ss;
+	struct achat_channel    *s  = NULL;
+	struct achat_channel    *c  = NULL;
+	achat_rc		 rc = ACHAT_RC_ERROR;
+
+	bzero(sockname, sizeof(sockname));
+	snprintf(sockname, sizeof(sockname) - 1, "%s%s%s%08d",
+	    TCCONNECT_SOCKETDIR, TCCONNECT_SOCKETPREFIX, "server", getpid());
+
+	c = acc_create();
+	fail_if(c == NULL, "couldn't create client channel");
+	rc = acc_settail(c, ACC_TAIL_CLIENT);
+	fail_if(rc != ACHAT_RC_OK, "client settail failed with rc=%d", rc);
+	rc = acc_setsslmode(c, ACC_SSLMODE_CLEAR);
+	fail_if(rc != ACHAT_RC_OK, "client setsslmode failed with rc=%d", rc);
+	mark_point();
+
+	bzero(&ss, sizeof(ss));
+	ss_sun->sun_family = AF_UNIX;
+	strncpy(ss_sun->sun_path, sockname, sizeof(ss_sun->sun_path) - 1 );
+	rc = acc_setaddr(c, &ss);
+	if (rc != ACHAT_RC_OK)
+		fail("client setaddr failed with rc=%d", rc);
+	mark_point();
+
+	rc = acc_prepare(c);
+	fail_if(rc != ACHAT_RC_OK, "client prepare failed with rc=%d [%s]",
+	    rc, strerror(errno));
+	if (c->state != ACC_STATE_NOTCONNECTED)
+		fail("client state not set correctly: expect %d got %d",
+		    ACC_STATE_NOTCONNECTED, c->state);
+	mark_point();
+
+	s = acc_create();
+	fail_if(s == NULL, "couldn't create server channel");
+	rc = acc_settail(s, ACC_TAIL_SERVER);
+	fail_if(rc != ACHAT_RC_OK, "server settail failed with rc=%d", rc);
+	rc = acc_setsslmode(s, ACC_SSLMODE_CLEAR);
+	fail_if(rc != ACHAT_RC_OK, "server setsslmode failed with rc=%d", rc);
+	mark_point();
+
+	rc = acc_setaddr(s, &ss);
+	if (rc != ACHAT_RC_OK)
+		fail("server setaddr failed with rc=%d", rc);
+	mark_point();
+
+	rc = acc_prepare(s);
+	fail_if(rc != ACHAT_RC_OK, "server prepare failed with rc=%d [%s]",
+	    rc, strerror(errno));
+	if (s->state != ACC_STATE_NOTCONNECTED)
+		fail("server state not set correctly: expect %d got %d",
+		    ACC_STATE_NOTCONNECTED, s->state);
+	mark_point();
+
+	if (access(sockname, F_OK) != 0)
+		fail("unix domain socket not created!");
+
+	rc = acc_destroy(c);
+	fail_if(rc != ACHAT_RC_OK, "client destroy failed with rc=%d", rc);
+
+	if (access(sockname, F_OK) != 0)
+		fail("unix domain socket (of server) removed by client!");
+
+	rc = acc_destroy(s);
+	fail_if(rc != ACHAT_RC_OK, "server destroy failed with rc=%d", rc);
+
 	if (access(sockname, F_OK) == 0)
 		fail("unix domain test: socket not removed!");
 }
@@ -299,7 +380,7 @@ START_TEST(tc_connect_localip)
 		fail("couldn't fork");
 		break;
 	case 0:
-		/* child / clinet */
+		/* child / client */
 		tc_connect_lip_client(ntohs(ss_sin->sin_port));
 		break;
 	default:
@@ -316,11 +397,11 @@ START_TEST(tc_connect_localip)
 		    rc);
 		break;
 	}
-	/* cleanup childs */
+	/* cleanup child(ren) */
 	do {
 		if ((pid = wait(NULL)) == -1 &&
 		    errno != EINTR && errno != ECHILD)
-			fail("errors while cleanup childs (wait)");
+			fail("errors while cleanup child(ren) (wait)");
 	} while (pid != -1 || (pid == -1 && errno == EINTR));
 }
 END_TEST
@@ -335,6 +416,7 @@ libanoubischat_testcase_connect(void)
 	tcase_set_timeout(tc_connect, 10);
 	tcase_add_test(tc_connect, tc_connect_localunixdomain);
 	tcase_add_test(tc_connect, tc_connect_localunixdomain_swapped);
+	tcase_add_test(tc_connect, tc_connect_localunixdomain_clientclose);
 	tcase_add_test(tc_connect, tc_connect_localip);
 
 	return (tc_connect);

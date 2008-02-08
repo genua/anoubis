@@ -92,7 +92,7 @@ acc_open(struct achat_channel *acc)
 
 	if (acc->tail == ACC_TAIL_SERVER) {
 		size = sizeof(remote);
-		/* retry if we were interupted (e.g by a signal) */
+		/* retry if we were interrupted (e.g by a signal) */
 		do {
 			acc->connfd = accept(acc->sockfd,
 			    (struct sockaddr *)&remote, &size);
@@ -101,7 +101,7 @@ acc_open(struct achat_channel *acc)
 			return (ACHAT_RC_ERROR);
 	} else {
 		size =  acc_sockaddrsize(&(acc->addr));
-		/* retry if we were interupted (e.g by a signal) */
+		/* retry if we were interrupted (e.g by a signal) */
 		do {
 			rc = connect(acc->connfd,
 			    (struct sockaddr *)&acc->addr, size);
@@ -126,7 +126,7 @@ acc_close(struct achat_channel *acc)
 	close(acc->sockfd);
 	close(acc->connfd);
 
-	if (acc->addr.ss_family == AF_UNIX)
+	if ((acc->addr.ss_family == AF_UNIX) && (acc->tail == ACC_TAIL_SERVER))
 		unlink(((struct sockaddr_un*)&(acc->addr))->sun_path);
 
 	acc_statetransit(acc, ACC_STATE_CLOSED);
