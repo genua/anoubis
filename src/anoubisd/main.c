@@ -28,27 +28,15 @@
 #include "config.h"
 
 #include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/socket.h>
-#include <sys/wait.h>
-
-#include <err.h>
-#include <errno.h>
-#include <libgen.h>
-#include <poll.h>
-#include <pwd.h>
-#include <signal.h>
-#include <stdio.h>
-#include <stdarg.h>
-#include <stdlib.h>
-#include <string.h>
-#include <syslog.h>
-#include <unistd.h>
-#include <fcntl.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
+#include <sys/time.h>
+#include <sys/wait.h>
+
 #include <arpa/inet.h>
 #include <netinet/in.h>
+
 #ifdef LINUX
 #include <linux/eventdev.h>
 #include <linux/anoubis.h>
@@ -58,19 +46,34 @@
 #include <dev/anoubis.h>
 #endif
 
+#include <err.h>
+#include <errno.h>
+#include <event.h>
+#include <fcntl.h>
+#include <pwd.h>
+#include <signal.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <syslog.h>
+#include <unistd.h>
+
 #include "anoubisd.h"
 #include "anoubis_alf.h"
 
-void	usage(void) __dead;
-void	sighandler(int);
-int	check_child(pid_t, const char *);
-void	sanitise_stdfd(void);
+static void	usage(void) __dead;
+static void	sighandler(int, short, void *);
+static void	main_cleanup(void);
+static void	main_shutdown(void) __dead;
+static int	check_child(pid_t, const char *);
+static void	sanitise_stdfd(void);
+static void	reconfigure(void);
+static void	dispatch_m2s(int, short, void *);
+static void	dispatch_m2p(int, short, void *);
+static void	dispatch_alf(int, short, void *);
 
-volatile sig_atomic_t	quit = 0;
-volatile sig_atomic_t	sigchld = 0;
-volatile sig_atomic_t	reconfig = 0;
-
-__dead void
+__dead static void
 usage(void)
 {
 	extern char *__progname;
@@ -79,26 +82,39 @@ usage(void)
 	exit(1);
 }
 
-#define PFD_PIPE_SESSION	0
-#define PFD_PIPE_POLICY		1
-#define PFD_DEVICE_ALF		2
-#define PFD_MAX			3
-#define POLL_TIMEOUT		(3600 * 1000)
+pid_t		se_pid = 0;
+pid_t		policy_pid = 0;
 
-void
-sighandler(int sig)
+/*
+ * Note:  Signalhandler managed by libevent are _not_ run in signal
+ * context, thus any C-function can be used.
+ */
+static void
+sighandler(int sig, short event, void *arg)
 {
+	int	die = 0;
+
 	switch (sig) {
 	case SIGTERM:
 	case SIGINT:
 	case SIGQUIT:
-		quit = 1;
+		die = 1;
+	case SIGCHLD:
+		if (check_child(se_pid, "session engine")) {
+			se_pid = 0;
+			die = 1;
+		}
+		if (check_child(policy_pid, "policy engine")) {
+			policy_pid = 0;
+			die = 1;
+		}
+		if (die) {
+			main_shutdown();
+			/* NOTREACHED */
+		}
 		break;
 	case SIGHUP:
-		reconfig = 1;
-		break;
-	case SIGCHLD:
-		sigchld = 1;
+		reconfigure();
 		break;
 	}
 }
@@ -106,15 +122,13 @@ sighandler(int sig)
 int
 main(int argc, char *argv[])
 {
+	struct event		ev_sigterm, ev_sigint, ev_sigquit, ev_sighup,
+				    ev_sigchld;
+	struct event		ev_m2s, ev_m2p, ev_alf;
 	struct anoubisd_config	conf;
-	struct sigaction	sa;
-	struct pollfd		pfd[PFD_MAX];
-	pid_t			pid;
-	pid_t			se_pid = 0;
-	pid_t			policy_pid = 0;
 	sigset_t		mask;
 	int			debug = 0;
-	int			ch, nfds;
+	int			ch;
 	int			pipe_m2s[2];
 	int			pipe_m2p[2];
 	int			pipe_s2p[2];
@@ -176,43 +190,26 @@ main(int argc, char *argv[])
 	setproctitle("master");
 #endif
 
+	(void)event_init();
+
 	/* We catch or block signals rather than ignore them. */
+	signal_set(&ev_sigterm, SIGTERM, sighandler, NULL);
+	signal_set(&ev_sigint, SIGINT, sighandler, NULL);
+	signal_set(&ev_sigquit, SIGQUIT, sighandler, NULL);
+	signal_set(&ev_sighup, SIGHUP, sighandler, NULL);
+	signal_set(&ev_sigchld, SIGCHLD, sighandler, NULL);
+	signal_add(&ev_sigterm, NULL);
+	signal_add(&ev_sigint, NULL);
+	signal_add(&ev_sigquit, NULL);
+	signal_add(&ev_sighup, NULL);
+	signal_add(&ev_sigchld, NULL);
+
 	sigfillset(&mask);
-
-	bzero(&sa, sizeof(sa));
-	sa.sa_flags |=  SA_RESTART;
-	sa.sa_handler = sighandler;
-
-	if (sigaction(SIGTERM, &sa, NULL) == -1) {
-		warn("sigaction");
-		goto cleanup;
-	}
 	sigdelset(&mask, SIGTERM);
-
-	if (sigaction(SIGINT, &sa, NULL) == -1) {
-		warn("sigaction");
-		goto cleanup;
-	}
 	sigdelset(&mask, SIGINT);
-
-	if (sigaction(SIGQUIT, &sa, NULL) == -1) {
-		warn("sigaction");
-		goto cleanup;
-	}
 	sigdelset(&mask, SIGQUIT);
-
-	if (sigaction(SIGHUP, &sa, NULL) == -1) {
-		warn("sigaction");
-		goto cleanup;
-	}
 	sigdelset(&mask, SIGHUP);
-
-	if (sigaction(SIGCHLD, &sa, NULL) == -1) {
-		warn("sigaction");
-		goto cleanup;
-	}
 	sigdelset(&mask, SIGCHLD);
-
 	sigprocmask(SIG_SETMASK, &mask, NULL);
 
 	close(pipe_m2s[1]);
@@ -225,93 +222,46 @@ main(int argc, char *argv[])
 	 */
 	eventfds[0] = open("/dev/eventdev", O_RDWR);
 	if (eventfds[0] < 0) {
-		warn("open(eventdev)");
-		goto cleanup;
+		main_cleanup();
+		err(1, "open(/dev/eventdev)");
 	}
 	eventfds[1] = open("/dev/anoubis", O_RDWR);
 	if (eventfds[1] < 0) {
-		warn("open(alf/anoubis)");
-		goto cleanup;
+		close(eventfds[0]);
+		main_cleanup();
+		err(1, "open(/dev/anoubis)");
 	}
 	if (ioctl(eventfds[1], ANOUBIS_DECLARE_FD, eventfds[0]) < 0) {
-		warn("ioctl");
-		goto cleanup;
+		close(eventfds[0]);
+		close(eventfds[1]);
+		main_cleanup();
+		err(1, "ioctl");
 	}
 	close(eventfds[1]);
 
-	/*
-	 * Daemon mainloop
-	 */
-	while (quit == 0) {
-		bzero(pfd, sizeof(pfd));
-		pfd[PFD_PIPE_SESSION].fd = pipe_m2s[0];
-		pfd[PFD_PIPE_SESSION].events = POLLIN;
-		pfd[PFD_PIPE_POLICY].fd = pipe_m2p[0];
-		pfd[PFD_PIPE_POLICY].events = POLLIN;
-		pfd[PFD_DEVICE_ALF].fd = eventfds[0];
-		pfd[PFD_DEVICE_ALF].events = POLLIN;
+	event_set(&ev_m2s, pipe_m2s[0], EV_READ | EV_PERSIST, dispatch_m2s,
+	    NULL);
+	event_add(&ev_m2s, NULL);
+	event_set(&ev_m2p, pipe_m2p[0], EV_READ | EV_PERSIST, dispatch_m2p,
+	    NULL);
+	event_add(&ev_m2p, NULL);
+	event_set(&ev_alf, eventfds[0], EV_READ | EV_PERSIST, dispatch_alf,
+	    NULL);
+	event_add(&ev_alf, NULL);
 
-		if ((nfds = poll(pfd, PFD_MAX, POLL_TIMEOUT)) == -1) {
-			if (errno != EINTR) {
-				warn("poll");
-				quit = 1;
-			}
-		}
+	if (event_dispatch() == -1)
+		warn("main: event_dispatch");
 
-		if ((nfds > 0) && (pfd[PFD_PIPE_SESSION].revents & POLLOUT))
-			/* XXX HSH: todo */
-			;
+	main_cleanup();
+	exit(0);
+}
 
-		if ((nfds > 0) && (pfd[PFD_PIPE_SESSION].revents & POLLIN))
-			/* XXX HSH: todo */
-			;
+static void
+main_cleanup(void)
+{
+	struct sigaction	sa;
+	pid_t			pid;
 
-		if ((nfds > 0) && (pfd[PFD_PIPE_POLICY].revents & POLLOUT))
-			/* XXX HSH: todo */
-			;
-
-		if ((nfds > 0) && (pfd[PFD_PIPE_POLICY].revents & POLLIN))
-			/* XXX HSH: todo */
-			;
-
-		if ((nfds > 0) && (pfd[PFD_DEVICE_ALF].revents & POLLIN)) {
-			struct alf_event event;
-			struct eventdev_reply rep;
-			int ret;
-
-			if (read(pfd[PFD_DEVICE_ALF].fd, &event,
-			    sizeof(struct alf_event)) < sizeof(event))
-				continue;
-
-			rep.reply = 0; /* Allow everything */
-			rep.msg_token = event.hdr.msg_token;
-
-			if ((ret = write(pfd[PFD_DEVICE_ALF].fd, &rep,
-			    sizeof(rep))) < sizeof(rep)) {
-				continue;
-			}
-		}
-
-		if (reconfig) {
-			reconfig = 0;
-
-			/* XXX HSH: todo */
-		}
-
-		if (sigchld) {
-			sigchld = 0;
-			if (check_child(se_pid, "session engine")) {
-				quit = 1;
-				se_pid = 0;
-			}
-			if (check_child(policy_pid, "policy engine")) {
-				quit = 1;
-				policy_pid = 0;
-			}
-		}
-	}
-
-cleanup:
 	/*
 	 * Ignoring SIGCHLD changes the behaviour of wait(2) et al. in that
 	 * way, that a call to wait(2) will block until all of the calling
@@ -334,19 +284,22 @@ cleanup:
 		kill(policy_pid, SIGTERM);
 
 	/* XXX HSH: Do all cleanup here. */
-	close(eventfds[0]);
-	close(eventfds[1]);
 
 	do {
 		if ((pid = wait(NULL)) == -1 &&
 		    errno != EINTR && errno != ECHILD)
 			err(1, "wait");
 	} while (pid != -1 || (pid == -1 && errno == EINTR));
-
-	return (0);
 }
 
-int
+__dead static void
+main_shutdown(void)
+{
+	main_cleanup();
+	exit(0);
+}
+
+static int
 check_child(pid_t pid, const char *pname)
 {
 	int	status;
@@ -366,7 +319,7 @@ check_child(pid_t pid, const char *pname)
 	return (0);
 }
 
-void
+static void
 sanitise_stdfd(void)
 {
 	int nullfd, dupfd;
@@ -384,4 +337,44 @@ sanitise_stdfd(void)
 	}
 	if (nullfd > 2)
 	close(nullfd);
+}
+
+static void
+reconfigure(void)
+{
+	/* XXX HJH: Todo */
+}
+
+static void
+dispatch_m2s(int fd, short event, void *arg)
+{
+	/* XXX HJH: Todo */
+}
+
+static void
+dispatch_m2p(int fd, short event, void *arg)
+{
+	/* XXX HJH: Todo */
+}
+
+static void
+dispatch_alf(int fd, short event, void *arg)
+{
+	struct alf_event	alf_event;
+	struct eventdev_reply	rep;
+
+	if (read(fd, &alf_event, sizeof(alf_event)) < sizeof(alf_event)) {
+		warn("short read");
+		return;
+	}
+
+	rep.reply = 0;	/* Allow everything */
+	rep.msg_token = alf_event.hdr.msg_token;
+
+	if (write(fd, &rep, sizeof(rep)) < sizeof(rep)) {
+		warn("short write");
+		return;
+	}
+
+	return;
 }

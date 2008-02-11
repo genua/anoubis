@@ -28,13 +28,14 @@
 #include "config.h"
 
 #include <sys/param.h>
+#include <sys/time.h>
 
 #include <err.h>
 #include <errno.h>
+#include <event.h>
 #ifdef LINUX
 #include <grp.h>
 #endif
-#include <poll.h>
 #include <pwd.h>
 #include <signal.h>
 #include <stdlib.h>
@@ -43,37 +44,31 @@
 
 #include "anoubisd.h"
 
-void	session_sighandler(int);
+static void	session_sighandler(int, short, void *);
+static void	m2s_dispatch(int, short, void *);
+static void	s2p_dispatch(int, short, void *);
 
-volatile sig_atomic_t	session_quit = 0;
-
-void
-session_sighandler(int sig)
+static void
+session_sighandler(int sig, short event, void *arg)
 {
 	switch (sig) {
 	case SIGTERM:
 	case SIGINT:
 	case SIGQUIT:
-		session_quit = 1;
-		break;
+		(void)event_loopexit(NULL);
+		/* FALLTRHOUGH */
 	}
 }
-
-#define PFD_PIPE_MASTER	0
-#define PFD_PIPE_POLICY	1
-#define PFD_MAX		2
-#define POLL_TIMEOUT	(3600 * 1000)
 
 pid_t
 session_main(struct anoubisd_config *conf, int pipe_m2s[2], int pipe_m2p[2],
     int pipe_s2p[2])
 {
+	struct event	 ev_sigterm, ev_sigint, ev_sigquit;
+	struct event	 ev_m2s, ev_s2p;
 	struct passwd	*pw;
-	struct sigaction sa;
-	struct pollfd	 pfd[PFD_MAX];
 	sigset_t	 mask;
 	pid_t		 pid;
-	int		 nfds;
 
 	switch (pid = fork()) {
 	case -1:
@@ -102,25 +97,22 @@ session_main(struct anoubisd_config *conf, int pipe_m2s[2], int pipe_m2p[2],
 	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
 		err(1, "can't drop privileges");
 
+	/* From now on, this is an unprivileged child process. */
+
+	(void)event_init();
+
 	/* We catch or block signals rather than ignoring them. */
+	signal_set(&ev_sigterm, SIGTERM, session_sighandler, NULL);
+	signal_set(&ev_sigint, SIGINT, session_sighandler, NULL);
+	signal_set(&ev_sigquit, SIGQUIT, session_sighandler, NULL);
+	signal_add(&ev_sigterm, NULL);
+	signal_add(&ev_sigint, NULL);
+	signal_add(&ev_sigquit, NULL);
+
 	sigfillset(&mask);
-
-	bzero(&sa, sizeof(sa));
-	sa.sa_flags |= SA_RESTART;
-	sa.sa_handler = session_sighandler;
-
-	if (sigaction(SIGTERM, &sa, NULL) == -1)
-		err(1, "sigaction");
 	sigdelset(&mask, SIGTERM);
-
-	if (sigaction(SIGINT, &sa, NULL) == -1)
-		err(1, "sigaction");
 	sigdelset(&mask, SIGINT);
-
-	if (sigaction(SIGQUIT, &sa, NULL) == -1)
-		err(1, "sigaction");
 	sigdelset(&mask, SIGQUIT);
-
 	sigprocmask(SIG_SETMASK, &mask, NULL);
 
 	close(pipe_m2s[0]);
@@ -128,34 +120,27 @@ session_main(struct anoubisd_config *conf, int pipe_m2s[2], int pipe_m2p[2],
 	close(pipe_m2p[0]);
 	close(pipe_m2p[1]);
 
-	while (session_quit == 0) {
-		bzero(pfd, sizeof(pfd));
-		pfd[PFD_PIPE_MASTER].fd = pipe_m2s[1];
-		pfd[PFD_PIPE_MASTER].events = POLLIN;
-		pfd[PFD_PIPE_POLICY].fd = pipe_s2p[0];
-		pfd[PFD_PIPE_POLICY].events = POLLIN;
+	event_set(&ev_m2s, pipe_m2s[1], EV_READ | EV_PERSIST, m2s_dispatch,
+	    NULL);
+	event_add(&ev_m2s, NULL);
+	event_set(&ev_s2p, pipe_s2p[1], EV_READ | EV_PERSIST, s2p_dispatch,
+	    NULL);
+	event_add(&ev_s2p, NULL);
 
-		if ((nfds = poll(pfd, PFD_MAX, POLL_TIMEOUT)) == -1) {
-			if (errno != EINTR)
-				err(1, "poll");
-		}
-
-		if (nfds > 0 && pfd[PFD_PIPE_MASTER].revents & POLLIN)
-			/* XXX HSH:  todo */
-			;
-
-		if (nfds > 0 && pfd[PFD_PIPE_MASTER].revents & POLLOUT)
-			/* XXX HSH:  todo */
-			;
-
-		if (nfds > 0 && pfd[PFD_PIPE_POLICY].revents & POLLIN)
-			/* XXX HSH:  todo */
-			;
-
-		if (nfds > 0 && pfd[PFD_PIPE_POLICY].revents & POLLOUT)
-			/* XXX HSH:  todo */
-			;
-	}
+	if (event_dispatch() == -1)
+		err(1, "session_main: event_dispatch");
 
 	_exit(0);
+}
+
+static void
+m2s_dispatch(int fd, short sig, void *arg)
+{
+	/* XXX HJH: Todo */
+}
+
+static void
+s2p_dispatch(int fd, short sig, void *arg)
+{
+	/* XXX HJH: Todo */
 }

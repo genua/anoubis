@@ -63,6 +63,7 @@ AC_CHECK_HEADERS([arpa/inet.h netinet/in.h stdlib.h string.h sys/socket.h])
 
 dnl checks for libraries
 PKG_CHECK_MODULES([CHECK], [check >= 0.9.4])
+AC_CHECK_LIB(event, event_init)
 
 AC_CONFIG_FILES([
 	Makefile
