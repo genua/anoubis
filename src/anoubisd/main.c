@@ -60,7 +60,6 @@
 #include <unistd.h>
 
 #include "anoubisd.h"
-#include "anoubis_alf.h"
 
 static void	usage(void) __dead;
 static void	sighandler(int, short, void *);
@@ -71,7 +70,7 @@ static void	sanitise_stdfd(void);
 static void	reconfigure(void);
 static void	dispatch_m2s(int, short, void *);
 static void	dispatch_m2p(int, short, void *);
-static void	dispatch_alf(int, short, void *);
+static void	dispatch_core(int, short, void *);
 
 __dead static void
 usage(void)
@@ -124,7 +123,7 @@ main(int argc, char *argv[])
 {
 	struct event		ev_sigterm, ev_sigint, ev_sigquit, ev_sighup,
 				    ev_sigchld;
-	struct event		ev_m2s, ev_m2p, ev_alf;
+	struct event		ev_m2s, ev_m2p, ev_core;
 	struct anoubisd_config	conf;
 	sigset_t		mask;
 	int			debug = 0;
@@ -231,6 +230,12 @@ main(int argc, char *argv[])
 		main_cleanup();
 		err(1, "open(/dev/anoubis)");
 	}
+	if (ioctl(eventfds[1], ANOUBIS_DECLARE_LISTENER, 0) < 0) {
+		close(eventfds[0]);
+		close(eventfds[1]);
+		main_cleanup();
+		err(1, "ioctl");
+	}
 	if (ioctl(eventfds[1], ANOUBIS_DECLARE_FD, eventfds[0]) < 0) {
 		close(eventfds[0]);
 		close(eventfds[1]);
@@ -245,9 +250,9 @@ main(int argc, char *argv[])
 	event_set(&ev_m2p, pipe_m2p[0], EV_READ | EV_PERSIST, dispatch_m2p,
 	    NULL);
 	event_add(&ev_m2p, NULL);
-	event_set(&ev_alf, eventfds[0], EV_READ | EV_PERSIST, dispatch_alf,
+	event_set(&ev_core, eventfds[0], EV_READ | EV_PERSIST, dispatch_core,
 	    NULL);
-	event_add(&ev_alf, NULL);
+	event_add(&ev_core, NULL);
 
 	if (event_dispatch() == -1)
 		warn("main: event_dispatch");
@@ -358,22 +363,33 @@ dispatch_m2p(int fd, short event, void *arg)
 }
 
 static void
-dispatch_alf(int fd, short event, void *arg)
+dispatch_core(int fd, short event, void *arg)
 {
-	struct alf_event	alf_event;
+	struct eventdev_hdr * hdr;;
 	struct eventdev_reply	rep;
+	int len;
+#define BUFSIZE 8192
+	char buf[BUFSIZE];
 
-	if (read(fd, &alf_event, sizeof(alf_event)) < sizeof(alf_event)) {
+	
+	len = read(fd, buf, BUFSIZE);
+	if (len < 0) {
+		warn("read error");
+		return;
+	}
+	if (len < sizeof (struct eventdev_hdr)) {
 		warn("short read");
 		return;
 	}
+	hdr = (struct eventdev_hdr *)buf;
+	if (hdr->msg_flags & EVENTDEV_NEED_REPLY) {
+		rep.reply = 0;	/* Allow everything */
+		rep.msg_token = hdr->msg_token;
 
-	rep.reply = 0;	/* Allow everything */
-	rep.msg_token = alf_event.hdr.msg_token;
-
-	if (write(fd, &rep, sizeof(rep)) < sizeof(rep)) {
-		warn("short write");
-		return;
+		if (write(fd, &rep, sizeof(rep)) < sizeof(rep)) {
+			warn("short write");
+			return;
+		}
 	}
 
 	return;

@@ -41,7 +41,6 @@ anoubisd_SOURCES= \
 	printconf.c \
 	session.c \
 	anoubisd.h \
-	anoubis_alf.h \
 	parse.y \
 	queue.h
 
@@ -50,8 +49,7 @@ anoubisd_SOURCES_flawfinder= \
 	policy.c_flawfinder \
 	printconf.c_flawfinder \
 	session.c_flawfinder \
-	anoubisd.h_flawfinder \
-	anoubis_alf.h_flawfinder
+	anoubisd.h_flawfinder
 
 anoubisd_SOURCES_lint= \
 	main.c_lint \
