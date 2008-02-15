@@ -25,7 +25,7 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ##########################################################################
 
-SUBDIRS = xanoubis libanoubischat
+SUBDIRS = libanoubischat libanoubisprotocol xanoubis 
 
 # targets must exist, but need not to do anything
 flawfinder:

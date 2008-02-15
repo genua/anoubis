@@ -1,4 +1,3 @@
-##########################################################################
 # Copyright (c) 2008 GeNUA mbH <info@genua.de>
 #
 # All rights reserved.
@@ -23,17 +22,30 @@
 # LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-##########################################################################
+#
 
-SUBDIRS = libanoubischat libanoubisprotocol anoubisd xanoubis
+TESTS = test_libanoubisps test_libanoubispc
 
-flawfinder:
-	for t in $(SUBDIRS); do cd $$t && make $@ && cd ..; done
+anoubisprotocoldir	= src/libanoubisprotocol
+libanoubisps = $(top_builddir)/$(anoubisprotocoldir)/libanoubisps.so
+libanoubispc = $(top_builddir)/$(anoubisprotocoldir)/libanoubispc.so
 
-lint:
-	for t in $(SUBDIRS); do cd $$t && make $@ && cd ..; done
+noinst_PROGRAMS = test_libanoubisps test_libanoubispc
+INCLUDES = -I$(top_srcdir)/$(anoubisprotocoldir)
 
-splint:
-	for t in $(SUBDIRS); do cd $$t && make $@ && cd ..; done
+AM_LDFLAGS = -L$(top_builddir)/$(anoubisprotocoldir) -dynamic
+test_libanoubisps_LDADD = @CHECK_LIBS@ -lanoubisps
+test_libanoubispc_LDADD = @CHECK_LIBS@ -lanoubispc
 
-linting: flawfinder lint splint
+test_libanoubisps_DEPENDENCIES = $(libanoubisps)
+test_libanoubispc_DEPENDENCIES = $(libanoubispc)
+
+test_libanoubisps_SOURCES = \
+	testrunner.c \
+	libanoubisps_testsuite.c \
+	libanoubisps_testcase_core.c
+
+test_libanoubispc_SOURCES = \
+	testrunner.c \
+	libanoubispc_testsuite.c \
+	libanoubispc_testcase_core.c

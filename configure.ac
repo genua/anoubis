@@ -70,9 +70,11 @@ AC_CONFIG_FILES([
 	src/Makefile
 	src/anoubisd/Makefile
 	src/libanoubischat/Makefile
+	src/libanoubisprotocol/Makefile
 	src/xanoubis/Makefile
 	test/Makefile
 	test/libanoubischat/Makefile
+	test/libanoubisprotocol/Makefile
 	test/xanoubis/Makefile
 	include/Makefile
 	include/linux/Makefile
