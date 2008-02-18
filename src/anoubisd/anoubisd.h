@@ -39,5 +39,18 @@ struct anoubisd_config {
 	int	opts;
 };
 
+enum {
+	PROC_MAIN,
+	PROC_POLICY,
+	PROC_SESSION
+} anoubisd_process;
+
 pid_t	session_main(struct anoubisd_config *, int[], int[], int[]);
 pid_t	policy_main(struct anoubisd_config *, int[], int[], int[]);
+void	log_init(int);
+void	log_warn(const char *, ...);
+void	log_warnx(const char *, ...);
+void	log_info(const char *, ...);
+void	log_debug(const char *, ...);
+void	fatalx(const char *);
+void	fatal(const char *);

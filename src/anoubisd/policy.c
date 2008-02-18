@@ -73,7 +73,7 @@ policy_main(struct anoubisd_config *conf, int pipe_m2s[2], int pipe_m2p[2],
 
 	switch (pid = fork()) {
 	case -1:
-		err(1, "fork");
+		fatal("fork");
 		/* NOTREACHED */
 	case 0:
 		break;
@@ -82,21 +82,22 @@ policy_main(struct anoubisd_config *conf, int pipe_m2s[2], int pipe_m2p[2],
 	}
 
 	if ((pw = getpwnam(ANOUBISD_USER)) == NULL)
-		err(1, "getpwnam");
+		fatal("getpwnam");
 
 	if (chroot(pw->pw_dir) == -1)
-		err(1, "chroot");
+		fatal("chroot");
 	if (chdir("/") == -1)
-		err(1, "chdir");
+		fatal("chdir");
 
 #ifdef OPENBSD
 	setproctitle("policy engine");
 #endif
+	anoubisd_process = PROC_POLICY;
 
 	if (setgroups(1, &pw->pw_gid) ||
 	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
 	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
-		err(1, "can't drop privileges");
+		fatal("can't drop privileges");
 
 	/* From now on, this is an unprivileged child process. */
 
@@ -129,7 +130,7 @@ policy_main(struct anoubisd_config *conf, int pipe_m2s[2], int pipe_m2p[2],
 	event_add(&ev_s2p, NULL);
 
 	if (event_dispatch() == -1)
-		err(1, "policy_main: event_dispatch");
+		fatal("policy_main: event_dispatch");
 
 	_exit(0);
 }

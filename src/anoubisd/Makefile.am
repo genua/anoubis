@@ -40,6 +40,7 @@ anoubisd_SOURCES= \
 	policy.c \
 	printconf.c \
 	session.c \
+	log.c \
 	anoubisd.h \
 	parse.y \
 	queue.h
@@ -49,19 +50,22 @@ anoubisd_SOURCES_flawfinder= \
 	policy.c_flawfinder \
 	printconf.c_flawfinder \
 	session.c_flawfinder \
+	log.c_flawfinder \
 	anoubisd.h_flawfinder
 
 anoubisd_SOURCES_lint= \
 	main.c_lint \
 	policy.c_lint \
 	printconf.c_lint \
-	session.c_lint
+	session.c_lint \
+	log.c_lint
 
 anoubisd_SOURCES_splint= \
 	main.c_splint \
 	policy.c_splint \
 	printconf.c_splint \
-	session.c_splint
+	session.c_splint \
+	log.c_splint
 
 lint: $(anoubisd_SOURCES_lint) $(anoubisd_SOURCES_splint) \
 	$(anoubisd_SOURCES_flawfinder)

@@ -64,7 +64,7 @@
 static void	usage(void) __dead;
 static void	sighandler(int, short, void *);
 static void	main_cleanup(void);
-static void	main_shutdown(void) __dead;
+static void	main_shutdown(int) __dead;
 static int	check_child(pid_t, const char *);
 static void	sanitise_stdfd(void);
 static void	reconfigure(void);
@@ -108,7 +108,7 @@ sighandler(int sig, short event, void *arg)
 			die = 1;
 		}
 		if (die) {
-			main_shutdown();
+			main_shutdown(0);
 			/* NOTREACHED */
 		}
 		break;
@@ -135,6 +135,9 @@ main(int argc, char *argv[])
 
 	/* Ensure that fds 0, 1 and 2 are open or directed to /dev/null */
 	sanitise_stdfd();
+
+	anoubisd_process = PROC_MAIN;
+	log_init(1);		/* Log to stderr until we're daemonized. */
 
 	bzero(&conf, sizeof(conf));
 
@@ -170,17 +173,17 @@ main(int argc, char *argv[])
 	if (getpwnam(ANOUBISD_USER) == NULL)
 		errx(1, "unkown user %s", ANOUBISD_USER);
 
-	openlog("anoubisd", LOG_CONS|LOG_ODELAY, LOG_AUTH);
+	log_init(debug);
 
 	if (!debug)
 		daemon(1, 0);
 
 	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, pipe_m2s) == -1)
-		err(1, "socketpair");
+		fatal("socketpair");
 	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, pipe_m2p) == -1)
-		err(1, "socketpair");
+		fatal("socketpair");
 	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, pipe_s2p) == -1)
-		err(1, "socketpair");
+		fatal("socketpair");
 
 	se_pid = session_main(&conf, pipe_m2s, pipe_m2p, pipe_s2p);
 	policy_pid = policy_main(&conf, pipe_m2s, pipe_m2p, pipe_s2p);
@@ -221,26 +224,26 @@ main(int argc, char *argv[])
 	 */
 	eventfds[0] = open("/dev/eventdev", O_RDWR);
 	if (eventfds[0] < 0) {
-		main_cleanup();
-		err(1, "open(/dev/eventdev)");
+		log_warn("open(/dev/eventdev)");
+		main_shutdown(1);
 	}
 	eventfds[1] = open("/dev/anoubis", O_RDWR);
 	if (eventfds[1] < 0) {
+		log_warn("open(/dev/anoubis)");
 		close(eventfds[0]);
-		main_cleanup();
-		err(1, "open(/dev/anoubis)");
+		main_shutdown(1);
 	}
 	if (ioctl(eventfds[1], ANOUBIS_DECLARE_LISTENER, 0) < 0) {
+		log_warn("ioctl");
 		close(eventfds[0]);
 		close(eventfds[1]);
-		main_cleanup();
-		err(1, "ioctl");
+		main_shutdown(1);
 	}
 	if (ioctl(eventfds[1], ANOUBIS_DECLARE_FD, eventfds[0]) < 0) {
+		log_warn("ioctl");
 		close(eventfds[0]);
 		close(eventfds[1]);
-		main_cleanup();
-		err(1, "ioctl");
+		main_shutdown(1);
 	}
 	close(eventfds[1]);
 
@@ -255,7 +258,7 @@ main(int argc, char *argv[])
 	event_add(&ev_core, NULL);
 
 	if (event_dispatch() == -1)
-		warn("main: event_dispatch");
+		log_warn("main: event_dispatch");
 
 	main_cleanup();
 	exit(0);
@@ -280,7 +283,7 @@ main_cleanup(void)
 
 	if (sigaction(SIGCHLD, &sa, NULL) == -1) {
 		/* Just warn and continue cleaning up the kids. */
-		warn("sigaction");
+		log_warn("sigaction");
 	}
 
 	if (se_pid)
@@ -292,36 +295,36 @@ main_cleanup(void)
 
 	do {
 		if ((pid = wait(NULL)) == -1 &&
-		    errno != EINTR && errno != ECHILD)
-			err(1, "wait");
-	} while (pid != -1 || (pid == -1 && errno == EINTR));
+	    errno != EINTR && errno != ECHILD)
+		fatal("wait");
+} while (pid != -1 || (pid == -1 && errno == EINTR));
 }
 
 __dead static void
-main_shutdown(void)
+main_shutdown(int error)
 {
-	main_cleanup();
-	exit(0);
+main_cleanup();
+exit(error);
 }
 
 static int
 check_child(pid_t pid, const char *pname)
 {
-	int	status;
+int	status;
 
-	if (waitpid(pid, &status, WNOHANG) > 0) {
-		if (WIFEXITED(status)) {
-			warnx("Lost child: %s exited", pname);
-			return (1);
-		}
-		if (WIFSIGNALED(status)) {
-			warnx("Lost child: %s terminated; signal %d", pname,
-			    WTERMSIG(status));
-			return (1);
-		}
+if (waitpid(pid, &status, WNOHANG) > 0) {
+	if (WIFEXITED(status)) {
+		log_warnx("Lost child: %s exited", pname);
+		return (1);
 	}
+	if (WIFSIGNALED(status)) {
+		log_warnx("Lost child: %s terminated; signal %d",
+		    pname, WTERMSIG(status));
+		return (1);
+	}
+}
 
-	return (0);
+return (0);
 }
 
 static void
@@ -371,14 +374,13 @@ dispatch_core(int fd, short event, void *arg)
 #define BUFSIZE 8192
 	char buf[BUFSIZE];
 
-	
 	len = read(fd, buf, BUFSIZE);
 	if (len < 0) {
-		warn("read error");
+		log_warn("read error");
 		return;
 	}
 	if (len < sizeof (struct eventdev_hdr)) {
-		warn("short read");
+		log_warn("short read");
 		return;
 	}
 	hdr = (struct eventdev_hdr *)buf;
@@ -387,7 +389,7 @@ dispatch_core(int fd, short event, void *arg)
 		rep.msg_token = hdr->msg_token;
 
 		if (write(fd, &rep, sizeof(rep)) < sizeof(rep)) {
-			warn("short write");
+			log_warn("short write");
 			return;
 		}
 	}
