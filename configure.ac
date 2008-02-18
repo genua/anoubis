@@ -40,6 +40,36 @@ AM_INIT_AUTOMAKE
 AM_MAINTAINER_MODE
 AC_CONFIG_HEADER([src/config.h])
 
+dnl check for presence of the stack protector
+AX_CHECK_COMPILER_FLAGS(-fstack-protector,
+[
+	CFLAGS="-fstack-protector $CFLAGS"
+	CXXFLAGS="-fstack-protector $CXXFLAGS"
+])
+
+dnl check if compiler can create position independent executables
+dnl
+dnl XXX tartler: This doesn't work like this yet. Since the libanoubischat
+dnl		 library is being linked both statically and dynamically
+dnl		 we need something more sophisticated here.
+dnl
+dnl AX_CHECK_COMPILER_FLAGS(-fPIE,
+dnl [
+dnl 	CFLAGS="-fPIE $CFLAGS"
+dnl 	CXXFLAGS="-fPIE $CXXFLAGS"
+dnl 	LDFLAGS="-z now -pie $LDFLAGS"
+dnl ])
+
+dnl enable automatic fortification
+dnl
+dnl on systems that do not support this (bsd, older linux), this is
+dnl effectively a noop. Since it doesn't harm, we enable it
+dnl unconditionally here.
+
+CFLAGS="-D_FORTIFY_SOURCE=2 $CFLAGS"
+CXXFLAGS="-D_FORTIFY_SOURCE=2 $CXXFLAGS"
+
+
 dnl checks for programs
 AC_PROG_CC
 AC_PROG_CXX
@@ -149,6 +179,7 @@ case $host in
 	*-*-linux*)
 	AC_DEFINE(LINUX, 1, "Define LINUX")
 	AC_DEFINE(_GNU_SOURCE, 1, "Define _GNU_SOURCE")
+	LDFLAGS="$LDFLAGS -z relro"
 	;;
 	*-*-openbsd*)
 	AC_DEFINE(OPENBSD, 1, "Define OpenBSD")

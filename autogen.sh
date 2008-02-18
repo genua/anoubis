@@ -1,6 +1,6 @@
 #!/bin/sh
 # a quick hack script to generate needed autotools files
-# $Id: 2309b5,v 1.9 2008/01/31 15:56:59 hshoexer Exp $
+# $Id: 2309b5,v 1.10 2008/02/18 11:25:29 hshoexer Exp $
 
 # map used commands
 : ${ACLOCAL=aclocal}
@@ -12,9 +12,9 @@
 	echo "running aclocal" >&2
 	if [ -n "$CHECK_DIR" ]; then
 		$ACLOCAL --version
-		$ACLOCAL -I $CHECK_DIR
+		$ACLOCAL -I m4 -I $CHECK_DIR
 	else
-		$ACLOCAL
+		$ACLOCAL -I m4
 	fi
 } && {
 	$AUTOHEADER --force
