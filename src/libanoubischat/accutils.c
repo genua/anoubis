@@ -105,6 +105,7 @@ acc_sockaddrcpy(struct sockaddr_storage *dest, struct sockaddr_storage *src)
 #ifdef OPENBSD
 		dsa_un->sin6_len = acc_sockaddrsize(src);
 #endif /* OPENBSD */
+		/* XXX HJH strlcpy ifdef OPENBSD */
 		strncpy(dsa_un->sun_path, ssa_un->sun_path,
 		    sizeof(dsa_un->sun_path) - 1);
 		dsa_un->sun_path[sizeof(dsa_un->sun_path) - 1] = '\0';
@@ -139,6 +140,7 @@ acc_sockaddrsize(struct sockaddr_storage *sa)
 
 	switch (sa->ss_family) {
 	case AF_UNIX:
+		/* XXX HJH is this correct? */
 		size = sizeof(((struct sockaddr_un*)sa)->sun_family) +
 		    strlen(((struct sockaddr_un*)sa)->sun_path) + 1;
 		break;
@@ -173,6 +175,7 @@ acc_io(struct achat_channel *acc, ssize_t (*f) (int, void *, size_t),
 		res = (f)(acc->connfd, buf + pos, size - pos);
 		switch (res) {
 		case -1:
+			/* XXX HJH EAGAIN and U_NONBLOCK -> busy loop? */
 			if (errno == EINTR || errno == EAGAIN)
 				continue;
 			rc = ACHAT_RC_ERROR;
@@ -182,9 +185,9 @@ acc_io(struct achat_channel *acc, ssize_t (*f) (int, void *, size_t),
 			rc = ACHAT_RC_ERROR;
 			break;
 		default:
-			if (res < 0)
+			if (res < 0)	/* XXX HJH break! */
 				rc = ACHAT_RC_ERROR;
-			pos += (size_t)res;
+			pos += (size_t)res;	/* XXX HJH res < 0! */
 			break;
 		}
 	}

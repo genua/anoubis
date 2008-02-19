@@ -35,7 +35,6 @@
 #include "accutils.h"
 #include "anoubischat.h"
 
-#include <stdio.h>
 achat_rc
 acc_sendmsg(struct achat_channel *acc, const char *msg, size_t size)
 {
@@ -46,7 +45,7 @@ acc_sendmsg(struct achat_channel *acc, const char *msg, size_t size)
 
 	ACC_CHKPARAM(acc  != NULL);
 	ACC_CHKPARAM(msg  != NULL);
-	ACC_CHKPARAM(size >  0);
+	ACC_CHKPARAM(0 < size && size <= ACHAT_MAX_MSGSIZE);
 	ACC_CHKSTATE(acc, ACC_STATE_ESTABLISHED);
 
 	acc_bufferinit(&pkgbuffer);
@@ -56,13 +55,13 @@ acc_sendmsg(struct achat_channel *acc, const char *msg, size_t size)
 	    sizeof(pkgsizenet));
 	if (rc != ACHAT_RC_OK) {
 		acc_bufferfree(&pkgbuffer);
-		return (rc);
+		return (rc);		/* XXX HJH close? */
 	}
 
 	rc = acc_bufferappend(&pkgbuffer, msg, size);
 	if (rc != ACHAT_RC_OK) {
 		acc_bufferfree(&pkgbuffer);
-		return (rc);
+		return (rc);		/* XXX HJH close? */
 	}
 
 	sendptr = acc_bufferptr(&pkgbuffer);
@@ -81,12 +80,13 @@ acc_receivemsg(struct achat_channel *acc, char *msg, size_t size)
 {
 	achat_buffer	 pkgbuffer;
 	u_int32_t	 pkgsizenet = 0;
-	achat_rc	 rc = ACHAT_RC_OK;
+	size_t		 len;
+	achat_rc	 rc;
 	char		*receiveptr;
 
 	ACC_CHKPARAM(acc  != NULL);
 	ACC_CHKPARAM(msg  != NULL);
-	ACC_CHKPARAM(size >  0);
+	ACC_CHKPARAM(0 < size && size <=  ACHAT_MAX_MSGSIZE);
 	ACC_CHKSTATE(acc, ACC_STATE_ESTABLISHED);
 
 	acc_bufferinit(&pkgbuffer);
@@ -95,31 +95,42 @@ acc_receivemsg(struct achat_channel *acc, char *msg, size_t size)
 	rc = acc_io(acc, read, (char*)&pkgsizenet, sizeof(pkgsizenet));
 	if (rc != ACHAT_RC_OK) {
 		/*
-		 * It seems we ost syncronisation. Closing the
-		 * connection would be wise ...
+		 * XXX HJH It might be better that the caller has to
+		 * XXX HJH take care of closeing the channel.  Moreover
+		 * XXX HJH the ACC_CHK* do not close the channel on failure,
+		 * XXX HJH consistency?  When does the caller have to take
+		 * XXX HJH care of cleaning up the channel?
 		 */
-		acc->state = ACC_STATE_ESTABLISHED;
 		acc_close(acc);
-		return (ACHAT_RC_ERROR);
+		goto out;
 	}
 
-	acc_bufferappend_space(&pkgbuffer, ntohl(pkgsizenet));
+	pkgsizenet = ntohl(pkgsizenet);
+	if (pkgsizenet <= sizeof(pkgsizenet)) {
+		rc = ACHAT_RC_ERROR;
+		acc_close(acc);		/* XXX HJH */
+		goto out;
+	}
+
+	len = pkgsizenet - sizeof(pkgsizenet);
+	if (size < len || len > ACHAT_MAX_MSGSIZE) {
+		rc = ACHAT_RC_ERROR;
+		acc_close(acc);		/* XXX HJH */
+		goto out;
+	}
+
+	acc_bufferappend_space(&pkgbuffer, len);
 	receiveptr = acc_bufferptr(&pkgbuffer);
 
-	rc = acc_io(acc, read, receiveptr,
-	    ntohl(pkgsizenet) - sizeof(pkgsizenet));
+	rc = acc_io(acc, read, receiveptr, len);
 	if (rc != ACHAT_RC_OK) {
-		/*
-		 * It seems we ost syncronisation. Closing the
-		 * connection would be wise ...
-		 */
-		acc->state = ACC_STATE_ESTABLISHED;
-		acc_close(acc);
-		return (ACHAT_RC_ERROR);
+		acc_close(acc);		/* XXX HJH */
+		goto out;
 	}
 
-	memcpy(msg, receiveptr, size);
+	memcpy(msg, receiveptr, len);
 
+out:
 	acc->state = ACC_STATE_ESTABLISHED;
 	acc_bufferfree(&pkgbuffer);
 

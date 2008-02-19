@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 GeNUA mbH <info@genua.de>
+ * Copyright (c) 2008 GeNUA mbH <info@genua.de>
  *
  * All rights reserved.
  *
@@ -26,33 +26,32 @@
  */
 
 #include <check.h>
+#include <string.h>
 
-extern TCase *libanoubischat_testcase_core(void);
-extern TCase *libanoubischat_testcase_connect(void);
-extern TCase *libanoubischat_testcase_chat(void);
-extern TCase *libanoubischat_testcase_recvmsg(void);
+#include "anoubischat.h"
 
-
-Suite *
-libanoubischat_testsuite(void)
+START_TEST(tc_recvmsg_parameter)
 {
-	Suite *s = suite_create("Suite");
+	struct achat_channel	c;
 
-	/* Core test case */
-	TCase *tc_core = libanoubischat_testcase_core();
-	suite_add_tcase(s, tc_core);
+	bzero(&c, sizeof(c));
 
-	/* Connect test case */
-	TCase *tc_connect = libanoubischat_testcase_connect();
-	suite_add_tcase(s, tc_connect);
+	fail_if(acc_receivemsg(NULL, NULL, 0) != ACHAT_RC_INVALPARAM);
+	fail_if(acc_receivemsg(&c, NULL, 0) != ACHAT_RC_INVALPARAM);
+	fail_if(acc_receivemsg(&c, NULL, 0) != ACHAT_RC_INVALPARAM);
+	fail_if(acc_receivemsg(&c, &c, 0) != ACHAT_RC_INVALPARAM);
+	fail_if(acc_receivemsg(&c, &c, ACHAT_MAX_MSGSIZE + 1) !=
+	    ACHAT_RC_INVALPARAM);
+	fail_if(acc_receivemsg(&c, &c, 5) != ACHAT_RC_WRONGSTATE);
+}
+END_TEST
 
-	/* Chat test case */
-	TCase *tc_chat = libanoubischat_testcase_chat();
-	suite_add_tcase(s, tc_chat);
+TCase *
+libanoubischat_testcase_recvmsg(void)
+{
+	TCase *tc_recvmsg = tcase_create("recvmsg");
 
-	/* recvmsg test case */
-	TCase *tc_recvmsg = libanoubischat_testcase_recvmsg();
-	suite_add_tcase(s, tc_recvmsg);
+	tcase_add_test(tc_recvmsg, tc_recvmsg_parameter);
 
-	return (s);
+	return (tc_recvmsg);
 }

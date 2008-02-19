@@ -33,8 +33,9 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 
-#define ACHAT_SERVER_PORT 4000
-#define ACHAT_MAX_BACKLOG    5
+#define ACHAT_SERVER_PORT	4000
+#define ACHAT_MAX_BACKLOG	5
+#define ACHAT_MAX_MSGSIZE	4096
 
 /* anoubis chat channel encryption mode */
 enum acc_sslmode {
