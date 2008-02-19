@@ -93,7 +93,7 @@ binary-common:
 #	dh_installmenu
 #	dh_installdebconf
 #	dh_installlogrotate
-	dh_installinit --update-rcd-params="start 05 S ." -panoubisd
+	dh_installinit --update-rcd-params="start 36 S ." -panoubisd
 #	dh_installcron
 #	dh_installinfo
 	dh_installman

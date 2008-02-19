@@ -18,7 +18,7 @@
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 DESC="Anoubis daemon"
 NAME=anoubisd
-DAEMON=/usr/bin/$NAME
+DAEMON=/sbin/$NAME
 DAEMON_ARGS=""
 SCRIPTNAME=/etc/init.d/$NAME
 
