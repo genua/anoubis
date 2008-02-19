@@ -1,4 +1,3 @@
-##########################################################################
 # Copyright (c) 2008 GeNUA mbH <info@genua.de>
 #
 # All rights reserved.
@@ -23,17 +22,67 @@
 # LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-##########################################################################
+#
 
-SUBDIRS = libanoubischat libanoubisprotocol anoubisd xanoubis anoubisctl
+sbin_PROGRAMS = anoubisctl
 
-flawfinder:
-	for t in $(SUBDIRS); do cd $$t && make $@ && cd ..; done
+if STATIC_LINKING
+AM_LDFLAGS = -static
+endif
 
-lint:
-	for t in $(SUBDIRS); do cd $$t && make $@ && cd ..; done
+INCLUDES = -I$(top_srcdir)/include
 
-splint:
-	for t in $(SUBDIRS); do cd $$t && make $@ && cd ..; done
+anoubisctl_SOURCES= \
+	main.c \
+	anoubisctl.h
 
-linting: flawfinder lint splint
+anoubisctl_SOURCES_flawfinder= \
+	main.c_flawfinder \
+	anoubisctl.h_flawfinder
+
+anoubisctl_SOURCES_lint= \
+	main.c_lint
+
+anoubisctl_SOURCES_splint= \
+	main.c_splint
+
+lint: $(anoubisctl_SOURCES_lint) $(anoubisctl_SOURCES_splint) \
+	$(anoubisctl_SOURCES_flawfinder)
+
+flawfinder_FLAGS=--minlevel=4 --allowlink --context
+splint_FLAGS=+posixlib
+lint_FLAGS=""
+
+flawfinder:	$(anoubisctl_SOURCES_flawfinder)
+splint:		$(anoubisctl_SOURCES_splint)
+lint:		$(anoubisctl_SOURCES_lint)
+
+.c.c_flawfinder .h.h_flawfinder:
+	flawfinder $(flawfinder_FLAGS) $< > $@
+
+.SUFFIXES= .lint
+
+.c.c_lint .h.h_lint:
+	@if expr $(build_os) : "openbsd" >/dev/null; then \
+		lint $< > $@; \
+		echo [lint] $<; \
+	else \
+		touch $@; \
+	fi
+
+# splint returns an bad exitcode on every source code hit. We need to
+# ignore these exits for a successful build
+.c.c_splint .h.h_splint:
+	@echo splint stub
+	-splint $(splint_FLAGS) $< > $@
+
+
+clean-local:
+	@rm -f $(anoubisctl_SOURCES_lint)
+	@rm -f $(anoubisctl_SOURCES_splint)
+	@rm -f $(anoubisctl_SOURCES_flawfinder)
+
+# As we're in maintainer mode we have to remove generated source files
+# manually.
+dist-hook:
+	$(MAKE) maintainer-clean-generic

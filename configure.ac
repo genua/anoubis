@@ -102,6 +102,7 @@ AC_CONFIG_FILES([
 	src/libanoubischat/Makefile
 	src/libanoubisprotocol/Makefile
 	src/xanoubis/Makefile
+	src/anoubisctl/Makefile
 	test/Makefile
 	test/libanoubischat/Makefile
 	test/libanoubisprotocol/Makefile
@@ -111,7 +112,7 @@ AC_CONFIG_FILES([
 	include/dev/Makefile
 ])
 
-dnl on some systems like openbsd, anoubisd must by linked statically
+dnl on some systems like openbsd, anoubisd must be linked statically
 AC_ARG_ENABLE(static-anoubisd,
 	AC_HELP_STRING([--enable-static-anoubisd], [link anoubisd statically]),
 	[case "${enableval}" in
@@ -123,6 +124,20 @@ AC_ARG_ENABLE(static-anoubisd,
 	esac],
 	[linkanoubisdstatic=no])
 AM_CONDITIONAL(STATIC_LINKING, [test "x$linkanoubisdstatic" = "xyes"])
+
+dnl on some systems like openbsd, anoubisctl must be linked statically
+AC_ARG_ENABLE(static-anoubisctl,
+	AC_HELP_STRING([--enable-static-anoubisctl], \
+	    [link anoubisctl statically]),
+	[case "${enableval}" in
+		yes) linkanoubisctlstatic=yes ;;
+		no)  linkanoubisctlstatic=no ;;
+		*)
+		    AC_MSG_ERROR(bad value ${enableval} for
+				 --enable-static-anoubisctl) ;;
+	esac],
+	[linkanoubisctlstatic=no])
+AM_CONDITIONAL(STATIC_LINKING, [test "x$linkanoubisctlstatic" = "xyes"])
 
 dnl determine wx-specific settings
 dnl
