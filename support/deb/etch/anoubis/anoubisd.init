@@ -48,7 +48,7 @@ do_start()
 	if [ ! -d /var/run/anoubisd ]; then
 		mkdir /var/run/anoubisd
 		chmod 0755 /var/run/anoubisd
-		chown _anoubisd /var/run/anoubisd
+		chown _anoubisd:_anoubisd /var/run/anoubisd
 	fi
 
 	# XXX: MG: We need a better way to load our modules so early (Bug 262)

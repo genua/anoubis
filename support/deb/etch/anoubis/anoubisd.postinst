@@ -2,7 +2,7 @@
 
 if ! getent passwd _anoubisd >/dev/null; then
 	adduser --quiet --system --no-create-home --home /var/run/anoubisd \
-	    --shell /usr/sbin/nologin --force-badname _anoubisd
+	    --disabled-login --group --force-badname _anoubisd
 fi
 
 #DEBHELPER#
