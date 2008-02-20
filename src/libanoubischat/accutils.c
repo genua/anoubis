@@ -56,11 +56,11 @@ acc_statetransit(struct achat_channel *acc, enum acc_state newstate)
 		ACC_CHKSTATE(acc, ACC_STATE_INITIALISED);
 		switch (acc->tail) {
 		case ACC_TAIL_SERVER:
-			if (acc->sockfd > 0)
+			if (acc->sockfd >= 0)
 				acc->state = newstate;
 			break;
 		case ACC_TAIL_CLIENT:
-			if (acc->connfd > 0)
+			if (acc->connfd >= 0)
 				acc->state = newstate;
 			break;
 		default:
@@ -69,7 +69,7 @@ acc_statetransit(struct achat_channel *acc, enum acc_state newstate)
 		break;
 	case ACC_STATE_ESTABLISHED:
 		ACC_CHKSTATE(acc, ACC_STATE_NOTCONNECTED);
-		if (acc->connfd > 0)
+		if (acc->connfd >= 0)
 			acc->state = newstate;
 		break;
 	case ACC_STATE_TRANSFERING:
@@ -77,8 +77,7 @@ acc_statetransit(struct achat_channel *acc, enum acc_state newstate)
 		return (ACHAT_RC_NYI);
 		break;
 	case ACC_STATE_CLOSED:
-		/* XXX by ch: missing requirements for state transission */
-		return (ACHAT_RC_NYI);
+		acc->state = newstate;
 		break;
 	default:
 		/* this should never be reached */
@@ -181,8 +180,7 @@ acc_io(struct achat_channel *acc, ssize_t (*f) (int, void *, size_t),
 			rc = ACHAT_RC_ERROR;
 			break;
 		case 0:
-			errno = EPIPE;
-			rc = ACHAT_RC_ERROR;
+			rc = ACHAT_RC_EOF;
 			break;
 		default:
 			if (res < 0)	/* XXX HJH break! */

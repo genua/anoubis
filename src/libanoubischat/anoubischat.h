@@ -66,6 +66,7 @@ enum achat_rc {
 	ACHAT_RC_OK = 0,
 	ACHAT_RC_ERROR,
 	ACHAT_RC_NYI,		/* not yet implemented */
+	ACHAT_RC_EOF,		/* connection end */
 	ACHAT_RC_INVALPARAM,	/* invalid argument */
 	ACHAT_RC_WRONGSTATE,	/* invalid state */
 	ACHAT_RC_OOMEM		/* out of memory */

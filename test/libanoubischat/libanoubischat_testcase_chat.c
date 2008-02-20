@@ -158,6 +158,13 @@ tc_chat_lud_server(const char *sockname)
 		fail("server received msg mismatch [%s] != [%s]", msg, buffer);
 	mark_point();
 
+	/* the client will close the channel now;
+	 * we'll give him another couple of seconds.
+	 */
+	sleep(2);
+	rc = acc_receivemsg(s, buffer, sizeof(msg));
+	fail_if(rc != ACHAT_RC_EOF, "server EOF not detected rc=%d", rc);
+
 	rc = acc_destroy(s);
 	fail_if(rc != ACHAT_RC_OK, "server destroy failed with rc=%d", rc);
 }
@@ -335,6 +342,14 @@ START_TEST(tc_chat_localip)
 		    "server send msg failed with rc=%d [%s]", rc,
 		    strerror(errno));
 		mark_point();
+
+		/* the client will close the channel now;
+		 * we'll give him another couple of seconds.
+		 */
+		sleep(2);
+		rc = acc_receivemsg(s, buffer, sizeof(msg));
+		fail_if(rc != ACHAT_RC_EOF, "server EOF not detected rc=%d",
+		    rc);
 
 		rc = acc_destroy(s);
 		fail_if(rc != ACHAT_RC_OK, "server destroy failed with rc=%d",
