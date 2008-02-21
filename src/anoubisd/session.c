@@ -46,7 +46,13 @@
 
 static void	session_sighandler(int, short, void *);
 static void	m2s_dispatch(int, short, void *);
+static void	s2m_dispatch(int, short, void *);
 static void	s2p_dispatch(int, short, void *);
+static void	p2s_dispatch(int, short, void *);
+
+struct event_info_session {
+	struct event	*ev_s2m, *ev_s2p;
+};
 
 static void
 session_sighandler(int sig, short event, void *arg)
@@ -65,7 +71,9 @@ session_main(struct anoubisd_config *conf, int pipe_m2s[2], int pipe_m2p[2],
     int pipe_s2p[2])
 {
 	struct event	 ev_sigterm, ev_sigint, ev_sigquit;
-	struct event	 ev_m2s, ev_s2p;
+	struct event	 ev_m2s, ev_p2s;
+	struct event	 ev_s2m, ev_s2p;
+	struct event_info_session	ev_info;
 	struct passwd	*pw;
 	sigset_t	 mask;
 	pid_t		 pid;
@@ -122,11 +130,21 @@ session_main(struct anoubisd_config *conf, int pipe_m2s[2], int pipe_m2p[2],
 	close(pipe_m2p[1]);
 
 	event_set(&ev_m2s, pipe_m2s[1], EV_READ | EV_PERSIST, m2s_dispatch,
-	    NULL);
+	    &ev_info);
 	event_add(&ev_m2s, NULL);
-	event_set(&ev_s2p, pipe_s2p[1], EV_READ | EV_PERSIST, s2p_dispatch,
-	    NULL);
-	event_add(&ev_s2p, NULL);
+
+	event_set(&ev_s2m, pipe_m2s[1], EV_WRITE, s2m_dispatch,
+	    &ev_info);
+
+	event_set(&ev_p2s, pipe_s2p[1], EV_READ | EV_PERSIST, p2s_dispatch,
+	    &ev_info);
+	event_add(&ev_p2s, NULL);
+
+	event_set(&ev_s2p, pipe_s2p[1], EV_WRITE, s2p_dispatch,
+	    &ev_info);
+
+	ev_info.ev_s2m = &ev_s2m;
+	ev_info.ev_s2p = &ev_s2p;
 
 	if (event_dispatch() == -1)
 		fatal("session_main: event_dispatch");
@@ -141,7 +159,19 @@ m2s_dispatch(int fd, short sig, void *arg)
 }
 
 static void
+s2m_dispatch(int fd, short sig, void *arg)
+{
+	/* XXX MG: Todo */
+}
+
+static void
 s2p_dispatch(int fd, short sig, void *arg)
 {
 	/* XXX HJH: Todo */
+}
+
+static void
+p2s_dispatch(int fd, short sig, void *arg)
+{
+	/* XXX MG: Todo */
 }

@@ -25,6 +25,16 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifdef LINUX
+#include <linux/eventdev.h>
+#include <linux/anoubis.h>
+#endif
+#ifdef OPENBSD
+#include <dev/eventdev.h>
+#include <dev/anoubis.h>
+#endif
+#include "queue.h"
+
 #define ANOUBISD_OPT_VERBOSE		0x0001
 #define ANOUBISD_OPT_VERBOSE2		0x0002
 #define ANOUBISD_OPT_NOACTION		0x0004
@@ -37,6 +47,20 @@
 
 struct anoubisd_config {
 	int	opts;
+};
+
+struct anoubisd_event_in {
+	TAILQ_ENTRY(anoubisd_event_in) events;
+
+	int event_size;
+	struct eventdev_hdr hdr;
+	char msg[0];
+};
+
+struct anoubisd_event_out {
+	TAILQ_ENTRY(anoubisd_event_out) events;
+
+	struct eventdev_reply reply;
 };
 
 enum {

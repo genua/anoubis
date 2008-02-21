@@ -37,15 +37,6 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 
-#ifdef LINUX
-#include <linux/eventdev.h>
-#include <linux/anoubis.h>
-#endif
-#ifdef OPENBSD
-#include <dev/eventdev.h>
-#include <dev/anoubis.h>
-#endif
-
 #include <err.h>
 #include <errno.h>
 #include <event.h>
@@ -69,8 +60,11 @@ static int	check_child(pid_t, const char *);
 static void	sanitise_stdfd(void);
 static void	reconfigure(void);
 static void	dispatch_m2s(int, short, void *);
+static void	dispatch_s2m(int, short, void *);
 static void	dispatch_m2p(int, short, void *);
-static void	dispatch_core(int, short, void *);
+static void	dispatch_p2m(int, short, void *);
+static void	dispatch_m2dev(int, short, void *);
+static void	dispatch_dev2m(int, short, void *);
 
 __dead static void
 usage(void)
@@ -83,6 +77,15 @@ usage(void)
 
 pid_t		se_pid = 0;
 pid_t		policy_pid = 0;
+
+static TAILQ_HEAD(head_m2p, anoubisd_event_in) eventq_m2p =
+    TAILQ_HEAD_INITIALIZER(eventq_m2p);
+static TAILQ_HEAD(head_m2dev, anoubisd_event_out) eventq_m2dev =
+    TAILQ_HEAD_INITIALIZER(eventq_m2dev);
+
+struct event_info_main {
+	struct event	*ev_m2s, *ev_m2p, *ev_m2dev;
+};
 
 /*
  * Note:  Signalhandler managed by libevent are _not_ run in signal
@@ -123,7 +126,9 @@ main(int argc, char *argv[])
 {
 	struct event		ev_sigterm, ev_sigint, ev_sigquit, ev_sighup,
 				    ev_sigchld;
-	struct event		ev_m2s, ev_m2p, ev_core;
+	struct event		ev_s2m, ev_p2m, ev_dev2m;
+	struct event		ev_m2s, ev_m2p, ev_m2dev;
+	struct event_info_main	ev_info;
 	struct anoubisd_config	conf;
 	sigset_t		mask;
 	int			debug = 0;
@@ -247,15 +252,33 @@ main(int argc, char *argv[])
 	}
 	close(eventfds[1]);
 
-	event_set(&ev_m2s, pipe_m2s[0], EV_READ | EV_PERSIST, dispatch_m2s,
-	    NULL);
-	event_add(&ev_m2s, NULL);
-	event_set(&ev_m2p, pipe_m2p[0], EV_READ | EV_PERSIST, dispatch_m2p,
-	    NULL);
-	event_add(&ev_m2p, NULL);
-	event_set(&ev_core, eventfds[0], EV_READ | EV_PERSIST, dispatch_core,
-	    NULL);
-	event_add(&ev_core, NULL);
+	event_set(&ev_m2s, pipe_m2s[0], EV_WRITE, dispatch_m2s,
+	    &ev_info);
+
+	event_set(&ev_s2m, pipe_m2s[0], EV_READ | EV_PERSIST, dispatch_s2m,
+	    &ev_info);
+	event_add(&ev_s2m, NULL);
+
+	event_set(&ev_m2p, pipe_m2p[0], EV_WRITE, dispatch_m2p,
+	    &ev_info);
+
+	event_set(&ev_p2m, pipe_m2p[0], EV_READ | EV_PERSIST, dispatch_p2m,
+	    &ev_info);
+	event_add(&ev_p2m, NULL);
+
+	event_set(&ev_dev2m, eventfds[0], EV_READ | EV_PERSIST, dispatch_dev2m,
+	    &ev_info);
+	event_add(&ev_dev2m, NULL);
+
+	event_set(&ev_m2dev, eventfds[0], EV_WRITE, dispatch_m2dev,
+	    &ev_info);
+
+	ev_info.ev_m2s = &ev_m2s;
+	ev_info.ev_m2p = &ev_m2p;
+	ev_info.ev_m2dev = &ev_m2dev;
+
+	TAILQ_INIT(&eventq_m2p);
+	TAILQ_INIT(&eventq_m2dev);
 
 	if (event_dispatch() == -1)
 		log_warn("main: event_dispatch");
@@ -360,21 +383,108 @@ dispatch_m2s(int fd, short event, void *arg)
 }
 
 static void
-dispatch_m2p(int fd, short event, void *arg)
+dispatch_s2m(int fd, short event, void *arg)
 {
-	/* XXX HJH: Todo */
+	/* XXX MG: Todo */
 }
 
 static void
-dispatch_core(int fd, short event, void *arg)
+dispatch_m2p(int fd, short event, void *arg)
 {
-	struct eventdev_hdr * hdr;;
-	struct eventdev_reply	rep;
+	struct anoubisd_event_in *ev;
+	struct event_info_main *ev_info = (struct event_info_main*)arg;
 	int len;
+
+	if (TAILQ_EMPTY(&eventq_m2p))
+		return;
+
+	ev = TAILQ_FIRST(&eventq_m2p);
+
+	len = write(fd, ev, ev->event_size);
+
+	if (len < 0) {
+		log_warn("write error");
+		return;
+	}
+
+	if (len < ev->event_size) {
+		log_warn("short write");
+		return;
+	}
+
+	TAILQ_REMOVE(&eventq_m2p, ev, events);
+	free(ev);
+
+	/* If the queue is not empty, we want to be called again */
+	if (!TAILQ_EMPTY(&eventq_m2p))
+		event_add(ev_info->ev_m2p, NULL);
+}
+
+static void
+dispatch_p2m(int fd, short event, void *arg)
+{
+	int len;
+	struct anoubisd_event_out *ev;
+	struct event_info_main *ev_info = (struct event_info_main*)arg;
+
+	if ((ev = malloc(sizeof(struct anoubisd_event_out))) == NULL) {
+		log_warn("can't allocate memory");
+		return;
+	}
+
+	len = read(fd, ev, sizeof(struct anoubisd_event_out));
+
+	if (len < 0) {
+		log_warn("read error");
+		return;
+	}
+
+	if (len < sizeof(struct anoubisd_event_out)) {
+		log_warn("short read");
+		return;
+	}
+
+	TAILQ_INSERT_TAIL(&eventq_m2dev, ev, events);
+	event_add(ev_info->ev_m2dev, NULL);
+}
+
+static void
+dispatch_m2dev(int fd, short event, void *arg)
+{
+	struct anoubisd_event_out *ev;
+	struct event_info_main *ev_info = (struct event_info_main*)arg;
+
+	if (TAILQ_EMPTY(&eventq_m2dev))
+		return;
+
+	ev = TAILQ_FIRST(&eventq_m2dev);
+
+	if (write(fd, &(ev->reply), sizeof(ev->reply)) < sizeof(ev->reply)) {
+		log_warn("short write");
+		return;
+	}
+
+	TAILQ_REMOVE(&eventq_m2dev, ev, events);
+	free(ev);
+
+	if (!TAILQ_EMPTY(&eventq_m2dev))
+		event_add(ev_info->ev_m2dev, NULL);
+}
+
+static void
+dispatch_dev2m(int fd, short event, void *arg)
+{
+	struct eventdev_hdr * hdr;
+	struct eventdev_reply	rep;
+	struct anoubisd_event_in *ev;
+	struct event_info_main *ev_info = (struct event_info_main*)arg;
+
+	int len;
+	int size;
 #define BUFSIZE 8192
 	char buf[BUFSIZE];
 
-	len = read(fd, buf, BUFSIZE);
+	len = read(fd, buf, sizeof(buf));
 	if (len < 0) {
 		log_warn("read error");
 		return;
@@ -384,15 +494,33 @@ dispatch_core(int fd, short event, void *arg)
 		return;
 	}
 	hdr = (struct eventdev_hdr *)buf;
-	if (hdr->msg_flags & EVENTDEV_NEED_REPLY) {
-		rep.reply = 0;	/* Allow everything */
-		rep.msg_token = hdr->msg_token;
 
-		if (write(fd, &rep, sizeof(rep)) < sizeof(rep)) {
-			log_warn("short write");
-			return;
+	size = sizeof(struct anoubisd_event_in) + hdr->msg_size;
+
+	if ((ev = malloc(size)) == NULL) {
+		log_warn("can't allocate memory");
+
+		if (hdr->msg_flags & EVENTDEV_NEED_REPLY) {
+			rep.reply = 1;	/* Fail close */
+			rep.msg_token = hdr->msg_token;
+
+			if (write(fd, &rep, sizeof(rep)) < sizeof(rep)) {
+				log_warn("short write");
+				return;
+			}
 		}
+
+		return;
 	}
+
+	ev->event_size = size;
+	ev->hdr = *hdr;
+	memcpy(ev->msg, hdr + sizeof(struct eventdev_hdr), hdr->msg_size);
+
+	TAILQ_INSERT_TAIL(&eventq_m2p, ev, events);
+
+	/* Wait for fd to get ready */
+	event_add(ev_info->ev_m2p, NULL);
 
 	return;
 }
