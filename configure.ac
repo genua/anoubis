@@ -55,9 +55,9 @@ dnl		 we need something more sophisticated here.
 dnl
 dnl AX_CHECK_COMPILER_FLAGS(-fPIE,
 dnl [
-dnl 	CFLAGS="-fPIE $CFLAGS"
-dnl 	CXXFLAGS="-fPIE $CXXFLAGS"
-dnl 	LDFLAGS="-z now -pie $LDFLAGS"
+dnl	CFLAGS="-fPIE $CFLAGS"
+dnl	CXXFLAGS="-fPIE $CXXFLAGS"
+dnl	LDFLAGS="-z now -pie $LDFLAGS"
 dnl ])
 
 dnl enable automatic fortification
@@ -103,6 +103,7 @@ AC_CONFIG_FILES([
 	src/libanoubisprotocol/Makefile
 	src/xanoubis/Makefile
 	src/anoubisctl/Makefile
+	src/libapn/Makefile
 	test/Makefile
 	test/libanoubischat/Makefile
 	test/libanoubisprotocol/Makefile

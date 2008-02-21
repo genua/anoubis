@@ -25,7 +25,9 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ##########################################################################
 
-SUBDIRS = libanoubischat libanoubisprotocol anoubisd xanoubis anoubisctl
+# Note:  Libraries must come first as applications might depend on them.
+SUBDIRS = libapn libanoubischat libanoubisprotocol anoubisd xanoubis anoubisctl
+
 
 flawfinder:
 	for t in $(SUBDIRS); do cd $$t && make $@ && cd ..; done

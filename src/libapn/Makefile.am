@@ -24,48 +24,52 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-sbin_PROGRAMS = anoubisctl
+BUILT_SOURCES = parse.h parse.c
+AM_YFLAGS = -d
+AM_CFLAGS = "-std=gnu99"
 
-if STATIC_LINKING
-AM_LDFLAGS = -static
-endif
+lib_LIBRARIES = libapn.a
 
-libapndir	= src/libapn
-libapn		= $(top_builddir)/$(libapndir)/libapn.a
+include_HEADERS = apn.h queue.h
 
-INCLUDES = -I$(top_srcdir)/include -I$(top_srcdir)/$(libapndir)
+libapn_a_SOURCES = \
+	apnparser.c  \
+	parse.y \
+	$(include_HEADERS)
 
-anoubisctl_LDADD = $(libapn)
+# For testing with aegis (especially against the baseline) we need to run
+# the test-binary (containing the current tests), operating on the old/baseline
+# library. Thus we build a dynamic link-able library for testing purpose only.
+noinst_PROGRAMS = libapn.so
+libapn_so_SOURCES = $(libapn_a_SOURCES)
+libapn_so_CFLAGS = -fPIC -shared
+libapn_so_LDFLAGS = -nostartfiles -shared
 
-anoubisctl_DEPENDENCIES = $(libapn)
+libapn_a_SOURCES_lint = \
+	apnparser.c_lint  \
+	apn.h_lint
 
-anoubisctl_SOURCES= \
-	main.c \
-	anoubisctl.h
+libapn_a_SOURCES_splint = \
+	apnparser.c_splint  \
+	apn.h_splint
 
-anoubisctl_SOURCES_flawfinder= \
-	main.c_flawfinder \
-	anoubisctl.h_flawfinder
-
-anoubisctl_SOURCES_lint= \
-	main.c_lint
-
-anoubisctl_SOURCES_splint= \
-	main.c_splint
-
-lint: $(anoubisctl_SOURCES_lint) $(anoubisctl_SOURCES_splint) \
-	$(anoubisctl_SOURCES_flawfinder)
+libapn_a_SOURCES_flawfinder = \
+	apnparser.c_flawfinder  \
+	apn.h_flawfinder
 
 flawfinder_FLAGS=--minlevel=4 --allowlink --context
 splint_FLAGS=+posixlib
 lint_FLAGS=""
 
-flawfinder:	$(anoubisctl_SOURCES_flawfinder)
-splint:		$(anoubisctl_SOURCES_splint)
-lint:		$(anoubisctl_SOURCES_lint)
 
+lint:		$(libapn_a_SOURCES_lint)
+splint:		$(libapn_a_SOURCES_splint)
+flawfinder:	$(libapn_a_SOURCES_flawfinder)
+
+# in some cases, flawfinder terminates with internal errors on openbsd.
+# Don't fail the build for now in this case.
 .c.c_flawfinder .h.h_flawfinder:
-	flawfinder $(flawfinder_FLAGS) $< > $@
+	-flawfinder $(flawfinder_FLAGS) $< > $@
 
 .SUFFIXES= .lint
 
@@ -85,11 +89,6 @@ lint:		$(anoubisctl_SOURCES_lint)
 
 
 clean-local:
-	@rm -f $(anoubisctl_SOURCES_lint)
-	@rm -f $(anoubisctl_SOURCES_splint)
-	@rm -f $(anoubisctl_SOURCES_flawfinder)
-
-# As we're in maintainer mode we have to remove generated source files
-# manually.
-dist-hook:
-	$(MAKE) maintainer-clean-generic
+	@rm -f $(libapn_a_SOURCES_lint)
+	@rm -f $(libapn_a_SOURCES_splint)
+	@rm -f $(libapn_a_SOURCES_flawfinder)

@@ -1,0 +1,85 @@
+.\"	$OpenBSD: mdoc.template,v 1.9 2004/07/02 10:36:57 jmc Exp $
+.\"
+.\" Copyright (c) 2008 GeNUA mbH <info@genua.de>
+.\"
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+.\" "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+.\" LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+.\" A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+.\" OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+.\" SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
+.\" TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+.\" PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+.\" LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+.\" NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+.\" SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\" The following requests are required for all man pages.
+.Dd February 14, 2008
+.Dt APN 3
+.Os Anoubis
+.Sh NAME
+.Nm apn_parse
+.Nd APN library functions
+.Sh SYNOPSIS
+.Fd #include <apn.h>
+.Ft int
+.Fn apn_parse "const char * filename" "struct apnruleset *ruleset" "int flags"
+.Sh DESCRIPTION
+These functions implement the APN parser.
+.Pp
+.Bl -tag -width Ds -compat
+.It Fn apn_parse filename ruleset flags
+The function
+.Fn apn_parse
+parses the file specified by
+.Fa filename .
+The parsed ruleset is stored in a structure pointed to by
+.Fa ruleset
+and which is allocated by
+.Fn apn_parse .
+The caller has to take care of freeing it.
+.Pp
+With the argument
+.Fa flags
+the following flags can be set:
+.Pp
+.Bl -tag -width APN_FLAG_VERBOSE2 -compact -offset indent
+.It Dv APN_FLAG_VERBOSE
+produce verbose output
+.It Dv APN_FLAG_VERBOSE2
+produce even more verbose output.
+.El
+.El
+.Pp
+.\" The following requests should be uncommented and used where appropriate.
+.\" This next request is for sections 2, 3, and 9 function return values only.
+.\" .Sh RETURN VALUES
+.\" .Sh DIAGNOSTICS
+.\" The next request is for sections 2, 3, and 9 error and signal handling only.
+.Sh ERRORS
+These functions return 0 to indicate success and a positive non-zero
+error code to indicate failure.
+In case of an internal error, e.g. a failed call to
+.Xr malloc 3 ,
+the code -1 is returned and errno can be evaluated.
+.Sh SEE ALSO
+.Xr errno 2 ,
+.Xr malloc 3
+.\" .Sh STANDARDS
+.\" .Sh HISTORY
+.Sh AUTHORS
+Hans-Joerg Hoexer
+.\" .Sh CAVEATS
+.\" .Sh BUGS

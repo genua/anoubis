@@ -27,78 +27,59 @@
 
 #include "config.h"
 
-#include <sys/param.h>
+#include <sys/types.h>
+
+#ifndef LINUX
 #include <sys/queue.h>
-#include <sys/stat.h>
+#else
+#include "queue.h"
+#endif
 
-#include <err.h>
-#include <errno.h>
-#include <fcntl.h>
-#include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
 
-#include "anoubisctl.h"
 #include "apn.h"
 
-void		 usage(void) __dead;
+#if 0	/* XXX HJH not yet */
+static int	 apn_add_rule(struct apnruleset *, struct apnrule *);
+static void	 apn_free_rule(struct apnrule *);
+#endif
 
-__dead void
-usage(void)
-{
-	extern char	*__progname;
+/* Implemented in parse.y */
+extern int	 parse_rules(const char *, struct apnruleset *);
 
-	fprintf(stderr, "usage: %s [-nv] [-f file]\n", __progname);
-	exit(1);
-}
-
+/*
+ * Parse the specified file and return the ruleset, which is allocated
+ * and which is to be freed be the caller.
+ *
+ * Return codes:
+ * -1: a systemcall failed and errno is set
+ *  0: file was parsed succesfully
+ *  1: file could not be parsed
+ */
 int
-main(int argc, char *argv[])
+apn_parse(const char *filename, struct apnruleset **rsp, int flags)
 {
-	struct apnruleset	*ruleset;
-	int			 ch, flags;
-	int			 error = 0;
-	int			 opts = 0;
-	char			*rulesopt = NULL;
+	struct apnruleset	*rs;
 
-	if (argc < 2)
-		usage();
+	if ((rs = calloc(sizeof(struct apnruleset), 1)) == NULL)
+		return (-1);
+	TAILQ_INIT(&rs->rule_queue);
+	TAILQ_INIT(&rs->var_queue);
+	*rsp = rs;
 
-	while ((ch = getopt(argc, argv, "f:nv")) != -1) {
-		switch (ch) {
-		case 'f':
-			rulesopt = optarg;
-			break;
-
-		case 'n':
-			opts |= ANOUBISCTL_OPT_NOACTION;
-			break;
-
-		case 'v':
-			if (opts & ANOUBISCTL_OPT_VERBOSE)
-				opts |= ANOUBISCTL_OPT_VERBOSE2;
-			opts |= ANOUBISCTL_OPT_VERBOSE;
-			break;
-
-		default:
-			usage();
-			/* NOTREACHED */
-		}
-	}
-	argc -= optind;
-	argv += optind;
-
-	if (rulesopt != NULL) {
-		flags = 0;
-		if (opts & ANOUBISCTL_OPT_VERBOSE)
-			flags |= APN_FLAG_VERBOSE;
-		if (opts & ANOUBISCTL_OPT_VERBOSE2)
-			flags |= APN_FLAG_VERBOSE2;
-
-		if (apn_parse(rulesopt, &ruleset, flags))
-			error = 1;
-	}
-
-	exit(error);
+	return (parse_rules(filename, rs));
 }
+
+#if 0	/* XXX HJH not yet */
+static int
+apn_add_rule(struct apnruleset *rsp, struct apnrule *rp)
+{
+	return (0);
+}
+
+static void
+apn_free_rule(struct apnrule *rp)
+{
+	return;
+}
+#endif	/* 0 */
