@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 GeNUA mbH <info@genua.de>
+ * Copyright (c) 2008 GeNUA mbH <info@genua.de>
  *
  * All rights reserved.
  *
@@ -25,31 +25,35 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __ModAnoubisMainPanelImpl__
-#define __ModAnoubisMainPanelImpl__
+#ifndef _NOTIFYLIST_H_
+#define _NOTIFYLIST_H_
 
-#include "ModAnoubisPanelsBase.h"
-#include "NotifyList.h"
+#include <wx/list.h>
 
-class ModAnoubisMainPanelImpl : public ModAnoubisMainPanelBase
-{
-	private:
-		enum notifyListTypes	 list_;
-		NotifyListEntry		*currentNotify_;
-
-		void			 update(void);
-
-	protected:
-		void OnTypeChoosen(wxCommandEvent& event);
-		void OnFirstBtnClick(wxCommandEvent& event);
-		void OnPreviousBtnClick(wxCommandEvent& event);
-		void OnNextBtnClick(wxCommandEvent& event);
-		void OnLastBtnClick(wxCommandEvent& event);
-		void OnAllowBtnClick(wxCommandEvent& event);
-		void OnDenyBtnClick(wxCommandEvent& event);
-
-		public:
-		ModAnoubisMainPanelImpl(wxWindow* parent, wxWindowID id);
+enum notifyListTypes {
+	NOTIFY_LIST_NONE = 0,
+	NOTIFY_LIST_NOTANSWERED,
+	NOTIFY_LIST_MESSAGE,
+	NOTIFY_LIST_ANSWERED,
+	NOTIFY_LIST_ALL
 };
 
-#endif /* __ModAnoubisMainPanelImpl__ */
+class NotifyListEntry {
+	private:
+		bool	isAnswered_;
+		bool	isAnswerAble_;
+
+	public:
+		/* XXX CH: remove this if proper obj layout is available */
+		int	id;
+
+		NotifyListEntry(bool);
+
+		bool	isAnswered(void);
+		bool	isAnswerAble(void);
+		void	answer(void);
+};
+
+WX_DECLARE_LIST(NotifyListEntry, NotifyList);
+
+#endif	/* _NOTIFYLIST_H_ */

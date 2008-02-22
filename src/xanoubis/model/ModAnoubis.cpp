@@ -28,10 +28,37 @@
 #include <wx/stdpaths.h>
 #include <wx/string.h>
 
+#include "main.h"
 #include "Module.h"
 #include "ModAnoubis.h"
 #include "ModAnoubisMainPanelImpl.h"
 #include "ModAnoubisOverviewPanelImpl.h"
+
+#define ITERATION_NEXT(list,idx,res) \
+	do { \
+		if (idx < list.GetCount() - 1) \
+			idx++; \
+		res = list.Item(idx); \
+	} while (0)
+
+#define ITERATION_PREVIOUS(list,idx,res) \
+	do { \
+		if (idx > 0) \
+			idx--; \
+		res = list.Item(idx); \
+	} while (0)
+
+#define ITERATION_FIRST(list,idx,res) \
+	do { \
+		idx = 0; \
+		res = list.Item(idx); \
+	} while (0)
+
+#define ITERATION_LAST(list,idx,res) \
+	do { \
+		idx = list.GetCount() - 1; \
+		res = list.Item(idx); \
+	} while (0)
 
 ModAnoubis::ModAnoubis(wxWindow *parent) : Module()
 {
@@ -45,10 +72,19 @@ ModAnoubis::ModAnoubis(wxWindow *parent) : Module()
 	loadIcon(_T("ModAnoubis.png"));
 	mainPanel_->Hide();
 	overviewPanel_->Hide();
+
+	notAnsweredListIdx_ = 0;
+	msgListIdx_ = 0;
+	answeredListIdx_ = 0;
+	allListIdx_ = 0;
 }
 
 ModAnoubis::~ModAnoubis(void)
 {
+	notAnsweredList_.DeleteContents(true);
+	msgList_.DeleteContents(true);
+	answeredList_.DeleteContents(true);
+	allList_.DeleteContents(true);
 	delete mainPanel_;
 	delete overviewPanel_;
 	delete icon_;
@@ -64,4 +100,189 @@ int
 ModAnoubis::getToolbarId(void)
 {
 	return (MODANOUBIS_ID_TOOLBAR);
+}
+
+void
+ModAnoubis::insertNotification(NotifyListEntry *newNotify)
+{
+	allList_.Append(newNotify);
+	if (newNotify->isAnswerAble()) {
+		notAnsweredList_.Append(newNotify);
+	} else {
+		msgList_.Append(newNotify);
+	}
+}
+
+void
+ModAnoubis::answerNotification(NotifyListEntry *notify)
+{
+	if ((notify != NULL) && notify->isAnswerAble()) {
+		notAnsweredList_.DeleteObject(notify);
+		answeredList_.Append(notify);
+		notify->answer();
+		wxGetApp().updateTrayIcon();
+	}
+}
+
+size_t
+ModAnoubis::getElementNo(enum notifyListTypes listType)
+{
+	size_t elementNo;
+
+	switch (listType) {
+	case NOTIFY_LIST_NOTANSWERED:
+		elementNo = notAnsweredListIdx_;
+		break;
+	case NOTIFY_LIST_MESSAGE:
+		elementNo = msgListIdx_;
+		break;
+	case NOTIFY_LIST_ANSWERED:
+		elementNo = answeredListIdx_;
+		break;
+	case NOTIFY_LIST_NONE:
+		/* FALLTHROUGH */
+	case NOTIFY_LIST_ALL:
+		/* FALLTHROUGH */
+	default:
+		elementNo = allListIdx_;
+		break;
+	}
+
+	return (elementNo);
+}
+
+size_t
+ModAnoubis::getListSize(enum notifyListTypes listType)
+{
+	size_t listSize;
+
+	switch (listType) {
+	case NOTIFY_LIST_NOTANSWERED:
+		listSize = notAnsweredList_.GetCount();
+		break;
+	case NOTIFY_LIST_MESSAGE:
+		listSize = msgList_.GetCount();
+		break;
+	case NOTIFY_LIST_ANSWERED:
+		listSize = answeredList_.GetCount();
+		break;
+	case NOTIFY_LIST_NONE:
+		/* FALLTHROUGH */
+	case NOTIFY_LIST_ALL:
+		/* FALLTHROUGH */
+	default:
+		listSize = allList_.GetCount();
+		break;
+	}
+
+	return (listSize);
+}
+
+NotifyListEntry *
+ModAnoubis::getFirst(enum notifyListTypes listType)
+{
+	wxNotifyListNode *element;
+
+	switch (listType) {
+	case NOTIFY_LIST_NOTANSWERED:
+		ITERATION_FIRST(notAnsweredList_,notAnsweredListIdx_,element);
+		break;
+	case NOTIFY_LIST_MESSAGE:
+		ITERATION_FIRST(msgList_,msgListIdx_,element);
+		break;
+	case NOTIFY_LIST_ANSWERED:
+		ITERATION_FIRST(answeredList_,answeredListIdx_,element);
+		break;
+	case NOTIFY_LIST_NONE:
+		/* FALLTHROUGH */
+	case NOTIFY_LIST_ALL:
+		/* FALLTHROUGH */
+	default:
+		ITERATION_FIRST(allList_,allListIdx_,element);
+		break;
+	}
+
+	return (element->GetData());
+}
+
+NotifyListEntry *
+ModAnoubis::getPrevious(enum notifyListTypes listType)
+{
+	wxNotifyListNode *element;
+
+	switch (listType) {
+	case NOTIFY_LIST_NOTANSWERED:
+		ITERATION_PREVIOUS(notAnsweredList_,notAnsweredListIdx_,\
+		    element);
+		break;
+	case NOTIFY_LIST_MESSAGE:
+		ITERATION_PREVIOUS(msgList_,msgListIdx_,element);
+		break;
+	case NOTIFY_LIST_ANSWERED:
+		ITERATION_PREVIOUS(answeredList_,answeredListIdx_,element);
+		break;
+	case NOTIFY_LIST_NONE:
+		/* FALLTHROUGH */
+	case NOTIFY_LIST_ALL:
+		/* FALLTHROUGH */
+	default:
+		ITERATION_PREVIOUS(allList_,allListIdx_,element);
+		break;
+	}
+
+	return (element->GetData());
+}
+
+NotifyListEntry *
+ModAnoubis::getNext(enum notifyListTypes listType)
+{
+	wxNotifyListNode *element;
+
+	switch (listType) {
+	case NOTIFY_LIST_NOTANSWERED:
+		ITERATION_NEXT(notAnsweredList_,notAnsweredListIdx_,element);
+		break;
+	case NOTIFY_LIST_MESSAGE:
+		ITERATION_NEXT(msgList_,msgListIdx_,element);
+		break;
+	case NOTIFY_LIST_ANSWERED:
+		ITERATION_NEXT(answeredList_,answeredListIdx_,element);
+		break;
+	case NOTIFY_LIST_NONE:
+		/* FALLTHROUGH */
+	case NOTIFY_LIST_ALL:
+		/* FALLTHROUGH */
+	default:
+		ITERATION_NEXT(allList_,allListIdx_,element);
+		break;
+	}
+
+	return (element->GetData());
+}
+
+NotifyListEntry *
+ModAnoubis::getLast(enum notifyListTypes listType)
+{
+	wxNotifyListNode *element;
+
+	switch (listType) {
+	case NOTIFY_LIST_NOTANSWERED:
+		ITERATION_LAST(notAnsweredList_,notAnsweredListIdx_,element);
+		break;
+	case NOTIFY_LIST_MESSAGE:
+		ITERATION_LAST(msgList_,msgListIdx_,element);
+		break;
+	case NOTIFY_LIST_ANSWERED:
+		ITERATION_LAST(answeredList_,answeredListIdx_,element);
+		break;
+	case NOTIFY_LIST_NONE:
+		/* FALLTHROUGH */
+	case NOTIFY_LIST_ALL:
+		/* FALLTHROUGH */
+	default:
+		ITERATION_LAST(allList_,allListIdx_,element);
+		break;
+	}
+
+	return (element->GetData());
 }

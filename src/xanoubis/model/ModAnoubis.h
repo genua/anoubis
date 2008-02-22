@@ -29,6 +29,7 @@
 #define __MODANOUBIS_H__
 
 #include "Module.h"
+#include "NotifyList.h"
 
 enum ModAnoubisId {
 	MODANOUBIS_ID_BASE = 13000,
@@ -39,12 +40,31 @@ enum ModAnoubisId {
 
 class ModAnoubis : public Module
 {
+	private:
+		size_t		notAnsweredListIdx_;
+		size_t		msgListIdx_;
+		size_t		answeredListIdx_;
+		size_t		allListIdx_;
+		NotifyList	notAnsweredList_;
+		NotifyList	msgList_;
+		NotifyList	answeredList_;
+		NotifyList	allList_;
+
 	public:
 		ModAnoubis(wxWindow *);
 		~ModAnoubis(void);
 
 		int	getBaseId(void);
 		int	getToolbarId(void);
+
+		void		 insertNotification(NotifyListEntry *);
+		void		 answerNotification(NotifyListEntry *);
+		size_t		 getElementNo(enum notifyListTypes);
+		size_t		 getListSize(enum notifyListTypes);
+		NotifyListEntry *getFirst(enum notifyListTypes);
+		NotifyListEntry *getPrevious(enum notifyListTypes);
+		NotifyListEntry *getNext(enum notifyListTypes);
+		NotifyListEntry *getLast(enum notifyListTypes);
 };
 
 #endif /* __MODANOUBIS_H__ */

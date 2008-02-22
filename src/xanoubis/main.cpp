@@ -75,6 +75,8 @@ AnoubisGuiApp::close(void)
 	trayIcon->RemoveIcon();
 }
 
+#include "NotifyList.h"
+
 bool AnoubisGuiApp::OnInit()
 {
 	mainFrame = new MainFrame((wxWindow*)NULL);
@@ -148,4 +150,20 @@ AnoubisGuiApp::loadIcon(wxString iconName)
 	 * message should be generated when logging will been implemented.
 	 */
 	return (new wxIcon(iconFileName, wxBITMAP_TYPE_PNG));
+}
+
+Module *
+AnoubisGuiApp::getModule(enum moduleIdx idx)
+{
+	return (modules_[idx]);
+}
+
+void
+AnoubisGuiApp::updateTrayIcon(void)
+{
+	unsigned int messageNo;
+	ModAnoubis *anoubisModule = (ModAnoubis *)modules_[ANOUBIS];
+
+	messageNo = anoubisModule->getListSize(NOTIFY_LIST_NOTANSWERED);
+	trayIcon->SetMessageByHand(messageNo);
 }

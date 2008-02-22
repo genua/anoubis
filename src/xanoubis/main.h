@@ -71,13 +71,15 @@ class AnoubisGuiApp : public wxApp
 		AnoubisGuiApp(void);
 		~AnoubisGuiApp(void);
 
-		bool OnInit(void);
-		void close(void);
-		void setLogViewerVisability(bool);
-		void toggleLogViewerVisability(void);
-		void setRuleEditorVisability(bool);
-		void toggleRuleEditorVisability(void);
+		bool	OnInit(void);
+		void	close(void);
+		void	setLogViewerVisability(bool);
+		void	toggleLogViewerVisability(void);
+		void	setRuleEditorVisability(bool);
+		void	toggleRuleEditorVisability(void);
 		wxIcon *loadIcon(wxString);
+		Module *getModule(enum moduleIdx);
+		void	updateTrayIcon(void);
 };
 
 DECLARE_APP(AnoubisGuiApp)
