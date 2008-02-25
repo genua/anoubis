@@ -43,22 +43,9 @@ AC_CONFIG_HEADER([src/config.h])
 dnl check for presence of the stack protector
 AX_CHECK_COMPILER_FLAGS(-fstack-protector,
 [
-	CFLAGS="-fstack-protector $CFLAGS"
-	CXXFLAGS="-fstack-protector $CXXFLAGS"
+	AM_CFLAGS="-fstack-protector $AM_CFLAGS"
+	AM_CXXFLAGS="-fstack-protector $AM_CXXFLAGS"
 ])
-
-dnl check if compiler can create position independent executables
-dnl
-dnl XXX tartler: This doesn't work like this yet. Since the libanoubischat
-dnl		 library is being linked both statically and dynamically
-dnl		 we need something more sophisticated here.
-dnl
-dnl AX_CHECK_COMPILER_FLAGS(-fPIE,
-dnl [
-dnl	CFLAGS="-fPIE $CFLAGS"
-dnl	CXXFLAGS="-fPIE $CXXFLAGS"
-dnl	LDFLAGS="-z now -pie $LDFLAGS"
-dnl ])
 
 dnl enable automatic fortification
 dnl
@@ -66,8 +53,8 @@ dnl on systems that do not support this (bsd, older linux), this is
 dnl effectively a noop. Since it doesn't harm, we enable it
 dnl unconditionally here.
 
-CFLAGS="-D_FORTIFY_SOURCE=2 $CFLAGS"
-CXXFLAGS="-D_FORTIFY_SOURCE=2 $CXXFLAGS"
+AM_CFLAGS="-D_FORTIFY_SOURCE=2 $AM_CFLAGS"
+AM_CXXFLAGS="-D_FORTIFY_SOURCE=2 $AM_CXXFLAGS"
 
 
 dnl checks for programs
@@ -166,11 +153,9 @@ WX_CPPFLAGS="`$WXCONFIG --cppflags`"
 WX_CXXFLAGS="`$WXCONFIG --cxxflags`"
 WX_LIBS="`$WXCONFIG --libs`"
 
-CPPFLAGS="$CPPFLAGS $WX_CPPFLAGS"
-CXXFLAGS="$CXXFLAGS $WX_CPPFLAGS"
-
 AC_SUBST(WX_LIBS)
 AC_SUBST(WX_CPPFLAGS)
+AC_SUBST(WX_CXXFLAGS)
 
 dnl Configured prefix has to be propagated to wxStandardPaths::SetInstallPrefix
 AS_IF([test "$prefix" = "NONE"],
@@ -195,11 +180,46 @@ case $host in
 	*-*-linux*)
 	AC_DEFINE(LINUX, 1, "Define LINUX")
 	AC_DEFINE(_GNU_SOURCE, 1, "Define _GNU_SOURCE")
-	LDFLAGS="$LDFLAGS -z relro"
+	AM_LDFLAGS="-Wl,-z,relro $AM_LDFLAGS"
 	;;
 	*-*-openbsd*)
 	AC_DEFINE(OPENBSD, 1, "Define OpenBSD")
 	;;
 esac
+
+dnl
+dnl enable some warnings and treat them as errors
+dnl
+AM_CFLAGS="-Werror -Wformat-security -Wall $AM_CFLAGS"
+AM_CXXFLAGS="-Werror -Wformat-security -Wall $AM_CXXFLAGS"
+
+dnl
+dnl resolve symbols at startup
+dnl
+AM_LDFLAGS="-Wl,-z,now $AM_LDFLAGS"
+
+dnl
+dnl save AM_*FLAGS without -fPIE/-pie for use in shared libraries
+dnl
+shared_AM_CFLAGS=$AM_CFLAGS
+shared_AM_CXXFLAGS=$AM_CXXFLAGS
+shared_AM_LDFLAGS=$AM_LDFLAGS
+
+dnl check if compiler can create position independent executables
+dnl this must be the last change of AM_*FLAGS
+dnl
+AX_CHECK_COMPILER_FLAGS(-fPIE,
+[
+	AM_CFLAGS="-fPIE $AM_CFLAGS"
+	AM_CXXFLAGS="-fPIE $AM_CXXFLAGS"
+	AM_LDFLAGS="-pie $AM_LDFLAGS"
+])
+
+AC_SUBST(shared_AM_CFLAGS)
+AC_SUBST(shared_AM_CXXFLAGS)
+AC_SUBST(shared_AM_LDFLAGS)
+AC_SUBST(AM_CFLAGS)
+AC_SUBST(AM_CXXFLAGS)
+AC_SUBST(AM_LDFLAGS)
 
 AC_OUTPUT

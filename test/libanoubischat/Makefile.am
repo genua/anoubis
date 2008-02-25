@@ -32,7 +32,9 @@ libanoubischat = $(top_builddir)/$(anoubischatdir)/libanoubischat.so
 noinst_PROGRAMS = test_libanoubischat
 INCLUDES = -I$(top_srcdir)/$(anoubischatdir)
 
-AM_LDFLAGS = -L$(top_builddir)/$(anoubischatdir) -dynamic
+test_libanoubischat_LDFLAGS = -L$(top_builddir)/$(anoubischatdir) -dynamic \
+	$(AM_LDFLAGS)
+test_libanoubischat_CFLAGS = $(AM_CFLAGS) @CHECK_CFLAGS@
 LDADD = @CHECK_LIBS@ -lanoubischat
 
 test_libanoubischat_DEPENDENCIES = $(libanoubischat)

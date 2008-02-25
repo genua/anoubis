@@ -35,9 +35,10 @@ xanoubis_CPPFLAGS = \
 	-I$(top_srcdir)/$(xanoubisdir) \
 	-I$(top_srcdir)/$(xanoubisdir)/model \
 	-I$(top_srcdir)/$(xanoubisdir)/view  \
-	-I$(top_srcdir)/$(xanoubisdir)/control
+	-I$(top_srcdir)/$(xanoubisdir)/control \
+	$(WX_CPPFLAGS) $(AM_CPPFLAGS)
 
-xanoubis_CXXFLAGS = -fno-strict-aliasing
+xanoubis_CXXFLAGS = -fno-strict-aliasing $(AM_CXXFLAGS) $(WX_CXXFLAGS)
 
 xanoubis_LDADD = \
 	@WX_LIBS@ \

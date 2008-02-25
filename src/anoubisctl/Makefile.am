@@ -27,7 +27,7 @@
 sbin_PROGRAMS = anoubisctl
 
 if STATIC_LINKING
-AM_LDFLAGS = -static
+STATIC = -static
 endif
 
 libapndir	= src/libapn
@@ -38,6 +38,8 @@ INCLUDES = -I$(top_srcdir)/include -I$(top_srcdir)/$(libapndir)
 anoubisctl_LDADD = $(libapn)
 
 anoubisctl_DEPENDENCIES = $(libapn)
+
+anoubisctl_LDFLAGS= $(AM_LDFLAGS) $(STATIC)
 
 anoubisctl_SOURCES= \
 	main.c \

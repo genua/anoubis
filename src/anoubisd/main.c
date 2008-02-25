@@ -180,8 +180,10 @@ main(int argc, char *argv[])
 
 	log_init(debug);
 
-	if (!debug)
-		daemon(1, 0);
+	if (!debug) {
+		if (daemon(1, 0) !=0)
+			fatal("daemon");
+	}
 
 	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, pipe_m2s) == -1)
 		fatal("socketpair");

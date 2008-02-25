@@ -38,7 +38,10 @@ test_xanoubis_CPPFLAGS = \
 	-I$(top_srcdir)/$(xanoubisdir) \
 	-I$(top_srcdir)/$(xanoubisdir)/model \
 	-I$(top_srcdir)/$(xanoubisdir)/view \
-	-I$(top_srcdir)/$(xanoubisdir)/control
+	-I$(top_srcdir)/$(xanoubisdir)/control \
+	$(AM_CPPFLAGS) $(WX_CPPFLAGS)
+
+test_xanoubis_CXXFLAGS = $(AM_CXXFLAGS) $(WX_CXXFLAGS)
 
 test_xanoubis_LDADD = \
 	$(top_builddir)/$(xanoubisdir)/xanoubis-Communicator.o \

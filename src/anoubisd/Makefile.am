@@ -30,10 +30,12 @@ AM_YFLAGS = -d
 sbin_PROGRAMS = anoubisd
 
 if STATIC_LINKING
-AM_LDFLAGS = -static
+STATIC = -static
 endif
 
 INCLUDES = -I$(top_srcdir)/include
+
+anoubisd_LDFLAGS = $(AM_LDFLAGS) $(STATIC)
 
 anoubisd_SOURCES= \
 	main.c \

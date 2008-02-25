@@ -33,16 +33,17 @@
 START_TEST(tc_recvmsg_parameter)
 {
 	struct achat_channel	c;
+	char buf[ACHAT_MAX_MSGSIZE+1];
 
 	bzero(&c, sizeof(c));
 
 	fail_if(acc_receivemsg(NULL, NULL, 0) != ACHAT_RC_INVALPARAM);
 	fail_if(acc_receivemsg(&c, NULL, 0) != ACHAT_RC_INVALPARAM);
 	fail_if(acc_receivemsg(&c, NULL, 0) != ACHAT_RC_INVALPARAM);
-	fail_if(acc_receivemsg(&c, &c, 0) != ACHAT_RC_INVALPARAM);
-	fail_if(acc_receivemsg(&c, &c, ACHAT_MAX_MSGSIZE + 1) !=
+	fail_if(acc_receivemsg(&c, buf, 0) != ACHAT_RC_INVALPARAM);
+	fail_if(acc_receivemsg(&c, buf, ACHAT_MAX_MSGSIZE + 1) !=
 	    ACHAT_RC_INVALPARAM);
-	fail_if(acc_receivemsg(&c, &c, 5) != ACHAT_RC_WRONGSTATE);
+	fail_if(acc_receivemsg(&c, buf, 5) != ACHAT_RC_WRONGSTATE);
 }
 END_TEST
 

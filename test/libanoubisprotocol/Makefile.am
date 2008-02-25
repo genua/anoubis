@@ -36,6 +36,8 @@ INCLUDES = -I$(top_srcdir)/$(anoubisprotocoldir)
 AM_LDFLAGS = -L$(top_builddir)/$(anoubisprotocoldir) -dynamic
 test_libanoubisps_LDADD = @CHECK_LIBS@ -lanoubisps
 test_libanoubispc_LDADD = @CHECK_LIBS@ -lanoubispc
+test_libanoubisps_CPPFLAGS = @CHECK_CFLAGS@ $(AM_CPPFLAGS)
+test_libanoubispc_CPPFLAGS = @CHECK_CFLAGS@ $(AM_CPPFLAGS)
 
 test_libanoubisps_DEPENDENCIES = $(libanoubisps)
 test_libanoubispc_DEPENDENCIES = $(libanoubispc)
