@@ -322,25 +322,25 @@ main_cleanup(void)
 		if ((pid = wait(NULL)) == -1 &&
 	    errno != EINTR && errno != ECHILD)
 		fatal("wait");
-} while (pid != -1 || (pid == -1 && errno == EINTR));
+	} while (pid != -1 || (pid == -1 && errno == EINTR));
 }
 
 __dead static void
 main_shutdown(int error)
 {
-main_cleanup();
-exit(error);
+	main_cleanup();
+	exit(error);
 }
 
 static int
 check_child(pid_t pid, const char *pname)
 {
-int	status;
+	int	status;
 
-if (waitpid(pid, &status, WNOHANG) > 0) {
-	if (WIFEXITED(status)) {
-		log_warnx("Lost child: %s exited", pname);
-		return (1);
+	if (waitpid(pid, &status, WNOHANG) > 0) {
+		if (WIFEXITED(status)) {
+			log_warnx("Lost child: %s exited", pname);
+			return (1);
 	}
 	if (WIFSIGNALED(status)) {
 		log_warnx("Lost child: %s terminated; signal %d",
@@ -496,6 +496,22 @@ dispatch_dev2m(int fd, short event, void *arg)
 		return;
 	}
 	hdr = (struct eventdev_hdr *)buf;
+
+	/* we shortcut and ack events for our own children */
+	if ((hdr->msg_flags & EVENTDEV_NEED_REPLY) &&
+	    (hdr->msg_pid == se_pid || hdr->msg_pid == policy_pid)) {
+
+		bzero(&rep, sizeof(rep));
+
+		rep.reply = 0;
+		rep.msg_token = hdr->msg_token;
+
+		if (write(fd, &rep, sizeof(rep)) < sizeof(rep)) {
+			log_warn("short write");
+			return;
+		}
+		return;
+	}
 
 	size = sizeof(struct anoubisd_event_in) + hdr->msg_size;
 
