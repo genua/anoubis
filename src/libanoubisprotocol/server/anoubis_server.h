@@ -24,30 +24,21 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#ifndef ANOUBIS_SERVER_H
+#define ANOUBIS_SERVER_H
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
+#include <anoubischat.h>
+
+struct anoubis_server;
+struct anoubis_notify_group;
+
+struct anoubis_server * anoubis_server_create(struct achat_channel * chan);
+void anoubis_server_destroy(struct anoubis_server *);
+int anoubis_server_start(struct anoubis_server *);
+int anoubis_server_continue(struct anoubis_server *);
+int anoubis_server_process(struct anoubis_server *, void * buf, size_t len);
+int anoubis_server_eof(struct anoubis_server * server);
+struct anoubis_notify_group * anoubis_server_getnotify(
+    struct anoubis_server * server);
+
 #endif
-
-#include <stdlib.h>
-#include <strings.h>
-
-#include "anoubisprotocol.h"
-#include "anoubisprotocolserver.h"
-
-struct ap_server *
-aps_create(void)
-{
-	struct ap_server *protocol;
-
-	protocol = (struct ap_server *)calloc(1, sizeof(struct ap_server));
-
-	return (protocol);
-}
-
-void
-aps_destroy(struct ap_server *protocol)
-{
-	bzero(protocol, sizeof(struct ap_server));
-	free((void *)protocol);
-}

@@ -24,19 +24,49 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#ifndef ANOUBIS_CRC32_H
+#define ANOUBIS_CRC32_H
 
-#include <check.h>
+#define POLY 0x04C11DB7UL
 
-extern TCase *libanoubisps_testcase_core(void);
-
-Suite *
-protocol_testsuite(void)
+static inline unsigned long _crc32_do(unsigned char * buf, int len)
 {
-	Suite *s = suite_create("Server Suite");
-
-	/* Core test case */
-	TCase *tc_core = libanoubisps_testcase_core();
-	suite_add_tcase(s, tc_core);
-
-	return (s);
+	unsigned long sum = sum = 0xFFFFFFFFUL;
+	int i;
+	for (i=0; i<len; buf++,i++) {
+		unsigned char byte = *buf;
+		unsigned char mask;
+		for (mask = 0x80; mask != 0; mask >>= 1) {
+			int highbit = sum >> 31;
+			int curbit = !!(byte & mask);
+			sum <<= 1;
+			if (highbit != curbit)
+				sum ^= POLY;
+		}
+	}
+	return sum;
 }
+
+static inline unsigned long crc32_get(void * buf, int len)
+{
+	return _crc32_do(buf, len);
+}
+
+static inline int crc32_check(void * buf, int len)
+{
+	return _crc32_do(buf, len) == 0;
+}
+
+static inline void crc32_set(void * _buf, int len)
+{
+	unsigned char * buf = _buf;
+	unsigned long sum = _crc32_do(buf, len-4);
+	int i;
+	buf += len-4;
+	for (i=3; i>=0; i--) {
+		buf[i] = sum % 256;
+		sum /= 256;
+	}
+}
+
+#endif

@@ -24,15 +24,38 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#define ANOUBIS_E_OK		0
+#define ANOUBIS_E_PERM		1
+#define ANOUBIS_E_NOENT		2
+#define ANOUBIS_E_SRCH		3
+#define ANOUBIS_E_INTR		4
+#define ANOUBIS_E_IO		5
+#define ANOUBIS_E_NXIO		6
+#define ANOUBIS_E_2BIG		7
+#define ANOUBIS_E_NOEXEC	8
+#define ANOUBIS_E_BADF		9
+#define ANOUBIS_E_CHILD		10
+/* reserved			11 */
+#define ANOUBIS_E_NOMEM		12
+#define ANOUBIS_E_ACCESS	13
+#define ANOUBIS_E_FAULT		14
+#define ANOUBIS_E_NOTBLK	15
+#define ANOUBIS_E_BUSY		16
+#define ANOUBIS_E_EXIST		17
+#define ANOUBIS_E_XDEV		18
+#define ANOUBIS_E_NODEV		19
+#define ANOUBIS_E_NOTDIR	20
+#define ANOUBIS_E_ISDIR		21
+#define ANOUBIS_E_INVAL		22
+#define ANOUBIS_E_NFILE		23
+#define ANOUBIS_E_MFILE		24
+#define ANOUBIS_E_NOTTY		25
+#define ANOUBIS_E_TXTBUSY	26
+#define ANOUBIS_E_FBIG		27
+#define ANOUBIS_E_NOSPC		28
+#define ANOUBIS_E_SPIPE		29
+#define ANOUBIS_E_ROFS		30
+#define ANOUBIS_E_MLINK		31
+#define ANOUBIS_E_PIPE		32
 
-#ifndef _ANOUBISPROTOCOL_H_
-#define _ANOUBISPROTOCOL_H_
-
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
-/* XXX by ch: ToDo common for client and server protocol */
-#define ANOUBIS_REPLY 0x1000
-
-#endif	/* _ANOUBISPROTOCOL_H_ */
+#define ANOUBIS_E_AGAIN		1024

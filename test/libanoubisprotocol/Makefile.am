@@ -24,30 +24,30 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-TESTS = test_libanoubisps test_libanoubispc
+TESTS = test_libanoubisproto
 
 anoubisprotocoldir	= src/libanoubisprotocol
+anoubischatdir		= src/libanoubischat
+libanoubischat = $(top_builddir)/$(anoubischatdir)/libanoubischat.so
 libanoubisps = $(top_builddir)/$(anoubisprotocoldir)/libanoubisps.so
 libanoubispc = $(top_builddir)/$(anoubisprotocoldir)/libanoubispc.so
 
-noinst_PROGRAMS = test_libanoubisps test_libanoubispc
-INCLUDES = -I$(top_srcdir)/$(anoubisprotocoldir)
+noinst_PROGRAMS = test_libanoubisproto
+INCLUDES =						\
+	-I$(top_srcdir)/$(anoubischatdir)		\
+	-I$(top_srcdir)/$(anoubisprotocoldir)/client	\
+	-I$(top_srcdir)/$(anoubisprotocoldir)/server	\
+	-I$(top_srcdir)/$(anoubisprotocoldir)
 
-AM_LDFLAGS = -L$(top_builddir)/$(anoubisprotocoldir) -dynamic
-test_libanoubisps_LDADD = @CHECK_LIBS@ -lanoubisps
-test_libanoubispc_LDADD = @CHECK_LIBS@ -lanoubispc
-test_libanoubisps_CPPFLAGS = @CHECK_CFLAGS@ $(AM_CPPFLAGS)
-test_libanoubispc_CPPFLAGS = @CHECK_CFLAGS@ $(AM_CPPFLAGS)
+AM_LDFLAGS = -L$(top_builddir)/$(anoubisprotocoldir) \
+	-L$(top_builddir)/$(anoubischatdir) -dynamic
+test_libanoubisproto_LDADD = @CHECK_LIBS@ -lanoubisps -lanoubispc -lanoubischat
+test_libanoubisproto_CPPFLAGS = @CHECK_CFLAGS@ $(AM_CPPFLAGS)
 
-test_libanoubisps_DEPENDENCIES = $(libanoubisps)
-test_libanoubispc_DEPENDENCIES = $(libanoubispc)
+test_libanoubisproto_DEPENDENCIES =	\
+	$(libanoubisps) $(libanoubispc) $(libanoubischat)
 
-test_libanoubisps_SOURCES = \
+test_libanoubisproto_SOURCES = \
 	testrunner.c \
-	libanoubisps_testsuite.c \
-	libanoubisps_testcase_core.c
-
-test_libanoubispc_SOURCES = \
-	testrunner.c \
-	libanoubispc_testsuite.c \
-	libanoubispc_testcase_core.c
+	libanoubisproto_testsuite.c \
+	libanoubisproto_testcase_core.c

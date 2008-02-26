@@ -24,30 +24,32 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#ifndef ANOUBIS_CLIENT_H
+#define ANOUBIS_CLIENT_H
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
+#include <anoubischat.h>
+#include <anoubis_protocol.h>
+
+struct anoubis_client;
+struct anoubis_msg;
+struct anoubis_transaction;
+
+extern struct anoubis_client * anoubis_client_create(
+    struct achat_channel * chan);
+extern void anoubis_client_destroy(struct anoubis_client *);
+extern int anoubis_client_connect(struct anoubis_client *, unsigned int);
+extern struct anoubis_transaction * anoubis_client_connect_start(
+    struct anoubis_client *, unsigned int);
+extern void anoubis_client_close(struct anoubis_client *);
+extern struct anoubis_transaction * anoubis_client_close_start(
+    struct anoubis_client *);
+extern int anoubis_client_process(struct anoubis_client *,
+    struct anoubis_msg *);
+struct anoubis_transaction * anoubis_client_register_start(
+    struct anoubis_client * client, anoubis_token_t token, pid_t pid,
+    u_int32_t rule_id, uid_t uid, u_int32_t subsystem);
+struct anoubis_transaction * anoubis_client_unregister_start(
+    struct anoubis_client * client, anoubis_token_t token, pid_t pid,
+    u_int32_t rule_id, uid_t uid, u_int32_t subsystem);
+
 #endif
-
-#include <stdlib.h>
-#include <strings.h>
-
-#include "anoubisprotocol.h"
-#include "anoubisprotocolclient.h"
-
-struct ap_client *
-apc_create(void)
-{
-	struct ap_client *protocol;
-
-	protocol = (struct ap_client *)calloc(1, sizeof(struct ap_client));
-
-	return (protocol);
-}
-
-void
-apc_destroy(struct ap_client *protocol)
-{
-	bzero(protocol, sizeof(struct ap_client));
-	free((void *)protocol);
-}

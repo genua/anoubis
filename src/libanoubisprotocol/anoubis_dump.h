@@ -24,18 +24,23 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#ifndef ANOUBIS_DUMP_H
+#define ANOUBIS_DUMP_H
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
+#include <stdio.h>
+#include <sys/types.h>
+#include <anoubis_msg.h>
+
+#ifdef DEBUG
+
+extern void anoubis_dump(struct anoubis_msg *, const char *);
+extern void anoubis_dump_buf(void * buf, size_t len, const char *);
+
+#else
+
+#define anoubis_dump(M,S)
+#define anoubis_dump_buf(BUF,LEN,S)
+
 #endif
 
-#include <sys/types.h>
-
-#include "anoubisprotocol.h"
-#include "anoubisprotocolserver.h"
-
-void
-aps_process(struct ap_server *protocol, char *pkg, size_t size)
-{
-	/* XXX by ch: Todo */
-}
+#endif

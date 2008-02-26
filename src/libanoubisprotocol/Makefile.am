@@ -24,34 +24,62 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+
 lib_LIBRARIES = libanoubisps.a libanoubispc.a
-include_HEADERS = \
-	anoubisprotocol.h \
-	anoubisprotocolserver.h \
-	anoubisprotocolclient.h
+include_HEADERS_common =		\
+	anoubis_auth.h			\
+	anoubis_dump.h			\
+	anoubis_msg.h			\
+	anoubis_errno.h			\
+	anoubis_protocol.h		\
+	crc32.h				\
+	queue.h
+include_HEADERS_server =		\
+	server/anoubis_server.h		\
+	server/anoubis_notify.h
+include_HEADERS_client =		\
+	client/anoubis_client.h		\
+	client/anoubis_transaction.h
+
+include_HEADERS =			\
+	$(include_HEADERS_common	\
+	$(include_HEADERS_server)	\
+	$(include_HEADERS_client)
+
 
 anoubisprotocoldir	= src/libanoubisprotocol
 anoubischatdir		= src/libanoubischat
-libanoubischat		= $(top_builddir)/$(anoubischatdir)/libanoubischat.a
 
 libanoubisps_a_CPPFLAGS = \
+	-I$(top_srcdir)/$(anoubisprotocoldir) \
 	-I$(top_srcdir)/$(anoubisprotocoldir)/server \
-	-I$(top_builddir)/$(anoubischatdir)
+	-I$(top_srcdir)/$(anoubischatdir)
+libanoubisps_so_CPPFLAGS = $(libanoubisps_a_CPPFLAGS)
 
-libanoubisps_a_SOURCES = \
-	server/apssetup.c \
-	server/apscore.c \
-	$(include_HEADERS)
+libanoubisps_a_SOURCES =		\
+	server/anoubis_server.c		\
+	server/anoubis_notify.c		\
+	anoubis_msg.c			\
+	anoubis_dump.c			\
+	anoubis_auth.c			\
+	$(include_HEADERS_common)	\
+	$(include_HEADERS_server)
 
 libanoubispc_a_CPPFLAGS = \
+	-I$(top_srcdir)/$(anoubisprotocoldir) \
 	-I$(top_srcdir)/$(anoubisprotocoldir)/client \
-	-I$(top_builddir)/$(anoubischatdir)
+	-I$(top_srcdir)/$(anoubischatdir)
+libanoubispc_so_CPPFLAGS = $(libanoubispc_a_CPPFLAGS)
 
 libanoubispc_a_SOURCES = \
-	client/apcsetup.c \
-	client/apccore.c \
-	$(include_HEADERS)
-#
+	client/anoubis_client.c		\
+	client/anoubis_transaction.c	\
+	anoubis_msg.c			\
+	anoubis_dump.c			\
+	anoubis_auth.c			\
+	$(include_HEADERS_common)	\
+	$(include_HEADERS_client)
+
 # For testing with aegis (especially against the baseline) we need to run
 # the test-binary (containing the current tests), operating on the old/baseline
 # library. Thus we build a dynamic link-able library for testing purpose only.
@@ -59,56 +87,115 @@ noinst_PROGRAMS = libanoubisps.so libanoubispc.so
 
 libanoubisps_so_SOURCES = $(libanoubisps_a_SOURCES)
 libanoubisps_so_CFLAGS = -fPIC -shared
-libanoubisps_so_LDFLAGS = -nostartfiles -shared
+libanoubisps_so_LDFLAGS = -nostartfiles -shared	\
+	-L$(top_builddir)/$(anoubischatdir) -lanoubischat
 
 libanoubispc_so_SOURCES = $(libanoubispc_a_SOURCES)
 libanoubispc_so_CFLAGS = -fPIC -shared
-libanoubispc_so_LDFLAGS = -nostartfiles -shared
+libanoubispc_so_LDFLAGS = -nostartfiles -shared	\
+	-L$(top_builddir)/$(anoubischatdir) -lanoubischat
 
+libanoubisps_a_SOURCES_flawfinder =		\
+	server/anoubis_server.c_flawfinder	\
+	server/anoubis_notify.c_flawfinder	\
+	anoubis_msg.c_flawfinder		\
+	anoubis_dump.c_flawfinder		\
+	anoubis_auth.c_flawfinder		\
+	server/anoubis_server.h_flawfinder	\
+	server/anoubis_notify.h_flawfinder	\
+	anoubis_msg.h_flawfinder		\
+	anoubis_dump.h_flawfinder		\
+	anoubis_auth.h_flawfinder		\
+	anoubis_protocol.h_flawfinder		\
+	anoubis_errno.h_flawfinder		\
+	crc32.h_flawfinder
 
-libanoubisps_a_SOURCES_flawfinder = \
-	server/apssetup.c_flawfinder \
-	server/apscore.c_flawfinder \
-	anoubisprotocolserver.h_flawfinder \
-	anoubisprotocol.h_flawfinder
+libanoubispc_a_SOURCES_flawfinder =		\
+	client/anoubis_client.c_flawfinder	\
+	client/anoubis_transaction.c_flawfinder	\
+	anoubis_msg.c_flawfinder		\
+	anoubis_dump.c_flawfinder		\
+	anoubis_auth.c_flawfinder		\
+	client/anoubis_client.h_flawfinder	\
+	client/anoubis_transaction.h_flawfinder	\
+	anoubis_msg.h_flawfinder		\
+	anoubis_dump.h_flawfinder		\
+	anoubis_auth.h_flawfinder		\
+	anoubis_protocol.h_flawfinder		\
+	anoubis_errno.h_flawfinder		\
+	crc32.h_flawfinder
 
-libanoubispc_a_SOURCES_flawfinder = \
-	client/apcsetup.c_flawfinder \
-	client/apccore.c_flawfinder \
-	anoubisprotocolclient.h_flawfinder \
-	anoubisprotocol.h_flawfinder
+libanoubisps_a_SOURCES_lint =		\
+	server/anoubis_server.c_lint	\
+	server/anoubis_notify.c_lint	\
+	anoubis_msg.c_lint		\
+	anoubis_dump.c_lint		\
+	anoubis_auth.c_lint		\
+	server/anoubis_server.h_lint	\
+	server/anoubis_notify.h_lint	\
+	anoubis_msg.h_lint		\
+	anoubis_dump.h_lint		\
+	anoubis_auth.h_lint		\
+	anoubis_protocol.h_lint		\
+	anoubis_errno.h_lint		\
+	crc32.h_lint
 
-libanoubisps_a_SOURCES_lint = \
-	server/apssetup.c_lint \
-	server/apscore.c_lint \
-	anoubisprotocolserver.h_lint \
-	anoubisprotocol.h_lint
+libanoubispc_a_SOURCES_lint =			\
+	client/anoubis_client.c_lint		\
+	client/anoubis_transaction.c_lint	\
+	anoubis_msg.c_lint			\
+	anoubis_dump.c_lint			\
+	anoubis_auth.c_lint			\
+	client/anoubis_client.h_lint		\
+	client/anoubis_transaction.h_lint	\
+	anoubis_msg.h_lint			\
+	anoubis_dump.h_lint			\
+	anoubis_auth.h_lint			\
+	anoubis_protocol.h_lint			\
+	anoubis_errno.h_lint			\
+	crc32.h_lint
 
-libanoubispc_a_SOURCES_lint = \
-	client/apcsetup.c_lint \
-	client/apccore.c_lint \
-	anoubisprotocolclient.h_lint \
-	anoubisprotocol.h_lint
+libanoubisps_a_SOURCES_splint =		\
+	server/anoubis_server.c_splint	\
+	server/anoubis_notify.c_splint	\
+	anoubis_msg.c_splint		\
+	anoubis_dump.c_splint		\
+	anoubis_auth.c_splint		\
+	server/anoubis_server.h_splint	\
+	server/anoubis_notify.h_splint	\
+	anoubis_msg.h_splint		\
+	anoubis_dump.h_splint		\
+	anoubis_auth.h_splint		\
+	anoubis_protocol.h_splint	\
+	anoubis_errno.h_splint		\
+	crc32.h_splint
 
-libanoubisps_a_SOURCES_splint = \
-	server/apssetup.c_splint \
-	server/apscore.c_splint \
-	anoubisprotocolserver.h_splint \
-	anoubisprotocol.h_splint
-
-libanoubispc_a_SOURCES_splint = \
-	client/apcsetup.c_splint \
-	client/apccore.c_splint \
-	anoubisprotocolclient.h_splint \
-	anoubisprotocol.h_splint
+libanoubispc_a_SOURCES_splint =			\
+	client/anoubis_client.c_splint		\
+	client/anoubis_transaction.c_splint	\
+	anoubis_msg.c_splint			\
+	anoubis_dump.c_splint			\
+	anoubis_auth.c_splint			\
+	client/anoubis_client.h_splint		\
+	client/anoubis_transaction.h_splint	\
+	anoubis_msg.h_splint			\
+	anoubis_dump.h_splint			\
+	anoubis_auth.h_splint			\
+	anoubis_protocol.h_splint		\
+	anoubis_errno.h_splint			\
+	crc32.h_splint
 
 flawfinder_FLAGS=--minlevel=4 --allowlink --context
 splint_FLAGS=+posixlib
 lint_FLAGS=""
 
-lint: $(libanoubisps_a_SOURCES_lint) $(libanoubispc_a_SOURCES_lint)
-splint: $(libanoubisps_a_SOURCES_splint) $(libanoubispc_a_SOURCES_splint)
-flawfinder: $(libanoubisps_a_SOURCES_flawfinder) \
+mksubdirs:
+	mkdir -p client server
+lint: mksubdirs $(libanoubisps_a_SOURCES_lint)	\
+	$(libanoubispc_a_SOURCES_lint)
+splint: mksubdirs $(libanoubisps_a_SOURCES_splint)\
+	$(libanoubispc_a_SOURCES_splint)
+flawfinder: mksubdirs $(libanoubisps_a_SOURCES_flawfinder) \
 	$(libanoubispc_a_SOURCES_flawfinder)
 
 # in some cases, flawfinder terminates with internal errors on openbsd.

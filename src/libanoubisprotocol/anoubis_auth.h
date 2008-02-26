@@ -24,27 +24,44 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#ifndef _ANOUBISPROTOCOLSERVER_H_
-#define _ANOUBISPROTOCOLSERVER_H_
-
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#ifndef ANOUBIS_AUTH_H
+#define ANOUBIS_AUTH_H
 
 #include <sys/types.h>
+#include <anoubis_protocol.h>
+#include <anoubischat.h>
 
-#include "anoubisprotocol.h"
+struct anoubis_msg;
 
-struct ap_server {
-	/* XXX by ch: ToDo server protocol status */
+#define ANOUBIS_AUTH_INIT		0
+#define ANOUBIS_AUTH_SUCCESS		1
+#define ANOUBIS_AUTH_FAILURE		2
+#define ANOUBIS_AUTH_INPROGRESS		3
+
+#define ANOUBIS_AUTH_TRANSPORT	0
+
+typedef void (*anoubis_auth_callback_t)(void * caller);
+
+struct anoubis_auth {
+	int state;
+	int auth_type;
+	int error;
+	uid_t uid;
+	char * username;
+	struct achat_channel * chan;
+	anoubis_auth_callback_t finish_callback;
+	void * cbdata;
 };
 
-/* anoubis protocol server setup: apssetup.c */
-struct ap_server	*aps_create(void);
-void			 aps_destroy(struct ap_server *);
+typedef struct {
+	u32n	type;
+	u32n	auth_type;
+} __attribute__((packed)) Anoubis_AuthTransportMessage;
 
-/* anoubis protocol server core: apscore.c */
-void			 aps_process(struct ap_server *, char *, size_t);
+struct anoubis_auth * anoubis_auth_create(struct achat_channel * chan,
+    anoubis_auth_callback_t finish, void * data);
+void anoubis_auth_destroy(struct anoubis_auth * auth);
+int anoubis_auth_process(struct anoubis_auth * auth,
+    struct anoubis_msg * m);
 
-#endif	/* _ANOUBISPROTOCOLSERVER_H_ */
+#endif
