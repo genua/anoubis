@@ -88,60 +88,17 @@ acc_statetransit(struct achat_channel *acc, enum acc_state newstate)
 	return (ACHAT_RC_OK);
 }
 
-void
-acc_sockaddrcpy(struct sockaddr_storage *dest, struct sockaddr_storage *src)
-{
-	struct sockaddr_un *ssa_un = (struct sockaddr_un *)src;
-	struct sockaddr_un *dsa_un = (struct sockaddr_un *)dest;
-	struct sockaddr_in *ssa_in = (struct sockaddr_in *)src;
-	struct sockaddr_in *dsa_in = (struct sockaddr_in *)dest;
-	struct sockaddr_in6 *ssa_in6 = (struct sockaddr_in6 *)src;
-	struct sockaddr_in6 *dsa_in6 = (struct sockaddr_in6 *)dest;
-
-	switch (src->ss_family) {
-	case AF_UNIX:
-		dsa_un->sun_family = AF_UNIX;
-#ifdef OPENBSD
-		dsa_un->sin6_len = acc_sockaddrsize(src);
-#endif /* OPENBSD */
-		/* XXX HJH strlcpy ifdef OPENBSD */
-		strncpy(dsa_un->sun_path, ssa_un->sun_path,
-		    sizeof(dsa_un->sun_path) - 1);
-		dsa_un->sun_path[sizeof(dsa_un->sun_path) - 1] = '\0';
-		break;
-	case AF_INET:
-		dsa_in->sin_family = AF_INET;
-#ifdef OPENBSD
-		dsa_in6->sin_len = acc_sockaddrsize(src);
-#endif /* OPENBSD */
-		dsa_in->sin_addr.s_addr = ssa_in->sin_addr.s_addr;
-		dsa_in->sin_port = ssa_in->sin_port;
-		break;
-	case AF_INET6:
-		dsa_in6->sin6_family = AF_INET6;
-#ifdef OPENBSD
-		dsa_in6->sin6_len = acc_sockaddrsize(src);
-#endif /* OPENBSD */
-		memcpy(&dsa_in6->sin6_addr, &ssa_in6->sin6_addr,
-		    sizeof(dsa_in6->sin6_addr));
-		dsa_in6->sin6_port = ssa_in6->sin6_port;
-		dsa_in6->sin6_scope_id = ssa_in6->sin6_scope_id;
-		break;
-	default:
-		break;
-	}
-}
-
 socklen_t
 acc_sockaddrsize(struct sockaddr_storage *sa)
 {
 	size_t size = 0;
 
+#ifdef OPENBSD
+	size = sa->ss_len;
+#else
 	switch (sa->ss_family) {
 	case AF_UNIX:
-		/* XXX HJH is this correct? */
-		size = sizeof(((struct sockaddr_un*)sa)->sun_family) +
-		    strlen(((struct sockaddr_un*)sa)->sun_path) + 1;
+		size = sizeof(struct sockaddr_un);
 		break;
 	case AF_INET:
 		size = sizeof(struct sockaddr_in);
@@ -153,7 +110,7 @@ acc_sockaddrsize(struct sockaddr_storage *sa)
 		/* we don't support other socket types yet */
 		break;
 	}
-
+#endif
 	return (size);
 }
 

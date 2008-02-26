@@ -116,8 +116,8 @@ acc_setaddr(struct achat_channel *acc, struct sockaddr_storage *newsa)
 	ACC_CHKPARAM(newsa != NULL);
 	ACC_CHKSTATE(acc, ACC_STATE_NONE);
 
-	bzero(&(acc->addr), sizeof(acc->addr));
-	acc_sockaddrcpy(&(acc->addr), newsa);
+	bzero(&acc->addr, sizeof(acc->addr));
+	bcopy(newsa, &acc->addr, sizeof(acc->addr));
 	acc_statetransit(acc, ACC_STATE_INITIALISED);
 
 	return (ACHAT_RC_OK);
