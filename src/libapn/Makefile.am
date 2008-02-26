@@ -26,7 +26,7 @@
 
 BUILT_SOURCES = parse.h parse.c
 AM_YFLAGS = -d
-AM_CFLAGS = "-std=gnu99"
+libapn_a_CFLAGS = -std=gnu99 $(AM_CFLAGS)
 
 lib_LIBRARIES = libapn.a
 
@@ -42,8 +42,8 @@ libapn_a_SOURCES = \
 # library. Thus we build a dynamic link-able library for testing purpose only.
 noinst_PROGRAMS = libapn.so
 libapn_so_SOURCES = $(libapn_a_SOURCES)
-libapn_so_CFLAGS = -fPIC -shared
-libapn_so_LDFLAGS = -nostartfiles -shared
+libapn_so_CFLAGS = -fPIC -shared -std=gnu99 $(shared_AM_CFLAGS)
+libapn_so_LDFLAGS = -nostartfiles -shared $(shared_AM_LDFLAGS)
 
 libapn_a_SOURCES_lint = \
 	apnparser.c_lint  \
