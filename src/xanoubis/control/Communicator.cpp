@@ -129,8 +129,12 @@ void
 Communicator::receiveMessage(char *messageStore, size_t size)
 {
 	achat_rc rc;
+	size_t	 len;
 
-	rc = acc_receivemsg(this, messageStore, size);
+	len = size;
+	rc = acc_receivemsg(this, messageStore, &len);
 	if (rc != ACHAT_RC_OK)
 		throw new CommunicatorException(rc);
+	if (len != size)
+		throw new  CommunicatorException(ACHAT_RC_ERROR);
 }

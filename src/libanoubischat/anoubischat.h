@@ -99,7 +99,7 @@ achat_rc acc_close(struct achat_channel *);
 
 /* Subsystem Transmission */
 achat_rc acc_sendmsg(struct achat_channel *, const char *, size_t);
-achat_rc acc_receivemsg(struct achat_channel *, char *, size_t);
+achat_rc acc_receivemsg(struct achat_channel *, char *, size_t *);
 
 __END_DECLS
 

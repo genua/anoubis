@@ -52,6 +52,7 @@ tc_chat_lud_client(const char *sockname)
 	struct sockaddr_un	*ss_sun = (struct sockaddr_un *)&ss;
 	struct achat_channel    *c  = NULL;
 	char			 buffer[16];
+	size_t			 size;
 	achat_rc		 rc = ACHAT_RC_ERROR;
 
 	c = acc_create();
@@ -87,11 +88,15 @@ tc_chat_lud_client(const char *sockname)
 	mark_point();
 
 	bzero(buffer, sizeof(buffer));
-	rc = acc_receivemsg(c, buffer, sizeof(msg));
+	size = sizeof(msg);
+	rc = acc_receivemsg(c, buffer, &size);
 	fail_if(rc != ACHAT_RC_OK, "client receive msg failed with rc=%d [%s]",
 	    rc, strerror(errno));
 	if (strncmp(buffer, msg, sizeof(msg)) != 0)
 		fail("client received msg mismatch [%s] != [%s]", msg, buffer);
+	if (size != sizeof(msg))
+		fail("client recieved msg size mismatch %d != %d", size,
+		    sizeof(msg));
 	mark_point();
 
 	rc = acc_sendmsg(c, msg, sizeof(msg));
@@ -112,6 +117,7 @@ tc_chat_lud_server(const char *sockname)
 	struct sockaddr_un	*ss_sun = (struct sockaddr_un *)&ss;
 	struct achat_channel    *s  = NULL;
 	char			 buffer[16];
+	size_t			 size;
 	achat_rc		 rc = ACHAT_RC_ERROR;
 
 	s = acc_create();
@@ -151,18 +157,22 @@ tc_chat_lud_server(const char *sockname)
 	mark_point();
 
 	bzero(buffer, sizeof(buffer));
-	rc = acc_receivemsg(s, buffer, sizeof(msg));
+	size = sizeof(msg);
+	rc = acc_receivemsg(s, buffer, &size);
 	fail_if(rc != ACHAT_RC_OK, "server receive msg failed with rc=%d [%s]",
 	    rc, strerror(errno));
 	if (strncmp(buffer, msg, sizeof(msg)) != 0)
 		fail("server received msg mismatch [%s] != [%s]", msg, buffer);
+	if (size != sizeof(msg))
+		fail("server recieved msg size mismatch %d != %d", size,
+		    sizeof(msg));
 	mark_point();
 
 	/* the client will close the channel now;
 	 * we'll give him another couple of seconds.
 	 */
 	sleep(2);
-	rc = acc_receivemsg(s, buffer, sizeof(msg));
+	rc = acc_receivemsg(s, buffer, &size);
 	fail_if(rc != ACHAT_RC_EOF, "server EOF not detected rc=%d", rc);
 
 	rc = acc_destroy(s);
@@ -175,6 +185,7 @@ tc_chat_lip_client(short port)
 	struct sockaddr_storage  ss;
 	struct sockaddr_in	*ss_sin = (struct sockaddr_in *)&ss;
 	struct achat_channel    *c  = NULL;
+	size_t			 size;
 	char			 buffer[16];
 	achat_rc		 rc = ACHAT_RC_ERROR;
 
@@ -217,11 +228,15 @@ tc_chat_lip_client(short port)
 	mark_point();
 
 	bzero(buffer, sizeof(buffer));
-	rc = acc_receivemsg(c, buffer, sizeof(msg));
+	size = sizeof(msg);
+	rc = acc_receivemsg(c, buffer, &size);
 	fail_if(rc != ACHAT_RC_OK, "client receive msg failed with rc=%d [%s]",
 	    rc, strerror(errno));
 	if (strncmp(buffer, msg, sizeof(msg)) != 0)
 		fail("client received msg mismatch [%s] != [%s]", msg, buffer);
+	if (size != sizeof(msg))
+		fail("server recieved msg size mismatch %d != %d", size,
+		    sizeof(msg));
 	mark_point();
 
 	rc = acc_destroy(c);
@@ -271,6 +286,7 @@ START_TEST(tc_chat_localip)
 	struct sockaddr_in	*ss_sin = (struct sockaddr_in *)&ss;
 	struct achat_channel    *s  = NULL;
 	char			 buffer[16];
+	size_t			 size;
 	achat_rc		 rc = ACHAT_RC_ERROR;
 	pid_t			 pid, childpid;
 	socklen_t                sslen;
@@ -328,13 +344,17 @@ START_TEST(tc_chat_localip)
 		mark_point();
 
 		bzero(buffer, sizeof(buffer));
-		rc = acc_receivemsg(s, buffer, sizeof(msg));
+		size = sizeof(msg);
+		rc = acc_receivemsg(s, buffer, &size);
 		fail_if(rc != ACHAT_RC_OK,
 		    "server receive msg failed with rc=%d [%s]", rc,
 		    strerror(errno));
 		if (strncmp(buffer, msg, sizeof(msg)) != 0)
 			fail("server received msg mismatch [%s] != [%s]",
 			    msg, buffer);
+		if (size != sizeof(msg))
+			fail("server recieved msg size mismatch %d != %d", size,
+			    sizeof(msg));
 		mark_point();
 
 		rc = acc_sendmsg(s, msg, sizeof(msg));
@@ -347,7 +367,7 @@ START_TEST(tc_chat_localip)
 		 * we'll give him another couple of seconds.
 		 */
 		sleep(2);
-		rc = acc_receivemsg(s, buffer, sizeof(msg));
+		rc = acc_receivemsg(s, buffer, &size);
 		fail_if(rc != ACHAT_RC_EOF, "server EOF not detected rc=%d",
 		    rc);
 

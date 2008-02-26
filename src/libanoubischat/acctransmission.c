@@ -41,6 +41,7 @@ acc_sendmsg(struct achat_channel *acc, const char *msg, size_t size)
 	achat_buffer	 pkgbuffer;
 	u_int32_t	 pkgsizenet = 0;
 	achat_rc	 rc = ACHAT_RC_ERROR;
+	size_t		 len;
 	char		*sendptr;
 
 	ACC_CHKPARAM(acc  != NULL);
@@ -67,7 +68,8 @@ acc_sendmsg(struct achat_channel *acc, const char *msg, size_t size)
 	sendptr = acc_bufferptr(&pkgbuffer);
 	acc->state = ACC_STATE_TRANSFERING;
 
-	rc = acc_io(acc, accwrite, sendptr, ntohl(pkgsizenet));
+	len = ntohl(pkgsizenet);
+	rc = acc_io(acc, accwrite, sendptr, &len);
 
 	acc->state = ACC_STATE_ESTABLISHED;
 	acc_bufferfree(&pkgbuffer);
@@ -76,7 +78,7 @@ acc_sendmsg(struct achat_channel *acc, const char *msg, size_t size)
 }
 
 achat_rc
-acc_receivemsg(struct achat_channel *acc, char *msg, size_t size)
+acc_receivemsg(struct achat_channel *acc, char *msg, size_t *size)
 {
 	achat_buffer	 pkgbuffer;
 	u_int32_t	 pkgsizenet = 0;
@@ -86,13 +88,14 @@ acc_receivemsg(struct achat_channel *acc, char *msg, size_t size)
 
 	ACC_CHKPARAM(acc  != NULL);
 	ACC_CHKPARAM(msg  != NULL);
-	ACC_CHKPARAM(0 < size && size <=  ACHAT_MAX_MSGSIZE);
+	ACC_CHKPARAM(0 < *size && *size <=  ACHAT_MAX_MSGSIZE);
 	ACC_CHKSTATE(acc, ACC_STATE_ESTABLISHED);
 
 	acc_bufferinit(&pkgbuffer);
 	acc->state = ACC_STATE_TRANSFERING;
 
-	rc = acc_io(acc, read, (char*)&pkgsizenet, sizeof(pkgsizenet));
+	len = sizeof(pkgsizenet);
+	rc = acc_io(acc, read, (char*)&pkgsizenet, &len);
 	if (rc != ACHAT_RC_OK) {
 		/*
 		 * XXX HJH It might be better that the caller has to
@@ -113,7 +116,7 @@ acc_receivemsg(struct achat_channel *acc, char *msg, size_t size)
 	}
 
 	len = pkgsizenet - sizeof(pkgsizenet);
-	if (size < len || len > ACHAT_MAX_MSGSIZE) {
+	if (*size < len || len > ACHAT_MAX_MSGSIZE) {
 		rc = ACHAT_RC_ERROR;
 		acc_close(acc);		/* XXX HJH */
 		goto out;
@@ -122,13 +125,14 @@ acc_receivemsg(struct achat_channel *acc, char *msg, size_t size)
 	acc_bufferappend_space(&pkgbuffer, len);
 	receiveptr = acc_bufferptr(&pkgbuffer);
 
-	rc = acc_io(acc, read, receiveptr, len);
+	rc = acc_io(acc, read, receiveptr, &len);
 	if (rc != ACHAT_RC_OK) {
 		acc_close(acc);		/* XXX HJH */
 		goto out;
 	}
 
 	memcpy(msg, receiveptr, len);
+	*size = len;
 
 out:
 	acc->state = ACC_STATE_ESTABLISHED;

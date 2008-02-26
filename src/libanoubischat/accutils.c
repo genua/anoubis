@@ -159,7 +159,7 @@ acc_sockaddrsize(struct sockaddr_storage *sa)
 
 achat_rc
 acc_io(struct achat_channel *acc, ssize_t (*f) (int, void *, size_t),
-    char *buf, size_t size)
+    char *buf, size_t *size)
 {
 	size_t   pos = 0;
 	ssize_t  res = 0;
@@ -168,10 +168,10 @@ acc_io(struct achat_channel *acc, ssize_t (*f) (int, void *, size_t),
 	ACC_CHKPARAM(acc  != NULL);
 	ACC_CHKPARAM(f    != NULL);
 	ACC_CHKPARAM(buf  != NULL);
-	ACC_CHKPARAM(size >= 0);
+	ACC_CHKPARAM(*size >= 0);
 
-	while ((size > pos) && (rc == ACHAT_RC_OK)) {
-		res = (f)(acc->connfd, buf + pos, size - pos);
+	while ((*size > pos) && (rc == ACHAT_RC_OK)) {
+		res = (f)(acc->connfd, buf + pos, *size - pos);
 		switch (res) {
 		case -1:
 			/* XXX HJH EAGAIN and U_NONBLOCK -> busy loop? */
@@ -183,11 +183,15 @@ acc_io(struct achat_channel *acc, ssize_t (*f) (int, void *, size_t),
 			rc = ACHAT_RC_EOF;
 			break;
 		default:
-			if (res < 0)	/* XXX HJH break! */
+			if (res < 0) {
 				rc = ACHAT_RC_ERROR;
-			pos += (size_t)res;	/* XXX HJH res < 0! */
+				break;
+			}
+			pos += (size_t)res;
 			break;
 		}
 	}
+
+	*size = pos;
 	return (rc);
 }
