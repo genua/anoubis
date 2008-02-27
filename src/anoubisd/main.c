@@ -542,7 +542,7 @@ dispatch_dev2m(int fd, short event, void *arg)
 		return;
 	}
 
-	size = sizeof(struct anoubisd_event_in) + hdr->msg_size;
+	size = sizeof(struct anoubisd_event_in) + hdr->msg_size - sizeof(*hdr);
 
 	if ((ev = malloc(size)) == NULL) {
 		log_warn("can't allocate memory");
@@ -562,7 +562,8 @@ dispatch_dev2m(int fd, short event, void *arg)
 
 	ev->event_size = size;
 	ev->hdr = *hdr;
-	memcpy(ev->msg, hdr + sizeof(struct eventdev_hdr), hdr->msg_size);
+	memcpy(ev->msg, (char *)hdr + sizeof(struct eventdev_hdr),
+	    hdr->msg_size - sizeof(*hdr));
 
 	TAILQ_INSERT_TAIL(&eventq_m2p, ev, events);
 
@@ -577,8 +578,8 @@ dispatch_dev2m(int fd, short event, void *arg)
 	if ((ev = malloc(size)) != NULL) {
 		ev->event_size = size;
 		ev->hdr = *hdr;
-		memcpy(ev->msg, hdr + sizeof(struct eventdev_hdr),
-		    hdr->msg_size);
+		memcpy(ev->msg, (char *)hdr + sizeof(struct eventdev_hdr),
+		    hdr->msg_size - sizeof(*hdr));
 
 		TAILQ_INSERT_TAIL(&eventq_m2s, ev, events);
 

@@ -276,7 +276,8 @@ m2s_dispatch(int fd, short sig, void *arg)
 	struct anoubisd_event_in *ev_in = (struct anoubisd_event_in*)buf;
 	struct anoubisd_event_in *ev;
 
-	len = read(fd, buf, sizeof(buf));
+	/* First get size of message */
+	len = read(fd, buf, sizeof(struct anoubisd_event_in));
 	if (len < 0) {
 		log_warn("read error");
 		return;
@@ -286,8 +287,31 @@ m2s_dispatch(int fd, short sig, void *arg)
 		event_loopexit(NULL);
 		return;
 	}
-	if (len < sizeof (struct anoubisd_event_in) ||
-	    len < ev_in->event_size) {
+	if (len < sizeof(struct anoubisd_event_in)) {
+		log_warn("short read");
+		return;
+	}
+
+	/* Size of remaining message */
+	if (ev_in->event_size > (sizeof(buf) -
+	    sizeof(struct anoubisd_event_in))) {
+		log_warn("message too large");
+		return;
+	}
+
+	/* Get remainder of the message */
+	len = read(fd, buf + sizeof(struct anoubisd_event_in),
+	    ev_in->event_size - sizeof(struct anoubisd_event_in));
+	if (len < 0) {
+		log_warn("read error");
+		return;
+	}
+	if (len == 0) {
+		event_del(ev_info->ev_m2s);
+		event_loopexit(NULL);
+		return;
+	}
+	if (len < ev_in->event_size - sizeof(struct anoubisd_event_in)) {
 		log_warn("short read");
 		return;
 	}
