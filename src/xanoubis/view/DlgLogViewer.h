@@ -32,13 +32,25 @@
 #include "config.h"
 #endif
 
+#include <wx/string.h>
+#include <wx/timer.h>
+
 #include "AnShortcuts.h"
 #include "DlgLogViewerBase.h"
 
 class DlgLogViewer : public DlgLogViewerBase
 {
+	private:
+		wxString	 currentFile_;
+		wxTimer		*updateTimer_;
+
+		void		update(void);
+
 	protected:
 		AnShortcuts	*shortcuts_;
+
+		void OnFileSelected(wxFileDirPickerEvent&);
+		void OnTimer(wxTimerEvent&);
 
 	public:
 		DlgLogViewer(wxWindow *);

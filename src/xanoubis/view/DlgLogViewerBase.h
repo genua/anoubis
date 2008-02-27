@@ -40,7 +40,9 @@
 #include <wx/font.h>
 #include <wx/colour.h>
 #include <wx/settings.h>
+#include <wx/filepicker.h>
 #include <wx/sizer.h>
+#include <wx/textctrl.h>
 #include <wx/dialog.h>
 
 ///////////////////////////////////////////////////////////////////////////
@@ -54,14 +56,17 @@ class DlgLogViewerBase : public wxDialog
 	private:
 	
 	protected:
-		wxStaticText* m_staticText1;
+		wxStaticText* tx_logFile;
+		wxFilePickerCtrl* fp_logFile;
+		wxTextCtrl* tx_logList;
 		
 		// Virtual event handlers, overide them in your derived class
 		virtual void OnKeyPressed( wxKeyEvent& event ){ event.Skip(); }
+		virtual void OnFileSelected( wxFileDirPickerEvent& event ){ event.Skip(); }
 		
 	
 	public:
-		DlgLogViewerBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxT("Log Viewer"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 250,300 ), long style = wxDEFAULT_DIALOG_STYLE, const wxString& name = wxT("DlgLogViewer") );
+		DlgLogViewerBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxT("Log Viewer"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( -1,-1 ), long style = wxDEFAULT_DIALOG_STYLE, const wxString& name = wxT("DlgLogViewer") );
 	
 };
 

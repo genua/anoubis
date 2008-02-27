@@ -29,6 +29,10 @@
 #include "config.h"
 #endif
 
+#include <unistd.h>
+#include <wx/string.h>
+#include <wx/timer.h>
+
 #include "AnShortcuts.h"
 #include "DlgLogViewer.h"
 
@@ -36,9 +40,40 @@ DlgLogViewer::DlgLogViewer(wxWindow* parent) : DlgLogViewerBase(parent)
 {
 	shortcuts_  = new AnShortcuts(this);
 	this->GetSizer()->Layout();
+	currentFile_ = wxT("/var/log/syslog");
+	updateTimer_ = new wxTimer(this);
+	updateTimer_->Start(30 * 1000); /* 30 seconds interval */
+	this->Connect(wxEVT_TIMER, wxTimerEventHandler(DlgLogViewer::OnTimer));
+	update();
 }
 
 DlgLogViewer::~DlgLogViewer(void)
 {
 	delete shortcuts_;
+	updateTimer_->Stop();
+	delete updateTimer_;
+}
+
+void
+DlgLogViewer::OnTimer(wxTimerEvent& event)
+{
+	update();
+}
+
+void
+DlgLogViewer::update(void)
+{
+	tx_logList->Clear();
+	if (access(currentFile_.fn_str(), R_OK) == 0)
+		tx_logList->LoadFile(currentFile_);
+	else
+		tx_logList->AppendText(
+		    wxT("Sorry. The choosen file is not accessable."));
+}
+
+void
+DlgLogViewer::OnFileSelected(wxFileDirPickerEvent& event)
+{
+	currentFile_ = event.GetPath();
+	update();
 }

@@ -37,18 +37,31 @@
 
 DlgLogViewerBase::DlgLogViewerBase( wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style, const wxString& name ) : wxDialog( parent, id, title, pos, size, style, name )
 {
-	this->SetSizeHints( wxDefaultSize, wxDefaultSize );
+	this->SetSizeHints( wxSize( 700,400 ), wxDefaultSize );
 	
 	wxBoxSizer* sz_main;
 	sz_main = new wxBoxSizer( wxVERTICAL );
 	
-	m_staticText1 = new wxStaticText( this, wxID_ANY, wxT("Log Viewer"), wxDefaultPosition, wxDefaultSize, 0 );
-	m_staticText1->Wrap( -1 );
-	sz_main->Add( m_staticText1, 0, wxALL, 5 );
+	wxBoxSizer* sz_filePicker;
+	sz_filePicker = new wxBoxSizer( wxHORIZONTAL );
+	
+	tx_logFile = new wxStaticText( this, wxID_ANY, wxT("Viewed log file:"), wxDefaultPosition, wxDefaultSize, 0 );
+	tx_logFile->Wrap( -1 );
+	sz_filePicker->Add( tx_logFile, 0, wxALIGN_CENTER|wxALL, 5 );
+	
+	fp_logFile = new wxFilePickerCtrl( this, wxID_ANY, wxT("/var/log/syslog"), wxT("Select a file"), wxT("*"), wxDefaultPosition, wxDefaultSize, wxFLP_DEFAULT_STYLE|wxFLP_FILE_MUST_EXIST );
+	sz_filePicker->Add( fp_logFile, 1, wxALIGN_CENTER_VERTICAL|wxALIGN_LEFT|wxALL, 5 );
+	
+	sz_main->Add( sz_filePicker, 0, wxALIGN_CENTER|wxALL|wxEXPAND, 5 );
+	
+	tx_logList = new wxTextCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_BESTWRAP|wxTE_DONTWRAP|wxTE_LEFT|wxTE_MULTILINE|wxTE_READONLY|wxTE_WORDWRAP );
+	sz_main->Add( tx_logList, 1, wxALL|wxEXPAND, 5 );
 	
 	this->SetSizer( sz_main );
 	this->Layout();
+	sz_main->Fit( this );
 	
 	// Connect Events
 	this->Connect( wxEVT_CHAR, wxKeyEventHandler( DlgLogViewerBase::OnKeyPressed ) );
+	fp_logFile->Connect( wxEVT_COMMAND_FILEPICKER_CHANGED, wxFileDirPickerEventHandler( DlgLogViewerBase::OnFileSelected ), NULL, this );
 }
