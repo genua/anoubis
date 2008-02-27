@@ -80,6 +80,8 @@ pid_t		policy_pid = 0;
 
 static TAILQ_HEAD(head_m2p, anoubisd_event_in) eventq_m2p =
     TAILQ_HEAD_INITIALIZER(eventq_m2p);
+static TAILQ_HEAD(head_m2s, anoubisd_event_in) eventq_m2s =
+    TAILQ_HEAD_INITIALIZER(eventq_m2s);
 static TAILQ_HEAD(head_m2dev, anoubisd_event_out) eventq_m2dev =
     TAILQ_HEAD_INITIALIZER(eventq_m2dev);
 
@@ -280,6 +282,7 @@ main(int argc, char *argv[])
 	ev_info.ev_m2dev = &ev_m2dev;
 
 	TAILQ_INIT(&eventq_m2p);
+	TAILQ_INIT(&eventq_m2s);
 	TAILQ_INIT(&eventq_m2dev);
 
 	if (event_dispatch() == -1)
@@ -381,7 +384,33 @@ reconfigure(void)
 static void
 dispatch_m2s(int fd, short event, void *arg)
 {
-	/* XXX HJH: Todo */
+	struct anoubisd_event_in *ev;
+	struct event_info_main *ev_info = (struct event_info_main*)arg;
+	int len;
+
+	if (TAILQ_EMPTY(&eventq_m2s))
+		return;
+
+	ev = TAILQ_FIRST(&eventq_m2s);
+
+	len = write(fd, ev, ev->event_size);
+
+	if (len < 0) {
+		log_warn("write error");
+		return;
+	}
+
+	if (len < ev->event_size) {
+		log_warn("short write");
+		return;
+	}
+
+	TAILQ_REMOVE(&eventq_m2s, ev, events);
+	free(ev);
+
+	/* If the queue is not empty, we want to be called again */
+	if (!TAILQ_EMPTY(&eventq_m2s))
+		event_add(ev_info->ev_m2s, NULL);
 }
 
 static void
@@ -539,6 +568,22 @@ dispatch_dev2m(int fd, short event, void *arg)
 
 	/* Wait for fd to get ready */
 	event_add(ev_info->ev_m2p, NULL);
+
+	/*
+	 * Copy events to the session process for notifications. It is not
+	 * fatal if malloc fails here, the notification will just not arrive
+	 * at the session process
+	 */
+	if ((ev = malloc(size)) != NULL) {
+		ev->event_size = size;
+		ev->hdr = *hdr;
+		memcpy(ev->msg, hdr + sizeof(struct eventdev_hdr),
+		    hdr->msg_size);
+
+		TAILQ_INSERT_TAIL(&eventq_m2s, ev, events);
+
+		event_add(ev_info->ev_m2s, NULL);
+	}
 
 	return;
 }

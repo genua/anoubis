@@ -49,9 +49,14 @@ static void	m2s_dispatch(int, short, void *);
 static void	s2m_dispatch(int, short, void *);
 static void	s2p_dispatch(int, short, void *);
 static void	p2s_dispatch(int, short, void *);
+static void	s2f_dispatch(int, short, void *);
+
+static TAILQ_HEAD(head_m2s, anoubisd_event_in) eventq_s2f =
+    TAILQ_HEAD_INITIALIZER(eventq_s2f);
 
 struct event_info_session {
 	struct event	*ev_s2m, *ev_s2p;
+	struct event	*ev_m2s, *ev_p2s;
 };
 
 static void
@@ -143,8 +148,12 @@ session_main(struct anoubisd_config *conf, int pipe_m2s[2], int pipe_m2p[2],
 	event_set(&ev_s2p, pipe_s2p[1], EV_WRITE, s2p_dispatch,
 	    &ev_info);
 
+	ev_info.ev_m2s = &ev_m2s;
 	ev_info.ev_s2m = &ev_s2m;
+	ev_info.ev_p2s = &ev_p2s;
 	ev_info.ev_s2p = &ev_s2p;
+
+	TAILQ_INIT(&eventq_s2f);
 
 	if (event_dispatch() == -1)
 		fatal("session_main: event_dispatch");
@@ -155,7 +164,42 @@ session_main(struct anoubisd_config *conf, int pipe_m2s[2], int pipe_m2p[2],
 static void
 m2s_dispatch(int fd, short sig, void *arg)
 {
-	/* XXX HJH: Todo */
+	struct event_info_session *ev_info = (struct event_info_session*)arg;
+#define BUFSIZE 8192
+	char buf[BUFSIZE];
+	int len;
+	struct anoubisd_event_in *ev_in = (struct anoubisd_event_in*)buf;
+	struct anoubisd_event_in *ev;
+
+	len = read(fd, buf, sizeof(buf));
+	if (len < 0) {
+		log_warn("read error");
+		return;
+	}
+	if (len == 0) {
+		event_del(ev_info->ev_m2s);
+		event_loopexit(NULL);
+		return;
+	}
+	if (len < sizeof (struct anoubisd_event_in) ||
+	    len < ev_in->event_size) {
+		log_warn("short read");
+		return;
+	}
+
+	if ((ev = malloc(ev_in->event_size)) == NULL) {
+		return;
+	}
+
+	memcpy(ev, ev_in, ev_in->event_size);
+
+	TAILQ_INSERT_TAIL(&eventq_s2f, ev, events);
+
+	/* XXX: Wait for frontend to handle the data */
+	//event_add(ev_info->ev_s2f, NULL);
+
+	/* Directly call s2f_dispatch, for now... */
+	s2f_dispatch(fd, sig, arg);
 }
 
 static void
@@ -174,4 +218,27 @@ static void
 p2s_dispatch(int fd, short sig, void *arg)
 {
 	/* XXX MG: Todo */
+}
+
+static void
+s2f_dispatch(int fd, short sig, void *arg)
+{
+	struct anoubisd_event_in *ev;
+	//struct event_info_session *ev_info = (struct event_info_session*)arg;
+
+	if (TAILQ_EMPTY(&eventq_s2f))
+		return;
+
+	ev = TAILQ_FIRST(&eventq_s2f);
+
+	/* XXX: Do magical things here */
+
+	TAILQ_REMOVE(&eventq_s2f, ev, events);
+	free(ev);
+
+	/* If the queue is not empty, we want to be called again */
+	if (!TAILQ_EMPTY(&eventq_s2f)) {
+		//event_add(ev_info->ev_s2f, NULL);
+		s2f_dispatch(fd, sig, arg);
+	}
 }
