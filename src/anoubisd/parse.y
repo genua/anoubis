@@ -23,13 +23,16 @@
 
 %{
 
+#ifdef HAVE_CONFIG_H
 #include <config.h>
+#endif
 
 #include <sys/types.h>
-#ifndef LINUX
+#ifndef NEEDBSDCOMPAT
 #include <sys/queue.h>
 #else
 #include "queue.h"
+#include "bsdcompat.h"
 #endif
 
 #include <ctype.h>
@@ -426,12 +429,7 @@ cmdline_symset(char *s)
 	if ((sym = malloc(len)) == NULL)
 		err(1, "cmdline_symset: malloc");
 
-#ifndef LINUX
 	strlcpy(sym, s, len);
-#else
-	strncpy(sym, s, len - 1);
-	sym[len - 1] = '\0';
-#endif
 
 	ret = symset(sym, val + 1, 1);
 	free(sym);

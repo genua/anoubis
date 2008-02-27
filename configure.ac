@@ -40,6 +40,15 @@ AM_INIT_AUTOMAKE
 AM_MAINTAINER_MODE
 AC_CONFIG_HEADER([src/config.h])
 
+dnl os specific library replacements
+AC_CONFIG_LIBOBJ_DIR([src/bsdcompat])
+AC_REPLACE_FUNCS([strlcat strlcpy strtonum getpeereid])
+AM_CONDITIONAL([NEEDBSDCOMPAT], [test -n "$LIBOBJS"])
+
+if test -n "$LIBOBJS"; then
+	AC_DEFINE(NEEDBSDCOMPAT, 1, "need a libbsdcompat.a")
+fi
+
 dnl check for presence of the stack protector
 AX_CHECK_COMPILER_FLAGS(-fstack-protector,
 [
@@ -88,6 +97,7 @@ AC_CONFIG_FILES([
 	src/anoubisd/Makefile
 	src/libanoubischat/Makefile
 	src/libanoubisprotocol/Makefile
+	src/bsdcompat/Makefile
 	src/xanoubis/Makefile
 	src/anoubisctl/Makefile
 	src/libapn/Makefile

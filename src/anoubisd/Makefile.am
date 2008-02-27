@@ -29,11 +29,18 @@ AM_YFLAGS = -d
 
 sbin_PROGRAMS = anoubisd
 
+bsdcompatdir = src/bsdcompat
+libbsdcompat = $(top_builddir)/$(bsdcompatdir)/libbsdcompat.a
+
 if STATIC_LINKING
 STATIC = -static
 endif
 
+if NEEDBSDCOMPAT
+INCLUDES = -I$(top_srcdir)/include -I$(top_srcdir)/$(bsdcompatdir)
+else
 INCLUDES = -I$(top_srcdir)/include
+endif
 
 anoubisd_LDFLAGS = $(AM_LDFLAGS) $(STATIC)
 
@@ -46,6 +53,10 @@ anoubisd_SOURCES= \
 	anoubisd.h \
 	parse.y \
 	queue.h
+
+if NEEDBSDCOMPAT
+anoubisd_LDADD = $(libbsdcompat)
+endif
 
 anoubisd_SOURCES_flawfinder= \
 	main.c_flawfinder \

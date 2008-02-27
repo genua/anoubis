@@ -1,4 +1,3 @@
-##########################################################################
 # Copyright (c) 2008 GeNUA mbH <info@genua.de>
 #
 # All rights reserved.
@@ -23,23 +22,27 @@
 # LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-##########################################################################
+#
 
-if NEEDBSDCOMPAT
-BSDCOMPAT=bsdcompat
-endif
+# We build the bsdcompat library in two flavors: One suitable for
+# executables, and one suitable for including in shared objects.
 
-# Note:  Libraries must come first as applications might depend on them.
-SUBDIRS = $(BSDCOMPAT) libapn libanoubischat libanoubisprotocol anoubisd \
-    xanoubis anoubisctl libapn
+lib_LIBRARIES = libbsdcompat.a libbsdcompat_pic.a
+include_HEADERS = bsdcompat.h
 
-flawfinder:
-	for t in $(SUBDIRS); do cd $$t && make $@ && cd ..; done
+# for LLONG_MIN/LLONG_MAX
+AM_CFLAGS += -std=gnu99
 
-lint:
-	for t in $(SUBDIRS); do cd $$t && make $@ && cd ..; done
+libbsdcompat_a_SOURCES = $(include_HEADERS)
+libbsdcompat_a_LIBADD = $(LIBOBJS)
+
+libbsdcompat_pic_a_SOURCES = $(libbsdcompat_a_SOURCES)
+libbsdcompat_pic_a_LIBADD  = $(libbsdcompat_a_LIBADD)
+libbsdcompat_pic_a_CFLAGS = -fPIC -std=gnu99 $(shared_AM_CFLAGS)
+
+# no linting is done here, as we are not developing new source here. The
+# functions here are rather source imports from OpenBSD.
 
 splint:
-	for t in $(SUBDIRS); do cd $$t && make $@ && cd ..; done
-
-linting: flawfinder lint splint
+flawfinder:
+lint:
