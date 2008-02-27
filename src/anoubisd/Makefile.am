@@ -31,15 +31,26 @@ sbin_PROGRAMS = anoubisd
 
 bsdcompatdir = src/bsdcompat
 libbsdcompat = $(top_builddir)/$(bsdcompatdir)/libbsdcompat.a
+anoubischatdir = src/libanoubischat
+libanoubischat = $(top_builddir)/$(anoubischatdir)/libanoubischat.a
 
 if STATIC_LINKING
 STATIC = -static
 endif
 
 if NEEDBSDCOMPAT
-INCLUDES = -I$(top_srcdir)/include -I$(top_srcdir)/$(bsdcompatdir)
+INCLUDES = \
+	   -I$(top_srcdir)/include \
+	   -I$(top_srcdir)/$(anoubischatdir) \
+	   -I$(top_srcdir)/$(bsdcompatdir)
+
+anoubisd_LDADD = $(libanoubischat) $(libbsdcompat)
 else
-INCLUDES = -I$(top_srcdir)/include
+INCLUDES = \
+	   -I$(top_srcdir)/include \
+	   -I$(top_srcdir)/$(anoubischatdir)
+
+anoubisd_LDADD = $(libanoubischat)
 endif
 
 anoubisd_LDFLAGS = $(AM_LDFLAGS) $(STATIC)
@@ -53,10 +64,6 @@ anoubisd_SOURCES= \
 	anoubisd.h \
 	parse.y \
 	queue.h
-
-if NEEDBSDCOMPAT
-anoubisd_LDADD = $(libbsdcompat)
-endif
 
 anoubisd_SOURCES_flawfinder= \
 	main.c_flawfinder \

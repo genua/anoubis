@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 GeNUA mbH <info@genua.de>
+ * Copyright (c) 2008 GeNUA mbH <info@genua.de>
  *
  * All rights reserved.
  *
@@ -25,58 +25,21 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifdef LINUX
-#include <linux/eventdev.h>
-#include <linux/anoubis.h>
-#endif
-#ifdef OPENBSD
-#include <dev/eventdev.h>
-#include <dev/anoubis.h>
-#endif
-#include "queue.h"
+#include <stdlib.h>
+#include <check.h>
 
-#define ANOUBISD_OPT_VERBOSE		0x0001
-#define ANOUBISD_OPT_VERBOSE2		0x0002
-#define ANOUBISD_OPT_NOACTION		0x0004
+extern Suite *anoubisd_testsuite(void);
 
-#define ANOUBISD_USER			"_anoubisd"
+int
+main (void)
+{
+	int number_failed = -1;
+	Suite *suite = anoubisd_testsuite();
+	SRunner *suiterunner = srunner_create(suite);
 
-#define ANOUBISD_SOCKETNAME		"/var/run/anoubisd.sock"
+	srunner_run_all(suiterunner, CK_NORMAL);
+	number_failed = srunner_ntests_failed(suiterunner);
+	srunner_free(suiterunner);
 
-#ifdef LINUX
-#define __dead
-#endif
-
-struct anoubisd_config {
-	int	opts;
-};
-
-struct anoubisd_event_in {
-	TAILQ_ENTRY(anoubisd_event_in) events;
-
-	int event_size;
-	struct eventdev_hdr hdr;
-	char msg[0];
-};
-
-struct anoubisd_event_out {
-	TAILQ_ENTRY(anoubisd_event_out) events;
-
-	struct eventdev_reply reply;
-};
-
-enum {
-	PROC_MAIN,
-	PROC_POLICY,
-	PROC_SESSION
-} anoubisd_process;
-
-pid_t	session_main(struct anoubisd_config *, int[], int[], int[]);
-pid_t	policy_main(struct anoubisd_config *, int[], int[], int[]);
-void	log_init(int);
-void	log_warn(const char *, ...);
-void	log_warnx(const char *, ...);
-void	log_info(const char *, ...);
-void	log_debug(const char *, ...);
-void	fatalx(const char *);
-void	fatal(const char *);
+	return ((number_failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE);
+}

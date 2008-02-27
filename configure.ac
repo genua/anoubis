@@ -105,6 +105,7 @@ AC_CONFIG_FILES([
 	test/libanoubischat/Makefile
 	test/libanoubisprotocol/Makefile
 	test/xanoubis/Makefile
+	test/anoubisd/Makefile
 	include/Makefile
 	include/linux/Makefile
 	include/dev/Makefile

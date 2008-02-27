@@ -131,6 +131,56 @@ tc_connect_lud_server(const char *sockname)
 }
 
 void
+tc_connect_lud_serverdup(const char *sockname)
+{
+	struct sockaddr_storage	 ss;
+	struct sockaddr_un	*ss_sun = (struct sockaddr_un *)&ss;
+	struct achat_channel    *s  = NULL;
+	struct achat_channel    *s2 = NULL;
+	achat_rc		 rc = ACHAT_RC_ERROR;
+
+	s = acc_create();
+	fail_if(s == NULL, "couldn't create server channel");
+	rc = acc_settail(s, ACC_TAIL_SERVER);
+	fail_if(rc != ACHAT_RC_OK, "server settail failed with rc=%d", rc);
+	rc = acc_setsslmode(s, ACC_SSLMODE_CLEAR);
+	fail_if(rc != ACHAT_RC_OK, "server setsslmode failed with rc=%d", rc);
+	mark_point();
+
+	bzero(&ss, sizeof(ss));
+	ss_sun->sun_family = AF_UNIX;
+	strncpy(ss_sun->sun_path, sockname, sizeof(ss_sun->sun_path) - 1);
+	rc = acc_setaddr(s, &ss);
+	if (rc != ACHAT_RC_OK)
+		fail("server setaddr failed with rc=%d", rc);
+	mark_point();
+
+	rc = acc_prepare(s);
+	fail_if(rc != ACHAT_RC_OK, "server prepare failed with rc=%d [%s]",
+	    rc, strerror(errno));
+	if (s->state != ACC_STATE_NOTCONNECTED)
+		fail("server state not set correctly: expect %d got %d",
+		    ACC_STATE_NOTCONNECTED, s->state);
+
+	s2 = acc_opendup(s);
+	fail_if(s2 == NULL, "server opendup failed [%s]", strerror(errno));
+	if (s2->state != ACC_STATE_ESTABLISHED)
+		fail("server wrong dup state: expect %d got %d",
+		    ACC_STATE_ESTABLISHED, s->state);
+	if (s->state != ACC_STATE_NOTCONNECTED)
+		fail("server wrong org state: expect %d got %d",
+		    ACC_STATE_NOTCONNECTED, s->state);
+
+	rc = acc_destroy(s);
+	fail_if(rc != ACHAT_RC_OK, "server org destroy failed with rc=%d",
+	    rc);
+
+	rc = acc_destroy(s2);
+	fail_if(rc != ACHAT_RC_OK, "server dup destroy failed with rc=%d",
+	    rc);
+}
+
+void
 tc_connect_lip_client(short port)
 {
 	struct sockaddr_storage  ss;
@@ -332,6 +382,40 @@ START_TEST(tc_connect_localunixdomain_clientclose)
 END_TEST
 
 
+START_TEST(tc_connect_localunixdomain_dup)
+{
+	pid_t pid, childpid;
+	char sockname[FILENAME_MAX];
+
+	bzero(sockname, sizeof(sockname));
+	snprintf(sockname, sizeof(sockname) - 1, "%s%s%s%08d",
+	    TCCONNECT_SOCKETDIR, TCCONNECT_SOCKETPREFIX, "server", getpid());
+
+	switch (childpid = fork()) {
+	case -1:
+		fail("couldn't fork");
+		break;
+	case 0:
+		/* child / client */
+		tc_connect_lud_client(sockname);
+		break;
+	default:
+		/* parent / server */
+		tc_connect_lud_serverdup(sockname);
+		break;
+	}
+	/* cleanup child(ren) */
+	do {
+		if ((pid = wait(NULL)) == -1 &&
+		    errno != EINTR && errno != ECHILD)
+			fail("errors while cleanup child(ren) (wait)");
+	} while (pid != -1 || (pid == -1 && errno == EINTR));
+	if (access(sockname, F_OK) == 0)
+		fail("unix domain test: socket not removed!");
+}
+END_TEST
+
+
 START_TEST(tc_connect_localip)
 {
 	struct sockaddr_storage  ss;
@@ -417,6 +501,7 @@ libanoubischat_testcase_connect(void)
 	tcase_add_test(tc_connect, tc_connect_localunixdomain);
 	tcase_add_test(tc_connect, tc_connect_localunixdomain_swapped);
 	tcase_add_test(tc_connect, tc_connect_localunixdomain_clientclose);
+	tcase_add_test(tc_connect, tc_connect_localunixdomain_dup);
 	tcase_add_test(tc_connect, tc_connect_localip);
 
 	return (tc_connect);

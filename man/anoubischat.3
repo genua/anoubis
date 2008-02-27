@@ -59,6 +59,8 @@
 .Fn "acc_prepare" "struct achat_channel *"
 .Ft "achat_rc"
 .Fn "acc_open" "struct achat_channel *"
+.Ft "struct achat_channel *"
+.Fn "acc_opendup" "struct achat_channel *"
 .Ft "achat_rc"
 .Fn "acc_close" "struct achat_channel *"
 .Ft "achat_rc"
@@ -171,6 +173,15 @@ All other errors cause
 .Fn acc_open "struct achat_channel *"
 to fail and are visible for it's caller by inspecting
 .Xr errno 3 .
+.It
+If you intend to manage more than one channel within your programm
+.Po
+this is typically done in a server
+.Pc
+then you might consider using
+.Fn acc_opendup "struct achat_channel *" .
+This will return a new and opened channel as a copy of the given one.
+In case of an error NULL is returned.
 .El
 .Pp
 When the connection has been established, you may proceed and send or

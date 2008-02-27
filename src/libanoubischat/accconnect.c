@@ -118,6 +118,35 @@ acc_open(struct achat_channel *acc)
 	return (ACHAT_RC_OK);
 }
 
+struct achat_channel *
+acc_opendup(struct achat_channel *acc)
+{
+	struct achat_channel	*nc;
+
+	if (acc == NULL)
+		return (NULL);
+
+	nc = acc_create();
+	if (nc == NULL)
+		return (NULL);
+
+	memcpy(nc, acc, sizeof(struct achat_channel));
+	nc->sockfd = dup(acc->sockfd);
+	if (nc->sockfd == -1) {
+		acc_clear(nc);
+		acc_destroy(nc);
+		return (NULL);
+	}
+
+	if (acc_open(nc) != ACHAT_RC_OK) {
+		acc_clear(nc);
+		acc_destroy(nc);
+		return (NULL);
+	}
+
+	return (nc);
+}
+
 achat_rc
 acc_close(struct achat_channel *acc)
 {

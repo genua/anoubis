@@ -29,6 +29,12 @@
 
 #include <sys/param.h>
 #include <sys/time.h>
+#ifdef OPENBSD
+#include <sys/queue.h>
+#else
+#include "queue.h"
+#endif
+#include <sys/un.h>
 
 #include <err.h>
 #include <errno.h>
@@ -42,7 +48,30 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "anoubischat.h"
 #include "anoubisd.h"
+
+struct event_info_session {
+	struct event	*ev_s2m, *ev_s2p;
+	struct event	*ev_m2s, *ev_p2s;
+};
+
+struct session {
+	int			 id;	/* session number */
+	uid_t			 uid;	/* user id; not authenticated on -1 */
+	struct achat_channel	*channel;	/* communication channel */
+	struct event		 ev_data;	/* event for receiving data */
+	LIST_ENTRY(session)	 nextSession;	/* linked list element */
+};
+
+struct sessionGroup {
+	LIST_HEAD(slHead, session)	 sessionList;
+	struct achat_channel		*keeper_uds;
+	struct event			 ev_connect;
+};
+
+static TAILQ_HEAD(head_m2s, anoubisd_event_in) eventq_s2f =
+    TAILQ_HEAD_INITIALIZER(eventq_s2f);
 
 static void	session_sighandler(int, short, void *);
 static void	m2s_dispatch(int, short, void *);
@@ -50,14 +79,11 @@ static void	s2m_dispatch(int, short, void *);
 static void	s2p_dispatch(int, short, void *);
 static void	p2s_dispatch(int, short, void *);
 static void	s2f_dispatch(int, short, void *);
+static void	session_connect(int, short, void *);
+static void	session_rxclient(int, short, void *);
+static void	session_setupuds(struct sessionGroup *);
+static void	session_destroy(struct session *);
 
-static TAILQ_HEAD(head_m2s, anoubisd_event_in) eventq_s2f =
-    TAILQ_HEAD_INITIALIZER(eventq_s2f);
-
-struct event_info_session {
-	struct event	*ev_s2m, *ev_s2p;
-	struct event	*ev_m2s, *ev_p2s;
-};
 
 static void
 session_sighandler(int sig, short event, void *arg)
@@ -71,6 +97,64 @@ session_sighandler(int sig, short event, void *arg)
 	}
 }
 
+static void
+session_connect(int fd, short event, void *arg)
+{
+	struct session		*session = NULL;
+	struct sessionGroup	*seg = (struct sessionGroup *)arg;
+	static int		 sessionid = 0;
+
+	session = (struct session *)calloc(1, sizeof(struct session));
+	if (session == NULL) {
+		log_warn("session_connect: calloc");
+		return;
+	}
+
+	session->id  = sessionid++;
+	session->uid = -1; /* this session is not authenticated */
+
+	session->channel = acc_opendup(seg->keeper_uds);
+	if (session->channel == NULL) {
+		log_warn("session_connect: acc_opendup");
+		free((void *)session);
+		return;
+	}
+
+	event_set(&(session->ev_data), session->channel->connfd,
+	    EV_READ | EV_PERSIST, session_rxclient, session);
+	event_add(&(session->ev_data), NULL);
+
+	LIST_INSERT_HEAD(&(seg->sessionList), session, nextSession);
+}
+
+static void
+session_rxclient(int fd, short event, void *arg)
+{
+	/* XXX CH:
+	 * this function is extremely experimental and considered
+	 * of been rewritten in a future change, when client and
+	 * server really start to communicate.
+	 */
+
+	struct session	*session;
+	char		 msg[13]; /* size depends on session testcase */
+	achat_rc	 rc;
+	size_t		 size;
+
+	session = (struct session *)arg;
+
+	size = sizeof(msg);
+	rc = acc_receivemsg(session->channel, msg, &size);
+
+	if (rc == ACHAT_RC_EOF) {
+		session_destroy(session);
+	}
+
+	/* XXX CH: msg and error handling missing here */
+	if (rc == ACHAT_RC_ERROR)
+		log_warn("session_rxclient: error reading client message");
+}
+
 pid_t
 session_main(struct anoubisd_config *conf, int pipe_m2s[2], int pipe_m2p[2],
     int pipe_s2p[2])
@@ -79,6 +163,7 @@ session_main(struct anoubisd_config *conf, int pipe_m2s[2], int pipe_m2p[2],
 	struct event	 ev_m2s, ev_p2s;
 	struct event	 ev_s2m, ev_s2p;
 	struct event_info_session	ev_info;
+	struct sessionGroup		seg;
 	struct passwd	*pw;
 	sigset_t	 mask;
 	pid_t		 pid;
@@ -92,6 +177,9 @@ session_main(struct anoubisd_config *conf, int pipe_m2s[2], int pipe_m2p[2],
 	default:
 		return (pid);
 	}
+
+	/* while still privileged we install a listening socket */
+	session_setupuds(&seg);
 
 	if ((pw = getpwnam(ANOUBISD_USER)) == NULL)
 		fatal("getpwnam");
@@ -114,6 +202,8 @@ session_main(struct anoubisd_config *conf, int pipe_m2s[2], int pipe_m2p[2],
 	/* From now on, this is an unprivileged child process. */
 
 	(void)event_init();
+	LIST_INIT(&(seg.sessionList));
+	TAILQ_INIT(&eventq_s2f);
 
 	/* We catch or block signals rather than ignoring them. */
 	signal_set(&ev_sigterm, SIGTERM, session_sighandler, NULL);
@@ -153,10 +243,25 @@ session_main(struct anoubisd_config *conf, int pipe_m2s[2], int pipe_m2p[2],
 	ev_info.ev_p2s = &ev_p2s;
 	ev_info.ev_s2p = &ev_s2p;
 
-	TAILQ_INIT(&eventq_s2f);
+	/* setup keeper of incomming unix domain socket connections */
+	if (seg.keeper_uds != NULL) {
+		event_set(&(seg.ev_connect), (seg.keeper_uds)->sockfd,
+		    EV_READ | EV_PERSIST, session_connect, &seg);
+		event_add(&(seg.ev_connect), NULL);
+	}
 
 	if (event_dispatch() == -1)
 		fatal("session_main: event_dispatch");
+
+	/* stop events of incomming connects and cleanup sessions */
+	event_del(&(seg.ev_connect));
+	while (!LIST_EMPTY(&(seg.sessionList))) {
+		struct session *session = LIST_FIRST(&(seg.sessionList));
+		log_warn("session_main: close remaining session by force");
+		LIST_REMOVE(session, nextSession);
+		session_destroy(session);
+	}
+	acc_destroy(seg.keeper_uds);
 
 	_exit(0);
 }
@@ -241,4 +346,69 @@ s2f_dispatch(int fd, short sig, void *arg)
 		//event_add(ev_info->ev_s2f, NULL);
 		s2f_dispatch(fd, sig, arg);
 	}
+}
+
+static void
+session_destroy(struct session *session)
+{
+	acc_destroy(session->channel);
+	event_del(&(session->ev_data));
+
+	LIST_REMOVE(session, nextSession);
+	bzero(session, sizeof(struct session));
+
+	free((void *)session);
+}
+
+void
+session_setupuds(struct sessionGroup *seg)
+{
+	struct sockaddr_storage	 ss;
+	achat_rc		 rc = ACHAT_RC_ERROR;
+
+	seg->keeper_uds = acc_create();
+	if (seg->keeper_uds == NULL) {
+		log_warn("session_setupuds: acc_create");
+		return;
+	}
+
+	rc = acc_settail(seg->keeper_uds, ACC_TAIL_SERVER);
+	if (rc != ACHAT_RC_OK) {
+		log_warn("session_setupuds: acc_settail");
+		acc_destroy(seg->keeper_uds);
+		return;
+	}
+
+	rc = acc_setsslmode(seg->keeper_uds, ACC_SSLMODE_CLEAR);
+	if (rc != ACHAT_RC_OK) {
+		log_warn("session_setupuds: acc_setsslmode");
+		acc_destroy(seg->keeper_uds);
+		return;
+	}
+
+	bzero(&ss, sizeof(ss));
+	((struct sockaddr_un *)&ss)->sun_family = AF_UNIX;
+#ifdef LINUX
+	strncpy(((struct sockaddr_un *)&ss)->sun_path, ANOUBISD_SOCKETNAME,
+	    sizeof(((struct sockaddr_un *)&ss)->sun_path) - 1);
+#endif
+#ifdef OPENBSD
+	strlcpy(((struct sockaddr_un *)&ss)->sun_path, ANOUBISD_SOCKETNAME,
+	    sizeof(((struct sockaddr_un *)&ss)->sun_path));
+#endif
+	rc = acc_setaddr(seg->keeper_uds, &ss);
+	if (rc != ACHAT_RC_OK) {
+		log_warn("session_setupuds: acc_setaddr");
+		acc_destroy(seg->keeper_uds);
+		return;
+	}
+
+	rc = acc_prepare(seg->keeper_uds);
+	if (rc != ACHAT_RC_OK) {
+		log_warn("session_setupuds: acc_prepare");
+		acc_destroy(seg->keeper_uds);
+		return;
+	}
+
+	return;
 }

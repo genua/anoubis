@@ -1,5 +1,4 @@
-##########################################################################
-# Copyright (c) 2008 GeNUA mbH <info@genua.de>
+# Copyright (c) 2007 GeNUA mbH <info@genua.de>
 #
 # All rights reserved.
 #
@@ -23,11 +22,26 @@
 # LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-##########################################################################
+#
 
-SUBDIRS = libanoubischat libanoubisprotocol anoubisd xanoubis
+TESTS = test_anoubisd
 
-# targets must exist, but need not to do anything
-flawfinder:
-lint:
-splint:
+noinst_PROGRAMS = test_anoubisd
+
+anoubisddir    = src/anoubisd
+anoubischatdir = src/libanoubischat
+libanoubischat = $(top_builddir)/$(anoubischatdir)/libanoubischat.a
+
+test_anoubisd_CPPFLAGS = \
+	-I$(top_srcdir)/$(anoubischatdir) \
+	-I$(top_srcdir)/$(anoubisddir) \
+	@CHECK_CFLAGS@
+
+test_anoubisd_LDADD = \
+	@CHECK_LIBS@ \
+	$(libanoubischat)
+
+test_anoubisd_SOURCES = \
+	anoubisd_testcase_sessions.c \
+	anoubisd_testsuite.c \
+	anoubisd_testrunner.c
