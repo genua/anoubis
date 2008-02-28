@@ -52,11 +52,7 @@
 #include <anoubisd.h>
 #include <anoubis_server.h>
 #include <anoubis_msg.h>
-
-struct event_info_session {
-	struct event	*ev_s2m, *ev_s2p;
-	struct event	*ev_m2s, *ev_p2s;
-};
+#include <anoubis_notify.h>
 
 struct session {
 	int			 id;	/* session number */
@@ -71,6 +67,12 @@ struct sessionGroup {
 	LIST_HEAD(slHead, session)	 sessionList;
 	struct achat_channel		*keeper_uds;
 	struct event			 ev_connect;
+};
+
+struct event_info_session {
+	struct event	*ev_s2m, *ev_s2p;
+	struct event	*ev_m2s, *ev_p2s;
+	struct sessionGroup * seg;
 };
 
 static TAILQ_HEAD(head_m2s, anoubisd_event_in) eventq_s2f =
@@ -271,6 +273,7 @@ session_main(struct anoubisd_config *conf, int pipe_m2s[2], int pipe_m2p[2],
 	ev_info.ev_s2m = &ev_s2m;
 	ev_info.ev_p2s = &ev_p2s;
 	ev_info.ev_s2p = &ev_s2p;
+	ev_info.seg = &seg;
 
 	/* setup keeper of incomming unix domain socket connections */
 	if (seg.keeper_uds != NULL) {
@@ -304,6 +307,7 @@ m2s_dispatch(int fd, short sig, void *arg)
 	int len;
 	struct anoubisd_event_in *ev_in = (struct anoubisd_event_in*)buf;
 	struct anoubisd_event_in *ev;
+	struct session * sess;
 
 	/* First get size of message */
 	len = read(fd, buf, sizeof(struct anoubisd_event_in));
@@ -353,6 +357,29 @@ m2s_dispatch(int fd, short sig, void *arg)
 
 	TAILQ_INSERT_TAIL(&eventq_s2f, ev, events);
 
+	LIST_FOREACH(sess, &ev_info->seg->sessionList, nextSession) {
+		struct anoubis_notify_group * ng;
+		struct anoubis_msg * m;
+		int extra;
+
+		if (sess->proto == NULL)
+			continue;
+		ng = anoubis_server_getnotify(sess->proto);
+		if (!ng)
+			continue;
+		extra = ev_in->hdr.msg_size - sizeof(struct eventdev_hdr);
+		m = anoubis_msg_new(sizeof(Anoubis_NotifyMessage) + extra);
+		if (!m)
+			continue;
+		set_value(m->u.notify->type, ANOUBIS_N_NOTIFY);
+		set_value(m->u.notify->pid, ev_in->hdr.msg_pid);
+		set_value(m->u.notify->uid, 0 /* XXX */);
+		set_value(m->u.notify->subsystem, ev_in->hdr.msg_source);
+		set_value(m->u.notify->operation, 0 /* XXX */);
+		memcpy(m->u.notify->payload, ev_in->msg, extra);
+		anoubis_notify(ng, ev_in->hdr.msg_pid, m, NULL, NULL);
+		anoubis_msg_free(m);
+	}
 	/* XXX: Wait for frontend to handle the data */
 	//event_add(ev_info->ev_s2f, NULL);
 

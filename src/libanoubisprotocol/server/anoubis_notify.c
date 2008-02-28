@@ -104,10 +104,10 @@ int anoubis_notify_register(struct anoubis_notify_group * ng,
 static int reg_match(struct anoubis_notify_reg * reg,
     uid_t uid, task_cookie_t task, u_int32_t ruleid, u_int32_t subsystem)
 {
-	return ((!uid || reg->uid == uid)
-	    && (!task || reg->task == task)
-	    && (!ruleid || reg->ruleid == ruleid)
-	    && (!subsystem || reg->subsystem == subsystem));
+	return ((!reg->uid || reg->uid == uid)
+	    && (!reg->task || reg->task == task)
+	    && (!reg->ruleid || reg->ruleid == ruleid)
+	    && (!reg->subsystem || reg->subsystem == subsystem));
 }
 
 static int reg_match_all(struct anoubis_notify_group * ng,
@@ -148,8 +148,12 @@ int anoubis_notify(struct anoubis_notify_group * ng, task_cookie_t task,
 {
 	struct anoubis_notify_event * nev;
 	int ret;
+	int opcode;
 
 	if (!VERIFY_LENGTH(m, sizeof(Anoubis_NotifyMessage)))
+		return -EINVAL;
+	opcode = get_value(m->u.general->type);
+	if (opcode != ANOUBIS_N_ASK && opcode != ANOUBIS_N_NOTIFY)
 		return -EINVAL;
 	uid_t uid = get_value(m->u.notify->uid);
 	pid_t pid = get_value(m->u.notify->pid);
@@ -157,11 +161,18 @@ int anoubis_notify(struct anoubis_notify_group * ng, task_cookie_t task,
 	u_int32_t subsystem = get_value(m->u.notify->subsystem);
 	anoubis_token_t token = m->u.notify->token;
 
-	if (task != /* pid_to_taskcookie */ (unsigned) pid)
 	if (token == 0)
+		return -EINVAL;
+	if (pid != /* Convert task id to pid. */ task)
 		return -EINVAL;
 	if (!reg_match_all(ng, uid, task, ruleid, subsystem))
 		return 0;
+	if (opcode == ANOUBIS_N_NOTIFY) {
+		ret = anoubis_msg_send(ng->chan, m);
+		if (ret < 0)
+			return ret;
+		return 1;
+	}
 	LIST_FOREACH(nev, &ng->pending, next) {
 		if (nev->token == token)
 			return -EEXIST;
@@ -178,9 +189,9 @@ int anoubis_notify(struct anoubis_notify_group * ng, task_cookie_t task,
 	if (ret < 0) {
 		LIST_REMOVE(nev, next);
 		free(nev);
-		return -EINVAL;
+		return ret;
 	}
-	return 0;
+	return 1;
 }
 
 static void drop_event(struct anoubis_notify_group * ng __attribute__((unused)),

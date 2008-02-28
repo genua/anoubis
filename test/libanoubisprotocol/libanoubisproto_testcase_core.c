@@ -100,7 +100,7 @@ void tp_chat_lud_client(const char *sockname)
 		size_t size = 1024;
 		achat_rc rc;
 
-		if (curr && curr->flags & ANOUBIS_T_DONE) {
+		if (curr && (curr->flags & ANOUBIS_T_DONE)) {
 			fail_if(curr->result, "Transaction error");
 			anoubis_transaction_destroy(curr);
 			curr = NULL;
