@@ -748,7 +748,7 @@ err:
 
 struct anoubis_transaction * __anoubis_client_register_start_common(
     struct anoubis_client * client, int opcode, anoubis_token_t token,
-    pid_t pid, u_int32_t rule_id, uid_t uid, u_int32_t subsystem)
+    uid_t uid, pid_t pid, u_int32_t rule_id, u_int32_t subsystem)
 {
 	struct anoubis_msg * m;
 	static const int nextops[] = { ANOUBIS_REPLY, 0 };
@@ -787,19 +787,19 @@ struct anoubis_transaction * __anoubis_client_register_start_common(
 }
 
 struct anoubis_transaction * anoubis_client_register_start(
-    struct anoubis_client * client, anoubis_token_t token, pid_t pid,
-    u_int32_t rule_id, uid_t uid, u_int32_t subsystem)
+    struct anoubis_client * client, anoubis_token_t token, uid_t uid,
+    pid_t pid, u_int32_t rule_id, u_int32_t subsystem)
 {
 	return  __anoubis_client_register_start_common(client,
-	    ANOUBIS_N_REGISTER, token, pid, rule_id, uid, subsystem);
+	    ANOUBIS_N_REGISTER, token, uid, pid, rule_id, subsystem);
 }
 
 struct anoubis_transaction * anoubis_client_unregister_start(
-    struct anoubis_client * client, anoubis_token_t token, pid_t pid,
-    u_int32_t rule_id, uid_t uid, u_int32_t subsystem)
+    struct anoubis_client * client, anoubis_token_t token, uid_t uid,
+    pid_t pid, u_int32_t rule_id, u_int32_t subsystem)
 {
 	return  __anoubis_client_register_start_common(client,
-	    ANOUBIS_N_UNREGISTER, token, pid, rule_id, uid, subsystem);
+	    ANOUBIS_N_UNREGISTER, token, uid, pid, rule_id, subsystem);
 }
 
 /* Sync function. */

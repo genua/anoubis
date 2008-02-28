@@ -46,10 +46,10 @@ extern struct anoubis_transaction * anoubis_client_close_start(
 extern int anoubis_client_process(struct anoubis_client *,
     struct anoubis_msg *);
 struct anoubis_transaction * anoubis_client_register_start(
-    struct anoubis_client * client, anoubis_token_t token, pid_t pid,
-    u_int32_t rule_id, uid_t uid, u_int32_t subsystem);
+    struct anoubis_client * client, anoubis_token_t token, uid_t uid,
+    pid_t pid, u_int32_t rule_id, u_int32_t subsystem);
 struct anoubis_transaction * anoubis_client_unregister_start(
-    struct anoubis_client * client, anoubis_token_t token, pid_t pid,
-    u_int32_t rule_id, uid_t uid, u_int32_t subsystem);
+    struct anoubis_client * client, anoubis_token_t token, uid_t uid,
+    pid_t pid, u_int32_t rule_id, u_int32_t subsystem);
 
 #endif

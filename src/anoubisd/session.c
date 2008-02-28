@@ -373,8 +373,14 @@ m2s_dispatch(int fd, short sig, void *arg)
 		if (!m)
 			continue;
 		set_value(m->u.notify->type, ANOUBIS_N_NOTIFY);
+		m->u.notify->token = ev_in->hdr.msg_token;
 		set_value(m->u.notify->pid, ev_in->hdr.msg_pid);
-		set_value(m->u.notify->uid, 0 /* XXX */);
+		set_value(m->u.notify->rule_id, 0);
+#ifdef LINUX
+		set_value(m->u.notify->uid, ev_in->hdr.msg_uid);
+#else
+		set_value(m->u.notify->uid, /* XXX */ 0);
+#endif
 		set_value(m->u.notify->subsystem, ev_in->hdr.msg_source);
 		set_value(m->u.notify->operation, 0 /* XXX */);
 		memcpy(m->u.notify->payload, ev_in->msg, extra);
