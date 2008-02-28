@@ -49,6 +49,7 @@ class ModOverview : public Module
 
 		int	getBaseId(void);
 		int	getToolbarId(void);
+		void	update(void);
 		void	addModules(Module* []);
 };
 

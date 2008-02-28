@@ -50,6 +50,8 @@
 #include <wx/radiobut.h>
 #include <wx/treectrl.h>
 #include <wx/notebook.h>
+#include <wx/statbmp.h>
+#include "AnFader.h"
 
 ///////////////////////////////////////////////////////////////////////////
 
@@ -100,10 +102,17 @@ class ModAlfOverviewPanelBase : public wxPanel
 	private:
 	
 	protected:
-		wxStaticText* tx_OVMainHeadline;
+		
+		wxStaticBitmap* alfStatusIcon;
+		wxStaticText* txt_status;
+		wxStaticText* txt_nachfragen;
+		wxStaticText* txt_statusValue;
+		wxStaticText* txt_nachfragenValue;
+		
+		AnFader *alfFader;
 	
 	public:
-		ModAlfOverviewPanelBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( -1,-1 ), long style = wxTAB_TRAVERSAL );
+		ModAlfOverviewPanelBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 600,-1 ), long style = wxTAB_TRAVERSAL );
 	
 };
 

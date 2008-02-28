@@ -35,6 +35,7 @@ Module::Module(void)
 {
 	name_ = wxString(wxT("unknown"));
 	nick_ = wxString(wxT("unknown"));
+	state_ = wxString(wxT("unknown"));
 	mainPanel_ = NULL;
 	overviewPanel_ = NULL;
 	icon_ = NULL;
@@ -60,6 +61,19 @@ wxString
 Module::getNick(void)
 {
 	return (nick_);
+}
+
+wxString
+Module::getState(void)
+{
+	return (state_);
+}
+
+void
+Module::setState(const wxString& state)
+{
+	if(!state.IsEmpty())
+		state_ = state;
 }
 
 wxPanel *

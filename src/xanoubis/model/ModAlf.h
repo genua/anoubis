@@ -45,6 +45,7 @@ class ModAlf : public Module
 
 		int	getBaseId(void);
 		int	getToolbarId(void);
+		void	update(void);
 };
 
 #endif /* __MODALF_H__ */

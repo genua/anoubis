@@ -68,6 +68,11 @@ ModOverview::getToolbarId(void)
 }
 
 void
+ModOverview::update(void)
+{
+}
+
+void
 ModOverview::addModules(Module* modules[ANOUBIS_MODULESNO])
 {
 	int		 i;

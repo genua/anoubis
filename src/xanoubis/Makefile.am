@@ -52,7 +52,11 @@ dist_icon_DATA = \
 	icons/ModOverview.png \
 	icons/tray.gif \
 	icons/tray_msgByHand.png \
-	icons/tray_normal.png
+	icons/tray_normal.png \
+	icons/ModALFError.png \
+	icons/ModALFOk.png \
+	icons/ModALFProblem.png
+
 
 xanoubis_SOURCES= \
 	model/ModAlf.cpp \
@@ -71,6 +75,8 @@ xanoubis_SOURCES= \
 	model/NotifyAnswer.h \
 	view/AnStatusBar.cpp \
 	view/AnStatusBar.h \
+	view/AnFader.cpp \
+	view/AnFader.h \
 	view/DlgLogViewerBase.cpp \
 	view/DlgLogViewerBase.h \
 	view/DlgLogViewer.cpp \

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 GeNUA mbH <info@genua.de>
+ * Copyright (c) 2008 GeNUA mbH <info@genua.de>
  *
  * All rights reserved.
  *
@@ -29,11 +29,18 @@
 #define __ModAlfOverviewPanelImpl__
 
 #include "ModAlfPanelsBase.h"
+#include <wx/icon.h>
 
 class ModAlfOverviewPanelImpl : public ModAlfOverviewPanelBase
 {
-public:
-	ModAlfOverviewPanelImpl(wxWindow* parent, wxWindowID id);
+	private:
+		wxIcon			*stateIconNormal_;
+
+	public:
+		ModAlfOverviewPanelImpl(wxWindow* parent, wxWindowID id);
+		~ModAlfOverviewPanelImpl(void);
+
+		virtual void update(void);
 };
 
 #endif /* __ModAlfOverviewPanelImpl__ */

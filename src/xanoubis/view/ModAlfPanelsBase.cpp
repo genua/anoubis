@@ -185,11 +185,51 @@ ModAlfOverviewPanelBase::ModAlfOverviewPanelBase( wxWindow* parent, wxWindowID i
 	wxBoxSizer* sz_OverviewALFMain;
 	sz_OverviewALFMain = new wxBoxSizer( wxVERTICAL );
 	
-	tx_OVMainHeadline = new wxStaticText( this, wxID_ANY, _("Overview Panel of Module ALF"), wxDefaultPosition, wxDefaultSize, 0 );
-	tx_OVMainHeadline->Wrap( -1 );
-	sz_OverviewALFMain->Add( tx_OVMainHeadline, 0, wxALL|wxEXPAND|wxALIGN_CENTER_HORIZONTAL, 5 );
+	wxFlexGridSizer* sz_OVALF;
+	sz_OVALF = new wxFlexGridSizer( 2, 4, 0, 0 );
+	sz_OVALF->SetFlexibleDirection( wxBOTH );
+	sz_OVALF->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_ALL );
+	
+	
+	sz_OVALF->Add( 20, 0, 1, wxEXPAND, 5 );
+	
+	alfStatusIcon = new wxStaticBitmap( this, wxID_ANY, wxNullBitmap, wxDefaultPosition, wxSize( -1,-1 ), 0 );
+	sz_OVALF->Add( alfStatusIcon, 0, wxALIGN_CENTER|wxALL, 5 );
+	
+	wxBoxSizer* sz_lables;
+	sz_lables = new wxBoxSizer( wxVERTICAL );
+	
+	txt_status = new wxStaticText( this, wxID_ANY, _("Status (ALF):"), wxDefaultPosition, wxDefaultSize, 0 );
+	txt_status->Wrap( -1 );
+	sz_lables->Add( txt_status, 0, wxALL, 5 );
+	
+	txt_nachfragen = new wxStaticText( this, wxID_ANY, _("Offene Nachfragen (ALF):"), wxDefaultPosition, wxDefaultSize, 0 );
+	txt_nachfragen->Wrap( -1 );
+	sz_lables->Add( txt_nachfragen, 0, wxALL, 5 );
+	
+	sz_OVALF->Add( sz_lables, 1, wxEXPAND, 5 );
+	
+	wxBoxSizer* sz_values;
+	sz_values = new wxBoxSizer( wxVERTICAL );
+	
+	txt_statusValue = new wxStaticText( this, wxID_ANY, _("alles OK"), wxDefaultPosition, wxDefaultSize, 0 );
+	txt_statusValue->Wrap( -1 );
+	sz_values->Add( txt_statusValue, 0, wxALL, 5 );
+	
+	txt_nachfragenValue = new wxStaticText( this, wxID_ANY, _("12"), wxDefaultPosition, wxDefaultSize, 0 );
+	txt_nachfragenValue->Wrap( -1 );
+	sz_values->Add( txt_nachfragenValue, 0, wxALL, 5 );
+	
+	sz_OVALF->Add( sz_values, 1, wxEXPAND, 5 );
+	
+	
+	sz_OVALF->Add( 20, 0, 1, wxEXPAND, 5 );
+	
+	alfFader = new AnFader(this);
+	sz_OVALF->Add( alfFader, 0, wxALL, 5 );
+	
+	sz_OverviewALFMain->Add( sz_OVALF, 1, wxEXPAND, 5 );
 	
 	this->SetSizer( sz_OverviewALFMain );
 	this->Layout();
-	sz_OverviewALFMain->Fit( this );
 }

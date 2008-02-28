@@ -65,3 +65,13 @@ ModAlf::getToolbarId(void)
 {
 	return (MODALF_ID_TOOLBAR);
 }
+
+void
+ModAlf::update(void)
+{
+	ModAlfOverviewPanelImpl *instance =
+	    (ModAlfOverviewPanelImpl*) overviewPanel_;
+
+	if(instance)
+		instance->update();
+}

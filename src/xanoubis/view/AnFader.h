@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 GeNUA mbH <info@genua.de>
+ * Copyright (c) 2008 GeNUA mbH <info@genua.de>
  *
  * All rights reserved.
  *
@@ -25,48 +25,35 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _MODULE_H_
-#define _MODULE_H_
+#ifndef _ANFADER_H_
+#define _ANFADER_H_
 
-#include <wx/icon.h>
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#include <wx/font.h>
 #include <wx/panel.h>
-#include <wx/string.h>
+#include <wx/slider.h>
 
-#define MODULE_ID_ENTRY(moduleName,entryName) \
-	MOD##moduleName##_ID_##entryName = MOD##moduleName##_ID_BASE + \
-	    MODULEID_OFFSET_##entryName
-
-enum ModuleIdOffset {
-	MODULEID_OFFSET_MAINPANEL = 1,
-	MODULEID_OFFSET_OVERVIEWPANEL,
-	MODULEID_OFFSET_TOOLBAR
-};
-
-class Module {
-	protected:
-		wxString	 name_;
-		wxString	 nick_;
-		wxString	 state_;
-		wxPanel		*mainPanel_;
-		wxPanel		*overviewPanel_;
-		wxIcon		*icon_;
-
-		virtual void	 loadIcon(wxString);
-
+class AnFader: public wxPanel
+{
+	private:
+		wxFont		 hlight;
+		wxFont		 normal;
+		wxSlider	*slider;
+		wxStaticText	*tx_p0;
+		wxStaticText	*tx_p1;
+		wxStaticText	*tx_p2;
+		wxStaticText	*tx_p3;
+		wxStaticText	*tx_p4;
+		wxStaticText	*tx_p5;
+	
 	public:
-		Module(void);
-		virtual ~Module(void);
+		AnFader(wxWindow *);
+		~AnFader(void);
 
-		virtual wxString	getName(void);
-		virtual wxString	getNick(void);
-		virtual wxString	getState(void);
-		virtual void		setState(const wxString& state);
-		virtual wxPanel		*getMainPanel(void);
-		virtual wxPanel		*getOverviewPanel(void);
-		virtual wxIcon		*getIcon(void);
-		virtual int		getBaseId(void) = 0;
-		virtual int		getToolbarId(void) = 0;
-		virtual void		update(void) = 0;
+		void OnFade(wxScrollEvent&);
 };
 
-#endif	/* _MODULE_H_ */
+#endif	/* _ANFADER_H_ */

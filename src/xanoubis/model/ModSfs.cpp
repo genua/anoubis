@@ -65,3 +65,8 @@ ModSfs::getToolbarId(void)
 {
 	return (MODSFS_ID_TOOLBAR);
 }
+
+void
+ModSfs::update(void)
+{
+}

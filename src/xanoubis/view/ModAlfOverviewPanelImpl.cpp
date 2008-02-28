@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 GeNUA mbH <info@genua.de>
+ * Copyright (c) 2008 GeNUA mbH <info@genua.de>
  *
  * All rights reserved.
  *
@@ -25,10 +25,33 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <wx/icon.h>
+
+#include "main.h"
+#include "ModAlf.h"
 #include "ModAlfOverviewPanelImpl.h"
+
 
 ModAlfOverviewPanelImpl::ModAlfOverviewPanelImpl(wxWindow* parent,
     wxWindowID id) : ModAlfOverviewPanelBase(parent, id)
 {
+	stateIconNormal_ = wxGetApp().loadIcon(_T("ModALFOk.png"));
+}
 
+ModAlfOverviewPanelImpl::~ModAlfOverviewPanelImpl(void)
+{
+	delete stateIconNormal_;
+}
+
+void
+ModAlfOverviewPanelImpl::update(void)
+{
+	ModAlf		*module;
+	wxString	state;
+	
+	module = (ModAlf *)(wxGetApp().getModule(ALF));
+	state.Printf(_T("%s"), module->getState().c_str());
+	txt_statusValue->SetLabel(state);
+
+	alfStatusIcon->SetIcon(*stateIconNormal_);
 }

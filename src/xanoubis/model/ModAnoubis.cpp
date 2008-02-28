@@ -103,6 +103,11 @@ ModAnoubis::getToolbarId(void)
 }
 
 void
+ModAnoubis::update(void)
+{
+}
+
+void
 ModAnoubis::insertNotification(NotifyListEntry *newNotify)
 {
 	allList_.Append(newNotify);

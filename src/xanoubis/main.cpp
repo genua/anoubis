@@ -99,6 +99,11 @@ bool AnoubisGuiApp::OnInit()
 	((ModOverview*)modules_[OVERVIEW])->addModules(modules_);
 	mainFrame->addModules(modules_);
 
+	// XXX ST: The following should be considered as a hack to update the
+	//         state of Module ALF by calling the update()-method.
+	//         Eventually the actual call has to be triggered by an event.
+	((ModAlf*)modules_[ALF])->update();
+
 	return (true);
 }
 
