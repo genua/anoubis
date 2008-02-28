@@ -92,6 +92,8 @@ policy_main(struct anoubisd_config *conf, int pipe_m2s[2], int pipe_m2p[2],
 		return (pid);
 	}
 
+	anoubisd_process = PROC_POLICY;
+
 	if ((pw = getpwnam(ANOUBISD_USER)) == NULL)
 		fatal("getpwnam");
 
@@ -103,7 +105,6 @@ policy_main(struct anoubisd_config *conf, int pipe_m2s[2], int pipe_m2p[2],
 #ifdef OPENBSD
 	setproctitle("policy engine");
 #endif
-	anoubisd_process = PROC_POLICY;
 
 	if (setgroups(1, &pw->pw_gid) ||
 	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||

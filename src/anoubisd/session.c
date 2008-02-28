@@ -209,6 +209,8 @@ session_main(struct anoubisd_config *conf, int pipe_m2s[2], int pipe_m2p[2],
 		return (pid);
 	}
 
+	anoubisd_process = PROC_SESSION;
+
 	/* while still privileged we install a listening socket */
 	session_setupuds(&seg);
 
@@ -223,7 +225,6 @@ session_main(struct anoubisd_config *conf, int pipe_m2s[2], int pipe_m2p[2],
 #ifdef OPENBSD
 	setproctitle("session engine");
 #endif
-	anoubisd_process = PROC_SESSION;
 
 	if (setgroups(1, &pw->pw_gid) ||
 	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||

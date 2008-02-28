@@ -87,6 +87,7 @@ static TAILQ_HEAD(head_m2dev, anoubisd_event_out) eventq_m2dev =
 
 struct event_info_main {
 	struct event	*ev_m2s, *ev_m2p, *ev_m2dev;
+	struct event	*ev_s2m, *ev_p2m;
 };
 
 /*
@@ -256,20 +257,25 @@ main(int argc, char *argv[])
 	}
 	close(eventfds[1]);
 
+	/* session process */
 	event_set(&ev_m2s, pipe_m2s[0], EV_WRITE, dispatch_m2s,
 	    &ev_info);
 
+	ev_info.ev_s2m = &ev_s2m;
 	event_set(&ev_s2m, pipe_m2s[0], EV_READ | EV_PERSIST, dispatch_s2m,
 	    &ev_info);
 	event_add(&ev_s2m, NULL);
 
+	/* policy process */
 	event_set(&ev_m2p, pipe_m2p[0], EV_WRITE, dispatch_m2p,
 	    &ev_info);
 
+	ev_info.ev_p2m = &ev_p2m;
 	event_set(&ev_p2m, pipe_m2p[0], EV_READ | EV_PERSIST, dispatch_p2m,
 	    &ev_info);
 	event_add(&ev_p2m, NULL);
 
+	/* event device */
 	event_set(&ev_dev2m, eventfds[0], EV_READ | EV_PERSIST, dispatch_dev2m,
 	    &ev_info);
 	event_add(&ev_dev2m, NULL);
@@ -416,6 +422,25 @@ dispatch_m2s(int fd, short event, void *arg)
 static void
 dispatch_s2m(int fd, short event, void *arg)
 {
+	struct event_info_main *ev_info = (struct event_info_main*)arg;
+	char buf[100];
+	int len;
+
+	/*
+	 * XXX HJH for now just make sure we can get an EOF and don't
+	 * XXX HJH bother about short reads for now.
+	 */
+	len = read(fd, buf, sizeof(buf));
+	if (len == -1) {
+		log_warn("read error");
+		return;
+	}
+	if (len == 0) {
+		event_del(ev_info->ev_s2m);
+		event_loopexit(NULL);
+		return;
+	}
+	
 	/* XXX MG: Todo */
 }
 
@@ -469,7 +494,11 @@ dispatch_p2m(int fd, short event, void *arg)
 		log_warn("read error");
 		return;
 	}
-
+	if (len == 0) {
+		event_del(ev_info->ev_p2m);
+		event_loopexit(NULL);
+		return;
+	}
 	if (len < sizeof(struct anoubisd_event_out)) {
 		log_warn("short read");
 		return;
