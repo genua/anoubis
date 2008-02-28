@@ -28,6 +28,22 @@
 #include "main.h"
 #include "ModAnoubis.h"
 #include "ModAnoubisMainPanelImpl.h"
+#include "NotifyList.h"
+#include "NotifyAnswer.h"
+
+#define SHOWSLOT(slotNo,field,value) \
+	do { \
+		tx_fieldSlot##slotNo->Show(); \
+		tx_fieldSlot##slotNo->SetLabel(field); \
+		tx_valueSlot##slotNo->Show(); \
+		tx_valueSlot##slotNo->SetLabel(value); \
+	} while (0)
+
+#define HIDESLOT(slotNo) \
+	do { \
+		tx_fieldSlot##slotNo->Hide(); \
+		tx_valueSlot##slotNo->Hide(); \
+	} while (0)
 
 ModAnoubisMainPanelImpl::ModAnoubisMainPanelImpl(wxWindow* parent,
     wxWindowID id) : ModAnoubisMainPanelBase(parent, id)
@@ -49,8 +65,9 @@ ModAnoubisMainPanelImpl::update(void)
 	elementNo = 0;
 
 	if (maxElementNo > 0) {
-		if (currentNotify_ == NULL)
+		if (currentNotify_ == NULL) {
 			currentNotify_ = module->getFirst(list_);
+		}
 		elementNo = module->getElementNo(list_);
 	}
 
@@ -83,8 +100,14 @@ ModAnoubisMainPanelImpl::update(void)
 	}
 
 	if (currentNotify_ != NULL) {
-		s.Printf(_T("%d"), currentNotify_->id);
-		tx_idValue->SetLabel(s);
+		s.Printf(_T("%d"), currentNotify_->getId());
+		SHOWSLOT(1,wxT("Id:"),s);
+		SHOWSLOT(2,wxT("Modul:"),currentNotify_->getModule());
+		HIDESLOT(3);
+	} else {
+		HIDESLOT(1);
+		HIDESLOT(2);
+		HIDESLOT(3);
 	}
 
 	if ((currentNotify_ != NULL) &&
@@ -96,8 +119,8 @@ ModAnoubisMainPanelImpl::update(void)
 	    currentNotify_->isAnswerAble() &&
 	    currentNotify_->isAnswered()     ) {
 		pn_question->Hide();
-		s.Printf(_T("Nachricht wurde beantwortet mit ..."));
-		tx_answerValue->SetLabel(s);
+		tx_answerValue->SetLabel(
+		    currentNotify_->getAnswer()->getAnswer());
 		tx_answerValue->Show();
 	} else {
 		pn_question->Hide();
@@ -176,23 +199,41 @@ ModAnoubisMainPanelImpl::OnLastBtnClick(wxCommandEvent& event)
 }
 
 void
-ModAnoubisMainPanelImpl::OnAllowBtnClick(wxCommandEvent& event)
+ModAnoubisMainPanelImpl::answer(bool allow)
 {
-	ModAnoubis *module;
+	ModAnoubis	*module;
+	NotifyAnswer	*answer;
 
 	module = (ModAnoubis *)(wxGetApp().getModule(ANOUBIS));
-	module->answerNotification(currentNotify_);
+
+	if (rb_number->GetValue()) {
+		answer = new NotifyAnswer(NOTIFY_ANSWER_COUNT, allow,
+		    sc_number->GetValue());
+	} else if (rb_procend->GetValue()) {
+		answer = new NotifyAnswer(NOTIFY_ANSWER_PROCEND, allow);
+	} else if (rb_time->GetValue()) {
+		answer = new NotifyAnswer(NOTIFY_ANSWER_TIME, allow,
+		    sc_time->GetValue(),
+		    (enum timeUnit)ch_time->GetCurrentSelection());
+	} else if (rb_always->GetValue()) {
+		answer = new NotifyAnswer(NOTIFY_ANSWER_FOREVER, allow);
+	} else {
+		answer = new NotifyAnswer(NOTIFY_ANSWER_NONE, allow);
+	}
+
+	module->answerNotification(currentNotify_, answer);
 	currentNotify_ = NULL;
 	update();
 }
 
 void
+ModAnoubisMainPanelImpl::OnAllowBtnClick(wxCommandEvent& event)
+{
+	answer(true);
+}
+
+void
 ModAnoubisMainPanelImpl::OnDenyBtnClick(wxCommandEvent& event)
 {
-	ModAnoubis *module;
-
-	module = (ModAnoubis *)(wxGetApp().getModule(ANOUBIS));
-	module->answerNotification(currentNotify_);
-	currentNotify_ = NULL;
-	update();
+	answer(false);
 }

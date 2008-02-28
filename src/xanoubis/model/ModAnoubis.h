@@ -30,6 +30,7 @@
 
 #include "Module.h"
 #include "NotifyList.h"
+#include "NotifyAnswer.h"
 
 enum ModAnoubisId {
 	MODANOUBIS_ID_BASE = 13000,
@@ -57,10 +58,11 @@ class ModAnoubis : public Module
 		int	getBaseId(void);
 		int	getToolbarId(void);
 
-		void		 insertNotification(NotifyListEntry *);
-		void		 answerNotification(NotifyListEntry *);
-		size_t		 getElementNo(enum notifyListTypes);
-		size_t		 getListSize(enum notifyListTypes);
+		void	insertNotification(NotifyListEntry *);
+		void	answerNotification(NotifyListEntry *, NotifyAnswer *);
+		size_t	getElementNo(enum notifyListTypes);
+		size_t	getListSize(enum notifyListTypes);
+
 		NotifyListEntry *getFirst(enum notifyListTypes);
 		NotifyListEntry *getPrevious(enum notifyListTypes);
 		NotifyListEntry *getNext(enum notifyListTypes);

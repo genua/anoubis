@@ -44,7 +44,7 @@
 #include <wx/sizer.h>
 #include <wx/button.h>
 #include <wx/radiobut.h>
-#include <wx/textctrl.h>
+#include <wx/spinctrl.h>
 #include <wx/panel.h>
 
 ///////////////////////////////////////////////////////////////////////////
@@ -71,26 +71,28 @@ class ModAnoubisMainPanelBase : public wxPanel
 		wxButton* bt_next;
 		wxButton* bt_last;
 		
-		wxStaticText* tx_id;
-		wxStaticText* tx_idValue;
+		wxStaticText* tx_fieldSlot1;
+		wxStaticText* tx_valueSlot1;
+		wxStaticText* tx_fieldSlot2;
+		wxStaticText* tx_valueSlot2;
+		wxStaticText* tx_fieldSlot3;
+		wxStaticText* tx_valueSlot3;
 		wxStaticText* tx_answerValue;
 		wxPanel* pn_question;
 		wxStaticText* tx_question;
 		wxRadioButton* rb_number;
-		wxTextCtrl* tc_number;
+		wxSpinCtrl* sc_number;
 		
 		
 		wxRadioButton* rb_procend;
 		
 		
 		wxRadioButton* rb_time;
-		wxStaticText* tx_time;
-		wxTextCtrl* tc_time;
+		wxSpinCtrl* sc_time;
 		wxChoice* ch_time;
-		
+		wxButton* bt_allow;
 		
 		wxRadioButton* rb_always;
-		wxButton* bt_allow;
 		wxButton* bt_deny;
 		
 		// Virtual event handlers, overide them in your derived class

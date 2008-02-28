@@ -38,6 +38,7 @@ class ModAnoubisMainPanelImpl : public ModAnoubisMainPanelBase
 		NotifyListEntry		*currentNotify_;
 
 		void			 update(void);
+		void			 answer(bool);
 
 	protected:
 		void OnTypeChoosen(wxCommandEvent& event);

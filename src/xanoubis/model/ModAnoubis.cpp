@@ -114,12 +114,12 @@ ModAnoubis::insertNotification(NotifyListEntry *newNotify)
 }
 
 void
-ModAnoubis::answerNotification(NotifyListEntry *notify)
+ModAnoubis::answerNotification(NotifyListEntry *notify, NotifyAnswer *answer)
 {
 	if ((notify != NULL) && notify->isAnswerAble()) {
 		notAnsweredList_.DeleteObject(notify);
 		answeredList_.Append(notify);
-		notify->answer();
+		notify->answer(answer);
 		wxGetApp().updateTrayIcon();
 	}
 }

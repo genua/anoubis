@@ -25,61 +25,40 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "main.h"
-#include "NotifyList.h"
-#include "NotifyAnswer.h"
+#ifndef _NOTIFYANSWER_H_
+#define _NOTIFYANSWER_H_
 
-#include <wx/listimpl.cpp>
-WX_DEFINE_LIST(NotifyList);
+#include <wx/string.h>
 
-NotifyListEntry::NotifyListEntry(bool isAnswerAble)
-{
-	isAnswered_ = false;
-	isAnswerAble_ = isAnswerAble;
-}
+enum notifyAnswerType {
+	NOTIFY_ANSWER_NONE = 0,
+	NOTIFY_ANSWER_COUNT,
+	NOTIFY_ANSWER_PROCEND,
+	NOTIFY_ANSWER_TIME,
+	NOTIFY_ANSWER_FOREVER
+};
 
-NotifyListEntry::NotifyListEntry(unsigned int id, wxString module,
-    bool isAnswerAble)
-{
-	isAnswered_ = false;
-	isAnswerAble_ = isAnswerAble;
-	id_ = id;
-	module_ = module;
-}
+enum timeUnit {
+	TIMEUNIT_SECOND = 0,
+	TIMEUNIT_MINUTE,
+	TIMEUNIT_HOUR,
+	TIMEUNIT_DAY
+};
 
-bool
-NotifyListEntry::isAnswered(void)
-{
-	return (isAnswered_);
-}
+class NotifyAnswer {
+	private:
+		enum notifyAnswerType	type_;
+		bool			wasAllowed_;
+		int			count_;
+		int			timeValue_;
+		enum timeUnit		timeUnit_;
 
-bool
-NotifyListEntry::isAnswerAble(void)
-{
-	return (isAnswerAble_);
-}
+	public:
+		NotifyAnswer(enum notifyAnswerType, bool);
+		NotifyAnswer(enum notifyAnswerType, bool, int);
+		NotifyAnswer(enum notifyAnswerType, bool, int, enum timeUnit);
 
-void
-NotifyListEntry::answer(NotifyAnswer *answer)
-{
-	isAnswered_ = true;
-	answer_ = answer;
-}
+		wxString getAnswer(void);
+};
 
-unsigned int
-NotifyListEntry::getId(void)
-{
-	return (id_);
-}
-
-wxString
-NotifyListEntry::getModule(void)
-{
-	return (module_);
-}
-
-NotifyAnswer *
-NotifyListEntry::getAnswer(void)
-{
-	return (answer_);
-}
+#endif	/* _NOTIFYANSWER_H_ */

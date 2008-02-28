@@ -30,6 +30,9 @@
 
 #include <wx/list.h>
 
+#include "main.h"
+#include "NotifyAnswer.h"
+
 enum notifyListTypes {
 	NOTIFY_LIST_NONE = 0,
 	NOTIFY_LIST_NOTANSWERED,
@@ -42,16 +45,21 @@ class NotifyListEntry {
 	private:
 		bool	isAnswered_;
 		bool	isAnswerAble_;
+		unsigned int	id_;
+		wxString	module_;
+		NotifyAnswer	*answer_;
 
 	public:
-		/* XXX CH: remove this if proper obj layout is available */
-		int	id;
-
 		NotifyListEntry(bool);
+		NotifyListEntry(unsigned int, wxString, bool);
 
 		bool	isAnswered(void);
 		bool	isAnswerAble(void);
-		void	answer(void);
+		void	answer(NotifyAnswer *);
+
+		unsigned int	 getId(void);
+		wxString	 getModule(void);
+		NotifyAnswer    *getAnswer(void);
 };
 
 WX_DECLARE_LIST(NotifyListEntry, NotifyList);

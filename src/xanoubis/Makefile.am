@@ -67,6 +67,8 @@ xanoubis_SOURCES= \
 	model/Module.h \
 	model/NotifyList.cpp \
 	model/NotifyList.h \
+	model/NotifyAnswer.cpp \
+	model/NotifyAnswer.h \
 	view/AnStatusBar.cpp \
 	view/AnStatusBar.h \
 	view/DlgLogViewerBase.cpp \
@@ -127,7 +129,9 @@ xanoubis_SOURCES_flawfinder= \
 	model/Module.cpp_flawfinder \
 	model/Module.h_flawfinder \
 	model/NotifyList.cpp_flawfinder \
-	model/NotifyList.h_flawdinder \
+	model/NotifyList.h_flawfinder \
+	model/NotifyAnswer.cpp_flawfinder \
+	model/NotifyAnswer.h_flawfinder \
 	view/AnStatusBar.cpp_flawfinder \
 	view/AnStatusBar.h_flawfinder \
 	view/DlgLogViewerBase.cpp_flawfinder \
@@ -189,6 +193,8 @@ xanoubis_SOURCES_lint= \
 	model/Module.h_lint \
 	model/NotifyList.cpp_lint \
 	model/NotifyList.h_lint \
+	model/NotifyAnswer.cpp_lint \
+	model/NotifyAnswer.h_lint \
 	view/AnStatusBar.cpp_lint \
 	view/AnStatusBar.h_lint \
 	view/DlgLogViewerBase.cpp_lint \
@@ -250,6 +256,8 @@ xanoubis_SOURCES_splint= \
 	model/Module.h_splint \
 	model/NotifyList.cpp_splint \
 	model/NotifyList.h_splint \
+	model/NotifyAnswer.cpp_splint \
+	model/NotifyAnswer.h_splint \
 	view/AnStatusBar.cpp_splint \
 	view/AnStatusBar.h_splint \
 	view/DlgLogViewerBase.cpp_splint \
