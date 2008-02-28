@@ -40,21 +40,22 @@
 #include <wx/font.h>
 #include <wx/colour.h>
 #include <wx/settings.h>
+#include <wx/listctrl.h>
+#include <wx/sizer.h>
+#include <wx/statline.h>
 #include <wx/panel.h>
 #include <wx/bitmap.h>
 #include <wx/image.h>
-#include <wx/sizer.h>
-#include <wx/statbox.h>
-#include <wx/statline.h>
 #include <wx/listbox.h>
 #include <wx/radiobut.h>
+#include <wx/treectrl.h>
 #include <wx/notebook.h>
 
 ///////////////////////////////////////////////////////////////////////////
 
 #define wxID_RulesOperationSep 7500
-#define wxID_GroupingContex 7501
-#define wxID_GroupingProg 7502
+#define wxID_GroupingProg 7501
+#define wxID_GroupingContex 7502
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Class ModAlfMainPanelBase
@@ -67,23 +68,27 @@ class ModAlfMainPanelBase : public wxPanel
 		wxBoxSizer* sz_MainALFMain;
 		wxStaticText* tx_MainHeadline;
 		wxNotebook* note_MainAlf;
-		wxPanel* pan_TabOptions;
 		wxPanel* pan_Rules;
+		wxListCtrl* lst_Rules;
 		wxStaticText* tx_RulesOperation1stHeader;
 		wxStaticLine* ln_RulesOperationSep;
 		wxStaticText* tx_RulesOperation2ndHeader;
 		wxPanel* pan_TabAppView;
 		wxStaticText* tx_AppSelHeader1;
 		wxListBox* lst_AppSelApplications1;
-		wxStaticText* tx_AppContextHeader1;
-		wxStaticText* tx_AppGroupChoice1;
-		wxRadioButton* rad_GroupChoiceOne1;
-		wxRadioButton* rad_GroupChoiceTwo1;
 		wxStaticLine* ln_GroupChoiceSepLine1;
 		wxStaticText* tx_AppGroupInfo1;
+		wxStaticLine* ln_AppViewVertSep;
+		wxStaticText* tx_AppGroupHeader;
+		
+		wxStaticText* tx_AppGroupChoice1;
+		wxRadioButton* rad_GroupChoiceTwo1;
+		wxRadioButton* rad_GroupChoiceOne1;
+		wxTreeCtrl* tr_AV_Rules;
+		wxPanel* pan_TabOptions;
 	
 	public:
-		ModAlfMainPanelBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( -1,-1 ), long style = wxTAB_TRAVERSAL );
+		ModAlfMainPanelBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 1067,-1 ), long style = wxTAB_TRAVERSAL );
 	
 };
 

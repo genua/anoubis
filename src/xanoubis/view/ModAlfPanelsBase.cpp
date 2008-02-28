@@ -46,8 +46,6 @@ ModAlfMainPanelBase::ModAlfMainPanelBase( wxWindow* parent, wxWindowID id, const
 	sz_MainALFMain->Add( tx_MainHeadline, 0, wxALL|wxALIGN_CENTER_HORIZONTAL, 5 );
 	
 	note_MainAlf = new wxNotebook( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0 );
-	pan_TabOptions = new wxPanel( note_MainAlf, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
-	note_MainAlf->AddPage( pan_TabOptions, _("Options"), false );
 	pan_Rules = new wxPanel( note_MainAlf, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
 	wxBoxSizer* sz_AlfRules;
 	sz_AlfRules = new wxBoxSizer( wxHORIZONTAL );
@@ -58,26 +56,29 @@ ModAlfMainPanelBase::ModAlfMainPanelBase( wxWindow* parent, wxWindowID id, const
 	wxBoxSizer* sz_RulesWE;
 	sz_RulesWE = new wxBoxSizer( wxHORIZONTAL );
 	
-	wxStaticBoxSizer* sbSizer2;
-	sbSizer2 = new wxStaticBoxSizer( new wxStaticBox( pan_Rules, -1, _("PLACEHOLDER_RULE_WIDGET") ), wxVERTICAL );
+	wxBoxSizer* sz_Rules;
+	sz_Rules = new wxBoxSizer( wxVERTICAL );
 	
-	sz_RulesWE->Add( sbSizer2, 1, wxEXPAND, 5 );
+	lst_Rules = new wxListCtrl( pan_Rules, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLC_ICON );
+	sz_Rules->Add( lst_Rules, 1, wxALL|wxEXPAND, 5 );
 	
-	wxBoxSizer* sz_RulesOperation;
-	sz_RulesOperation = new wxBoxSizer( wxVERTICAL );
+	sz_RulesWE->Add( sz_Rules, 66, wxEXPAND, 5 );
+	
+	wxBoxSizer* sz_RulesOperations;
+	sz_RulesOperations = new wxBoxSizer( wxVERTICAL );
 	
 	tx_RulesOperation1stHeader = new wxStaticText( pan_Rules, wxID_ANY, _("Rule:"), wxDefaultPosition, wxDefaultSize, 0 );
 	tx_RulesOperation1stHeader->Wrap( -1 );
-	sz_RulesOperation->Add( tx_RulesOperation1stHeader, 0, wxALL, 5 );
+	sz_RulesOperations->Add( tx_RulesOperation1stHeader, 0, wxALL, 5 );
 	
 	ln_RulesOperationSep = new wxStaticLine( pan_Rules, wxID_RulesOperationSep, wxDefaultPosition, wxDefaultSize, wxLI_HORIZONTAL );
-	sz_RulesOperation->Add( ln_RulesOperationSep, 0, wxEXPAND | wxALL, 5 );
+	sz_RulesOperations->Add( ln_RulesOperationSep, 0, wxEXPAND | wxALL, 5 );
 	
 	tx_RulesOperation2ndHeader = new wxStaticText( pan_Rules, wxID_ANY, _("Information:"), wxDefaultPosition, wxDefaultSize, 0 );
 	tx_RulesOperation2ndHeader->Wrap( -1 );
-	sz_RulesOperation->Add( tx_RulesOperation2ndHeader, 0, wxALL, 5 );
+	sz_RulesOperations->Add( tx_RulesOperation2ndHeader, 0, wxALL, 5 );
 	
-	sz_RulesWE->Add( sz_RulesOperation, 1, wxEXPAND, 5 );
+	sz_RulesWE->Add( sz_RulesOperations, 34, wxEXPAND, 5 );
 	
 	sz_RulesNS->Add( sz_RulesWE, 1, wxEXPAND, 5 );
 	
@@ -87,79 +88,96 @@ ModAlfMainPanelBase::ModAlfMainPanelBase( wxWindow* parent, wxWindowID id, const
 	pan_Rules->Layout();
 	sz_AlfRules->Fit( pan_Rules );
 	note_MainAlf->AddPage( pan_Rules, _("Rules"), false );
-	pan_TabAppView = new wxPanel( note_MainAlf, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
-	wxBoxSizer* sz_AlfAppView1;
-	sz_AlfAppView1 = new wxBoxSizer( wxHORIZONTAL );
+	pan_TabAppView = new wxPanel( note_MainAlf, wxID_ANY, wxDefaultPosition, wxSize( -1,-1 ), wxTAB_TRAVERSAL );
+	wxBoxSizer* sz_AlfAppView;
+	sz_AlfAppView = new wxBoxSizer( wxHORIZONTAL );
 	
-	wxBoxSizer* sz_AppSel1;
-	sz_AppSel1 = new wxBoxSizer( wxVERTICAL );
+	wxBoxSizer* sz_AppViewWest;
+	sz_AppViewWest = new wxBoxSizer( wxVERTICAL );
+	
+	wxBoxSizer* sz_AppSelNorth;
+	sz_AppSelNorth = new wxBoxSizer( wxVERTICAL );
 	
 	tx_AppSelHeader1 = new wxStaticText( pan_TabAppView, wxID_ANY, _("Application:"), wxDefaultPosition, wxDefaultSize, 0 );
 	tx_AppSelHeader1->Wrap( -1 );
-	sz_AppSel1->Add( tx_AppSelHeader1, 0, wxALL, 5 );
+	sz_AppSelNorth->Add( tx_AppSelHeader1, 0, wxALL, 5 );
 	
-	lst_AppSelApplications1 = new wxListBox( pan_TabAppView, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0, NULL, 0 );
-	lst_AppSelApplications1->Append( _("gvim") );
-	lst_AppSelApplications1->Append( _("firefox") );
-	lst_AppSelApplications1->Append( _("thunderbird") );
-	lst_AppSelApplications1->Append( _("irc") );
-	lst_AppSelApplications1->Append( _("ssh") );
-	sz_AppSel1->Add( lst_AppSelApplications1, 0, wxALL, 5 );
+	lst_AppSelApplications1 = new wxListBox( pan_TabAppView, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0, NULL, 0 ); 
+	sz_AppSelNorth->Add( lst_AppSelApplications1, 1, wxALL|wxEXPAND, 5 );
 	
-	sz_AlfAppView1->Add( sz_AppSel1, 1, wxEXPAND, 5 );
+	sz_AppViewWest->Add( sz_AppSelNorth, 66, wxEXPAND, 5 );
 	
-	wxBoxSizer* sz_AppContext1;
-	sz_AppContext1 = new wxBoxSizer( wxVERTICAL );
+	wxBoxSizer* sz_AppSelSouth;
+	sz_AppSelSouth = new wxBoxSizer( wxVERTICAL );
 	
-	tx_AppContextHeader1 = new wxStaticText( pan_TabAppView, wxID_ANY, _("Context/Program:"), wxDefaultPosition, wxDefaultSize, 0 );
-	tx_AppContextHeader1->Wrap( -1 );
-	sz_AppContext1->Add( tx_AppContextHeader1, 0, wxALL, 5 );
-	
-	wxStaticBoxSizer* sbSizer11;
-	sbSizer11 = new wxStaticBoxSizer( new wxStaticBox( pan_TabAppView, -1, _("PLACEHOLDER") ), wxVERTICAL );
-	
-	sbSizer11->SetMinSize( wxSize( 180,260 ) ); 
-	sz_AppContext1->Add( sbSizer11, 1, wxEXPAND, 5 );
-	
-	sz_AlfAppView1->Add( sz_AppContext1, 1, wxEXPAND, 5 );
-	
-	wxBoxSizer* sz_AppGroup1;
-	sz_AppGroup1 = new wxBoxSizer( wxVERTICAL );
-	
-	wxBoxSizer* sz_AppGroupVert1;
-	sz_AppGroupVert1 = new wxBoxSizer( wxVERTICAL );
-	
-	tx_AppGroupChoice1 = new wxStaticText( pan_TabAppView, wxID_ANY, _("Grouping:"), wxDefaultPosition, wxDefaultSize, 0 );
-	tx_AppGroupChoice1->Wrap( -1 );
-	sz_AppGroupVert1->Add( tx_AppGroupChoice1, 0, wxALL, 5 );
-	
-	rad_GroupChoiceOne1 = new wxRadioButton( pan_TabAppView, wxID_GroupingContex, _("Context"), wxDefaultPosition, wxDefaultSize, 0 );
-	sz_AppGroupVert1->Add( rad_GroupChoiceOne1, 0, wxALL, 5 );
-	
-	rad_GroupChoiceTwo1 = new wxRadioButton( pan_TabAppView, wxID_GroupingProg, _("Program"), wxDefaultPosition, wxDefaultSize, 0 );
-	sz_AppGroupVert1->Add( rad_GroupChoiceTwo1, 0, wxALL, 5 );
-	
-	ln_GroupChoiceSepLine1 = new wxStaticLine( pan_TabAppView, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLI_HORIZONTAL );
-	sz_AppGroupVert1->Add( ln_GroupChoiceSepLine1, 0, wxEXPAND | wxALL, 5 );
+	ln_GroupChoiceSepLine1 = new wxStaticLine( pan_TabAppView, wxID_ANY, wxPoint( -1,-1 ), wxDefaultSize, wxLI_HORIZONTAL );
+	sz_AppSelSouth->Add( ln_GroupChoiceSepLine1, 0, wxEXPAND | wxALL, 5 );
 	
 	tx_AppGroupInfo1 = new wxStaticText( pan_TabAppView, wxID_ANY, _("Information:"), wxDefaultPosition, wxDefaultSize, 0 );
 	tx_AppGroupInfo1->Wrap( -1 );
-	sz_AppGroupVert1->Add( tx_AppGroupInfo1, 0, wxALL, 5 );
+	tx_AppGroupInfo1->Enable( false );
 	
-	sz_AppGroup1->Add( sz_AppGroupVert1, 1, wxEXPAND, 5 );
+	sz_AppSelSouth->Add( tx_AppGroupInfo1, 0, wxALL|wxEXPAND, 5 );
 	
-	sz_AlfAppView1->Add( sz_AppGroup1, 1, wxEXPAND, 5 );
+	sz_AppViewWest->Add( sz_AppSelSouth, 34, wxEXPAND, 5 );
 	
-	pan_TabAppView->SetSizer( sz_AlfAppView1 );
+	sz_AlfAppView->Add( sz_AppViewWest, 34, wxEXPAND, 5 );
+	
+	ln_AppViewVertSep = new wxStaticLine( pan_TabAppView, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLI_HORIZONTAL|wxLI_VERTICAL );
+	sz_AlfAppView->Add( ln_AppViewVertSep, 0, wxEXPAND | wxALL, 5 );
+	
+	wxBoxSizer* sz_AppViewEast;
+	sz_AppViewEast = new wxBoxSizer( wxHORIZONTAL );
+	
+	wxBoxSizer* sz_AppViewRulesEast;
+	sz_AppViewRulesEast = new wxBoxSizer( wxVERTICAL );
+	
+	wxBoxSizer* sz_AVEastHeader;
+	sz_AVEastHeader = new wxBoxSizer( wxHORIZONTAL );
+	
+	tx_AppGroupHeader = new wxStaticText( pan_TabAppView, wxID_ANY, _("Rules (Application)"), wxDefaultPosition, wxDefaultSize, 0 );
+	tx_AppGroupHeader->Wrap( -1 );
+	sz_AVEastHeader->Add( tx_AppGroupHeader, 1, wxALL|wxALIGN_CENTER_VERTICAL|wxEXPAND, 5 );
+	
+	
+	sz_AVEastHeader->Add( 1, 1, 0, wxALL, 5 );
+	
+	tx_AppGroupChoice1 = new wxStaticText( pan_TabAppView, wxID_ANY, _("Grouping:"), wxDefaultPosition, wxDefaultSize, wxALIGN_RIGHT );
+	tx_AppGroupChoice1->Wrap( -1 );
+	sz_AVEastHeader->Add( tx_AppGroupChoice1, 0, wxALIGN_RIGHT|wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	
+	rad_GroupChoiceTwo1 = new wxRadioButton( pan_TabAppView, wxID_GroupingProg, _("Program"), wxDefaultPosition, wxDefaultSize, 0 );
+	sz_AVEastHeader->Add( rad_GroupChoiceTwo1, 0, wxALL, 5 );
+	
+	rad_GroupChoiceOne1 = new wxRadioButton( pan_TabAppView, wxID_GroupingContex, _("Context"), wxDefaultPosition, wxDefaultSize, 0 );
+	sz_AVEastHeader->Add( rad_GroupChoiceOne1, 0, wxALL, 5 );
+	
+	sz_AppViewRulesEast->Add( sz_AVEastHeader, 0, wxEXPAND, 5 );
+	
+	wxBoxSizer* sz_AVEastFooter;
+	sz_AVEastFooter = new wxBoxSizer( wxVERTICAL );
+	
+	sz_AVEastFooter->SetMinSize( wxSize( -1,200 ) ); 
+	tr_AV_Rules = new wxTreeCtrl( pan_TabAppView, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTR_DEFAULT_STYLE );
+	sz_AVEastFooter->Add( tr_AV_Rules, 1, wxALL|wxEXPAND, 5 );
+	
+	sz_AppViewRulesEast->Add( sz_AVEastFooter, 0, wxEXPAND, 5 );
+	
+	sz_AppViewEast->Add( sz_AppViewRulesEast, 1, 0, 5 );
+	
+	sz_AlfAppView->Add( sz_AppViewEast, 66, 0, 5 );
+	
+	pan_TabAppView->SetSizer( sz_AlfAppView );
 	pan_TabAppView->Layout();
-	sz_AlfAppView1->Fit( pan_TabAppView );
+	sz_AlfAppView->Fit( pan_TabAppView );
 	note_MainAlf->AddPage( pan_TabAppView, _("Application View"), true );
+	pan_TabOptions = new wxPanel( note_MainAlf, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	note_MainAlf->AddPage( pan_TabOptions, _("Options"), false );
 	
 	sz_MainALFMain->Add( note_MainAlf, 1, wxEXPAND | wxALL, 5 );
 	
 	this->SetSizer( sz_MainALFMain );
 	this->Layout();
-	sz_MainALFMain->Fit( this );
 }
 
 ModAlfOverviewPanelBase::ModAlfOverviewPanelBase( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size, long style ) : wxPanel( parent, id, pos, size, style )
