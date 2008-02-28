@@ -48,8 +48,10 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "anoubischat.h"
-#include "anoubisd.h"
+#include <anoubischat.h>
+#include <anoubisd.h>
+#include <anoubis_server.h>
+#include <anoubis_msg.h>
 
 struct event_info_session {
 	struct event	*ev_s2m, *ev_s2p;
@@ -60,6 +62,7 @@ struct session {
 	int			 id;	/* session number */
 	uid_t			 uid;	/* user id; not authenticated on -1 */
 	struct achat_channel	*channel;	/* communication channel */
+	struct anoubis_server	*proto;		/* Server protocol handler */
 	struct event		 ev_data;	/* event for receiving data */
 	LIST_ENTRY(session)	 nextSession;	/* linked list element */
 };
@@ -119,6 +122,19 @@ session_connect(int fd, short event, void *arg)
 		free((void *)session);
 		return;
 	}
+	session->proto = anoubis_server_create(session->channel);
+	if (session->proto == NULL) {
+		log_warn("cannot create server protocol handler");
+		acc_close(session->channel);
+		acc_destroy(session->channel);
+		free(session);
+		return;
+	}
+	if (anoubis_server_start(session->proto) < 0) {
+		log_warn("Failed to send initial hello");
+		session_destroy(session);
+		return;
+	}
 
 	event_set(&(session->ev_data), session->channel->connfd,
 	    EV_READ | EV_PERSIST, session_rxclient, session);
@@ -130,29 +146,42 @@ session_connect(int fd, short event, void *arg)
 static void
 session_rxclient(int fd, short event, void *arg)
 {
-	/* XXX CH:
-	 * this function is extremely experimental and considered
-	 * of been rewritten in a future change, when client and
-	 * server really start to communicate.
-	 */
-
 	struct session	*session;
-	char		 msg[13]; /* size depends on session testcase */
+	struct anoubis_msg * m = NULL;
 	achat_rc	 rc;
 	size_t		 size;
 
 	session = (struct session *)arg;
-
-	size = sizeof(msg);
-	rc = acc_receivemsg(session->channel, msg, &size);
-
+	m = anoubis_msg_new(1000 /* XXX */);
+	if(!m)
+		goto err;
+	size = m->length;
+	rc = acc_receivemsg(session->channel, m->u.buf, &size);
 	if (rc == ACHAT_RC_EOF) {
+		anoubis_msg_free(m);
 		session_destroy(session);
+		return;
 	}
-
-	/* XXX CH: msg and error handling missing here */
-	if (rc == ACHAT_RC_ERROR)
-		log_warn("session_rxclient: error reading client message");
+	if (rc != ACHAT_RC_OK)
+		goto err;
+	if (!session->proto)
+		goto err;
+	anoubis_msg_resize(m, size);
+	/*
+	 * Return codes: less than zero is an error. Zero means the no
+	 * error but message did not fit into protocol stream.
+	 */
+	if (anoubis_server_process(session->proto, m->u.buf, size) < 0)
+		goto err;
+	anoubis_msg_free(m);
+	if (anoubis_server_eof(session->proto))
+		session_destroy(session);
+	return;
+err:
+	if (m)
+		anoubis_msg_free(m);
+	session_destroy(session);
+	log_warn("session_rxclient: error reading client message");
 }
 
 pid_t
@@ -375,6 +404,10 @@ s2f_dispatch(int fd, short sig, void *arg)
 static void
 session_destroy(struct session *session)
 {
+	if (session->proto) {
+		anoubis_server_destroy(session->proto);
+		session->proto = NULL;
+	}
 	acc_destroy(session->channel);
 	event_del(&(session->ev_data));
 

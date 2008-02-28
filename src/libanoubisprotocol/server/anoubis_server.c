@@ -49,7 +49,6 @@ struct anoubis_server {
 	unsigned int connect_flags;
 	unsigned int auth_uid;
 	struct achat_channel * chan;
-	struct anoubis_msg * head, *tail;
 	struct anoubis_auth * auth;
 	struct anoubis_notify_group * notify;
 };
@@ -69,36 +68,7 @@ struct anoubis_server {
 #define FLAG_SENTCLOSEREQ		0x0200
 #define FLAG_GOTCLOSEACK		0x0400
 #define FLAG_SENTCLOSEACK		0x0800
-
-static void append_msg(struct anoubis_server * server, struct anoubis_msg * m)
-{
-	m->next = NULL;
-	if (!server->tail) {
-		server->head = server->tail = m;
-	} else {
-		server->tail->next = m;
-		server->tail = m;
-	}
-}
-
-static void prepend_msg(struct anoubis_server * server, struct anoubis_msg * m)
-{
-	m->next = server->head;
-	server->head = m;
-	if (!server->tail)
-		server->tail = m;
-}
-
-static struct anoubis_msg * get_msg(struct anoubis_server * server)
-{
-	struct anoubis_msg * m = server->head;
-	if (m) {
-		server->head = m->next;
-		if (!m->next)
-			server->tail = NULL;
-	}
-	return m;
-}
+#define FLAG_ERROR			0x1000
 
 struct anoubis_server * anoubis_server_create(struct achat_channel * chan)
 {
@@ -108,7 +78,6 @@ struct anoubis_server * anoubis_server_create(struct achat_channel * chan)
 	ret->proto = ANOUBIS_PROTO_CONNECT;
 	ret->connect_flags = 0;
 	ret->chan = chan;
-	ret->head = ret->tail = NULL;
 	ret->auth = NULL;
 	ret->auth_uid = (unsigned int) -1;
 	ret->notify = NULL;
@@ -117,49 +86,28 @@ struct anoubis_server * anoubis_server_create(struct achat_channel * chan)
 
 void anoubis_server_destroy(struct anoubis_server * server)
 {
-	struct anoubis_msg * m;
-	while((m = get_msg(server)))
-		anoubis_msg_free(m);
 	if (server->auth) {
 		anoubis_auth_destroy(server->auth);
 		server->auth = NULL;
 	}
+	if (server->notify) {
+		anoubis_notify_destroy(server->notify);
+		server->notify = NULL;
+	}
 	free(server);
 }
 
-/* Start communication by sending initial HELLO.*/
-int anoubis_server_start(struct anoubis_server * server)
+static int anoubis_server_send(struct anoubis_server * server,
+    struct anoubis_msg * m)
 {
-	struct anoubis_msg * m = anoubis_msg_new(sizeof(Anoubis_HelloMessage));
+	int ret;
 
-	assert(server->proto == ANOUBIS_PROTO_CONNECT);
-	assert((server->connect_flags & FLAG_HELLOSENT) == 0);
-	if (!m)
-		return -ENOMEM;
-	set_value(m->u.hello->type, ANOUBIS_C_HELLO);
-	set_value(m->u.hello->version, ANOUBIS_PROTO_VERSION);
-	set_value(m->u.hello->min_version, ANOUBIS_PROTO_MINVERSION);
-	append_msg(server, m);
-	server->connect_flags |= FLAG_HELLOSENT;
-	return anoubis_server_continue(server);
-}
-
-int anoubis_server_continue(struct anoubis_server * server)
-{
-	while (1) {
-		struct anoubis_msg * m = get_msg(server);
-		achat_rc ret;
-		if (!m)
-			break;
-		crc32_set(m->u.buf, m->length);
-		anoubis_dump(m, "Server send");
-		ret = acc_sendmsg(server->chan, m->u.buf, m->length);
-		if (ret != ACHAT_RC_OK) {
-			prepend_msg(server, m);
-			return 1;
-		}
-		anoubis_msg_free(m);
-	}
+	crc32_set(m->u.buf, m->length);
+	anoubis_dump(m, "Server send");
+	ret = acc_sendmsg(server->chan, m->u.buf, m->length);
+	anoubis_msg_free(m);
+	if (ret != ACHAT_RC_OK)
+		return -EIO;
 	/*
 	 * The connection is closing and we just sent the last pending packet.
 	 */
@@ -168,8 +116,10 @@ int anoubis_server_continue(struct anoubis_server * server)
 		struct anoubis_msg * m;
 		/* We sent the close ack, too. */
 		if (server->connect_flags & FLAG_SENTCLOSEACK) {
-			if (server->connect_flags & FLAG_GOTCLOSEACK)
+			if (server->connect_flags & FLAG_GOTCLOSEACK) {
+				acc_close(server->chan);
 				server->chan = NULL;	/* dead! */
+			}
 			return 0;
 		}
 		m = anoubis_msg_new(sizeof(Anoubis_GeneralMessage));
@@ -182,10 +132,29 @@ int anoubis_server_continue(struct anoubis_server * server)
 		}
 		set_value(m->u.general->type, ANOUBIS_C_CLOSEACK);
 		server->connect_flags |= FLAG_SENTCLOSEACK;
-		append_msg(server, m);
 		/* Recursive but at most once! */
-		return anoubis_server_continue(server);
+		return anoubis_server_send(server, m);
 	}
+	return 0;
+}
+
+/* Start communication by sending initial HELLO.*/
+int anoubis_server_start(struct anoubis_server * server)
+{
+	struct anoubis_msg * m = anoubis_msg_new(sizeof(Anoubis_HelloMessage));
+	int ret;
+
+	assert(server->proto == ANOUBIS_PROTO_CONNECT);
+	assert((server->connect_flags & FLAG_HELLOSENT) == 0);
+	if (!m)
+		return -ENOMEM;
+	set_value(m->u.hello->type, ANOUBIS_C_HELLO);
+	set_value(m->u.hello->version, ANOUBIS_PROTO_VERSION);
+	set_value(m->u.hello->min_version, ANOUBIS_PROTO_MINVERSION);
+	ret = anoubis_server_send(server, m);
+	if (ret < 0)
+		return ret;
+	server->connect_flags |= FLAG_HELLOSENT;
 	return 0;
 }
 
@@ -198,8 +167,7 @@ static int __reply(struct anoubis_server * server, anoubis_token_t token,
 	set_value(m->u.ack->error, error);
 	set_value(m->u.ack->opcode, opcode);
 	m->u.ack->token = token;
-	append_msg(server, m);
-	return anoubis_server_continue(server);
+	return anoubis_server_send(server, m);
 }
 
 static int reply_invalid(struct anoubis_server * server, int opcode)
@@ -281,8 +249,7 @@ static int anoubis_process_optreq(struct anoubis_server * server,
 	rep = anoubis_stringlist_msg(ANOUBIS_C_OPTACK, anoubis_options, opts);
 	if (!rep)
 		return -ENOMEM;
-	append_msg(server, rep);
-	return anoubis_server_continue(server);
+	return anoubis_server_send(server, rep);
 }
 
 static void anoubis_auth_finish_callback(void * data);
@@ -318,33 +285,36 @@ static int anoubis_process_authdata(struct anoubis_server * server,
 static void anoubis_auth_finish_callback(void * data)
 {
 	struct anoubis_server * server = data;
-	struct anoubis_msg * ret;
+	struct anoubis_msg * m;
+
 	/* More Messages necessary. */
 	if (server->auth->state == ANOUBIS_AUTH_SUCCESS) {
 		int len = 0;
 		if (server->auth->username)
 			len = strlen(server->auth->username);
-		ret = anoubis_msg_new(sizeof(Anoubis_AuthReplyMessage) + len);
-		set_value(ret->u.authreply->type, ANOUBIS_C_AUTHREPLY);
-		set_value(ret->u.authreply->error, ANOUBIS_E_OK);
-		set_value(ret->u.authreply->uid, server->auth->uid);
+		m = anoubis_msg_new(sizeof(Anoubis_AuthReplyMessage) + len);
+		set_value(m->u.authreply->type, ANOUBIS_C_AUTHREPLY);
+		set_value(m->u.authreply->error, ANOUBIS_E_OK);
+		set_value(m->u.authreply->uid, server->auth->uid);
 		if (len)
-			strncpy(ret->u.authreply->name,
+			strncpy(m->u.authreply->name,
 			    server->auth->username, len);
 		server->connect_flags |= FLAG_AUTH;
 		server->auth_uid = server->auth->uid;
 	} else {
 		assert(server->auth->state == ANOUBIS_AUTH_FAILURE);
-		ret = anoubis_msg_new(sizeof(Anoubis_AuthReplyMessage));
-		set_value(ret->u.authreply->type, ANOUBIS_C_AUTHREPLY);
-		set_value(ret->u.authreply->error, server->auth->error);
-		set_value(ret->u.authreply->uid, -1);
+		m = anoubis_msg_new(sizeof(Anoubis_AuthReplyMessage));
+		set_value(m->u.authreply->type, ANOUBIS_C_AUTHREPLY);
+		set_value(m->u.authreply->error, server->auth->error);
+		set_value(m->u.authreply->uid, -1);
 	}
 	anoubis_auth_destroy(server->auth);
 	server->auth = NULL;
-	append_msg(server, ret);
-	if (anoubis_server_continue(server) < 0)
+	if (anoubis_server_send(server, m) < 0) {
+		server->connect_flags |= FLAG_ERROR;
 		acc_close(server->chan);
+		server->chan = NULL;
+	}
 }
 
 static int anoubis_process_protosel(struct anoubis_server * server,
@@ -396,7 +366,8 @@ static int anoubis_process_protosel(struct anoubis_server * server,
 
 static int anoubis_process_closereq(struct anoubis_server * server, int opcode)
 {
-	struct anoubis_msg * ret;
+	struct anoubis_msg * m;
+	int ret;
 
 	/*
 	 * Treat CLOSEACK identical ot CLOSEREQ except that we also
@@ -417,13 +388,15 @@ static int anoubis_process_closereq(struct anoubis_server * server, int opcode)
 	/* If we already sent a CLOSEREQ we are done. */
 	if (server->connect_flags & FLAG_SENTCLOSEREQ)
 		return 0;
-	ret = anoubis_msg_new(sizeof(Anoubis_GeneralMessage));
-	if (!ret)
+	m = anoubis_msg_new(sizeof(Anoubis_GeneralMessage));
+	if (!m)
 		return -ENOMEM;
-	set_value(ret->u.general->type, ANOUBIS_C_CLOSEREQ);
-	append_msg(server, ret);
+	set_value(m->u.general->type, ANOUBIS_C_CLOSEREQ);
+	ret = anoubis_server_send(server, m);
+	if (ret < 0)
+		return ret;
 	server->connect_flags |= FLAG_SENTCLOSEREQ;
-	return anoubis_server_continue(server);
+	return 0;
 }
 
 static int anoubis_process_nregister(struct anoubis_server * server,
@@ -472,33 +445,87 @@ static int anoubis_process_reply(struct anoubis_server * server,
 	return 0;
 }
 
-/* Who is going to release buf? */
-/* Return values:
+/*
+ * Process a message from the wire. Caller must release buf!
+ * Return values:
  *   - negtiver errno on error.
  *   - zero in case of success.
- *   - positive in case of success but queuing of messages for the
- *     client would have blocked. The caller should call
- *     anoubis_server_continue once sendmsg becomes possible again.
  */
 int anoubis_server_process(struct anoubis_server * server, void * buf,
     size_t len)
 {
+	anoubis_token_t token;
 	struct anoubis_msg m = {
 		.length = len,
 		.u.buf = buf,
 	};
+	int opcode;
 	/* Return an error if the partner sent data over a dead channel. */
-	if (!server->chan || server->connect_flags & FLAG_GOTCLOSEACK)
+	if (!server->chan
+	    || (server->connect_flags & (FLAG_GOTCLOSEACK|FLAG_ERROR)))
 		return -EBADF;
 	/* Protocol data stream corrupt! */
 	if (!VERIFY_LENGTH(&m, 0) || !crc32_check(m.u.buf, m.length))
 		return -EIO;
+	/* Message too short. */
 	if (!VERIFY_FIELD(&m, general, type))
 		return -EIO;
+
 	anoubis_dump(&m, "server process");
-	int opcode = get_value(m.u.general->type);
+
+	opcode = get_value(m.u.general->type);
+	token = 0;
+	if (ANOUBIS_IS_NOTIFY(opcode)) {
+		if (!VERIFY_FIELD(&m, token, token))
+			return -EIO;
+		token = m.u.token->token;
+		if ((server->proto & ANOUBIS_PROTO_NOTIFY) == 0)
+			return reply_invalid_token(server, token, opcode);
+	}
+
+	/* Check if opcode is applicable. */
 	switch (opcode) {
-	/* Connect protocol */
+	case ANOUBIS_C_VERSEL:
+	case ANOUBIS_C_AUTH:
+	case ANOUBIS_C_AUTHDATA:
+	case ANOUBIS_C_OPTREQ:
+	case ANOUBIS_C_PROTOSEL:
+	case ANOUBIS_N_REGISTER:
+	case ANOUBIS_N_UNREGISTER:
+		/*
+		 * These start new requests. If we either got a closereq
+		 * from the other end these are forbidden. If we sent a
+		 * closereq they are allowed but we no longer accept them.
+		 */
+		if ((server->connect_flags & FLAG_GOTCLOSEREQ)
+		    || (server->connect_flags & FLAG_SENTCLOSEREQ))
+			return reply_invalid_token(server, token, opcode);
+		break;
+	case ANOUBIS_C_CLOSEREQ:
+	case ANOUBIS_C_CLOSEACK:
+		/* Always accepted even if they start a request. */
+		break;
+	case ANOUBIS_REPLY:
+	case ANOUBIS_N_DELEGATE:
+		/* These belong to ongoing requests. */
+		break;
+	case ANOUBIS_N_ASK:
+	case ANOUBIS_N_NOTIFY:
+	case ANOUBIS_N_RESYOU:
+	case ANOUBIS_N_RESOTHER:
+		/* These are not allowed from the client. */
+		return reply_invalid_token(server, token, opcode);
+	default:
+		/*
+		 * Default is deny. Please fit new opcodes into the
+		 * catagories above.
+		 */
+		return reply_invalid_token(server, token, opcode);
+	}
+
+	/* Process message based on its opcode. */
+	switch (opcode) {
+	/* Single shot requests from the connect protocol */
 	case ANOUBIS_C_VERSEL:
 		return anoubis_process_versel(server, &m, opcode);
 	case ANOUBIS_C_AUTH:
@@ -509,40 +536,26 @@ int anoubis_server_process(struct anoubis_server * server, void * buf,
 		return anoubis_process_optreq(server, &m, opcode);
 	case ANOUBIS_C_PROTOSEL:
 		return anoubis_process_protosel(server, &m, opcode);
+	/* Close request handling. */
 	case ANOUBIS_C_CLOSEREQ:
 	case ANOUBIS_C_CLOSEACK:
 		return anoubis_process_closereq(server, opcode);
-	/* Notify protocol */
+	/* Single shot client requests from the notify protocol. */
 	case ANOUBIS_N_REGISTER:
 	case ANOUBIS_N_UNREGISTER:
-		if (!VERIFY_FIELD(&m, token, token))
-			return -EIO;
-		return anoubis_process_nregister(server, &m, opcode,
-		    m.u.token->token);
-	case ANOUBIS_N_ASK:
-	case ANOUBIS_N_NOTIFY:
-		/*
-		 * Client must not send ASK and NOTIFY messages. Server
-		 * side should use anoubis_notify(server->notify)
-		 */
-		if (!VERIFY_FIELD(&m, token, token))
-			return -EIO;
-		reply_invalid_token(server, m.u.token->token, opcode);
+		return anoubis_process_nregister(server, &m, opcode, token);
 	case ANOUBIS_REPLY:
 	case ANOUBIS_N_DELEGATE:
 		if (!VERIFY_FIELD(&m, token, token))
 			return -EIO;
 		return anoubis_process_reply(server, &m, opcode,
 		    m.u.token->token);
-	case ANOUBIS_N_RESYOU:
-	case ANOUBIS_N_RESOTHER:
-		/* Client is not allowed to send these. */
-		if (!VERIFY_FIELD(&m, token, token))
-			return -EIO;
-		return reply_invalid_token(server, m.u.token->token, opcode);
+	default:
+		/* Should never happen! */
+		return -EINVAL;
 	}
-	/* Protocol error: Invalid opcode */
-	return reply_invalid(server, opcode);
+	/* NOT REACHED */
+	return -EINVAL;
 }
 
 int anoubis_server_eof(struct anoubis_server * server)

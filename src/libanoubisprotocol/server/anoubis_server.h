@@ -35,7 +35,6 @@ struct anoubis_notify_group;
 struct anoubis_server * anoubis_server_create(struct achat_channel * chan);
 void anoubis_server_destroy(struct anoubis_server *);
 int anoubis_server_start(struct anoubis_server *);
-int anoubis_server_continue(struct anoubis_server *);
 int anoubis_server_process(struct anoubis_server *, void * buf, size_t len);
 int anoubis_server_eof(struct anoubis_server * server);
 struct anoubis_notify_group * anoubis_server_getnotify(

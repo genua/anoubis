@@ -237,8 +237,6 @@ void tp_chat_lud_server(const char *sockname)
 		achat_rc rc = acc_receivemsg(s, buf, &size);
 		fail_if(rc != ACHAT_RC_OK, "acc_receivemsg failed");
 		ret = anoubis_server_process(server, buf, size);
-		while(ret > 0)
-			ret = anoubis_server_continue(server);
 		fail_if(ret < 0, "protocol error");
 		if (anoubis_server_eof(server))
 			break;

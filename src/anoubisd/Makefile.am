@@ -33,24 +33,25 @@ bsdcompatdir = src/bsdcompat
 libbsdcompat = $(top_builddir)/$(bsdcompatdir)/libbsdcompat.a
 anoubischatdir = src/libanoubischat
 libanoubischat = $(top_builddir)/$(anoubischatdir)/libanoubischat.a
+anoubispsdir = src/libanoubisprotocol
+libanoubisps = $(top_builddir)/$(anoubispsdir)/libanoubisps.a
+
 
 if STATIC_LINKING
 STATIC = -static
 endif
 
-if NEEDBSDCOMPAT
 INCLUDES = \
 	   -I$(top_srcdir)/include \
 	   -I$(top_srcdir)/$(anoubischatdir) \
-	   -I$(top_srcdir)/$(bsdcompatdir)
+	   -I$(top_srcdir)/$(anoubispsdir) \
+	   -I$(top_srcdir)/$(anoubispsdir)/server
 
-anoubisd_LDADD = $(libanoubischat) $(libbsdcompat)
-else
-INCLUDES = \
-	   -I$(top_srcdir)/include \
-	   -I$(top_srcdir)/$(anoubischatdir)
+anoubisd_LDADD = $(libanoubisps) $(libanoubischat)
 
-anoubisd_LDADD = $(libanoubischat)
+if NEEDBSDCOMPAT
+INCLUDES += -I$(top_srcdir)/$(bsdcompatdir)
+anoubisd_LDADD += $(libbsdcompat)
 endif
 
 anoubisd_LDFLAGS = $(AM_LDFLAGS) $(STATIC)
