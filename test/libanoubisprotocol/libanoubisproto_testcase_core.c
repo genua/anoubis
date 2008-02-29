@@ -101,7 +101,17 @@ void tp_chat_lud_client(const char *sockname)
 		achat_rc rc;
 
 		if (curr && (curr->flags & ANOUBIS_T_DONE)) {
-			fail_if(curr->result, "Transaction error");
+			if (geteuid() == 0) {
+				fail_if(curr->result, "Transaction error");
+			} else {
+				if (k==0 || k==1 || k== 10) {
+					fail_if(curr->result != 0,
+					    "Transaction error");
+				} else {
+					fail_if(curr->result == 0,
+					    "Transaction error expected");
+				}
+			}
 			anoubis_transaction_destroy(curr);
 			curr = NULL;
 		}
@@ -110,11 +120,11 @@ void tp_chat_lud_client(const char *sockname)
 				break;
 			if (k < 5) {
 				curr = anoubis_client_register_start(client,
-				    0x123000+k, k+100, 0, 0, 0);
+				    0x123000+k, geteuid()+k, 0, 0, 0);
 				fail_if(!curr, "register");
 			} else {
 				curr = anoubis_client_unregister_start(client,
-				    0x123000+k, 109-k, 0, 0, 0);
+				    0x123000+k, geteuid()+9-k, 0, 0, 0);
 				fail_if(!curr, "unregister");
 			}
 			k++;

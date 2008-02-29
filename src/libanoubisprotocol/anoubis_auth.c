@@ -27,7 +27,6 @@
 #include <config.h>
 #include <stdlib.h>
 #include <string.h>
-#include <pwd.h>
 #include <anoubis_msg.h>
 #include <anoubis_auth.h>
 #include <anoubis_errno.h>
@@ -61,22 +60,23 @@ void anoubis_auth_destroy(struct anoubis_auth * auth)
 int anoubis_auth_process(struct anoubis_auth * auth,
     struct anoubis_msg * m)
 {
-	struct passwd * pwent;
 	if (!VERIFY_LENGTH(m, sizeof(Anoubis_AuthTransportMessage))
 	    || get_value(m->u.general->type) != ANOUBIS_C_AUTHDATA
-	    || !auth || auth->state != ANOUBIS_AUTH_INIT) {
+	    || !auth || !auth->chan || auth->state != ANOUBIS_AUTH_INIT) {
 		auth->error = ANOUBIS_E_INVAL;
 		auth->state = ANOUBIS_AUTH_FAILURE;
 		return -EINVAL;
 	}
-	auth->uid = 4711; /* XXXXXXXXX Find UID of socket peer. */
-	pwent = getpwuid(auth->uid);
-	if (pwent) {
-		auth->username = strdup(pwent->pw_name);
+	if (auth->chan->euid == -1) {
+		auth->error = ANOUBIS_E_PERM;
+		auth->state = ANOUBIS_AUTH_FAILURE;
+		auth->uid = -1;
 	} else {
-		auth->username = NULL;
+		auth->uid = auth->chan->euid;
+		auth->state = ANOUBIS_AUTH_SUCCESS;
+		auth->username = NULL; /* XXX for now. -- ceh */
+		auth->state = ANOUBIS_AUTH_SUCCESS;
 	}
-	auth->state = ANOUBIS_AUTH_SUCCESS;
 	auth->finish_callback(auth->cbdata);
 	return 0;
 }

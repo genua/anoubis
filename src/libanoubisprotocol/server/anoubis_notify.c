@@ -88,8 +88,8 @@ int anoubis_notify_register(struct anoubis_notify_group * ng,
 {
 	struct anoubis_notify_reg * reg;
 
-	/* XXX Check if the registration is valid!.  -- ceh 02/09 */
-	/* XXX Limit maximum number of registrations!.  -- ceh 02/09 */
+	if (ng->uid != 0 /* XXX root */ && ng->uid != uid)
+		return -EPERM;
 	reg = malloc(sizeof(struct anoubis_notify_reg));
 	if (!reg)
 		return -ENOMEM;
