@@ -54,6 +54,7 @@ do_start()
 	# XXX: MG: We need a better way to load our modules so early (Bug 262)
 	modprobe eventdev
 	modprobe alf
+	modprobe sfs
 
 	start-stop-daemon --start --quiet --exec $DAEMON --test > /dev/null \
 		|| return 1
