@@ -29,6 +29,7 @@
 
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
 #include <sys/un.h>
 
 #ifdef NEEDBSDCOMPAT
@@ -68,6 +69,9 @@ acc_prepare(struct achat_channel *acc)
 		rc = bind(acc->sockfd, (struct sockaddr*)&(acc->addr), size);
 		if (rc == -1)
 			return (ACHAT_RC_ERROR);
+
+		if (acc->addr.ss_family == AF_UNIX)
+			fchmod(acc->sockfd, S_IRWXU | S_IRWXG | S_IRWXO);
 
 		rc = listen(acc->sockfd, ACHAT_MAX_BACKLOG);
 		if (rc == -1)

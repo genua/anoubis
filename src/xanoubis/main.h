@@ -77,6 +77,8 @@ class AnoubisGuiApp : public wxApp
 		void	toggleLogViewerVisability(void);
 		void	setRuleEditorVisability(bool);
 		void	toggleRuleEditorVisability(void);
+		void	setDaemonConnection(bool);
+		void	update(void);
 		wxIcon *loadIcon(wxString);
 		Module *getModule(enum moduleIdx);
 		void	updateTrayIcon(void);

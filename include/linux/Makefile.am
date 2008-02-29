@@ -27,4 +27,6 @@
 
 noinst_HEADERS = \
 anoubis.h \
+anoubis_alf.h \
+anoubis_sfs.h \
 eventdev.h

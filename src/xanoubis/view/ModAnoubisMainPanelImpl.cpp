@@ -25,6 +25,26 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#include <sys/types.h>
+
+#ifdef LINUX
+#include <linux/eventdev.h>
+#include <linux/anoubis.h>
+#include <linux/anoubis_alf.h>
+#include <linux/anoubis_sfs.h>
+#endif
+
+#ifdef OPENBSD
+#include <dev/eventdev.h>
+#include <dev/anoubis.h>
+#include <dev/anoubis_alf.h>
+#include <dev/anoubis_sfs.h>
+#endif
+
 #include "main.h"
 #include "ModAnoubis.h"
 #include "ModAnoubisMainPanelImpl.h"
@@ -103,11 +123,27 @@ ModAnoubisMainPanelImpl::update(void)
 		s.Printf(_T("%d"), currentNotify_->getId());
 		SHOWSLOT(1,wxT("Id:"),s);
 		SHOWSLOT(2,wxT("Modul:"),currentNotify_->getModule());
-		HIDESLOT(3);
+		if (!currentNotify_->getModule().Cmp(wxT("ALF"))) {
+			SHOWSLOT(3,wxT("Transport:"),
+			    currentNotify_->getAlfTransport());
+			SHOWSLOT(4,wxT("Operation:"),
+			    currentNotify_->getAlfOp());
+			SHOWSLOT(5,wxT("PID / UID:"),
+			    currentNotify_->getAlfWho());
+		}
+		if (!currentNotify_->getModule().Cmp(wxT("SFS"))) {
+			SHOWSLOT(3,wxT("Checksum:"),
+			    currentNotify_->getSfsChkSum());
+			SHOWSLOT(4,wxT("Operation:"),
+			    currentNotify_->getSfsOp());
+			SHOWSLOT(5,wxT("Path:"),currentNotify_->getSfsPath());
+		}
 	} else {
 		HIDESLOT(1);
 		HIDESLOT(2);
 		HIDESLOT(3);
+		HIDESLOT(4);
+		HIDESLOT(5);
 	}
 
 	if ((currentNotify_ != NULL) &&
@@ -126,6 +162,7 @@ ModAnoubisMainPanelImpl::update(void)
 		pn_question->Hide();
 		tx_answerValue->Hide();
 	}
+	Layout();
 }
 
 void

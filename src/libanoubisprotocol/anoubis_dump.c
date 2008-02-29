@@ -86,7 +86,7 @@ static void dump_versel(Anoubis_VerselMessage * m, size_t len __used)
 static void dump_stringlist(Anoubis_StringListMessage * m, size_t len)
 {
 	len -= sizeof(Anoubis_StringListMessage);
-	printf(" stringlist = %.*s", len, m->stringlist);
+	printf(" stringlist = %.*s", (int)len, m->stringlist);
 }
 
 static void dump_ack(Anoubis_AckMessage * m, size_t len __used)
@@ -101,7 +101,7 @@ static void dump_authreply(Anoubis_AuthReplyMessage * m, size_t len)
 	DUMP_NETX(m, error);
 	DUMP_NETU(m, uid);
 	len -= sizeof(Anoubis_AuthReplyMessage);
-	printf(" name = %.*s", len, m->name);
+	printf(" name = %.*s", (int)len, m->name);
 }
 
 static void dump_notify(Anoubis_NotifyMessage * m, size_t len)

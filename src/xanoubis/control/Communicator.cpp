@@ -25,116 +25,219 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#include <sys/types.h>
+#include <sys/un.h>
+#include <unistd.h>
+
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
+#include <wx/app.h>
+#include <wx/msgdlg.h>
+#include <wx/string.h>
+#include <wx/thread.h>
+
+#include "anoubischat.h"
+#include "anoubis_client.h"
+#include "anoubis_msg.h"
+#include "anoubis_transaction.h"
 #include "Communicator.h"
-#include "CommunicatorException.h"
+#include "main.h"
+#include "ModAnoubis.h"
+#include "Module.h"
+#include "NotifyList.h"
 
-Communicator::Communicator()
+Communicator::Communicator(wxString socketPath)
 {
-	acc_clear(this);
+	channel_ = acc_create();
+	client_  = NULL;
+	socketPath_ = socketPath;
+	notDone_ = true;
+	doRegister_ = true;
+	isRegistered_ = false;
+	registerInProcess_ = false;
+	doShutdown_ = false;
+	isDown_ = false;
 }
 
-Communicator::~Communicator()
+achat_rc
+Communicator::connect(void)
 {
-	acc_close(this);
+	struct sockaddr_storage	 ss;
+	struct sockaddr_un	*ss_sun = (struct sockaddr_un *)&ss;
+	achat_rc		 rc = ACHAT_RC_ERROR;
+
+	channel_ = acc_create();
+	if (channel_ == NULL)
+		return (ACHAT_RC_OOMEM);
+
+	rc = acc_settail(channel_, ACC_TAIL_CLIENT);
+	if (rc != ACHAT_RC_OK) {
+		acc_destroy(channel_);
+		return (rc);
+	}
+
+	rc = acc_setsslmode(channel_, ACC_SSLMODE_CLEAR);
+	if (rc != ACHAT_RC_OK) {
+		acc_destroy(channel_);
+		return (rc);
+	}
+
+	bzero(&ss, sizeof(ss));
+	ss_sun->sun_family = AF_UNIX;
+#ifdef LINUX
+	strncpy(ss_sun->sun_path, socketPath_.fn_str(),
+	    sizeof(ss_sun->sun_path) - 1 );
+#endif
+#ifdef OPENBSD
+	strlcpy(ss_sun->sun_path, socketPath_.fn_str(),
+	    sizeof(ss_sun->sun_path));
+#endif
+	rc = acc_setaddr(channel_, &ss);
+	if (rc != ACHAT_RC_OK) {
+		acc_destroy(channel_);
+		return (rc);
+	}
+
+	rc = acc_prepare(channel_);
+	if (rc != ACHAT_RC_OK) {
+		acc_destroy(channel_);
+		return (rc);
+	}
+
+	rc = acc_open(channel_);
+	if (rc != ACHAT_RC_OK) {
+		acc_destroy(channel_);
+		return (rc);
+	}
+
+	return (ACHAT_RC_OK);
 }
 
-void
-Communicator::setTail(enum acc_tail tail)
+void *
+Communicator::Entry(void)
 {
-	achat_rc rc;
+	struct anoubis_transaction	*currTa;
 
-	rc = acc_settail(this, tail);
-	if (rc != ACHAT_RC_OK)
-		throw new CommunicatorException(rc);
-}
+	if (connect() != ACHAT_RC_OK) {
+		wxMessageBox(wxT("Can't connect to anoubis daemon!"),
+		    wxT("Error"), wxOK | wxICON_ERROR);
+		(wxGetApp()).close();
+		return (NULL);
+	}
 
-void
-Communicator::setSslMode(enum acc_sslmode sslmode)
-{
-	achat_rc rc;
+	client_ = anoubis_client_create(channel_);
+	if (client_ == NULL) {
+		acc_destroy(channel_);
+		return (NULL);
+	}
 
-	rc = acc_setsslmode(this, sslmode);
-	if (rc != ACHAT_RC_OK)
-		throw new CommunicatorException(rc);
-}
+	currTa = anoubis_client_connect_start(client_, 3 /* XXX */);
+	if (currTa == NULL) {
+		anoubis_client_close(client_);
+		anoubis_client_destroy(client_);
+		acc_destroy(channel_);
+	}
 
-void
-Communicator::setAddr(struct sockaddr_storage *addr)
-{
-	achat_rc rc;
+	while (notDone_) {
+		struct anoubis_msg * m;
+		size_t size = 1024;
+		achat_rc rc;
 
-	rc = acc_setaddr(this, addr);
-	if (rc != ACHAT_RC_OK)
-		throw new CommunicatorException(rc);
-}
+		if (currTa && (currTa->flags & ANOUBIS_T_DONE)) {
+			anoubis_transaction_destroy(currTa);
+			if (doRegister_ && registerInProcess_ &&
+			    (currTa->result == 0)) {
+				doRegister_ = false;
+				isRegistered_ = true;
+				registerInProcess_ = false;
+			}
+			if (doShutdown_ && (currTa->result == 0)) {
+				doShutdown_ = false;
+				isDown_ = true;
+				notDone_ = false;
+			}
+			currTa = NULL;
+		}
 
-void
-Communicator::prepare(void)
-{
-	achat_rc rc;
+		if (currTa == NULL) {
+			if (doRegister_ && !registerInProcess_) {
+				currTa = anoubis_client_register_start(client_,
+				    0x123000, geteuid(), 0, 0, 0);
+				registerInProcess_ = true;
+			}
+			if (doShutdown_) {
+				currTa = anoubis_client_unregister_start(
+				    client_, 0x123000, geteuid(), 0, 0, 0);
+			}
+		}
 
-	rc = acc_prepare(this);
-	if (rc != ACHAT_RC_OK)
-		throw new CommunicatorException(rc);
+		m = anoubis_msg_new(1024);
+		if (m == NULL) {
+			notDone_ = false;
+		}
+
+		rc = acc_receivemsg(channel_, (char*)(m->u.buf), &size);
+		if (rc != ACHAT_RC_OK) {
+			notDone_ = false;
+		}
+
+		anoubis_msg_resize(m, size);
+
+		int ret;
+		ret = anoubis_client_process(client_, m);
+		if (ret != 1) {
+			notDone_ = false;
+		}
+
+		struct anoubis_msg *notify = get_notifies(client_);
+		if (notify != NULL) {
+			NotifyListEntry *nl;
+			ModAnoubis *anoubisModule;
+
+			nl = new NotifyListEntry(notify);
+			anoubisModule = (ModAnoubis *)(wxGetApp().getModule(
+			    ANOUBIS));
+			anoubisModule->insertNotification(nl);
+		}
+
+	}
+
+	anoubis_client_close(client_);
+	anoubis_client_destroy(client_);
+	acc_destroy(channel_);
+
+	return (NULL);
 }
 
 void
 Communicator::open(void)
 {
-	achat_rc rc;
-
-	rc = acc_open(this);
-	if (rc != ACHAT_RC_OK)
-		throw new CommunicatorException(rc);
+	doRegister_ = true;
 }
 
 void
 Communicator::close(void)
 {
-	achat_rc rc;
-
-	rc = acc_close(this);
-	if (rc != ACHAT_RC_OK)
-		throw new CommunicatorException(rc);
+	doShutdown_ = true;
 }
 
-short
-Communicator::getPort(void)
+bool
+Communicator::isConnected(void)
 {
-	struct sockaddr_storage  ss;
-	struct sockaddr_in      *ss_sin = (struct sockaddr_in *)&ss;
-	socklen_t                sslen;
-
-	sslen = sizeof(ss);
-	bzero(&ss, sslen);
-	if (getsockname(sockfd, (struct sockaddr *)&ss, &sslen) == -1)
-		throw new CommunicatorException(ACHAT_RC_ERROR);
-	if (ss_sin->sin_port == 0)
-		throw new CommunicatorException(ACHAT_RC_ERROR);
-
-	return (ss_sin->sin_port);
+	return (true);
 }
 
-void
-Communicator::sendMessage(const char *message, size_t size)
+wxString
+Communicator::getRemoteStation(void)
 {
-	achat_rc rc;
-
-	rc = acc_sendmsg(this, message, size);
-	if (rc != ACHAT_RC_OK)
-		throw new CommunicatorException(rc);
-}
-
-void
-Communicator::receiveMessage(char *messageStore, size_t size)
-{
-	achat_rc rc;
-	size_t	 len;
-
-	len = size;
-	rc = acc_receivemsg(this, messageStore, &len);
-	if (rc != ACHAT_RC_OK)
-		throw new CommunicatorException(rc);
-	if (len != size)
-		throw new  CommunicatorException(ACHAT_RC_ERROR);
+	if(isConnected()) {
+		return (wxT("localhost"));
+	} else {
+		return (wxT("none"));
+	}
 }

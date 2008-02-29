@@ -34,6 +34,7 @@
 class TrayIcon : public wxTaskBarIcon
 {
 	private:
+		wxString	 daemon_;
 		unsigned int	 messageByHandNo_;
 		wxIcon		*iconNormal_;
 		wxIcon		*iconMsgByHand_;
@@ -45,6 +46,7 @@ class TrayIcon : public wxTaskBarIcon
 		~TrayIcon(void);
 
 		void SetMessageByHand(unsigned int);
+		void SetConnectedDaemon(wxString);
 };
 
 #endif	/* _TRAYICON_H_ */

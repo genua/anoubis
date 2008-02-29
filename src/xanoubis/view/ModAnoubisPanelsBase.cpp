@@ -75,7 +75,7 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	
 	sz_navigate->Add( bt_previous, 0, wxALIGN_CENTER|wxALL, 5 );
 	
-	tx_currNumber = new wxStaticText( this, wxID_ANY, _("0"), wxDefaultPosition, wxDefaultSize, 0 );
+	tx_currNumber = new wxStaticText( this, wxID_ANY, _("00000000"), wxDefaultPosition, wxDefaultSize, 0 );
 	tx_currNumber->Wrap( -1 );
 	sz_navigate->Add( tx_currNumber, 0, wxALIGN_CENTER|wxALL, 5 );
 	
@@ -83,7 +83,7 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	tx_delimiter->Wrap( -1 );
 	sz_navigate->Add( tx_delimiter, 0, wxALIGN_CENTER|wxALL, 5 );
 	
-	tx_maxNumber = new wxStaticText( this, wxID_ANY, _("0"), wxDefaultPosition, wxDefaultSize, 0 );
+	tx_maxNumber = new wxStaticText( this, wxID_ANY, _("00000000"), wxDefaultPosition, wxDefaultSize, 0 );
 	tx_maxNumber->Wrap( -1 );
 	sz_navigate->Add( tx_maxNumber, 0, wxALIGN_CENTER|wxALL, 5 );
 	
@@ -102,34 +102,80 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	
 	sz_MainAnoubisMain->Add( sz_navigate, 0, wxALIGN_CENTER, 5 );
 	
-	wxGridSizer* sz_info;
-	sz_info = new wxGridSizer( 2, 2, 0, 0 );
+	wxBoxSizer* sz_slot1;
+	sz_slot1 = new wxBoxSizer( wxHORIZONTAL );
 	
 	tx_fieldSlot1 = new wxStaticText( this, wxID_ANY, _(":"), wxDefaultPosition, wxDefaultSize, 0 );
 	tx_fieldSlot1->Wrap( -1 );
-	sz_info->Add( tx_fieldSlot1, 0, wxALL, 5 );
+	tx_fieldSlot1->SetMinSize( wxSize( 150,-1 ) );
+	
+	sz_slot1->Add( tx_fieldSlot1, 0, wxALL, 5 );
 	
 	tx_valueSlot1 = new wxStaticText( this, wxID_ANY, _("0"), wxDefaultPosition, wxDefaultSize, 0 );
 	tx_valueSlot1->Wrap( -1 );
-	sz_info->Add( tx_valueSlot1, 0, wxALL, 5 );
+	sz_slot1->Add( tx_valueSlot1, 0, wxALL, 5 );
+	
+	sz_MainAnoubisMain->Add( sz_slot1, 0, wxEXPAND, 5 );
+	
+	wxBoxSizer* sz_slot2;
+	sz_slot2 = new wxBoxSizer( wxHORIZONTAL );
 	
 	tx_fieldSlot2 = new wxStaticText( this, wxID_ANY, _(":"), wxDefaultPosition, wxDefaultSize, 0 );
 	tx_fieldSlot2->Wrap( -1 );
-	sz_info->Add( tx_fieldSlot2, 0, wxALL, 5 );
+	tx_fieldSlot2->SetMinSize( wxSize( 150,-1 ) );
+	
+	sz_slot2->Add( tx_fieldSlot2, 0, wxALL, 5 );
 	
 	tx_valueSlot2 = new wxStaticText( this, wxID_ANY, _("0"), wxDefaultPosition, wxDefaultSize, 0 );
 	tx_valueSlot2->Wrap( -1 );
-	sz_info->Add( tx_valueSlot2, 0, wxALL, 5 );
+	sz_slot2->Add( tx_valueSlot2, 0, wxALL, 5 );
+	
+	sz_MainAnoubisMain->Add( sz_slot2, 0, wxEXPAND, 5 );
+	
+	wxBoxSizer* sz_slot3;
+	sz_slot3 = new wxBoxSizer( wxHORIZONTAL );
 	
 	tx_fieldSlot3 = new wxStaticText( this, wxID_ANY, _(":"), wxDefaultPosition, wxDefaultSize, 0 );
 	tx_fieldSlot3->Wrap( -1 );
-	sz_info->Add( tx_fieldSlot3, 0, wxALL, 5 );
+	tx_fieldSlot3->SetMinSize( wxSize( 150,-1 ) );
+	
+	sz_slot3->Add( tx_fieldSlot3, 0, wxALL, 5 );
 	
 	tx_valueSlot3 = new wxStaticText( this, wxID_ANY, _("0"), wxDefaultPosition, wxDefaultSize, 0 );
 	tx_valueSlot3->Wrap( -1 );
-	sz_info->Add( tx_valueSlot3, 0, wxALL, 5 );
+	sz_slot3->Add( tx_valueSlot3, 0, wxALL, 5 );
 	
-	sz_MainAnoubisMain->Add( sz_info, 0, wxEXPAND, 5 );
+	sz_MainAnoubisMain->Add( sz_slot3, 0, wxEXPAND, 5 );
+	
+	wxBoxSizer* sz_slot4;
+	sz_slot4 = new wxBoxSizer( wxHORIZONTAL );
+	
+	tx_fieldSlot4 = new wxStaticText( this, wxID_ANY, _(":"), wxDefaultPosition, wxDefaultSize, 0 );
+	tx_fieldSlot4->Wrap( -1 );
+	tx_fieldSlot4->SetMinSize( wxSize( 150,-1 ) );
+	
+	sz_slot4->Add( tx_fieldSlot4, 0, wxALL, 5 );
+	
+	tx_valueSlot4 = new wxStaticText( this, wxID_ANY, _("0"), wxDefaultPosition, wxDefaultSize, 0 );
+	tx_valueSlot4->Wrap( -1 );
+	sz_slot4->Add( tx_valueSlot4, 0, wxALL, 5 );
+	
+	sz_MainAnoubisMain->Add( sz_slot4, 0, wxEXPAND, 5 );
+	
+	wxBoxSizer* sz_slot5;
+	sz_slot5 = new wxBoxSizer( wxHORIZONTAL );
+	
+	tx_fieldSlot5 = new wxStaticText( this, wxID_ANY, _(":"), wxDefaultPosition, wxDefaultSize, 0 );
+	tx_fieldSlot5->Wrap( -1 );
+	tx_fieldSlot5->SetMinSize( wxSize( 150,-1 ) );
+	
+	sz_slot5->Add( tx_fieldSlot5, 0, wxALL, 5 );
+	
+	tx_valueSlot5 = new wxStaticText( this, wxID_ANY, _("0"), wxDefaultPosition, wxDefaultSize, 0 );
+	tx_valueSlot5->Wrap( -1 );
+	sz_slot5->Add( tx_valueSlot5, 0, wxALL, 5 );
+	
+	sz_MainAnoubisMain->Add( sz_slot5, 0, wxEXPAND, 5 );
 	
 	tx_answerValue = new wxStaticText( this, wxID_ANY, _("Diese Nachricht wurde beantwortet."), wxDefaultPosition, wxDefaultSize, 0 );
 	tx_answerValue->Wrap( -1 );

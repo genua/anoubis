@@ -104,6 +104,27 @@ MainFrame::setLogViewerVisability(bool visible)
 }
 
 void
+MainFrame::setDaemonConnection(bool state)
+{
+	an_menubar->Check(ID_MIFILECONNECT, state);
+}
+
+void
+MainFrame::setConnectionString(wxString host)
+{
+	wxString label;
+
+	/* XXX CH: statically connected */
+	//if  (label = wxT("none")) {
+	//	label = wxT("not connected");
+	//} else {
+		label = wxT("connected with\n");
+		label += host;
+	//}
+	tx_connected->SetLabel(label);
+}
+
+void
 MainFrame::OnTbModuleSelect(wxCommandEvent& event)
 {
 	int id;
@@ -161,7 +182,7 @@ MainFrame::OnMbHelpHelpSelect(wxCommandEvent& event)
 void
 MainFrame::OnMbFileConnectSelect(wxCommandEvent& event)
 {
-	printf("Menu Item File->Connect selected\n");
+	wxGetApp().setDaemonConnection(event.IsChecked());
 }
 
 void

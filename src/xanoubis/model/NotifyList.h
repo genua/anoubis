@@ -30,6 +30,7 @@
 
 #include <wx/list.h>
 
+#include "anoubis_msg.h"
 #include "main.h"
 #include "NotifyAnswer.h"
 
@@ -47,19 +48,36 @@ class NotifyListEntry {
 		bool	isAnswerAble_;
 		unsigned int	id_;
 		wxString	module_;
+		int		type_;
 		NotifyAnswer	*answer_;
 
+		wxString	alf_op_;
+		wxString	alf_transport_;
+		wxString	alf_who_;
+
+		wxString	sfs_op_;
+		wxString	sfs_path_;
+		wxString	sfs_chksum_;
+
 	public:
-		NotifyListEntry(bool);
-		NotifyListEntry(unsigned int, wxString, bool);
+		NotifyListEntry(struct anoubis_msg *);
 
 		bool	isAnswered(void);
 		bool	isAnswerAble(void);
 		void	answer(NotifyAnswer *);
 
 		unsigned int	 getId(void);
+		int		 getType(void);
 		wxString	 getModule(void);
 		NotifyAnswer    *getAnswer(void);
+
+		wxString	 getAlfOp(void);
+		wxString	 getAlfTransport(void);
+		wxString	 getAlfWho(void);
+
+		wxString	 getSfsOp(void);
+		wxString	 getSfsPath(void);
+		wxString	 getSfsChkSum(void);
 };
 
 WX_DECLARE_LIST(NotifyListEntry, NotifyList);

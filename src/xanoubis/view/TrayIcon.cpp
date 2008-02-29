@@ -37,6 +37,8 @@ TrayIcon::TrayIcon(void)
 	iconMsgByHand_ = wxGetApp().loadIcon(_T("tray_msgByHand.png"));
 
 	messageByHandNo_ = 0;
+	daemon_ = wxT("none");
+
 	update();
 }
 
@@ -54,15 +56,25 @@ TrayIcon::SetMessageByHand(unsigned int number)
 }
 
 void
+TrayIcon::SetConnectedDaemon(wxString daemon)
+{
+	daemon_ = daemon;
+	update();
+}
+
+void
 TrayIcon::update(void)
 {
+	wxString tooltip;
+
 	if (messageByHandNo_ > 0) {
-		wxString tooltip = wxT("Messages: ");
+		tooltip = wxT("Messages: ");
 		tooltip += wxString::Format(wxT("%d\n"), messageByHandNo_);
-		tooltip += wxT("connected with localhost");
+		tooltip += daemon_;
 		SetIcon(*iconMsgByHand_, tooltip);
 	} else {
-		SetIcon(*iconNormal_, wxString(wxT(
-		    "No messages\nconnected with localhost")));
+		tooltip = wxT("No messages\n");
+		tooltip += daemon_;
+		SetIcon(*iconNormal_, tooltip);
 	}
 }

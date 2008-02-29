@@ -41,7 +41,7 @@ MainFrameBase::MainFrameBase( wxWindow* parent, wxWindowID id, const wxString& t
 	
 	an_menubar = new wxMenuBar( 0 );
 	me_menubarFile = new wxMenu();
-	wxMenuItem* mi_mbFileConnect = new wxMenuItem( me_menubarFile, ID_MIFILECONNECT, wxString( _("Connect") ) , wxEmptyString, wxITEM_NORMAL );
+	wxMenuItem* mi_mbFileConnect = new wxMenuItem( me_menubarFile, ID_MIFILECONNECT, wxString( _("Connect") ) , wxEmptyString, wxITEM_CHECK );
 	me_menubarFile->Append( mi_mbFileConnect );
 	
 	me_menubarFile->AppendSeparator();

@@ -59,6 +59,7 @@ struct anoubis_transaction {
 	int stage;		/* Stage of the transaction. Used by caller */
 };
 
+__BEGIN_DECLS
 struct anoubis_transaction * anoubis_transaction_create(anoubis_token_t token,
     unsigned int flags, anoubis_transaction_process_t process,
     anoubis_transaction_callback_t finish, void * cbdata);
@@ -70,5 +71,6 @@ void anoubis_transaction_process(struct anoubis_transaction * t,
     struct anoubis_msg * m);
 void anoubis_transaction_progress(struct anoubis_transaction *, const int *);
 void anoubis_transaction_done(struct anoubis_transaction * t, int error);
+__END_DECLS
 
 #endif

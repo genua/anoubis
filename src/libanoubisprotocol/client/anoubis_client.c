@@ -94,6 +94,20 @@ static void queue_notify(struct anoubis_client * client, struct anoubis_msg * m)
 	}
 }
 
+struct anoubis_msg * get_notifies(struct anoubis_client * client)
+{
+	struct anoubis_msg * m = client->notify;
+
+	if (m) {
+		client->notify = m->next;
+		if (!client->notify)
+			client->tail = NULL;
+		m->next = NULL;
+	}
+
+	return m;
+}
+
 static struct anoubis_msg * anoubis_client_rcv(struct anoubis_client * client,
     size_t alloclen)
 {

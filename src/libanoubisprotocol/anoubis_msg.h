@@ -81,9 +81,12 @@ struct stringlist_iterator {
 	struct proto_opt * opts;
 };
 
-extern struct anoubis_msg * anoubis_msg_new(u_int32_t len);
-extern int anoubis_msg_resize(struct anoubis_msg * m, u_int32_t len);
-extern void anoubis_msg_free(struct anoubis_msg * m);
+__BEGIN_DECLS
+struct anoubis_msg * anoubis_msg_new(u_int32_t len);
+int anoubis_msg_resize(struct anoubis_msg * m, u_int32_t len);
+void anoubis_msg_free(struct anoubis_msg * m);
+__END_DECLS
+
 void stringlist_iterator_init(struct stringlist_iterator * it,
     struct anoubis_msg * m, struct proto_opt * opts);
 int stringlist_iterator_get(struct stringlist_iterator * it);

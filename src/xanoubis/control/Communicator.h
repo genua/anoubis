@@ -28,25 +28,35 @@
 #ifndef _COMMUNICATOR_H_
 #define _COMMUNICATOR_H_
 
+#include <wx/string.h>
+#include <wx/thread.h>
+
 #include <anoubischat.h>
+#include <anoubis_client.h>
 
-class Communicator : private achat_channel
-{
+class Communicator : public wxThread {
+	private:
+		struct achat_channel	*channel_;
+		struct anoubis_client	*client_;
+		wxString		 socketPath_;
+		bool			 notDone_;
+		bool			 doRegister_;
+		/* XXX CH: this is ugly and should be changed */
+		bool			 isRegistered_;
+		bool			 registerInProcess_;
+		bool			 doShutdown_;
+		bool			 isDown_;
+
+		achat_rc	connect(void);
+
 	public:
-		Communicator();
-		~Communicator();
+		Communicator(wxString);
 
-		void setTail(enum acc_tail);
-		void setSslMode(enum acc_sslmode);
-		void setAddr(struct sockaddr_storage *);
-
-		void  prepare(void);
-		void  open(void);
-		void  close(void);
-		short getPort(void);
-
-		void sendMessage(const char *, size_t);
-		void receiveMessage(char *, size_t);
+		virtual void	*Entry(void);
+		void		 open(void);
+		void		 close(void);
+		bool		 isConnected(void);
+		wxString	 getRemoteStation(void);
 };
 
 #endif	/* _COMMUNICATOR_H_ */

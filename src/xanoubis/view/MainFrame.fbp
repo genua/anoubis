@@ -152,7 +152,7 @@
                         <property name="enabled">1</property>
                         <property name="help"></property>
                         <property name="id">ID_MIFILECONNECT</property>
-                        <property name="kind">wxITEM_NORMAL</property>
+                        <property name="kind">wxITEM_CHECK</property>
                         <property name="label">Connect</property>
                         <property name="name">mi_mbFileConnect</property>
                         <property name="shortcut"></property>
@@ -271,7 +271,7 @@
                     <property name="border">5</property>
                     <property name="flag">wxEXPAND</property>
                     <property name="proportion">0</property>
-                    <object class="wxBoxSizer" expanded="1">
+                    <object class="wxBoxSizer" expanded="0">
                         <property name="minimum_size"></property>
                         <property name="name">sz_mfMainLeft</property>
                         <property name="orient">wxVERTICAL</property>

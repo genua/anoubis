@@ -31,9 +31,14 @@ libbsdcompat   = $(top_builddir)/$(bsdcompatdir)/libbsdcompat.a
 xanoubisdir    = src/xanoubis
 anoubischatdir = src/libanoubischat
 libanoubischat = $(top_builddir)/$(anoubischatdir)/libanoubischat.a
+anoubisprotocoldir = src/libanoubisprotocol
+libanoubisprotocol = $(top_builddir)/$(anoubisprotocoldir)/libanoubispc.a
 
 xanoubis_CPPFLAGS = \
+	-I$(top_srcdir)/include \
 	-I$(top_srcdir)/$(anoubischatdir) \
+	-I$(top_srcdir)/$(anoubisprotocoldir) \
+	-I$(top_srcdir)/$(anoubisprotocoldir)/client \
 	-I$(top_srcdir)/$(xanoubisdir) \
 	-I$(top_srcdir)/$(xanoubisdir)/model \
 	-I$(top_srcdir)/$(xanoubisdir)/view  \
@@ -44,7 +49,8 @@ xanoubis_CXXFLAGS = -fno-strict-aliasing $(AM_CXXFLAGS) $(WX_CXXFLAGS)
 
 xanoubis_LDADD = \
 	@WX_LIBS@ \
-	$(libanoubischat)
+	$(libanoubischat) \
+	$(libanoubisprotocol)
 
 if NEEDBSDCOMPAT
 xanoubis_LDADD += $(libbsdcompat)

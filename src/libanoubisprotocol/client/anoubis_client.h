@@ -34,16 +34,18 @@ struct anoubis_client;
 struct anoubis_msg;
 struct anoubis_transaction;
 
-extern struct anoubis_client * anoubis_client_create(
+__BEGIN_DECLS
+struct anoubis_msg * get_notifies(struct anoubis_client * client);
+struct anoubis_client * anoubis_client_create(
     struct achat_channel * chan);
-extern void anoubis_client_destroy(struct anoubis_client *);
-extern int anoubis_client_connect(struct anoubis_client *, unsigned int);
-extern struct anoubis_transaction * anoubis_client_connect_start(
+void anoubis_client_destroy(struct anoubis_client *);
+int anoubis_client_connect(struct anoubis_client *, unsigned int);
+struct anoubis_transaction * anoubis_client_connect_start(
     struct anoubis_client *, unsigned int);
-extern void anoubis_client_close(struct anoubis_client *);
-extern struct anoubis_transaction * anoubis_client_close_start(
+void anoubis_client_close(struct anoubis_client *);
+struct anoubis_transaction * anoubis_client_close_start(
     struct anoubis_client *);
-extern int anoubis_client_process(struct anoubis_client *,
+int anoubis_client_process(struct anoubis_client *,
     struct anoubis_msg *);
 struct anoubis_transaction * anoubis_client_register_start(
     struct anoubis_client * client, anoubis_token_t token, uid_t uid,
@@ -51,5 +53,6 @@ struct anoubis_transaction * anoubis_client_register_start(
 struct anoubis_transaction * anoubis_client_unregister_start(
     struct anoubis_client * client, anoubis_token_t token, uid_t uid,
     pid_t pid, u_int32_t rule_id, u_int32_t subsystem);
+__END_DECLS
 
 #endif

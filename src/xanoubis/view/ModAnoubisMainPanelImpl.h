@@ -37,8 +37,7 @@ class ModAnoubisMainPanelImpl : public ModAnoubisMainPanelBase
 		enum notifyListTypes	 list_;
 		NotifyListEntry		*currentNotify_;
 
-		void			 update(void);
-		void			 answer(bool);
+		void answer(bool);
 
 	protected:
 		void OnTypeChoosen(wxCommandEvent& event);
@@ -49,8 +48,9 @@ class ModAnoubisMainPanelImpl : public ModAnoubisMainPanelBase
 		void OnAllowBtnClick(wxCommandEvent& event);
 		void OnDenyBtnClick(wxCommandEvent& event);
 
-		public:
+	public:
 		ModAnoubisMainPanelImpl(wxWindow* parent, wxWindowID id);
+		void update(void);
 };
 
 #endif /* __ModAnoubisMainPanelImpl__ */

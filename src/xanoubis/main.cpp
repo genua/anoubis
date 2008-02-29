@@ -43,6 +43,7 @@
 #include "ModAlf.h"
 #include "ModSfs.h"
 #include "ModAnoubis.h"
+#include "NotifyList.h"
 #include "TrayIcon.h"
 
 IMPLEMENT_APP(AnoubisGuiApp)
@@ -73,16 +74,17 @@ void
 AnoubisGuiApp::close(void)
 {
 	trayIcon->RemoveIcon();
+	com->close();
+	com->Wait();
 }
 
-#include "NotifyList.h"
 
 bool AnoubisGuiApp::OnInit()
 {
 	mainFrame = new MainFrame((wxWindow*)NULL);
 	logViewer_ = new DlgLogViewer(mainFrame);
 	ruleEditor_ = new DlgRuleEditor(mainFrame);
-	com = new Communicator();
+	com = new Communicator(wxT("/var/run/anoubisd.sock"));
 	trayIcon = new TrayIcon();
 
 	modules_[OVERVIEW] = new ModOverview(mainFrame);
@@ -103,6 +105,13 @@ bool AnoubisGuiApp::OnInit()
 	//         state of Module ALF by calling the update()-method.
 	//         Eventually the actual call has to be triggered by an event.
 	((ModAlf*)modules_[ALF])->update();
+	((ModAnoubis*)modules_[ANOUBIS])->update();
+
+	/* XXX CH: do error check */
+	com->Create();
+	com->Run();
+
+	update();
 
 	return (true);
 }
@@ -131,6 +140,24 @@ void
 AnoubisGuiApp::toggleLogViewerVisability(void)
 {
 	setLogViewerVisability(!logViewer_->IsShown());
+}
+
+void
+AnoubisGuiApp::setDaemonConnection(bool doConnect)
+{
+	if (doConnect)
+		com->open();
+	else
+		com->close();
+	update();
+}
+
+void
+AnoubisGuiApp::update(void)
+{
+	mainFrame->setDaemonConnection(com->isConnected());
+	mainFrame->setConnectionString(com->getRemoteStation());
+	updateTrayIcon();
 }
 
 wxIcon *
@@ -171,4 +198,5 @@ AnoubisGuiApp::updateTrayIcon(void)
 
 	messageNo = anoubisModule->getListSize(NOTIFY_LIST_NOTANSWERED);
 	trayIcon->SetMessageByHand(messageNo);
+	trayIcon->SetConnectedDaemon(com->getRemoteStation());
 }

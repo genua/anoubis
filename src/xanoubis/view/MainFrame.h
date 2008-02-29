@@ -67,6 +67,8 @@ class MainFrame : public MainFrameBase
 
 		void setLogViewerVisability(bool);
 		void setRuleEditorVisability(bool);
+		void setDaemonConnection(bool);
+		void setConnectionString(wxString);
 };
 
 #endif /* __MAINFRAME_H__ */
