@@ -28,15 +28,17 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/un.h>
+#include <sys/wait.h>
+
 #include <netinet/in.h>
 #include <arpa/inet.h>
+
 #include <check.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <sys/wait.h>
 
 #include "anoubischat.h"
 
@@ -125,6 +127,11 @@ tc_connect_lud_server(const char *sockname)
 	if (s->state != ACC_STATE_ESTABLISHED)
 		fail("server state not set correctly: expect %d got %d",
 		    ACC_STATE_ESTABLISHED, s->state);
+
+	fail_if(s->euid != geteuid(), "server retrieved bogus uid %d, "
+	    "expected %d", s->euid, geteuid());
+	fail_if(s->egid != getegid(), "server retrieved bogus gid %d, "
+	    "expected %d", s->egid, getegid());
 
 	rc = acc_destroy(s);
 	fail_if(rc != ACHAT_RC_OK, "server destroy failed with rc=%d", rc);

@@ -31,6 +31,7 @@
 #include <sys/cdefs.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+
 #include <netinet/in.h>
 
 #define ACHAT_SERVER_PORT	4000
@@ -80,6 +81,10 @@ struct achat_channel {
 	struct sockaddr_storage	addr;	 /* where we want to go to */
 	int			sockfd;
 	int			connfd;
+
+	/* credentials of users connect via a unix domain socket */
+	uid_t			euid;
+	gid_t			egid;
 };
 
 __BEGIN_DECLS
@@ -97,6 +102,7 @@ achat_rc acc_prepare(struct achat_channel *);
 achat_rc acc_open(struct achat_channel *);
 struct achat_channel *acc_opendup(struct achat_channel *);
 achat_rc acc_close(struct achat_channel *);
+achat_rc acc_getpeerids(struct achat_channel *);
 
 /* Subsystem Transmission */
 achat_rc acc_sendmsg(struct achat_channel *, const char *, size_t);

@@ -25,6 +25,10 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/un.h>
@@ -147,6 +151,9 @@ START_TEST(tc_core_addr)
 	sa_un->sun_family = AF_UNIX;
 	strncpy(sa_un->sun_path, testpath, sizeof(sa_un->sun_path) - 1);
 	sa_un->sun_path[sizeof(sa_un->sun_path) - 1] = '\0';
+#ifdef OPENBSD
+	sa_un->sun_len = SUN_LEN(sa_un);
+#endif
 	rc = acc_setaddr(c, &sa);
 	fail_if(rc != ACHAT_RC_OK, "setaddr failed with rc=%d", rc);
 	if (memcmp(&c->addr, &sa, sizeof(sa)) != 0)
@@ -157,6 +164,9 @@ START_TEST(tc_core_addr)
 	sa_in->sin_family = AF_INET;
 	sa_in->sin_port = htons(ACHAT_SERVER_PORT);
 	inet_aton("127.0.0.1", &(sa_in->sin_addr));
+#ifdef OPENBSD
+	sa_in->sin_len = sizeof(struct sockaddr_in);
+#endif
 	rc = acc_setaddr(c, &sa);
 	fail_if(rc != ACHAT_RC_OK, "setaddr failed with rc=%d", rc);
 	if (memcmp(&c->addr, &sa, sizeof(sa)) != 0)
@@ -185,6 +195,9 @@ START_TEST(tc_core_state_initialised)
 	sa_in->sin_family = AF_INET;
 	sa_in->sin_port = htons(ACHAT_SERVER_PORT);
 	inet_aton("127.0.0.1", &(sa_in->sin_addr));
+#ifdef OPENBSD
+	sa_in->sin_len = sizeof(struct sockaddr_in);
+#endif
 
 	rc = acc_setaddr(c, &sa);
 	fail_if(rc != ACHAT_RC_OK, "setaddr failed with rc=%d", rc);

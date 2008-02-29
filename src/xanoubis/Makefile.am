@@ -26,6 +26,8 @@
 
 bin_PROGRAMS = xanoubis
 
+bsdcompatdir   = src/bsdcompat
+libbsdcompat   = $(top_builddir)/$(bsdcompatdir)/libbsdcompat.a
 xanoubisdir    = src/xanoubis
 anoubischatdir = src/libanoubischat
 libanoubischat = $(top_builddir)/$(anoubischatdir)/libanoubischat.a
@@ -43,6 +45,10 @@ xanoubis_CXXFLAGS = -fno-strict-aliasing $(AM_CXXFLAGS) $(WX_CXXFLAGS)
 xanoubis_LDADD = \
 	@WX_LIBS@ \
 	$(libanoubischat)
+
+if NEEDBSDCOMPAT
+xanoubis_LDADD += $(libbsdcompat)
+endif
 
 icondir = $(datadir)/$(bin_PROGRAMS)/icons
 dist_icon_DATA = \

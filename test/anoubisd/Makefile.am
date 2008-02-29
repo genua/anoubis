@@ -30,7 +30,9 @@ noinst_PROGRAMS = test_anoubisd
 
 anoubisddir    = src/anoubisd
 anoubischatdir = src/libanoubischat
+bsdcompatdir   = src/bsdcompat
 libanoubischat = $(top_builddir)/$(anoubischatdir)/libanoubischat.a
+libbsdcompat   = $(top_builddir)/$(bsdcompatdir)/libbsdcompat.a
 
 test_anoubisd_CPPFLAGS = \
 	-I$(top_srcdir)/$(anoubischatdir) \
@@ -40,6 +42,10 @@ test_anoubisd_CPPFLAGS = \
 test_anoubisd_LDADD = \
 	@CHECK_LIBS@ \
 	$(libanoubischat)
+
+if NEEDBSDCOMPAT
+test_anoubisd_LDADD += $(libbsdcompat)
+endif
 
 test_anoubisd_SOURCES = \
 	anoubisd_testcase_sessions.c \

@@ -25,11 +25,19 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "config.h"
+
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/un.h>
-#include <errno.h>
+
+#ifdef NEEDBSDCOMPAT
+#include "bsdcompat.h"
+#endif
+
 #include <netinet/in.h>
+
+#include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -113,6 +121,13 @@ acc_open(struct achat_channel *acc)
 		}
 	}
 
+	rc = acc_getpeerids(acc);
+	if (rc != ACHAT_RC_OK) {
+		close(acc->connfd);
+		acc->connfd = -1;
+		return (ACHAT_RC_ERROR);
+	}
+
 	acc_statetransit(acc, ACC_STATE_ESTABLISHED);
 
 	return (ACHAT_RC_OK);
@@ -159,6 +174,30 @@ acc_close(struct achat_channel *acc)
 		unlink(((struct sockaddr_un*)&(acc->addr))->sun_path);
 
 	acc_statetransit(acc, ACC_STATE_CLOSED);
+
+	return (ACHAT_RC_OK);
+}
+
+achat_rc
+acc_getpeerids(struct achat_channel *acc)
+{
+	int	rc;
+
+	ACC_CHKPARAM(acc != NULL);
+	/*
+	 * Currently we can retrieve the user information only from
+	 * unix domain sockets. -- CH
+	 */
+	if (acc->addr.ss_family != PF_UNIX) {
+		/* XXX HJH */
+		acc->euid = -1;
+		acc->egid = -1;
+		return (ACHAT_RC_OK);
+	}
+
+	rc = getpeereid(acc->connfd, &acc->euid, &acc->egid);
+	if (rc == -1)
+		return (ACHAT_RC_ERROR);
 
 	return (ACHAT_RC_OK);
 }

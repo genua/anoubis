@@ -28,6 +28,8 @@ lib_LIBRARIES = libanoubischat.a
 
 include_HEADERS = anoubischat.h
 
+bsdcompatdir = src/bsdcompat
+
 libanoubischat_a_SOURCES = \
 	accsetup.c  \
 	acctransmission.c \
@@ -38,6 +40,10 @@ libanoubischat_a_SOURCES = \
 	accbuffer.h \
 	$(include_HEADERS)
 
+if NEEDBSDCOMPAT
+INCLUDES = -I$(top_srcdir)/$(bsdcompatdir)
+endif
+
 # For testing with aegis (especially against the baseline) we need to run
 # the test-binary (containing the current tests), operating on the old/baseline
 # library. Thus we build a dynamic link-able library for testing purpose only.
@@ -45,6 +51,11 @@ noinst_PROGRAMS = libanoubischat.so
 libanoubischat_so_SOURCES = $(libanoubischat_a_SOURCES)
 libanoubischat_so_CFLAGS = -fPIC -shared $(shared_AM_CFLAGS)
 libanoubischat_so_LDFLAGS = -nostartfiles -shared $(shared_AM_LDFLAGS)
+
+if NEEDBSDCOMPAT
+LDADD = -lbsdcompat
+libanoubischat_so_LDFLAGS += -L$(top_builddir)/$(bsdcompatdir)
+endif
 
 libanoubischat_a_SOURCES_lint = \
 	accsetup.c_lint  \

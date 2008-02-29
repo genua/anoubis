@@ -28,7 +28,9 @@ TESTS = test_libanoubisproto
 
 anoubisprotocoldir	= src/libanoubisprotocol
 anoubischatdir		= src/libanoubischat
+bsdcompatdir		= src/bsdcompat
 libanoubischat = $(top_builddir)/$(anoubischatdir)/libanoubischat.so
+libbsdcompat = $(top_builddir)/$(bsdcompatdir)/libbsdcompat.a
 libanoubisps = $(top_builddir)/$(anoubisprotocoldir)/libanoubisps.so
 libanoubispc = $(top_builddir)/$(anoubisprotocoldir)/libanoubispc.so
 
@@ -39,13 +41,21 @@ INCLUDES =						\
 	-I$(top_srcdir)/$(anoubisprotocoldir)/server	\
 	-I$(top_srcdir)/$(anoubisprotocoldir)
 
-AM_LDFLAGS = -L$(top_builddir)/$(anoubisprotocoldir) \
+
+test_libanoubisproto_LDFLAGS = -L$(top_builddir)/$(anoubisprotocoldir) \
 	-L$(top_builddir)/$(anoubischatdir) -dynamic
-test_libanoubisproto_LDADD = @CHECK_LIBS@ -lanoubisps -lanoubispc -lanoubischat
-test_libanoubisproto_CPPFLAGS = @CHECK_CFLAGS@ $(AM_CPPFLAGS)
+LDADD = @CHECK_LIBS@ -lanoubisps -lanoubispc -lanoubischat
 
 test_libanoubisproto_DEPENDENCIES =	\
 	$(libanoubisps) $(libanoubispc) $(libanoubischat)
+
+if NEEDBSDCOMPAT
+test_libanoubisproto_LDFLAGS += -L$(top_builddir)/$(bsdcompatdir)
+LDADD += -lbsdcompat
+test_libanoubisproto_DEPENDENCIES += $(libbsdcompat)
+endif
+
+test_libanoubisproto_CPPFLAGS = @CHECK_CFLAGS@ $(AM_CPPFLAGS)
 
 test_libanoubisproto_SOURCES = \
 	testrunner.c \

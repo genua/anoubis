@@ -28,6 +28,8 @@ TESTS = test_xanoubis
 
 noinst_PROGRAMS = test_xanoubis
 
+bsdcompatdir   = src/bsdcompat
+libbsdcompat   = $(top_builddir)/$(bsdcompatdir)/libbsdcompat.a
 xanoubisdir    = src/xanoubis
 anoubischatdir = src/libanoubischat
 libanoubischat = $(top_builddir)/$(anoubischatdir)/libanoubischat.a
@@ -49,6 +51,10 @@ test_xanoubis_LDADD = \
 	@CHECK_LIBS@ \
 	$(libanoubischat) \
 	@WX_LIBS@
+
+if NEEDBSDCOMPAT
+test_xanoubis_LDADD += $(libbsdcompat)
+endif
 
 test_xanoubis_SOURCES = \
 	xanoubis_testcase_Communicator.cpp \
