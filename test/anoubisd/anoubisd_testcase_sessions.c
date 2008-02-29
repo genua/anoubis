@@ -39,6 +39,7 @@
 #include <sys/wait.h>
 
 #include "anoubischat.h"
+#include <anoubis_client.h>
 
 /* It's a bit tricky to include anoubisd.h here to access the path and
  * name of the listening socket, because we would inherit the need of
@@ -52,8 +53,8 @@ START_TEST(tc_Sessions_one)
 	struct sockaddr_storage	 ss;
 	struct sockaddr_un	*ss_sun = (struct sockaddr_un *)&ss;
 	struct achat_channel	*c  = NULL;
-	const char		 msg[] = "Hello World";
 	achat_rc		 rc = ACHAT_RC_ERROR;
+	struct anoubis_client   *client;
 
 	c = acc_create();
 	fail_if(c == NULL, "couldn't create channel");
@@ -79,9 +80,15 @@ START_TEST(tc_Sessions_one)
 	    strerror(errno));
 	mark_point();
 
-	rc = acc_sendmsg(c, msg, sizeof(msg));
-	fail_if(rc != ACHAT_RC_OK, "send msg failed with rc=%d [%s]", rc,
-	    strerror(errno));
+	client = anoubis_client_create(c);
+	fail_if(!client, "Failed to create client");
+	mark_point();
+
+	rc = anoubis_client_connect(client, 3);
+	fail_if(rc < 0, "client connect failed with code %d", rc);
+	mark_point();
+
+	anoubis_client_close(client);
 	mark_point();
 
 	rc = acc_destroy(c);
@@ -95,8 +102,8 @@ START_TEST(tc_Sessions_two)
 	struct sockaddr_un	*ss_sun = (struct sockaddr_un *)&ss;
 	struct achat_channel	*c1  = NULL;
 	struct achat_channel	*c2  = NULL;
-	const char		 msg[] = "Hello World";
 	achat_rc		 rc = ACHAT_RC_ERROR;
+	struct anoubis_client   *client1, *client2;
 
 	c1 = acc_create();
 	fail_if(c1 == NULL, "couldn't create first channel");
@@ -134,10 +141,8 @@ START_TEST(tc_Sessions_two)
 	    rc, strerror(errno));
 	mark_point();
 
-	rc = acc_sendmsg(c1, msg, sizeof(msg));
-	if (rc != ACHAT_RC_OK)
-		fail("1st channel 1st send msg failed with rc=%d [%s]", rc,
-		    strerror(errno));
+	client1 = anoubis_client_create(c1);
+	fail_if(!client1, "1st client create failed");
 	mark_point();
 
 	rc = acc_prepare(c2);
@@ -147,17 +152,16 @@ START_TEST(tc_Sessions_two)
 	fail_if(rc != ACHAT_RC_OK, "2nd channel open failed with rc=%d [%s]",
 	    rc, strerror(errno));
 	mark_point();
-
-	rc = acc_sendmsg(c2, msg, sizeof(msg));
-	if (rc != ACHAT_RC_OK)
-		fail("2nd channel 1st send msg failed with rc=%d [%s]", rc,
-		    strerror(errno));
+	client2 = anoubis_client_create(c2);
+	fail_if(!client1, "2nd client create failed");
 	mark_point();
 
-	rc = acc_sendmsg(c1, msg, sizeof(msg));
-	if (rc != ACHAT_RC_OK)
-		fail("1st channel 2nd send msg failed with rc=%d [%s]", rc,
-		    strerror(errno));
+	rc = anoubis_client_connect(client1, 3);
+	fail_if(rc < 0, "1st client connect failed with %d", rc);
+	mark_point();
+
+	rc = anoubis_client_connect(client2, 3);
+	fail_if(rc < 0, "2nd client connect failed with %d", rc);
 	mark_point();
 
 	rc = acc_destroy(c1);

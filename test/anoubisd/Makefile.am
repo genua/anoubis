@@ -28,19 +28,24 @@ TESTS = test_anoubisd
 
 noinst_PROGRAMS = test_anoubisd
 
-anoubisddir    = src/anoubisd
-anoubischatdir = src/libanoubischat
-bsdcompatdir   = src/bsdcompat
-libanoubischat = $(top_builddir)/$(anoubischatdir)/libanoubischat.a
-libbsdcompat   = $(top_builddir)/$(bsdcompatdir)/libbsdcompat.a
+anoubisddir     = src/anoubisd
+anoubischatdir  = src/libanoubischat
+bsdcompatdir    = src/bsdcompat
+anoubisprotodir = src/libanoubisprotocol
+libanoubischat  = $(top_builddir)/$(anoubischatdir)/libanoubischat.a
+libanoubispc    = $(top_builddir)/$(anoubisprotodir)/libanoubispc.a
+libbsdcompat    = $(top_builddir)/$(bsdcompatdir)/libbsdcompat.a
 
 test_anoubisd_CPPFLAGS = \
 	-I$(top_srcdir)/$(anoubischatdir) \
 	-I$(top_srcdir)/$(anoubisddir) \
+	-I$(top_srcdir)/$(anoubisprotodir) \
+	-I$(top_srcdir)/$(anoubisprotodir)/client \
 	@CHECK_CFLAGS@
 
 test_anoubisd_LDADD = \
 	@CHECK_LIBS@ \
+	$(libanoubispc) \
 	$(libanoubischat)
 
 if NEEDBSDCOMPAT
