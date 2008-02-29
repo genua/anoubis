@@ -130,13 +130,16 @@ ModAnoubisMainPanelImpl::update(void)
 			    currentNotify_->getAlfOp());
 			SHOWSLOT(5,wxT("PID / UID:"),
 			    currentNotify_->getAlfWho());
-		}
-		if (!currentNotify_->getModule().Cmp(wxT("SFS"))) {
+		} else if (!currentNotify_->getModule().Cmp(wxT("SFS"))) {
 			SHOWSLOT(3,wxT("Checksum:"),
 			    currentNotify_->getSfsChkSum());
 			SHOWSLOT(4,wxT("Operation:"),
 			    currentNotify_->getSfsOp());
 			SHOWSLOT(5,wxT("Path:"),currentNotify_->getSfsPath());
+		} else {
+			HIDESLOT(3);
+			HIDESLOT(4);
+			HIDESLOT(5);
 		}
 	} else {
 		HIDESLOT(1);

@@ -70,8 +70,13 @@ acc_prepare(struct achat_channel *acc)
 		if (rc == -1)
 			return (ACHAT_RC_ERROR);
 
-		if (acc->addr.ss_family == AF_UNIX)
-			fchmod(acc->sockfd, S_IRWXU | S_IRWXG | S_IRWXO);
+		if (acc->addr.ss_family == AF_UNIX) {
+			rc = chmod(
+			    ((struct sockaddr_un*)&(acc->addr))->sun_path,
+			    S_IRWXU | S_IRWXG | S_IRWXO);
+			if (rc == -1)
+				return (ACHAT_RC_ERROR);
+		}
 
 		rc = listen(acc->sockfd, ACHAT_MAX_BACKLOG);
 		if (rc == -1)

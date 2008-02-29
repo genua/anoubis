@@ -51,6 +51,13 @@
 #include "Module.h"
 #include "NotifyList.h"
 
+static long long
+getToken(void)
+{
+	static long long token = 0;
+	return (++token);
+}
+
 Communicator::Communicator(wxString socketPath)
 {
 	channel_ = acc_create();
@@ -167,12 +174,12 @@ Communicator::Entry(void)
 		if (currTa == NULL) {
 			if (doRegister_ && !registerInProcess_) {
 				currTa = anoubis_client_register_start(client_,
-				    0x123000, geteuid(), 0, 0, 0);
+				    getToken(), geteuid(), 0, 0, 0);
 				registerInProcess_ = true;
 			}
 			if (doShutdown_) {
 				currTa = anoubis_client_unregister_start(
-				    client_, 0x123000, geteuid(), 0, 0, 0);
+				    client_, getToken(), geteuid(), 0, 0, 0);
 			}
 		}
 

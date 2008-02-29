@@ -148,6 +148,9 @@ NotifyListEntry::NotifyListEntry(struct anoubis_msg *notify)
 			sfs_chksum_ = wxT("unknown");
 		}
 		break;
+	default:
+		module_ = wxT("unknown");
+		break;
 	}
 }
 
