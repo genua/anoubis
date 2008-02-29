@@ -28,7 +28,7 @@
 # executables, and one suitable for including in shared objects.
 
 lib_LIBRARIES = libbsdcompat.a libbsdcompat_pic.a
-include_HEADERS = bsdcompat.h
+include_HEADERS = bsdcompat.h queue.h
 
 # for LLONG_MIN/LLONG_MAX
 AM_CFLAGS += -std=gnu99
