@@ -132,9 +132,11 @@ Communicator::Entry(void)
 	struct anoubis_transaction	*currTa;
 
 	if (connect() != ACHAT_RC_OK) {
+		/* XXX CH: missing wrong error handling
 		wxMessageBox(wxT("Can't connect to anoubis daemon!"),
 		    wxT("Error"), wxOK | wxICON_ERROR);
 		(wxGetApp()).close();
+		*/
 		return (NULL);
 	}
 
