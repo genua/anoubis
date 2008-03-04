@@ -39,11 +39,6 @@
 #include "anoubis_notify.h"
 #include "crc32.h"
 
-#define ANOUBIS_PROTO_CONNECT	0
-#define ANOUBIS_PROTO_POLICY	1
-#define	ANOUBIS_PROTO_NOTIFY	2
-#define	ANOUBIS_PROTO_BOTH	3
-
 struct anoubis_server {
 	unsigned int proto;
 	unsigned int connect_flags;

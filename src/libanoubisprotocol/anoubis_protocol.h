@@ -32,6 +32,11 @@
 
 #include <assert.h>
 
+#define ANOUBIS_PROTO_CONNECT		0
+#define ANOUBIS_PROTO_POLICY		1
+#define ANOUBIS_PROTO_NOTIFY		2
+#define ANOUBIS_PROTO_BOTH		3
+
 #define DEFINE_UNSIGNED_TYPE(BITS)		\
 	typedef union __attribute__((packed)) {	\
 		unsigned char bytes[BITS/8];	\

@@ -28,6 +28,7 @@
 #define ANOUBIS_SERVER_H
 
 #include <anoubischat.h>
+#include <anoubis_protocol.h>
 
 struct anoubis_server;
 struct anoubis_notify_group;

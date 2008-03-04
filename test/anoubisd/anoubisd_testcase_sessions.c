@@ -39,6 +39,7 @@
 #include <sys/wait.h>
 
 #include "anoubischat.h"
+#include <anoubis_protocol.h>
 #include <anoubis_client.h>
 
 /* It's a bit tricky to include anoubisd.h here to access the path and
@@ -84,7 +85,7 @@ START_TEST(tc_Sessions_one)
 	fail_if(!client, "Failed to create client");
 	mark_point();
 
-	rc = anoubis_client_connect(client, 3);
+	rc = anoubis_client_connect(client, ANOUBIS_PROTO_BOTH);
 	fail_if(rc < 0, "client connect failed with code %d", rc);
 	mark_point();
 
@@ -156,11 +157,11 @@ START_TEST(tc_Sessions_two)
 	fail_if(!client1, "2nd client create failed");
 	mark_point();
 
-	rc = anoubis_client_connect(client1, 3);
+	rc = anoubis_client_connect(client1, ANOUBIS_PROTO_BOTH);
 	fail_if(rc < 0, "1st client connect failed with %d", rc);
 	mark_point();
 
-	rc = anoubis_client_connect(client2, 3);
+	rc = anoubis_client_connect(client2, ANOUBIS_PROTO_BOTH);
 	fail_if(rc < 0, "2nd client connect failed with %d", rc);
 	mark_point();
 

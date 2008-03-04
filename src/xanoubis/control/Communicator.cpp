@@ -42,6 +42,7 @@
 #include <wx/thread.h>
 
 #include "anoubischat.h"
+#include "anoubis_protocol.h"
 #include "anoubis_client.h"
 #include "anoubis_msg.h"
 #include "anoubis_transaction.h"
@@ -143,7 +144,7 @@ Communicator::Entry(void)
 		return (NULL);
 	}
 
-	currTa = anoubis_client_connect_start(client_, 3 /* XXX */);
+	currTa = anoubis_client_connect_start(client_, ANOUBIS_PROTO_BOTH);
 	if (currTa == NULL) {
 		anoubis_client_close(client_);
 		anoubis_client_destroy(client_);

@@ -45,11 +45,6 @@
 
 #define ANOUBIS_PROTO_VERSION		1
 
-#define ANOUBIS_PROTO_CONNECT		0
-#define ANOUBIS_PROTO_POLICY		1
-#define ANOUBIS_PROTO_NOTIFY		2
-#define ANOUBIS_PROTO_BOTH		3
-
 #define ALLOCLEN ((8192>ACHAT_MAX_MSGSIZE)?ACHAT_MAX_MSGSIZE:8192)
 
 static struct proto_opt anoubis_protos[] = {

@@ -58,6 +58,7 @@ void tp_chat_lud_client(const char *sockname)
 	achat_rc		 rc = ACHAT_RC_ERROR;
 	struct anoubis_client	*client;
 	int			 ret;
+	struct anoubis_transaction * curr;
 
 	c = acc_create();
 	fail_if(c == NULL, "couldn't create client channel");
@@ -91,8 +92,7 @@ void tp_chat_lud_client(const char *sockname)
 	fail_if(client == NULL, "Cannot create client");
 	mark_point();
 
-	struct anoubis_transaction * curr = anoubis_client_connect_start(
-	    client, 3 /* XXX */);
+	curr = anoubis_client_connect_start(client, ANOUBIS_PROTO_BOTH);
 	fail_if(!curr, "connect start");
 	int k = 0;
 	while(1) {
