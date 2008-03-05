@@ -86,7 +86,8 @@ static void	p2s_dispatch(int, short, void *);
 static void	s2f_dispatch(int, short, void *);
 static void	session_connect(int, short, void *);
 static void	session_rxclient(int, short, void *);
-static void	session_setupuds(struct sessionGroup *);
+static void	session_setupuds(struct sessionGroup *,
+		struct anoubisd_config *);
 static void	session_destroy(struct session *);
 
 
@@ -212,7 +213,7 @@ session_main(struct anoubisd_config *conf, int pipe_m2s[2], int pipe_m2p[2],
 	anoubisd_process = PROC_SESSION;
 
 	/* while still privileged we install a listening socket */
-	session_setupuds(&seg);
+	session_setupuds(&seg, conf);
 
 	if ((pw = getpwnam(ANOUBISD_USER)) == NULL)
 		fatal("getpwnam");
@@ -452,7 +453,7 @@ session_destroy(struct session *session)
 }
 
 void
-session_setupuds(struct sessionGroup *seg)
+session_setupuds(struct sessionGroup *seg, struct anoubisd_config * conf)
 {
 	struct sockaddr_storage	 ss;
 	achat_rc		 rc = ACHAT_RC_ERROR;
@@ -480,11 +481,11 @@ session_setupuds(struct sessionGroup *seg)
 	bzero(&ss, sizeof(ss));
 	((struct sockaddr_un *)&ss)->sun_family = AF_UNIX;
 #ifdef LINUX
-	strncpy(((struct sockaddr_un *)&ss)->sun_path, ANOUBISD_SOCKETNAME,
+	strncpy(((struct sockaddr_un *)&ss)->sun_path, conf->unixsocket,
 	    sizeof(((struct sockaddr_un *)&ss)->sun_path) - 1);
 #endif
 #ifdef OPENBSD
-	strlcpy(((struct sockaddr_un *)&ss)->sun_path, ANOUBISD_SOCKETNAME,
+	strlcpy(((struct sockaddr_un *)&ss)->sun_path, conf->unixsocket,
 	    sizeof(((struct sockaddr_un *)&ss)->sun_path));
 #endif
 	rc = acc_setaddr(seg->keeper_uds, &ss);

@@ -49,6 +49,7 @@
 
 struct anoubisd_config {
 	int	opts;
+	const char * unixsocket;	/* defaults to ANOUBISD_SOCKETNAME */
 };
 
 struct anoubisd_event_in {

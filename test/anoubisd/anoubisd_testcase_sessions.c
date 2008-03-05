@@ -48,6 +48,7 @@
  * struct eventdev_hdr). Thus we set it manually for this test.
  */
 #define ANOUBISD_SOCKETNAME	"/var/run/anoubisd.sock"
+const char * sockname = ANOUBISD_SOCKETNAME;
 
 START_TEST(tc_Sessions_one)
 {
@@ -67,7 +68,7 @@ START_TEST(tc_Sessions_one)
 
 	bzero(&ss, sizeof(ss));
 	ss_sun->sun_family = AF_UNIX;
-	strncpy(ss_sun->sun_path, ANOUBISD_SOCKETNAME,
+	strncpy(ss_sun->sun_path, sockname,
 	    sizeof(ss_sun->sun_path) - 1);
 	rc = acc_setaddr(c, &ss);
 	fail_if(rc != ACHAT_RC_OK, "setaddr failed with rc=%d", rc);
@@ -126,7 +127,7 @@ START_TEST(tc_Sessions_two)
 
 	bzero(&ss, sizeof(ss));
 	ss_sun->sun_family = AF_UNIX;
-	strncpy(ss_sun->sun_path, ANOUBISD_SOCKETNAME,
+	strncpy(ss_sun->sun_path, sockname,
 	    sizeof(ss_sun->sun_path) - 1);
 	rc = acc_setaddr(c1, &ss);
 	fail_if(rc != ACHAT_RC_OK, "1st channel setaddr failed with rc=%d", rc);

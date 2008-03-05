@@ -29,11 +29,16 @@
 #include <check.h>
 
 extern Suite *anoubisd_testsuite(void);
-
+extern const char * sockname;
 int
-main (void)
+main (int argc, char * argv[])
 {
 	int number_failed = -1;
+
+	if (argc > 2)
+		return 2;
+	if (argc == 2)
+		sockname = argv[1];
 	Suite *suite = anoubisd_testsuite();
 	SRunner *suiterunner = srunner_create(suite);
 

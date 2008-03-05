@@ -71,7 +71,7 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s [-dnv]\n", __progname);
+	fprintf(stderr, "usage: %s [ -dnv ] [ -s socket ]\n", __progname);
 	exit(1);
 }
 
@@ -149,7 +149,7 @@ main(int argc, char *argv[])
 
 	bzero(&conf, sizeof(conf));
 
-	while ((ch = getopt(argc, argv, "dnv")) != -1) {
+	while ((ch = getopt(argc, argv, "dnvs:")) != -1) {
 		switch (ch) {
 		case 'd':
 			debug = 1;
@@ -162,11 +162,20 @@ main(int argc, char *argv[])
 				conf.opts |= ANOUBISD_OPT_VERBOSE2;
 			conf.opts |= ANOUBISD_OPT_VERBOSE;
 			break;
+		case 's':
+			if (conf.unixsocket)
+				usage();
+			conf.unixsocket = strdup(optarg);
+			break;
 		default:
 			usage();
 			/* NOTREACHED */
 		}
 	}
+
+	/* Defaults. */
+	if (conf.unixsocket == NULL)
+		conf.unixsocket = ANOUBISD_SOCKETNAME;
 
 	/*
 	 * XXX HSH: Configfile will be parsed here.
