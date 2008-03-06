@@ -32,6 +32,8 @@ endif
 
 libapndir	= src/libapn
 libapn		= $(top_builddir)/$(libapndir)/libapn.a
+bsdcompatdir	= src/bsdcompat
+libbsdcompat	= $(top_builddir)/$(bsdcompatdir)/libbsdcompat.a
 
 INCLUDES = -I$(top_srcdir)/include -I$(top_srcdir)/$(libapndir)
 
@@ -40,6 +42,11 @@ anoubisctl_LDADD = $(libapn)
 anoubisctl_DEPENDENCIES = $(libapn)
 
 anoubisctl_LDFLAGS= $(AM_LDFLAGS) $(STATIC)
+
+if NEEDBSDCOMPAT
+INCLUDES += -I$(top_srcdir)/$(bsdcompatdir)
+anoubisctl_LDADD += $(libbsdcompat)
+endif
 
 anoubisctl_SOURCES= \
 	main.c \

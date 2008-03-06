@@ -32,7 +32,9 @@
 #define APN_FLAG_VERBOSE2	0x0002
 
 #define APN_HASH_SHA256		1
-#define APN_HASH_SHA512		2
+
+#define APN_HASH_SHA256_LEN	32
+#define MAX_APN_HASH_LEN	APN_HASH_SHA256_LEN
 
 /* APN variables. */
 struct var {
@@ -51,6 +53,11 @@ struct var {
 };
 TAILQ_HEAD(apnvar_queue, var);
 
+struct application {
+	char		*name;
+	int		 hashtype;
+	char		 hashvalue[MAX_APN_HASH_LEN];
+};
 
 /* Complete state of one rule. */
 struct apnrule {

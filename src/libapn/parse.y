@@ -27,6 +27,7 @@
 #ifndef LINUX
 #include <sys/queue.h>
 #else
+#include "bsdcompat.h"
 #include "queue.h"
 #endif	/* !LINUX */
 #include <sys/stat.h>
@@ -67,6 +68,8 @@ int		 lungetc(int);
 int		 findeol(void);
 int		 varset(const char *, void *, size_t, int);
 struct var	*varget(const char *);
+int		 str2hash(const char *, char *, size_t);
+int		 validate_hash(int, const char *);
 
 static struct apnruleset	*apnrsp = NULL;
 static int			 debug = 0;
@@ -75,6 +78,12 @@ typedef struct {
 	union {
 		int64_t			 number;
 		char			*string;
+		struct application	*app;
+		int			 hashtype;
+		struct {
+			int		 type;
+			char		 value[MAX_APN_HASH_LEN];
+		} hashspec;
 	} v;
 	int lineno;
 } YYSTYPE;
@@ -87,6 +96,9 @@ typedef struct {
 %token	READ WRITE EXEC CHMOD ERROR APPLICATION RULE HOST TFILE
 %token	<v.string>		STRING
 %token	<v.number>		NUMBER
+%type	<v.app>			app
+%type	<v.hashtype>		hashtype
+%type	<v.hashspec>		hashspec
 %%
 
 grammar		: /* empty */
@@ -455,20 +467,57 @@ app_l		: app_l comma optnl app
 		| ANY
 		;
 
-app		: STRING hashtype hashvalue
-		| '$' STRING			{
-			struct var		*var;
+app		: STRING hashspec		{
+			struct application	*app;
 
-			if ((var = varget($2)) == NULL)
+			if ((app = calloc(1, sizeof(struct application)))
+			    == NULL) {
+				free($1);
 				YYERROR;
+			}
+			if ((app->name = strdup($1)) == NULL) {
+				free($1);
+				free(app);
+				YYERROR;
+			}
+			app->hashtype = $2.type;
+			bcopy($2.value, app->hashvalue, sizeof(app->hashvalue));
+
+			free($1);
+
+			$$ = app;
+		}
+		| '$' STRING			{
+			struct var	*var;
+
+			if ((var = varget($2)) == NULL) {
+				free($2);
+				YYERROR;
+			}
+
+			free($2);
 		}
 		;
 
-hashtype	: SHA256
-		| /* empty */
+hashspec	: hashtype STRING		{
+
+			if (validate_hash($1, $2)) {
+				free($2);
+				YYERROR;
+			}
+			$$.type = $1;
+
+			if (str2hash($2, $$.value, sizeof($$.value)) == -1) {
+				free($2);
+				YYERROR;
+			}
+
+			free($2);
+		}
 		;
 
-hashvalue	: STRING
+hashtype	: SHA256			{ $$ = APN_HASH_SHA256; }
+		| /* empty */			{ $$ = APN_HASH_SHA256; }
 		;
 
 action		: ALLOW
@@ -481,7 +530,7 @@ log		: LOG
 		;
 
 not		: NOT
-		| /* emptry */
+		| /* empty */
 		;
 %%
 
@@ -666,9 +715,6 @@ yylex(void)
 	char	*p;
 	int	 quotec, next, c;
 	int	 token;
-#ifdef LINUX
-	char	*ep;
-#endif
 
 	p = buf;
 	while ((c = lgetc(0)) == ' ' || c == '\t')
@@ -732,18 +778,8 @@ yylex(void)
 			const char *errstr = NULL;
 
 			*p = '\0';
-#ifndef LINUX
 			yylval.v.number = strtonum(buf, LLONG_MIN,
 			    LLONG_MAX, &errstr);
-#else
-			errno = 0;
-			yylval.v.number = strtol(buf, &ep, 10);
-			if (buf[0] == '\0' || *ep != '\0')
-				errstr = "not a number";
-			if (errno == ERANGE && (yylval.v.number ==
-			    LONG_LONG_MIN || yylval.v.number == LONG_LONG_MAX))
-				errstr = strerror(errno);
-#endif	/* LINUX */
 			if (errstr) {
 				yyerror("\"%s\" invalid number: %s",
 				    buf, errstr);
@@ -930,4 +966,52 @@ varget(const char *name)
 			return (var);
 		}
 	return (NULL);
+}
+
+int
+str2hash(const char *s, char *dest, size_t max_len)
+{
+	unsigned	i;
+	char		t[3];
+
+	if (strlen(s) / 2 > max_len) {
+		yyerror("hash too long");
+		return (-1);
+	}
+
+	if (strlen(s) % 2) {
+		yyerror("hash must be of even length");
+		return (-1);
+	}
+
+	for (i = 0; i < strlen(s) / 2; i++) {
+		t[0] = s[2 * i];
+		t[1] = s[2 * i + 1];
+		t[2] = 0;
+		if (!isxdigit(t[0]) || !isxdigit(t[1])) {
+			yyerror("hash must be specified in hex");
+			return (-1);
+		}
+		dest[i] = strtoul(t, NULL, 16);
+	}
+
+	return (0);
+}
+
+int
+validate_hash(int type, const char *s)
+{
+	switch (type) {
+	case APN_HASH_SHA256:
+		if (strlen(s) != APN_HASH_SHA256_LEN * 2) {
+			yyerror("wrong hash length");
+			return (-1);
+		}
+		break;
+	default:
+		yyerror("unknown hash type %d", type);
+		return (-1);
+	}
+
+	return (0);
 }

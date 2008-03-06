@@ -30,7 +30,14 @@ libapn_a_CFLAGS = -std=gnu99 $(AM_CFLAGS)
 
 lib_LIBRARIES = libapn.a
 
-include_HEADERS = apn.h queue.h
+include_HEADERS = apn.h
+
+bsdcompatdir = src/bsdcompat
+libbsdcompat = $(top_builddir)/$(bsdcompatdir)/libbsdcompat.a
+
+if NEEDBSDCOMPAT
+INCLUDES = -I$(top_srcdir)/$(bsdcompatdir)
+endif
 
 libapn_a_SOURCES = \
 	apnparser.c  \
@@ -44,6 +51,11 @@ noinst_PROGRAMS = libapn.so
 libapn_so_SOURCES = $(libapn_a_SOURCES)
 libapn_so_CFLAGS = -fPIC -shared -std=gnu99 $(shared_AM_CFLAGS)
 libapn_so_LDFLAGS = -nostartfiles -shared $(shared_AM_LDFLAGS)
+
+if NEEDBSDCOMPAT
+LDADD = -lbsdcompat
+libapn_so_LDFLAGS += -L$(top_builddir)/$(bsdcompatdir)
+endif
 
 libapn_a_SOURCES_lint = \
 	apnparser.c_lint  \
