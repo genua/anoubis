@@ -73,6 +73,9 @@ class AnoubisGuiApp : public wxApp
 
 		bool	OnInit(void);
 		void	close(void);
+		void	sendEvent(wxCommandEvent&);
+		void	sendEvent(wxEventType);
+
 		void	setLogViewerVisability(bool);
 		void	toggleLogViewerVisability(void);
 		void	setRuleEditorVisability(bool);

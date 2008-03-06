@@ -33,6 +33,7 @@
 #include <wx/stdpaths.h>
 #include <wx/string.h>
 
+#include "AnEvents.h"
 #include "Communicator.h"
 #include "DlgLogViewer.h"
 #include "DlgRuleEditor.h"
@@ -121,6 +122,24 @@ AnoubisGuiApp::setRuleEditorVisability(bool visable)
 {
 	ruleEditor_->Show(visable);
 	mainFrame->setRuleEditorVisability(visable);
+}
+
+void
+AnoubisGuiApp::sendEvent(wxCommandEvent& event)
+{
+	wxPostEvent(mainFrame, event);
+	wxPostEvent(logViewer_, event);
+	wxPostEvent(ruleEditor_, event);
+	//wxPostEvent(com, event);
+	wxPostEvent(trayIcon, event);
+}
+
+void
+AnoubisGuiApp::sendEvent(wxEventType type)
+{
+	wxCommandEvent anEvent(type);
+	anEvent.SetInt(true);
+	sendEvent(anEvent);
 }
 
 void

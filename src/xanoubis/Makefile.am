@@ -127,6 +127,8 @@ xanoubis_SOURCES= \
 	view/TrayIcon.h \
 	control/AnShortcuts.cpp \
 	control/AnShortcuts.h \
+	control/AnEvents.cpp \
+	control/AnEvents.h \
 	control/Communicator.cpp \
 	control/CommunicatorException.cpp \
 	control/CommunicatorException.h \
@@ -190,6 +192,8 @@ xanoubis_SOURCES_flawfinder= \
 	view/TrayIcon.h_flawfinder \
 	control/AnShortcuts.cpp_flawfinder \
 	control/AnShortcuts.h_flawfinder \
+	control/AnEvents.cpp_flawfinder \
+	control/AnEvents.h_flawfinder \
 	control/Communicator.cpp_flawfinder \
 	control/CommunicatorException.cpp_flawfinder \
 	control/CommunicatorException.h_flawfinder \
@@ -253,6 +257,8 @@ xanoubis_SOURCES_lint= \
 	view/TrayIcon.h_lint \
 	control/AnShortcuts.cpp_lint \
 	control/AnShortcuts.h_lint \
+	control/AnEvents.cpp_lint \
+	control/AnEvents.h_lint \
 	control/Communicator.cpp_lint \
 	control/CommunicatorException.cpp_lint \
 	control/CommunicatorException.h_lint \
@@ -316,6 +322,8 @@ xanoubis_SOURCES_splint= \
 	view/TrayIcon.h_splint \
 	control/AnShortcuts.cpp_splint \
 	control/AnShortcuts.h_splint \
+	control/AnEvents.cpp_splint \
+	control/AnEvents.h_splint \
 	control/Communicator.cpp_splint \
 	control/CommunicatorException.cpp_splint \
 	control/CommunicatorException.h_splint \
