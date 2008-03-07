@@ -1,0 +1,179 @@
+.\"	$OpenBSD: mdoc.template,v 1.9 2004/07/02 10:36:57 jmc Exp $
+.\"
+.\" Copyright (c) 2007 GeNUA mbH <info@genua.de>
+.\"
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+.\" "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+.\" LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+.\" A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+.\" OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+.\" SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
+.\" TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+.\" PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+.\" LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+.\" NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+.\" SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd February 29, 2008
+.Dt ANOUBIS_MSG 3
+.Os Anoubis
+.Sh NAME
+.Nm struct anoubis_msg
+.Nm anoubis_msg_new ,
+.Nm anoubis_msg_resize ,
+.Nm anoubis_msg_free ,
+.Nm anoubis_msg_send ,
+.Nm anoubis_stringlist_msg ,
+.Nm struct proto_opt ,
+.Nm struct stringlist_iterator ,
+.Nm stringlist_iterator_init ,
+.Nm stringlist_iterator_get ,
+.Nm VERIFY_LENGTH(msg, len) , 
+.Nm VERIFY_FIELD(msg, unionmember, field)
+.Nd basic message handling functions for the anoubis protocol library
+.Sh SYNOPSIS
+.In anoubis_msg.h
+.Ft "struct anoubis_msg *"
+.Fn "anoubis_msg_new" "u_int32_t payloadlen"
+.Ft "int"
+.Fn "anoubis_msg_resize" "struct anoubis_msg * m" "u_int32_t totallen"
+.Ft "void"
+.Fn "anoubis_msg_free" "struct anoubis_msg * m"
+.Ft "void"
+.Fn "stringlist_iterator_init" "struct stringlist_iterator * it" "struct anoubis_msg * m" "struct proto_opt * opts"
+.Ft "int"
+.Fn stringlist_iterator_get "struct stringlist_iterator * it" "struct anoubis_msg * m" "struct proto_opt * opts"
+.Ft "struct anoubis_msg *"
+.Fn "anoubis_stringlist_msg" "u_int32_t type" "struct proto_opt * opts" "int * optvals"
+.Ft "int"
+.Fn "anoubis_msg_send" "struct achat_channel * chan" "struct anoubis_msg * m"
+.Ft int
+.Fn VERIFY_LENGTH msg payloadlen
+.Ft int
+.Fn VERIFY_FIELD msg unionmember field
+.Sh DESCRIPTION
+The
+.Nm anoubis_msg.h
+file offers a simple interface for the handling of messages in the anoubis
+protocol library.
+Each message is represented by a
+.Nm struct anoubis_msg
+which consists of a length field and a pointer to a buffer (allocated by
+malloc) that contains the actual message.
+The value in the length field includes the size of the actual payload and
+a four bytes CRC32 checksum that is part of each protocol message on the wire.
+The function 
+.Nm anoubis_msg_new
+can be used to allocate a new message that has room for
+.Fa payload
+bytes of payload.
+This means that the length of the actual buffer will be
+.Fa payload
++ 4 because of the additional checksum.
+The length of the message buffer can be modified by
+.Nm anoubis_msg_resize.
+As opposed to
+.Nm anoubis_msg_new
+the length parameter given as the first argument
+.Em includes
+the length of the checksum.
+Thus if a message is resized to length 16 it has only room for 12 bytes
+of actual payload.
+Freeing a message is done with
+.Nm anoubis_msg_free.
+This will free the message structure and the buffer space allocated to it.
+.Pp
+The macro
+.Nm VERIFY_LENGTH(m, len)
+returns true if the buffer of the message is large enough to hold at
+least
+.Fa len
+bytes of
+.Em payload.
+Similarly 
+.Nm VERIFY_FIELD(m, unionmember, field)
+returns true if it is safe to access m->u.unionmember->field.
+.Pp
+The
+.Nm anoubis_msg_send
+function can be used to send a given message onto a communication channel.
+The checksum of the message is calculated and inserted into the buffer
+before sending the message.
+.Pp
+.Sh STRINGLIST FUNCTIONS
+A special kind of messages are stringlist messages.
+Apart from an appropriate message type the payload of such a message
+consists of a comma separated list of words/strings.
+Handling of such a message is simplified by special stringlist functions.
+These functions use an array of
+.Ft "struct proto_opt"
+structures to translate words in the comma separated list into
+options.
+Each
+.Ft "struct proto_opt"
+contains the following fields:
+.Bl -tag -width "MMM"
+.It "int val"
+is the numerical value that corresponds to the option
+.It const char * str
+is a null terminated string that corresponds to the given option.
+.El
+.Pp
+The array of
+.Ft "struct proto_opt"
+structures is terminated by an element with a negative value in 
+.Va val.
+.Pp
+The function
+.Fn stringlist_iterator_init
+creates a stringlist iterator for a given message and a given set of options.
+.Fn stringlist_iterator_get
+can be used to retrieve the numerical value of one option from a stringlist
+at at time.
+Unknown options (i.e. options not listed in the
+.Ft "struct proto_opt"
+array are ignored.
+If no more options are present -1 is returned.
+.Pp
+The function
+.Fn anoubis_stringlist_msg
+creates a stringlist message with the type field set to
+.Fn type
+and with the options in the array
+.Va ovals[].
+The ovals array is terminated by -1.
+.Sh RETURN VALUES
+The functions
+.Fn anoubis_msg_new
+and
+.Fn anoubis_stringlist_msg
+return the new message on success or NULL if no memory was available.
+.Pp
+.Fn anoubis_msg_resize
+and
+.Fn anoubis_msg_send
+return zero on success and a negative value on error.
+In case of an error the absolute value is the errno number as defined in
+.Xr errno 2
+.Pp
+.Fn stringlist_iterator_get
+returns the numerical value of the next option or -1 if no more
+options were found.
+.Sh SEE ALSO
+.Xr anoubis_client 3 ,
+.Xr anoubis_server 3 ,
+.Xr anouis_chat 3 ,
+.Xr errno 2
+.Sh AUTHORS
+Christian Ehrhardt <ehrhardt@genua.de>

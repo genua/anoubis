@@ -1,0 +1,84 @@
+.\"	$OpenBSD: mdoc.template,v 1.9 2004/07/02 10:36:57 jmc Exp $
+.\"
+.\" Copyright (c) 2007 GeNUA mbH <info@genua.de>
+.\"
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+.\" "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+.\" LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+.\" A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+.\" OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+.\" SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
+.\" TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+.\" PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+.\" LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+.\" NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+.\" SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd February 29, 2008
+.Dt ANOUBIS_AUTH 3
+.Os Anoubis
+.Sh NAME
+.Nm struct anoubis_auth
+.Nm anoubis_auth_create
+.Nm anoubis_auth_destroy
+.Nm anoubis_auth_process
+.Nd Protocol level authentication interface
+.Sh SYNOPSIS
+.In anoubis_msg.h
+.In anoubis_auth.h
+.Ft struct anoubis_auth *
+.Fn anoubis_auth_create "struct achat_channel * chan" "anoubis_auth_callback_t finish" "void * data"
+.Ft void
+.Fn anoubis_auth_destroy "struct anoubis_auth * auth"
+.Ft int
+.Fn anoubis_auth_process "struct anoubis_auth * auth" "struct anoubis_msg * m"
+.Sh DESCRIPTION
+This module is used to handle client authentication at the anoubis protocol
+level.
+Once the client requests authentication with an
+.Em ANOUBIS_C_AUTH
+message an authentication object should be created with
+.Nm anoubis_auth_create.
+All of the
+.Em ANOUBIS_C_AUTHDATA
+messages that are exchanged during authentication should be passed to
+.Nm anoubis_auth_process.
+Once the authentication library detects the end of the authentication
+phase it will call the
+.Va finish
+callback function.
+.Em Only
+messages of type
+.Em ANOUBIS_C_AUTHDATA
+should be passed to
+.Nm anoubis_auth_process.
+Any messages that must be sent by the authentication
+library are sent onto the channel
+.Va chan.
+.Sh RETURN VALUES
+.Nm anoubis_auth_create
+returns a pointer to the new authentication structure or
+.Em NULL
+if no memory was available.
+.Pp
+.Nm anoubis_auth_process
+returns zero if the message could be processed or a negative errno value
+of processing failed for some reason.
+In the latter case subsequent messages will also yield an error code.
+.Sh SEE ALSO
+.Xr anoubis_msg 3 ,
+.Xr anoubis_client 3 ,
+.Xr anoubis_server 3 ,
+.Sh AUTHORS
+Christian Ehrhardt <ehrhardt@genua.de>

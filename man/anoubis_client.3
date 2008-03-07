@@ -1,0 +1,158 @@
+.\"	$OpenBSD: mdoc.template,v 1.9 2004/07/02 10:36:57 jmc Exp $
+.\"
+.\" Copyright (c) 2007 GeNUA mbH <info@genua.de>
+.\"
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+.\" "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+.\" LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+.\" A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+.\" OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+.\" SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
+.\" TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+.\" PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+.\" LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+.\" NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+.\" SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd February 29, 2008
+.Dt ANOUBIS_CLIENT 3
+.Os Anoubis
+.Sh NAME
+.Nm struct anoubis_client
+.Nm anoubis_client_create
+.Nm anoubis_client_destroy
+.Nm anoubis_client_connect_start
+.Nm anoubis_client_register_start
+.Nm anoubis_client_unregister_start
+.Nm anoubis_client_close_start
+.Nm anoubis_client_connect
+.Nm anoubis_client_close
+.Nd Client side protocol handler
+.Sh SYNOPSIS
+.In anoubis_msg.h
+.In anoubis_transaction.h
+.In anoubis_client.h
+.Ft struct anoubis_client *
+.Fn anoubis_client_create "struct achat_channel * chan"
+.Ft void
+.Fn anoubis_client_destroy "struct anoubis_client * client"
+.Ft int
+.Fn anoubis_client_process "struct anoubis_client * client" "struct anoubis_msg * m"
+.Ft struct anoubis_transaction *
+.Fn anoubis_client_connect_start "struct anoubis_client * client" "unsigned int proto"
+.Ft void
+.Fn anoubis_client_close_start "struct anoubis_client * client"
+.Ft struct anoubis_transaction *
+.Fn anoubis_client_register_start "struct anoubis_client * client" "anoubis_token_t token" "uid_t uid" "pid_t pid" "u_int32_t rule_id" "u_int32_t subsystem"
+.Ft struct anoubis_transaction *
+.Fn anoubis_client_unregister_start "struct anoubis_client * client" "anoubis_token_t token" "uid_t uid" "pid_t pid" "u_int32_t rule_id" "u_int32_t subsystem"
+.Ft int
+.Fn anoubis_client_connect "struct anoubis_client * client" "unsigned int"
+.Ft void
+.Fn anoubis_client_close "struct anoubis_client * client"
+.Sh DESCRIPTION
+This module is used to handle the client side of the anoubis protocol.
+Messages are sent (and sometimes received) via the channels specified
+to
+.Nm anoubis_client_create.
+Each request to the protocol layer is done in the form of a transaction, i.e.
+for operation
+.Nm xxx
+the
+.Nm anoubis_client_xxx_start
+function is called which returns a pointer to an
+.Xr anoubis_transaction 3
+structure that will track this transaction.
+The client protocol library tracks ongoing transactions and can automatically
+associate incoming messages with the appropriate ongoing transaction.
+These functions
+.Em do not read
+messages from the channel.
+Instead the caller must read messages and pass them to the client library
+for processing by calling the
+.Nm anoubis_client_process
+function.
+.Sh REQUESTS
+Currently the client protocol library supports the following types of
+requests:
+.Bl -tag -width MMM
+.It anoubis_client_connect_start
+This request handles setup of the connection.
+It cannot be run in parallel with other requests.
+The proto parameter tells the client library which protocols to request
+from the server.
+Supported protocols are
+.Bl -tag -width MMM
+.It ANOUBIS_PROTO_POLICY
+Only the policy protocol will be used.
+.It ANOUBIS_PROTO_NOTIFY
+Only the notify protocol will be used.
+.It ANOUBIS_PROTO_BOTH
+Both the policy and the notify protocol will be used.
+.El
+.It anoubis_client_register_start
+.It anoubis_client_unregister_start
+These start a registration or unregistration request for certain
+types of notify events.
+Events can be selected based on user-ID, process-ID, rule-ID and subsystem.
+The special constant zero is a wild card that matches all values in the
+respective field.
+.It anoubis_client_close_start
+Initiate shutdown of the connection.
+.El
+.Pp
+In all cases the issuer of the request is responsible for feeding messages
+into the client protocol.
+Additionally the issuer must periodically check for completed transactions.
+In order to simplify this for applications that do not need asynchronous
+message handling a few transactions have synchronous counterparts.
+These are
+.Nm anoubis_client_connect
+and
+.Nm anoubis_client_close.
+These functions return the result of the transaction as an errno code.
+These functions are the only functions that actively read messages from
+the channel.
+.Sh RETURN VALUES
+.Nm anoubis_client_create
+returns the protocol client or NULL if the client could not be created
+for some reason.
+.Pp
+The functions
+.Nm anoubis_client_connect_start ,
+.Nm anoubis_client_register_start ,
+.Nm anoubis_client_unregister_start
+and 
+.Nm anoubis_client_close_start
+return the newly created transaction or NULL if an error occurred.
+.Pp
+The functions
+.Nm anoubis_client_connect
+and 
+.Nm anoubis_client_close
+return an anoubis error code or zero if the transaction completed
+successfully.
+.Pp
+.Nm anoubis_client_process
+returns a negative error code if an error occurred while processing the
+message. Otherwise zero is returned if the message was not processed and
+true (a positive value) if the message could be processed.
+The message and its associated buffer will be freed during processing.
+.Sh SEE ALSO
+.Xr anoubis_msg 3 ,
+.Xr anoubis_transaction 3 ,
+.Xr anoubis_client 3 ,
+.Xr anoubis_server 3 ,
+.Sh AUTHORS
+Christian Ehrhardt <ehrhardt@genua.de>

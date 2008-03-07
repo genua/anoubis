@@ -1,0 +1,212 @@
+.\"	$OpenBSD: mdoc.template,v 1.9 2004/07/02 10:36:57 jmc Exp $
+.\"
+.\" Copyright (c) 2007 GeNUA mbH <info@genua.de>
+.\"
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+.\" "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+.\" LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+.\" A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+.\" OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+.\" SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
+.\" TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+.\" PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+.\" LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+.\" NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+.\" SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd February 29, 2008
+.Dt ANOUBIS_TRANSACTION 3
+.Os Anoubis
+.Sh NAME
+.Nm struct anoubis_transaction
+.Nm anoubis_transaction_process_t ,
+.Nm anoubis_transaction_callback_t ,
+.Nm anoubis_transaction_create ,
+.Nm anoubis_transaction_destroy ,
+.Nm anoubis_transaction_setopcodes ,
+.Nm anoubis_transaction_match ,
+.Nm anoubis_transaction_process ,
+.Nm anoubis_transaction_progress ,
+.Nm anoubis_transaction_done ,
+.Nd basic transaction handling functions for the anoubis protocol library
+.Sh SYNOPSIS
+.In anoubis_transaction.h
+.Ft "struct anoubis_transaction *"
+.Fn "anoubis_transaction_create" "anoubis_token_t token" "unsigned int flags" "anoubis_transaction_process_t process" "anoubis_transaction_callback_t finish" "void * cbdata"
+.Ft void
+.Fn anoubis_transaction_destroy "struct anoubis_transaction * t"
+.Ft void
+.Fn anoubis_transaction_setopcodes "struct anoubis_transaction * t" "const int * opcode"
+.Ft int
+.Fn anoubis_transaction_match "struct anoubis_transaction * t" "anoubis_token_t token" "int self" "int opcode"
+.Ft void
+.Fn anoubis_transaction_process "struct anoubis_transaction * t" "struct anoubis_msg * m"
+.Ft void
+.Fn anoubis_transaction_progress "struct anoubis_transaction *" "const int *"
+.Ft void
+.Fn anoubis_transaction_done "struct anoubis_transaction * t" "int error"
+.Sh DESCRIPTION
+The
+.Nm anoubis_transaction.h
+file offers an interface for the handling of transactions.
+For the purpose of this document a transaction is defined to be a sequence
+of related messages.
+Each message in the protocol stream is identified by a token and these tokens
+are used to associate messages with ongoing transactions (there can be many).
+Tokens are opaque values that are created by the transaction initiator.
+Transactions initiated by the peer of the connection are marked with
+.Em ANOUBIS_T_INITPEER
+while transactions marked with
+.Em ANOUBIS_T_INITSELF
+are initiated by the local end.
+.Pp
+Usually a single step in a transaction consists of a new message that is
+processed and a reply that is sent onto the wire.
+The steps that have to be done when processing a message are obviously
+dependant on the kind of transaction that is going on.
+.Pp
+In order to determine if a message fits into a transaction three things must
+be checked:
+.Bl -bullet
+.It
+The token of the message and the token of the transaction must match
+.It
+If the token is not zero the initiator must also match.
+.It
+Finally the message type of the new message must be in the list of
+message types that are currently applicable for the transaction.
+These message types can be set by the
+.Fn anoubis_transaction_setopcodes
+function.
+.El
+A new transaction is created by calling
+.Fn anoubis_transaction_create .
+Function arguments are defined as follows:
+.Bl -tag -width "MMM"
+.It token
+The token for the transaction.
+Only messages with the same token are eligible for processing in this
+transaction.
+.It flags
+Transaction flags.
+These flags must include either
+.Em ANOUBIS_T_INITSELF
+or
+.Em ANOUBIS_T_INITPEER.
+Apart from that the following flags are supported:
+.Bl -tag -bullet -width "MMM"
+.It ANOUBIS_T_DONE
+Will be set if the transaction is finished.
+Once this flag is set the error code of the transaction can be evaluated.
+.It ANOUBIS_T_DESTROY
+Destroy the transaction after the transaction is finished.
+.It ANOUBIS_T_DEQUEUE
+Transactions can be put onto a list of transactions.
+If this is the case this flag indicates that the transaction should
+be removed from the list once it is complete.
+.It ANOUBIS_T_FREECBDATA
+If this flag is set the callback data will be freed when the transaction
+is destroyed.
+.El
+.It process
+This function will be called for each message that should be processed
+as part of the transaction.
+The transaction structure and the new message will be passed to the
+transaction function.
+.It finish
+This function will be called once the transaction is complete.
+It can be used to send notifications of the transaction result to
+interested parties.
+.It cbdata
+An opaque pointer that is stored in the
+.Nm cbdata
+field of the
+.Nm anoubis_transaction
+structure.
+The process function can use this data to keep state between invocations.
+.El
+.Pp
+A transaction can be destroyed explicitly by a call to
+.Nm anoubis_transaction_destroy.
+.Pp
+If a new message arrives the caller should first check if the message
+is applicable to the transaction at all.
+This is done by calling
+.Nm anoubis_transaction_match.
+If the message is applicable it can be fed into the transaction by
+calling
+.Nm anoubis_transaction_process.
+.Em NOTE:
+Never call the finish function directly!
+.Pp
+The first thing to do after a transaction has been created is to set
+message types that are applicable for the transaction.
+Otherwise no message will be applicable for the transaction at all.
+.Nm anoubis_set_opcodes
+can be used to do this.
+.Pp
+When processing a message it is often necessary to change the message
+types that are applicable.
+The process function must call
+.Nm anoubis_transaction_setopcodes
+or
+.Nm anoubis_transaction_progress
+(see below) in this case.
+.Pp
+Once a transaction is complete the process hook must call
+.Nm anoubis_transaction_done
+to set the
+.Em ANOUBIS_T_DONE
+flag
+and the result of the transaction.
+The latter can later be retrieved via the
+.Em error
+field of the transaction structure.
+.Sh THE STAGE COUNTER
+The process function of a transaction must keep track of the state
+that the transaction is in.
+Normally this must be done in the callback data.
+However, there is also support for a stage counter that can be used by
+simple linear transactions.
+The stage counter is initialized to 1 at the time the transaction is
+created and each time that
+.Nm anoubis_transaction_progress
+is called it is incremented by one.
+Thus if a sequence of three messages is expected in a transaction the
+process function can be a switch statement that selects its label based on
+the value of the
+.Dv stage
+field in the transaction structure.
+The code to process each label from 1 to 3 would process one of the messages
+and at the end of each case label the process function would call
+.Nm anoubis_transaction_progress before returning from the function.
+The last label would also have to call
+.Nm anoubis_transaction_done
+of course.
+.Sh RETURN VALUES
+.Nm anoubis_transaction_create
+returns a pointer to the new transaction or
+.Em NULL
+if the transaction could not be created.
+.Pp
+.Nm anoubis_transaction_match
+returns true if the message is eligible for the transaction and false
+otherwise.
+.Sh SEE ALSO
+.Xr anoubis_msg 3 ,
+.Xr anoubis_client 3 ,
+.Xr anoubis_server 3 ,
+.Xr errno 2 ,
+.Sh AUTHORS
+Christian Ehrhardt <ehrhardt@genua.de>
