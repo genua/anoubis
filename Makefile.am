@@ -27,7 +27,9 @@ SUBDIRS = src test include
 
 # the following is needed to add man pages to the dist file
 man_MANS = man/anoubisd.8 man/xanoubis.1 man/anoubischat.3 man/anoubisctl.8 \
-	man/apn.3
+	man/apn.3 man/anoubis_msg.3 man/anoubis_transaction.3 \
+	man/anoubis_client.3 man/anoubis_server.3 man/anoubis_auth.3
+
 EXTRA_DIST = $(man_MANS) @WXFB_PROJECT_FILES@ autogen.sh
 
 MAINTAINERCLEANFILES= \
