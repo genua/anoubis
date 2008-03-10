@@ -50,6 +50,50 @@
 
 #include <anoubischat.h>
 
+#define NNOTIFIES 100
+struct {
+	anoubis_token_t token;
+	char sent_reply;
+	char got_verdict;
+} notifies[NNOTIFIES];
+int nnotifies;
+
+void handle_notify(struct anoubis_client * client, struct anoubis_msg * m)
+{
+	int i, opcode;
+	anoubis_token_t token;
+
+	fail_if(nnotifies >= NNOTIFIES, "Did not expect that many messages");
+	fail_if(!VERIFY_FIELD(m, token, token), "Short message");
+	opcode = get_value(m->u.token->type);
+	token = m->u.token->token;
+	for(i=0; i<nnotifies; ++i) {
+		if (notifies[i].token == token)
+			break;
+	}
+	if (opcode == ANOUBIS_N_NOTIFY || opcode == ANOUBIS_N_ASK) {
+		fail_if(!VERIFY_LENGTH(m, sizeof(Anoubis_NotifyMessage)));
+		anoubis_msg_free(m);
+		fail_if(i != nnotifies);
+		nnotifies++;
+		notifies[i].token = token;
+		notifies[i].sent_reply = 1;
+		notifies[i].got_verdict = 0;
+		anoubis_client_notifyreply(client, token, i, i%2); 
+		return;
+	}
+	fail_if(opcode == ANOUBIS_N_RESOTHER, "RESOTHER unexpected");
+	fail_if(opcode != ANOUBIS_N_RESYOU, "Bad opcode");
+	fail_if(!VERIFY_LENGTH(m, sizeof(Anoubis_NotifyResultMessage)),
+	    "Short Message");
+	fail_if(i == nnotifies, "result for nonexisting message");
+	fail_if(notifies[i].got_verdict == 1, "Already got verdict");
+	fail_if(get_value(m->u.notifyresult->error) != i, "Wrong verdict");
+	notifies[i].got_verdict = 1;
+}
+
+char * trans = "reg";
+
 void tp_chat_lud_client(const char *sockname)
 {
 	struct sockaddr_storage	 ss;
@@ -57,7 +101,7 @@ void tp_chat_lud_client(const char *sockname)
 	struct achat_channel    *c  = NULL;
 	achat_rc		 rc = ACHAT_RC_ERROR;
 	struct anoubis_client	*client;
-	int			 ret;
+	int			 i, ret;
 	struct anoubis_transaction * curr;
 
 	c = acc_create();
@@ -101,6 +145,8 @@ void tp_chat_lud_client(const char *sockname)
 		achat_rc rc;
 
 		if (curr && (curr->flags & ANOUBIS_T_DONE)) {
+			if (k == 11)
+				break;
 			if (geteuid() == 0) {
 				fail_if(curr->result, "Transaction error");
 			} else {
@@ -116,9 +162,12 @@ void tp_chat_lud_client(const char *sockname)
 			curr = NULL;
 		}
 		if (curr == 0) {
-			if (k >= 10)
-				break;
-			if (k < 5) {
+			if (k == 10) {
+				trans = "close";
+				curr = anoubis_client_close_start(client);
+				fail_if(!curr, "close start failed");
+				k++;
+			} else if (k < 5) {
 				curr = anoubis_client_register_start(client,
 				    0x123000+k, geteuid()+k, 0, 0, 0);
 				fail_if(!curr, "register");
@@ -138,12 +187,17 @@ void tp_chat_lud_client(const char *sockname)
 		if (ret != 1)
 			errno = -ret;
 		fail_if(ret != 1, "protocol error");
+		while(anoubis_client_hasnotifies(client)) {
+			handle_notify(client, anoubis_client_getnotify(client));
+		}
 	}
-
-	sleep(2);
-
-	anoubis_client_close(client);
-
+	fail_if(nnotifies == 0, "Did not receive notifies");
+	for (i=0; i<nnotifies; ++i) {
+		fail_if(notifies[i].sent_reply != notifies[i].got_verdict,
+		    "Did not receive verdict for token 0x%llx (sent=%d go=%d)",
+		    notifies[i].token, notifies[i].sent_reply,
+		    notifies[i].got_verdict);
+	}
 	mark_point();
 
 	anoubis_client_destroy(client);
@@ -176,8 +230,9 @@ static void do_notify(struct anoubis_notify_group * grp, pid_t pid)
 	m->u.notify->token = ++token;
 	set_value(m->u.notify->pid, pid);
 	set_value(m->u.notify->rule_id, 0);
-	set_value(m->u.notify->uid, 0);
+	set_value(m->u.notify->uid, geteuid());
 	set_value(m->u.notify->subsystem, 0);
+	set_value(m->u.notify->operation, 0);
 	head = anoubis_notify_create_head(/* XXX */ pid, m, &notify_callback,
 	    NULL);
 	if (!head < 0) {

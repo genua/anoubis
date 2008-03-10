@@ -35,7 +35,8 @@ struct anoubis_msg;
 struct anoubis_transaction;
 
 __BEGIN_DECLS
-struct anoubis_msg * get_notifies(struct anoubis_client * client);
+
+struct anoubis_msg * anoubis_client_getnotify(struct anoubis_client * client);
 struct anoubis_client * anoubis_client_create(
     struct achat_channel * chan);
 void anoubis_client_destroy(struct anoubis_client *);
@@ -53,6 +54,11 @@ struct anoubis_transaction * anoubis_client_register_start(
 struct anoubis_transaction * anoubis_client_unregister_start(
     struct anoubis_client * client, anoubis_token_t token, uid_t uid,
     pid_t pid, u_int32_t rule_id, u_int32_t subsystem);
+struct anoubis_msg * anoubis_client_getnotify(struct anoubis_client * client);
+int anoubis_client_notifyreply(struct anoubis_client * client,
+    anoubis_token_t, int error, int delegate);
+int anoubis_client_hasnotifies(struct anoubis_client * client);
+
 __END_DECLS
 
 #endif

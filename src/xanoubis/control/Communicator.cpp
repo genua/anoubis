@@ -204,7 +204,7 @@ Communicator::Entry(void)
 			notDone_ = false;
 		}
 
-		struct anoubis_msg *notify = get_notifies(client_);
+		struct anoubis_msg *notify = anoubis_client_getnotify(client_);
 		if (notify != NULL) {
 			NotifyListEntry *nl;
 			ModAnoubis *anoubisModule;

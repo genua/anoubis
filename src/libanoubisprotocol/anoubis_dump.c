@@ -91,7 +91,7 @@ static void dump_stringlist(Anoubis_StringListMessage * m, size_t len)
 static void dump_ack(Anoubis_AckMessage * m, size_t len __used)
 {
 	DUMP_NETX(m, opcode);
-	printf(" token = %llx", m->token);
+	printf(" token = 0x%llx", m->token);
 	DUMP_NETX(m, error);
 }
 
@@ -105,7 +105,7 @@ static void dump_authreply(Anoubis_AuthReplyMessage * m, size_t len)
 
 static void dump_notify(Anoubis_NotifyMessage * m, size_t len)
 {
-	printf(" token = %llx", m->token);
+	printf(" token = 0x%llx", m->token);
 	DUMP_NETU(m, pid);
 	DUMP_NETU(m, rule_id);
 	DUMP_NETU(m, uid);
@@ -116,13 +116,13 @@ static void dump_notify(Anoubis_NotifyMessage * m, size_t len)
 
 static void dump_notifyreg(Anoubis_NotifyRegMessage * m, size_t len __used)
 {
-	printf(" token = %llx", m->token);
+	printf(" token = 0x%llx", m->token);
 }
 
 static void dump_notifyresult(Anoubis_NotifyResultMessage * m,
     size_t len __used)
 {
-	printf(" token = %llx", m->token);
+	printf(" token = 0x%llx", m->token);
 	DUMP_NETU(m, error);
 	DUMP_NETU(m, uid);
 }
@@ -159,7 +159,7 @@ void anoubis_dump(struct anoubis_msg * m, const char * str)
 	printf("\n");
 }
 
-void anoubis_dump_buffer(void * buf, size_t len, const char * str)
+void anoubis_dump_buf(void * buf, size_t len, const char * str)
 {
 	struct anoubis_msg m = {
 		.u.buf = buf,

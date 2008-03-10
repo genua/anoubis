@@ -89,7 +89,7 @@ static void queue_notify(struct anoubis_client * client, struct anoubis_msg * m)
 	}
 }
 
-struct anoubis_msg * get_notifies(struct anoubis_client * client)
+struct anoubis_msg * anoubis_client_getnotify(struct anoubis_client * client)
 {
 	struct anoubis_msg * m = client->notify;
 
@@ -101,6 +101,11 @@ struct anoubis_msg * get_notifies(struct anoubis_client * client)
 	}
 
 	return m;
+}
+
+int anoubis_client_hasnotifies(struct anoubis_client * client)
+{
+	return (client->notify != NULL);
 }
 
 static struct anoubis_msg * anoubis_client_rcv(struct anoubis_client * client,
@@ -154,16 +159,12 @@ int anoubis_client_verify(struct anoubis_client * client,
 	return 0;
 }
 
-int anoubis_client_send(struct anoubis_client * client, struct anoubis_msg * m)
+static int anoubis_client_send(struct anoubis_client * client,
+    struct anoubis_msg * m)
 {
-	achat_rc rc;
-	crc32_set(m->u.buf, m->length);
-	anoubis_dump(m, "Client send");
-	rc = acc_sendmsg(client->chan, m->u.buf, m->length);
+	int ret = anoubis_msg_send(client->chan, m);
 	anoubis_msg_free(m);
-	if (rc != ACHAT_RC_OK)
-		return -ECONNABORTED;
-	return 0;
+	return ret;
 }
 
 struct anoubis_client * anoubis_client_create(struct achat_channel * chan)
@@ -552,78 +553,24 @@ err:
 	return NULL;
 }
 
-static void anoubis_client_process_verdict(struct anoubis_transaction * t,
-    struct anoubis_msg * m)
-{
-	struct anoubis_msg * s;
-	struct anoubis_client * client = t->cbdata;
-	u_int32_t opcode;
-	anoubis_token_t token;
-
-	if (!VERIFY_LENGTH(m, sizeof(Anoubis_NotifyResultMessage))) {
-		anoubis_msg_free(m);
-		return;
-	}
-	opcode = get_value(m->u.notifyresult->type);
-	token = m->u.notifyresult->token;
-	if (opcode != ANOUBIS_N_RESYOU && opcode != ANOUBIS_N_RESOTHER) {
-		anoubis_msg_free(m);
-		return;
-	}
-	for(s=client->notify; s; s=s->next)
-		if (s->u.token->token == token)
-			break;
-	/* Return ESRCH if:
-	 *  - No message with the given token was found.
-	 *  - A message was found but is was not of type ANOUBIS_N_ASK
-	 *  - The next message on the queue is a previously received answer
-	 *    for the message.
-	 */
-	if (!s || (get_value(s->u.general->type) != ANOUBIS_N_ASK)
-	    || (s->next && s->u.token->token == s->next->u.token->token)) {
-		anoubis_msg_free(m);
-		return;
-	}
-	m->next = s->next;
-	s->next = m;
-	if (client->tail == s)
-		client->tail = m;
-	anoubis_dump(m, "NOTIFY_REPLY");
-	/*
-	 * XXX: If no answer was sent we should do so right now.
-	 * XXX: However, this requires a more sophisticated registeration
-	 * XXX: of pending events.  --ceh 02/09
-	 */
-	return;
-}
-
 static int anoubis_client_process_event(struct anoubis_client * client,
     struct anoubis_msg * m, int opcode, anoubis_token_t token)
 {
-	struct anoubis_transaction * t;
-	static const int nextops[] = {
-	    ANOUBIS_N_RESYOU, ANOUBIS_N_RESOTHER, 0
-	};
-	if (!VERIFY_LENGTH(m, sizeof(Anoubis_NotifyMessage))) {
-		anoubis_msg_free(m);
-		return -EIO;
-	}
-	if (opcode != ANOUBIS_N_ASK && opcode != ANOUBIS_N_NOTIFY) {
-		anoubis_msg_free(m);
+	switch(opcode) {
+	case ANOUBIS_N_ASK:
+	case ANOUBIS_N_NOTIFY:
+		if (!VERIFY_LENGTH(m, sizeof(Anoubis_NotifyMessage)))
+			return -EIO;
+		break;
+	case ANOUBIS_N_RESYOU:
+	case ANOUBIS_N_RESOTHER:
+		if (!VERIFY_LENGTH(m, sizeof(Anoubis_NotifyResultMessage)))
+			return -EIO;
+		break;
+	default:
 		return -EINVAL;
 	}
-	anoubis_dump(m, "notify");
-	if (opcode == ANOUBIS_N_ASK) {
-		t = anoubis_transaction_create(token,
-		    ANOUBIS_T_INITPEER|ANOUBIS_T_DEQUEUE|ANOUBIS_T_DESTROY,
-		    &anoubis_client_process_verdict, NULL, client);
-		if (!t) {
-			anoubis_msg_free(m);
-			return -EINVAL;
-		}
-		anoubis_transaction_setopcodes(t, nextops);
-		LIST_INSERT_HEAD(&client->ops, t, next);
-	}
+	anoubis_dump(m, "queue_notify");
 	queue_notify(client, m);
 	return 1;
 }
@@ -658,12 +605,6 @@ static int anoubis_client_continue_self(struct anoubis_client * client,
     struct anoubis_msg * m, u_int32_t opcode, anoubis_token_t token)
 {
 	return __anoubis_client_continue(client, m, opcode, token, 1);
-}
-
-static int anoubis_client_continue_peer(struct anoubis_client * client,
-    struct anoubis_msg * m, u_int32_t opcode, anoubis_token_t token)
-{
-	return __anoubis_client_continue(client, m, opcode, token, 0);
 }
 
 /* Will take over and ultimately free the message! */
@@ -710,11 +651,9 @@ int anoubis_client_process(struct anoubis_client * client,
 		switch(opcode) {
 		case ANOUBIS_N_ASK:
 		case ANOUBIS_N_NOTIFY:
-			return anoubis_client_process_event(client, m, opcode,
-			    m->u.token->token);
 		case ANOUBIS_N_RESYOU:
 		case ANOUBIS_N_RESOTHER:
-			return anoubis_client_continue_peer(client, m, opcode,
+			return anoubis_client_process_event(client, m, opcode,
 			    m->u.token->token);
 		case ANOUBIS_N_REGISTER:
 		case ANOUBIS_N_UNREGISTER:
@@ -755,7 +694,7 @@ err:
 	anoubis_transaction_done(t, -ret);
 }
 
-struct anoubis_transaction * __anoubis_client_register_start_common(
+static struct anoubis_transaction * __anoubis_client_register_start_common(
     struct anoubis_client * client, int opcode, anoubis_token_t token,
     uid_t uid, pid_t pid, u_int32_t rule_id, u_int32_t subsystem)
 {
@@ -787,7 +726,6 @@ struct anoubis_transaction * __anoubis_client_register_start_common(
 	}
 	if (anoubis_client_send(client, m) < 0) {
 		anoubis_transaction_destroy(ret);
-		anoubis_msg_free(m);
 		return NULL;
 	}
 	anoubis_transaction_setopcodes(ret, nextops);
@@ -809,6 +747,27 @@ struct anoubis_transaction * anoubis_client_unregister_start(
 {
 	return  __anoubis_client_register_start_common(client,
 	    ANOUBIS_N_UNREGISTER, token, uid, pid, rule_id, subsystem);
+}
+
+int anoubis_client_notifyreply(struct anoubis_client * client,
+    anoubis_token_t token, int verdict, int delegate)
+{
+	struct anoubis_msg * m;
+
+	if ((client->proto & ANOUBIS_PROTO_NOTIFY) == 0
+	    || (client->connect_flags & FLAG_SENTCLOSEACK))
+		return -EINVAL;
+	m = anoubis_msg_new(sizeof(Anoubis_AckMessage));
+	int opcode = ANOUBIS_REPLY;
+	if (!m)
+		return -ENOMEM;
+	if (delegate)
+		opcode = ANOUBIS_N_DELEGATE;
+	set_value(m->u.ack->type, opcode);
+	m->u.ack->token = token;
+	set_value(m->u.ack->opcode, ANOUBIS_N_ASK);
+	set_value(m->u.ack->error, verdict);
+	return anoubis_client_send(client, m);
 }
 
 /* Sync function. */

@@ -38,6 +38,9 @@
 .Nm anoubis_client_close_start
 .Nm anoubis_client_connect
 .Nm anoubis_client_close
+.Nm anoubis_client_hasnotifies
+.Nm anoubis_client_getnotify
+.Nm anoubis_client_notifyreply
 .Nd Client side protocol handler
 .Sh SYNOPSIS
 .In anoubis_msg.h
@@ -61,6 +64,12 @@
 .Fn anoubis_client_connect "struct anoubis_client * client" "unsigned int"
 .Ft void
 .Fn anoubis_client_close "struct anoubis_client * client"
+.Ft int
+.Fn anoubis_client_hasnotifies "struct anoubis_client * client"
+.Ft struct anoubis_msg *
+.Fn anoubis_client_getnotify "struct anoubis_client * client"
+.Ft int
+.Fn anoubis_client_notifyreply "struct anoubis_client * client" "anoubis_token_t" "int error" "int delegate"
 .Sh DESCRIPTION
 This module is used to handle the client side of the anoubis protocol.
 Messages are sent (and sometimes received) via the channels specified
@@ -124,6 +133,33 @@ and
 These functions return the result of the transaction as an errno code.
 These functions are the only functions that actively read messages from
 the channel.
+.Sh NOTIFICATIONS
+All imcoming notifications, i.e. messages of type
+.Em ANOUBIS_N_ASK
+or
+.Em ANOUBIS_N_NOTIFY
+and all messages that inform the client of a result, i.e.
+messages of type
+.Em ANOUBIS_N_RESYOU
+and
+.Em ANOUBIS_N_RESOTHER
+are queued internally for further processing by the application.
+All of these messages are queued and no further processing on them is done
+on the part of the protocol library.
+.Pp
+The application should call
+.Nm anoubis_client_hasnotifies
+periodically ideally after each call to
+.Nm anoubis_client_process.
+If the function returns true
+.Nm anoubis_client_getnotify
+can be used to retrieve the first message from the queue.
+.Pp
+Replies to incoming ask events can be sent by the application with the
+utility function
+.Nm anoubis_client_notifyreply .
+This function does not check the validity of the token, this must be
+done by the application.
 .Sh RETURN VALUES
 .Nm anoubis_client_create
 returns the protocol client or NULL if the client could not be created
@@ -149,6 +185,18 @@ returns a negative error code if an error occurred while processing the
 message. Otherwise zero is returned if the message was not processed and
 true (a positive value) if the message could be processed.
 The message and its associated buffer will be freed during processing.
+.Pp
+.Nm anoubis_client_hasnotifies
+returns true if there are pending messages in the notification queue and false
+otherwise.
+.Pp
+.Nm anoubis_client_getnotify
+returns a pointer to the first message in the notify queue and remove the
+message from the queue.
+If the queue is empty NULL is returned.
+.Pp
+.Nm anoubis_client_notifyreply
+returns zero on success and a negative errno value in case of an error.
 .Sh SEE ALSO
 .Xr anoubis_msg 3 ,
 .Xr anoubis_transaction 3 ,
