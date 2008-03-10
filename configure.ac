@@ -42,7 +42,7 @@ AC_CONFIG_HEADER([src/config.h])
 
 dnl os specific library replacements
 AC_CONFIG_LIBOBJ_DIR([src/bsdcompat])
-AC_REPLACE_FUNCS([strlcat strlcpy strtonum getpeereid])
+AC_REPLACE_FUNCS([strlcat strlcpy strtonum getpeereid inet_net_pton])
 AM_CONDITIONAL([NEEDBSDCOMPAT], [test -n "$LIBOBJS"])
 
 if test -n "$LIBOBJS"; then
@@ -106,6 +106,7 @@ AC_CONFIG_FILES([
 	test/libanoubisprotocol/Makefile
 	test/xanoubis/Makefile
 	test/anoubisd/Makefile
+	test/bsdcompat/Makefile
 	include/Makefile
 	include/linux/Makefile
 	include/dev/Makefile

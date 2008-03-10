@@ -1,4 +1,3 @@
-##########################################################################
 # Copyright (c) 2008 GeNUA mbH <info@genua.de>
 #
 # All rights reserved.
@@ -23,15 +22,24 @@
 # LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-##########################################################################
+#
 
-if NEEDBSDCOMPAT
-BSDCOMPAT=bsdcompat
-endif
+TESTS = test_bsdcompat
 
-SUBDIRS = libanoubischat libanoubisprotocol anoubisd xanoubis $(BSDCOMPAT)
+libbsdcompatdir	= src/bsdcompat
+libbsdcompat	= $(top_builddir)/$(libbsdcompatdir)/libbsdcompat.so
 
-# targets must exist, but need not to do anything
-flawfinder:
-lint:
-splint:
+noinst_PROGRAMS = test_bsdcompat
+INCLUDES = -I$(top_srcdir)/$(libbsdcompatdir)
+
+test_bsdcompat_CFLAGS = $(AM_CFLAGS) @CHECK_CFLAGS@
+
+test_bsdcompat_LDFLAGS = -L$(top_builddir)/$(libbsdcompatdir) -dynamic \
+	$(AM_LDFLAGS)
+LDADD = @CHECK_LIBS@ -lbsdcompat
+
+test_bsdcompat_DEPENDENCIES = $(libbsdcompat)
+test_bsdcompat_SOURCES = \
+	bsdcompat_testsuite.c \
+	bsdcompat_testrunner.c \
+	bsdcompat_testcase_inet_net_pton.c

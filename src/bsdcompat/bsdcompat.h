@@ -96,5 +96,9 @@ long long strtonum(const char *, long long, long long, const char **);
 int getpeereid(int, uid_t *, gid_t *);
 #endif
 
+#ifndef HAVE_INET_NET_PTON
+int inet_net_pton(int , const char *, void *, size_t);
+#endif
+
 #endif /* __BSDCOMPAT_H__ */
 #endif /* NEEDBSDCOMPAT */

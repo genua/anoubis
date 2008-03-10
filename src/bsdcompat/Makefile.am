@@ -32,6 +32,7 @@ include_HEADERS = bsdcompat.h queue.h
 
 # for LLONG_MIN/LLONG_MAX
 AM_CFLAGS += -std=gnu99
+shared_AM_CFLAGS += -std=gnu99
 
 libbsdcompat_a_SOURCES = $(include_HEADERS)
 libbsdcompat_a_LIBADD = $(LIBOBJS)
@@ -39,6 +40,20 @@ libbsdcompat_a_LIBADD = $(LIBOBJS)
 libbsdcompat_pic_a_SOURCES = $(libbsdcompat_a_SOURCES)
 libbsdcompat_pic_a_LIBADD  = $(libbsdcompat_a_LIBADD)
 libbsdcompat_pic_a_CFLAGS = -fPIC -std=gnu99 $(shared_AM_CFLAGS)
+
+# For testing with aegis (especially against the baseline) we need to run
+# the test-binary (containing the current tests), operating on the old/baseline
+# library. Thus we build a dynamic link-able library for testing purpose only.
+noinst_PROGRAMS = libbsdcompat.so
+libbsdcompat_so_SOURCES = \
+	getpeereid.c \
+	inet_net_pton.c \
+	strlcat.c \
+	strlcpy.c \
+	strtonum.c \
+	$(include_HEADERS)
+libbsdcompat_so_CFLAGS = -fPIC -shared $(shared_AM_CFLAGS)
+libbsdcompat_so_LDFLAGS = -nostartfiles -shared $(shared_AM_LDFLAGS)
 
 # no linting is done here, as we are not developing new source here. The
 # functions here are rather source imports from OpenBSD.
