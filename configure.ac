@@ -72,6 +72,14 @@ AC_PROG_CXX
 AC_PROG_RANLIB
 AC_PROG_YACC
 
+AC_PATH_PROG(FLAWFINDER, flawfinder)
+AC_PATH_PROG(SPLINT, splint)
+AC_PATH_PROG(LINT, lint)
+
+AM_CONDITIONAL(HAVE_FLAWFINDER, [test "x$FLAWFINDER" != "x"])
+AM_CONDITIONAL(HAVE_SPLINT, [test "x$SPLINT" != "x"])
+AM_CONDITIONAL(HAVE_LINT, [test "x$LINT" != "x"])
+
 dnl checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
 AC_TYPE_UID_T
@@ -110,6 +118,10 @@ AC_CONFIG_FILES([
 	include/Makefile
 	include/linux/Makefile
 	include/dev/Makefile
+	lint/Makefile
+	lint/flawfinder
+	lint/splint
+	lint/lint
 ])
 
 dnl on some systems like openbsd, anoubisd must be linked statically

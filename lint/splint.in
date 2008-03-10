@@ -1,0 +1,29 @@
+#!/bin/sh
+# -*- mode: sh -*-
+
+SPLINT=@SPLINT@
+
+if ! test -x ${SPLINT}; then
+	echo "SPLINT not found" >&2
+	exit 1
+fi
+
+STDOUT=`mktemp` || exit 1
+STDERR=`mktemp` || exit 1
+trap 'rm -f $STDOUT $STDERR' INT QUIT TERM EXIT
+
+splint $* 2>$STDERR >$STDOUT
+
+if grep -i 'error' $STDERR; then
+	cat $STDERR >&2;
+	cat $STDOUT >&2;
+	# XXX RT: actually we want to do an 'exit 1' here.
+	#	  however, we have too many parse errors with splint
+	#	  at this point. we therefore just output stderr here
+	#	  so that we notice it, but don't abort the build.
+	echo $STDERR
+	exit 0
+fi
+
+cat $STDERR
+cat $STDOUT

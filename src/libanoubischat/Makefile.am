@@ -41,7 +41,9 @@ libanoubischat_a_SOURCES = \
 	$(include_HEADERS)
 
 if NEEDBSDCOMPAT
-INCLUDES = -I$(top_srcdir)/$(bsdcompatdir)
+INCLUDES = -I$(top_srcdir)/$(bsdcompatdir) -I..
+else
+INCLUDES = -I ..
 endif
 
 # For testing with aegis (especially against the baseline) we need to run
@@ -62,9 +64,7 @@ libanoubischat_a_SOURCES_lint = \
 	acctransmission.c_lint \
 	accconnect.c_lint \
 	accutils.c_lint \
-	accutils.h_lint \
-	accbuffer.c_lint \
-	accbuffer.h_lint
+	accbuffer.c_lint
 
 libanoubischat_a_SOURCES_splint = \
 	accsetup.c_splint  \
@@ -84,39 +84,18 @@ libanoubischat_a_SOURCES_flawfinder = \
 	accbuffer.c_flawfinder \
 	accbuffer.h_flawfinder
 
-# lint: $(libanoubischat_a_SOURCES_lint) $(libanoubischat_a_SOURCES_splint) \
-#	$(libanoubischat_a_SOURCES_flawfinder)
+linting: $(libanoubischat_a_SOURCES_lint) $(libanoubischat_a_SOURCES_splint) \
+	$(libanoubischat_a_SOURCES_flawfinder)
 
 flawfinder_FLAGS=--minlevel=4 --allowlink --context
-splint_FLAGS=+posixlib
-lint_FLAGS=""
-
+splint_FLAGS=+unixlib $(INCLUDES)
+lint_FLAGS=$(INCLUDES)
 
 lint:		$(libanoubischat_a_SOURCES_lint)
 splint:		$(libanoubischat_a_SOURCES_splint)
 flawfinder:	$(libanoubischat_a_SOURCES_flawfinder)
 
-# in some cases, flawfinder terminates with internal errors on openbsd.
-# Don't fail the build for now in this case.
-.c.c_flawfinder .h.h_flawfinder:
-	-flawfinder $(flawfinder_FLAGS) $< > $@
-
-.SUFFIXES= .lint
-
-.c.c_lint .h.h_lint:
-	@if expr $(build_os) : "openbsd" >/dev/null; then \
-		lint $< > $@; \
-		echo [lint] $<; \
-	else \
-		touch $@; \
-	fi
-
-# splint returns an bad exitcode on every source code hit. We need to
-# ignore these exits for a successful build
-.c.c_splint .h.h_splint:
-	@echo splint stub
-	-splint $(splint_FLAGS) $< > $@
-
+include $(top_srcdir)/lint/Makefile.lint
 
 clean-local:
 	@rm -f $(libanoubischat_a_SOURCES_lint)

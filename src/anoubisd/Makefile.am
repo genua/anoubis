@@ -42,6 +42,8 @@ STATIC = -static
 endif
 
 INCLUDES = \
+	   -I. \
+	   -I$(top_builddir)/src \
 	   -I$(top_srcdir)/include \
 	   -I$(top_srcdir)/$(anoubischatdir) \
 	   -I$(top_srcdir)/$(anoubispsdir) \
@@ -88,36 +90,19 @@ anoubisd_SOURCES_splint= \
 	session.c_splint \
 	log.c_splint
 
-lint: $(anoubisd_SOURCES_lint) $(anoubisd_SOURCES_splint) \
-	$(anoubisd_SOURCES_flawfinder)
 
 flawfinder_FLAGS=--minlevel=4 --allowlink --context
-splint_FLAGS=+posixlib
-lint_FLAGS=""
+splint_FLAGS=-Du_int64_t='unsigned long long' -Du_int32_t='unsigned int' \
+	-D__signed__=signed +unixlib -imptype $(INCLUDES)
+lint_FLAGS=$(INCLUDES)
+
+linting: flawfinder splint lint
 
 flawfinder:	$(anoubisd_SOURCES_flawfinder)
 splint:		$(anoubisd_SOURCES_splint)
 lint:		$(anoubisd_SOURCES_lint)
 
-.c.c_flawfinder .h.h_flawfinder:
-	flawfinder $(flawfinder_FLAGS) $< > $@
-
-.SUFFIXES= .lint
-
-.c.c_lint .h.h_lint:
-	@if expr $(build_os) : "openbsd" >/dev/null; then \
-		lint $< > $@; \
-		echo [lint] $<; \
-	else \
-		touch $@; \
-	fi
-
-# splint returns an bad exitcode on every source code hit. We need to
-# ignore these exits for a successful build
-.c.c_splint .h.h_splint:
-	@echo splint stub
-	-splint $(splint_FLAGS) $< > $@
-
+include $(top_srcdir)/lint/Makefile.lint
 
 clean-local:
 	@rm -f $(anoubisd_SOURCES_lint)

@@ -114,46 +114,19 @@ libanoubispc_a_SOURCES_flawfinder =		\
 	client/anoubis_client.c_flawfinder	\
 	client/anoubis_transaction.c_flawfinder	\
 	anoubis_msg.c_flawfinder		\
-	anoubis_dump.c_flawfinder		\
-	anoubis_auth.c_flawfinder		\
 	client/anoubis_client.h_flawfinder	\
-	client/anoubis_transaction.h_flawfinder	\
-	anoubis_msg.h_flawfinder		\
-	anoubis_dump.h_flawfinder		\
-	anoubis_auth.h_flawfinder		\
-	anoubis_protocol.h_flawfinder		\
-	anoubis_errno.h_flawfinder		\
-	crc32.h_flawfinder
+	client/anoubis_transaction.h_flawfinder
 
 libanoubisps_a_SOURCES_lint =		\
 	server/anoubis_server.c_lint	\
 	server/anoubis_notify.c_lint	\
 	anoubis_msg.c_lint		\
 	anoubis_dump.c_lint		\
-	anoubis_auth.c_lint		\
-	server/anoubis_server.h_lint	\
-	server/anoubis_notify.h_lint	\
-	anoubis_msg.h_lint		\
-	anoubis_dump.h_lint		\
-	anoubis_auth.h_lint		\
-	anoubis_protocol.h_lint		\
-	anoubis_errno.h_lint		\
-	crc32.h_lint
+	anoubis_auth.c_lint
 
 libanoubispc_a_SOURCES_lint =			\
 	client/anoubis_client.c_lint		\
-	client/anoubis_transaction.c_lint	\
-	anoubis_msg.c_lint			\
-	anoubis_dump.c_lint			\
-	anoubis_auth.c_lint			\
-	client/anoubis_client.h_lint		\
-	client/anoubis_transaction.h_lint	\
-	anoubis_msg.h_lint			\
-	anoubis_dump.h_lint			\
-	anoubis_auth.h_lint			\
-	anoubis_protocol.h_lint			\
-	anoubis_errno.h_lint			\
-	crc32.h_lint
+	client/anoubis_transaction.c_lint
 
 libanoubisps_a_SOURCES_splint =		\
 	server/anoubis_server.c_splint	\
@@ -173,54 +146,34 @@ libanoubisps_a_SOURCES_splint =		\
 libanoubispc_a_SOURCES_splint =			\
 	client/anoubis_client.c_splint		\
 	client/anoubis_transaction.c_splint	\
-	anoubis_msg.c_splint			\
-	anoubis_dump.c_splint			\
-	anoubis_auth.c_splint			\
 	client/anoubis_client.h_splint		\
-	client/anoubis_transaction.h_splint	\
-	anoubis_msg.h_splint			\
-	anoubis_dump.h_splint			\
-	anoubis_auth.h_splint			\
-	anoubis_protocol.h_splint		\
-	anoubis_errno.h_splint			\
-	crc32.h_splint
+	client/anoubis_transaction.h_splint
 
 flawfinder_FLAGS=--minlevel=4 --allowlink --context
-splint_FLAGS=+posixlib
-lint_FLAGS=""
+splint_FLAGS=-Du_int64_t='unsigned long long' -Du_int32_t='unsigned int' \
+	-D__signed__=signed +unixlib -imptype \
+	$(libanoubispc_a_CPPFLAGS) $(libanoubisps_a_CPPFLAGS) -I..
+lint_FLAGS=$(libanoubispc_a_CPPFLAGS) $(libanoubisps_a_CPPFLAGS) -I..
+
 
 mksubdirs:
 	mkdir -p client server
+	touch $@
+
 lint: mksubdirs $(libanoubisps_a_SOURCES_lint)	\
 	$(libanoubispc_a_SOURCES_lint)
+
 splint: mksubdirs $(libanoubisps_a_SOURCES_splint)\
 	$(libanoubispc_a_SOURCES_splint)
-flawfinder: mksubdirs $(libanoubisps_a_SOURCES_flawfinder) \
+
+flawfinder: mksubdirs $(libanoubisps_a_SOURCES_flawfinder)\
 	$(libanoubispc_a_SOURCES_flawfinder)
 
-# in some cases, flawfinder terminates with internal errors on openbsd.
-# Don't fail the build for now in this case.
-.c.c_flawfinder .h.h_flawfinder:
-	-flawfinder $(flawfinder_FLAGS) $< > $@
-
-.SUFFIXES= .lint
-
-.c.c_lint .h.h_lint:
-	@if expr $(build_os) : "openbsd" >/dev/null; then \
-		lint $< > $@; \
-		echo [lint] $<; \
-	else \
-		touch $@; \
-	fi
-
-# splint returns an bad exitcode on every source code hit. We need to
-# ignore these exits for a successful build
-.c.c_splint .h.h_splint:
-	@echo splint stub
-	-splint $(splint_FLAGS) $< > $@
+include $(top_srcdir)/lint/Makefile.lint
 
 clean-local:
 	@rm -f $(libanoubisps_a_SOURCES_lint) $(libanoubispc_a_SOURCES_lint)
 	@rm -f $(libanoubisps_a_SOURCES_splint) $(libanoubispc_a_SOURCES_splint)
 	@rm -f $(libanoubisps_a_SOURCES_flawfinder) \
 		$(libanoubispc_a_SOURCES_flawfinder)
+	@rm mksubdirs

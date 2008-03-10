@@ -267,103 +267,33 @@ xanoubis_SOURCES_lint= \
 	main.cpp_lint \
 	main.h_lint
 
-xanoubis_SOURCES_splint= \
-	model/ModAlf.cpp_splint \
-	model/ModAlf.h_splint \
-	model/ModAnoubis.cpp_splint \
-	model/ModAnoubis.h_splint \
-	model/ModOverview.cpp_splint \
-	model/ModOverview.h_splint \
-	model/ModSfs.cpp_splint \
-	model/ModSfs.h_splint \
-	model/Module.cpp_splint \
-	model/Module.h_splint \
-	model/NotifyList.cpp_splint \
-	model/NotifyList.h_splint \
-	model/NotifyAnswer.cpp_splint \
-	model/NotifyAnswer.h_splint \
-	view/AnStatusBar.cpp_splint \
-	view/AnStatusBar.h_splint \
-	view/DlgLogViewerBase.cpp_splint \
-	view/DlgLogViewerBase.h_splint \
-	view/DlgLogViewer.cpp_splint \
-	view/DlgLogViewer.h_splint \
-	view/DlgRuleEditorBase.cpp_splint \
-	view/DlgRuleEditorBase.h_splint \
-	view/DlgRuleEditor.cpp_splint \
-	view/DlgRuleEditor.h_splint \
-	view/MainFrameBase.cpp_splint \
-	view/MainFrameBase.h_splint \
-	view/MainFrame.cpp_splint \
-	view/MainFrame.h_splint \
-	view/ModAlfMainPanelImpl.cpp_splint \
-	view/ModAlfMainPanelImpl.h_splint \
-	view/ModAlfOverviewPanelImpl.cpp_splint \
-	view/ModAlfOverviewPanelImpl.h_splint \
-	view/ModAlfPanelsBase.cpp_splint \
-	view/ModAlfPanelsBase.h_splint \
-	view/ModAnoubisMainPanelImpl.cpp_splint \
-	view/ModAnoubisMainPanelImpl.h_splint \
-	view/ModAnoubisOverviewPanelImpl.cpp_splint \
-	view/ModAnoubisOverviewPanelImpl.h_splint \
-	view/ModAnoubisPanelsBase.cpp_splint \
-	view/ModAnoubisPanelsBase.h_splint \
-	view/ModOverviewMainPanelImpl.cpp_splint \
-	view/ModOverviewMainPanelImpl.h_splint \
-	view/ModOverviewPanelsBase.cpp_splint \
-	view/ModOverviewPanelsBase.h_splint \
-	view/ModSfsMainPanelImpl.cpp_splint \
-	view/ModSfsMainPanelImpl.h_splint \
-	view/ModSfsOverviewPanelImpl.cpp_splint \
-	view/ModSfsOverviewPanelImpl.h_splint \
-	view/ModSfsPanelsBase.cpp_splint \
-	view/ModSfsPanelsBase.h_splint \
-	view/TrayIcon.cpp_splint \
-	view/TrayIcon.h_splint \
-	control/AnShortcuts.cpp_splint \
-	control/AnShortcuts.h_splint \
-	control/AnEvents.cpp_splint \
-	control/AnEvents.h_splint \
-	control/Communicator.cpp_splint \
-	control/CommunicatorException.cpp_splint \
-	control/CommunicatorException.h_splint \
-	control/Communicator.h_splint \
-	ctassert.h_splint \
-	main.cpp_splint \
-	main.h_splint
+# splint does not support C++ at all.
+xanoubis_SOURCES_splint=
 
-lint: $(xanoubis_SOURCES_lint) $(xanoubis_SOURCES_splint) \
+linting: $(xanoubis_SOURCES_lint) $(xanoubis_SOURCES_splint) \
 	$(xanoubis_SOURCES_flawfinder)
 
 flawfinder_FLAGS=--minlevel=4 --allowlink --context
-splint_FLAGS=+posixlib @WX_CPPFLAGS@
-lint_FLAGS=""
+lint_FLAGS=$(xanoubis_CPPFLAGS)
 
-flawfinder:	$(xanoubis_SOURCES_flawfinder)
-splint:		$(xanoubis_SOURCES_splint)
-lint:		$(xanoubis_SOURCES_lint)
+mkdirs:
+	@mkdir model view control
+	@touch $@
 
-.cpp.cpp_flawfinder .h.h_flawfinder:
-	flawfinder $(flawfinder_FLAGS) $< > $@
+.PHONY: mkdirs
 
-.SUFFIXES= .lint
+# XXX RT: C++ code needs extra change. See #257
+flawfinder splint lint:
+	@echo "linting temporarily disabled for xanoubis"
 
-.cpp.cpp_lint .h.h_lint:
-	@if expr $(build_os) : "openbsd" >/dev/null; then \
-		lint $< > $@; \
-		echo [lint] $<; \
-	else \
-		touch $@; \
-	fi
+#flawfinder:	$(xanoubis_SOURCES_flawfinder)
+#splint:		$(xanoubis_SOURCES_splint)
+#lint:		$(xanoubis_SOURCES_lint)
 
-# splint returns an bad exitcode on every source code hit. We need to
-# ignore these exits for a successful build
-.cpp.cpp_splint .h.h_splint:
-	@echo splint stub
-	-splint $(splint_FLAGS) $< > $@
-
+include $(top_srcdir)/lint/Makefile.lint
 
 clean-local:
 	@rm -f $(xanoubis_SOURCES_lint)
 	@rm -f $(xanoubis_SOURCES_splint)
 	@rm -f $(xanoubis_SOURCES_flawfinder)
+	@rm mkdirs

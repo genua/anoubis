@@ -1,0 +1,23 @@
+
+This file contains some wrappers around the linters used by Anoubis.
+
+flawfinder
+==========
+
+Flawfinder gives pretty much output when no hits are found. This is
+unnecessary, so we create a file with no content here.
+
+
+splint
+======
+
+splint is exiting with an error code even a single warning is
+found. This is not acceptable. We only want to exit with an error if a
+real error is found.
+
+
+lint
+====
+
+The lint utility seems to be available on BSD systems only. It seems to
+return an error code on any parse error as well on regular warnings.

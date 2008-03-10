@@ -1,3 +1,4 @@
+##########################################################################
 # Copyright (c) 2008 GeNUA mbH <info@genua.de>
 #
 # All rights reserved.
@@ -22,65 +23,7 @@
 # LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
+##########################################################################
 
-sbin_PROGRAMS = anoubisctl
 
-if STATIC_LINKING
-STATIC = -static
-endif
-
-libapndir	= src/libapn
-libapn		= $(top_builddir)/$(libapndir)/libapn.a
-bsdcompatdir	= src/bsdcompat
-libbsdcompat	= $(top_builddir)/$(bsdcompatdir)/libbsdcompat.a
-
-INCLUDES = -I$(top_srcdir)/include -I$(top_srcdir)/$(libapndir)
-
-anoubisctl_LDADD = $(libapn)
-
-anoubisctl_DEPENDENCIES = $(libapn)
-
-anoubisctl_LDFLAGS= $(AM_LDFLAGS) $(STATIC)
-
-if NEEDBSDCOMPAT
-INCLUDES += -I$(top_srcdir)/$(bsdcompatdir)
-anoubisctl_LDADD += $(libbsdcompat)
-endif
-
-anoubisctl_SOURCES= \
-	main.c \
-	anoubisctl.h
-
-anoubisctl_SOURCES_flawfinder= \
-	main.c_flawfinder \
-	anoubisctl.h_flawfinder
-
-anoubisctl_SOURCES_lint= \
-	main.c_lint
-
-anoubisctl_SOURCES_splint= \
-	main.c_splint
-
-linting: $(anoubisctl_SOURCES_lint) $(anoubisctl_SOURCES_splint) \
-	$(anoubisctl_SOURCES_flawfinder)
-
-flawfinder_FLAGS=--minlevel=4 --allowlink --context
-splint_FLAGS=+unixlib $(INCLUDES) -I..
-lint_FLAGS=""
-
-flawfinder:	$(anoubisctl_SOURCES_flawfinder)
-splint:		$(anoubisctl_SOURCES_splint)
-lint:		$(anoubisctl_SOURCES_lint)
-
-include $(top_srcdir)/lint/Makefile.lint
-
-clean-local:
-	@rm -f $(anoubisctl_SOURCES_lint)
-	@rm -f $(anoubisctl_SOURCES_splint)
-	@rm -f $(anoubisctl_SOURCES_flawfinder)
-
-# As we're in maintainer mode we have to remove generated source files
-# manually.
-dist-hook:
-	$(MAKE) maintainer-clean-generic
+EXTRA_DIST = README

@@ -36,7 +36,9 @@ bsdcompatdir = src/bsdcompat
 libbsdcompat = $(top_builddir)/$(bsdcompatdir)/libbsdcompat.a
 
 if NEEDBSDCOMPAT
-INCLUDES = -I$(top_srcdir)/$(bsdcompatdir)
+INCLUDES = -I$(top_srcdir)/$(bsdcompatdir) -I $(top_builddir)/src
+else
+INCLUDES = -I $(top_builddir)/src
 endif
 
 libapn_a_SOURCES = \
@@ -58,8 +60,7 @@ libapn_so_LDFLAGS += -L$(top_builddir)/$(bsdcompatdir)
 endif
 
 libapn_a_SOURCES_lint = \
-	apnparser.c_lint  \
-	apn.h_lint
+	apnparser.c_lint
 
 libapn_a_SOURCES_splint = \
 	apnparser.c_splint  \
@@ -70,35 +71,14 @@ libapn_a_SOURCES_flawfinder = \
 	apn.h_flawfinder
 
 flawfinder_FLAGS=--minlevel=4 --allowlink --context
-splint_FLAGS=+posixlib
-lint_FLAGS=""
-
+splint_FLAGS=+posixlib $(INCLUDES)
+lint_FLAGS=$(INCLUDES)
 
 lint:		$(libapn_a_SOURCES_lint)
 splint:		$(libapn_a_SOURCES_splint)
 flawfinder:	$(libapn_a_SOURCES_flawfinder)
 
-# in some cases, flawfinder terminates with internal errors on openbsd.
-# Don't fail the build for now in this case.
-.c.c_flawfinder .h.h_flawfinder:
-	-flawfinder $(flawfinder_FLAGS) $< > $@
-
-.SUFFIXES= .lint
-
-.c.c_lint .h.h_lint:
-	@if expr $(build_os) : "openbsd" >/dev/null; then \
-		lint $< > $@; \
-		echo [lint] $<; \
-	else \
-		touch $@; \
-	fi
-
-# splint returns an bad exitcode on every source code hit. We need to
-# ignore these exits for a successful build
-.c.c_splint .h.h_splint:
-	@echo splint stub
-	-splint $(splint_FLAGS) $< > $@
-
+include $(top_srcdir)/lint/Makefile.lint
 
 clean-local:
 	@rm -f $(libapn_a_SOURCES_lint)
