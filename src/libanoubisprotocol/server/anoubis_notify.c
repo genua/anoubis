@@ -30,6 +30,7 @@
 #include <anoubischat.h>
 #include <anoubis_msg.h>
 #include <anoubis_notify.h>
+#include <anoubis_errno.h>
 #include <queue.h>
 
 struct anoubis_notify_reg {
@@ -40,17 +41,37 @@ struct anoubis_notify_reg {
 	u_int32_t subsystem;
 };
 
+struct anoubis_notify_head {
+	LIST_HEAD(, anoubis_notify_event) events;
+	struct anoubis_msg * m;
+	task_cookie_t task;
+	int verdict;
+	int eventcount;
+	anoubis_notify_callback_t finish;
+	void * cbdata;
+	void * you;
+	uid_t uid;
+	int reply;
+};
+
+/*
+ * FLAG_VERDICT: This peer will not send a verdict (because it
+ *    already did so, because it died or because it delegated the event)
+ * FLAG_REPLY: A reply has been sent to this peer and we are disconnected
+ *    from the head.
+ */
+
 #define FLAG_VERDICT	1
 #define FLAG_REPLY	2
 #define DROPMASK	(FLAG_VERDICT|FLAG_REPLY)
 
-
 struct anoubis_notify_event {
 	LIST_ENTRY(anoubis_notify_event) next;
-	anoubis_token_t token;
-	anoubis_notify_callback_t finish_callback;
-	void * cbdata;
+	LIST_ENTRY(anoubis_notify_event) nextgroup;
+	struct anoubis_notify_group * grp;
+	struct anoubis_notify_head * head;
 	unsigned int flags;
+	anoubis_token_t token;
 };
 
 struct anoubis_notify_group {
@@ -58,7 +79,6 @@ struct anoubis_notify_group {
 	LIST_HEAD(, anoubis_notify_reg) regs;
 	struct achat_channel * chan;
 	LIST_HEAD(, anoubis_notify_event) pending;
-	LIST_HEAD(, anoubis_notify_event) answered;
 };
 
 struct anoubis_notify_group * anoubis_notify_create(struct achat_channel * chan,
@@ -72,15 +92,48 @@ struct anoubis_notify_group * anoubis_notify_create(struct achat_channel * chan,
 	return ret;
 }
 
+static void drop_event(struct anoubis_notify_event * ev, int flags);
+
 void anoubis_notify_destroy(struct anoubis_notify_group * ng)
 {
 	struct anoubis_notify_reg * reg;
+
 	while(!LIST_EMPTY(&ng->regs)) {
 		reg = LIST_FIRST(&ng->regs);
 		LIST_REMOVE(reg, next);
 		free(reg);
 	}
+	while(!LIST_EMPTY(&ng->pending)) {
+		struct anoubis_notify_event * nev;
+		struct anoubis_notify_head * head;
+		nev = LIST_FIRST(&ng->pending);
+		head = nev->head;
+		drop_event(nev, FLAG_VERDICT|FLAG_REPLY);
+		if (!head || head->eventcount)
+			continue;
+		/*
+		 * We just dropped the last event that might have
+		 * answered this without getting an answer.
+		 */
+		anoubis_notify_sendreply(head, head->verdict, head->you,
+		    head->uid);
+	}
 	free(ng);
+}
+
+/*
+ * Drop pending events and free the head. When this function is called
+ * the list should be empty. We still drop the events to be sure.
+ */
+void anoubis_notify_destroy_head(struct anoubis_notify_head * head)
+{
+	anoubis_msg_free(head->m);
+	while(!LIST_EMPTY(&head->events)) {
+		struct anoubis_notify_event * event;
+		event = LIST_FIRST(&head->events);
+		drop_event(event, FLAG_REPLY);
+	}
+	free(head);
 }
 
 int anoubis_notify_register(struct anoubis_notify_group * ng,
@@ -121,6 +174,28 @@ static int reg_match_all(struct anoubis_notify_group * ng,
 	return 0;
 }
 
+static void drop_event(struct anoubis_notify_event * ev, int flags)
+{
+	if ((flags & FLAG_VERDICT) && (ev->flags & FLAG_VERDICT) == 0) {
+		ev->flags |= FLAG_VERDICT;
+		/*
+		 * No need to track the eventcount if a reply has already
+		 * been sent. Moreover, ev->head is NULL in this case anyway.
+		 */
+		if ((ev->flags & FLAG_REPLY) == 0)
+			ev->head->eventcount--;
+	}
+	if ((flags & FLAG_REPLY) && (ev->flags & FLAG_REPLY) == 0) {
+		LIST_REMOVE(ev, nextgroup);
+		ev->head = NULL;
+		ev->flags |= FLAG_REPLY;
+	}
+	if ((ev->flags & DROPMASK) == DROPMASK) {
+		LIST_REMOVE(ev, next);
+		free(ev);
+	}
+}
+
 
 int anoubis_notify_unregister(struct anoubis_notify_group * ng,
     uid_t uid, task_cookie_t task, u_int32_t ruleid, u_int32_t subsystem)
@@ -136,6 +211,39 @@ int anoubis_notify_unregister(struct anoubis_notify_group * ng,
 	return -ESRCH;
 }
 
+struct anoubis_notify_head * anoubis_notify_create_head(task_cookie_t task,
+    struct anoubis_msg * m, anoubis_notify_callback_t finish, void * cbdata)
+{
+	struct anoubis_notify_head * head;
+	int opcode;
+
+	if (!VERIFY_LENGTH(m, sizeof(Anoubis_NotifyMessage))) {
+		anoubis_msg_free(m);
+		return NULL;
+	}
+	opcode = get_value(m->u.general->type);
+	if (opcode != ANOUBIS_N_ASK && opcode != ANOUBIS_N_NOTIFY) {
+		anoubis_msg_free(m);
+		return NULL;
+	}
+	head = malloc(sizeof(struct anoubis_notify_head));
+	if (!head) {
+		anoubis_msg_free(m);
+		return NULL;
+	}
+	LIST_INIT(&head->events);
+	head->m = m;
+	head->task = task;
+	head->verdict = ANOUBIS_E_IO;
+	head->eventcount = 0;
+	head->finish = finish;
+	head->cbdata = cbdata;
+	head->reply = 0;
+	head->uid = 0;
+	head->you = NULL;
+	return head;
+}
+
 /*
  * Returns:
  *  - negative errno on error.
@@ -143,18 +251,15 @@ int anoubis_notify_unregister(struct anoubis_notify_group * ng,
  *  - positive if notify message was sent.
  */
 
-int anoubis_notify(struct anoubis_notify_group * ng, task_cookie_t task,
-    struct anoubis_msg * m, anoubis_notify_callback_t finish, void * cbdata)
+int anoubis_notify(struct anoubis_notify_group * ng,
+    struct anoubis_notify_head * head)
 {
 	struct anoubis_notify_event * nev;
+	struct anoubis_msg * m = head->m;
 	int ret;
 	int opcode;
 
-	if (!VERIFY_LENGTH(m, sizeof(Anoubis_NotifyMessage)))
-		return -EINVAL;
 	opcode = get_value(m->u.general->type);
-	if (opcode != ANOUBIS_N_ASK && opcode != ANOUBIS_N_NOTIFY)
-		return -EINVAL;
 	uid_t uid = get_value(m->u.notify->uid);
 	pid_t pid = get_value(m->u.notify->pid);
 	u_int32_t ruleid = get_value(m->u.notify->rule_id);
@@ -163,122 +268,132 @@ int anoubis_notify(struct anoubis_notify_group * ng, task_cookie_t task,
 
 	if (token == 0)
 		return -EINVAL;
-	if (pid != /* Convert task id to pid. */ task)
+	if (pid != /* Convert task id to pid. */ head->task)
 		return -EINVAL;
-	if (!reg_match_all(ng, uid, task, ruleid, subsystem))
+	if (!reg_match_all(ng, uid, head->task, ruleid, subsystem))
 		return 0;
+	LIST_FOREACH(nev, &ng->pending, next) {
+		if (nev->token == token)
+			return -EEXIST;
+	}
 	if (opcode == ANOUBIS_N_NOTIFY) {
 		ret = anoubis_msg_send(ng->chan, m);
 		if (ret < 0)
 			return ret;
 		return 1;
 	}
-	LIST_FOREACH(nev, &ng->pending, next) {
-		if (nev->token == token)
-			return -EEXIST;
-	}
 	nev = malloc(sizeof(struct anoubis_notify_event));
 	if (!nev)
 		return -ENOMEM;
 	nev->token = token;
-	nev->finish_callback = finish;
-	nev->cbdata = cbdata;
 	nev->flags = 0;
-	LIST_INSERT_HEAD(&ng->pending, nev, next);
+	nev->head = head;
+	nev->grp = ng;
 	ret = anoubis_msg_send(ng->chan, m);
 	if (ret < 0) {
-		LIST_REMOVE(nev, next);
 		free(nev);
 		return ret;
 	}
+	LIST_INSERT_HEAD(&ng->pending, nev, next);
+	LIST_INSERT_HEAD(&head->events, nev, nextgroup);
+	head->eventcount++;
 	return 1;
 }
 
-static void drop_event(struct anoubis_notify_group * ng __attribute__((unused)),
-    struct anoubis_notify_event * nev, unsigned int flag)
+int anoubis_notify_sendreply(struct anoubis_notify_head * head,
+    int verdict, void * you, uid_t uid)
 {
-	nev->flags |= flag;
-	if ((flag & DROPMASK) == DROPMASK) {
-		LIST_REMOVE(nev, next);
-		free(nev);
+	struct anoubis_msg * m;
+	anoubis_notify_callback_t finish;
+	void * cbdata;
+
+	if (verdict < 0)
+		return -EINVAL;
+	if (head->reply)
+		return 0;
+	head->reply = 1;
+	m = anoubis_msg_new(sizeof(Anoubis_NotifyResultMessage));
+	if (!m)
+		return -ENOMEM;
+	head->verdict = verdict;
+	head->uid = uid;
+	set_value(m->u.notifyresult->uid, uid);
+	set_value(m->u.notifyresult->error, verdict);
+	while(!LIST_EMPTY(&head->events)) {
+		int ret;
+		struct anoubis_notify_event * nev;
+		nev = LIST_FIRST(&head->events);
+		if (you == nev)
+			set_value(m->u.notifyresult->type, ANOUBIS_N_RESYOU);
+		else
+			set_value(m->u.notifyresult->type, ANOUBIS_N_RESOTHER);
+		m->u.notifyresult->token = nev->token;
+		ret = anoubis_msg_send(nev->grp->chan, m);
+		if (ret < 0)
+			drop_event(nev, FLAG_VERDICT);
+		drop_event(nev, FLAG_REPLY);
 	}
+	anoubis_msg_free(m);
+
+	/* Call the callback function. This might leagally free head! */
+	finish = head->finish;
+	cbdata = head->cbdata;
+	if (finish)
+		finish(head, head->verdict, cbdata);
+	return 0;
 }
 
-/*
- * This function processes the answer received over the wire.
- * It does NOT send answers to the remote end because it is not clear
- * if the remote end should receive ANOUBIS_N_RESYOU or ANOUBIS_N_RESOTHER.
- * Instead the caller must explicitly generate answers by calling
- * anoubis_notify_end.
- */
 int anoubis_notify_answer(struct anoubis_notify_group * ng,
     anoubis_token_t token, int verdict, int delegate)
 {
 	struct anoubis_notify_event * nev;
-	anoubis_notify_callback_t finish;
-	void * data;
+	struct anoubis_notify_head * head;
 
 	LIST_FOREACH(nev, &ng->pending, next) {
 		if (nev->token == token)
 			break;
 	}
 	/*
-	 * IF we got no mesage with this token if we already received an
+	 * If we got no mesage with this token or if we already received an
 	 * answer for this token from this channel, this is no longer
 	 * allowed.
 	 */
-	if (!nev || nev->flags & FLAG_VERDICT)
+	if (!nev || (nev->flags & FLAG_VERDICT))
 		return -ESRCH;
-	/* Save the callback info, because drop might free @nev. */
-	finish = nev->finish_callback;
-	data = nev->cbdata;
-	drop_event(ng, nev, FLAG_VERDICT);
 	/*
-	 * If FLAG_REPLY is set, this already went through @anoubis_notify_end.
-	 * In this case there is no need to call the callback. The callback
-	 * function must still be prepared to receive these callback for
-	 * events that are in the process of being answered!
+	 * Event has already been answered. This is just the reply from
+	 * the peer. In this case we only drop the event. We must not access
+	 * nev->head!
 	 */
-	if (nev->flags & FLAG_REPLY)
-		finish(data, verdict, delegate);
-	return 0;
-}
-
-/*
- * This function must be called in reaction to the event callback function
- * exactly once for each anoubis_notify_group the sent the event to a
- * client, i.e it returned a positive value from anoubis_notify.
- */
-int anoubis_notify_end(struct anoubis_notify_group * ng,
-    anoubis_token_t token, int verdict, uid_t uid, int you)
-{
-	struct anoubis_msg * m;
-	struct anoubis_notify_event * nev;
-	int ret;
-
-	LIST_FOREACH(nev, &ng->pending, next) {
-		if (nev->token == token)
-			break;
+	if (nev->flags & FLAG_REPLY) {
+		drop_event(nev, FLAG_VERDICT);
+		return 0;
 	}
-	if (!token)
-		return -ESRCH;
-	m = anoubis_msg_new(sizeof(Anoubis_NotifyResultMessage));
-	if (!m)
-		return -ENOMEM;
-	LIST_REMOVE(nev, next);
-	if (you)
-		set_value(m->u.notifyresult->type, ANOUBIS_N_RESYOU);
-	else
-		set_value(m->u.notifyresult->type, ANOUBIS_N_RESOTHER);
-	m->u.notifyresult->token = token;
-	set_value(m->u.notifyresult->uid, uid);
-	set_value(m->u.notifyresult->error, verdict);
-	ret = anoubis_msg_send(ng->chan, m);
-	anoubis_msg_free(m);
-	if (ret < 0) {
-		LIST_INSERT_HEAD(&ng->pending, nev, next);
-		return ret;
+	/*
+	 * If this is a delegation we remove the event from its group but
+	 * leave it in the head (if it is still there). If dropping the
+	 * event removes the last event from head take this as a verict
+	 * with -EIO.
+	 */
+	head = nev->head;
+	drop_event(nev, FLAG_VERDICT);
+	/*
+	 * Return if this is a delegation and answers from other
+	 * peers are still outstanding just remember the verdict
+	 * and return.
+	 */
+	head->verdict = verdict;
+	head->uid = nev->grp->uid;
+	head->you = nev;
+	if (delegate) {
+		if (head->eventcount)
+			return 0;
 	}
-	drop_event(ng, nev, FLAG_REPLY);
+	/*
+	 * Either this is the first reply or the last delegation.
+	 * In either case send the replies now. In case of a delegation
+	 * use the verdict provided together with the delegation!
+	 */
+	anoubis_notify_sendreply(head, head->verdict, head->you, head->uid);
 	return 0;
 }

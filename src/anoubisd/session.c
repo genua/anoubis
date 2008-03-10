@@ -41,6 +41,7 @@
 #include <event.h>
 #ifdef LINUX
 #include <grp.h>
+#include <bsdcompat.h>
 #endif
 #include <pwd.h>
 #include <signal.h>
@@ -304,6 +305,8 @@ static void
 m2s_dispatch(int fd, short sig, void *arg)
 {
 	struct event_info_session *ev_info = (struct event_info_session*)arg;
+	struct anoubis_notify_head * head;
+	struct anoubis_msg * m;
 #define BUFSIZE 8192
 	char buf[BUFSIZE];
 	int len;
@@ -359,31 +362,37 @@ m2s_dispatch(int fd, short sig, void *arg)
 
 	TAILQ_INSERT_TAIL(&eventq_s2f, ev, events);
 
+	int extra = ev_in->hdr.msg_size - sizeof(struct eventdev_hdr);
+	m = anoubis_msg_new(sizeof(Anoubis_NotifyMessage) + extra);
+	if (!m) {
+		/* XXX */
+		return;
+	}
+	set_value(m->u.notify->type, ANOUBIS_N_NOTIFY);
+	m->u.notify->token = ev_in->hdr.msg_token;
+	set_value(m->u.notify->pid, ev_in->hdr.msg_pid);
+	set_value(m->u.notify->rule_id, 0);
+	set_value(m->u.notify->uid, ev_in->hdr.msg_uid);
+	set_value(m->u.notify->subsystem, ev_in->hdr.msg_source);
+	set_value(m->u.notify->operation, 0 /* XXX */);
+	memcpy(m->u.notify->payload, ev_in->msg, extra);
+	head = anoubis_notify_create_head(ev_in->hdr.msg_pid, m, NULL, NULL);
+	if (!head) {
+		/* XXX */
+		anoubis_msg_free(m);
+		return;
+	}
 	LIST_FOREACH(sess, &ev_info->seg->sessionList, nextSession) {
 		struct anoubis_notify_group * ng;
-		struct anoubis_msg * m;
-		int extra;
 
 		if (sess->proto == NULL)
 			continue;
 		ng = anoubis_server_getnotify(sess->proto);
 		if (!ng)
 			continue;
-		extra = ev_in->hdr.msg_size - sizeof(struct eventdev_hdr);
-		m = anoubis_msg_new(sizeof(Anoubis_NotifyMessage) + extra);
-		if (!m)
-			continue;
-		set_value(m->u.notify->type, ANOUBIS_N_NOTIFY);
-		m->u.notify->token = ev_in->hdr.msg_token;
-		set_value(m->u.notify->pid, ev_in->hdr.msg_pid);
-		set_value(m->u.notify->rule_id, 0);
-		set_value(m->u.notify->uid, ev_in->hdr.msg_uid);
-		set_value(m->u.notify->subsystem, ev_in->hdr.msg_source);
-		set_value(m->u.notify->operation, 0 /* XXX */);
-		memcpy(m->u.notify->payload, ev_in->msg, extra);
-		anoubis_notify(ng, ev_in->hdr.msg_pid, m, NULL, NULL);
-		anoubis_msg_free(m);
+		anoubis_notify(ng, head);
 	}
+	anoubis_notify_destroy_head(head);
 	/* XXX: Wait for frontend to handle the data */
 	//event_add(ev_info->ev_s2f, NULL);
 
@@ -476,14 +485,8 @@ session_setupuds(struct sessionGroup *seg, struct anoubisd_config * conf)
 
 	bzero(&ss, sizeof(ss));
 	((struct sockaddr_un *)&ss)->sun_family = AF_UNIX;
-#ifdef LINUX
-	strncpy(((struct sockaddr_un *)&ss)->sun_path, conf->unixsocket,
-	    sizeof(((struct sockaddr_un *)&ss)->sun_path) - 1);
-#endif
-#ifdef OPENBSD
 	strlcpy(((struct sockaddr_un *)&ss)->sun_path, conf->unixsocket,
 	    sizeof(((struct sockaddr_un *)&ss)->sun_path));
-#endif
 	rc = acc_setaddr(seg->keeper_uds, &ss);
 	if (rc != ACHAT_RC_OK) {
 		log_warn("session_setupuds: acc_setaddr");

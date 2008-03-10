@@ -24,7 +24,6 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifdef DEBUG
 
 #include <config.h>
 #include <stdio.h>
@@ -118,10 +117,14 @@ static void dump_notify(Anoubis_NotifyMessage * m, size_t len)
 static void dump_notifyreg(Anoubis_NotifyRegMessage * m, size_t len __used)
 {
 	printf(" token = %llx", m->token);
-	DUMP_NETU(m, pid);
-	DUMP_NETU(m, rule_id);
+}
+
+static void dump_notifyresult(Anoubis_NotifyResultMessage * m,
+    size_t len __used)
+{
+	printf(" token = %llx", m->token);
+	DUMP_NETU(m, error);
 	DUMP_NETU(m, uid);
-	DUMP_NETU(m, subsystem);
 }
 
 void anoubis_dump(struct anoubis_msg * m, const char * str)
@@ -147,6 +150,8 @@ void anoubis_dump(struct anoubis_msg * m, const char * str)
 	CASE(ANOUBIS_N_ASK, notify)
 	CASE(ANOUBIS_N_REGISTER, notifyreg)
 	CASE(ANOUBIS_N_UNREGISTER, notifyreg)
+	CASE(ANOUBIS_N_RESYOU, notifyresult)
+	CASE(ANOUBIS_N_RESOTHER, notifyresult)
 	default:
 		printf(" type = %x", opcode);
 		dump_general(m->u.general, m->length-CSUM_LEN);
@@ -162,5 +167,3 @@ void anoubis_dump_buffer(void * buf, size_t len, const char * str)
 	};
 	anoubis_dump(&m, str);
 }
-
-#endif

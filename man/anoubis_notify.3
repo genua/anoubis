@@ -1,0 +1,224 @@
+.\"	$OpenBSD: mdoc.template,v 1.9 2004/07/02 10:36:57 jmc Exp $
+.\"
+.\" Copyright (c) 2007 GeNUA mbH <info@genua.de>
+.\"
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+.\" "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+.\" LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+.\" A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+.\" OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+.\" SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
+.\" TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+.\" PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+.\" LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+.\" NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+.\" SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd February 29, 2008
+.Dt ANOUBIS_NOTIFY 3
+.Os Anoubis
+.Sh NAME
+.Nm struct anoubis_notify_group
+.Nm struct anoubis_notify_head
+.Nm anoubis_notify_callback_t
+.Nm anoubis_notify_create
+.Nm anoubis_notify_destroy
+.Nm anoubis_notify_register
+.Nm anoubis_notify_unregister
+.Nm anoubis_notify_create_head
+.Nm anoubis_notify_destroy_head
+.Nm anoubis_notify
+.Nm anoubis_notify_answer
+.Nm anoubis_notify_sendreply
+.Sh SYNOPSIS
+.In anoubis_msg.h
+.In anoubis_notify.h
+.Ft struct anoubis_notify_group *
+.Fn anoubis_notify_create "struct achat_channel * chan" "uid_t uid"
+.Ft void
+.Fn anoubis_notify_destroy "struct anoubis_notify_group *"
+.Ft int
+.Fn anoubis_notify_register "struct anoubis_notify_group * g" "uid_t uid" "task_cookie_t task" "u_int32_t ruleid" "u_int32_t subsystem"
+.Ft int
+.Fn anoubis_notify_unregister "struct anoubis_notify_group * g" "uid_t uid" "task_cookie_t task" "u_int32_t ruleid" "u_int32_t subsystem"
+.Ft void
+.Fn "(*anoubis_notify_callback_t)" "struct anoubis_notify_head" "int verdict" "void *cbdata"
+.Ft struct anoubis_notify_head *
+.Fn anoubis_notify_create_head "task_cookie_t task" "struct anoubis_msg * m" "anoubis_notify_callback_t finish" "void * cbdata"
+.Ft void
+.Fn anoubis_notify_destroy_head "struct anoubis_notify_head * h"
+.Ft int
+.Fn anoubis_notify_answer "struct anoubis_notify_group * ng" "anoubis_token_t token" "int verdict" "int delegate"
+.Ft int
+.Fn anoubis_notify_sendreply "struct anoubis_notify_head * head" "int verdict" "void * you" "uid_t uid"
+.Sh DESCRIPTION
+The
+.Nm anoubis_notify.h
+file provides facilities for handling notify messages in the anoubis
+server.
+There are two kinds of handles that are created by this module:
+.Bl -bullet
+.It
+.Nm anoubis_notify_group
+encapsulates communication with a single dedicated peer.
+.It
+.Nm anoubis_notify_head
+tracks a single notify event that might be sent to multiple notify groups.
+.El
+.Pp
+Heads and groups are linked together by an internal data structure
+called
+.Nm anoubis_notify_event.
+.Pp
+A notify group will only receive notify events that it actually registered
+for with
+.Nm anoubis_notify_register.
+An active registration can be revoked with
+.Nm anoubis_notify_unregister.
+.Sh LIFE CYCLE OF EVENTS
+If a new event needs an answer the first thing to do is to
+create a new
+.Nm anoubis_notify_head.
+All information about the event and any potential callback functions
+must be provided when creating the head.
+Among other things this means that the same message token is used
+for all notify groups that receive the event.
+.Pp
+The next step is to send the event to one or more notify groups.
+This is done by
+.Nm anoubis_notify.
+This function will return a positive value if the event could actually
+be sent and zero if the event did not match any active registration of
+the group.
+.Pp
+If the event is a notify and not an ask event (i.e. no reply from the
+peer is required) this is all that must be done and the caller should
+destroy the notify head immediately after the final call to
+.Nm anoubis_notify.
+Likewise if the message did not match any registration the notify head
+must be destroyed by the caller right now because no further events will
+happen.
+.Pp
+The remainder of this section only applies to ask events that actually
+need an answer.
+.Pp
+Such a message requires two more messages per peer:
+.Bl -bullet
+.It
+A message from the peer that provides a return code for the event.
+This message can either indicate that the return code provided in the event
+should be used unconditionally or that the peer wishes to delegate the
+decision.
+In the latter case the return code is on only used if all peers
+delegate the event and the current delegation is the last one.
+.It
+A message to the peer that informs the peer of the actual return code.
+.El
+.Pp
+Both messages must be exchanged with
+.Em each peer
+that originally received the ask event.
+If multiple peers try to answer the event unconditionally the first one
+wins and the reply from the other peer is treated as if it were a delegation.
+A peer that has not yet sent a return code or a delegation for an event
+must send a delegation immediately if it receives a message with the
+actual return code.
+.Pp
+This way the order in which the two messages described above are
+sent does not matter.
+.Pp
+If a result message from a peer is received it must be processed
+by calling
+.Nm anoubis_notify_answer
+on the appropriate group.
+This is normally done by the server side protocol handler.
+If the server wants to abort an event without an answer from any client
+it can do so by calling
+.Nm anoubis_notify_sendreply.
+However, this function is normally called internally as a reaction to
+a call to
+.Nm anoubis_notify_answer.
+.Pp
+If a callback function for an event has been provided it will be called
+exactly once for each notify head when a return code has been received.
+The head itself can safely be destroyed from the callback function.
+.Pp
+Destroying a notify group will delegate all pending events without actually
+providing a return code, i.e. the default return code will be used.
+.Sh FUNCTION REFERENCE
+.Bl -tag -width "MMM"
+.It anoubis_notify_create
+Create a notify group for the given channel.
+Channels cannot be shared among multiple notify groups.
+.It anoubis_notify_destroy
+Destroy a notify group.
+This will delegate all pending events of that group.
+.It anoubis_notify_register
+.It anoubis_notify_unregister
+Register or unregister for a set of events.
+Each event is sent only once even if it matches multiple registrations.
+Registrations are cumulative and unregistration is only possible with the
+exact same parameters as a previous registration.
+.It anoubis_notify_create_head
+Create a new notify head.
+The caller must provide the task that is responsible for the event
+and the event itself in the form of an
+.Xr anoubis_msg 3
+with a type of
+.Em ANOUBIS_N_ASK
+for ASK events that need an answer or
+.Em ANOUBIS_N_NOTIFY
+for pure notifications.
+The message will be destroyed together with the head.
+The caller must no longer use this message.
+.It anoubis_notify
+Send the notification described by the notify head to the given notify group.
+.It anoubis_notify_answer
+Process a return code for the message given by token.
+The parameter delegate should be true if the peer wants to delegate
+the decision.
+.It anoubis_notify_sendreply
+Send replies to all peers without having received an answer from any of them.
+The value of the parameter
+.Va you
+should be
+.Em NULL
+if this function is called from extern.
+.El
+.Sh RETURN VALUES
+.Nm anoubis_notify_create
+and
+.Nm anoubis_notify_create_head
+return the new notify group or head respectively.
+If the creation fails NULL is returned.
+.Pp
+.Nm anoubis_notify_register,
+.Nm anoubis_notify_unregister,
+.Nm anoubis_notify_answer
+and
+.Nm anoubis_notify_sendreply
+return zero on success and a negative errno value in case of an error.
+.Pp
+.Nm anoubis_notify
+returns a negative errno value in case of an error, zero if the message
+was not sent because it did not match any registration and one if the
+message was successfully sent.
+.Sh SEE ALSO
+.Xr anoubis_client 3 ,
+.Xr anoubis_server 3 ,
+.Xr anoubis_msg 3 ,
+.Xr anouis_chat 3 ,
+.Xr errno 2 ,
+.Sh AUTHORS
+Christian Ehrhardt <ehrhardt@genua.de>

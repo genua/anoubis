@@ -24,40 +24,60 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-TESTS = test_libanoubisproto
-
+TESTS = test_libanoubisproto test_libanoubisnotify
 anoubisprotocoldir	= src/libanoubisprotocol
 anoubischatdir		= src/libanoubischat
 bsdcompatdir		= src/bsdcompat
 libanoubischat = $(top_builddir)/$(anoubischatdir)/libanoubischat.so
 libbsdcompat = $(top_builddir)/$(bsdcompatdir)/libbsdcompat.a
 libanoubisps = $(top_builddir)/$(anoubisprotocoldir)/libanoubisps.so
+libanoubispsa = $(top_builddir)/$(anoubisprotocoldir)/libanoubisps.a
 libanoubispc = $(top_builddir)/$(anoubisprotocoldir)/libanoubispc.so
 
-noinst_PROGRAMS = test_libanoubisproto
+noinst_PROGRAMS = test_libanoubisproto test_libanoubisnotify libanoubischat.so
 INCLUDES =						\
 	-I$(top_srcdir)/$(anoubischatdir)		\
 	-I$(top_srcdir)/$(anoubisprotocoldir)/client	\
 	-I$(top_srcdir)/$(anoubisprotocoldir)/server	\
 	-I$(top_srcdir)/$(anoubisprotocoldir)
 
+libanoubischat_so_CFLAGS = -fPIC -shared
+libanoubischat_so_LDFLAGS = -nostartfiles -shared
 
 test_libanoubisproto_LDFLAGS = -L$(top_builddir)/$(anoubisprotocoldir) \
 	-L$(top_builddir)/$(anoubischatdir) -dynamic
-LDADD = @CHECK_LIBS@ -lanoubisps -lanoubispc -lanoubischat
+test_libanoubisnotify_LDFLAGS = -L. -L$(top_builddir)/$(anoubisprotocoldir)
+test_libanoubisproto_LDADD = @CHECK_LIBS@ -lanoubisps -lanoubispc \
+	-lanoubischat
+test_libanoubisnotify_LDADD = @CHECK_LIBS@ -lanoubisps -lanoubischat
 
 test_libanoubisproto_DEPENDENCIES =	\
 	$(libanoubisps) $(libanoubispc) $(libanoubischat)
+test_libanoubisnotify_DEPENDENCIES = $(libanoubisps) libanoubischat.so
 
 if NEEDBSDCOMPAT
 test_libanoubisproto_LDFLAGS += -L$(top_builddir)/$(bsdcompatdir)
-LDADD += -lbsdcompat
+test_libanoubisnotify_LDFLAGS += -L$(top_builddir)/$(bsdcompatdir)
+test_libanoubisproto_LDADD += -lbsdcompat
+test_libanoubisnotify_LDADD += -lbsdcompat
 test_libanoubisproto_DEPENDENCIES += $(libbsdcompat)
+test_libanoubisnotify_DEPENDENCIES += $(libbsdcompat)
 endif
 
 test_libanoubisproto_CPPFLAGS = @CHECK_CFLAGS@ $(AM_CPPFLAGS)
+test_libanoubisnotify_CPPFLAGS = @CHECK_CFLAGS@ $(AM_CPPFLAGS)
 
 test_libanoubisproto_SOURCES = \
 	testrunner.c \
 	libanoubisproto_testsuite.c \
 	libanoubisproto_testcase_core.c
+
+test_libanoubisnotify_SOURCES = \
+	testrunner_notify.c \
+	libanoubisprotonotify_testsuite.c \
+	libanoubisprotonotify_testcase.c \
+	anoubischat_dummy.c \
+	anoubischat_dummy.h
+libanoubischat_so_SOURCES =		\
+	anoubischat_dummy.h		\
+	anoubischat_dummy.c

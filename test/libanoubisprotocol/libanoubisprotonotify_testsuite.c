@@ -27,16 +27,16 @@
 
 #include <check.h>
 
-extern TCase *libanoubisproto_testcase_core(void);
+extern TCase *libanoubisproto_testcase_notify(void);
 
 Suite *
-protocol_testsuite(void)
+notify_testsuite(void)
 {
 	Suite *s = suite_create("Client Suite");
 
 	/* Core test case */
-	TCase *tc_core = libanoubisproto_testcase_core();
-	suite_add_tcase(s, tc_core);
+	TCase *tc_notify = libanoubisproto_testcase_notify();
+	suite_add_tcase(s, tc_notify);
 
 	return (s);
 }

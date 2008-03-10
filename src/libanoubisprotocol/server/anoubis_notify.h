@@ -33,26 +33,27 @@
 #include <anoubischat.h>
 #include <anoubis_msg.h>
 
-struct anoubis_notify_reg;
-struct anoubis_notify_event;
 struct anoubis_notify_group;
+struct anoubis_notify_head;
 
 typedef u_int64_t task_cookie_t; /* XXX Use kernel header! -- ceh 02/09*/
-typedef void (*anoubis_notify_callback_t)(void * caller, int verdict,
-    int delegate);
+typedef void (*anoubis_notify_callback_t)(struct anoubis_notify_head * head,
+    int verdict, void * cbdata);
 
 struct anoubis_notify_group * anoubis_notify_create(struct achat_channel * chan,
     uid_t uid);
 void anoubis_notify_destroy(struct anoubis_notify_group *);
-int anoubis_notify(struct anoubis_notify_group *, task_cookie_t task,
-    struct anoubis_msg * m, anoubis_notify_callback_t finish, void * data);
+struct anoubis_notify_head * anoubis_notify_create_head(task_cookie_t task,
+    struct anoubis_msg * m, anoubis_notify_callback_t finish, void * cbdata);
+void anoubis_notify_destroy_head(struct anoubis_notify_head * h);
 int anoubis_notify_register(struct anoubis_notify_group * g,
     uid_t uid, task_cookie_t task, u_int32_t ruleid, u_int32_t subsystem);
 int anoubis_notify_unregister(struct anoubis_notify_group * g,
     uid_t uid, task_cookie_t task, u_int32_t ruleid, u_int32_t subsystem);
+int anoubis_notify(struct anoubis_notify_group *, struct anoubis_notify_head *);
+int anoubis_notify_sendreply(struct anoubis_notify_head * head,
+    int verdict, void * you, uid_t uid);
 int anoubis_notify_answer(struct anoubis_notify_group * ng,
     anoubis_token_t token, int verdict, int delegate);
-int anoubis_notify_end(struct anoubis_notify_group * ng,
-    anoubis_token_t token, int verdict, uid_t uid, int you);
 
 #endif

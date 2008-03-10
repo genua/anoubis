@@ -154,25 +154,14 @@ void tp_chat_lud_client(const char *sockname)
 }
 
 
-struct event_cbdata {
-	struct anoubis_notify_group * grp;
-	struct anoubis_msg * m;
-};
-
-/* Simplified callback function which works only for a single notify group */
-static void notify_callback(void * data, int verdict, int delegate)
+/* Simplified callback function which does not care about the event. */
+static void notify_callback(struct anoubis_notify_head * head, int verdict,
+    void * cbdata)
 {
-	struct event_cbdata * cbdata = data;
-	anoubis_token_t token = cbdata->m->u.notify->token;
-	if (delegate)
-		anoubis_notify_end(cbdata->grp, token, ANOUBIS_E_IO, 0, 0);
-	else
-		anoubis_notify_end(cbdata->grp, token, verdict, 0, 1);
-	anoubis_msg_free(cbdata->m);
-	free(data);
+	anoubis_notify_destroy_head(head);
 }
 
-/* XXX Simplified demo notify function. No error checking. */
+/* Demo notify function. No error checking. */
 static void do_notify(struct anoubis_notify_group * grp, pid_t pid)
 {
 	static u_int64_t token = 1;
@@ -180,22 +169,24 @@ static void do_notify(struct anoubis_notify_group * grp, pid_t pid)
 	if (!grp)
 		return;
 	struct anoubis_msg * m = anoubis_msg_new(sizeof(Anoubis_NotifyMessage));
-	struct event_cbdata * cb = malloc(sizeof(*cb));
+	struct anoubis_notify_head * head;
 	int ret;
 
-	cb->grp = grp;
-	cb->m = m;
 	set_value(m->u.notify->type, ANOUBIS_N_ASK);
 	m->u.notify->token = ++token;
 	set_value(m->u.notify->pid, pid);
 	set_value(m->u.notify->rule_id, 0);
 	set_value(m->u.notify->uid, 0);
 	set_value(m->u.notify->subsystem, 0);
-	ret = anoubis_notify(grp, /* XXX */ pid, m, &notify_callback, cb);
-	if (ret < 0) {
+	head = anoubis_notify_create_head(/* XXX */ pid, m, &notify_callback,
+	    NULL);
+	if (!head < 0) {
 		anoubis_msg_free(m);
-		free(cb);
 	}
+	ret = anoubis_notify(grp, head);
+	fail_if(ret < 0);
+	if (ret == 0)
+		anoubis_notify_destroy_head(head);
 }
 
 void tp_chat_lud_server(const char *sockname)
@@ -294,7 +285,7 @@ START_TEST(tp_core_comm)
 END_TEST
 
 TCase *
-libanoubispc_testcase_core(void)
+libanoubisproto_testcase_core(void)
 {
 	/* Core test case */
 	TCase *tp_core = tcase_create("Core");

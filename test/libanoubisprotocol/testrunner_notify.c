@@ -25,18 +25,21 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <stdlib.h>
 #include <check.h>
 
-extern TCase *libanoubisproto_testcase_core(void);
+extern Suite *notify_testsuite(void);
 
-Suite *
-protocol_testsuite(void)
+int
+main (void)
 {
-	Suite *s = suite_create("Client Suite");
+	int number_failed = -1;
+	Suite *suite = notify_testsuite();
+	SRunner *suiterunner = srunner_create(suite);
 
-	/* Core test case */
-	TCase *tc_core = libanoubisproto_testcase_core();
-	suite_add_tcase(s, tc_core);
+	srunner_run_all(suiterunner, CK_NORMAL);
+	number_failed = srunner_ntests_failed(suiterunner);
+	srunner_free(suiterunner);
 
-	return (s);
+	return ((number_failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE);
 }
