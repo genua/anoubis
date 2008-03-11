@@ -150,15 +150,12 @@ libanoubispc_a_SOURCES_splint =			\
 	client/anoubis_transaction.h_splint
 
 flawfinder_FLAGS=--minlevel=4 --allowlink --context
-splint_FLAGS=-Du_int64_t='unsigned long long' -Du_int32_t='unsigned int' \
-	-D__signed__=signed +unixlib -imptype \
-	$(libanoubispc_a_CPPFLAGS) $(libanoubisps_a_CPPFLAGS) -I..
+splint_FLAGS=$(libanoubispc_a_CPPFLAGS) $(libanoubisps_a_CPPFLAGS) -I..
 lint_FLAGS=$(libanoubispc_a_CPPFLAGS) $(libanoubisps_a_CPPFLAGS) -I..
-
 
 mksubdirs:
 	mkdir -p client server
-	touch $@
+.PHONY: mksubdirs
 
 lint: mksubdirs $(libanoubisps_a_SOURCES_lint)	\
 	$(libanoubispc_a_SOURCES_lint)
@@ -176,4 +173,3 @@ clean-local:
 	@rm -f $(libanoubisps_a_SOURCES_splint) $(libanoubispc_a_SOURCES_splint)
 	@rm -f $(libanoubisps_a_SOURCES_flawfinder) \
 		$(libanoubispc_a_SOURCES_flawfinder)
-	@rm mksubdirs

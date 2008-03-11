@@ -84,9 +84,6 @@ libanoubischat_a_SOURCES_flawfinder = \
 	accbuffer.c_flawfinder \
 	accbuffer.h_flawfinder
 
-linting: $(libanoubischat_a_SOURCES_lint) $(libanoubischat_a_SOURCES_splint) \
-	$(libanoubischat_a_SOURCES_flawfinder)
-
 flawfinder_FLAGS=--minlevel=4 --allowlink --context
 splint_FLAGS=+unixlib $(INCLUDES)
 lint_FLAGS=$(INCLUDES)

@@ -111,6 +111,11 @@ int anoubis_client_hasnotifies(struct anoubis_client * client)
 static struct anoubis_msg * anoubis_client_rcv(struct anoubis_client * client,
     size_t alloclen)
 {
+# ifndef S_SPLINT_S
+	/*
+	 * XXX tartler: this part doesn't parse with splint :(
+	 */
+
 	struct anoubis_msg * m = NULL;
 	achat_rc rc;
 
@@ -140,11 +145,17 @@ err:
 	if (m)
 		anoubis_msg_free(m);
 	return NULL;
+#endif
 }
 
 int anoubis_client_verify(struct anoubis_client * client,
     struct anoubis_msg * m)
 {
+# ifndef S_SPLINT_S
+	/*
+	 * XXX tartler: this part doesn't parse with splint :(
+	 */
+
 	if (!VERIFY_FIELD(m,general,type)
 	    || !crc32_check(m->u.buf, m->length))
 		return -EIO;
@@ -157,6 +168,7 @@ int anoubis_client_verify(struct anoubis_client * client,
 		client->connect_flags |= FLAG_GOTCLOSEACK;
 	}
 	return 0;
+# endif
 }
 
 static int anoubis_client_send(struct anoubis_client * client,
@@ -193,6 +205,11 @@ void anoubis_client_destroy(struct anoubis_client * client)
 static int anoubis_verify_reply(struct anoubis_client * client,
     u_int32_t origop, struct anoubis_msg * m)
 {
+# ifndef S_SPLINT_S
+	/*
+	 * XXX tartler: this part doesn't parse with splint :(
+	 */
+
 	int ret = -EPROTO;
 	u_int32_t opcode;
 
@@ -211,11 +228,17 @@ static int anoubis_verify_reply(struct anoubis_client * client,
 err:
 	anoubis_msg_free(m);
 	return ret;
+# endif
 }
 
 static int anoubis_verify_hello(struct anoubis_client * client, int myproto,
     struct anoubis_msg * m)
 {
+# ifndef S_SPLINT_S
+	/*
+	 * XXX tartler: this part doesn't parse with splint :(
+	 */
+
 	int ret;
 	u_int32_t opcode;
 
@@ -235,11 +258,17 @@ static int anoubis_verify_hello(struct anoubis_client * client, int myproto,
 err:
 	anoubis_msg_free(m);
 	return ret;
+# endif
 }
 
 static int anoubis_verify_authreply(struct anoubis_client * client,
     struct anoubis_msg * m)
 {
+# ifndef S_SPLINT_S
+	/*
+	 * XXX tartler: this part doesn't parse with splint :(
+	 */
+
 	int ret;
 	u_int32_t opcode;
 	int slen;
@@ -267,6 +296,7 @@ static int anoubis_verify_authreply(struct anoubis_client * client,
 err:
 	anoubis_msg_free(m);
 	return ret;
+# endif
 }
 
 static int anoubis_verify_stringlist(struct anoubis_client * client,
@@ -611,6 +641,11 @@ static int anoubis_client_continue_self(struct anoubis_client * client,
 int anoubis_client_process(struct anoubis_client * client,
     struct anoubis_msg * m)
 {
+# ifndef S_SPLINT_S
+	/*
+	 * XXX tartler: this part doesn't parse with splint :(
+	 */
+
 	int ret, opcode;
 
 	/* First do sanity checks on the message. */
@@ -675,11 +710,17 @@ int anoubis_client_process(struct anoubis_client * client,
 err:
 	anoubis_msg_free(m);
 	return ret;
+#endif
 }
 
 static void anoubis_client_register_steps(struct anoubis_transaction * t,
     struct anoubis_msg * m)
 {
+# ifndef S_SPLINT_S
+	/*
+	 * XXX tartler: this part doesn't parse with splint :(
+	 */
+
 	struct anoubis_client * client = t->cbdata;
 	int ret = anoubis_client_verify(client, m);
 	if (ret < 0)
@@ -692,6 +733,7 @@ static void anoubis_client_register_steps(struct anoubis_transaction * t,
 err:
 	anoubis_msg_free(m);
 	anoubis_transaction_done(t, -ret);
+# endif
 }
 
 static struct anoubis_transaction * __anoubis_client_register_start_common(
@@ -752,6 +794,11 @@ struct anoubis_transaction * anoubis_client_unregister_start(
 int anoubis_client_notifyreply(struct anoubis_client * client,
     anoubis_token_t token, int verdict, int delegate)
 {
+# ifndef S_SPLINT_S
+	/*
+	 * XXX tartler: this part doesn't parse with splint :(
+	 */
+
 	struct anoubis_msg * m;
 
 	if ((client->proto & ANOUBIS_PROTO_NOTIFY) == 0
@@ -768,11 +815,17 @@ int anoubis_client_notifyreply(struct anoubis_client * client,
 	set_value(m->u.ack->opcode, ANOUBIS_N_ASK);
 	set_value(m->u.ack->error, verdict);
 	return anoubis_client_send(client, m);
+# endif
 }
 
 /* Sync function. */
 int anoubis_client_connect(struct anoubis_client * client, unsigned int proto)
 {
+# ifndef S_SPLINT_S
+	/*
+	 * XXX tartler: this part doesn't parse with splint :(
+	 */
+
 	struct anoubis_transaction * t;
 	struct anoubis_msg * m;
 	int ret;
@@ -793,10 +846,16 @@ int anoubis_client_connect(struct anoubis_client * client, unsigned int proto)
 	ret = t->result;
 	anoubis_transaction_destroy(t);
 	return ret;
+# endif
 }
 
 void anoubis_client_close(struct anoubis_client * client)
 {
+# ifndef S_SPLINT_S
+	/*
+	 * XXX tartler: this part doesn't parse with splint :(
+	 */
+
 	struct anoubis_msg * m;
 	struct anoubis_transaction * t;
 
@@ -822,4 +881,5 @@ void anoubis_client_close(struct anoubis_client * client)
 	}
 	anoubis_transaction_destroy(t);
 	return;
+# endif
 }

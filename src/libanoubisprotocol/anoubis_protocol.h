@@ -60,6 +60,7 @@ DEFINE_SIGNED_TYPE(8);
 DEFINE_SIGNED_TYPE(16);
 DEFINE_SIGNED_TYPE(32);
 
+# ifndef S_SPLINT_S
 #define get_value(VAR)		({				\
 	__typeof__(&(VAR)) __ptr = &(VAR);			\
 	__typeof__(__ptr->netint) __ret;			\
@@ -72,6 +73,10 @@ DEFINE_SIGNED_TYPE(32);
 	}							\
 	__ret;							\
 })
+# else
+#define get_value(VAR) VAR;
+# endif
+
 
 #define set_value(VAR,VAL)	do {				\
 	__typeof__(&(VAR)) __ptr = &(VAR);			\

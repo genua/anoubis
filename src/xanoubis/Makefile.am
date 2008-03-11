@@ -270,15 +270,11 @@ xanoubis_SOURCES_lint= \
 # splint does not support C++ at all.
 xanoubis_SOURCES_splint=
 
-linting: $(xanoubis_SOURCES_lint) $(xanoubis_SOURCES_splint) \
-	$(xanoubis_SOURCES_flawfinder)
-
 flawfinder_FLAGS=--minlevel=4 --allowlink --context
 lint_FLAGS=$(xanoubis_CPPFLAGS)
 
 mkdirs:
 	@mkdir model view control
-	@touch $@
 
 .PHONY: mkdirs
 
@@ -296,4 +292,3 @@ clean-local:
 	@rm -f $(xanoubis_SOURCES_lint)
 	@rm -f $(xanoubis_SOURCES_splint)
 	@rm -f $(xanoubis_SOURCES_flawfinder)
-	@rm mkdirs

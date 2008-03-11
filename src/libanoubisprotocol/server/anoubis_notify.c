@@ -254,6 +254,11 @@ struct anoubis_notify_head * anoubis_notify_create_head(task_cookie_t task,
 int anoubis_notify(struct anoubis_notify_group * ng,
     struct anoubis_notify_head * head)
 {
+# ifndef S_SPLINT_S
+	/*
+	 * XXX tartler: this part doesn't parse with splint :(
+	 */
+
 	struct anoubis_notify_event * nev;
 	struct anoubis_msg * m = head->m;
 	int ret;
@@ -298,6 +303,7 @@ int anoubis_notify(struct anoubis_notify_group * ng,
 	LIST_INSERT_HEAD(&head->events, nev, nextgroup);
 	head->eventcount++;
 	return 1;
+# endif
 }
 
 int anoubis_notify_sendreply(struct anoubis_notify_head * head,

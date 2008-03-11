@@ -38,7 +38,9 @@
 
 /* APN variables. */
 struct var {
+# ifndef S_SPLINT_S
 	TAILQ_ENTRY(var)	 entry;
+# endif
 #define VAR_APPLICATION	1
 #define VAR_RULE	2
 #define VAR_DEFAULT	3
@@ -51,7 +53,10 @@ struct var {
 	size_t			 valsize;
 	void			*value;
 };
+
+# ifndef S_SPLINT_S
 TAILQ_HEAD(apnvar_queue, var);
+# endif
 
 struct application {
 	char		*name;
@@ -61,10 +66,15 @@ struct application {
 
 /* Complete state of one rule. */
 struct apnrule {
+# ifndef S_SPLINT_S
 	TAILQ_ENTRY(apn_rule) rule_entry;
+# endif
 	u_int8_t		type;
 };
+
+# ifndef S_SPLINT_S
 TAILQ_HEAD(apnrule_queue, apnrule);
+# endif
 
 /* Complete APN ruleset. */
 struct apnruleset {

@@ -92,11 +92,8 @@ anoubisd_SOURCES_splint= \
 
 
 flawfinder_FLAGS=--minlevel=4 --allowlink --context
-splint_FLAGS=-Du_int64_t='unsigned long long' -Du_int32_t='unsigned int' \
-	-D__signed__=signed +unixlib -imptype $(INCLUDES)
+splint_FLAGS=$(INCLUDES)
 lint_FLAGS=$(INCLUDES)
-
-linting: flawfinder splint lint
 
 flawfinder:	$(anoubisd_SOURCES_flawfinder)
 splint:		$(anoubisd_SOURCES_splint)

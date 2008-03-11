@@ -62,9 +62,6 @@ anoubisctl_SOURCES_lint= \
 anoubisctl_SOURCES_splint= \
 	main.c_splint
 
-linting: $(anoubisctl_SOURCES_lint) $(anoubisctl_SOURCES_splint) \
-	$(anoubisctl_SOURCES_flawfinder)
-
 flawfinder_FLAGS=--minlevel=4 --allowlink --context
 splint_FLAGS=+unixlib $(INCLUDES) -I..
 lint_FLAGS=""

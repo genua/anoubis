@@ -28,6 +28,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <unistd.h>
 #include <sys/types.h>
 #include <anoubischat.h>
 
@@ -190,6 +191,10 @@ static int reply_invalid_token(struct anoubis_server * server,
 static int anoubis_process_versel(struct anoubis_server * server,
     struct anoubis_msg * m, int opcode)
 {
+# ifndef S_SPLINT_S
+	/*
+	 * XXX tartler: this part doesn't parse with splint :(
+	 */
 	if (!VERIFY_LENGTH(m, sizeof(m->u.versel)))
 		return reply_invalid(server, opcode);
 	if (server->proto != ANOUBIS_PROTO_CONNECT
@@ -199,6 +204,7 @@ static int anoubis_process_versel(struct anoubis_server * server,
 	}
 	server->connect_flags |= FLAG_VERSEL;
 	return reply_ok(server, opcode);
+# endif
 }
 
 static struct proto_opt anoubis_options[] = {
@@ -397,6 +403,10 @@ static int anoubis_process_closereq(struct anoubis_server * server, int opcode)
 static int anoubis_process_nregister(struct anoubis_server * server,
     struct anoubis_msg * m, int opcode, anoubis_token_t token)
 {
+# ifndef S_SPLINT_S
+	/*
+	 * XXX tartler: this part doesn't parse with splint :(
+	 */
 	int ret;
 	if (opcode != ANOUBIS_N_REGISTER && opcode != ANOUBIS_N_UNREGISTER)
 		return -EINVAL;
@@ -419,6 +429,7 @@ static int anoubis_process_nregister(struct anoubis_server * server,
 	if (ret < 0)
 		return reply_invalid_token(server, token, opcode);
 	return reply_ok_token(server, token, opcode);
+#endif
 }
 
 static int anoubis_process_reply(struct anoubis_server * server,
@@ -449,6 +460,11 @@ static int anoubis_process_reply(struct anoubis_server * server,
 int anoubis_server_process(struct anoubis_server * server, void * buf,
     size_t len)
 {
+# ifndef S_SPLINT_S
+	/*
+	 * XXX tartler: this part doesn't parse with splint :(
+	 */
+
 	anoubis_token_t token;
 	struct anoubis_msg m = {
 		.length = len,
@@ -551,6 +567,7 @@ int anoubis_server_process(struct anoubis_server * server, void * buf,
 	}
 	/* NOT REACHED */
 	return -EINVAL;
+#endif
 }
 
 int anoubis_server_eof(struct anoubis_server * server)

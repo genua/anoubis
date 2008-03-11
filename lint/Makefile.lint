@@ -1,3 +1,4 @@
+# -*- mode: makefile -*-
 ##########################################################################
 # Copyright (c) 2008 GeNUA mbH <info@genua.de>
 #
@@ -41,13 +42,23 @@ else
 	@touch $@
 endif
 
+if HAVE_SPLINT
+missing_splint_types=-Du_int64_t='unsigned long long' \
+	-Du_int32_t='unsigned int' \
+	-Du_int8_t='unsigned char' \
+	-Du_int16_t='unsigned short int' \
+	-D__signed__=signed
+
+common_splint_FLAGS = $(missing_splint_types) +unixlib -imptype
+endif
+
 .c.c_splint .h.h_splint:
 if HAVE_SPLINT
-	sh $(top_builddir)/lint/splint $(splint_FLAGS) $< > $@
+	sh $(top_builddir)/lint/splint $(common_splint_FLAGS) $(splint_FLAGS) \
+	    $< > $@
 else
 	@touch $@
 endif
 
 linting: flawfinder splint lint
-
 .PHONY: flawfinder splint lint
