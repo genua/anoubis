@@ -91,7 +91,7 @@ anoubisd_SOURCES_splint= \
 	log.c_splint
 
 
-flawfinder_FLAGS=--minlevel=4 --allowlink --context
+flawfinder_FLAGS=
 splint_FLAGS=$(INCLUDES)
 lint_FLAGS=$(INCLUDES)
 

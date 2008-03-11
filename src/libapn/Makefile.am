@@ -70,7 +70,7 @@ libapn_a_SOURCES_flawfinder = \
 	apnparser.c_flawfinder  \
 	apn.h_flawfinder
 
-flawfinder_FLAGS=--minlevel=4 --allowlink --context
+flawfinder_FLAGS=
 splint_FLAGS=$(INCLUDES)
 lint_FLAGS=$(INCLUDES)
 

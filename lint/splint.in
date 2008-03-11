@@ -12,7 +12,7 @@ STDOUT=`mktemp` || exit 1
 STDERR=`mktemp` || exit 1
 trap 'rm -f $STDOUT $STDERR' INT QUIT TERM EXIT
 
-splint $* 2>$STDERR >$STDOUT
+${SPLINT}  $* 2>$STDERR >$STDOUT
 
 if egrep '(Cannot find include file|Parse Error)' $STDERR; then
 	cat $STDERR >&2;

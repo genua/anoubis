@@ -270,7 +270,7 @@ xanoubis_SOURCES_lint= \
 # splint does not support C++ at all.
 xanoubis_SOURCES_splint=
 
-flawfinder_FLAGS=--minlevel=4 --allowlink --context
+flawfinder_FLAGS=
 lint_FLAGS=$(xanoubis_CPPFLAGS)
 
 mkdirs:

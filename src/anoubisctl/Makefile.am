@@ -62,9 +62,9 @@ anoubisctl_SOURCES_lint= \
 anoubisctl_SOURCES_splint= \
 	main.c_splint
 
-flawfinder_FLAGS=--minlevel=4 --allowlink --context
+flawfinder_FLAGS=
 splint_FLAGS=+unixlib $(INCLUDES) -I..
-lint_FLAGS=""
+lint_FLAGS=
 
 flawfinder:	$(anoubisctl_SOURCES_flawfinder)
 splint:		$(anoubisctl_SOURCES_splint)

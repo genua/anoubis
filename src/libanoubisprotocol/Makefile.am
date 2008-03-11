@@ -149,7 +149,7 @@ libanoubispc_a_SOURCES_splint =			\
 	client/anoubis_client.h_splint		\
 	client/anoubis_transaction.h_splint
 
-flawfinder_FLAGS=--minlevel=4 --allowlink --context
+flawfinder_FLAGS=
 splint_FLAGS=$(libanoubispc_a_CPPFLAGS) $(libanoubisps_a_CPPFLAGS) -I..
 lint_FLAGS=$(libanoubispc_a_CPPFLAGS) $(libanoubisps_a_CPPFLAGS) -I..
 

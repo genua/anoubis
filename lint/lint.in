@@ -12,7 +12,7 @@ STDOUT=`mktemp` || exit 1
 STDERR=`mktemp` || exit 1
 trap 'rm -f $STDOUT $STDERR' INT QUIT TERM EXIT
 
-lint $* 2>$STDERR >$STDOUT
+${LINT} $* 2>$STDERR >$STDOUT
 
 # XXX ignore any error codes for now. lint is behaving strange here...
 

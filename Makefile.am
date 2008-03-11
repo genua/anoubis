@@ -41,15 +41,34 @@ MAINTAINERCLEANFILES= \
 	config.guess \
 	config.sub
 
-flawfinder:
-	for t in $(SUBDIRS); do cd $$t && make $@ && cd ..; done
+REPORTS=
 
-lint:
-	for t in $(SUBDIRS); do cd $$t && make $@ && cd ..; done
+if HAVE_FLAWFINDER
+REPORTS += flawfinder.report
+flawfinder: flawfinder.report
+flawfinder.report:
+	for t in $(SUBDIRS); do cd $$t && make flawfinder && cd ..; done
+	cat `find $(top_builddir) -name \*_flawfinder` > $@
 
-splint:
-	for t in $(SUBDIRS); do cd $$t && make $@ && cd ..; done
+endif
 
-linting: flawfinder lint splint
+if HAVE_SPLINT
+REPORTS += splint.report
+splint: splint.report
+splint.report:
+	for t in $(SUBDIRS); do cd $$t && make splint && cd ..; done
+	cat `find $(top_builddir) -name \*_splint` > $@
+endif
+
+if HAVE_LINT
+REPORTS += lint.report
+lint: lint.report
+lint.report:
+	for t in $(SUBDIRS); do cd $$t && make lint && cd ..; done
+	cat `find $(top_builddir) -name \*_lint` > $@
+endif
+
+linting: $(REPORTS)
+	@echo linting done
 
 .PHONY: flawfinder lint splint
