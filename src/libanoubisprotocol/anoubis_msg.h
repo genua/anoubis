@@ -31,6 +31,7 @@
 #include <errno.h>
 #include <anoubis_protocol.h>
 #include <anoubis_auth.h>
+#include <stddef.h>	/* for offsetof */
 
 struct anoubis_msg {
 	u_int32_t	length;
@@ -52,15 +53,6 @@ struct anoubis_msg {
 };
 
 #define ANOUBIS_MESSAGE_MAXLEN		100000UL /* Arbitrary limit for now. */
-
-#ifndef offsetof
-#ifdef LINUX
-#define offsetof(X,Y) __builtin_offsetof(X,Y)
-#endif
-#ifdef OPENBSD
-#define offsetof(X,Y) ((unsigned long)(&(((X *)NULL)->Y)))
-#endif
-#endif
 
 #ifndef S_SPLINT_S
 #define VERIFY_FIELD(M, SEL, FIELD)	\
