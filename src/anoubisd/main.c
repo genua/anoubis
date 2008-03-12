@@ -131,9 +131,7 @@ static void
 dispatch_timer(int sig, short event, void * arg)
 {
 	struct event_info_main	*ev_info = arg;
-#ifndef OPENBSD
 	ioctl(ev_info->anoubisfd, ANOUBIS_REQUEST_STATS, 0);
-#endif
 	event_add(ev_info->ev_timer, ev_info->tv);
 }
 

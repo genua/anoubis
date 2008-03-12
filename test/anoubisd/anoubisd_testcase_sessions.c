@@ -192,10 +192,8 @@ START_TEST(tc_Sessions_three)
 	struct achat_channel	*c  = NULL;
 	achat_rc		 rc = ACHAT_RC_ERROR;
 	struct anoubis_client   *client;
-#ifdef LINUX
 	struct anoubis_transaction * t;
 	int count = 0;
-#endif
 
 	c = acc_create();
 	fail_if(c == NULL, "couldn't create channel");
@@ -229,7 +227,6 @@ START_TEST(tc_Sessions_three)
 	fail_if(rc < 0, "client connect failed with code %d", rc);
 	mark_point();
 
-#ifdef LINUX	/* XXX Not yet implemented on OpenBSD  -- ceh 03/2008 */
 	t = anoubis_client_register_start(client, 0x123, 0, 0, 0,
 	    ANOUBIS_SOURCE_STAT);
 	fail_if(!t, "Failed to register for stat events");
@@ -249,7 +246,6 @@ START_TEST(tc_Sessions_three)
 			count++;
 		}
 	}
-#endif
 	anoubis_client_close(client);
 	mark_point();
 

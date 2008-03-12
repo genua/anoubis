@@ -40,13 +40,6 @@
 #include <dev/anoubis.h>
 #endif
 
-/* XXX for OpenBSD: */
-#ifdef OPENBSD
-#ifndef ANOUBIS_SOURCE_STAT
-#define ANOUBIS_SOURCE_STAT	-1
-#endif
-#endif
-
 struct anoubis_notify_reg {
 	LIST_ENTRY(anoubis_notify_reg) next;
 	task_cookie_t task;
