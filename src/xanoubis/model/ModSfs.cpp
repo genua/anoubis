@@ -42,7 +42,7 @@ ModSfs::ModSfs(wxWindow *parent) : Module()
 	overviewPanel_ = new ModSfsOverviewPanelImpl(parent,
 	    MODSFS_ID_OVERVIEWPANEL);
 
-	loadIcon(_T("ModSFS.png"));
+	loadIcon(_T("ModSfs_black_48.png"));
 	mainPanel_->Hide();
 	overviewPanel_->Hide();
 }

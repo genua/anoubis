@@ -35,7 +35,7 @@
 ModAlfOverviewPanelImpl::ModAlfOverviewPanelImpl(wxWindow* parent,
     wxWindowID id) : ModAlfOverviewPanelBase(parent, id)
 {
-	stateIconNormal_ = wxGetApp().loadIcon(_T("ModALFOk.png"));
+	stateIconNormal_ = wxGetApp().loadIcon(_T("ModAlf_ok_48.png"));
 }
 
 ModAlfOverviewPanelImpl::~ModAlfOverviewPanelImpl(void)

@@ -42,7 +42,7 @@ ModAlf::ModAlf(wxWindow *parent) : Module()
 	overviewPanel_ = new ModAlfOverviewPanelImpl(parent,
 	    MODALF_ID_OVERVIEWPANEL);
 
-	loadIcon(_T("ModALF.png"));
+	loadIcon(_T("ModAlf_black_48.png"));
 	mainPanel_->Hide();
 	overviewPanel_->Hide();
 }

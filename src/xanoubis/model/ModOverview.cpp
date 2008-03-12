@@ -45,7 +45,7 @@ ModOverview::ModOverview(wxWindow *parent) : Module()
 	mainPanel_ = new ModOverviewMainPanelImpl(parent,
 	    MODOVERVIEW_ID_MAINPANEL);
 
-	loadIcon(_T("ModOverview.png"));
+	loadIcon(_T("ModOverview_black_48.png"));
 	mainPanel_->Hide();
 }
 

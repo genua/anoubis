@@ -33,8 +33,8 @@
 
 TrayIcon::TrayIcon(void)
 {
-	iconNormal_    = wxGetApp().loadIcon(_T("tray_normal.png"));
-	iconMsgByHand_ = wxGetApp().loadIcon(_T("tray_msgByHand.png"));
+	iconNormal_    = wxGetApp().loadIcon(_T("ModAnoubis_black_48.png"));
+	iconMsgByHand_ = wxGetApp().loadIcon(_T("ModAnoubis_question_48.png"));
 
 	messageByHandNo_ = 0;
 	daemon_ = wxT("none");

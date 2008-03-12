@@ -69,7 +69,7 @@ ModAnoubis::ModAnoubis(wxWindow *parent) : Module()
 	overviewPanel_ = new ModAnoubisOverviewPanelImpl(parent,
 	    MODANOUBIS_ID_OVERVIEWPANEL);
 
-	loadIcon(_T("ModAnoubis.png"));
+	loadIcon(_T("ModAnoubis_black_48.png"));
 	mainPanel_->Hide();
 	overviewPanel_->Hide();
 

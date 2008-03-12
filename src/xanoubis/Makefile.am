@@ -58,17 +58,62 @@ endif
 
 icondir = $(datadir)/$(bin_PROGRAMS)/icons
 dist_icon_DATA = \
-	icons/ModALF.png \
-	icons/ModAnoubis.png \
-	icons/ModSFS.png \
-	icons/ModOverview.png \
-	icons/tray.gif \
-	icons/tray_msgByHand.png \
-	icons/tray_normal.png \
-	icons/ModALFError.png \
-	icons/ModALFOk.png \
-	icons/ModALFProblem.png
-
+	icons/ModAlf_alert_16.png \
+	icons/ModAlf_alert_48.png \
+	icons/ModAlf_black_16.png \
+	icons/ModAlf_black_48.png \
+	icons/ModAlf_error_16.png \
+	icons/ModAlf_error_48.png \
+	icons/ModAlf_grey_16.png \
+	icons/ModAlf_grey_48.png \
+	icons/ModAlf_ok_16.png \
+	icons/ModAlf_ok_48.png \
+	icons/ModAlf_problem_16.png \
+	icons/ModAlf_problem_48.png \
+	icons/ModAlf_question_16.png \
+	icons/ModAlf_question_48.png \
+	icons/ModAnoubis_alert_16.png \
+	icons/ModAnoubis_alert_48.png \
+	icons/ModAnoubis_black_16.png \
+	icons/ModAnoubis_black_48.png \
+	icons/ModAnoubis_error_16.png \
+	icons/ModAnoubis_error_48.png \
+	icons/ModAnoubis_grey_16.png \
+	icons/ModAnoubis_grey_48.png \
+	icons/ModAnoubis_ok_16.png \
+	icons/ModAnoubis_ok_48.png \
+	icons/ModAnoubis_problem_16.png \
+	icons/ModAnoubis_problem_48.png \
+	icons/ModAnoubis_question_16.png \
+	icons/ModAnoubis_question_48.png \
+	icons/ModOverview_alert_16.png \
+	icons/ModOverview_alert_48.png \
+	icons/ModOverview_black_16.png \
+	icons/ModOverview_black_48.png \
+	icons/ModOverview_error_16.png \
+	icons/ModOverview_error_48.png \
+	icons/ModOverview_grey_16.png \
+	icons/ModOverview_grey_48.png \
+	icons/ModOverview_ok_16.png \
+	icons/ModOverview_ok_48.png \
+	icons/ModOverview_problem_16.png \
+	icons/ModOverview_problem_48.png \
+	icons/ModOverview_question_16.png \
+	icons/ModOverview_question_48.png \
+	icons/ModSfs_alert_16.png \
+	icons/ModSfs_alert_48.png \
+	icons/ModSfs_black_16.png \
+	icons/ModSfs_black_48.png \
+	icons/ModSfs_error_16.png \
+	icons/ModSfs_error_48.png \
+	icons/ModSfs_grey_16.png \
+	icons/ModSfs_grey_48.png \
+	icons/ModSfs_ok_16.png \
+	icons/ModSfs_ok_48.png \
+	icons/ModSfs_problem_16.png \
+	icons/ModSfs_problem_48.png \
+	icons/ModSfs_question_16.png \
+	icons/ModSfs_question_48.png
 
 xanoubis_SOURCES= \
 	model/ModAlf.cpp \
