@@ -76,8 +76,3 @@ clean-local:
 	@rm -f $(anoubisctl_SOURCES_lint)
 	@rm -f $(anoubisctl_SOURCES_splint)
 	@rm -f $(anoubisctl_SOURCES_flawfinder)
-
-# As we're in maintainer mode we have to remove generated source files
-# manually.
-dist-hook:
-	$(MAKE) maintainer-clean-generic

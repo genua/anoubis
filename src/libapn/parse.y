@@ -24,25 +24,33 @@
 #include "config.h"
 
 #include <sys/types.h>
+#include <sys/socket.h>
 #ifndef LINUX
 #include <sys/queue.h>
 #else
-#include "bsdcompat.h"
-#include "queue.h"
+#include <queue.h>
 #endif	/* !LINUX */
 #include <sys/stat.h>
+
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
+#include <netdb.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <syslog.h>
 #include <unistd.h>
+
+#ifdef LINUX
+#include <bsdcompat.h>
+#endif	/* LINUX */
 
 #include "apn.h"
 
@@ -70,6 +78,10 @@ int		 varset(const char *, void *, size_t, int);
 struct var	*varget(const char *);
 int		 str2hash(const char *, char *, size_t);
 int		 validate_hash(int, const char *);
+int		 host(const char *, struct apn_addr *);
+int		 host_v4(const char *, struct apn_addr *);
+int		 host_v6(const char *, struct apn_addr *);
+int		 validate_host(const struct host *);
 
 static struct apnruleset	*apnrsp = NULL;
 static int			 debug = 0;
@@ -84,6 +96,8 @@ typedef struct {
 			int		 type;
 			char		 value[MAX_APN_HASH_LEN];
 		} hashspec;
+		struct apn_addr		 addr;
+		struct host		 host;
 	} v;
 	int lineno;
 } YYSTYPE;
@@ -92,13 +106,16 @@ typedef struct {
 %}
 
 %token	ALLOW DENY ALF SFS SB VS CAP CONTEXT RAW ALL OTHER LOG CONNECT ACCEPT
-%token	INET INET6 FROM TO PORT ANY SHA256 TCP UDP DEFAULT NEW ASK NOT
+%token	INET INET6 FROM TO PORT ANY SHA256 TCP UDP DEFAULT NEW ASK
 %token	READ WRITE EXEC CHMOD ERROR APPLICATION RULE HOST TFILE
 %token	<v.string>		STRING
 %token	<v.number>		NUMBER
 %type	<v.app>			app
 %type	<v.hashtype>		hashtype
 %type	<v.hashspec>		hashspec
+%type	<v.addr>		address
+%type	<v.host>		host
+%type	<v.number>		not
 %%
 
 grammar		: /* empty */
@@ -270,12 +287,23 @@ host_l		: host_l comma host
 		| host
 		;
 
-host		: not address
+host		: not address			{
+			$$.not = $1;
+			$$.addr = $2;
+
+			if (validate_host(&$$) == -1)
+				YYERROR;
+		}
 		;
 
-address		: STRING
-		| STRING '/' NUMBER
-		;
+address		: STRING			{
+			if (!host($1, &$$)) {
+				free($1);
+				yyerror("could not parse address");
+				YYERROR;
+			}
+			free($1);
+		}
 
 portspec	: PORT ports
 		| /* empty */
@@ -501,7 +529,7 @@ app		: STRING hashspec		{
 
 hashspec	: hashtype STRING		{
 
-			if (validate_hash($1, $2)) {
+			if (validate_hash($1, $2) == -1) {
 				free($2);
 				YYERROR;
 			}
@@ -529,8 +557,8 @@ log		: LOG
 		| /* empty */
 		;
 
-not		: NOT
-		| /* empty */
+not		: '!'				{ $$ = 1; }
+		| /* empty */			{ $$ = 0; }
 		;
 %%
 
@@ -585,7 +613,6 @@ lookup(char *s)
 		{ "inet6",	INET6 },
 		{ "log",	LOG },
 		{ "new",	NEW },
-		{ "not",	NOT },
 		{ "other",	OTHER },
 		{ "port",	PORT },
 		{ "raw",	RAW },
@@ -801,7 +828,7 @@ nodigits:
 	x != '{' && x != '}' && x != '<' && x != '>' && \
 	x != '!' && x != '=' && x != '#' && x != ','))
 
-	if (isalnum(c) || c == '/') {
+	if (isalnum(c) || c == ':' || c == '/') {
 		do {
 			*p++ = c;
 			if ((unsigned)(p-buf) >= sizeof(buf)) {
@@ -1012,6 +1039,115 @@ validate_hash(int type, const char *s)
 		yyerror("unknown hash type %d", type);
 		return (-1);
 	}
+
+	return (0);
+}
+
+/*
+ * Regarding host_v[46]():
+ * As discussed with mpf and mfriedl this is the way to go right now.
+ * In a long term a solution based on solely getaddrinfo(3) might be better.
+ */
+int
+host(const char *s, struct apn_addr *h)
+{
+	int done = 0;
+
+	bzero(h, sizeof(struct apn_addr));
+
+	/* IPv4 address? */
+	done = host_v4(s, h);
+
+	if (!done)
+		done = host_v6(s, h);
+
+	return (done);
+}
+
+int
+host_v4(const char *s, struct apn_addr *h)
+{
+	struct in_addr	 ina;
+	int		 bits = 32;
+
+	bzero(&ina, sizeof(struct in_addr));
+	if (strrchr(s, '/') != NULL) {
+		if ((bits = inet_net_pton(AF_INET, s, &ina, sizeof(ina))) == -1)
+			return (0);
+	} else {
+		if (inet_pton(AF_INET, s, &ina) != 1)
+			return (0);
+	}
+
+	h->af = AF_INET;
+	h->apa.v4.s_addr = ina.s_addr;
+	h->len = bits;
+
+	return (1);
+}
+
+int
+host_v6(const char *s, struct apn_addr *h)
+{
+	char		*p, *ps;
+	const char	*errstr;
+	int		 bits = 128;
+	struct addrinfo	hints, *res;
+
+	if ((p = strrchr(s, '/')) != NULL) {
+		bits = strtonum(p + 1, 0, 128, &errstr);
+		if (errstr) {
+			yyerror("prefixlen is %s: %s", errstr, p + 1);
+			return (-1);
+		}
+		if ((ps = malloc(strlen(s) - strlen(p) + 1)) == NULL)
+			return (-1);
+		strlcpy(ps, s, strlen(s) - strlen(p) + 1);
+	} else {
+		if ((ps = strdup(s)) == NULL)
+			return (-1);
+	}
+
+	bzero(&hints, sizeof(hints));
+	hints.ai_family = AF_INET6;
+	hints.ai_socktype = SOCK_DGRAM;	/* dummy */
+	hints.ai_flags = AI_NUMERICHOST;
+	if (getaddrinfo(ps, NULL, &hints, &res) == 0) {
+		h->af = AF_INET6;
+		bcopy(&((struct sockaddr_in6 *)res->ai_addr)->sin6_addr,
+		    &h->apa.v6, sizeof(struct sockaddr_in6));
+		h->len = bits;
+
+		freeaddrinfo(res);
+		free(ps);
+		return (1);
+	}
+
+	free(ps);
+
+	return (0);
+}
+
+int
+validate_host(const struct host *host)
+{
+	switch (host->addr.af) {
+	case AF_INET:
+		if (host->addr.len > 32)
+			return (-1);
+		break;
+
+	case AF_INET6:
+		if (host->addr.len > 128)
+			return (-1);
+		break;
+
+	default:
+		return (-1);
+	}
+
+	if (!(0 <= host->not && host->not <= 1))
+		return (-1);
 
 	return (0);
 }

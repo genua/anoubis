@@ -84,3 +84,8 @@ clean-local:
 	@rm -f $(libapn_a_SOURCES_lint)
 	@rm -f $(libapn_a_SOURCES_splint)
 	@rm -f $(libapn_a_SOURCES_flawfinder)
+
+# As we're in maintainer mode we have to remove generated source files
+# manually.
+dist-hook:
+	$(MAKE) maintainer-clean-generic

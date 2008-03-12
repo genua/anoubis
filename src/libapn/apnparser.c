@@ -28,12 +28,15 @@
 #include "config.h"
 
 #include <sys/types.h>
-
+#include <sys/socket.h>
 #ifndef LINUX
 #include <sys/queue.h>
 #else
-#include "queue.h"
+#include <queue.h>
 #endif
+
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 #include <stdlib.h>
 

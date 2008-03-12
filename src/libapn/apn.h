@@ -28,6 +28,12 @@
 #ifndef _APN_H_
 #define _APN_H_
 
+#ifndef LINUX
+#include <sys/queue.h>
+#else
+#include <queue.h>
+#endif
+
 #define APN_FLAG_VERBOSE	0x0001
 #define APN_FLAG_VERBOSE2	0x0002
 
@@ -38,9 +44,7 @@
 
 /* APN variables. */
 struct var {
-# ifndef S_SPLINT_S
 	TAILQ_ENTRY(var)	 entry;
-# endif
 #define VAR_APPLICATION	1
 #define VAR_RULE	2
 #define VAR_DEFAULT	3
@@ -54,9 +58,7 @@ struct var {
 	void			*value;
 };
 
-# ifndef S_SPLINT_S
 TAILQ_HEAD(apnvar_queue, var);
-# endif
 
 struct application {
 	char		*name;
@@ -64,17 +66,31 @@ struct application {
 	char		 hashvalue[MAX_APN_HASH_LEN];
 };
 
+struct apn_addr {
+	sa_family_t		af;
+	u_int8_t		len;
+	union {
+		struct in_addr		v4;
+		struct in6_addr		v6;
+		u_int8_t		addr8[16];
+		u_int16_t		addr16[8];
+		u_int32_t		addr32[4];
+	} apa;		/* 128-bit address */
+};
+
+struct host {
+	struct apn_addr		addr;
+	int			not;
+};
+
+
 /* Complete state of one rule. */
 struct apnrule {
-# ifndef S_SPLINT_S
-	TAILQ_ENTRY(apn_rule) rule_entry;
-# endif
+	TAILQ_ENTRY(apn_rule)	rule_entry;
 	u_int8_t		type;
 };
 
-# ifndef S_SPLINT_S
 TAILQ_HEAD(apnrule_queue, apnrule);
-# endif
 
 /* Complete APN ruleset. */
 struct apnruleset {
