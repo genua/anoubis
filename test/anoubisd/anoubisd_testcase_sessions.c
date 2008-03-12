@@ -25,6 +25,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <config.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/un.h>
@@ -41,6 +42,16 @@
 #include "anoubischat.h"
 #include <anoubis_protocol.h>
 #include <anoubis_client.h>
+#include <anoubis_msg.h>
+#include <anoubis_transaction.h>
+#include <anoubis_dump.h>
+
+#ifdef LINUX
+#include <linux/anoubis.h>
+#endif
+#ifdef OPENBSD
+#include <dev/anoubis.h>
+#endif
 
 /* It's a bit tricky to include anoubisd.h here to access the path and
  * name of the listening socket, because we would inherit the need of
@@ -174,6 +185,78 @@ START_TEST(tc_Sessions_two)
 }
 END_TEST
 
+START_TEST(tc_Sessions_three)
+{
+	struct sockaddr_storage	 ss;
+	struct sockaddr_un	*ss_sun = (struct sockaddr_un *)&ss;
+	struct achat_channel	*c  = NULL;
+	achat_rc		 rc = ACHAT_RC_ERROR;
+	struct anoubis_client   *client;
+#ifdef LINUX
+	struct anoubis_transaction * t;
+	int count = 0;
+#endif
+
+	c = acc_create();
+	fail_if(c == NULL, "couldn't create channel");
+	rc = acc_settail(c, ACC_TAIL_CLIENT);
+	fail_if(rc != ACHAT_RC_OK, "settail failed with rc=%d", rc);
+	rc = acc_setsslmode(c, ACC_SSLMODE_CLEAR);
+	fail_if(rc != ACHAT_RC_OK, "setsslmode failed with rc=%d", rc);
+	mark_point();
+
+	bzero(&ss, sizeof(ss));
+	ss_sun->sun_family = AF_UNIX;
+	strncpy(ss_sun->sun_path, sockname,
+	    sizeof(ss_sun->sun_path) - 1);
+	rc = acc_setaddr(c, &ss);
+	fail_if(rc != ACHAT_RC_OK, "setaddr failed with rc=%d", rc);
+	mark_point();
+
+	rc = acc_prepare(c);
+	fail_if(rc != ACHAT_RC_OK, "prepare failed with rc=%d [%s]", rc,
+	    strerror(errno));
+	rc = acc_open(c);
+	fail_if(rc != ACHAT_RC_OK, "open failed with rc=%d [%s]", rc,
+	    strerror(errno));
+	mark_point();
+
+	client = anoubis_client_create(c);
+	fail_if(!client, "Failed to create client");
+	mark_point();
+
+	rc = anoubis_client_connect(client, ANOUBIS_PROTO_BOTH);
+	fail_if(rc < 0, "client connect failed with code %d", rc);
+	mark_point();
+
+#ifdef LINUX	/* XXX Not yet implemented on OpenBSD  -- ceh 03/2008 */
+	t = anoubis_client_register_start(client, 0x123, 0, 0, 0,
+	    ANOUBIS_SOURCE_STAT);
+	fail_if(!t, "Failed to register for stat events");
+	while(count < 3) {
+		struct anoubis_msg * m = anoubis_msg_new(4000);
+		size_t length = 4000;
+		fail_if(!m, "Cannot allocate message");
+		rc = acc_receivemsg(c, m->u.buf, &length);
+		fail_if(rc != ACHAT_RC_OK, "receive message returned %d", rc);
+		anoubis_msg_resize(m, length);
+		rc = anoubis_client_process(client, m);
+		fail_if(rc != 1, "client process failed");
+		m = anoubis_client_getnotify(client);
+		if (m) {
+			anoubis_dump(m, "NOTIFY");
+			anoubis_msg_free(m);
+			count++;
+		}
+	}
+#endif
+	anoubis_client_close(client);
+	mark_point();
+
+	rc = acc_destroy(c);
+	fail_if(rc != ACHAT_RC_OK, "destroy failed with rc=%d", rc);
+}
+END_TEST
 
 TCase *
 anoubisd_testcase_sessions(void)
@@ -181,9 +264,11 @@ anoubisd_testcase_sessions(void)
 	/* sessions test case */
 	TCase *tc_sessions = tcase_create("Sessions");
 
-	tcase_set_timeout(tc_sessions, 10);
+	/* Timeout set to 20 seconds for tc_Sessions_three! */
+	tcase_set_timeout(tc_sessions, 20);
 	tcase_add_test(tc_sessions, tc_Sessions_one);
 	tcase_add_test(tc_sessions, tc_Sessions_two);
+	tcase_add_test(tc_sessions, tc_Sessions_three);
 
 	return (tc_sessions);
 }

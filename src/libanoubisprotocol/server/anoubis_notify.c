@@ -33,6 +33,20 @@
 #include <anoubis_errno.h>
 #include <queue.h>
 
+#ifdef LINUX
+#include <linux/anoubis.h>
+#endif
+#ifdef OPENBSD
+#include <dev/anoubis.h>
+#endif
+
+/* XXX for OpenBSD: */
+#ifdef OPENBSD
+#ifndef ANOUBIS_SOURCE_STAT
+#define ANOUBIS_SOURCE_STAT	-1
+#endif
+#endif
+
 struct anoubis_notify_reg {
 	LIST_ENTRY(anoubis_notify_reg) next;
 	task_cookie_t task;
@@ -136,12 +150,27 @@ void anoubis_notify_destroy_head(struct anoubis_notify_head * head)
 	free(head);
 }
 
+static int anoubis_register_ok(struct anoubis_notify_group * ng,
+    uid_t uid, task_cookie_t task, u_int32_t ruleid, u_int32_t subsystem)
+{
+	/* Registering for stat messages is allowed if all other ids are 0 */
+	if (subsystem == ANOUBIS_SOURCE_STAT)
+		return (uid == 0 && ruleid == 0 && task == 0);
+	/*
+	 * Registering for other events is only allowed if the uid and
+	 * the authorized uid match or the user is root.
+	 */
+	if (ng->uid == 0 /* XXX root */ || ng->uid == uid)
+		return 1;
+	return 0;
+}
+
 int anoubis_notify_register(struct anoubis_notify_group * ng,
     uid_t uid, task_cookie_t task, u_int32_t ruleid, u_int32_t subsystem)
 {
 	struct anoubis_notify_reg * reg;
 
-	if (ng->uid != 0 /* XXX root */ && ng->uid != uid)
+	if (!anoubis_register_ok(ng, uid, task, ruleid, subsystem))
 		return -EPERM;
 	reg = malloc(sizeof(struct anoubis_notify_reg));
 	if (!reg)
@@ -254,19 +283,13 @@ struct anoubis_notify_head * anoubis_notify_create_head(task_cookie_t task,
 int anoubis_notify(struct anoubis_notify_group * ng,
     struct anoubis_notify_head * head)
 {
-# ifndef S_SPLINT_S
-	/*
-	 * XXX tartler: this part doesn't parse with splint :(
-	 */
-
 	struct anoubis_notify_event * nev;
 	struct anoubis_msg * m = head->m;
 	int ret;
-	int opcode;
 
-	opcode = get_value(m->u.general->type);
-	uid_t uid = get_value(m->u.notify->uid);
-	pid_t pid = get_value(m->u.notify->pid);
+	int opcode = get_value(m->u.general->type);
+	u_int32_t uid = get_value(m->u.notify->uid);
+	u_int32_t pid = get_value(m->u.notify->pid);
 	u_int32_t ruleid = get_value(m->u.notify->rule_id);
 	u_int32_t subsystem = get_value(m->u.notify->subsystem);
 	anoubis_token_t token = m->u.notify->token;
@@ -303,7 +326,6 @@ int anoubis_notify(struct anoubis_notify_group * ng,
 	LIST_INSERT_HEAD(&head->events, nev, nextgroup);
 	head->eventcount++;
 	return 1;
-# endif
 }
 
 int anoubis_notify_sendreply(struct anoubis_notify_head * head,

@@ -53,7 +53,8 @@ anoubischatdir		= src/libanoubischat
 libanoubisps_a_CPPFLAGS = \
 	-I$(top_srcdir)/$(anoubisprotocoldir) \
 	-I$(top_srcdir)/$(anoubisprotocoldir)/server \
-	-I$(top_srcdir)/$(anoubischatdir)
+	-I$(top_srcdir)/$(anoubischatdir) \
+	-I$(top_srcdir)/include
 libanoubisps_so_CPPFLAGS = $(libanoubisps_a_CPPFLAGS)
 
 libanoubisps_a_SOURCES =		\
@@ -68,7 +69,8 @@ libanoubisps_a_SOURCES =		\
 libanoubispc_a_CPPFLAGS = \
 	-I$(top_srcdir)/$(anoubisprotocoldir) \
 	-I$(top_srcdir)/$(anoubisprotocoldir)/client \
-	-I$(top_srcdir)/$(anoubischatdir)
+	-I$(top_srcdir)/$(anoubischatdir) \
+	-I$(top_srcdir)/include
 libanoubispc_so_CPPFLAGS = $(libanoubispc_a_CPPFLAGS)
 
 libanoubispc_a_SOURCES = \

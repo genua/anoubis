@@ -41,6 +41,7 @@ test_anoubisd_CPPFLAGS = \
 	-I$(top_srcdir)/$(anoubisddir) \
 	-I$(top_srcdir)/$(anoubisprotodir) \
 	-I$(top_srcdir)/$(anoubisprotodir)/client \
+	-I$(top_srcdir)/include \
 	@CHECK_CFLAGS@
 
 test_anoubisd_LDADD = \

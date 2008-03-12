@@ -88,6 +88,9 @@ static TAILQ_HEAD(head_m2dev, anoubisd_event_out) eventq_m2dev =
 struct event_info_main {
 	struct event	*ev_m2s, *ev_m2p, *ev_m2dev;
 	struct event	*ev_s2m, *ev_p2m;
+	struct event	*ev_timer;
+	struct timeval	*tv;
+	int anoubisfd;
 };
 
 /*
@@ -124,6 +127,16 @@ sighandler(int sig, short event, void *arg)
 	}
 }
 
+static void
+dispatch_timer(int sig, short event, void * arg)
+{
+	struct event_info_main	*ev_info = arg;
+#ifndef OPENBSD
+	ioctl(ev_info->anoubisfd, ANOUBIS_REQUEST_STATS, 0);
+#endif
+	event_add(ev_info->ev_timer, ev_info->tv);
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -131,6 +144,7 @@ main(int argc, char *argv[])
 				    ev_sigchld;
 	struct event		ev_s2m, ev_p2m, ev_dev2m;
 	struct event		ev_m2s, ev_m2p, ev_m2dev;
+	struct event		ev_timer;
 	struct event_info_main	ev_info;
 	struct anoubisd_config	conf;
 	sigset_t		mask;
@@ -140,6 +154,7 @@ main(int argc, char *argv[])
 	int			pipe_m2p[2];
 	int			pipe_s2p[2];
 	int			eventfds[2];
+	struct timeval		tv;
 
 	/* Ensure that fds 0, 1 and 2 are open or directed to /dev/null */
 	sanitise_stdfd();
@@ -264,8 +279,16 @@ main(int argc, char *argv[])
 		close(eventfds[1]);
 		main_shutdown(1);
 	}
-	close(eventfds[1]);
+	/* Note that we keep /dev/anoubis open for subsequent ioctls. */
 
+	/* Five second timer for statistics ioctl */
+	tv.tv_sec = 5;
+	tv.tv_usec = 0;
+	ev_info.anoubisfd = eventfds[1];
+	ev_info.ev_timer = &ev_timer;
+	ev_info.tv = &tv;
+	evtimer_set(&ev_timer, &dispatch_timer, &ev_info);
+	event_add(&ev_timer, &tv);
 	/* session process */
 	event_set(&ev_m2s, pipe_m2s[0], EV_WRITE, dispatch_m2s,
 	    &ev_info);
@@ -449,7 +472,7 @@ dispatch_s2m(int fd, short event, void *arg)
 		event_loopexit(NULL);
 		return;
 	}
-	
+
 	/* XXX MG: Todo */
 }
 
