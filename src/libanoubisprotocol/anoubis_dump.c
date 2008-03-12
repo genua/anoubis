@@ -72,26 +72,14 @@ static void dump_general(Anoubis_GeneralMessage * m, size_t len)
 
 static void dump_hello(Anoubis_HelloMessage * m, size_t len __used)
 {
-# ifndef S_SPLINT_S
-	/*
-	 * XXX tartler: this part doesn't parse with splint :(
-	 */
-
 	DUMP_NETX(m, version);
 	DUMP_NETX(m, min_version);
-# endif
 }
 
 static void dump_versel(Anoubis_VerselMessage * m, size_t len __used)
 {
-# ifndef S_SPLINT_S
-	/*
-	 * XXX tartler: this part doesn't parse with splint :(
-	 */
-
 	DUMP_NETX(m, version);
 	DUMP_NETX(m, _pad);
-# endif
 }
 
 static void dump_stringlist(Anoubis_StringListMessage * m, size_t len)
@@ -102,38 +90,21 @@ static void dump_stringlist(Anoubis_StringListMessage * m, size_t len)
 
 static void dump_ack(Anoubis_AckMessage * m, size_t len __used)
 {
-# ifndef S_SPLINT_S
-	/*
-	 * XXX tartler: this part doesn't parse with splint :(
-	 */
-
 	DUMP_NETX(m, opcode);
 	printf(" token = 0x%llx", m->token);
 	DUMP_NETX(m, error);
-#endif
 }
 
 static void dump_authreply(Anoubis_AuthReplyMessage * m, size_t len)
 {
-# ifndef S_SPLINT_S
-	/*
-	 * XXX tartler: this part doesn't parse with splint :(
-	 */
-
 	DUMP_NETX(m, error);
 	DUMP_NETU(m, uid);
 	len -= sizeof(Anoubis_AuthReplyMessage);
 	printf(" name = %.*s", (int)len, m->name);
-# endif
 }
 
 static void dump_notify(Anoubis_NotifyMessage * m, size_t len)
 {
-# ifndef S_SPLINT_S
-	/*
-	 * XXX tartler: this part doesn't parse with splint :(
-	 */
-
 	printf(" token = 0x%llx", m->token);
 	DUMP_NETU(m, pid);
 	DUMP_NETU(m, rule_id);
@@ -141,7 +112,6 @@ static void dump_notify(Anoubis_NotifyMessage * m, size_t len)
 	DUMP_NETU(m, subsystem);
 	DUMP_NETU(m, operation);
 	DUMP_DATA(m->payload, len-sizeof(*m));
-# endif
 }
 
 static void dump_notifyreg(Anoubis_NotifyRegMessage * m, size_t len __used)
@@ -152,24 +122,13 @@ static void dump_notifyreg(Anoubis_NotifyRegMessage * m, size_t len __used)
 static void dump_notifyresult(Anoubis_NotifyResultMessage * m,
     size_t len __used)
 {
-# ifndef S_SPLINT_S
-	/*
-	 * XXX tartler: this part doesn't parse with splint :(
-	 */
-
 	printf(" token = 0x%llx", m->token);
 	DUMP_NETU(m, error);
 	DUMP_NETU(m, uid);
-# endif
 }
 
 void anoubis_dump(struct anoubis_msg * m, const char * str)
 {
-# ifndef S_SPLINT_S
-	/*
-	 * XXX tartler: this part doesn't parse with splint :(
-	 */
-
 	int opcode;
 	printf("%s:", str?str:"(null)");
 	ASSERT(VERIFY_FIELD(m, general, type));
@@ -198,7 +157,6 @@ void anoubis_dump(struct anoubis_msg * m, const char * str)
 		dump_general(m->u.general, m->length-CSUM_LEN);
 	}
 	printf("\n");
-#endif
 }
 
 void anoubis_dump_buf(void * buf, size_t len, const char * str)

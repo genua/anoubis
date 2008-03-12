@@ -60,11 +60,6 @@ void anoubis_auth_destroy(struct anoubis_auth * auth)
 int anoubis_auth_process(struct anoubis_auth * auth,
     struct anoubis_msg * m)
 {
-# ifndef S_SPLINT_S
-	/*
-	 * XXX tartler: this part doesn't parse with splint :(
-	 */
-
 	if (!VERIFY_LENGTH(m, sizeof(Anoubis_AuthTransportMessage))
 	    || get_value(m->u.general->type) != ANOUBIS_C_AUTHDATA
 	    || !auth || !auth->chan || auth->state != ANOUBIS_AUTH_INIT) {
@@ -84,7 +79,6 @@ int anoubis_auth_process(struct anoubis_auth * auth,
 	}
 	auth->finish_callback(auth->cbdata);
 	return 0;
-# endif
 }
 
 #ifndef ANOUBIS_AUTH_H

@@ -191,10 +191,6 @@ static int reply_invalid_token(struct anoubis_server * server,
 static int anoubis_process_versel(struct anoubis_server * server,
     struct anoubis_msg * m, int opcode)
 {
-# ifndef S_SPLINT_S
-	/*
-	 * XXX tartler: this part doesn't parse with splint :(
-	 */
 	if (!VERIFY_LENGTH(m, sizeof(m->u.versel)))
 		return reply_invalid(server, opcode);
 	if (server->proto != ANOUBIS_PROTO_CONNECT
@@ -204,7 +200,6 @@ static int anoubis_process_versel(struct anoubis_server * server,
 	}
 	server->connect_flags |= FLAG_VERSEL;
 	return reply_ok(server, opcode);
-# endif
 }
 
 static struct proto_opt anoubis_options[] = {
@@ -403,22 +398,21 @@ static int anoubis_process_closereq(struct anoubis_server * server, int opcode)
 static int anoubis_process_nregister(struct anoubis_server * server,
     struct anoubis_msg * m, int opcode, anoubis_token_t token)
 {
-# ifndef S_SPLINT_S
-	/*
-	 * XXX tartler: this part doesn't parse with splint :(
-	 */
 	int ret;
+	u_int32_t uid, pid, ruleid, subsystem;
+	task_cookie_t task;
+
 	if (opcode != ANOUBIS_N_REGISTER && opcode != ANOUBIS_N_UNREGISTER)
 		return -EINVAL;
 	if (!VERIFY_LENGTH(m, sizeof(Anoubis_NotifyRegMessage))
 	    || (server->proto & ANOUBIS_PROTO_NOTIFY) == 0
 	    || (server->notify == NULL))
 		return reply_invalid_token(server, token, opcode);
-	uid_t uid = get_value(m->u.notifyreg->uid);
-	pid_t pid = get_value(m->u.notifyreg->pid);
-	u_int32_t ruleid = get_value(m->u.notifyreg->rule_id);
-	u_int32_t subsystem = get_value(m->u.notifyreg->subsystem);
-	task_cookie_t task = /* Convert pid to task */ pid;
+	uid = get_value(m->u.notifyreg->uid);
+	pid = get_value(m->u.notifyreg->pid);
+	ruleid = get_value(m->u.notifyreg->rule_id);
+	subsystem = get_value(m->u.notifyreg->subsystem);
+	task = /* Convert pid to task */ pid;
 	if (opcode == ANOUBIS_N_REGISTER) {
 		ret = anoubis_notify_register(server->notify, uid, task,
 		    ruleid, subsystem);
@@ -429,7 +423,6 @@ static int anoubis_process_nregister(struct anoubis_server * server,
 	if (ret < 0)
 		return reply_invalid_token(server, token, opcode);
 	return reply_ok_token(server, token, opcode);
-#endif
 }
 
 static int anoubis_process_reply(struct anoubis_server * server,
@@ -460,15 +453,10 @@ static int anoubis_process_reply(struct anoubis_server * server,
 int anoubis_server_process(struct anoubis_server * server, void * buf,
     size_t len)
 {
-# ifndef S_SPLINT_S
-	/*
-	 * XXX tartler: this part doesn't parse with splint :(
-	 */
-
 	anoubis_token_t token;
 	struct anoubis_msg m = {
 		.length = len,
-		.u.buf = buf,
+		.u = { .buf = buf }
 	};
 	int opcode;
 	/* Return an error if the partner sent data over a dead channel. */
@@ -567,7 +555,6 @@ int anoubis_server_process(struct anoubis_server * server, void * buf,
 	}
 	/* NOT REACHED */
 	return -EINVAL;
-#endif
 }
 
 int anoubis_server_eof(struct anoubis_server * server)
