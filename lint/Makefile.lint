@@ -26,6 +26,8 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ##########################################################################
 
+# define this if you want debug output from the linters
+# DEBUG=-d
 
 if HAVE_FLAWFINDER
 common_flawfinder_flags=\
@@ -38,8 +40,9 @@ endif
 
 .c.c_flawfinder .h.h_flawfinder:
 if HAVE_FLAWFINDER
-	sh $(top_builddir)/lint/flawfinder $(common_flawfinder_flags) \
-	    $(flawfinder_FLAGS) $< > $@
+	@echo [FLAWFINDER] $<
+	@sh $(top_builddir)/lint/flawfinder $(DEBUG) -o $@ -- \
+	    $(common_flawfinder_flags) $(flawfinder_FLAGS) $<
 else
 	@touch $@
 endif
@@ -48,25 +51,85 @@ endif
 
 .c.c_lint .h.h_lint:
 if HAVE_LINT
-	sh $(top_builddir)/lint/lint $(lint_FLAGS) $< > $@
+	@echo [LINT] $<
+	@sh $(top_builddir)/lint/lint -o $@ $(DEBUG) -- \
+	    $(lint_FLAGS) $<
 else
 	@touch $@
 endif
 
 if HAVE_SPLINT
-missing_splint_types=-Du_int64_t='unsigned long long' \
+missing_splint_types = \
+	-Du_int64_t='unsigned long long' \
 	-Du_int32_t='unsigned int' \
-	-Du_int8_t='unsigned char' \
 	-Du_int16_t='unsigned short int' \
+	-Du_int8_t='unsigned char' \
 	-D__signed__=signed
 
-common_splint_FLAGS = $(missing_splint_types) +unixlib -imptype
+common_splint_FLAGS = \
+	$(missing_splint_types) \
+	-weak \
+	+unixlib \
+	-warnposix
+
+# XXX tartler: the flags below are useful when not using -weak, but
+#              -standard. They are provided here for future reference.
+splint_extra_FLAGS = \
+	+charint \
+	+matchanyintegral \
+	-boolops \
+	-branchstate \
+	-casebreak \
+	-compdef \
+	-compdestroy \
+	-compmempass \
+	-dependenttrans \
+	-duplicatequals \
+	-exitarg \
+	-exportlocal \
+	-fcnuse \
+	-fixedformalarray \
+	-fullinitblock \
+	-immediatetrans \
+	-imptype \
+	-infloops \
+	-kepttrans \
+	-mustfreefresh \
+	-mustfreeonly \
+	-nestedextern \
+	-noeffect \
+	-noret \
+	-nullassign \
+	-nullderef \
+	-nullpass \
+	-nullret \
+	-nullstate \
+	-observertrans \
+	-onlytrans \
+	-paramuse \
+	-predboolint \
+	-predboolothers \
+	-retvalint \
+	-retvalother \
+	-shadow \
+	-shiftimplementation \
+	-statictrans \
+	-temptrans \
+	-type \
+	-uniondef \
+	-unqualifiedtrans \
+	-unreachable \
+	-unrecog \
+	-unsignedcompare \
+	-usedef \
+	-usereleased
 endif
 
 .c.c_splint .h.h_splint:
 if HAVE_SPLINT
-	sh $(top_builddir)/lint/splint $(common_splint_FLAGS) $(splint_FLAGS) \
-	    $< > $@
+	@echo [SPLINT] $<
+	@sh $(top_builddir)/lint/splint -o $@ $(DEBUG) -- \
+	    $(common_splint_FLAGS) $(splint_FLAGS) $<
 else
 	@touch $@
 endif

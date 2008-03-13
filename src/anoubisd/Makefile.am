@@ -39,9 +39,9 @@ STATIC = -static
 endif
 
 INCLUDES = \
-	   -I. \
 	   -I$(top_builddir)/src \
 	   -I$(top_srcdir)/include \
+	   -I$(top_srcdir)/src/anoubisd \
 	   -I$(top_srcdir)/$(anoubischatdir) \
 	   -I$(top_srcdir)/$(anoubispsdir) \
 	   -I$(top_srcdir)/$(anoubispsdir)/server

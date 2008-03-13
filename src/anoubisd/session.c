@@ -309,7 +309,7 @@ m2s_dispatch(int fd, short sig, void *arg)
 	struct anoubis_msg * m;
 #define BUFSIZE 8192
 	char buf[BUFSIZE];
-	int len;
+	int len, extra;
 	struct anoubisd_event_in *ev_in = (struct anoubisd_event_in*)buf;
 	struct anoubisd_event_in *ev;
 	struct session * sess;
@@ -362,7 +362,7 @@ m2s_dispatch(int fd, short sig, void *arg)
 
 	TAILQ_INSERT_TAIL(&eventq_s2f, ev, events);
 
-	int extra = ev_in->hdr.msg_size - sizeof(struct eventdev_hdr);
+	extra = ev_in->hdr.msg_size - sizeof(struct eventdev_hdr);
 	m = anoubis_msg_new(sizeof(Anoubis_NotifyMessage) + extra);
 	if (!m) {
 		/* XXX */

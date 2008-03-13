@@ -1,5 +1,31 @@
 #!/bin/sh
 # -*- mode: sh -*-
+##########################################################################
+# Copyright (c) ${date %Y} GeNUA mbH <info@genua.de>
+#
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+# OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
+# TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+# PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+# LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+##########################################################################
 
 LINT=@LINT@
 
@@ -8,12 +34,62 @@ if ! test -x ${LINT}; then
 	exit 1
 fi
 
-STDOUT=`mktemp` || exit 1
-STDERR=`mktemp` || exit 1
+usage() {
+	cat >&2 << EOF
+usage: $0 [-dh]
+  -h : display help
+  -d : enable debug messages
+EOF
+}
+
+debug () {
+	set +e
+	$DEBUG && echo "DEBUG: $*" >&2
+	set -e
+}
+
+fatal () {
+	debug "$2"
+	exit 1
+}
+
+set +e
+PARAMS=`getopt dho: "$@"`
+if test $? -ne 0; then usage; exit 1; fi;
+set -e
+
+eval set -- "$PARAMS"
+
+DEBUG=false
+OUTPUTFILE=
+
+while test $# -gt 0
+do
+	case $1 in
+		-h) usage; exit 1 ;;
+		-d) DEBUG=true ;;
+		-o) OUTPUTFILE="$2"; shift ;;
+		--) shift ; break ;;
+		*)  echo "Internal error!" >&2; exit 1 ;;
+	esac
+	shift
+done
+
+: ${OUTPUTFILE:=/dev/stdout}
+
+debug "using output file $OUTPUTFILE"
+
+STDOUT=`mktemp` || fatal "failed to create tmpfile for stdout"
+STDERR=`mktemp` || fatal "failed to create tmpfile for stderr"
 trap 'rm -f $STDOUT $STDERR' INT QUIT TERM EXIT
 
+set +e
 ${LINT} $* 2>$STDERR >$STDOUT
+set -e
+
+debug "lint exit code: $?"
 
 # XXX ignore any error codes for now. lint is behaving strange here...
 
-cat $STDOUT
+cat $STDERR > ${OUTPUTFILE}
+cat $STDOUT >> ${OUTPUTFILE}

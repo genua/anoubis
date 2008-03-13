@@ -72,3 +72,6 @@ linting: $(REPORTS)
 	@echo linting done
 
 .PHONY: flawfinder lint splint
+
+clean-local:
+	rm -f $(REPORTS)
