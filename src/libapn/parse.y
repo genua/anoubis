@@ -82,6 +82,8 @@ int		 host(const char *, struct apn_addr *);
 int		 host_v4(const char *, struct apn_addr *);
 int		 host_v6(const char *, struct apn_addr *);
 int		 validate_host(const struct host *);
+int		 portbyname(const char *, u_int16_t *);
+int		 portbynumber(int64_t, u_int16_t *);
 
 static struct apnruleset	*apnrsp = NULL;
 static int			 debug = 0;
@@ -89,6 +91,7 @@ static int			 debug = 0;
 typedef struct {
 	union {
 		int64_t			 number;
+		u_int16_t		 port;
 		char			*string;
 		struct application	*app;
 		int			 hashtype;
@@ -116,6 +119,7 @@ typedef struct {
 %type	<v.addr>		address
 %type	<v.host>		host
 %type	<v.number>		not
+%type	<v.port>		port
 %%
 
 grammar		: /* empty */
@@ -323,11 +327,17 @@ port_l		: port_l comma port
 		| port
 		;
 
-port		: portval
-		;
-
-portval		: STRING
-		| NUMBER
+port		: STRING			{
+			if (portbyname($1, &$$) == -1) {
+				free($1);
+				YYERROR;
+			}
+			free($1);
+		}
+		| NUMBER			{
+			if (portbynumber($1, &$$) == -1)
+				YYERROR;
+		}
 		;
 
 alfcaprule	: action capability
@@ -1148,6 +1158,34 @@ validate_host(const struct host *host)
 
 	if (!(0 <= host->not && host->not <= 1))
 		return (-1);
+
+	return (0);
+}
+int
+portbyname(const char *ports, u_int16_t *portp)
+{
+	struct servent	*s;
+
+	if ((s = getservbyname(ports, "tcp")) == NULL &&
+	    (s = getservbyname(ports, "udp")) == NULL) {
+		yyerror("could not parse port: %s", ports);
+		return (-1);
+	}
+
+	*portp = s->s_port;
+
+	return (0);
+}
+
+int
+portbynumber(int64_t port, u_int16_t *portp)
+{
+	if (!(0 <= port && port <= USHRT_MAX)) {
+		yyerror("port out of range: %ld", port);
+		return (-1);
+	}
+
+	*portp = htons(port);
 
 	return (0);
 }
