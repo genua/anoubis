@@ -29,16 +29,15 @@
 
 #include <sys/param.h>
 #include <sys/time.h>
+#include <sys/un.h>
+#include <err.h>
+#include <errno.h>
+#include <event.h>
 #ifdef OPENBSD
 #include <sys/queue.h>
 #else
 #include "queue.h"
 #endif
-#include <sys/un.h>
-
-#include <err.h>
-#include <errno.h>
-#include <event.h>
 #ifdef LINUX
 #include <grp.h>
 #include <bsdcompat.h>
@@ -50,10 +49,14 @@
 #include <unistd.h>
 
 #include <anoubischat.h>
-#include <anoubisd.h>
 #include <anoubis_server.h>
 #include <anoubis_msg.h>
 #include <anoubis_notify.h>
+
+#include "anoubisd.h"
+#include "aqueue.h"
+#include "amsg.h"
+
 
 struct session {
 	int			 id;	/* session number */
@@ -73,23 +76,25 @@ struct sessionGroup {
 struct event_info_session {
 	struct event	*ev_s2m, *ev_s2p;
 	struct event	*ev_m2s, *ev_p2s;
-	struct sessionGroup * seg;
+	struct event	*ev_s2f;
+	struct sessionGroup *seg;
 };
 
-static TAILQ_HEAD(head_m2s, anoubisd_event_in) eventq_s2f =
-    TAILQ_HEAD_INITIALIZER(eventq_s2f);
-
 static void	session_sighandler(int, short, void *);
-static void	m2s_dispatch(int, short, void *);
-static void	s2m_dispatch(int, short, void *);
-static void	s2p_dispatch(int, short, void *);
-static void	p2s_dispatch(int, short, void *);
-static void	s2f_dispatch(int, short, void *);
+static void	dispatch_m2s(int, short, void *);
+static void	dispatch_s2m(int, short, void *);
+static void	dispatch_s2p(int, short, void *);
+static void	dispatch_p2s(int, short, void *);
+static void	dispatch_s2f(int, short, void *);
 static void	session_connect(int, short, void *);
 static void	session_rxclient(int, short, void *);
 static void	session_setupuds(struct sessionGroup *,
 		struct anoubisd_config *);
 static void	session_destroy(struct session *);
+
+static Queue eventq_s2f;
+static Queue eventq_s2p;
+static Queue eventq_s2m;
 
 
 static void
@@ -195,11 +200,13 @@ session_main(struct anoubisd_config *conf, int pipe_m2s[2], int pipe_m2p[2],
 	struct event	 ev_sigterm, ev_sigint, ev_sigquit;
 	struct event	 ev_m2s, ev_p2s;
 	struct event	 ev_s2m, ev_s2p;
+	struct event	 ev_s2f;
 	struct event_info_session	ev_info;
 	struct sessionGroup		seg;
 	struct passwd	*pw;
 	sigset_t	 mask;
 	pid_t		 pid;
+
 
 	switch (pid = fork()) {
 	case -1:
@@ -210,6 +217,8 @@ session_main(struct anoubisd_config *conf, int pipe_m2s[2], int pipe_m2p[2],
 	default:
 		return (pid);
 	}
+
+	log_info("session started");
 
 	anoubisd_process = PROC_SESSION;
 
@@ -233,11 +242,14 @@ session_main(struct anoubisd_config *conf, int pipe_m2s[2], int pipe_m2p[2],
 	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
 		fatal("can't drop privileges");
 
+
 	/* From now on, this is an unprivileged child process. */
 
 	(void)event_init();
 	LIST_INIT(&(seg.sessionList));
-	TAILQ_INIT(&eventq_s2f);
+	queue_init(eventq_s2f);
+	queue_init(eventq_s2p);
+	queue_init(eventq_s2m);
 
 	/* We catch or block signals rather than ignoring them. */
 	signal_set(&ev_sigterm, SIGTERM, session_sighandler, NULL);
@@ -258,37 +270,46 @@ session_main(struct anoubisd_config *conf, int pipe_m2s[2], int pipe_m2p[2],
 	close(pipe_m2p[0]);
 	close(pipe_m2p[1]);
 
-	event_set(&ev_m2s, pipe_m2s[1], EV_READ | EV_PERSIST, m2s_dispatch,
+	/* init msg_bufs - keep track of outgoing ev_info */
+	msg_init(pipe_m2s[1], &ev_s2m, "s2m");
+	msg_init(pipe_s2p[0], &ev_s2p, "s2p");
+
+	/* master process */
+	event_set(&ev_m2s, pipe_m2s[1], EV_READ | EV_PERSIST, dispatch_m2s,
 	    &ev_info);
 	event_add(&ev_m2s, NULL);
 
-	event_set(&ev_s2m, pipe_m2s[1], EV_WRITE, s2m_dispatch,
+	event_set(&ev_s2m, pipe_m2s[1], EV_WRITE, dispatch_s2m,
 	    &ev_info);
 
-	event_set(&ev_p2s, pipe_s2p[1], EV_READ | EV_PERSIST, p2s_dispatch,
+	/* policy process */
+	event_set(&ev_p2s, pipe_s2p[0], EV_READ | EV_PERSIST, dispatch_p2s,
 	    &ev_info);
 	event_add(&ev_p2s, NULL);
 
-	event_set(&ev_s2p, pipe_s2p[1], EV_WRITE, s2p_dispatch,
+	event_set(&ev_s2p, pipe_s2p[0], EV_WRITE, dispatch_s2p,
 	    &ev_info);
 
 	ev_info.ev_m2s = &ev_m2s;
 	ev_info.ev_s2m = &ev_s2m;
 	ev_info.ev_p2s = &ev_p2s;
 	ev_info.ev_s2p = &ev_s2p;
+	ev_info.ev_s2f = &ev_s2f;
 	ev_info.seg = &seg;
 
-	/* setup keeper of incomming unix domain socket connections */
+	/* setup keeper of incoming unix domain socket connections */
 	if (seg.keeper_uds != NULL) {
 		event_set(&(seg.ev_connect), (seg.keeper_uds)->sockfd,
 		    EV_READ | EV_PERSIST, session_connect, &seg);
 		event_add(&(seg.ev_connect), NULL);
 	}
 
+	DEBUG(DBG_TRACE, "event loop");
 	if (event_dispatch() == -1)
 		fatal("session_main: event_dispatch");
+	DEBUG(DBG_TRACE, "event loop done");
 
-	/* stop events of incomming connects and cleanup sessions */
+	/* stop events of incoming connects and cleanup sessions */
 	event_del(&(seg.ev_connect));
 	while (!LIST_EMPTY(&(seg.sessionList))) {
 		struct session *session = LIST_FIRST(&(seg.sessionList));
@@ -302,84 +323,45 @@ session_main(struct anoubisd_config *conf, int pipe_m2s[2], int pipe_m2p[2],
 }
 
 static void
-m2s_dispatch(int fd, short sig, void *arg)
+dispatch_m2s(int fd, short sig, void *arg)
 {
 	struct event_info_session *ev_info = (struct event_info_session*)arg;
 	struct anoubis_notify_head * head;
 	struct anoubis_msg * m;
-#define BUFSIZE 8192
-	char buf[BUFSIZE];
-	int len, extra;
-	struct anoubisd_event_in *ev_in = (struct anoubisd_event_in*)buf;
-	struct anoubisd_event_in *ev;
+	anoubisd_msg_t *msg;
+	struct eventdev_hdr *hdr;
 	struct session * sess;
 
-	/* First get size of message */
-	len = read(fd, buf, sizeof(struct anoubisd_event_in));
-	if (len < 0) {
-		log_warn("read error");
-		return;
-	}
-	if (len == 0) {
-		event_del(ev_info->ev_m2s);
-		event_loopexit(NULL);
-		return;
-	}
-	if (len < sizeof(struct anoubisd_event_in)) {
-		log_warn("short read");
+	DEBUG(DBG_TRACE, ">dispatch_m2s");
+	if ((msg = get_msg(fd)) == NULL) {
+		DEBUG(DBG_TRACE, "<dispatch_m2s (no msg)");
 		return;
 	}
 
-	/* Size of remaining message */
-	if (ev_in->event_size > (sizeof(buf) -
-	    sizeof(struct anoubisd_event_in))) {
-		log_warn("message too large");
-		return;
-	}
+/*	enqueue(&eventq_s2f, msg); */
 
-	/* Get remainder of the message */
-	len = read(fd, buf + sizeof(struct anoubisd_event_in),
-	    ev_in->event_size - sizeof(struct anoubisd_event_in));
-	if (len < 0) {
-		log_warn("read error");
-		return;
-	}
-	if (len == 0) {
-		event_del(ev_info->ev_m2s);
-		event_loopexit(NULL);
-		return;
-	}
-	if (len < ev_in->event_size - sizeof(struct anoubisd_event_in)) {
-		log_warn("short read");
-		return;
-	}
+	hdr = (struct eventdev_hdr *)msg->msg;
 
-	if ((ev = malloc(ev_in->event_size)) == NULL) {
-		return;
-	}
-
-	memcpy(ev, ev_in, ev_in->event_size);
-
-	TAILQ_INSERT_TAIL(&eventq_s2f, ev, events);
-
-	extra = ev_in->hdr.msg_size - sizeof(struct eventdev_hdr);
+	int extra = hdr->msg_size -  sizeof(struct eventdev_hdr);
 	m = anoubis_msg_new(sizeof(Anoubis_NotifyMessage) + extra);
 	if (!m) {
 		/* XXX */
+		DEBUG(DBG_TRACE, "<dispatch_m2s (new)");
 		return;
 	}
 	set_value(m->u.notify->type, ANOUBIS_N_NOTIFY);
-	m->u.notify->token = ev_in->hdr.msg_token;
-	set_value(m->u.notify->pid, ev_in->hdr.msg_pid);
+	m->u.notify->token = hdr->msg_token;
+	set_value(m->u.notify->pid, hdr->msg_pid);
 	set_value(m->u.notify->rule_id, 0);
-	set_value(m->u.notify->uid, ev_in->hdr.msg_uid);
-	set_value(m->u.notify->subsystem, ev_in->hdr.msg_source);
+	set_value(m->u.notify->uid, hdr->msg_uid);
+	set_value(m->u.notify->subsystem, hdr->msg_source);
 	set_value(m->u.notify->operation, 0 /* XXX */);
-	memcpy(m->u.notify->payload, ev_in->msg, extra);
-	head = anoubis_notify_create_head(ev_in->hdr.msg_pid, m, NULL, NULL);
+	memcpy(m->u.notify->payload, &hdr[1], extra);
+	head = anoubis_notify_create_head(hdr->msg_pid, m, NULL, NULL);
 	if (!head) {
 		/* XXX */
 		anoubis_msg_free(m);
+		DEBUG(DBG_TRACE, "<dispatch_m2s (free)");
 		return;
 	}
 	LIST_FOREACH(sess, &ev_info->seg->sessionList, nextSession) {
@@ -393,57 +375,71 @@ m2s_dispatch(int fd, short sig, void *arg)
 		anoubis_notify(ng, head);
 	}
 	anoubis_notify_destroy_head(head);
+
 	/* XXX: Wait for frontend to handle the data */
 	//event_add(ev_info->ev_s2f, NULL);
 
-	/* Directly call s2f_dispatch, for now... */
-	s2f_dispatch(fd, sig, arg);
+	free(msg);
+
+	/* Directly call dispatch_s2f, for now... */
+	dispatch_s2f(fd, sig, arg);
+	DEBUG(DBG_TRACE, "<dispatch_m2s");
 }
 
 static void
-s2m_dispatch(int fd, short sig, void *arg)
+dispatch_s2m(int fd, short sig, void *arg)
 {
+	DEBUG(DBG_TRACE, ">dispatch_s2m");
 	/* XXX MG: Todo */
+	DEBUG(DBG_TRACE, "<dispatch_m2s");
 }
 
 static void
-s2p_dispatch(int fd, short sig, void *arg)
+dispatch_s2p(int fd, short sig, void *arg)
 {
+	DEBUG(DBG_TRACE, ">dispatch_s2p");
 	/* XXX HJH: Todo */
+	DEBUG(DBG_TRACE, "<dispatch_s2p");
 }
 
 static void
-p2s_dispatch(int fd, short sig, void *arg)
+dispatch_p2s(int fd, short sig, void *arg)
 {
+	DEBUG(DBG_TRACE, ">dispatch_p2s");
 	/* XXX MG: Todo */
+	DEBUG(DBG_TRACE, "<dispatch_p2s");
 }
 
 static void
-s2f_dispatch(int fd, short sig, void *arg)
+dispatch_s2f(int fd, short sig, void *arg)
 {
-	struct anoubisd_event_in *ev;
-	//struct event_info_session *ev_info = (struct event_info_session*)arg;
+	anoubisd_msg_t *msg;
+	struct event_info_session *ev_info = (struct event_info_session*)arg;
 
-	if (TAILQ_EMPTY(&eventq_s2f))
+	DEBUG(DBG_TRACE, ">dispatch_s2f");
+	if ((msg = queue_next(&eventq_s2f)) == NULL) {
+		DEBUG(DBG_TRACE, "<dispatch_s2f (no msg)");
 		return;
+	}
 
-	ev = TAILQ_FIRST(&eventq_s2f);
-
+log_info("magical");
 	/* XXX: Do magical things here */
 
-	TAILQ_REMOVE(&eventq_s2f, ev, events);
-	free(ev);
+DEBUG(DBG_TRACE, "dequeue");
+	msg = dequeue(&eventq_s2f);
+DEBUG(DBG_TRACE, "free");
+	free(msg);
 
-	/* If the queue is not empty, we want to be called again */
-	if (!TAILQ_EMPTY(&eventq_s2f)) {
-		//event_add(ev_info->ev_s2f, NULL);
-		s2f_dispatch(fd, sig, arg);
-	}
+DEBUG(DBG_TRACE, "queue_next");
+	if (queue_next(&eventq_s2f))
+		event_add(ev_info->ev_s2f, NULL);
+	DEBUG(DBG_TRACE, "<dispatch_s2f");
 }
 
 static void
 session_destroy(struct session *session)
 {
+	DEBUG(DBG_TRACE, ">session_destroy");
 	if (session->proto) {
 		anoubis_server_destroy(session->proto);
 		session->proto = NULL;
@@ -455,6 +451,7 @@ session_destroy(struct session *session)
 	bzero(session, sizeof(struct session));
 
 	free((void *)session);
+	DEBUG(DBG_TRACE, "<session_destroy");
 }
 
 void

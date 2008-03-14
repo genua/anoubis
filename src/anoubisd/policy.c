@@ -43,15 +43,17 @@
 #include <unistd.h>
 
 #include "anoubisd.h"
+#include "aqueue.h"
+#include "amsg.h"
 
 static void	policy_sighandler(int, short, void *);
-static void	m2p_dispatch(int, short, void *);
-static void	p2m_dispatch(int, short, void *);
-static void	s2p_dispatch(int, short, void *);
-static void	p2s_dispatch(int, short, void *);
+static void	dispatch_m2p(int, short, void *);
+static void	dispatch_p2m(int, short, void *);
+static void	dispatch_s2p(int, short, void *);
+static void	dispatch_p2s(int, short, void *);
 
-static TAILQ_HEAD(head_p2m, anoubisd_event_out) eventq_p2m =
-    TAILQ_HEAD_INITIALIZER(eventq_p2m);
+static Queue eventq_p2m;
+static Queue eventq_p2s;
 
 struct event_info_policy {
 	struct event	*ev_p2m, *ev_p2s;
@@ -113,6 +115,8 @@ policy_main(struct anoubisd_config *conf, int pipe_m2s[2], int pipe_m2p[2],
 
 	/* From now on, this is an unprivileged child process. */
 
+	log_info("policy started");
+
 	(void)event_init();
 
 	/* We catch or block signals rather than ignoring them. */
@@ -134,24 +138,31 @@ policy_main(struct anoubisd_config *conf, int pipe_m2s[2], int pipe_m2p[2],
 	close(pipe_m2s[0]);
 	close(pipe_m2s[1]);
 
-	event_set(&ev_m2p, pipe_m2p[1], EV_READ | EV_PERSIST, m2p_dispatch,
+	queue_init(eventq_p2m);
+	queue_init(eventq_p2s);
+
+	/* init msg_bufs - keep track of outgoing ev_info */
+	msg_init(pipe_m2p[1], &ev_m2p, "m2p");
+	msg_init(pipe_s2p[1], &ev_s2p, "s2p");
+
+	/* master process */
+	event_set(&ev_m2p, pipe_m2p[1], EV_READ | EV_PERSIST, dispatch_m2p,
 	    &ev_info);
 	event_add(&ev_m2p, NULL);
 
-	event_set(&ev_p2m, pipe_m2p[1], EV_WRITE, p2m_dispatch,
+	event_set(&ev_p2m, pipe_m2p[1], EV_WRITE, dispatch_p2m,
 	    &ev_info);
 
-	event_set(&ev_s2p, pipe_s2p[1], EV_READ | EV_PERSIST, s2p_dispatch,
+	/* session process */
+	event_set(&ev_s2p, pipe_s2p[1], EV_READ | EV_PERSIST, dispatch_s2p,
 	    &ev_info);
 	event_add(&ev_s2p, NULL);
 
-	event_set(&ev_p2s, pipe_s2p[1], EV_WRITE, p2s_dispatch,
+	event_set(&ev_p2s, pipe_s2p[1], EV_WRITE, dispatch_p2s,
 	    &ev_info);
 
 	ev_info.ev_p2m = &ev_p2m;
 	ev_info.ev_p2s = &ev_p2s;
-
-	TAILQ_INIT(&eventq_p2m);
 
 	if (event_dispatch() == -1)
 		fatal("policy_main: event_dispatch");
@@ -160,101 +171,82 @@ policy_main(struct anoubisd_config *conf, int pipe_m2s[2], int pipe_m2p[2],
 }
 
 static void
-m2p_dispatch(int fd, short sig, void *arg)
+dispatch_m2p(int fd, short sig, void *arg)
 {
+	anoubisd_msg_t *msg;
+	anoubisd_msg_t *msg_reply;
 	struct event_info_policy *ev_info = (struct event_info_policy*)arg;
-#define BUFSIZE 8192
-	char buf[BUFSIZE];
-	int len;
-	struct anoubisd_event_in *ev_in = (struct anoubisd_event_in*)buf;
-	struct anoubisd_event_out *ev_out;
+	struct eventdev_hdr *hdr;
+	struct eventdev_reply *rep;
 
-	/* First get size of message */
-	len = read(fd, buf, sizeof(struct anoubisd_event_in));
-	if (len < 0) {				/* XXX HJH EOF */
-		log_warn("read error");
-		return;
-	}
-	if (len < sizeof(struct anoubisd_event_in)) {
-		log_warn("short read");
+	DEBUG(DBG_TRACE, ">dispatch_m2p");
+	if ((msg = get_msg(fd)) == NULL) {
+		DEBUG(DBG_TRACE, "<dispatch_m2p (no msg)");
 		return;
 	}
 
-	/* Size of remaining message */
-	if (ev_in->event_size > (sizeof(buf) -
-	    sizeof(struct anoubisd_event_in))) {
-		log_warn("message too large");
-		return;
-	}
+	/* this should be a eventdev_hdr message, needing a reply */
+/* XXX RD Check message type */
 
-	/* Get remainder of the message */
-	len = read(fd, buf + sizeof(struct anoubisd_event_in),
-	    ev_in->event_size - sizeof(struct anoubisd_event_in));
-	if (len < 0) {				/* XXX HJH EOF */
-		log_warn("read error");
-		return;
-	}
-	if (len < ev_in->event_size - sizeof(struct anoubisd_event_in)) {
-		log_warn("short read");
-		return;
-	}
+	hdr = (struct eventdev_hdr *)msg->msg;
 
-	if (ev_in->hdr.msg_flags & EVENTDEV_NEED_REPLY) {
-		if ((ev_out = malloc(sizeof(struct anoubisd_event_out)))
-		    == NULL) {
-			log_warn("can't allocate memory");
-			return;
+	if (hdr->msg_flags & EVENTDEV_NEED_REPLY) {
+		if ((msg_reply = malloc(sizeof(anoubisd_msg_t) +
+		    sizeof(struct eventdev_reply))) == NULL) {
+/* XXX RD probably fatal */
 		}
+		bzero(msg_reply, sizeof(anoubisd_msg_t) +
+		    sizeof(struct eventdev_reply));
 
-		ev_out->reply.reply = 0;	/* Allow everything */
-		ev_out->reply.msg_token = ev_in->hdr.msg_token;
+		msg_reply->size = sizeof(anoubisd_msg_t) +
+		    sizeof(struct eventdev_reply);
+		rep = (struct eventdev_reply *)msg_reply->msg;
+		rep->msg_token = hdr->msg_token;
+		rep->reply = 0;		/* allow */
 
-		TAILQ_INSERT_TAIL(&eventq_p2m, ev_out, events);
-
+		enqueue(&eventq_p2m, msg_reply);
 		event_add(ev_info->ev_p2m, NULL);
 	}
+
+	free(msg);
+	DEBUG(DBG_TRACE, "<dispatch_m2p");
 }
 
 static void
-p2m_dispatch(int fd, short sig, void *arg)
+dispatch_p2m(int fd, short sig, void *arg)
 {
+	anoubisd_msg_t *msg;
 	struct event_info_policy *ev_info = (struct event_info_policy*)arg;
-	struct anoubisd_event_out *ev;
-	int len;
 
-	if (TAILQ_EMPTY(&eventq_p2m))
-		return;
-
-	ev = TAILQ_FIRST(&eventq_p2m);
-
-	len = write(fd, ev, sizeof(struct anoubisd_event_out));
-
-	if (len < 0) {
-		log_warn("write error");
+	DEBUG(DBG_TRACE, ">dispatch_p2m");
+	if ((msg = queue_next(&eventq_p2m)) == NULL) {
+		DEBUG(DBG_TRACE, "<dispatch_p2m (no msg)");
 		return;
 	}
 
-	if (len < sizeof(struct anoubisd_event_out)) {
-		log_warn("short write");
-		return;
+	if (send_msg(fd, msg)) {
+		msg = dequeue(&eventq_p2m);
+		free(msg);
 	}
-
-	TAILQ_REMOVE(&eventq_p2m, ev, events);
-	free(ev);
 
 	/* If the queue is not empty, we want to be called again */
-	if (!TAILQ_EMPTY(&eventq_p2m))
+	if (queue_next(&eventq_p2m))
 		event_add(ev_info->ev_p2m, NULL);
+	DEBUG(DBG_TRACE, "<dispatch_p2m");
 }
 
 static void
-s2p_dispatch(int fd, short sig, void *arg)
+dispatch_s2p(int fd, short sig, void *arg)
 {
+	DEBUG(DBG_TRACE, ">dispatch_s2p");
 	/* XXX HJH: Todo */
+	DEBUG(DBG_TRACE, "<dispatch_s2p");
 }
 
 static void
-p2s_dispatch(int fd, short sig, void *arg)
+dispatch_p2s(int fd, short sig, void *arg)
 {
+	DEBUG(DBG_TRACE, ">dispatch_p2s");
 	/* XXX MG: Todo */
+	DEBUG(DBG_TRACE, "<dispatch_p2s");
 }

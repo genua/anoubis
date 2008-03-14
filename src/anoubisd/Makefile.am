@@ -61,8 +61,12 @@ anoubisd_SOURCES= \
 	printconf.c \
 	session.c \
 	log.c \
+	amsg.c \
+	aqueue.c \
 	anoubisd.h \
-	queue.h
+	queue.h \
+	amsg.h \
+	aqueue.h
 
 anoubisd_SOURCES_flawfinder= \
 	main.c_flawfinder \
@@ -70,7 +74,11 @@ anoubisd_SOURCES_flawfinder= \
 	printconf.c_flawfinder \
 	session.c_flawfinder \
 	log.c_flawfinder \
-	anoubisd.h_flawfinder
+	amsg.c_flawfinder \
+	aqueue.c_flawfinder \
+	anoubisd.h_flawfinder \
+	amsg.h_flawfinder \
+	aqueue.h_flawfinder
 
 anoubisd_SOURCES_lint= \
 	main.c_lint \
@@ -84,7 +92,9 @@ anoubisd_SOURCES_splint= \
 	policy.c_splint \
 	printconf.c_splint \
 	session.c_splint \
-	log.c_splint
+	log.c_splint \
+	amsg.c_splint \
+	aqueue.c_splint
 
 
 flawfinder_FLAGS=

@@ -36,21 +36,15 @@ static const char * const procnames[] = {
 	"session"
 };
 
-static int	debug;
-
 static void	logit(int, const char *, ...);
 static void	vlog(int, const char *, va_list);
 
 void
-log_init(int n_debug)
+log_init(void)
 {
 	extern char	*__progname;
 
-	debug = n_debug;
-
-	if (!debug)
-		openlog(__progname, LOG_PID | LOG_NDELAY, LOG_DAEMON);
-
+	openlog(__progname, LOG_PID | LOG_NDELAY, LOG_DAEMON);
 	tzset();
 }
 
@@ -67,19 +61,19 @@ logit(int pri, const char *fmt, ...)
 static void
 vlog(int pri, const char *fmt, va_list ap)
 {
-	char	*nfmt;
+//	char	*nfmt;
 
-	if (debug) {
-		/* best effort in out of mem situations */
-		if (asprintf(&nfmt, "%s\n", fmt) == -1) {
-			vfprintf(stderr, fmt, ap); /* Flawfinder: ignore */
-			fprintf(stderr, "\n");
-		} else {
-			vfprintf(stderr, nfmt, ap); /* Flawfinder: ignore */
-			free(nfmt);
-		}
-		fflush(stderr);
-	} else
+//	if (debug) {
+//		/* best effort in out of mem situations */
+//		if (asprintf(&nfmt, "%s\n", fmt) == -1) {
+//			vfprintf(stderr, fmt, ap); /* Flawfinder: ignore */
+//			fprintf(stderr, "\n");
+//		} else {
+//			vfprintf(stderr, nfmt, ap); /* Flawfinder: ignore */
+//			free(nfmt);
+//		}
+//		fflush(stderr);
+//	} else
 		vsyslog(pri, fmt, ap);
 }
 
@@ -132,11 +126,11 @@ log_debug(const char *emsg, ...)
 {
 	va_list	 ap;
 
-	if (debug) {
+//	if (debug) {
 		va_start(ap, emsg);
 		vlog(LOG_DEBUG, emsg, ap);
 		va_end(ap);
-	}
+//	}
 }
 
 void

@@ -25,6 +25,9 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _ANOUBISD_H
+#define _ANOUBISD_H
+
 #ifdef LINUX
 #include <linux/eventdev.h>
 #include <linux/anoubis.h>
@@ -33,7 +36,6 @@
 #include <dev/eventdev.h>
 #include <dev/anoubis.h>
 #endif
-#include "queue.h"
 
 #define ANOUBISD_OPT_VERBOSE		0x0001
 #define ANOUBISD_OPT_VERBOSE2		0x0002
@@ -49,22 +51,26 @@
 
 struct anoubisd_config {
 	int	opts;
-	const char * unixsocket;	/* defaults to ANOUBISD_SOCKETNAME */
+	const char * unixsocket;        /* defaults to ANOUBISD_SOCKETNAME */
 };
 
-struct anoubisd_event_in {
-	TAILQ_ENTRY(anoubisd_event_in) events;
+struct session_reg {
+	u_int32_t session_id;
+	int flag;
+};
 
-	int event_size;
-	struct eventdev_hdr hdr;
+struct anoubisd_msg {
+	short size;
+	short mtype;
 	char msg[0];
 };
-
-struct anoubisd_event_out {
-	TAILQ_ENTRY(anoubisd_event_out) events;
-
-	struct eventdev_reply reply;
-};
+typedef struct anoubisd_msg anoubisd_msg_t;
+enum {
+	ANOUBISD_MSG_EVENTDEV,
+	ANOUBISD_MSG_EVENTREPLY,
+	ANOUBISD_MSG_EVENTCANCEL,
+	ANOUBISD_MSG_SESSION_REG
+} anoubisd_msg;
 
 enum {
 	PROC_MAIN,
@@ -74,10 +80,20 @@ enum {
 
 pid_t	session_main(struct anoubisd_config *, int[], int[], int[]);
 pid_t	policy_main(struct anoubisd_config *, int[], int[], int[]);
-void	log_init(int);
+void	log_init(void);
 void	log_warn(const char *, ...);
 void	log_warnx(const char *, ...);
 void	log_info(const char *, ...);
 void	log_debug(const char *, ...);
 void	fatalx(const char *);
 void	fatal(const char *);
+
+#define DEBUG(flag, ...) {if (flag & debug_flags) log_debug(__VA_ARGS__);}
+u_int32_t debug_flags;
+
+#define DBG_MSG_FD	1
+#define DBG_MSG_SEND	2
+#define DBG_MSG_RECV	4
+#define DBG_TRACE	8
+
+#endif /* !_ANOUBISD_H */
