@@ -2,12 +2,12 @@ Source: anoubis
 Section: misc
 Priority: extra
 Maintainer: Stefan Fritsch <fritsch@genua.de>
-Build-Depends: debhelper (>= 5), libx11-dev, libwxgtk2.8-dev, check, pkg-config (>= 0.18), libevent-dev
+Build-Depends: debhelper (>= 5), libx11-dev, libwxgtk2.8-dev, check, pkg-config (>= 0.18), libevent-dev, libssl-dev
 Standards-Version: 3.7.3
 
 Package: anoubisd
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, adduser, libevent1
+Depends: ${shlibs:Depends}, ${misc:Depends}, adduser, libevent1, openssl
 Description: Central daemon of the Anoubis Security Suite
  XXX: long description
 
