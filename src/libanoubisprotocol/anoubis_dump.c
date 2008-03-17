@@ -161,9 +161,11 @@ void anoubis_dump(struct anoubis_msg * m, const char * str)
 
 void anoubis_dump_buf(void * buf, size_t len, const char * str)
 {
+#ifndef lint
 	struct anoubis_msg m = {
 		.u.buf = buf,
 		.length = len,
 	};
+#endif
 	anoubis_dump(&m, str);
 }

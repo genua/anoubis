@@ -53,6 +53,10 @@ fatal () {
 	exit 1
 }
 
+error () {
+	echo "$*" >&2
+}
+
 set +e
 PARAMS=`getopt dho: "$@"`
 if test $? -ne 0; then usage; exit 1; fi;
@@ -89,7 +93,19 @@ set -e
 
 debug "lint exit code: $?"
 
-# XXX ignore any error codes for now. lint is behaving strange here...
+if egrep "\.h: No such file or directory" $STDOUT; then
+	error "Aborted due to missing includes"
+	error $STDERR
+	error $STDOUT
+	exit 1
+fi
+
+if egrep "syntax error" $STDOUT; then
+	error "lint failed to parse the source file"
+	error $STDERR
+	error $STDOUT
+	exit 1
+fi
 
 cat $STDERR > ${OUTPUTFILE}
 cat $STDOUT >> ${OUTPUTFILE}

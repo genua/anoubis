@@ -331,6 +331,7 @@ dispatch_m2s(int fd, short sig, void *arg)
 	anoubisd_msg_t *msg;
 	struct eventdev_hdr *hdr;
 	struct session * sess;
+	int extra;
 
 	DEBUG(DBG_TRACE, ">dispatch_m2s");
 	if ((msg = get_msg(fd)) == NULL) {
@@ -342,7 +343,7 @@ dispatch_m2s(int fd, short sig, void *arg)
 
 	hdr = (struct eventdev_hdr *)msg->msg;
 
-	int extra = hdr->msg_size -  sizeof(struct eventdev_hdr);
+	extra = hdr->msg_size -  sizeof(struct eventdev_hdr);
 	m = anoubis_msg_new(sizeof(Anoubis_NotifyMessage) + extra);
 	if (!m) {
 		/* XXX */

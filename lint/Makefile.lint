@@ -49,11 +49,15 @@ endif
 
 .SUFFIXES= .lint
 
+if HAVE_LINT
+common_lint_FLAGS = -DS_SPLINT_S
+endif
+
 .c.c_lint .h.h_lint:
 if HAVE_LINT
 	@echo [LINT] $<
 	@sh $(top_builddir)/lint/lint -o $@ $(DEBUG) -- \
-	    $(lint_FLAGS) $<
+	    $(common_lint_FLAGS) $(lint_FLAGS) $<
 else
 	@touch $@
 endif

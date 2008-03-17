@@ -454,10 +454,12 @@ int anoubis_server_process(struct anoubis_server * server, void * buf,
     size_t len)
 {
 	anoubis_token_t token;
+#ifndef lint
 	struct anoubis_msg m = {
 		.length = len,
 		.u = { .buf = buf }
 	};
+#endif
 	int opcode;
 	/* Return an error if the partner sent data over a dead channel. */
 	if (!server->chan

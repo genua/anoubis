@@ -35,7 +35,10 @@ libapn		= $(top_builddir)/$(libapndir)/libapn.a
 bsdcompatdir	= src/bsdcompat
 libbsdcompat	= $(top_builddir)/$(bsdcompatdir)/libbsdcompat.a
 
-INCLUDES = -I$(top_srcdir)/include -I$(top_srcdir)/$(libapndir)
+INCLUDES = \
+	-I$(top_builddir)/src \
+	-I$(top_srcdir)/include \
+	-I$(top_srcdir)/$(libapndir)
 
 anoubisctl_LDADD = $(libapn)
 
@@ -63,8 +66,8 @@ anoubisctl_SOURCES_splint= \
 	main.c_splint
 
 flawfinder_FLAGS=
-splint_FLAGS=+unixlib $(INCLUDES) -I..
-lint_FLAGS=
+splint_FLAGS=$(INCLUDES)
+lint_FLAGS=$(INCLUDES)
 
 flawfinder:	$(anoubisctl_SOURCES_flawfinder)
 splint:		$(anoubisctl_SOURCES_splint)
