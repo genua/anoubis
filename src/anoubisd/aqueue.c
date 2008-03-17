@@ -56,8 +56,7 @@ enqueue(Queuep queuep, void *msgp)
 
 	if (queuep->tail)
 		queuep->tail->next = qep;
-	else
-		queuep->tail = qep;
+	queuep->tail = qep;
 	if (queuep->head == NULL)
 		queuep->head = queuep->tail;
 	return(0);
