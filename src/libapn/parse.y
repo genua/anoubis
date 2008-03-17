@@ -84,6 +84,10 @@ int		 host_v6(const char *, struct apn_addr *);
 int		 validate_host(const struct host *);
 int		 portbyname(const char *, u_int16_t *);
 int		 portbynumber(int64_t, u_int16_t *);
+int		 validate_alffilterspec(struct alffilterspec *);
+int		 validate_hostlist(struct host *);
+void		 freehost(struct host *);
+void		 freeport(struct port *);
 
 static struct apnruleset	*apnrsp = NULL;
 static int			 debug = 0;
@@ -91,16 +95,29 @@ static int			 debug = 0;
 typedef struct {
 	union {
 		int64_t			 number;
-		u_int16_t		 port;
 		char			*string;
-		struct application	*app;
 		int			 hashtype;
+		int			 netaccess;
+		int			 af;
+		int			 proto;
+		int			 action;
+		int			 log;
 		struct {
 			int		 type;
 			char		 value[MAX_APN_HASH_LEN];
 		} hashspec;
+		struct {
+			struct host	*fromhost;
+			struct port	*fromport;
+			struct host	*tohost;
+			struct port	*toport;
+		} hosts;
+		struct alffilterrule	 afrule;
+		struct alffilterspec	 afspec;
 		struct apn_addr		 addr;
-		struct host		 host;
+		struct application	*app;
+		struct port		*port;
+		struct host		*host;
 	} v;
 	int lineno;
 } YYSTYPE;
@@ -109,7 +126,7 @@ typedef struct {
 %}
 
 %token	ALLOW DENY ALF SFS SB VS CAP CONTEXT RAW ALL OTHER LOG CONNECT ACCEPT
-%token	INET INET6 FROM TO PORT ANY SHA256 TCP UDP DEFAULT NEW ASK
+%token	INET INET6 FROM TO PORT ANY SHA256 TCP UDP DEFAULT NEW ASK ALERT
 %token	READ WRITE EXEC CHMOD ERROR APPLICATION RULE HOST TFILE
 %token	<v.string>		STRING
 %token	<v.number>		NUMBER
@@ -117,9 +134,17 @@ typedef struct {
 %type	<v.hashtype>		hashtype
 %type	<v.hashspec>		hashspec
 %type	<v.addr>		address
-%type	<v.host>		host
+%type	<v.host>		host host_l hostspec
+%type	<v.port>		port port_l ports portspec
+%type	<v.hosts>		hosts
 %type	<v.number>		not
-%type	<v.port>		port
+%type	<v.netaccess>		netaccess
+%type	<v.af>			af
+%type	<v.proto>		proto
+%type	<v.afspec>		alffilterspec
+%type	<v.action>		action
+%type	<v.log>			log
+%type	<v.afrule>		alffilterrule
 %%
 
 grammar		: /* empty */
@@ -238,10 +263,29 @@ alfspecs	: alffilterspec
 		| ctxspec
 		;
 
-alffilterrule	: action alffilterspec
+alffilterrule	: action alffilterspec		{
+			$$.action = $1;
+			$$.alffilterspec = $2;
+		}
 		;
 
-alffilterspec	: netaccspec log af proto hosts
+alffilterspec	: netaccess log af proto hosts	{
+			$$.log = $2;
+			$$.af = $3;
+			$$.proto = $4;
+			$$.fromhost = $5.fromhost;
+			$$.fromport = $5.fromport;
+			$$.tohost = $5.tohost;
+			$$.toport = $5.toport;
+
+			if (validate_alffilterspec(&$$) == -1) {
+				freehost($$.fromhost);
+				freehost($$.tohost);
+				freeport($$.fromport);
+				freeport($$.toport);
+				YYERROR;
+			}
+		}
 		| '$' STRING			{
 			struct var	*var;
 
@@ -250,35 +294,33 @@ alffilterspec	: netaccspec log af proto hosts
 		}
 		;
 
-netaccspec	: '{' netaccess_l '}'
-		| netaccess
-		| ANY
+netaccess	: CONNECT			{ $$ = APN_CONNECT; }
+		| ACCEPT			{ $$ = APN_ACCEPT; }
 		;
 
-netaccess_l	: netaccess_l comma netaccess
-		| netaccess
+af		: INET				{ $$ = AF_INET; }
+		| INET6				{ $$ = AF_INET6; }
+		| /* empty */			{ $$ = AF_UNSPEC; }
 		;
 
-netaccess	: CONNECT
-		| ACCEPT
+proto		: UDP				{ $$ = IPPROTO_UDP; }
+		| TCP				{ $$ = IPPROTO_TCP; }
 		;
 
-af		: INET
-		| INET6
-		| /* empty */
+hosts		: FROM hostspec portspec TO hostspec portspec	{
+			$$.fromhost = $2;
+			$$.fromport = $3;
+			$$.tohost = $5;
+			$$.toport = $6;
+		}
+		| ALL				{
+			bzero(&$$, sizeof($$));
+		}
 		;
 
-proto		: UDP
-		| TCP
-		;
-
-hosts		: FROM hostspec portspec TO hostspec portspec
-		| ALL
-		;
-
-hostspec	: '{' host_l '}'
-		| host
-		| ANY
+hostspec	: '{' host_l '}'		{ $$ = $2; }
+		| host				{ $$ = $1; }
+		| ANY				{ $$ = NULL; }
 		| '$' STRING			{
 			struct var	*var;
 
@@ -287,16 +329,32 @@ hostspec	: '{' host_l '}'
 		}
 		;
 
-host_l		: host_l comma host
-		| host
+host_l		: host_l comma host		{
+			if ($3 == NULL)
+				$$ = $1;
+			else if ($1 == NULL)
+				$$ = $3;
+			else {
+				$1->tail->next = $3;
+				$1->tail = $3->tail;
+				$$ = $1;
+			}
+		}
+		| host				{ $$ = $1; }
 		;
 
 host		: not address			{
-			$$.not = $1;
-			$$.addr = $2;
+			struct host	*host;
 
-			if (validate_host(&$$) == -1)
+			host = calloc(1, sizeof(struct host));
+			if (host == NULL)
 				YYERROR;
+
+			host->not = $1;
+			host->addr = $2;
+			host->tail = host;
+
+			$$ = host;
 		}
 		;
 
@@ -309,12 +367,12 @@ address		: STRING			{
 			free($1);
 		}
 
-portspec	: PORT ports
-		| /* empty */
+portspec	: PORT ports			{ $$ = $2; }
+		| /* empty */			{ $$ = NULL; }
 		;
 
-ports		: '{' port_l '}'
-		| port
+ports		: '{' port_l '}'		{ $$ = $2; }
+		| port				{ $$ = $1; }
 		| '$' STRING			{
 			struct var	*var;
 
@@ -323,20 +381,53 @@ ports		: '{' port_l '}'
 		}
 		;
 
-port_l		: port_l comma port
-		| port
+port_l		: port_l comma port		{
+			if ($3 == NULL)
+				$$ = $1;
+			else if ($1 == NULL)
+				$$ = $3;
+			else {
+				$1->tail->next = $3;
+				$1->tail = $3->tail;
+				$$ = $1;
+			}
+		}
+		| port				{ $$ = $1; }
 		;
 
 port		: STRING			{
-			if (portbyname($1, &$$) == -1) {
+			struct port	*port;
+
+			port = calloc(1, sizeof(struct port));
+			if (port == NULL)
+				YYERROR;
+
+			port->tail = port;
+
+			if (portbyname($1, &port->port) == -1) {
 				free($1);
+				free(port);
 				YYERROR;
 			}
 			free($1);
+
+			$$ = port;
 		}
 		| NUMBER			{
-			if (portbynumber($1, &$$) == -1)
+			struct port	*port;
+
+			port = calloc(1, sizeof(struct port));
+			if (port == NULL)
 				YYERROR;
+
+			port->tail = port;
+
+			if (portbynumber($1, &port->port) == -1) {
+				free(port);
+				YYERROR;
+			}
+
+			$$ = port;
 		}
 		;
 
@@ -558,13 +649,14 @@ hashtype	: SHA256			{ $$ = APN_HASH_SHA256; }
 		| /* empty */			{ $$ = APN_HASH_SHA256; }
 		;
 
-action		: ALLOW
-		| DENY
-		| ASK
+action		: ALLOW				{ $$ = APN_ACTION_ALLOW; }
+		| DENY				{ $$ = APN_ACTION_DENY; }
+		| ASK				{ $$ = APN_ACTION_ASK; }
 		;
 
-log		: LOG
-		| /* empty */
+log		: LOG				{ $$ = APN_LOG_NORMAL; }
+		| ALERT				{ $$ = APN_LOG_ALERT; }
+		| /* empty */			{ $$ = APN_LOG_NONE; }
 		;
 
 not		: '!'				{ $$ = 1; }
@@ -603,6 +695,7 @@ lookup(char *s)
 	/* this has to be sorted always */
 	static const struct keywords keywords[] = {
 		{ "accept",	ACCEPT },
+		{ "alert",	ALERT },
 		{ "alf",	ALF },
 		{ "all",	ALL },
 		{ "allow",	ALLOW },
@@ -1035,6 +1128,9 @@ str2hash(const char *s, char *dest, size_t max_len)
 	return (0);
 }
 
+/*
+ * Verify a hash has a size matching its type.
+ */
 int
 validate_hash(int type, const char *s)
 {
@@ -1138,6 +1234,12 @@ host_v6(const char *s, struct apn_addr *h)
 	return (0);
 }
 
+/*
+ * Verify that a host address has a sane address family, correct size and
+ * '!'  flag.
+ *
+ * Returns -1 on failure, 0 otherwise.
+ */
 int
 validate_host(const struct host *host)
 {
@@ -1161,6 +1263,7 @@ validate_host(const struct host *host)
 
 	return (0);
 }
+
 int
 portbyname(const char *ports, u_int16_t *portp)
 {
@@ -1188,4 +1291,121 @@ portbynumber(int64_t port, u_int16_t *portp)
 	*portp = htons(port);
 
 	return (0);
+}
+
+/*
+ * Verify that a filterspecification uses the same address family
+ * throughout, that only allowed protocols are specified and that host
+ * addresses are sane.
+ *
+ * Returns -1 on failure, otherwise 0.
+ */
+int
+validate_alffilterspec(struct alffilterspec *afspec)
+{
+	if (!(APN_LOG_NONE <= afspec->log && afspec->log <= APN_LOG_ALERT))
+		return (-1);
+
+	if (!(APN_CONNECT <= afspec->netaccess && afspec->netaccess <=
+	    APN_ACCEPT))
+		return (-1);
+
+	switch (afspec->af) {
+	case AF_INET:
+	case AF_INET6:
+	case AF_UNSPEC:
+		break;
+	default:
+		return (-1);
+	}
+
+	switch (afspec->proto) {
+	case IPPROTO_UDP:
+	case IPPROTO_TCP:
+		break;
+	default:
+		return (-1);
+	}
+
+	if (validate_hostlist(afspec->fromhost) == -1)
+		return (-1);
+	if (validate_hostlist(afspec->tohost) == -1)
+		return (-1);
+
+	return (0);
+}
+
+/*
+ * Verfiy that a list of hosts is of the same address family, ie. either
+ * only AF_INET or AF_INET6.  An empty list is allowed.  The list may be
+ * just one single host.
+ *
+ * Returns -1 on failure, otherwise the address family is returned.
+ */
+int
+validate_hostlist(struct host *hostlist)
+{
+	struct host	*hp;
+	int		 inet, inet6;
+
+	if (hostlist == NULL)
+		return (0);
+
+	inet = inet6 = 0;
+	for (hp = hostlist; hp; hp = hp->next) {
+		if (validate_host(hp) == -1)
+			return (-1);
+
+		switch (hp->addr.af) {
+		case AF_INET:
+			inet++;
+			break;
+
+		case AF_INET6:
+			inet6++;
+			break;
+
+		default:
+			return (-1);
+		}
+	}
+
+	if (inet != 0 && inet6 != 0)
+		return (-1);
+	else if (inet != 0)
+		return (AF_INET);
+	else
+		return (AF_INET6);
+}
+
+void
+freehost(struct host *host)
+{
+	struct host *hp, *tmp;
+
+	if (host == NULL)
+		return;
+
+	hp = host;
+	while (hp) {
+		tmp = hp->next;
+		free(hp);
+		hp = tmp;
+	}
+}
+
+void
+freeport(struct port *port)
+{
+	struct port *hp, *tmp;
+
+	if (port == NULL)
+		return;
+	
+	hp = port;
+	while (hp) {
+		tmp = hp->next;
+		free(hp);
+		hp = tmp;
+	}
 }

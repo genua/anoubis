@@ -37,20 +37,33 @@
 #define APN_FLAG_VERBOSE	0x0001
 #define APN_FLAG_VERBOSE2	0x0002
 
-#define APN_HASH_SHA256		1
-
 #define APN_HASH_SHA256_LEN	32
 #define MAX_APN_HASH_LEN	APN_HASH_SHA256_LEN
+
+enum {
+	APN_HASH_SHA256
+};
+
+enum {
+	APN_CONNECT, APN_ACCEPT
+};
+
+enum {
+	APN_ACTION_ALLOW, APN_ACTION_DENY, APN_ACTION_ASK
+};
+
+enum {
+	APN_LOG_NONE, APN_LOG_NORMAL, APN_LOG_ALERT
+};
+
+enum {
+	VAR_APPLICATION, VAR_RULE, VAR_DEFAULT, VAR_HOST, VAR_PORT,
+	VAR_FILENAME
+};
 
 /* APN variables. */
 struct var {
 	TAILQ_ENTRY(var)	 entry;
-#define VAR_APPLICATION	1
-#define VAR_RULE	2
-#define VAR_DEFAULT	3
-#define VAR_HOST	4
-#define VAR_PORT	5
-#define VAR_FILENAME	6
 	u_int8_t		 type;
 	u_int8_t		 used;
 	char			*name;
@@ -79,10 +92,36 @@ struct apn_addr {
 };
 
 struct host {
-	struct apn_addr		addr;
-	int			not;
+	struct apn_addr		 addr;
+	int			 not;
+	struct host		*next;
+	struct host		*tail;
 };
 
+struct port {
+	u_int16_t		 port;
+	struct port		*next;
+	struct port		*tail;
+};
+
+struct alffilterspec {
+	int			 log;
+	int			 af;
+	int			 proto;
+	int			 netaccess;
+
+	struct host		*fromhost;
+	struct port		*fromport;
+	struct host		*tohost;
+	struct port		*toport;
+};
+
+struct alffilterrule {
+	TAILQ_ENTRY(alf_filterrule) entry;
+
+	int			 action;
+	struct alffilterspec	 alffilterspec;
+};
 
 /* Complete state of one rule. */
 struct apnrule {
