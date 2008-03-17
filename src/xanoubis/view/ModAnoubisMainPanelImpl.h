@@ -29,15 +29,17 @@
 #define __ModAnoubisMainPanelImpl__
 
 #include "ModAnoubisPanelsBase.h"
-#include "NotifyList.h"
+#include "Notification.h"
 
 class ModAnoubisMainPanelImpl : public ModAnoubisMainPanelBase
 {
 	private:
 		enum notifyListTypes	 list_;
-		NotifyListEntry		*currentNotify_;
+		Notification		*currentNotify_;
 
 		void answer(bool);
+		void displayEscalation(void);
+		void displayAlert(void);
 
 	protected:
 		void OnTypeChoosen(wxCommandEvent& event);

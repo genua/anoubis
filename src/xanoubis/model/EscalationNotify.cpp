@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 GeNUA mbH <info@genua.de>
+ * Copyright (c) 2008 GeNUA mbH <info@genua.de>
  *
  * All rights reserved.
  *
@@ -25,54 +25,67 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __MODANOUBIS_H__
-#define __MODANOUBIS_H__
+#include <anoubis_msg.h>
+#include <wx/string.h>
 
-#include "Module.h"
 #include "Notification.h"
-#include "EscalationNotify.h"
 #include "NotifyAnswer.h"
+#include "EscalationNotify.h"
 
-enum ModAnoubisId {
-	MODANOUBIS_ID_BASE = 13000,
-	MODULE_ID_ENTRY(ANOUBIS,MAINPANEL),
-	MODULE_ID_ENTRY(ANOUBIS,OVERVIEWPANEL),
-	MODULE_ID_ENTRY(ANOUBIS,TOOLBAR)
-};
-
-class ModAnoubis : public Module, public wxEvtHandler
+EscalationNotify::EscalationNotify(struct anoubis_msg *msg) : Notification(msg)
 {
-	private:
-		size_t		notAnsweredListIdx_;
-		size_t		logListIdx_;
-		size_t		alertListIdx_;
-		size_t		answeredListIdx_;
-		size_t		allListIdx_;
-		NotifyList	notAnsweredList_;
-		NotifyList	alertList_;
-		NotifyList	logList_;
-		NotifyList	answeredList_;
-		NotifyList	allList_;
+	answer_ = NULL;
+}
 
-	public:
-		ModAnoubis(wxWindow *);
-		~ModAnoubis(void);
+EscalationNotify::~EscalationNotify(void)
+{
+	if (isAnswered()) {
+		delete answer_;
+	}
+}
 
-		int	getBaseId(void);
-		int	getToolbarId(void);
-		void	update(void);
+void
+EscalationNotify::assembleLogMessage(void)
+{
+	if (!logMessage_.IsEmpty()) {
+		return;
+	}
 
-		void	OnAddNotification(wxCommandEvent&);
-		void	insertNotification(Notification *);
-		void	answerEscalationNotify(EscalationNotify *,
-			    NotifyAnswer *);
-		size_t	getElementNo(enum notifyListTypes);
-		size_t	getListSize(enum notifyListTypes);
+	if (notify_ == NULL) {
+		logMessage_ = wxT("No information available.");
+		return;
+	}
 
-		Notification *getFirst(enum notifyListTypes);
-		Notification *getPrevious(enum notifyListTypes);
-		Notification *getNext(enum notifyListTypes);
-		Notification *getLast(enum notifyListTypes);
-};
+	/* XXX: create log message from notify -- ch */
+	logMessage_ = wxT("No information extracted yet.");
 
-#endif /* __MODANOUBIS_H__ */
+}
+
+bool
+EscalationNotify::isAnswered(void)
+{
+	if (answer_ == NULL) {
+		return (false);
+	} else {
+		return (true);
+	}
+}
+
+void
+EscalationNotify::answer(NotifyAnswer *answer)
+{
+	answer_ = answer;
+}
+
+NotifyAnswer *
+EscalationNotify::getAnswer(void)
+{
+	return (answer_);
+}
+
+wxString
+EscalationNotify::getLogMessage(void)
+{
+	assembleLogMessage();
+	return (logMessage_);
+}

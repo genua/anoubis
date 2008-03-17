@@ -37,6 +37,12 @@ BEGIN_DECLARE_EVENT_TYPES()
 	DECLARE_LOCAL_EVENT_TYPE(anEVT_COM_REMOTESTATION, wxNewEventType())
 	DECLARE_LOCAL_EVENT_TYPE(anEVT_COM_ALERTNOTIFY, wxNewEventType())
 	DECLARE_LOCAL_EVENT_TYPE(anEVT_COM_ESCALNOTIFY, wxNewEventType())
+
+	/*
+	 * Transports a notification as client object.
+	 * A notification will been stored and deleted by ModAnoubis.
+	 */
+	DECLARE_LOCAL_EVENT_TYPE(anEVT_ADD_NOTIFICATION, wxNewEventType())
 END_DECLARE_EVENT_TYPES()
 
 #endif	/* _ANEVENTS_H_ */

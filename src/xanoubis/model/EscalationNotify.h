@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 GeNUA mbH <info@genua.de>
+ * Copyright (c) 2008 GeNUA mbH <info@genua.de>
  *
  * All rights reserved.
  *
@@ -25,54 +25,32 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __MODANOUBIS_H__
-#define __MODANOUBIS_H__
+#ifndef _ESCALATIONNOTIFY_H_
+#define _ESCALATIONNOTIFY_H_
 
-#include "Module.h"
+#include <anoubis_msg.h>
+#include <wx/string.h>
+
 #include "Notification.h"
-#include "EscalationNotify.h"
 #include "NotifyAnswer.h"
 
-enum ModAnoubisId {
-	MODANOUBIS_ID_BASE = 13000,
-	MODULE_ID_ENTRY(ANOUBIS,MAINPANEL),
-	MODULE_ID_ENTRY(ANOUBIS,OVERVIEWPANEL),
-	MODULE_ID_ENTRY(ANOUBIS,TOOLBAR)
-};
+#define IS_ESCALATIONOBJ(obj) \
+	(typeid(*obj) == typeid(class EscalationNotify))
 
-class ModAnoubis : public Module, public wxEvtHandler
-{
+class EscalationNotify : public Notification {
 	private:
-		size_t		notAnsweredListIdx_;
-		size_t		logListIdx_;
-		size_t		alertListIdx_;
-		size_t		answeredListIdx_;
-		size_t		allListIdx_;
-		NotifyList	notAnsweredList_;
-		NotifyList	alertList_;
-		NotifyList	logList_;
-		NotifyList	answeredList_;
-		NotifyList	allList_;
+		NotifyAnswer	*answer_;
+
+		void assembleLogMessage(void);
 
 	public:
-		ModAnoubis(wxWindow *);
-		~ModAnoubis(void);
+		EscalationNotify(struct anoubis_msg *);
+		~EscalationNotify(void);
 
-		int	getBaseId(void);
-		int	getToolbarId(void);
-		void	update(void);
-
-		void	OnAddNotification(wxCommandEvent&);
-		void	insertNotification(Notification *);
-		void	answerEscalationNotify(EscalationNotify *,
-			    NotifyAnswer *);
-		size_t	getElementNo(enum notifyListTypes);
-		size_t	getListSize(enum notifyListTypes);
-
-		Notification *getFirst(enum notifyListTypes);
-		Notification *getPrevious(enum notifyListTypes);
-		Notification *getNext(enum notifyListTypes);
-		Notification *getLast(enum notifyListTypes);
+		bool		 isAnswered(void);
+		void		 answer(NotifyAnswer *);
+		NotifyAnswer	*getAnswer(void);
+		wxString	 getLogMessage(void);
 };
 
-#endif /* __MODANOUBIS_H__ */
+#endif	/* _ESCALATIONNOTIFY_H_ */

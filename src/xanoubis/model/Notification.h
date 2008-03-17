@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 GeNUA mbH <info@genua.de>
+ * Copyright (c) 2008 GeNUA mbH <info@genua.de>
  *
  * All rights reserved.
  *
@@ -25,54 +25,51 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __MODANOUBIS_H__
-#define __MODANOUBIS_H__
+#ifndef _NOTIFICATION_H_
+#define _NOTIFICATION_H_
 
-#include "Module.h"
-#include "Notification.h"
-#include "EscalationNotify.h"
-#include "NotifyAnswer.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-enum ModAnoubisId {
-	MODANOUBIS_ID_BASE = 13000,
-	MODULE_ID_ENTRY(ANOUBIS,MAINPANEL),
-	MODULE_ID_ENTRY(ANOUBIS,OVERVIEWPANEL),
-	MODULE_ID_ENTRY(ANOUBIS,TOOLBAR)
+#include <anoubis_msg.h>
+#include <wx/list.h>
+#include <wx/string.h>
+
+enum notifyKey {
+	NOTIFY_KEY_MODULE = 0,
+	NOTIFY_KEY_TIME,
+	NOTIFY_KEY_LOGMSG
 };
 
-class ModAnoubis : public Module, public wxEvtHandler
-{
+enum notifyListTypes {
+	NOTIFY_LIST_NONE = 0,
+	NOTIFY_LIST_NOTANSWERED,
+	NOTIFY_LIST_MESSAGE,
+	NOTIFY_LIST_ANSWERED,
+	NOTIFY_LIST_ALL
+};
+
+class Notification {
 	private:
-		size_t		notAnsweredListIdx_;
-		size_t		logListIdx_;
-		size_t		alertListIdx_;
-		size_t		answeredListIdx_;
-		size_t		allListIdx_;
-		NotifyList	notAnsweredList_;
-		NotifyList	alertList_;
-		NotifyList	logList_;
-		NotifyList	answeredList_;
-		NotifyList	allList_;
+		wxString		 module_;
+		wxString		 timeStamp_;
+		wxString		 logMessage_;
+		struct anoubis_msg	*notify_;
 
 	public:
-		ModAnoubis(wxWindow *);
-		~ModAnoubis(void);
+		Notification(struct anoubis_msg *);
+		virtual ~Notification(void);
 
-		int	getBaseId(void);
-		int	getToolbarId(void);
-		void	update(void);
+		virtual wxString getModule(void);
+		virtual wxString getTime(void);
+		virtual wxString getLogMessage(void) = 0;
 
-		void	OnAddNotification(wxCommandEvent&);
-		void	insertNotification(Notification *);
-		void	answerEscalationNotify(EscalationNotify *,
-			    NotifyAnswer *);
-		size_t	getElementNo(enum notifyListTypes);
-		size_t	getListSize(enum notifyListTypes);
-
-		Notification *getFirst(enum notifyListTypes);
-		Notification *getPrevious(enum notifyListTypes);
-		Notification *getNext(enum notifyListTypes);
-		Notification *getLast(enum notifyListTypes);
+		friend class AlertNotify;
+		friend class EscalationNotify;
+		friend class LogNotify;
 };
 
-#endif /* __MODANOUBIS_H__ */
+WX_DECLARE_LIST(Notification, NotifyList);
+
+#endif	/* _NOTIFICATION_H_ */

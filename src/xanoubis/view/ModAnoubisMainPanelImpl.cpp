@@ -48,7 +48,10 @@
 #include "main.h"
 #include "ModAnoubis.h"
 #include "ModAnoubisMainPanelImpl.h"
-#include "NotifyList.h"
+#include "Notification.h"
+#include "LogNotify.h"
+#include "AlertNotify.h"
+#include "EscalationNotify.h"
 #include "NotifyAnswer.h"
 
 #define SHOWSLOT(slotNo,field,value) \
@@ -70,6 +73,52 @@ ModAnoubisMainPanelImpl::ModAnoubisMainPanelImpl(wxWindow* parent,
 {
 	list_ = NOTIFY_LIST_NOTANSWERED;
 	currentNotify_ = NULL;
+}
+
+void
+ModAnoubisMainPanelImpl::displayEscalation(void)
+{
+	EscalationNotify	*eNotify;
+
+	if (currentNotify_ == NULL) {
+		return;
+	}
+	eNotify = (EscalationNotify *)currentNotify_;
+
+	SHOWSLOT(1, wxT("Time:"), eNotify->getTime());
+	SHOWSLOT(2, wxT("Module:"), eNotify->getModule());
+
+	if (eNotify->getModule().Cmp(wxT("ALF")) == 0) {
+		/*
+		 * SHOWSLOT(3,wxT("Transport:"), eNotify_->getAlfTransport());
+		 * SHOWSLOT(4,wxT("Operation:"), eNotify_->getAlfOp());
+		 * SHOWSLOT(5,wxT("PID / UID:"), eNotify_->getAlfWho());
+		 */
+	} else if (eNotify->getModule().Cmp(wxT("SFS")) == 0) {
+		/*
+		 * SHOWSLOT(3,wxT("Checksum:"),  eNotify_->getSfsChkSum());
+		 * SHOWSLOT(4,wxT("Operation:"), eNotify_->getSfsOp());
+		 * SHOWSLOT(5,wxT("Path:"),      eNotify_->getSfsPath());
+		 */
+	} else {
+	}
+
+	HIDESLOT(4);
+	HIDESLOT(5);
+}
+
+void
+ModAnoubisMainPanelImpl::displayAlert(void)
+{
+	AlertNotify	*aNotify;
+
+	aNotify = (AlertNotify *)currentNotify_;
+
+	SHOWSLOT(1, wxT("Time:"), aNotify->getTime());
+	SHOWSLOT(2, wxT("Module:"), aNotify->getModule());
+	SHOWSLOT(3, wxT("Message:"), aNotify->getLogMessage());
+	HIDESLOT(4);
+	HIDESLOT(5);
 }
 
 void
@@ -119,28 +168,10 @@ ModAnoubisMainPanelImpl::update(void)
 		bt_last->Enable();
 	}
 
-	if (currentNotify_ != NULL) {
-		s.Printf(_T("%d"), currentNotify_->getId());
-		SHOWSLOT(1,wxT("Id:"),s);
-		SHOWSLOT(2,wxT("Modul:"),currentNotify_->getModule());
-		if (!currentNotify_->getModule().Cmp(wxT("ALF"))) {
-			SHOWSLOT(3,wxT("Transport:"),
-			    currentNotify_->getAlfTransport());
-			SHOWSLOT(4,wxT("Operation:"),
-			    currentNotify_->getAlfOp());
-			SHOWSLOT(5,wxT("PID / UID:"),
-			    currentNotify_->getAlfWho());
-		} else if (!currentNotify_->getModule().Cmp(wxT("SFS"))) {
-			SHOWSLOT(3,wxT("Checksum:"),
-			    currentNotify_->getSfsChkSum());
-			SHOWSLOT(4,wxT("Operation:"),
-			    currentNotify_->getSfsOp());
-			SHOWSLOT(5,wxT("Path:"),currentNotify_->getSfsPath());
-		} else {
-			HIDESLOT(3);
-			HIDESLOT(4);
-			HIDESLOT(5);
-		}
+	if ((currentNotify_ != NULL) && IS_ESCALATIONOBJ(currentNotify_)) {
+		displayEscalation();
+	} else if ((currentNotify_ != NULL) && IS_ALERTOBJ(currentNotify_)) {
+		displayAlert();
 	} else {
 		HIDESLOT(1);
 		HIDESLOT(2);
@@ -149,18 +180,18 @@ ModAnoubisMainPanelImpl::update(void)
 		HIDESLOT(5);
 	}
 
-	if ((currentNotify_ != NULL) &&
-	    currentNotify_->isAnswerAble() &&
-	    !currentNotify_->isAnswered()    ) {
-		pn_question->Show();
-		tx_answerValue->Hide();
-	} else if ((currentNotify_ != NULL) &&
-	    currentNotify_->isAnswerAble() &&
-	    currentNotify_->isAnswered()     ) {
-		pn_question->Hide();
-		tx_answerValue->SetLabel(
-		    currentNotify_->getAnswer()->getAnswer());
-		tx_answerValue->Show();
+	if ((currentNotify_ != NULL) && IS_ESCALATIONOBJ(currentNotify_)) {
+		EscalationNotify *eNotify = (EscalationNotify *)currentNotify_;
+
+		if (!eNotify->isAnswered()) {
+			pn_question->Show();
+			tx_answerValue->Hide();
+		} else {
+			pn_question->Hide();
+			tx_answerValue->SetLabel(
+			    eNotify->getAnswer()->getAnswer());
+			tx_answerValue->Show();
+		}
 	} else {
 		pn_question->Hide();
 		tx_answerValue->Hide();
@@ -239,29 +270,35 @@ ModAnoubisMainPanelImpl::OnLastBtnClick(wxCommandEvent& event)
 }
 
 void
-ModAnoubisMainPanelImpl::answer(bool allow)
+ModAnoubisMainPanelImpl::answer(bool permission)
 {
 	ModAnoubis	*module;
 	NotifyAnswer	*answer;
 
-	module = (ModAnoubis *)(wxGetApp().getModule(ANOUBIS));
+	if (IS_ESCALATIONOBJ(currentNotify_)) {
+		module = (ModAnoubis *)(wxGetApp().getModule(ANOUBIS));
 
-	if (rb_number->GetValue()) {
-		answer = new NotifyAnswer(NOTIFY_ANSWER_COUNT, allow,
-		    sc_number->GetValue());
-	} else if (rb_procend->GetValue()) {
-		answer = new NotifyAnswer(NOTIFY_ANSWER_PROCEND, allow);
-	} else if (rb_time->GetValue()) {
-		answer = new NotifyAnswer(NOTIFY_ANSWER_TIME, allow,
-		    sc_time->GetValue(),
-		    (enum timeUnit)ch_time->GetCurrentSelection());
-	} else if (rb_always->GetValue()) {
-		answer = new NotifyAnswer(NOTIFY_ANSWER_FOREVER, allow);
-	} else {
-		answer = new NotifyAnswer(NOTIFY_ANSWER_NONE, allow);
+		if (rb_number->GetValue()) {
+			answer = new NotifyAnswer(NOTIFY_ANSWER_COUNT,
+			    permission, sc_number->GetValue());
+		} else if (rb_procend->GetValue()) {
+			answer = new NotifyAnswer(NOTIFY_ANSWER_PROCEND,
+			    permission);
+		} else if (rb_time->GetValue()) {
+			answer = new NotifyAnswer(NOTIFY_ANSWER_TIME,
+			    permission, sc_time->GetValue(),
+			    (enum timeUnit)ch_time->GetCurrentSelection());
+		} else if (rb_always->GetValue()) {
+			answer = new NotifyAnswer(NOTIFY_ANSWER_FOREVER,
+			    permission);
+		} else {
+			answer = new NotifyAnswer(NOTIFY_ANSWER_NONE,
+			    permission);
+		}
+
+		module->answerEscalationNotify(
+		    (EscalationNotify *)currentNotify_, answer);
 	}
-
-	module->answerNotification(currentNotify_, answer);
 	currentNotify_ = NULL;
 	update();
 }

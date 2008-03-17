@@ -34,15 +34,13 @@
 #ifndef __DlgLogViewerBase__
 #define __DlgLogViewerBase__
 
-#include <wx/string.h>
-#include <wx/stattext.h>
+#include <wx/listctrl.h>
 #include <wx/gdicmn.h>
 #include <wx/font.h>
 #include <wx/colour.h>
 #include <wx/settings.h>
-#include <wx/filepicker.h>
+#include <wx/string.h>
 #include <wx/sizer.h>
-#include <wx/textctrl.h>
 #include <wx/dialog.h>
 
 ///////////////////////////////////////////////////////////////////////////
@@ -56,13 +54,10 @@ class DlgLogViewerBase : public wxDialog
 	private:
 	
 	protected:
-		wxStaticText* tx_logFile;
-		wxFilePickerCtrl* fp_logFile;
-		wxTextCtrl* tx_logList;
+		wxListCtrl* lc_logList;
 		
 		// Virtual event handlers, overide them in your derived class
 		virtual void OnKeyPressed( wxKeyEvent& event ){ event.Skip(); }
-		virtual void OnFileSelected( wxFileDirPickerEvent& event ){ event.Skip(); }
 		
 	
 	public:

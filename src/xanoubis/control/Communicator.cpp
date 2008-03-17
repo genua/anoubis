@@ -50,7 +50,7 @@
 #include "main.h"
 #include "ModAnoubis.h"
 #include "Module.h"
-#include "NotifyList.h"
+#include "Notification.h"
 
 static long long
 getToken(void)
@@ -206,13 +206,18 @@ Communicator::Entry(void)
 
 		struct anoubis_msg *notify = anoubis_client_getnotify(client_);
 		if (notify != NULL) {
-			NotifyListEntry *nl;
-			ModAnoubis *anoubisModule;
-
-			nl = new NotifyListEntry(notify);
-			anoubisModule = (ModAnoubis *)(wxGetApp().getModule(
-			    ANOUBIS));
-			anoubisModule->insertNotification(nl);
+			/*
+			 * XXX: received notifies will not been processed by
+			 * the GUI anymore. This will re-enabled by the change
+			 * fixing the communicator.
+			 *
+			 * Notification *nl;
+			 * ModAnoubis *anoubisModule;
+			 * nl = new Notification(notify);
+			 * anoubisModule = (ModAnoubis *)(wxGetApp().getModule(
+			 *     ANOUBIS));
+			 * anoubisModule->insertNotification(nl);
+			 */
 		}
 
 	}

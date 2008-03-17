@@ -28,6 +28,12 @@
 #include <wx/stdpaths.h>
 #include <wx/string.h>
 
+#include "AnEvents.h"
+#include "Notification.h"
+#include "EscalationNotify.h"
+#include "AlertNotify.h"
+#include "LogNotify.h"
+#include "NotifyAnswer.h"
 #include "main.h"
 #include "Module.h"
 #include "ModAnoubis.h"
@@ -74,15 +80,20 @@ ModAnoubis::ModAnoubis(wxWindow *parent) : Module()
 	overviewPanel_->Hide();
 
 	notAnsweredListIdx_ = 0;
-	msgListIdx_ = 0;
+	alertListIdx_ = 0;
+	logListIdx_ = 0;
 	answeredListIdx_ = 0;
 	allListIdx_ = 0;
+
+	parent->Connect(anEVT_ADD_NOTIFICATION,
+	    wxCommandEventHandler(ModAnoubis::OnAddNotification), NULL, this);
 }
 
 ModAnoubis::~ModAnoubis(void)
 {
 	notAnsweredList_.DeleteContents(true);
-	msgList_.DeleteContents(true);
+	alertList_.DeleteContents(true);
+	logList_.DeleteContents(true);
 	answeredList_.DeleteContents(true);
 	allList_.DeleteContents(true);
 	delete mainPanel_;
@@ -108,24 +119,42 @@ ModAnoubis::update(void)
 }
 
 void
-ModAnoubis::insertNotification(NotifyListEntry *newNotify)
+ModAnoubis::OnAddNotification(wxCommandEvent& event)
 {
-	allList_.Append(newNotify);
-	if (newNotify->isAnswerAble()) {
+	Notification *notify;
+
+	notify = (Notification *)(event.GetClientObject());
+	insertNotification(notify);
+
+	event.Skip();
+}
+
+void
+ModAnoubis::insertNotification(Notification *newNotify)
+{
+	if (IS_ESCALATIONOBJ(newNotify)) {
 		notAnsweredList_.Append(newNotify);
+		allList_.Append(newNotify);
+	} else if (IS_ALERTOBJ(newNotify)) {
+		alertList_.Append(newNotify);
+		allList_.Append(newNotify);
 	} else {
-		msgList_.Append(newNotify);
+		logList_.Append(newNotify);
+		/*
+		 * Normal logs are hidden in ModAnoubis, thus we don't add
+		 * them to the  list of all notifies.
+		 */
 	}
 }
 
 void
-ModAnoubis::answerNotification(NotifyListEntry *notify, NotifyAnswer *answer)
+ModAnoubis::answerEscalationNotify(EscalationNotify *notify,
+    NotifyAnswer *answer)
 {
-	if ((notify != NULL) && notify->isAnswerAble()) {
+	if ((notify != NULL) && IS_ESCALATIONOBJ(notify)) {
 		notAnsweredList_.DeleteObject(notify);
 		answeredList_.Append(notify);
 		notify->answer(answer);
-		wxGetApp().updateTrayIcon();
 	}
 }
 
@@ -139,7 +168,7 @@ ModAnoubis::getElementNo(enum notifyListTypes listType)
 		elementNo = notAnsweredListIdx_;
 		break;
 	case NOTIFY_LIST_MESSAGE:
-		elementNo = msgListIdx_;
+		elementNo = alertListIdx_;
 		break;
 	case NOTIFY_LIST_ANSWERED:
 		elementNo = answeredListIdx_;
@@ -166,7 +195,7 @@ ModAnoubis::getListSize(enum notifyListTypes listType)
 		listSize = notAnsweredList_.GetCount();
 		break;
 	case NOTIFY_LIST_MESSAGE:
-		listSize = msgList_.GetCount();
+		listSize = alertList_.GetCount();
 		break;
 	case NOTIFY_LIST_ANSWERED:
 		listSize = answeredList_.GetCount();
@@ -183,7 +212,7 @@ ModAnoubis::getListSize(enum notifyListTypes listType)
 	return (listSize);
 }
 
-NotifyListEntry *
+Notification *
 ModAnoubis::getFirst(enum notifyListTypes listType)
 {
 	wxNotifyListNode *element;
@@ -193,7 +222,7 @@ ModAnoubis::getFirst(enum notifyListTypes listType)
 		ITERATION_FIRST(notAnsweredList_,notAnsweredListIdx_,element);
 		break;
 	case NOTIFY_LIST_MESSAGE:
-		ITERATION_FIRST(msgList_,msgListIdx_,element);
+		ITERATION_FIRST(alertList_,alertListIdx_,element);
 		break;
 	case NOTIFY_LIST_ANSWERED:
 		ITERATION_FIRST(answeredList_,answeredListIdx_,element);
@@ -210,7 +239,7 @@ ModAnoubis::getFirst(enum notifyListTypes listType)
 	return (element->GetData());
 }
 
-NotifyListEntry *
+Notification *
 ModAnoubis::getPrevious(enum notifyListTypes listType)
 {
 	wxNotifyListNode *element;
@@ -221,7 +250,7 @@ ModAnoubis::getPrevious(enum notifyListTypes listType)
 		    element);
 		break;
 	case NOTIFY_LIST_MESSAGE:
-		ITERATION_PREVIOUS(msgList_,msgListIdx_,element);
+		ITERATION_PREVIOUS(alertList_,alertListIdx_,element);
 		break;
 	case NOTIFY_LIST_ANSWERED:
 		ITERATION_PREVIOUS(answeredList_,answeredListIdx_,element);
@@ -238,7 +267,7 @@ ModAnoubis::getPrevious(enum notifyListTypes listType)
 	return (element->GetData());
 }
 
-NotifyListEntry *
+Notification *
 ModAnoubis::getNext(enum notifyListTypes listType)
 {
 	wxNotifyListNode *element;
@@ -248,7 +277,7 @@ ModAnoubis::getNext(enum notifyListTypes listType)
 		ITERATION_NEXT(notAnsweredList_,notAnsweredListIdx_,element);
 		break;
 	case NOTIFY_LIST_MESSAGE:
-		ITERATION_NEXT(msgList_,msgListIdx_,element);
+		ITERATION_NEXT(alertList_,alertListIdx_,element);
 		break;
 	case NOTIFY_LIST_ANSWERED:
 		ITERATION_NEXT(answeredList_,answeredListIdx_,element);
@@ -265,7 +294,7 @@ ModAnoubis::getNext(enum notifyListTypes listType)
 	return (element->GetData());
 }
 
-NotifyListEntry *
+Notification *
 ModAnoubis::getLast(enum notifyListTypes listType)
 {
 	wxNotifyListNode *element;
@@ -275,7 +304,7 @@ ModAnoubis::getLast(enum notifyListTypes listType)
 		ITERATION_LAST(notAnsweredList_,notAnsweredListIdx_,element);
 		break;
 	case NOTIFY_LIST_MESSAGE:
-		ITERATION_LAST(msgList_,msgListIdx_,element);
+		ITERATION_LAST(alertList_,alertListIdx_,element);
 		break;
 	case NOTIFY_LIST_ANSWERED:
 		ITERATION_LAST(answeredList_,answeredListIdx_,element);

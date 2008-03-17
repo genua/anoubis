@@ -33,3 +33,10 @@ DEFINE_LOCAL_EVENT_TYPE(anEVT_COM_CONNECTION)
 DEFINE_LOCAL_EVENT_TYPE(anEVT_COM_REMOTESTATION)
 DEFINE_LOCAL_EVENT_TYPE(anEVT_COM_ALERTNOTIFY)
 DEFINE_LOCAL_EVENT_TYPE(anEVT_COM_ESCALNOTIFY)
+
+/*
+ * Transports a notification as client object.
+ * A notification will been stored and deleted by ModAnoubis.
+ * _ANY_ receiver of this evnet has to call event.Skip().
+ */
+DEFINE_LOCAL_EVENT_TYPE(anEVT_ADD_NOTIFICATION)

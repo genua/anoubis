@@ -31,49 +31,98 @@
 
 #include <unistd.h>
 #include <wx/string.h>
-#include <wx/timer.h>
+#include <wx/imaglist.h>
 
+#include "AnEvents.h"
 #include "AnShortcuts.h"
 #include "DlgLogViewer.h"
+#include "main.h"
+#include "Notification.h"
+#include "AlertNotify.h"
+#include "LogNotify.h"
+#include "EscalationNotify.h"
+
+#define LOGVIEWER_COLUMN_ICON		0
+#define LOGVIEWER_COLUMN_TIME		1
+#define LOGVIEWER_COLUMN_MODULE		2
+#define LOGVIEWER_COLUMN_MESSAGE	3
 
 DlgLogViewer::DlgLogViewer(wxWindow* parent) : DlgLogViewerBase(parent)
 {
+	wxIcon		*icon;
+	wxImageList	*imgList;
+
+	imgList = new wxImageList(16, 16);
 	shortcuts_  = new AnShortcuts(this);
 	this->GetSizer()->Layout();
-	currentFile_ = wxT("/var/log/syslog");
-	updateTimer_ = new wxTimer(this);
-	updateTimer_->Start(30 * 1000); /* 30 seconds interval */
-	this->Connect(wxEVT_TIMER, wxTimerEventHandler(DlgLogViewer::OnTimer));
-	update();
+
+	defaultIconIdx_ = imgList->Add(wxNullIcon);
+	icon = wxGetApp().loadIcon(wxT("ModAnoubis_alert_16.png"));
+	alertIconIdx_ = imgList->Add(*icon);
+
+	icon = wxGetApp().loadIcon(wxT("ModAnoubis_question_16.png"));
+	escalationIconIdx_ = imgList->Add(*icon);
+	lc_logList->AssignImageList(imgList, wxIMAGE_LIST_SMALL);
+
+	lc_logList->InsertColumn(LOGVIEWER_COLUMN_ICON, wxT(""),
+	    wxLIST_FORMAT_LEFT, 24);
+
+	lc_logList->InsertColumn(LOGVIEWER_COLUMN_TIME, wxT("Time"),
+	    wxLIST_FORMAT_LEFT, wxLIST_AUTOSIZE);
+
+	lc_logList->InsertColumn(LOGVIEWER_COLUMN_MODULE, wxT("Module"),
+	    wxLIST_FORMAT_CENTER, wxLIST_AUTOSIZE);
+
+	lc_logList->InsertColumn(LOGVIEWER_COLUMN_MESSAGE, wxT("Message"),
+	    wxLIST_FORMAT_LEFT, wxLIST_AUTOSIZE);
+
+	Connect(anEVT_ADD_NOTIFICATION,
+	    wxCommandEventHandler(DlgLogViewer::OnAddNotification));
 }
 
 DlgLogViewer::~DlgLogViewer(void)
 {
 	delete shortcuts_;
-	updateTimer_->Stop();
-	delete updateTimer_;
 }
 
 void
-DlgLogViewer::OnTimer(wxTimerEvent& event)
+DlgLogViewer::OnAddNotification(wxCommandEvent& event)
 {
-	update();
+	Notification *notify;
+
+	notify = (Notification *)(event.GetClientObject());
+	addNotification(notify);
+	/*
+	 * The notify was also received by ModAnoubis, which stores
+	 * and destroies it. Thus we must not delete it.
+	 */
+	event.Skip();
 }
 
 void
-DlgLogViewer::update(void)
+DlgLogViewer::addNotification(Notification *notify)
 {
-	tx_logList->Clear();
-	if (access(currentFile_.fn_str(), R_OK) == 0)
-		tx_logList->LoadFile(currentFile_);
-	else
-		tx_logList->AppendText(
-		    wxT("Sorry. The choosen file is not accessable."));
-}
+	int listIdx;
+	int iconIdx;
 
-void
-DlgLogViewer::OnFileSelected(wxFileDirPickerEvent& event)
-{
-	currentFile_ = event.GetPath();
-	update();
+	listIdx = lc_logList->GetItemCount();
+	if (typeid(*notify) == typeid(class EscalationNotify)) {
+		iconIdx = escalationIconIdx_;
+	} else if (typeid(*notify) == typeid(class AlertNotify)) {
+		iconIdx = alertIconIdx_;
+	} else {
+		iconIdx = defaultIconIdx_;
+	}
+
+	lc_logList->InsertItem(listIdx, wxEmptyString, iconIdx);
+	lc_logList->SetItem(listIdx, LOGVIEWER_COLUMN_TIME, notify->getTime());
+	lc_logList->SetItem(listIdx, LOGVIEWER_COLUMN_MODULE,
+	    notify->getModule());
+	lc_logList->SetItem(listIdx, LOGVIEWER_COLUMN_MESSAGE,
+	    notify->getLogMessage());
+
+	/* trigger new calculation of column width (all icons has same size) */
+	lc_logList->SetColumnWidth(LOGVIEWER_COLUMN_TIME, wxLIST_AUTOSIZE);
+	lc_logList->SetColumnWidth(LOGVIEWER_COLUMN_MODULE, wxLIST_AUTOSIZE);
+	lc_logList->SetColumnWidth(LOGVIEWER_COLUMN_MESSAGE, wxLIST_AUTOSIZE);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 GeNUA mbH <info@genua.de>
+ * Copyright (c) 2008 GeNUA mbH <info@genua.de>
  *
  * All rights reserved.
  *
@@ -25,70 +25,84 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __MAIN_H__
-#define __MAIN_H__
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <wx/app.h>
-#include <wx/icon.h>
-#include <wx/stdpaths.h>
+#include <sys/types.h>
+
+#ifdef LINUX
+#include <linux/eventdev.h>
+#include <linux/anoubis.h>
+#include <linux/anoubis_alf.h>
+#include <linux/anoubis_sfs.h>
+#endif
+
+#ifdef OPENBSD
+#include <dev/eventdev.h>
+#include <dev/anoubis.h>
+#include <dev/anoubis_alf.h>
+#include <dev/anoubis_sfs.h>
+#endif
+
+#include <anoubis_msg.h>
 #include <wx/string.h>
+#include <wx/utils.h>
 
-#include "Communicator.h"
-#include "ctassert.h"
-#include "DlgLogViewer.h"
-#include "DlgRuleEditor.h"
-#include "MainFrame.h"
-#include "Module.h"
-#include "TrayIcon.h"
+#include "Notification.h"
 
-enum moduleIdx {
-	OVERVIEW = 0,
-	ALF,
-	SFS,
-	ANOUBIS,
-	LAST_MODULE_INDEX
-};
+#include <wx/listimpl.cpp>
+WX_DEFINE_LIST(NotifyList);
 
-compile_time_assert((LAST_MODULE_INDEX == ANOUBIS_MODULESNO), \
-    MODULE_INDEX_mismatch_ANOUBIS_MODULESNO);
-
-class AnoubisGuiApp : public wxApp
+Notification::Notification(struct anoubis_msg *msg)
 {
-	private:
-		MainFrame	*mainFrame;
-		DlgLogViewer	*logViewer_;
-		DlgRuleEditor	*ruleEditor_;
-		Communicator	*com;
-		TrayIcon	*trayIcon;
-		Module		*modules_[ANOUBIS_MODULESNO];
-		wxStandardPaths	 paths_;
+	module_ = wxEmptyString;
+	timeStamp_ = wxEmptyString;
+	logMessage_ = wxEmptyString;
+	notify_ = msg;
+}
 
-	public:
-		AnoubisGuiApp(void);
-		~AnoubisGuiApp(void);
+Notification::~Notification(void)
+{
+	if (notify_ != NULL) {
+		anoubis_msg_free(notify_);
+		notify_ = NULL;
+	}
+}
 
-		bool	OnInit(void);
-		void	close(void);
-		void	sendEvent(wxCommandEvent&);
-		void	sendEvent(wxEventType);
-		void	log(wxString);
-		void	alert(wxString);
+wxString
+Notification::getModule(void)
+{
+	if (module_.IsEmpty() && (notify_ != NULL)) {
+		switch (get_value((notify_->u.notify)->subsystem)) {
+		case ANOUBIS_SOURCE_TEST:
+			module_ = wxT("TEST");
+			break;
+		case ANOUBIS_SOURCE_ALF:
+			module_ = wxT("ALF");
+			break;
+		case ANOUBIS_SOURCE_SANDBOX:
+			module_ = wxT("SANDBOX");
+			break;
+		case ANOUBIS_SOURCE_SFS:
+			module_ = wxT("SFS");
+			break;
+		default:
+			module_ = wxT("(unknown)");
+			break;
+		}
+	}
 
-		void	setLogViewerVisability(bool);
-		void	toggleLogViewerVisability(void);
-		void	setRuleEditorVisability(bool);
-		void	toggleRuleEditorVisability(void);
-		void	setDaemonConnection(bool);
-		void	update(void);
-		wxIcon *loadIcon(wxString);
-		Module *getModule(enum moduleIdx);
-		void	updateTrayIcon(void);
-};
+	return (module_);
+}
 
-DECLARE_APP(AnoubisGuiApp)
+wxString
+Notification::getTime(void)
+{
+	if (timeStamp_.IsEmpty()) { // && (notify_ != NULL)) {
+		/* XXX: use time of notify_  -- ch */
+		timeStamp_ = wxNow();
+	}
 
-#endif /* __MAIN_H__ */
+	return (timeStamp_);
+}

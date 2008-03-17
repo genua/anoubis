@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 GeNUA mbH <info@genua.de>
+ * Copyright (c) 2008 GeNUA mbH <info@genua.de>
  *
  * All rights reserved.
  *
@@ -25,54 +25,49 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __MODANOUBIS_H__
-#define __MODANOUBIS_H__
+#include <anoubis_msg.h>
+#include <wx/string.h>
+#include <wx/utils.h>
 
-#include "Module.h"
 #include "Notification.h"
-#include "EscalationNotify.h"
-#include "NotifyAnswer.h"
+#include "LogNotify.h"
 
-enum ModAnoubisId {
-	MODANOUBIS_ID_BASE = 13000,
-	MODULE_ID_ENTRY(ANOUBIS,MAINPANEL),
-	MODULE_ID_ENTRY(ANOUBIS,OVERVIEWPANEL),
-	MODULE_ID_ENTRY(ANOUBIS,TOOLBAR)
-};
-
-class ModAnoubis : public Module, public wxEvtHandler
+LogNotify::LogNotify(wxString msg) : Notification(NULL)
 {
-	private:
-		size_t		notAnsweredListIdx_;
-		size_t		logListIdx_;
-		size_t		alertListIdx_;
-		size_t		answeredListIdx_;
-		size_t		allListIdx_;
-		NotifyList	notAnsweredList_;
-		NotifyList	alertList_;
-		NotifyList	logList_;
-		NotifyList	answeredList_;
-		NotifyList	allList_;
+	module_ = wxT("xanoubis");
+	timeStamp_ = wxNow();
+	logMessage_ = msg;
+}
 
-	public:
-		ModAnoubis(wxWindow *);
-		~ModAnoubis(void);
+LogNotify::LogNotify(struct anoubis_msg *msg) : Notification(msg)
+{
+	/* Nothing special needs to be done here. */
+}
 
-		int	getBaseId(void);
-		int	getToolbarId(void);
-		void	update(void);
+LogNotify::~LogNotify(void)
+{
+	/* Nothing special needs to be done here. */
+}
 
-		void	OnAddNotification(wxCommandEvent&);
-		void	insertNotification(Notification *);
-		void	answerEscalationNotify(EscalationNotify *,
-			    NotifyAnswer *);
-		size_t	getElementNo(enum notifyListTypes);
-		size_t	getListSize(enum notifyListTypes);
+void
+LogNotify::assembleLogMessage(void)
+{
+	if (!logMessage_.IsEmpty()) {
+		return;
+	}
 
-		Notification *getFirst(enum notifyListTypes);
-		Notification *getPrevious(enum notifyListTypes);
-		Notification *getNext(enum notifyListTypes);
-		Notification *getLast(enum notifyListTypes);
-};
+	if (notify_ == NULL) {
+		logMessage_ = wxT("No information available.");
+		return;
+	}
 
-#endif /* __MODANOUBIS_H__ */
+	/* XXX: create log message from  notify -- ch */
+	logMessage_ = wxT("No information extracted yet.");
+}
+
+wxString
+LogNotify::getLogMessage(void)
+{
+	assembleLogMessage();
+	return (logMessage_);
+}

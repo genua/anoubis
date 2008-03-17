@@ -116,6 +116,12 @@ dist_icon_DATA = \
 	icons/ModSfs_question_48.png
 
 xanoubis_SOURCES= \
+	model/AlertNotify.cpp \
+	model/AlertNotify.h \
+	model/EscalationNotify.cpp \
+	model/EscalationNotify.h \
+	model/LogNotify.cpp \
+	model/LogNotify.h \
 	model/ModAlf.cpp \
 	model/ModAlf.h \
 	model/ModAnoubis.cpp \
@@ -126,8 +132,8 @@ xanoubis_SOURCES= \
 	model/ModSfs.h \
 	model/Module.cpp \
 	model/Module.h \
-	model/NotifyList.cpp \
-	model/NotifyList.h \
+	model/Notification.cpp \
+	model/Notification.h \
 	model/NotifyAnswer.cpp \
 	model/NotifyAnswer.h \
 	view/AnStatusBar.cpp \
@@ -183,6 +189,12 @@ xanoubis_SOURCES= \
 	main.h
 
 xanoubis_SOURCES_flawfinder= \
+	model/AlertNotify.cpp_flawfinder \
+	model/AlertNotify.h_flawfinder \
+	model/EscalationNotify.cpp_flawfinder \
+	model/EscalationNotify.h_flawfinder \
+	model/LogNotify.cpp_flawfinder \
+	model/LogNotify.h_flawfinder \
 	model/ModAlf.cpp_flawfinder \
 	model/ModAlf.h_flawfinder \
 	model/ModAnoubis.cpp_flawfinder \
@@ -193,8 +205,8 @@ xanoubis_SOURCES_flawfinder= \
 	model/ModSfs.h_flawfinder \
 	model/Module.cpp_flawfinder \
 	model/Module.h_flawfinder \
-	model/NotifyList.cpp_flawfinder \
-	model/NotifyList.h_flawfinder \
+	model/Notification.cpp_flawfinder \
+	model/Notification.h_flawfinder \
 	model/NotifyAnswer.cpp_flawfinder \
 	model/NotifyAnswer.h_flawfinder \
 	view/AnStatusBar.cpp_flawfinder \
@@ -248,6 +260,12 @@ xanoubis_SOURCES_flawfinder= \
 	main.h_flawfinder
 
 xanoubis_SOURCES_lint= \
+	model/AlertNotify.cpp_lint \
+	model/AlertNotify.h_lint \
+	model/EscalationNotify.cpp_lint \
+	model/EscalationNotify.h_lint \
+	model/LogNotify.cpp_lint \
+	model/LogNotify.h_lint \
 	model/ModAlf.cpp_lint \
 	model/ModAlf.h_lint \
 	model/ModAnoubis.cpp_lint \
@@ -258,8 +276,8 @@ xanoubis_SOURCES_lint= \
 	model/ModSfs.h_lint \
 	model/Module.cpp_lint \
 	model/Module.h_lint \
-	model/NotifyList.cpp_lint \
-	model/NotifyList.h_lint \
+	model/Notification.cpp_lint \
+	model/Notification.h_lint \
 	model/NotifyAnswer.cpp_lint \
 	model/NotifyAnswer.h_lint \
 	view/AnStatusBar.cpp_lint \

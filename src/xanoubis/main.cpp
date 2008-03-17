@@ -34,9 +34,11 @@
 #include <wx/string.h>
 
 #include "AnEvents.h"
+#include "AlertNotify.h"
 #include "Communicator.h"
 #include "DlgLogViewer.h"
 #include "DlgRuleEditor.h"
+#include "LogNotify.h"
 #include "main.h"
 #include "MainFrame.h"
 #include "Module.h"
@@ -44,7 +46,6 @@
 #include "ModAlf.h"
 #include "ModSfs.h"
 #include "ModAnoubis.h"
-#include "NotifyList.h"
 #include "TrayIcon.h"
 
 IMPLEMENT_APP(AnoubisGuiApp)
@@ -140,6 +141,38 @@ AnoubisGuiApp::sendEvent(wxEventType type)
 	wxCommandEvent anEvent(type);
 	anEvent.SetInt(true);
 	sendEvent(anEvent);
+}
+
+void
+AnoubisGuiApp::log(wxString msg)
+{
+	LogNotify	*notify;
+	wxCommandEvent	 event(anEVT_ADD_NOTIFICATION);
+
+	notify = new LogNotify(msg);
+	event.SetClientObject((wxClientData*)notify);
+	sendEvent(event);
+	/*
+	 * The created AlertNotify object must not been destroyed here, so
+	 * it's still alive for the receiver. The notify will be stored by
+	 * ModAnoubis and been deleted by it.
+	 */
+}
+
+void
+AnoubisGuiApp::alert(wxString msg)
+{
+	AlertNotify	*notify;
+	wxCommandEvent	 event(anEVT_ADD_NOTIFICATION);
+
+	notify = new AlertNotify(msg);
+	event.SetClientObject((wxClientData*)notify);
+	sendEvent(event);
+	/*
+	 * The created AlertNotify object must not been destroyed here, so
+	 * it's still alive for the receiver. The notify will be stored by
+	 * ModAnoubis and been deleted by it.
+	 */
 }
 
 void
