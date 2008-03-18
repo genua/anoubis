@@ -29,52 +29,71 @@
 #include "config.h"
 #endif
 
+#include <wx/filedlg.h>
+#include <wx/choicdlg.h>
+
 #include "AnShortcuts.h"
 #include "DlgRuleEditor.h"
 
 DlgRuleEditor::DlgRuleEditor(wxWindow* parent) : DlgRuleEditorBase(parent)
 {
-	alfPanel_ = new DlgRuleEditorAlfPanelBase(this);
-	sfsPanel_ = new DlgRuleEditorSfsPanelBase(this);
-	shortcuts_  = new AnShortcuts(this);
-
-	alfPanel_->Show();
-	sfsPanel_->Hide();
-
-	this->GetSizer()->Add(alfPanel_, 1, wxALL|wxEXPAND, 5);
-	this->GetSizer()->Layout();
+	ruleListCtrl->InsertColumn(0, wxT("Id"),
+	    wxLIST_FORMAT_LEFT, wxLIST_AUTOSIZE_USEHEADER);
+	ruleListCtrl->InsertColumn(1, wxT("Application"),
+	    wxLIST_FORMAT_LEFT, wxLIST_AUTOSIZE_USEHEADER);
+	ruleListCtrl->InsertColumn(2, wxT("Context"),
+	    wxLIST_FORMAT_LEFT, wxLIST_AUTOSIZE_USEHEADER);
+	ruleListCtrl->InsertColumn(3, wxT("Binary"),
+	    wxLIST_FORMAT_LEFT, wxLIST_AUTOSIZE_USEHEADER);
+	ruleListCtrl->InsertColumn(4, wxT("Hash-Type"),
+	    wxLIST_FORMAT_LEFT, wxLIST_AUTOSIZE_USEHEADER);
+	ruleListCtrl->InsertColumn(5, wxT("Hash"),
+	    wxLIST_FORMAT_LEFT, wxLIST_AUTOSIZE_USEHEADER);
+	ruleListCtrl->InsertColumn(6, wxT("Action"),
+	    wxLIST_FORMAT_LEFT, wxLIST_AUTOSIZE_USEHEADER);
 }
 
 DlgRuleEditor::~DlgRuleEditor(void)
 {
-	delete alfPanel_;
-	delete sfsPanel_;
 	delete shortcuts_;
 }
 
 void
-DlgRuleEditor::OnModSelected(wxCommandEvent& event)
+DlgRuleEditor::OnTableOptionButtonClick(wxCommandEvent& event)
 {
-	wxPanel *modulePanel;
-	wxSizer *mainSizer;
+	wxArrayString	 choices;
+	wxMultiChoiceDialog	*multiChoiceDlg;
 
-	mainSizer = this->GetSizer();
-	mainSizer->GetItem(2)->GetWindow()->Hide();
-	mainSizer->Detach(2);
+	choices.Add(wxT("Id"));
+	choices.Add(wxT("Application"));
+	choices.Add(wxT("Context"));
+	choices.Add(wxT("Binary"));
+	choices.Add(wxT("Hash-Type"));
+	choices.Add(wxT("Hash"));
+	choices.Add(wxT("Action"));
 
-	switch (this->rb_modSelector->GetSelection()) {
-	default:
-		fprintf(stderr, "INTERNAL ERROR: default for modSelector\n");
-		/* FALLTHROUGH */
-	case 0:
-		modulePanel = alfPanel_;
-		break;
-	case 1:
-		modulePanel = sfsPanel_;
-		break;
+	multiChoiceDlg = new wxMultiChoiceDialog(this, wxT("Table columns"),
+	    wxT("Please select the columns you're interested in"), choices);
+
+	if (multiChoiceDlg->ShowModal() == wxID_OK) {
+		/* XXX: alter table columns here -- ch */
 	}
-	mainSizer->Add(modulePanel, 1, wxALL|wxEXPAND, 5);
-	modulePanel->Show();
-	mainSizer->Layout();
-	event.Skip();
+
+	delete multiChoiceDlg;
+}
+
+void
+DlgRuleEditor::OnBinaryModifyButtonClick(wxCommandEvent& event)
+{
+	wxString	caption = wxT("Choose a binary");
+	wxString	wildcard = wxT("*");
+	wxString	defaultDir = wxT("/usr/bin/");
+	wxString	defaultFilename = wxEmptyString;
+	wxFileDialog	fileDlg(NULL, caption, defaultDir, defaultFilename,
+			    wildcard, wxOPEN);
+
+	if (fileDlg.ShowModal() == wxID_OK) {
+		appBinaryTextCtrl->Clear();
+		appBinaryTextCtrl->AppendText(fileDlg.GetPath());
+	}
 }

@@ -35,15 +35,27 @@
 #define __DlgRuleEditorBase__
 
 #include <wx/string.h>
-#include <wx/radiobox.h>
+#include <wx/stattext.h>
 #include <wx/gdicmn.h>
 #include <wx/font.h>
 #include <wx/colour.h>
 #include <wx/settings.h>
+#include <wx/button.h>
+#include <wx/textctrl.h>
+#include <wx/choice.h>
 #include <wx/sizer.h>
+#include <wx/listctrl.h>
+#include <wx/radiobut.h>
+#include <wx/spinctrl.h>
+#include "AnFader.h"
 #include <wx/statbox.h>
-#include <wx/panel.h>
-#include <wx/dialog.h>
+#include <wx/scrolwin.h>
+#include <wx/bitmap.h>
+#include <wx/image.h>
+#include <wx/combobox.h>
+#include <wx/checkbox.h>
+#include <wx/notebook.h>
+#include <wx/frame.h>
 
 ///////////////////////////////////////////////////////////////////////////
 
@@ -51,49 +63,148 @@
 ///////////////////////////////////////////////////////////////////////////////
 /// Class DlgRuleEditorBase
 ///////////////////////////////////////////////////////////////////////////////
-class DlgRuleEditorBase : public wxDialog 
+class DlgRuleEditorBase : public wxFrame 
 {
 	private:
 	
 	protected:
-		wxRadioBox* rb_modSelector;
-		wxPanel* pa_common;
+		wxStaticText* controlRuleText;
+		wxButton* controlRuleCreateButton;
+		wxButton* controlRuleDeleteButton;
+		
+		wxStaticText* controlFilterText;
+		wxTextCtrl* controlFilterTextCtrl;
+		wxStaticText* controlFilterInText;
+		wxChoice* controlFilterChoice;
+		wxStaticText* controlRuleSetText;
+		wxButton* controlRuleSetSaveButton;
+		
+		wxStaticText* controlOptionText;
+		wxButton* controlOptionButton;
+		wxListCtrl* ruleListCtrl;
+		wxNotebook* ruleEditNotebook;
+		wxScrolledWindow* commonNbPanel;
+		wxStaticText* commonModuleText;
+		wxChoice* commonModuleChoice;
+		wxStaticText* commonStateText;
+		wxRadioButton* commonActiveRadioButton;
+		wxRadioButton* commonDeactiveRadioButton;
+		wxStaticText* commonNameText;
+		wxTextCtrl* commonNameTextCtrl;
+		wxStaticText* commonPriorityText;
+		wxSpinCtrl* commonPrioritySpinCtrl;
+		wxStaticText* commonFaderText;
+		AnFader *commonFader;
+		wxStaticText* commonCommentText;
+		wxTextCtrl* commonCommentTextCtrl;
+		wxRadioButton* commonCountRadioButton;
+		wxSpinCtrl* commonCountSpinCtrl;
+		wxRadioButton* commonProcEndRadioButton;
+		wxRadioButton* commonTimeRadioButton;
+		wxSpinCtrl* commonTimeSpinCtrl;
+		wxChoice* commonTimeUnitChoice;
+		wxRadioButton* commonAlwaysRadioButton;
+		wxRadioButton* commonNoneLogRadioButton;
+		wxRadioButton* commonDoLogRadioButton;
+		wxRadioButton* commonAlertLogRadioButton;
+		wxStaticText* commonCreatedText;
+		wxStaticText* commonCreateTextValue;
+		wxStaticText* commonModifiedText;
+		wxStaticText* commonModifiedTextValue;
+		wxStaticText* commonModificatorText;
+		wxStaticText* commonModificatorTextValue;
+		wxScrolledWindow* applicationNbPanel;
+		wxStaticText* appNameText;
+		wxComboBox* appNameComboBox;
+		
+		
+		
+		wxStaticText* appBinaryText;
+		wxButton* appGuessButton;
+		wxStaticText* appGuessText;
+		
+		
+		
+		
+		wxTextCtrl* appBinaryTextCtrl;
+		wxButton* appBinaryModifyButton;
+		
+		wxButton* appBinaryAddButton;
+		wxStaticText* appInheritanceText;
+		wxTextCtrl* appInheritanceTextCtrl;
+		wxButton* appInheritanceModifyButton;
+		
+		wxButton* appInheritanceAddButton;
+		wxScrolledWindow* alfNbPanel;
+		wxStaticText* alfActionText;
+		wxRadioButton* alfAllowRadioButton;
+		wxRadioButton* alfDenyRadioButton;
+		wxRadioButton* alfAskRadioButton;
+		wxStaticText* alfTypeText;
+		wxRadioButton* alfFilterRadioButton;
+		wxRadioButton* alfCapRadioButton;
+		wxRadioButton* alfDefaultRadioButton;
+		wxStaticText* alfProtocolText;
+		wxCheckBox* alfTcpCheckBox;
+		wxCheckBox* alfUdpCheckBox;
+		
+		
+		
+		
+		wxStaticText* alfSrcAddrText;
+		wxComboBox* alfSrcAddrComboBox;
+		wxStaticText* alfSrcAddrDelimiterText;
+		wxSpinCtrl* alfSrcAddrNetSpinCtrl;
+		
+		wxButton* alfSrcAddrAddButton;
+		wxStaticText* alfDstAddrText;
+		wxComboBox* alfDstAddrComboBox;
+		wxStaticText* alfDstAddrDelimiterText;
+		wxSpinCtrl* alfDstAddrNetSpinCtrl;
+		
+		wxButton* alfDstAddrAddButton;
+		wxStaticText* alfSrcPortText;
+		wxComboBox* alfSrcPortComboBox;
+		
+		
+		
+		
+		wxStaticText* alfDstPortText;
+		wxComboBox* alfDstPortComboBox;
+		
+		
+		
+		
+		wxStaticText* alfAddrFamilyText;
+		wxRadioButton* alfInetRadioButton;
+		wxRadioButton* alfInet6RadionButton;
+		wxRadioButton* alfAnyRadioButton;
+		wxScrolledWindow* sfsNbPanel;
+		wxStaticText* sfsBinaryLabelText;
+		wxTextCtrl* sfsBinaryTextCtrl;
+		wxButton* sfsBinaryModifyButton;
+		wxStaticText* sfsRegisteredSumLabelText;
+		wxStaticText* sfsRegisteredSumValueText;
+		
+		wxStaticText* sfsCurrentSumLabelText;
+		wxStaticText* sfsCurrentSumValueText;
+		
+		wxStaticText* sfsStatusLabelText;
+		wxStaticText* sfsStatusValueText;
+		wxButton* sfsUpdateChkSumButton;
+		wxScrolledWindow* macroNbPanel;
+		wxStaticText* macroTypeLabelText;
+		wxChoice* macroTypeChoice;
+		wxStaticText* macroValueLabelText;
+		wxTextCtrl* macroValueextCtrl;
 		
 		// Virtual event handlers, overide them in your derived class
-		virtual void OnKeyPressed( wxKeyEvent& event ){ event.Skip(); }
-		virtual void OnModSelected( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnTableOptionButtonClick( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnBinaryModifyButtonClick( wxCommandEvent& event ){ event.Skip(); }
 		
 	
 	public:
-		DlgRuleEditorBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxT("Rule Editor"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 250,300 ), long style = wxDEFAULT_DIALOG_STYLE, const wxString& name = wxT("DlgRuleEditor") );
-	
-};
-
-///////////////////////////////////////////////////////////////////////////////
-/// Class DlgRuleEditorAlfPanelBase
-///////////////////////////////////////////////////////////////////////////////
-class DlgRuleEditorAlfPanelBase : public wxPanel 
-{
-	private:
-	
-	protected:
-	
-	public:
-		DlgRuleEditorAlfPanelBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 200,100 ), long style = wxTAB_TRAVERSAL );
-	
-};
-
-///////////////////////////////////////////////////////////////////////////////
-/// Class DlgRuleEditorSfsPanelBase
-///////////////////////////////////////////////////////////////////////////////
-class DlgRuleEditorSfsPanelBase : public wxPanel 
-{
-	private:
-	
-	protected:
-	
-	public:
-		DlgRuleEditorSfsPanelBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 200,100 ), long style = wxTAB_TRAVERSAL );
+		DlgRuleEditorBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxT("Anoubis Rule Editor"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( -1,-1 ), long style = wxDEFAULT_FRAME_STYLE|wxTAB_TRAVERSAL );
 	
 };
 

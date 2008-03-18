@@ -38,11 +38,10 @@
 class DlgRuleEditor : public DlgRuleEditorBase
 {
 	protected:
-		wxPanel		*alfPanel_;
-		wxPanel		*sfsPanel_;
 		AnShortcuts	*shortcuts_;
 
-		void OnModSelected(wxCommandEvent&);
+		void OnTableOptionButtonClick(wxCommandEvent&);
+		void OnBinaryModifyButtonClick(wxCommandEvent&);
 
 	public:
 		DlgRuleEditor(wxWindow *);
