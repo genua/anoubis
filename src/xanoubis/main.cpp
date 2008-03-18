@@ -107,6 +107,7 @@ bool AnoubisGuiApp::OnInit()
 	//         state of Module ALF by calling the update()-method.
 	//         Eventually the actual call has to be triggered by an event.
 	((ModAlf*)modules_[ALF])->update();
+	((ModSfs*)modules_[SFS])->update();
 	((ModAnoubis*)modules_[ANOUBIS])->update();
 
 	/* XXX CH: do error check */

@@ -28,12 +28,19 @@
 #ifndef __ModSfsOverviewPanelImpl__
 #define __ModSfsOverviewPanelImpl__
 
+#include <wx/icon.h>
 #include "ModSfsPanelsBase.h"
 
 class ModSfsOverviewPanelImpl : public ModSfsOverviewPanelBase
 {
-public:
-	ModSfsOverviewPanelImpl(wxWindow* parent, wxWindowID id);
+	private:
+		wxIcon	*stateIconNormal_;
+
+	public:
+		ModSfsOverviewPanelImpl(wxWindow*, wxWindowID);
+		~ModSfsOverviewPanelImpl(void);
+
+		virtual void update(void);
 };
 
 #endif /* __ModSfsOverviewPanelImpl__ */

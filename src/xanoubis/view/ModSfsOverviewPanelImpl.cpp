@@ -25,10 +25,32 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <wx/icon.h>
+
+#include "main.h"
+#include "ModSfs.h"
 #include "ModSfsOverviewPanelImpl.h"
 
 ModSfsOverviewPanelImpl::ModSfsOverviewPanelImpl(wxWindow* parent,
     wxWindowID id) : ModSfsOverviewPanelBase(parent, id)
 {
+	stateIconNormal_ = wxGetApp().loadIcon(_T("ModSfs_ok_48.png"));
+}
 
+ModSfsOverviewPanelImpl::~ModSfsOverviewPanelImpl(void)
+{
+	delete stateIconNormal_;
+}
+
+void
+ModSfsOverviewPanelImpl::update(void)
+{
+	ModSfs		*module;
+	wxString	state;
+
+	module = (ModSfs *)(wxGetApp().getModule(SFS));
+	state.Printf(_T("%s"), module->getState().c_str());
+	txt_statusValue->SetLabel(state);
+
+	sfsStatusIcon->SetIcon(*stateIconNormal_);
 }

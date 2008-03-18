@@ -69,4 +69,7 @@ ModSfs::getToolbarId(void)
 void
 ModSfs::update(void)
 {
+	if (overviewPanel_ != NULL) {
+		((ModSfsOverviewPanelImpl *)overviewPanel_)->update();
+	}
 }

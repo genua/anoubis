@@ -32,8 +32,8 @@
 
 class ModSfsMainPanelImpl : public ModSfsMainPanelBase
 {
-public:
-	ModSfsMainPanelImpl(wxWindow* parent, wxWindowID id);
+	public:
+		ModSfsMainPanelImpl(wxWindow*, wxWindowID);
 };
 
 #endif /* __ModSfsMainPanelImpl__ */

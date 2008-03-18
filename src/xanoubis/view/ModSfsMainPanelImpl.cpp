@@ -31,4 +31,16 @@ ModSfsMainPanelImpl::ModSfsMainPanelImpl(wxWindow* parent,
     wxWindowID id) : ModSfsMainPanelBase(parent, id)
 {
 
+	lst_Rules->InsertColumn(0, wxT("Id"), wxLIST_FORMAT_LEFT,
+	    wxLIST_AUTOSIZE_USEHEADER );
+	lst_Rules->InsertColumn(1, wxT("Application"), wxLIST_FORMAT_LEFT,
+	    wxLIST_AUTOSIZE_USEHEADER );
+	lst_Rules->InsertColumn(2, wxT("Log"), wxLIST_FORMAT_LEFT,
+	    wxLIST_AUTOSIZE_USEHEADER );
+	lst_Rules->InsertColumn(3, wxT("Hash"), wxLIST_FORMAT_LEFT,
+	    wxLIST_AUTOSIZE_USEHEADER );
+	lst_Rules->InsertColumn(4, wxT("Action"), wxLIST_FORMAT_LEFT,
+	    wxLIST_AUTOSIZE_USEHEADER );
+	lst_Rules->InsertColumn(5, wxT("write"), wxLIST_FORMAT_LEFT,
+	    wxLIST_AUTOSIZE_USEHEADER );
 }

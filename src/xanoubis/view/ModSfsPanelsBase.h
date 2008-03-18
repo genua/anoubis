@@ -40,11 +40,19 @@
 #include <wx/font.h>
 #include <wx/colour.h>
 #include <wx/settings.h>
+#include <wx/listctrl.h>
 #include <wx/sizer.h>
+#include <wx/statline.h>
 #include <wx/panel.h>
+#include <wx/bitmap.h>
+#include <wx/image.h>
+#include <wx/notebook.h>
+#include <wx/statbmp.h>
+#include "AnFader.h"
 
 ///////////////////////////////////////////////////////////////////////////
 
+#define wxID_RulesOperationSep 7500
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Class ModSfsMainPanelBase
@@ -56,6 +64,13 @@ class ModSfsMainPanelBase : public wxPanel
 	protected:
 		wxBoxSizer* sz_MainSFSMain;
 		wxStaticText* tx_MainHeadline;
+		wxNotebook* note_MainSfs;
+		wxPanel* pan_Rules;
+		wxListCtrl* lst_Rules;
+		wxStaticText* tx_RulesOperation1stHeader;
+		wxStaticLine* ln_RulesOperationSep;
+		wxStaticText* tx_RulesOperation2ndHeader;
+		wxPanel* pan_TabOptions;
 	
 	public:
 		ModSfsMainPanelBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( -1,-1 ), long style = wxTAB_TRAVERSAL );
@@ -70,7 +85,14 @@ class ModSfsOverviewPanelBase : public wxPanel
 	private:
 	
 	protected:
-		wxStaticText* tx_OVMainHeadline;
+		
+		wxStaticBitmap* sfsStatusIcon;
+		wxStaticText* txt_status;
+		wxStaticText* txt_nachfragen;
+		wxStaticText* txt_statusValue;
+		wxStaticText* txt_nachfragenValue;
+		
+		AnFader *sfsFader;
 	
 	public:
 		ModSfsOverviewPanelBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( -1,-1 ), long style = wxTAB_TRAVERSAL );
