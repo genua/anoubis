@@ -100,7 +100,7 @@ if egrep "\.h: No such file or directory" $STDOUT; then
 	exit 1
 fi
 
-if egrep "syntax error" $STDOUT; then
+if egrep "syntax error" $STDOUT || egrep "syntax error" $STDERR; then
 	error "lint failed to parse the source file"
 	error $STDERR
 	error $STDOUT

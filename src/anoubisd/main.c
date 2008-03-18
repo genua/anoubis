@@ -39,7 +39,6 @@
 
 #include <err.h>
 #include <errno.h>
-#include <event.h>
 #include <fcntl.h>
 #include <pwd.h>
 #include <signal.h>
@@ -50,6 +49,12 @@
 #include <syslog.h>
 #include <unistd.h>
 
+#ifdef S_SPLINT_S
+#include "splint-includes.h"
+#endif
+
+/* on glibc 2.6+, event.h uses non C89 types :/ */
+#include <event.h>
 #include "anoubisd.h"
 #include "aqueue.h"
 #include "amsg.h"

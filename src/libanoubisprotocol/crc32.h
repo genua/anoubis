@@ -47,16 +47,19 @@ static inline unsigned long _crc32_do(unsigned char * buf, int len)
 	return sum;
 }
 
+/*@unused@*/
 static inline unsigned long crc32_get(void * buf, int len)
 {
 	return _crc32_do(buf, len);
 }
 
+/*@unused@*/
 static inline int crc32_check(void * buf, int len)
 {
 	return _crc32_do(buf, len) == 0;
 }
 
+/*@unused@*/
 static inline void crc32_set(void * _buf, int len)
 {
 	unsigned char * buf = _buf;

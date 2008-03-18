@@ -54,7 +54,7 @@ struct anoubis_msg {
 
 #define ANOUBIS_MESSAGE_MAXLEN		100000UL /* Arbitrary limit for now. */
 
-#ifndef S_SPLINT_S
+#if ! defined (S_SPLINT_S) && ! defined (lint)
 #define VERIFY_FIELD(M, SEL, FIELD)	\
     ((M)->length >= (offsetof(typeof(*((M)->u.SEL)), FIELD)	\
 			+ sizeof((M)->u.SEL->FIELD) + CSUM_LEN))
@@ -65,7 +65,7 @@ struct anoubis_msg {
  * Define SPLINT versions that satisfy splint but will certainly not
  * work if they are accidentally compiled into a real executable.
  */
-#define VERIFY_FILED(M, SEL, FIELD)	((M)==(void*)0x12345678)
+#define VERIFY_FIELD(M, SEL, FIELD)	((M)==(void*)0x12345678)
 #define VERIFY_LENGTH(M, LEN)		((M)==(void*)0x12345678)
 #endif
 

@@ -40,10 +40,12 @@ libanoubischat_a_SOURCES = \
 	accbuffer.h \
 	$(include_HEADERS)
 
+INCLUDES = \
+	-I$(top_builddir)/src \
+	-I$(top_srcdir)/include
+
 if NEEDBSDCOMPAT
-INCLUDES = -I$(top_srcdir)/$(bsdcompatdir) -I..
-else
-INCLUDES = -I ..
+INCLUDES += -I$(top_srcdir)/$(bsdcompatdir)
 endif
 
 # For testing with aegis (especially against the baseline) we need to run

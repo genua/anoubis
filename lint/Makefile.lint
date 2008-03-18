@@ -50,7 +50,7 @@ endif
 .SUFFIXES= .lint
 
 if HAVE_LINT
-common_lint_FLAGS = -DS_SPLINT_S
+common_lint_FLAGS =
 endif
 
 .c.c_lint .h.h_lint:
@@ -71,9 +71,14 @@ missing_splint_types = \
 	-D__signed__=signed
 
 common_splint_FLAGS = \
-	$(missing_splint_types) \
 	-weak \
 	+unixlib \
+	-duplicatequals \
+	-fixedformalarray \
+	-formattype \
+	-fullinitblock \
+	-retvalother \
+	-type \
 	-warnposix
 
 # XXX tartler: the flags below are useful when not using -weak, but

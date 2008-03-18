@@ -27,6 +27,11 @@
 
 #include "config.h"
 
+#ifdef S_SPLINT_S
+/* on glibc 2.6+, event.h uses non C89 types :/ */
+#include "splint-includes.h"
+#endif /* S_SPLINT_S */
+
 #include <sys/types.h>
 #include <strings.h>
 #include <stdlib.h>

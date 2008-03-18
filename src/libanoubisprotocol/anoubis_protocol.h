@@ -32,6 +32,10 @@
 
 #include <assert.h>
 
+#ifdef S_SPLINT_S
+#include "splint-includes.h"
+#endif
+
 #define ANOUBIS_PROTO_CONNECT		0
 #define ANOUBIS_PROTO_POLICY		1
 #define ANOUBIS_PROTO_NOTIFY		2
@@ -50,7 +54,7 @@
 	} s##BITS##n;
 
 /* Tokens are opaque data, i.e. we do not have to worry about endianness. */
-typedef u_int64_t anoubis_token_t;
+typedef  u_int64_t anoubis_token_t;
 
 DEFINE_UNSIGNED_TYPE(8);
 DEFINE_UNSIGNED_TYPE(16);
@@ -60,7 +64,7 @@ DEFINE_SIGNED_TYPE(8);
 DEFINE_SIGNED_TYPE(16);
 DEFINE_SIGNED_TYPE(32);
 
-#ifndef S_SPLINT_S
+#if ! defined (S_SPLINT_S) && ! defined (lint)
 #define get_value(VAR)		({				\
 	__typeof__(&(VAR)) __ptr = &(VAR);			\
 	__typeof__(__ptr->netint) __ret;			\
@@ -77,7 +81,7 @@ DEFINE_SIGNED_TYPE(32);
 #define get_value(VAR) 0 /* ((VAR).netint) */
 #endif
 
-#ifndef S_SPLINT_S
+#if ! defined (S_SPLINT_S) && ! defined (lint)
 #define set_value(VAR,VAL)	do {				\
 	__typeof__(&(VAR)) __ptr = &(VAR);			\
 	__typeof__(__ptr->netint) __val = (VAL);		\

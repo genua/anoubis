@@ -34,6 +34,10 @@
 #include <queue.h>
 #endif
 
+#ifdef S_SPLINT_S
+#include "splint-includes.h"
+#endif
+
 #define APN_FLAG_VERBOSE	0x0001
 #define APN_FLAG_VERBOSE2	0x0002
 

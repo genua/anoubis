@@ -35,10 +35,10 @@ include_HEADERS = apn.h
 bsdcompatdir = src/bsdcompat
 libbsdcompat = $(top_builddir)/$(bsdcompatdir)/libbsdcompat.a
 
+INCLUDES = -I $(top_builddir)/src -I $(top_srcdir)/include
+
 if NEEDBSDCOMPAT
-INCLUDES = -I$(top_srcdir)/$(bsdcompatdir) -I $(top_builddir)/src
-else
-INCLUDES = -I $(top_builddir)/src
+INCLUDES += -I$(top_srcdir)/$(bsdcompatdir)
 endif
 
 libapn_a_SOURCES = \

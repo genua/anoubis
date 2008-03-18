@@ -28,6 +28,10 @@
 #ifndef _ANOUBISD_H
 #define _ANOUBISD_H
 
+#ifdef S_SPLINT_S
+#include "splint-includes.h"
+#endif
+
 #ifdef LINUX
 #include <linux/eventdev.h>
 #include <linux/anoubis.h>
@@ -88,7 +92,12 @@ void	log_debug(const char *, ...);
 void	fatalx(const char *);
 void	fatal(const char *);
 
+#ifndef S_SPLINT_S
 #define DEBUG(flag, ...) {if (flag & debug_flags) log_debug(__VA_ARGS__);}
+#else
+/* Splint does not parse varadic macros */
+#define DEBUG
+#endif
 u_int32_t debug_flags;
 
 #define DBG_MSG_FD	1

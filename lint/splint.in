@@ -98,6 +98,13 @@ if egrep 'Parse Error' $STDERR || egrep 'Cannot find include file' $STDOUT; then
 	exit 1
 fi
 
+if egrep '^*** Cannot continue' $STDERR; then
+	echo "Error while running splint:" >&2
+	cat $STDERR >&2
+	cat $STDOUT >&2
+	exit 1
+fi
+
 if egrep '^Finished checking --- no warnings$' $STDERR; then
 	echo "" >$OUTPUTFILE
 	exit 0

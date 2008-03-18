@@ -34,6 +34,10 @@
 
 #include <netinet/in.h>
 
+#ifdef S_SPLINT_S
+#include "splint-includes.h"
+#endif
+
 #define ACHAT_SERVER_PORT	4000
 #define ACHAT_MAX_BACKLOG	5
 #define ACHAT_MAX_MSGSIZE	4096

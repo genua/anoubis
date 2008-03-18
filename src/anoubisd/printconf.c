@@ -31,6 +31,10 @@
 
 #include <stdio.h>
 
+#ifdef S_SPLINT_S
+#include "splint-includes.h"
+#endif
+
 #include "anoubisd.h"
 
 void	print_mainconf(struct anoubisd_config *);

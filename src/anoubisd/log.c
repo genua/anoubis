@@ -28,6 +28,10 @@
 #include <time.h>
 #include <unistd.h>
 
+#ifdef S_SPLINT_S
+#include "splint-includes.h"
+#endif
+
 #include "anoubisd.h"
 
 static const char * const procnames[] = {
@@ -61,19 +65,21 @@ logit(int pri, const char *fmt, ...)
 static void
 vlog(int pri, const char *fmt, va_list ap)
 {
-//	char	*nfmt;
+#if 0
+	char	*nfmt;
 
-//	if (debug) {
-//		/* best effort in out of mem situations */
-//		if (asprintf(&nfmt, "%s\n", fmt) == -1) {
-//			vfprintf(stderr, fmt, ap); /* Flawfinder: ignore */
-//			fprintf(stderr, "\n");
-//		} else {
-//			vfprintf(stderr, nfmt, ap); /* Flawfinder: ignore */
-//			free(nfmt);
-//		}
-//		fflush(stderr);
-//	} else
+	if (debug) {
+		/* best effort in out of mem situations */
+		if (asprintf(&nfmt, "%s\n", fmt) == -1) {
+			vfprintf(stderr, fmt, ap); /* Flawfinder: ignore */
+			fprintf(stderr, "\n");
+		} else {
+			vfprintf(stderr, nfmt, ap); /* Flawfinder: ignore */
+			free(nfmt);
+		}
+		fflush(stderr);
+	} else
+#endif
 		vsyslog(pri, fmt, ap);
 }
 

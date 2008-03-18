@@ -27,6 +27,10 @@
 
 #include "config.h"
 
+#ifdef S_SPLINT_S
+#include "splint-includes.h"
+#endif
+
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/un.h>
