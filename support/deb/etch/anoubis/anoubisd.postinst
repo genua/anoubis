@@ -1,8 +1,18 @@
 #!/bin/sh
+set -e
 
 if ! getent passwd _anoubisd >/dev/null; then
 	adduser --quiet --system --no-create-home --home /var/run/anoubisd \
 	    --disabled-login --group --force-badname _anoubisd
+fi
+
+# migrate broken startlink
+if [ "$1" = "configure" ] &&
+   [ -n "$2" ] &&
+   dpkg --compare-versions $2 lt 10.700.D045 &&
+   [ -L /etc/rcS.d/S36anoubisd ]
+then
+	mv /etc/rcS.d/S36anoubisd /etc/rcS.d/S37anoubisd
 fi
 
 #DEBHELPER#

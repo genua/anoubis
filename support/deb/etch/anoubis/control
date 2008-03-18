@@ -7,7 +7,7 @@ Standards-Version: 3.7.3
 
 Package: anoubisd
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, adduser, libevent1, openssl
+Depends: ${shlibs:Depends}, ${misc:Depends}, adduser
 Description: Central daemon of the Anoubis Security Suite
  XXX: long description
 

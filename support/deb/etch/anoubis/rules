@@ -61,16 +61,6 @@ clean:
 
 install: install-indep install-arch
 install-indep:
-#	dh_testdir
-#	dh_testroot
-#	dh_clean -k -i
-#	dh_installdirs -i
-#
-#	# Add here commands to install the indep part of the package into
-#	# debian/<package>-doc.
-#	#INSTALLDOC#
-#
-#	dh_install -i
 
 install-arch:
 	dh_testdir
@@ -90,18 +80,13 @@ binary-common:
 	dh_testroot
 	dh_installchangelogs
 	dh_installdocs
-#	dh_installmenu
-#	dh_installdebconf
-#	dh_installlogrotate
-	dh_installinit --update-rcd-params="start 36 S ." -panoubisd
-#	dh_installcron
-#	dh_installinfo
+	# see anoubisd.postinst for migration on upgrades
+	dh_installinit --update-rcd-params="start 37 S ." -panoubisd
 	dh_installman
 	dh_link
 	dh_strip
 	dh_compress
 	dh_fixperms
-#	dh_makeshlibs
 	dh_installdeb
 	dh_shlibdeps
 	dh_gencontrol
