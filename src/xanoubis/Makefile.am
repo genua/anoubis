@@ -180,9 +180,9 @@ xanoubis_SOURCES= \
 	control/AnShortcuts.h \
 	control/AnEvents.cpp \
 	control/AnEvents.h \
+	control/CommunicatorCtrl.cpp \
+	control/CommunicatorCtrl.h \
 	control/Communicator.cpp \
-	control/CommunicatorException.cpp \
-	control/CommunicatorException.h \
 	control/Communicator.h \
 	ctassert.h \
 	main.cpp \
@@ -251,9 +251,9 @@ xanoubis_SOURCES_flawfinder= \
 	control/AnShortcuts.h_flawfinder \
 	control/AnEvents.cpp_flawfinder \
 	control/AnEvents.h_flawfinder \
+	control/CommunicatorCtrl.cpp_flawfinder \
+	control/CommunicatorCtrl.h_flawfinder \
 	control/Communicator.cpp_flawfinder \
-	control/CommunicatorException.cpp_flawfinder \
-	control/CommunicatorException.h_flawfinder \
 	control/Communicator.h_flawfinder \
 	ctassert.h_flawfinder \
 	main.cpp_flawfinder \
@@ -322,9 +322,9 @@ xanoubis_SOURCES_lint= \
 	control/AnShortcuts.h_lint \
 	control/AnEvents.cpp_lint \
 	control/AnEvents.h_lint \
+	control/CommunicatorCtrl.cpp_lint \
+	control/CommunicatorCtrl.h_lint \
 	control/Communicator.cpp_lint \
-	control/CommunicatorException.cpp_lint \
-	control/CommunicatorException.h_lint \
 	control/Communicator.h_lint \
 	ctassert.h_lint \
 	main.cpp_lint \

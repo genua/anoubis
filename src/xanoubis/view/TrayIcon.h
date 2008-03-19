@@ -45,6 +45,7 @@ class TrayIcon : public wxTaskBarIcon
 		TrayIcon(void);
 		~TrayIcon(void);
 
+		void OnRemoteStation(wxCommandEvent&);
 		void SetMessageByHand(unsigned int);
 		void SetConnectedDaemon(wxString);
 };

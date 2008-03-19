@@ -34,9 +34,18 @@ BEGIN_DECLARE_EVENT_TYPES()
 	DECLARE_LOCAL_EVENT_TYPE(anEVT_LOGVIEWER_SHOW, wxNewEventType())
 	DECLARE_LOCAL_EVENT_TYPE(anEVT_RULEEDITOR_SHOW, wxNewEventType())
 	DECLARE_LOCAL_EVENT_TYPE(anEVT_COM_CONNECTION, wxNewEventType())
+
+	/*
+	 * A connection to the daemon was sucessfully established.
+	 * The remote station is transmitted as client data.
+	 */
 	DECLARE_LOCAL_EVENT_TYPE(anEVT_COM_REMOTESTATION, wxNewEventType())
-	DECLARE_LOCAL_EVENT_TYPE(anEVT_COM_ALERTNOTIFY, wxNewEventType())
-	DECLARE_LOCAL_EVENT_TYPE(anEVT_COM_ESCALNOTIFY, wxNewEventType())
+
+	/*
+	 * A notification was received. The client data points to the
+	 * corresponding client protocol message.
+	 */
+	DECLARE_LOCAL_EVENT_TYPE(anEVT_COM_NOTIFYRECEIVED, wxNewEventType())
 
 	/*
 	 * Transports a notification as client object.

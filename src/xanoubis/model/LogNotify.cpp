@@ -48,26 +48,3 @@ LogNotify::~LogNotify(void)
 {
 	/* Nothing special needs to be done here. */
 }
-
-void
-LogNotify::assembleLogMessage(void)
-{
-	if (!logMessage_.IsEmpty()) {
-		return;
-	}
-
-	if (notify_ == NULL) {
-		logMessage_ = wxT("No information available.");
-		return;
-	}
-
-	/* XXX: create log message from  notify -- ch */
-	logMessage_ = wxT("No information extracted yet.");
-}
-
-wxString
-LogNotify::getLogMessage(void)
-{
-	assembleLogMessage();
-	return (logMessage_);
-}

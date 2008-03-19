@@ -36,27 +36,20 @@
 
 class Communicator : public wxThread {
 	private:
+		wxEvtHandler		*eventDestination_;
+		wxString		 socketPath_;
+		bool			 isConnected_;
 		struct achat_channel	*channel_;
 		struct anoubis_client	*client_;
-		wxString		 socketPath_;
-		bool			 notDone_;
-		bool			 doRegister_;
-		/* XXX CH: this is ugly and should be changed */
-		bool			 isRegistered_;
-		bool			 registerInProcess_;
-		bool			 doShutdown_;
-		bool			 isDown_;
 
 		achat_rc	connect(void);
+		void		shutdown(void);
 
 	public:
-		Communicator(wxString);
+		Communicator(wxEvtHandler *, wxString);
 
-		virtual void	*Entry(void);
-		void		 open(void);
-		void		 close(void);
-		bool		 isConnected(void);
-		wxString	 getRemoteStation(void);
+		virtual void		*Entry(void);
+		bool			 isConnected(void);
 };
 
 #endif	/* _COMMUNICATOR_H_ */

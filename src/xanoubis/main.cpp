@@ -35,7 +35,7 @@
 
 #include "AnEvents.h"
 #include "AlertNotify.h"
-#include "Communicator.h"
+#include "CommunicatorCtrl.h"
 #include "DlgLogViewer.h"
 #include "DlgRuleEditor.h"
 #include "LogNotify.h"
@@ -55,7 +55,7 @@ AnoubisGuiApp::AnoubisGuiApp(void)
 	mainFrame = NULL;
 	logViewer_ = NULL;
 	ruleEditor_ = NULL;
-	com = NULL;
+	comCtrl_ = NULL;
 	trayIcon = NULL;
 
 	wxInitAllImageHandlers();
@@ -66,8 +66,6 @@ AnoubisGuiApp::AnoubisGuiApp(void)
 AnoubisGuiApp::~AnoubisGuiApp(void)
 {
 	/* mainFrame not handled here, 'cause object already destroyed */
-	if (com != NULL)
-		delete com;
 	if (trayIcon != NULL)
 		delete trayIcon;
 }
@@ -76,8 +74,6 @@ void
 AnoubisGuiApp::close(void)
 {
 	trayIcon->RemoveIcon();
-	com->close();
-	com->Wait();
 }
 
 
@@ -86,7 +82,7 @@ bool AnoubisGuiApp::OnInit()
 	mainFrame = new MainFrame((wxWindow*)NULL);
 	logViewer_ = new DlgLogViewer(mainFrame);
 	ruleEditor_ = new DlgRuleEditor(mainFrame);
-	com = new Communicator(wxT("/var/run/anoubisd.sock"));
+	comCtrl_ = new CommunicatorCtrl(wxT("/var/run/anoubisd.sock"));
 	trayIcon = new TrayIcon();
 
 	modules_[OVERVIEW] = new ModOverview(mainFrame);
@@ -109,10 +105,6 @@ bool AnoubisGuiApp::OnInit()
 	((ModAlf*)modules_[ALF])->update();
 	((ModSfs*)modules_[SFS])->update();
 	((ModAnoubis*)modules_[ANOUBIS])->update();
-
-	/* XXX CH: do error check */
-	com->Create();
-	com->Run();
 
 	update();
 
@@ -196,20 +188,20 @@ AnoubisGuiApp::toggleLogViewerVisability(void)
 }
 
 void
-AnoubisGuiApp::setDaemonConnection(bool doConnect)
+AnoubisGuiApp::connectToDaemon(bool doConnect)
 {
 	if (doConnect)
-		com->open();
+		comCtrl_->connect();
 	else
-		com->close();
+		comCtrl_->disconnect();
 	update();
 }
 
 void
 AnoubisGuiApp::update(void)
 {
-	mainFrame->setDaemonConnection(com->isConnected());
-	mainFrame->setConnectionString(com->getRemoteStation());
+	mainFrame->setDaemonConnection(comCtrl_->isConnected());
+	mainFrame->setConnectionString(comCtrl_->getRemoteStation());
 	updateTrayIcon();
 }
 
@@ -251,5 +243,5 @@ AnoubisGuiApp::updateTrayIcon(void)
 
 	messageNo = anoubisModule->getListSize(NOTIFY_LIST_NOTANSWERED);
 	trayIcon->SetMessageByHand(messageNo);
-	trayIcon->SetConnectedDaemon(com->getRemoteStation());
+	trayIcon->SetConnectedDaemon(comCtrl_->getRemoteStation());
 }

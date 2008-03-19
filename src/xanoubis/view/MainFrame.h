@@ -57,6 +57,7 @@ class MainFrame : public MainFrameBase
 		void OnMbToolsLogViewerSelect(wxCommandEvent&);
 		void OnMbHelpHelpSelect(wxCommandEvent&);
 		void OnTbModuleSelect(wxCommandEvent&);
+		void OnRemoteStation(wxCommandEvent&);
 
 	public:
 		MainFrame(wxWindow*);

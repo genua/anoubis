@@ -57,13 +57,22 @@ class Notification {
 		wxString		 logMessage_;
 		struct anoubis_msg	*notify_;
 
+		wxString	assembleAddress(bool);
+		wxString	localAlfAddress(void);
+		wxString	remoteAlfAddress(void);
+
 	public:
 		Notification(struct anoubis_msg *);
 		virtual ~Notification(void);
 
 		virtual wxString getModule(void);
 		virtual wxString getTime(void);
-		virtual wxString getLogMessage(void) = 0;
+		virtual wxString getLogMessage(void);
+
+		virtual wxString getOperation(void);
+		virtual wxString getPath(void);
+		virtual wxString getOrigin(void);
+		virtual wxString getCheckSum(void);
 
 		friend class AlertNotify;
 		friend class EscalationNotify;

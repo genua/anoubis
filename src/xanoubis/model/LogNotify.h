@@ -44,8 +44,6 @@ class LogNotify : public Notification {
 		LogNotify(wxString);
 		LogNotify(struct anoubis_msg *);
 		~LogNotify(void);
-
-		wxString getLogMessage(void);
 };
 
 #endif	/* _LOGNOTIFY_H_ */

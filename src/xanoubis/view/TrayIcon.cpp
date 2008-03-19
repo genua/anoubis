@@ -28,6 +28,7 @@
 #include <wx/icon.h>
 #include <wx/string.h>
 
+#include "AnEvents.h"
 #include "main.h"
 #include "TrayIcon.h"
 
@@ -40,12 +41,22 @@ TrayIcon::TrayIcon(void)
 	daemon_ = wxT("none");
 
 	update();
+	Connect(anEVT_COM_REMOTESTATION,
+	    wxCommandEventHandler(TrayIcon::OnRemoteStation), NULL, this);
 }
 
 TrayIcon::~TrayIcon(void)
 {
 	delete iconNormal_;
 	delete iconMsgByHand_;
+}
+
+void
+TrayIcon::OnRemoteStation(wxCommandEvent& event)
+{
+	daemon_ = *(wxString *)(event.GetClientObject());
+	update();
+	event.Skip();
 }
 
 void
@@ -66,15 +77,21 @@ void
 TrayIcon::update(void)
 {
 	wxString tooltip;
+	wxIcon	*icon;
 
 	if (messageByHandNo_ > 0) {
 		tooltip = wxT("Messages: ");
 		tooltip += wxString::Format(wxT("%d\n"), messageByHandNo_);
-		tooltip += daemon_;
-		SetIcon(*iconMsgByHand_, tooltip);
+		icon = iconMsgByHand_;
 	} else {
 		tooltip = wxT("No messages\n");
-		tooltip += daemon_;
-		SetIcon(*iconNormal_, tooltip);
+		icon = iconNormal_;
 	}
+	if (!daemon_.Cmp(wxT("none"))) {
+		tooltip += wxT("not connected");
+	} else {
+		tooltip += wxT("connected with ");
+		tooltip += daemon_;
+	}
+	SetIcon(*icon, tooltip);
 }

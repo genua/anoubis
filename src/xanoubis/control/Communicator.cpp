@@ -41,16 +41,25 @@
 #include <wx/string.h>
 #include <wx/thread.h>
 
-#include "anoubischat.h"
-#include "anoubis_protocol.h"
-#include "anoubis_client.h"
-#include "anoubis_msg.h"
-#include "anoubis_transaction.h"
+#include <anoubischat.h>
+#include <anoubis_protocol.h>
+#include <anoubis_client.h>
+#include <anoubis_msg.h>
+#include <anoubis_transaction.h>
+
+#include "AnEvents.h"
 #include "Communicator.h"
 #include "main.h"
 #include "ModAnoubis.h"
 #include "Module.h"
 #include "Notification.h"
+
+enum communicatorFlag {
+	COMMUNICATOR_FLAG_NONE = 0,
+	COMMUNICATOR_FLAG_INIT,
+	COMMUNICATOR_FLAG_PROG,
+	COMMUNICATOR_FLAG_DONE
+};
 
 static long long
 getToken(void)
@@ -59,17 +68,14 @@ getToken(void)
 	return (++token);
 }
 
-Communicator::Communicator(wxString socketPath)
+Communicator::Communicator(wxEvtHandler *eventDestination, wxString socketPath)
+    : wxThread(wxTHREAD_DETACHED)
 {
-	channel_ = acc_create();
-	client_  = NULL;
+	eventDestination_ = eventDestination;
 	socketPath_ = socketPath;
-	notDone_ = true;
-	doRegister_ = true;
-	isRegistered_ = false;
-	registerInProcess_ = false;
-	doShutdown_ = false;
-	isDown_ = false;
+	isConnected_ = false;
+	channel_ = NULL;
+	client_  = NULL;
 }
 
 achat_rc
@@ -86,12 +92,14 @@ Communicator::connect(void)
 	rc = acc_settail(channel_, ACC_TAIL_CLIENT);
 	if (rc != ACHAT_RC_OK) {
 		acc_destroy(channel_);
+		channel_ = NULL;
 		return (rc);
 	}
 
 	rc = acc_setsslmode(channel_, ACC_SSLMODE_CLEAR);
 	if (rc != ACHAT_RC_OK) {
 		acc_destroy(channel_);
+		channel_ = NULL;
 		return (rc);
 	}
 
@@ -108,151 +116,149 @@ Communicator::connect(void)
 	rc = acc_setaddr(channel_, &ss);
 	if (rc != ACHAT_RC_OK) {
 		acc_destroy(channel_);
+		channel_ = NULL;
 		return (rc);
 	}
 
 	rc = acc_prepare(channel_);
 	if (rc != ACHAT_RC_OK) {
 		acc_destroy(channel_);
+		channel_ = NULL;
 		return (rc);
 	}
 
 	rc = acc_open(channel_);
 	if (rc != ACHAT_RC_OK) {
 		acc_destroy(channel_);
+		channel_ = NULL;
 		return (rc);
 	}
 
+	isConnected_ = true;
 	return (ACHAT_RC_OK);
+}
+
+void
+Communicator::shutdown(void)
+{
+	isConnected_ = false;
+	((CommunicatorCtrl *)eventDestination_)->disconnect();
+	if (client_ != NULL) {
+		anoubis_client_close(client_);
+		anoubis_client_destroy(client_);
+	}
+
+	if (channel_ != NULL) {
+		acc_destroy(channel_);
+	}
 }
 
 void *
 Communicator::Entry(void)
 {
 	struct anoubis_transaction	*currTa;
+	bool				 notDone;
+	enum communicatorFlag		 startRegistration;
+	enum communicatorFlag		 startDeRegistration;
+
+	currTa  = NULL;
+	notDone = true;
+	startRegistration   = COMMUNICATOR_FLAG_INIT;
+	startDeRegistration = COMMUNICATOR_FLAG_NONE;
 
 	if (connect() != ACHAT_RC_OK) {
-		/* XXX CH: missing wrong error handling
-		wxMessageBox(wxT("Can't connect to anoubis daemon!"),
-		    wxT("Error"), wxOK | wxICON_ERROR);
-		(wxGetApp()).close();
-		*/
+		shutdown();
 		return (NULL);
 	}
 
 	client_ = anoubis_client_create(channel_);
 	if (client_ == NULL) {
-		acc_destroy(channel_);
+		shutdown();
 		return (NULL);
 	}
 
 	currTa = anoubis_client_connect_start(client_, ANOUBIS_PROTO_BOTH);
 	if (currTa == NULL) {
-		anoubis_client_close(client_);
-		anoubis_client_destroy(client_);
-		acc_destroy(channel_);
+		shutdown();
+		return (NULL);
 	}
 
-	while (notDone_) {
-		struct anoubis_msg * m;
-		size_t size = 1024;
-		achat_rc rc;
+	while (notDone) {
+		struct anoubis_msg	*msg;
+		size_t			 size = 1024;
+		achat_rc		 rc = ACHAT_RC_ERROR;
 
 		if (currTa && (currTa->flags & ANOUBIS_T_DONE)) {
+			/* the current transaction was done */
 			anoubis_transaction_destroy(currTa);
-			if (doRegister_ && registerInProcess_ &&
-			    (currTa->result == 0)) {
-				doRegister_ = false;
-				isRegistered_ = true;
-				registerInProcess_ = false;
-			}
-			if (doShutdown_ && (currTa->result == 0)) {
-				doShutdown_ = false;
-				isDown_ = true;
-				notDone_ = false;
-			}
 			currTa = NULL;
+			if (startRegistration == COMMUNICATOR_FLAG_PROG) {
+				startRegistration = COMMUNICATOR_FLAG_DONE;
+			}
+			if (startDeRegistration == COMMUNICATOR_FLAG_PROG) {
+				startDeRegistration = COMMUNICATOR_FLAG_DONE;
+				notDone = false;
+				continue;
+			}
 		}
 
 		if (currTa == NULL) {
-			if (doRegister_ && !registerInProcess_) {
+			/* we can start the next transaction */
+			if (startRegistration == COMMUNICATOR_FLAG_INIT) {
 				currTa = anoubis_client_register_start(client_,
 				    getToken(), geteuid(), 0, 0, 0);
-				registerInProcess_ = true;
+				startRegistration = COMMUNICATOR_FLAG_PROG;
 			}
-			if (doShutdown_) {
+			if (startDeRegistration == COMMUNICATOR_FLAG_INIT) {
 				currTa = anoubis_client_unregister_start(
 				    client_, getToken(), geteuid(), 0, 0, 0);
+				startDeRegistration = COMMUNICATOR_FLAG_PROG;
 			}
 		}
 
-		m = anoubis_msg_new(1024);
-		if (m == NULL) {
-			notDone_ = false;
+		msg = anoubis_msg_new(1024);
+		if (msg == NULL) {
+			/* XXX: is this error path ok? -- ch */
+			startDeRegistration = COMMUNICATOR_FLAG_INIT;
+			continue;
 		}
 
-		rc = acc_receivemsg(channel_, (char*)(m->u.buf), &size);
+		rc = acc_receivemsg(channel_, (char*)(msg->u.buf), &size);
 		if (rc != ACHAT_RC_OK) {
-			notDone_ = false;
+			/* XXX: is this error path ok? -- ch */
+			startDeRegistration = COMMUNICATOR_FLAG_INIT;
+			continue;
 		}
 
-		anoubis_msg_resize(m, size);
+		anoubis_msg_resize(msg, size);
 
-		int ret;
-		ret = anoubis_client_process(client_, m);
-		if (ret != 1) {
-			notDone_ = false;
+		if (anoubis_client_process(client_, msg) != 1) {
+			startDeRegistration = COMMUNICATOR_FLAG_INIT;
 		}
 
-		struct anoubis_msg *notify = anoubis_client_getnotify(client_);
-		if (notify != NULL) {
-			/*
-			 * XXX: received notifies will not been processed by
-			 * the GUI anymore. This will re-enabled by the change
-			 * fixing the communicator.
-			 *
-			 * Notification *nl;
-			 * ModAnoubis *anoubisModule;
-			 * nl = new Notification(notify);
-			 * anoubisModule = (ModAnoubis *)(wxGetApp().getModule(
-			 *     ANOUBIS));
-			 * anoubisModule->insertNotification(nl);
-			 */
+		if (anoubis_client_hasnotifies(client_) != 0) {
+			struct anoubis_msg *notifyMsg = NULL;
+
+			notifyMsg = anoubis_client_getnotify(client_);
+			wxCommandEvent   event(anEVT_COM_NOTIFYRECEIVED);
+			event.SetClientData(notifyMsg);
+			eventDestination_->ProcessEvent(event);
 		}
 
+		if (TestDestroy() &&
+		    (startDeRegistration == COMMUNICATOR_FLAG_NONE)) {
+			startDeRegistration = COMMUNICATOR_FLAG_INIT;
+		}
 	}
 
-	anoubis_client_close(client_);
-	anoubis_client_destroy(client_);
-	acc_destroy(channel_);
+	isConnected_ = false;
+	shutdown();
 
 	return (NULL);
-}
-
-void
-Communicator::open(void)
-{
-	doRegister_ = true;
-}
-
-void
-Communicator::close(void)
-{
-	doShutdown_ = true;
 }
 
 bool
 Communicator::isConnected(void)
 {
-	return (true);
-}
-
-wxString
-Communicator::getRemoteStation(void)
-{
-	if(isConnected()) {
-		return (wxT("localhost"));
-	} else {
-		return (wxT("none"));
-	}
+	return (isConnected_);
 }

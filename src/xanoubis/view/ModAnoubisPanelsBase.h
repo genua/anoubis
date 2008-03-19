@@ -71,16 +71,18 @@ class ModAnoubisMainPanelBase : public wxPanel
 		wxButton* bt_next;
 		wxButton* bt_last;
 		
-		wxStaticText* tx_fieldSlot1;
-		wxStaticText* tx_valueSlot1;
-		wxStaticText* tx_fieldSlot2;
-		wxStaticText* tx_valueSlot2;
-		wxStaticText* tx_fieldSlot3;
-		wxStaticText* tx_valueSlot3;
-		wxStaticText* tx_fieldSlot4;
-		wxStaticText* tx_valueSlot4;
-		wxStaticText* tx_fieldSlot5;
-		wxStaticText* tx_valueSlot5;
+		wxStaticText* slotLabelText1;
+		wxStaticText* slotValueText1;
+		wxStaticText* slotLabelText2;
+		wxStaticText* slotValueText2;
+		wxStaticText* slotLabelText3;
+		wxStaticText* slotValueText3;
+		wxStaticText* slotLabelText4;
+		wxStaticText* slotValueText4;
+		wxStaticText* slotLabelText5;
+		wxStaticText* slotValueText5;
+		wxStaticText* slotLabelText6;
+		wxStaticText* slotValueText6;
 		wxStaticText* tx_answerValue;
 		wxPanel* pn_question;
 		wxStaticText* tx_question;

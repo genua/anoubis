@@ -30,9 +30,18 @@
 DEFINE_LOCAL_EVENT_TYPE(anEVT_LOGVIEWER_SHOW)
 DEFINE_LOCAL_EVENT_TYPE(anEVT_RULEEDITOR_SHOW)
 DEFINE_LOCAL_EVENT_TYPE(anEVT_COM_CONNECTION)
+
+/*
+ * A connection to the daemon was sucessfully established.
+ * The remote station is transmitted as client data.
+ */
 DEFINE_LOCAL_EVENT_TYPE(anEVT_COM_REMOTESTATION)
-DEFINE_LOCAL_EVENT_TYPE(anEVT_COM_ALERTNOTIFY)
-DEFINE_LOCAL_EVENT_TYPE(anEVT_COM_ESCALNOTIFY)
+
+/*
+ * A notification was received. The client data points to the
+ * corresponding client protocol message.
+ */
+DEFINE_LOCAL_EVENT_TYPE(anEVT_COM_NOTIFYRECEIVED)
 
 /*
  * Transports a notification as client object.

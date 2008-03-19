@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 GeNUA mbH <info@genua.de>
+ * Copyright (c) 2008 GeNUA mbH <info@genua.de>
  *
  * All rights reserved.
  *
@@ -25,65 +25,30 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <anoubischat.h>
-#include <errno.h>
-#include <exception>
-#include <string.h>
+#ifndef _COMMUNICATORCTRL_H_
+#define _COMMUNICATORCTRL_H_
+
+#include <wx/event.h>
 #include <wx/string.h>
 
-#include "CommunicatorException.h"
+#include "Communicator.h"
 
+class CommunicatorCtrl : public wxEvtHandler {
+	private:
+		Communicator	*com_;
+		wxString	 socketPath_;
+		bool		 isAlive_;
 
-CommunicatorException::CommunicatorException(void)
-{
-	reason_ = ACHAT_RC_ERROR;
-}
+	public:
+		CommunicatorCtrl(wxString);
+		~CommunicatorCtrl(void);
 
-CommunicatorException::CommunicatorException(enum achat_rc reason)
-{
-	reason_ = reason;
-}
+		void	 connect(void);
+		void	 disconnect(void);
+		bool	 isConnected(void);
+		wxString getRemoteStation(void);
 
-wxString *
-CommunicatorException::explain(void)
-{
-	const wxChar *reason = NULL;
-	wxString	*msg;
+		void	OnNotifyReceived(wxCommandEvent&);
+};
 
-	switch(reason_) {
-	case ACHAT_RC_OK:
-		reason = _T("ACHAT_RC_OK - anything is ok");
-		break;
-	case ACHAT_RC_ERROR:
-		reason = _T("ACHAT_RC_ERROR - a general error occured");
-		break;
-	case ACHAT_RC_NYI:
-		reason = _T("ACHAT_RC_NYI - method is not implemented");
-		break;
-	case ACHAT_RC_INVALPARAM:
-		reason = _T("ACHAT_RC_INVALPARAM - invalid parameter");
-		break;
-	case ACHAT_RC_WRONGSTATE:
-		reason = _T("ACHAT_RC_WRONGSTATE - wrong state");
-		break;
-	case ACHAT_RC_OOMEM:
-		reason = _T("ACHAT_RC_OOMEM - out of memory");
-		break;
-	default:
-		reason = _T("Thrown with unknown reason!");
-		break;
-	}
-
-	msg = new wxString(reason);
-	*msg += wxT("[");
-	*msg += (wxChar*)std::strerror(errno);
-	*msg += wxT("]");
-
-	return (msg);
-}
-
-achat_rc
- CommunicatorException::getReason(void)
-{
-	return (reason_);
-}
+#endif	/* _COMMUNICATORCTRL_H_ */

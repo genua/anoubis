@@ -50,7 +50,6 @@ class EscalationNotify : public Notification {
 		bool		 isAnswered(void);
 		void		 answer(NotifyAnswer *);
 		NotifyAnswer	*getAnswer(void);
-		wxString	 getLogMessage(void);
 };
 
 #endif	/* _ESCALATIONNOTIFY_H_ */

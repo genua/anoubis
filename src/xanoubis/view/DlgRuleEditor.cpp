@@ -37,6 +37,8 @@
 
 DlgRuleEditor::DlgRuleEditor(wxWindow* parent) : DlgRuleEditorBase(parent)
 {
+	shortcuts_ = new AnShortcuts(this);
+
 	ruleListCtrl->InsertColumn(0, wxT("Id"),
 	    wxLIST_FORMAT_LEFT, wxLIST_AUTOSIZE_USEHEADER);
 	ruleListCtrl->InsertColumn(1, wxT("Application"),

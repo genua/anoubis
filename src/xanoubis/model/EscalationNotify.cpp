@@ -44,23 +44,6 @@ EscalationNotify::~EscalationNotify(void)
 	}
 }
 
-void
-EscalationNotify::assembleLogMessage(void)
-{
-	if (!logMessage_.IsEmpty()) {
-		return;
-	}
-
-	if (notify_ == NULL) {
-		logMessage_ = wxT("No information available.");
-		return;
-	}
-
-	/* XXX: create log message from notify -- ch */
-	logMessage_ = wxT("No information extracted yet.");
-
-}
-
 bool
 EscalationNotify::isAnswered(void)
 {
@@ -81,11 +64,4 @@ NotifyAnswer *
 EscalationNotify::getAnswer(void)
 {
 	return (answer_);
-}
-
-wxString
-EscalationNotify::getLogMessage(void)
-{
-	assembleLogMessage();
-	return (logMessage_);
 }

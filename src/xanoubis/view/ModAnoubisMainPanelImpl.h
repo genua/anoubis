@@ -38,7 +38,6 @@ class ModAnoubisMainPanelImpl : public ModAnoubisMainPanelBase
 		Notification		*currentNotify_;
 
 		void answer(bool);
-		void displayEscalation(void);
 		void displayAlert(void);
 
 	protected:

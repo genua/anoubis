@@ -32,6 +32,7 @@
 #include <wx/app.h>
 #include <wx/msgdlg.h>
 
+#include "AnEvents.h"
 #include "AnShortcuts.h"
 #include "AnStatusBar.h"
 #include "MainFrameBase.h"
@@ -44,6 +45,8 @@
 MainFrame::MainFrame(wxWindow *parent) : MainFrameBase(parent)
 {
 	shortcuts_ = new AnShortcuts(this);
+	Connect(anEVT_COM_REMOTESTATION,
+	    wxCommandEventHandler(MainFrame::OnRemoteStation), NULL, this);
 }
 
 MainFrame::~MainFrame()
@@ -114,14 +117,16 @@ MainFrame::setConnectionString(wxString host)
 {
 	wxString label;
 
-	/* XXX CH: statically connected */
-	//if  (label = wxT("none")) {
-	//	label = wxT("not connected");
-	//} else {
+	if  (!host.Cmp(wxT("none"))) {
+		label = wxT("not connected");
+		an_menubar->Check(ID_MIFILECONNECT, false);
+	} else {
 		label = wxT("connected with\n");
 		label += host;
-	//}
+		an_menubar->Check(ID_MIFILECONNECT, true);
+	}
 	tx_connected->SetLabel(label);
+	Layout();
 }
 
 void
@@ -140,6 +145,13 @@ MainFrame::OnTbModuleSelect(wxCommandEvent& event)
 	sz_mainframeMain->Add(modulePanel, 1, wxEXPAND, 5);
 	modulePanel->Show();
 	sz_mainframeMain->Layout();
+}
+
+void
+MainFrame::OnRemoteStation(wxCommandEvent& event)
+{
+	setConnectionString(*(wxString *)(event.GetClientObject()));
+	event.Skip();
 }
 
 void
@@ -182,7 +194,7 @@ MainFrame::OnMbHelpHelpSelect(wxCommandEvent& event)
 void
 MainFrame::OnMbFileConnectSelect(wxCommandEvent& event)
 {
-	wxGetApp().setDaemonConnection(event.IsChecked());
+	wxGetApp().connectToDaemon(event.IsChecked());
 }
 
 void

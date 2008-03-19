@@ -37,7 +37,7 @@
 #include <wx/stdpaths.h>
 #include <wx/string.h>
 
-#include "Communicator.h"
+#include "CommunicatorCtrl.h"
 #include "ctassert.h"
 #include "DlgLogViewer.h"
 #include "DlgRuleEditor.h"
@@ -59,13 +59,13 @@ compile_time_assert((LAST_MODULE_INDEX == ANOUBIS_MODULESNO), \
 class AnoubisGuiApp : public wxApp
 {
 	private:
-		MainFrame	*mainFrame;
-		DlgLogViewer	*logViewer_;
-		DlgRuleEditor	*ruleEditor_;
-		Communicator	*com;
-		TrayIcon	*trayIcon;
-		Module		*modules_[ANOUBIS_MODULESNO];
-		wxStandardPaths	 paths_;
+		MainFrame		*mainFrame;
+		DlgLogViewer		*logViewer_;
+		DlgRuleEditor		*ruleEditor_;
+		CommunicatorCtrl	*comCtrl_;
+		TrayIcon		*trayIcon;
+		Module			*modules_[ANOUBIS_MODULESNO];
+		wxStandardPaths		 paths_;
 
 	public:
 		AnoubisGuiApp(void);
@@ -82,7 +82,7 @@ class AnoubisGuiApp : public wxApp
 		void	toggleLogViewerVisability(void);
 		void	setRuleEditorVisability(bool);
 		void	toggleRuleEditorVisability(void);
-		void	setDaemonConnection(bool);
+		void	connectToDaemon(bool);
 		void	update(void);
 		wxIcon *loadIcon(wxString);
 		Module *getModule(enum moduleIdx);
