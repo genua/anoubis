@@ -1,2 +1,3 @@
 sbin/anoubisd
 sbin/anoubisctl
+sbin/sfssig

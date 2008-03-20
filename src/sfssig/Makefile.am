@@ -1,4 +1,3 @@
-##########################################################################
 # Copyright (c) 2008 GeNUA mbH <info@genua.de>
 #
 # All rights reserved.
@@ -23,23 +22,49 @@
 # LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-##########################################################################
+#
 
-if NEEDBSDCOMPAT
-BSDCOMPAT=bsdcompat
+sbin_PROGRAMS = sfssig
+
+if STATIC_LINKING
+STATIC = -static
 endif
 
-# Note:  Libraries must come first as applications might depend on them.
-SUBDIRS = $(BSDCOMPAT) libapn libanoubischat libanoubisprotocol anoubisd \
-    xanoubis anoubisctl libapn sfssig
+INCLUDES = -I$(top_srcdir)/include
 
-flawfinder:
-	for t in $(SUBDIRS); do cd $$t && make $@ && cd ..; done
+CFLAGS += $(SSL_CFLAGS)
+LIBS += $(SSL_LIBS)
 
-lint:
-	for t in $(SUBDIRS); do cd $$t && make $@ && cd ..; done
+sfssig_LDFLAGS = $(AM_LDFLAGS) $(SSL_LDFLAGS)
 
-splint:
-	for t in $(SUBDIRS); do cd $$t && make $@ && cd ..; done
+sfssig_SOURCES= \
+	main.c
 
-linting: flawfinder lint splint
+sfssig_SOURCES_flawfinder= \
+	main.c_flawfinder
+
+sfssig_SOURCES_lint= \
+	main.c_lint
+
+sfssig_SOURCES_splint= \
+	main.c_splint
+
+flawfinder_FLAGS=
+splint_FLAGS=+unixlib $(INCLUDES) -I..
+lint_FLAGS=
+
+flawfinder:	$(sfssig_SOURCES_flawfinder)
+splint:		$(sfssig_SOURCES_splint)
+lint:		$(sfssig_SOURCES_lint)
+
+include $(top_srcdir)/lint/Makefile.lint
+
+clean-local:
+	@rm -f $(sfssig_SOURCES_lint)
+	@rm -f $(sfssig_SOURCES_splint)
+	@rm -f $(sfssig_SOURCES_flawfinder)
+
+# As we're in maintainer mode we have to remove generated source files
+# manually.
+dist-hook:
+	$(MAKE) maintainer-clean-generic

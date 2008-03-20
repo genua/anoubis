@@ -109,6 +109,7 @@ AC_CONFIG_FILES([
 	src/bsdcompat/Makefile
 	src/xanoubis/Makefile
 	src/anoubisctl/Makefile
+	src/sfssig/Makefile
 	src/libapn/Makefile
 	test/Makefile
 	test/libanoubischat/Makefile

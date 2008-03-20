@@ -65,10 +65,9 @@ logit(int pri, const char *fmt, ...)
 static void
 vlog(int pri, const char *fmt, va_list ap)
 {
-#if 0
 	char	*nfmt;
 
-	if (debug) {
+	if (debug_flags) {
 		/* best effort in out of mem situations */
 		if (asprintf(&nfmt, "%s\n", fmt) == -1) {
 			vfprintf(stderr, fmt, ap); /* Flawfinder: ignore */
@@ -79,7 +78,6 @@ vlog(int pri, const char *fmt, va_list ap)
 		}
 		fflush(stderr);
 	} else
-#endif
 		vsyslog(pri, fmt, ap);
 }
 
