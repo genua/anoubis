@@ -118,6 +118,11 @@ DEFINE_SIGNED_TYPE(32);
 
 #define		ANOUBIS_P_MIN		0x3000
 
+#if 0
+/* 
+ * These are currently not implemented and replaced with a more general
+ * interface.
+ */
 #define		ANOUBIS_P_INSERT	0x3000
 #define		ANOUBIS_P_INSERTOK	0x3001
 #define		ANOUBIS_P_DELETE	0x3002
@@ -127,6 +132,10 @@ DEFINE_SIGNED_TYPE(32);
 #define		ANOUBIS_P_DELVERSION	0x3013
 #define		ANOUBIS_P_GETRULES	0x3020
 #define		ANOUBIS_P_RULELIST	0x3021
+#endif
+
+#define		ANOUBIS_P_REQUEST	0x3800
+#define		ANOUBIS_P_REPLY		0x3801
 
 #define		ANOUBIS_P_MAX		0x3FFF
 
@@ -218,5 +227,16 @@ typedef struct {
 	u32n	uid;
 	u32n	error;
 } __attribute__((packed)) Anoubis_NotifyResultMessage;
+
+typedef struct {
+	u32n	type;
+	char	payload[0];
+} __attribute__((packed)) Anoubis_PolicyRequestMessage;
+
+typedef struct {
+	u32n	type;
+	u32n	error;
+	char	payload[0];
+} __attribute__((packed)) Anoubis_PolicyReplyMessage;
 
 #endif

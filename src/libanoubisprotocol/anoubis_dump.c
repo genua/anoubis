@@ -127,6 +127,16 @@ static void dump_notifyresult(Anoubis_NotifyResultMessage * m,
 	DUMP_NETU(m, uid);
 }
 
+static void dump_policyrequest(Anoubis_PolicyRequestMessage * m, size_t len)
+{
+	DUMP_DATA(m->payload, len-sizeof(*m));
+}
+
+static void dump_policyreply(Anoubis_PolicyReplyMessage * m, size_t len)
+{
+	DUMP_DATA(m->payload, len-sizeof(*m));
+}
+
 void anoubis_dump(struct anoubis_msg * m, const char * str)
 {
 	int opcode;
@@ -152,6 +162,8 @@ void anoubis_dump(struct anoubis_msg * m, const char * str)
 	CASE(ANOUBIS_N_UNREGISTER, notifyreg)
 	CASE(ANOUBIS_N_RESYOU, notifyresult)
 	CASE(ANOUBIS_N_RESOTHER, notifyresult)
+	CASE(ANOUBIS_P_REQUEST, policyrequest)
+	CASE(ANOUBIS_P_REPLY, policyreply)
 	default:
 		printf(" type = %x", opcode);
 		dump_general(m->u.general, m->length-CSUM_LEN);

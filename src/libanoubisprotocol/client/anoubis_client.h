@@ -46,6 +46,8 @@ struct anoubis_transaction * anoubis_client_connect_start(
 void anoubis_client_close(struct anoubis_client *);
 struct anoubis_transaction * anoubis_client_close_start(
     struct anoubis_client *);
+struct anoubis_transaction * anoubis_client_policyrequest_start(
+    struct anoubis_client *, void * data, int datalen);
 int anoubis_client_process(struct anoubis_client *,
     struct anoubis_msg *);
 struct anoubis_transaction * anoubis_client_register_start(

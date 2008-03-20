@@ -38,6 +38,7 @@
 #include "anoubis_msg.h"
 #include "anoubis_dump.h"
 #include "anoubis_notify.h"
+#include "anoubis_policy.h"
 #include "crc32.h"
 
 struct anoubis_server {
@@ -47,6 +48,7 @@ struct anoubis_server {
 	struct achat_channel * chan;
 	struct anoubis_auth * auth;
 	struct anoubis_notify_group * notify;
+	struct anoubis_policy_comm * policy;
 };
 
 #define ANOUBIS_PROTO_VERSION		1
@@ -66,7 +68,8 @@ struct anoubis_server {
 #define FLAG_SENTCLOSEACK		0x0800
 #define FLAG_ERROR			0x1000
 
-struct anoubis_server * anoubis_server_create(struct achat_channel * chan)
+struct anoubis_server * anoubis_server_create(struct achat_channel * chan,
+    struct anoubis_policy_comm * policy)
 {
 	struct anoubis_server * ret = malloc(sizeof(struct anoubis_server));
 	if (!ret)
@@ -76,9 +79,20 @@ struct anoubis_server * anoubis_server_create(struct achat_channel * chan)
 	ret->chan = chan;
 	ret->auth = NULL;
 	ret->auth_uid = (unsigned int) -1;
+	ret->policy = policy;
 	ret->notify = NULL;
 	return ret;
 };
+
+static void channel_close(struct anoubis_server * server)
+{
+	if (server->policy && server->chan)
+		anoubis_policy_comm_abort(server->policy, server->chan);
+	if (server->chan) {
+		acc_close(server->chan);
+		server->chan = NULL;
+	}
+}
 
 void anoubis_server_destroy(struct anoubis_server * server)
 {
@@ -90,6 +104,7 @@ void anoubis_server_destroy(struct anoubis_server * server)
 		anoubis_notify_destroy(server->notify);
 		server->notify = NULL;
 	}
+	channel_close(server);
 	free(server);
 }
 
@@ -112,18 +127,14 @@ static int anoubis_server_send(struct anoubis_server * server,
 		struct anoubis_msg * m;
 		/* We sent the close ack, too. */
 		if (server->connect_flags & FLAG_SENTCLOSEACK) {
-			if (server->connect_flags & FLAG_GOTCLOSEACK) {
-				acc_close(server->chan);
-				server->chan = NULL;	/* dead! */
-			}
+			if (server->connect_flags & FLAG_GOTCLOSEACK)
+				channel_close(server);
 			return 0;
 		}
 		m = anoubis_msg_new(sizeof(Anoubis_GeneralMessage));
 		if (!m) {
-			if (server->connect_flags & FLAG_GOTCLOSEACK) {
-				acc_close(server->chan);
-				server->chan = NULL;	/* dead! */
-			}
+			if (server->connect_flags & FLAG_GOTCLOSEACK)
+				channel_close(server);
 			return -ENOMEM;
 		}
 		set_value(m->u.general->type, ANOUBIS_C_CLOSEACK);
@@ -308,8 +319,7 @@ static void anoubis_auth_finish_callback(void * data)
 	server->auth = NULL;
 	if (anoubis_server_send(server, m) < 0) {
 		server->connect_flags |= FLAG_ERROR;
-		acc_close(server->chan);
-		server->chan = NULL;
+		channel_close(server);
 	}
 }
 
@@ -372,7 +382,7 @@ static int anoubis_process_closereq(struct anoubis_server * server, int opcode)
 	if (opcode == ANOUBIS_C_CLOSEACK) {
 		server->connect_flags |= FLAG_GOTCLOSEACK;
 		if (server->connect_flags |= FLAG_SENTCLOSEACK)
-			server->chan = NULL;	/* dead! */
+			channel_close(server);
 	}
 	server->connect_flags |= FLAG_GOTCLOSEREQ;
 	/*
@@ -493,6 +503,7 @@ int anoubis_server_process(struct anoubis_server * server, void * buf,
 	case ANOUBIS_C_PROTOSEL:
 	case ANOUBIS_N_REGISTER:
 	case ANOUBIS_N_UNREGISTER:
+	case ANOUBIS_P_REQUEST:
 		/*
 		 * These start new requests. If we either got a closereq
 		 * from the other end these are forbidden. If we sent a
@@ -514,6 +525,7 @@ int anoubis_server_process(struct anoubis_server * server, void * buf,
 	case ANOUBIS_N_NOTIFY:
 	case ANOUBIS_N_RESYOU:
 	case ANOUBIS_N_RESOTHER:
+	case ANOUBIS_P_REPLY:
 		/* These are not allowed from the client. */
 		return reply_invalid_token(server, token, opcode);
 	default:
@@ -551,6 +563,17 @@ int anoubis_server_process(struct anoubis_server * server, void * buf,
 			return -EIO;
 		return anoubis_process_reply(server, &m, opcode,
 		    m.u.token->token);
+	case ANOUBIS_P_REQUEST: {
+		struct anoubis_msg * tmp;
+		if ((server->proto & ANOUBIS_PROTO_POLICY) == 0)
+			return reply_invalid_token(server, token, opcode);
+		tmp = anoubis_msg_clone(&m);
+		if (!tmp)
+			return -ENOMEM;
+		/* This will ultimately free the copy of the message. */
+		return anoubis_policy_comm_process(server->policy, tmp,
+		    server->auth_uid, server->chan);
+	}
 	default:
 		/* Should never happen! */
 		return -EINVAL;

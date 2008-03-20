@@ -67,10 +67,12 @@ static struct proto_opt anoubis_protos[] = {
 #define FLAG_SENTCLOSEACK		0x0010
 #define FLAG_GOTCLOSEACK		0x0020
 
+#define	FLAG_POLICY_PENDING		0x0040
+
 struct anoubis_client {
 	int state;
 	int proto;
-	int connect_flags;
+	int flags;
 	struct achat_channel * chan;
 	unsigned long auth_uid;
 	char * username;
@@ -129,11 +131,11 @@ static struct anoubis_msg * anoubis_client_rcv(struct anoubis_client * client,
 		goto err;
 	if (get_value(m->u.general->type) == ANOUBIS_C_CLOSEREQ) {
 		client->state = ANOUBIS_STATE_CLOSING;
-		client->connect_flags |= FLAG_GOTCLOSEREQ;
+		client->flags |= FLAG_GOTCLOSEREQ;
 	}
 	if (get_value(m->u.general->type) == ANOUBIS_C_CLOSEACK) {
 		client->state = ANOUBIS_STATE_CLOSING;
-		client->connect_flags |= FLAG_GOTCLOSEACK;
+		client->flags |= FLAG_GOTCLOSEACK;
 	}
 	return m;
 err:
@@ -150,11 +152,11 @@ int anoubis_client_verify(struct anoubis_client * client,
 		return -EIO;
 	if (get_value(m->u.general->type) == ANOUBIS_C_CLOSEREQ) {
 		client->state = ANOUBIS_STATE_CLOSING;
-		client->connect_flags |= FLAG_GOTCLOSEREQ;
+		client->flags |= FLAG_GOTCLOSEREQ;
 	}
 	if (get_value(m->u.general->type) == ANOUBIS_C_CLOSEACK) {
 		client->state = ANOUBIS_STATE_CLOSING;
-		client->connect_flags |= FLAG_GOTCLOSEACK;
+		client->flags |= FLAG_GOTCLOSEACK;
 	}
 	return 0;
 }
@@ -175,7 +177,7 @@ struct anoubis_client * anoubis_client_create(struct achat_channel * chan)
 	ret->chan = chan;
 	ret->state = ANOUBIS_STATE_INIT;
 	ret->proto = ANOUBIS_PROTO_CONNECT;
-	ret->connect_flags = 0;
+	ret->flags = 0;
 	ret->auth_uid = -1;
 	ret->username = NULL;
 	LIST_INIT(&ret->ops);
@@ -397,7 +399,7 @@ static void anoubis_client_connect_steps(struct anoubis_transaction * t,
 		    anoubis_proto_opts, &selopts, m);
 		if (ret < 0)
 			goto err;
-		client->connect_flags |= selopts;
+		client->flags |= selopts;
 		ret = -EPROTONOSUPPORT;
 		if (multiplex && (selopts & FLAG_MULTIPLEX) == 0)
 			goto err;
@@ -481,23 +483,23 @@ static void anoubis_client_close_steps(struct anoubis_transaction * t,
 	if (opcode != ANOUBIS_C_CLOSEREQ && opcode != ANOUBIS_C_CLOSEACK)
 		goto err;
 	if (opcode == ANOUBIS_C_CLOSEREQ)
-		client->connect_flags |= FLAG_GOTCLOSEREQ;
+		client->flags |= FLAG_GOTCLOSEREQ;
 	if (opcode == ANOUBIS_C_CLOSEACK)
-		client->connect_flags |= FLAG_GOTCLOSEACK;
+		client->flags |= FLAG_GOTCLOSEACK;
 	/* Make sure that we already sent a CLOSEREQ. */
-	if ((client->connect_flags & FLAG_SENTCLOSEREQ) == 0)
+	if ((client->flags & FLAG_SENTCLOSEREQ) == 0)
 		goto err;
 	/* The following checks for a client protocol error. */
-	if ((client->connect_flags & FLAG_GOTCLOSEACK)
-	    && (client->connect_flags & FLAG_GOTCLOSEREQ) == 0)
+	if ((client->flags & FLAG_GOTCLOSEACK)
+	    && (client->flags & FLAG_GOTCLOSEREQ) == 0)
 		goto err;
 	/* Send a CLOSEACK if we can and have not yet done so. */
-	if (client->connect_flags & FLAG_GOTCLOSEREQ) {
-		if ((client->connect_flags & FLAG_SENTCLOSEACK) == 0) {
+	if (client->flags & FLAG_GOTCLOSEREQ) {
+		if ((client->flags & FLAG_SENTCLOSEACK) == 0) {
 			ret = anoubis_send_general(client, ANOUBIS_C_CLOSEACK);
 			if (ret < 0)
 				goto err;
-			client->connect_flags |= FLAG_SENTCLOSEACK;
+			client->flags |= FLAG_SENTCLOSEACK;
 		}
 	}
 	/* See if we are done.
@@ -510,8 +512,8 @@ static void anoubis_client_close_steps(struct anoubis_transaction * t,
 	 *    still wait for the CLOSEREQ and the CLOSEACK from the
 	 *    other end.
 	 */
-	if (client->connect_flags & FLAG_GOTCLOSEACK
-	    && client->connect_flags & FLAG_SENTCLOSEACK) {
+	if (client->flags & FLAG_GOTCLOSEACK
+	    && client->flags & FLAG_SENTCLOSEACK) {
 		client->state = ANOUBIS_STATE_CLOSED;
 		acc_close(client->chan);
 		anoubis_transaction_done(t, 0);
@@ -531,7 +533,7 @@ struct anoubis_transaction * anoubis_client_close_start(
 	    ANOUBIS_C_CLOSEREQ, ANOUBIS_C_CLOSEACK, 0
 	};
 
-	if (client->connect_flags & FLAG_SENTCLOSEREQ)
+	if (client->flags & FLAG_SENTCLOSEREQ)
 		return NULL;
 	ret = anoubis_transaction_create(0,
 	    ANOUBIS_T_INITSELF|ANOUBIS_T_DEQUEUE,
@@ -542,7 +544,7 @@ struct anoubis_transaction * anoubis_client_close_start(
 	if (anoubis_send_general(client, ANOUBIS_C_CLOSEREQ) < 0)
 		goto err;
 	client->state = ANOUBIS_STATE_CLOSING;
-	client->connect_flags |= FLAG_SENTCLOSEREQ;
+	client->flags |= FLAG_SENTCLOSEREQ;
 	LIST_INSERT_HEAD(&client->ops, ret, next);
 	return ret;
 err:
@@ -688,7 +690,7 @@ static void anoubis_client_register_steps(struct anoubis_transaction * t,
 	if (!VERIFY_LENGTH(m, sizeof(Anoubis_AckMessage))
 	    || get_value(m->u.ack->type) != ANOUBIS_REPLY)
 		goto err;
-	ret = get_value(m->u.ack->error);
+	ret = - get_value(m->u.ack->error);
 err:
 	anoubis_msg_free(m);
 	anoubis_transaction_done(t, -ret);
@@ -724,12 +726,12 @@ static struct anoubis_transaction * __anoubis_client_register_start_common(
 		anoubis_msg_free(m);
 		return NULL;
 	}
+	anoubis_transaction_setopcodes(ret, nextops);
+	LIST_INSERT_HEAD(&client->ops, ret, next);
 	if (anoubis_client_send(client, m) < 0) {
 		anoubis_transaction_destroy(ret);
 		return NULL;
 	}
-	anoubis_transaction_setopcodes(ret, nextops);
-	LIST_INSERT_HEAD(&client->ops, ret, next);
 	return ret;
 }
 
@@ -756,7 +758,7 @@ int anoubis_client_notifyreply(struct anoubis_client * client,
 	int opcode;
 
 	if ((client->proto & ANOUBIS_PROTO_NOTIFY) == 0
-	    || (client->connect_flags & FLAG_SENTCLOSEACK))
+	    || (client->flags & FLAG_SENTCLOSEACK))
 		return -EINVAL;
 	m = anoubis_msg_new(sizeof(Anoubis_AckMessage));
 	opcode = ANOUBIS_REPLY;
@@ -771,7 +773,64 @@ int anoubis_client_notifyreply(struct anoubis_client * client,
 	return anoubis_client_send(client, m);
 }
 
-/* Sync function. */
+static void anoubis_client_policy_steps(struct anoubis_transaction * t,
+    struct anoubis_msg * m)
+{
+	struct anoubis_client * client = t->cbdata;
+	int ret = anoubis_client_verify(client, m);
+	if (ret < 0)
+		goto err;
+	ret = -EPROTO;
+	if (!VERIFY_LENGTH(m, sizeof(Anoubis_PolicyReplyMessage))
+	    || get_value(m->u.policyreply->type) != ANOUBIS_P_REPLY)
+		goto err;
+	ret = - get_value(m->u.policyreply->error);
+err:
+	/* Do not free the message because of ANOUBIS_T_WANTMESSAGE */
+	anoubis_transaction_done(t, -ret);
+	LIST_REMOVE(t, next);
+	client->flags &= ~FLAG_POLICY_PENDING;
+}
+
+struct anoubis_transaction *
+anoubis_client_policyrequest_start(struct anoubis_client * client,
+    void * data, int datalen)
+{
+	struct anoubis_msg * m;
+	struct anoubis_transaction * t;
+	static const int nextops[] = { ANOUBIS_P_REPLY, -1 };
+	if ((client->proto & ANOUBIS_PROTO_POLICY) == 0)
+		return NULL;
+	if (client->state != ANOUBIS_STATE_CONNECTED)
+		return NULL;
+	if (!data)
+		return NULL;
+	if (client->flags & FLAG_POLICY_PENDING)
+		return NULL;
+	m = anoubis_msg_new(sizeof(Anoubis_PolicyRequestMessage) + datalen);
+	if (!m)
+		return NULL;
+	t = anoubis_transaction_create(0,
+	    ANOUBIS_T_INITSELF|ANOUBIS_T_WANTMESSAGE,
+	    &anoubis_client_policy_steps, NULL, client);
+	if (!t) {
+		anoubis_msg_free(m);
+		return t;
+	}
+	set_value(m->u.policyrequest->type, ANOUBIS_P_REQUEST);
+	memcpy(m->u.policyrequest->payload, data, datalen);
+	anoubis_transaction_setopcodes(t, nextops);
+	LIST_INSERT_HEAD(&client->ops, t, next);
+	if (anoubis_client_send(client, m) < 0) {
+		anoubis_transaction_destroy(t);
+		return NULL;
+	}
+	client->flags |= FLAG_POLICY_PENDING;
+	return t;
+}
+
+
+/* Sync functions */
 int anoubis_client_connect(struct anoubis_client * client, unsigned int proto)
 {
 	struct anoubis_transaction * t;

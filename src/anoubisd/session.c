@@ -56,6 +56,7 @@
 #include <anoubis_server.h>
 #include <anoubis_msg.h>
 #include <anoubis_notify.h>
+#include <anoubis_policy.h>
 
 #include "anoubisd.h"
 #include "aqueue.h"
@@ -82,6 +83,7 @@ struct event_info_session {
 	struct event	*ev_m2s, *ev_p2s;
 	struct event	*ev_s2f;
 	struct sessionGroup *seg;
+	struct anoubis_policy_comm * policy;
 };
 
 static void	session_sighandler(int, short, void *);
@@ -116,8 +118,9 @@ session_sighandler(int sig, short event, void *arg)
 static void
 session_connect(int fd, short event, void *arg)
 {
+	struct event_info_session * info = arg;
 	struct session		*session = NULL;
-	struct sessionGroup	*seg = (struct sessionGroup *)arg;
+	struct sessionGroup	*seg = info->seg;
 	static int		 sessionid = 0;
 
 	session = (struct session *)calloc(1, sizeof(struct session));
@@ -135,7 +138,7 @@ session_connect(int fd, short event, void *arg)
 		free((void *)session);
 		return;
 	}
-	session->proto = anoubis_server_create(session->channel);
+	session->proto = anoubis_server_create(session->channel, info->policy);
 	if (session->proto == NULL) {
 		log_warn("cannot create server protocol handler");
 		acc_close(session->channel);
@@ -195,6 +198,22 @@ err:
 		anoubis_msg_free(m);
 	session_destroy(session);
 	log_warn("session_rxclient: error reading client message");
+}
+
+/*
+ * XXX Dummy dispatcher function. This function must send the
+ * XXX the policy request to the policy process. Any reply must
+ * XXX then be fed into the global policy object with a call to
+ * XXX anoubis_policy_answer as shown below. Note that currently
+ * XXX the token is at least in theory only unique within a single
+ * XXX anoubis_policy_comm object.
+ * XXX -- CEH
+ */
+static int
+dispatch_policy(struct anoubis_policy_comm * comm, u_int64_t token,
+    u_int32_t uid, void * buf, size_t len)
+{
+	return anoubis_policy_comm_answer(comm, token, 0, NULL, 0);
 }
 
 pid_t
@@ -300,11 +319,14 @@ session_main(struct anoubisd_config *conf, int pipe_m2s[2], int pipe_m2p[2],
 	ev_info.ev_s2p = &ev_s2p;
 	ev_info.ev_s2f = &ev_s2f;
 	ev_info.seg = &seg;
+	ev_info.policy = anoubis_policy_comm_create(&dispatch_policy);
+	if (!ev_info.policy)
+		fatal("Cannot create policy object (out of memory)");
 
 	/* setup keeper of incoming unix domain socket connections */
 	if (seg.keeper_uds != NULL) {
 		event_set(&(seg.ev_connect), (seg.keeper_uds)->sockfd,
-		    EV_READ | EV_PERSIST, session_connect, &seg);
+		    EV_READ | EV_PERSIST, session_connect, &ev_info);
 		event_add(&(seg.ev_connect), NULL);
 	}
 

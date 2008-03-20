@@ -47,6 +47,8 @@
 #include <anoubis_msg.h>
 #include <anoubis_transaction.h>
 #include <anoubis_notify.h>
+#include <anoubis_policy.h>
+#include <anoubis_dump.h>
 
 #include <anoubischat.h>
 
@@ -102,7 +104,7 @@ void tp_chat_lud_client(const char *sockname)
 	achat_rc		 rc = ACHAT_RC_ERROR;
 	struct anoubis_client	*client;
 	int			 i, ret;
-	struct anoubis_transaction * curr;
+	struct anoubis_transaction * curr, * policy = NULL;
 
 	c = acc_create();
 	fail_if(c == NULL, "couldn't create client channel");
@@ -161,6 +163,11 @@ void tp_chat_lud_client(const char *sockname)
 			anoubis_transaction_destroy(curr);
 			curr = NULL;
 		}
+		if (policy && (policy->flags & ANOUBIS_T_DONE)) {
+			fail_if(policy->result, "Transaction error");
+			anoubis_transaction_destroy(policy);
+			policy = NULL;
+		}
 		if (curr == 0) {
 			if (k == 10) {
 				trans = "close";
@@ -178,11 +185,18 @@ void tp_chat_lud_client(const char *sockname)
 			}
 			k++;
 		}
+		if (k && k < 10 && policy == NULL) {
+			char data[] = "Hello World";
+			policy = anoubis_client_policyrequest_start(client,
+			    data, sizeof(data));
+			fail_if(!policy, "Cannot create policy request");
+		}
 		m = anoubis_msg_new(1024);
 		fail_if(!m, "Memalloc");
 		rc = acc_receivemsg(c, m->u.buf, &size);
 		fail_if(rc != ACHAT_RC_OK, "acc_receivemsg failed");
 		anoubis_msg_resize(m, size);
+		anoubis_dump(m, "client recv");
 		ret = anoubis_client_process(client, m);
 		if (ret != 1)
 			errno = -ret;
@@ -244,6 +258,12 @@ static void do_notify(struct anoubis_notify_group * grp, pid_t pid)
 		anoubis_notify_destroy_head(head);
 }
 
+int policy_dispatch(struct anoubis_policy_comm * policy, u_int64_t token,
+    u_int32_t uid, void * buf,  size_t len)
+{
+	return anoubis_policy_comm_answer(policy, token, 0, NULL, 0);
+}
+
 void tp_chat_lud_server(const char *sockname)
 {
 	struct sockaddr_storage	 ss;
@@ -251,6 +271,7 @@ void tp_chat_lud_server(const char *sockname)
 	struct achat_channel    *s  = NULL;
 	achat_rc		 rc = ACHAT_RC_ERROR;
 	struct anoubis_server	*server;
+	struct anoubis_policy_comm *policy;
 
 	s = acc_create();
 	fail_if(s == NULL, "couldn't create server channel");
@@ -279,7 +300,8 @@ void tp_chat_lud_server(const char *sockname)
 		fail("server state not set correctly", __LINE__);
 	mark_point();
 
-	server = anoubis_server_create(s);
+	policy = anoubis_policy_comm_create(&policy_dispatch);
+	server = anoubis_server_create(s, policy);
 	fail_if(server == NULL, "Failed to create server protocol");
 	mark_point();
 

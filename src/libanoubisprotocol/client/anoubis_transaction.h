@@ -37,8 +37,9 @@
 #define	ANOUBIS_T_DESTROY	0x0008	/* Destroy after final process. */
 #define ANOUBIS_T_DONE		0x0010	/* Transaction is done. */
 #define	ANOUBIS_T_DEQUEUE	0x0020	/* Dequeue transaction from list */
+#define ANOUBIS_T_WANTMESSAGE	0x0040	/* Keep the final message */
 
-#define ANOUBIS_T_MASK		0x003fU
+#define ANOUBIS_T_MASK		0x007fU
 
 
 struct anoubis_transaction;
@@ -52,6 +53,7 @@ struct anoubis_transaction {
 	LIST_ENTRY(anoubis_transaction) next;
 	unsigned int flags;	/* Transaction flags (ANOUBIS_T_xxx). */
 	int result;		/* Result of the transaction. */
+	struct anoubis_msg * msg; /* Final message if ANOUBIS_T_WANTMESSAGE */
 	const int * opcodes;	/* List of permitted opcodes. */
 	anoubis_transaction_process_t process;
 	anoubis_transaction_callback_t finish;

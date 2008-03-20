@@ -36,7 +36,8 @@ include_HEADERS_common =		\
 	queue.h
 include_HEADERS_server =		\
 	server/anoubis_server.h		\
-	server/anoubis_notify.h
+	server/anoubis_notify.h		\
+	server/anoubis_policy.h
 include_HEADERS_client =		\
 	client/anoubis_client.h		\
 	client/anoubis_transaction.h
@@ -60,6 +61,7 @@ libanoubisps_so_CPPFLAGS = $(libanoubisps_a_CPPFLAGS)
 libanoubisps_a_SOURCES =		\
 	server/anoubis_server.c		\
 	server/anoubis_notify.c		\
+	server/anoubis_policy.c		\
 	anoubis_msg.c			\
 	anoubis_dump.c			\
 	anoubis_auth.c			\
@@ -100,11 +102,13 @@ libanoubispc_so_LDFLAGS = -nostartfiles -shared	\
 libanoubisps_a_SOURCES_flawfinder =		\
 	server/anoubis_server.c_flawfinder	\
 	server/anoubis_notify.c_flawfinder	\
+	server/anoubis_policy.c_flawfinder	\
 	anoubis_msg.c_flawfinder		\
 	anoubis_dump.c_flawfinder		\
 	anoubis_auth.c_flawfinder		\
 	server/anoubis_server.h_flawfinder	\
 	server/anoubis_notify.h_flawfinder	\
+	server/anoubis_policy.h_flawfinder	\
 	anoubis_msg.h_flawfinder		\
 	anoubis_dump.h_flawfinder		\
 	anoubis_auth.h_flawfinder		\
@@ -122,6 +126,7 @@ libanoubispc_a_SOURCES_flawfinder =		\
 libanoubisps_a_SOURCES_lint =		\
 	server/anoubis_server.c_lint	\
 	server/anoubis_notify.c_lint	\
+	server/anoubis_policy.c_lint	\
 	anoubis_msg.c_lint		\
 	anoubis_dump.c_lint		\
 	anoubis_auth.c_lint
@@ -133,11 +138,13 @@ libanoubispc_a_SOURCES_lint =			\
 libanoubisps_a_SOURCES_splint =		\
 	server/anoubis_server.c_splint	\
 	server/anoubis_notify.c_splint	\
+	server/anoubis_policy.c_splint	\
 	anoubis_msg.c_splint		\
 	anoubis_dump.c_splint		\
 	anoubis_auth.c_splint		\
 	server/anoubis_server.h_splint	\
 	server/anoubis_notify.h_splint	\
+	server/anoubis_policy.h_splint	\
 	anoubis_msg.h_splint		\
 	anoubis_dump.h_splint		\
 	anoubis_auth.h_splint		\

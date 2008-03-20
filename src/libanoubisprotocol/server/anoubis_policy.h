@@ -24,23 +24,24 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef ANOUBIS_SERVER_H
-#define ANOUBIS_SERVER_H
+
+#ifndef _ANOUBIS_POLICY_H_
+#define _ANOUBIS_POLICY_H_
 
 #include <anoubischat.h>
-#include <anoubis_protocol.h>
-#include <anoubis_policy.h>
+#include <anoubis_msg.h>
 
-struct anoubis_server;
-struct anoubis_notify_group;
+struct anoubis_policy_comm;
 
-struct anoubis_server * anoubis_server_create(struct achat_channel * chan,
-    struct anoubis_policy_comm *);
-void anoubis_server_destroy(struct anoubis_server *);
-int anoubis_server_start(struct anoubis_server *);
-int anoubis_server_process(struct anoubis_server *, void * buf, size_t len);
-int anoubis_server_eof(struct anoubis_server * server);
-struct anoubis_notify_group * anoubis_server_getnotify(
-    struct anoubis_server * server);
+typedef int (*anoubis_policy_comm_dispatcher_t)(struct anoubis_policy_comm *,
+    u_int64_t token, u_int32_t uid, void * buf, size_t len);
 
-#endif
+struct anoubis_policy_comm * anoubis_policy_comm_create(
+    anoubis_policy_comm_dispatcher_t dispatch);
+int anoubis_policy_comm_process(struct anoubis_policy_comm * comm,
+    struct anoubis_msg * m, u_int32_t uid, struct achat_channel * chan);
+int anoubis_policy_comm_answer(struct anoubis_policy_comm * comm,
+    u_int64_t token, int error, void * data, int len);
+void anoubis_policy_comm_abort(struct anoubis_policy_comm * comm,
+    struct achat_channel * chan);
+#endif	/* _ANOUBIS_POLICY_H_ */

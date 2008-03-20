@@ -50,6 +50,16 @@ struct anoubis_msg * anoubis_msg_new(u_int32_t len)
 	return ret;
 }
 
+struct anoubis_msg * anoubis_msg_clone(struct anoubis_msg * m)
+{
+	struct anoubis_msg * ret = anoubis_msg_new(m->length - CSUM_LEN);
+	if (!ret)
+		return NULL;
+	assert(m->length == ret->length);
+	memcpy(ret->u.buf, m->u.buf, m->length);
+	return ret;
+}
+
 int anoubis_msg_resize(struct anoubis_msg * m, u_int32_t len)
 {
 	void * new = realloc(m->u.buf, len);

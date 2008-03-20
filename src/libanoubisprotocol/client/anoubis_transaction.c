@@ -26,7 +26,6 @@
  */
 #include <config.h>
 #include <stdlib.h>
-#include <assert.h>
 
 #include <anoubis_protocol.h>
 #include <anoubis_msg.h>
@@ -53,12 +52,15 @@ struct anoubis_transaction * anoubis_transaction_create(anoubis_token_t token,
 	ret->finish = finish;
 	ret->cbdata = cbdata;
 	ret->stage = -1;
+	ret->msg = NULL;
 	return ret;
 }
 void anoubis_transaction_destroy(struct anoubis_transaction * t)
 {
 	if (t->flags & ANOUBIS_T_FREECBDATA)
 		free(t->cbdata);
+	if (t->msg)
+		anoubis_msg_free(t->msg);
 	free(t);
 }
 
@@ -94,6 +96,8 @@ void anoubis_transaction_process(struct anoubis_transaction * t,
 	if (t->process)
 		t->process(t, m);
 	if (t->flags & ANOUBIS_T_DONE) {
+		if (t->flags & ANOUBIS_T_WANTMESSAGE)
+			t->msg = m;
 		if (t->finish)
 			t->finish(t);
 		if (t->flags & ANOUBIS_T_DEQUEUE)
