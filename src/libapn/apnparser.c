@@ -38,17 +38,14 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "apn.h"
 
-#if 0	/* XXX HJH not yet */
-static int	 apn_add_rule(struct apnruleset *, struct apnrule *);
-static void	 apn_free_rule(struct apnrule *);
-#endif
-
 /* Implemented in parse.y */
-extern int	 parse_rules(const char *, struct apnruleset *);
+extern int	parse_rules(const char *, struct apn_ruleset *);
 
 /*
  * Parse the specified file and return the ruleset, which is allocated
@@ -60,29 +57,55 @@ extern int	 parse_rules(const char *, struct apnruleset *);
  *  1: file could not be parsed
  */
 int
-apn_parse(const char *filename, struct apnruleset **rsp, int flags)
+apn_parse(const char *filename, struct apn_ruleset **rsp, int flags)
 {
-	struct apnruleset	*rs;
+	struct apn_ruleset	*rs;
 
-	if ((rs = calloc(sizeof(struct apnruleset), 1)) == NULL)
+	if ((rs = calloc(sizeof(struct apn_ruleset), 1)) == NULL)
 		return (-1);
-	TAILQ_INIT(&rs->rule_queue);
+	TAILQ_INIT(&rs->alf_queue);
+	TAILQ_INIT(&rs->sfs_queue);
 	TAILQ_INIT(&rs->var_queue);
+	rs->flags = flags;
 	*rsp = rs;
 
 	return (parse_rules(filename, rs));
 }
 
-#if 0	/* XXX HJH not yet */
-static int
-apn_add_rule(struct apnruleset *rsp, struct apnrule *rp)
+/*
+ * Add a rule or a list of rules to the ALF ruleset.
+ *
+ * Return codes:
+ * -1: a systemcall failed and errno is set
+ *  0: rule was added.
+ *
+ * In case of an error, no rules are added, thus caller can free them safely.
+ */
+int
+apn_add_alfrule(struct apn_rule *rule, struct apn_ruleset *ruleset)
 {
-	return (0);
+	int ret = 0;
+
+	TAILQ_INSERT_TAIL(&ruleset->alf_queue, rule, entry);
+
+	if (ruleset->flags & APN_FLAG_VERBOSE)
+		ret = apn_print_rule(rule, ruleset->flags);
+
+	return (ret);
 }
 
-static void
-apn_free_rule(struct apnrule *rp)
+/*
+ * Print a rule.
+ *
+ * Return codes:
+ * -1: a systemcall failed and errno is set
+ *  0: rule could be printed
+ *  1: an error occured while parsing the rule
+ */
+int
+apn_print_rule(struct apn_rule *rule, int flags)
 {
-	return;
+	/* XXX HJH */
+
+	return (0);
 }
-#endif	/* 0 */

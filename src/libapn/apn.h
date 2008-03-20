@@ -77,10 +77,13 @@ struct var {
 
 TAILQ_HEAD(apnvar_queue, var);
 
-struct application {
+struct apn_app {
 	char		*name;
 	int		 hashtype;
 	char		 hashvalue[MAX_APN_HASH_LEN];
+
+	struct apn_app	*tail;
+	struct apn_app	*next;
 };
 
 struct apn_addr {
@@ -95,54 +98,91 @@ struct apn_addr {
 	} apa;		/* 128-bit address */
 };
 
-struct host {
+struct apn_host {
 	struct apn_addr		 addr;
 	int			 not;
-	struct host		*next;
-	struct host		*tail;
+	struct apn_host		*next;
+	struct apn_host		*tail;
 };
 
-struct port {
+struct apn_port {
 	u_int16_t		 port;
-	struct port		*next;
-	struct port		*tail;
+	struct apn_port		*next;
+	struct apn_port		*tail;
 };
 
-struct alffilterspec {
+struct apn_afiltspec {
 	int			 log;
 	int			 af;
 	int			 proto;
 	int			 netaccess;
 
-	struct host		*fromhost;
-	struct port		*fromport;
-	struct host		*tohost;
-	struct port		*toport;
+	struct apn_host		*fromhost;
+	struct apn_port		*fromport;
+	struct apn_host		*tohost;
+	struct apn_port		*toport;
 };
 
-struct alffilterrule {
-	TAILQ_ENTRY(alf_filterrule) entry;
-
+struct apn_afiltrule {
 	int			 action;
-	struct alffilterspec	 alffilterspec;
+	struct apn_afiltspec	 filtspec;
+};
+
+struct apn_acaprule {
+	/* XXX HJH */
+};
+
+struct apn_adfltrule {
+	/* XXX HJH */
+};
+
+enum {
+	APN_ALF_FILTER, APN_ALF_CAPABILITY, APN_ALF_DEFAULT
+};
+
+struct apn_alfrule {
+	u_int8_t		 type;
+	union {
+		struct apn_afiltrule	afilt;
+		struct apn_acaprule	acap;
+		struct apn_adfltrule	adflt;
+	} rule;
+
+	struct apn_alfrule	*next;
+	struct apn_alfrule	*tail;
+};
+
+enum {
+	APN_ALF,  APN_SFS, APN_SB, APN_VS
 };
 
 /* Complete state of one rule. */
-struct apnrule {
-	TAILQ_ENTRY(apn_rule)	rule_entry;
-	u_int8_t		type;
+struct apn_rule {
+	TAILQ_ENTRY(apn_rule)	 entry;
+	u_int8_t		 type;
+
+	struct apn_app		*app;
+
+	union {
+		struct apn_alfrule	*alf;
+	} rule;
+
+	struct apn_rule		*tail;
+	struct apn_rule		*next;
 };
 
-TAILQ_HEAD(apnrule_queue, apnrule);
+TAILQ_HEAD(apnrule_queue, apn_rule);
 
 /* Complete APN ruleset. */
-struct apnruleset {
-	u_int32_t		rule_nr;
-	int			opts;
-	struct apnrule_queue	rule_queue;
+struct apn_ruleset {
+	int			flags;
+	struct apnrule_queue	alf_queue;
+	struct apnrule_queue	sfs_queue;
 	struct apnvar_queue	var_queue;
 };
 
-int	apn_parse(const char *, struct apnruleset **, int);
+int	apn_parse(const char *, struct apn_ruleset **, int);
+int	apn_add_alfrule(struct apn_rule *, struct apn_ruleset *);
+int	apn_print_rule(struct apn_rule *, int);
 
 #endif /* _APN_H_ */

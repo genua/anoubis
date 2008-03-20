@@ -60,7 +60,7 @@ usage(void)
 int
 main(int argc, char *argv[])
 {
-	struct apnruleset	*ruleset;
+	struct apn_ruleset	*ruleset;
 	int			 ch, flags;
 	int			 error = 0;
 	int			 opts = 0;

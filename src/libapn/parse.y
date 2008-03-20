@@ -81,15 +81,18 @@ int		 validate_hash(int, const char *);
 int		 host(const char *, struct apn_addr *);
 int		 host_v4(const char *, struct apn_addr *);
 int		 host_v6(const char *, struct apn_addr *);
-int		 validate_host(const struct host *);
+int		 validate_host(const struct apn_host *);
 int		 portbyname(const char *, u_int16_t *);
 int		 portbynumber(int64_t, u_int16_t *);
-int		 validate_alffilterspec(struct alffilterspec *);
-int		 validate_hostlist(struct host *);
-void		 freehost(struct host *);
-void		 freeport(struct port *);
+int		 validate_alffilterspec(struct apn_afiltspec *);
+int		 validate_hostlist(struct apn_host *);
+void		 freehost(struct apn_host *);
+void		 freeport(struct apn_port *);
+void		 clearfilter(struct apn_afiltspec *);
+void		 clearapp(struct apn_app *);
+void		 clearalfrule(struct apn_alfrule *);
 
-static struct apnruleset	*apnrsp = NULL;
+static struct apn_ruleset	*apnrsp = NULL;
 static int			 debug = 0;
 
 typedef struct {
@@ -107,17 +110,19 @@ typedef struct {
 			char		 value[MAX_APN_HASH_LEN];
 		} hashspec;
 		struct {
-			struct host	*fromhost;
-			struct port	*fromport;
-			struct host	*tohost;
-			struct port	*toport;
+			struct apn_host	*fromhost;
+			struct apn_port	*fromport;
+			struct apn_host	*tohost;
+			struct apn_port	*toport;
 		} hosts;
-		struct alffilterrule	 afrule;
-		struct alffilterspec	 afspec;
+		struct apn_afiltspec	 afspec;
+		struct apn_afiltrule	 afrule;
 		struct apn_addr		 addr;
-		struct application	*app;
-		struct port		*port;
-		struct host		*host;
+		struct apn_app		*app;
+		struct apn_port		*port;
+		struct apn_host		*host;
+		struct apn_alfrule	*alfrule;
+		struct apn_rule		*ruleset;
 	} v;
 	int lineno;
 } YYSTYPE;
@@ -130,7 +135,7 @@ typedef struct {
 %token	READ WRITE EXEC CHMOD ERROR APPLICATION RULE HOST TFILE
 %token	<v.string>		STRING
 %token	<v.number>		NUMBER
-%type	<v.app>			app
+%type	<v.app>			app app_l apps
 %type	<v.hashtype>		hashtype
 %type	<v.hashspec>		hashspec
 %type	<v.addr>		address
@@ -145,11 +150,13 @@ typedef struct {
 %type	<v.action>		action
 %type	<v.log>			log
 %type	<v.afrule>		alffilterrule
+%type	<v.alfrule>		alfrule alfrule_l
+%type	<v.ruleset>		alfruleset
 %%
 
 grammar		: /* empty */
 		| grammar '\n'
-		| grammar modules '\n'
+		| grammar module_l '\n'
 		| grammar varset '\n'
 		| grammar error '\n'		{ file->errors++; }
 		;
@@ -162,7 +169,7 @@ varset		: varapp
 		| varfilename
 		;
 
-varapp		: APPLICATION STRING '=' app		{
+varapp		: APPLICATION STRING '=' apps		{
 			if (varset($2, NULL, 0, 0) == -1)
 				YYERROR;
 		}
@@ -179,8 +186,11 @@ varrules	: varalfrule
 		;
 
 varalfrule	: RULE STRING '=' alfspecs		{
-			if (varset($2, NULL, 0, 0) == -1)
+			if (varset($2, NULL, 0, 0) == -1) {
+				free($2);
 				YYERROR;
+			}
+			free($2);
 		}
 		;
 
@@ -191,8 +201,15 @@ varsfsrule	: RULE STRING '=' sfsspec		{
 		;
 
 varhost		: HOST STRING '=' hostspec		{
-			if (varset($2, NULL, 0, 0) == -1)
+			if (validate_hostlist($4) == -1) {
+				free($2);
 				YYERROR;
+			}
+			if (varset($2, NULL, 0, 0) == -1) {
+				free($2);
+				YYERROR;
+			}
+			free($2);
 		}
 		;
 
@@ -218,9 +235,6 @@ optnl		: '\n' optnl
 nl		: '\n' optnl		/* one newline or more */
 		;
 
-modules		: module_l
-		;
-
 module_l	: module_l module
 		| module
 		;
@@ -241,21 +255,59 @@ alfruleset_l	: alfruleset_l alfruleset
 		| alfruleset
 		;
 
-alfruleset	: app_l				{
-		} optnl '{' optnl alfrules '}' nl
+alfruleset	: apps optnl '{' optnl alfrule_l '}' nl {
+			struct apn_rule	*rule;
+
+			if ((rule = calloc(1, sizeof(struct apn_rule)))
+			    == NULL) {
+				clearapp($1);
+				clearalfrule($5);
+				YYERROR;
+			}
+
+			rule->app = $1;
+			rule->rule.alf = $5;
+			rule->tail = rule;
+			rule->type = APN_ALF;
+
+			if (apn_add_alfrule(rule, apnrsp) != 0) {
+				YYERROR;
+			}
+		}
 		;
 
-alfrules	: alfrule_l
+alfrule_l	: alfrule_l alfrule nl		{
+			if ($2 == NULL)
+				$$ = $1;
+			else if ($1 == NULL)
+				$$ = $2;
+			else {
+				$1->tail->next = $2;
+				$1->tail = $2->tail;
+				$$ = $1;
+			}
+		}
+		| alfrule nl			{ $$ = $1; }
 		;
 
-alfrule_l	: alfrule_l alfrule nl
-		| alfrule nl
-		;
+alfrule		: alffilterrule			{
+			struct apn_alfrule	*rule;
 
-alfrule		: alffilterrule
-		| alfcaprule
-		| alfdefault
-		| ctxrule
+			if ((rule = calloc(1, sizeof(struct apn_alfrule)))
+			    == NULL) {
+				clearfilter(&$1.filtspec);
+				YYERROR;
+			}
+
+			rule->type = APN_ALF_FILTER;
+			rule->rule.afilt = $1;
+			rule->tail = rule;
+
+			$$ = rule;
+		}
+		| alfcaprule			{ $$ = NULL; }
+		| alfdefault			{ $$ = NULL; }
+		| ctxrule			{ $$ = NULL; }
 		;
 
 alfspecs	: alffilterspec
@@ -265,7 +317,7 @@ alfspecs	: alffilterspec
 
 alffilterrule	: action alffilterspec		{
 			$$.action = $1;
-			$$.alffilterspec = $2;
+			$$.filtspec = $2;
 		}
 		;
 
@@ -279,10 +331,7 @@ alffilterspec	: netaccess log af proto hosts	{
 			$$.toport = $5.toport;
 
 			if (validate_alffilterspec(&$$) == -1) {
-				freehost($$.fromhost);
-				freehost($$.tohost);
-				freeport($$.fromport);
-				freeport($$.toport);
+				clearfilter(&$$);
 				YYERROR;
 			}
 		}
@@ -344,9 +393,9 @@ host_l		: host_l comma host		{
 		;
 
 host		: not address			{
-			struct host	*host;
+			struct apn_host	*host;
 
-			host = calloc(1, sizeof(struct host));
+			host = calloc(1, sizeof(struct apn_host));
 			if (host == NULL)
 				YYERROR;
 
@@ -396,9 +445,9 @@ port_l		: port_l comma port		{
 		;
 
 port		: STRING			{
-			struct port	*port;
+			struct apn_port	*port;
 
-			port = calloc(1, sizeof(struct port));
+			port = calloc(1, sizeof(struct apn_port));
 			if (port == NULL)
 				YYERROR;
 
@@ -414,9 +463,9 @@ port		: STRING			{
 			$$ = port;
 		}
 		| NUMBER			{
-			struct port	*port;
+			struct apn_port	*port;
 
-			port = calloc(1, sizeof(struct port));
+			port = calloc(1, sizeof(struct apn_port));
 			if (port == NULL)
 				YYERROR;
 
@@ -452,7 +501,7 @@ sfsruleset_l	: sfsruleset_l sfsruleset
 		| sfsruleset
 		;
 
-sfsruleset	: app_l				{
+sfsruleset	: apps				{
 		} optnl '{' optnl sfsrules '}' nl
 		;
 		;
@@ -487,7 +536,7 @@ sbruleset_l	: sbruleset_l sbruleset
 		| sbruleset
 		;
 
-sbruleset	: app_l				{
+sbruleset	: apps				{
 		} optnl '{' optnl sbrules '}' nl
 		;
 
@@ -548,7 +597,7 @@ vsruleset_l	: vsruleset_l vsruleset
 		| vsruleset
 		;
 
-vsruleset	: app_l				{
+vsruleset	: apps				{
 		} optnl '{' optnl vsrules '}' nl
 		;
 
@@ -570,7 +619,7 @@ vsspec		: STRING
 ctxrule		: CONTEXT ctxspec
 		;
 
-ctxspec		: NEW app_l
+ctxspec		: NEW apps
 		;
 
 		/*
@@ -591,15 +640,35 @@ defaultspec	: action
 		/*
 		 * Common elements
 		 */
-app_l		: app_l comma optnl app
-		| app
-		| ANY
+apps		: '{' app_l '}'			{ $$ = $2; }
+		| app				{ $$ = $1; }
+		| ANY				{ $$ = NULL; }
+		| '$' STRING			{
+			struct var	*var;
+
+			if ((var = varget($2)) == NULL)
+				YYERROR;
+		}
+		;
+
+app_l		: app_l comma optnl app		{
+			if ($4 == NULL)
+				$$ = $1;
+			else if ($1 == NULL)
+				$$ = $4;
+			else {
+				$1->tail->next = $4;
+				$1->tail = $4->tail;
+				$$ = $1;
+			}
+		}
+		| app				{ $$ = $1; }
 		;
 
 app		: STRING hashspec		{
-			struct application	*app;
+			struct apn_app	*app;
 
-			if ((app = calloc(1, sizeof(struct application)))
+			if ((app = calloc(1, sizeof(struct apn_app)))
 			    == NULL) {
 				free($1);
 				YYERROR;
@@ -611,25 +680,15 @@ app		: STRING hashspec		{
 			}
 			app->hashtype = $2.type;
 			bcopy($2.value, app->hashvalue, sizeof(app->hashvalue));
+			app->tail = app;
 
 			free($1);
 
 			$$ = app;
 		}
-		| '$' STRING			{
-			struct var	*var;
-
-			if ((var = varget($2)) == NULL) {
-				free($2);
-				YYERROR;
-			}
-
-			free($2);
-		}
 		;
 
 hashspec	: hashtype STRING		{
-
 			if (validate_hash($1, $2) == -1) {
 				free($2);
 				YYERROR;
@@ -1028,9 +1087,9 @@ popfile(void)
 }
 
 int
-parse_rules(const char *filename, struct apnruleset *apnrspx)
+parse_rules(const char *filename, struct apn_ruleset *apnrspx)
 {
-	int		 errors = 0;
+	int errors = 0;
 
 	apnrsp = apnrspx;
 
@@ -1041,6 +1100,14 @@ parse_rules(const char *filename, struct apnruleset *apnrspx)
 	yyparse();
 	errors = file->errors;
 	popfile();
+
+	if (errors) {
+		/* XXX clean up rule sets */
+	}
+
+	fclose(file->stream);
+	free(file->name);
+	free(file);
 
 	return (errors ? -1 : 0);
 }
@@ -1241,7 +1308,7 @@ host_v6(const char *s, struct apn_addr *h)
  * Returns -1 on failure, 0 otherwise.
  */
 int
-validate_host(const struct host *host)
+validate_host(const struct apn_host *host)
 {
 	switch (host->addr.af) {
 	case AF_INET:
@@ -1301,8 +1368,10 @@ portbynumber(int64_t port, u_int16_t *portp)
  * Returns -1 on failure, otherwise 0.
  */
 int
-validate_alffilterspec(struct alffilterspec *afspec)
+validate_alffilterspec(struct apn_afiltspec *afspec)
 {
+	int	affrom, afto;
+
 	if (!(APN_LOG_NONE <= afspec->log && afspec->log <= APN_LOG_ALERT))
 		return (-1);
 
@@ -1327,10 +1396,37 @@ validate_alffilterspec(struct alffilterspec *afspec)
 		return (-1);
 	}
 
-	if (validate_hostlist(afspec->fromhost) == -1)
+	if ((affrom = validate_hostlist(afspec->fromhost)) == -1)
 		return (-1);
-	if (validate_hostlist(afspec->tohost) == -1)
+	if ((afto = validate_hostlist(afspec->tohost)) == -1)
 		return (-1);
+
+
+	switch (afspec->af) {
+	case AF_UNSPEC:
+		if (affrom == AF_UNSPEC || afto == AF_UNSPEC)
+			break;
+		if (affrom != afto) {
+			yyerror("address family mismatch");
+			return (-1);
+		}
+		break;
+	case AF_INET:
+		if (affrom == AF_INET6 || afto == AF_INET6) {
+			yyerror("address family mismatch");
+			return (-1);
+		}
+		break;
+	case AF_INET6:
+		if (affrom == AF_INET || afto == AF_INET) {
+			yyerror("address family mismatch");
+			return (-1);
+		}
+		break;
+	default:
+		/* NOTREACHED */
+		return (-1);
+	}
 
 	return (0);
 }
@@ -1343,13 +1439,14 @@ validate_alffilterspec(struct alffilterspec *afspec)
  * Returns -1 on failure, otherwise the address family is returned.
  */
 int
-validate_hostlist(struct host *hostlist)
+validate_hostlist(struct apn_host *hostlist)
 {
-	struct host	*hp;
+	struct apn_host	*hp;
 	int		 inet, inet6;
 
+	/* In case of "any". */
 	if (hostlist == NULL)
-		return (0);
+		return (AF_UNSPEC);
 
 	inet = inet6 = 0;
 	for (hp = hostlist; hp; hp = hp->next) {
@@ -1370,18 +1467,19 @@ validate_hostlist(struct host *hostlist)
 		}
 	}
 
-	if (inet != 0 && inet6 != 0)
+	if (inet != 0 && inet6 != 0) {
+		yyerror("address family mismatch");
 		return (-1);
-	else if (inet != 0)
+	} else if (inet != 0)
 		return (AF_INET);
 	else
 		return (AF_INET6);
 }
 
 void
-freehost(struct host *host)
+freehost(struct apn_host *host)
 {
-	struct host *hp, *tmp;
+	struct apn_host *hp, *tmp;
 
 	if (host == NULL)
 		return;
@@ -1395,16 +1493,73 @@ freehost(struct host *host)
 }
 
 void
-freeport(struct port *port)
+freeport(struct apn_port *port)
 {
-	struct port *hp, *tmp;
+	struct apn_port *hp, *tmp;
 
 	if (port == NULL)
 		return;
-	
+
 	hp = port;
 	while (hp) {
 		tmp = hp->next;
+		free(hp);
+		hp = tmp;
+	}
+}
+
+void
+clearfilter(struct apn_afiltspec *filtspec)
+{
+	if (filtspec == NULL)
+		return;
+
+	freehost(filtspec->fromhost);
+	freehost(filtspec->tohost);
+	freeport(filtspec->fromport);
+	freeport(filtspec->toport);
+}
+
+void
+clearapp(struct apn_app *app)
+{
+	struct apn_app *hp, *tmp;
+
+	if (app == NULL)
+		return;
+
+	hp = app;
+	while (hp) {
+		tmp = hp->next;
+		free(hp->name);
+		free(hp);
+		hp = tmp;
+	}
+}
+
+void
+clearalfrule(struct apn_alfrule *rule)
+{
+	struct apn_alfrule *hp, *tmp;
+
+	if (rule == NULL)
+		return;
+
+	hp = rule;
+	while (hp) {
+		tmp = hp->next;
+
+		switch (hp->type) {
+		case APN_ALF_FILTER:
+			clearfilter(&hp->rule.afilt.filtspec);
+			break;
+
+		case APN_ALF_CAPABILITY:
+		case APN_ALF_DEFAULT:
+		default:
+			break;
+		}
+
 		free(hp);
 		hp = tmp;
 	}
