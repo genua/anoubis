@@ -71,6 +71,12 @@ acc_prepare(struct achat_channel *acc)
 			return (ACHAT_RC_ERROR);
 
 		if (acc->addr.ss_family == AF_UNIX) {
+			/*
+			 * Flawfider suggests to use fchmod() instead, but
+			 * that's not working for/on sockets; thus we
+			 * stop flawfinder complaining about.
+			 */
+			/* Flawfinder: ignore */
 			rc = chmod(
 			    ((struct sockaddr_un*)&(acc->addr))->sun_path,
 			    S_IRWXU | S_IRWXG | S_IRWXO);
