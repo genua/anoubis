@@ -32,20 +32,20 @@ anoubischatdir = src/libanoubischat
 libanoubischat = $(top_builddir)/$(anoubischatdir)/libanoubischat.so
 
 noinst_PROGRAMS = test_libanoubischat
-INCLUDES = -I$(top_srcdir)/$(anoubischatdir)
 
 test_libanoubischat_CFLAGS = $(AM_CFLAGS) @CHECK_CFLAGS@
-
-test_libanoubischat_LDFLAGS = -L$(top_builddir)/$(anoubischatdir) -dynamic \
-	$(AM_LDFLAGS)
-LDADD = @CHECK_LIBS@ -lanoubischat
+test_libanoubischat_CPPFLAGS = -I$(top_srcdir)/$(anoubischatdir)
+test_libanoubischat_LDFLAGS = $(AM_LDFLAGS) -dynamic \
+			      -L$(top_builddir)/$(anoubischatdir)
+test_libanoubischat_LDADD = @CHECK_LIBS@ -lanoubischat
+test_libanoubischat_DEPENDENCIES = $(libanoubischat)
 
 if NEEDBSDCOMPAT
-test_libanoubischat_LDFLAGS += -L$(top_builddir)/$(bsdcompatdir)
-LDADD += -lbsdcompat
+test_libanoubischat_DEPENDENCIES += $(libbsdcompat)
+test_libanoubischat_CPPFLAGS += -I$(top_srcdir)/$(bsdcompatdir)
+test_libanoubischat_LDADD += $(libbsdcompat)
 endif
 
-test_libanoubischat_DEPENDENCIES = $(libanoubischat)
 test_libanoubischat_SOURCES = \
 	libanoubischat_testcase_core.c     \
 	libanoubischat_testcase_connect.c  \

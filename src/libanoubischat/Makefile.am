@@ -28,7 +28,8 @@ lib_LIBRARIES = libanoubischat.a
 
 include_HEADERS = anoubischat.h
 
-bsdcompatdir = src/bsdcompat
+bsdcompatdir   = src/bsdcompat
+libbsdcompat   = $(top_builddir)/$(bsdcompatdir)/libbsdcompat.a
 
 libanoubischat_a_SOURCES = \
 	accsetup.c  \
@@ -40,25 +41,27 @@ libanoubischat_a_SOURCES = \
 	accbuffer.h \
 	$(include_HEADERS)
 
-INCLUDES = \
-	-I$(top_builddir)/src \
-	-I$(top_srcdir)/include
-
-if NEEDBSDCOMPAT
-INCLUDES += -I$(top_srcdir)/$(bsdcompatdir)
-endif
+libanoubischat_a_CFLAGS = $(shared_AM_CFLAGS)
+libanoubischat_a_CPPFLAGS = -I .. -I$(top_builddir)/src -I$(top_srcdir)/include
+libanoubischat_a_LIBADD =
 
 # For testing with aegis (especially against the baseline) we need to run
 # the test-binary (containing the current tests), operating on the old/baseline
 # library. Thus we build a dynamic link-able library for testing purpose only.
 noinst_PROGRAMS = libanoubischat.so
 libanoubischat_so_SOURCES = $(libanoubischat_a_SOURCES)
-libanoubischat_so_CFLAGS = -fPIC -shared $(shared_AM_CFLAGS)
+libanoubischat_so_CFLAGS = $(libanoubischat_a_CFLAGS) -fPIC -shared
+libanoubischat_so_CPPFLAGS = $(libanoubischat_a_CPPFLAGS)
 libanoubischat_so_LDFLAGS = -nostartfiles -shared $(shared_AM_LDFLAGS)
+libanoubischat_so_LDADD =
 
 if NEEDBSDCOMPAT
-LDADD = -lbsdcompat
-libanoubischat_so_LDFLAGS += -L$(top_builddir)/$(bsdcompatdir)
+libanoubischat_a_CPPFLAGS += -I$(top_srcdir)/$(bsdcompatdir)
+libanoubischat_a_LIBADD += $(libbsdcompat)
+libanoubischat_a_DEPENDENCIES = $(libbsdcompat)
+libanoubischat_so_CPPFLAGS += -I$(top_srcdir)/$(bsdcompatdir)
+libanoubischat_so_LDADD += $(libbsdcompat)
+libanoubischat_so_DEPENDENCIES = $(libbsdcompat)
 endif
 
 libanoubischat_a_SOURCES_lint = \
@@ -87,8 +90,8 @@ libanoubischat_a_SOURCES_flawfinder = \
 	accbuffer.h_flawfinder
 
 flawfinder_FLAGS=
-splint_FLAGS=$(INCLUDES)
-lint_FLAGS=$(INCLUDES)
+splint_FLAGS=$(libanoubischat_a_CPPFLAGS)
+lint_FLAGS=$(libanoubischat_a_CPPFLAGS)
 
 lint:		$(libanoubischat_a_SOURCES_lint)
 splint:		$(libanoubischat_a_SOURCES_splint)
