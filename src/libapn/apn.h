@@ -128,8 +128,13 @@ struct apn_afiltrule {
 	struct apn_afiltspec	 filtspec;
 };
 
+enum {
+	APN_ALF_CAPRAW, APN_ALF_CAPOTHER, APN_ALF_CAPALL
+};
+
 struct apn_acaprule {
-	/* XXX HJH */
+	int			 action;
+	int			 capability;
 };
 
 struct apn_adfltrule {

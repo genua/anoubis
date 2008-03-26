@@ -117,6 +117,7 @@ typedef struct {
 		} hosts;
 		struct apn_afiltspec	 afspec;
 		struct apn_afiltrule	 afrule;
+		struct apn_acaprule	 acaprule;
 		struct apn_addr		 addr;
 		struct apn_app		*app;
 		struct apn_port		*port;
@@ -142,7 +143,7 @@ typedef struct {
 %type	<v.host>		host host_l hostspec
 %type	<v.port>		port port_l ports portspec
 %type	<v.hosts>		hosts
-%type	<v.number>		not
+%type	<v.number>		not capability
 %type	<v.netaccess>		netaccess
 %type	<v.af>			af
 %type	<v.proto>		proto
@@ -152,6 +153,7 @@ typedef struct {
 %type	<v.afrule>		alffilterrule
 %type	<v.alfrule>		alfrule alfrule_l
 %type	<v.ruleset>		alfruleset
+%type	<v.acaprule>		alfcaprule
 %%
 
 grammar		: /* empty */
@@ -293,8 +295,8 @@ alfrule_l	: alfrule_l alfrule nl		{
 alfrule		: alffilterrule			{
 			struct apn_alfrule	*rule;
 
-			if ((rule = calloc(1, sizeof(struct apn_alfrule)))
-			    == NULL) {
+			rule = calloc(1, sizeof(struct apn_alfrule));
+			if (rule == NULL) {
 				clearfilter(&$1.filtspec);
 				YYERROR;
 			}
@@ -305,7 +307,19 @@ alfrule		: alffilterrule			{
 
 			$$ = rule;
 		}
-		| alfcaprule			{ $$ = NULL; }
+		| alfcaprule			{
+			struct apn_alfrule	*rule;
+
+			rule = calloc(1, sizeof(struct apn_alfrule));
+			if (rule == NULL)
+				YYERROR;
+
+			rule->type = APN_ALF_CAPABILITY;
+			rule->rule.acap = $1;
+			rule->tail = rule;
+
+			$$ = rule;
+		}
 		| alfdefault			{ $$ = NULL; }
 		| ctxrule			{ $$ = NULL; }
 		;
@@ -480,12 +494,15 @@ port		: STRING			{
 		}
 		;
 
-alfcaprule	: action capability
+alfcaprule	: action capability		{
+			$$.action = $1;
+			$$.capability = $2;
+		}
 		;
 
-capability	: RAW
-		| OTHER
-		| ALL
+capability	: RAW				{ $$ = APN_ALF_CAPRAW; }
+		| OTHER				{ $$ = APN_ALF_CAPOTHER; }
+		| ALL				{ $$ = APN_ALF_CAPALL; }
 		;
 
 alfdefault	: defaultrule;

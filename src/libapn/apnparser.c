@@ -55,6 +55,7 @@ static int	apn_print_afiltrule(struct apn_afiltrule *);
 static int	apn_print_host(struct apn_host *);
 static int	apn_print_address(struct apn_addr *);
 static int	apn_print_port(struct apn_port *);
+static int	apn_print_acaprule(struct apn_acaprule *);
 static int	apn_print_action(int);
 static int	apn_print_netaccess(int);
 static int	apn_print_log(int);
@@ -188,6 +189,8 @@ apn_print_alfrule(struct apn_alfrule *rule, int flags)
 			ret = apn_print_afiltrule(&hp->rule.afilt);
 			break;
 		case APN_ALF_CAPABILITY:
+			ret = apn_print_acaprule(&hp->rule.acap);
+			break;
 		case APN_ALF_DEFAULT:
 			ret = 0; /* XXX HJH:  Those are not implemented yet */
 			break;
@@ -233,6 +236,36 @@ apn_print_afiltrule(struct apn_afiltrule *rule)
 			return (1);
 		if (apn_print_port(rule->filtspec.toport) == 1)
 			return (1);
+	}
+
+	printf("\n");
+
+	return (0);
+}
+
+static int
+apn_print_acaprule(struct apn_acaprule *rule)
+{
+	if (rule == NULL)
+		return (1);
+
+	printf("\t");
+
+	if (apn_print_action(rule->action) == 1)
+		return (1);
+
+	switch (rule->capability) {
+	case APN_ALF_CAPRAW:
+		printf("raw");
+		break;
+	case APN_ALF_CAPOTHER:
+		printf("other");
+		break;
+	case APN_ALF_CAPALL:
+		printf("all");
+		break;
+	default:
+		return (1);
 	}
 
 	printf("\n");
