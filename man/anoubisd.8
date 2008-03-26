@@ -1,4 +1,4 @@
-.\"	$Id: 56550e,v 1.7 2008/01/31 15:56:59 hshoexer Exp $
+.\"	$Id: 56550e,v 1.8 2008/03/26 11:54:19 fritsch Exp $
 .\"	$OpenBSD: mdoc.template,v 1.10 2007/05/31 22:10:19 jmc Exp $
 .\"
 .\" The following requests are required for all man pages.
@@ -12,7 +12,9 @@
 .Nd Anoubis daemon
 .Sh SYNOPSIS
 .Nm anoubisd
-.Op Fl dnv
+.Op Fl d Ar flags
+.Op Fl nv
+.Op Fl s Ar socket
 .Sh DESCRIPTION
 The
 .Nm
@@ -20,18 +22,20 @@ is the backend daemon of the Anoubis Security Suite.
 .Pp
 The options are as follows:
 .Bl -tag -wdith Ds
-.It Fl d
+.It Fl d Ar flags
 When the
 .Fl d
 option is set,
 .Nm
-will run in debug mode in the foreground instead of daemonizing.
+will turn on debug output to syslog. The flags values are:
 .It Fl n
 Config test mode.
 Only check the configuration file for validity.
 .Nm
-will do nothing except
+will do nothing except parse the configuration file and terminate.
 .It Fl v
+Produce more verbose output.
+.It Fl s Ar socket
 Produce more verbose output.
 .El
 .\" The following requests should be uncommented and used where appropriate.

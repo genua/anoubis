@@ -28,28 +28,18 @@
 #include "config.h"
 
 #include <sys/types.h>
-
-#include <stdio.h>
 #include <time.h>
-
-#ifdef S_SPLINT_S
-#include "splint-includes.h"
-#endif
 
 #include "anoubisd.h"
 
-void	print_mainconf(struct anoubisd_config *);
-
 void
-print_mainconf(struct anoubisd_config *conf)
+policy_engine(struct eventdev_hdr *request, anoubisd_reply_t *reply)
 {
-	/* XXX HSH: Todo */
-}
+	DEBUG(DBG_TRACE, ">policy_engine");
 
-void
-print_config(struct anoubisd_config *conf)
-{
-	printf("\n");
-	print_mainconf(conf);
-	printf("\n");
+	reply->ask = 0;		/* false */
+	reply->reply = 0;	/* allow */
+	reply->timeout = (time_t)0;
+
+	DEBUG(DBG_TRACE, "<policy_engine");
 }

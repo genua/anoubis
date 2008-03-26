@@ -47,6 +47,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <syslog.h>
+#include <time.h>
 #include <unistd.h>
 
 #ifdef S_SPLINT_S
@@ -61,6 +62,7 @@
 
 static void	usage(void) __dead;
 
+static int	eventfds[2];
 static void	main_cleanup(void);
 static void	main_shutdown(int) __dead;
 static void	sanitise_stdfd(void);
@@ -75,6 +77,7 @@ static void	dispatch_p2m(int, short, void *);
 static void	dispatch_m2dev(int, short, void *);
 static void	dispatch_dev2m(int, short, void *);
 
+pid_t		master_pid = 0;
 pid_t		se_pid = 0;
 pid_t		policy_pid = 0;
 
@@ -95,7 +98,8 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s [-d <flags>] [-nv]\n", __progname);
+	fprintf(stderr, "usage: %s [-d <flags>] [-nv] [-s <socket> ]\n",
+	    __progname);
 	exit(1);
 }
 
@@ -108,6 +112,7 @@ sighandler(int sig, short event, void *arg)
 {
 	int	die = 0;
 
+	DEBUG(DBG_TRACE, ">sighandler: %d", sig);
 	switch (sig) {
 	case SIGTERM:
 	case SIGINT:
@@ -131,6 +136,7 @@ sighandler(int sig, short event, void *arg)
 		reconfigure();
 		break;
 	}
+	DEBUG(DBG_TRACE, "<sighandler: %d", sig);
 }
 
 static void
@@ -156,7 +162,6 @@ main(int argc, char *argv[])
 	int			pipe_m2s[2];
 	int			pipe_m2p[2];
 	int			pipe_s2p[2];
-	int			eventfds[2];
 	struct timeval		tv;
 	char		       *endptr;
 
@@ -168,9 +173,12 @@ main(int argc, char *argv[])
 
 	bzero(&conf, sizeof(conf));
 
-	while ((ch = getopt(argc, argv, "d:nvs:")) != -1) {
+	while ((ch = getopt(argc, argv, "dD:nvs:")) != -1) {
 		switch (ch) {
 		case 'd':
+			debug_stderr = 1;
+			break;
+		case 'D':
 			errno = 0;    /* To distinguish success/failure */
 			debug_flags = strtol(optarg, &endptr, 0);
 
@@ -222,11 +230,14 @@ main(int argc, char *argv[])
 	if (getpwnam(ANOUBISD_USER) == NULL)
 		errx(1, "unkown user %s", ANOUBISD_USER);
 
-	if (daemon(1, 0) !=0)
-		fatal("daemon");
+	if (debug_stderr == 0)
+		if (daemon(1, 0) !=0)
+			fatal("daemon");
 
 	log_info("master start");
 	DEBUG(DBG_TRACE, "debug=%x", debug_flags);
+	master_pid = getpid();
+	DEBUG(DBG_TRACE, "master_pid=%d", master_pid);
 
 	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, pipe_m2s) == -1)
 		fatal("socketpair");
@@ -367,6 +378,11 @@ main_cleanup(void)
 	struct sigaction	sa;
 	pid_t			pid;
 
+	DEBUG(DBG_TRACE, ">main_cleanup");
+
+	close(eventfds[1]);
+	close(eventfds[0]);
+
 	/*
 	 * Ignoring SIGCHLD changes the behaviour of wait(2) et al. in that
 	 * way, that a call to wait(2) will block until all of the calling
@@ -401,6 +417,20 @@ __dead static void
 main_shutdown(int error)
 {
 	main_cleanup();
+	exit(error);
+}
+
+__dead void
+master_terminate(int error)
+{
+	DEBUG(DBG_TRACE, ">master_terminate");
+	if (master_pid) {
+		if (getpid() == master_pid)
+			main_shutdown(error);
+		else
+			kill(master_pid, SIGTERM);
+	}
+	sleep(10);
 	exit(error);
 }
 
@@ -441,7 +471,7 @@ sanitise_stdfd(void)
 		}
 	}
 	if (nullfd > 2)
-	close(nullfd);
+		close(nullfd);
 }
 
 static void
@@ -457,19 +487,23 @@ dispatch_m2s(int fd, short event, void *arg)
 	struct event_info_main *ev_info = (struct event_info_main*)arg;
 
 	DEBUG(DBG_TRACE, ">dispatch_m2s");
-	if ((msg = queue_next(&eventq_m2s)) == NULL) {
+
+	if ((msg = queue_peek(&eventq_m2s)) == NULL) {
 		DEBUG(DBG_TRACE, "<dispatch_m2s (no msg) ");
 		return;
 	}
 
 	if (send_msg(fd, msg)) {
 		msg = dequeue(&eventq_m2s);
+		DEBUG(DBG_QUEUE, " <eventq_m2s: %x",
+		    ((struct eventdev_hdr *)msg->msg)->msg_token);
 		free(msg);
 	}
 
 	/* If the queue is not empty, to be called again */
-	if (queue_next(&eventq_m2s))
+	if (queue_peek(&eventq_m2s))
 		event_add(ev_info->ev_m2s, NULL);
+
 	DEBUG(DBG_TRACE, "<dispatch_m2s");
 }
 
@@ -479,14 +513,20 @@ dispatch_s2m(int fd, short event, void *arg)
 	anoubisd_msg_t *msg;
 
 	DEBUG(DBG_TRACE, ">dispatch_s2m");
+
 	if ((msg = get_msg(fd)) == NULL) {
 		DEBUG(DBG_TRACE, "<dispatch_s2m (no msg)");
 		return;
 	}
 
+	DEBUG(DBG_QUEUE, " >s2m: %x",
+	    ((struct eventdev_hdr *)msg->msg)->msg_token);
+
 	/* This should be a sessionid registration message */
 
-	/* XXX RD Todo */
+/* XXX RD Session registration - optimization */
+	free(msg);
+
 	DEBUG(DBG_TRACE, "<dispatch_s2m");
 }
 
@@ -497,19 +537,23 @@ dispatch_m2p(int fd, short event, void *arg)
 	struct event_info_main *ev_info = (struct event_info_main*)arg;
 
 	DEBUG(DBG_TRACE, ">dispatch_m2p");
-	if ((msg = queue_next(&eventq_m2p)) == NULL) {
+
+	if ((msg = queue_peek(&eventq_m2p)) == NULL) {
 		DEBUG(DBG_TRACE, "<dispatch_m2p (no msg)");
 		return;
 	}
 
 	if (send_msg(fd, msg)) {
 		msg = dequeue(&eventq_m2p);
+		DEBUG(DBG_QUEUE, " <eventq_m2p: %x",
+		    ((struct eventdev_hdr *)msg->msg)->msg_token);
 		free(msg);
 	}
 
 	/* If the queue is not empty, we want to be called again */
-	if (queue_next(&eventq_m2p))
+	if (queue_peek(&eventq_m2p))
 		event_add(ev_info->ev_m2p, NULL);
+
 	DEBUG(DBG_TRACE, "<dispatch_m2p");
 }
 
@@ -520,16 +564,26 @@ dispatch_p2m(int fd, short event, void *arg)
 	struct event_info_main *ev_info = (struct event_info_main*)arg;
 
 	DEBUG(DBG_TRACE, ">dispatch_p2m");
+
 	if ((msg = get_msg(fd)) == NULL) {
 		DEBUG(DBG_TRACE, "<dispatch_p2m (no msg)");
 		return;
 	}
 
 	/* this should be a event_reply message */
-/* XXX RD check it */
+	if (msg->mtype != ANOUBISD_MSG_EVENTREPLY) {
+		DEBUG(DBG_TRACE, "<dispatch_p2m (bad msg)");
+		return;
+	}
+
+	DEBUG(DBG_QUEUE, " >p2m: %x",
+	    ((struct eventdev_reply *)msg->msg)->msg_token);
 
 	enqueue(&eventq_m2dev, msg);
+	DEBUG(DBG_QUEUE, " >eventq_m2dev: %x",
+	    ((struct eventdev_reply *)msg->msg)->msg_token);
 	event_add(ev_info->ev_m2dev, NULL);
+
 	DEBUG(DBG_TRACE, "<dispatch_p2m");
 }
 
@@ -540,18 +594,22 @@ dispatch_m2dev(int fd, short event, void *arg)
 	struct event_info_main *ev_info = (struct event_info_main*)arg;
 
 	DEBUG(DBG_TRACE, ">dispatch_m2dev");
-	if ((msg = queue_next(&eventq_m2dev)) == NULL) {
+
+	if ((msg = queue_peek(&eventq_m2dev)) == NULL) {
 		DEBUG(DBG_TRACE, "<dispatch_m2dev (no msg)");
 		return;
 	}
 
 	if (send_reply(fd, msg)) {
 		msg = dequeue(&eventq_m2dev);
+		DEBUG(DBG_QUEUE, " <eventq_m2dev: %x",
+		    ((struct eventdev_reply *)msg->msg)->msg_token);
 		free(msg);
 	}
 
-	if (queue_next(&eventq_m2dev))
+	if (queue_peek(&eventq_m2dev))
 		event_add(ev_info->ev_m2dev, NULL);
+
 	DEBUG(DBG_TRACE, "<dispatch_m2dev");
 }
 
@@ -560,16 +618,19 @@ dispatch_dev2m(int fd, short event, void *arg)
 {
 	struct eventdev_hdr * hdr;
 	anoubisd_msg_t *msg;
-	anoubisd_msg_t *msg_s;
 	anoubisd_msg_t *msg_reply;
 	struct eventdev_reply *rep;
 	struct event_info_main *ev_info = (struct event_info_main*)arg;
 
 	DEBUG(DBG_TRACE, ">dispatch_dev2m");
+
 	if ((msg = get_event(fd)) == NULL) {
 		DEBUG(DBG_TRACE, "<dispatch_dev2m (no msg)");
 		return;
 	}
+
+	DEBUG(DBG_QUEUE, " >dev2m: %x",
+	    ((struct eventdev_hdr *)msg->msg)->msg_token);
 
 	hdr = (struct eventdev_hdr *)msg->msg;
 
@@ -577,9 +638,11 @@ dispatch_dev2m(int fd, short event, void *arg)
 	if ((hdr->msg_flags & EVENTDEV_NEED_REPLY) &&
 	    (hdr->msg_pid == se_pid || hdr->msg_pid == policy_pid)) {
 
+
 		if ((msg_reply = malloc(sizeof(anoubisd_msg_t) +
 		    sizeof(struct eventdev_reply))) == NULL) {
-/* XXX RD probably fatal */
+			log_warn("dispatch_dev2m: cannot allocate memory");
+			main_shutdown(ENOMEM);
 		}
 		bzero(msg_reply, sizeof(anoubisd_msg_t) +
 		    sizeof(struct eventdev_reply));
@@ -592,6 +655,8 @@ dispatch_dev2m(int fd, short event, void *arg)
 
 		/* this should be queued, so as to not get lost */
 		enqueue(&eventq_m2dev, msg_reply);
+		DEBUG(DBG_QUEUE, " >eventq_m2dev: %x",
+		    ((struct eventdev_reply *)msg_reply->msg)->msg_token);
 		event_add(ev_info->ev_m2dev, NULL);
 
 		free(msg);
@@ -600,25 +665,26 @@ dispatch_dev2m(int fd, short event, void *arg)
 		return;
 	}
 
-	/* Send event to the policy process for handling */
+	DEBUG(DBG_TRACE, " token %x pid %d", hdr->msg_token, hdr->msg_pid);
+
+/* XXX RD syslog? */
+
 	if (hdr->msg_flags & EVENTDEV_NEED_REPLY) {
 
+		/* Send event to the policy process for handling. */
 		enqueue(&eventq_m2p, msg);
+		DEBUG(DBG_QUEUE, " >eventq_m2p: %x",
+		    ((struct eventdev_hdr *)msg->msg)->msg_token);
 		event_add(ev_info->ev_m2p, NULL);
-	}
 
-	/*
-	 * Copy events to the session process for notifications. It is not
-	 * fatal if malloc fails here, the notification will just not arrive
-	 * at the session process
-	 */
-	if ((msg_s = malloc(msg->size)) != NULL) {
+	} else {
 
-		memcpy(msg_s, msg, msg->size);
-
-		enqueue(&eventq_m2s, msg_s);
+		/* Send event to the session process for notifications. */
+		enqueue(&eventq_m2s, msg);
+		DEBUG(DBG_QUEUE, " >eventq_m2s: %x",
+		    ((struct eventdev_hdr *)msg->msg)->msg_token);
 		event_add(ev_info->ev_m2s, NULL);
 	}
+
 	DEBUG(DBG_TRACE, "<dispatch_dev2m");
 }
-

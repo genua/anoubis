@@ -40,6 +40,7 @@
 #include <dev/eventdev.h>
 #include <dev/anoubis.h>
 #endif
+#include <assert.h>
 
 #define ANOUBISD_OPT_VERBOSE		0x0001
 #define ANOUBISD_OPT_VERBOSE2		0x0002
@@ -59,22 +60,33 @@ struct anoubisd_config {
 };
 
 struct session_reg {
-	u_int32_t session_id;
-	int flag;
+	u_int32_t	session_id;
+	int	flag;
 };
 
 struct anoubisd_msg {
-	short size;
-	short mtype;
-	char msg[0];
+	short	size;
+	short	mtype;
+	time_t	starttime;
+	time_t	timeout;
+	char	msg[0];
 };
 typedef struct anoubisd_msg anoubisd_msg_t;
 enum {
+	ANOUBISD_MSG_POLREQUEST,
+	ANOUBISD_MSG_POLREPLY,
 	ANOUBISD_MSG_EVENTDEV,
 	ANOUBISD_MSG_EVENTREPLY,
 	ANOUBISD_MSG_EVENTCANCEL,
 	ANOUBISD_MSG_SESSION_REG
 } anoubisd_msg;
+
+struct anoubisd_reply {
+	short	ask;
+	int	reply;
+	time_t	timeout;
+};
+typedef struct anoubisd_reply anoubisd_reply_t;
 
 enum {
 	PROC_MAIN,
@@ -84,13 +96,15 @@ enum {
 
 pid_t	session_main(struct anoubisd_config *, int[], int[], int[]);
 pid_t	policy_main(struct anoubisd_config *, int[], int[], int[]);
+void	policy_engine(struct eventdev_hdr *request, anoubisd_reply_t *reply);
 void	log_init(void);
 void	log_warn(const char *, ...);
 void	log_warnx(const char *, ...);
 void	log_info(const char *, ...);
 void	log_debug(const char *, ...);
-void	fatalx(const char *);
-void	fatal(const char *);
+void	fatalx(const char *);	/* XXX RD __dead */
+void	fatal(const char *);	/* XXX RD __dead */
+void	master_terminate(int);	/* XXX RD __dead */
 
 #ifndef S_SPLINT_S
 #define DEBUG(flag, ...) {if (flag & debug_flags) log_debug(__VA_ARGS__);}
@@ -99,10 +113,12 @@ void	fatal(const char *);
 #define DEBUG
 #endif
 u_int32_t debug_flags;
+u_int32_t debug_stderr;
 
-#define DBG_MSG_FD	1
-#define DBG_MSG_SEND	2
-#define DBG_MSG_RECV	4
-#define DBG_TRACE	8
+#define DBG_MSG_FD	0x01
+#define DBG_MSG_SEND	0x02
+#define DBG_MSG_RECV	0x04
+#define DBG_TRACE	0x08
+#define DBG_QUEUE	0x10
 
 #endif /* !_ANOUBISD_H */

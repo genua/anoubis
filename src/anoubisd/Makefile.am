@@ -58,6 +58,7 @@ anoubisd_LDFLAGS = $(AM_LDFLAGS) $(STATIC)
 anoubisd_SOURCES= \
 	main.c \
 	policy.c \
+	pe.c \
 	printconf.c \
 	session.c \
 	log.c \
@@ -71,6 +72,7 @@ anoubisd_SOURCES= \
 anoubisd_SOURCES_flawfinder= \
 	main.c_flawfinder \
 	policy.c_flawfinder \
+	pe.c_flawfinder \
 	printconf.c_flawfinder \
 	session.c_flawfinder \
 	log.c_flawfinder \
@@ -83,6 +85,7 @@ anoubisd_SOURCES_flawfinder= \
 anoubisd_SOURCES_lint= \
 	main.c_lint \
 	policy.c_lint \
+	pe.c_lint \
 	printconf.c_lint \
 	session.c_lint \
 	log.c_lint
@@ -90,6 +93,7 @@ anoubisd_SOURCES_lint= \
 anoubisd_SOURCES_splint= \
 	main.c_splint \
 	policy.c_splint \
+	pe.c_splint \
 	printconf.c_splint \
 	session.c_splint \
 	log.c_splint \

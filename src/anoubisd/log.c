@@ -67,7 +67,7 @@ vlog(int pri, const char *fmt, va_list ap)
 {
 	char	*nfmt;
 
-	if (debug_flags) {
+	if (debug_stderr) {
 		/* best effort in out of mem situations */
 		if (asprintf(&nfmt, "%s\n", fmt) == -1) {
 			vfprintf(stderr, fmt, ap); /* Flawfinder: ignore */
@@ -130,11 +130,9 @@ log_debug(const char *emsg, ...)
 {
 	va_list	 ap;
 
-//	if (debug) {
-		va_start(ap, emsg);
-		vlog(LOG_DEBUG, emsg, ap);
-		va_end(ap);
-//	}
+	va_start(ap, emsg);
+	vlog(LOG_DEBUG, emsg, ap);
+	va_end(ap);
 }
 
 void

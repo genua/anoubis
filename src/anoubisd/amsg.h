@@ -38,6 +38,16 @@
 #endif
 
 
+/*
+ * The MSG_BUF_SIZE must be larger than the largest message that the
+ * kernel will ever send.  The mechanism is to allocate two times this size and
+ * thus be always able to read an unprocessed message from the kernel, while
+ * still processing a previously read message.  This is probably "overkill", as
+ * the whole mechanism is to assure that we can always get a whole message from
+ * the kernel in a single read. The kernel only provides messages as units, thus
+ * this might not be really needed.  However, it is an additional guarantee and
+ * check.
+ */
 #define MSG_BUF_SIZE 4096
 #define MSG_BUFS 10
 struct msg_buf {

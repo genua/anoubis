@@ -1,29 +1,29 @@
 /*
-* Copyright (c) 2008 GeNUA mbH <info@genua.de>
-*
-* All rights reserved.
-*
-* Redistribution and use in source and binary forms, with or without
-* modification, are permitted provided that the following conditions
-* are met:
-* 1. Redistributions of source code must retain the above copyright
-*    notice, this list of conditions and the following disclaimer.
-* 2. Redistributions in binary form must reproduce the above copyright
-*    notice, this list of conditions and the following disclaimer in the
-*    documentation and/or other materials provided with the distribution.
-*
-* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-* "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-* LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-* A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-* OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-* SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
-* TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-* PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-* LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-* NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-* SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
+ * Copyright (c) 2008 GeNUA mbH <info@genua.de>
+ *
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
+ * TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 
 #include "config.h"
 
@@ -33,6 +33,8 @@
 #include <stdio.h>
 #define log_warn(x)
 #endif /* UTEST */
+
+#include <errno.h>
 
 #include "aqueue.h"
 
@@ -47,9 +49,14 @@ enqueue(Queuep queuep, void *msgp)
 {
 	Qentry *qep;
 
+	if (queuep == NULL) {
+		log_warn("uninitialized queue");
+		return 0;
+	}
 	if ((qep = malloc(sizeof(struct queue_entry))) == NULL) {
-		log_warn("can't allocate memory");
-		return(-1);
+		log_warn("enqueue: can't allocate memory");
+		master_terminate(ENOMEM);
+		return 0;
 	}
 	qep->next = NULL;
 	qep->entry = msgp;
@@ -59,15 +66,7 @@ enqueue(Queuep queuep, void *msgp)
 	queuep->tail = qep;
 	if (queuep->head == NULL)
 		queuep->head = queuep->tail;
-	return(0);
-}
-
-void *
-queue_next(Queuep queuep)
-{
-	if (queuep->head == NULL)
-		return NULL;
-	return queuep->head->entry;
+	return 1;
 }
 
 void *
@@ -76,6 +75,10 @@ dequeue(Queuep queuep)
 	Qentry *qep;
 	void *msgp;
 
+	if (queuep == NULL) {
+		log_warn("uninitialized queue");
+		return 0;
+	}
 	if (queuep->head == NULL)
 		return NULL;
 	qep = queuep->head;
@@ -87,18 +90,93 @@ dequeue(Queuep queuep)
 	return msgp;
 }
 
-void *
-queue_find(Queuep queuep, void *msgp)
+Qentryp
+queue_head(Queuep queuep)
 {
-/* XXX void *msg; */
-	return msgp; /* XXX msg */
+	if (queuep == NULL) {
+		log_warn("uninitialized queue");
+		return 0;
+	}
+	return queuep->head;
+}
+
+Qentryp
+queue_walk(Queuep queuep, Qentryp qep)
+{
+	if (queuep == NULL) {
+		log_warn("uninitialized queue");
+		return 0;
+	}
+	if (qep == NULL)
+		return NULL;
+	return qep->next;
+}
+
+void *
+queue_peek(Queuep queuep)
+{
+	if (queuep == NULL) {
+		log_warn("uninitialized queue");
+		return 0;
+	}
+	if (queuep->head == NULL)
+		return NULL;
+	return queuep->head->entry;
+}
+
+void *
+queue_find(Queuep queuep, void *msgp, int(*cmp)(const void *, const void *))
+{
+	Qentryp qep;
+
+	if (queuep == NULL) {
+		log_warn("uninitialized queue");
+		return 0;
+	}
+	if (queuep->head == NULL)
+		return NULL;
+	qep = queuep->head;
+	while (qep) {
+		if ((*cmp)(msgp, qep->entry))
+			return qep->entry;
+		qep = qep->next;
+	}
+	return NULL;
 }
 
 int
 queue_delete(Queuep queuep, void *msgp)
 {
-/* XXX */
-	return(1);
+	Qentryp qep;
+	Qentryp lqep = NULL;
+
+	if (queuep == NULL) {
+		log_warn("uninitialized queue");
+		return 0;
+	}
+	if (queuep->head == NULL)
+		return 0;
+	qep = queuep->head;
+	while (qep) {
+		if (msgp == qep->entry) {
+			free(msgp);
+			if (qep == queuep->head) {
+				queuep->head = qep->next;
+				if (queuep->head == NULL)
+					queuep->tail = NULL;
+				free(qep);
+				return 1;
+			}
+			lqep->next = qep->next;
+			if (queuep->tail == qep)
+				queuep->tail = lqep;
+			free(qep);
+			return 1;
+		}
+		lqep = qep;
+		qep = qep->next;
+	}
+	return 0;
 }
 
 #ifdef UTEST
@@ -161,6 +239,6 @@ main(int ac, char *av[])
 	printf("dequeue: empty\n");
 	queue_dump(&q);
 
-	return(0);
+	return 0;
 }
 #endif /* UTEST */
