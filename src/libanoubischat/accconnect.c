@@ -49,7 +49,7 @@
 achat_rc
 acc_prepare(struct achat_channel *acc)
 {
-	size_t size;
+	socklen_t size;
 	int rc;
 
 	ACC_CHKPARAM(acc != NULL);

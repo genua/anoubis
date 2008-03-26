@@ -67,7 +67,7 @@ static inline void crc32_set(void * _buf, int len)
 	int i;
 	buf += len-4;
 	for (i=3; i>=0; i--) {
-		buf[i] = sum % 256;
+		buf[i] = (unsigned char) (sum % 256);
 		sum /= 256;
 	}
 }

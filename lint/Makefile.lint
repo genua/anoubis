@@ -50,7 +50,9 @@ endif
 .SUFFIXES= .lint
 
 if HAVE_LINT
-common_lint_FLAGS =
+# See lint(1bsd) for details. At least ATM they just add a lot of
+# unnecessary noise to the reports.
+common_lint_FLAGS = -g -u
 endif
 
 .c.c_lint .h.h_lint:
@@ -63,19 +65,12 @@ else
 endif
 
 if HAVE_SPLINT
-missing_splint_types = \
-	-Du_int64_t='unsigned long long' \
-	-Du_int32_t='unsigned int' \
-	-Du_int16_t='unsigned short int' \
-	-Du_int8_t='unsigned char' \
-	-D__signed__=signed
-
 common_splint_FLAGS = \
 	-weak \
 	+unixlib \
+	+matchanyintegral \
 	-duplicatequals \
 	-fixedformalarray \
-	-formattype \
 	-fullinitblock \
 	-retvalother \
 	-type \

@@ -178,6 +178,8 @@ void anoubis_dump_buf(void * buf, size_t len, const char * str)
 		.u.buf = buf,
 		.length = len,
 	};
-#endif
 	anoubis_dump(&m, str);
+#else
+	return;
+#endif
 }

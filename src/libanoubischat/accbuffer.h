@@ -27,9 +27,9 @@
 
 struct achat_buffer {
 	u_char	*buf;		/* achat_buffer for data. */
-	u_int	 alloc;		/* Number of bytes allocated for data. */
-	u_int	 offset;	/* Offset of first byte containing data. */
-	u_int	 end;		/* Offset of last byte containing data. */
+	size_t	 alloc;		/* Number of bytes allocated for data. */
+	size_t	 offset;	/* Offset of first byte containing data. */
+	size_t	 end;		/* Offset of last byte containing data. */
 };
 typedef struct achat_buffer achat_buffer;
 
@@ -41,8 +41,8 @@ achat_rc acc_bufferfree(achat_buffer *);
 size_t	 acc_bufferlen(achat_buffer *);
 void	*acc_bufferptr(achat_buffer *);
 
-achat_rc acc_bufferappend(achat_buffer *, const void *, u_int);
-void *acc_bufferappend_space(achat_buffer *, u_int);
+achat_rc acc_bufferappend(achat_buffer *, const void *, size_t);
+void *acc_bufferappend_space(achat_buffer *, size_t);
 __END_DECLS
 
 #endif /* __ACCBUFFER_H__ */

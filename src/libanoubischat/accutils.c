@@ -91,10 +91,10 @@ acc_statetransit(struct achat_channel *acc, enum acc_state newstate)
 socklen_t
 acc_sockaddrsize(struct sockaddr_storage *sa)
 {
-	size_t size = 0;
+	socklen_t size = 0;
 
 #ifdef OPENBSD
-	size = sa->ss_len;
+	size = (socklen_t) sa->ss_len;
 #else
 	switch (sa->ss_family) {
 	case AF_UNIX:
@@ -125,7 +125,6 @@ acc_io(struct achat_channel *acc, ssize_t (*f) (int, void *, size_t),
 	ACC_CHKPARAM(acc  != NULL);
 	ACC_CHKPARAM(f    != NULL);
 	ACC_CHKPARAM(buf  != NULL);
-	ACC_CHKPARAM(*size >= 0);
 
 	while ((*size > pos) && (rc == ACHAT_RC_OK)) {
 		res = (f)(acc->connfd, buf + pos, *size - pos);

@@ -30,15 +30,16 @@ if STATIC_LINKING
 STATIC = -static
 endif
 
-INCLUDES = -I$(top_srcdir)/include
-
 CFLAGS += $(SSL_CFLAGS)
+
 LIBS += $(SSL_LIBS)
 
 sfssig_LDFLAGS = $(AM_LDFLAGS) $(SSL_LDFLAGS)
 
 sfssig_SOURCES= \
 	main.c
+
+sfssig_CPPFLAGS = -I$(top_srcdir)/include -I$(top_builddir)/src
 
 sfssig_SOURCES_flawfinder= \
 	main.c_flawfinder
@@ -50,8 +51,8 @@ sfssig_SOURCES_splint= \
 	main.c_splint
 
 flawfinder_FLAGS=
-splint_FLAGS=+unixlib $(INCLUDES) -I..
-lint_FLAGS=
+splint_FLAGS=+unixlib $(sfssig_CPPFLAGS)
+lint_FLAGS=$(sfssig_CPPFLAGS)
 
 flawfinder:	$(sfssig_SOURCES_flawfinder)
 splint:		$(sfssig_SOURCES_splint)

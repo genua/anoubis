@@ -45,16 +45,16 @@
 	typedef union __attribute__((packed)) {	\
 		unsigned char bytes[BITS/8];	\
 		u_int##BITS##_t netint;		\
-	} u##BITS##n;
+	} /*@unsignedintegraltype@*/ u##BITS##n;
 
 #define DEFINE_SIGNED_TYPE(BITS)		\
 	typedef union __attribute__((packed)) {	\
 		unsigned char bytes[BITS/8];	\
 		int##BITS##_t netint;		\
-	} s##BITS##n;
+	} /*@signedintegraltype@*/ s##BITS##n;
 
 /* Tokens are opaque data, i.e. we do not have to worry about endianness. */
-typedef  u_int64_t anoubis_token_t;
+typedef  u_int64_t /*@unsignedintegraltype@*/ anoubis_token_t;
 
 DEFINE_UNSIGNED_TYPE(8);
 DEFINE_UNSIGNED_TYPE(16);

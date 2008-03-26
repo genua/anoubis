@@ -78,7 +78,7 @@ acc_bufferclear(achat_buffer *buffer)
 
 /* Appends data to the buffer, expanding it if necessary. */
 achat_rc
-acc_bufferappend(achat_buffer *buffer, const void *data, u_int len)
+acc_bufferappend(achat_buffer *buffer, const void *data, size_t len)
 {
 	void *p;
 
@@ -104,7 +104,7 @@ accbuffer_compact(achat_buffer *buffer)
 	 */
 	if (buffer->offset > MIN(buffer->alloc, ACHAT_BUFFER_MAX_CHUNK)) {
 		memmove(buffer->buf, buffer->buf + buffer->offset,
-			buffer->end - buffer->offset);
+		    buffer->end - buffer->offset);
 		buffer->end -= buffer->offset;
 		buffer->offset = 0;
 		return (1);
@@ -118,9 +118,9 @@ accbuffer_compact(achat_buffer *buffer)
  * to the allocated region.
  */
 void *
-acc_bufferappend_space(achat_buffer *buffer, u_int len)
+acc_bufferappend_space(achat_buffer *buffer, size_t len)
 {
-	u_int newlen;
+	size_t newlen;
 	void *p;
 
 	if ((buffer == NULL) || (len <= 0) || (len > ACHAT_BUFFER_MAX_CHUNK))
