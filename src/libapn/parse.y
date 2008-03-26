@@ -118,6 +118,7 @@ typedef struct {
 		struct apn_afiltspec	 afspec;
 		struct apn_afiltrule	 afrule;
 		struct apn_acaprule	 acaprule;
+		struct apn_default	 dfltrule;
 		struct apn_addr		 addr;
 		struct apn_app		*app;
 		struct apn_port		*port;
@@ -143,7 +144,7 @@ typedef struct {
 %type	<v.host>		host host_l hostspec
 %type	<v.port>		port port_l ports portspec
 %type	<v.hosts>		hosts
-%type	<v.number>		not capability
+%type	<v.number>		not capability defaultspec
 %type	<v.netaccess>		netaccess
 %type	<v.af>			af
 %type	<v.proto>		proto
@@ -154,6 +155,7 @@ typedef struct {
 %type	<v.alfrule>		alfrule alfrule_l
 %type	<v.ruleset>		alfruleset
 %type	<v.acaprule>		alfcaprule
+%type	<v.dfltrule>		defaultrule alfdefault sfsdefault sbdefault;
 %%
 
 grammar		: /* empty */
@@ -320,7 +322,19 @@ alfrule		: alffilterrule			{
 
 			$$ = rule;
 		}
-		| alfdefault			{ $$ = NULL; }
+		| alfdefault			{
+			struct apn_alfrule	*rule;
+
+			rule = calloc(1, sizeof(struct apn_alfrule));
+			if (rule == NULL)
+				YYERROR;
+
+			rule->type = APN_ALF_DEFAULT;
+			rule->rule.apndefault = $1;
+			rule->tail = rule;
+
+			$$ = rule;
+		}
 		| ctxrule			{ $$ = NULL; }
 		;
 
@@ -505,7 +519,7 @@ capability	: RAW				{ $$ = APN_ALF_CAPRAW; }
 		| ALL				{ $$ = APN_ALF_CAPALL; }
 		;
 
-alfdefault	: defaultrule;
+alfdefault	: defaultrule			{ $$ = $1; }
 		;
 
 		/*
@@ -565,7 +579,7 @@ sbrule_l	: sbrule_l sbrule nl
 		;
 
 sbrule		: sbfilterrule
-		| sbdefaultrule
+		| sbdefault
 		| ctxrule
 		;
 
@@ -601,7 +615,7 @@ path_l		: path_l comma path
 path		: STRING
 		;
 
-sbdefaultrule	: defaultrule
+sbdefault	: defaultrule
 		;
 
 		/*
@@ -642,13 +656,15 @@ ctxspec		: NEW apps
 		/*
 		 * Default rule
 		 */
-defaultrule	: DEFAULT defaultspec
+defaultrule	: DEFAULT defaultspec		{
+			$$.action = $2;
+		}
 		;
 
-defaultspec	: action
-		| '$' STRING			{
-			struct var	*var;
 
+defaultspec	: action			{ $$ = $1; }
+		| '$' STRING			{
+			struct var      *var;
 			if ((var = varget($2)) == NULL)
 				YYERROR;
 		}
@@ -1417,7 +1433,6 @@ validate_alffilterspec(struct apn_afiltspec *afspec)
 		return (-1);
 	if ((afto = validate_hostlist(afspec->tohost)) == -1)
 		return (-1);
-
 
 	switch (afspec->af) {
 	case AF_UNSPEC:

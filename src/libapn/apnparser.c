@@ -56,7 +56,8 @@ static int	apn_print_host(struct apn_host *);
 static int	apn_print_address(struct apn_addr *);
 static int	apn_print_port(struct apn_port *);
 static int	apn_print_acaprule(struct apn_acaprule *);
-static int	apn_print_action(int);
+static int	apn_print_defaultrule(struct apn_default *);
+static int	apn_print_action(int, int);
 static int	apn_print_netaccess(int);
 static int	apn_print_log(int);
 static int	apn_print_af(int);
@@ -192,7 +193,7 @@ apn_print_alfrule(struct apn_alfrule *rule, int flags)
 			ret = apn_print_acaprule(&hp->rule.acap);
 			break;
 		case APN_ALF_DEFAULT:
-			ret = 0; /* XXX HJH:  Those are not implemented yet */
+			ret = apn_print_defaultrule(&hp->rule.apndefault);
 			break;
 		default:
 			return (1);
@@ -212,7 +213,7 @@ apn_print_afiltrule(struct apn_afiltrule *rule)
 
 	printf("\t");
 
-	if (apn_print_action(rule->action) == 1)
+	if (apn_print_action(rule->action, 1) == 1)
 		return (1);
 	if (apn_print_netaccess(rule->filtspec.netaccess) == 1)
 		return (1);
@@ -251,7 +252,7 @@ apn_print_acaprule(struct apn_acaprule *rule)
 
 	printf("\t");
 
-	if (apn_print_action(rule->action) == 1)
+	if (apn_print_action(rule->action, 1) == 1)
 		return (1);
 
 	switch (rule->capability) {
@@ -267,6 +268,22 @@ apn_print_acaprule(struct apn_acaprule *rule)
 	default:
 		return (1);
 	}
+
+	printf("\n");
+
+	return (0);
+}
+
+static int
+apn_print_defaultrule(struct apn_default *rule)
+{
+	if (rule == NULL)
+		return (1);
+
+	printf("\tdefault ");
+
+	if (apn_print_action(rule->action, 0) == 1)
+		return (1);
 
 	printf("\n");
 
@@ -347,21 +364,24 @@ apn_print_port(struct apn_port *port)
 }
 
 static int
-apn_print_action(int action)
+apn_print_action(int action, int space)
 {
 	switch (action) {
 	case APN_ACTION_ALLOW:
-		printf("allow ");
+		printf("allow");
 		break;
 	case APN_ACTION_DENY:
-		printf("deny ");
+		printf("deny");
 		break;
 	case APN_ACTION_ASK:
-		printf("ask ");
+		printf("ask");
 		break;
 	default:
 		return (1);
 	}
+
+	if (space)
+		printf(" ");
 
 	return (0);
 }

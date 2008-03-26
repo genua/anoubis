@@ -137,8 +137,8 @@ struct apn_acaprule {
 	int			 capability;
 };
 
-struct apn_adfltrule {
-	/* XXX HJH */
+struct apn_default {
+	int			action;
 };
 
 enum {
@@ -150,7 +150,7 @@ struct apn_alfrule {
 	union {
 		struct apn_afiltrule	afilt;
 		struct apn_acaprule	acap;
-		struct apn_adfltrule	adflt;
+		struct apn_default	apndefault;
 	} rule;
 
 	struct apn_alfrule	*next;
