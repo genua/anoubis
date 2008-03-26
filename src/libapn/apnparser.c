@@ -48,15 +48,16 @@
 extern int	parse_rules(const char *, struct apn_ruleset *);
 
 /* Only for internal use */
-static int	apn_print_app(struct apn_app *, int);
-static int	apn_print_alfrule(struct apn_alfrule *, int);
-static void	apn_print_hash(char *, int, int);
+static int	apn_print_app(struct apn_app *);
+static int	apn_print_alfrule(struct apn_alfrule *);
+static void	apn_print_hash(char *, int);
 static int	apn_print_afiltrule(struct apn_afiltrule *);
 static int	apn_print_host(struct apn_host *);
 static int	apn_print_address(struct apn_addr *);
 static int	apn_print_port(struct apn_port *);
 static int	apn_print_acaprule(struct apn_acaprule *);
 static int	apn_print_defaultrule(struct apn_default *);
+static int	apn_print_contextrule(struct apn_context *);
 static int	apn_print_action(int, int);
 static int	apn_print_netaccess(int);
 static int	apn_print_log(int);
@@ -105,7 +106,7 @@ apn_add_alfrule(struct apn_rule *rule, struct apn_ruleset *ruleset)
 	TAILQ_INSERT_TAIL(&ruleset->alf_queue, rule, entry);
 
 	if (ruleset->flags & APN_FLAG_VERBOSE)
-		ret = apn_print_rule(rule, ruleset->flags);
+		ret = apn_print_rule(rule);
 
 	return (ret);
 }
@@ -119,18 +120,18 @@ apn_add_alfrule(struct apn_rule *rule, struct apn_ruleset *ruleset)
  *  1: an error occured while parsing the rule
  */
 int
-apn_print_rule(struct apn_rule *rule, int flags)
+apn_print_rule(struct apn_rule *rule)
 {
 	int	ret = 0;
 
-	if ((ret = apn_print_app(rule->app, flags)) != 0)
+	if ((ret = apn_print_app(rule->app)) != 0)
 		return (ret);
 
 	printf(" {\n");
 
 	switch (rule->type) {
 	case APN_ALF:
-		ret = apn_print_alfrule(rule->rule.alf, flags);
+		ret = apn_print_alfrule(rule->rule.alf);
 		break;
 	default:
 		ret = 1;
@@ -143,12 +144,14 @@ apn_print_rule(struct apn_rule *rule, int flags)
 }
 
 static int
-apn_print_app(struct apn_app *app, int flags)
+apn_print_app(struct apn_app *app)
 {
 	struct apn_app *hp = app;
 
-	if (hp == NULL)
-		return (1);
+	if (hp == NULL) {
+		printf("any");
+		return (0);
+	}
 
 	if (app->next)
 		printf("{");
@@ -160,9 +163,9 @@ apn_print_app(struct apn_app *app, int flags)
 
 		if (hp->hashtype != APN_HASH_SHA256)
 			return (1);
-		printf("sha256 \\\n\t");
+		printf("sha256 \\\n");
 
-		apn_print_hash(hp->hashvalue, flags, 256 / 8);
+		apn_print_hash(hp->hashvalue, 256 / 8);
 
 		hp = hp->next;
 		if (hp)
@@ -170,13 +173,13 @@ apn_print_app(struct apn_app *app, int flags)
 	}
 
 	if (app->next)
-		printf("}");
+		printf(" }");
 
 	return (0);
 }
 
 static int
-apn_print_alfrule(struct apn_alfrule *rule, int flags)
+apn_print_alfrule(struct apn_alfrule *rule)
 {
 	struct apn_alfrule	*hp = rule;
 	int			 ret = 0;
@@ -195,6 +198,9 @@ apn_print_alfrule(struct apn_alfrule *rule, int flags)
 		case APN_ALF_DEFAULT:
 			ret = apn_print_defaultrule(&hp->rule.apndefault);
 			break;
+		case APN_ALF_CTX:
+			ret = apn_print_contextrule(&hp->rule.apncontext);
+			break;
 		default:
 			return (1);
 		}
@@ -210,8 +216,6 @@ apn_print_afiltrule(struct apn_afiltrule *rule)
 {
 	if (rule == NULL)
 		return (1);
-
-	printf("\t");
 
 	if (apn_print_action(rule->action, 1) == 1)
 		return (1);
@@ -250,8 +254,6 @@ apn_print_acaprule(struct apn_acaprule *rule)
 	if (rule == NULL)
 		return (1);
 
-	printf("\t");
-
 	if (apn_print_action(rule->action, 1) == 1)
 		return (1);
 
@@ -280,9 +282,25 @@ apn_print_defaultrule(struct apn_default *rule)
 	if (rule == NULL)
 		return (1);
 
-	printf("\tdefault ");
+	printf("default ");
 
 	if (apn_print_action(rule->action, 0) == 1)
+		return (1);
+
+	printf("\n");
+
+	return (0);
+}
+
+static int
+apn_print_contextrule(struct apn_context *rule)
+{
+	if (rule == NULL)
+		return (1);
+
+	printf("context new ");
+
+	if (apn_print_app(rule->application) == 1)
 		return (1);
 
 	printf("\n");
@@ -457,7 +475,7 @@ apn_print_proto(int proto)
 }
 
 static void
-apn_print_hash(char *hash, int flags, int len)
+apn_print_hash(char *hash, int len)
 {
 	int	i;
 

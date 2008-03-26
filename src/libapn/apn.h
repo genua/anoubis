@@ -141,8 +141,12 @@ struct apn_default {
 	int			action;
 };
 
+struct apn_context {
+	struct apn_app		*application;
+};
+
 enum {
-	APN_ALF_FILTER, APN_ALF_CAPABILITY, APN_ALF_DEFAULT
+	APN_ALF_FILTER, APN_ALF_CAPABILITY, APN_ALF_DEFAULT, APN_ALF_CTX
 };
 
 struct apn_alfrule {
@@ -151,6 +155,7 @@ struct apn_alfrule {
 		struct apn_afiltrule	afilt;
 		struct apn_acaprule	acap;
 		struct apn_default	apndefault;
+		struct apn_context	apncontext;
 	} rule;
 
 	struct apn_alfrule	*next;
@@ -188,6 +193,6 @@ struct apn_ruleset {
 
 int	apn_parse(const char *, struct apn_ruleset **, int);
 int	apn_add_alfrule(struct apn_rule *, struct apn_ruleset *);
-int	apn_print_rule(struct apn_rule *, int);
+int	apn_print_rule(struct apn_rule *);
 
 #endif /* _APN_H_ */

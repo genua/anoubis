@@ -119,6 +119,7 @@ typedef struct {
 		struct apn_afiltrule	 afrule;
 		struct apn_acaprule	 acaprule;
 		struct apn_default	 dfltrule;
+		struct apn_context	 ctxrule;
 		struct apn_addr		 addr;
 		struct apn_app		*app;
 		struct apn_port		*port;
@@ -156,6 +157,7 @@ typedef struct {
 %type	<v.ruleset>		alfruleset
 %type	<v.acaprule>		alfcaprule
 %type	<v.dfltrule>		defaultrule alfdefault sfsdefault sbdefault;
+%type	<v.ctxrule>		ctxrule
 %%
 
 grammar		: /* empty */
@@ -335,12 +337,23 @@ alfrule		: alffilterrule			{
 
 			$$ = rule;
 		}
-		| ctxrule			{ $$ = NULL; }
+		| ctxrule			{
+			struct apn_alfrule	*rule;
+
+			rule = calloc(1, sizeof(struct apn_alfrule));
+			if (rule == NULL)
+				YYERROR;
+
+			rule->type = APN_ALF_CTX;
+			rule->rule.apncontext = $1;
+			rule->tail = rule;
+
+			$$ = rule;
+		}
 		;
 
 alfspecs	: alffilterspec
 		| capability
-		| ctxspec
 		;
 
 alffilterrule	: action alffilterspec		{
@@ -647,10 +660,9 @@ vsspec		: STRING
 		/*
 		 * Context
 		 */
-ctxrule		: CONTEXT ctxspec
-		;
-
-ctxspec		: NEW apps
+ctxrule		: CONTEXT NEW apps		{
+			$$.application = $3;
+		}
 		;
 
 		/*
