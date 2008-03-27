@@ -41,7 +41,6 @@ libanoubischat_a_SOURCES = \
 	accbuffer.h \
 	$(include_HEADERS)
 
-libanoubischat_a_CFLAGS = $(shared_AM_CFLAGS)
 libanoubischat_a_CPPFLAGS = -I .. -I$(top_builddir)/src -I$(top_srcdir)/include
 libanoubischat_a_LIBADD =
 
@@ -50,7 +49,7 @@ libanoubischat_a_LIBADD =
 # library. Thus we build a dynamic link-able library for testing purpose only.
 noinst_PROGRAMS = libanoubischat.so
 libanoubischat_so_SOURCES = $(libanoubischat_a_SOURCES)
-libanoubischat_so_CFLAGS = $(libanoubischat_a_CFLAGS) -fPIC -shared
+libanoubischat_so_CFLAGS = $(shared_AM_CFLAGS) -fPIC -shared
 libanoubischat_so_CPPFLAGS = $(libanoubischat_a_CPPFLAGS)
 libanoubischat_so_LDFLAGS = -nostartfiles -shared $(shared_AM_LDFLAGS)
 libanoubischat_so_LDADD =
