@@ -24,17 +24,11 @@ dnl NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 dnl SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 AC_PREREQ(2.59)
-dnl XXX: the version must be generated, see BUG #163
-dnl XXX: this bugzilla reference seems outdated. we should update it with a
-dnl      new bug number, if the versioning style is wrong, or remove this
-dnl      reference altogether
-
-dnl
 dnl XXX: this automake project must be more configurable at compilation time
 dnl      see #311 for details.
 
-dnl Define version
-AC_INIT(anoubis, esyscmd([echo -n `aesub '${version}'`]), info@genua.de)
+dnl Define version as provided by VERSION
+AC_INIT(anoubis, esyscmd([echo -n `head -1 VERSION`]), info@genua.de)
 
 AM_INIT_AUTOMAKE
 AM_MAINTAINER_MODE

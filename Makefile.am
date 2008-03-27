@@ -31,7 +31,7 @@ man_MANS = man/anoubisd.8 man/xanoubis.1 man/anoubischat.3 man/anoubisctl.8 \
 	man/anoubis_client.3 man/anoubis_server.3 man/anoubis_auth.3 \
 	man/anoubis_notify.3
 
-EXTRA_DIST = $(man_MANS) @WXFB_PROJECT_FILES@ autogen.sh
+EXTRA_DIST = $(man_MANS) @WXFB_PROJECT_FILES@ autogen.sh VERSION
 
 MAINTAINERCLEANFILES= \
 	aclocal.m4 \
