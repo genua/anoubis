@@ -100,8 +100,10 @@ main(int argc, char *argv[])
 		if (opts & ANOUBISCTL_OPT_VERBOSE2)
 			flags |= APN_FLAG_VERBOSE2;
 
-		if (apn_parse(rulesopt, &ruleset, flags))
+		if (apn_parse(rulesopt, &ruleset, flags)) {
 			error = 1;
+			apn_print_errors(ruleset);
+		}
 	}
 
 	exit(error);

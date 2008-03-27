@@ -776,14 +776,32 @@ struct keywords {
 int
 yyerror(const char *fmt, ...)
 {
-	va_list		 ap;
+	struct apn_errmsg	*msg;
+	va_list			 ap;
+	char			*s1, *s2;
+
+	if ((msg = calloc(1, sizeof(struct apn_errmsg))) == NULL)
+		return (-1);
 
 	file->errors++;
+
 	va_start(ap, fmt);
-	fprintf(stderr, "%s: %d: ", file->name, yylval.lineno);
-	vfprintf(stderr, fmt, ap);
-	fprintf(stderr, "\n");
+	if (vasprintf(&s1, fmt, ap) == -1) {
+		free(msg);
+		return (-1);
+	}
 	va_end(ap);
+
+	if (asprintf(&s2, "%s: %d: %s", file->name, yylval.lineno, s1) == -1) {
+		free(msg);
+		free(s1);
+		return (-1);
+	}
+	free(s1);
+
+	msg->msg = s2;
+	TAILQ_INSERT_TAIL(&apnrsp->err_queue, msg, entry);
+
 	return (0);
 }
 

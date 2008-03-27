@@ -181,18 +181,31 @@ struct apn_rule {
 	struct apn_rule		*next;
 };
 
+/* Error message */
+struct apn_errmsg {
+	TAILQ_ENTRY(apn_errmsg)	 entry;
+	char			*msg;
+};
+TAILQ_HEAD(apnerr_queue, apn_errmsg);
+
 TAILQ_HEAD(apnrule_queue, apn_rule);
 
 /* Complete APN ruleset. */
 struct apn_ruleset {
 	int			flags;
+
+	/* Rulesets and variables */
 	struct apnrule_queue	alf_queue;
 	struct apnrule_queue	sfs_queue;
 	struct apnvar_queue	var_queue;
+
+	/* Error messages from the parser */
+	struct apnerr_queue	err_queue;
 };
 
 int	apn_parse(const char *, struct apn_ruleset **, int);
 int	apn_add_alfrule(struct apn_rule *, struct apn_ruleset *);
 int	apn_print_rule(struct apn_rule *);
+void	apn_print_errors(struct apn_ruleset *);
 
 #endif /* _APN_H_ */
