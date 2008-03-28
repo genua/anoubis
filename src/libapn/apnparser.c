@@ -63,6 +63,15 @@ static int	apn_print_netaccess(int);
 static int	apn_print_log(int);
 static int	apn_print_af(int);
 static int	apn_print_proto(int);
+static void	apn_free_errq(struct apnerr_queue *);
+static void	apn_free_ruleq(struct apnrule_queue *);
+static void	apn_free_varq(struct apnvar_queue *);
+static void	apn_free_rule(struct apn_rule *);
+static void	apn_free_var(struct var *);
+static void	apn_free_alfrule(struct apn_alfrule *);
+static void	apn_free_host(struct apn_host *);
+static void	apn_free_port(struct apn_port *);
+static void	apn_free_app(struct apn_app *);
 
 /*
  * Parse the specified file and return the ruleset, which is allocated
@@ -160,6 +169,25 @@ apn_print_errors(struct apn_ruleset *rs)
 		fprintf(stderr, "%s\n", msg->msg);
 
 	return;
+}
+
+/*
+ * Free a full ruleset.
+ */
+void
+apn_free_ruleset(struct apn_ruleset *rs)
+{
+	struct apnerr_queue	*errq = &rs->err_queue;
+	struct apnrule_queue	*alfq = &rs->alf_queue;
+	struct apnrule_queue	*sfsq = &rs->sfs_queue;
+	struct apnvar_queue	*varq = &rs->var_queue;
+
+	apn_free_errq(errq);
+	apn_free_ruleq(alfq);
+	apn_free_ruleq(sfsq);
+	apn_free_varq(varq);
+
+	free(rs);
 }
 
 static int
@@ -500,4 +528,180 @@ apn_print_hash(char *hash, int len)
 
 	for (i = 0; i < len; i++)
 		printf("%2.2x", (unsigned char)hash[i]);
+}
+
+static void
+apn_free_errq(struct apnerr_queue *errq)
+{
+	struct apn_errmsg	*msg, *next;
+
+	if (TAILQ_EMPTY(errq))
+		return;
+	for (msg = TAILQ_FIRST(errq); msg != TAILQ_END(varq); msg = next) {
+		next = TAILQ_NEXT(msg, entry);
+		TAILQ_REMOVE(errq, msg, entry);
+		free(msg->msg);
+		free(msg);
+	}
+}
+
+static void
+apn_free_ruleq(struct apnrule_queue *ruleq)
+{
+	struct apn_rule	*rule, *next;
+
+	if (TAILQ_EMPTY(ruleq))
+		return;
+	for (rule = TAILQ_FIRST(ruleq); rule != TAILQ_END(ruleq); rule = next) {
+		next = TAILQ_NEXT(rule, entry);
+		TAILQ_REMOVE(ruleq, rule, entry);
+		apn_free_rule(rule);
+	}
+}
+
+static void
+apn_free_varq(struct apnvar_queue *varq)
+{
+	struct var	*var, *next;
+
+	if (TAILQ_EMPTY(varq))
+		return;
+	for (var = TAILQ_FIRST(varq); var != TAILQ_END(varq); var = next) {
+		next = TAILQ_NEXT(var, entry);
+		TAILQ_REMOVE(varq, var, entry);
+		apn_free_var(var);
+	}
+}
+
+static void
+apn_free_rule(struct apn_rule *rule)
+{
+	struct apn_rule	*hp, *next;
+
+	hp = rule;
+	while (hp) {
+		next = hp->next;
+
+		switch (hp->type) {
+		case APN_ALF:
+			apn_free_alfrule(hp->rule.alf);
+			break;
+		default:
+			break;
+		}
+		apn_free_app(hp->app);
+		free(hp);
+		hp = next;
+
+	}
+}
+
+static void
+apn_free_var(struct var *var)
+{
+	switch (var->type) {
+	case VAR_APPLICATION:
+		apn_free_app((struct apn_app *)var->value);
+		break;
+
+	case VAR_RULE:
+		apn_free_rule((struct apn_rule *)var->value);
+		break;
+
+	case VAR_DEFAULT:
+		/* nothing to free */
+		break;
+
+	case VAR_HOST:
+		apn_free_host((struct apn_host *)var->value);
+		break;
+
+	case VAR_PORT:
+		apn_free_port((struct apn_port *)var->value);
+		break;
+
+	default:
+		break;
+	}
+	free(var->name);
+	free(var);
+}
+
+static void
+apn_free_alfrule(struct apn_alfrule *rule)
+{
+	struct apn_alfrule	*hp, *next;
+
+	hp = rule;
+	while (hp) {
+		next = hp->next;
+
+		switch (hp->type) {
+		case APN_ALF_FILTER:
+			/* XXX HSH not yet, vars. need to be enabled first */
+			/* apn_free_host(hp->rule.afilt.filtspec.fromhost); */
+			/* apn_free_host(hp->rule.afilt.filtspec.tohost); */
+			/* apn_free_port(hp->rule.afilt.filtspec.fromport); */
+			/* apn_free_port(hp->rule.afilt.filtspec.toport); */
+			break;
+
+		case APN_ALF_CAPABILITY:
+			/* nothing to free */
+			break;
+
+		case APN_ALF_DEFAULT:
+			/* nothing to free */
+			break;
+
+		case APN_ALF_CTX:
+			/* XXX HSH not yet, vars. need to be enabled first */
+			/* apn_free_app(hp->rule.apncontext.application); */
+			break;
+
+		default:
+			break;
+		}
+		free(hp);
+		hp = next;
+	}
+}
+
+static void
+apn_free_host(struct apn_host *addr)
+{
+	struct apn_host	*hp, *next;
+
+	hp = addr;
+	while (hp) {
+		next = hp->next;
+		free(hp);
+		hp = next;
+	}
+}
+
+static void
+apn_free_port(struct apn_port *port)
+{
+	struct apn_port	*hp, *next;
+
+	hp = port;
+	while (hp) {
+		next = hp->next;
+		free(hp);
+		hp = next;
+	}
+}
+
+static void
+apn_free_app(struct apn_app *app)
+{
+	struct apn_app	*hp, *next;
+
+	hp = app;
+	while (hp) {
+		next = hp->next;
+		free(hp->name);
+		free(hp);
+		hp = next;
+	}
 }

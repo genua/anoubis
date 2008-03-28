@@ -63,6 +63,7 @@ static struct file {
 } *file;
 TAILQ_HEAD(files, file)		 files = TAILQ_HEAD_INITIALIZER(files);
 
+int		 parse_rules(const char *, struct apn_ruleset *);
 struct file	*pushfile(const char *, int);
 int		 popfile(void);
 int		 check_file_secrecy(int, const char *);
@@ -93,7 +94,6 @@ void		 clearapp(struct apn_app *);
 void		 clearalfrule(struct apn_alfrule *);
 
 static struct apn_ruleset	*apnrsp = NULL;
-static int			 debug = 0;
 
 typedef struct {
 	union {
@@ -176,14 +176,20 @@ varset		: varapp
 		;
 
 varapp		: APPLICATION STRING '=' apps		{
-			if (varset($2, NULL, 0, 0) == -1)
+			if (varset($2, NULL, 0, 0) == -1) {
+				free($2);
 				YYERROR;
+			}
+			free($2);
 		}
 		;
 
 vardefault	: DEFAULT STRING '=' action		{
-			if (varset($2, NULL, 0, 0) == -1)
+			if (varset($2, NULL, 0, 0) == -1) {
+				free($2);
 				YYERROR;
+			}
+			free($2);
 		}
 		;
 
@@ -201,8 +207,11 @@ varalfrule	: RULE STRING '=' alfspecs		{
 		;
 
 varsfsrule	: RULE STRING '=' sfsspec		{
-			if (varset($2, NULL, 0, 0) == -1)
+			if (varset($2, NULL, 0, 0) == -1) {
+				free($2);
 				YYERROR;
+			}
+			free($2);
 		}
 		;
 
@@ -220,14 +229,22 @@ varhost		: HOST STRING '=' hostspec		{
 		;
 
 varport		: PORT STRING '=' ports			{
-			if (varset($2, NULL, 0, 0) == -1)
+			if (varset($2, NULL, 0, 0) == -1) {
+				free($2);
 				YYERROR;
+			}
+			free($2);
 		}
 		;
 
 varfilename	: TFILE STRING '=' STRING		{
-			if (varset($2, NULL, 0, 0) == -1)
+			if (varset($2, NULL, 0, 0) == -1) {
+				free($2);
+				free($4);
 				YYERROR;
+			}
+			free($2);
+			free($4);
 		}
 		;
 
@@ -379,8 +396,11 @@ alffilterspec	: netaccess log af proto hosts	{
 		| '$' STRING			{
 			struct var	*var;
 
-			if ((var = varget($2)) == NULL)
+			if ((var = varget($2)) == NULL) {
+				free($2);
 				YYERROR;
+			}
+			free($2);
 		}
 		;
 
@@ -414,8 +434,11 @@ hostspec	: '{' host_l '}'		{ $$ = $2; }
 		| '$' STRING			{
 			struct var	*var;
 
-			if ((var = varget($2)) == NULL)
+			if ((var = varget($2)) == NULL) {
+				free($2);
 				YYERROR;
+			}
+			free($2);
 		}
 		;
 
@@ -466,8 +489,11 @@ ports		: '{' port_l '}'		{ $$ = $2; }
 		| '$' STRING			{
 			struct var	*var;
 
-			if ((var = varget($2)) == NULL)
+			if ((var = varget($2)) == NULL) {
+				free($2);
 				YYERROR;
+			}
+			free($2);
 		}
 		;
 
@@ -489,8 +515,10 @@ port		: STRING			{
 			struct apn_port	*port;
 
 			port = calloc(1, sizeof(struct apn_port));
-			if (port == NULL)
+			if (port == NULL) {
+				free($1);
 				YYERROR;
+			}
 
 			port->tail = port;
 
@@ -564,7 +592,7 @@ sfsrule		: sfscheckrule
 sfscheckrule	: action sfsspec
 		;
 
-sfsspec		: STRING
+sfsspec		: STRING			{ free($1); }
 		;
 
 sfsdefault	: defaultrule
@@ -625,7 +653,7 @@ path_l		: path_l comma path
 		| path
 		;
 
-path		: STRING
+path		: STRING			{ free($1); }
 		;
 
 sbdefault	: defaultrule
@@ -654,7 +682,7 @@ vsrule_l	: vsrule_l vsrule nl
 vsrule		: action vsspec
 		;
 
-vsspec		: STRING
+vsspec		: STRING			{ free($1); }
 		;
 
 		/*
@@ -676,9 +704,12 @@ defaultrule	: DEFAULT defaultspec		{
 
 defaultspec	: action			{ $$ = $1; }
 		| '$' STRING			{
-			struct var      *var;
-			if ((var = varget($2)) == NULL)
+			struct var	*var;
+			if ((var = varget($2)) == NULL) {
+				free($2);
 				YYERROR;
+			}
+			free($2);
 		}
 		;
 
@@ -691,8 +722,11 @@ apps		: '{' app_l '}'			{ $$ = $2; }
 		| '$' STRING			{
 			struct var	*var;
 
-			if ((var = varget($2)) == NULL)
+			if ((var = varget($2)) == NULL) {
+				free($2);
 				YYERROR;
+			}
+			free($2);
 		}
 		;
 
@@ -857,15 +891,10 @@ lookup(char *s)
 	p = bsearch(s, keywords, sizeof(keywords)/sizeof(keywords[0]),
 	    sizeof(keywords[0]), kw_cmp);
 
-	if (p) {
-		if (debug > 1)
-			fprintf(stderr, "%s: %d\n", s, p->k_val);
+	if (p)
 		return (p->k_val);
-	} else {
-		if (debug > 1)
-			fprintf(stderr, "string: %s\n", s);
+	else
 		return (STRING);
-	}
 }
 
 #define MAXPUSHBACK	128

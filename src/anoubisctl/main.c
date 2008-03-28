@@ -106,5 +106,8 @@ main(int argc, char *argv[])
 		}
 	}
 
+	if (ruleset)
+		apn_free_ruleset(ruleset);
+
 	exit(error);
 }

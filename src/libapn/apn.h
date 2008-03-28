@@ -207,5 +207,6 @@ int	apn_parse(const char *, struct apn_ruleset **, int);
 int	apn_add_alfrule(struct apn_rule *, struct apn_ruleset *);
 int	apn_print_rule(struct apn_rule *);
 void	apn_print_errors(struct apn_ruleset *);
+void	apn_free_ruleset(struct apn_ruleset *);
 
 #endif /* _APN_H_ */
