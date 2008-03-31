@@ -430,8 +430,8 @@ master_terminate(int error)
 		else
 			kill(master_pid, SIGTERM);
 	}
-	sleep(10);
-	exit(error);
+/*	sleep(10); XXX RD - probably not needed */
+	_exit(error);
 }
 
 static int
@@ -480,6 +480,22 @@ reconfigure(void)
 	/* XXX HJH: Todo */
 }
 
+anoubisd_msg_t *
+msg_factory(int mtype, int size)
+{
+	anoubisd_msg_t *msg;
+
+	if ((msg = malloc(sizeof(anoubisd_msg_t) + size)) == NULL) {
+		log_warn("msg_factory: cannot allocate memory");
+		master_terminate(ENOMEM);
+		return NULL;
+	}
+	bzero(msg, sizeof(anoubisd_msg_t) + size);
+	msg->mtype = mtype;
+	msg->size = sizeof(anoubisd_msg_t) + size;
+	return msg;
+}
+
 static void
 dispatch_m2s(int fd, short event, void *arg)
 {
@@ -512,22 +528,24 @@ dispatch_s2m(int fd, short event, void *arg)
 {
 	anoubisd_msg_t *msg;
 
-	DEBUG(DBG_TRACE, ">dispatch_s2m");
+	for (;;) {
+		DEBUG(DBG_TRACE, ">dispatch_s2m");
 
-	if ((msg = get_msg(fd)) == NULL) {
-		DEBUG(DBG_TRACE, "<dispatch_s2m (no msg)");
-		return;
-	}
+		if ((msg = get_msg(fd)) == NULL) {
+			DEBUG(DBG_TRACE, "<dispatch_s2m");
+			return;
+		}
+		DEBUG(DBG_QUEUE, " >s2m: %x",
+		    ((struct eventdev_hdr *)msg->msg)->msg_token);
 
-	DEBUG(DBG_QUEUE, " >s2m: %x",
-	    ((struct eventdev_hdr *)msg->msg)->msg_token);
-
-	/* This should be a sessionid registration message */
+		/* This should be a sessionid registration message */
 
 /* XXX RD Session registration - optimization */
-	free(msg);
 
-	DEBUG(DBG_TRACE, "<dispatch_s2m");
+		free(msg);
+
+		DEBUG(DBG_TRACE, "<dispatch_s2m (loop)");
+	}
 }
 
 static void
@@ -560,31 +578,30 @@ dispatch_m2p(int fd, short event, void *arg)
 static void
 dispatch_p2m(int fd, short event, void *arg)
 {
-	anoubisd_msg_t *msg;
 	struct event_info_main *ev_info = (struct event_info_main*)arg;
+	anoubisd_msg_t *msg;
 
 	DEBUG(DBG_TRACE, ">dispatch_p2m");
 
-	if ((msg = get_msg(fd)) == NULL) {
-		DEBUG(DBG_TRACE, "<dispatch_p2m (no msg)");
-		return;
+	for (;;) {
+		if ((msg = get_msg(fd)) == NULL) {
+			DEBUG(DBG_TRACE, "<dispatch_p2m");
+			return;
+		}
+		if (msg->mtype != ANOUBISD_MSG_EVENTREPLY) {
+			DEBUG(DBG_TRACE, "<dispatch_p2m (bad msg)");
+			continue;
+		}
+		DEBUG(DBG_QUEUE, " >p2m: %x",
+		    ((struct eventdev_reply *)msg->msg)->msg_token);
+
+		enqueue(&eventq_m2dev, msg);
+		DEBUG(DBG_QUEUE, " >eventq_m2dev: %x",
+		    ((struct eventdev_reply *)msg->msg)->msg_token);
+		event_add(ev_info->ev_m2dev, NULL);
+
+		DEBUG(DBG_TRACE, "<dispatch_p2m (loop)");
 	}
-
-	/* this should be a event_reply message */
-	if (msg->mtype != ANOUBISD_MSG_EVENTREPLY) {
-		DEBUG(DBG_TRACE, "<dispatch_p2m (bad msg)");
-		return;
-	}
-
-	DEBUG(DBG_QUEUE, " >p2m: %x",
-	    ((struct eventdev_reply *)msg->msg)->msg_token);
-
-	enqueue(&eventq_m2dev, msg);
-	DEBUG(DBG_QUEUE, " >eventq_m2dev: %x",
-	    ((struct eventdev_reply *)msg->msg)->msg_token);
-	event_add(ev_info->ev_m2dev, NULL);
-
-	DEBUG(DBG_TRACE, "<dispatch_p2m");
 }
 
 static void
@@ -624,67 +641,62 @@ dispatch_dev2m(int fd, short event, void *arg)
 
 	DEBUG(DBG_TRACE, ">dispatch_dev2m");
 
-	if ((msg = get_event(fd)) == NULL) {
-		DEBUG(DBG_TRACE, "<dispatch_dev2m (no msg)");
-		return;
-	}
-
-	DEBUG(DBG_QUEUE, " >dev2m: %x",
-	    ((struct eventdev_hdr *)msg->msg)->msg_token);
-
-	hdr = (struct eventdev_hdr *)msg->msg;
-
-	/* we shortcut and ack events for our own children */
-	if ((hdr->msg_flags & EVENTDEV_NEED_REPLY) &&
-	    (hdr->msg_pid == se_pid || hdr->msg_pid == policy_pid)) {
-
-
-		if ((msg_reply = malloc(sizeof(anoubisd_msg_t) +
-		    sizeof(struct eventdev_reply))) == NULL) {
-			log_warn("dispatch_dev2m: cannot allocate memory");
-			main_shutdown(ENOMEM);
+	for (;;) {
+		if ((msg = get_event(fd)) == NULL) {
+			DEBUG(DBG_TRACE, "<dispatch_dev2m");
+			return;
 		}
-		bzero(msg_reply, sizeof(anoubisd_msg_t) +
-		    sizeof(struct eventdev_reply));
+		DEBUG(DBG_QUEUE, " >dev2m: %x",
+		    ((struct eventdev_hdr *)msg->msg)->msg_token);
 
-		msg_reply->size = sizeof(anoubisd_msg_t) +
-		    sizeof(struct eventdev_reply);
-		rep = (struct eventdev_reply *)msg_reply->msg;
-		rep->msg_token = hdr->msg_token;
-		rep->reply = 0;
+		hdr = (struct eventdev_hdr *)msg->msg;
 
-		/* this should be queued, so as to not get lost */
-		enqueue(&eventq_m2dev, msg_reply);
-		DEBUG(DBG_QUEUE, " >eventq_m2dev: %x",
-		    ((struct eventdev_reply *)msg_reply->msg)->msg_token);
-		event_add(ev_info->ev_m2dev, NULL);
+		/* we shortcut and ack events for our own children */
+		if ((hdr->msg_flags & EVENTDEV_NEED_REPLY) &&
+		    (hdr->msg_pid == se_pid || hdr->msg_pid == policy_pid)) {
 
-		free(msg);
+			msg_reply = msg_factory(ANOUBISD_MSG_EVENTREPLY,
+			    sizeof(struct eventdev_reply));
+			rep = (struct eventdev_reply *)msg_reply->msg;
+			rep->msg_token = hdr->msg_token;
+			rep->reply = 0;
 
-		DEBUG(DBG_TRACE, "<dispatch_dev2m (self)");
-		return;
-	}
+			/* this should be queued, so as to not get lost */
+			enqueue(&eventq_m2dev, msg_reply);
+			DEBUG(DBG_QUEUE, " >eventq_m2dev: %x",
+			    ((struct eventdev_reply *)msg_reply->msg)->
+				msg_token);
+			event_add(ev_info->ev_m2dev, NULL);
 
-	DEBUG(DBG_TRACE, " token %x pid %d", hdr->msg_token, hdr->msg_pid);
+			free(msg);
+
+			DEBUG(DBG_TRACE, "<dispatch_dev2m (self)");
+			continue;
+
+		}
+
+		DEBUG(DBG_TRACE, " token %x pid %d", hdr->msg_token,
+		    hdr->msg_pid);
 
 /* XXX RD syslog? */
 
-	if (hdr->msg_flags & EVENTDEV_NEED_REPLY) {
+		if (hdr->msg_flags & EVENTDEV_NEED_REPLY) {
 
-		/* Send event to the policy process for handling. */
-		enqueue(&eventq_m2p, msg);
-		DEBUG(DBG_QUEUE, " >eventq_m2p: %x",
-		    ((struct eventdev_hdr *)msg->msg)->msg_token);
-		event_add(ev_info->ev_m2p, NULL);
+			/* Send event to policy process for handling. */
+			enqueue(&eventq_m2p, msg);
+			DEBUG(DBG_QUEUE, " >eventq_m2p: %x",
+			    ((struct eventdev_hdr *)msg->msg)->msg_token);
+			event_add(ev_info->ev_m2p, NULL);
 
-	} else {
+		} else {
 
-		/* Send event to the session process for notifications. */
-		enqueue(&eventq_m2s, msg);
-		DEBUG(DBG_QUEUE, " >eventq_m2s: %x",
-		    ((struct eventdev_hdr *)msg->msg)->msg_token);
-		event_add(ev_info->ev_m2s, NULL);
+			/* Send event to session process for notifications. */
+			enqueue(&eventq_m2s, msg);
+			DEBUG(DBG_QUEUE, " >eventq_m2s: %x",
+			    ((struct eventdev_hdr *)msg->msg)->msg_token);
+			event_add(ev_info->ev_m2s, NULL);
+		}
+
+		DEBUG(DBG_TRACE, "<dispatch_dev2m (loop)");
 	}
-
-	DEBUG(DBG_TRACE, "<dispatch_dev2m");
 }

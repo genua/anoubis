@@ -125,7 +125,7 @@ queue_peek(Queuep queuep)
 }
 
 void *
-queue_find(Queuep queuep, void *msgp, int(*cmp)(const void *, const void *))
+queue_find(Queuep queuep, void *msgp, int(*cmp)(void *, void *))
 {
 	Qentryp qep;
 

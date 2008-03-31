@@ -35,6 +35,7 @@
 #include <sys/types.h>
 #include <errno.h>
 #include <event.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <strings.h>
@@ -54,6 +55,9 @@ msg_init(int fd, struct event *ev, char *name)
 	for (idx=0; idx < MSG_BUFS; idx++)
 		if (fds[idx].fd == fd)
 			return;
+
+	if (fcntl(fd, F_SETFL, O_NONBLOCK))
+		log_warn("O_NONBLOCK not set");
 
 	for (idx=0; idx < MSG_BUFS; idx++) {
 		if (fds[idx].rbufp == NULL) {
@@ -118,13 +122,12 @@ _fill_buf(struct msg_buf *mbp)
 
 	size = read(mbp->fd, mbp->rtailp, MSG_BUF_SIZE);
 	if (size < 0) {
-		log_warn("read error");
-/* XXX [RD] */
+		if (errno != EAGAIN)
+			log_warn("read error");
 		return;
 	}
 	if (size == 0) {
 		log_warn("read error (closed)");
-/* XXX [RD] */
 		event_del(mbp->ev);
 		event_loopexit(NULL);
 		return;
@@ -144,7 +147,6 @@ _flush_buf(struct msg_buf *mbp)
 	size = write(mbp->fd, mbp->wheadp, mbp->wtailp - mbp->wheadp);
 	if (size < 0) {
 		log_warn("write error");
-/* XXX [RD] */
 		return;
 	}
 	mbp->wheadp += size;

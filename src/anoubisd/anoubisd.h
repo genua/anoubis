@@ -61,15 +61,13 @@ struct anoubisd_config {
 
 struct session_reg {
 	u_int32_t	session_id;
-	int	flag;
+	int		flag;
 };
 
 struct anoubisd_msg {
-	short	size;
-	short	mtype;
-	time_t	starttime;
-	time_t	timeout;
-	char	msg[0];
+	short		size;
+	short		mtype;
+	char		msg[0];
 };
 typedef struct anoubisd_msg anoubisd_msg_t;
 enum {
@@ -81,12 +79,28 @@ enum {
 	ANOUBISD_MSG_SESSION_REG
 } anoubisd_msg;
 
+/* format of ANOUBISD_MSG_EVENTDEV
+ * is struct eventdev_hdr */
+
+/* format of ANOUBISD_MSG_POLREQUEST */
+struct anoubisd_msg_comm {
+	u_int64_t	token;
+	u_int32_t	uid;
+	short		len;		/* of following msg */
+	char		msg[0];
+};
+typedef struct anoubisd_msg_comm anoubisd_msg_comm_t;
+
 struct anoubisd_reply {
-	short	ask;
-	int	reply;
-	time_t	timeout;
+	short		ask;		/* flag - ask GUI */
+	time_t		timeout;	/* from policy engine, if ask GUI */
+	int		reply;		/* result code */
+	u_int64_t	token;		/* only for anoubisd_msg_comm_t msgs */
+	short		len;		/* of following msg */
+	char		msg[0];
 };
 typedef struct anoubisd_reply anoubisd_reply_t;
+
 
 enum {
 	PROC_MAIN,
@@ -96,7 +110,7 @@ enum {
 
 pid_t	session_main(struct anoubisd_config *, int[], int[], int[]);
 pid_t	policy_main(struct anoubisd_config *, int[], int[], int[]);
-void	policy_engine(struct eventdev_hdr *request, anoubisd_reply_t *reply);
+anoubisd_reply_t *policy_engine(int mtype, void *request);
 void	log_init(void);
 void	log_warn(const char *, ...);
 void	log_warnx(const char *, ...);
@@ -105,6 +119,7 @@ void	log_debug(const char *, ...);
 void	fatalx(const char *);	/* XXX RD __dead */
 void	fatal(const char *);	/* XXX RD __dead */
 void	master_terminate(int);	/* XXX RD __dead */
+anoubisd_msg_t *msg_factory(int, int);
 
 #ifndef S_SPLINT_S
 #define DEBUG(flag, ...) {if (flag & debug_flags) log_debug(__VA_ARGS__);}

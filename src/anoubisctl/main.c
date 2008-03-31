@@ -46,34 +46,65 @@
 #include "anoubisctl.h"
 #include "apn.h"
 
-void		 usage(void) __dead;
+
+void		usage(void) __dead;
+static int	daemon_start(void);
+static int	daemon_stop(void);
+static int	daemon_restart(void);
+static int	daemon_status(void);
+static int	load(char *);
+static int	dump(char *);
+
+typedef int (*func_void_t)(void);
+typedef int (*func_char_t)(char *);
+
+struct cmd {
+	char	       *command;
+	func_void_t	func;
+	int		file;
+} commands[] = {
+	{ "start",   daemon_start,   0 },
+	{ "stop",    daemon_stop,    0 },
+	{ "restart", daemon_restart, 0 },
+	{ "status",  daemon_status,  0 },
+	{ "load",    (func_void_t)load, 1 },
+	{ "dump",    (func_void_t)dump, 1 },
+};
+
+static int	opts = 0;
 
 __dead void
 usage(void)
 {
+	int	i;
 	extern char	*__progname;
 
-	fprintf(stderr, "usage: %s [-nv] [-f file]\n", __progname);
+	fprintf(stderr, "usage: %s [-nv] <command> [<file>]\n", __progname);
+	fprintf(stderr, "    <command>:\n");
+	for (i=0; i < sizeof(commands)/sizeof(struct cmd); i++) {
+		if (commands[i].file)
+			fprintf(stderr, "        %s <file>\n",
+				commands[i].command);
+		else
+			fprintf(stderr, "        %s\n", commands[i].command);
+
+	}
 	exit(1);
 }
 
 int
 main(int argc, char *argv[])
 {
-	struct apn_ruleset	*ruleset;
-	int			 ch, flags;
-	int			 error = 0;
-	int			 opts = 0;
-	char			*rulesopt = NULL;
+	int	ch, i, done;
+	int	error = 0;
+	char	*command = NULL;
+	char	*rulesopt = NULL;
 
 	if (argc < 2)
 		usage();
 
-	while ((ch = getopt(argc, argv, "f:nv")) != -1) {
+	while ((ch = getopt(argc, argv, "nv")) != -1) {
 		switch (ch) {
-		case 'f':
-			rulesopt = optarg;
-			break;
 
 		case 'n':
 			opts |= ANOUBISCTL_OPT_NOACTION;
@@ -93,8 +124,100 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
+	if (argc <= 0)
+		usage();
+		/* NOTREACHED */
+
+	command = *argv++;
+	argc--;
+
+	if (argc > 0) {
+		rulesopt = *argv++;
+		argc--;
+	}
+
+	done = 0;
+	for (i=0; i < sizeof(commands)/sizeof(struct cmd); i++) {
+
+		if (strcmp(command, commands[i].command) == 0) {
+
+			if (commands[i].file)  {
+
+				if (rulesopt == NULL) {
+					fprintf(stderr, "no rules file\n");
+					error = 1;
+				} else {
+					error = ((func_char_t)commands[i].func)(
+					    rulesopt);
+					done = 1;
+				}
+
+			} else {
+
+				if (rulesopt != NULL) {
+					fprintf(stderr, "too many arguments\n");
+					error = 1;
+				} else {
+					error = commands[i].func();
+					done = 1;
+				}
+			}
+		}
+	}
+	if (!done)
+		usage();
+
+	exit(error);
+}
+
+static int
+daemon_start(void)
+{
+	int	error = 0;
+	printf("start\n");
+	return error;
+}
+
+static int
+daemon_stop(void)
+{
+	int	error = 0;
+	printf("stop\n");
+	return error;
+}
+
+static int
+daemon_restart(void)
+{
+	int	error = 0;
+	printf("restart\n");
+	return error;
+}
+
+static int
+daemon_status(void)
+{
+	int	error = 0;
+	printf("status\n");
+	return error;
+}
+
+static int
+dump(char *file)
+{
+	int	error = 0;
+	printf("dump %s\n", file);
+	return error;
+}
+
+static int
+load(char *rulesopt)
+{
+	struct apn_ruleset	*ruleset;
+	int	flags = 0;
+	int	error = 0;
+
 	if (rulesopt != NULL) {
-		flags = 0;
 		if (opts & ANOUBISCTL_OPT_VERBOSE)
 			flags |= APN_FLAG_VERBOSE;
 		if (opts & ANOUBISCTL_OPT_VERBOSE2)
@@ -109,5 +232,5 @@ main(int argc, char *argv[])
 	if (ruleset)
 		apn_free_ruleset(ruleset);
 
-	exit(error);
+	return error;
 }

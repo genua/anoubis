@@ -53,7 +53,6 @@
 #include "amsg.h"
 
 static void	policy_sighandler(int, short, void *);
-static anoubisd_msg_t *reply_factory(void);
 static void	dispatch_timer(int, short, void *);
 static void	dispatch_m2p(int, short, void *);
 static void	dispatch_p2m(int, short, void *);
@@ -69,11 +68,11 @@ static Queue	eventq_s2p;
  * session process. They will be timed out after a configured
  * timeout and a configured default reply will be generated.
  */
-struct wait_reply {
-	time_t time;
-	struct eventdev_hdr	*msg;
+struct reply_wait {
+	eventdev_token	token;
+	time_t	starttime;
+	time_t	timeout;
 };
-
 static Queue	replyq;
 
 struct event_info_policy {
@@ -208,57 +207,20 @@ policy_main(struct anoubisd_config *conf, int pipe_m2s[2], int pipe_m2p[2],
 	_exit(0);
 }
 
-static anoubisd_msg_t *
-reply_factory(void)
-{
-	anoubisd_msg_t *msg_reply;
-
-	if ((msg_reply = malloc(sizeof(anoubisd_msg_t) +
-	    sizeof(struct eventdev_reply))) == NULL) {
-		log_warn("reply_factory: cannot allocate memory");
-		master_terminate(ENOMEM);
-		return NULL;
-	}
-	bzero(msg_reply, sizeof(anoubisd_msg_t) +
-	    sizeof(struct eventdev_reply));
-
-	msg_reply->size = sizeof(anoubisd_msg_t) +
-	    sizeof(struct eventdev_reply);
-	msg_reply->mtype = ANOUBISD_MSG_EVENTREPLY;
-	return msg_reply;
-}
-
-int
-token_cmp(const void *msg1, const void *msg2)
-{
-	if (msg1 == NULL || msg2 == NULL) {
-		DEBUG(DBG_TRACE, "token_cmp: null msg pointer");
-		return 0;
-	}
-	if (((anoubisd_msg_t *)msg1)->mtype != ANOUBISD_MSG_EVENTDEV ||
-	    ((anoubisd_msg_t *)msg2)->mtype != ANOUBISD_MSG_EVENTDEV) {
-		DEBUG(DBG_TRACE, "token_cmp: bad mtype");
-		return 0;
-	}
-	if (((struct eventdev_hdr *)((anoubisd_msg_t *)msg1)->msg)->msg_token ==
-	    ((struct eventdev_hdr *)((anoubisd_msg_t *)msg2)->msg)->msg_token)
-		return 1;
-	return 0;
-}
-
 static void
 dispatch_timer(int sig, short event, void *arg)
 {
 	struct event_info_policy *ev_info = (struct event_info_policy*)arg;
-	anoubisd_msg_t *msg, *msg_reply;
+	struct reply_wait *msg_wait;
+	anoubisd_msg_t *msg;
+	eventdev_token *tk;
 	Qentryp qep_cur, qep_next;
-	struct eventdev_hdr *hdr;
 	struct eventdev_reply *rep;
 	time_t now = time(NULL);
 
 	DEBUG(DBG_TRACE, ">dispatch_timer");
 
-	if ((msg = queue_peek(&replyq)) == NULL) {
+	if ((msg_wait = queue_peek(&replyq)) == NULL) {
 		event_add(ev_info->ev_timer, ev_info->tv);
 		DEBUG(DBG_TRACE, "<dispatch_timer (no msg)");
 		return;
@@ -268,29 +230,28 @@ dispatch_timer(int sig, short event, void *arg)
 	do {
 		qep_next = queue_walk(&replyq, qep_cur);
 
-		/* check for timed out requests */
-		msg = qep_cur->entry;
-		if (now > msg->starttime + msg->timeout) {
+		msg_wait = qep_cur->entry;
+		if (now > (msg_wait->starttime + msg_wait->timeout)) {
 
-			/* generate a neg reply and remove from the list */
-			hdr = (struct eventdev_hdr *)msg->msg;
-			msg_reply = reply_factory();
-			rep = (struct eventdev_reply *)msg_reply->msg;
-			rep->msg_token = hdr->msg_token;
+			msg = msg_factory(ANOUBISD_MSG_EVENTREPLY,
+			    sizeof(struct eventdev_reply));
+			rep = (struct eventdev_reply *)msg->msg;
+			rep->msg_token = msg_wait->token;
 			rep->reply = EPERM;
-
-			queue_delete(&replyq, msg);
-			DEBUG(DBG_QUEUE, " <replyq: %x", hdr->msg_token);
-
-			enqueue(&eventq_p2m, msg_reply);
+			enqueue(&eventq_p2m, msg);
 			DEBUG(DBG_QUEUE, " >eventq_p2m: %x", rep->msg_token);
 			event_add(ev_info->ev_p2m, NULL);
 
-			/* queue a cancel message to session */
-			msg->mtype = ANOUBISD_MSG_EVENTCANCEL;
+			msg = msg_factory(ANOUBISD_MSG_EVENTCANCEL,
+			    sizeof(eventdev_token));
+			tk = (eventdev_token *)msg->msg;
+			*tk = msg_wait->token;
 			enqueue(&eventq_p2s, msg);
-			DEBUG(DBG_QUEUE, " >eventq_p2s: %x", rep->msg_token);
+			DEBUG(DBG_QUEUE, " >eventq_p2s: %x", msg_wait->token);
 			event_add(ev_info->ev_p2s, NULL);
+
+			DEBUG(DBG_QUEUE, " <replyq: %x", msg_wait->token);
+			queue_delete(&replyq, msg_wait);
 		}
 
 	} while ((qep_cur = qep_next));
@@ -303,73 +264,80 @@ dispatch_timer(int sig, short event, void *arg)
 static void
 dispatch_m2p(int fd, short sig, void *arg)
 {
-	anoubisd_msg_t *msg, *msg2, *msg_reply;
-	anoubisd_reply_t reply;
+	struct reply_wait *msg_wait;
+	anoubisd_msg_t *msg, *msg_reply;
+	anoubisd_reply_t *reply;
 	struct event_info_policy *ev_info = (struct event_info_policy*)arg;
 	struct eventdev_hdr *hdr;
 	struct eventdev_reply *rep;
 
 	DEBUG(DBG_TRACE, ">dispatch_m2p");
 
-	if ((msg = get_msg(fd)) == NULL) {
-		DEBUG(DBG_TRACE, "<dispatch_m2p (no msg)");
-		return;
-	}
-
-	/* this should be a eventdev_hdr message, needing a reply */
-	if (msg->mtype != ANOUBISD_MSG_EVENTDEV) {
-		free(msg);
-		DEBUG(DBG_TRACE, "<dispatch_m2p (bad type %d)", msg->mtype);
-		return;
-	}
-	hdr = (struct eventdev_hdr *)msg->msg;
-	if ((hdr->msg_flags & EVENTDEV_NEED_REPLY) == 0) {
-		free(msg);
-		DEBUG(DBG_TRACE, "<dispatch_m2p (not NEED_REPLY)");
-		return;
-	}
-
-	DEBUG(DBG_QUEUE, " >m2p: %x", hdr->msg_token);
-
-	/* ask the policy_engine what to do */
-	policy_engine(hdr, &reply);
-
-	if (reply.ask) {
-
-		time(&msg->starttime);
-		msg->timeout = reply.timeout;
-
-		/* save on the expected reply queue, for timeouts */
-		if ((msg2 = malloc(msg->size)) == NULL) {
-			free(msg);
-			log_warn("dispatch_m2p: cannot allocate memory");
-			master_terminate(ENOMEM);
+	for (;;) {
+		if ((msg = get_msg(fd)) == NULL) {
+			DEBUG(DBG_TRACE, "<dispatch_m2p (no msg)");
 			return;
 		}
-		bcopy(msg, msg2, msg->size);
-		enqueue(&replyq, msg2);
-		DEBUG(DBG_QUEUE, " >replyq: %x", hdr->msg_token);
+		DEBUG(DBG_QUEUE, " >m2p: %x",
+		    ((struct eventdev_hdr *)msg->msg)->msg_token);
 
-		/* send it to the session */
-		enqueue(&eventq_p2s, msg);
-		DEBUG(DBG_QUEUE, " >eventq_p2s: %x", hdr->msg_token);
-		event_add(ev_info->ev_p2s, NULL);
+		/* this should be a eventdev_hdr message, needing a reply */
+		if (msg->mtype != ANOUBISD_MSG_EVENTDEV) {
+			free(msg);
+			DEBUG(DBG_TRACE, "<dispatch_m2p (bad type %d)",
+			    msg->mtype);
+			continue;
+		}
+		hdr = (struct eventdev_hdr *)msg->msg;
+		if ((hdr->msg_flags & EVENTDEV_NEED_REPLY) == 0) {
+			free(msg);
+			DEBUG(DBG_TRACE, "<dispatch_m2p (not NEED_REPLY)");
+			continue;
+		}
 
-	} else {
+		reply = policy_engine(ANOUBISD_MSG_EVENTDEV, hdr);
 
-		msg_reply = reply_factory();
-		rep = (struct eventdev_reply *)msg_reply->msg;
-		rep->msg_token = hdr->msg_token;
-		rep->reply = reply.reply;
+		if (reply->ask) {
 
-		free(msg);
+			if ((msg_wait = malloc(sizeof(struct reply_wait))) ==
+			    NULL) {
+				free(msg);
+				log_warn("dispatch_m2p: can't allocate memory");
+				master_terminate(ENOMEM);
+				continue;
+			}
 
-		enqueue(&eventq_p2m, msg_reply);
-		DEBUG(DBG_QUEUE, " >eventq_p2m: %x", hdr->msg_token);
-		event_add(ev_info->ev_p2m, NULL);
+			msg_wait->token = hdr->msg_token;
+			time(&msg_wait->starttime);
+			msg_wait->timeout = reply->timeout;
+
+			enqueue(&replyq, msg_wait);
+			DEBUG(DBG_QUEUE, " >replyq: %x", msg_wait->token);
+
+			/* send msg to the session */
+			enqueue(&eventq_p2s, msg);
+			DEBUG(DBG_QUEUE, " >eventq_p2s: %x", hdr->msg_token);
+			event_add(ev_info->ev_p2s, NULL);
+
+		} else {
+
+			msg_reply = msg_factory(ANOUBISD_MSG_EVENTREPLY,
+			    sizeof(struct eventdev_reply));
+			rep = (struct eventdev_reply *)msg_reply->msg;
+			rep->msg_token = hdr->msg_token;
+			rep->reply = reply->reply;
+
+			free(msg);
+
+			enqueue(&eventq_p2m, msg_reply);
+			DEBUG(DBG_QUEUE, " >eventq_p2m: %x", hdr->msg_token);
+			event_add(ev_info->ev_p2m, NULL);
+		}
+
+		free(reply);
+
+		DEBUG(DBG_TRACE, "<dispatch_m2p (loop)");
 	}
-
-	DEBUG(DBG_TRACE, "<dispatch_m2p");
 }
 
 static void
@@ -394,18 +362,35 @@ dispatch_p2m(int fd, short sig, void *arg)
 	/* If the queue is not empty, we want to be called again */
 	if (queue_peek(&eventq_p2m))
 		event_add(ev_info->ev_p2m, NULL);
+
 	DEBUG(DBG_TRACE, "<dispatch_p2m");
+}
+
+int
+token_cmp(void *msg1, void *msg2)
+{
+	if (msg1 == NULL || msg2 == NULL) {
+		DEBUG(DBG_TRACE, "token_cmp: null msg pointer");
+		return 0;
+	}
+	if (((struct reply_wait *)msg1)->token ==
+	    ((struct reply_wait *)msg2)->token)
+		return 1;
+	return 0;
 }
 
 static void
 dispatch_s2p(int fd, short sig, void *arg)
 {
 	struct event_info_policy *ev_info = (struct event_info_policy*)arg;
-	char buf[sizeof(anoubisd_msg_t)+sizeof(struct eventdev_hdr)];
-	anoubisd_msg_t *msg, *msgto, *msgtmp;
-	struct eventdev_hdr *hdr, *hdrtmp;
+	struct reply_wait rep_tmp, *rep_wait;
+	anoubisd_msg_t *msg, *msg_rep;
+	struct eventdev_hdr *hdr;
+	anoubisd_msg_comm_t *comm;
+	anoubisd_reply_t *reply, *rep;
 
 	DEBUG(DBG_TRACE, ">dispatch_s2p");
+
 	if ((msg = queue_peek(&eventq_s2p)) == NULL) {
 		DEBUG(DBG_TRACE, "<dispatch_s2p (no msg)");
 		return;
@@ -415,44 +400,55 @@ dispatch_s2p(int fd, short sig, void *arg)
 
 	case ANOUBISD_MSG_SESSION_REG:
 
-/* XXX RD - handle session registration */
+		/* XXX RD - handle session registration */
+
 		msg = dequeue(&eventq_s2p);
 		DEBUG(DBG_QUEUE, " <eventq_s2p");
+		free(msg);
+		break;
+
+	case ANOUBISD_MSG_POLREQUEST:
+
+		comm = (anoubisd_msg_comm_t *)msg->msg;
+
+		reply = policy_engine(ANOUBISD_MSG_POLREQUEST, comm);
+
+		msg_rep = msg_factory(ANOUBISD_MSG_POLREPLY,
+		    sizeof(anoubisd_reply_t) + reply->len);
+		rep = (anoubisd_reply_t *)msg_rep->msg;
+		bcopy(reply, rep, sizeof(anoubisd_reply_t) + reply->len);
+		free(reply);
+		enqueue(&eventq_p2s, msg_rep);
+		DEBUG(DBG_QUEUE, " >eventq_p22: %x", rep->token);
+		event_add(ev_info->ev_p2m, NULL);
+
+		msg = dequeue(&eventq_s2p);
+		DEBUG(DBG_QUEUE, " <eventq_s2p: %x", comm->token);
 		free(msg);
 		break;
 
 	case ANOUBISD_MSG_EVENTREPLY:
 
 		hdr = (struct eventdev_hdr *)msg->msg;
+		rep_tmp.token = hdr->msg_token;
 
-		/* create temporary message, for searching */
-		bzero(buf, sizeof(buf));
-		msgtmp = (anoubisd_msg_t *)buf;
-		msgtmp->mtype = ANOUBISD_MSG_EVENTDEV;
-		hdrtmp = (struct eventdev_hdr *)msgtmp->msg;
-		hdrtmp->msg_token = hdr->msg_token;
-
-		if ((msgto = queue_find(&replyq, msgtmp, token_cmp)) != NULL) {
-
+		if ((rep_wait = queue_find(&replyq, &rep_tmp, token_cmp)) !=
+		    0) {
+			/*
+			 * Only send message if still in queue. It might have
+			 * already been replied to by a timeout or other GUI
+			 */
 			if (send_msg(fd, msg)) {
 
-				queue_delete(&replyq, msgto);
 				DEBUG(DBG_QUEUE, " <replyq: %x",
-				    ((struct eventdev_hdr *)msg->msg)->
-					msg_token);
-
-				msg = dequeue(&eventq_s2p);
-				DEBUG(DBG_QUEUE, " <eventq_s2p: %x",
-				    ((struct eventdev_reply *)msg->msg)->
-					msg_token);
-				free(msg);
+				    rep_wait->token);
+				queue_delete(&replyq, rep_wait);
 			}
-		} else {
-			msg = dequeue(&eventq_s2p);
-			DEBUG(DBG_QUEUE, " <eventq_s2p: %x",
-			    ((struct eventdev_hdr *)msg->msg)->msg_token);
-			free(msg);
 		}
+		msg = dequeue(&eventq_s2p);
+		DEBUG(DBG_QUEUE, " <eventq_s2p: %x",
+		    ((struct eventdev_hdr *)msg->msg)->msg_token);
+		free(msg);
 		break;
 
 	default:
@@ -494,5 +490,6 @@ dispatch_p2s(int fd, short sig, void *arg)
 	/* If the queue is not empty, we want to be called again */
 	if (queue_peek(&eventq_p2s))
 		event_add(ev_info->ev_p2s, NULL);
+
 	DEBUG(DBG_TRACE, "<dispatch_p2s");
 }

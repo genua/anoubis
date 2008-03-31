@@ -83,7 +83,7 @@ struct event_info_session {
 	struct event	*ev_s2m, *ev_s2p;
 	struct event	*ev_m2s, *ev_p2s;
 	struct sessionGroup *seg;
-	struct anoubis_policy_comm * policy;
+	struct anoubis_policy_comm *policy;
 };
 
 struct cbdata {
@@ -92,13 +92,26 @@ struct cbdata {
 	struct anoubis_notify_head	*ev_head;
 };
 
+struct anoubisd_msg_comm_store {
+	u_int64_t	token;
+	struct anoubis_policy_comm *comm;
+};
+
+
 static void	session_sighandler(int, short, void *);
-static int	cbdata_cmp(const void *, const void *);
 static void	notify_callback(struct anoubis_notify_head *, int, void *);
+static int	dispatch_policy(struct anoubis_policy_comm *, u_int64_t,
+		    u_int32_t, void *, size_t, void *);
 static void	dispatch_m2s(int, short, void *);
 static void	dispatch_s2m(int, short, void *);
 static void	dispatch_s2p(int, short, void *);
 static void	dispatch_p2s(int, short, void *);
+static void	dispatch_p2s_evt_request(anoubisd_msg_t *,
+		    struct event_info_session *);
+static void	dispatch_p2s_evt_cancel(anoubisd_msg_t *,
+		    struct event_info_session *);
+static void	dispatch_p2s_pol_reply(anoubisd_msg_t *,
+		    struct event_info_session *);
 static void	session_connect(int, short, void *);
 static void	session_rxclient(int, short, void *);
 static void	session_setupuds(struct sessionGroup *,
@@ -107,6 +120,9 @@ static void	session_destroy(struct session *);
 
 static Queue eventq_s2p;
 static Queue eventq_s2m;
+static Queue requestq;
+
+static Queue headq;
 
 static Queue headq;
 
@@ -208,22 +224,6 @@ err:
 	log_warn("session_rxclient: error reading client message");
 }
 
-/*
- * XXX Dummy dispatcher function. This function must send the
- * XXX the policy request to the policy process. Any reply must
- * XXX then be fed into the global policy object with a call to
- * XXX anoubis_policy_answer as shown below. Note that currently
- * XXX the token is at least in theory only unique within a single
- * XXX anoubis_policy_comm object.
- * XXX -- CEH
- */
-static int
-dispatch_policy(struct anoubis_policy_comm * comm, u_int64_t token,
-    u_int32_t uid, void * buf, size_t len)
-{
-	return anoubis_policy_comm_answer(comm, token, 0, NULL, 0);
-}
-
 pid_t
 session_main(struct anoubisd_config *conf, int pipe_m2s[2], int pipe_m2p[2],
     int pipe_s2p[2])
@@ -279,6 +279,9 @@ session_main(struct anoubisd_config *conf, int pipe_m2s[2], int pipe_m2p[2],
 	LIST_INIT(&(seg.sessionList));
 	queue_init(eventq_s2p);
 	queue_init(eventq_s2m);
+	queue_init(requestq);
+
+	queue_init(headq);
 
 	queue_init(headq);
 
@@ -326,7 +329,7 @@ session_main(struct anoubisd_config *conf, int pipe_m2s[2], int pipe_m2p[2],
 	ev_info.ev_p2s = &ev_p2s;
 	ev_info.ev_s2p = &ev_s2p;
 	ev_info.seg = &seg;
-	ev_info.policy = anoubis_policy_comm_create(&dispatch_policy);
+	ev_info.policy = anoubis_policy_comm_create(&dispatch_policy, &ev_info);
 	if (!ev_info.policy)
 		fatal("Cannot create policy object (out of memory)");
 
@@ -355,19 +358,7 @@ session_main(struct anoubisd_config *conf, int pipe_m2s[2], int pipe_m2p[2],
 	_exit(0);
 }
 
-static int
-cbdata_cmp(const void *msg1, const void *msg2)
-{
-	if (msg1 == NULL || msg2 == NULL) {
-		DEBUG(DBG_TRACE, "cbdata_cmp: null msg pointer");
-		return 0;
-	}
-	if (((struct cbdata *)msg1)->ev_token ==
-	    ((struct cbdata *)msg2)->ev_token)
-		return 1;
-	return 0;
-}
-
+/* Handle Notify and Alert Messages - coming from master */
 static void
 notify_callback(struct anoubis_notify_head *head, int verdict, void *cbdata)
 {
@@ -382,31 +373,64 @@ notify_callback(struct anoubis_notify_head *head, int verdict, void *cbdata)
 		return;
 	}
 
-	if ((msg = malloc(sizeof(anoubisd_msg_t) +
-	    sizeof(struct eventdev_reply))) == NULL) {
-		log_warn("notify_callback: cannot allocate memory");
-		master_terminate(ENOMEM);
-		return;
-	}
-	bzero(msg, sizeof(anoubisd_msg_t) + sizeof(struct eventdev_reply));
-	msg->size = sizeof(anoubisd_msg_t) + sizeof(struct eventdev_reply);
-	msg->mtype = ANOUBISD_MSG_EVENTREPLY;
-
+	msg = msg_factory(ANOUBISD_MSG_EVENTREPLY,
+	    sizeof(struct eventdev_reply));
 	rep = (struct eventdev_reply *)msg->msg;
 	rep->msg_token = ((struct cbdata *)cbdata)->ev_token;
 	rep->reply = verdict;
 
 	anoubis_notify_destroy_head(head);
+	DEBUG(DBG_TRACE, " >anoubis_notify_destroy_head");
 
 	enqueue(&eventq_s2p, msg);
 	DEBUG(DBG_QUEUE, " >eventq_s2p: %x", rep->msg_token);
 	event_add(((struct cbdata *)cbdata)->ev_info->ev_s2p, NULL);
 
-	queue_delete(&headq, cbdata);
 	DEBUG(DBG_QUEUE, " <headq: %x", rep->msg_token);
+	queue_delete(&headq, cbdata);
 	free(cbdata);
 
 	DEBUG(DBG_TRACE, "<notify_callback");
+}
+
+static int
+dispatch_policy(struct anoubis_policy_comm *comm, u_int64_t token,
+    u_int32_t uid, void *buf, size_t len, void *arg)
+{
+	struct event_info_session *ev_info = (struct event_info_session*)arg;
+	anoubisd_msg_t *msg;
+	anoubisd_msg_comm_t *msg_comm;
+	struct anoubisd_msg_comm_store *msg_store;
+
+	DEBUG(DBG_TRACE, ">dispatch_policy");
+
+	msg = msg_factory(ANOUBISD_MSG_POLREQUEST,
+	    sizeof(anoubisd_msg_comm_t) + len);
+	msg_comm = (anoubisd_msg_comm_t *)msg->msg;
+	msg_comm->token = token;
+	msg_comm->uid = uid;
+	msg_comm->len = len;
+	bcopy(buf, msg_comm->msg, len);
+
+	if ((msg_store = malloc(sizeof(struct anoubisd_msg_comm_store))) ==
+	    NULL) {
+		log_warn("dispatch_policy: cannot allocate memory");
+		free(msg);
+		master_terminate(ENOMEM);
+		return -ENOMEM;
+	}
+	msg_store->token = msg_comm->token;
+	msg_store->comm = comm;
+
+	enqueue(&requestq, msg_store);
+	DEBUG(DBG_QUEUE, " >requestq: %x", token);
+
+	enqueue(&eventq_s2p, msg);
+	DEBUG(DBG_QUEUE, " >eventq_s2p: %x", token);
+	event_add(ev_info->ev_s2p, NULL);
+
+	DEBUG(DBG_TRACE, "<dispatch_policy");
+	return 0;
 }
 
 /* Handle Notify and Alert Messages - coming from master */
@@ -423,125 +447,35 @@ dispatch_m2s(int fd, short sig, void *arg)
 
 	DEBUG(DBG_TRACE, ">dispatch_m2s");
 
-	if ((msg = get_msg(fd)) == NULL) {
-		DEBUG(DBG_TRACE, "<dispatch_m2s (no msg)");
-		return;
-	}
+	for (;;) {
+		if ((msg = get_msg(fd)) == NULL) {
+			DEBUG(DBG_TRACE, "<dispatch_m2s");
+			return;
+		}
+		if (msg->mtype != ANOUBISD_MSG_EVENTDEV) {
+			log_warn("dispatch_m2s: bad mtype %d", msg->mtype);
+		}
 
-	if (msg->mtype != ANOUBISD_MSG_EVENTDEV) {
-		log_warn("dispatch_m2s: bad mtype %d", msg->mtype);
-	}
+		hdr = (struct eventdev_hdr *)msg->msg;
 
-	hdr = (struct eventdev_hdr *)msg->msg;
+		DEBUG(DBG_QUEUE, " >m2s: %x", hdr->msg_token);
 
-	if (hdr->msg_flags & EVENTDEV_NEED_REPLY) {
-		log_warn("dispatch_m2s: bad flags %x", hdr->msg_flags);
-	}
+		if (hdr->msg_flags & EVENTDEV_NEED_REPLY) {
+			log_warn("dispatch_m2s: bad flags %x", hdr->msg_flags);
+		}
 
-	DEBUG(DBG_QUEUE, " >m2s: %x",
-	    ((struct eventdev_hdr *)msg->msg)->msg_token);
+		DEBUG(DBG_QUEUE, " >m2s: %x",
+		    ((struct eventdev_hdr *)msg->msg)->msg_token);
 
-	extra = hdr->msg_size -  sizeof(struct eventdev_hdr);
-	m = anoubis_msg_new(sizeof(Anoubis_NotifyMessage) + extra);
-	if (!m) {
-		/* malloc failure, then we don't send the message */
-		free(msg);
-		DEBUG(DBG_TRACE, "<dispatch_m2s (new)");
-		return;
-	}
-	set_value(m->u.notify->type, ANOUBIS_N_NOTIFY);
-	m->u.notify->token = hdr->msg_token;
-	set_value(m->u.notify->pid, hdr->msg_pid);
-	set_value(m->u.notify->rule_id, 0);
-	set_value(m->u.notify->uid, hdr->msg_uid);
-	set_value(m->u.notify->subsystem, hdr->msg_source);
-	set_value(m->u.notify->operation, 0 /* XXX ?? */);
-	memcpy(m->u.notify->payload, &hdr[1], extra);
-	head = anoubis_notify_create_head(hdr->msg_pid, m, NULL, NULL);
-	if (!head) {
-		/* malloc failure, then we don't send the message */
-		anoubis_msg_free(m);
-		free(msg);
-		DEBUG(DBG_TRACE, "<dispatch_m2s (free)");
-		return;
-	}
-
-	free(msg);
-
-	LIST_FOREACH(sess, &ev_info->seg->sessionList, nextSession) {
-		struct anoubis_notify_group * ng;
-
-		if (sess->proto == NULL)
-			continue;
-		ng = anoubis_server_getnotify(sess->proto);
-		if (!ng)
-			continue;
-		anoubis_notify(ng, head);
-		DEBUG(DBG_TRACE, " >anoubis_notify: %x", hdr->msg_token);
-	}
-	anoubis_notify_destroy_head(head);
-
-	DEBUG(DBG_TRACE, "<dispatch_m2s");
-}
-
-/* Handle Request Messages - coming from policy */
-static void
-dispatch_p2s(int fd, short sig, void *arg)
-{
-	struct event_info_session *ev_info = (struct event_info_session*)arg;
-	struct anoubis_notify_head * head;
-	struct anoubis_msg * m;
-	anoubisd_msg_t	*msg;
-	struct eventdev_hdr *hdr;
-	struct session	*sess;
-	struct cbdata	*cbdata;
-	int extra;
-	int sent;
-
-	DEBUG(DBG_TRACE, ">dispatch_p2s");
-
-	if ((msg = get_msg(fd)) == NULL) {
-		DEBUG(DBG_TRACE, "<dispatch_p2s (no msg)");
-		return;
-	}
-
-	if (msg->mtype != ANOUBISD_MSG_EVENTDEV &&
-	    msg->mtype != ANOUBISD_MSG_EVENTCANCEL) {
-		log_warn("dispatch_p2s: bad mtype %d", msg->mtype);
-	}
-
-	hdr = (struct eventdev_hdr *)msg->msg;
-
-	if ((hdr->msg_flags & EVENTDEV_NEED_REPLY) == 0) {
-		log_warn("dispatch_p2s: bad flags %x", hdr->msg_flags);
-	}
-
-	DEBUG(DBG_QUEUE, " >p2s: %x",
-	    ((struct eventdev_hdr *)msg->msg)->msg_token);
-
-	extra = hdr->msg_size -  sizeof(struct eventdev_hdr);
-
-	if (msg->mtype == ANOUBISD_MSG_EVENTDEV) {
-
+		extra = hdr->msg_size -  sizeof(struct eventdev_hdr);
 		m = anoubis_msg_new(sizeof(Anoubis_NotifyMessage) + extra);
 		if (!m) {
 			/* malloc failure, then we don't send the message */
 			free(msg);
 			DEBUG(DBG_TRACE, "<dispatch_m2s (new)");
-			return;
+			continue;
 		}
-
-		if ((cbdata = malloc(sizeof(struct cbdata))) == NULL) {
-			/* malloc failure, then we don't send the message */
-			anoubis_msg_free(m);
-			free(msg);
-			DEBUG(DBG_TRACE, "<dispatch_m2s (free)");
-			return;
-		}
-		cbdata->ev_token = hdr->msg_token;
-		cbdata->ev_info = ev_info;
-
-		set_value(m->u.notify->type, ANOUBIS_N_ASK);
+		set_value(m->u.notify->type, ANOUBIS_N_NOTIFY);
 		m->u.notify->token = hdr->msg_token;
 		set_value(m->u.notify->pid, hdr->msg_pid);
 		set_value(m->u.notify->rule_id, 0);
@@ -549,20 +483,18 @@ dispatch_p2s(int fd, short sig, void *arg)
 		set_value(m->u.notify->subsystem, hdr->msg_source);
 		set_value(m->u.notify->operation, 0 /* XXX ?? */);
 		memcpy(m->u.notify->payload, &hdr[1], extra);
-		head = anoubis_notify_create_head(hdr->msg_pid, m,
-		    notify_callback, cbdata);
-		cbdata->ev_head = head;
-
+		head = anoubis_notify_create_head(hdr->msg_pid, m, NULL, NULL);
 		if (!head) {
 			/* malloc failure, then we don't send the message */
 			anoubis_msg_free(m);
 			free(msg);
-			free(cbdata);
 			DEBUG(DBG_TRACE, "<dispatch_m2s (free)");
-			return;
+			continue;
 		}
+		DEBUG(DBG_TRACE, " >anoubis_notify_create_head");
 
-		sent = 0;
+		free(msg);
+
 		LIST_FOREACH(sess, &ev_info->seg->sessionList, nextSession) {
 			struct anoubis_notify_group * ng;
 
@@ -571,36 +503,229 @@ dispatch_p2s(int fd, short sig, void *arg)
 			ng = anoubis_server_getnotify(sess->proto);
 			if (!ng)
 				continue;
-			if (anoubis_notify(ng, head)) {
-				DEBUG(DBG_TRACE, " >anoubis_notify: %x",
-				    hdr->msg_token);
-				sent = 1;
-			}
+			anoubis_notify(ng, head);
+			DEBUG(DBG_TRACE, " >anoubis_notify: %x",
+			    hdr->msg_token);
+		}
+		anoubis_notify_destroy_head(head);
+		DEBUG(DBG_TRACE, " >anoubis_notify_destroy_head");
+
+		DEBUG(DBG_TRACE, "<dispatch_m2s (loop)");
+	}
+}
+
+/* Handle Request Messages - coming from policy */
+static void
+dispatch_p2s(int fd, short sig, void *arg)
+{
+	struct event_info_session *ev_info = (struct event_info_session*)arg;
+	anoubisd_msg_t *msg;
+
+	DEBUG(DBG_TRACE, ">dispatch_p2s");
+
+	for (;;) {
+		if ((msg = get_msg(fd)) == NULL) {
+			DEBUG(DBG_TRACE, "<dispatch_p2s");
+			return;
 		}
 
-		if (sent) {
-			enqueue(&headq, cbdata);
-			DEBUG(DBG_TRACE, " >headq: %x", hdr->msg_token);
-		} else
-			anoubis_notify_destroy_head(head);
+		switch (msg->mtype) {
+
+		case ANOUBISD_MSG_POLREPLY:
+			DEBUG(DBG_QUEUE, " >p2s");
+			dispatch_p2s_pol_reply(msg, ev_info);
+			break;
+
+		case ANOUBISD_MSG_EVENTDEV:
+			DEBUG(DBG_QUEUE, " >p2s: %x",
+			    ((struct eventdev_hdr *)msg->msg)->msg_token);
+			dispatch_p2s_evt_request(msg, ev_info);
+			break;
+
+		case ANOUBISD_MSG_EVENTCANCEL:
+			DEBUG(DBG_QUEUE, " >p2s: %x",
+			    ((struct eventdev_hdr *)msg->msg)->msg_token);
+			dispatch_p2s_evt_cancel(msg, ev_info);
+			break;
+
+		default:
+			log_warn("dispatch_p2s: bad mtype %d", msg->mtype);
+			break;
+		}
+
+		free(msg);
+
+		DEBUG(DBG_TRACE, "<dispatch_p2s (loop)");
+	}
+}
+
+void
+dispatch_p2s_evt_request(anoubisd_msg_t	*msg,
+    struct event_info_session *ev_info)
+{
+	struct anoubis_notify_head * head;
+	struct anoubis_msg * m;
+	struct eventdev_hdr *hdr;
+	struct session	*sess;
+	struct cbdata	*cbdata;
+	int extra;
+	int sent;
+
+	DEBUG(DBG_TRACE, ">dispatch_p2s_evt_request");
+
+	hdr = (struct eventdev_hdr *)msg->msg;
+
+	if ((hdr->msg_flags & EVENTDEV_NEED_REPLY) == 0) {
+		log_warn("dispatch_p2s: bad flags %x", hdr->msg_flags);
 	}
 
-	if (msg->mtype == ANOUBISD_MSG_EVENTCANCEL) {
-		struct cbdata cbdatatmp;
+	extra = hdr->msg_size -  sizeof(struct eventdev_hdr);
+	m = anoubis_msg_new(sizeof(Anoubis_NotifyMessage) + extra);
+	if (!m) {
+		/* malloc failure, then we don't send the message */
+		DEBUG(DBG_TRACE, "<dispatch_p2s_evt_request (bad new)");
+		return;
+	}
 
-		cbdatatmp.ev_token = hdr->msg_token;
-		if ((cbdata = queue_find(&headq, &cbdatatmp, cbdata_cmp))) {
-			head = cbdata->ev_head;
-			anoubis_notify_sendreply(head, EPERM /* XXX RD */,
-			    NULL, 0);
-			DEBUG(DBG_TRACE, " >anoubis_notify_sendreply: %x",
-				    hdr->msg_token);
+	if ((cbdata = malloc(sizeof(struct cbdata))) == NULL) {
+		/* malloc failure, then we don't send the message */
+		anoubis_msg_free(m);
+		DEBUG(DBG_TRACE, "<dispatch_p2s_evt_request (bad cbdata)");
+		return;
+	}
+	cbdata->ev_token = hdr->msg_token;
+	cbdata->ev_info = ev_info;
+
+	set_value(m->u.notify->type, ANOUBIS_N_ASK);
+	m->u.notify->token = hdr->msg_token;
+	set_value(m->u.notify->pid, hdr->msg_pid);
+	set_value(m->u.notify->rule_id, 0);
+	set_value(m->u.notify->uid, hdr->msg_uid);
+	set_value(m->u.notify->subsystem, hdr->msg_source);
+	set_value(m->u.notify->operation, 0 /* XXX ?? */);
+	memcpy(m->u.notify->payload, &hdr[1], extra);
+	head = anoubis_notify_create_head(hdr->msg_pid, m,
+	    notify_callback, cbdata);
+	cbdata->ev_head = head;
+
+	if (!head) {
+		/* malloc failure, then we don't send the message */
+		anoubis_msg_free(m);
+		free(cbdata);
+		DEBUG(DBG_TRACE, "<dispatch_p2s_evt_request (bad head)");
+		return;
+	}
+
+	sent = 0;
+	LIST_FOREACH(sess, &ev_info->seg->sessionList, nextSession) {
+		struct anoubis_notify_group * ng;
+
+		if (sess->proto == NULL)
+			continue;
+		ng = anoubis_server_getnotify(sess->proto);
+		if (!ng)
+			continue;
+		if (anoubis_notify(ng, head)) {
+			DEBUG(DBG_TRACE, " >anoubis_notify: %x",
+			    hdr->msg_token);
+			sent = 1;
 		}
 	}
 
-	free(msg);
+	if (sent) {
+		enqueue(&headq, cbdata);
+		DEBUG(DBG_TRACE, " >headq: %x", hdr->msg_token);
+	} else {
+		anoubis_notify_destroy_head(head);
+		DEBUG(DBG_TRACE, ">anoubis_notify_destroy_head");
+	}
 
-	DEBUG(DBG_TRACE, "<dispatch_p2s");
+	DEBUG(DBG_TRACE, "<dispatch_p2s_evt_request");
+}
+
+static int
+cbdata_cmp(void *msg1, void *msg2)
+{
+	if (msg1 == NULL || msg2 == NULL) {
+		DEBUG(DBG_TRACE, "cbdata_cmp: null msg pointer");
+		return 0;
+	}
+	if (((struct cbdata *)msg1)->ev_token ==
+	    ((struct cbdata *)msg2)->ev_token)
+		return 1;
+	return 0;
+}
+
+static void
+dispatch_p2s_evt_cancel(anoubisd_msg_t *msg, struct event_info_session *ev_info)
+{
+	struct anoubis_notify_head *head;
+	struct cbdata	*cbdata;
+	struct cbdata	cbdatatmp;
+	struct eventdev_hdr *hdr;
+
+	DEBUG(DBG_TRACE, ">dispatch_p2s_evt_cancel");
+
+	hdr = (struct eventdev_hdr *)msg->msg;
+
+	if ((hdr->msg_flags & EVENTDEV_NEED_REPLY) == 0) {
+		log_warn("dispatch_p2s: bad flags %x", hdr->msg_flags);
+	}
+
+	cbdatatmp.ev_token = hdr->msg_token;
+	if ((cbdata = queue_find(&headq, &cbdatatmp, cbdata_cmp))) {
+		head = cbdata->ev_head;
+		anoubis_notify_sendreply(head, EPERM /* XXX RD */,
+		    NULL, 0);
+		DEBUG(DBG_TRACE, " >anoubis_notify_sendreply: %x",
+			    hdr->msg_token);
+	}
+
+	DEBUG(DBG_TRACE, "<dispatch_p2s_evt_cancel");
+}
+
+static int
+pol_reply_cmp(void *msg1, void *msg2)
+{
+	if (msg1 == NULL || msg2 == NULL) {
+		DEBUG(DBG_TRACE, "pol_reply_cmp: null msg pointer");
+		return 0;
+	}
+	if (((struct anoubisd_msg_comm_store *)msg1)->token ==
+	    ((struct anoubisd_msg_comm_store *)msg2)->token)
+		return 1;
+	return 0;
+}
+
+static void
+dispatch_p2s_pol_reply(anoubisd_msg_t *msg, struct event_info_session *ev_info)
+{
+	anoubisd_reply_t *reply;
+	struct anoubisd_msg_comm_store msg_comm_store_tmp, *msg_comm;
+	void *buf = NULL;
+
+	DEBUG(DBG_TRACE, ">dispatch_p2s_pol_reply");
+
+	reply = (anoubisd_reply_t *)msg->msg;
+	msg_comm_store_tmp.token = reply->token;
+	msg_comm = queue_find(&requestq, &msg_comm_store_tmp,  pol_reply_cmp);
+	if (msg_comm == NULL) {
+		log_warn("dispatch_p2s_pol_reply: comm not found");
+		DEBUG(DBG_TRACE, "<dispatch_p2s_pol_reply (not found)");
+		return;
+	}
+
+	if (reply->len)
+		buf = reply->msg;
+
+	anoubis_policy_comm_answer(msg_comm->comm, reply->token, reply->reply,
+	    buf, reply->len);
+	DEBUG(DBG_TRACE, " >anoubis_policy_comm_answer");
+
+	DEBUG(DBG_QUEUE, " <requestq: %x", reply->token);
+	queue_delete(&requestq, msg_comm);
+
+	DEBUG(DBG_TRACE, "<dispatch_p2s_pol_reply");
 }
 
 static void
@@ -610,6 +735,7 @@ dispatch_s2m(int fd, short sig, void *arg)
 	anoubisd_msg_t *msg;
 
 	DEBUG(DBG_TRACE, ">dispatch_s2m");
+
 	if ((msg = queue_peek(&eventq_s2m)) == NULL) {
 		DEBUG(DBG_TRACE, "<dispatch_s2m (no msg)");
 		return;
@@ -626,7 +752,7 @@ dispatch_s2m(int fd, short sig, void *arg)
 	if (queue_peek(&eventq_s2m))
 		event_add(ev_info->ev_s2m, NULL);
 
-	DEBUG(DBG_TRACE, "<dispatch_m2s");
+	DEBUG(DBG_TRACE, "<dispatch_s2m");
 }
 
 static void
@@ -636,6 +762,7 @@ dispatch_s2p(int fd, short sig, void *arg)
 	anoubisd_msg_t *msg;
 
 	DEBUG(DBG_TRACE, ">dispatch_s2p");
+
 	if ((msg = queue_peek(&eventq_s2p)) == NULL) {
 		DEBUG(DBG_TRACE, "<dispatch_s2p (no msg)");
 		return;

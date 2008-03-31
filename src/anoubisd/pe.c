@@ -28,18 +28,46 @@
 #include "config.h"
 
 #include <sys/types.h>
+#include <errno.h>
+#include <stdlib.h>
+#include <strings.h>
 #include <time.h>
 
 #include "anoubisd.h"
 
-void
-policy_engine(struct eventdev_hdr *request, anoubisd_reply_t *reply)
+anoubisd_reply_t *
+policy_engine(int mtype, void *request)
 {
+	anoubisd_reply_t *reply;
+	struct eventdev_hdr *hdr = NULL;
+	struct anoubisd_msg_comm *comm = NULL;
+
 	DEBUG(DBG_TRACE, ">policy_engine");
+
+
+	if (mtype == ANOUBISD_MSG_EVENTDEV)
+		hdr = (struct eventdev_hdr *)request;
+
+	if (mtype == ANOUBISD_MSG_POLREQUEST)
+		comm = (anoubisd_msg_comm_t *)request;
+
+
+	if ((reply = malloc(sizeof(struct anoubisd_reply))) == NULL) {
+		log_warn("policy_engine: cannot allocate memory");
+		master_terminate(ENOMEM);
+		return NULL;
+	}
+	bzero(reply, sizeof(anoubisd_reply_t));
 
 	reply->ask = 0;		/* false */
 	reply->reply = 0;	/* allow */
 	reply->timeout = (time_t)0;
+	reply->len = 0;
+
+	if (mtype == ANOUBISD_MSG_POLREQUEST)
+		reply->token = comm->token;
 
 	DEBUG(DBG_TRACE, "<policy_engine");
+
+	return reply;
 }

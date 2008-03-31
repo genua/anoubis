@@ -34,10 +34,10 @@
 struct anoubis_policy_comm;
 
 typedef int (*anoubis_policy_comm_dispatcher_t)(struct anoubis_policy_comm *,
-    u_int64_t token, u_int32_t uid, void * buf, size_t len);
+    u_int64_t token, u_int32_t uid, void * buf, size_t len, void * arg);
 
 struct anoubis_policy_comm * anoubis_policy_comm_create(
-    anoubis_policy_comm_dispatcher_t dispatch);
+    anoubis_policy_comm_dispatcher_t dispatch, void *arg);
 int anoubis_policy_comm_process(struct anoubis_policy_comm * comm,
     struct anoubis_msg * m, u_int32_t uid, struct achat_channel * chan);
 int anoubis_policy_comm_answer(struct anoubis_policy_comm * comm,

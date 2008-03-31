@@ -259,7 +259,7 @@ static void do_notify(struct anoubis_notify_group * grp, pid_t pid)
 }
 
 int policy_dispatch(struct anoubis_policy_comm * policy, u_int64_t token,
-    u_int32_t uid, void * buf,  size_t len)
+    u_int32_t uid, void * buf,  size_t len, void *arg)
 {
 	return anoubis_policy_comm_answer(policy, token, 0, NULL, 0);
 }
@@ -300,7 +300,7 @@ void tp_chat_lud_server(const char *sockname)
 		fail("server state not set correctly", __LINE__);
 	mark_point();
 
-	policy = anoubis_policy_comm_create(&policy_dispatch);
+	policy = anoubis_policy_comm_create(&policy_dispatch, NULL);
 	server = anoubis_server_create(s, policy);
 	fail_if(server == NULL, "Failed to create server protocol");
 	mark_point();

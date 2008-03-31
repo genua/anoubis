@@ -56,7 +56,7 @@ void	*dequeue(Queuep);
 Qentryp	 queue_head(Queuep);
 Qentryp	 queue_walk(Queuep, Qentryp);
 void	*queue_peek(Queuep);
-void	*queue_find(Queuep, void *, int(*cmp)(const void *, const void *));
+void	*queue_find(Queuep, void *, int(*cmp)(void *, void *));
 int	 queue_delete(Queuep, void *);
 
 #endif /* !_AQUEUE_H */

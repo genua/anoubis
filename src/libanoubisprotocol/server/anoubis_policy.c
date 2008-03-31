@@ -44,12 +44,13 @@ struct policy_request {
 
 struct anoubis_policy_comm {
 	anoubis_policy_comm_dispatcher_t dispatch;
+	void	*arg;
 	u_int64_t nexttoken;
 	LIST_HEAD(, policy_request) req;
 };
 
 struct anoubis_policy_comm * anoubis_policy_comm_create(
-    anoubis_policy_comm_dispatcher_t dispatch)
+    anoubis_policy_comm_dispatcher_t dispatch, void *arg)
 {
 	struct anoubis_policy_comm * ret;
 
@@ -59,6 +60,7 @@ struct anoubis_policy_comm * anoubis_policy_comm_create(
 	if (!ret)
 		return NULL;
 	ret->dispatch = dispatch;
+	ret->arg = arg;
 	ret->nexttoken = 0x10000000;
 	LIST_INIT(&ret->req);
 	return ret;
@@ -89,7 +91,7 @@ int anoubis_policy_comm_process(struct anoubis_policy_comm * comm,
 	req->chan = chan;
 	LIST_INSERT_HEAD(&comm->req, req, link);
 	ret = comm->dispatch(comm, req->token, uid,
-	    m->u.policyrequest->payload, datalen);
+	    m->u.policyrequest->payload, datalen, comm->arg);
 	if (ret < 0) {
 		LIST_REMOVE(req, link);
 		anoubis_msg_free(req->m);
