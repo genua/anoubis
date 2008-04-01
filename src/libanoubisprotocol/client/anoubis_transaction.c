@@ -65,13 +65,13 @@ void anoubis_transaction_destroy(struct anoubis_transaction * t)
 }
 
 void anoubis_transaction_setopcodes(struct anoubis_transaction * t,
-    const int * ocp)
+    const u_int32_t * ocp)
 {
 	t->opcodes = ocp;
 }
 
 int anoubis_transaction_match(struct anoubis_transaction * t,
-    anoubis_token_t token, int self, int opcode)
+    anoubis_token_t token, int self, u_int32_t opcode)
 {
 	int i;
 	if (!t->opcodes)
@@ -108,7 +108,7 @@ void anoubis_transaction_process(struct anoubis_transaction * t,
 }
 
 void anoubis_transaction_progress(struct anoubis_transaction * t,
-    const int * ocp)
+    const u_int32_t * ocp)
 {
 	t->opcodes = ocp;
 	t->stage++;

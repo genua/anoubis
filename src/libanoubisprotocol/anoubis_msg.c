@@ -31,7 +31,7 @@
 #include <anoubis_dump.h>
 #include <crc32.h>
 
-struct anoubis_msg * anoubis_msg_new(u_int32_t len)
+struct anoubis_msg * anoubis_msg_new(size_t len)
 {
 	struct anoubis_msg * ret;
 
@@ -41,7 +41,7 @@ struct anoubis_msg * anoubis_msg_new(u_int32_t len)
 	ret = malloc(sizeof(struct anoubis_msg));
 	if (!ret)
 		return NULL;
-	ret->length = len;
+	ret->length = (u_int32_t) len;
 	ret->u.buf = malloc(len);
 	if (!ret->u.buf) {
 		free(ret);
@@ -60,13 +60,13 @@ struct anoubis_msg * anoubis_msg_clone(struct anoubis_msg * m)
 	return ret;
 }
 
-int anoubis_msg_resize(struct anoubis_msg * m, u_int32_t len)
+int anoubis_msg_resize(struct anoubis_msg * m, size_t len)
 {
 	void * new = realloc(m->u.buf, len);
 	if (!new)
 		return -ENOMEM;
 	m->u.buf = new;
-	m->length = len;
+	m->length = (u_int32_t) len;
 	return 0;
 }
 

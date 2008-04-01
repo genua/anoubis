@@ -70,6 +70,15 @@ int /*@printflike@*/ asprintf(char **strp, const char *fmt, ...);
 int setresuid(uid_t ruid, uid_t euid, uid_t suid);
 int setresgid(gid_t rgid, gid_t egid, gid_t sgid);
 
+/*
+ * The splint unix library does not seem to know about neither ENOATTR
+ * nor about ENODATA. We therefore copy the definition of ENODATA from
+ * dev:/usr/include/asm-generig/errno.h.
+ */
+
+#ifndef ENODATA
+#define	ENODATA		61	/* No data available */
+#endif
 
 #endif /* S_SPLINT_S */
 #endif	/* _SPLINT-INCLUDES_H_ */

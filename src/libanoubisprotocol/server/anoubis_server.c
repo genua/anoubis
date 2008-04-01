@@ -296,7 +296,7 @@ static void anoubis_auth_finish_callback(void * data)
 
 	/* More Messages necessary. */
 	if (server->auth->state == ANOUBIS_AUTH_SUCCESS) {
-		int len = 0;
+		size_t len = 0;
 		if (server->auth->username)
 			len = strlen(server->auth->username);
 		m = anoubis_msg_new(sizeof(Anoubis_AuthReplyMessage) + len);
@@ -469,6 +469,8 @@ int anoubis_server_process(struct anoubis_server * server, void * buf,
 		.length = len,
 		.u = { .buf = buf }
 	};
+#else
+	struct anoubis_msg m;
 #endif
 	int opcode;
 	/* Return an error if the partner sent data over a dead channel. */
@@ -578,7 +580,7 @@ int anoubis_server_process(struct anoubis_server * server, void * buf,
 		/* Should never happen! */
 		return -EINVAL;
 	}
-	/* NOT REACHED */
+	/* NOTREACHED */
 	return -EINVAL;
 }
 

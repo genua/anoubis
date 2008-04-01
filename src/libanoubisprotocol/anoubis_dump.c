@@ -139,10 +139,12 @@ static void dump_policyreply(Anoubis_PolicyReplyMessage * m, size_t len)
 
 void anoubis_dump(struct anoubis_msg * m, const char * str)
 {
-	int opcode;
+	u_int32_t opcode;
+
 	printf("%s:", str?str:"(null)");
 	ASSERT(VERIFY_FIELD(m, general, type));
-	ASSERT(crc32_check(m->u.buf, m->length));
+	ASSERT(m->length < INT_MAX);
+	ASSERT(crc32_check(m->u.buf, (int) m->length));
 	opcode = get_value(m->u.general->type);
 	switch(opcode) {
 	CASE(ANOUBIS_REPLY, ack)
@@ -178,8 +180,8 @@ void anoubis_dump_buf(void * buf, size_t len, const char * str)
 		.u.buf = buf,
 		.length = len,
 	};
-	anoubis_dump(&m, str);
 #else
-	return;
+	struct anoubis_msg m;
 #endif
+	anoubis_dump(&m, str);
 }

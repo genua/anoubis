@@ -114,7 +114,7 @@ acc_open(struct achat_channel *acc)
 	ACC_CHKSTATE(acc, ACC_STATE_NOTCONNECTED);
 
 	if (acc->tail == ACC_TAIL_SERVER) {
-		size = sizeof(remote);
+		size = (socklen_t) sizeof(remote);
 		/* retry if we were interrupted (e.g by a signal) */
 		do {
 			acc->connfd = accept(acc->sockfd,
@@ -123,7 +123,7 @@ acc_open(struct achat_channel *acc)
 		if (acc->connfd == -1)
 			return (ACHAT_RC_ERROR);
 	} else {
-		size =  acc_sockaddrsize(&(acc->addr));
+		size = acc_sockaddrsize(&(acc->addr));
 		/* retry if we were interrupted (e.g by a signal) */
 		do {
 			rc = connect(acc->connfd,

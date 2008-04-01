@@ -244,7 +244,7 @@ static int anoubis_verify_authreply(struct anoubis_client * client,
 {
 	int ret;
 	u_int32_t opcode;
-	int slen;
+	size_t slen;
 
 	ret = anoubis_client_verify(client, m);
 	if (ret < 0)
@@ -333,7 +333,7 @@ static void anoubis_client_connect_steps(struct anoubis_transaction * t,
 
 	switch(t->stage) {
 	case 1: {
-		static const int nextops[] = { ANOUBIS_REPLY, 0 };
+		static const u_int32_t nextops[] = { ANOUBIS_REPLY, 0 };
 		ret = anoubis_verify_hello(client, ANOUBIS_PROTO_VERSION, m);
 		if (ret < 0)
 			goto err;
@@ -350,7 +350,7 @@ static void anoubis_client_connect_steps(struct anoubis_transaction * t,
 		anoubis_transaction_progress(t, nextops);
 		return;
 	} case 2: {
-		static const int nextops[] = { ANOUBIS_REPLY, 0 };
+		static const u_int32_t nextops[] = { ANOUBIS_REPLY, 0 };
 		ret = anoubis_verify_reply(client, ANOUBIS_C_VERSEL, m);
 		if (ret < 0)
 			goto err;
@@ -360,7 +360,7 @@ static void anoubis_client_connect_steps(struct anoubis_transaction * t,
 		anoubis_transaction_progress(t, nextops);
 		return;
 	} case 3: {
-		static const int nextops[] = { ANOUBIS_C_AUTHREPLY, 0 };
+		static const u_int32_t nextops[] = { ANOUBIS_C_AUTHREPLY, 0 };
 		ret = anoubis_verify_reply(client, ANOUBIS_C_AUTH, m);
 		if (ret < 0)
 			goto err;
@@ -374,7 +374,7 @@ static void anoubis_client_connect_steps(struct anoubis_transaction * t,
 		anoubis_transaction_progress(t, nextops);
 		return;
 	} case 4: {
-		static const int nextops[] = { ANOUBIS_C_OPTACK, 0 };
+		static const u_int32_t nextops[] = { ANOUBIS_C_OPTACK, 0 };
 		int opts[3] = { FLAG_MULTIPLEX, FLAG_PIPELINE, -1 };
 		ret = anoubis_verify_authreply(client, m);
 		if (ret < 0)
@@ -390,7 +390,7 @@ static void anoubis_client_connect_steps(struct anoubis_transaction * t,
 		anoubis_transaction_progress(t, nextops);
 		return;
 	} case 5: {
-		static const int nextops[] = { ANOUBIS_REPLY, 0 };
+		static const u_int32_t nextops[] = { ANOUBIS_REPLY, 0 };
 		int multiplex = (cb->proto == ANOUBIS_PROTO_BOTH);
 		unsigned int selopts = 0;
 		int opts[3];
@@ -441,7 +441,7 @@ struct anoubis_transaction * anoubis_client_connect_start(
 {
 	struct anoubis_transaction * t;
 	struct anoubis_connect_cbdata * cb;
-	static const int nextops[] = { ANOUBIS_C_HELLO, 0 };
+	static const u_int32_t nextops[] = { ANOUBIS_C_HELLO, 0 };
 	if (client->state != ANOUBIS_STATE_INIT)
 		return NULL;
 	if (proto & ~(ANOUBIS_PROTO_BOTH))
@@ -529,7 +529,7 @@ struct anoubis_transaction * anoubis_client_close_start(
     struct anoubis_client * client)
 {
 	struct anoubis_transaction * ret = NULL;
-	static const int nextops[] = {
+	static const u_int32_t nextops[] = {
 	    ANOUBIS_C_CLOSEREQ, ANOUBIS_C_CLOSEACK, 0
 	};
 
@@ -555,8 +555,9 @@ err:
 	return NULL;
 }
 
+/* ARGUSED */
 static int anoubis_client_process_event(struct anoubis_client * client,
-    struct anoubis_msg * m, int opcode, anoubis_token_t token)
+    struct anoubis_msg * m, u_int32_t opcode, anoubis_token_t token)
 {
 	switch(opcode) {
 	case ANOUBIS_N_ASK:
@@ -613,7 +614,8 @@ static int anoubis_client_continue_self(struct anoubis_client * client,
 int anoubis_client_process(struct anoubis_client * client,
     struct anoubis_msg * m)
 {
-	int ret, opcode;
+	int ret;
+	u_int32_t opcode;
 
 	/* First do sanity checks on the message. */
 	ret = anoubis_client_verify(client, m);
@@ -656,7 +658,7 @@ int anoubis_client_process(struct anoubis_client * client,
 		case ANOUBIS_N_RESYOU:
 		case ANOUBIS_N_RESOTHER:
 			return anoubis_client_process_event(client, m, opcode,
-			    m->u.token->token);
+			    token);
 		case ANOUBIS_N_REGISTER:
 		case ANOUBIS_N_UNREGISTER:
 		case ANOUBIS_N_DELEGATE:
@@ -697,11 +699,11 @@ err:
 }
 
 static struct anoubis_transaction * __anoubis_client_register_start_common(
-    struct anoubis_client * client, int opcode, anoubis_token_t token,
+    struct anoubis_client * client, u_int32_t opcode, anoubis_token_t token,
     uid_t uid, pid_t pid, u_int32_t rule_id, u_int32_t subsystem)
 {
 	struct anoubis_msg * m;
-	static const int nextops[] = { ANOUBIS_REPLY, 0 };
+	static const u_int32_t nextops[] = { ANOUBIS_REPLY, 0 };
 	struct anoubis_transaction * ret;
 
 	if ((client->proto & ANOUBIS_PROTO_NOTIFY) == 0)
@@ -755,7 +757,7 @@ int anoubis_client_notifyreply(struct anoubis_client * client,
     anoubis_token_t token, int verdict, int delegate)
 {
 	struct anoubis_msg * m;
-	int opcode;
+	u_int32_t opcode;
 
 	if ((client->proto & ANOUBIS_PROTO_NOTIFY) == 0
 	    || (client->flags & FLAG_SENTCLOSEACK))
@@ -794,11 +796,11 @@ err:
 
 struct anoubis_transaction *
 anoubis_client_policyrequest_start(struct anoubis_client * client,
-    void * data, int datalen)
+    void * data, size_t datalen)
 {
 	struct anoubis_msg * m;
 	struct anoubis_transaction * t;
-	static const int nextops[] = { ANOUBIS_P_REPLY, -1 };
+	static const u_int32_t nextops[] = { ANOUBIS_P_REPLY, -1 };
 	if ((client->proto & ANOUBIS_PROTO_POLICY) == 0)
 		return NULL;
 	if (client->state != ANOUBIS_STATE_CONNECTED)

@@ -66,7 +66,7 @@ if HAVE_LINT
 REPORTS += lint.report
 lint: lint.report
 lint.report:
-	find $(top_builddir) -name \*_splint -exec rm {} \;
+	find $(top_builddir) -name \*_lint -exec rm {} \;
 	for t in $(SUBDIRS); do cd $$t && make lint && cd ..; done
 	cat `find $(top_builddir) -name \*_lint` > $@
 endif

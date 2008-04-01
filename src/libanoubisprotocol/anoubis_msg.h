@@ -85,9 +85,9 @@ struct stringlist_iterator {
 };
 
 __BEGIN_DECLS
-struct anoubis_msg * anoubis_msg_new(u_int32_t len);
+struct anoubis_msg * anoubis_msg_new(size_t len);
 struct anoubis_msg * anoubis_msg_clone(struct anoubis_msg * m);
-int anoubis_msg_resize(struct anoubis_msg * m, u_int32_t len);
+int anoubis_msg_resize(struct anoubis_msg * m, size_t len);
 void anoubis_msg_free(struct anoubis_msg * m);
 __END_DECLS
 

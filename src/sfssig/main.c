@@ -27,6 +27,10 @@
 
 #include "config.h"
 
+#ifdef S_SPLINT_S
+#include "splint-includes.h"
+#endif
+
 #include <assert.h>
 #include <err.h>
 #include <errno.h>
