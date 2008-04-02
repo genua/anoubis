@@ -112,13 +112,6 @@ bool AnoubisGuiApp::OnInit()
 }
 
 void
-AnoubisGuiApp::setRuleEditorVisability(bool visable)
-{
-	ruleEditor_->Show(visable);
-	mainFrame->setRuleEditorVisability(visable);
-}
-
-void
 AnoubisGuiApp::sendEvent(wxCommandEvent& event)
 {
 	wxPostEvent(mainFrame, event);
@@ -171,20 +164,17 @@ AnoubisGuiApp::alert(wxString msg)
 void
 AnoubisGuiApp::toggleRuleEditorVisability(void)
 {
-	setRuleEditorVisability(!ruleEditor_->IsShown());
-}
-
-void
-AnoubisGuiApp::setLogViewerVisability(bool visable)
-{
-	logViewer_->Show(visable);
-	mainFrame->setLogViewerVisability(visable);
+	wxCommandEvent  showEvent(anEVT_RULEEDITOR_SHOW);
+	showEvent.SetInt(!ruleEditor_->IsShown());
+	wxGetApp().sendEvent(showEvent);
 }
 
 void
 AnoubisGuiApp::toggleLogViewerVisability(void)
 {
-	setLogViewerVisability(!logViewer_->IsShown());
+	wxCommandEvent  showEvent(anEVT_LOGVIEWER_SHOW);
+	showEvent.SetInt(!logViewer_->IsShown());
+	wxGetApp().sendEvent(showEvent);
 }
 
 void

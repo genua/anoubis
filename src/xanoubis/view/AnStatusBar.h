@@ -66,12 +66,12 @@ class AnStatusBar : public wxStatusBar
 		void OnRuleEditorClick(wxMouseEvent&);
 		void OnRuleEditorEnter(wxMouseEvent&);
 
+		void onLogViewerShow(wxCommandEvent&);
+		void onRuleEditorShow(wxCommandEvent&);
+
 	public:
 		AnStatusBar(wxWindow *);
 		~AnStatusBar(void);
-
-		void setLogViewerVisability(bool);
-		void setRuleEditorVisability(bool);
 };
 
 #endif /* __ANSTATUSBAR_H__ */

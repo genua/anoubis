@@ -45,6 +45,10 @@ class DlgLogViewer : public DlgLogViewerBase
 		AnShortcuts	*shortcuts_;
 
 		void OnAddNotification(wxCommandEvent&);
+		void OnShow(wxCommandEvent&);
+
+	protected:
+		void OnClose(wxCloseEvent& event);
 
 	public:
 		DlgLogViewer(wxWindow *);

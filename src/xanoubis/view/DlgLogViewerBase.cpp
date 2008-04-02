@@ -35,7 +35,7 @@
 
 ///////////////////////////////////////////////////////////////////////////
 
-DlgLogViewerBase::DlgLogViewerBase( wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style, const wxString& name ) : wxDialog( parent, id, title, pos, size, style, name )
+DlgLogViewerBase::DlgLogViewerBase( wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style, const wxString& name ) : wxFrame( parent, id, title, pos, size, style, name )
 {
 	this->SetSizeHints( wxSize( 700,400 ), wxDefaultSize );
 	
@@ -51,4 +51,5 @@ DlgLogViewerBase::DlgLogViewerBase( wxWindow* parent, wxWindowID id, const wxStr
 	
 	// Connect Events
 	this->Connect( wxEVT_CHAR, wxKeyEventHandler( DlgLogViewerBase::OnKeyPressed ) );
+	this->Connect( wxEVT_CLOSE_WINDOW, wxCloseEventHandler( DlgLogViewerBase::OnClose ) );
 }

@@ -37,6 +37,7 @@
 #include <wx/stattext.h>
 
 #include "AnStatusBar.h"
+#include "AnEvents.h"
 #include "main.h"
 
 /*
@@ -190,6 +191,11 @@ AnStatusBar::AnStatusBar(wxWindow *parent) : wxStatusBar(parent, ID_STATUSBAR)
 	    wxMouseEventHandler(AnStatusBar::OnRuleEditorEnter), NULL, this);
 	sunkenRuleEditorPanel_->Connect(wxEVT_LEAVE_WINDOW,
 	    wxMouseEventHandler(AnStatusBar::OnRuleEditorEnter), NULL, this);
+
+	parent->Connect(anEVT_LOGVIEWER_SHOW,
+	    wxCommandEventHandler(AnStatusBar::onLogViewerShow), NULL, this);
+	parent->Connect(anEVT_RULEEDITOR_SHOW,
+	    wxCommandEventHandler(AnStatusBar::onRuleEditorShow), NULL, this);
 }
 
 AnStatusBar::~AnStatusBar(void)
@@ -300,7 +306,9 @@ void
 AnStatusBar::OnLogViewerClick(wxMouseEvent& event)
 {
 	isLogViewerPressed_ = !isLogViewerPressed_;
-	wxGetApp().setLogViewerVisability(isLogViewerPressed_);
+	wxCommandEvent  showEvent(anEVT_LOGVIEWER_SHOW);
+	showEvent.SetInt(isLogViewerPressed_);
+	wxGetApp().sendEvent(showEvent);
 	event.Skip();
 }
 
@@ -315,7 +323,9 @@ void
 AnStatusBar::OnRuleEditorClick(wxMouseEvent& event)
 {
 	isRuleEditorPressed_ = !isRuleEditorPressed_;
-	wxGetApp().setRuleEditorVisability(isRuleEditorPressed_);
+	wxCommandEvent  showEvent(anEVT_RULEEDITOR_SHOW);
+	showEvent.SetInt(isRuleEditorPressed_);
+	wxGetApp().sendEvent(showEvent);
 	event.Skip();
 }
 
@@ -327,15 +337,17 @@ AnStatusBar::OnRuleEditorEnter(wxMouseEvent& event)
 }
 
 void
-AnStatusBar::setLogViewerVisability(bool visible)
+AnStatusBar::onLogViewerShow(wxCommandEvent& event)
 {
-	isLogViewerPressed_ = visible;
+	isLogViewerPressed_ = event.GetInt();
 	redrawLogViewerPanel();
+	event.Skip();
 }
 
 void
-AnStatusBar::setRuleEditorVisability(bool visible)
+AnStatusBar::onRuleEditorShow(wxCommandEvent& event)
 {
-	isRuleEditorPressed_ = visible;
+	isRuleEditorPressed_ = event.GetInt();
 	redrawRuleEditorPanel();
+	event.Skip();
 }

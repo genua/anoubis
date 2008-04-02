@@ -78,9 +78,7 @@ class AnoubisGuiApp : public wxApp
 		void	log(wxString);
 		void	alert(wxString);
 
-		void	setLogViewerVisability(bool);
 		void	toggleLogViewerVisability(void);
-		void	setRuleEditorVisability(bool);
 		void	toggleRuleEditorVisability(void);
 		void	connectToDaemon(bool);
 		void	update(void);

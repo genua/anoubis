@@ -40,8 +40,12 @@ class DlgRuleEditor : public DlgRuleEditorBase
 	protected:
 		AnShortcuts	*shortcuts_;
 
+		void OnClose(wxCloseEvent& event);
 		void OnTableOptionButtonClick(wxCommandEvent&);
 		void OnBinaryModifyButtonClick(wxCommandEvent&);
+
+	private:
+		void OnShow(wxCommandEvent&);
 
 	public:
 		DlgRuleEditor(wxWindow *);

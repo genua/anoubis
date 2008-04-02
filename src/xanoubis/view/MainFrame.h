@@ -46,6 +46,9 @@ class MainFrame : public MainFrameBase
 		 */
 		AnShortcuts *shortcuts_;
 
+		void onRuleEditorShow(wxCommandEvent&);
+		void onLogViewerShow(wxCommandEvent&);
+
 	protected:
 		AnStatusBar *an_statusbar;
 
@@ -66,8 +69,6 @@ class MainFrame : public MainFrameBase
 		void OnInit(void);
 		void addModules(Module* []);
 
-		void setLogViewerVisability(bool);
-		void setRuleEditorVisability(bool);
 		void setDaemonConnection(bool);
 		void setConnectionString(wxString);
 };

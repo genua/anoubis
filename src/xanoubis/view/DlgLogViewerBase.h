@@ -41,7 +41,7 @@
 #include <wx/settings.h>
 #include <wx/string.h>
 #include <wx/sizer.h>
-#include <wx/dialog.h>
+#include <wx/frame.h>
 
 ///////////////////////////////////////////////////////////////////////////
 
@@ -49,7 +49,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 /// Class DlgLogViewerBase
 ///////////////////////////////////////////////////////////////////////////////
-class DlgLogViewerBase : public wxDialog 
+class DlgLogViewerBase : public wxFrame 
 {
 	private:
 	
@@ -58,10 +58,11 @@ class DlgLogViewerBase : public wxDialog
 		
 		// Virtual event handlers, overide them in your derived class
 		virtual void OnKeyPressed( wxKeyEvent& event ){ event.Skip(); }
+		virtual void OnClose( wxCloseEvent& event ){ event.Skip(); }
 		
 	
 	public:
-		DlgLogViewerBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxT("Log Viewer"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( -1,-1 ), long style = wxDEFAULT_DIALOG_STYLE, const wxString& name = wxT("DlgLogViewer") );
+		DlgLogViewerBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxT("Log Viewer"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( -1,-1 ), long style = wxDEFAULT_FRAME_STYLE, const wxString& name = wxT("DlgLogViewer") );
 	
 };
 

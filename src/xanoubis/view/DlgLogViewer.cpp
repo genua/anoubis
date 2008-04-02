@@ -78,6 +78,8 @@ DlgLogViewer::DlgLogViewer(wxWindow* parent) : DlgLogViewerBase(parent)
 
 	Connect(anEVT_ADD_NOTIFICATION,
 	    wxCommandEventHandler(DlgLogViewer::OnAddNotification));
+	Connect(anEVT_LOGVIEWER_SHOW,
+	    wxCommandEventHandler(DlgLogViewer::OnShow));
 }
 
 DlgLogViewer::~DlgLogViewer(void)
@@ -94,7 +96,7 @@ DlgLogViewer::OnAddNotification(wxCommandEvent& event)
 	addNotification(notify);
 	/*
 	 * The notify was also received by ModAnoubis, which stores
-	 * and destroies it. Thus we must not delete it.
+	 * and destroys it. Thus we must not delete it.
 	 */
 	event.Skip();
 }
@@ -125,4 +127,18 @@ DlgLogViewer::addNotification(Notification *notify)
 	lc_logList->SetColumnWidth(LOGVIEWER_COLUMN_TIME, wxLIST_AUTOSIZE);
 	lc_logList->SetColumnWidth(LOGVIEWER_COLUMN_MODULE, wxLIST_AUTOSIZE);
 	lc_logList->SetColumnWidth(LOGVIEWER_COLUMN_MESSAGE, wxLIST_AUTOSIZE);
+}
+
+void
+DlgLogViewer::OnClose(wxCloseEvent& event)
+{
+	wxCommandEvent	showEvent(anEVT_LOGVIEWER_SHOW);
+	showEvent.SetInt(false);
+	wxGetApp().sendEvent(showEvent);
+}
+
+void
+DlgLogViewer::OnShow(wxCommandEvent& event)
+{
+	this->Show(event.GetInt());
 }

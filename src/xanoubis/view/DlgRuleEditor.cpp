@@ -33,7 +33,9 @@
 #include <wx/choicdlg.h>
 
 #include "AnShortcuts.h"
+#include "AnEvents.h"
 #include "DlgRuleEditor.h"
+#include "main.h"
 
 DlgRuleEditor::DlgRuleEditor(wxWindow* parent) : DlgRuleEditorBase(parent)
 {
@@ -53,6 +55,9 @@ DlgRuleEditor::DlgRuleEditor(wxWindow* parent) : DlgRuleEditorBase(parent)
 	    wxLIST_FORMAT_LEFT, wxLIST_AUTOSIZE_USEHEADER);
 	ruleListCtrl->InsertColumn(6, wxT("Action"),
 	    wxLIST_FORMAT_LEFT, wxLIST_AUTOSIZE_USEHEADER);
+
+	Connect(anEVT_RULEEDITOR_SHOW,
+	    wxCommandEventHandler(DlgRuleEditor::OnShow));
 }
 
 DlgRuleEditor::~DlgRuleEditor(void)
@@ -98,4 +103,19 @@ DlgRuleEditor::OnBinaryModifyButtonClick(wxCommandEvent& event)
 		appBinaryTextCtrl->Clear();
 		appBinaryTextCtrl->AppendText(fileDlg.GetPath());
 	}
+}
+
+
+void
+DlgRuleEditor::OnClose(wxCloseEvent& event)
+{
+	wxCommandEvent  showEvent(anEVT_RULEEDITOR_SHOW);
+	showEvent.SetInt(false);
+	wxGetApp().sendEvent(showEvent);
+}
+
+void
+DlgRuleEditor::OnShow(wxCommandEvent& event)
+{
+	this->Show(event.GetInt());
 }

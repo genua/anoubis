@@ -641,6 +641,7 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	sz_main->Fit( this );
 	
 	// Connect Events
+	this->Connect( wxEVT_CLOSE_WINDOW, wxCloseEventHandler( DlgRuleEditorBase::OnClose ) );
 	controlOptionButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::OnTableOptionButtonClick ), NULL, this );
 	appBinaryModifyButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::OnBinaryModifyButtonClick ), NULL, this );
 	sfsBinaryModifyButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::OnBinaryModifyButtonClick ), NULL, this );

@@ -47,6 +47,11 @@ MainFrame::MainFrame(wxWindow *parent) : MainFrameBase(parent)
 	shortcuts_ = new AnShortcuts(this);
 	Connect(anEVT_COM_REMOTESTATION,
 	    wxCommandEventHandler(MainFrame::OnRemoteStation), NULL, this);
+	Connect(anEVT_LOGVIEWER_SHOW,
+	    wxCommandEventHandler(MainFrame::onLogViewerShow), NULL, this);
+	Connect(anEVT_RULEEDITOR_SHOW,
+	    wxCommandEventHandler(MainFrame::onRuleEditorShow), NULL, this);
+
 }
 
 MainFrame::~MainFrame()
@@ -93,17 +98,15 @@ MainFrame::addModules(Module* modules[ANOUBIS_MODULESNO])
 }
 
 void
-MainFrame::setRuleEditorVisability(bool visible)
+MainFrame::onRuleEditorShow(wxCommandEvent& event)
 {
-	an_statusbar->setRuleEditorVisability(visible);
-	an_menubar->Check(ID_MITOOLSRULEEDITOR, visible);
+	an_menubar->Check(ID_MITOOLSRULEEDITOR, event.GetInt());
 }
 
 void
-MainFrame::setLogViewerVisability(bool visible)
+MainFrame::onLogViewerShow(wxCommandEvent& event)
 {
-	an_statusbar->setLogViewerVisability(visible);
-	an_menubar->Check(ID_MITOOLSLOGVIEWER, visible);
+	an_menubar->Check(ID_MITOOLSLOGVIEWER, event.GetInt());
 }
 
 void
@@ -176,13 +179,17 @@ MainFrame::OnMbFileQuitSelect(wxCommandEvent& event)
 void
 MainFrame::OnMbToolsRuleEditorSelect(wxCommandEvent& event)
 {
-	wxGetApp().setRuleEditorVisability(event.IsChecked());
+	wxCommandEvent  showEvent(anEVT_RULEEDITOR_SHOW);
+	showEvent.SetInt(event.IsChecked());
+	wxGetApp().sendEvent(showEvent);
 }
 
 void
 MainFrame::OnMbToolsLogViewerSelect(wxCommandEvent& event)
 {
-	wxGetApp().setLogViewerVisability(event.IsChecked());
+	wxCommandEvent  showEvent(anEVT_LOGVIEWER_SHOW);
+	showEvent.SetInt(event.IsChecked());
+	wxGetApp().sendEvent(showEvent);
 }
 
 void
