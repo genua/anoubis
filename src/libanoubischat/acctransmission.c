@@ -49,7 +49,9 @@ acc_sendmsg(struct achat_channel *acc, const char *msg, size_t size)
 	ACC_CHKPARAM(0 < size && size <= ACHAT_MAX_MSGSIZE);
 	ACC_CHKSTATE(acc, ACC_STATE_ESTABLISHED);
 
-	acc_bufferinit(&pkgbuffer);
+	rc = acc_bufferinit(&pkgbuffer);
+	if (rc != ACHAT_RC_OK)
+		return (rc);		/* XXX HJH close? */
 	pkgsizenet = htonl(sizeof(pkgsizenet) + size);
 
 	rc = acc_bufferappend(&pkgbuffer, (const void *)&pkgsizenet,
@@ -91,7 +93,11 @@ acc_receivemsg(struct achat_channel *acc, char *msg, size_t *size)
 	ACC_CHKPARAM(0 < *size && *size <=  ACHAT_MAX_MSGSIZE);
 	ACC_CHKSTATE(acc, ACC_STATE_ESTABLISHED);
 
-	acc_bufferinit(&pkgbuffer);
+	rc = acc_bufferinit(&pkgbuffer);
+	if (rc != ACHAT_RC_OK) {
+		return rc;
+	}
+
 	acc->state = ACC_STATE_TRANSFERING;
 
 	len = sizeof(pkgsizenet);
@@ -122,7 +128,7 @@ acc_receivemsg(struct achat_channel *acc, char *msg, size_t *size)
 		goto out;
 	}
 
-	acc_bufferappend_space(&pkgbuffer, len);
+	(void)acc_bufferappend_space(&pkgbuffer, len);
 	receiveptr = acc_bufferptr(&pkgbuffer);
 
 	rc = acc_io(acc, read, receiveptr, &len);

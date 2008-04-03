@@ -156,7 +156,7 @@ restart:
 
 	buffer->alloc = newlen;
 	goto restart;
-	/* NOTREACHED */
+	/*NOTREACHED*/
 }
 
 /* Returns the number of bytes of data in the buffer. */

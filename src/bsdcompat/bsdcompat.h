@@ -49,13 +49,14 @@
 extern void __chk_fail (void) __attribute__ ((__noreturn__));
 
 #ifndef HAVE_STRLCPY
-extern size_t __strlcpy_nrm(char *dest, const char *src, size_t len);
+extern size_t /*@alt void@*/ __strlcpy_nrm(char *dest, const char *src,
+    size_t len);
 
 #if __USE_FORTIFY_LEVEL > 0 && !defined __cplusplus
 
 #define strlcpy(dest, src, len) __strlcpy_chk (dest, src, len)
-static __always_inline __unused size_t __strlcpy_chk(char *dest,
-    const char *src, size_t len) {
+static __always_inline __unused size_t /*@alt void@*/ __strlcpy_chk(
+    char *dest, const char *src, size_t len) {
 	if (__bos(dest) != (size_t) -1 && __bos(dest)  < len ) {
 		__chk_fail();
 	}

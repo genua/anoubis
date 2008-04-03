@@ -95,8 +95,8 @@ __BEGIN_DECLS
 
 /* Subsystem Setup */
 struct achat_channel *acc_create(void);
-achat_rc acc_destroy(struct achat_channel *);
-achat_rc acc_clear(struct achat_channel *);
+achat_rc /*@alt void@*/ acc_destroy(struct achat_channel *);
+achat_rc /*@alt void@*/ acc_clear(struct achat_channel *);
 achat_rc acc_settail(struct achat_channel *, enum acc_tail);
 achat_rc acc_setsslmode(struct achat_channel *, enum acc_sslmode);
 achat_rc acc_setaddr(struct achat_channel *, struct sockaddr_storage *);
@@ -105,7 +105,7 @@ achat_rc acc_setaddr(struct achat_channel *, struct sockaddr_storage *);
 achat_rc acc_prepare(struct achat_channel *);
 achat_rc acc_open(struct achat_channel *);
 struct achat_channel *acc_opendup(struct achat_channel *);
-achat_rc acc_close(struct achat_channel *);
+achat_rc /*@alt void@*/ acc_close(struct achat_channel *);
 achat_rc acc_getpeerids(struct achat_channel *);
 
 /* Subsystem Transmission */

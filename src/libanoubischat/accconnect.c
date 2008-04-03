@@ -98,9 +98,7 @@ acc_prepare(struct achat_channel *acc)
 		break;
 	}
 
-	acc_statetransit(acc, ACC_STATE_NOTCONNECTED);
-
-	return (ACHAT_RC_OK);
+	return acc_statetransit(acc, ACC_STATE_NOTCONNECTED);
 }
 
 achat_rc
@@ -143,9 +141,7 @@ acc_open(struct achat_channel *acc)
 		return (ACHAT_RC_ERROR);
 	}
 
-	acc_statetransit(acc, ACC_STATE_ESTABLISHED);
-
-	return (ACHAT_RC_OK);
+	return acc_statetransit(acc, ACC_STATE_ESTABLISHED);
 }
 
 struct achat_channel *
@@ -188,9 +184,7 @@ acc_close(struct achat_channel *acc)
 	if ((acc->addr.ss_family == AF_UNIX) && (acc->tail == ACC_TAIL_SERVER))
 		unlink(((struct sockaddr_un*)&(acc->addr))->sun_path);
 
-	acc_statetransit(acc, ACC_STATE_CLOSED);
-
-	return (ACHAT_RC_OK);
+	return acc_statetransit(acc, ACC_STATE_CLOSED);
 }
 
 achat_rc

@@ -72,7 +72,6 @@ common_splint_FLAGS = \
 	-duplicatequals \
 	-fixedformalarray \
 	-fullinitblock \
-	-retvalother \
 	-type \
 	-warnposix
 

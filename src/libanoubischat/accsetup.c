@@ -87,9 +87,7 @@ acc_settail(struct achat_channel *acc, enum acc_tail newtail)
 	ACC_CHKSTATE(acc, ACC_STATE_NONE);
 
 	acc->tail = newtail;
-	acc_statetransit(acc, ACC_STATE_INITIALISED);
-
-	return (ACHAT_RC_OK);
+	return acc_statetransit(acc, ACC_STATE_INITIALISED);
 }
 
 achat_rc
@@ -104,9 +102,7 @@ acc_setsslmode(struct achat_channel *acc, enum acc_sslmode newsslmode)
 		return (ACHAT_RC_NYI);
 
 	acc->sslmode = newsslmode;
-	acc_statetransit(acc, ACC_STATE_INITIALISED);
-
-	return (ACHAT_RC_OK);
+	return acc_statetransit(acc, ACC_STATE_INITIALISED);
 }
 
 achat_rc
@@ -118,7 +114,5 @@ acc_setaddr(struct achat_channel *acc, struct sockaddr_storage *newsa)
 
 	bzero(&acc->addr, sizeof(acc->addr));
 	bcopy(newsa, &acc->addr, sizeof(acc->addr));
-	acc_statetransit(acc, ACC_STATE_INITIALISED);
-
-	return (ACHAT_RC_OK);
+	return acc_statetransit(acc, ACC_STATE_INITIALISED);
 }

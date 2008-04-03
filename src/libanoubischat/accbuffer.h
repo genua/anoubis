@@ -35,8 +35,8 @@ typedef struct achat_buffer achat_buffer;
 
 __BEGIN_DECLS
 achat_rc acc_bufferinit(achat_buffer *);
-achat_rc acc_bufferclear(achat_buffer *);
-achat_rc acc_bufferfree(achat_buffer *);
+achat_rc /*@alt void@*/ acc_bufferclear(achat_buffer *);
+achat_rc /*@alt void@*/ acc_bufferfree(achat_buffer *);
 
 size_t	 acc_bufferlen(achat_buffer *);
 void	*acc_bufferptr(achat_buffer *);
