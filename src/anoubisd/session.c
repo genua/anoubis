@@ -130,6 +130,7 @@ static Queue headq;
 static void
 session_sighandler(int sig, short event, void *arg)
 {
+	DEBUG(DBG_TRACE, ">session_sighandler");
 	switch (sig) {
 	case SIGTERM:
 	case SIGINT:
@@ -147,9 +148,12 @@ session_connect(int fd, short event, void *arg)
 	struct sessionGroup	*seg = info->seg;
 	static int		 sessionid = 0;
 
+	DEBUG(DBG_TRACE, ">session_connect");
+
 	session = (struct session *)calloc(1, sizeof(struct session));
 	if (session == NULL) {
 		log_warn("session_connect: calloc");
+		DEBUG(DBG_TRACE, "<session_connect (calloc)");
 		return;
 	}
 
@@ -160,6 +164,7 @@ session_connect(int fd, short event, void *arg)
 	if (session->channel == NULL) {
 		log_warn("session_connect: acc_opendup");
 		free((void *)session);
+		DEBUG(DBG_TRACE, "<session_connect (opendup)");
 		return;
 	}
 	session->proto = anoubis_server_create(session->channel, info->policy);
@@ -168,11 +173,13 @@ session_connect(int fd, short event, void *arg)
 		acc_close(session->channel);
 		acc_destroy(session->channel);
 		free(session);
+		DEBUG(DBG_TRACE, "<session_connect (create)");
 		return;
 	}
 	if (anoubis_server_start(session->proto) < 0) {
 		log_warn("Failed to send initial hello");
 		session_destroy(session);
+		DEBUG(DBG_TRACE, "<session_connect (start)");
 		return;
 	}
 
@@ -181,6 +188,8 @@ session_connect(int fd, short event, void *arg)
 	event_add(&(session->ev_data), NULL);
 
 	LIST_INSERT_HEAD(&(seg->sessionList), session, nextSession);
+
+	DEBUG(DBG_TRACE, "<session_connect");
 }
 
 static void
@@ -191,6 +200,8 @@ session_rxclient(int fd, short event, void *arg)
 	achat_rc	 rc;
 	size_t		 size;
 
+	DEBUG(DBG_TRACE, ">session_rxclient");
+
 	session = (struct session *)arg;
 	m = anoubis_msg_new(1000 /* XXX ?? */);
 	if(!m)
@@ -200,6 +211,7 @@ session_rxclient(int fd, short event, void *arg)
 	if (rc == ACHAT_RC_EOF) {
 		anoubis_msg_free(m);
 		session_destroy(session);
+		DEBUG(DBG_TRACE, "<session_rxclient (recievemsg)");
 		return;
 	}
 	if (rc != ACHAT_RC_OK)
@@ -216,12 +228,16 @@ session_rxclient(int fd, short event, void *arg)
 	anoubis_msg_free(m);
 	if (anoubis_server_eof(session->proto))
 		session_destroy(session);
+	DEBUG(DBG_TRACE, "<session_rxclient");
 	return;
+
 err:
 	if (m)
 		anoubis_msg_free(m);
 	session_destroy(session);
 	log_warn("session_rxclient: error reading client message");
+
+	DEBUG(DBG_TRACE, "<session_rxclient (error)");
 }
 
 pid_t

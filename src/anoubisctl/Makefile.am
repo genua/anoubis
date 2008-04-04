@@ -30,19 +30,28 @@ if STATIC_LINKING
 STATIC = -static
 endif
 
-libapndir	= src/libapn
-libapn		= $(top_builddir)/$(libapndir)/libapn.a
-bsdcompatdir	= src/bsdcompat
-libbsdcompat	= $(top_builddir)/$(bsdcompatdir)/libbsdcompat.a
+bsdcompatdir		= src/bsdcompat
+libapndir		= src/libapn
+libanoubischatdir	= src/libanoubischat
+libanoubisprotocoldir	= src/libanoubisprotocol
+
+libapn	       = $(top_builddir)/$(libapndir)/libapn.a
+libbsdcompat   = $(top_builddir)/$(bsdcompatdir)/libbsdcompat.a
+libanoubischat = $(top_builddir)/$(libanoubischatdir)/libanoubischat.a
+libanoubispc   = $(top_builddir)/$(libanoubisprotocoldir)/libanoubispc.a
 
 INCLUDES = \
-	-I$(top_builddir)/src \
-	-I$(top_srcdir)/include \
-	-I$(top_srcdir)/$(libapndir)
+	-I$(top_builddir)/src                        \
+	-I$(top_srcdir)/include                      \
+	-I$(top_srcdir)/$(libapndir)                 \
+	-I$(top_srcdir)/$(libanoubischatdir)            \
+	-I$(top_srcdir)/$(libanoubisprotocoldir)/client \
+	-I$(top_srcdir)/$(libanoubisprotocoldir)
 
-anoubisctl_LDADD = $(libapn)
 
-anoubisctl_DEPENDENCIES = $(libapn)
+anoubisctl_DEPENDENCIES = $(libapn) $(libanoubispc) $(libanoubischat)
+
+anoubisctl_LDADD = $(anoubisctl_DEPENDENCIES)
 
 anoubisctl_LDFLAGS= $(AM_LDFLAGS) $(STATIC)
 

@@ -28,7 +28,8 @@
 #include "config.h"
 
 #include <sys/param.h>
-#include <sys/queue.h>
+#include <sys/types.h>
+#include <sys/un.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
 
@@ -43,17 +44,26 @@
 #include <string.h>
 #include <unistd.h>
 
+#include <anoubis_protocol.h>
+#include <anoubis_errno.h>
+#include <anoubis_client.h>
+#include <anoubis_msg.h>
+#include <anoubis_transaction.h>
+
+#include <anoubischat.h>
+
 #include "anoubisctl.h"
 #include "apn.h"
-
 
 void		usage(void) __dead;
 static int	daemon_start(void);
 static int	daemon_stop(void);
-static int	daemon_restart(void);
 static int	daemon_status(void);
+static int	daemon_reload(void);
 static int	load(char *);
 static int	dump(char *);
+static int	create_channel(void);
+static void	destroy_channel(void);
 
 typedef int (*func_void_t)(void);
 typedef int (*func_char_t)(char *);
@@ -65,13 +75,20 @@ struct cmd {
 } commands[] = {
 	{ "start",   daemon_start,   0 },
 	{ "stop",    daemon_stop,    0 },
-	{ "restart", daemon_restart, 0 },
 	{ "status",  daemon_status,  0 },
+	{ "reload",  daemon_reload,  0 },
 	{ "load",    (func_void_t)load, 1 },
 	{ "dump",    (func_void_t)dump, 1 },
 };
 
+static char    *anoubis_socket = "/var/run/anoubisd.sock";
+
 static int	opts = 0;
+
+
+static struct achat_channel	*channel;
+struct anoubis_client		*client;
+
 
 __dead void
 usage(void)
@@ -91,6 +108,16 @@ usage(void)
 	}
 	exit(1);
 }
+
+/*
+ * Return values:
+ *  0 - success
+ *  1 - rules parse error
+ *  2 - start/stop error
+ *  3 - error in getting rules
+ *  4 - options parse error
+ *  5 - communication error
+ */
 
 int
 main(int argc, char *argv[])
@@ -145,7 +172,7 @@ main(int argc, char *argv[])
 
 				if (rulesopt == NULL) {
 					fprintf(stderr, "no rules file\n");
-					error = 1;
+					error = 4;
 				} else {
 					error = ((func_char_t)commands[i].func)(
 					    rulesopt);
@@ -156,7 +183,7 @@ main(int argc, char *argv[])
 
 				if (rulesopt != NULL) {
 					fprintf(stderr, "too many arguments\n");
-					error = 1;
+					error = 4;
 				} else {
 					error = commands[i].func();
 					done = 1;
@@ -173,8 +200,14 @@ main(int argc, char *argv[])
 static int
 daemon_start(void)
 {
+	int	err;
 	int	error = 0;
-	printf("start\n");
+
+	if ((err = system("/sbin/anoubisd"))) {
+		perror("system(\"/sbin/anoubisd\")");
+		error = 2;
+	}
+
 	return error;
 }
 
@@ -182,15 +215,10 @@ static int
 daemon_stop(void)
 {
 	int	error = 0;
-	printf("stop\n");
-	return error;
-}
 
-static int
-daemon_restart(void)
-{
-	int	error = 0;
-	printf("restart\n");
+	error = create_channel();
+
+
 	return error;
 }
 
@@ -198,15 +226,37 @@ static int
 daemon_status(void)
 {
 	int	error = 0;
-	printf("status\n");
+
+	error = create_channel();
+	if (error == 0)
+		printf("anoubisd is running\n");
+	else
+		printf("anoubisd is not running\n");
+	destroy_channel();
 	return error;
 }
+
+static int
+daemon_reload(void)
+{
+	int	error = 0;
+
+	error = create_channel();
+
+
+	return error;
+}
+
 
 static int
 dump(char *file)
 {
 	int	error = 0;
+
 	printf("dump %s\n", file);
+
+	/* error = 3 */
+
 	return error;
 }
 
@@ -228,9 +278,119 @@ load(char *rulesopt)
 			apn_print_errors(ruleset);
 		}
 	}
+	return error;
+}
 
-	if (ruleset)
-		apn_free_ruleset(ruleset);
+
+static int
+create_channel(void)
+{
+	achat_rc		rc;
+	struct sockaddr_storage ss;
+	struct sockaddr_un     *ss_sun = (struct sockaddr_un *)&ss;
+	int			error = 0;
+
+	if (opts & ANOUBISCTL_OPT_VERBOSE) fprintf(stderr, ">create_channel\n");
+
+	if (opts & ANOUBISCTL_OPT_VERBOSE2) fprintf(stderr, "acc_create\n");
+	if ((channel = acc_create()) == NULL) {
+		fprintf(stderr, "cannot create client channel\n");
+		error = 5;
+		goto err;
+	}
+	if (opts & ANOUBISCTL_OPT_VERBOSE2) fprintf(stderr, "acc_settail\n");
+	if ((rc = acc_settail(channel, ACC_TAIL_CLIENT)) != ACHAT_RC_OK) {
+		acc_destroy(channel);
+		channel = NULL;
+		fprintf(stderr, "client settail failed\n");
+		error = 5;
+		goto err;
+	}
+	if (opts & ANOUBISCTL_OPT_VERBOSE2) fprintf(stderr, "acc_setsslmode\n");
+	if ((rc = acc_setsslmode(channel, ACC_SSLMODE_CLEAR)) != ACHAT_RC_OK) {
+		acc_destroy(channel);
+		channel = NULL;
+		fprintf(stderr, "client setsslmode failed\n");
+		error = 5;
+		goto err;
+	}
+
+	bzero(&ss, sizeof(ss));
+        ss_sun->sun_family = AF_UNIX;
+#ifdef LINUX
+        strncpy(ss_sun->sun_path, anoubis_socket,
+            sizeof(ss_sun->sun_path) - 1 );
+#endif
+#ifdef OPENBSD
+        strlcpy(ss_sun->sun_path, anoubis_socket,
+            sizeof(ss_sun->sun_path));
+#endif
+	if (opts & ANOUBISCTL_OPT_VERBOSE2) fprintf(stderr, "acc_setaddr\n");
+        rc = acc_setaddr(channel, &ss);
+        if (rc != ACHAT_RC_OK) {
+                acc_destroy(channel);
+		channel = NULL;
+		fprintf(stderr, "client setaddr failed\n");
+		error = 5;
+		goto err;
+        }
+
+	if (opts & ANOUBISCTL_OPT_VERBOSE2) fprintf(stderr, "acc_prepare\n");
+        rc = acc_prepare(channel);
+        if (rc != ACHAT_RC_OK) {
+                acc_destroy(channel);
+		channel = NULL;
+		fprintf(stderr, "client prepare failed\n");
+		error = 5;
+		goto err;
+        }
+
+	if (opts & ANOUBISCTL_OPT_VERBOSE2) fprintf(stderr, "acc_open\n");
+        rc = acc_open(channel);
+        if (rc != ACHAT_RC_OK) {
+                acc_destroy(channel);
+		channel = NULL;
+		fprintf(stderr, "client open failed\n");
+		error = 5;
+		goto err;
+        }
+
+	if (opts & ANOUBISCTL_OPT_VERBOSE2)
+		fprintf(stderr, "anoubis_client_create\n");
+	client = anoubis_client_create(channel);
+	if (client == NULL) {
+                acc_destroy(channel);
+		channel = NULL;
+		fprintf(stderr, "anoubis_client_create failed\n");
+		error = 5;
+		goto err;
+	}
+
+	if (opts & ANOUBISCTL_OPT_VERBOSE2)
+		fprintf(stderr, "anoubis_client_connect\n");
+	if ((error = anoubis_client_connect(client, ANOUBIS_PROTO_BOTH))) {
+		anoubis_client_destroy(client);
+		client = NULL;
+                acc_destroy(channel);
+		channel = NULL;
+		perror("anoubis_client_connect");
+		error = 5;
+		goto err;
+	}
+
+err:
+	if (opts & ANOUBISCTL_OPT_VERBOSE) fprintf(stderr, "<create_channel\n");
 
 	return error;
+}
+
+static void
+destroy_channel(void)
+{
+	if (client) {
+		anoubis_client_close(client);
+		anoubis_client_destroy(client);
+	}
+	if (channel)
+		acc_destroy(channel);
 }

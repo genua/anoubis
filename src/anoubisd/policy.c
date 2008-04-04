@@ -222,7 +222,7 @@ dispatch_timer(int sig, short event, void *arg)
 
 	if ((msg_wait = queue_peek(&replyq)) == NULL) {
 		event_add(ev_info->ev_timer, ev_info->tv);
-		DEBUG(DBG_TRACE, "<dispatch_timer (no msg)");
+		DEBUG(DBG_TRACE, "<dispatch_timer");
 		return;
 	}
 

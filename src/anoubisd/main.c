@@ -92,6 +92,7 @@ struct event_info_main {
 	int anoubisfd;
 };
 
+static char *pid_file_name = "/var/run/anoubisd.pid";
 
 __dead static void
 usage(void)
@@ -113,6 +114,7 @@ sighandler(int sig, short event, void *arg)
 	int	die = 0;
 
 	DEBUG(DBG_TRACE, ">sighandler: %d", sig);
+
 	switch (sig) {
 	case SIGTERM:
 	case SIGINT:
@@ -136,15 +138,65 @@ sighandler(int sig, short event, void *arg)
 		reconfigure();
 		break;
 	}
+
 	DEBUG(DBG_TRACE, "<sighandler: %d", sig);
+}
+
+static int
+check_pid(void)
+{
+	FILE *fp;
+	pid_t pid;
+	int scans;
+
+	fp = fopen(pid_file_name, "r");
+	if (fp == NULL)
+		return 0;
+	scans = fscanf(fp, "%d", &pid);
+	fclose(fp);
+	if (scans != 1)
+		return 0;
+
+	if (pid <= 1)
+		return 0;
+
+	if (kill(pid, 0) == 0)
+		return 1;
+
+	return 0;
+}
+
+static void
+save_pid(pid_t pid)
+{
+	FILE *fp;
+	int error = 0;
+
+	fp = fopen(pid_file_name, "w");
+	if (fp == NULL) {
+		perror(pid_file_name);
+		error = 1;
+	}
+	fprintf(fp, "%d\n", pid);
+	if (fclose(fp)) {
+		perror(pid_file_name);
+		error = 1;
+	}
+	if (error)
+		fatal("cannot write pid file");
 }
 
 static void
 dispatch_timer(int sig, short event, void * arg)
 {
 	struct event_info_main	*ev_info = arg;
+
+	DEBUG(DBG_TRACE, ">dispatch_timer");
+
 	ioctl(ev_info->anoubisfd, ANOUBIS_REQUEST_STATS, 0);
 	event_add(ev_info->ev_timer, ev_info->tv);
+
+	DEBUG(DBG_TRACE, "<dispatch_timer");
 }
 
 int
@@ -230,6 +282,11 @@ main(int argc, char *argv[])
 	if (getpwnam(ANOUBISD_USER) == NULL)
 		errx(1, "unkown user %s", ANOUBISD_USER);
 
+	if (check_pid()) {
+		fprintf(stderr, "anoubisd is already running\n");
+		fatal("anoubisd is already running");
+	}
+
 	if (debug_stderr == 0)
 		if (daemon(1, 0) !=0)
 			fatal("daemon");
@@ -238,6 +295,7 @@ main(int argc, char *argv[])
 	DEBUG(DBG_TRACE, "debug=%x", debug_flags);
 	master_pid = getpid();
 	DEBUG(DBG_TRACE, "master_pid=%d", master_pid);
+	save_pid(master_pid);
 
 	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, pipe_m2s) == -1)
 		fatal("socketpair");
@@ -411,6 +469,8 @@ main_cleanup(void)
 	    errno != EINTR && errno != ECHILD)
 		fatal("wait");
 	} while (pid != -1 || (pid == -1 && errno == EINTR));
+
+	unlink(pid_file_name);
 }
 
 __dead static void
@@ -424,6 +484,7 @@ __dead void
 master_terminate(int error)
 {
 	DEBUG(DBG_TRACE, ">master_terminate");
+
 	if (master_pid) {
 		if (getpid() == master_pid)
 			main_shutdown(error);
@@ -439,6 +500,8 @@ check_child(pid_t pid, const char *pname)
 {
 	int	status;
 
+	DEBUG(DBG_TRACE, ">check_child");
+
 	if (waitpid(pid, &status, WNOHANG) > 0) {
 		if (WIFEXITED(status)) {
 			log_warnx("Lost child: %s exited", pname);
@@ -450,6 +513,8 @@ check_child(pid_t pid, const char *pname)
 			return (1);
 		}
 	}
+
+	DEBUG(DBG_TRACE, "<check_child");
 
 	return (0);
 }
@@ -528,8 +593,9 @@ dispatch_s2m(int fd, short event, void *arg)
 {
 	anoubisd_msg_t *msg;
 
+	DEBUG(DBG_TRACE, ">dispatch_s2m");
+
 	for (;;) {
-		DEBUG(DBG_TRACE, ">dispatch_s2m");
 
 		if ((msg = get_msg(fd)) == NULL) {
 			DEBUG(DBG_TRACE, "<dispatch_s2m");
@@ -646,10 +712,10 @@ dispatch_dev2m(int fd, short event, void *arg)
 			DEBUG(DBG_TRACE, "<dispatch_dev2m");
 			return;
 		}
-		DEBUG(DBG_QUEUE, " >dev2m: %x",
-		    ((struct eventdev_hdr *)msg->msg)->msg_token);
-
 		hdr = (struct eventdev_hdr *)msg->msg;
+
+		DEBUG(DBG_QUEUE, " >dev2m: %x %c", hdr->msg_token,
+		    (hdr->msg_flags & EVENTDEV_NEED_REPLY)  ? 'R' : 'N');
 
 		/* we shortcut and ack events for our own children */
 		if ((hdr->msg_flags & EVENTDEV_NEED_REPLY) &&
@@ -684,16 +750,14 @@ dispatch_dev2m(int fd, short event, void *arg)
 
 			/* Send event to policy process for handling. */
 			enqueue(&eventq_m2p, msg);
-			DEBUG(DBG_QUEUE, " >eventq_m2p: %x",
-			    ((struct eventdev_hdr *)msg->msg)->msg_token);
+			DEBUG(DBG_QUEUE, " >eventq_m2p: %x", hdr->msg_token);
 			event_add(ev_info->ev_m2p, NULL);
 
 		} else {
 
 			/* Send event to session process for notifications. */
 			enqueue(&eventq_m2s, msg);
-			DEBUG(DBG_QUEUE, " >eventq_m2s: %x",
-			    ((struct eventdev_hdr *)msg->msg)->msg_token);
+			DEBUG(DBG_QUEUE, " >eventq_m2s: %x", hdr->msg_token);
 			event_add(ev_info->ev_m2s, NULL);
 		}
 
