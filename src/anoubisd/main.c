@@ -92,7 +92,7 @@ struct event_info_main {
 	int anoubisfd;
 };
 
-static char *pid_file_name = "/var/run/anoubisd.pid";
+static char *pid_file_name = ANOUBISD_PIDFILENAME;
 
 __dead static void
 usage(void)
@@ -174,12 +174,12 @@ save_pid(pid_t pid)
 
 	fp = fopen(pid_file_name, "w");
 	if (fp == NULL) {
-		perror(pid_file_name);
+		log_warn(pid_file_name);
 		error = 1;
 	}
 	fprintf(fp, "%d\n", pid);
 	if (fclose(fp)) {
-		perror(pid_file_name);
+		log_warn(pid_file_name);
 		error = 1;
 	}
 	if (error)
@@ -221,7 +221,6 @@ main(int argc, char *argv[])
 	sanitise_stdfd();
 
 	anoubisd_process = PROC_MAIN;
-	log_init();
 
 	bzero(&conf, sizeof(conf));
 
@@ -282,10 +281,10 @@ main(int argc, char *argv[])
 	if (getpwnam(ANOUBISD_USER) == NULL)
 		errx(1, "unkown user %s", ANOUBISD_USER);
 
-	if (check_pid()) {
-		fprintf(stderr, "anoubisd is already running\n");
-		fatal("anoubisd is already running");
-	}
+	if (check_pid())
+		errx(1, "anoubisd is already running");
+
+	log_init();
 
 	if (debug_stderr == 0)
 		if (daemon(1, 0) !=0)

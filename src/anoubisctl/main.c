@@ -43,6 +43,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#ifdef LINUX
+#include <bsdcompat.h>
+#endif
 
 #include <anoubis_protocol.h>
 #include <anoubis_errno.h>
@@ -100,10 +103,10 @@ usage(void)
 	fprintf(stderr, "    <command>:\n");
 	for (i=0; i < sizeof(commands)/sizeof(struct cmd); i++) {
 		if (commands[i].file)
-			fprintf(stderr, "        %s <file>\n",
+			fprintf(stderr, "	%s <file>\n",
 				commands[i].command);
 		else
-			fprintf(stderr, "        %s\n", commands[i].command);
+			fprintf(stderr, "	%s\n", commands[i].command);
 
 	}
 	exit(1);
@@ -290,15 +293,18 @@ create_channel(void)
 	struct sockaddr_un     *ss_sun = (struct sockaddr_un *)&ss;
 	int			error = 0;
 
-	if (opts & ANOUBISCTL_OPT_VERBOSE) fprintf(stderr, ">create_channel\n");
+	if (opts & ANOUBISCTL_OPT_VERBOSE)
+		fprintf(stderr, ">create_channel\n");
 
-	if (opts & ANOUBISCTL_OPT_VERBOSE2) fprintf(stderr, "acc_create\n");
+	if (opts & ANOUBISCTL_OPT_VERBOSE2)
+		fprintf(stderr, "acc_create\n");
 	if ((channel = acc_create()) == NULL) {
 		fprintf(stderr, "cannot create client channel\n");
 		error = 5;
 		goto err;
 	}
-	if (opts & ANOUBISCTL_OPT_VERBOSE2) fprintf(stderr, "acc_settail\n");
+	if (opts & ANOUBISCTL_OPT_VERBOSE2)
+		fprintf(stderr, "acc_settail\n");
 	if ((rc = acc_settail(channel, ACC_TAIL_CLIENT)) != ACHAT_RC_OK) {
 		acc_destroy(channel);
 		channel = NULL;
@@ -306,7 +312,8 @@ create_channel(void)
 		error = 5;
 		goto err;
 	}
-	if (opts & ANOUBISCTL_OPT_VERBOSE2) fprintf(stderr, "acc_setsslmode\n");
+	if (opts & ANOUBISCTL_OPT_VERBOSE2)
+		fprintf(stderr, "acc_setsslmode\n");
 	if ((rc = acc_setsslmode(channel, ACC_SSLMODE_CLEAR)) != ACHAT_RC_OK) {
 		acc_destroy(channel);
 		channel = NULL;
@@ -316,50 +323,49 @@ create_channel(void)
 	}
 
 	bzero(&ss, sizeof(ss));
-        ss_sun->sun_family = AF_UNIX;
-#ifdef LINUX
-        strncpy(ss_sun->sun_path, anoubis_socket,
-            sizeof(ss_sun->sun_path) - 1 );
-#endif
-#ifdef OPENBSD
-        strlcpy(ss_sun->sun_path, anoubis_socket,
-            sizeof(ss_sun->sun_path));
-#endif
-	if (opts & ANOUBISCTL_OPT_VERBOSE2) fprintf(stderr, "acc_setaddr\n");
-        rc = acc_setaddr(channel, &ss);
-        if (rc != ACHAT_RC_OK) {
-                acc_destroy(channel);
+	ss_sun->sun_family = AF_UNIX;
+
+	strlcpy(ss_sun->sun_path, anoubis_socket,
+	    sizeof(ss_sun->sun_path));
+
+	if (opts & ANOUBISCTL_OPT_VERBOSE2)
+		fprintf(stderr, "acc_setaddr\n");
+	rc = acc_setaddr(channel, &ss);
+	if (rc != ACHAT_RC_OK) {
+		acc_destroy(channel);
 		channel = NULL;
 		fprintf(stderr, "client setaddr failed\n");
 		error = 5;
 		goto err;
-        }
+	}
 
-	if (opts & ANOUBISCTL_OPT_VERBOSE2) fprintf(stderr, "acc_prepare\n");
-        rc = acc_prepare(channel);
-        if (rc != ACHAT_RC_OK) {
-                acc_destroy(channel);
+	if (opts & ANOUBISCTL_OPT_VERBOSE2)
+		fprintf(stderr, "acc_prepare\n");
+	rc = acc_prepare(channel);
+	if (rc != ACHAT_RC_OK) {
+		acc_destroy(channel);
 		channel = NULL;
 		fprintf(stderr, "client prepare failed\n");
 		error = 5;
 		goto err;
-        }
+	}
 
-	if (opts & ANOUBISCTL_OPT_VERBOSE2) fprintf(stderr, "acc_open\n");
-        rc = acc_open(channel);
-        if (rc != ACHAT_RC_OK) {
-                acc_destroy(channel);
+	if (opts & ANOUBISCTL_OPT_VERBOSE2)
+		fprintf(stderr, "acc_open\n");
+	rc = acc_open(channel);
+	if (rc != ACHAT_RC_OK) {
+		acc_destroy(channel);
 		channel = NULL;
 		fprintf(stderr, "client open failed\n");
 		error = 5;
 		goto err;
-        }
+	}
 
 	if (opts & ANOUBISCTL_OPT_VERBOSE2)
 		fprintf(stderr, "anoubis_client_create\n");
 	client = anoubis_client_create(channel);
 	if (client == NULL) {
-                acc_destroy(channel);
+		acc_destroy(channel);
 		channel = NULL;
 		fprintf(stderr, "anoubis_client_create failed\n");
 		error = 5;
@@ -371,7 +377,7 @@ create_channel(void)
 	if ((error = anoubis_client_connect(client, ANOUBIS_PROTO_BOTH))) {
 		anoubis_client_destroy(client);
 		client = NULL;
-                acc_destroy(channel);
+		acc_destroy(channel);
 		channel = NULL;
 		perror("anoubis_client_connect");
 		error = 5;
@@ -379,7 +385,8 @@ create_channel(void)
 	}
 
 err:
-	if (opts & ANOUBISCTL_OPT_VERBOSE) fprintf(stderr, "<create_channel\n");
+	if (opts & ANOUBISCTL_OPT_VERBOSE)
+		fprintf(stderr, "<create_channel\n");
 
 	return error;
 }

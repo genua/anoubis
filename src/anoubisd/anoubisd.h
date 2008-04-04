@@ -49,6 +49,7 @@
 #define ANOUBISD_USER			"_anoubisd"
 
 #define ANOUBISD_SOCKETNAME		"/var/run/anoubisd.sock"
+#define ANOUBISD_PIDFILENAME		"/var/run/anoubisd.pid"
 
 #ifdef LINUX
 #define __dead
