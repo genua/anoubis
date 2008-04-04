@@ -45,13 +45,19 @@
 MainFrame::MainFrame(wxWindow *parent) : MainFrameBase(parent)
 {
 	shortcuts_ = new AnShortcuts(this);
+	messageAlertCount_ = 0;
+	messageEscalationCount_ = 0;
+
 	Connect(anEVT_COM_REMOTESTATION,
 	    wxCommandEventHandler(MainFrame::OnRemoteStation), NULL, this);
 	Connect(anEVT_LOGVIEWER_SHOW,
 	    wxCommandEventHandler(MainFrame::onLogViewerShow), NULL, this);
 	Connect(anEVT_RULEEDITOR_SHOW,
 	    wxCommandEventHandler(MainFrame::onRuleEditorShow), NULL, this);
-
+	Connect(anEVT_OPEN_ALERTS,
+	    wxCommandEventHandler(MainFrame::OnOpenAlerts), NULL, this);
+	Connect(anEVT_OPEN_ESCALATIONS,
+	    wxCommandEventHandler(MainFrame::OnOpenEscalations), NULL, this);
 }
 
 MainFrame::~MainFrame()
@@ -133,6 +139,25 @@ MainFrame::setConnectionString(wxString host)
 }
 
 void
+MainFrame::setMessageString(void)
+{
+	wxString label;
+
+	label = wxT("Messages: ");
+	if (messageEscalationCount_ > 0) {
+		label += wxString::Format(wxT("%d\n"), messageEscalationCount_);
+	}
+	if (messageEscalationCount_ == 0 && messageAlertCount_ > 0) {
+		label += wxString::Format(wxT("%d\n"), messageAlertCount_);
+	} else {
+		label = wxT("No messages\n");
+	}
+
+	tx_messages->SetLabel(label);
+	Layout();
+}
+
+void
 MainFrame::OnTbModuleSelect(wxCommandEvent& event)
 {
 	int id;
@@ -155,6 +180,20 @@ MainFrame::OnRemoteStation(wxCommandEvent& event)
 {
 	setConnectionString(*(wxString *)(event.GetClientObject()));
 	event.Skip();
+}
+
+void
+MainFrame::OnOpenAlerts(wxCommandEvent& event)
+{
+	messageAlertCount_ = event.GetInt();
+	setMessageString();
+}
+
+void
+MainFrame::OnOpenEscalations(wxCommandEvent& event)
+{
+	messageEscalationCount_ = event.GetInt();
+	setMessageString();
 }
 
 void

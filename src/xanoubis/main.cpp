@@ -90,8 +90,6 @@ bool AnoubisGuiApp::OnInit()
 	modules_[SFS]      = new ModSfs(mainFrame);
 	modules_[ANOUBIS]  = new ModAnoubis(mainFrame);
 
-	trayIcon->SetMessageByHand(0);
-
 	mainFrame->Show();
 	SetTopWindow(mainFrame);
 	mainFrame->OnInit();
@@ -99,9 +97,11 @@ bool AnoubisGuiApp::OnInit()
 	((ModOverview*)modules_[OVERVIEW])->addModules(modules_);
 	mainFrame->addModules(modules_);
 
-	// XXX ST: The following should be considered as a hack to update the
-	//         state of Module ALF by calling the update()-method.
-	//         Eventually the actual call has to be triggered by an event.
+	/* XXX [ST]: BUG #424
+	 * The following should be considered as a hack to update the state of
+	 * Module ALF by calling the update()-method.
+	 * Eventually the actual call has to be triggered by an event.
+	 */
 	((ModAlf*)modules_[ALF])->update();
 	((ModSfs*)modules_[SFS])->update();
 	((ModAnoubis*)modules_[ANOUBIS])->update();
@@ -114,7 +114,13 @@ bool AnoubisGuiApp::OnInit()
 void
 AnoubisGuiApp::sendEvent(wxCommandEvent& event)
 {
-	wxPostEvent(mainFrame, event);
+	/* XXX [ST]: BUG #424
+	 * The following ``wxPostEvent'' is not needed therefore comment it out.
+	 * Nethertheless we have to cleanup and normalise the concept of
+	 * events within the GUI.
+	 *
+	 * wxPostEvent(mainFrame, event);
+	 */
 	wxPostEvent(logViewer_, event);
 	wxPostEvent(ruleEditor_, event);
 	//wxPostEvent(com, event);
@@ -192,7 +198,6 @@ AnoubisGuiApp::update(void)
 {
 	mainFrame->setDaemonConnection(comCtrl_->isConnected());
 	mainFrame->setConnectionString(comCtrl_->getRemoteStation());
-	updateTrayIcon();
 }
 
 wxIcon *
@@ -223,15 +228,4 @@ Module *
 AnoubisGuiApp::getModule(enum moduleIdx idx)
 {
 	return (modules_[idx]);
-}
-
-void
-AnoubisGuiApp::updateTrayIcon(void)
-{
-	unsigned int messageNo;
-	ModAnoubis *anoubisModule = (ModAnoubis *)modules_[ANOUBIS];
-
-	messageNo = anoubisModule->getListSize(NOTIFY_LIST_NOTANSWERED);
-	trayIcon->SetMessageByHand(messageNo);
-	trayIcon->SetConnectedDaemon(comCtrl_->getRemoteStation());
 }

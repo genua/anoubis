@@ -35,20 +35,28 @@
 TrayIcon::TrayIcon(void)
 {
 	iconNormal_    = wxGetApp().loadIcon(_T("ModAnoubis_black_48.png"));
-	iconMsgByHand_ = wxGetApp().loadIcon(_T("ModAnoubis_question_48.png"));
+	iconMsgProblem_ = wxGetApp().loadIcon(_T("ModAnoubis_alert_48.png"));
+	iconMsgQuestion_ =
+	    wxGetApp().loadIcon(_T("ModAnoubis_question_48.png"));
 
-	messageByHandNo_ = 0;
+	messageAlertCount_ = 0;
+	messageEscalationCount_ = 0;
 	daemon_ = wxT("none");
 
 	update();
 	Connect(anEVT_COM_REMOTESTATION,
 	    wxCommandEventHandler(TrayIcon::OnRemoteStation), NULL, this);
+	Connect(anEVT_OPEN_ALERTS,
+	    wxCommandEventHandler(TrayIcon::OnOpenAlerts), NULL, this);
+	Connect(anEVT_OPEN_ESCALATIONS,
+	    wxCommandEventHandler(TrayIcon::OnOpenEscalations), NULL, this);
 }
 
 TrayIcon::~TrayIcon(void)
 {
 	delete iconNormal_;
-	delete iconMsgByHand_;
+	delete iconMsgProblem_;
+	delete iconMsgQuestion_;
 }
 
 void
@@ -60,9 +68,16 @@ TrayIcon::OnRemoteStation(wxCommandEvent& event)
 }
 
 void
-TrayIcon::SetMessageByHand(unsigned int number)
+TrayIcon::OnOpenAlerts(wxCommandEvent& event)
 {
-	messageByHandNo_ = number;
+	messageAlertCount_ = event.GetInt();
+	update();
+}
+
+void
+TrayIcon::OnOpenEscalations(wxCommandEvent& event)
+{
+	messageEscalationCount_ = event.GetInt();
 	update();
 }
 
@@ -79,19 +94,29 @@ TrayIcon::update(void)
 	wxString tooltip;
 	wxIcon	*icon;
 
-	if (messageByHandNo_ > 0) {
-		tooltip = wxT("Messages: ");
-		tooltip += wxString::Format(wxT("%d\n"), messageByHandNo_);
-		icon = iconMsgByHand_;
+	tooltip = wxT("Messages: ");
+
+	if (messageEscalationCount_ > 0) {
+		tooltip += wxString::Format(wxT("%d\n"),
+		    messageEscalationCount_);
+		icon = iconMsgQuestion_;
+	}
+
+	if (messageEscalationCount_ == 0 && messageAlertCount_ > 0) {
+		tooltip += wxString::Format(wxT("%d\n"), messageAlertCount_);
+		icon = iconMsgProblem_;
 	} else {
 		tooltip = wxT("No messages\n");
 		icon = iconNormal_;
 	}
+
+	/* connection to daemon established */
 	if (!daemon_.Cmp(wxT("none"))) {
 		tooltip += wxT("not connected");
 	} else {
 		tooltip += wxT("connected with ");
 		tooltip += daemon_;
 	}
+
 	SetIcon(*icon, tooltip);
 }

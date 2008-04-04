@@ -32,6 +32,16 @@ DEFINE_LOCAL_EVENT_TYPE(anEVT_RULEEDITOR_SHOW)
 DEFINE_LOCAL_EVENT_TYPE(anEVT_COM_CONNECTION)
 
 /*
+ * The count of open ALERTS is stored in the events int field
+ */
+DEFINE_LOCAL_EVENT_TYPE(anEVT_OPEN_ALERTS)
+
+/*
+ * The count of open ESCALATIONS is stored in the events int field
+ */
+DEFINE_LOCAL_EVENT_TYPE(anEVT_OPEN_ESCALATIONS)
+
+/*
  * A connection to the daemon was sucessfully established.
  * The remote station is transmitted as client data.
  */

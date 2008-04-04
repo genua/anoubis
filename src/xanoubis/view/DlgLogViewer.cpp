@@ -98,7 +98,6 @@ DlgLogViewer::OnAddNotification(wxCommandEvent& event)
 	 * The notify was also received by ModAnoubis, which stores
 	 * and destroys it. Thus we must not delete it.
 	 */
-	event.Skip();
 }
 
 void

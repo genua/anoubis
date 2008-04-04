@@ -84,7 +84,6 @@ class AnoubisGuiApp : public wxApp
 		void	update(void);
 		wxIcon *loadIcon(wxString);
 		Module *getModule(enum moduleIdx);
-		void	updateTrayIcon(void);
 };
 
 DECLARE_APP(AnoubisGuiApp)

@@ -36,8 +36,11 @@ class TrayIcon : public wxTaskBarIcon
 	private:
 		wxString	 daemon_;
 		unsigned int	 messageByHandNo_;
+		unsigned int	 messageAlertCount_;
+		unsigned int	 messageEscalationCount_;
 		wxIcon		*iconNormal_;
-		wxIcon		*iconMsgByHand_;
+		wxIcon		*iconMsgProblem_;
+		wxIcon		*iconMsgQuestion_;
 
 		void		 update(void);
 
@@ -46,7 +49,8 @@ class TrayIcon : public wxTaskBarIcon
 		~TrayIcon(void);
 
 		void OnRemoteStation(wxCommandEvent&);
-		void SetMessageByHand(unsigned int);
+		void OnOpenAlerts(wxCommandEvent&);
+		void OnOpenEscalations(wxCommandEvent&);
 		void SetConnectedDaemon(wxString);
 };
 

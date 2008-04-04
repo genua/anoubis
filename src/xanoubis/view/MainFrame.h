@@ -45,6 +45,9 @@ class MainFrame : public MainFrameBase
 		 * receive key events; but a (this) panel can.
 		 */
 		AnShortcuts *shortcuts_;
+		unsigned int     messageAlertCount_;
+		unsigned int     messageEscalationCount_;
+		void setMessageString(void);
 
 		void onRuleEditorShow(wxCommandEvent&);
 		void onLogViewerShow(wxCommandEvent&);
@@ -61,6 +64,8 @@ class MainFrame : public MainFrameBase
 		void OnMbHelpHelpSelect(wxCommandEvent&);
 		void OnTbModuleSelect(wxCommandEvent&);
 		void OnRemoteStation(wxCommandEvent&);
+		void OnOpenAlerts(wxCommandEvent&);
+		void OnOpenEscalations(wxCommandEvent&);
 
 	public:
 		MainFrame(wxWindow*);

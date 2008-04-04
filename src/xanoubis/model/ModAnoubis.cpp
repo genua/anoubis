@@ -125,7 +125,6 @@ ModAnoubis::OnAddNotification(wxCommandEvent& event)
 
 	notify = (Notification *)(event.GetClientObject());
 	insertNotification(notify);
-
 	event.Skip();
 }
 
@@ -135,9 +134,15 @@ ModAnoubis::insertNotification(Notification *newNotify)
 	if (IS_ESCALATIONOBJ(newNotify)) {
 		notAnsweredList_.Append(newNotify);
 		allList_.Append(newNotify);
+		wxCommandEvent  showEvent(anEVT_OPEN_ESCALATIONS);
+		showEvent.SetInt(notAnsweredList_.GetCount());
+		wxGetApp().sendEvent(showEvent);
 	} else if (IS_ALERTOBJ(newNotify)) {
 		alertList_.Append(newNotify);
 		allList_.Append(newNotify);
+		wxCommandEvent  showEvent(anEVT_OPEN_ALERTS);
+		showEvent.SetInt(alertList_.GetCount());
+		wxGetApp().sendEvent(showEvent);
 	} else {
 		logList_.Append(newNotify);
 		/*

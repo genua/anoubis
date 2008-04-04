@@ -36,6 +36,16 @@ BEGIN_DECLARE_EVENT_TYPES()
 	DECLARE_LOCAL_EVENT_TYPE(anEVT_COM_CONNECTION, wxNewEventType())
 
 	/*
+	 * The count of open ALERTS is stored in the events int field
+	 */
+	DECLARE_LOCAL_EVENT_TYPE(anEVT_OPEN_ALERTS, wxNewEventType())
+
+	/*
+	 * The count of open ESCALATIONS is stored in the events int field
+	 */
+	DECLARE_LOCAL_EVENT_TYPE(anEVT_OPEN_ESCALATIONS, wxNewEventType())
+
+	/*
 	 * A connection to the daemon was sucessfully established.
 	 * The remote station is transmitted as client data.
 	 */
