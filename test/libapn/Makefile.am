@@ -1,5 +1,4 @@
-##########################################################################
-# Copyright (c) 2008 GeNUA mbH <info@genua.de>
+# Copyright (c) 2007 GeNUA mbH <info@genua.de>
 #
 # All rights reserved.
 #
@@ -23,16 +22,34 @@
 # LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-##########################################################################
+#
+
+TESTS = test_libapn
+
+noinst_PROGRAMS = test_libapn
+
+libapndir       = src/libapn
+bsdcompatdir    = src/bsdcompat
+libapn		= $(top_builddir)/$(libapndir)/libapn.so
+libbsdcompat    = $(top_builddir)/$(bsdcompatdir)/libbsdcompat.a
+
+test_libapn_CPPFLAGS = \
+	-I$(top_srcdir)/$(libapndir) \
+	-I$(top_srcdir)/$(bsdcompatdir) \
+	-I$(top_srcdir)/include \
+	@CHECK_CFLAGS@
+
+test_libapn_LDFLAGS = -L$(top_builddir)/$(libapndir) -dynamic
+test_libapn_LDADD = @CHECK_LIBS@ -lapn
+
+test_libapn_DEPENDENCIES = $(libapn)
 
 if NEEDBSDCOMPAT
-BSDCOMPAT=bsdcompat
+test_libapn_LDADD += $(libbsdcompat)
+test_libapn_DEPENDENCIES += $(libbsdcompat)
 endif
 
-SUBDIRS = libapn libanoubischat libanoubisprotocol anoubisd xanoubis \
-    $(BSDCOMPAT)
-
-# targets must exist, but need not to do anything
-flawfinder:
-lint:
-splint:
+test_libapn_SOURCES = \
+	libapn_testcase_errorcodes.c \
+	libapn_testsuite.c \
+	libapn_testrunner.c

@@ -111,6 +111,7 @@ AC_CONFIG_FILES([
 	test/xanoubis/Makefile
 	test/anoubisd/Makefile
 	test/bsdcompat/Makefile
+	test/libapn/Makefile
 	include/Makefile
 	include/linux/Makefile
 	include/dev/Makefile

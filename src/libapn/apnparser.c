@@ -86,6 +86,7 @@ int
 apn_parse(const char *filename, struct apn_ruleset **rsp, int flags)
 {
 	struct apn_ruleset	*rs;
+	int			 ret;
 
 	if ((rs = calloc(sizeof(struct apn_ruleset), 1)) == NULL)
 		return (-1);
@@ -96,7 +97,13 @@ apn_parse(const char *filename, struct apn_ruleset **rsp, int flags)
 	rs->flags = flags;
 	*rsp = rs;
 
-	return (parse_rules(filename, rs));
+	if ((ret = parse_rules(filename, rs)) != 0) {
+		apn_free_ruleq(&rs->alf_queue);
+		apn_free_ruleq(&rs->sfs_queue);
+		apn_free_varq(&rs->var_queue);
+	}
+
+	return (ret);
 }
 
 /*

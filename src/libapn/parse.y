@@ -1193,15 +1193,11 @@ parse_rules(const char *filename, struct apn_ruleset *apnrspx)
 	errors = file->errors;
 	popfile();
 
-	if (errors) {
-		/* XXX clean up rule sets */
-	}
-
 	fclose(file->stream);
 	free(file->name);
 	free(file);
 
-	return (errors ? -1 : 0);
+	return (errors ? 1 : 0);
 }
 
 /*
