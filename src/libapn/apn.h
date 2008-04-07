@@ -134,11 +134,13 @@ enum {
 
 struct apn_acaprule {
 	int			 action;
+	int			 log;
 	int			 capability;
 };
 
 struct apn_default {
 	int			action;
+	int			log;
 };
 
 struct apn_context {

@@ -549,9 +549,10 @@ port		: STRING			{
 		}
 		;
 
-alfcaprule	: action capability		{
+alfcaprule	: action log capability		{
 			$$.action = $1;
-			$$.capability = $2;
+			$$.log = $2;
+			$$.capability = $3;
 		}
 		;
 
@@ -696,8 +697,9 @@ ctxrule		: CONTEXT NEW apps		{
 		/*
 		 * Default rule
 		 */
-defaultrule	: DEFAULT defaultspec		{
-			$$.action = $2;
+defaultrule	: DEFAULT log defaultspec	{
+			$$.log = $2;
+			$$.action = $3;
 		}
 		;
 

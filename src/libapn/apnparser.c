@@ -310,6 +310,8 @@ apn_print_acaprule(struct apn_acaprule *rule)
 
 	if (apn_print_action(rule->action, 1) == 1)
 		return (1);
+	if (apn_print_log(rule->log) == 1)
+		return (1);
 
 	switch (rule->capability) {
 	case APN_ALF_CAPRAW:
@@ -338,6 +340,8 @@ apn_print_defaultrule(struct apn_default *rule)
 
 	printf("default ");
 
+	if (apn_print_log(rule->log) == 1)
+		return (1);
 	if (apn_print_action(rule->action, 0) == 1)
 		return (1);
 
