@@ -1,4 +1,4 @@
-.\"	$Id: 56550e,v 1.8 2008/03/26 11:54:19 fritsch Exp $
+.\"	$Id: 56550e,v 1.9 2008/04/08 11:53:29 fritsch Exp $
 .\"	$OpenBSD: mdoc.template,v 1.10 2007/05/31 22:10:19 jmc Exp $
 .\"
 .\" The following requests are required for all man pages.
@@ -12,8 +12,8 @@
 .Nd Anoubis daemon
 .Sh SYNOPSIS
 .Nm anoubisd
-.Op Fl d Ar flags
-.Op Fl nv
+.Op Fl D Ar flags
+.Op Fl dnv
 .Op Fl s Ar socket
 .Sh DESCRIPTION
 The
@@ -21,13 +21,31 @@ The
 is the backend daemon of the Anoubis Security Suite.
 .Pp
 The options are as follows:
-.Bl -tag -wdith Ds
-.It Fl d Ar flags
+.Bl -tag -width Ds
+.It Fl D Ar flags
 When the
-.Fl d
+.Fl D
 option is set,
 .Nm
-will turn on debug output to syslog. The flags values are:
+will turn on debug output to syslog. The
+.Ar flags
+values (or'ed together) are:
+.Pp
+0x01 - File descriptor handling
+.Pp
+0x02 - Message sending
+.Pp
+0x04 - Message receiving
+.Pp
+0x08 - Tracing
+.Pp
+0x10 - Queue handling
+.It Fl d
+Generate output to
+.Ar stderr
+instead of
+.Ar syslog
+.
 .It Fl n
 Config test mode.
 Only check the configuration file for validity.
@@ -36,23 +54,113 @@ will do nothing except parse the configuration file and terminate.
 .It Fl v
 Produce more verbose output.
 .It Fl s Ar socket
-Produce more verbose output.
+Use the
+.Ar socket
+for communication.
 .El
+.Pp
+.Nm
+starts and immediately becomes a daemon (unless the
+.Op Fl d
+flag is given).
+The
+.Em master
+process reads the configuration file (policy rules).
+It then creates two additional
+child processes.  The main process becomes the
+.Em master
+process.  The children are the
+.Em policy
+process and the
+.Em session
+process.
+.Pp
+The daemon processes implement a reliable queuing and messaging
+protocol and effectively function as a reliable message bus for
+the Anoubis architecture.
+.Pp
+The
+.Em master
+process handles all communication to and from the kernel. It passes
+notification messages directly to the
+.Em session
+process, which then makes them available to the GUI. The
+.Em master
+process passes Reply Request messages directly to the
+.Em policy
+process, where they are passed to the
+.Em policy engine .
+.Pp
+The
+.Em session
+process handles messages coming from the GUI destined for the
+.Em policy
+process and passes Requests requiring user interaction to the
+GUI(s).
+.Pp
+The
+.Em policy
+process contains the
+.Em policy engine
+which analyzes the Requests. The
+.Em policy engine
+can directly generate a reply, or pass the Request to the
+.Em session
+process for interaction with users.
+The
+.Em policy
+process maintains a list of all outstanding requests and applies
+a timeout to messages that are otherwise not answered. The timeout
+results in a negative reply to the Request.
 .\" The following requests should be uncommented and used where appropriate.
 .\" This next request is for sections 2, 3, and 9 function return values only.
-.\" .Sh RETURN VALUES
+.Sh RETURN VALUES
+.Nm anoubisd
+has an exit value of
+.Ar 0
+for normal exits and usually
+.Ar 1
+for any abnormal exits.
 .\" This next request is for sections 1, 6, 7 & 8 only.
 .\" .Sh ENVIRONMENT
-.\" .Sh FILES
+.Sh FILES
+The program binary is
+.Ar /sbin/anoubisd .
+.Pp
+.Ar /var/run/anoubisd.sock
+is the default value for the
+named
+.Ar socket
+connection from the GUI or clients
+connecting over the
+.Ar libanoubischat
+and
+.Ar libanoubisprotocol
+libaries.
+.Pp
+.Ar /var/run/anoubisd.pid
+contains the PID of the
+.Ar master
+process.
+.Pp
+.Ar /dev/eventdev
+is the kernel interface for messages.
+.Pp
+.Ar /dev/anoubis
+is the
+.Ar ioctl
+kernel interface for initializing the kernel and triggering updates.
 .\" .Sh EXAMPLES
 .\" This next request is for sections 1, 4, 6, and 8 only.
 .\" .Sh DIAGNOSTICS
 .\" The next request is for sections 2, 3, and 9 error and signal handling only.
 .\" .Sh ERRORS
-.\" .Sh SEE ALSO
+.Sh SEE ALSO
+.Xr anoubisctl 8
 .\" .Xr foobar 1
 .\" .Sh STANDARDS
 .\" .Sh HISTORY
-.\" .Sh AUTHORS
+.Sh AUTHORS
+Hans-Joerg Hoexer and Randall Dow
 .\" .Sh CAVEATS
 .\" .Sh BUGS

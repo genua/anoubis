@@ -68,20 +68,20 @@ static int	dump(char *);
 static int	create_channel(void);
 static void	destroy_channel(void);
 
-typedef int (*func_void_t)(void);
+typedef int (*func_int_t)(void);
 typedef int (*func_char_t)(char *);
 
 struct cmd {
 	char	       *command;
-	func_void_t	func;
+	func_int_t	func;
 	int		file;
 } commands[] = {
 	{ "start",   daemon_start,   0 },
 	{ "stop",    daemon_stop,    0 },
 	{ "status",  daemon_status,  0 },
 	{ "reload",  daemon_reload,  0 },
-	{ "load",    (func_void_t)load, 1 },
-	{ "dump",    (func_void_t)dump, 1 },
+	{ "load",    (func_int_t)load, 1 },
+	{ "dump",    (func_int_t)dump, 1 },
 };
 
 static char    *anoubis_socket = "/var/run/anoubisd.sock";
@@ -218,10 +218,24 @@ static int
 daemon_stop(void)
 {
 	int	error = 0;
+	struct anoubis_msg * m = NULL;
+	int	rc;
+	char msg[] = "CTL_STOP";
 
 	error = create_channel();
 
+	m = anoubis_msg_new(sizeof(msg)+sizeof(u32n));
+	if(!m)
+		goto err;
 
+	set_value(m->u.general->type, ANOUBIS_P_CONTROL);
+	bcopy("CTL_STOP", m->u.general->payload, sizeof(msg));
+
+	rc = anoubis_msg_send(channel, m);
+	fprintf(stderr, "%d\n", rc);
+
+err:
+	destroy_channel();
 	return error;
 }
 
@@ -246,7 +260,9 @@ daemon_reload(void)
 
 	error = create_channel();
 
+/* XXX RD anoubis_profile ?? reload */
 
+	destroy_channel();
 	return error;
 }
 
@@ -255,6 +271,8 @@ static int
 dump(char *file)
 {
 	int	error = 0;
+
+/* XXX RD anoubis_profile ?? dump rules */
 
 	printf("dump %s\n", file);
 
@@ -281,9 +299,11 @@ load(char *rulesopt)
 			apn_print_errors(ruleset);
 		}
 	}
+
+/* XXX RD anoubis_profile ?? load rules */
+
 	return error;
 }
-
 
 static int
 create_channel(void)

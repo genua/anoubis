@@ -49,13 +49,14 @@
 #include <pwd.h>
 #include <signal.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
 
 #include <anoubischat.h>
-#include <anoubis_server.h>
 #include <anoubis_msg.h>
+#include <anoubis_server.h>
 #include <anoubis_notify.h>
 #include <anoubis_policy.h>
 
@@ -102,6 +103,7 @@ static void	session_sighandler(int, short, void *);
 static void	notify_callback(struct anoubis_notify_head *, int, void *);
 static int	dispatch_policy(struct anoubis_policy_comm *, u_int64_t,
 		    u_int32_t, void *, size_t, void *);
+static int	dispatch_control(struct anoubis_msg *, struct achat_channel *);
 static void	dispatch_m2s(int, short, void *);
 static void	dispatch_s2m(int, short, void *);
 static void	dispatch_s2p(int, short, void *);
@@ -208,6 +210,7 @@ session_rxclient(int fd, short event, void *arg)
 		goto err;
 	size = m->length;
 	rc = acc_receivemsg(session->channel, m->u.buf, &size);
+	DEBUG(DBG_TRACE, "rc=%d", rc);
 	if (rc == ACHAT_RC_EOF) {
 		anoubis_msg_free(m);
 		session_destroy(session);
@@ -218,6 +221,7 @@ session_rxclient(int fd, short event, void *arg)
 		goto err;
 	if (!session->proto)
 		goto err;
+
 	anoubis_msg_resize(m, size);
 	/*
 	 * Return codes: less than zero is an error. Zero means the no
@@ -348,6 +352,7 @@ session_main(struct anoubisd_config *conf, int pipe_m2s[2], int pipe_m2p[2],
 	ev_info.policy = anoubis_policy_comm_create(&dispatch_policy, &ev_info);
 	if (!ev_info.policy)
 		fatal("Cannot create policy object (out of memory)");
+	anoubis_process_control_create(dispatch_control);
 
 	/* setup keeper of incoming unix domain socket connections */
 	if (seg.keeper_uds != NULL) {
@@ -407,6 +412,16 @@ notify_callback(struct anoubis_notify_head *head, int verdict, void *cbdata)
 	free(cbdata);
 
 	DEBUG(DBG_TRACE, "<notify_callback");
+}
+
+static int
+dispatch_control(struct anoubis_msg *m, struct achat_channel *chan)
+{
+	DEBUG(DBG_TRACE, ">dispatch_control");
+	DEBUG(DBG_TRACE, "%s\n", m->u.general->payload);
+	master_terminate(0);
+	DEBUG(DBG_TRACE, "<dispatch_control");
+	return 0;
 }
 
 static int

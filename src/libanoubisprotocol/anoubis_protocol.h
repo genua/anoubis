@@ -119,7 +119,7 @@ DEFINE_SIGNED_TYPE(32);
 #define		ANOUBIS_P_MIN		0x3000
 
 #if 0
-/* 
+/*
  * These are currently not implemented and replaced with a more general
  * interface.
  */
@@ -133,6 +133,8 @@ DEFINE_SIGNED_TYPE(32);
 #define		ANOUBIS_P_GETRULES	0x3020
 #define		ANOUBIS_P_RULELIST	0x3021
 #endif
+
+#define		ANOUBIS_P_CONTROL	0x3700
 
 #define		ANOUBIS_P_REQUEST	0x3800
 #define		ANOUBIS_P_REPLY		0x3801

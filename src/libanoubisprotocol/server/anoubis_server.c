@@ -68,6 +68,10 @@ struct anoubis_server {
 #define FLAG_SENTCLOSEACK		0x0800
 #define FLAG_ERROR			0x1000
 
+static struct anoubis_server_process_control {
+	anoubis_process_control_dispatcher_t dispatch_ctl;
+} anoubis_server_process_control;
+
 struct anoubis_server * anoubis_server_create(struct achat_channel * chan,
     struct anoubis_policy_comm * policy)
 {
@@ -454,6 +458,21 @@ static int anoubis_process_reply(struct anoubis_server * server,
 	return 0;
 }
 
+void anoubis_process_control_create(anoubis_process_control_dispatcher_t
+    dispatch_ctl)
+{
+	if (dispatch_ctl)
+		anoubis_server_process_control.dispatch_ctl = dispatch_ctl;
+}
+
+static int anoubis_process_control(struct anoubis_msg * m,
+    struct achat_channel * chan)
+{
+	if (anoubis_server_process_control.dispatch_ctl)
+		return anoubis_server_process_control.dispatch_ctl(m, chan);
+	return -EINVAL;
+}
+
 /*
  * Process a message from the wire. Caller must release buf!
  * Return values:
@@ -506,6 +525,7 @@ int anoubis_server_process(struct anoubis_server * server, void * buf,
 	case ANOUBIS_N_REGISTER:
 	case ANOUBIS_N_UNREGISTER:
 	case ANOUBIS_P_REQUEST:
+	case ANOUBIS_P_CONTROL:
 		/*
 		 * These start new requests. If we either got a closereq
 		 * from the other end these are forbidden. If we sent a
@@ -565,6 +585,8 @@ int anoubis_server_process(struct anoubis_server * server, void * buf,
 			return -EIO;
 		return anoubis_process_reply(server, &m, opcode,
 		    m.u.token->token);
+	case ANOUBIS_P_CONTROL:
+		return anoubis_process_control(&m, server->chan);
 	case ANOUBIS_P_REQUEST: {
 		struct anoubis_msg * tmp;
 		if ((server->proto & ANOUBIS_PROTO_POLICY) == 0)

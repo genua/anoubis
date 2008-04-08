@@ -99,7 +99,7 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s [-d <flags>] [-nv] [-s <socket> ]\n",
+	fprintf(stderr, "usage: %s [-D <flags>] [-dnv] [-s <socket> ]\n",
 	    __progname);
 	exit(1);
 }

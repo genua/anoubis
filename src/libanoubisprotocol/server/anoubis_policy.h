@@ -31,10 +31,15 @@
 #include <anoubischat.h>
 #include <anoubis_msg.h>
 
+struct anoubis_server;
 struct anoubis_policy_comm;
 
 typedef int (*anoubis_policy_comm_dispatcher_t)(struct anoubis_policy_comm *,
     u_int64_t token, u_int32_t uid, void * buf, size_t len, void * arg);
+
+typedef int (*anoubis_process_control_dispatcher_t)(struct anoubis_msg *,
+    struct achat_channel *);
+void anoubis_process_control_create(anoubis_process_control_dispatcher_t);
 
 struct anoubis_policy_comm * anoubis_policy_comm_create(
     anoubis_policy_comm_dispatcher_t dispatch, void *arg);
