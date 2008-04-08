@@ -43,12 +43,17 @@ xanoubis_CPPFLAGS = \
 	-I$(top_srcdir)/$(xanoubisdir)/model \
 	-I$(top_srcdir)/$(xanoubisdir)/view  \
 	-I$(top_srcdir)/$(xanoubisdir)/control \
-	$(WX_CPPFLAGS) $(AM_CPPFLAGS)
+	$(WX_CPPFLAGS) $(GTK_CFLAGS) $(GLIB_CFLAGS) $(NOTIFY_CFLAGS) \
+	$(AM_CPPFLAGS)
 
-xanoubis_CXXFLAGS = -fno-strict-aliasing $(AM_CXXFLAGS) $(WX_CXXFLAGS)
+xanoubis_CXXFLAGS = \
+	-fno-strict-aliasing $(AM_CXXFLAGS) $(WX_CXXFLAGS)
 
 xanoubis_LDADD = \
 	@WX_LIBS@ \
+	@GTK_LIBS@ \
+	@GLIB_LIBS@ \
+	@NOTIFY_LIBS@ \
 	$(libanoubischat) \
 	$(libanoubisprotocol)
 

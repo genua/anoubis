@@ -94,6 +94,17 @@ PKG_CHECK_MODULES([CHECK], [check >= 0.9.4])
 AC_CHECK_LIB(event, event_init)
 AX_CHECK_SSL
 
+dnl checks for libnotify and its dependencies (xanoubis)
+PKG_CHECK_MODULES([GTK], [gtk+-2.0 >= 2.4.0])
+PKG_CHECK_MODULES([GLIB], [glib-2.0 >= 2.2])
+PKG_CHECK_MODULES([NOTIFY], [libnotify >= 0.4.2])
+AC_SUBST(GTK_LIBS)
+AC_SUBST(GTK_CFLAGS)
+AC_SUBST(GLIB_LIBS)
+AC_SUBST(GLIB_CFLAGS)
+AC_SUBST(NOTIFY_LIBS)
+AC_SUBST(NOTIFY_CFLAGS)
+
 AC_CONFIG_FILES([
 	Makefile
 	src/Makefile

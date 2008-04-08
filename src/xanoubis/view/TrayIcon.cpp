@@ -27,6 +27,7 @@
 
 #include <wx/icon.h>
 #include <wx/string.h>
+#include <libnotify/notify.h>
 
 #include "AnEvents.h"
 #include "main.h"
@@ -100,11 +101,17 @@ TrayIcon::update(void)
 		tooltip += wxString::Format(wxT("%d\n"),
 		    messageEscalationCount_);
 		icon = iconMsgQuestion_;
+		if (!systemNotify("ESCALATION", "Escalations received\n",
+		    NOTIFY_URGENCY_CRITICAL, 8))
+			wxGetApp().log(wxT("Couldn't send Escalation"));
 	}
 
 	if (messageEscalationCount_ == 0 && messageAlertCount_ > 0) {
 		tooltip += wxString::Format(wxT("%d\n"), messageAlertCount_);
 		icon = iconMsgProblem_;
+		if (!systemNotify("ALERT", "Alerts received\n",
+		    NOTIFY_URGENCY_NORMAL, 8))
+			wxGetApp().log(wxT("Couldn't send Alert"));
 	} else {
 		tooltip = wxT("No messages\n");
 		icon = iconNormal_;
@@ -119,4 +126,41 @@ TrayIcon::update(void)
 	}
 
 	SetIcon(*icon, tooltip);
+}
+
+bool
+TrayIcon::systemNotify(const gchar *module, const gchar *message,
+    NotifyUrgency priority, const int timeout)
+{
+	NotifyNotification *notification;
+	NotifyUrgency messagePriority = priority;
+	if(!messagePriority)
+		messagePriority = NOTIFY_URGENCY_NORMAL;
+
+	if (message != NULL && timeout > 0)
+	{
+		/* mandatory initialisation call */
+		(module != NULL) ? notify_init(module) : notify_init("Anoubis");
+
+		if (module != NULL)
+			notification = notify_notification_new (module, message,
+					NULL, NULL);
+		else
+			notification = notify_notification_new("Anoubis",
+					message, NULL, NULL);
+
+		notify_notification_set_timeout(notification, 1000 * (timeout));
+		notify_notification_set_urgency(notification, messagePriority);
+
+		if (!notify_notification_show (notification, NULL))
+			return false;
+
+	} else {
+		return false;
+	}
+
+	/* free notification object */
+	g_object_unref(G_OBJECT(notification));
+
+	return true;
 }

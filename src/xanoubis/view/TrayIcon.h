@@ -30,6 +30,7 @@
 
 #include <wx/icon.h>
 #include <wx/taskbar.h>
+#include <libnotify/notify.h>
 
 class TrayIcon : public wxTaskBarIcon
 {
@@ -43,6 +44,8 @@ class TrayIcon : public wxTaskBarIcon
 		wxIcon		*iconMsgQuestion_;
 
 		void		 update(void);
+		bool		 systemNotify(const gchar*, const gchar*,
+		    NotifyUrgency, const int);
 
 	public:
 		TrayIcon(void);
