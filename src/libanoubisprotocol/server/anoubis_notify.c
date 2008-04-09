@@ -31,7 +31,12 @@
 #include <anoubis_msg.h>
 #include <anoubis_notify.h>
 #include <anoubis_errno.h>
+
+#ifndef NEEDBSDCOMPAT
+#include <sys/queue.h>
+#else
 #include <queue.h>
+#endif
 
 #ifdef LINUX
 #include <linux/anoubis.h>

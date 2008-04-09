@@ -32,7 +32,12 @@
 #include <anoubischat.h>
 #include <anoubis_msg.h>
 #include <anoubis_policy.h>
+
+#ifndef NEEDBSDCOMPAT
+#include <sys/queue.h>
+#else
 #include <queue.h>
+#endif
 
 struct policy_request {
 	u_int64_t token;

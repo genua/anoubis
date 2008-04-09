@@ -80,26 +80,3 @@ int anoubis_auth_process(struct anoubis_auth * auth,
 	auth->finish_callback(auth->cbdata);
 	return 0;
 }
-
-#ifndef ANOUBIS_AUTH_H
-#define ANOUBIS_AUTH_H
-
-#define ANOUBIS_AUTH_INIT	0
-#define ANOUBIS_AUTH_SUCCESS	1
-#define ANOUBIS_AUTH_FAILURE	2
-
-#define ANOUBIS_AUTH_TRANSPORT	0
-
-struct anoubis_auth {
-	int state;
-	int auth_type;
-	uid_t uid;
-	char * username;
-};
-
-struct anoubis_auth * anoubis_auth_create(void);
-void * anoubis_auth_destroy(struct anoubis_auth * auth);
-struct anoubis_msg * anoubis_auth_process(struct anoubis_auth * auth,
-    struct anoubis_msg * m);
-
-#endif

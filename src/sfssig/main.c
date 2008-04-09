@@ -43,8 +43,13 @@
 
 #include <openssl/sha.h>
 
-#include <sys/param.h>
+#ifndef NEEDBSDCOMPAT
 #include <sys/queue.h>
+#else
+#include <queue.h>
+#endif
+
+#include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 

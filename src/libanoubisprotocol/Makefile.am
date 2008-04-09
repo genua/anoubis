@@ -24,6 +24,7 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+bsdcompatdir = $(top_srcdir)/src/bsdcompat
 
 lib_LIBRARIES = libanoubisps.a libanoubispc.a
 include_HEADERS_common =		\
@@ -32,8 +33,8 @@ include_HEADERS_common =		\
 	anoubis_msg.h			\
 	anoubis_errno.h			\
 	anoubis_protocol.h		\
-	crc32.h				\
-	queue.h
+	crc32.h
+
 include_HEADERS_server =		\
 	server/anoubis_server.h		\
 	server/anoubis_notify.h		\
@@ -57,6 +58,10 @@ libanoubisps_a_CPPFLAGS = \
 	-I$(top_srcdir)/$(anoubischatdir) \
 	-I$(top_srcdir)/include
 libanoubisps_so_CPPFLAGS = $(libanoubisps_a_CPPFLAGS)
+if NEEDBSDCOMPAT
+libanoubisps_a_CPPFLAGS  += -I$(bsdcompatdir)
+libanoubisps_so_CPPFLAGS += -I$(bsdcompatdir)
+endif
 
 libanoubisps_a_SOURCES =		\
 	server/anoubis_server.c		\
@@ -74,6 +79,10 @@ libanoubispc_a_CPPFLAGS = \
 	-I$(top_srcdir)/$(anoubischatdir) \
 	-I$(top_srcdir)/include
 libanoubispc_so_CPPFLAGS = $(libanoubispc_a_CPPFLAGS)
+if NEEDBSDCOMPAT
+libanoubispc_a_CPPFLAGS  += -I$(bsdcompatdir)
+libanoubispc_so_CPPFLAGS += -I$(bsdcompatdir)
+endif
 
 libanoubispc_a_SOURCES = \
 	client/anoubis_client.c		\

@@ -25,9 +25,17 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "config.h"
+
 #include <stdlib.h>
 #include <string.h>
+
+#ifndef NEEDBSDCOMPAT
+#include <sys/queue.h>
+#else
 #include "queue.h"
+#endif
+
 #include <anoubischat_dummy.h>
 
 struct mymsgbuf {

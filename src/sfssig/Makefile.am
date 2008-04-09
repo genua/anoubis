@@ -40,6 +40,9 @@ sfssig_SOURCES= \
 	main.c
 
 sfssig_CPPFLAGS = -I$(top_srcdir)/include -I$(top_builddir)/src
+if NEEDBSDCOMPAT
+sfssig_CPPFLAGS += -I$(top_srcdir)/src/bsdcompat
+endif
 
 sfssig_SOURCES_flawfinder= \
 	main.c_flawfinder

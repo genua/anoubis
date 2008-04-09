@@ -29,7 +29,7 @@
 
 #include <sys/types.h>
 #include <sys/socket.h>
-#ifndef LINUX
+#ifndef NEEDBSDCOMPAT
 #include <sys/queue.h>
 #else
 #include <queue.h>

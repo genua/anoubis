@@ -35,6 +35,7 @@ anoubisprotocoldir = src/libanoubisprotocol
 libanoubisprotocol = $(top_builddir)/$(anoubisprotocoldir)/libanoubispc.a
 
 xanoubis_CPPFLAGS = \
+	-I$(top_builddir)/src \
 	-I$(top_srcdir)/include \
 	-I$(top_srcdir)/$(anoubischatdir) \
 	-I$(top_srcdir)/$(anoubisprotocoldir) \
@@ -59,6 +60,7 @@ xanoubis_LDADD = \
 
 if NEEDBSDCOMPAT
 xanoubis_LDADD += $(libbsdcompat)
+xanoubis_CPPFLAGS += -I$(top_srcdir)/$(bsdcompatdir)
 endif
 
 icondir = $(datadir)/$(bin_PROGRAMS)/icons

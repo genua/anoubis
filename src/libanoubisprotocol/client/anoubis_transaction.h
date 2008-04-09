@@ -27,9 +27,16 @@
 #ifndef ANOUBIS_TRANSACTION_H
 #define ANOUBIS_TRANSACTION_H
 
+#include "config.h"
+
 #include <anoubis_protocol.h>
 #include <anoubis_msg.h>
-#include "queue.h"
+
+#ifndef NEEDBSDCOMPAT
+#include <sys/queue.h>
+#else
+#include <queue.h>
+#endif
 
 #define ANOUBIS_T_INITSELF	0x0001	/* Self-initiated transaction */
 #define ANOUBIS_T_INITPEER	0x0002	/* Peer-initiated transaction. */

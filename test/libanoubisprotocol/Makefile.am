@@ -35,7 +35,7 @@ libanoubispsa = $(top_builddir)/$(anoubisprotocoldir)/libanoubisps.a
 libanoubispc = $(top_builddir)/$(anoubisprotocoldir)/libanoubispc.so
 
 noinst_PROGRAMS = test_libanoubisproto test_libanoubisnotify libanoubischat.so
-INCLUDES =						\
+CPPFLAGS =						\
 	-I$(top_srcdir)/$(anoubischatdir)		\
 	-I$(top_srcdir)/$(anoubisprotocoldir)/client	\
 	-I$(top_srcdir)/$(anoubisprotocoldir)/server	\
@@ -56,6 +56,7 @@ test_libanoubisproto_DEPENDENCIES =	\
 test_libanoubisnotify_DEPENDENCIES = $(libanoubisps) libanoubischat.so
 
 if NEEDBSDCOMPAT
+CPPFLAGS += -I$(top_srcdir)/$(bsdcompatdir)
 test_libanoubisproto_LDFLAGS += -L$(top_builddir)/$(bsdcompatdir)
 test_libanoubisnotify_LDFLAGS += -L$(top_builddir)/$(bsdcompatdir)
 test_libanoubisproto_LDADD += -lbsdcompat

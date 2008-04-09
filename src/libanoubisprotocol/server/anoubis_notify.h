@@ -27,8 +27,15 @@
 #ifndef ANOUBIS_NOTIFY_H
 #define ANOUBIS_NOTIFY_H
 
-#include <sys/types.h>
+#include "config.h"
+
+#ifndef NEEDBSDCOMPAT
+#include <sys/queue.h>
+#else
 #include <queue.h>
+#endif
+
+#include <sys/types.h>
 
 #include <anoubischat.h>
 #include <anoubis_msg.h>

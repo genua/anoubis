@@ -38,7 +38,7 @@ if STATIC_LINKING
 STATIC = -static
 endif
 
-INCLUDES = \
+CPPFLAGS = \
 	   -I$(top_builddir)/src \
 	   -I$(top_srcdir)/include \
 	   -I$(top_srcdir)/src/anoubisd \
@@ -49,8 +49,8 @@ INCLUDES = \
 anoubisd_LDADD = $(libanoubisps) $(libanoubischat)
 
 if NEEDBSDCOMPAT
-INCLUDES += -I$(top_srcdir)/$(bsdcompatdir)
-anoubisd_LDADD += $(libbsdcompat)
+CPPFLAGS += -I$(top_srcdir)/$(bsdcompatdir)
+anoubisd_LDADD    += $(libbsdcompat)
 endif
 
 anoubisd_LDFLAGS = $(AM_LDFLAGS) $(STATIC)
@@ -65,7 +65,6 @@ anoubisd_SOURCES= \
 	amsg.c \
 	aqueue.c \
 	anoubisd.h \
-	queue.h \
 	amsg.h \
 	aqueue.h
 
@@ -102,8 +101,8 @@ anoubisd_SOURCES_splint= \
 
 
 flawfinder_FLAGS=
-splint_FLAGS=$(INCLUDES)
-lint_FLAGS=$(INCLUDES)
+splint_FLAGS=$(CPPFLAGS)
+lint_FLAGS=$(CPPFLAGS)
 
 flawfinder:	$(anoubisd_SOURCES_flawfinder)
 splint:		$(anoubisd_SOURCES_splint)
