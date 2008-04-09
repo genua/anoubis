@@ -71,11 +71,22 @@ getToken(void)
 Communicator::Communicator(wxEvtHandler *eventDestination, wxString socketPath)
     : wxThread(wxTHREAD_DETACHED)
 {
-	eventDestination_ = eventDestination;
 	socketPath_ = socketPath;
+	eventDestination_ = eventDestination;
 	isConnected_ = false;
 	channel_ = NULL;
 	client_  = NULL;
+}
+
+void
+Communicator::setConnectionState(bool state)
+{
+	wxCommandEvent event(anEVT_COM_CONNECTION);
+
+	isConnected_ = state;
+
+	event.SetInt(isConnected_);
+	eventDestination_->AddPendingEvent(event);
 }
 
 achat_rc
@@ -134,15 +145,14 @@ Communicator::connect(void)
 		return (rc);
 	}
 
-	isConnected_ = true;
 	return (ACHAT_RC_OK);
 }
 
 void
 Communicator::shutdown(void)
 {
-	isConnected_ = false;
-	((CommunicatorCtrl *)eventDestination_)->disconnect();
+	setConnectionState(false);
+
 	if (client_ != NULL) {
 		anoubis_client_close(client_);
 		anoubis_client_destroy(client_);
@@ -194,6 +204,7 @@ Communicator::Entry(void)
 			currTa = NULL;
 			if (startRegistration == COMMUNICATOR_FLAG_PROG) {
 				startRegistration = COMMUNICATOR_FLAG_DONE;
+				setConnectionState(true);
 			}
 			if (startDeRegistration == COMMUNICATOR_FLAG_PROG) {
 				startDeRegistration = COMMUNICATOR_FLAG_DONE;
@@ -237,12 +248,12 @@ Communicator::Entry(void)
 		}
 
 		if (anoubis_client_hasnotifies(client_) != 0) {
+			wxCommandEvent event(anEVT_COM_NOTIFYRECEIVED);
 			struct anoubis_msg *notifyMsg = NULL;
 
 			notifyMsg = anoubis_client_getnotify(client_);
-			wxCommandEvent   event(anEVT_COM_NOTIFYRECEIVED);
 			event.SetClientData(notifyMsg);
-			eventDestination_->ProcessEvent(event);
+			eventDestination_->AddPendingEvent(event);
 		}
 
 		if (TestDestroy() &&
@@ -251,14 +262,7 @@ Communicator::Entry(void)
 		}
 	}
 
-	isConnected_ = false;
 	shutdown();
 
 	return (NULL);
-}
-
-bool
-Communicator::isConnected(void)
-{
-	return (isConnected_);
 }

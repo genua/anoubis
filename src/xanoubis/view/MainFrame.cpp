@@ -71,6 +71,9 @@ MainFrame::OnInit(void)
 {
 	an_statusbar = new AnStatusBar(this);
 
+	setMessageString();
+	setConnectionString(wxT("none"));
+
 	SetStatusBar(an_statusbar);
 	GetStatusBar()->Show();
 	PositionStatusBar();
@@ -240,7 +243,7 @@ MainFrame::OnMbHelpHelpSelect(wxCommandEvent& event)
 void
 MainFrame::OnMbFileConnectSelect(wxCommandEvent& event)
 {
-	wxGetApp().connectToDaemon(event.IsChecked());
+	wxGetApp().connectCommunicator(event.IsChecked());
 }
 
 void

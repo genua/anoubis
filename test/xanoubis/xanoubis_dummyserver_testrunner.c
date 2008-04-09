@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 GeNUA mbH <info@genua.de>
+ * Copyright (c) 2008 GeNUA mbH <info@genua.de>
  *
  * All rights reserved.
  *
@@ -24,17 +24,16 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
 #include <stdlib.h>
 #include <check.h>
 
-extern Suite *xanoubis_testsuite(void);
+extern Suite *xanoubis_dummyserver_testsuite(int, char **);
 
 int
-main (void)
+main (int argc, char *argv[])
 {
 	int number_failed = -1;
-	Suite *suite = xanoubis_testsuite();
+	Suite *suite = xanoubis_dummyserver_testsuite(argc, argv);
 	SRunner *suiterunner = srunner_create(suite);
 
 	srunner_run_all(suiterunner, CK_NORMAL);

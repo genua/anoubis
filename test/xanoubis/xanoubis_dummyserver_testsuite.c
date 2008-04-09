@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 GeNUA mbH <info@genua.de>
+ * Copyright (c) 2008 GeNUA mbH <info@genua.de>
  *
  * All rights reserved.
  *
@@ -27,20 +27,15 @@
 
 #include <check.h>
 
-extern TCase *xanoubis_testcase_Communicator(void);
-extern TCase *xanoubis_testcase_CommunicatorException(void);
+extern TCase *xanoubis_testcase_dummyserver(int, char **);
 
 Suite *
-xanoubis_testsuite(void)
+xanoubis_dummyserver_testsuite(int argc, char *argv[])
 {
 	Suite *s = suite_create("Suite");
 
-	/* CommunicatorException test case */
-	TCase *tc_ce = xanoubis_testcase_CommunicatorException();
-	suite_add_tcase(s, tc_ce);
-
-	/* Communicator test case */
-	TCase *tc_comm = xanoubis_testcase_Communicator();
+	/* dummyserver test case */
+	TCase *tc_comm = xanoubis_testcase_dummyserver(argc, argv);
 	suite_add_tcase(s, tc_comm);
 
 	return (s);

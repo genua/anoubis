@@ -29,6 +29,7 @@
 #include "config.h"
 #endif
 
+#include <wx/cmdline.h>
 #include <wx/icon.h>
 #include <wx/stdpaths.h>
 #include <wx/string.h>
@@ -76,13 +77,15 @@ AnoubisGuiApp::close(void)
 	trayIcon->RemoveIcon();
 }
 
-
 bool AnoubisGuiApp::OnInit()
 {
+	if (!wxApp::OnInit())
+		return false;
+
 	mainFrame = new MainFrame((wxWindow*)NULL);
 	logViewer_ = new DlgLogViewer(mainFrame);
 	ruleEditor_ = new DlgRuleEditor(mainFrame);
-	comCtrl_ = new CommunicatorCtrl(wxT("/var/run/anoubisd.sock"));
+	comCtrl_ = new CommunicatorCtrl(socketParam_);
 	trayIcon = new TrayIcon();
 
 	modules_[OVERVIEW] = new ModOverview(mainFrame);
@@ -106,8 +109,6 @@ bool AnoubisGuiApp::OnInit()
 	((ModSfs*)modules_[SFS])->update();
 	((ModAnoubis*)modules_[ANOUBIS])->update();
 
-	update();
-
 	return (true);
 }
 
@@ -123,7 +124,7 @@ AnoubisGuiApp::sendEvent(wxCommandEvent& event)
 	 */
 	wxPostEvent(logViewer_, event);
 	wxPostEvent(ruleEditor_, event);
-	//wxPostEvent(com, event);
+	wxPostEvent(comCtrl_, event);
 	wxPostEvent(trayIcon, event);
 }
 
@@ -133,6 +134,12 @@ AnoubisGuiApp::sendEvent(wxEventType type)
 	wxCommandEvent anEvent(type);
 	anEvent.SetInt(true);
 	sendEvent(anEvent);
+}
+
+void
+AnoubisGuiApp::status(wxString msg)
+{
+	mainFrame->SetStatusText(msg, 0);
 }
 
 void
@@ -168,6 +175,43 @@ AnoubisGuiApp::alert(wxString msg)
 }
 
 void
+AnoubisGuiApp::OnInitCmdLine(wxCmdLineParser& parser)
+{
+	static const wxCmdLineEntryDesc cmdLineDescription[] = {
+		{
+			wxCMD_LINE_SWITCH,
+			wxT("h"),
+			wxT("help"),
+			wxT("this help"),
+			wxCMD_LINE_VAL_NONE,
+			wxCMD_LINE_OPTION_HELP
+		}, {
+			wxCMD_LINE_OPTION,
+			wxT("s"),
+			wxT("socket"),
+			wxT("communication socket of anoubis daemon"),
+			wxCMD_LINE_VAL_STRING,
+			wxCMD_LINE_PARAM_OPTIONAL
+		}, {
+			wxCMD_LINE_NONE
+		}
+	};
+
+	parser.SetDesc(cmdLineDescription);
+	parser.SetSwitchChars(wxT("-"));
+}
+
+bool
+AnoubisGuiApp::OnCmdLineParsed(wxCmdLineParser& parser)
+{
+	if (!parser.Found(wxT("s"), &socketParam_)) {
+		socketParam_ = wxT(ANOUBISD_SOCKETNAME);
+	}
+
+	return (true);
+}
+
+void
 AnoubisGuiApp::toggleRuleEditorVisability(void)
 {
 	wxCommandEvent  showEvent(anEVT_RULEEDITOR_SHOW);
@@ -184,20 +228,13 @@ AnoubisGuiApp::toggleLogViewerVisability(void)
 }
 
 void
-AnoubisGuiApp::connectToDaemon(bool doConnect)
+AnoubisGuiApp::connectCommunicator(bool doConnect)
 {
-	if (doConnect)
+	if (doConnect) {
 		comCtrl_->connect();
-	else
+	} else {
 		comCtrl_->disconnect();
-	update();
-}
-
-void
-AnoubisGuiApp::update(void)
-{
-	mainFrame->setDaemonConnection(comCtrl_->isConnected());
-	mainFrame->setConnectionString(comCtrl_->getRemoteStation());
+	}
 }
 
 wxIcon *

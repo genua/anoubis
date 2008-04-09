@@ -38,17 +38,19 @@
 
 CommunicatorCtrl::CommunicatorCtrl(wxString socketPath)
 {
-	com_ = NULL;
-	socketPath_ = socketPath;
-	isAlive_ = false;
+	socketPath_	= socketPath;
+	isConnected_	= false;
+	com_		= NULL;
 
 	Connect(anEVT_COM_NOTIFYRECEIVED,
 	    wxCommandEventHandler(CommunicatorCtrl::OnNotifyReceived));
+	Connect(anEVT_COM_CONNECTION,
+	    wxCommandEventHandler(CommunicatorCtrl::OnConnection));
 }
 
 CommunicatorCtrl::~CommunicatorCtrl(void)
 {
-	if (isAlive_) {
+	if (isConnected_) {
 		disconnect();
 	}
 }
@@ -56,17 +58,16 @@ CommunicatorCtrl::~CommunicatorCtrl(void)
 void
 CommunicatorCtrl::connect(void)
 {
-	wxThreadError	 rc;
-	wxCommandEvent	 event(anEVT_COM_REMOTESTATION);
-	wxString	*host;
+	wxThreadError rc;
 
-	if (!isAlive_) {
+	if (!isConnected_) {
 		/*
 		 * If this is a reconnect, the previous object referenced by
 		 * com_, was deleted by 'Delete()' (which also removed the
 		 * object). Thus com_ can be filled with a new object.
 		 */
 		com_ = new Communicator(this, socketPath_);
+
 		rc = com_->Create();
 		if (rc != wxTHREAD_NO_ERROR) {
 			wxGetApp().alert(
@@ -74,6 +75,7 @@ CommunicatorCtrl::connect(void)
 			com_->Delete();
 			return;
 		}
+
 		rc = com_->Run();
 		if (rc != wxTHREAD_NO_ERROR) {
 			wxGetApp().alert(
@@ -81,60 +83,39 @@ CommunicatorCtrl::connect(void)
 			com_->Delete();
 			return;
 		}
-		isAlive_ = true;
-		/*
-		 * XXX currently only connections via unix domain socket
-		 * to localhost are supported. -- ch
-		 */
-		host = new wxString(wxT("localhost"));
-		event.SetClientObject((wxClientData*)host);
-		wxGetApp().sendEvent(event);
-		wxGetApp().log(wxT("Connection established"));
+		wxGetApp().status(wxT("connecting to ") + socketPath_
+		    + wxT(" ..."));
 	}
 }
 
 void
 CommunicatorCtrl::disconnect(void)
 {
-	wxThreadError	 rc;
-	wxCommandEvent	 event(anEVT_COM_REMOTESTATION);
-	wxString	*host;
+	wxThreadError rc;
 
-	if (isAlive_) {
+	if (isConnected_) {
 		rc = com_->Delete(); /* no explicite 'delete com_' needed */
 		if  (rc != wxTHREAD_NO_ERROR) {
 			wxGetApp().alert(
-			    wxT("Error during shutdown of communication"));
+			    wxT("Error: no proper shutdown of communication"));
 		}
-		/*
-		 * Even if we couldn't Delete() the thread successfully, we
-		 * enable the creation of a new thread. Because the old one
-		 * will "delete itself", no memory leak is seen here. -- ch
-		 */
-		isAlive_ = false;
-		host = new wxString(wxT("none"));
-		event.SetClientObject((wxClientData*)host);
-		wxGetApp().sendEvent(event);
-		wxGetApp().log(wxT("Connection closed"));
+		wxGetApp().status(wxT("disconnecting from ") + socketPath_
+		    + wxT(" ..."));
 	}
 }
 
 bool
 CommunicatorCtrl::isConnected(void)
 {
-	if (!isAlive_) {
-		return (false);
-	} else {
-		return (com_->isConnected());
-	}
+	return (isConnected_);
 }
 
 wxString
 CommunicatorCtrl::getRemoteStation(void)
 {
-	if (isAlive_ && com_->isConnected()) {
+	if (isConnected_) {
 		/*
-		 * XXX currently only connections via unix domain socket
+		 * XXX: currently only connections via unix domain socket
 		 * to localhost are supported. -- ch
 		 */
 		return (wxT("localhost"));
@@ -165,4 +146,27 @@ CommunicatorCtrl::OnNotifyReceived(wxCommandEvent& event)
 		addEvent.SetClientObject((wxClientData*)notify);
 		wxGetApp().sendEvent(addEvent);
 	}
+}
+
+void
+CommunicatorCtrl::OnConnection(wxCommandEvent& event)
+{
+	wxCommandEvent	 remoteStationEvent(anEVT_COM_REMOTESTATION);
+	wxString	 logMessage;
+	wxString	*host;
+
+	isConnected_ = event.GetInt();
+
+	if (isConnected_) {
+		host = new wxString(wxT("localhost"));
+		logMessage = wxT("Connection established with localhost:")
+		    + socketPath_;
+	} else {
+		host = new wxString(wxT("none"));
+		logMessage = wxT("Connection closed");
+	}
+	remoteStationEvent.SetClientObject((wxClientData*)host);
+	wxGetApp().sendEvent(remoteStationEvent);
+	wxGetApp().log(logMessage);
+	wxGetApp().status(logMessage);
 }

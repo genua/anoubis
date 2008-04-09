@@ -24,53 +24,38 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-# XXX CH: Deactivate this test; see Bug #368
-TESTS =
-#test_xanoubis
+TESTS = test_xanoubis_server
 
-# XXX CH: Deactivate this test; see Bug #368
-# noinst_PROGRAMS = test_xanoubis
+noinst_PROGRAMS = $(TESTS)
 
-bsdcompatdir   = src/bsdcompat
-libbsdcompat   = $(top_builddir)/$(bsdcompatdir)/libbsdcompat.a
-xanoubisdir    = src/xanoubis
-anoubischatdir = src/libanoubischat
-libanoubischat = $(top_builddir)/$(anoubischatdir)/libanoubischat.a
+bsdcompatdir	   = src/bsdcompat
+anoubischatdir	   = src/libanoubischat
 anoubisprotocoldir = src/libanoubisprotocol
-libanoubisprotocol = $(top_builddir)/$(anoubisprotocoldir)/libanoubispc.a
 
-# XXX CH: Deactivate this test; see Bug #368
-test_xanoubis_CPPFLAGS_hidden = \
+libbsdcompat	  = $(top_builddir)/$(bsdcompatdir)/libbsdcompat.a
+libanoubischat	  = $(top_builddir)/$(anoubischatdir)/libanoubischat.a
+libprotocolserver = $(top_builddir)/$(anoubisprotocoldir)/libanoubisps.a
+
+test_xanoubis_server_CFLAGS = $(AM_CFLAGS) @CHECK_CFLAGS@
+test_xanoubis_server_CPPFLAGS = \
 	-I$(top_srcdir)/$(anoubischatdir) \
 	-I$(top_srcdir)/$(anoubisprotocoldir) \
-	-I$(top_srcdir)/$(anoubisprotocoldir)/client \
-	@CHECK_CFLAGS@ \
-	-I$(top_srcdir)/$(xanoubisdir) \
-	-I$(top_srcdir)/$(xanoubisdir)/model \
-	-I$(top_srcdir)/$(xanoubisdir)/view \
-	-I$(top_srcdir)/$(xanoubisdir)/control \
-	$(AM_CPPFLAGS) $(WX_CPPFLAGS)
+	-I$(top_srcdir)/$(anoubisprotocoldir)/server
 
-# XXX CH: Deactivate this test; see Bug #368
-test_xanoubis_CXXFLAGS_hide = -fno-strict-aliasing $(AM_CXXFLAGS) $(WX_CXXFLAGS)
-
-# XXX CH: Deactivate this test; see Bug #368
-test_xanoubis_LDADD_hidden = \
-	$(top_builddir)/$(xanoubisdir)/xanoubis-Communicator.o \
-	$(top_builddir)/$(xanoubisdir)/xanoubis-CommunicatorException.o \
-	@CHECK_LIBS@ \
+test_xanoubis_server_DEPENDENCIES = \
 	$(libanoubischat) \
-	$(libanoubisprotocol) \
-	@WX_LIBS@
+	$(libprotocolserver)
 
 if NEEDBSDCOMPAT
-# XXX CH: Deactivate this test; see Bug #368
-test_xanoubis_LDADD_hidden += $(libbsdcompat)
+test_xanoubis_server_CPPFLAGS += -I$(top_srcdir)/$(bsdcompatdir)
+test_xanoubis_server_DEPENDENCIES += $(libbsdcompat)
 endif
 
-# XXX CH: Deactivate this test; see Bug #368
-test_xanoubis_SOURCES_hidden = \
-	xanoubis_testcase_Communicator.cpp \
-	xanoubis_testcase_CommunicatorException.cpp \
-	xanoubis_testsuite.cpp \
-	xanoubis_testrunner.cpp
+test_xanoubis_server_LDADD = \
+	$(test_xanoubis_server_DEPENDENCIES) \
+	@CHECK_LIBS@
+
+test_xanoubis_server_SOURCES = \
+	xanoubis_dummyserver_testrunner.c \
+	xanoubis_dummyserver_testsuite.c \
+	xanoubis_testcase_dummyserver.c

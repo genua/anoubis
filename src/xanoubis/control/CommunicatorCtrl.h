@@ -35,9 +35,9 @@
 
 class CommunicatorCtrl : public wxEvtHandler {
 	private:
-		Communicator	*com_;
 		wxString	 socketPath_;
-		bool		 isAlive_;
+		bool		 isConnected_;
+		Communicator	*com_;
 
 	public:
 		CommunicatorCtrl(wxString);
@@ -49,6 +49,7 @@ class CommunicatorCtrl : public wxEvtHandler {
 		wxString getRemoteStation(void);
 
 		void	OnNotifyReceived(wxCommandEvent&);
+		void	OnConnection(wxCommandEvent&);
 };
 
 #endif	/* _COMMUNICATORCTRL_H_ */

@@ -37,6 +37,9 @@
 #include <wx/stdpaths.h>
 #include <wx/string.h>
 
+#include <wx/wxprec.h>
+#include <wx/cmdline.h>
+
 #include "CommunicatorCtrl.h"
 #include "ctassert.h"
 #include "DlgLogViewer.h"
@@ -44,6 +47,8 @@
 #include "MainFrame.h"
 #include "Module.h"
 #include "TrayIcon.h"
+
+#define ANOUBISD_SOCKETNAME	"/var/run/anoubisd.sock"
 
 enum moduleIdx {
 	OVERVIEW = 0,
@@ -59,13 +64,14 @@ compile_time_assert((LAST_MODULE_INDEX == ANOUBIS_MODULESNO), \
 class AnoubisGuiApp : public wxApp
 {
 	private:
+		wxString		 socketParam_;
+		wxStandardPaths		 paths_;
 		MainFrame		*mainFrame;
 		DlgLogViewer		*logViewer_;
 		DlgRuleEditor		*ruleEditor_;
 		CommunicatorCtrl	*comCtrl_;
 		TrayIcon		*trayIcon;
 		Module			*modules_[ANOUBIS_MODULESNO];
-		wxStandardPaths		 paths_;
 
 	public:
 		AnoubisGuiApp(void);
@@ -75,13 +81,16 @@ class AnoubisGuiApp : public wxApp
 		void	close(void);
 		void	sendEvent(wxCommandEvent&);
 		void	sendEvent(wxEventType);
+		void	status(wxString);
 		void	log(wxString);
 		void	alert(wxString);
 
+		void	OnInitCmdLine(wxCmdLineParser&);
+		bool	OnCmdLineParsed(wxCmdLineParser&);
+
 		void	toggleLogViewerVisability(void);
 		void	toggleRuleEditorVisability(void);
-		void	connectToDaemon(bool);
-		void	update(void);
+		void	connectCommunicator(bool);
 		wxIcon *loadIcon(wxString);
 		Module *getModule(enum moduleIdx);
 };

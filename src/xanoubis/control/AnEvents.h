@@ -33,6 +33,13 @@
 BEGIN_DECLARE_EVENT_TYPES()
 	DECLARE_LOCAL_EVENT_TYPE(anEVT_LOGVIEWER_SHOW, wxNewEventType())
 	DECLARE_LOCAL_EVENT_TYPE(anEVT_RULEEDITOR_SHOW, wxNewEventType())
+
+	/*
+	 * A connection to the daemon was sucessfully established.
+	 * This event is intended of been used between the communicator
+	 * thread and communicator control only. The inteter field
+	 * the successfull established connection or an error.
+	 */
 	DECLARE_LOCAL_EVENT_TYPE(anEVT_COM_CONNECTION, wxNewEventType())
 
 	/*

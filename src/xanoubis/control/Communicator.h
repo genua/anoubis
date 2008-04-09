@@ -36,12 +36,13 @@
 
 class Communicator : public wxThread {
 	private:
-		wxEvtHandler		*eventDestination_;
 		wxString		 socketPath_;
 		bool			 isConnected_;
+		wxEvtHandler		*eventDestination_;
 		struct achat_channel	*channel_;
 		struct anoubis_client	*client_;
 
+		void		setConnectionState(bool);
 		achat_rc	connect(void);
 		void		shutdown(void);
 
@@ -49,7 +50,6 @@ class Communicator : public wxThread {
 		Communicator(wxEvtHandler *, wxString);
 
 		virtual void		*Entry(void);
-		bool			 isConnected(void);
 };
 
 #endif	/* _COMMUNICATOR_H_ */
