@@ -745,7 +745,8 @@ dispatch_dev2m(int fd, short event, void *arg)
 
 /* XXX RD syslog? */
 
-		if (hdr->msg_flags & EVENTDEV_NEED_REPLY) {
+		if ((hdr->msg_flags & EVENTDEV_NEED_REPLY) ||
+		    (hdr->msg_source == ANOUBIS_SOURCE_PROCESS)) {
 
 			/* Send event to policy process for handling. */
 			enqueue(&eventq_m2p, msg);

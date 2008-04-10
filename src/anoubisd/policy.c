@@ -289,13 +289,18 @@ dispatch_m2p(int fd, short sig, void *arg)
 			continue;
 		}
 		hdr = (struct eventdev_hdr *)msg->msg;
-		if ((hdr->msg_flags & EVENTDEV_NEED_REPLY) == 0) {
+		if (((hdr->msg_flags & EVENTDEV_NEED_REPLY) == 0) &&
+		    (hdr->msg_source != ANOUBIS_SOURCE_PROCESS)) {
 			free(msg);
 			DEBUG(DBG_TRACE, "<dispatch_m2p (not NEED_REPLY)");
 			continue;
 		}
 
 		reply = policy_engine(ANOUBISD_MSG_EVENTDEV, hdr);
+		if (reply == NULL) {
+			DEBUG(DBG_TRACE, "<dispatch_m2p (no reply)");
+			continue;
+		}
 
 		if (reply->ask) {
 

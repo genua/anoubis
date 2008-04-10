@@ -303,8 +303,6 @@ session_main(struct anoubisd_config *conf, int pipe_m2s[2], int pipe_m2p[2],
 
 	queue_init(headq);
 
-	queue_init(headq);
-
 	/* We catch or block signals rather than ignoring them. */
 	signal_set(&ev_sigterm, SIGTERM, session_sighandler, NULL);
 	signal_set(&ev_sigint, SIGINT, session_sighandler, NULL);

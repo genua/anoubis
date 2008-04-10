@@ -81,7 +81,7 @@ void handle_notify(struct anoubis_client * client, struct anoubis_msg * m)
 		notifies[i].token = token;
 		notifies[i].sent_reply = 1;
 		notifies[i].got_verdict = 0;
-		anoubis_client_notifyreply(client, token, i, i%2); 
+		anoubis_client_notifyreply(client, token, i, i%2);
 		return;
 	}
 	fail_if(opcode == ANOUBIS_N_RESOTHER, "RESOTHER unexpected");

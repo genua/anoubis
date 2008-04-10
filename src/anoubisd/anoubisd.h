@@ -131,10 +131,15 @@ anoubisd_msg_t *msg_factory(int, int);
 u_int32_t debug_flags;
 u_int32_t debug_stderr;
 
-#define DBG_MSG_FD	0x01
-#define DBG_MSG_SEND	0x02
-#define DBG_MSG_RECV	0x04
-#define DBG_TRACE	0x08
-#define DBG_QUEUE	0x10
+#define DBG_MSG_FD	0x0001
+#define DBG_MSG_SEND	0x0002
+#define DBG_MSG_RECV	0x0004
+#define DBG_TRACE	0x0008
+#define DBG_QUEUE	0x0010
+#define DBG_PE		0x0020
+#define DBG_PE_PROC	0x0040
+#define DBG_PE_SFS	0x0080
+#define DBG_PE_ALF	0x0100
+#define DBG_PE_POLICY	0x0200
 
 #endif /* !_ANOUBISD_H */
