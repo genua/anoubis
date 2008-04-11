@@ -39,12 +39,11 @@
 #include <event.h>
 #ifdef OPENBSD
 #include <sys/queue.h>
-#else
-#include "queue.h"
 #endif
 #ifdef LINUX
 #include <grp.h>
 #include <bsdcompat.h>
+#include <queue.h>
 #endif
 #include <pwd.h>
 #include <signal.h>

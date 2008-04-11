@@ -32,6 +32,8 @@ anoubischatdir = src/libanoubischat
 libanoubischat = $(top_builddir)/$(anoubischatdir)/libanoubischat.a
 anoubispsdir = src/libanoubisprotocol
 libanoubisps = $(top_builddir)/$(anoubispsdir)/libanoubisps.a
+libapndir = src/libapn
+libapn = $(top_builddir)/$(libapndir)/libapn.a
 
 
 if STATIC_LINKING
@@ -44,9 +46,10 @@ CPPFLAGS = \
 	   -I$(top_srcdir)/src/anoubisd \
 	   -I$(top_srcdir)/$(anoubischatdir) \
 	   -I$(top_srcdir)/$(anoubispsdir) \
-	   -I$(top_srcdir)/$(anoubispsdir)/server
+	   -I$(top_srcdir)/$(anoubispsdir)/server \
+	   -I$(top_srcdir)/$(libapndir)
 
-anoubisd_LDADD = $(libanoubisps) $(libanoubischat)
+anoubisd_LDADD = $(libanoubisps) $(libanoubischat) $(libapn)
 
 if NEEDBSDCOMPAT
 CPPFLAGS += -I$(top_srcdir)/$(bsdcompatdir)

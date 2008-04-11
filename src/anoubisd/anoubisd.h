@@ -51,8 +51,14 @@
 #define ANOUBISD_SOCKETNAME		"/var/run/anoubisd.sock"
 #define ANOUBISD_PIDFILENAME		"/var/run/anoubisd.pid"
 
+#define ANOUBISD_POLICYDIR		"/etc/anoubis/policy"
+#define ANOUBISD_USERDIR		"user"
+#define ANOUBISD_ADMINDIR		"admin"
+#define ANOUBISD_DEFAULTNAME		"default"
+
 #ifdef LINUX
 #define __dead
+#define UID_MAX	UINT_MAX
 #endif
 
 struct anoubisd_config {
@@ -102,7 +108,6 @@ struct anoubisd_reply {
 };
 typedef struct anoubisd_reply anoubisd_reply_t;
 
-
 enum {
 	PROC_MAIN,
 	PROC_POLICY,
@@ -111,6 +116,7 @@ enum {
 
 pid_t	session_main(struct anoubisd_config *, int[], int[], int[]);
 pid_t	policy_main(struct anoubisd_config *, int[], int[], int[]);
+void	pe_init(void);
 anoubisd_reply_t *policy_engine(int mtype, void *request);
 void	log_init(void);
 void	log_warn(const char *, ...);
@@ -121,6 +127,7 @@ void	fatalx(const char *);	/* XXX RD __dead */
 void	fatal(const char *);	/* XXX RD __dead */
 void	master_terminate(int);	/* XXX RD __dead */
 anoubisd_msg_t *msg_factory(int, int);
+void	pe_dump(void);
 
 #ifndef S_SPLINT_S
 #define DEBUG(flag, ...) {if (flag & debug_flags) log_debug(__VA_ARGS__);}
@@ -141,5 +148,7 @@ u_int32_t debug_stderr;
 #define DBG_PE_SFS	0x0080
 #define DBG_PE_ALF	0x0100
 #define DBG_PE_POLICY	0x0200
+#define DBG_PE_TRACKER	0x0400
+#define DBG_PE_CTX	0x0800
 
 #endif /* !_ANOUBISD_H */

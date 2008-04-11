@@ -476,6 +476,7 @@ __dead static void
 main_shutdown(int error)
 {
 	main_cleanup();
+	log_info("shutting down");
 	exit(error);
 }
 

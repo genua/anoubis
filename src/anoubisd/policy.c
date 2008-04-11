@@ -38,6 +38,7 @@
 #include <pwd.h>
 #include <signal.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
@@ -86,6 +87,9 @@ static void
 policy_sighandler(int sig, short event, void *arg)
 {
 	switch (sig) {
+	case SIGUSR1:
+		pe_dump();
+		break;
 	case SIGTERM:
 	case SIGINT:
 	case SIGQUIT:
@@ -98,7 +102,7 @@ pid_t
 policy_main(struct anoubisd_config *conf, int pipe_m2s[2], int pipe_m2p[2],
     int pipe_s2p[2])
 {
-	struct event	 ev_sigterm, ev_sigint, ev_sigquit;
+	struct event	 ev_sigterm, ev_sigint, ev_sigquit, ev_sigusr1;
 	struct event	 ev_m2p, ev_s2p;
 	struct event	 ev_p2m, ev_p2s;
 	struct event	 ev_timer;
@@ -123,7 +127,7 @@ policy_main(struct anoubisd_config *conf, int pipe_m2s[2], int pipe_m2p[2],
 	if ((pw = getpwnam(ANOUBISD_USER)) == NULL)
 		fatal("getpwnam");
 
-	if (chroot(pw->pw_dir) == -1)
+	if (chroot(ANOUBISD_POLICYDIR) == -1)
 		fatal("chroot");
 	if (chdir("/") == -1)
 		fatal("chdir");
@@ -147,14 +151,17 @@ policy_main(struct anoubisd_config *conf, int pipe_m2s[2], int pipe_m2p[2],
 	signal_set(&ev_sigterm, SIGTERM, policy_sighandler, NULL);
 	signal_set(&ev_sigint, SIGINT, policy_sighandler, NULL);
 	signal_set(&ev_sigquit, SIGQUIT, policy_sighandler, NULL);
+	signal_set(&ev_sigusr1, SIGUSR1, policy_sighandler, NULL);
 	signal_add(&ev_sigterm, NULL);
 	signal_add(&ev_sigint, NULL);
 	signal_add(&ev_sigquit, NULL);
+	signal_add(&ev_sigusr1, NULL);
 
 	sigfillset(&mask);
 	sigdelset(&mask, SIGTERM);
 	sigdelset(&mask, SIGINT);
 	sigdelset(&mask, SIGQUIT);
+	sigdelset(&mask, SIGUSR1);
 	sigprocmask(SIG_SETMASK, &mask, NULL);
 
 	close(pipe_m2p[0]);
@@ -199,6 +206,9 @@ policy_main(struct anoubisd_config *conf, int pipe_m2s[2], int pipe_m2p[2],
 	ev_info.tv = &tv;
 	evtimer_set(&ev_timer, &dispatch_timer, &ev_info);
 	event_add(&ev_timer, &tv);
+
+	/* Policy engine */
+	pe_init();
 
 	DEBUG(DBG_TRACE, "policy event loop");
 	if (event_dispatch() == -1)
