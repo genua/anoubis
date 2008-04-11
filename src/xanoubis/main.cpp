@@ -237,8 +237,8 @@ AnoubisGuiApp::connectCommunicator(bool doConnect)
 	}
 }
 
-wxIcon *
-AnoubisGuiApp::loadIcon(wxString iconName)
+wxString
+AnoubisGuiApp::getIconPath(wxString iconName)
 {
 	wxString iconFileName;
 
@@ -258,8 +258,15 @@ AnoubisGuiApp::loadIcon(wxString iconName)
 	 * dialog, complaining about missing icons itself. But maybe a logging
 	 * message should be generated when logging will been implemented.
 	 */
-	return (new wxIcon(iconFileName, wxBITMAP_TYPE_PNG));
+	return iconFileName;
 }
+
+wxIcon *
+AnoubisGuiApp::loadIcon(wxString iconName)
+{
+	return (new wxIcon(getIconPath(iconName), wxBITMAP_TYPE_PNG));
+}
+
 
 Module *
 AnoubisGuiApp::getModule(enum moduleIdx idx)

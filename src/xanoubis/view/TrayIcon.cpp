@@ -27,11 +27,16 @@
 
 #include <wx/icon.h>
 #include <wx/string.h>
+
 #include <libnotify/notify.h>
 
 #include "AnEvents.h"
 #include "main.h"
 #include "TrayIcon.h"
+
+#define MAX_MESSAGE	128
+#define MAX_PATH	1024
+#define ONE_SECOND	1000
 
 TrayIcon::TrayIcon(void)
 {
@@ -51,6 +56,8 @@ TrayIcon::TrayIcon(void)
 	    wxCommandEventHandler(TrayIcon::OnOpenAlerts), NULL, this);
 	Connect(anEVT_OPEN_ESCALATIONS,
 	    wxCommandEventHandler(TrayIcon::OnOpenEscalations), NULL, this);
+	Connect(anEVT_LOGVIEWER_SHOW,
+	    wxCommandEventHandler(TrayIcon::OnLogViewerShow), NULL, this);
 }
 
 TrayIcon::~TrayIcon(void)
@@ -82,6 +89,21 @@ TrayIcon::OnOpenEscalations(wxCommandEvent& event)
 	update();
 }
 
+/*
+ * XXX ST: #422
+ * [MPI] has to decide if we clear Alerts onClose() of the LogViewer or on open.
+ * For now we clear the Alert Events onClose()
+ */
+void
+TrayIcon::OnLogViewerShow(wxCommandEvent& event)
+{
+	if(!event.GetInt())
+	{
+		messageAlertCount_ = 0;
+		update();
+	}
+}
+
 void
 TrayIcon::SetConnectedDaemon(wxString daemon)
 {
@@ -93,25 +115,27 @@ void
 TrayIcon::update(void)
 {
 	wxString tooltip;
-	wxIcon	*icon;
-
+	wxIcon *icon;
+	char message[MAX_MESSAGE];
 	tooltip = wxT("Messages: ");
 
 	if (messageEscalationCount_ > 0) {
 		tooltip += wxString::Format(wxT("%d\n"),
 		    messageEscalationCount_);
 		icon = iconMsgQuestion_;
-		if (!systemNotify("ESCALATION", "Escalations received\n",
+		sprintf(message, "Received Escalations: %d\n",
+		    messageEscalationCount_);
+		if (!systemNotify("ESCALATION", message,
 		    NOTIFY_URGENCY_CRITICAL, 8))
-			wxGetApp().log(wxT("Couldn't send Escalation"));
+			wxGetApp().log(wxT("Couldn't send Escalation Notify"));
 	}
 
 	if (messageEscalationCount_ == 0 && messageAlertCount_ > 0) {
 		tooltip += wxString::Format(wxT("%d\n"), messageAlertCount_);
 		icon = iconMsgProblem_;
-		if (!systemNotify("ALERT", "Alerts received\n",
-		    NOTIFY_URGENCY_NORMAL, 8))
-			wxGetApp().log(wxT("Couldn't send Alert"));
+		sprintf(message, "Received Alerts: %d\n", messageAlertCount_);
+		if (!systemNotify("ALERT", message, NOTIFY_URGENCY_NORMAL, 8))
+			wxGetApp().log(wxT("Couldn't send Alert Notify"));
 	} else {
 		tooltip = wxT("No messages\n");
 		icon = iconNormal_;
@@ -132,24 +156,49 @@ bool
 TrayIcon::systemNotify(const gchar *module, const gchar *message,
     NotifyUrgency priority, const int timeout)
 {
+	char *uri = NULL;
+	char buffer[MAX_PATH];
+	wxString ipath = wxT("file://");
+
 	NotifyNotification *notification;
 	NotifyUrgency messagePriority = priority;
-	if(!messagePriority)
-		messagePriority = NOTIFY_URGENCY_NORMAL;
 
+	if(!messagePriority)
+		messagePriority = NOTIFY_URGENCY_LOW;
+
+	/* determine the icon used for systemNotify */
+	if (messagePriority == NOTIFY_URGENCY_LOW)
+		ipath += wxGetApp().getIconPath(_T("ModAnoubis_black_48.png"));
+	if (messagePriority == NOTIFY_URGENCY_NORMAL)
+		ipath += wxGetApp().getIconPath(_T("ModAnoubis_alert_48.png"));
+	if (messagePriority == NOTIFY_URGENCY_CRITICAL)
+		ipath += wxGetApp().getIconPath(_T("ModAnoubis_question_48.png")
+		    );
+
+#ifdef LINUX
+	strncpy(buffer, (const char*)ipath.mb_str(wxConvUTF8),
+	    sizeof(buffer) - 1);
+#endif
+#ifdef OPENBSD
+	strlcpy(buffer, (const char*)ipath.mb_str(wxConvUTF8), sizeof(buffer));
+#endif
+	uri = buffer;
+
+	/* set notification properties */
 	if (message != NULL && timeout > 0)
 	{
 		/* mandatory initialisation call */
 		(module != NULL) ? notify_init(module) : notify_init("Anoubis");
 
 		if (module != NULL)
-			notification = notify_notification_new (module, message,
-					NULL, NULL);
+			notification = notify_notification_new(module, message,
+			    uri, NULL);
 		else
 			notification = notify_notification_new("Anoubis",
-					message, NULL, NULL);
+			    message, uri, NULL);
 
-		notify_notification_set_timeout(notification, 1000 * (timeout));
+		notify_notification_set_timeout(notification, ONE_SECOND *
+		    (timeout));
 		notify_notification_set_urgency(notification, messagePriority);
 
 		if (!notify_notification_show (notification, NULL))
@@ -161,6 +210,7 @@ TrayIcon::systemNotify(const gchar *module, const gchar *message,
 
 	/* free notification object */
 	g_object_unref(G_OBJECT(notification));
+	notify_uninit();
 
 	return true;
 }
