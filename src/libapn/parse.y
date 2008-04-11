@@ -380,6 +380,7 @@ alffilterrule	: action alffilterspec		{
 		;
 
 alffilterspec	: netaccess log af proto hosts	{
+			$$.netaccess = $1;
 			$$.log = $2;
 			$$.af = $3;
 			$$.proto = $4;
