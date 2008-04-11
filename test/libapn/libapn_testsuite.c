@@ -28,6 +28,8 @@
 #include <check.h>
 
 extern TCase *libapn_testcase_errorcodes(void);
+extern TCase *libapn_testcase_crash_apn_free_ruleset(void);
+extern TCase *libapn_testcase_crash_parse_files(void);
 
 Suite *
 libapn_testsuite(void)
@@ -36,7 +38,13 @@ libapn_testsuite(void)
 
 	/* sessions test case */
 	TCase *tc_errorcodes = libapn_testcase_errorcodes();
+	TCase *tc_crash_apn_free_ruleset =
+	    libapn_testcase_crash_apn_free_ruleset();
+	TCase *tc_crash_parse_files = libapn_testcase_crash_parse_files();
+
 	suite_add_tcase(s, tc_errorcodes);
+	suite_add_tcase(s, tc_crash_apn_free_ruleset);
+	suite_add_tcase(s, tc_crash_parse_files);
 
 	return (s);
 }

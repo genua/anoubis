@@ -120,6 +120,9 @@ apn_add_alfrule(struct apn_rule *rule, struct apn_ruleset *ruleset)
 {
 	int ret = 0;
 
+	if (ruleset == NULL || rule == NULL)
+		return (1);
+
 	TAILQ_INSERT_TAIL(&ruleset->alf_queue, rule, entry);
 
 	if (ruleset->flags & APN_FLAG_VERBOSE)
@@ -140,6 +143,9 @@ int
 apn_print_rule(struct apn_rule *rule)
 {
 	int	ret = 0;
+
+	if (rule == NULL)
+		return (1);
 
 	if ((ret = apn_print_app(rule->app)) != 0)
 		return (ret);
@@ -166,10 +172,14 @@ apn_print_rule(struct apn_rule *rule)
 void
 apn_print_errors(struct apn_ruleset *rs)
 {
-	struct apnerr_queue	*errq = &rs->err_queue;
+	struct apnerr_queue	*errq;
 	struct apn_errmsg	*msg;
 
-	if (TAILQ_EMPTY(errq))
+	if (rs == NULL)
+		return;
+
+	errq = &rs->err_queue;
+	if (errq == NULL || TAILQ_EMPTY(errq))
 		return;
 
 	TAILQ_FOREACH(msg, errq, entry)
@@ -188,6 +198,9 @@ apn_free_ruleset(struct apn_ruleset *rs)
 	struct apnrule_queue	*alfq = &rs->alf_queue;
 	struct apnrule_queue	*sfsq = &rs->sfs_queue;
 	struct apnvar_queue	*varq = &rs->var_queue;
+
+	if (rs == NULL)
+		return;
 
 	apn_free_errq(errq);
 	apn_free_ruleq(alfq);
@@ -400,6 +413,8 @@ apn_print_address(struct apn_addr *addr)
 {
 	char	buffer[256];
 
+	if (addr == NULL)
+		return (1);
 	if (inet_ntop(addr->af, &addr->apa.addr32, buffer, sizeof(buffer))
 	    == NULL)
 		return (1);
@@ -537,6 +552,9 @@ apn_print_hash(char *hash, int len)
 {
 	int	i;
 
+	if (hash == NULL)
+		return;
+
 	for (i = 0; i < len; i++)
 		printf("%2.2x", (unsigned char)hash[i]);
 }
@@ -546,7 +564,7 @@ apn_free_errq(struct apnerr_queue *errq)
 {
 	struct apn_errmsg	*msg, *next;
 
-	if (TAILQ_EMPTY(errq))
+	if (errq == NULL || TAILQ_EMPTY(errq))
 		return;
 	for (msg = TAILQ_FIRST(errq); msg != TAILQ_END(varq); msg = next) {
 		next = TAILQ_NEXT(msg, entry);
@@ -561,7 +579,7 @@ apn_free_ruleq(struct apnrule_queue *ruleq)
 {
 	struct apn_rule	*rule, *next;
 
-	if (TAILQ_EMPTY(ruleq))
+	if (ruleq == NULL || TAILQ_EMPTY(ruleq))
 		return;
 	for (rule = TAILQ_FIRST(ruleq); rule != TAILQ_END(ruleq); rule = next) {
 		next = TAILQ_NEXT(rule, entry);
@@ -575,7 +593,7 @@ apn_free_varq(struct apnvar_queue *varq)
 {
 	struct var	*var, *next;
 
-	if (TAILQ_EMPTY(varq))
+	if (varq == NULL || TAILQ_EMPTY(varq))
 		return;
 	for (var = TAILQ_FIRST(varq); var != TAILQ_END(varq); var = next) {
 		next = TAILQ_NEXT(var, entry);
@@ -610,6 +628,9 @@ apn_free_rule(struct apn_rule *rule)
 static void
 apn_free_var(struct var *var)
 {
+	if (var == NULL)
+		return;
+
 	switch (var->type) {
 	case VAR_APPLICATION:
 		apn_free_app((struct apn_app *)var->value);

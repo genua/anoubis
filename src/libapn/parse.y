@@ -61,7 +61,7 @@ static struct file {
 	int			 lineno;
 	int			 errors;
 } *file;
-TAILQ_HEAD(files, file)		 files = TAILQ_HEAD_INITIALIZER(files);
+TAILQ_HEAD(files, file)		 files;
 
 int		 parse_rules(const char *, struct apn_ruleset *);
 struct file	*pushfile(const char *, int);
@@ -1188,8 +1188,9 @@ parse_rules(const char *filename, struct apn_ruleset *apnrspx)
 
 	apnrsp = apnrspx;
 
+	TAILQ_INIT(&files);
 	if ((file = pushfile(filename, 1)) == NULL) {
-		return (-1);
+		return (1);
 	}
 
 	yyparse();
