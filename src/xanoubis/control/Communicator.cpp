@@ -73,13 +73,13 @@ Communicator::Communicator(wxEvtHandler *eventDestination, wxString socketPath)
 {
 	socketPath_ = socketPath;
 	eventDestination_ = eventDestination;
-	isConnected_ = false;
+	isConnected_ = CONNECTION_DISCONNECTED;
 	channel_ = NULL;
 	client_  = NULL;
 }
 
 void
-Communicator::setConnectionState(bool state)
+Communicator::setConnectionState(connectionStateType state)
 {
 	wxCommandEvent event(anEVT_COM_CONNECTION);
 
@@ -149,9 +149,9 @@ Communicator::connect(void)
 }
 
 void
-Communicator::shutdown(void)
+Communicator::shutdown(connectionStateType state)
 {
-	setConnectionState(false);
+	setConnectionState(state);
 
 	if (client_ != NULL) {
 		anoubis_client_close(client_);
@@ -177,19 +177,19 @@ Communicator::Entry(void)
 	startDeRegistration = COMMUNICATOR_FLAG_NONE;
 
 	if (connect() != ACHAT_RC_OK) {
-		shutdown();
+		shutdown(CONNECTION_FAILED);
 		return (NULL);
 	}
 
 	client_ = anoubis_client_create(channel_);
 	if (client_ == NULL) {
-		shutdown();
+		shutdown(CONNECTION_FAILED);
 		return (NULL);
 	}
 
 	currTa = anoubis_client_connect_start(client_, ANOUBIS_PROTO_BOTH);
 	if (currTa == NULL) {
-		shutdown();
+		shutdown(CONNECTION_FAILED);
 		return (NULL);
 	}
 
@@ -204,7 +204,7 @@ Communicator::Entry(void)
 			currTa = NULL;
 			if (startRegistration == COMMUNICATOR_FLAG_PROG) {
 				startRegistration = COMMUNICATOR_FLAG_DONE;
-				setConnectionState(true);
+				setConnectionState(CONNECTION_CONNECTED);
 			}
 			if (startDeRegistration == COMMUNICATOR_FLAG_PROG) {
 				startDeRegistration = COMMUNICATOR_FLAG_DONE;
@@ -262,7 +262,7 @@ Communicator::Entry(void)
 		}
 	}
 
-	shutdown();
+	shutdown(CONNECTION_DISCONNECTED);
 
 	return (NULL);
 }

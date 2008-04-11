@@ -35,18 +35,18 @@
 
 class CommunicatorCtrl : public wxEvtHandler {
 	private:
-		wxString	 socketPath_;
-		bool		 isConnected_;
-		Communicator	*com_;
+		wxString		socketPath_;
+		connectionStateType	connectionState_;
+		Communicator		*com_;
 
 	public:
 		CommunicatorCtrl(wxString);
 		~CommunicatorCtrl(void);
 
-		void	 connect(void);
-		void	 disconnect(void);
-		bool	 isConnected(void);
-		wxString getRemoteStation(void);
+		void		connect(void);
+		void		disconnect(void);
+		bool		isConnected(void);
+		wxString	getRemoteStation(void);
 
 		void	OnNotifyReceived(wxCommandEvent&);
 		void	OnConnection(wxCommandEvent&);

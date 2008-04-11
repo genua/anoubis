@@ -39,7 +39,7 @@
 CommunicatorCtrl::CommunicatorCtrl(wxString socketPath)
 {
 	socketPath_	= socketPath;
-	isConnected_	= false;
+	connectionState_	= CONNECTION_DISCONNECTED;
 	com_		= NULL;
 
 	Connect(anEVT_COM_NOTIFYRECEIVED,
@@ -50,7 +50,7 @@ CommunicatorCtrl::CommunicatorCtrl(wxString socketPath)
 
 CommunicatorCtrl::~CommunicatorCtrl(void)
 {
-	if (isConnected_) {
+	if (connectionState_ == CONNECTION_CONNECTED) {
 		disconnect();
 	}
 }
@@ -60,7 +60,7 @@ CommunicatorCtrl::connect(void)
 {
 	wxThreadError rc;
 
-	if (!isConnected_) {
+	if (connectionState_ == CONNECTION_DISCONNECTED) {
 		/*
 		 * If this is a reconnect, the previous object referenced by
 		 * com_, was deleted by 'Delete()' (which also removed the
@@ -71,7 +71,7 @@ CommunicatorCtrl::connect(void)
 		rc = com_->Create();
 		if (rc != wxTHREAD_NO_ERROR) {
 			wxGetApp().alert(
-			    wxT("Error: couldn't crate communication thread"));
+			    wxT("Error: couldn't create communication thread"));
 			com_->Delete();
 			return;
 		}
@@ -93,7 +93,7 @@ CommunicatorCtrl::disconnect(void)
 {
 	wxThreadError rc;
 
-	if (isConnected_) {
+	if (connectionState_ == CONNECTION_CONNECTED) {
 		rc = com_->Delete(); /* no explicite 'delete com_' needed */
 		if  (rc != wxTHREAD_NO_ERROR) {
 			wxGetApp().alert(
@@ -107,21 +107,29 @@ CommunicatorCtrl::disconnect(void)
 bool
 CommunicatorCtrl::isConnected(void)
 {
-	return (isConnected_);
+	if (connectionState_ == CONNECTION_CONNECTED) {
+		return true;
+	} else {
+		return false;
+	}
 }
 
 wxString
 CommunicatorCtrl::getRemoteStation(void)
 {
-	if (isConnected_) {
+	wxString result;
+
+	if (connectionState_ == CONNECTION_CONNECTED) {
 		/*
 		 * XXX: currently only connections via unix domain socket
-		 * to localhost are supported. -- ch
+		 * to localhost are supported. -- [CH]
 		 */
-		return (wxT("localhost"));
+		result = wxT("localhost");
 	} else {
-		return (wxT("none"));
+		result = wxT("none");
 	}
+
+	return result;
 }
 
 void
@@ -151,22 +159,29 @@ CommunicatorCtrl::OnNotifyReceived(wxCommandEvent& event)
 void
 CommunicatorCtrl::OnConnection(wxCommandEvent& event)
 {
-	wxCommandEvent	 remoteStationEvent(anEVT_COM_REMOTESTATION);
-	wxString	 logMessage;
-	wxString	*host;
+	wxCommandEvent	remoteStationEvent(anEVT_COM_REMOTESTATION);
+	wxString	logMessage;
+	wxString        *host = NULL;
 
-	isConnected_ = event.GetInt();
-
-	if (isConnected_) {
+	switch(event.GetInt()) {
+	case CONNECTION_CONNECTED:
 		host = new wxString(wxT("localhost"));
 		logMessage = wxT("Connection established with localhost:")
 		    + socketPath_;
-	} else {
+		wxGetApp().log(logMessage);
+		break;
+	case CONNECTION_DISCONNECTED:
 		host = new wxString(wxT("none"));
-		logMessage = wxT("Connection closed");
+		logMessage = wxT("Disconnected from localhost");
+		wxGetApp().log(logMessage);
+		break;
+	case CONNECTION_FAILED:
+		host = new wxString(wxT("none"));
+		logMessage = wxT("Connection to localhost failed!");
+		wxGetApp().alert(logMessage);
+		break;
 	}
 	remoteStationEvent.SetClientObject((wxClientData*)host);
 	wxGetApp().sendEvent(remoteStationEvent);
-	wxGetApp().log(logMessage);
 	wxGetApp().status(logMessage);
 }

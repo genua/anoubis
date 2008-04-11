@@ -34,17 +34,23 @@
 #include <anoubischat.h>
 #include <anoubis_client.h>
 
+enum connectionStateType {
+	CONNECTION_CONNECTED = 0,
+	CONNECTION_DISCONNECTED,
+	CONNECTION_FAILED
+};
+
 class Communicator : public wxThread {
 	private:
 		wxString		 socketPath_;
-		bool			 isConnected_;
+		connectionStateType	isConnected_;
 		wxEvtHandler		*eventDestination_;
 		struct achat_channel	*channel_;
 		struct anoubis_client	*client_;
 
-		void		setConnectionState(bool);
+		void		setConnectionState(connectionStateType);
 		achat_rc	connect(void);
-		void		shutdown(void);
+		void		shutdown(connectionStateType);
 
 	public:
 		Communicator(wxEvtHandler *, wxString);

@@ -37,8 +37,11 @@ BEGIN_DECLARE_EVENT_TYPES()
 	/*
 	 * A connection to the daemon was sucessfully established.
 	 * This event is intended of been used between the communicator
-	 * thread and communicator control only. The inteter field
-	 * the successfull established connection or an error.
+	 * thread and communicator control only.
+	 * The integer field contains the connectionState enum stating:
+	 * a successfull connection	=> CONNECTION_CONNECTED
+	 * normal disconnect		=> CONNECTION_DISCONNECTED
+	 * an error (failed to connect)	=> CONNECTION_FAILED
 	 */
 	DECLARE_LOCAL_EVENT_TYPE(anEVT_COM_CONNECTION, wxNewEventType())
 
