@@ -3,5 +3,11 @@
 @newuser _anoubisd:593:_anoubisd:daemon:anoubisd user:/var/empty:/sbin/nologin
 @man man/man8/anoubisd.8
 @man man/man8/anoubisctl.8
+@exec mkdir -p /etc/anoubis/policy/user /etc/anoubis/policy/admin
+@exec chown _anoubisd:_anoubisd /etc/anoubis/policy/user
+@exec chown _anoubisd:_anoubisd /etc/anoubis/policy/admin
+@exec chown _anoubisd:_anoubisd /etc/anoubis/policy
+@exec chmod 700 /etc/anoubis/policy /etc/anoubis/policy/admin 
+@exec chmod 700 /etc/anoubis/policy/user
 sbin/anoubisd
 sbin/anoubisctl

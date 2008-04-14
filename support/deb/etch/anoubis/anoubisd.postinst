@@ -1,15 +1,31 @@
 #!/bin/sh
 set -e
 
-if ! getent passwd _anoubisd >/dev/null; then
-	adduser --quiet --system --no-create-home --home /var/run/anoubisd \
-	    --disabled-login --group --force-badname _anoubisd
+if [ "$1" != configure ]
+	then
+	exit 0
 fi
 
+ANOUBIS_USER=_anoubisd
+POLICY_DIR=/etc/anoubis/policy
+
+if ! getent passwd _anoubisd >/dev/null; then
+	adduser --quiet --system --no-create-home --home /var/run/anoubisd \
+	    --disabled-login --group --force-badname $ANOUBIS_USER
+fi
+
+setperms () {
+	if ! dpkg-statoverride --list $1 > /dev/null 2>&1 ; then
+	    dpkg-statoverride --update --add $ANOUBIS_USER $ANOUBIS_USER 0700 $1
+	fi
+}
+
+setperms $POLICY_DIR
+setperms $POLICY_DIR/user
+setperms $POLICY_DIR/admin
+
 # migrate broken startlink
-if [ "$1" = "configure" ] &&
-   [ -n "$2" ] &&
-   dpkg --compare-versions $2 lt 10.700.D045 &&
+if [ -n "$2" ] &&
    [ -L /etc/rcS.d/S36anoubisd ]
 then
 	mv /etc/rcS.d/S36anoubisd /etc/rcS.d/S37anoubisd

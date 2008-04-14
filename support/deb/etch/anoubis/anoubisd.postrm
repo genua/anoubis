@@ -1,0 +1,15 @@
+#!/bin/sh
+
+set -e
+
+POLICY_DIR=/etc/anoubis/policy
+
+case "$1" in
+	purge)
+		dpkg-statoverride --remove $POLICY_DIR       || true
+		dpkg-statoverride --remove $POLICY_DIR/user  || true
+		dpkg-statoverride --remove $POLICY_DIR/admin || true
+		;;
+esac
+
+#DEBHELPER#
