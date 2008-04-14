@@ -14,6 +14,6 @@ Description: Central daemon of the Anoubis Security Suite
 
 Package: xanoubis
 Architecture: any
-Depends: ${shlibs:Depends}
+Depends: ${shlibs:Depends}, notification-daemon
 Description: Graphical user interface of the Anoubis Security Suite
  XXX:  long description
