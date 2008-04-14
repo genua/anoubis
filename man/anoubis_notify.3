@@ -53,11 +53,13 @@
 .Ft int
 .Fn anoubis_notify_unregister "struct anoubis_notify_group * g" "uid_t uid" "task_cookie_t task" "u_int32_t ruleid" "u_int32_t subsystem"
 .Ft void
-.Fn "(*anoubis_notify_callback_t)" "struct anoubis_notify_head" "int verdict" "void *cbdata"
+.Fn "(*anoubis_notify_callback_t)" "struct anoubis_notify_head * head" "int verdict" "void * cbdata"
 .Ft struct anoubis_notify_head *
 .Fn anoubis_notify_create_head "task_cookie_t task" "struct anoubis_msg * m" "anoubis_notify_callback_t finish" "void * cbdata"
 .Ft void
 .Fn anoubis_notify_destroy_head "struct anoubis_notify_head * h"
+.Ft int
+.Fn anoubis_notify "struct anoubis_notify_group * ng" "struct anoubis_notify_head * head"
 .Ft int
 .Fn anoubis_notify_answer "struct anoubis_notify_group * ng" "anoubis_token_t token" "int verdict" "int delegate"
 .Ft int
