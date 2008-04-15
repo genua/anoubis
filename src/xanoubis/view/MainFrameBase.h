@@ -56,13 +56,14 @@
 #define ID_MAINFRAME 1500
 #define ID_MENUBAR 1501
 #define ID_MIFILECONNECT 1502
-#define ID_MIFILEQUIT 1503
-#define ID_MIEDITPREFERENCES 1504
-#define ID_MITOOLSRULEEDITOR 1505
-#define ID_MITOOLSLOGVIEWER 1506
-#define ID_MIHELPHELP 1507
-#define ID_MIHELPABOUT 1508
-#define ID_TOOLBAR 1509
+#define ID_MIFILECLOSE 1503
+#define ID_MIFILEQUIT 1504
+#define ID_MIEDITPREFERENCES 1505
+#define ID_MITOOLSRULEEDITOR 1506
+#define ID_MITOOLSLOGVIEWER 1507
+#define ID_MIHELPHELP 1508
+#define ID_MIHELPABOUT 1509
+#define ID_TOOLBAR 1510
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Class MainFrameBase
@@ -89,7 +90,9 @@ class MainFrameBase : public wxFrame
 		wxStaticLine* li_MainLineRight;
 		
 		// Virtual event handlers, overide them in your derived class
+		virtual void OnClose( wxCloseEvent& event ){ event.Skip(); }
 		virtual void OnMbFileConnectSelect( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnMbFileCloseSelect( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnMbFileQuitSelect( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnMbEditPreferencesSelect( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnMbToolsRuleEditorSelect( wxCommandEvent& event ){ event.Skip(); }

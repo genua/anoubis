@@ -72,7 +72,7 @@
             <event name="OnActivate"></event>
             <event name="OnActivateApp"></event>
             <event name="OnChar"></event>
-            <event name="OnClose"></event>
+            <event name="OnClose">OnClose</event>
             <event name="OnEnterWindow"></event>
             <event name="OnEraseBackground"></event>
             <event name="OnHibernate"></event>
@@ -142,7 +142,7 @@
                 <event name="OnSetFocus"></event>
                 <event name="OnSize"></event>
                 <event name="OnUpdateUI"></event>
-                <object class="wxMenu" expanded="0">
+                <object class="wxMenu" expanded="1">
                     <property name="label">File</property>
                     <property name="name">me_menubarFile</property>
                     <property name="permission">protected</property>
@@ -166,6 +166,20 @@
                         <property name="checked">0</property>
                         <property name="enabled">1</property>
                         <property name="help"></property>
+                        <property name="id">ID_MIFILECLOSE</property>
+                        <property name="kind">wxITEM_NORMAL</property>
+                        <property name="label">Close</property>
+                        <property name="name">mi_mbFileClose</property>
+                        <property name="shortcut"></property>
+                        <property name="unchecked_bitmap"></property>
+                        <event name="OnMenuSelection">OnMbFileCloseSelect</event>
+                        <event name="OnUpdateUI"></event>
+                    </object>
+                    <object class="wxMenuItem" expanded="1">
+                        <property name="bitmap"></property>
+                        <property name="checked">0</property>
+                        <property name="enabled">1</property>
+                        <property name="help"></property>
                         <property name="id">ID_MIFILEQUIT</property>
                         <property name="kind">wxITEM_NORMAL</property>
                         <property name="label">Quit</property>
@@ -176,7 +190,7 @@
                         <event name="OnUpdateUI"></event>
                     </object>
                 </object>
-                <object class="wxMenu" expanded="1">
+                <object class="wxMenu" expanded="0">
                     <property name="label">Edit</property>
                     <property name="name">me_menubarEdit</property>
                     <property name="permission">protected</property>
@@ -195,7 +209,7 @@
                         <event name="OnUpdateUI"></event>
                     </object>
                 </object>
-                <object class="wxMenu" expanded="1">
+                <object class="wxMenu" expanded="0">
                     <property name="label">Tools</property>
                     <property name="name">me_menubarTools</property>
                     <property name="permission">protected</property>

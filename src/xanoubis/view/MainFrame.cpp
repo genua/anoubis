@@ -54,6 +54,8 @@ MainFrame::MainFrame(wxWindow *parent) : MainFrameBase(parent)
 	    wxCommandEventHandler(MainFrame::onLogViewerShow), NULL, this);
 	Connect(anEVT_RULEEDITOR_SHOW,
 	    wxCommandEventHandler(MainFrame::onRuleEditorShow), NULL, this);
+	Connect(anEVT_MAINFRAME_SHOW,
+	    wxCommandEventHandler(MainFrame::onMainFrameShow), NULL, this);
 	Connect(anEVT_OPEN_ALERTS,
 	    wxCommandEventHandler(MainFrame::OnOpenAlerts), NULL, this);
 	Connect(anEVT_OPEN_ESCALATIONS,
@@ -116,6 +118,12 @@ void
 MainFrame::onLogViewerShow(wxCommandEvent& event)
 {
 	an_menubar->Check(ID_MITOOLSLOGVIEWER, event.GetInt());
+}
+
+void
+MainFrame::onMainFrameShow(wxCommandEvent& event)
+{
+	this->Show();
 }
 
 void
@@ -208,13 +216,27 @@ MainFrame::OnMbHelpAboutSelect(wxCommandEvent& event)
 }
 
 void
+MainFrame::OnMbFileCloseSelect(wxCommandEvent&)
+{
+	this->Hide();
+}
+
+void
 MainFrame::OnMbFileQuitSelect(wxCommandEvent& event)
 {
+	wxGetApp().quit();
+}
+
+bool
+MainFrame::OnQuit(void)
+{
 	uint8_t answer = wxMessageBox(_("Really Quit Anoubis?"), _("Confirm"),
-	    wxYES_NO, this);
-	if ( answer == wxYES ) {
-		this->Close(true);
-		(wxGetApp()).close();
+			wxYES_NO, this);
+
+	if (answer == wxYES) {
+		return true;
+	} else {
+		return false;
 	}
 }
 
@@ -250,4 +272,10 @@ void
 MainFrame::OnMbEditPreferencesSelect(wxCommandEvent& event)
 {
 	printf("Menu Item Edit->Preferences selected\n");
+}
+
+void
+MainFrame::OnClose(wxCloseEvent& event)
+{
+	this->Hide();
 }

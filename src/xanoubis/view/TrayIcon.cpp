@@ -26,6 +26,7 @@
  */
 
 #include <wx/icon.h>
+#include <wx/event.h>
 #include <wx/string.h>
 
 #include <libnotify/notify.h>
@@ -37,6 +38,11 @@
 #define MAX_MESSAGE	128
 #define MAX_PATH	1024
 #define ONE_SECOND	1000
+
+BEGIN_EVENT_TABLE(TrayIcon, wxTaskBarIcon)
+	EVT_MENU(GUI_EXIT, TrayIcon::OnGuiExit)
+	EVT_MENU(GUI_RESTORE, TrayIcon::OnGuiRestore)
+END_EVENT_TABLE()
 
 TrayIcon::TrayIcon(void)
 {
@@ -105,10 +111,35 @@ TrayIcon::OnLogViewerShow(wxCommandEvent& event)
 }
 
 void
+TrayIcon::OnGuiRestore(wxCommandEvent& event)
+{
+	wxCommandEvent  showEvent(anEVT_MAINFRAME_SHOW);
+	showEvent.SetInt(true);
+	wxGetApp().sendEvent(showEvent);
+}
+
+void
+TrayIcon::OnGuiExit(wxCommandEvent& event)
+{
+	wxGetApp().quit();
+}
+
+void
 TrayIcon::SetConnectedDaemon(wxString daemon)
 {
 	daemon_ = daemon;
 	update();
+}
+
+wxMenu*
+TrayIcon::CreatePopupMenu(void)
+{
+	wxMenu *menue = new wxMenu;
+
+	menue->Append(GUI_RESTORE, wxT("&Restore xanoubis"));
+	menue->Append(GUI_EXIT, wxT("E&xit xanoubis"));
+
+	return menue;
 }
 
 void

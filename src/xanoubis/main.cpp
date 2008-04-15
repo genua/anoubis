@@ -66,15 +66,23 @@ AnoubisGuiApp::AnoubisGuiApp(void)
 
 AnoubisGuiApp::~AnoubisGuiApp(void)
 {
-	/* mainFrame not handled here, 'cause object already destroyed */
+	/* mainFrame not handled here, coz object already destroyed */
 	if (trayIcon != NULL)
 		delete trayIcon;
 }
 
 void
-AnoubisGuiApp::close(void)
+AnoubisGuiApp::quit(void)
 {
-	trayIcon->RemoveIcon();
+	bool result = mainFrame->OnQuit();
+
+	if(result) {
+		trayIcon->RemoveIcon();
+		mainFrame->Destroy();
+		delete logViewer_;
+		delete ruleEditor_;
+		delete comCtrl_;
+	}
 }
 
 bool AnoubisGuiApp::OnInit()

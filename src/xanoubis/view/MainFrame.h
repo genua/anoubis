@@ -51,13 +51,15 @@ class MainFrame : public MainFrameBase
 
 		void onRuleEditorShow(wxCommandEvent&);
 		void onLogViewerShow(wxCommandEvent&);
+		void onMainFrameShow(wxCommandEvent&);
 
 	protected:
 		AnStatusBar *an_statusbar;
 
 		void OnMbHelpAboutSelect(wxCommandEvent&);
-		void OnMbFileQuitSelect(wxCommandEvent&);
 		void OnMbFileConnectSelect(wxCommandEvent&);
+		void OnMbFileCloseSelect(wxCommandEvent&);
+		void OnMbFileQuitSelect(wxCommandEvent&);
 		void OnMbEditPreferencesSelect(wxCommandEvent&);
 		void OnMbToolsRuleEditorSelect(wxCommandEvent&);
 		void OnMbToolsLogViewerSelect(wxCommandEvent&);
@@ -66,12 +68,14 @@ class MainFrame : public MainFrameBase
 		void OnRemoteStation(wxCommandEvent&);
 		void OnOpenAlerts(wxCommandEvent&);
 		void OnOpenEscalations(wxCommandEvent&);
+		void OnClose(wxCloseEvent& event);
 
 	public:
 		MainFrame(wxWindow*);
 		~MainFrame();
 
 		void OnInit(void);
+		bool OnQuit(void);
 		void addModules(Module* []);
 
 		void setDaemonConnection(bool);

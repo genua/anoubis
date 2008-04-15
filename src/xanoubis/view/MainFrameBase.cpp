@@ -45,6 +45,8 @@ MainFrameBase::MainFrameBase( wxWindow* parent, wxWindowID id, const wxString& t
 	me_menubarFile->Append( mi_mbFileConnect );
 	
 	me_menubarFile->AppendSeparator();
+	wxMenuItem* mi_mbFileClose = new wxMenuItem( me_menubarFile, ID_MIFILECLOSE, wxString( _("Close") ) , wxEmptyString, wxITEM_NORMAL );
+	me_menubarFile->Append( mi_mbFileClose );
 	wxMenuItem* mi_mbFileQuit = new wxMenuItem( me_menubarFile, ID_MIFILEQUIT, wxString( _("Quit") ) , wxEmptyString, wxITEM_NORMAL );
 	me_menubarFile->Append( mi_mbFileQuit );
 	an_menubar->Append( me_menubarFile, _("File") );
@@ -135,7 +137,9 @@ MainFrameBase::MainFrameBase( wxWindow* parent, wxWindowID id, const wxString& t
 	this->Layout();
 	
 	// Connect Events
+	this->Connect( wxEVT_CLOSE_WINDOW, wxCloseEventHandler( MainFrameBase::OnClose ) );
 	this->Connect( mi_mbFileConnect->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnMbFileConnectSelect ) );
+	this->Connect( mi_mbFileClose->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnMbFileCloseSelect ) );
 	this->Connect( mi_mbFileQuit->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnMbFileQuitSelect ) );
 	this->Connect( mi_mbEditPreferences->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnMbEditPreferencesSelect ) );
 	this->Connect( mi_mbToolsRuleEditor->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnMbToolsRuleEditorSelect ) );

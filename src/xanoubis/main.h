@@ -78,7 +78,7 @@ class AnoubisGuiApp : public wxApp
 		~AnoubisGuiApp(void);
 
 		bool	OnInit(void);
-		void	close(void);
+		void	quit(void);
 		void	sendEvent(wxCommandEvent&);
 		void	sendEvent(wxEventType);
 		void	status(wxString);

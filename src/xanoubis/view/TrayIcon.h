@@ -29,6 +29,7 @@
 #define _TRAYICON_H_
 
 #include <wx/icon.h>
+#include <wx/event.h>
 #include <wx/taskbar.h>
 #include <libnotify/notify.h>
 
@@ -56,6 +57,17 @@ class TrayIcon : public wxTaskBarIcon
 		void OnOpenEscalations(wxCommandEvent&);
 		void OnLogViewerShow(wxCommandEvent&);
 		void SetConnectedDaemon(wxString);
+		void OnGuiRestore(wxCommandEvent&);
+		void OnGuiExit(wxCommandEvent&);
+
+		virtual wxMenu *CreatePopupMenu(void);
+
+	DECLARE_EVENT_TABLE()
+
+	enum {
+		GUI_EXIT = 12001,
+		GUI_RESTORE
+	};
 };
 
 #endif	/* _TRAYICON_H_ */
