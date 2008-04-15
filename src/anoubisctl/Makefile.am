@@ -75,7 +75,11 @@ anoubisctl_SOURCES_splint= \
 	main.c_splint
 
 flawfinder_FLAGS=
-splint_FLAGS=$(INCLUDES)
+# XXX tartler: the anoubisctl source needs annotations to
+#     enable splint memory checking effektively. We disable
+#     memory checking for part of anoubis until proper annotations
+#     have been added.
+splint_FLAGS=$(INCLUDES) -memchecks
 lint_FLAGS=$(INCLUDES)
 
 flawfinder:	$(anoubisctl_SOURCES_flawfinder)

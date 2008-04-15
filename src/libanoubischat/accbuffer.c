@@ -28,8 +28,15 @@ acc_bufferinit(achat_buffer *buffer)
 {
 	const u_int len = ACHAT_BUFFER_DEFAULTSZ;
 
+	/*
+	 * splint detects a failure to allocate buffer->buf as promised
+	 * in the specification if buffer is not set. This is of course
+	 * not an error here, we therefore ignore errors here
+	 */
+	/*@-memchecks@*/
 	ACC_CHKPARAM(buffer != NULL);
 	ACC_CHKPARAM(len <= UINT_MAX);
+	/*@=memchecks@*/
 
 	buffer->alloc = 0;
 	buffer->offset = 0;
@@ -48,8 +55,20 @@ acc_bufferinit(achat_buffer *buffer)
 achat_rc
 acc_bufferfree(achat_buffer *buffer)
 {
+	/*
+	 * splint reports that there might be a memory leak for
+	 * buffer->buf if buffer is NULL, which is of course stupid.
+	 */
+	/*@-memchecks@*/
 	ACC_CHKPARAM(buffer != NULL);
+	/*@=memchecks@*/
 
+	/*
+	 * splint (correctly) reports a memory leak if alloc is set to
+	 * null. We need to make sure manually that alloc is never
+	 * 0 if buf points to allocated storage.
+	 */
+	/*@-mustfreeonly*/
 	if (buffer->alloc > 0) {
 		if (buffer->buf == NULL)
 			return (ACHAT_RC_ERROR);
@@ -59,6 +78,7 @@ acc_bufferfree(achat_buffer *buffer)
 	}
 
 	return (ACHAT_RC_OK);
+	/*@=mustfreeonly@*/
 }
 
 /*
@@ -90,14 +110,19 @@ acc_bufferappend(achat_buffer *buffer, const void *data, size_t len)
 	if (p == NULL)
 		return (ACHAT_RC_ERROR);
 
+	/*@-mayaliasunique@*/
 	memcpy(p, data, len);
+	/*@=mayaliasunique@*/
 
 	return (ACHAT_RC_OK);
 }
 
 static int
-accbuffer_compact(achat_buffer *buffer)
+accbuffer_compact(/*@null@*/ achat_buffer *buffer)
 {
+	if (NULL != buffer || NULL != buffer->buf)
+		return(1);
+
 	/*
 	 * If the buffer is quite empty, but all data is at the end, move the
 	 * data to the beginning.
@@ -123,7 +148,7 @@ acc_bufferappend_space(achat_buffer *buffer, size_t len)
 	size_t newlen;
 	void *p;
 
-	if ((buffer == NULL) || (len <= 0) || (len > ACHAT_BUFFER_MAX_CHUNK))
+	if ((buffer == NULL) || (len == 0) || (len > ACHAT_BUFFER_MAX_CHUNK))
 		return (NULL);
 
 	/* If the buffer is empty, start using it from the beginning. */

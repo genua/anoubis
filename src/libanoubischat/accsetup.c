@@ -59,10 +59,10 @@ acc_destroy(struct achat_channel *acc)
 	    (acc->state == ACC_STATE_TRANSFERING))
 		rc = acc_close(acc);
 
+	free((void*)acc);
+
 	if (rc != ACHAT_RC_OK)
 		return (rc);
-
-	free((void*)acc);
 
 	return (ACHAT_RC_OK);
 }

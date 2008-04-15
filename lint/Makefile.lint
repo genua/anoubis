@@ -67,6 +67,8 @@ endif
 if HAVE_SPLINT
 common_splint_FLAGS = \
 	-weak \
+	+memchecks \
+	+showdeephistory \
 	+unixlib \
 	+matchanyintegral \
 	-duplicatequals \

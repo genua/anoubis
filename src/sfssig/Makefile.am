@@ -54,7 +54,12 @@ sfssig_SOURCES_splint= \
 	main.c_splint
 
 flawfinder_FLAGS=
-splint_FLAGS=+unixlib $(sfssig_CPPFLAGS)
+
+# sfssig uses parts of the openbsd library, which has no proper
+# annotations for splint. We therefore have to disable checking for
+# complete definitions, as splint cannot know the internal semantics of
+# OpenSSL at this point.
+splint_FLAGS=+unixlib $(sfssig_CPPFLAGS) -compdef
 lint_FLAGS=$(sfssig_CPPFLAGS)
 
 flawfinder:	$(sfssig_SOURCES_flawfinder)

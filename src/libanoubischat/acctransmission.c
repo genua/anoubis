@@ -51,7 +51,8 @@ acc_sendmsg(struct achat_channel *acc, const char *msg, size_t size)
 
 	rc = acc_bufferinit(&pkgbuffer);
 	if (rc != ACHAT_RC_OK)
-		return (rc);		/* XXX HJH close? */
+		/* no memory leak in OOM situations */
+		/*@i1*/return (rc);		/* XXX HJH close? */
 	pkgsizenet = htonl(sizeof(pkgsizenet) + size);
 
 	rc = acc_bufferappend(&pkgbuffer, (const void *)&pkgsizenet,
@@ -95,7 +96,8 @@ acc_receivemsg(struct achat_channel *acc, char *msg, size_t *size)
 
 	rc = acc_bufferinit(&pkgbuffer);
 	if (rc != ACHAT_RC_OK) {
-		return rc;
+		/* no memory leak in OOM situations */
+		/*@i1*/return rc;
 	}
 
 	acc->state = ACC_STATE_TRANSFERING;

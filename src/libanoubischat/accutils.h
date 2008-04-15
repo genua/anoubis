@@ -47,7 +47,8 @@
 #define accwrite (ssize_t (*)(int, void *, size_t))write
 
 __BEGIN_DECLS
-achat_rc acc_statetransit(struct achat_channel *, enum acc_state);
+achat_rc /*@alt void@*/ acc_statetransit(struct achat_channel *,
+    enum acc_state);
 void acc_sockaddrcpy(struct sockaddr_storage *, struct sockaddr_storage *);
 socklen_t acc_sockaddrsize(struct sockaddr_storage *);
 achat_rc acc_io(struct achat_channel *, ssize_t (*f) (int, void *, size_t),

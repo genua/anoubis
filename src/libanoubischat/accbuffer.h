@@ -26,6 +26,7 @@
 #define ACHAT_BUFFER_ALLOCSZ   0x008000
 
 struct achat_buffer {
+	/*@null@*/
 	u_char	*buf;		/* achat_buffer for data. */
 	size_t	 alloc;		/* Number of bytes allocated for data. */
 	size_t	 offset;	/* Offset of first byte containing data. */
@@ -34,15 +35,19 @@ struct achat_buffer {
 typedef struct achat_buffer achat_buffer;
 
 __BEGIN_DECLS
-achat_rc acc_bufferinit(achat_buffer *);
+achat_rc acc_bufferinit(/*@special@*/ achat_buffer *b)
+	/*@sets b@*/ /*@allocates b->buf@*/;
 achat_rc /*@alt void@*/ acc_bufferclear(achat_buffer *);
-achat_rc /*@alt void@*/ acc_bufferfree(achat_buffer *);
+achat_rc /*@alt void@*/ acc_bufferfree(/*@special@*/achat_buffer *b)
+    /*@releases b->buf@*/ /*@uses b->alloc@*/;
 
 size_t	 acc_bufferlen(achat_buffer *);
-void	*acc_bufferptr(achat_buffer *);
+/*@exposed@*/ void	*acc_bufferptr(achat_buffer *);
 
-achat_rc acc_bufferappend(achat_buffer *, const void *, size_t);
-void *acc_bufferappend_space(achat_buffer *, size_t);
+achat_rc acc_bufferappend(/*@out@*/achat_buffer *, const void *,
+    size_t);
+/*@null@*/ /*@exposed@*/void *acc_bufferappend_space(/*@out@*/achat_buffer *,
+    size_t);
 __END_DECLS
 
 #endif /* __ACCBUFFER_H__ */

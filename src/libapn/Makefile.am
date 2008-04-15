@@ -71,7 +71,10 @@ libapn_a_SOURCES_flawfinder = \
 	apn.h_flawfinder
 
 flawfinder_FLAGS=
-splint_FLAGS=$(INCLUDES)
+# XXX tartler: the libapn source needs annotations to enable splint
+#              memory checking efficiently. We disable memory checking
+#              for this source file for now.
+splint_FLAGS=$(INCLUDES) -memchecks
 lint_FLAGS=$(INCLUDES)
 
 lint:		$(libapn_a_SOURCES_lint)
