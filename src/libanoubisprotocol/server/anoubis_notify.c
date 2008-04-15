@@ -249,7 +249,14 @@ struct anoubis_notify_head * anoubis_notify_create_head(task_cookie_t task,
 		return NULL;
 	}
 	opcode = get_value(m->u.general->type);
-	if (opcode != ANOUBIS_N_ASK && opcode != ANOUBIS_N_NOTIFY) {
+	switch(opcode) {
+	case ANOUBIS_N_NOTIFY:
+	case ANOUBIS_N_ASK:
+		set_value(m->u.notify->error, 0);
+		set_value(m->u.notify->loglevel, 0);
+	case ANOUBIS_N_LOGNOTIFY:
+		break;
+	default:
 		anoubis_msg_free(m);
 		return NULL;
 	}
@@ -302,7 +309,7 @@ int anoubis_notify(struct anoubis_notify_group * ng,
 		if (nev->token == token)
 			return -EEXIST;
 	}
-	if (opcode == ANOUBIS_N_NOTIFY) {
+	if (opcode == ANOUBIS_N_NOTIFY || opcode == ANOUBIS_N_LOGNOTIFY) {
 		ret = anoubis_msg_send(ng->chan, m);
 		if (ret < 0)
 			return ret;

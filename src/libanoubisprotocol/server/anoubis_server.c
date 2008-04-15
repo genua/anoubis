@@ -545,6 +545,7 @@ int anoubis_server_process(struct anoubis_server * server, void * buf,
 		break;
 	case ANOUBIS_N_ASK:
 	case ANOUBIS_N_NOTIFY:
+	case ANOUBIS_N_LOGNOTIFY:
 	case ANOUBIS_N_RESYOU:
 	case ANOUBIS_N_RESOTHER:
 	case ANOUBIS_P_REPLY:

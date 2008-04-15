@@ -85,7 +85,13 @@ START_TEST(tp_notify_reg)
 		}
 		m = anoubis_msg_new(sizeof(Anoubis_NotifyMessage));
 		fail_if(m == NULL, "Cannot allocate message");
-		set_value(m->u.notify->type, ANOUBIS_N_NOTIFY);
+		if (i%2) {
+			set_value(m->u.notify->type, ANOUBIS_N_NOTIFY);
+		} else {
+			set_value(m->u.notify->type, ANOUBIS_N_LOGNOTIFY);
+			set_value(m->u.notify->error, 0);
+			set_value(m->u.notify->loglevel, 0);
+		}
 		set_value(m->u.notify->pid, TASK+off[TIDX]);
 		set_value(m->u.notify->uid, UID+off[UIDX]);
 		set_value(m->u.notify->subsystem, SUBSYS+off[SIDX]);

@@ -45,6 +45,13 @@
 		dump_ ## SEL (m->u.SEL, m->length - CSUM_LEN);		\
 		break;
 
+#define CASE2(X, SEL, ARG)						\
+	case X:								\
+		printf(" type = %s(%x)", #X, X);			\
+		ASSERT(VERIFY_LENGTH(m, sizeof(*(m->u.SEL))));		\
+		dump_ ## SEL (m->u.SEL, m->length - CSUM_LEN, (ARG));	\
+		break;
+
 #define DUMP_NETX(PTR,FIELD)						\
 	printf(" %s = 0x%x", #FIELD, get_value((PTR)->FIELD));
 #define DUMP_NETU(PTR,FIELD)						\
@@ -103,7 +110,7 @@ static void dump_authreply(Anoubis_AuthReplyMessage * m, size_t len)
 	printf(" name = %.*s", (int)len, m->name);
 }
 
-static void dump_notify(Anoubis_NotifyMessage * m, size_t len)
+static void dump_notify(Anoubis_NotifyMessage * m, size_t len, int arg)
 {
 	printf(" token = 0x%llx", m->token);
 	DUMP_NETU(m, pid);
@@ -111,6 +118,10 @@ static void dump_notify(Anoubis_NotifyMessage * m, size_t len)
 	DUMP_NETU(m, uid);
 	DUMP_NETU(m, subsystem);
 	DUMP_NETU(m, operation);
+	if (arg) {
+		DUMP_NETU(m, error);
+		DUMP_NETU(m, loglevel);
+	}
 	DUMP_DATA(m->payload, len-sizeof(*m));
 }
 
@@ -158,8 +169,9 @@ void anoubis_dump(struct anoubis_msg * m, const char * str)
 	CASE(ANOUBIS_C_PROTOSEL, stringlist)
 	CASE(ANOUBIS_C_CLOSEREQ, general)
 	CASE(ANOUBIS_C_CLOSEACK, general)
-	CASE(ANOUBIS_N_NOTIFY, notify)
-	CASE(ANOUBIS_N_ASK, notify)
+	CASE2(ANOUBIS_N_NOTIFY, notify, 0)
+	CASE2(ANOUBIS_N_ASK, notify, 0)
+	CASE2(ANOUBIS_N_LOGNOTIFY, notify, 1)
 	CASE(ANOUBIS_N_REGISTER, notifyreg)
 	CASE(ANOUBIS_N_UNREGISTER, notifyreg)
 	CASE(ANOUBIS_N_RESYOU, notifyresult)

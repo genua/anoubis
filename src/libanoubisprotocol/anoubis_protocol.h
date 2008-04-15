@@ -151,6 +151,7 @@ DEFINE_SIGNED_TYPE(32);
 #define		ANOUBIS_N_RESYOU	0x4012
 #define		ANOUBIS_N_RESOTHER	0x4013
 #define		ANOUBIS_N_NOTIFY	0x4014
+#define		ANOUBIS_N_LOGNOTIFY	0x4015
 #define		ANOUBIS_N_CTXREQ	0x4020
 #define		ANOUBIS_N_CTXREPLY	0x4021
 
@@ -220,6 +221,12 @@ typedef struct {
 	u32n	uid;
 	u32n	subsystem;
 	u32n	operation;
+	/*
+	 * The following two fields are only valid if the message type
+	 * is ANOUBIS_N_LOGNOTIFY.
+	 */
+	u32n	loglevel;
+	u32n	error;
 	char	payload[0];
 } __attribute__((packed)) Anoubis_NotifyMessage;
 

@@ -562,6 +562,7 @@ static int anoubis_client_process_event(struct anoubis_client * client,
 	switch(opcode) {
 	case ANOUBIS_N_ASK:
 	case ANOUBIS_N_NOTIFY:
+	case ANOUBIS_N_LOGNOTIFY:
 		if (!VERIFY_LENGTH(m, sizeof(Anoubis_NotifyMessage)))
 			return -EIO;
 		break;
@@ -655,6 +656,7 @@ int anoubis_client_process(struct anoubis_client * client,
 		switch(opcode) {
 		case ANOUBIS_N_ASK:
 		case ANOUBIS_N_NOTIFY:
+		case ANOUBIS_N_LOGNOTIFY:
 		case ANOUBIS_N_RESYOU:
 		case ANOUBIS_N_RESOTHER:
 			return anoubis_client_process_event(client, m, opcode,
