@@ -46,6 +46,11 @@
 #include <wx/radiobut.h>
 #include <wx/spinctrl.h>
 #include <wx/panel.h>
+#include <wx/bitmap.h>
+#include <wx/image.h>
+#include <wx/checkbox.h>
+#include <wx/statbox.h>
+#include <wx/notebook.h>
 
 ///////////////////////////////////////////////////////////////////////////
 
@@ -60,6 +65,8 @@ class ModAnoubisMainPanelBase : public wxPanel
 	protected:
 		wxBoxSizer* sz_MainAnoubisMain;
 		wxStaticText* tx_MainHeadline;
+		wxNotebook* tb_MainAnoubisNotify;
+		wxPanel* tb_MainAnoubisNotification;
 		wxStaticText* tx_type;
 		wxChoice* ch_type;
 		
@@ -100,6 +107,10 @@ class ModAnoubisMainPanelBase : public wxPanel
 		
 		wxRadioButton* rb_always;
 		wxButton* bt_deny;
+		wxPanel* tb_MainAnoubisOptions;
+		wxCheckBox* cb_SystemNotification;
+		wxSpinCtrl* m_spinSystemNotificationTimeout;
+		wxStaticText* m_staticText21;
 		
 		// Virtual event handlers, overide them in your derived class
 		virtual void OnTypeChoosen( wxCommandEvent& event ){ event.Skip(); }
@@ -109,6 +120,8 @@ class ModAnoubisMainPanelBase : public wxPanel
 		virtual void OnLastBtnClick( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnAllowBtnClick( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnDenyBtnClick( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnToggleNotification( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnNotificationTimeout( wxSpinEvent& event ){ event.Skip(); }
 		
 	
 	public:

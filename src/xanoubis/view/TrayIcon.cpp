@@ -55,6 +55,10 @@ TrayIcon::TrayIcon(void)
 	messageEscalationCount_ = 0;
 	daemon_ = wxT("none");
 
+	systemNotifyEnabled_ = false;
+	systemNotifyTimeout_ = 10;
+
+
 	update();
 	Connect(anEVT_COM_REMOTESTATION,
 	    wxCommandEventHandler(TrayIcon::OnRemoteStation), NULL, this);
@@ -64,6 +68,8 @@ TrayIcon::TrayIcon(void)
 	    wxCommandEventHandler(TrayIcon::OnOpenEscalations), NULL, this);
 	Connect(anEVT_LOGVIEWER_SHOW,
 	    wxCommandEventHandler(TrayIcon::OnLogViewerShow), NULL, this);
+	Connect(anEVT_SYSNOTIFICATION_OPTIONS,
+	    wxCommandEventHandler(TrayIcon::OnSysNotifyChanged), NULL, this);
 }
 
 TrayIcon::~TrayIcon(void)
@@ -125,6 +131,18 @@ TrayIcon::OnGuiExit(wxCommandEvent& event)
 }
 
 void
+TrayIcon::OnSysNotifyChanged(wxCommandEvent& event)
+{
+	if (event.GetInt() > 0) {
+		systemNotifyEnabled_ = true;
+	} else {
+		systemNotifyEnabled_ = false;
+	}
+
+	systemNotifyTimeout_ = event.GetExtraLong();
+}
+
+void
 TrayIcon::SetConnectedDaemon(wxString daemon)
 {
 	daemon_ = daemon;
@@ -156,17 +174,22 @@ TrayIcon::update(void)
 		icon = iconMsgQuestion_;
 		sprintf(message, "Received Escalations: %d\n",
 		    messageEscalationCount_);
-		if (!systemNotify("ESCALATION", message,
-		    NOTIFY_URGENCY_CRITICAL, 8))
-			wxGetApp().log(wxT("Couldn't send Escalation Notify"));
+		if (systemNotifyEnabled_) {
+			if (!systemNotify("ESCALATION", message,
+			    NOTIFY_URGENCY_CRITICAL, systemNotifyTimeout_))
+				wxGetApp().log(wxT("Couldn't send Escalation"));
+		}
 	}
 
 	if (messageEscalationCount_ == 0 && messageAlertCount_ > 0) {
 		tooltip += wxString::Format(wxT("%d\n"), messageAlertCount_);
 		icon = iconMsgProblem_;
 		sprintf(message, "Received Alerts: %d\n", messageAlertCount_);
-		if (!systemNotify("ALERT", message, NOTIFY_URGENCY_NORMAL, 8))
-			wxGetApp().log(wxT("Couldn't send Alert Notify"));
+		if (systemNotifyEnabled_) {
+			if (!systemNotify("ALERT", message,
+			    NOTIFY_URGENCY_NORMAL, systemNotifyTimeout_))
+				wxGetApp().log(wxT("Couldn't send Alert"));
+		}
 	} else {
 		tooltip = wxT("No messages\n");
 		icon = iconNormal_;

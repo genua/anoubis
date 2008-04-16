@@ -36,6 +36,11 @@ BEGIN_DECLARE_EVENT_TYPES()
 	DECLARE_LOCAL_EVENT_TYPE(anEVT_MAINFRAME_SHOW, wxNewEventType())
 
 	/*
+	 * The options of the system notification via libnotify have changed
+	 */
+	DECLARE_LOCAL_EVENT_TYPE(anEVT_SYSNOTIFICATION_OPTIONS, wxNewEventType())
+
+	/*
 	 * A connection to the daemon was sucessfully established.
 	 * This event is intended of been used between the communicator
 	 * thread and communicator control only.

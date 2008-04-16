@@ -32,6 +32,11 @@ DEFINE_LOCAL_EVENT_TYPE(anEVT_RULEEDITOR_SHOW)
 DEFINE_LOCAL_EVENT_TYPE(anEVT_MAINFRAME_SHOW)
 
 /*
+ * The options of the system notification via libnotify have changed
+ */
+DEFINE_LOCAL_EVENT_TYPE(anEVT_SYSNOTIFICATION_OPTIONS)
+
+/*
  * A connection to the daemon was sucessfully established.
  * This event is intended of been used between the communicator
  * thread and communicator control only.

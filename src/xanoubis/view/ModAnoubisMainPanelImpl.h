@@ -36,6 +36,8 @@ class ModAnoubisMainPanelImpl : public ModAnoubisMainPanelBase
 	private:
 		enum notifyListTypes	 list_;
 		Notification		*currentNotify_;
+		bool			systemNotifyEnabled_;
+		int			systemNotifyTimeout_;
 
 		void answer(bool);
 		void displayAlert(void);
@@ -48,6 +50,8 @@ class ModAnoubisMainPanelImpl : public ModAnoubisMainPanelBase
 		void OnLastBtnClick(wxCommandEvent& event);
 		void OnAllowBtnClick(wxCommandEvent& event);
 		void OnDenyBtnClick(wxCommandEvent& event);
+		void OnToggleNotification(wxCommandEvent& event);
+		void OnNotificationTimeout(wxSpinEvent& event);
 
 	public:
 		ModAnoubisMainPanelImpl(wxWindow* parent, wxWindowID id);

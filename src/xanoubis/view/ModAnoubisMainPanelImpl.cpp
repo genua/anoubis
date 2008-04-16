@@ -46,6 +46,7 @@
 #endif
 
 #include "main.h"
+#include "AnEvents.h"
 #include "ModAnoubis.h"
 #include "ModAnoubisMainPanelImpl.h"
 #include "Notification.h"
@@ -53,6 +54,8 @@
 #include "AlertNotify.h"
 #include "EscalationNotify.h"
 #include "NotifyAnswer.h"
+
+#define TEN_SECONDS	10
 
 #define SHOWSLOT(slotNo,field,value) \
 	do { \
@@ -73,6 +76,8 @@ ModAnoubisMainPanelImpl::ModAnoubisMainPanelImpl(wxWindow* parent,
 {
 	list_ = NOTIFY_LIST_NOTANSWERED;
 	currentNotify_ = NULL;
+	systemNotifyEnabled_ = false;
+	systemNotifyTimeout_ = TEN_SECONDS;
 }
 
 void
@@ -285,4 +290,30 @@ void
 ModAnoubisMainPanelImpl::OnDenyBtnClick(wxCommandEvent& event)
 {
 	answer(false);
+}
+
+void
+ModAnoubisMainPanelImpl::OnToggleNotification(wxCommandEvent& event)
+{
+	if(event.IsChecked()) {
+		systemNotifyEnabled_ = true;
+	} else {
+		systemNotifyEnabled_ = false;
+	}
+
+	wxCommandEvent  showEvent(anEVT_SYSNOTIFICATION_OPTIONS);
+	showEvent.SetInt(systemNotifyEnabled_);
+	showEvent.SetExtraLong(systemNotifyTimeout_);
+	wxGetApp().sendEvent(showEvent);
+}
+
+void
+ModAnoubisMainPanelImpl::OnNotificationTimeout(wxSpinEvent& event)
+{
+	systemNotifyTimeout_ = event.GetPosition();
+
+	wxCommandEvent  showEvent(anEVT_SYSNOTIFICATION_OPTIONS);
+	showEvent.SetInt(systemNotifyEnabled_);
+	showEvent.SetExtraLong(systemNotifyTimeout_);
+	wxGetApp().sendEvent(showEvent);
 }

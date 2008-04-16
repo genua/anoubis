@@ -43,6 +43,8 @@ class TrayIcon : public wxTaskBarIcon
 		wxIcon		*iconNormal_;
 		wxIcon		*iconMsgProblem_;
 		wxIcon		*iconMsgQuestion_;
+		bool		systemNotifyEnabled_;
+		int		systemNotifyTimeout_;
 
 		void		 update(void);
 		bool		 systemNotify(const gchar*, const gchar*,
@@ -56,6 +58,7 @@ class TrayIcon : public wxTaskBarIcon
 		void OnOpenAlerts(wxCommandEvent&);
 		void OnOpenEscalations(wxCommandEvent&);
 		void OnLogViewerShow(wxCommandEvent&);
+		void OnSysNotifyChanged(wxCommandEvent&);
 		void SetConnectedDaemon(wxString);
 		void OnGuiRestore(wxCommandEvent&);
 		void OnGuiExit(wxCommandEvent&);
