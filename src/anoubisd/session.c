@@ -322,8 +322,8 @@ session_main(struct anoubisd_config *conf, int pipe_m2s[2], int pipe_m2p[2],
 	close(pipe_m2p[1]);
 
 	/* init msg_bufs - keep track of outgoing ev_info */
-	msg_init(pipe_m2s[1], &ev_s2m, "s2m");
-	msg_init(pipe_s2p[0], &ev_s2p, "s2p");
+	msg_init(pipe_m2s[1], "s2m");
+	msg_init(pipe_s2p[0], "s2p");
 
 	/* master process */
 	event_set(&ev_m2s, pipe_m2s[1], EV_READ | EV_PERSIST, dispatch_m2s,
@@ -776,7 +776,7 @@ dispatch_s2m(int fd, short sig, void *arg)
 	}
 
 	/* If the queue is not empty, we want to be called again */
-	if (queue_peek(&eventq_s2m))
+	if (queue_peek(&eventq_s2m) || msg_pending(fd))
 		event_add(ev_info->ev_s2m, NULL);
 
 	DEBUG(DBG_TRACE, "<dispatch_s2m");
@@ -803,7 +803,7 @@ dispatch_s2p(int fd, short sig, void *arg)
 	}
 
 	/* If the queue is not empty, we want to be called again */
-	if (queue_peek(&eventq_s2p))
+	if (queue_peek(&eventq_s2p) || msg_pending(fd))
 		event_add(ev_info->ev_s2p, NULL);
 
 	DEBUG(DBG_TRACE, "<dispatch_s2p");

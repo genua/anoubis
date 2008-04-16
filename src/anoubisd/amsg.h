@@ -49,25 +49,15 @@
  * check.
  */
 #define MSG_BUF_SIZE 4096
-#define MSG_BUFS 10
-struct msg_buf {
-	int fd;
-	struct event *ev;
-	char *name;
-	void *rbufp;
-	void *rheadp;
-	void *rtailp;
-	void *wbufp;
-	void *wheadp;
-	void *wtailp;
-};
-struct msg_buf fds[MSG_BUFS];
 
-void msg_init(int, struct event *, char *);
+struct msg_bug;
 
-anoubisd_msg_t *get_msg(int);
-anoubisd_msg_t *get_event(int);
-int send_msg(int, anoubisd_msg_t *);
-int send_reply(int, anoubisd_msg_t *);
+extern void msg_init(int, char *);
+
+extern anoubisd_msg_t *get_msg(int);
+extern anoubisd_msg_t *get_event(int);
+extern int send_msg(int, anoubisd_msg_t *);
+extern int send_reply(int, anoubisd_msg_t *);
+extern int msg_pending(int);
 
 #endif /* !_AMSG_H */

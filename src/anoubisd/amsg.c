@@ -45,9 +45,22 @@
 #include "anoubisd.h"
 #include "amsg.h"
 
+#define MSG_BUFS 10
+struct msg_buf {
+	int fd;
+	char *name;
+	void *rbufp;
+	void *rheadp;
+	void *rtailp;
+	void *wbufp;
+	void *wheadp;
+	void *wtailp;
+};
+static struct msg_buf fds[MSG_BUFS];
+
 /* simple buffered file access, remember the event */
 void
-msg_init(int fd, struct event *ev, char *name)
+msg_init(int fd, char *name)
 {
 	int idx;
 
@@ -71,6 +84,7 @@ msg_init(int fd, struct event *ev, char *name)
 
 			if ((fds[idx].wbufp = malloc(MSG_BUF_SIZE)) == NULL) {
 				free(fds[idx].rbufp);
+				fds[idx].rbufp = NULL;
 				log_warn("msg_init: can't allocate memory");
 				master_terminate(ENOMEM);
 				return;
@@ -78,7 +92,6 @@ msg_init(int fd, struct event *ev, char *name)
 			fds[idx].wheadp = fds[idx].wtailp = fds[idx].wbufp;
 
 			fds[idx].fd = fd;
-			fds[idx].ev = ev;
 			fds[idx].name = name;
 			DEBUG(DBG_MSG_FD, "msg_init: name=%s fd:%d idx:%d",
 			    name, fd, idx);
@@ -86,6 +99,7 @@ msg_init(int fd, struct event *ev, char *name)
 			return;
 		}
 	}
+	log_warn("msg_init: No unused msg_bufs found");
 }
 
 static struct msg_buf *
@@ -128,7 +142,6 @@ _fill_buf(struct msg_buf *mbp)
 	}
 	if (size == 0) {
 		log_warn("read error (closed)");
-		event_del(mbp->ev);
 		event_loopexit(NULL);
 		return;
 	}
@@ -254,7 +267,6 @@ send_msg(int fd, anoubisd_msg_t *msg)
 	}
 	if (mbp->wtailp != mbp->wheadp) {
 		_flush_buf(mbp);
-/* XXX [RD] event_add()? */
 		return 0;
 	}
 
@@ -276,7 +288,6 @@ send_reply(int fd, anoubisd_msg_t *msg)
 	}
 	if (mbp->wtailp != mbp->wheadp) {
 		_flush_buf(mbp);
-/* XXX [RD] event_add()? */
 		return 0;
 	}
 
@@ -285,4 +296,15 @@ send_reply(int fd, anoubisd_msg_t *msg)
 	DEBUG(DBG_MSG_RECV, "send_reply: fd:%d size:%d", mbp->fd, msg->size);
 	_flush_buf(mbp);
 	return 1;
+}
+
+int msg_pending(int fd)
+{
+	struct msg_buf * mbp;
+
+	if ((mbp = _get_mbp(fd)) == NULL) {
+		log_warn("msg_buf not initialized");
+		return 0;
+	}
+	return mbp->wtailp != mbp->wheadp;
 }

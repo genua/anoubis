@@ -344,8 +344,8 @@ main(int argc, char *argv[])
 	queue_init(eventq_m2dev);
 
 	/* init msg_bufs - keep track of outgoing ev_info */
-	msg_init(pipe_m2s[0], &ev_m2s, "m2s");
-	msg_init(pipe_m2p[0], &ev_m2p, "m2p");
+	msg_init(pipe_m2s[0], "m2s");
+	msg_init(pipe_m2p[0], "m2p");
 
 	/*
 	 * Open eventdev to communicate with the kernel.
@@ -357,7 +357,7 @@ main(int argc, char *argv[])
 		log_warn("open(/dev/eventdev)");
 		main_shutdown(1);
 	}
-	msg_init(eventfds[0], &ev_m2dev, "m2dev");
+	msg_init(eventfds[0], "m2dev");
 
 	/* session process */
 	event_set(&ev_m2s, pipe_m2s[0], EV_WRITE, dispatch_m2s,
@@ -582,7 +582,7 @@ dispatch_m2s(int fd, short event, void *arg)
 	}
 
 	/* If the queue is not empty, to be called again */
-	if (queue_peek(&eventq_m2s))
+	if (queue_peek(&eventq_m2s) || msg_pending(fd))
 		event_add(ev_info->ev_m2s, NULL);
 
 	DEBUG(DBG_TRACE, "<dispatch_m2s");
@@ -635,7 +635,7 @@ dispatch_m2p(int fd, short event, void *arg)
 	}
 
 	/* If the queue is not empty, we want to be called again */
-	if (queue_peek(&eventq_m2p))
+	if (queue_peek(&eventq_m2p) || msg_pending(fd))
 		event_add(ev_info->ev_m2p, NULL);
 
 	DEBUG(DBG_TRACE, "<dispatch_m2p");
@@ -690,7 +690,7 @@ dispatch_m2dev(int fd, short event, void *arg)
 		free(msg);
 	}
 
-	if (queue_peek(&eventq_m2dev))
+	if (queue_peek(&eventq_m2dev) || msg_pending(fd))
 		event_add(ev_info->ev_m2dev, NULL);
 
 	DEBUG(DBG_TRACE, "<dispatch_m2dev");
