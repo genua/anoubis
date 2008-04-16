@@ -195,170 +195,25 @@ xanoubis_SOURCES= \
 	main.cpp \
 	main.h
 
-xanoubis_SOURCES_flawfinder= \
-	model/AlertNotify.cpp_flawfinder \
-	model/AlertNotify.h_flawfinder \
-	model/EscalationNotify.cpp_flawfinder \
-	model/EscalationNotify.h_flawfinder \
-	model/LogNotify.cpp_flawfinder \
-	model/LogNotify.h_flawfinder \
-	model/ModAlf.cpp_flawfinder \
-	model/ModAlf.h_flawfinder \
-	model/ModAnoubis.cpp_flawfinder \
-	model/ModAnoubis.h_flawfinder \
-	model/ModOverview.cpp_flawfinder \
-	model/ModOverview.h_flawfinder \
-	model/ModSfs.cpp_flawfinder \
-	model/ModSfs.h_flawfinder \
-	model/Module.cpp_flawfinder \
-	model/Module.h_flawfinder \
-	model/Notification.cpp_flawfinder \
-	model/Notification.h_flawfinder \
-	model/NotifyAnswer.cpp_flawfinder \
-	model/NotifyAnswer.h_flawfinder \
-	view/AnStatusBar.cpp_flawfinder \
-	view/AnStatusBar.h_flawfinder \
-	view/DlgLogViewerBase.cpp_flawfinder \
-	view/DlgLogViewerBase.h_flawfinder \
-	view/DlgLogViewer.cpp_flawfinder \
-	view/DlgLogViewer.h_flawfinder \
-	view/DlgRuleEditorBase.cpp_flawfinder \
-	view/DlgRuleEditorBase.h_flawfinder \
-	view/DlgRuleEditor.cpp_flawfinder \
-	view/DlgRuleEditor.h_flawfinder \
-	view/MainFrameBase.cpp_flawfinder \
-	view/MainFrameBase.h_flawfinder \
-	view/MainFrame.cpp_flawfinder \
-	view/MainFrame.h_flawfinder \
-	view/ModAlfMainPanelImpl.cpp_flawfinder \
-	view/ModAlfMainPanelImpl.h_flawfinder \
-	view/ModAlfOverviewPanelImpl.cpp_flawfinder \
-	view/ModAlfOverviewPanelImpl.h_flawfinder \
-	view/ModAlfPanelsBase.cpp_flawfinder \
-	view/ModAlfPanelsBase.h_flawfinder \
-	view/ModAnoubisMainPanelImpl.cpp_flawfinder \
-	view/ModAnoubisMainPanelImpl.h_flawfinder \
-	view/ModAnoubisOverviewPanelImpl.cpp_flawfinder \
-	view/ModAnoubisOverviewPanelImpl.h_flawfinder \
-	view/ModAnoubisPanelsBase.cpp_flawfinder \
-	view/ModAnoubisPanelsBase.h_flawfinder \
-	view/ModOverviewMainPanelImpl.cpp_flawfinder \
-	view/ModOverviewMainPanelImpl.h_flawfinder \
-	view/ModOverviewPanelsBase.cpp_flawfinder \
-	view/ModOverviewPanelsBase.h_flawfinder \
-	view/ModSfsMainPanelImpl.cpp_flawfinder \
-	view/ModSfsMainPanelImpl.h_flawfinder \
-	view/ModSfsOverviewPanelImpl.cpp_flawfinder \
-	view/ModSfsOverviewPanelImpl.h_flawfinder \
-	view/ModSfsPanelsBase.cpp_flawfinder \
-	view/ModSfsPanelsBase.h_flawfinder \
-	view/TrayIcon.cpp_flawfinder \
-	view/TrayIcon.h_flawfinder \
-	control/AnShortcuts.cpp_flawfinder \
-	control/AnShortcuts.h_flawfinder \
-	control/AnEvents.cpp_flawfinder \
-	control/AnEvents.h_flawfinder \
-	control/CommunicatorCtrl.cpp_flawfinder \
-	control/CommunicatorCtrl.h_flawfinder \
-	control/Communicator.cpp_flawfinder \
-	control/Communicator.h_flawfinder \
-	ctassert.h_flawfinder \
-	main.cpp_flawfinder \
-	main.h_flawfinder
+flawfinder_FLAGS=\
+	--dataonly \
+	--quiet \
+	--allowlink \
+	--minlevel=1 \
+	--context
 
-xanoubis_SOURCES_lint= \
-	model/AlertNotify.cpp_lint \
-	model/AlertNotify.h_lint \
-	model/EscalationNotify.cpp_lint \
-	model/EscalationNotify.h_lint \
-	model/LogNotify.cpp_lint \
-	model/LogNotify.h_lint \
-	model/ModAlf.cpp_lint \
-	model/ModAlf.h_lint \
-	model/ModAnoubis.cpp_lint \
-	model/ModAnoubis.h_lint \
-	model/ModOverview.cpp_lint \
-	model/ModOverview.h_lint \
-	model/ModSfs.cpp_lint \
-	model/ModSfs.h_lint \
-	model/Module.cpp_lint \
-	model/Module.h_lint \
-	model/Notification.cpp_lint \
-	model/Notification.h_lint \
-	model/NotifyAnswer.cpp_lint \
-	model/NotifyAnswer.h_lint \
-	view/AnStatusBar.cpp_lint \
-	view/AnStatusBar.h_lint \
-	view/DlgLogViewerBase.cpp_lint \
-	view/DlgLogViewerBase.h_lint \
-	view/DlgLogViewer.cpp_lint \
-	view/DlgLogViewer.h_lint \
-	view/DlgRuleEditorBase.cpp_lint \
-	view/DlgRuleEditorBase.h_lint \
-	view/DlgRuleEditor.cpp_lint \
-	view/DlgRuleEditor.h_lint \
-	view/MainFrameBase.cpp_lint \
-	view/MainFrameBase.h_lint \
-	view/MainFrame.cpp_lint \
-	view/MainFrame.h_lint \
-	view/ModAlfMainPanelImpl.cpp_lint \
-	view/ModAlfMainPanelImpl.h_lint \
-	view/ModAlfOverviewPanelImpl.cpp_lint \
-	view/ModAlfOverviewPanelImpl.h_lint \
-	view/ModAlfPanelsBase.cpp_lint \
-	view/ModAlfPanelsBase.h_lint \
-	view/ModAnoubisMainPanelImpl.cpp_lint \
-	view/ModAnoubisMainPanelImpl.h_lint \
-	view/ModAnoubisOverviewPanelImpl.cpp_lint \
-	view/ModAnoubisOverviewPanelImpl.h_lint \
-	view/ModAnoubisPanelsBase.cpp_lint \
-	view/ModAnoubisPanelsBase.h_lint \
-	view/ModOverviewMainPanelImpl.cpp_lint \
-	view/ModOverviewMainPanelImpl.h_lint \
-	view/ModOverviewPanelsBase.cpp_lint \
-	view/ModOverviewPanelsBase.h_lint \
-	view/ModSfsMainPanelImpl.cpp_lint \
-	view/ModSfsMainPanelImpl.h_lint \
-	view/ModSfsOverviewPanelImpl.cpp_lint \
-	view/ModSfsOverviewPanelImpl.h_lint \
-	view/ModSfsPanelsBase.cpp_lint \
-	view/ModSfsPanelsBase.h_lint \
-	view/TrayIcon.cpp_lint \
-	view/TrayIcon.h_lint \
-	control/AnShortcuts.cpp_lint \
-	control/AnShortcuts.h_lint \
-	control/AnEvents.cpp_lint \
-	control/AnEvents.h_lint \
-	control/CommunicatorCtrl.cpp_lint \
-	control/CommunicatorCtrl.h_lint \
-	control/Communicator.cpp_lint \
-	control/Communicator.h_lint \
-	ctassert.h_lint \
-	main.cpp_lint \
-	main.h_lint
-
-# splint does not support C++ at all.
-xanoubis_SOURCES_splint=
-
-flawfinder_FLAGS=
-lint_FLAGS=$(xanoubis_CPPFLAGS)
-
-mkdirs:
-	@mkdir model view control
-
-.PHONY: mkdirs
-
-# XXX RT: C++ code needs extra change. See #257
-flawfinder splint lint:
-	@echo "linting temporarily disabled for xanoubis"
-
-#flawfinder:	$(xanoubis_SOURCES_flawfinder)
-#splint:		$(xanoubis_SOURCES_splint)
-#lint:		$(xanoubis_SOURCES_lint)
+# bsd lint and splint do not support C++ at all.
+splint lint:
+flawfinder: flawfinder_report
 
 include $(top_srcdir)/lint/Makefile.lint
+
+flawfinder_report: $(xanoubis_SOURCES)
+	@sh $(top_builddir)/lint/flawfinder $(DEBUG) -o $@ -- \
+		$(flawfinder_FLAGS) $^
 
 clean-local:
 	@rm -f $(xanoubis_SOURCES_lint)
 	@rm -f $(xanoubis_SOURCES_splint)
 	@rm -f $(xanoubis_SOURCES_flawfinder)
+	@rm -f flawfinder_report
