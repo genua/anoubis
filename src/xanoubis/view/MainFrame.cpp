@@ -117,6 +117,10 @@ MainFrame::onRuleEditorShow(wxCommandEvent& event)
 void
 MainFrame::onLogViewerShow(wxCommandEvent& event)
 {
+	if(!event.GetInt())
+		messageAlertCount_ = 0;
+	setMessageString();
+
 	an_menubar->Check(ID_MITOOLSLOGVIEWER, event.GetInt());
 }
 
