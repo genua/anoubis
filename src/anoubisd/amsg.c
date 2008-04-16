@@ -38,7 +38,7 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <strings.h>
+#include <string.h>
 #include <time.h>
 #include <unistd.h>
 
@@ -114,10 +114,10 @@ _fill_buf(struct msg_buf *mbp)
 
 	/* if not at start, move to start */
 	if (mbp->rheadp != mbp->rbufp) {
-		size = mbp->rheadp - mbp->rbufp;
-		bcopy(mbp->rheadp, mbp->rbufp, size);
-		mbp->rheadp -= size;
-		mbp->rtailp -= size;
+		size = mbp->rtailp - mbp->rheadp;
+		memmove(mbp->rbufp, mbp->rheadp, size);
+		mbp->rheadp = mbp->rbufp;
+		mbp->rtailp = mbp->rheadp + size;
 	}
 
 	size = read(mbp->fd, mbp->rtailp, MSG_BUF_SIZE);
@@ -183,6 +183,7 @@ get_msg(int fd)
 	msg = (anoubisd_msg_t *)mbp->rheadp;
 	if (mbp->rtailp - mbp->rheadp < msg->size)
 		_fill_buf(mbp);
+	msg = (anoubisd_msg_t *)mbp->rheadp;
 	if (mbp->rtailp - mbp->rheadp < msg->size)
 		return NULL;
 
@@ -224,6 +225,7 @@ get_event(int fd)
 	evt = (struct eventdev_hdr *)mbp->rheadp;
 	if ((mbp->rtailp - mbp->rheadp) < evt->msg_size)
 		_fill_buf(mbp);
+	evt = (struct eventdev_hdr *)mbp->rheadp;
 	if ((mbp->rtailp - mbp->rheadp) < evt->msg_size)
 		return NULL;
 

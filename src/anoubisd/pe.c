@@ -78,12 +78,13 @@ struct pe_context {
 
 struct pe_proc {
 	TAILQ_ENTRY(pe_proc)	 entry;
+	int			 refcount;
 	pid_t			 pid;
 
 	u_int8_t		*csum;
 	char			*pathhint;
 	anoubis_cookie_t	 task_cookie;
-	anoubis_cookie_t	 parent_cookie;
+	struct pe_proc		*parent_proc;
 
 	struct pe_context	*context;
 	struct apn_rule		*policy;
@@ -110,8 +111,12 @@ anoubisd_reply_t	*pe_handle_sfs(struct eventdev_hdr *);
 anoubisd_reply_t	*pe_dispatch_policy(struct anoubisd_msg_comm *);
 
 struct pe_proc		*pe_get_proc(anoubis_cookie_t);
+void			 pe_put_proc(struct pe_proc * proc);
 struct pe_proc		*pe_alloc_proc(anoubis_cookie_t, anoubis_cookie_t);
 void			 pe_track_proc(struct pe_proc *);
+void			 pe_untrack_proc(struct pe_proc *);
+void			 pe_set_parent_proc(struct pe_proc * proc,
+					    struct pe_proc * newparent);
 int			 pe_load_db(void);
 int			 pe_load_dir(const char *, int);
 struct apn_ruleset	*pe_load_policy(const char *);
@@ -206,25 +211,20 @@ pe_load_dir(const char *dirname, int prio)
 		free(filename);
 
 		/* If parsing fails, we just continue */
-		if (rs == NULL) {
-			apn_free_ruleset(rs);
+		if (rs == NULL)
 			continue;
-		}
 
 		if (pe_insert_rs(rs, uid, prio) != 0) {
 			apn_free_ruleset(rs);
 			log_warnx("could not insert policy %s/%s", dirname,
 			    dp->d_name);
 			continue;
-			break;
 		}
 		count++;
 	}
 
-	if (closedir(dir) == -1) {
+	if (closedir(dir) == -1)
 		log_warn("closedir");
-		return (count);
-	}
 
 	DEBUG(DBG_PE_POLICY, "pe_load_dir: %d policies inserted", count);
 
@@ -397,7 +397,6 @@ pe_handle_process(struct eventdev_hdr *hdr)
 		pe_inherit_ctx(proc);
 		pe_track_proc(proc);
 		break;
-
 	case ANOUBIS_PROCESS_OP_EXEC:
 		proc = pe_get_proc(msg->common.task_cookie);
 		if (proc == NULL) {
@@ -413,7 +412,11 @@ pe_handle_process(struct eventdev_hdr *hdr)
 		DEBUG(DBG_PE_PROC, "pe_handle_process: using policy %p",
 		    proc->context ? proc->context->rule : NULL);
 		break;
-
+	case ANOUBIS_PROCESS_OP_EXIT:
+		/* NOTE: Do NOT use msg->common.task_cookie here! */
+		proc = pe_get_proc(msg->task_cookie);
+		pe_untrack_proc(proc);
+		break;
 	default:
 		log_warnx("pe_handle_process: undefined operation %d", msg->op);
 		break;
@@ -426,7 +429,8 @@ pe_handle_process(struct eventdev_hdr *hdr)
 		    proc->task_cookie, proc->pid, hdr->msg_uid, msg->op,
 		    msg->op == ANOUBIS_PROCESS_OP_EXEC ? msg->pathhint : "",
 		    proc, proc->csum ? htonl(*(unsigned long *)proc->csum) : 0,
-		    proc->parent_cookie);
+		    proc->parent_proc ? proc->parent_proc->task_cookie : 0);
+		pe_put_proc(proc);
 	}
 #endif
 	return (NULL);
@@ -499,7 +503,7 @@ pe_handle_sfs(struct eventdev_hdr *hdr)
 			if ((proc->csum = calloc(sizeof(u_int8_t),
 			    sizeof(msg->csum))) == NULL) {
 				log_warn("calloc");
-			master_terminate(ENOMEM);	/* XXX HSH */
+				master_terminate(ENOMEM);	/* XXX HSH */
 			}
 			bcopy(msg->csum, proc->csum, sizeof(msg->csum));
 		}
@@ -510,6 +514,7 @@ pe_handle_sfs(struct eventdev_hdr *hdr)
 				master_terminate(ENOMEM);	/* XXX HSH */
 			}
 		}
+		pe_put_proc(proc);
 	}
 	DEBUG(DBG_PE_SFS, "pe_handle_sfs: pid %u uid %u ino %llu dev 0x%llx "
 	    "flags %lx \"%s\" csum 0x%08x...", hdr->msg_pid, hdr->msg_uid,
@@ -568,11 +573,28 @@ pe_get_proc(anoubis_cookie_t cookie)
 			break;
 		}
 	}
-	if (proc)
+	if (proc) {
 		DEBUG(DBG_PE_TRACKER, "pe_get_proc: proc %p pid %d cookie "
 		    "0x%08llx", proc, (int)proc->pid, proc->task_cookie);
+		proc->refcount++;
+	}
 
 	return (proc);
+}
+
+void
+pe_put_proc(struct pe_proc * proc)
+{
+	if (!proc || --(proc->refcount))
+		return;
+	if (proc->parent_proc != proc)
+		pe_put_proc(proc->parent_proc);
+	if (proc->csum)
+		free(proc->csum);
+	if (proc->pathhint)
+		free(proc->pathhint);
+	/* XXX Free contents of proc structure. */
+	free(proc);
 }
 
 struct pe_proc *
@@ -586,14 +608,26 @@ pe_alloc_proc(anoubis_cookie_t cookie, anoubis_cookie_t parent_cookie)
 		return (NULL);	/* XXX HSH */
 	}
 	proc->task_cookie = cookie;
-	proc->parent_cookie = parent_cookie;
+	proc->parent_proc = pe_get_proc(parent_cookie);
 	proc->pid = -1;
+	proc->refcount = 1;
 
 	DEBUG(DBG_PE_TRACKER, "pe_alloc_proc: proc %p cookie 0x%08llx "
 	    "parent cookie 0x%08llx", proc, proc->task_cookie,
-	    proc->parent_cookie);
+	    proc->parent_proc ? parent_cookie : 0);
 
 	return (proc);
+}
+
+void
+pe_set_parent_proc(struct pe_proc * proc, struct pe_proc * newparent)
+{
+	struct pe_proc * oldparent = proc->parent_proc;
+	proc->parent_proc = newparent;
+	if (proc != newparent)
+		newparent->refcount++;
+	if (oldparent && oldparent != proc)
+		pe_put_proc(oldparent);
 }
 
 void
@@ -605,8 +639,17 @@ pe_track_proc(struct pe_proc *proc)
 	}
 	DEBUG(DBG_PE_TRACKER, "pe_track_proc: proc %p cookie 0x%08llx",
 	    proc, proc->task_cookie);
-
+	proc->refcount++;
 	TAILQ_INSERT_TAIL(&tracker, proc, entry);
+}
+
+void
+pe_untrack_proc(struct pe_proc * proc)
+{
+	if (!proc)
+		return;
+	TAILQ_REMOVE(&tracker, proc, entry);
+	pe_put_proc(proc);
 }
 
 /*
@@ -628,9 +671,9 @@ pe_inherit_ctx(struct pe_proc *proc)
 	}
 
 	/* Get parents context */
-	parent = pe_get_proc(proc->parent_cookie);
+	parent = proc->parent_proc;
 	DEBUG(DBG_PE_CTX, "pe_inherit_ctx: parent %p 0x%08llx", parent,
-	    proc->parent_cookie);
+	    parent ? parent->task_cookie : 0);
 
 	if (parent && parent->context == NULL) {
 		DEBUG(DBG_PE_CTX, "pe_inherit_ctx: parent %p 0x%08llx has no "
@@ -641,7 +684,7 @@ pe_inherit_ctx(struct pe_proc *proc)
 		DEBUG(DBG_PE_CTX, "pe_inherit_ctx: rule %p ctx %p",
 		    parent->context->rule, parent->context->ctx);
 		proc->context = parent->context;
-		proc->parent_cookie = parent->parent_cookie;
+		pe_set_parent_proc(proc, parent);
 	}
 }
 
@@ -691,7 +734,7 @@ pe_set_ctx(struct pe_proc *proc, uid_t uid, const u_int8_t *csum,
 		/*
 		 * If we have not found any context bound to the UID
 		 * or the default user (-1), we use an empty context,
-		 * which will us never allow to leave it.
+		 * which will never allow us to leave it.
 		 */
 		ctx = NULL;
 	} else {
@@ -709,7 +752,7 @@ pe_set_ctx(struct pe_proc *proc, uid_t uid, const u_int8_t *csum,
 		}
 	}
 	proc->context = ctx;
-	proc->parent_cookie = proc->task_cookie;
+	pe_set_parent_proc(proc, proc);
 
 	DEBUG(DBG_PE_CTX, "pe_set_ctx: proc %p 0x%08llx got context "
 	    "%p rule %p ctx %p", proc, proc->task_cookie,
