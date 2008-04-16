@@ -217,12 +217,12 @@ Communicator::Entry(void)
 			/* we can start the next transaction */
 			if (startRegistration == COMMUNICATOR_FLAG_INIT) {
 				currTa = anoubis_client_register_start(client_,
-				    getToken(), geteuid(), 0, 0, 0);
+				    getToken(), geteuid(), 0, 0);
 				startRegistration = COMMUNICATOR_FLAG_PROG;
 			}
 			if (startDeRegistration == COMMUNICATOR_FLAG_INIT) {
 				currTa = anoubis_client_unregister_start(
-				    client_, getToken(), geteuid(), 0, 0, 0);
+				    client_, getToken(), geteuid(), 0, 0);
 				startDeRegistration = COMMUNICATOR_FLAG_PROG;
 			}
 		}

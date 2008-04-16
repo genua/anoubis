@@ -176,11 +176,11 @@ void tp_chat_lud_client(const char *sockname)
 				k++;
 			} else if (k < 5) {
 				curr = anoubis_client_register_start(client,
-				    0x123000+k, geteuid()+k, 0, 0, 0);
+				    0x123000+k, geteuid()+k, 0, 0);
 				fail_if(!curr, "register");
 			} else {
 				curr = anoubis_client_unregister_start(client,
-				    0x123000+k, geteuid()+9-k, 0, 0, 0);
+				    0x123000+k, geteuid()+9-k, 0, 0);
 				fail_if(!curr, "unregister");
 			}
 			k++;
@@ -230,7 +230,7 @@ static void notify_callback(struct anoubis_notify_head * head, int verdict,
 }
 
 /* Demo notify function. No error checking. */
-static void do_notify(struct anoubis_notify_group * grp, pid_t pid)
+static void do_notify(struct anoubis_notify_group * grp)
 {
 	static u_int64_t token = 1;
 
@@ -242,13 +242,12 @@ static void do_notify(struct anoubis_notify_group * grp, pid_t pid)
 
 	set_value(m->u.notify->type, ANOUBIS_N_ASK);
 	m->u.notify->token = ++token;
-	set_value(m->u.notify->pid, pid);
+	set_value(m->u.notify->pid, 0);
 	set_value(m->u.notify->rule_id, 0);
 	set_value(m->u.notify->uid, geteuid());
 	set_value(m->u.notify->subsystem, 0);
 	set_value(m->u.notify->operation, 0);
-	head = anoubis_notify_create_head(/* XXX */ pid, m, &notify_callback,
-	    NULL);
+	head = anoubis_notify_create_head(m, &notify_callback, NULL);
 	if (!head < 0) {
 		anoubis_msg_free(m);
 	}
@@ -318,7 +317,7 @@ void tp_chat_lud_server(const char *sockname)
 		fail_if(ret < 0, "protocol error");
 		if (anoubis_server_eof(server))
 			break;
-		do_notify(anoubis_server_getnotify(server), 0);
+		do_notify(anoubis_server_getnotify(server));
 	}
 	mark_point();
 	anoubis_server_destroy(server);

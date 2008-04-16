@@ -227,7 +227,7 @@ START_TEST(tc_Sessions_three)
 	fail_if(rc < 0, "client connect failed with code %d", rc);
 	mark_point();
 
-	t = anoubis_client_register_start(client, 0x123, 0, 0, 0,
+	t = anoubis_client_register_start(client, 0x123, 0, 0,
 	    ANOUBIS_SOURCE_STAT);
 	fail_if(!t, "Failed to register for stat events");
 	while(count < 3) {

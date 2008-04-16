@@ -413,8 +413,7 @@ static int anoubis_process_nregister(struct anoubis_server * server,
     struct anoubis_msg * m, int opcode, anoubis_token_t token)
 {
 	int ret;
-	u_int32_t uid, pid, ruleid, subsystem;
-	task_cookie_t task;
+	u_int32_t uid, ruleid, subsystem;
 
 	if (opcode != ANOUBIS_N_REGISTER && opcode != ANOUBIS_N_UNREGISTER)
 		return -EINVAL;
@@ -423,15 +422,13 @@ static int anoubis_process_nregister(struct anoubis_server * server,
 	    || (server->notify == NULL))
 		return reply_invalid_token(server, token, opcode);
 	uid = get_value(m->u.notifyreg->uid);
-	pid = get_value(m->u.notifyreg->pid);
 	ruleid = get_value(m->u.notifyreg->rule_id);
 	subsystem = get_value(m->u.notifyreg->subsystem);
-	task = /* Convert pid to task */ pid;
 	if (opcode == ANOUBIS_N_REGISTER) {
-		ret = anoubis_notify_register(server->notify, uid, task,
+		ret = anoubis_notify_register(server->notify, uid,
 		    ruleid, subsystem);
 	} else {
-		ret = anoubis_notify_unregister(server->notify, uid, task,
+		ret = anoubis_notify_unregister(server->notify, uid,
 		    ruleid, subsystem);
 	}
 	if (ret < 0)

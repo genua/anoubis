@@ -25,7 +25,7 @@
 .\" NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 .\" SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 29, 2008
+.Dd April 15, 2008
 .Dt ANOUBIS_NOTIFY 3
 .Os Anoubis
 .Sh NAME
@@ -49,13 +49,13 @@
 .Ft void
 .Fn anoubis_notify_destroy "struct anoubis_notify_group *"
 .Ft int
-.Fn anoubis_notify_register "struct anoubis_notify_group * g" "uid_t uid" "task_cookie_t task" "u_int32_t ruleid" "u_int32_t subsystem"
+.Fn anoubis_notify_register "struct anoubis_notify_group * g" "uid_t uid" "u_int32_t ruleid" "u_int32_t subsystem"
 .Ft int
-.Fn anoubis_notify_unregister "struct anoubis_notify_group * g" "uid_t uid" "task_cookie_t task" "u_int32_t ruleid" "u_int32_t subsystem"
+.Fn anoubis_notify_unregister "struct anoubis_notify_group * g" "uid_t uid" "u_int32_t ruleid" "u_int32_t subsystem"
 .Ft void
 .Fn "(*anoubis_notify_callback_t)" "struct anoubis_notify_head * head" "int verdict" "void * cbdata"
 .Ft struct anoubis_notify_head *
-.Fn anoubis_notify_create_head "task_cookie_t task" "struct anoubis_msg * m" "anoubis_notify_callback_t finish" "void * cbdata"
+.Fn anoubis_notify_create_head "struct anoubis_msg * m" "anoubis_notify_callback_t finish" "void * cbdata"
 .Ft void
 .Fn anoubis_notify_destroy_head "struct anoubis_notify_head * h"
 .Ft int
@@ -174,14 +174,15 @@ Registrations are cumulative and unregistration is only possible with the
 exact same parameters as a previous registration.
 .It anoubis_notify_create_head
 Create a new notify head.
-The caller must provide the task that is responsible for the event
-and the event itself in the form of an
+The caller must provide the event in the form of an
 .Xr anoubis_msg 3
 with a type of
 .Em ANOUBIS_N_ASK
 for ASK events that need an answer or
 .Em ANOUBIS_N_NOTIFY
-for pure notifications.
+or
+.Em ANOUBIS_N_LOGNOTIFY
+for notifications.
 The message will be destroyed together with the head.
 The caller must no longer use this message.
 .It anoubis_notify

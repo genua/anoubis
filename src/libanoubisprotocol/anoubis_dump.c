@@ -128,6 +128,9 @@ static void dump_notify(Anoubis_NotifyMessage * m, size_t len, int arg)
 static void dump_notifyreg(Anoubis_NotifyRegMessage * m, size_t len __used)
 {
 	printf(" token = 0x%llx", m->token);
+	DUMP_NETU(m, uid);
+	DUMP_NETU(m, rule_id);
+	DUMP_NETU(m, subsystem);
 }
 
 static void dump_notifyresult(Anoubis_NotifyResultMessage * m,

@@ -41,7 +41,6 @@
 
 #define NRCLIENT 32
 #define UID	4711
-#define TASK	12345
 #define RULE	67890
 #define SUBSYS	321
 
@@ -65,12 +64,12 @@ START_TEST(tp_notify_reg)
 		fail_if(chan[i] == NULL, "failed to create channel");
 		ng[i] = anoubis_notify_create(chan[i], UID + i%2);
 		fail_if(ng[i] == NULL);
-		ret = anoubis_notify_register(ng[i], UID + i%2, (i&2)?TASK:0,
+		ret = anoubis_notify_register(ng[i], UID + i%2,
 		    (i&4)?RULE:0, (i&8)?SUBSYS:0);
 		fail_if(ret != 0, "Register failed with %d", ret);
 		if (i&16) {
 			ret = anoubis_notify_register(ng[i], UID + i%2,
-			    (i&2)?TASK+1:0, (i&4)?RULE+1:0, (i&8)?SUBSYS+1:0);
+			    (i&4)?RULE+1:0, (i&8)?SUBSYS+1:0);
 			fail_if(ret != 0, "Register failed with %d", ret);
 		}
 		cnt[i] = 0;
@@ -92,13 +91,11 @@ START_TEST(tp_notify_reg)
 			set_value(m->u.notify->error, 0);
 			set_value(m->u.notify->loglevel, 0);
 		}
-		set_value(m->u.notify->pid, TASK+off[TIDX]);
 		set_value(m->u.notify->uid, UID+off[UIDX]);
 		set_value(m->u.notify->subsystem, SUBSYS+off[SIDX]);
 		set_value(m->u.notify->rule_id, RULE+off[RIDX]);
 		m->u.notify->token = ++token;
-		head = anoubis_notify_create_head(TASK+off[TIDX],
-		    m, NULL, NULL);
+		head = anoubis_notify_create_head(m, NULL, NULL);
 		for(j=0; j<NRCLIENT; ++j) {
 			ret = anoubis_notify(ng[j], head);
 			fail_if(ret < 0, "notify failed with %d", ret);
@@ -110,10 +107,10 @@ START_TEST(tp_notify_reg)
 	for (i=0; i<NRCLIENT; ++i) {
 		int expect = 1;
 		int real;
-		if ((i&16) && (i&14))
+		if ((i&16) && (i&12))
 			expect++;
-		if ((i&2) == 0)
-			expect *= 3;
+		/* For TASK which has been removed. */
+		expect *= 3;
 		if ((i&4) == 0)
 			expect *= 3;
 		if ((i&8) == 0)
@@ -160,7 +157,7 @@ START_TEST(tp_ask)
 		fail_if(chan[i] == NULL, "failed to create channel");
 		ng[i] = anoubis_notify_create(chan[i], UID);
 		fail_if(ng[i] == NULL);
-		ret = anoubis_notify_register(ng[i], UID, 0, 0, 0);
+		ret = anoubis_notify_register(ng[i], UID, 0, 0);
 		fail_if(ret != 0, "Register failed with %d", ret);
 	}
 	for (k=0; k<5; ++k) {
@@ -172,7 +169,7 @@ START_TEST(tp_ask)
 		set_value(m->u.notify->subsystem, 0x200+i);
 		set_value(m->u.notify->rule_id, 0x300+i);
 		m->u.notify->token = TOKENOFF+k;
-		heads[k] = anoubis_notify_create_head(0x100+i, m, NULL, NULL);
+		heads[k] = anoubis_notify_create_head(m, NULL, NULL);
 		for(i=0; i<NRCLIENT; ++i) {
 			int ret = anoubis_notify(ng[i], heads[k]);
 			fail_if(ret != 1, "Did not notify (%d)", ret);

@@ -207,7 +207,6 @@ typedef struct {
 typedef struct {
 	u32n	type;
 	anoubis_token_t token;
-	u32n	pid;
 	u32n	rule_id;
 	u32n	uid;
 	u32n	subsystem;

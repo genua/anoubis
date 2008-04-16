@@ -702,7 +702,7 @@ err:
 
 static struct anoubis_transaction * __anoubis_client_register_start_common(
     struct anoubis_client * client, u_int32_t opcode, anoubis_token_t token,
-    uid_t uid, pid_t pid, u_int32_t rule_id, u_int32_t subsystem)
+    uid_t uid, u_int32_t rule_id, u_int32_t subsystem)
 {
 	struct anoubis_msg * m;
 	static const u_int32_t nextops[] = { ANOUBIS_REPLY, 0 };
@@ -719,7 +719,6 @@ static struct anoubis_transaction * __anoubis_client_register_start_common(
 		return NULL;
 	set_value(m->u.notifyreg->type, opcode);
 	m->u.notifyreg->token = token;
-	set_value(m->u.notifyreg->pid, pid);
 	set_value(m->u.notifyreg->rule_id, rule_id);
 	set_value(m->u.notifyreg->uid, uid);
 	set_value(m->u.notifyreg->subsystem, subsystem);
@@ -741,18 +740,18 @@ static struct anoubis_transaction * __anoubis_client_register_start_common(
 
 struct anoubis_transaction * anoubis_client_register_start(
     struct anoubis_client * client, anoubis_token_t token, uid_t uid,
-    pid_t pid, u_int32_t rule_id, u_int32_t subsystem)
+    u_int32_t rule_id, u_int32_t subsystem)
 {
 	return  __anoubis_client_register_start_common(client,
-	    ANOUBIS_N_REGISTER, token, uid, pid, rule_id, subsystem);
+	    ANOUBIS_N_REGISTER, token, uid, rule_id, subsystem);
 }
 
 struct anoubis_transaction * anoubis_client_unregister_start(
     struct anoubis_client * client, anoubis_token_t token, uid_t uid,
-    pid_t pid, u_int32_t rule_id, u_int32_t subsystem)
+    u_int32_t rule_id, u_int32_t subsystem)
 {
 	return  __anoubis_client_register_start_common(client,
-	    ANOUBIS_N_UNREGISTER, token, uid, pid, rule_id, subsystem);
+	    ANOUBIS_N_UNREGISTER, token, uid, rule_id, subsystem);
 }
 
 int anoubis_client_notifyreply(struct anoubis_client * client,

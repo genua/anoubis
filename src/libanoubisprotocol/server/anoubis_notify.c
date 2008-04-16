@@ -47,7 +47,6 @@
 
 struct anoubis_notify_reg {
 	LIST_ENTRY(anoubis_notify_reg) next;
-	task_cookie_t task;
 	u_int32_t ruleid;
 	uid_t uid;
 	u_int32_t subsystem;
@@ -56,7 +55,6 @@ struct anoubis_notify_reg {
 struct anoubis_notify_head {
 	LIST_HEAD(, anoubis_notify_event) events;
 	struct anoubis_msg * m;
-	task_cookie_t task;
 	int verdict;
 	int eventcount;
 	anoubis_notify_callback_t finish;
@@ -149,11 +147,11 @@ void anoubis_notify_destroy_head(struct anoubis_notify_head * head)
 }
 
 static int anoubis_register_ok(struct anoubis_notify_group * ng,
-    uid_t uid, task_cookie_t task, u_int32_t ruleid, u_int32_t subsystem)
+    uid_t uid, u_int32_t ruleid, u_int32_t subsystem)
 {
 	/* Registering for stat messages is allowed if all other ids are 0 */
 	if (subsystem == ANOUBIS_SOURCE_STAT)
-		return (uid == 0 && ruleid == 0 && task == 0);
+		return (uid == 0 && ruleid == 0);
 	/*
 	 * Registering for other events is only allowed if the uid and
 	 * the authorized uid match or the user is root.
@@ -164,17 +162,16 @@ static int anoubis_register_ok(struct anoubis_notify_group * ng,
 }
 
 int anoubis_notify_register(struct anoubis_notify_group * ng,
-    uid_t uid, task_cookie_t task, u_int32_t ruleid, u_int32_t subsystem)
+    uid_t uid, u_int32_t ruleid, u_int32_t subsystem)
 {
 	struct anoubis_notify_reg * reg;
 
-	if (!anoubis_register_ok(ng, uid, task, ruleid, subsystem))
+	if (!anoubis_register_ok(ng, uid, ruleid, subsystem))
 		return -EPERM;
 	reg = malloc(sizeof(struct anoubis_notify_reg));
 	if (!reg)
 		return -ENOMEM;
 	reg->uid = uid;
-	reg->task = task;
 	reg->ruleid = ruleid;
 	reg->subsystem = subsystem;
 	LIST_INSERT_HEAD(&ng->regs, reg, next);
@@ -182,20 +179,19 @@ int anoubis_notify_register(struct anoubis_notify_group * ng,
 }
 
 static int reg_match(struct anoubis_notify_reg * reg,
-    uid_t uid, task_cookie_t task, u_int32_t ruleid, u_int32_t subsystem)
+    uid_t uid, u_int32_t ruleid, u_int32_t subsystem)
 {
 	return ((!reg->uid || reg->uid == uid)
-	    && (!reg->task || reg->task == task)
 	    && (!reg->ruleid || reg->ruleid == ruleid)
 	    && (!reg->subsystem || reg->subsystem == subsystem));
 }
 
 static int reg_match_all(struct anoubis_notify_group * ng,
-    uid_t uid, task_cookie_t task, u_int32_t ruleid, u_int32_t subsystem)
+    uid_t uid, u_int32_t ruleid, u_int32_t subsystem)
 {
 	struct anoubis_notify_reg * reg;
 	LIST_FOREACH(reg, &ng->regs, next) {
-		 if (reg_match(reg, uid, task, ruleid, subsystem))
+		 if (reg_match(reg, uid, ruleid, subsystem))
 			return 1;
 	}
 	return 0;
@@ -225,11 +221,11 @@ static void drop_event(struct anoubis_notify_event * ev, int flags)
 
 
 int anoubis_notify_unregister(struct anoubis_notify_group * ng,
-    uid_t uid, task_cookie_t task, u_int32_t ruleid, u_int32_t subsystem)
+    uid_t uid, u_int32_t ruleid, u_int32_t subsystem)
 {
 	struct anoubis_notify_reg * reg;
 	LIST_FOREACH(reg, &ng->regs, next) {
-		 if (reg_match(reg, uid, task, ruleid, subsystem)) {
+		 if (reg_match(reg, uid, ruleid, subsystem)) {
 			LIST_REMOVE(reg, next);
 			free(reg);
 			return 0;
@@ -238,8 +234,9 @@ int anoubis_notify_unregister(struct anoubis_notify_group * ng,
 	return -ESRCH;
 }
 
-struct anoubis_notify_head * anoubis_notify_create_head(task_cookie_t task,
-    struct anoubis_msg * m, anoubis_notify_callback_t finish, void * cbdata)
+struct anoubis_notify_head *
+anoubis_notify_create_head(struct anoubis_msg * m,
+    anoubis_notify_callback_t finish, void * cbdata)
 {
 	struct anoubis_notify_head * head;
 	int opcode;
@@ -267,7 +264,6 @@ struct anoubis_notify_head * anoubis_notify_create_head(task_cookie_t task,
 	}
 	LIST_INIT(&head->events);
 	head->m = m;
-	head->task = task;
 	head->verdict = ANOUBIS_E_IO;
 	head->eventcount = 0;
 	head->finish = finish;
@@ -294,16 +290,13 @@ int anoubis_notify(struct anoubis_notify_group * ng,
 
 	int opcode = get_value(m->u.general->type);
 	u_int32_t uid = get_value(m->u.notify->uid);
-	u_int32_t pid = get_value(m->u.notify->pid);
 	u_int32_t ruleid = get_value(m->u.notify->rule_id);
 	u_int32_t subsystem = get_value(m->u.notify->subsystem);
 	anoubis_token_t token = m->u.notify->token;
 
 	if (token == 0)
 		return -EINVAL;
-	if (pid != /* Convert task id to pid. */ head->task)
-		return -EINVAL;
-	if (!reg_match_all(ng, uid, head->task, ruleid, subsystem))
+	if (!reg_match_all(ng, uid, ruleid, subsystem))
 		return 0;
 	LIST_FOREACH(nev, &ng->pending, next) {
 		if (nev->token == token)

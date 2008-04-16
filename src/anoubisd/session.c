@@ -511,7 +511,7 @@ dispatch_m2s(int fd, short sig, void *arg)
 		set_value(m->u.notify->subsystem, hdr->msg_source);
 		set_value(m->u.notify->operation, 0 /* XXX ?? */);
 		memcpy(m->u.notify->payload, &hdr[1], extra);
-		head = anoubis_notify_create_head(hdr->msg_pid, m, NULL, NULL);
+		head = anoubis_notify_create_head(m, NULL, NULL);
 		if (!head) {
 			/* malloc failure, then we don't send the message */
 			anoubis_msg_free(m);
@@ -632,8 +632,7 @@ dispatch_p2s_evt_request(anoubisd_msg_t	*msg,
 	set_value(m->u.notify->subsystem, hdr->msg_source);
 	set_value(m->u.notify->operation, 0 /* XXX ?? */);
 	memcpy(m->u.notify->payload, &hdr[1], extra);
-	head = anoubis_notify_create_head(hdr->msg_pid, m,
-	    notify_callback, cbdata);
+	head = anoubis_notify_create_head(m, notify_callback, cbdata);
 	cbdata->ev_head = head;
 
 	if (!head) {
