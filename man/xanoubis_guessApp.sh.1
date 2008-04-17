@@ -1,0 +1,100 @@
+.\"	$OpenBSD: mdoc.template,v 1.9 2004/07/02 10:36:57 jmc Exp $
+.\"
+.\" Copyright (c) 2008 GeNUA mbH <info@genua.de>
+.\"
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+.\" "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+.\" LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+.\" A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+.\" OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+.\" SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
+.\" TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+.\" PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+.\" LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+.\" NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+.\" SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\" The following requests are required for all man pages.
+.Dd April 08, 2008
+.Dt XANOUBIS_GUESSAPP.SH 1
+.Os Anoubis
+.Sh NAME
+.Nm xanoubis_guessApp.sh
+.Nd Search in Desktop Entry files for a given pattern
+.Sh SYNOPSIS
+.\" For a program:  program [-abc] file ...
+.Nm xanoubis_guessApp.sh
+.Op Fl b Ar binary
+.Op Fl d
+.Op Fl h
+.Op Fl s Ar path
+.Op Ar pattern
+.Sh DESCRIPTION
+The
+.Nm
+searches in (hopefully) all desktop entry files for a given pattern.
+For searching for a special binary, you may specify
+.Fl b .
+With the optional parameter
+.Fl s
+you can specify addtional directories to search in.
+Those files describe the entries in the start menue of most modern
+desktops (like Gnome or KDE).
+A single line with 4 fields, seperated by '#', for each file containing
+the pattern, is written to standard out.
+The fields are:
+.Bl -tag -width Ds
+.It Name
+specified in the desktop entry file
+.Po
+key 'Name'
+.Pc
+.It Binary
+specified in the desktop entry file
+.Po
+key 'Exec'
+.Pc
+.It Package name
+extracted by 'dpkg -s'
+.It Package description
+a short description claimed by 'dpkg -S'
+.El
+.Pp
+If the pattern is ommited, a line for each found desktop entry file
+will been printed.
+.\" The following requests should be uncommented and used where appropriate.
+.\" This next request is for sections 1, 6, 7 & 8 only.
+.\" .Sh ENVIRONMENT
+.Sh FILES
+The following directories will been searched for files with a name matching
+"*.desktop" :
+.Bl -tag -width Ds
+.It /usr/share/applications/
+.It $HOME/.kde*
+.It $HOME/.gnome*
+.It $HOME/Desktop/
+.El
+.Sh EXAMPLES
+.Nm
+.Ar xpdf
+.Pp
+xpdf # /usr/bin/xpdf # xpdf-reader #  Portable <...> viewer for X11
+.\" This next request is for sections 1, 4, 6, and 8 only.
+.\" .Sh DIAGNOSTICS
+.Sh SEE ALSO
+.Xr xanoubis 1
+.Xr dpkg lin1
+.Xr www.freedesktop.org/wiki/Specifications/desktop-entry-spec
+.Sh AUTHORS
+Christian Hiesl

@@ -63,7 +63,9 @@ xanoubis_LDADD += $(libbsdcompat)
 xanoubis_CPPFLAGS += -I$(top_srcdir)/$(bsdcompatdir)
 endif
 
+utildir = $(datadir)/$(bin_PROGRAMS)/utils
 icondir = $(datadir)/$(bin_PROGRAMS)/icons
+dist_util_DATA = utils/xanoubis_guessApp.sh
 dist_icon_DATA = \
 	icons/ModAlf_alert_16.png \
 	icons/ModAlf_alert_48.png \
