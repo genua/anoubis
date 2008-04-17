@@ -46,12 +46,15 @@ struct anoubis_notify_head;
 typedef void (*anoubis_notify_callback_t)(struct anoubis_notify_head * head,
     int verdict, void * cbdata);
 
-struct anoubis_notify_group * anoubis_notify_create(struct achat_channel * chan,
+/*@null@*/ /*@only@*/
+struct anoubis_notify_group * anoubis_notify_create(
+    /*@dependent@*/struct achat_channel * chan,
     uid_t uid);
-void anoubis_notify_destroy(struct anoubis_notify_group *);
+void anoubis_notify_destroy(/*@only@*/ struct anoubis_notify_group *);
+/*@null@*/ /*@only@*/
 struct anoubis_notify_head * anoubis_notify_create_head(
     struct anoubis_msg * m, anoubis_notify_callback_t finish, void * cbdata);
-void anoubis_notify_destroy_head(struct anoubis_notify_head * h);
+void anoubis_notify_destroy_head(/*@only@*/ struct anoubis_notify_head * h);
 int anoubis_notify_register(struct anoubis_notify_group * g,
     uid_t uid, u_int32_t ruleid, u_int32_t subsystem);
 int anoubis_notify_unregister(struct anoubis_notify_group * g,

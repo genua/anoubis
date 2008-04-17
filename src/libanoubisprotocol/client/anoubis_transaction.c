@@ -31,6 +31,15 @@
 #include <anoubis_msg.h>
 #include <anoubis_transaction.h>
 
+/* XXX tartler: The anoubis client library is pretty challenging to
+ *              annotate properly, since I don't quite understand the
+ *              memory managment implications between struct
+ *              anoubis_client and struct anoubis_msg. Since for MS7 the
+ *              priority is on anoubisd, we defer enabling memory checks
+ *              for this part of libanoubisprotocol.
+ */
+
+/*@-memchecks@*/
 struct anoubis_transaction * anoubis_transaction_create(anoubis_token_t token,
     unsigned int flags, anoubis_transaction_process_t process,
     anoubis_transaction_callback_t finish, void * cbdata)
@@ -122,3 +131,4 @@ void anoubis_transaction_done(struct anoubis_transaction * t, int error)
 	t->stage = -1;
 	t->process = NULL;
 }
+/*@=memchecks@*/

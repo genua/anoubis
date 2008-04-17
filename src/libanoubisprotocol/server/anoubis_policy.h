@@ -39,14 +39,21 @@ typedef int (*anoubis_policy_comm_dispatcher_t)(struct anoubis_policy_comm *,
 
 typedef int (*anoubis_process_control_dispatcher_t)(struct anoubis_msg *,
     struct achat_channel *);
+
 void anoubis_process_control_create(anoubis_process_control_dispatcher_t);
 
+/*@null@*/ /*@only@*/
 struct anoubis_policy_comm * anoubis_policy_comm_create(
-    anoubis_policy_comm_dispatcher_t dispatch, void *arg);
+    anoubis_policy_comm_dispatcher_t dispatch, /*@dependent@*/ void *arg);
+
 int anoubis_policy_comm_process(struct anoubis_policy_comm * comm,
-    struct anoubis_msg * m, u_int32_t uid, struct achat_channel * chan);
+    /*@keep@*/ struct anoubis_msg * m, u_int32_t uid,
+    /*@dependent@*/ struct achat_channel * chan);
+
 int anoubis_policy_comm_answer(struct anoubis_policy_comm * comm,
     u_int64_t token, int error, void * data, int len);
+
 void anoubis_policy_comm_abort(struct anoubis_policy_comm * comm,
-    struct achat_channel * chan);
+    /*@notnull@*/ struct achat_channel * chan);
+
 #endif	/* _ANOUBIS_POLICY_H_ */

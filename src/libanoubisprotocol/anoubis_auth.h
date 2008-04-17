@@ -47,9 +47,12 @@ struct anoubis_auth {
 	int auth_type;
 	int error;
 	uid_t uid;
+	/*@only@*/ /*@relnull@*/
 	char * username;
+	/*@dependent@*/
 	struct achat_channel * chan;
 	anoubis_auth_callback_t finish_callback;
+	/*@dependent@*/
 	void * cbdata;
 };
 
@@ -58,9 +61,11 @@ typedef struct {
 	u32n	auth_type;
 } __attribute__((packed)) Anoubis_AuthTransportMessage;
 
-struct anoubis_auth * anoubis_auth_create(struct achat_channel * chan,
-    anoubis_auth_callback_t finish, void * data);
-void anoubis_auth_destroy(struct anoubis_auth * auth);
+/*@null@*/ /*@only@*/
+struct anoubis_auth * anoubis_auth_create(
+    /*@dependent@*/ struct achat_channel * chan,
+    anoubis_auth_callback_t finish, /*@dependent@*/ void * cbdata);
+void anoubis_auth_destroy(/*@only@*/ struct anoubis_auth * auth);
 int anoubis_auth_process(struct anoubis_auth * auth,
     struct anoubis_msg * m);
 

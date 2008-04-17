@@ -62,12 +62,14 @@ struct anoubis_msg * anoubis_msg_clone(struct anoubis_msg * m)
 
 int anoubis_msg_resize(struct anoubis_msg * m, size_t len)
 {
+	/*@-memchecks@*/ /* splint doesn't support realloc properly */
 	void * new = realloc(m->u.buf, len);
 	if (!new)
 		return -ENOMEM;
 	m->u.buf = new;
 	m->length = (u_int32_t) len;
 	return 0;
+	/*@=memchecks@*/
 }
 
 void anoubis_msg_free(struct anoubis_msg * m)

@@ -49,11 +49,19 @@ struct policy_request {
 
 struct anoubis_policy_comm {
 	anoubis_policy_comm_dispatcher_t dispatch;
-	void	*arg;
+	/*@dependent@*/
+	void *arg;
 	u_int64_t nexttoken;
 	LIST_HEAD(, policy_request) req;
 };
 
+/*
+ * The following code utilizes list functions from BSD queue.h, which
+ * cannot be reliably annotated. We therefore exclude the following
+ * functions from memory checking.
+ */
+
+/*@-memchecks@*/
 struct anoubis_policy_comm * anoubis_policy_comm_create(
     anoubis_policy_comm_dispatcher_t dispatch, void *arg)
 {
@@ -155,3 +163,4 @@ void anoubis_policy_comm_abort(struct anoubis_policy_comm * comm,
 			req->chan = NULL;
 	}
 }
+/*@=memchecks@*/

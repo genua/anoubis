@@ -87,10 +87,18 @@ struct anoubis_notify_event {
 struct anoubis_notify_group {
 	uid_t uid;	/* Authorized User-ID. */
 	LIST_HEAD(, anoubis_notify_reg) regs;
+	/*@dependent@*/
 	struct achat_channel * chan;
 	LIST_HEAD(, anoubis_notify_event) pending;
 };
 
+/*
+ * The following code utilizes list functions from BSD queue.h, which
+ * cannot be reliably annotated. We therefore exclude the following
+ * functions from memory checking.
+ */
+
+/*@-memchecks@*/
 struct anoubis_notify_group * anoubis_notify_create(struct achat_channel * chan,
     uid_t uid)
 {
@@ -423,3 +431,4 @@ int anoubis_notify_answer(struct anoubis_notify_group * ng,
 	anoubis_notify_sendreply(head, head->verdict, head->you, head->uid);
 	return 0;
 }
+/*@=memchecks@*/

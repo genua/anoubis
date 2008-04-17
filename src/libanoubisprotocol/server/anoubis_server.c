@@ -45,9 +45,13 @@ struct anoubis_server {
 	unsigned int proto;
 	unsigned int connect_flags;
 	unsigned int auth_uid;
+	/*@relnull@*/ /*@dependent@*/
 	struct achat_channel * chan;
+	/*@relnull@*/
 	struct anoubis_auth * auth;
+	/*@relnull@*/
 	struct anoubis_notify_group * notify;
+	/*@relnull@*/ /*@dependent@*/
 	struct anoubis_policy_comm * policy;
 };
 
@@ -59,7 +63,7 @@ struct anoubis_server {
 #define FLAG_OPTIONS			0x0004
 #define FLAG_PROTOCOLS			0x0008
 #define FLAG_MULTIPLEX			0x0010
-#define	FLAG_PIPELINE			0x0020
+#define FLAG_PIPELINE			0x0020
 #define FLAG_OOB			0x0040
 #define FLAG_HELLOSENT			0x0080
 #define FLAG_GOTCLOSEREQ		0x0100
@@ -69,6 +73,7 @@ struct anoubis_server {
 #define FLAG_ERROR			0x1000
 
 static struct anoubis_server_process_control {
+	/*@null@*/
 	anoubis_process_control_dispatcher_t dispatch_ctl;
 } anoubis_server_process_control;
 
@@ -88,7 +93,7 @@ struct anoubis_server * anoubis_server_create(struct achat_channel * chan,
 	return ret;
 };
 
-static void channel_close(struct anoubis_server * server)
+static void channel_close(/*@notnull@*/ struct anoubis_server * server)
 {
 	if (server->policy && server->chan)
 		anoubis_policy_comm_abort(server->policy, server->chan);
@@ -113,7 +118,7 @@ void anoubis_server_destroy(struct anoubis_server * server)
 }
 
 static int anoubis_server_send(struct anoubis_server * server,
-    struct anoubis_msg * m)
+    /*@only@*/ struct anoubis_msg * m)
 {
 	int ret;
 
@@ -225,7 +230,7 @@ static struct proto_opt anoubis_options[] = {
 };
 
 static int anoubis_process_optreq(struct anoubis_server * server,
-    struct anoubis_msg * m, int opcode)
+    /*@dependent@*/ struct anoubis_msg * m, int opcode)
 {
 	struct stringlist_iterator it;
 	struct anoubis_msg * rep;
@@ -265,7 +270,7 @@ static int anoubis_process_optreq(struct anoubis_server * server,
 
 static void anoubis_auth_finish_callback(void * data);
 
-static int anoubis_process_auth(struct anoubis_server * server,
+static int anoubis_process_auth(/*@dependent@*/ struct anoubis_server * server,
     struct anoubis_msg * m, int opcode)
 {
 	if (server->proto != ANOUBIS_PROTO_CONNECT

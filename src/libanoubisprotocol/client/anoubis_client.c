@@ -81,6 +81,15 @@ struct anoubis_client {
 	struct anoubis_msg * tail;
 };
 
+/* XXX tartler: The anoubis client library is pretty challenging to
+ *              annotate properly, since I don't quite understand the
+ *              memory managment implications between struct
+ *              anoubis_client and struct anoubis_msg. Since for MS7 the
+ *              priority is on anoubisd, we defer enabling memory checks
+ *              for this part of libanoubisprotocol.
+ */
+
+/*@-memchecks@*/
 static void queue_notify(struct anoubis_client * client, struct anoubis_msg * m)
 {
 	m->next = client->tail;
@@ -886,3 +895,4 @@ void anoubis_client_close(struct anoubis_client * client)
 	anoubis_transaction_destroy(t);
 	return;
 }
+/*@=memchecks@*/

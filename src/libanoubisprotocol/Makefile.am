@@ -168,12 +168,7 @@ libanoubispc_a_SOURCES_splint =			\
 	client/anoubis_transaction.h_splint
 
 flawfinder_FLAGS=
-# XXX tartler: the libanoubisprotocol source needs annotations to
-#     enable splint memory checking effektively. We disable
-#     memory checking for part of anoubis until proper annotations
-#     have been added.
-splint_FLAGS=$(libanoubispc_a_CPPFLAGS) $(libanoubisps_a_CPPFLAGS) -I.. \
-    -memchecks
+splint_FLAGS=$(libanoubispc_a_CPPFLAGS) $(libanoubisps_a_CPPFLAGS) -I..
 lint_FLAGS=$(libanoubispc_a_CPPFLAGS) $(libanoubisps_a_CPPFLAGS) -I..
 
 mksubdirs:
