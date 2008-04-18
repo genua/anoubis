@@ -518,8 +518,9 @@ pe_handle_sfs(struct eventdev_hdr *hdr)
 	}
 	DEBUG(DBG_PE_SFS, "pe_handle_sfs: pid %u uid %u ino %llu dev 0x%llx "
 	    "flags %lx \"%s\" csum 0x%08x...", hdr->msg_pid, hdr->msg_uid,
-	    msg->ino, msg->dev, msg->flags, msg->pathhint ? msg->pathhint :
-	    "", htonl(*(unsigned long *)msg->csum));
+	    msg->ino, msg->dev, msg->flags,
+	    (msg->flags & ANOUBIS_OPEN_FLAG_PATHHINT) ? msg->pathhint : "",
+	    htonl(*(unsigned long *)msg->csum));
 
 #endif	/* LINUX */
 

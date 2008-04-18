@@ -125,9 +125,6 @@ static Queue requestq;
 
 static Queue headq;
 
-static Queue headq;
-
-
 static void
 session_sighandler(int sig, short event, void *arg)
 {
@@ -137,7 +134,7 @@ session_sighandler(int sig, short event, void *arg)
 	case SIGINT:
 	case SIGQUIT:
 		(void)event_loopexit(NULL);
-		/* FALLTRHOUGH */
+		/*FALLTRHOUGH*/
 	}
 }
 

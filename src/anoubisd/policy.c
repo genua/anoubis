@@ -323,7 +323,12 @@ dispatch_m2p(int fd, short sig, void *arg)
 			}
 
 			msg_wait->token = hdr->msg_token;
-			time(&msg_wait->starttime);
+			if (time(&msg_wait->starttime) == -1) {
+				free(msg);
+				log_warn("dispatch_m2p: failed to get time");
+				master_terminate(EIO);
+				continue;
+			}
 			msg_wait->timeout = reply->timeout;
 
 			enqueue(&replyq, msg_wait);
