@@ -40,8 +40,6 @@ typedef int (*anoubis_policy_comm_dispatcher_t)(struct anoubis_policy_comm *,
 typedef int (*anoubis_process_control_dispatcher_t)(struct anoubis_msg *,
     struct achat_channel *);
 
-void anoubis_process_control_create(anoubis_process_control_dispatcher_t);
-
 /*@null@*/ /*@only@*/
 struct anoubis_policy_comm * anoubis_policy_comm_create(
     anoubis_policy_comm_dispatcher_t dispatch, /*@dependent@*/ void *arg);

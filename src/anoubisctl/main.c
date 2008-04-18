@@ -32,6 +32,7 @@
 #include <sys/un.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
+#include <signal.h>
 
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -217,26 +218,24 @@ daemon_start(void)
 static int
 daemon_stop(void)
 {
-	int	error = 0;
-	struct anoubis_msg * m = NULL;
-	int	rc;
-	char msg[] = "CTL_STOP";
+	FILE * fp = fopen("/var/run/anoubisd.pid", "r");
+	int i, pid;
 
-	error = create_channel();
-
-	m = anoubis_msg_new(sizeof(msg)+sizeof(u32n));
-	if(!m)
-		goto err;
-
-	set_value(m->u.general->type, ANOUBIS_P_CONTROL);
-	bcopy("CTL_STOP", m->u.general->payload, sizeof(msg));
-
-	rc = anoubis_msg_send(channel, m);
-	fprintf(stderr, "%d\n", rc);
-
-err:
-	destroy_channel();
-	return error;
+	if (!fp)
+		return 2;
+	if (fscanf(fp, "%d", &pid) != 1)
+		return 2;
+	if (kill(pid, SIGTERM) != 0)
+		return 2;
+	/* Wait at most 10 seconds for termination. */
+	for(i=0; i<10; ++i) {
+		if (kill(pid, 0) < 0 && errno == ESRCH)
+			return 0;
+		sleep(1);
+	}
+	if (kill(pid, 0) < 0 && errno == ESRCH)
+		return 0;
+	return 2;
 }
 
 static int

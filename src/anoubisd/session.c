@@ -102,7 +102,6 @@ static void	session_sighandler(int, short, void *);
 static void	notify_callback(struct anoubis_notify_head *, int, void *);
 static int	dispatch_policy(struct anoubis_policy_comm *, u_int64_t,
 		    u_int32_t, void *, size_t, void *);
-static int	dispatch_control(struct anoubis_msg *, struct achat_channel *);
 static void	dispatch_m2s(int, short, void *);
 static void	dispatch_s2m(int, short, void *);
 static void	dispatch_s2p(int, short, void *);
@@ -346,7 +345,6 @@ session_main(struct anoubisd_config *conf, int pipe_m2s[2], int pipe_m2p[2],
 	ev_info.policy = anoubis_policy_comm_create(&dispatch_policy, &ev_info);
 	if (!ev_info.policy)
 		fatal("Cannot create policy object (out of memory)");
-	anoubis_process_control_create(dispatch_control);
 
 	/* setup keeper of incoming unix domain socket connections */
 	if (seg.keeper_uds != NULL) {
@@ -406,16 +404,6 @@ notify_callback(struct anoubis_notify_head *head, int verdict, void *cbdata)
 	free(cbdata);
 
 	DEBUG(DBG_TRACE, "<notify_callback");
-}
-
-static int
-dispatch_control(struct anoubis_msg *m, struct achat_channel *chan)
-{
-	DEBUG(DBG_TRACE, ">dispatch_control");
-	DEBUG(DBG_TRACE, "%s\n", m->u.general->payload);
-	master_terminate(0);
-	DEBUG(DBG_TRACE, "<dispatch_control");
-	return 0;
 }
 
 static int
