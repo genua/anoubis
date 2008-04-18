@@ -105,6 +105,7 @@ TAILQ_HEAD(policies, pe_user) pdb;
 anoubisd_reply_t	*policy_engine(int, void *);
 anoubisd_reply_t	*pe_dispatch_event(struct eventdev_hdr *);
 anoubisd_reply_t	*pe_handle_process(struct eventdev_hdr *);
+anoubisd_reply_t	*pe_handle_sfsexec(struct eventdev_hdr *);
 anoubisd_reply_t	*pe_handle_alf(struct eventdev_hdr *);
 char			*pe_dump_alfmsg(struct alf_event *);
 anoubisd_reply_t	*pe_handle_sfs(struct eventdev_hdr *);
@@ -355,6 +356,10 @@ pe_dispatch_event(struct eventdev_hdr *hdr)
 		reply = pe_handle_process(hdr);
 		break;
 
+	case ANOUBIS_SOURCE_SFSEXEC:
+		reply = pe_handle_sfsexec(hdr);
+		break;
+
 	case ANOUBIS_SOURCE_SFS:
 		reply = pe_handle_sfs(hdr);
 		break;
@@ -370,6 +375,56 @@ pe_dispatch_event(struct eventdev_hdr *hdr)
 	}
 
 	return (reply);
+}
+
+anoubisd_reply_t *
+pe_handle_sfsexec(struct eventdev_hdr *hdr)
+{
+#ifndef OPENBSD
+	struct sfs_open_message		*msg;
+	struct pe_proc			*proc = NULL;
+
+	if (hdr == NULL) {
+		log_warnx("pe_handle_sfsexec: empty header");
+		return NULL;
+	}
+	if (hdr->msg_size < (sizeof(struct eventdev_hdr) +
+	    sizeof(struct sfs_open_message))) {
+		log_warnx("pe_handle_sfsexec: short message");
+		return NULL;
+	}
+	msg = (struct sfs_open_message *)(hdr+1);
+	proc = pe_get_proc(msg->common.task_cookie);
+	if (proc == NULL) {
+		DEBUG(DBG_PE_PROC, "pe_handle_process: untracked "
+		    "process %u 0x%08llx execs", hdr->msg_pid,
+		    msg->common.task_cookie);
+		return NULL;
+	}
+	/* if not yet set, fill in checksum and pathhint */
+	if ((proc->csum == NULL) && (msg->flags & ANOUBIS_OPEN_FLAG_CSUM)) {
+		if ((proc->csum = calloc(1, sizeof(msg->csum))) == NULL) {
+			log_warn("calloc");
+			master_terminate(ENOMEM);	/* XXX HSH */
+		}
+		bcopy(msg->csum, proc->csum, sizeof(msg->csum));
+	}
+	if ((proc->pathhint == NULL) &&
+	    (msg->flags & ANOUBIS_OPEN_FLAG_PATHHINT)) {
+		if ((proc->pathhint = strdup(msg->pathhint)) == NULL) {
+			log_warn("strdup");
+			master_terminate(ENOMEM);	/* XXX HSH */
+		}
+	}
+	proc->pid = hdr->msg_pid;
+	pe_set_ctx(proc, hdr->msg_uid, proc->csum, proc->pathhint);
+
+	/* Get our policy */
+	DEBUG(DBG_PE_PROC, "pe_handle_sfsexec: using policy %p",
+	    proc->context ? proc->context->rule : NULL);
+	pe_put_proc(proc);
+#endif
+	return NULL;
 }
 
 anoubisd_reply_t *
@@ -397,21 +452,6 @@ pe_handle_process(struct eventdev_hdr *hdr)
 		pe_inherit_ctx(proc);
 		pe_track_proc(proc);
 		break;
-	case ANOUBIS_PROCESS_OP_EXEC:
-		proc = pe_get_proc(msg->common.task_cookie);
-		if (proc == NULL) {
-			DEBUG(DBG_PE_PROC, "pe_handle_process: untracked "
-			    "process %u 0x%08llx execs", hdr->msg_pid,
-			    msg->common.task_cookie);
-			break;
-		}
-		proc->pid = hdr->msg_pid;
-		pe_set_ctx(proc, hdr->msg_uid, proc->csum, proc->pathhint);
-
-		/* Get our policy */
-		DEBUG(DBG_PE_PROC, "pe_handle_process: using policy %p",
-		    proc->context ? proc->context->rule : NULL);
-		break;
 	case ANOUBIS_PROCESS_OP_EXIT:
 		/* NOTE: Do NOT use msg->common.task_cookie here! */
 		proc = pe_get_proc(msg->task_cookie);
@@ -424,10 +464,9 @@ pe_handle_process(struct eventdev_hdr *hdr)
 
 	if (proc) {
 		DEBUG(DBG_PE_PROC, "pe_handle_process: token 0x%08llx pid %d "
-		    "uid %u op %d path \"%s\" proc %p csum 0x%08x... parent "
+		    "uid %u op %d proc %p csum 0x%08x... parent "
 		    "token 0x%08llx",
 		    proc->task_cookie, proc->pid, hdr->msg_uid, msg->op,
-		    msg->op == ANOUBIS_PROCESS_OP_EXEC ? msg->pathhint : "",
 		    proc, proc->csum ? htonl(*(unsigned long *)proc->csum) : 0,
 		    proc->parent_proc ? proc->parent_proc->task_cookie : 0);
 		pe_put_proc(proc);
@@ -475,54 +514,6 @@ anoubisd_reply_t *
 pe_handle_sfs(struct eventdev_hdr *hdr)
 {
 	anoubisd_reply_t	*reply = NULL;
-#ifdef LINUX	/* XXX HSH */
-	struct sfs_open_message	*msg;
-	struct pe_proc		*proc;
-
-	if (hdr == NULL) {
-		log_warnx("pe_handle_sfs: empty header");
-		return (NULL);
-	}
-	if (hdr->msg_size < (sizeof(struct eventdev_hdr) +
-	    sizeof(struct sfs_open_message))) {
-		log_warnx("pe_handle_sfs: short message");
-		return (NULL);
-	}
-	msg = (struct sfs_open_message *)(hdr + 1);
-
-	/* check tracker list */
-	proc = pe_get_proc(msg->common.task_cookie);
-
-	if (proc == NULL) {
-		DEBUG(DBG_PE_SFS, "pe_handle_sfs: untracked process %u",
-		    hdr->msg_pid);
-	} else {
-		/* if not yet set, fill in checksum and pathhint */
-		if ((proc->csum == NULL) && (msg->flags &
-		    ANOUBIS_OPEN_FLAG_CSUM)) {
-			if ((proc->csum = calloc(sizeof(u_int8_t),
-			    sizeof(msg->csum))) == NULL) {
-				log_warn("calloc");
-				master_terminate(ENOMEM);	/* XXX HSH */
-			}
-			bcopy(msg->csum, proc->csum, sizeof(msg->csum));
-		}
-		if ((proc->pathhint == NULL) &&
-		    (msg->flags & ANOUBIS_OPEN_FLAG_PATHHINT)) {
-			if ((proc->pathhint = strdup(msg->pathhint)) == NULL) {
-				log_warn("strdup");
-				master_terminate(ENOMEM);	/* XXX HSH */
-			}
-		}
-		pe_put_proc(proc);
-	}
-	DEBUG(DBG_PE_SFS, "pe_handle_sfs: pid %u uid %u ino %llu dev 0x%llx "
-	    "flags %lx \"%s\" csum 0x%08x...", hdr->msg_pid, hdr->msg_uid,
-	    msg->ino, msg->dev, msg->flags,
-	    (msg->flags & ANOUBIS_OPEN_FLAG_PATHHINT) ? msg->pathhint : "",
-	    htonl(*(unsigned long *)msg->csum));
-
-#endif	/* LINUX */
 
 	if ((reply = calloc(1, sizeof(struct anoubisd_reply))) == NULL) {
 		log_warn("pe_handle_sfs: cannot allocate memory");
