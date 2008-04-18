@@ -51,6 +51,9 @@
 #include <anoubis_dump.h>
 
 #include <anoubischat.h>
+#ifdef NEEDBSDCOMPAT
+#include <bsdcompat.h>
+#endif
 
 #define NNOTIFIES 100
 struct {
@@ -116,7 +119,7 @@ void tp_chat_lud_client(const char *sockname)
 
 	bzero(&ss, sizeof(ss));
 	ss_sun->sun_family = AF_UNIX;
-	strncpy(ss_sun->sun_path, sockname, sizeof(ss_sun->sun_path) - 1 );
+	strlcpy(ss_sun->sun_path, sockname, sizeof(ss_sun->sun_path));
 	rc = acc_setaddr(c, &ss);
 	if (rc != ACHAT_RC_OK)
 		fail("client setaddr failed", __LINE__);
@@ -282,7 +285,7 @@ void tp_chat_lud_server(const char *sockname)
 
 	bzero(&ss, sizeof(ss));
 	ss_sun->sun_family = AF_UNIX;
-	strncpy(ss_sun->sun_path, sockname, sizeof(ss_sun->sun_path) - 1 );
+	strlcpy(ss_sun->sun_path, sockname, sizeof(ss_sun->sun_path));
 	rc = acc_setaddr(s, &ss);
 	if (rc != ACHAT_RC_OK)
 		fail("server setaddr failed", __LINE__);

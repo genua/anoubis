@@ -38,6 +38,9 @@
 #include <string.h>
 
 #include "anoubischat.h"
+#ifdef NEEDBSDCOMPAT
+#include <bsdcompat.h>
+#endif
 
 START_TEST(tc_core_creation)
 {
@@ -149,8 +152,7 @@ START_TEST(tc_core_addr)
 
 	bzero(&sa, sizeof(sa));
 	sa_un->sun_family = AF_UNIX;
-	strncpy(sa_un->sun_path, testpath, sizeof(sa_un->sun_path) - 1);
-	sa_un->sun_path[sizeof(sa_un->sun_path) - 1] = '\0';
+	strlcpy(sa_un->sun_path, testpath, sizeof(sa_un->sun_path));
 #ifdef OPENBSD
 	sa_un->sun_len = SUN_LEN(sa_un);
 #endif

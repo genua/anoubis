@@ -33,12 +33,14 @@
 #include <netinet/in.h>
 
 #include <apn.h>
-#include <bsdcompat.h>
 #include <check.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#ifdef NEEDBSDCOMPAT
+#include <bsdcompat.h>
+#endif
 
 char *
 generate_file(void)

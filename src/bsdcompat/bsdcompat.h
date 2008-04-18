@@ -37,6 +37,7 @@
 #include <features.h>
 #define __need_size_t
 #include <stddef.h>
+#include <unistd.h>
 
 #ifndef __always_inline
 # define __always_inline __attribute__ ((always_inline))
@@ -45,6 +46,8 @@
 #ifndef __unused
 # define __unused __attribute__ ((unused))
 #endif
+
+__BEGIN_DECLS
 
 extern void __chk_fail (void) __attribute__ ((__noreturn__));
 
@@ -100,6 +103,8 @@ int getpeereid(int, uid_t *, gid_t *);
 #ifndef HAVE_INET_NET_PTON
 int inet_net_pton(int , const char *, void *, size_t);
 #endif
+
+__END_DECLS
 
 #endif /* __BSDCOMPAT_H__ */
 #endif /* NEEDBSDCOMPAT */

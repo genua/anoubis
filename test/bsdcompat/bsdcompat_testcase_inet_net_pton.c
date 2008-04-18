@@ -37,7 +37,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef NEEDBSDCOMPAT
 #include <bsdcompat.h>
+#endif
 
 void
 dump(void *data, size_t len)

@@ -30,6 +30,10 @@
 #include <wx/string.h>
 
 #include <libnotify/notify.h>
+#include "config.h"
+#ifdef NEEDBSDCOMPAT
+#include <bsdcompat.h>
+#endif
 
 #include "AnEvents.h"
 #include "main.h"
@@ -229,13 +233,7 @@ TrayIcon::systemNotify(const gchar *module, const gchar *message,
 		ipath += wxGetApp().getIconPath(_T("ModAnoubis_question_48.png")
 		    );
 
-#ifdef LINUX
-	strncpy(buffer, (const char*)ipath.mb_str(wxConvUTF8),
-	    sizeof(buffer) - 1);
-#endif
-#ifdef OPENBSD
 	strlcpy(buffer, (const char*)ipath.mb_str(wxConvUTF8), sizeof(buffer));
-#endif
 	uri = buffer;
 
 	/* set notification properties */

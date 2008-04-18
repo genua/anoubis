@@ -35,6 +35,8 @@ AM_MAINTAINER_MODE
 AC_CONFIG_HEADER([src/config.h])
 
 dnl os specific library replacements
+AC_SEARCH_LIBS([inet_net_pton], [resolv], \
+	AC_DEFINE([__USE_MISC], [1], [for inet_net_pton]))
 AC_CONFIG_LIBOBJ_DIR([src/bsdcompat])
 AC_REPLACE_FUNCS([strlcat strlcpy strtonum getpeereid inet_net_pton])
 AM_CONDITIONAL([NEEDBSDCOMPAT], [test -n "$LIBOBJS"])

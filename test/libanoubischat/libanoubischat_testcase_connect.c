@@ -41,6 +41,10 @@
 #include <unistd.h>
 
 #include "anoubischat.h"
+#include "config.h"
+#ifdef NEEDBSDCOMPAT
+#include <bsdcompat.h>
+#endif
 
 #define TCCONNECT_SOCKETDIR	"/tmp/"
 #define TCCONNECT_SOCKETPREFIX	"achat_socket."
@@ -63,7 +67,7 @@ tc_connect_lud_client(const char *sockname)
 
 	bzero(&ss, sizeof(ss));
 	ss_sun->sun_family = AF_UNIX;
-	strncpy(ss_sun->sun_path, sockname, sizeof(ss_sun->sun_path) - 1 );
+	strlcpy(ss_sun->sun_path, sockname, sizeof(ss_sun->sun_path));
 	rc = acc_setaddr(c, &ss);
 	if (rc != ACHAT_RC_OK)
 		fail("client setaddr failed with rc=%d", rc);
@@ -108,7 +112,7 @@ tc_connect_lud_server(const char *sockname)
 
 	bzero(&ss, sizeof(ss));
 	ss_sun->sun_family = AF_UNIX;
-	strncpy(ss_sun->sun_path, sockname, sizeof(ss_sun->sun_path) - 1);
+	strlcpy(ss_sun->sun_path, sockname, sizeof(ss_sun->sun_path));
 	rc = acc_setaddr(s, &ss);
 	if (rc != ACHAT_RC_OK)
 		fail("server setaddr failed with rc=%d", rc);
@@ -156,7 +160,7 @@ tc_connect_lud_serverdup(const char *sockname)
 
 	bzero(&ss, sizeof(ss));
 	ss_sun->sun_family = AF_UNIX;
-	strncpy(ss_sun->sun_path, sockname, sizeof(ss_sun->sun_path) - 1);
+	strlcpy(ss_sun->sun_path, sockname, sizeof(ss_sun->sun_path));
 	rc = acc_setaddr(s, &ss);
 	if (rc != ACHAT_RC_OK)
 		fail("server setaddr failed with rc=%d", rc);
@@ -336,7 +340,7 @@ START_TEST(tc_connect_localunixdomain_clientclose)
 
 	bzero(&ss, sizeof(ss));
 	ss_sun->sun_family = AF_UNIX;
-	strncpy(ss_sun->sun_path, sockname, sizeof(ss_sun->sun_path) - 1 );
+	strlcpy(ss_sun->sun_path, sockname, sizeof(ss_sun->sun_path));
 	rc = acc_setaddr(c, &ss);
 	if (rc != ACHAT_RC_OK)
 		fail("client setaddr failed with rc=%d", rc);

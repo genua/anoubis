@@ -48,6 +48,7 @@
 
 #ifdef LINUX
 #include <linux/anoubis.h>
+#include <bsdcompat.h>
 #endif
 #ifdef OPENBSD
 #include <dev/anoubis.h>
@@ -79,8 +80,7 @@ START_TEST(tc_Sessions_one)
 
 	bzero(&ss, sizeof(ss));
 	ss_sun->sun_family = AF_UNIX;
-	strncpy(ss_sun->sun_path, sockname,
-	    sizeof(ss_sun->sun_path) - 1);
+	strlcpy(ss_sun->sun_path, sockname, sizeof(ss_sun->sun_path));
 	rc = acc_setaddr(c, &ss);
 	fail_if(rc != ACHAT_RC_OK, "setaddr failed with rc=%d", rc);
 	mark_point();
@@ -138,8 +138,7 @@ START_TEST(tc_Sessions_two)
 
 	bzero(&ss, sizeof(ss));
 	ss_sun->sun_family = AF_UNIX;
-	strncpy(ss_sun->sun_path, sockname,
-	    sizeof(ss_sun->sun_path) - 1);
+	strlcpy(ss_sun->sun_path, sockname, sizeof(ss_sun->sun_path));
 	rc = acc_setaddr(c1, &ss);
 	fail_if(rc != ACHAT_RC_OK, "1st channel setaddr failed with rc=%d", rc);
 	rc = acc_setaddr(c2, &ss);
@@ -205,8 +204,7 @@ START_TEST(tc_Sessions_three)
 
 	bzero(&ss, sizeof(ss));
 	ss_sun->sun_family = AF_UNIX;
-	strncpy(ss_sun->sun_path, sockname,
-	    sizeof(ss_sun->sun_path) - 1);
+	strlcpy(ss_sun->sun_path, sockname, sizeof(ss_sun->sun_path));
 	rc = acc_setaddr(c, &ss);
 	fail_if(rc != ACHAT_RC_OK, "setaddr failed with rc=%d", rc);
 	mark_point();

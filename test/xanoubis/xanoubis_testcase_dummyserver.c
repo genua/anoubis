@@ -34,6 +34,10 @@
 
 #include <anoubis_protocol.h>
 #include <anoubis_server.h>
+#include "config.h"
+#ifdef NEEDBSDCOMPAT
+#include <bsdcompat.h>
+#endif
 
 #include <check.h>
 #include <errno.h>
@@ -71,7 +75,7 @@ tc_Communicator_lud_server(const char *sockname)
 
 	bzero(&ss, sizeof(ss));
 	ss_sun->sun_family = AF_UNIX;
-	strncpy(ss_sun->sun_path, sockname, sizeof(ss_sun->sun_path) - 1 );
+	strlcpy(ss_sun->sun_path, sockname, sizeof(ss_sun->sun_path));
 	rc = acc_setaddr(s, &ss);
 	if (rc != ACHAT_RC_OK)
 		fail("server setaddr failed", __LINE__);

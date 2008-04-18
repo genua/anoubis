@@ -25,8 +25,9 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifdef HAVE_CONFIG_H
 #include "config.h"
+#ifdef NEEDBSDCOMPAT
+#include <bsdcompat.h>
 #endif
 
 #include <sys/types.h>
@@ -116,14 +117,8 @@ Communicator::connect(void)
 
 	bzero(&ss, sizeof(ss));
 	ss_sun->sun_family = AF_UNIX;
-#ifdef LINUX
-	strncpy(ss_sun->sun_path, socketPath_.fn_str(),
-	    sizeof(ss_sun->sun_path) - 1 );
-#endif
-#ifdef OPENBSD
 	strlcpy(ss_sun->sun_path, socketPath_.fn_str(),
 	    sizeof(ss_sun->sun_path));
-#endif
 	rc = acc_setaddr(channel_, &ss);
 	if (rc != ACHAT_RC_OK) {
 		acc_destroy(channel_);

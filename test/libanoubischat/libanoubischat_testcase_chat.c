@@ -39,6 +39,10 @@
 #include <sys/wait.h>
 
 #include "anoubischat.h"
+#include "config.h"
+#ifdef NEEDBSDCOMPAT
+#include <bsdcompat.h>
+#endif
 
 #define TCCHAT_SOCKETDIR	"/tmp/"
 #define TCCHAT_SOCKETPREFIX	"achat_socket."
@@ -65,7 +69,7 @@ tc_chat_lud_client(const char *sockname)
 
 	bzero(&ss, sizeof(ss));
 	ss_sun->sun_family = AF_UNIX;
-	strncpy(ss_sun->sun_path, sockname, sizeof(ss_sun->sun_path) - 1 );
+	strlcpy(ss_sun->sun_path, sockname, sizeof(ss_sun->sun_path));
 	rc = acc_setaddr(c, &ss);
 	if (rc != ACHAT_RC_OK)
 		fail("client setaddr failed with rc=%d", rc);
@@ -130,7 +134,7 @@ tc_chat_lud_server(const char *sockname)
 
 	bzero(&ss, sizeof(ss));
 	ss_sun->sun_family = AF_UNIX;
-	strncpy(ss_sun->sun_path, sockname, sizeof(ss_sun->sun_path) - 1 );
+	strlcpy(ss_sun->sun_path, sockname, sizeof(ss_sun->sun_path));
 	rc = acc_setaddr(s, &ss);
 	if (rc != ACHAT_RC_OK)
 		fail("server setaddr failed with rc=%d", rc);

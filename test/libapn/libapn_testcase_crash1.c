@@ -32,12 +32,14 @@
 #include <netinet/in.h>
 
 #include <apn.h>
-#include <bsdcompat.h>
 #include <check.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <signal.h>
 #include <unistd.h>
+#ifdef NEEDBSDCOMPAT
+#include <bsdcompat.h>
+#endif
 
 char *test = NULL;
 
