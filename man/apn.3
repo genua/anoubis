@@ -35,17 +35,27 @@
 .Sh SYNOPSIS
 .Fd #include <apn.h>
 .Ft int
-.Fn apn_parse "const char * filename" "struct apnruleset *ruleset" "int flags"
+.Fn apn_parse "const char *filename" "struct apnruleset *ruleset" "int flags"
+.Ft int
+.Fn apn_add_alfrule "struct apn_rule *rule" "struct apn_ruleset *ruleset"
+.Ft int
+.Fn apn_add_sfsrule "struct apn_rule *rule" "struct apn_ruleset *ruleset"
+.Ft int
+.Fn apn_print_rules "struct apn_rule *rule" "int flags"
+.Ft void
+.Fn apn_print_errors "struct apn_ruleset *ruleset"
+.Ft void
+.Fn apn_free_ruleset "struct apn_ruleset *ruleset"
 .Sh DESCRIPTION
 These functions implement the APN parser.
 .Pp
-.Bl -tag -width Ds -compat
+.Bl -tag -width Ds -compact
 .It Fn apn_parse filename ruleset flags
 The function
 .Fn apn_parse
 parses the file specified by
 .Fa filename .
-The parsed ruleset is stored in a structure pointed to by
+The parsed rule set is stored in a structure pointed to by
 .Fa ruleset
 and which is allocated by
 .Fn apn_parse .
@@ -61,14 +71,178 @@ produce verbose output
 .It Dv APN_FLAG_VERBOSE2
 produce even more verbose output.
 .El
+.Pp
+.It Fn apn_add_alfrule rule ruleset
+The function
+.Fn apn_add_alfrule
+adds a single ALF rule
+.Em rule
+of type
+.Em struct apn_rule
+to the rule set
+.Em ruleset
+of type
+.Em struct apn_ruleset .
+.Pp
+.It Fn apn_add_sfsrule rule ruleset
+The function
+.Fn apn_add_sfsrule
+adds a single SFS rule
+.Em rule
+of type
+.Em struct sfs_rule
+to the rule set
+.Em ruleset
+of type
+.Em struct apn_ruleset .
+.Pp
+.It Fn apn_print_rules rule flags
+The function
+.Fn apn_print_rule
+prints a parsed rule of type
+.Em struct apn_rule
+to
+.Em stdout .
+The parameter
+.Em flags
+may contain the flag
+.Em APN_FLAG_VERBOSE2 .
+If this flags is set, the numeric rule ID will be prefix the actual rule.
+.Pp
+.It Fn apn_print_errors ruleset
+The function
+.Fn apn_print_errors
+prints the error messages generated while parsing a rule set with the
+function
+.Fn apn_parse
+to
+.Em stderr .
+.Pp
+.It Fn apn_free_ruleset ruleset
+The function
+.Fn apn_free_ruleset
+frees all data structures contained in the rule set
+.Em ruleset
+of type
+.Em struct apn_ruleset .
+The argument
+.Em ruleset
+is freed, too.
 .El
 .Pp
+.Sh RULE SETS
+A full rule set is defined by the structure
+.Em struct apn_ruleset :
+.Bd -literal
+struct apn_ruleset {
+       int                     flags;
+
+       /* Rulesets and variables */
+       struct apnrule_queue    alf_queue;
+       struct apnrule_queue    sfs_queue;
+       struct apnvar_queue     var_queue;
+
+	/* Error messages from the parser */
+	struct apnerr_queue     err_queue;
+};
+.Ed
+.Pp
+The
+.Em apn_ruleset
+has the following members:
+.Bl -tag -width alf_queue
+.It Fa flags
+Contains a copy of the flags passed to
+.Fn apn_parse .
+These are used internally by the library, eg.
+.Fn apn_print_rules
+checks these flags for
+.Em APN_FLAG_VERBOSE2
+to produce more verbose output.
+.It Fa alf_queue
+The TAILQ
+.Pf ( see Xr queue 3bsd )
+contains all ALF rules.
+This queue holds structures of type
+.Em struct apn_rule .
+.It Fa sfs_queue
+Similarly,
+.Em sfs_queue contains all SFS rules.
+This queue holds structures of type
+.Em struct apn_rule .
+.It Fa var_queue
+In this queue, all variables are stored.
+This queue holds structures of type
+.Em struct apn_rule .
+Note, this is not fully implemented yet!
+.It Fa err_queue
+This queue contains all error messages produced while parsing a file.
+The error messages are of type
+.Em struct apn_errmsg .
+The function
+.Fn apn_print_errors
+prints all messages in this queue to
+.Em stdout .
+.El
+The next central data structure is
+.Em struct apn_rule :
+.Bd -literal
+struct apn_rule {
+	TAILQ_ENTRY(apn_rule)    entry;
+	u_int8_t                 type;
+	int                      id;
+
+	struct apn_app          *app;
+
+	union {
+		struct apn_alfrule      *alf;
+		struct apn_sfsrule      *sfs;
+	} rule;
+
+	struct apn_rule         *tail;
+	struct apn_rule         *next;
+};
+.Ed
+.Pp
+The ALF uses a set of several rules for each application.
+Such a set of rules is a list of
+.Em struct apn_rule
+structures linked via the fields
+.Em next
+and
+.Em tail .
+.Pp
+The first structure of such a list defines the application using the field
+.Em app .
+This field is either by empty (ie. any application would match this set
+of rules) or points to a stucture
+.Em struct apn_app
+specifying one or more applications.
+The first structures of such rule chains are linked together using a TAILQ,
+defined by the field
+.Em entry .
+The TAILQ head is the field
+.Em alf_queue
+in
+.Em struct apn_ruleset .
+This means, a ALF rule set consists of chains of rules linked together,
+where each chain defines the structures of type
+.Em struct apn_rule
+for a particular application or a set of applications.
+.Pp
+SFS rules use a set of
+.Em struct apn_rule
+linked together using a TAILQ, the head is the field
+.Em sfs_queue
+in
+.Em struct apn_ruleset .
+Thus a SFS rule set consists of linked list of structures of type
+.Em struct apn_rule .
 .\" The following requests should be uncommented and used where appropriate.
 .\" This next request is for sections 2, 3, and 9 function return values only.
-.\" .Sh RETURN VALUES
 .\" .Sh DIAGNOSTICS
 .\" The next request is for sections 2, 3, and 9 error and signal handling only.
-.Sh ERRORS
+.Sh RETURN VALUES
 These functions return 0 to indicate success and a positive non-zero
 error code to indicate failure.
 In case of an internal error, e.g. a failed call to

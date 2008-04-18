@@ -63,6 +63,7 @@ static struct file {
 } *file;
 TAILQ_HEAD(files, file)		 files;
 
+
 int		 parse_rules(const char *, struct apn_ruleset *);
 struct file	*pushfile(const char *, int);
 int		 popfile(void);
@@ -92,8 +93,10 @@ void		 freeport(struct apn_port *);
 void		 clearfilter(struct apn_afiltspec *);
 void		 clearapp(struct apn_app *);
 void		 clearalfrule(struct apn_alfrule *);
+void		 clearsfsrule(struct apn_sfsrule *);
 
 static struct apn_ruleset	*apnrsp = NULL;
+static int			 counter = 0;
 
 typedef struct {
 	union {
@@ -120,11 +123,13 @@ typedef struct {
 		struct apn_acaprule	 acaprule;
 		struct apn_default	 dfltrule;
 		struct apn_context	 ctxrule;
+		struct apn_sfscheck	 sfscheck;
 		struct apn_addr		 addr;
 		struct apn_app		*app;
 		struct apn_port		*port;
 		struct apn_host		*host;
 		struct apn_alfrule	*alfrule;
+		struct apn_sfsrule	*sfsrule;
 		struct apn_rule		*ruleset;
 	} v;
 	int lineno;
@@ -138,7 +143,7 @@ typedef struct {
 %token	READ WRITE EXEC CHMOD ERROR APPLICATION RULE HOST TFILE
 %token	<v.string>		STRING
 %token	<v.number>		NUMBER
-%type	<v.app>			app app_l apps
+%type	<v.app>			app app_l apps sfsapp
 %type	<v.hashtype>		hashtype
 %type	<v.hashspec>		hashspec
 %type	<v.addr>		address
@@ -158,6 +163,8 @@ typedef struct {
 %type	<v.acaprule>		alfcaprule
 %type	<v.dfltrule>		defaultrule alfdefault sfsdefault sbdefault;
 %type	<v.ctxrule>		ctxrule
+%type	<v.sfscheck>		sfscheckrule
+%type	<v.sfsrule>		sfsrule sfsrule_l
 %%
 
 grammar		: /* empty */
@@ -206,7 +213,7 @@ varalfrule	: RULE STRING '=' alfspecs		{
 		}
 		;
 
-varsfsrule	: RULE STRING '=' sfsspec		{
+varsfsrule	: RULE STRING '=' sfscheckrule		{
 			if (varset($2, NULL, 0, 0) == -1) {
 				free($2);
 				YYERROR;
@@ -292,8 +299,12 @@ alfruleset	: apps optnl '{' optnl alfrule_l '}' nl {
 			rule->rule.alf = $5;
 			rule->tail = rule;
 			rule->type = APN_ALF;
+			rule->id = counter++;
 
 			if (apn_add_alfrule(rule, apnrsp) != 0) {
+				clearapp($1);
+				clearalfrule($5);
+				free(rule);
 				YYERROR;
 			}
 		}
@@ -325,6 +336,7 @@ alfrule		: alffilterrule			{
 			rule->type = APN_ALF_FILTER;
 			rule->rule.afilt = $1;
 			rule->tail = rule;
+			rule->id = counter++;
 
 			$$ = rule;
 		}
@@ -338,6 +350,7 @@ alfrule		: alffilterrule			{
 			rule->type = APN_ALF_CAPABILITY;
 			rule->rule.acap = $1;
 			rule->tail = rule;
+			rule->id = counter++;
 
 			$$ = rule;
 		}
@@ -351,6 +364,7 @@ alfrule		: alffilterrule			{
 			rule->type = APN_ALF_DEFAULT;
 			rule->rule.apndefault = $1;
 			rule->tail = rule;
+			rule->id = counter++;
 
 			$$ = rule;
 		}
@@ -364,6 +378,7 @@ alfrule		: alffilterrule			{
 			rule->type = APN_ALF_CTX;
 			rule->rule.apncontext = $1;
 			rule->tail = rule;
+			rule->id = counter++;
 
 			$$ = rule;
 		}
@@ -568,33 +583,76 @@ alfdefault	: defaultrule			{ $$ = $1; }
 		/*
 		 * SFS
 		 */
-sfsmodule	: SFS optnl '{' optnl sfsruleset_l '}'
+sfsmodule	: SFS optnl '{' optnl sfsrule_l '}'	{
+			struct apn_rule	*rule;
+
+			if ((rule = calloc(1, sizeof(struct apn_rule)))
+			    == NULL) {
+				clearsfsrule($5);
+				YYERROR;
+			}
+
+			rule->rule.sfs = $5;
+			rule->type = APN_SFS;
+
+			if (apn_add_sfsrule(rule, apnrsp) != 0) {
+				clearsfsrule($5);
+				free(rule);
+				YYERROR;
+			}
+		}
 		;
 
-sfsruleset_l	: sfsruleset_l sfsruleset
-		| sfsruleset
+sfsrule_l	: sfsrule_l sfsrule nl		{
+			if ($2 == NULL)
+				$$ = $1;
+			else if ($1 == NULL)
+				$$ = $2;
+			else {
+				$1->tail->next = $2;
+				$1->tail = $2->tail;
+				$$ = $1;
+			}
+		}
+		| sfsrule nl			{ $$ = $1; }
 		;
 
-sfsruleset	: apps				{
-		} optnl '{' optnl sfsrules '}' nl
-		;
+sfsrule		: sfscheckrule			{
+			struct apn_sfsrule	*rule;
+
+			rule = calloc(1, sizeof(struct apn_sfsrule));
+			if (rule == NULL) {
+				clearapp($1.app);
+				YYERROR;
+			}
+
+			rule->type = APN_SFS_CHECK;
+			rule->rule.sfscheck = $1;
+			rule->tail = rule;
+			rule->id = counter++;
+
+			$$ = rule;
+		}
+		| sfsdefault			{
+			struct apn_sfsrule	*rule;
+
+			rule = calloc(1, sizeof(struct apn_alfrule));
+			if (rule == NULL)
+				YYERROR;
+
+			rule->type = APN_SFS_DEFAULT;
+			rule->rule.apndefault = $1;
+			rule->tail = rule;
+			rule->id = counter++;
+
+			$$ = rule;
+		}
 		;
 
-sfsrule_l	: sfsrule_l sfsrule nl
-		| sfsrule nl
-		;
-
-sfsrules	: sfsrule_l
-		;
-
-sfsrule		: sfscheckrule
-		| sfsdefault
-		;
-
-sfscheckrule	: action sfsspec
-		;
-
-sfsspec		: STRING			{ free($1); }
+sfscheckrule	: sfsapp log			{
+			$$.app = $1;
+			$$.log = $2;
+		}
 		;
 
 sfsdefault	: defaultrule
@@ -769,6 +827,28 @@ app		: STRING hashspec		{
 			$$ = app;
 		}
 		;
+
+sfsapp		: STRING			{
+			struct apn_app	*app;
+
+			if ((app = calloc(1, sizeof(struct apn_app)))
+			    == NULL) {
+				free($1);
+				YYERROR;
+			}
+			if ((app->name = strdup($1)) == NULL) {
+				free($1);
+				free(app);
+				YYERROR;
+			}
+			app->hashtype = APN_HASH_NONE;
+			app->tail = app;
+
+			free($1);
+
+			$$ = app;
+		}
+		| app				{ $$ = $1; }
 
 hashspec	: hashtype STRING		{
 			if (validate_hash($1, $2) == -1) {
@@ -1187,6 +1267,7 @@ parse_rules(const char *filename, struct apn_ruleset *apnrspx)
 	int errors = 0;
 
 	apnrsp = apnrspx;
+	counter = 0;
 
 	TAILQ_INIT(&files);
 	if ((file = pushfile(filename, 1)) == NULL) {
@@ -1651,6 +1732,32 @@ clearalfrule(struct apn_alfrule *rule)
 			break;
 		}
 
+		free(hp);
+		hp = tmp;
+	}
+}
+
+void
+clearsfsrule(struct apn_sfsrule *rule)
+{
+	struct apn_sfsrule	*hp, *tmp;
+
+	if (rule == NULL)
+		return;
+
+	hp = rule;
+	while (hp) {
+		tmp = hp->next;
+
+		switch (hp->type) {
+		case APN_SFS_CHECK:
+			clearapp(hp->rule.sfscheck.app);
+			break;
+
+		case APN_SFS_DEFAULT:
+		default:
+			break;
+		}
 		free(hp);
 		hp = tmp;
 	}

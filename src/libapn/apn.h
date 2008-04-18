@@ -45,7 +45,7 @@
 #define MAX_APN_HASH_LEN	APN_HASH_SHA256_LEN
 
 enum {
-	APN_HASH_SHA256
+	APN_HASH_NONE, APN_HASH_SHA256
 };
 
 enum {
@@ -153,6 +153,8 @@ enum {
 
 struct apn_alfrule {
 	u_int8_t		 type;
+	int			 id;
+
 	union {
 		struct apn_afiltrule	afilt;
 		struct apn_acaprule	acap;
@@ -164,6 +166,28 @@ struct apn_alfrule {
 	struct apn_alfrule	*tail;
 };
 
+struct apn_sfscheck {
+	struct apn_app	*app;
+	int		 log;
+};
+
+enum {
+	APN_SFS_CHECK, APN_SFS_DEFAULT
+};
+
+struct apn_sfsrule {
+	u_int8_t		 type;
+	int			 id;
+
+	union {
+		struct apn_sfscheck	sfscheck;
+		struct apn_default	apndefault;
+	} rule;
+
+	struct apn_sfsrule	*next;
+	struct apn_sfsrule	*tail;
+};
+
 enum {
 	APN_ALF,  APN_SFS, APN_SB, APN_VS
 };
@@ -172,11 +196,13 @@ enum {
 struct apn_rule {
 	TAILQ_ENTRY(apn_rule)	 entry;
 	u_int8_t		 type;
+	int			 id;
 
 	struct apn_app		*app;
 
 	union {
 		struct apn_alfrule	*alf;
+		struct apn_sfsrule	*sfs;
 	} rule;
 
 	struct apn_rule		*tail;
@@ -207,7 +233,8 @@ struct apn_ruleset {
 
 int	apn_parse(const char *, struct apn_ruleset **, int);
 int	apn_add_alfrule(struct apn_rule *, struct apn_ruleset *);
-int	apn_print_rule(struct apn_rule *);
+int	apn_add_sfsrule(struct apn_rule *, struct apn_ruleset *);
+int	apn_print_rule(struct apn_rule *, int);
 void	apn_print_errors(struct apn_ruleset *);
 void	apn_free_ruleset(struct apn_ruleset *);
 
