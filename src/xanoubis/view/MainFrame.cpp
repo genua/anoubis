@@ -234,8 +234,8 @@ MainFrame::OnMbFileQuitSelect(wxCommandEvent& event)
 bool
 MainFrame::OnQuit(void)
 {
-	uint8_t answer = wxMessageBox(_("Really Quit Anoubis?"), _("Confirm"),
-			wxYES_NO, this);
+	uint8_t answer = wxMessageBox(_("xanoubis is going to be closed."),
+	    _("Confirm"), wxYES_NO, this);
 
 	if (answer == wxYES) {
 		return true;

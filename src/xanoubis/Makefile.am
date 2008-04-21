@@ -63,8 +63,13 @@ xanoubis_LDADD += $(libbsdcompat)
 xanoubis_CPPFLAGS += -I$(top_srcdir)/$(bsdcompatdir)
 endif
 
+xanoubis_DEPENDENCIES = $(top_srcdir)/$(xanoubisdir)/catalogs/de/xanoubis.mo
+
+catalogdir = $(datadir)/$(bin_PROGRAMS)/catalogs/de
 utildir = $(datadir)/$(bin_PROGRAMS)/utils
 icondir = $(datadir)/$(bin_PROGRAMS)/icons
+
+dist_catalog_DATA = catalogs/de/xanoubis.mo
 dist_util_DATA = utils/xanoubis_guessApp.sh
 dist_icon_DATA = \
 	icons/ModAlf_alert_16.png \
@@ -196,6 +201,18 @@ xanoubis_SOURCES= \
 	ctassert.h \
 	main.cpp \
 	main.h
+
+# XXX by ch: the target for po files is experimental and
+# will not been done automatically
+%.po:
+	( \
+	  cd $(top_srcdir)/$(xanoubisdir); \
+	  rm -f $@; \
+	  xgettext -L C++ -k_ -o $@ $(xanoubis_SOURCES); \
+	)
+
+%.mo: %.po
+	msgfmt -o $@ $<
 
 flawfinder_FLAGS=\
 	--dataonly \

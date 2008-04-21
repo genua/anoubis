@@ -34,6 +34,7 @@
 
 #include <wx/app.h>
 #include <wx/icon.h>
+#include <wx/intl.h>
 #include <wx/stdpaths.h>
 #include <wx/string.h>
 
@@ -66,6 +67,7 @@ class AnoubisGuiApp : public wxApp
 	private:
 		wxString		 socketParam_;
 		wxStandardPaths		 paths_;
+		wxLocale		 language_;
 		MainFrame		*mainFrame;
 		DlgLogViewer		*logViewer_;
 		DlgRuleEditor		*ruleEditor_;
@@ -92,6 +94,7 @@ class AnoubisGuiApp : public wxApp
 		void	toggleRuleEditorVisability(void);
 		void	connectCommunicator(bool);
 		wxIcon *loadIcon(wxString);
+		wxString getCatalogPath(void);
 		wxString getIconPath(wxString);
 		Module *getModule(enum moduleIdx);
 };

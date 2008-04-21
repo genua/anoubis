@@ -87,8 +87,16 @@ AnoubisGuiApp::quit(void)
 
 bool AnoubisGuiApp::OnInit()
 {
+	bool hasLocale;
+
 	if (!wxApp::OnInit())
 		return false;
+
+	hasLocale = language_.Init(wxLANGUAGE_DEFAULT, wxLOCALE_CONV_ENCODING);
+	if (hasLocale) {
+		language_.AddCatalogLookupPathPrefix(getCatalogPath());
+		language_.AddCatalog(wxT("xanoubis"));
+	}
 
 	mainFrame = new MainFrame((wxWindow*)NULL);
 	logViewer_ = new DlgLogViewer(mainFrame);
@@ -117,6 +125,9 @@ bool AnoubisGuiApp::OnInit()
 	((ModSfs*)modules_[SFS])->update();
 	((ModAnoubis*)modules_[ANOUBIS])->update();
 
+	if (hasLocale) {
+		status(_("Language setting: ") + language_.GetCanonicalName());
+	}
 	return (true);
 }
 
@@ -243,6 +254,26 @@ AnoubisGuiApp::connectCommunicator(bool doConnect)
 	} else {
 		comCtrl_->disconnect();
 	}
+}
+
+wxString
+AnoubisGuiApp::getCatalogPath(void)
+{
+	wxString catalogFileName;
+
+	catalogFileName = paths_.GetDataDir() + _T("/catalogs/");
+	if (!::wxFileExists(catalogFileName)) {
+		/*
+		 * We didn't find our catalog (where --prefix told us)!
+		 * Try to take executable path into account. This should
+		 * fix a missing --prefix as the matter in our build and test
+		 * environment with aegis.
+		 */
+		catalogFileName  = ::wxPathOnly(paths_.GetExecutablePath()) +
+		    _T("/../../..") + catalogFileName;
+	}
+
+	return catalogFileName;
 }
 
 wxString
