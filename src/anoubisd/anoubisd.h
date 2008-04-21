@@ -81,6 +81,7 @@ enum {
 	ANOUBISD_MSG_POLREQUEST,
 	ANOUBISD_MSG_POLREPLY,
 	ANOUBISD_MSG_EVENTDEV,
+	ANOUBISD_MSG_LOGREQUEST,
 	ANOUBISD_MSG_EVENTREPLY,
 	ANOUBISD_MSG_EVENTCANCEL,
 	ANOUBISD_MSG_SESSION_REG
@@ -107,6 +108,15 @@ struct anoubisd_reply {
 	char		msg[0];
 };
 typedef struct anoubisd_reply anoubisd_reply_t;
+
+/* format of ANOUBISD_MSG_LOGREQUEST */
+struct anoubisd_msg_logrequest
+{
+	u_int32_t		error;
+	u_int32_t		loglevel;
+	struct eventdev_hdr	hdr;
+	/* Eventdev data follows. */
+};
 
 enum {
 	PROC_MAIN,

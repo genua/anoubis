@@ -399,6 +399,31 @@ token_cmp(void *msg1, void *msg2)
 	return 0;
 }
 
+void
+send_lognotify(struct eventdev_hdr * hdr, u_int32_t error, u_int32_t loglevel)
+{
+	int size;
+	anoubisd_msg_t * msg;
+	struct anoubisd_msg_logrequest * req;
+
+	size = sizeof(anoubisd_msg_t)
+	    + sizeof(struct anoubisd_msg_logrequest)
+	    + hdr->msg_size
+	    - sizeof(struct eventdev_hdr);
+	msg = malloc(size);
+	if (!msg) {
+		log_warn("send_lognotify: can't allocate memory");
+		return;
+	}
+	msg->size = size;
+	msg->mtype = ANOUBISD_MSG_LOGREQUEST;
+	req = (struct anoubisd_msg_logrequest *)msg->msg;
+	req->error = error;
+	req->loglevel = loglevel;
+	bcopy(hdr, &req->hdr, hdr->msg_size);
+	enqueue(&eventq_p2s, msg);
+}
+
 static void
 dispatch_s2p(int fd, short sig, void *arg)
 {

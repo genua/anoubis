@@ -108,6 +108,8 @@ static void	dispatch_s2p(int, short, void *);
 static void	dispatch_p2s(int, short, void *);
 static void	dispatch_p2s_evt_request(anoubisd_msg_t *,
 		    struct event_info_session *);
+static void	dispatch_p2s_log_request(anoubisd_msg_t *,
+		    struct event_info_session *);
 static void	dispatch_p2s_evt_cancel(anoubisd_msg_t *,
 		    struct event_info_session *);
 static void	dispatch_p2s_pol_reply(anoubisd_msg_t *,
@@ -555,6 +557,13 @@ dispatch_p2s(int fd, short sig, void *arg)
 			dispatch_p2s_evt_request(msg, ev_info);
 			break;
 
+		case ANOUBISD_MSG_LOGREQUEST:
+			DEBUG(DBG_QUEUE, " >p2s: log %x",
+			    ((struct anoubisd_msg_logrequest*)msg->msg)
+				->hdr.msg_token);
+			dispatch_p2s_log_request(msg, ev_info);
+			break;
+
 		case ANOUBISD_MSG_EVENTCANCEL:
 			DEBUG(DBG_QUEUE, " >p2s: %x",
 			    ((struct eventdev_hdr *)msg->msg)->msg_token);
@@ -570,6 +579,60 @@ dispatch_p2s(int fd, short sig, void *arg)
 
 		DEBUG(DBG_TRACE, "<dispatch_p2s (loop)");
 	}
+}
+
+void
+dispatch_p2s_log_request(anoubisd_msg_t *msg,
+    struct event_info_session *ev_info)
+{
+	int extra;
+	struct anoubisd_msg_logrequest * req;
+	struct anoubis_notify_head * head;
+	struct anoubis_msg * m;
+	struct session * sess;
+
+	DEBUG(DBG_TRACE, ">dispatch_p2s_log_request");
+
+	req = (struct anoubisd_msg_logrequest *)msg->msg;
+	extra = req->hdr.msg_size - sizeof(struct eventdev_hdr);
+	m = anoubis_msg_new(sizeof(Anoubis_NotifyMessage) + extra);
+	if (!m) {
+		/* malloc failure, then we don't send the message */
+		DEBUG(DBG_TRACE, "<dispatch_p2s_log_request (bad new)");
+		return;
+	}
+	set_value(m->u.notify->type, ANOUBIS_N_LOGNOTIFY);
+	m->u.notify->token = req->hdr.msg_token;
+	set_value(m->u.notify->pid, req->hdr.msg_pid);
+	set_value(m->u.notify->rule_id, 0 /* XXX ?? */);
+	set_value(m->u.notify->uid, req->hdr.msg_uid);
+	set_value(m->u.notify->subsystem, req->hdr.msg_source);
+	set_value(m->u.notify->operation, 0 /* XXX ?? */);
+	set_value(m->u.notify->loglevel, req->loglevel);
+	set_value(m->u.notify->error, req->error);
+	memcpy(m->u.notify->payload, (&req->hdr)+1, extra);
+	head = anoubis_notify_create_head(m, NULL, NULL);
+	if (!head) {
+		/* malloc failure, then we don't send the message */
+		anoubis_msg_free(m);
+		DEBUG(DBG_TRACE, "<dispatch_p2s (free)");
+		return;
+	}
+	DEBUG(DBG_TRACE, " >anoubis_notify_create_head");
+
+	LIST_FOREACH(sess, &ev_info->seg->sessionList, nextSession) {
+		struct anoubis_notify_group * ng;
+
+		if (sess->proto == NULL)
+			continue;
+		ng = anoubis_server_getnotify(sess->proto);
+		if (!ng)
+			continue;
+		anoubis_notify(ng, head);
+		DEBUG(DBG_TRACE, " >anoubis_notify: %x", req->hdr.msg_token);
+	}
+	anoubis_notify_destroy_head(head);
+	DEBUG(DBG_TRACE, " >anoubis_notify_destroy_head");
 }
 
 void
@@ -592,7 +655,7 @@ dispatch_p2s_evt_request(anoubisd_msg_t	*msg,
 		log_warn("dispatch_p2s: bad flags %x", hdr->msg_flags);
 	}
 
-	extra = hdr->msg_size -  sizeof(struct eventdev_hdr);
+	extra = hdr->msg_size - sizeof(struct eventdev_hdr);
 	m = anoubis_msg_new(sizeof(Anoubis_NotifyMessage) + extra);
 	if (!m) {
 		/* malloc failure, then we don't send the message */
