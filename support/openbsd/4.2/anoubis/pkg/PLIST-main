@@ -3,8 +3,11 @@ bin/xanoubis
 @comment include/anoubischat.h
 @comment lib/libanoubischat.a
 @man man/man1/xanoubis.1
+@comment @man man/man1/xanoubis_guessApp.1
 @comment @man man/man3/anoubischat.3
 share/xanoubis/
+@comment share/xanoubis/utils/
+@comment share/xanoubis/utils/xanoubis_guessApp.sh
 share/xanoubis/icons/
 share/xanoubis/icons/ModAlf_alert_16.png
 share/xanoubis/icons/ModAlf_alert_48.png
