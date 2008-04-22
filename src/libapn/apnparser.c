@@ -580,6 +580,9 @@ apn_print_netaccess(int netaccess)
 	case APN_ACCEPT:
 		printf("accept ");
 		break;
+	case APN_INOUT:
+		/* nothing */
+		break;
 	default:
 		return (1);
 	}

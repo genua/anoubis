@@ -422,6 +422,7 @@ alffilterspec	: netaccess log af proto hosts	{
 
 netaccess	: CONNECT			{ $$ = APN_CONNECT; }
 		| ACCEPT			{ $$ = APN_ACCEPT; }
+		| /* empty */			{ $$ = APN_INOUT; }
 		;
 
 af		: INET				{ $$ = AF_INET; }
@@ -1549,7 +1550,7 @@ validate_alffilterspec(struct apn_afiltspec *afspec)
 		return (-1);
 
 	if (!(APN_CONNECT <= afspec->netaccess && afspec->netaccess <=
-	    APN_ACCEPT))
+	    APN_INOUT))
 		return (-1);
 
 	switch (afspec->af) {

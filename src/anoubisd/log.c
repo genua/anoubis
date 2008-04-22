@@ -135,7 +135,7 @@ log_debug(const char *emsg, ...)
 	va_end(ap);
 }
 
-void
+__dead void
 fatal(const char *emsg)
 {
 	if (emsg == NULL)
@@ -155,7 +155,7 @@ fatal(const char *emsg)
 		_exit(1);
 }
 
-void
+__dead void
 fatalx(const char *emsg)
 {
 	errno = 0;

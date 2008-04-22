@@ -49,7 +49,7 @@ enum {
 };
 
 enum {
-	APN_CONNECT, APN_ACCEPT
+	APN_CONNECT, APN_ACCEPT, APN_INOUT
 };
 
 enum {
@@ -151,6 +151,10 @@ enum {
 	APN_ALF_FILTER, APN_ALF_CAPABILITY, APN_ALF_DEFAULT, APN_ALF_CTX
 };
 
+/*
+ * XXX HSH This should be optimized by putting each type on a separate
+ * XXX HSH chain.
+ */
 struct apn_alfrule {
 	u_int8_t		 type;
 	int			 id;

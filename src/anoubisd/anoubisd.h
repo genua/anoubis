@@ -130,6 +130,8 @@ pid_t	policy_main(struct anoubisd_config *, int[], int[], int[]);
 
 void	pe_init(void);
 
+void	pe_shutdown(void);
+
 anoubisd_reply_t *policy_engine(int mtype, void *request);
 
 void	log_init(void);
@@ -143,17 +145,19 @@ void	log_info(const char *, ...);
 void	log_debug(const char *, ...);
 
 /*@noreturn@*/
-void	fatalx(const char *);	/* XXX RD __dead */
+__dead void	fatalx(const char *);
 
 /*@noreturn@*/
-void	fatal(const char *);	/* XXX RD __dead */
+__dead void	fatal(const char *);
 
 /*@noreturn@*/
-void	master_terminate(int);	/* XXX RD __dead */
+__dead void	master_terminate(int);
 
 anoubisd_msg_t *msg_factory(int, int);
 
 void	pe_dump(void);
+
+void	send_lognotify(struct eventdev_hdr *, u_int32_t, u_int32_t);
 
 #ifndef S_SPLINT_S
 #define DEBUG(flag, ...) {if (flag & debug_flags) log_debug(__VA_ARGS__);}
@@ -177,5 +181,7 @@ u_int32_t debug_stderr;
 #define DBG_PE_POLICY	0x0200
 #define DBG_PE_TRACKER	0x0400
 #define DBG_PE_CTX	0x0800
+#define DBG_PE_DECALF	0x1000
+#define DBG_SESSION	0x2000
 
 #endif /* !_ANOUBISD_H */

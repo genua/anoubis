@@ -211,13 +211,15 @@ policy_main(struct anoubisd_config *conf, int pipe_m2s[2], int pipe_m2p[2],
 	evtimer_set(&ev_timer, &dispatch_timer, &ev_info);
 	event_add(&ev_timer, &tv);
 
-	/* Policy engine */
+	/* Start policy engine */
 	pe_init();
 
 	DEBUG(DBG_TRACE, "policy event loop");
 	if (event_dispatch() == -1)
 		fatal("policy_main: event_dispatch");
 
+	/* Shutdown policy engine */
+	pe_shutdown();
 	_exit(0);
 }
 
@@ -303,8 +305,10 @@ dispatch_m2p(int fd, short sig, void *arg)
 			continue;
 		}
 		hdr = (struct eventdev_hdr *)msg->msg;
+		DEBUG(DBG_PE, "dispatch_m2p: %d", hdr->msg_source);
 		if (((hdr->msg_flags & EVENTDEV_NEED_REPLY) == 0) &&
-		    (hdr->msg_source != ANOUBIS_SOURCE_PROCESS)) {
+		    (hdr->msg_source != ANOUBIS_SOURCE_PROCESS &&
+		    hdr->msg_source != ANOUBIS_SOURCE_SFSEXEC)) {
 			free(msg);
 			DEBUG(DBG_TRACE, "<dispatch_m2p (not NEED_REPLY)");
 			continue;
@@ -404,7 +408,7 @@ token_cmp(void *msg1, void *msg2)
 }
 
 void
-send_lognotify(struct eventdev_hdr * hdr, u_int32_t error, u_int32_t loglevel)
+send_lognotify(struct eventdev_hdr *hdr, u_int32_t error, u_int32_t loglevel)
 {
 	int size;
 	anoubisd_msg_t * msg;
