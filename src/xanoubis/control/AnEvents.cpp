@@ -75,3 +75,10 @@ DEFINE_LOCAL_EVENT_TYPE(anEVT_COM_NOTIFYRECEIVED)
  * _ANY_ receiver of this evnet has to call event.Skip().
  */
 DEFINE_LOCAL_EVENT_TYPE(anEVT_ADD_NOTIFICATION)
+
+/*
+ * This event transports an escalation been answered to the
+ * communicator for sending the answer. The escalation is stored
+ * as client object.
+ */
+DEFINE_LOCAL_EVENT_TYPE(anEVT_ANSWER_ESCALATION)

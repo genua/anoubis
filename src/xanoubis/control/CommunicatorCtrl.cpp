@@ -67,6 +67,8 @@ CommunicatorCtrl::CommunicatorCtrl(wxString socketPath)
 	    wxCommandEventHandler(CommunicatorCtrl::OnNotifyReceived));
 	Connect(anEVT_COM_CONNECTION,
 	    wxCommandEventHandler(CommunicatorCtrl::OnConnection));
+	Connect(anEVT_ANSWER_ESCALATION,
+	    wxCommandEventHandler(CommunicatorCtrl::OnAnswerEscalation));
 }
 
 CommunicatorCtrl::~CommunicatorCtrl(void)
@@ -225,4 +227,13 @@ CommunicatorCtrl::OnConnection(wxCommandEvent& event)
 	remoteStationEvent.SetClientObject((wxClientData*)host);
 	wxGetApp().sendEvent(remoteStationEvent);
 	wxGetApp().status(logMessage);
+}
+
+void
+CommunicatorCtrl::OnAnswerEscalation(wxCommandEvent& event)
+{
+	Notification *notify;
+
+	notify = (Notification *)event.GetClientObject();
+	com_->sendEscalationAnswer(notify);
 }

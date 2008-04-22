@@ -50,6 +50,7 @@ class CommunicatorCtrl : public wxEvtHandler {
 
 		void	OnNotifyReceived(wxCommandEvent&);
 		void	OnConnection(wxCommandEvent&);
+		void	OnAnswerEscalation(wxCommandEvent&);
 };
 
 #endif	/* _COMMUNICATORCTRL_H_ */

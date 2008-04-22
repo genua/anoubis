@@ -28,6 +28,8 @@
 #include <anoubis_msg.h>
 #include <wx/string.h>
 
+#include "AnEvents.h"
+#include "main.h"
 #include "Notification.h"
 #include "NotifyAnswer.h"
 #include "EscalationNotify.h"
@@ -57,11 +59,22 @@ EscalationNotify::isAnswered(void)
 void
 EscalationNotify::answer(NotifyAnswer *answer)
 {
+	wxCommandEvent	event(anEVT_ANSWER_ESCALATION);
+
 	answer_ = answer;
+
+	event.SetClientObject((wxClientData *)this);
+	wxGetApp().sendEvent(event);
 }
 
 NotifyAnswer *
 EscalationNotify::getAnswer(void)
 {
 	return (answer_);
+}
+
+anoubis_token_t
+EscalationNotify::getToken(void)
+{
+	return (notify_->u.notify->token);
 }

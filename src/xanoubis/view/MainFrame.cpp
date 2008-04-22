@@ -37,6 +37,8 @@
 #include "AnStatusBar.h"
 #include "MainFrameBase.h"
 #include "Module.h"
+#include "ModAnoubis.h"
+#include "ModAnoubisMainPanelImpl.h"
 
 #include "main.h"
 
@@ -188,6 +190,10 @@ MainFrame::OnTbModuleSelect(wxCommandEvent& event)
 	sz_mainframeMain->Add(modulePanel, 1, wxEXPAND, 5);
 	modulePanel->Show();
 	sz_mainframeMain->Layout();
+
+	if (id == MODANOUBIS_ID_MAINPANEL) {
+		((ModAnoubisMainPanelImpl *)modulePanel)->update();
+	}
 }
 
 void

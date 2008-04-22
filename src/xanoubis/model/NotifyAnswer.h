@@ -58,7 +58,8 @@ class NotifyAnswer {
 		NotifyAnswer(enum notifyAnswerType, bool, int);
 		NotifyAnswer(enum notifyAnswerType, bool, int, enum timeUnit);
 
-		wxString getAnswer(void);
+		wxString	getAnswer(void);
+		bool		wasAllowed(void);
 };
 
 #endif	/* _NOTIFYANSWER_H_ */

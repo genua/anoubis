@@ -150,6 +150,7 @@ ModAnoubis::insertNotification(Notification *newNotify)
 		 * them to the  list of all notifies.
 		 */
 	}
+	((ModAnoubisMainPanelImpl *)mainPanel_)->update();
 }
 
 void

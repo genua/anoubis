@@ -78,6 +78,13 @@ BEGIN_DECLARE_EVENT_TYPES()
 	 * A notification will been stored and deleted by ModAnoubis.
 	 */
 	DECLARE_LOCAL_EVENT_TYPE(anEVT_ADD_NOTIFICATION, wxNewEventType())
+
+	/*
+	 * This event transports an escalation been answered to the
+	 * communicator for sending the answer. The escalation is stored
+	 * as client object.
+	 */
+	DECLARE_LOCAL_EVENT_TYPE(anEVT_ANSWER_ESCALATION, wxNewEventType())
 END_DECLARE_EVENT_TYPES()
 
 #endif	/* _ANEVENTS_H_ */

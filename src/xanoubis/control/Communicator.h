@@ -28,11 +28,19 @@
 #ifndef _COMMUNICATOR_H_
 #define _COMMUNICATOR_H_
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <wx/string.h>
 #include <wx/thread.h>
 
 #include <anoubischat.h>
 #include <anoubis_client.h>
+#include <anoubis_msg.h>
+
+#include "Notification.h"
+#include "EscalationNotify.h"
 
 enum connectionStateType {
 	CONNECTION_CONNECTED = 0,
@@ -44,6 +52,7 @@ class Communicator : public wxThread {
 	private:
 		wxString		 socketPath_;
 		connectionStateType	 isConnected_;
+		NotifyList		 answerList_;
 		wxEvtHandler		*eventDestination_;
 		struct achat_channel	*channel_;
 		struct anoubis_client	*client_;
@@ -55,7 +64,9 @@ class Communicator : public wxThread {
 	public:
 		Communicator(wxEvtHandler *, wxString);
 
-		virtual void		*Entry(void);
+		virtual void	*Entry(void);
+
+		void sendEscalationAnswer(Notification *);
 };
 
 #endif	/* _COMMUNICATOR_H_ */

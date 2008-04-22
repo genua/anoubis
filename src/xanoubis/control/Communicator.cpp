@@ -32,6 +32,7 @@
 
 #include <sys/types.h>
 #include <sys/un.h>
+
 #include <unistd.h>
 
 #ifdef LINUX
@@ -67,6 +68,7 @@
 #include "ModAnoubis.h"
 #include "Module.h"
 #include "Notification.h"
+#include "EscalationNotify.h"
 
 enum communicatorFlag {
 	COMMUNICATOR_FLAG_NONE = 0,
@@ -209,6 +211,7 @@ Communicator::Entry(void)
 		struct anoubis_msg	*msg;
 		size_t			 size = 1024;
 		achat_rc		 rc = ACHAT_RC_ERROR;
+		NotifyList::iterator	 ali;
 
 		if (currTa && (currTa->flags & ANOUBIS_T_DONE)) {
 			/* the current transaction was done */
@@ -286,6 +289,18 @@ Communicator::Entry(void)
 			eventDestination_->AddPendingEvent(event);
 		}
 
+		for (ali=answerList_.begin(); ali!=answerList_.end(); ali++) {
+			anoubis_token_t		 token;
+			int			 answer;
+			EscalationNotify	*escalation;
+
+			escalation = (EscalationNotify *)(*ali);
+			token = escalation->getToken();
+			answer = escalation->getAnswer()->wasAllowed();
+			anoubis_client_notifyreply(client_, token, answer, 0);
+			answerList_.erase(ali);
+		}
+
 		if (TestDestroy() &&
 		    (startStatDeRegistration == COMMUNICATOR_FLAG_NONE)) {
 			startStatDeRegistration = COMMUNICATOR_FLAG_INIT;
@@ -295,4 +310,12 @@ Communicator::Entry(void)
 	shutdown(CONNECTION_DISCONNECTED);
 
 	return (NULL);
+}
+
+void
+Communicator::sendEscalationAnswer(Notification *notify)
+{
+	if ((notify != NULL) && IS_ESCALATIONOBJ(notify)) {
+		answerList_.Append(notify);
+	}
 }

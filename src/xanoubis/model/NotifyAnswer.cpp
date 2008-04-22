@@ -107,8 +107,11 @@ NotifyAnswer::getAnswer(void)
 		s += wxT("verboten.");
 	}
 
-	/* XXX CH: send answer */
-	s += wxT("Die Antwort wurde noch nicht abgeschickt.");
-
 	return (s);
+}
+
+bool
+NotifyAnswer::wasAllowed(void)
+{
+	return (wasAllowed_);
 }

@@ -50,6 +50,7 @@ class EscalationNotify : public Notification {
 		bool		 isAnswered(void);
 		void		 answer(NotifyAnswer *);
 		NotifyAnswer	*getAnswer(void);
+		anoubis_token_t	 getToken(void);
 };
 
 #endif	/* _ESCALATIONNOTIFY_H_ */
