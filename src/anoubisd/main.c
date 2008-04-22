@@ -60,10 +60,12 @@
 #include "aqueue.h"
 #include "amsg.h"
 
+/*@noreturn@*/
 static void	usage(void) __dead;
 
 static int	eventfds[2];
 static void	main_cleanup(void);
+/*@noreturn@*/
 static void	main_shutdown(int) __dead;
 static void	sanitise_stdfd(void);
 static void	reconfigure(void);
@@ -86,8 +88,11 @@ static Queue eventq_m2s;
 static Queue eventq_m2dev;
 
 struct event_info_main {
+	/*@dependent@*/
 	struct event	*ev_m2s, *ev_m2p, *ev_m2dev;
+	/*@dependent@*/
 	struct event	*ev_timer;
+	/*@null@*/
 	struct timeval	*tv;
 	int anoubisfd;
 };
@@ -131,7 +136,7 @@ sighandler(int sig, short event, void *arg)
 		}
 		if (die) {
 			main_shutdown(0);
-			/* NOTREACHED */
+			/*NOTREACHED*/
 		}
 		break;
 	case SIGHUP:
@@ -187,7 +192,7 @@ save_pid(pid_t pid)
 }
 
 static void
-dispatch_timer(int sig, short event, void * arg)
+dispatch_timer(int sig, short event, /*@dependent@*/ void * arg)
 {
 	struct event_info_main	*ev_info = arg;
 
@@ -201,12 +206,14 @@ dispatch_timer(int sig, short event, void * arg)
 
 int
 main(int argc, char *argv[])
+/*@globals undef eventq_m2p, undef eventq_m2s, undef eventq_m2dev@*/
 {
 	struct event		ev_sigterm, ev_sigint, ev_sigquit, ev_sighup,
 				    ev_sigchld;
 	struct event		ev_s2m, ev_p2m, ev_dev2m;
 	struct event		ev_m2s, ev_m2p, ev_m2dev;
 	struct event		ev_timer;
+	/*@observer@*/
 	struct event_info_main	ev_info;
 	struct anoubisd_config	conf;
 	sigset_t		mask;
@@ -260,7 +267,7 @@ main(int argc, char *argv[])
 			break;
 		default:
 			usage();
-			/* NOTREACHED */
+			/*NOTREACHED*/
 		}
 	}
 
@@ -396,6 +403,12 @@ main(int argc, char *argv[])
 		close(eventfds[0]);
 		main_shutdown(1);
 	}
+	/*
+	 * ioctl is declared with varadic parameters, which is
+	 * impossible to annotate properly. We therefore temporarily
+	 * disable checking for passed NULL pointers.
+	 */
+	/*@-nullpass@*/
 	if (ioctl(eventfds[1], ANOUBIS_DECLARE_LISTENER, 0) < 0) {
 		log_warn("ioctl");
 		close(eventfds[0]);
@@ -408,6 +421,7 @@ main(int argc, char *argv[])
 		close(eventfds[1]);
 		main_shutdown(1);
 	}
+	/*@=nullpass@*/
 	/* Note that we keep /dev/anoubis open for subsequent ioctls. */
 
 	/* Five second timer for statistics ioctl */
@@ -472,6 +486,7 @@ main_cleanup(void)
 	unlink(pid_file_name);
 }
 
+/*@noreturn@*/
 __dead static void
 main_shutdown(int error)
 {
@@ -480,6 +495,7 @@ main_shutdown(int error)
 	exit(error);
 }
 
+/*@noreturn@*/
 __dead void
 master_terminate(int error)
 {
@@ -562,8 +578,9 @@ msg_factory(int mtype, int size)
 }
 
 static void
-dispatch_m2s(int fd, short event, void *arg)
+dispatch_m2s(int fd, short event, /*@dependent@*/ void *arg)
 {
+	/*@dependent@*/
 	anoubisd_msg_t *msg;
 	struct event_info_main *ev_info = (struct event_info_main*)arg;
 
@@ -591,6 +608,7 @@ dispatch_m2s(int fd, short event, void *arg)
 static void
 dispatch_s2m(int fd, short event, void *arg)
 {
+	/*@dependent@*/
 	anoubisd_msg_t *msg;
 
 	DEBUG(DBG_TRACE, ">dispatch_s2m");
@@ -615,8 +633,9 @@ dispatch_s2m(int fd, short event, void *arg)
 }
 
 static void
-dispatch_m2p(int fd, short event, void *arg)
+dispatch_m2p(int fd, short event, /*@dependent@*/ void *arg)
 {
+	/*@dependent@*/
 	anoubisd_msg_t *msg;
 	struct event_info_main *ev_info = (struct event_info_main*)arg;
 
@@ -642,8 +661,9 @@ dispatch_m2p(int fd, short event, void *arg)
 }
 
 static void
-dispatch_p2m(int fd, short event, void *arg)
+dispatch_p2m(int fd, short event, /*@dependent@*/ void *arg)
 {
+	/*@dependent@*/
 	struct event_info_main *ev_info = (struct event_info_main*)arg;
 	anoubisd_msg_t *msg;
 
@@ -671,8 +691,9 @@ dispatch_p2m(int fd, short event, void *arg)
 }
 
 static void
-dispatch_m2dev(int fd, short event, void *arg)
+dispatch_m2dev(int fd, short event, /*@dependent@*/ void *arg)
 {
+	/*@dependent@*/
 	anoubisd_msg_t *msg;
 	struct event_info_main *ev_info = (struct event_info_main*)arg;
 
@@ -700,7 +721,9 @@ static void
 dispatch_dev2m(int fd, short event, void *arg)
 {
 	struct eventdev_hdr * hdr;
+	/*@dependent@*/
 	anoubisd_msg_t *msg;
+	/*@dependent@*/
 	anoubisd_msg_t *msg_reply;
 	struct eventdev_reply *rep;
 	struct event_info_main *ev_info = (struct event_info_main*)arg;

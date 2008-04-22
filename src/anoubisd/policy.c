@@ -77,8 +77,11 @@ struct reply_wait {
 static Queue	replyq;
 
 struct event_info_policy {
+	/*@dependent@*/
 	struct event	*ev_p2m, *ev_p2s, *ev_s2p;
+	/*@dependent@*/
 	struct event	*ev_timer;
+	/*@null@*/
 	struct timeval	*tv;
 };
 
@@ -101,6 +104,7 @@ policy_sighandler(int sig, short event, void *arg)
 pid_t
 policy_main(struct anoubisd_config *conf, int pipe_m2s[2], int pipe_m2p[2],
     int pipe_s2p[2])
+/*@globals undef eventq_p2m, undef eventq_p2s, undef eventq_s2p@*/
 {
 	struct event	 ev_sigterm, ev_sigint, ev_sigquit, ev_sigusr1;
 	struct event	 ev_m2p, ev_s2p;
@@ -115,7 +119,7 @@ policy_main(struct anoubisd_config *conf, int pipe_m2s[2], int pipe_m2p[2],
 	switch (pid = fork()) {
 	case -1:
 		fatal("fork");
-		/* NOTREACHED */
+		/*NOTREACHED*/
 	case 0:
 		break;
 	default:

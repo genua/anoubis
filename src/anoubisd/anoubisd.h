@@ -125,18 +125,34 @@ enum {
 } anoubisd_process;
 
 pid_t	session_main(struct anoubisd_config *, int[], int[], int[]);
+
 pid_t	policy_main(struct anoubisd_config *, int[], int[], int[]);
+
 void	pe_init(void);
+
 anoubisd_reply_t *policy_engine(int mtype, void *request);
+
 void	log_init(void);
+
 void	log_warn(const char *, ...);
+
 void	log_warnx(const char *, ...);
+
 void	log_info(const char *, ...);
+
 void	log_debug(const char *, ...);
+
+/*@noreturn@*/
 void	fatalx(const char *);	/* XXX RD __dead */
+
+/*@noreturn@*/
 void	fatal(const char *);	/* XXX RD __dead */
+
+/*@noreturn@*/
 void	master_terminate(int);	/* XXX RD __dead */
+
 anoubisd_msg_t *msg_factory(int, int);
+
 void	pe_dump(void);
 
 #ifndef S_SPLINT_S
@@ -145,6 +161,7 @@ void	pe_dump(void);
 /* Splint does not parse varadic macros */
 #define DEBUG
 #endif
+
 u_int32_t debug_flags;
 u_int32_t debug_stderr;
 

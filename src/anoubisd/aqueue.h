@@ -51,10 +51,11 @@ typedef struct queue_hd *Queuep;
 
 #define queue_init(queue) { queue.head = queue.tail = NULL; }
 
-int	 enqueue(Queuep, void *);
+int	 enqueue(Queuep, /*@keep@*/ void *);
 void	*dequeue(Queuep);
 Qentryp	 queue_head(Queuep);
 Qentryp	 queue_walk(Queuep, Qentryp);
+/*@observer@*/
 void	*queue_peek(Queuep);
 void	*queue_find(Queuep, void *, int(*cmp)(void *, void *));
 int	 queue_delete(Queuep, void *);

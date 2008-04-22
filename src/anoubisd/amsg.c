@@ -48,14 +48,23 @@
 #define MSG_BUFS 10
 struct msg_buf {
 	int fd;
+	/*@relnull@*/ /*@dependent@*/
 	char *name;
+	/*@relnull@*/ /*@owned@*/
 	void *rbufp;
+	/*@relnull@*/ /*@dependent@*/
 	void *rheadp;
+	/*@relnull@*/ /*@dependent@*/
 	void *rtailp;
+	/*@relnull@*/ /*@owned@*/
 	void *wbufp;
+	/*@relnull@*/ /*@dependent@*/
 	void *wheadp;
+	/*@relnull@*/ /*@dependent@*/
 	void *wtailp;
 };
+
+/*@reldef@*/
 static struct msg_buf fds[MSG_BUFS];
 
 /* simple buffered file access, remember the event */
@@ -102,6 +111,7 @@ msg_init(int fd, char *name)
 	log_warn("msg_init: No unused msg_bufs found");
 }
 
+/*@exposed@*/ /*@null@*/
 static struct msg_buf *
 _get_mbp(int fd)
 {

@@ -80,8 +80,8 @@ int setresgid(gid_t rgid, gid_t egid, gid_t sgid);
 #define	ENODATA		61	/* No data available */
 #endif
 
-extern int event_loopexit(/*@null@*/struct timeval *tv);
-extern void event_set(/*@out@*/struct event *, int, short,
+extern int event_loopexit(/*@null@*/ struct timeval *tv);
+extern void event_set(/*@out@*/ struct event *, int, short,
     void (*)(int, short, void *), /*@null@*/ void *);
 extern int event_add(/*@dependent@*/struct event *,
      /*@null@*/ struct timeval *);

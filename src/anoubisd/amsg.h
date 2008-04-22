@@ -52,12 +52,18 @@
 
 struct msg_bug;
 
-extern void msg_init(int, char *);
+extern void msg_init(int, /*@dependent@*/ char *);
 
+/*@null@*/
 extern anoubisd_msg_t *get_msg(int);
+
+/*@null@*/
 extern anoubisd_msg_t *get_event(int);
+
 extern int send_msg(int, anoubisd_msg_t *);
+
 extern int send_reply(int, anoubisd_msg_t *);
+
 extern int msg_pending(int);
 
 #endif /* !_AMSG_H */
