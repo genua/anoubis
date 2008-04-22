@@ -69,7 +69,9 @@ catalogdir = $(datadir)/$(bin_PROGRAMS)/catalogs/de
 utildir = $(datadir)/$(bin_PROGRAMS)/utils
 icondir = $(datadir)/$(bin_PROGRAMS)/icons
 
-dist_catalog_DATA = catalogs/de/xanoubis.mo
+dist_catalog_DATA = \
+	catalogs/de/xanoubis.mo \
+	catalogs/de/xanoubis.po
 dist_util_DATA = utils/xanoubis_guessApp.sh
 dist_icon_DATA = \
 	icons/ModAlf_alert_16.png \
