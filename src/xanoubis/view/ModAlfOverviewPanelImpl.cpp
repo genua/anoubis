@@ -36,22 +36,31 @@ ModAlfOverviewPanelImpl::ModAlfOverviewPanelImpl(wxWindow* parent,
     wxWindowID id) : ModAlfOverviewPanelBase(parent, id)
 {
 	stateIconNormal_ = wxGetApp().loadIcon(_T("ModAlf_ok_48.png"));
+	stateIconError_ = wxGetApp().loadIcon(_T("ModAlf_error_48.png"));
 }
 
 ModAlfOverviewPanelImpl::~ModAlfOverviewPanelImpl(void)
 {
 	delete stateIconNormal_;
+	delete stateIconError_;
 }
 
 void
 ModAlfOverviewPanelImpl::update(void)
 {
+	wxString	 stateText;
+	wxIcon		*stateIcon;
 	ModAlf		*module;
-	wxString	state;
-	
-	module = (ModAlf *)(wxGetApp().getModule(ALF));
-	state.Printf(_T("%s"), module->getState().c_str());
-	txt_statusValue->SetLabel(state);
 
-	alfStatusIcon->SetIcon(*stateIconNormal_);
+	module = (ModAlf *)(wxGetApp().getModule(ALF));
+	if (module->isActive()) {
+		stateText = _("ok");
+		stateIcon = stateIconNormal_;
+	} else {
+		stateText = _("not active");
+		stateIcon = stateIconError_;
+	}
+
+	txt_statusValue->SetLabel(stateText);
+	alfStatusIcon->SetIcon(*stateIcon);
 }

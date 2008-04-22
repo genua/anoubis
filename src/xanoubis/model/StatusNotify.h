@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 GeNUA mbH <info@genua.de>
+ * Copyright (c) 2008 GeNUA mbH <info@genua.de>
  *
  * All rights reserved.
  *
@@ -25,34 +25,36 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __MODALF_H__
-#define __MODALF_H__
+#ifndef _STATUSNOTIFY_H_
+#define _STATUSNOTIFY_H_
 
-#include "Module.h"
+#include <anoubis_msg.h>
+#include <wx/string.h>
+
 #include "Notification.h"
 
-enum ModAlfId {
-	MODALF_ID_BASE = 11000,
-	MODULE_ID_ENTRY(ALF,MAINPANEL),
-	MODULE_ID_ENTRY(ALF,OVERVIEWPANEL),
-	MODULE_ID_ENTRY(ALF,TOOLBAR)
-};
+#define IS_STATUSOBJ(obj) \
+	(typeid(*obj) == typeid(class StatusNotify))
 
-class ModAlf : public Module, public wxEvtHandler
-{
+class StatusNotify : public Notification {
 	private:
-		bool	isActive_;
+		int				 valueNo_;
+		struct anoubis_stat_message	*statMsg_;
+
+		bool	extractValue(unsigned int, unsigned int, wxString *);
+		void	assembleStatusMessage(void);
 
 	public:
-		ModAlf(wxWindow *);
-		~ModAlf(void);
+		StatusNotify(wxString);
+		StatusNotify(struct anoubis_msg *);
+		~StatusNotify(void);
 
-		int	getBaseId(void);
-		int	getToolbarId(void);
-		void	update(void);
+		bool	 hasAlfLoadtime(void);
+		wxString getAlfLoadtime(void);
 
-		void	OnAddNotification(wxCommandEvent&);
-		bool	isActive(void);
+		bool	 hasSfsLoadtime(void);
+		wxString getSfsLoadtime(void);
+		wxString getSfsCsumRecalc(void);
 };
 
-#endif /* __MODALF_H__ */
+#endif	/* _STATUSNOTIFY_H_ */

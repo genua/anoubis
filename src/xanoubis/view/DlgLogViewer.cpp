@@ -41,6 +41,7 @@
 #include "AlertNotify.h"
 #include "LogNotify.h"
 #include "EscalationNotify.h"
+#include "StatusNotify.h"
 
 #define LOGVIEWER_COLUMN_ICON		0
 #define LOGVIEWER_COLUMN_TIME		1
@@ -93,7 +94,10 @@ DlgLogViewer::OnAddNotification(wxCommandEvent& event)
 	Notification *notify;
 
 	notify = (Notification *)(event.GetClientObject());
-	addNotification(notify);
+	if (!IS_STATUSOBJ(notify)) {
+		/* show all other notifies than a StatusNotify */
+		addNotification(notify);
+	}
 	/*
 	 * The notify was also received by ModAnoubis, which stores
 	 * and destroys it. Thus we must not delete it.

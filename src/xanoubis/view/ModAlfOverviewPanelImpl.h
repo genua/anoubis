@@ -35,6 +35,7 @@ class ModAlfOverviewPanelImpl : public ModAlfOverviewPanelBase
 {
 	private:
 		wxIcon			*stateIconNormal_;
+		wxIcon			*stateIconError_;
 
 	public:
 		ModAlfOverviewPanelImpl(wxWindow* parent, wxWindowID id);

@@ -51,7 +51,7 @@ enum notifyListTypes {
 };
 
 class Notification {
-	private:
+	protected:
 		wxString		 module_;
 		wxString		 timeStamp_;
 		wxString		 logMessage_;
@@ -69,14 +69,11 @@ class Notification {
 		virtual wxString getTime(void);
 		virtual wxString getLogMessage(void);
 
+		virtual wxString getAction(void);
 		virtual wxString getOperation(void);
 		virtual wxString getPath(void);
 		virtual wxString getOrigin(void);
 		virtual wxString getCheckSum(void);
-
-		friend class AlertNotify;
-		friend class EscalationNotify;
-		friend class LogNotify;
 };
 
 WX_DECLARE_LIST(Notification, NotifyList);

@@ -25,6 +25,26 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#include <sys/types.h>
+
+#ifdef LINUX
+#include <linux/eventdev.h>
+#include <linux/anoubis.h>
+#include <linux/anoubis_alf.h>
+#include <linux/anoubis_sfs.h>
+#endif
+
+#ifdef OPENBSD
+#include <dev/eventdev.h>
+#include <dev/anoubis.h>
+#include <dev/anoubis_alf.h>
+#include <dev/anoubis_sfs.h>
+#endif
+
 #include <anoubis_msg.h>
 #include <wx/string.h>
 
@@ -35,6 +55,7 @@
 #include "EscalationNotify.h"
 #include "LogNotify.h"
 #include "AlertNotify.h"
+#include "StatusNotify.h"
 
 CommunicatorCtrl::CommunicatorCtrl(wxString socketPath)
 {
@@ -137,6 +158,7 @@ CommunicatorCtrl::OnNotifyReceived(wxCommandEvent& event)
 {
 	wxCommandEvent		 addEvent(anEVT_ADD_NOTIFICATION);
 	int			 type;
+	int			 subsystem;
 	Notification		*notify;
 	struct anoubis_msg	*notifyMsg;
 
@@ -144,11 +166,28 @@ CommunicatorCtrl::OnNotifyReceived(wxCommandEvent& event)
 	notifyMsg = (struct anoubis_msg *)(event.GetClientData());
 
 	type = get_value((notifyMsg->u.general)->type);
+	subsystem = get_value((notifyMsg->u.notify)->subsystem);
 	if (ANOUBIS_IS_NOTIFY(type)) {
-		if (type == ANOUBIS_N_ASK) {
+		switch (type) {
+		case ANOUBIS_N_ASK:
 			notify = new EscalationNotify(notifyMsg);
-		} else {
-			notify = new AlertNotify(notifyMsg);
+			break;
+		case ANOUBIS_N_NOTIFY:
+			if (subsystem == ANOUBIS_SOURCE_STAT) {
+				notify = new StatusNotify(notifyMsg);
+			} else {
+				notify = new LogNotify(notifyMsg);
+			}
+			break;
+		case ANOUBIS_N_LOGNOTIFY:
+			if (get_value((notifyMsg->u.notify)->loglevel) == 0) {
+				notify = new LogNotify(notifyMsg);
+			} else {
+				notify = new AlertNotify(notifyMsg);
+			}
+			break;
+		default:
+			break;
 		}
 
 		addEvent.SetClientObject((wxClientData*)notify);
@@ -163,7 +202,9 @@ CommunicatorCtrl::OnConnection(wxCommandEvent& event)
 	wxString	logMessage;
 	wxString        *host = NULL;
 
-	switch(event.GetInt()) {
+	connectionState_ = (connectionStateType)event.GetInt();
+
+	switch(connectionState_) {
 	case CONNECTION_CONNECTED:
 		host = new wxString(wxT("localhost"));
 		logMessage = wxT("Connection established with localhost:")

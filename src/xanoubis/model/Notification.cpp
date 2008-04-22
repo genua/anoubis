@@ -47,6 +47,7 @@
 
 #include <anoubis_msg.h>
 #include <wx/string.h>
+#include <wx/intl.h>
 #include <wx/utils.h>
 
 #include "Notification.h"
@@ -147,6 +148,12 @@ Notification::getModule(void)
 		case ANOUBIS_SOURCE_SFS:
 			module_ = wxT("SFS");
 			break;
+		case ANOUBIS_SOURCE_PROCESS:
+			module_ = wxT("PROCESS");
+			break;
+		case ANOUBIS_SOURCE_STAT:
+			module_ = wxT("STAT");
+			break;
 		default:
 			module_ = wxT("(unknown)");
 			break;
@@ -169,13 +176,34 @@ Notification::getTime(void)
 
 wxString
 Notification::getLogMessage(void){
-	if (!logMessage_.IsEmpty()) {
-		return (logMessage_);
+	int	type;
+
+	if (logMessage_.IsEmpty()) {
+		logMessage_ = getOperation() + wxT(" ") + getPath();
+		type = get_value((notify_->u.notify)->type);
+		if (type == ANOUBIS_N_LOGNOTIFY) {
+			logMessage_ += wxT(" ") + getAction();
+		}
 	}
 
-	logMessage_ = getOperation() + wxT(" ") + getPath();
-
 	return (logMessage_);
+}
+
+wxString
+Notification::getAction(void)
+{
+	wxString action;
+	int	 error;
+
+	action = _("was ");
+	error = get_value((notify_->u.notify)->error);
+	if (error == 0) {
+		action += _("allowed");
+	} else {
+		action += _("denied");
+	}
+
+	return (action);
 }
 
 wxString

@@ -28,10 +28,13 @@
 #include <wx/stdpaths.h>
 #include <wx/string.h>
 
+#include "AnEvents.h"
 #include "Module.h"
 #include "ModSfs.h"
 #include "ModSfsMainPanelImpl.h"
 #include "ModSfsOverviewPanelImpl.h"
+#include "Notification.h"
+#include "StatusNotify.h"
 
 ModSfs::ModSfs(wxWindow *parent) : Module()
 {
@@ -42,9 +45,14 @@ ModSfs::ModSfs(wxWindow *parent) : Module()
 	overviewPanel_ = new ModSfsOverviewPanelImpl(parent,
 	    MODSFS_ID_OVERVIEWPANEL);
 
+	isActive_ = false;
+
 	loadIcon(_T("ModSfs_black_48.png"));
 	mainPanel_->Hide();
 	overviewPanel_->Hide();
+
+	parent->Connect(anEVT_ADD_NOTIFICATION,
+	    wxCommandEventHandler(ModSfs::OnAddNotification), NULL, this);
 }
 
 ModSfs::~ModSfs(void)
@@ -72,4 +80,24 @@ ModSfs::update(void)
 	if (overviewPanel_ != NULL) {
 		((ModSfsOverviewPanelImpl *)overviewPanel_)->update();
 	}
+}
+
+void
+ModSfs::OnAddNotification(wxCommandEvent& event)
+{
+	Notification *notify;
+
+	notify = (Notification *)(event.GetClientObject());
+	if (IS_STATUSOBJ(notify)) {
+		isActive_ = ((StatusNotify *)notify)->hasSfsLoadtime();
+	}
+	update();
+
+	event.Skip();
+}
+
+bool
+ModSfs::isActive(void)
+{
+	return (isActive_);
 }

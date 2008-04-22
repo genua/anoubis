@@ -38,6 +38,7 @@ libprotocolserver = $(top_builddir)/$(anoubisprotocoldir)/libanoubisps.a
 
 test_xanoubis_server_CFLAGS = $(AM_CFLAGS) @CHECK_CFLAGS@
 test_xanoubis_server_CPPFLAGS = \
+	-I$(top_srcdir)/include \
 	-I$(top_srcdir)/$(anoubischatdir) \
 	-I$(top_srcdir)/$(anoubisprotocoldir) \
 	-I$(top_srcdir)/$(anoubisprotocoldir)/server

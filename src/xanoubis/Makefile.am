@@ -150,6 +150,8 @@ xanoubis_SOURCES= \
 	model/Notification.h \
 	model/NotifyAnswer.cpp \
 	model/NotifyAnswer.h \
+	model/StatusNotify.cpp \
+	model/StatusNotify.h \
 	view/AnStatusBar.cpp \
 	view/AnStatusBar.h \
 	view/AnFader.cpp \

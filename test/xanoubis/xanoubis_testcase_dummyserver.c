@@ -24,15 +24,34 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <sys/wait.h>
 
+#ifdef LINUX
+#include <linux/eventdev.h>
+#include <linux/anoubis.h>
+#include <linux/anoubis_alf.h>
+#include <linux/anoubis_sfs.h>
+#endif
+#ifdef OPENBSD
+#include <dev/eventdev.h>
+#include <dev/anoubis.h>
+#include <dev/anoubis_alf.h>
+#include <dev/anoubis_sfs.h>
+#endif
+
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
 #include <anoubis_protocol.h>
+#include <anoubis_notify.h>
 #include <anoubis_server.h>
 #include "config.h"
 #ifdef NEEDBSDCOMPAT
@@ -64,6 +83,13 @@ tc_Communicator_lud_server(const char *sockname)
 	achat_rc		 rc = ACHAT_RC_ERROR;
 	struct anoubis_server	*server;
 	struct anoubis_policy_comm *policy;
+
+	struct anoubis_msg		*statNotify;
+	struct anoubis_msg		*currNotify;
+	struct anoubis_stat_message	*statMsg;
+	struct anoubis_notify_group	*ng;
+	struct anoubis_notify_head	*head;
+	size_t				 statSize;
 
 	s = acc_create();
 	fail_if(s == NULL, "couldn't create server channel");
@@ -97,6 +123,24 @@ tc_Communicator_lud_server(const char *sockname)
 	fail_if(server == NULL, "Failed to create server protocol");
 	mark_point();
 
+	/* assemble status notify */
+	statSize = sizeof(Anoubis_NotifyMessage);
+	statSize += sizeof(struct anoubis_stat_message);
+	statSize += 2 * sizeof(struct anoubis_stat_value);
+	statNotify = anoubis_msg_new(statSize);
+	fail_if(statNotify == NULL, "Cannot allocate status message");
+	set_value(statNotify->u.notify->type, ANOUBIS_N_NOTIFY);
+	set_value(statNotify->u.notify->subsystem, ANOUBIS_SOURCE_STAT);
+	statNotify->u.notify->token = 0x01;
+
+	statMsg = (struct anoubis_stat_message*)(statNotify->u.notify)->payload;
+	statMsg->vals[0].subsystem = ANOUBIS_SOURCE_ALF;
+	statMsg->vals[0].key = ALF_STAT_LOADTIME;
+	statMsg->vals[0].value = 1;
+	statMsg->vals[1].subsystem = ANOUBIS_SOURCE_SFS;
+	statMsg->vals[1].key = SFS_STAT_LOADTIME;
+	statMsg->vals[1].value = 1;
+
 	int ret = anoubis_server_start(server);
 	mark_point();
 	fail_if(ret < 0, "Failed to start server\n");
@@ -104,14 +148,26 @@ tc_Communicator_lud_server(const char *sockname)
 		char buf[1024];
 		size_t size;
 		size = 1024;
+
 		achat_rc rc = acc_receivemsg(s, buf, &size);
 		fail_if(rc != ACHAT_RC_OK, "acc_receivemsg failed");
 		ret = anoubis_server_process(server, buf, size);
 		fail_if(ret < 0, "protocol error");
 		if (anoubis_server_eof(server))
 			break;
+
+		ng = anoubis_server_getnotify(server);
+		if (ng != NULL) {
+			currNotify = anoubis_msg_clone(statNotify);
+			head = anoubis_notify_create_head(currNotify, NULL,
+			    NULL);
+			fail_if(head == NULL, "Cannot create msg head");
+			anoubis_notify(ng, head);
+			anoubis_notify_destroy_head(head);
+		}
 	}
 	mark_point();
+	anoubis_msg_free(statNotify);
 	anoubis_server_destroy(server);
 	rc = acc_destroy(s);
 	fail_if(rc != ACHAT_RC_OK, "server destroy failed");

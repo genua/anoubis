@@ -35,22 +35,31 @@ ModSfsOverviewPanelImpl::ModSfsOverviewPanelImpl(wxWindow* parent,
     wxWindowID id) : ModSfsOverviewPanelBase(parent, id)
 {
 	stateIconNormal_ = wxGetApp().loadIcon(_T("ModSfs_ok_48.png"));
+	stateIconError_ = wxGetApp().loadIcon(_T("ModSfs_error_48.png"));
 }
 
 ModSfsOverviewPanelImpl::~ModSfsOverviewPanelImpl(void)
 {
 	delete stateIconNormal_;
+	delete stateIconError_;
 }
 
 void
 ModSfsOverviewPanelImpl::update(void)
 {
+	wxString	 stateText;
+	wxIcon		*stateIcon;
 	ModSfs		*module;
-	wxString	state;
 
 	module = (ModSfs *)(wxGetApp().getModule(SFS));
-	state.Printf(_T("%s"), module->getState().c_str());
-	txt_statusValue->SetLabel(state);
+	if (module->isActive()) {
+		stateText = _("ok");
+		stateIcon = stateIconNormal_;
+	} else {
+		stateText = _("not active");
+		stateIcon = stateIconError_;
+	}
 
-	sfsStatusIcon->SetIcon(*stateIconNormal_);
+	txt_statusValue->SetLabel(stateText);
+	sfsStatusIcon->SetIcon(*stateIcon);
 }

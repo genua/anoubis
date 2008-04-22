@@ -34,6 +34,19 @@
 #include <sys/un.h>
 #include <unistd.h>
 
+#ifdef LINUX
+#include <linux/eventdev.h>
+#include <linux/anoubis.h>
+#include <linux/anoubis_alf.h>
+#include <linux/anoubis_sfs.h>
+#endif
+#ifdef OPENBSD
+#include <dev/eventdev.h>
+#include <dev/anoubis.h>
+#include <dev/anoubis_alf.h>
+#include <dev/anoubis_sfs.h>
+#endif
+
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
@@ -165,11 +178,15 @@ Communicator::Entry(void)
 	bool				 notDone;
 	enum communicatorFlag		 startRegistration;
 	enum communicatorFlag		 startDeRegistration;
+	enum communicatorFlag		 startStatRegistration;
+	enum communicatorFlag		 startStatDeRegistration;
 
 	currTa  = NULL;
 	notDone = true;
-	startRegistration   = COMMUNICATOR_FLAG_INIT;
-	startDeRegistration = COMMUNICATOR_FLAG_NONE;
+	startRegistration	= COMMUNICATOR_FLAG_INIT;
+	startDeRegistration	= COMMUNICATOR_FLAG_NONE;
+	startStatRegistration	= COMMUNICATOR_FLAG_NONE;
+	startStatDeRegistration	= COMMUNICATOR_FLAG_NONE;
 
 	if (connect() != ACHAT_RC_OK) {
 		shutdown(CONNECTION_FAILED);
@@ -199,12 +216,18 @@ Communicator::Entry(void)
 			currTa = NULL;
 			if (startRegistration == COMMUNICATOR_FLAG_PROG) {
 				startRegistration = COMMUNICATOR_FLAG_DONE;
+				startStatRegistration = COMMUNICATOR_FLAG_INIT;
 				setConnectionState(CONNECTION_CONNECTED);
 			}
 			if (startDeRegistration == COMMUNICATOR_FLAG_PROG) {
 				startDeRegistration = COMMUNICATOR_FLAG_DONE;
 				notDone = false;
 				continue;
+			}
+			if (startStatDeRegistration == COMMUNICATOR_FLAG_PROG) {
+				startStatDeRegistration =
+				    COMMUNICATOR_FLAG_DONE;
+				startDeRegistration = COMMUNICATOR_FLAG_INIT;
 			}
 		}
 
@@ -215,31 +238,43 @@ Communicator::Entry(void)
 				    getToken(), geteuid(), 0, 0);
 				startRegistration = COMMUNICATOR_FLAG_PROG;
 			}
+			if (startStatRegistration == COMMUNICATOR_FLAG_INIT) {
+				currTa = anoubis_client_register_start(client_,
+				    getToken(), 0, 0, ANOUBIS_SOURCE_STAT);
+				startStatRegistration = COMMUNICATOR_FLAG_PROG;
+			}
 			if (startDeRegistration == COMMUNICATOR_FLAG_INIT) {
 				currTa = anoubis_client_unregister_start(
 				    client_, getToken(), geteuid(), 0, 0);
 				startDeRegistration = COMMUNICATOR_FLAG_PROG;
+			}
+			if (startStatDeRegistration == COMMUNICATOR_FLAG_INIT) {
+				currTa = anoubis_client_unregister_start(
+				    client_, getToken(), 0, 0,
+				    ANOUBIS_SOURCE_STAT);
+				startStatDeRegistration =
+				    COMMUNICATOR_FLAG_PROG;
 			}
 		}
 
 		msg = anoubis_msg_new(1024);
 		if (msg == NULL) {
 			/* XXX: is this error path ok? -- ch */
-			startDeRegistration = COMMUNICATOR_FLAG_INIT;
+			startStatDeRegistration = COMMUNICATOR_FLAG_INIT;
 			continue;
 		}
 
 		rc = acc_receivemsg(channel_, (char*)(msg->u.buf), &size);
 		if (rc != ACHAT_RC_OK) {
 			/* XXX: is this error path ok? -- ch */
-			startDeRegistration = COMMUNICATOR_FLAG_INIT;
+			startStatDeRegistration = COMMUNICATOR_FLAG_INIT;
 			continue;
 		}
 
 		anoubis_msg_resize(msg, size);
 
 		if (anoubis_client_process(client_, msg) != 1) {
-			startDeRegistration = COMMUNICATOR_FLAG_INIT;
+			startStatDeRegistration = COMMUNICATOR_FLAG_INIT;
 		}
 
 		if (anoubis_client_hasnotifies(client_) != 0) {
@@ -252,8 +287,8 @@ Communicator::Entry(void)
 		}
 
 		if (TestDestroy() &&
-		    (startDeRegistration == COMMUNICATOR_FLAG_NONE)) {
-			startDeRegistration = COMMUNICATOR_FLAG_INIT;
+		    (startStatDeRegistration == COMMUNICATOR_FLAG_NONE)) {
+			startStatDeRegistration = COMMUNICATOR_FLAG_INIT;
 		}
 	}
 

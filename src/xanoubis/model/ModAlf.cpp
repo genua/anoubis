@@ -28,10 +28,13 @@
 #include <wx/stdpaths.h>
 #include <wx/string.h>
 
+#include "AnEvents.h"
 #include "Module.h"
 #include "ModAlf.h"
 #include "ModAlfMainPanelImpl.h"
 #include "ModAlfOverviewPanelImpl.h"
+#include "Notification.h"
+#include "StatusNotify.h"
 
 ModAlf::ModAlf(wxWindow *parent) : Module()
 {
@@ -42,9 +45,14 @@ ModAlf::ModAlf(wxWindow *parent) : Module()
 	overviewPanel_ = new ModAlfOverviewPanelImpl(parent,
 	    MODALF_ID_OVERVIEWPANEL);
 
+	isActive_ = false;
+
 	loadIcon(_T("ModAlf_black_48.png"));
 	mainPanel_->Hide();
 	overviewPanel_->Hide();
+
+	parent->Connect(anEVT_ADD_NOTIFICATION,
+	    wxCommandEventHandler(ModAlf::OnAddNotification), NULL, this);
 }
 
 ModAlf::~ModAlf(void)
@@ -74,4 +82,24 @@ ModAlf::update(void)
 
 	if(instance)
 		instance->update();
+}
+
+void
+ModAlf::OnAddNotification(wxCommandEvent& event)
+{
+	Notification *notify;
+
+	notify = (Notification *)(event.GetClientObject());
+	if (IS_STATUSOBJ(notify)) {
+		isActive_ = ((StatusNotify *)notify)->hasAlfLoadtime();
+	}
+	update();
+
+	event.Skip();
+}
+
+bool
+ModAlf::isActive(void)
+{
+	return (isActive_);
 }

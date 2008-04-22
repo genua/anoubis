@@ -43,7 +43,7 @@ enum connectionStateType {
 class Communicator : public wxThread {
 	private:
 		wxString		 socketPath_;
-		connectionStateType	isConnected_;
+		connectionStateType	 isConnected_;
 		wxEvtHandler		*eventDestination_;
 		struct achat_channel	*channel_;
 		struct anoubis_client	*client_;

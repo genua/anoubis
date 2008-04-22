@@ -35,6 +35,7 @@ class ModSfsOverviewPanelImpl : public ModSfsOverviewPanelBase
 {
 	private:
 		wxIcon	*stateIconNormal_;
+		wxIcon	*stateIconError_;
 
 	public:
 		ModSfsOverviewPanelImpl(wxWindow*, wxWindowID);

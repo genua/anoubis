@@ -29,6 +29,7 @@
 #define __MODSFS_H__
 
 #include "Module.h"
+#include "Notification.h"
 
 enum ModSfsId {
 	MODSFS_ID_BASE = 12000,
@@ -37,8 +38,11 @@ enum ModSfsId {
 	MODULE_ID_ENTRY(SFS,TOOLBAR)
 };
 
-class ModSfs : public Module
+class ModSfs : public Module, public wxEvtHandler
 {
+	private:
+		bool	isActive_;
+
 	public:
 		ModSfs(wxWindow *);
 		~ModSfs(void);
@@ -46,6 +50,9 @@ class ModSfs : public Module
 		int	getBaseId(void);
 		int	getToolbarId(void);
 		void	update(void);
+
+		void	OnAddNotification(wxCommandEvent&);
+		bool	isActive(void);
 };
 
 #endif /* __MODSFS_H__ */
