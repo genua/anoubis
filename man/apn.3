@@ -41,9 +41,11 @@
 .Ft int
 .Fn apn_add_sfsrule "struct apn_rule *rule" "struct apn_ruleset *ruleset"
 .Ft int
-.Fn apn_print_rules "struct apn_rule *rule" "int flags"
+.Fn apn_print_rule "struct apn_rule *rule" "int flags" "FILE *file"
+.Ft int
+.Fn apn_print_ruleset "struct apn_ruleset *ruleset" "int flags" "FILE *file"
 .Ft void
-.Fn apn_print_errors "struct apn_ruleset *ruleset"
+.Fn apn_print_errors "struct apn_ruleset *ruleset" "FILE *file"
 .Ft void
 .Fn apn_free_ruleset "struct apn_ruleset *ruleset"
 .Sh DESCRIPTION
@@ -96,27 +98,41 @@ to the rule set
 of type
 .Em struct apn_ruleset .
 .Pp
-.It Fn apn_print_rules rule flags
+.It Fn apn_print_rule rule flags file
 The function
 .Fn apn_print_rule
 prints a parsed rule of type
 .Em struct apn_rule
-to
-.Em stdout .
+to the filehandle
+.Em file .
+The parameter
+.Em flags
+may contain the flag
+.Em APN_FLAG_VERBOSE2 .
+If this flags is set, the numeric rule ID will be prefix the actual rule.
+
+.Pp
+.It Fn apn_print_ruleset ruleset flags file
+The function
+.Fn apn_print_ruleset
+prints a full rule set of type
+.Em struct apn_ruleset
+to the filehandle
+.Em file .
 The parameter
 .Em flags
 may contain the flag
 .Em APN_FLAG_VERBOSE2 .
 If this flags is set, the numeric rule ID will be prefix the actual rule.
 .Pp
-.It Fn apn_print_errors ruleset
+.It Fn apn_print_errors ruleset file
 The function
 .Fn apn_print_errors
 prints the error messages generated while parsing a rule set with the
 function
 .Fn apn_parse
-to
-.Em stderr .
+to the filehandle
+.Em file .
 .Pp
 .It Fn apn_free_ruleset ruleset
 The function
@@ -155,7 +171,7 @@ has the following members:
 Contains a copy of the flags passed to
 .Fn apn_parse .
 These are used internally by the library, eg.
-.Fn apn_print_rules
+.Fn apn_print_rule
 checks these flags for
 .Em APN_FLAG_VERBOSE2
 to produce more verbose output.

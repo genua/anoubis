@@ -24,9 +24,9 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-TESTS = test_libapn
+TESTS = test_libapn test_printing
 
-noinst_PROGRAMS = test_libapn
+noinst_PROGRAMS = test_libapn test_printing
 
 libapndir       = src/libapn
 bsdcompatdir    = src/bsdcompat
@@ -54,3 +54,25 @@ test_libapn_SOURCES = \
 	libapn_testcase_crash1.c \
 	libapn_testsuite.c \
 	libapn_testrunner.c
+
+
+test_printing_CPPFLAGS = \
+	-I$(top_srcdir)/$(libapndir) \
+	-I$(top_srcdir)/$(bsdcompatdir) \
+	-I$(top_srcdir)/include \
+	@CHECK_CFLAGS@
+
+test_printing_LDFLAGS = -L$(top_builddir)/$(libapndir) -dynamic
+test_printing_LDADD = @CHECK_LIBS@ -lapn
+
+test_printing_DEPENDENCIES = $(libapn)
+
+if NEEDBSDCOMPAT
+test_printing_LDADD += $(libbsdcompat)
+test_printing_DEPENDENCIES += $(libbsdcompat)
+endif
+
+test_printing_SOURCES = \
+	printing_testcase_ruleset.c \
+	printing_testsuite.c \
+	printing_testrunner.c

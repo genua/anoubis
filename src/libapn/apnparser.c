@@ -48,23 +48,23 @@
 extern int	parse_rules(const char *, struct apn_ruleset *);
 
 /* Only for internal use */
-static int	apn_print_app(struct apn_app *);
-static int	apn_print_alfrule(struct apn_alfrule *, int);
-static int	apn_print_sfsrule(struct apn_sfsrule *, int);
-static void	apn_print_hash(char *, int);
-static int	apn_print_afiltrule(struct apn_afiltrule *);
-static int	apn_print_host(struct apn_host *);
-static int	apn_print_address(struct apn_addr *);
-static int	apn_print_port(struct apn_port *);
-static int	apn_print_acaprule(struct apn_acaprule *);
-static int	apn_print_defaultrule(struct apn_default *);
-static int	apn_print_contextrule(struct apn_context *);
-static int	apn_print_scheckrule(struct apn_sfscheck *);
-static int	apn_print_action(int, int);
-static int	apn_print_netaccess(int);
-static int	apn_print_log(int);
-static int	apn_print_af(int);
-static int	apn_print_proto(int);
+static int	apn_print_app(struct apn_app *, FILE *);
+static int	apn_print_alfrule(struct apn_alfrule *, int, FILE *);
+static int	apn_print_sfsrule(struct apn_sfsrule *, int, FILE *);
+static void	apn_print_hash(char *, int, FILE *);
+static int	apn_print_afiltrule(struct apn_afiltrule *, FILE *);
+static int	apn_print_host(struct apn_host *, FILE *);
+static int	apn_print_address(struct apn_addr *, FILE *);
+static int	apn_print_port(struct apn_port *, FILE *);
+static int	apn_print_acaprule(struct apn_acaprule *, FILE *);
+static int	apn_print_defaultrule(struct apn_default *, FILE *);
+static int	apn_print_contextrule(struct apn_context *, FILE *);
+static int	apn_print_scheckrule(struct apn_sfscheck *, FILE *);
+static int	apn_print_action(int, int, FILE *);
+static int	apn_print_netaccess(int, FILE *);
+static int	apn_print_log(int, FILE *);
+static int	apn_print_af(int, FILE *);
+static int	apn_print_proto(int, FILE *);
 static void	apn_free_errq(struct apnerr_queue *);
 static void	apn_free_ruleq(struct apnrule_queue *);
 static void	apn_free_varq(struct apnvar_queue *);
@@ -82,13 +82,16 @@ static void	apn_free_app(struct apn_app *);
  * Return codes:
  * -1: a systemcall failed and errno is set
  *  0: file was parsed succesfully
- *  1: file could not be parsed
+ *  1: file could not be parsed or parameters are invalid
  */
 int
 apn_parse(const char *filename, struct apn_ruleset **rsp, int flags)
 {
 	struct apn_ruleset	*rs;
 	int			 ret;
+
+	if (filename == NULL || rsp == NULL)
+		return (1);
 
 	if ((rs = calloc(sizeof(struct apn_ruleset), 1)) == NULL)
 		return (-1);
@@ -114,6 +117,7 @@ apn_parse(const char *filename, struct apn_ruleset **rsp, int flags)
  * Return codes:
  * -1: a systemcall failed and errno is set
  *  0: rule was added.
+ *  1: an error occured while adding the rule
  *
  * In case of an error, no rules are added, thus caller can free them safely.
  */
@@ -128,7 +132,7 @@ apn_add_alfrule(struct apn_rule *rule, struct apn_ruleset *ruleset)
 	TAILQ_INSERT_TAIL(&ruleset->alf_queue, rule, entry);
 
 	if (ruleset->flags & APN_FLAG_VERBOSE)
-		ret = apn_print_rule(rule, ruleset->flags);
+		ret = apn_print_rule(rule, ruleset->flags, stdout);
 
 	return (ret);
 }
@@ -139,6 +143,7 @@ apn_add_alfrule(struct apn_rule *rule, struct apn_ruleset *ruleset)
  * Return codes:
  * -1: a systemcall failed and errno is set
  *  0: rule was added.
+ *  1: an error occoured while adding the rule
  *
  * In case of an error, no rules are added, thus caller can free them safely.
  */
@@ -153,7 +158,7 @@ apn_add_sfsrule(struct apn_rule *rule, struct apn_ruleset *ruleset)
 	TAILQ_INSERT_TAIL(&ruleset->sfs_queue, rule, entry);
 
 	if (ruleset->flags & APN_FLAG_VERBOSE)
-		ret = apn_print_rule(rule, ruleset->flags);
+		ret = apn_print_rule(rule, ruleset->flags, stdout);
 
 	return (ret);
 }
@@ -165,30 +170,30 @@ apn_add_sfsrule(struct apn_rule *rule, struct apn_ruleset *ruleset)
  * Return codes:
  * -1: a systemcall failed and errno is set
  *  0: rule could be printed
- *  1: an error occured while parsing the rule
+ *  1: an error occured while printing the rule
  */
 int
-apn_print_rule(struct apn_rule *rule, int flags)
+apn_print_rule(struct apn_rule *rule, int flags, FILE *file)
 {
 	int	ret = 0;
 
-	if (rule == NULL)
+	if (rule == NULL || file == NULL)
 		return (1);
 
 	switch (rule->type) {
 	case APN_ALF:
 		/* ALF rules are application specific. */
 		if (flags & APN_FLAG_VERBOSE2)
-			printf("%d: ", rule->id);
-		if ((ret = apn_print_app(rule->app)) != 0)
+			fprintf(file, "%d: ", rule->id);
+		if ((ret = apn_print_app(rule->app, file)) != 0)
 			return (ret);
-		printf(" {\n");
-		ret = apn_print_alfrule(rule->rule.alf, flags);
-		printf("}\n");
+		fprintf(file, " {\n");
+		ret = apn_print_alfrule(rule->rule.alf, flags, file);
+		fprintf(file, "}\n");
 		break;
 	case APN_SFS:
 		/* SFS rule are not application specific. */
-		ret = apn_print_sfsrule(rule->rule.sfs, flags);
+		ret = apn_print_sfsrule(rule->rule.sfs, flags, file);
 		break;
 	default:
 		ret = 1;
@@ -199,15 +204,53 @@ apn_print_rule(struct apn_rule *rule, int flags)
 }
 
 /*
+ * Print a full rule set.
+ *
+ * Return code:
+ *
+ * -1: a systemcall failed and errno is set
+ *  0: rule could be printed
+ *  1: an error occured printing the rule set
+ */
+int
+apn_print_ruleset(struct apn_ruleset *rs, int flags, FILE *file)
+{
+	struct apn_rule		*rule;
+	struct apnrule_queue	*queue;
+	int			 ret = 0;
+
+	if (rs == NULL || file == NULL)
+		return (1);
+
+	queue = &rs->alf_queue;
+	if (!TAILQ_EMPTY(queue)) {
+		TAILQ_FOREACH(rule, queue, entry) {
+			if ((ret = apn_print_rule(rule, flags, file)) != 0)
+				return (ret);
+		}
+	}
+
+	queue = &rs->sfs_queue;
+	if (!TAILQ_EMPTY(&rs->sfs_queue)) {
+		TAILQ_FOREACH(rule, queue, entry) {
+			if ((ret = apn_print_rule(rule, flags, file)) != 0)
+				return (ret);
+		}
+	}
+
+	return (0);
+}
+
+/*
  * Print error messages generated by libapn.
  */
 void
-apn_print_errors(struct apn_ruleset *rs)
+apn_print_errors(struct apn_ruleset *rs, FILE *file)
 {
 	struct apnerr_queue	*errq;
 	struct apn_errmsg	*msg;
 
-	if (rs == NULL)
+	if (rs == NULL || file == NULL)
 		return;
 
 	errq = &rs->err_queue;
@@ -215,7 +258,7 @@ apn_print_errors(struct apn_ruleset *rs)
 		return;
 
 	TAILQ_FOREACH(msg, errq, entry)
-		fprintf(stderr, "%s\n", msg->msg);
+		fprintf(file, "%s\n", msg->msg);
 
 	return;
 }
@@ -226,13 +269,18 @@ apn_print_errors(struct apn_ruleset *rs)
 void
 apn_free_ruleset(struct apn_ruleset *rs)
 {
-	struct apnerr_queue	*errq = &rs->err_queue;
-	struct apnrule_queue	*alfq = &rs->alf_queue;
-	struct apnrule_queue	*sfsq = &rs->sfs_queue;
-	struct apnvar_queue	*varq = &rs->var_queue;
+	struct apnerr_queue	*errq;
+	struct apnrule_queue	*alfq;
+	struct apnrule_queue	*sfsq;
+	struct apnvar_queue	*varq;
 
 	if (rs == NULL)
 		return;
+
+	errq = &rs->err_queue;
+	alfq = &rs->alf_queue;
+	sfsq = &rs->sfs_queue;
+	varq = &rs->var_queue;
 
 	apn_free_errq(errq);
 	apn_free_ruleq(alfq);
@@ -243,29 +291,32 @@ apn_free_ruleset(struct apn_ruleset *rs)
 }
 
 static int
-apn_print_app(struct apn_app *app)
+apn_print_app(struct apn_app *app, FILE *file)
 {
 	struct apn_app *hp = app;
 
+	if (file == NULL)
+		return (1);
+
 	if (hp == NULL) {
-		printf("any");
+		fprintf(file, "any");
 		return (0);
 	}
 
-	if (app->next)
-		printf("{");
+	if (app && app->next)
+		fprintf(file, "{");
 
 	while (hp) {
 		if (hp->name == NULL)
 			return (1);
-		printf("%s ", hp->name);
+		fprintf(file, "%s ", hp->name);
 
 		switch (hp->hashtype) {
 		case APN_HASH_NONE:
 			break;
 		case APN_HASH_SHA256:
-			printf("sha256 \\\n");
-			apn_print_hash(hp->hashvalue, 256 / 8);
+			fprintf(file, "sha256 \\\n");
+			apn_print_hash(hp->hashvalue, 256 / 8, file);
 			break;
 		default:
 			return (1);
@@ -273,40 +324,40 @@ apn_print_app(struct apn_app *app)
 
 		hp = hp->next;
 		if (hp)
-			printf(",\n");
+			fprintf(file, ",\n");
 	}
 
-	if (app->next)
-		printf(" }");
+	if (app && app->next)
+		fprintf(file, " }");
 
 	return (0);
 }
 
 static int
-apn_print_alfrule(struct apn_alfrule *rule, int flags)
+apn_print_alfrule(struct apn_alfrule *rule, int flags, FILE *file)
 {
 	struct apn_alfrule	*hp = rule;
 	int			 ret = 0;
 
-	if (hp == NULL)
+	if (hp == NULL || file == NULL)
 		return (1);
 
 	while (hp) {
 		if (flags & APN_FLAG_VERBOSE2)
-			printf("%d: ", hp->id);
+			fprintf(file, "%d: ", hp->id);
 
 		switch (hp->type) {
 		case APN_ALF_FILTER:
-			ret = apn_print_afiltrule(&hp->rule.afilt);
+			ret = apn_print_afiltrule(&hp->rule.afilt, file);
 			break;
 		case APN_ALF_CAPABILITY:
-			ret = apn_print_acaprule(&hp->rule.acap);
+			ret = apn_print_acaprule(&hp->rule.acap, file);
 			break;
 		case APN_ALF_DEFAULT:
-			ret = apn_print_defaultrule(&hp->rule.apndefault);
+			ret = apn_print_defaultrule(&hp->rule.apndefault, file);
 			break;
 		case APN_ALF_CTX:
-			ret = apn_print_contextrule(&hp->rule.apncontext);
+			ret = apn_print_contextrule(&hp->rule.apncontext, file);
 			break;
 		default:
 			return (1);
@@ -322,24 +373,24 @@ apn_print_alfrule(struct apn_alfrule *rule, int flags)
 }
 
 static int
-apn_print_sfsrule(struct apn_sfsrule *rule, int flags)
+apn_print_sfsrule(struct apn_sfsrule *rule, int flags, FILE *file)
 {
 	struct apn_sfsrule	*hp = rule;
 	int			 ret = 0;
 
-	if (hp == NULL)
+	if (hp == NULL || file == NULL)
 		return (1);
 
 	while (hp) {
 		if (flags & APN_FLAG_VERBOSE2)
-			printf("%d: ", hp->id);
+			fprintf(file, "%d: ", hp->id);
 
 		switch (hp->type) {
 		case APN_SFS_CHECK:
-			ret = apn_print_scheckrule(&hp->rule.sfscheck);
+			ret = apn_print_scheckrule(&hp->rule.sfscheck, file);
 			break;
 		case APN_SFS_DEFAULT:
-			ret = apn_print_defaultrule(&hp->rule.apndefault);
+			ret = apn_print_defaultrule(&hp->rule.apndefault, file);
 			break;
 		default:
 			return (1);
@@ -354,231 +405,243 @@ apn_print_sfsrule(struct apn_sfsrule *rule, int flags)
 	return (ret);
 }
 static int
-apn_print_afiltrule(struct apn_afiltrule *rule)
+apn_print_afiltrule(struct apn_afiltrule *rule, FILE *file)
 {
-	if (rule == NULL)
+	if (rule == NULL || file == NULL)
 		return (1);
 
-	if (apn_print_action(rule->action, 1) == 1)
+	if (apn_print_action(rule->action, 1, file) == 1)
 		return (1);
-	if (apn_print_netaccess(rule->filtspec.netaccess) == 1)
+	if (apn_print_netaccess(rule->filtspec.netaccess, file) == 1)
 		return (1);
-	if (apn_print_log(rule->filtspec.log) == 1)
+	if (apn_print_log(rule->filtspec.log, file) == 1)
 		return (1);
-	if (apn_print_af(rule->filtspec.af) == 1)
+	if (apn_print_af(rule->filtspec.af, file) == 1)
 		return (1);
-	if (apn_print_proto(rule->filtspec.proto) == 1)
+	if (apn_print_proto(rule->filtspec.proto, file) == 1)
 		return (1);
 
 	if (rule->filtspec.fromhost == NULL && rule->filtspec.tohost == NULL)
-		printf("all");
+		fprintf(file, "all");
 	else {
-		printf("from ");
-		if (apn_print_host(rule->filtspec.fromhost) == 1)
+		fprintf(file, "from ");
+		if (apn_print_host(rule->filtspec.fromhost, file) == 1)
 			return (1);
-		if (apn_print_port(rule->filtspec.fromport) == 1)
+		if (apn_print_port(rule->filtspec.fromport, file) == 1)
 			return (1);
-		printf(" to ");
-		if (apn_print_host(rule->filtspec.tohost) == 1)
+		fprintf(file, " to ");
+		if (apn_print_host(rule->filtspec.tohost, file) == 1)
 			return (1);
-		if (apn_print_port(rule->filtspec.toport) == 1)
+		if (apn_print_port(rule->filtspec.toport, file) == 1)
 			return (1);
 	}
 
-	printf("\n");
+	fprintf(file, "\n");
 
 	return (0);
 }
 
 static int
-apn_print_acaprule(struct apn_acaprule *rule)
+apn_print_acaprule(struct apn_acaprule *rule, FILE *file)
 {
-	if (rule == NULL)
+	if (rule == NULL || file == NULL)
 		return (1);
 
-	if (apn_print_action(rule->action, 1) == 1)
+	if (apn_print_action(rule->action, 1, file) == 1)
 		return (1);
-	if (apn_print_log(rule->log) == 1)
+	if (apn_print_log(rule->log, file) == 1)
 		return (1);
 
 	switch (rule->capability) {
 	case APN_ALF_CAPRAW:
-		printf("raw");
+		fprintf(file, "raw");
 		break;
 	case APN_ALF_CAPOTHER:
-		printf("other");
+		fprintf(file, "other");
 		break;
 	case APN_ALF_CAPALL:
-		printf("all");
+		fprintf(file, "all");
 		break;
 	default:
 		return (1);
 	}
 
-	printf("\n");
+	fprintf(file, "\n");
 
 	return (0);
 }
 
 static int
-apn_print_defaultrule(struct apn_default *rule)
+apn_print_defaultrule(struct apn_default *rule, FILE *file)
 {
-	if (rule == NULL)
+	if (rule == NULL || file == NULL)
 		return (1);
 
-	printf("default ");
+	fprintf(file, "default ");
 
-	if (apn_print_log(rule->log) == 1)
+	if (apn_print_log(rule->log, file) == 1)
 		return (1);
-	if (apn_print_action(rule->action, 0) == 1)
+	if (apn_print_action(rule->action, 0, file) == 1)
 		return (1);
 
-	printf("\n");
+	fprintf(file, "\n");
 
 	return (0);
 }
 
 static int
-apn_print_contextrule(struct apn_context *rule)
+apn_print_contextrule(struct apn_context *rule, FILE *file)
 {
-	if (rule == NULL)
+	if (rule == NULL || file == NULL)
 		return (1);
 
-	printf("context new ");
+	fprintf(file, "context new ");
 
-	if (apn_print_app(rule->application) == 1)
+	if (apn_print_app(rule->application, file) == 1)
 		return (1);
 
-	printf("\n");
+	fprintf(file, "\n");
 
 	return (0);
 }
 
 static int
-apn_print_scheckrule(struct apn_sfscheck *rule)
+apn_print_scheckrule(struct apn_sfscheck *rule, FILE *file)
 {
-	if (rule == NULL)
+	if (rule == NULL || file == NULL)
 		return (1);
 
-	if (apn_print_app(rule->app) == 1)
+	if (apn_print_app(rule->app, file) == 1)
 		return (1);
 	if (rule->log != APN_LOG_NONE)
-		printf(" ");
-	if (apn_print_log(rule->log) == 1)
+		fprintf(file, " ");
+	if (apn_print_log(rule->log, file) == 1)
 		return (1);
 
-	printf("\n");
+	fprintf(file, "\n");
 
 	return (0);
 }
 
 static int
-apn_print_host(struct apn_host *host)
+apn_print_host(struct apn_host *host, FILE *file)
 {
 	struct apn_host *hp = host;
 
+	if (file == NULL)
+		return (1);
+
 	if (hp == NULL) {
-		printf("any");
+		fprintf(file, "any");
 		return (0);
 	}
 
 	if (host->next)
-		printf("{");
+		fprintf(file, "{");
 
 	while (hp) {
 		if (hp->not)
-			printf("!");
-		if (apn_print_address(&hp->addr) == 1)
+			fprintf(file, "!");
+		if (apn_print_address(&hp->addr, file) == 1)
 			return (1);
 		hp = hp->next;
 		if (hp)
-			printf(", ");
+			fprintf(file, ", ");
 	}
 
 	if (host->next)
-		printf("} ");
+		fprintf(file, "} ");
 
 	return (0);
 }
 
 static int
-apn_print_address(struct apn_addr *addr)
+apn_print_address(struct apn_addr *addr, FILE *file)
 {
 	char	buffer[256];
 
-	if (addr == NULL)
+	if (addr == NULL || file == NULL)
 		return (1);
 	if (inet_ntop(addr->af, &addr->apa.addr32, buffer, sizeof(buffer))
 	    == NULL)
 		return (1);
 
-	printf("%s", buffer);
+	fprintf(file, "%s", buffer);
 
 	if (addr->len != 32 && addr->len != 128)
-		printf("/%u", addr->len);
+		fprintf(file, "/%u", addr->len);
 
 	return (0);
 }
 
 static int
-apn_print_port(struct apn_port *port)
+apn_print_port(struct apn_port *port, FILE *file)
 {
 	struct apn_port *hp = port;
+
+	if (file == NULL)
+		return (1);
 
 	if (hp == NULL)
 		return (0);
 
-	printf(" port ");
+	fprintf(file, " port ");
 
 	if (port->next)
-		printf("{");
+		fprintf(file, "{");
 
 	while (hp) {
-		printf("%hu", ntohs(hp->port));
+		fprintf(file, "%hu", ntohs(hp->port));
 
 		hp = hp->next;
 		if (hp)
-			printf(", ");
+			fprintf(file, ", ");
 	}
 
 	if (port->next)
-		printf("} ");
+		fprintf(file, "} ");
 
 	return (0);
 }
 
 static int
-apn_print_action(int action, int space)
+apn_print_action(int action, int space, FILE *file)
 {
+	if (file == NULL)
+		return (1);
+
 	switch (action) {
 	case APN_ACTION_ALLOW:
-		printf("allow");
+		fprintf(file, "allow");
 		break;
 	case APN_ACTION_DENY:
-		printf("deny");
+		fprintf(file, "deny");
 		break;
 	case APN_ACTION_ASK:
-		printf("ask");
+		fprintf(file, "ask");
 		break;
 	default:
 		return (1);
 	}
 
 	if (space)
-		printf(" ");
+		fprintf(file, " ");
 
 	return (0);
 }
 
 static int
-apn_print_netaccess(int netaccess)
+apn_print_netaccess(int netaccess, FILE *file)
 {
+	if (file == NULL)
+		return (1);
+
 	switch (netaccess) {
 	case APN_CONNECT:
-		printf("connect ");
+		fprintf(file, "connect ");
 		break;
 	case APN_ACCEPT:
-		printf("accept ");
+		fprintf(file, "accept ");
 		break;
 	case APN_INOUT:
 		/* nothing */
@@ -591,16 +654,19 @@ apn_print_netaccess(int netaccess)
 }
 
 static int
-apn_print_log(int log)
+apn_print_log(int log, FILE *file)
 {
+	if (file == NULL)
+		return (1);
+
 	switch (log) {
 	case APN_LOG_NONE:
 		break;
 	case APN_LOG_NORMAL:
-		printf("log ");
+		fprintf(file, "log ");
 		break;
 	case APN_LOG_ALERT:
-		printf("alert ");
+		fprintf(file, "alert ");
 		break;
 	default:
 		return (1);
@@ -610,14 +676,17 @@ apn_print_log(int log)
 }
 
 static int
-apn_print_af(int af)
+apn_print_af(int af, FILE *file)
 {
+	if (file == NULL)
+		return (1);
+
 	switch (af) {
 	case AF_INET:
-		printf("inet ");
+		fprintf(file, "inet ");
 		break;
 	case AF_INET6:
-		printf("inet6 ");
+		fprintf(file, "inet6 ");
 		break;
 	default:
 		break;
@@ -627,14 +696,17 @@ apn_print_af(int af)
 }
 
 static int
-apn_print_proto(int proto)
+apn_print_proto(int proto, FILE *file)
 {
+	if (file == NULL)
+		return (1);
+
 	switch (proto) {
 	case IPPROTO_TCP:
-		printf("tcp ");
+		fprintf(file, "tcp ");
 		break;
 	case IPPROTO_UDP:
-		printf("udp ");
+		fprintf(file, "udp ");
 		break;
 	default:
 		return (1);
@@ -644,15 +716,15 @@ apn_print_proto(int proto)
 }
 
 static void
-apn_print_hash(char *hash, int len)
+apn_print_hash(char *hash, int len, FILE *file)
 {
 	int	i;
 
-	if (hash == NULL)
+	if (hash == NULL || file == NULL)
 		return;
 
 	for (i = 0; i < len; i++)
-		printf("%2.2x", (unsigned char)hash[i]);
+		fprintf(file, "%2.2x", (unsigned char)hash[i]);
 }
 
 static void

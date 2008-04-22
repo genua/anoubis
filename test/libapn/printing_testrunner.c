@@ -25,32 +25,22 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <stdlib.h>
 #include <check.h>
 
-extern TCase *libapn_testcase_errorcodes(void);
-extern TCase *libapn_testcase_invalidparams(void);
-extern TCase *libapn_testcase_crash_apn_free_ruleset(void);
-extern TCase *libapn_testcase_crash_parse_files(void);
-extern TCase *libapn_testcase_crash_print_errors(void);
+extern Suite *printing_testsuite(void);
 
-Suite *
-libapn_testsuite(void)
+int
+main (int argc, char * argv[])
 {
-	Suite *s = suite_create("Suite");
+	int number_failed = -1;
 
-	/* sessions test case */
-	TCase *tc_errorcodes = libapn_testcase_errorcodes();
-	TCase *tc_invalidparams = libapn_testcase_invalidparams();
-	TCase *tc_crash_apn_free_ruleset =
-	    libapn_testcase_crash_apn_free_ruleset();
-	TCase *tc_crash_parse_files = libapn_testcase_crash_parse_files();
-	TCase *tc_crash_print_error = libapn_testcase_crash_print_errors();
+	Suite *suite = printing_testsuite();
+	SRunner *suiterunner = srunner_create(suite);
 
-	suite_add_tcase(s, tc_errorcodes);
-	suite_add_tcase(s, tc_invalidparams);
-	suite_add_tcase(s, tc_crash_apn_free_ruleset);
-	suite_add_tcase(s, tc_crash_parse_files);
-	suite_add_tcase(s, tc_crash_print_error);
+	srunner_run_all(suiterunner, CK_NORMAL);
+	number_failed = srunner_ntests_failed(suiterunner);
+	srunner_free(suiterunner);
 
-	return (s);
+	return ((number_failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE);
 }

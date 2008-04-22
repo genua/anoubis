@@ -27,30 +27,17 @@
 
 #include <check.h>
 
-extern TCase *libapn_testcase_errorcodes(void);
-extern TCase *libapn_testcase_invalidparams(void);
-extern TCase *libapn_testcase_crash_apn_free_ruleset(void);
-extern TCase *libapn_testcase_crash_parse_files(void);
-extern TCase *libapn_testcase_crash_print_errors(void);
+extern TCase *printing_testcase_ruleset(void);
 
 Suite *
-libapn_testsuite(void)
+printing_testsuite(void)
 {
 	Suite *s = suite_create("Suite");
 
 	/* sessions test case */
-	TCase *tc_errorcodes = libapn_testcase_errorcodes();
-	TCase *tc_invalidparams = libapn_testcase_invalidparams();
-	TCase *tc_crash_apn_free_ruleset =
-	    libapn_testcase_crash_apn_free_ruleset();
-	TCase *tc_crash_parse_files = libapn_testcase_crash_parse_files();
-	TCase *tc_crash_print_error = libapn_testcase_crash_print_errors();
+	TCase *tc_ruleset = printing_testcase_ruleset();
 
-	suite_add_tcase(s, tc_errorcodes);
-	suite_add_tcase(s, tc_invalidparams);
-	suite_add_tcase(s, tc_crash_apn_free_ruleset);
-	suite_add_tcase(s, tc_crash_parse_files);
-	suite_add_tcase(s, tc_crash_print_error);
+	suite_add_tcase(s, tc_ruleset);
 
 	return (s);
 }

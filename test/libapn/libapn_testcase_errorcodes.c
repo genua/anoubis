@@ -78,9 +78,61 @@ START_TEST(tc_Errorcodes)
 	unlink(filename);	/* File will disappear on exit(2). */
 
 	if (ret != 0)
-		apn_print_errors(rs);
+		apn_print_errors(rs, stderr);
 
 	fail_if(ret != 1, "apn_parse() did not return required value \"1\"");
+}
+END_TEST
+
+START_TEST(tc_Invalidparameters)
+{
+	struct apn_ruleset	*rsp, rs;
+	struct apn_rule		 rule;
+	int			 ret;
+
+	ret = apn_parse(NULL, &rsp, 0);
+	fail_if(ret != 1, "apn_parse(NULL, &rs) did not return required "
+	    "value \"1\"");
+	ret = apn_parse("foo", NULL, 0);
+	fail_if(ret != 1, "apn_parse(\"foo\", NULL) did not return required "
+	    "value \"1\"");
+
+	bzero(&rule, sizeof(rule));
+	bzero(&rs, sizeof(rs));
+
+	ret = apn_add_alfrule(NULL, NULL);
+	fail_if(ret != 1, "apn_add_alfrule(NULL, NULL) did not return "
+	    "required value \"1\"");
+	ret = apn_add_alfrule(NULL, &rs);
+	fail_if(ret != 1, "apn_add_alfrule(NULL, &rs) did not return "
+	    "required value \"1\"");
+	ret = apn_add_alfrule(&rule, NULL);
+	fail_if(ret != 1, "apn_add_alfrule(&rule, NULL) did not return "
+	    "required value \"1\"");
+
+	bzero(&rule, sizeof(rule));
+
+	ret = apn_print_rule(NULL, 0, NULL);
+	fail_if(ret != 1, "apn_print_rule(NULL, 0, NULL) did not return "
+	    "required value \"1\"");
+	ret = apn_print_rule(&rule, 0, NULL);
+	fail_if(ret != 1, "apn_print_rule(&rule, 0, NULL) did not return "
+	    "required value \"1\"");
+	ret = apn_print_rule(NULL, 0, stdout);
+	fail_if(ret != 1, "apn_print_rule(NULL, 0, stdout) did not return "
+	    "required value \"1\"");
+
+	bzero(&rs, sizeof(rs));
+
+	ret = apn_print_ruleset(NULL, 0, NULL);
+	fail_if(ret != 1, "apn_print_ruleset(NULL, 0, NULL) did not return "
+	    "required value \"1\"");
+	ret = apn_print_ruleset(&rs, 0, NULL);
+	fail_if(ret != 1, "apn_print_ruleset(&rs, 0, NULL) did not return "
+	    "required value \"1\"");
+	ret = apn_print_ruleset(NULL, 0, stdout);
+	fail_if(ret != 1, "apn_print_ruleset(NULL, 0, stdout) did not return "
+	    "required value \"1\"");
 }
 END_TEST
 
@@ -93,4 +145,14 @@ libapn_testcase_errorcodes(void)
 	tcase_add_test(tc_errorcodes, tc_Errorcodes);
 
 	return (tc_errorcodes);
+}
+
+TCase *
+libapn_testcase_invalidparams(void)
+{
+	TCase *tc_invalidparams = tcase_create("Invalid parameters");
+
+	tcase_add_test(tc_invalidparams, tc_Invalidparameters);
+
+	return (tc_invalidparams);
 }

@@ -95,7 +95,7 @@ START_TEST(tc_Crash_parse_files)
 {
 	struct apn_ruleset	*rs;
 	char			*file1, *file2;
-	int	 		 ret;
+	int			 ret;
 
 	signal(SIGABRT, handler);
 	test = "tc_Crash_parse_files";
@@ -106,15 +106,25 @@ START_TEST(tc_Crash_parse_files)
 	ret = apn_parse(file1, &rs, APN_FLAG_VERBOSE);
 	unlink(file1);
 	if (ret != 0)
-		apn_print_errors(rs);
+		apn_print_errors(rs, stderr);
 	fail_if(ret != 0, "Parsing of file 1 failed");
 
 	rs = NULL;
 	ret = apn_parse(file2, &rs, APN_FLAG_VERBOSE);
 	unlink(file2);
 	if (ret != 0)
-		apn_print_errors(rs);
+		apn_print_errors(rs, stderr);
 	fail_if(ret != 0, "Parsing of file 2 failed");
+}
+END_TEST
+
+START_TEST(tc_Crash_print_errors)
+{
+	signal(SIGABRT, handler);
+	test = "tc_Crash_apn_print_errors";
+
+	apn_print_errors(NULL, stderr);
+	fail_if(0);
 }
 END_TEST
 
@@ -123,7 +133,7 @@ libapn_testcase_crash_apn_free_ruleset(void)
 {
 	TCase *tc_crash_apn_free_ruleset =
 	    tcase_create("Crash apn_free_ruleset(NULL)");
-	
+
 	tcase_add_test(tc_crash_apn_free_ruleset, tc_Crash_apn_free_ruleset);
 
 	return (tc_crash_apn_free_ruleset);
@@ -134,8 +144,19 @@ libapn_testcase_crash_parse_files(void)
 {
 	TCase *tc_crash_parse_files = tcase_create("Crash on parsing more "
 	    "than one input file");
-	
+
 	tcase_add_test(tc_crash_parse_files, tc_Crash_parse_files);
 
 	return (tc_crash_parse_files);
+}
+
+TCase *
+libapn_testcase_crash_print_errors(void)
+{
+	TCase *tc_crash_apn_print_errors =
+	    tcase_create("Crash apn_print_errors(NULL, NULL)");
+
+	tcase_add_test(tc_crash_apn_print_errors, tc_Crash_print_errors);
+
+	return (tc_crash_apn_print_errors);
 }

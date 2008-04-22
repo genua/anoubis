@@ -295,7 +295,7 @@ load(char *rulesopt)
 
 		if (apn_parse(rulesopt, &ruleset, flags)) {
 			error = 1;
-			apn_print_errors(ruleset);
+			apn_print_errors(ruleset, stderr);
 		}
 	}
 

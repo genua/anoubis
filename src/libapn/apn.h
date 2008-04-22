@@ -34,6 +34,8 @@
 #include <queue.h>
 #endif
 
+#include <stdio.h>
+
 #ifdef S_SPLINT_S
 #include "splint-includes.h"
 #endif
@@ -238,8 +240,9 @@ struct apn_ruleset {
 int	apn_parse(const char *, struct apn_ruleset **, int);
 int	apn_add_alfrule(struct apn_rule *, struct apn_ruleset *);
 int	apn_add_sfsrule(struct apn_rule *, struct apn_ruleset *);
-int	apn_print_rule(struct apn_rule *, int);
-void	apn_print_errors(struct apn_ruleset *);
+int	apn_print_rule(struct apn_rule *, int, FILE *);
+int	apn_print_ruleset(struct apn_ruleset *, int, FILE *);
+void	apn_print_errors(struct apn_ruleset *, FILE *);
 void	apn_free_ruleset(struct apn_ruleset *);
 
 #endif /* _APN_H_ */
