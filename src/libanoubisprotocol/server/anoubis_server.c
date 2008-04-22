@@ -88,8 +88,10 @@ struct anoubis_server * anoubis_server_create(struct achat_channel * chan,
 	return ret;
 };
 
-static void channel_close(/*@notnull@*/ struct anoubis_server * server)
+static void channel_close(struct anoubis_server * server)
 {
+	if (!server)
+		return;
 	if (server->policy && server->chan)
 		anoubis_policy_comm_abort(server->policy, server->chan);
 	if (server->chan) {
@@ -152,13 +154,16 @@ static int anoubis_server_send(struct anoubis_server * server,
 /* Start communication by sending initial HELLO.*/
 int anoubis_server_start(struct anoubis_server * server)
 {
-	struct anoubis_msg * m = anoubis_msg_new(sizeof(Anoubis_HelloMessage));
+	struct anoubis_msg * m;
 	int ret;
+
+	m = anoubis_msg_new(sizeof(Anoubis_HelloMessage));
+	if (!m)
+		return -ENOMEM;
 
 	assert(server->proto == ANOUBIS_PROTO_CONNECT);
 	assert((server->connect_flags & FLAG_HELLOSENT) == 0);
-	if (!m)
-		return -ENOMEM;
+
 	set_value(m->u.hello->type, ANOUBIS_C_HELLO);
 	set_value(m->u.hello->version, ANOUBIS_PROTO_VERSION);
 	set_value(m->u.hello->min_version, ANOUBIS_PROTO_MINVERSION);
@@ -174,6 +179,8 @@ static int __reply(struct anoubis_server * server, anoubis_token_t token,
 {
 	struct anoubis_msg * m;
 	m = anoubis_msg_new(sizeof(Anoubis_AckMessage));
+	if (!m)
+		return -ENOMEM;
 	set_value(m->u.ack->type, ANOUBIS_REPLY);
 	set_value(m->u.ack->error, error);
 	set_value(m->u.ack->opcode, opcode);
@@ -271,11 +278,16 @@ static int anoubis_process_auth(/*@dependent@*/ struct anoubis_server * server,
 	if (server->proto != ANOUBIS_PROTO_CONNECT
 	    || (server->connect_flags & FLAG_HELLOSENT) == 0
 	    || (server->connect_flags & FLAG_AUTH)
-	    || server->auth != NULL)
+	    || (server->auth != NULL))
 		return reply_invalid(server, opcode);
 	if (!VERIFY_LENGTH(m, sizeof(Anoubis_GeneralMessage)))
 		return reply_invalid(server, opcode);
-	server->auth = anoubis_auth_create(server->chan,
+
+	/*
+	 * server->auth has been checked for non-null at the top of this
+	 * function.
+	 */
+	/*@i@*/	server->auth = anoubis_auth_create(server->chan,
 	    &anoubis_auth_finish_callback, server);
 	if (!server->auth)
 		return -ENOMEM;
@@ -304,17 +316,32 @@ static void anoubis_auth_finish_callback(void * data)
 		if (server->auth->username)
 			len = strlen(server->auth->username);
 		m = anoubis_msg_new(sizeof(Anoubis_AuthReplyMessage) + len);
+		if (!m) {
+			server->connect_flags |= FLAG_ERROR;
+			channel_close(server);
+			return;
+		}
 		set_value(m->u.authreply->type, ANOUBIS_C_AUTHREPLY);
 		set_value(m->u.authreply->error, ANOUBIS_E_OK);
 		set_value(m->u.authreply->uid, server->auth->uid);
-		if (len)
+		if (len > 0)
+			/*
+			 * len contains the length of the string pointed
+			 * to server->auth->username, and thus cannot be
+			 * possibly null.
+			 */
 			strncpy(m->u.authreply->name,
-			    server->auth->username, len);
+			    /*@i@*/server->auth->username, len);
 		server->connect_flags |= FLAG_AUTH;
 		server->auth_uid = server->auth->uid;
 	} else {
 		assert(server->auth->state == ANOUBIS_AUTH_FAILURE);
 		m = anoubis_msg_new(sizeof(Anoubis_AuthReplyMessage));
+		if (!m) {
+			server->connect_flags |= FLAG_ERROR;
+			channel_close(server);
+			return;
+		}
 		set_value(m->u.authreply->type, ANOUBIS_C_AUTHREPLY);
 		set_value(m->u.authreply->error, server->auth->error);
 		set_value(m->u.authreply->uid, -1);
@@ -364,8 +391,17 @@ static int anoubis_process_protosel(struct anoubis_server * server,
 			break;
 		server->proto = newproto[k];
 		if (server->proto & ANOUBIS_PROTO_NOTIFY) {
-			server->notify = anoubis_notify_create(server->chan,
-			    server->auth_uid);
+			/*
+			 * At this point, server->notify cannot be
+			 * allocated, because the protocol specification
+			 * says, that an initialised anoubis_server
+			 * structure has set server->proto to some other
+			 * value than ANOUBIS_PROTO_CONNECT. That case
+			 * is already excluded at the top of this
+			 * function.
+			 */
+			/*@i@*/ server->notify = anoubis_notify_create(
+			    server->chan, server->auth_uid);
 			if (!server->notify)
 				return reply_invalid(server, opcode);
 		}
@@ -447,11 +483,11 @@ static int anoubis_process_reply(struct anoubis_server * server,
 	if (!VERIFY_LENGTH(m, sizeof(Anoubis_AckMessage))
 	    || (server->proto & ANOUBIS_PROTO_NOTIFY) == 0
 	    || (server->notify == NULL))
-		reply_invalid_token(server, token, opcode);
+		return reply_invalid_token(server, token, opcode);
 	verdict = get_value(m->u.ack->error);
 	delegate = (opcode == ANOUBIS_N_DELEGATE);
 	if (anoubis_notify_answer(server->notify, token, verdict, delegate) < 0)
-		reply_invalid_token(server, token, opcode);
+		return reply_invalid_token(server, token, opcode);
 	return 0;
 }
 

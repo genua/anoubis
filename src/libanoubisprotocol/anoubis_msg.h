@@ -37,7 +37,7 @@ struct anoubis_msg {
 	u_int32_t	length;
 	/*@null@*/ /*@dependent@*/
 	struct anoubis_msg * next;
-	/*@relnull@*/
+	/*@relnull@*/ /*@reldef@*/
 	union {
 		/*@relnull@*/
 		Anoubis_GeneralMessage  * general;

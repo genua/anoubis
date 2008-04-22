@@ -47,6 +47,7 @@ struct anoubis_msg * anoubis_msg_new(size_t len)
 		free(ret);
 		return NULL;
 	}
+	ret->next = NULL;
 	return ret;
 }
 

@@ -74,8 +74,6 @@ int anoubis_auth_process(struct anoubis_auth * auth,
 	} else {
 		auth->uid = auth->chan->euid;
 		auth->state = ANOUBIS_AUTH_SUCCESS;
-		auth->username = NULL; /* XXX for now. -- ceh */
-		auth->state = ANOUBIS_AUTH_SUCCESS;
 	}
 	auth->finish_callback(auth->cbdata);
 	return 0;

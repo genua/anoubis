@@ -97,12 +97,19 @@ struct anoubis_notify_group {
  * cannot be reliably annotated. We therefore exclude the following
  * functions from memory checking.
  */
-
 /*@-memchecks@*/
 struct anoubis_notify_group * anoubis_notify_create(struct achat_channel * chan,
     uid_t uid)
 {
-	struct anoubis_notify_group * ret = malloc(sizeof(*ret));
+	struct anoubis_notify_group * ret;
+
+	if (NULL == chan)
+		return NULL;
+
+	ret = malloc(sizeof(*ret));
+	if (!ret)
+		return NULL;
+	
 	ret->chan = chan;
 	ret->uid = uid;
 	LIST_INIT(&ret->regs);

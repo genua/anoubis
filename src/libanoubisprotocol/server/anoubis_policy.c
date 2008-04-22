@@ -86,11 +86,15 @@ int anoubis_policy_comm_process(struct anoubis_policy_comm * comm,
 	size_t datalen;
 	int ret;
 
-	if (!VERIFY_LENGTH(m, sizeof(Anoubis_PolicyRequestMessage)))
+	if (!VERIFY_LENGTH(m, sizeof(Anoubis_PolicyRequestMessage))) {
+		anoubis_msg_free(m);
 		return -EINVAL;
+	}
 	datalen = m->length - CSUM_LEN - sizeof(Anoubis_PolicyRequestMessage);
-	if (get_value(m->u.policyrequest->type) != ANOUBIS_P_REQUEST)
+	if (get_value(m->u.policyrequest->type) != ANOUBIS_P_REQUEST) {
+		anoubis_msg_free(m);
 		return -EINVAL;
+	}
 	LIST_FOREACH(req, &comm->req, link) {
 		if (req->chan == chan)
 			return -EBUSY;
