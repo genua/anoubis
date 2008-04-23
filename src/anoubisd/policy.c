@@ -81,7 +81,7 @@ struct event_info_policy {
 	struct event	*ev_p2m, *ev_p2s, *ev_s2p;
 	/*@dependent@*/
 	struct event	*ev_timer;
-	/*@null@*/
+	/*@null@*/ /*@temp@*/
 	struct timeval	*tv;
 };
 
@@ -104,7 +104,7 @@ policy_sighandler(int sig, short event, void *arg)
 pid_t
 policy_main(struct anoubisd_config *conf, int pipe_m2s[2], int pipe_m2p[2],
     int pipe_s2p[2])
-/*@globals undef eventq_p2m, undef eventq_p2s, undef eventq_s2p@*/
+/*@globals undef eventq_p2m, undef eventq_p2s, undef eventq_s2p, undef replyq@*/
 {
 	struct event	 ev_sigterm, ev_sigint, ev_sigquit, ev_sigusr1;
 	struct event	 ev_m2p, ev_s2p;
@@ -123,7 +123,11 @@ policy_main(struct anoubisd_config *conf, int pipe_m2s[2], int pipe_m2p[2],
 	case 0:
 		break;
 	default:
-		return (pid);
+		/*
+		 * eventq_p2m, eventq_p2s and eventq_s2p do not need to
+		 * be defined in the child process.
+		 */
+		/*@i@*/return (pid);
 	}
 
 	anoubisd_process = PROC_POLICY;
@@ -230,7 +234,10 @@ dispatch_timer(int sig, short event, void *arg)
 	struct reply_wait *msg_wait;
 	anoubisd_msg_t *msg;
 	eventdev_token *tk;
-	Qentryp qep_cur, qep_next;
+	/*@dependent@*/
+	Qentryp qep_cur;
+	/*@dependent@*/
+	Qentryp qep_next;
 	struct eventdev_reply *rep;
 	time_t now = time(NULL);
 
@@ -284,6 +291,7 @@ dispatch_m2p(int fd, short sig, void *arg)
 	anoubisd_msg_t *msg, *msg_reply;
 	anoubisd_reply_t *reply;
 	struct event_info_policy *ev_info = (struct event_info_policy*)arg;
+	/*@dependent@*/
 	struct eventdev_hdr *hdr;
 	struct eventdev_reply *rep;
 
@@ -299,9 +307,9 @@ dispatch_m2p(int fd, short sig, void *arg)
 
 		/* this should be a eventdev_hdr message, needing a reply */
 		if (msg->mtype != ANOUBISD_MSG_EVENTDEV) {
-			free(msg);
 			DEBUG(DBG_TRACE, "<dispatch_m2p (bad type %d)",
 			    msg->mtype);
+			free(msg);
 			continue;
 		}
 		hdr = (struct eventdev_hdr *)msg->msg;

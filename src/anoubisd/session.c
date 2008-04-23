@@ -64,6 +64,12 @@
 #include "amsg.h"
 
 
+/*
+ * The following code utilizes list functions from BSD queue.h, which
+ * cannot be reliably annotated. We therefore exclude the following
+ * functions from memory checking.
+ */
+/*@-memchecks@*/
 struct session {
 	int			 id;	/* session number */
 	uid_t			 uid;	/* user id; not authenticated on -1 */
@@ -925,3 +931,4 @@ session_setupuds(struct sessionGroup *seg, struct anoubisd_config * conf)
 
 	DEBUG(DBG_TRACE, "<session_setupuds");
 }
+/*@=memchecks@*/

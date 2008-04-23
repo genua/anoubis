@@ -44,6 +44,11 @@
  *   ./aqueue
  */
 
+/*
+ * XXX tartler: The following code implements a sophisticated queue,
+ * which will be properly annotated in a later change.
+ */
+/*@-memchecks@*/
 int
 enqueue(Queuep queuep, void *msgp)
 {
@@ -178,6 +183,7 @@ queue_delete(Queuep queuep, void *msgp)
 	}
 	return 0;
 }
+/*@=memchecks@*/
 
 #ifdef UTEST
 void

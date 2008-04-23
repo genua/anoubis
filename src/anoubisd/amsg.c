@@ -91,7 +91,15 @@ msg_init(int fd, char *name)
 			}
 			fds[idx].rheadp = fds[idx].rtailp = fds[idx].rbufp;
 
-			if ((fds[idx].wbufp = malloc(MSG_BUF_SIZE)) == NULL) {
+			/*
+			 * We are initialising the fds msg_buf
+			 * structures. We can safely assume that we are
+			 * not running this code on already initialised
+			 * structures, because of the checks at the
+			 * beginning of the function.
+			 */
+			if ((/*@i@*/fds[idx].wbufp = malloc(MSG_BUF_SIZE))
+			    == NULL) {
 				free(fds[idx].rbufp);
 				fds[idx].rbufp = NULL;
 				log_warn("msg_init: can't allocate memory");

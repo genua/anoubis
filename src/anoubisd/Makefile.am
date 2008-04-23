@@ -104,10 +104,9 @@ anoubisd_SOURCES_splint= \
 
 
 flawfinder_FLAGS=
-# XXX tartler: the anoubisd source needs annotations to enable splint
-#              memory checking efficiently. We disable memory checking
-#              for this source file for now.
-splint_FLAGS=$(CPPFLAGS) -memchecks
+# XXX tartler: -compdestoy, because it causes too many false positives.
+# Will be revisited in a later change
+splint_FLAGS=$(CPPFLAGS) -compdestroy
 lint_FLAGS=$(CPPFLAGS)
 
 flawfinder:	$(anoubisd_SOURCES_flawfinder)

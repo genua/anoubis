@@ -159,6 +159,12 @@ int			 pe_addrmatch_host(struct apn_host *, void *,
 int			 pe_addrmatch_port(struct apn_port *, void *,
 			     unsigned short);
 
+/*
+ * The following code utilizes list functions from BSD queue.h, which
+ * cannot be reliably annotated. We therefore exclude the following
+ * functions from memory checking.
+ */
+/*@-memchecks@*/
 void
 pe_init(void)
 {
@@ -1779,3 +1785,4 @@ pe_addrmatch_port(struct apn_port *port, void *addr, unsigned short af)
 
 	return (match);
 }
+/*@=memchecks@*/

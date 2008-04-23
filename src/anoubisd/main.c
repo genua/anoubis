@@ -175,20 +175,17 @@ static void
 save_pid(pid_t pid)
 {
 	FILE *fp;
-	int error = 0;
 
 	fp = fopen(pid_file_name, "w");
 	if (fp == NULL) {
 		log_warn(pid_file_name);
-		error = 1;
+		fatal("cannot write pid file");
 	}
 	fprintf(fp, "%d\n", pid);
 	if (fclose(fp)) {
 		log_warn(pid_file_name);
-		error = 1;
-	}
-	if (error)
 		fatal("cannot write pid file");
+	}
 }
 
 static void
@@ -198,7 +195,8 @@ dispatch_timer(int sig, short event, /*@dependent@*/ void * arg)
 
 	DEBUG(DBG_TRACE, ">dispatch_timer");
 
-	ioctl(ev_info->anoubisfd, ANOUBIS_REQUEST_STATS, 0);
+	/* ioctls cannot be sensibly annotated because of varadic args */
+	/*@i@*/ioctl(ev_info->anoubisfd, ANOUBIS_REQUEST_STATS, 0);
 	event_add(ev_info->ev_timer, ev_info->tv);
 
 	DEBUG(DBG_TRACE, "<dispatch_timer");
