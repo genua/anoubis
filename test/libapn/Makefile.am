@@ -24,9 +24,9 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-TESTS = test_libapn test_printing
+TESTS = test_libapn test_printing test_insertcopy
 
-noinst_PROGRAMS = test_libapn test_printing
+noinst_PROGRAMS = test_libapn test_printing test_insertcopy
 
 libapndir       = src/libapn
 bsdcompatdir    = src/bsdcompat
@@ -55,7 +55,6 @@ test_libapn_SOURCES = \
 	libapn_testsuite.c \
 	libapn_testrunner.c
 
-
 test_printing_CPPFLAGS = \
 	-I$(top_srcdir)/$(libapndir) \
 	-I$(top_srcdir)/$(bsdcompatdir) \
@@ -76,3 +75,24 @@ test_printing_SOURCES = \
 	printing_testcase_ruleset.c \
 	printing_testsuite.c \
 	printing_testrunner.c
+
+test_insertcopy_CPPFLAGS = \
+	-I$(top_srcdir)/$(libapndir) \
+	-I$(top_srcdir)/$(bsdcompatdir) \
+	-I$(top_srcdir)/include \
+	@CHECK_CFLAGS@
+
+test_insertcopy_LDFLAGS = -L$(top_builddir)/$(libapndir) -dynamic
+test_insertcopy_LDADD = @CHECK_LIBS@ -lapn
+
+test_insertcopy_DEPENDENCIES = $(libapn)
+
+if NEEDBSDCOMPAT
+test_insertcopy_LDADD += $(libbsdcompat)
+test_insertcopy_DEPENDENCIES += $(libbsdcompat)
+endif
+
+test_insertcopy_SOURCES = \
+	insertcopy_testcase_copy.c \
+	insertcopy_testsuite.c \
+	insertcopy_testrunner.c

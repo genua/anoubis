@@ -210,9 +210,6 @@ struct apn_rule {
 		struct apn_alfrule	*alf;
 		struct apn_sfsrule	*sfs;
 	} rule;
-
-	struct apn_rule		*tail;
-	struct apn_rule		*next;
 };
 
 /* Error message */
@@ -227,6 +224,7 @@ TAILQ_HEAD(apnrule_queue, apn_rule);
 /* Complete APN ruleset. */
 struct apn_ruleset {
 	int			flags;
+	int			maxid;
 
 	/* Rulesets and variables */
 	struct apnrule_queue	alf_queue;
@@ -243,6 +241,8 @@ int	apn_add_sfsrule(struct apn_rule *, struct apn_ruleset *);
 int	apn_print_rule(struct apn_rule *, int, FILE *);
 int	apn_print_ruleset(struct apn_ruleset *, int, FILE *);
 void	apn_print_errors(struct apn_ruleset *, FILE *);
+int	apn_insert(struct apn_ruleset *, struct apn_rule *, int);
+int	apn_insert_alfrule(struct apn_ruleset *, struct apn_alfrule *, int);
 void	apn_free_ruleset(struct apn_ruleset *);
 
 #endif /* _APN_H_ */

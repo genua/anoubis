@@ -297,7 +297,6 @@ alfruleset	: apps optnl '{' optnl alfrule_l '}' nl {
 
 			rule->app = $1;
 			rule->rule.alf = $5;
-			rule->tail = rule;
 			rule->type = APN_ALF;
 			rule->id = counter++;
 
@@ -1282,6 +1281,8 @@ parse_rules(const char *filename, struct apn_ruleset *apnrspx)
 	fclose(file->stream);
 	free(file->name);
 	free(file);
+
+	apnrspx->maxid = counter;
 
 	return (errors ? 1 : 0);
 }

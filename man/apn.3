@@ -46,6 +46,10 @@
 .Fn apn_print_ruleset "struct apn_ruleset *ruleset" "int flags" "FILE *file"
 .Ft void
 .Fn apn_print_errors "struct apn_ruleset *ruleset" "FILE *file"
+.Ft int
+.Fn apn_insert "struct apn_ruleset *" "struct apn_rule *" "int"
+.Ft int
+.Fn apn_insert_alfrule "struct apn_ruleset *" "struct apn_alfrule *" "int"
 .Ft void
 .Fn apn_free_ruleset "struct apn_ruleset *ruleset"
 .Sh DESCRIPTION
@@ -110,7 +114,6 @@ The parameter
 may contain the flag
 .Em APN_FLAG_VERBOSE2 .
 If this flags is set, the numeric rule ID will be prefix the actual rule.
-
 .Pp
 .It Fn apn_print_ruleset ruleset flags file
 The function
@@ -133,6 +136,50 @@ function
 .Fn apn_parse
 to the filehandle
 .Em file .
+.Pp
+.It Fn apn_insert ruleset rule ID
+The function
+.Fn apn_insert
+inserts an application rule
+.Em rule
+of type
+.Em struct apn_rule
+to the rule set rule
+.Em ruleset
+of type
+.Em struct apn_ruleset .
+The rule
+.Em rule
+is an application rule, ie. it contains one or more specifications
+for application and rules, either of type
+.Em APN_ALF
+or
+.Em APN_SFS .
+The rule is inserted before the application rule with the identifier
+.Em ID .
+If that particular rule is not found, the rule is not added to the rule set.
+Otherwise, it is inserted and the IDs in the rule are updated according
+to the IDs already used in the rule set.
+.Pp
+.It Fn apn_insert_alfrule ruleset alfrule id
+The fucntion
+.Fn apn_insert_alfrule
+inserts an ALF rule
+.Em alfrule
+of type
+.Em struct apn_alfrule
+to the rule set
+.Em ruleset
+of type
+.Em struct apn_ruleset .
+The ALF rule
+.Em  rule
+is a single ALF rule and is inserted before the ALF rule with the
+identifier
+.Em ID .
+If that particular rule is not found, the rule is not added to the rule set.
+Otherwise, it is inserted and the ID of the rule is updated according
+to the IDs already used in the rule set.
 .Pp
 .It Fn apn_free_ruleset ruleset
 The function

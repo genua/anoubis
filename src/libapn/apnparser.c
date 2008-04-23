@@ -74,6 +74,11 @@ static void	apn_free_alfrule(struct apn_alfrule *);
 static void	apn_free_host(struct apn_host *);
 static void	apn_free_port(struct apn_port *);
 static void	apn_free_app(struct apn_app *);
+static struct apn_rule	*apn_search_rule(struct apnrule_queue *, int);
+static int		 apn_update_ids(struct apn_rule *,
+			     struct apn_ruleset *);
+static struct apn_alfrule *apn_searchinsert_alfrule(struct apnrule_queue *,
+		 struct apn_alfrule *, int);
 
 /*
  * Parse the specified file and return the ruleset, which is allocated
@@ -100,6 +105,7 @@ apn_parse(const char *filename, struct apn_ruleset **rsp, int flags)
 	TAILQ_INIT(&rs->var_queue);
 	TAILQ_INIT(&rs->err_queue);
 	rs->flags = flags;
+	rs->maxid = 0;
 	*rsp = rs;
 
 	if ((ret = parse_rules(filename, rs)) != 0) {
@@ -117,7 +123,7 @@ apn_parse(const char *filename, struct apn_ruleset **rsp, int flags)
  * Return codes:
  * -1: a systemcall failed and errno is set
  *  0: rule was added.
- *  1: an error occured while adding the rule
+ *  1: invalid parameters
  *
  * In case of an error, no rules are added, thus caller can free them safely.
  */
@@ -143,7 +149,7 @@ apn_add_alfrule(struct apn_rule *rule, struct apn_ruleset *ruleset)
  * Return codes:
  * -1: a systemcall failed and errno is set
  *  0: rule was added.
- *  1: an error occoured while adding the rule
+ *  1: invalid parameters
  *
  * In case of an error, no rules are added, thus caller can free them safely.
  */
@@ -163,6 +169,75 @@ apn_add_sfsrule(struct apn_rule *rule, struct apn_ruleset *ruleset)
 	return (ret);
 }
 
+/*
+ * Insert rule to rule set before rule with the identification ID.
+ * The IDs of the passed struct apn_rule will be updated!
+ *
+ * Return codes:
+ * -1: a systemcall failed and errno is set
+ *  0: rule was inserted.
+ *  1: invalid parameters
+ *
+ * In case of an error, no rules are added, thus caller can free them safely.
+ */
+int
+apn_insert(struct apn_ruleset *rs, struct apn_rule *rule, int id)
+{
+	struct apnrule_queue	*queue;
+	struct apn_rule		*p;
+
+	if (rs == NULL || rule == NULL || id < 0 || rs->maxid == INT_MAX)
+		return (1);
+
+	switch (rule->type) {
+	case APN_ALF:
+		queue = &rs->alf_queue;
+		break;
+	case APN_SFS:
+		queue = &rs->sfs_queue;
+		break;
+	default:
+		return (1);
+	}
+
+	if ((p = apn_search_rule(queue, id)) == NULL)
+		return (1);
+
+	if (apn_update_ids(rule, rs))
+		return (1);
+
+	TAILQ_INSERT_BEFORE(p, rule, entry);
+
+	return (0);
+}
+
+/*
+ * Insert alf rule before alf rule with identification ID.  The IDs of
+ * the passed struct apn_alfrule is updated.
+ *
+ * Return codes:
+ * -1: a systemcall failed and errno is set
+ *  0: rule was inserted
+ *  1: invalid parameters
+ */
+int
+apn_insert_alfrule(struct apn_ruleset *rs, struct apn_alfrule *arule, int id)
+{
+	struct apnrule_queue	*queue;
+	struct apn_alfrule	*p;
+
+	if (rs == NULL || arule == NULL || id < 0 || rs->maxid == INT_MAX)
+		return (1);
+
+	queue = &rs->alf_queue;
+	if ((p = apn_searchinsert_alfrule(queue, arule, id)) == NULL)
+		return (1);
+
+	arule->id = rs->maxid;
+	rs->maxid += 1;
+
+	return (0);
+}
 
 /*
  * Print a rule.
@@ -773,24 +848,18 @@ apn_free_varq(struct apnvar_queue *varq)
 static void
 apn_free_rule(struct apn_rule *rule)
 {
-	struct apn_rule	*hp, *next;
+	if (rule == NULL)
+		return;
 
-	hp = rule;
-	while (hp) {
-		next = hp->next;
-
-		switch (hp->type) {
-		case APN_ALF:
-			apn_free_alfrule(hp->rule.alf);
-			break;
-		default:
-			break;
-		}
-		apn_free_app(hp->app);
-		free(hp);
-		hp = next;
-
+	switch (rule->type) {
+	case APN_ALF:
+		apn_free_alfrule(rule->rule.alf);
+		break;
+	default:
+		break;
 	}
+	apn_free_app(rule->app);
+	free(rule);
 }
 
 static void
@@ -904,4 +973,95 @@ apn_free_app(struct apn_app *app)
 		free(hp);
 		hp = next;
 	}
+}
+
+static struct apn_rule *
+apn_search_rule(struct apnrule_queue *queue, int id)
+{
+	struct apn_rule	*p;
+
+	TAILQ_FOREACH(p, queue, entry) {
+		if (p->id == id)
+			return (p);
+	}
+
+	return (NULL);
+}
+
+/*
+ * Update IDs.  In case of error, return 1.
+ */
+static int
+apn_update_ids(struct apn_rule *rule, struct apn_ruleset *rs)
+{
+	struct apn_alfrule	*alf;
+	struct apn_sfsrule	*sfs;
+	int			 counter;
+
+	if (rule == NULL || rs == NULL)
+		return (1);
+
+	counter = rs->maxid;
+
+	switch (rule->type) {
+	case APN_ALF:
+		alf = rule->rule.alf;
+		while (alf) {
+			alf->id = counter++;
+			alf = alf->next;
+		}
+		break;
+
+	case APN_SFS:
+		sfs = rule->rule.sfs;
+		while (sfs) {
+			sfs->id = counter++;
+			sfs = sfs->next;
+		}
+		break;
+
+	default:
+		return (1);
+	}
+
+	rule->id = counter++;
+	rs->maxid = counter;
+
+	return (0);
+}
+
+/*
+ * Search for alf rule with ID id and add arule before that one, if
+ * arule != NULL.  Return the rule with ID rule.
+ */
+static struct apn_alfrule *
+apn_searchinsert_alfrule(struct apnrule_queue *queue, struct apn_alfrule
+    *arule, int id)
+{
+	struct apn_rule		*p;
+	struct apn_alfrule	*hp, *previous;
+
+	TAILQ_FOREACH(p, queue, entry) {
+		hp = p->rule.alf;
+		previous = NULL;
+		while (hp) {
+			if (hp->id == id) {
+				if (arule) {
+					arule->tail = hp->tail;
+					arule->next = hp;
+
+					if (previous)
+						previous->next = arule;
+					else {
+						p->rule.alf = arule;
+					}
+				}
+				return (hp);
+			}
+			previous = hp;
+			hp = hp->next;
+		}
+	}
+
+	return (NULL);
 }
