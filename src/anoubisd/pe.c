@@ -1060,8 +1060,8 @@ pe_dump_alfmsg(struct alf_event *msg)
 		return (NULL);
 
 	pport = lport = 0;
-	sprintf(local, "<unknown>");
-	sprintf(peer, "<unknown>");
+	snprintf(local, 128, "<unknown>");
+	snprintf(peer, 128, "<unknown>");
 
 	switch (msg->op) {
 	case ALF_ANY:
@@ -1091,10 +1091,10 @@ pe_dump_alfmsg(struct alf_event *msg)
 
 		if (inet_ntop(msg->family, &msg->local.in_addr.sin_addr,
 		    local, sizeof(local)) == NULL)
-			sprintf(local, "<unknown>");
+			snprintf(local, 128, "<unknown>");
 		if (inet_ntop(msg->family, &msg->peer.in_addr.sin_addr, peer,
 		    sizeof(peer)) == NULL)
-			sprintf(peer, "<unknown>");
+			snprintf(peer, 128, "<unknown>");
 		break;
 
 	case AF_INET6:
@@ -1104,10 +1104,10 @@ pe_dump_alfmsg(struct alf_event *msg)
 
 		if (inet_ntop(msg->family, &msg->local.in6_addr.sin6_addr,
 		    local, sizeof(local)))
-			sprintf(local, "<unknown>");
+			snprintf(local, 128, "<unknown>");
 		if (inet_ntop(msg->family, &msg->peer.in6_addr.sin6_addr, peer,
 		    sizeof(peer)) == NULL)
-			sprintf(peer, "<unknown>");
+			snprintf(peer, 128, "<unknown>");
 		break;
 
 	case AF_PACKET:
@@ -1155,7 +1155,7 @@ pe_dump_alfmsg(struct alf_event *msg)
 		proto = "<unknown>";
 	}
 
-	if (asprintf(&dump, "%s (%d): uid %u pid %u %s (%d) %s (%d) %s (%d) "
+	if (asprintf(&dump, "%s (%u): uid %u pid %u %s (%u) %s (%u) %s (%u) "
 	    "local %s:%u peer %s:%u", op, msg->op, msg->uid, msg->pid, type,
 	    msg->type, proto, msg->protocol, af, msg->family, local, lport,
 	    peer, pport) == -1) {
@@ -1329,8 +1329,9 @@ pe_dispatch_policy(struct anoubisd_msg_comm *comm)
 			req->realname = pe_policy_file_name(uid, prio);
 			if (!req->realname)
 				goto err;
-			if (asprintf(&req->tmpname, "%s.%lld", req->realname,
-			    req->token) == -1) {
+			/* splint doesn't understand the %llu modifier */
+			if (asprintf(&req->tmpname, "%s.%llu", req->realname,
+			    /*@i@*/ req->token) == -1) {
 			    	req->tmpname = NULL;
 				goto err;
 			}

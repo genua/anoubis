@@ -105,7 +105,7 @@ policy_sighandler(int sig, short event, void *arg)
 pid_t
 policy_main(struct anoubisd_config *conf, int pipe_m2s[2], int pipe_m2p[2],
     int pipe_s2p[2])
-/*@globals undef eventq_p2m, undef eventq_p2s, undef eventq_s2p, undef replyq@*/
+/*@globals undef eventq_p2m, undef eventq_p2s, undef replyq@*/
 {
 	struct event	 ev_sigterm, ev_sigint, ev_sigquit, ev_sigusr1;
 	struct event	 ev_m2p, ev_s2p;
@@ -125,7 +125,7 @@ policy_main(struct anoubisd_config *conf, int pipe_m2s[2], int pipe_m2p[2],
 		break;
 	default:
 		/*
-		 * eventq_p2m, eventq_p2s and eventq_s2p do not need to
+		 * eventq_p2m and eventq_p2s do not need to
 		 * be defined in the child process.
 		 */
 		/*@i@*/return (pid);
@@ -448,6 +448,7 @@ send_lognotify(struct eventdev_hdr *hdr, u_int32_t error, u_int32_t loglevel)
 int send_policy_data(u_int64_t token, int fd)
 {
 	anoubisd_msg_t * msg;
+	/*@observer@*/
 	struct anoubisd_reply * comm;
 	int flags = POLICY_FLAG_START;
 	int size = sizeof(anoubisd_msg_t) + sizeof(struct anoubisd_reply)
@@ -489,8 +490,10 @@ dispatch_s2p(int fd, short sig, void *arg)
 {
 	struct event_info_policy *ev_info = (struct event_info_policy*)arg;
 	struct reply_wait rep_tmp, *rep_wait;
+	/*@observer@*/
 	struct eventdev_reply * evrep;
 	anoubisd_msg_t *msg, *msg_rep;
+	/*@observer@*/
 	anoubisd_msg_comm_t *comm;
 	anoubisd_reply_t *reply, *rep;
 
