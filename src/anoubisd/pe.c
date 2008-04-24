@@ -1270,7 +1270,7 @@ pe_dispatch_policy(struct anoubisd_msg_comm *comm)
 	case ANOUBIS_PTYPE_GETBYUID:
 		if ((comm->flags & POLICY_FLAG_END) == 0
 		    || (comm->len < sizeof(Policy_GetByUid))) {
-		    	error = EINVAL;
+			error = EINVAL;
 			goto err;
 		}
 		getbyuid = (Policy_GetByUid *)comm->msg;
@@ -1332,7 +1332,7 @@ pe_dispatch_policy(struct anoubisd_msg_comm *comm)
 			/* splint doesn't understand the %llu modifier */
 			if (asprintf(&req->tmpname, "%s.%llu", req->realname,
 			    /*@i@*/ req->token) == -1) {
-			    	req->tmpname = NULL;
+				req->tmpname = NULL;
 				goto err;
 			}
 			DEBUG(DBG_TRACE, "  open: %s", req->tmpname);
@@ -1934,7 +1934,7 @@ pe_addrmatch_host(struct apn_host *host, void *addr, unsigned short af)
 	struct sockaddr_in	*in;
 	struct sockaddr_in6	*in6;
 	in_addr_t		 mask;
-	int			 cmp;
+	int			 match;
 
 	DEBUG(DBG_PE_DECALF, "pe_addrmatch_host: host %p addr %p af %d", host,
 	    addr, af);
@@ -1957,28 +1957,30 @@ pe_addrmatch_host(struct apn_host *host, void *addr, unsigned short af)
 		case AF_INET:
 			in = (struct sockaddr_in *)addr;
 			mask = htonl(~0UL << (32 - hp->addr.len));
-			cmp = ((in->sin_addr.s_addr & mask) ==
+			match = ((in->sin_addr.s_addr & mask) ==
 			    (hp->addr.apa.v4.s_addr & mask));
 			break;
 
 		case AF_INET6:
 			/* XXX HSH no network addresses, yet! */
 			in6 = (struct sockaddr_in6 *)addr;
-			cmp = bcmp(&in6->sin6_addr, &hp->addr.apa.v6,
+			match = bcmp(&in6->sin6_addr, &hp->addr.apa.v6,
 			    sizeof(struct in6_addr));
 			break;
 
 		default:
 			log_warnx("pe_addrmatch_host: unknown address family "
 			    "%d", af);
-			cmp = 0;
+			match = 0;
 		}
+		if (match)
+			break;
 		hp = hp->next;
 	}
 
-	DEBUG(DBG_PE_DECALF, "pe_addrmatch_host: cmp %d", cmp);
+	DEBUG(DBG_PE_DECALF, "pe_addrmatch_host: match %d", match);
 
-	return (cmp);
+	return (match);
 }
 
 int
@@ -2019,6 +2021,8 @@ pe_addrmatch_port(struct apn_port *port, void *addr, unsigned short af)
 			    "family %d", af);
 			match = 0;
 		}
+		if (match)
+			break;
 		pp = pp->next;
 	}
 
