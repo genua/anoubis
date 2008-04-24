@@ -148,20 +148,26 @@ class DlgRuleEditorBase : public wxFrame
 		wxCheckBox* alfTcpCheckBox;
 		wxCheckBox* alfUdpCheckBox;
 		
-		
-		
-		
+		wxStaticText* alfAddrFamilyText;
+		wxRadioButton* alfInetRadioButton;
+		wxRadioButton* alfInet6RadioButton;
+		wxRadioButton* alfAnyRadioButton;
+		wxStaticText* alfCapText;
+		wxRadioButton* alfRawCapRadioButton;
+		wxRadioButton* alfOtherCapRadioButton;
+		wxRadioButton* alfAllCapRadioButton;
+		wxFlexGridSizer* alfConnectAddrSizer;
 		wxStaticText* alfSrcAddrText;
 		wxComboBox* alfSrcAddrComboBox;
 		wxStaticText* alfSrcAddrDelimiterText;
 		wxSpinCtrl* alfSrcAddrNetSpinCtrl;
-		
+		wxButton* alfSrcAddrDelButton;
 		wxButton* alfSrcAddrAddButton;
 		wxStaticText* alfDstAddrText;
 		wxComboBox* alfDstAddrComboBox;
 		wxStaticText* alfDstAddrDelimiterText;
 		wxSpinCtrl* alfDstAddrNetSpinCtrl;
-		
+		wxButton* alfDstAddrDelButton;
 		wxButton* alfDstAddrAddButton;
 		wxStaticText* alfSrcPortText;
 		wxComboBox* alfSrcPortComboBox;
@@ -175,10 +181,6 @@ class DlgRuleEditorBase : public wxFrame
 		
 		
 		
-		wxStaticText* alfAddrFamilyText;
-		wxRadioButton* alfInetRadioButton;
-		wxRadioButton* alfInet6RadionButton;
-		wxRadioButton* alfAnyRadioButton;
 		wxScrolledWindow* sfsNbPanel;
 		wxStaticText* sfsBinaryLabelText;
 		wxTextCtrl* sfsBinaryTextCtrl;
@@ -201,7 +203,9 @@ class DlgRuleEditorBase : public wxFrame
 		// Virtual event handlers, overide them in your derived class
 		virtual void OnClose( wxCloseEvent& event ){ event.Skip(); }
 		virtual void OnTableOptionButtonClick( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnLineSelected( wxListEvent& event ){ event.Skip(); }
 		virtual void OnBinaryModifyButtonClick( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnSrcAddrAddButton( wxCommandEvent& event ){ event.Skip(); }
 		
 	
 	public:

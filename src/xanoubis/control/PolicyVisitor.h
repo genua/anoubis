@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 GeNUA mbH <info@genua.de>
+ * Copyright (c) 2008 GeNUA mbH <info@genua.de>
  *
  * All rights reserved.
  *
@@ -25,36 +25,30 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __ModAlfMainPanelImpl__
-#define __ModAlfMainPanelImpl__
+#ifndef _POLICYVISITOR_H_
+#define _POLICYVISITOR_H_
 
-#include "AnEvents.h"
-#include "ModAlfPanelsBase.h"
+#include "AppPolicy.h"
+#include "AlfPolicy.h"
+#include "SfsPolicy.h"
+#include "VarPolicy.h"
 
-enum modAlfListColumns {
-	MODALF_LIST_COLUMN_PRIO = 0,
-	MODALF_LIST_COLUMN_APP,
-	MODALF_LIST_COLUMN_PROG,
-	MODALF_LIST_COLUMN_CTX,
-	MODALF_LIST_COLUMN_SERVICE,
-	MODALF_LIST_COLUMN_ROLE,
-	MODALF_LIST_COLUMN_ACTION,
-	MODALF_LIST_COLUMN_ADMIN,
-	MODALF_LIST_COLUMN_OS,
-	MODALF_LIST_COLUMN_EOL
-};
-
-class ModAlfMainPanelImpl : public ModAlfMainPanelBase
+class PolicyVisitor
 {
 	private:
-		wxString	columnNames_[MODALF_LIST_COLUMN_EOL];
-
-		void OnLoadRuleSet(wxCommandEvent&);
+		bool	propagate_;
 
 	public:
-		ModAlfMainPanelImpl(wxWindow*, wxWindowID);
+		PolicyVisitor(void);
+		virtual ~PolicyVisitor(void);
 
-		friend class ModAlfAddPolicyVisitor;
+		virtual void setPropagation(bool);
+		virtual bool shallBeenPropagated(void);
+
+		virtual void visitAppPolicy(AppPolicy *) = 0;
+		virtual void visitAlfPolicy(AlfPolicy *) = 0;
+		virtual void visitSfsPolicy(SfsPolicy *) = 0;
+		virtual void visitVarPolicy(VarPolicy *) = 0;
 };
 
-#endif /* __ModAlfMainPanelImpl__ */
+#endif	/* _POLICYVISITOR_H_ */

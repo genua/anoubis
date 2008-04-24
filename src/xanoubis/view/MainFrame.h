@@ -59,6 +59,7 @@ class MainFrame : public MainFrameBase
 		void OnMbHelpAboutSelect(wxCommandEvent&);
 		void OnMbFileConnectSelect(wxCommandEvent&);
 		void OnMbFileCloseSelect(wxCommandEvent&);
+		void OnMbFileImportSelect(wxCommandEvent&);
 		void OnMbFileQuitSelect(wxCommandEvent&);
 		void OnMbEditPreferencesSelect(wxCommandEvent&);
 		void OnMbToolsRuleEditorSelect(wxCommandEvent&);

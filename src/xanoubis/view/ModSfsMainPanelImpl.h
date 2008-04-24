@@ -28,12 +28,30 @@
 #ifndef __ModSfsMainPanelImpl__
 #define __ModSfsMainPanelImpl__
 
+#include "AnEvents.h"
 #include "ModSfsPanelsBase.h"
+
+enum modSfsListColumns {
+	MODSFS_LIST_COLUMN_PRIO = 0,
+	MODSFS_LIST_COLUMN_APP,
+	MODSFS_LIST_COLUMN_PROG,
+	MODSFS_LIST_COLUMN_HASHT,
+	MODSFS_LIST_COLUMN_HASH,
+	MODSFS_LIST_COLUMN_EOL
+};
+
 
 class ModSfsMainPanelImpl : public ModSfsMainPanelBase
 {
+	private:
+		wxString	columnNames_[MODSFS_LIST_COLUMN_EOL];
+
+		void OnLoadRuleSet(wxCommandEvent&);
+
 	public:
 		ModSfsMainPanelImpl(wxWindow*, wxWindowID);
+
+		friend class ModSfsAddPolicyVisitor;
 };
 
 #endif /* __ModSfsMainPanelImpl__ */

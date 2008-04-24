@@ -26,6 +26,8 @@
 
 bin_PROGRAMS = xanoubis
 
+apndir	= src/libapn
+libapn  = $(top_builddir)/$(apndir)/libapn.a
 bsdcompatdir   = src/bsdcompat
 libbsdcompat   = $(top_builddir)/$(bsdcompatdir)/libbsdcompat.a
 xanoubisdir    = src/xanoubis
@@ -37,6 +39,7 @@ libanoubisprotocol = $(top_builddir)/$(anoubisprotocoldir)/libanoubispc.a
 xanoubis_CPPFLAGS = \
 	-I$(top_builddir)/src \
 	-I$(top_srcdir)/include \
+	-I$(top_srcdir)/$(apndir) \
 	-I$(top_srcdir)/$(anoubischatdir) \
 	-I$(top_srcdir)/$(anoubisprotocoldir) \
 	-I$(top_srcdir)/$(anoubisprotocoldir)/client \
@@ -44,26 +47,37 @@ xanoubis_CPPFLAGS = \
 	-I$(top_srcdir)/$(xanoubisdir)/model \
 	-I$(top_srcdir)/$(xanoubisdir)/view  \
 	-I$(top_srcdir)/$(xanoubisdir)/control \
-	$(WX_CPPFLAGS) $(GTK_CFLAGS) $(GLIB_CFLAGS) $(NOTIFY_CFLAGS) \
+	$(WX_CPPFLAGS) \
 	$(AM_CPPFLAGS)
 
 xanoubis_CXXFLAGS = \
-	-fno-strict-aliasing $(AM_CXXFLAGS) $(WX_CXXFLAGS)
+	-fno-strict-aliasing \
+	$(AM_CXXFLAGS) \
+	$(WX_CXXFLAGS) \
+	$(GTK_CFLAGS) \
+	$(GLIB_CFLAGS) \
+	$(NOTIFY_CFLAGS)
+
+xanoubis_DEPEND_LIBS = \
+	$(libapn) \
+	$(libanoubischat) \
+	$(libanoubisprotocol)
+
+if NEEDBSDCOMPAT
+xanoubis_CPPFLAGS += -I$(top_srcdir)/$(bsdcompatdir)
+xanoubis_DEPEND_LIBS += $(libbsdcompat)
+endif
+
+xanoubis_DEPENDENCIES = \
+	$(xanoubis_DEPEND_LIBS) \
+	$(top_srcdir)/$(xanoubisdir)/catalogs/de/xanoubis.mo
 
 xanoubis_LDADD = \
 	@WX_LIBS@ \
 	@GTK_LIBS@ \
 	@GLIB_LIBS@ \
 	@NOTIFY_LIBS@ \
-	$(libanoubischat) \
-	$(libanoubisprotocol)
-
-if NEEDBSDCOMPAT
-xanoubis_LDADD += $(libbsdcompat)
-xanoubis_CPPFLAGS += -I$(top_srcdir)/$(bsdcompatdir)
-endif
-
-xanoubis_DEPENDENCIES = $(top_srcdir)/$(xanoubisdir)/catalogs/de/xanoubis.mo
+	$(xanoubis_DEPEND_LIBS)
 
 catalogdir = $(datadir)/$(bin_PROGRAMS)/catalogs/de
 utildir = $(datadir)/$(bin_PROGRAMS)/utils
@@ -154,6 +168,18 @@ xanoubis_SOURCES= \
 	model/NotifyAnswer.h \
 	model/StatusNotify.cpp \
 	model/StatusNotify.h \
+	model/AlfPolicy.cpp \
+	model/AlfPolicy.h \
+	model/SfsPolicy.cpp \
+	model/SfsPolicy.h \
+	model/AppPolicy.cpp \
+	model/AppPolicy.h \
+	model/Policy.cpp \
+	model/Policy.h \
+	model/PolicyRuleSet.cpp \
+	model/PolicyRuleSet.h \
+	model/VarPolicy.cpp \
+	model/VarPolicy.h \
 	view/AnStatusBar.cpp \
 	view/AnStatusBar.h \
 	view/AnFader.cpp \
@@ -202,6 +228,14 @@ xanoubis_SOURCES= \
 	control/CommunicatorCtrl.h \
 	control/Communicator.cpp \
 	control/Communicator.h \
+	control/PolicyVisitor.cpp \
+	control/PolicyVisitor.h \
+	control/RuleEditorAddPolicyVisitor.cpp \
+	control/RuleEditorAddPolicyVisitor.h \
+	control/ModAlfAddPolicyVisitor.cpp \
+	control/ModAlfAddPolicyVisitor.h \
+	control/ModSfsAddPolicyVisitor.cpp \
+	control/ModSfsAddPolicyVisitor.h \
 	ctassert.h \
 	main.cpp \
 	main.h

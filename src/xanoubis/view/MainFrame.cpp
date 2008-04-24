@@ -30,6 +30,7 @@
 #endif
 
 #include <wx/app.h>
+#include <wx/filedlg.h>
 #include <wx/msgdlg.h>
 
 #include "AnEvents.h"
@@ -229,6 +230,21 @@ void
 MainFrame::OnMbFileCloseSelect(wxCommandEvent&)
 {
 	this->Hide();
+}
+
+void
+MainFrame::OnMbFileImportSelect(wxCommandEvent& event)
+{
+	wxString	caption = _("Choose a policy file:");
+	wxString	wildcard = wxT("*");
+	wxString	defaultDir = wxGetApp().getDataDir();
+	wxString	defaultFilename = wxEmptyString;
+	wxFileDialog	fileDlg(NULL, caption, defaultDir, defaultFilename,
+			    wildcard, wxOPEN);
+
+	if (fileDlg.ShowModal() == wxID_OK) {
+		wxGetApp().importPolicyFile(fileDlg.GetPath());
+	}
 }
 
 void

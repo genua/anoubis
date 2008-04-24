@@ -28,6 +28,8 @@
 #ifndef _APN_H_
 #define _APN_H_
 
+#include <sys/cdefs.h>
+
 #ifndef LINUX
 #include <sys/queue.h>
 #else
@@ -102,7 +104,7 @@ struct apn_addr {
 
 struct apn_host {
 	struct apn_addr		 addr;
-	int			 not;
+	int			 negate;
 	struct apn_host		*next;
 	struct apn_host		*tail;
 };
@@ -235,6 +237,7 @@ struct apn_ruleset {
 	struct apnerr_queue	err_queue;
 };
 
+__BEGIN_DECLS
 int	apn_parse(const char *, struct apn_ruleset **, int);
 int	apn_add_alfrule(struct apn_rule *, struct apn_ruleset *);
 int	apn_add_sfsrule(struct apn_rule *, struct apn_ruleset *);
@@ -246,5 +249,6 @@ int	apn_insert_alfrule(struct apn_ruleset *, struct apn_alfrule *, int);
 int	apn_copyinsert(struct apn_ruleset *, struct apn_alfrule *, int,
 	    const char *, const char *, int);
 void	apn_free_ruleset(struct apn_ruleset *);
+__END_DECLS
 
 #endif /* _APN_H_ */

@@ -48,11 +48,13 @@
 #include "ModSfs.h"
 #include "ModAnoubis.h"
 #include "TrayIcon.h"
+#include "PolicyRuleSet.h"
 
 IMPLEMENT_APP(AnoubisGuiApp)
 
 AnoubisGuiApp::AnoubisGuiApp(void)
 {
+	ruleSet_ = NULL;
 	mainFrame = NULL;
 	logViewer_ = NULL;
 	ruleEditor_ = NULL;
@@ -69,6 +71,10 @@ AnoubisGuiApp::~AnoubisGuiApp(void)
 	/* mainFrame not handled here, coz object already destroyed */
 	if (trayIcon != NULL)
 		delete trayIcon;
+
+	if (ruleSet_ != NULL) {
+		delete ruleSet_;
+	}
 }
 
 void
@@ -311,4 +317,24 @@ Module *
 AnoubisGuiApp::getModule(enum moduleIdx idx)
 {
 	return (modules_[idx]);
+}
+
+wxString
+AnoubisGuiApp::getDataDir(void)
+{
+	return (paths_.GetUserConfigDir());
+}
+
+void
+AnoubisGuiApp::importPolicyFile(wxString fileName)
+{
+	wxCommandEvent		 event(anEVT_LOAD_RULESET);
+
+	if (ruleSet_ != NULL) {
+		delete ruleSet_;
+	}
+	ruleSet_ = new PolicyRuleSet(fileName);
+
+	event.SetClientData((void*)ruleSet_);
+	sendEvent(event);
 }

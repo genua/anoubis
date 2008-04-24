@@ -479,7 +479,7 @@ host		: not address			{
 			if (host == NULL)
 				YYERROR;
 
-			host->not = $1;
+			host->negate = $1;
 			host->addr = $2;
 			host->tail = host;
 
@@ -1500,7 +1500,7 @@ validate_host(const struct apn_host *host)
 		return (-1);
 	}
 
-	if (!(0 <= host->not && host->not <= 1))
+	if (!(0 <= host->negate && host->negate <= 1))
 		return (-1);
 
 	return (0);

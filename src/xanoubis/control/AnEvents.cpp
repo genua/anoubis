@@ -82,3 +82,9 @@ DEFINE_LOCAL_EVENT_TYPE(anEVT_ADD_NOTIFICATION)
  * as client object.
  */
 DEFINE_LOCAL_EVENT_TYPE(anEVT_ANSWER_ESCALATION)
+
+/*
+ * Transport a pointer to a new ruleset, stored in the main application
+ * to the display objects via ClientData.
+ */
+DEFINE_LOCAL_EVENT_TYPE(anEVT_LOAD_RULESET)

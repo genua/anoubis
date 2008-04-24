@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 GeNUA mbH <info@genua.de>
+ * Copyright (c) 2008 GeNUA mbH <info@genua.de>
  *
  * All rights reserved.
  *
@@ -25,36 +25,47 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __ModAlfMainPanelImpl__
-#define __ModAlfMainPanelImpl__
+#ifndef _POLICYRULESET_H_
+#define _POLICYRULESET_H_
 
-#include "AnEvents.h"
-#include "ModAlfPanelsBase.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-enum modAlfListColumns {
-	MODALF_LIST_COLUMN_PRIO = 0,
-	MODALF_LIST_COLUMN_APP,
-	MODALF_LIST_COLUMN_PROG,
-	MODALF_LIST_COLUMN_CTX,
-	MODALF_LIST_COLUMN_SERVICE,
-	MODALF_LIST_COLUMN_ROLE,
-	MODALF_LIST_COLUMN_ACTION,
-	MODALF_LIST_COLUMN_ADMIN,
-	MODALF_LIST_COLUMN_OS,
-	MODALF_LIST_COLUMN_EOL
-};
+#include <sys/param.h>
+#include <sys/socket.h>
 
-class ModAlfMainPanelImpl : public ModAlfMainPanelBase
+#ifndef LINUX
+#include <sys/queue.h>
+#else
+#include <queue.h>
+#endif
+
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <wx/string.h>
+
+#include <apn.h>
+
+#include "Policy.h"
+
+class PolicyRuleSet
 {
 	private:
-		wxString	columnNames_[MODALF_LIST_COLUMN_EOL];
+		struct apn_ruleset	*ruleSet_;
+		PolicyList		 alfList_;
+		PolicyList		 sfsList_;
+		PolicyList		 varList_;
 
-		void OnLoadRuleSet(wxCommandEvent&);
+		void create(wxString);
+		void create(struct apn_ruleset *);
 
 	public:
-		ModAlfMainPanelImpl(wxWindow*, wxWindowID);
+		PolicyRuleSet(struct apn_ruleset *);
+		PolicyRuleSet(wxString);
+		~PolicyRuleSet(void);
 
-		friend class ModAlfAddPolicyVisitor;
+		void accept(PolicyVisitor&);
 };
 
-#endif /* __ModAlfMainPanelImpl__ */
+#endif	/* _POLICYRULESET_H_ */

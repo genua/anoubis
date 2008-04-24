@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 GeNUA mbH <info@genua.de>
+ * Copyright (c) 2008 GeNUA mbH <info@genua.de>
  *
  * All rights reserved.
  *
@@ -25,36 +25,39 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __ModAlfMainPanelImpl__
-#define __ModAlfMainPanelImpl__
+#ifndef _POLICY_H_
+#define _POLICY_H_
 
-#include "AnEvents.h"
-#include "ModAlfPanelsBase.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-enum modAlfListColumns {
-	MODALF_LIST_COLUMN_PRIO = 0,
-	MODALF_LIST_COLUMN_APP,
-	MODALF_LIST_COLUMN_PROG,
-	MODALF_LIST_COLUMN_CTX,
-	MODALF_LIST_COLUMN_SERVICE,
-	MODALF_LIST_COLUMN_ROLE,
-	MODALF_LIST_COLUMN_ACTION,
-	MODALF_LIST_COLUMN_ADMIN,
-	MODALF_LIST_COLUMN_OS,
-	MODALF_LIST_COLUMN_EOL
-};
+#include <wx/list.h>
+#include <wx/string.h>
 
-class ModAlfMainPanelImpl : public ModAlfMainPanelBase
+#define SUPER(cls)	((cls *)this)
+
+class PolicyVisitor;
+
+class Policy
 {
 	private:
-		wxString	columnNames_[MODALF_LIST_COLUMN_EOL];
-
-		void OnLoadRuleSet(wxCommandEvent&);
+		Policy	*parent_;
 
 	public:
-		ModAlfMainPanelImpl(wxWindow*, wxWindowID);
+		Policy(void);
+		Policy(Policy *);
+		virtual ~Policy(void);
 
-		friend class ModAlfAddPolicyVisitor;
+		virtual void accept(PolicyVisitor&) = 0;
+
+		wxString getActionName(int);
+		wxString getDirectionName(int);
+		wxString getLogName(int);
+		wxString getVarTypeName(int);
+		wxString getRuleTypeName(int);
 };
 
-#endif /* __ModAlfMainPanelImpl__ */
+WX_DECLARE_LIST(Policy, PolicyList);
+
+#endif	/* _POLICY_H_ */

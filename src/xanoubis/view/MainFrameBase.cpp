@@ -43,6 +43,8 @@ MainFrameBase::MainFrameBase( wxWindow* parent, wxWindowID id, const wxString& t
 	me_menubarFile = new wxMenu();
 	wxMenuItem* mi_mbFileConnect = new wxMenuItem( me_menubarFile, ID_MIFILECONNECT, wxString( _("Connect") ) , wxEmptyString, wxITEM_CHECK );
 	me_menubarFile->Append( mi_mbFileConnect );
+	wxMenuItem* mi_mbFileImport = new wxMenuItem( me_menubarFile, ID_MIFILEIMPORT, wxString( _("Import policy file...") ) , wxEmptyString, wxITEM_NORMAL );
+	me_menubarFile->Append( mi_mbFileImport );
 	
 	me_menubarFile->AppendSeparator();
 	wxMenuItem* mi_mbFileClose = new wxMenuItem( me_menubarFile, ID_MIFILECLOSE, wxString( _("Close") ) , wxEmptyString, wxITEM_NORMAL );
@@ -139,6 +141,7 @@ MainFrameBase::MainFrameBase( wxWindow* parent, wxWindowID id, const wxString& t
 	// Connect Events
 	this->Connect( wxEVT_CLOSE_WINDOW, wxCloseEventHandler( MainFrameBase::OnClose ) );
 	this->Connect( mi_mbFileConnect->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnMbFileConnectSelect ) );
+	this->Connect( mi_mbFileImport->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnMbFileImportSelect ) );
 	this->Connect( mi_mbFileClose->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnMbFileCloseSelect ) );
 	this->Connect( mi_mbFileQuit->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnMbFileQuitSelect ) );
 	this->Connect( mi_mbEditPreferences->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnMbEditPreferencesSelect ) );

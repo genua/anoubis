@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 GeNUA mbH <info@genua.de>
+ * Copyright (c) 2008 GeNUA mbH <info@genua.de>
  *
  * All rights reserved.
  *
@@ -25,36 +25,27 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __ModAlfMainPanelImpl__
-#define __ModAlfMainPanelImpl__
+#ifndef _RULEEDITORADDPOLICYVISITOR_H_
+#define _RULEEDITORADDPOLICYVISITOR_H_
 
-#include "AnEvents.h"
-#include "ModAlfPanelsBase.h"
+#include "DlgRuleEditor.h"
+#include "PolicyVisitor.h"
 
-enum modAlfListColumns {
-	MODALF_LIST_COLUMN_PRIO = 0,
-	MODALF_LIST_COLUMN_APP,
-	MODALF_LIST_COLUMN_PROG,
-	MODALF_LIST_COLUMN_CTX,
-	MODALF_LIST_COLUMN_SERVICE,
-	MODALF_LIST_COLUMN_ROLE,
-	MODALF_LIST_COLUMN_ACTION,
-	MODALF_LIST_COLUMN_ADMIN,
-	MODALF_LIST_COLUMN_OS,
-	MODALF_LIST_COLUMN_EOL
-};
-
-class ModAlfMainPanelImpl : public ModAlfMainPanelBase
+class RuleEditorAddPolicyVisitor : public PolicyVisitor
 {
 	private:
-		wxString	columnNames_[MODALF_LIST_COLUMN_EOL];
+		DlgRuleEditor	*ruleEditor_;
 
-		void OnLoadRuleSet(wxCommandEvent&);
+		long appendPolicy(Policy *);
 
 	public:
-		ModAlfMainPanelImpl(wxWindow*, wxWindowID);
+		RuleEditorAddPolicyVisitor(DlgRuleEditor *);
+		~RuleEditorAddPolicyVisitor(void);
 
-		friend class ModAlfAddPolicyVisitor;
+		virtual void visitAppPolicy(AppPolicy *);
+		virtual void visitAlfPolicy(AlfPolicy *);
+		virtual void visitSfsPolicy(SfsPolicy *);
+		virtual void visitVarPolicy(VarPolicy *);
 };
 
-#endif /* __ModAlfMainPanelImpl__ */
+#endif	/* _RULEEDITORADDPOLICYVISITOR_H_ */

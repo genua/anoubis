@@ -25,22 +25,63 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#include <sys/param.h>
+#include <sys/socket.h>
+
+#ifndef LINUX
+#include <sys/queue.h>
+#else
+#include <queue.h>
+#endif
+
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
+#include <apn.h>
+
+#include "AnEvents.h"
+#include "Policy.h"
+#include "PolicyRuleSet.h"
+#include "ModSfsAddPolicyVisitor.h"
+
 #include "ModSfsMainPanelImpl.h"
 
 ModSfsMainPanelImpl::ModSfsMainPanelImpl(wxWindow* parent,
     wxWindowID id) : ModSfsMainPanelBase(parent, id)
 {
+	columnNames_[MODSFS_LIST_COLUMN_PRIO] = _("Prio");
+	columnNames_[MODSFS_LIST_COLUMN_APP] = _("Application");
+	columnNames_[MODSFS_LIST_COLUMN_PROG] = _("Program");
+	columnNames_[MODSFS_LIST_COLUMN_HASHT] = _("Hash-Type");
+	columnNames_[MODSFS_LIST_COLUMN_HASH] = _("Hash");
 
-	lst_Rules->InsertColumn(0, wxT("Id"), wxLIST_FORMAT_LEFT,
-	    wxLIST_AUTOSIZE_USEHEADER );
-	lst_Rules->InsertColumn(1, wxT("Application"), wxLIST_FORMAT_LEFT,
-	    wxLIST_AUTOSIZE_USEHEADER );
-	lst_Rules->InsertColumn(2, wxT("Log"), wxLIST_FORMAT_LEFT,
-	    wxLIST_AUTOSIZE_USEHEADER );
-	lst_Rules->InsertColumn(3, wxT("Hash"), wxLIST_FORMAT_LEFT,
-	    wxLIST_AUTOSIZE_USEHEADER );
-	lst_Rules->InsertColumn(4, wxT("Action"), wxLIST_FORMAT_LEFT,
-	    wxLIST_AUTOSIZE_USEHEADER );
-	lst_Rules->InsertColumn(5, wxT("write"), wxLIST_FORMAT_LEFT,
-	    wxLIST_AUTOSIZE_USEHEADER );
+	for (int i=0; i<MODSFS_LIST_COLUMN_EOL; i++) {
+		lst_Rules->InsertColumn(i, columnNames_[i], wxLIST_FORMAT_LEFT,
+		    wxLIST_AUTOSIZE);
+	}
+
+	parent->Connect(anEVT_LOAD_RULESET,
+	    wxCommandEventHandler(ModSfsMainPanelImpl::OnLoadRuleSet),
+	    NULL, this);
+}
+
+void
+ModSfsMainPanelImpl::OnLoadRuleSet(wxCommandEvent& event)
+{
+	ModSfsAddPolicyVisitor	 addVisitor(this);
+	PolicyRuleSet		*ruleSet;
+
+	lst_Rules->DeleteAllItems();
+	ruleSet = (PolicyRuleSet *)event.GetClientData();
+	ruleSet->accept(addVisitor);
+
+	/* trigger new * calculation of column width */
+	for (int i=0; i<MODSFS_LIST_COLUMN_EOL; i++) {
+		lst_Rules->SetColumnWidth(i, wxLIST_AUTOSIZE);
+	}
+	event.Skip();
 }

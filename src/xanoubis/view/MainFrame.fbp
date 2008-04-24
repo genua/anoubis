@@ -160,6 +160,20 @@
                         <event name="OnMenuSelection">OnMbFileConnectSelect</event>
                         <event name="OnUpdateUI"></event>
                     </object>
+                    <object class="wxMenuItem" expanded="1">
+                        <property name="bitmap"></property>
+                        <property name="checked">0</property>
+                        <property name="enabled">1</property>
+                        <property name="help"></property>
+                        <property name="id">ID_MIFILEIMPORT</property>
+                        <property name="kind">wxITEM_NORMAL</property>
+                        <property name="label">Import policy file...</property>
+                        <property name="name">mi_mbFileImport</property>
+                        <property name="shortcut"></property>
+                        <property name="unchecked_bitmap"></property>
+                        <event name="OnMenuSelection">OnMbFileImportSelect</event>
+                        <event name="OnUpdateUI"></event>
+                    </object>
                     <object class="separator" expanded="1" />
                     <object class="wxMenuItem" expanded="1">
                         <property name="bitmap"></property>

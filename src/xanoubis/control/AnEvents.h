@@ -85,6 +85,12 @@ BEGIN_DECLARE_EVENT_TYPES()
 	 * as client object.
 	 */
 	DECLARE_LOCAL_EVENT_TYPE(anEVT_ANSWER_ESCALATION, wxNewEventType())
+
+	/*
+	 * Transport a pointer to a new ruleset, stored in the main application
+	 * to the display objects via ClientData.
+	 */
+	DECLARE_LOCAL_EVENT_TYPE(anEVT_LOAD_RULESET, wxNewEventType())
 END_DECLARE_EVENT_TYPES()
 
 #endif	/* _ANEVENTS_H_ */

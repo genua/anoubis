@@ -48,6 +48,7 @@
 #include "MainFrame.h"
 #include "Module.h"
 #include "TrayIcon.h"
+#include "PolicyRuleSet.h"
 
 #define ANOUBISD_SOCKETNAME	"/var/run/anoubisd.sock"
 
@@ -68,6 +69,7 @@ class AnoubisGuiApp : public wxApp
 		wxString		 socketParam_;
 		wxStandardPaths		 paths_;
 		wxLocale		 language_;
+		PolicyRuleSet		*ruleSet_;
 		MainFrame		*mainFrame;
 		DlgLogViewer		*logViewer_;
 		DlgRuleEditor		*ruleEditor_;
@@ -90,13 +92,15 @@ class AnoubisGuiApp : public wxApp
 		void	OnInitCmdLine(wxCmdLineParser&);
 		bool	OnCmdLineParsed(wxCmdLineParser&);
 
-		void	toggleLogViewerVisability(void);
-		void	toggleRuleEditorVisability(void);
-		void	connectCommunicator(bool);
-		wxIcon *loadIcon(wxString);
-		wxString getCatalogPath(void);
-		wxString getIconPath(wxString);
-		Module *getModule(enum moduleIdx);
+		void		 toggleLogViewerVisability(void);
+		void		 toggleRuleEditorVisability(void);
+		void		 connectCommunicator(bool);
+		wxString	 getCatalogPath(void);
+		wxString	 getIconPath(wxString);
+		wxIcon		*loadIcon(wxString);
+		Module		*getModule(enum moduleIdx);
+		wxString	 getDataDir(void);
+		void		 importPolicyFile(wxString);
 };
 
 DECLARE_APP(AnoubisGuiApp)

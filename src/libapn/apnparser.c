@@ -690,7 +690,7 @@ apn_print_host(struct apn_host *host, FILE *file)
 		fprintf(file, "{");
 
 	while (hp) {
-		if (hp->not)
+		if (hp->negate)
 			fprintf(file, "!");
 		if (apn_print_address(&hp->addr, file) == 1)
 			return (1);

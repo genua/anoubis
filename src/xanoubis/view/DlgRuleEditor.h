@@ -32,17 +32,71 @@
 #include "config.h"
 #endif
 
+#include <wx/list.h>
+#include <wx/string.h>
+
+#include "AnEvents.h"
 #include "AnShortcuts.h"
 #include "DlgRuleEditorBase.h"
 
+enum ruleEditorListColumns {
+	RULEDITOR_LIST_COLUMN_PRIO = 0,
+	RULEDITOR_LIST_COLUMN_RULE,
+	RULEDITOR_LIST_COLUMN_APP,
+	RULEDITOR_LIST_COLUMN_BIN,
+	RULEDITOR_LIST_COLUMN_HASHT,
+	RULEDITOR_LIST_COLUMN_HASH,
+	RULEDITOR_LIST_COLUMN_CTX,
+	RULEDITOR_LIST_COLUMN_TYPE,
+	RULEDITOR_LIST_COLUMN_ACTION,
+	RULEDITOR_LIST_COLUMN_LOG,
+	RULEDITOR_LIST_COLUMN_AF,
+	RULEDITOR_LIST_COLUMN_CAP,
+	RULEDITOR_LIST_COLUMN_PROTO,
+	RULEDITOR_LIST_COLUMN_DIR,
+	RULEDITOR_LIST_COLUMN_FHOST,
+	RULEDITOR_LIST_COLUMN_FPORT,
+	RULEDITOR_LIST_COLUMN_THOST,
+	RULEDITOR_LIST_COLUMN_TPORT,
+	RULEDITOR_LIST_COLUMN_EOL
+};
+
+class AddrLine
+{
+	private:
+		wxSizer		*sizer_;
+		wxWindow	*parent_;
+		wxStaticText	*lead_;
+		wxComboBox	*addr_;
+		wxStaticText	*delimiter_;
+		wxSpinCtrl	*net_;
+		wxButton	*remove_;
+		wxButton	*add_;
+
+	public:
+		AddrLine(wxWindow *, wxString, wxString);
+		~AddrLine(void);
+		void add(wxSizer *, size_t);
+		void remove(void);
+};
+WX_DECLARE_LIST(AddrLine, AddrLineList);
+
 class DlgRuleEditor : public DlgRuleEditorBase
 {
+	private:
+		wxString	columnNames_[RULEDITOR_LIST_COLUMN_EOL];
+		int		columnWidths_[RULEDITOR_LIST_COLUMN_EOL];
+		AddrLineList	extraSrcAddrList;
+		AddrLineList	extraDstAddrList;
+
+
 	protected:
 		AnShortcuts	*shortcuts_;
 
 		void OnClose(wxCloseEvent& event);
 		void OnTableOptionButtonClick(wxCommandEvent&);
 		void OnBinaryModifyButtonClick(wxCommandEvent&);
+		void OnLoadRuleSet(wxCommandEvent&);
 
 	private:
 		void OnShow(wxCommandEvent&);
@@ -50,6 +104,8 @@ class DlgRuleEditor : public DlgRuleEditorBase
 	public:
 		DlgRuleEditor(wxWindow *);
 		~DlgRuleEditor(void);
+
+		friend class RuleEditorAddPolicyVisitor;
 };
 
 #endif /* __DlgRuleEditor__ */

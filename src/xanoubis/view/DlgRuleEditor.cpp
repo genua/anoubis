@@ -32,32 +32,156 @@
 #include <wx/filedlg.h>
 #include <wx/choicdlg.h>
 
+#include "AnEvents.h"
 #include "AnShortcuts.h"
 #include "AnEvents.h"
 #include "DlgRuleEditor.h"
 #include "main.h"
+#include "Policy.h"
+#include "PolicyRuleSet.h"
+#include "RuleEditorAddPolicyVisitor.h"
+
+#include <wx/listimpl.cpp>
+WX_DEFINE_LIST(AddrLineList);
+
+#include <stdio.h>
+AddrLine::AddrLine(wxWindow *parent, wxString addr, wxString net)
+{
+	parent_ = parent;
+
+	lead_ = new wxStaticText(parent, wxID_ANY, wxEmptyString,
+	    wxDefaultPosition, wxDefaultSize, 0);
+	addr_ = new wxComboBox(parent, wxID_ANY, wxT("Combo!"),
+	    wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+	delimiter_ = new wxStaticText(parent, wxID_ANY, wxT(" / "),
+	    wxDefaultPosition, wxDefaultSize, 0);
+	net_ = new wxSpinCtrl(parent, wxID_ANY, wxEmptyString,
+	    wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 128, 0);
+	remove_ = new wxButton(parent, wxID_ANY, wxT("-"),
+	    wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT);
+	add_ = new wxButton(parent, wxID_ANY, wxT("+"),
+	    wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT);
+
+	addr_->SetValue(addr);
+	net_->SetValue(net);
+}
+
+
+AddrLine::~AddrLine(void)
+{
+	sizer_->Detach(lead_);
+	delete lead_;
+	sizer_->Detach(addr_);
+	delete addr_;
+	sizer_->Detach(delimiter_);
+	delete delimiter_;
+	sizer_->Detach(net_);
+	delete net_;
+	sizer_->Detach(remove_);
+	delete remove_;
+	sizer_->Detach(add_);
+	delete add_;
+
+	sizer_->Fit(parent_);
+	sizer_->Layout();
+}
+
+void
+AddrLine::add(wxSizer *sizer, size_t index)
+{
+	sizer_ = sizer;
+
+	sizer->Insert(index, add_, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5);
+	sizer->Insert(index, remove_, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5);
+	sizer->Insert(index, net_, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5);
+	sizer->Insert(index, delimiter_, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5);
+	sizer->Insert(index, addr_, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5);
+	sizer->Insert(index, lead_, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5);
+
+	sizer->Fit(parent_);
+	sizer->Layout();
+}
+
+void
+AddrLine::remove(void)
+{
+	sizer_->Remove(lead_);
+	sizer_->Remove(addr_);
+	sizer_->Remove(delimiter_);
+	sizer_->Remove(net_);
+	sizer_->Remove(remove_);
+	sizer_->Remove(add_);
+	sizer_->Fit(parent_);
+	sizer_->Layout();
+}
 
 DlgRuleEditor::DlgRuleEditor(wxWindow* parent) : DlgRuleEditorBase(parent)
 {
-	shortcuts_ = new AnShortcuts(this);
+	columnNames_[RULEDITOR_LIST_COLUMN_PRIO] = _("ID");
+	columnWidths_[RULEDITOR_LIST_COLUMN_PRIO] = wxLIST_AUTOSIZE;
 
-	ruleListCtrl->InsertColumn(0, wxT("Id"),
-	    wxLIST_FORMAT_LEFT, wxLIST_AUTOSIZE_USEHEADER);
-	ruleListCtrl->InsertColumn(1, wxT("Application"),
-	    wxLIST_FORMAT_LEFT, wxLIST_AUTOSIZE_USEHEADER);
-	ruleListCtrl->InsertColumn(2, wxT("Context"),
-	    wxLIST_FORMAT_LEFT, wxLIST_AUTOSIZE_USEHEADER);
-	ruleListCtrl->InsertColumn(3, wxT("Binary"),
-	    wxLIST_FORMAT_LEFT, wxLIST_AUTOSIZE_USEHEADER);
-	ruleListCtrl->InsertColumn(4, wxT("Hash-Type"),
-	    wxLIST_FORMAT_LEFT, wxLIST_AUTOSIZE_USEHEADER);
-	ruleListCtrl->InsertColumn(5, wxT("Hash"),
-	    wxLIST_FORMAT_LEFT, wxLIST_AUTOSIZE_USEHEADER);
-	ruleListCtrl->InsertColumn(6, wxT("Action"),
-	    wxLIST_FORMAT_LEFT, wxLIST_AUTOSIZE_USEHEADER);
+	columnNames_[RULEDITOR_LIST_COLUMN_RULE] = _("Rule");
+	columnWidths_[RULEDITOR_LIST_COLUMN_RULE] = wxLIST_AUTOSIZE;
+
+	columnNames_[RULEDITOR_LIST_COLUMN_APP] = _("Application");
+	columnWidths_[RULEDITOR_LIST_COLUMN_APP] = wxLIST_AUTOSIZE;
+
+	columnNames_[RULEDITOR_LIST_COLUMN_BIN] = _("Binary");
+	columnWidths_[RULEDITOR_LIST_COLUMN_BIN] = wxLIST_AUTOSIZE;
+
+	columnNames_[RULEDITOR_LIST_COLUMN_HASHT] = _("Hahs-Type");
+	columnWidths_[RULEDITOR_LIST_COLUMN_HASHT] = wxLIST_AUTOSIZE_USEHEADER;
+
+	columnNames_[RULEDITOR_LIST_COLUMN_HASH] = _("Hash");
+	columnWidths_[RULEDITOR_LIST_COLUMN_HASH] = 80;
+
+	columnNames_[RULEDITOR_LIST_COLUMN_CTX] = _("Context");
+	columnWidths_[RULEDITOR_LIST_COLUMN_CTX] = wxLIST_AUTOSIZE_USEHEADER;
+
+	columnNames_[RULEDITOR_LIST_COLUMN_TYPE] = _("Type");
+	columnWidths_[RULEDITOR_LIST_COLUMN_TYPE] = wxLIST_AUTOSIZE;
+
+	columnNames_[RULEDITOR_LIST_COLUMN_ACTION] = _("Action");
+	columnWidths_[RULEDITOR_LIST_COLUMN_ACTION] = wxLIST_AUTOSIZE_USEHEADER;
+
+	columnNames_[RULEDITOR_LIST_COLUMN_LOG] = _("Log");
+	columnWidths_[RULEDITOR_LIST_COLUMN_LOG] = wxLIST_AUTOSIZE;
+
+	columnNames_[RULEDITOR_LIST_COLUMN_AF] = _("AF");
+	columnWidths_[RULEDITOR_LIST_COLUMN_AF] = wxLIST_AUTOSIZE;
+
+	columnNames_[RULEDITOR_LIST_COLUMN_CAP] = _("Capability");
+	columnWidths_[RULEDITOR_LIST_COLUMN_CAP] = wxLIST_AUTOSIZE;
+
+	columnNames_[RULEDITOR_LIST_COLUMN_PROTO] = _("Protocol");
+	columnWidths_[RULEDITOR_LIST_COLUMN_PROTO] = wxLIST_AUTOSIZE_USEHEADER;
+
+	columnNames_[RULEDITOR_LIST_COLUMN_DIR] = _("Direction");
+	columnWidths_[RULEDITOR_LIST_COLUMN_DIR] = wxLIST_AUTOSIZE_USEHEADER;
+
+	columnNames_[RULEDITOR_LIST_COLUMN_FHOST] = _("From Host");
+	columnWidths_[RULEDITOR_LIST_COLUMN_FHOST] = wxLIST_AUTOSIZE;
+
+	columnNames_[RULEDITOR_LIST_COLUMN_FPORT] = _("From Port");
+	columnWidths_[RULEDITOR_LIST_COLUMN_FPORT] = wxLIST_AUTOSIZE_USEHEADER;
+
+	columnNames_[RULEDITOR_LIST_COLUMN_THOST] = _("To Host");
+	columnWidths_[RULEDITOR_LIST_COLUMN_THOST] = wxLIST_AUTOSIZE;
+
+	columnNames_[RULEDITOR_LIST_COLUMN_TPORT] = _("To Port");
+	columnWidths_[RULEDITOR_LIST_COLUMN_TPORT] = wxLIST_AUTOSIZE_USEHEADER;
+
+	for (int i=0; i<RULEDITOR_LIST_COLUMN_EOL; i++) {
+		ruleListCtrl->InsertColumn(i, columnNames_[i],
+		    wxLIST_FORMAT_LEFT, columnWidths_[i]);
+	}
+
+	shortcuts_ = new AnShortcuts(this);
 
 	Connect(anEVT_RULEEDITOR_SHOW,
 	    wxCommandEventHandler(DlgRuleEditor::OnShow));
+	Connect(anEVT_LOAD_RULESET,
+	    wxCommandEventHandler(DlgRuleEditor::OnLoadRuleSet), NULL, this);
 }
 
 DlgRuleEditor::~DlgRuleEditor(void)
@@ -68,16 +192,12 @@ DlgRuleEditor::~DlgRuleEditor(void)
 void
 DlgRuleEditor::OnTableOptionButtonClick(wxCommandEvent& event)
 {
-	wxArrayString	 choices;
+	wxArrayString		 choices;
 	wxMultiChoiceDialog	*multiChoiceDlg;
 
-	choices.Add(wxT("Id"));
-	choices.Add(wxT("Application"));
-	choices.Add(wxT("Context"));
-	choices.Add(wxT("Binary"));
-	choices.Add(wxT("Hash-Type"));
-	choices.Add(wxT("Hash"));
-	choices.Add(wxT("Action"));
+	for (int i=0; i<RULEDITOR_LIST_COLUMN_EOL; i++) {
+		choices.Add(columnNames_[i]);
+	}
 
 	multiChoiceDlg = new wxMultiChoiceDialog(this, wxT("Table columns"),
 	    wxT("Please select the columns you're interested in"), choices);
@@ -105,7 +225,6 @@ DlgRuleEditor::OnBinaryModifyButtonClick(wxCommandEvent& event)
 	}
 }
 
-
 void
 DlgRuleEditor::OnClose(wxCloseEvent& event)
 {
@@ -118,4 +237,20 @@ void
 DlgRuleEditor::OnShow(wxCommandEvent& event)
 {
 	this->Show(event.GetInt());
+}
+
+void
+DlgRuleEditor::OnLoadRuleSet(wxCommandEvent& event)
+{
+	RuleEditorAddPolicyVisitor	 addVisitor(this);
+	PolicyRuleSet			*ruleSet;
+
+	ruleListCtrl->DeleteAllItems();
+	ruleSet = (PolicyRuleSet *)event.GetClientData();
+	ruleSet->accept(addVisitor);
+
+	/* trigger new calculation of column width */
+	for (int i=0; i<RULEDITOR_LIST_COLUMN_EOL; i++) {
+		ruleListCtrl->SetColumnWidth(i, columnWidths_[i]);
+	}
 }

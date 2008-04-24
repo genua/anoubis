@@ -59,7 +59,7 @@ ModAlfMainPanelBase::ModAlfMainPanelBase( wxWindow* parent, wxWindowID id, const
 	wxBoxSizer* sz_Rules;
 	sz_Rules = new wxBoxSizer( wxVERTICAL );
 	
-	lst_Rules = new wxListCtrl( pan_Rules, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLC_ICON );
+	lst_Rules = new wxListCtrl( pan_Rules, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLC_HRULES|wxLC_REPORT|wxLC_SINGLE_SEL );
 	sz_Rules->Add( lst_Rules, 1, wxALL|wxEXPAND, 5 );
 	
 	sz_RulesWE->Add( sz_Rules, 66, wxEXPAND, 5 );
@@ -157,15 +157,14 @@ ModAlfMainPanelBase::ModAlfMainPanelBase( wxWindow* parent, wxWindowID id, const
 	wxBoxSizer* sz_AVEastFooter;
 	sz_AVEastFooter = new wxBoxSizer( wxVERTICAL );
 	
-	sz_AVEastFooter->SetMinSize( wxSize( -1,200 ) ); 
 	tr_AV_Rules = new wxTreeCtrl( pan_TabAppView, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTR_DEFAULT_STYLE );
 	sz_AVEastFooter->Add( tr_AV_Rules, 1, wxALL|wxEXPAND, 5 );
 	
-	sz_AppViewRulesEast->Add( sz_AVEastFooter, 0, wxEXPAND, 5 );
+	sz_AppViewRulesEast->Add( sz_AVEastFooter, 1, wxEXPAND, 5 );
 	
-	sz_AppViewEast->Add( sz_AppViewRulesEast, 1, 0, 5 );
+	sz_AppViewEast->Add( sz_AppViewRulesEast, 1, wxEXPAND, 5 );
 	
-	sz_AlfAppView->Add( sz_AppViewEast, 66, 0, 5 );
+	sz_AlfAppView->Add( sz_AppViewEast, 66, wxEXPAND, 5 );
 	
 	pan_TabAppView->SetSizer( sz_AlfAppView );
 	pan_TabAppView->Layout();

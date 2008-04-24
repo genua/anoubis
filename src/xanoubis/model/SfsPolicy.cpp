@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 GeNUA mbH <info@genua.de>
+ * Copyright (c) 2008 GeNUA mbH <info@genua.de>
  *
  * All rights reserved.
  *
@@ -43,51 +43,94 @@
 
 #include <apn.h>
 
-#include "AnEvents.h"
 #include "Policy.h"
-#include "PolicyRuleSet.h"
-#include "ModAlfAddPolicyVisitor.h"
+#include "PolicyVisitor.h"
+#include "AppPolicy.h"
 
-#include "ModAlfMainPanelImpl.h"
+#include "SfsPolicy.h"
 
-ModAlfMainPanelImpl::ModAlfMainPanelImpl(wxWindow* parent,
-    wxWindowID id) : ModAlfMainPanelBase(parent, id)
+SfsPolicy::SfsPolicy(AppPolicy *parent, struct apn_sfsrule *sfsRule)
+    : Policy(parent)
 {
-	columnNames_[MODALF_LIST_COLUMN_PRIO] = _("Prio");
-	columnNames_[MODALF_LIST_COLUMN_APP] = _("Application");
-	columnNames_[MODALF_LIST_COLUMN_PROG] = _("Program");
-	columnNames_[MODALF_LIST_COLUMN_CTX] = _("Context");
-	columnNames_[MODALF_LIST_COLUMN_SERVICE] = _("Service");
-	columnNames_[MODALF_LIST_COLUMN_ROLE] = _("Role");
-	columnNames_[MODALF_LIST_COLUMN_ACTION] = _("Action");
-	columnNames_[MODALF_LIST_COLUMN_ADMIN] = _("Admin");
-	columnNames_[MODALF_LIST_COLUMN_OS] = _("OS");
+	sfsRule_ = sfsRule;
+}
 
-	for (int i=0; i<MODALF_LIST_COLUMN_EOL; i++) {
-		lst_Rules->InsertColumn(i, columnNames_[i], wxLIST_FORMAT_LEFT,
-		    wxLIST_AUTOSIZE);
-	}
-
-	parent->Connect(anEVT_LOAD_RULESET,
-	    wxCommandEventHandler(ModAlfMainPanelImpl::OnLoadRuleSet),
-	    NULL, this);
+SfsPolicy::~SfsPolicy()
+{
 }
 
 void
-ModAlfMainPanelImpl::OnLoadRuleSet(wxCommandEvent& event)
+SfsPolicy::accept(PolicyVisitor& visitor)
 {
-	ModAlfAddPolicyVisitor	 addVisitor(this);
-	PolicyRuleSet		*ruleSet;
+	visitor.visitSfsPolicy(this);
+}
 
-	lst_Rules->DeleteAllItems();
-	tr_AV_Rules->DeleteAllItems();
+wxString
+SfsPolicy::getAppName(void)
+{
+	return (getBinaryName());
+}
 
-	ruleSet = (PolicyRuleSet *)event.GetClientData();
-	ruleSet->accept(addVisitor);
+wxString
+SfsPolicy::getBinaryName(void)
+{
+	struct apn_app	*app;
 
-	/* trigger new * calculation of column width */
-	for (int i=0; i<MODALF_LIST_COLUMN_EOL; i++) {
-		lst_Rules->SetColumnWidth(i, wxLIST_AUTOSIZE);
+	app = sfsRule_->rule.sfscheck.app;
+
+	if ((app != NULL) && (app->name != NULL)) {
+		return (wxString::From8BitData(app->name));
+	} else {
+		return (wxEmptyString);
 	}
-	event.Skip();
+}
+
+wxString
+SfsPolicy::getHashTypeName(void)
+{
+	wxString	 result;
+	struct apn_app	*app;
+
+	app = sfsRule_->rule.sfscheck.app;
+
+	switch (app->hashtype) {
+	case APN_HASH_SHA256:
+		result = wxT("SHA256");
+		break;
+	default:
+		result = wxT("(unknown)");
+		break;
+	}
+
+	return (result);
+}
+
+wxString
+SfsPolicy::getHashValue(void)
+{
+	wxString	 result;
+	unsigned int	 length;
+	struct apn_app	*app;
+
+	app = sfsRule_->rule.sfscheck.app;
+
+	length = 0;
+	result = wxT("0x");
+
+	switch (app->hashtype) {
+	case APN_HASH_SHA256:
+		length = APN_HASH_SHA256_LEN;
+		break;
+	default:
+		length = 0;
+		result = wxT("(unknown hash type)");
+		break;
+	}
+
+	for (unsigned int i=0; i<length; i++) {
+		result += wxString::Format(wxT("%2.2x"),
+		    (unsigned char)app->hashvalue[i]);
+	}
+
+	return (result);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 GeNUA mbH <info@genua.de>
+ * Copyright (c) 2008 GeNUA mbH <info@genua.de>
  *
  * All rights reserved.
  *
@@ -25,6 +25,9 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _ALFPOLICY_H_
+#define _ALFPOLICY_H_
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -40,54 +43,71 @@
 
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <wx/string.h>
+#include <wx/arrstr.h>
 
 #include <apn.h>
 
-#include "AnEvents.h"
 #include "Policy.h"
-#include "PolicyRuleSet.h"
-#include "ModAlfAddPolicyVisitor.h"
+#include "AppPolicy.h"
+#include "PolicyVisitor.h"
 
-#include "ModAlfMainPanelImpl.h"
-
-ModAlfMainPanelImpl::ModAlfMainPanelImpl(wxWindow* parent,
-    wxWindowID id) : ModAlfMainPanelBase(parent, id)
+class AlfPolicy : public Policy
 {
-	columnNames_[MODALF_LIST_COLUMN_PRIO] = _("Prio");
-	columnNames_[MODALF_LIST_COLUMN_APP] = _("Application");
-	columnNames_[MODALF_LIST_COLUMN_PROG] = _("Program");
-	columnNames_[MODALF_LIST_COLUMN_CTX] = _("Context");
-	columnNames_[MODALF_LIST_COLUMN_SERVICE] = _("Service");
-	columnNames_[MODALF_LIST_COLUMN_ROLE] = _("Role");
-	columnNames_[MODALF_LIST_COLUMN_ACTION] = _("Action");
-	columnNames_[MODALF_LIST_COLUMN_ADMIN] = _("Admin");
-	columnNames_[MODALF_LIST_COLUMN_OS] = _("OS");
+	private:
+		struct apn_alfrule	*alfRule_;
 
-	for (int i=0; i<MODALF_LIST_COLUMN_EOL; i++) {
-		lst_Rules->InsertColumn(i, columnNames_[i], wxLIST_FORMAT_LEFT,
-		    wxLIST_AUTOSIZE);
-	}
+		wxString	getHostName(struct apn_host *);
+		wxString	getPortName(struct apn_port *);
+		wxString	listToString(wxArrayString);
 
-	parent->Connect(anEVT_LOAD_RULESET,
-	    wxCommandEventHandler(ModAlfMainPanelImpl::OnLoadRuleSet),
-	    NULL, this);
-}
+	public:
+		AlfPolicy(AppPolicy *, struct apn_alfrule *);
+		~AlfPolicy(void);
 
-void
-ModAlfMainPanelImpl::OnLoadRuleSet(wxCommandEvent& event)
-{
-	ModAlfAddPolicyVisitor	 addVisitor(this);
-	PolicyRuleSet		*ruleSet;
+		virtual void accept(PolicyVisitor&);
 
-	lst_Rules->DeleteAllItems();
-	tr_AV_Rules->DeleteAllItems();
+		int		getTypeNo(void);
+		wxString	getTypeName(void);
 
-	ruleSet = (PolicyRuleSet *)event.GetClientData();
-	ruleSet->accept(addVisitor);
+		int		getActionNo(void);
+		wxString	getActionName(void);
 
-	/* trigger new * calculation of column width */
-	for (int i=0; i<MODALF_LIST_COLUMN_EOL; i++) {
-		lst_Rules->SetColumnWidth(i, wxLIST_AUTOSIZE);
-	}
-	event.Skip();
-}
+		wxArrayString	getContextList(void);
+		wxString	getContextName(void);
+
+		wxString	getRoleName(void);
+		wxString	getServiceName(void);
+
+		/* valid for type one of APN_ALF_{FILTER,CAPABILITY,DEFAULT} */
+		int		getLogNo(void);
+		wxString	getLogName(void);
+
+		/* valid for type == APN_ALF_FILTER */
+		int		getDirectionNo(void);
+		wxString	getDirectionName(void);
+
+		int		getProtocolNo(void);
+		wxString	getProtocolName(void);
+
+		int		getAddrFamilyNo(void);
+		wxString	getAddrFamilyName(void);
+
+		wxArrayString	getFromHostList(void);
+		wxString	getFromHostName(void);
+
+		wxArrayString	getFromPortList(void);
+		wxString	getFromPortName(void);
+
+		wxArrayString	getToHostList(void);
+		wxString	getToHostName(void);
+
+		wxArrayString	getToPortList(void);
+		wxString	getToPortName(void);
+
+		/* valid for type == APN_ALF_CAPABILITY */
+		int		getCapTypeNo(void);
+		wxString	getCapTypeName(void);
+};
+
+#endif	/* _ALFPOLICY_H_ */

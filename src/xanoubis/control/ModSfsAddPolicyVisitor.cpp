@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 GeNUA mbH <info@genua.de>
+ * Copyright (c) 2008 GeNUA mbH <info@genua.de>
  *
  * All rights reserved.
  *
@@ -40,54 +40,74 @@
 
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <wx/string.h>
 
 #include <apn.h>
 
-#include "AnEvents.h"
+#include "ModSfsMainPanelImpl.h"
 #include "Policy.h"
-#include "PolicyRuleSet.h"
-#include "ModAlfAddPolicyVisitor.h"
+#include "PolicyVisitor.h"
+#include "AppPolicy.h"
+#include "AlfPolicy.h"
+#include "VarPolicy.h"
 
-#include "ModAlfMainPanelImpl.h"
+#include "ModSfsAddPolicyVisitor.h"
 
-ModAlfMainPanelImpl::ModAlfMainPanelImpl(wxWindow* parent,
-    wxWindowID id) : ModAlfMainPanelBase(parent, id)
+ModSfsAddPolicyVisitor::ModSfsAddPolicyVisitor(ModSfsMainPanelImpl *sfsPanel)
 {
-	columnNames_[MODALF_LIST_COLUMN_PRIO] = _("Prio");
-	columnNames_[MODALF_LIST_COLUMN_APP] = _("Application");
-	columnNames_[MODALF_LIST_COLUMN_PROG] = _("Program");
-	columnNames_[MODALF_LIST_COLUMN_CTX] = _("Context");
-	columnNames_[MODALF_LIST_COLUMN_SERVICE] = _("Service");
-	columnNames_[MODALF_LIST_COLUMN_ROLE] = _("Role");
-	columnNames_[MODALF_LIST_COLUMN_ACTION] = _("Action");
-	columnNames_[MODALF_LIST_COLUMN_ADMIN] = _("Admin");
-	columnNames_[MODALF_LIST_COLUMN_OS] = _("OS");
+	sfsPanel_ = sfsPanel;
+}
 
-	for (int i=0; i<MODALF_LIST_COLUMN_EOL; i++) {
-		lst_Rules->InsertColumn(i, columnNames_[i], wxLIST_FORMAT_LEFT,
-		    wxLIST_AUTOSIZE);
-	}
+ModSfsAddPolicyVisitor::~ModSfsAddPolicyVisitor()
+{
+}
 
-	parent->Connect(anEVT_LOAD_RULESET,
-	    wxCommandEventHandler(ModAlfMainPanelImpl::OnLoadRuleSet),
-	    NULL, this);
+long
+ModSfsAddPolicyVisitor::ruleListAppend(Policy *policy)
+{
+	long idx;
+
+	idx = sfsPanel_->lst_Rules->GetItemCount();
+	sfsPanel_->lst_Rules->InsertItem(idx, wxString::Format(wxT("%d"),
+	    idx));
+
+	sfsPanel_->lst_Rules->SetItemPtrData(idx, (wxUIntPtr)policy);
+
+	return (idx);
 }
 
 void
-ModAlfMainPanelImpl::OnLoadRuleSet(wxCommandEvent& event)
+ModSfsAddPolicyVisitor::visitAppPolicy(AppPolicy *appPolicy)
 {
-	ModAlfAddPolicyVisitor	 addVisitor(this);
-	PolicyRuleSet		*ruleSet;
+	/* no app policies shown in SFS module */
+}
 
-	lst_Rules->DeleteAllItems();
-	tr_AV_Rules->DeleteAllItems();
+void
+ModSfsAddPolicyVisitor::visitAlfPolicy(AlfPolicy *alfPolicy)
+{
+	/* no ALF policies shown in SFS module */
+}
 
-	ruleSet = (PolicyRuleSet *)event.GetClientData();
-	ruleSet->accept(addVisitor);
+void
+ModSfsAddPolicyVisitor::visitSfsPolicy(SfsPolicy *sfsPolicy)
+{
+	long		 idx;
+	wxListCtrl	*list;
 
-	/* trigger new * calculation of column width */
-	for (int i=0; i<MODALF_LIST_COLUMN_EOL; i++) {
-		lst_Rules->SetColumnWidth(i, wxLIST_AUTOSIZE);
-	}
-	event.Skip();
+	idx = ruleListAppend(sfsPolicy);
+	list = sfsPanel_->lst_Rules;
+
+	list->SetItem(idx, MODSFS_LIST_COLUMN_APP,
+	    sfsPolicy->getAppName());
+	list->SetItem(idx, MODSFS_LIST_COLUMN_PROG,
+	    sfsPolicy->getBinaryName());
+	list->SetItem(idx, MODSFS_LIST_COLUMN_HASHT,
+	    sfsPolicy->getHashTypeName());
+	list->SetItem(idx, MODSFS_LIST_COLUMN_HASH,
+	   sfsPolicy->getHashValue());
+}
+
+void
+ModSfsAddPolicyVisitor::visitVarPolicy(VarPolicy *variable)
+{
 }

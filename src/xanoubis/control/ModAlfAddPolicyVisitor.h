@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 GeNUA mbH <info@genua.de>
+ * Copyright (c) 2008 GeNUA mbH <info@genua.de>
  *
  * All rights reserved.
  *
@@ -25,36 +25,52 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __ModAlfMainPanelImpl__
-#define __ModAlfMainPanelImpl__
+#ifndef _MODALFADDPOLICYVISITOR_H_
+#define _MODALFADDPOLICYVISITOR_H_
 
-#include "AnEvents.h"
-#include "ModAlfPanelsBase.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-enum modAlfListColumns {
-	MODALF_LIST_COLUMN_PRIO = 0,
-	MODALF_LIST_COLUMN_APP,
-	MODALF_LIST_COLUMN_PROG,
-	MODALF_LIST_COLUMN_CTX,
-	MODALF_LIST_COLUMN_SERVICE,
-	MODALF_LIST_COLUMN_ROLE,
-	MODALF_LIST_COLUMN_ACTION,
-	MODALF_LIST_COLUMN_ADMIN,
-	MODALF_LIST_COLUMN_OS,
-	MODALF_LIST_COLUMN_EOL
-};
+#include <sys/param.h>
+#include <sys/socket.h>
 
-class ModAlfMainPanelImpl : public ModAlfMainPanelBase
+#ifndef LINUX
+#include <sys/queue.h>
+#else
+#include <queue.h>
+#endif
+
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <wx/string.h>
+
+#include <apn.h>
+
+#include "ModAlfMainPanelImpl.h"
+#include "Policy.h"
+#include "PolicyVisitor.h"
+#include "AppPolicy.h"
+#include "AlfPolicy.h"
+#include "VarPolicy.h"
+
+class ModAlfAddPolicyVisitor : public PolicyVisitor
 {
 	private:
-		wxString	columnNames_[MODALF_LIST_COLUMN_EOL];
+		wxTreeItemId		 lastTreeRoot_;
+		ModAlfMainPanelImpl	*alfPanel_;
 
-		void OnLoadRuleSet(wxCommandEvent&);
+		long	ruleListAppend(Policy *);
+		void	addTreeContext(wxString);
 
 	public:
-		ModAlfMainPanelImpl(wxWindow*, wxWindowID);
+		ModAlfAddPolicyVisitor(ModAlfMainPanelImpl *);
+		~ModAlfAddPolicyVisitor(void);
 
-		friend class ModAlfAddPolicyVisitor;
+		virtual void visitAppPolicy(AppPolicy *);
+		virtual void visitAlfPolicy(AlfPolicy *);
+		virtual void visitSfsPolicy(SfsPolicy *);
+		virtual void visitVarPolicy(VarPolicy *);
 };
 
-#endif /* __ModAlfMainPanelImpl__ */
+#endif	/* _MODALFADDPOLICYVISITOR_H_ */

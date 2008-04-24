@@ -405,148 +405,148 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	wxStaticBoxSizer* alfConnectionBox;
 	alfConnectionBox = new wxStaticBoxSizer( new wxStaticBox( alfNbPanel, -1, wxT("Connection") ), wxVERTICAL );
 	
-	wxFlexGridSizer* alfConnectionSizer;
-	alfConnectionSizer = new wxFlexGridSizer( 2, 6, 0, 0 );
-	alfConnectionSizer->SetFlexibleDirection( wxBOTH );
-	alfConnectionSizer->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+	wxFlexGridSizer* alfConnectOptionSizer;
+	alfConnectOptionSizer = new wxFlexGridSizer( 3, 4, 0, 0 );
+	alfConnectOptionSizer->SetFlexibleDirection( wxBOTH );
+	alfConnectOptionSizer->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
 	
 	alfProtocolText = new wxStaticText( alfNbPanel, wxID_ANY, wxT("Protocol:"), wxDefaultPosition, wxDefaultSize, 0 );
 	alfProtocolText->Wrap( -1 );
-	alfConnectionSizer->Add( alfProtocolText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
-	
-	wxBoxSizer* alfProtocolSizer;
-	alfProtocolSizer = new wxBoxSizer( wxHORIZONTAL );
+	alfConnectOptionSizer->Add( alfProtocolText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	alfTcpCheckBox = new wxCheckBox( alfNbPanel, wxID_ANY, wxT("tcp"), wxDefaultPosition, wxDefaultSize, 0 );
 	alfTcpCheckBox->SetValue(true);
 	
-	alfProtocolSizer->Add( alfTcpCheckBox, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	alfConnectOptionSizer->Add( alfTcpCheckBox, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	alfUdpCheckBox = new wxCheckBox( alfNbPanel, wxID_ANY, wxT("udp"), wxDefaultPosition, wxDefaultSize, 0 );
 	
-	alfProtocolSizer->Add( alfUdpCheckBox, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
-	
-	alfConnectionSizer->Add( alfProtocolSizer, 1, wxEXPAND, 5 );
+	alfConnectOptionSizer->Add( alfUdpCheckBox, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	
-	alfConnectionSizer->Add( 0, 0, 1, wxEXPAND, 5 );
+	alfConnectOptionSizer->Add( 0, 0, 1, wxEXPAND, 5 );
 	
+	alfAddrFamilyText = new wxStaticText( alfNbPanel, wxID_ANY, wxT("Address family:"), wxDefaultPosition, wxDefaultSize, 0 );
+	alfAddrFamilyText->Wrap( -1 );
+	alfConnectOptionSizer->Add( alfAddrFamilyText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	alfConnectionSizer->Add( 0, 0, 1, wxEXPAND, 5 );
+	alfInetRadioButton = new wxRadioButton( alfNbPanel, wxID_ANY, wxT("inet"), wxDefaultPosition, wxSize( -1,-1 ), wxRB_GROUP );
+	alfConnectOptionSizer->Add( alfInetRadioButton, 0, wxALL, 5 );
 	
+	alfInet6RadioButton = new wxRadioButton( alfNbPanel, wxID_ANY, wxT("inet6"), wxDefaultPosition, wxSize( -1,-1 ), 0 );
+	alfConnectOptionSizer->Add( alfInet6RadioButton, 0, wxALL, 5 );
 	
-	alfConnectionSizer->Add( 0, 0, 1, wxEXPAND, 5 );
+	alfAnyRadioButton = new wxRadioButton( alfNbPanel, wxID_ANY, wxT("any"), wxDefaultPosition, wxDefaultSize, 0 );
+	alfConnectOptionSizer->Add( alfAnyRadioButton, 0, wxALL, 5 );
 	
+	alfCapText = new wxStaticText( alfNbPanel, wxID_ANY, wxT("Capability:"), wxDefaultPosition, wxDefaultSize, 0 );
+	alfCapText->Wrap( -1 );
+	alfConnectOptionSizer->Add( alfCapText, 0, wxALL, 5 );
 	
-	alfConnectionSizer->Add( 0, 0, 1, wxEXPAND, 5 );
+	alfRawCapRadioButton = new wxRadioButton( alfNbPanel, wxID_ANY, wxT("raw"), wxDefaultPosition, wxSize( -1,-1 ), wxRB_GROUP );
+	alfConnectOptionSizer->Add( alfRawCapRadioButton, 0, wxALL, 5 );
+	
+	alfOtherCapRadioButton = new wxRadioButton( alfNbPanel, wxID_ANY, wxT("other"), wxDefaultPosition, wxSize( -1,-1 ), 0 );
+	alfConnectOptionSizer->Add( alfOtherCapRadioButton, 0, wxALL, 5 );
+	
+	alfAllCapRadioButton = new wxRadioButton( alfNbPanel, wxID_ANY, wxT("all"), wxDefaultPosition, wxDefaultSize, 0 );
+	alfConnectOptionSizer->Add( alfAllCapRadioButton, 0, wxALL, 5 );
+	
+	alfConnectionBox->Add( alfConnectOptionSizer, 0, wxEXPAND, 5 );
+	
+	alfConnectAddrSizer = new wxFlexGridSizer( 2, 6, 0, 0 );
+	alfConnectAddrSizer->SetFlexibleDirection( wxBOTH );
+	alfConnectAddrSizer->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
 	
 	alfSrcAddrText = new wxStaticText( alfNbPanel, wxID_ANY, wxT("Source address:"), wxDefaultPosition, wxDefaultSize, 0 );
 	alfSrcAddrText->Wrap( -1 );
-	alfConnectionSizer->Add( alfSrcAddrText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	alfConnectAddrSizer->Add( alfSrcAddrText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	alfSrcAddrComboBox = new wxComboBox( alfNbPanel, wxID_ANY, wxT("Combo!"), wxDefaultPosition, wxDefaultSize, 0, NULL, 0 ); 
-	alfConnectionSizer->Add( alfSrcAddrComboBox, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	alfConnectAddrSizer->Add( alfSrcAddrComboBox, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	alfSrcAddrDelimiterText = new wxStaticText( alfNbPanel, wxID_ANY, wxT(" / "), wxDefaultPosition, wxDefaultSize, 0 );
 	alfSrcAddrDelimiterText->Wrap( -1 );
-	alfConnectionSizer->Add( alfSrcAddrDelimiterText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	alfConnectAddrSizer->Add( alfSrcAddrDelimiterText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	alfSrcAddrNetSpinCtrl = new wxSpinCtrl( alfNbPanel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 10, 0 );
-	alfConnectionSizer->Add( alfSrcAddrNetSpinCtrl, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	alfSrcAddrNetSpinCtrl = new wxSpinCtrl( alfNbPanel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 128, 0 );
+	alfConnectAddrSizer->Add( alfSrcAddrNetSpinCtrl, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	
-	alfConnectionSizer->Add( 35, 0, 1, wxEXPAND, 5 );
+	alfSrcAddrDelButton = new wxButton( alfNbPanel, wxID_ANY, wxT("-"), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
+	alfConnectAddrSizer->Add( alfSrcAddrDelButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	alfSrcAddrAddButton = new wxButton( alfNbPanel, wxID_ANY, wxT("+"), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
-	alfConnectionSizer->Add( alfSrcAddrAddButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	alfConnectAddrSizer->Add( alfSrcAddrAddButton, 0, wxALL, 5 );
 	
 	alfDstAddrText = new wxStaticText( alfNbPanel, wxID_ANY, wxT("Destination address:"), wxDefaultPosition, wxDefaultSize, 0 );
 	alfDstAddrText->Wrap( -1 );
-	alfConnectionSizer->Add( alfDstAddrText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	alfConnectAddrSizer->Add( alfDstAddrText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	alfDstAddrComboBox = new wxComboBox( alfNbPanel, wxID_ANY, wxT("Combo!"), wxDefaultPosition, wxDefaultSize, 0, NULL, 0 ); 
-	alfConnectionSizer->Add( alfDstAddrComboBox, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	alfConnectAddrSizer->Add( alfDstAddrComboBox, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	alfDstAddrDelimiterText = new wxStaticText( alfNbPanel, wxID_ANY, wxT(" / "), wxDefaultPosition, wxDefaultSize, 0 );
 	alfDstAddrDelimiterText->Wrap( -1 );
-	alfConnectionSizer->Add( alfDstAddrDelimiterText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	alfConnectAddrSizer->Add( alfDstAddrDelimiterText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	alfDstAddrNetSpinCtrl = new wxSpinCtrl( alfNbPanel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 10, 0 );
-	alfConnectionSizer->Add( alfDstAddrNetSpinCtrl, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	alfDstAddrNetSpinCtrl = new wxSpinCtrl( alfNbPanel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 128, 0 );
+	alfConnectAddrSizer->Add( alfDstAddrNetSpinCtrl, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	
-	alfConnectionSizer->Add( 0, 0, 1, wxEXPAND, 5 );
+	alfDstAddrDelButton = new wxButton( alfNbPanel, wxID_ANY, wxT("-"), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
+	alfConnectAddrSizer->Add( alfDstAddrDelButton, 0, wxALL, 5 );
 	
 	alfDstAddrAddButton = new wxButton( alfNbPanel, wxID_ANY, wxT("+"), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
-	alfConnectionSizer->Add( alfDstAddrAddButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	alfConnectAddrSizer->Add( alfDstAddrAddButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	alfSrcPortText = new wxStaticText( alfNbPanel, wxID_ANY, wxT("Source Port:"), wxDefaultPosition, wxDefaultSize, 0 );
 	alfSrcPortText->Wrap( -1 );
-	alfConnectionSizer->Add( alfSrcPortText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	alfConnectAddrSizer->Add( alfSrcPortText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	alfSrcPortComboBox = new wxComboBox( alfNbPanel, wxID_ANY, wxT("53"), wxDefaultPosition, wxDefaultSize, 0, NULL, 0 );
 	alfSrcPortComboBox->Append( wxT("80") );
 	alfSrcPortComboBox->Append( wxT("443") );
 	alfSrcPortComboBox->Append( wxT("$www") );
 	alfSrcPortComboBox->Append( wxT("21,22") );
-	alfConnectionSizer->Add( alfSrcPortComboBox, 0, wxALL, 5 );
+	alfConnectAddrSizer->Add( alfSrcPortComboBox, 0, wxALL, 5 );
 	
 	
-	alfConnectionSizer->Add( 0, 0, 1, wxEXPAND, 5 );
+	alfConnectAddrSizer->Add( 0, 0, 1, wxEXPAND, 5 );
 	
 	
-	alfConnectionSizer->Add( 0, 0, 1, wxEXPAND, 5 );
+	alfConnectAddrSizer->Add( 0, 0, 1, wxEXPAND, 5 );
 	
 	
-	alfConnectionSizer->Add( 0, 0, 1, wxEXPAND, 5 );
+	alfConnectAddrSizer->Add( 0, 0, 1, wxEXPAND, 5 );
 	
 	
-	alfConnectionSizer->Add( 0, 0, 1, wxEXPAND, 5 );
+	alfConnectAddrSizer->Add( 0, 0, 1, wxEXPAND, 5 );
 	
 	alfDstPortText = new wxStaticText( alfNbPanel, wxID_ANY, wxT("Destination Port:"), wxDefaultPosition, wxDefaultSize, 0 );
 	alfDstPortText->Wrap( -1 );
-	alfConnectionSizer->Add( alfDstPortText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	alfConnectAddrSizer->Add( alfDstPortText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	alfDstPortComboBox = new wxComboBox( alfNbPanel, wxID_ANY, wxT("53"), wxDefaultPosition, wxDefaultSize, 0, NULL, 0 );
 	alfDstPortComboBox->Append( wxT("80") );
 	alfDstPortComboBox->Append( wxT("443") );
 	alfDstPortComboBox->Append( wxT("$www") );
 	alfDstPortComboBox->Append( wxT("21,22") );
-	alfConnectionSizer->Add( alfDstPortComboBox, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	alfConnectAddrSizer->Add( alfDstPortComboBox, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	
-	alfConnectionSizer->Add( 0, 0, 1, wxEXPAND, 5 );
+	alfConnectAddrSizer->Add( 0, 0, 1, wxEXPAND, 5 );
 	
 	
-	alfConnectionSizer->Add( 0, 0, 1, wxEXPAND, 5 );
+	alfConnectAddrSizer->Add( 0, 0, 1, wxEXPAND, 5 );
 	
 	
-	alfConnectionSizer->Add( 0, 0, 1, wxEXPAND, 5 );
+	alfConnectAddrSizer->Add( 0, 0, 1, wxEXPAND, 5 );
 	
 	
-	alfConnectionSizer->Add( 0, 0, 1, wxEXPAND, 5 );
+	alfConnectAddrSizer->Add( 0, 0, 1, wxEXPAND, 5 );
 	
-	alfAddrFamilyText = new wxStaticText( alfNbPanel, wxID_ANY, wxT("Address family:"), wxDefaultPosition, wxDefaultSize, 0 );
-	alfAddrFamilyText->Wrap( -1 );
-	alfConnectionSizer->Add( alfAddrFamilyText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	alfConnectionBox->Add( alfConnectAddrSizer, 1, wxEXPAND, 5 );
 	
-	wxBoxSizer* alfAddrFamilySizer;
-	alfAddrFamilySizer = new wxBoxSizer( wxHORIZONTAL );
-	
-	alfInetRadioButton = new wxRadioButton( alfNbPanel, wxID_ANY, wxT("inet"), wxDefaultPosition, wxDefaultSize, wxRB_GROUP );
-	alfAddrFamilySizer->Add( alfInetRadioButton, 0, wxALL, 5 );
-	
-	alfInet6RadionButton = new wxRadioButton( alfNbPanel, wxID_ANY, wxT("inet6"), wxDefaultPosition, wxDefaultSize, 0 );
-	alfAddrFamilySizer->Add( alfInet6RadionButton, 0, wxALL, 5 );
-	
-	alfAnyRadioButton = new wxRadioButton( alfNbPanel, wxID_ANY, wxT("any"), wxDefaultPosition, wxDefaultSize, 0 );
-	alfAddrFamilySizer->Add( alfAnyRadioButton, 0, wxALL, 5 );
-	
-	alfConnectionSizer->Add( alfAddrFamilySizer, 1, wxEXPAND, 5 );
-	
-	alfConnectionBox->Add( alfConnectionSizer, 1, wxEXPAND, 5 );
-	
-	alfPanelMainSizer->Add( alfConnectionBox, 0, 0, 5 );
+	alfPanelMainSizer->Add( alfConnectionBox, 1, wxEXPAND, 5 );
 	
 	alfNbPanel->SetSizer( alfPanelMainSizer );
 	alfNbPanel->Layout();
@@ -643,6 +643,8 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	// Connect Events
 	this->Connect( wxEVT_CLOSE_WINDOW, wxCloseEventHandler( DlgRuleEditorBase::OnClose ) );
 	controlOptionButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::OnTableOptionButtonClick ), NULL, this );
+	ruleListCtrl->Connect( wxEVT_COMMAND_LIST_ITEM_SELECTED, wxListEventHandler( DlgRuleEditorBase::OnLineSelected ), NULL, this );
 	appBinaryModifyButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::OnBinaryModifyButtonClick ), NULL, this );
+	alfSrcAddrAddButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::OnSrcAddrAddButton ), NULL, this );
 	sfsBinaryModifyButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::OnBinaryModifyButtonClick ), NULL, this );
 }
