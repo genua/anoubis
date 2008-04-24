@@ -243,6 +243,8 @@ int	apn_print_ruleset(struct apn_ruleset *, int, FILE *);
 void	apn_print_errors(struct apn_ruleset *, FILE *);
 int	apn_insert(struct apn_ruleset *, struct apn_rule *, int);
 int	apn_insert_alfrule(struct apn_ruleset *, struct apn_alfrule *, int);
+int	apn_copyinsert(struct apn_ruleset *, struct apn_alfrule *, int,
+	    const char *, const char *, int);
 void	apn_free_ruleset(struct apn_ruleset *);
 
 #endif /* _APN_H_ */

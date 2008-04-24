@@ -29,6 +29,7 @@
 
 extern TCase *insertcopy_testcase_insert1(void);
 extern TCase *insertcopy_testcase_insert2(void);
+extern TCase *insertcopy_testcase_copy1(void);
 
 Suite *
 insertcopy_testsuite(void)
@@ -37,9 +38,11 @@ insertcopy_testsuite(void)
 
 	TCase *tc_insert1 = insertcopy_testcase_insert1();
 	TCase *tc_insert2 = insertcopy_testcase_insert2();
+	TCase *tc_copy1 = insertcopy_testcase_copy1();
 
 	suite_add_tcase(s, tc_insert1);
 	suite_add_tcase(s, tc_insert2);
+	suite_add_tcase(s, tc_copy1);
 
 	return (s);
 }

@@ -241,6 +241,8 @@ START_TEST(tc_Insert1)
 	ret = apn_insert(rs, rule, 22);
 	fail_if(ret != 1, "Insert did not fail, but should have!");
 	fail_if(rule->id != 33, "Rule ID was modified!");
+
+	apn_free_ruleset(rs);
 }
 END_TEST
 
@@ -316,6 +318,89 @@ START_TEST(tc_Insert2)
 	ret = apn_insert_alfrule(rs, rule, 24);
 	fail_if(ret != 1, "Insert did not fail, but should have!");
 	fail_if(rule->id != 33, "Rule ID was modified!");
+
+	apn_free_ruleset(rs);
+}
+END_TEST
+
+START_TEST(tc_Copy1)
+{
+	char			 fakecs[APN_HASH_SHA256_LEN];
+	struct apn_alfrule	*rule;
+	struct apn_ruleset	*rs;
+	char			*file;
+	int			 ret;
+
+	file = generate_file();
+	ret = apn_parse(file, &rs, 0);
+	unlink(file);
+	if (ret != 0)
+		apn_print_errors(rs, stderr);
+	fail_if(ret != 0, "Parsing failed");
+
+	/*
+	 * Dump the rule set, so the perl wrapper can check the output.
+	 */
+	ret = apn_print_ruleset(rs, APN_FLAG_VERBOSE|APN_FLAG_VERBOSE2,
+	    stdout);
+	if (ret != 0)
+		apn_print_errors(rs, stderr);
+	fail_if(ret != 0, "Printing failed");
+
+
+	/*
+	 * First, insert+copy for a rule in the first application rule.
+	 * The application rule has ID 9, the alf rule we want to be
+	 * inserted before has ID 6.
+	 */
+	rule = generate_alfrule();
+	fail_if(rule == NULL, "generate_rule() failed");
+
+	memset(fakecs, 0xaa, sizeof(fakecs));
+	ret = apn_copyinsert(rs, rule, 6, "/bin/foobar", fakecs,
+	    APN_HASH_SHA256);
+	if (ret != 0)
+		apn_print_errors(rs, stderr);
+	fail_if(ret != 0, "Copy + insert failed");
+	fail_if(rule->id != 38, "Rule should have new id 38, but has %d",
+	    rule->id);
+	fail_if(rs->maxid != 42, "Wrong maxid, is %d should be 42", rs->maxid);
+
+	/*
+	 * Second, insert+copy for a default rule.
+	 * The application rule has ID 13, the alf rule we want to be
+	 * inserted before has ID 10.
+	 */
+	rule = generate_alfrule();
+	fail_if(rule == NULL, "generate_rule() failed");
+
+	memset(fakecs, 0xaa, sizeof(fakecs));
+	ret = apn_copyinsert(rs, rule, 10, "/bin/foobar", fakecs,
+	    APN_HASH_SHA256);
+	if (ret != 0)
+		apn_print_errors(rs, stderr);
+	fail_if(ret != 0, "Copy + insert failed");
+	fail_if(rule->id != 42, "Rule should have new id 42, but has %d",
+	    rule->id);
+	fail_if(rs->maxid != 46, "Wrong maxid, is %d should be 46", rs->maxid);
+
+	/*
+	 * Dump the new rule set, so the perl wrapper can check the
+	 * output.
+	 */
+	ret = apn_print_ruleset(rs, APN_FLAG_VERBOSE|APN_FLAG_VERBOSE2,
+	    stdout);
+	if (ret != 0)
+		apn_print_errors(rs, stderr);
+	fail_if(ret != 0, "Printing failed");
+
+
+	/* Try to copy+insert using the bogus ID 1234 */
+	ret = apn_copyinsert(rs, rule, 1234, "/bin/foobar", fakecs,
+	    APN_HASH_SHA256);
+	fail_if(ret != 1, "Copy+insert did not fail, but should have!");
+
+	apn_free_ruleset(rs);
 }
 END_TEST
 
@@ -339,4 +424,15 @@ insertcopy_testcase_insert2(void)
 	tcase_add_test(tc_insert2, tc_Insert2);
 
 	return (tc_insert2);
+}
+
+TCase *
+insertcopy_testcase_copy1(void)
+{
+	/* sessions test case */
+	TCase *tc_copy1 = tcase_create("Copy test 1");
+
+	tcase_add_test(tc_copy1, tc_Copy1);
+
+	return (tc_copy1);
 }

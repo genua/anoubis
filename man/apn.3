@@ -50,6 +50,9 @@
 .Fn apn_insert "struct apn_ruleset *" "struct apn_rule *" "int"
 .Ft int
 .Fn apn_insert_alfrule "struct apn_ruleset *" "struct apn_alfrule *" "int"
+.Ft int
+.\" The following line cannot be wrapped, the parameters have to be on one line
+.Fn apn_copyinsert "struct apn_ruleset *" "struct apn_alfrule *" "int" "const char *" "const char *" "int"
 .Ft void
 .Fn apn_free_ruleset "struct apn_ruleset *ruleset"
 .Sh DESCRIPTION
@@ -180,6 +183,49 @@ identifier
 If that particular rule is not found, the rule is not added to the rule set.
 Otherwise, it is inserted and the ID of the rule is updated according
 to the IDs already used in the rule set.
+.Pp
+.It Fn apn_copyinsert ruleset alfrule id filename checksum type
+The function
+.Fn apn_copyinsert
+copies the full application rule from the rule set
+.Em ruleset
+that includes the ALF rule with ID
+.Em id
+and inserts the provided ALF rule
+.Em alfrule
+in the new rule set before that particular rule.
+The application specification is derived from the provided filename
+.Em filename
+and the checksum
+.Em checksum
+of type
+.Em type .
+The only valid value is
+.Em APN_HASH_SHA256 .
+Note, that context rules are not copied!
+.Pp
+As an example, consider the following rule set with a single application rule:
+.Bd -literal
+2: foobar 0xdeadbeef {
+0:	default ask
+1:	context new any
+}
+.Ed
+.Pp
+Calling
+.Fn apn_copyinsert
+with a new rule, some new application and the ID 0 will produce the
+following rule set:
+.Bd -literal
+5: <some new application> {
+3:	<new rule>
+4:	default ask
+}
+2: foobar 0xdeadbeef {
+0:	default ask
+1:	context new any
+}
+.Ed
 .Pp
 .It Fn apn_free_ruleset ruleset
 The function

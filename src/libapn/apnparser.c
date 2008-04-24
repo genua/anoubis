@@ -79,6 +79,17 @@ static int		 apn_update_ids(struct apn_rule *,
 			     struct apn_ruleset *);
 static struct apn_alfrule *apn_searchinsert_alfrule(struct apnrule_queue *,
 		 struct apn_alfrule *, int);
+static struct apn_rule	*apn_search_rulealf(struct apnrule_queue *, int);
+static struct apn_rule	*apn_copy_rule(struct apn_rule *);
+static struct apn_alfrule *apn_copy_alfrules(struct apn_alfrule *);
+static int	 apn_copy_afilt(struct apn_afiltrule *, struct apn_afiltrule *);
+static int	 apn_copy_acap(struct apn_acaprule *, struct apn_acaprule *);
+static int	 apn_copy_apndefault(struct apn_default *,
+		     struct apn_default *);
+static struct apn_host *apn_copy_hosts(struct apn_host *);
+static struct apn_port *apn_copy_ports(struct apn_port *);
+static int	 apn_set_application(struct apn_rule *, const char *,
+		     const char *, int);
 
 /*
  * Parse the specified file and return the ruleset, which is allocated
@@ -235,6 +246,70 @@ apn_insert_alfrule(struct apn_ruleset *rs, struct apn_alfrule *arule, int id)
 
 	arule->id = rs->maxid;
 	rs->maxid += 1;
+
+	return (0);
+}
+
+/*
+ * Copy a full application rule and insert the provided ALF rule before
+ * the original rule with ID id.
+ * Return codes:
+ * -1: a systemcall failed and errno is set
+ *  0: rule was inserted
+ *  1: invalid parameters
+ */
+int
+apn_copyinsert(struct apn_ruleset *rs, struct apn_alfrule *arule, int id,
+    const char *filename, const char *csum, int type)
+{
+	struct apnrule_queue	*queue;
+	struct apn_alfrule	*hp, *previous;
+	struct apn_rule		*rule, *newrule;
+
+	if (rs == NULL || arule == NULL || id < 0 || rs->maxid == INT_MAX)
+		return (1);
+
+	/* find app_rule that includes rule with ID id */
+	queue = &rs->alf_queue;
+	if ((rule = apn_search_rulealf(queue, id)) == NULL)
+		return (1);
+
+	/* copy that app_rule without context rules and applications */
+	if ((newrule = apn_copy_rule(rule)) == NULL)
+		return (1);
+
+	/* set applications */
+	if (apn_set_application(newrule, filename, csum, type) != 0) {
+		apn_free_rule(newrule);
+		return (1);
+	}
+
+	/* insert arule before alf rule with ID id */
+	hp = newrule->rule.alf;
+	previous = NULL;
+	while (hp) {
+		if (hp->id == id) {
+			arule->tail = hp->tail;
+			arule->next = hp;
+
+			if (previous)
+				previous->next = arule;
+			else
+				newrule->rule.alf = arule;
+		}
+		previous = hp;
+		hp = hp->next;
+	}
+
+	/*
+	 * Insert new rule before appliation rule including rule with
+	 * ID id.  apn_insert() will generate new IDs for all rules
+	 * in newrule.
+	 */
+	if (apn_insert(rs, newrule, rule->id) != 0) {
+		apn_free_rule(newrule);
+		return (1);
+	}
 
 	return (0);
 }
@@ -907,11 +982,10 @@ apn_free_alfrule(struct apn_alfrule *rule)
 
 		switch (hp->type) {
 		case APN_ALF_FILTER:
-			/* XXX HSH not yet, vars. need to be enabled first */
-			/* apn_free_host(hp->rule.afilt.filtspec.fromhost); */
-			/* apn_free_host(hp->rule.afilt.filtspec.tohost); */
-			/* apn_free_port(hp->rule.afilt.filtspec.fromport); */
-			/* apn_free_port(hp->rule.afilt.filtspec.toport); */
+			apn_free_host(hp->rule.afilt.filtspec.fromhost);
+			apn_free_host(hp->rule.afilt.filtspec.tohost);
+			apn_free_port(hp->rule.afilt.filtspec.fromport);
+			apn_free_port(hp->rule.afilt.filtspec.toport);
 			break;
 
 		case APN_ALF_CAPABILITY:
@@ -923,8 +997,7 @@ apn_free_alfrule(struct apn_alfrule *rule)
 			break;
 
 		case APN_ALF_CTX:
-			/* XXX HSH not yet, vars. need to be enabled first */
-			/* apn_free_app(hp->rule.apncontext.application); */
+			apn_free_app(hp->rule.apncontext.application);
 			break;
 
 		default:
@@ -1052,9 +1125,8 @@ apn_searchinsert_alfrule(struct apnrule_queue *queue, struct apn_alfrule
 
 					if (previous)
 						previous->next = arule;
-					else {
+					else
 						p->rule.alf = arule;
-					}
 				}
 				return (hp);
 			}
@@ -1064,4 +1136,272 @@ apn_searchinsert_alfrule(struct apnrule_queue *queue, struct apn_alfrule
 	}
 
 	return (NULL);
+}
+
+/*
+ * Search for alf rule with ID id.  Return the apn_rule including that
+ * alf rule.
+ */
+static struct apn_rule *
+apn_search_rulealf(struct apnrule_queue *queue, int id)
+{
+	struct apn_rule		*p;
+	struct apn_alfrule	*hp;
+
+	TAILQ_FOREACH(p, queue, entry) {
+		hp = p->rule.alf;
+		while (hp) {
+			if (hp->id == id)
+				return (p);
+			hp = hp->next;
+		}
+	}
+
+	return (NULL);
+}
+
+/*
+ * Copy rules, including their IDs.
+ */
+static struct apn_rule *
+apn_copy_rule(struct apn_rule *rule)
+{
+	struct apn_rule	*newrule;
+
+	if (rule == NULL)
+		return (NULL);
+
+	if ((newrule = calloc(1, sizeof(struct apn_rule))) == NULL)
+		return (NULL);
+
+	newrule->type = rule->type;
+	newrule->id = rule->id;
+
+	switch (rule->type) {
+	case APN_ALF:
+		newrule->rule.alf = apn_copy_alfrules(rule->rule.alf);
+		break;
+	default:
+		free(newrule);
+		return (NULL);
+	}
+
+	return (newrule);
+}
+
+/*
+ * Copy a chain of struct apn_alfrule, however skip context rules!
+ * Include IDs.
+ */
+static struct apn_alfrule *
+apn_copy_alfrules(struct apn_alfrule *rule)
+{
+	struct apn_alfrule	*newrule, *newhead, *hp;
+
+	hp = rule;
+	newhead = NULL;
+	while (hp) {
+		if ((newrule = calloc(1, sizeof(struct apn_alfrule))) == NULL)
+			goto errout;
+
+		newrule->type = hp->type;
+		newrule->id = hp->id;
+
+		switch (hp->type) {
+		case APN_ALF_FILTER:
+			if (apn_copy_afilt(&hp->rule.afilt,
+			    &newrule->rule.afilt) != 0) {
+				free(newrule);
+				goto errout;
+			}
+			break;
+
+		case APN_ALF_CAPABILITY:
+			if (apn_copy_acap(&hp->rule.acap, &newrule->rule.acap)
+			    != 0) {
+				free(newrule);
+				goto errout;
+			}
+			break;
+
+		case APN_ALF_DEFAULT:
+			if (apn_copy_apndefault(&hp->rule.apndefault,
+			    &newrule->rule.apndefault) != 0) {
+				free(newrule);
+				goto errout;
+			}
+			break;
+
+		case APN_ALF_CTX:
+			/*FALLTHROUGH*/
+		default:
+			/* just ignore and go on */
+			free(newrule);
+			hp = hp->next;
+			continue;
+		}
+
+		newrule->tail = newrule;
+		if (newhead == NULL)
+			newhead = newrule;
+		else {
+			newhead->tail->next = newrule;
+			newhead->tail = newrule;
+		}
+
+		hp = hp->next;
+	}
+
+	return (newhead);
+
+errout:
+	apn_free_alfrule(newhead);
+	return (NULL);
+}
+
+static int
+apn_copy_afilt(struct apn_afiltrule *src, struct apn_afiltrule *dst)
+{
+	if (src == NULL || dst == NULL)
+		return (0);
+
+	bcopy(src, dst, sizeof(*dst));
+
+	if (src->filtspec.fromhost && (dst->filtspec.fromhost =
+	    apn_copy_hosts(src->filtspec.fromhost)) == NULL) {
+		return (1);
+	}
+	if (src->filtspec.tohost && (dst->filtspec.tohost =
+	    apn_copy_hosts(src->filtspec.tohost)) == NULL) {
+		apn_free_host(dst->filtspec.fromhost);
+		return (1);
+	}
+	if (src->filtspec.fromport && (dst->filtspec.fromport =
+	    apn_copy_ports(src->filtspec.fromport)) == NULL) {
+		apn_free_host(dst->filtspec.fromhost);
+		apn_free_host(dst->filtspec.tohost);
+		return (1);
+	}
+	if (src->filtspec.toport && (dst->filtspec.toport =
+	    apn_copy_ports(src->filtspec.toport)) == NULL) {
+		apn_free_host(dst->filtspec.fromhost);
+		apn_free_host(dst->filtspec.tohost);
+		apn_free_port(dst->filtspec.fromport);
+		return (1);
+	}
+
+	return (0);
+}
+
+static int
+apn_copy_acap(struct apn_acaprule *src, struct apn_acaprule *dst)
+{
+	bcopy(src, dst, sizeof(struct apn_acaprule));
+	return (0);
+}
+
+static int
+apn_copy_apndefault(struct apn_default *src, struct apn_default *dst)
+{
+	bcopy(src, dst, sizeof(struct apn_default));
+	return (0);
+}
+
+static struct apn_host *
+apn_copy_hosts(struct apn_host *host)
+{
+	struct apn_host	*hp, *newhost, *newhead;
+
+	newhead = NULL;
+	hp = host;
+	while (hp) {
+		if ((newhost = calloc(1, sizeof(struct apn_host))) == NULL)
+			goto errout;
+
+		bcopy(hp, newhost, sizeof(struct apn_host));
+		newhost->tail = newhost;
+		if (newhead == NULL)
+			newhead = newhost;
+		else {
+			newhead->tail->next = newhost;
+			newhead->tail = newhost;
+		}
+
+		hp = hp->next;
+	}
+
+	return (newhead);
+
+errout:
+	apn_free_host(newhead);
+	return (NULL);
+}
+
+static struct apn_port *
+apn_copy_ports(struct apn_port *port)
+{
+	struct apn_port	*hp, *newport, *newhead;
+
+	newhead = NULL;
+	hp = port;
+	while (hp) {
+		if ((newport = calloc(1, sizeof(struct apn_port))) == NULL)
+			goto errout;
+
+		bcopy(hp, newport, sizeof(struct apn_port));
+		newport->tail = newport;
+		if (newhead == NULL)
+			newhead = newport;
+		else {
+			newhead->tail->next = newport;
+			newhead->tail = newport;
+		}
+
+		hp = hp->next;
+	}
+
+	return (newhead);
+
+errout:
+	apn_free_port(newhead);
+	return (NULL);
+}
+
+static int
+apn_set_application(struct apn_rule *rule, const char *filename,
+    const char *csum, int type)
+{
+	struct apn_app	*app;
+	size_t		 len;
+
+	if (rule == NULL || rule->app != NULL)
+		return (1);
+
+	/*
+	 * Empty filename _and_ empty checksum is ok, ie. this means
+	 * "any".
+	 */
+	if (filename == NULL && csum == NULL)
+		return (0);
+
+	switch (type) {
+	case APN_HASH_SHA256:
+		len = APN_HASH_SHA256_LEN;
+		break;
+	default:
+		return (-1);
+	}
+
+	if ((app = calloc(1, sizeof(struct apn_app))) == NULL)
+		return (-1);
+	if ((app->name = strdup(filename)) == NULL) {
+		free(app);
+		return (-1);
+	}
+	bcopy(csum, app->hashvalue, len);
+	app->hashtype = type;
+
+	rule->app = app;
+
+	return (0);
 }
