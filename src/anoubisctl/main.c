@@ -32,6 +32,8 @@
 #include <sys/un.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
+#include <sys/mman.h>
+#include <fcntl.h>
 #include <signal.h>
 
 #include <netinet/in.h>
@@ -266,42 +268,209 @@ daemon_reload(void)
 }
 
 
+static void
+free_msg_list(struct anoubis_msg * m)
+{
+	struct anoubis_msg * tmp;
+	while (m) {
+		tmp = m;
+		m = m->next;
+		anoubis_msg_free(tmp);
+	}
+}
+
 static int
 dump(char *file)
 {
 	int	error = 0;
+	FILE * fp = NULL;
+	struct anoubis_transaction * t;
+	struct anoubis_msg * m;
+	Policy_GetByUid req;
+	int prio, len;
 
-/* XXX RD anoubis_profile ?? dump rules */
+	error = create_channel();
+	if (error) {
+		fprintf(stderr, "Cannot connect to anoubisd\n");
+		return error;
+	}
+	set_value(req.ptype, ANOUBIS_PTYPE_GETBYUID);
+	set_value(req.uid, geteuid());
 
-	printf("dump %s\n", file);
-
-	/* error = 3 */
-
-	return error;
+	for (prio = 0; prio < 2 /*XXX CEH: Should be PE_PRIO_MAX */; ++prio) {
+		set_value(req.prio, prio);
+		t = anoubis_client_policyrequest_start(client, &req,
+		    sizeof(req));
+		if (!t) {
+			destroy_channel();
+			return 3;
+		}
+		while(1) {
+			int ret = anoubis_client_wait(client);
+			if (ret <= 0) {
+				anoubis_transaction_destroy(t);
+				destroy_channel();
+				return 3;
+			}
+			if (t->flags & ANOUBIS_T_DONE)
+				break;
+		}
+		if (t->result) {
+			fprintf(stderr, "Policy Request failed: %d\n",
+			    t->result);
+			anoubis_transaction_destroy(t);
+			return 3;
+		}
+		m = t->msg;
+		t->msg = NULL;
+		anoubis_transaction_destroy(t);
+		if (!m || !VERIFY_LENGTH(m, sizeof(Anoubis_PolicyReplyMessage))
+		    || get_value(m->u.policyreply->error) != 0) {
+			fprintf(stderr, "Error retrieving policy\n");
+			free_msg_list(m);
+			return 3;
+		}
+		if (!fp) {
+			if (!file || strcmp(file, "-") == 0) {
+				fp = stdout;
+			} else {
+				fp = fopen(file, "w");
+			}
+		}
+		if (!fp) {
+			free_msg_list(m);
+			destroy_channel();
+			fprintf(stderr, "Cannot open %s for writing\n", file);
+			return 3;
+		}
+		fprintf(fp, "\nPolicies for UID %d PRIO %d\n",
+		    geteuid(), prio);
+		while (m) {
+			struct anoubis_msg * tmp;
+			len = m->length - CSUM_LEN
+			    - sizeof(Anoubis_PolicyReplyMessage);
+			if (fwrite(m->u.policyreply->payload, 1, len, fp)
+			    != len) {
+				fprintf(stderr, "Error writing to %s\n", file);
+				free_msg_list(m);
+				fclose(fp);
+				destroy_channel();
+				return 3;
+			}
+			tmp = m;
+			m = m->next;
+			anoubis_msg_free(tmp);
+		}
+	}
+	if (fp)
+		fclose(fp);
+	destroy_channel();
+	return 0;
 }
 
 static int
 load(char *rulesopt)
 {
-	struct apn_ruleset	*ruleset;
-	int	flags = 0;
-	int	error = 0;
+	int fd;
+	struct stat statbuf;
+	size_t length, total;
+	char * buf = NULL;
+	Policy_SetByUid * req;
+	struct anoubis_transaction *t;
+	struct apn_ruleset *ruleset = NULL;
+	int error, flags = 0;
 
-	if (rulesopt != NULL) {
-		if (opts & ANOUBISCTL_OPT_VERBOSE)
-			flags |= APN_FLAG_VERBOSE;
-		if (opts & ANOUBISCTL_OPT_VERBOSE2)
-			flags |= APN_FLAG_VERBOSE2;
-
-		if (apn_parse(rulesopt, &ruleset, flags)) {
-			error = 1;
+	if (rulesopt == NULL) {
+		fprintf(stderr, "Need a rules file");
+		return 3;
+	}
+	if (strcmp(rulesopt, "-") == 0
+	    && (opts & ANOUBISCTL_OPT_NOACTION) == 0)  {
+		fprintf(stderr, "Rules must be loaded from a regular file\n");
+		return 3;
+	}
+	if (opts & ANOUBISCTL_OPT_VERBOSE)
+		flags |= APN_FLAG_VERBOSE;
+	if (opts & ANOUBISCTL_OPT_VERBOSE2)
+		flags |= APN_FLAG_VERBOSE2;
+	if (apn_parse(rulesopt, &ruleset, flags)) {
+		error = 1;
+		if (ruleset) {
 			apn_print_errors(ruleset, stderr);
+			free(ruleset);
+		} else {
+			fprintf(stderr, "FATAL: Out of memory\n");
+		}
+		return error;
+	}
+	apn_free_ruleset(ruleset);
+	if (opts & ANOUBISCTL_OPT_NOACTION)
+		return 0;
+	error = create_channel();
+	if (error) {
+		fprintf(stderr, "Cannot connect to anoubisd\n");
+		return error;
+	}
+	fd = open(rulesopt, O_RDONLY);
+	if (fd < 0) {
+		perror("open");
+		return 3;
+	}
+	if (fstat(fd, &statbuf) < 0) {
+		perror("fstat");
+		close(fd);
+		return 3;
+	}
+	length = statbuf.st_size;
+	if (length) {
+		buf = mmap(NULL, length, PROT_READ, MAP_PRIVATE, fd, 0);
+		if (buf == MAP_FAILED) {
+			perror("mmap");
+			close(fd);
+			return 3;
 		}
 	}
-
-/* XXX RD anoubis_profile ?? load rules */
-
-	return error;
+	close(fd);
+	total = sizeof(*req) + length;
+	req = malloc(total);
+	if (!req) {
+		fprintf(stderr, "Out of memory\n");
+		if (length)
+			munmap(buf, length);
+		return 3;
+	}
+	set_value(req->ptype, ANOUBIS_PTYPE_SETBYUID);
+	/* XXXXX */
+	set_value(req->uid, geteuid());
+	set_value(req->prio, 1);
+	if (length) {
+		memcpy(req->payload, buf, length);
+		munmap(buf, length);
+	}
+	t = anoubis_client_policyrequest_start(client, req, total);
+	free(req);
+	if (!t) {
+		fprintf(stderr, "Failed to issue policy request\n");
+		destroy_channel();
+		return 3;
+	}
+	while(1) {
+		int ret = anoubis_client_wait(client);
+		if (ret <= 0) {
+			anoubis_transaction_destroy(t);
+			destroy_channel();
+			return 3;
+		}
+		if (t->flags & ANOUBIS_T_DONE)
+			break;
+	}
+	if (t->result) {
+		fprintf(stderr, "Policy Request failed: %d\n", t->result);
+		anoubis_transaction_destroy(t);
+		return 3;
+	}
+	destroy_channel();
+	return 0;
 }
 
 static int

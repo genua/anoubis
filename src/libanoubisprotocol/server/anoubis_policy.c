@@ -39,12 +39,16 @@
 #include <queue.h>
 #endif
 
+#define	REQUEST_DATAEND		0x001UL
+#define REPLY_DATASTART		0x002UL
+#define REPLY_DATAEND		0x004UL
+
 struct policy_request {
 	u_int64_t token;
 	LIST_ENTRY(policy_request) link;
 	struct achat_channel * chan;
-	struct anoubis_msg * m;
 	u_int32_t uid;
+	int flags;
 };
 
 struct anoubis_policy_comm {
@@ -84,7 +88,7 @@ int anoubis_policy_comm_process(struct anoubis_policy_comm * comm,
 {
 	struct policy_request * req;
 	size_t datalen;
-	int ret;
+	int ret, flags;
 
 	if (!VERIFY_LENGTH(m, sizeof(Anoubis_PolicyRequestMessage))) {
 		anoubis_msg_free(m);
@@ -97,32 +101,44 @@ int anoubis_policy_comm_process(struct anoubis_policy_comm * comm,
 	}
 	LIST_FOREACH(req, &comm->req, link) {
 		if (req->chan == chan)
-			return -EBUSY;
+			break;
 	}
-	req = malloc(sizeof(struct policy_request));
-	if (!req)
-		return -ENOMEM;
-	req->m = m;
-	req->token = ++comm->nexttoken;
-	req->uid = uid;
-	req->chan = chan;
-	LIST_INSERT_HEAD(&comm->req, req, link);
+	flags = get_value(m->u.policyrequest->flags);
+	if (req) {
+		if (flags & POLICY_FLAG_START) 
+			return -EBUSY;
+		if (req->flags & REQUEST_DATAEND)
+			return -EINVAL;
+	} else {
+		req = malloc(sizeof(struct policy_request));
+		if (!req)
+			return -ENOMEM;
+		req->token = ++comm->nexttoken;
+		req->uid = uid;
+		req->chan = chan;
+		req->flags = 0;
+		LIST_INSERT_HEAD(&comm->req, req, link);
+	}
 	ret = comm->dispatch(comm, req->token, uid,
-	    m->u.policyrequest->payload, datalen, comm->arg);
+	    m->u.policyrequest->payload, datalen, comm->arg,
+	    get_value(m->u.policyrequest->flags));
 	if (ret < 0) {
 		LIST_REMOVE(req, link);
-		anoubis_msg_free(req->m);
 		free(req);
 	}
+	if (flags & POLICY_FLAG_END)
+		req->flags |= REQUEST_DATAEND;
+	anoubis_msg_free(m);
 	return ret;
 }
 
 int anoubis_policy_comm_answer(struct anoubis_policy_comm * comm,
-    u_int64_t token, int error, void * data, int len)
+    u_int64_t token, int error, void * data, int len, int end)
 {
 	struct policy_request * req;
 	struct anoubis_msg * m;
 	achat_rc ret;
+	int flags = 0;
 
 	LIST_FOREACH(req, &comm->req, link) {
 		if (req->token == token)
@@ -130,29 +146,41 @@ int anoubis_policy_comm_answer(struct anoubis_policy_comm * comm,
 	}
 	if (!req)
 		return -ESRCH;
-	LIST_REMOVE(req, link);
-	anoubis_msg_free(req->m);
-	/*
-	 * chan = NULL will be used to mark a connection as dead. This
-	 * is not an error.
-	 */
-	if (!req->chan) {
-		free(req);
-		return 0;
+	if (req->flags & REPLY_DATAEND)
+		return -EINVAL;
+	if ((req->flags & REPLY_DATASTART) == 0) {
+		req->flags |= REPLY_DATASTART;
+		flags |= POLICY_FLAG_START;
+	}
+	if (end) {
+		req->flags |= REPLY_DATAEND;
+		flags |= POLICY_FLAG_END;
+		LIST_REMOVE(req, link);
+		/*
+		 * chan = NULL will be used to mark a connection as dead. This
+		 * is not an error.
+		 */
+		if (!req->chan) {
+			free(req);
+			return 0;
+		}
 	}
 	m = anoubis_msg_new(sizeof(Anoubis_PolicyReplyMessage) + len);
 	if (!m) {
-		free(req);
+		if (end)
+			free(req);
 		return -ENOMEM;
 	}
 	set_value(m->u.policyreply->type, ANOUBIS_P_REPLY);
 	set_value(m->u.policyreply->error, error);
+	set_value(m->u.policyreply->flags, flags);
 	if (len) {
 		memcpy(m->u.policyreply->payload, data, len);
 	}
 	ret = anoubis_msg_send(req->chan, m);
 	anoubis_msg_free(m);
-	free(req);
+	if (end)
+		free(req);
 	if (ret != ACHAT_RC_OK)
 		return -EPIPE;
 	return 0;

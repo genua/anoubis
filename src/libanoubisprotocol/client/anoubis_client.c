@@ -45,7 +45,8 @@
 
 #define ANOUBIS_PROTO_VERSION		1
 
-#define ALLOCLEN ((8192>ACHAT_MAX_MSGSIZE)?ACHAT_MAX_MSGSIZE:8192)
+#define ALLOCLEN 4000
+#define SENDLEN  3000
 
 static struct proto_opt anoubis_protos[] = {
 	{ ANOUBIS_PROTO_POLICY,		"POLICY"	},
@@ -790,6 +791,7 @@ static void anoubis_client_policy_steps(struct anoubis_transaction * t,
 {
 	struct anoubis_client * client = t->cbdata;
 	int ret = anoubis_client_verify(client, m);
+	int flags;
 	if (ret < 0)
 		goto err;
 	ret = -EPROTO;
@@ -797,6 +799,16 @@ static void anoubis_client_policy_steps(struct anoubis_transaction * t,
 	    || get_value(m->u.policyreply->type) != ANOUBIS_P_REPLY)
 		goto err;
 	ret = - get_value(m->u.policyreply->error);
+	if (ret)
+		goto err;
+	flags = get_value(m->u.policyreply->flags);
+	/* Start must be set exactly once on the first message. */
+	if ((t->msg == NULL) == ((flags & POLICY_FLAG_START) == 0)) {
+		ret = -EPROTO;
+		goto err;
+	}
+	if ((flags & POLICY_FLAG_END) == 0)
+		return;
 err:
 	/* Do not free the message because of ANOUBIS_T_WANTMESSAGE */
 	anoubis_transaction_done(t, -ret);
@@ -809,7 +821,7 @@ anoubis_client_policyrequest_start(struct anoubis_client * client,
     void * data, size_t datalen)
 {
 	struct anoubis_msg * m;
-	struct anoubis_transaction * t;
+	struct anoubis_transaction * t = NULL;
 	static const u_int32_t nextops[] = { ANOUBIS_P_REPLY, -1 };
 	if ((client->proto & ANOUBIS_PROTO_POLICY) == 0)
 		return NULL;
@@ -819,24 +831,42 @@ anoubis_client_policyrequest_start(struct anoubis_client * client,
 		return NULL;
 	if (client->flags & FLAG_POLICY_PENDING)
 		return NULL;
-	m = anoubis_msg_new(sizeof(Anoubis_PolicyRequestMessage) + datalen);
-	if (!m)
-		return NULL;
-	t = anoubis_transaction_create(0,
-	    ANOUBIS_T_INITSELF|ANOUBIS_T_WANTMESSAGE,
-	    &anoubis_client_policy_steps, NULL, client);
-	if (!t) {
-		anoubis_msg_free(m);
-		return t;
+	while (datalen) {
+		int len = datalen;
+		int flags = 0;
+		if (len > SENDLEN)
+			len = SENDLEN;
+		m = anoubis_msg_new(sizeof(Anoubis_PolicyRequestMessage) + len);
+		if (!m) {
+			if (t)
+				anoubis_transaction_destroy(t);
+			return NULL;
+		}
+		if (!t) {
+			t = anoubis_transaction_create(0,
+			    ANOUBIS_T_INITSELF|ANOUBIS_T_WANT_ALL,
+			    &anoubis_client_policy_steps, NULL, client);
+			if (!t) {
+				anoubis_msg_free(m);
+				return NULL;
+			}
+			flags |= POLICY_FLAG_START;
+		}
+		set_value(m->u.policyrequest->type, ANOUBIS_P_REQUEST);
+		memcpy(m->u.policyrequest->payload, data, len);
+		data += len;
+		datalen -= len;
+		if (datalen == 0)
+			flags |= POLICY_FLAG_END;
+		set_value(m->u.policyrequest->flags, flags);
+		if (anoubis_client_send(client, m) < 0) {
+			anoubis_msg_free(m);
+			anoubis_transaction_destroy(t);
+			return NULL;
+		}
 	}
-	set_value(m->u.policyrequest->type, ANOUBIS_P_REQUEST);
-	memcpy(m->u.policyrequest->payload, data, datalen);
 	anoubis_transaction_setopcodes(t, nextops);
 	LIST_INSERT_HEAD(&client->ops, t, next);
-	if (anoubis_client_send(client, m) < 0) {
-		anoubis_transaction_destroy(t);
-		return NULL;
-	}
 	client->flags |= FLAG_POLICY_PENDING;
 	return t;
 }
@@ -895,4 +925,13 @@ void anoubis_client_close(struct anoubis_client * client)
 	anoubis_transaction_destroy(t);
 	return;
 }
+
+int anoubis_client_wait(struct anoubis_client * client)
+{
+	struct anoubis_msg * m = anoubis_client_rcv(client, ALLOCLEN);
+	if (!m)
+		return 0;
+	return anoubis_client_process(client, m);
+}
+
 /*@=memchecks@*/

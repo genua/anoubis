@@ -45,8 +45,9 @@
 #define ANOUBIS_T_DONE		0x0010	/* Transaction is done. */
 #define	ANOUBIS_T_DEQUEUE	0x0020	/* Dequeue transaction from list */
 #define ANOUBIS_T_WANTMESSAGE	0x0040	/* Keep the final message */
+#define ANOUBIS_T_WANT_ALL	0x0080	/* Keep ALL messages */
 
-#define ANOUBIS_T_MASK		0x007fU
+#define ANOUBIS_T_MASK		0x00ffU
 
 
 struct anoubis_transaction;

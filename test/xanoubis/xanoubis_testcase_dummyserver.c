@@ -69,9 +69,9 @@ static char **tc_argv;
 static int    tc_argc;
 
 int policy_dispatch(struct anoubis_policy_comm * policy, u_int64_t token,
-    u_int32_t uid, void * buf,  size_t len, void *arg)
+    u_int32_t uid, void * buf,  size_t len, void *arg, int flags)
 {
-	return anoubis_policy_comm_answer(policy, token, 0, NULL, 0);
+	return anoubis_policy_comm_answer(policy, token, 0, NULL, 0, 1);
 }
 
 void

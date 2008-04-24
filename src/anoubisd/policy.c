@@ -53,6 +53,8 @@
 #include "aqueue.h"
 #include "amsg.h"
 
+#include <anoubis_protocol.h>
+
 static void	policy_sighandler(int, short, void *);
 static void	dispatch_timer(int, short, void *);
 static void	dispatch_m2p(int, short, void *);
@@ -62,7 +64,6 @@ static void	dispatch_p2s(int, short, void *);
 
 static Queue	eventq_p2m;
 static Queue	eventq_p2s;
-static Queue	eventq_s2p;
 
 /*
  * Keep track of messages which have been forwarded to the
@@ -179,7 +180,6 @@ policy_main(struct anoubisd_config *conf, int pipe_m2s[2], int pipe_m2p[2],
 
 	queue_init(eventq_p2m);
 	queue_init(eventq_p2s);
-	queue_init(eventq_s2p);
 
 	queue_init(replyq);
 
@@ -205,7 +205,7 @@ policy_main(struct anoubisd_config *conf, int pipe_m2s[2], int pipe_m2p[2],
 
 	ev_info.ev_p2m = &ev_p2m;
 	ev_info.ev_p2s = &ev_p2s;
-	ev_info.ev_p2s = &ev_s2p;
+	ev_info.ev_s2p = &ev_s2p;
 
 	/* Five second timer for statistics ioctl */
 	tv.tv_sec = 5;
@@ -325,6 +325,11 @@ dispatch_m2p(int fd, short sig, void *arg)
 		reply = policy_engine(ANOUBISD_MSG_EVENTDEV, hdr);
 		if (reply == NULL) {
 			DEBUG(DBG_TRACE, "<dispatch_m2p (no reply)");
+			/*
+			 * Just in case messages have been queued. E.g.
+			 * via send_notify
+			 */
+			event_add(ev_info->ev_p2s, NULL);
 			continue;
 		}
 
@@ -440,91 +445,127 @@ send_lognotify(struct eventdev_hdr *hdr, u_int32_t error, u_int32_t loglevel)
 	enqueue(&eventq_p2s, msg);
 }
 
+int send_policy_data(u_int64_t token, int fd)
+{
+	anoubisd_msg_t * msg;
+	struct anoubisd_reply * comm;
+	int flags = POLICY_FLAG_START;
+	int size = sizeof(anoubisd_msg_t) + sizeof(struct anoubisd_reply)
+	    + 3000;
+
+	while(1) {
+		msg = malloc(size);
+		if (!msg)
+			goto oom;
+		msg->size = size;
+		msg->mtype = ANOUBISD_MSG_POLREPLY;
+		comm = (struct anoubisd_reply *)msg->msg;
+		comm->token = token;
+		comm->reply = 0;
+		comm->flags = flags;
+		comm->len = read(fd, comm->msg, 3000);
+		if (comm->len < 0) {
+			int ret = -errno;
+			free(msg);
+			return ret;
+		}
+		if (comm->len == 0) {
+			comm->flags |= POLICY_FLAG_END;
+			enqueue(&eventq_p2s, msg);
+			break;
+		}
+		enqueue(&eventq_p2s, msg);
+		flags = 0;
+	}
+	return 0;
+oom:
+	log_warn("send_policy_data: can't allocate memory");
+	master_terminate(ENOMEM);
+	return -ENOMEM;
+}
+
 static void
 dispatch_s2p(int fd, short sig, void *arg)
 {
 	struct event_info_policy *ev_info = (struct event_info_policy*)arg;
 	struct reply_wait rep_tmp, *rep_wait;
+	struct eventdev_reply * evrep;
 	anoubisd_msg_t *msg, *msg_rep;
-	struct eventdev_hdr *hdr;
 	anoubisd_msg_comm_t *comm;
 	anoubisd_reply_t *reply, *rep;
 
 	DEBUG(DBG_TRACE, ">dispatch_s2p");
 
-	if ((msg = queue_peek(&eventq_s2p)) == NULL) {
-		DEBUG(DBG_TRACE, "<dispatch_s2p (no msg)");
-		return;
-	}
-
-	switch (msg->mtype) {
-
-	case ANOUBISD_MSG_SESSION_REG:
-
-		/* XXX RD - handle session registration */
-
-		msg = dequeue(&eventq_s2p);
-		DEBUG(DBG_QUEUE, " <eventq_s2p");
-		free(msg);
-		break;
-
-	case ANOUBISD_MSG_POLREQUEST:
-
-		comm = (anoubisd_msg_comm_t *)msg->msg;
-
-		reply = policy_engine(ANOUBISD_MSG_POLREQUEST, comm);
-
-		msg_rep = msg_factory(ANOUBISD_MSG_POLREPLY,
-		    sizeof(anoubisd_reply_t) + reply->len);
-		rep = (anoubisd_reply_t *)msg_rep->msg;
-		bcopy(reply, rep, sizeof(anoubisd_reply_t) + reply->len);
-		free(reply);
-		enqueue(&eventq_p2s, msg_rep);
-		DEBUG(DBG_QUEUE, " >eventq_p22: %x", rep->token);
-		event_add(ev_info->ev_p2m, NULL);
-
-		msg = dequeue(&eventq_s2p);
-		DEBUG(DBG_QUEUE, " <eventq_s2p: %x", comm->token);
-		free(msg);
-		break;
-
-	case ANOUBISD_MSG_EVENTREPLY:
-
-		hdr = (struct eventdev_hdr *)msg->msg;
-		rep_tmp.token = hdr->msg_token;
-
-		if ((rep_wait = queue_find(&replyq, &rep_tmp, token_cmp)) !=
-		    0) {
-			/*
-			 * Only send message if still in queue. It might have
-			 * already been replied to by a timeout or other GUI
-			 */
-			if (send_msg(fd, msg)) {
-
-				DEBUG(DBG_QUEUE, " <replyq: %x",
-				    rep_wait->token);
-				queue_delete(&replyq, rep_wait);
-			}
+	for (;;) {
+		if ((msg = get_msg(fd)) == NULL) {
+			DEBUG(DBG_TRACE, "<dispatch_s2p (no msg)");
+			return;
 		}
-		msg = dequeue(&eventq_s2p);
-		DEBUG(DBG_QUEUE, " <eventq_s2p: %x",
-		    ((struct eventdev_hdr *)msg->msg)->msg_token);
-		free(msg);
-		break;
 
-	default:
+		switch (msg->mtype) {
 
-		DEBUG(DBG_TRACE, "dispatch_s2p: msg type %d", msg->mtype);
-		msg = dequeue(&eventq_s2p);
-		DEBUG(DBG_QUEUE, " <eventq_s2p: ?");
-		free(msg);
-		break;
+		case ANOUBISD_MSG_SESSION_REG:
+
+			/* XXX RD - handle session registration */
+
+			DEBUG(DBG_QUEUE, " <eventq_s2p");
+			free(msg);
+			break;
+
+		case ANOUBISD_MSG_POLREQUEST:
+
+			comm = (anoubisd_msg_comm_t *)msg->msg;
+
+			reply = policy_engine(ANOUBISD_MSG_POLREQUEST, comm);
+			if (!reply) {
+				/*
+				 * Messages have been queued via 
+				 * send_policy_data
+				 */
+				event_add(ev_info->ev_p2s, NULL);
+				break;
+			}
+			msg_rep = msg_factory(ANOUBISD_MSG_POLREPLY,
+			    sizeof(anoubisd_reply_t) + reply->len);
+			rep = (anoubisd_reply_t *)msg_rep->msg;
+			bcopy(reply, rep, sizeof(anoubisd_reply_t)+reply->len);
+			free(reply);
+			enqueue(&eventq_p2s, msg_rep);
+			DEBUG(DBG_QUEUE, " >eventq_p2s: %x", rep->token);
+			event_add(ev_info->ev_p2s, NULL);
+			free(msg);
+			break;
+
+		case ANOUBISD_MSG_EVENTREPLY:
+
+			evrep = (struct eventdev_reply *)msg->msg;
+			rep_tmp.token = evrep->msg_token;
+
+			if ((rep_wait = queue_find(&replyq, &rep_tmp,
+			    token_cmp)) != 0) {
+				/*
+				 * Only send message if still in queue. It
+				 * might have already been replied to by a
+				 * timeout or other GUI
+				 */
+				enqueue(&eventq_p2m, msg);
+				DEBUG(DBG_QUEUE, " >eventq_p2m: %x",
+				    ((struct eventdev_reply *)msg->msg)
+					->msg_token);
+				event_add(ev_info->ev_p2m, NULL);
+			} else {
+				free(msg);
+			}
+			break;
+
+		default:
+
+			DEBUG(DBG_TRACE, "dispatch_s2p: msg type %d",
+			    msg->mtype);
+			free(msg);
+			break;
+		}
 	}
-
-	/* If the queue is not empty, we want to be called again */
-	if (queue_peek(&eventq_s2p) || msg_pending(fd))
-		event_add(ev_info->ev_s2p, NULL);
-
 	DEBUG(DBG_TRACE, "<dispatch_s2p");
 }
 

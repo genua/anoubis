@@ -94,6 +94,7 @@ enum {
 struct anoubisd_msg_comm {
 	u_int64_t	token;
 	u_int32_t	uid;
+	u_int32_t	flags;		/* Only for POLREQUEST */
 	short		len;		/* of following msg */
 	char		msg[0];
 };
@@ -104,6 +105,7 @@ struct anoubisd_reply {
 	time_t		timeout;	/* from policy engine, if ask GUI */
 	int		reply;		/* result code */
 	u_int64_t	token;		/* only for anoubisd_msg_comm_t msgs */
+	u_int32_t	flags;		/* Only for POLREPLY */
 	short		len;		/* of following msg */
 	char		msg[0];
 };
@@ -156,6 +158,7 @@ __dead void	master_terminate(int);
 anoubisd_msg_t *msg_factory(int, int);
 
 void	pe_dump(void);
+int	send_policy_data(u_int64_t token, int fd);
 
 void	send_lognotify(struct eventdev_hdr *, u_int32_t, u_int32_t);
 

@@ -35,7 +35,8 @@ struct anoubis_server;
 struct anoubis_policy_comm;
 
 typedef int (*anoubis_policy_comm_dispatcher_t)(struct anoubis_policy_comm *,
-    u_int64_t token, u_int32_t uid, void * buf, size_t len, void * arg);
+    u_int64_t token, u_int32_t uid, void * buf, size_t len, void * arg,
+    int flags);
 
 typedef int (*anoubis_process_control_dispatcher_t)(struct anoubis_msg *,
     struct achat_channel *);
@@ -49,7 +50,7 @@ int anoubis_policy_comm_process(struct anoubis_policy_comm * comm,
     /*@dependent@*/ struct achat_channel * chan);
 
 int anoubis_policy_comm_answer(struct anoubis_policy_comm * comm,
-    u_int64_t token, int error, void * data, int len);
+    u_int64_t token, int error, void * data, int len, int end);
 
 void anoubis_policy_comm_abort(struct anoubis_policy_comm * comm,
     /*@notnull@*/ struct achat_channel * chan);

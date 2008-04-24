@@ -50,6 +50,8 @@ struct anoubis_transaction * anoubis_transaction_create(anoubis_token_t token,
 		return NULL;
 	if ((flags & ANOUBIS_T_INITSELF) && (flags & ANOUBIS_T_INITPEER))
 		return NULL;
+	if ((flags & ANOUBIS_T_WANTMESSAGE) && (flags & ANOUBIS_T_WANT_ALL))
+		return NULL;
 	ret = malloc(sizeof(struct anoubis_transaction));
 	if (!ret)
 		return NULL;
@@ -68,8 +70,16 @@ void anoubis_transaction_destroy(struct anoubis_transaction * t)
 {
 	if (t->flags & ANOUBIS_T_FREECBDATA)
 		free(t->cbdata);
-	if (t->msg)
-		anoubis_msg_free(t->msg);
+	if (t->flags & ANOUBIS_T_WANT_ALL) {
+		while(t->msg) {
+			struct anoubis_msg * m = t->msg;
+			t->msg = m->next;
+			anoubis_msg_free(m);
+		}
+	} else {
+		if (t->msg)
+			anoubis_msg_free(t->msg);
+	}
 	free(t);
 }
 
@@ -104,6 +114,18 @@ void anoubis_transaction_process(struct anoubis_transaction * t,
 {
 	if (t->process)
 		t->process(t, m);
+	if (t->flags & ANOUBIS_T_WANT_ALL) {
+		struct anoubis_msg * tmp;
+		m->next = NULL;
+		tmp = t->msg;
+		if (tmp) {
+			while (tmp->next)
+				tmp = tmp->next;
+			tmp->next = m;
+		} else {
+			t->msg = m;
+		}
+	}
 	if (t->flags & ANOUBIS_T_DONE) {
 		if (t->flags & ANOUBIS_T_WANTMESSAGE)
 			t->msg = m;

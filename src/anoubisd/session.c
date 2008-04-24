@@ -107,7 +107,7 @@ struct anoubisd_msg_comm_store {
 static void	session_sighandler(int, short, void *);
 static void	notify_callback(struct anoubis_notify_head *, int, void *);
 static int	dispatch_policy(struct anoubis_policy_comm *, u_int64_t,
-		    u_int32_t, void *, size_t, void *);
+		    u_int32_t, void *, size_t, void *, int);
 static void	dispatch_m2s(int, short, void *);
 static void	dispatch_s2m(int, short, void *);
 static void	dispatch_s2p(int, short, void *);
@@ -208,7 +208,7 @@ session_rxclient(int fd, short event, void *arg)
 	DEBUG(DBG_TRACE, ">session_rxclient");
 
 	session = (struct session *)arg;
-	m = anoubis_msg_new(1000 /* XXX ?? */);
+	m = anoubis_msg_new(MSG_BUF_SIZE);
 	if(!m)
 		goto err;
 	size = m->length;
@@ -416,20 +416,21 @@ notify_callback(struct anoubis_notify_head *head, int verdict, void *cbdata)
 
 static int
 dispatch_policy(struct anoubis_policy_comm *comm, u_int64_t token,
-    u_int32_t uid, void *buf, size_t len, void *arg)
+    u_int32_t uid, void *buf, size_t len, void *arg, int flags)
 {
 	struct event_info_session *ev_info = (struct event_info_session*)arg;
 	anoubisd_msg_t *msg;
 	anoubisd_msg_comm_t *msg_comm;
 	struct anoubisd_msg_comm_store *msg_store;
 
-	DEBUG(DBG_TRACE, ">dispatch_policy");
+	DEBUG(DBG_TRACE, ">dispatch_policy token = %lld", token);
 
 	msg = msg_factory(ANOUBISD_MSG_POLREQUEST,
 	    sizeof(anoubisd_msg_comm_t) + len);
 	msg_comm = (anoubisd_msg_comm_t *)msg->msg;
 	msg_comm->token = token;
 	msg_comm->uid = uid;
+	msg_comm->flags = flags;
 	msg_comm->len = len;
 	bcopy(buf, msg_comm->msg, len);
 
@@ -784,6 +785,7 @@ dispatch_p2s_pol_reply(anoubisd_msg_t *msg, struct event_info_session *ev_info)
 	anoubisd_reply_t *reply;
 	struct anoubisd_msg_comm_store msg_comm_store_tmp, *msg_comm;
 	void *buf = NULL;
+	int end, ret;
 
 	DEBUG(DBG_TRACE, ">dispatch_p2s_pol_reply");
 
@@ -791,7 +793,8 @@ dispatch_p2s_pol_reply(anoubisd_msg_t *msg, struct event_info_session *ev_info)
 	msg_comm_store_tmp.token = reply->token;
 	msg_comm = queue_find(&requestq, &msg_comm_store_tmp,  pol_reply_cmp);
 	if (msg_comm == NULL) {
-		log_warn("dispatch_p2s_pol_reply: comm not found");
+		log_warn("dispatch_p2s_pol_reply: comm not found for 0x%x",
+		    reply->token);
 		DEBUG(DBG_TRACE, "<dispatch_p2s_pol_reply (not found)");
 		return;
 	}
@@ -799,12 +802,15 @@ dispatch_p2s_pol_reply(anoubisd_msg_t *msg, struct event_info_session *ev_info)
 	if (reply->len)
 		buf = reply->msg;
 
-	anoubis_policy_comm_answer(msg_comm->comm, reply->token, reply->reply,
-	    buf, reply->len);
-	DEBUG(DBG_TRACE, " >anoubis_policy_comm_answer");
+	end = reply->flags & POLICY_FLAG_END;
+	ret = anoubis_policy_comm_answer(msg_comm->comm, reply->token,
+	    reply->reply, buf, reply->len, end != 0);
+	DEBUG(DBG_TRACE, " >anoubis_policy_comm_answer: %lld %d %d",
+	    reply->token, ret, reply->reply);
 
 	DEBUG(DBG_QUEUE, " <requestq: %x", reply->token);
-	queue_delete(&requestq, msg_comm);
+	if (end)
+		queue_delete(&requestq, msg_comm);
 
 	DEBUG(DBG_TRACE, "<dispatch_p2s_pol_reply");
 }

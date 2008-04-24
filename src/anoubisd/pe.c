@@ -72,6 +72,8 @@
 #define POLICY_ASK	2
 #endif
 
+#include <anoubis_protocol.h>
+
 #include "anoubisd.h"
 
 struct pe_user {
@@ -106,6 +108,24 @@ struct pe_proc {
 	int			 valid_ctx;
 };
 TAILQ_HEAD(tracker, pe_proc) tracker;
+
+static char * prio_to_string[PE_PRIO_MAX] = {
+#ifndef lint
+	[ PE_PRIO_ADMIN ] = ANOUBISD_ADMINDIR,
+	[ PE_PRIO_USER1 ] = ANOUBISD_USERDIR,
+#endif
+};
+
+struct policy_request {
+	LIST_ENTRY(policy_request) next;
+	u_int64_t token;
+	u_int32_t ptype;
+	u_int32_t authuid;
+	int fd;
+	char * tmpname;
+	char * realname;
+};
+LIST_HEAD(, policy_request) preqs;
 
 anoubisd_reply_t	*policy_engine(int, void *);
 anoubisd_reply_t	*pe_dispatch_event(struct eventdev_hdr *);
@@ -158,6 +178,8 @@ int			 pe_addrmatch_host(struct apn_host *, void *,
 			     unsigned short);
 int			 pe_addrmatch_port(struct apn_port *, void *,
 			     unsigned short);
+static char		*pe_policy_file_name(uid_t uid, int prio);
+static int		pe_open_policy_file(uid_t uid, int prio);
 
 /*
  * The following code utilizes list functions from BSD queue.h, which
@@ -172,6 +194,7 @@ pe_init(void)
 
 	TAILQ_INIT(&tracker);
 	TAILQ_INIT(&pdb);
+	LIST_INIT(&preqs);
 
 	count = pe_load_db();
 
@@ -375,6 +398,36 @@ pe_get_user(uid_t uid)
 	DEBUG(DBG_PE_POLICY, "pe_get_user: uid %d user %p", (int)uid, user);
 
 	return (user);
+}
+
+static char *
+pe_policy_file_name(uid_t uid, int prio)
+{
+	char * name;
+	if (asprintf(&name, "/%s/%d", prio_to_string[prio], uid) == -1)
+		return NULL;
+	return name;
+}
+
+static int
+pe_open_policy_file(uid_t uid, int prio)
+{
+	int err, fd;
+	char * name = pe_policy_file_name(uid, prio);
+
+	if (!name)
+		return -ENOMEM;
+	fd = open(name, O_RDONLY);
+	err = errno;
+	free(name);
+	if (fd >= 0)
+		return fd;
+	if (err != ENOENT || prio != PE_PRIO_ADMIN)
+		return -err;
+	fd = open("/" ANOUBISD_ADMINDIR "/" ANOUBISD_DEFAULTNAME, O_RDONLY);
+	if (fd >= 0)
+		return fd;
+	return -errno;
 }
 
 anoubisd_reply_t *
@@ -1134,27 +1187,214 @@ pe_handle_sfs(struct eventdev_hdr *hdr)
 	return (reply);
 }
 
+static struct policy_request * policy_request_find(u_int64_t token)
+{
+	struct policy_request * req;
+	LIST_FOREACH(req, &preqs, next) {
+		if (req->token == token)
+			return req;
+	}
+	return NULL;
+}
+
+static void put_request(struct policy_request *req)
+{
+	if (req->tmpname) {
+		unlink(req->tmpname);
+		free(req->tmpname);
+	}
+	if (req->realname) {
+		free(req->realname);
+	}
+	if (req->fd >= 0)
+		close(req->fd);
+	free(req);
+}
+
 anoubisd_reply_t *
 pe_dispatch_policy(struct anoubisd_msg_comm *comm)
 {
 	anoubisd_reply_t	*reply = NULL;
+	Policy_Generic		*gen;
+	Policy_GetByUid		*getbyuid;
+	Policy_SetByUid		*setbyuid;
+	u_int32_t		uid;
+	u_int32_t		prio;
+	int			error = 0;
+	int			fd;
+	struct policy_request	*req;
+	char			*buf;
+	int			len;
 
 	if (comm == NULL) {
 		log_warnx("pe_dispatch_policy: empty comm");
 		return (NULL);
 	}
 
-	DEBUG(DBG_PE_POLICY, "pe_dispatch_policy: token %x", comm->token);
-
-	if ((reply = calloc(1, sizeof(struct anoubisd_reply))) == NULL) {
-		log_warn("pe_dispatch_policy: cannot allocate memory");
-		master_terminate(ENOMEM);
-		return (NULL);
+	DEBUG(DBG_TRACE, ">pe_dispatch_policy");
+	/*
+	 * See if we have a policy request for this token. It is an error if
+	 *  - there is no request and POLICY_FLAG_START is clear   or
+	 *  - there is a request and POLICY_FLAG_START ist set.
+	 */
+	req = policy_request_find(comm->token);
+	if ((req == NULL) == ((comm->flags & POLICY_FLAG_START) == 0)) {
+		if (req) {
+			error = EBUSY;
+		} else {
+			error = ESRCH;
+		}
+		goto err;
 	}
-
+	/* No request yet, start one. */
+	if (req == NULL) {
+		if (comm->len < sizeof(Policy_Generic)) {
+			error = EINVAL;
+			goto err;
+		}
+		gen = (Policy_Generic *)comm->msg;
+		req = calloc(1, sizeof(struct policy_request));
+		if (!req) {
+			error = ENOMEM;
+			goto err;
+		}
+		req->token = comm->token;
+		req->ptype = get_value(gen->ptype);
+		req->authuid = comm->uid;
+		req->fd = -1;
+		LIST_INSERT_HEAD(&preqs, req, next);
+	}
+	DEBUG(DBG_TRACE, " pe_dispatch_policy: ptype = %d, flags = %d "
+	    "token = %lld", req->ptype, comm->flags, req->token);
+	switch (req->ptype) {
+	case ANOUBIS_PTYPE_GETBYUID:
+		if ((comm->flags & POLICY_FLAG_END) == 0
+		    || (comm->len < sizeof(Policy_GetByUid))) {
+		    	error = EINVAL;
+			goto err;
+		}
+		getbyuid = (Policy_GetByUid *)comm->msg;
+		uid = get_value(getbyuid->uid);
+		prio = get_value(getbyuid->prio);
+		/*
+		 * XXX CEH: Do more/better permission checks here!
+		 * XXX CEH: Authorized user ID is in comm->uid.
+		 * XXX CEH: Currently this assumes Admin == root == uid 0
+		 */
+		error = EPERM;
+		if (comm->uid != uid && comm->uid != 0)
+			goto err;
+		fd = pe_open_policy_file(uid, prio);
+		if (fd == -ENOENT) {
+			error = 0;
+			goto err;
+		}
+		error = EIO;
+		if (fd < 0) {
+			/* ENOENT indicates an empty policy and not an error. */
+			if (fd == -ENOENT)
+				error = 0;
+			goto err;
+		}
+		error = - send_policy_data(comm->token, fd);
+		close(fd);
+		if (error)
+			goto err;
+		break;
+	case ANOUBIS_PTYPE_SETBYUID:
+		buf = comm->msg;
+		len = comm->len;
+		if (comm->flags & POLICY_FLAG_START) {
+			if (comm->len < sizeof(Policy_SetByUid)) {
+				error = EINVAL;
+				goto err;
+			}
+			error = ENOMEM;
+			setbyuid = (Policy_SetByUid *)comm->msg;
+			uid = get_value(setbyuid->uid);
+			prio = get_value(setbyuid->prio);
+			/*
+			 * XXX CEH: Do more/better permission checks here!
+			 * XXX CEH: Authorized user ID is in comm->uid.
+			 * XXX CEH: Currently this assumes Admin = root = uid 0
+			 */
+			if (uid != req->authuid && req->authuid != 0) {
+				error = EPERM;
+				goto err;
+			}
+			if (prio == PE_PRIO_ADMIN && req->authuid != 0) {
+				error = EPERM;
+				goto err;
+			}
+			req->realname = pe_policy_file_name(uid, prio);
+			if (!req->realname)
+				goto err;
+			if (asprintf(&req->tmpname, "%s.%lld", req->realname,
+			    req->token) == -1) {
+			    	req->tmpname = NULL;
+				goto err;
+			}
+			DEBUG(DBG_TRACE, "  open: %s", req->tmpname);
+			req->fd = open(req->tmpname,
+			    O_WRONLY|O_CREAT|O_EXCL, 0400);
+			if (req->fd < 0) {
+				error = errno;
+				goto err;
+			}
+			DEBUG(DBG_TRACE, "  open: %s fd = %d", req->tmpname,
+			    req->fd);
+			buf += sizeof(Policy_SetByUid);
+			len -= sizeof(Policy_SetByUid);
+		}
+		if (req->authuid != comm->uid) {
+			error = EPERM;
+			goto err;
+		}
+		while(len) {
+			int ret = write(req->fd, buf, len);
+			if (ret < 0) {
+				DEBUG(DBG_TRACE, "  write error fd=%d",
+				    req->fd);
+				error = errno;
+				goto err;
+			}
+			buf += ret;
+			len -= ret;
+		}
+		if (comm->flags & POLICY_FLAG_END) {
+			if (rename(req->tmpname, req->realname) < 0) {
+				error = errno;
+				goto err;
+			}
+			error = 0;
+			goto err;
+		}
+		break;
+	default:
+		/* Unknown opcode. */
+		error = EINVAL;
+		goto err;
+	}
+	if (req && (comm->flags & POLICY_FLAG_END)) {
+		LIST_REMOVE(req, next);
+		put_request(req);
+	}
+	DEBUG(DBG_TRACE, "<pe_dispatch_policy (NULL)");
+	return NULL;
+err:
+	if (req) {
+		LIST_REMOVE(req, next);
+		put_request(req);
+	}
+	reply = calloc(1, sizeof(struct anoubisd_reply));
 	reply->token = comm->token;
-
-	return (reply);
+	reply->ask = 0;
+	reply->len = 0;
+	reply->flags = POLICY_FLAG_START|POLICY_FLAG_END;
+	reply->timeout = 0;
+	reply->reply = error;
+	DEBUG(DBG_TRACE, "<pe_dispatch_policy: %d", error);
+	return reply;
 }
 
 struct pe_proc *

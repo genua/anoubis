@@ -60,6 +60,7 @@ struct anoubis_msg * anoubis_client_getnotify(struct anoubis_client * client);
 int anoubis_client_notifyreply(struct anoubis_client * client,
     anoubis_token_t, int error, int delegate);
 int anoubis_client_hasnotifies(struct anoubis_client * client);
+int anoubis_client_wait(struct anoubis_client * client);
 
 __END_DECLS
 

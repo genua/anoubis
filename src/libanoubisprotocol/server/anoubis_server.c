@@ -501,6 +501,7 @@ int anoubis_server_process(struct anoubis_server * server, void * buf,
     size_t len)
 {
 	anoubis_token_t token;
+	int flags;
 #ifndef lint
 	struct anoubis_msg m = {
 		.length = len,
@@ -510,6 +511,7 @@ int anoubis_server_process(struct anoubis_server * server, void * buf,
 	struct anoubis_msg m;
 #endif
 	int opcode;
+
 	/* Return an error if the partner sent data over a dead channel. */
 	if (!server->chan
 	    || (server->connect_flags & (FLAG_GOTCLOSEACK|FLAG_ERROR)))
@@ -535,6 +537,13 @@ int anoubis_server_process(struct anoubis_server * server, void * buf,
 
 	/* Check if opcode is applicable. */
 	switch (opcode) {
+	case ANOUBIS_P_REQUEST:
+		/* This starts a request if POLICY_FLAG_START is set. */
+		if (!VERIFY_FIELD(&m, policyrequest, flags))
+			reply_invalid(server, opcode);
+		flags = get_value(m.u.policyrequest->flags);
+		if ((flags & POLICY_FLAG_START) == 0)
+			break;
 	case ANOUBIS_C_VERSEL:
 	case ANOUBIS_C_AUTH:
 	case ANOUBIS_C_AUTHDATA:
@@ -542,7 +551,6 @@ int anoubis_server_process(struct anoubis_server * server, void * buf,
 	case ANOUBIS_C_PROTOSEL:
 	case ANOUBIS_N_REGISTER:
 	case ANOUBIS_N_UNREGISTER:
-	case ANOUBIS_P_REQUEST:
 		/*
 		 * These start new requests. If we either got a closereq
 		 * from the other end these are forbidden. If we sent a

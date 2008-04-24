@@ -40,7 +40,7 @@
 
 #define ACHAT_SERVER_PORT	4000
 #define ACHAT_MAX_BACKLOG	5
-#define ACHAT_MAX_MSGSIZE	4096
+#define ACHAT_MAX_MSGSIZE	8192
 
 /* anoubis chat channel encryption mode */
 enum acc_sslmode {

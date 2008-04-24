@@ -234,15 +234,43 @@ typedef struct {
 	u32n	error;
 } __attribute__((packed)) Anoubis_NotifyResultMessage;
 
+#define	POLICY_FLAG_START	0x0001UL
+#define	POLICY_FLAG_END		0x0002UL
+
 typedef struct {
 	u32n	type;
+	u32n	flags;
 	char	payload[0];
 } __attribute__((packed)) Anoubis_PolicyRequestMessage;
 
 typedef struct {
 	u32n	type;
+	u32n	flags;
 	u32n	error;
 	char	payload[0];
 } __attribute__((packed)) Anoubis_PolicyReplyMessage;
+
+/* Payload subformat for PolicyRequest messages. */
+
+#define ANOUBIS_PTYPE_GETBYUID		0x100UL
+#define ANOUBIS_PTYPE_SETBYUID		0x101UL
+
+typedef struct {
+	u32n	ptype;
+	char	payload[0];
+} __attribute__((packed)) Policy_Generic;
+
+typedef struct {
+	u32n	ptype;
+	u32n	uid;
+	u32n	prio;
+} __attribute__((packed)) Policy_GetByUid;
+
+typedef struct {
+	u32n	ptype;
+	u32n	uid;
+	u32n	prio;
+	char	payload[0];
+} __attribute__((packed)) Policy_SetByUid;
 
 #endif
