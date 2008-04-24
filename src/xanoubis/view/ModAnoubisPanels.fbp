@@ -197,7 +197,7 @@
                         <object class="notebookpage" expanded="1">
                             <property name="bitmap"></property>
                             <property name="label">Notifications</property>
-                            <property name="select">0</property>
+                            <property name="select">1</property>
                             <object class="wxPanel" expanded="1">
                                 <property name="bg"></property>
                                 <property name="context_help"></property>
@@ -755,13 +755,13 @@
                                         <property name="proportion">0</property>
                                         <object class="wxFlexGridSizer" expanded="0">
                                             <property name="cols">2</property>
-                                            <property name="flexible_direction">wxBOTH</property>
-                                            <property name="growablecols"></property>
+                                            <property name="flexible_direction">wxHORIZONTAL</property>
+                                            <property name="growablecols">0,1</property>
                                             <property name="growablerows"></property>
                                             <property name="hgap">0</property>
                                             <property name="minimum_size"></property>
                                             <property name="name">slotSizer</property>
-                                            <property name="non_flexible_grow_mode">wxFLEX_GROWMODE_SPECIFIED</property>
+                                            <property name="non_flexible_grow_mode">wxFLEX_GROWMODE_NONE</property>
                                             <property name="permission">none</property>
                                             <property name="rows">6</property>
                                             <property name="vgap">0</property>
@@ -1486,7 +1486,7 @@
                                                 <property name="vgap">0</property>
                                                 <object class="sizeritem" expanded="1">
                                                     <property name="border">5</property>
-                                                    <property name="flag">wxALL</property>
+                                                    <property name="flag">wxALL|wxALIGN_RIGHT</property>
                                                     <property name="proportion">0</property>
                                                     <object class="wxStaticText" expanded="1">
                                                         <property name="bg"></property>
@@ -2088,7 +2088,7 @@
                         <object class="notebookpage" expanded="1">
                             <property name="bitmap"></property>
                             <property name="label">Options</property>
-                            <property name="select">1</property>
+                            <property name="select">0</property>
                             <object class="wxPanel" expanded="1">
                                 <property name="bg"></property>
                                 <property name="context_help"></property>
