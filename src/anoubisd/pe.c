@@ -675,8 +675,10 @@ pe_decide_alf(struct pe_proc *proc, struct eventdev_hdr *hdr)
 	DEBUG(DBG_PE_DECALF, "pe_decide_alf: decision %d", decision);
 
 	/* If no default rule matched, decide on deny */
-	if (decision == -1)
+	if (decision == -1) {
 		decision = POLICY_DENY;
+		log = APN_LOG_ALERT;
+	}
 
 	if (log != APN_LOG_NONE)
 		dump = pe_dump_alfmsg(msg);
@@ -706,9 +708,13 @@ pe_decide_alf(struct pe_proc *proc, struct eventdev_hdr *hdr)
 		return (NULL);
 	}
 
-	reply->ask = 0;			/* XXX HSH false */
-	reply->reply = decision;
+	reply->ask = 0;
 	reply->timeout = (time_t)0;
+	if (decision == POLICY_ASK) {
+		reply->ask = 1;
+		reply->timeout = 300;	/* XXX 5 Minutes for now. */
+	}
+	reply->reply = decision;
 	reply->len = 0;
 #else	/* LINUX */
 	anoubisd_reply_t	*reply;
@@ -1500,8 +1506,7 @@ pe_untrack_proc(struct pe_proc *proc)
  * the direct parent process, but some grand parent.  This happens on
  * fork(2).  Moreover, we set a reference to that particular parent.
  *
- * If our parent was never tracked, we will not inherit a context,
- * thus we have to set one later on exec(2).
+ * If our parent was never tracked, we get a new context.
  */
 void
 pe_inherit_ctx(struct pe_proc *proc)
@@ -1533,6 +1538,17 @@ pe_inherit_ctx(struct pe_proc *proc)
 		pe_set_parent_proc(proc, parent);
 
 		pe_dump_ctx("pe_inherit_ctx", proc);
+	} else {
+		/*
+		 * No parent available, derive new context:  We have
+		 * neither an UID, nor pathname and checksum.  Thus the only
+		 * possible context will be derived from the admin/default
+		 * rule set.  If this is not available, the process will
+		 * get no context and susequent policy decisions will not
+		 * yield a valid result (ie. != -1).  In that case,
+		 * the policy engine will enforce the decision POLICY_DENY.
+		 */
+		pe_set_ctx(proc, -1, NULL, NULL);
 	}
 }
 
@@ -1562,8 +1578,8 @@ pe_set_ctx(struct pe_proc *proc, uid_t uid, const u_int8_t *csum,
 		DEBUG(DBG_PE_CTX, "pe_set_ctx: proc %p 0x%08llx has context "
 		    "%p rule %p ctx %p", proc, proc->task_cookie,
 		    proc->context[0],
-		    proc->valid_ctx ? proc->context[0]->rule : NULL,
-		    proc->valid_ctx ? proc->context[0]->ctx : NULL);
+		    proc->context[0] ? proc->context[0]->rule : NULL,
+		    proc->context[0] ? proc->context[0]->ctx : NULL);
 
 		if (pe_decide_ctx(proc, csum, pathhint) != 1) {
 			DEBUG(DBG_PE_CTX, "pe_set_ctx: keeping context");

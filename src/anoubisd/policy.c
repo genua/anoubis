@@ -275,6 +275,7 @@ dispatch_timer(int sig, short event, void *arg)
 
 			DEBUG(DBG_QUEUE, " <replyq: %x", msg_wait->token);
 			queue_delete(&replyq, msg_wait);
+			free(msg_wait);
 		}
 
 	} while ((qep_cur = qep_next));

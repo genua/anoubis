@@ -164,7 +164,6 @@ queue_delete(Queuep queuep, void *msgp)
 	qep = queuep->head;
 	while (qep) {
 		if (msgp == qep->entry) {
-			free(msgp);
 			if (qep == queuep->head) {
 				queuep->head = qep->next;
 				if (queuep->head == NULL)

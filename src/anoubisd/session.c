@@ -400,15 +400,16 @@ notify_callback(struct anoubis_notify_head *head, int verdict, void *cbdata)
 	rep->msg_token = ((struct cbdata *)cbdata)->ev_token;
 	rep->reply = verdict;
 
-	anoubis_notify_destroy_head(head);
-	DEBUG(DBG_TRACE, " >anoubis_notify_destroy_head");
-
 	enqueue(&eventq_s2p, msg);
 	DEBUG(DBG_QUEUE, " >eventq_s2p: %x", rep->msg_token);
 	event_add(((struct cbdata *)cbdata)->ev_info->ev_s2p, NULL);
 
-	DEBUG(DBG_QUEUE, " <headq: %x", rep->msg_token);
-	queue_delete(&headq, cbdata);
+	if (head) {
+		anoubis_notify_destroy_head(head);
+		DEBUG(DBG_TRACE, " >anoubis_notify_destroy_head");
+		DEBUG(DBG_QUEUE, " <headq: %x", rep->msg_token);
+		queue_delete(&headq, cbdata);
+	}
 	free(cbdata);
 
 	DEBUG(DBG_TRACE, "<notify_callback");
@@ -719,6 +720,7 @@ dispatch_p2s_evt_request(anoubisd_msg_t	*msg,
 		DEBUG(DBG_TRACE, " >headq: %x", hdr->msg_token);
 	} else {
 		anoubis_notify_destroy_head(head);
+		notify_callback(NULL, EPERM, cbdata);
 		DEBUG(DBG_TRACE, ">anoubis_notify_destroy_head");
 	}
 
@@ -809,8 +811,10 @@ dispatch_p2s_pol_reply(anoubisd_msg_t *msg, struct event_info_session *ev_info)
 	    reply->token, ret, reply->reply);
 
 	DEBUG(DBG_QUEUE, " <requestq: %x", reply->token);
-	if (end)
+	if (end) {
 		queue_delete(&requestq, msg_comm);
+		free(msg_comm);
+	}
 
 	DEBUG(DBG_TRACE, "<dispatch_p2s_pol_reply");
 }
