@@ -464,7 +464,7 @@
                                                                     <property name="font"></property>
                                                                     <property name="hidden">0</property>
                                                                     <property name="id">wxID_ANY</property>
-                                                                    <property name="label">Information:</property>
+                                                                    <property name="label">Information:&#x0A;&#x0A;This outlines the rules of the ALF.&#x0A;They are displayed depending on&#x0A;their priority.</property>
                                                                     <property name="maximum_size"></property>
                                                                     <property name="minimum_size"></property>
                                                                     <property name="name">tx_RulesOperation2ndHeader</property>
@@ -751,12 +751,12 @@
                                                         <object class="wxStaticText" expanded="1">
                                                             <property name="bg"></property>
                                                             <property name="context_help"></property>
-                                                            <property name="enabled">0</property>
+                                                            <property name="enabled">1</property>
                                                             <property name="fg"></property>
                                                             <property name="font"></property>
                                                             <property name="hidden">0</property>
                                                             <property name="id">wxID_ANY</property>
-                                                            <property name="label">Information:</property>
+                                                            <property name="label">Information: &#x0A;&#x0A;By choosing an application the&#x0A;dependent ruleset will be&#x0A;displayed in the window&#x0A;on the right side.</property>
                                                             <property name="maximum_size">-1,-1</property>
                                                             <property name="minimum_size"></property>
                                                             <property name="name">tx_AppGroupInfo1</property>
@@ -1603,6 +1603,67 @@
                                 <property name="name">alfFader</property>
                                 <property name="permission">protected</property>
                                 <property name="settings"></property>
+                            </object>
+                        </object>
+                        <object class="sizeritem" expanded="1">
+                            <property name="border">5</property>
+                            <property name="flag">wxEXPAND</property>
+                            <property name="proportion">1</property>
+                            <object class="spacer" expanded="1">
+                                <property name="height">0</property>
+                                <property name="permission">protected</property>
+                                <property name="width">0</property>
+                            </object>
+                        </object>
+                        <object class="sizeritem" expanded="1">
+                            <property name="border">5</property>
+                            <property name="flag">wxALL</property>
+                            <property name="proportion">0</property>
+                            <object class="wxStaticText" expanded="1">
+                                <property name="bg"></property>
+                                <property name="context_help"></property>
+                                <property name="enabled">1</property>
+                                <property name="fg"></property>
+                                <property name="font"></property>
+                                <property name="hidden">0</property>
+                                <property name="id">wxID_ANY</property>
+                                <property name="label">The level of restrictions increases with the&#x0A;profile chosen.&#x0A;Rules and restrictions of a lower profile&#x0A;are automatically valid in all profiles above.&#x0A;All settings you choose are contingent upon&#x0A;the chosen profile.&#x0A;It may occur that you can&apos;t switch off the&#x0A;module because of restrictions.</property>
+                                <property name="maximum_size"></property>
+                                <property name="minimum_size"></property>
+                                <property name="name">Info_for_slider</property>
+                                <property name="permission">protected</property>
+                                <property name="pos"></property>
+                                <property name="size"></property>
+                                <property name="style"></property>
+                                <property name="subclass"></property>
+                                <property name="tooltip"></property>
+                                <property name="window_extra_style"></property>
+                                <property name="window_name"></property>
+                                <property name="window_style"></property>
+                                <property name="wrap">-1</property>
+                                <event name="OnChar"></event>
+                                <event name="OnEnterWindow"></event>
+                                <event name="OnEraseBackground"></event>
+                                <event name="OnKeyDown"></event>
+                                <event name="OnKeyUp"></event>
+                                <event name="OnKillFocus"></event>
+                                <event name="OnLeaveWindow"></event>
+                                <event name="OnLeftDClick"></event>
+                                <event name="OnLeftDown"></event>
+                                <event name="OnLeftUp"></event>
+                                <event name="OnMiddleDClick"></event>
+                                <event name="OnMiddleDown"></event>
+                                <event name="OnMiddleUp"></event>
+                                <event name="OnMotion"></event>
+                                <event name="OnMouseEvents"></event>
+                                <event name="OnMouseWheel"></event>
+                                <event name="OnPaint"></event>
+                                <event name="OnRightDClick"></event>
+                                <event name="OnRightDown"></event>
+                                <event name="OnRightUp"></event>
+                                <event name="OnSetFocus"></event>
+                                <event name="OnSize"></event>
+                                <event name="OnUpdateUI"></event>
                             </object>
                         </object>
                     </object>

@@ -93,6 +93,8 @@ class ModSfsOverviewPanelBase : public wxPanel
 		wxStaticText* txt_nachfragenValue;
 		
 		AnFader *sfsFader;
+		
+		wxStaticText* Info_for_slider;
 	
 	public:
 		ModSfsOverviewPanelBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( -1,-1 ), long style = wxTAB_TRAVERSAL );

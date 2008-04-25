@@ -1,0 +1,46 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% This file contains the bilingual descriptions which should eventually be     %
+% part of the distributed language file.                                       %
+% As an interims solution this file is added to the tree but not the sources   %
+% we distribute to act as a reminder to fix that task as soon as possible.     %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%% Overview ALF, SFS [DE] %%%
+Hier lassen sich Profile auswählen.
+Das Niveau der Einschränkungen korrespondiert direkt mit dem ausgewählten
+Profil.
+Einschränkungen oder Regeln aus unten liegenden Profilen sind automatisch in den
+ihnen übergeordneten gültig.
+Einstellungen, die sie im weiteren Verlauf vornehmen, sind immer an das von
+ihnen gewählte Profil gebunden.
+Es kann vorkommen, dass sie das Modul aufgrund ihrer Rechte nicht abschalten
+können.
+
+%%% Overview ALF, SFS [EN] %%%
+The level of restrictions increases with the profile chosen.
+Rules and restrictions of a lower profile are automatically valid in all
+profiles above.
+All settings you choose are contingent upon the chosen profile.
+It may occur that you can't switch off the module because of restrictions.
+
+%%% Main Panel of Module ALF - Rules [DE] %%%
+Hier werden die Regeln der ALF, in Abhängigkeit der Priorität dargestellt.
+
+%%% Main Panel of Module ALF - Rules [EN] %%%
+Here you can see the rules of the ALF.
+They are displayed depending on their priority.
+
+%%% Main Panel of Module Alf - Application [DE] %%%
+Nach Auswahl der Applikation werden ihnen rechts die zugehörigen Regeln
+angezeigt.
+
+%%% Main Panel of Module ALF - Application [EN] %%%
+By choosing an application the dependent rule-set will be displayed in the
+window on the right side.
+
+%%% Main Panel of Module SFS - Rules [DE] %%%
+Hier werden die Regeln der ALF, in Abhängigkeit der Priorität dargestellt.
+
+%%% Main Panel of Module SFS - Rules [EN] %%%
+This outlines the rules of the ALF.
+They are displayed depending on their priority.

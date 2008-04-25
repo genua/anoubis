@@ -74,7 +74,7 @@ ModSfsMainPanelBase::ModSfsMainPanelBase( wxWindow* parent, wxWindowID id, const
 	ln_RulesOperationSep = new wxStaticLine( pan_Rules, wxID_RulesOperationSep, wxDefaultPosition, wxDefaultSize, wxLI_HORIZONTAL );
 	sz_RulesOperations->Add( ln_RulesOperationSep, 0, wxEXPAND | wxALL, 5 );
 	
-	tx_RulesOperation2ndHeader = new wxStaticText( pan_Rules, wxID_ANY, _("Information:"), wxDefaultPosition, wxDefaultSize, 0 );
+	tx_RulesOperation2ndHeader = new wxStaticText( pan_Rules, wxID_ANY, _("Information:\n\nHere you can see the\nrules of the SFS. They are displayed\ndepending on their priority."), wxDefaultPosition, wxDefaultSize, 0 );
 	tx_RulesOperation2ndHeader->Wrap( -1 );
 	sz_RulesOperations->Add( tx_RulesOperation2ndHeader, 0, wxALL, 5 );
 	
@@ -87,7 +87,7 @@ ModSfsMainPanelBase::ModSfsMainPanelBase( wxWindow* parent, wxWindowID id, const
 	pan_Rules->SetSizer( sz_SfsRules );
 	pan_Rules->Layout();
 	sz_SfsRules->Fit( pan_Rules );
-	note_MainSfs->AddPage( pan_Rules, _("Rules"), false );
+	note_MainSfs->AddPage( pan_Rules, _("Rules"), true );
 	pan_TabOptions = new wxPanel( note_MainSfs, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
 	note_MainSfs->AddPage( pan_TabOptions, _("Options"), false );
 	
@@ -145,6 +145,13 @@ ModSfsOverviewPanelBase::ModSfsOverviewPanelBase( wxWindow* parent, wxWindowID i
 	
 	sfsFader = new AnFader(this);
 	sz_OVSFS->Add( sfsFader, 0, wxALL, 5 );
+	
+	
+	sz_OVSFS->Add( 0, 0, 1, wxEXPAND, 5 );
+	
+	Info_for_slider = new wxStaticText( this, wxID_ANY, _("The level of restrictions increases with the\nprofile chosen.\nSettings of a lower profile\nare automatically valid in all profiles above.\nAll settings you choose are contingent upon\nthe chosen profile.\nIt may occur that you can't switch off the\nmodule because of restrictions."), wxDefaultPosition, wxDefaultSize, 0 );
+	Info_for_slider->Wrap( -1 );
+	sz_OVSFS->Add( Info_for_slider, 0, wxALL, 5 );
 	
 	sz_OverviewSFSMain->Add( sz_OVSFS, 1, wxEXPAND, 5 );
 	

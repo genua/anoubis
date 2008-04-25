@@ -74,7 +74,7 @@ ModAlfMainPanelBase::ModAlfMainPanelBase( wxWindow* parent, wxWindowID id, const
 	ln_RulesOperationSep = new wxStaticLine( pan_Rules, wxID_RulesOperationSep, wxDefaultPosition, wxDefaultSize, wxLI_HORIZONTAL );
 	sz_RulesOperations->Add( ln_RulesOperationSep, 0, wxEXPAND | wxALL, 5 );
 	
-	tx_RulesOperation2ndHeader = new wxStaticText( pan_Rules, wxID_ANY, _("Information:"), wxDefaultPosition, wxDefaultSize, 0 );
+	tx_RulesOperation2ndHeader = new wxStaticText( pan_Rules, wxID_ANY, _("Information:\n\nThis outlines the rules of the ALF.\nThey are displayed depending on\ntheir priority."), wxDefaultPosition, wxDefaultSize, 0 );
 	tx_RulesOperation2ndHeader->Wrap( -1 );
 	sz_RulesOperations->Add( tx_RulesOperation2ndHeader, 0, wxALL, 5 );
 	
@@ -113,10 +113,8 @@ ModAlfMainPanelBase::ModAlfMainPanelBase( wxWindow* parent, wxWindowID id, const
 	ln_GroupChoiceSepLine1 = new wxStaticLine( pan_TabAppView, wxID_ANY, wxPoint( -1,-1 ), wxDefaultSize, wxLI_HORIZONTAL );
 	sz_AppSelSouth->Add( ln_GroupChoiceSepLine1, 0, wxEXPAND | wxALL, 5 );
 	
-	tx_AppGroupInfo1 = new wxStaticText( pan_TabAppView, wxID_ANY, _("Information:"), wxDefaultPosition, wxDefaultSize, 0 );
+	tx_AppGroupInfo1 = new wxStaticText( pan_TabAppView, wxID_ANY, _("Information: \n\nBy choosing an application the\ndependent ruleset will be\ndisplayed in the window\non the right side."), wxDefaultPosition, wxDefaultSize, 0 );
 	tx_AppGroupInfo1->Wrap( -1 );
-	tx_AppGroupInfo1->Enable( false );
-	
 	sz_AppSelSouth->Add( tx_AppGroupInfo1, 0, wxALL|wxEXPAND, 5 );
 	
 	sz_AppViewWest->Add( sz_AppSelSouth, 34, wxEXPAND, 5 );
@@ -226,6 +224,13 @@ ModAlfOverviewPanelBase::ModAlfOverviewPanelBase( wxWindow* parent, wxWindowID i
 	
 	alfFader = new AnFader(this);
 	sz_OVALF->Add( alfFader, 0, wxALL, 5 );
+	
+	
+	sz_OVALF->Add( 0, 0, 1, wxEXPAND, 5 );
+	
+	Info_for_slider = new wxStaticText( this, wxID_ANY, _("The level of restrictions increases with the\nprofile chosen.\nRules and restrictions of a lower profile\nare automatically valid in all profiles above.\nAll settings you choose are contingent upon\nthe chosen profile.\nIt may occur that you can't switch off the\nmodule because of restrictions."), wxDefaultPosition, wxDefaultSize, 0 );
+	Info_for_slider->Wrap( -1 );
+	sz_OVALF->Add( Info_for_slider, 0, wxALL, 5 );
 	
 	sz_OverviewALFMain->Add( sz_OVALF, 1, wxEXPAND, 5 );
 	
