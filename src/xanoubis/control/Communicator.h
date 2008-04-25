@@ -45,7 +45,8 @@
 enum connectionStateType {
 	CONNECTION_CONNECTED = 0,
 	CONNECTION_DISCONNECTED,
-	CONNECTION_FAILED
+	CONNECTION_FAILED,
+	CONNECTION_RXTX_ERROR
 };
 
 class Communicator : public wxThread {

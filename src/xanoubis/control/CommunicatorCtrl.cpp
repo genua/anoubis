@@ -83,7 +83,7 @@ CommunicatorCtrl::connect(void)
 {
 	wxThreadError rc;
 
-	if (connectionState_ == CONNECTION_DISCONNECTED) {
+	if (connectionState_ != CONNECTION_CONNECTED) {
 		/*
 		 * If this is a reconnect, the previous object referenced by
 		 * com_, was deleted by 'Delete()' (which also removed the
@@ -229,6 +229,11 @@ CommunicatorCtrl::OnConnection(wxCommandEvent& event)
 	case CONNECTION_FAILED:
 		host = new wxString(wxT("none"));
 		logMessage = wxT("Connection to localhost failed!");
+		wxGetApp().alert(logMessage);
+		break;
+	case CONNECTION_RXTX_ERROR:
+		host = new wxString(wxT("none"));
+		logMessage = wxT("Communication error. Disconnected!");
 		wxGetApp().alert(logMessage);
 		break;
 	}

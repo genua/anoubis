@@ -182,9 +182,11 @@ Communicator::Entry(void)
 	enum communicatorFlag		 startDeRegistration;
 	enum communicatorFlag		 startStatRegistration;
 	enum communicatorFlag		 startStatDeRegistration;
+	enum connectionStateType	 commRC;
 
 	currTa  = NULL;
 	notDone = true;
+	commRC			= CONNECTION_FAILED;
 	startRegistration	= COMMUNICATOR_FLAG_INIT;
 	startDeRegistration	= COMMUNICATOR_FLAG_NONE;
 	startStatRegistration	= COMMUNICATOR_FLAG_NONE;
@@ -225,6 +227,7 @@ Communicator::Entry(void)
 			if (startDeRegistration == COMMUNICATOR_FLAG_PROG) {
 				startDeRegistration = COMMUNICATOR_FLAG_DONE;
 				notDone = false;
+				commRC = CONNECTION_DISCONNECTED;
 				continue;
 			}
 			if (startStatDeRegistration == COMMUNICATOR_FLAG_PROG) {
@@ -269,8 +272,8 @@ Communicator::Entry(void)
 
 		rc = acc_receivemsg(channel_, (char*)(msg->u.buf), &size);
 		if (rc != ACHAT_RC_OK) {
-			/* XXX: is this error path ok? -- ch */
-			startStatDeRegistration = COMMUNICATOR_FLAG_INIT;
+			notDone = false;
+			commRC = CONNECTION_RXTX_ERROR;
 			continue;
 		}
 
@@ -307,7 +310,7 @@ Communicator::Entry(void)
 		}
 	}
 
-	shutdown(CONNECTION_DISCONNECTED);
+	shutdown(commRC);
 
 	return (NULL);
 }
