@@ -47,6 +47,8 @@ class MainFrame : public MainFrameBase
 		AnShortcuts *shortcuts_;
 		unsigned int     messageAlertCount_;
 		unsigned int     messageEscalationCount_;
+		wxIcon		*aboutIcon_;
+
 		void setMessageString(void);
 
 		void onRuleEditorShow(wxCommandEvent&);

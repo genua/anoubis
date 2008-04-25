@@ -32,6 +32,7 @@
 #include <wx/app.h>
 #include <wx/filedlg.h>
 #include <wx/msgdlg.h>
+#include <wx/aboutdlg.h>
 
 #include "AnEvents.h"
 #include "AnShortcuts.h"
@@ -50,6 +51,7 @@ MainFrame::MainFrame(wxWindow *parent) : MainFrameBase(parent)
 	shortcuts_ = new AnShortcuts(this);
 	messageAlertCount_ = 0;
 	messageEscalationCount_ = 0;
+	aboutIcon_ = wxGetApp().loadIcon(_T("ModAnoubis_black_48.png"));
 
 	Connect(anEVT_COM_REMOTESTATION,
 	    wxCommandEventHandler(MainFrame::OnRemoteStation), NULL, this);
@@ -69,6 +71,7 @@ MainFrame::~MainFrame()
 {
 	SetStatusBar(NULL);
 	delete an_statusbar;
+	delete aboutIcon_;
 }
 
 void
@@ -221,9 +224,31 @@ MainFrame::OnOpenEscalations(wxCommandEvent& event)
 void
 MainFrame::OnMbHelpAboutSelect(wxCommandEvent& event)
 {
-	wxMessageBox(
-	    _("Anoubis GUI\n\nAuthors:\nAndreas Fiessler\nChristian Hiesl"),
-	    _("About"), wxOK, this);
+	wxAboutDialogInfo info;
+
+	info.SetName(_T("Anoubis GUI"));
+	info.SetVersion(_T("MS7.A"));
+	info.SetCopyright(_T("(C) 2007-2008 GeNUA mbH"));
+	// info.SetWebSite(_T("www.anoubis.org"));
+	info.SetIcon(*aboutIcon_);
+	// info.SetDescription(_T(""));
+
+	info.AddDeveloper(_T("Alexander von Gernler"));
+	info.AddDeveloper(_T("Andreas Fiessler"));
+	info.AddDeveloper(_T("Christian Ehrhardt"));
+	info.AddDeveloper(_T("Christian Hiesl"));
+	info.AddDeveloper(_T("Hans-Joerg Hoexer"));
+	info.AddDeveloper(_T("Joachim Ayasse"));
+	info.AddDeveloper(_T("Michael Gernoth"));
+	info.AddDeveloper(_T("Pedro Martelleto"));
+	info.AddDeveloper(_T("Reinhard Tartler"));
+	info.AddDeveloper(_T("Sebastian Trahm"));
+	info.AddDeveloper(_T("Stefan Fritsch"));
+
+	info.AddTranslator(_T("Christian Wehrle"));
+	info.AddTranslator(_T("Mathias Pippel"));
+
+	wxAboutBox(info);
 }
 
 void
