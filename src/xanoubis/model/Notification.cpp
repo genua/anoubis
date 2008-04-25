@@ -197,10 +197,19 @@ Notification::getAction(void)
 
 	action = _("was ");
 	error = get_value((notify_->u.notify)->error);
-	if (error == 0) {
+	switch (error) {
+	case POLICY_ALLOW:
 		action += _("allowed");
-	} else {
+		break;
+	case POLICY_DENY:
 		action += _("denied");
+		break;
+	case POLICY_ASK:
+		action += _("asked");
+		break;
+	default:
+		action = _("caused unknown action");
+		break;
 	}
 
 	return (action);

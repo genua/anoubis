@@ -182,10 +182,18 @@ CommunicatorCtrl::OnNotifyReceived(wxCommandEvent& event)
 			}
 			break;
 		case ANOUBIS_N_LOGNOTIFY:
-			if (get_value((notifyMsg->u.notify)->loglevel) == 0) {
+			switch (get_value((notifyMsg->u.notify)->loglevel)) {
+			case APN_LOG_NONE:
+				/* don't show notifies of loglevel 0/none */
+				break;
+			case APN_LOG_NORMAL:
 				notify = new LogNotify(notifyMsg);
-			} else {
+				break;
+			case APN_LOG_ALERT:
 				notify = new AlertNotify(notifyMsg);
+				break;
+			default:
+				break;
 			}
 			break;
 		default:
