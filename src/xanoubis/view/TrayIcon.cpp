@@ -46,6 +46,7 @@
 BEGIN_EVENT_TABLE(TrayIcon, wxTaskBarIcon)
 	EVT_MENU(GUI_EXIT, TrayIcon::OnGuiExit)
 	EVT_MENU(GUI_RESTORE, TrayIcon::OnGuiRestore)
+	EVT_TASKBAR_LEFT_DCLICK(TrayIcon::OnLeftButtonDClick)
 END_EVENT_TABLE()
 
 TrayIcon::TrayIcon(void)
@@ -106,18 +107,24 @@ TrayIcon::OnOpenEscalations(wxCommandEvent& event)
 }
 
 /*
- * XXX ST: #422
- * [MPI] has to decide if we clear Alerts onClose() of the LogViewer or on open.
- * For now we clear the Alert Events onClose()
+ * [MPI] has decided that we clear Alerts on opening the LogViewer.
  */
 void
 TrayIcon::OnLogViewerShow(wxCommandEvent& event)
 {
-	if(!event.GetInt())
+	if(event.GetInt())
 	{
 		messageAlertCount_ = 0;
 		update();
 	}
+}
+
+void
+TrayIcon::OnLeftButtonDClick(wxTaskBarIconEvent& event)
+{
+	wxCommandEvent  showEvent(anEVT_MAINFRAME_SHOW);
+	showEvent.SetInt(true);
+	wxGetApp().sendEvent(showEvent);
 }
 
 void
