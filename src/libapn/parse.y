@@ -140,7 +140,8 @@ typedef struct {
 
 %token	ALLOW DENY ALF SFS SB VS CAP CONTEXT RAW ALL OTHER LOG CONNECT ACCEPT
 %token	INET INET6 FROM TO PORT ANY SHA256 TCP UDP DEFAULT NEW ASK ALERT
-%token	READ WRITE EXEC CHMOD ERROR APPLICATION RULE HOST TFILE
+%token	READ WRITE EXEC CHMOD ERROR APPLICATION RULE HOST TFILE BOTH SEND
+%token	RECEIVE
 %token	<v.string>		STRING
 %token	<v.number>		NUMBER
 %type	<v.app>			app app_l apps sfsapp
@@ -421,7 +422,9 @@ alffilterspec	: netaccess log af proto hosts	{
 
 netaccess	: CONNECT			{ $$ = APN_CONNECT; }
 		| ACCEPT			{ $$ = APN_ACCEPT; }
-		| /* empty */			{ $$ = APN_INOUT; }
+		| SEND				{ $$ = APN_SEND; }
+		| RECEIVE			{ $$ = APN_RECEIVE; }
+		| BOTH				{ $$ = APN_BOTH; }
 		;
 
 af		: INET				{ $$ = AF_INET; }
@@ -941,6 +944,7 @@ lookup(char *s)
 		{ "any",	ANY },
 		{ "application", APPLICATION },
 		{ "ask",	ASK },
+		{ "both",	BOTH },
 		{ "cap",	CAP },
 		{ "chmod",	CHMOD },
 		{ "connect",	CONNECT },
@@ -959,8 +963,10 @@ lookup(char *s)
 		{ "port",	PORT },
 		{ "raw",	RAW },
 		{ "read",	READ },
+		{ "receive",	RECEIVE },
 		{ "rule",	RULE },
 		{ "sb",		SB },
+		{ "send",	SEND },
 		{ "sfs",	SFS },
 		{ "sha256",	SHA256 },
 		{ "tcp",	TCP },
@@ -1551,7 +1557,7 @@ validate_alffilterspec(struct apn_afiltspec *afspec)
 		return (-1);
 
 	if (!(APN_CONNECT <= afspec->netaccess && afspec->netaccess <=
-	    APN_INOUT))
+	    APN_BOTH))
 		return (-1);
 
 	switch (afspec->af) {
@@ -1565,8 +1571,17 @@ validate_alffilterspec(struct apn_afiltspec *afspec)
 
 	switch (afspec->proto) {
 	case IPPROTO_UDP:
-	case IPPROTO_TCP:
+		if (afspec->netaccess != APN_SEND && afspec->netaccess !=
+		    APN_RECEIVE && afspec->netaccess != APN_BOTH)
+			return (-1);
 		break;
+
+	case IPPROTO_TCP:
+		if (afspec->netaccess != APN_CONNECT && afspec->netaccess !=
+		    APN_ACCEPT && afspec->netaccess != APN_BOTH)
+			return (-1);
+		break;
+
 	default:
 		return (-1);
 	}

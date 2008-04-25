@@ -793,8 +793,14 @@ apn_print_netaccess(int netaccess, FILE *file)
 	case APN_ACCEPT:
 		fprintf(file, "accept ");
 		break;
-	case APN_INOUT:
-		/* nothing */
+	case APN_SEND:
+		fprintf(file, "send ");
+		break;
+	case APN_RECEIVE:
+		fprintf(file, "receive ");
+		break;
+	case APN_BOTH:
+		fprintf(file, "both ");
 		break;
 	default:
 		return (1);

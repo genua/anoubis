@@ -811,13 +811,13 @@ pe_decide_alffilt(struct apn_rule *rule, struct alf_event *msg, int *log)
 
 		case ALF_CONNECT:
 			if (hp->rule.afilt.filtspec.netaccess != APN_CONNECT &&
-			    hp->rule.afilt.filtspec.netaccess != APN_INOUT)
+			    hp->rule.afilt.filtspec.netaccess != APN_BOTH)
 				continue;
 			break;
 
 		case ALF_ACCEPT:
 			if (hp->rule.afilt.filtspec.netaccess != APN_ACCEPT &&
-			    hp->rule.afilt.filtspec.netaccess != APN_INOUT)
+			    hp->rule.afilt.filtspec.netaccess != APN_BOTH)
 				continue;
 			break;
 
