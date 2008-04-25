@@ -372,6 +372,7 @@ apn_print_ruleset(struct apn_ruleset *rs, int flags, FILE *file)
 	if (rs == NULL || file == NULL)
 		return (1);
 
+	fprintf(file, "alf {\n");
 	queue = &rs->alf_queue;
 	if (!TAILQ_EMPTY(queue)) {
 		TAILQ_FOREACH(rule, queue, entry) {
@@ -379,7 +380,9 @@ apn_print_ruleset(struct apn_ruleset *rs, int flags, FILE *file)
 				return (ret);
 		}
 	}
+	fprintf(file, "}\n");
 
+	fprintf(file, "sfs {\n");
 	queue = &rs->sfs_queue;
 	if (!TAILQ_EMPTY(&rs->sfs_queue)) {
 		TAILQ_FOREACH(rule, queue, entry) {
@@ -387,6 +390,7 @@ apn_print_ruleset(struct apn_ruleset *rs, int flags, FILE *file)
 				return (ret);
 		}
 	}
+	fprintf(file, "}\n");
 
 	return (0);
 }

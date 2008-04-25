@@ -273,6 +273,21 @@ MainFrame::OnMbFileImportSelect(wxCommandEvent& event)
 }
 
 void
+MainFrame::OnMbFileExportSelect(wxCommandEvent& event)
+{
+	wxString	caption = _("Choose a file to write the policies to:");
+	wxString	wildcard = wxT("*");
+	wxString	defaultDir = wxGetApp().getDataDir();
+	wxString	defaultFilename = wxEmptyString;
+	wxFileDialog	fileDlg(NULL, caption, defaultDir, defaultFilename,
+			    wildcard, wxFD_SAVE);
+
+	if (fileDlg.ShowModal() == wxID_OK) {
+		wxGetApp().exportPolicyFile(fileDlg.GetPath());
+	}
+}
+
+void
 MainFrame::OnMbFileQuitSelect(wxCommandEvent& event)
 {
 	wxGetApp().quit();

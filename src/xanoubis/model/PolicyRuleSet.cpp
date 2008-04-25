@@ -41,6 +41,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <wx/string.h>
+#include <wx/ffile.h>
 
 #include <apn.h>
 #include <errno.h>
@@ -158,4 +159,26 @@ PolicyRuleSet::accept(PolicyVisitor& visitor)
 	for (i=varList_.begin(); i != varList_.end(); ++i) {
 		(*i)->accept(visitor);
 	}
+}
+
+void
+PolicyRuleSet::exportToFile(wxString fileName)
+{
+	wxString	 logEntry;
+	wxFFile		*exportFile;
+
+	exportFile = new wxFFile(fileName, wxT("w"));
+
+	if (exportFile->IsOpened()) {
+		if (apn_print_ruleset(ruleSet_, 0, exportFile->fp()) == 0) {
+			logEntry = wxT("Policies exported successfully to ");
+		}
+		fchmod(fileno(exportFile->fp()), S_IRUSR);
+		exportFile->Close();
+	} else {
+		logEntry = wxT("Could not open file for export: ");
+	}
+	logEntry += fileName;
+	wxGetApp().log(logEntry);
+	wxGetApp().status(logEntry);
 }

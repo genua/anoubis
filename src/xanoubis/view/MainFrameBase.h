@@ -57,14 +57,15 @@
 #define ID_MENUBAR 1501
 #define ID_MIFILECONNECT 1502
 #define ID_MIFILEIMPORT 1503
-#define ID_MIFILECLOSE 1504
-#define ID_MIFILEQUIT 1505
-#define ID_MIEDITPREFERENCES 1506
-#define ID_MITOOLSRULEEDITOR 1507
-#define ID_MITOOLSLOGVIEWER 1508
-#define ID_MIHELPHELP 1509
-#define ID_MIHELPABOUT 1510
-#define ID_TOOLBAR 1511
+#define ID_MIFILEEXPORT 1504
+#define ID_MIFILECLOSE 1505
+#define ID_MIFILEQUIT 1506
+#define ID_MIEDITPREFERENCES 1507
+#define ID_MITOOLSRULEEDITOR 1508
+#define ID_MITOOLSLOGVIEWER 1509
+#define ID_MIHELPHELP 1510
+#define ID_MIHELPABOUT 1511
+#define ID_TOOLBAR 1512
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Class MainFrameBase
@@ -94,6 +95,7 @@ class MainFrameBase : public wxFrame
 		virtual void OnClose( wxCloseEvent& event ){ event.Skip(); }
 		virtual void OnMbFileConnectSelect( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnMbFileImportSelect( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnMbFileExportSelect( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnMbFileCloseSelect( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnMbFileQuitSelect( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnMbEditPreferencesSelect( wxCommandEvent& event ){ event.Skip(); }

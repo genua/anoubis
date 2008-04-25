@@ -66,6 +66,7 @@ class PolicyRuleSet
 		~PolicyRuleSet(void);
 
 		void accept(PolicyVisitor&);
+		void exportToFile(wxString);
 };
 
 #endif	/* _POLICYRULESET_H_ */

@@ -338,3 +338,13 @@ AnoubisGuiApp::importPolicyFile(wxString fileName)
 	event.SetClientData((void*)ruleSet_);
 	sendEvent(event);
 }
+
+void
+AnoubisGuiApp::exportPolicyFile(wxString fileName)
+{
+	if (ruleSet_ != NULL) {
+		ruleSet_->exportToFile(fileName);
+	} else {
+		status(wxT("no loaded RuleSet; export failed!"));
+	}
+}

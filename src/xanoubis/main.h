@@ -101,6 +101,7 @@ class AnoubisGuiApp : public wxApp
 		Module		*getModule(enum moduleIdx);
 		wxString	 getDataDir(void);
 		void		 importPolicyFile(wxString);
+		void		 exportPolicyFile(wxString);
 };
 
 DECLARE_APP(AnoubisGuiApp)
