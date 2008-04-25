@@ -39,22 +39,19 @@ AnFader::AnFader(wxWindow *parent) : wxPanel(parent)
 
 	sz_h = new wxBoxSizer(wxHORIZONTAL);
 	sz_v = new wxBoxSizer(wxVERTICAL);
-	//panel = new wxPanel(parent);
 	slider = new wxSlider(this, wxID_ANY, 0, 0, 5, wxDefaultPosition,
 	    wxDefaultSize, wxSL_VERTICAL);
 
-	tx_p0 = new wxStaticText(this, wxID_ANY, wxT("Profile 1"));
-	tx_p1 = new wxStaticText(this, wxID_ANY, wxT("Profile 2"));
-	tx_p2 = new wxStaticText(this, wxID_ANY, wxT("Profile 3"));
-	tx_p3 = new wxStaticText(this, wxID_ANY, wxT("Profile 4"));
-	tx_p4 = new wxStaticText(this, wxID_ANY, wxT("Admin"));
-	tx_p5 = new wxStaticText(this, wxID_ANY, wxT("Aus"));
+	tx_p0 = new wxStaticText(this, wxID_ANY, wxT("high"));
+	tx_p1 = new wxStaticText(this, wxID_ANY, wxT("medium"));
+	tx_p2 = new wxStaticText(this, wxID_ANY, wxT("admin (normal)"));
+	tx_p3 = new wxStaticText(this, wxID_ANY, wxT("off"));
 
 	hlight = wxFont(10, 74, 90, 92, false, wxT("Sans"));
 	normal = wxFont(10, 74, 90, 90, false, wxT("Sans"));
 
-	slider->SetRange(0, 5);
-	slider->SetPageSize(6);
+	slider->SetRange(0, 3);
+	slider->SetPageSize(4);
 	slider->SetValue(0);
 	tx_p0->SetFont(hlight);
 
@@ -65,13 +62,13 @@ AnFader::AnFader(wxWindow *parent) : wxPanel(parent)
 	sz_v->Add(tx_p1, 5, wxALIGN_LEFT | wxEXPAND, 1);
 	sz_v->Add(tx_p2, 5, wxALIGN_LEFT | wxEXPAND, 1);
 	sz_v->Add(tx_p3, 5, wxALIGN_LEFT | wxEXPAND, 1);
-	sz_v->Add(tx_p4, 5, wxALIGN_LEFT | wxEXPAND, 1);
-	sz_v->Add(tx_p5, 5, wxALIGN_LEFT | wxEXPAND, 1);
 
 	SetSizer(sz_h);
 	Layout();
 
 	Connect(wxEVT_SCROLL_CHANGED, wxScrollEventHandler(AnFader::OnFade),
+	    NULL, this );
+	Connect(wxEVT_SCROLL_THUMBTRACK, wxScrollEventHandler(AnFader::OnFade),
 	    NULL, this );
 }
 
@@ -81,16 +78,14 @@ AnFader::~AnFader()
 }
 
 void
-AnFader::OnFade(wxScrollEvent& event)
+AnFader::update(int value)
 {
 	tx_p0->SetFont(normal);
 	tx_p1->SetFont(normal);
 	tx_p2->SetFont(normal);
 	tx_p3->SetFont(normal);
-	tx_p4->SetFont(normal);
-	tx_p5->SetFont(normal);
 
-	switch (event.GetPosition()) {
+	switch (value) {
 	case 0:
 		tx_p0->SetFont(hlight);
 		break;
@@ -103,11 +98,24 @@ AnFader::OnFade(wxScrollEvent& event)
 	case 3:
 		tx_p3->SetFont(hlight);
 		break;
-	case 4:
-		tx_p4->SetFont(hlight);
-		break;
-	case 5:
-		tx_p5->SetFont(hlight);
-		break;
 	}
+}
+
+void
+AnFader::OnFade(wxScrollEvent& event)
+{
+	update(event.GetPosition());
+}
+
+void
+AnFader::setValue(int value)
+{
+	slider->SetValue(value);
+	update(value);
+}
+
+int
+AnFader::getValue(void)
+{
+	return (slider->GetValue());
 }

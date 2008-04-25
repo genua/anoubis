@@ -46,14 +46,17 @@ class AnFader: public wxPanel
 		wxStaticText	*tx_p1;
 		wxStaticText	*tx_p2;
 		wxStaticText	*tx_p3;
-		wxStaticText	*tx_p4;
-		wxStaticText	*tx_p5;
-	
+
+		void update(int);
+
 	public:
 		AnFader(wxWindow *);
 		~AnFader(void);
 
 		void OnFade(wxScrollEvent&);
+
+		void setValue(int);
+		int  getValue(void);
 };
 
 #endif	/* _ANFADER_H_ */
