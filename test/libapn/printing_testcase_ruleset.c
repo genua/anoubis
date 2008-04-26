@@ -91,7 +91,7 @@ generate_file(void)
 	    "0123456789abcdef {\n");
 	fprintf(sfp, "default deny\n");
 	fprintf(sfp, "allow raw\n");
-	fprintf(sfp, "allow connect udp all\n");
+	fprintf(sfp, "allow receive udp all\n");
 	fprintf(sfp, "}\n");
 	fprintf(sfp, "\n");
 	fprintf(sfp, "/bin/sh \\\n");
@@ -112,7 +112,7 @@ generate_file(void)
 	    "0123456789abcdef {\n");
 	fprintf(sfp, "default deny\n");
 	fprintf(sfp, "allow raw\n");
-	fprintf(sfp, "allow connect log udp all\n");
+	fprintf(sfp, "allow receive log udp all\n");
 	fprintf(sfp, "}\n");
 	fprintf(sfp, "any {\n");
 	fprintf(sfp, "default deny\n");
