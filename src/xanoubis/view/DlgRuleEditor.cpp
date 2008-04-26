@@ -29,8 +29,22 @@
 #include "config.h"
 #endif
 
+#include <sys/param.h>
+#include <sys/socket.h>
+
+#ifndef LINUX
+#include <sys/queue.h>
+#else
+#include <queue.h>
+#endif
+
 #include <wx/filedlg.h>
 #include <wx/choicdlg.h>
+
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
+#include <apn.h>
 
 #include "AnEvents.h"
 #include "AnShortcuts.h"
@@ -40,6 +54,7 @@
 #include "Policy.h"
 #include "PolicyRuleSet.h"
 #include "RuleEditorAddPolicyVisitor.h"
+#include "RuleEditorFillWidgetsVisitor.h"
 
 #include <wx/listimpl.cpp>
 WX_DEFINE_LIST(AddrLineList);
@@ -117,6 +132,8 @@ AddrLine::remove(void)
 
 DlgRuleEditor::DlgRuleEditor(wxWindow* parent) : DlgRuleEditorBase(parent)
 {
+	selectedId_ = 0;
+
 	columnNames_[RULEDITOR_LIST_COLUMN_PRIO] = _("ID");
 	columnWidths_[RULEDITOR_LIST_COLUMN_PRIO] = wxLIST_AUTOSIZE;
 
@@ -234,6 +251,206 @@ DlgRuleEditor::OnClose(wxCloseEvent& event)
 }
 
 void
+DlgRuleEditor::OnAlfAllowRadioButton(wxCommandEvent& event)
+{
+	AlfPolicy *policy;
+
+	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedId_);
+	policy->setAction(APN_ACTION_ALLOW);
+	ruleListCtrl->SetItem(selectedId_, RULEDITOR_LIST_COLUMN_ACTION,
+	    policy->getActionName());
+}
+
+void
+DlgRuleEditor::OnAlfDenyRadioButton(wxCommandEvent& event)
+{
+	AlfPolicy *policy;
+
+	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedId_);
+	policy->setAction(APN_ACTION_DENY);
+	ruleListCtrl->SetItem(selectedId_, RULEDITOR_LIST_COLUMN_ACTION,
+	    policy->getActionName());
+}
+
+void
+DlgRuleEditor::OnAlfAskRadioButton(wxCommandEvent& event)
+{
+	AlfPolicy *policy;
+
+	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedId_);
+	policy->setAction(APN_ACTION_ASK);
+	ruleListCtrl->SetItem(selectedId_, RULEDITOR_LIST_COLUMN_ACTION,
+	    policy->getActionName());
+}
+
+void
+DlgRuleEditor::OnAlfFilterRadioButton(wxCommandEvent& event)
+{
+	AlfPolicy *policy;
+	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedId_);
+	policy->setType(APN_ALF_FILTER);
+	ruleListCtrl->SetItem(selectedId_, RULEDITOR_LIST_COLUMN_TYPE,
+	    policy->getTypeName());
+}
+
+void
+DlgRuleEditor::OnAlfCapRadioButton(wxCommandEvent& event)
+{
+	AlfPolicy *policy;
+	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedId_);
+	policy->setType(APN_ALF_CAPABILITY);
+	ruleListCtrl->SetItem(selectedId_, RULEDITOR_LIST_COLUMN_TYPE,
+	    policy->getTypeName());
+}
+
+void
+DlgRuleEditor::OnAlfDefaultRadioButton(wxCommandEvent& event)
+{
+	AlfPolicy *policy;
+	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedId_);
+	policy->setType(APN_ALF_DEFAULT);
+	ruleListCtrl->SetItem(selectedId_, RULEDITOR_LIST_COLUMN_TYPE,
+	    policy->getTypeName());
+}
+
+void
+DlgRuleEditor::OnAlfTcpRadioButton(wxCommandEvent& event)
+{
+	AlfPolicy *policy;
+	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedId_);
+	policy->setProtocol(IPPROTO_TCP);
+	ruleListCtrl->SetItem(selectedId_, RULEDITOR_LIST_COLUMN_PROTO,
+	    policy->getProtocolName());
+}
+
+void
+DlgRuleEditor::OnAlfUdpRadioButton(wxCommandEvent& event)
+{
+	AlfPolicy *policy;
+	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedId_);
+	policy->setProtocol(IPPROTO_UDP);
+	ruleListCtrl->SetItem(selectedId_, RULEDITOR_LIST_COLUMN_PROTO,
+	    policy->getProtocolName());
+}
+
+void
+DlgRuleEditor::OnAlfInetRadioButton(wxCommandEvent& event)
+{
+	AlfPolicy *policy;
+	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedId_);
+	policy->setAddrFamily(AF_INET);
+	ruleListCtrl->SetItem(selectedId_, RULEDITOR_LIST_COLUMN_AF,
+	    policy->getAddrFamilyName());
+}
+
+void
+DlgRuleEditor::OnAlfInet6RadioButton(wxCommandEvent& event)
+{
+	AlfPolicy *policy;
+	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedId_);
+	policy->setAddrFamily(AF_INET6);
+	ruleListCtrl->SetItem(selectedId_, RULEDITOR_LIST_COLUMN_AF,
+	    policy->getAddrFamilyName());
+}
+
+void
+DlgRuleEditor::OnAlfAnyRadioButton(wxCommandEvent& event)
+{
+	AlfPolicy *policy;
+	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedId_);
+	policy->setAddrFamily(0);
+	ruleListCtrl->SetItem(selectedId_, RULEDITOR_LIST_COLUMN_AF,
+	    policy->getAddrFamilyName());
+}
+
+void
+DlgRuleEditor::OnAlfRawCapRadioButton(wxCommandEvent& event)
+{
+	AlfPolicy *policy;
+	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedId_);
+	policy->setCapType(APN_ALF_CAPRAW);
+	ruleListCtrl->SetItem(selectedId_, RULEDITOR_LIST_COLUMN_CAP,
+	    policy->getCapTypeName());
+}
+
+void
+DlgRuleEditor::OnAlfOtherCapRadioButton(wxCommandEvent& event)
+{
+	AlfPolicy *policy;
+	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedId_);
+	policy->setCapType(APN_ALF_CAPOTHER);
+	ruleListCtrl->SetItem(selectedId_, RULEDITOR_LIST_COLUMN_CAP,
+	    policy->getCapTypeName());
+}
+
+void
+DlgRuleEditor::OnAlfAllCapRadioButton(wxCommandEvent& event)
+{
+	AlfPolicy *policy;
+	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedId_);
+	policy->setCapType(APN_ALF_CAPALL);
+	ruleListCtrl->SetItem(selectedId_, RULEDITOR_LIST_COLUMN_CAP,
+	    policy->getCapTypeName());
+}
+
+void
+DlgRuleEditor::OnAlfAcceptRadioButton(wxCommandEvent& event)
+{
+	AlfPolicy *policy;
+	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedId_);
+	policy->setDirection(APN_ACCEPT);
+	ruleListCtrl->SetItem(selectedId_, RULEDITOR_LIST_COLUMN_DIR,
+	    policy->getDirectionName());
+}
+
+void
+DlgRuleEditor::OnAlfConnectRadioButton(wxCommandEvent& event)
+{
+	AlfPolicy *policy;
+	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedId_);
+	policy->setDirection(APN_CONNECT);
+	ruleListCtrl->SetItem(selectedId_, RULEDITOR_LIST_COLUMN_DIR,
+	    policy->getDirectionName());
+}
+
+void
+DlgRuleEditor::OnSfsBinaryModifyButton(wxCommandEvent& event)
+{
+	SfsPolicy	*policy;
+	policy = (SfsPolicy *)ruleListCtrl->GetItemData(selectedId_);
+	wxString	 caption = wxT("Choose a binary");
+	wxString	 wildcard = wxT("*");
+	wxString	 defaultDir = wxT("/usr/bin/");
+	wxString	 defaultFilename = policy->getBinaryName();
+	wxFileDialog	 fileDlg(NULL, caption, defaultDir, defaultFilename,
+			    wildcard, wxOPEN);
+
+
+	if (fileDlg.ShowModal() == wxID_OK) {
+		policy->setBinaryName(fileDlg.GetPath());
+		sfsBinaryTextCtrl->Clear();
+		sfsBinaryTextCtrl->AppendText(policy->getBinaryName());
+		ruleListCtrl->SetItem(selectedId_, RULEDITOR_LIST_COLUMN_BIN,
+		    policy->getBinaryName());
+	}
+}
+
+void
+DlgRuleEditor::OnSfsUpdateChkSumButton(wxCommandEvent& event)
+{
+	RuleEditorFillWidgetsVisitor	 updateVisitor(this);
+	SfsPolicy			*policy;
+	unsigned char			 csum[MAX_APN_HASH_LEN];
+
+	policy = (SfsPolicy *)ruleListCtrl->GetItemData(selectedId_);
+
+	policy->calcCurrentHash(csum);
+	policy->setHashValue(csum);
+	updateVisitor.setPropagation(false);
+	policy->accept(updateVisitor);
+}
+
+void
 DlgRuleEditor::OnShow(wxCommandEvent& event)
 {
 	this->Show(event.GetInt());
@@ -253,4 +470,17 @@ DlgRuleEditor::OnLoadRuleSet(wxCommandEvent& event)
 	for (int i=0; i<RULEDITOR_LIST_COLUMN_EOL; i++) {
 		ruleListCtrl->SetColumnWidth(i, columnWidths_[i]);
 	}
+}
+
+void
+DlgRuleEditor::OnLineSelected(wxListEvent& event)
+{
+	RuleEditorFillWidgetsVisitor	 updateVisitor(this);
+	Policy				*policy;
+
+	selectedId_ = event.GetIndex();
+
+	updateVisitor.setPropagation(false);
+	policy = (Policy *)event.GetData();
+	policy->accept(updateVisitor);
 }

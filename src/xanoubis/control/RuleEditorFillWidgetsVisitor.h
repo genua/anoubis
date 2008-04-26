@@ -25,40 +25,37 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _POLICY_H_
-#define _POLICY_H_
+#ifndef _RULEEDITORFILLWIDGETSVISITOR_H_
+#define _RULEEDITORFILLWIDGETSVISITOR_H_
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include "DlgRuleEditor.h"
+#include "PolicyVisitor.h"
 
-#include <wx/list.h>
-#include <wx/string.h>
-
-#define SUPER(cls)	((cls *)this)
-
-class PolicyVisitor;
-
-class Policy
+class RuleEditorFillWidgetsVisitor : public PolicyVisitor
 {
 	private:
-		Policy	*parent_;
+		DlgRuleEditor	*ruleEditor_;
+
+		void clear(void);
+		void showAction(int);
+		void showLog(int);
+		void showProtocol(int);
+		void showAddrFamily(int);
+		void showCapability(int);
+		void showSrcAddr(wxArrayString);
+		void showDstAddr(wxArrayString);
+		void showSrcPort(wxString);
+		void showDstPort(wxString);
+		void showDirection(int);
 
 	public:
-		Policy(void);
-		Policy(Policy *);
-		virtual ~Policy(void);
+		RuleEditorFillWidgetsVisitor(DlgRuleEditor *);
+		~RuleEditorFillWidgetsVisitor(void);
 
-		virtual void accept(PolicyVisitor&) = 0;
-
-		wxString getActionName(int);
-		wxString getDirectionName(int);
-		wxString getLogName(int);
-		wxString getVarTypeName(int);
-		wxString getRuleTypeName(int);
-		wxString guessAppName(wxString);
+		virtual void visitAppPolicy(AppPolicy *);
+		virtual void visitAlfPolicy(AlfPolicy *);
+		virtual void visitSfsPolicy(SfsPolicy *);
+		virtual void visitVarPolicy(VarPolicy *);
 };
 
-WX_DECLARE_LIST(Policy, PolicyList);
-
-#endif	/* _POLICY_H_ */
+#endif	/* _RULEEDITORFILLWIDGETSVISITOR_H_ */

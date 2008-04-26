@@ -56,12 +56,14 @@ xanoubis_CXXFLAGS = \
 	$(WX_CXXFLAGS) \
 	$(GTK_CFLAGS) \
 	$(GLIB_CFLAGS) \
-	$(NOTIFY_CFLAGS)
+	$(NOTIFY_CFLAGS) \
+	$(SSL_CFLAGS)
 
 xanoubis_DEPEND_LIBS = \
 	$(libapn) \
 	$(libanoubischat) \
-	$(libanoubisprotocol)
+	$(libanoubisprotocol) \
+	$(SSL_LIBS)
 
 if NEEDBSDCOMPAT
 xanoubis_CPPFLAGS += -I$(top_srcdir)/$(bsdcompatdir)
@@ -71,6 +73,8 @@ endif
 xanoubis_DEPENDENCIES = \
 	$(xanoubis_DEPEND_LIBS) \
 	$(top_srcdir)/$(xanoubisdir)/catalogs/de/xanoubis.mo
+
+xanoubis_LDFLAGS = $(AM_LDFLAGS) $(SSL_LDFLAGS)
 
 xanoubis_LDADD = \
 	@WX_LIBS@ \
@@ -232,6 +236,8 @@ xanoubis_SOURCES= \
 	control/PolicyVisitor.h \
 	control/RuleEditorAddPolicyVisitor.cpp \
 	control/RuleEditorAddPolicyVisitor.h \
+	control/RuleEditorFillWidgetsVisitor.cpp \
+	control/RuleEditorFillWidgetsVisitor.h \
 	control/ModAlfAddPolicyVisitor.cpp \
 	control/ModAlfAddPolicyVisitor.h \
 	control/ModSfsAddPolicyVisitor.cpp \

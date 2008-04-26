@@ -42,6 +42,8 @@
 #include <arpa/inet.h>
 #include <wx/string.h>
 #include <wx/ffile.h>
+#include <wx/window.h>
+#include <wx/progdlg.h>
 
 #include <apn.h>
 #include <errno.h>
@@ -53,18 +55,18 @@
 #include "PolicyRuleSet.h"
 #include "PolicyVisitor.h"
 
-PolicyRuleSet::PolicyRuleSet(struct apn_ruleset *ruleSet)
+PolicyRuleSet::PolicyRuleSet(wxWindow *parent, struct apn_ruleset *ruleSet)
 {
 	ruleSet_ = NULL;
 
-	create(ruleSet);
+	create(parent, ruleSet);
 }
 
-PolicyRuleSet::PolicyRuleSet(wxString fileName)
+PolicyRuleSet::PolicyRuleSet(wxWindow *parent, wxString fileName)
 {
 	ruleSet_ = NULL;
 
-	create(fileName);
+	create(parent, fileName);
 }
 
 PolicyRuleSet::~PolicyRuleSet(void)
@@ -77,28 +79,40 @@ PolicyRuleSet::~PolicyRuleSet(void)
 }
 
 void
-PolicyRuleSet::create(struct apn_ruleset *ruleSet)
+PolicyRuleSet::create(wxWindow *parent, struct apn_ruleset *ruleSet)
 {
-	struct apn_rule *appRule;
-	struct var	*variable;
+	wxString		 title;
+	wxProgressDialog	*dialog;
+	struct apn_rule		*appRule;
+	struct var		*variable;
 
 	ruleSet_ = ruleSet;
 
+	title = _("Creating policy structure ...");
+
+	dialog = new wxProgressDialog(title, title, ruleSet->maxid, parent);
+
+	wxGetApp().status(title);
 	TAILQ_FOREACH(appRule, &(ruleSet->alf_queue), entry) {
 		alfList_.Append(new AppPolicy(appRule));
+		dialog->Update(appRule->id, _("creating alf policies ..."));
 	}
 
 	TAILQ_FOREACH(appRule, &(ruleSet->sfs_queue), entry) {
 		sfsList_.Append(new AppPolicy(appRule));
+		dialog->Update(appRule->id, _("creating sfs policies ..."));
 	}
 
 	TAILQ_FOREACH(variable, &(ruleSet->var_queue), entry) {
 		varList_.Append(new VarPolicy(variable));
+		dialog->Update(appRule->id, _("creating var policies ..."));
 	}
+	dialog->Update(ruleSet->maxid);
+	wxGetApp().status(_("done"));
 }
 
 void
-PolicyRuleSet::create(wxString fileName)
+PolicyRuleSet::create(wxWindow *parent, wxString fileName)
 {
 	wxString		 logEntry;
 	int			 rc;
@@ -121,14 +135,13 @@ PolicyRuleSet::create(wxString fileName)
 		logEntry += fileName;
 		wxGetApp().log(logEntry);
 		wxGetApp().status(logEntry);
-		create(ruleSet);
+		create(parent, ruleSet);
 		break;
 	case 1:
 		logEntry = wxT("Failed import of policy file ");
 		if (TAILQ_EMPTY(&(ruleSet->err_queue))) {
 			logEntry += fileName;
 			wxGetApp().log(logEntry);
-			break;
 		}
 		wxGetApp().status(logEntry);
 		TAILQ_FOREACH(errMsg, &(ruleSet->err_queue), entry) {

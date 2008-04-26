@@ -96,6 +96,7 @@ class AnoubisGuiApp : public wxApp
 		void		 toggleRuleEditorVisability(void);
 		void		 connectCommunicator(bool);
 		wxString	 getCatalogPath(void);
+		wxString	 getUtilsPath(void);
 		wxString	 getIconPath(wxString);
 		wxIcon		*loadIcon(wxString);
 		Module		*getModule(enum moduleIdx);

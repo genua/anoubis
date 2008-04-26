@@ -84,11 +84,13 @@ WX_DECLARE_LIST(AddrLine, AddrLineList);
 class DlgRuleEditor : public DlgRuleEditorBase
 {
 	private:
+		unsigned long	selectedId_;
 		wxString	columnNames_[RULEDITOR_LIST_COLUMN_EOL];
 		int		columnWidths_[RULEDITOR_LIST_COLUMN_EOL];
 		AddrLineList	extraSrcAddrList;
 		AddrLineList	extraDstAddrList;
 
+		void OnShow(wxCommandEvent&);
 
 	protected:
 		AnShortcuts	*shortcuts_;
@@ -97,15 +99,39 @@ class DlgRuleEditor : public DlgRuleEditorBase
 		void OnTableOptionButtonClick(wxCommandEvent&);
 		void OnBinaryModifyButtonClick(wxCommandEvent&);
 		void OnLoadRuleSet(wxCommandEvent&);
+		void OnLineSelected(wxListEvent&);
 
-	private:
-		void OnShow(wxCommandEvent&);
+		void OnAlfAllowRadioButton(wxCommandEvent&);
+		void OnAlfDenyRadioButton(wxCommandEvent&);
+		void OnAlfAskRadioButton(wxCommandEvent&);
+
+		void OnAlfFilterRadioButton(wxCommandEvent&);
+		void OnAlfCapRadioButton(wxCommandEvent&);
+		void OnAlfDefaultRadioButton(wxCommandEvent&);
+
+		void OnAlfTcpRadioButton(wxCommandEvent&);
+		void OnAlfUdpRadioButton(wxCommandEvent&);
+
+		void OnAlfInetRadioButton(wxCommandEvent&);
+		void OnAlfInet6RadioButton(wxCommandEvent&);
+		void OnAlfAnyRadioButton(wxCommandEvent&);
+
+		void OnAlfRawCapRadioButton(wxCommandEvent&);
+		void OnAlfOtherCapRadioButton(wxCommandEvent&);
+		void OnAlfAllCapRadioButton(wxCommandEvent&);
+
+		void OnAlfAcceptRadioButton(wxCommandEvent&);
+		void OnAlfConnectRadioButton(wxCommandEvent&);
+
+		void OnSfsBinaryModifyButton(wxCommandEvent&);
+		void OnSfsUpdateChkSumButton(wxCommandEvent&);
 
 	public:
 		DlgRuleEditor(wxWindow *);
 		~DlgRuleEditor(void);
 
 		friend class RuleEditorAddPolicyVisitor;
+		friend class RuleEditorFillWidgetsVisitor;
 };
 
 #endif /* __DlgRuleEditor__ */

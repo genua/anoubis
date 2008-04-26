@@ -44,6 +44,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <wx/string.h>
+#include <wx/window.h>
 
 #include <apn.h>
 
@@ -57,12 +58,12 @@ class PolicyRuleSet
 		PolicyList		 sfsList_;
 		PolicyList		 varList_;
 
-		void create(wxString);
-		void create(struct apn_ruleset *);
+		void create(wxWindow *, wxString);
+		void create(wxWindow *, struct apn_ruleset *);
 
 	public:
-		PolicyRuleSet(struct apn_ruleset *);
-		PolicyRuleSet(wxString);
+		PolicyRuleSet(wxWindow *, struct apn_ruleset *);
+		PolicyRuleSet(wxWindow *, wxString);
 		~PolicyRuleSet(void);
 
 		void accept(PolicyVisitor&);

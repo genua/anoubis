@@ -37,6 +37,7 @@ class AppPolicy : public Policy
 {
 	private:
 		PolicyList	 ruleList_;
+		wxString	 appName_;
 		AlfPolicy	*context_;
 		struct apn_rule	*appRule_;
 

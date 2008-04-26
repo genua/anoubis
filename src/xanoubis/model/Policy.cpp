@@ -40,9 +40,13 @@
 
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <wx/arrstr.h>
+#include <wx/intl.h>
+#include <wx/utils.h>
 
 #include <apn.h>
 
+#include "main.h"
 #include "Policy.h"
 
 #include <wx/listimpl.cpp>
@@ -96,6 +100,15 @@ Policy::getDirectionName(int direction)
 		break;
 	case APN_ACCEPT:
 		result = wxT("accept");
+		break;
+	case APN_SEND:
+		result = wxT("send");
+		break;
+	case APN_RECEIVE:
+		result = wxT("receive");
+		break;
+	case APN_BOTH:
+		result = wxT("");
 		break;
 	default:
 		result = wxT("(unknown)");
@@ -181,6 +194,27 @@ Policy::getRuleTypeName(int type)
 	default:
 		result = wxT("(unknown)");
 		break;
+	}
+
+	return (result);
+}
+
+wxString
+Policy::guessAppName(wxString binary)
+{
+	wxString	result;
+	wxString	command;
+	wxArrayString	output;
+	wxArrayString	errors;
+
+	command = wxT("sh ");
+	command += wxGetApp().getUtilsPath() + wxT("/xanoubis_guessApp.sh ");
+	command += binary;
+
+	if (wxExecute(command, output, errors) == 0) {
+		result = output.Item(0).BeforeFirst('#');
+	} else {
+		result = _("unknown");
 	}
 
 	return (result);

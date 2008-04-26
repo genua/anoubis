@@ -61,15 +61,18 @@ class AlfPolicy : public Policy
 		wxString	getPortName(struct apn_port *);
 		wxString	listToString(wxArrayString);
 
+
 	public:
 		AlfPolicy(AppPolicy *, struct apn_alfrule *);
 		~AlfPolicy(void);
 
 		virtual void accept(PolicyVisitor&);
 
+		void		setType(int);
 		int		getTypeNo(void);
 		wxString	getTypeName(void);
 
+		void		setAction(int);
 		int		getActionNo(void);
 		wxString	getActionName(void);
 
@@ -84,12 +87,15 @@ class AlfPolicy : public Policy
 		wxString	getLogName(void);
 
 		/* valid for type == APN_ALF_FILTER */
+		void		setDirection(int);
 		int		getDirectionNo(void);
 		wxString	getDirectionName(void);
 
+		void		setProtocol(int);
 		int		getProtocolNo(void);
 		wxString	getProtocolName(void);
 
+		void		setAddrFamily(int);
 		int		getAddrFamilyNo(void);
 		wxString	getAddrFamilyName(void);
 
@@ -106,6 +112,7 @@ class AlfPolicy : public Policy
 		wxString	getToPortName(void);
 
 		/* valid for type == APN_ALF_CAPABILITY */
+		void		setCapType(int);
 		int		getCapTypeNo(void);
 		wxString	getCapTypeName(void);
 };

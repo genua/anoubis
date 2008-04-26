@@ -53,7 +53,6 @@
 #include <wx/bitmap.h>
 #include <wx/image.h>
 #include <wx/combobox.h>
-#include <wx/checkbox.h>
 #include <wx/notebook.h>
 #include <wx/frame.h>
 
@@ -145,8 +144,8 @@ class DlgRuleEditorBase : public wxFrame
 		wxRadioButton* alfCapRadioButton;
 		wxRadioButton* alfDefaultRadioButton;
 		wxStaticText* alfProtocolText;
-		wxCheckBox* alfTcpCheckBox;
-		wxCheckBox* alfUdpCheckBox;
+		wxRadioButton* alfTcpRadioButton;
+		wxRadioButton* alfUdpRadioButton;
 		
 		wxStaticText* alfAddrFamilyText;
 		wxRadioButton* alfInetRadioButton;
@@ -156,6 +155,9 @@ class DlgRuleEditorBase : public wxFrame
 		wxRadioButton* alfRawCapRadioButton;
 		wxRadioButton* alfOtherCapRadioButton;
 		wxRadioButton* alfAllCapRadioButton;
+		wxStaticText* alfDirectionText;
+		wxRadioButton* alfAcceptRadioButton;
+		wxRadioButton* alfConnectRadioButton;
 		wxFlexGridSizer* alfConnectAddrSizer;
 		wxStaticText* alfSrcAddrText;
 		wxComboBox* alfSrcAddrComboBox;
@@ -205,7 +207,25 @@ class DlgRuleEditorBase : public wxFrame
 		virtual void OnTableOptionButtonClick( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnLineSelected( wxListEvent& event ){ event.Skip(); }
 		virtual void OnBinaryModifyButtonClick( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnAlfAllowRadioButton( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnAlfDenyRadioButton( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnAlfAskRadioButton( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnAlfFilterRadioButton( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnAlfCapRadioButton( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnAlfDefaultRadioButton( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnAlfTcpRadioButton( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnAlfUdpRadioButton( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnAlfInetRadioButton( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnAlfInet6RadioButton( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnAlfAnyRadioButton( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnAlfRawCapRadioButton( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnAlfOtherCapRadioButton( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnAlfAllCapRadioButton( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnAlfAcceptRadioButton( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnAlfConnectRadioButton( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnSrcAddrAddButton( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnSfsBinaryModifyButton( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnSfsUpdateChkSumButton( wxCommandEvent& event ){ event.Skip(); }
 		
 	
 	public:

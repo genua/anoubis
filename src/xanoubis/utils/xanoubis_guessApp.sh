@@ -153,12 +153,13 @@ END {
 		cmdAbsPath = "which " field["Exec"];
 		cmdAbsPath | getline absPath;
 
+		$1 = "";
 		cmdPkgName = "dpkg -S " absPath " 2>/dev/null";
 		cmdPkgName | getline;
 		pkgName = $1;
 
 		cmdPkgDescription = "dpkg -s " pkgName " 2>/dev/null";
-		if (pkgName != "##") {
+		if (pkgName != "") {
 			do {
 				cmdPkgDescription | getline;
 			} while ($1 !~ "Description");
@@ -171,6 +172,17 @@ END {
 		OFS = " # ";
 		print field["Name"], absPath, pkgName, pkgDescription;
 
-		exit 0;
+	} else {
+		$1 = "";
+		cmdPkgName = "dpkg -S " pattern " 2>/dev/null";
+		cmdPkgName | getline;
+		pkgName = $1;
+
+		if (pkgName != "") {
+			print pkgName;
+		} else {
+			print "unknown";
+		}
 	}
+	exit 0;
 } '

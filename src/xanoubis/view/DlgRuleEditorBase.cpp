@@ -280,7 +280,7 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	commonNbPanel->SetSizer( commonMainSizer );
 	commonNbPanel->Layout();
 	commonMainSizer->Fit( commonNbPanel );
-	ruleEditNotebook->AddPage( commonNbPanel, wxT("Common"), false );
+	ruleEditNotebook->AddPage( commonNbPanel, wxT("Common"), true );
 	applicationNbPanel = new wxScrolledWindow( ruleEditNotebook, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxVSCROLL );
 	applicationNbPanel->SetScrollRate( 5, 5 );
 	wxFlexGridSizer* appMainPanelSizer;
@@ -414,14 +414,11 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	alfProtocolText->Wrap( -1 );
 	alfConnectOptionSizer->Add( alfProtocolText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	alfTcpCheckBox = new wxCheckBox( alfNbPanel, wxID_ANY, wxT("tcp"), wxDefaultPosition, wxDefaultSize, 0 );
-	alfTcpCheckBox->SetValue(true);
+	alfTcpRadioButton = new wxRadioButton( alfNbPanel, wxID_ANY, wxT("tcp"), wxDefaultPosition, wxDefaultSize, wxRB_GROUP );
+	alfConnectOptionSizer->Add( alfTcpRadioButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	alfConnectOptionSizer->Add( alfTcpCheckBox, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
-	
-	alfUdpCheckBox = new wxCheckBox( alfNbPanel, wxID_ANY, wxT("udp"), wxDefaultPosition, wxDefaultSize, 0 );
-	
-	alfConnectOptionSizer->Add( alfUdpCheckBox, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	alfUdpRadioButton = new wxRadioButton( alfNbPanel, wxID_ANY, wxT("udp"), wxDefaultPosition, wxDefaultSize, 0 );
+	alfConnectOptionSizer->Add( alfUdpRadioButton, 0, wxALL, 5 );
 	
 	
 	alfConnectOptionSizer->Add( 0, 0, 1, wxEXPAND, 5 );
@@ -451,6 +448,16 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	
 	alfAllCapRadioButton = new wxRadioButton( alfNbPanel, wxID_ANY, wxT("all"), wxDefaultPosition, wxDefaultSize, 0 );
 	alfConnectOptionSizer->Add( alfAllCapRadioButton, 0, wxALL, 5 );
+	
+	alfDirectionText = new wxStaticText( alfNbPanel, wxID_ANY, wxT("Direction:"), wxDefaultPosition, wxDefaultSize, 0 );
+	alfDirectionText->Wrap( -1 );
+	alfConnectOptionSizer->Add( alfDirectionText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	
+	alfAcceptRadioButton = new wxRadioButton( alfNbPanel, wxID_ANY, wxT("accept"), wxDefaultPosition, wxDefaultSize, wxRB_GROUP );
+	alfConnectOptionSizer->Add( alfAcceptRadioButton, 0, wxALL, 5 );
+	
+	alfConnectRadioButton = new wxRadioButton( alfNbPanel, wxID_ANY, wxT("connect"), wxDefaultPosition, wxDefaultSize, 0 );
+	alfConnectOptionSizer->Add( alfConnectRadioButton, 0, wxALL, 5 );
 	
 	alfConnectionBox->Add( alfConnectOptionSizer, 0, wxEXPAND, 5 );
 	
@@ -551,7 +558,7 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	alfNbPanel->SetSizer( alfPanelMainSizer );
 	alfNbPanel->Layout();
 	alfPanelMainSizer->Fit( alfNbPanel );
-	ruleEditNotebook->AddPage( alfNbPanel, wxT("ALF"), true );
+	ruleEditNotebook->AddPage( alfNbPanel, wxT("ALF"), false );
 	sfsNbPanel = new wxScrolledWindow( ruleEditNotebook, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxVSCROLL );
 	sfsNbPanel->SetScrollRate( 5, 5 );
 	wxFlexGridSizer* sfsSizer;
@@ -563,8 +570,8 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	sfsBinaryLabelText->Wrap( -1 );
 	sfsSizer->Add( sfsBinaryLabelText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	sfsBinaryTextCtrl = new wxTextCtrl( sfsNbPanel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
-	sfsSizer->Add( sfsBinaryTextCtrl, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	sfsBinaryTextCtrl = new wxTextCtrl( sfsNbPanel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize( 200,-1 ), 0 );
+	sfsSizer->Add( sfsBinaryTextCtrl, 1, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	sfsBinaryModifyButton = new wxButton( sfsNbPanel, wxID_ANY, wxT("modify"), wxDefaultPosition, wxDefaultSize, 0 );
 	sfsSizer->Add( sfsBinaryModifyButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
@@ -645,6 +652,23 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	controlOptionButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::OnTableOptionButtonClick ), NULL, this );
 	ruleListCtrl->Connect( wxEVT_COMMAND_LIST_ITEM_SELECTED, wxListEventHandler( DlgRuleEditorBase::OnLineSelected ), NULL, this );
 	appBinaryModifyButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::OnBinaryModifyButtonClick ), NULL, this );
+	alfAllowRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorBase::OnAlfAllowRadioButton ), NULL, this );
+	alfDenyRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorBase::OnAlfDenyRadioButton ), NULL, this );
+	alfAskRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorBase::OnAlfAskRadioButton ), NULL, this );
+	alfFilterRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorBase::OnAlfFilterRadioButton ), NULL, this );
+	alfCapRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorBase::OnAlfCapRadioButton ), NULL, this );
+	alfDefaultRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorBase::OnAlfDefaultRadioButton ), NULL, this );
+	alfTcpRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorBase::OnAlfTcpRadioButton ), NULL, this );
+	alfUdpRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorBase::OnAlfUdpRadioButton ), NULL, this );
+	alfInetRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorBase::OnAlfInetRadioButton ), NULL, this );
+	alfInet6RadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorBase::OnAlfInet6RadioButton ), NULL, this );
+	alfAnyRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorBase::OnAlfAnyRadioButton ), NULL, this );
+	alfRawCapRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorBase::OnAlfRawCapRadioButton ), NULL, this );
+	alfOtherCapRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorBase::OnAlfOtherCapRadioButton ), NULL, this );
+	alfAllCapRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorBase::OnAlfAllCapRadioButton ), NULL, this );
+	alfAcceptRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorBase::OnAlfAcceptRadioButton ), NULL, this );
+	alfConnectRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorBase::OnAlfConnectRadioButton ), NULL, this );
 	alfSrcAddrAddButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::OnSrcAddrAddButton ), NULL, this );
-	sfsBinaryModifyButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::OnBinaryModifyButtonClick ), NULL, this );
+	sfsBinaryModifyButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::OnSfsBinaryModifyButton ), NULL, this );
+	sfsUpdateChkSumButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::OnSfsUpdateChkSumButton ), NULL, this );
 }

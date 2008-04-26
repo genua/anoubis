@@ -283,6 +283,26 @@ AnoubisGuiApp::getCatalogPath(void)
 }
 
 wxString
+AnoubisGuiApp::getUtilsPath(void)
+{
+	wxString utilsFileName;
+
+	utilsFileName = paths_.GetDataDir() + _T("/utils/");
+	if (!::wxFileExists(utilsFileName)) {
+		/*
+		 * We didn't find our utils (where --prefix told us)!
+		 * Try to take executable path into account. This should
+		 * fix a missing --prefix as the matter in our build and test
+		 * environment with aegis.
+		 */
+		utilsFileName  = ::wxPathOnly(paths_.GetExecutablePath()) +
+		    _T("/../../..") + utilsFileName;
+	}
+
+	return utilsFileName;
+}
+
+wxString
 AnoubisGuiApp::getIconPath(wxString iconName)
 {
 	wxString iconFileName;
@@ -333,7 +353,7 @@ AnoubisGuiApp::importPolicyFile(wxString fileName)
 	if (ruleSet_ != NULL) {
 		delete ruleSet_;
 	}
-	ruleSet_ = new PolicyRuleSet(fileName);
+	ruleSet_ = new PolicyRuleSet(mainFrame, fileName);
 
 	event.SetClientData((void*)ruleSet_);
 	sendEvent(event);

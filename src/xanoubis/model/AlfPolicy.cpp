@@ -129,6 +129,12 @@ AlfPolicy::accept(PolicyVisitor &visitor)
 	visitor.visitAlfPolicy(this);
 }
 
+void
+AlfPolicy::setType(int type)
+{
+	alfRule_->type = type;
+}
+
 int
 AlfPolicy::getTypeNo(void)
 {
@@ -159,6 +165,24 @@ AlfPolicy::getTypeName(void)
 	}
 
 	return (result);
+}
+
+void
+AlfPolicy::setAction(int action)
+{
+	switch (alfRule_->type) {
+	case APN_ALF_FILTER:
+		alfRule_->rule.afilt.action = action;
+		break;
+	case APN_ALF_CAPABILITY:
+		alfRule_->rule.acap.action = action;
+		break;
+	case APN_ALF_DEFAULT:
+		alfRule_->rule.apndefault.action = action;
+		break;
+	default:
+		break;
+	}
 }
 
 int
@@ -225,11 +249,18 @@ AlfPolicy::getRoleName(void)
 	wxString result;
 
 	switch (getDirectionNo()) {
+	case APN_SEND:
+		/* FALLTHROUGH */
 	case APN_CONNECT:
 		result = wxT("client");
 		break;
+	case APN_RECEIVE:
+		/* FALLTHROUGH */
 	case APN_ACCEPT:
 		result = wxT("server");
+		break;
+	case APN_BOTH:
+		result = wxT("both");
 		break;
 	default:
 		result = wxT("(unknown)");
@@ -245,11 +276,19 @@ AlfPolicy::getServiceName(void)
 	wxString result;
 
 	switch (getDirectionNo()) {
+	case APN_SEND:
+		/* FALLTHROUGH */
 	case APN_CONNECT:
 		result = wxT("to ") + getToHostName();
 		break;
+	case APN_RECEIVE:
+		/* FALLTHROUGH */
 	case APN_ACCEPT:
 		result = wxT("from ") + getFromHostName();
+		break;
+	case APN_BOTH:
+		result = wxT("both from ") + getFromHostName();
+		result += wxT(" to ") + getToHostName();
 		break;
 	default:
 		result = wxT("(unknown)");
@@ -287,6 +326,14 @@ AlfPolicy::getLogName(void)
 	return (SUPER(Policy)->getLogName(getLogNo()));
 }
 
+void
+AlfPolicy::setDirection(int direction)
+{
+	if (alfRule_->type == APN_ALF_FILTER) {
+		alfRule_->rule.afilt.filtspec.netaccess = direction;
+	}
+}
+
 int
 AlfPolicy::getDirectionNo(void)
 {
@@ -303,6 +350,14 @@ wxString
 AlfPolicy::getDirectionName(void)
 {
 	return (SUPER(Policy)->getDirectionName(getDirectionNo()));
+}
+
+void
+AlfPolicy::setProtocol(int protocol)
+{
+	if (alfRule_->type == APN_ALF_FILTER) {
+		alfRule_->rule.afilt.filtspec.proto = protocol;
+	}
 }
 
 int
@@ -335,6 +390,14 @@ AlfPolicy::getProtocolName(void)
 	}
 
 	return (result);
+}
+
+void
+AlfPolicy::setAddrFamily(int addrFamily)
+{
+	if (alfRule_->type == APN_ALF_FILTER) {
+		alfRule_->rule.afilt.filtspec.af = addrFamily;
+	}
 }
 
 int
@@ -474,6 +537,14 @@ wxString
 AlfPolicy::getToPortName(void)
 {
 	return (listToString(getToPortList()));
+}
+
+void
+AlfPolicy::setCapType(int capability)
+{
+	if (alfRule_->type == APN_ALF_CAPABILITY) {
+		alfRule_->rule.acap.capability = capability;
+	}
 }
 
 int

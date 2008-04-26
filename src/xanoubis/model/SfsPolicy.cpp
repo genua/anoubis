@@ -32,14 +32,18 @@
 #include <sys/param.h>
 #include <sys/socket.h>
 
+
 #ifndef LINUX
 #include <sys/queue.h>
+#include <sha2.h>
 #else
 #include <queue.h>
+#include <openssl/sha.h>
 #endif
 
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <wx/file.h>
 
 #include <apn.h>
 
@@ -53,6 +57,7 @@ SfsPolicy::SfsPolicy(AppPolicy *parent, struct apn_sfsrule *sfsRule)
     : Policy(parent)
 {
 	sfsRule_ = sfsRule;
+	appName_ = guessAppName(getBinaryName());
 }
 
 SfsPolicy::~SfsPolicy()
@@ -68,7 +73,18 @@ SfsPolicy::accept(PolicyVisitor& visitor)
 wxString
 SfsPolicy::getAppName(void)
 {
-	return (getBinaryName());
+	return (appName_);
+}
+
+void
+SfsPolicy::setBinaryName(wxString name)
+{
+	struct apn_app	*app;
+
+	app = sfsRule_->rule.sfscheck.app;
+
+	free(app->name);
+	app->name = strdup(name.fn_str());
 }
 
 wxString
@@ -103,6 +119,53 @@ SfsPolicy::getHashTypeName(void)
 	}
 
 	return (result);
+}
+
+bool
+SfsPolicy::calcCurrentHash(unsigned char csum[MAX_APN_HASH_LEN])
+{
+	SHA256_CTX	 shaCtx;
+	u_int8_t	 buf[4096];
+	size_t		 ret;
+	wxFile		*file;
+
+	file = new wxFile(getBinaryName().c_str());
+	bzero(csum, MAX_APN_HASH_LEN);
+
+	if (file->IsOpened()) {
+		SHA256_Init(&shaCtx);
+		while(1) {
+			ret = file->Read(buf, sizeof(buf));
+			if (ret == 0) {
+				break;
+			}
+			if (ret < 0) {
+				return (false);
+			}
+			SHA256_Update(&shaCtx, buf, ret);
+		}
+		SHA256_Final(csum, &shaCtx);
+		file->Close();
+	}
+
+	return (true);
+}
+
+void
+SfsPolicy::setHashValue(unsigned char csum[MAX_APN_HASH_LEN])
+{
+	int len;
+
+	switch (sfsRule_->rule.sfscheck.app->hashtype) {
+	case APN_HASH_SHA256:
+		len = APN_HASH_SHA256_LEN;
+		break;
+	default:
+		len = 0;
+		break;
+	}
+
+	bcopy(csum, sfsRule_->rule.sfscheck.app->hashvalue, len);
 }
 
 wxString

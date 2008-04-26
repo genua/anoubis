@@ -60,6 +60,8 @@ AppPolicy::AppPolicy(struct apn_rule *appRule) : Policy(NULL)
 	context_ = NULL;
 	appRule_ = appRule;
 
+	appName_ = guessAppName(getBinaryName());
+
 	switch (appRule_->type) {
 	case APN_ALF:
 		alfRule = appRule_->rule.alf;
@@ -110,7 +112,7 @@ AppPolicy::accept(PolicyVisitor& visitor)
 wxString
 AppPolicy::getAppName(void)
 {
-	return (getBinaryName());
+	return (appName_);
 }
 
 wxString
