@@ -55,64 +55,57 @@
 #include "PolicyRuleSet.h"
 #include "PolicyVisitor.h"
 
-PolicyRuleSet::PolicyRuleSet(wxWindow *parent, struct apn_ruleset *ruleSet)
+PolicyRuleSet::PolicyRuleSet(struct apn_ruleset *ruleSet)
 {
 	ruleSet_ = NULL;
 
-	create(parent, ruleSet);
+	create(ruleSet);
 }
 
-PolicyRuleSet::PolicyRuleSet(wxWindow *parent, wxString fileName)
+PolicyRuleSet::PolicyRuleSet(wxString fileName)
 {
 	ruleSet_ = NULL;
 
-	create(parent, fileName);
+	create(fileName);
 }
 
 PolicyRuleSet::~PolicyRuleSet(void)
 {
-	alfList_.DeleteContents(true);
-	sfsList_.DeleteContents(true);
-	varList_.DeleteContents(true);
-
+	clean();
 	apn_free_ruleset(ruleSet_);
 }
 
 void
-PolicyRuleSet::create(wxWindow *parent, struct apn_ruleset *ruleSet)
+PolicyRuleSet::create(struct apn_ruleset *ruleSet)
 {
-	wxString		 title;
-	wxProgressDialog	*dialog;
-	struct apn_rule		*appRule;
-	struct var		*variable;
+	struct apn_rule *appRule;
+	struct var	*variable;
 
 	ruleSet_ = ruleSet;
 
-	title = _("Creating policy structure ...");
-
-	dialog = new wxProgressDialog(title, title, ruleSet->maxid, parent);
-
-	wxGetApp().status(title);
 	TAILQ_FOREACH(appRule, &(ruleSet->alf_queue), entry) {
 		alfList_.Append(new AppPolicy(appRule));
-		dialog->Update(appRule->id, _("creating alf policies ..."));
 	}
 
 	TAILQ_FOREACH(appRule, &(ruleSet->sfs_queue), entry) {
 		sfsList_.Append(new AppPolicy(appRule));
-		dialog->Update(appRule->id, _("creating sfs policies ..."));
 	}
 
 	TAILQ_FOREACH(variable, &(ruleSet->var_queue), entry) {
 		varList_.Append(new VarPolicy(variable));
-		dialog->Update(appRule->id, _("creating var policies ..."));
 	}
-	dialog->Update(ruleSet->maxid);
-	wxGetApp().status(_("done"));
 }
 
 void
-PolicyRuleSet::create(wxWindow *parent, wxString fileName)
+PolicyRuleSet::clean(void)
+{
+	alfList_.DeleteContents(true);
+	sfsList_.DeleteContents(true);
+	varList_.DeleteContents(true);
+}
+
+void
+PolicyRuleSet::create(wxString fileName)
 {
 	wxString		 logEntry;
 	int			 rc;
@@ -135,13 +128,14 @@ PolicyRuleSet::create(wxWindow *parent, wxString fileName)
 		logEntry += fileName;
 		wxGetApp().log(logEntry);
 		wxGetApp().status(logEntry);
-		create(parent, ruleSet);
+		create(ruleSet);
 		break;
 	case 1:
 		logEntry = wxT("Failed import of policy file ");
 		if (TAILQ_EMPTY(&(ruleSet->err_queue))) {
 			logEntry += fileName;
 			wxGetApp().log(logEntry);
+			break;
 		}
 		wxGetApp().status(logEntry);
 		TAILQ_FOREACH(errMsg, &(ruleSet->err_queue), entry) {
@@ -162,7 +156,7 @@ void
 PolicyRuleSet::accept(PolicyVisitor& visitor)
 {
 	PolicyList::iterator	i;
-
+	
 	for (i=alfList_.begin(); i != alfList_.end(); ++i) {
 		(*i)->accept(visitor);
 	}
@@ -190,8 +184,36 @@ PolicyRuleSet::exportToFile(wxString fileName)
 		exportFile->Close();
 	} else {
 		logEntry = wxT("Could not open file for export: ");
+	}         logEntry += fileName;
+	wxGetApp().log(logEntry);         wxGetApp().status(logEntry);
+}
+
+	void
+PolicyRuleSet::insertAlfPolicy(int id)
+{
+	struct apn_rule	*newAlfRule;
+
+	newAlfRule = (struct apn_rule *)calloc(1, sizeof(struct apn_rule));
+
+	if (newAlfRule != NULL) {
+		newAlfRule->type = APN_ALF;
+		newAlfRule->app = (struct apn_app *)calloc(1,
+		    sizeof(struct apn_app));
+		apn_add_alfrule(newAlfRule, ruleSet_);
 	}
-	logEntry += fileName;
-	wxGetApp().log(logEntry);
-	wxGetApp().status(logEntry);
+
+	clean();
+	create(ruleSet_);
+}
+
+void
+PolicyRuleSet::insertSfsPolicy(int id)
+{
+
+}
+
+void
+PolicyRuleSet::insertVarPolicy(int id)
+{
+
 }

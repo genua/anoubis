@@ -58,9 +58,8 @@ class AlfPolicy : public Policy
 		struct apn_alfrule	*alfRule_;
 
 		wxString	getHostName(struct apn_host *);
-		wxString	getPortName(struct apn_port *);
-		wxString	listToString(wxArrayString);
-
+		wxString        getPortName(struct apn_port *);
+		wxString        listToString(wxArrayString);
 
 	public:
 		AlfPolicy(AppPolicy *, struct apn_alfrule *);
@@ -99,14 +98,14 @@ class AlfPolicy : public Policy
 		int		getAddrFamilyNo(void);
 		wxString	getAddrFamilyName(void);
 
-		wxArrayString	getFromHostList(void);
 		wxString	getFromHostName(void);
+		wxArrayString	getFromHostList(void);
 
 		wxArrayString	getFromPortList(void);
 		wxString	getFromPortName(void);
 
-		wxArrayString	getToHostList(void);
 		wxString	getToHostName(void);
+		wxArrayString	getToHostList(void);
 
 		wxArrayString	getToPortList(void);
 		wxString	getToPortName(void);

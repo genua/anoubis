@@ -32,6 +32,12 @@
 #include "config.h"
 #endif
 
+#include <sys/param.h>
+#include <sys/socket.h>
+
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
 #include <wx/app.h>
 #include <wx/icon.h>
 #include <wx/intl.h>
@@ -40,6 +46,8 @@
 
 #include <wx/wxprec.h>
 #include <wx/cmdline.h>
+
+#include <apn.h>
 
 #include "CommunicatorCtrl.h"
 #include "ctassert.h"

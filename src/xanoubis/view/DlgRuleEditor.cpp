@@ -67,7 +67,7 @@ AddrLine::AddrLine(wxWindow *parent, wxString addr, wxString net)
 	lead_ = new wxStaticText(parent, wxID_ANY, wxEmptyString,
 	    wxDefaultPosition, wxDefaultSize, 0);
 	addr_ = new wxComboBox(parent, wxID_ANY, wxT("Combo!"),
-	    wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
+	    wxDefaultPosition, wxDefaultSize, 0, NULL, 0);	
 	delimiter_ = new wxStaticText(parent, wxID_ANY, wxT(" / "),
 	    wxDefaultPosition, wxDefaultSize, 0);
 	net_ = new wxSpinCtrl(parent, wxID_ANY, wxEmptyString,
@@ -133,12 +133,10 @@ AddrLine::remove(void)
 DlgRuleEditor::DlgRuleEditor(wxWindow* parent) : DlgRuleEditorBase(parent)
 {
 	selectedId_ = 0;
+	ruleSet_ = NULL;
 
 	columnNames_[RULEDITOR_LIST_COLUMN_PRIO] = _("ID");
 	columnWidths_[RULEDITOR_LIST_COLUMN_PRIO] = wxLIST_AUTOSIZE;
-
-	columnNames_[RULEDITOR_LIST_COLUMN_RULE] = _("Rule");
-	columnWidths_[RULEDITOR_LIST_COLUMN_RULE] = wxLIST_AUTOSIZE;
 
 	columnNames_[RULEDITOR_LIST_COLUMN_APP] = _("Application");
 	columnWidths_[RULEDITOR_LIST_COLUMN_APP] = wxLIST_AUTOSIZE;
@@ -457,21 +455,32 @@ DlgRuleEditor::OnShow(wxCommandEvent& event)
 }
 
 void
-DlgRuleEditor::OnLoadRuleSet(wxCommandEvent& event)
+DlgRuleEditor::loadRuleSet(PolicyRuleSet *ruleSet)
 {
 	RuleEditorAddPolicyVisitor	 addVisitor(this);
-	PolicyRuleSet			*ruleSet;
 
 	ruleListCtrl->DeleteAllItems();
-	ruleSet = (PolicyRuleSet *)event.GetClientData();
-	ruleSet->accept(addVisitor);
+	/* we just remember the ruleSet for further usage */
+	ruleSet_ = ruleSet;
+	ruleSet_->accept(addVisitor);
 
 	/* trigger new calculation of column width */
 	for (int i=0; i<RULEDITOR_LIST_COLUMN_EOL; i++) {
 		ruleListCtrl->SetColumnWidth(i, columnWidths_[i]);
 	}
+
 }
 
+void
+DlgRuleEditor::OnLoadRuleSet(wxCommandEvent& event)
+{
+	PolicyRuleSet *ruleSet;
+
+	ruleSet = (PolicyRuleSet *)event.GetClientData();
+	loadRuleSet(ruleSet);
+}
+
+#include <stdio.h>
 void
 DlgRuleEditor::OnLineSelected(wxListEvent& event)
 {
@@ -483,4 +492,34 @@ DlgRuleEditor::OnLineSelected(wxListEvent& event)
 	updateVisitor.setPropagation(false);
 	policy = (Policy *)event.GetData();
 	policy->accept(updateVisitor);
+
+	fprintf(stderr, "DlgRuleEditor::OnLineSelected id=%ld\n", selectedId_);
+}
+
+void
+DlgRuleEditor::OnSrcAddrAddButton(wxCommandEvent& event)
+{
+	fprintf(stderr, "DlgRuleEditor::OnSrcAddrAddButton\n");
+}
+
+void
+DlgRuleEditor::OnCreationChoice(wxCommandEvent& event)
+{
+	/* keep this in sync with controlCreationChoice elements */
+	switch (event.GetSelection()) {
+	case 0:
+		ruleSet_->insertAlfPolicy(selectedId_);
+		break;
+	case 1:
+		ruleSet_->insertSfsPolicy(selectedId_);
+		break;
+	case 2:
+		ruleSet_->insertVarPolicy(selectedId_);
+		break;
+	default:
+		break;
+	}
+
+	fprintf(stderr, "DlgRuleEditor::OnCreationChoice %d\n", event.GetSelection());
+	loadRuleSet(ruleSet_);
 }

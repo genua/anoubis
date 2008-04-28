@@ -353,7 +353,7 @@ AnoubisGuiApp::importPolicyFile(wxString fileName)
 	if (ruleSet_ != NULL) {
 		delete ruleSet_;
 	}
-	ruleSet_ = new PolicyRuleSet(mainFrame, fileName);
+	ruleSet_ = new PolicyRuleSet(fileName);
 
 	event.SetClientData((void*)ruleSet_);
 	sendEvent(event);

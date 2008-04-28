@@ -103,7 +103,7 @@ AlfPolicy::getPortName(struct apn_port *port)
 wxString
 AlfPolicy::listToString(wxArrayString list)
 {
-	wxString	result;
+	wxString        result;
 
 	if (list.IsEmpty()) {
 		result = wxEmptyString;
@@ -171,17 +171,17 @@ void
 AlfPolicy::setAction(int action)
 {
 	switch (alfRule_->type) {
-	case APN_ALF_FILTER:
-		alfRule_->rule.afilt.action = action;
-		break;
-	case APN_ALF_CAPABILITY:
-		alfRule_->rule.acap.action = action;
-		break;
-	case APN_ALF_DEFAULT:
-		alfRule_->rule.apndefault.action = action;
-		break;
-	default:
-		break;
+		case APN_ALF_FILTER:
+			alfRule_->rule.afilt.action = action;
+			break;
+		case APN_ALF_CAPABILITY:
+			alfRule_->rule.acap.action = action;
+			break;
+		case APN_ALF_DEFAULT:
+			alfRule_->rule.apndefault.action = action;
+			break;
+		default:
+			break;
 	}
 }
 
@@ -216,8 +216,8 @@ AlfPolicy::getActionName(void)
 wxArrayString
 AlfPolicy::getContextList(void)
 {
-	wxArrayString	 result;
-	struct apn_app	*app;
+	wxArrayString    result;
+	struct apn_app  *app;
 
 	if (alfRule_->type == APN_ALF_CTX) {
 		app = alfRule_->rule.apncontext.application;
@@ -227,8 +227,7 @@ AlfPolicy::getContextList(void)
 			} else {
 				result.Add(wxString::From8BitData(app->name));
 			}
-			if ((app == NULL) || (app->next == NULL)) {
-				break;
+			if ((app == NULL) || (app->next == NULL)) {                                break;
 			}
 			app = app->next;
 		} while (app);
@@ -237,10 +236,22 @@ AlfPolicy::getContextList(void)
 	return (result);
 }
 
+
 wxString
 AlfPolicy::getContextName(void)
 {
-	return (listToString(getContextList()));
+	wxString		 result;
+	struct apn_context	*ctx;
+
+	ctx = &(alfRule_->rule.apncontext);
+
+	if ((alfRule_->type == APN_ALF_CTX) && (ctx->application != NULL)) {
+		result = wxString::From8BitData(ctx->application->name);
+	} else {
+		result = wxT("any");
+	}
+
+	return (result);
 }
 
 wxString
@@ -378,6 +389,9 @@ AlfPolicy::getProtocolName(void)
 	wxString result;
 
 	switch (getProtocolNo()) {
+	case 0:
+		result = wxT("any");
+		break;
 	case IPPROTO_TCP:
 		result = wxT("tcp");
 		break;
@@ -458,14 +472,29 @@ AlfPolicy::getFromHostList(void)
 wxString
 AlfPolicy::getFromHostName(void)
 {
-	return (listToString(getFromHostList()));
+	wxString	result;
+	wxArrayString	list;
+
+	list = getFromHostList();
+	result = list.Item(0);
+
+	for (size_t i=1; i<list.GetCount(); i++) {
+		result += wxT(", ");
+		result += list.Item(i);
+	}
+	if (list.GetCount() > 1) {
+		result.Prepend(wxT("{"));
+		result.Append(wxT("}"));
+	}
+
+	return (result);
 }
 
 wxArrayString
 AlfPolicy::getFromPortList(void)
 {
-	wxArrayString	 result;
-	struct apn_port	*fromPort;
+	wxArrayString    result;
+	struct apn_port *fromPort;
 
 	if (alfRule_->type == APN_ALF_FILTER) {
 		fromPort = alfRule_->rule.afilt.filtspec.fromport;
@@ -484,14 +513,37 @@ AlfPolicy::getFromPortList(void)
 wxString
 AlfPolicy::getFromPortName(void)
 {
-	return (listToString(getFromPortList()));
+	wxString	 result;
+	bool		 isList;
+	struct apn_port	*fromPort;
+
+	isList = false;
+
+	if (alfRule_->type == APN_ALF_FILTER) {
+		fromPort = alfRule_->rule.afilt.filtspec.fromport;
+		while (fromPort) {
+			result += wxString::Format(wxT("%hu"),
+			    ntohs(fromPort->port));
+			fromPort = fromPort->next;
+			if (fromPort) {
+				isList = true;
+				result += wxT(", ");
+			}
+		}
+		if (isList) {
+			result.Prepend(wxT("{"));
+			result.Append(wxT("}"));
+		}
+	}
+
+	return (result);
 }
 
 wxArrayString
 AlfPolicy::getToHostList(void)
 {
-	wxArrayString	 result;
-	struct apn_host	*toHost;
+	wxArrayString    result;
+	struct apn_host *toHost;
 
 	if (alfRule_->type == APN_ALF_FILTER) {
 		toHost = alfRule_->rule.afilt.filtspec.tohost;
@@ -510,14 +562,38 @@ AlfPolicy::getToHostList(void)
 wxString
 AlfPolicy::getToHostName(void)
 {
-	return (listToString(getToHostList()));
+	wxString	 result;
+	bool		 isList;
+	struct apn_host	*toHost;
+
+	isList = false;
+
+	if (alfRule_->type == APN_ALF_FILTER) {
+		toHost = alfRule_->rule.afilt.filtspec.tohost;
+		do {
+			result += getHostName(toHost);
+			if ((toHost != NULL) && (toHost->next != NULL)) {
+				isList = true;
+				result += wxT(", ");
+				toHost = toHost->next;
+			} else {
+				break;
+			}
+		} while (toHost);
+		if (isList) {
+			result.Prepend(wxT("{"));
+			result.Append(wxT("}"));
+		}
+	}
+
+	return (result);
 }
 
 wxArrayString
 AlfPolicy::getToPortList(void)
 {
-	wxArrayString	 result;
-	struct apn_port	*toPort;
+	wxArrayString    result;
+	struct apn_port *toPort;
 
 	if (alfRule_->type == APN_ALF_FILTER) {
 		toPort = alfRule_->rule.afilt.filtspec.toport;
@@ -536,7 +612,30 @@ AlfPolicy::getToPortList(void)
 wxString
 AlfPolicy::getToPortName(void)
 {
-	return (listToString(getToPortList()));
+	wxString	 result;
+	bool		 isList;
+	struct apn_port	*toPort;
+
+	isList = false;
+
+	if (alfRule_->type == APN_ALF_FILTER) {
+		toPort = alfRule_->rule.afilt.filtspec.toport;
+		while (toPort) {
+			result += wxString::Format(wxT("%hu"),
+			    ntohs(toPort->port));
+			toPort = toPort->next;
+			if (toPort) {
+				isList = true;
+				result += wxT(", ");
+			}
+		}
+		if (isList) {
+			result.Prepend(wxT("{"));
+			result.Append(wxT("}"));
+		}
+	}
+
+	return (result);
 }
 
 void

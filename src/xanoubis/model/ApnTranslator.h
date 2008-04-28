@@ -25,52 +25,48 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _MODALFADDPOLICYVISITOR_H_
-#define _MODALFADDPOLICYVISITOR_H_
+#ifndef _APNTRANSLATOR_H_
+#define _APNTRANSLATOR_H_
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
-#include <sys/param.h>
-#include <sys/socket.h>
-
-#ifndef LINUX
-#include <sys/queue.h>
-#else
-#include <queue.h>
-#endif
-
-#include <netinet/in.h>
-#include <arpa/inet.h>
 #include <wx/string.h>
 
-#include <apn.h>
-
-#include "ModAlfMainPanelImpl.h"
-#include "Policy.h"
-#include "PolicyVisitor.h"
-#include "AppPolicy.h"
-#include "AlfPolicy.h"
-#include "VarPolicy.h"
-
-class ModAlfAddPolicyVisitor : public PolicyVisitor
+class ApnTranslator
 {
-	private:
-		wxTreeItemId		 lastTreeRoot_;
-		ModAlfMainPanelImpl	*alfPanel_;
-
-		long		ruleListAppend(Policy *);
-		void    addTreeContext(wxString);
-
 	public:
-		ModAlfAddPolicyVisitor(ModAlfMainPanelImpl *);
-		~ModAlfAddPolicyVisitor(void);
+		ApnTranslator(void);
+		~ApnTranslator(void);
 
-		virtual void visitAppPolicy(AppPolicy *);
-		virtual void visitAlfPolicy(AlfPolicy *);
-		virtual void visitSfsPolicy(SfsPolicy *);
-		virtual void visitVarPolicy(VarPolicy *);
+		wxString	direction(int);
+		int		direction(wxString);
+
+		wxString	action(int);
+		int		action(wxString);
+
+		wxString	log(int);
+		int		log(wxString);
+
+		wxString	varType(int);
+		int		varType(wxString);
+
+		wxString	ruleType(int);
+		int		ruleType(wxString);
+
+		wxString	alfCap(int);
+		int		alfCap(wxString);
+
+		wxString	alfType(int);
+		int		alfType(wxString);
+
+		wxString	hashType(int);
+		int		hashType(wxString);
+
+		wxString	prettyPrintHash(int, char *);
+
+		wxString	ipProtocol(int);
+		int		ipProtocol(wxString);
+
+		wxString	addrFamily(int);
+		int		addrFamily(wxString);
 };
 
-#endif	/* _MODALFADDPOLICYVISITOR_H_ */
+#endif	/* _APNTRANSLATOR_H_ */

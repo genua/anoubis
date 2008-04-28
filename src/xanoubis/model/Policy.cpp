@@ -71,7 +71,7 @@ Policy::getActionName(int action)
 {
 	wxString result;
 
-	switch (action) {
+        switch (action) {
 	case APN_ACTION_ALLOW:
 		result = wxT("allow");
 		break;
@@ -202,10 +202,10 @@ Policy::getRuleTypeName(int type)
 wxString
 Policy::guessAppName(wxString binary)
 {
-	wxString	result;
-	wxString	command;
-	wxArrayString	output;
-	wxArrayString	errors;
+	wxString        result;
+	wxString        command;
+	wxArrayString   output;
+	wxArrayString   errors;
 
 	command = wxT("sh ");
 	command += wxGetApp().getUtilsPath() + wxT("/xanoubis_guessApp.sh ");
@@ -216,6 +216,5 @@ Policy::guessAppName(wxString binary)
 	} else {
 		result = _("unknown");
 	}
-
 	return (result);
 }

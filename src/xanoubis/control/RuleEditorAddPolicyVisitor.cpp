@@ -27,9 +27,9 @@
 
 #include "RuleEditorAddPolicyVisitor.h"
 
-RuleEditorAddPolicyVisitor::RuleEditorAddPolicyVisitor(DlgRuleEditor *editor)
+RuleEditorAddPolicyVisitor::RuleEditorAddPolicyVisitor(DlgRuleEditor *ruleEditor)
 {
-	ruleEditor_ = editor;
+	ruleEditor_ = ruleEditor;
 }
 
 RuleEditorAddPolicyVisitor::~RuleEditorAddPolicyVisitor(void)
@@ -57,21 +57,14 @@ RuleEditorAddPolicyVisitor::visitAppPolicy(AppPolicy *appPolicy)
 
 	idx = appendPolicy(appPolicy);
 
-	ruleEditor_->ruleListCtrl->SetItem(idx, RULEDITOR_LIST_COLUMN_RULE,
-	    _("Application"));
 	ruleEditor_->ruleListCtrl->SetItem(idx, RULEDITOR_LIST_COLUMN_APP,
-	    appPolicy->getAppName());
+	    appPolicy->getBinaryName());
 	ruleEditor_->ruleListCtrl->SetItem(idx, RULEDITOR_LIST_COLUMN_BIN,
 	    appPolicy->getBinaryName());
 	ruleEditor_->ruleListCtrl->SetItem(idx, RULEDITOR_LIST_COLUMN_HASHT,
 	    appPolicy->getHashTypeName());
 	ruleEditor_->ruleListCtrl->SetItem(idx, RULEDITOR_LIST_COLUMN_HASH,
 	    appPolicy->getHashValue());
-	if (appPolicy->hasContext()) {
-		ruleEditor_->ruleListCtrl->SetItem(idx,
-		    RULEDITOR_LIST_COLUMN_CTX,
-		    appPolicy->getContext()->getContextName());
-	}
 }
 
 void
@@ -81,12 +74,12 @@ RuleEditorAddPolicyVisitor::visitAlfPolicy(AlfPolicy *alfPolicy)
 	int		 type;
 	wxListCtrl	*list;
 
+	idx = appendPolicy(alfPolicy);
 	type = alfPolicy->getTypeNo();
 	list = ruleEditor_->ruleListCtrl;
 
 	switch (type) {
 	case APN_ALF_FILTER:
-		idx = appendPolicy(alfPolicy);
 		list->SetItem(idx, RULEDITOR_LIST_COLUMN_TYPE,
 		    alfPolicy->getTypeName());
 		list->SetItem(idx, RULEDITOR_LIST_COLUMN_ACTION,
@@ -107,11 +100,8 @@ RuleEditorAddPolicyVisitor::visitAlfPolicy(AlfPolicy *alfPolicy)
 		    alfPolicy->getToHostName());
 		list->SetItem(idx, RULEDITOR_LIST_COLUMN_TPORT,
 		    alfPolicy->getToPortName());
-		list->SetItem(idx, RULEDITOR_LIST_COLUMN_RULE,
-		    _("AppFilter"));
 		break;
 	case APN_ALF_CAPABILITY:
-		idx = appendPolicy(alfPolicy);
 		list->SetItem(idx, RULEDITOR_LIST_COLUMN_TYPE,
 		    alfPolicy->getTypeName());
 		list->SetItem(idx, RULEDITOR_LIST_COLUMN_LOG,
@@ -120,22 +110,18 @@ RuleEditorAddPolicyVisitor::visitAlfPolicy(AlfPolicy *alfPolicy)
 		    alfPolicy->getActionName());
 		list->SetItem(idx, RULEDITOR_LIST_COLUMN_CAP,
 		    alfPolicy->getCapTypeName());
-		list->SetItem(idx, RULEDITOR_LIST_COLUMN_RULE,
-		    _("AppFilter"));
 		break;
 	case APN_ALF_DEFAULT:
-		idx = appendPolicy(alfPolicy);
 		list->SetItem(idx, RULEDITOR_LIST_COLUMN_TYPE,
 		    alfPolicy->getTypeName());
 		list->SetItem(idx, RULEDITOR_LIST_COLUMN_LOG,
 		    alfPolicy->getLogName());
 		list->SetItem(idx, RULEDITOR_LIST_COLUMN_ACTION,
 		    alfPolicy->getActionName());
-		list->SetItem(idx, RULEDITOR_LIST_COLUMN_RULE,
-		    _("AppFilter"));
 		break;
 	case APN_ALF_CTX:
-		/* no separate line for context rules */
+		list->SetItem(idx, RULEDITOR_LIST_COLUMN_CTX,
+		    alfPolicy->getContextName());
 		break;
 	default:
 		break;
@@ -150,16 +136,17 @@ RuleEditorAddPolicyVisitor::visitSfsPolicy(SfsPolicy *sfsPolicy)
 	idx = appendPolicy(sfsPolicy);
 
 	ruleEditor_->ruleListCtrl->SetItem(idx, RULEDITOR_LIST_COLUMN_RULE,
-	    _("SFS"));
+			_("SFS"));
 	ruleEditor_->ruleListCtrl->SetItem(idx, RULEDITOR_LIST_COLUMN_APP,
-	    sfsPolicy->getAppName());
+			sfsPolicy->getAppName());
 	ruleEditor_->ruleListCtrl->SetItem(idx, RULEDITOR_LIST_COLUMN_BIN,
-	    sfsPolicy->getBinaryName());
+			sfsPolicy->getBinaryName());
 	ruleEditor_->ruleListCtrl->SetItem(idx, RULEDITOR_LIST_COLUMN_HASHT,
-	    sfsPolicy->getHashTypeName());
+			sfsPolicy->getHashTypeName());
 	ruleEditor_->ruleListCtrl->SetItem(idx, RULEDITOR_LIST_COLUMN_HASH,
-	    sfsPolicy->getHashValue());
+			sfsPolicy->getHashValue());
 }
+
 
 void
 RuleEditorAddPolicyVisitor::visitVarPolicy(VarPolicy *variable)

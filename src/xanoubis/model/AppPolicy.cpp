@@ -45,7 +45,6 @@
 
 #include "Policy.h"
 #include "AlfPolicy.h"
-#include "SfsPolicy.h"
 #include "PolicyVisitor.h"
 
 #include "AppPolicy.h"
@@ -53,14 +52,10 @@
 AppPolicy::AppPolicy(struct apn_rule *appRule) : Policy(NULL)
 {
 	struct apn_alfrule	*alfRule;
-	struct apn_sfsrule	*sfsRule;
 	AlfPolicy		*newAlf;
-	SfsPolicy		*newSfs;
 
 	context_ = NULL;
 	appRule_ = appRule;
-
-	appName_ = guessAppName(getBinaryName());
 
 	switch (appRule_->type) {
 	case APN_ALF:
@@ -75,13 +70,6 @@ AppPolicy::AppPolicy(struct apn_rule *appRule) : Policy(NULL)
 		}
 		break;
 	case APN_SFS:
-		sfsRule = appRule_->rule.sfs;
-		while (sfsRule) {
-			newSfs = new SfsPolicy(this, sfsRule);
-			ruleList_.Append(newSfs);
-			sfsRule = sfsRule->next;
-		}
-		break;
 	case APN_SB:
 	case APN_VS:
 	default:
@@ -110,36 +98,15 @@ AppPolicy::accept(PolicyVisitor& visitor)
 }
 
 wxString
-AppPolicy::getAppName(void)
-{
-	return (appName_);
-}
-
-wxString
 AppPolicy::getBinaryName(void)
 {
-	if (appRule_->type == APN_SFS) {
-		return (wxEmptyString);
-	}
-	if (appRule_->app != NULL) {
-		return (wxString::From8BitData(appRule_->app->name));
-	} else {
-		return (wxT("any"));
-	}
+	return wxString::From8BitData(appRule_->app->name);
 }
 
 wxString
 AppPolicy::getHashTypeName(void)
 {
 	wxString result;
-
-	if (appRule_->type == APN_SFS) {
-		return (wxEmptyString);
-	}
-
-	if (appRule_->app == NULL) {
-		return (wxT("any"));
-	}
 
 	switch (appRule_->app->hashtype) {
 	case APN_HASH_SHA256:
@@ -158,14 +125,6 @@ AppPolicy::getHashValue(void)
 {
 	wxString	result;
 	unsigned int	length;
-
-	if (appRule_->type == APN_SFS) {
-		return (wxEmptyString);
-	}
-
-	if (appRule_->app == NULL) {
-		return (wxT("any"));
-	}
 
 	length = 0;
 	result = wxT("0x");

@@ -38,6 +38,7 @@
 #include "AnEvents.h"
 #include "AnShortcuts.h"
 #include "DlgRuleEditorBase.h"
+#include "PolicyRuleSet.h"
 
 enum ruleEditorListColumns {
 	RULEDITOR_LIST_COLUMN_PRIO = 0,
@@ -85,6 +86,7 @@ class DlgRuleEditor : public DlgRuleEditorBase
 {
 	private:
 		unsigned long	selectedId_;
+		PolicyRuleSet	*ruleSet_;
 		wxString	columnNames_[RULEDITOR_LIST_COLUMN_EOL];
 		int		columnWidths_[RULEDITOR_LIST_COLUMN_EOL];
 		AddrLineList	extraSrcAddrList;
@@ -125,6 +127,10 @@ class DlgRuleEditor : public DlgRuleEditorBase
 
 		void OnSfsBinaryModifyButton(wxCommandEvent&);
 		void OnSfsUpdateChkSumButton(wxCommandEvent&);
+		
+		void loadRuleSet(PolicyRuleSet*);
+		void OnCreationChoice(wxCommandEvent&);
+		void OnSrcAddrAddButton(wxCommandEvent&);
 
 	public:
 		DlgRuleEditor(wxWindow *);

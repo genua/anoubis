@@ -33,9 +33,9 @@
 #define RULEDITOR_DEFAULT	-1
 #define RULEDITOR_DISABLE	-2
 
-RuleEditorFillWidgetsVisitor::RuleEditorFillWidgetsVisitor(DlgRuleEditor *re)
+RuleEditorFillWidgetsVisitor::RuleEditorFillWidgetsVisitor(DlgRuleEditor *ruleEditor)
 {
-	ruleEditor_ = re;
+	ruleEditor_ = ruleEditor;
 }
 
 RuleEditorFillWidgetsVisitor::~RuleEditorFillWidgetsVisitor(void)
@@ -91,11 +91,8 @@ RuleEditorFillWidgetsVisitor::clear(void)
 		delete (*i);
 	}
 	ruleEditor_->extraDstAddrList.Clear();//DeleteContents(true);
-
-	ruleEditor_->sfsBinaryTextCtrl->Clear();
-	ruleEditor_->sfsRegisteredSumValueText->SetLabel(wxT("0"));
-
 	ruleEditor_->Layout();
+
 }
 
 void
@@ -293,15 +290,14 @@ RuleEditorFillWidgetsVisitor::showDstAddr(wxArrayString hosts)
 		} else {
 			window = ruleEditor_->alfNbPanel;
 			addrLine = new AddrLine(window, host, net);
-			addrLine->add(ruleEditor_->alfConnectAddrSizer,
-			    6 + (i * 6));
+			addrLine->add(ruleEditor_->alfConnectAddrSizer, 6 + (i * 6));
 			ruleEditor_->extraDstAddrList.Append(addrLine);
 		}
 	}
 }
 
 void
-RuleEditorFillWidgetsVisitor::showSrcPort(wxString port)
+RuleEditorFillWidgetsVisitor:: showSrcPort(wxString port)
 {
 	ruleEditor_->alfSrcPortText->Enable();
 	ruleEditor_->alfSrcPortComboBox->Enable();
@@ -309,7 +305,7 @@ RuleEditorFillWidgetsVisitor::showSrcPort(wxString port)
 }
 
 void
-RuleEditorFillWidgetsVisitor::showDstPort(wxString port)
+RuleEditorFillWidgetsVisitor:: showDstPort(wxString port)
 {
 	ruleEditor_->alfDstPortText->Enable();
 	ruleEditor_->alfDstPortComboBox->Enable();
@@ -346,34 +342,32 @@ RuleEditorFillWidgetsVisitor::visitAppPolicy(AppPolicy *appPolicy)
 {
 	wxString name;
 
-	clear();
-
 	ruleEditor_->applicationNbPanel->Enable();
-//	ruleEditor_->ruleEditNotebook->ChangeSelection(1);
-	ruleEditor_->ruleEditNotebook->SetSelection(1);
+	ruleEditor_->alfNbPanel->Disable();
+	ruleEditor_->sfsNbPanel->Disable();
 
+	clear();
 
 	name = appPolicy->getBinaryName();
 	ruleEditor_->appBinaryTextCtrl->Clear();
 	ruleEditor_->appBinaryTextCtrl->AppendText(name);
-	ruleEditor_->appNameComboBox->SetValue(appPolicy->getAppName());
+	ruleEditor_->appNameComboBox->SetValue(name);
 	if (appPolicy->hasContext()) {
 		name = appPolicy->getContext()->getContextName();
 		ruleEditor_->appInheritanceTextCtrl->Clear();
 		ruleEditor_->appInheritanceTextCtrl->AppendText(name);
 	}
-	ruleEditor_->ruleListCtrl->SetFocus();
 }
 
 void
 RuleEditorFillWidgetsVisitor::visitAlfPolicy(AlfPolicy *alfPolicy)
 {
 	int type;
-
 	clear();
 
+	ruleEditor_->applicationNbPanel->Disable();
 	ruleEditor_->alfNbPanel->Enable();
-	ruleEditor_->ruleEditNotebook->ChangeSelection(2);
+	ruleEditor_->sfsNbPanel->Disable();
 
 	type = alfPolicy->getTypeNo();
 
@@ -388,7 +382,6 @@ RuleEditorFillWidgetsVisitor::visitAlfPolicy(AlfPolicy *alfPolicy)
 		showDstAddr(alfPolicy->getToHostList());
 		showSrcPort(alfPolicy->getFromPortName());
 		showDstPort(alfPolicy->getToPortName());
-		showDirection(alfPolicy->getDirectionNo());
 		break;
 	case APN_ALF_CAPABILITY:
 		ruleEditor_->alfCapRadioButton->SetValue(true);
@@ -403,16 +396,15 @@ RuleEditorFillWidgetsVisitor::visitAlfPolicy(AlfPolicy *alfPolicy)
 		break;
 	default:
 		break;
-	}
-	ruleEditor_->ruleListCtrl->SetFocus();
+	}                                             
 }
 
 void
 RuleEditorFillWidgetsVisitor::visitSfsPolicy(SfsPolicy *sfsPolicy)
 {
-	wxString	currHash;
-	wxString	regHash;
-	unsigned char	csum[MAX_APN_HASH_LEN];
+	wxString        currHash;
+	wxString        regHash;
+	unsigned char   csum[MAX_APN_HASH_LEN];
 
 	clear();
 
@@ -423,7 +415,7 @@ RuleEditorFillWidgetsVisitor::visitSfsPolicy(SfsPolicy *sfsPolicy)
 		currHash = wxT("0x");
 		for (unsigned int i=0; i<MAX_APN_HASH_LEN; i++) {
 			currHash += wxString::Format(wxT("%2.2x"),
-			    (unsigned char)csum[i]);
+					(unsigned char)csum[i]);
 		}
 	} else {
 		currHash = _("unable to calculate checksum");
@@ -435,8 +427,7 @@ RuleEditorFillWidgetsVisitor::visitSfsPolicy(SfsPolicy *sfsPolicy)
 	ruleEditor_->sfsCurrentSumValueText->SetLabel(currHash);
 
 	if (regHash.Cmp(currHash) == 0) {
-		ruleEditor_->sfsStatusValueText->SetLabel(_("match"));
-		ruleEditor_->sfsUpdateChkSumButton->Disable();
+		ruleEditor_->sfsStatusValueText->SetLabel(_("match"));                ruleEditor_->sfsUpdateChkSumButton->Disable();
 	} else {
 		ruleEditor_->sfsStatusValueText->SetLabel(_("mismatch"));
 		ruleEditor_->sfsUpdateChkSumButton->Enable();

@@ -78,20 +78,6 @@ ModAlfAddPolicyVisitor::ruleListAppend(Policy *policy)
 }
 
 void
-ModAlfAddPolicyVisitor::addTreeContext(wxString ctxName)
-{
-	wxTreeItemId	 id;
-	wxString	 treeLabel;
-	wxTreeCtrl	*tree;
-
-	tree = alfPanel_->tr_AV_Rules;
-
-	treeLabel = wxT("context ") + ctxName;
-	id = tree->AppendItem(lastTreeRoot_, treeLabel);
-	/* XXX ch: search rules for ctxName and AppendItem(id, ...) */
-}
-
-void
 ModAlfAddPolicyVisitor::visitAppPolicy(AppPolicy *appPolicy)
 {
 	long		 idx;
@@ -102,39 +88,43 @@ ModAlfAddPolicyVisitor::visitAppPolicy(AppPolicy *appPolicy)
 	idx = ruleListAppend(appPolicy);
 	list = alfPanel_->lst_Rules;
 
-	list->SetItem(idx, MODALF_LIST_COLUMN_APP, appPolicy->getAppName());
+	list->SetItem(idx, MODALF_LIST_COLUMN_APP, appPolicy->getBinaryName());
 	list->SetItem(idx, MODALF_LIST_COLUMN_PROG, appPolicy->getBinaryName());
 	if (appPolicy->hasContext()) {
 		list->SetItem(idx, MODALF_LIST_COLUMN_CTX,
-		    appPolicy->getContext()->getContextName());
+		    appPolicy->getContext()->getContextName());	
 	}
 
 	/* fill tree of application view */
 	tree = alfPanel_->tr_AV_Rules;
 
 	if (tree->GetCount() == 0) {
-		tree->AddRoot(wxT("Program"));
+		tree->AddRoot(wxT("Applications"));
 	}
 	lastTreeRoot_ = tree->AppendItem(tree->GetRootItem(),
-	    appPolicy->getBinaryName());
+	    appPolicy->getBinaryName(), -1, -1, (wxTreeItemData *)appPolicy);
+	if (appPolicy->hasContext()) {
+		lastTreeRoot_ = tree->AppendItem(lastTreeRoot_,
+		    wxT("Context: ") + appPolicy->getContext()->getContextName(),
+		    -1, -1, (wxTreeItemData *)appPolicy);
+	}
 }
 
 void
 ModAlfAddPolicyVisitor::visitAlfPolicy(AlfPolicy *alfPolicy)
 {
 	wxString	 treeLabel;
-	wxArrayString	 ctxList;
 	long		 idx;
 	wxListCtrl	*list;
 	wxTreeCtrl	*tree;
 
+	idx = ruleListAppend(alfPolicy);
 	list = alfPanel_->lst_Rules;
 	tree = alfPanel_->tr_AV_Rules;
 
 	switch (alfPolicy->getTypeNo()) {
 	case APN_ALF_FILTER:
 		/* fill list of all rules */
-		idx = ruleListAppend(alfPolicy);
 		list->SetItem(idx, MODALF_LIST_COLUMN_ACTION,
 		    alfPolicy->getActionName());
 		list->SetItem(idx, MODALF_LIST_COLUMN_ROLE,
@@ -146,37 +136,34 @@ ModAlfAddPolicyVisitor::visitAlfPolicy(AlfPolicy *alfPolicy)
 		treeLabel = alfPolicy->getActionName() + wxT(", ");
 		treeLabel += alfPolicy->getRoleName() + wxT(", ");
 		treeLabel += alfPolicy->getServiceName();
-		tree->AppendItem(lastTreeRoot_, treeLabel);
+		tree->AppendItem(lastTreeRoot_, treeLabel, -1, -1,
+		    (wxTreeItemData *)alfPolicy);
 		break;
 	case APN_ALF_CAPABILITY:
 		treeLabel = wxT("capability ");
 		treeLabel += alfPolicy->getCapTypeName();
 
-		idx = ruleListAppend(alfPolicy);
 		list->SetItem(idx, MODALF_LIST_COLUMN_ACTION,
 		    alfPolicy->getActionName());
 		list->SetItem(idx, MODALF_LIST_COLUMN_SERVICE,
 		    treeLabel);
 
 		treeLabel.Prepend(alfPolicy->getActionName() + wxT(" "));
-		tree->AppendItem(lastTreeRoot_, treeLabel);
+		tree->AppendItem(lastTreeRoot_, treeLabel, -1, -1,
+		     (wxTreeItemData *)alfPolicy);
 		break;
 	case APN_ALF_DEFAULT:
 		/* fill list of all rules */
-		idx = ruleListAppend(alfPolicy);
 		list->SetItem(idx, MODALF_LIST_COLUMN_ACTION,
 		    alfPolicy->getActionName());
 		list->SetItem(idx, MODALF_LIST_COLUMN_SERVICE, wxT("default"));
 
 		/* fill tree of application view */
 		treeLabel = wxT("default ") + alfPolicy->getActionName();
-		tree->AppendItem(lastTreeRoot_, treeLabel);
+		tree->AppendItem(lastTreeRoot_, treeLabel, -1, -1,
+		    (wxTreeItemData *)alfPolicy);
 		break;
 	case APN_ALF_CTX:
-		ctxList = alfPolicy->getContextList();
-		for (size_t i=0; i<ctxList.GetCount(); i++) {
-			addTreeContext(ctxList.Item(i));
-		}
 		break;
 	default:
 		break;
