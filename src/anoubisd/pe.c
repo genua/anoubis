@@ -114,19 +114,19 @@ TAILQ_HEAD(tracker, pe_proc) tracker;
 
 static char * prio_to_string[PE_PRIO_MAX] = {
 #ifndef lint
-	[ PE_PRIO_ADMIN ] = ANOUBISD_ADMINDIR,
-	[ PE_PRIO_USER1 ] = ANOUBISD_USERDIR,
+	[ PE_PRIO_ADMIN ] = ANOUBISD_POLICYDIR "/" ANOUBISD_ADMINDIR,
+	[ PE_PRIO_USER1 ] = ANOUBISD_POLICYDIR "/" ANOUBISD_USERDIR,
 #endif
 };
 
 struct policy_request {
 	LIST_ENTRY(policy_request) next;
-	u_int64_t token;
-	u_int32_t ptype;
-	u_int32_t authuid;
-	int fd;
-	char * tmpname;
-	char * realname;
+	u_int64_t	 token;
+	u_int32_t	 ptype;
+	u_int32_t	 authuid;
+	int		 fd;
+	char		*tmpname;
+	char		*realname;
 };
 LIST_HEAD(, policy_request) preqs;
 
@@ -382,10 +382,12 @@ pe_load_db(struct policies *p)
 	}
 
 	/* load admin policies */
-	count = pe_load_dir(ANOUBISD_ADMINDIR, PE_PRIO_ADMIN, p);
+	count = pe_load_dir(ANOUBISD_POLICYDIR "/" ANOUBISD_ADMINDIR,
+	    PE_PRIO_ADMIN, p);
 
 	/* load user policies */
-	count += pe_load_dir(ANOUBISD_USERDIR, PE_PRIO_USER1, p);
+	count += pe_load_dir(ANOUBISD_POLICYDIR "/" ANOUBISD_USERDIR,
+	    PE_PRIO_USER1, p);
 
 	return (count);
 }
@@ -557,7 +559,8 @@ pe_get_user(uid_t uid, struct policies *p)
 static char *
 pe_policy_file_name(uid_t uid, int prio)
 {
-	char * name;
+	char *name;
+
 	if (asprintf(&name, "/%s/%d", prio_to_string[prio], uid) == -1)
 		return NULL;
 	return name;
@@ -567,7 +570,7 @@ static int
 pe_open_policy_file(uid_t uid, int prio)
 {
 	int err, fd;
-	char * name = pe_policy_file_name(uid, prio);
+	char	*name = pe_policy_file_name(uid, prio);
 
 	if (!name)
 		return -ENOMEM;
