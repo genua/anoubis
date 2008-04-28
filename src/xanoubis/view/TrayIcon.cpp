@@ -179,6 +179,7 @@ TrayIcon::update(void)
 	char message[MAX_MESSAGE];
 	tooltip = wxT("Messages: ");
 
+	/* escalations represent the highest priority */
 	if (messageEscalationCount_ > 0) {
 		tooltip += wxString::Format(wxT("%d\n"),
 		    messageEscalationCount_);
@@ -190,20 +191,24 @@ TrayIcon::update(void)
 			    NOTIFY_URGENCY_CRITICAL, systemNotifyTimeout_))
 				wxGetApp().log(wxT("Couldn't send Escalation"));
 		}
-	}
-
-	if (messageEscalationCount_ == 0 && messageAlertCount_ > 0) {
-		tooltip += wxString::Format(wxT("%d\n"), messageAlertCount_);
-		icon = iconMsgProblem_;
-		sprintf(message, "Received Alerts: %d\n", messageAlertCount_);
-		if (systemNotifyEnabled_) {
-			if (!systemNotify("ALERT", message,
-			    NOTIFY_URGENCY_NORMAL, systemNotifyTimeout_))
-				wxGetApp().log(wxT("Couldn't send Alert"));
-		}
 	} else {
-		tooltip = wxT("No messages\n");
-		icon = iconNormal_;
+		if (messageAlertCount_ > 0) {
+			tooltip += wxString::Format(wxT("%d\n"),
+			    messageAlertCount_);
+			icon = iconMsgProblem_;
+			sprintf(message, "Received Alerts: %d\n",
+			    messageAlertCount_);
+			if (systemNotifyEnabled_) {
+				if (!systemNotify("ALERT", message,
+				    NOTIFY_URGENCY_NORMAL,
+				    systemNotifyTimeout_))
+					wxGetApp().log(
+					    wxT("Couldn't send Alert"));
+			}
+		} else {
+			tooltip = wxT("No messages\n");
+			icon = iconNormal_;
+		}
 	}
 
 	/* connection to daemon established */

@@ -165,13 +165,17 @@ MainFrame::setMessageString(void)
 	wxString label;
 
 	label = wxT("Messages: ");
+
+	/* escalations represent the highest priority */
 	if (messageEscalationCount_ > 0) {
 		label += wxString::Format(wxT("%d\n"), messageEscalationCount_);
-	}
-	if (messageEscalationCount_ == 0 && messageAlertCount_ > 0) {
-		label += wxString::Format(wxT("%d\n"), messageAlertCount_);
 	} else {
-		label = wxT("No messages\n");
+		if (messageAlertCount_ > 0) {
+			label += wxString::Format(wxT("%d\n"),
+			    messageAlertCount_);
+		} else {
+			label = wxT("No messages\n");
+		}
 	}
 
 	tx_messages->SetLabel(label);

@@ -41,6 +41,8 @@ class ModAnoubisMainPanelImpl : public ModAnoubisMainPanelBase
 
 		void answer(bool);
 		void displayAlert(void);
+		void displayEscalation(void);
+		void displayLog(void);
 
 	protected:
 		void OnTypeChoosen(wxCommandEvent& event);

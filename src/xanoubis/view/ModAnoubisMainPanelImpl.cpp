@@ -100,6 +100,44 @@ ModAnoubisMainPanelImpl::displayAlert(void)
 }
 
 void
+ModAnoubisMainPanelImpl::displayEscalation(void)
+{
+	EscalationNotify	*eNotify;
+
+	eNotify = (EscalationNotify *)currentNotify_;
+
+	SHOWSLOT(1, wxT("Time:"), eNotify->getTime());
+	SHOWSLOT(2, wxT("Module:"), eNotify->getModule());
+	if (eNotify->getModule().Cmp(wxT("ALF")) == 0) {
+		SHOWSLOT(3, wxT("Traffic:"), eNotify->getPath());
+	} else {
+		SHOWSLOT(3, wxT("Path:"), eNotify->getPath());
+	}
+	SHOWSLOT(4, wxT("Operation:"), eNotify->getOperation());
+	SHOWSLOT(5, wxT("Origin:"), eNotify->getOrigin());
+	SHOWSLOT(6, wxT("Checksum:"), eNotify->getCheckSum());
+}
+
+void
+ModAnoubisMainPanelImpl::displayLog(void)
+{
+	LogNotify	*lNotify;
+
+	lNotify = (LogNotify *)currentNotify_;
+
+	SHOWSLOT(1, wxT("Time:"), lNotify->getTime());
+	SHOWSLOT(2, wxT("Module:"), lNotify->getModule());
+	if (lNotify->getModule().Cmp(wxT("ALF")) == 0) {
+		SHOWSLOT(3, wxT("Traffic:"), lNotify->getPath());
+	} else {
+		SHOWSLOT(3, wxT("Path:"), lNotify->getPath());
+	}
+	SHOWSLOT(4, wxT("Operation:"), lNotify->getOperation());
+	SHOWSLOT(5, wxT("Origin:"), lNotify->getOrigin());
+	SHOWSLOT(6, wxT("Checksum:"), lNotify->getCheckSum());
+}
+
+void
 ModAnoubisMainPanelImpl::update(void)
 {
 	ModAnoubis	*module;
@@ -146,8 +184,13 @@ ModAnoubisMainPanelImpl::update(void)
 		bt_last->Enable();
 	}
 
-	if ((currentNotify_ != NULL) && IS_ALERTOBJ(currentNotify_)) {
-		displayAlert();
+	if (currentNotify_ != NULL) {
+		if IS_ALERTOBJ(currentNotify_)
+			displayAlert();
+		if IS_ESCALATIONOBJ(currentNotify_)
+			displayEscalation();
+		if IS_LOGOBJ(currentNotify_)
+			displayLog();
 	} else {
 		HIDESLOT(1);
 		HIDESLOT(2);
