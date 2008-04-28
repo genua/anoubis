@@ -31,6 +31,7 @@
 #endif
 
 #include <sys/types.h>
+#include <errno.h>
 #include <sys/un.h>
 
 #include <unistd.h>
@@ -294,13 +295,14 @@ Communicator::Entry(void)
 
 		for (ali=answerList_.begin(); ali!=answerList_.end(); ali++) {
 			anoubis_token_t		 token;
-			int			 answer;
+			int			 allowed;
 			EscalationNotify	*escalation;
 
 			escalation = (EscalationNotify *)(*ali);
 			token = escalation->getToken();
-			answer = escalation->getAnswer()->wasAllowed();
-			anoubis_client_notifyreply(client_, token, answer, 0);
+			allowed = escalation->getAnswer()->wasAllowed();
+			anoubis_client_notifyreply(client_, token,
+			    allowed?0:EPERM, 0);
 			answerList_.erase(ali);
 		}
 
