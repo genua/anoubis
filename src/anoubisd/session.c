@@ -773,23 +773,16 @@ dispatch_p2s_evt_cancel(anoubisd_msg_t *msg, struct event_info_session *ev_info)
 	struct anoubis_notify_head *head;
 	struct cbdata	*cbdata;
 	struct cbdata	cbdatatmp;
-	struct eventdev_hdr *hdr;
 
 	DEBUG(DBG_TRACE, ">dispatch_p2s_evt_cancel");
 
-	hdr = (struct eventdev_hdr *)msg->msg;
-
-	if ((hdr->msg_flags & EVENTDEV_NEED_REPLY) == 0) {
-		log_warn("dispatch_p2s: bad flags %x", hdr->msg_flags);
-	}
-
-	cbdatatmp.ev_token = hdr->msg_token;
+	cbdatatmp.ev_token = *(eventdev_token*)msg->msg;
 	if ((cbdata = queue_find(&headq, &cbdatatmp, cbdata_cmp))) {
 		head = cbdata->ev_head;
 		anoubis_notify_sendreply(head, EPERM /* XXX RD */,
 		    NULL, 0);
 		DEBUG(DBG_TRACE, " >anoubis_notify_sendreply: %x",
-			    hdr->msg_token);
+			    cbdata->ev_token);
 	}
 
 	DEBUG(DBG_TRACE, "<dispatch_p2s_evt_cancel");
