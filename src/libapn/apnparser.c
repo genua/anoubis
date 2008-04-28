@@ -575,7 +575,8 @@ apn_print_afiltrule(struct apn_afiltrule *rule, FILE *file)
 	if (apn_print_proto(rule->filtspec.proto, file) == 1)
 		return (1);
 
-	if (rule->filtspec.fromhost == NULL && rule->filtspec.tohost == NULL)
+	if (rule->filtspec.fromhost == NULL && rule->filtspec.tohost == NULL &&
+	    rule->filtspec.fromport == NULL && rule->filtspec.toport == NULL)
 		fprintf(file, "all");
 	else {
 		fprintf(file, "from ");
