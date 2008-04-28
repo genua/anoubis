@@ -70,6 +70,12 @@ install-arch:
 
 	$(MAKE) DESTDIR=$(CURDIR)/debian/tmp install
 
+	mkdir -p debian/tmp/etc/anoubis/policy/admin
+	cp debian/policy.0 debian/tmp/etc/anoubis/policy/admin/0
+	cp debian/policy.1 debian/tmp/etc/anoubis/policy/admin/1
+	cp debian/policy.default debian/tmp/etc/anoubis/policy/admin/default
+	chmod 700 debian/tmp/etc/anoubis/policy/admin
+	chmod 600 debian/tmp/etc/anoubis/policy/admin/*
 	dh_install -s --sourcedir=debian/tmp
 
 # Must not depend on anything. This is to be called by
@@ -86,7 +92,7 @@ binary-common:
 	dh_link
 	dh_strip
 	dh_compress
-	dh_fixperms
+	dh_fixperms -X etc/anoubis/policy/admin
 	dh_installdeb
 	dh_shlibdeps
 	dh_gencontrol

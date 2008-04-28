@@ -23,6 +23,9 @@ setperms () {
 setperms $POLICY_DIR
 setperms $POLICY_DIR/user
 setperms $POLICY_DIR/admin
+setperms $POLICY_DIR/admin/default
+setperms $POLICY_DIR/admin/0
+setperms $POLICY_DIR/admin/1
 
 # migrate broken startlink
 if [ -n "$2" ] &&

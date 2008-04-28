@@ -1,0 +1,6 @@
+alf {
+	any {
+		default ask
+		context new any
+	}
+}

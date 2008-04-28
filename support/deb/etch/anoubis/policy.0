@@ -1,0 +1,6 @@
+alf {
+	any {
+		default allow
+		context new any
+	}
+}

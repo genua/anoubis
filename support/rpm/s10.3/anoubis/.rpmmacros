@@ -1,0 +1,2 @@
+# define %_topdir per user so 'rpmbuild' uses @@BUILD_PATH@@ to assemble RPMs
+%_topdir	@@BUILD_PATH@@
