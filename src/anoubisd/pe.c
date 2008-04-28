@@ -87,7 +87,7 @@ struct pe_user {
 #define PE_PRIO_MAX	2
 	struct apn_ruleset	*prio[PE_PRIO_MAX];
 };
-TAILQ_HEAD(policies, pe_user) pdb;
+TAILQ_HEAD(policies, pe_user) *pdb;
 
 struct pe_context {
 	int			 refcount;
@@ -99,6 +99,7 @@ struct pe_proc {
 	TAILQ_ENTRY(pe_proc)	 entry;
 	int			 refcount;
 	pid_t			 pid;
+	uid_t			 uid;
 
 	u_int8_t		*csum;
 	char			*pathhint;
@@ -154,18 +155,23 @@ anoubisd_reply_t	*pe_dispatch_policy(struct anoubisd_msg_comm *);
 
 struct pe_proc		*pe_get_proc(anoubis_cookie_t);
 void			 pe_put_proc(struct pe_proc * proc);
-struct pe_proc		*pe_alloc_proc(anoubis_cookie_t, anoubis_cookie_t);
+struct pe_proc		*pe_alloc_proc(uid_t, anoubis_cookie_t,
+			     anoubis_cookie_t);
 void			 pe_track_proc(struct pe_proc *);
 void			 pe_untrack_proc(struct pe_proc *);
 void			 pe_set_parent_proc(struct pe_proc * proc,
-					    struct pe_proc * newparent);
-int			 pe_load_db(void);
-void			 pe_flush_db(void);
+			     struct pe_proc * newparent);
+int			 pe_load_db(struct policies *);
+void			 pe_flush_db(struct policies *);
+int			 pe_update_db(struct policies *, struct policies *);
+int			 pe_update_ctx(struct pe_proc *, struct pe_context **,
+			     int, struct policies *);
 void			 pe_flush_tracker(void);
-int			 pe_load_dir(const char *, int);
+int			 pe_load_dir(const char *, int, struct policies *);
 struct apn_ruleset	*pe_load_policy(const char *);
-int			 pe_insert_rs(struct apn_ruleset *, uid_t, int);
-struct pe_user		*pe_get_user(uid_t);
+int			 pe_insert_rs(struct apn_ruleset *, uid_t, int,
+			     struct policies *);
+struct pe_user		*pe_get_user(uid_t, struct policies *);
 void			 pe_inherit_ctx(struct pe_proc *);
 void			 pe_set_ctx(struct pe_proc *, uid_t, const u_int8_t *,
 			     const char *);
@@ -197,38 +203,160 @@ static int		pe_open_policy_file(uid_t uid, int prio);
 void
 pe_init(void)
 {
-	int	count;
+	struct policies	*p;
+	int		 count;
 
 	TAILQ_INIT(&tracker);
-	TAILQ_INIT(&pdb);
 	LIST_INIT(&preqs);
 
-	count = pe_load_db();
+	if ((p = calloc(1, sizeof(struct policies))) == NULL) {
+		log_warn("calloc");
+		master_terminate(ENOMEM);	/* XXX HSH */
+	}
+	TAILQ_INIT(p);
 
-	log_info("pe_init: %d policies loaded", count);
+	/* We die gracefully if loading fails. */
+	if ((count = pe_load_db(p)) == -1)
+		fatal("pe_init: failed to initialize policy database");
+	pdb = p;
+
+	log_info("pe_init: %d policies loaded to pdb %p", count, p);
 }
 
 void
 pe_shutdown(void)
 {
 	pe_flush_tracker();
-	pe_flush_db();
+	pe_flush_db(pdb);
 }
 
 void
-pe_flush_db(void)
+pe_reconfigure(void)
+{
+	struct policies	*newpdb, *oldpdb;
+	int		 count;
+
+	if ((newpdb = calloc(1, sizeof(struct policies))) == NULL) {
+		log_warn("calloc");
+		master_terminate(ENOMEM);       /* XXX HSH */
+	}
+	TAILQ_INIT(newpdb);
+
+	if ((count = pe_load_db(newpdb)) == -1) {
+		log_warnx("pe_reconfigure: could not reload policy database");
+		return;
+	}
+
+	/* Switch to new policy database */
+	oldpdb = pdb;
+	pdb = newpdb;
+
+	if (pe_update_db(newpdb, oldpdb) == -1) {
+		log_warnx("pe_reconfigure: database update failed");
+		pe_flush_db(newpdb);
+		return;
+	}
+
+	pe_flush_db(oldpdb);
+
+	log_info("pe_reconfigure: loaded %d policies to new pdb %p, "
+	    "flushed old pdb %p", count, newpdb, oldpdb);
+}
+
+void
+pe_flush_db(struct policies *ppdb)
 {
 	struct pe_user	*p, *pnext;
 	int		 i;
 
-	for (p = TAILQ_FIRST(&pdb); p != TAILQ_END(&pdb); p = pnext) {
+	for (p = TAILQ_FIRST(ppdb); p != TAILQ_END(ppdb); p = pnext) {
 		pnext = TAILQ_NEXT(p, entry);
-		TAILQ_REMOVE(&pdb, p, entry);
+		TAILQ_REMOVE(ppdb, p, entry);
 
 		for (i = 0; i < PE_PRIO_MAX; i++)
 			apn_free_ruleset(p->prio[i]);
 		free(p);
 	}
+}
+
+int
+pe_update_db(struct policies *newpdb, struct policies *oldpdb)
+{
+	struct pe_proc		*pproc;
+	struct pe_context	*newctx;
+	int			 i;
+
+	if (newpdb == NULL || oldpdb == NULL) {
+		log_warnx("pe_update_db: empty database pointers");
+		return (-1);
+	}
+
+	TAILQ_FOREACH(pproc, &tracker, entry) {
+		for (i = 0; i < PE_PRIO_MAX; i++) {
+			DEBUG(DBG_PE_POLICY, "pe_update_db: proc %p prio %d "
+			    "context %p", pproc, i, pproc->context[i]);
+
+			if (pe_update_ctx(pproc, &newctx, i, newpdb) == -1)
+				return (-1);
+			pe_put_ctx(pproc->context[i]);
+			pproc->context[i] = newctx;
+		}
+	}
+
+	return (0);
+}
+
+/*
+ * Update a context.
+ * If the members rule and ctx of struct pe_context are set, they
+ * reference rules in the old pdb.  If similar rules are available in
+ * the new pdb (ie. checksum of the application can be found), update
+ * the references.
+ *
+ * Otherwise, reset them to NULL.
+ */
+int
+pe_update_ctx(struct pe_proc *pproc, struct pe_context **newctx, int prio,
+    struct policies *newpdb)
+{
+	struct pe_user		*newuser;
+	struct pe_context	*context;
+
+	if (pproc == NULL) {
+		log_warnx("pe_update_ctx: empty process");
+		return (-1);
+	}
+	if (newctx == NULL) {
+		log_warnx("pe_update_ctx: invalid new context pointer");
+		return (-1);
+	}
+	if (prio < 0 || prio >= PE_PRIO_MAX) {
+		log_warnx("pe_update_ctx: illegal priority %d", prio);
+		return (-1);
+	}
+	if (newpdb == NULL) {
+		log_warnx("pe_update_ctx: empty database pointers %p", newpdb);
+		return (-1);
+	}
+
+	/*
+	 * Try to get policies for our uid from the new pdb.  If the
+	 * new pdb does not provide policies for our uid, try to get the
+	 * default policies.
+	 */
+	if ((newuser = pe_get_user(pproc->uid, newpdb)) == NULL)
+		newuser = pe_get_user(-1, newpdb);
+
+	context = pe_search_ctx(newuser->prio[prio], pproc->csum,
+	    pproc->pathhint);
+
+	DEBUG(DBG_PE_POLICY, "pe_update_ctx: context %p rule %p ctx %p",
+	    context, context ? context->rule : NULL, context ? context->ctx :
+	    NULL);
+
+	*newctx = context;
+
+	return (0);
 }
 
 void
@@ -244,21 +372,26 @@ pe_flush_tracker(void)
 }
 
 int
-pe_load_db(void)
+pe_load_db(struct policies *p)
 {
 	int	count = 0;
 
+	if (p == NULL) {
+		log_warnx("pe_load_db: bogus database pointer");
+		return (-1);
+	}
+
 	/* load admin policies */
-	count = pe_load_dir(ANOUBISD_ADMINDIR, PE_PRIO_ADMIN);
+	count = pe_load_dir(ANOUBISD_ADMINDIR, PE_PRIO_ADMIN, p);
 
 	/* load user policies */
-	count += pe_load_dir(ANOUBISD_USERDIR, PE_PRIO_USER1);
+	count += pe_load_dir(ANOUBISD_USERDIR, PE_PRIO_USER1, p);
 
 	return (count);
 }
 
 int
-pe_load_dir(const char *dirname, int prio)
+pe_load_dir(const char *dirname, int prio, struct policies *p)
 {
 	DIR			*dir;
 	struct dirent		*dp;
@@ -268,10 +401,15 @@ pe_load_dir(const char *dirname, int prio)
 	const char		*errstr;
 	char			*filename;
 
-	DEBUG(DBG_PE_POLICY, "pe_load_dir: %s", dirname);
+	DEBUG(DBG_PE_POLICY, "pe_load_dir: %s %p", dirname, p);
 
 	if (prio < 0 || prio >= PE_PRIO_MAX) {
 		log_warnx("pe_load_dir: illegal priority %d", prio);
+		return (0);
+	}
+
+	if (p == NULL) {
+		log_warnx("pe_load_dir: illegal database");
 		return (0);
 	}
 
@@ -298,8 +436,8 @@ pe_load_dir(const char *dirname, int prio)
 		else {
 			uid = strtonum(dp->d_name, 0, UID_MAX, &errstr);
 			if (errstr) {
-				log_warnx("\"%s/%s\" %s", dirname, dp->d_name,
-				    errstr);
+				log_warnx("pe_load_dir: filename \"%s/%s\" %s",
+				    dirname, dp->d_name, errstr);
 				continue;
 			}
 		}
@@ -314,7 +452,7 @@ pe_load_dir(const char *dirname, int prio)
 		if (rs == NULL)
 			continue;
 
-		if (pe_insert_rs(rs, uid, prio) != 0) {
+		if (pe_insert_rs(rs, uid, prio, p) != 0) {
 			apn_free_ruleset(rs);
 			log_warnx("could not insert policy %s/%s", dirname,
 			    dp->d_name);
@@ -353,12 +491,16 @@ pe_load_policy(const char *name)
 }
 
 int
-pe_insert_rs(struct apn_ruleset *rs, uid_t uid, int prio)
+pe_insert_rs(struct apn_ruleset *rs, uid_t uid, int prio, struct policies *p)
 {
 	struct pe_user		*user;
 
 	if (rs == NULL) {
 		log_warnx("pe_insert_rs: empty ruleset");
+		return (1);
+	}
+	if (p == NULL) {
+		log_warnx("pe_insert_rs: empty database pointer");
 		return (1);
 	}
 	if (prio < 0 || prio >= PE_PRIO_MAX) {
@@ -367,13 +509,13 @@ pe_insert_rs(struct apn_ruleset *rs, uid_t uid, int prio)
 	}
 
 	/* Find or create user */
-	if ((user = pe_get_user(uid)) == NULL) {
+	if ((user = pe_get_user(uid, p)) == NULL) {
 		if ((user = calloc(1, sizeof(struct pe_user))) == NULL) {
 			log_warn("calloc");
 			master_terminate(ENOMEM);	/* XXX HSH */
 		}
 		user->uid = uid;
-		TAILQ_INSERT_TAIL(&pdb, user, entry);
+		TAILQ_INSERT_TAIL(p, user, entry);
 	} else if (user->prio[prio]) {
 		DEBUG(DBG_PE_POLICY, "pe_insert_rs: freeing %p prio %d user %p",
 		    user->prio[prio], prio, user);
@@ -390,12 +532,17 @@ pe_insert_rs(struct apn_ruleset *rs, uid_t uid, int prio)
 }
 
 struct pe_user *
-pe_get_user(uid_t uid)
+pe_get_user(uid_t uid, struct policies *p)
 {
 	struct pe_user	*puser, *user;
 
+	if (p == NULL) {
+		log_warnx("pe_get_user: bogus database pointer");
+		return (NULL);
+	}
+
 	user = NULL;
-	TAILQ_FOREACH(puser, &pdb, entry) {
+	TAILQ_FOREACH(puser, p, entry) {
 		if (puser->uid != uid)
 			continue;
 		user = puser;
@@ -581,7 +728,8 @@ pe_handle_process(struct eventdev_hdr *hdr)
 	switch (msg->op) {
 	case ANOUBIS_PROCESS_OP_FORK:
 		/* Use cookie of new process */
-		proc = pe_alloc_proc(msg->task_cookie, msg->common.task_cookie);
+		proc = pe_alloc_proc(hdr->msg_uid, msg->task_cookie,
+		    msg->common.task_cookie);
 		pe_inherit_ctx(proc);
 		pe_track_proc(proc);
 		break;
@@ -631,7 +779,7 @@ pe_handle_alf(struct eventdev_hdr *hdr)
 		DEBUG(DBG_PE_ALF, "pe_handle_alf: untrackted process %u",
 		    hdr->msg_pid);
 		/* Untracked process: create it, set context and track it. */
-		proc = pe_alloc_proc(msg->common.task_cookie, 0);
+		proc = pe_alloc_proc(hdr->msg_uid, msg->common.task_cookie, 0);
 		pe_set_ctx(proc, hdr->msg_uid, NULL, NULL);
 		pe_track_proc(proc);
 	}
@@ -719,7 +867,7 @@ pe_decide_alf(struct pe_proc *proc, struct eventdev_hdr *hdr)
 	reply->timeout = (time_t)0;
 	if (decision == POLICY_ASK) {
 		reply->ask = 1;
-		reply->timeout = 300;	/* XXX 5 Minutes for now. */
+		reply->timeout = 30;	/* XXX 5 Minutes for now. */
 	}
 	reply->reply = decision;
 	reply->len = 0;
@@ -1198,9 +1346,9 @@ pe_handle_sfs(struct eventdev_hdr *hdr)
 		return (NULL);
 	}
 
-	user = pe_get_user(hdr->msg_uid);
+	user = pe_get_user(hdr->msg_uid, pdb);
 	if (user == NULL)
-		user = pe_get_user(-1);
+		user = pe_get_user(-1, pdb);
 
 	reply = pe_decide_sfs(user, hdr);
 
@@ -1646,7 +1794,8 @@ pe_put_proc(struct pe_proc *proc)
 }
 
 struct pe_proc *
-pe_alloc_proc(anoubis_cookie_t cookie, anoubis_cookie_t parent_cookie)
+pe_alloc_proc(uid_t uid, anoubis_cookie_t cookie,
+    anoubis_cookie_t parent_cookie)
 {
 	struct pe_proc	*proc;
 
@@ -1658,10 +1807,11 @@ pe_alloc_proc(anoubis_cookie_t cookie, anoubis_cookie_t parent_cookie)
 	proc->task_cookie = cookie;
 	proc->parent_proc = pe_get_proc(parent_cookie);
 	proc->pid = -1;
+	proc->uid = uid;
 	proc->refcount = 1;
 
-	DEBUG(DBG_PE_TRACKER, "pe_alloc_proc: proc %p cookie 0x%08llx "
-	    "parent cookie 0x%08llx", proc, proc->task_cookie,
+	DEBUG(DBG_PE_TRACKER, "pe_alloc_proc: proc %p uid %u cookie 0x%08llx "
+	    "parent cookie 0x%08llx", proc, uid, proc->task_cookie,
 	    proc->parent_proc ? parent_cookie : 0);
 
 	return (proc);
@@ -1793,8 +1943,8 @@ pe_set_ctx(struct pe_proc *proc, uid_t uid, const u_int8_t *csum,
 	 * actually should not happen), or we are allowed to switch context
 	 * we use the first matching application rule as new context.
 	 */
-	if ((user = pe_get_user(uid)) == NULL &&
-	    (user = pe_get_user(-1)) == NULL) {
+	if ((user = pe_get_user(uid, pdb)) == NULL &&
+	    (user = pe_get_user(-1, pdb)) == NULL) {
 		/*
 		 * If we have not found any context bound to the UID
 		 * or the default user (-1), we use an empty context,
@@ -1805,6 +1955,7 @@ pe_set_ctx(struct pe_proc *proc, uid_t uid, const u_int8_t *csum,
 		proc->valid_ctx = 1;
 	} else {
 		for (i = 0; i < PE_PRIO_MAX; i++) {
+			pe_put_ctx(proc->context[i]);
 			proc->context[i] = pe_search_ctx(user->prio[i], csum,
 			    pathhint);
 		}
@@ -2022,8 +2173,8 @@ pe_dump(void)
 		    proc->context[1] ? proc->context[1]->rule : NULL);
 	}
 
-	log_info("policies");
-	TAILQ_FOREACH(user, &pdb, entry) {
+	log_info("policies (pdb %p)", pdb);
+	TAILQ_FOREACH(user, pdb, entry) {
 		log_info("uid %d", (int)user->uid);
 		for (i = 0; i < PE_PRIO_MAX; i++) {
 			if (user->prio[i] == NULL)

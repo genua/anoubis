@@ -94,6 +94,9 @@ policy_sighandler(int sig, short event, void *arg)
 	case SIGUSR1:
 		pe_dump();
 		break;
+	case SIGHUP:
+		pe_reconfigure();
+		break;
 	case SIGTERM:
 	case SIGINT:
 	case SIGQUIT:
@@ -107,7 +110,8 @@ policy_main(struct anoubisd_config *conf, int pipe_m2s[2], int pipe_m2p[2],
     int pipe_s2p[2])
 /*@globals undef eventq_p2m, undef eventq_p2s, undef replyq@*/
 {
-	struct event	 ev_sigterm, ev_sigint, ev_sigquit, ev_sigusr1;
+	struct event	 ev_sigterm, ev_sigint, ev_sigquit, ev_sigusr1,
+			     ev_sighup;
 	struct event	 ev_m2p, ev_s2p;
 	struct event	 ev_p2m, ev_p2s;
 	struct event	 ev_timer;
@@ -161,16 +165,19 @@ policy_main(struct anoubisd_config *conf, int pipe_m2s[2], int pipe_m2p[2],
 	signal_set(&ev_sigint, SIGINT, policy_sighandler, NULL);
 	signal_set(&ev_sigquit, SIGQUIT, policy_sighandler, NULL);
 	signal_set(&ev_sigusr1, SIGUSR1, policy_sighandler, NULL);
+	signal_set(&ev_sighup, SIGHUP, policy_sighandler, NULL);
 	signal_add(&ev_sigterm, NULL);
 	signal_add(&ev_sigint, NULL);
 	signal_add(&ev_sigquit, NULL);
 	signal_add(&ev_sigusr1, NULL);
+	signal_add(&ev_sighup, NULL);
 
 	sigfillset(&mask);
 	sigdelset(&mask, SIGTERM);
 	sigdelset(&mask, SIGINT);
 	sigdelset(&mask, SIGQUIT);
 	sigdelset(&mask, SIGUSR1);
+	sigdelset(&mask, SIGHUP);
 	sigprocmask(SIG_SETMASK, &mask, NULL);
 
 	close(pipe_m2p[0]);
@@ -523,7 +530,7 @@ dispatch_s2p(int fd, short sig, void *arg)
 			reply = policy_engine(ANOUBISD_MSG_POLREQUEST, comm);
 			if (!reply) {
 				/*
-				 * Messages have been queued via 
+				 * Messages have been queued via
 				 * send_policy_data
 				 */
 				event_add(ev_info->ev_p2s, NULL);
@@ -552,6 +559,9 @@ dispatch_s2p(int fd, short sig, void *arg)
 				 * might have already been replied to by a
 				 * timeout or other GUI
 				 */
+				queue_delete(&replyq, rep_wait);
+				DEBUG(DBG_QUEUE, " <replyq: %x",
+				    rep_wait->token);
 				enqueue(&eventq_p2m, msg);
 				DEBUG(DBG_QUEUE, " >eventq_p2m: %x",
 				    ((struct eventdev_reply *)msg->msg)

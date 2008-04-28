@@ -563,7 +563,9 @@ sanitise_stdfd(void)
 static void
 reconfigure(void)
 {
-	/* XXX HJH: Todo */
+	/* Forward SIGHUP to policy process */
+	if (kill(policy_pid, SIGHUP) != 0)
+		log_warn("sending SIGHUP to child %u failed", policy_pid);
 }
 
 anoubisd_msg_t *

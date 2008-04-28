@@ -137,6 +137,8 @@ void	pe_init(void);
 
 void	pe_shutdown(void);
 
+void	pe_reconfigure(void);
+
 anoubisd_reply_t *policy_engine(int mtype, void *request);
 
 void	log_init(void);
