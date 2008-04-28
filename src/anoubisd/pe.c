@@ -151,7 +151,7 @@ int			 pe_decide_sfscheck(struct apn_rule *, struct
 			     sfs_open_message *, int *);
 int			 pe_decide_sfsdflt(struct apn_rule *, struct
 			     sfs_open_message *, int *);
-anoubisd_reply_t	*pe_dispatch_policy(struct anoubisd_msg_comm *);
+anoubisd_reply_t	*pe_dispatch_policy(struct anoubisd_msg_comm *, int *);
 
 struct pe_proc		*pe_get_proc(anoubis_cookie_t);
 void			 pe_put_proc(struct pe_proc * proc);
@@ -593,6 +593,7 @@ policy_engine(int mtype, void *request)
 	anoubisd_reply_t *reply;
 	struct eventdev_hdr *hdr = NULL;
 	struct anoubisd_msg_comm *comm = NULL;
+	int reconfigure = 0;
 
 	DEBUG(DBG_TRACE, ">policy_engine");
 
@@ -604,7 +605,9 @@ policy_engine(int mtype, void *request)
 
 	case ANOUBISD_MSG_POLREQUEST:
 		comm = (anoubisd_msg_comm_t *)request;
-		reply = pe_dispatch_policy(comm);
+		reply = pe_dispatch_policy(comm, &reconfigure);
+		if (reconfigure)
+			pe_reconfigure();
 		break;
 
 	default:
@@ -870,7 +873,7 @@ pe_decide_alf(struct pe_proc *proc, struct eventdev_hdr *hdr)
 	reply->timeout = (time_t)0;
 	if (decision == POLICY_ASK) {
 		reply->ask = 1;
-		reply->timeout = 30;	/* XXX 5 Minutes for now. */
+		reply->timeout = 300;	/* XXX 5 Minutes for now. */
 	}
 	reply->reply = decision;
 	reply->len = 0;
@@ -1569,7 +1572,7 @@ static void put_request(struct policy_request *req)
 }
 
 anoubisd_reply_t *
-pe_dispatch_policy(struct anoubisd_msg_comm *comm)
+pe_dispatch_policy(struct anoubisd_msg_comm *comm, int *reconf)
 {
 	anoubisd_reply_t	*reply = NULL;
 	Policy_Generic		*gen;
@@ -1583,6 +1586,7 @@ pe_dispatch_policy(struct anoubisd_msg_comm *comm)
 	char			*buf;
 	int			len;
 
+	(*reconf) = 0;
 	if (comm == NULL) {
 		log_warnx("pe_dispatch_policy: empty comm");
 		return (NULL);
@@ -1727,6 +1731,7 @@ pe_dispatch_policy(struct anoubisd_msg_comm *comm)
 			error = 0;
 			goto err;
 		}
+		(*reconf) = 1;
 		break;
 	default:
 		/* Unknown opcode. */
