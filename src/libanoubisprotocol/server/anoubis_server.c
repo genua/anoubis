@@ -72,6 +72,11 @@ struct anoubis_server {
 #define FLAG_SENTCLOSEACK		0x0800
 #define FLAG_ERROR			0x1000
 
+static struct anoubis_server_checksum_control {
+	anoubis_checksum_control_dispatcher_t dispatch_ctl;
+	void *arg;
+} anoubis_server_checksum_control;
+
 struct anoubis_server * anoubis_server_create(struct achat_channel * chan,
     struct anoubis_policy_comm * policy)
 {
@@ -491,6 +496,25 @@ static int anoubis_process_reply(struct anoubis_server * server,
 	return 0;
 }
 
+void anoubis_checksum_control_create(anoubis_checksum_control_dispatcher_t
+    dispatch_ctl, void *arg)
+{
+	if (dispatch_ctl)
+		anoubis_server_checksum_control.dispatch_ctl = dispatch_ctl;
+	if (arg)
+		anoubis_server_checksum_control.arg = arg;
+}
+
+static int anoubis_checksum_control(struct anoubis_msg * m,
+    struct achat_channel * chan)
+{
+	if (anoubis_server_checksum_control.dispatch_ctl &&
+	    anoubis_server_checksum_control.arg)
+		return anoubis_server_checksum_control.dispatch_ctl(m, chan,
+		    anoubis_server_checksum_control.arg);
+	return -EINVAL;
+}
+
 /*
  * Process a message from the wire. Caller must release buf!
  * Return values:
@@ -551,6 +575,7 @@ int anoubis_server_process(struct anoubis_server * server, void * buf,
 	case ANOUBIS_C_PROTOSEL:
 	case ANOUBIS_N_REGISTER:
 	case ANOUBIS_N_UNREGISTER:
+	case ANOUBIS_S_CSUMREQUEST:
 		/*
 		 * These start new requests. If we either got a closereq
 		 * from the other end these are forbidden. If we sent a
@@ -622,6 +647,8 @@ int anoubis_server_process(struct anoubis_server * server, void * buf,
 		return anoubis_policy_comm_process(server->policy, tmp,
 		    server->auth_uid, server->chan);
 	}
+	case ANOUBIS_S_CSUMREQUEST:
+		return anoubis_checksum_control(&m, server->chan);
 	default:
 		/* Should never happen! */
 		return -EINVAL;

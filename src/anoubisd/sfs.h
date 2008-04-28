@@ -24,36 +24,15 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef ANOUBIS_SERVER_H
-#define ANOUBIS_SERVER_H
 
-#include <anoubischat.h>
-#include <anoubis_protocol.h>
-#include <anoubis_policy.h>
+#ifndef _SFS_H_
+#define _SFS_H_
 
-struct anoubis_server;
-struct anoubis_notify_group;
+#define ANOUBISD_CSUM_NONE	0
+#define ANOUBISD_CSUM_USER	1
+#define ANOUBISD_CSUM_ROOT	2
 
-/*@null@*/ /*@only@*/
-struct anoubis_server * anoubis_server_create(
-   /*@dependent@*/ struct achat_channel * chan,
-   /*@dependent@*/ struct anoubis_policy_comm *);
+int sfs_checksumop(const char *path, unsigned int operation, uid_t uid);
+int sfs_getchecksum(const char *path, uid_t uid, unsigned char *md);
 
-void anoubis_server_destroy(/*@only@*/ struct anoubis_server *);
-
-int anoubis_server_start(struct anoubis_server *);
-
-int anoubis_server_process(/*@dependent@*/ struct anoubis_server *, void * buf,
-    size_t len);
-
-int anoubis_server_eof(struct anoubis_server * server);
-
-/*@exposed@*/
-struct anoubis_notify_group * anoubis_server_getnotify(
-    struct anoubis_server * server);
-typedef int (*anoubis_checksum_control_dispatcher_t)(struct anoubis_msg *,
-    struct achat_channel *, void *arg);
-void anoubis_checksum_control_create(anoubis_checksum_control_dispatcher_t,
-    void *arg);
-
-#endif
+#endif	/* _SFS_H_ */

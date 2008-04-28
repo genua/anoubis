@@ -151,6 +151,12 @@ static void dump_policyreply(Anoubis_PolicyReplyMessage * m, size_t len)
 	DUMP_DATA(m->payload, len-sizeof(*m));
 }
 
+static void dump_checksumrequest(Anoubis_CheckSumRequestMessage * m, size_t len)
+{
+	DUMP_NETU(m, operation);
+	printf(" path = %s", m->path);
+}
+
 void anoubis_dump(struct anoubis_msg * m, const char * str)
 {
 	u_int32_t opcode;
@@ -181,6 +187,7 @@ void anoubis_dump(struct anoubis_msg * m, const char * str)
 	CASE(ANOUBIS_N_RESOTHER, notifyresult)
 	CASE(ANOUBIS_P_REQUEST, policyrequest)
 	CASE(ANOUBIS_P_REPLY, policyreply)
+	CASE(ANOUBIS_S_CSUMREQUEST, checksumrequest)
 	default:
 		printf(" type = %x", opcode);
 		dump_general(m->u.general, m->length-CSUM_LEN);

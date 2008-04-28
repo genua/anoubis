@@ -37,7 +37,6 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 
-#include <err.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <pwd.h>
@@ -54,11 +53,19 @@
 #include "splint-includes.h"
 #endif
 
+#ifdef LINUX
+#include <linux/anoubis_sfs.h>
+#else
+#include <dev/anoubis_sfs.h>
+#endif
+
 /* on glibc 2.6+, event.h uses non C89 types :/ */
 #include <event.h>
+#include <anoubis_msg.h>
 #include "anoubisd.h"
 #include "aqueue.h"
 #include "amsg.h"
+#include "sfs.h"
 
 /*@noreturn@*/
 static void	usage(void) __dead;
@@ -281,13 +288,13 @@ main(int argc, char *argv[])
 		exit(0);
 
 	if (geteuid() != 0)
-		errx(1, "need root privileges");
+		early_errx(1, "need root privileges");
 
 	if (getpwnam(ANOUBISD_USER) == NULL)
-		errx(1, "unkown user %s", ANOUBISD_USER);
+		early_errx(1, "unkown user " ANOUBISD_USER);
 
 	if (check_pid())
-		errx(1, "anoubisd is already running");
+		early_errx(1, "anoubisd is already running");
 
 	log_init();
 
@@ -539,14 +546,14 @@ sanitise_stdfd(void)
 	int nullfd, dupfd;
 
 	if ((nullfd = dupfd = open("/dev/null", O_RDWR)) == -1)
-		err(1, "open");
+		early_err(1, "open");
 
 	while (++dupfd <= 2) {
 		/* Only clobber closed fds */
 		if (fcntl(dupfd, F_GETFL, 0) >= 0)
 			continue;
 		if (dup2(nullfd, dupfd) == -1) {
-			err(1, "dup2");
+			early_err(1, "dup2");
 		}
 	}
 	if (nullfd > 2)
@@ -617,10 +624,27 @@ dispatch_s2m(int fd, short event, void *arg)
 			DEBUG(DBG_TRACE, "<dispatch_s2m");
 			return;
 		}
-		DEBUG(DBG_QUEUE, " >s2m: %x",
-		    ((struct eventdev_hdr *)msg->msg)->msg_token);
+		switch(msg->mtype) {
+		case ANOUBISD_MSG_CHECKSUM_OP: {
+				anoubisd_msg_comm_t *msg_comm =
+				    (anoubisd_msg_comm_t*)msg->msg;
 
-		/* This should be a sessionid registration message */
+				Anoubis_CheckSumRequestMessage *csum =
+				    (Anoubis_CheckSumRequestMessage*)
+				    msg_comm->msg;
+
+				sfs_checksumop(csum->path,
+				    get_value(csum->operation), msg_comm->uid);
+			}
+			break;
+		default:
+			DEBUG(DBG_QUEUE, " >s2m: %x",
+			    ((struct eventdev_hdr *)msg->msg)->msg_token);
+
+			/* This should be a sessionid registration message */
+			log_warn("dispatch_s2m: bad mtype %d", msg->mtype);
+			break;
+		}
 
 /* XXX RD Session registration - optimization */
 
@@ -766,6 +790,32 @@ dispatch_dev2m(int fd, short event, void *arg)
 		    hdr->msg_pid);
 
 /* XXX RD syslog? */
+
+		/* Lookup stored checksum */
+		if (hdr->msg_source == ANOUBIS_SOURCE_SFS) {
+			struct sfs_open_message		*msg;
+
+			msg = (struct sfs_open_message *)(hdr+1);
+
+			if (msg->flags & ANOUBIS_OPEN_FLAG_CSUM) {
+				int ret;
+
+				msg->anoubisd_csum_set = ANOUBISD_CSUM_NONE;
+
+				ret = sfs_getchecksum(msg->pathhint,
+				    hdr->msg_uid, msg->anoubisd_csum);
+				if (ret >= 0) {
+					msg->anoubisd_csum_set =
+					    ANOUBISD_CSUM_USER;
+				} else {
+					ret = sfs_getchecksum(msg->pathhint,
+					    0, msg->anoubisd_csum);
+					if (ret >= 0)
+						msg->anoubisd_csum_set =
+						    ANOUBISD_CSUM_ROOT;
+				}
+			}
+		}
 
 		if ((hdr->msg_flags & EVENTDEV_NEED_REPLY) ||
 		    (hdr->msg_source == ANOUBIS_SOURCE_PROCESS) ||

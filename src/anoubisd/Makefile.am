@@ -40,6 +40,9 @@ if STATIC_LINKING
 STATIC = -static
 endif
 
+#CFLAGS += $(SSL_CFLAGS)
+LIBS += $(SSL_LIBS)
+
 CPPFLAGS = \
 	   -I$(top_builddir)/src \
 	   -I$(top_srcdir)/include \
@@ -67,9 +70,11 @@ anoubisd_SOURCES= \
 	log.c \
 	amsg.c \
 	aqueue.c \
+	sfs.c \
 	anoubisd.h \
 	amsg.h \
-	aqueue.h
+	aqueue.h \
+	sfs.h
 
 anoubisd_SOURCES_flawfinder= \
 	main.c_flawfinder \
@@ -80,9 +85,11 @@ anoubisd_SOURCES_flawfinder= \
 	log.c_flawfinder \
 	amsg.c_flawfinder \
 	aqueue.c_flawfinder \
+	sfs.c_flawfinder \
 	anoubisd.h_flawfinder \
 	amsg.h_flawfinder \
-	aqueue.h_flawfinder
+	aqueue.h_flawfinder \
+	sfs.h_flawfinder
 
 anoubisd_SOURCES_lint= \
 	main.c_lint \
@@ -90,7 +97,8 @@ anoubisd_SOURCES_lint= \
 	pe.c_lint \
 	printconf.c_lint \
 	session.c_lint \
-	log.c_lint
+	log.c_lint \
+	sfs.c_lint
 
 anoubisd_SOURCES_splint= \
 	main.c_splint \
@@ -100,7 +108,8 @@ anoubisd_SOURCES_splint= \
 	session.c_splint \
 	log.c_splint \
 	amsg.c_splint \
-	aqueue.c_splint
+	aqueue.c_splint \
+	sfs.c_splint
 
 
 flawfinder_FLAGS=

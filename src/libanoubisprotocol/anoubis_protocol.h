@@ -155,8 +155,16 @@ DEFINE_SIGNED_TYPE(32);
 
 #define		ANOUBIS_N_MAX		0x4FFF
 
+/* SFS Protocol */
+#define		ANOUBIS_S_MIN		0x5000
+
+#define		ANOUBIS_S_CSUMREQUEST	0x5000
+
+#define		ANOUBIS_S_MAX		0x500F
+
 #define ANOUBIS_IS_NOTIFY(X) ((ANOUBIS_N_MIN)<=(X) && (X) <= (ANOUBIS_N_MAX))
 #define ANOUBIS_IS_POLICY(X) ((ANOUBIS_P_MIN)<=(X) && (X) <= (ANOUBIS_P_MAX))
+#define ANOUBIS_IS_SFS(X) ((ANOUBIS_S_MIN)<=(X) && (X) <= (ANOUBIS_S_MAX))
 
 #define CSUM_LEN	4
 
@@ -273,4 +281,12 @@ typedef struct {
 	char	payload[0];
 } __attribute__((packed)) Policy_SetByUid;
 
+#define ANOUBIS_CHECKSUM_OP_ADD		0x0001UL
+#define ANOUBIS_CHECKSUM_OP_DEL		0x0002UL
+
+typedef struct {
+	u32n	type;
+	u32n	operation;
+	char	path[0];
+} __attribute__((packed)) Anoubis_CheckSumRequestMessage;
 #endif

@@ -56,6 +56,8 @@
 #define ANOUBISD_ADMINDIR		"admin"
 #define ANOUBISD_DEFAULTNAME		"default"
 
+#define SFS_CHECKSUMROOT		"/var/lib/sfs"
+
 #ifdef LINUX
 #define __dead
 #define UID_MAX	UINT_MAX
@@ -84,7 +86,8 @@ enum {
 	ANOUBISD_MSG_LOGREQUEST,
 	ANOUBISD_MSG_EVENTREPLY,
 	ANOUBISD_MSG_EVENTCANCEL,
-	ANOUBISD_MSG_SESSION_REG
+	ANOUBISD_MSG_SESSION_REG,
+	ANOUBISD_MSG_CHECKSUM_OP
 } anoubisd_msg;
 
 /* format of ANOUBISD_MSG_EVENTDEV
@@ -154,6 +157,12 @@ __dead void	fatal(const char *);
 
 /*@noreturn@*/
 __dead void	master_terminate(int);
+
+/*@noreturn@*/
+__dead void	early_err(int, const char *);
+
+/*@noreturn@*/
+__dead void	early_errx(int, const char *);
 
 anoubisd_msg_t *msg_factory(int, int);
 

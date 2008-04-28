@@ -161,3 +161,29 @@ fatalx(const char *emsg)
 	errno = 0;
 	fatal(emsg);
 }
+
+void
+early_err(int eval, const char *emsg)
+{
+	extern char *__progname;
+
+	if (emsg == NULL) {
+		fprintf(stderr, "%s: %s", __progname, strerror(errno));
+	 } else {
+		if (errno) {
+			fprintf(stderr, "%s: %s: %s", __progname, emsg,
+			    strerror(errno));
+		} else {
+			fprintf(stderr, "%s: %s", __progname, emsg);
+		}
+	}
+
+	exit(eval);
+}
+
+void
+early_errx(int eval, const char *emsg)
+{
+	errno = 0;
+	early_err(eval, emsg);
+}

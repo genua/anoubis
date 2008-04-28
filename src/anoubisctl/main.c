@@ -68,6 +68,8 @@ static int	daemon_status(void);
 static int	daemon_reload(void);
 static int	load(char *);
 static int	dump(char *);
+static int	sfs_addsum(char *file);
+static int	sfs_delsum(char *file);
 static int	create_channel(void);
 static void	destroy_channel(void);
 
@@ -85,6 +87,8 @@ struct cmd {
 	{ "reload",  daemon_reload,  0 },
 	{ "load",    (func_int_t)load, 1 },
 	{ "dump",    (func_int_t)dump, 1 },
+	{ "addsum",  (func_int_t)sfs_addsum, 1},
+	{ "delsum",  (func_int_t)sfs_delsum, 1},
 };
 
 static char    *anoubis_socket = "/var/run/anoubisd.sock";
@@ -366,6 +370,44 @@ dump(char *file)
 		fclose(fp);
 	destroy_channel();
 	return 0;
+}
+
+static int
+sfs_sumop(char *file, int operation)
+{
+	int	error = 0;
+	struct	anoubis_msg * m = NULL;
+	int	rc;
+
+	error = create_channel();
+
+	m = anoubis_msg_new(sizeof(Anoubis_CheckSumRequestMessage) +
+	    strlen(file) + 1);
+	if(!m)
+		goto err;
+
+	set_value(m->u.checksumrequest->type, ANOUBIS_S_CSUMREQUEST);
+	set_value(m->u.checksumrequest->operation, operation);
+	strlcpy(m->u.checksumrequest->path, file, strlen(file) + 1);
+
+	rc = anoubis_msg_send(channel, m);
+
+err:
+	destroy_channel();
+
+	return error;
+}
+
+static int
+sfs_addsum(char *file)
+{
+	return sfs_sumop(file, ANOUBIS_CHECKSUM_OP_ADD);
+}
+
+static int
+sfs_delsum(char *file)
+{
+	return sfs_sumop(file, ANOUBIS_CHECKSUM_OP_DEL);
 }
 
 static int
