@@ -44,11 +44,6 @@
  *   ./aqueue
  */
 
-/*
- * XXX tartler: The following code implements a sophisticated queue,
- * which will be properly annotated in a later change.
- */
-/*@-memchecks@*/
 int
 enqueue(Queuep queuep, void *msgp)
 {
@@ -56,19 +51,26 @@ enqueue(Queuep queuep, void *msgp)
 
 	if (queuep == NULL) {
 		log_warn("uninitialized queue");
+		free(msgp);
 		return 0;
 	}
 	if ((qep = malloc(sizeof(struct queue_entry))) == NULL) {
 		log_warn("enqueue: can't allocate memory");
+		free(msgp);
 		master_terminate(ENOMEM);
-		return 0;
+		/*
+		 * In case of OOM situation, we can live with potential
+		 * unfreed storage. We therefore ignore the splint warning
+		 * at this point
+		 */
+		/*@i@*/return 0;
 	}
 	qep->next = NULL;
 	qep->entry = msgp;
 
 	if (queuep->tail)
 		queuep->tail->next = qep;
-	queuep->tail = qep;
+	/*@i@*/queuep->tail = qep;
 	if (queuep->head == NULL)
 		queuep->head = queuep->tail;
 	return 1;
@@ -165,24 +167,38 @@ queue_delete(Queuep queuep, void *msgp)
 	while (qep) {
 		if (msgp == qep->entry) {
 			if (qep == queuep->head) {
-				queuep->head = qep->next;
+				/* common queue operation, ignore splint here */
+				/*@i@*/queuep->head = qep->next;
 				if (queuep->head == NULL)
 					queuep->tail = NULL;
 				free(qep);
 				return 1;
 			}
-			lqep->next = qep->next;
+			/*
+			 * no null pointer dereference possible here,
+			 * since the first loop run is always caught by
+			 * the if-branch directly above this comment. On
+			 * the 2nd loop-run lqep is always defined to
+			 * the previous queue element (read: nonnull).
+			 */
+			/*@i@*/lqep->next = qep->next;
 			if (queuep->tail == qep)
 				queuep->tail = lqep;
 			free(qep);
-			return 1;
+			/*
+			 * splint warns here that the parameter queuep
+			 * might indirectly point to deallocated storage
+			 * via queuep->head. However, this is no problem
+			 * here. Queue operations like this ARE
+			 * difficult to understand by splint.
+			 */
+			/*@i@*/return 1;
 		}
 		lqep = qep;
 		qep = qep->next;
 	}
 	return 0;
 }
-/*@=memchecks@*/
 
 #ifdef UTEST
 void

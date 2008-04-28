@@ -32,8 +32,10 @@
 
 
 struct queue_entry {
-   struct queue_entry *next;
-   void *entry;
+	/*@dependent@*/ /*@null@*/
+	struct queue_entry *next;
+	/*@owned@*/
+	void *entry;
 };
 typedef struct queue_entry  Qentry;
 typedef struct queue_entry *Qentryp;
@@ -43,28 +45,31 @@ typedef struct queue_entry *Qentryp;
  * If head is NULL, then the queue is empty.
  */
 struct queue_hd {
-   Qentryp head;
-   Qentryp tail;
+	/*@owned@*/ /*@null@*/
+	Qentryp head;
+	/*@shared@*/ /*@null@*/
+	Qentryp tail;
 };
 typedef struct queue_hd  Queue;
 typedef struct queue_hd *Queuep;
 
 #define queue_init(queue) { queue.head = queue.tail = NULL; }
 
-int	 enqueue(Queuep, /*@owned@*/ void *);
+int	 enqueue(/*@notnull@*/ Queuep, /*@owned@*/ void *);
 
+/*@null@*/
 void	*dequeue(Queuep);
 
-/*@exposed@*/
+/*@exposed@*/ /*@null@*/
 Qentryp	 queue_head(Queuep);
 
-/*@exposed@*/
-Qentryp	 queue_walk(Queuep, Qentryp);
+/*@exposed@*/ /*@null@*/
+Qentryp	 queue_walk(Queuep, /*@null@*/ Qentryp);
 
-/*@exposed@*/
+/*@exposed@*/ /*@null@*/
 void	*queue_peek(Queuep);
 
-/*@exposed@*/
+/*@exposed@*/ /*@null@*/
 void	*queue_find(Queuep, void *, int(*cmp)(void *, void *));
 
 int	 queue_delete(Queuep, void *);

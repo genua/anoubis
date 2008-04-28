@@ -255,6 +255,9 @@ dispatch_timer(int sig, short event, void *arg)
 	}
 
 	qep_cur = queue_head(&replyq);
+	if (qep_cur == NULL)
+		return;
+
 	do {
 		qep_next = queue_walk(&replyq, qep_cur);
 
@@ -399,12 +402,15 @@ dispatch_p2m(int fd, short sig, void *arg)
 		return;
 	}
 
+	/* msg was checked for non-nullness just above */
+	/*@-nullderef@*/ /*@-nullpass@*/
 	if (send_msg(fd, msg)) {
 		msg = dequeue(&eventq_p2m);
 		DEBUG(DBG_QUEUE, " <eventq_p2m: %x",
 		    ((struct eventdev_reply *)msg->msg)->msg_token);
 		free(msg);
 	}
+	/*@=nullderef@*/ /*@=nullpass@*/
 
 	/* If the queue is not empty, we want to be called again */
 	if (queue_peek(&eventq_p2m) || msg_pending(fd))
@@ -594,12 +600,15 @@ dispatch_p2s(int fd, short sig, void *arg)
 		return;
 	}
 
+	/* msg was checked for non-nullness just above */
+	/*@-nullderef@*/ /*@-nullpass@*/
 	if (send_msg(fd, msg)) {
 		msg = dequeue(&eventq_p2s);
 		DEBUG(DBG_QUEUE, " <eventq_p2s: %x",
 		    ((struct eventdev_hdr *)msg->msg)->msg_token);
 		free(msg);
 	}
+	/*@=nullderef@*/ /*@=nullpass@*/
 
 	/* If the queue is not empty, we want to be called again */
 	if (queue_peek(&eventq_p2s) || msg_pending(fd))

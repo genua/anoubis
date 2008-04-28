@@ -598,12 +598,15 @@ dispatch_m2s(int fd, short event, /*@dependent@*/ void *arg)
 		return;
 	}
 
+	/* msg was checked for non-nullness just above */
+	/*@-nullderef@*/ /*@-nullpass@*/
 	if (send_msg(fd, msg)) {
 		msg = dequeue(&eventq_m2s);
 		DEBUG(DBG_QUEUE, " <eventq_m2s: %x",
 		    ((struct eventdev_hdr *)msg->msg)->msg_token);
 		free(msg);
 	}
+	/*@=nullderef@*/ /*@=nullpass@*/
 
 	/* If the queue is not empty, to be called again */
 	if (queue_peek(&eventq_m2s) || msg_pending(fd))
@@ -670,12 +673,15 @@ dispatch_m2p(int fd, short event, /*@dependent@*/ void *arg)
 		return;
 	}
 
+	/* msg was checked for non-nullness just above */
+	/*@-nullderef@*/ /*@-nullpass@*/
 	if (send_msg(fd, msg)) {
 		msg = dequeue(&eventq_m2p);
 		DEBUG(DBG_QUEUE, " <eventq_m2p: %x",
 		    ((struct eventdev_hdr *)msg->msg)->msg_token);
 		free(msg);
 	}
+	/*@=nullderef@*/ /*@=nullpass@*/
 
 	/* If the queue is not empty, we want to be called again */
 	if (queue_peek(&eventq_m2p) || msg_pending(fd))
@@ -723,10 +729,13 @@ dispatch_m2dev(int fd, short event, /*@dependent@*/ void *arg)
 
 	DEBUG(DBG_TRACE, ">dispatch_m2dev");
 
+	/* msg was checked for non-nullness just above */
+	/*@-nullderef@*/ /*@-nullpass@*/
 	if ((msg = queue_peek(&eventq_m2dev)) == NULL) {
 		DEBUG(DBG_TRACE, "<dispatch_m2dev (no msg)");
 		return;
 	}
+	/*@=nullderef@*/ /*@=nullpass@*/
 
 	if (send_reply(fd, msg)) {
 		msg = dequeue(&eventq_m2dev);
