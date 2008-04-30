@@ -254,6 +254,8 @@ DlgRuleEditor::OnAlfAllowRadioButton(wxCommandEvent& event)
 	AlfPolicy *policy;
 
 	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedId_);
+	if (!policy)
+		return;
 	policy->setAction(APN_ACTION_ALLOW);
 	ruleListCtrl->SetItem(selectedId_, RULEDITOR_LIST_COLUMN_ACTION,
 	    policy->getActionName());
@@ -265,6 +267,8 @@ DlgRuleEditor::OnAlfDenyRadioButton(wxCommandEvent& event)
 	AlfPolicy *policy;
 
 	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedId_);
+	if (!policy)
+		return;
 	policy->setAction(APN_ACTION_DENY);
 	ruleListCtrl->SetItem(selectedId_, RULEDITOR_LIST_COLUMN_ACTION,
 	    policy->getActionName());
@@ -276,6 +280,8 @@ DlgRuleEditor::OnAlfAskRadioButton(wxCommandEvent& event)
 	AlfPolicy *policy;
 
 	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedId_);
+	if (!policy)
+		return;
 	policy->setAction(APN_ACTION_ASK);
 	ruleListCtrl->SetItem(selectedId_, RULEDITOR_LIST_COLUMN_ACTION,
 	    policy->getActionName());
@@ -286,6 +292,8 @@ DlgRuleEditor::OnAlfFilterRadioButton(wxCommandEvent& event)
 {
 	AlfPolicy *policy;
 	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedId_);
+	if (!policy)
+		return;
 	policy->setType(APN_ALF_FILTER);
 	ruleListCtrl->SetItem(selectedId_, RULEDITOR_LIST_COLUMN_TYPE,
 	    policy->getTypeName());
@@ -296,6 +304,8 @@ DlgRuleEditor::OnAlfCapRadioButton(wxCommandEvent& event)
 {
 	AlfPolicy *policy;
 	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedId_);
+	if (!policy)
+		return;
 	policy->setType(APN_ALF_CAPABILITY);
 	ruleListCtrl->SetItem(selectedId_, RULEDITOR_LIST_COLUMN_TYPE,
 	    policy->getTypeName());
@@ -306,6 +316,8 @@ DlgRuleEditor::OnAlfDefaultRadioButton(wxCommandEvent& event)
 {
 	AlfPolicy *policy;
 	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedId_);
+	if (!policy)
+		return;
 	policy->setType(APN_ALF_DEFAULT);
 	ruleListCtrl->SetItem(selectedId_, RULEDITOR_LIST_COLUMN_TYPE,
 	    policy->getTypeName());
@@ -316,6 +328,8 @@ DlgRuleEditor::OnAlfTcpRadioButton(wxCommandEvent& event)
 {
 	AlfPolicy *policy;
 	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedId_);
+	if (!policy)
+		return;
 	policy->setProtocol(IPPROTO_TCP);
 	ruleListCtrl->SetItem(selectedId_, RULEDITOR_LIST_COLUMN_PROTO,
 	    policy->getProtocolName());
@@ -326,6 +340,8 @@ DlgRuleEditor::OnAlfUdpRadioButton(wxCommandEvent& event)
 {
 	AlfPolicy *policy;
 	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedId_);
+	if (!policy)
+		return;
 	policy->setProtocol(IPPROTO_UDP);
 	ruleListCtrl->SetItem(selectedId_, RULEDITOR_LIST_COLUMN_PROTO,
 	    policy->getProtocolName());
@@ -336,6 +352,8 @@ DlgRuleEditor::OnAlfInetRadioButton(wxCommandEvent& event)
 {
 	AlfPolicy *policy;
 	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedId_);
+	if (!policy)
+		return;
 	policy->setAddrFamily(AF_INET);
 	ruleListCtrl->SetItem(selectedId_, RULEDITOR_LIST_COLUMN_AF,
 	    policy->getAddrFamilyName());
@@ -346,6 +364,8 @@ DlgRuleEditor::OnAlfInet6RadioButton(wxCommandEvent& event)
 {
 	AlfPolicy *policy;
 	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedId_);
+	if (!policy)
+		return;
 	policy->setAddrFamily(AF_INET6);
 	ruleListCtrl->SetItem(selectedId_, RULEDITOR_LIST_COLUMN_AF,
 	    policy->getAddrFamilyName());
@@ -356,6 +376,8 @@ DlgRuleEditor::OnAlfAnyRadioButton(wxCommandEvent& event)
 {
 	AlfPolicy *policy;
 	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedId_);
+	if (!policy)
+		return;
 	policy->setAddrFamily(0);
 	ruleListCtrl->SetItem(selectedId_, RULEDITOR_LIST_COLUMN_AF,
 	    policy->getAddrFamilyName());
@@ -366,6 +388,8 @@ DlgRuleEditor::OnAlfRawCapRadioButton(wxCommandEvent& event)
 {
 	AlfPolicy *policy;
 	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedId_);
+	if (!policy)
+		return;
 	policy->setCapType(APN_ALF_CAPRAW);
 	ruleListCtrl->SetItem(selectedId_, RULEDITOR_LIST_COLUMN_CAP,
 	    policy->getCapTypeName());
@@ -376,6 +400,8 @@ DlgRuleEditor::OnAlfOtherCapRadioButton(wxCommandEvent& event)
 {
 	AlfPolicy *policy;
 	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedId_);
+	if (!policy)
+		return;
 	policy->setCapType(APN_ALF_CAPOTHER);
 	ruleListCtrl->SetItem(selectedId_, RULEDITOR_LIST_COLUMN_CAP,
 	    policy->getCapTypeName());
@@ -386,6 +412,8 @@ DlgRuleEditor::OnAlfAllCapRadioButton(wxCommandEvent& event)
 {
 	AlfPolicy *policy;
 	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedId_);
+	if (!policy)
+		return;
 	policy->setCapType(APN_ALF_CAPALL);
 	ruleListCtrl->SetItem(selectedId_, RULEDITOR_LIST_COLUMN_CAP,
 	    policy->getCapTypeName());
@@ -396,6 +424,8 @@ DlgRuleEditor::OnAlfAcceptRadioButton(wxCommandEvent& event)
 {
 	AlfPolicy *policy;
 	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedId_);
+	if (!policy)
+		return;
 	policy->setDirection(APN_ACCEPT);
 	ruleListCtrl->SetItem(selectedId_, RULEDITOR_LIST_COLUMN_DIR,
 	    policy->getDirectionName());
@@ -406,6 +436,8 @@ DlgRuleEditor::OnAlfConnectRadioButton(wxCommandEvent& event)
 {
 	AlfPolicy *policy;
 	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedId_);
+	if (!policy)
+		return;
 	policy->setDirection(APN_CONNECT);
 	ruleListCtrl->SetItem(selectedId_, RULEDITOR_LIST_COLUMN_DIR,
 	    policy->getDirectionName());
@@ -416,6 +448,8 @@ DlgRuleEditor::OnSfsBinaryModifyButton(wxCommandEvent& event)
 {
 	SfsPolicy	*policy;
 	policy = (SfsPolicy *)ruleListCtrl->GetItemData(selectedId_);
+	if (!policy)
+		return;
 	wxString	 caption = wxT("Choose a binary");
 	wxString	 wildcard = wxT("*");
 	wxString	 defaultDir = wxT("/usr/bin/");
@@ -441,6 +475,8 @@ DlgRuleEditor::OnSfsUpdateChkSumButton(wxCommandEvent& event)
 	unsigned char			 csum[MAX_APN_HASH_LEN];
 
 	policy = (SfsPolicy *)ruleListCtrl->GetItemData(selectedId_);
+	if (!policy)
+		return;
 
 	policy->calcCurrentHash(csum);
 	policy->setHashValue(csum);
@@ -491,6 +527,8 @@ DlgRuleEditor::OnLineSelected(wxListEvent& event)
 
 	updateVisitor.setPropagation(false);
 	policy = (Policy *)event.GetData();
+	if (!policy)
+		return;
 	policy->accept(updateVisitor);
 
 	fprintf(stderr, "DlgRuleEditor::OnLineSelected id=%ld\n", selectedId_);
