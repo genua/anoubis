@@ -4,12 +4,13 @@
 Summary:	The Anoubis Security Suite
 Name:		anoubis
 Version:	@@VERSION@@
-Release:	1
+Release:	2
 License:	BSD
 Group:		System Environment/Base
 URL:		http://www.genua.de
 Source0:	%{name}-%{version}.tar.gz
 Source1:	anoubisd.init
+Source2:	anoubisd.udev
 Vendor:		GeNUA mbH
 BuildRoot:	%(mktemp -d %{_tmppath}/%{name}-%{version}-build.XXXX)
 
@@ -46,6 +47,7 @@ Requires:	anoubisd
 Requires:	wxGTK >= 2.8
 Requires:	libevent
 Requires:	libnotify
+Requires:	xorg-x11-fonts
 
 %description -n xanoubis
 GUI of the Anoubis Security Suite.
@@ -69,9 +71,13 @@ export CFLAGS="$RPM_OPT_FLAGS"
 [ "$RPM_BUILD_ROOT" != "/" ] && [ -d $RPM_BUILD_ROOT ] \
   && rm -rf $RPM_BUILD_ROOT
 make install DESTDIR=$RPM_BUILD_ROOT
-mkdir -p $RPM_BUILD_ROOT/etc/rc.d/init.d
-cp $RPM_SOURCE_DIR/anoubisd.init $RPM_BUILD_ROOT/etc/rc.d/init.d/anoubisd
-chmod 755 $RPM_BUILD_ROOT/etc/rc.d/init.d/anoubisd
+mkdir -p $RPM_BUILD_ROOT/etc/init.d
+cp $RPM_SOURCE_DIR/anoubisd.init $RPM_BUILD_ROOT/etc/init.d/anoubisd
+chmod 755 $RPM_BUILD_ROOT/etc/init.d/anoubisd
+
+mkdir -p $RPM_BUILD_ROOT/etc/udev/rules.d
+cp $RPM_SOURCE_DIR/anoubisd.udev \
+  $RPM_BUILD_ROOT/etc/udev/rules.d/06-anoubis.rules
 
 # remove files that should not be part of the rpm
 rm -fr $RPM_BUILD_ROOT%{_includedir}
@@ -86,7 +92,8 @@ rm -fr $RPM_BUILD_ROOT%{_mandir}/man3
 %pre -n anoubisd
 if ! getent passwd _anoubisd >/dev/null; then
 	groupadd -f -r _anoubisd
-	useradd -M -r -s /sbin/nologin -g _anoubisd _anoubisd
+	useradd -M -r -s /sbin/nologin -d /var/run/anoubisd \
+	    -g _anoubisd _anoubisd
 fi
 
 %post -n anoubisd
@@ -98,6 +105,9 @@ chmod 700 /etc/anoubis/policy
 chmod 700 /etc/anoubis/policy/admin /etc/anoubis/policy/user
 chown _anoubisd: /etc/anoubis/policy
 chown _anoubisd: /etc/anoubis/policy/admin /etc/anoubis/policy/user
+if [ ! -e /dev/eventdev ] ; then
+	mknod /dev/eventdev c 10 62
+fi
 
 
 %preun -n anoubisd
@@ -108,7 +118,8 @@ rmdir /etc/anoubis/policy /etc/anoubis 2>/dev/null || true
 ### files of subpackage anoubisd ###########################
 %files -n anoubisd
 %defattr(-,root,root)
-/etc/rc.d/*
+/etc/init.d/*
+/etc/udev/*
 /sbin/*
 %{_mandir}/man8/*
 

@@ -19,15 +19,16 @@
 ### END INIT INFO
 
 # Source function library.
-. /etc/rc.d/init.d/functions
+. /etc/rc.status
 
 # Check that we're a priviledged user
 [ `id -u` = 0 ] || exit 1
 
+ANOUBISD_PIDFILE=/var/run/anoubisd.pid
+ANOUBISD_BIN=/sbin/anoubisd
 # Check if anoubisd is executable
-test -x /sbin/anoubisd || exit 1
-
-RETVAL=0
+test -x $ANOUBISD_BIN || exit 1
+rc_reset
 
 #
 # See how we were called.
@@ -35,47 +36,27 @@ RETVAL=0
 
 start() {
 	# Check if it is already running
-	if [ ! -f /var/lock/subsys/anoubisd ]; then
-	    if [ ! -d /var/run/anoubisd ]; then
-		mkdir /var/run/anoubisd
-		chmod 0755 /var/run/anoubisd
-		chown _anoubisd:_anoubisd /var/run/anoubisd
-	    fi
-
-	    # XXX: MG: We need a better way to load our modules so early (Bug 262)
-	    modprobe alf || true
-	    modprobe sfs || true
-
-		echo -n $"Starting anoubis daemon: "
-	    daemon /sbin/anoubisd $@
-	    RETVAL=$?
-	    [ $RETVAL -eq 0 ] && touch /var/lock/subsys/anoubisd
-	    echo
+	if [ ! -d /var/run/anoubisd ]; then
+	    mkdir /var/run/anoubisd
+	    chmod 0755 /var/run/anoubisd
+	    chown _anoubisd:_anoubisd /var/run/anoubisd
 	fi
-	return $RETVAL
+
+	# XXX: MG: We need a better way to load our modules so early (Bug 262)
+	modprobe alf || true
+	modprobe sfs || true
+
+	echo -n $"Starting anoubis daemon: "
+	startproc -f -p $ANOUBISD_PIDFILE $ANOUBISD_BIN $@
+	rc_status -v
 }
 
 stop() {
 	echo -n $"Stopping anoubis daemon: "
-	killproc /sbin/anoubisd
-	RETVAL=$?
-	[ $RETVAL -eq 0 ] && rm -f /var/lock/subsys/anoubisd
-	echo
-    return $RETVAL
+	killproc -p $ANOUBISD_PIDFILE -TERM $ANOUBISD_BIN
+	rc_status -v
 }
 
-
-restart() {
-	stop
-	start $@
-}	
-
-reload() {
-	trap "" SIGHUP
-	action $"Reloading anoubis daemon:" killall -HUP anoubisd
-	RETVAL=$?
-	return $RETVAL
-}	
 
 case "$1" in
 start)
@@ -84,28 +65,52 @@ start)
 stop)
 	stop
 	;;
-reload)
-	reload
-	;;
-force-reload)
-	echo "$0: Unimplemented feature."
-	RETVAL=3
-	;;
-restart)
-	restart $2
-	;;
-condrestart)
-	if [ -f /var/lock/subsys/anoubisd ]; then
-	    restart $2
-	fi
-	;;
-status)
-	status anoubisd
-	RETVAL=$?
-	;;
-*)
-	echo $"Usage: $0 {start|stop|status|restart|condrestart|reload|force-reload}"
-	RETVAL=2
-esac
+try-restart)
+        ## Stop the service and if this succeeds (i.e. the
+        ## service was running before), start it again.
+        $0 status >/dev/null &&  $0 restart
 
-exit $RETVAL
+        # Remember status and be quiet
+        rc_status
+        ;;
+restart)
+        ## Stop the service and regardless of whether it was
+        ## running or not, start it again.
+        $0 stop
+        $0 start
+
+        # Remember status and be quiet
+        rc_status
+        ;;
+force-reload|reload)
+        ## Signal the daemon to reload its config. Most daemons
+        ## do this on signal 1 (SIGHUP).
+
+        echo -n "Reload service anoubisd"
+
+        killproc -p $ANOUBISD_PIDFILE -HUP $ANOUBISD_BIN
+
+        rc_status -v
+
+        ;;
+status)
+        echo -n "Checking for service anoubisd "
+        ## Check status with checkproc(8), if process is running
+        ## checkproc will return with exit status 0.
+
+        # Status has a slightly different for the status command:
+        # 0 - service running
+        # 1 - service dead, but /var/run/  pid  file exists
+        # 2 - service dead, but /var/lock/ lock file exists
+        # 3 - service not running
+
+        checkproc -p $ANOUBISD_PIDFILE $ANOUBISD_BIN
+
+        rc_status -v
+        ;;
+*)
+        echo "Usage: $0 {start|stop|status|try-restart|restart|force-reload|reload|probe}"
+        exit 1
+        ;;
+esac
+rc_exit

@@ -1,0 +1,1 @@
+KERNEL=="eventdev" NAME="eventdev" OPTIONS="last_rule"
