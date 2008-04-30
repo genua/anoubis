@@ -144,7 +144,7 @@ DlgRuleEditor::DlgRuleEditor(wxWindow* parent) : DlgRuleEditorBase(parent)
 	columnNames_[RULEDITOR_LIST_COLUMN_BIN] = _("Binary");
 	columnWidths_[RULEDITOR_LIST_COLUMN_BIN] = wxLIST_AUTOSIZE;
 
-	columnNames_[RULEDITOR_LIST_COLUMN_HASHT] = _("Hahs-Type");
+	columnNames_[RULEDITOR_LIST_COLUMN_HASHT] = _("Hash-Type");
 	columnWidths_[RULEDITOR_LIST_COLUMN_HASHT] = wxLIST_AUTOSIZE_USEHEADER;
 
 	columnNames_[RULEDITOR_LIST_COLUMN_HASH] = _("Hash");

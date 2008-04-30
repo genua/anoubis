@@ -53,6 +53,14 @@
 
 #include "ModAlfAddPolicyVisitor.h"
 
+class MyTreeItemData : public wxTreeItemData {
+public:
+	void *ptr_;
+	MyTreeItemData(void *ptr) {
+		ptr_ = ptr;
+	}
+};
+
 ModAlfAddPolicyVisitor::ModAlfAddPolicyVisitor(ModAlfMainPanelImpl *alfPanel)
 {
 	alfPanel_ = alfPanel;
@@ -83,6 +91,7 @@ ModAlfAddPolicyVisitor::visitAppPolicy(AppPolicy *appPolicy)
 	long		 idx;
 	wxListCtrl	*list;
 	wxTreeCtrl	*tree;
+	wxString	&treeLabel = *(new wxString(wxT("")));
 
 	/* fill list of all rules */
 	idx = ruleListAppend(appPolicy);
@@ -101,19 +110,20 @@ ModAlfAddPolicyVisitor::visitAppPolicy(AppPolicy *appPolicy)
 	if (tree->GetCount() == 0) {
 		tree->AddRoot(wxT("Applications"));
 	}
+	treeLabel += wxT("Context: ");
+	treeLabel += appPolicy->getContext()->getContextName();
 	lastTreeRoot_ = tree->AppendItem(tree->GetRootItem(),
-	    appPolicy->getBinaryName(), -1, -1, (wxTreeItemData *)appPolicy);
+	    appPolicy->getBinaryName(), -1, -1, new MyTreeItemData(appPolicy));
 	if (appPolicy->hasContext()) {
-		lastTreeRoot_ = tree->AppendItem(lastTreeRoot_,
-		    wxT("Context: ") + appPolicy->getContext()->getContextName(),
-		    -1, -1, (wxTreeItemData *)appPolicy);
+		lastTreeRoot_ = tree->AppendItem(lastTreeRoot_, treeLabel,
+		    -1, -1, new MyTreeItemData(appPolicy));
 	}
 }
 
 void
 ModAlfAddPolicyVisitor::visitAlfPolicy(AlfPolicy *alfPolicy)
 {
-	wxString	 treeLabel;
+	wxString	 & treeLabel = *(new wxString(wxT("")));
 	long		 idx;
 	wxListCtrl	*list;
 	wxTreeCtrl	*tree;
@@ -133,14 +143,14 @@ ModAlfAddPolicyVisitor::visitAlfPolicy(AlfPolicy *alfPolicy)
 		    alfPolicy->getServiceName());
 
 		/* fill tree of application view */
-		treeLabel = alfPolicy->getActionName() + wxT(", ");
+		treeLabel += alfPolicy->getActionName() + wxT(", ");
 		treeLabel += alfPolicy->getRoleName() + wxT(", ");
 		treeLabel += alfPolicy->getServiceName();
 		tree->AppendItem(lastTreeRoot_, treeLabel, -1, -1,
-		    (wxTreeItemData *)alfPolicy);
+		    new MyTreeItemData(alfPolicy));
 		break;
 	case APN_ALF_CAPABILITY:
-		treeLabel = wxT("capability ");
+		treeLabel += wxT("capability ");
 		treeLabel += alfPolicy->getCapTypeName();
 
 		list->SetItem(idx, MODALF_LIST_COLUMN_ACTION,
@@ -150,7 +160,7 @@ ModAlfAddPolicyVisitor::visitAlfPolicy(AlfPolicy *alfPolicy)
 
 		treeLabel.Prepend(alfPolicy->getActionName() + wxT(" "));
 		tree->AppendItem(lastTreeRoot_, treeLabel, -1, -1,
-		     (wxTreeItemData *)alfPolicy);
+		     new MyTreeItemData(alfPolicy));
 		break;
 	case APN_ALF_DEFAULT:
 		/* fill list of all rules */
@@ -159,9 +169,9 @@ ModAlfAddPolicyVisitor::visitAlfPolicy(AlfPolicy *alfPolicy)
 		list->SetItem(idx, MODALF_LIST_COLUMN_SERVICE, wxT("default"));
 
 		/* fill tree of application view */
-		treeLabel = wxT("default ") + alfPolicy->getActionName();
+		treeLabel += wxT("default ") + alfPolicy->getActionName();
 		tree->AppendItem(lastTreeRoot_, treeLabel, -1, -1,
-		    (wxTreeItemData *)alfPolicy);
+		    new MyTreeItemData(alfPolicy));
 		break;
 	case APN_ALF_CTX:
 		break;

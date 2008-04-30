@@ -100,6 +100,8 @@ AppPolicy::accept(PolicyVisitor& visitor)
 wxString
 AppPolicy::getBinaryName(void)
 {
+	if (appRule_->app == NULL)
+		return wxString::From8BitData("any");
 	return wxString::From8BitData(appRule_->app->name);
 }
 
@@ -108,6 +110,8 @@ AppPolicy::getHashTypeName(void)
 {
 	wxString result;
 
+	if (appRule_->app == NULL)
+		return wxString::From8BitData("");
 	switch (appRule_->app->hashtype) {
 	case APN_HASH_SHA256:
 		result = wxT("SHA256");
@@ -129,6 +133,8 @@ AppPolicy::getHashValue(void)
 	length = 0;
 	result = wxT("0x");
 
+	if (appRule_->app == NULL)
+		return wxString::From8BitData("any");
 	switch (appRule_->app->hashtype) {
 	case APN_HASH_SHA256:
 		length = APN_HASH_SHA256_LEN;
