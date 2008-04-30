@@ -311,7 +311,7 @@
                                                 <property name="proportion">0</property>
                                                 <object class="wxChoice" expanded="1">
                                                     <property name="bg"></property>
-                                                    <property name="choices">&apos;aktuelle Nachfragen&apos; &apos;Meldungen&apos; &apos;beantwortete Nachfragen&apos; &apos;alle&apos;</property>
+                                                    <property name="choices">&apos;current requests&apos; &apos;messages&apos; &apos;closed requests&apos; &apos;all&apos;</property>
                                                     <property name="context_help"></property>
                                                     <property name="enabled">1</property>
                                                     <property name="fg"></property>
@@ -1391,7 +1391,7 @@
                                             <property name="font"></property>
                                             <property name="hidden">0</property>
                                             <property name="id">wxID_ANY</property>
-                                            <property name="label">Diese Nachricht wurde beantwortet.</property>
+                                            <property name="label">This message was answered.</property>
                                             <property name="maximum_size"></property>
                                             <property name="minimum_size"></property>
                                             <property name="name">tx_answerValue</property>
@@ -1496,7 +1496,7 @@
                                                         <property name="font"></property>
                                                         <property name="hidden">0</property>
                                                         <property name="id">wxID_ANY</property>
-                                                        <property name="label">Diese Nachricht</property>
+                                                        <property name="label">This message</property>
                                                         <property name="maximum_size"></property>
                                                         <property name="minimum_size"></property>
                                                         <property name="name">tx_question</property>
@@ -1556,7 +1556,7 @@
                                                                 <property name="font"></property>
                                                                 <property name="hidden">0</property>
                                                                 <property name="id">wxID_ANY</property>
-                                                                <property name="label">Anzahl</property>
+                                                                <property name="label">count</property>
                                                                 <property name="maximum_size"></property>
                                                                 <property name="minimum_size">100,-1</property>
                                                                 <property name="name">rb_number</property>
@@ -1685,7 +1685,7 @@
                                                         <property name="font"></property>
                                                         <property name="hidden">0</property>
                                                         <property name="id">wxID_ANY</property>
-                                                        <property name="label">bis Prozess Ende</property>
+                                                        <property name="label">till process ends</property>
                                                         <property name="maximum_size"></property>
                                                         <property name="minimum_size"></property>
                                                         <property name="name">rb_procend</property>
@@ -1766,7 +1766,7 @@
                                                                 <property name="font"></property>
                                                                 <property name="hidden">0</property>
                                                                 <property name="id">wxID_ANY</property>
-                                                                <property name="label">fuer </property>
+                                                                <property name="label">for </property>
                                                                 <property name="maximum_size"></property>
                                                                 <property name="minimum_size">100,-1</property>
                                                                 <property name="name">rb_time</property>
@@ -1867,7 +1867,7 @@
                                                             <property name="proportion">0</property>
                                                             <object class="wxChoice" expanded="1">
                                                                 <property name="bg"></property>
-                                                                <property name="choices">&apos;Sekunde&apos; &apos;Minute&apos; &apos;Stunde&apos; &apos;Tag&apos;</property>
+                                                                <property name="choices">&apos;seconds&apos; &apos;minutes&apos; &apos;hours&apos; &apos;days&apos;</property>
                                                                 <property name="context_help"></property>
                                                                 <property name="enabled">1</property>
                                                                 <property name="fg"></property>
@@ -1926,7 +1926,7 @@
                                                         <property name="font"></property>
                                                         <property name="hidden">0</property>
                                                         <property name="id">wxID_ANY</property>
-                                                        <property name="label">erlauben</property>
+                                                        <property name="label">allow</property>
                                                         <property name="maximum_size"></property>
                                                         <property name="minimum_size"></property>
                                                         <property name="name">bt_allow</property>
@@ -1987,7 +1987,7 @@
                                                         <property name="font"></property>
                                                         <property name="hidden">0</property>
                                                         <property name="id">wxID_ANY</property>
-                                                        <property name="label">immer</property>
+                                                        <property name="label">always</property>
                                                         <property name="maximum_size"></property>
                                                         <property name="minimum_size"></property>
                                                         <property name="name">rb_always</property>
@@ -2040,7 +2040,7 @@
                                                         <property name="font"></property>
                                                         <property name="hidden">0</property>
                                                         <property name="id">wxID_ANY</property>
-                                                        <property name="label">verbieten</property>
+                                                        <property name="label">deny</property>
                                                         <property name="maximum_size"></property>
                                                         <property name="minimum_size"></property>
                                                         <property name="name">bt_deny</property>

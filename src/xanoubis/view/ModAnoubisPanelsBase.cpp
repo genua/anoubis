@@ -57,7 +57,7 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	tx_type->Wrap( -1 );
 	sz_type->Add( tx_type, 0, wxALIGN_CENTER|wxALL|wxFIXED_MINSIZE, 5 );
 	
-	wxString ch_typeChoices[] = { _("aktuelle Nachfragen"), _("Meldungen"), _("beantwortete Nachfragen"), _("alle") };
+	wxString ch_typeChoices[] = { _("current requests"), _("messages"), _("closed requests"), _("all") };
 	int ch_typeNChoices = sizeof( ch_typeChoices ) / sizeof( wxString );
 	ch_type = new wxChoice( tb_MainAnoubisNotification, wxID_ANY, wxDefaultPosition, wxDefaultSize, ch_typeNChoices, ch_typeChoices, 0 );
 	sz_type->Add( ch_type, 0, wxALIGN_CENTER|wxALL, 5 );
@@ -164,7 +164,7 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	
 	sz_MainAnoubisNotify->Add( slotSizer, 0, wxEXPAND, 5 );
 	
-	tx_answerValue = new wxStaticText( tb_MainAnoubisNotification, wxID_ANY, _("Diese Nachricht wurde beantwortet."), wxDefaultPosition, wxDefaultSize, 0 );
+	tx_answerValue = new wxStaticText( tb_MainAnoubisNotification, wxID_ANY, _("This message was answered."), wxDefaultPosition, wxDefaultSize, 0 );
 	tx_answerValue->Wrap( -1 );
 	sz_MainAnoubisNotify->Add( tx_answerValue, 0, wxALL, 5 );
 	
@@ -172,14 +172,14 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	wxGridSizer* sz_question;
 	sz_question = new wxGridSizer( 4, 3, 0, 0 );
 	
-	tx_question = new wxStaticText( pn_question, wxID_ANY, _("Diese Nachricht"), wxDefaultPosition, wxDefaultSize, 0 );
+	tx_question = new wxStaticText( pn_question, wxID_ANY, _("This message"), wxDefaultPosition, wxDefaultSize, 0 );
 	tx_question->Wrap( -1 );
 	sz_question->Add( tx_question, 0, wxALL|wxALIGN_RIGHT, 5 );
 	
 	wxBoxSizer* sz_number;
 	sz_number = new wxBoxSizer( wxHORIZONTAL );
 	
-	rb_number = new wxRadioButton( pn_question, wxID_ANY, _("Anzahl"), wxDefaultPosition, wxDefaultSize, 0 );
+	rb_number = new wxRadioButton( pn_question, wxID_ANY, _("count"), wxDefaultPosition, wxDefaultSize, 0 );
 	rb_number->SetMinSize( wxSize( 100,-1 ) );
 	
 	sz_number->Add( rb_number, 0, wxALIGN_CENTER|wxALL, 1 );
@@ -197,7 +197,7 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	
 	sz_question->Add( 0, 0, 1, wxEXPAND, 5 );
 	
-	rb_procend = new wxRadioButton( pn_question, wxID_ANY, _("bis Prozess Ende"), wxDefaultPosition, wxDefaultSize, 0 );
+	rb_procend = new wxRadioButton( pn_question, wxID_ANY, _("till process ends"), wxDefaultPosition, wxDefaultSize, 0 );
 	sz_question->Add( rb_procend, 0, wxALL, 1 );
 	
 	
@@ -209,7 +209,7 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	wxBoxSizer* sz_time;
 	sz_time = new wxBoxSizer( wxHORIZONTAL );
 	
-	rb_time = new wxRadioButton( pn_question, wxID_ANY, _("fuer "), wxDefaultPosition, wxDefaultSize, 0 );
+	rb_time = new wxRadioButton( pn_question, wxID_ANY, _("for "), wxDefaultPosition, wxDefaultSize, 0 );
 	rb_time->SetMinSize( wxSize( 100,-1 ) );
 	
 	sz_time->Add( rb_time, 0, wxALIGN_CENTER_VERTICAL|wxALL, 1 );
@@ -219,23 +219,23 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	
 	sz_time->Add( sc_time, 0, wxALL|wxALIGN_CENTER_VERTICAL, 1 );
 	
-	wxString ch_timeChoices[] = { _("Sekunde"), _("Minute"), _("Stunde"), _("Tag") };
+	wxString ch_timeChoices[] = { _("seconds"), _("minutes"), _("hours"), _("days") };
 	int ch_timeNChoices = sizeof( ch_timeChoices ) / sizeof( wxString );
 	ch_time = new wxChoice( pn_question, wxID_ANY, wxDefaultPosition, wxDefaultSize, ch_timeNChoices, ch_timeChoices, 0 );
 	sz_time->Add( ch_time, 0, wxALIGN_CENTER|wxALL, 1 );
 	
 	sz_question->Add( sz_time, 0, 0, 1 );
 	
-	bt_allow = new wxButton( pn_question, wxID_ANY, _("erlauben"), wxDefaultPosition, wxDefaultSize, 0 );
+	bt_allow = new wxButton( pn_question, wxID_ANY, _("allow"), wxDefaultPosition, wxDefaultSize, 0 );
 	sz_question->Add( bt_allow, 0, wxALL|wxALIGN_RIGHT, 1 );
 	
 	
 	sz_question->Add( 0, 0, 1, wxEXPAND, 5 );
 	
-	rb_always = new wxRadioButton( pn_question, wxID_ANY, _("immer"), wxDefaultPosition, wxDefaultSize, 0 );
+	rb_always = new wxRadioButton( pn_question, wxID_ANY, _("always"), wxDefaultPosition, wxDefaultSize, 0 );
 	sz_question->Add( rb_always, 0, wxALL, 1 );
 	
-	bt_deny = new wxButton( pn_question, wxID_ANY, _("verbieten"), wxDefaultPosition, wxDefaultSize, 0 );
+	bt_deny = new wxButton( pn_question, wxID_ANY, _("deny"), wxDefaultPosition, wxDefaultSize, 0 );
 	sz_question->Add( bt_deny, 0, wxALL|wxALIGN_RIGHT, 1 );
 	
 	pn_question->SetSizer( sz_question );
