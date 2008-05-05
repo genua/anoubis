@@ -196,11 +196,11 @@ ModAlfOverviewPanelBase::ModAlfOverviewPanelBase( wxWindow* parent, wxWindowID i
 	wxBoxSizer* sz_lables;
 	sz_lables = new wxBoxSizer( wxVERTICAL );
 	
-	txt_status = new wxStaticText( this, wxID_ANY, _("Status (ALF):"), wxDefaultPosition, wxDefaultSize, 0 );
+	txt_status = new wxStaticText( this, wxID_ANY, _("status (ALF):"), wxDefaultPosition, wxDefaultSize, 0 );
 	txt_status->Wrap( -1 );
 	sz_lables->Add( txt_status, 0, wxALL, 5 );
 	
-	txt_nachfragen = new wxStaticText( this, wxID_ANY, _("Offene Nachfragen (ALF):"), wxDefaultPosition, wxDefaultSize, 0 );
+	txt_nachfragen = new wxStaticText( this, wxID_ANY, _("open requests (ALF):"), wxDefaultPosition, wxDefaultSize, 0 );
 	txt_nachfragen->Wrap( -1 );
 	sz_lables->Add( txt_nachfragen, 0, wxALL, 5 );
 	
