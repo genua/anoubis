@@ -147,7 +147,8 @@ dist_icon_DATA = \
 	icons/ModSfs_problem_16.png \
 	icons/ModSfs_problem_48.png \
 	icons/ModSfs_question_16.png \
-	icons/ModSfs_question_48.png
+	icons/ModSfs_question_48.png \
+	icons/xanoubis.png
 
 xanoubis_SOURCES= \
 	model/AlertNotify.cpp \

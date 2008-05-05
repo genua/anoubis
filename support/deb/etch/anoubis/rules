@@ -76,6 +76,11 @@ install-arch:
 	cp debian/policy.default debian/tmp/etc/anoubis/policy/admin/default
 	chmod 700 debian/tmp/etc/anoubis/policy/admin
 	chmod 600 debian/tmp/etc/anoubis/policy/admin/*
+	mkdir -p debian/tmp/usr/share/applications
+	cp debian/xanoubis.desktop debian/tmp/usr/share/applications
+	mkdir -p debian/tmp/usr/share/pixmaps
+	cp src/xanoubis/icons/xanoubis.png debian/tmp/usr/share/pixmaps/xanoubis.png
+
 	dh_install -s --sourcedir=debian/tmp
 
 # Must not depend on anything. This is to be called by
@@ -90,6 +95,7 @@ binary-common:
 	dh_installinit --update-rcd-params="start 37 S ." -panoubisd
 	dh_installman
 	dh_link
+	dh_desktop -pxanoubis
 	dh_strip
 	dh_compress
 	dh_fixperms -X etc/anoubis/policy/admin
