@@ -21,6 +21,7 @@ USE_X11=	YES
 
 MULTI_PACKAGES=	-main -daemon
 
+BUILD_DEPENDS=		::devel/check
 RUN_DEPENDS-main=	:notification-daemon:sysutils/notification-daemon
 LIB_DEPENDS-main=	notify::devel/libnotify\
 			wx_base_xml,wx_gtk2_aui,wx_gtk2_qa,wx_base_odbc,wx_gtk2_html,wx_base,wx_gtk2_adv,wx_gtk2_xrc,wx_gtk2_core,wx_base_net,wx_gtk2_dbgrid:wxWidgets-gtk2->=2.8.6:x11/wxWidgets
@@ -37,6 +38,6 @@ WANTLIB-daemon+=	c
 CONFIGURE_STYLE=	gnu
 CONFIGURE_ARGS+=	--enable-static-anoubisd
 
-REGRESS_DEPENDS=	::devel/check
+REGRESS_DEPENDS=	${BUILD_DEPENDS}
 
 .include <bsd.port.mk>
