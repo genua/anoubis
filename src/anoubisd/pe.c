@@ -59,6 +59,7 @@
 #ifdef OPENBSD
 #include <sys/queue.h>
 #include <dev/anoubis_alf.h>
+#include <dev/anoubis_sfs.h>
 #endif
 
 #ifdef LINUX
@@ -662,7 +663,6 @@ pe_dispatch_event(struct eventdev_hdr *hdr)
 anoubisd_reply_t *
 pe_handle_sfsexec(struct eventdev_hdr *hdr)
 {
-#ifndef OPENBSD
 	struct sfs_open_message		*msg;
 	struct pe_proc			*proc = NULL;
 
@@ -709,14 +709,12 @@ pe_handle_sfsexec(struct eventdev_hdr *hdr)
 	    proc->pathhint ? proc->pathhint : "",
 	    proc->csum ? htonl(*(unsigned long *)proc->csum) : 0);
 	pe_put_proc(proc);
-#endif
 	return (NULL);
 }
 
 anoubisd_reply_t *
 pe_handle_process(struct eventdev_hdr *hdr)
 {
-#ifndef OPENBSD		/* XXX HSH */
 	struct ac_process_message	*msg;
 	struct pe_proc			*proc = NULL;
 
@@ -758,7 +756,6 @@ pe_handle_process(struct eventdev_hdr *hdr)
 		    proc->parent_proc ? proc->parent_proc->task_cookie : 0);
 		pe_put_proc(proc);
 	}
-#endif
 	return (NULL);
 }
 
@@ -800,7 +797,6 @@ pe_handle_alf(struct eventdev_hdr *hdr)
 anoubisd_reply_t *
 pe_decide_alf(struct pe_proc *proc, struct eventdev_hdr *hdr)
 {
-#ifdef LINUX
 	static char		*verdict[3] = { "allowed", "denied", "asked" };
 	struct alf_event	*msg;
 	anoubisd_reply_t	*reply;
@@ -877,20 +873,6 @@ pe_decide_alf(struct pe_proc *proc, struct eventdev_hdr *hdr)
 	}
 	reply->reply = decision;
 	reply->len = 0;
-#else	/* LINUX */
-	anoubisd_reply_t	*reply;
-
-	if ((reply = calloc(1, sizeof(struct anoubisd_reply))) == NULL) {
-		log_warn("pe_decide_alf: cannot allocate memory");
-		master_terminate(ENOMEM);
-		return (NULL);
-	}
-
-	reply->ask = 0;
-	reply->reply = 0;
-	reply->timeout = (time_t)0;
-	reply->len = 0;
-#endif	/* LINUX */
 
 	return (reply);
 }
@@ -1089,7 +1071,6 @@ int
 pe_decide_alfcap(struct apn_rule *rule, struct alf_event *msg, int *log)
 {
 	int			 decision;
-#ifdef LINUX
 	struct apn_alfrule	*hp;
 
 	if (rule == NULL) {
@@ -1125,11 +1106,19 @@ pe_decide_alfcap(struct apn_rule *rule, struct alf_event *msg, int *log)
 		 */
 		switch (hp->rule.acap.capability) {
 		case APN_ALF_CAPRAW:
-			if (msg->type == SOCK_RAW || msg->type == SOCK_PACKET)
+			if (msg->type == SOCK_RAW)
 				decision = POLICY_ALLOW;
+#ifdef LINUX
+			if (msg->type == SOCK_PACKET)
+				decision = POLICY_ALLOW;
+#endif
 			break;
 		case APN_ALF_CAPOTHER:
+#ifdef LINUX
 			if (msg->type != SOCK_RAW && msg->type != SOCK_PACKET)
+#else
+			if (msg->type != SOCK_RAW)
+#endif
 				decision = POLICY_ALLOW;
 			break;
 		case APN_ALF_CAPALL:
@@ -1148,10 +1137,6 @@ pe_decide_alfcap(struct apn_rule *rule, struct alf_event *msg, int *log)
 		}
 		hp = hp->next;
 	}
-
-#else	/* LINUX */
-	decision = -1;
-#endif	/* LINUX */
 
 	return (decision);
 }
@@ -1212,7 +1197,6 @@ pe_decide_alfdflt(struct apn_rule *rule, struct alf_event *msg, int *log)
 char *
 pe_dump_alfmsg(struct alf_event *msg)
 {
-#ifdef LINUX
 	unsigned short	 lport, pport;
 	char		*op, *af, *type, *proto, *dump;
 
@@ -1278,10 +1262,11 @@ pe_dump_alfmsg(struct alf_event *msg)
 		    sizeof(peer)) == NULL)
 			snprintf(peer, 128, "<unknown>");
 		break;
-
+#ifdef LINUX
 	case AF_PACKET:
 		af = "packet";
 		break;
+#endif
 	case AF_UNSPEC:
 		af = "unspec";
 		break;
@@ -1304,9 +1289,11 @@ pe_dump_alfmsg(struct alf_event *msg)
 	case SOCK_SEQPACKET:
 		type = "seqpacket";
 		break;
+#ifdef LINUX
 	case SOCK_PACKET:
 		type = "packet";
 		break;
+#endif
 	default:
 		type = "<unknown>";
 	}
@@ -1331,9 +1318,6 @@ pe_dump_alfmsg(struct alf_event *msg)
 		dump = NULL;
 	}
 	return (dump);
-#else	/* LINUX */
-	return (NULL);
-#endif	/* LINUX */
 }
 
 anoubisd_reply_t *
@@ -2105,7 +2089,13 @@ pe_decide_ctx(struct pe_proc *proc, const u_int8_t *csum, const char *pathhint)
 	struct apn_app	*hp;
 	int		 cmp, decision, i;
 
-	if (!proc->valid_ctx || csum == NULL || pathhint == NULL)
+	if (!proc->valid_ctx)
+		return (0);
+	/*
+	 * NOTE: Once we actually use the pathhint in policiy decision
+	 * NOTE: this shortcut will no longer be valid.
+	 */
+	if (!csum)
 		return (0);
 
 	/*
