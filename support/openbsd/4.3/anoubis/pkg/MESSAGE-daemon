@@ -1,0 +1,6 @@
+To have the anoubisd start at boot time, you may insert the following
+into ${SYSCONFDIR}/rc.local:
+
+if [ -x ${PREFIX}/sbin/anoubisd ]; then
+	echo -n ' anoubisd';   ${PREFIX}/sbin/anoubisd
+fi
