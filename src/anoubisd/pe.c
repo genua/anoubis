@@ -684,15 +684,26 @@ pe_handle_sfsexec(struct eventdev_hdr *hdr)
 		return (NULL);
 	}
 	/* if not yet set, fill in checksum and pathhint */
-	if ((proc->csum == NULL) && (msg->flags & ANOUBIS_OPEN_FLAG_CSUM)) {
-		if ((proc->csum = calloc(1, sizeof(msg->csum))) == NULL) {
-			log_warn("calloc");
-			master_terminate(ENOMEM);	/* XXX HSH */
+	if (msg->flags & ANOUBIS_OPEN_FLAG_CSUM) {
+		if (proc->csum == NULL) {
+			proc->csum = calloc(1, sizeof(msg->csum));
+			if (proc->csum == NULL) {
+				log_warn("calloc");
+				master_terminate(ENOMEM);	/* XXX HSH */
+			}
 		}
 		bcopy(msg->csum, proc->csum, sizeof(msg->csum));
+	} else {
+		if (proc->csum) {
+			free(proc->csum);
+			proc->csum = NULL;
+		}
 	}
-	if ((proc->pathhint == NULL) &&
-	    (msg->flags & ANOUBIS_OPEN_FLAG_PATHHINT)) {
+	if (proc->pathhint) {
+		free(proc->pathhint);
+		proc->pathhint = NULL;
+	}
+	if (msg->flags & ANOUBIS_OPEN_FLAG_PATHHINT) {
 		if ((proc->pathhint = strdup(msg->pathhint)) == NULL) {
 			log_warn("strdup");
 			master_terminate(ENOMEM);	/* XXX HSH */
@@ -1789,24 +1800,39 @@ struct pe_proc *
 pe_alloc_proc(uid_t uid, anoubis_cookie_t cookie,
     anoubis_cookie_t parent_cookie)
 {
-	struct pe_proc	*proc;
+	struct pe_proc	*proc, *parent;
 
-	if ((proc = calloc(1, sizeof(struct pe_proc))) == NULL) {
-		log_warn("pe_findproc: cannot allocate memory");
-		master_terminate(ENOMEM);
-		return (NULL);	/* XXX HSH */
-	}
+	if ((proc = calloc(1, sizeof(struct pe_proc))) == NULL)
+		goto oom;
 	proc->task_cookie = cookie;
-	proc->parent_proc = pe_get_proc(parent_cookie);
+	parent = pe_get_proc(parent_cookie);
+	proc->parent_proc = parent;
 	proc->pid = -1;
 	proc->uid = uid;
 	proc->refcount = 1;
+	if (parent) {
+		if (parent->pathhint) {
+			proc->pathhint = strdup(parent->pathhint);
+			if (!proc->pathhint)
+				goto oom;
+		}
+		if (parent->csum) {
+			proc->csum = malloc(ANOUBIS_SFS_CS_LEN);
+			if (!proc->csum)
+				goto oom;
+			memcpy(proc->csum, parent->csum, ANOUBIS_SFS_CS_LEN);
+		}
+	}
 
 	DEBUG(DBG_PE_TRACKER, "pe_alloc_proc: proc %p uid %u cookie 0x%08llx "
 	    "parent cookie 0x%08llx", proc, uid, proc->task_cookie,
 	    proc->parent_proc ? parent_cookie : 0);
 
 	return (proc);
+oom:
+	log_warn("pe_alloc_proc: cannot allocate memory");
+	master_terminate(ENOMEM);
+	return (NULL);	/* XXX HSH */
 }
 
 void
