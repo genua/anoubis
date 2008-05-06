@@ -280,6 +280,7 @@ module		: alfmodule
 		 * ALF
 		 */
 alfmodule	: ALF optnl '{' optnl alfruleset_l '}'
+		| ALF optnl '{' optnl '}'
 		;
 
 alfruleset_l	: alfruleset_l alfruleset
@@ -604,6 +605,7 @@ sfsmodule	: SFS optnl '{' optnl sfsrule_l '}'	{
 				YYERROR;
 			}
 		}
+		| SFS optnl '{' optnl '}'
 		;
 
 sfsrule_l	: sfsrule_l sfsrule nl		{
@@ -665,6 +667,7 @@ sfsdefault	: defaultrule
 		 * SB
 		 */
 sbmodule	: SB optnl '{' optnl sbruleset_l '}'
+		| SB optnl '{' optnl '}'
 		;
 
 sbruleset_l	: sbruleset_l sbruleset
@@ -726,6 +729,7 @@ sbdefault	: defaultrule
 		 * VS
 		 */
 vsmodule	: VS optnl '{' optnl vsruleset_l '}'
+		| VS optnl '{' optnl '}'
 		;
 
 vsruleset_l	: vsruleset_l vsruleset
