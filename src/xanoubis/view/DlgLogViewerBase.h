@@ -62,7 +62,7 @@ class DlgLogViewerBase : public wxFrame
 		
 	
 	public:
-		DlgLogViewerBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxT("Log Viewer"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( -1,-1 ), long style = wxDEFAULT_FRAME_STYLE, const wxString& name = wxT("DlgLogViewer") );
+		DlgLogViewerBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Log Viewer"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( -1,-1 ), long style = wxDEFAULT_FRAME_STYLE, const wxString& name = wxT("DlgLogViewer") );
 	
 };
 
