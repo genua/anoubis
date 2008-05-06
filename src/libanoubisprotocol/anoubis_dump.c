@@ -187,7 +187,7 @@ void anoubis_dump(struct anoubis_msg * m, const char * str)
 	CASE(ANOUBIS_N_RESOTHER, notifyresult)
 	CASE(ANOUBIS_P_REQUEST, policyrequest)
 	CASE(ANOUBIS_P_REPLY, policyreply)
-	CASE(ANOUBIS_S_CSUMREQUEST, checksumrequest)
+	CASE(ANOUBIS_P_CSUMREQUEST, checksumrequest)
 	default:
 		printf(" type = %x", opcode);
 		dump_general(m->u.general, m->length-CSUM_LEN);

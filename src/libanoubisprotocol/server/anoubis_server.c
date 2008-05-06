@@ -31,6 +31,11 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <anoubischat.h>
+#ifndef NEEDBSDCOMPAT
+#include <sys/queue.h>
+#else
+#include <queue.h>
+#endif
 
 #include "anoubis_protocol.h"
 #include "anoubis_server.h"
@@ -40,6 +45,13 @@
 #include "anoubis_notify.h"
 #include "anoubis_policy.h"
 #include "crc32.h"
+
+struct dispatcher {
+	LIST_ENTRY(dispatcher) next;
+	int opcode;
+	anoubis_dispatcher_t dispatch;
+	void * arg;
+};
 
 struct anoubis_server {
 	unsigned int proto;
@@ -53,6 +65,7 @@ struct anoubis_server {
 	struct anoubis_notify_group * notify;
 	/*@relnull@*/ /*@dependent@*/
 	struct anoubis_policy_comm * policy;
+	LIST_HEAD(, dispatcher) dispatch;
 };
 
 #define ANOUBIS_PROTO_VERSION		1
@@ -72,11 +85,6 @@ struct anoubis_server {
 #define FLAG_SENTCLOSEACK		0x0800
 #define FLAG_ERROR			0x1000
 
-static struct anoubis_server_checksum_control {
-	anoubis_checksum_control_dispatcher_t dispatch_ctl;
-	void *arg;
-} anoubis_server_checksum_control;
-
 struct anoubis_server * anoubis_server_create(struct achat_channel * chan,
     struct anoubis_policy_comm * policy)
 {
@@ -90,6 +98,7 @@ struct anoubis_server * anoubis_server_create(struct achat_channel * chan,
 	ret->auth_uid = (unsigned int) -1;
 	ret->policy = policy;
 	ret->notify = NULL;
+	LIST_INIT(&ret->dispatch);
 	return ret;
 };
 
@@ -496,23 +505,49 @@ static int anoubis_process_reply(struct anoubis_server * server,
 	return 0;
 }
 
-void anoubis_checksum_control_create(anoubis_checksum_control_dispatcher_t
-    dispatch_ctl, void *arg)
+int anoubis_dispatch_create(struct anoubis_server *server, int opcode,
+    anoubis_dispatcher_t dispatch, void *arg)
 {
-	if (dispatch_ctl)
-		anoubis_server_checksum_control.dispatch_ctl = dispatch_ctl;
-	if (arg)
-		anoubis_server_checksum_control.arg = arg;
+	struct dispatcher	*disp;
+
+	if (dispatch == NULL)
+		return -EINVAL;
+	LIST_FOREACH(disp, &server->dispatch, next) {
+		if (disp->opcode == opcode)
+			return -EBUSY;
+	}
+	disp = malloc(sizeof(struct dispatcher));
+	if (!disp)
+		return -ENOMEM;
+	disp->opcode = opcode;
+	disp->dispatch = dispatch;
+	disp->arg = arg;
+	LIST_INSERT_HEAD(&server->dispatch, disp, next);
+	return 0;
 }
 
-static int anoubis_checksum_control(struct anoubis_msg * m,
-    struct achat_channel * chan)
+static struct dispatcher *
+anoubis_find_dispatcher(struct anoubis_server *server, int opcode)
 {
-	if (anoubis_server_checksum_control.dispatch_ctl &&
-	    anoubis_server_checksum_control.arg)
-		return anoubis_server_checksum_control.dispatch_ctl(m, chan,
-		    anoubis_server_checksum_control.arg);
-	return -EINVAL;
+	struct dispatcher	*disp = NULL;
+	if ((server->proto & ANOUBIS_PROTO_POLICY) == 0
+	    || (server->connect_flags & FLAG_AUTH) == 0)
+		return NULL;
+	LIST_FOREACH(disp, &server->dispatch, next) {
+		if (disp->opcode == opcode)
+			break;
+	}
+	return disp;
+}
+
+static int
+anoubis_process_dispatcher(struct anoubis_server *server,
+    struct dispatcher *disp, struct anoubis_msg * m)
+{
+	if (!disp)
+		return -EINVAL;
+	disp->dispatch(server, m, disp->arg);
+	return 0;
 }
 
 /*
@@ -526,6 +561,7 @@ int anoubis_server_process(struct anoubis_server * server, void * buf,
 {
 	anoubis_token_t token;
 	int flags;
+	struct dispatcher	*disp = NULL;
 #ifndef lint
 	struct anoubis_msg m = {
 		.length = len,
@@ -575,7 +611,6 @@ int anoubis_server_process(struct anoubis_server * server, void * buf,
 	case ANOUBIS_C_PROTOSEL:
 	case ANOUBIS_N_REGISTER:
 	case ANOUBIS_N_UNREGISTER:
-	case ANOUBIS_S_CSUMREQUEST:
 		/*
 		 * These start new requests. If we either got a closereq
 		 * from the other end these are forbidden. If we sent a
@@ -606,7 +641,16 @@ int anoubis_server_process(struct anoubis_server * server, void * buf,
 		 * Default is deny. Please fit new opcodes into the
 		 * catagories above.
 		 */
-		return reply_invalid_token(server, token, opcode);
+		disp = anoubis_find_dispatcher(server, opcode);
+		if (!disp)
+			return reply_invalid_token(server, token, opcode);
+		/*
+		 * Dispatched events are ok, as long as the connection
+		 * is not about to be closed.
+		 */
+		if ((server->connect_flags & FLAG_GOTCLOSEREQ)
+		    || (server->connect_flags & FLAG_SENTCLOSEREQ))
+			return reply_invalid_token(server, token, opcode);
 	}
 
 	/* Process message based on its opcode. */
@@ -647,14 +691,19 @@ int anoubis_server_process(struct anoubis_server * server, void * buf,
 		return anoubis_policy_comm_process(server->policy, tmp,
 		    server->auth_uid, server->chan);
 	}
-	case ANOUBIS_S_CSUMREQUEST:
-		return anoubis_checksum_control(&m, server->chan);
 	default:
-		/* Should never happen! */
-		return -EINVAL;
+		return anoubis_process_dispatcher(server, disp, &m);
 	}
 	/* NOTREACHED */
 	return -EINVAL;
+}
+
+uid_t
+anoubis_server_auth_uid(struct anoubis_server *server)
+{
+	if (server->connect_flags & FLAG_AUTH)
+		return server->auth_uid;
+	return (uid_t)-1;
 }
 
 int anoubis_server_eof(struct anoubis_server * server)

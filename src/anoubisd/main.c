@@ -631,17 +631,36 @@ dispatch_s2m(int fd, short event, void *arg)
 		}
 		switch(msg->mtype) {
 		case ANOUBISD_MSG_CHECKSUM_OP: {
-				anoubisd_msg_comm_t *msg_comm =
-				    (anoubisd_msg_comm_t*)msg->msg;
+			struct anoubis_msg rawmsg;
+			anoubisd_msg_comm_t *msg_comm =
+			    (anoubisd_msg_comm_t*)msg->msg;
+			char * path = NULL;
+			int err, op = 0;
 
-				Anoubis_CheckSumRequestMessage *csum =
-				    (Anoubis_CheckSumRequestMessage*)
-				    msg_comm->msg;
-
-				sfs_checksumop(csum->path,
-				    get_value(csum->operation), msg_comm->uid);
+			rawmsg.length = msg_comm->len;
+			rawmsg.u.buf = msg_comm->msg;
+			if (VERIFY_LENGTH(&rawmsg,
+			    sizeof(Anoubis_CheckSumRequestMessage))) {
+				path = rawmsg.u.checksumrequest->path;
+				op = get_value(
+				    rawmsg.u.checksumrequest->operation);
 			}
+			if (path) {
+				int plen;
+				plen = rawmsg.length - CSUM_LEN
+				    - sizeof(Anoubis_CheckSumRequestMessage);
+				if (path[plen-1] != 0) {
+					path[plen-1] = 0;
+					if (strlen(path) >= plen-1)
+						path = NULL;
+				}
+			}
+			err = -EINVAL;
+			if (path)
+				err = sfs_checksumop(path, op, msg_comm->uid);
+			/* XXX CEH: Send a reply message with the error code */
 			break;
+		}
 		default:
 			DEBUG(DBG_QUEUE, " >s2m: %x",
 			    ((struct eventdev_hdr *)msg->msg)->msg_token);

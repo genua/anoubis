@@ -108,8 +108,8 @@ static void	session_sighandler(int, short, void *);
 static void	notify_callback(struct anoubis_notify_head *, int, void *);
 static int	dispatch_policy(struct anoubis_policy_comm *, u_int64_t,
 		    u_int32_t, void *, size_t, void *, int);
-static int	checksum_control(struct anoubis_msg *, struct achat_channel *,
-		    void *arg);
+static void	checksum_dispatch(struct anoubis_server *server,
+		    struct anoubis_msg *msg, void *arg);
 static void	dispatch_m2s(int, short, void *);
 static void	dispatch_s2m(int, short, void *);
 static void	dispatch_s2p(int, short, void *);
@@ -183,6 +183,8 @@ session_connect(int fd, short event, void *arg)
 		DEBUG(DBG_TRACE, "<session_connect (create)");
 		return;
 	}
+	anoubis_dispatch_create(session->proto, ANOUBIS_P_CSUMREQUEST,
+	       checksum_dispatch, info);
 	if (anoubis_server_start(session->proto) < 0) {
 		log_warn("Failed to send initial hello");
 		session_destroy(session);
@@ -355,7 +357,6 @@ session_main(struct anoubisd_config *conf, int pipe_m2s[2], int pipe_m2p[2],
 	ev_info.policy = anoubis_policy_comm_create(&dispatch_policy, &ev_info);
 	if (!ev_info.policy)
 		fatal("Cannot create policy object (out of memory)");
-	anoubis_checksum_control_create(checksum_control, &ev_info);
 
 	/* setup keeper of incoming unix domain socket connections */
 	if (seg.keeper_uds != NULL) {
@@ -418,19 +419,20 @@ notify_callback(struct anoubis_notify_head *head, int verdict, void *cbdata)
 	DEBUG(DBG_TRACE, "<notify_callback");
 }
 
-static int
-checksum_control(struct anoubis_msg *m, struct achat_channel *chan, void *arg)
+static void
+checksum_dispatch(struct anoubis_server *server, struct anoubis_msg *m,
+    void *arg)
 {
 	anoubisd_msg_t *s2m_msg;
 	anoubisd_msg_comm_t *msg_comm;
 	struct event_info_session *ev_info = (struct event_info_session*)arg;
 
-	DEBUG(DBG_TRACE, ">checksum_control");
+	DEBUG(DBG_TRACE, ">checksum_dispatch");
 	DEBUG(DBG_TRACE, "%s\n", m->u.checksumrequest->path);
 	s2m_msg = msg_factory(ANOUBISD_MSG_CHECKSUM_OP,
 	    sizeof(anoubisd_msg_comm_t) + m->length);
 	msg_comm = (anoubisd_msg_comm_t *)s2m_msg->msg;
-	msg_comm->uid = chan->euid;
+	msg_comm->uid = anoubis_server_auth_uid(server);
 	msg_comm->len = m->length;
 	memcpy(msg_comm->msg, m->u.checksumrequest, m->length);
 
@@ -438,8 +440,7 @@ checksum_control(struct anoubis_msg *m, struct achat_channel *chan, void *arg)
 	DEBUG(DBG_QUEUE, " >eventq_s2m");
 	event_add(ev_info->ev_s2m, NULL);
 
-	DEBUG(DBG_TRACE, "<checksum_control");
-	return 0;
+	DEBUG(DBG_TRACE, "<checksum_dispatch");
 }
 
 static int

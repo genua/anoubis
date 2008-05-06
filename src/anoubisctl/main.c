@@ -386,7 +386,7 @@ sfs_sumop(char *file, int operation)
 	if(!m)
 		goto err;
 
-	set_value(m->u.checksumrequest->type, ANOUBIS_S_CSUMREQUEST);
+	set_value(m->u.checksumrequest->type, ANOUBIS_P_CSUMREQUEST);
 	set_value(m->u.checksumrequest->operation, operation);
 	strlcpy(m->u.checksumrequest->path, file, strlen(file) + 1);
 
