@@ -34,14 +34,16 @@
 class ModSfsOverviewPanelImpl : public ModSfsOverviewPanelBase
 {
 	private:
-		wxIcon	*stateIconNormal_;
-		wxIcon	*stateIconError_;
+		wxIcon		*stateIconNormal_;
+		wxIcon		*stateIconError_;
+		wxString	notAnswered_;
 
 	public:
 		ModSfsOverviewPanelImpl(wxWindow*, wxWindowID);
 		~ModSfsOverviewPanelImpl(void);
 
 		virtual void update(void);
+		void OnOpenSfsEscalation(wxCommandEvent&);
 };
 
 #endif /* __ModSfsOverviewPanelImpl__ */

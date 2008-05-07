@@ -90,7 +90,7 @@ class ModSfsOverviewPanelBase : public wxPanel
 		wxStaticText* txt_status;
 		wxStaticText* txt_nachfragen;
 		wxStaticText* txt_statusValue;
-		wxStaticText* txt_nachfragenValue;
+		wxStaticText* txt_requestValue;
 		
 		AnFader *sfsFader;
 		

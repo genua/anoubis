@@ -134,9 +134,9 @@ ModSfsOverviewPanelBase::ModSfsOverviewPanelBase( wxWindow* parent, wxWindowID i
 	txt_statusValue->Wrap( -1 );
 	sz_values->Add( txt_statusValue, 0, wxALL, 5 );
 	
-	txt_nachfragenValue = new wxStaticText( this, wxID_ANY, _("12"), wxDefaultPosition, wxDefaultSize, 0 );
-	txt_nachfragenValue->Wrap( -1 );
-	sz_values->Add( txt_nachfragenValue, 0, wxALL, 5 );
+	txt_requestValue = new wxStaticText( this, wxID_ANY, _("0"), wxDefaultPosition, wxDefaultSize, 0 );
+	txt_requestValue->Wrap( -1 );
+	sz_values->Add( txt_requestValue, 0, wxALL, 5 );
 	
 	sz_OVSFS->Add( sz_values, 1, wxEXPAND, 5 );
 	

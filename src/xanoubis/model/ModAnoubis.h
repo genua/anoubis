@@ -44,6 +44,8 @@ class ModAnoubis : public Module, public wxEvtHandler
 {
 	private:
 		size_t		notAnsweredListIdx_;
+		int		notAnsweredAlf_;
+		int		notAnsweredSfs_;
 		size_t		logListIdx_;
 		size_t		alertListIdx_;
 		size_t		answeredListIdx_;

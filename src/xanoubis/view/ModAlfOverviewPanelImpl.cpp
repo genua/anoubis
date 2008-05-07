@@ -37,6 +37,11 @@ ModAlfOverviewPanelImpl::ModAlfOverviewPanelImpl(wxWindow* parent,
 {
 	stateIconNormal_ = wxGetApp().loadIcon(_T("ModAlf_ok_48.png"));
 	stateIconError_ = wxGetApp().loadIcon(_T("ModAlf_error_48.png"));
+	notAnswered_.Printf(_T("%d"), 0);
+
+	parent->Connect(anEVT_OPEN_ALF_ESCALATIONS,
+            wxCommandEventHandler(ModAlfOverviewPanelImpl::OnOpenAlfEscalation),
+	    	NULL, this);
 }
 
 ModAlfOverviewPanelImpl::~ModAlfOverviewPanelImpl(void)
@@ -60,7 +65,15 @@ ModAlfOverviewPanelImpl::update(void)
 		stateText = _("not active");
 		stateIcon = stateIconError_;
 	}
-
+	
 	txt_statusValue->SetLabel(stateText);
+	txt_requestValue->SetLabel(notAnswered_);
 	alfStatusIcon->SetIcon(*stateIcon);
+}
+
+void
+ModAlfOverviewPanelImpl::OnOpenAlfEscalation(wxCommandEvent& event)
+{
+	notAnswered_.Printf(_T("%d"), event.GetInt());
+	update();
 }

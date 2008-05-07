@@ -36,12 +36,14 @@ class ModAlfOverviewPanelImpl : public ModAlfOverviewPanelBase
 	private:
 		wxIcon			*stateIconNormal_;
 		wxIcon			*stateIconError_;
+		wxString		notAnswered_;
 
 	public:
 		ModAlfOverviewPanelImpl(wxWindow* parent, wxWindowID id);
 		~ModAlfOverviewPanelImpl(void);
 
 		virtual void update(void);
+		void OnOpenAlfEscalation(wxCommandEvent& event);
 };
 
 #endif /* __ModAlfOverviewPanelImpl__ */

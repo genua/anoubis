@@ -58,6 +58,16 @@ DEFINE_LOCAL_EVENT_TYPE(anEVT_OPEN_ALERTS)
 DEFINE_LOCAL_EVENT_TYPE(anEVT_OPEN_ESCALATIONS)
 
 /*
+ * The count of open ESCALATIONS for ALF is stored in the events int field
+ */
+DEFINE_LOCAL_EVENT_TYPE(anEVT_OPEN_ALF_ESCALATIONS)
+
+/*
+ * The count of open ESCALATIONS for SFS is stored in the events int field
+ */
+DEFINE_LOCAL_EVENT_TYPE(anEVT_OPEN_SFS_ESCALATIONS)
+
+/*
  * A connection to the daemon was sucessfully established.
  * The remote station is transmitted as client data.
  */

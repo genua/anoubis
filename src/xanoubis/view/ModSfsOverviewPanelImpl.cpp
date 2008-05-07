@@ -36,6 +36,10 @@ ModSfsOverviewPanelImpl::ModSfsOverviewPanelImpl(wxWindow* parent,
 {
 	stateIconNormal_ = wxGetApp().loadIcon(_T("ModSfs_ok_48.png"));
 	stateIconError_ = wxGetApp().loadIcon(_T("ModSfs_error_48.png"));
+	notAnswered_.Printf(_T("%d"), 0);
+
+	parent->Connect(anEVT_OPEN_SFS_ESCALATIONS,
+            wxCommandEventHandler(ModSfsOverviewPanelImpl::OnOpenSfsEscalation), NULL, this);
 }
 
 ModSfsOverviewPanelImpl::~ModSfsOverviewPanelImpl(void)
@@ -61,5 +65,13 @@ ModSfsOverviewPanelImpl::update(void)
 	}
 
 	txt_statusValue->SetLabel(stateText);
+	txt_requestValue->SetLabel(notAnswered_);
 	sfsStatusIcon->SetIcon(*stateIcon);
+}
+
+void
+ModSfsOverviewPanelImpl::OnOpenSfsEscalation(wxCommandEvent& event)
+{
+	notAnswered_.Printf(_T("%d"), event.GetInt());
+	update();
 }
