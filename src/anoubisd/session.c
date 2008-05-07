@@ -730,13 +730,17 @@ dispatch_p2s_evt_request(anoubisd_msg_t	*msg,
 	sent = 0;
 	LIST_FOREACH(sess, &ev_info->seg->sessionList, nextSession) {
 		struct anoubis_notify_group * ng;
+		int ret;
 
 		if (sess->proto == NULL)
 			continue;
 		ng = anoubis_server_getnotify(sess->proto);
 		if (!ng)
 			continue;
-		if (anoubis_notify(ng, head)) {
+		ret = anoubis_notify(ng, head);
+		if (ret < 0)
+			log_warn("anoubis_notify: Error code %d", -ret);
+		if (ret > 0) {
 			DEBUG(DBG_TRACE, " >anoubis_notify: %x",
 			    hdr->msg_token);
 			sent = 1;
