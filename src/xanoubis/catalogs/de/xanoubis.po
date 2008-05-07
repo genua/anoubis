@@ -258,13 +258,16 @@ msgstr "immer"
 msgid "Logging"
 msgstr "Logging"
 
-#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:214
 #: src/anoubis/src/xanoubis/view/MainFrame.cpp:83
 #: src/anoubis/src/xanoubis/view/MainFrame.cpp:150
 #: src/anoubis/src/xanoubis/view/TrayIcon.cpp:61
 #: src/anoubis/src/xanoubis/view/TrayIcon.cpp:215
 msgid "none"
 msgstr "keine"
+
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:214
+msgid "none "
+msgstr "kein"
 
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:217
 msgid "log"
@@ -372,11 +375,11 @@ msgstr "Filter"
 
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:380
 msgid "capability"
-msgstr "Möglichkeit"
+msgstr "Fähigkeit"
 
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:383
 msgid "default"
-msgstr "Vorgabewert"
+msgstr "Standard"
 
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:389
 msgid "Connection"
@@ -412,7 +415,7 @@ msgstr "alle"
 
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:422
 msgid "Capability:"
-msgstr "Möglichkeit:"
+msgstr "Fähigkeit:"
 
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:426
 msgid "raw"
@@ -436,7 +439,7 @@ msgstr "verbinden"
 
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:451
 msgid "Source address:"
-msgstr "Qeull-Adresse"
+msgstr "Quell-Adresse"
 
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:458
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:478
@@ -579,7 +582,7 @@ msgstr "AF"
 
 #: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:168
 msgid "Capability"
-msgstr "Möglichkeit"
+msgstr "Fähigkeit"
 
 #: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:171
 msgid "Protocol"

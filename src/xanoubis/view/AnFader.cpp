@@ -42,10 +42,10 @@ AnFader::AnFader(wxWindow *parent) : wxPanel(parent)
 	slider = new wxSlider(this, wxID_ANY, 0, 0, 5, wxDefaultPosition,
 	    wxDefaultSize, wxSL_VERTICAL);
 
-	tx_p0 = new wxStaticText(this, wxID_ANY, wxT("high"));
-	tx_p1 = new wxStaticText(this, wxID_ANY, wxT("medium"));
-	tx_p2 = new wxStaticText(this, wxID_ANY, wxT("admin (normal)"));
-	tx_p3 = new wxStaticText(this, wxID_ANY, wxT("off"));
+	tx_p0 = new wxStaticText(this, wxID_ANY, _("high"));
+	tx_p1 = new wxStaticText(this, wxID_ANY, _("medium"));
+	tx_p2 = new wxStaticText(this, wxID_ANY, _("admin (normal)"));
+	tx_p3 = new wxStaticText(this, wxID_ANY, _("off"));
 
 	hlight = wxFont(10, 74, 90, 92, false, wxT("Sans"));
 	normal = wxFont(10, 74, 90, 90, false, wxT("Sans"));

@@ -68,13 +68,13 @@ DlgLogViewer::DlgLogViewer(wxWindow* parent) : DlgLogViewerBase(parent)
 	lc_logList->InsertColumn(LOGVIEWER_COLUMN_ICON, wxT(""),
 	    wxLIST_FORMAT_LEFT, 24);
 
-	lc_logList->InsertColumn(LOGVIEWER_COLUMN_TIME, wxT("Time"),
+	lc_logList->InsertColumn(LOGVIEWER_COLUMN_TIME, _("Time"),
 	    wxLIST_FORMAT_LEFT, wxLIST_AUTOSIZE);
 
-	lc_logList->InsertColumn(LOGVIEWER_COLUMN_MODULE, wxT("Module"),
+	lc_logList->InsertColumn(LOGVIEWER_COLUMN_MODULE, _("Module"),
 	    wxLIST_FORMAT_CENTER, wxLIST_AUTOSIZE);
 
-	lc_logList->InsertColumn(LOGVIEWER_COLUMN_MESSAGE, wxT("Message"),
+	lc_logList->InsertColumn(LOGVIEWER_COLUMN_MESSAGE, _("Message"),
 	    wxLIST_FORMAT_LEFT, wxLIST_AUTOSIZE);
 
 	Connect(anEVT_ADD_NOTIFICATION,

@@ -214,8 +214,8 @@ DlgRuleEditor::OnTableOptionButtonClick(wxCommandEvent& event)
 		choices.Add(columnNames_[i]);
 	}
 
-	multiChoiceDlg = new wxMultiChoiceDialog(this, wxT("Table columns"),
-	    wxT("Please select the columns you're interested in"), choices);
+	multiChoiceDlg = new wxMultiChoiceDialog(this, _("Table columns"),
+	    _("Please select the columns you're interested in"), choices);
 
 	if (multiChoiceDlg->ShowModal() == wxID_OK) {
 		/* XXX: alter table columns here -- ch */
@@ -227,7 +227,7 @@ DlgRuleEditor::OnTableOptionButtonClick(wxCommandEvent& event)
 void
 DlgRuleEditor::OnBinaryModifyButtonClick(wxCommandEvent& event)
 {
-	wxString	caption = wxT("Choose a binary");
+	wxString	caption = _("Choose a binary");
 	wxString	wildcard = wxT("*");
 	wxString	defaultDir = wxT("/usr/bin/");
 	wxString	defaultFilename = wxEmptyString;
@@ -450,7 +450,7 @@ DlgRuleEditor::OnSfsBinaryModifyButton(wxCommandEvent& event)
 	policy = (SfsPolicy *)ruleListCtrl->GetItemData(selectedId_);
 	if (!policy)
 		return;
-	wxString	 caption = wxT("Choose a binary");
+	wxString	 caption = _("Choose a binary");
 	wxString	 wildcard = wxT("*");
 	wxString	 defaultDir = wxT("/usr/bin/");
 	wxString	 defaultFilename = policy->getBinaryName();

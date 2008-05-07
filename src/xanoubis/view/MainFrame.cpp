@@ -80,7 +80,7 @@ MainFrame::OnInit(void)
 	an_statusbar = new AnStatusBar(this);
 
 	setMessageString();
-	setConnectionString(wxT("none"));
+	setConnectionString(_("none"));
 
 	SetStatusBar(an_statusbar);
 	GetStatusBar()->Show();
@@ -147,11 +147,11 @@ MainFrame::setConnectionString(wxString host)
 {
 	wxString label;
 
-	if  (!host.Cmp(wxT("none"))) {
-		label = wxT("not connected");
+	if  (!host.Cmp(_("none"))) {
+		label = _("not connected");
 		an_menubar->Check(ID_MIFILECONNECT, false);
 	} else {
-		label = wxT("connected with\n");
+		label = _("connected with\n");
 		label += host;
 		an_menubar->Check(ID_MIFILECONNECT, true);
 	}
@@ -164,7 +164,7 @@ MainFrame::setMessageString(void)
 {
 	wxString label;
 
-	label = wxT("Messages: ");
+	label = _("Messages: ");
 
 	/* escalations represent the highest priority */
 	if (messageEscalationCount_ > 0) {
@@ -174,7 +174,7 @@ MainFrame::setMessageString(void)
 			label += wxString::Format(wxT("%d\n"),
 			    messageAlertCount_);
 		} else {
-			label = wxT("No messages\n");
+			label = _("No messages\n");
 		}
 	}
 

@@ -237,7 +237,7 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	wxStaticBoxSizer* logBox;
 	logBox = new wxStaticBoxSizer( new wxStaticBox( commonNbPanel, -1, _("Logging") ), wxVERTICAL );
 	
-	commonNoneLogRadioButton = new wxRadioButton( commonNbPanel, wxID_ANY, _("none"), wxDefaultPosition, wxDefaultSize, wxRB_GROUP );
+	commonNoneLogRadioButton = new wxRadioButton( commonNbPanel, wxID_ANY, _("none "), wxDefaultPosition, wxDefaultSize, wxRB_GROUP );
 	logBox->Add( commonNoneLogRadioButton, 0, wxALL, 5 );
 	
 	commonDoLogRadioButton = new wxRadioButton( commonNbPanel, wxID_ANY, _("log"), wxDefaultPosition, wxDefaultSize, 0 );
