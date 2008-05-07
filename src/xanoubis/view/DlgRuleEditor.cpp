@@ -137,9 +137,12 @@ DlgRuleEditor::DlgRuleEditor(wxWindow* parent) : DlgRuleEditorBase(parent)
 
 	columnNames_[RULEDITOR_LIST_COLUMN_PRIO] = _("ID");
 	columnWidths_[RULEDITOR_LIST_COLUMN_PRIO] = wxLIST_AUTOSIZE;
+	
+	columnNames_[RULEDITOR_LIST_COLUMN_RULE] = _("Rule");
+	columnWidths_[RULEDITOR_LIST_COLUMN_RULE] = wxLIST_AUTOSIZE;
 
 	columnNames_[RULEDITOR_LIST_COLUMN_APP] = _("Application");
-	columnWidths_[RULEDITOR_LIST_COLUMN_APP] = wxLIST_AUTOSIZE;
+	columnWidths_[RULEDITOR_LIST_COLUMN_APP] = wxLIST_AUTOSIZE_USEHEADER;
 
 	columnNames_[RULEDITOR_LIST_COLUMN_BIN] = _("Binary");
 	columnWidths_[RULEDITOR_LIST_COLUMN_BIN] = wxLIST_AUTOSIZE;
