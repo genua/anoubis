@@ -195,6 +195,9 @@ ModAnoubis::answerEscalationNotify(EscalationNotify *notify,
 		} else {
 			/* Default do nothing */
 		}
+		wxCommandEvent  showEvent(anEVT_OPEN_ESCALATIONS);
+		showEvent.SetInt(notAnsweredList_.GetCount());
+		wxGetApp().sendEvent(showEvent);
 	}
 }
 
