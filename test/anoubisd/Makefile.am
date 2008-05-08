@@ -24,7 +24,12 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-TESTS = test_anoubisd
+# XXX ST: #423
+#	  This test was disabled due to the fact that it heavily depends on
+#	  on a running anoubisd which can't be expected to be run during
+#	  'make distcheck'.
+#	  Nethertheless that test is quite useful and still should be shipped.
+# TESTS = test_anoubisd
 
 noinst_PROGRAMS = test_anoubisd
 

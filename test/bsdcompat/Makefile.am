@@ -29,6 +29,10 @@ TESTS = test_bsdcompat
 libbsdcompatdir	= src/bsdcompat
 libbsdcompat	= $(top_builddir)/$(libbsdcompatdir)/libbsdcompat.so
 
+# set TESTS_ENVIRONMENT for checks
+RPATH = $(top_builddir)/$(libbsdcompatdir)
+TESTS_ENVIRONMENT = LD_LIBRARY_PATH=$(RPATH)
+
 noinst_PROGRAMS = test_bsdcompat
 INCLUDES = -I$(top_srcdir)/$(libbsdcompatdir)
 

@@ -24,9 +24,14 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-TESTS = test_xanoubis_server
+# XXX ST: #423
+#         This test was disabled due to the fact that it heavily depends on
+#         on a running anoubisd which can't be expected to be run during
+#         'make distcheck'.
+#         Nethertheless that test is quite useful and still should be shipped.
+# TESTS = test_xanoubis_server
 
-noinst_PROGRAMS = $(TESTS)
+noinst_PROGRAMS = test_xanoubis_server
 
 bsdcompatdir	   = src/bsdcompat
 anoubischatdir	   = src/libanoubischat

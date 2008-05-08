@@ -33,13 +33,18 @@ bsdcompatdir    = src/bsdcompat
 libapn		= $(top_builddir)/$(libapndir)/libapn.so
 libbsdcompat    = $(top_builddir)/$(bsdcompatdir)/libbsdcompat.a
 
+# set TESTS_ENVIRONMENT for checks
+RPATH = $(top_builddir)/$(libapndir):$(top_builddir)/$(bsdcompatdir)
+TESTS_ENVIRONMENT = LD_LIBRARY_PATH=$(RPATH)
+
 test_libapn_CPPFLAGS = \
 	-I$(top_srcdir)/$(libapndir) \
 	-I$(top_srcdir)/$(bsdcompatdir) \
 	-I$(top_srcdir)/include \
 	@CHECK_CFLAGS@
 
-test_libapn_LDFLAGS = -L$(top_builddir)/$(libapndir) -dynamic
+test_libapn_LDFLAGS = \
+	-L$(top_builddir)/$(libapndir) -dynamic
 test_libapn_LDADD = @CHECK_LIBS@ -lapn
 
 test_libapn_DEPENDENCIES = $(libapn)
@@ -61,7 +66,8 @@ test_printing_CPPFLAGS = \
 	-I$(top_srcdir)/include \
 	@CHECK_CFLAGS@
 
-test_printing_LDFLAGS = -L$(top_builddir)/$(libapndir) -dynamic
+test_printing_LDFLAGS = \
+	-L$(top_builddir)/$(libapndir) -dynamic
 test_printing_LDADD = @CHECK_LIBS@ -lapn
 
 test_printing_DEPENDENCIES = $(libapn)
@@ -82,9 +88,9 @@ test_insertcopy_CPPFLAGS = \
 	-I$(top_srcdir)/include \
 	@CHECK_CFLAGS@
 
-test_insertcopy_LDFLAGS = -L$(top_builddir)/$(libapndir) -dynamic
+test_insertcopy_LDFLAGS = \
+	-L$(top_builddir)/$(libapndir) -dynamic
 test_insertcopy_LDADD = @CHECK_LIBS@ -lapn
-
 test_insertcopy_DEPENDENCIES = $(libapn)
 
 if NEEDBSDCOMPAT

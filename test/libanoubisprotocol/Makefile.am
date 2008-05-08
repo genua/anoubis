@@ -34,6 +34,10 @@ libanoubisps = $(top_builddir)/$(anoubisprotocoldir)/libanoubisps.so
 libanoubispsa = $(top_builddir)/$(anoubisprotocoldir)/libanoubisps.a
 libanoubispc = $(top_builddir)/$(anoubisprotocoldir)/libanoubispc.so
 
+# set TESTS_ENVIRONMENT for checks
+RPATH = $(top_builddir)/$(anoubisprotocoldir):$(top_builddir)/$(anoubischatdir):$(top_builddir)/$(bsdcompatdir)
+TESTS_ENVIRONMENT = LD_LIBRARY_PATH=$(RPATH)
+
 noinst_PROGRAMS = test_libanoubisproto test_libanoubisnotify libanoubischat.so
 CPPFLAGS =						\
 	-I$(top_srcdir)/$(anoubischatdir)		\
@@ -44,9 +48,11 @@ CPPFLAGS =						\
 libanoubischat_so_CFLAGS = -fPIC -shared
 libanoubischat_so_LDFLAGS = -nostartfiles -shared
 
-test_libanoubisproto_LDFLAGS = -L$(top_builddir)/$(anoubisprotocoldir) \
+test_libanoubisproto_LDFLAGS = \
+	-L$(top_builddir)/$(anoubisprotocoldir) \
 	-L$(top_builddir)/$(anoubischatdir) -dynamic
-test_libanoubisnotify_LDFLAGS = -L. -L$(top_builddir)/$(anoubisprotocoldir)
+test_libanoubisnotify_LDFLAGS = \
+	-L. -L$(top_builddir)/$(anoubisprotocoldir)
 test_libanoubisproto_LDADD = @CHECK_LIBS@ -lanoubisps -lanoubispc \
 	-lanoubischat
 test_libanoubisnotify_LDADD = @CHECK_LIBS@ -lanoubisps -lanoubischat

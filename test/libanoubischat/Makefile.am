@@ -26,17 +26,22 @@
 
 TESTS = test_libanoubischat
 
-bsdcompatdir   = src/bsdcompat
-libbsdcompat   = $(top_builddir)/$(bsdcompatdir)/libbsdcompat.a
-anoubischatdir = src/libanoubischat
-libanoubischat = $(top_builddir)/$(anoubischatdir)/libanoubischat.so
+bsdcompatdir	= src/bsdcompat
+libbsdcompat	= $(top_builddir)/$(bsdcompatdir)/libbsdcompat.a
+anoubischatdir	= src/libanoubischat
+libanoubischat	= $(top_builddir)/$(anoubischatdir)/libanoubischat.so
+
+# set TESTS_ENVIRONMENT for checks
+RPATH = $(top_builddir)/$(anoubischatdir):$(top_builddir)/$(bsdcompatdir)
+TESTS_ENVIRONMENT = LD_LIBRARY_PATH=$(RPATH)
 
 noinst_PROGRAMS = test_libanoubischat
 
 test_libanoubischat_CFLAGS = $(AM_CFLAGS) @CHECK_CFLAGS@
 test_libanoubischat_CPPFLAGS = -I$(top_srcdir)/$(anoubischatdir)
-test_libanoubischat_LDFLAGS = $(AM_LDFLAGS) -dynamic \
-			      -L$(top_builddir)/$(anoubischatdir)
+test_libanoubischat_LDFLAGS = \
+	$(AM_LDFLAGS) -dynamic \
+	-L$(top_builddir)/$(anoubischatdir)
 test_libanoubischat_LDADD = @CHECK_LIBS@ -lanoubischat
 test_libanoubischat_DEPENDENCIES = $(libanoubischat)
 
