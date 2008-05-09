@@ -127,6 +127,7 @@ usage(void)
  *  3 - error in getting rules
  *  4 - options parse error
  *  5 - communication error
+ *  6 - checksum request error
  */
 
 int
@@ -375,26 +376,39 @@ dump(char *file)
 static int
 sfs_sumop(char *file, int operation)
 {
-	int	error = 0;
-	struct	anoubis_msg * m = NULL;
-	int	rc;
+	int				 error = 0;
+	struct anoubis_transaction	*t;
 
 	error = create_channel();
+	if (error) {
+		fprintf(stderr, "Cannot connect to anoubis daemon\n");
+		return error;
+	}
 
-	m = anoubis_msg_new(sizeof(Anoubis_CheckSumRequestMessage) +
-	    strlen(file) + 1);
-	if(!m)
-		goto err;
-
-	set_value(m->u.checksumrequest->type, ANOUBIS_P_CSUMREQUEST);
-	set_value(m->u.checksumrequest->operation, operation);
-	strlcpy(m->u.checksumrequest->path, file, strlen(file) + 1);
-
-	rc = anoubis_msg_send(channel, m);
-
-err:
+	t = anoubis_client_csumrequest_start(client, operation, file);
+	if (!t) {
+		destroy_channel();
+		fprintf(stderr, "Cannot send checksum request\n");
+		return 6;
+	}
+	while(1) {
+		int ret = anoubis_client_wait(client);
+		if (ret <= 0) {
+			anoubis_transaction_destroy(t);
+			destroy_channel();
+			fprintf(stderr, "Checksum request interrupted\n");
+			return 6;
+		}
+		if (t->flags & ANOUBIS_T_DONE)
+			break;
+	}
+	if (t->result) {
+		fprintf(stderr, "Checksum Request failed: %d\n", t->result);
+		anoubis_transaction_destroy(t);
+		destroy_channel();
+		return 6;
+	}
 	destroy_channel();
-
 	return error;
 }
 
@@ -482,7 +496,10 @@ load(char *rulesopt)
 		return 3;
 	}
 	set_value(req->ptype, ANOUBIS_PTYPE_SETBYUID);
-	/* XXXXX */
+	/*
+	 * XXX CEH: Add posibility to set admin rules for a user and
+	 * XXX CEH: default rules
+	 */
 	set_value(req->uid, geteuid());
 	set_value(req->prio, 1);
 	if (length) {

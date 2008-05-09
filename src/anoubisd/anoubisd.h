@@ -35,10 +35,12 @@
 #ifdef LINUX
 #include <linux/eventdev.h>
 #include <linux/anoubis.h>
+#include <linux/anoubis_sfs.h>
 #endif
 #ifdef OPENBSD
 #include <dev/eventdev.h>
 #include <dev/anoubis.h>
+#include <dev/anoubis_sfs.h>
 #endif
 #include <assert.h>
 
@@ -87,11 +89,18 @@ enum {
 	ANOUBISD_MSG_EVENTREPLY,
 	ANOUBISD_MSG_EVENTCANCEL,
 	ANOUBISD_MSG_SESSION_REG,
-	ANOUBISD_MSG_CHECKSUM_OP
+	ANOUBISD_MSG_CHECKSUM_OP,
+	ANOUBISD_MSG_SFSOPEN
 } anoubisd_msg;
 
-/* format of ANOUBISD_MSG_EVENTDEV
- * is struct eventdev_hdr */
+/* format of ANOUBISD_MSG_EVENTDEV is struct eventdev_hdr */
+
+struct anoubisd_msg_sfsopen {
+	u_int32_t		anoubisd_csum_set;
+	u_int8_t		anoubisd_csum[ANOUBIS_SFS_CS_LEN];
+	struct eventdev_hdr	hdr;
+};
+typedef struct anoubisd_msg_sfsopen anoubisd_msg_sfsopen_t;
 
 /* format of ANOUBISD_MSG_POLREQUEST */
 struct anoubisd_msg_comm {
@@ -102,6 +111,14 @@ struct anoubisd_msg_comm {
 	char		msg[0];
 };
 typedef struct anoubisd_msg_comm anoubisd_msg_comm_t;
+
+struct anoubisd_msg_checksum_op {
+	u_int64_t	token;
+	u_int32_t	uid;
+	short		len;
+	char		msg[0];
+};
+typedef struct anoubisd_msg_checksum_op anoubisd_msg_checksum_op_t;
 
 struct anoubisd_reply {
 	short		ask;		/* flag - ask GUI */
@@ -139,7 +156,7 @@ void	pe_shutdown(void);
 
 void	pe_reconfigure(void);
 
-anoubisd_reply_t *policy_engine(int mtype, void *request);
+anoubisd_reply_t *policy_engine(anoubisd_msg_t *request);
 
 void	log_init(void);
 

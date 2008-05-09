@@ -546,7 +546,7 @@ anoubis_process_dispatcher(struct anoubis_server *server,
 {
 	if (!disp)
 		return -EINVAL;
-	disp->dispatch(server, m, disp->arg);
+	disp->dispatch(server, m, server->auth_uid, disp->arg);
 	return 0;
 }
 
@@ -698,14 +698,6 @@ int anoubis_server_process(struct anoubis_server * server, void * buf,
 	return -EINVAL;
 }
 
-uid_t
-anoubis_server_auth_uid(struct anoubis_server *server)
-{
-	if (server->connect_flags & FLAG_AUTH)
-		return server->auth_uid;
-	return (uid_t)-1;
-}
-
 int anoubis_server_eof(struct anoubis_server * server)
 {
 	return (server->connect_flags & FLAG_GOTCLOSEACK)
@@ -716,4 +708,10 @@ struct anoubis_notify_group *
 anoubis_server_getnotify(struct anoubis_server * server)
 {
 	return server->notify;
+}
+
+struct achat_channel *
+anoubis_server_getchannel(struct anoubis_server *server)
+{
+	return server->chan;
 }

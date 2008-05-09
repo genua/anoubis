@@ -186,7 +186,7 @@ sfs_checksumop(const char *path, unsigned int operation, uid_t uid)
 			}
 			written += ret;
 		}
-
+		ret = 0;
 		close(fd);
 	} else if (operation == ANOUBIS_CHECKSUM_OP_DEL) {
 		snprintf(csum_path, len - 1, "%s%s/%u", SFS_CHECKSUMROOT, path,

@@ -108,8 +108,10 @@ static void	session_sighandler(int, short, void *);
 static void	notify_callback(struct anoubis_notify_head *, int, void *);
 static int	dispatch_policy(struct anoubis_policy_comm *, u_int64_t,
 		    u_int32_t, void *, size_t, void *, int);
-static void	checksum_dispatch(struct anoubis_server *server,
-		    struct anoubis_msg *msg, void *arg);
+static void	dispatch_checksum(struct anoubis_server *server,
+		    struct anoubis_msg *msg, uid_t uid, void *arg);
+static int	dispatch_checksum_reply(void *cbdata, int error, void *data,
+		    int len, int end);
 static void	dispatch_m2s(int, short, void *);
 static void	dispatch_s2m(int, short, void *);
 static void	dispatch_s2p(int, short, void *);
@@ -122,6 +124,8 @@ static void	dispatch_p2s_evt_cancel(anoubisd_msg_t *,
 		    struct event_info_session *);
 static void	dispatch_p2s_pol_reply(anoubisd_msg_t *,
 		    struct event_info_session *);
+static void	dispatch_m2s_pol_reply(anoubisd_msg_t *msg,
+		    struct event_info_session *ev_info);
 static void	session_connect(int, short, void *);
 static void	session_rxclient(int, short, void *);
 static void	session_setupuds(struct sessionGroup *,
@@ -184,7 +188,7 @@ session_connect(int fd, short event, void *arg)
 		return;
 	}
 	anoubis_dispatch_create(session->proto, ANOUBIS_P_CSUMREQUEST,
-	       checksum_dispatch, info);
+	       dispatch_checksum, info);
 	if (anoubis_server_start(session->proto) < 0) {
 		log_warn("Failed to send initial hello");
 		session_destroy(session);
@@ -420,27 +424,64 @@ notify_callback(struct anoubis_notify_head *head, int verdict, void *cbdata)
 }
 
 static void
-checksum_dispatch(struct anoubis_server *server, struct anoubis_msg *m,
-    void *arg)
+dispatch_checksum(struct anoubis_server *server, struct anoubis_msg *m,
+    uid_t uid, void *arg)
 {
-	anoubisd_msg_t *s2m_msg;
-	anoubisd_msg_comm_t *msg_comm;
+	anoubisd_msg_t			*s2m_msg;
+	anoubisd_msg_checksum_op_t	*msg_csum;
+	struct achat_channel		*chan;
+	int err;
+
 	struct event_info_session *ev_info = (struct event_info_session*)arg;
 
-	DEBUG(DBG_TRACE, ">checksum_dispatch");
+	DEBUG(DBG_TRACE, ">dispatch_checksum");
 	DEBUG(DBG_TRACE, "%s\n", m->u.checksumrequest->path);
+	chan = anoubis_server_getchannel(server);
 	s2m_msg = msg_factory(ANOUBISD_MSG_CHECKSUM_OP,
-	    sizeof(anoubisd_msg_comm_t) + m->length);
-	msg_comm = (anoubisd_msg_comm_t *)s2m_msg->msg;
-	msg_comm->uid = anoubis_server_auth_uid(server);
-	msg_comm->len = m->length;
-	memcpy(msg_comm->msg, m->u.checksumrequest, m->length);
+	    sizeof(anoubisd_msg_checksum_op_t) + m->length);
+	msg_csum = (anoubisd_msg_checksum_op_t *)s2m_msg->msg;
+	msg_csum->uid = uid;
+	msg_csum->len = m->length;
+	memcpy(msg_csum->msg, m->u.checksumrequest, m->length);
 
+	err = anoubis_policy_comm_addrequest(ev_info->policy, chan,
+	    POLICY_FLAG_START | POLICY_FLAG_END, &dispatch_checksum_reply,
+	    server, &msg_csum->token);
+	if (err < 0) {
+		log_warn("Dropping checksum request (error %d)", err);
+		free(s2m_msg);
+		return;
+	}
 	enqueue(&eventq_s2m, s2m_msg);
 	DEBUG(DBG_QUEUE, " >eventq_s2m");
 	event_add(ev_info->ev_s2m, NULL);
 
-	DEBUG(DBG_TRACE, "<checksum_dispatch");
+	DEBUG(DBG_TRACE, "<dispatch_checksum");
+}
+
+static int
+dispatch_checksum_reply(void *cbdata, int error, void *data, int len, int flags)
+{
+	struct anoubis_server	*server = cbdata;
+	struct anoubis_msg	*m;
+	int			 ret;
+
+	m = anoubis_msg_new(sizeof(Anoubis_AckMessage));
+	if (!m)
+		return -ENOMEM;
+	if (flags != (POLICY_FLAG_START|POLICY_FLAG_END)) {
+		log_warn("dispatch_checksum_reply: flags is %x");
+		return -EINVAL;
+	}
+	set_value(m->u.ack->type, ANOUBIS_REPLY);
+	set_value(m->u.ack->error, error);
+	set_value(m->u.ack->opcode, ANOUBIS_P_CSUMREQUEST);
+	m->u.ack->token = 0;
+	ret = anoubis_msg_send(anoubis_server_getchannel(server), m);
+	anoubis_msg_free(m);
+	if (ret < 0)
+		return ret;
+	return 0;
 }
 
 static int
@@ -503,8 +544,13 @@ dispatch_m2s(int fd, short sig, void *arg)
 			DEBUG(DBG_TRACE, "<dispatch_m2s");
 			return;
 		}
+		if (msg->mtype == ANOUBISD_MSG_POLREPLY) {
+			dispatch_m2s_pol_reply(msg, ev_info);
+			continue;
+		}
 		if (msg->mtype != ANOUBISD_MSG_EVENTDEV) {
 			log_warn("dispatch_m2s: bad mtype %d", msg->mtype);
+			continue;
 		}
 
 		hdr = (struct eventdev_hdr *)msg->msg;
@@ -685,7 +731,17 @@ dispatch_p2s_evt_request(anoubisd_msg_t	*msg,
 
 	DEBUG(DBG_TRACE, ">dispatch_p2s_evt_request");
 
-	hdr = (struct eventdev_hdr *)msg->msg;
+	switch(msg->mtype) {
+	case ANOUBISD_MSG_EVENTDEV:
+		hdr = (struct eventdev_hdr *)msg->msg;
+		break;
+	case ANOUBISD_MSG_SFSOPEN:
+		hdr = &((anoubisd_msg_sfsopen_t*)msg->msg)->hdr;
+		break;
+	default:
+		log_warn("dispatch_p2s_evt_request: bad mtype %d", msg->mtype);
+		return;
+	}
 
 	if ((hdr->msg_flags & EVENTDEV_NEED_REPLY) == 0) {
 		log_warn("dispatch_p2s: bad flags %x", hdr->msg_flags);
@@ -842,6 +898,22 @@ dispatch_p2s_pol_reply(anoubisd_msg_t *msg, struct event_info_session *ev_info)
 	}
 
 	DEBUG(DBG_TRACE, "<dispatch_p2s_pol_reply");
+}
+
+static void
+dispatch_m2s_pol_reply(anoubisd_msg_t *msg, struct event_info_session *ev_info)
+{
+	anoubisd_reply_t	*reply;
+	int			 ret, end;
+
+	reply = (anoubisd_reply_t *)msg->msg;
+	end = reply->flags & POLICY_FLAG_END;
+	ret = anoubis_policy_comm_answer(ev_info->policy, reply->token,
+	    reply->reply, reply->msg, reply->len, end);
+	if (ret < 0) {
+		errno = -ret;
+		log_warn("dispatch_m2s_pol_reply: Failed to process answer");
+	}
 }
 
 static void

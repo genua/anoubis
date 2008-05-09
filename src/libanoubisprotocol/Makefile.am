@@ -25,6 +25,7 @@
 #
 
 bsdcompatdir = $(top_srcdir)/src/bsdcompat
+libbsdcompat = $(top_builddir)/src/bsdcompat/libbsdcompat.a
 
 lib_LIBRARIES = libanoubisps.a libanoubispc.a
 include_HEADERS_common =		\
@@ -58,9 +59,16 @@ libanoubisps_a_CPPFLAGS = \
 	-I$(top_srcdir)/$(anoubischatdir) \
 	-I$(top_srcdir)/include
 libanoubisps_so_CPPFLAGS = $(libanoubisps_a_CPPFLAGS)
+libanoubisps_so_LDFLAGS	=
+libanoubispc_so_LDFLAGS	=
 if NEEDBSDCOMPAT
 libanoubisps_a_CPPFLAGS  += -I$(bsdcompatdir)
 libanoubisps_so_CPPFLAGS += -I$(bsdcompatdir)
+libanoubisps_so_LDFLAGS	 += -L$(top_builddir)/src/bsdcompat
+libanoubisps_a_LIBADD	 = $(libbsdcompat)
+libanoubisps_so_LDADD	 = -lbsdcompat
+libanoubisps_a_DEPENDENCIES = $(libbsdcompat)
+libanoubisps_so_DEPENDENCIES = $(libbsdcompat)
 endif
 
 libanoubisps_a_SOURCES =		\
@@ -82,6 +90,11 @@ libanoubispc_so_CPPFLAGS = $(libanoubispc_a_CPPFLAGS)
 if NEEDBSDCOMPAT
 libanoubispc_a_CPPFLAGS  += -I$(bsdcompatdir)
 libanoubispc_so_CPPFLAGS += -I$(bsdcompatdir)
+libanoubispc_so_LDFLAGS	+= -L$(top_builddir)/src/bsdcompat
+libanoubispc_a_LIBADD	= $(libbsdcompat)
+libanoubispc_so_LDADD	= -lbsdcompat
+libanoubispc_a_DEPENDENCIES = $(libbsdcompat)
+libanoubispc_so_DEPENDENCIES = $(libbsdcompat)
 endif
 
 libanoubispc_a_SOURCES = \
@@ -100,12 +113,12 @@ noinst_PROGRAMS = libanoubisps.so libanoubispc.so
 
 libanoubisps_so_SOURCES = $(libanoubisps_a_SOURCES)
 libanoubisps_so_CFLAGS = -fPIC -shared
-libanoubisps_so_LDFLAGS = -nostartfiles -shared	\
+libanoubisps_so_LDFLAGS += -nostartfiles -shared	\
 	-L$(top_builddir)/$(anoubischatdir) -lanoubischat
 
 libanoubispc_so_SOURCES = $(libanoubispc_a_SOURCES)
 libanoubispc_so_CFLAGS = -fPIC -shared
-libanoubispc_so_LDFLAGS = -nostartfiles -shared	\
+libanoubispc_so_LDFLAGS += -nostartfiles -shared	\
 	-L$(top_builddir)/$(anoubischatdir) -lanoubischat
 
 libanoubisps_a_SOURCES_flawfinder =		\

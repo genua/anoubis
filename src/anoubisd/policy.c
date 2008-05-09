@@ -303,6 +303,7 @@ dispatch_m2p(int fd, short sig, void *arg)
 	/*@dependent@*/
 	struct eventdev_hdr *hdr;
 	struct eventdev_reply *rep;
+	anoubisd_msg_sfsopen_t *sfsmsg = NULL;
 
 	DEBUG(DBG_TRACE, ">dispatch_m2p");
 
@@ -314,14 +315,21 @@ dispatch_m2p(int fd, short sig, void *arg)
 		DEBUG(DBG_QUEUE, " >m2p: %x",
 		    ((struct eventdev_hdr *)msg->msg)->msg_token);
 
-		/* this should be a eventdev_hdr message, needing a reply */
-		if (msg->mtype != ANOUBISD_MSG_EVENTDEV) {
+		switch(msg->mtype) {
+		case ANOUBISD_MSG_EVENTDEV:
+			hdr = (struct eventdev_hdr *)msg->msg;
+			break;
+		case ANOUBISD_MSG_SFSOPEN:
+			sfsmsg = (anoubisd_msg_sfsopen_t *)msg->msg;
+			hdr = (struct eventdev_hdr *)&sfsmsg->hdr;
+			break;
+		default:
 			DEBUG(DBG_TRACE, "<dispatch_m2p (bad type %d)",
 			    msg->mtype);
 			free(msg);
 			continue;
 		}
-		hdr = (struct eventdev_hdr *)msg->msg;
+
 		DEBUG(DBG_PE, "dispatch_m2p: %d", hdr->msg_source);
 		if (((hdr->msg_flags & EVENTDEV_NEED_REPLY) == 0) &&
 		    (hdr->msg_source != ANOUBIS_SOURCE_PROCESS &&
@@ -330,8 +338,7 @@ dispatch_m2p(int fd, short sig, void *arg)
 			DEBUG(DBG_TRACE, "<dispatch_m2p (not NEED_REPLY)");
 			continue;
 		}
-
-		reply = policy_engine(ANOUBISD_MSG_EVENTDEV, hdr);
+		reply = policy_engine(msg);
 		if (reply == NULL) {
 			DEBUG(DBG_TRACE, "<dispatch_m2p (no reply)");
 			/*
@@ -470,8 +477,7 @@ int send_policy_data(u_int64_t token, int fd)
 		msg = malloc(size);
 		if (!msg)
 			goto oom;
-		msg->size = size;
-		msg->mtype = ANOUBISD_MSG_POLREPLY;
+		msg = msg_factory(ANOUBISD_MSG_POLREPLY, size);
 		comm = (struct anoubisd_reply *)msg->msg;
 		comm->token = token;
 		comm->reply = 0;
@@ -506,7 +512,6 @@ dispatch_s2p(int fd, short sig, void *arg)
 	struct eventdev_reply * evrep;
 	anoubisd_msg_t *msg, *msg_rep;
 	/*@observer@*/
-	anoubisd_msg_comm_t *comm;
 	anoubisd_reply_t *reply, *rep;
 
 	DEBUG(DBG_TRACE, ">dispatch_s2p");
@@ -528,10 +533,7 @@ dispatch_s2p(int fd, short sig, void *arg)
 			break;
 
 		case ANOUBISD_MSG_POLREQUEST:
-
-			comm = (anoubisd_msg_comm_t *)msg->msg;
-
-			reply = policy_engine(ANOUBISD_MSG_POLREQUEST, comm);
+			reply = policy_engine(msg);
 			if (!reply) {
 				/*
 				 * Messages have been queued via

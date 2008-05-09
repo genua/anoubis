@@ -131,7 +131,7 @@ struct policy_request {
 };
 LIST_HEAD(, policy_request) preqs;
 
-anoubisd_reply_t	*policy_engine(int, void *);
+anoubisd_reply_t	*policy_engine(anoubisd_msg_t *);
 anoubisd_reply_t	*pe_dispatch_event(struct eventdev_hdr *);
 anoubisd_reply_t	*pe_handle_process(struct eventdev_hdr *);
 anoubisd_reply_t	*pe_handle_sfsexec(struct eventdev_hdr *);
@@ -146,8 +146,9 @@ int			 pe_decide_alfcap(struct apn_rule *, struct
 int			 pe_decide_alfdflt(struct apn_rule *, struct
 			     alf_event *, int *);
 char			*pe_dump_alfmsg(struct alf_event *);
-anoubisd_reply_t	*pe_handle_sfs(struct eventdev_hdr *);
-anoubisd_reply_t	*pe_decide_sfs(struct pe_user *, struct eventdev_hdr *);
+anoubisd_reply_t	*pe_handle_sfs(anoubisd_msg_sfsopen_t *);
+anoubisd_reply_t	*pe_decide_sfs(struct pe_user *,
+			    anoubisd_msg_sfsopen_t*);
 int			 pe_decide_sfscheck(struct apn_rule *, struct
 			     sfs_open_message *, int *);
 int			 pe_decide_sfsdflt(struct apn_rule *, struct
@@ -589,29 +590,30 @@ pe_open_policy_file(uid_t uid, int prio)
 }
 
 anoubisd_reply_t *
-policy_engine(int mtype, void *request)
+policy_engine(anoubisd_msg_t *request)
 {
 	anoubisd_reply_t *reply;
-	struct eventdev_hdr *hdr = NULL;
-	struct anoubisd_msg_comm *comm = NULL;
-	int reconfigure = 0;
 
 	DEBUG(DBG_TRACE, ">policy_engine");
 
-	switch (mtype) {
-	case ANOUBISD_MSG_EVENTDEV:
-		hdr = (struct eventdev_hdr *)request;
+	switch (request->mtype) {
+	case ANOUBISD_MSG_EVENTDEV: {
+		struct eventdev_hdr *hdr = (struct eventdev_hdr *)request->msg;
 		reply = pe_dispatch_event(hdr);
 		break;
-
-	case ANOUBISD_MSG_POLREQUEST:
-		comm = (anoubisd_msg_comm_t *)request;
+	} case ANOUBISD_MSG_SFSOPEN: {
+		anoubisd_msg_sfsopen_t *sfsmsg;
+		sfsmsg = (anoubisd_msg_sfsopen_t *)request->msg;
+		reply = pe_handle_sfs(sfsmsg);
+		break;
+	} case ANOUBISD_MSG_POLREQUEST: {
+		int reconfigure = 0;
+		anoubisd_msg_comm_t *comm = (anoubisd_msg_comm_t *)request->msg;
 		reply = pe_dispatch_policy(comm, &reconfigure);
 		if (reconfigure)
 			pe_reconfigure();
 		break;
-
-	default:
+	} default:
 		reply = NULL;
 		break;
 	}
@@ -641,10 +643,6 @@ pe_dispatch_event(struct eventdev_hdr *hdr)
 
 	case ANOUBIS_SOURCE_SFSEXEC:
 		reply = pe_handle_sfsexec(hdr);
-		break;
-
-	case ANOUBIS_SOURCE_SFS:
-		reply = pe_handle_sfs(hdr);
 		break;
 
 	case ANOUBIS_SOURCE_ALF:
@@ -1332,15 +1330,17 @@ pe_dump_alfmsg(struct alf_event *msg)
 }
 
 anoubisd_reply_t *
-pe_handle_sfs(struct eventdev_hdr *hdr)
+pe_handle_sfs(anoubisd_msg_sfsopen_t *sfsmsg)
 {
 	anoubisd_reply_t		*reply = NULL;
 	struct pe_user			*user;
+	struct eventdev_hdr		*hdr;
 
-	if (hdr == NULL) {
-		log_warnx("pe_handle_sfs: empty header");
+	if (sfsmsg == NULL) {
+		log_warnx("pe_handle_sfs: empty message");
 		return (NULL);
 	}
+	hdr = (struct eventdev_hdr *)&sfsmsg->hdr;
 	if (hdr->msg_size < (sizeof(struct eventdev_hdr) +
 	    sizeof(struct sfs_open_message))) {
 		log_warnx("pe_handle_sfs: short message");
@@ -1351,20 +1351,22 @@ pe_handle_sfs(struct eventdev_hdr *hdr)
 	if (user == NULL)
 		user = pe_get_user(-1, pdb);
 
-	reply = pe_decide_sfs(user, hdr);
+	reply = pe_decide_sfs(user, sfsmsg);
 
 	return (reply);
 }
 
 anoubisd_reply_t *
-pe_decide_sfs(struct pe_user *user, struct eventdev_hdr *hdr)
+pe_decide_sfs(struct pe_user *user, anoubisd_msg_sfsopen_t *sfsmsg)
 {
 	static char		*verdict[3] = { "allowed", "denied", "asked" };
 	anoubisd_reply_t	*reply = NULL;
+	struct eventdev_hdr	*hdr;
 	struct sfs_open_message	*msg;
 	int			ret, log, i, decision;
 	char			*dump = NULL;
 
+	hdr = &sfsmsg->hdr;
 	msg = (struct sfs_open_message *)(hdr+1);
 
 	if ((reply = calloc(1, sizeof(struct anoubisd_reply))) == NULL) {
@@ -1407,8 +1409,8 @@ pe_decide_sfs(struct pe_user *user, struct eventdev_hdr *hdr)
 		}
 		/* Look into checksum from /var/lib/sfs */
 		if ((decision == -1) &&
-		    (msg->anoubisd_csum_set != ANOUBISD_CSUM_NONE)) {
-			if (memcmp(msg->csum, msg->anoubisd_csum,
+		    (sfsmsg->anoubisd_csum_set != ANOUBISD_CSUM_NONE)) {
+			if (memcmp(msg->csum, sfsmsg->anoubisd_csum,
 			    ANOUBIS_SFS_CS_LEN))
 				decision = POLICY_DENY;
 		}

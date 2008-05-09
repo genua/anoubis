@@ -29,6 +29,9 @@
 #include <string.h>
 #include <errno.h>
 #include <sys/types.h>
+#ifdef LINUX
+#include <bsdcompat.h>
+#endif
 #include <anoubischat.h>
 
 #include <anoubis_protocol.h>
@@ -693,7 +696,7 @@ err:
 	return ret;
 }
 
-static void anoubis_client_register_steps(struct anoubis_transaction * t,
+static void anoubis_client_ack_steps(struct anoubis_transaction * t,
     struct anoubis_msg * m)
 {
 	struct anoubis_client * client = t->cbdata;
@@ -706,6 +709,8 @@ static void anoubis_client_register_steps(struct anoubis_transaction * t,
 		goto err;
 	ret = - get_value(m->u.ack->error);
 err:
+	if (m->u.ack->token == 0)
+		client->flags &= ~FLAG_POLICY_PENDING;
 	anoubis_msg_free(m);
 	anoubis_transaction_done(t, -ret);
 }
@@ -734,7 +739,7 @@ static struct anoubis_transaction * __anoubis_client_register_start_common(
 	set_value(m->u.notifyreg->subsystem, subsystem);
 	ret = anoubis_transaction_create(token,
 	    ANOUBIS_T_INITSELF|ANOUBIS_T_DEQUEUE,
-	    &anoubis_client_register_steps, NULL, client);
+	    &anoubis_client_ack_steps, NULL, client);
 	if (!ret) {
 		anoubis_msg_free(m);
 		return NULL;
@@ -871,6 +876,45 @@ anoubis_client_policyrequest_start(struct anoubis_client * client,
 	return t;
 }
 
+struct anoubis_transaction *
+anoubis_client_csumrequest_start(struct anoubis_client *client,
+    int op, char *path)
+{
+	struct anoubis_msg * m;
+	struct anoubis_transaction * t = NULL;
+	static const u_int32_t nextops[] = { ANOUBIS_REPLY, -1 };
+
+	if ((client->proto & ANOUBIS_PROTO_POLICY) == 0)
+		return NULL;
+	if (client->state != ANOUBIS_STATE_CONNECTED)
+		return NULL;
+	if (!path || !strlen(path))
+		return NULL;
+	if (client->flags & FLAG_POLICY_PENDING)
+		return NULL;
+	m = anoubis_msg_new(sizeof(Anoubis_CheckSumRequestMessage)
+	    + strlen(path) + 1);
+	if (!m)
+		return NULL;
+	t = anoubis_transaction_create(0, ANOUBIS_T_INITSELF|ANOUBIS_T_DEQUEUE,
+	    &anoubis_client_ack_steps, NULL, client);
+	if (!t) {
+		anoubis_msg_free(m);
+		return NULL;
+	}
+	set_value(m->u.checksumrequest->type, ANOUBIS_P_CSUMREQUEST);
+	set_value(m->u.checksumrequest->operation, op);
+	strlcpy(m->u.checksumrequest->path, path, strlen(path)+1);
+	if (anoubis_client_send(client, m) < 0) {
+		anoubis_msg_free(m);
+		anoubis_transaction_destroy(t);
+		return NULL;
+	}
+	anoubis_transaction_setopcodes(t, nextops);
+	LIST_INSERT_HEAD(&client->ops, t, next);
+	client->flags |= FLAG_POLICY_PENDING;
+	return t;
+}
 
 /* Sync functions */
 int anoubis_client_connect(struct anoubis_client * client, unsigned int proto)

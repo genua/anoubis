@@ -52,9 +52,9 @@ int anoubis_server_eof(struct anoubis_server * server);
 struct anoubis_notify_group * anoubis_server_getnotify(
     struct anoubis_server * server);
 typedef void (*anoubis_dispatcher_t)(struct anoubis_server * server,
-    struct anoubis_msg *, void *arg);
+    struct anoubis_msg *, uid_t uid, void *arg);
 int anoubis_dispatch_create(struct anoubis_server *server, int opcode,
     anoubis_dispatcher_t dispatch, void* arg);
-uid_t anoubis_server_auth_uid(struct anoubis_server *server);
+struct achat_channel *anoubis_server_getchannel(struct anoubis_server *server);
 
 #endif

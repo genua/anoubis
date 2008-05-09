@@ -620,6 +620,7 @@ dispatch_s2m(int fd, short event, void *arg)
 {
 	/*@dependent@*/
 	anoubisd_msg_t *msg;
+	struct event_info_main *ev_info = (struct event_info_main*)arg;
 
 	DEBUG(DBG_TRACE, ">dispatch_s2m");
 
@@ -632,10 +633,12 @@ dispatch_s2m(int fd, short event, void *arg)
 		switch(msg->mtype) {
 		case ANOUBISD_MSG_CHECKSUM_OP: {
 			struct anoubis_msg rawmsg;
-			anoubisd_msg_comm_t *msg_comm =
-			    (anoubisd_msg_comm_t*)msg->msg;
+			anoubisd_msg_checksum_op_t *msg_comm =
+			    (anoubisd_msg_checksum_op_t *)msg->msg;
 			char * path = NULL;
 			int err, op = 0;
+			anoubisd_reply_t * reply;
+			anoubisd_msg_t *msg;
 
 			rawmsg.length = msg_comm->len;
 			rawmsg.u.buf = msg_comm->msg;
@@ -646,19 +649,33 @@ dispatch_s2m(int fd, short event, void *arg)
 				    rawmsg.u.checksumrequest->operation);
 			}
 			if (path) {
-				int plen;
-				plen = rawmsg.length - CSUM_LEN
+				int i, plen = rawmsg.length - CSUM_LEN
 				    - sizeof(Anoubis_CheckSumRequestMessage);
-				if (path[plen-1] != 0) {
-					path[plen-1] = 0;
-					if (strlen(path) >= plen-1)
-						path = NULL;
+				for (i=0; i<plen; ++i) {
+					if (path[i] == 0)
+						break;
 				}
+				if (i >= plen)
+					path = NULL;
 			}
-			err = -EINVAL;
+			err = -EFAULT;
 			if (path)
 				err = sfs_checksumop(path, op, msg_comm->uid);
-			/* XXX CEH: Send a reply message with the error code */
+			msg = msg_factory(ANOUBISD_MSG_POLREPLY,
+			    sizeof(anoubisd_reply_t));
+			if (!msg) {
+				master_terminate(ENOMEM);
+				break;
+			}
+			reply = (anoubisd_reply_t*)msg->msg;
+			reply->token = msg_comm->token;
+			reply->timeout = 0;
+			reply->reply = -err;
+			reply->flags = POLICY_FLAG_START | POLICY_FLAG_END;
+			reply->len = 0;
+			enqueue(&eventq_m2s, msg);
+			DEBUG(DBG_QUEUE, " >eventq_m2s: %x", reply->token);
+			event_add(ev_info->ev_m2s, NULL);
 			break;
 		}
 		default:
@@ -822,29 +839,41 @@ dispatch_dev2m(int fd, short event, void *arg)
 /* XXX RD syslog? */
 
 		/* Lookup stored checksum */
-		if (hdr->msg_source == ANOUBIS_SOURCE_SFS) {
-			struct sfs_open_message		*msg;
+		if (hdr->msg_source == ANOUBIS_SOURCE_SFS
+		    && (hdr->msg_flags & EVENTDEV_NEED_REPLY)) {
+			anoubisd_msg_t * nmsg;
+			anoubisd_msg_sfsopen_t * sfsmsg;
+			struct sfs_open_message * kernelmsg;
+			int size;
 
-			msg = (struct sfs_open_message *)(hdr+1);
-
-			if (msg->flags & ANOUBIS_OPEN_FLAG_CSUM) {
+			size = sizeof(*sfsmsg) - sizeof(struct eventdev_hdr)
+			    + hdr->msg_size;
+			nmsg = msg_factory(ANOUBISD_MSG_SFSOPEN, size);
+			sfsmsg = (anoubisd_msg_sfsopen_t *)nmsg->msg;
+			memcpy(&sfsmsg->hdr, hdr, hdr->msg_size);
+			hdr = &sfsmsg->hdr;
+			free(msg);
+			kernelmsg = (struct sfs_open_message *)(hdr+1);
+			sfsmsg->anoubisd_csum_set = ANOUBISD_CSUM_NONE;
+			if ((kernelmsg->flags & ANOUBIS_OPEN_FLAG_PATHHINT)
+			    && (kernelmsg->flags & ANOUBIS_OPEN_FLAG_CSUM)) {
 				int ret;
 
-				msg->anoubisd_csum_set = ANOUBISD_CSUM_NONE;
-
-				ret = sfs_getchecksum(msg->pathhint,
-				    hdr->msg_uid, msg->anoubisd_csum);
+				ret = sfs_getchecksum(kernelmsg->pathhint,
+				    hdr->msg_uid, sfsmsg->anoubisd_csum);
 				if (ret >= 0) {
-					msg->anoubisd_csum_set =
+					sfsmsg->anoubisd_csum_set =
 					    ANOUBISD_CSUM_USER;
 				} else {
-					ret = sfs_getchecksum(msg->pathhint,
-					    0, msg->anoubisd_csum);
+					ret = sfs_getchecksum(
+					    kernelmsg->pathhint,
+					    0, sfsmsg->anoubisd_csum);
 					if (ret >= 0)
-						msg->anoubisd_csum_set =
+						sfsmsg->anoubisd_csum_set =
 						    ANOUBISD_CSUM_ROOT;
 				}
 			}
+			msg = nmsg;
 		}
 
 		if ((hdr->msg_flags & EVENTDEV_NEED_REPLY) ||
