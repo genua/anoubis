@@ -87,16 +87,16 @@ ModAnoubisMainPanelImpl::displayAlert(void)
 
 	aNotify = (AlertNotify *)currentNotify_;
 
-	SHOWSLOT(1, wxT("Time:"), aNotify->getTime());
-	SHOWSLOT(2, wxT("Module:"), aNotify->getModule());
-	if (aNotify->getModule().Cmp(wxT("ALF")) == 0) {
-		SHOWSLOT(3, wxT("Traffic:"), aNotify->getPath());
+	SHOWSLOT(1, _("Time:"), aNotify->getTime());
+	SHOWSLOT(2, _("Module:"), aNotify->getModule());
+	if (aNotify->getModule().Cmp(_("ALF")) == 0) {
+		SHOWSLOT(3, _("Traffic:"), aNotify->getPath());
 	} else {
-		SHOWSLOT(3, wxT("Path:"), aNotify->getPath());
+		SHOWSLOT(3, _("Path:"), aNotify->getPath());
 	}
-	SHOWSLOT(4, wxT("Operation:"), aNotify->getOperation());
-	SHOWSLOT(5, wxT("Origin:"), aNotify->getOrigin());
-	SHOWSLOT(6, wxT("Checksum:"), aNotify->getCheckSum());
+	SHOWSLOT(4, _("Operation:"), aNotify->getOperation());
+	SHOWSLOT(5, _("Origin:"), aNotify->getOrigin());
+	SHOWSLOT(6, _("Checksum:"), aNotify->getCheckSum());
 }
 
 void
@@ -106,16 +106,16 @@ ModAnoubisMainPanelImpl::displayEscalation(void)
 
 	eNotify = (EscalationNotify *)currentNotify_;
 
-	SHOWSLOT(1, wxT("Time:"), eNotify->getTime());
-	SHOWSLOT(2, wxT("Module:"), eNotify->getModule());
-	if (eNotify->getModule().Cmp(wxT("ALF")) == 0) {
-		SHOWSLOT(3, wxT("Traffic:"), eNotify->getPath());
+	SHOWSLOT(1, _("Time:"), eNotify->getTime());
+	SHOWSLOT(2, _("Module:"), eNotify->getModule());
+	if (eNotify->getModule().Cmp(_("ALF")) == 0) {
+		SHOWSLOT(3, _("Traffic:"), eNotify->getPath());
 	} else {
-		SHOWSLOT(3, wxT("Path:"), eNotify->getPath());
+		SHOWSLOT(3, _("Path:"), eNotify->getPath());
 	}
-	SHOWSLOT(4, wxT("Operation:"), eNotify->getOperation());
-	SHOWSLOT(5, wxT("Origin:"), eNotify->getOrigin());
-	SHOWSLOT(6, wxT("Checksum:"), eNotify->getCheckSum());
+	SHOWSLOT(4, _("Operation:"), eNotify->getOperation());
+	SHOWSLOT(5, _("Origin:"), eNotify->getOrigin());
+	SHOWSLOT(6, _("Checksum:"), eNotify->getCheckSum());
 }
 
 void
@@ -125,16 +125,16 @@ ModAnoubisMainPanelImpl::displayLog(void)
 
 	lNotify = (LogNotify *)currentNotify_;
 
-	SHOWSLOT(1, wxT("Time:"), lNotify->getTime());
-	SHOWSLOT(2, wxT("Module:"), lNotify->getModule());
-	if (lNotify->getModule().Cmp(wxT("ALF")) == 0) {
-		SHOWSLOT(3, wxT("Traffic:"), lNotify->getPath());
+	SHOWSLOT(1, _("Time:"), lNotify->getTime());
+	SHOWSLOT(2, _("Module:"), lNotify->getModule());
+	if (lNotify->getModule().Cmp(_("ALF")) == 0) {
+		SHOWSLOT(3, _("Traffic:"), lNotify->getPath());
 	} else {
-		SHOWSLOT(3, wxT("Path:"), lNotify->getPath());
+		SHOWSLOT(3, _("Path:"), lNotify->getPath());
 	}
-	SHOWSLOT(4, wxT("Operation:"), lNotify->getOperation());
-	SHOWSLOT(5, wxT("Origin:"), lNotify->getOrigin());
-	SHOWSLOT(6, wxT("Checksum:"), lNotify->getCheckSum());
+	SHOWSLOT(4, _("Operation:"), lNotify->getOperation());
+	SHOWSLOT(5, _("Origin:"), lNotify->getOrigin());
+	SHOWSLOT(6, _("Checksum:"), lNotify->getCheckSum());
 }
 
 void
