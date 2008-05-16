@@ -31,6 +31,7 @@
 #define ANOUBISCTL_OPT_NOACTION		0x0001
 #define ANOUBISCTL_OPT_VERBOSE		0x0002
 #define ANOUBISCTL_OPT_VERBOSE2		0x0004
+#define ANOUBISCTL_OPT_FORCE		0x0008
 
 #ifdef LINUX
 #define __dead	__attribute__((__noreturn__))

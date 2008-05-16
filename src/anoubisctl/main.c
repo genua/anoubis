@@ -106,7 +106,7 @@ usage(void)
 	int	i;
 	extern char	*__progname;
 
-	fprintf(stderr, "usage: %s [-nv] <command> [<file>]\n", __progname);
+	fprintf(stderr, "usage: %s [-fnv] <command> [<file>]\n", __progname);
 	fprintf(stderr, "    <command>:\n");
 	for (i=0; i < sizeof(commands)/sizeof(struct cmd); i++) {
 		if (commands[i].file)
@@ -141,7 +141,7 @@ main(int argc, char *argv[])
 	if (argc < 2)
 		usage();
 
-	while ((ch = getopt(argc, argv, "nv")) != -1) {
+	while ((ch = getopt(argc, argv, "fnv")) != -1) {
 		switch (ch) {
 
 		case 'n':
@@ -152,6 +152,9 @@ main(int argc, char *argv[])
 			if (opts & ANOUBISCTL_OPT_VERBOSE)
 				opts |= ANOUBISCTL_OPT_VERBOSE2;
 			opts |= ANOUBISCTL_OPT_VERBOSE;
+			break;
+		case 'f':
+			opts |= ANOUBISCTL_OPT_FORCE;
 			break;
 
 		default:
@@ -449,17 +452,19 @@ load(char *rulesopt)
 		flags |= APN_FLAG_VERBOSE;
 	if (opts & ANOUBISCTL_OPT_VERBOSE2)
 		flags |= APN_FLAG_VERBOSE2;
-	if (apn_parse(rulesopt, &ruleset, flags)) {
-		error = 1;
-		if (ruleset) {
-			apn_print_errors(ruleset, stderr);
-			free(ruleset);
-		} else {
-			fprintf(stderr, "FATAL: Out of memory\n");
+	if ((opts & ANOUBISCTL_OPT_FORCE) == 0) {
+		if (apn_parse(rulesopt, &ruleset, flags)) {
+			error = 1;
+			if (ruleset) {
+				apn_print_errors(ruleset, stderr);
+				free(ruleset);
+			} else {
+				fprintf(stderr, "FATAL: Out of memory\n");
+			}
+			return error;
 		}
-		return error;
+		apn_free_ruleset(ruleset);
 	}
-	apn_free_ruleset(ruleset);
 	if (opts & ANOUBISCTL_OPT_NOACTION)
 		return 0;
 	error = create_channel();

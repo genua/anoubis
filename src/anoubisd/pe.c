@@ -1721,6 +1721,15 @@ pe_dispatch_policy(struct anoubisd_msg_comm *comm, int *reconf)
 			len -= ret;
 		}
 		if (comm->flags & POLICY_FLAG_END) {
+			struct apn_ruleset * ruleset = NULL;
+			/* Only accept syntactically correct rules. */
+			if (apn_parse(req->tmpname, &ruleset, 0)) {
+				if (ruleset)
+					free(ruleset);
+				error = EINVAL;
+				goto err;
+			}
+			apn_free_ruleset(ruleset);
 			if (rename(req->tmpname, req->realname) < 0) {
 				error = errno;
 				goto err;
