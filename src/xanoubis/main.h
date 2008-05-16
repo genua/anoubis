@@ -111,6 +111,7 @@ class AnoubisGuiApp : public wxApp
 		wxString	 getDataDir(void);
 		void		 importPolicyFile(wxString);
 		void		 exportPolicyFile(wxString);
+		bool		getCommConnectionState(void);
 };
 
 DECLARE_APP(AnoubisGuiApp)

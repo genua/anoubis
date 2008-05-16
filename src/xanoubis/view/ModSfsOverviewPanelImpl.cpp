@@ -36,6 +36,7 @@ ModSfsOverviewPanelImpl::ModSfsOverviewPanelImpl(wxWindow* parent,
 {
 	stateIconNormal_ = wxGetApp().loadIcon(_T("ModSfs_ok_48.png"));
 	stateIconError_ = wxGetApp().loadIcon(_T("ModSfs_error_48.png"));
+	stateIconNotConnected_ = wxGetApp().loadIcon(_T("ModSfs_black_48.png"));
 	notAnswered_.Printf(_T("%d"), 0);
 
 	parent->Connect(anEVT_OPEN_SFS_ESCALATIONS,
@@ -46,6 +47,7 @@ ModSfsOverviewPanelImpl::~ModSfsOverviewPanelImpl(void)
 {
 	delete stateIconNormal_;
 	delete stateIconError_;
+	delete stateIconNotConnected_;
 }
 
 void
@@ -56,12 +58,17 @@ ModSfsOverviewPanelImpl::update(void)
 	ModSfs		*module;
 
 	module = (ModSfs *)(wxGetApp().getModule(SFS));
-	if (module->isActive()) {
-		stateText = _("ok");
-		stateIcon = stateIconNormal_;
+	if (!wxGetApp().getCommConnectionState()) {
+		stateText = _("not connected");
+		stateIcon = stateIconNotConnected_;
 	} else {
-		stateText = _("not active");
-		stateIcon = stateIconError_;
+		if (module->isActive()) {
+			stateText = _("ok");
+			stateIcon = stateIconNormal_;
+		} else {
+			stateText = _("not active");
+			stateIcon = stateIconError_;
+		}
 	}
 
 	txt_statusValue->SetLabel(stateText);

@@ -345,6 +345,12 @@ AnoubisGuiApp::getDataDir(void)
 	return (paths_.GetUserConfigDir());
 }
 
+bool
+AnoubisGuiApp::getCommConnectionState(void)
+{
+	return (comCtrl_->isConnected());
+}
+
 void
 AnoubisGuiApp::importPolicyFile(wxString fileName)
 {
