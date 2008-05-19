@@ -36,15 +36,16 @@
 class TrayIcon : public wxTaskBarIcon
 {
 	private:
-		wxString	 daemon_;
-		unsigned int	 messageByHandNo_;
-		unsigned int	 messageAlertCount_;
-		unsigned int	 messageEscalationCount_;
-		wxIcon		*iconNormal_;
-		wxIcon		*iconMsgProblem_;
-		wxIcon		*iconMsgQuestion_;
-		bool		systemNotifyEnabled_;
-		int		systemNotifyTimeout_;
+		wxString		daemon_;
+		unsigned int		messageByHandNo_;
+		unsigned int		messageAlertCount_;
+		unsigned int		messageEscalationCount_;
+		wxIcon			*iconNormal_;
+		wxIcon			*iconMsgProblem_;
+		wxIcon			*iconMsgQuestion_;
+		bool			systemNotifyEnabled_;
+		int			systemNotifyTimeout_;
+		NotifyNotification	*notification;
 
 		void		 update(void);
 		bool		 systemNotify(const gchar*, const gchar*,

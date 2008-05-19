@@ -63,6 +63,7 @@ TrayIcon::TrayIcon(void)
 	systemNotifyEnabled_ = false;
 	systemNotifyTimeout_ = 10;
 
+	notification = notify_notification_new("Anoubis", "", NULL, NULL);
 
 	update();
 	Connect(anEVT_COM_REMOTESTATION,
@@ -79,6 +80,10 @@ TrayIcon::TrayIcon(void)
 
 TrayIcon::~TrayIcon(void)
 {
+	/* free notification object */
+	g_object_unref(G_OBJECT(notification));
+	notify_uninit();
+
 	delete iconNormal_;
 	delete iconMsgProblem_;
 	delete iconMsgQuestion_;
@@ -229,12 +234,20 @@ TrayIcon::systemNotify(const gchar *module, const gchar *message,
 	char *uri = NULL;
 	char buffer[MAX_PATH];
 	wxString ipath = wxT("file://");
+	int timeShown = (timeout * ONE_SECOND);
 
-	NotifyNotification *notification;
 	NotifyUrgency messagePriority = priority;
 
-	if(!messagePriority)
-		messagePriority = NOTIFY_URGENCY_LOW;
+	/* mandatory initialisation call */
+	(module != NULL) ? notify_init(module) : notify_init("Anoubis");
+	notify_notification_set_timeout(notification, timeShown);
+
+	/* XXX ST: we disable the setting of the corresponding urgency level
+	 *	   as it only renders the color area covered by the
+	 *	   urgency icon (it's a libnotify bug)
+	 *
+	 * notify_notification_set_urgency(notification, messagePriority);
+	 */
 
 	/* determine the icon used for systemNotify */
 	if (messagePriority == NOTIFY_URGENCY_LOW)
@@ -249,21 +262,8 @@ TrayIcon::systemNotify(const gchar *module, const gchar *message,
 	uri = buffer;
 
 	/* set notification properties */
-	if (message != NULL && timeout > 0)
-	{
-		/* mandatory initialisation call */
-		(module != NULL) ? notify_init(module) : notify_init("Anoubis");
-
-		if (module != NULL)
-			notification = notify_notification_new(module, message,
-			    uri, NULL);
-		else
-			notification = notify_notification_new("Anoubis",
-			    message, uri, NULL);
-
-		notify_notification_set_timeout(notification, ONE_SECOND *
-		    (timeout));
-		notify_notification_set_urgency(notification, messagePriority);
+	if (message != NULL) {
+		notify_notification_update(notification, module, message, uri);
 
 		if (!notify_notification_show (notification, NULL))
 			return false;
@@ -271,10 +271,6 @@ TrayIcon::systemNotify(const gchar *module, const gchar *message,
 	} else {
 		return false;
 	}
-
-	/* free notification object */
-	g_object_unref(G_OBJECT(notification));
-	notify_uninit();
 
 	return true;
 }
