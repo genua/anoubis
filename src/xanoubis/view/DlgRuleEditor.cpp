@@ -67,7 +67,7 @@ AddrLine::AddrLine(wxWindow *parent, wxString addr, wxString net)
 	lead_ = new wxStaticText(parent, wxID_ANY, wxEmptyString,
 	    wxDefaultPosition, wxDefaultSize, 0);
 	addr_ = new wxComboBox(parent, wxID_ANY, wxT("Combo!"),
-	    wxDefaultPosition, wxDefaultSize, 0, NULL, 0);	
+	    wxDefaultPosition, wxDefaultSize, 0, NULL, 0);
 	delimiter_ = new wxStaticText(parent, wxID_ANY, wxT(" / "),
 	    wxDefaultPosition, wxDefaultSize, 0);
 	net_ = new wxSpinCtrl(parent, wxID_ANY, wxEmptyString,
@@ -137,7 +137,7 @@ DlgRuleEditor::DlgRuleEditor(wxWindow* parent) : DlgRuleEditorBase(parent)
 
 	columnNames_[RULEDITOR_LIST_COLUMN_PRIO] = _("ID");
 	columnWidths_[RULEDITOR_LIST_COLUMN_PRIO] = wxLIST_AUTOSIZE;
-	
+
 	columnNames_[RULEDITOR_LIST_COLUMN_RULE] = _("Rule");
 	columnWidths_[RULEDITOR_LIST_COLUMN_RULE] = wxLIST_AUTOSIZE;
 
@@ -196,9 +196,9 @@ DlgRuleEditor::DlgRuleEditor(wxWindow* parent) : DlgRuleEditorBase(parent)
 
 	shortcuts_ = new AnShortcuts(this);
 
-	Connect(anEVT_RULEEDITOR_SHOW,
-	    wxCommandEventHandler(DlgRuleEditor::OnShow));
-	Connect(anEVT_LOAD_RULESET,
+	parent->Connect(anEVT_RULEEDITOR_SHOW,
+	    wxCommandEventHandler(DlgRuleEditor::OnShow), NULL, this);
+	parent->Connect(anEVT_LOAD_RULESET,
 	    wxCommandEventHandler(DlgRuleEditor::OnLoadRuleSet), NULL, this);
 }
 
@@ -241,6 +241,19 @@ DlgRuleEditor::OnBinaryModifyButtonClick(wxCommandEvent& event)
 		appBinaryTextCtrl->Clear();
 		appBinaryTextCtrl->AppendText(fileDlg.GetPath());
 	}
+}
+
+void
+DlgRuleEditor::OnRuleSetSave(wxCommandEvent& event)
+{
+	wxString	tmpPreFix;
+	wxString	tmpName;
+
+	/* XXX: KM there should be a better way, like apn_parse_xxx */
+	tmpPreFix = wxT("xanoubis");
+	tmpName = wxFileName::CreateTempFileName(tmpPreFix);
+	wxGetApp().exportPolicyFile(tmpName);
+	wxGetApp().usePolicy(tmpName);
 }
 
 void

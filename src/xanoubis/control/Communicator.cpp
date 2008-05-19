@@ -56,6 +56,8 @@
 #include <wx/msgdlg.h>
 #include <wx/string.h>
 #include <wx/thread.h>
+#include <wx/file.h>
+#include <wx/filename.h>
 
 #include <anoubischat.h>
 #include <anoubis_protocol.h>
@@ -93,6 +95,8 @@ Communicator::Communicator(wxEvtHandler *eventDestination, wxString socketPath)
 	isConnected_ = CONNECTION_DISCONNECTED;
 	channel_ = NULL;
 	client_  = NULL;
+	policyReq_ = false;
+	policyUse_ = false;
 }
 
 void
@@ -178,13 +182,27 @@ void *
 Communicator::Entry(void)
 {
 	struct anoubis_transaction	*currTa;
+	struct anoubis_transaction	*reqTa;
 	bool				 notDone;
 	enum communicatorFlag		 startRegistration;
 	enum communicatorFlag		 startDeRegistration;
 	enum communicatorFlag		 startStatRegistration;
 	enum communicatorFlag		 startStatDeRegistration;
 	enum connectionStateType	 commRC;
+	enum communicatorFlag		 startPolicyRequest;
+	enum communicatorFlag		 startPolicyUse;
+	wxFile				 tmpFile;
+	wxString			 tmpName;
+	wxString			 tmpPreFix;
+	Policy_GetByUid			req;
+	Policy_SetByUid			*ureq;
+	char				*buf;
+	int				 prio;
+	size_t				 length, total;
 
+	reqTa	= NULL;
+	buf	= NULL;
+	ureq	= NULL;
 	currTa  = NULL;
 	notDone = true;
 	commRC			= CONNECTION_FAILED;
@@ -192,6 +210,12 @@ Communicator::Entry(void)
 	startDeRegistration	= COMMUNICATOR_FLAG_NONE;
 	startStatRegistration	= COMMUNICATOR_FLAG_NONE;
 	startStatDeRegistration	= COMMUNICATOR_FLAG_NONE;
+	startPolicyRequest	= COMMUNICATOR_FLAG_NONE;
+	startPolicyUse		= COMMUNICATOR_FLAG_NONE;
+	prio			= 2;
+	length			= 0;
+	total			= 0;
+	tmpPreFix		= wxT("xanoubis");
 
 	if (connect() != ACHAT_RC_OK) {
 		shutdown(CONNECTION_FAILED);
@@ -211,7 +235,7 @@ Communicator::Entry(void)
 	}
 
 	while (notDone) {
-		struct anoubis_msg	*msg;
+		struct anoubis_msg	*msg, *reqmsg;
 		size_t			 size = 1024;
 		achat_rc		 rc = ACHAT_RC_ERROR;
 		NotifyList::iterator	 ali;
@@ -262,6 +286,155 @@ Communicator::Entry(void)
 				startStatDeRegistration =
 				    COMMUNICATOR_FLAG_PROG;
 			}
+		}
+
+		/*
+		 * Load policy of xanoubis in anoubisd and activate the loaded
+		 * policy
+		 */
+		if (policyUse_ && startPolicyUse == COMMUNICATOR_FLAG_NONE &&
+		startPolicyRequest == COMMUNICATOR_FLAG_NONE) {
+			startPolicyUse = COMMUNICATOR_FLAG_INIT;
+			policyUse_ = false;
+			length = policyBuf_.Length();
+
+			buf = (char *)malloc(length);
+			if(!buf) {
+				/* Here should be a better error handling*/
+				notDone = false;
+				continue;
+			}
+
+			strlcpy( buf,
+				(const char *)policyBuf_.mb_str(wxConvUTF8),
+				length);
+		}
+
+		if (startPolicyUse == COMMUNICATOR_FLAG_INIT) {
+			length = strlen(buf);
+			total =	sizeof(*ureq) + length;
+
+			ureq = (Policy_SetByUid *)malloc(total);
+			if (!ureq) {
+			/* XXX: KM Here should be a better error handling*/
+				notDone = false;
+				continue;
+			}
+
+			set_value(ureq->ptype, ANOUBIS_PTYPE_SETBYUID);
+			set_value(ureq->uid, geteuid());
+			set_value(ureq->prio, 1);
+
+			if (length)
+				memcpy(ureq->payload, buf, length+1);
+
+			reqTa = anoubis_client_policyrequest_start(client_,
+					ureq, total);
+			if (!reqTa) {
+				notDone = false;
+				commRC =  CONNECTION_RXTX_ERROR;
+				continue;
+			}
+
+			startPolicyUse = COMMUNICATOR_FLAG_PROG;
+		}
+
+		if (startPolicyUse == COMMUNICATOR_FLAG_PROG) {
+			if(reqTa->flags & ANOUBIS_T_DONE)
+				startPolicyUse = COMMUNICATOR_FLAG_DONE;
+		}
+
+		if (startPolicyUse == COMMUNICATOR_FLAG_DONE) {
+			if (reqTa->result) {
+			/* XXX: KM Here should be a better error handling*/
+				notDone = false;
+				continue;
+			}
+			anoubis_transaction_destroy(reqTa);
+			free(buf);
+			startPolicyUse = COMMUNICATOR_FLAG_NONE;
+		}
+
+		/* Request policy from anoubisd				*/
+		if (policyReq_ &&
+			startPolicyRequest == COMMUNICATOR_FLAG_NONE &&
+			startPolicyUse == COMMUNICATOR_FLAG_NONE) {
+			startPolicyRequest = COMMUNICATOR_FLAG_INIT;
+			policyReq_ = false;
+			prio = 0;
+		}
+
+		if (startPolicyRequest == COMMUNICATOR_FLAG_INIT && prio < 2) {
+			set_value(req.ptype, ANOUBIS_PTYPE_GETBYUID);
+			set_value(req.uid, geteuid());
+			set_value(req.prio, prio);
+			reqTa = anoubis_client_policyrequest_start(client_,
+					&req, sizeof(req));
+			if(!reqTa) {
+			/* XXX: KM Here should be a better error handling*/
+				notDone = false;
+				commRC =  CONNECTION_RXTX_ERROR;
+				continue;
+			}
+			startPolicyRequest = COMMUNICATOR_FLAG_PROG;
+		}
+
+		if (startPolicyRequest == COMMUNICATOR_FLAG_PROG) {
+			if(reqTa->flags & ANOUBIS_T_DONE)
+				startPolicyRequest = COMMUNICATOR_FLAG_DONE;
+		}
+
+		if (startPolicyRequest == COMMUNICATOR_FLAG_DONE) {
+			if(reqTa->result) {
+			/* XXX: KM Here should be a better error handling*/
+				anoubis_transaction_destroy(reqTa);
+				startPolicyRequest = COMMUNICATOR_FLAG_NONE;
+				prio = 2;
+				continue;
+			}
+
+			reqmsg = reqTa->msg;
+			reqTa->msg = NULL;
+			anoubis_transaction_destroy(reqTa);
+
+			if(!reqmsg || !VERIFY_LENGTH(reqmsg,
+				sizeof(Anoubis_PolicyReplyMessage)) ||
+				get_value(reqmsg->u.policyreply->error) != 0) {
+			/* XXX: KM Here should be a better error handling*/
+				anoubis_transaction_destroy(reqTa);
+				startPolicyRequest = COMMUNICATOR_FLAG_NONE;
+				prio = 2;
+				continue;
+			}
+
+			/* XXX: KM should be done with the apn_parser */
+			tmpName = wxFileName::CreateTempFileName(tmpPreFix,
+						&tmpFile);
+			while(reqmsg) {
+				size_t len;
+				struct anoubis_msg * tmp;
+				len = reqmsg->length - CSUM_LEN
+					- sizeof(Anoubis_PolicyReplyMessage);
+				if (len != tmpFile.Write(
+					reqmsg->u.policyreply->payload, len)) {
+			/* XXX: KM Here should be a better error handling*/
+					notDone = false;
+					continue;
+				}
+				tmp = reqmsg;
+				reqmsg = reqmsg->next;
+				anoubis_msg_free(tmp);
+			}
+
+			wxCommandEvent event(anEVT_ANOUBISD_RULESET_ARRIVED);
+			event.SetString(tmpName);
+			eventDestination_->AddPendingEvent(event);
+			tmpFile.Close();
+			prio++;
+			if(prio < 2)
+				startPolicyRequest = COMMUNICATOR_FLAG_INIT;
+			else
+				startPolicyRequest = COMMUNICATOR_FLAG_NONE;
 		}
 
 		msg = anoubis_msg_new(1024);
@@ -323,4 +496,17 @@ Communicator::sendEscalationAnswer(Notification *notify)
 	if ((notify != NULL) && IS_ESCALATIONOBJ(notify)) {
 		answerList_.Append(notify);
 	}
+}
+
+void
+Communicator::policyRequest(void)
+{
+	policyReq_ = true;
+}
+
+void
+Communicator::policyUse(wxString policyBuf)
+{
+	policyUse_ = true;
+	policyBuf_ = policyBuf;
 }

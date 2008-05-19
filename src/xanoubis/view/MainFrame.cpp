@@ -65,6 +65,8 @@ MainFrame::MainFrame(wxWindow *parent) : MainFrameBase(parent)
 	    wxCommandEventHandler(MainFrame::OnOpenAlerts), NULL, this);
 	Connect(anEVT_OPEN_ESCALATIONS,
 	    wxCommandEventHandler(MainFrame::OnOpenEscalations), NULL, this);
+	Connect(anEVT_ANOUBISD_RULESET,
+	    wxCommandEventHandler(MainFrame::OnAnoubisdRuleSet), NULL, this);
 }
 
 MainFrame::~MainFrame()
@@ -208,6 +210,7 @@ void
 MainFrame::OnRemoteStation(wxCommandEvent& event)
 {
 	setConnectionString(*(wxString *)(event.GetClientObject()));
+	wxGetApp().requestPolicy();
 	event.Skip();
 }
 
@@ -348,4 +351,11 @@ void
 MainFrame::OnClose(wxCloseEvent& event)
 {
 	this->Hide();
+}
+
+void
+MainFrame::OnAnoubisdRuleSet(wxCommandEvent& event)
+{
+	wxString tmpName = event.GetString();
+	wxGetApp().importPolicyFile(tmpName);
 }

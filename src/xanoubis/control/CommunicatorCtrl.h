@@ -47,8 +47,11 @@ class CommunicatorCtrl : public wxEvtHandler {
 		void		disconnect(void);
 		bool		isConnected(void);
 		wxString	getRemoteStation(void);
+		void		requestPolicy(void);
+		void		usePolicy(wxString);
 
 		void	OnNotifyReceived(wxCommandEvent&);
+		void	OnAnoubisdRuleSet(wxCommandEvent&);
 		void	OnConnection(wxCommandEvent&);
 		void	OnAnswerEscalation(wxCommandEvent&);
 };

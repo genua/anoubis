@@ -208,6 +208,7 @@ class DlgRuleEditorBase : public wxFrame
 		virtual void OnClose( wxCloseEvent& event ){ event.Skip(); }
 		virtual void OnRuleCreateButton( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnRuleDeleteButton( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnRuleSetSave( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnTableOptionButtonClick( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnLineSelected( wxListEvent& event ){ event.Skip(); }
 		virtual void OnBinaryModifyButtonClick( wxCommandEvent& event ){ event.Skip(); }

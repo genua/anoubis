@@ -98,3 +98,15 @@ DEFINE_LOCAL_EVENT_TYPE(anEVT_ANSWER_ESCALATION)
  * to the display objects via ClientData.
  */
 DEFINE_LOCAL_EVENT_TYPE(anEVT_LOAD_RULESET)
+
+/*
+ * Send a Event if the rules of the anoubisd arrived, with the
+ * file name of the tmp-File which holds the rules.
+ */
+DEFINE_LOCAL_EVENT_TYPE(anEVT_ANOUBISD_RULESET)
+
+/*
+ * Send a Event if the rules of the anoubisd arrived, with the
+ * file name of the tmp-File which holds the rules.
+ */
+DEFINE_LOCAL_EVENT_TYPE(anEVT_ANOUBISD_RULESET_ARRIVED)

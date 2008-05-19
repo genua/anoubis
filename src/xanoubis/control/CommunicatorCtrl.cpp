@@ -47,6 +47,7 @@
 
 #include <anoubis_msg.h>
 #include <wx/string.h>
+#include <wx/textfile.h>
 
 #include "AnEvents.h"
 #include "CommunicatorCtrl.h"
@@ -69,6 +70,8 @@ CommunicatorCtrl::CommunicatorCtrl(wxString socketPath)
 	    wxCommandEventHandler(CommunicatorCtrl::OnConnection));
 	Connect(anEVT_ANSWER_ESCALATION,
 	    wxCommandEventHandler(CommunicatorCtrl::OnAnswerEscalation));
+	Connect(anEVT_ANOUBISD_RULESET_ARRIVED,
+	    wxCommandEventHandler(CommunicatorCtrl::OnAnoubisdRuleSet));
 }
 
 CommunicatorCtrl::~CommunicatorCtrl(void)
@@ -153,6 +156,41 @@ CommunicatorCtrl::getRemoteStation(void)
 	}
 
 	return result;
+}
+
+void
+CommunicatorCtrl::requestPolicy(void)
+{
+	com_->policyRequest();
+}
+
+void
+CommunicatorCtrl::usePolicy(wxString tmpName)
+{
+	if (connectionState_ == CONNECTION_CONNECTED)
+	{
+		wxTextFile tmpFile;
+		wxString rules = wxEmptyString;
+		wxString str;
+		wxString nLine = wxT("\n");
+
+		if(tmpFile.Open(tmpName)) {
+			for( str = tmpFile.GetFirstLine(); !tmpFile.Eof();
+				str = tmpFile.GetNextLine()) {
+				rules = rules + str;
+				rules = rules + nLine;
+			}
+			rules = rules + str;
+			rules = rules + nLine;
+
+		}
+		tmpFile.Close();
+		com_->policyUse(rules);
+	}
+	else
+	{
+		/* XXX [KM] There could be your Error Handling: like log ??*/
+	}
 }
 
 void
@@ -269,4 +307,13 @@ CommunicatorCtrl::OnAnswerEscalation(wxCommandEvent& event)
 
 	notify = (Notification *)event.GetClientObject();
 	com_->sendEscalationAnswer(notify);
+}
+
+void
+CommunicatorCtrl::OnAnoubisdRuleSet(wxCommandEvent& event)
+{
+	wxString fileName = event.GetString();
+	wxCommandEvent aEvent(anEVT_ANOUBISD_RULESET);
+	aEvent.SetString(fileName);
+	wxGetApp().sendEvent(aEvent);
 }

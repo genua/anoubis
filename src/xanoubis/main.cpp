@@ -146,11 +146,21 @@ AnoubisGuiApp::sendEvent(wxCommandEvent& event)
 	 * events within the GUI.
 	 *
 	 * wxPostEvent(mainFrame, event);
+	 *
+	 * XXX [KM] : BUG 522
+	 * If "logViewer" and "ruleEditor" get a "wxPostEvent" a Event-Handler
+	 * from "mainFrame" and the child-Windows gets two event messages per
+	 * "sendEvent". Therefore I brought back the wxPostEvent(mainFrame,
+	 * event);, commented out the two below and connecte "logViewer" and
+	 * "ruleEditor" over their "parent" Window.
+	 *
+	 * wxPostEvent(logViewer_, event);
+	 * wxPostEvent(ruleEditor_, event);
 	 */
-	wxPostEvent(logViewer_, event);
-	wxPostEvent(ruleEditor_, event);
+
+	wxPostEvent(mainFrame, event);
 	wxPostEvent(comCtrl_, event);
-	wxPostEvent(trayIcon, event);
+	wxPostEvent(trayIcon, event); 
 }
 
 void
@@ -260,6 +270,18 @@ AnoubisGuiApp::connectCommunicator(bool doConnect)
 	} else {
 		comCtrl_->disconnect();
 	}
+}
+
+void
+AnoubisGuiApp::requestPolicy(void)
+{
+	comCtrl_->requestPolicy();
+}
+
+void
+AnoubisGuiApp::usePolicy(wxString tmpFile)
+{
+	comCtrl_->usePolicy(tmpFile);
 }
 
 wxString

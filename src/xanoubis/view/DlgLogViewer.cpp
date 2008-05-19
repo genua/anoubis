@@ -77,10 +77,10 @@ DlgLogViewer::DlgLogViewer(wxWindow* parent) : DlgLogViewerBase(parent)
 	lc_logList->InsertColumn(LOGVIEWER_COLUMN_MESSAGE, _("Message"),
 	    wxLIST_FORMAT_LEFT, wxLIST_AUTOSIZE);
 
-	Connect(anEVT_ADD_NOTIFICATION,
-	    wxCommandEventHandler(DlgLogViewer::OnAddNotification));
-	Connect(anEVT_LOGVIEWER_SHOW,
-	    wxCommandEventHandler(DlgLogViewer::OnShow));
+	parent->Connect(anEVT_ADD_NOTIFICATION,
+	    wxCommandEventHandler(DlgLogViewer::OnAddNotification), NULL, this);
+	parent->Connect(anEVT_LOGVIEWER_SHOW,
+	    wxCommandEventHandler(DlgLogViewer::OnShow), NULL, this);
 }
 
 DlgLogViewer::~DlgLogViewer(void)

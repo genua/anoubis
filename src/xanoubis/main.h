@@ -103,6 +103,8 @@ class AnoubisGuiApp : public wxApp
 		void		 toggleLogViewerVisability(void);
 		void		 toggleRuleEditorVisability(void);
 		void		 connectCommunicator(bool);
+		void		 requestPolicy(void);
+		void		 usePolicy(wxString);
 		wxString	 getCatalogPath(void);
 		wxString	 getUtilsPath(void);
 		wxString	 getIconPath(wxString);

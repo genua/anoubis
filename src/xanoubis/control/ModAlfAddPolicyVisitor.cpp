@@ -101,7 +101,7 @@ ModAlfAddPolicyVisitor::visitAppPolicy(AppPolicy *appPolicy)
 	list->SetItem(idx, MODALF_LIST_COLUMN_PROG, appPolicy->getBinaryName());
 	if (appPolicy->hasContext()) {
 		list->SetItem(idx, MODALF_LIST_COLUMN_CTX,
-		    appPolicy->getContext()->getContextName());	
+		    appPolicy->getContext()->getContextName());
 	}
 
 	/* fill tree of application view */
@@ -110,11 +110,11 @@ ModAlfAddPolicyVisitor::visitAppPolicy(AppPolicy *appPolicy)
 	if (tree->GetCount() == 0) {
 		tree->AddRoot(wxT("Applications"));
 	}
-	treeLabel += wxT("Context: ");
-	treeLabel += appPolicy->getContext()->getContextName();
 	lastTreeRoot_ = tree->AppendItem(tree->GetRootItem(),
 	    appPolicy->getBinaryName(), -1, -1, new MyTreeItemData(appPolicy));
 	if (appPolicy->hasContext()) {
+		treeLabel += wxT("Context: ");
+		treeLabel += appPolicy->getContext()->getContextName();
 		lastTreeRoot_ = tree->AppendItem(lastTreeRoot_, treeLabel,
 		    -1, -1, new MyTreeItemData(appPolicy));
 	}

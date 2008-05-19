@@ -34,6 +34,7 @@
 
 #include <wx/list.h>
 #include <wx/string.h>
+#include <wx/filename.h>
 
 #include "AnEvents.h"
 #include "AnShortcuts.h"
@@ -102,6 +103,7 @@ class DlgRuleEditor : public DlgRuleEditorBase
 		void OnBinaryModifyButtonClick(wxCommandEvent&);
 		void OnLoadRuleSet(wxCommandEvent&);
 		void OnLineSelected(wxListEvent&);
+		void OnRuleSetSave(wxCommandEvent&);
 
 		void OnAlfAllowRadioButton(wxCommandEvent&);
 		void OnAlfDenyRadioButton(wxCommandEvent&);
@@ -127,7 +129,7 @@ class DlgRuleEditor : public DlgRuleEditorBase
 
 		void OnSfsBinaryModifyButton(wxCommandEvent&);
 		void OnSfsUpdateChkSumButton(wxCommandEvent&);
-		
+
 		void loadRuleSet(PolicyRuleSet*);
 		void OnCreationChoice(wxCommandEvent&);
 		void OnSrcAddrAddButton(wxCommandEvent&);
