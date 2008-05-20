@@ -107,6 +107,9 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	
 	sz_MainAnoubisNotify->Add( sz_navigate, 0, wxALIGN_CENTER, 5 );
 	
+	wxBoxSizer* bSizer10;
+	bSizer10 = new wxBoxSizer( wxVERTICAL );
+	
 	wxFlexGridSizer* slotSizer;
 	slotSizer = new wxFlexGridSizer( 6, 2, 0, 0 );
 	slotSizer->AddGrowableCol( 0 );
@@ -114,7 +117,7 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	slotSizer->SetFlexibleDirection( wxHORIZONTAL );
 	slotSizer->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_NONE );
 	
-	slotLabelText1 = new wxStaticText( tb_MainAnoubisNotification, wxID_ANY, _(":"), wxDefaultPosition, wxDefaultSize, 0 );
+	slotLabelText1 = new wxStaticText( tb_MainAnoubisNotification, wxID_ANY, _(":"), wxDefaultPosition, wxSize( 140,-1 ), 0 );
 	slotLabelText1->Wrap( -1 );
 	slotSizer->Add( slotLabelText1, 0, wxALL, 5 );
 	
@@ -122,7 +125,7 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	slotValueText1->Wrap( -1 );
 	slotSizer->Add( slotValueText1, 0, wxALL, 5 );
 	
-	slotLabelText2 = new wxStaticText( tb_MainAnoubisNotification, wxID_ANY, _(":"), wxDefaultPosition, wxDefaultSize, 0 );
+	slotLabelText2 = new wxStaticText( tb_MainAnoubisNotification, wxID_ANY, _(":"), wxDefaultPosition, wxSize( 140,-1 ), 0 );
 	slotLabelText2->Wrap( -1 );
 	slotSizer->Add( slotLabelText2, 0, wxALL, 5 );
 	
@@ -130,7 +133,7 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	slotValueText2->Wrap( -1 );
 	slotSizer->Add( slotValueText2, 0, wxALL, 5 );
 	
-	slotLabelText3 = new wxStaticText( tb_MainAnoubisNotification, wxID_ANY, _(":"), wxDefaultPosition, wxDefaultSize, 0 );
+	slotLabelText3 = new wxStaticText( tb_MainAnoubisNotification, wxID_ANY, _(":"), wxDefaultPosition, wxSize( 140,-1 ), 0 );
 	slotLabelText3->Wrap( -1 );
 	slotSizer->Add( slotLabelText3, 0, wxALL, 5 );
 	
@@ -138,7 +141,7 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	slotValueText3->Wrap( -1 );
 	slotSizer->Add( slotValueText3, 0, wxALL, 5 );
 	
-	slotLabelText4 = new wxStaticText( tb_MainAnoubisNotification, wxID_ANY, _(":"), wxDefaultPosition, wxDefaultSize, 0 );
+	slotLabelText4 = new wxStaticText( tb_MainAnoubisNotification, wxID_ANY, _(":"), wxDefaultPosition, wxSize( 140,-1 ), 0 );
 	slotLabelText4->Wrap( -1 );
 	slotSizer->Add( slotLabelText4, 0, wxALL, 5 );
 	
@@ -146,7 +149,7 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	slotValueText4->Wrap( -1 );
 	slotSizer->Add( slotValueText4, 0, wxALL, 5 );
 	
-	slotLabelText5 = new wxStaticText( tb_MainAnoubisNotification, wxID_ANY, _(":"), wxDefaultPosition, wxDefaultSize, 0 );
+	slotLabelText5 = new wxStaticText( tb_MainAnoubisNotification, wxID_ANY, _(":"), wxDefaultPosition, wxSize( 140,-1 ), 0 );
 	slotLabelText5->Wrap( -1 );
 	slotSizer->Add( slotLabelText5, 0, wxALL, 5 );
 	
@@ -154,7 +157,7 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	slotValueText5->Wrap( -1 );
 	slotSizer->Add( slotValueText5, 0, wxALL, 5 );
 	
-	slotLabelText6 = new wxStaticText( tb_MainAnoubisNotification, wxID_ANY, _(":"), wxDefaultPosition, wxDefaultSize, 0 );
+	slotLabelText6 = new wxStaticText( tb_MainAnoubisNotification, wxID_ANY, _(":"), wxDefaultPosition, wxSize( 140,-1 ), 0 );
 	slotLabelText6->Wrap( -1 );
 	slotSizer->Add( slotLabelText6, 0, wxALL, 5 );
 	
@@ -162,19 +165,34 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	slotValueText6->Wrap( -1 );
 	slotSizer->Add( slotValueText6, 0, wxALL, 5 );
 	
-	sz_MainAnoubisNotify->Add( slotSizer, 0, wxEXPAND, 5 );
+	bSizer10->Add( slotSizer, 0, 0, 5 );
+	
+	sz_MainAnoubisNotify->Add( bSizer10, 0, wxALL, 5 );
 	
 	tx_answerValue = new wxStaticText( tb_MainAnoubisNotification, wxID_ANY, _("This message was answered."), wxDefaultPosition, wxDefaultSize, 0 );
 	tx_answerValue->Wrap( -1 );
 	sz_MainAnoubisNotify->Add( tx_answerValue, 0, wxALL, 5 );
 	
+	wxBoxSizer* sz_question_top;
+	sz_question_top = new wxBoxSizer( wxVERTICAL );
+	
 	pn_question = new wxPanel( tb_MainAnoubisNotification, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
-	wxGridSizer* sz_question;
-	sz_question = new wxGridSizer( 4, 3, 0, 0 );
+	wxBoxSizer* sz_message;
+	sz_message = new wxBoxSizer( wxVERTICAL );
+	
+	wxGridBagSizer* sz_question;
+	sz_question = new wxGridBagSizer( 0, 0 );
+	sz_question->SetFlexibleDirection( wxBOTH );
+	sz_question->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
 	
 	tx_question = new wxStaticText( pn_question, wxID_ANY, _("This message"), wxDefaultPosition, wxDefaultSize, 0 );
 	tx_question->Wrap( -1 );
-	sz_question->Add( tx_question, 0, wxALL|wxALIGN_RIGHT, 5 );
+	tx_question->SetMinSize( wxSize( 140,-1 ) );
+	
+	sz_question->Add( tx_question, wxGBPosition( 0, 0 ), wxGBSpan( 1, 1 ), wxALL, 5 );
+	
+	wxGridSizer* sz_question_sub;
+	sz_question_sub = new wxGridSizer( 4, 3, 0, 0 );
 	
 	wxBoxSizer* sz_number;
 	sz_number = new wxBoxSizer( wxHORIZONTAL );
@@ -189,22 +207,22 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	
 	sz_number->Add( sc_number, 0, wxALL|wxALIGN_CENTER_VERTICAL, 1 );
 	
-	sz_question->Add( sz_number, 0, 0, 5 );
+	sz_question_sub->Add( sz_number, 0, 0, 5 );
 	
 	
-	sz_question->Add( 0, 0, 1, wxEXPAND, 5 );
+	sz_question_sub->Add( 0, 0, 1, wxEXPAND, 5 );
 	
 	
-	sz_question->Add( 0, 0, 1, wxEXPAND, 5 );
+	sz_question_sub->Add( 0, 0, 1, wxEXPAND, 5 );
 	
 	rb_procend = new wxRadioButton( pn_question, wxID_ANY, _("till process ends"), wxDefaultPosition, wxDefaultSize, 0 );
-	sz_question->Add( rb_procend, 0, wxALL, 1 );
+	sz_question_sub->Add( rb_procend, 0, wxALL, 1 );
 	
 	
-	sz_question->Add( 0, 0, 1, wxEXPAND, 5 );
+	sz_question_sub->Add( 0, 0, 1, wxEXPAND, 5 );
 	
 	
-	sz_question->Add( 0, 0, 1, wxEXPAND, 5 );
+	sz_question_sub->Add( 0, 0, 1, wxEXPAND, 5 );
 	
 	wxBoxSizer* sz_time;
 	sz_time = new wxBoxSizer( wxHORIZONTAL );
@@ -224,24 +242,30 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	ch_time = new wxChoice( pn_question, wxID_ANY, wxDefaultPosition, wxDefaultSize, ch_timeNChoices, ch_timeChoices, 0 );
 	sz_time->Add( ch_time, 0, wxALIGN_CENTER|wxALL, 1 );
 	
-	sz_question->Add( sz_time, 0, 0, 1 );
+	sz_question_sub->Add( sz_time, 0, 0, 1 );
 	
 	bt_allow = new wxButton( pn_question, wxID_ANY, _("allow"), wxDefaultPosition, wxDefaultSize, 0 );
-	sz_question->Add( bt_allow, 0, wxALL|wxALIGN_RIGHT, 1 );
+	sz_question_sub->Add( bt_allow, 0, wxALL|wxALIGN_RIGHT, 1 );
 	
 	
-	sz_question->Add( 0, 0, 1, wxEXPAND, 5 );
+	sz_question_sub->Add( 0, 0, 1, wxEXPAND, 5 );
 	
 	rb_always = new wxRadioButton( pn_question, wxID_ANY, _("always"), wxDefaultPosition, wxDefaultSize, 0 );
-	sz_question->Add( rb_always, 0, wxALL, 1 );
+	sz_question_sub->Add( rb_always, 0, wxALL, 1 );
 	
 	bt_deny = new wxButton( pn_question, wxID_ANY, _("deny"), wxDefaultPosition, wxDefaultSize, 0 );
-	sz_question->Add( bt_deny, 0, wxALL|wxALIGN_RIGHT, 1 );
+	sz_question_sub->Add( bt_deny, 0, wxALL|wxALIGN_RIGHT, 1 );
 	
-	pn_question->SetSizer( sz_question );
+	sz_question->Add( sz_question_sub, wxGBPosition( 0, 1 ), wxGBSpan( 1, 1 ), wxEXPAND, 5 );
+	
+	sz_message->Add( sz_question, 1, wxALL, 5 );
+	
+	pn_question->SetSizer( sz_message );
 	pn_question->Layout();
-	sz_question->Fit( pn_question );
-	sz_MainAnoubisNotify->Add( pn_question, 0, wxEXPAND | wxALL, 5 );
+	sz_message->Fit( pn_question );
+	sz_question_top->Add( pn_question, 0, wxALIGN_TOP|wxALL, 5 );
+	
+	sz_MainAnoubisNotify->Add( sz_question_top, 0, wxEXPAND, 5 );
 	
 	tb_MainAnoubisNotification->SetSizer( sz_MainAnoubisNotify );
 	tb_MainAnoubisNotification->Layout();

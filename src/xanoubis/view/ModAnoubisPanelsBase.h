@@ -45,6 +45,7 @@
 #include <wx/button.h>
 #include <wx/radiobut.h>
 #include <wx/spinctrl.h>
+#include <wx/gbsizer.h>
 #include <wx/panel.h>
 #include <wx/bitmap.h>
 #include <wx/image.h>
