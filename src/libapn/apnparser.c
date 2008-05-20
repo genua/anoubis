@@ -27,6 +27,10 @@
 
 #include "config.h"
 
+#ifdef S_SPLINT_S
+#include "splint-includes.h"
+#endif
+
 #include <sys/types.h>
 #include <sys/socket.h>
 #ifndef NEEDBSDCOMPAT
@@ -46,6 +50,8 @@
 
 /* Implemented in parse.y */
 extern int	parse_rules(const char *, struct apn_ruleset *);
+extern int	parse_rules_iovec(const char *, struct iovec *, int count,
+		    struct apn_ruleset *);
 
 /* Only for internal use */
 static int	apn_print_app(struct apn_app *, FILE *);
@@ -92,7 +98,7 @@ static int	 apn_set_application(struct apn_rule *, const char *,
 		     const char *, int);
 
 /*
- * Parse the specified file and return the ruleset, which is allocated
+ * Parse the specified file or iovec and return the ruleset, which is allocated
  * and which is to be freed be the caller.
  *
  * Return codes:
@@ -100,11 +106,10 @@ static int	 apn_set_application(struct apn_rule *, const char *,
  *  0: file was parsed succesfully
  *  1: file could not be parsed or parameters are invalid
  */
-int
-apn_parse(const char *filename, struct apn_ruleset **rsp, int flags)
+static int
+__apn_parse_common(const char *filename, struct apn_ruleset **rsp, int flags)
 {
 	struct apn_ruleset	*rs;
-	int			 ret;
 
 	if (filename == NULL || rsp == NULL)
 		return (1);
@@ -119,6 +124,19 @@ apn_parse(const char *filename, struct apn_ruleset **rsp, int flags)
 	rs->maxid = 0;
 	*rsp = rs;
 
+	return 0;
+}
+
+int
+apn_parse(const char *filename, struct apn_ruleset **rsp, int flags)
+{
+	int			 ret;
+	struct apn_ruleset	*rs;
+
+	ret = __apn_parse_common(filename, rsp, flags);
+	if (ret)
+		return ret;
+	rs = *(rsp);
 	if ((ret = parse_rules(filename, rs)) != 0) {
 		apn_free_ruleq(&rs->alf_queue);
 		apn_free_ruleq(&rs->sfs_queue);
@@ -126,6 +144,24 @@ apn_parse(const char *filename, struct apn_ruleset **rsp, int flags)
 	}
 
 	return (ret);
+}
+
+int apn_parse_iovec(const char *filename, struct iovec *vec, int count,
+    struct apn_ruleset **rsp, int flags)
+{
+	int			 ret;
+	struct apn_ruleset	*rs;
+
+	ret = __apn_parse_common(filename, rsp, flags);
+	if (ret)
+		return ret;
+	rs = *(rsp);
+	if ((ret = parse_rules_iovec(filename, vec, count, rs)) != 0) {
+		apn_free_ruleq(&rs->alf_queue);
+		apn_free_ruleq(&rs->sfs_queue);
+		apn_free_varq(&rs->var_queue);
+	}
+	return ret;
 }
 
 /*

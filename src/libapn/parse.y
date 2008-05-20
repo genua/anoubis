@@ -27,6 +27,7 @@
 #include <sys/socket.h>
 #ifndef LINUX
 #include <sys/queue.h>
+#include <sys/uio.h>
 #else
 #include <queue.h>
 #endif	/* !LINUX */
@@ -54,9 +55,21 @@
 
 #include "apn.h"
 
+#define APN_FILE	1
+#define APN_IOVEC	2
+
 static struct file {
 	TAILQ_ENTRY(file)	 entry;
-	FILE			*stream;
+	int type;
+	union {
+		FILE			*u_stream;
+		struct {
+			struct iovec	*vec;
+			int		 count;
+			int		 cvec;
+			int		 cidx;
+		} u_iov;
+	} u;
 	char			*name;
 	int			 lineno;
 	int			 errors;
@@ -65,7 +78,11 @@ TAILQ_HEAD(files, file)		 files;
 
 
 int		 parse_rules(const char *, struct apn_ruleset *);
+int		 parse_rules_iovec(const char *, struct iovec *, int count,
+		     struct apn_ruleset *);
+int		 __parse_rules_common(struct apn_ruleset *apnrspx);
 struct file	*pushfile(const char *, int);
+struct file	*pushiov(const char *, struct iovec *, int count);
 int		 popfile(void);
 int		 check_file_secrecy(int, const char *);
 int		 yyparse(void);
@@ -74,6 +91,7 @@ int		 yyerror(const char *, ...);
 int		 kw_cmp(const void *, const void *);
 int		 lookup(char *);
 int		 lgetc(int);
+int		 llgetc(struct file *);
 int		 lungetc(int);
 int		 findeol(void);
 int		 varset(const char *, void *, size_t, int);
@@ -997,6 +1015,33 @@ int	 parseindex;
 char	 pushback_buffer[MAXPUSHBACK];
 int	 pushback_index = 0;
 
+int llgetc(struct file * file)
+{
+	switch(file->type) {
+	case APN_FILE:
+		return getc(file->u.u_stream);
+	case APN_IOVEC:
+		while(1) {
+			int vec, idx;
+			struct iovec *iov;
+
+			vec = file->u.u_iov.cvec;
+			if (vec >= file->u.u_iov.count)
+				return EOF;
+			iov = &file->u.u_iov.vec[vec];
+			idx = file->u.u_iov.cidx;
+			if (idx >= iov->iov_len) {
+				file->u.u_iov.cidx = 0;
+				file->u.u_iov.cvec++;
+				continue;
+			}
+			file->u.u_iov.cidx++;
+			return ((unsigned char*)(iov->iov_base))[idx];
+		}
+	}
+	return EOF;
+}
+
 int
 lgetc(int quotec)
 {
@@ -1017,7 +1062,7 @@ lgetc(int quotec)
 		return (pushback_buffer[--pushback_index]);
 
 	if (quotec) {
-		if ((c = getc(file->stream)) == EOF) {
+		if ((c = llgetc(file)) == EOF) {
 			yyerror("reached end of file while parsing quoted "
 			    "string");
 			if (popfile() == EOF)
@@ -1027,8 +1072,8 @@ lgetc(int quotec)
 		return (c);
 	}
 
-	while ((c = getc(file->stream)) == '\\') {
-		next = getc(file->stream);
+	while ((c = llgetc(file)) == '\\') {
+		next = llgetc(file);
 		if (next != '\n') {
 			c = next;
 			break;
@@ -1040,7 +1085,7 @@ lgetc(int quotec)
 	while (c == EOF) {
 		if (popfile() == EOF)
 			return (EOF);
-		c = getc(file->stream);
+		c = llgetc(file);
 	}
 	return (c);
 }
@@ -1229,22 +1274,23 @@ pushfile(const char *name, int secret)
 		warn("malloc");
 		return (NULL);
 	}
+	nfile->type = APN_FILE;
 	if (TAILQ_FIRST(&files) == NULL && strcmp(nfile->name, "-") == 0) {
-		nfile->stream = stdin;
+		nfile->u.u_stream = stdin;
 		free(nfile->name);
 		if ((nfile->name = strdup("stdin")) == NULL) {
 			warn("strdup");
 			free(nfile);
 			return (NULL);
 		}
-	} else if ((nfile->stream = fopen(nfile->name, "r")) == NULL) {
+	} else if ((nfile->u.u_stream = fopen(nfile->name, "r")) == NULL) {
 		warn("%s", nfile->name);
 		free(nfile->name);
 		free(nfile);
 		return (NULL);
 	} else if (secret &&
-	    check_file_secrecy(fileno(nfile->stream), nfile->name)) {
-		fclose(nfile->stream);
+	    check_file_secrecy(fileno(nfile->u.u_stream), nfile->name)) {
+		fclose(nfile->u.u_stream);
 		free(nfile->name);
 		free(nfile);
 		return (NULL);
@@ -1252,6 +1298,26 @@ pushfile(const char *name, int secret)
 	nfile->lineno = 1;
 	TAILQ_INSERT_TAIL(&files, nfile, entry);
 	return (nfile);
+}
+
+struct file *
+pushiov(const char *name, struct iovec *vec, int count)
+{
+	struct file	*nfile;
+
+	if ((nfile = calloc(1, sizeof(struct file))) == NULL ||
+	    (nfile->name = strdup(name)) == NULL) {
+		warn("malloc");
+		return NULL;
+	}
+	nfile->type = APN_IOVEC;
+	nfile->lineno = 1;
+	nfile->u.u_iov.vec = vec;
+	nfile->u.u_iov.count = count;
+	nfile->u.u_iov.cvec = 0;
+	nfile->u.u_iov.cidx = 0;
+	TAILQ_INSERT_TAIL(&files, nfile, entry);
+	return nfile;
 }
 
 int
@@ -1262,7 +1328,8 @@ popfile(void)
 	if ((prev = TAILQ_PREV(file, files, entry)) != NULL) {
 		prev->errors += file->errors;
 		TAILQ_REMOVE(&files, file, entry);
-		fclose(file->stream);
+		if (file->type == APN_FILE)
+			fclose(file->u.u_stream);
 		free(file->name);
 		free(file);
 		file = prev;
@@ -1274,21 +1341,36 @@ popfile(void)
 int
 parse_rules(const char *filename, struct apn_ruleset *apnrspx)
 {
+	TAILQ_INIT(&files);
+	if ((file = pushfile(filename, 1)) == NULL)
+		return (1);
+	return __parse_rules_common(apnrspx);
+}
+
+int
+parse_rules_iovec(const char *filename, struct iovec *iovec, int count,
+    struct apn_ruleset *apnrspx)
+{
+	TAILQ_INIT(&files);
+	if ((file = pushiov(filename, iovec, count)) == NULL)
+		return 1;
+	return __parse_rules_common(apnrspx);
+}
+
+int
+__parse_rules_common(struct apn_ruleset *apnrspx)
+{
 	int errors = 0;
 
 	apnrsp = apnrspx;
 	counter = 0;
 
-	TAILQ_INIT(&files);
-	if ((file = pushfile(filename, 1)) == NULL) {
-		return (1);
-	}
-
 	yyparse();
 	errors = file->errors;
 	popfile();
 
-	fclose(file->stream);
+	if (file->type == APN_FILE)
+		fclose(file->u.u_stream);
 	free(file->name);
 	free(file);
 

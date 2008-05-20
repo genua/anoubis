@@ -58,7 +58,8 @@ test_libapn_SOURCES = \
 	libapn_testcase_errorcodes.c \
 	libapn_testcase_crash1.c \
 	libapn_testsuite.c \
-	libapn_testrunner.c
+	libapn_testrunner.c \
+	libapn_testcase_iov.c
 
 test_printing_CPPFLAGS = \
 	-I$(top_srcdir)/$(libapndir) \

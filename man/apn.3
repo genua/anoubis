@@ -35,7 +35,9 @@
 .Sh SYNOPSIS
 .Fd #include <apn.h>
 .Ft int
-.Fn apn_parse "const char *filename" "struct apnruleset *ruleset" "int flags"
+.Fn apn_parse "const char *filename" "struct apnruleset **ruleset" "int flags"
+.Ft int
+.Fn apn_parse_iovec "const char *filename" "struct iovec *iov" "int iovcnt" "struct apnruleset **ruleset "int flags"
 .Ft int
 .Fn apn_add_alfrule "struct apn_rule *rule" "struct apn_ruleset *ruleset"
 .Ft int
@@ -80,6 +82,16 @@ produce verbose output
 .It Dv APN_FLAG_VERBOSE2
 produce even more verbose output.
 .El
+.Pp
+.It Fn apn_parse_iovec filename iovec iovcnt ruleset flags
+This function behaves in the same way as
+.Fn apn_parse
+except that the input for the parser is not taken from a file but
+from memory given by an array of
+.Fa count
+iovec structures pointed to by
+.Fa iovec .
+The filename argument is only used in error messages.
 .Pp
 .It Fn apn_add_alfrule rule ruleset
 The function

@@ -29,9 +29,12 @@
 #define _APN_H_
 
 #include <sys/cdefs.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 #ifndef LINUX
 #include <sys/queue.h>
+#include <sys/uio.h>
 #else
 #include <queue.h>
 #endif
@@ -239,6 +242,8 @@ struct apn_ruleset {
 
 __BEGIN_DECLS
 int	apn_parse(const char *, struct apn_ruleset **, int);
+int	apn_parse_iovec(const char *filename, struct iovec *vec, int count,
+	    struct apn_ruleset **rsp, int flags);
 int	apn_add_alfrule(struct apn_rule *, struct apn_ruleset *);
 int	apn_add_sfsrule(struct apn_rule *, struct apn_ruleset *);
 int	apn_print_rule(struct apn_rule *, int, FILE *);

@@ -42,7 +42,7 @@
 #include <bsdcompat.h>
 #endif
 
-char *
+static char *
 generate_file(void)
 {
 	char	*sfn;
