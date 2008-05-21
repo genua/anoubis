@@ -124,7 +124,7 @@ PolicyRuleSet::create(wxString fileName)
 		wxGetApp().status(logEntry);
 		break;
 	case 0:
-		logEntry = wxT("Succsessfully imported policy file ");
+		logEntry = wxT("Successfully imported policy file ");
 		logEntry += fileName;
 		wxGetApp().log(logEntry);
 		wxGetApp().status(logEntry);
