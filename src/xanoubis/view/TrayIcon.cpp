@@ -58,7 +58,7 @@ TrayIcon::TrayIcon(void)
 
 	messageAlertCount_ = 0;
 	messageEscalationCount_ = 0;
-	daemon_ = wxT("none");
+	daemon_ = _("none");
 
 	systemNotifyEnabled_ = false;
 	systemNotifyTimeout_ = 10;
@@ -170,8 +170,8 @@ TrayIcon::CreatePopupMenu(void)
 {
 	wxMenu *menue = new wxMenu;
 
-	menue->Append(GUI_RESTORE, wxT("&Restore xanoubis"));
-	menue->Append(GUI_EXIT, wxT("E&xit xanoubis"));
+	menue->Append(GUI_RESTORE, _("&Restore xanoubis"));
+	menue->Append(GUI_EXIT, _("E&xit xanoubis"));
 
 	return menue;
 }
@@ -182,7 +182,7 @@ TrayIcon::update(void)
 	wxString tooltip;
 	wxIcon *icon;
 	char message[MAX_MESSAGE];
-	tooltip = wxT("Messages: ");
+	tooltip = _("Messages: ");
 
 	/* escalations represent the highest priority */
 	if (messageEscalationCount_ > 0) {
@@ -194,7 +194,7 @@ TrayIcon::update(void)
 		if (systemNotifyEnabled_) {
 			if (!systemNotify("ESCALATION", message,
 			    NOTIFY_URGENCY_CRITICAL, systemNotifyTimeout_))
-				wxGetApp().log(wxT("Couldn't send Escalation"));
+				wxGetApp().log(_("Couldn't send Escalation"));
 		}
 	} else {
 		if (messageAlertCount_ > 0) {
@@ -208,19 +208,19 @@ TrayIcon::update(void)
 				    NOTIFY_URGENCY_NORMAL,
 				    systemNotifyTimeout_))
 					wxGetApp().log(
-					    wxT("Couldn't send Alert"));
+					    _("Couldn't send Alert"));
 			}
 		} else {
-			tooltip = wxT("No messages\n");
+			tooltip = _("No messages\n");
 			icon = iconNormal_;
 		}
 	}
 
 	/* connection to daemon established */
-	if (!daemon_.Cmp(wxT("none"))) {
-		tooltip += wxT("not connected");
+	if (!daemon_.Cmp(_("none"))) {
+		tooltip += _("not connected");
 	} else {
-		tooltip += wxT("connected with ");
+		tooltip += _("connected with ");
 		tooltip += daemon_;
 	}
 
