@@ -115,8 +115,8 @@ TAILQ_HEAD(tracker, pe_proc) tracker;
 
 static char * prio_to_string[PE_PRIO_MAX] = {
 #ifndef lint
-	[ PE_PRIO_ADMIN ] = ANOUBISD_POLICYDIR "/" ANOUBISD_ADMINDIR,
-	[ PE_PRIO_USER1 ] = ANOUBISD_POLICYDIR "/" ANOUBISD_USERDIR,
+	[ PE_PRIO_ADMIN ] = ANOUBISD_POLICYCHROOT "/" ANOUBISD_ADMINDIR,
+	[ PE_PRIO_USER1 ] = ANOUBISD_POLICYCHROOT "/" ANOUBISD_USERDIR,
 #endif
 };
 
@@ -384,11 +384,11 @@ pe_load_db(struct policies *p)
 	}
 
 	/* load admin policies */
-	count = pe_load_dir(ANOUBISD_POLICYDIR "/" ANOUBISD_ADMINDIR,
+	count = pe_load_dir(ANOUBISD_POLICYCHROOT "/" ANOUBISD_ADMINDIR,
 	    PE_PRIO_ADMIN, p);
 
 	/* load user policies */
-	count += pe_load_dir(ANOUBISD_POLICYDIR "/" ANOUBISD_USERDIR,
+	count += pe_load_dir(ANOUBISD_POLICYCHROOT "/" ANOUBISD_USERDIR,
 	    PE_PRIO_USER1, p);
 
 	return (count);

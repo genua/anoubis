@@ -107,7 +107,7 @@ policy_sighandler(int sig, short event, void *arg)
 
 pid_t
 policy_main(struct anoubisd_config *conf, int pipe_m2s[2], int pipe_m2p[2],
-    int pipe_s2p[2])
+    int pipe_s2p[2], int loggers[3])
 /*@globals undef eventq_p2m, undef eventq_p2s, undef replyq@*/
 {
 	struct event	 ev_sigterm, ev_sigint, ev_sigquit, ev_sigusr1,
@@ -137,10 +137,18 @@ policy_main(struct anoubisd_config *conf, int pipe_m2s[2], int pipe_m2p[2],
 
 	anoubisd_process = PROC_POLICY;
 
+	(void)event_init();
+
+	log_init(loggers[1]);
+	close(loggers[0]);
+	close(loggers[2]);
+
 	if ((pw = getpwnam(ANOUBISD_USER)) == NULL)
 		fatal("getpwnam");
 
-	if (chdir(ANOUBISD_POLICYDIR) == -1)
+	if (chroot(ANOUBISD_POLICYDIR) == -1)
+		fatal("chroot");
+	if (chdir(ANOUBISD_POLICYCHROOT) == -1)
 		fatal("chdir");
 
 #ifdef OPENBSD
@@ -153,10 +161,7 @@ policy_main(struct anoubisd_config *conf, int pipe_m2s[2], int pipe_m2p[2],
 		fatal("can't drop privileges");
 
 	/* From now on, this is an unprivileged child process. */
-
 	log_info("policy started");
-
-	(void)event_init();
 
 	/* We catch or block signals rather than ignoring them. */
 	signal_set(&ev_sigterm, SIGTERM, policy_sighandler, NULL);
@@ -330,7 +335,8 @@ dispatch_m2p(int fd, short sig, void *arg)
 			continue;
 		}
 
-		DEBUG(DBG_PE, "dispatch_m2p: %d", hdr->msg_source);
+		DEBUG(DBG_PE, "dispatch_m2p: src=%d pid=%d", hdr->msg_source,
+		    hdr->msg_pid);
 		if (((hdr->msg_flags & EVENTDEV_NEED_REPLY) == 0) &&
 		    (hdr->msg_source != ANOUBIS_SOURCE_PROCESS &&
 		    hdr->msg_source != ANOUBIS_SOURCE_SFSEXEC)) {

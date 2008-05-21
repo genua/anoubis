@@ -257,7 +257,7 @@ err:
 
 pid_t
 session_main(struct anoubisd_config *conf, int pipe_m2s[2], int pipe_m2p[2],
-    int pipe_s2p[2])
+    int pipe_s2p[2], int loggers[3])
 {
 	struct event	 ev_sigterm, ev_sigint, ev_sigquit;
 	struct event	 ev_m2s, ev_p2s;
@@ -279,6 +279,11 @@ session_main(struct anoubisd_config *conf, int pipe_m2s[2], int pipe_m2p[2],
 		return (pid);
 	}
 
+	(void)event_init();
+
+	log_init(loggers[2]);
+	close(loggers[0]);
+	close(loggers[1]);
 	log_info("session started");
 
 	anoubisd_process = PROC_SESSION;
@@ -305,8 +310,6 @@ session_main(struct anoubisd_config *conf, int pipe_m2s[2], int pipe_m2p[2],
 
 
 	/* From now on, this is an unprivileged child process. */
-
-	(void)event_init();
 	LIST_INIT(&(seg.sessionList));
 	queue_init(eventq_s2p);
 	queue_init(eventq_s2m);

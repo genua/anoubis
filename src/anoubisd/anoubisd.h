@@ -54,6 +54,7 @@
 #define ANOUBISD_PIDFILENAME		"/var/run/anoubisd.pid"
 
 #define ANOUBISD_POLICYDIR		"/etc/anoubis/policy"
+#define ANOUBISD_POLICYCHROOT		"/"
 #define ANOUBISD_USERDIR		"user"
 #define ANOUBISD_ADMINDIR		"admin"
 #define ANOUBISD_DEFAULTNAME		"default"
@@ -143,12 +144,15 @@ struct anoubisd_msg_logrequest
 enum {
 	PROC_MAIN,
 	PROC_POLICY,
-	PROC_SESSION
+	PROC_SESSION,
+	PROC_LOGGER
 } anoubisd_process;
 
-pid_t	session_main(struct anoubisd_config *, int[], int[], int[]);
+pid_t	session_main(struct anoubisd_config *, int[], int[], int[], int[]);
 
-pid_t	policy_main(struct anoubisd_config *, int[], int[], int[]);
+pid_t	policy_main(struct anoubisd_config *, int[], int[], int[], int[]);
+
+pid_t	logger_main(struct anoubisd_config *, int[], int[], int[]);
 
 void	pe_init(void);
 
@@ -158,7 +162,7 @@ void	pe_reconfigure(void);
 
 anoubisd_reply_t *policy_engine(anoubisd_msg_t *request);
 
-void	log_init(void);
+void	log_init(int fd);
 
 void	log_warn(const char *, ...);
 

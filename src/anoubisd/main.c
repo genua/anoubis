@@ -88,6 +88,7 @@ static void	dispatch_dev2m(int, short, void *);
 
 pid_t		master_pid = 0;
 pid_t		se_pid = 0;
+pid_t		logger_pid = 0;
 pid_t		policy_pid = 0;
 
 static Queue eventq_m2p;
@@ -139,6 +140,10 @@ sighandler(int sig, short event, void *arg)
 		}
 		if (check_child(policy_pid, "policy engine")) {
 			policy_pid = 0;
+			die = 1;
+		}
+		if (check_child(logger_pid, "anoubis logger")) {
+			logger_pid = 0;
 			die = 1;
 		}
 		if (die) {
@@ -226,6 +231,10 @@ main(int argc, char *argv[])
 	int			pipe_m2s[2];
 	int			pipe_m2p[2];
 	int			pipe_s2p[2];
+	int			pipe_m2l[2];
+	int			pipe_s2l[2];
+	int			pipe_p2l[2];
+	int			loggers[3];
 	struct timeval		tv;
 	char		       *endptr;
 
@@ -295,12 +304,28 @@ main(int argc, char *argv[])
 
 	if (check_pid())
 		early_errx(1, "anoubisd is already running");
-
-	log_init();
-
 	if (debug_stderr == 0)
 		if (daemon(1, 0) !=0)
-			fatal("daemon");
+			early_errx(1, "daemonize failed");
+
+	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, pipe_m2l) == -1)
+		early_errx(1, "socketpair");
+	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, pipe_p2l) == -1)
+		early_errx(1, "socketpair");
+	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, pipe_s2l) == -1)
+		early_errx(1, "socketpair");
+	logger_pid = logger_main(&conf, pipe_m2l, pipe_p2l, pipe_s2l);
+	close(pipe_m2l[0]);
+	close(pipe_p2l[0]);
+	close(pipe_s2l[0]);
+	loggers[0] = pipe_m2l[1];
+	loggers[1] = pipe_p2l[1];
+	loggers[2] = pipe_s2l[1];
+
+	(void)event_init();
+
+	log_init(loggers[0]);
+	DEBUG(DBG_TRACE, "logger_pid=%d", logger_pid);
 
 	log_info("master start");
 	DEBUG(DBG_TRACE, "debug=%x", debug_flags);
@@ -315,16 +340,16 @@ main(int argc, char *argv[])
 	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, pipe_s2p) == -1)
 		fatal("socketpair");
 
-	se_pid = session_main(&conf, pipe_m2s, pipe_m2p, pipe_s2p);
+	se_pid = session_main(&conf, pipe_m2s, pipe_m2p, pipe_s2p, loggers);
 	DEBUG(DBG_TRACE, "session_pid=%d", se_pid);
-	policy_pid = policy_main(&conf, pipe_m2s, pipe_m2p, pipe_s2p);
+	policy_pid = policy_main(&conf, pipe_m2s, pipe_m2p, pipe_s2p, loggers);
 	DEBUG(DBG_TRACE, "policy_pid=%d", policy_pid);
+	close(loggers[1]);
+	close(loggers[2]);
 
 #ifdef OPENBSD
 	setproctitle("master");
 #endif
-
-	(void)event_init();
 
 	/* We catch or block signals rather than ignore them. */
 	signal_set(&ev_sigterm, SIGTERM, sighandler, NULL);
@@ -479,6 +504,8 @@ main_cleanup(void)
 		kill(se_pid, SIGTERM);
 	if (policy_pid)
 		kill(policy_pid, SIGTERM);
+	if (logger_pid)
+		kill(logger_pid, SIGTERM);
 
 	/* XXX HSH: Do all cleanup here. */
 
@@ -811,7 +838,8 @@ dispatch_dev2m(int fd, short event, void *arg)
 
 		/* we shortcut and ack events for our own children */
 		if ((hdr->msg_flags & EVENTDEV_NEED_REPLY) &&
-		    (hdr->msg_pid == se_pid || hdr->msg_pid == policy_pid)) {
+		    (hdr->msg_pid == se_pid || hdr->msg_pid == policy_pid
+		     || hdr->msg_pid == logger_pid)) {
 
 			msg_reply = msg_factory(ANOUBISD_MSG_EVENTREPLY,
 			    sizeof(struct eventdev_reply));

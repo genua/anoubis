@@ -17,6 +17,10 @@
 
 #include "config.h"
 
+#ifdef S_SPLINT_S
+#include "splint-includes.h"
+#endif
+
 #include <err.h>
 #include <errno.h>
 #include <netdb.h>
@@ -27,12 +31,17 @@
 #include <syslog.h>
 #include <time.h>
 #include <unistd.h>
-
-#ifdef S_SPLINT_S
-#include "splint-includes.h"
+#include <sys/types.h>
+#include <pwd.h>
+#include <signal.h>
+#include <event.h>
+#ifdef LINUX
+#include <grp.h>
 #endif
 
 #include "anoubisd.h"
+#include "amsg.h"
+#include "aqueue.h"
 
 static const char * const procnames[] = {
 	"parent",
@@ -43,13 +52,38 @@ static const char * const procnames[] = {
 static void	logit(int, const char *, ...);
 static void	vlog(int, const char *, va_list);
 
-void
-log_init(void)
-{
-	extern char	*__progname;
+static int		__log_fd = -1;
+static struct event	__log_event;
+static Queue		__eventq_log;
+static int		__logging = 0;
 
-	openlog(__progname, LOG_PID | LOG_NDELAY, LOG_DAEMON);
-	tzset();
+static void
+dispatch_log_write(int fd, short event, void *arg)
+{
+	anoubisd_msg_t		*msg;
+
+	__logging = 1;
+	if ((msg = queue_peek(&__eventq_log)) == NULL) {
+		__logging = 0;
+		return;
+	}
+	if (send_msg(__log_fd, msg)) {
+		msg = dequeue(&__eventq_log);
+		free(msg);
+	}
+	if (queue_peek(&__eventq_log) || msg_pending(__log_fd))
+		event_add(&__log_event, NULL);
+	__logging = 0;
+}
+
+void
+log_init(int fd)
+{
+	msg_init(fd, "logger");
+	__log_fd = fd;
+	__logging = 0;
+	queue_init(__eventq_log);
+	event_set(&__log_event, __log_fd, EV_WRITE, &dispatch_log_write, NULL);
 }
 
 static void
@@ -67,6 +101,9 @@ vlog(int pri, const char *fmt, va_list ap)
 {
 	char	*nfmt;
 
+	if (__logging)
+		return;
+	__logging = 1;
 	if (debug_stderr) {
 		/* best effort in out of mem situations */
 		if (asprintf(&nfmt, "%s\n", fmt) == -1) {
@@ -77,8 +114,28 @@ vlog(int pri, const char *fmt, va_list ap)
 			free(nfmt);
 		}
 		fflush(stderr);
-	} else
-		vsyslog(pri, fmt, ap);
+	} else {
+		if (__log_fd >= 0) {
+			anoubisd_msg_t	*msg;
+			if (vasprintf(&nfmt, fmt, ap) == -1) {
+				master_terminate(ENOMEM);
+				return;
+			}
+			msg = msg_factory(pri, strlen(nfmt)+1);
+			if (!msg) {
+				free(nfmt);
+				master_terminate(ENOMEM);
+				return;
+			}
+			strcpy(msg->msg, nfmt);
+			free(nfmt);
+			enqueue(&__eventq_log, msg);
+			event_add(&__log_event, NULL);
+		} else {
+			vsyslog(pri, fmt, ap);
+		}
+	}
+	__logging = 0;
 }
 
 void
@@ -187,3 +244,102 @@ early_errx(int eval, const char *emsg)
 	errno = 0;
 	early_err(eval, emsg);
 }
+
+void dispatch_log_read(int fd, short sig, void *arg)
+{
+	anoubisd_msg_t * msg;
+	__logging = 1;
+	while(1) {
+		msg = get_msg(fd);
+		if (msg == NULL)
+			break;
+		syslog(msg->mtype, "%s", msg->msg);
+		free(msg);
+	}
+	__logging = 0;
+}
+
+extern char	*__progname;
+
+static void
+logger_sighandler(int sig, short event, void *arg)
+{
+	/*
+	 * XXX CEH: Maybe we should delay the exit somewhat to make
+	 * XXX CEH: sure that log messages make it into the syslog.
+	 */
+	event_loopexit(NULL);
+}
+
+pid_t
+logger_main(struct anoubisd_config *conf, int pipe_m2l[2], int pipe_p2l[2],
+    int pipe_s2l[2])
+{
+	pid_t pid;
+	struct event	 ev_m2l, ev_p2l, ev_s2l;
+	struct event	 ev_sigterm, ev_sigint, ev_sigquit;
+	struct passwd	*pw;
+	sigset_t	 mask;
+
+	if ((pw = getpwnam(ANOUBISD_USER)) == NULL)
+		fatal("getpwnam");
+	
+	pid = fork();
+	if (pid < 0)
+		fatal("fork");
+		/*NOTREACHED*/
+	if (pid)
+		return pid;
+	anoubisd_process = PROC_LOGGER;
+#ifdef OPENBSD
+	setproctitle("anoubis logger");
+#endif
+
+	if (setgroups(1, &pw->pw_gid) ||
+	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
+	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
+		fatal("can't drop privileges");
+
+	openlog(__progname, LOG_PID | LOG_NDELAY, LOG_DAEMON);
+	tzset();
+	__log_fd = -1;
+	log_info("logger started");
+
+	(void)event_init();
+
+	signal_set(&ev_sigterm, SIGTERM,logger_sighandler, NULL);
+	signal_set(&ev_sigint, SIGINT, logger_sighandler, NULL);
+	signal_set(&ev_sigquit, SIGQUIT, logger_sighandler, NULL);
+	signal_add(&ev_sigterm, NULL);
+	signal_add(&ev_sigint, NULL);
+	signal_add(&ev_sigquit, NULL);
+
+	sigfillset(&mask);
+	sigdelset(&mask, SIGTERM);
+	sigdelset(&mask, SIGINT);
+	sigdelset(&mask, SIGQUIT);
+	sigprocmask(SIG_SETMASK, &mask, NULL);
+
+	close(pipe_m2l[1]);
+	close(pipe_p2l[1]);
+	close(pipe_s2l[1]);
+
+	msg_init(pipe_m2l[0], "m2l");
+	msg_init(pipe_p2l[0], "p2l");
+	msg_init(pipe_s2l[0], "s2l");
+
+	event_set(&ev_m2l, pipe_m2l[0], EV_READ | EV_PERSIST,
+	    &dispatch_log_read, NULL);
+	event_add(&ev_m2l, NULL);
+	event_set(&ev_p2l, pipe_p2l[0], EV_READ | EV_PERSIST,
+	    &dispatch_log_read, NULL);
+	event_add(&ev_p2l, NULL);
+	event_set(&ev_s2l, pipe_s2l[0], EV_READ | EV_PERSIST,
+	    &dispatch_log_read, NULL);
+	event_add(&ev_s2l, NULL);
+
+	if (event_dispatch() == -1)
+		fatal("logger_main: event_dispatch");
+	_exit(0);
+}
+
