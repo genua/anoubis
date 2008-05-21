@@ -1602,19 +1602,19 @@ pe_dispatch_policy(struct anoubisd_msg_comm *comm, int *reconf)
 		} else {
 			error = ESRCH;
 		}
-		goto err;
+		goto reply;
 	}
 	/* No request yet, start one. */
 	if (req == NULL) {
 		if (comm->len < sizeof(Policy_Generic)) {
 			error = EINVAL;
-			goto err;
+			goto reply;
 		}
 		gen = (Policy_Generic *)comm->msg;
 		req = calloc(1, sizeof(struct policy_request));
 		if (!req) {
 			error = ENOMEM;
-			goto err;
+			goto reply;
 		}
 		req->token = comm->token;
 		req->ptype = get_value(gen->ptype);
@@ -1629,7 +1629,7 @@ pe_dispatch_policy(struct anoubisd_msg_comm *comm, int *reconf)
 		if ((comm->flags & POLICY_FLAG_END) == 0
 		    || (comm->len < sizeof(Policy_GetByUid))) {
 			error = EINVAL;
-			goto err;
+			goto reply;
 		}
 		getbyuid = (Policy_GetByUid *)comm->msg;
 		uid = get_value(getbyuid->uid);
@@ -1641,23 +1641,23 @@ pe_dispatch_policy(struct anoubisd_msg_comm *comm, int *reconf)
 		 */
 		error = EPERM;
 		if (comm->uid != uid && comm->uid != 0)
-			goto err;
+			goto reply;
 		fd = pe_open_policy_file(uid, prio);
 		if (fd == -ENOENT) {
 			error = 0;
-			goto err;
+			goto reply;
 		}
 		error = EIO;
 		if (fd < 0) {
 			/* ENOENT indicates an empty policy and not an error. */
 			if (fd == -ENOENT)
 				error = 0;
-			goto err;
+			goto reply;
 		}
 		error = - send_policy_data(comm->token, fd);
 		close(fd);
 		if (error)
-			goto err;
+			goto reply;
 		break;
 	case ANOUBIS_PTYPE_SETBYUID:
 		buf = comm->msg;
@@ -1665,7 +1665,7 @@ pe_dispatch_policy(struct anoubisd_msg_comm *comm, int *reconf)
 		if (comm->flags & POLICY_FLAG_START) {
 			if (comm->len < sizeof(Policy_SetByUid)) {
 				error = EINVAL;
-				goto err;
+				goto reply;
 			}
 			error = ENOMEM;
 			setbyuid = (Policy_SetByUid *)comm->msg;
@@ -1678,27 +1678,27 @@ pe_dispatch_policy(struct anoubisd_msg_comm *comm, int *reconf)
 			 */
 			if (uid != req->authuid && req->authuid != 0) {
 				error = EPERM;
-				goto err;
+				goto reply;
 			}
 			if (prio == PE_PRIO_ADMIN && req->authuid != 0) {
 				error = EPERM;
-				goto err;
+				goto reply;
 			}
 			req->realname = pe_policy_file_name(uid, prio);
 			if (!req->realname)
-				goto err;
+				goto reply;
 			/* splint doesn't understand the %llu modifier */
 			if (asprintf(&req->tmpname, "%s.%llu", req->realname,
 			    /*@i@*/ req->token) == -1) {
 				req->tmpname = NULL;
-				goto err;
+				goto reply;
 			}
 			DEBUG(DBG_TRACE, "  open: %s", req->tmpname);
 			req->fd = open(req->tmpname,
 			    O_WRONLY|O_CREAT|O_EXCL, 0400);
 			if (req->fd < 0) {
 				error = errno;
-				goto err;
+				goto reply;
 			}
 			DEBUG(DBG_TRACE, "  open: %s fd = %d", req->tmpname,
 			    req->fd);
@@ -1707,7 +1707,7 @@ pe_dispatch_policy(struct anoubisd_msg_comm *comm, int *reconf)
 		}
 		if (req->authuid != comm->uid) {
 			error = EPERM;
-			goto err;
+			goto reply;
 		}
 		while(len) {
 			int ret = write(req->fd, buf, len);
@@ -1715,7 +1715,7 @@ pe_dispatch_policy(struct anoubisd_msg_comm *comm, int *reconf)
 				DEBUG(DBG_TRACE, "  write error fd=%d",
 				    req->fd);
 				error = errno;
-				goto err;
+				goto reply;
 			}
 			buf += ret;
 			len -= ret;
@@ -1727,22 +1727,22 @@ pe_dispatch_policy(struct anoubisd_msg_comm *comm, int *reconf)
 				if (ruleset)
 					free(ruleset);
 				error = EINVAL;
-				goto err;
+				goto reply;
 			}
 			apn_free_ruleset(ruleset);
 			if (rename(req->tmpname, req->realname) < 0) {
 				error = errno;
-				goto err;
+				goto reply;
 			}
+			(*reconf) = 1;
 			error = 0;
-			goto err;
+			goto reply;
 		}
-		(*reconf) = 1;
 		break;
 	default:
 		/* Unknown opcode. */
 		error = EINVAL;
-		goto err;
+		goto reply;
 	}
 	if (req && (comm->flags & POLICY_FLAG_END)) {
 		LIST_REMOVE(req, next);
@@ -1750,7 +1750,7 @@ pe_dispatch_policy(struct anoubisd_msg_comm *comm, int *reconf)
 	}
 	DEBUG(DBG_TRACE, "<pe_dispatch_policy (NULL)");
 	return NULL;
-err:
+reply:
 	if (req) {
 		LIST_REMOVE(req, next);
 		put_request(req);
