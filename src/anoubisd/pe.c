@@ -126,6 +126,8 @@ struct policy_request {
 	u_int32_t	 ptype;
 	u_int32_t	 authuid;
 	int		 fd;
+	int		 prio;
+	uid_t		 uid;
 	char		*tmpname;
 	char		*realname;
 };
@@ -194,7 +196,7 @@ int			 pe_addrmatch_host(struct apn_host *, void *,
 int			 pe_addrmatch_port(struct apn_port *, void *,
 			     unsigned short);
 static char		*pe_policy_file_name(uid_t uid, int prio);
-static int		pe_open_policy_file(uid_t uid, int prio);
+static int		 pe_open_policy_file(uid_t uid, int prio);
 
 /*
  * The following code utilizes list functions from BSD queue.h, which
@@ -349,8 +351,12 @@ pe_update_ctx(struct pe_proc *pproc, struct pe_context **newctx, int prio,
 	if ((newuser = pe_get_user(pproc->uid, newpdb)) == NULL)
 		newuser = pe_get_user(-1, newpdb);
 
-	context = pe_search_ctx(newuser->prio[prio], pproc->csum,
-	    pproc->pathhint);
+	if (newuser) {
+		context = pe_search_ctx(newuser->prio[prio], pproc->csum,
+		    pproc->pathhint);
+	} else {
+		context = NULL;
+	}
 
 	DEBUG(DBG_PE_POLICY, "pe_update_ctx: context %p rule %p ctx %p",
 	    context, context ? context->rule : NULL, context ? context->ctx :
@@ -429,6 +435,9 @@ pe_load_dir(const char *dirname, int prio, struct policies *p)
 		if (dp->d_type != DT_REG)
 			continue;
 
+		/* Skip files starting with a dot. */
+		if (dp->d_name[0] == '.')
+			continue;
 		/*
 		 * Validate the file name: For PE_PRIO_ADMIN it has
 		 * to be either ANOUBISD_DEFAULTNAME or a numeric uid,
@@ -559,13 +568,19 @@ pe_get_user(uid_t uid, struct policies *p)
 }
 
 static char *
-pe_policy_file_name(uid_t uid, int prio)
+__pe_policy_file_name(uid_t uid, int prio, char *pre)
 {
 	char *name;
 
-	if (asprintf(&name, "/%s/%d", prio_to_string[prio], uid) == -1)
+	if (asprintf(&name, "/%s/%s%d", prio_to_string[prio], pre, uid) == -1)
 		return NULL;
 	return name;
+}
+
+static char *
+pe_policy_file_name(uid_t uid, int prio)
+{
+	return __pe_policy_file_name(uid, prio, "");
 }
 
 static int
@@ -1643,6 +1658,8 @@ pe_dispatch_policy(struct anoubisd_msg_comm *comm, int *reconf)
 		if (comm->uid != uid && comm->uid != 0)
 			goto reply;
 		fd = pe_open_policy_file(uid, prio);
+		req->uid = uid;
+		req->prio = prio;
 		if (fd == -ENOENT) {
 			error = 0;
 			goto reply;
@@ -1663,6 +1680,7 @@ pe_dispatch_policy(struct anoubisd_msg_comm *comm, int *reconf)
 		buf = comm->msg;
 		len = comm->len;
 		if (comm->flags & POLICY_FLAG_START) {
+			char	*tmp;
 			if (comm->len < sizeof(Policy_SetByUid)) {
 				error = EINVAL;
 				goto reply;
@@ -1685,14 +1703,21 @@ pe_dispatch_policy(struct anoubisd_msg_comm *comm, int *reconf)
 				goto reply;
 			}
 			req->realname = pe_policy_file_name(uid, prio);
+			req->uid = uid;
+			req->prio = prio;
 			if (!req->realname)
 				goto reply;
+			tmp = __pe_policy_file_name(uid, prio, ".tmp.");
+			if (!tmp)
+				goto reply;
 			/* splint doesn't understand the %llu modifier */
-			if (asprintf(&req->tmpname, "%s.%llu", req->realname,
+			if (asprintf(&req->tmpname, "%s.%llu", tmp, 
 			    /*@i@*/ req->token) == -1) {
+			    	free(tmp);
 				req->tmpname = NULL;
 				goto reply;
 			}
+			free(tmp);
 			DEBUG(DBG_TRACE, "  open: %s", req->tmpname);
 			req->fd = open(req->tmpname,
 			    O_WRONLY|O_CREAT|O_EXCL, 0400);
@@ -1721,7 +1746,11 @@ pe_dispatch_policy(struct anoubisd_msg_comm *comm, int *reconf)
 			len -= ret;
 		}
 		if (comm->flags & POLICY_FLAG_END) {
+			char	*bkup, *tmp;
+			time_t	 t;
+			int	 ret;
 			struct apn_ruleset * ruleset = NULL;
+
 			/* Only accept syntactically correct rules. */
 			if (apn_parse(req->tmpname, &ruleset, 0)) {
 				if (ruleset)
@@ -1730,6 +1759,35 @@ pe_dispatch_policy(struct anoubisd_msg_comm *comm, int *reconf)
 				goto reply;
 			}
 			apn_free_ruleset(ruleset);
+			/* Backup old rules */
+			if (time(&t) == (time_t)-1) {
+				error = errno;
+				goto reply;
+			}
+			tmp = __pe_policy_file_name(req->uid, req->prio,
+			    ".save.");
+			if (tmp == NULL) {
+				error = ENOMEM;
+				goto reply;
+			}
+			ret = asprintf(&bkup, "%s.%lld", tmp, (long long)t);
+			free(tmp);
+			if (ret == -1) {
+				errno = ENOMEM;
+				goto reply;
+			}
+			DEBUG(DBG_TRACE, "    link: %s->%s", req->realname,
+			    bkup);
+			if (link(req->realname, bkup) < 0) {
+				if (errno != ENOENT) {
+					error = errno;
+					free(bkup);
+					goto reply;
+				}
+			}
+			free(bkup);
+			DEBUG(DBG_TRACE, "    rename: %s->%s", req->tmpname,
+			    req->realname);
 			if (rename(req->tmpname, req->realname) < 0) {
 				error = errno;
 				goto reply;
