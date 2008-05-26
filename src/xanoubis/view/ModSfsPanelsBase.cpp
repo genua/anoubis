@@ -100,6 +100,8 @@ ModSfsMainPanelBase::ModSfsMainPanelBase( wxWindow* parent, wxWindowID id, const
 
 ModSfsOverviewPanelBase::ModSfsOverviewPanelBase( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size, long style ) : wxPanel( parent, id, pos, size, style )
 {
+	this->SetToolTip( _("The level of restrictions increases with the\nprofile chosen.\nSettings of a lower profile\nare automatically valid in all profiles above.\nAll settings you choose are contingent upon\nthe chosen profile.\nIt may occur that you can't switch off the\nmodule because of restrictions.") );
+	
 	wxBoxSizer* sz_OverviewSFSMain;
 	sz_OverviewSFSMain = new wxBoxSizer( wxVERTICAL );
 	
@@ -149,7 +151,7 @@ ModSfsOverviewPanelBase::ModSfsOverviewPanelBase( wxWindow* parent, wxWindowID i
 	
 	sz_OVSFS->Add( 0, 0, 1, wxEXPAND, 5 );
 	
-	Info_for_slider = new wxStaticText( this, wxID_ANY, _("The level of restrictions increases with the\nprofile chosen.\nSettings of a lower profile\nare automatically valid in all profiles above.\nAll settings you choose are contingent upon\nthe chosen profile.\nIt may occur that you can't switch off the\nmodule because of restrictions."), wxDefaultPosition, wxDefaultSize, 0 );
+	Info_for_slider = new wxStaticText( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
 	Info_for_slider->Wrap( -1 );
 	sz_OVSFS->Add( Info_for_slider, 0, wxALL, 5 );
 	

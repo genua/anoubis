@@ -578,7 +578,7 @@
             <property name="pos"></property>
             <property name="size">-1,-1</property>
             <property name="subclass"></property>
-            <property name="tooltip"></property>
+            <property name="tooltip">The level of restrictions increases with the&#x0A;profile chosen.&#x0A;Settings of a lower profile&#x0A;are automatically valid in all profiles above.&#x0A;All settings you choose are contingent upon&#x0A;the chosen profile.&#x0A;It may occur that you can&apos;t switch off the&#x0A;module because of restrictions.</property>
             <property name="window_extra_style"></property>
             <property name="window_name"></property>
             <property name="window_style">wxTAB_TRAVERSAL</property>
@@ -958,7 +958,7 @@
                                 <property name="font"></property>
                                 <property name="hidden">0</property>
                                 <property name="id">wxID_ANY</property>
-                                <property name="label">The level of restrictions increases with the&#x0A;profile chosen.&#x0A;Settings of a lower profile&#x0A;are automatically valid in all profiles above.&#x0A;All settings you choose are contingent upon&#x0A;the chosen profile.&#x0A;It may occur that you can&apos;t switch off the&#x0A;module because of restrictions.</property>
+                                <property name="label"></property>
                                 <property name="maximum_size"></property>
                                 <property name="minimum_size"></property>
                                 <property name="name">Info_for_slider</property>

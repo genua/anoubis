@@ -87,7 +87,7 @@ ModAlfMainPanelBase::ModAlfMainPanelBase( wxWindow* parent, wxWindowID id, const
 	pan_Rules->SetSizer( sz_AlfRules );
 	pan_Rules->Layout();
 	sz_AlfRules->Fit( pan_Rules );
-	note_MainAlf->AddPage( pan_Rules, _("Rules"), false );
+	note_MainAlf->AddPage( pan_Rules, _("Rules"), true );
 	pan_TabAppView = new wxPanel( note_MainAlf, wxID_ANY, wxDefaultPosition, wxSize( -1,-1 ), wxTAB_TRAVERSAL );
 	wxBoxSizer* sz_AlfAppView;
 	sz_AlfAppView = new wxBoxSizer( wxHORIZONTAL );
@@ -167,7 +167,7 @@ ModAlfMainPanelBase::ModAlfMainPanelBase( wxWindow* parent, wxWindowID id, const
 	pan_TabAppView->SetSizer( sz_AlfAppView );
 	pan_TabAppView->Layout();
 	sz_AlfAppView->Fit( pan_TabAppView );
-	note_MainAlf->AddPage( pan_TabAppView, _("Application View"), true );
+	note_MainAlf->AddPage( pan_TabAppView, _("Application View"), false );
 	pan_TabOptions = new wxPanel( note_MainAlf, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
 	note_MainAlf->AddPage( pan_TabOptions, _("Options"), false );
 	
@@ -179,6 +179,8 @@ ModAlfMainPanelBase::ModAlfMainPanelBase( wxWindow* parent, wxWindowID id, const
 
 ModAlfOverviewPanelBase::ModAlfOverviewPanelBase( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size, long style ) : wxPanel( parent, id, pos, size, style )
 {
+	this->SetToolTip( _("The level of restrictions increases with the\nprofile chosen.\nRules and restrictions of a lower profile\nare automatically valid in all profiles above.\nAll settings you choose are contingent upon\nthe chosen profile.\nIt may occur that you can't switch off the\nmodule because of restrictions.") );
+	
 	wxBoxSizer* sz_OverviewALFMain;
 	sz_OverviewALFMain = new wxBoxSizer( wxVERTICAL );
 	
@@ -228,7 +230,7 @@ ModAlfOverviewPanelBase::ModAlfOverviewPanelBase( wxWindow* parent, wxWindowID i
 	
 	sz_OVALF->Add( 0, 0, 1, wxEXPAND, 5 );
 	
-	Info_for_slider = new wxStaticText( this, wxID_ANY, _("The level of restrictions increases with the\nprofile chosen.\nRules and restrictions of a lower profile\nare automatically valid in all profiles above.\nAll settings you choose are contingent upon\nthe chosen profile.\nIt may occur that you can't switch off the\nmodule because of restrictions."), wxDefaultPosition, wxDefaultSize, 0 );
+	Info_for_slider = new wxStaticText( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
 	Info_for_slider->Wrap( -1 );
 	sz_OVALF->Add( Info_for_slider, 0, wxALL, 5 );
 	
