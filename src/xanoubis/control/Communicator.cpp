@@ -198,7 +198,7 @@ Communicator::Entry(void)
 	Policy_SetByUid			*ureq;
 	char				*buf;
 	int				 prio;
-	size_t				 length, total;
+	size_t				 length, total, size;
 
 	reqTa	= NULL;
 	buf	= NULL;
@@ -236,7 +236,6 @@ Communicator::Entry(void)
 
 	while (notDone) {
 		struct anoubis_msg	*msg, *reqmsg;
-		size_t			 size = 1024;
 		achat_rc		 rc = ACHAT_RC_ERROR;
 		NotifyList::iterator	 ali;
 
@@ -437,7 +436,8 @@ Communicator::Entry(void)
 				startPolicyRequest = COMMUNICATOR_FLAG_NONE;
 		}
 
-		msg = anoubis_msg_new(1024);
+		size = 4096;
+		msg = anoubis_msg_new(size);
 		if (msg == NULL) {
 			/* XXX: is this error path ok? -- ch */
 			startStatDeRegistration = COMMUNICATOR_FLAG_INIT;
