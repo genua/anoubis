@@ -627,7 +627,7 @@ apn_print_afiltrule(struct apn_afiltrule *rule, FILE *file)
 			return (1);
 	}
 
-	fprintf(file, "\n");
+	fprintf(file, " timeout %u\n", rule->filtspec.statetimeout);
 
 	return (0);
 }
