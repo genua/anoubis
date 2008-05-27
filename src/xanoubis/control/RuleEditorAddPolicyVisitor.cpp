@@ -55,16 +55,19 @@ RuleEditorAddPolicyVisitor::visitAppPolicy(AppPolicy *appPolicy)
 {
 	long idx;
 
-	idx = appendPolicy(appPolicy);
+	if (appPolicy->getType() == APN_ALF) {
+		idx = appendPolicy(appPolicy);
 
-	ruleEditor_->ruleListCtrl->SetItem(idx, RULEDITOR_LIST_COLUMN_APP,
-	    appPolicy->getBinaryName());
-	ruleEditor_->ruleListCtrl->SetItem(idx, RULEDITOR_LIST_COLUMN_BIN,
-	    appPolicy->getBinaryName());
-	ruleEditor_->ruleListCtrl->SetItem(idx, RULEDITOR_LIST_COLUMN_HASHT,
-	    appPolicy->getHashTypeName());
-	ruleEditor_->ruleListCtrl->SetItem(idx, RULEDITOR_LIST_COLUMN_HASH,
-	    appPolicy->getHashValue());
+		ruleEditor_->ruleListCtrl->SetItem(idx,
+		    RULEDITOR_LIST_COLUMN_APP, appPolicy->getBinaryName());
+		ruleEditor_->ruleListCtrl->SetItem(idx,
+		    RULEDITOR_LIST_COLUMN_BIN, appPolicy->getBinaryName());
+		ruleEditor_->ruleListCtrl->SetItem(idx,
+		    RULEDITOR_LIST_COLUMN_HASHT, appPolicy->getHashTypeName());
+		ruleEditor_->ruleListCtrl->SetItem(idx,
+		    RULEDITOR_LIST_COLUMN_HASH, appPolicy->getHashValue());
+
+	}
 }
 
 void
@@ -145,6 +148,7 @@ RuleEditorAddPolicyVisitor::visitSfsPolicy(SfsPolicy *sfsPolicy)
 			sfsPolicy->getHashTypeName());
 	ruleEditor_->ruleListCtrl->SetItem(idx, RULEDITOR_LIST_COLUMN_HASH,
 			sfsPolicy->getHashValue());
+
 }
 
 

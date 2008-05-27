@@ -51,6 +51,7 @@ class AppPolicy : public Policy
 		wxString	 getHashValue(void);
 		AlfPolicy	*getContext(void);
 		bool		 hasContext(void);
+		int		 getType(void);
 };
 
 #endif	/* _APPPOLICY_H_ */

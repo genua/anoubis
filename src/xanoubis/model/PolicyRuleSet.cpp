@@ -156,7 +156,7 @@ void
 PolicyRuleSet::accept(PolicyVisitor& visitor)
 {
 	PolicyList::iterator	i;
-	
+
 	for (i=alfList_.begin(); i != alfList_.end(); ++i) {
 		(*i)->accept(visitor);
 	}
@@ -209,7 +209,19 @@ PolicyRuleSet::insertAlfPolicy(int id)
 void
 PolicyRuleSet::insertSfsPolicy(int id)
 {
+	struct apn_rule	*newSfsRule;
 
+	newSfsRule = (struct apn_rule *)calloc(1, sizeof(struct apn_rule));
+
+	if (newSfsRule != NULL) {
+		newSfsRule->type = APN_SFS;
+		newSfsRule->app = (struct apn_app *)calloc(1,
+		    sizeof(struct apn_app));
+		apn_add_sfsrule(newSfsRule, ruleSet_);
+	}
+
+	clean();
+	create(ruleSet_);
 }
 
 void

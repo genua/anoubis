@@ -52,7 +52,9 @@
 AppPolicy::AppPolicy(struct apn_rule *appRule) : Policy(NULL)
 {
 	struct apn_alfrule	*alfRule;
+	struct apn_sfsrule	*sfsRule;
 	AlfPolicy		*newAlf;
+	SfsPolicy		*newSfs;
 
 	context_ = NULL;
 	appRule_ = appRule;
@@ -70,6 +72,13 @@ AppPolicy::AppPolicy(struct apn_rule *appRule) : Policy(NULL)
 		}
 		break;
 	case APN_SFS:
+		sfsRule = appRule_->rule.sfs;
+		while (sfsRule) {
+			newSfs = new SfsPolicy(this, sfsRule);
+			ruleList_.Append(newSfs);
+			sfsRule = sfsRule->next;
+		}
+		break;
 	case APN_SB:
 	case APN_VS:
 	default:
@@ -167,4 +176,10 @@ AppPolicy::hasContext(void)
 	} else {
 		return (true);
 	}
+}
+
+int
+AppPolicy::getType(void)
+{
+	return(appRule_->type);
 }

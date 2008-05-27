@@ -93,30 +93,35 @@ ModAlfAddPolicyVisitor::visitAppPolicy(AppPolicy *appPolicy)
 	wxTreeCtrl	*tree;
 	wxString	&treeLabel = *(new wxString(wxT("")));
 
-	/* fill list of all rules */
-	idx = ruleListAppend(appPolicy);
-	list = alfPanel_->lst_Rules;
+	if(appPolicy->getType() == APN_ALF) {
+		/* fill list of all rules */
+		idx = ruleListAppend(appPolicy);
+		list = alfPanel_->lst_Rules;
 
-	list->SetItem(idx, MODALF_LIST_COLUMN_APP, appPolicy->getBinaryName());
-	list->SetItem(idx, MODALF_LIST_COLUMN_PROG, appPolicy->getBinaryName());
-	if (appPolicy->hasContext()) {
-		list->SetItem(idx, MODALF_LIST_COLUMN_CTX,
-		    appPolicy->getContext()->getContextName());
-	}
+		list->SetItem(idx, MODALF_LIST_COLUMN_APP,
+		    appPolicy->getBinaryName());
+		list->SetItem(idx, MODALF_LIST_COLUMN_PROG,
+		    appPolicy->getBinaryName());
+		if (appPolicy->hasContext()) {
+			list->SetItem(idx, MODALF_LIST_COLUMN_CTX,
+			    appPolicy->getContext()->getContextName());
+		}
 
-	/* fill tree of application view */
-	tree = alfPanel_->tr_AV_Rules;
+		/* fill tree of application view */
+		tree = alfPanel_->tr_AV_Rules;
 
-	if (tree->GetCount() == 0) {
-		tree->AddRoot(wxT("Applications"));
-	}
-	lastTreeRoot_ = tree->AppendItem(tree->GetRootItem(),
-	    appPolicy->getBinaryName(), -1, -1, new MyTreeItemData(appPolicy));
-	if (appPolicy->hasContext()) {
-		treeLabel += wxT("Context: ");
-		treeLabel += appPolicy->getContext()->getContextName();
-		lastTreeRoot_ = tree->AppendItem(lastTreeRoot_, treeLabel,
-		    -1, -1, new MyTreeItemData(appPolicy));
+		if (tree->GetCount() == 0) {
+			tree->AddRoot(wxT("Applications"));
+		}
+		lastTreeRoot_ = tree->AppendItem(tree->GetRootItem(),
+		appPolicy->getBinaryName(), -1, -1,
+		    new MyTreeItemData(appPolicy));
+		if (appPolicy->hasContext()) {
+			treeLabel += wxT("Context: ");
+			treeLabel += appPolicy->getContext()->getContextName();
+			lastTreeRoot_ = tree->AppendItem(lastTreeRoot_,
+			    treeLabel, -1, -1, new MyTreeItemData(appPolicy));
+		}
 	}
 }
 
