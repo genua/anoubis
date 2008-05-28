@@ -25,6 +25,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <wx/intl.h>
 #include <wx/string.h>
 
 #include "NotifyAnswer.h"
@@ -47,40 +48,40 @@ NotifyAnswer::NotifyAnswer(enum notifyAnswerType type, bool allow, int value,
 wxString
 NotifyAnswer::getAnswer(void)
 {
-	wxString s = wxT("Diese Nachricht wurde ");;
+	wxString s = _("this message was ");;
 
 	switch (type_) {
 	case NOTIFY_ANSWER_ONCE:
 		break;
 	case NOTIFY_ANSWER_PROCEND:
-		s += wxT("bis Prozess Ende ");
+		s += wxT("till process ends ");
 		break;
 	case NOTIFY_ANSWER_TIME:
-		s += wxString::Format(wxT("fuer %d "), timeValue_);
+		s += wxString::Format(_("for %d "), timeValue_);
 		switch (timeUnit_) {
 		case TIMEUNIT_SECOND:
 			if (timeValue_ < 2)
-				s += wxT("Sekunde ");
+				s += _("second ");
 			else
-				s += wxT("Sekunden ");
+				s += _("seconds ");
 			break;
 		case TIMEUNIT_MINUTE:
 			if (timeValue_ < 2)
-				s += wxT("Minute ");
+				s += _("minute ");
 			else
-				s += wxT("Minuten ");
+				s += _("minutes ");
 			break;
 		case TIMEUNIT_HOUR:
 			if (timeValue_ < 2)
-				s += wxT("Stunde ");
+				s += wxT("hour ");
 			else
-				s += wxT("Stunden ");
+				s += wxT("hours ");
 			break;
 		case TIMEUNIT_DAY:
 			if (timeValue_ < 2)
-				s += wxT("Tag ");
+				s += _("day ");
 			else
-				s += wxT("Tage ");
+				s += _("days ");
 			break;
 		}
 		break;
@@ -89,14 +90,14 @@ NotifyAnswer::getAnswer(void)
 	case NOTIFY_ANSWER_NONE:
 		/* FALLTHROUGH*/
 	default:
-		s += wxT("fuer immer ");
+		s += _("forever ");
 		break;
 	}
 
 	if (wasAllowed_) {
-		s += wxT("erlaubt.");
+		s += _("allowed.");
 	} else {
-		s += wxT("verboten.");
+		s += _("forbidden.");
 	}
 
 	return (s);

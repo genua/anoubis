@@ -117,21 +117,21 @@ PolicyRuleSet::create(wxString fileName)
 
 	switch (rc) {
 	case -1:
-		logEntry = wxT("System error during import of policy file ");
-		logEntry += fileName + wxT(" : ");
+		logEntry = _("System error during import of policy file ");
+		logEntry += fileName + _(" : ");
 		logEntry += wxString::From8BitData(strerror(errno));
 		wxGetApp().log(logEntry);
 		wxGetApp().status(logEntry);
 		break;
 	case 0:
-		logEntry = wxT("Successfully imported policy file ");
+		logEntry = _("Successfully imported policy file ");
 		logEntry += fileName;
 		wxGetApp().log(logEntry);
 		wxGetApp().status(logEntry);
 		create(ruleSet);
 		break;
 	case 1:
-		logEntry = wxT("Failed import of policy file ");
+		logEntry = _("Failed import of policy file ");
 		if (TAILQ_EMPTY(&(ruleSet->err_queue))) {
 			logEntry += fileName;
 			wxGetApp().log(logEntry);
@@ -139,13 +139,13 @@ PolicyRuleSet::create(wxString fileName)
 		}
 		wxGetApp().status(logEntry);
 		TAILQ_FOREACH(errMsg, &(ruleSet->err_queue), entry) {
-			logEntry = wxT("Failed import of policy file ");
+			logEntry = _("Failed import of policy file ");
 			logEntry += wxString::From8BitData(errMsg->msg);
 			wxGetApp().log(logEntry);
 		}
 		break;
 	default:
-		logEntry = wxT("Unknown error during import of policy file ");
+		logEntry = _("Unknown error during import of policy file ");
 		logEntry += fileName;
 		wxGetApp().log(logEntry);
 		break;
@@ -178,12 +178,12 @@ PolicyRuleSet::exportToFile(wxString fileName)
 
 	if (exportFile->IsOpened()) {
 		if (apn_print_ruleset(ruleSet_, 0, exportFile->fp()) == 0) {
-			logEntry = wxT("Policies exported successfully to ");
+			logEntry = _("Policies exported successfully to ");
 		}
 		fchmod(fileno(exportFile->fp()), S_IRUSR);
 		exportFile->Close();
 	} else {
-		logEntry = wxT("Could not open file for export: ");
+		logEntry = _("Could not open file for export: ");
 	}         logEntry += fileName;
 	wxGetApp().log(logEntry);         wxGetApp().status(logEntry);
 }

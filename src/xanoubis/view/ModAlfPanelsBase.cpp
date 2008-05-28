@@ -211,7 +211,7 @@ ModAlfOverviewPanelBase::ModAlfOverviewPanelBase( wxWindow* parent, wxWindowID i
 	wxBoxSizer* sz_values;
 	sz_values = new wxBoxSizer( wxVERTICAL );
 	
-	txt_statusValue = new wxStaticText( this, wxID_ANY, _("alles OK"), wxDefaultPosition, wxDefaultSize, 0 );
+	txt_statusValue = new wxStaticText( this, wxID_ANY, _("everything OK"), wxDefaultPosition, wxDefaultSize, 0 );
 	txt_statusValue->Wrap( -1 );
 	sz_values->Add( txt_statusValue, 0, wxALL, 5 );
 	

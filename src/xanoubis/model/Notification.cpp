@@ -81,7 +81,7 @@ Notification::assembleAddress(bool isLocal)
 	const void		*address;
 
 	if (notify_ == NULL) {
-		return (wxT("no notify data available"));
+		return (_("no notify data available"));
 	}
 
 	bzero(ipAddrBuffer, sizeof(ipAddrBuffer));
@@ -107,7 +107,7 @@ Notification::assembleAddress(bool isLocal)
 		}
 		break;
 	default:
-		localAddr = wxT("unknown address type");
+		localAddr = _("unknown address type");
 		return (localAddr);
 		break;
 	}
@@ -137,25 +137,25 @@ Notification::getModule(void)
 	if (module_.IsEmpty() && (notify_ != NULL)) {
 		switch (get_value((notify_->u.notify)->subsystem)) {
 		case ANOUBIS_SOURCE_TEST:
-			module_ = wxT("TEST");
+			module_ = _("TEST");
 			break;
 		case ANOUBIS_SOURCE_ALF:
-			module_ = wxT("ALF");
+			module_ = _("ALF");
 			break;
 		case ANOUBIS_SOURCE_SANDBOX:
-			module_ = wxT("SANDBOX");
+			module_ = _("SANDBOX");
 			break;
 		case ANOUBIS_SOURCE_SFS:
-			module_ = wxT("SFS");
+			module_ = _("SFS");
 			break;
 		case ANOUBIS_SOURCE_PROCESS:
-			module_ = wxT("PROCESS");
+			module_ = _("PROCESS");
 			break;
 		case ANOUBIS_SOURCE_STAT:
-			module_ = wxT("STAT");
+			module_ = _("STAT");
 			break;
 		default:
-			module_ = wxT("(unknown)");
+			module_ = _("(unknown)");
 			break;
 		}
 	}
@@ -223,7 +223,7 @@ Notification::getOperation(void)
 	struct alf_event	*alf;
 
 	if (notify_ == NULL) {
-		return (wxT("no notify data available"));
+		return (_("no notify data available"));
 	}
 
 	alf = (struct alf_event *)(notify_->u.notify)->payload;
@@ -233,36 +233,36 @@ Notification::getOperation(void)
 		module_ = getModule();
 	}
 
-	if (module_.Cmp(wxT("ALF")) == 0) {
+	if (module_.Cmp(_("ALF")) == 0) {
 		switch (alf->op) {
 		case ALF_CONNECT:
-			operation = wxT("connect");
+			operation = _("connect");
 			break;
 		case ALF_ACCEPT:
-			operation = wxT("accept");
+			operation = _("accept");
 			break;
 		case ALF_SENDMSG:
-			operation = wxT("send message");
+			operation = _("send message");
 			break;
 		case ALF_RECVMSG:
-			operation = wxT("receive message");
+			operation = _("receive message");
 			break;
 		default:
-			operation = wxT("unknown");
+			operation = _("unknown");
 			break;
 		}
 	} else if (module_.Cmp(wxT("SFS")) == 0) {
 		if (! (sfs->flags & ANOUBIS_OPEN_FLAG_STRICT)) {
-			operation += wxT("open ");
+			operation += _("open ");
 		}
 		if (sfs->flags & ANOUBIS_OPEN_FLAG_READ) {
-			operation += wxT("read ");
+			operation += _("read ");
 		}
 		if (sfs->flags & ANOUBIS_OPEN_FLAG_WRITE) {
-			operation += wxT("write");
+			operation += _("write");
 		}
 	} else {
-		operation = wxT("unable to extract operation information");
+		operation = _("unable to extract operation information");
 	}
 
 	return (operation);
@@ -276,7 +276,7 @@ Notification::getPath(void)
 	struct alf_event	*alf;
 
 	if (notify_ == NULL) {
-		return (wxT("no notify data available"));
+		return (_("no notify data available"));
 	}
 
 	alf = (struct alf_event *)(notify_->u.notify)->payload;
@@ -287,17 +287,17 @@ Notification::getPath(void)
 	}
 
 	if (module_.Cmp(wxT("ALF")) == 0) {
-		path = wxT("from ");
-		path += localAlfAddress() + wxT("  to  ");
+		path = _("from ");
+		path += localAlfAddress() + _("  to  ");
 		path += remoteAlfAddress();
 	} else if (module_.Cmp(wxT("SFS")) == 0) {
 		if (sfs->flags & ANOUBIS_OPEN_FLAG_PATHHINT) {
 			path = wxString::From8BitData(sfs->pathhint);
 		} else {
-			path = wxT("no path information available");
+			path = _("no path information available");
 		}
 	} else {
-		path = wxT("unable to extract path information");
+		path = _("unable to extract path information");
 	}
 
 	return (path);
@@ -309,7 +309,7 @@ Notification::getOrigin(void)
 	wxString origin;
 
 	if (notify_ == NULL) {
-		return (wxT("no notify data available"));
+		return (_("no notify data available"));
 	}
 
 	origin = wxString::Format(wxT("Pid: %u / Uid: %u"),
@@ -327,7 +327,7 @@ Notification::getCheckSum(void)
 	struct alf_event	*alf;
 
 	if (notify_ == NULL) {
-		return (wxT("no notify data available"));
+		return (_("no notify data available"));
 	}
 
 	alf = (struct alf_event *)(notify_->u.notify)->payload;
@@ -338,7 +338,7 @@ Notification::getCheckSum(void)
 	}
 
 	if (module_.Cmp(wxT("ALF")) == 0) {
-		checksum = wxT("no checksum information available");
+		checksum = _("no checksum information available");
 	} else if (module_.Cmp(wxT("SFS")) == 0) {
 		if (sfs->flags & ANOUBIS_OPEN_FLAG_CSUM) {
 			checksum = wxT("0x");
@@ -347,10 +347,10 @@ Notification::getCheckSum(void)
 				    sfs->csum[i]);
 			}
 		} else {
-			checksum = wxT("no checksum information available");
+			checksum = _("no checksum information available");
 		}
 	} else {
-		checksum = wxT("unable to extract checksum information");
+		checksum = _("unable to extract checksum information");
 	}
 
 	return (checksum);

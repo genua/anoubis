@@ -97,7 +97,7 @@ CommunicatorCtrl::connect(void)
 		rc = com_->Create();
 		if (rc != wxTHREAD_NO_ERROR) {
 			wxGetApp().alert(
-			    wxT("Error: couldn't create communication thread"));
+			    _("Error: couldn't create communication thread"));
 			com_->Delete();
 			return;
 		}
@@ -105,11 +105,11 @@ CommunicatorCtrl::connect(void)
 		rc = com_->Run();
 		if (rc != wxTHREAD_NO_ERROR) {
 			wxGetApp().alert(
-			    wxT("Error: couldn't start communication thread"));
+			    _("Error: couldn't start communication thread"));
 			com_->Delete();
 			return;
 		}
-		wxGetApp().status(wxT("connecting to ") + socketPath_
+		wxGetApp().status(_("connecting to ") + socketPath_
 		    + wxT(" ..."));
 	}
 }
@@ -125,7 +125,7 @@ CommunicatorCtrl::disconnect(void)
 			wxGetApp().alert(
 			    wxT("Error: no proper shutdown of communication"));
 		}
-		wxGetApp().status(wxT("disconnecting from ") + socketPath_
+		wxGetApp().status(_("disconnecting from ") + socketPath_
 		    + wxT(" ..."));
 	}
 }
@@ -275,23 +275,23 @@ CommunicatorCtrl::OnConnection(wxCommandEvent& event)
 	switch(connectionState_) {
 	case CONNECTION_CONNECTED:
 		host = new wxString(wxT("localhost"));
-		logMessage = wxT("Connection established with localhost:")
+		logMessage = _("Connection established with localhost:")
 		    + socketPath_;
 		wxGetApp().log(logMessage);
 		break;
 	case CONNECTION_DISCONNECTED:
-		host = new wxString(wxT("none"));
-		logMessage = wxT("Disconnected from localhost");
+		host = new wxString(_("none"));
+		logMessage = _("Disconnected from localhost");
 		wxGetApp().log(logMessage);
 		break;
 	case CONNECTION_FAILED:
-		host = new wxString(wxT("none"));
-		logMessage = wxT("Connection to localhost failed!");
+		host = new wxString(_("none"));
+		logMessage = _("Connection to localhost failed!");
 		wxGetApp().alert(logMessage);
 		break;
 	case CONNECTION_RXTX_ERROR:
-		host = new wxString(wxT("none"));
-		logMessage = wxT("Communication error. Disconnected!");
+		host = new wxString(_("none"));
+		logMessage = _("Communication error. Disconnected!");
 		wxGetApp().alert(logMessage);
 		break;
 	}
