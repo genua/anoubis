@@ -32,7 +32,7 @@
 
 enum notifyAnswerType {
 	NOTIFY_ANSWER_NONE = 0,
-	NOTIFY_ANSWER_COUNT,
+	NOTIFY_ANSWER_ONCE,
 	NOTIFY_ANSWER_PROCEND,
 	NOTIFY_ANSWER_TIME,
 	NOTIFY_ANSWER_FOREVER
@@ -49,13 +49,11 @@ class NotifyAnswer {
 	private:
 		enum notifyAnswerType	type_;
 		bool			wasAllowed_;
-		int			count_;
 		int			timeValue_;
 		enum timeUnit		timeUnit_;
 
 	public:
 		NotifyAnswer(enum notifyAnswerType, bool);
-		NotifyAnswer(enum notifyAnswerType, bool, int);
 		NotifyAnswer(enum notifyAnswerType, bool, int, enum timeUnit);
 
 		wxString	getAnswer(void);

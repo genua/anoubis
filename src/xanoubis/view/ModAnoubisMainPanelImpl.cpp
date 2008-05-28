@@ -299,8 +299,8 @@ ModAnoubisMainPanelImpl::answer(bool permission)
 		module = (ModAnoubis *)(wxGetApp().getModule(ANOUBIS));
 
 		if (rb_number->GetValue()) {
-			answer = new NotifyAnswer(NOTIFY_ANSWER_COUNT,
-			    permission, sc_number->GetValue());
+			answer = new NotifyAnswer(NOTIFY_ANSWER_ONCE,
+			    permission);
 		} else if (rb_procend->GetValue()) {
 			answer = new NotifyAnswer(NOTIFY_ANSWER_PROCEND,
 			    permission);

@@ -35,13 +35,6 @@ NotifyAnswer::NotifyAnswer(enum notifyAnswerType type, bool allow)
 	wasAllowed_ = allow;
 }
 
-NotifyAnswer::NotifyAnswer(enum notifyAnswerType type, bool allow, int value)
-{
-	type_ = type;
-	wasAllowed_ = allow;
-	count_ = value;
-}
-
 NotifyAnswer::NotifyAnswer(enum notifyAnswerType type, bool allow, int value,
     enum timeUnit unit)
 {
@@ -57,8 +50,7 @@ NotifyAnswer::getAnswer(void)
 	wxString s = wxT("Diese Nachricht wurde ");;
 
 	switch (type_) {
-	case NOTIFY_ANSWER_COUNT:
-		s += wxString::Format(wxT("%d mal "), count_);
+	case NOTIFY_ANSWER_ONCE:
 		break;
 	case NOTIFY_ANSWER_PROCEND:
 		s += wxT("bis Prozess Ende ");
