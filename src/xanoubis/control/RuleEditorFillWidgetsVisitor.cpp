@@ -75,6 +75,10 @@ RuleEditorFillWidgetsVisitor::clear(void)
 	ruleEditor_->alfDstPortText->Disable();
 	ruleEditor_->alfDstPortComboBox->Disable();
 
+	ruleEditor_->alfStateTimeoutText->Disable();
+	ruleEditor_->alfStateTimeoutSpinCtrl->Disable();
+	ruleEditor_->alfStateTimeoutSpinCtrl->SetValue(0);
+
 	for (AddrLineList::iterator i=ruleEditor_->extraSrcAddrList.begin();
 	    i != ruleEditor_->extraSrcAddrList.end();
 	    i++) {
@@ -382,6 +386,10 @@ RuleEditorFillWidgetsVisitor::visitAlfPolicy(AlfPolicy *alfPolicy)
 		showDstAddr(alfPolicy->getToHostList());
 		showSrcPort(alfPolicy->getFromPortName());
 		showDstPort(alfPolicy->getToPortName());
+		ruleEditor_->alfStateTimeoutText->Enable();
+		ruleEditor_->alfStateTimeoutSpinCtrl->Enable();
+		ruleEditor_->alfStateTimeoutSpinCtrl->SetValue(
+		    alfPolicy->getStateTimeout());
 		break;
 	case APN_ALF_CAPABILITY:
 		ruleEditor_->alfCapRadioButton->SetValue(true);
@@ -396,7 +404,7 @@ RuleEditorFillWidgetsVisitor::visitAlfPolicy(AlfPolicy *alfPolicy)
 		break;
 	default:
 		break;
-	}                                             
+	}
 }
 
 void

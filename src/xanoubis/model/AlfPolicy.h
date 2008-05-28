@@ -110,6 +110,9 @@ class AlfPolicy : public Policy
 		wxArrayString	getToPortList(void);
 		wxString	getToPortName(void);
 
+		void		setStateTimeout(int);
+		wxString	getStateTimeout(void);
+
 		/* valid for type == APN_ALF_CAPABILITY */
 		void		setCapType(int);
 		int		getCapTypeNo(void);

@@ -103,6 +103,8 @@ RuleEditorAddPolicyVisitor::visitAlfPolicy(AlfPolicy *alfPolicy)
 		    alfPolicy->getToHostName());
 		list->SetItem(idx, RULEDITOR_LIST_COLUMN_TPORT,
 		    alfPolicy->getToPortName());
+		list->SetItem(idx, RULEDITOR_LIST_COLUMN_STATETIMEOUT,
+		    alfPolicy->getStateTimeout());
 		break;
 	case APN_ALF_CAPABILITY:
 		list->SetItem(idx, RULEDITOR_LIST_COLUMN_TYPE,

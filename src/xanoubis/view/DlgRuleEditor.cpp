@@ -189,6 +189,10 @@ DlgRuleEditor::DlgRuleEditor(wxWindow* parent) : DlgRuleEditorBase(parent)
 	columnNames_[RULEDITOR_LIST_COLUMN_TPORT] = _("To Port");
 	columnWidths_[RULEDITOR_LIST_COLUMN_TPORT] = wxLIST_AUTOSIZE_USEHEADER;
 
+	columnNames_[RULEDITOR_LIST_COLUMN_STATETIMEOUT] = _("State Timeout");
+	columnWidths_[RULEDITOR_LIST_COLUMN_STATETIMEOUT] =
+	    wxLIST_AUTOSIZE_USEHEADER;
+
 	for (int i=0; i<RULEDITOR_LIST_COLUMN_EOL; i++) {
 		ruleListCtrl->InsertColumn(i, columnNames_[i],
 		    wxLIST_FORMAT_LEFT, columnWidths_[i]);
@@ -576,4 +580,19 @@ DlgRuleEditor::OnCreationChoice(wxCommandEvent& event)
 
 	fprintf(stderr, "DlgRuleEditor::OnCreationChoice %d\n", event.GetSelection());
 	loadRuleSet(ruleSet_);
+}
+
+void
+DlgRuleEditor::OnAlfStateTimeoutChange(wxSpinEvent& event)
+{
+	AlfPolicy *policy;
+
+	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedId_);
+	if (!policy) {
+		return;
+	}
+
+	policy->setStateTimeout(event.GetPosition());
+	ruleListCtrl->SetItem(selectedId_, RULEDITOR_LIST_COLUMN_STATETIMEOUT,
+	    policy->getStateTimeout());
 }

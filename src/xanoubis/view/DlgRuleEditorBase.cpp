@@ -1,3 +1,29 @@
+/*
+ * Copyright (c) 2008 GeNUA mbH <info@genua.de>
+ *
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
+ * TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 ///////////////////////////////////////////////////////////////////////////
 // C++ code generated with wxFormBuilder (version Sep 28 2007)
 // http://www.wxformbuilder.org/
@@ -248,7 +274,7 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	commonNbPanel->SetSizer( commonMainSizer );
 	commonNbPanel->Layout();
 	commonMainSizer->Fit( commonNbPanel );
-	ruleEditNotebook->AddPage( commonNbPanel, _("Common"), true );
+	ruleEditNotebook->AddPage( commonNbPanel, _("Common"), false );
 	applicationNbPanel = new wxScrolledWindow( ruleEditNotebook, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxVSCROLL );
 	applicationNbPanel->SetScrollRate( 5, 5 );
 	wxFlexGridSizer* appMainPanelSizer;
@@ -519,6 +545,13 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	
 	alfConnectAddrSizer->Add( 0, 0, 1, wxEXPAND, 5 );
 	
+	alfStateTimeoutText = new wxStaticText( alfNbPanel, wxID_ANY, _("State timeout:"), wxDefaultPosition, wxDefaultSize, 0 );
+	alfStateTimeoutText->Wrap( -1 );
+	alfConnectAddrSizer->Add( alfStateTimeoutText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	
+	alfStateTimeoutSpinCtrl = new wxSpinCtrl( alfNbPanel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 604800, 0 );
+	alfConnectAddrSizer->Add( alfStateTimeoutSpinCtrl, 0, wxALL|wxEXPAND|wxALIGN_CENTER_VERTICAL, 5 );
+	
 	alfConnectionBox->Add( alfConnectAddrSizer, 1, wxEXPAND, 5 );
 	
 	alfPanelMainSizer->Add( alfConnectionBox, 1, wxEXPAND, 5 );
@@ -526,7 +559,7 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	alfNbPanel->SetSizer( alfPanelMainSizer );
 	alfNbPanel->Layout();
 	alfPanelMainSizer->Fit( alfNbPanel );
-	ruleEditNotebook->AddPage( alfNbPanel, _("ALF"), false );
+	ruleEditNotebook->AddPage( alfNbPanel, _("ALF"), true );
 	sfsNbPanel = new wxScrolledWindow( ruleEditNotebook, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxVSCROLL );
 	sfsNbPanel->SetScrollRate( 5, 5 );
 	wxFlexGridSizer* sfsSizer;
@@ -640,6 +673,7 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	alfAcceptRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorBase::OnAlfAcceptRadioButton ), NULL, this );
 	alfConnectRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorBase::OnAlfConnectRadioButton ), NULL, this );
 	alfSrcAddrAddButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::OnSrcAddrAddButton ), NULL, this );
+	alfStateTimeoutSpinCtrl->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( DlgRuleEditorBase::OnAlfStateTimeoutChange ), NULL, this );
 	sfsBinaryModifyButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::OnSfsBinaryModifyButton ), NULL, this );
 	sfsUpdateChkSumButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::OnSfsUpdateChkSumButton ), NULL, this );
 }

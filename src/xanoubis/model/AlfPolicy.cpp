@@ -639,6 +639,29 @@ AlfPolicy::getToPortName(void)
 }
 
 void
+AlfPolicy::setStateTimeout(int timeout)
+{
+	if (alfRule_->type == APN_ALF_FILTER) {
+		alfRule_->rule.afilt.filtspec.statetimeout = timeout;
+	}
+}
+
+wxString
+AlfPolicy::getStateTimeout(void)
+{
+	wxString result;
+	int timeout = -1;
+
+	if (alfRule_->type == APN_ALF_FILTER) {
+		timeout = alfRule_->rule.afilt.filtspec.statetimeout;
+	}
+
+	result.Printf(wxT("%d"), timeout);
+
+	return (result);
+}
+
+void
 AlfPolicy::setCapType(int capability)
 {
 	if (alfRule_->type == APN_ALF_CAPABILITY) {

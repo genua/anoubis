@@ -60,6 +60,7 @@ enum ruleEditorListColumns {
 	RULEDITOR_LIST_COLUMN_FPORT,
 	RULEDITOR_LIST_COLUMN_THOST,
 	RULEDITOR_LIST_COLUMN_TPORT,
+	RULEDITOR_LIST_COLUMN_STATETIMEOUT,
 	RULEDITOR_LIST_COLUMN_EOL
 };
 
@@ -133,6 +134,8 @@ class DlgRuleEditor : public DlgRuleEditorBase
 		void loadRuleSet(PolicyRuleSet*);
 		void OnCreationChoice(wxCommandEvent&);
 		void OnSrcAddrAddButton(wxCommandEvent&);
+
+		void OnAlfStateTimeoutChange(wxSpinEvent&);
 
 	public:
 		DlgRuleEditor(wxWindow *);
