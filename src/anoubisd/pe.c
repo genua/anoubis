@@ -351,12 +351,27 @@ pe_update_ctx(struct pe_proc *pproc, struct pe_context **newctx, int prio,
 	if ((newuser = pe_get_user(pproc->uid, newpdb)) == NULL)
 		newuser = pe_get_user(-1, newpdb);
 
+	context = NULL;
 	if (newuser) {
-		context = pe_search_ctx(newuser->prio[prio], pproc->csum,
-		    pproc->pathhint);
-	} else {
-		context = NULL;
+		u_int8_t		*csum = NULL;
+		char			*pathhint = NULL;
+		struct apn_rule		*oldrule;
+		struct apn_app		*oldapp;
+
+		if (pproc->context[prio] == NULL)
+			goto out;
+		oldrule = pproc->context[prio]->rule;
+		if (!oldrule)
+			goto out;
+		oldapp = oldrule->app;
+		if (oldapp) {
+			if (oldapp->hashtype == APN_HASH_SHA256)
+				csum = oldapp->hashvalue;
+			pathhint = oldapp->name;
+		}
+		context = pe_search_ctx(newuser->prio[prio], csum, pathhint);
 	}
+out:
 
 	DEBUG(DBG_PE_POLICY, "pe_update_ctx: context %p rule %p ctx %p",
 	    context, context ? context->rule : NULL, context ? context->ctx :

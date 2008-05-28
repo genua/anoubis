@@ -325,7 +325,7 @@ END_TEST
 
 START_TEST(tc_Copy1)
 {
-	char			 fakecs[APN_HASH_SHA256_LEN];
+	u_int8_t		 fakecs[APN_HASH_SHA256_LEN];
 	struct apn_alfrule	*rule;
 	struct apn_ruleset	*rs;
 	char			*file;

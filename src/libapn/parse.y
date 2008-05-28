@@ -96,7 +96,7 @@ int		 lungetc(int);
 int		 findeol(void);
 int		 varset(const char *, void *, size_t, int);
 struct var	*varget(const char *);
-int		 str2hash(const char *, char *, size_t);
+int		 str2hash(const char *, u_int8_t *, size_t);
 int		 validate_hash(int, const char *);
 int		 host(const char *, struct apn_addr *);
 int		 host_v4(const char *, struct apn_addr *);
@@ -129,7 +129,7 @@ typedef struct {
 		int			 log;
 		struct {
 			int		 type;
-			char		 value[MAX_APN_HASH_LEN];
+			u_int8_t	 value[MAX_APN_HASH_LEN];
 		} hashspec;
 		struct {
 			struct apn_host	*fromhost;
@@ -1455,7 +1455,7 @@ varget(const char *name)
 }
 
 int
-str2hash(const char *s, char *dest, size_t max_len)
+str2hash(const char *s, u_int8_t *dest, size_t max_len)
 {
 	unsigned	i;
 	char		t[3];

@@ -57,7 +57,7 @@ extern int	parse_rules_iovec(const char *, struct iovec *, int count,
 static int	apn_print_app(struct apn_app *, FILE *);
 static int	apn_print_alfrule(struct apn_alfrule *, int, FILE *);
 static int	apn_print_sfsrule(struct apn_sfsrule *, int, FILE *);
-static void	apn_print_hash(char *, int, FILE *);
+static void	apn_print_hash(u_int8_t *, int, FILE *);
 static int	apn_print_afiltrule(struct apn_afiltrule *, FILE *);
 static int	apn_print_host(struct apn_host *, FILE *);
 static int	apn_print_address(struct apn_addr *, FILE *);
@@ -95,7 +95,7 @@ static int	 apn_copy_apndefault(struct apn_default *,
 static struct apn_host *apn_copy_hosts(struct apn_host *);
 static struct apn_port *apn_copy_ports(struct apn_port *);
 static int	 apn_set_application(struct apn_rule *, const char *,
-		     const char *, int);
+		     const u_int8_t *, int);
 
 /*
  * Parse the specified file or iovec and return the ruleset, which is allocated
@@ -296,7 +296,7 @@ apn_insert_alfrule(struct apn_ruleset *rs, struct apn_alfrule *arule, int id)
  */
 int
 apn_copyinsert(struct apn_ruleset *rs, struct apn_alfrule *arule, int id,
-    const char *filename, const char *csum, int type)
+    const char *filename, const u_int8_t *csum, int type)
 {
 	struct apnrule_queue	*queue;
 	struct apn_alfrule	*hp, *previous;
@@ -913,7 +913,7 @@ apn_print_proto(int proto, FILE *file)
 }
 
 static void
-apn_print_hash(char *hash, int len, FILE *file)
+apn_print_hash(u_int8_t *hash, int len, FILE *file)
 {
 	int	i;
 
@@ -1416,7 +1416,7 @@ errout:
 
 static int
 apn_set_application(struct apn_rule *rule, const char *filename,
-    const char *csum, int type)
+    const u_int8_t *csum, int type)
 {
 	struct apn_app	*app;
 	size_t		 len;
