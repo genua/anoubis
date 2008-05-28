@@ -226,16 +226,16 @@ As an example, consider the following rule set with a single application rule:
 .Pp
 Calling
 .Fn apn_copyinsert
-with a new rule, some new application and the ID 0 will produce the
+with a new rule, some new application and the ID 1 will produce the
 following rule set:
 .Bd -literal
-5: <some new application> {
-3:	<new rule>
-4:	default ask
+6: <some new application> {
+4:	<new rule>
+5:	default ask
 }
-2: foobar 0xdeadbeef {
-0:	default ask
-1:	context new any
+3: foobar 0xdeadbeef {
+1:	default ask
+2:	context new any
 }
 .Ed
 .Pp

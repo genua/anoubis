@@ -233,7 +233,7 @@ apn_insert(struct apn_ruleset *rs, struct apn_rule *rule, int id)
 	struct apnrule_queue	*queue;
 	struct apn_rule		*p;
 
-	if (rs == NULL || rule == NULL || id < 0 || rs->maxid == INT_MAX)
+	if (rs == NULL || rule == NULL || id < 1 || rs->maxid == INT_MAX)
 		return (1);
 
 	switch (rule->type) {
@@ -273,7 +273,7 @@ apn_insert_alfrule(struct apn_ruleset *rs, struct apn_alfrule *arule, int id)
 	struct apnrule_queue	*queue;
 	struct apn_alfrule	*p;
 
-	if (rs == NULL || arule == NULL || id < 0 || rs->maxid == INT_MAX)
+	if (rs == NULL || arule == NULL || id < 1 || rs->maxid == INT_MAX)
 		return (1);
 
 	queue = &rs->alf_queue;
@@ -302,7 +302,7 @@ apn_copyinsert(struct apn_ruleset *rs, struct apn_alfrule *arule, int id,
 	struct apn_alfrule	*hp, *previous;
 	struct apn_rule		*rule, *newrule;
 
-	if (rs == NULL || arule == NULL || id < 0 || rs->maxid == INT_MAX)
+	if (rs == NULL || arule == NULL || id < 1 || rs->maxid == INT_MAX)
 		return (1);
 
 	/* find app_rule that includes rule with ID id */

@@ -101,11 +101,11 @@ generate_file(void)
 	fprintf(sfp, "context new any\n");
 	fprintf(sfp, "allow connect tcp from any to 1.2.3.4 port www\n");
 	fprintf(sfp, "}\n");
-	fprintf(sfp, "/usr/bin/ssh \\\n");	/* This rule has ID 24 */
+	fprintf(sfp, "/usr/bin/ssh \\\n");	/* This rule has ID 25 */
 	fprintf(sfp, "0123456789abcdef0123456789abcdef0123456789abcdef"
 	    "0123456789abcdef {\n");
-	fprintf(sfp, "default deny\n");		/* This is rule 22 */
-	fprintf(sfp, "allow connect alert tcp all\n"); /* This is rule 23 */
+	fprintf(sfp, "default deny\n");		/* This is rule 23 */
+	fprintf(sfp, "allow connect alert tcp all\n"); /* This is rule 24 */
 	fprintf(sfp, "}\n");
 	fprintf(sfp, "/sbin/dhclient \\\n");
 	fprintf(sfp, "0123456789abcdef0123456789abcdef0123456789abcdef"
@@ -202,21 +202,21 @@ START_TEST(tc_Insert1)
 		apn_print_errors(rs, stderr);
 	fail_if(ret != 0, "Printing failed");
 
-	fail_if(rs->maxid != 32, "Maximum ID in ruleset is %d, but should be"
-	    " 32!", rs->maxid);
+	fail_if(rs->maxid != 33, "Maximum ID in ruleset is %d, but should be"
+	    " 33!", rs->maxid);
 
 	rule = generate_rule();
 	fail_if(rule == NULL, "generate_rule() failed");
 
 	/*
-	 * Put in before application rule with ID 24, see comment in
-	 * generate_file() above! The inserted rule must have the new ID 33.
+	 * Put in before application rule with ID 25, see comment in
+	 * generate_file() above! The inserted rule must have the new ID 34.
 	 */
-	ret = apn_insert(rs, rule, 24);
+	ret = apn_insert(rs, rule, 25);
 	if (ret != 0)
 		apn_print_errors(rs, stderr);
 	fail_if(ret != 0, "Insert failed");
-	fail_if(rule->id != 33, "ID update failed, got %d expected 33",
+	fail_if(rule->id != 34, "ID update failed, got %d expected 34",
 	    rule->id);
 
 	/*
@@ -232,15 +232,15 @@ START_TEST(tc_Insert1)
 	/* Try to put in before application rule with bogus ID 1234 */
 	ret = apn_insert(rs, rule, 1234);
 	fail_if(ret != 1, "Insert did not fail, but should have!");
-	fail_if(rule->id != 33, "Rule ID was modified!");
+	fail_if(rule->id != 34, "Rule ID was modified!");
 
 	/*
-	 * Try to put in before rule with the ID 22, which is not an
+	 * Try to put in before rule with the ID 23, which is not an
 	 * application rule.
 	 */
-	ret = apn_insert(rs, rule, 22);
+	ret = apn_insert(rs, rule, 23);
 	fail_if(ret != 1, "Insert did not fail, but should have!");
-	fail_if(rule->id != 33, "Rule ID was modified!");
+	fail_if(rule->id != 34, "Rule ID was modified!");
 
 	apn_free_ruleset(rs);
 }
@@ -270,9 +270,24 @@ START_TEST(tc_Insert2)
 	fail_if(ret != 0, "Printing failed");
 
 	/*
+	 * Put in before alf filter rule with ID 24, see comment in
+	 * generate_file() above!
+	 * Rule 24 is in the middle of a rule chain.
+	 */
+	rule = generate_alfrule();
+	fail_if(rule == NULL, "generate_alfrule() failed");
+
+	ret = apn_insert_alfrule(rs, rule, 24);
+	if (ret != 0)
+		apn_print_errors(rs, stderr);
+	fail_if(ret != 0, "Insert failed");
+	fail_if(rule->id != 33, "ID update failed, got %d expected 33",
+	    rule->id);
+
+	/*
 	 * Put in before alf filter rule with ID 23, see comment in
 	 * generate_file() above!
-	 * Rule 23 is in the middle of a rule chain.
+	 * Rule 23 is the head of a rule chain.
 	 */
 	rule = generate_alfrule();
 	fail_if(rule == NULL, "generate_alfrule() failed");
@@ -281,22 +296,7 @@ START_TEST(tc_Insert2)
 	if (ret != 0)
 		apn_print_errors(rs, stderr);
 	fail_if(ret != 0, "Insert failed");
-	fail_if(rule->id != 32, "ID update failed, got %d expected 32",
-	    rule->id);
-
-	/*
-	 * Put in before alf filter rule with ID 22, see comment in
-	 * generate_file() above!
-	 * Rule 22 is the head of a rule chain.
-	 */
-	rule = generate_alfrule();
-	fail_if(rule == NULL, "generate_alfrule() failed");
-
-	ret = apn_insert_alfrule(rs, rule, 22);
-	if (ret != 0)
-		apn_print_errors(rs, stderr);
-	fail_if(ret != 0, "Insert failed");
-	fail_if(rule->id != 33, "ID update failed, got %d expected 33",
+	fail_if(rule->id != 34, "ID update failed, got %d expected 34",
 	    rule->id);
 
 	/*
@@ -312,12 +312,12 @@ START_TEST(tc_Insert2)
 	/* Try to put in before alf rule with bogus ID 1234 */
 	ret = apn_insert_alfrule(rs, rule, 1234);
 	fail_if(ret != 1, "Insert did not fail, but should have!");
-	fail_if(rule->id != 33, "Rule ID was modified!");
+	fail_if(rule->id != 34, "Rule ID was modified!");
 
-	/* Try to put in before application rule 24 */
-	ret = apn_insert_alfrule(rs, rule, 24);
+	/* Try to put in before application rule 25 */
+	ret = apn_insert_alfrule(rs, rule, 25);
 	fail_if(ret != 1, "Insert did not fail, but should have!");
-	fail_if(rule->id != 33, "Rule ID was modified!");
+	fail_if(rule->id != 34, "Rule ID was modified!");
 
 	apn_free_ruleset(rs);
 }
@@ -350,39 +350,39 @@ START_TEST(tc_Copy1)
 
 	/*
 	 * First, insert+copy for a rule in the first application rule.
-	 * The application rule has ID 9, the alf rule we want to be
-	 * inserted before has ID 6.
+	 * The application rule has ID 10, the alf rule we want to be
+	 * inserted before has ID 7.
 	 */
 	rule = generate_alfrule();
 	fail_if(rule == NULL, "generate_rule() failed");
 
 	memset(fakecs, 0xaa, sizeof(fakecs));
-	ret = apn_copyinsert(rs, rule, 6, "/bin/foobar", fakecs,
+	ret = apn_copyinsert(rs, rule, 7, "/bin/foobar", fakecs,
 	    APN_HASH_SHA256);
 	if (ret != 0)
 		apn_print_errors(rs, stderr);
 	fail_if(ret != 0, "Copy + insert failed");
-	fail_if(rule->id != 38, "Rule should have new id 38, but has %d",
+	fail_if(rule->id != 39, "Rule should have new id 39, but has %d",
 	    rule->id);
-	fail_if(rs->maxid != 42, "Wrong maxid, is %d should be 42", rs->maxid);
+	fail_if(rs->maxid != 43, "Wrong maxid, is %d should be 43", rs->maxid);
 
 	/*
 	 * Second, insert+copy for a default rule.
-	 * The application rule has ID 13, the alf rule we want to be
-	 * inserted before has ID 10.
+	 * The application rule has ID 14, the alf rule we want to be
+	 * inserted before has ID 11.
 	 */
 	rule = generate_alfrule();
 	fail_if(rule == NULL, "generate_rule() failed");
 
 	memset(fakecs, 0xaa, sizeof(fakecs));
-	ret = apn_copyinsert(rs, rule, 10, "/bin/foobar", fakecs,
+	ret = apn_copyinsert(rs, rule, 11, "/bin/foobar", fakecs,
 	    APN_HASH_SHA256);
 	if (ret != 0)
 		apn_print_errors(rs, stderr);
 	fail_if(ret != 0, "Copy + insert failed");
-	fail_if(rule->id != 42, "Rule should have new id 42, but has %d",
+	fail_if(rule->id != 43, "Rule should have new id 43, but has %d",
 	    rule->id);
-	fail_if(rs->maxid != 46, "Wrong maxid, is %d should be 46", rs->maxid);
+	fail_if(rs->maxid != 47, "Wrong maxid, is %d should be 47", rs->maxid);
 
 	/*
 	 * Dump the new rule set, so the perl wrapper can check the

@@ -114,7 +114,7 @@ void		 clearalfrule(struct apn_alfrule *);
 void		 clearsfsrule(struct apn_sfsrule *);
 
 static struct apn_ruleset	*apnrsp = NULL;
-static int			 counter = 0;
+static int			 counter = 1;
 
 typedef struct {
 	union {
@@ -1385,7 +1385,7 @@ __parse_rules_common(struct apn_ruleset *apnrspx)
 	int errors = 0;
 
 	apnrsp = apnrspx;
-	counter = 0;
+	counter = 1;
 
 	yyparse();
 	errors = file->errors;
