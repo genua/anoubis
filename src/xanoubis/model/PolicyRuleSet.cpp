@@ -199,7 +199,8 @@ PolicyRuleSet::insertAlfPolicy(int id)
 		newAlfRule->type = APN_ALF;
 		newAlfRule->app = (struct apn_app *)calloc(1,
 		    sizeof(struct apn_app));
-		apn_add_alfrule(newAlfRule, ruleSet_);
+		/* XXX CEH/CH: This call can fail. Deal with errors! */
+		apn_add_alfrule(newAlfRule, ruleSet_, NULL, 0);
 	}
 
 	clean();

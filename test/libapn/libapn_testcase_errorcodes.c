@@ -100,13 +100,13 @@ START_TEST(tc_Invalidparameters)
 	bzero(&rule, sizeof(rule));
 	bzero(&rs, sizeof(rs));
 
-	ret = apn_add_alfrule(NULL, NULL);
+	ret = apn_add_alfrule(NULL, NULL, NULL, 0);
 	fail_if(ret != 1, "apn_add_alfrule(NULL, NULL) did not return "
 	    "required value \"1\"");
-	ret = apn_add_alfrule(NULL, &rs);
+	ret = apn_add_alfrule(NULL, &rs, NULL, 0);
 	fail_if(ret != 1, "apn_add_alfrule(NULL, &rs) did not return "
 	    "required value \"1\"");
-	ret = apn_add_alfrule(&rule, NULL);
+	ret = apn_add_alfrule(&rule, NULL, NULL, 0);
 	fail_if(ret != 1, "apn_add_alfrule(&rule, NULL) did not return "
 	    "required value \"1\"");
 

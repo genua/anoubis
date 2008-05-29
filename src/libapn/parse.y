@@ -322,7 +322,10 @@ alfruleset	: apps optnl '{' optnl alfrule_l '}' nl {
 			rule->type = APN_ALF;
 			rule->id = counter++;
 
-			if (apn_add_alfrule(rule, apnrsp) != 0) {
+			if (apn_add_alfrule(rule, apnrsp, file->name,
+			    yylval.lineno) != 0) {
+				/* Account for errors in apn_add_alfrule */
+				file->errors++;
 				clearapp($1);
 				clearalfrule($5);
 				free(rule);
@@ -938,33 +941,14 @@ struct keywords {
 int
 yyerror(const char *fmt, ...)
 {
-	struct apn_errmsg	*msg;
 	va_list			 ap;
-	char			*s1, *s2;
-
-	if ((msg = calloc(1, sizeof(struct apn_errmsg))) == NULL)
-		return (-1);
+	int ret;
 
 	file->errors++;
-
 	va_start(ap, fmt);
-	if (vasprintf(&s1, fmt, ap) == -1) {
-		free(msg);
-		return (-1);
-	}
+	ret = apn_verror(apnrsp, file->name, yylval.lineno, fmt, ap);
 	va_end(ap);
-
-	if (asprintf(&s2, "%s: %d: %s", file->name, yylval.lineno, s1) == -1) {
-		free(msg);
-		free(s1);
-		return (-1);
-	}
-	free(s1);
-
-	msg->msg = s2;
-	TAILQ_INSERT_TAIL(&apnrsp->err_queue, msg, entry);
-
-	return (0);
+	return ret;
 }
 
 int

@@ -28,6 +28,7 @@
 #ifndef _APN_H_
 #define _APN_H_
 
+#include <stdarg.h>
 #include <sys/cdefs.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -247,10 +248,15 @@ __BEGIN_DECLS
 int	apn_parse(const char *, struct apn_ruleset **, int);
 int	apn_parse_iovec(const char *filename, struct iovec *vec, int count,
 	    struct apn_ruleset **rsp, int flags);
-int	apn_add_alfrule(struct apn_rule *, struct apn_ruleset *);
+int	apn_add_alfrule(struct apn_rule *, struct apn_ruleset *,
+	    const char *, int lineno);
 int	apn_add_sfsrule(struct apn_rule *, struct apn_ruleset *);
 int	apn_print_rule(struct apn_rule *, int, FILE *);
 int	apn_print_ruleset(struct apn_ruleset *, int, FILE *);
+int	apn_error(struct apn_ruleset *, const char *, int lineno,
+	    const char *fmt, ...);
+int	apn_verror(struct apn_ruleset *, const char *, int lineno,
+	    const char *, va_list);
 void	apn_print_errors(struct apn_ruleset *, FILE *);
 int	apn_insert(struct apn_ruleset *, struct apn_rule *, int);
 int	apn_insert_alfrule(struct apn_ruleset *, struct apn_alfrule *, int);

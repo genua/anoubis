@@ -146,7 +146,8 @@ apn_parse(const char *filename, struct apn_ruleset **rsp, int flags)
 	return (ret);
 }
 
-int apn_parse_iovec(const char *filename, struct iovec *vec, int count,
+int
+apn_parse_iovec(const char *filename, struct iovec *vec, int count,
     struct apn_ruleset **rsp, int flags)
 {
 	int			 ret;
@@ -164,6 +165,22 @@ int apn_parse_iovec(const char *filename, struct iovec *vec, int count,
 	return ret;
 }
 
+static int
+apn_hash_equal(int type, const u_int8_t *h1, const u_int8_t *h2)
+{
+	int len;
+	switch(type) {
+	case APN_HASH_NONE:
+		return 1;
+	case APN_HASH_SHA256:
+		len = APN_HASH_SHA256_LEN;
+		break;
+	default:
+		return 0;
+	}
+	return (memcmp(h1, h2, len) == 0);
+}
+
 /*
  * Add a rule or a list of rules to the ALF ruleset.
  *
@@ -175,12 +192,33 @@ int apn_parse_iovec(const char *filename, struct iovec *vec, int count,
  * In case of an error, no rules are added, thus caller can free them safely.
  */
 int
-apn_add_alfrule(struct apn_rule *rule, struct apn_ruleset *ruleset)
+apn_add_alfrule(struct apn_rule *rule, struct apn_ruleset *ruleset,
+    const char * filename, int lineno)
 {
 	int ret = 0;
+	struct apn_rule *tmp;
 
 	if (ruleset == NULL || rule == NULL)
 		return (1);
+
+	/*
+	 * Issue an error if the ruleset appears after an any rule or
+	 * another application rule for the same application.
+	 */
+	TAILQ_FOREACH(tmp, &ruleset->alf_queue, entry) {
+		if (tmp->app == NULL)
+			goto duplicate;
+		if (rule->app == NULL)
+			continue;
+		if (strcmp(rule->app->name, tmp->app->name) != 0)
+			continue;
+		if (rule->app->hashtype != tmp->app->hashtype)
+			continue;
+		if (!apn_hash_equal(rule->app->hashtype, rule->app->hashvalue,
+		    tmp->app->hashvalue))
+			continue;
+		goto duplicate;
+	}
 
 	TAILQ_INSERT_TAIL(&ruleset->alf_queue, rule, entry);
 
@@ -188,6 +226,10 @@ apn_add_alfrule(struct apn_rule *rule, struct apn_ruleset *ruleset)
 		ret = apn_print_rule(rule, ruleset->flags, stdout);
 
 	return (ret);
+duplicate:
+	if (filename)
+		apn_error(ruleset, filename, lineno, "Rule will never match!");
+	return (1);
 }
 
 /*
@@ -427,6 +469,47 @@ apn_print_ruleset(struct apn_ruleset *rs, int flags, FILE *file)
 		}
 	}
 	fprintf(file, "}\n");
+
+	return (0);
+}
+
+int
+apn_error(struct apn_ruleset *ruleset, const char * filename, int lineno,
+    const char *fmt, ...)
+{
+	va_list		args;
+	int		ret;
+
+	va_start(args, fmt);
+	ret = apn_verror(ruleset, filename, lineno, fmt, args);
+	va_end(args);
+	return ret;
+}
+
+int
+apn_verror(struct apn_ruleset *ruleset, const char *filename, int lineno,
+    const char *fmt, va_list args)
+{
+	struct apn_errmsg	*msg;
+	char			*s1, *s2;
+
+	if ((msg = calloc(1, sizeof(struct apn_errmsg))) == NULL)
+		return (-1);
+
+	if (vasprintf(&s1, fmt, args) == -1) {
+		free(msg);
+		return (-1);
+	}
+
+	if (asprintf(&s2, "%s: %d: %s", filename, lineno, s1) == -1) {
+		free(msg);
+		free(s1);
+		return (-1);
+	}
+	free(s1);
+
+	msg->msg = s2;
+	TAILQ_INSERT_TAIL(&ruleset->err_queue, msg, entry);
 
 	return (0);
 }

@@ -67,7 +67,7 @@ generate_file(FILE **infp)
 
 	fprintf(sfp, "alf {\n");
 	fprintf(sfp, "/bin/sh sha256 \\\n");
-	fprintf(sfp, "0123456789abcdef0123456789abcdef0123456789abcdef"
+	fprintf(sfp, "a123456789abcdef0123456789abcdef0123456789abcdef"
 	    "0123456789abcdef {\n");
 	fprintf(sfp, "allow connect tcp all\n");
 	fprintf(sfp, "allow accept tcp from any to any\n");
@@ -80,19 +80,19 @@ generate_file(FILE **infp)
 	fprintf(sfp, "context new any\n");
 	fprintf(sfp, "}\n");
 	fprintf(sfp, "/usr/bin/ssh sha256 \\\n");
-	fprintf(sfp, "0123456789abcdef0123456789abcdef0123456789abcdef"
+	fprintf(sfp, "b123456789abcdef0123456789abcdef0123456789abcdef"
 	    "0123456789abcdef {\n");
 	fprintf(sfp, "default deny\n");
 	fprintf(sfp, "allow connect tcp all\n");
 	fprintf(sfp, "context new { /sbin/dhclient sha256 \\\n");
-	fprintf(sfp, "0123456789abcdef0123456789abcdef0123456789abcdef"
+	fprintf(sfp, "c123456789abcdef0123456789abcdef0123456789abcdef"
 	    "0123456789abcdef,\n");
 	fprintf(sfp, "/bin/sh \\\n");
-	fprintf(sfp, "0123456789abcdef0123456789abcdef0123456789abcdef"
+	fprintf(sfp, "d123456789abcdef0123456789abcdef0123456789abcdef"
 	    "0123456789abcdef }\n");
 	fprintf(sfp, "}\n");
 	fprintf(sfp, "/sbin/dhclient sha256 \\\n");
-	fprintf(sfp, "0123456789abcdef0123456789abcdef0123456789abcdef"
+	fprintf(sfp, "c123456789abcdef0123456789abcdef0123456789abcdef"
 	    "0123456789abcdef {\n");
 	fprintf(sfp, "default deny\n");
 	fprintf(sfp, "allow raw\n");
@@ -100,20 +100,20 @@ generate_file(FILE **infp)
 	fprintf(sfp, "}\n");
 	fprintf(sfp, "\n");
 	fprintf(sfp, "/bin/sh \\\n");
-	fprintf(sfp, "0123456789abcdef0123456789abcdef0123456789abcdef"
+	fprintf(sfp, "d123456789abcdef0123456789abcdef0123456789abcdef"
 	    "0123456789abcdef {\n");
 	fprintf(sfp, "default deny\n");
 	fprintf(sfp, "context new any\n");
 	fprintf(sfp, "allow connect tcp from any to 1.2.3.4 port www\n");
 	fprintf(sfp, "}\n");
 	fprintf(sfp, "/usr/bin/ssh \\\n");	/* This rule has ID 24 */
-	fprintf(sfp, "0123456789abcdef0123456789abcdef0123456789abcdef"
+	fprintf(sfp, "e123456789abcdef0123456789abcdef0123456789abcdef"
 	    "0123456789abcdef {\n");
 	fprintf(sfp, "default deny\n");		/* This is rule 22 */
 	fprintf(sfp, "allow connect alert tcp all\n"); /* This is rule 23 */
 	fprintf(sfp, "}\n");
 	fprintf(sfp, "/sbin/dhclient \\\n");
-	fprintf(sfp, "0123456789abcdef0123456789abcdef0123456789abcdef"
+	fprintf(sfp, "f123456789abcdef0123456789abcdef0123456789abcdef"
 	    "0123456789abcdef {\n");
 	fprintf(sfp, "default deny\n");
 	fprintf(sfp, "allow raw\n");
@@ -235,4 +235,3 @@ libapn_testcase_iovec(void)
 
 	return (testcase_iovec);
 }
-
