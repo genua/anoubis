@@ -155,7 +155,7 @@ int			 pe_decide_sfscheck(struct apn_rule *, struct
 			     sfs_open_message *, int *);
 int			 pe_decide_sfsdflt(struct apn_rule *, struct
 			     sfs_open_message *, int *);
-anoubisd_reply_t	*pe_dispatch_policy(struct anoubisd_msg_comm *, int *);
+anoubisd_reply_t	*pe_dispatch_policy(struct anoubisd_msg_comm *);
 
 struct pe_proc		*pe_get_proc(anoubis_cookie_t);
 void			 pe_put_proc(struct pe_proc * proc);
@@ -308,6 +308,28 @@ pe_update_db(struct policies *newpdb, struct policies *oldpdb)
 	}
 
 	return (0);
+}
+
+/*
+ * This function is not allowed to fail! It must remove all references
+ * to the old ruleset from processes of the given uid.
+ */
+void
+pe_update_db_one(uid_t uid, int prio)
+{
+	struct pe_context	*newctx, *oldctx;
+	struct pe_proc		*pproc;
+	TAILQ_FOREACH(pproc, &tracker, entry) {
+		if (pproc->uid != uid)
+			continue;
+		if (pe_update_ctx(pproc, &newctx, prio, pdb) == -1) {
+			log_warn("Failed to replace context");
+			newctx = NULL;
+		}
+		oldctx = pproc->context[prio];
+		pproc->context[prio] = newctx;
+		pe_put_ctx(oldctx);
+	}
 }
 
 /*
@@ -559,6 +581,37 @@ pe_insert_rs(struct apn_ruleset *rs, uid_t uid, int prio, struct policies *p)
 	return (0);
 }
 
+int
+pe_replace_rs(struct apn_ruleset *rs, uid_t uid, int prio)
+{
+	struct apn_ruleset	*oldrs;
+	struct pe_user		*user;
+
+	if (rs == NULL) {
+		log_warnx("pe_replac_rs: empty ruleset");
+		return (1);
+	}
+	if (prio < 0  || prio >= PE_PRIO_MAX) {
+		log_warnx("pe_replace_rs: illegal priority %d", prio);
+		return (1);
+	}
+	if ((user = pe_get_user(uid, pdb)) == NULL) {
+		user = calloc(1, sizeof(struct pe_user));
+		if (user == NULL) {
+			log_warn("calloc");
+			master_terminate(ENOMEM);
+			return 1;
+		}
+		user->uid = uid;
+		TAILQ_INSERT_TAIL(pdb, user, entry);
+	}
+	oldrs = user->prio[prio];
+	user->prio[prio] = rs;
+	pe_update_db_one(uid, prio);
+	apn_free_ruleset(oldrs);
+	return 0;
+}
+
 struct pe_user *
 pe_get_user(uid_t uid, struct policies *p)
 {
@@ -637,11 +690,8 @@ policy_engine(anoubisd_msg_t *request)
 		reply = pe_handle_sfs(sfsmsg);
 		break;
 	} case ANOUBISD_MSG_POLREQUEST: {
-		int reconfigure = 0;
 		anoubisd_msg_comm_t *comm = (anoubisd_msg_comm_t *)request->msg;
-		reply = pe_dispatch_policy(comm, &reconfigure);
-		if (reconfigure)
-			pe_reconfigure();
+		reply = pe_dispatch_policy(comm);
 		break;
 	} default:
 		reply = NULL;
@@ -1599,7 +1649,7 @@ static void put_request(struct policy_request *req)
 }
 
 anoubisd_reply_t *
-pe_dispatch_policy(struct anoubisd_msg_comm *comm, int *reconf)
+pe_dispatch_policy(struct anoubisd_msg_comm *comm)
 {
 	anoubisd_reply_t	*reply = NULL;
 	Policy_Generic		*gen;
@@ -1613,7 +1663,6 @@ pe_dispatch_policy(struct anoubisd_msg_comm *comm, int *reconf)
 	char			*buf;
 	int			len;
 
-	(*reconf) = 0;
 	if (comm == NULL) {
 		log_warnx("pe_dispatch_policy: empty comm");
 		return (NULL);
@@ -1726,9 +1775,9 @@ pe_dispatch_policy(struct anoubisd_msg_comm *comm, int *reconf)
 			if (!tmp)
 				goto reply;
 			/* splint doesn't understand the %llu modifier */
-			if (asprintf(&req->tmpname, "%s.%llu", tmp, 
+			if (asprintf(&req->tmpname, "%s.%llu", tmp,
 			    /*@i@*/ req->token) == -1) {
-			    	free(tmp);
+				free(tmp);
 				req->tmpname = NULL;
 				goto reply;
 			}
@@ -1773,22 +1822,24 @@ pe_dispatch_policy(struct anoubisd_msg_comm *comm, int *reconf)
 				error = EINVAL;
 				goto reply;
 			}
-			apn_free_ruleset(ruleset);
 			/* Backup old rules */
 			if (time(&t) == (time_t)-1) {
 				error = errno;
+				apn_free_ruleset(ruleset);
 				goto reply;
 			}
 			tmp = __pe_policy_file_name(req->uid, req->prio,
 			    ".save.");
 			if (tmp == NULL) {
 				error = ENOMEM;
+				apn_free_ruleset(ruleset);
 				goto reply;
 			}
 			ret = asprintf(&bkup, "%s.%lld", tmp, (long long)t);
 			free(tmp);
 			if (ret == -1) {
 				errno = ENOMEM;
+				apn_free_ruleset(ruleset);
 				goto reply;
 			}
 			DEBUG(DBG_TRACE, "    link: %s->%s", req->realname,
@@ -1797,6 +1848,7 @@ pe_dispatch_policy(struct anoubisd_msg_comm *comm, int *reconf)
 				if (errno != ENOENT) {
 					error = errno;
 					free(bkup);
+					apn_free_ruleset(ruleset);
 					goto reply;
 				}
 			}
@@ -1805,9 +1857,19 @@ pe_dispatch_policy(struct anoubisd_msg_comm *comm, int *reconf)
 			    req->realname);
 			if (rename(req->tmpname, req->realname) < 0) {
 				error = errno;
+				apn_free_ruleset(ruleset);
 				goto reply;
 			}
-			(*reconf) = 1;
+			if (pe_replace_rs(ruleset, req->uid, req->prio)) {
+				error = EIO;
+				apn_free_ruleset(ruleset);
+				goto reply;
+			}
+			/*
+			 * XXX CEH: Try to generate a log event about the
+			 * XXX CEH: policy change here to let other UIs know
+			 * XXX CEH: that policies changed.
+			 */
 			error = 0;
 			goto reply;
 		}
