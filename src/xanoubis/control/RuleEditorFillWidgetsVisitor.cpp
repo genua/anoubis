@@ -79,6 +79,8 @@ RuleEditorFillWidgetsVisitor::clear(void)
 	ruleEditor_->alfStateTimeoutSpinCtrl->Disable();
 	ruleEditor_->alfStateTimeoutSpinCtrl->SetValue(0);
 
+	ruleEditor_->sfsBinaryTextCtrl->Clear();
+
 	for (AddrLineList::iterator i=ruleEditor_->extraSrcAddrList.begin();
 	    i != ruleEditor_->extraSrcAddrList.end();
 	    i++) {
@@ -346,11 +348,12 @@ RuleEditorFillWidgetsVisitor::visitAppPolicy(AppPolicy *appPolicy)
 {
 	wxString name;
 
+	clear();
+
 	ruleEditor_->applicationNbPanel->Enable();
 	ruleEditor_->alfNbPanel->Disable();
 	ruleEditor_->sfsNbPanel->Disable();
-
-	clear();
+	ruleEditor_->ruleEditNotebook->ChangeSelection(RULEDITOR_PANEL_APP);
 
 	name = appPolicy->getBinaryName();
 	ruleEditor_->appBinaryTextCtrl->Clear();
@@ -372,6 +375,7 @@ RuleEditorFillWidgetsVisitor::visitAlfPolicy(AlfPolicy *alfPolicy)
 	ruleEditor_->applicationNbPanel->Disable();
 	ruleEditor_->alfNbPanel->Enable();
 	ruleEditor_->sfsNbPanel->Disable();
+	ruleEditor_->ruleEditNotebook->ChangeSelection(RULEDITOR_PANEL_ALF);
 
 	type = alfPolicy->getTypeNo();
 
@@ -417,7 +421,7 @@ RuleEditorFillWidgetsVisitor::visitSfsPolicy(SfsPolicy *sfsPolicy)
 	clear();
 
 	ruleEditor_->sfsNbPanel->Enable();
-	ruleEditor_->ruleEditNotebook->ChangeSelection(3);
+	ruleEditor_->ruleEditNotebook->ChangeSelection(RULEDITOR_PANEL_SFS);
 
 	if (sfsPolicy->calcCurrentHash(csum)) {
 		currHash = wxT("0x");
@@ -435,7 +439,8 @@ RuleEditorFillWidgetsVisitor::visitSfsPolicy(SfsPolicy *sfsPolicy)
 	ruleEditor_->sfsCurrentSumValueText->SetLabel(currHash);
 
 	if (regHash.Cmp(currHash) == 0) {
-		ruleEditor_->sfsStatusValueText->SetLabel(_("match"));                ruleEditor_->sfsUpdateChkSumButton->Disable();
+		ruleEditor_->sfsStatusValueText->SetLabel(_("match"));
+		ruleEditor_->sfsUpdateChkSumButton->Disable();
 	} else {
 		ruleEditor_->sfsStatusValueText->SetLabel(_("mismatch"));
 		ruleEditor_->sfsUpdateChkSumButton->Enable();

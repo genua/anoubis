@@ -97,8 +97,6 @@ ModSfsAddPolicyVisitor::visitSfsPolicy(SfsPolicy *sfsPolicy)
 	idx = ruleListAppend(sfsPolicy);
 	list = sfsPanel_->lst_Rules;
 
-	list->SetItem(idx, MODSFS_LIST_COLUMN_APP,
-	    sfsPolicy->getAppName());
 	list->SetItem(idx, MODSFS_LIST_COLUMN_PROG,
 	    sfsPolicy->getBinaryName());
 	list->SetItem(idx, MODSFS_LIST_COLUMN_HASHT,

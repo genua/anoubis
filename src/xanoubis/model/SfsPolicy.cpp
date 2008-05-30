@@ -57,7 +57,6 @@ SfsPolicy::SfsPolicy(AppPolicy *parent, struct apn_sfsrule *sfsRule)
     : Policy(parent)
 {
 	sfsRule_ = sfsRule;
-	appName_ = wxEmptyString;
 }
 
 SfsPolicy::~SfsPolicy()
@@ -68,12 +67,6 @@ void
 SfsPolicy::accept(PolicyVisitor& visitor)
 {
 	visitor.visitSfsPolicy(this);
-}
-
-wxString
-SfsPolicy::getAppName(void)
-{
-	return(appName_);
 }
 
 void

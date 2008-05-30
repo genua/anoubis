@@ -61,6 +61,8 @@ RuleEditorAddPolicyVisitor::visitAppPolicy(AppPolicy *appPolicy)
 		ruleEditor_->ruleListCtrl->SetItem(idx,
 		    RULEDITOR_LIST_COLUMN_APP, appPolicy->getBinaryName());
 		ruleEditor_->ruleListCtrl->SetItem(idx,
+		    RULEDITOR_LIST_COLUMN_RULE, _("APP"));
+		ruleEditor_->ruleListCtrl->SetItem(idx,
 		    RULEDITOR_LIST_COLUMN_BIN, appPolicy->getBinaryName());
 		ruleEditor_->ruleListCtrl->SetItem(idx,
 		    RULEDITOR_LIST_COLUMN_HASHT, appPolicy->getHashTypeName());
@@ -80,6 +82,8 @@ RuleEditorAddPolicyVisitor::visitAlfPolicy(AlfPolicy *alfPolicy)
 	idx = appendPolicy(alfPolicy);
 	type = alfPolicy->getTypeNo();
 	list = ruleEditor_->ruleListCtrl;
+
+	list->SetItem(idx, RULEDITOR_LIST_COLUMN_RULE,_("ALF"));
 
 	switch (type) {
 	case APN_ALF_FILTER:
@@ -142,8 +146,6 @@ RuleEditorAddPolicyVisitor::visitSfsPolicy(SfsPolicy *sfsPolicy)
 
 	ruleEditor_->ruleListCtrl->SetItem(idx, RULEDITOR_LIST_COLUMN_RULE,
 			_("SFS"));
-	ruleEditor_->ruleListCtrl->SetItem(idx, RULEDITOR_LIST_COLUMN_APP,
-			sfsPolicy->getAppName());
 	ruleEditor_->ruleListCtrl->SetItem(idx, RULEDITOR_LIST_COLUMN_BIN,
 			sfsPolicy->getBinaryName());
 	ruleEditor_->ruleListCtrl->SetItem(idx, RULEDITOR_LIST_COLUMN_HASHT,

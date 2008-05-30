@@ -54,7 +54,6 @@ ModSfsMainPanelImpl::ModSfsMainPanelImpl(wxWindow* parent,
     wxWindowID id) : ModSfsMainPanelBase(parent, id)
 {
 	columnNames_[MODSFS_LIST_COLUMN_PRIO] = _("Prio");
-	columnNames_[MODSFS_LIST_COLUMN_APP] = _("Application");
 	columnNames_[MODSFS_LIST_COLUMN_PROG] = _("Program");
 	columnNames_[MODSFS_LIST_COLUMN_HASHT] = _("Hash-Type");
 	columnNames_[MODSFS_LIST_COLUMN_HASH] = _("Hash");

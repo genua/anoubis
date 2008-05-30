@@ -502,6 +502,9 @@ DlgRuleEditor::OnSfsUpdateChkSumButton(wxCommandEvent& event)
 	policy->setHashValue(csum);
 	updateVisitor.setPropagation(false);
 	policy->accept(updateVisitor);
+
+	ruleListCtrl->SetItem(selectedId_, RULEDITOR_LIST_COLUMN_HASH,
+	   policy->getHashValue());
 }
 
 void

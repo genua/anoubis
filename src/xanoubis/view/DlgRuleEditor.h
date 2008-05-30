@@ -41,6 +41,15 @@
 #include "DlgRuleEditorBase.h"
 #include "PolicyRuleSet.h"
 
+enum ruleEditorPanels {
+	RULEDITOR_PANEL_COMMON = 0,
+	RULEDITOR_PANEL_APP,
+	RULEDITOR_PANEL_ALF,
+	RULEDITOR_PANEL_SFS,
+	RULEDITOR_PANEL_MACRO,
+	RULEDITOR_PANEL_EOL
+};
+
 enum ruleEditorListColumns {
 	RULEDITOR_LIST_COLUMN_PRIO = 0,
 	RULEDITOR_LIST_COLUMN_RULE,
