@@ -140,21 +140,21 @@ anoubisd_reply_t	*pe_handle_sfsexec(struct eventdev_hdr *);
 anoubisd_reply_t	*pe_handle_alf(struct eventdev_hdr *);
 anoubisd_reply_t	*pe_decide_alf(struct pe_proc *, struct eventdev_hdr *);
 int			 pe_alf_evaluate(struct pe_context *,
-			     struct alf_event *, int *);
+			     struct alf_event *, int *, u_int32_t *);
 int			 pe_decide_alffilt(struct apn_rule *, struct
-			     alf_event *, int *);
+			     alf_event *, int *, u_int32_t *);
 int			 pe_decide_alfcap(struct apn_rule *, struct
-			     alf_event *, int *);
+			     alf_event *, int *, u_int32_t *);
 int			 pe_decide_alfdflt(struct apn_rule *, struct
-			     alf_event *, int *);
+			     alf_event *, int *, u_int32_t *);
 char			*pe_dump_alfmsg(struct alf_event *);
 anoubisd_reply_t	*pe_handle_sfs(anoubisd_msg_sfsopen_t *);
 anoubisd_reply_t	*pe_decide_sfs(struct pe_user *,
 			    anoubisd_msg_sfsopen_t*);
 int			 pe_decide_sfscheck(struct apn_rule *, struct
-			     sfs_open_message *, int *);
+			     sfs_open_message *, int *, u_int32_t *);
 int			 pe_decide_sfsdflt(struct apn_rule *, struct
-			     sfs_open_message *, int *);
+			     sfs_open_message *, int *, u_int32_t *);
 anoubisd_reply_t	*pe_dispatch_policy(struct anoubisd_msg_comm *);
 
 struct pe_proc		*pe_get_proc(anoubis_cookie_t);
@@ -910,6 +910,7 @@ pe_decide_alf(struct pe_proc *proc, struct eventdev_hdr *hdr)
 	anoubisd_reply_t	*reply;
 	int			 i, ret, decision, log;
 	char			*dump = NULL;
+	u_int32_t		 rule_id = 0;
 
 	if (hdr == NULL) {
 		log_warnx("pe_decide_alf: empty header");
@@ -929,7 +930,7 @@ pe_decide_alf(struct pe_proc *proc, struct eventdev_hdr *hdr)
 		DEBUG(DBG_PE_DECALF, "pe_decide_alf: prio %d context %p", i,
 		    proc->context[i]);
 
-		ret = pe_alf_evaluate(proc->context[i], msg, &log);
+		ret = pe_alf_evaluate(proc->context[i], msg, &log, &rule_id);
 
 		if (ret != -1)
 			decision = ret;
@@ -954,11 +955,11 @@ pe_decide_alf(struct pe_proc *proc, struct eventdev_hdr *hdr)
 		break;
 	case APN_LOG_NORMAL:
 		log_info("%s %s", verdict[decision], dump);
-		send_lognotify(hdr, decision, log);
+		send_lognotify(hdr, decision, log, rule_id);
 		break;
 	case APN_LOG_ALERT:
 		log_warnx("%s %s", verdict[decision], dump);
-		send_lognotify(hdr, decision, log);
+		send_lognotify(hdr, decision, log, rule_id);
 		break;
 	default:
 		log_warnx("pe_decide_alf: unknown log type %d", log);
@@ -974,6 +975,7 @@ pe_decide_alf(struct pe_proc *proc, struct eventdev_hdr *hdr)
 	}
 
 	reply->ask = 0;
+	reply->rule_id = rule_id;
 	reply->timeout = (time_t)0;
 	if (decision == POLICY_ASK) {
 		reply->ask = 1;
@@ -986,7 +988,8 @@ pe_decide_alf(struct pe_proc *proc, struct eventdev_hdr *hdr)
 }
 
 int
-pe_alf_evaluate(struct pe_context *context, struct alf_event *msg, int *log)
+pe_alf_evaluate(struct pe_context *context, struct alf_event *msg, int *log,
+    u_int32_t *rule_id)
 {
 	struct apn_rule	*rule;
 	int		 decision;
@@ -1002,11 +1005,11 @@ pe_alf_evaluate(struct pe_context *context, struct alf_event *msg, int *log)
 		return (-1);
 	}
 
-	decision = pe_decide_alffilt(rule, msg, log);
+	decision = pe_decide_alffilt(rule, msg, log, rule_id);
 	if (decision == -1)
-		decision = pe_decide_alfcap(rule, msg, log);
+		decision = pe_decide_alfcap(rule, msg, log, rule_id);
 	if (decision == -1)
-		decision = pe_decide_alfdflt(rule, msg, log);
+		decision = pe_decide_alfdflt(rule, msg, log, rule_id);
 
 	DEBUG(DBG_PE_DECALF, "pe_alf_evaluate: decision %d rule %p", decision,
 	    rule);
@@ -1018,7 +1021,8 @@ pe_alf_evaluate(struct pe_context *context, struct alf_event *msg, int *log)
  * ALF filter logic.
  */
 int
-pe_decide_alffilt(struct apn_rule *rule, struct alf_event *msg, int *log)
+pe_decide_alffilt(struct apn_rule *rule, struct alf_event *msg, int *log,
+    u_int32_t *rule_id)
 {
 	struct apn_alfrule	*hp;
 	int			 decision;
@@ -1166,6 +1170,8 @@ pe_decide_alffilt(struct apn_rule *rule, struct alf_event *msg, int *log)
 
 		if (log)
 			*log = hp->rule.afilt.filtspec.log;
+		if (rule_id)
+			*rule_id = hp->id;
 		break;
 	}
 
@@ -1176,7 +1182,8 @@ pe_decide_alffilt(struct apn_rule *rule, struct alf_event *msg, int *log)
  * ALF capability logic.
  */
 int
-pe_decide_alfcap(struct apn_rule *rule, struct alf_event *msg, int *log)
+pe_decide_alfcap(struct apn_rule *rule, struct alf_event *msg, int *log,
+    u_int32_t *rule_id)
 {
 	int			 decision;
 	struct apn_alfrule	*hp;
@@ -1241,6 +1248,8 @@ pe_decide_alfcap(struct apn_rule *rule, struct alf_event *msg, int *log)
 		if (decision != -1) {
 			if (log)
 				*log = hp->rule.acap.log;
+			if (rule_id)
+				*rule_id = hp->id;
 			break;
 		}
 		hp = hp->next;
@@ -1253,7 +1262,8 @@ pe_decide_alfcap(struct apn_rule *rule, struct alf_event *msg, int *log)
  * ALF default logic.
  */
 int
-pe_decide_alfdflt(struct apn_rule *rule, struct alf_event *msg, int *log)
+pe_decide_alfdflt(struct apn_rule *rule, struct alf_event *msg, int *log,
+    u_int32_t *rule_id)
 {
 	struct apn_alfrule	*hp;
 	int			 decision;
@@ -1290,6 +1300,8 @@ pe_decide_alfdflt(struct apn_rule *rule, struct alf_event *msg, int *log)
 		if (decision != -1) {
 			if (log)
 				*log = hp->rule.apndefault.log;
+			if (rule_id)
+				*rule_id = hp->id;
 			break;
 		}
 		hp = hp->next;
@@ -1462,8 +1474,9 @@ pe_decide_sfs(struct pe_user *user, anoubisd_msg_sfsopen_t *sfsmsg)
 	anoubisd_reply_t	*reply = NULL;
 	struct eventdev_hdr	*hdr;
 	struct sfs_open_message	*msg;
-	int			ret, log, i, decision;
+	int			 ret, log, i, decision;
 	char			*dump = NULL;
+	u_int32_t		 rule_id = 0;
 
 	hdr = &sfsmsg->hdr;
 	msg = (struct sfs_open_message *)(hdr+1);
@@ -1491,11 +1504,11 @@ pe_decide_sfs(struct pe_user *user, anoubisd_msg_sfsopen_t *sfsmsg)
 
 				TAILQ_FOREACH(rule, &rs->sfs_queue, entry) {
 					ret = pe_decide_sfscheck(rule, msg,
-					    &log);
+					    &log, &rule_id);
 
 					if (ret == -1)
 						ret = pe_decide_sfsdflt(rule,
-						    msg, &log);
+						    msg, &log, &rule_id);
 
 					if (ret != -1)
 						decision = ret;
@@ -1513,6 +1526,9 @@ pe_decide_sfs(struct pe_user *user, anoubisd_msg_sfsopen_t *sfsmsg)
 			    ANOUBIS_SFS_CS_LEN))
 				decision = POLICY_DENY;
 		}
+	} else {
+		if (sfsmsg->anoubisd_csum_set != ANOUBISD_CSUM_NONE)
+			decision = POLICY_DENY;
 	}
 
 	if (decision == -1)
@@ -1531,11 +1547,11 @@ pe_decide_sfs(struct pe_user *user, anoubisd_msg_sfsopen_t *sfsmsg)
 		break;
 	case APN_LOG_NORMAL:
 		log_info("%s %s", verdict[decision], dump);
-		send_lognotify(hdr, decision, log);
+		send_lognotify(hdr, decision, log, rule_id);
 		break;
 	case APN_LOG_ALERT:
 		log_warnx("%s %s", verdict[decision], dump);
-		send_lognotify(hdr, decision, log);
+		send_lognotify(hdr, decision, log, rule_id);
 		break;
 	default:
 		log_warnx("pe_decide_sfs: unknown log type %d", log);
@@ -1546,6 +1562,7 @@ pe_decide_sfs(struct pe_user *user, anoubisd_msg_sfsopen_t *sfsmsg)
 
 	reply->reply = decision;
 	reply->ask = 0;		/* false */
+	reply->rule_id = rule_id;
 	reply->timeout = (time_t)0;
 	reply->len = 0;
 
@@ -1554,7 +1571,7 @@ pe_decide_sfs(struct pe_user *user, anoubisd_msg_sfsopen_t *sfsmsg)
 
 int
 pe_decide_sfscheck(struct apn_rule *rule, struct sfs_open_message *msg,
-    int *log)
+    int *log, u_int32_t *rule_id)
 {
 	struct apn_sfsrule	*hp;
 	int			 decision;
@@ -1590,6 +1607,8 @@ pe_decide_sfscheck(struct apn_rule *rule, struct sfs_open_message *msg,
 
 		if (log)
 			*log = hp->rule.sfscheck.log;
+		if (rule_id)
+			*rule_id = hp->id;
 
 		break;
 	}
@@ -1598,7 +1617,8 @@ pe_decide_sfscheck(struct apn_rule *rule, struct sfs_open_message *msg,
 }
 
 int
-pe_decide_sfsdflt(struct apn_rule *rule, struct sfs_open_message *msg, int *log)
+pe_decide_sfsdflt(struct apn_rule *rule, struct sfs_open_message *msg, int *log,
+    u_int32_t *rule_id)
 {
 	struct apn_sfsrule	*hp;
 	int			 decision;
@@ -1635,6 +1655,8 @@ pe_decide_sfsdflt(struct apn_rule *rule, struct sfs_open_message *msg, int *log)
 		if (decision != -1) {
 			if (log)
 				*log = hp->rule.apndefault.log;
+			if (rule_id)
+				*rule_id = hp->id;
 			break;
 		}
 		hp = hp->next;
@@ -1912,6 +1934,7 @@ reply:
 	reply = calloc(1, sizeof(struct anoubisd_reply));
 	reply->token = comm->token;
 	reply->ask = 0;
+	reply->rule_id = 0;
 	reply->len = 0;
 	reply->flags = POLICY_FLAG_START|POLICY_FLAG_END;
 	reply->timeout = 0;

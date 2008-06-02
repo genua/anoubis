@@ -27,6 +27,7 @@
 #ifndef ANOUBIS_PROTOCOL_H
 #define ANOUBIS_PROTOCOL_H
 
+#include <sys/param.h>
 #include <sys/types.h>
 #include <arpa/inet.h>
 
@@ -59,12 +60,33 @@ typedef  u_int64_t /*@unsignedintegraltype@*/ anoubis_token_t;
 DEFINE_UNSIGNED_TYPE(8);
 DEFINE_UNSIGNED_TYPE(16);
 DEFINE_UNSIGNED_TYPE(32);
+DEFINE_UNSIGNED_TYPE(64);
 
 DEFINE_SIGNED_TYPE(8);
 DEFINE_SIGNED_TYPE(16);
 DEFINE_SIGNED_TYPE(32);
 
 #if ! defined (S_SPLINT_S) && ! defined (lint)
+#if BYTE_ORDER == BIG_ENDIAN
+#define __ntohll(X) (X)
+#endif
+#if BYTE_ORDER == LITTLE_ENDIAN
+static inline u_int64_t __ntohll(u_int64_t arg)
+{
+	unsigned char tmp;
+	union {
+		u_int64_t	val;
+		unsigned char	buf[8];
+	} u;
+	u.val = arg;
+	tmp = u.buf[0]; u.buf[0] = u.buf[7]; u.buf[7] = tmp;
+	tmp = u.buf[1]; u.buf[1] = u.buf[6]; u.buf[6] = tmp;
+	tmp = u.buf[2]; u.buf[2] = u.buf[5]; u.buf[5] = tmp;
+	tmp = u.buf[3]; u.buf[3] = u.buf[4]; u.buf[4] = tmp;
+	return u.val;
+}
+#endif
+
 #define get_value(VAR)		({				\
 	__typeof__(&(VAR)) __ptr = &(VAR);			\
 	__typeof__(__ptr->netint) __ret;			\
@@ -72,6 +94,7 @@ DEFINE_SIGNED_TYPE(32);
 	case 1:		__ret = (__ptr->netint); break;		\
 	case 2:		__ret = ntohs(__ptr->netint); break;	\
 	case 4:		__ret = ntohl(__ptr->netint); break;	\
+	case 8:		__ret = __ntohll(__ptr->netint); break;	\
 	default:						\
 		assert(0);					\
 	}							\
@@ -89,6 +112,7 @@ DEFINE_SIGNED_TYPE(32);
 	case 1:		__ptr->netint = __val; break;		\
 	case 2:		__ptr->netint = htons(__val); break;	\
 	case 4:		__ptr->netint = htonl(__val); break;	\
+	case 8:		__ptr->netint = __ntohll(__val); break;	\
 	default:						\
 		assert(0);					\
 	}							\
@@ -216,6 +240,7 @@ typedef struct {
 typedef struct {
 	u32n	type;
 	anoubis_token_t	token;
+	u64n	task_cookie;
 	u32n	pid;
 	u32n	rule_id;
 	u32n	uid;

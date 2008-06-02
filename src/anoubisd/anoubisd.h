@@ -91,12 +91,21 @@ enum {
 	ANOUBISD_MSG_EVENTCANCEL,
 	ANOUBISD_MSG_SESSION_REG,
 	ANOUBISD_MSG_CHECKSUM_OP,
-	ANOUBISD_MSG_SFSOPEN
+	ANOUBISD_MSG_SFSOPEN,
+	ANOUBISD_MSG_EVENTASK,
 } anoubisd_msg;
 
 /* format of ANOUBISD_MSG_EVENTDEV is struct eventdev_hdr */
 
+struct anoubisd_msg_eventask
+{
+	u_int32_t rule_id;
+	struct eventdev_hdr hdr;
+};
+typedef struct anoubisd_msg_eventask anoubisd_msg_eventask_t;
+
 struct anoubisd_msg_sfsopen {
+	u_int32_t		rule_id;
 	u_int32_t		anoubisd_csum_set;
 	u_int8_t		anoubisd_csum[ANOUBIS_SFS_CS_LEN];
 	struct eventdev_hdr	hdr;
@@ -127,6 +136,7 @@ struct anoubisd_reply {
 	int		reply;		/* result code */
 	u_int64_t	token;		/* only for anoubisd_msg_comm_t msgs */
 	u_int32_t	flags;		/* Only for POLREPLY */
+	u_int32_t	rule_id;	/* Rule ID if ask is true */
 	short		len;		/* of following msg */
 	char		msg[0];
 };
@@ -137,6 +147,7 @@ struct anoubisd_msg_logrequest
 {
 	u_int32_t		error;
 	u_int32_t		loglevel;
+	u_int32_t		rule_id;
 	struct eventdev_hdr	hdr;
 	/* Eventdev data follows. */
 };
@@ -192,7 +203,7 @@ anoubisd_msg_t *msg_factory(int, int);
 void	pe_dump(void);
 int	send_policy_data(u_int64_t token, int fd);
 
-void	send_lognotify(struct eventdev_hdr *, u_int32_t, u_int32_t);
+void	send_lognotify(struct eventdev_hdr *, u_int32_t, u_int32_t, u_int32_t);
 
 #ifndef S_SPLINT_S
 #define DEBUG(flag, ...) {if (flag & debug_flags) log_debug(__VA_ARGS__);}

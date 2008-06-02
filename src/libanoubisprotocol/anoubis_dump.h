@@ -31,10 +31,14 @@
 #include <sys/types.h>
 #include <anoubis_msg.h>
 
+
+extern void __anoubis_dump(struct anoubis_msg *, const char *);
+extern void __anoubis_dump_buf(void * buf, size_t len, const char *);
+
 #ifdef PROTO_DEBUG
 
-extern void anoubis_dump(struct anoubis_msg *, const char *);
-extern void anoubis_dump_buf(void * buf, size_t len, const char *);
+#define anoubis_dump(M,S) __anoubis_dump((M), (S));
+#define anoubis_dump_buf(BUF,LEN,S) __anoubis_dump_buf((BUF), (LEN), (S))
 
 #else
 

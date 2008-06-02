@@ -29,6 +29,7 @@
 #include <stdio.h>
 #include <anoubis_msg.h>
 #include <anoubis_protocol.h>
+#include <anoubis_dump.h>
 #include <crc32.h>
 
 #define __used __attribute__((unused))
@@ -56,6 +57,8 @@
 	printf(" %s = 0x%x", #FIELD, get_value((PTR)->FIELD));
 #define DUMP_NETU(PTR,FIELD)						\
 	printf(" %s = %u", #FIELD, get_value((PTR)->FIELD));
+#define DUMP_NETULL(PTR,FIELD)						\
+	printf(" %s = %llu", #FIELD, get_value((PTR)->FIELD));
 
 static void DUMP_DATA(void * _buf, size_t len)
 {
@@ -115,6 +118,7 @@ static void dump_notify(Anoubis_NotifyMessage * m, size_t len, int arg)
 	printf(" token = 0x%llx", m->token);
 	DUMP_NETU(m, pid);
 	DUMP_NETU(m, rule_id);
+	DUMP_NETULL(m, task_cookie);
 	DUMP_NETU(m, uid);
 	DUMP_NETU(m, subsystem);
 	DUMP_NETU(m, operation);
@@ -157,7 +161,7 @@ static void dump_checksumrequest(Anoubis_CheckSumRequestMessage * m, size_t len)
 	printf(" path = %s", m->path);
 }
 
-void anoubis_dump(struct anoubis_msg * m, const char * str)
+void __anoubis_dump(struct anoubis_msg * m, const char * str)
 {
 	u_int32_t opcode;
 
@@ -195,7 +199,7 @@ void anoubis_dump(struct anoubis_msg * m, const char * str)
 	printf("\n");
 }
 
-void anoubis_dump_buf(void * buf, size_t len, const char * str)
+void __anoubis_dump_buf(void * buf, size_t len, const char * str)
 {
 #ifndef lint
 	struct anoubis_msg m = {
@@ -205,5 +209,5 @@ void anoubis_dump_buf(void * buf, size_t len, const char * str)
 #else
 	struct anoubis_msg m;
 #endif
-	anoubis_dump(&m, str);
+	__anoubis_dump(&m, str);
 }

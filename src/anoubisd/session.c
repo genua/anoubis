@@ -39,11 +39,15 @@
 #include <event.h>
 #ifdef OPENBSD
 #include <sys/queue.h>
+#include <dev/eventdev.h>
+#include <dev/anoubis.h>
 #endif
 #ifdef LINUX
 #include <grp.h>
 #include <bsdcompat.h>
 #include <queue.h>
+#include <linux/eventdev.h>
+#include <linux/anoubis.h>
 #endif
 #include <pwd.h>
 #include <signal.h>
@@ -543,6 +547,7 @@ dispatch_m2s(int fd, short sig, void *arg)
 	DEBUG(DBG_TRACE, ">dispatch_m2s");
 
 	for (;;) {
+		u_int64_t task;
 		if ((msg = get_msg(fd)) == NULL) {
 			DEBUG(DBG_TRACE, "<dispatch_m2s");
 			return;
@@ -568,6 +573,10 @@ dispatch_m2s(int fd, short sig, void *arg)
 		    ((struct eventdev_hdr *)msg->msg)->msg_token);
 
 		extra = hdr->msg_size -  sizeof(struct eventdev_hdr);
+		task = 0;
+		if (extra >= sizeof(struct anoubis_event_common))
+			task = ((struct anoubis_event_common *)
+			    (hdr+1))->task_cookie;
 		m = anoubis_msg_new(sizeof(Anoubis_NotifyMessage) + extra);
 		if (!m) {
 			/* malloc failure, then we don't send the message */
@@ -578,6 +587,7 @@ dispatch_m2s(int fd, short sig, void *arg)
 		set_value(m->u.notify->type, ANOUBIS_N_NOTIFY);
 		m->u.notify->token = hdr->msg_token;
 		set_value(m->u.notify->pid, hdr->msg_pid);
+		set_value(m->u.notify->task_cookie, task);
 		set_value(m->u.notify->rule_id, 0);
 		set_value(m->u.notify->uid, hdr->msg_uid);
 		set_value(m->u.notify->subsystem, hdr->msg_source);
@@ -637,8 +647,9 @@ dispatch_p2s(int fd, short sig, void *arg)
 			break;
 
 		case ANOUBISD_MSG_EVENTDEV:
-			DEBUG(DBG_QUEUE, " >p2s: %x",
-			    ((struct eventdev_hdr *)msg->msg)->msg_token);
+		case ANOUBISD_MSG_EVENTASK:
+		case ANOUBISD_MSG_SFSOPEN:
+			DEBUG(DBG_QUEUE, ">p2s");
 			dispatch_p2s_evt_request(msg, ev_info);
 			break;
 
@@ -675,12 +686,16 @@ dispatch_p2s_log_request(anoubisd_msg_t *msg,
 	struct anoubis_notify_head * head;
 	struct anoubis_msg * m;
 	struct session * sess;
+	anoubis_cookie_t task = 0;
 
 	DEBUG(DBG_TRACE, ">dispatch_p2s_log_request");
 
 	req = (struct anoubisd_msg_logrequest *)msg->msg;
 	extra = req->hdr.msg_size - sizeof(struct eventdev_hdr);
 	m = anoubis_msg_new(sizeof(Anoubis_NotifyMessage) + extra);
+	if (extra >= sizeof(struct anoubis_event_common))
+		task = ((struct anoubis_event_common *)
+		    ((&req->hdr)+1))->task_cookie;
 	if (!m) {
 		/* malloc failure, then we don't send the message */
 		DEBUG(DBG_TRACE, "<dispatch_p2s_log_request (bad new)");
@@ -689,7 +704,8 @@ dispatch_p2s_log_request(anoubisd_msg_t *msg,
 	set_value(m->u.notify->type, ANOUBIS_N_LOGNOTIFY);
 	m->u.notify->token = req->hdr.msg_token;
 	set_value(m->u.notify->pid, req->hdr.msg_pid);
-	set_value(m->u.notify->rule_id, 0 /* XXX ?? */);
+	set_value(m->u.notify->task_cookie, task);
+	set_value(m->u.notify->rule_id, req->rule_id);
 	set_value(m->u.notify->uid, req->hdr.msg_uid);
 	set_value(m->u.notify->subsystem, req->hdr.msg_source);
 	set_value(m->u.notify->operation, 0 /* XXX ?? */);
@@ -726,11 +742,14 @@ dispatch_p2s_evt_request(anoubisd_msg_t	*msg,
 {
 	struct anoubis_notify_head * head;
 	struct anoubis_msg * m;
+	anoubisd_msg_eventask_t *eventask;
 	struct eventdev_hdr *hdr;
 	struct session	*sess;
 	struct cbdata	*cbdata;
 	int extra;
 	int sent;
+	u_int64_t task = 0;
+	u_int32_t rule_id = 0;
 
 	DEBUG(DBG_TRACE, ">dispatch_p2s_evt_request");
 
@@ -738,8 +757,14 @@ dispatch_p2s_evt_request(anoubisd_msg_t	*msg,
 	case ANOUBISD_MSG_EVENTDEV:
 		hdr = (struct eventdev_hdr *)msg->msg;
 		break;
+	case ANOUBISD_MSG_EVENTASK:
+		eventask = (anoubisd_msg_eventask_t *)(msg->msg);
+		rule_id = eventask->rule_id;
+		hdr = &eventask->hdr;
+		break;
 	case ANOUBISD_MSG_SFSOPEN:
 		hdr = &((anoubisd_msg_sfsopen_t*)msg->msg)->hdr;
+		rule_id = ((anoubisd_msg_sfsopen_t*)msg->msg)->rule_id;
 		break;
 	default:
 		log_warn("dispatch_p2s_evt_request: bad mtype %d", msg->mtype);
@@ -751,6 +776,8 @@ dispatch_p2s_evt_request(anoubisd_msg_t	*msg,
 	}
 
 	extra = hdr->msg_size - sizeof(struct eventdev_hdr);
+	if (extra >= sizeof(struct anoubis_event_common))
+		task = ((struct anoubis_event_common*)(hdr+1))->task_cookie;
 	m = anoubis_msg_new(sizeof(Anoubis_NotifyMessage) + extra);
 	if (!m) {
 		/* malloc failure, then we don't send the message */
@@ -770,7 +797,8 @@ dispatch_p2s_evt_request(anoubisd_msg_t	*msg,
 	set_value(m->u.notify->type, ANOUBIS_N_ASK);
 	m->u.notify->token = hdr->msg_token;
 	set_value(m->u.notify->pid, hdr->msg_pid);
-	set_value(m->u.notify->rule_id, 0);
+	set_value(m->u.notify->task_cookie, task);
+	set_value(m->u.notify->rule_id, rule_id);
 	set_value(m->u.notify->uid, hdr->msg_uid);
 	set_value(m->u.notify->subsystem, hdr->msg_source);
 	set_value(m->u.notify->operation, 0 /* XXX ?? */);

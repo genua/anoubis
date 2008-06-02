@@ -356,7 +356,27 @@ dispatch_m2p(int fd, short sig, void *arg)
 		}
 
 		if (reply->ask) {
+			switch(msg->mtype) {
+			case ANOUBISD_MSG_SFSOPEN:
+				sfsmsg->rule_id = reply->rule_id;
+				break;
+			case ANOUBISD_MSG_EVENTDEV: {
+				anoubisd_msg_t *nmsg;
+				anoubisd_msg_eventask_t *eventask;
 
+				int extra = hdr->msg_size - sizeof(*hdr);
+				nmsg = msg_factory(ANOUBISD_MSG_EVENTASK,
+				    sizeof(anoubisd_msg_eventask_t) + extra);
+				eventask =
+				    (anoubisd_msg_eventask_t *)nmsg->msg;
+				eventask->rule_id = reply->rule_id;
+				bcopy(hdr, &eventask->hdr, hdr->msg_size);
+				hdr = &eventask->hdr;
+				free(msg);
+				msg = nmsg;
+				break;
+			}
+			}
 			if ((msg_wait = malloc(sizeof(struct reply_wait))) ==
 			    NULL) {
 				free(msg);
@@ -446,7 +466,8 @@ token_cmp(void *msg1, void *msg2)
 }
 
 void
-send_lognotify(struct eventdev_hdr *hdr, u_int32_t error, u_int32_t loglevel)
+send_lognotify(struct eventdev_hdr *hdr, u_int32_t error, u_int32_t loglevel,
+    u_int32_t rule_id)
 {
 	int size;
 	anoubisd_msg_t * msg;
@@ -466,6 +487,7 @@ send_lognotify(struct eventdev_hdr *hdr, u_int32_t error, u_int32_t loglevel)
 	req = (struct anoubisd_msg_logrequest *)msg->msg;
 	req->error = error;
 	req->loglevel = loglevel;
+	req->rule_id = rule_id;
 	bcopy(hdr, &req->hdr, hdr->msg_size);
 	enqueue(&eventq_p2s, msg);
 }

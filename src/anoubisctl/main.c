@@ -55,6 +55,7 @@
 #include <anoubis_client.h>
 #include <anoubis_msg.h>
 #include <anoubis_transaction.h>
+#include <anoubis_dump.h>
 
 #include <anoubischat.h>
 
@@ -66,6 +67,7 @@ static int	daemon_start(void);
 static int	daemon_stop(void);
 static int	daemon_status(void);
 static int	daemon_reload(void);
+static int	monitor(int argc, char **argv);
 static int	load(char *);
 static int	dump(char *);
 static int	sfs_addsum(char *file);
@@ -116,6 +118,8 @@ usage(void)
 			fprintf(stderr, "	%s\n", commands[i].command);
 
 	}
+	fprintf(stderr, "	monitor [ delegate ] [ error=<num> ] "
+	    "[ count=<num> ]\n");
 	exit(1);
 }
 
@@ -172,10 +176,8 @@ main(int argc, char *argv[])
 	command = *argv++;
 	argc--;
 
-	if (argc > 0) {
-		rulesopt = *argv++;
-		argc--;
-	}
+	if (argc > 0)
+		rulesopt = *argv;
 
 	done = 0;
 	for (i=0; i < sizeof(commands)/sizeof(struct cmd); i++) {
@@ -184,7 +186,7 @@ main(int argc, char *argv[])
 
 			if (commands[i].file)  {
 
-				if (rulesopt == NULL) {
+				if (rulesopt == NULL || argc != 1) {
 					fprintf(stderr, "no rules file\n");
 					error = 4;
 				} else {
@@ -204,6 +206,10 @@ main(int argc, char *argv[])
 				}
 			}
 		}
+	}
+	if (!done && strcmp(command, "monitor") == 0) {
+		error = monitor(argc, argv);
+		done = 1;
 	}
 	if (!done)
 		usage();
@@ -532,6 +538,112 @@ load(char *rulesopt)
 		fprintf(stderr, "Policy Request failed: %d\n", t->result);
 		anoubis_transaction_destroy(t);
 		return 3;
+	}
+	destroy_channel();
+	return 0;
+}
+
+#define ALLOCLEN	4000
+
+static int monitor(int argc, char **argv)
+{
+	int				 i, count = 0, error;
+	static anoubis_token_t		 nexttok = 1;
+	struct anoubis_transaction	*t;
+
+	int maxcount = -1;
+	int defaulterror = -1;
+	int delegate = 0;
+	char ch;
+
+	for(i=0; i<argc; ++i) {
+		if (strcasecmp(argv[i], "delegate") == 0) {
+			if (delegate)
+				usage();
+			delegate = 1;
+			continue;
+		}
+		if (strncasecmp(argv[i], "error=", 6) == 0) {
+			if (defaulterror >= 0)
+				usage();
+			if (sscanf(argv[i]+6, "%d%c", &defaulterror, &ch) != 1)
+				usage();
+			if (defaulterror < 0)
+				usage();
+			continue;
+		}
+		if (strncasecmp(argv[i], "count=", 6) == 0) {
+			if (maxcount >= 0)
+				usage();
+			if (sscanf(argv[i]+6, "%d%c", &maxcount, &ch) != 1)
+				usage();
+			if (maxcount < 0)
+				usage();
+			continue;
+		}
+		usage();
+	}
+	if (maxcount < 0)
+		maxcount = 0;
+	if (defaulterror < 0)
+		defaulterror = 0;
+
+	error = create_channel();
+	if (error) {
+		fprintf(stderr, "Cannot create channel\n");
+		return error;
+	}
+	t = anoubis_client_register_start(client, ++nexttok, geteuid(), 0, 0);
+	if (!t) {
+		fprintf(stderr, "Cannot register for notificiations\n");
+		destroy_channel();
+		return 5;
+	}
+	while(1) {
+		error = anoubis_client_wait(client);
+		if (error <= 0) {
+			anoubis_transaction_destroy(t);
+			destroy_channel();
+			return 5;
+		}
+		if (t->flags & ANOUBIS_T_DONE)
+			break;
+	}
+	if (t->result) {
+		fprintf(stderr, "Notify registration failed with %d\n",
+		    t->result);
+		anoubis_transaction_destroy(t);
+		destroy_channel();
+		return 5;
+	}
+	anoubis_transaction_destroy(t);
+	while (1) {
+		struct anoubis_msg	*m;
+		if (anoubis_client_wait(client) <= 0) {
+			fprintf(stderr, "message receive failed\n");
+			destroy_channel();
+			return 5;
+		}
+		while((m = anoubis_client_getnotify(client))) {
+			count++;
+			/* __anoubis_dump will verify the message length */
+			__anoubis_dump(m, "");
+			if (get_value(m->u.notify->type) != ANOUBIS_N_ASK) {
+				anoubis_msg_free(m);
+				continue;
+			}
+			error = anoubis_client_notifyreply(client,
+			    m->u.notify->token, defaulterror, delegate);
+			anoubis_msg_free(m);
+			if (error < 0) {
+				fprintf(stderr, "notify reply failed "
+				    "with code %d", -error);
+				destroy_channel();
+				return 5;
+			}
+		}
+		if (maxcount > 0 && count >= maxcount)
+			break;
 	}
 	destroy_channel();
 	return 0;
