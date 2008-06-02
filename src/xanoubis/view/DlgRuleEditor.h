@@ -111,6 +111,7 @@ class DlgRuleEditor : public DlgRuleEditorBase
 		void OnClose(wxCloseEvent& event);
 		void OnTableOptionButtonClick(wxCommandEvent&);
 		void OnBinaryModifyButtonClick(wxCommandEvent&);
+		void OnAppUpdateChkSumButton(wxCommandEvent&);
 		void OnLoadRuleSet(wxCommandEvent&);
 		void OnLineSelected(wxListEvent&);
 		void OnRuleSetSave(wxCommandEvent&);

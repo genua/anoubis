@@ -34,12 +34,15 @@
 
 #ifndef LINUX
 #include <sys/queue.h>
+#include <sha2.h>
 #else
 #include <queue.h>
+#include <openssl/sha.h>
 #endif
 
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <wx/file.h>
 
 #include <apn.h>
 
@@ -106,12 +109,53 @@ AppPolicy::accept(PolicyVisitor& visitor)
 	}
 }
 
+void
+AppPolicy::setBinaryName(wxString name)
+{
+	struct apn_app  *app;
+
+	app = appRule_->app;
+
+	free(app->name);
+	app->name = strdup(name.fn_str());
+}
+
 wxString
 AppPolicy::getBinaryName(void)
 {
 	if (appRule_->app == NULL)
 		return wxString::From8BitData("any");
 	return wxString::From8BitData(appRule_->app->name);
+}
+
+bool
+AppPolicy::calcCurrentHash(unsigned char csum[MAX_APN_HASH_LEN])
+{
+	SHA256_CTX	 shaCtx;
+	u_int8_t	 buf[4096];
+	size_t		 ret;
+	wxFile		*file;
+
+	file = new wxFile(getBinaryName().c_str());
+	bzero(csum, MAX_APN_HASH_LEN);
+
+	if (file->IsOpened()) {
+		SHA256_Init(&shaCtx);
+		while(1) {
+			ret = file->Read(buf, sizeof(buf));
+			if (ret == 0) {
+				break;
+			}
+			if (ret < 0) {
+				return (false);
+			}
+			SHA256_Update(&shaCtx, buf, ret);
+		}
+		SHA256_Final(csum, &shaCtx);
+		file->Close();
+	}
+
+	return (true);
 }
 
 wxString
@@ -131,6 +175,27 @@ AppPolicy::getHashTypeName(void)
 	}
 
 	return (result);
+}
+
+void
+AppPolicy::setHashValue(unsigned char csum[MAX_APN_HASH_LEN])
+{
+	int len;
+
+	/* XXX: KM there should be a propper error handling */
+	if (appRule_->app == NULL)
+		return;
+
+	switch (appRule_->app->hashtype) {
+	case APN_HASH_SHA256:
+		len = APN_HASH_SHA256_LEN;
+		break;
+	default:
+		len = 0;
+		break;
+	}
+
+	bcopy(csum, appRule_->app->hashvalue, len);
 }
 
 wxString

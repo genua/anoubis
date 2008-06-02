@@ -354,10 +354,55 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	appInheritanceAddButton = new wxButton( applicationNbPanel, wxID_ANY, _("+"), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
 	appMainPanelSizer->Add( appInheritanceAddButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
+	appRegisteredSumLabelText = new wxStaticText( applicationNbPanel, wxID_ANY, _("Checksum (registered):"), wxDefaultPosition, wxDefaultSize, 0 );
+	appRegisteredSumLabelText->Wrap( -1 );
+	appMainPanelSizer->Add( appRegisteredSumLabelText, 0, wxALL, 5 );
+	
+	appRegisteredSumValueText = new wxStaticText( applicationNbPanel, wxID_ANY, _("0"), wxDefaultPosition, wxDefaultSize, 0 );
+	appRegisteredSumValueText->Wrap( -1 );
+	appMainPanelSizer->Add( appRegisteredSumValueText, 0, wxALL, 5 );
+	
+	
+	appMainPanelSizer->Add( 0, 0, 1, wxEXPAND, 5 );
+	
+	
+	appMainPanelSizer->Add( 0, 0, 1, wxEXPAND, 5 );
+	
+	
+	appMainPanelSizer->Add( 0, 0, 1, wxEXPAND, 5 );
+	
+	appCurrentSumLabelText = new wxStaticText( applicationNbPanel, wxID_ANY, _("Checksum (current):"), wxDefaultPosition, wxDefaultSize, 0 );
+	appCurrentSumLabelText->Wrap( -1 );
+	appMainPanelSizer->Add( appCurrentSumLabelText, 0, wxALL, 5 );
+	
+	appCurrentSumValueText = new wxStaticText( applicationNbPanel, wxID_ANY, _("0"), wxDefaultPosition, wxDefaultSize, 0 );
+	appCurrentSumValueText->Wrap( -1 );
+	appMainPanelSizer->Add( appCurrentSumValueText, 0, wxALL, 5 );
+	
+	
+	appMainPanelSizer->Add( 0, 0, 1, wxEXPAND, 5 );
+	
+	
+	appMainPanelSizer->Add( 0, 0, 1, wxEXPAND, 5 );
+	
+	
+	appMainPanelSizer->Add( 0, 0, 1, wxEXPAND, 5 );
+	
+	appStatusLabelText = new wxStaticText( applicationNbPanel, wxID_ANY, _("Status:"), wxDefaultPosition, wxDefaultSize, 0 );
+	appStatusLabelText->Wrap( -1 );
+	appMainPanelSizer->Add( appStatusLabelText, 0, wxALL, 5 );
+	
+	appStatusValueText = new wxStaticText( applicationNbPanel, wxID_ANY, _("mismatch"), wxDefaultPosition, wxDefaultSize, 0 );
+	appStatusValueText->Wrap( -1 );
+	appMainPanelSizer->Add( appStatusValueText, 0, wxALL, 5 );
+	
+	appUpdateChkSumButton = new wxButton( applicationNbPanel, wxID_ANY, _("update"), wxDefaultPosition, wxDefaultSize, 0 );
+	appMainPanelSizer->Add( appUpdateChkSumButton, 0, wxALL, 5 );
+	
 	applicationNbPanel->SetSizer( appMainPanelSizer );
 	applicationNbPanel->Layout();
 	appMainPanelSizer->Fit( applicationNbPanel );
-	ruleEditNotebook->AddPage( applicationNbPanel, _("Application"), false );
+	ruleEditNotebook->AddPage( applicationNbPanel, _("Application"), true );
 	alfNbPanel = new wxScrolledWindow( ruleEditNotebook, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxVSCROLL );
 	alfNbPanel->SetScrollRate( 5, 5 );
 	wxBoxSizer* alfPanelMainSizer;
@@ -559,7 +604,7 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	alfNbPanel->SetSizer( alfPanelMainSizer );
 	alfNbPanel->Layout();
 	alfPanelMainSizer->Fit( alfNbPanel );
-	ruleEditNotebook->AddPage( alfNbPanel, _("ALF"), true );
+	ruleEditNotebook->AddPage( alfNbPanel, _("ALF"), false );
 	sfsNbPanel = new wxScrolledWindow( ruleEditNotebook, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxVSCROLL );
 	sfsNbPanel->SetScrollRate( 5, 5 );
 	wxFlexGridSizer* sfsSizer;
@@ -656,6 +701,7 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	controlOptionButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::OnTableOptionButtonClick ), NULL, this );
 	ruleListCtrl->Connect( wxEVT_COMMAND_LIST_ITEM_SELECTED, wxListEventHandler( DlgRuleEditorBase::OnLineSelected ), NULL, this );
 	appBinaryModifyButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::OnBinaryModifyButtonClick ), NULL, this );
+	appUpdateChkSumButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::OnAppUpdateChkSumButton ), NULL, this );
 	alfAllowRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorBase::OnAlfAllowRadioButton ), NULL, this );
 	alfDenyRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorBase::OnAlfDenyRadioButton ), NULL, this );
 	alfAskRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorBase::OnAlfAskRadioButton ), NULL, this );

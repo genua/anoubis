@@ -234,17 +234,55 @@ DlgRuleEditor::OnTableOptionButtonClick(wxCommandEvent& event)
 void
 DlgRuleEditor::OnBinaryModifyButtonClick(wxCommandEvent& event)
 {
-	wxString	caption = _("Choose a binary");
-	wxString	wildcard = wxT("*");
-	wxString	defaultDir = wxT("/usr/bin/");
-	wxString	defaultFilename = wxEmptyString;
-	wxFileDialog	fileDlg(NULL, caption, defaultDir, defaultFilename,
-			    wildcard, wxOPEN);
+	AppPolicy			*policy;
+	RuleEditorFillWidgetsVisitor	 updateVisitor(this);
+	wxString			 caption = _("Choose a binary");
+	wxString			 wildcard = wxT("*");
+	wxString			 defaultDir = wxT("/usr/bin/");
+	wxString			 defaultFilename = wxEmptyString;
+	wxFileDialog			 fileDlg(NULL, caption, defaultDir,
+					     defaultFilename, wildcard, wxOPEN);
+
+	policy = (AppPolicy *)ruleListCtrl->GetItemData(selectedId_);
+	if (!policy)
+		return;
 
 	if (fileDlg.ShowModal() == wxID_OK) {
 		appBinaryTextCtrl->Clear();
 		appBinaryTextCtrl->AppendText(fileDlg.GetPath());
+		policy->setBinaryName(fileDlg.GetPath());
+		updateVisitor.setPropagation(false);
+		policy->accept(updateVisitor);
 	}
+
+	ruleListCtrl->SetItem(selectedId_, RULEDITOR_LIST_COLUMN_BIN,
+	    policy->getBinaryName());
+	ruleListCtrl->SetItem(selectedId_, RULEDITOR_LIST_COLUMN_APP,
+	    policy->getBinaryName());
+
+	/* XXX: KM just as long as we have no sofisticated guessAPP */
+	appNameComboBox->Clear();
+	appNameComboBox->SetValue(policy->getBinaryName());
+}
+
+void
+DlgRuleEditor::OnAppUpdateChkSumButton(wxCommandEvent& event)
+{
+	RuleEditorFillWidgetsVisitor	 updateVisitor(this);
+	AppPolicy			*policy;
+	unsigned char			 csum[MAX_APN_HASH_LEN];
+
+	policy = (AppPolicy *)ruleListCtrl->GetItemData(selectedId_);
+	if (!policy)
+		return;
+
+	policy->calcCurrentHash(csum);
+	policy->setHashValue(csum);
+	updateVisitor.setPropagation(false);
+	policy->accept(updateVisitor);
+
+	ruleListCtrl->SetItem(selectedId_, RULEDITOR_LIST_COLUMN_HASH,
+	    policy->getHashValue());
 }
 
 void

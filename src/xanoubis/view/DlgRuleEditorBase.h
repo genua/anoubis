@@ -134,6 +134,19 @@ class DlgRuleEditorBase : public wxFrame
 		wxButton* appInheritanceModifyButton;
 		
 		wxButton* appInheritanceAddButton;
+		wxStaticText* appRegisteredSumLabelText;
+		wxStaticText* appRegisteredSumValueText;
+		
+		
+		
+		wxStaticText* appCurrentSumLabelText;
+		wxStaticText* appCurrentSumValueText;
+		
+		
+		
+		wxStaticText* appStatusLabelText;
+		wxStaticText* appStatusValueText;
+		wxButton* appUpdateChkSumButton;
 		wxScrolledWindow* alfNbPanel;
 		wxStaticText* alfActionText;
 		wxRadioButton* alfAllowRadioButton;
@@ -212,6 +225,7 @@ class DlgRuleEditorBase : public wxFrame
 		virtual void OnTableOptionButtonClick( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnLineSelected( wxListEvent& event ){ event.Skip(); }
 		virtual void OnBinaryModifyButtonClick( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnAppUpdateChkSumButton( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnAlfAllowRadioButton( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnAlfDenyRadioButton( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnAlfAskRadioButton( wxCommandEvent& event ){ event.Skip(); }

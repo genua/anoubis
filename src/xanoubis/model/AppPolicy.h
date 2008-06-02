@@ -47,7 +47,10 @@ class AppPolicy : public Policy
 		virtual void accept(PolicyVisitor&);
 
 		wxString	 getBinaryName(void);
+		void		 setBinaryName(wxString name);
+		bool		 calcCurrentHash(unsigned char *);
 		wxString	 getHashTypeName(void);
+		void		 setHashValue(unsigned char *);
 		wxString	 getHashValue(void);
 		AlfPolicy	*getContext(void);
 		bool		 hasContext(void);

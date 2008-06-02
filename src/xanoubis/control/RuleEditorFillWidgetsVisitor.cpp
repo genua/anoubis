@@ -347,6 +347,9 @@ void
 RuleEditorFillWidgetsVisitor::visitAppPolicy(AppPolicy *appPolicy)
 {
 	wxString name;
+	wxString        currHash;
+	wxString        regHash;
+	unsigned char   csum[MAX_APN_HASH_LEN];
 
 	clear();
 
@@ -354,6 +357,7 @@ RuleEditorFillWidgetsVisitor::visitAppPolicy(AppPolicy *appPolicy)
 	ruleEditor_->alfNbPanel->Disable();
 	ruleEditor_->sfsNbPanel->Disable();
 	ruleEditor_->ruleEditNotebook->ChangeSelection(RULEDITOR_PANEL_APP);
+
 
 	name = appPolicy->getBinaryName();
 	ruleEditor_->appBinaryTextCtrl->Clear();
@@ -363,6 +367,38 @@ RuleEditorFillWidgetsVisitor::visitAppPolicy(AppPolicy *appPolicy)
 		name = appPolicy->getContext()->getContextName();
 		ruleEditor_->appInheritanceTextCtrl->Clear();
 		ruleEditor_->appInheritanceTextCtrl->AppendText(name);
+	}
+
+	if (appPolicy->getBinaryName().Cmp(wxT("any")))
+	{
+		if (appPolicy->calcCurrentHash(csum)) {
+			currHash = wxT("0x");
+			for (unsigned int i=0; i<MAX_APN_HASH_LEN; i++) {
+				currHash += wxString::Format(wxT("%2.2x"),
+				    (unsigned char)csum[i]);
+			}
+		} else {
+			currHash = _("unable to calculate checksum");
+		}
+		regHash = appPolicy->getHashValue();
+
+		ruleEditor_->appRegisteredSumValueText->SetLabel(regHash);
+		ruleEditor_->appCurrentSumValueText->SetLabel(currHash);
+
+		if (regHash.Cmp(currHash) == 0) {
+			ruleEditor_->appStatusValueText->SetLabel(_("match"));
+			ruleEditor_->appUpdateChkSumButton->Disable();
+		} else {
+			ruleEditor_->appStatusValueText->SetLabel(
+			    _("mismatch"));
+			ruleEditor_->appUpdateChkSumButton->Enable();
+		}
+	} else {
+		ruleEditor_->appUpdateChkSumButton->Disable();
+		ruleEditor_->appRegisteredSumValueText->SetLabel(
+		    _("no application selected"));
+		ruleEditor_->appCurrentSumValueText->SetLabel(
+		    _("no application selected"));
 	}
 }
 
