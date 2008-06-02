@@ -176,6 +176,7 @@ struct apn_ruleset	*pe_load_policy(const char *);
 int			 pe_insert_rs(struct apn_ruleset *, uid_t, int,
 			     struct policies *);
 struct pe_user		*pe_get_user(uid_t, struct policies *);
+struct apn_ruleset	*pe_get_ruleset(uid_t, int, struct policies *);
 void			 pe_inherit_ctx(struct pe_proc *);
 void			 pe_set_ctx(struct pe_proc *, uid_t, const u_int8_t *,
 			     const char *);
@@ -345,7 +346,7 @@ int
 pe_update_ctx(struct pe_proc *pproc, struct pe_context **newctx, int prio,
     struct policies *newpdb)
 {
-	struct pe_user		*newuser;
+	struct apn_ruleset	*newrules;
 	struct pe_context	*context;
 
 	if (pproc == NULL) {
@@ -370,16 +371,20 @@ pe_update_ctx(struct pe_proc *pproc, struct pe_context **newctx, int prio,
 	 * new pdb does not provide policies for our uid, try to get the
 	 * default policies.
 	 */
-	if ((newuser = pe_get_user(pproc->uid, newpdb)) == NULL)
-		newuser = pe_get_user(-1, newpdb);
 
 	context = NULL;
-	if (newuser) {
+	newrules = pe_get_ruleset(pproc->uid, prio, newpdb);
+	if (newrules) {
 		u_int8_t		*csum = NULL;
 		char			*pathhint = NULL;
 		struct apn_rule		*oldrule;
 		struct apn_app		*oldapp;
 
+		/*
+		 * XXX CEH: In some cases we might want to look for
+		 * XXX CEH: a new any rule if the old context for the priority
+		 * XXX CEH: or its assocated ruleset is NULL.
+		 */
 		if (pproc->context[prio] == NULL)
 			goto out;
 		oldrule = pproc->context[prio]->rule;
@@ -391,7 +396,7 @@ pe_update_ctx(struct pe_proc *pproc, struct pe_context **newctx, int prio,
 				csum = oldapp->hashvalue;
 			pathhint = oldapp->name;
 		}
-		context = pe_search_ctx(newuser->prio[prio], csum, pathhint);
+		context = pe_search_ctx(newrules, csum, pathhint);
 	}
 out:
 
@@ -633,6 +638,20 @@ pe_get_user(uid_t uid, struct policies *p)
 	DEBUG(DBG_PE_POLICY, "pe_get_user: uid %d user %p", (int)uid, user);
 
 	return (user);
+}
+
+struct apn_ruleset *
+pe_get_ruleset(uid_t uid, int prio, struct policies *p)
+{
+	struct pe_user *user;
+
+	user = pe_get_user(uid, p);
+	if (user && user->prio[prio])
+		return user->prio[prio];
+	user = pe_get_user(-1, p);
+	if (!user)
+		return NULL;
+	return user->prio[prio];
 }
 
 static char *
@@ -2119,8 +2138,10 @@ pe_set_ctx(struct pe_proc *proc, uid_t uid, const u_int8_t *csum,
 		proc->valid_ctx = 1;
 	} else {
 		for (i = 0; i < PE_PRIO_MAX; i++) {
+			struct apn_ruleset *ruleset;
+			ruleset = pe_get_ruleset(uid, i, pdb);
 			pe_put_ctx(proc->context[i]);
-			proc->context[i] = pe_search_ctx(user->prio[i], csum,
+			proc->context[i] = pe_search_ctx(ruleset, csum,
 			    pathhint);
 		}
 		proc->valid_ctx = 1;
