@@ -485,12 +485,10 @@ pe_load_dir(const char *dirname, int prio, struct policies *p)
 		if (dp->d_name[0] == '.')
 			continue;
 		/*
-		 * Validate the file name: For PE_PRIO_ADMIN it has
-		 * to be either ANOUBISD_DEFAULTNAME or a numeric uid,
-		 * for other priorities only a numeric uid.
+		 * Validate the file name: It has to be either
+		 * ANOUBISD_DEFAULTNAME or a numeric uid.
 		 */
-		if (prio == PE_PRIO_ADMIN && strcmp(dp->d_name,
-		    ANOUBISD_DEFAULTNAME) == 0)
+		if (strcmp(dp->d_name, ANOUBISD_DEFAULTNAME) == 0)
 			uid = -1;
 		else {
 			uid = strtonum(dp->d_name, 0, UID_MAX, &errstr);
@@ -687,9 +685,15 @@ pe_open_policy_file(uid_t uid, int prio)
 	free(name);
 	if (fd >= 0)
 		return fd;
-	if (err != ENOENT || prio != PE_PRIO_ADMIN)
+	if (err != ENOENT)
 		return -err;
-	fd = open("/" ANOUBISD_ADMINDIR "/" ANOUBISD_DEFAULTNAME, O_RDONLY);
+
+	err = asprintf(&name, "/%s/%s", prio_to_string[prio],
+	    ANOUBISD_DEFAULTNAME);
+	if (err == -1)
+		return -ENOMEM;
+	fd = open(name, O_RDONLY);
+	free(name);
 	if (fd >= 0)
 		return fd;
 	return -errno;
