@@ -36,14 +36,30 @@ BEGIN_DECLARE_EVENT_TYPES()
 	DECLARE_LOCAL_EVENT_TYPE(anEVT_MAINFRAME_SHOW, wxNewEventType())
 
 	/*
+	 * Request the View of the current Notifications due to user interaction
+	 * caused by clicking on the TrayIcon or Notification Popup when
+	 * Escalations or Alerts were reported by these, to the user of xanoubis
+	 *
+	 * The integer field contains a boolean stating:
+	 * true		=> show Widget
+	 *
+	 * The string field may contain the following strings stating:
+	 * "ESCALATIONS" => Show Notification Tab and current notifications
+	 * "ALERTS"	 => Show Notification Tab and current messages
+	 */
+	DECLARE_LOCAL_EVENT_TYPE(anEVT_ESCALATIONS_SHOW, wxNewEventType())
+
+	/*
 	 * The options of the system notification via libnotify have changed
 	 */
-	DECLARE_LOCAL_EVENT_TYPE(anEVT_SYSNOTIFICATION_OPTIONS, wxNewEventType())
+	DECLARE_LOCAL_EVENT_TYPE(anEVT_SYSNOTIFICATION_OPTIONS,
+	    wxNewEventType())
 
 	/*
 	 * A connection to the daemon was sucessfully established.
 	 * This event is intended of been used between the communicator
 	 * thread and communicator control only.
+	 *
 	 * The integer field contains the connectionState enum stating:
 	 * a successfull connection	=> CONNECTION_CONNECTED
 	 * normal disconnect		=> CONNECTION_DISCONNECTED
@@ -114,7 +130,8 @@ BEGIN_DECLARE_EVENT_TYPES()
 	 * Send a Event if the rules of the anoubisd arrived, with the
 	 * file name of the tmp-File which holds the rules.
 	 */
-	DECLARE_LOCAL_EVENT_TYPE(anEVT_ANOUBISD_RULESET_ARRIVED, wxNewEventType())
+	DECLARE_LOCAL_EVENT_TYPE(anEVT_ANOUBISD_RULESET_ARRIVED,
+	    wxNewEventType())
 END_DECLARE_EVENT_TYPES()
 
 #endif	/* _ANEVENTS_H_ */

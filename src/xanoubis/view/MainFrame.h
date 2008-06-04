@@ -74,6 +74,7 @@ class MainFrame : public MainFrameBase
 		void OnOpenEscalations(wxCommandEvent&);
 		void OnClose(wxCloseEvent& event);
 		void OnAnoubisdRuleSet(wxCommandEvent&);
+		void OnEscalationsShow(wxCommandEvent&);
 
 	public:
 		MainFrame(wxWindow*);

@@ -46,8 +46,9 @@
 BEGIN_EVENT_TABLE(TrayIcon, wxTaskBarIcon)
 	EVT_MENU(GUI_EXIT, TrayIcon::OnGuiExit)
 	EVT_MENU(GUI_RESTORE, TrayIcon::OnGuiRestore)
-	EVT_TASKBAR_LEFT_DCLICK(TrayIcon::OnLeftButtonDClick)
+	EVT_TASKBAR_LEFT_DOWN(TrayIcon::OnLeftButtonClick)
 END_EVENT_TABLE()
+
 
 TrayIcon::TrayIcon(void)
 {
@@ -117,19 +118,22 @@ TrayIcon::OnOpenEscalations(wxCommandEvent& event)
 void
 TrayIcon::OnLogViewerShow(wxCommandEvent& event)
 {
-	if(event.GetInt())
-	{
+	if(event.GetInt()) {
 		messageAlertCount_ = 0;
 		update();
 	}
 }
 
 void
-TrayIcon::OnLeftButtonDClick(wxTaskBarIconEvent& event)
+TrayIcon::OnLeftButtonClick(wxTaskBarIconEvent& event)
 {
-	wxCommandEvent  showEvent(anEVT_MAINFRAME_SHOW);
-	showEvent.SetInt(true);
-	wxGetApp().sendEvent(showEvent);
+	if (messageEscalationCount_ > 0 || messageAlertCount_ > 0) {
+		this->systemNotifyCallback();
+	} else {
+		wxCommandEvent  showEvent(anEVT_MAINFRAME_SHOW);
+		showEvent.SetInt(true);
+		wxGetApp().sendEvent(showEvent);
+	}
 }
 
 void
@@ -227,6 +231,39 @@ TrayIcon::update(void)
 	SetIcon(*icon, tooltip);
 }
 
+
+static void
+callback(NotifyNotification *notification, const char *action,
+    void *user_data)
+{
+	assert(action != NULL);
+	assert(strcmp("default", action) == 0);
+	notify_notification_close(notification, NULL);
+
+	TrayIcon* inst = (TrayIcon*)user_data;
+	inst->systemNotifyCallback();
+}
+
+void
+TrayIcon::systemNotifyCallback(void)
+{
+	wxCommandEvent  showEvent(anEVT_ESCALATIONS_SHOW);
+
+	/* request notifications view of ESCALATIONS */
+	if (messageEscalationCount_ > 0) {
+		showEvent.SetInt(true);
+		showEvent.SetString(wxT("ESCALATIONS"));
+		wxGetApp().sendEvent(showEvent);
+	}
+
+	/* request notifications view of ALERTS */
+	if (messageAlertCount_ > 0) {
+		showEvent.SetInt(true);
+		showEvent.SetString(wxT("ALERTS"));
+		wxGetApp().sendEvent(showEvent);
+	}
+}
+
 bool
 TrayIcon::systemNotify(const gchar *module, const gchar *message,
     NotifyUrgency priority, const int timeout)
@@ -241,6 +278,8 @@ TrayIcon::systemNotify(const gchar *module, const gchar *message,
 	/* mandatory initialisation call */
 	(module != NULL) ? notify_init(module) : notify_init("Anoubis");
 	notify_notification_set_timeout(notification, timeShown);
+	notify_notification_add_action(notification, "default", "default cb",
+	    (NotifyActionCallback)callback, this, NULL);
 
 	/* XXX ST: we disable the setting of the corresponding urgency level
 	 *	   as it only renders the color area covered by the

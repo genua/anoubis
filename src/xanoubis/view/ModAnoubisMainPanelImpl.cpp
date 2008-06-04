@@ -78,6 +78,10 @@ ModAnoubisMainPanelImpl::ModAnoubisMainPanelImpl(wxWindow* parent,
 	currentNotify_ = NULL;
 	systemNotifyEnabled_ = false;
 	systemNotifyTimeout_ = TEN_SECONDS;
+
+	parent->Connect(anEVT_ESCALATIONS_SHOW,
+	    wxCommandEventHandler(ModAnoubisMainPanelImpl::OnEscalationsShow),
+	    NULL, this);
 }
 
 void
@@ -359,4 +363,23 @@ ModAnoubisMainPanelImpl::OnNotificationTimeout(wxSpinEvent& event)
 	showEvent.SetInt(systemNotifyEnabled_);
 	showEvent.SetExtraLong(systemNotifyTimeout_);
 	wxGetApp().sendEvent(showEvent);
+}
+
+void
+ModAnoubisMainPanelImpl::OnEscalationsShow(wxCommandEvent& event)
+{
+	/* select tab "Notifications" */
+	tb_MainAnoubisNotify->ChangeSelection(0);
+
+	if (event.GetString().Cmp(wxT("ESCALATIONS")) == 0) {
+		/* select "current requests" */
+		ch_type->SetSelection(0);
+	}
+
+	if (event.GetString().Cmp(wxT("ALERTS")) == 0) {
+		/* select "current messages" */
+		ch_type->SetSelection(1);
+	}
+
+	event.Skip();
 }

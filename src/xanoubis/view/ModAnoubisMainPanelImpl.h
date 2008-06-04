@@ -54,6 +54,7 @@ class ModAnoubisMainPanelImpl : public ModAnoubisMainPanelBase
 		void OnDenyBtnClick(wxCommandEvent& event);
 		void OnToggleNotification(wxCommandEvent& event);
 		void OnNotificationTimeout(wxSpinEvent& event);
+		void OnEscalationsShow(wxCommandEvent& event);
 
 	public:
 		ModAnoubisMainPanelImpl(wxWindow* parent, wxWindowID id);

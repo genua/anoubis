@@ -67,6 +67,8 @@ MainFrame::MainFrame(wxWindow *parent) : MainFrameBase(parent)
 	    wxCommandEventHandler(MainFrame::OnOpenEscalations), NULL, this);
 	Connect(anEVT_ANOUBISD_RULESET,
 	    wxCommandEventHandler(MainFrame::OnAnoubisdRuleSet), NULL, this);
+	Connect(anEVT_ESCALATIONS_SHOW,
+	    wxCommandEventHandler(MainFrame::OnEscalationsShow), NULL, this);
 }
 
 MainFrame::~MainFrame()
@@ -358,4 +360,16 @@ MainFrame::OnAnoubisdRuleSet(wxCommandEvent& event)
 {
 	wxString tmpName = event.GetString();
 	wxGetApp().importPolicyFile(tmpName);
+}
+
+void
+MainFrame::OnEscalationsShow(wxCommandEvent& event)
+{
+	this->Show(event.GetInt());
+	Module *module = wxGetApp().getModule(ANOUBIS);
+	int id = module->getToolbarId();
+
+	wxCommandEvent selectEvent(wxEVT_COMMAND_MENU_SELECTED, id);
+	selectEvent.SetInt(id);
+	this->AddPendingEvent(selectEvent);
 }

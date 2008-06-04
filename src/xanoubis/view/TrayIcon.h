@@ -61,9 +61,10 @@ class TrayIcon : public wxTaskBarIcon
 		void OnLogViewerShow(wxCommandEvent&);
 		void OnSysNotifyChanged(wxCommandEvent&);
 		void SetConnectedDaemon(wxString);
-		void OnLeftButtonDClick(wxTaskBarIconEvent&);
+		void OnLeftButtonClick(wxTaskBarIconEvent&);
 		void OnGuiRestore(wxCommandEvent&);
 		void OnGuiExit(wxCommandEvent&);
+		void systemNotifyCallback(void);
 
 		virtual wxMenu *CreatePopupMenu(void);
 

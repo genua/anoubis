@@ -32,6 +32,20 @@ DEFINE_LOCAL_EVENT_TYPE(anEVT_RULEEDITOR_SHOW)
 DEFINE_LOCAL_EVENT_TYPE(anEVT_MAINFRAME_SHOW)
 
 /*
+ * Request the View of the current Notifications due to user interaction
+ * caused by clicking on the TrayIcon or Notification Popup when
+ * Escalations or Alerts were reported by these, to the user of xanoubis
+ *
+ * The integer field contains a boolean stating:
+ * true         => show Widget
+ *
+ * The string field may contain the following strings stating:
+ * "ESCALATIONS" => Show Notification Tab and current notifications
+ * "ALERTS"      => Show Notification Tab and current messages
+ */
+DEFINE_LOCAL_EVENT_TYPE(anEVT_ESCALATIONS_SHOW)
+
+/*
  * The options of the system notification via libnotify have changed
  */
 DEFINE_LOCAL_EVENT_TYPE(anEVT_SYSNOTIFICATION_OPTIONS)
@@ -40,6 +54,7 @@ DEFINE_LOCAL_EVENT_TYPE(anEVT_SYSNOTIFICATION_OPTIONS)
  * A connection to the daemon was sucessfully established.
  * This event is intended of been used between the communicator
  * thread and communicator control only.
+ *
  * The integer field contains the connectionState enum stating:
  * a successfull connection     => CONNECTION_CONNECTED
  * normal disconnect            => CONNECTION_DISCONNECTED
