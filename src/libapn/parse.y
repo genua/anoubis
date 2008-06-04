@@ -150,6 +150,7 @@ typedef struct {
 		struct apn_alfrule	*alfrule;
 		struct apn_sfsrule	*sfsrule;
 		struct apn_rule		*ruleset;
+		struct apn_scope	*scope;
 	} v;
 	int lineno;
 } YYSTYPE;
@@ -160,7 +161,7 @@ typedef struct {
 %token	ALLOW DENY ALF SFS SB VS CAP CONTEXT RAW ALL OTHER LOG CONNECT ACCEPT
 %token	INET INET6 FROM TO PORT ANY SHA256 TCP UDP DEFAULT NEW ASK ALERT
 %token	READ WRITE EXEC CHMOD ERROR APPLICATION RULE HOST TFILE BOTH SEND
-%token	RECEIVE TIMEOUT STATEFUL
+%token	RECEIVE TIMEOUT STATEFUL TASK UNTIL
 %token	<v.string>		STRING
 %token	<v.number>		NUMBER
 %type	<v.app>			app app_l apps sfsapp
@@ -186,6 +187,7 @@ typedef struct {
 %type	<v.sfscheck>		sfscheckrule
 %type	<v.sfsrule>		sfsrule sfsrule_l
 %type	<v.timeout>		statetimeout
+%type	<v.scope>		scope
 %%
 
 grammar		: /* empty */
@@ -348,7 +350,57 @@ alfrule_l	: alfrule_l alfrule nl		{
 		| alfrule nl			{ $$ = $1; }
 		;
 
-alfrule		: alffilterrule			{
+scope		: /* Empty */ {
+			$$ = NULL;
+		}
+		| TASK NUMBER {
+			struct apn_scope *scope;
+
+			if (apnrsp->flags & APN_FLAG_NOSCOPE) {
+				yyerror("Scopes not permitted");
+				YYERROR;
+			}
+			scope = calloc(1, sizeof(struct apn_scope));
+			if (!scope)
+				YYERROR;
+			scope->task = $2;
+			scope->timeout = 0;
+
+			$$ = scope;
+		}
+		| TASK NUMBER UNTIL NUMBER {
+			struct apn_scope *scope;
+
+			if (apnrsp->flags & APN_FLAG_NOSCOPE) {
+				yyerror("Scopes not permitted");
+				YYERROR;
+			}
+			scope = calloc(1, sizeof(struct apn_scope));
+			if (!scope)
+				YYERROR;
+			scope->task = $2;
+			scope->timeout = $4;
+
+			$$ = scope;
+		}
+		| UNTIL NUMBER {
+			struct apn_scope *scope;
+
+			if (apnrsp->flags & APN_FLAG_NOSCOPE) {
+				yyerror("Scopes not permitted");
+				YYERROR;
+			}
+			scope = calloc(1, sizeof(struct apn_scope));
+			if (!scope)
+				YYERROR;
+			scope->task = 0; 
+			scope->timeout = $2;
+
+			$$ = scope;
+		}
+		;
+
+alfrule		: alffilterrule	scope		{
 			struct apn_alfrule	*rule;
 
 			rule = calloc(1, sizeof(struct apn_alfrule));
@@ -361,10 +413,11 @@ alfrule		: alffilterrule			{
 			rule->rule.afilt = $1;
 			rule->tail = rule;
 			rule->id = counter++;
+			rule->scope = $2;
 
 			$$ = rule;
 		}
-		| alfcaprule			{
+		| alfcaprule scope		{
 			struct apn_alfrule	*rule;
 
 			rule = calloc(1, sizeof(struct apn_alfrule));
@@ -375,10 +428,11 @@ alfrule		: alffilterrule			{
 			rule->rule.acap = $1;
 			rule->tail = rule;
 			rule->id = counter++;
+			rule->scope = $2;
 
 			$$ = rule;
 		}
-		| alfdefault			{
+		| alfdefault scope		{
 			struct apn_alfrule	*rule;
 
 			rule = calloc(1, sizeof(struct apn_alfrule));
@@ -389,10 +443,11 @@ alfrule		: alffilterrule			{
 			rule->rule.apndefault = $1;
 			rule->tail = rule;
 			rule->id = counter++;
+			rule->scope = $2;
 
 			$$ = rule;
 		}
-		| ctxrule			{
+		| ctxrule scope			{
 			struct apn_alfrule	*rule;
 
 			rule = calloc(1, sizeof(struct apn_alfrule));
@@ -403,6 +458,7 @@ alfrule		: alffilterrule			{
 			rule->rule.apncontext = $1;
 			rule->tail = rule;
 			rule->id = counter++;
+			rule->scope = $2;
 
 			$$ = rule;
 		}
@@ -663,7 +719,7 @@ sfsrule_l	: sfsrule_l sfsrule nl		{
 		| sfsrule nl			{ $$ = $1; }
 		;
 
-sfsrule		: sfscheckrule			{
+sfsrule		: sfscheckrule scope		{
 			struct apn_sfsrule	*rule;
 
 			rule = calloc(1, sizeof(struct apn_sfsrule));
@@ -676,10 +732,11 @@ sfsrule		: sfscheckrule			{
 			rule->rule.sfscheck = $1;
 			rule->tail = rule;
 			rule->id = counter++;
+			rule->scope = $2;
 
 			$$ = rule;
 		}
-		| sfsdefault			{
+		| sfsdefault scope		{
 			struct apn_sfsrule	*rule;
 
 			rule = calloc(1, sizeof(struct apn_alfrule));
@@ -690,6 +747,7 @@ sfsrule		: sfscheckrule			{
 			rule->rule.apndefault = $1;
 			rule->tail = rule;
 			rule->id = counter++;
+			rule->scope = $2;
 
 			$$ = rule;
 		}
@@ -920,7 +978,13 @@ hashtype	: SHA256			{ $$ = APN_HASH_SHA256; }
 
 action		: ALLOW				{ $$ = APN_ACTION_ALLOW; }
 		| DENY				{ $$ = APN_ACTION_DENY; }
-		| ASK				{ $$ = APN_ACTION_ASK; }
+		| ASK				{
+			if (apnrsp->flags & APN_FLAG_NOASK) {
+				yyerror("Action ``ASK'' not permitted");
+				YYERROR;
+			}
+			$$ = APN_ACTION_ASK;
+		}
 		;
 
 log		: LOG				{ $$ = APN_LOG_NORMAL; }
@@ -996,12 +1060,15 @@ lookup(char *s)
 		{ "sfs",	SFS },
 		{ "sha256",	SHA256 },
 		{ "stateful",	STATEFUL },
+		{ "task",	TASK },
 		{ "tcp",	TCP },
 		{ "timeout",	TIMEOUT },
 		{ "to",		TO },
 		{ "udp",	UDP },
+		{ "until",	UNTIL },
 		{ "vs",		VS },
 		{ "write",	WRITE },
+		/* the above list has to be sorted always */
 	};
 	const struct keywords	*p;
 
@@ -1841,6 +1908,8 @@ clearalfrule(struct apn_alfrule *rule)
 			break;
 		}
 
+		if (hp->scope)
+			free(hp->scope);
 		free(hp);
 		hp = tmp;
 	}
@@ -1867,6 +1936,8 @@ clearsfsrule(struct apn_sfsrule *rule)
 		default:
 			break;
 		}
+		if (hp->scope)
+			free(hp->scope);
 		free(hp);
 		hp = tmp;
 	}

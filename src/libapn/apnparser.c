@@ -46,6 +46,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <sys/types.h>
 #include "apn.h"
 
 /* Implemented in parse.y */
@@ -607,6 +608,18 @@ apn_print_app(struct apn_app *app, FILE *file)
 }
 
 static int
+apn_print_scope(struct apn_scope *scope, FILE * file)
+{
+	if (!scope)
+		return 0;
+	if (scope->task)
+		fprintf(file, " task %lld", scope->task);
+	if (scope->timeout)
+		fprintf(file, " until %ld", (long int)scope->timeout);
+	return 0;
+}
+
+static int
 apn_print_alfrule(struct apn_alfrule *rule, int flags, FILE *file)
 {
 	struct apn_alfrule	*hp = rule;
@@ -638,6 +651,12 @@ apn_print_alfrule(struct apn_alfrule *rule, int flags, FILE *file)
 
 		if (ret)
 			break;
+		if (hp->scope)
+			ret = apn_print_scope(hp->scope, file);
+		if (ret)
+			break;
+
+		fprintf(file, "\n");
 
 		hp = hp->next;
 	}
@@ -671,6 +690,12 @@ apn_print_sfsrule(struct apn_sfsrule *rule, int flags, FILE *file)
 
 		if (ret)
 			break;
+		if (hp->scope)
+			ret = apn_print_scope(hp->scope, file);
+		if (ret)
+			break;
+
+		fprintf(file, "\n");
 
 		hp = hp->next;
 	}
@@ -710,7 +735,7 @@ apn_print_afiltrule(struct apn_afiltrule *rule, FILE *file)
 			return (1);
 	}
 
-	fprintf(file, " timeout %u\n", rule->filtspec.statetimeout);
+	fprintf(file, " timeout %u", rule->filtspec.statetimeout);
 
 	return (0);
 }
@@ -740,8 +765,6 @@ apn_print_acaprule(struct apn_acaprule *rule, FILE *file)
 		return (1);
 	}
 
-	fprintf(file, "\n");
-
 	return (0);
 }
 
@@ -758,8 +781,6 @@ apn_print_defaultrule(struct apn_default *rule, FILE *file)
 	if (apn_print_action(rule->action, 0, file) == 1)
 		return (1);
 
-	fprintf(file, "\n");
-
 	return (0);
 }
 
@@ -773,8 +794,6 @@ apn_print_contextrule(struct apn_context *rule, FILE *file)
 
 	if (apn_print_app(rule->application, file) == 1)
 		return (1);
-
-	fprintf(file, "\n");
 
 	return (0);
 }
@@ -791,8 +810,6 @@ apn_print_scheckrule(struct apn_sfscheck *rule, FILE *file)
 		fprintf(file, " ");
 	if (apn_print_log(rule->log, file) == 1)
 		return (1);
-
-	fprintf(file, "\n");
 
 	return (0);
 }
@@ -1133,6 +1150,8 @@ apn_free_alfrule(struct apn_alfrule *rule)
 		default:
 			break;
 		}
+		if (hp->scope)
+			free(hp->scope);
 		free(hp);
 		hp = next;
 	}
@@ -1326,7 +1345,7 @@ apn_copy_rule(struct apn_rule *rule)
 static struct apn_alfrule *
 apn_copy_alfrules(struct apn_alfrule *rule)
 {
-	struct apn_alfrule	*newrule, *newhead, *hp;
+	struct apn_alfrule	*newrule = NULL, *newhead, *hp;
 
 	hp = rule;
 	newhead = NULL;
@@ -1336,36 +1355,39 @@ apn_copy_alfrules(struct apn_alfrule *rule)
 
 		newrule->type = hp->type;
 		newrule->id = hp->id;
+		if (rule->scope) {
+			newrule->scope = calloc(1, sizeof(struct apn_scope));
+			if (newrule->scope == NULL)
+				goto errout;
+			*(newrule->scope) = *(rule->scope);
+		} else {
+			newrule->scope = NULL;
+		}
 
 		switch (hp->type) {
 		case APN_ALF_FILTER:
 			if (apn_copy_afilt(&hp->rule.afilt,
-			    &newrule->rule.afilt) != 0) {
-				free(newrule);
+			    &newrule->rule.afilt) != 0)
 				goto errout;
-			}
 			break;
 
 		case APN_ALF_CAPABILITY:
 			if (apn_copy_acap(&hp->rule.acap, &newrule->rule.acap)
-			    != 0) {
-				free(newrule);
+			    != 0)
 				goto errout;
-			}
 			break;
 
 		case APN_ALF_DEFAULT:
 			if (apn_copy_apndefault(&hp->rule.apndefault,
-			    &newrule->rule.apndefault) != 0) {
-				free(newrule);
+			    &newrule->rule.apndefault) != 0)
 				goto errout;
-			}
 			break;
 
 		case APN_ALF_CTX:
 			/*FALLTHROUGH*/
 		default:
 			/* just ignore and go on */
+			free(newrule->scope);
 			free(newrule);
 			hp = hp->next;
 			continue;
@@ -1385,6 +1407,11 @@ apn_copy_alfrules(struct apn_alfrule *rule)
 	return (newhead);
 
 errout:
+	if (newrule) {
+		if (newrule->scope)
+			free(newrule->scope);
+		free(newrule);
+	}
 	apn_free_alfrule(newhead);
 	return (NULL);
 }

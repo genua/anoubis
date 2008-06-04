@@ -69,10 +69,10 @@ generate_file(FILE **infp)
 	fprintf(sfp, "/bin/sh sha256 \\\n");
 	fprintf(sfp, "a123456789abcdef0123456789abcdef0123456789abcdef"
 	    "0123456789abcdef {\n");
-	fprintf(sfp, "allow connect tcp all\n");
+	fprintf(sfp, "allow connect tcp all until 10\n");
 	fprintf(sfp, "allow accept tcp from any to any\n");
-	fprintf(sfp, "allow connect tcp from any to 1.2.3.4\n");
-	fprintf(sfp, "allow accept tcp from any to 1.2.3.4 port www\n");
+	fprintf(sfp, "allow connect tcp from any to 1.2.3.4 task 20 until 30\n");
+	fprintf(sfp, "allow accept tcp from any to 1.2.3.4 port www task 40\n");
 	fprintf(sfp, "allow connect tcp from 1.2.3.4 to any\n");
 	fprintf(sfp, "allow accept tcp from 1.2.3.4 port www to any\n");
 	fprintf(sfp, "allow connect tcp from 1.2.3.0/24 to 4.0.0.0/8\n");

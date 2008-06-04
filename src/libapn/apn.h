@@ -28,6 +28,12 @@
 #ifndef _APN_H_
 #define _APN_H_
 
+#include "config.h"
+
+#ifdef S_SPLINT_S
+#include "splint-includes.h"
+#endif
+
 #include <stdarg.h>
 #include <sys/cdefs.h>
 #include <sys/types.h>
@@ -35,19 +41,19 @@
 
 #ifndef LINUX
 #include <sys/queue.h>
+#include <dev/anoubis.h>
 #include <sys/uio.h>
 #else
 #include <queue.h>
+#include <linux/anoubis.h>
 #endif
 
 #include <stdio.h>
 
-#ifdef S_SPLINT_S
-#include "splint-includes.h"
-#endif
-
 #define APN_FLAG_VERBOSE	0x0001
 #define APN_FLAG_VERBOSE2	0x0002
+#define APN_FLAG_NOSCOPE	0x0004
+#define APN_FLAG_NOASK		0x0008
 
 #define APN_HASH_SHA256_LEN	32
 #define MAX_APN_HASH_LEN	APN_HASH_SHA256_LEN
@@ -170,6 +176,7 @@ struct apn_alfrule {
 	u_int8_t		 type;
 	int			 id;
 
+	struct apn_scope	*scope;
 	union {
 		struct apn_afiltrule	afilt;
 		struct apn_acaprule	acap;
@@ -194,6 +201,7 @@ struct apn_sfsrule {
 	u_int8_t		 type;
 	int			 id;
 
+	struct apn_scope	*scope;
 	union {
 		struct apn_sfscheck	sfscheck;
 		struct apn_default	apndefault;
@@ -205,6 +213,11 @@ struct apn_sfsrule {
 
 enum {
 	APN_ALF,  APN_SFS, APN_SB, APN_VS
+};
+
+struct apn_scope {
+	time_t			timeout;
+	anoubis_cookie_t	task;
 };
 
 /* Complete state of one rule. */

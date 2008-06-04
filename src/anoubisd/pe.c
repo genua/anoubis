@@ -55,11 +55,13 @@
 #include <bsdcompat.h>
 #include <linux/anoubis_sfs.h>
 #include <linux/anoubis_alf.h>
+#include <linux/anoubis.h>
 #endif
 #ifdef OPENBSD
 #include <sys/queue.h>
 #include <dev/anoubis_alf.h>
 #include <dev/anoubis_sfs.h>
+#include <dev/anoubis.h>
 #endif
 
 #ifdef LINUX
@@ -142,19 +144,19 @@ anoubisd_reply_t	*pe_decide_alf(struct pe_proc *, struct eventdev_hdr *);
 int			 pe_alf_evaluate(struct pe_context *,
 			     struct alf_event *, int *, u_int32_t *);
 int			 pe_decide_alffilt(struct apn_rule *, struct
-			     alf_event *, int *, u_int32_t *);
+			     alf_event *, int *, u_int32_t *, time_t);
 int			 pe_decide_alfcap(struct apn_rule *, struct
-			     alf_event *, int *, u_int32_t *);
+			     alf_event *, int *, u_int32_t *, time_t);
 int			 pe_decide_alfdflt(struct apn_rule *, struct
-			     alf_event *, int *, u_int32_t *);
+			     alf_event *, int *, u_int32_t *, time_t);
 char			*pe_dump_alfmsg(struct alf_event *);
 anoubisd_reply_t	*pe_handle_sfs(anoubisd_msg_sfsopen_t *);
 anoubisd_reply_t	*pe_decide_sfs(struct pe_user *,
-			    anoubisd_msg_sfsopen_t*);
+			    anoubisd_msg_sfsopen_t*, time_t now);
 int			 pe_decide_sfscheck(struct apn_rule *, struct
-			     sfs_open_message *, int *, u_int32_t *);
+			     sfs_open_message *, int *, u_int32_t *, time_t);
 int			 pe_decide_sfsdflt(struct apn_rule *, struct
-			     sfs_open_message *, int *, u_int32_t *);
+			     sfs_open_message *, int *, u_int32_t *, time_t);
 anoubisd_reply_t	*pe_dispatch_policy(struct anoubisd_msg_comm *);
 
 struct pe_proc		*pe_get_proc(anoubis_cookie_t);
@@ -198,6 +200,8 @@ int			 pe_addrmatch_port(struct apn_port *, void *,
 			     unsigned short);
 static char		*pe_policy_file_name(uid_t uid, int prio);
 static int		 pe_open_policy_file(uid_t uid, int prio);
+static int		 pe_in_scope(struct apn_scope *,
+			     struct anoubis_event_common *, time_t);
 
 /*
  * The following code utilizes list functions from BSD queue.h, which
@@ -993,6 +997,7 @@ pe_alf_evaluate(struct pe_context *context, struct alf_event *msg, int *log,
 {
 	struct apn_rule	*rule;
 	int		 decision;
+	time_t		 t;
 
 	if (context == NULL)
 		return (-1);
@@ -1005,11 +1010,17 @@ pe_alf_evaluate(struct pe_context *context, struct alf_event *msg, int *log,
 		return (-1);
 	}
 
-	decision = pe_decide_alffilt(rule, msg, log, rule_id);
+	if (time(&t) == (time_t)-1) {
+		int code = errno;
+		log_warn("Cannot get current time");
+		master_terminate(code);
+		return -1;
+	}
+	decision = pe_decide_alffilt(rule, msg, log, rule_id, t);
 	if (decision == -1)
-		decision = pe_decide_alfcap(rule, msg, log, rule_id);
+		decision = pe_decide_alfcap(rule, msg, log, rule_id, t);
 	if (decision == -1)
-		decision = pe_decide_alfdflt(rule, msg, log, rule_id);
+		decision = pe_decide_alfdflt(rule, msg, log, rule_id, t);
 
 	DEBUG(DBG_PE_DECALF, "pe_alf_evaluate: decision %d rule %p", decision,
 	    rule);
@@ -1022,7 +1033,7 @@ pe_alf_evaluate(struct pe_context *context, struct alf_event *msg, int *log,
  */
 int
 pe_decide_alffilt(struct apn_rule *rule, struct alf_event *msg, int *log,
-    u_int32_t *rule_id)
+    u_int32_t *rule_id, time_t now)
 {
 	struct apn_alfrule	*hp;
 	int			 decision;
@@ -1045,7 +1056,8 @@ pe_decide_alffilt(struct apn_rule *rule, struct alf_event *msg, int *log,
 		/*
 		 * Skip non-filter rules.
 		 */
-		if (hp->type != APN_ALF_FILTER)
+		if (hp->type != APN_ALF_FILTER
+		    || !pe_in_scope(hp->scope, &msg->common, now))
 			continue;
 
 		DEBUG(DBG_PE_DECALF, "pe_decide_alffilt: family %d == %d/%p?",
@@ -1183,7 +1195,7 @@ pe_decide_alffilt(struct apn_rule *rule, struct alf_event *msg, int *log,
  */
 int
 pe_decide_alfcap(struct apn_rule *rule, struct alf_event *msg, int *log,
-    u_int32_t *rule_id)
+    u_int32_t *rule_id, time_t now)
 {
 	int			 decision;
 	struct apn_alfrule	*hp;
@@ -1205,7 +1217,8 @@ pe_decide_alfcap(struct apn_rule *rule, struct alf_event *msg, int *log,
 	hp = rule->rule.alf;
 	while (hp) {
 		/* Skip non-capability rules. */
-		if (hp->type != APN_ALF_CAPABILITY) {
+		if (hp->type != APN_ALF_CAPABILITY ||
+		    !pe_in_scope(hp->scope, &msg->common, now)) {
 			hp = hp->next;
 			continue;
 		}
@@ -1263,7 +1276,7 @@ pe_decide_alfcap(struct apn_rule *rule, struct alf_event *msg, int *log,
  */
 int
 pe_decide_alfdflt(struct apn_rule *rule, struct alf_event *msg, int *log,
-    u_int32_t *rule_id)
+    u_int32_t *rule_id, time_t now)
 {
 	struct apn_alfrule	*hp;
 	int			 decision;
@@ -1277,7 +1290,8 @@ pe_decide_alfdflt(struct apn_rule *rule, struct alf_event *msg, int *log,
 	hp = rule->rule.alf;
 	while (hp) {
 		/* Skip non-default rules. */
-		if (hp->type != APN_ALF_DEFAULT) {
+		if (hp->type != APN_ALF_DEFAULT
+		    || !pe_in_scope(hp->scope, &msg->common, now)) {
 			hp = hp->next;
 			continue;
 		}
@@ -1446,6 +1460,7 @@ pe_handle_sfs(anoubisd_msg_sfsopen_t *sfsmsg)
 	anoubisd_reply_t		*reply = NULL;
 	struct pe_user			*user;
 	struct eventdev_hdr		*hdr;
+	time_t				 now;
 
 	if (sfsmsg == NULL) {
 		log_warnx("pe_handle_sfs: empty message");
@@ -1462,13 +1477,19 @@ pe_handle_sfs(anoubisd_msg_sfsopen_t *sfsmsg)
 	if (user == NULL)
 		user = pe_get_user(-1, pdb);
 
-	reply = pe_decide_sfs(user, sfsmsg);
+	if (time(&now) == (time_t)-1) {
+		int code = errno;
+		log_warn("pe_handle_sfs: Cannot get time");
+		master_terminate(code);
+		return (NULL);
+	}
+	reply = pe_decide_sfs(user, sfsmsg, now);
 
 	return (reply);
 }
 
 anoubisd_reply_t *
-pe_decide_sfs(struct pe_user *user, anoubisd_msg_sfsopen_t *sfsmsg)
+pe_decide_sfs(struct pe_user *user, anoubisd_msg_sfsopen_t *sfsmsg, time_t now)
 {
 	static char		*verdict[3] = { "allowed", "denied", "asked" };
 	anoubisd_reply_t	*reply = NULL;
@@ -1504,11 +1525,11 @@ pe_decide_sfs(struct pe_user *user, anoubisd_msg_sfsopen_t *sfsmsg)
 
 				TAILQ_FOREACH(rule, &rs->sfs_queue, entry) {
 					ret = pe_decide_sfscheck(rule, msg,
-					    &log, &rule_id);
+					    &log, &rule_id, now);
 
 					if (ret == -1)
 						ret = pe_decide_sfsdflt(rule,
-						    msg, &log, &rule_id);
+						    msg, &log, &rule_id, now);
 
 					if (ret != -1)
 						decision = ret;
@@ -1571,7 +1592,7 @@ pe_decide_sfs(struct pe_user *user, anoubisd_msg_sfsopen_t *sfsmsg)
 
 int
 pe_decide_sfscheck(struct apn_rule *rule, struct sfs_open_message *msg,
-    int *log, u_int32_t *rule_id)
+    int *log, u_int32_t *rule_id, time_t now)
 {
 	struct apn_sfsrule	*hp;
 	int			 decision;
@@ -1590,7 +1611,8 @@ pe_decide_sfscheck(struct apn_rule *rule, struct sfs_open_message *msg,
 		/*
 		 * skip non-check rules
 		 */
-		if (hp->type != APN_SFS_CHECK)
+		if (hp->type != APN_SFS_CHECK
+		    || !pe_in_scope(hp->scope, &msg->common, now))
 			continue;
 
 		if (strcmp(hp->rule.sfscheck.app->name, msg->pathhint))
@@ -1618,7 +1640,7 @@ pe_decide_sfscheck(struct apn_rule *rule, struct sfs_open_message *msg,
 
 int
 pe_decide_sfsdflt(struct apn_rule *rule, struct sfs_open_message *msg, int *log,
-    u_int32_t *rule_id)
+    u_int32_t *rule_id, time_t now)
 {
 	struct apn_sfsrule	*hp;
 	int			 decision;
@@ -1632,7 +1654,8 @@ pe_decide_sfsdflt(struct apn_rule *rule, struct sfs_open_message *msg, int *log,
 	hp = rule->rule.sfs;
 	while (hp) {
 		/* Skip non-default rules. */
-		if (hp->type != APN_SFS_DEFAULT) {
+		if (hp->type != APN_SFS_DEFAULT
+		    || !pe_in_scope(hp->scope, &msg->common, now)) {
 			hp = hp->next;
 			continue;
 		}
@@ -2611,4 +2634,18 @@ pe_addrmatch_port(struct apn_port *port, void *addr, unsigned short af)
 
 	return (match);
 }
+
+static int
+pe_in_scope(struct apn_scope *scope, struct anoubis_event_common *common,
+    time_t now)
+{
+	if (!scope)
+		return 1;
+	if (scope->timeout && now > scope->timeout)
+		return 0;
+	if (scope->task && common->task_cookie != scope->task)
+		return 0;
+	return 1;
+}
+
 /*@=memchecks@*/
