@@ -149,7 +149,10 @@ int			 pe_decide_alfcap(struct apn_rule *, struct
 			     alf_event *, int *, u_int32_t *, time_t);
 int			 pe_decide_alfdflt(struct apn_rule *, struct
 			     alf_event *, int *, u_int32_t *, time_t);
-char			*pe_dump_alfmsg(struct alf_event *);
+char			*pe_dump_alfmsg(struct alf_event *,
+			     struct eventdev_hdr *, int);
+char			*pe_dump_ctx(struct eventdev_hdr *, struct pe_proc *,
+			     int);
 anoubisd_reply_t	*pe_handle_sfs(anoubisd_msg_sfsopen_t *);
 anoubisd_reply_t	*pe_decide_sfs(struct pe_user *,
 			    anoubisd_msg_sfsopen_t*, time_t now);
@@ -158,6 +161,7 @@ int			 pe_decide_sfscheck(struct apn_rule *, struct
 int			 pe_decide_sfsdflt(struct apn_rule *, struct
 			     sfs_open_message *, int *, u_int32_t *, time_t);
 anoubisd_reply_t	*pe_dispatch_policy(struct anoubisd_msg_comm *);
+char			*pe_dump_sfsmsg(struct sfs_open_message *, int);
 
 struct pe_proc		*pe_get_proc(anoubis_cookie_t);
 void			 pe_put_proc(struct pe_proc * proc);
@@ -170,8 +174,10 @@ void			 pe_set_parent_proc(struct pe_proc * proc,
 int			 pe_load_db(struct policies *);
 void			 pe_flush_db(struct policies *);
 int			 pe_update_db(struct policies *, struct policies *);
+void			 pe_update_db_one(uid_t, int);
 int			 pe_update_ctx(struct pe_proc *, struct pe_context **,
 			     int, struct policies *);
+int			 pe_replace_rs(struct apn_ruleset *, uid_t, int);
 void			 pe_flush_tracker(void);
 int			 pe_load_dir(const char *, int, struct policies *);
 struct apn_ruleset	*pe_load_policy(const char *);
@@ -189,7 +195,7 @@ void			 pe_put_ctx(struct pe_context *);
 void			 pe_reference_ctx(struct pe_context *);
 int			 pe_decide_ctx(struct pe_proc *, const u_int8_t *,
 			     const char *);
-void			 pe_dump_ctx(const char *, struct pe_proc *);
+void			 pe_dump_dbgctx(const char *, struct pe_proc *);
 int			 pe_addrmatch_out(struct alf_event *, struct
 			     apn_alfrule *);
 int			 pe_addrmatch_in(struct alf_event *, struct
@@ -913,12 +919,14 @@ pe_handle_alf(struct eventdev_hdr *hdr)
 anoubisd_reply_t *
 pe_decide_alf(struct pe_proc *proc, struct eventdev_hdr *hdr)
 {
+	static char		 prefix[] = "ALF";
 	static char		*verdict[3] = { "allowed", "denied", "asked" };
 	struct alf_event	*msg;
 	anoubisd_reply_t	*reply;
-	int			 i, ret, decision, log;
-	char			*dump = NULL;
+	int			 i, ret, decision, log, prio;
 	u_int32_t		 rule_id = 0;
+	char			*dump = NULL;
+	char			*context = NULL;
 
 	if (hdr == NULL) {
 		log_warnx("pe_decide_alf: empty header");
@@ -932,6 +940,8 @@ pe_decide_alf(struct pe_proc *proc, struct eventdev_hdr *hdr)
 	msg = (struct alf_event *)(hdr + 1);
 
 	log = 0;
+	prio = -1;
+	rule_id = 0;
 	decision = -1;
 
 	for (i = 0; proc->valid_ctx && i < PE_PRIO_MAX; i++) {
@@ -940,8 +950,10 @@ pe_decide_alf(struct pe_proc *proc, struct eventdev_hdr *hdr)
 
 		ret = pe_alf_evaluate(proc->context[i], msg, &log, &rule_id);
 
-		if (ret != -1)
+		if (ret != -1) {
 			decision = ret;
+			prio = i;
+		}
 		if (ret == POLICY_DENY) {
 			break;
 		}
@@ -954,19 +966,23 @@ pe_decide_alf(struct pe_proc *proc, struct eventdev_hdr *hdr)
 		log = APN_LOG_ALERT;
 	}
 
-	if (log != APN_LOG_NONE)
-		dump = pe_dump_alfmsg(msg);
+	if (log != APN_LOG_NONE) {
+		context = pe_dump_ctx(hdr, proc, prio);
+		dump = pe_dump_alfmsg(msg, hdr, ANOUBISD_LOG_APN);
+	}
 
 	/* Logging */
 	switch (log) {
 	case APN_LOG_NONE:
 		break;
 	case APN_LOG_NORMAL:
-		log_info("%s %s", verdict[decision], dump);
+		log_info("%s prio %d rule %d %s %s (%s)", prefix, prio,
+		    rule_id, verdict[decision], dump, context);
 		send_lognotify(hdr, decision, log, rule_id);
 		break;
 	case APN_LOG_ALERT:
-		log_warnx("%s %s", verdict[decision], dump);
+		log_warnx("%s prio %d rule %d %s %s (%s)", prefix, prio,
+		    rule_id, verdict[decision], dump, context);
 		send_lognotify(hdr, decision, log, rule_id);
 		break;
 	default:
@@ -974,7 +990,9 @@ pe_decide_alf(struct pe_proc *proc, struct eventdev_hdr *hdr)
 	}
 
 	if (dump)
-	    free(dump);
+		free(dump);
+	if (context)
+		free(context);
 
 	if ((reply = calloc(1, sizeof(struct anoubisd_reply))) == NULL) {
 		log_warn("pe_decide_alf: cannot allocate memory");
@@ -1333,7 +1351,7 @@ pe_decide_alfdflt(struct apn_rule *rule, struct alf_event *msg, int *log,
  * allocated and needs to be freed by the caller.
  */
 char *
-pe_dump_alfmsg(struct alf_event *msg)
+pe_dump_alfmsg(struct alf_event *msg, struct eventdev_hdr *hdr, int format)
 {
 	unsigned short	 lport, pport;
 	char		*op, *af, *type, *proto, *dump;
@@ -1449,12 +1467,72 @@ pe_dump_alfmsg(struct alf_event *msg)
 		proto = "<unknown>";
 	}
 
-	if (asprintf(&dump, "%s (%u): uid %u pid %u %s (%u) %s (%u) %s (%u) "
-	    "local %s:%u peer %s:%u", op, msg->op, msg->uid, msg->pid, type,
-	    msg->type, proto, msg->protocol, af, msg->family, local, lport,
-	    peer, pport) == -1) {
+	switch (format) {
+	case ANOUBISD_LOG_RAW:
+		if (asprintf(&dump, "%s (%u): uid %u pid %u %s (%u) %s (%u) "
+		    "%s (%u) local %s:%hu peer %s:%hu", op, msg->op,
+		    hdr->msg_uid, hdr->msg_pid, type, msg->type, proto,
+		    msg->protocol, af, msg->family, local, lport, peer, pport)
+		    == -1) {
+			dump = NULL;
+		}
+		break;
+
+	case ANOUBISD_LOG_APN:
+		if (asprintf(&dump, "%s %s %s from %s port %hu to %s port %hu",
+		    op, af, proto, local, lport, peer, pport) == -1) {
+			dump = NULL;
+		}
+		break;
+
+	default:
+		log_warnx("pe_dump_alfmsg: illegal logging format %d", format);
 		dump = NULL;
 	}
+
+	return (dump);
+}
+
+/*
+ * Decode a context in a printable string.  This strings is allocated
+ * and needs to be freed by the caller.
+ */
+char *
+pe_dump_ctx(struct eventdev_hdr *hdr, struct pe_proc *proc, int prio)
+{
+	struct pe_context	*ctx;
+	unsigned long		 csumctx;
+	char			*dump, *progctx;
+
+	/* hdr must be non-NULL, proc might be NULL */
+	if (hdr == NULL)
+		return (NULL);
+
+	csumctx = 0;
+	progctx = "<none>";
+
+	if (proc && 0 <= prio && prio <= PE_PRIO_MAX && proc->valid_ctx) {
+		ctx = proc->context[prio];
+
+		if (ctx && ctx->rule) {
+			if (ctx->rule->app) {
+				csumctx = htonl(*(unsigned long *)
+				    ctx->rule->app->hashvalue);
+				progctx = ctx->rule->app->name;
+			} else
+				progctx = "any";
+		}
+	}
+
+	if (asprintf(&dump, "uid %hu pid %hu program %s checksum 0x%08x... "
+	    "context program %s checksum 0x%08lx...",
+	    hdr->msg_uid, hdr->msg_pid,
+	    (proc && proc->pathhint) ? proc->pathhint : "<none>",
+	    (proc && proc->csum) ? htonl(*(unsigned long *)proc->csum) : 0,
+	    progctx, csumctx) == -1) {
+		dump = NULL;
+	}
+
 	return (dump);
 }
 
@@ -1495,13 +1573,15 @@ pe_handle_sfs(anoubisd_msg_sfsopen_t *sfsmsg)
 anoubisd_reply_t *
 pe_decide_sfs(struct pe_user *user, anoubisd_msg_sfsopen_t *sfsmsg, time_t now)
 {
+	static char		 prefix[] = "SFS";
 	static char		*verdict[3] = { "allowed", "denied", "asked" };
 	anoubisd_reply_t	*reply = NULL;
 	struct eventdev_hdr	*hdr;
 	struct sfs_open_message	*msg;
-	int			 ret, log, i, decision;
-	char			*dump = NULL;
+	int			 ret, log, i, decision, prio;
 	u_int32_t		 rule_id = 0;
+	char			*dump = NULL;
+	char			*context = NULL;
 
 	hdr = &sfsmsg->hdr;
 	msg = (struct sfs_open_message *)(hdr+1);
@@ -1513,6 +1593,8 @@ pe_decide_sfs(struct pe_user *user, anoubisd_msg_sfsopen_t *sfsmsg, time_t now)
 	}
 
 	decision = -1;
+	prio = -1;
+	rule_id = 0;
 	log = 0;
 
 	if (msg->flags & ANOUBIS_OPEN_FLAG_CSUM) {
@@ -1535,8 +1617,10 @@ pe_decide_sfs(struct pe_user *user, anoubisd_msg_sfsopen_t *sfsmsg, time_t now)
 						ret = pe_decide_sfsdflt(rule,
 						    msg, &log, &rule_id, now);
 
-					if (ret != -1)
+					if (ret != -1) {
 						decision = ret;
+						prio = i;
+					}
 					if (ret == POLICY_DENY)
 						break;
 				}
@@ -1560,10 +1644,9 @@ pe_decide_sfs(struct pe_user *user, anoubisd_msg_sfsopen_t *sfsmsg, time_t now)
 		decision = POLICY_ALLOW;
 
 	if (log != APN_LOG_NONE) {
-		if (asprintf(&dump, "SFS: uid %u pid %u %s", hdr->msg_uid,
-		    hdr->msg_pid, msg->pathhint) == -1) {
-			dump = NULL;
-		}
+		context = pe_dump_ctx(hdr, pe_get_proc(msg->common.task_cookie),
+		    prio);
+		dump = pe_dump_sfsmsg(msg, ANOUBISD_LOG_APN);
 	}
 
 	/* Logging */
@@ -1571,11 +1654,13 @@ pe_decide_sfs(struct pe_user *user, anoubisd_msg_sfsopen_t *sfsmsg, time_t now)
 	case APN_LOG_NONE:
 		break;
 	case APN_LOG_NORMAL:
-		log_info("%s %s", verdict[decision], dump);
+		log_info("%s prio %d rule %d %s %s (%s)", prefix, prio,
+		    rule_id, verdict[decision], dump, context);
 		send_lognotify(hdr, decision, log, rule_id);
 		break;
 	case APN_LOG_ALERT:
-		log_warnx("%s %s", verdict[decision], dump);
+		log_warnx("%s %s %s (%s)", prefix, prio, rule_id,
+		    verdict[decision], dump, context);
 		send_lognotify(hdr, decision, log, rule_id);
 		break;
 	default:
@@ -1584,6 +1669,8 @@ pe_decide_sfs(struct pe_user *user, anoubisd_msg_sfsopen_t *sfsmsg, time_t now)
 
 	if (dump)
 	    free(dump);
+	if (context)
+		free(context);
 
 	reply->reply = decision;
 	reply->ask = 0;		/* false */
@@ -1692,7 +1779,38 @@ pe_decide_sfsdflt(struct apn_rule *rule, struct sfs_open_message *msg, int *log,
 	return (decision);
 }
 
-static struct policy_request * policy_request_find(u_int64_t token)
+/*
+ * Decode a SFS message into a printable string.  The strings is allocated
+ * and needs to be freed by the caller.
+ *
+ * "format" is specified for symmetry with pe_dump_alfmsg().
+ */
+char *
+pe_dump_sfsmsg(struct sfs_open_message *msg, int format)
+{
+	char	*dump, *access;
+
+	if (msg == NULL)
+		return (NULL);
+
+	if (msg->flags & ANOUBIS_OPEN_FLAG_READ)
+		access = "read";
+	else if (msg->flags & ANOUBIS_OPEN_FLAG_WRITE)
+		access = "write";
+	else
+		access = "<unknown access>";
+
+	if (asprintf(&dump, "%s %s", access,
+	    msg->flags & ANOUBIS_OPEN_FLAG_PATHHINT ? msg->pathhint : "<none>")
+	    == -1) {
+		dump = NULL;
+	}
+
+	return (dump);
+}
+
+static struct
+policy_request *policy_request_find(u_int64_t token)
 {
 	struct policy_request * req;
 	LIST_FOREACH(req, &preqs, next) {
@@ -1702,7 +1820,8 @@ static struct policy_request * policy_request_find(u_int64_t token)
 	return NULL;
 }
 
-static void put_request(struct policy_request *req)
+static void
+put_request(struct policy_request *req)
 {
 	if (req->tmpname) {
 		unlink(req->tmpname);
@@ -2120,7 +2239,7 @@ pe_inherit_ctx(struct pe_proc *proc)
 		proc->valid_ctx = 1;
 		pe_set_parent_proc(proc, parent);
 
-		pe_dump_ctx("pe_inherit_ctx", proc);
+		pe_dump_dbgctx("pe_inherit_ctx", proc);
 	} else {
 		/*
 		 * No parent available, derive new context:  We have
@@ -2214,7 +2333,7 @@ pe_search_ctx(struct apn_ruleset *rs, const u_int8_t *csum,
 	struct apn_app		*hp;
 
 	DEBUG(DBG_PE_CTX, "pe_search_ctx: ruleset %p csum 0x%08x...", rs,
-	    csum ?  htonl(*(unsigned long *)csum) : 0);
+	    csum ? htonl(*(unsigned long *)csum) : 0);
 
 	/*
 	 * We do not check csum and pathhint for being NULL, as we
@@ -2405,11 +2524,12 @@ pe_dump(void)
 
 	log_info("tracked processes:");
 	TAILQ_FOREACH(proc, &tracker, entry) {
-		log_info("proc %p token 0x%08llx pid %d csum 0x%08x "
-		    "pathhint \"%s\" ctx %p rules %p %p", proc,
-		    proc->task_cookie, (int)proc->pid, proc->csum ?
-		    htonl(*(unsigned long *)proc->csum) : 0,
-		    proc->pathhint ? proc->pathhint : "", proc->context[0],
+		log_info("proc %p token 0x%08llx pproc %p pid %d csum 0x%08x "
+		    "pathhint \"%s\" ctx %p %p rules %p %p", proc,
+		    proc->task_cookie, proc->parent_proc, (int)proc->pid,
+		    proc->csum ? htonl(*(unsigned long *)proc->csum) : 0,
+		    proc->pathhint ? proc->pathhint : "",
+		    proc->context[0], proc->context[1],
 		    proc->context[0] ? proc->context[0]->rule : NULL,
 		    proc->context[1] ? proc->context[1]->rule : NULL);
 	}
@@ -2430,7 +2550,7 @@ pe_dump(void)
 }
 
 void
-pe_dump_ctx(const char *prefix, struct pe_proc *proc)
+pe_dump_dbgctx(const char *prefix, struct pe_proc *proc)
 {
 	int	i;
 

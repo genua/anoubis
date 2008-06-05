@@ -61,6 +61,11 @@
 
 #define SFS_CHECKSUMROOT		"/var/lib/sfs"
 
+enum {
+	ANOUBISD_LOG_RAW,
+	ANOUBISD_LOG_APN
+};
+
 #ifdef LINUX
 #define __dead
 #define UID_MAX	UINT_MAX
