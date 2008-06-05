@@ -54,7 +54,7 @@ NotifyAnswer::getAnswer(void)
 	case NOTIFY_ANSWER_ONCE:
 		break;
 	case NOTIFY_ANSWER_PROCEND:
-		s += wxT("till process ends ");
+		s += _("till process ends ");
 		break;
 	case NOTIFY_ANSWER_TIME:
 		s += wxString::Format(_("for %d "), timeValue_);
@@ -73,9 +73,9 @@ NotifyAnswer::getAnswer(void)
 			break;
 		case TIMEUNIT_HOUR:
 			if (timeValue_ < 2)
-				s += wxT("hour ");
+				s += _("hour ");
 			else
-				s += wxT("hours ");
+				s += _("hours ");
 			break;
 		case TIMEUNIT_DAY:
 			if (timeValue_ < 2)

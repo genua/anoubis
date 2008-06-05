@@ -123,7 +123,7 @@ CommunicatorCtrl::disconnect(void)
 		rc = com_->Delete(); /* no explicite 'delete com_' needed */
 		if  (rc != wxTHREAD_NO_ERROR) {
 			wxGetApp().alert(
-			    wxT("Error: no proper shutdown of communication"));
+			    _("Error: no proper shutdown of communication"));
 		}
 		wxGetApp().status(_("disconnecting from ") + socketPath_
 		    + wxT(" ..."));
@@ -152,7 +152,7 @@ CommunicatorCtrl::getRemoteStation(void)
 		 */
 		result = wxT("localhost");
 	} else {
-		result = wxT("none");
+		result = _("none");
 	}
 
 	return result;

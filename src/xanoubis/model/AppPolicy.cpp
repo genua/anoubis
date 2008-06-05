@@ -43,6 +43,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <wx/file.h>
+#include <wx/intl.h>
 
 #include <apn.h>
 
@@ -170,7 +171,7 @@ AppPolicy::getHashTypeName(void)
 		result = wxT("SHA256");
 		break;
 	default:
-		result = wxT("(unknown)");
+		result = _("(unknown)");
 		break;
 	}
 
@@ -215,7 +216,7 @@ AppPolicy::getHashValue(void)
 		break;
 	default:
 		length = 0;
-		result = wxT("(unknown hash type)");
+		result = _("(unknown hash type)");
 		break;
 	}
 

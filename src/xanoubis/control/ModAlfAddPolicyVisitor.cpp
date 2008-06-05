@@ -111,13 +111,13 @@ ModAlfAddPolicyVisitor::visitAppPolicy(AppPolicy *appPolicy)
 		tree = alfPanel_->tr_AV_Rules;
 
 		if (tree->GetCount() == 0) {
-			tree->AddRoot(wxT("Applications"));
+			tree->AddRoot(_("Applications"));
 		}
 		lastTreeRoot_ = tree->AppendItem(tree->GetRootItem(),
 		appPolicy->getBinaryName(), -1, -1,
 		    new MyTreeItemData(appPolicy));
 		if (appPolicy->hasContext()) {
-			treeLabel += wxT("Context: ");
+			treeLabel += _("Context: ");
 			treeLabel += appPolicy->getContext()->getContextName();
 			lastTreeRoot_ = tree->AppendItem(lastTreeRoot_,
 			    treeLabel, -1, -1, new MyTreeItemData(appPolicy));

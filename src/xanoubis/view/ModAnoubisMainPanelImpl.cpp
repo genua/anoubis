@@ -93,7 +93,7 @@ ModAnoubisMainPanelImpl::displayAlert(void)
 
 	SHOWSLOT(1, _("Time:"), aNotify->getTime());
 	SHOWSLOT(2, _("Module:"), aNotify->getModule());
-	if (aNotify->getModule().Cmp(_("ALF")) == 0) {
+	if (aNotify->getModule().Cmp(wxT("ALF")) == 0) {
 		SHOWSLOT(3, _("Traffic:"), aNotify->getPath());
 	} else {
 		SHOWSLOT(3, _("Path:"), aNotify->getPath());
@@ -112,7 +112,7 @@ ModAnoubisMainPanelImpl::displayEscalation(void)
 
 	SHOWSLOT(1, _("Time:"), eNotify->getTime());
 	SHOWSLOT(2, _("Module:"), eNotify->getModule());
-	if (eNotify->getModule().Cmp(_("ALF")) == 0) {
+	if (eNotify->getModule().Cmp(wxT("ALF")) == 0) {
 		SHOWSLOT(3, _("Traffic:"), eNotify->getPath());
 	} else {
 		SHOWSLOT(3, _("Path:"), eNotify->getPath());
@@ -131,7 +131,7 @@ ModAnoubisMainPanelImpl::displayLog(void)
 
 	SHOWSLOT(1, _("Time:"), lNotify->getTime());
 	SHOWSLOT(2, _("Module:"), lNotify->getModule());
-	if (lNotify->getModule().Cmp(_("ALF")) == 0) {
+	if (lNotify->getModule().Cmp(wxT("ALF")) == 0) {
 		SHOWSLOT(3, _("Traffic:"), lNotify->getPath());
 	} else {
 		SHOWSLOT(3, _("Path:"), lNotify->getPath());
@@ -160,10 +160,10 @@ ModAnoubisMainPanelImpl::update(void)
 		elementNo = module->getElementNo(list_);
 	}
 
-	s.Printf(_T("%d"), maxElementNo);
+	s.Printf(wxT("%d"), maxElementNo);
 	tx_maxNumber->SetLabel(s);
 	if (maxElementNo > 0)
-		s.Printf(_T("%d"), elementNo + 1);
+		s.Printf(wxT("%d"), elementNo + 1);
 	tx_currNumber->SetLabel(s);
 
 	if ((maxElementNo > 0) && (elementNo == 0)) {

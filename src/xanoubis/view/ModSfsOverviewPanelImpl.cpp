@@ -34,10 +34,10 @@
 ModSfsOverviewPanelImpl::ModSfsOverviewPanelImpl(wxWindow* parent,
     wxWindowID id) : ModSfsOverviewPanelBase(parent, id)
 {
-	stateIconNormal_ = wxGetApp().loadIcon(_T("ModSfs_ok_48.png"));
-	stateIconError_ = wxGetApp().loadIcon(_T("ModSfs_error_48.png"));
-	stateIconNotConnected_ = wxGetApp().loadIcon(_T("ModSfs_black_48.png"));
-	notAnswered_.Printf(_T("%d"), 0);
+	stateIconNormal_ = wxGetApp().loadIcon(wxT("ModSfs_ok_48.png"));
+	stateIconError_ = wxGetApp().loadIcon(wxT("ModSfs_error_48.png"));
+	stateIconNotConnected_ = wxGetApp().loadIcon(wxT("ModSfs_black_48.png"));
+	notAnswered_.Printf(wxT("%d"), 0);
 
 	parent->Connect(anEVT_OPEN_SFS_ESCALATIONS,
             wxCommandEventHandler(ModSfsOverviewPanelImpl::OnOpenSfsEscalation), NULL, this);
@@ -79,6 +79,6 @@ ModSfsOverviewPanelImpl::update(void)
 void
 ModSfsOverviewPanelImpl::OnOpenSfsEscalation(wxCommandEvent& event)
 {
-	notAnswered_.Printf(_T("%d"), event.GetInt());
+	notAnswered_.Printf(wxT("%d"), event.GetInt());
 	update();
 }

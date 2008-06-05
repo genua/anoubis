@@ -38,8 +38,8 @@
 
 ModSfs::ModSfs(wxWindow *parent) : Module()
 {
-	name_ = wxString(_("Secure File System"));
-	nick_ = wxString(_("SFS"));
+	name_ = wxString(wxT("Secure File System"));
+	nick_ = wxString(wxT("SFS"));
 	mainPanel_ = new ModSfsMainPanelImpl(parent,
 	    MODSFS_ID_MAINPANEL);
 	overviewPanel_ = new ModSfsOverviewPanelImpl(parent,
@@ -47,7 +47,7 @@ ModSfs::ModSfs(wxWindow *parent) : Module()
 
 	isActive_ = false;
 
-	loadIcon(_T("ModSfs_black_48.png"));
+	loadIcon(wxT("ModSfs_black_48.png"));
 	mainPanel_->Hide();
 	overviewPanel_->Hide();
 

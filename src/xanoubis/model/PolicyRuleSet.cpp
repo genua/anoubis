@@ -118,7 +118,7 @@ PolicyRuleSet::create(wxString fileName)
 	switch (rc) {
 	case -1:
 		logEntry = _("System error during import of policy file ");
-		logEntry += fileName + _(" : ");
+		logEntry += fileName + wxT(" : ");
 		logEntry += wxString::From8BitData(strerror(errno));
 		wxGetApp().log(logEntry);
 		wxGetApp().status(logEntry);

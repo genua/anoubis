@@ -52,10 +52,10 @@ END_EVENT_TABLE()
 
 TrayIcon::TrayIcon(void)
 {
-	iconNormal_    = wxGetApp().loadIcon(_T("ModAnoubis_black_48.png"));
-	iconMsgProblem_ = wxGetApp().loadIcon(_T("ModAnoubis_alert_48.png"));
+	iconNormal_    = wxGetApp().loadIcon(wxT("ModAnoubis_black_48.png"));
+	iconMsgProblem_ = wxGetApp().loadIcon(wxT("ModAnoubis_alert_48.png"));
 	iconMsgQuestion_ =
-	    wxGetApp().loadIcon(_T("ModAnoubis_question_48.png"));
+	    wxGetApp().loadIcon(wxT("ModAnoubis_question_48.png"));
 
 	messageAlertCount_ = 0;
 	messageEscalationCount_ = 0;
@@ -221,7 +221,7 @@ TrayIcon::update(void)
 	}
 
 	/* connection to daemon established */
-	if (!daemon_.Cmp(_("none"))) {
+	if (!daemon_.Cmp(wxT("none"))) {
 		tooltip += _("not connected");
 	} else {
 		tooltip += _("connected with ");
@@ -290,11 +290,11 @@ TrayIcon::systemNotify(const gchar *module, const gchar *message,
 
 	/* determine the icon used for systemNotify */
 	if (messagePriority == NOTIFY_URGENCY_LOW)
-		ipath += wxGetApp().getIconPath(_T("ModAnoubis_black_48.png"));
+		ipath += wxGetApp().getIconPath(wxT("ModAnoubis_black_48.png"));
 	if (messagePriority == NOTIFY_URGENCY_NORMAL)
-		ipath += wxGetApp().getIconPath(_T("ModAnoubis_alert_48.png"));
+		ipath += wxGetApp().getIconPath(wxT("ModAnoubis_alert_48.png"));
 	if (messagePriority == NOTIFY_URGENCY_CRITICAL)
-		ipath += wxGetApp().getIconPath(_T("ModAnoubis_question_48.png")
+		ipath += wxGetApp().getIconPath(wxT("ModAnoubis_question_48.png")
 		    );
 
 	strlcpy(buffer, (const char*)ipath.mb_str(wxConvUTF8), sizeof(buffer));

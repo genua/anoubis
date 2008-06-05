@@ -137,22 +137,22 @@ Notification::getModule(void)
 	if (module_.IsEmpty() && (notify_ != NULL)) {
 		switch (get_value((notify_->u.notify)->subsystem)) {
 		case ANOUBIS_SOURCE_TEST:
-			module_ = _("TEST");
+			module_ = wxT("TEST");
 			break;
 		case ANOUBIS_SOURCE_ALF:
-			module_ = _("ALF");
+			module_ = wxT("ALF");
 			break;
 		case ANOUBIS_SOURCE_SANDBOX:
-			module_ = _("SANDBOX");
+			module_ = wxT("SANDBOX");
 			break;
 		case ANOUBIS_SOURCE_SFS:
-			module_ = _("SFS");
+			module_ = wxT("SFS");
 			break;
 		case ANOUBIS_SOURCE_PROCESS:
-			module_ = _("PROCESS");
+			module_ = wxT("PROCESS");
 			break;
 		case ANOUBIS_SOURCE_STAT:
-			module_ = _("STAT");
+			module_ = wxT("STAT");
 			break;
 		default:
 			module_ = _("(unknown)");
@@ -233,19 +233,19 @@ Notification::getOperation(void)
 		module_ = getModule();
 	}
 
-	if (module_.Cmp(_("ALF")) == 0) {
+	if (module_.Cmp(wxT("ALF")) == 0) {
 		switch (alf->op) {
 		case ALF_CONNECT:
-			operation = _("connect");
+			operation = wxT("connect");
 			break;
 		case ALF_ACCEPT:
-			operation = _("accept");
+			operation = wxT("accept");
 			break;
 		case ALF_SENDMSG:
-			operation = _("send message");
+			operation = wxT("send message");
 			break;
 		case ALF_RECVMSG:
-			operation = _("receive message");
+			operation = wxT("receive message");
 			break;
 		default:
 			operation = _("unknown");
@@ -253,16 +253,16 @@ Notification::getOperation(void)
 		}
 	} else if (module_.Cmp(wxT("SFS")) == 0) {
 		if (! (sfs->flags & ANOUBIS_OPEN_FLAG_STRICT)) {
-			operation += _("open ");
+			operation += wxT("open ");
 		}
 		if (sfs->flags & ANOUBIS_OPEN_FLAG_READ) {
-			operation += _("read ");
+			operation += wxT("read ");
 		}
 		if (sfs->flags & ANOUBIS_OPEN_FLAG_WRITE) {
-			operation += _("write");
+			operation += wxT("write");
 		}
 	} else {
-		operation = _("unable to extract operation information");
+		operation = _("unknown module");
 	}
 
 	return (operation);
@@ -287,8 +287,8 @@ Notification::getPath(void)
 	}
 
 	if (module_.Cmp(wxT("ALF")) == 0) {
-		path = _("from ");
-		path += localAlfAddress() + _("  to  ");
+		path = wxT("from ");
+		path += localAlfAddress() + wxT("  to  ");
 		path += remoteAlfAddress();
 	} else if (module_.Cmp(wxT("SFS")) == 0) {
 		if (sfs->flags & ANOUBIS_OPEN_FLAG_PATHHINT) {

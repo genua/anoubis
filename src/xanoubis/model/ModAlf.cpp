@@ -38,8 +38,8 @@
 
 ModAlf::ModAlf(wxWindow *parent) : Module()
 {
-	name_ = wxString(_("Application level firewall"));
-	nick_ = wxString(_("ALF"));
+	name_ = wxString(wxT("Application level firewall"));
+	nick_ = wxString(wxT("ALF"));
 	mainPanel_ = new ModAlfMainPanelImpl(parent,
 	    MODALF_ID_MAINPANEL);
 	overviewPanel_ = new ModAlfOverviewPanelImpl(parent,
@@ -47,7 +47,7 @@ ModAlf::ModAlf(wxWindow *parent) : Module()
 
 	isActive_ = false;
 
-	loadIcon(_T("ModAlf_black_48.png"));
+	loadIcon(wxT("ModAlf_black_48.png"));
 	mainPanel_->Hide();
 	overviewPanel_->Hide();
 

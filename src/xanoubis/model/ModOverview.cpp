@@ -40,12 +40,12 @@
 
 ModOverview::ModOverview(wxWindow *parent) : Module()
 {
-	name_ = wxString(_("Overview"));
-	nick_ = wxString(_("Overview"));
+	name_ = wxString(wxT("Overview"));
+	nick_ = wxString(wxT("Overview"));
 	mainPanel_ = new ModOverviewMainPanelImpl(parent,
 	    MODOVERVIEW_ID_MAINPANEL);
 
-	loadIcon(_T("ModOverview_black_48.png"));
+	loadIcon(wxT("ModOverview_black_48.png"));
 	mainPanel_->Hide();
 }
 

@@ -51,7 +51,7 @@ MainFrame::MainFrame(wxWindow *parent) : MainFrameBase(parent)
 	shortcuts_ = new AnShortcuts(this);
 	messageAlertCount_ = 0;
 	messageEscalationCount_ = 0;
-	aboutIcon_ = wxGetApp().loadIcon(_T("ModAnoubis_black_48.png"));
+	aboutIcon_ = wxGetApp().loadIcon(wxT("ModAnoubis_black_48.png"));
 
 	Connect(anEVT_COM_REMOTESTATION,
 	    wxCommandEventHandler(MainFrame::OnRemoteStation), NULL, this);
@@ -151,7 +151,7 @@ MainFrame::setConnectionString(wxString host)
 {
 	wxString label;
 
-	if  (!host.Cmp(_("none"))) {
+	if  (!host.Cmp(wxT("none"))) {
 		label = _("not connected");
 		an_menubar->Check(ID_MIFILECONNECT, false);
 	} else {
@@ -235,27 +235,27 @@ MainFrame::OnMbHelpAboutSelect(wxCommandEvent& event)
 {
 	wxAboutDialogInfo info;
 
-	info.SetName(_T("Anoubis GUI"));
-	info.SetVersion(_T("MS7.A"));
-	info.SetCopyright(_T("(C) 2007-2008 GeNUA mbH"));
-	// info.SetWebSite(_T("www.anoubis.org"));
+	info.SetName(wxT("Anoubis GUI"));
+	info.SetVersion(wxT("MS7.A"));
+	info.SetCopyright(wxT("(C) 2007-2008 GeNUA mbH"));
+	// info.SetWebSite(wxT("www.anoubis.org"));
 	info.SetIcon(*aboutIcon_);
-	// info.SetDescription(_T(""));
+	// info.SetDescription(wxT(""));
 
-	info.AddDeveloper(_T("Alexander von Gernler"));
-	info.AddDeveloper(_T("Andreas Fiessler"));
-	info.AddDeveloper(_T("Christian Ehrhardt"));
-	info.AddDeveloper(_T("Christian Hiesl"));
-	info.AddDeveloper(_T("Hans-Joerg Hoexer"));
-	info.AddDeveloper(_T("Joachim Ayasse"));
-	info.AddDeveloper(_T("Michael Gernoth"));
-	info.AddDeveloper(_T("Pedro Martelleto"));
-	info.AddDeveloper(_T("Reinhard Tartler"));
-	info.AddDeveloper(_T("Sebastian Trahm"));
-	info.AddDeveloper(_T("Stefan Fritsch"));
+	info.AddDeveloper(wxT("Alexander von Gernler"));
+	info.AddDeveloper(wxT("Andreas Fiessler"));
+	info.AddDeveloper(wxT("Christian Ehrhardt"));
+	info.AddDeveloper(wxT("Christian Hiesl"));
+	info.AddDeveloper(wxT("Hans-Joerg Hoexer"));
+	info.AddDeveloper(wxT("Joachim Ayasse"));
+	info.AddDeveloper(wxT("Michael Gernoth"));
+	info.AddDeveloper(wxT("Pedro Martelleto"));
+	info.AddDeveloper(wxT("Reinhard Tartler"));
+	info.AddDeveloper(wxT("Sebastian Trahm"));
+	info.AddDeveloper(wxT("Stefan Fritsch"));
 
-	info.AddTranslator(_T("Christian Wehrle"));
-	info.AddTranslator(_T("Mathias Pippel"));
+	info.AddTranslator(wxT("Christian Wehrle"));
+	info.AddTranslator(wxT("Mathias Pippel"));
 
 	wxAboutBox(info);
 }

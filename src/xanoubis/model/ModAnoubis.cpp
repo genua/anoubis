@@ -68,14 +68,14 @@
 
 ModAnoubis::ModAnoubis(wxWindow *parent) : Module()
 {
-	name_ = wxString(_("Anoubis"));
-	nick_ = wxString(_("Anoubis"));
+	name_ = wxString(wxT("Anoubis"));
+	nick_ = wxString(wxT("Anoubis"));
 	mainPanel_ = new ModAnoubisMainPanelImpl(parent,
 	    MODANOUBIS_ID_MAINPANEL);
 	overviewPanel_ = new ModAnoubisOverviewPanelImpl(parent,
 	    MODANOUBIS_ID_OVERVIEWPANEL);
 
-	loadIcon(_T("ModAnoubis_black_48.png"));
+	loadIcon(wxT("ModAnoubis_black_48.png"));
 	mainPanel_->Hide();
 	overviewPanel_->Hide();
 

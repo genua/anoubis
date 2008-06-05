@@ -33,9 +33,9 @@
 
 Module::Module(void)
 {
-	name_ = wxString(wxT("unknown"));
-	nick_ = wxString(wxT("unknown"));
-	state_ = wxString(wxT("unknown"));
+	name_ = wxString(_("unknown"));
+	nick_ = wxString(_("unknown"));
+	state_ = wxString(_("unknown"));
 	mainPanel_ = NULL;
 	overviewPanel_ = NULL;
 	icon_ = NULL;

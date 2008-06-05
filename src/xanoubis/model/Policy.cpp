@@ -82,7 +82,7 @@ Policy::getActionName(int action)
 		result = wxT("ask");
 		break;
 	default:
-		result = wxT("(unknown)");
+		result = _("(unknown)");
 		break;
 	}
 
@@ -111,7 +111,7 @@ Policy::getDirectionName(int direction)
 		result = wxT("");
 		break;
 	default:
-		result = wxT("(unknown)");
+		result = _("(unknown)");
 		break;
 	}
 
@@ -134,7 +134,7 @@ Policy::getLogName(int log)
 		result = wxT("alert");
 		break;
 	default:
-		result = wxT("(unknown)");
+		result = _("(unknown)");
 		break;
 	}
 
@@ -166,7 +166,7 @@ Policy::getVarTypeName(int type)
 		result = wxT("Filename");
 		break;
 	default:
-		result = wxT("(unknown)");
+		result = _("(unknown)");
 		break;
 	}
 
@@ -192,7 +192,7 @@ Policy::getRuleTypeName(int type)
 		result = wxT("vs");
 		break;
 	default:
-		result = wxT("(unknown)");
+		result = _("(unknown)");
 		break;
 	}
 

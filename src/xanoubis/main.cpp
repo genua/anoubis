@@ -160,7 +160,7 @@ AnoubisGuiApp::sendEvent(wxCommandEvent& event)
 
 	wxPostEvent(mainFrame, event);
 	wxPostEvent(comCtrl_, event);
-	wxPostEvent(trayIcon, event); 
+	wxPostEvent(trayIcon, event);
 }
 
 void
@@ -217,14 +217,14 @@ AnoubisGuiApp::OnInitCmdLine(wxCmdLineParser& parser)
 			wxCMD_LINE_SWITCH,
 			wxT("h"),
 			wxT("help"),
-			wxT("this help"),
+			_("this help"),
 			wxCMD_LINE_VAL_NONE,
 			wxCMD_LINE_OPTION_HELP
 		}, {
 			wxCMD_LINE_OPTION,
 			wxT("s"),
 			wxT("socket"),
-			wxT("communication socket of anoubis daemon"),
+			_("communication socket of anoubis daemon"),
 			wxCMD_LINE_VAL_STRING,
 			wxCMD_LINE_PARAM_OPTIONAL
 		}, {
@@ -289,7 +289,7 @@ AnoubisGuiApp::getCatalogPath(void)
 {
 	wxString catalogFileName;
 
-	catalogFileName = paths_.GetDataDir() + _T("/catalogs/");
+	catalogFileName = paths_.GetDataDir() + wxT("/catalogs/");
 	if (!::wxFileExists(catalogFileName)) {
 		/*
 		 * We didn't find our catalog (where --prefix told us)!
@@ -298,7 +298,7 @@ AnoubisGuiApp::getCatalogPath(void)
 		 * environment with aegis.
 		 */
 		catalogFileName  = ::wxPathOnly(paths_.GetExecutablePath()) +
-		    _T("/../../..") + catalogFileName;
+		    wxT("/../../..") + catalogFileName;
 	}
 
 	return catalogFileName;
@@ -309,7 +309,7 @@ AnoubisGuiApp::getUtilsPath(void)
 {
 	wxString utilsFileName;
 
-	utilsFileName = paths_.GetDataDir() + _T("/utils/");
+	utilsFileName = paths_.GetDataDir() + wxT("/utils/");
 	if (!::wxFileExists(utilsFileName)) {
 		/*
 		 * We didn't find our utils (where --prefix told us)!
@@ -318,7 +318,7 @@ AnoubisGuiApp::getUtilsPath(void)
 		 * environment with aegis.
 		 */
 		utilsFileName  = ::wxPathOnly(paths_.GetExecutablePath()) +
-		    _T("/../../..") + utilsFileName;
+		    wxT("/../../..") + utilsFileName;
 	}
 
 	return utilsFileName;
@@ -329,7 +329,7 @@ AnoubisGuiApp::getIconPath(wxString iconName)
 {
 	wxString iconFileName;
 
-	iconFileName = paths_.GetDataDir() + _T("/icons/") + iconName;
+	iconFileName = paths_.GetDataDir() + wxT("/icons/") + iconName;
 	if (!::wxFileExists(iconFileName)) {
 		/*
 		 * We didn't find our icon (where --prefix told us)!
@@ -338,7 +338,7 @@ AnoubisGuiApp::getIconPath(wxString iconName)
 		 * environment with aegis.
 		 */
 		iconFileName  = ::wxPathOnly(paths_.GetExecutablePath()) +
-		    _T("/../../..") + iconFileName;
+		    wxT("/../../..") + iconFileName;
 	}
 	/*
 	 * XXX: by ch: No error check is done, 'cause wxIcon will open a error
@@ -393,6 +393,6 @@ AnoubisGuiApp::exportPolicyFile(wxString fileName)
 	if (ruleSet_ != NULL) {
 		ruleSet_->exportToFile(fileName);
 	} else {
-		status(wxT("no loaded RuleSet; export failed!"));
+		status(_("no loaded RuleSet; export failed!"));
 	}
 }

@@ -41,6 +41,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <wx/string.h>
+#include <wx/intl.h>
 
 #include <apn.h>
 
@@ -160,7 +161,7 @@ AlfPolicy::getTypeName(void)
 		result = wxT("context");
 		break;
 	default:
-		result = wxT("(unknown)");
+		result = _("(unknown)");
 		break;
 	}
 
@@ -274,7 +275,7 @@ AlfPolicy::getRoleName(void)
 		result = wxT("both");
 		break;
 	default:
-		result = wxT("(unknown)");
+		result = _("(unknown)");
 		break;
 	}
 
@@ -302,7 +303,7 @@ AlfPolicy::getServiceName(void)
 		result += wxT(" to ") + getToHostName();
 		break;
 	default:
-		result = wxT("(unknown)");
+		result = _("(unknown)");
 		break;
 	}
 
@@ -399,7 +400,7 @@ AlfPolicy::getProtocolName(void)
 		result = wxT("udp");
 		break;
 	default:
-		result = wxT("(unknown");
+		result = _("(unknown");
 		break;
 	}
 
@@ -442,7 +443,7 @@ AlfPolicy::getAddrFamilyName(void)
 		result = wxT("inet6");
 		break;
 	default:
-		result = wxT("(unknown)");
+		result = _("(unknown)");
 		break;
 	}
 
@@ -697,7 +698,7 @@ AlfPolicy::getCapTypeName(void)
 		result = wxT("all");
 		break;
 	default:
-		result = wxT("(unknown)");
+		result = _("(unknown)");
 		break;
 	}
 
