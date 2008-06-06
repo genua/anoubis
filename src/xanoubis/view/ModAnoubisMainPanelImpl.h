@@ -36,28 +36,34 @@ class ModAnoubisMainPanelImpl : public ModAnoubisMainPanelBase
 	private:
 		enum notifyListTypes	 list_;
 		Notification		*currentNotify_;
-		bool			systemNotifyEnabled_;
-		int			systemNotifyTimeout_;
 
 		void answer(bool);
 		void displayAlert(void);
 		void displayEscalation(void);
 		void displayLog(void);
+		void sendNotifierOptionsEvents(WXTYPE, bool, long);
+		void sendNotifierOptions(void);
 
 	protected:
-		void OnTypeChoosen(wxCommandEvent& event);
-		void OnFirstBtnClick(wxCommandEvent& event);
-		void OnPreviousBtnClick(wxCommandEvent& event);
-		void OnNextBtnClick(wxCommandEvent& event);
-		void OnLastBtnClick(wxCommandEvent& event);
-		void OnAllowBtnClick(wxCommandEvent& event);
-		void OnDenyBtnClick(wxCommandEvent& event);
-		void OnToggleNotification(wxCommandEvent& event);
-		void OnNotificationTimeout(wxSpinEvent& event);
-		void OnEscalationsShow(wxCommandEvent& event);
+		void OnTypeChoosen(wxCommandEvent&);
+		void OnFirstBtnClick(wxCommandEvent&);
+		void OnPreviousBtnClick(wxCommandEvent&);
+		void OnNextBtnClick(wxCommandEvent&);
+		void OnLastBtnClick(wxCommandEvent&);
+		void OnAllowBtnClick(wxCommandEvent&);
+		void OnDenyBtnClick(wxCommandEvent&);
+
+		void OnEscalationDisable(wxCommandEvent&);
+		void OnAlertDisable(wxCommandEvent&);
+		void OnEscalationNoTimeout(wxCommandEvent&);
+		void OnAlertNoTimeout(wxCommandEvent&);
+		void OnEscalationTimeout(wxSpinEvent&);
+		void OnAlertTimeout(wxSpinEvent&);
+
+		void OnEscalationsShow(wxCommandEvent&);
 
 	public:
-		ModAnoubisMainPanelImpl(wxWindow* parent, wxWindowID id);
+		ModAnoubisMainPanelImpl(wxWindow*, wxWindowID);
 		void update(void);
 };
 

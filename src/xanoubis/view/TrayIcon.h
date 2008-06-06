@@ -43,8 +43,10 @@ class TrayIcon : public wxTaskBarIcon
 		wxIcon			*iconNormal_;
 		wxIcon			*iconMsgProblem_;
 		wxIcon			*iconMsgQuestion_;
-		bool			systemNotifyEnabled_;
-		int			systemNotifyTimeout_;
+		bool			noAlert_;
+		bool			noEscalation_;
+		unsigned int            escalationTimeout_;
+		unsigned int            alertTimeout_;
 		NotifyNotification	*notification;
 
 		void		 update(void);
@@ -59,7 +61,8 @@ class TrayIcon : public wxTaskBarIcon
 		void OnOpenAlerts(wxCommandEvent&);
 		void OnOpenEscalations(wxCommandEvent&);
 		void OnLogViewerShow(wxCommandEvent&);
-		void OnSysNotifyChanged(wxCommandEvent&);
+		void OnEscalationSettingsChanged(wxCommandEvent&);
+		void OnAlertSettingsChanged(wxCommandEvent&);
 		void SetConnectedDaemon(wxString);
 		void OnLeftButtonClick(wxTaskBarIconEvent&);
 		void OnGuiRestore(wxCommandEvent&);

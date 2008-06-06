@@ -1,3 +1,29 @@
+/*
+ * Copyright (c) 2008 GeNUA mbH <info@genua.de>
+ *
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
+ * TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 ///////////////////////////////////////////////////////////////////////////
 // C++ code generated with wxFormBuilder (version Sep 28 2007)
 // http://www.wxformbuilder.org/
@@ -232,35 +258,118 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	tb_MainAnoubisNotification->SetSizer( sz_MainAnoubisNotify );
 	tb_MainAnoubisNotification->Layout();
 	sz_MainAnoubisNotify->Fit( tb_MainAnoubisNotification );
-	tb_MainAnoubisNotify->AddPage( tb_MainAnoubisNotification, _("Notifications"), true );
+	tb_MainAnoubisNotify->AddPage( tb_MainAnoubisNotification, _("Notifications"), false );
 	tb_MainAnoubisOptions = new wxPanel( tb_MainAnoubisNotify, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
 	wxBoxSizer* sz_MainAnoubisOptions;
 	sz_MainAnoubisOptions = new wxBoxSizer( wxVERTICAL );
 	
-	wxStaticBoxSizer* sbSizer1;
-	sbSizer1 = new wxStaticBoxSizer( new wxStaticBox( tb_MainAnoubisOptions, -1, _("settings") ), wxVERTICAL );
+	wxBoxSizer* bSizer13;
+	bSizer13 = new wxBoxSizer( wxHORIZONTAL );
 	
-	cb_SystemNotification = new wxCheckBox( tb_MainAnoubisOptions, wxID_ANY, _("Send System Notification"), wxDefaultPosition, wxDefaultSize, 0 );
+	wxStaticBoxSizer* sbSizer3;
+	sbSizer3 = new wxStaticBoxSizer( new wxStaticBox( tb_MainAnoubisOptions, -1, _("Escalation Notifier Settings") ), wxVERTICAL );
 	
-	cb_SystemNotification->SetToolTip( _("Get Alert and Escalation Notification via Popup") );
+	wxFlexGridSizer* fgSizer2;
+	fgSizer2 = new wxFlexGridSizer( 3, 2, 0, 0 );
+	fgSizer2->SetFlexibleDirection( wxBOTH );
+	fgSizer2->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
 	
-	sbSizer1->Add( cb_SystemNotification, 0, wxALL, 5 );
+	cb_NoEscalations = new wxCheckBox( tb_MainAnoubisOptions, wxID_ANY, _("Do not send Escalations"), wxDefaultPosition, wxDefaultSize, 0 );
 	
-	m_spinSystemNotificationTimeout = new wxSpinCtrl( tb_MainAnoubisOptions, wxID_ANY, wxT("10"), wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 60, 10 );
-	m_spinSystemNotificationTimeout->SetToolTip( _("Set System Notification timeout in Seconds") );
+	cb_NoEscalations->SetToolTip( _("Check to disable the messaging via Notifier") );
 	
-	sbSizer1->Add( m_spinSystemNotificationTimeout, 0, wxALL, 5 );
+	fgSizer2->Add( cb_NoEscalations, 0, wxALL, 5 );
 	
-	m_staticText21 = new wxStaticText( tb_MainAnoubisOptions, wxID_ANY, _("Notification Timeout"), wxDefaultPosition, wxDefaultSize, 0 );
-	m_staticText21->Wrap( -1 );
-	sbSizer1->Add( m_staticText21, 0, wxALL, 5 );
 	
-	sz_MainAnoubisOptions->Add( sbSizer1, 1, wxEXPAND, 5 );
+	fgSizer2->Add( 0, 0, 1, wxEXPAND, 5 );
+	
+	cb_NoEscalationTimeout = new wxCheckBox( tb_MainAnoubisOptions, wxID_ANY, _("No Timeout"), wxDefaultPosition, wxDefaultSize, 0 );
+	cb_NoEscalationTimeout->SetValue(true);
+	
+	cb_NoEscalationTimeout->SetToolTip( _("Check to let the Notifier never timeout") );
+	
+	fgSizer2->Add( cb_NoEscalationTimeout, 0, wxALL, 5 );
+	
+	
+	fgSizer2->Add( 0, 0, 1, wxEXPAND, 5 );
+	
+	wxBoxSizer* bSizer14;
+	bSizer14 = new wxBoxSizer( wxHORIZONTAL );
+	
+	m_spinEscalationNotifyTimeout = new wxSpinCtrl( tb_MainAnoubisOptions, wxID_ANY, wxT("1"), wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 1, 120, 1 );
+	m_spinEscalationNotifyTimeout->Enable( false );
+	
+	bSizer14->Add( m_spinEscalationNotifyTimeout, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	
+	tx_EscalationNotifyTimeoutLabel = new wxStaticText( tb_MainAnoubisOptions, wxID_ANY, _("Timeout in Seconds"), wxDefaultPosition, wxDefaultSize, 0 );
+	tx_EscalationNotifyTimeoutLabel->Wrap( -1 );
+	tx_EscalationNotifyTimeoutLabel->Enable( false );
+	
+	bSizer14->Add( tx_EscalationNotifyTimeoutLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	
+	fgSizer2->Add( bSizer14, 1, wxEXPAND, 5 );
+	
+	sbSizer3->Add( fgSizer2, 1, wxEXPAND, 5 );
+	
+	bSizer13->Add( sbSizer3, 49, wxEXPAND, 5 );
+	
+	
+	bSizer13->Add( 0, 0, 2, wxEXPAND, 5 );
+	
+	wxStaticBoxSizer* sbSizer4;
+	sbSizer4 = new wxStaticBoxSizer( new wxStaticBox( tb_MainAnoubisOptions, -1, _("Alert Notifier Settings") ), wxVERTICAL );
+	
+	wxFlexGridSizer* fgSizer3;
+	fgSizer3 = new wxFlexGridSizer( 2, 2, 0, 0 );
+	fgSizer3->SetFlexibleDirection( wxBOTH );
+	fgSizer3->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+	
+	cb_NoAlerts = new wxCheckBox( tb_MainAnoubisOptions, wxID_ANY, _("Do not send Alerts"), wxDefaultPosition, wxDefaultSize, 0 );
+	cb_NoAlerts->SetValue(true);
+	
+	cb_NoAlerts->SetToolTip( _("Check to disable the messaging via Notifier") );
+	
+	fgSizer3->Add( cb_NoAlerts, 0, wxALL, 5 );
+	
+	
+	fgSizer3->Add( 0, 0, 1, wxEXPAND, 5 );
+	
+	cb_NoAlertTimeout = new wxCheckBox( tb_MainAnoubisOptions, wxID_ANY, _("No Timeout"), wxDefaultPosition, wxDefaultSize, 0 );
+	
+	cb_NoAlertTimeout->Enable( false );
+	cb_NoAlertTimeout->SetToolTip( _("Check to let the Notifier never timeout") );
+	
+	fgSizer3->Add( cb_NoAlertTimeout, 0, wxALL, 5 );
+	
+	
+	fgSizer3->Add( 0, 0, 1, wxEXPAND, 5 );
+	
+	wxBoxSizer* bSizer15;
+	bSizer15 = new wxBoxSizer( wxHORIZONTAL );
+	
+	m_spinAlertNotifyTimeout = new wxSpinCtrl( tb_MainAnoubisOptions, wxID_ANY, wxT("10"), wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 1, 120, 10 );
+	m_spinAlertNotifyTimeout->Enable( false );
+	
+	bSizer15->Add( m_spinAlertNotifyTimeout, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	
+	tx_AlertNotifyTimeoutLabel = new wxStaticText( tb_MainAnoubisOptions, wxID_ANY, _("Timeout in Seconds"), wxDefaultPosition, wxDefaultSize, 0 );
+	tx_AlertNotifyTimeoutLabel->Wrap( -1 );
+	tx_AlertNotifyTimeoutLabel->Enable( false );
+	
+	bSizer15->Add( tx_AlertNotifyTimeoutLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	
+	fgSizer3->Add( bSizer15, 1, wxEXPAND, 5 );
+	
+	sbSizer4->Add( fgSizer3, 1, wxEXPAND, 5 );
+	
+	bSizer13->Add( sbSizer4, 49, wxEXPAND, 5 );
+	
+	sz_MainAnoubisOptions->Add( bSizer13, 1, wxEXPAND, 5 );
 	
 	tb_MainAnoubisOptions->SetSizer( sz_MainAnoubisOptions );
 	tb_MainAnoubisOptions->Layout();
 	sz_MainAnoubisOptions->Fit( tb_MainAnoubisOptions );
-	tb_MainAnoubisNotify->AddPage( tb_MainAnoubisOptions, _("Options"), false );
+	tb_MainAnoubisNotify->AddPage( tb_MainAnoubisOptions, _("Options"), true );
 	
 	sz_MainAnoubisMain->Add( tb_MainAnoubisNotify, 1, wxEXPAND | wxALL, 5 );
 	
@@ -276,8 +385,12 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	bt_last->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModAnoubisMainPanelBase::OnLastBtnClick ), NULL, this );
 	bt_allow->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModAnoubisMainPanelBase::OnAllowBtnClick ), NULL, this );
 	bt_deny->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModAnoubisMainPanelBase::OnDenyBtnClick ), NULL, this );
-	cb_SystemNotification->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( ModAnoubisMainPanelBase::OnToggleNotification ), NULL, this );
-	m_spinSystemNotificationTimeout->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( ModAnoubisMainPanelBase::OnNotificationTimeout ), NULL, this );
+	cb_NoEscalations->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( ModAnoubisMainPanelBase::OnEscalationDisable ), NULL, this );
+	cb_NoEscalationTimeout->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( ModAnoubisMainPanelBase::OnEscalationNoTimeout ), NULL, this );
+	m_spinEscalationNotifyTimeout->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( ModAnoubisMainPanelBase::OnEscalationTimeout ), NULL, this );
+	cb_NoAlerts->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( ModAnoubisMainPanelBase::OnAlertDisable ), NULL, this );
+	cb_NoAlertTimeout->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( ModAnoubisMainPanelBase::OnAlertNoTimeout ), NULL, this );
+	m_spinAlertNotifyTimeout->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( ModAnoubisMainPanelBase::OnAlertTimeout ), NULL, this );
 }
 
 ModAnoubisOverviewPanelBase::ModAnoubisOverviewPanelBase( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size, long style ) : wxPanel( parent, id, pos, size, style )

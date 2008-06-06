@@ -61,8 +61,11 @@ TrayIcon::TrayIcon(void)
 	messageEscalationCount_ = 0;
 	daemon_ = _("none");
 
-	systemNotifyEnabled_ = false;
-	systemNotifyTimeout_ = 10;
+	/* these defaults comply with the wxforrmbuilder settings */
+	noAlert_ = true;
+	noEscalation_ = false;
+	escalationTimeout_ = 0;
+	alertTimeout_ = 10;
 
 	notification = notify_notification_new("Anoubis", "", NULL, NULL);
 
@@ -75,8 +78,12 @@ TrayIcon::TrayIcon(void)
 	    wxCommandEventHandler(TrayIcon::OnOpenEscalations), NULL, this);
 	Connect(anEVT_LOGVIEWER_SHOW,
 	    wxCommandEventHandler(TrayIcon::OnLogViewerShow), NULL, this);
-	Connect(anEVT_SYSNOTIFICATION_OPTIONS,
-	    wxCommandEventHandler(TrayIcon::OnSysNotifyChanged), NULL, this);
+	Connect(anEVT_ESCALATIONNOTIFY_OPTIONS,
+	    wxCommandEventHandler(TrayIcon::OnEscalationSettingsChanged), NULL,
+	    this);
+	Connect(anEVT_ALERTNOTIFY_OPTIONS,
+	    wxCommandEventHandler(TrayIcon::OnAlertSettingsChanged), NULL,
+	    this);
 }
 
 TrayIcon::~TrayIcon(void)
@@ -151,15 +158,25 @@ TrayIcon::OnGuiExit(wxCommandEvent& event)
 }
 
 void
-TrayIcon::OnSysNotifyChanged(wxCommandEvent& event)
+TrayIcon::OnEscalationSettingsChanged(wxCommandEvent& event)
 {
 	if (event.GetInt() > 0) {
-		systemNotifyEnabled_ = true;
+		noEscalation_ = true;
 	} else {
-		systemNotifyEnabled_ = false;
+		noEscalation_ = false;
 	}
+	escalationTimeout_ = event.GetExtraLong();
+}
 
-	systemNotifyTimeout_ = event.GetExtraLong();
+void
+TrayIcon::OnAlertSettingsChanged(wxCommandEvent& event)
+{
+	if (event.GetInt() > 0) {
+		noAlert_ = true;
+	} else {
+		noAlert_ = false;
+	}
+	alertTimeout_ = event.GetExtraLong();
 }
 
 void
@@ -195,9 +212,9 @@ TrayIcon::update(void)
 		icon = iconMsgQuestion_;
 		sprintf(message, "Received Escalations: %d\n",
 		    messageEscalationCount_);
-		if (systemNotifyEnabled_) {
+		if (!noEscalation_) {
 			if (!systemNotify("ESCALATION", message,
-			    NOTIFY_URGENCY_CRITICAL, systemNotifyTimeout_))
+			    NOTIFY_URGENCY_CRITICAL, escalationTimeout_))
 				wxGetApp().log(_("Couldn't send Escalation"));
 		}
 	} else {
@@ -207,10 +224,10 @@ TrayIcon::update(void)
 			icon = iconMsgProblem_;
 			sprintf(message, "Received Alerts: %d\n",
 			    messageAlertCount_);
-			if (systemNotifyEnabled_) {
+			if (!noAlert_) {
 				if (!systemNotify("ALERT", message,
 				    NOTIFY_URGENCY_NORMAL,
-				    systemNotifyTimeout_))
+				    alertTimeout_))
 					wxGetApp().log(
 					    _("Couldn't send Alert"));
 			}
@@ -294,8 +311,8 @@ TrayIcon::systemNotify(const gchar *module, const gchar *message,
 	if (messagePriority == NOTIFY_URGENCY_NORMAL)
 		ipath += wxGetApp().getIconPath(wxT("ModAnoubis_alert_48.png"));
 	if (messagePriority == NOTIFY_URGENCY_CRITICAL)
-		ipath += wxGetApp().getIconPath(wxT("ModAnoubis_question_48.png")
-		    );
+		ipath += wxGetApp().getIconPath(
+		    wxT("ModAnoubis_question_48.png"));
 
 	strlcpy(buffer, (const char*)ipath.mb_str(wxConvUTF8), sizeof(buffer));
 	uri = buffer;

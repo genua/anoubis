@@ -55,6 +55,7 @@
 #include "EscalationNotify.h"
 #include "NotifyAnswer.h"
 
+#define ZERO_SECONDS	0
 #define TEN_SECONDS	10
 
 #define SHOWSLOT(slotNo,field,value) \
@@ -76,8 +77,6 @@ ModAnoubisMainPanelImpl::ModAnoubisMainPanelImpl(wxWindow* parent,
 {
 	list_ = NOTIFY_LIST_NOTANSWERED;
 	currentNotify_ = NULL;
-	systemNotifyEnabled_ = false;
-	systemNotifyTimeout_ = TEN_SECONDS;
 
 	parent->Connect(anEVT_ESCALATIONS_SHOW,
 	    wxCommandEventHandler(ModAnoubisMainPanelImpl::OnEscalationsShow),
@@ -139,6 +138,43 @@ ModAnoubisMainPanelImpl::displayLog(void)
 	SHOWSLOT(4, _("Operation:"), lNotify->getOperation());
 	SHOWSLOT(5, _("Origin:"), lNotify->getOrigin());
 	SHOWSLOT(6, _("Checksum:"), lNotify->getCheckSum());
+}
+
+void
+ModAnoubisMainPanelImpl::sendNotifierOptionsEvents(WXTYPE type, bool show,
+    long timeout)
+{
+	wxCommandEvent showEvent(type);
+	showEvent.SetInt(show);
+	showEvent.SetExtraLong(timeout);
+	wxGetApp().sendEvent(showEvent);
+}
+
+void
+ModAnoubisMainPanelImpl::sendNotifierOptions(void)
+{
+	bool show;
+	long timeout;
+
+	/* handle and pass Escalation Options */
+	show = cb_NoEscalations->IsChecked();
+	if (!show && cb_NoEscalationTimeout->IsChecked()) {
+		timeout = 0;
+	} else {
+		timeout = m_spinEscalationNotifyTimeout->GetValue();
+	}
+	sendNotifierOptionsEvents(anEVT_ESCALATIONNOTIFY_OPTIONS, show,
+	    timeout);
+
+	/* handle and pass Alert Options */
+	 show = cb_NoAlerts->IsChecked();
+	 if (!show && cb_NoAlertTimeout->IsChecked()) {
+		 timeout = 0;
+	 } else {
+		 timeout = m_spinAlertNotifyTimeout->GetValue();
+	 }
+	 sendNotifierOptionsEvents(anEVT_ALERTNOTIFY_OPTIONS, show,
+			 timeout);
 }
 
 void
@@ -340,29 +376,87 @@ ModAnoubisMainPanelImpl::OnDenyBtnClick(wxCommandEvent& event)
 }
 
 void
-ModAnoubisMainPanelImpl::OnToggleNotification(wxCommandEvent& event)
+ModAnoubisMainPanelImpl::OnEscalationDisable(wxCommandEvent& event)
 {
 	if(event.IsChecked()) {
-		systemNotifyEnabled_ = true;
+		m_spinEscalationNotifyTimeout->Disable();
+		cb_NoEscalationTimeout->Disable();
+		tx_EscalationNotifyTimeoutLabel->Disable();
 	} else {
-		systemNotifyEnabled_ = false;
+		if (cb_NoEscalationTimeout->IsChecked()) {
+			cb_NoEscalationTimeout->Enable();
+			m_spinEscalationNotifyTimeout->Disable();
+			tx_EscalationNotifyTimeoutLabel->Disable();
+		} else {
+			cb_NoEscalationTimeout->Enable();
+			m_spinEscalationNotifyTimeout->Enable();
+			tx_EscalationNotifyTimeoutLabel->Enable();
+		}
 	}
 
-	wxCommandEvent  showEvent(anEVT_SYSNOTIFICATION_OPTIONS);
-	showEvent.SetInt(systemNotifyEnabled_);
-	showEvent.SetExtraLong(systemNotifyTimeout_);
-	wxGetApp().sendEvent(showEvent);
+	sendNotifierOptions();
 }
 
 void
-ModAnoubisMainPanelImpl::OnNotificationTimeout(wxSpinEvent& event)
+ModAnoubisMainPanelImpl::OnAlertDisable(wxCommandEvent& event)
 {
-	systemNotifyTimeout_ = event.GetPosition();
+	if(event.IsChecked()) {
+		m_spinAlertNotifyTimeout->Disable();
+		cb_NoAlertTimeout->Disable();
+		tx_AlertNotifyTimeoutLabel->Disable();
+	} else {
+		if (cb_NoAlertTimeout->IsChecked()) {
+			cb_NoAlertTimeout->Enable();
+			m_spinAlertNotifyTimeout->Disable();
+			tx_AlertNotifyTimeoutLabel->Disable();
+		} else {
+			cb_NoAlertTimeout->Enable();
+			m_spinAlertNotifyTimeout->Enable();
+			tx_AlertNotifyTimeoutLabel->Enable();
+		}
+	}
 
-	wxCommandEvent  showEvent(anEVT_SYSNOTIFICATION_OPTIONS);
-	showEvent.SetInt(systemNotifyEnabled_);
-	showEvent.SetExtraLong(systemNotifyTimeout_);
-	wxGetApp().sendEvent(showEvent);
+	sendNotifierOptions();
+}
+
+void
+ModAnoubisMainPanelImpl::OnEscalationNoTimeout(wxCommandEvent& event)
+{
+	if(event.IsChecked()) {
+		m_spinEscalationNotifyTimeout->Disable();
+		tx_EscalationNotifyTimeoutLabel->Disable();
+	} else {
+		m_spinEscalationNotifyTimeout->Enable();
+		tx_EscalationNotifyTimeoutLabel->Enable();
+	}
+
+	sendNotifierOptions();
+}
+
+void
+ModAnoubisMainPanelImpl::OnAlertNoTimeout(wxCommandEvent& event)
+{
+	if(event.IsChecked()) {
+		m_spinAlertNotifyTimeout->Disable();
+		tx_AlertNotifyTimeoutLabel->Disable();
+	} else {
+		m_spinAlertNotifyTimeout->Enable();
+		tx_AlertNotifyTimeoutLabel->Enable();
+	}
+
+	sendNotifierOptions();
+}
+
+void
+ModAnoubisMainPanelImpl::OnEscalationTimeout(wxSpinEvent& event)
+{
+	sendNotifierOptions();
+}
+
+void
+ModAnoubisMainPanelImpl::OnAlertTimeout(wxSpinEvent& event)
+{
+	sendNotifierOptions();
 }
 
 void

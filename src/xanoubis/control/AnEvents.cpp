@@ -46,9 +46,18 @@ DEFINE_LOCAL_EVENT_TYPE(anEVT_MAINFRAME_SHOW)
 DEFINE_LOCAL_EVENT_TYPE(anEVT_ESCALATIONS_SHOW)
 
 /*
- * The options of the system notification via libnotify have changed
+ * The options of the system notification via libnotify for ESCALATIONS
+ * or ALERTS have changed.
+ *
+ * The integer field contains a boolean stating:
+ * true
+ * false
+ *
+ * The long  field contains a value stating:
+ * value        => time in seconds the ESCALATION/ALERT is shown
  */
-DEFINE_LOCAL_EVENT_TYPE(anEVT_SYSNOTIFICATION_OPTIONS)
+DEFINE_LOCAL_EVENT_TYPE(anEVT_ESCALATIONNOTIFY_OPTIONS)
+DEFINE_LOCAL_EVENT_TYPE(anEVT_ALERTNOTIFY_OPTIONS)
 
 /*
  * A connection to the daemon was sucessfully established.
