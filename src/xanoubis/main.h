@@ -39,6 +39,7 @@
 #include <arpa/inet.h>
 
 #include <wx/app.h>
+#include <wx/config.h>
 #include <wx/icon.h>
 #include <wx/intl.h>
 #include <wx/stdpaths.h>
@@ -84,6 +85,7 @@ class AnoubisGuiApp : public wxApp
 		CommunicatorCtrl	*comCtrl_;
 		TrayIcon		*trayIcon;
 		Module			*modules_[ANOUBIS_MODULESNO];
+		wxConfig		*userOptions_;
 
 	public:
 		AnoubisGuiApp(void);
@@ -114,6 +116,7 @@ class AnoubisGuiApp : public wxApp
 		void		 importPolicyFile(wxString);
 		void		 exportPolicyFile(wxString);
 		bool		getCommConnectionState(void);
+		const wxConfig	*getUserOptions(void);
 };
 
 DECLARE_APP(AnoubisGuiApp)

@@ -60,7 +60,9 @@ AnoubisGuiApp::AnoubisGuiApp(void)
 	ruleEditor_ = NULL;
 	comCtrl_ = NULL;
 	trayIcon = NULL;
+	userOptions_ = NULL;
 
+	SetAppName(wxT("xanoubis"));
 	wxInitAllImageHandlers();
 
 	paths_.SetInstallPrefix(wxT(GENERALPREFIX));
@@ -74,6 +76,10 @@ AnoubisGuiApp::~AnoubisGuiApp(void)
 
 	if (ruleSet_ != NULL) {
 		delete ruleSet_;
+	}
+
+	if (userOptions_ != NULL) {
+		delete userOptions_;
 	}
 }
 
@@ -101,9 +107,10 @@ bool AnoubisGuiApp::OnInit()
 	hasLocale = language_.Init(wxLANGUAGE_DEFAULT, wxLOCALE_CONV_ENCODING);
 	if (hasLocale) {
 		language_.AddCatalogLookupPathPrefix(getCatalogPath());
-		language_.AddCatalog(wxT("xanoubis"));
+		language_.AddCatalog(GetAppName());
 	}
 
+	userOptions_ = new wxConfig(GetAppName());
 	mainFrame = new MainFrame((wxWindow*)NULL);
 	logViewer_ = new DlgLogViewer(mainFrame);
 	ruleEditor_ = new DlgRuleEditor(mainFrame);
@@ -134,6 +141,7 @@ bool AnoubisGuiApp::OnInit()
 	if (hasLocale) {
 		status(_("Language setting: ") + language_.GetCanonicalName());
 	}
+
 	return (true);
 }
 
@@ -395,4 +403,10 @@ AnoubisGuiApp::exportPolicyFile(wxString fileName)
 	} else {
 		status(_("no loaded RuleSet; export failed!"));
 	}
+}
+
+const wxConfig *
+AnoubisGuiApp::getUserOptions(void)
+{
+	return (userOptions_);
 }
