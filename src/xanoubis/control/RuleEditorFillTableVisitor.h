@@ -25,54 +25,33 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "RuleEditorAddPolicyVisitor.h"
+#ifndef _RULEEDITORFILLTABLEVISITOR_H_
+#define _RULEEDITORFILLTABLEVISITOR_H_
 
-RuleEditorAddPolicyVisitor::RuleEditorAddPolicyVisitor(
-    DlgRuleEditor *ruleEditor) : RuleEditorFillTableVisitor(ruleEditor, 0)
+#include "DlgRuleEditor.h"
+#include "PolicyVisitor.h"
+
+class RuleEditorFillTableVisitor : public PolicyVisitor
 {
-	setPropagation(true);
-}
+	protected:
+		long		 selectedLine_;
+		DlgRuleEditor	*ruleEditor_;
 
-RuleEditorAddPolicyVisitor::~RuleEditorAddPolicyVisitor(void)
-{
-}
+		void clean(long);
 
-long
-RuleEditorAddPolicyVisitor::appendPolicy(Policy *policy)
-{
-	long idx;
+		virtual void showApp(AppPolicy *, long);
+		virtual void showAlf(AlfPolicy *, long);
+		virtual void showSfs(SfsPolicy *, long);
+		virtual void showVar(VarPolicy *, long);
 
-	idx = ruleEditor_->ruleListCtrl->GetItemCount();
-	ruleEditor_->ruleListCtrl->InsertItem(idx, wxString::Format(wxT("%d"),
-	    idx));
+	public:
+		RuleEditorFillTableVisitor(DlgRuleEditor *, long);
+		~RuleEditorFillTableVisitor(void);
 
-	ruleEditor_->ruleListCtrl->SetItemPtrData(idx, (wxUIntPtr)policy);
+		virtual void visitAppPolicy(AppPolicy *);
+		virtual void visitAlfPolicy(AlfPolicy *);
+		virtual void visitSfsPolicy(SfsPolicy *);
+		virtual void visitVarPolicy(VarPolicy *);
+};
 
-	return (idx);
-}
-
-void
-RuleEditorAddPolicyVisitor::visitAppPolicy(AppPolicy *appPolicy)
-{
-	if (appPolicy->getType() == APN_ALF) {
-		showApp(appPolicy, appendPolicy(appPolicy));
-	}
-}
-
-void
-RuleEditorAddPolicyVisitor::visitAlfPolicy(AlfPolicy *alfPolicy)
-{
-	showAlf(alfPolicy, appendPolicy(alfPolicy));
-}
-
-void
-RuleEditorAddPolicyVisitor::visitSfsPolicy(SfsPolicy *sfsPolicy)
-{
-	showSfs(sfsPolicy, appendPolicy(sfsPolicy));
-}
-
-void
-RuleEditorAddPolicyVisitor::visitVarPolicy(VarPolicy *variable)
-{
-	 showVar(variable, appendPolicy(variable));
-}
+#endif	/* _RULEEDITORFILLTABLEVISITOR_H_ */

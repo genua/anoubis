@@ -241,6 +241,8 @@ xanoubis_SOURCES= \
 	control/RuleEditorAddPolicyVisitor.h \
 	control/RuleEditorFillWidgetsVisitor.cpp \
 	control/RuleEditorFillWidgetsVisitor.h \
+	control/RuleEditorFillTableVisitor.cpp \
+	control/RuleEditorFillTableVisitor.h \
 	control/ModAlfAddPolicyVisitor.cpp \
 	control/ModAlfAddPolicyVisitor.h \
 	control/ModSfsAddPolicyVisitor.cpp \

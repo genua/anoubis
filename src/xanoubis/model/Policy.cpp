@@ -66,12 +66,18 @@ Policy::~Policy(void)
 {
 }
 
+Policy *
+Policy::getParent(void)
+{
+	return (parent_);
+}
+
 wxString
 Policy::getActionName(int action)
 {
 	wxString result;
 
-        switch (action) {
+	switch (action) {
 	case APN_ACTION_ALLOW:
 		result = wxT("allow");
 		break;

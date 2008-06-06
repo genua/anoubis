@@ -33,9 +33,11 @@
 #define RULEDITOR_DEFAULT	-1
 #define RULEDITOR_DISABLE	-2
 
-RuleEditorFillWidgetsVisitor::RuleEditorFillWidgetsVisitor(DlgRuleEditor *ruleEditor)
+RuleEditorFillWidgetsVisitor::RuleEditorFillWidgetsVisitor(
+    DlgRuleEditor *ruleEditor)
 {
 	ruleEditor_ = ruleEditor;
+	setPropagation(false);
 }
 
 RuleEditorFillWidgetsVisitor::~RuleEditorFillWidgetsVisitor(void)
@@ -59,21 +61,27 @@ RuleEditorFillWidgetsVisitor::clear(void)
 
 	ruleEditor_->alfSrcAddrText->Disable();
 	ruleEditor_->alfSrcAddrComboBox->Disable();
+	ruleEditor_->alfSrcAddrComboBox->SetValue(wxEmptyString);
 	ruleEditor_->alfSrcAddrDelimiterText->Disable();
 	ruleEditor_->alfSrcAddrNetSpinCtrl->Disable();
+	ruleEditor_->alfSrcAddrNetSpinCtrl->SetValue(0);
 	ruleEditor_->alfSrcAddrDelButton->Disable();
 	ruleEditor_->alfSrcAddrAddButton->Disable();
 	ruleEditor_->alfDstAddrText->Disable();
 	ruleEditor_->alfDstAddrComboBox->Disable();
+	ruleEditor_->alfDstAddrComboBox->SetValue(wxEmptyString);
 	ruleEditor_->alfDstAddrDelimiterText->Disable();
 	ruleEditor_->alfDstAddrNetSpinCtrl->Disable();
+	ruleEditor_->alfDstAddrNetSpinCtrl->SetValue(0);
 	ruleEditor_->alfDstAddrDelButton->Disable();
 	ruleEditor_->alfDstAddrAddButton->Disable();
 
 	ruleEditor_->alfSrcPortText->Disable();
 	ruleEditor_->alfSrcPortComboBox->Disable();
+	ruleEditor_->alfSrcPortComboBox->SetValue(wxEmptyString);
 	ruleEditor_->alfDstPortText->Disable();
 	ruleEditor_->alfDstPortComboBox->Disable();
+	ruleEditor_->alfDstPortComboBox->SetValue(wxEmptyString);
 
 	ruleEditor_->alfStateTimeoutText->Disable();
 	ruleEditor_->alfStateTimeoutSpinCtrl->Disable();
@@ -81,22 +89,12 @@ RuleEditorFillWidgetsVisitor::clear(void)
 
 	ruleEditor_->sfsBinaryTextCtrl->Clear();
 
-	for (AddrLineList::iterator i=ruleEditor_->extraSrcAddrList.begin();
-	    i != ruleEditor_->extraSrcAddrList.end();
-	    i++) {
-		(*i)->remove();
-		delete (*i);
-	}
-	ruleEditor_->extraSrcAddrList.Clear();//DeleteContents(true);
+	ruleEditor_->extraSrcAddrList.DeleteContents(true);
+	ruleEditor_->extraSrcAddrList.Clear();
 	ruleEditor_->Layout();
 
-	for (AddrLineList::iterator i=ruleEditor_->extraDstAddrList.begin();
-	    i != ruleEditor_->extraDstAddrList.end();
-	    i++) {
-		(*i)->remove();
-		delete (*i);
-	}
-	ruleEditor_->extraDstAddrList.Clear();//DeleteContents(true);
+	ruleEditor_->extraDstAddrList.DeleteContents(true);
+	ruleEditor_->extraDstAddrList.Clear();
 	ruleEditor_->Layout();
 
 }
@@ -296,7 +294,8 @@ RuleEditorFillWidgetsVisitor::showDstAddr(wxArrayString hosts)
 		} else {
 			window = ruleEditor_->alfNbPanel;
 			addrLine = new AddrLine(window, host, net);
-			addrLine->add(ruleEditor_->alfConnectAddrSizer, 6 + (i * 6));
+			addrLine->add(ruleEditor_->alfConnectAddrSizer,
+			    6 + (i * 6));
 			ruleEditor_->extraDstAddrList.Append(addrLine);
 		}
 	}
@@ -408,6 +407,7 @@ RuleEditorFillWidgetsVisitor::visitAlfPolicy(AlfPolicy *alfPolicy)
 	int type;
 	clear();
 
+	visitAppPolicy((AppPolicy *)alfPolicy->getParent());
 	ruleEditor_->applicationNbPanel->Disable();
 	ruleEditor_->alfNbPanel->Enable();
 	ruleEditor_->sfsNbPanel->Disable();
@@ -422,6 +422,7 @@ RuleEditorFillWidgetsVisitor::visitAlfPolicy(AlfPolicy *alfPolicy)
 		showLog(alfPolicy->getLogNo());
 		showProtocol(alfPolicy->getProtocolNo());
 		showAddrFamily(alfPolicy->getAddrFamilyNo());
+		showDirection(alfPolicy->getDirectionNo());
 		showSrcAddr(alfPolicy->getFromHostList());
 		showDstAddr(alfPolicy->getToHostList());
 		showSrcPort(alfPolicy->getFromPortName());

@@ -105,6 +105,14 @@ class DlgRuleEditor : public DlgRuleEditorBase
 
 		void OnShow(wxCommandEvent&);
 
+		void updateAction(int);
+		void updateType(int);
+		void updateProtocol(int);
+		void updateAddrFamily(int);
+		void updateCapType(int);
+		void updateDirection(int);
+		void updateTimeout(int);
+
 	protected:
 		AnShortcuts	*shortcuts_;
 
@@ -153,6 +161,7 @@ class DlgRuleEditor : public DlgRuleEditorBase
 
 		friend class RuleEditorAddPolicyVisitor;
 		friend class RuleEditorFillWidgetsVisitor;
+		friend class RuleEditorFillTableVisitor;
 };
 
 #endif /* __DlgRuleEditor__ */

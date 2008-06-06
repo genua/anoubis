@@ -30,12 +30,11 @@
 
 #include "DlgRuleEditor.h"
 #include "PolicyVisitor.h"
+#include "RuleEditorFillTableVisitor.h"
 
-class RuleEditorAddPolicyVisitor : public PolicyVisitor
+class RuleEditorAddPolicyVisitor : public RuleEditorFillTableVisitor
 {
 	private:
-		DlgRuleEditor	*ruleEditor_;
-
 		long appendPolicy(Policy *);
 
 	public:

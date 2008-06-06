@@ -51,6 +51,7 @@ class Policy
 
 		virtual void accept(PolicyVisitor&) = 0;
 
+		Policy	*getParent(void);
 		wxString getActionName(int);
 		wxString getDirectionName(int);
 		wxString getLogName(int);

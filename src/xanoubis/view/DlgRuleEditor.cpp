@@ -55,6 +55,7 @@
 #include "PolicyRuleSet.h"
 #include "RuleEditorAddPolicyVisitor.h"
 #include "RuleEditorFillWidgetsVisitor.h"
+#include "RuleEditorFillTableVisitor.h"
 
 #include <wx/listimpl.cpp>
 WX_DEFINE_LIST(AddrLineList);
@@ -212,6 +213,125 @@ DlgRuleEditor::~DlgRuleEditor(void)
 }
 
 void
+DlgRuleEditor::updateAction(int action)
+{
+	AlfPolicy			*policy;
+	RuleEditorFillTableVisitor	 updateTable(this, selectedId_);
+	RuleEditorFillWidgetsVisitor	 updateWidgets(this);
+
+	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedId_);
+	if (policy == NULL) {
+		return;
+	}
+
+	policy->setAction(action);
+	policy->accept(updateTable);
+	policy->accept(updateWidgets);
+}
+
+void
+DlgRuleEditor::updateType(int type)
+{
+	AlfPolicy			*policy;
+	RuleEditorFillTableVisitor	 updateTable(this, selectedId_);
+	RuleEditorFillWidgetsVisitor	 updateWidgets(this);
+
+	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedId_);
+	if (policy == NULL) {
+		return;
+	}
+
+	policy->setType(type);
+	policy->accept(updateTable);
+	policy->accept(updateWidgets);
+}
+
+void
+DlgRuleEditor::updateProtocol(int protocol)
+{
+	AlfPolicy			*policy;
+	RuleEditorFillTableVisitor	 updateTable(this, selectedId_);
+	RuleEditorFillWidgetsVisitor	 updateWidgets(this);
+
+	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedId_);
+	if (policy == NULL) {
+		return;
+	}
+
+	policy->setProtocol(protocol);
+	policy->accept(updateTable);
+	policy->accept(updateWidgets);
+}
+
+void
+DlgRuleEditor::updateAddrFamily(int addrFamily)
+{
+	AlfPolicy			*policy;
+	RuleEditorFillTableVisitor	 updateTable(this, selectedId_);
+	RuleEditorFillWidgetsVisitor	 updateWidgets(this);
+
+	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedId_);
+	if (policy == NULL) {
+		return;
+	}
+
+	policy->setAddrFamily(addrFamily);
+	policy->accept(updateTable);
+	policy->accept(updateWidgets);
+}
+
+void
+DlgRuleEditor::updateCapType(int type)
+{
+	AlfPolicy			*policy;
+	RuleEditorFillTableVisitor	 updateTable(this, selectedId_);
+	RuleEditorFillWidgetsVisitor	 updateWidgets(this);
+
+	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedId_);
+	if (policy == NULL) {
+		return;
+	}
+
+	policy->setCapType(type);
+	policy->accept(updateTable);
+	policy->accept(updateWidgets);
+}
+
+void
+DlgRuleEditor::updateDirection(int direction)
+{
+	AlfPolicy			*policy;
+	RuleEditorFillTableVisitor	 updateTable(this, selectedId_);
+	RuleEditorFillWidgetsVisitor	 updateWidgets(this);
+
+	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedId_);
+	if (policy == NULL) {
+		return;
+	}
+
+	policy->setDirection(direction);
+	policy->accept(updateTable);
+	policy->accept(updateWidgets);
+}
+
+void
+DlgRuleEditor::updateTimeout(int timeout)
+{
+	AlfPolicy			*policy;
+	RuleEditorFillTableVisitor	 updateTable(this, selectedId_);
+	RuleEditorFillWidgetsVisitor	 updateWidgets(this);
+
+	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedId_);
+	if (policy == NULL) {
+		return;
+	}
+
+	policy->setStateTimeout(timeout);
+	policy->accept(updateTable);
+	policy->accept(updateWidgets);
+}
+
+void
 DlgRuleEditor::OnTableOptionButtonClick(wxCommandEvent& event)
 {
 	wxArrayString		 choices;
@@ -268,8 +388,9 @@ DlgRuleEditor::OnBinaryModifyButtonClick(wxCommandEvent& event)
 void
 DlgRuleEditor::OnAppUpdateChkSumButton(wxCommandEvent& event)
 {
-	RuleEditorFillWidgetsVisitor	 updateVisitor(this);
 	AppPolicy			*policy;
+	RuleEditorFillTableVisitor       updateTable(this, selectedId_);
+	RuleEditorFillWidgetsVisitor	 updateWidgets(this);
 	unsigned char			 csum[MAX_APN_HASH_LEN];
 
 	policy = (AppPolicy *)ruleListCtrl->GetItemData(selectedId_);
@@ -278,11 +399,8 @@ DlgRuleEditor::OnAppUpdateChkSumButton(wxCommandEvent& event)
 
 	policy->calcCurrentHash(csum);
 	policy->setHashValue(csum);
-	updateVisitor.setPropagation(false);
-	policy->accept(updateVisitor);
-
-	ruleListCtrl->SetItem(selectedId_, RULEDITOR_LIST_COLUMN_HASH,
-	    policy->getHashValue());
+	policy->accept(updateTable);
+	policy->accept(updateWidgets);
 }
 
 void
@@ -309,196 +427,97 @@ DlgRuleEditor::OnClose(wxCloseEvent& event)
 void
 DlgRuleEditor::OnAlfAllowRadioButton(wxCommandEvent& event)
 {
-	AlfPolicy *policy;
-
-	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedId_);
-	if (!policy)
-		return;
-	policy->setAction(APN_ACTION_ALLOW);
-	ruleListCtrl->SetItem(selectedId_, RULEDITOR_LIST_COLUMN_ACTION,
-	    policy->getActionName());
+	updateAction(APN_ACTION_ALLOW);
 }
 
 void
 DlgRuleEditor::OnAlfDenyRadioButton(wxCommandEvent& event)
 {
-	AlfPolicy *policy;
-
-	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedId_);
-	if (!policy)
-		return;
-	policy->setAction(APN_ACTION_DENY);
-	ruleListCtrl->SetItem(selectedId_, RULEDITOR_LIST_COLUMN_ACTION,
-	    policy->getActionName());
+	updateAction(APN_ACTION_DENY);
 }
 
 void
 DlgRuleEditor::OnAlfAskRadioButton(wxCommandEvent& event)
 {
-	AlfPolicy *policy;
-
-	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedId_);
-	if (!policy)
-		return;
-	policy->setAction(APN_ACTION_ASK);
-	ruleListCtrl->SetItem(selectedId_, RULEDITOR_LIST_COLUMN_ACTION,
-	    policy->getActionName());
+	updateAction(APN_ACTION_ASK);
 }
 
 void
 DlgRuleEditor::OnAlfFilterRadioButton(wxCommandEvent& event)
 {
-	AlfPolicy *policy;
-	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedId_);
-	if (!policy)
-		return;
-	policy->setType(APN_ALF_FILTER);
-	ruleListCtrl->SetItem(selectedId_, RULEDITOR_LIST_COLUMN_TYPE,
-	    policy->getTypeName());
+	updateType(APN_ALF_FILTER);
 }
 
 void
 DlgRuleEditor::OnAlfCapRadioButton(wxCommandEvent& event)
 {
-	AlfPolicy *policy;
-	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedId_);
-	if (!policy)
-		return;
-	policy->setType(APN_ALF_CAPABILITY);
-	ruleListCtrl->SetItem(selectedId_, RULEDITOR_LIST_COLUMN_TYPE,
-	    policy->getTypeName());
+	updateType(APN_ALF_CAPABILITY);
 }
 
 void
 DlgRuleEditor::OnAlfDefaultRadioButton(wxCommandEvent& event)
 {
-	AlfPolicy *policy;
-	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedId_);
-	if (!policy)
-		return;
-	policy->setType(APN_ALF_DEFAULT);
-	ruleListCtrl->SetItem(selectedId_, RULEDITOR_LIST_COLUMN_TYPE,
-	    policy->getTypeName());
+	updateType(APN_ALF_DEFAULT);
 }
 
 void
 DlgRuleEditor::OnAlfTcpRadioButton(wxCommandEvent& event)
 {
-	AlfPolicy *policy;
-	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedId_);
-	if (!policy)
-		return;
-	policy->setProtocol(IPPROTO_TCP);
-	ruleListCtrl->SetItem(selectedId_, RULEDITOR_LIST_COLUMN_PROTO,
-	    policy->getProtocolName());
+	updateProtocol(IPPROTO_TCP);
 }
 
 void
 DlgRuleEditor::OnAlfUdpRadioButton(wxCommandEvent& event)
 {
-	AlfPolicy *policy;
-	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedId_);
-	if (!policy)
-		return;
-	policy->setProtocol(IPPROTO_UDP);
-	ruleListCtrl->SetItem(selectedId_, RULEDITOR_LIST_COLUMN_PROTO,
-	    policy->getProtocolName());
+	updateProtocol(IPPROTO_UDP);
 }
 
 void
 DlgRuleEditor::OnAlfInetRadioButton(wxCommandEvent& event)
 {
-	AlfPolicy *policy;
-	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedId_);
-	if (!policy)
-		return;
-	policy->setAddrFamily(AF_INET);
-	ruleListCtrl->SetItem(selectedId_, RULEDITOR_LIST_COLUMN_AF,
-	    policy->getAddrFamilyName());
+	updateAddrFamily(AF_INET);
 }
 
 void
 DlgRuleEditor::OnAlfInet6RadioButton(wxCommandEvent& event)
 {
-	AlfPolicy *policy;
-	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedId_);
-	if (!policy)
-		return;
-	policy->setAddrFamily(AF_INET6);
-	ruleListCtrl->SetItem(selectedId_, RULEDITOR_LIST_COLUMN_AF,
-	    policy->getAddrFamilyName());
+	updateAddrFamily(AF_INET6);
 }
 
 void
 DlgRuleEditor::OnAlfAnyRadioButton(wxCommandEvent& event)
 {
-	AlfPolicy *policy;
-	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedId_);
-	if (!policy)
-		return;
-	policy->setAddrFamily(0);
-	ruleListCtrl->SetItem(selectedId_, RULEDITOR_LIST_COLUMN_AF,
-	    policy->getAddrFamilyName());
+	updateAddrFamily(0);
 }
 
 void
 DlgRuleEditor::OnAlfRawCapRadioButton(wxCommandEvent& event)
 {
-	AlfPolicy *policy;
-	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedId_);
-	if (!policy)
-		return;
-	policy->setCapType(APN_ALF_CAPRAW);
-	ruleListCtrl->SetItem(selectedId_, RULEDITOR_LIST_COLUMN_CAP,
-	    policy->getCapTypeName());
+	updateCapType(APN_ALF_CAPRAW);
 }
 
 void
 DlgRuleEditor::OnAlfOtherCapRadioButton(wxCommandEvent& event)
 {
-	AlfPolicy *policy;
-	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedId_);
-	if (!policy)
-		return;
-	policy->setCapType(APN_ALF_CAPOTHER);
-	ruleListCtrl->SetItem(selectedId_, RULEDITOR_LIST_COLUMN_CAP,
-	    policy->getCapTypeName());
+	updateCapType(APN_ALF_CAPOTHER);
 }
 
 void
 DlgRuleEditor::OnAlfAllCapRadioButton(wxCommandEvent& event)
 {
-	AlfPolicy *policy;
-	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedId_);
-	if (!policy)
-		return;
-	policy->setCapType(APN_ALF_CAPALL);
-	ruleListCtrl->SetItem(selectedId_, RULEDITOR_LIST_COLUMN_CAP,
-	    policy->getCapTypeName());
+	updateCapType(APN_ALF_CAPALL);
 }
 
 void
 DlgRuleEditor::OnAlfAcceptRadioButton(wxCommandEvent& event)
 {
-	AlfPolicy *policy;
-	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedId_);
-	if (!policy)
-		return;
-	policy->setDirection(APN_ACCEPT);
-	ruleListCtrl->SetItem(selectedId_, RULEDITOR_LIST_COLUMN_DIR,
-	    policy->getDirectionName());
+	updateDirection(APN_ACCEPT);
 }
 
 void
 DlgRuleEditor::OnAlfConnectRadioButton(wxCommandEvent& event)
 {
-	AlfPolicy *policy;
-	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedId_);
-	if (!policy)
-		return;
-	policy->setDirection(APN_CONNECT);
-	ruleListCtrl->SetItem(selectedId_, RULEDITOR_LIST_COLUMN_DIR,
-	    policy->getDirectionName());
+	updateDirection(APN_CONNECT);
 }
 
 void
@@ -577,7 +596,6 @@ DlgRuleEditor::OnLoadRuleSet(wxCommandEvent& event)
 	loadRuleSet(ruleSet);
 }
 
-#include <stdio.h>
 void
 DlgRuleEditor::OnLineSelected(wxListEvent& event)
 {
@@ -591,14 +609,11 @@ DlgRuleEditor::OnLineSelected(wxListEvent& event)
 	if (!policy)
 		return;
 	policy->accept(updateVisitor);
-
-	fprintf(stderr, "DlgRuleEditor::OnLineSelected id=%ld\n", selectedId_);
 }
 
 void
 DlgRuleEditor::OnSrcAddrAddButton(wxCommandEvent& event)
 {
-	fprintf(stderr, "DlgRuleEditor::OnSrcAddrAddButton\n");
 }
 
 void
@@ -619,21 +634,11 @@ DlgRuleEditor::OnCreationChoice(wxCommandEvent& event)
 		break;
 	}
 
-	fprintf(stderr, "DlgRuleEditor::OnCreationChoice %d\n", event.GetSelection());
 	loadRuleSet(ruleSet_);
 }
 
 void
 DlgRuleEditor::OnAlfStateTimeoutChange(wxSpinEvent& event)
 {
-	AlfPolicy *policy;
-
-	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedId_);
-	if (!policy) {
-		return;
-	}
-
-	policy->setStateTimeout(event.GetPosition());
-	ruleListCtrl->SetItem(selectedId_, RULEDITOR_LIST_COLUMN_STATETIMEOUT,
-	    policy->getStateTimeout());
+	updateTimeout(event.GetPosition());
 }
