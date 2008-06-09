@@ -236,7 +236,7 @@ MainFrame::OnMbHelpAboutSelect(wxCommandEvent& event)
 	wxAboutDialogInfo info;
 
 	info.SetName(wxT("Anoubis GUI"));
-	info.SetVersion(wxT("MS7.A"));
+	info.SetVersion(wxT(VERSION));
 	info.SetCopyright(wxT("(C) 2007-2008 GeNUA mbH"));
 	// info.SetWebSite(wxT("www.anoubis.org"));
 	info.SetIcon(*aboutIcon_);
