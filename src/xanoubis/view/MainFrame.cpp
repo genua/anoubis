@@ -369,6 +369,11 @@ MainFrame::OnEscalationsShow(wxCommandEvent& event)
 	Module *module = wxGetApp().getModule(ANOUBIS);
 	int id = module->getToolbarId();
 
+	/*
+	 * Select the corresponding Modul Tab in the Toolbar
+	 */
+	tb_LeftToolbarModule->ToggleTool(MODANOUBIS_ID_TOOLBAR, true);
+
 	wxCommandEvent selectEvent(wxEVT_COMMAND_MENU_SELECTED, id);
 	selectEvent.SetInt(id);
 	this->AddPendingEvent(selectEvent);
