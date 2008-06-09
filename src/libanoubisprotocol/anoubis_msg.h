@@ -44,6 +44,7 @@ struct anoubis_msg {
 		Anoubis_TokenMessage * token;
 		Anoubis_HelloMessage * hello;
 		Anoubis_AckMessage * ack;
+		Anoubis_AckPayloadMessage * ackpayload;
 		Anoubis_VerselMessage * versel;
 		Anoubis_AuthReplyMessage * authreply;
 		Anoubis_StringListMessage * stringlist;

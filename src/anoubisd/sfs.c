@@ -59,6 +59,7 @@
 #include <anoubis_protocol.h>
 
 #include "anoubisd.h"
+#include "sfs.h"
 
 int
 sfs_sha256(const char * filename, unsigned char md[SHA256_DIGEST_LENGTH])
@@ -120,10 +121,11 @@ mkpath(const char *path)
 }
 
 int
-sfs_checksumop(const char *path, unsigned int operation, uid_t uid)
+sfs_checksumop(const char *path, unsigned int operation, uid_t uid,
+    u_int8_t md[SHA256_DIGEST_LENGTH])
 {
-	char *csum_path;
-	int ret = -1;
+	char *csum_path = NULL;
+	int ret = -EINVAL;
 	int len;
 
 	if (!path || path[0] != '/')
@@ -146,55 +148,63 @@ sfs_checksumop(const char *path, unsigned int operation, uid_t uid)
 	if (csum_path == NULL)
 		return -ENOMEM;
 
-	bzero(csum_path, len);
-
-	if (operation == ANOUBIS_CHECKSUM_OP_ADD) {
-		unsigned char md[SHA256_DIGEST_LENGTH];
+	if (operation == ANOUBIS_CHECKSUM_OP_ADD
+	    || operation == ANOUBIS_CHECKSUM_OP_CALC) {
 		int fd;
 		int written = 0;
 
 		ret = sfs_sha256(path, md);
-		if (ret < 0) {
-			free(csum_path);
-			return ret;
-		}
+		if (ret < 0)
+			goto out;
 
-		bzero(csum_path, len);
 		snprintf(csum_path, len - 1, "%s%s", SFS_CHECKSUMROOT, path);
 
 		ret = mkpath(csum_path);
-		if (ret < 0) {
-			free(csum_path);
-			return ret;
-		}
+		if (ret < 0)
+			goto out;
 
 		snprintf(csum_path, len - 1, "%s%s/%u", SFS_CHECKSUMROOT, path,
 		    uid);
 
-		fd = open(csum_path, O_WRONLY|O_CREAT, 0600);
-		if (fd < 0) {
-			free(csum_path);
-			return -errno;
-		}
-
-		while (written < sizeof(md)) {
-			ret = write(fd, md + written, sizeof(md) - written);
-			if (ret < 0) {
-				unlink(csum_path);
+		if (operation == ANOUBIS_CHECKSUM_OP_ADD) {
+			fd = open(csum_path, O_WRONLY|O_CREAT|O_TRUNC, 0600);
+			if (fd < 0) {
 				ret = -errno;
-				break;
+				goto out;
 			}
-			written += ret;
+
+			while (written < SHA256_DIGEST_LENGTH) {
+				ret = write(fd, md + written,
+				    SHA256_DIGEST_LENGTH - written);
+				if (ret < 0) {
+					ret = -errno;
+					unlink(csum_path);
+					close(fd);
+					goto out;
+				}
+				written += ret;
+			}
+			close(fd);
 		}
 		ret = 0;
-		close(fd);
 	} else if (operation == ANOUBIS_CHECKSUM_OP_DEL) {
 		snprintf(csum_path, len - 1, "%s%s/%u", SFS_CHECKSUMROOT, path,
 		    uid);
 		ret = unlink(csum_path);
+		if (ret < 0)
+			ret = -errno;
+		goto out;
+	} else if (operation == ANOUBIS_CHECKSUM_OP_GET) {
+		ret = sfs_getchecksum(path, uid, md);
+		if (ret == SHA256_DIGEST_LENGTH)
+			ret = 0;
+		else
+			ret = -EIO;
 	}
 
-	free(csum_path);
+out:
+	if (csum_path)
+		free(csum_path);
 	return ret;
 }
 

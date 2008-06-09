@@ -55,8 +55,10 @@
 
 #ifdef LINUX
 #include <linux/anoubis_sfs.h>
+#include <openssl/sha.h>
 #else
 #include <dev/anoubis_sfs.h>
+#include <sha2.h>
 #endif
 
 /* on glibc 2.6+, event.h uses non C89 types :/ */
@@ -663,9 +665,10 @@ dispatch_s2m(int fd, short event, void *arg)
 			anoubisd_msg_checksum_op_t *msg_comm =
 			    (anoubisd_msg_checksum_op_t *)msg->msg;
 			char * path = NULL;
-			int err, op = 0;
+			int err, op = 0, extra;
 			anoubisd_reply_t * reply;
 			anoubisd_msg_t *msg;
+			u_int8_t digest[SHA256_DIGEST_LENGTH];
 
 			rawmsg.length = msg_comm->len;
 			rawmsg.u.buf = msg_comm->msg;
@@ -687,9 +690,13 @@ dispatch_s2m(int fd, short event, void *arg)
 			}
 			err = -EFAULT;
 			if (path)
-				err = sfs_checksumop(path, op, msg_comm->uid);
+				err = sfs_checksumop(path, op, msg_comm->uid,
+				    digest);
+			extra = 0;
+			if (err == 0 && op != ANOUBIS_CHECKSUM_OP_DEL)
+				extra = SHA256_DIGEST_LENGTH;
 			msg = msg_factory(ANOUBISD_MSG_POLREPLY,
-			    sizeof(anoubisd_reply_t));
+			    sizeof(anoubisd_reply_t) + extra);
 			if (!msg) {
 				master_terminate(ENOMEM);
 				break;
@@ -699,7 +706,9 @@ dispatch_s2m(int fd, short event, void *arg)
 			reply->timeout = 0;
 			reply->reply = -err;
 			reply->flags = POLICY_FLAG_START | POLICY_FLAG_END;
-			reply->len = 0;
+			reply->len = extra;
+			if (extra)
+				memcpy(reply->msg, digest, extra);
 			enqueue(&eventq_m2s, msg);
 			DEBUG(DBG_QUEUE, " >eventq_m2s: %x", reply->token);
 			event_add(ev_info->ev_m2s, NULL);

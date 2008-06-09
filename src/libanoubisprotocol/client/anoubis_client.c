@@ -711,7 +711,8 @@ static void anoubis_client_ack_steps(struct anoubis_transaction * t,
 err:
 	if (m->u.ack->token == 0)
 		client->flags &= ~FLAG_POLICY_PENDING;
-	anoubis_msg_free(m);
+	if ((t->flags & (ANOUBIS_T_WANTMESSAGE|ANOUBIS_T_WANT_ALL)) == 0)
+		anoubis_msg_free(m);
 	anoubis_transaction_done(t, -ret);
 }
 
@@ -896,7 +897,8 @@ anoubis_client_csumrequest_start(struct anoubis_client *client,
 	    + strlen(path) + 1);
 	if (!m)
 		return NULL;
-	t = anoubis_transaction_create(0, ANOUBIS_T_INITSELF|ANOUBIS_T_DEQUEUE,
+	t = anoubis_transaction_create(0,
+	    ANOUBIS_T_INITSELF|ANOUBIS_T_DEQUEUE|ANOUBIS_T_WANTMESSAGE,
 	    &anoubis_client_ack_steps, NULL, client);
 	if (!t) {
 		anoubis_msg_free(m);

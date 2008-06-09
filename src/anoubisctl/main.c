@@ -46,8 +46,17 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#ifdef S_SPLINT_S
+#include "splint-includes.h"
+#endif
+
 #ifdef LINUX
 #include <bsdcompat.h>
+#include <openssl/sha.h>
+#endif
+#ifdef OPENBSD
+#include <sha2.h>
 #endif
 
 #include <anoubis_protocol.h>
@@ -72,6 +81,8 @@ static int	load(char *);
 static int	dump(char *);
 static int	sfs_addsum(char *file);
 static int	sfs_delsum(char *file);
+static int	sfs_getsum(char *file);
+static int	sfs_calcsum(char *file);
 static int	create_channel(void);
 static void	destroy_channel(void);
 
@@ -91,6 +102,8 @@ struct cmd {
 	{ "dump",    (func_int_t)dump, 1 },
 	{ "addsum",  (func_int_t)sfs_addsum, 1},
 	{ "delsum",  (func_int_t)sfs_delsum, 1},
+	{ "getsum",  (func_int_t)sfs_getsum, 1},
+	{ "calcsum",  (func_int_t)sfs_calcsum, 1},
 };
 
 static char    *anoubis_socket = "/var/run/anoubisd.sock";
@@ -418,6 +431,20 @@ sfs_sumop(char *file, int operation)
 		return 6;
 	}
 	destroy_channel();
+	if (operation != ANOUBIS_CHECKSUM_OP_DEL) {
+		int i;
+		if (!VERIFY_LENGTH(t->msg, sizeof(Anoubis_AckPayloadMessage)
+		    + SHA256_DIGEST_LENGTH)) {
+			fprintf(stderr, "Short checksum in reply (len=%d)\n",
+			    t->msg->length);
+		    	return 6;
+		}
+		for (i=0; i<SHA256_DIGEST_LENGTH; ++i) {
+			printf("%02x", t->msg->u.ackpayload->payload[i]);
+		}
+		printf("\n");
+	}
+	anoubis_transaction_destroy(t);
 	return error;
 }
 
@@ -431,6 +458,18 @@ static int
 sfs_delsum(char *file)
 {
 	return sfs_sumop(file, ANOUBIS_CHECKSUM_OP_DEL);
+}
+
+static int
+sfs_getsum(char *file)
+{
+	return sfs_sumop(file, ANOUBIS_CHECKSUM_OP_GET);
+}
+
+static int
+sfs_calcsum(char *file)
+{
+	return sfs_sumop(file, ANOUBIS_CHECKSUM_OP_CALC);
 }
 
 static int

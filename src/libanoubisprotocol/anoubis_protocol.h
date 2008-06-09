@@ -206,6 +206,14 @@ typedef struct {
 } __attribute__((packed)) Anoubis_AckMessage;
 
 typedef struct {
+	u32n		type;
+	anoubis_token_t	token;
+	u32n		opcode;
+	u32n		error;
+	u_int8_t 	payload[0];
+} __attribute__((packed)) Anoubis_AckPayloadMessage;
+
+typedef struct {
 	u32n	type;
 	u16n	version;
 	u16n	_pad;
@@ -303,6 +311,8 @@ typedef struct {
 
 #define ANOUBIS_CHECKSUM_OP_ADD		0x0001UL
 #define ANOUBIS_CHECKSUM_OP_DEL		0x0002UL
+#define ANOUBIS_CHECKSUM_OP_GET		0x0003UL
+#define ANOUBIS_CHECKSUM_OP_CALC	0x0004UL
 
 typedef struct {
 	u32n	type;

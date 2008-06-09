@@ -32,7 +32,8 @@
 #define ANOUBISD_CSUM_USER	1
 #define ANOUBISD_CSUM_ROOT	2
 
-int sfs_checksumop(const char *path, unsigned int operation, uid_t uid);
+int sfs_checksumop(const char *path, unsigned int operation, uid_t uid,
+    unsigned char *md);
 int sfs_getchecksum(const char *path, uid_t uid, unsigned char *md);
 
 #endif	/* _SFS_H_ */

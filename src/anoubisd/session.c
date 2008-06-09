@@ -473,17 +473,19 @@ dispatch_checksum_reply(void *cbdata, int error, void *data, int len, int flags)
 	struct anoubis_msg	*m;
 	int			 ret;
 
-	m = anoubis_msg_new(sizeof(Anoubis_AckMessage));
+	m = anoubis_msg_new(sizeof(Anoubis_AckPayloadMessage)+len);
 	if (!m)
 		return -ENOMEM;
 	if (flags != (POLICY_FLAG_START|POLICY_FLAG_END)) {
 		log_warn("dispatch_checksum_reply: flags is %x");
 		return -EINVAL;
 	}
-	set_value(m->u.ack->type, ANOUBIS_REPLY);
-	set_value(m->u.ack->error, error);
-	set_value(m->u.ack->opcode, ANOUBIS_P_CSUMREQUEST);
+	set_value(m->u.ackpayload->type, ANOUBIS_REPLY);
+	set_value(m->u.ackpayload->error, error);
+	set_value(m->u.ackpayload->opcode, ANOUBIS_P_CSUMREQUEST);
 	m->u.ack->token = 0;
+	if (len)
+		memcpy(m->u.ackpayload->payload, data, len);
 	ret = anoubis_msg_send(anoubis_server_getchannel(server), m);
 	anoubis_msg_free(m);
 	if (ret < 0)
