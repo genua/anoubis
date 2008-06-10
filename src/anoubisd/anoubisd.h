@@ -28,6 +28,10 @@
 #ifndef _ANOUBISD_H
 #define _ANOUBISD_H
 
+#include <sys/types.h>
+#include <sys/param.h>
+#include <grp.h>
+
 #ifdef S_SPLINT_S
 #include "splint-includes.h"
 #endif
@@ -209,6 +213,15 @@ void	pe_dump(void);
 int	send_policy_data(u_int64_t token, int fd);
 
 void	send_lognotify(struct eventdev_hdr *, u_int32_t, u_int32_t, u_int32_t);
+
+struct credentials {
+	uid_t   euid;
+	gid_t   egid;
+	gid_t   groups[NGROUPS_MAX];
+	int     ngroups;
+};
+int	restore_uid(struct credentials *cred);
+int	switch_uid(uid_t uid, struct credentials *cred);
 
 #ifndef S_SPLINT_S
 #define DEBUG(flag, ...) {if (flag & debug_flags) log_debug(__VA_ARGS__);}

@@ -61,16 +61,31 @@
 #include "anoubisd.h"
 #include "sfs.h"
 
-int
-sfs_sha256(const char * filename, unsigned char md[SHA256_DIGEST_LENGTH])
+/*
+ * NOTE: This function is not reentrant for several reasons:
+ * - Both credentials and buf can be quite large (65k supplementary group
+ *   IDs on Linux) and are thus declared static.
+ * - The switch_uid/restore_uid pair of functions is not reentrant either.
+ */
+static int
+sfs_sha256(const char * filename, unsigned char md[SHA256_DIGEST_LENGTH],
+    uid_t auth_uid)
 {
-	SHA256_CTX c;
-	int fd;
-	static char buf[40960];
+	SHA256_CTX			c;
+	int				fd;
+	static struct credentials	savedcred;
+	static char			buf[40960];
 
+	if (switch_uid(auth_uid, &savedcred) < 0)
+		return -1;
 	fd = open(filename, O_RDONLY);
+	if (restore_uid(&savedcred) < 0) {
+		log_warnx("FATAL: Cannot restore credentials");
+		master_terminate(EPERM);
+		return -1;
+	}
 	if (fd < 0)
-		return fd;
+		return -1;
 	SHA256_Init(&c);
 	while(1) {
 		int ret = read(fd, buf, sizeof(buf));
@@ -153,7 +168,7 @@ sfs_checksumop(const char *path, unsigned int operation, uid_t uid,
 		int fd;
 		int written = 0;
 
-		ret = sfs_sha256(path, md);
+		ret = sfs_sha256(path, md, uid);
 		if (ret < 0)
 			goto out;
 

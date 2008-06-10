@@ -71,6 +71,7 @@ anoubisd_SOURCES= \
 	amsg.c \
 	aqueue.c \
 	sfs.c \
+	uidswap.c \
 	anoubisd.h \
 	amsg.h \
 	aqueue.h \
@@ -82,6 +83,7 @@ anoubisd_SOURCES_flawfinder= \
 	pe.c_flawfinder \
 	printconf.c_flawfinder \
 	session.c_flawfinder \
+	uidswap.c_flawfinder \
 	log.c_flawfinder \
 	amsg.c_flawfinder \
 	aqueue.c_flawfinder \
@@ -97,6 +99,7 @@ anoubisd_SOURCES_lint= \
 	pe.c_lint \
 	printconf.c_lint \
 	session.c_lint \
+	uidswap.c_lint \
 	log.c_lint \
 	sfs.c_lint
 
@@ -106,6 +109,7 @@ anoubisd_SOURCES_splint= \
 	pe.c_splint \
 	printconf.c_splint \
 	session.c_splint \
+	uidswap.c_splint \
 	log.c_splint \
 	amsg.c_splint \
 	aqueue.c_splint \
