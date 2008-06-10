@@ -108,10 +108,6 @@ int		 validate_alffilterspec(struct apn_afiltspec *);
 int		 validate_hostlist(struct apn_host *);
 void		 freehost(struct apn_host *);
 void		 freeport(struct apn_port *);
-void		 clearfilter(struct apn_afiltspec *);
-void		 clearapp(struct apn_app *);
-void		 clearalfrule(struct apn_alfrule *);
-void		 clearsfsrule(struct apn_sfsrule *);
 
 static struct apn_ruleset	*apnrsp = NULL;
 static int			 counter = 1;
@@ -314,8 +310,8 @@ alfruleset	: apps optnl '{' optnl alfrule_l '}' nl {
 
 			if ((rule = calloc(1, sizeof(struct apn_rule)))
 			    == NULL) {
-				clearapp($1);
-				clearalfrule($5);
+				apn_free_app($1);
+				apn_free_alfrule($5);
 				YYERROR;
 			}
 
@@ -328,8 +324,8 @@ alfruleset	: apps optnl '{' optnl alfrule_l '}' nl {
 			    yylval.lineno) != 0) {
 				/* Account for errors in apn_add_alfrule */
 				file->errors++;
-				clearapp($1);
-				clearalfrule($5);
+				apn_free_app($1);
+				apn_free_alfrule($5);
 				free(rule);
 				YYERROR;
 			}
@@ -347,7 +343,7 @@ alfrule_l	: alfrule_l alfrule nl		{
 				$$ = $1;
 			}
 		}
-		| alfrule nl			{ $$ = $1; }
+		| /* Empty */			{ $$ = NULL; }
 		;
 
 scope		: /* Empty */ {
@@ -393,7 +389,7 @@ scope		: /* Empty */ {
 			scope = calloc(1, sizeof(struct apn_scope));
 			if (!scope)
 				YYERROR;
-			scope->task = 0; 
+			scope->task = 0;
 			scope->timeout = $2;
 
 			$$ = scope;
@@ -405,7 +401,7 @@ alfrule		: alffilterrule	scope		{
 
 			rule = calloc(1, sizeof(struct apn_alfrule));
 			if (rule == NULL) {
-				clearfilter(&$1.filtspec);
+				apn_free_filter(&$1.filtspec);
 				YYERROR;
 			}
 
@@ -486,7 +482,7 @@ alffilterspec	: netaccess log af proto hosts statetimeout	{
 			$$.statetimeout = $6;
 
 			if (validate_alffilterspec(&$$) == -1) {
-				clearfilter(&$$);
+				apn_free_filter(&$$);
 				YYERROR;
 			}
 		}
@@ -689,7 +685,7 @@ sfsmodule	: SFS optnl '{' optnl sfsrule_l '}'	{
 
 			if ((rule = calloc(1, sizeof(struct apn_rule)))
 			    == NULL) {
-				clearsfsrule($5);
+				apn_free_sfsrule($5);
 				YYERROR;
 			}
 
@@ -697,7 +693,7 @@ sfsmodule	: SFS optnl '{' optnl sfsrule_l '}'	{
 			rule->type = APN_SFS;
 
 			if (apn_add_sfsrule(rule, apnrsp) != 0) {
-				clearsfsrule($5);
+				apn_free_sfsrule($5);
 				free(rule);
 				YYERROR;
 			}
@@ -716,7 +712,7 @@ sfsrule_l	: sfsrule_l sfsrule nl		{
 				$$ = $1;
 			}
 		}
-		| sfsrule nl			{ $$ = $1; }
+		| /* Empty */			{ $$ = NULL; }
 		;
 
 sfsrule		: sfscheckrule scope		{
@@ -724,7 +720,7 @@ sfsrule		: sfscheckrule scope		{
 
 			rule = calloc(1, sizeof(struct apn_sfsrule));
 			if (rule == NULL) {
-				clearapp($1.app);
+				apn_free_app($1.app);
 				YYERROR;
 			}
 
@@ -1851,93 +1847,6 @@ freeport(struct apn_port *port)
 	hp = port;
 	while (hp) {
 		tmp = hp->next;
-		free(hp);
-		hp = tmp;
-	}
-}
-
-void
-clearfilter(struct apn_afiltspec *filtspec)
-{
-	if (filtspec == NULL)
-		return;
-
-	freehost(filtspec->fromhost);
-	freehost(filtspec->tohost);
-	freeport(filtspec->fromport);
-	freeport(filtspec->toport);
-}
-
-void
-clearapp(struct apn_app *app)
-{
-	struct apn_app *hp, *tmp;
-
-	if (app == NULL)
-		return;
-
-	hp = app;
-	while (hp) {
-		tmp = hp->next;
-		free(hp->name);
-		free(hp);
-		hp = tmp;
-	}
-}
-
-void
-clearalfrule(struct apn_alfrule *rule)
-{
-	struct apn_alfrule *hp, *tmp;
-
-	if (rule == NULL)
-		return;
-
-	hp = rule;
-	while (hp) {
-		tmp = hp->next;
-
-		switch (hp->type) {
-		case APN_ALF_FILTER:
-			clearfilter(&hp->rule.afilt.filtspec);
-			break;
-
-		case APN_ALF_CAPABILITY:
-		case APN_ALF_DEFAULT:
-		default:
-			break;
-		}
-
-		if (hp->scope)
-			free(hp->scope);
-		free(hp);
-		hp = tmp;
-	}
-}
-
-void
-clearsfsrule(struct apn_sfsrule *rule)
-{
-	struct apn_sfsrule	*hp, *tmp;
-
-	if (rule == NULL)
-		return;
-
-	hp = rule;
-	while (hp) {
-		tmp = hp->next;
-
-		switch (hp->type) {
-		case APN_SFS_CHECK:
-			clearapp(hp->rule.sfscheck.app);
-			break;
-
-		case APN_SFS_DEFAULT:
-		default:
-			break;
-		}
-		if (hp->scope)
-			free(hp->scope);
 		free(hp);
 		hp = tmp;
 	}

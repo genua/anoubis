@@ -33,6 +33,7 @@
 
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
 #ifdef OPENBSD
 #include <sys/limits.h>
 #endif
@@ -96,6 +97,7 @@ struct pe_context {
 	int			 refcount;
 	struct apn_rule		*rule;
 	struct apn_context	*ctx;
+	struct apn_ruleset	*ruleset;
 };
 
 struct pe_proc {
@@ -174,13 +176,14 @@ void			 pe_set_parent_proc(struct pe_proc * proc,
 int			 pe_load_db(struct policies *);
 void			 pe_flush_db(struct policies *);
 int			 pe_update_db(struct policies *, struct policies *);
-void			 pe_update_db_one(uid_t, int);
+void			 pe_update_db_one(struct apn_ruleset *, uid_t, int);
 int			 pe_update_ctx(struct pe_proc *, struct pe_context **,
 			     int, struct policies *);
 int			 pe_replace_rs(struct apn_ruleset *, uid_t, int);
 void			 pe_flush_tracker(void);
 int			 pe_load_dir(const char *, int, struct policies *);
-struct apn_ruleset	*pe_load_policy(const char *);
+static int		 pe_clean_policy(const char *, const char *, int);
+struct apn_ruleset	*pe_load_policy(const char *, int flags);
 int			 pe_insert_rs(struct apn_ruleset *, uid_t, int,
 			     struct policies *);
 struct pe_user		*pe_get_user(uid_t, struct policies *);
@@ -190,7 +193,7 @@ void			 pe_set_ctx(struct pe_proc *, uid_t, const u_int8_t *,
 			     const char *);
 struct pe_context	*pe_search_ctx(struct apn_ruleset *, const u_int8_t *,
 			     const char *);
-struct pe_context	*pe_alloc_ctx(struct apn_rule *);
+struct pe_context	*pe_alloc_ctx(struct apn_rule *, struct apn_ruleset *);
 void			 pe_put_ctx(struct pe_context *);
 void			 pe_reference_ctx(struct pe_context *);
 int			 pe_decide_ctx(struct pe_proc *, const u_int8_t *,
@@ -323,24 +326,43 @@ pe_update_db(struct policies *newpdb, struct policies *oldpdb)
 
 /*
  * This function is not allowed to fail! It must remove all references
- * to the old ruleset from processes of the given uid.
+ * to the old ruleset from tracked processes.
+ * NOTE: If pproc->context[prio] is not NULL then pproc->context[prio]->ruleset
+ *       cannot be NULL either. oldrs == NULL is allowed, however.
  */
 void
-pe_update_db_one(uid_t uid, int prio)
+pe_update_db_one(struct apn_ruleset *oldrs, uid_t uid, int prio)
 {
 	struct pe_context	*newctx, *oldctx;
 	struct pe_proc		*pproc;
+
+	DEBUG(DBG_TRACE, ">pe_update_db_one");
 	TAILQ_FOREACH(pproc, &tracker, entry) {
-		if (pproc->uid != uid)
+		if (pproc->context[prio] == NULL)
+			continue;
+		/*
+		 * XXX CEH: For now we change the rules of a process if
+		 * XXX CEH:  - it is running with rules from the ruleset that
+		 * XXX CEH:    is being replaced   or
+		 * XXX CEH:  - its registered user ID matches that of the
+		 * XXX CEH:    user that is replacing its rules.
+		 */
+		if (pproc->uid != uid
+		    && pproc->context[prio]->ruleset != oldrs)
+			continue;
+		if (pproc->context[prio]->ruleset != oldrs)
 			continue;
 		if (pe_update_ctx(pproc, &newctx, prio, pdb) == -1) {
 			log_warn("Failed to replace context");
 			newctx = NULL;
 		}
 		oldctx = pproc->context[prio];
+		DEBUG(DBG_TRACE, " pe_update_db_one: old=%x new=%x",
+		    oldctx, newctx);
 		pproc->context[prio] = newctx;
 		pe_put_ctx(oldctx);
 	}
+	DEBUG(DBG_TRACE, "<pe_update_db_one");
 }
 
 /*
@@ -382,8 +404,10 @@ pe_update_ctx(struct pe_proc *pproc, struct pe_context **newctx, int prio,
 	 * default policies.
 	 */
 
+	DEBUG(DBG_TRACE, ">pe_update_ctx");
 	context = NULL;
 	newrules = pe_get_ruleset(pproc->uid, prio, newpdb);
+	DEBUG(DBG_TRACE, " pe_update_ctx: newrules = %x", newrules);
 	if (newrules) {
 		u_int8_t		*csum = NULL;
 		char			*pathhint = NULL;
@@ -393,7 +417,7 @@ pe_update_ctx(struct pe_proc *pproc, struct pe_context **newctx, int prio,
 		/*
 		 * XXX CEH: In some cases we might want to look for
 		 * XXX CEH: a new any rule if the old context for the priority
-		 * XXX CEH: or its assocated ruleset is NULL.
+		 * XXX CEH: or its associated ruleset is NULL.
 		 */
 		if (pproc->context[prio] == NULL)
 			goto out;
@@ -462,6 +486,7 @@ pe_load_dir(const char *dirname, int prio, struct policies *p)
 	uid_t			 uid;
 	const char		*errstr;
 	char			*filename;
+	int			 flags = APN_FLAG_NOSCOPE;
 
 	DEBUG(DBG_PE_POLICY, "pe_load_dir: %s %p", dirname, p);
 
@@ -479,6 +504,9 @@ pe_load_dir(const char *dirname, int prio, struct policies *p)
 		log_warn("opendir");
 		return (0);
 	}
+
+	if (prio != PE_PRIO_USER1)
+		flags |= APN_FLAG_NOASK;
 
 	count = 0;
 
@@ -505,10 +533,15 @@ pe_load_dir(const char *dirname, int prio, struct policies *p)
 			}
 		}
 		if (asprintf(&filename, "%s/%s", dirname, dp->d_name) == -1) {
-			log_warn("asprintf");
+			log_warnx("asprintf: Out of memory");
 			continue;
 		}
-		rs = pe_load_policy(filename);
+		if (pe_clean_policy(filename, dirname, 1) != 0) {
+			log_warnx("Cannot clean %s", filename);
+			free(filename);
+			continue;
+		}
+		rs = pe_load_policy(filename, flags);
 		free(filename);
 
 		/* If parsing fails, we just continue */
@@ -532,15 +565,100 @@ pe_load_dir(const char *dirname, int prio, struct policies *p)
 	return (count);
 }
 
+static int
+scope_check(struct apn_scope * scope, void * data)
+{
+	time_t		now = *(time_t *)data;
+
+	/* now == 0 means clean all scopes. */
+	if (!now)
+		return 1;
+	/* Clean it if the scope has a timeout and it has expired. */
+	if (scope->timeout && now > scope->timeout)
+		return 1;
+	/* Clean it if the scope has a task and the task does no exist */
+	if (scope->task) {
+		struct pe_proc *proc = pe_get_proc(scope->task);
+		if (!proc)
+			return 1;
+		pe_put_proc(proc);
+	}
+	/* Keep it. */
+	return 0;
+}
+
+static int
+pe_clean_policy(const char *filename, const char *dirname, int all)
+{
+	time_t			 now = 0;
+	int			 err = -1;
+	struct apn_ruleset	*rs = NULL;
+	char			*tmpname = NULL;
+	FILE			*tmp = NULL;
+
+	if (!all) {
+		if (time(&now) == (time_t)-1) {
+			int err = errno;
+			log_warn("Cannot get current time");
+			master_terminate(err);
+			return -1;
+		}
+	}
+	if (apn_parse(filename, &rs, 0)) {
+		log_warnx("apn_parse: Parsing failed");
+		goto out;
+	}
+	if (apn_clean_ruleset(rs, &scope_check, &now)) {
+		/* Something changed. Dump modified rules. */
+		mode_t	oldmask;
+		if (dirname) {
+			if (asprintf(&tmpname, "%s/.cleantmp", dirname) == -1) {
+				log_warnx("asprintf: Out of memory");
+				goto out;
+			}
+			oldmask = umask(0077);
+			tmp = fopen(tmpname, "w");
+		} else {
+			oldmask = umask(0077);
+			tmp = fopen(filename, "w");
+		}
+		umask(oldmask);
+		if (!tmp) {
+			log_warnx("fopen");
+			goto out;
+		}
+		if (apn_print_ruleset(rs, 0, tmp)) {
+			log_warnx("apn_print_ruleset failed");
+			if (tmpname)
+				unlink(tmpname);
+			goto out;
+		}
+		if (tmpname && rename(tmpname, filename) < 0) {
+			log_warn("rename");
+			unlink(tmpname);
+			goto out;
+		}
+	}
+	err = 0;
+out:
+	if (rs)
+		apn_free_ruleset(rs);
+	if (tmp)
+		fclose(tmp);
+	if (tmpname)
+		free(tmpname);
+	return err;
+}
+
 struct apn_ruleset *
-pe_load_policy(const char *name)
+pe_load_policy(const char *name, int flags)
 {
 	struct apn_ruleset	*rs;
 	int			 ret;
 
 	DEBUG(DBG_PE_POLICY, "pe_load_policy: %s", name);
 
-	ret = apn_parse(name, &rs, 0);
+	ret = apn_parse(name, &rs, flags);
 	if (ret == -1) {
 		log_warn("could not parse \"%s\"", name);
 		return (NULL);
@@ -608,6 +726,7 @@ pe_replace_rs(struct apn_ruleset *rs, uid_t uid, int prio)
 		log_warnx("pe_replace_rs: illegal priority %d", prio);
 		return (1);
 	}
+	DEBUG(DBG_TRACE, ">pe_replace_rs");
 	if ((user = pe_get_user(uid, pdb)) == NULL) {
 		user = calloc(1, sizeof(struct pe_user));
 		if (user == NULL) {
@@ -620,8 +739,9 @@ pe_replace_rs(struct apn_ruleset *rs, uid_t uid, int prio)
 	}
 	oldrs = user->prio[prio];
 	user->prio[prio] = rs;
-	pe_update_db_one(uid, prio);
+	pe_update_db_one(oldrs, uid, prio);
 	apn_free_ruleset(oldrs);
+	DEBUG(DBG_TRACE, "<pe_replace_rs");
 	return 0;
 }
 
@@ -653,6 +773,7 @@ pe_get_ruleset(uid_t uid, int prio, struct policies *p)
 {
 	struct pe_user *user;
 
+	DEBUG(DBG_TRACE, " pe_get_ruleset");
 	user = pe_get_user(uid, p);
 	if (user && user->prio[prio])
 		return user->prio[prio];
@@ -2003,7 +2124,13 @@ pe_dispatch_policy(struct anoubisd_msg_comm *comm)
 			struct apn_ruleset * ruleset = NULL;
 
 			/* Only accept syntactically correct rules. */
-			if (apn_parse(req->tmpname, &ruleset, 0)) {
+			if (pe_clean_policy(req->tmpname,
+			    prio_to_string[req->prio], 0)) {
+				error = EINVAL;
+				goto reply;
+			}
+			if (apn_parse(req->tmpname, &ruleset,
+			    (req->prio != PE_PRIO_USER1)?APN_FLAG_NOASK:0)) {
 				if (ruleset)
 					free(ruleset);
 				error = EINVAL;
@@ -2032,7 +2159,7 @@ pe_dispatch_policy(struct anoubisd_msg_comm *comm)
 			DEBUG(DBG_TRACE, "    link: %s->%s", req->realname,
 			    bkup);
 			if (link(req->realname, bkup) < 0) {
-				if (errno != ENOENT) {
+				if (errno != ENOENT && errno != EEXIST) {
 					error = errno;
 					free(bkup);
 					apn_free_ruleset(ruleset);
@@ -2047,6 +2174,8 @@ pe_dispatch_policy(struct anoubisd_msg_comm *comm)
 				apn_free_ruleset(ruleset);
 				goto reply;
 			}
+			DEBUG(DBG_TRACE, "    pe_replace_rs uid=%d prio=%d\n",
+			    req->uid, req->prio);
 			if (pe_replace_rs(ruleset, req->uid, req->prio)) {
 				error = EIO;
 				apn_free_ruleset(ruleset);
@@ -2316,6 +2445,8 @@ pe_set_ctx(struct pe_proc *proc, uid_t uid, const u_int8_t *csum,
 		proc->valid_ctx = 1;
 	}
 	pe_set_parent_proc(proc, proc);
+	if (uid >= 0)
+		proc->uid = uid;
 
 	DEBUG(DBG_PE_CTX, "pe_set_ctx: proc %p 0x%08llx got context "
 	    "%p rule %p ctx %p", proc, proc->task_cookie,
@@ -2382,7 +2513,11 @@ pe_search_ctx(struct apn_ruleset *rs, const u_int8_t *csum,
 		DEBUG(DBG_PE_CTX, "pe_search_ctx: no rule found");
 		return (NULL);
 	}
-	context = pe_alloc_ctx(rule);
+	context = pe_alloc_ctx(rule, rs);
+	if (!context) {
+		master_terminate(ENOMEM);
+		return NULL;
+	}
 
 	/*
 	 * Now we have a rule chain, search for a context rule.  It is
@@ -2403,16 +2538,25 @@ pe_search_ctx(struct apn_ruleset *rs, const u_int8_t *csum,
 	return (context);
 }
 
+/*
+ * NOTE: rs must not be NULL.
+ */
 struct pe_context *
-pe_alloc_ctx(struct apn_rule *rule)
+pe_alloc_ctx(struct apn_rule *rule, struct apn_ruleset *rs)
 {
 	struct pe_context	*ctx;
 
+	if (!rs) {
+		log_warnx("NULL rulset in pe_alloc_ctx?");
+		return NULL;
+	}
 	if ((ctx = calloc(1, sizeof(struct pe_context))) == NULL) {
 		log_warn("calloc");
 		master_terminate(ENOMEM);	/* XXX HSH */
+		return NULL;
 	}
 	ctx->rule = rule;
+	ctx->ruleset = rs;
 	ctx->refcount = 1;
 
 	return (ctx);

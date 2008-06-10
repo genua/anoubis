@@ -57,6 +57,8 @@
 .Fn apn_copyinsert "struct apn_ruleset *" "struct apn_alfrule *" "int" "const char *" "const char *" "int"
 .Ft void
 .Fn apn_free_ruleset "struct apn_ruleset *ruleset"
+.Ft int
+.Fn apn_clean_ruleset "struct apn_ruleset *ruleset" "int (*fn)(struct apn_scope *, void *)" "void *data"
 .Sh DESCRIPTION
 These functions implement the APN parser.
 .Pp
@@ -249,6 +251,19 @@ of type
 The argument
 .Em ruleset
 is freed, too.
+.Pp
+.It Fn apn_clean_ruleset ruleset fn data
+The function
+.Fn apn_clean_ruleset
+iterates through all rules in a ruleset.
+For each individual rule that has a scope the function
+.Va fn
+is called.
+If this call returns true the rule is removed from the ruleset and freed.
+The argument
+.Va data
+is passed to each individual call to
+.Va fn.
 .El
 .Pp
 .Sh RULE SETS

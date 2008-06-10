@@ -37,6 +37,8 @@
 #include <stdarg.h>
 #include <sys/cdefs.h>
 #include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
 #include <unistd.h>
 
 #ifndef LINUX
@@ -276,6 +278,12 @@ int	apn_insert_alfrule(struct apn_ruleset *, struct apn_alfrule *, int);
 int	apn_copyinsert(struct apn_ruleset *, struct apn_alfrule *, int,
 	    const char *, const u_int8_t *, int);
 void	apn_free_ruleset(struct apn_ruleset *);
+void	apn_free_alfrule(struct apn_alfrule *);
+void	apn_free_sfsrule(struct apn_sfsrule *);
+void	apn_free_app(struct apn_app *);
+void	apn_free_filter(struct apn_afiltspec *filtspec);
+int	apn_clean_ruleset(struct apn_ruleset *rs,
+	    int (*)(struct apn_scope *, void *), void *);
 __END_DECLS
 
 #endif /* _APN_H_ */

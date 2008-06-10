@@ -77,10 +77,8 @@ static void	apn_free_ruleq(struct apnrule_queue *);
 static void	apn_free_varq(struct apnvar_queue *);
 static void	apn_free_rule(struct apn_rule *);
 static void	apn_free_var(struct var *);
-static void	apn_free_alfrule(struct apn_alfrule *);
 static void	apn_free_host(struct apn_host *);
 static void	apn_free_port(struct apn_port *);
-static void	apn_free_app(struct apn_app *);
 static struct apn_rule	*apn_search_rule(struct apnrule_queue *, int);
 static int		 apn_update_ids(struct apn_rule *,
 			     struct apn_ruleset *);
@@ -625,7 +623,7 @@ apn_print_alfrule(struct apn_alfrule *rule, int flags, FILE *file)
 	struct apn_alfrule	*hp = rule;
 	int			 ret = 0;
 
-	if (hp == NULL || file == NULL)
+	if (file == NULL)
 		return (1);
 
 	while (hp) {
@@ -670,7 +668,7 @@ apn_print_sfsrule(struct apn_sfsrule *rule, int flags, FILE *file)
 	struct apn_sfsrule	*hp = rule;
 	int			 ret = 0;
 
-	if (hp == NULL || file == NULL)
+	if (file == NULL)
 		return (1);
 
 	while (hp) {
@@ -1077,6 +1075,9 @@ apn_free_rule(struct apn_rule *rule)
 	case APN_ALF:
 		apn_free_alfrule(rule->rule.alf);
 		break;
+	case APN_SFS:
+		apn_free_sfsrule(rule->rule.sfs);
+		break;
 	default:
 		break;
 	}
@@ -1118,7 +1119,18 @@ apn_free_var(struct var *var)
 	free(var);
 }
 
-static void
+void
+apn_free_filter(struct apn_afiltspec *filtspec)
+{
+	if (filtspec) {
+		apn_free_host(filtspec->fromhost);
+		apn_free_host(filtspec->tohost);
+		apn_free_port(filtspec->fromport);
+		apn_free_port(filtspec->toport);
+	}
+}
+
+void
 apn_free_alfrule(struct apn_alfrule *rule)
 {
 	struct apn_alfrule	*hp, *next;
@@ -1129,10 +1141,7 @@ apn_free_alfrule(struct apn_alfrule *rule)
 
 		switch (hp->type) {
 		case APN_ALF_FILTER:
-			apn_free_host(hp->rule.afilt.filtspec.fromhost);
-			apn_free_host(hp->rule.afilt.filtspec.tohost);
-			apn_free_port(hp->rule.afilt.filtspec.fromport);
-			apn_free_port(hp->rule.afilt.filtspec.toport);
+			apn_free_filter(&hp->rule.afilt.filtspec);
 			break;
 
 		case APN_ALF_CAPABILITY:
@@ -1152,6 +1161,30 @@ apn_free_alfrule(struct apn_alfrule *rule)
 		}
 		if (hp->scope)
 			free(hp->scope);
+		free(hp);
+		hp = next;
+	}
+}
+
+void
+apn_free_sfsrule(struct apn_sfsrule *rule)
+{
+	struct apn_sfsrule	*hp, *next;
+
+	hp = rule;
+	while (hp) {
+		next = hp->next;
+
+		if (hp->scope)
+			free(hp->scope);
+		switch (hp->type) {
+		case APN_SFS_CHECK:
+			apn_free_app(hp->rule.sfscheck.app);
+			break;
+		case APN_SFS_DEFAULT:
+			/* Nothing else */
+			break;
+		}
 		free(hp);
 		hp = next;
 	}
@@ -1183,7 +1216,7 @@ apn_free_port(struct apn_port *port)
 	}
 }
 
-static void
+void
 apn_free_app(struct apn_app *app)
 {
 	struct apn_app	*hp, *next;
@@ -1561,4 +1594,108 @@ apn_set_application(struct apn_rule *rule, const char *filename,
 	rule->app = app;
 
 	return (0);
+}
+
+static int
+apn_clean_alfrule(struct apn_alfrule **rule,
+    int (*check)(struct apn_scope *, void*), void *data)
+{
+	struct apn_alfrule	*hp, *newtail = NULL;
+	struct apn_alfrule	**prevp;
+	int ret = 0;
+
+	prevp = rule;
+	while ((hp = *prevp)) {
+		if (hp->scope && (*check)(hp->scope, data)) {
+			(*prevp) = hp->next;
+			hp->next = hp->tail = NULL;
+			apn_free_alfrule(hp);
+			ret++;
+		} else {
+			newtail = hp;
+			prevp = &hp->next;
+		}
+	}
+	hp = *rule;
+	while(hp) {
+		hp->tail = newtail;
+		hp = hp->next;
+	}
+	return ret;
+}
+
+static int
+apn_clean_sfsrule(struct apn_sfsrule **rule,
+    int (*check)(struct apn_scope *, void*), void *data)
+{
+	struct apn_sfsrule	*hp, *newtail = NULL;
+	struct apn_sfsrule	**prevp;
+	int ret = 0;
+
+	prevp = rule;
+	while ((hp = *prevp)) {
+		if (hp->scope && (*check)(hp->scope, data)) {
+			(*prevp) = hp->next;
+			hp->next = NULL;
+			apn_free_sfsrule(hp);
+			ret++;
+		} else {
+			newtail = hp;
+			prevp = &hp->next;
+		}
+	}
+	hp = *rule;
+	while(hp) {
+		hp->tail = newtail;
+		hp = hp->next;
+	}
+	return ret;
+}
+
+static int
+apn_clean_rule(struct apn_rule *rule,
+    int (*check)(struct apn_scope *, void*), void *data)
+{
+	int ret = 0;
+	if (rule == NULL)
+		return 0;
+
+	switch (rule->type) {
+	case APN_ALF:
+		ret = apn_clean_alfrule(&rule->rule.alf, check, data);
+		break;
+	case APN_SFS:
+		ret = apn_clean_sfsrule(&rule->rule.sfs, check, data);
+		break;
+	default:
+		break;
+	}
+	return ret;
+}
+
+static int
+apn_clean_ruleq(struct apnrule_queue *ruleq,
+    int (*check)(struct apn_scope *, void*), void *data)
+{
+	struct apn_rule	*rule, *next;
+	int ret = 0;
+
+	if (ruleq == NULL || TAILQ_EMPTY(ruleq))
+		return 0;
+	for (rule = TAILQ_FIRST(ruleq); rule != TAILQ_END(ruleq); rule = next) {
+		next = TAILQ_NEXT(rule, entry);
+		ret += apn_clean_rule(rule, check, data);
+	}
+	return ret;
+}
+
+int
+apn_clean_ruleset(struct apn_ruleset *rs,
+    int (*check)(struct apn_scope *, void*), void *data)
+{
+	int ret;
+
+	ret = apn_clean_ruleq(&rs->alf_queue, check, data);
+	ret += apn_clean_ruleq(&rs->sfs_queue, check, data);
+	return ret;
 }
