@@ -58,6 +58,7 @@ SfsPolicy::SfsPolicy(AppPolicy *parent, struct apn_sfsrule *sfsRule)
     : Policy(parent)
 {
 	sfsRule_ = sfsRule;
+	currHash_ = wxEmptyString;
 }
 
 SfsPolicy::~SfsPolicy()
@@ -113,6 +114,22 @@ SfsPolicy::getHashTypeName(void)
 	}
 
 	return (result);
+}
+
+wxString
+SfsPolicy::getCurrentHash(void)
+{
+	if (currHash_.IsEmpty()) {
+		return _("unkown");
+	} else {
+		return (currHash_);
+	}
+}
+
+void
+SfsPolicy::setCurrentHash(wxString currHash)
+{
+	currHash_ = currHash;
 }
 
 bool

@@ -404,6 +404,32 @@ DlgRuleEditor::OnAppUpdateChkSumButton(wxCommandEvent& event)
 }
 
 void
+DlgRuleEditor::OnAppValidateChkSumButton(wxCommandEvent& event)
+{
+	AppPolicy			*policy;
+	RuleEditorFillWidgetsVisitor	 updateVisitor(this);
+	wxString			 currHash;
+	unsigned char			 csum[MAX_APN_HASH_LEN];
+
+	policy = (AppPolicy *)ruleListCtrl->GetItemData(selectedId_);
+	if (!policy)
+		return;
+
+	if (policy->calcCurrentHash(csum)) {
+		currHash = wxT("0x");
+		for (unsigned int i=0; i<MAX_APN_HASH_LEN; i++) {
+			currHash += wxString::Format(wxT("%2.2x"),
+			(unsigned char)csum[i]);
+		}
+	} else {
+		currHash = _("unable to calculate checksum");
+	}
+	policy->setCurrentHash(currHash);
+	updateVisitor.setPropagation(false);
+	policy->accept(updateVisitor);
+}
+
+void
 DlgRuleEditor::OnRuleSetSave(wxCommandEvent& event)
 {
 	wxString	tmpPreFix;
@@ -562,6 +588,33 @@ DlgRuleEditor::OnSfsUpdateChkSumButton(wxCommandEvent& event)
 
 	ruleListCtrl->SetItem(selectedId_, RULEDITOR_LIST_COLUMN_HASH,
 	   policy->getHashValue());
+}
+
+void
+DlgRuleEditor::OnSfsValidateChkSumButton(wxCommandEvent& event)
+{
+	SfsPolicy			*policy;
+	wxString			 currHash;
+	RuleEditorFillWidgetsVisitor	 updateWidgets(this);
+	unsigned char			 csum[MAX_APN_HASH_LEN];
+
+	policy = (SfsPolicy *)ruleListCtrl->GetItemData(selectedId_);
+	if (!policy)
+		return;
+
+	if (policy->calcCurrentHash(csum)) {
+		currHash = wxT("0x");
+		for (unsigned int i=0; i<MAX_APN_HASH_LEN; i++) {
+			currHash += wxString::Format(wxT("%2.2x"),
+			(unsigned char)csum[i]);
+		}
+	} else {
+		currHash = _("unable to calculate checksum");
+	}
+	policy->setCurrentHash(currHash);
+	updateWidgets.setPropagation(false);
+	policy->accept(updateWidgets);
+
 }
 
 void

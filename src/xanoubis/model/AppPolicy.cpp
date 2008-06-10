@@ -62,6 +62,7 @@ AppPolicy::AppPolicy(struct apn_rule *appRule) : Policy(NULL)
 
 	context_ = NULL;
 	appRule_ = appRule;
+	currHash_ = wxEmptyString;
 
 	switch (appRule_->type) {
 	case APN_ALF:
@@ -127,6 +128,22 @@ AppPolicy::getBinaryName(void)
 	if (appRule_->app == NULL)
 		return wxString::From8BitData("any");
 	return wxString::From8BitData(appRule_->app->name);
+}
+
+wxString
+AppPolicy::getCurrentHash(void)
+{
+	if (currHash_.IsEmpty()) {
+		return _("unkown");
+	} else {
+		return (currHash_);
+	}
+}
+
+void
+AppPolicy::setCurrentHash(wxString currHash)
+{
+	currHash_ = currHash;
 }
 
 bool

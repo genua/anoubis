@@ -396,13 +396,16 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	appStatusValueText->Wrap( -1 );
 	appMainPanelSizer->Add( appStatusValueText, 0, wxALL, 5 );
 	
+	appValidateChkSumButton = new wxButton( applicationNbPanel, wxID_ANY, _("validate"), wxDefaultPosition, wxDefaultSize, 0 );
+	appMainPanelSizer->Add( appValidateChkSumButton, 0, wxALL, 5 );
+	
 	appUpdateChkSumButton = new wxButton( applicationNbPanel, wxID_ANY, _("update"), wxDefaultPosition, wxDefaultSize, 0 );
 	appMainPanelSizer->Add( appUpdateChkSumButton, 0, wxALL, 5 );
 	
 	applicationNbPanel->SetSizer( appMainPanelSizer );
 	applicationNbPanel->Layout();
 	appMainPanelSizer->Fit( applicationNbPanel );
-	ruleEditNotebook->AddPage( applicationNbPanel, _("Application"), true );
+	ruleEditNotebook->AddPage( applicationNbPanel, _("Application"), false );
 	alfNbPanel = new wxScrolledWindow( ruleEditNotebook, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxVSCROLL );
 	alfNbPanel->SetScrollRate( 5, 5 );
 	wxBoxSizer* alfPanelMainSizer;
@@ -608,7 +611,7 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	sfsNbPanel = new wxScrolledWindow( ruleEditNotebook, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxVSCROLL );
 	sfsNbPanel->SetScrollRate( 5, 5 );
 	wxFlexGridSizer* sfsSizer;
-	sfsSizer = new wxFlexGridSizer( 3, 3, 0, 0 );
+	sfsSizer = new wxFlexGridSizer( 3, 4, 0, 0 );
 	sfsSizer->SetFlexibleDirection( wxBOTH );
 	sfsSizer->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
 	
@@ -622,6 +625,9 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	sfsBinaryModifyButton = new wxButton( sfsNbPanel, wxID_ANY, _("modify"), wxDefaultPosition, wxDefaultSize, 0 );
 	sfsSizer->Add( sfsBinaryModifyButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
+	
+	sfsSizer->Add( 0, 0, 1, wxEXPAND, 5 );
+	
 	sfsRegisteredSumLabelText = new wxStaticText( sfsNbPanel, wxID_ANY, _("Checksum (registered):"), wxDefaultPosition, wxDefaultSize, 0 );
 	sfsRegisteredSumLabelText->Wrap( -1 );
 	sfsSizer->Add( sfsRegisteredSumLabelText, 0, wxALL, 5 );
@@ -629,6 +635,9 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	sfsRegisteredSumValueText = new wxStaticText( sfsNbPanel, wxID_ANY, _("0"), wxDefaultPosition, wxDefaultSize, 0 );
 	sfsRegisteredSumValueText->Wrap( -1 );
 	sfsSizer->Add( sfsRegisteredSumValueText, 0, wxALL, 5 );
+	
+	
+	sfsSizer->Add( 0, 0, 1, wxEXPAND, 5 );
 	
 	
 	sfsSizer->Add( 0, 0, 1, wxEXPAND, 5 );
@@ -644,6 +653,9 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	
 	sfsSizer->Add( 0, 0, 1, wxEXPAND, 5 );
 	
+	
+	sfsSizer->Add( 0, 0, 1, wxEXPAND, 5 );
+	
 	sfsStatusLabelText = new wxStaticText( sfsNbPanel, wxID_ANY, _("Status:"), wxDefaultPosition, wxDefaultSize, 0 );
 	sfsStatusLabelText->Wrap( -1 );
 	sfsSizer->Add( sfsStatusLabelText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
@@ -652,13 +664,16 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	sfsStatusValueText->Wrap( -1 );
 	sfsSizer->Add( sfsStatusValueText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
+	sfsValidateChkSumButton = new wxButton( sfsNbPanel, wxID_ANY, _("validate"), wxDefaultPosition, wxDefaultSize, 0 );
+	sfsSizer->Add( sfsValidateChkSumButton, 0, wxALL, 5 );
+	
 	sfsUpdateChkSumButton = new wxButton( sfsNbPanel, wxID_ANY, _("update"), wxDefaultPosition, wxDefaultSize, 0 );
 	sfsSizer->Add( sfsUpdateChkSumButton, 0, wxALL, 5 );
 	
 	sfsNbPanel->SetSizer( sfsSizer );
 	sfsNbPanel->Layout();
 	sfsSizer->Fit( sfsNbPanel );
-	ruleEditNotebook->AddPage( sfsNbPanel, _("SFS"), false );
+	ruleEditNotebook->AddPage( sfsNbPanel, _("SFS"), true );
 	macroNbPanel = new wxScrolledWindow( ruleEditNotebook, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxVSCROLL );
 	macroNbPanel->SetScrollRate( 5, 5 );
 	wxFlexGridSizer* macroSizer;
@@ -701,6 +716,7 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	controlOptionButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::OnTableOptionButtonClick ), NULL, this );
 	ruleListCtrl->Connect( wxEVT_COMMAND_LIST_ITEM_SELECTED, wxListEventHandler( DlgRuleEditorBase::OnLineSelected ), NULL, this );
 	appBinaryModifyButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::OnBinaryModifyButtonClick ), NULL, this );
+	appValidateChkSumButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::OnAppValidateChkSumButton ), NULL, this );
 	appUpdateChkSumButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::OnAppUpdateChkSumButton ), NULL, this );
 	alfAllowRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorBase::OnAlfAllowRadioButton ), NULL, this );
 	alfDenyRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorBase::OnAlfDenyRadioButton ), NULL, this );
@@ -721,5 +737,6 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	alfSrcAddrAddButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::OnSrcAddrAddButton ), NULL, this );
 	alfStateTimeoutSpinCtrl->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( DlgRuleEditorBase::OnAlfStateTimeoutChange ), NULL, this );
 	sfsBinaryModifyButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::OnSfsBinaryModifyButton ), NULL, this );
+	sfsValidateChkSumButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::OnSfsValidateChkSumButton ), NULL, this );
 	sfsUpdateChkSumButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::OnSfsUpdateChkSumButton ), NULL, this );
 }

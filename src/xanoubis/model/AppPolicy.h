@@ -40,6 +40,8 @@ class AppPolicy : public Policy
 		AlfPolicy	*context_;
 		struct apn_rule	*appRule_;
 
+		wxString	 currHash_;
+
 	public:
 		AppPolicy(struct apn_rule *);
 		~AppPolicy(void);
@@ -48,6 +50,8 @@ class AppPolicy : public Policy
 
 		wxString	 getBinaryName(void);
 		void		 setBinaryName(wxString name);
+		wxString	 getCurrentHash(void);
+		void		 setCurrentHash(wxString);
 		bool		 calcCurrentHash(unsigned char *);
 		wxString	 getHashTypeName(void);
 		void		 setHashValue(unsigned char *);

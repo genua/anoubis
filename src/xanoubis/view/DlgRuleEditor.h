@@ -120,6 +120,7 @@ class DlgRuleEditor : public DlgRuleEditorBase
 		void OnTableOptionButtonClick(wxCommandEvent&);
 		void OnBinaryModifyButtonClick(wxCommandEvent&);
 		void OnAppUpdateChkSumButton(wxCommandEvent&);
+		void OnAppValidateChkSumButton(wxCommandEvent&);
 		void OnLoadRuleSet(wxCommandEvent&);
 		void OnLineSelected(wxListEvent&);
 		void OnRuleSetSave(wxCommandEvent&);
@@ -148,6 +149,7 @@ class DlgRuleEditor : public DlgRuleEditorBase
 
 		void OnSfsBinaryModifyButton(wxCommandEvent&);
 		void OnSfsUpdateChkSumButton(wxCommandEvent&);
+		void OnSfsValidateChkSumButton(wxCommandEvent&);
 
 		void loadRuleSet(PolicyRuleSet*);
 		void OnCreationChoice(wxCommandEvent&);

@@ -146,6 +146,7 @@ class DlgRuleEditorBase : public wxFrame
 		
 		wxStaticText* appStatusLabelText;
 		wxStaticText* appStatusValueText;
+		wxButton* appValidateChkSumButton;
 		wxButton* appUpdateChkSumButton;
 		wxScrolledWindow* alfNbPanel;
 		wxStaticText* alfActionText;
@@ -202,14 +203,18 @@ class DlgRuleEditorBase : public wxFrame
 		wxStaticText* sfsBinaryLabelText;
 		wxTextCtrl* sfsBinaryTextCtrl;
 		wxButton* sfsBinaryModifyButton;
+		
 		wxStaticText* sfsRegisteredSumLabelText;
 		wxStaticText* sfsRegisteredSumValueText;
+		
 		
 		wxStaticText* sfsCurrentSumLabelText;
 		wxStaticText* sfsCurrentSumValueText;
 		
+		
 		wxStaticText* sfsStatusLabelText;
 		wxStaticText* sfsStatusValueText;
+		wxButton* sfsValidateChkSumButton;
 		wxButton* sfsUpdateChkSumButton;
 		wxScrolledWindow* macroNbPanel;
 		wxStaticText* macroTypeLabelText;
@@ -225,6 +230,7 @@ class DlgRuleEditorBase : public wxFrame
 		virtual void OnTableOptionButtonClick( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnLineSelected( wxListEvent& event ){ event.Skip(); }
 		virtual void OnBinaryModifyButtonClick( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnAppValidateChkSumButton( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnAppUpdateChkSumButton( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnAlfAllowRadioButton( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnAlfDenyRadioButton( wxCommandEvent& event ){ event.Skip(); }
@@ -245,6 +251,7 @@ class DlgRuleEditorBase : public wxFrame
 		virtual void OnSrcAddrAddButton( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnAlfStateTimeoutChange( wxSpinEvent& event ){ event.Skip(); }
 		virtual void OnSfsBinaryModifyButton( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnSfsValidateChkSumButton( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnSfsUpdateChkSumButton( wxCommandEvent& event ){ event.Skip(); }
 		
 	

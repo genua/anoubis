@@ -348,7 +348,6 @@ RuleEditorFillWidgetsVisitor::visitAppPolicy(AppPolicy *appPolicy)
 	wxString name;
 	wxString        currHash;
 	wxString        regHash;
-	unsigned char   csum[MAX_APN_HASH_LEN];
 
 	clear();
 
@@ -370,15 +369,7 @@ RuleEditorFillWidgetsVisitor::visitAppPolicy(AppPolicy *appPolicy)
 
 	if (appPolicy->getBinaryName().Cmp(wxT("any")))
 	{
-		if (appPolicy->calcCurrentHash(csum)) {
-			currHash = wxT("0x");
-			for (unsigned int i=0; i<MAX_APN_HASH_LEN; i++) {
-				currHash += wxString::Format(wxT("%2.2x"),
-				    (unsigned char)csum[i]);
-			}
-		} else {
-			currHash = _("unable to calculate checksum");
-		}
+		currHash = appPolicy->getCurrentHash();
 		regHash = appPolicy->getHashValue();
 
 		ruleEditor_->appRegisteredSumValueText->SetLabel(regHash);
@@ -453,22 +444,13 @@ RuleEditorFillWidgetsVisitor::visitSfsPolicy(SfsPolicy *sfsPolicy)
 {
 	wxString        currHash;
 	wxString        regHash;
-	unsigned char   csum[MAX_APN_HASH_LEN];
 
 	clear();
 
 	ruleEditor_->sfsNbPanel->Enable();
 	ruleEditor_->ruleEditNotebook->ChangeSelection(RULEDITOR_PANEL_SFS);
 
-	if (sfsPolicy->calcCurrentHash(csum)) {
-		currHash = wxT("0x");
-		for (unsigned int i=0; i<MAX_APN_HASH_LEN; i++) {
-			currHash += wxString::Format(wxT("%2.2x"),
-					(unsigned char)csum[i]);
-		}
-	} else {
-		currHash = _("unable to calculate checksum");
-	}
+	currHash = sfsPolicy->getCurrentHash();
 	regHash = sfsPolicy->getHashValue();
 
 	ruleEditor_->sfsBinaryTextCtrl->AppendText(sfsPolicy->getBinaryName());
