@@ -28,6 +28,7 @@
 #ifndef __ModAnoubisMainPanelImpl__
 #define __ModAnoubisMainPanelImpl__
 
+#include "main.h"
 #include "ModAnoubisPanelsBase.h"
 #include "Notification.h"
 
@@ -36,6 +37,7 @@ class ModAnoubisMainPanelImpl : public ModAnoubisMainPanelBase
 	private:
 		enum notifyListTypes	 list_;
 		Notification		*currentNotify_;
+		wxConfig		*userOptions_;
 
 		void answer(bool);
 		void displayAlert(void);
@@ -43,6 +45,8 @@ class ModAnoubisMainPanelImpl : public ModAnoubisMainPanelBase
 		void displayLog(void);
 		void sendNotifierOptionsEvents(WXTYPE, bool, long);
 		void sendNotifierOptions(void);
+		void readOptions(void);
+		void setOptionsWidgetsVisability(void);
 
 	protected:
 		void OnTypeChoosen(wxCommandEvent&);
@@ -61,9 +65,11 @@ class ModAnoubisMainPanelImpl : public ModAnoubisMainPanelBase
 		void OnAlertTimeout(wxSpinEvent&);
 
 		void OnEscalationsShow(wxCommandEvent&);
+		void OnAnoubisOptionShow(wxCommandEvent&);
 
 	public:
 		ModAnoubisMainPanelImpl(wxWindow*, wxWindowID);
+		~ModAnoubisMainPanelImpl(void);
 		void update(void);
 };
 

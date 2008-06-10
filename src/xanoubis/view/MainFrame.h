@@ -75,6 +75,7 @@ class MainFrame : public MainFrameBase
 		void OnClose(wxCloseEvent& event);
 		void OnAnoubisdRuleSet(wxCommandEvent&);
 		void OnEscalationsShow(wxCommandEvent&);
+		void OnAnoubisOptionShow(wxCommandEvent&);
 
 	public:
 		MainFrame(wxWindow*);

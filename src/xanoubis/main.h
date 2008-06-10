@@ -116,7 +116,7 @@ class AnoubisGuiApp : public wxApp
 		void		 importPolicyFile(wxString);
 		void		 exportPolicyFile(wxString);
 		bool		getCommConnectionState(void);
-		const wxConfig	*getUserOptions(void);
+		wxConfig	*getUserOptions(void);
 };
 
 DECLARE_APP(AnoubisGuiApp)

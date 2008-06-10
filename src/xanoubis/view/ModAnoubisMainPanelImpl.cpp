@@ -77,10 +77,109 @@ ModAnoubisMainPanelImpl::ModAnoubisMainPanelImpl(wxWindow* parent,
 {
 	list_ = NOTIFY_LIST_NOTANSWERED;
 	currentNotify_ = NULL;
+	userOptions_ = wxGetApp().getUserOptions();
+
+	/* read and restore Escalations Settings */
+	readOptions();
 
 	parent->Connect(anEVT_ESCALATIONS_SHOW,
 	    wxCommandEventHandler(ModAnoubisMainPanelImpl::OnEscalationsShow),
 	    NULL, this);
+	parent->Connect(anEVT_ANOUBISOPTIONS_SHOW,
+	    wxCommandEventHandler(ModAnoubisMainPanelImpl::OnAnoubisOptionShow),
+	    NULL, this);
+}
+
+ModAnoubisMainPanelImpl::~ModAnoubisMainPanelImpl(void)
+{
+	/* write Escalations Settings */
+	userOptions_->Write(wxT("/Options/NoEscalations"),
+	    cb_NoEscalations->IsChecked());
+	userOptions_->Write(wxT("/Options/NoEscalationsTimeout"),
+	    cb_NoEscalationTimeout->IsChecked());
+	userOptions_->Write(wxT("/Options/EscalationTimeout"),
+	    m_spinEscalationNotifyTimeout->GetValue());
+
+	/* write Alert Settings */
+	userOptions_->Write(wxT("/Options/NoAlert"),
+	    cb_NoAlerts->IsChecked());
+	userOptions_->Write(wxT("/Options/NoAlertTimeout"),
+	    cb_NoAlertTimeout->IsChecked());
+	userOptions_->Write(wxT("/Options/AlertTimeout"),
+	    m_spinAlertNotifyTimeout->GetValue());
+}
+
+void
+ModAnoubisMainPanelImpl::readOptions(void)
+{
+	bool NoEscalation = false;
+	bool NoEscalationTimeout = true;
+	int EscalationTimeout = 0;
+	bool NoAlert = true;
+	bool NoAlertTimeout = false;
+	int AlertTimeout = 10;
+
+	/* read the stored Notifications Options */
+	userOptions_->Read(wxT("/Options/NoEscalations"), &NoEscalation);
+	userOptions_->Read(wxT("/Options/NoEscalationsTimeout"),
+	    &NoEscalationTimeout);
+	userOptions_->Read(wxT("/Options/EscalationTimeout"),
+	    &EscalationTimeout);
+
+	userOptions_->Read(wxT("/Options/NoAlert"), &NoAlert);
+	userOptions_->Read(wxT("/Options/NoAlertTimeout"), &NoAlertTimeout);
+	userOptions_->Read(wxT("/Options/AlertTimeout"), &AlertTimeout);
+
+	/* restore the stored Notifications Options */
+	cb_NoEscalations->SetValue(NoEscalation);
+	cb_NoEscalationTimeout->SetValue(NoEscalationTimeout);
+	m_spinEscalationNotifyTimeout->SetValue(EscalationTimeout);
+
+	cb_NoAlerts->SetValue(NoAlert);
+	cb_NoAlertTimeout->SetValue(NoAlertTimeout);
+	m_spinAlertNotifyTimeout->SetValue(AlertTimeout);
+
+	/* set widgets visability and send options event */
+	setOptionsWidgetsVisability();
+	sendNotifierOptions();
+}
+
+void
+ModAnoubisMainPanelImpl::setOptionsWidgetsVisability(void)
+{
+	/* synchronize Escalation widgets */
+	if (cb_NoEscalations->IsChecked()) {
+		m_spinEscalationNotifyTimeout->Disable();
+		cb_NoEscalationTimeout->Disable();
+		tx_EscalationNotifyTimeoutLabel->Disable();
+	} else {
+		if (cb_NoEscalationTimeout->IsChecked()) {
+			cb_NoEscalationTimeout->Enable();
+			m_spinEscalationNotifyTimeout->Disable();
+			tx_EscalationNotifyTimeoutLabel->Disable();
+		} else {
+			cb_NoEscalationTimeout->Enable();
+			m_spinEscalationNotifyTimeout->Enable();
+			tx_EscalationNotifyTimeoutLabel->Enable();
+		}
+	}
+
+	/* synchronize Alert widgets */
+	if (cb_NoAlerts->IsChecked()) {
+		m_spinAlertNotifyTimeout->Disable();
+		cb_NoAlertTimeout->Disable();
+		tx_AlertNotifyTimeoutLabel->Disable();
+	} else {
+		if (cb_NoAlertTimeout->IsChecked()) {
+			cb_NoAlertTimeout->Enable();
+			m_spinAlertNotifyTimeout->Disable();
+			tx_AlertNotifyTimeoutLabel->Disable();
+		} else {
+			cb_NoAlertTimeout->Enable();
+			m_spinAlertNotifyTimeout->Enable();
+			tx_AlertNotifyTimeoutLabel->Enable();
+		}
+	}
 }
 
 void
@@ -378,84 +477,42 @@ ModAnoubisMainPanelImpl::OnDenyBtnClick(wxCommandEvent& event)
 void
 ModAnoubisMainPanelImpl::OnEscalationDisable(wxCommandEvent& event)
 {
-	if(event.IsChecked()) {
-		m_spinEscalationNotifyTimeout->Disable();
-		cb_NoEscalationTimeout->Disable();
-		tx_EscalationNotifyTimeoutLabel->Disable();
-	} else {
-		if (cb_NoEscalationTimeout->IsChecked()) {
-			cb_NoEscalationTimeout->Enable();
-			m_spinEscalationNotifyTimeout->Disable();
-			tx_EscalationNotifyTimeoutLabel->Disable();
-		} else {
-			cb_NoEscalationTimeout->Enable();
-			m_spinEscalationNotifyTimeout->Enable();
-			tx_EscalationNotifyTimeoutLabel->Enable();
-		}
-	}
-
+	setOptionsWidgetsVisability();
 	sendNotifierOptions();
 }
 
 void
 ModAnoubisMainPanelImpl::OnAlertDisable(wxCommandEvent& event)
 {
-	if(event.IsChecked()) {
-		m_spinAlertNotifyTimeout->Disable();
-		cb_NoAlertTimeout->Disable();
-		tx_AlertNotifyTimeoutLabel->Disable();
-	} else {
-		if (cb_NoAlertTimeout->IsChecked()) {
-			cb_NoAlertTimeout->Enable();
-			m_spinAlertNotifyTimeout->Disable();
-			tx_AlertNotifyTimeoutLabel->Disable();
-		} else {
-			cb_NoAlertTimeout->Enable();
-			m_spinAlertNotifyTimeout->Enable();
-			tx_AlertNotifyTimeoutLabel->Enable();
-		}
-	}
-
+	setOptionsWidgetsVisability();
 	sendNotifierOptions();
 }
 
 void
 ModAnoubisMainPanelImpl::OnEscalationNoTimeout(wxCommandEvent& event)
 {
-	if(event.IsChecked()) {
-		m_spinEscalationNotifyTimeout->Disable();
-		tx_EscalationNotifyTimeoutLabel->Disable();
-	} else {
-		m_spinEscalationNotifyTimeout->Enable();
-		tx_EscalationNotifyTimeoutLabel->Enable();
-	}
-
+	setOptionsWidgetsVisability();
 	sendNotifierOptions();
 }
 
 void
 ModAnoubisMainPanelImpl::OnAlertNoTimeout(wxCommandEvent& event)
 {
-	if(event.IsChecked()) {
-		m_spinAlertNotifyTimeout->Disable();
-		tx_AlertNotifyTimeoutLabel->Disable();
-	} else {
-		m_spinAlertNotifyTimeout->Enable();
-		tx_AlertNotifyTimeoutLabel->Enable();
-	}
-
+	setOptionsWidgetsVisability();
 	sendNotifierOptions();
 }
 
 void
 ModAnoubisMainPanelImpl::OnEscalationTimeout(wxSpinEvent& event)
 {
+	setOptionsWidgetsVisability();
 	sendNotifierOptions();
 }
 
 void
 ModAnoubisMainPanelImpl::OnAlertTimeout(wxSpinEvent& event)
 {
+	setOptionsWidgetsVisability();
 	sendNotifierOptions();
 }
 
@@ -474,6 +531,15 @@ ModAnoubisMainPanelImpl::OnEscalationsShow(wxCommandEvent& event)
 		/* select "current messages" */
 		ch_type->SetSelection(1);
 	}
+
+	event.Skip();
+}
+
+void
+ModAnoubisMainPanelImpl::OnAnoubisOptionShow(wxCommandEvent& event)
+{
+	/* select tab "Options" */
+	tb_MainAnoubisNotify->ChangeSelection(1);
 
 	event.Skip();
 }

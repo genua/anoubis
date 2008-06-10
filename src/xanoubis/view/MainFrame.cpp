@@ -69,6 +69,8 @@ MainFrame::MainFrame(wxWindow *parent) : MainFrameBase(parent)
 	    wxCommandEventHandler(MainFrame::OnAnoubisdRuleSet), NULL, this);
 	Connect(anEVT_ESCALATIONS_SHOW,
 	    wxCommandEventHandler(MainFrame::OnEscalationsShow), NULL, this);
+	Connect(anEVT_ANOUBISOPTIONS_SHOW,
+	    wxCommandEventHandler(MainFrame::OnAnoubisOptionShow), NULL, this);
 }
 
 MainFrame::~MainFrame()
@@ -346,7 +348,9 @@ MainFrame::OnMbFileConnectSelect(wxCommandEvent& event)
 void
 MainFrame::OnMbEditPreferencesSelect(wxCommandEvent& event)
 {
-	printf("Menu Item Edit->Preferences selected\n");
+	wxCommandEvent  showEvent(anEVT_ANOUBISOPTIONS_SHOW);
+	showEvent.SetInt(true);
+	wxGetApp().sendEvent(showEvent);
 }
 
 void
@@ -364,6 +368,23 @@ MainFrame::OnAnoubisdRuleSet(wxCommandEvent& event)
 
 void
 MainFrame::OnEscalationsShow(wxCommandEvent& event)
+{
+	this->Show(event.GetInt());
+	Module *module = wxGetApp().getModule(ANOUBIS);
+	int id = module->getToolbarId();
+
+	/*
+	 * Select the corresponding Modul Tab in the Toolbar
+	 */
+	tb_LeftToolbarModule->ToggleTool(MODANOUBIS_ID_TOOLBAR, true);
+
+	wxCommandEvent selectEvent(wxEVT_COMMAND_MENU_SELECTED, id);
+	selectEvent.SetInt(id);
+	this->AddPendingEvent(selectEvent);
+}
+
+void
+MainFrame::OnAnoubisOptionShow(wxCommandEvent& event)
 {
 	this->Show(event.GetInt());
 	Module *module = wxGetApp().getModule(ANOUBIS);

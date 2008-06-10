@@ -405,7 +405,7 @@ AnoubisGuiApp::exportPolicyFile(wxString fileName)
 	}
 }
 
-const wxConfig *
+wxConfig *
 AnoubisGuiApp::getUserOptions(void)
 {
 	return (userOptions_);

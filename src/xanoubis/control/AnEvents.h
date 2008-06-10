@@ -50,6 +50,14 @@ BEGIN_DECLARE_EVENT_TYPES()
 	DECLARE_LOCAL_EVENT_TYPE(anEVT_ESCALATIONS_SHOW, wxNewEventType())
 
 	/*
+	 * Request the View of the optional settings of Module Anoubis
+	 *
+	 * The integer field contains a boolean stating:
+	 * true         => show Widget
+	 */
+	DECLARE_LOCAL_EVENT_TYPE(anEVT_ANOUBISOPTIONS_SHOW, wxNewEventType())
+
+	/*
 	 * The options of the system notification via libnotify for ESCALATIONS
 	 * or ALERTS have changed.
 	 *

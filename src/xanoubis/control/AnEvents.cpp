@@ -60,6 +60,14 @@ DEFINE_LOCAL_EVENT_TYPE(anEVT_ESCALATIONNOTIFY_OPTIONS)
 DEFINE_LOCAL_EVENT_TYPE(anEVT_ALERTNOTIFY_OPTIONS)
 
 /*
+ * Request the View of the optional settings of Module Anoubis
+ *
+ * The integer field contains a boolean stating:
+ * true         => show Widget
+ */
+DEFINE_LOCAL_EVENT_TYPE(anEVT_ANOUBISOPTIONS_SHOW)
+
+/*
  * A connection to the daemon was sucessfully established.
  * This event is intended of been used between the communicator
  * thread and communicator control only.
