@@ -193,8 +193,10 @@ session_connect(int fd, short event, void *arg)
 	}
 	anoubis_dispatch_create(session->proto, ANOUBIS_P_CSUMREQUEST,
 	       dispatch_checksum, info);
+	LIST_INSERT_HEAD(&(seg->sessionList), session, nextSession);
 	if (anoubis_server_start(session->proto) < 0) {
 		log_warn("Failed to send initial hello");
+		/* Removes session from session List. */
 		session_destroy(session);
 		DEBUG(DBG_TRACE, "<session_connect (start)");
 		return;
@@ -203,8 +205,6 @@ session_connect(int fd, short event, void *arg)
 	event_set(&(session->ev_data), session->channel->connfd,
 	    EV_READ | EV_PERSIST, session_rxclient, session);
 	event_add(&(session->ev_data), NULL);
-
-	LIST_INSERT_HEAD(&(seg->sessionList), session, nextSession);
 
 	DEBUG(DBG_TRACE, "<session_connect");
 }
@@ -386,7 +386,7 @@ session_main(struct anoubisd_config *conf, int pipe_m2s[2], int pipe_m2p[2],
 	while (!LIST_EMPTY(&(seg.sessionList))) {
 		struct session *session = LIST_FIRST(&(seg.sessionList));
 		log_warn("session_main: close remaining session by force");
-		LIST_REMOVE(session, nextSession);
+		/* session_destroy will call LIST_REMOVE. */
 		session_destroy(session);
 	}
 	acc_destroy(seg.keeper_uds);
