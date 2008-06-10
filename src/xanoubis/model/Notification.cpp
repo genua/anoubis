@@ -179,14 +179,34 @@ Notification::getLogMessage(void){
 	int	type;
 
 	if (logMessage_.IsEmpty()) {
-		logMessage_ = getOperation() + wxT(" ") + getPath();
+		logMessage_ += getRuleId();
+		logMessage_ += getOperation() + wxT(" ") + getPath();
 		type = get_value((notify_->u.notify)->type);
+
 		if (type == ANOUBIS_N_LOGNOTIFY) {
 			logMessage_ += wxT(" ") + getAction();
 		}
 	}
 
 	return (logMessage_);
+}
+
+wxString
+Notification::getRuleId(void)
+{
+	int	 ruleId;
+	wxString ruleMsg;
+
+	ruleMsg = wxT("");
+
+	if(notify_ != NULL) {
+		ruleId = get_value((notify_->u.notify)->rule_id);
+		if (ruleId) {
+			ruleMsg +=  wxString::Format(_("Rule %d: "), ruleId);
+		}
+	}
+
+	return (ruleMsg);
 }
 
 wxString
