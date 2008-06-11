@@ -893,16 +893,19 @@ dispatch_dev2m(int fd, short event, void *arg)
 			kernelmsg = (struct sfs_open_message *)(hdr+1);
 			sfsmsg->anoubisd_csum_set = ANOUBISD_CSUM_NONE;
 			if ((kernelmsg->flags & ANOUBIS_OPEN_FLAG_PATHHINT)
+			    && (kernelmsg->flags & ANOUBIS_OPEN_FLAG_STATDATA)
 			    && (kernelmsg->flags & ANOUBIS_OPEN_FLAG_CSUM)) {
 				int ret;
 
-				ret = sfs_getchecksum(kernelmsg->pathhint,
-				    hdr->msg_uid, sfsmsg->anoubisd_csum);
+				ret = sfs_getchecksum(kernelmsg->dev,
+				    kernelmsg->pathhint, hdr->msg_uid,
+				    sfsmsg->anoubisd_csum);
 				if (ret >= 0) {
 					sfsmsg->anoubisd_csum_set =
 					    ANOUBISD_CSUM_USER;
 				} else {
 					ret = sfs_getchecksum(
+					    kernelmsg->dev,
 					    kernelmsg->pathhint,
 					    0, sfsmsg->anoubisd_csum);
 					if (ret >= 0)

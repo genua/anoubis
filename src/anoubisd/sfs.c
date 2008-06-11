@@ -61,6 +61,11 @@
 #include "anoubisd.h"
 #include "sfs.h"
 
+static int	sfs_readchecksum(const char *csum_file, unsigned char *md);
+static int	sfs_sha256(const char * filename,
+		    unsigned char md[SHA256_DIGEST_LENGTH], uid_t auth_uid);
+static int	convert_user_path(const char * path, char **dir);
+
 /*
  * NOTE: This function is not reentrant for several reasons:
  * - Both credentials and buf can be quite large (65k supplementary group
@@ -135,34 +140,112 @@ mkpath(const char *path)
 	return 0;
 }
 
+static int
+convert_user_path(const char * path, char **dir)
+{
+	int i;
+
+	*dir = NULL;
+	if (!path || path[0] != '/')
+		return -EINVAL;
+	if (strstr(path, "/../") != NULL)
+		return -EINVAL;
+	if (strstr(path, "/./") != NULL)
+		return -EINVAL;
+	if (strstr(path, "//") != NULL)
+		return -EINVAL;
+	if (path[0] == '/' && path[1] == '.') {
+		if (path[2] == 0)
+			return -EINVAL;
+		if (path[2] == '.' && path[3] == 0)
+			return -EINVAL;
+	}
+	i = strlen(path) - 1;
+	if (path[i] == '.') {
+		if (path[i-1] == '/')
+			return -EINVAL;
+		if (path[i-1] == '.' && path[i-2] == '/')
+			return -EINVAL;
+	}
+	if (path[i] == '/')
+		return -EINVAL;
+#ifdef OPENBSD
+{
+	if (asprintf(dir, "%s%s", SFS_CHECKSUMROOT, path) == -1)
+		return -ENOMEM;
+	return 0;
+}
+#endif
+#ifdef LINUX
+{
+	struct stat	 statbuf;
+	dev_t		 dev;
+	char		*tmppath = strdup(path);
+	int		 error = -EINVAL;
+	int		 samei = -1;
+	unsigned long	 major, minor;
+
+	if (!tmppath)
+		return -ENOMEM;
+	if (lstat(tmppath, &statbuf) < 0) {
+		error = -errno;
+		goto err;
+	}
+	if (!S_ISREG(statbuf.st_mode))
+		goto err;
+	dev = statbuf.st_dev;
+	if (!dev)
+		goto err;
+
+	while(i > 0) {
+		while(tmppath[i] != '/')
+			i--;
+		/* Keep the slash */
+		tmppath[i+1] = 0;
+		if (lstat(tmppath, &statbuf) < 0) {
+			error = -errno;
+			goto err;
+		}
+		if (!S_ISDIR(statbuf.st_mode))
+			goto err;
+		if (statbuf.st_dev != dev)
+			break;
+		samei = i;
+		i--;	/* Skip slah */
+	}
+	if (samei < 0)
+		goto err;
+	major = (dev >> 8);
+	minor = (dev & 0xff);
+	if (asprintf(dir, "%s/%lu:%lu%s",
+	    SFS_CHECKSUMROOT, major, minor, path+samei) == -1) {
+		error = -ENOMEM;
+		goto err;
+	}
+	free(tmppath);
+	return 0;
+err:
+	free(tmppath);
+	return error;
+}
+#endif
+	return -EOPNOTSUPP;
+}
+
 int
 sfs_checksumop(const char *path, unsigned int operation, uid_t uid,
     u_int8_t md[SHA256_DIGEST_LENGTH])
 {
-	char *csum_path = NULL;
-	int ret = -EINVAL;
-	int len;
+	char *csum_path = NULL, *csum_file = NULL;
+	int ret;
 
-	if (!path || path[0] != '/')
-		return -EINVAL;
-
-	if(strstr(path, "/../") != NULL)
-		return -EINVAL;
-
-	if (strlen(path) >= strlen("/..")) {
-		if (!strncmp(path + strlen(path) - strlen("/.."), "/..",
-		    strlen("/.."))) {
-			return -EINVAL;
-		}
+	ret = convert_user_path(path, &csum_path);
+	if (ret < 0)
+		return ret;
+	if (asprintf(&csum_file, "%s/%d", csum_path, uid) == -1) {
+		ret = -ENOMEM;
+		goto out;
 	}
-
-	/* XXX: 100 is length of uid as string */
-	len = strlen(path) + strlen(SFS_CHECKSUMROOT) + 1 + 100;
-
-	csum_path = malloc(len);
-	if (csum_path == NULL)
-		return -ENOMEM;
-
 	if (operation == ANOUBIS_CHECKSUM_OP_ADD
 	    || operation == ANOUBIS_CHECKSUM_OP_CALC) {
 		int fd;
@@ -171,18 +254,11 @@ sfs_checksumop(const char *path, unsigned int operation, uid_t uid,
 		ret = sfs_sha256(path, md, uid);
 		if (ret < 0)
 			goto out;
-
-		snprintf(csum_path, len - 1, "%s%s", SFS_CHECKSUMROOT, path);
-
 		ret = mkpath(csum_path);
 		if (ret < 0)
 			goto out;
-
-		snprintf(csum_path, len - 1, "%s%s/%u", SFS_CHECKSUMROOT, path,
-		    uid);
-
 		if (operation == ANOUBIS_CHECKSUM_OP_ADD) {
-			fd = open(csum_path, O_WRONLY|O_CREAT|O_TRUNC, 0600);
+			fd = open(csum_file, O_WRONLY|O_CREAT|O_TRUNC, 0600);
 			if (fd < 0) {
 				ret = -errno;
 				goto out;
@@ -193,7 +269,7 @@ sfs_checksumop(const char *path, unsigned int operation, uid_t uid,
 				    SHA256_DIGEST_LENGTH - written);
 				if (ret < 0) {
 					ret = -errno;
-					unlink(csum_path);
+					unlink(csum_file);
 					close(fd);
 					goto out;
 				}
@@ -203,51 +279,31 @@ sfs_checksumop(const char *path, unsigned int operation, uid_t uid,
 		}
 		ret = 0;
 	} else if (operation == ANOUBIS_CHECKSUM_OP_DEL) {
-		snprintf(csum_path, len - 1, "%s%s/%u", SFS_CHECKSUMROOT, path,
-		    uid);
-		ret = unlink(csum_path);
+		ret = unlink(csum_file);
 		if (ret < 0)
 			ret = -errno;
-		goto out;
 	} else if (operation == ANOUBIS_CHECKSUM_OP_GET) {
-		ret = sfs_getchecksum(path, uid, md);
-		if (ret == SHA256_DIGEST_LENGTH)
-			ret = 0;
-		else
-			ret = -EIO;
+		ret = sfs_readchecksum(csum_file, md);
 	}
 
 out:
 	if (csum_path)
 		free(csum_path);
+	if (csum_file)
+		free(csum_file);
 	return ret;
 }
 
-int
-sfs_getchecksum(const char *path, uid_t uid, unsigned char *md)
+static int
+sfs_readchecksum(const char *csum_file, unsigned char *md)
 {
-	char *csum_path;
-	int len;
-	int ret = 0;
 	int fd;
+	int ret = 0;
 	int bytes_read = 0;
 
-	bzero(md, ANOUBIS_SFS_CS_LEN);
-
-	/* XXX: 100 is length of uid as string */
-	len = strlen(path) + strlen(SFS_CHECKSUMROOT) + 1 + 100;
-	csum_path = malloc(len);
-	if (csum_path == NULL)
-		return -ENOMEM;
-
-	bzero(csum_path, len);
-	snprintf(csum_path, len - 1, "%s%s/%u", SFS_CHECKSUMROOT, path, uid);
-
-	fd = open(csum_path, O_RDONLY);
-	if (fd < 0) {
-		free(csum_path);
+	fd = open(csum_file, O_RDONLY);
+	if (fd < 0)
 		return -errno;
-	}
 
 	while (bytes_read < SHA256_DIGEST_LENGTH) {
 		ret = read(fd, md + bytes_read,
@@ -261,10 +317,47 @@ sfs_getchecksum(const char *path, uid_t uid, unsigned char *md)
 		}
 		bytes_read += ret;
 	}
-
 	close(fd);
+	if (ret < 0)
+		return ret;
+	return 0;
+}
 
-	free(csum_path);
+int
+sfs_getchecksum(u_int64_t kdev, const char *kpath, uid_t uid,
+    unsigned char *md)
+{
+#ifdef LINUX
+{
+	char		*path;
+	int		 ret;
+	unsigned long	 major, minor;
 
+	/*
+	 * XXX CEH: Ultimately the kernel should report major and minor
+	 * XXX CEH: numbers. Currently this duplicates kernel source code.
+	 */
+	major = (kdev >> 20);
+	minor = (kdev & ((1UL << 20) - 1));
+	if (asprintf(&path, "%s/%lu:%lu%s/%d",
+	    SFS_CHECKSUMROOT, major, minor, kpath, uid) == -1)
+		return -ENOMEM;
+	ret = sfs_readchecksum(path, md);
+	free(path);
 	return ret;
+}
+#endif
+#ifdef OPENBSD
+{
+	char	*path;
+	int	 ret;
+
+	if (asprintf(&path, "%s%s/%d", SFS_CHECKSUMROOT, kpath, uid) == -1)
+		return -ENOMEM;
+	ret = sfs_readchecksum(path, md);
+	free(path);
+	return ret;
+}
+#endif
+	return -EOPNOTSUPP;
 }
