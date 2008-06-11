@@ -881,6 +881,8 @@ apn_print_port(struct apn_port *port, FILE *file)
 
 	while (hp) {
 		fprintf(file, "%hu", ntohs(hp->port));
+		if (hp->port2)
+			fprintf(file, " - %hu", ntohs(hp->port2));
 
 		hp = hp->next;
 		if (hp)

@@ -125,6 +125,7 @@ struct apn_host {
 
 struct apn_port {
 	u_int16_t		 port;
+	u_int16_t		 port2;
 	struct apn_port		*next;
 	struct apn_port		*tail;
 };

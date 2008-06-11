@@ -2880,12 +2880,22 @@ pe_addrmatch_port(struct apn_port *port, void *addr, unsigned short af)
 		switch (af) {
 		case AF_INET:
 			in = (struct sockaddr_in *)addr;
-			match = (in->sin_port == pp->port);
+			if (pp->port2) {
+				match = (in->sin_port >= pp->port &&
+					in->sin_port <= pp->port2);
+			}
+			else
+				match = (in->sin_port == pp->port);
 			break;
 
 		case AF_INET6:
 			in6 = (struct sockaddr_in6 *)addr;
-			match = (in6->sin6_port == pp->port);
+			if (pp->port2) {
+				match = (in6->sin6_port >= pp->port &&
+					in6->sin6_port <= pp->port2);
+			}
+			else
+				match = (in6->sin6_port == pp->port);
 			break;
 
 		default:

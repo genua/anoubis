@@ -277,6 +277,9 @@ varfilename	: TFILE STRING '=' STRING		{
 comma		: ','
 		;
 
+minus		: '-'
+		;
+
 optnl		: '\n' optnl
 		| /*empty */
 		;
@@ -624,7 +627,33 @@ port_l		: port_l comma port		{
 		| port				{ $$ = $1; }
 		;
 
-port		: STRING			{
+port		: NUMBER minus NUMBER		{
+			struct apn_port *port;
+			port = calloc(1, sizeof(struct apn_port));
+			if (port == NULL)
+				YYERROR;
+
+			port->tail = port;
+
+			if (portbynumber($1, &port->port) == -1) {
+				free(port);
+				YYERROR;
+			}
+
+			if (portbynumber($3, &port->port2) == -1) {
+				free(port);
+				YYERROR;
+			}
+
+			if ($3 < $1) {
+				yyerror("portrange invalid: %ld-%ld", $1, $3);
+				free(port);
+				YYERROR;
+			}
+
+			$$ = port;
+		}
+		| STRING			{
 			struct apn_port	*port;
 
 			port = calloc(1, sizeof(struct apn_port));
