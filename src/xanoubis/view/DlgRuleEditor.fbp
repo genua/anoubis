@@ -46,7 +46,7 @@
         <property name="relative_path">1</property>
         <property name="use_enum">0</property>
         <property name="use_microsoft_bom">0</property>
-        <object class="Frame" expanded="1">
+        <object class="Frame" expanded="0">
             <property name="bg"></property>
             <property name="center">wxBOTH</property>
             <property name="context_help"></property>
@@ -98,7 +98,7 @@
             <event name="OnSetFocus"></event>
             <event name="OnSize"></event>
             <event name="OnUpdateUI"></event>
-            <object class="wxBoxSizer" expanded="1">
+            <object class="wxBoxSizer" expanded="0">
                 <property name="minimum_size">-1,-1</property>
                 <property name="name">sz_main</property>
                 <property name="orient">wxVERTICAL</property>
@@ -887,7 +887,7 @@
                     <property name="border">5</property>
                     <property name="flag">wxEXPAND | wxALL</property>
                     <property name="proportion">1</property>
-                    <object class="wxNotebook" expanded="1">
+                    <object class="wxNotebook" expanded="0">
                         <property name="bg"></property>
                         <property name="bitmapsize"></property>
                         <property name="context_help"></property>
@@ -2606,7 +2606,7 @@
                                             <property name="window_name"></property>
                                             <property name="window_style"></property>
                                             <event name="OnChar"></event>
-                                            <event name="OnCombobox"></event>
+                                            <event name="OnCombobox">OnAppNameComboBox</event>
                                             <event name="OnEnterWindow"></event>
                                             <event name="OnEraseBackground"></event>
                                             <event name="OnKeyDown"></event>
@@ -2628,7 +2628,7 @@
                                             <event name="OnRightUp"></event>
                                             <event name="OnSetFocus"></event>
                                             <event name="OnSize"></event>
-                                            <event name="OnText"></event>
+                                            <event name="OnText">OnAppNameComboBox</event>
                                             <event name="OnTextEnter"></event>
                                             <event name="OnUpdateUI"></event>
                                         </object>
@@ -2916,7 +2916,7 @@
                                             <event name="OnRightUp"></event>
                                             <event name="OnSetFocus"></event>
                                             <event name="OnSize"></event>
-                                            <event name="OnText"></event>
+                                            <event name="OnText">OnAppBinaryTextCtrl</event>
                                             <event name="OnTextEnter"></event>
                                             <event name="OnTextMaxLen"></event>
                                             <event name="OnTextURL"></event>
@@ -2949,7 +2949,7 @@
                                             <property name="window_extra_style"></property>
                                             <property name="window_name"></property>
                                             <property name="window_style"></property>
-                                            <event name="OnButtonClick">OnBinaryModifyButtonClick</event>
+                                            <event name="OnButtonClick">OnAppBinaryModifyButton</event>
                                             <event name="OnChar"></event>
                                             <event name="OnEnterWindow"></event>
                                             <event name="OnEraseBackground"></event>
@@ -2993,10 +2993,10 @@
                                             <property name="bg"></property>
                                             <property name="context_help"></property>
                                             <property name="default">0</property>
-                                            <property name="enabled">1</property>
+                                            <property name="enabled">0</property>
                                             <property name="fg"></property>
                                             <property name="font"></property>
-                                            <property name="hidden">0</property>
+                                            <property name="hidden">1</property>
                                             <property name="id">wxID_ANY</property>
                                             <property name="label">+</property>
                                             <property name="maximum_size"></property>
@@ -3049,10 +3049,10 @@
                                             <property name="font"></property>
                                             <property name="hidden">0</property>
                                             <property name="id">wxID_ANY</property>
-                                            <property name="label">Inheritance:</property>
+                                            <property name="label">Context:</property>
                                             <property name="maximum_size"></property>
                                             <property name="minimum_size"></property>
-                                            <property name="name">appInheritanceText</property>
+                                            <property name="name">appContextText</property>
                                             <property name="permission">protected</property>
                                             <property name="pos"></property>
                                             <property name="size"></property>
@@ -3103,7 +3103,7 @@
                                             <property name="maximum_size"></property>
                                             <property name="maxlength">0</property>
                                             <property name="minimum_size"></property>
-                                            <property name="name">appInheritanceTextCtrl</property>
+                                            <property name="name">appContextTextCtrl</property>
                                             <property name="permission">protected</property>
                                             <property name="pos"></property>
                                             <property name="size"></property>
@@ -3159,7 +3159,7 @@
                                             <property name="label">modify</property>
                                             <property name="maximum_size"></property>
                                             <property name="minimum_size"></property>
-                                            <property name="name">appInheritanceModifyButton</property>
+                                            <property name="name">appContextModifyButton</property>
                                             <property name="permission">protected</property>
                                             <property name="pos"></property>
                                             <property name="size"></property>
@@ -3213,10 +3213,10 @@
                                             <property name="bg"></property>
                                             <property name="context_help"></property>
                                             <property name="default">0</property>
-                                            <property name="enabled">1</property>
+                                            <property name="enabled">0</property>
                                             <property name="fg"></property>
                                             <property name="font"></property>
-                                            <property name="hidden">0</property>
+                                            <property name="hidden">1</property>
                                             <property name="id">wxID_ANY</property>
                                             <property name="label">+</property>
                                             <property name="maximum_size"></property>
@@ -3734,7 +3734,7 @@
                             <property name="bitmap"></property>
                             <property name="label">ALF</property>
                             <property name="select">0</property>
-                            <object class="wxScrolledWindow" expanded="1">
+                            <object class="wxScrolledWindow" expanded="0">
                                 <property name="bg"></property>
                                 <property name="context_help"></property>
                                 <property name="enabled">1</property>
@@ -3778,7 +3778,7 @@
                                 <event name="OnSetFocus"></event>
                                 <event name="OnSize"></event>
                                 <event name="OnUpdateUI"></event>
-                                <object class="wxBoxSizer" expanded="1">
+                                <object class="wxBoxSizer" expanded="0">
                                     <property name="minimum_size"></property>
                                     <property name="name">alfPanelMainSizer</property>
                                     <property name="orient">wxVERTICAL</property>
@@ -4219,7 +4219,7 @@
                                         <property name="border">5</property>
                                         <property name="flag">wxEXPAND</property>
                                         <property name="proportion">1</property>
-                                        <object class="wxStaticBoxSizer" expanded="1">
+                                        <object class="wxStaticBoxSizer" expanded="0">
                                             <property name="label">Connection</property>
                                             <property name="minimum_size"></property>
                                             <property name="name">alfConnectionBox</property>
@@ -4981,7 +4981,7 @@
                                                 <property name="border">5</property>
                                                 <property name="flag">wxEXPAND</property>
                                                 <property name="proportion">1</property>
-                                                <object class="wxFlexGridSizer" expanded="1">
+                                                <object class="wxFlexGridSizer" expanded="0">
                                                     <property name="cols">6</property>
                                                     <property name="flexible_direction">wxBOTH</property>
                                                     <property name="growablecols"></property>

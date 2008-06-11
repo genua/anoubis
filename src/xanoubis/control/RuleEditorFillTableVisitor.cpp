@@ -55,7 +55,7 @@ RuleEditorFillTableVisitor::showApp(AppPolicy *appPolicy, long idx)
 	clean(idx);
 	if (appPolicy->getType() == APN_ALF) {
 		ruleEditor_->ruleListCtrl->SetItem(idx,
-		    RULEDITOR_LIST_COLUMN_APP, appPolicy->getBinaryName());
+		    RULEDITOR_LIST_COLUMN_APP, appPolicy->getApplicationName());
 		ruleEditor_->ruleListCtrl->SetItem(idx,
 		    RULEDITOR_LIST_COLUMN_RULE, wxT("APP"));
 		ruleEditor_->ruleListCtrl->SetItem(idx,

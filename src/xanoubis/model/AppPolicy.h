@@ -37,6 +37,7 @@ class AppPolicy : public Policy
 {
 	private:
 		PolicyList	 ruleList_;
+		wxString	 appName_;
 		AlfPolicy	*context_;
 		struct apn_rule	*appRule_;
 
@@ -48,6 +49,8 @@ class AppPolicy : public Policy
 
 		virtual void accept(PolicyVisitor&);
 
+		wxString	 getApplicationName(void);
+		void		 setApplicationName(wxString);
 		wxString	 getBinaryName(void);
 		void		 setBinaryName(wxString name);
 		wxString	 getCurrentHash(void);

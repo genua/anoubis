@@ -336,22 +336,28 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	appMainPanelSizer->Add( 35, 0, 1, wxEXPAND, 5 );
 	
 	appBinaryAddButton = new wxButton( applicationNbPanel, wxID_ANY, _("+"), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
+	appBinaryAddButton->Enable( false );
+	appBinaryAddButton->Hide();
+	
 	appMainPanelSizer->Add( appBinaryAddButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	appInheritanceText = new wxStaticText( applicationNbPanel, wxID_ANY, _("Inheritance:"), wxDefaultPosition, wxDefaultSize, 0 );
-	appInheritanceText->Wrap( -1 );
-	appMainPanelSizer->Add( appInheritanceText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	appContextText = new wxStaticText( applicationNbPanel, wxID_ANY, _("Context:"), wxDefaultPosition, wxDefaultSize, 0 );
+	appContextText->Wrap( -1 );
+	appMainPanelSizer->Add( appContextText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	appInheritanceTextCtrl = new wxTextCtrl( applicationNbPanel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
-	appMainPanelSizer->Add( appInheritanceTextCtrl, 0, wxALL|wxALIGN_CENTER_VERTICAL|wxEXPAND, 5 );
+	appContextTextCtrl = new wxTextCtrl( applicationNbPanel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	appMainPanelSizer->Add( appContextTextCtrl, 0, wxALL|wxALIGN_CENTER_VERTICAL|wxEXPAND, 5 );
 	
-	appInheritanceModifyButton = new wxButton( applicationNbPanel, wxID_ANY, _("modify"), wxDefaultPosition, wxDefaultSize, 0 );
-	appMainPanelSizer->Add( appInheritanceModifyButton, 0, wxALL|wxALIGN_CENTER_VERTICAL|wxALIGN_RIGHT, 5 );
+	appContextModifyButton = new wxButton( applicationNbPanel, wxID_ANY, _("modify"), wxDefaultPosition, wxDefaultSize, 0 );
+	appMainPanelSizer->Add( appContextModifyButton, 0, wxALL|wxALIGN_CENTER_VERTICAL|wxALIGN_RIGHT, 5 );
 	
 	
 	appMainPanelSizer->Add( 0, 0, 1, wxEXPAND, 5 );
 	
 	appInheritanceAddButton = new wxButton( applicationNbPanel, wxID_ANY, _("+"), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
+	appInheritanceAddButton->Enable( false );
+	appInheritanceAddButton->Hide();
+	
 	appMainPanelSizer->Add( appInheritanceAddButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	appRegisteredSumLabelText = new wxStaticText( applicationNbPanel, wxID_ANY, _("Checksum (registered):"), wxDefaultPosition, wxDefaultSize, 0 );
@@ -715,7 +721,10 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	controlRuleSetSaveButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::OnRuleSetSave ), NULL, this );
 	controlOptionButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::OnTableOptionButtonClick ), NULL, this );
 	ruleListCtrl->Connect( wxEVT_COMMAND_LIST_ITEM_SELECTED, wxListEventHandler( DlgRuleEditorBase::OnLineSelected ), NULL, this );
-	appBinaryModifyButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::OnBinaryModifyButtonClick ), NULL, this );
+	appNameComboBox->Connect( wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler( DlgRuleEditorBase::OnAppNameComboBox ), NULL, this );
+	appNameComboBox->Connect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( DlgRuleEditorBase::OnAppNameComboBox ), NULL, this );
+	appBinaryTextCtrl->Connect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( DlgRuleEditorBase::OnAppBinaryTextCtrl ), NULL, this );
+	appBinaryModifyButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::OnAppBinaryModifyButton ), NULL, this );
 	appValidateChkSumButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::OnAppValidateChkSumButton ), NULL, this );
 	appUpdateChkSumButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::OnAppUpdateChkSumButton ), NULL, this );
 	alfAllowRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorBase::OnAlfAllowRadioButton ), NULL, this );

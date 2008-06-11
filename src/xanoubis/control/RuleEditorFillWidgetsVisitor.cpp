@@ -356,15 +356,14 @@ RuleEditorFillWidgetsVisitor::visitAppPolicy(AppPolicy *appPolicy)
 	ruleEditor_->sfsNbPanel->Disable();
 	ruleEditor_->ruleEditNotebook->ChangeSelection(RULEDITOR_PANEL_APP);
 
+	name = appPolicy->getApplicationName();
+	ruleEditor_->appNameComboBox->SetValue(name);
 
 	name = appPolicy->getBinaryName();
-	ruleEditor_->appBinaryTextCtrl->Clear();
-	ruleEditor_->appBinaryTextCtrl->AppendText(name);
-	ruleEditor_->appNameComboBox->SetValue(name);
+	ruleEditor_->appBinaryTextCtrl->ChangeValue(name);
 	if (appPolicy->hasContext()) {
 		name = appPolicy->getContext()->getContextName();
-		ruleEditor_->appInheritanceTextCtrl->Clear();
-		ruleEditor_->appInheritanceTextCtrl->AppendText(name);
+		ruleEditor_->appContextTextCtrl->ChangeValue(name);
 	}
 
 	if (appPolicy->getBinaryName().Cmp(wxT("any")))

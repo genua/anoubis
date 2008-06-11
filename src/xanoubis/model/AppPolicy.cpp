@@ -63,6 +63,7 @@ AppPolicy::AppPolicy(struct apn_rule *appRule) : Policy(NULL)
 	context_ = NULL;
 	appRule_ = appRule;
 	currHash_ = wxEmptyString;
+	appName_ = wxEmptyString;
 
 	switch (appRule_->type) {
 	case APN_ALF:
@@ -109,6 +110,18 @@ AppPolicy::accept(PolicyVisitor& visitor)
 			(*i)->accept(visitor);
 		}
 	}
+}
+
+wxString
+AppPolicy::getApplicationName(void)
+{
+	return (appName_);
+}
+
+void
+AppPolicy::setApplicationName(wxString appName)
+{
+	appName_ = appName;
 }
 
 void

@@ -105,6 +105,8 @@ class DlgRuleEditor : public DlgRuleEditorBase
 
 		void OnShow(wxCommandEvent&);
 
+		void updateAppName(wxString);
+		void updateBinName(wxString);
 		void updateAction(int);
 		void updateType(int);
 		void updateProtocol(int);
@@ -118,12 +120,15 @@ class DlgRuleEditor : public DlgRuleEditorBase
 
 		void OnClose(wxCloseEvent& event);
 		void OnTableOptionButtonClick(wxCommandEvent&);
-		void OnBinaryModifyButtonClick(wxCommandEvent&);
 		void OnAppUpdateChkSumButton(wxCommandEvent&);
 		void OnAppValidateChkSumButton(wxCommandEvent&);
 		void OnLoadRuleSet(wxCommandEvent&);
 		void OnLineSelected(wxListEvent&);
 		void OnRuleSetSave(wxCommandEvent&);
+
+		void OnAppNameComboBox(wxCommandEvent&);
+		void OnAppBinaryTextCtrl(wxCommandEvent&);
+		void OnAppBinaryModifyButton(wxCommandEvent&);
 
 		void OnAlfAllowRadioButton(wxCommandEvent&);
 		void OnAlfDenyRadioButton(wxCommandEvent&);

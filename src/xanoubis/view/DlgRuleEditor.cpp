@@ -213,6 +213,40 @@ DlgRuleEditor::~DlgRuleEditor(void)
 }
 
 void
+DlgRuleEditor::updateAppName(wxString appName)
+{
+	AppPolicy			*policy;
+	RuleEditorFillTableVisitor	 updateTable(this, selectedId_);
+	RuleEditorFillWidgetsVisitor	 updateWidgets(this);
+
+	policy = (AppPolicy *)ruleListCtrl->GetItemData(selectedId_);
+	if (policy == NULL) {
+		return;
+	}
+
+	policy->setApplicationName(appName);
+	policy->accept(updateTable);
+	policy->accept(updateWidgets);
+}
+
+void
+DlgRuleEditor::updateBinName(wxString binName)
+{
+	AppPolicy			*policy;
+	RuleEditorFillTableVisitor	 updateTable(this, selectedId_);
+	RuleEditorFillWidgetsVisitor	 updateWidgets(this);
+
+	policy = (AppPolicy *)ruleListCtrl->GetItemData(selectedId_);
+	if (policy == NULL) {
+		return;
+	}
+
+	policy->setBinaryName(binName);
+	policy->accept(updateTable);
+	policy->accept(updateWidgets);
+}
+
+void
 DlgRuleEditor::updateAction(int action)
 {
 	AlfPolicy			*policy;
@@ -352,37 +386,34 @@ DlgRuleEditor::OnTableOptionButtonClick(wxCommandEvent& event)
 }
 
 void
-DlgRuleEditor::OnBinaryModifyButtonClick(wxCommandEvent& event)
+DlgRuleEditor::OnAppNameComboBox(wxCommandEvent& event)
 {
-	AppPolicy			*policy;
-	RuleEditorFillWidgetsVisitor	 updateVisitor(this);
-	wxString			 caption = _("Choose a binary");
-	wxString			 wildcard = wxT("*");
-	wxString			 defaultDir = wxT("/usr/bin/");
-	wxString			 defaultFilename = wxEmptyString;
-	wxFileDialog			 fileDlg(NULL, caption, defaultDir,
-					     defaultFilename, wildcard, wxOPEN);
+	updateAppName(appNameComboBox->GetValue());
+}
 
-	policy = (AppPolicy *)ruleListCtrl->GetItemData(selectedId_);
-	if (!policy)
-		return;
+void
+DlgRuleEditor::OnAppBinaryTextCtrl(wxCommandEvent& event)
+{
+	updateBinName(appBinaryTextCtrl->GetValue());
+}
 
-	if (fileDlg.ShowModal() == wxID_OK) {
-		appBinaryTextCtrl->Clear();
-		appBinaryTextCtrl->AppendText(fileDlg.GetPath());
-		policy->setBinaryName(fileDlg.GetPath());
-		updateVisitor.setPropagation(false);
-		policy->accept(updateVisitor);
+void
+DlgRuleEditor::OnAppBinaryModifyButton(wxCommandEvent& event)
+{
+	wxString	 caption = _("Choose a binary");
+	wxString	 wildcard = wxT("*");
+	wxString	 defaultDir = wxT("/usr/bin/");
+	wxString	 defaultFilename = wxEmptyString;
+	wxFileDialog	*fileDlg;
+
+	wxBeginBusyCursor();
+	fileDlg = new wxFileDialog(NULL, caption, defaultDir, defaultFilename,
+	    wildcard, wxOPEN);
+	wxEndBusyCursor();
+
+	if (fileDlg->ShowModal() == wxID_OK) {
+		updateBinName(fileDlg->GetPath());
 	}
-
-	ruleListCtrl->SetItem(selectedId_, RULEDITOR_LIST_COLUMN_BIN,
-	    policy->getBinaryName());
-	ruleListCtrl->SetItem(selectedId_, RULEDITOR_LIST_COLUMN_APP,
-	    policy->getBinaryName());
-
-	/* XXX: KM just as long as we have no sofisticated guessAPP */
-	appNameComboBox->Clear();
-	appNameComboBox->SetValue(policy->getBinaryName());
 }
 
 void
