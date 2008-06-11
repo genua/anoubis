@@ -62,8 +62,8 @@ TrayIcon::TrayIcon(void)
 	daemon_ = _("none");
 
 	/* these defaults comply with the wxforrmbuilder settings */
-	noAlert_ = true;
-	noEscalation_ = false;
+	sendAlert_ = false;
+	sendEscalation_ = true;
 	escalationTimeout_ = 0;
 	alertTimeout_ = 10;
 
@@ -161,9 +161,9 @@ void
 TrayIcon::OnEscalationSettingsChanged(wxCommandEvent& event)
 {
 	if (event.GetInt() > 0) {
-		noEscalation_ = true;
+		sendEscalation_ = true;
 	} else {
-		noEscalation_ = false;
+		sendEscalation_ = false;
 	}
 	escalationTimeout_ = event.GetExtraLong();
 }
@@ -172,9 +172,9 @@ void
 TrayIcon::OnAlertSettingsChanged(wxCommandEvent& event)
 {
 	if (event.GetInt() > 0) {
-		noAlert_ = true;
+		sendAlert_ = true;
 	} else {
-		noAlert_ = false;
+		sendAlert_ = false;
 	}
 	alertTimeout_ = event.GetExtraLong();
 }
@@ -212,7 +212,7 @@ TrayIcon::update(void)
 		icon = iconMsgQuestion_;
 		sprintf(message, "Received Escalations: %d\n",
 		    messageEscalationCount_);
-		if (!noEscalation_) {
+		if (sendEscalation_) {
 			if (!systemNotify("ESCALATION", message,
 			    NOTIFY_URGENCY_CRITICAL, escalationTimeout_))
 				wxGetApp().log(_("Couldn't send Escalation"));
@@ -224,7 +224,7 @@ TrayIcon::update(void)
 			icon = iconMsgProblem_;
 			sprintf(message, "Received Alerts: %d\n",
 			    messageAlertCount_);
-			if (!noAlert_) {
+			if (sendAlert_) {
 				if (!systemNotify("ALERT", message,
 				    NOTIFY_URGENCY_NORMAL,
 				    alertTimeout_))

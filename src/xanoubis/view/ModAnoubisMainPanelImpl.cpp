@@ -93,16 +93,16 @@ ModAnoubisMainPanelImpl::ModAnoubisMainPanelImpl(wxWindow* parent,
 ModAnoubisMainPanelImpl::~ModAnoubisMainPanelImpl(void)
 {
 	/* write Escalations Settings */
-	userOptions_->Write(wxT("/Options/NoEscalations"),
-	    cb_NoEscalations->IsChecked());
+	userOptions_->Write(wxT("/Options/SendEscalations"),
+	    cb_SendEscalations->IsChecked());
 	userOptions_->Write(wxT("/Options/NoEscalationsTimeout"),
 	    cb_NoEscalationTimeout->IsChecked());
 	userOptions_->Write(wxT("/Options/EscalationTimeout"),
 	    m_spinEscalationNotifyTimeout->GetValue());
 
 	/* write Alert Settings */
-	userOptions_->Write(wxT("/Options/NoAlert"),
-	    cb_NoAlerts->IsChecked());
+	userOptions_->Write(wxT("/Options/SendAlerts"),
+	    cb_SendAlerts->IsChecked());
 	userOptions_->Write(wxT("/Options/NoAlertTimeout"),
 	    cb_NoAlertTimeout->IsChecked());
 	userOptions_->Write(wxT("/Options/AlertTimeout"),
@@ -112,30 +112,30 @@ ModAnoubisMainPanelImpl::~ModAnoubisMainPanelImpl(void)
 void
 ModAnoubisMainPanelImpl::readOptions(void)
 {
-	bool NoEscalation = false;
+	bool SendEscalation = true;
 	bool NoEscalationTimeout = true;
 	int EscalationTimeout = 0;
-	bool NoAlert = true;
+	bool SendAlert = false;
 	bool NoAlertTimeout = false;
 	int AlertTimeout = 10;
 
 	/* read the stored Notifications Options */
-	userOptions_->Read(wxT("/Options/NoEscalations"), &NoEscalation);
+	userOptions_->Read(wxT("/Options/SendEscalations"), &SendEscalation);
 	userOptions_->Read(wxT("/Options/NoEscalationsTimeout"),
 	    &NoEscalationTimeout);
 	userOptions_->Read(wxT("/Options/EscalationTimeout"),
 	    &EscalationTimeout);
 
-	userOptions_->Read(wxT("/Options/NoAlert"), &NoAlert);
+	userOptions_->Read(wxT("/Options/SendAlerts"), &SendAlert);
 	userOptions_->Read(wxT("/Options/NoAlertTimeout"), &NoAlertTimeout);
 	userOptions_->Read(wxT("/Options/AlertTimeout"), &AlertTimeout);
 
 	/* restore the stored Notifications Options */
-	cb_NoEscalations->SetValue(NoEscalation);
+	cb_SendEscalations->SetValue(SendEscalation);
 	cb_NoEscalationTimeout->SetValue(NoEscalationTimeout);
 	m_spinEscalationNotifyTimeout->SetValue(EscalationTimeout);
 
-	cb_NoAlerts->SetValue(NoAlert);
+	cb_SendAlerts->SetValue(SendAlert);
 	cb_NoAlertTimeout->SetValue(NoAlertTimeout);
 	m_spinAlertNotifyTimeout->SetValue(AlertTimeout);
 
@@ -148,7 +148,7 @@ void
 ModAnoubisMainPanelImpl::setOptionsWidgetsVisability(void)
 {
 	/* synchronize Escalation widgets */
-	if (cb_NoEscalations->IsChecked()) {
+	if (!cb_SendEscalations->IsChecked()) {
 		m_spinEscalationNotifyTimeout->Disable();
 		cb_NoEscalationTimeout->Disable();
 		tx_EscalationNotifyTimeoutLabel->Disable();
@@ -165,7 +165,7 @@ ModAnoubisMainPanelImpl::setOptionsWidgetsVisability(void)
 	}
 
 	/* synchronize Alert widgets */
-	if (cb_NoAlerts->IsChecked()) {
+	if (!cb_SendAlerts->IsChecked()) {
 		m_spinAlertNotifyTimeout->Disable();
 		cb_NoAlertTimeout->Disable();
 		tx_AlertNotifyTimeoutLabel->Disable();
@@ -256,8 +256,8 @@ ModAnoubisMainPanelImpl::sendNotifierOptions(void)
 	long timeout;
 
 	/* handle and pass Escalation Options */
-	show = cb_NoEscalations->IsChecked();
-	if (!show && cb_NoEscalationTimeout->IsChecked()) {
+	show = cb_SendEscalations->IsChecked();
+	if (show && cb_NoEscalationTimeout->IsChecked()) {
 		timeout = 0;
 	} else {
 		timeout = m_spinEscalationNotifyTimeout->GetValue();
@@ -266,8 +266,8 @@ ModAnoubisMainPanelImpl::sendNotifierOptions(void)
 	    timeout);
 
 	/* handle and pass Alert Options */
-	 show = cb_NoAlerts->IsChecked();
-	 if (!show && cb_NoAlertTimeout->IsChecked()) {
+	 show = cb_SendAlerts->IsChecked();
+	 if (show && cb_NoAlertTimeout->IsChecked()) {
 		 timeout = 0;
 	 } else {
 		 timeout = m_spinAlertNotifyTimeout->GetValue();

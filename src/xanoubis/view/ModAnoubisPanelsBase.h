@@ -108,14 +108,14 @@ class ModAnoubisMainPanelBase : public wxPanel
 		wxRadioButton* rb_always;
 		wxButton* bt_deny;
 		wxPanel* tb_MainAnoubisOptions;
-		wxCheckBox* cb_NoEscalations;
+		wxCheckBox* cb_SendEscalations;
 		
 		wxCheckBox* cb_NoEscalationTimeout;
 		
 		wxSpinCtrl* m_spinEscalationNotifyTimeout;
 		wxStaticText* tx_EscalationNotifyTimeoutLabel;
 		
-		wxCheckBox* cb_NoAlerts;
+		wxCheckBox* cb_SendAlerts;
 		
 		wxCheckBox* cb_NoAlertTimeout;
 		

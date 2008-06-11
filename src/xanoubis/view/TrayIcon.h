@@ -43,8 +43,8 @@ class TrayIcon : public wxTaskBarIcon
 		wxIcon			*iconNormal_;
 		wxIcon			*iconMsgProblem_;
 		wxIcon			*iconMsgQuestion_;
-		bool			noAlert_;
-		bool			noEscalation_;
+		bool			sendAlert_;
+		bool			sendEscalation_;
 		unsigned int            escalationTimeout_;
 		unsigned int            alertTimeout_;
 		NotifyNotification	*notification;

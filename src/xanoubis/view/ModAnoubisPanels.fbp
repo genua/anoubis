@@ -2167,17 +2167,17 @@
                                                                 <property name="proportion">0</property>
                                                                 <object class="wxCheckBox" expanded="1">
                                                                     <property name="bg"></property>
-                                                                    <property name="checked">0</property>
+                                                                    <property name="checked">1</property>
                                                                     <property name="context_help"></property>
                                                                     <property name="enabled">1</property>
                                                                     <property name="fg"></property>
                                                                     <property name="font"></property>
                                                                     <property name="hidden">0</property>
                                                                     <property name="id">wxID_ANY</property>
-                                                                    <property name="label">Do not send Escalations</property>
+                                                                    <property name="label">send Escalations</property>
                                                                     <property name="maximum_size"></property>
                                                                     <property name="minimum_size"></property>
-                                                                    <property name="name">cb_NoEscalations</property>
+                                                                    <property name="name">cb_SendEscalations</property>
                                                                     <property name="permission">protected</property>
                                                                     <property name="pos"></property>
                                                                     <property name="size"></property>
@@ -2448,17 +2448,17 @@
                                                                 <property name="proportion">0</property>
                                                                 <object class="wxCheckBox" expanded="1">
                                                                     <property name="bg"></property>
-                                                                    <property name="checked">1</property>
+                                                                    <property name="checked">0</property>
                                                                     <property name="context_help"></property>
                                                                     <property name="enabled">1</property>
                                                                     <property name="fg"></property>
                                                                     <property name="font"></property>
                                                                     <property name="hidden">0</property>
                                                                     <property name="id">wxID_ANY</property>
-                                                                    <property name="label">Do not send Alerts</property>
+                                                                    <property name="label">send Alerts</property>
                                                                     <property name="maximum_size"></property>
                                                                     <property name="minimum_size"></property>
-                                                                    <property name="name">cb_NoAlerts</property>
+                                                                    <property name="name">cb_SendAlerts</property>
                                                                     <property name="permission">protected</property>
                                                                     <property name="pos"></property>
                                                                     <property name="size"></property>
@@ -2512,7 +2512,7 @@
                                                                     <property name="bg"></property>
                                                                     <property name="checked">0</property>
                                                                     <property name="context_help"></property>
-                                                                    <property name="enabled">0</property>
+                                                                    <property name="enabled">1</property>
                                                                     <property name="fg"></property>
                                                                     <property name="font"></property>
                                                                     <property name="hidden">0</property>
@@ -2582,7 +2582,7 @@
                                                                         <object class="wxSpinCtrl" expanded="1">
                                                                             <property name="bg"></property>
                                                                             <property name="context_help"></property>
-                                                                            <property name="enabled">0</property>
+                                                                            <property name="enabled">1</property>
                                                                             <property name="fg"></property>
                                                                             <property name="font"></property>
                                                                             <property name="hidden">0</property>
@@ -2637,7 +2637,7 @@
                                                                         <object class="wxStaticText" expanded="1">
                                                                             <property name="bg"></property>
                                                                             <property name="context_help"></property>
-                                                                            <property name="enabled">0</property>
+                                                                            <property name="enabled">1</property>
                                                                             <property name="fg"></property>
                                                                             <property name="font"></property>
                                                                             <property name="hidden">0</property>
