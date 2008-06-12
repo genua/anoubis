@@ -58,6 +58,15 @@ BEGIN_DECLARE_EVENT_TYPES()
 	DECLARE_LOCAL_EVENT_TYPE(anEVT_ANOUBISOPTIONS_SHOW, wxNewEventType())
 
 	/*
+	 * The integer field contains a boolean stating:
+	 * true		=> show Widget
+	 *
+	 * The long  field contains a value stating:
+	 * value	=> RuleId which is going to be shown/selected
+	 */
+	DECLARE_LOCAL_EVENT_TYPE(anEVT_SHOW_RULE, wxNewEventType())
+
+	/*
 	 * The options of the system notification via libnotify for ESCALATIONS
 	 * or ALERTS have changed.
 	 *

@@ -46,6 +46,7 @@ class DlgLogViewer : public DlgLogViewerBase
 
 		void OnAddNotification(wxCommandEvent&);
 		void OnShow(wxCommandEvent&);
+		void OnListItemSelected(wxListEvent&);
 
 	protected:
 		void OnClose(wxCloseEvent& event);

@@ -68,6 +68,15 @@ DEFINE_LOCAL_EVENT_TYPE(anEVT_ALERTNOTIFY_OPTIONS)
 DEFINE_LOCAL_EVENT_TYPE(anEVT_ANOUBISOPTIONS_SHOW)
 
 /*
+ * The integer field contains a boolean stating:
+ * true         => show Widget
+ *
+ * The long  field contains a value stating:
+ * value        => RuleId which is going to be shown/selected
+ */
+DEFINE_LOCAL_EVENT_TYPE(anEVT_SHOW_RULE)
+
+/*
  * A connection to the daemon was sucessfully established.
  * This event is intended of been used between the communicator
  * thread and communicator control only.

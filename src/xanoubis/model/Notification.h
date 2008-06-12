@@ -74,7 +74,7 @@ class Notification {
 		virtual wxString getPath(void);
 		virtual wxString getOrigin(void);
 		virtual wxString getCheckSum(void);
-		virtual wxString getRuleId(void);
+		virtual unsigned int getRuleId(void);
 };
 
 WX_DECLARE_LIST(Notification, NotifyList);

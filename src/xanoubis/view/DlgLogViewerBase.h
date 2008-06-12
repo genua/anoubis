@@ -59,6 +59,7 @@ class DlgLogViewerBase : public wxFrame
 		// Virtual event handlers, overide them in your derived class
 		virtual void OnKeyPressed( wxKeyEvent& event ){ event.Skip(); }
 		virtual void OnClose( wxCloseEvent& event ){ event.Skip(); }
+		virtual void OnListItemSelected( wxListEvent& event ){ event.Skip(); }
 		
 	
 	public:

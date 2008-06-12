@@ -162,6 +162,8 @@ class DlgRuleEditor : public DlgRuleEditorBase
 
 		void OnAlfStateTimeoutChange(wxSpinEvent&);
 
+		void OnShowRule(wxCommandEvent&);
+
 	public:
 		DlgRuleEditor(wxWindow *);
 		~DlgRuleEditor(void);

@@ -52,4 +52,5 @@ DlgLogViewerBase::DlgLogViewerBase( wxWindow* parent, wxWindowID id, const wxStr
 	// Connect Events
 	this->Connect( wxEVT_CHAR, wxKeyEventHandler( DlgLogViewerBase::OnKeyPressed ) );
 	this->Connect( wxEVT_CLOSE_WINDOW, wxCloseEventHandler( DlgLogViewerBase::OnClose ) );
+	lc_logList->Connect( wxEVT_COMMAND_LIST_ITEM_SELECTED, wxListEventHandler( DlgLogViewerBase::OnListItemSelected ), NULL, this );
 }

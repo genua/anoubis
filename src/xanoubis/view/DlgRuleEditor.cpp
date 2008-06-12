@@ -205,6 +205,8 @@ DlgRuleEditor::DlgRuleEditor(wxWindow* parent) : DlgRuleEditorBase(parent)
 	    wxCommandEventHandler(DlgRuleEditor::OnShow), NULL, this);
 	parent->Connect(anEVT_LOAD_RULESET,
 	    wxCommandEventHandler(DlgRuleEditor::OnLoadRuleSet), NULL, this);
+	parent->Connect(anEVT_SHOW_RULE,
+	    wxCommandEventHandler(DlgRuleEditor::OnShowRule), NULL, this);
 }
 
 DlgRuleEditor::~DlgRuleEditor(void)
@@ -725,4 +727,15 @@ void
 DlgRuleEditor::OnAlfStateTimeoutChange(wxSpinEvent& event)
 {
 	updateTimeout(event.GetPosition());
+}
+
+void
+DlgRuleEditor::OnShowRule(wxCommandEvent& event)
+{
+	wxListView *selecter;
+
+	/* show RuleEditor Dialog and corresponding Ruleid entry */
+	this->Show();
+	selecter = (wxListView*)ruleListCtrl;
+	selecter->Select(event.GetExtraLong());
 }

@@ -81,6 +81,8 @@ DlgLogViewer::DlgLogViewer(wxWindow* parent) : DlgLogViewerBase(parent)
 	    wxCommandEventHandler(DlgLogViewer::OnAddNotification), NULL, this);
 	parent->Connect(anEVT_LOGVIEWER_SHOW,
 	    wxCommandEventHandler(DlgLogViewer::OnShow), NULL, this);
+	parent->Connect(wxEVT_COMMAND_LIST_ITEM_DESELECTED,
+	     wxListEventHandler(DlgLogViewer::OnListItemSelected), NULL, this);
 }
 
 DlgLogViewer::~DlgLogViewer(void)
@@ -125,6 +127,7 @@ DlgLogViewer::addNotification(Notification *notify)
 	    notify->getModule());
 	lc_logList->SetItem(listIdx, LOGVIEWER_COLUMN_MESSAGE,
 	    notify->getLogMessage());
+	lc_logList->SetItemPtrData(listIdx, (wxUIntPtr)notify);
 
 	/* trigger new calculation of column width (all icons has same size) */
 	lc_logList->SetColumnWidth(LOGVIEWER_COLUMN_TIME, wxLIST_AUTOSIZE);
@@ -144,4 +147,20 @@ void
 DlgLogViewer::OnShow(wxCommandEvent& event)
 {
 	this->Show(event.GetInt());
+}
+
+void
+DlgLogViewer::OnListItemSelected(wxListEvent& event)
+{
+	Notification	*notify;
+
+	notify = (Notification*)event.GetData();
+
+	if (!notify)
+		return;
+
+	wxCommandEvent  showEvent(anEVT_SHOW_RULE);
+	showEvent.SetInt(true);
+	showEvent.SetExtraLong(notify->getRuleId());
+	wxGetApp().sendEvent(showEvent);
 }
