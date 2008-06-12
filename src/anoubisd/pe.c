@@ -1448,6 +1448,9 @@ pe_decide_alfdflt(struct apn_rule *rule, struct alf_event *msg, int *log,
 		case APN_ACTION_DENY:
 			decision = POLICY_DENY;
 			break;
+		case APN_ACTION_ASK:
+			decision = POLICY_ASK;
+			break;
 		default:
 		log_warnx("pe_decide_alfdflt: unknown action %d",
 			    hp->rule.apndefault.action);
@@ -1880,6 +1883,9 @@ pe_decide_sfsdflt(struct apn_rule *rule, struct sfs_open_message *msg, int *log,
 			break;
 		case APN_ACTION_DENY:
 			decision = POLICY_DENY;
+			break;
+		case APN_ACTION_ASK:
+			decision = POLICY_ASK;
 			break;
 		default:
 		log_warnx("pe_decide_sfsdflt: unknown action %d",
