@@ -54,11 +54,18 @@
 
 #include "SfsPolicy.h"
 
+IMPLEMENT_DYNAMIC_CLASS(SfsPolicy, Policy)
+
+SfsPolicy::SfsPolicy(void)
+{
+}
+
 SfsPolicy::SfsPolicy(AppPolicy *parent, struct apn_sfsrule *sfsRule)
     : Policy(parent)
 {
 	sfsRule_ = sfsRule;
 	currHash_ = wxEmptyString;
+	modified_ = false;
 }
 
 SfsPolicy::~SfsPolicy()
@@ -80,6 +87,7 @@ SfsPolicy::setBinaryName(wxString name)
 
 	free(app->name);
 	app->name = strdup(name.fn_str());
+	modified_ = true;
 }
 
 wxString
@@ -177,6 +185,7 @@ SfsPolicy::setHashValue(unsigned char csum[MAX_APN_HASH_LEN])
 	}
 
 	bcopy(csum, sfsRule_->rule.sfscheck.app->hashvalue, len);
+	modified_ = true;
 }
 
 wxString
@@ -207,4 +216,16 @@ SfsPolicy::getHashValue(void)
 	}
 
 	return (result);
+}
+
+bool
+SfsPolicy::isModified(void)
+{
+	return (modified_);
+}
+
+void
+SfsPolicy::setModified(bool modified)
+{
+	modified_ = modified;
 }

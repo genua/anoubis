@@ -107,6 +107,8 @@ ModAnoubisMainPanelImpl::~ModAnoubisMainPanelImpl(void)
 	    cb_NoAlertTimeout->IsChecked());
 	userOptions_->Write(wxT("/Options/AlertTimeout"),
 	    m_spinAlertNotifyTimeout->GetValue());
+	userOptions_->Write(wxT("/Options/AutoChecksumCheck"),
+	    controlAutoCheck->IsChecked());
 }
 
 void
@@ -118,6 +120,7 @@ ModAnoubisMainPanelImpl::readOptions(void)
 	bool SendAlert = false;
 	bool NoAlertTimeout = false;
 	int AlertTimeout = 10;
+	bool AutoChecksum = false;
 
 	/* read the stored Notifications Options */
 	userOptions_->Read(wxT("/Options/SendEscalations"), &SendEscalation);
@@ -130,6 +133,8 @@ ModAnoubisMainPanelImpl::readOptions(void)
 	userOptions_->Read(wxT("/Options/NoAlertTimeout"), &NoAlertTimeout);
 	userOptions_->Read(wxT("/Options/AlertTimeout"), &AlertTimeout);
 
+	userOptions_->Read(wxT("/Options/AutoChecksumCheck"), &AutoChecksum);
+
 	/* restore the stored Notifications Options */
 	cb_SendEscalations->SetValue(SendEscalation);
 	cb_NoEscalationTimeout->SetValue(NoEscalationTimeout);
@@ -138,6 +143,11 @@ ModAnoubisMainPanelImpl::readOptions(void)
 	cb_SendAlerts->SetValue(SendAlert);
 	cb_NoAlertTimeout->SetValue(NoAlertTimeout);
 	m_spinAlertNotifyTimeout->SetValue(AlertTimeout);
+
+	controlAutoCheck->SetValue(AutoChecksum);
+	wxCommandEvent showEvent(anEVT_SEND_AUTO_CHECK);
+	showEvent.SetInt(AutoChecksum);
+	wxGetApp().sendEvent(showEvent);
 
 	/* set widgets visability and send options event */
 	setOptionsWidgetsVisability();
@@ -542,4 +552,12 @@ ModAnoubisMainPanelImpl::OnAnoubisOptionShow(wxCommandEvent& event)
 	tb_MainAnoubisNotify->ChangeSelection(1);
 
 	event.Skip();
+}
+
+void
+ModAnoubisMainPanelImpl::OnAutoCheck(wxCommandEvent& event)
+{
+	wxCommandEvent showEvent(anEVT_SEND_AUTO_CHECK);
+	showEvent.SetInt(event.IsChecked());
+	wxGetApp().sendEvent(showEvent);
 }

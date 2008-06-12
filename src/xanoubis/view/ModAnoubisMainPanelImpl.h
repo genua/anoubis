@@ -66,6 +66,7 @@ class ModAnoubisMainPanelImpl : public ModAnoubisMainPanelBase
 
 		void OnEscalationsShow(wxCommandEvent&);
 		void OnAnoubisOptionShow(wxCommandEvent&);
+		void OnAutoCheck(wxCommandEvent&);
 
 	public:
 		ModAnoubisMainPanelImpl(wxWindow*, wxWindowID);

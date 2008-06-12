@@ -52,6 +52,8 @@
 #include <wx/listimpl.cpp>
 WX_DEFINE_LIST(PolicyList);
 
+IMPLEMENT_CLASS(Policy, wxObject)
+
 Policy::Policy(void)
 {
 	parent_ = NULL;

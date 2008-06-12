@@ -121,6 +121,7 @@ class ModAnoubisMainPanelBase : public wxPanel
 		
 		wxSpinCtrl* m_spinAlertNotifyTimeout;
 		wxStaticText* tx_AlertNotifyTimeoutLabel;
+		wxCheckBox* controlAutoCheck;
 		
 		// Virtual event handlers, overide them in your derived class
 		virtual void OnTypeChoosen( wxCommandEvent& event ){ event.Skip(); }
@@ -136,6 +137,7 @@ class ModAnoubisMainPanelBase : public wxPanel
 		virtual void OnAlertDisable( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnAlertNoTimeout( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnAlertTimeout( wxSpinEvent& event ){ event.Skip(); }
+		virtual void OnAutoCheck( wxCommandEvent& event ){ event.Skip(); }
 		
 	
 	public:

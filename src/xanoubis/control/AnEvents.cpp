@@ -89,6 +89,12 @@ DEFINE_LOCAL_EVENT_TYPE(anEVT_SHOW_RULE)
 DEFINE_LOCAL_EVENT_TYPE(anEVT_COM_CONNECTION)
 
 /*
+ * Send the new Status for the Auto Checksum Checkbox. The status is stored
+ * in the in field of the event.
+ */
+DEFINE_LOCAL_EVENT_TYPE(anEVT_SEND_AUTO_CHECK)
+
+/*
  * The count of open ALERTS is stored in the events int field
  */
 DEFINE_LOCAL_EVENT_TYPE(anEVT_OPEN_ALERTS)

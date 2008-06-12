@@ -54,11 +54,15 @@
 
 class SfsPolicy : public Policy
 {
+	DECLARE_DYNAMIC_CLASS(SfsPolicy)
+
 	private:
 		struct apn_sfsrule	*sfsRule_;
 		wxString		 currHash_;
+		bool			 modified_;
 
 	public:
+		SfsPolicy(void);
 		SfsPolicy(AppPolicy *, struct apn_sfsrule *);
 		~SfsPolicy(void);
 
@@ -73,6 +77,9 @@ class SfsPolicy : public Policy
 		bool		 calcCurrentHash(unsigned char *);
 		void		 setHashValue(unsigned char *);
 		wxString	 getHashValue(void);
+
+		bool		 isModified(void);
+		void		 setModified(bool);
 };
 
 #endif	/* _SFSPOLICY_H_ */

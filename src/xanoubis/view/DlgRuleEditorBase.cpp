@@ -112,7 +112,7 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	
 	sz_main->Add( controlRuleSetSizer, 0, wxEXPAND, 5 );
 	
-	ruleListCtrl = new wxListCtrl( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLC_HRULES|wxLC_REPORT );
+	ruleListCtrl = new wxListCtrl( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLC_HRULES|wxLC_REPORT|wxLC_SINGLE_SEL );
 	sz_main->Add( ruleListCtrl, 1, wxALL|wxEXPAND, 5 );
 	
 	ruleEditNotebook = new wxNotebook( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0|wxVSCROLL );

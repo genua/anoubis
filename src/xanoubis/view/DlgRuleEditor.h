@@ -97,6 +97,8 @@ class DlgRuleEditor : public DlgRuleEditorBase
 {
 	private:
 		unsigned long	selectedId_;
+		unsigned long	lastSelectedId_;
+		bool		autoCheck_;
 		PolicyRuleSet	*ruleSet_;
 		wxString	columnNames_[RULEDITOR_LIST_COLUMN_EOL];
 		int		columnWidths_[RULEDITOR_LIST_COLUMN_EOL];
@@ -161,8 +163,11 @@ class DlgRuleEditor : public DlgRuleEditorBase
 		void OnSrcAddrAddButton(wxCommandEvent&);
 
 		void OnAlfStateTimeoutChange(wxSpinEvent&);
-
+		void OnAutoCheck(wxCommandEvent&);
 		void OnShowRule(wxCommandEvent&);
+
+		void SetRuleSetToNotModified(void);
+		bool CheckLastSelection(void);
 
 	public:
 		DlgRuleEditor(wxWindow *);

@@ -50,6 +50,13 @@
 #include "AlfPolicy.h"
 #include "PolicyVisitor.h"
 
+IMPLEMENT_DYNAMIC_CLASS(AlfPolicy, Policy)
+
+AlfPolicy::AlfPolicy(void)
+{
+
+}
+
 AlfPolicy::AlfPolicy(AppPolicy *parent, struct apn_alfrule *alfRule)
     : Policy(parent)
 {
@@ -133,7 +140,11 @@ AlfPolicy::accept(PolicyVisitor &visitor)
 void
 AlfPolicy::setType(int type)
 {
+	AppPolicy *parent;
+
 	alfRule_->type = type;
+	parent = (AppPolicy *)this->getParent();
+	parent->setModified(true);
 }
 
 int
@@ -171,6 +182,8 @@ AlfPolicy::getTypeName(void)
 void
 AlfPolicy::setAction(int action)
 {
+	AppPolicy *parent;
+
 	switch (alfRule_->type) {
 		case APN_ALF_FILTER:
 			alfRule_->rule.afilt.action = action;
@@ -184,6 +197,8 @@ AlfPolicy::setAction(int action)
 		default:
 			break;
 	}
+	parent = (AppPolicy *)this->getParent();
+	parent->setModified(true);
 }
 
 int
@@ -228,7 +243,8 @@ AlfPolicy::getContextList(void)
 			} else {
 				result.Add(wxString::From8BitData(app->name));
 			}
-			if ((app == NULL) || (app->next == NULL)) {                                break;
+			if ((app == NULL) || (app->next == NULL)) {
+				break;
 			}
 			app = app->next;
 		} while (app);
@@ -341,8 +357,12 @@ AlfPolicy::getLogName(void)
 void
 AlfPolicy::setDirection(int direction)
 {
+	AppPolicy *parent;
+
 	if (alfRule_->type == APN_ALF_FILTER) {
 		alfRule_->rule.afilt.filtspec.netaccess = direction;
+		parent = (AppPolicy *)this->getParent();
+		parent->setModified(true);
 	}
 }
 
@@ -367,8 +387,12 @@ AlfPolicy::getDirectionName(void)
 void
 AlfPolicy::setProtocol(int protocol)
 {
+	AppPolicy *parent;
+
 	if (alfRule_->type == APN_ALF_FILTER) {
 		alfRule_->rule.afilt.filtspec.proto = protocol;
+		parent = (AppPolicy *)this->getParent();
+		parent->setModified(true);
 	}
 }
 
@@ -410,8 +434,12 @@ AlfPolicy::getProtocolName(void)
 void
 AlfPolicy::setAddrFamily(int addrFamily)
 {
+	AppPolicy *parent;
+
 	if (alfRule_->type == APN_ALF_FILTER) {
 		alfRule_->rule.afilt.filtspec.af = addrFamily;
+		parent = (AppPolicy *)this->getParent();
+		parent->setModified(true);
 	}
 }
 
@@ -642,8 +670,12 @@ AlfPolicy::getToPortName(void)
 void
 AlfPolicy::setStateTimeout(int timeout)
 {
+	AppPolicy *parent;
+
 	if (alfRule_->type == APN_ALF_FILTER) {
 		alfRule_->rule.afilt.filtspec.statetimeout = timeout;
+		parent = (AppPolicy *)this->getParent();
+		parent->setModified(true);
 	}
 }
 
@@ -665,8 +697,12 @@ AlfPolicy::getStateTimeout(void)
 void
 AlfPolicy::setCapType(int capability)
 {
+	AppPolicy *parent;
+
 	if (alfRule_->type == APN_ALF_CAPABILITY) {
 		alfRule_->rule.acap.capability = capability;
+		parent = (AppPolicy *)this->getParent();
+		parent->setModified(true);
 	}
 }
 

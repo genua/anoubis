@@ -35,15 +35,19 @@ class AlfPolicy;
 
 class AppPolicy : public Policy
 {
+	DECLARE_DYNAMIC_CLASS(AppPolicy)
+
 	private:
 		PolicyList	 ruleList_;
 		wxString	 appName_;
 		AlfPolicy	*context_;
 		struct apn_rule	*appRule_;
+		bool		 modified_;
 
 		wxString	 currHash_;
 
 	public:
+		AppPolicy(void);
 		AppPolicy(struct apn_rule *);
 		~AppPolicy(void);
 
@@ -62,6 +66,9 @@ class AppPolicy : public Policy
 		AlfPolicy	*getContext(void);
 		bool		 hasContext(void);
 		int		 getType(void);
+
+		bool		 isModified(void);
+		void		 setModified(bool);
 };
 
 #endif	/* _APPPOLICY_H_ */

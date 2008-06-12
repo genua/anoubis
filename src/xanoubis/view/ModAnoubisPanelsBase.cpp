@@ -264,7 +264,7 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	sz_MainAnoubisOptions = new wxBoxSizer( wxVERTICAL );
 	
 	wxBoxSizer* bSizer13;
-	bSizer13 = new wxBoxSizer( wxHORIZONTAL );
+	bSizer13 = new wxBoxSizer( wxVERTICAL );
 	
 	wxStaticBoxSizer* sbSizer3;
 	sbSizer3 = new wxStaticBoxSizer( new wxStaticBox( tb_MainAnoubisOptions, -1, _("Escalation Notifier Settings") ), wxVERTICAL );
@@ -312,10 +312,7 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	
 	sbSizer3->Add( fgSizer2, 1, wxEXPAND, 5 );
 	
-	bSizer13->Add( sbSizer3, 49, wxEXPAND, 5 );
-	
-	
-	bSizer13->Add( 0, 0, 2, wxEXPAND, 5 );
+	bSizer13->Add( sbSizer3, 30, wxEXPAND, 5 );
 	
 	wxStaticBoxSizer* sbSizer4;
 	sbSizer4 = new wxStaticBoxSizer( new wxStaticBox( tb_MainAnoubisOptions, -1, _("Alert Notifier Settings") ), wxVERTICAL );
@@ -357,7 +354,21 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	
 	sbSizer4->Add( fgSizer3, 1, wxEXPAND, 5 );
 	
-	bSizer13->Add( sbSizer4, 49, wxEXPAND, 5 );
+	bSizer13->Add( sbSizer4, 30, wxEXPAND, 5 );
+	
+	wxStaticBoxSizer* sbSizer12;
+	sbSizer12 = new wxStaticBoxSizer( new wxStaticBox( tb_MainAnoubisOptions, -1, _("Rule Editor") ), wxVERTICAL );
+	
+	wxBoxSizer* bSizer19;
+	bSizer19 = new wxBoxSizer( wxVERTICAL );
+	
+	controlAutoCheck = new wxCheckBox( tb_MainAnoubisOptions, wxID_ANY, _("Auto Checksum Check"), wxDefaultPosition, wxDefaultSize, 0 );
+	
+	bSizer19->Add( controlAutoCheck, 0, wxALL, 5 );
+	
+	sbSizer12->Add( bSizer19, 1, wxEXPAND, 5 );
+	
+	bSizer13->Add( sbSizer12, 30, wxEXPAND, 5 );
 	
 	sz_MainAnoubisOptions->Add( bSizer13, 1, wxEXPAND, 5 );
 	
@@ -386,6 +397,7 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	cb_SendAlerts->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( ModAnoubisMainPanelBase::OnAlertDisable ), NULL, this );
 	cb_NoAlertTimeout->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( ModAnoubisMainPanelBase::OnAlertNoTimeout ), NULL, this );
 	m_spinAlertNotifyTimeout->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( ModAnoubisMainPanelBase::OnAlertTimeout ), NULL, this );
+	controlAutoCheck->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( ModAnoubisMainPanelBase::OnAutoCheck ), NULL, this );
 }
 
 ModAnoubisOverviewPanelBase::ModAnoubisOverviewPanelBase( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size, long style ) : wxPanel( parent, id, pos, size, style )

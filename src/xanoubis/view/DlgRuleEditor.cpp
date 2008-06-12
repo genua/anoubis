@@ -40,7 +40,7 @@
 
 #include <wx/filedlg.h>
 #include <wx/choicdlg.h>
-
+#include <wx/msgdlg.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
@@ -134,6 +134,8 @@ AddrLine::remove(void)
 DlgRuleEditor::DlgRuleEditor(wxWindow* parent) : DlgRuleEditorBase(parent)
 {
 	selectedId_ = 0;
+	lastSelectedId_ = 0;
+	autoCheck_ = false;
 	ruleSet_ = NULL;
 
 	columnNames_[RULEDITOR_LIST_COLUMN_PRIO] = _("ID");
@@ -207,6 +209,8 @@ DlgRuleEditor::DlgRuleEditor(wxWindow* parent) : DlgRuleEditorBase(parent)
 	    wxCommandEventHandler(DlgRuleEditor::OnLoadRuleSet), NULL, this);
 	parent->Connect(anEVT_SHOW_RULE,
 	    wxCommandEventHandler(DlgRuleEditor::OnShowRule), NULL, this);
+	parent->Connect(anEVT_SEND_AUTO_CHECK,
+	    wxCommandEventHandler(DlgRuleEditor::OnAutoCheck), NULL, this);
 }
 
 DlgRuleEditor::~DlgRuleEditor(void)
@@ -259,7 +263,6 @@ DlgRuleEditor::updateAction(int action)
 	if (policy == NULL) {
 		return;
 	}
-
 	policy->setAction(action);
 	policy->accept(updateTable);
 	policy->accept(updateWidgets);
@@ -593,7 +596,6 @@ DlgRuleEditor::OnSfsBinaryModifyButton(wxCommandEvent& event)
 	wxFileDialog	 fileDlg(NULL, caption, defaultDir, defaultFilename,
 			    wildcard, wxOPEN);
 
-
 	if (fileDlg.ShowModal() == wxID_OK) {
 		policy->setBinaryName(fileDlg.GetPath());
 		sfsBinaryTextCtrl->Clear();
@@ -687,9 +689,17 @@ DlgRuleEditor::OnLineSelected(wxListEvent& event)
 {
 	RuleEditorFillWidgetsVisitor	 updateVisitor(this);
 	Policy				*policy;
+	wxListView			*selecter;
 
+	lastSelectedId_ = selectedId_;
+	if (autoCheck_) {
+		if (!CheckLastSelection()) {
+			selecter = (wxListView *)ruleListCtrl;
+			selecter->Focus(selectedId_);
+			return;
+		}
+	}
 	selectedId_ = event.GetIndex();
-
 	updateVisitor.setPropagation(false);
 	policy = (Policy *)event.GetData();
 	if (!policy)
@@ -738,4 +748,132 @@ DlgRuleEditor::OnShowRule(wxCommandEvent& event)
 	this->Show();
 	selecter = (wxListView*)ruleListCtrl;
 	selecter->Select(event.GetExtraLong());
+}
+
+void
+DlgRuleEditor::OnAutoCheck(wxCommandEvent& event)
+{
+	autoCheck_ = event.GetInt();
+}
+
+void
+DlgRuleEditor::SetRuleSetToNotModified(void)
+{
+	Policy				*policy;
+	AppPolicy			*appPolicy;
+	SfsPolicy			*sfsPolicy;
+	AlfPolicy			*alfPolicy;
+	long				 iterator;
+
+	for (iterator = 0; iterator < ruleListCtrl->GetItemCount(); iterator++)
+	{
+		policy = (Policy *)ruleListCtrl->GetItemData(iterator);
+		if (!policy)
+			return;
+
+		if (policy->IsKindOf(CLASSINFO(SfsPolicy))) {
+			sfsPolicy = (SfsPolicy *)policy;
+			sfsPolicy->setModified(false);
+		} else {
+			if (policy->IsKindOf(CLASSINFO(AlfPolicy))) {
+				alfPolicy = (AlfPolicy *)policy;
+				appPolicy = (AppPolicy *)alfPolicy->getParent();
+			} else {
+				appPolicy = (AppPolicy *)policy;
+			}
+			appPolicy->setModified(false);
+		}
+
+	}
+}
+
+bool
+DlgRuleEditor::CheckLastSelection(void)
+{
+	Policy				*policy;
+	RuleEditorFillWidgetsVisitor	 updateVisitor(this);
+	AppPolicy			*appPolicy;
+	SfsPolicy			*sfsPolicy;
+	AlfPolicy			*alfPolicy;
+	unsigned char			 csum[MAX_APN_HASH_LEN];
+	int				 mismatch;
+	wxString			 currHash;
+	wxString			 regHash;
+	wxString			 message;
+
+	sfsPolicy = NULL;
+	alfPolicy = NULL;
+	appPolicy = NULL;
+	policy	  = NULL;
+
+	policy = (Policy *)ruleListCtrl->GetItemData(selectedId_);
+	if (!policy)
+		return (false);
+
+	if (policy->IsKindOf(CLASSINFO(SfsPolicy))) {
+		sfsPolicy = (SfsPolicy *)policy;
+		if (!sfsPolicy->isModified())
+			return (true);
+
+		if (sfsPolicy->calcCurrentHash(csum)) {
+			currHash = wxT("0x");
+			for (unsigned int i=0; i<MAX_APN_HASH_LEN; i++)
+			{
+				currHash += wxString::Format(
+				wxT("%2.2x"), (unsigned char)csum[i]);
+			}
+		} else {
+			/* XXX: KM Better Error Handling is needed */
+			currHash = _("unable to calculate checksum");
+			return (true);
+		}
+		sfsPolicy->setCurrentHash(currHash);
+		regHash = sfsPolicy->getHashValue();
+		mismatch = regHash.Cmp(currHash);
+	} else {
+		if (policy->IsKindOf(CLASSINFO(AlfPolicy))) {
+			alfPolicy = (AlfPolicy *)policy;
+			appPolicy = (AppPolicy *)alfPolicy->getParent();
+		} else {
+			appPolicy = (AppPolicy *)policy;
+		}
+		if (!appPolicy->isModified() ||
+		    !appPolicy->getBinaryName().Cmp(_("any")))
+			return (true);
+		if (appPolicy->calcCurrentHash(csum)) {
+			currHash = wxT("0x");
+			for (unsigned int i=0; i<MAX_APN_HASH_LEN; i++)
+			{
+				currHash += wxString::Format(
+				wxT("%2.2x"), (unsigned char)csum[i]);
+			}
+		} else {
+			/* XXX: KM Better Error Handling is needed */
+			currHash = _("unable to calculate checksum");
+			return (true);
+		}
+		appPolicy->setCurrentHash(currHash);
+		regHash = appPolicy->getHashValue();
+		mismatch = regHash.Cmp(currHash);
+	}
+
+	if (mismatch) {
+		message = _("Checksums don't match for this Rule.\n \
+		    Back to Rule");
+		int answer = wxMessageBox(message,
+		    _("Back to Rule?"),
+		    wxYES_NO, this);
+		if (answer == wxYES) {
+			selectedId_ = lastSelectedId_;
+			updateVisitor.setPropagation(false);
+			policy = (Policy *)ruleListCtrl->GetItemData(
+			    selectedId_);
+			if (!policy)
+				return (false);
+			policy->accept(updateVisitor);
+			return (false);
+		}
+
+	}
+	return (true);
 }

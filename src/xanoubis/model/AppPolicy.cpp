@@ -53,6 +53,12 @@
 
 #include "AppPolicy.h"
 
+IMPLEMENT_DYNAMIC_CLASS(AppPolicy, Policy)
+
+AppPolicy::AppPolicy(void)
+{
+}
+
 AppPolicy::AppPolicy(struct apn_rule *appRule) : Policy(NULL)
 {
 	struct apn_alfrule	*alfRule;
@@ -64,6 +70,7 @@ AppPolicy::AppPolicy(struct apn_rule *appRule) : Policy(NULL)
 	appRule_ = appRule;
 	currHash_ = wxEmptyString;
 	appName_ = wxEmptyString;
+	modified_ = false;
 
 	switch (appRule_->type) {
 	case APN_ALF:
@@ -122,6 +129,7 @@ void
 AppPolicy::setApplicationName(wxString appName)
 {
 	appName_ = appName;
+	modified_ = true;
 }
 
 void
@@ -133,6 +141,7 @@ AppPolicy::setBinaryName(wxString name)
 
 	free(app->name);
 	app->name = strdup(name.fn_str());
+	modified_ = true;
 }
 
 wxString
@@ -227,6 +236,7 @@ AppPolicy::setHashValue(unsigned char csum[MAX_APN_HASH_LEN])
 	}
 
 	bcopy(csum, appRule_->app->hashvalue, len);
+	modified_ = true;
 }
 
 wxString
@@ -278,4 +288,16 @@ int
 AppPolicy::getType(void)
 {
 	return(appRule_->type);
+}
+
+bool
+AppPolicy::isModified(void)
+{
+	return (modified_);
+}
+
+void
+AppPolicy::setModified(bool modified)
+{
+	modified_ = modified;
 }

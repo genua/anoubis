@@ -81,8 +81,6 @@ DlgLogViewer::DlgLogViewer(wxWindow* parent) : DlgLogViewerBase(parent)
 	    wxCommandEventHandler(DlgLogViewer::OnAddNotification), NULL, this);
 	parent->Connect(anEVT_LOGVIEWER_SHOW,
 	    wxCommandEventHandler(DlgLogViewer::OnShow), NULL, this);
-	parent->Connect(wxEVT_COMMAND_LIST_ITEM_DESELECTED,
-	     wxListEventHandler(DlgLogViewer::OnListItemSelected), NULL, this);
 }
 
 DlgLogViewer::~DlgLogViewer(void)

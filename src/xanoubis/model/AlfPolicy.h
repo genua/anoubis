@@ -54,6 +54,8 @@
 
 class AlfPolicy : public Policy
 {
+	DECLARE_DYNAMIC_CLASS(AlfPolicy)
+
 	private:
 		struct apn_alfrule	*alfRule_;
 
@@ -62,6 +64,7 @@ class AlfPolicy : public Policy
 		wxString        listToString(wxArrayString);
 
 	public:
+		AlfPolicy(void);
 		AlfPolicy(AppPolicy *, struct apn_alfrule *);
 		~AlfPolicy(void);
 

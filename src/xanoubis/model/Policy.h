@@ -39,8 +39,10 @@
 
 class PolicyVisitor;
 
-class Policy
+class Policy: public wxObject
 {
+	DECLARE_CLASS(Policy)
+
 	private:
 		Policy	*parent_;
 

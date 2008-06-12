@@ -96,6 +96,12 @@ BEGIN_DECLARE_EVENT_TYPES()
 	DECLARE_LOCAL_EVENT_TYPE(anEVT_COM_CONNECTION, wxNewEventType())
 
 	/*
+	 *  Send the new Status for the Auto Checksum Checkbox. The status
+	 *  is stored in the int field of the event.
+	 */
+	DECLARE_LOCAL_EVENT_TYPE(anEVT_SEND_AUTO_CHECK, wxNewEventType())
+
+	/*
 	 * The count of open ALERTS is stored in the events int field
 	 */
 	DECLARE_LOCAL_EVENT_TYPE(anEVT_OPEN_ALERTS, wxNewEventType())
