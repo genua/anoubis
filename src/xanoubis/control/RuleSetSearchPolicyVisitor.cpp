@@ -25,28 +25,61 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "VarPolicy.h"
-#include "PolicyVisitor.h"
+#include "RuleSetSearchPolicyVisitor.h"
 
-VarPolicy::VarPolicy(struct var *variable) : Policy(NULL)
+RuleSetSearchPolicyVisitor::RuleSetSearchPolicyVisitor(int id)
 {
-	variable_ = variable;
+	seekId_ = id;
+	matchingPolicy_ = NULL;
 }
 
-VarPolicy::~VarPolicy(void)
+RuleSetSearchPolicyVisitor::~RuleSetSearchPolicyVisitor(void)
 {
-	/* The apn structure is destroyed by PolicyRuleSet */
 }
 
 void
-VarPolicy::accept(PolicyVisitor& visitor)
+RuleSetSearchPolicyVisitor::compare(Policy *policy)
 {
-	visitor.visitVarPolicy(this);
+	/* first match strategie */
+	if (matchingPolicy_ == NULL) {
+		if (policy->getId() == seekId_) {
+			matchingPolicy_ = policy;
+		}
+	}
 }
 
-int
-VarPolicy::getId(void)
+Policy *
+RuleSetSearchPolicyVisitor::getMatchingPolicy(void)
 {
-	/* XXX CH: a var element has no id */
-	return (-1);
+	return (matchingPolicy_);
+}
+
+bool
+RuleSetSearchPolicyVisitor::hasMatchingPolicy(void)
+{
+	return (matchingPolicy_ != NULL);
+}
+
+void
+RuleSetSearchPolicyVisitor::visitAppPolicy(AppPolicy *appPolicy)
+{
+	compare((Policy *)appPolicy);
+}
+
+void
+RuleSetSearchPolicyVisitor::visitAlfPolicy(AlfPolicy *alfPolicy)
+{
+	compare((Policy *)alfPolicy);
+}
+
+void
+RuleSetSearchPolicyVisitor::visitSfsPolicy(SfsPolicy *sfsPolicy)
+{
+	compare((Policy *)sfsPolicy);
+}
+
+void
+RuleSetSearchPolicyVisitor::visitVarPolicy(VarPolicy *varPolicy)
+{
+	/* var rules don't have an id -- do  nothing */
 }

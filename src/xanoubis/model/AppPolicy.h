@@ -66,9 +66,9 @@ class AppPolicy : public Policy
 		AlfPolicy	*getContext(void);
 		bool		 hasContext(void);
 		int		 getType(void);
-
 		bool		 isModified(void);
 		void		 setModified(bool);
+		int		 getId(void);
 };
 
 #endif	/* _APPPOLICY_H_ */

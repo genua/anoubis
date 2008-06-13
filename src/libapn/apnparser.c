@@ -80,10 +80,11 @@ static void	apn_free_var(struct var *);
 static void	apn_free_host(struct apn_host *);
 static void	apn_free_port(struct apn_port *);
 static struct apn_rule	*apn_search_rule(struct apnrule_queue *, int);
-static int		 apn_update_ids(struct apn_rule *,
-			     struct apn_ruleset *);
+static int	apn_update_ids(struct apn_rule *, struct apn_ruleset *);
 static struct apn_alfrule *apn_searchinsert_alfrule(struct apnrule_queue *,
 		 struct apn_alfrule *, int);
+static struct apn_sfsrule *apn_searchinsert_sfsrule(struct apnrule_queue *,
+    struct apn_sfsrule *, int);
 static struct apn_rule	*apn_search_rulealf(struct apnrule_queue *, int);
 static struct apn_rule	*apn_copy_rule(struct apn_rule *);
 static struct apn_alfrule *apn_copy_alfrules(struct apn_alfrule *);
@@ -323,6 +324,66 @@ apn_insert_alfrule(struct apn_ruleset *rs, struct apn_alfrule *arule, int id)
 
 	arule->id = rs->maxid;
 	rs->maxid += 1;
+
+	return (0);
+}
+
+/*
+ * Insert sfs rule before sfs rule with identification ID.  The IDs of
+ * the passed struct apn_sfsrule is updated.
+ *
+ * Return codes:
+ * -1: a systemcall failed and errno is set
+ *  0: rule was inserted
+ *  1: invalid parameters
+ */
+int
+apn_insert_sfsrule(struct apn_ruleset *rs, struct apn_sfsrule *srule, int id)
+{
+	struct apnrule_queue	*queue;
+	struct apn_sfsrule	*p;
+
+	if (rs == NULL || srule == NULL || id < 1 || rs->maxid == INT_MAX)
+		return (1);
+
+	queue = &rs->sfs_queue;
+	if ((p = apn_searchinsert_sfsrule(queue, srule, id)) == NULL)
+		return (1);
+
+	srule->id = rs->maxid;
+	rs->maxid += 1;
+
+	return (0);
+}
+
+/*
+ * Add struct apn_alfrule arule to struct apn_rule identified by id. The
+ * IDs of the passed struct apn_alfrule is updated.
+ *
+ * Return codes:
+ * -1: a systemcall failed and errno is set
+ *  0: rule was added
+ *  1: invalid parameters
+ */
+int
+apn_add2app_alfrule(struct apn_ruleset *rs, struct apn_alfrule *arule, int id)
+{
+	struct apn_rule		*app;
+
+	if (rs == NULL || arule == NULL || id < 1 || rs->maxid == INT_MAX)
+		return (1);
+
+	if ((app = apn_search_rule(&rs->alf_queue, id)) == NULL) {
+		return (1);
+	}
+
+	if (app->rule.alf == NULL) {
+		app->rule.alf = arule;
+		arule->id = rs->maxid;
+		rs->maxid += 1;
+	} else {
+		return (apn_insert_alfrule(rs, arule, app->rule.alf->id));
+	}
 
 	return (0);
 }
@@ -1311,6 +1372,41 @@ apn_searchinsert_alfrule(struct apnrule_queue *queue, struct apn_alfrule
 						previous->next = arule;
 					else
 						p->rule.alf = arule;
+				}
+				return (hp);
+			}
+			previous = hp;
+			hp = hp->next;
+		}
+	}
+
+	return (NULL);
+}
+
+/*
+ * Search for sfs rule with ID id and add arule before that one, if
+ * arule != NULL.  Return the rule with ID rule.
+ */
+static struct apn_sfsrule *
+apn_searchinsert_sfsrule(struct apnrule_queue *queue, struct apn_sfsrule
+    *srule, int id)
+{
+	struct apn_rule		*p;
+	struct apn_sfsrule	*hp, *previous;
+
+	TAILQ_FOREACH(p, queue, entry) {
+		hp = p->rule.sfs;
+		previous = NULL;
+		while (hp) {
+			if (hp->id == id) {
+				if (srule) {
+					srule->tail = hp->tail;
+					srule->next = hp;
+
+					if (previous)
+						previous->next = srule;
+					else
+						p->rule.sfs = srule;
 				}
 				return (hp);
 			}

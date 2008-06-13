@@ -52,6 +52,7 @@ class Policy: public wxObject
 		virtual ~Policy(void);
 
 		virtual void accept(PolicyVisitor&) = 0;
+		virtual int  getId(void) = 0;
 
 		Policy	*getParent(void);
 		wxString getActionName(int);

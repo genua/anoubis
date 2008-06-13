@@ -70,6 +70,8 @@ class AlfPolicy : public Policy
 
 		virtual void accept(PolicyVisitor&);
 
+		int		getId(void);
+
 		void		setType(int);
 		int		getTypeNo(void);
 		wxString	getTypeName(void);

@@ -78,6 +78,12 @@ SfsPolicy::accept(PolicyVisitor& visitor)
 	visitor.visitSfsPolicy(this);
 }
 
+int
+SfsPolicy::getId(void)
+{
+	return (sfsRule_->id);
+}
+
 void
 SfsPolicy::setBinaryName(wxString name)
 {

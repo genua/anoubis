@@ -44,7 +44,7 @@ RuleEditorAddPolicyVisitor::appendPolicy(Policy *policy)
 
 	idx = ruleEditor_->ruleListCtrl->GetItemCount();
 	ruleEditor_->ruleListCtrl->InsertItem(idx, wxString::Format(wxT("%d"),
-	    idx));
+	    policy->getId()));
 
 	ruleEditor_->ruleListCtrl->SetItemPtrData(idx, (wxUIntPtr)policy);
 

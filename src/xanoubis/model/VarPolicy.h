@@ -40,6 +40,8 @@ class VarPolicy : public Policy
 		~VarPolicy(void);
 
 		virtual void accept(PolicyVisitor&);
+
+		int getId(void);
 };
 
 #endif	/* _VARPOLICY_H_ */

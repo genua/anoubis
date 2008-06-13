@@ -41,6 +41,7 @@
 #include <wx/filedlg.h>
 #include <wx/choicdlg.h>
 #include <wx/msgdlg.h>
+
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
@@ -466,6 +467,41 @@ DlgRuleEditor::OnAppValidateChkSumButton(wxCommandEvent& event)
 }
 
 void
+DlgRuleEditor::OnRuleCreateButton(wxCommandEvent& event)
+{
+	int id = -1;
+
+	switch (controlCreationChoice->GetSelection()) {
+	case 0: /* Application */
+		id = ruleSet_->createAppPolicy(selectedId_);
+		break;
+	case 1: /* ALF */
+		id = ruleSet_->createAlfPolicy(selectedId_);
+		break;
+	case 2: /* SFS */
+		id = ruleSet_->createSfsPolicy(selectedId_);
+		break;
+	case 3: /* Variable */
+		id = ruleSet_->createVarPolicy(selectedId_);
+		break;
+	default:
+		break;
+	}
+
+	if (id == -1) {
+		wxMessageBox(_("Could not create new rule."), _("Error"),
+		    wxOK, this);
+	} else {
+		loadRuleSet(ruleSet_);
+	}
+}
+
+void
+DlgRuleEditor::OnRuleDeleteButton(wxCommandEvent& event)
+{
+}
+
+void
 DlgRuleEditor::OnRuleSetSave(wxCommandEvent& event)
 {
 	wxString	tmpPreFix;
@@ -702,6 +738,7 @@ DlgRuleEditor::OnLineSelected(wxListEvent& event)
 	selectedId_ = event.GetIndex();
 	updateVisitor.setPropagation(false);
 	policy = (Policy *)event.GetData();
+	selectedId_ = policy->getId();
 	if (!policy)
 		return;
 	policy->accept(updateVisitor);
@@ -710,27 +747,6 @@ DlgRuleEditor::OnLineSelected(wxListEvent& event)
 void
 DlgRuleEditor::OnSrcAddrAddButton(wxCommandEvent& event)
 {
-}
-
-void
-DlgRuleEditor::OnCreationChoice(wxCommandEvent& event)
-{
-	/* keep this in sync with controlCreationChoice elements */
-	switch (event.GetSelection()) {
-	case 0:
-		ruleSet_->insertAlfPolicy(selectedId_);
-		break;
-	case 1:
-		ruleSet_->insertSfsPolicy(selectedId_);
-		break;
-	case 2:
-		ruleSet_->insertVarPolicy(selectedId_);
-		break;
-	default:
-		break;
-	}
-
-	loadRuleSet(ruleSet_);
 }
 
 void

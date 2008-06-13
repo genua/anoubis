@@ -25,28 +25,30 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "VarPolicy.h"
+#ifndef _RULESETSEARCHPOLICYVISITOR_H_
+#define _RULESETSEARCHPOLICYVISITOR_H_
+
 #include "PolicyVisitor.h"
 
-VarPolicy::VarPolicy(struct var *variable) : Policy(NULL)
+class RuleSetSearchPolicyVisitor : public PolicyVisitor
 {
-	variable_ = variable;
-}
+	private:
+		int	 seekId_;
+		Policy	*matchingPolicy_;
 
-VarPolicy::~VarPolicy(void)
-{
-	/* The apn structure is destroyed by PolicyRuleSet */
-}
+		void	compare(Policy *);
 
-void
-VarPolicy::accept(PolicyVisitor& visitor)
-{
-	visitor.visitVarPolicy(this);
-}
+	public:
+		RuleSetSearchPolicyVisitor(int);
+		~RuleSetSearchPolicyVisitor(void);
 
-int
-VarPolicy::getId(void)
-{
-	/* XXX CH: a var element has no id */
-	return (-1);
-}
+		Policy	*getMatchingPolicy(void);
+		bool	 hasMatchingPolicy(void);
+
+		virtual void visitAppPolicy(AppPolicy *);
+		virtual void visitAlfPolicy(AlfPolicy *);
+		virtual void visitSfsPolicy(SfsPolicy *);
+		virtual void visitVarPolicy(VarPolicy *);
+};
+
+#endif	/* _RULESETSEARCHPOLICYVISITOR_H_ */

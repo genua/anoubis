@@ -276,6 +276,8 @@ int	apn_verror(struct apn_ruleset *, const char *, int lineno,
 void	apn_print_errors(struct apn_ruleset *, FILE *);
 int	apn_insert(struct apn_ruleset *, struct apn_rule *, int);
 int	apn_insert_alfrule(struct apn_ruleset *, struct apn_alfrule *, int);
+int	apn_insert_sfsrule(struct apn_ruleset *, struct apn_sfsrule *, int);
+int	apn_add2app_alfrule(struct apn_ruleset *, struct apn_alfrule *, int);
 int	apn_copyinsert(struct apn_ruleset *, struct apn_alfrule *, int,
 	    const char *, const u_int8_t *, int);
 void	apn_free_ruleset(struct apn_ruleset *);

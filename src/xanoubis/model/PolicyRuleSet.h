@@ -69,9 +69,10 @@ class PolicyRuleSet
 		void accept(PolicyVisitor&);
 		void exportToFile(wxString);
 
-		void insertAlfPolicy(int);
-		void insertSfsPolicy(int);
-		void insertVarPolicy(int);
+		int createAppPolicy(int);
+		int createAlfPolicy(int);
+		int createSfsPolicy(int);
+		int createVarPolicy(int);
 };
 
 #endif	/* _POLICYRULESET_H_ */

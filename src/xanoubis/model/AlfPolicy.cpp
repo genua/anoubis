@@ -137,6 +137,12 @@ AlfPolicy::accept(PolicyVisitor &visitor)
 	visitor.visitAlfPolicy(this);
 }
 
+int
+AlfPolicy::getId(void)
+{
+	return (alfRule_->id);
+}
+
 void
 AlfPolicy::setType(int type)
 {

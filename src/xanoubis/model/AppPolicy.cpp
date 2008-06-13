@@ -301,3 +301,9 @@ AppPolicy::setModified(bool modified)
 {
 	modified_ = modified;
 }
+
+int
+AppPolicy::getId(void)
+{
+	return(appRule_->id);
+}

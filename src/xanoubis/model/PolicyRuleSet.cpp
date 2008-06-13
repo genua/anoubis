@@ -54,6 +54,9 @@
 #include "VarPolicy.h"
 #include "PolicyRuleSet.h"
 #include "PolicyVisitor.h"
+#include "RuleSetSearchPolicyVisitor.h"
+
+#define CALLOC_STRUCT(type) (struct type *)calloc(1, sizeof(struct type))
 
 PolicyRuleSet::PolicyRuleSet(struct apn_ruleset *ruleSet)
 {
@@ -100,8 +103,11 @@ void
 PolicyRuleSet::clean(void)
 {
 	alfList_.DeleteContents(true);
+	alfList_.Clear();
 	sfsList_.DeleteContents(true);
+	sfsList_.Clear();
 	varList_.DeleteContents(true);
+	varList_.Clear();
 }
 
 void
@@ -188,45 +194,156 @@ PolicyRuleSet::exportToFile(wxString fileName)
 	wxGetApp().log(logEntry);         wxGetApp().status(logEntry);
 }
 
-	void
-PolicyRuleSet::insertAlfPolicy(int id)
+int
+PolicyRuleSet::createAppPolicy(int insertBeforeId)
 {
-	struct apn_rule	*newAlfRule;
+	int		 newId;
+	wxCommandEvent	 event(anEVT_LOAD_RULESET);
+	struct apn_rule	*newAppRule;
 
-	newAlfRule = (struct apn_rule *)calloc(1, sizeof(struct apn_rule));
+	newId	   = -1;
+	newAppRule = CALLOC_STRUCT(apn_rule);
 
-	if (newAlfRule != NULL) {
-		newAlfRule->type = APN_ALF;
-		newAlfRule->app = (struct apn_app *)calloc(1,
-		    sizeof(struct apn_app));
-		/* XXX CEH/CH: This call can fail. Deal with errors! */
-		apn_add_alfrule(newAlfRule, ruleSet_, NULL, 0);
+	if (newAppRule == NULL) {
+		return (-1);
 	}
 
-	clean();
-	create(ruleSet_);
-}
-
-void
-PolicyRuleSet::insertSfsPolicy(int id)
-{
-	struct apn_rule	*newSfsRule;
-
-	newSfsRule = (struct apn_rule *)calloc(1, sizeof(struct apn_rule));
-
-	if (newSfsRule != NULL) {
-		newSfsRule->type = APN_SFS;
-		newSfsRule->app = (struct apn_app *)calloc(1,
-		    sizeof(struct apn_app));
-		apn_add_sfsrule(newSfsRule, ruleSet_);
+	newAppRule->type = APN_ALF;
+	newAppRule->app = CALLOC_STRUCT(apn_app);
+	if (newAppRule->app == NULL) {
+		free(newAppRule);
+		return (-1);
 	}
 
-	clean();
-	create(ruleSet_);
+	if (apn_insert(ruleSet_, newAppRule, insertBeforeId) == 0) {
+		newId = newAppRule->id;
+		clean();
+		create(ruleSet_);
+		event.SetClientData((void*)this);
+		wxGetApp().sendEvent(event);
+	} else {
+		free(newAppRule->app);
+		free(newAppRule);
+	}
+
+	return (newId);
 }
 
-void
-PolicyRuleSet::insertVarPolicy(int id)
+int
+PolicyRuleSet::createAlfPolicy(int insertBeforeId)
 {
+	int				 newId;
+	int				 rc;
+	wxCommandEvent			 event(anEVT_LOAD_RULESET);
+	RuleSetSearchPolicyVisitor	 seeker(insertBeforeId);
+	Policy				*parentPolicy;
+	struct apn_alfrule		*newAlfRule;
 
+	this->accept(seeker);
+	if (! seeker.hasMatchingPolicy()) {
+		return (-1);
+	}
+
+	newId = -1;
+	rc = -1;
+	newAlfRule = CALLOC_STRUCT(apn_alfrule);
+	parentPolicy = seeker.getMatchingPolicy();
+
+	if (newAlfRule == NULL) {
+		return (-1);
+	}
+
+	newAlfRule->type = APN_ALF_FILTER;
+
+	if (parentPolicy->IsKindOf(CLASSINFO(AppPolicy))) {
+		rc = apn_add2app_alfrule(ruleSet_, newAlfRule, insertBeforeId);
+	} else if (parentPolicy->IsKindOf(CLASSINFO(AlfPolicy))) {
+		rc = apn_insert_alfrule(ruleSet_, newAlfRule, insertBeforeId);
+	}
+
+	if (rc == 0) {
+		newId = newAlfRule->id;
+		clean();
+		create(ruleSet_);
+		event.SetClientData((void*)this);
+		wxGetApp().sendEvent(event);
+	} else {
+		free(newAlfRule);
+	}
+
+	return (newId);
+}
+
+int
+PolicyRuleSet::createSfsPolicy(int insertBeforeId)
+{
+	int				 newId;
+	int				 rc;
+	wxCommandEvent			 event(anEVT_LOAD_RULESET);
+	RuleSetSearchPolicyVisitor	 seeker(insertBeforeId);
+	Policy				*parentPolicy;
+	struct apn_rule			*sfsRootRule;
+	struct apn_sfsrule		*newSfsRule;
+
+	this->accept(seeker);
+	if (! seeker.hasMatchingPolicy()) {
+		return (-1);
+	}
+
+	newId = -1;
+	rc = -1;
+	newSfsRule = CALLOC_STRUCT(apn_sfsrule);
+	parentPolicy = seeker.getMatchingPolicy();
+
+	if (newSfsRule == NULL) {
+		return (-1);
+	}
+
+	newSfsRule->type = APN_SFS_CHECK;
+	newSfsRule->rule.sfscheck.app = CALLOC_STRUCT(apn_app);
+	if (newSfsRule->rule.sfscheck.app == NULL) {
+		free(newSfsRule);
+		return (-1);
+	}
+
+	if (TAILQ_EMPTY(&(ruleSet_->sfs_queue))) {
+		sfsRootRule = CALLOC_STRUCT(apn_rule);
+		sfsRootRule->type = APN_SFS;
+		apn_add_sfsrule(sfsRootRule, ruleSet_);
+	}
+	/* we assume sfs_queue will contain only one element */
+	sfsRootRule = TAILQ_FIRST(&(ruleSet_->sfs_queue));
+
+	if (parentPolicy->IsKindOf(CLASSINFO(SfsPolicy))) {
+		rc = apn_insert_sfsrule(ruleSet_, newSfsRule, insertBeforeId);
+	} else {
+		if (sfsRootRule->rule.sfs != NULL) {
+			rc = apn_insert_sfsrule(ruleSet_, newSfsRule,
+			    sfsRootRule->rule.sfs->id);
+		} else {
+			sfsRootRule->rule.sfs = newSfsRule;
+			newSfsRule->id = ruleSet_->maxid;
+			ruleSet_->maxid += 1;
+			rc = 0;
+		}
+	}
+
+	if (rc == 0) {
+		newId = newSfsRule->id;
+		clean();
+		create(ruleSet_);
+		event.SetClientData((void*)this);
+		wxGetApp().sendEvent(event);
+	} else {
+		free(newSfsRule);
+	}
+
+	return (newId);
+}
+
+int
+PolicyRuleSet::createVarPolicy(int insertBeforeId)
+{
+	/* XXX ch: currently no variables are supported */
+	return (-1);
 }

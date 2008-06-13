@@ -126,6 +126,8 @@ class DlgRuleEditor : public DlgRuleEditorBase
 		void OnAppValidateChkSumButton(wxCommandEvent&);
 		void OnLoadRuleSet(wxCommandEvent&);
 		void OnLineSelected(wxListEvent&);
+		void OnRuleCreateButton(wxCommandEvent&);
+		void OnRuleDeleteButton(wxCommandEvent&);
 		void OnRuleSetSave(wxCommandEvent&);
 
 		void OnAppNameComboBox(wxCommandEvent&);
@@ -159,7 +161,6 @@ class DlgRuleEditor : public DlgRuleEditorBase
 		void OnSfsValidateChkSumButton(wxCommandEvent&);
 
 		void loadRuleSet(PolicyRuleSet*);
-		void OnCreationChoice(wxCommandEvent&);
 		void OnSrcAddrAddButton(wxCommandEvent&);
 
 		void OnAlfStateTimeoutChange(wxSpinEvent&);

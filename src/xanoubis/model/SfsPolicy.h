@@ -68,6 +68,8 @@ class SfsPolicy : public Policy
 
 		virtual void accept(PolicyVisitor&);
 
+		int		 getId(void);
+
 		void		 setBinaryName(wxString);
 		wxString	 getBinaryName(void);
 		wxString	 getHashTypeName(void);
