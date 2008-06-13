@@ -541,6 +541,7 @@ ModAnoubisMainPanelImpl::OnEscalationsShow(wxCommandEvent& event)
 		/* select "current messages" */
 		ch_type->SetSelection(1);
 	}
+	update();
 
 	event.Skip();
 }

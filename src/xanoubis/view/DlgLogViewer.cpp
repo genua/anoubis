@@ -157,8 +157,10 @@ DlgLogViewer::OnListItemSelected(wxListEvent& event)
 	if (!notify)
 		return;
 
-	wxCommandEvent  showEvent(anEVT_SHOW_RULE);
-	showEvent.SetInt(true);
-	showEvent.SetExtraLong(notify->getRuleId());
-	wxGetApp().sendEvent(showEvent);
+	if (notify->getRuleId() > 0) {
+		wxCommandEvent  showEvent(anEVT_SHOW_RULE);
+		showEvent.SetInt(true);
+		showEvent.SetExtraLong(notify->getRuleId());
+		wxGetApp().sendEvent(showEvent);
+	}
 }
