@@ -96,7 +96,7 @@ binary-common:
 	dh_installman
 	dh_link
 	dh_desktop -pxanoubis
-	dh_strip
+	dh_strip --dbg-package=anoubis-dbg
 	dh_compress
 	dh_fixperms -X etc/anoubis/policy/admin
 	dh_installdeb

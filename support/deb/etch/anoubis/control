@@ -17,3 +17,10 @@ Architecture: any
 Depends: ${shlibs:Depends}, notification-daemon
 Description: Graphical user interface of the Anoubis Security Suite
  XXX:  long description
+
+Package: anoubis-dbg
+Section: libdevel
+Architecture: any
+Depends: anoubisd (= ${binary:Version})
+Description: Debugging symbols for anoubisd/xanoubis
+ XXX:  long description
