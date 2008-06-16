@@ -97,7 +97,7 @@ class DlgRuleEditor : public DlgRuleEditorBase
 {
 	private:
 		unsigned long	selectedId_;
-		unsigned long	lastSelectedId_;
+		unsigned long	selectedIndex_;
 		bool		autoCheck_;
 		PolicyRuleSet	*ruleSet_;
 		wxString	columnNames_[RULEDITOR_LIST_COLUMN_EOL];

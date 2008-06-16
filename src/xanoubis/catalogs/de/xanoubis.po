@@ -39,12 +39,14 @@ msgstr ""
 #: view/MainFrame.cpp:237 src/anoubis/src/xanoubis/view/MainFrame.cpp:303
 #: src/anoubis/src/xanoubis/view/MainFrame.cpp:306
 #: src/anoubis/src/xanoubis/view/MainFrame.cpp:308
+#: src/anoubis/src/xanoubis/view/MainFrame.cpp:310
 msgid "xanoubis is going to be closed."
 msgstr "xanoubis wird beendet."
 
 #: view/MainFrame.cpp:237 src/anoubis/src/xanoubis/view/MainFrame.cpp:304
 #: src/anoubis/src/xanoubis/view/MainFrame.cpp:307
 #: src/anoubis/src/xanoubis/view/MainFrame.cpp:309
+#: src/anoubis/src/xanoubis/view/MainFrame.cpp:311
 msgid "Confirm"
 msgstr "Bestätigen"
 
@@ -64,15 +66,15 @@ msgstr "Admin (normal)"
 msgid "off"
 msgstr "aus"
 
+# This is a keyword and thus not been translated (empty msgstr).
 #: src/anoubis/src/xanoubis/view/AnStatusBar.cpp:84
 #: src/anoubis/src/xanoubis/view/AnStatusBar.cpp:88
-# This is a keyword and thus not been translated (empty msgstr).
 msgid "LogViewer"
 msgstr ""
 
+# This is a keyword and thus not been translated (empty msgstr).
 #: src/anoubis/src/xanoubis/view/AnStatusBar.cpp:120
 #: src/anoubis/src/xanoubis/view/AnStatusBar.cpp:124
-# This is a keyword and thus not been translated (empty msgstr).
 msgid "RuleEditor"
 msgstr ""
 
@@ -109,6 +111,8 @@ msgstr "Regel:"
 #: src/anoubis/src/xanoubis/model/ApnTranslator.cpp:209
 #: src/anoubis/src/xanoubis/model/Policy.cpp:151
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:405
+#: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:148
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:426
 msgid "Application"
 msgstr "Anwendung"
 
@@ -133,6 +137,7 @@ msgstr "AppFilter"
 #: src/anoubis/src/xanoubis/model/ModSfs.cpp:42
 #: src/anoubis/src/xanoubis/control/RuleEditorAddPolicyVisitor.cpp:148
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:661
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:694
 msgid "SFS"
 msgstr "SFS"
 
@@ -175,6 +180,7 @@ msgstr "in"
 #: src/anoubis/src/xanoubis/model/AlfPolicy.cpp:674
 #: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:34
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:488
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:509
 msgid "all"
 msgstr "alle"
 
@@ -209,6 +215,7 @@ msgstr "Optionen..."
 #: src/anoubis/src/xanoubis/model/ApnTranslator.cpp:182
 #: src/anoubis/src/xanoubis/model/ApnTranslator.cpp:211
 #: src/anoubis/src/xanoubis/model/Policy.cpp:154
+#: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:145
 msgid "Rule"
 msgstr "Regel"
 
@@ -220,9 +227,13 @@ msgstr "Regel"
 #: src/anoubis/src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:95
 #: src/anoubis/src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:114
 #: src/anoubis/src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:133
+#: src/anoubis/src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:203
+#: src/anoubis/src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:222
+#: src/anoubis/src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:241
 msgid "Module:"
 msgstr "Module:"
 
+# This is a keyword and thus not been translated (empty msgstr).
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:110
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:544
 #: src/anoubis/src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:92
@@ -239,7 +250,7 @@ msgstr "Module:"
 #: src/anoubis/src/xanoubis/model/ModAlf.cpp:42
 #: src/anoubis/src/xanoubis/control/RuleEditorAddPolicyVisitor.cpp:86
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:607
-# This is a keyword and thus not been translated (empty msgstr).
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:628
 msgid "ALF"
 msgstr ""
 
@@ -263,6 +274,7 @@ msgstr "deaktiviert"
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:156
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:300
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:285
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:297
 msgid "Name:"
 msgstr "Name:"
 
@@ -278,11 +290,13 @@ msgstr "Profil:"
 
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:151
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:177
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:189
 msgid "Comment:"
 msgstr "Kommentar:"
 
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:166
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:192
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:204
 msgid "Duration"
 msgstr "Dauer"
 
@@ -294,36 +308,42 @@ msgstr "Trefferzahl"
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:183
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:209
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:194
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:206
 msgid "until end of process"
 msgstr "bis Prozessende"
 
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:189
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:215
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:200
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:212
 msgid "duration"
 msgstr "Laufzeit"
 
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:199
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:225
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:210
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:222
 msgid "second"
 msgstr "Sekunde"
 
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:199
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:225
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:210
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:222
 msgid "minute"
 msgstr "Minute"
 
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:199
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:225
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:210
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:222
 msgid "hour"
 msgstr "Stunde"
 
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:199
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:225
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:210
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:222
 msgid "day"
 msgstr "Tag"
 
@@ -333,12 +353,15 @@ msgstr "Tag"
 #: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:253
 #: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:215
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:217
+#: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:241
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:229
 msgid "always"
 msgstr "immer"
 
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:212
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:238
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:223
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:235
 msgid "Logging"
 msgstr "Logging"
 
@@ -358,12 +381,17 @@ msgstr "Logging"
 #: src/anoubis/src/xanoubis/model/Policy.cpp:128
 #: src/anoubis/src/xanoubis/view/TrayIcon.cpp:62
 #: src/anoubis/src/xanoubis/view/MainFrame.cpp:87
+#: src/anoubis/src/xanoubis/control/CommunicatorCtrl.cpp:285
+#: src/anoubis/src/xanoubis/control/CommunicatorCtrl.cpp:290
+#: src/anoubis/src/xanoubis/control/CommunicatorCtrl.cpp:295
+#: src/anoubis/src/xanoubis/view/MainFrame.cpp:89
 msgid "none"
 msgstr "keine"
 
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:217
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:243
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:228
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:240
 msgid "log"
 msgstr "log"
 
@@ -372,54 +400,63 @@ msgstr "log"
 #: src/anoubis/src/xanoubis/model/ApnTranslator.cpp:146
 #: src/anoubis/src/xanoubis/model/Policy.cpp:134
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:231
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:243
 msgid "alert"
 msgstr "alert"
 
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:226
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:252
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:237
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:249
 msgid "Modification"
 msgstr "Modifikationen"
 
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:233
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:259
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:244
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:256
 msgid "created:"
 msgstr "erstellt:"
 
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:241
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:267
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:252
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:264
 msgid "modified:"
 msgstr "modifiziert:"
 
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:249
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:275
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:260
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:272
 msgid "modified by:"
 msgstr "modifiziert von:"
 
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:266
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:292
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:277
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:289
 msgid "Common"
 msgstr "Allgemein"
 
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:290
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:316
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:301
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:313
 msgid "Binaries:"
 msgstr "Binäre Dateien:"
 
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:297
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:323
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:308
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:320
 msgid "guess ..."
 msgstr "versuchen ..."
 
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:300
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:326
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:311
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:323
 msgid "(by application)"
 msgstr "(nach Applikation)"
 
@@ -432,6 +469,8 @@ msgstr "(nach Applikation)"
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:332
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:348
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:622
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:344
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:643
 msgid "modify"
 msgstr "ändern"
 
@@ -444,6 +483,7 @@ msgstr "Vererbung:"
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:360
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:386
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:416
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:437
 msgid "Action:"
 msgstr "Aktion:"
 
@@ -455,6 +495,8 @@ msgstr "Aktion:"
 #: src/anoubis/src/xanoubis/model/ApnTranslator.cpp:122
 #: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:209
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:420
+#: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:235
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:441
 msgid "allow"
 msgstr "erlauben"
 
@@ -465,6 +507,8 @@ msgstr "erlauben"
 #: src/anoubis/src/xanoubis/model/ApnTranslator.cpp:104
 #: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:218
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:423
+#: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:244
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:444
 msgid "deny"
 msgstr "verbieten"
 
@@ -473,6 +517,7 @@ msgstr "verbieten"
 #: src/anoubis/src/xanoubis/model/ApnTranslator.cpp:107
 #: src/anoubis/src/xanoubis/model/ApnTranslator.cpp:124
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:426
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:447
 msgid "ask"
 msgstr "nachfragen"
 
@@ -482,6 +527,8 @@ msgstr "nachfragen"
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:632
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:429
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:669
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:450
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:702
 msgid "Type:"
 msgstr "Art:"
 
@@ -491,6 +538,7 @@ msgstr "Art:"
 #: src/anoubis/src/xanoubis/model/ApnTranslator.cpp:340
 #: src/anoubis/src/xanoubis/model/AlfPolicy.cpp:151
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:433
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:454
 msgid "filter"
 msgstr "Filter"
 
@@ -500,6 +548,7 @@ msgstr "Filter"
 #: src/anoubis/src/xanoubis/model/ApnTranslator.cpp:342
 #: src/anoubis/src/xanoubis/model/AlfPolicy.cpp:154
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:436
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:457
 msgid "capability"
 msgstr "Capability"
 
@@ -510,18 +559,21 @@ msgstr "Capability"
 #: src/anoubis/src/xanoubis/model/ApnTranslator.cpp:344
 #: src/anoubis/src/xanoubis/model/AlfPolicy.cpp:157
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:439
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:460
 msgid "default"
 msgstr "Standard"
 
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:389
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:415
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:445
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:466
 msgid "Connection"
 msgstr "Verbindung"
 
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:396
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:422
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:452
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:473
 msgid "Protocol:"
 msgstr "Protokoll:"
 
@@ -531,6 +583,7 @@ msgstr "Protokoll:"
 #: src/anoubis/src/xanoubis/model/ApnTranslator.cpp:434
 #: src/anoubis/src/xanoubis/model/AlfPolicy.cpp:396
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:456
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:477
 msgid "tcp"
 msgstr "tcp"
 
@@ -540,12 +593,14 @@ msgstr "tcp"
 #: src/anoubis/src/xanoubis/model/ApnTranslator.cpp:436
 #: src/anoubis/src/xanoubis/model/AlfPolicy.cpp:399
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:459
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:480
 msgid "udp"
 msgstr "udp"
 
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:409
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:435
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:465
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:486
 msgid "Address family:"
 msgstr "Adress Familie:"
 
@@ -555,6 +610,7 @@ msgstr "Adress Familie:"
 #: src/anoubis/src/xanoubis/model/ApnTranslator.cpp:475
 #: src/anoubis/src/xanoubis/model/AlfPolicy.cpp:439
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:469
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:490
 msgid "inet"
 msgstr "inet"
 
@@ -564,6 +620,7 @@ msgstr "inet"
 #: src/anoubis/src/xanoubis/model/ApnTranslator.cpp:473
 #: src/anoubis/src/xanoubis/model/AlfPolicy.cpp:442
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:472
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:493
 msgid "inet6"
 msgstr "inet6"
 
@@ -572,12 +629,15 @@ msgstr "inet6"
 #: src/anoubis/src/xanoubis/model/ApnTranslator.cpp:413
 #: src/anoubis/src/xanoubis/model/ApnTranslator.cpp:452
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:475
+#: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:856
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:496
 msgid "any"
 msgstr "alle"
 
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:422
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:448
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:478
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:499
 msgid "Capability:"
 msgstr "Capability:"
 
@@ -587,22 +647,25 @@ msgstr "Capability:"
 #: src/anoubis/src/xanoubis/model/ApnTranslator.cpp:298
 #: src/anoubis/src/xanoubis/model/AlfPolicy.cpp:668
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:482
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:503
 msgid "raw"
 msgstr "raw"
 
+# This is a keyword and thus not been translated (empty msgstr).
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:429
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:455
 #: src/anoubis/src/xanoubis/model/ApnTranslator.cpp:280
 #: src/anoubis/src/xanoubis/model/ApnTranslator.cpp:300
 #: src/anoubis/src/xanoubis/model/AlfPolicy.cpp:671
 #: src/anoubihs/src/xanoubis/view/DlgRuleEditorBase.cpp:485
-# This is a keyword and thus not been translated (empty msgstr).
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:506
 msgid "other"
 msgstr ""
 
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:435
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:461
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:491
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:512
 msgid "Direction:"
 msgstr "Richtung:"
 
@@ -613,6 +676,7 @@ msgstr "Richtung:"
 #: src/anoubis/src/xanoubis/model/Policy.cpp:102
 #: src/anoubis/src/xanoubis/model/Notification.cpp:242
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:495
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:516
 msgid "accept"
 msgstr "annehmen"
 
@@ -622,36 +686,42 @@ msgstr "annehmen"
 #: src/anoubis/src/xanoubis/model/Policy.cpp:99
 #: src/anoubis/src/xanoubis/model/Notification.cpp:239
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:498
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:519
 msgid "connect"
 msgstr "verbinden"
 
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:451
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:477
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:507
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:528
 msgid "Source address:"
 msgstr "Quell-Adresse:"
 
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:471
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:497
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:527
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:548
 msgid "Destination address:"
 msgstr "Ziel-Adresse:"
 
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:491
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:517
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:547
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:568
 msgid "Source Port:"
 msgstr "Quell-Port:"
 
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:514
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:540
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:570
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:591
 msgid "Destination Port:"
 msgstr "Ziel-Port:"
 
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:552
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:578
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:615
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:636
 msgid "Binary:"
 msgstr "Binäre Datei:"
 
@@ -659,6 +729,8 @@ msgstr "Binäre Datei:"
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:588
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:357
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:625
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:375
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:649
 msgid "Checksum (registered):"
 msgstr "Prüfsumme (registriert):"
 
@@ -666,6 +738,8 @@ msgstr "Prüfsumme (registriert):"
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:599
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:374
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:636
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:392
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:663
 msgid "Checksum (current):"
 msgstr "Prüfsumme (aktuell):"
 
@@ -673,6 +747,8 @@ msgstr "Prüfsumme (aktuell):"
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:610
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:391
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:647
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:409
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:677
 msgid "Status:"
 msgstr "Status:"
 
@@ -681,6 +757,10 @@ msgstr "Status:"
 #: src/anoubis/src/xanoubis/control/RuleEditorFillWidgetsVisitor.cpp:481
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:395
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:651
+#: src/anoubis/src/xanoubis/control/RuleEditorFillWidgetsVisitor.cpp:382
+#: src/anoubis/src/xanoubis/control/RuleEditorFillWidgetsVisitor.cpp:463
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:413
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:681
 msgid "mismatch"
 msgstr "Abweichung"
 
@@ -688,21 +768,26 @@ msgstr "Abweichung"
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:618
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:399
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:655
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:420
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:688
 msgid "update"
 msgstr "update"
 
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:615
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:641
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:678
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:711
 msgid "Value:"
 msgstr "Wert:"
 
 #: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:138
+#: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:142
 msgid "ID"
 msgstr "ID"
 
 #: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:144
 #: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:147
+#: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:151
 msgid "Binary"
 msgstr "Binäre Datei"
 
@@ -710,6 +795,7 @@ msgstr "Binäre Datei"
 #: src/anoubis/src/xanoubis/view/ModSfsMainPanelImpl.cpp:59
 #: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:150
 #: src/anoubis/src/xanoubis/view/ModSfsMainPanelImpl.cpp:58
+#: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:154
 msgid "Hash-Type"
 msgstr "Hash-Typ"
 
@@ -717,6 +803,7 @@ msgstr "Hash-Typ"
 #: src/anoubis/src/xanoubis/view/ModSfsMainPanelImpl.cpp:60
 #: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:153
 #: src/anoubis/src/xanoubis/view/ModSfsMainPanelImpl.cpp:59
+#: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:157
 msgid "Hash"
 msgstr "Hash"
 
@@ -724,74 +811,88 @@ msgstr "Hash"
 #: src/anoubis/src/xanoubis/view/ModAlfMainPanelImpl.cpp:59
 #: src/anoubis/src/xanoubis/view/ModAlfPanelsBase.cpp:150
 #: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:156
+#: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:160
 msgid "Context"
 msgstr "Kontext"
 
 #: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:156
 #: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:159
+#: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:163
 msgid "Type"
 msgstr "Art"
 
 #: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:159
 #: src/anoubis/src/xanoubis/view/ModAlfMainPanelImpl.cpp:62
 #: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:162
+#: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:166
 msgid "Action"
 msgstr "Aktion"
 
 #: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:162
 #: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:165
+#: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:169
 msgid "Log"
 msgstr "Log"
 
 #: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:165
 #: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:168
+#: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:172
 msgid "AF"
 msgstr "AF"
 
 #: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:168
 #: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:171
+#: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:175
 msgid "Capability"
 msgstr "Capability"
 
 #: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:171
 #: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:174
+#: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:178
 msgid "Protocol"
 msgstr "Protokoll"
 
 #: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:174
 #: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:177
+#: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:181
 msgid "Direction"
 msgstr "Richtung"
 
 #: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:177
 #: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:180
+#: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:184
 msgid "From Host"
 msgstr "Von Host"
 
 #: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:180
 #: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:183
+#: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:187
 msgid "From Port"
 msgstr "Von Port"
 
 #: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:183
 #: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:186
+#: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:190
 msgid "To Host"
 msgstr "Zu Host"
 
 #: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:186
 #: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:189
+#: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:193
 msgid "To Port"
 msgstr "Zu Port"
 
 #: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:217
 #: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:220
 #: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:224
+#: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:384
 msgid "Table columns"
 msgstr "Tabellenspalte"
 
 #: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:218
 #: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:221
 #: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:225
+#: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:385
 msgid "Please select the columns you're interested in"
 msgstr "Bitte selektieren sie die Spalten die sie interessieren"
 
@@ -802,6 +903,8 @@ msgstr "Bitte selektieren sie die Spalten die sie interessieren"
 #: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:469
 #: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:239
 #: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:511
+#: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:409
+#: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:628
 msgid "Choose a binary"
 msgstr "Wählen sie eine Binäre Datei aus"
 
@@ -838,6 +941,7 @@ msgid "Edit"
 msgstr "Editieren"
 
 #: src/anoubis/src/xanoubis/view/MainFrameBase.cpp:64
+#: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:360
 msgid "Rule Editor"
 msgstr "Rule Editor"
 
@@ -878,12 +982,15 @@ msgstr "Verbunden mit localhost"
 #: src/anoubis/src/xanoubis/view/TrayIcon.cpp:221
 #: src/anoubis/src/xanoubis/view/TrayIcon.cpp:225
 #: src/anoubis/src/xanoubis/view/MainFrame.cpp:155
+#: src/anoubis/src/xanoubis/view/TrayIcon.cpp:242
+#: src/anoubis/src/xanoubis/view/MainFrame.cpp:157
 msgid "not connected"
 msgstr "nicht Verbunden"
 
 #: src/anoubis/src/xanoubis/view/MainFrame.cpp:154
 #: src/anoubis/src/xanoubis/view/MainFrame.cpp:156
 #: src/anoubis/src/xanoubis/view/MainFrame.cpp:158
+#: src/anoubis/src/xanoubis/view/MainFrame.cpp:160
 msgid "connected with\n"
 msgstr "Verbunden mit\n"
 
@@ -893,6 +1000,8 @@ msgstr "Verbunden mit\n"
 #: src/anoubis/src/xanoubis/view/TrayIcon.cpp:185
 #: src/anoubis/src/xanoubis/view/TrayIcon.cpp:189
 #: src/anoubis/src/xanoubis/view/MainFrame.cpp:171
+#: src/anoubis/src/xanoubis/view/TrayIcon.cpp:206
+#: src/anoubis/src/xanoubis/view/MainFrame.cpp:173
 msgid "Messages: "
 msgstr "Meldungen:"
 
@@ -902,18 +1011,22 @@ msgstr "Meldungen:"
 #: src/anoubis/src/xanoubis/view/TrayIcon.cpp:214
 #: src/anoubis/src/xanoubis/view/TrayIcon.cpp:218
 #: src/anoubis/src/xanoubis/view/MainFrame.cpp:181
+#: src/anoubis/src/xanoubis/view/TrayIcon.cpp:235
+#: src/anoubis/src/xanoubis/view/MainFrame.cpp:183
 msgid "No messages\n"
 msgstr "Keine Meldungen\n"
 
 #: src/anoubis/src/xanoubis/view/MainFrame.cpp:267
 #: src/anoubis/src/xanoubis/view/MainFrame.cpp:270
 #: src/anoubis/src/xanoubis/view/MainFrame.cpp:272
+#: src/anoubis/src/xanoubis/view/MainFrame.cpp:274
 msgid "Choose a policy file:"
 msgstr "Wählen sie eine Policy Datei aus:"
 
 #: src/anoubis/src/xanoubis/view/MainFrame.cpp:282
 #: src/anoubis/src/xanoubis/view/MainFrame.cpp:285
 #: src/anoubis/src/xanoubis/view/MainFrame.cpp:287
+#: src/anoubis/src/xanoubis/view/MainFrame.cpp:289
 msgid "Choose a file to write the policies to:"
 msgstr "Wähle sie eine Datei in die die Policies abgelegt werden:"
 
@@ -1023,6 +1136,7 @@ msgstr "Applikationsansicht"
 #: src/anoubis/src/xanoubis/view/ModSfsPanelsBase.cpp:92
 #: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:301
 #: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:263
+#: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:378
 msgid "Options"
 msgstr "Optionen"
 
@@ -1057,6 +1171,9 @@ msgstr ""
 #: src/anoubis/src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:94
 #: src/anoubis/src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:113
 #: src/anoubis/src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:132
+#: src/anoubis/src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:202
+#: src/anoubis/src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:221
+#: src/anoubis/src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:240
 msgid "Time:"
 msgstr "Zeit:"
 
@@ -1066,6 +1183,9 @@ msgstr "Zeit:"
 #: src/anoubis/src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:97
 #: src/anoubis/src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:116
 #: src/anoubis/src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:135
+#: src/anoubis/src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:205
+#: src/anoubis/src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:224
+#: src/anoubis/src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:243
 msgid "Traffic:"
 msgstr "Netzwerk Verkehr:"
 
@@ -1075,6 +1195,9 @@ msgstr "Netzwerk Verkehr:"
 #: src/anoubis/src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:99
 #: src/anoubis/src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:118
 #: src/anoubis/src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:137
+#: src/anoubis/src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:207
+#: src/anoubis/src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:226
+#: src/anoubis/src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:245
 msgid "Path:"
 msgstr "Pfad:"
 
@@ -1084,6 +1207,9 @@ msgstr "Pfad:"
 #: src/anoubis/src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:101
 #: src/anoubis/src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:120
 #: src/anoubis/src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:139
+#: src/anoubis/src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:209
+#: src/anoubis/src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:228
+#: src/anoubis/src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:247
 msgid "Operation:"
 msgstr "Operation:"
 
@@ -1093,6 +1219,9 @@ msgstr "Operation:"
 #: src/anoubis/src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:102
 #: src/anoubis/src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:121
 #: src/anoubis/src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:140
+#: src/anoubis/src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:210
+#: src/anoubis/src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:229
+#: src/anoubis/src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:248
 msgid "Origin:"
 msgstr "Ursprung:"
 
@@ -1102,6 +1231,9 @@ msgstr "Ursprung:"
 #: src/anoubis/src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:103
 #: src/anoubis/src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:122
 #: src/anoubis/src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:141
+#: src/anoubis/src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:211
+#: src/anoubis/src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:230
+#: src/anoubis/src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:249
 msgid "Checksum:"
 msgstr "Prüfsumme:"
 
@@ -1150,42 +1282,49 @@ msgstr "Anzahl"
 #: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:200
 #: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:218
 #: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:180
+#: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:206
 msgid "till process ends"
 msgstr "bis Prozessende"
 
 #: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:212
 #: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:230
 #: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:192
+#: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:218
 msgid "for "
 msgstr "für "
 
 #: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:222
 #: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:240
 #: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:202
+#: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:228
 msgid "seconds"
 msgstr "Sekunden"
 
 #: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:222
 #: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:240
 #: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:202
+#: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:228
 msgid "minutes"
 msgstr "Minuten"
 
 #: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:222
 #: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:240
 #: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:202
+#: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:228
 msgid "hours"
 msgstr "Stunden"
 
 #: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:222
 #: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:240
 #: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:202
+#: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:228
 msgid "days"
 msgstr "Tage"
 
 #: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:249
 #: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:273
 #: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:235
+#: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:261
 msgid "Notifications"
 msgstr "Nachrichten"
 
@@ -1275,12 +1414,14 @@ msgstr ""
 #: src/anoubis/src/xanoubis/view/TrayIcon.cpp:168
 #: src/anoubis/src/xanoubis/view/TrayIcon.cpp:173
 #: src/anoubis/src/xanoubis/view/TrayIcon.cpp:177
+#: src/anoubis/src/xanoubis/view/TrayIcon.cpp:194
 msgid "&Restore xanoubis"
 msgstr "&xanoubis wiederherstellen"
 
 #: src/anoubis/src/xanoubis/view/TrayIcon.cpp:169
 #: src/anoubis/src/xanoubis/view/TrayIcon.cpp:174
 #: src/anoubis/src/xanoubis/view/TrayIcon.cpp:178
+#: src/anoubis/src/xanoubis/view/TrayIcon.cpp:195
 msgid "E&xit xanoubis"
 msgstr "xanoubis b&eenden"
 
@@ -1298,6 +1439,7 @@ msgstr "NACHFRAGE"
 #: src/anoubis/src/xanoubis/view/TrayIcon.cpp:192
 #: src/anoubis/src/xanoubis/view/TrayIcon.cpp:197
 #: src/anoubis/src/xanoubis/view/TrayIcon.cpp:201
+#: src/anoubis/src/xanoubis/view/TrayIcon.cpp:218
 msgid "Couldn't send Escalation"
 msgstr "Nachfrage konnte nicht gesendet werden"
 
@@ -1315,12 +1457,14 @@ msgstr "ALARM"
 #: src/anoubis/src/xanoubis/view/TrayIcon.cpp:206
 #: src/anoubis/src/xanoubis/view/TrayIcon.cpp:211
 #: src/anoubis/src/xanoubis/view/TrayIcon.cpp:215
+#: src/anoubis/src/xanoubis/view/TrayIcon.cpp:232
 msgid "Couldn't send Alert"
 msgstr "Alarm konnte nicht gesendet werden"
 
 #: src/anoubis/src/xanoubis/view/TrayIcon.cpp:218
 #: src/anoubis/src/xanoubis/view/TrayIcon.cpp:223
 #: src/anoubis/src/xanoubis/view/TrayIcon.cpp:227
+#: src/anoubis/src/xanoubis/view/TrayIcon.cpp:244
 msgid "connected with "
 msgstr "verbunden mit "
 
@@ -1353,16 +1497,23 @@ msgstr "Offene Nachfragen (SFS)"
 
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:240
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:225
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:237
 msgid "none "
 msgstr "keine "
 
 #: src/anoubis/src/xanoubis/control/RuleEditorFillWidgetsVisitor.cpp:381
 #: src/anoubis/src/xanoubis/control/RuleEditorFillWidgetsVisitor.cpp:469
+#: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:462
+#: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:683
+#: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:842
+#: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:867
 msgid "unable to calculate checksum"
 msgstr "kann Prüfsumme nicht errechnen"
 
 #: src/anoubis/src/xanoubis/control/RuleEditorFillWidgetsVisitor.cpp:389
 #: src/anoubis/src/xanoubis/control/RuleEditorFillWidgetsVisitor.cpp:478
+#: src/anoubis/src/xanoubis/control/RuleEditorFillWidgetsVisitor.cpp:378
+#: src/anoubis/src/xanoubis/control/RuleEditorFillWidgetsVisitor.cpp:460
 msgid "match"
 msgstr "Übereinstimmung"
 
@@ -1408,22 +1559,26 @@ msgid "localhost"
 msgstr "localhost"
 
 #: src/anoubis/src/xanoubis/control/CommunicatorCtrl.cpp:278
+#: src/anoubis/src/xanoubis/control/CommunicatorCtrl.cpp:280
 msgid "Connection established with localhost:"
 msgstr "Verbindung erstellt zu localhost:"
 
 #: src/anoubis/src/xanoubis/control/CommunicatorCtrl.cpp:284
+#: src/anoubis/src/xanoubis/control/CommunicatorCtrl.cpp:286
 msgid "Disconnected from localhost"
 msgstr "Verbindung mit localhost unterbrochen"
 
 #: src/anoubis/src/xanoubis/control/CommunicatorCtrl.cpp:289
+#: src/anoubis/src/xanoubis/control/CommunicatorCtrl.cpp:291
 msgid "Connection to localhost failed!"
 msgstr "Verbindung zum localhost Fehlgeschlagen!"
 
 #: src/anoubis/src/xanoubis/control/CommunicatorCtrl.cpp:294
+#: src/anoubis/src/xanoubis/control/CommunicatorCtrl.cpp:296
 msgid "Communication error. Disconnected!"
 msgstr "Kommunikations Fehler. Verbindung Beendet!"
 
-#: src/anoubis/src/xanoubis/main.cpp:135
+#: src/anoubis/src/xanoubis/main.cpp:135 src/anoubis/src/xanoubis/main.cpp:142
 msgid "Language setting: "
 msgstr "Spracheinstellung: "
 
@@ -1431,7 +1586,7 @@ msgstr "Spracheinstellung: "
 msgid "help"
 msgstr "Hilfe"
 
-#: src/anoubis/src/xanoubis/main.cpp:220
+#: src/anoubis/src/xanoubis/main.cpp:220 src/anoubis/src/xanoubis/main.cpp:228
 msgid "this help"
 msgstr "Diese Hilfe"
 
@@ -1439,11 +1594,11 @@ msgstr "Diese Hilfe"
 msgid "socket"
 msgstr "Socket"
 
-#: src/anoubis/src/xanoubis/main.cpp:227
+#: src/anoubis/src/xanoubis/main.cpp:227 src/anoubis/src/xanoubis/main.cpp:235
 msgid "communication socket of anoubis daemon"
 msgstr "Kommunikations socket vom Anoubis deamon"
 
-#: src/anoubis/src/xanoubis/main.cpp:396
+#: src/anoubis/src/xanoubis/main.cpp:396 src/anoubis/src/xanoubis/main.cpp:404
 msgid "no loaded RuleSet; export failed!"
 msgstr "kein geladener Regel Satz; Export Fehlgeschlagen!"
 
@@ -1568,6 +1723,19 @@ msgstr "kein Wert"
 #: src/anoubis/src/xanoubis/model/AlfPolicy.cpp:306
 #: src/anoubis/src/xanoubis/model/AlfPolicy.cpp:446
 #: src/anoubis/src/xanoubis/model/AlfPolicy.cpp:701
+#: src/anoubis/src/xanoubis/model/Policy.cpp:93
+#: src/anoubis/src/xanoubis/model/Policy.cpp:122
+#: src/anoubis/src/xanoubis/model/Policy.cpp:145
+#: src/anoubis/src/xanoubis/model/Policy.cpp:177
+#: src/anoubis/src/xanoubis/model/Policy.cpp:203
+#: src/anoubis/src/xanoubis/model/SfsPolicy.cpp:126
+#: src/anoubis/src/xanoubis/model/Notification.cpp:161
+#: src/anoubis/src/xanoubis/model/AppPolicy.cpp:213
+#: src/anoubis/src/xanoubis/model/AlfPolicy.cpp:181
+#: src/anoubis/src/xanoubis/model/AlfPolicy.cpp:300
+#: src/anoubis/src/xanoubis/model/AlfPolicy.cpp:328
+#: src/anoubis/src/xanoubis/model/AlfPolicy.cpp:480
+#: src/anoubis/src/xanoubis/model/AlfPolicy.cpp:743
 msgid "(unknown)"
 msgstr "(unbekannt)"
 
@@ -1600,17 +1768,17 @@ msgstr "Port"
 msgid "Filename"
 msgstr "Dateiname"
 
+# This is a keyword and thus not been translated (empty msgstr).
 #: src/anoubis/src/xanoubis/model/ApnTranslator.cpp:233
 #: src/anoubis/src/xanoubis/model/ApnTranslator.cpp:257
 #: src/anoubis/src/xanoubis/model/Policy.cpp:183
-# This is a keyword and thus not been translated (empty msgstr).
 msgid "alf"
 msgstr ""
 
+# This is a keyword and thus not been translated (empty msgstr).
 #: src/anoubis/src/xanoubis/model/ApnTranslator.cpp:236
 #: src/anoubis/src/xanoubis/model/ApnTranslator.cpp:259
 #: src/anoubis/src/xanoubis/model/Policy.cpp:186
-# This is a keyword and thus not been translated (empty msgstr).
 msgid "sfs"
 msgstr ""
 
@@ -1624,6 +1792,8 @@ msgstr "Kontext"
 #: src/anoubis/src/xanoubis/model/AppPolicy.cpp:144
 #: src/anoubis/src/xanoubis/model/AppPolicy.cpp:219
 #: src/anoubis/src/xanoubis/model/SfsPolicy.cpp:183
+#: src/anoubis/src/xanoubis/model/SfsPolicy.cpp:215
+#: src/anoubis/src/xanoubis/model/AppPolicy.cpp:259
 msgid "(unknown hash type)"
 msgstr "(unbekannter Hash Typ)"
 
@@ -1631,6 +1801,7 @@ msgstr "(unbekannter Hash Typ)"
 #: src/anoubis/src/xanoubis/model/ApnTranslator.cpp:461
 #: src/anoubis/src/xanoubis/model/AlfPolicy.cpp:402
 #: src/anoubis/src/xanoubis/model/AlfPolicy.cpp:403
+#: src/anoubis/src/xanoubis/model/AlfPolicy.cpp:433
 msgid "(unknown"
 msgstr "(Unbekannt"
 
@@ -1639,6 +1810,8 @@ msgstr "(Unbekannt"
 #: src/anoubis/src/xanoubis/model/Module.cpp:38
 #: src/anoubis/src/xanoubis/model/Policy.cpp:217
 #: src/anoubis/src/xanoubis/model/Notification.cpp:251
+#: src/anoubis/src/xanoubis/model/Policy.cpp:225
+#: src/anoubis/src/xanoubis/model/Notification.cpp:274
 msgid "unknown"
 msgstr "Unbekannt"
 
@@ -1655,10 +1828,16 @@ msgstr "empfangen"
 #: src/anoubis/src/xanoubis/model/Notification.cpp:279
 #: src/anoubis/src/xanoubis/model/Notification.cpp:312
 #: src/anoubis/src/xanoubis/model/Notification.cpp:330
+#: src/anoubis/src/xanoubis/model/Notification.cpp:85
+#: src/anoubis/src/xanoubis/model/Notification.cpp:248
+#: src/anoubis/src/xanoubis/model/Notification.cpp:306
+#: src/anoubis/src/xanoubis/model/Notification.cpp:343
+#: src/anoubis/src/xanoubis/model/Notification.cpp:361
 msgid "no notify data available"
 msgstr "keine Meldungen verfügbar"
 
 #: src/anoubis/src/xanoubis/model/Notification.cpp:110
+#: src/anoubis/src/xanoubis/model/Notification.cpp:113
 msgid "unknown address type"
 msgstr "unbekannter Adressen Typ"
 
@@ -1672,22 +1851,27 @@ msgid "PROCESS"
 msgstr "PROZESS"
 
 #: src/anoubis/src/xanoubis/model/Notification.cpp:198
+#: src/anoubis/src/xanoubis/model/Notification.cpp:219
 msgid "was "
 msgstr "wurde "
 
 #: src/anoubis/src/xanoubis/model/Notification.cpp:202
+#: src/anoubis/src/xanoubis/model/Notification.cpp:223
 msgid "allowed"
 msgstr "erlaubt"
 
 #: src/anoubis/src/xanoubis/model/Notification.cpp:205
+#: src/anoubis/src/xanoubis/model/Notification.cpp:226
 msgid "denied"
 msgstr "verboten"
 
 #: src/anoubis/src/xanoubis/model/Notification.cpp:208
+#: src/anoubis/src/xanoubis/model/Notification.cpp:229
 msgid "asked"
 msgstr "gefragt"
 
 #: src/anoubis/src/xanoubis/model/Notification.cpp:211
+#: src/anoubis/src/xanoubis/model/Notification.cpp:232
 msgid "caused unknown action"
 msgstr "ungültige aktion aufgetreten"
 
@@ -1712,6 +1896,7 @@ msgid "write"
 msgstr "schreiben"
 
 #: src/anoubis/src/xanoubis/model/Notification.cpp:265
+#: src/anoubis/src/xanoubis/model/Notification.cpp:291
 msgid "unknown module"
 msgstr "unbekanntes Modul"
 
@@ -1725,44 +1910,56 @@ msgid "  to  "
 msgstr "  zu  "
 
 #: src/anoubis/src/xanoubis/model/Notification.cpp:297
+#: src/anoubis/src/xanoubis/model/Notification.cpp:328
 msgid "no path information available"
 msgstr "keine Pfadinformationen verfügbar"
 
 #: src/anoubis/src/xanoubis/model/Notification.cpp:300
+#: src/anoubis/src/xanoubis/model/Notification.cpp:331
 msgid "unable to extract path information"
 msgstr "extrahieren der Pfadinformation fehlgeschlagen"
 
 #: src/anoubis/src/xanoubis/model/Notification.cpp:341
 #: src/anoubis/src/xanoubis/model/Notification.cpp:350
+#: src/anoubis/src/xanoubis/model/Notification.cpp:370
+#: src/anoubis/src/xanoubis/model/Notification.cpp:382
 msgid "no checksum information available"
 msgstr "keine Prüfsummen Information verfügbar"
 
 #: src/anoubis/src/xanoubis/model/Notification.cpp:353
+#: src/anoubis/src/xanoubis/model/Notification.cpp:385
 msgid "unable to extract checksum information"
 msgstr "extrahieren der Prüfsummen Information Fehlgeschlagen"
 
 #: src/anoubis/src/xanoubis/model/PolicyRuleSet.cpp:120
+#: src/anoubis/src/xanoubis/model/PolicyRuleSet.cpp:126
 msgid "System error during import of policy file "
 msgstr "Systemfehler beim importieren der Policy Files"
 
 #: src/anoubis/src/xanoubis/model/PolicyRuleSet.cpp:127
+#: src/anoubis/src/xanoubis/model/PolicyRuleSet.cpp:133
 msgid "Successfully imported policy file "
 msgstr "Policy Files erfolgreich importiert"
 
 #: src/anoubis/src/xanoubis/model/PolicyRuleSet.cpp:134
 #: src/anoubis/src/xanoubis/model/PolicyRuleSet.cpp:142
+#: src/anoubis/src/xanoubis/model/PolicyRuleSet.cpp:140
+#: src/anoubis/src/xanoubis/model/PolicyRuleSet.cpp:148
 msgid "Failed import of policy file "
 msgstr "Policy File Import fehlgeschlagen"
 
 #: src/anoubis/src/xanoubis/model/PolicyRuleSet.cpp:148
+#: src/anoubis/src/xanoubis/model/PolicyRuleSet.cpp:154
 msgid "Unknown error during import of policy file "
 msgstr "Unbekannter fehler beim Importieren der Policy Files"
 
 #: src/anoubis/src/xanoubis/model/PolicyRuleSet.cpp:181
+#: src/anoubis/src/xanoubis/model/PolicyRuleSet.cpp:187
 msgid "Policies exported successfully to "
 msgstr "Erfolgreicher Policy-Export nach"
 
 #: src/anoubis/src/xanoubis/model/PolicyRuleSet.cpp:186
+#: src/anoubis/src/xanoubis/model/PolicyRuleSet.cpp:192
 msgid "Could not open file for export: "
 msgstr "Konnte File für Export nicht öffnen: "
 
@@ -1797,61 +1994,80 @@ msgstr "Verboten."
 
 #: src/anoubis/src/xanoubis/control/RuleEditorFillWidgetsVisitor.cpp:399
 #: src/anoubis/src/xanoubis/control/RuleEditorFillWidgetsVisitor.cpp:401
+#: src/anoubis/src/xanoubis/control/RuleEditorFillWidgetsVisitor.cpp:388
+#: src/anoubis/src/xanoubis/control/RuleEditorFillWidgetsVisitor.cpp:390
 msgid "no application selected"
 msgstr "keine Applikation ausgewählt"
 
-
 #: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:192
+#: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:196
 msgid "State Timeout"
 msgstr "State Timeout"
 
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:593
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:614
 msgid "State timeout:"
 msgstr "State Timeout"
 
-#: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:47
 # This is a keyword and thus not been translated (empty msgstr).
+#: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:47
+#: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:73
 msgid "<<"
 msgstr ""
 
-#: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:52
 # This is a keyword and thus not been translated (empty msgstr).
+#: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:52
+#: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:78
 msgid "<"
 msgstr ""
 
+# This is a keyword and thus not been translated (empty msgstr).
 #: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:57
 #: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:65
-# This is a keyword and thus not been translated (empty msgstr).
+#: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:83
+#: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:91
 msgid "00000000"
 msgstr ""
 
+# This is a keyword and thus not been translated (empty msgstr).
 #: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:61
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:514
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:534
-# This is a keyword and thus not been translated (empty msgstr).
+#: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:87
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:535
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:555
 msgid " / "
 msgstr ""
 
-#: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:69
 # This is a keyword and thus not been translated (empty msgstr).
+#: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:69
+#: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:95
 msgid ">"
 msgstr ""
 
-#: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:74
 # This is a keyword and thus not been translated (empty msgstr).
+#: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:74
+#: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:100
 msgid ">>"
 msgstr ""
 
+# This is a keyword and thus not been translated (empty msgstr).
 #: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:94
 #: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:102
 #: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:110
 #: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:118
 #: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:126
 #: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:134
-# This is a keyword and thus not been translated (empty msgstr).
+#: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:120
+#: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:128
+#: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:136
+#: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:144
+#: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:152
+#: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:160
 msgid ":"
 msgstr ""
 
+# This is a keyword and thus not been translated (empty msgstr).
 #: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:98
 #: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:106
 #: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:114
@@ -1864,113 +2080,258 @@ msgstr ""
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:378
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:629
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:640
-# This is a keyword and thus not been translated (empty msgstr).
+#: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:124
+#: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:132
+#: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:140
+#: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:148
+#: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:156
+#: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:164
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:379
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:396
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:653
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:667
 msgid "0"
 msgstr ""
 
-#: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:171
 # This is a keyword and thus not been translated (empty msgstr).
+#: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:171
+#: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:197
 msgid "once"
 msgstr ""
 
+# This is a keyword and thus not been translated (empty msgstr).
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:136
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:688
-# This is a keyword and thus not been translated (empty msgstr).
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:721
 msgid "Macro"
 msgstr ""
 
-#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:248
 # This is a keyword and thus not been translated (empty msgstr).
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:248
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:260
 msgid "Fri Mar  7 14:33:02 CET 2008"
 msgstr ""
 
-#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:256
 # This is a keyword and thus not been translated (empty msgstr).
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:256
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:268
 msgid "Fri Mar  8 14:33:02 CET 2008"
 msgstr ""
 
-#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:264
 # This is a keyword and thus not been translated (empty msgstr).
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:264
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:276
 msgid "trahm"
 msgstr ""
 
+# This is a keyword and thus not been translated (empty msgstr).
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:289
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:511
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:531
-# This is a keyword and thus not been translated (empty msgstr).
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:301
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:532
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:552
 msgid "Combo!"
 msgstr ""
 
+# This is a keyword and thus not been translated (empty msgstr).
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:338
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:354
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:524
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:544
-# This is a keyword and thus not been translated (empty msgstr).
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:350
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:369
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:545
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:565
 msgid "+"
 msgstr ""
 
+# This is a keyword and thus not been translated (empty msgstr).
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:521
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:541
-# This is a keyword and thus not been translated (empty msgstr).
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:542
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:562
 msgid "-"
 msgstr ""
 
+# This is a keyword and thus not been translated (empty msgstr).
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:551
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:574
-# This is a keyword and thus not been translated (empty msgstr).
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:572
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:595
 msgid "53"
 msgstr ""
 
+# This is a keyword and thus not been translated (empty msgstr).
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:552
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:575
-# This is a keyword and thus not been translated (empty msgstr).
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:573
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:596
 msgid "80"
 msgstr ""
 
+# This is a keyword and thus not been translated (empty msgstr).
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:553
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:576
-# This is a keyword and thus not been translated (empty msgstr).
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:574
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:597
 msgid "443"
 msgstr ""
 
+# This is a keyword and thus not been translated (empty msgstr).
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:554
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:577
-# This is a keyword and thus not been translated (empty msgstr).
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:575
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:598
 msgid "$www"
 msgstr ""
 
+# This is a keyword and thus not been translated (empty msgstr).
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:555
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:578
-# This is a keyword and thus not been translated (empty msgstr).
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:576
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:599
 msgid "21,22"
 msgstr ""
 
-#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:673
 # This is a keyword and thus not been translated (empty msgstr).
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:673
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:706
 msgid "VAR_APPLICATION"
 msgstr ""
 
-#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:673
 # This is a keyword and thus not been translated (empty msgstr).
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:673
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:706
 msgid "VAR_RULE"
 msgstr ""
 
-#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:673
 # This is a keyword and thus not been translated (empty msgstr).
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:673
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:706
 msgid "VAR_DEFAULT"
 msgstr ""
 
-#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:673
 # This is a keyword and thus not been translated (empty msgstr).
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:673
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:706
 msgid "VAR_HOST"
 msgstr ""
 
-#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:673
 # This is a keyword and thus not been translated (empty msgstr).
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:673
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:706
 msgid "VAR_PORT"
 msgstr ""
 
-#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:673
 # This is a keyword and thus not been translated (empty msgstr).
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:673
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:706
 msgid "VAR_FILENAME"
 msgstr ""
+
+#: src/anoubis/src/xanoubis/control/CommunicatorCtrl.cpp:181
+msgid "Error while allocating memory"
+msgstr "Fehler beim Reservieren von Speicher"
+
+#: src/anoubis/src/xanoubis/control/CommunicatorCtrl.cpp:185
+msgid "Error while reading file"
+msgstr "Fehler beim Lesen von Datei"
+
+#: src/anoubis/src/xanoubis/control/CommunicatorCtrl.cpp:194
+msgid "Couldn't send Policy to deamon: Not connected!"
+msgstr "Policy konnte nicht an Deamon gesendet werden: Nicht verbunden!"
+
+#: src/anoubis/src/xanoubis/model/SfsPolicy.cpp:137
+#: src/anoubis/src/xanoubis/model/AppPolicy.cpp:159
+msgid "unkown"
+msgstr "unbekannt"
+
+#: src/anoubis/src/xanoubis/model/Notification.cpp:186
+#, c-format
+msgid "Rule %d: "
+msgstr "Regel %d: "
+
+#: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:270
+msgid "Escalation Notifier Settings"
+msgstr "Eskalations Benachrichtigungs Einstellungen"
+
+#: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:277
+msgid "send Escalations"
+msgstr "Benachrichtigung bei Eskalationen"
+
+#: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:280
+#: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:327
+msgid "Check to disable the messaging via Notifier"
+msgstr "Um Benachrichtigung bei Eskalotion zu aktivieren"
+
+#: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:287
+#: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:334
+msgid "No Timeout"
+msgstr "Verfallszeit der Benachrichtigung"
+
+#: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:290
+#: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:336
+msgid "Check to let the Notifier never timeout"
+msgstr "Um Benachrichtigungen nicht verfallen zu lassen."
+
+#: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:305
+#: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:349
+msgid "Timeout in Seconds"
+msgstr "Verfallszeit in Sekunden"
+
+#: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:318
+msgid "Alert Notifier Settings"
+msgstr "Alarm Benachrichtiguns Einstellungen"
+
+#: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:325
+msgid "send Alerts"
+msgstr "Benachrichtigung bei Alarmen"
+
+#: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:365
+msgid "Auto Checksum Check"
+msgstr ""
+
+#: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:422
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:174
+msgid "Profile: high"
+msgstr "Profil: hoch"
+
+#: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:425
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:180
+msgid "Profile: medium"
+msgstr "Profil: medium"
+
+#: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:428
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:186
+msgid "Profile: admin"
+msgstr "Profil: admin"
+
+#: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:492
+msgid "Could not create new rule."
+msgstr "Neue Regel konnte nicht erstellt werden."
+
+#: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:492
+msgid "Error"
+msgstr "Fehler"
+
+#: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:876
+msgid ""
+"Checksums don't match for this Rule.\n"
+" \t\t    Back to Rule"
+msgstr ""
+"Prüfsummen stimmen für letzte Regel nicht überein.\n"
+" \t\t	 Zurück zur letzten Regel"
+
+#: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:879
+msgid "Back to Rule?"
+msgstr "Zurück zur letzten Regel"
+
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:356
+msgid "Context:"
+msgstr "Kontext:"
+
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:417
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:685
+msgid "validate"
+msgstr "Überprüfen"

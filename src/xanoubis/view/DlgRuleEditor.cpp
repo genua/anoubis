@@ -135,7 +135,7 @@ AddrLine::remove(void)
 DlgRuleEditor::DlgRuleEditor(wxWindow* parent) : DlgRuleEditorBase(parent)
 {
 	selectedId_ = 0;
-	lastSelectedId_ = 0;
+	selectedIndex_ = 0;
 	autoCheck_ = false;
 	ruleSet_ = NULL;
 
@@ -226,7 +226,7 @@ DlgRuleEditor::updateAppName(wxString appName)
 	RuleEditorFillTableVisitor	 updateTable(this, selectedId_);
 	RuleEditorFillWidgetsVisitor	 updateWidgets(this);
 
-	policy = (AppPolicy *)ruleListCtrl->GetItemData(selectedId_);
+	policy = (AppPolicy *)ruleListCtrl->GetItemData(selectedIndex_);
 	if (policy == NULL) {
 		return;
 	}
@@ -243,7 +243,7 @@ DlgRuleEditor::updateBinName(wxString binName)
 	RuleEditorFillTableVisitor	 updateTable(this, selectedId_);
 	RuleEditorFillWidgetsVisitor	 updateWidgets(this);
 
-	policy = (AppPolicy *)ruleListCtrl->GetItemData(selectedId_);
+	policy = (AppPolicy *)ruleListCtrl->GetItemData(selectedIndex_);
 	if (policy == NULL) {
 		return;
 	}
@@ -260,7 +260,7 @@ DlgRuleEditor::updateAction(int action)
 	RuleEditorFillTableVisitor	 updateTable(this, selectedId_);
 	RuleEditorFillWidgetsVisitor	 updateWidgets(this);
 
-	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedId_);
+	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedIndex_);
 	if (policy == NULL) {
 		return;
 	}
@@ -276,7 +276,7 @@ DlgRuleEditor::updateType(int type)
 	RuleEditorFillTableVisitor	 updateTable(this, selectedId_);
 	RuleEditorFillWidgetsVisitor	 updateWidgets(this);
 
-	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedId_);
+	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedIndex_);
 	if (policy == NULL) {
 		return;
 	}
@@ -293,7 +293,7 @@ DlgRuleEditor::updateProtocol(int protocol)
 	RuleEditorFillTableVisitor	 updateTable(this, selectedId_);
 	RuleEditorFillWidgetsVisitor	 updateWidgets(this);
 
-	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedId_);
+	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedIndex_);
 	if (policy == NULL) {
 		return;
 	}
@@ -310,7 +310,7 @@ DlgRuleEditor::updateAddrFamily(int addrFamily)
 	RuleEditorFillTableVisitor	 updateTable(this, selectedId_);
 	RuleEditorFillWidgetsVisitor	 updateWidgets(this);
 
-	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedId_);
+	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedIndex_);
 	if (policy == NULL) {
 		return;
 	}
@@ -327,7 +327,7 @@ DlgRuleEditor::updateCapType(int type)
 	RuleEditorFillTableVisitor	 updateTable(this, selectedId_);
 	RuleEditorFillWidgetsVisitor	 updateWidgets(this);
 
-	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedId_);
+	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedIndex_);
 	if (policy == NULL) {
 		return;
 	}
@@ -344,7 +344,7 @@ DlgRuleEditor::updateDirection(int direction)
 	RuleEditorFillTableVisitor	 updateTable(this, selectedId_);
 	RuleEditorFillWidgetsVisitor	 updateWidgets(this);
 
-	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedId_);
+	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedIndex_);
 	if (policy == NULL) {
 		return;
 	}
@@ -361,7 +361,7 @@ DlgRuleEditor::updateTimeout(int timeout)
 	RuleEditorFillTableVisitor	 updateTable(this, selectedId_);
 	RuleEditorFillWidgetsVisitor	 updateWidgets(this);
 
-	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedId_);
+	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedIndex_);
 	if (policy == NULL) {
 		return;
 	}
@@ -430,7 +430,7 @@ DlgRuleEditor::OnAppUpdateChkSumButton(wxCommandEvent& event)
 	RuleEditorFillWidgetsVisitor	 updateWidgets(this);
 	unsigned char			 csum[MAX_APN_HASH_LEN];
 
-	policy = (AppPolicy *)ruleListCtrl->GetItemData(selectedId_);
+	policy = (AppPolicy *)ruleListCtrl->GetItemData(selectedIndex_);
 	if (!policy)
 		return;
 
@@ -448,7 +448,7 @@ DlgRuleEditor::OnAppValidateChkSumButton(wxCommandEvent& event)
 	wxString			 currHash;
 	unsigned char			 csum[MAX_APN_HASH_LEN];
 
-	policy = (AppPolicy *)ruleListCtrl->GetItemData(selectedId_);
+	policy = (AppPolicy *)ruleListCtrl->GetItemData(selectedIndex_);
 	if (!policy)
 		return;
 
@@ -622,7 +622,7 @@ void
 DlgRuleEditor::OnSfsBinaryModifyButton(wxCommandEvent& event)
 {
 	SfsPolicy	*policy;
-	policy = (SfsPolicy *)ruleListCtrl->GetItemData(selectedId_);
+	policy = (SfsPolicy *)ruleListCtrl->GetItemData(selectedIndex_);
 	if (!policy)
 		return;
 	wxString	 caption = _("Choose a binary");
@@ -648,7 +648,7 @@ DlgRuleEditor::OnSfsUpdateChkSumButton(wxCommandEvent& event)
 	SfsPolicy			*policy;
 	unsigned char			 csum[MAX_APN_HASH_LEN];
 
-	policy = (SfsPolicy *)ruleListCtrl->GetItemData(selectedId_);
+	policy = (SfsPolicy *)ruleListCtrl->GetItemData(selectedIndex_);
 	if (!policy)
 		return;
 
@@ -669,7 +669,7 @@ DlgRuleEditor::OnSfsValidateChkSumButton(wxCommandEvent& event)
 	RuleEditorFillWidgetsVisitor	 updateWidgets(this);
 	unsigned char			 csum[MAX_APN_HASH_LEN];
 
-	policy = (SfsPolicy *)ruleListCtrl->GetItemData(selectedId_);
+	policy = (SfsPolicy *)ruleListCtrl->GetItemData(selectedIndex_);
 	if (!policy)
 		return;
 
@@ -727,7 +727,6 @@ DlgRuleEditor::OnLineSelected(wxListEvent& event)
 	Policy				*policy;
 	wxListView			*selecter;
 
-	lastSelectedId_ = selectedId_;
 	if (autoCheck_) {
 		if (!CheckLastSelection()) {
 			selecter = (wxListView *)ruleListCtrl;
@@ -735,7 +734,7 @@ DlgRuleEditor::OnLineSelected(wxListEvent& event)
 			return;
 		}
 	}
-	selectedId_ = event.GetIndex();
+	selectedIndex_ = event.GetIndex();
 	updateVisitor.setPropagation(false);
 	policy = (Policy *)event.GetData();
 	selectedId_ = policy->getId();
@@ -822,7 +821,7 @@ DlgRuleEditor::CheckLastSelection(void)
 	appPolicy = NULL;
 	policy	  = NULL;
 
-	policy = (Policy *)ruleListCtrl->GetItemData(selectedId_);
+	policy = (Policy *)ruleListCtrl->GetItemData(selectedIndex_);
 	if (!policy)
 		return (false);
 
@@ -880,10 +879,9 @@ DlgRuleEditor::CheckLastSelection(void)
 		    _("Back to Rule?"),
 		    wxYES_NO, this);
 		if (answer == wxYES) {
-			selectedId_ = lastSelectedId_;
 			updateVisitor.setPropagation(false);
 			policy = (Policy *)ruleListCtrl->GetItemData(
-			    selectedId_);
+			    selectedIndex_);
 			if (!policy)
 				return (false);
 			policy->accept(updateVisitor);

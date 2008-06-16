@@ -293,24 +293,11 @@ Communicator::Entry(void)
 		 */
 		if (policyUse_ && startPolicyUse == COMMUNICATOR_FLAG_NONE &&
 		startPolicyRequest == COMMUNICATOR_FLAG_NONE) {
-			startPolicyUse = COMMUNICATOR_FLAG_INIT;
+
 			policyUse_ = false;
-			length = policyBuf_.Length();
 
-			buf = (char *)malloc(length);
-			if(!buf) {
-				/* Here should be a better error handling*/
-				notDone = false;
-				continue;
-			}
+			length = strlen(policyBuf_);
 
-			strlcpy( buf,
-				(const char *)policyBuf_.mb_str(wxConvUTF8),
-				length);
-		}
-
-		if (startPolicyUse == COMMUNICATOR_FLAG_INIT) {
-			length = strlen(buf);
 			total =	sizeof(*ureq) + length;
 
 			ureq = (Policy_SetByUid *)malloc(total);
@@ -325,7 +312,8 @@ Communicator::Entry(void)
 			set_value(ureq->prio, 1);
 
 			if (length)
-				memcpy(ureq->payload, buf, length+1);
+				memcpy(ureq->payload, policyBuf_, length);
+
 
 			reqTa = anoubis_client_policyrequest_start(client_,
 					ureq, total);
@@ -334,7 +322,6 @@ Communicator::Entry(void)
 				commRC =  CONNECTION_RXTX_ERROR;
 				continue;
 			}
-
 			startPolicyUse = COMMUNICATOR_FLAG_PROG;
 		}
 
@@ -505,7 +492,7 @@ Communicator::policyRequest(void)
 }
 
 void
-Communicator::policyUse(wxString policyBuf)
+Communicator::policyUse(char *policyBuf)
 {
 	policyUse_ = true;
 	policyBuf_ = policyBuf;

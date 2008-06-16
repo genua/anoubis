@@ -52,7 +52,7 @@ enum connectionStateType {
 class Communicator : public wxThread {
 	private:
 		wxString		 socketPath_;
-		wxString		 policyBuf_;
+		char			*policyBuf_;
 		bool			 policyReq_;
 		bool			 policyUse_;
 		connectionStateType	 isConnected_;
@@ -72,7 +72,7 @@ class Communicator : public wxThread {
 
 		void sendEscalationAnswer(Notification *);
 		void policyRequest(void);
-		void policyUse(wxString);
+		void policyUse(char *);
 };
 
 #endif	/* _COMMUNICATOR_H_ */

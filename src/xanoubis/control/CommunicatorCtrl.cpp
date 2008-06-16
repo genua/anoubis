@@ -47,7 +47,7 @@
 
 #include <anoubis_msg.h>
 #include <wx/string.h>
-#include <wx/textfile.h>
+#include <wx/file.h>
 
 #include "AnEvents.h"
 #include "CommunicatorCtrl.h"
@@ -169,27 +169,29 @@ CommunicatorCtrl::usePolicy(wxString tmpName)
 {
 	if (connectionState_ == CONNECTION_CONNECTED)
 	{
-		wxTextFile tmpFile;
-		wxString rules = wxEmptyString;
-		wxString str;
-		wxString nLine = wxT("\n");
+		wxFile tmpFile;
+		int len;
+		char *buf = NULL;
 
 		if(tmpFile.Open(tmpName)) {
-			for( str = tmpFile.GetFirstLine(); !tmpFile.Eof();
-				str = tmpFile.GetNextLine()) {
-				rules = rules + str;
-				rules = rules + nLine;
+			len = tmpFile.Length();
+			buf = (char *)malloc(len);
+			if (!buf) {
+				wxGetApp().log(
+				    _("Error while allocating memory"));
+				return;
 			}
-			rules = rules + str;
-			rules = rules + nLine;
+			if (len != tmpFile.Read(buf, len))
+				wxGetApp().log(_("Error while reading file"));
 
 		}
 		tmpFile.Close();
-		com_->policyUse(rules);
+		com_->policyUse(buf);
 	}
 	else
 	{
-		/* XXX [KM] There could be your Error Handling: like log ??*/
+		wxGetApp().log(
+		    _("Couldn't send Policy to deamon: Not connected"));
 	}
 }
 
