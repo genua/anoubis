@@ -79,13 +79,16 @@ Notification::assembleAddress(bool isLocal)
 	unsigned short		 port;
 	struct alf_event	*alf;
 	const void		*address;
+	int			 evoff;
 
 	if (notify_ == NULL) {
 		return (_("no notify data available"));
 	}
 
+	evoff = get_value(notify_->u.notify->evoff);
 	bzero(ipAddrBuffer, sizeof(ipAddrBuffer));
-	alf = (struct alf_event *)(notify_->u.notify)->payload;
+	/* XXX CEH: Should verify that evlen >= sizeof(struct alf_event) */
+	alf = (struct alf_event *)((notify_->u.notify)->payload + evoff);
 
 	switch (alf->family) {
 	case AF_INET:
@@ -239,19 +242,21 @@ Notification::getOperation(void)
 	wxString		 operation;
 	struct sfs_open_message	*sfs;
 	struct alf_event	*alf;
+	int			 evoff;
 
 	if (notify_ == NULL) {
 		return (_("no notify data available"));
 	}
 
-	alf = (struct alf_event *)(notify_->u.notify)->payload;
-	sfs = (struct sfs_open_message *)(notify_->u.notify)->payload;
-
+	evoff = get_value(notify_->u.notify->evoff);
 	if (module_.IsEmpty()) {
 		module_ = getModule();
 	}
 
 	if (module_.Cmp(wxT("ALF")) == 0) {
+		/* XXX CEH: Should verify that evlen >= sizeof(*alf) */
+		alf = (struct alf_event *)
+		    ((notify_->u.notify)->payload + evoff);
 		switch (alf->op) {
 		case ALF_CONNECT:
 			operation = wxT("connect");
@@ -270,6 +275,9 @@ Notification::getOperation(void)
 			break;
 		}
 	} else if (module_.Cmp(wxT("SFS")) == 0) {
+		/* XXX CEH: Should verify that evlen >= sizeof(*sfs) */
+		sfs = (struct sfs_open_message *)
+		    ((notify_->u.notify)->payload + evoff);
 		if (! (sfs->flags & ANOUBIS_OPEN_FLAG_STRICT)) {
 			operation += wxT("open ");
 		}
@@ -292,23 +300,28 @@ Notification::getPath(void)
 	wxString		 path;
 	struct sfs_open_message	*sfs;
 	struct alf_event	*alf;
+	int			 evoff;
 
 	if (notify_ == NULL) {
 		return (_("no notify data available"));
 	}
 
-	alf = (struct alf_event *)(notify_->u.notify)->payload;
-	sfs = (struct sfs_open_message *)(notify_->u.notify)->payload;
-
+	evoff = get_value(notify_->u.notify->evoff);
 	if (module_.IsEmpty()) {
 		module_ = getModule();
 	}
 
 	if (module_.Cmp(wxT("ALF")) == 0) {
+		/* XXX CEH: Should verify that evlen >= sizeof(*alf) */
+		alf = (struct alf_event *)
+		    ((notify_->u.notify)->payload + evoff);
 		path = wxT("from ");
 		path += localAlfAddress() + wxT("  to  ");
 		path += remoteAlfAddress();
 	} else if (module_.Cmp(wxT("SFS")) == 0) {
+		/* XXX CEH: Should verify that evlen >= sizeof(*sfs) */
+		sfs = (struct sfs_open_message *)
+		    ((notify_->u.notify)->payload + evoff);
 		if (sfs->flags & ANOUBIS_OPEN_FLAG_PATHHINT) {
 			path = wxString::From8BitData(sfs->pathhint);
 		} else {
@@ -342,15 +355,13 @@ Notification::getCheckSum(void)
 {
 	wxString		 checksum;
 	struct sfs_open_message	*sfs;
-	struct alf_event	*alf;
+	int			 evoff;
 
 	if (notify_ == NULL) {
 		return (_("no notify data available"));
 	}
 
-	alf = (struct alf_event *)(notify_->u.notify)->payload;
-	sfs = (struct sfs_open_message *)(notify_->u.notify)->payload;
-
+	evoff = get_value(notify_->u.notify->evoff);
 	if (module_.IsEmpty()) {
 		module_ = getModule();
 	}
@@ -358,6 +369,9 @@ Notification::getCheckSum(void)
 	if (module_.Cmp(wxT("ALF")) == 0) {
 		checksum = _("no checksum information available");
 	} else if (module_.Cmp(wxT("SFS")) == 0) {
+		/* XXX CEH: Should verify that evlen >= sizeof(*sfs) */
+		sfs = (struct sfs_open_message *)
+		    ((notify_->u.notify)->payload + evoff);
 		if (sfs->flags & ANOUBIS_OPEN_FLAG_CSUM) {
 			checksum = wxT("0x");
 			for (int i=0; i<ANOUBIS_SFS_CS_LEN; i++) {

@@ -260,6 +260,9 @@ typedef struct {
 	 */
 	u32n	loglevel;
 	u32n	error;
+	u16n	csumoff, csumlen;
+	u16n	pathoff, pathlen;
+	u16n	evoff, evlen;
 	char	payload[0];
 } __attribute__((packed)) Anoubis_NotifyMessage;
 

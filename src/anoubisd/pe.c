@@ -1127,6 +1127,8 @@ pe_decide_alf(struct pe_proc *proc, struct eventdev_hdr *hdr)
 	if (decision == POLICY_ASK) {
 		reply->ask = 1;
 		reply->timeout = 300;	/* XXX 5 Minutes for now. */
+		reply->csum = proc->csum;
+		reply->path = proc->pathhint;
 	}
 	reply->reply = decision;
 	reply->len = 0;

@@ -30,10 +30,18 @@
 #include <sys/param.h>
 #include <sys/time.h>
 
+#ifdef S_SPLINT_S
+#include "splint-includes.h"
+#endif
+
 #include <err.h>
 #include <errno.h>
 #ifdef LINUX
 #include <grp.h>
+#include <openssl/sha.h>
+#endif
+#ifdef OPENBSD
+#include <sha2.h>
 #endif
 #include <pwd.h>
 #include <signal.h>
@@ -42,10 +50,6 @@
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
-
-#ifdef S_SPLINT_S
-#include "splint-includes.h"
-#endif
 
 /* on glibc 2.6+, event.h uses non C89 types :/ */
 #include <event.h>
@@ -363,15 +367,32 @@ dispatch_m2p(int fd, short sig, void *arg)
 			case ANOUBISD_MSG_EVENTDEV: {
 				anoubisd_msg_t *nmsg;
 				anoubisd_msg_eventask_t *eventask;
+				int extra = hdr->msg_size;
+				int plen = 0;
+				int cslen = 0;
 
-				int extra = hdr->msg_size - sizeof(*hdr);
+				if (reply->path)
+					plen = 1+strlen(reply->path);
+				if (reply->csum)
+					cslen = SHA256_DIGEST_LENGTH;
 				nmsg = msg_factory(ANOUBISD_MSG_EVENTASK,
-				    sizeof(anoubisd_msg_eventask_t) + extra);
+				    sizeof(anoubisd_msg_eventask_t)
+				    + extra + plen + cslen);
 				eventask =
 				    (anoubisd_msg_eventask_t *)nmsg->msg;
 				eventask->rule_id = reply->rule_id;
-				bcopy(hdr, &eventask->hdr, hdr->msg_size);
-				hdr = &eventask->hdr;
+				eventask->evoff = 0;
+				eventask->evlen = extra;
+				bcopy(hdr, eventask->payload, hdr->msg_size);
+				eventask->csumoff = extra;
+				eventask->csumlen = cslen;
+				bcopy(reply->csum, eventask->payload+extra,
+				    cslen);
+				eventask->pathoff = extra+cslen;
+				eventask->pathlen = plen;
+				bcopy(reply->path,
+				    eventask->payload+extra+cslen, plen);
+				hdr = (struct eventdev_hdr *)eventask->payload;
 				free(msg);
 				msg = nmsg;
 				break;

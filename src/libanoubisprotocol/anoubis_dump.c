@@ -60,19 +60,20 @@
 #define DUMP_NETULL(PTR,FIELD)						\
 	printf(" %s = %llu", #FIELD, get_value((PTR)->FIELD));
 
-static void DUMP_DATA(void * _buf, size_t len)
+static void DUMP_DATA_LABEL(const void * _buf, size_t len, const char *label)
 {
 	int i;
-	unsigned char * cbuf = _buf;
+	unsigned const char * cbuf = _buf;
 	if (!len)
 		return;
-	printf(" data =");
+	printf(" %s =", label);
 	for (i=0; i<(int)len; ++i) {
 		if (i%4 == 0)
 			printf(" ");
 		printf("%02x", cbuf[i]);
 	}
 }
+#define DUMP_DATA(BUF,LEN)	DUMP_DATA_LABEL((BUF),(LEN),"data")
 
 static void dump_general(Anoubis_GeneralMessage * m, size_t len)
 {
@@ -113,8 +114,46 @@ static void dump_authreply(Anoubis_AuthReplyMessage * m, size_t len)
 	printf(" name = %.*s", (int)len, m->name);
 }
 
+static void
+dump_part_hex(const char *payload, int totallen, int off, int len,
+    const char *label)
+{
+	int trunc = 0;
+	if (len == 0)
+		return;
+	if (len > totallen - off) {
+		len = totallen - off;
+		trunc = 1;
+	}
+	if (len < 0)
+		len = 0;
+	DUMP_DATA_LABEL(payload+off, len, label);
+	if (trunc)
+		printf("truncated");
+}
+
+static void
+dump_part_string(const char *payload, int totallen, int off, int len,
+    const char *label)
+{
+	int trunc = 0;
+	if (len == 0)
+		return;
+	if (len > totallen - off) {
+		len = totallen - off;
+		trunc = 1;
+	}
+	if (len < 0)
+		len = 0;
+	printf(" %s = %*s", label, len, payload+off);
+	if (trunc)
+		printf("truncated");
+}
+
 static void dump_notify(Anoubis_NotifyMessage * m, size_t len, int arg)
 {
+	int payloadlen = len - sizeof(*m);
+
 	printf(" token = 0x%llx", m->token);
 	DUMP_NETU(m, pid);
 	DUMP_NETU(m, rule_id);
@@ -122,11 +161,22 @@ static void dump_notify(Anoubis_NotifyMessage * m, size_t len, int arg)
 	DUMP_NETU(m, uid);
 	DUMP_NETU(m, subsystem);
 	DUMP_NETU(m, operation);
+	DUMP_NETU(m, evoff);
+	DUMP_NETU(m, evlen);
+	DUMP_NETU(m, pathoff);
+	DUMP_NETU(m, pathlen);
+	DUMP_NETU(m, csumoff);
+	DUMP_NETU(m, csumlen);
 	if (arg) {
 		DUMP_NETU(m, error);
 		DUMP_NETU(m, loglevel);
 	}
-	DUMP_DATA(m->payload, len-sizeof(*m));
+	dump_part_hex(m->payload, payloadlen, get_value(m->csumoff),
+	    get_value(m->csumlen), "csum");
+	dump_part_string(m->payload, payloadlen, get_value(m->pathoff),
+	    get_value(m->pathlen), "path");
+	dump_part_hex(m->payload, payloadlen, get_value(m->evoff),
+	    get_value(m->evlen), "raw event");
 }
 
 static void dump_notifyreg(Anoubis_NotifyRegMessage * m, size_t len __used)

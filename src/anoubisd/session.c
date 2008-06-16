@@ -594,6 +594,12 @@ dispatch_m2s(int fd, short sig, void *arg)
 		set_value(m->u.notify->uid, hdr->msg_uid);
 		set_value(m->u.notify->subsystem, hdr->msg_source);
 		set_value(m->u.notify->operation, 0 /* XXX ?? */);
+		set_value(m->u.notify->csumoff, 0);
+		set_value(m->u.notify->csumlen, 0);
+		set_value(m->u.notify->pathoff, 0);
+		set_value(m->u.notify->pathlen, 0);
+		set_value(m->u.notify->evoff, 0);
+		set_value(m->u.notify->evlen, extra);
 		memcpy(m->u.notify->payload, &hdr[1], extra);
 		head = anoubis_notify_create_head(m, NULL, NULL);
 		if (!head) {
@@ -713,6 +719,12 @@ dispatch_p2s_log_request(anoubisd_msg_t *msg,
 	set_value(m->u.notify->operation, 0 /* XXX ?? */);
 	set_value(m->u.notify->loglevel, req->loglevel);
 	set_value(m->u.notify->error, req->error);
+	set_value(m->u.notify->csumoff, 0);
+	set_value(m->u.notify->csumlen, 0);
+	set_value(m->u.notify->pathoff, 0);
+	set_value(m->u.notify->pathlen, 0);
+	set_value(m->u.notify->evoff, 0);
+	set_value(m->u.notify->evlen, extra);
 	memcpy(m->u.notify->payload, (&req->hdr)+1, extra);
 	head = anoubis_notify_create_head(m, NULL, NULL);
 	if (!head) {
@@ -744,7 +756,7 @@ dispatch_p2s_evt_request(anoubisd_msg_t	*msg,
 {
 	struct anoubis_notify_head * head;
 	struct anoubis_msg * m;
-	anoubisd_msg_eventask_t *eventask;
+	anoubisd_msg_eventask_t *eventask = NULL;
 	struct eventdev_hdr *hdr;
 	struct session	*sess;
 	struct cbdata	*cbdata;
@@ -752,6 +764,7 @@ dispatch_p2s_evt_request(anoubisd_msg_t	*msg,
 	int sent;
 	u_int64_t task = 0;
 	u_int32_t rule_id = 0;
+	int plen = 0, cslen = 0;
 
 	DEBUG(DBG_TRACE, ">dispatch_p2s_evt_request");
 
@@ -762,7 +775,10 @@ dispatch_p2s_evt_request(anoubisd_msg_t	*msg,
 	case ANOUBISD_MSG_EVENTASK:
 		eventask = (anoubisd_msg_eventask_t *)(msg->msg);
 		rule_id = eventask->rule_id;
-		hdr = &eventask->hdr;
+		hdr = (struct eventdev_hdr *)
+		    (eventask->payload + eventask->evoff);
+		plen = eventask->pathlen;
+		cslen = eventask->csumlen;
 		break;
 	case ANOUBISD_MSG_SFSOPEN:
 		hdr = &((anoubisd_msg_sfsopen_t*)msg->msg)->hdr;
@@ -780,7 +796,8 @@ dispatch_p2s_evt_request(anoubisd_msg_t	*msg,
 	extra = hdr->msg_size - sizeof(struct eventdev_hdr);
 	if (extra >= sizeof(struct anoubis_event_common))
 		task = ((struct anoubis_event_common*)(hdr+1))->task_cookie;
-	m = anoubis_msg_new(sizeof(Anoubis_NotifyMessage) + extra);
+	m = anoubis_msg_new(sizeof(Anoubis_NotifyMessage)
+	    + extra + plen + cslen);
 	if (!m) {
 		/* malloc failure, then we don't send the message */
 		DEBUG(DBG_TRACE, "<dispatch_p2s_evt_request (bad new)");
@@ -804,7 +821,27 @@ dispatch_p2s_evt_request(anoubisd_msg_t	*msg,
 	set_value(m->u.notify->uid, hdr->msg_uid);
 	set_value(m->u.notify->subsystem, hdr->msg_source);
 	set_value(m->u.notify->operation, 0 /* XXX ?? */);
+	set_value(m->u.notify->evoff, 0);
+	set_value(m->u.notify->evlen, extra);
 	memcpy(m->u.notify->payload, &hdr[1], extra);
+	if (cslen) {
+		set_value(m->u.notify->csumoff, extra);
+		set_value(m->u.notify->csumlen, cslen);
+		memcpy(m->u.notify->payload + extra,
+		    eventask->payload + eventask->csumoff, cslen);
+	} else {
+		set_value(m->u.notify->csumoff, 0);
+		set_value(m->u.notify->csumlen, 0);
+	}
+	if (plen) {
+		set_value(m->u.notify->pathoff, extra + cslen);
+		set_value(m->u.notify->pathlen, plen);
+		memcpy(m->u.notify->payload + extra + cslen,
+		    eventask->payload + eventask->pathoff, plen);
+	} else {
+		set_value(m->u.notify->pathoff, 0);
+		set_value(m->u.notify->pathlen, 0);
+	}
 	head = anoubis_notify_create_head(m, notify_callback, cbdata);
 	cbdata->ev_head = head;
 

@@ -108,8 +108,11 @@ enum {
 
 struct anoubisd_msg_eventask
 {
-	u_int32_t rule_id;
-	struct eventdev_hdr hdr;
+	u_int32_t	rule_id;
+	u_int16_t	csumoff, csumlen;
+	u_int16_t	pathoff, pathlen;
+	u_int16_t	evoff, evlen;
+	char		payload[0];
 };
 typedef struct anoubisd_msg_eventask anoubisd_msg_eventask_t;
 
@@ -146,6 +149,8 @@ struct anoubisd_reply {
 	u_int64_t	token;		/* only for anoubisd_msg_comm_t msgs */
 	u_int32_t	flags;		/* Only for POLREPLY */
 	u_int32_t	rule_id;	/* Rule ID if ask is true */
+	u_int8_t	*csum;
+	char		*path;
 	short		len;		/* of following msg */
 	char		msg[0];
 };
