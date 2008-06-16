@@ -47,7 +47,6 @@
 #include <wx/listctrl.h>
 #include <wx/radiobut.h>
 #include <wx/spinctrl.h>
-#include "AnFader.h"
 #include <wx/statbox.h>
 #include <wx/scrolwin.h>
 #include <wx/bitmap.h>
@@ -95,7 +94,11 @@ class DlgRuleEditorBase : public wxFrame
 		wxStaticText* commonPriorityText;
 		wxSpinCtrl* commonPrioritySpinCtrl;
 		wxStaticText* commonFaderText;
-		AnFader *commonFader;
+		wxRadioButton* commonHighProfileRadioButton;
+		
+		wxRadioButton* commonMediumProfileRadioButton;
+		
+		wxRadioButton* commonAdminProfileRadioButton;
 		wxStaticText* commonCommentText;
 		wxTextCtrl* commonCommentTextCtrl;
 		wxRadioButton* commonProcEndRadioButton;
@@ -229,6 +232,9 @@ class DlgRuleEditorBase : public wxFrame
 		virtual void OnRuleSetSave( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnTableOptionButtonClick( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnLineSelected( wxListEvent& event ){ event.Skip(); }
+		virtual void OnCommonHighProfileButton( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnCommonMediumProfileButton( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnCommonAdminProfileButton( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnAppNameComboBox( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnAppBinaryTextCtrl( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnAppBinaryModifyButton( wxCommandEvent& event ){ event.Skip(); }

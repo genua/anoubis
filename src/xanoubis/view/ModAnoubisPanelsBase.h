@@ -52,6 +52,7 @@
 #include <wx/checkbox.h>
 #include <wx/statbox.h>
 #include <wx/notebook.h>
+#include <wx/statbmp.h>
 
 ///////////////////////////////////////////////////////////////////////////
 
@@ -114,7 +115,6 @@ class ModAnoubisMainPanelBase : public wxPanel
 		
 		wxSpinCtrl* m_spinEscalationNotifyTimeout;
 		wxStaticText* tx_EscalationNotifyTimeoutLabel;
-		
 		wxCheckBox* cb_SendAlerts;
 		
 		wxCheckBox* cb_NoAlertTimeout;
@@ -153,7 +153,17 @@ class ModAnoubisOverviewPanelBase : public wxPanel
 	private:
 	
 	protected:
-		wxStaticText* tx_OVMainHeadline;
+		
+		wxStaticBitmap* anoubisStatusIcon;
+		wxRadioButton* highProfileRadioButton;
+		wxRadioButton* mediumProfileRadioButton;
+		wxRadioButton* adminProfileRadioButton;
+		
+		// Virtual event handlers, overide them in your derived class
+		virtual void OnHighProfileRadioButton( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnMediumProfileRadioButton( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnAdminProfileRadioButton( wxCommandEvent& event ){ event.Skip(); }
+		
 	
 	public:
 		ModAnoubisOverviewPanelBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( -1,-1 ), long style = wxTAB_TRAVERSAL );

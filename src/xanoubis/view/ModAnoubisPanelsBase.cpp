@@ -405,11 +405,39 @@ ModAnoubisOverviewPanelBase::ModAnoubisOverviewPanelBase( wxWindow* parent, wxWi
 	wxBoxSizer* sz_OverviewAnoubisMain;
 	sz_OverviewAnoubisMain = new wxBoxSizer( wxVERTICAL );
 	
-	tx_OVMainHeadline = new wxStaticText( this, wxID_ANY, _("Show overview information of module Anoubis"), wxDefaultPosition, wxDefaultSize, 0 );
-	tx_OVMainHeadline->Wrap( -1 );
-	sz_OverviewAnoubisMain->Add( tx_OVMainHeadline, 0, wxALIGN_TOP|wxALL, 5 );
+	wxFlexGridSizer* fgSizer4;
+	fgSizer4 = new wxFlexGridSizer( 1, 3, 0, 0 );
+	fgSizer4->SetFlexibleDirection( wxBOTH );
+	fgSizer4->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+	
+	
+	fgSizer4->Add( 20, 0, 1, wxEXPAND, 5 );
+	
+	anoubisStatusIcon = new wxStaticBitmap( this, wxID_ANY, wxNullBitmap, wxDefaultPosition, wxDefaultSize, 0 );
+	fgSizer4->Add( anoubisStatusIcon, 0, wxALL|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL, 5 );
+	
+	wxBoxSizer* profileSizer;
+	profileSizer = new wxBoxSizer( wxVERTICAL );
+	
+	highProfileRadioButton = new wxRadioButton( this, wxID_ANY, _("Profile: high"), wxDefaultPosition, wxDefaultSize, wxRB_GROUP );
+	profileSizer->Add( highProfileRadioButton, 0, wxALL, 5 );
+	
+	mediumProfileRadioButton = new wxRadioButton( this, wxID_ANY, _("Profile: medium"), wxDefaultPosition, wxDefaultSize, 0 );
+	profileSizer->Add( mediumProfileRadioButton, 0, wxALL, 5 );
+	
+	adminProfileRadioButton = new wxRadioButton( this, wxID_ANY, _("Profile: admin"), wxDefaultPosition, wxDefaultSize, 0 );
+	profileSizer->Add( adminProfileRadioButton, 0, wxALL, 5 );
+	
+	fgSizer4->Add( profileSizer, 1, wxEXPAND, 5 );
+	
+	sz_OverviewAnoubisMain->Add( fgSizer4, 1, wxEXPAND, 5 );
 	
 	this->SetSizer( sz_OverviewAnoubisMain );
 	this->Layout();
 	sz_OverviewAnoubisMain->Fit( this );
+	
+	// Connect Events
+	highProfileRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( ModAnoubisOverviewPanelBase::OnHighProfileRadioButton ), NULL, this );
+	mediumProfileRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( ModAnoubisOverviewPanelBase::OnMediumProfileRadioButton ), NULL, this );
+	adminProfileRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( ModAnoubisOverviewPanelBase::OnAdminProfileRadioButton ), NULL, this );
 }

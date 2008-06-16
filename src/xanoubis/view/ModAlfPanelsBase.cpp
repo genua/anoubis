@@ -221,20 +221,7 @@ ModAlfOverviewPanelBase::ModAlfOverviewPanelBase( wxWindow* parent, wxWindowID i
 	
 	sz_OVALF->Add( sz_values, 1, wxEXPAND, 5 );
 	
-	
-	sz_OVALF->Add( 20, 0, 1, wxEXPAND, 5 );
-	
-	alfFader = new AnFader(this);
-	sz_OVALF->Add( alfFader, 0, wxALL, 5 );
-	
-	
-	sz_OVALF->Add( 0, 0, 1, wxEXPAND, 5 );
-	
-	Info_for_slider = new wxStaticText( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
-	Info_for_slider->Wrap( -1 );
-	sz_OVALF->Add( Info_for_slider, 0, wxALL, 5 );
-	
-	sz_OverviewALFMain->Add( sz_OVALF, 1, wxEXPAND, 5 );
+	sz_OverviewALFMain->Add( sz_OVALF, 0, wxEXPAND, 5 );
 	
 	this->SetSizer( sz_OverviewALFMain );
 	this->Layout();

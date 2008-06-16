@@ -171,8 +171,20 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	commonFaderText->Wrap( -1 );
 	commonRuleSizer->Add( commonFaderText, 0, wxALL, 5 );
 	
-	commonFader = new AnFader(commonNbPanel);
-	commonRuleSizer->Add( commonFader, 0, wxALL, 5 );
+	commonHighProfileRadioButton = new wxRadioButton( commonNbPanel, wxID_ANY, _("Profile: high"), wxDefaultPosition, wxDefaultSize, wxRB_GROUP );
+	commonRuleSizer->Add( commonHighProfileRadioButton, 0, wxALL, 5 );
+	
+	
+	commonRuleSizer->Add( 0, 0, 1, wxEXPAND, 5 );
+	
+	commonMediumProfileRadioButton = new wxRadioButton( commonNbPanel, wxID_ANY, _("Profile: medium"), wxDefaultPosition, wxDefaultSize, 0 );
+	commonRuleSizer->Add( commonMediumProfileRadioButton, 0, wxALL, 5 );
+	
+	
+	commonRuleSizer->Add( 0, 0, 1, wxEXPAND, 5 );
+	
+	commonAdminProfileRadioButton = new wxRadioButton( commonNbPanel, wxID_ANY, _("Profile: admin"), wxDefaultPosition, wxDefaultSize, 0 );
+	commonRuleSizer->Add( commonAdminProfileRadioButton, 0, wxALL, 5 );
 	
 	commonCommentText = new wxStaticText( commonNbPanel, wxID_ANY, _("Comment:"), wxDefaultPosition, wxDefaultSize, 0 );
 	commonCommentText->Wrap( -1 );
@@ -274,7 +286,7 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	commonNbPanel->SetSizer( commonMainSizer );
 	commonNbPanel->Layout();
 	commonMainSizer->Fit( commonNbPanel );
-	ruleEditNotebook->AddPage( commonNbPanel, _("Common"), false );
+	ruleEditNotebook->AddPage( commonNbPanel, _("Common"), true );
 	applicationNbPanel = new wxScrolledWindow( ruleEditNotebook, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxVSCROLL );
 	applicationNbPanel->SetScrollRate( 5, 5 );
 	wxFlexGridSizer* appMainPanelSizer;
@@ -679,7 +691,7 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	sfsNbPanel->SetSizer( sfsSizer );
 	sfsNbPanel->Layout();
 	sfsSizer->Fit( sfsNbPanel );
-	ruleEditNotebook->AddPage( sfsNbPanel, _("SFS"), true );
+	ruleEditNotebook->AddPage( sfsNbPanel, _("SFS"), false );
 	macroNbPanel = new wxScrolledWindow( ruleEditNotebook, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxVSCROLL );
 	macroNbPanel->SetScrollRate( 5, 5 );
 	wxFlexGridSizer* macroSizer;
@@ -721,6 +733,9 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	controlRuleSetSaveButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::OnRuleSetSave ), NULL, this );
 	controlOptionButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::OnTableOptionButtonClick ), NULL, this );
 	ruleListCtrl->Connect( wxEVT_COMMAND_LIST_ITEM_SELECTED, wxListEventHandler( DlgRuleEditorBase::OnLineSelected ), NULL, this );
+	commonHighProfileRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorBase::OnCommonHighProfileButton ), NULL, this );
+	commonMediumProfileRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorBase::OnCommonMediumProfileButton ), NULL, this );
+	commonAdminProfileRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorBase::OnCommonAdminProfileButton ), NULL, this );
 	appNameComboBox->Connect( wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler( DlgRuleEditorBase::OnAppNameComboBox ), NULL, this );
 	appNameComboBox->Connect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( DlgRuleEditorBase::OnAppNameComboBox ), NULL, this );
 	appBinaryTextCtrl->Connect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( DlgRuleEditorBase::OnAppBinaryTextCtrl ), NULL, this );

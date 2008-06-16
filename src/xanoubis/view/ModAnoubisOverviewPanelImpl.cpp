@@ -26,9 +26,11 @@
  */
 
 #include "ModAnoubisOverviewPanelImpl.h"
+#include "main.h"
 
 ModAnoubisOverviewPanelImpl::ModAnoubisOverviewPanelImpl(wxWindow* parent, \
     wxWindowID id) : ModAnoubisOverviewPanelBase(parent, id)
 {
-
+	wxIcon *icon = wxGetApp().loadIcon(wxT("ModAnoubis_black_48.png"));
+	anoubisStatusIcon->SetIcon(*icon);
 }

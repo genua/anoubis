@@ -142,19 +142,6 @@ ModSfsOverviewPanelBase::ModSfsOverviewPanelBase( wxWindow* parent, wxWindowID i
 	
 	sz_OVSFS->Add( sz_values, 1, wxEXPAND, 5 );
 	
-	
-	sz_OVSFS->Add( 20, 0, 1, wxEXPAND, 5 );
-	
-	sfsFader = new AnFader(this);
-	sz_OVSFS->Add( sfsFader, 0, wxALL, 5 );
-	
-	
-	sz_OVSFS->Add( 0, 0, 1, wxEXPAND, 5 );
-	
-	Info_for_slider = new wxStaticText( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
-	Info_for_slider->Wrap( -1 );
-	sz_OVSFS->Add( Info_for_slider, 0, wxALL, 5 );
-	
 	sz_OverviewSFSMain->Add( sz_OVSFS, 1, wxEXPAND, 5 );
 	
 	this->SetSizer( sz_OverviewSFSMain );
