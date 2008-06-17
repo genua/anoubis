@@ -42,6 +42,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <fcntl.h>
 
 #include "accutils.h"
 #include "anoubischat.h"
@@ -61,6 +62,9 @@ acc_prepare(struct achat_channel *acc)
 
 		acc->sockfd = socket(acc->addr.ss_family, SOCK_STREAM, 0);
 		if (acc->sockfd == -1)
+			return (ACHAT_RC_ERROR);
+
+		if (fcntl(acc->sockfd, F_SETFD, FD_CLOEXEC) == -1)
 			return (ACHAT_RC_ERROR);
 
 		if (acc->addr.ss_family == AF_UNIX)
@@ -92,6 +96,10 @@ acc_prepare(struct achat_channel *acc)
 		acc->connfd = socket(acc->addr.ss_family, SOCK_STREAM, 0);
 		if (acc->connfd == -1)
 			return (ACHAT_RC_ERROR);
+
+		if (fcntl(acc->connfd, F_SETFD, FD_CLOEXEC) == -1)
+			return (ACHAT_RC_ERROR);
+
 		break;
 	default:
 		return (ACHAT_RC_ERROR);

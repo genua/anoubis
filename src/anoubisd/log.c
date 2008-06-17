@@ -303,7 +303,7 @@ logger_main(struct anoubisd_config *conf, int pipe_m2l[2], int pipe_p2l[2],
 	openlog(__progname, LOG_PID | LOG_NDELAY, LOG_DAEMON);
 	tzset();
 	__log_fd = -1;
-	log_info("logger started");
+	log_info("logger started (pid %d)", getpid());
 
 	(void)event_init();
 

@@ -288,7 +288,7 @@ session_main(struct anoubisd_config *conf, int pipe_m2s[2], int pipe_m2p[2],
 	log_init(loggers[2]);
 	close(loggers[0]);
 	close(loggers[1]);
-	log_info("session started");
+	log_info("session started (pid %d)", getpid());
 
 	anoubisd_process = PROC_SESSION;
 

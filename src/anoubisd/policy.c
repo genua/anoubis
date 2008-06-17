@@ -165,7 +165,7 @@ policy_main(struct anoubisd_config *conf, int pipe_m2s[2], int pipe_m2p[2],
 		fatal("can't drop privileges");
 
 	/* From now on, this is an unprivileged child process. */
-	log_info("policy started");
+	log_info("policy started (pid %d)", getpid());
 
 	/* We catch or block signals rather than ignoring them. */
 	signal_set(&ev_sigterm, SIGTERM, policy_sighandler, NULL);
