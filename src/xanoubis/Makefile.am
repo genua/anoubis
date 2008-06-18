@@ -86,11 +86,12 @@ xanoubis_LDADD = \
 catalogdir = $(datadir)/$(bin_PROGRAMS)/catalogs/de
 utildir = $(datadir)/$(bin_PROGRAMS)/utils
 icondir = $(datadir)/$(bin_PROGRAMS)/icons
+profiledir = $(datadir)/$(bin_PROGRAMS)/profiles
 
 dist_catalog_DATA = \
 	catalogs/de/xanoubis.mo \
 	catalogs/de/xanoubis.po
-dist_util_DATA = utils/xanoubis_guessApp.sh
+dist_util_SCRIPTS = utils/xanoubis_guessApp.sh
 dist_icon_DATA = \
 	icons/ModAlf_alert_16.png \
 	icons/ModAlf_alert_48.png \
@@ -149,6 +150,13 @@ dist_icon_DATA = \
 	icons/ModSfs_question_16.png \
 	icons/ModSfs_question_48.png \
 	icons/xanoubis.png
+dist_profile_SCRIPTS = \
+	profiles/high \
+	profiles/medium \
+	profiles/admin
+
+install-data-hook:
+	-chmod 400 $(DESTDIR)/$(profiledir)/*
 
 xanoubis_SOURCES= \
 	model/AlertNotify.cpp \

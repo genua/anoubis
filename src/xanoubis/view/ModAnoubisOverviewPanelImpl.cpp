@@ -34,3 +34,56 @@ ModAnoubisOverviewPanelImpl::ModAnoubisOverviewPanelImpl(wxWindow* parent, \
 	wxIcon *icon = wxGetApp().loadIcon(wxT("ModAnoubis_black_48.png"));
 	anoubisStatusIcon->SetIcon(*icon);
 }
+
+void
+ModAnoubisOverviewPanelImpl::setRadioButtons(wxString profileName)
+{
+	if (profileName.Cmp(wxT("admin")) == 0) {
+		adminProfileRadioButton->SetValue(true);
+	} else if (profileName.Cmp(wxT("medium")) == 0) {
+		mediumProfileRadioButton->SetValue(true);
+	} else if (profileName.Cmp(wxT("high")) == 0) {
+		highProfileRadioButton->SetValue(true);
+	} else {
+		/* do nothing */
+	}
+}
+
+void
+ModAnoubisOverviewPanelImpl::setProfile(wxString newProfile)
+{
+	wxString	currProfile;
+
+	currProfile = wxGetApp().getCurrentProfileName();
+
+	if (newProfile.Cmp(currProfile) == 0) {
+		/* nothing to do */
+	} else if (!wxGetApp().profileFromDaemonToDisk(currProfile)) {
+		/* no ruleset was loaded */
+		setRadioButtons(currProfile);
+		return;
+	} else if (!wxGetApp().profileFromDiskToDaemon(newProfile)) {
+		/* didn't find new profile */
+		setRadioButtons(currProfile);
+		return;
+	}
+	setRadioButtons(newProfile);
+}
+
+void
+ModAnoubisOverviewPanelImpl::OnHighProfileRadioButton(wxCommandEvent& event)
+{
+	setProfile(wxT("high"));
+}
+
+void
+ModAnoubisOverviewPanelImpl::OnMediumProfileRadioButton(wxCommandEvent& event)
+{
+	setProfile(wxT("medium"));
+}
+
+void
+ModAnoubisOverviewPanelImpl::OnAdminProfileRadioButton(wxCommandEvent& event)
+{
+	setProfile(wxT("admin"));
+}

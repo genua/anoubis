@@ -63,6 +63,7 @@ class ModAnoubis : public Module, public wxEvtHandler
 		int	getBaseId(void);
 		int	getToolbarId(void);
 		void	update(void);
+		void	setProfile(wxString);
 
 		void	OnAddNotification(wxCommandEvent&);
 		void	insertNotification(Notification *);

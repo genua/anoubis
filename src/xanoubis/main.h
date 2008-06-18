@@ -76,6 +76,7 @@ class AnoubisGuiApp : public wxApp
 {
 	private:
 		wxString		 socketParam_;
+		wxString		 profile_;
 		wxStandardPaths		 paths_;
 		wxLocale		 language_;
 		PolicyRuleSet		*ruleSet_;
@@ -115,8 +116,11 @@ class AnoubisGuiApp : public wxApp
 		wxString	 getDataDir(void);
 		void		 importPolicyFile(wxString);
 		void		 exportPolicyFile(wxString);
-		bool		getCommConnectionState(void);
+		bool		 getCommConnectionState(void);
 		wxConfig	*getUserOptions(void);
+		bool		 profileFromDiskToDaemon(wxString);
+		bool		 profileFromDaemonToDisk(wxString);
+		wxString	 getCurrentProfileName(void);
 };
 
 DECLARE_APP(AnoubisGuiApp)

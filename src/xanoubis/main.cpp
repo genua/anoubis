@@ -30,6 +30,7 @@
 #endif
 
 #include <wx/cmdline.h>
+#include <wx/fileconf.h>
 #include <wx/icon.h>
 #include <wx/stdpaths.h>
 #include <wx/string.h>
@@ -88,6 +89,8 @@ AnoubisGuiApp::quit(void)
 {
 	bool result = mainFrame->OnQuit();
 
+	userOptions_->Write(wxT("Anoubis/Profile"), profile_);
+
 	if(result) {
 		trayIcon->RemoveIcon();
 		mainFrame->Destroy();
@@ -110,7 +113,12 @@ bool AnoubisGuiApp::OnInit()
 		language_.AddCatalog(GetAppName());
 	}
 
-	userOptions_ = new wxConfig(GetAppName());
+	if (!wxDirExists(paths_.GetUserDataDir())) {
+		wxMkdir(paths_.GetUserDataDir());
+	}
+	userOptions_ = new wxFileConfig(GetAppName(), wxEmptyString,
+	    wxEmptyString, wxEmptyString,
+	    wxCONFIG_USE_SUBDIR | wxCONFIG_USE_LOCAL_FILE);
 	mainFrame = new MainFrame((wxWindow*)NULL);
 	logViewer_ = new DlgLogViewer(mainFrame);
 	ruleEditor_ = new DlgRuleEditor(mainFrame);
@@ -141,6 +149,12 @@ bool AnoubisGuiApp::OnInit()
 	if (hasLocale) {
 		status(_("Language setting: ") + language_.GetCanonicalName());
 	}
+
+	if (!userOptions_->Read(wxT("Anoubis/Profile"), &profile_)) {
+		profile_ = wxT("admin");
+		profileFromDiskToDaemon(profile_);
+	}
+	((ModAnoubis*)modules_[ANOUBIS])->setProfile(profile_);
 
 	return (true);
 }
@@ -409,4 +423,75 @@ wxConfig *
 AnoubisGuiApp::getUserOptions(void)
 {
 	return (userOptions_);
+}
+
+bool
+AnoubisGuiApp::profileFromDiskToDaemon(wxString profileName)
+{
+	wxString	fileName;
+	wxString	logMsg;
+
+	if ((comCtrl_ == NULL) || !comCtrl_->isConnected()) {
+		status(_("Error: xanoubis is not connected to the daemon"));
+		return (false);
+	}
+
+	logMsg = _("seek for profile ") + profileName + _(" at ");
+	fileName = paths_.GetUserDataDir() + wxT("/") + profileName;
+	log(logMsg + fileName);
+	if (!wxFileExists(fileName)) {
+		fileName = paths_.GetDataDir();
+		fileName += wxT("/profiles/") + profileName;
+		log(logMsg + fileName);
+	}
+	if (!wxFileExists(fileName)) {
+		/*
+		 * We didn't find our icon (where --prefix told us)!
+		 * Try to take executable path into account. This should
+		 * fix a missing --prefix as the matter in our build and test
+		 * environment with aegis.
+		 */
+		fileName  = wxPathOnly(paths_.GetExecutablePath()) +
+		    wxT("/../../..") + fileName;
+		log(logMsg + fileName);
+	}
+	if (!wxFileExists(fileName)) {
+		status(_("Error: could not find profile: ") + profileName);
+		return (false);
+	}
+
+	profile_ = profileName;
+	comCtrl_->usePolicy(fileName);
+	importPolicyFile(fileName);
+
+	return (true);
+}
+
+bool
+AnoubisGuiApp::profileFromDaemonToDisk(wxString profileName)
+{
+	wxString	fileName;
+
+	if ((comCtrl_ == NULL) || !comCtrl_->isConnected()) {
+		status(_("Error: xanoubis is not connected to the daemon"));
+		return (false);
+	}
+
+	if (ruleSet_ == NULL) {
+		return (false);
+	}
+
+	fileName = paths_.GetUserDataDir() + wxT("/") + profileName;
+	if (wxFileExists(fileName)) {
+		wxRemoveFile(fileName);
+	}
+	exportPolicyFile(fileName);
+
+	return (true);
+}
+
+wxString
+AnoubisGuiApp::getCurrentProfileName(void)
+{
+	return (profile_);
 }

@@ -32,8 +32,16 @@
 
 class ModAnoubisOverviewPanelImpl : public ModAnoubisOverviewPanelBase
 {
+	private:
+		void setRadioButtons(wxString);
+		void OnHighProfileRadioButton(wxCommandEvent&);
+		void OnMediumProfileRadioButton(wxCommandEvent&);
+		void OnAdminProfileRadioButton(wxCommandEvent&);
+
 	public:
 		ModAnoubisOverviewPanelImpl(wxWindow* parent, wxWindowID id);
+
+		void setProfile(wxString);
 };
 
 #endif /* __ModAnoubisOverviewPanelImpl__ */

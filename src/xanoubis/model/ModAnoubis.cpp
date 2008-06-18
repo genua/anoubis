@@ -121,6 +121,12 @@ ModAnoubis::update(void)
 }
 
 void
+ModAnoubis::setProfile(wxString profile)
+{
+	((ModAnoubisOverviewPanelImpl *)overviewPanel_)->setProfile(profile);
+}
+
+void
 ModAnoubis::OnAddNotification(wxCommandEvent& event)
 {
 	Notification *notify;
