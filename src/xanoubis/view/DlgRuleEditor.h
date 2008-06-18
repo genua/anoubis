@@ -116,6 +116,10 @@ class DlgRuleEditor : public DlgRuleEditorBase
 		void updateCapType(int);
 		void updateDirection(int);
 		void updateTimeout(int);
+		void updateAlfSrcAddr(wxString, int, int);
+		void updateAlfDstAddr(wxString, int, int);
+		void updateAlfSrcPort(int);
+		void updateAlfDstPort(int);
 
 	protected:
 		AnShortcuts	*shortcuts_;
@@ -159,6 +163,16 @@ class DlgRuleEditor : public DlgRuleEditorBase
 		void OnSfsBinaryModifyButton(wxCommandEvent&);
 		void OnSfsUpdateChkSumButton(wxCommandEvent&);
 		void OnSfsValidateChkSumButton(wxCommandEvent&);
+
+		void OnAlfSrcAddrComboBox(wxCommandEvent&);
+		void OnAlfDstAddrComboBox(wxCommandEvent&);
+		void OnAlfSrcNetmaskSpinCtrl(wxSpinEvent&);
+		void OnAlfSrcNetmaskSpinCtrlText(wxCommandEvent&);
+		void OnAlfDstNetmaskSpinCtrl(wxSpinEvent&);
+		void OnAlfDstNetmaskSpinCtrlText(wxCommandEvent&);
+		void OnAlfSrcPortComboBox(wxCommandEvent&);
+		void OnAlfDstPortComboBox(wxCommandEvent&);
+		void OnAlfStateTimeoutChange(wxCommandEvent&);
 
 		void loadRuleSet(PolicyRuleSet*);
 		void OnSrcAddrAddButton(wxCommandEvent&);

@@ -436,6 +436,7 @@ RuleEditorFillWidgetsVisitor::visitAlfPolicy(AlfPolicy *alfPolicy)
 	default:
 		break;
 	}
+	ruleEditor_->alfNbPanel->SetFocus();
 }
 
 void

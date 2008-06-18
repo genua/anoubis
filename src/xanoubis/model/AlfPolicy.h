@@ -122,6 +122,15 @@ class AlfPolicy : public Policy
 		void		setCapType(int);
 		int		getCapTypeNo(void);
 		wxString	getCapTypeName(void);
+
+		wxString        getSrcNetmask(void);
+		wxString        getDstNetmask(void);
+
+		void		setAlfSrcAddress(wxString, int, int);
+		void		setAlfDstAddress(wxString, int, int);
+
+		void		setAlfSrcPort(int);
+		void		setAlfDstPort(int);
 };
 
 #endif	/* _ALFPOLICY_H_ */

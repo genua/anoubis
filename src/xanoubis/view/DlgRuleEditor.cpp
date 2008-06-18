@@ -368,6 +368,83 @@ DlgRuleEditor::updateTimeout(int timeout)
 
 	policy->setStateTimeout(timeout);
 	policy->accept(updateTable);
+	/*
+	 * ST: disabled as wxSpinCtrl::SetValue ends up in an endless event loop
+	 * policy->accept(updateWidgets);
+	 */
+}
+
+void
+DlgRuleEditor::updateAlfSrcAddr(wxString address, int netmask, int af)
+{
+	AlfPolicy                       *policy;
+	RuleEditorFillTableVisitor       updateTable(this, selectedId_);
+	RuleEditorFillWidgetsVisitor     updateWidgets(this);
+
+	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedIndex_);
+	if (policy == NULL) {
+		return;
+	}
+
+	policy->setAlfSrcAddress(address, netmask, af);
+	policy->accept(updateTable);
+	/*
+	 * ST: disabled as wxSpinCtrl::SetValue ends up in an endless event loop
+	 * policy->accept(updateWidgets);
+	 */
+}
+
+void
+DlgRuleEditor::updateAlfDstAddr(wxString address, int netmask, int af)
+{
+	AlfPolicy                       *policy;
+	RuleEditorFillTableVisitor       updateTable(this, selectedId_);
+	RuleEditorFillWidgetsVisitor     updateWidgets(this);
+
+	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedIndex_);
+	if (policy == NULL) {
+		return;
+	}
+
+	policy->setAlfDstAddress(address, netmask, af);
+	policy->accept(updateTable);
+	/*
+	 * ST: disabled as wxSpinCtrl::SetValue ends up in an endless event loop
+	 * policy->accept(updateWidgets);
+	 */
+}
+
+void
+DlgRuleEditor::updateAlfSrcPort(int port)
+{
+	AlfPolicy                       *policy;
+	RuleEditorFillTableVisitor       updateTable(this, selectedId_);
+	RuleEditorFillWidgetsVisitor     updateWidgets(this);
+
+	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedIndex_);
+	if (policy == NULL) {
+		return;
+	}
+
+	policy->setAlfSrcPort(port);
+	policy->accept(updateTable);
+	policy->accept(updateWidgets);
+}
+
+void
+DlgRuleEditor::updateAlfDstPort(int port)
+{
+	AlfPolicy                       *policy;
+	RuleEditorFillTableVisitor       updateTable(this, selectedId_);
+	RuleEditorFillWidgetsVisitor     updateWidgets(this);
+
+	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedIndex_);
+	if (policy == NULL) {
+		return;
+	}
+
+	policy->setAlfDstPort(port);
+	policy->accept(updateTable);
 	policy->accept(updateWidgets);
 }
 
@@ -752,6 +829,99 @@ void
 DlgRuleEditor::OnAlfStateTimeoutChange(wxSpinEvent& event)
 {
 	updateTimeout(event.GetPosition());
+}
+
+void
+DlgRuleEditor::OnAlfSrcAddrComboBox(wxCommandEvent& event)
+{
+	int af = alfInet6RadioButton->GetValue() ? AF_INET6 : AF_INET;
+
+	if (alfAnyRadioButton->GetValue()) {
+		updateAddrFamily(AF_INET);
+	}
+
+	updateAlfSrcAddr(alfSrcAddrComboBox->GetValue(),
+	    alfSrcAddrNetSpinCtrl->GetValue(), af);
+}
+
+void
+DlgRuleEditor::OnAlfDstAddrComboBox(wxCommandEvent& event)
+{
+	if (alfAnyRadioButton->GetValue()) {
+		updateAddrFamily(AF_INET);
+	}
+
+	int af = alfInet6RadioButton->GetValue() ? AF_INET6 : AF_INET;
+	updateAlfDstAddr(alfDstAddrComboBox->GetValue(),
+	    alfDstAddrNetSpinCtrl->GetValue(), af);
+}
+
+void
+DlgRuleEditor::OnAlfSrcNetmaskSpinCtrl(wxSpinEvent& event)
+{
+	if (alfAnyRadioButton->GetValue()) {
+		updateAddrFamily(AF_INET);
+	}
+
+	int af = alfInet6RadioButton->GetValue() ? AF_INET6 : AF_INET;
+	updateAlfSrcAddr(alfSrcAddrComboBox->GetValue(),
+	    event.GetPosition(), af);
+}
+
+void
+DlgRuleEditor::OnAlfSrcNetmaskSpinCtrlText(wxCommandEvent&)
+{
+	if (alfAnyRadioButton->GetValue()) {
+		updateAddrFamily(AF_INET);
+	}
+
+	int af = alfInet6RadioButton->GetValue() ? AF_INET6 : AF_INET;
+	updateAlfSrcAddr(alfSrcAddrComboBox->GetValue(),
+	    alfSrcAddrNetSpinCtrl->GetValue(), af);
+}
+
+void
+DlgRuleEditor::OnAlfDstNetmaskSpinCtrl(wxSpinEvent& event)
+{
+	if (alfAnyRadioButton->GetValue()) {
+		updateAddrFamily(AF_INET);
+	}
+
+	int af = alfInet6RadioButton->GetValue() ? AF_INET6 : AF_INET;
+	updateAlfDstAddr(alfDstAddrComboBox->GetValue(),
+	    event.GetPosition(), af);
+}
+
+void
+DlgRuleEditor::OnAlfDstNetmaskSpinCtrlText(wxCommandEvent&)
+{
+	if (alfAnyRadioButton->GetValue()) {
+		updateAddrFamily(AF_INET);
+	}
+
+	int af = alfInet6RadioButton->GetValue() ? AF_INET6 : AF_INET;
+	updateAlfDstAddr(alfDstAddrComboBox->GetValue(),
+	    alfDstAddrNetSpinCtrl->GetValue(), af);
+}
+
+void
+DlgRuleEditor::OnAlfSrcPortComboBox(wxCommandEvent& event)
+{
+	unsigned long int	port;
+
+	if ((alfSrcPortComboBox->GetValue()).ToULong(&port)) {
+		updateAlfSrcPort(port);
+	}
+}
+
+void
+DlgRuleEditor::OnAlfDstPortComboBox(wxCommandEvent& event)
+{
+	unsigned long int       port;
+
+	if (alfDstPortComboBox->GetValue().ToULong(&port)) {
+		updateAlfDstPort(port);
+	}
 }
 
 void

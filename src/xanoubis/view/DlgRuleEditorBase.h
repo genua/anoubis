@@ -256,7 +256,16 @@ class DlgRuleEditorBase : public wxFrame
 		virtual void OnAlfAllCapRadioButton( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnAlfAcceptRadioButton( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnAlfConnectRadioButton( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnAlfSrcAddrComboBox( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnAlfSrcNetmaskSpinCtrl( wxSpinEvent& event ){ event.Skip(); }
+		virtual void OnAlfSrcNetmaskSpinCtrlText( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnSrcAddrAddButton( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnAlfDstAddrComboBox( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnAlfDstNetmaskSpinCtrl( wxSpinEvent& event ){ event.Skip(); }
+		virtual void OnAlfDstNetmaskSpinCtrlText( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnDstAddrAddButton( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnAlfSrcPortComboBox( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnAlfDstPortComboBox( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnAlfStateTimeoutChange( wxSpinEvent& event ){ event.Skip(); }
 		virtual void OnSfsBinaryModifyButton( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnSfsValidateChkSumButton( wxCommandEvent& event ){ event.Skip(); }

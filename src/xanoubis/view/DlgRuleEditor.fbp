@@ -936,7 +936,7 @@
                         <object class="notebookpage" expanded="1">
                             <property name="bitmap"></property>
                             <property name="label">Common</property>
-                            <property name="select">1</property>
+                            <property name="select">0</property>
                             <object class="wxScrolledWindow" expanded="1">
                                 <property name="bg"></property>
                                 <property name="context_help"></property>
@@ -3895,7 +3895,7 @@
                         <object class="notebookpage" expanded="1">
                             <property name="bitmap"></property>
                             <property name="label">ALF</property>
-                            <property name="select">0</property>
+                            <property name="select">1</property>
                             <object class="wxScrolledWindow" expanded="0">
                                 <property name="bg"></property>
                                 <property name="context_help"></property>
@@ -5228,12 +5228,12 @@
                                                             <property name="style"></property>
                                                             <property name="subclass"></property>
                                                             <property name="tooltip"></property>
-                                                            <property name="value">Combo!</property>
+                                                            <property name="value">10.0.1.1</property>
                                                             <property name="window_extra_style"></property>
                                                             <property name="window_name"></property>
                                                             <property name="window_style"></property>
                                                             <event name="OnChar"></event>
-                                                            <event name="OnCombobox"></event>
+                                                            <event name="OnCombobox">OnAlfSrcAddrComboBox</event>
                                                             <event name="OnEnterWindow"></event>
                                                             <event name="OnEraseBackground"></event>
                                                             <event name="OnKeyDown"></event>
@@ -5255,7 +5255,7 @@
                                                             <event name="OnRightUp"></event>
                                                             <event name="OnSetFocus"></event>
                                                             <event name="OnSize"></event>
-                                                            <event name="OnText"></event>
+                                                            <event name="OnText">OnAlfSrcAddrComboBox</event>
                                                             <event name="OnTextEnter"></event>
                                                             <event name="OnUpdateUI"></event>
                                                         </object>
@@ -5361,8 +5361,8 @@
                                                             <event name="OnRightUp"></event>
                                                             <event name="OnSetFocus"></event>
                                                             <event name="OnSize"></event>
-                                                            <event name="OnSpinCtrl"></event>
-                                                            <event name="OnSpinCtrlText"></event>
+                                                            <event name="OnSpinCtrl">OnAlfSrcNetmaskSpinCtrl</event>
+                                                            <event name="OnSpinCtrlText">OnAlfSrcNetmaskSpinCtrlText</event>
                                                             <event name="OnUpdateUI"></event>
                                                         </object>
                                                     </object>
@@ -5543,12 +5543,12 @@
                                                             <property name="style"></property>
                                                             <property name="subclass"></property>
                                                             <property name="tooltip"></property>
-                                                            <property name="value">Combo!</property>
+                                                            <property name="value">192.168.0.1</property>
                                                             <property name="window_extra_style"></property>
                                                             <property name="window_name"></property>
                                                             <property name="window_style"></property>
                                                             <event name="OnChar"></event>
-                                                            <event name="OnCombobox"></event>
+                                                            <event name="OnCombobox">OnAlfDstAddrComboBox</event>
                                                             <event name="OnEnterWindow"></event>
                                                             <event name="OnEraseBackground"></event>
                                                             <event name="OnKeyDown"></event>
@@ -5570,7 +5570,7 @@
                                                             <event name="OnRightUp"></event>
                                                             <event name="OnSetFocus"></event>
                                                             <event name="OnSize"></event>
-                                                            <event name="OnText"></event>
+                                                            <event name="OnText">OnAlfDstAddrComboBox</event>
                                                             <event name="OnTextEnter"></event>
                                                             <event name="OnUpdateUI"></event>
                                                         </object>
@@ -5676,8 +5676,8 @@
                                                             <event name="OnRightUp"></event>
                                                             <event name="OnSetFocus"></event>
                                                             <event name="OnSize"></event>
-                                                            <event name="OnSpinCtrl"></event>
-                                                            <event name="OnSpinCtrlText"></event>
+                                                            <event name="OnSpinCtrl">OnAlfDstNetmaskSpinCtrl</event>
+                                                            <event name="OnSpinCtrlText">OnAlfDstNetmaskSpinCtrlText</event>
                                                             <event name="OnUpdateUI"></event>
                                                         </object>
                                                     </object>
@@ -5759,7 +5759,7 @@
                                                             <property name="window_extra_style"></property>
                                                             <property name="window_name"></property>
                                                             <property name="window_style"></property>
-                                                            <event name="OnButtonClick"></event>
+                                                            <event name="OnButtonClick">OnDstAddrAddButton</event>
                                                             <event name="OnChar"></event>
                                                             <event name="OnEnterWindow"></event>
                                                             <event name="OnEraseBackground"></event>
@@ -5863,7 +5863,7 @@
                                                             <property name="window_name"></property>
                                                             <property name="window_style"></property>
                                                             <event name="OnChar"></event>
-                                                            <event name="OnCombobox"></event>
+                                                            <event name="OnCombobox">OnAlfSrcPortComboBox</event>
                                                             <event name="OnEnterWindow"></event>
                                                             <event name="OnEraseBackground"></event>
                                                             <event name="OnKeyDown"></event>
@@ -5885,7 +5885,7 @@
                                                             <event name="OnRightUp"></event>
                                                             <event name="OnSetFocus"></event>
                                                             <event name="OnSize"></event>
-                                                            <event name="OnText"></event>
+                                                            <event name="OnText">OnAlfSrcPortComboBox</event>
                                                             <event name="OnTextEnter"></event>
                                                             <event name="OnUpdateUI"></event>
                                                         </object>
@@ -6008,7 +6008,7 @@
                                                             <property name="window_name"></property>
                                                             <property name="window_style"></property>
                                                             <event name="OnChar"></event>
-                                                            <event name="OnCombobox"></event>
+                                                            <event name="OnCombobox">OnAlfDstPortComboBox</event>
                                                             <event name="OnEnterWindow"></event>
                                                             <event name="OnEraseBackground"></event>
                                                             <event name="OnKeyDown"></event>
@@ -6030,7 +6030,7 @@
                                                             <event name="OnRightUp"></event>
                                                             <event name="OnSetFocus"></event>
                                                             <event name="OnSize"></event>
-                                                            <event name="OnText"></event>
+                                                            <event name="OnText">OnAlfDstPortComboBox</event>
                                                             <event name="OnTextEnter"></event>
                                                             <event name="OnUpdateUI"></event>
                                                         </object>
