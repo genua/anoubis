@@ -356,6 +356,7 @@ dispatch_m2p(int fd, short sig, void *arg)
 			 * via send_notify
 			 */
 			event_add(ev_info->ev_p2s, NULL);
+			free(msg);
 			continue;
 		}
 
@@ -589,6 +590,7 @@ dispatch_s2p(int fd, short sig, void *arg)
 				 * send_policy_data
 				 */
 				event_add(ev_info->ev_p2s, NULL);
+				free(msg);
 				break;
 			}
 			msg_rep = msg_factory(ANOUBISD_MSG_POLREPLY,
@@ -617,6 +619,7 @@ dispatch_s2p(int fd, short sig, void *arg)
 				queue_delete(&replyq, rep_wait);
 				DEBUG(DBG_QUEUE, " <replyq: %x",
 				    rep_wait->token);
+				free(rep_wait);
 				enqueue(&eventq_p2m, msg);
 				DEBUG(DBG_QUEUE, " >eventq_p2m: %x",
 				    ((struct eventdev_reply *)msg->msg)
