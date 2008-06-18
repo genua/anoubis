@@ -1653,7 +1653,7 @@ host_v6(const char *s, struct apn_addr *h)
 	if (getaddrinfo(ps, NULL, &hints, &res) == 0) {
 		h->af = AF_INET6;
 		bcopy(&((struct sockaddr_in6 *)res->ai_addr)->sin6_addr,
-		    &h->apa.v6, sizeof(struct sockaddr_in6));
+		    &h->apa.v6, sizeof(struct in6_addr));
 		h->len = bits;
 
 		freeaddrinfo(res);
