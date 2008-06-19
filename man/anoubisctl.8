@@ -26,7 +26,7 @@
 .\" SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\" The following requests are required for all man pages.
-.Dd February 15, 2008
+.Dd June 18, 2008
 .Dt ANOUBISCTL 8
 .Os Anoubis
 .Sh NAME
@@ -34,7 +34,7 @@
 .Nd control the Anoubis Backend Daemon
 .Sh SYNOPSIS
 .Nm anoubisctl
-.Op Fl nv
+.Op Fl fnv
 .Ar command
 .Op file
 .Sh DESCRIPTION
@@ -83,7 +83,31 @@ to the
 dump - dump rules from the
 .Xr anoubisd 8
 daemon to the
-.Op file .
+.Ar file .
+.Pp
+addsum - add checksum to the shadow tree matching the current content of
+.Ar file .
+.Pp
+delsum - delete checksum of
+.Ar file
+from the shadow tree.
+.Pp
+calcsum - calculate checksum matching the current content of
+.Ar file .
+.Pp
+getsum - returns the checksum of
+.Ar file
+found in the shadow tree.
+.Pp
+monitor - shows live information on notifications being sent and received.
+.Bl -tag -width Ds
+.It
+.Pp
+[ error=<num> ]
+specifies the return value that will be sent in response to ASK events.
+.Pp
+[ count=<num> ]
+specifies the amount of messages being shown.
 .El
 .Pp
 .Nm
@@ -120,7 +144,7 @@ The following example shows if the
 .Xr anoubisd 8
 daemon is running
 .Bd -literal -offset -indent-two
-anoubisctl status
+# anoubisctl status
 .\" .Sh DIAGNOSTICS
 .Sh SEE ALSO
 .Xr anoubisd 8
