@@ -223,7 +223,7 @@ void
 DlgRuleEditor::updateAppName(wxString appName)
 {
 	AppPolicy			*policy;
-	RuleEditorFillTableVisitor	 updateTable(this, selectedId_);
+	RuleEditorFillTableVisitor	 updateTable(this, selectedIndex_);
 	RuleEditorFillWidgetsVisitor	 updateWidgets(this);
 
 	policy = (AppPolicy *)ruleListCtrl->GetItemData(selectedIndex_);
@@ -240,7 +240,7 @@ void
 DlgRuleEditor::updateBinName(wxString binName)
 {
 	AppPolicy			*policy;
-	RuleEditorFillTableVisitor	 updateTable(this, selectedId_);
+	RuleEditorFillTableVisitor	 updateTable(this, selectedIndex_);
 	RuleEditorFillWidgetsVisitor	 updateWidgets(this);
 
 	policy = (AppPolicy *)ruleListCtrl->GetItemData(selectedIndex_);
@@ -257,7 +257,7 @@ void
 DlgRuleEditor::updateAction(int action)
 {
 	AlfPolicy			*policy;
-	RuleEditorFillTableVisitor	 updateTable(this, selectedId_);
+	RuleEditorFillTableVisitor	 updateTable(this, selectedIndex_);
 	RuleEditorFillWidgetsVisitor	 updateWidgets(this);
 
 	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedIndex_);
@@ -273,7 +273,7 @@ void
 DlgRuleEditor::updateType(int type)
 {
 	AlfPolicy			*policy;
-	RuleEditorFillTableVisitor	 updateTable(this, selectedId_);
+	RuleEditorFillTableVisitor	 updateTable(this, selectedIndex_);
 	RuleEditorFillWidgetsVisitor	 updateWidgets(this);
 
 	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedIndex_);
@@ -290,7 +290,7 @@ void
 DlgRuleEditor::updateProtocol(int protocol)
 {
 	AlfPolicy			*policy;
-	RuleEditorFillTableVisitor	 updateTable(this, selectedId_);
+	RuleEditorFillTableVisitor	 updateTable(this, selectedIndex_);
 	RuleEditorFillWidgetsVisitor	 updateWidgets(this);
 
 	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedIndex_);
@@ -307,7 +307,7 @@ void
 DlgRuleEditor::updateAddrFamily(int addrFamily)
 {
 	AlfPolicy			*policy;
-	RuleEditorFillTableVisitor	 updateTable(this, selectedId_);
+	RuleEditorFillTableVisitor	 updateTable(this, selectedIndex_);
 	RuleEditorFillWidgetsVisitor	 updateWidgets(this);
 
 	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedIndex_);
@@ -324,7 +324,7 @@ void
 DlgRuleEditor::updateCapType(int type)
 {
 	AlfPolicy			*policy;
-	RuleEditorFillTableVisitor	 updateTable(this, selectedId_);
+	RuleEditorFillTableVisitor	 updateTable(this, selectedIndex_);
 	RuleEditorFillWidgetsVisitor	 updateWidgets(this);
 
 	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedIndex_);
@@ -341,7 +341,7 @@ void
 DlgRuleEditor::updateDirection(int direction)
 {
 	AlfPolicy			*policy;
-	RuleEditorFillTableVisitor	 updateTable(this, selectedId_);
+	RuleEditorFillTableVisitor	 updateTable(this, selectedIndex_);
 	RuleEditorFillWidgetsVisitor	 updateWidgets(this);
 
 	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedIndex_);
@@ -358,7 +358,7 @@ void
 DlgRuleEditor::updateTimeout(int timeout)
 {
 	AlfPolicy			*policy;
-	RuleEditorFillTableVisitor	 updateTable(this, selectedId_);
+	RuleEditorFillTableVisitor	 updateTable(this, selectedIndex_);
 	RuleEditorFillWidgetsVisitor	 updateWidgets(this);
 
 	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedIndex_);
@@ -378,7 +378,7 @@ void
 DlgRuleEditor::updateAlfSrcAddr(wxString address, int netmask, int af)
 {
 	AlfPolicy                       *policy;
-	RuleEditorFillTableVisitor       updateTable(this, selectedId_);
+	RuleEditorFillTableVisitor       updateTable(this, selectedIndex_);
 	RuleEditorFillWidgetsVisitor     updateWidgets(this);
 
 	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedIndex_);
@@ -398,7 +398,7 @@ void
 DlgRuleEditor::updateAlfDstAddr(wxString address, int netmask, int af)
 {
 	AlfPolicy                       *policy;
-	RuleEditorFillTableVisitor       updateTable(this, selectedId_);
+	RuleEditorFillTableVisitor       updateTable(this, selectedIndex_);
 	RuleEditorFillWidgetsVisitor     updateWidgets(this);
 
 	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedIndex_);
@@ -418,7 +418,7 @@ void
 DlgRuleEditor::updateAlfSrcPort(int port)
 {
 	AlfPolicy                       *policy;
-	RuleEditorFillTableVisitor       updateTable(this, selectedId_);
+	RuleEditorFillTableVisitor       updateTable(this, selectedIndex_);
 	RuleEditorFillWidgetsVisitor     updateWidgets(this);
 
 	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedIndex_);
@@ -435,7 +435,7 @@ void
 DlgRuleEditor::updateAlfDstPort(int port)
 {
 	AlfPolicy                       *policy;
-	RuleEditorFillTableVisitor       updateTable(this, selectedId_);
+	RuleEditorFillTableVisitor       updateTable(this, selectedIndex_);
 	RuleEditorFillWidgetsVisitor     updateWidgets(this);
 
 	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedIndex_);
@@ -503,7 +503,7 @@ void
 DlgRuleEditor::OnAppUpdateChkSumButton(wxCommandEvent& event)
 {
 	AppPolicy			*policy;
-	RuleEditorFillTableVisitor       updateTable(this, selectedId_);
+	RuleEditorFillTableVisitor       updateTable(this, selectedIndex_);
 	RuleEditorFillWidgetsVisitor	 updateWidgets(this);
 	unsigned char			 csum[MAX_APN_HASH_LEN];
 
