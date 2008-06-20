@@ -11,3 +11,4 @@
 @exec chmod 700 /etc/anoubis/policy/user
 sbin/anoubisd
 sbin/anoubisctl
+sbin/sfssig

@@ -33,9 +33,9 @@ WANTLIB-main+=		c m pthread stdc++ event glib-2.0 \
 			fontconfig freetype gdk-x11-2.0 gdk_pixbuf-2.0 \
 			glitz gmodule-2.0 gobject-2.0 gtk-x11-2.0 iconv \
 			intl pango-1.0 pangocairo-1.0 pangoft2-1.0 png z \
-			crypto ssl
+			crypto ssl event
 
-WANTLIB-daemon+=	c
+WANTLIB-daemon+=	c crypto ssl event
 CONFIGURE_STYLE=	gnu
 CONFIGURE_ARGS+=	--enable-static-anoubisd
 

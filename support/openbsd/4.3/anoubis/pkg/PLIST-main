@@ -1,13 +1,24 @@
 @comment $OpenBSD$
 bin/xanoubis
+@comment include/apn.h
 @comment include/anoubischat.h
+@comment include/splint-includes.h
 @comment lib/libanoubischat.a
+@comment lib/libanoubispc.a
+@comment lib/libanoubisps.a
+@comment lib/libapn.a
 @man man/man1/xanoubis.1
 @comment @man man/man1/xanoubis_guessApp.1
+@comment @man man/man3/anoubis_auth.3
+@comment @man man/man3/anoubis_client.3
+@comment @man man/man3/anoubis_msg.3
+@comment @man man/man3/anoubis_notify.3
+@comment @man man/man3/anoubis_server.3
+@comment @man man/man3/anoubis_transaction.3
 @comment @man man/man3/anoubischat.3
-share/xanoubis/
 @comment share/xanoubis/utils/
 @comment share/xanoubis/utils/xanoubis_guessApp.sh
+share/xanoubis/
 share/xanoubis/icons/
 share/xanoubis/icons/ModAlf_alert_16.png
 share/xanoubis/icons/ModAlf_alert_48.png
@@ -65,3 +76,8 @@ share/xanoubis/icons/ModSfs_problem_16.png
 share/xanoubis/icons/ModSfs_problem_48.png
 share/xanoubis/icons/ModSfs_question_16.png
 share/xanoubis/icons/ModSfs_question_48.png
+share/xanoubis/icons/xanoubis.png
+share/xanoubis/profiles/
+share/xanoubis/profiles/admin
+share/xanoubis/profiles/high
+share/xanoubis/profiles/medium
