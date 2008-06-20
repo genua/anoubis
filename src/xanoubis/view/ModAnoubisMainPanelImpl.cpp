@@ -535,11 +535,13 @@ ModAnoubisMainPanelImpl::OnEscalationsShow(wxCommandEvent& event)
 	if (event.GetString().Cmp(wxT("ESCALATIONS")) == 0) {
 		/* select "current requests" */
 		ch_type->SetSelection(0);
+		list_ = NOTIFY_LIST_NOTANSWERED;
 	}
 
 	if (event.GetString().Cmp(wxT("ALERTS")) == 0) {
 		/* select "current messages" */
 		ch_type->SetSelection(1);
+		list_ = NOTIFY_LIST_MESSAGE;
 	}
 	update();
 
