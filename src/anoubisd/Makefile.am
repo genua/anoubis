@@ -72,10 +72,12 @@ anoubisd_SOURCES= \
 	aqueue.c \
 	sfs.c \
 	uidswap.c \
+	kernelcache.c \
 	anoubisd.h \
 	amsg.h \
 	aqueue.h \
-	sfs.h
+	sfs.h \
+	kernelcache.h
 
 anoubisd_SOURCES_flawfinder= \
 	main.c_flawfinder \
@@ -88,10 +90,12 @@ anoubisd_SOURCES_flawfinder= \
 	amsg.c_flawfinder \
 	aqueue.c_flawfinder \
 	sfs.c_flawfinder \
+	kernelcache.c_flawfinder \
 	anoubisd.h_flawfinder \
 	amsg.h_flawfinder \
 	aqueue.h_flawfinder \
-	sfs.h_flawfinder
+	sfs.h_flawfinder \
+	kernelcache.h_flawfinder
 
 anoubisd_SOURCES_lint= \
 	main.c_lint \
@@ -101,7 +105,8 @@ anoubisd_SOURCES_lint= \
 	session.c_lint \
 	uidswap.c_lint \
 	log.c_lint \
-	sfs.c_lint
+	sfs.c_lint \
+	kernelcache.c_lint
 
 anoubisd_SOURCES_splint= \
 	main.c_splint \
@@ -113,7 +118,8 @@ anoubisd_SOURCES_splint= \
 	log.c_splint \
 	amsg.c_splint \
 	aqueue.c_splint \
-	sfs.c_splint
+	sfs.c_splint \
+	kernelcache.c_splint
 
 
 flawfinder_FLAGS=

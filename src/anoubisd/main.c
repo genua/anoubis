@@ -68,6 +68,7 @@
 #include "aqueue.h"
 #include "amsg.h"
 #include "sfs.h"
+#include "kernelcache.h"
 
 /*@noreturn@*/
 static void	usage(void) __dead;
@@ -776,7 +777,8 @@ dispatch_p2m(int fd, short event, /*@dependent@*/ void *arg)
 			DEBUG(DBG_TRACE, "<dispatch_p2m");
 			return;
 		}
-		if (msg->mtype != ANOUBISD_MSG_EVENTREPLY) {
+		if (msg->mtype != ANOUBISD_MSG_EVENTREPLY &&
+		    msg->mtype != ANOUBISD_MSG_KCACHE) {
 			DEBUG(DBG_TRACE, "<dispatch_p2m (bad msg)");
 			continue;
 		}
@@ -809,11 +811,27 @@ dispatch_m2dev(int fd, short event, /*@dependent@*/ void *arg)
 	}
 	/*@=nullderef@*/ /*@=nullpass@*/
 
-	if (send_reply(fd, msg)) {
-		msg = dequeue(&eventq_m2dev);
-		DEBUG(DBG_QUEUE, " <eventq_m2dev: %x",
-		    ((struct eventdev_reply *)msg->msg)->msg_token);
-		free(msg);
+	switch(msg->mtype) {
+		case ANOUBISD_MSG_EVENTREPLY:
+			if (send_reply(fd, msg)) {
+				msg = dequeue(&eventq_m2dev);
+				DEBUG(DBG_QUEUE, " <eventq_m2dev: %x",
+				    ((struct eventdev_reply *)
+				    msg->msg)->msg_token);
+				free(msg);
+			}
+			break;
+		case ANOUBISD_MSG_KCACHE:
+			if (kernelcache_upload(ev_info->anoubisfd, msg) == 0)
+				log_warn("upload of kernelcache failed");
+			msg = dequeue(&eventq_m2dev);
+			free(msg);
+			break;
+		default:
+			DEBUG(DBG_TRACE, "<dispatch_m2dev (bad msg)");
+			msg = dequeue(&eventq_m2dev);
+			free(msg);
+			break;
 	}
 
 	if (queue_peek(&eventq_m2dev) || msg_pending(fd))

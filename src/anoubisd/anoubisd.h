@@ -102,6 +102,7 @@ enum {
 	ANOUBISD_MSG_CHECKSUM_OP,
 	ANOUBISD_MSG_SFSOPEN,
 	ANOUBISD_MSG_EVENTASK,
+	ANOUBISD_MSG_KCACHE,
 } anoubisd_msg;
 
 /* format of ANOUBISD_MSG_EVENTDEV is struct eventdev_hdr */
@@ -186,6 +187,8 @@ void	pe_shutdown(void);
 void	pe_reconfigure(void);
 
 anoubisd_reply_t *policy_engine(anoubisd_msg_t *request);
+
+void	policy_msg2master(anoubisd_msg_t *);
 
 void	log_init(int fd);
 

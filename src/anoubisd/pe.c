@@ -81,6 +81,7 @@
 
 #include "anoubisd.h"
 #include "sfs.h"
+#include "kernelcache.h"
 
 struct pe_user {
 	TAILQ_ENTRY(pe_user)	 entry;
@@ -114,6 +115,9 @@ struct pe_proc {
 	/* Per priority contexts */
 	struct pe_context	*context[PE_PRIO_MAX];
 	int			 valid_ctx;
+
+	/* Pointer to kernel cache */
+	struct anoubis_kernel_policy_header	*kcache;
 };
 TAILQ_HEAD(tracker, pe_proc) tracker;
 
@@ -143,14 +147,16 @@ anoubisd_reply_t	*pe_handle_process(struct eventdev_hdr *);
 anoubisd_reply_t	*pe_handle_sfsexec(struct eventdev_hdr *);
 anoubisd_reply_t	*pe_handle_alf(struct eventdev_hdr *);
 anoubisd_reply_t	*pe_decide_alf(struct pe_proc *, struct eventdev_hdr *);
-int			 pe_alf_evaluate(struct pe_context *,
+int			 pe_alf_evaluate(struct pe_proc *, struct pe_context *,
 			     struct alf_event *, int *, u_int32_t *);
-int			 pe_decide_alffilt(struct apn_rule *, struct
-			     alf_event *, int *, u_int32_t *, time_t);
+int			 pe_decide_alffilt(struct pe_proc *, struct apn_rule *,
+			     struct alf_event *, int *, u_int32_t *, time_t);
 int			 pe_decide_alfcap(struct apn_rule *, struct
 			     alf_event *, int *, u_int32_t *, time_t);
 int			 pe_decide_alfdflt(struct apn_rule *, struct
 			     alf_event *, int *, u_int32_t *, time_t);
+void			 pe_kcache_alf(struct apn_alfrule *, int,
+			     struct pe_proc *, struct alf_event *);
 char			*pe_dump_alfmsg(struct alf_event *,
 			     struct eventdev_hdr *, int);
 char			*pe_dump_ctx(struct eventdev_hdr *, struct pe_proc *,
@@ -310,6 +316,10 @@ pe_update_db(struct policies *newpdb, struct policies *oldpdb)
 	}
 
 	TAILQ_FOREACH(pproc, &tracker, entry) {
+		if (pproc->kcache != NULL) {
+			pproc->kcache = kernelcache_clear(pproc->kcache);
+			kernelcache_send2master(pproc->kcache, pproc->pid);
+		}
 		for (i = 0; i < PE_PRIO_MAX; i++) {
 			DEBUG(DBG_PE_POLICY, "pe_update_db: proc %p prio %d "
 			    "context %p", pproc, i, pproc->context[i]);
@@ -361,6 +371,10 @@ pe_update_db_one(struct apn_ruleset *oldrs, uid_t uid, int prio)
 		    oldctx, newctx);
 		pproc->context[prio] = newctx;
 		pe_put_ctx(oldctx);
+		if (pproc->kcache != NULL) {
+			pproc->kcache = kernelcache_clear(pproc->kcache);
+			kernelcache_send2master(pproc->kcache, pproc->pid);
+		}
 	}
 	DEBUG(DBG_TRACE, "<pe_update_db_one");
 }
@@ -1030,6 +1044,9 @@ pe_handle_alf(struct eventdev_hdr *hdr)
 		pe_track_proc(proc);
 	}
 
+	if (proc->pid == -1)
+		proc->pid = hdr->msg_pid;
+
 	reply = pe_decide_alf(proc, hdr);
 	pe_put_proc(proc);
 
@@ -1069,7 +1086,8 @@ pe_decide_alf(struct pe_proc *proc, struct eventdev_hdr *hdr)
 		DEBUG(DBG_PE_DECALF, "pe_decide_alf: prio %d context %p", i,
 		    proc->context[i]);
 
-		ret = pe_alf_evaluate(proc->context[i], msg, &log, &rule_id);
+		ret = pe_alf_evaluate(proc, proc->context[i], msg, &log,
+		    &rule_id);
 
 		if (ret != -1) {
 			decision = ret;
@@ -1137,8 +1155,8 @@ pe_decide_alf(struct pe_proc *proc, struct eventdev_hdr *hdr)
 }
 
 int
-pe_alf_evaluate(struct pe_context *context, struct alf_event *msg, int *log,
-    u_int32_t *rule_id)
+pe_alf_evaluate(struct pe_proc *proc, struct pe_context *context,
+    struct alf_event *msg, int *log, u_int32_t *rule_id)
 {
 	struct apn_rule	*rule;
 	int		 decision;
@@ -1161,7 +1179,7 @@ pe_alf_evaluate(struct pe_context *context, struct alf_event *msg, int *log,
 		master_terminate(code);
 		return -1;
 	}
-	decision = pe_decide_alffilt(rule, msg, log, rule_id, t);
+	decision = pe_decide_alffilt(proc, rule, msg, log, rule_id, t);
 	if (decision == -1)
 		decision = pe_decide_alfcap(rule, msg, log, rule_id, t);
 	if (decision == -1)
@@ -1177,8 +1195,8 @@ pe_alf_evaluate(struct pe_context *context, struct alf_event *msg, int *log,
  * ALF filter logic.
  */
 int
-pe_decide_alffilt(struct apn_rule *rule, struct alf_event *msg, int *log,
-    u_int32_t *rule_id, time_t now)
+pe_decide_alffilt(struct pe_proc *proc, struct apn_rule *rule,
+    struct alf_event *msg, int *log, u_int32_t *rule_id, time_t now)
 {
 	struct apn_alfrule	*hp;
 	int			 decision;
@@ -1309,9 +1327,11 @@ pe_decide_alffilt(struct apn_rule *rule, struct alf_event *msg, int *log,
 		switch (hp->rule.afilt.action) {
 		case APN_ACTION_ALLOW:
 			decision = POLICY_ALLOW;
+			pe_kcache_alf(hp, decision, proc, msg);
 			break;
 		case APN_ACTION_DENY:
 			decision = POLICY_DENY;
+			pe_kcache_alf(hp, decision, proc, msg);
 			break;
 		case APN_ACTION_ASK:
 			decision = POLICY_ASK;
@@ -1333,6 +1353,68 @@ pe_decide_alffilt(struct apn_rule *rule, struct alf_event *msg, int *log,
 	}
 
 	return (decision);
+}
+
+void
+pe_kcache_alf(struct apn_alfrule *rule, int decision, struct pe_proc *proc,
+    struct alf_event *msg)
+{
+	struct anoubis_kernel_policy *policy;
+	struct alf_rule *alfrule;
+
+	if (msg->op != ALF_SENDMSG && msg->op != ALF_RECVMSG)
+		return;
+
+	policy = malloc(sizeof(struct anoubis_kernel_policy) +
+	    sizeof(struct alf_rule));
+	if (policy == NULL)
+		return;
+
+	policy->anoubis_source = ANOUBIS_SOURCE_ALF;
+	policy->rule_len = sizeof(struct alf_rule);
+	policy->decision = decision;
+	if (rule->rule.afilt.filtspec.statetimeout > 0) {
+		policy->expire = rule->rule.afilt.filtspec.statetimeout +
+		    time(NULL);
+	} else {
+		policy->expire = 0;
+	}
+
+	alfrule = (struct alf_rule*)(policy->rule);
+
+	alfrule->family = msg->family;
+	alfrule->protocol = msg->protocol;
+	alfrule->type = msg->type;
+	alfrule->op = msg->op;
+
+	switch(alfrule->family) {
+	case AF_INET:
+		alfrule->local.port_min = msg->local.in_addr.sin_port;
+		alfrule->local.port_max = msg->local.in_addr.sin_port;
+		alfrule->peer.port_min = msg->peer.in_addr.sin_port;
+		alfrule->peer.port_max = msg->peer.in_addr.sin_port;
+		alfrule->local.addr.in_addr =
+		    msg->local.in_addr.sin_addr;
+		alfrule->peer.addr.in_addr =
+		    msg->peer.in_addr.sin_addr;
+		break;
+
+	case AF_INET6:
+		alfrule->local.port_min = msg->local.in6_addr.sin6_port;
+		alfrule->local.port_max = msg->local.in6_addr.sin6_port;
+		alfrule->peer.port_min = msg->peer.in6_addr.sin6_port;
+		alfrule->peer.port_max = msg->peer.in6_addr.sin6_port;
+		alfrule->local.addr.in6_addr =
+		    msg->local.in6_addr.sin6_addr;
+		alfrule->peer.addr.in6_addr =
+		    msg->peer.in6_addr.sin6_addr;
+		break;
+	}
+
+	proc->kcache = kernelcache_add(proc->kcache, policy);
+	kernelcache_send2master(proc->kcache, proc->pid);
+
+	free(policy);
 }
 
 /*
@@ -2264,6 +2346,8 @@ pe_put_proc(struct pe_proc *proc)
 	for (i = 0; i < PE_PRIO_MAX; i++)
 		pe_put_ctx(proc->context[i]);
 
+	kernelcache_clear(proc->kcache);
+
 	free(proc);
 }
 
@@ -2281,6 +2365,7 @@ pe_alloc_proc(uid_t uid, anoubis_cookie_t cookie,
 	proc->pid = -1;
 	proc->uid = uid;
 	proc->refcount = 1;
+	proc->kcache = NULL;
 	if (parent) {
 		if (parent->pathhint) {
 			proc->pathhint = strdup(parent->pathhint);
