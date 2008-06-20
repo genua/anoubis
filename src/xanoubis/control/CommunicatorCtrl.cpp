@@ -186,6 +186,9 @@ CommunicatorCtrl::usePolicy(wxString tmpName)
 
 		}
 		tmpFile.Close();
+		if (!wxRemoveFile(tmpName))
+			wxGetApp().log(_("Couldn't remove tmp file"));
+
 		com_->policyUse(buf);
 	}
 	else
