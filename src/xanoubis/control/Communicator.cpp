@@ -191,7 +191,6 @@ Communicator::Entry(void)
 	enum connectionStateType	 commRC;
 	enum communicatorFlag		 startPolicyRequest;
 	enum communicatorFlag		 startPolicyUse;
-	wxFile				 tmpFile;
 	wxString			 tmpName;
 	wxString			 tmpPreFix;
 	Policy_GetByUid			req;
@@ -199,12 +198,20 @@ Communicator::Entry(void)
 	char				*buf;
 	int				 prio;
 	size_t				 length, total, size;
+	int				 iovcnt;
+	int				 ret;
+	struct iovec			*iov;
+	struct apn_ruleset		*ruleSet;
 
+	iov	= NULL;
+	ruleSet = NULL;
 	reqTa	= NULL;
 	buf	= NULL;
 	ureq	= NULL;
 	currTa  = NULL;
 	notDone = true;
+	iovcnt	= 0;
+	ret	= 0;
 	commRC			= CONNECTION_FAILED;
 	startRegistration	= COMMUNICATOR_FLAG_INIT;
 	startDeRegistration	= COMMUNICATOR_FLAG_NONE;
@@ -235,7 +242,7 @@ Communicator::Entry(void)
 	}
 
 	while (notDone) {
-		struct anoubis_msg	*msg, *reqmsg;
+		struct anoubis_msg	*msg, *reqmsg, *tmp;
 		achat_rc		 rc = ACHAT_RC_ERROR;
 		NotifyList::iterator	 ali;
 
@@ -347,7 +354,10 @@ Communicator::Entry(void)
 			startPolicyUse == COMMUNICATOR_FLAG_NONE) {
 			startPolicyRequest = COMMUNICATOR_FLAG_INIT;
 			policyReq_ = false;
-			prio = 0;
+			/* XXX KM: prio = 1 is just user policy
+			 *	   prio = 0 loading admin, too;
+			 */
+			prio = 1;
 		}
 
 		if (startPolicyRequest == COMMUNICATOR_FLAG_INIT && prio < 2) {
@@ -383,39 +393,54 @@ Communicator::Entry(void)
 			reqTa->msg = NULL;
 			anoubis_transaction_destroy(reqTa);
 
-			if(!reqmsg || !VERIFY_LENGTH(reqmsg,
-				sizeof(Anoubis_PolicyReplyMessage)) ||
-				get_value(reqmsg->u.policyreply->error) != 0) {
-			/* XXX: KM Here should be a better error handling*/
+			iovcnt = 0;
+			for(tmp = reqmsg; tmp != NULL; tmp = tmp->next)
+				iovcnt++;
+
+			iov = (struct iovec *)malloc(iovcnt *
+			    sizeof(struct iovec));
+			if (!iov) {
 				anoubis_transaction_destroy(reqTa);
-				startPolicyRequest = COMMUNICATOR_FLAG_NONE;
-				prio = 2;
+				notDone = false;
 				continue;
 			}
 
-			/* XXX: KM should be done with the apn_parser */
-			tmpName = wxFileName::CreateTempFileName(tmpPreFix,
-						&tmpFile);
-			while(reqmsg) {
-				size_t len;
-				struct anoubis_msg * tmp;
-				len = reqmsg->length - CSUM_LEN
-					- sizeof(Anoubis_PolicyReplyMessage);
-				if (len != tmpFile.Write(
-					reqmsg->u.policyreply->payload, len)) {
-			/* XXX: KM Here should be a better error handling*/
+			tmp = reqmsg;
+			for(int i = 0; i<iovcnt; i++ ) {
+				if (!VERIFY_LENGTH(tmp,
+				    sizeof(Anoubis_PolicyReplyMessage)) ||
+				    get_value(tmp->u.policyreply->error) != 0) {
+					anoubis_transaction_destroy(reqTa);
 					notDone = false;
-					continue;
+					break;
 				}
-				tmp = reqmsg;
-				reqmsg = reqmsg->next;
-				anoubis_msg_free(tmp);
+				iov[i].iov_len = tmp->length - CSUM_LEN
+				    - sizeof(Anoubis_PolicyReplyMessage);
+				iov[i].iov_base = tmp->u.policyreply->payload;
+				tmp = tmp->next;
 			}
 
-			wxCommandEvent event(anEVT_ANOUBISD_RULESET_ARRIVED);
-			event.SetString(tmpName);
-			eventDestination_->AddPendingEvent(event);
-			tmpFile.Close();
+			if(notDone)
+				break;
+
+			ret = apn_parse_iovec("com", iov, iovcnt, &ruleSet, 0);
+
+			while(reqmsg) {
+				tmp = reqmsg->next;
+				anoubis_msg_free(reqmsg);
+				reqmsg = tmp;
+			}
+			free(iov);
+
+			if (ret == 0) {
+				wxCommandEvent event(
+				    anEVT_ANOUBISD_RULESET_ARRIVED);
+				event.SetClientData(ruleSet);
+				eventDestination_->AddPendingEvent(event);
+			} else {
+				/* XXX: KM we need here better error handling */
+			}
+
 			prio++;
 			if(prio < 2)
 				startPolicyRequest = COMMUNICATOR_FLAG_INIT;

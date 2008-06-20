@@ -65,8 +65,6 @@ MainFrame::MainFrame(wxWindow *parent) : MainFrameBase(parent)
 	    wxCommandEventHandler(MainFrame::OnOpenAlerts), NULL, this);
 	Connect(anEVT_OPEN_ESCALATIONS,
 	    wxCommandEventHandler(MainFrame::OnOpenEscalations), NULL, this);
-	Connect(anEVT_ANOUBISD_RULESET,
-	    wxCommandEventHandler(MainFrame::OnAnoubisdRuleSet), NULL, this);
 	Connect(anEVT_ESCALATIONS_SHOW,
 	    wxCommandEventHandler(MainFrame::OnEscalationsShow), NULL, this);
 	Connect(anEVT_ANOUBISOPTIONS_SHOW,
@@ -357,13 +355,6 @@ void
 MainFrame::OnClose(wxCloseEvent& event)
 {
 	this->Hide();
-}
-
-void
-MainFrame::OnAnoubisdRuleSet(wxCommandEvent& event)
-{
-	wxString tmpName = event.GetString();
-	wxGetApp().importPolicyFile(tmpName);
 }
 
 void

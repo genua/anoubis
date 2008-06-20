@@ -114,6 +114,7 @@ class AnoubisGuiApp : public wxApp
 		wxIcon		*loadIcon(wxString);
 		Module		*getModule(enum moduleIdx);
 		wxString	 getDataDir(void);
+		void		 importPolicyRuleSet(struct apn_ruleset*);
 		void		 importPolicyFile(wxString);
 		void		 exportPolicyFile(wxString);
 		bool		 getCommConnectionState(void);

@@ -317,8 +317,8 @@ CommunicatorCtrl::OnAnswerEscalation(wxCommandEvent& event)
 void
 CommunicatorCtrl::OnAnoubisdRuleSet(wxCommandEvent& event)
 {
-	wxString fileName = event.GetString();
-	wxCommandEvent aEvent(anEVT_ANOUBISD_RULESET);
-	aEvent.SetString(fileName);
-	wxGetApp().sendEvent(aEvent);
+	struct apn_ruleset *ruleSet;
+
+	ruleSet = (struct apn_ruleset*)event.GetClientData();
+	wxGetApp().importPolicyRuleSet(ruleSet);
 }

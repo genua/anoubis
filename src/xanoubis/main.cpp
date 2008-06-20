@@ -396,6 +396,20 @@ AnoubisGuiApp::getCommConnectionState(void)
 }
 
 void
+AnoubisGuiApp::importPolicyRuleSet(struct apn_ruleset *rule)
+{
+	wxCommandEvent		 event(anEVT_LOAD_RULESET);
+
+	if (ruleSet_ != NULL) {
+		delete ruleSet_;
+	}
+	ruleSet_ = new PolicyRuleSet(rule);
+
+	event.SetClientData((void*)ruleSet_);
+	sendEvent(event);
+}
+
+void
 AnoubisGuiApp::importPolicyFile(wxString fileName)
 {
 	wxCommandEvent		 event(anEVT_LOAD_RULESET);
