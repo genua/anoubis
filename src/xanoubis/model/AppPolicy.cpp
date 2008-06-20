@@ -139,7 +139,16 @@ AppPolicy::setBinaryName(wxString name)
 
 	app = appRule_->app;
 
-	free(app->name);
+	if(app == NULL) {
+		app = (struct apn_app *)calloc(1, sizeof(struct apn_app));
+		if (app == NULL)
+			return;
+
+		appRule_->app = app;
+		app->hashtype = APN_HASH_SHA256;
+	} else
+		free(app->name);
+
 	app->name = strdup(name.fn_str());
 	modified_ = true;
 }

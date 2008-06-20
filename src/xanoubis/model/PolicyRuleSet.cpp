@@ -215,6 +215,8 @@ PolicyRuleSet::createAppPolicy(int insertBeforeId)
 		return (-1);
 	}
 
+	newAppRule->app->hashtype = APN_HASH_SHA256;
+
 	if (apn_insert(ruleSet_, newAppRule, insertBeforeId) == 0) {
 		newId = newAppRule->id;
 		clean();
@@ -305,6 +307,8 @@ PolicyRuleSet::createSfsPolicy(int insertBeforeId)
 		free(newSfsRule);
 		return (-1);
 	}
+
+	newSfsRule->rule.sfscheck.app->hashtype = APN_HASH_SHA256;
 
 	if (TAILQ_EMPTY(&(ruleSet_->sfs_queue))) {
 		sfsRootRule = CALLOC_STRUCT(apn_rule);
