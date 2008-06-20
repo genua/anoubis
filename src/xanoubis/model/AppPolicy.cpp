@@ -165,7 +165,7 @@ wxString
 AppPolicy::getCurrentHash(void)
 {
 	if (currHash_.IsEmpty()) {
-		return _("unkown");
+		return _("unknown");
 	} else {
 		return (currHash_);
 	}
@@ -203,6 +203,8 @@ AppPolicy::calcCurrentHash(unsigned char csum[MAX_APN_HASH_LEN])
 		SHA256_Final(csum, &shaCtx);
 		file->Close();
 	}
+
+	currHash_ = convertToString(csum);
 
 	return (true);
 }
@@ -252,27 +254,8 @@ wxString
 AppPolicy::getHashValue(void)
 {
 	wxString	result;
-	unsigned int	length;
 
-	length = 0;
-	result = wxT("0x");
-
-	if (appRule_->app == NULL)
-		return wxString::From8BitData("any");
-	switch (appRule_->app->hashtype) {
-	case APN_HASH_SHA256:
-		length = APN_HASH_SHA256_LEN;
-		break;
-	default:
-		length = 0;
-		result = _("(unknown hash type)");
-		break;
-	}
-
-	for (unsigned int i=0; i<length; i++) {
-		result += wxString::Format(wxT("%2.2x"),
-		    (unsigned char)appRule_->app->hashvalue[i]);
-	}
+	result = convertToString(appRule_->app->hashvalue);
 
 	return (result);
 }
@@ -315,4 +298,34 @@ int
 AppPolicy::getId(void)
 {
 	return(appRule_->id);
+}
+
+wxString
+AppPolicy::convertToString(unsigned char *csum)
+{
+	wxString	result;
+	unsigned int	length;
+
+	length = 0;
+	result = wxT("0x");
+
+	if (appRule_->app == NULL)
+		return (_("any"));
+
+	switch (appRule_->app->hashtype) {
+	case APN_HASH_SHA256:
+		length = APN_HASH_SHA256_LEN;
+		break;
+	default:
+		length = 0;
+		result = _("(unknown hash type)");
+		break;
+	}
+
+	for (unsigned int i=0; i<length; i++) {
+		result += wxString::Format(wxT("%2.2x"),
+		    (unsigned char)csum[i]);
+	}
+
+	return (result);
 }

@@ -69,6 +69,7 @@ class AppPolicy : public Policy
 		bool		 isModified(void);
 		void		 setModified(bool);
 		int		 getId(void);
+		wxString	 convertToString(unsigned char*);
 };
 
 #endif	/* _APPPOLICY_H_ */

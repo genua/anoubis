@@ -181,7 +181,6 @@ class DlgRuleEditor : public DlgRuleEditorBase
 		void OnAutoCheck(wxCommandEvent&);
 		void OnShowRule(wxCommandEvent&);
 
-		void SetRuleSetToNotModified(void);
 		bool CheckLastSelection(void);
 
 	public:

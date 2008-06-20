@@ -170,11 +170,16 @@ CommunicatorCtrl::usePolicy(wxString tmpName)
 	if (connectionState_ == CONNECTION_CONNECTED)
 	{
 		wxFile tmpFile;
-		int len;
+		int len = 0;
 		char *buf = NULL;
 
 		if(tmpFile.Open(tmpName)) {
 			len = tmpFile.Length();
+			if (len <= 0) {
+				wxGetApp().log(
+				    _("Error with length of file\n"));
+				return;
+			}
 			buf = (char *)malloc(len);
 			if (!buf) {
 				wxGetApp().log(
@@ -189,7 +194,7 @@ CommunicatorCtrl::usePolicy(wxString tmpName)
 		if (!wxRemoveFile(tmpName))
 			wxGetApp().log(_("Couldn't remove tmp file"));
 
-		com_->policyUse(buf);
+		com_->policyUse(buf, len);
 	}
 	else
 	{

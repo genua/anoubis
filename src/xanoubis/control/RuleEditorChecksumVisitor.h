@@ -25,64 +25,30 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _SFSPOLICY_H_
-#define _SFSPOLICY_H_
+#ifndef _RULEEDITORCHECKSUMVISITOR_H_
+#define _RULEEDITORCHECKSUMVISITOR_H_
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
-#include <sys/param.h>
-#include <sys/socket.h>
-
-#ifndef LINUX
-#include <sys/queue.h>
-#else
-#include <queue.h>
-#endif
-
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <wx/string.h>
-#include <wx/arrstr.h>
-
-#include <apn.h>
-
-#include "Policy.h"
-#include "AppPolicy.h"
 #include "PolicyVisitor.h"
 
-class SfsPolicy : public Policy
+class RuleEditorChecksumVisitor : public PolicyVisitor
 {
-	DECLARE_DYNAMIC_CLASS(SfsPolicy)
-
 	private:
-		struct apn_sfsrule	*sfsRule_;
-		wxString		 currHash_;
-		bool			 modified_;
+		bool mismatch_;
+		int state_;
+		void compare(Policy *policy);
+		void setModifiedTo(Policy *policy);
 
 	public:
-		SfsPolicy(void);
-		SfsPolicy(AppPolicy *, struct apn_sfsrule *);
-		~SfsPolicy(void);
+		RuleEditorChecksumVisitor(void);
+		RuleEditorChecksumVisitor(int);
+		~RuleEditorChecksumVisitor(void);
 
-		virtual void accept(PolicyVisitor&);
+		bool hasMismatch(void);
 
-		int		 getId(void);
-
-		void		 setBinaryName(wxString);
-		wxString	 getBinaryName(void);
-		wxString	 getHashTypeName(void);
-
-		wxString	 getCurrentHash(void);
-		void		 setCurrentHash(wxString);
-		bool		 calcCurrentHash(unsigned char *);
-		void		 setHashValue(unsigned char *);
-		wxString	 getHashValue(void);
-
-		bool		 isModified(void);
-		void		 setModified(bool);
-		wxString	 convertToString(unsigned char*);
+		virtual void visitAppPolicy(AppPolicy *);
+		virtual void visitAlfPolicy(AlfPolicy *);
+		virtual void visitSfsPolicy(SfsPolicy *);
+		virtual void visitVarPolicy(VarPolicy *);
 };
 
-#endif	/* _SFSPOLICY_H_ */
+#endif	/* _RULEEDITORCHECKSUMVISITOR_H_ */

@@ -97,6 +97,7 @@ Communicator::Communicator(wxEvtHandler *eventDestination, wxString socketPath)
 	client_  = NULL;
 	policyReq_ = false;
 	policyUse_ = false;
+	policyLen_ = 0;
 }
 
 void
@@ -300,10 +301,9 @@ Communicator::Entry(void)
 		 */
 		if (policyUse_ && startPolicyUse == COMMUNICATOR_FLAG_NONE &&
 		startPolicyRequest == COMMUNICATOR_FLAG_NONE) {
-
 			policyUse_ = false;
 
-			length = strlen(policyBuf_);
+			length = policyLen_;
 
 			total =	sizeof(*ureq) + length;
 
@@ -517,8 +517,12 @@ Communicator::policyRequest(void)
 }
 
 void
-Communicator::policyUse(char *policyBuf)
+Communicator::policyUse(char *policyBuf, int len)
 {
+	if (len <= 0)
+		return;
+
+	policyLen_ = len;
 	policyUse_ = true;
 	policyBuf_ = policyBuf;
 }

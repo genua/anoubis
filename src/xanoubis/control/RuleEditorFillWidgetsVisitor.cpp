@@ -345,9 +345,10 @@ RuleEditorFillWidgetsVisitor::showDirection(int direction)
 void
 RuleEditorFillWidgetsVisitor::visitAppPolicy(AppPolicy *appPolicy)
 {
-	wxString name;
+	wxString	name;
 	wxString        currHash;
 	wxString        regHash;
+	wxString	unknown;
 
 	clear();
 
@@ -356,6 +357,7 @@ RuleEditorFillWidgetsVisitor::visitAppPolicy(AppPolicy *appPolicy)
 	ruleEditor_->sfsNbPanel->Disable();
 	ruleEditor_->ruleEditNotebook->ChangeSelection(RULEDITOR_PANEL_APP);
 
+	unknown = _("unknown");
 	name = appPolicy->getApplicationName();
 	ruleEditor_->appNameComboBox->SetValue(name);
 
@@ -373,17 +375,25 @@ RuleEditorFillWidgetsVisitor::visitAppPolicy(AppPolicy *appPolicy)
 
 		ruleEditor_->appRegisteredSumValueText->SetLabel(regHash);
 		ruleEditor_->appCurrentSumValueText->SetLabel(currHash);
+		ruleEditor_->appValidateChkSumButton->Enable();
 
 		if (regHash.Cmp(currHash) == 0) {
 			ruleEditor_->appStatusValueText->SetLabel(_("match"));
 			ruleEditor_->appUpdateChkSumButton->Disable();
 		} else {
-			ruleEditor_->appStatusValueText->SetLabel(
-			    _("mismatch"));
-			ruleEditor_->appUpdateChkSumButton->Enable();
+			if (currHash.Cmp(unknown)) {
+				ruleEditor_->appStatusValueText->SetLabel(
+				    _("mismatch"));
+				ruleEditor_->appUpdateChkSumButton->Enable();
+			} else {
+				ruleEditor_->appStatusValueText->
+				    SetLabel(unknown);
+				ruleEditor_->appUpdateChkSumButton->Disable();
+			}
 		}
 	} else {
 		ruleEditor_->appUpdateChkSumButton->Disable();
+		ruleEditor_->appValidateChkSumButton->Disable();
 		ruleEditor_->appRegisteredSumValueText->SetLabel(
 		    _("no application selected"));
 		ruleEditor_->appCurrentSumValueText->SetLabel(
@@ -444,8 +454,10 @@ RuleEditorFillWidgetsVisitor::visitSfsPolicy(SfsPolicy *sfsPolicy)
 {
 	wxString        currHash;
 	wxString        regHash;
+	wxString	unknown;
 
 	clear();
+	unknown = _("unknown");
 
 	ruleEditor_->sfsNbPanel->Enable();
 	ruleEditor_->ruleEditNotebook->ChangeSelection(RULEDITOR_PANEL_SFS);
@@ -461,8 +473,15 @@ RuleEditorFillWidgetsVisitor::visitSfsPolicy(SfsPolicy *sfsPolicy)
 		ruleEditor_->sfsStatusValueText->SetLabel(_("match"));
 		ruleEditor_->sfsUpdateChkSumButton->Disable();
 	} else {
-		ruleEditor_->sfsStatusValueText->SetLabel(_("mismatch"));
-		ruleEditor_->sfsUpdateChkSumButton->Enable();
+		if (currHash.Cmp(unknown)) {
+			ruleEditor_->sfsStatusValueText->
+			    SetLabel(_("mismatch"));
+			ruleEditor_->sfsUpdateChkSumButton->Enable();
+		}
+		else {
+			ruleEditor_->sfsStatusValueText->SetLabel(unknown);
+			ruleEditor_->sfsUpdateChkSumButton->Disable();
+		}
 	}
 
 	ruleEditor_->ruleListCtrl->SetFocus();

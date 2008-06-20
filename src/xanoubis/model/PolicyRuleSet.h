@@ -73,6 +73,9 @@ class PolicyRuleSet
 		int createAlfPolicy(int);
 		int createSfsPolicy(int);
 		int createVarPolicy(int);
+
+		void clearModified(void);
+		bool findMismatchHash(void);
 };
 
 #endif	/* _POLICYRULESET_H_ */

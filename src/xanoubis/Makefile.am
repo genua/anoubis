@@ -257,6 +257,8 @@ xanoubis_SOURCES= \
 	control/ModSfsAddPolicyVisitor.h \
 	control/RuleSetSearchPolicyVisitor.cpp \
 	control/RuleSetSearchPolicyVisitor.h \
+	control/RuleEditorChecksumVisitor.cpp \
+	control/RuleEditorChecksumVisitor.h \
 	ctassert.h \
 	main.cpp \
 	main.h

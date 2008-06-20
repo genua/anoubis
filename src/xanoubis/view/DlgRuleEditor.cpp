@@ -522,23 +522,13 @@ DlgRuleEditor::OnAppValidateChkSumButton(wxCommandEvent& event)
 {
 	AppPolicy			*policy;
 	RuleEditorFillWidgetsVisitor	 updateVisitor(this);
-	wxString			 currHash;
 	unsigned char			 csum[MAX_APN_HASH_LEN];
 
 	policy = (AppPolicy *)ruleListCtrl->GetItemData(selectedIndex_);
 	if (!policy)
 		return;
 
-	if (policy->calcCurrentHash(csum)) {
-		currHash = wxT("0x");
-		for (unsigned int i=0; i<MAX_APN_HASH_LEN; i++) {
-			currHash += wxString::Format(wxT("%2.2x"),
-			(unsigned char)csum[i]);
-		}
-	} else {
-		currHash = _("unable to calculate checksum");
-	}
-	policy->setCurrentHash(currHash);
+	policy->calcCurrentHash(csum);
 	updateVisitor.setPropagation(false);
 	policy->accept(updateVisitor);
 }
@@ -576,19 +566,6 @@ DlgRuleEditor::OnRuleCreateButton(wxCommandEvent& event)
 void
 DlgRuleEditor::OnRuleDeleteButton(wxCommandEvent& event)
 {
-}
-
-void
-DlgRuleEditor::OnRuleSetSave(wxCommandEvent& event)
-{
-	wxString	tmpPreFix;
-	wxString	tmpName;
-
-	/* XXX: KM there should be a better way, like apn_parse_xxx */
-	tmpPreFix = wxT("xanoubis");
-	tmpName = wxFileName::CreateTempFileName(tmpPreFix);
-	wxGetApp().exportPolicyFile(tmpName);
-	wxGetApp().usePolicy(tmpName);
 }
 
 void
@@ -750,16 +727,7 @@ DlgRuleEditor::OnSfsValidateChkSumButton(wxCommandEvent& event)
 	if (!policy)
 		return;
 
-	if (policy->calcCurrentHash(csum)) {
-		currHash = wxT("0x");
-		for (unsigned int i=0; i<MAX_APN_HASH_LEN; i++) {
-			currHash += wxString::Format(wxT("%2.2x"),
-			(unsigned char)csum[i]);
-		}
-	} else {
-		currHash = _("unable to calculate checksum");
-	}
-	policy->setCurrentHash(currHash);
+	policy->calcCurrentHash(csum);
 	updateWidgets.setPropagation(false);
 	policy->accept(updateWidgets);
 
@@ -769,6 +737,33 @@ void
 DlgRuleEditor::OnShow(wxCommandEvent& event)
 {
 	this->Show(event.GetInt());
+}
+
+void
+DlgRuleEditor::OnRuleSetSave(wxCommandEvent& event)
+{
+	wxString	tmpPreFix;
+	wxString	tmpName;
+	wxString	message;
+
+	if (ruleSet_->findMismatchHash())
+	{
+		message = _("Mismatch of Checksums in one or more Rule.\n \
+		    Do you want to store anyway?");
+		int answer = wxMessageBox(message,
+		    _("Mismatch of Checksums"), wxYES_NO, this);
+		if (answer == wxNO) {
+			return;
+		}
+	}
+
+	ruleSet_->clearModified();
+
+	/* XXX: KM there should be a better way, like apn_parse_xxx */
+	tmpPreFix = wxT("xanoubis");
+	tmpName = wxFileName::CreateTempFileName(tmpPreFix);
+	wxGetApp().exportPolicyFile(tmpName);
+	wxGetApp().usePolicy(tmpName);
 }
 
 void
@@ -941,37 +936,6 @@ DlgRuleEditor::OnAutoCheck(wxCommandEvent& event)
 	autoCheck_ = event.GetInt();
 }
 
-void
-DlgRuleEditor::SetRuleSetToNotModified(void)
-{
-	Policy				*policy;
-	AppPolicy			*appPolicy;
-	SfsPolicy			*sfsPolicy;
-	AlfPolicy			*alfPolicy;
-	long				 iterator;
-
-	for (iterator = 0; iterator < ruleListCtrl->GetItemCount(); iterator++)
-	{
-		policy = (Policy *)ruleListCtrl->GetItemData(iterator);
-		if (!policy)
-			return;
-
-		if (policy->IsKindOf(CLASSINFO(SfsPolicy))) {
-			sfsPolicy = (SfsPolicy *)policy;
-			sfsPolicy->setModified(false);
-		} else {
-			if (policy->IsKindOf(CLASSINFO(AlfPolicy))) {
-				alfPolicy = (AlfPolicy *)policy;
-				appPolicy = (AppPolicy *)alfPolicy->getParent();
-			} else {
-				appPolicy = (AppPolicy *)policy;
-			}
-			appPolicy->setModified(false);
-		}
-
-	}
-}
-
 bool
 DlgRuleEditor::CheckLastSelection(void)
 {
@@ -1012,7 +976,6 @@ DlgRuleEditor::CheckLastSelection(void)
 			currHash = _("unable to calculate checksum");
 			return (true);
 		}
-		sfsPolicy->setCurrentHash(currHash);
 		regHash = sfsPolicy->getHashValue();
 		mismatch = regHash.Cmp(currHash);
 	} else {
@@ -1037,7 +1000,6 @@ DlgRuleEditor::CheckLastSelection(void)
 			currHash = _("unable to calculate checksum");
 			return (true);
 		}
-		appPolicy->setCurrentHash(currHash);
 		regHash = appPolicy->getHashValue();
 		mismatch = regHash.Cmp(currHash);
 	}

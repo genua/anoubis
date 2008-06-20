@@ -55,6 +55,7 @@
 #include "PolicyRuleSet.h"
 #include "PolicyVisitor.h"
 #include "RuleSetSearchPolicyVisitor.h"
+#include "RuleEditorChecksumVisitor.h"
 
 #define CALLOC_STRUCT(type) (struct type *)calloc(1, sizeof(struct type))
 
@@ -350,4 +351,23 @@ PolicyRuleSet::createVarPolicy(int insertBeforeId)
 {
 	/* XXX ch: currently no variables are supported */
 	return (-1);
+}
+
+void
+PolicyRuleSet::clearModified(void)
+{
+	RuleEditorChecksumVisitor	seeker(0);
+
+	this->accept(seeker);
+}
+
+bool
+PolicyRuleSet::findMismatchHash(void)
+{
+	RuleEditorChecksumVisitor	seeker;
+
+	this->accept(seeker);
+
+	return (seeker.hasMismatch());
+
 }

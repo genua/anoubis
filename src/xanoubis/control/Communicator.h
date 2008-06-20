@@ -55,6 +55,7 @@ class Communicator : public wxThread {
 		char			*policyBuf_;
 		bool			 policyReq_;
 		bool			 policyUse_;
+		int			 policyLen_;
 		connectionStateType	 isConnected_;
 		NotifyList		 answerList_;
 		wxEvtHandler		*eventDestination_;
@@ -72,7 +73,7 @@ class Communicator : public wxThread {
 
 		void sendEscalationAnswer(Notification *);
 		void policyRequest(void);
-		void policyUse(char *);
+		void policyUse(char *, int);
 };
 
 #endif	/* _COMMUNICATOR_H_ */

@@ -134,7 +134,7 @@ wxString
 SfsPolicy::getCurrentHash(void)
 {
 	if (currHash_.IsEmpty()) {
-		return _("unkown");
+		return _("unknown");
 	} else {
 		return (currHash_);
 	}
@@ -173,6 +173,8 @@ SfsPolicy::calcCurrentHash(unsigned char csum[MAX_APN_HASH_LEN])
 		file->Close();
 	}
 
+	currHash_ = convertToString(csum);
+
 	return (true);
 }
 
@@ -198,28 +200,11 @@ wxString
 SfsPolicy::getHashValue(void)
 {
 	wxString	 result;
-	unsigned int	 length;
 	struct apn_app	*app;
 
 	app = sfsRule_->rule.sfscheck.app;
 
-	length = 0;
-	result = wxT("0x");
-
-	switch (app->hashtype) {
-	case APN_HASH_SHA256:
-		length = APN_HASH_SHA256_LEN;
-		break;
-	default:
-		length = 0;
-		result = _("(unknown hash type)");
-		break;
-	}
-
-	for (unsigned int i=0; i<length; i++) {
-		result += wxString::Format(wxT("%2.2x"),
-		    (unsigned char)app->hashvalue[i]);
-	}
+	result = convertToString(app->hashvalue);
 
 	return (result);
 }
@@ -234,4 +219,31 @@ void
 SfsPolicy::setModified(bool modified)
 {
 	modified_ = modified;
+}
+
+wxString
+SfsPolicy::convertToString(unsigned char *csum)
+{
+	wxString	result;
+	unsigned int	length;
+
+	length = 0;
+	result = wxT("0x");
+
+	switch (sfsRule_->rule.sfscheck.app->hashtype) {
+	case APN_HASH_SHA256:
+		length = APN_HASH_SHA256_LEN;
+		break;
+	default:
+		length = 0;
+		result = _("(unknown hash type)");
+		break;
+	}
+
+	for (unsigned int i=0; i<length; i++) {
+		result += wxString::Format(wxT("%2.2x"),
+		    (unsigned char)csum[i]);
+	}
+
+	return (result);
 }
