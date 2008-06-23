@@ -173,7 +173,7 @@ _fill_buf(struct msg_buf *mbp)
 	return 1;
 err:
 	DEBUG(DBG_MSG_RECV, "_fill_buf: fd:%d size:%d", mbp->fd, size);
-	if (errno == EAGAIN)
+	if (size < 0 && errno == EAGAIN)
 		return 1;
 	if (size < 0)
 		log_warn("read error");
