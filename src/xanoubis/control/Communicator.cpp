@@ -420,7 +420,7 @@ Communicator::Entry(void)
 				tmp = tmp->next;
 			}
 
-			if(notDone)
+			if(!notDone)
 				break;
 
 			ret = apn_parse_iovec("com", iov, iovcnt, &ruleSet, 0);

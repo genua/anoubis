@@ -77,8 +77,6 @@ static void	apn_free_ruleq(struct apnrule_queue *);
 static void	apn_free_varq(struct apnvar_queue *);
 static void	apn_free_rule(struct apn_rule *);
 static void	apn_free_var(struct var *);
-static void	apn_free_host(struct apn_host *);
-static void	apn_free_port(struct apn_port *);
 static struct apn_rule	*apn_search_rule(struct apnrule_queue *, int);
 static int	apn_update_ids(struct apn_rule *, struct apn_ruleset *);
 static struct apn_alfrule *apn_searchinsert_alfrule(struct apnrule_queue *,
@@ -87,7 +85,6 @@ static struct apn_sfsrule *apn_searchinsert_sfsrule(struct apnrule_queue *,
     struct apn_sfsrule *, int);
 static struct apn_rule	*apn_search_rulealf(struct apnrule_queue *, int);
 static struct apn_rule	*apn_copy_rule(struct apn_rule *);
-static struct apn_alfrule *apn_copy_alfrules(struct apn_alfrule *);
 static int	 apn_copy_afilt(struct apn_afiltrule *, struct apn_afiltrule *);
 static int	 apn_copy_acap(struct apn_acaprule *, struct apn_acaprule *);
 static int	 apn_copy_apndefault(struct apn_default *,
@@ -1253,7 +1250,7 @@ apn_free_sfsrule(struct apn_sfsrule *rule)
 	}
 }
 
-static void
+void
 apn_free_host(struct apn_host *addr)
 {
 	struct apn_host	*hp, *next;
@@ -1266,7 +1263,7 @@ apn_free_host(struct apn_host *addr)
 	}
 }
 
-static void
+void
 apn_free_port(struct apn_port *port)
 {
 	struct apn_port	*hp, *next;
@@ -1473,7 +1470,7 @@ apn_copy_rule(struct apn_rule *rule)
  * Copy a chain of struct apn_alfrule, however skip context rules!
  * Include IDs.
  */
-static struct apn_alfrule *
+struct apn_alfrule *
 apn_copy_alfrules(struct apn_alfrule *rule)
 {
 	struct apn_alfrule	*newrule = NULL, *newhead, *hp;

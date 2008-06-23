@@ -338,6 +338,9 @@ wxString
 Notification::getOrigin(void)
 {
 	wxString origin;
+	int	 offset;
+	int	 length;
+	char	*buffer;
 
 	if (notify_ == NULL) {
 		return (_("no notify data available"));
@@ -346,6 +349,14 @@ Notification::getOrigin(void)
 	origin = wxString::Format(wxT("Pid: %u / Uid: %u"),
 	    get_value((notify_->u.notify)->pid),
 	    get_value((notify_->u.notify)->uid));
+
+	offset = get_value((notify_->u.notify)->pathoff);
+	length = get_value((notify_->u.notify)->pathlen);
+	if (length > 0) {
+		buffer = notify_->u.notify->payload + offset;
+		origin += _(" / Program: ");
+		origin += wxString::From8BitData(buffer, length);
+	}
 
 	return (origin);
 }

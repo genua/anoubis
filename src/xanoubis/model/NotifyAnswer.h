@@ -56,8 +56,12 @@ class NotifyAnswer {
 		NotifyAnswer(enum notifyAnswerType, bool);
 		NotifyAnswer(enum notifyAnswerType, bool, int, enum timeUnit);
 
-		wxString	getAnswer(void);
-		bool		wasAllowed(void);
+		wxString		getAnswer(void);
+		bool			wasAllowed(void);
+		bool			causeTmpRule(void);
+		bool			causePermRule(void);
+		time_t			getTime(void);
+		enum notifyAnswerType	getType(void);
 };
 
 #endif	/* _NOTIFYANSWER_H_ */

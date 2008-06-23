@@ -287,6 +287,9 @@ void	apn_free_app(struct apn_app *);
 void	apn_free_filter(struct apn_afiltspec *filtspec);
 int	apn_clean_ruleset(struct apn_ruleset *rs,
 	    int (*)(struct apn_scope *, void *), void *);
+struct apn_alfrule *apn_copy_alfrules(struct apn_alfrule *);
+void	apn_free_host(struct apn_host *);
+void	apn_free_port(struct apn_port *);
 __END_DECLS
 
 #endif /* _APN_H_ */

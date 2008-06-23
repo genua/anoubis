@@ -80,6 +80,7 @@ class AnoubisGuiApp : public wxApp
 		wxStandardPaths		 paths_;
 		wxLocale		 language_;
 		PolicyRuleSet		*ruleSet_;
+		PolicyRuleSet		*oldRuleSet_;
 		MainFrame		*mainFrame;
 		DlgLogViewer		*logViewer_;
 		DlgRuleEditor		*ruleEditor_;

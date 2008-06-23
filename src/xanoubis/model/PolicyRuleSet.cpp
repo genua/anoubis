@@ -48,6 +48,7 @@
 #include <apn.h>
 #include <errno.h>
 
+#include "AnEvents.h"
 #include "main.h"
 #include "Policy.h"
 #include "AppPolicy.h"
@@ -64,6 +65,8 @@ PolicyRuleSet::PolicyRuleSet(struct apn_ruleset *ruleSet)
 	ruleSet_ = NULL;
 
 	create(ruleSet);
+	Connect(anEVT_ANSWER_ESCALATION,
+	    wxCommandEventHandler(PolicyRuleSet::OnAnswerEscalation));
 }
 
 PolicyRuleSet::PolicyRuleSet(wxString fileName)
@@ -71,6 +74,8 @@ PolicyRuleSet::PolicyRuleSet(wxString fileName)
 	ruleSet_ = NULL;
 
 	create(fileName);
+	Connect(anEVT_ANSWER_ESCALATION,
+	    wxCommandEventHandler(PolicyRuleSet::OnAnswerEscalation));
 }
 
 PolicyRuleSet::~PolicyRuleSet(void)
@@ -159,6 +164,168 @@ PolicyRuleSet::create(wxString fileName)
 	}
 }
 
+bool
+PolicyRuleSet::hasLocalHost(wxArrayString list)
+{
+	bool result = false;
+
+	if (list.IsEmpty()) {
+		return (false);
+	}
+
+	for (size_t i=0; i<list.GetCount(); i++) {
+		if ((list.Item(i).Cmp(wxT("127.0.0.1")) == 0) ||
+		   (list.Item(i).Cmp(wxT("::1")) == 0)) {
+			result = true;
+		}
+	}
+
+	return (result);
+}
+
+struct apn_alfrule *
+PolicyRuleSet::assembleAlfPolicy(AlfPolicy *old, EscalationNotify *escalation)
+{
+	struct apn_alfrule	*newAlfRule;
+	struct apn_afiltrule	*afilt;
+	NotifyAnswer		*answer;
+
+	newAlfRule = old->cloneRule();
+
+	if (newAlfRule == NULL) {
+		return (NULL);
+	}
+
+	if (escalation->getAnswer()->causeTmpRule()) {
+		if (newAlfRule->scope == NULL) {
+			newAlfRule->scope = CALLOC_STRUCT(apn_scope);
+		}
+	} else {
+		if (newAlfRule->scope != NULL) {
+			free(newAlfRule->scope);
+		}
+	}
+
+	answer = escalation->getAnswer();
+	newAlfRule->type = old->getTypeNo();
+
+	switch (old->getTypeNo()) {
+	case APN_ALF_FILTER:
+		afilt = &(newAlfRule->rule.afilt);
+		if (answer->wasAllowed()) {
+			afilt->action = APN_ACTION_ALLOW;
+		} else {
+			afilt->action = APN_ACTION_DENY;
+		}
+		if (old->getDirectionNo() == APN_ACCEPT) {
+			apn_free_port(afilt->filtspec.fromport);
+			if (hasLocalHost(old->getFromHostList())) {
+				apn_free_host(afilt->filtspec.fromhost);
+			}
+		} else {
+			apn_free_port(afilt->filtspec.toport);
+			if (hasLocalHost(old->getToHostList())) {
+				apn_free_host(afilt->filtspec.tohost);
+			}
+		}
+		break;
+	case APN_ALF_CAPABILITY:
+		newAlfRule->rule.acap.capability = old->getCapTypeNo();
+		if (answer->wasAllowed()) {
+			newAlfRule->rule.acap.action = APN_ACTION_ALLOW;
+		} else {
+			newAlfRule->rule.acap.action = APN_ACTION_DENY;
+		}
+		break;
+	case APN_ALF_DEFAULT:
+		newAlfRule->type = APN_ALF_FILTER;
+		afilt = &(newAlfRule->rule.afilt);
+		afilt->filtspec.af = 0; /* any */
+		afilt->filtspec.proto = escalation->getProtocolNo();
+		apn_free_port(afilt->filtspec.fromport);
+		apn_free_port(afilt->filtspec.toport);
+		if (old->getDirectionNo() == APN_ACCEPT) {
+			apn_free_host(afilt->filtspec.tohost);
+		} else {
+			apn_free_host(afilt->filtspec.fromhost);
+		}
+		break;
+	}
+
+	return (newAlfRule);
+}
+
+void
+PolicyRuleSet::createAnswerPolicy(EscalationNotify *escalation)
+{
+	unsigned char			 csum[APN_HASH_SHA256_LEN];
+	wxString			 filename;
+	Policy				*triggerPolicy;
+	Policy				*parentPolicy;
+	NotifyAnswer			*answer;
+	RuleSetSearchPolicyVisitor	*seeker;
+	struct apn_alfrule		*newAlfRule;
+
+	/* get the policy caused this escalation */
+	seeker = new RuleSetSearchPolicyVisitor(escalation->getRuleId());
+	this->accept(*seeker);
+	if (! seeker->hasMatchingPolicy()) {
+		return;
+	}
+	triggerPolicy = seeker->getMatchingPolicy();
+	delete seeker;
+
+	/* get the enclosing app policy */
+	parentPolicy = triggerPolicy->getParent();
+
+	filename = escalation->getBinaryName();
+	escalation->getChecksum(csum);
+
+	newAlfRule = assembleAlfPolicy((AlfPolicy *)triggerPolicy, escalation);
+
+	if (!parentPolicy->isDefault()) {
+		/*
+		 * This escalation was caused by a rule not been element of
+		 * an any-rule. Thus we can just insert the new policy before
+		 * the troggering rule.
+		 */
+		apn_insert_alfrule(ruleSet_, newAlfRule,
+		    escalation->getRuleId());
+	} else {
+		/*
+		 * This escalation was caused by a rule been placed within an
+		 * any-rule. Thus we have to copy the any block and insert
+		 * the new rule to the new block.
+		 */
+		apn_copyinsert(ruleSet_, newAlfRule, escalation->getRuleId(),
+		    filename.To8BitData(), csum, APN_HASH_SHA256);
+	}
+
+	answer = escalation->getAnswer();
+	if (answer->causeTmpRule()) {
+		if (answer->getType() == NOTIFY_ANSWER_TIME) {
+			newAlfRule->scope->timeout = answer->getTime();
+		} else {
+			newAlfRule->scope->task = escalation->getToken();
+		}
+	}
+
+
+	PolicyRuleSet	*nrs = new PolicyRuleSet(ruleSet_);
+	wxCommandEvent           event(anEVT_LOAD_RULESET);
+	event.SetClientData((void*)nrs);
+	wxGetApp().sendEvent(event);
+}
+
+void
+PolicyRuleSet::OnAnswerEscalation(wxCommandEvent& event)
+{
+	EscalationNotify	*escalation;
+
+	escalation = (EscalationNotify *)event.GetClientObject();
+	createAnswerPolicy(escalation);
+}
+
 void
 PolicyRuleSet::accept(PolicyVisitor& visitor)
 {
@@ -192,7 +359,8 @@ PolicyRuleSet::exportToFile(wxString fileName)
 	} else {
 		logEntry = _("Could not open file for export: ");
 	}         logEntry += fileName;
-	wxGetApp().log(logEntry);         wxGetApp().status(logEntry);
+	wxGetApp().log(logEntry);
+	wxGetApp().status(logEntry);
 }
 
 int

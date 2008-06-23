@@ -27,6 +27,7 @@
 
 #include <wx/intl.h>
 #include <wx/string.h>
+#include <wx/timer.h>
 
 #include "NotifyAnswer.h"
 
@@ -107,4 +108,56 @@ bool
 NotifyAnswer::wasAllowed(void)
 {
 	return (wasAllowed_);
+}
+
+bool
+NotifyAnswer::causeTmpRule(void)
+{
+	bool result;
+
+	if ((type_ == NOTIFY_ANSWER_PROCEND) ||
+	    (type_ == NOTIFY_ANSWER_TIME)) {
+		result = true;
+	} else {
+		result = false;
+	}
+
+	return (result);
+}
+
+bool
+NotifyAnswer::causePermRule(void)
+{
+	return (type_ == NOTIFY_ANSWER_FOREVER);
+}
+
+time_t
+NotifyAnswer::getTime(void)
+{
+	long	now;
+	long	factor;
+	time_t	result;
+
+	now = wxGetLocalTime(); /* number of seconds since ... 1970 */
+	factor = 1;
+	result = 0;
+
+	switch (timeUnit_) {
+	case TIMEUNIT_DAY:
+		factor *= 24;
+	case TIMEUNIT_HOUR:
+		factor *= 60;
+	case TIMEUNIT_MINUTE:
+		factor *= 60;
+	case TIMEUNIT_SECOND:
+		result = timeValue_ * factor;
+	}
+
+	return (now + result);
+}
+
+enum notifyAnswerType
+NotifyAnswer::getType(void)
+{
+	return (type_);
 }

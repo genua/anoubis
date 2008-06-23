@@ -183,6 +183,10 @@ AnoubisGuiApp::sendEvent(wxCommandEvent& event)
 	wxPostEvent(mainFrame, event);
 	wxPostEvent(comCtrl_, event);
 	wxPostEvent(trayIcon, event);
+
+	if (ruleSet_ != NULL) {
+		wxPostEvent(ruleSet_, event);
+	}
 }
 
 void
@@ -414,9 +418,10 @@ AnoubisGuiApp::importPolicyFile(wxString fileName)
 {
 	wxCommandEvent		 event(anEVT_LOAD_RULESET);
 
-	if (ruleSet_ != NULL) {
-		delete ruleSet_;
+	if (oldRuleSet_ != NULL) {
+		delete oldRuleSet_;
 	}
+	oldRuleSet_ = ruleSet_;
 	ruleSet_ = new PolicyRuleSet(fileName);
 
 	event.SetClientData((void*)ruleSet_);

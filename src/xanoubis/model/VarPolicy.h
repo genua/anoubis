@@ -41,7 +41,8 @@ class VarPolicy : public Policy
 
 		virtual void accept(PolicyVisitor&);
 
-		int getId(void);
+		int	getId(void);
+		bool	isDefault(void);
 };
 
 #endif	/* _VARPOLICY_H_ */

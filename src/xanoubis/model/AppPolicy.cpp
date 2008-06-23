@@ -329,3 +329,9 @@ AppPolicy::convertToString(unsigned char *csum)
 
 	return (result);
 }
+
+bool
+AppPolicy::isDefault(void)
+{
+	return (appRule_->app == NULL); /* aka any rule */
+}

@@ -144,10 +144,22 @@ AlfPolicy::accept(PolicyVisitor &visitor)
 	visitor.visitAlfPolicy(this);
 }
 
+struct apn_alfrule *
+AlfPolicy::cloneRule(void)
+{
+	return (apn_copy_alfrules(alfRule_));
+}
+
 int
 AlfPolicy::getId(void)
 {
 	return (alfRule_->id);
+}
+
+bool
+AlfPolicy::isDefault(void)
+{
+	return (alfRule_->type == APN_ALF_DEFAULT);
 }
 
 void

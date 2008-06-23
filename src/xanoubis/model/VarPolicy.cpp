@@ -50,3 +50,10 @@ VarPolicy::getId(void)
 	/* XXX CH: a var element has no id */
 	return (-1);
 }
+
+bool
+VarPolicy::isDefault(void)
+{
+	/* variables are never default */
+	return (false);
+}

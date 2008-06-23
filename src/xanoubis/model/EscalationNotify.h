@@ -51,6 +51,9 @@ class EscalationNotify : public Notification {
 		void		 answer(NotifyAnswer *);
 		NotifyAnswer	*getAnswer(void);
 		anoubis_token_t	 getToken(void);
+		wxString	 getBinaryName(void);
+		void		 getChecksum(unsigned char *);
+		int		 getProtocolNo(void);
 };
 
 #endif	/* _ESCALATIONNOTIFY_H_ */

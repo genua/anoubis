@@ -83,6 +83,7 @@ class SfsPolicy : public Policy
 		bool		 isModified(void);
 		void		 setModified(bool);
 		wxString	 convertToString(unsigned char*);
+		bool		 isDefault(void);
 };
 
 #endif	/* _SFSPOLICY_H_ */

@@ -70,6 +70,7 @@ class AppPolicy : public Policy
 		void		 setModified(bool);
 		int		 getId(void);
 		wxString	 convertToString(unsigned char*);
+		bool		 isDefault(void);
 };
 
 #endif	/* _APPPOLICY_H_ */

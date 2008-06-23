@@ -247,3 +247,10 @@ SfsPolicy::convertToString(unsigned char *csum)
 
 	return (result);
 }
+
+bool
+SfsPolicy::isDefault(void)
+{
+	/* sfs policies are never default */
+	return (false);
+}

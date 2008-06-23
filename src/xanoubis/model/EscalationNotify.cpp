@@ -25,6 +25,26 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#include <sys/types.h>
+
+#ifdef LINUX
+#include <linux/eventdev.h>
+#include <linux/anoubis.h>
+#include <linux/anoubis_alf.h>
+#include <linux/anoubis_sfs.h>
+#endif
+
+#ifdef OPENBSD
+#include <dev/eventdev.h>
+#include <dev/anoubis.h>
+#include <dev/anoubis_alf.h>
+#include <dev/anoubis_sfs.h>
+#endif
+
 #include <anoubis_msg.h>
 #include <wx/string.h>
 
@@ -63,6 +83,7 @@ EscalationNotify::answer(NotifyAnswer *answer)
 
 	answer_ = answer;
 
+	fprintf(stderr, "EscalationNotify::answer\n");
 	event.SetClientObject((wxClientData *)this);
 	wxGetApp().sendEvent(event);
 }
@@ -77,4 +98,50 @@ anoubis_token_t
 EscalationNotify::getToken(void)
 {
 	return (notify_->u.notify->token);
+}
+
+wxString
+EscalationNotify::getBinaryName(void)
+{
+	wxString result;
+	int	 offset;
+	int	 length;
+	char	*buffer;
+
+	offset = get_value(notify_->u.notify->pathoff);
+	length = get_value(notify_->u.notify->pathlen);
+
+	if (length <= 0) {
+		result = wxEmptyString;
+	} else {
+		buffer = notify_->u.notify->payload + offset;
+		result = wxString::From8BitData(buffer, length);
+	}
+
+	return (result);
+}
+
+void
+EscalationNotify::getChecksum(unsigned char csum[MAX_APN_HASH_LEN])
+{
+	int	offset;
+	int	length;
+
+	offset = get_value(notify_->u.notify->csumoff);
+	length = get_value(notify_->u.notify->csumlen);
+
+	bzero(csum, MAX_APN_HASH_LEN);
+	bcopy(csum, notify_->u.notify->payload+offset, length);
+}
+
+int
+EscalationNotify::getProtocolNo(void)
+{
+	struct alf_event	*alf;
+	int			 evoff  =  0;
+
+	evoff = get_value(notify_->u.notify->evoff);
+	alf = (struct alf_event *)((notify_->u.notify)->payload + evoff);
+
+	return (alf->protocol);
 }
