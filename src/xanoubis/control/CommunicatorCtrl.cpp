@@ -72,6 +72,12 @@ CommunicatorCtrl::CommunicatorCtrl(wxString socketPath)
 	    wxCommandEventHandler(CommunicatorCtrl::OnAnswerEscalation));
 	Connect(anEVT_ANOUBISD_RULESET_ARRIVED,
 	    wxCommandEventHandler(CommunicatorCtrl::OnAnoubisdRuleSet));
+	Connect(anEVT_ANOUBISD_CSUM_CUR_ARRIVED,
+	    wxCommandEventHandler(CommunicatorCtrl::OnAnoubisdCurCsum));
+	Connect(anEVT_ANOUBISD_CSUM_SHA_ARRIVED,
+	    wxCommandEventHandler(CommunicatorCtrl::OnAnoubisdShaCsum));
+	Connect(anEVT_COMMUNICATOR_ERROR,
+	    wxCommandEventHandler(CommunicatorCtrl::OnCommunicatorError));
 }
 
 CommunicatorCtrl::~CommunicatorCtrl(void)
@@ -162,6 +168,24 @@ void
 CommunicatorCtrl::requestPolicy(void)
 {
 	com_->policyRequest();
+}
+
+void
+CommunicatorCtrl::checksumAdd(wxString file)
+{
+	com_->addChecksum(file);
+}
+
+void
+CommunicatorCtrl::checksumGet(wxString file)
+{
+	com_->getChecksum(file, CSUM_GET_SHADOW);
+}
+
+void
+CommunicatorCtrl::checksumCal(wxString file)
+{
+	com_->getChecksum(file, CSUM_GET_CURRENT);
 }
 
 void
@@ -326,4 +350,55 @@ CommunicatorCtrl::OnAnoubisdRuleSet(wxCommandEvent& event)
 
 	ruleSet = (struct apn_ruleset*)event.GetClientData();
 	wxGetApp().importPolicyRuleSet(ruleSet);
+}
+
+void
+CommunicatorCtrl::OnAnoubisdShaCsum(wxCommandEvent& event)
+{
+	wxCommandEvent aEvent(anEVT_ANOUBISD_CSUM_SHA);
+	aEvent.SetString(event.GetString());
+	aEvent.SetClientData(event.GetClientData());
+	wxGetApp().sendEvent(aEvent);
+}
+
+void
+CommunicatorCtrl::OnAnoubisdCurCsum(wxCommandEvent& event)
+{
+	wxCommandEvent aEvent(anEVT_ANOUBISD_CSUM_CUR);
+	aEvent.SetString(event.GetString());
+	aEvent.SetClientData(event.GetClientData());
+	wxGetApp().sendEvent(aEvent);
+}
+
+void
+CommunicatorCtrl::OnCommunicatorError(wxCommandEvent& event)
+{
+	wxString	errMsg;
+	int		errNum;
+
+	errMsg = event.GetString();
+	errNum = event.GetInt();
+
+	wxCommandEvent aEvent(anEVT_CHECKSUM_ERROR);
+
+	switch (errNum) {
+	case COM_CSUM_ADD_FAIL:
+		aEvent.SetString(_("add"));
+		wxGetApp().sendEvent(aEvent);
+		break;
+	case COM_CSUM_GET_FAIL:
+		aEvent.SetString(_("get"));
+		wxGetApp().sendEvent(aEvent);
+		break;
+	case COM_CSUM_CAL_FAIL:
+		aEvent.SetString(_("cal"));
+		wxGetApp().sendEvent(aEvent);
+		break;
+	default:
+		if (errMsg.IsEmpty()) {
+			return;
+		}
+		wxGetApp().log(errMsg);
+		break;
+	}
 }

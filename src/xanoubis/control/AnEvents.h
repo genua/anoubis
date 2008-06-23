@@ -160,6 +160,41 @@ BEGIN_DECLARE_EVENT_TYPES()
 	 */
 	DECLARE_LOCAL_EVENT_TYPE(anEVT_ANOUBISD_RULESET_ARRIVED,
 	    wxNewEventType())
+	/*
+	 * Send a Event if the checksum of a file from the shadowtree arrived.
+	 */
+	DECLARE_LOCAL_EVENT_TYPE(anEVT_ANOUBISD_CSUM_SHA_ARRIVED, \
+	    wxNewEventType())
+
+	/*
+	 * Send a Event if the current checksum of a file arrived.
+	 */
+	DECLARE_LOCAL_EVENT_TYPE(anEVT_ANOUBISD_CSUM_CUR_ARRIVED, \
+	    wxNewEventType())
+
+	/*
+	 * Send a Event if the checksum of a file from the shadowtree arrived.
+	 */
+	DECLARE_LOCAL_EVENT_TYPE(anEVT_ANOUBISD_CSUM_SHA, \
+	    wxNewEventType())
+
+	/*
+	 * Send a Event if the current checksum of a file arrived.
+	 */
+	DECLARE_LOCAL_EVENT_TYPE(anEVT_ANOUBISD_CSUM_CUR, \
+	    wxNewEventType())
+
+	/*
+	 * An error Event from Communicator to CommunicatorCtrl. The Error
+	 * Code is stored as an int
+	 */
+	DECLARE_LOCAL_EVENT_TYPE(anEVT_COMMUNICATOR_ERROR, wxNewEventType())
+
+	/*
+	 * An error happend while requesting checksum. The event storing an
+	 * string which checksum request failed
+	 */
+	DECLARE_LOCAL_EVENT_TYPE(anEVT_CHECKSUM_ERROR, wxNewEventType())
 END_DECLARE_EVENT_TYPES()
 
 #endif	/* _ANEVENTS_H_ */

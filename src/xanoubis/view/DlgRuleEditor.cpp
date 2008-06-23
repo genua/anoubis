@@ -212,6 +212,12 @@ DlgRuleEditor::DlgRuleEditor(wxWindow* parent) : DlgRuleEditorBase(parent)
 	    wxCommandEventHandler(DlgRuleEditor::OnShowRule), NULL, this);
 	parent->Connect(anEVT_SEND_AUTO_CHECK,
 	    wxCommandEventHandler(DlgRuleEditor::OnAutoCheck), NULL, this);
+	parent->Connect(anEVT_ANOUBISD_CSUM_CUR,
+	    wxCommandEventHandler(DlgRuleEditor::OnAnoubisCurCsum), NULL, this);
+	parent->Connect(anEVT_ANOUBISD_CSUM_SHA,
+	    wxCommandEventHandler(DlgRuleEditor::OnAnoubisShaCsum), NULL, this);
+	parent->Connect(anEVT_CHECKSUM_ERROR,
+	    wxCommandEventHandler(DlgRuleEditor::OnChecksumError), NULL, this);
 }
 
 DlgRuleEditor::~DlgRuleEditor(void)
@@ -489,6 +495,9 @@ DlgRuleEditor::OnAppBinaryModifyButton(wxCommandEvent& event)
 	wxString	 defaultFilename = wxEmptyString;
 	wxFileDialog	*fileDlg;
 
+	if (wxIsBusy())
+		return;
+
 	wxBeginBusyCursor();
 	fileDlg = new wxFileDialog(NULL, caption, defaultDir, defaultFilename,
 	    wildcard, wxOPEN);
@@ -505,13 +514,17 @@ DlgRuleEditor::OnAppUpdateChkSumButton(wxCommandEvent& event)
 	AppPolicy			*policy;
 	RuleEditorFillTableVisitor       updateTable(this, selectedIndex_);
 	RuleEditorFillWidgetsVisitor	 updateWidgets(this);
-	unsigned char			 csum[MAX_APN_HASH_LEN];
+	unsigned char			 *csum;
+	wxString			 curHash;
+
+	if (wxIsBusy())
+		return;
 
 	policy = (AppPolicy *)ruleListCtrl->GetItemData(selectedIndex_);
 	if (!policy)
 		return;
 
-	policy->calcCurrentHash(csum);
+	csum = policy->getCurrentSum();
 	policy->setHashValue(csum);
 	policy->accept(updateTable);
 	policy->accept(updateWidgets);
@@ -523,14 +536,42 @@ DlgRuleEditor::OnAppValidateChkSumButton(wxCommandEvent& event)
 	AppPolicy			*policy;
 	RuleEditorFillWidgetsVisitor	 updateVisitor(this);
 	unsigned char			 csum[MAX_APN_HASH_LEN];
+	wxString			 currHash;
+	wxString			 message;
+	wxString			 title;
+	int				 ret;
+
+	if (wxIsBusy())
+		return;
 
 	policy = (AppPolicy *)ruleListCtrl->GetItemData(selectedIndex_);
 	if (!policy)
 		return;
 
-	policy->calcCurrentHash(csum);
-	updateVisitor.setPropagation(false);
-	policy->accept(updateVisitor);
+	ret = policy->calcCurrentHash(csum);
+
+	if (ret == 1) {
+		currHash = wxT("0x");
+		for (unsigned int i=0; i<MAX_APN_HASH_LEN; i++) {
+			currHash += wxString::Format(wxT("%2.2x"),
+			(unsigned char)csum[i]);
+		}
+		policy->setCurrentHash(currHash);
+		policy->setCurrentSum(csum);
+		updateVisitor.setPropagation(false);
+		policy->accept(updateVisitor);
+	} else if (ret == 0) {
+		wxGetApp().calChecksum(policy->getBinaryName());
+		wxBeginBusyCursor();
+	} else if (ret == -2) {
+		message = _("Wrong file access permission");
+		title = _("File is not set readable for the user.");
+		wxMessageBox(message, title, wxICON_INFORMATION);
+	} else {
+		message = _("File does not exist");
+		title = _("File does not exist");
+		wxMessageBox(message, title, wxICON_INFORMATION);
+	}
 }
 
 void
@@ -676,9 +717,14 @@ void
 DlgRuleEditor::OnSfsBinaryModifyButton(wxCommandEvent& event)
 {
 	SfsPolicy	*policy;
+
+	if (wxIsBusy())
+		return;
+
 	policy = (SfsPolicy *)ruleListCtrl->GetItemData(selectedIndex_);
 	if (!policy)
 		return;
+
 	wxString	 caption = _("Choose a binary");
 	wxString	 wildcard = wxT("*");
 	wxString	 defaultDir = wxT("/usr/bin/");
@@ -700,19 +746,22 @@ DlgRuleEditor::OnSfsUpdateChkSumButton(wxCommandEvent& event)
 {
 	RuleEditorFillWidgetsVisitor	 updateVisitor(this);
 	SfsPolicy			*policy;
-	unsigned char			 csum[MAX_APN_HASH_LEN];
+	unsigned char			*csum;
+
+	if (wxIsBusy())
+		return;
 
 	policy = (SfsPolicy *)ruleListCtrl->GetItemData(selectedIndex_);
 	if (!policy)
 		return;
 
-	policy->calcCurrentHash(csum);
+	csum = policy->getCurrentSum();
 	policy->setHashValue(csum);
 	updateVisitor.setPropagation(false);
 	policy->accept(updateVisitor);
 
 	ruleListCtrl->SetItem(selectedId_, RULEDITOR_LIST_COLUMN_HASH,
-	   policy->getHashValue());
+	    policy->getHashValue());
 }
 
 void
@@ -722,14 +771,39 @@ DlgRuleEditor::OnSfsValidateChkSumButton(wxCommandEvent& event)
 	wxString			 currHash;
 	RuleEditorFillWidgetsVisitor	 updateWidgets(this);
 	unsigned char			 csum[MAX_APN_HASH_LEN];
+	wxString			 message;
+	wxString			 title;
+	int				 ret;
+
+	if (wxIsBusy())
+		return;
 
 	policy = (SfsPolicy *)ruleListCtrl->GetItemData(selectedIndex_);
 	if (!policy)
 		return;
 
-	policy->calcCurrentHash(csum);
-	updateWidgets.setPropagation(false);
-	policy->accept(updateWidgets);
+	ret = policy->calcCurrentHash(csum);
+	if ( ret == 1) {
+		currHash = wxT("0x");
+		for (unsigned int i=0; i<MAX_APN_HASH_LEN; i++) {
+			currHash += wxString::Format(wxT("%2.2x"),
+			(unsigned char)csum[i]);
+		}
+		policy->setCurrentHash(currHash);
+		updateWidgets.setPropagation(false);
+		policy->accept(updateWidgets);
+	} else if (ret == 0) {
+		wxGetApp().calChecksum(policy->getBinaryName());
+		wxBeginBusyCursor();
+	} else if (ret == -2) {
+		message = _("Wrong file access permission");
+		title = _("File is not set readable for the user.");
+		wxMessageBox(message, title, wxICON_INFORMATION);
+	} else {
+		message = _("File does not exist");
+		title = _("File does not exist");
+		wxMessageBox(message, title, wxICON_INFORMATION);
+	}
 
 }
 
@@ -798,6 +872,9 @@ DlgRuleEditor::OnLineSelected(wxListEvent& event)
 	RuleEditorFillWidgetsVisitor	 updateVisitor(this);
 	Policy				*policy;
 	wxListView			*selecter;
+
+	if (wxIsBusy())
+		return;
 
 	if (autoCheck_) {
 		if (!CheckLastSelection()) {
@@ -1022,4 +1099,93 @@ DlgRuleEditor::CheckLastSelection(void)
 
 	}
 	return (true);
+}
+
+void
+DlgRuleEditor::OnAnoubisCurCsum(wxCommandEvent& event)
+{
+	wxString			 sum;
+	RuleEditorFillWidgetsVisitor	 updateWidgets(this);
+	unsigned char			 csum[MAX_APN_HASH_LEN];
+	Policy				*policy;
+
+	sum = wxT("0x");
+	sum += event.GetString();
+	bcopy((unsigned char *) event.GetClientData(), csum, MAX_APN_HASH_LEN);
+
+	policy = (Policy *)ruleListCtrl->GetItemData(selectedIndex_);
+	if (!policy)
+		return;
+
+	if(policy->IsKindOf(CLASSINFO(SfsPolicy))) {
+		SfsPolicy *sfsPolicy = (SfsPolicy *)policy;
+
+		sfsPolicy->setCurrentSum(csum);
+		sfsPolicy->setCurrentHash(sum);
+		wxGetApp().getChecksum(sfsPolicy->getBinaryName());
+	} else {
+		/* AppPolicy doesn't need to be checked with Shaodwtree*/
+		AppPolicy *appPolicy = (AppPolicy *)policy;
+
+		appPolicy->setCurrentSum(csum);
+		appPolicy->setCurrentHash(sum);
+
+		policy->accept(updateWidgets);
+		wxEndBusyCursor();
+	}
+
+}
+
+void
+DlgRuleEditor::OnAnoubisShaCsum(wxCommandEvent& event)
+{
+	wxString			 sum;
+	RuleEditorFillWidgetsVisitor	 updateWidgets(this);
+	unsigned char			 csum[MAX_APN_HASH_LEN];
+	Policy				*policy;
+
+	sum = wxT("0x");
+	sum += event.GetString();
+	bcopy((unsigned char *) event.GetClientData(), csum, MAX_APN_HASH_LEN);
+
+	policy = (Policy *)ruleListCtrl->GetItemData(selectedIndex_);
+	if (!policy)
+		return;
+
+	SfsPolicy *sfsPolicy = (SfsPolicy *)policy;
+
+	if (sum.Cmp(sfsPolicy->getCurrentHash())) {
+		/* if not matching update shadowtree */
+		wxGetApp().sendChecksum(sfsPolicy->getBinaryName());
+	}
+
+	policy->accept(updateWidgets);
+	wxEndBusyCursor();
+}
+
+void
+DlgRuleEditor::OnChecksumError(wxCommandEvent& event)
+{
+	RuleEditorFillWidgetsVisitor	 updateWidgets(this);
+	SfsPolicy			*policy;
+	wxString			 errMsg;
+	wxString			 message;
+	wxString			 title;
+
+	policy = (SfsPolicy *)ruleListCtrl->GetItemData(selectedIndex_);
+	if (!policy)
+		return;
+
+	errMsg = event.GetString();
+
+	if ((errMsg.Cmp(_("add")) == 0) || (errMsg.Cmp(_("cal")) == 0)) {
+		wxEndBusyCursor();
+		message = _("Permission denied for this file.");
+		title = _("Permission denied");
+		wxMessageBox(message, title, wxICON_INFORMATION);
+	} else {
+		policy->accept(updateWidgets);
+	}
+
+	wxEndBusyCursor();
 }

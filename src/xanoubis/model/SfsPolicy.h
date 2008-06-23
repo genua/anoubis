@@ -59,6 +59,7 @@ class SfsPolicy : public Policy
 	private:
 		struct apn_sfsrule	*sfsRule_;
 		wxString		 currHash_;
+		unsigned char		*currSum_;
 		bool			 modified_;
 
 	public:
@@ -74,9 +75,11 @@ class SfsPolicy : public Policy
 		wxString	 getBinaryName(void);
 		wxString	 getHashTypeName(void);
 
+		void		 setCurrentSum(unsigned char*);
+		unsigned char	*getCurrentSum(void);
 		wxString	 getCurrentHash(void);
 		void		 setCurrentHash(wxString);
-		bool		 calcCurrentHash(unsigned char *);
+		int		 calcCurrentHash(unsigned char *);
 		void		 setHashValue(unsigned char *);
 		wxString	 getHashValue(void);
 

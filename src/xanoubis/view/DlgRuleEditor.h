@@ -183,6 +183,10 @@ class DlgRuleEditor : public DlgRuleEditorBase
 
 		bool CheckLastSelection(void);
 
+		void OnAnoubisCurCsum(wxCommandEvent&);
+		void OnAnoubisShaCsum(wxCommandEvent&);
+		void OnChecksumError(wxCommandEvent&);
+
 	public:
 		DlgRuleEditor(wxWindow *);
 		~DlgRuleEditor(void);

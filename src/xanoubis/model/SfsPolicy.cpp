@@ -43,6 +43,9 @@
 
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 #include <wx/file.h>
 #include <wx/intl.h>
 
@@ -65,6 +68,7 @@ SfsPolicy::SfsPolicy(AppPolicy *parent, struct apn_sfsrule *sfsRule)
 {
 	sfsRule_ = sfsRule;
 	currHash_ = wxEmptyString;
+	currSum_ = NULL;
 	modified_ = false;
 }
 
@@ -110,6 +114,35 @@ SfsPolicy::getBinaryName(void)
 	}
 }
 
+unsigned char*
+SfsPolicy::getCurrentSum(void)
+{
+	return (currSum_);
+}
+
+void
+SfsPolicy::setCurrentSum(unsigned char *csum)
+{
+	int len;
+
+	if (!currSum_) {
+		currSum_ = (unsigned char*)malloc(MAX_APN_HASH_LEN);
+		if (!currSum_)
+			return;
+	}
+
+	switch (sfsRule_->rule.sfscheck.app->hashtype) {
+	case APN_HASH_SHA256:
+		len = APN_HASH_SHA256_LEN;
+		break;
+	default:
+		len = 0;
+		break;
+	}
+
+	bcopy(csum, currSum_, len);
+}
+
 wxString
 SfsPolicy::getHashTypeName(void)
 {
@@ -146,13 +179,25 @@ SfsPolicy::setCurrentHash(wxString currHash)
 	currHash_ = currHash;
 }
 
-bool
+int
 SfsPolicy::calcCurrentHash(unsigned char csum[MAX_APN_HASH_LEN])
 {
 	SHA256_CTX	 shaCtx;
 	u_int8_t	 buf[4096];
 	size_t		 ret;
 	wxFile		*file;
+	struct stat	fileStat;
+
+	stat(getBinaryName().mb_str(wxConvUTF8), &fileStat);
+	if (! (fileStat.st_mode & S_IRUSR))
+		return -2;
+
+	if (wxFile::Exists(getBinaryName().c_str())) {
+		if (!wxFile::Access(getBinaryName().c_str(), wxFile::read))
+			return (0);
+	} else {
+		return -1;
+	}
 
 	file = new wxFile(getBinaryName().c_str());
 	bzero(csum, MAX_APN_HASH_LEN);
@@ -165,7 +210,7 @@ SfsPolicy::calcCurrentHash(unsigned char csum[MAX_APN_HASH_LEN])
 				break;
 			}
 			if (ret < 0) {
-				return (false);
+				return (-1);
 			}
 			SHA256_Update(&shaCtx, buf, ret);
 		}
@@ -174,8 +219,9 @@ SfsPolicy::calcCurrentHash(unsigned char csum[MAX_APN_HASH_LEN])
 	}
 
 	currHash_ = convertToString(csum);
+	setCurrentSum(csum);
 
-	return (true);
+	return (1);
 }
 
 void

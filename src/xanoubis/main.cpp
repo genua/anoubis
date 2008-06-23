@@ -310,6 +310,24 @@ AnoubisGuiApp::usePolicy(wxString tmpFile)
 	comCtrl_->usePolicy(tmpFile);
 }
 
+void
+AnoubisGuiApp::sendChecksum(wxString File)
+{
+	comCtrl_->checksumAdd(File);
+}
+
+void
+AnoubisGuiApp::getChecksum(wxString File)
+{
+	comCtrl_->checksumGet(File);
+}
+
+void
+AnoubisGuiApp::calChecksum(wxString File)
+{
+	comCtrl_->checksumCal(File);
+}
+
 wxString
 AnoubisGuiApp::getCatalogPath(void)
 {

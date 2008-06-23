@@ -30,6 +30,8 @@
 
 #include <wx/string.h>
 
+#include <apn.h>
+
 #include "Policy.h"
 class AlfPolicy;
 
@@ -45,6 +47,7 @@ class AppPolicy : public Policy
 		bool		 modified_;
 
 		wxString	 currHash_;
+		unsigned char	*currSum_;
 
 	public:
 		AppPolicy(void);
@@ -57,9 +60,11 @@ class AppPolicy : public Policy
 		void		 setApplicationName(wxString);
 		wxString	 getBinaryName(void);
 		void		 setBinaryName(wxString name);
+		unsigned char	*getCurrentSum(void);
+		void		 setCurrentSum(unsigned char*);
 		wxString	 getCurrentHash(void);
 		void		 setCurrentHash(wxString);
-		bool		 calcCurrentHash(unsigned char *);
+		int		 calcCurrentHash(unsigned char *);
 		wxString	 getHashTypeName(void);
 		void		 setHashValue(unsigned char *);
 		wxString	 getHashValue(void);

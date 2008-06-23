@@ -49,11 +49,17 @@ class CommunicatorCtrl : public wxEvtHandler {
 		wxString	getRemoteStation(void);
 		void		requestPolicy(void);
 		void		usePolicy(wxString);
+		void		checksumAdd(wxString);
+		void		checksumGet(wxString);
+		void		checksumCal(wxString);
 
 		void	OnNotifyReceived(wxCommandEvent&);
 		void	OnAnoubisdRuleSet(wxCommandEvent&);
 		void	OnConnection(wxCommandEvent&);
 		void	OnAnswerEscalation(wxCommandEvent&);
+		void	OnAnoubisdCurCsum(wxCommandEvent&);
+		void	OnAnoubisdShaCsum(wxCommandEvent&);
+		void	OnCommunicatorError(wxCommandEvent&);
 };
 
 #endif	/* _COMMUNICATORCTRL_H_ */

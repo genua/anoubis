@@ -109,6 +109,9 @@ class AnoubisGuiApp : public wxApp
 		void		 connectCommunicator(bool);
 		void		 requestPolicy(void);
 		void		 usePolicy(wxString);
+		void		 sendChecksum(wxString);
+		void		 getChecksum(wxString);
+		void		 calChecksum(wxString);
 		wxString	 getCatalogPath(void);
 		wxString	 getUtilsPath(void);
 		wxString	 getIconPath(wxString);

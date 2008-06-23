@@ -151,3 +151,34 @@ DEFINE_LOCAL_EVENT_TYPE(anEVT_LOAD_RULESET)
  * file name of the tmp-File which holds the rules.
  */
 DEFINE_LOCAL_EVENT_TYPE(anEVT_ANOUBISD_RULESET_ARRIVED)
+
+/*
+ * Send a Event if the checksum of a file from the shadowtree arrived.
+ */
+DEFINE_LOCAL_EVENT_TYPE(anEVT_ANOUBISD_CSUM_SHA_ARRIVED)
+
+/*
+ * Send a Event if the current checksum of a file arrived.
+ */
+DEFINE_LOCAL_EVENT_TYPE(anEVT_ANOUBISD_CSUM_CUR_ARRIVED)
+
+/*
+ * Send a Event if the checksum of a file from the shadowtree arrived.
+ */
+DEFINE_LOCAL_EVENT_TYPE(anEVT_ANOUBISD_CSUM_SHA)
+
+/*
+ * Send a Event if the current checksum of a file arrived.
+ */
+DEFINE_LOCAL_EVENT_TYPE(anEVT_ANOUBISD_CSUM_CUR)
+
+/* An error Event from Communicator to CommunicatorCtrl. The Error
+ * Code is stored as an int
+ */
+DEFINE_LOCAL_EVENT_TYPE(anEVT_COMMUNICATOR_ERROR)
+
+/*
+ * An error happend while requesting checksum. The event storing an string
+ * which checksum request failed
+ */
+DEFINE_LOCAL_EVENT_TYPE(anEVT_CHECKSUM_ERROR)

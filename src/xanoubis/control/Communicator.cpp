@@ -38,6 +38,7 @@
 
 #ifdef LINUX
 #include <linux/eventdev.h>
+#include <openssl/sha.h>
 #include <linux/anoubis.h>
 #include <linux/anoubis_alf.h>
 #include <linux/anoubis_sfs.h>
@@ -47,6 +48,7 @@
 #include <dev/anoubis.h>
 #include <dev/anoubis_alf.h>
 #include <dev/anoubis_sfs.h>
+#include <sha2.h>
 #endif
 
 #include <netinet/in.h>
@@ -98,6 +100,9 @@ Communicator::Communicator(wxEvtHandler *eventDestination, wxString socketPath)
 	policyReq_ = false;
 	policyUse_ = false;
 	policyLen_ = 0;
+	checksumAdd_ = false;
+	checksumGet_ = false;
+	addFile_ = NULL;
 }
 
 void
@@ -189,15 +194,20 @@ Communicator::Entry(void)
 	enum communicatorFlag		 startDeRegistration;
 	enum communicatorFlag		 startStatRegistration;
 	enum communicatorFlag		 startStatDeRegistration;
+	enum communicatorFlag		 startChecksumAdd;
+	enum communicatorFlag		 startChecksumGet;
 	enum connectionStateType	 commRC;
 	enum communicatorFlag		 startPolicyRequest;
 	enum communicatorFlag		 startPolicyUse;
 	wxString			 tmpName;
 	wxString			 tmpPreFix;
+	wxString			 wxCsum;
+	wxString			 errString;
 	Policy_GetByUid			req;
 	Policy_SetByUid			*ureq;
 	char				*buf;
 	int				 prio;
+	unsigned char			 csum[MAX_APN_HASH_LEN];
 	size_t				 length, total, size;
 	int				 iovcnt;
 	int				 ret;
@@ -220,9 +230,12 @@ Communicator::Entry(void)
 	startStatDeRegistration	= COMMUNICATOR_FLAG_NONE;
 	startPolicyRequest	= COMMUNICATOR_FLAG_NONE;
 	startPolicyUse		= COMMUNICATOR_FLAG_NONE;
+	startChecksumAdd	= COMMUNICATOR_FLAG_NONE;
+	startChecksumGet	= COMMUNICATOR_FLAG_NONE;
 	prio			= 2;
 	length			= 0;
 	total			= 0;
+	wxCsum			= wxEmptyString;
 	tmpPreFix		= wxT("xanoubis");
 
 	if (connect() != ACHAT_RC_OK) {
@@ -300,7 +313,9 @@ Communicator::Entry(void)
 		 * policy
 		 */
 		if (policyUse_ && startPolicyUse == COMMUNICATOR_FLAG_NONE &&
-		startPolicyRequest == COMMUNICATOR_FLAG_NONE) {
+		    startPolicyRequest == COMMUNICATOR_FLAG_NONE &&
+		    startChecksumAdd == COMMUNICATOR_FLAG_NONE) {
+			startPolicyUse = COMMUNICATOR_FLAG_INIT;
 			policyUse_ = false;
 
 			length = policyLen_;
@@ -309,7 +324,8 @@ Communicator::Entry(void)
 
 			ureq = (Policy_SetByUid *)malloc(total);
 			if (!ureq) {
-			/* XXX: KM Here should be a better error handling*/
+				errString = _("Error while allocate memory.");
+				sendError(COM_ALLOC_ERR, errString);
 				notDone = false;
 				continue;
 			}
@@ -339,19 +355,21 @@ Communicator::Entry(void)
 
 		if (startPolicyUse == COMMUNICATOR_FLAG_DONE) {
 			if (reqTa->result) {
-			/* XXX: KM Here should be a better error handling*/
-				notDone = false;
-				continue;
+				errString = _("Error while sending ");
+				errString += _("Policy to deamon.");
+				sendError(COM_POLICY_USE_ERR, errString);
 			}
 			anoubis_transaction_destroy(reqTa);
 			free(buf);
 			startPolicyUse = COMMUNICATOR_FLAG_NONE;
+			continue;
 		}
 
 		/* Request policy from anoubisd				*/
 		if (policyReq_ &&
-			startPolicyRequest == COMMUNICATOR_FLAG_NONE &&
-			startPolicyUse == COMMUNICATOR_FLAG_NONE) {
+		    startPolicyRequest == COMMUNICATOR_FLAG_NONE &&
+		    startPolicyUse == COMMUNICATOR_FLAG_NONE &&
+		    startChecksumAdd == COMMUNICATOR_FLAG_NONE) {
 			startPolicyRequest = COMMUNICATOR_FLAG_INIT;
 			policyReq_ = false;
 			/* XXX KM: prio = 1 is just user policy
@@ -367,7 +385,6 @@ Communicator::Entry(void)
 			reqTa = anoubis_client_policyrequest_start(client_,
 					&req, sizeof(req));
 			if(!reqTa) {
-			/* XXX: KM Here should be a better error handling*/
 				notDone = false;
 				commRC =  CONNECTION_RXTX_ERROR;
 				continue;
@@ -382,7 +399,9 @@ Communicator::Entry(void)
 
 		if (startPolicyRequest == COMMUNICATOR_FLAG_DONE) {
 			if(reqTa->result) {
-			/* XXX: KM Here should be a better error handling*/
+				errString = _("Error while requesting ");
+				errString += _("Policy from deamon");
+				sendError(COM_POLICY_REQ_ERR, errString);
 				anoubis_transaction_destroy(reqTa);
 				startPolicyRequest = COMMUNICATOR_FLAG_NONE;
 				prio = 2;
@@ -411,7 +430,6 @@ Communicator::Entry(void)
 				    sizeof(Anoubis_PolicyReplyMessage)) ||
 				    get_value(tmp->u.policyreply->error) != 0) {
 					anoubis_transaction_destroy(reqTa);
-					notDone = false;
 					break;
 				}
 				iov[i].iov_len = tmp->length - CSUM_LEN
@@ -420,7 +438,7 @@ Communicator::Entry(void)
 				tmp = tmp->next;
 			}
 
-			if(!notDone)
+			if (!notDone)
 				break;
 
 			ret = apn_parse_iovec("com", iov, iovcnt, &ruleSet, 0);
@@ -446,6 +464,124 @@ Communicator::Entry(void)
 				startPolicyRequest = COMMUNICATOR_FLAG_INIT;
 			else
 				startPolicyRequest = COMMUNICATOR_FLAG_NONE;
+		}
+
+		/* Request to add a checksum for a file */
+		if (checksumAdd_ && startChecksumAdd == COMMUNICATOR_FLAG_NONE
+		    && startPolicyRequest == COMMUNICATOR_FLAG_NONE
+		    && startPolicyUse == COMMUNICATOR_FLAG_NONE) {
+			startChecksumAdd = COMMUNICATOR_FLAG_INIT;
+		}
+
+		if (startChecksumAdd == COMMUNICATOR_FLAG_INIT) {
+			reqTa =  anoubis_client_csumrequest_start(client_,
+			    ANOUBIS_CHECKSUM_OP_ADD, addFile_);
+			if(!reqTa) {
+				notDone = false;
+				commRC =  CONNECTION_RXTX_ERROR;
+				free(addFile_);
+				continue;
+			}
+			startChecksumAdd = COMMUNICATOR_FLAG_PROG;
+		}
+
+		if (startChecksumAdd == COMMUNICATOR_FLAG_PROG) {
+			if(reqTa->flags & ANOUBIS_T_DONE)
+				startChecksumAdd = COMMUNICATOR_FLAG_DONE;
+		}
+
+		if (startChecksumAdd == COMMUNICATOR_FLAG_DONE) {
+			if (reqTa->result) {
+				errString = wxEmptyString;
+				sendError(COM_CSUM_ADD_FAIL, errString);
+			}
+			free(addFile_);
+			checksumAdd_ = false;
+			startChecksumAdd = COMMUNICATOR_FLAG_NONE;
+		}
+
+		/* Request to get a checksum for a file */
+		if (checksumGet_ && startChecksumGet == COMMUNICATOR_FLAG_NONE
+		    && startChecksumAdd  == COMMUNICATOR_FLAG_NONE
+		    && startPolicyRequest == COMMUNICATOR_FLAG_NONE
+		    && startPolicyUse == COMMUNICATOR_FLAG_NONE) {
+
+			if (csumOp_ == CSUM_GET_CURRENT) {
+				reqTa = anoubis_client_csumrequest_start(
+				    client_, ANOUBIS_CHECKSUM_OP_CALC,
+				    getFile_);
+			} else {
+				reqTa = anoubis_client_csumrequest_start(
+				    client_, ANOUBIS_CHECKSUM_OP_GET,
+				    getFile_);
+			}
+			if(!reqTa) {
+				notDone = false;
+				commRC =  CONNECTION_RXTX_ERROR;
+				free(getFile_);
+				continue;
+			}
+			startChecksumGet = COMMUNICATOR_FLAG_PROG;
+		}
+
+		if (startChecksumGet == COMMUNICATOR_FLAG_PROG) {
+			if(reqTa->flags & ANOUBIS_T_DONE)
+				startChecksumGet = COMMUNICATOR_FLAG_DONE;
+		}
+
+		if (startChecksumGet == COMMUNICATOR_FLAG_DONE) {
+			if (reqTa->result) {
+				errString = wxEmptyString;
+				if (csumOp_ == CSUM_GET_CURRENT)
+					sendError(COM_CSUM_CAL_FAIL, errString);
+				else
+					sendError(COM_CSUM_GET_FAIL, errString);
+
+				startChecksumGet = COMMUNICATOR_FLAG_NONE;
+				free(getFile_);
+				checksumGet_ = false;
+				anoubis_transaction_destroy(reqTa);
+				continue;
+			}
+			free(getFile_);
+			checksumGet_ = false;
+
+			reqmsg = reqTa->msg;
+			reqTa->msg = NULL;
+			anoubis_transaction_destroy(reqTa);
+
+			if(!reqmsg || !VERIFY_LENGTH(reqmsg,
+				sizeof(Anoubis_PolicyReplyMessage)) ||
+				get_value(reqmsg->u.policyreply->error) != 0) {
+				anoubis_transaction_destroy(reqTa);
+				startChecksumGet = COMMUNICATOR_FLAG_NONE;
+				continue;
+			}
+
+			for (unsigned int i = 0; i<SHA256_DIGEST_LENGTH; ++i) {
+				wxCsum += wxString::Format(wxT("%2.2x"),
+				    (unsigned char)
+				    reqmsg->u.ackpayload->payload[i]);
+				csum[i] = reqmsg->u.ackpayload->payload[i];
+			}
+
+			if (csumOp_ == CSUM_GET_CURRENT) {
+				wxCommandEvent event(
+				    anEVT_ANOUBISD_CSUM_CUR_ARRIVED);
+				event.SetString(wxCsum);
+				event.SetClientData(csum);
+				eventDestination_->AddPendingEvent(event);
+
+			} else {
+				wxCommandEvent event(
+				    anEVT_ANOUBISD_CSUM_SHA_ARRIVED);
+				event.SetString(wxCsum);
+				event.SetClientData(csum);
+				eventDestination_->AddPendingEvent(event);
+			}
+
+			wxCsum = wxEmptyString;
+			startChecksumGet = COMMUNICATOR_FLAG_NONE;
 		}
 
 		size = 4096;
@@ -525,4 +661,54 @@ Communicator::policyUse(char *policyBuf, int len)
 	policyLen_ = len;
 	policyUse_ = true;
 	policyBuf_ = policyBuf;
+}
+
+void
+Communicator::addChecksum(wxString file)
+{
+	int len;
+
+	if (!checksumAdd_) {
+		len = file.Len();
+
+		addFile_ = (char *) malloc(len + 1);
+		if (!addFile_) {
+			/* XXX: KM there should be a better error handling */
+			len = 0;
+			return;
+		}
+		strcpy(addFile_, (const char*)file.mb_str(wxConvUTF8));
+		checksumAdd_ = true;
+	}
+
+}
+
+void
+Communicator::getChecksum(wxString file, int operation)
+{
+	int len;
+
+	if(!checksumGet_) {
+		len = file.Len();
+
+		getFile_ = (char *) malloc(len + 1);
+		if(!getFile_) {
+		/* XXX: KM there should be a better error handling */
+			len = 0;
+			return;
+		}
+
+		strcpy(getFile_, (const char*)file.mb_str(wxConvUTF8));
+		checksumGet_ = true;
+		csumOp_ = operation;
+	}
+}
+
+void
+Communicator::sendError(int errNum, wxString msg)
+{
+	wxCommandEvent event(anEVT_COMMUNICATOR_ERROR);
+	event.SetInt(errNum);
+	event.SetString(msg);
+	eventDestination_->AddPendingEvent(event);
 }

@@ -49,13 +49,33 @@ enum connectionStateType {
 	CONNECTION_RXTX_ERROR
 };
 
+enum communicatorError {
+	COM_ALLOC_ERR = 0,
+	COM_POLICY_USE_ERR,
+	COM_POLICY_REQ_ERR,
+	COM_MESG_SIZE_ERR,
+	COM_CSUM_ADD_FAIL,
+	COM_CSUM_GET_FAIL,
+	COM_CSUM_CAL_FAIL,
+	COM_FILE_WRITE_ERR
+};
+enum checksumOperation {
+	CSUM_GET_CURRENT = 0,
+	CSUM_GET_SHADOW
+};
+
 class Communicator : public wxThread {
 	private:
 		wxString		 socketPath_;
 		char			*policyBuf_;
+		char			*addFile_;
+		char			*getFile_;
 		bool			 policyReq_;
 		bool			 policyUse_;
 		int			 policyLen_;
+		bool			 checksumAdd_;
+		bool			 checksumGet_;
+		int			 csumOp_;
 		connectionStateType	 isConnected_;
 		NotifyList		 answerList_;
 		wxEvtHandler		*eventDestination_;
@@ -65,6 +85,7 @@ class Communicator : public wxThread {
 		void		setConnectionState(connectionStateType);
 		achat_rc	connect(void);
 		void		shutdown(connectionStateType);
+		void		sendError(int, wxString);
 
 	public:
 		Communicator(wxEvtHandler *, wxString);
@@ -74,6 +95,8 @@ class Communicator : public wxThread {
 		void sendEscalationAnswer(Notification *);
 		void policyRequest(void);
 		void policyUse(char *, int);
+		void addChecksum(wxString);
+		void getChecksum(wxString, int);
 };
 
 #endif	/* _COMMUNICATOR_H_ */
