@@ -51,6 +51,12 @@
 #include <time.h>
 #include <unistd.h>
 
+#ifdef OPENBSD
+#ifndef s6_addr32
+#define s6_addr32 __u6_addr.__u6_addr32
+#endif
+#endif
+
 #ifdef LINUX
 #include <queue.h>
 #include <bsdcompat.h>
@@ -2889,8 +2895,50 @@ pe_addrmatch_in(struct alf_event *msg, struct apn_alfrule *rule)
 }
 
 /*
+ * compare addr1 and addr2 with netmask of length len
+ */
+static int
+compare_ip6_mask(struct in6_addr *addr1, struct in6_addr *addr2, int len)
+{
+	int		 bits, match, i;
+	struct in6_addr	 mask;
+	u_int32_t	*pmask;
+
+	if (len > 128)
+		len = 128;
+
+	if (len == 128)
+		return !bcmp(addr1, addr2, sizeof(struct in6_addr));
+
+	if (len < 0)
+		len = 0;
+
+	bits = len;
+	bzero(&mask, sizeof(struct in6_addr));
+	pmask = &mask.s6_addr32[0];
+	while (bits >= 32) {
+		*pmask = 0xffffffff;
+		pmask++;
+		bits -= 32;
+	}
+	if (bits > 0) {
+		*pmask = htonl(0xffffffff << (32 - bits));
+	}
+
+	match = 1;
+	for (i=0; i <=3 ; i++) {
+		if ((addr1->s6_addr32[i] & mask.s6_addr32[i]) !=
+		    (addr2->s6_addr32[i] & mask.s6_addr32[i])) {
+			match = 0;
+			break;
+		}
+	}
+
+	return match;
+}
+
+/*
  * Compare addresses. 1 on match, 0 otherwise.
- * XXX HSH masks for inet6
  */
 int
 pe_addrmatch_host(struct apn_host *host, void *addr, unsigned short af)
@@ -2927,10 +2975,9 @@ pe_addrmatch_host(struct apn_host *host, void *addr, unsigned short af)
 			break;
 
 		case AF_INET6:
-			/* XXX HSH no network addresses, yet! */
 			in6 = (struct sockaddr_in6 *)addr;
-			match = bcmp(&in6->sin6_addr, &hp->addr.apa.v6,
-			    sizeof(struct in6_addr));
+			match = compare_ip6_mask(&in6->sin6_addr,
+			    &hp->addr.apa.v6, hp->addr.len);
 			break;
 
 		default:
