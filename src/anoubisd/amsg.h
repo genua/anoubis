@@ -28,6 +28,8 @@
 #ifndef _AMSG_H
 #define _AMSG_H
 
+#include <anoubis_msg.h>
+
 #ifdef LINUX
 #include <linux/eventdev.h>
 #include <linux/anoubis.h>
@@ -53,12 +55,15 @@
 struct msg_bug;
 
 extern void msg_init(int, /*@dependent@*/ char *);
+extern void msg_release(int);
 
 /*@null@*/
 extern anoubisd_msg_t *get_msg(int);
 
 /*@null@*/
 extern anoubisd_msg_t *get_event(int);
+
+extern int get_client_msg(int, struct anoubis_msg **);
 
 extern int send_msg(int, anoubisd_msg_t *);
 

@@ -27,21 +27,52 @@
 
 #include <sys/types.h>
 
+#include <stdlib.h>
 #include <errno.h>
 #include <string.h>
 #include <unistd.h>
 
+#ifdef S_SPLINT_S
+#include "splint-includes.h"
+#endif
+
+#include <event.h>
+
+#include "anoubischat.h"
 #include "accbuffer.h"
 #include "accutils.h"
-#include "anoubischat.h"
+
+achat_rc
+acc_flush(struct achat_channel *chan)
+{
+	struct achat_buffer	*buf = chan->sendbuffer;
+	unsigned int		 len;
+
+	if (!chan->sendbuffer)
+		return ACHAT_RC_OK;
+	while((len = acc_bufferlen(buf))) {
+		int ret = write(chan->connfd, acc_bufferptr(buf), len);
+		if (ret < 0) {
+			if (errno == EAGAIN) {
+				if (chan->event)
+					event_add(chan->event, NULL);
+				return ACHAT_RC_OK;
+			}
+			return  ACHAT_RC_ERROR;
+		}
+		buf->offset += ret;
+	}
+	acc_bufferfree(buf);
+	free(chan->sendbuffer);
+	chan->sendbuffer = NULL;
+	return ACHAT_RC_OK;
+}
 
 achat_rc
 acc_sendmsg(struct achat_channel *acc, const char *msg, size_t size)
 {
-	achat_buffer	 pkgbuffer;
 	u_int32_t	 pkgsizenet = 0;
 	achat_rc	 rc = ACHAT_RC_ERROR;
-	size_t		 len;
 	char		*sendptr;
 
 	ACC_CHKPARAM(acc  != NULL);
@@ -49,35 +80,41 @@ acc_sendmsg(struct achat_channel *acc, const char *msg, size_t size)
 	ACC_CHKPARAM(0 < size && size <= ACHAT_MAX_MSGSIZE);
 	ACC_CHKSTATE(acc, ACC_STATE_ESTABLISHED);
 
-	rc = acc_bufferinit(&pkgbuffer);
+	if (acc->sendbuffer) {
+		rc = acc_flush(acc);
+		if (rc != ACHAT_RC_OK)
+			return rc;
+	}
+	/* We already have a buffer and were unable to flush it. */
+	if (acc->sendbuffer)
+		return ACHAT_RC_ERROR;
+	acc->sendbuffer = malloc(sizeof(struct achat_buffer));
+	if (!acc->sendbuffer)
+		return ACHAT_RC_OOMEM;
+	rc = acc_bufferinit(acc->sendbuffer);
 	if (rc != ACHAT_RC_OK)
 		/* no memory leak in OOM situations */
-		/*@i1*/return (rc);		/* XXX HJH close? */
+		/*@i1*/return (rc);
+
 	pkgsizenet = htonl(sizeof(pkgsizenet) + size);
-
-	rc = acc_bufferappend(&pkgbuffer, (const void *)&pkgsizenet,
+	rc = acc_bufferappend(acc->sendbuffer, &pkgsizenet,
 	    sizeof(pkgsizenet));
-	if (rc != ACHAT_RC_OK) {
-		acc_bufferfree(&pkgbuffer);
-		return (rc);		/* XXX HJH close? */
-	}
+	if (rc != ACHAT_RC_OK)
+		goto release_buffer;
+	rc = acc_bufferappend(acc->sendbuffer, msg, size);
+	if (rc != ACHAT_RC_OK)
+		goto release_buffer;
+	sendptr = acc_bufferptr(acc->sendbuffer);
 
-	rc = acc_bufferappend(&pkgbuffer, msg, size);
-	if (rc != ACHAT_RC_OK) {
-		acc_bufferfree(&pkgbuffer);
-		return (rc);		/* XXX HJH close? */
-	}
-
-	sendptr = acc_bufferptr(&pkgbuffer);
 	acc->state = ACC_STATE_TRANSFERING;
-
-	len = ntohl(pkgsizenet);
-	rc = acc_io(acc, accwrite, sendptr, &len);
-
+	rc = acc_flush(acc);
 	acc->state = ACC_STATE_ESTABLISHED;
-	acc_bufferfree(&pkgbuffer);
-
-	return (rc);
+	return rc;
+release_buffer:
+	acc_bufferfree(acc->sendbuffer);
+	free(acc->sendbuffer);
+	acc->sendbuffer = NULL;
+	return rc;
 }
 
 achat_rc
@@ -104,29 +141,18 @@ acc_receivemsg(struct achat_channel *acc, char *msg, size_t *size)
 
 	len = sizeof(pkgsizenet);
 	rc = acc_io(acc, read, (char*)&pkgsizenet, &len);
-	if (rc != ACHAT_RC_OK) {
-		/*
-		 * XXX HJH It might be better that the caller has to
-		 * XXX HJH take care of closeing the channel.  Moreover
-		 * XXX HJH the ACC_CHK* do not close the channel on failure,
-		 * XXX HJH consistency?  When does the caller have to take
-		 * XXX HJH care of cleaning up the channel?
-		 */
-		acc_close(acc);
+	if (rc != ACHAT_RC_OK)
 		goto out;
-	}
 
 	pkgsizenet = ntohl(pkgsizenet);
 	if (pkgsizenet <= sizeof(pkgsizenet)) {
 		rc = ACHAT_RC_ERROR;
-		acc_close(acc);		/* XXX HJH */
 		goto out;
 	}
 
 	len = pkgsizenet - sizeof(pkgsizenet);
 	if (*size < len || len > ACHAT_MAX_MSGSIZE) {
 		rc = ACHAT_RC_ERROR;
-		acc_close(acc);		/* XXX HJH */
 		goto out;
 	}
 
@@ -134,10 +160,8 @@ acc_receivemsg(struct achat_channel *acc, char *msg, size_t *size)
 	receiveptr = acc_bufferptr(&pkgbuffer);
 
 	rc = acc_io(acc, read, receiveptr, &len);
-	if (rc != ACHAT_RC_OK) {
-		acc_close(acc);		/* XXX HJH */
+	if (rc != ACHAT_RC_OK)
 		goto out;
-	}
 
 	memcpy(msg, receiveptr, len);
 	*size = len;

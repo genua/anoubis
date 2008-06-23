@@ -45,7 +45,7 @@
 #include "anoubisd.h"
 #include "amsg.h"
 
-#define MSG_BUFS 10
+#define MSG_BUFS 100
 struct msg_buf {
 	int fd;
 	/*@relnull@*/ /*@dependent@*/
@@ -135,7 +135,20 @@ _get_mbp(int fd)
 	return NULL;
 }
 
-static void
+void
+msg_release(int fd)
+{
+	struct msg_buf	*buf = _get_mbp(fd);
+	if (!buf)
+		return;
+	free(buf->rbufp);
+	free(buf->wbufp);
+	buf->rbufp = buf->wbufp = NULL;
+	buf->fd = -1;
+	buf->name = NULL;
+}
+
+static int
 _fill_buf(struct msg_buf *mbp)
 {
 	int size;
@@ -153,18 +166,18 @@ _fill_buf(struct msg_buf *mbp)
 	}
 
 	size = read(mbp->fd, mbp->rtailp, MSG_BUF_SIZE);
-	if (size < 0) {
-		if (errno != EAGAIN)
-			log_warn("read error");
-		return;
-	}
-	if (size == 0) {
-		log_warn("read error (closed)");
-		event_loopexit(NULL);
-		return;
-	}
+	if (size <= 0)
+		goto err;
 	mbp->rtailp += size;
 	DEBUG(DBG_MSG_RECV, "_fill_buf: fd:%d size:%d", mbp->fd, size);
+	return 1;
+err:
+	DEBUG(DBG_MSG_RECV, "_fill_buf: fd:%d size:%d", mbp->fd, size);
+	if (errno == EAGAIN)
+		return 1;
+	if (size < 0)
+		log_warn("read error");
+	return 0;
 }
 
 static void
@@ -206,14 +219,16 @@ get_msg(int fd)
 
 	/* we need at least a short (check for an int) in the buffer */
 	if (mbp->rtailp - mbp->rheadp < sizeof(int))
-		_fill_buf(mbp);
+		if (!_fill_buf(mbp))
+			goto eof;
 	if (mbp->rtailp - mbp->rheadp < sizeof(int))
 		return NULL;
 
 	/* check for a complete message */
 	msg = (anoubisd_msg_t *)mbp->rheadp;
 	if (mbp->rtailp - mbp->rheadp < msg->size)
-		_fill_buf(mbp);
+		if (!_fill_buf(mbp))
+			goto eof;
 	msg = (anoubisd_msg_t *)mbp->rheadp;
 	if (mbp->rtailp - mbp->rheadp < msg->size)
 		return NULL;
@@ -228,6 +243,10 @@ get_msg(int fd)
 	mbp->rheadp += msg->size;
 	DEBUG(DBG_MSG_RECV, "get_msg: fd:%d size:%d", mbp->fd, msg->size);
 	return msg_r;
+eof:
+	log_warnx("get_msg: Unexpected end of file");
+	event_loopexit(NULL);
+	return NULL;
 }
 
 /*
@@ -248,14 +267,16 @@ get_event(int fd)
 
 	/* we need at least a short (check for an int) in the buffer */
 	if (mbp->rtailp - mbp->rheadp < sizeof(int))
-		_fill_buf(mbp);
+		if (!_fill_buf(mbp))
+			goto eof;
 	if (mbp->rtailp - mbp->rheadp < sizeof(int))
 		return NULL;
 
 	/* check for a complete message */
 	evt = (struct eventdev_hdr *)mbp->rheadp;
 	if ((mbp->rtailp - mbp->rheadp) < evt->msg_size)
-		_fill_buf(mbp);
+		if (!_fill_buf(mbp))
+			goto eof;
 	evt = (struct eventdev_hdr *)mbp->rheadp;
 	if ((mbp->rtailp - mbp->rheadp) < evt->msg_size)
 		return NULL;
@@ -272,6 +293,45 @@ get_event(int fd)
 	mbp->rheadp += evt->msg_size;
 	DEBUG(DBG_MSG_RECV, "get_event: fd:%d size:%d", mbp->fd, evt->msg_size);
 	return msg_r;
+eof:
+	log_warnx("get_event: Unexpected end of file");
+	event_loopexit(NULL);
+	return NULL;
+}
+
+/*
+ * Returns:
+ *  - negative errno number in case of error
+ *  - Zero on EOF
+ *  - One otherwise. *msgp is NULL if message is incomplete
+ */
+int get_client_msg(int fd, struct anoubis_msg **msgp)
+{
+	struct msg_buf		*mbp;
+	u_int32_t		 len;
+	struct anoubis_msg	*m;
+	*msgp = NULL;
+
+	if ((mbp = _get_mbp(fd)) == NULL)
+		return 0;
+	if (mbp->rtailp - mbp->rheadp < sizeof(len))
+		if (!_fill_buf(mbp))
+			return 0;
+	if (mbp->rtailp - mbp->rheadp < sizeof(len))
+		return 1;
+	len = ntohl(*(u_int32_t*)mbp->rheadp);
+	if (mbp->rtailp - mbp->rheadp < len)
+		if (!_fill_buf(mbp))
+			return 0;
+	if (mbp->rtailp - mbp->rheadp < len)
+		return 1;
+	m = anoubis_msg_new(len - sizeof(len) - CSUM_LEN);
+	if (!m)
+		return -ENOMEM;
+	bcopy(mbp->rheadp+sizeof(len), m->u.buf, m->length);
+	mbp->rheadp += len;
+	*msgp = m;
+	return 1;
 }
 
 int

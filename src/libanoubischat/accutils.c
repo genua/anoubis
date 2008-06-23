@@ -130,8 +130,12 @@ acc_io(struct achat_channel *acc, ssize_t (*f) (int, void *, size_t),
 		res = (f)(acc->connfd, buf + pos, *size - pos);
 		switch (res) {
 		case -1:
-			/* XXX HJH EAGAIN and U_NONBLOCK -> busy loop? */
-			if (errno == EINTR || errno == EAGAIN)
+			/*
+			 * Return an error in case of EAGAIN! The caller
+			 * should not use this function with non-bocking
+			 * filedescriptor.
+			 */
+			if (errno == EINTR)
 				continue;
 			rc = ACHAT_RC_ERROR;
 			break;

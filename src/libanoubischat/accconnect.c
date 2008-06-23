@@ -45,6 +45,7 @@
 #include <fcntl.h>
 
 #include "accutils.h"
+#include "accbuffer.h"
 #include "anoubischat.h"
 
 achat_rc
@@ -157,7 +158,7 @@ acc_opendup(struct achat_channel *acc)
 {
 	struct achat_channel	*nc;
 
-	if (acc == NULL)
+	if (acc == NULL || acc->sendbuffer || acc->event)
 		return (NULL);
 
 	nc = acc_create();
@@ -186,6 +187,12 @@ acc_close(struct achat_channel *acc)
 {
 	ACC_CHKPARAM(acc != NULL);
 
+	if (acc->sendbuffer) {
+		acc_bufferfree(acc->sendbuffer);
+		free(acc->sendbuffer);
+		acc->sendbuffer = NULL;
+	}
+	acc->event = NULL;
 	close(acc->sockfd);
 	close(acc->connfd);
 

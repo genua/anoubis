@@ -78,6 +78,11 @@ enum achat_rc {
 };
 typedef enum achat_rc achat_rc;
 
+/* Forward declarations */
+struct achat_buffer;
+struct event;
+
+/* The channel */
 struct achat_channel {
 	enum acc_sslmode	sslmode; /* CLEAR, ENCIPHERED */
 	enum acc_tail		tail;	 /* SERVER, CLIENT */
@@ -89,6 +94,8 @@ struct achat_channel {
 	/* credentials of users connect via a unix domain socket */
 	uid_t			euid;
 	gid_t			egid;
+	struct achat_buffer	*sendbuffer;
+	struct event		*event;
 };
 
 __BEGIN_DECLS
@@ -113,6 +120,7 @@ achat_rc acc_getpeerids(struct achat_channel *);
 /* Subsystem Transmission */
 achat_rc acc_sendmsg(struct achat_channel *, const char *, size_t);
 achat_rc acc_receivemsg(struct achat_channel *, char *, size_t *);
+achat_rc acc_flush(struct achat_channel *);
 
 __END_DECLS
 

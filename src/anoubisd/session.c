@@ -62,6 +62,7 @@
 #include <anoubis_server.h>
 #include <anoubis_notify.h>
 #include <anoubis_policy.h>
+#include <anoubis_dump.h>
 
 #include "anoubisd.h"
 #include "aqueue.h"
@@ -75,11 +76,13 @@
  */
 /*@-memchecks@*/
 struct session {
-	int			 id;	/* session number */
+	int			 id;		/* session number */
+	int			 connfd;	/* saved connect fd */
 	uid_t			 uid;	/* user id; not authenticated on -1 */
 	struct achat_channel	*channel;	/* communication channel */
 	struct anoubis_server	*proto;		/* Server protocol handler */
-	struct event		 ev_data;	/* event for receiving data */
+	struct event		 ev_rdata;	/* event for receiving data */
+	struct event		 ev_wdata;	/* event for sending data */
 	LIST_ENTRY(session)	 nextSession;	/* linked list element */
 };
 
@@ -132,6 +135,7 @@ static void	dispatch_m2s_pol_reply(anoubisd_msg_t *msg,
 		    struct event_info_session *ev_info);
 static void	session_connect(int, short, void *);
 static void	session_rxclient(int, short, void *);
+static void	session_txclient(int, short, void *);
 static void	session_setupuds(struct sessionGroup *,
 		struct anoubisd_config *);
 static void	session_destroy(struct session *);
@@ -202,9 +206,14 @@ session_connect(int fd, short event, void *arg)
 		return;
 	}
 
-	event_set(&(session->ev_data), session->channel->connfd,
+	event_set(&(session->ev_rdata), session->channel->connfd,
 	    EV_READ | EV_PERSIST, session_rxclient, session);
-	event_add(&(session->ev_data), NULL);
+	event_set(&(session->ev_wdata), session->channel->connfd,
+	    EV_WRITE, session_txclient, session);
+	event_add(&(session->ev_rdata), NULL);
+	session->connfd = session->channel->connfd;
+	session->channel->event = &session->ev_wdata;
+	msg_init(session->connfd, "session");
 
 	DEBUG(DBG_TRACE, "<session_connect");
 }
@@ -212,51 +221,59 @@ session_connect(int fd, short event, void *arg)
 static void
 session_rxclient(int fd, short event, void *arg)
 {
-	struct session	*session;
-	struct anoubis_msg * m = NULL;
-	achat_rc	 rc;
-	size_t		 size;
+	struct session		*session;
+	struct anoubis_msg	*m;
+	int			 ret;
 
 	DEBUG(DBG_TRACE, ">session_rxclient");
 
 	session = (struct session *)arg;
-	m = anoubis_msg_new(MSG_BUF_SIZE);
-	if(!m)
-		goto err;
-	size = m->length;
-	rc = acc_receivemsg(session->channel, m->u.buf, &size);
-	DEBUG(DBG_TRACE, "rc=%d", rc);
-	if (rc == ACHAT_RC_EOF) {
+	while(1) {
+		ret = get_client_msg(session->channel->connfd, &m);
+		if (ret == 0) {
+			session_destroy(session);
+			DEBUG(DBG_TRACE, "<session_rxclient (receivemsg)");
+			return;
+		}
+		if (ret < 0)
+			goto err;
+		/* Only incomplete message. Nothing to do */
+		if (!m)
+			break;
+		/* At this point we actually got a message. */
+		if (!session->proto)
+			goto err;
+		/*
+		 * Return codes: less than zero is an error. Zero means no
+		 * error but message did not fit into protocol stream.
+		 */
+		ret = anoubis_server_process(session->proto,
+		    m->u.buf, m->length);
+		if (ret < 0)
+			goto err;
 		anoubis_msg_free(m);
-		session_destroy(session);
-		DEBUG(DBG_TRACE, "<session_rxclient (recievemsg)");
-		return;
+		if (anoubis_server_eof(session->proto)) {
+			session_destroy(session);
+			break;
+		}
 	}
-	if (rc != ACHAT_RC_OK)
-		goto err;
-	if (!session->proto)
-		goto err;
-
-	anoubis_msg_resize(m, size);
-	/*
-	 * Return codes: less than zero is an error. Zero means the no
-	 * error but message did not fit into protocol stream.
-	 */
-	if (anoubis_server_process(session->proto, m->u.buf, size) < 0)
-		goto err;
-	anoubis_msg_free(m);
-	if (anoubis_server_eof(session->proto))
-		session_destroy(session);
 	DEBUG(DBG_TRACE, "<session_rxclient");
 	return;
-
 err:
 	if (m)
 		anoubis_msg_free(m);
 	session_destroy(session);
-	log_warn("session_rxclient: error reading client message");
+	log_warnx("session_rxclient: error processing client message %d", ret);
 
 	DEBUG(DBG_TRACE, "<session_rxclient (error)");
+}
+
+static void
+session_txclient(int fd, short event, void *arg)
+{
+	struct session	*sess = arg;
+	/* acc_flush will re-add the event if needed. */
+	acc_flush(sess->channel);
 }
 
 pid_t
@@ -1049,8 +1066,11 @@ session_destroy(struct session *session)
 		anoubis_server_destroy(session->proto);
 		session->proto = NULL;
 	}
+	event_del(&(session->ev_rdata));
+	event_del(&(session->ev_wdata));
+	msg_release(session->connfd);
+	session->connfd = -1;
 	acc_destroy(session->channel);
-	event_del(&(session->ev_data));
 
 	LIST_REMOVE(session, nextSession);
 	bzero(session, sizeof(struct session));

@@ -19,6 +19,7 @@
 #include <string.h>
 #include <stdarg.h>
 
+#include "anoubischat.h"
 #include "accbuffer.h"
 #include "accutils.h"
 

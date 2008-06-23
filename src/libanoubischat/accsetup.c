@@ -34,6 +34,7 @@
 
 #include "accutils.h"
 #include "anoubischat.h"
+#include "accbuffer.h"
 
 struct achat_channel *
 acc_create(void)
@@ -59,6 +60,10 @@ acc_destroy(struct achat_channel *acc)
 	    (acc->state == ACC_STATE_TRANSFERING))
 		rc = acc_close(acc);
 
+	if (acc->sendbuffer) {
+		acc_bufferfree(acc->sendbuffer);
+		free(acc->sendbuffer);
+	}
 	free((void*)acc);
 
 	if (rc != ACHAT_RC_OK)
@@ -75,6 +80,8 @@ acc_clear(struct achat_channel *acc)
 	bzero(acc, sizeof(struct achat_channel));
 	acc->sockfd = -1;
 	acc->connfd = -1;
+	acc->sendbuffer = NULL;
+	acc->event = NULL;
 
 	return (ACHAT_RC_OK);
 }
