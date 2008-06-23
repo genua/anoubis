@@ -62,6 +62,7 @@ clean:
 install: install-indep install-arch
 install-indep:
 
+DEFPOLICYDIR=/usr/share/anoubisd/default_policy
 install-arch:
 	dh_testdir
 	dh_testroot
@@ -70,16 +71,20 @@ install-arch:
 
 	$(MAKE) DESTDIR=$(CURDIR)/debian/tmp install
 
-	mkdir -p debian/tmp/etc/anoubis/policy/admin
-	cp debian/policy.0 debian/tmp/etc/anoubis/policy/admin/0
-	cp debian/policy.1 debian/tmp/etc/anoubis/policy/admin/1
-	cp debian/policy.default debian/tmp/etc/anoubis/policy/admin/default
-	chmod 700 debian/tmp/etc/anoubis/policy/admin
-	chmod 600 debian/tmp/etc/anoubis/policy/admin/*
 	mkdir -p debian/tmp/usr/share/applications
 	cp debian/xanoubis.desktop debian/tmp/usr/share/applications
 	mkdir -p debian/tmp/usr/share/pixmaps
 	cp src/xanoubis/icons/xanoubis.png debian/tmp/usr/share/pixmaps/xanoubis.png
+
+	for a in admin user profiles ; do \
+	  for f in debian/policy.$$a.* ; do \
+	    cp $$f debian/anoubisd/$(DEFPOLICYDIR)/$$a/$${f##*/policy.$$a.} ;\
+	  done ;\
+	done
+	install -m755 debian/install_policy debian/anoubisd/usr/share/anoubisd
+
+	rm -rf debian/tmp/usr/share/xanoubis/profiles
+	ln -s /etc/anoubis/profiles debian/tmp/usr/share/xanoubis/profiles
 
 	dh_install -s --sourcedir=debian/tmp
 
@@ -98,7 +103,7 @@ binary-common:
 	dh_desktop -pxanoubis
 	dh_strip --dbg-package=anoubis-dbg
 	dh_compress
-	dh_fixperms -X etc/anoubis/policy/admin
+	dh_fixperms -X etc/anoubis/policy/admin -X etc/anoubis/policy/user
 	dh_installdeb
 	dh_shlibdeps
 	dh_gencontrol

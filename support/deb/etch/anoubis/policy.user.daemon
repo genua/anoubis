@@ -1,0 +1,8 @@
+# dummy user policy to disable user/default policy for this user
+
+alf {
+	any {
+		default allow
+		context new any
+	}
+}

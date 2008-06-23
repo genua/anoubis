@@ -1,6 +1,6 @@
 #!/bin/sh
 
-set -e
+set -eu
 
 POLICY_DIR=/etc/anoubis/policy
 
@@ -9,6 +9,11 @@ case "$1" in
 		dpkg-statoverride --remove $POLICY_DIR       || true
 		dpkg-statoverride --remove $POLICY_DIR/user  || true
 		dpkg-statoverride --remove $POLICY_DIR/admin || true
+
+		echo Purging policy directory $POLICY_DIR
+		rm -rf $POLICY_DIR
+		echo Purging profile directory /etc/anoubis/profiles
+		rm -rf /etc/anoubis/profiles
 		;;
 esac
 

@@ -20,12 +20,20 @@ setperms () {
 	fi
 }
 
+rmoverride () {
+	if dpkg-statoverride --list $1 > /dev/null 2>&1 ; then
+	    dpkg-statoverride --remove $1
+	fi
+}
+
 setperms $POLICY_DIR
 setperms $POLICY_DIR/user
 setperms $POLICY_DIR/admin
-setperms $POLICY_DIR/admin/default
-setperms $POLICY_DIR/admin/0
-setperms $POLICY_DIR/admin/1
+
+# remove overrides from older packages
+rmoverride $POLICY_DIR/admin/default
+rmoverride $POLICY_DIR/admin/0
+rmoverride $POLICY_DIR/admin/1
 
 # migrate broken startlink
 if [ -n "$2" ] &&
@@ -33,5 +41,18 @@ if [ -n "$2" ] &&
 then
 	mv /etc/rcS.d/S36anoubisd /etc/rcS.d/S37anoubisd
 fi
+
+# copy new default policy
+/usr/share/anoubisd/install_policy \
+	/usr/share/anoubisd/default_policy/admin \
+	/etc/anoubis/policy/admin
+
+/usr/share/anoubisd/install_policy \
+	/usr/share/anoubisd/default_policy/user \
+	/etc/anoubis/policy/user
+
+/usr/share/anoubisd/install_policy -n -o \
+	/usr/share/anoubisd/default_policy/profiles \
+	/etc/anoubis/profiles
 
 #DEBHELPER#

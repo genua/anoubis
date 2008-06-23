@@ -1,0 +1,13 @@
+alf {
+	/usr/sbin/avahi-daemon @@
+	{
+		allow send    udp from any port 5353 to any
+		allow receive udp from any           to any port 5353
+		default log deny
+	}
+
+	any {
+		default allow
+		context new any
+	}
+}

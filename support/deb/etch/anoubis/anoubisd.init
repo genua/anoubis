@@ -21,6 +21,7 @@ NAME=anoubisd
 DAEMON=/sbin/$NAME
 DAEMON_ARGS=""
 SCRIPTNAME=/etc/init.d/$NAME
+PIDFILE=/var/run/$NAME.pid
 
 # Exit if the package is not installed
 [ -x "$DAEMON" ] || exit 0
@@ -72,8 +73,8 @@ do_stop()
 	#   1 if daemon was already stopped
 	#   2 if daemon could not be stopped
 	#   other if a failure occurred
-	start-stop-daemon --stop --quiet --signal=KILL \
-	    --retry=KILL/30/KILL/5 --name $DAEMON
+	start-stop-daemon --stop --quiet --signal=TERM \
+	    --retry=10 --name $NAME --pidfile $PIDFILE
 	RETVAL="$?"
 	[ "$RETVAL" = 2 ] && return 2
 	# Wait for children to finish too if this is a daemon that forks
@@ -83,7 +84,7 @@ do_stop()
 	# needed by services started subsequently.  A last resort is to
 	# sleep for some time.
 	start-stop-daemon --stop --quiet --oknodo \
-	    --retry=0/30/KILL/5 --exec $DAEMON
+	    --retry=10 --exec $DAEMON
 	[ "$?" = 2 ] && return 2
 	return "$RETVAL"
 }

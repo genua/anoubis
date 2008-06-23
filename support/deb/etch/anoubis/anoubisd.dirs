@@ -1,2 +1,6 @@
 etc/anoubis/policy/admin
 etc/anoubis/policy/user
+etc/anoubis/profiles
+usr/share/anoubisd/default_policy/admin
+usr/share/anoubisd/default_policy/user
+usr/share/anoubisd/default_policy/profiles

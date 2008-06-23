@@ -1,0 +1,184 @@
+#!/usr/bin/perl
+
+##########################################################################
+# Copyright (c) 2008 GeNUA mbH <info@genua.de>
+#
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+# OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
+# TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+# PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+# LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+##########################################################################
+
+use strict;
+use warnings "all";
+use Getopt::Std;
+use File::Path;
+
+my $opt = {};
+getopts("hqno",$opt) || usage();
+
+my $Quiet     = $opt->{q};
+my $No_Rename = $opt->{n};
+my $No_Chown  = $opt->{o};
+$opt->{h} and usage();
+
+usage() if (scalar @ARGV != 2);
+
+# create dummy sha256 sums for nonexistant files
+my $dummy = 0;
+
+my $user = '_anoubisd';
+my (undef, undef, $uid, $gid) = getpwnam($user);
+if (!$No_Chown) {
+	(defined $uid && defined $gid) or
+	    die "Could not get user id of user $user\n";
+}
+
+my $source = $ARGV[0];
+my $target = $ARGV[1];
+-d "$source" or die "directory $source does not exist\n";
+-d "$target" or die "directory $target does not exist\n";
+
+opendir(my $dirh, "$source")
+    or die "could not open $source\n";
+my @files = readdir($dirh) or die;
+closedir($dirh);
+@files = grep { ! m{^\.} } @files;
+
+foreach my $file (@files) {
+	my $name;
+	if ($No_Rename or $file =~ /^[0-9]+$/ or $file eq 'default') {
+		$name = $file;
+	}
+	else {
+		# translate name to uid
+		$name = getpwnam($file);
+		if ($name !~ /^\d+$/ ) {
+			info("user $name not found, ignoring\n");
+			next;
+		}
+	}
+
+	process_file("$source/$file", "$target/$name");
+}
+
+exit(0);
+
+##########################################################################
+# Subroutines
+##########################################################################
+sub get_sha256 {
+	my $file = shift;
+	if ($^O eq 'linux') {
+		my $output = `sha256sum $file 2> /dev/null`;
+		if ($? == 0 && $output =~ /^([\da-f]{64}) /i) {
+			return "$file " . lc($1);
+		}
+		else {
+			info("could not checksum '$file'\n");
+			return "$file " . sprintf("ffff%060d", $dummy++);
+		}
+	}
+	else {
+		my $output = `cksum -a sha256 $file 2> /dev/null`;
+		if ($? == 0 && $output =~ /^SHA256 .*? = ([\da-f]{64})\s*$/i) {
+			return "$file " . lc($1);
+		}
+		else {
+			info("could not checksum '$file'\n");
+			return "$file " . sprintf("ffff%060d", $dummy++);
+		}
+	}
+}
+
+sub get_pathname {
+	my $file = shift;
+
+	my $output = `which $file`;
+	chomp $output;
+	if ($output =~ m{^/}) {
+		return $output;
+	}
+	else {
+		warn "could not find '$file'\n";
+		return $file;
+	}
+
+}
+
+sub process_file {
+	my ($source, $target) = @_;
+
+	if (-e $target) {
+		info("$target already exists, ignoring $source\n");
+		return;
+	}
+
+	open(my $inh,  "<", $source) or die "could not open $source: $!\n";
+	open(my $outh, ">", $target) or die "could not open $target: $!\n";
+
+	my $line;
+	while (defined ($line = <$inh>)) {
+		chomp $line;
+		while ( $line =~ s{\\$}{} ) {
+			my $newline = <$inh>;
+			defined $newline
+			    or die "invalid continuation in $source: $.\n";
+			chomp $newline;
+			$line .= $newline;
+		}
+
+		# replace "@prog@" by filename
+		$line =~ s{\@(\w+)\@}{get_pathname($1)}ge;
+
+		# replace "/file/name @@" by "/file/name 01234..."
+		$line =~ s{(/\S+)\s*\@\@}{get_sha256($1)}ge;
+
+		print $outh "$line\n";
+	}
+
+	close($inh);
+	close($outh);
+
+	if (!$No_Chown) {
+		chown $uid, $gid, $target;
+		chmod 0600, $target;
+	}
+	info("created new policy $target\n");
+}
+
+sub usage {
+	print STDERR << "EOF";
+usage: $0 [-hqn] <source_dir> <target_dir>
+EOF
+	print STDERR << 'EOF';
+Copies policy directory tree and:
+- renames files from "username" to "numerical uid" (unless -n is given)
+- replaces "@prog@" placeholders by full path to program
+- replaces "@@" placeholders in files by sha256 sums
+- chowns the resulting files to $user (unless -o is given)
+EOF
+	exit(1);
+}
+
+sub info {
+	print STDERR @_ unless $Quiet;
+}

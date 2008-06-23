@@ -1,0 +1,61 @@
+alf {
+	/usr/sbin/sshd @@ {
+		allow accept  tcp all
+
+		# connect required for port forwarding
+		allow connect tcp all
+		context new any
+		default log deny
+	}
+
+	/usr/bin/ssh @@ {
+		# DNS
+		allow connect tcp from any	   to any port 53
+		allow send    udp from any	   to any port 53
+		allow receive udp from any port 53 to any
+
+		# allow port forwarding only from localhost
+		allow accept tcp from 127.0.0.1 to any
+		allow accept tcp from ::1       to any
+
+		# ssh outbound connections:
+		allow connect tcp from any to any port 22
+		# for non-standard ports, ask
+		ask   connect tcp from any to any
+
+		context new any
+		default log deny
+	}
+
+	/usr/lib/iceweasel/firefox-bin @@
+	{
+		# DNS
+		allow connect tcp from any	   to any port 53
+		allow send    udp from any	   to any port 53
+		allow receive udp from any port 53 to any
+
+		# X
+		allow connect tcp from any to 127.0.0.1 port 6000 - 6099
+		allow connect tcp from any to ::1       port 6000 - 6099
+
+		# web
+		ask connect log tcp from any to any port { 80, 443, 8000, 8080 }
+
+		default log deny
+	}
+
+	any
+	{
+		# DNS
+		allow connect tcp from any	   to any port 53
+		allow send    udp from any	   to any port 53
+		allow receive udp from any port 53 to any
+
+		# X
+		allow connect tcp from any to 127.0.0.1 port 6000 - 6099
+		allow connect tcp from any to ::1       port 6000 - 6099
+
+		default log ask
+		context new any
+	}
+}

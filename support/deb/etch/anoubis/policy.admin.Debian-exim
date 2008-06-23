@@ -1,0 +1,18 @@
+alf {
+	any {
+		# DNS
+		allow connect tcp from any	   to any port 53
+		allow send    udp from any	   to any port 53
+		allow receive udp from any port 53 to any
+
+		# SMTP
+		allow accept  tcp from any to any port 25
+		allow connect tcp from any to any port 25
+
+		# ident
+		allow connect tcp from any to any port 113
+
+		context new any
+		default log deny
+	}
+}
