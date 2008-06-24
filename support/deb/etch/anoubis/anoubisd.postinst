@@ -29,6 +29,7 @@ rmoverride () {
 setperms $POLICY_DIR
 setperms $POLICY_DIR/user
 setperms $POLICY_DIR/admin
+setperms $POLICY_DIR/pubkeys
 
 # remove overrides from older packages
 rmoverride $POLICY_DIR/admin/default

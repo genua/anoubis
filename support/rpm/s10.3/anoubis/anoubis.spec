@@ -101,10 +101,13 @@ chkconfig --add anoubisd
 chkconfig anoubisd on
 mkdir -p /etc/anoubis/policy/admin
 mkdir -p /etc/anoubis/policy/user
+mkdir -p /etc/anoubis/policy/pubkeys
 chmod 700 /etc/anoubis/policy
 chmod 700 /etc/anoubis/policy/admin /etc/anoubis/policy/user
+chmod 700 /etc/anoubis/policy/pubkeys
 chown _anoubisd: /etc/anoubis/policy
 chown _anoubisd: /etc/anoubis/policy/admin /etc/anoubis/policy/user
+chown _anoubisd: /etc/anoubis/policy/pubkeys
 if [ ! -e /dev/eventdev ] ; then
 	mknod /dev/eventdev c 10 62
 fi
@@ -113,6 +116,7 @@ fi
 %preun -n anoubisd
 chkconfig --del anoubisd
 rmdir /etc/anoubis/policy/admin /etc/anoubis/policy/user 2>/dev/null || true
+rmdir /etc/anoubis/policy/pubkeys 2>/dev/null || true
 rmdir /etc/anoubis/policy /etc/anoubis 2>/dev/null || true
 
 ### files of subpackage anoubisd ###########################

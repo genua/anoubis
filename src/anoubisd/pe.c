@@ -51,6 +51,8 @@
 #include <time.h>
 #include <unistd.h>
 
+#include <openssl/pem.h>
+
 #ifdef OPENBSD
 #ifndef s6_addr32
 #define s6_addr32 __u6_addr.__u6_addr32
@@ -99,6 +101,13 @@ struct pe_user {
 	struct apn_ruleset	*prio[PE_PRIO_MAX];
 };
 TAILQ_HEAD(policies, pe_user) *pdb;
+
+struct pe_pubkey {
+	TAILQ_ENTRY(pe_pubkey)	 entry;
+	uid_t			 uid;
+	EVP_PKEY		*pubkey;
+};
+TAILQ_HEAD(pubkeys, pe_pubkey) *pubkeys;
 
 struct pe_context {
 	int			 refcount;
@@ -223,6 +232,10 @@ static char		*pe_policy_file_name(uid_t uid, int prio);
 static int		 pe_open_policy_file(uid_t uid, int prio);
 static int		 pe_in_scope(struct apn_scope *,
 			     struct anoubis_event_common *, time_t);
+int			 pe_load_pubkeys(const char *, struct pubkeys *);
+void			 pe_flush_pubkeys(struct pubkeys *);
+int			 pe_verify_sig(const char *, uid_t);
+EVP_PKEY		*pe_get_pubkey(uid_t);
 
 /*
  * The following code utilizes list functions from BSD queue.h, which
@@ -233,24 +246,35 @@ static int		 pe_in_scope(struct apn_scope *,
 void
 pe_init(void)
 {
-	struct policies	*p;
+	struct policies	*pp;
+	struct pubkeys	*pk;
 	int		 count;
 
 	TAILQ_INIT(&tracker);
 	LIST_INIT(&preqs);
 
-	if ((p = calloc(1, sizeof(struct policies))) == NULL) {
+	if ((pp = calloc(1, sizeof(struct policies))) == NULL) {
 		log_warn("calloc");
 		master_terminate(ENOMEM);	/* XXX HSH */
 	}
-	TAILQ_INIT(p);
+	TAILQ_INIT(pp);
+	if ((pk = calloc(1, sizeof(struct pubkeys))) == NULL) {
+		log_warn("calloc");
+		master_terminate(ENOMEM);	/* XXX HSH */
+	}
+	TAILQ_INIT(pk);
+
+	/* We die gracefully if loading of public keys fails. */
+	if ((count = pe_load_pubkeys(ANOUBISD_PUBKEYDIR, pk)) == -1)
+		fatal("pe_init: failed to load policy keys");
+	pubkeys = pk;
 
 	/* We die gracefully if loading fails. */
-	if ((count = pe_load_db(p)) == -1)
+	if ((count = pe_load_db(pp)) == -1)
 		fatal("pe_init: failed to initialize policy database");
-	pdb = p;
+	pdb = pp;
 
-	log_info("pe_init: %d policies loaded to pdb %p", count, p);
+	log_info("pe_init: %d policies loaded to pdb %p", count, pp);
 }
 
 void
@@ -258,13 +282,21 @@ pe_shutdown(void)
 {
 	pe_flush_tracker();
 	pe_flush_db(pdb);
+	pe_flush_pubkeys(pubkeys);
 }
 
 void
 pe_reconfigure(void)
 {
+	struct pubkeys	*newpk, *oldpk;
 	struct policies	*newpdb, *oldpdb;
 	int		 count;
+
+	if ((newpk = calloc(1, sizeof(struct pubkeys))) == NULL) {
+		log_warn("calloc");
+		master_terminate(ENOMEM);       /* XXX HSH */
+	}
+	TAILQ_INIT(newpk);
 
 	if ((newpdb = calloc(1, sizeof(struct policies))) == NULL) {
 		log_warn("calloc");
@@ -272,8 +304,24 @@ pe_reconfigure(void)
 	}
 	TAILQ_INIT(newpdb);
 
+	if ((count = pe_load_pubkeys(ANOUBISD_PUBKEYDIR, newpk)) == -1) {
+		log_warnx("pe_reconfigure: could not load public keys");
+		free(newpk);
+		free(newpdb);
+		return;
+	}
+
+	/*
+	 * We switch pubkeys right now, so newly loaded policies can
+	 * be verfied using the most recent keys.
+	 */
+	oldpk = pubkeys;
+	pubkeys = newpk;
+	pe_flush_pubkeys(oldpk);
+
 	if ((count = pe_load_db(newpdb)) == -1) {
 		log_warnx("pe_reconfigure: could not reload policy database");
+		free(newpdb);
 		return;
 	}
 
@@ -505,7 +553,7 @@ pe_load_dir(const char *dirname, int prio, struct policies *p)
 	int			 count;
 	uid_t			 uid;
 	const char		*errstr;
-	char			*filename;
+	char			*filename, *t;
 	int			 flags = APN_FLAG_NOSCOPE;
 
 	DEBUG(DBG_PE_POLICY, "pe_load_dir: %s %p", dirname, p);
@@ -541,10 +589,15 @@ pe_load_dir(const char *dirname, int prio, struct policies *p)
 		/*
 		 * Validate the file name: It has to be either
 		 * ANOUBISD_DEFAULTNAME or a numeric uid.
+		 * Signatures have the format "<uid>.sig", we just
+		 * skip those.
 		 */
 		if (strcmp(dp->d_name, ANOUBISD_DEFAULTNAME) == 0)
 			uid = -1;
-		else {
+		else if ((t = strrchr(dp->d_name, '.')) != NULL &&
+		    strcmp(t, ".sig") == 0) {
+			continue;
+		} else {
 			uid = strtonum(dp->d_name, 0, UID_MAX, &errstr);
 			if (errstr) {
 				log_warnx("pe_load_dir: filename \"%s/%s\" %s",
@@ -556,8 +609,20 @@ pe_load_dir(const char *dirname, int prio, struct policies *p)
 			log_warnx("asprintf: Out of memory");
 			continue;
 		}
-		if (pe_clean_policy(filename, dirname, 1) != 0) {
+		/*
+		 * Only clean user policies.  Temporary rules in admin
+		 * policies are not allowed.
+		 */
+		if (prio == PE_PRIO_USER1 &&
+		    pe_clean_policy(filename, dirname, 1) != 0) {
 			log_warnx("Cannot clean %s", filename);
+			free(filename);
+			continue;
+		}
+		/* XXX Right now, only use administrators key, ie. uid == 0 */
+		if (pe_verify_sig(filename, 0) != 1) {
+			log_warnx("not loading \"%s\", invalid siganture",
+			    filename);
 			free(filename);
 			continue;
 		}
@@ -3064,6 +3129,192 @@ pe_in_scope(struct apn_scope *scope, struct anoubis_event_common *common,
 	if (scope->task && common->task_cookie != scope->task)
 		return 0;
 	return 1;
+}
+
+int
+pe_load_pubkeys(const char *dirname, struct pubkeys *pubkeys)
+{
+	DIR			*dir;
+	FILE			*fp;
+	struct dirent		*dp;
+	struct pe_pubkey	*pk;
+	uid_t			 uid;
+	int			 count;
+	const char		*errstr;
+	char			*filename;
+
+	DEBUG(DBG_PE_POLICY, "pe_load_pubkeys: %s %p", dirname, pubkeys);
+
+	if (pubkeys == NULL) {
+		log_warnx("pe_load_pubkeys: illegal pubkey queue");
+		return (0);
+	}
+
+	if ((dir = opendir(dirname)) == NULL) {
+		log_warn("opendir");
+		return (0);
+	}
+
+	count = 0;
+
+	/* iterate over directory entries */
+	while ((dp = readdir(dir)) != NULL) {
+		if (dp->d_type != DT_REG)
+			continue;
+		/*
+		 * Validate the file name: It has to be a numeric uid.
+		 */
+		uid = strtonum(dp->d_name, 0, UID_MAX, &errstr);
+		if (errstr) {
+			log_warnx("pe_load_pubkeys: filename \"%s/%s\" %s",
+			    dirname, dp->d_name, errstr);
+			continue;
+		}
+		if (asprintf(&filename, "%s/%s", dirname, dp->d_name) == -1) {
+			log_warnx("asprintf: Out of memory");
+			continue;
+		}
+		if ((pk = calloc(1, sizeof(struct pe_pubkey))) == NULL) {
+			log_warnx("calloc: Out or memory");
+			free(filename);
+			continue;
+		}
+		if ((fp = fopen(filename, "r")) == NULL) {
+			log_warn("fopen");
+			free(pk);
+			free(filename);
+			continue;
+		}
+		free(filename);
+
+		if ((pk->pubkey = PEM_read_PUBKEY(fp, NULL, NULL, NULL))
+		    == NULL) {
+			log_warn("PEM_read_PUBKEY");
+			free(pk);
+			fclose(fp);
+			continue;
+		}
+		pk->uid = uid;
+		fclose(fp);
+		TAILQ_INSERT_TAIL(pubkeys, pk, entry);
+		count++;
+	}
+
+	if (closedir(dir) == -1)
+		log_warn("closedir");
+
+	DEBUG(DBG_PE_POLICY, "pe_load_pubkeys: %d public keys loaded", count);
+
+	return (count);
+}
+
+void
+pe_flush_pubkeys(struct pubkeys *pk)
+{
+	struct pe_pubkey	*p, *next;
+
+	for (p = TAILQ_FIRST(pk); p != TAILQ_END(pk); p = next) {
+		next = TAILQ_NEXT(p, entry);
+		TAILQ_REMOVE(pk, p, entry);
+
+		EVP_PKEY_free(p->pubkey);
+		free(p);
+	}
+}
+
+int
+pe_verify_sig(const char *filename, uid_t uid)
+{
+	char		 buffer[1024];
+	EVP_PKEY	*sigkey;
+	EVP_MD_CTX	 ctx;
+	unsigned char	*sigbuf;
+	char		*sigfile;
+	int		 fd, n, siglen, result;
+
+	if (asprintf(&sigfile, "%s.sig", filename) == -1) {
+		log_warnx("asprintf: Out of memory");
+		return (0);	/* XXX policy will not be loaded... */
+	}
+
+	/* If no signature file is available, return successfully */
+	if ((fd = open(sigfile, O_RDONLY)) == -1) {
+		free(sigfile);
+		return (1);
+	}
+	free(sigfile);
+
+	/* Fail when we have no public key for that uid */
+	if ((sigkey = pe_get_pubkey(uid)) == NULL) {
+		log_warnx("pe_verify_sig: no key for uid %lu available",
+		    (unsigned long)uid);
+		close(fd);
+		return (0);
+	}
+
+	/* Read in signature */
+	siglen = EVP_PKEY_size(sigkey);
+	if ((sigbuf = calloc(siglen, sizeof(unsigned char))) == NULL) {
+		close(fd);
+		return (0);
+	}
+	if (read(fd, sigbuf, siglen) != siglen) {
+		log_warnx("pe_verify_sig: error reading signature file %s",
+		    sigfile);
+		close(fd);
+		free(sigbuf);
+		return (0);
+	}
+	close(fd);
+
+	EVP_MD_CTX_init(&ctx);
+	if (EVP_VerifyInit(&ctx, EVP_sha1()) == 0) {
+		log_warnx("pe_verify_sig: could not verify signature");
+		free(sigbuf);
+		EVP_MD_CTX_cleanup(&ctx);
+		return (0);
+	}
+
+	/* Open policy file */
+	if ((fd = open(filename, O_RDONLY)) == -1) {
+		log_warnx("pe_verify_sig: could not read policy %s", filename);
+		free(sigbuf);
+		EVP_MD_CTX_cleanup(&ctx);
+		return (0);
+	}
+
+	while ((n = read(fd, buffer, sizeof(buffer))) > 0)
+		EVP_VerifyUpdate(&ctx, buffer, n);
+	if (n == -1) {
+		log_warn("read");
+		close(fd);
+		free(sigbuf);
+		EVP_MD_CTX_cleanup(&ctx);
+		return (0);
+	}
+	close(fd);
+
+	/* Verify */
+	if ((result = EVP_VerifyFinal(&ctx, sigbuf, siglen, sigkey)) == -1)
+		log_warnx("pe_verify_sig: could not verify signature");
+
+	EVP_MD_CTX_cleanup(&ctx);
+	free(sigbuf);
+
+	return (result);
+}
+
+EVP_PKEY *
+pe_get_pubkey(uid_t uid)
+{
+	struct pe_pubkey	*p;
+
+	TAILQ_FOREACH(p, pubkeys, entry) {
+		if (p->uid == uid)
+			return (p->pubkey);
+	}
+
+	return (NULL);
 }
 
 /*@=memchecks@*/

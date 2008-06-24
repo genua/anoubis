@@ -62,6 +62,7 @@
 #define ANOUBISD_USERDIR		"user"
 #define ANOUBISD_ADMINDIR		"admin"
 #define ANOUBISD_DEFAULTNAME		"default"
+#define ANOUBISD_PUBKEYDIR		"pubkeys"
 
 #define SFS_CHECKSUMROOT		"/var/lib/sfs"
 
