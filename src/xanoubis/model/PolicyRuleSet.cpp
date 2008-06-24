@@ -315,6 +315,11 @@ PolicyRuleSet::createAnswerPolicy(EscalationNotify *escalation)
 	wxCommandEvent           event(anEVT_LOAD_RULESET);
 	event.SetClientData((void*)nrs);
 	wxGetApp().sendEvent(event);
+
+	wxString	tmpFileName;
+	tmpFileName = wxFileName::CreateTempFileName(wxT("xanoubis"));
+	nrs->exportToFile(tmpFileName);
+	wxGetApp().usePolicy(tmpFileName);
 }
 
 void
