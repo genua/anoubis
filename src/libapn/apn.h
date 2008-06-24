@@ -290,6 +290,7 @@ int	apn_clean_ruleset(struct apn_ruleset *rs,
 struct apn_alfrule *apn_copy_alfrules(struct apn_alfrule *);
 void	apn_free_host(struct apn_host *);
 void	apn_free_port(struct apn_port *);
+int	apn_remove(struct apn_ruleset *, int);
 __END_DECLS
 
 #endif /* _APN_H_ */

@@ -85,6 +85,7 @@ class PolicyRuleSet : public wxEvtHandler
 
 		void clearModified(void);
 		bool findMismatchHash(void);
+		bool deletePolicy(int);
 };
 
 #endif	/* _POLICYRULESET_H_ */

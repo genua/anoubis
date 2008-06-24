@@ -607,6 +607,7 @@ DlgRuleEditor::OnRuleCreateButton(wxCommandEvent& event)
 void
 DlgRuleEditor::OnRuleDeleteButton(wxCommandEvent& event)
 {
+	ruleSet_->deletePolicy(selectedId_);
 }
 
 void

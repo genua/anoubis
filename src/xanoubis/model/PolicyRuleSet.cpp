@@ -544,3 +544,17 @@ PolicyRuleSet::findMismatchHash(void)
 	return (seeker.hasMismatch());
 
 }
+
+bool
+PolicyRuleSet::deletePolicy(int id)
+{
+	wxCommandEvent			 event(anEVT_LOAD_RULESET);
+
+	apn_remove(ruleSet_, id);
+	clean();
+	create(ruleSet_);
+	event.SetClientData((void*)this);
+	wxGetApp().sendEvent(event);
+
+	return (true);
+}

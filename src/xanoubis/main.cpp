@@ -56,6 +56,7 @@ IMPLEMENT_APP(AnoubisGuiApp)
 AnoubisGuiApp::AnoubisGuiApp(void)
 {
 	ruleSet_ = NULL;
+	oldRuleSet_ = NULL;
 	mainFrame = NULL;
 	logViewer_ = NULL;
 	ruleEditor_ = NULL;

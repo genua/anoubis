@@ -93,6 +93,9 @@ static struct apn_host *apn_copy_hosts(struct apn_host *);
 static struct apn_port *apn_copy_ports(struct apn_port *);
 static int	 apn_set_application(struct apn_rule *, const char *,
 		     const u_int8_t *, int);
+static int	apn_remove_alf(struct apn_rule *, int);
+static int	apn_remove_sfs(struct apn_rule *, int);
+static int	apn_remove_queue(struct apnrule_queue *, int);
 
 /*
  * Parse the specified file or iovec and return the ruleset, which is allocated
@@ -1793,4 +1796,153 @@ apn_clean_ruleset(struct apn_ruleset *rs,
 	ret = apn_clean_ruleq(&rs->alf_queue, check, data);
 	ret += apn_clean_ruleq(&rs->sfs_queue, check, data);
 	return ret;
+}
+
+/*
+ * Removes the rule with the given id from a alf rule list.
+ *
+ * Return codes:
+ * -1: error
+ *  0: rule was removed
+ *  1: invalid parameters
+ *  2: no rule was found
+ */
+static int
+apn_remove_alf(struct apn_rule *rule, int id)
+{
+	struct apn_alfrule	*hp, *previous;
+
+	if (rule == NULL || id < 1) {
+		return (1);
+	}
+
+	hp = rule->rule.alf;
+	previous = NULL;
+	while (hp) {
+		if (hp->id == id) {
+			if (previous) {
+				previous->next = hp->next;
+				previous->tail = hp->tail;
+			} else {
+				rule->rule.alf = hp->next;
+			}
+			apn_free_alfrule(hp);
+			return (0);
+		}
+		previous = hp;
+		hp = hp->next;
+	}
+	return (2);
+}
+
+/*
+ * Removes the rule with the given id from a sfs rule list.
+ *
+ * Return codes:
+ * -1: error
+ *  0: rule was removed
+ *  1: invalid parameters
+ *  2: no rule was found
+ */
+static int
+apn_remove_sfs(struct apn_rule *rule, int id)
+{
+	struct apn_sfsrule	*hp, *previous;
+
+	if (rule == NULL || id < 1) {
+		return (1);
+	}
+
+	hp = rule->rule.sfs;
+	previous = NULL;
+	while (hp) {
+		if (hp->id == id) {
+			if (previous) {
+				previous->next = hp->next;
+				previous->tail = hp->tail;
+			} else {
+				rule->rule.sfs = hp->next;
+			}
+			apn_free_sfsrule(hp);
+			return (0);
+		}
+		previous = hp;
+		hp = hp->next;
+	}
+	return (2);
+}
+
+/*
+ * Removes the rule with the given id from a ruleset queue.
+ *
+ * Return codes:
+ * -1: error
+ *  0: rule was removed
+ *  1: invalid parameters
+ *  2: no rule was found
+ */
+static int
+apn_remove_queue(struct apnrule_queue *queue, int id)
+{
+	struct apn_rule	*p;
+	int		 rc = 2;
+
+	if (queue == NULL || id < 1) {
+		return (1);
+	}
+
+	TAILQ_FOREACH(p, queue, entry) {
+		if (p->id == id) {
+			TAILQ_REMOVE(queue, p, entry);
+			apn_free_rule(p);
+			rc = 0;
+		} else {
+			switch (p->type) {
+			case APN_ALF:
+				rc = apn_remove_alf(p, id);
+				break;
+			case APN_SFS:
+				rc = apn_remove_sfs(p, id);
+				break;
+			default:
+				rc = 2;
+				break;
+			}
+		}
+		if (rc == 0) {
+			return (0);
+		}
+	}
+	return (2);
+}
+
+/*
+ * Removes the rule with the given id from a ruleset.
+ *
+ * Return codes:
+ * -1: error
+ *  0: rule was removed
+ *  1: invalid parameters
+ *  2: no rule was found
+ */
+int
+apn_remove(struct apn_ruleset *rs, int id)
+{
+	int rc;
+
+	if (rs == NULL || id < 1 || rs->maxid == INT_MAX) {
+		return (1);
+	}
+
+	rc = apn_remove_queue(&rs->alf_queue, id);
+	if (rc == 0) {
+		return (0);
+	}
+
+	rc = apn_remove_queue(&rs->sfs_queue, id);
+	if (rc == 0) {
+		return (0);
+	}
+
+	return (2);
 }
