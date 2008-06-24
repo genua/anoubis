@@ -3,11 +3,24 @@
 @newuser _anoubisd:593:_anoubisd:daemon:anoubisd user:/var/empty:/sbin/nologin
 @man man/man8/anoubisd.8
 @man man/man8/anoubisctl.8
+share/xanoubis/
+share/xanoubis/profiles/
+share/xanoubis/profiles/admin
+share/xanoubis/profiles/high
+share/xanoubis/profiles/medium
 @exec mkdir -p /etc/anoubis/policy/user /etc/anoubis/policy/admin
-@exec chown _anoubisd:_anoubisd /etc/anoubis/policy/user
-@exec chown _anoubisd:_anoubisd /etc/anoubis/policy/admin
-@exec chown _anoubisd:_anoubisd /etc/anoubis/policy
-@exec chmod 700 /etc/anoubis/policy /etc/anoubis/policy/admin 
+@exec cp ${PREFIX}/share/xanoubis/profiles/admin /etc/anoubis/policy/admin/default
+@exec cp ${PREFIX}/share/xanoubis/profiles/admin /etc/anoubis/policy/admin/0
+@exec cp ${PREFIX}/share/xanoubis/profiles/admin /etc/anoubis/policy/user/0
+@exec chown -R _anoubisd:_anoubisd /etc/anoubis/policy/user
+@exec chmod 700 /etc/anoubis/policy /etc/anoubis/policy/admin
 @exec chmod 700 /etc/anoubis/policy/user
+@exec chmod 600 /etc/anoubis/policy/*/*
+@exec mknod /dev/eventdev c 89 0
+@exec mknod /dev/anoubis c 90 0
+@unexec rm -rf /dev/eventdev
+@unexec rm -rf /dev/anoubis
+@unexec rm -rf /etc/anoubis
 sbin/anoubisd
 sbin/anoubisctl
+sbin/sfssig
