@@ -2335,3 +2335,7 @@ msgstr "Kontext:"
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:685
 msgid "validate"
 msgstr "Überprüfen"
+
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:619
+msgid "To enable stateful filtering use the timeout 600."
+msgstr "Um Stateful Filtering zu aktivieren, wählen sie den Timeout 600."

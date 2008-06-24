@@ -616,6 +616,8 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	alfConnectAddrSizer->Add( alfStateTimeoutText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	alfStateTimeoutSpinCtrl = new wxSpinCtrl( alfNbPanel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 604800, 0 );
+	alfStateTimeoutSpinCtrl->SetToolTip( _("To enable stateful filtering use the timeout 600.") );
+	
 	alfConnectAddrSizer->Add( alfStateTimeoutSpinCtrl, 0, wxALL|wxEXPAND|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	alfConnectionBox->Add( alfConnectAddrSizer, 1, wxEXPAND, 5 );
