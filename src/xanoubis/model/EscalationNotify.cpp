@@ -83,7 +83,6 @@ EscalationNotify::answer(NotifyAnswer *answer)
 
 	answer_ = answer;
 
-	fprintf(stderr, "EscalationNotify::answer\n");
 	event.SetClientObject((wxClientData *)this);
 	wxGetApp().sendEvent(event);
 }

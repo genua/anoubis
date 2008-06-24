@@ -367,6 +367,8 @@ Notification::getCheckSum(void)
 	wxString		 checksum;
 	struct sfs_open_message	*sfs;
 	int			 evoff;
+	int			 csumoff;
+	int			 csumlen;
 
 	if (notify_ == NULL) {
 		return (_("no notify data available"));
@@ -378,7 +380,20 @@ Notification::getCheckSum(void)
 	}
 
 	if (module_.Cmp(wxT("ALF")) == 0) {
-		checksum = _("no checksum information available");
+		csumoff = get_value((notify_->u.notify)->csumoff);
+		csumlen = get_value((notify_->u.notify)->csumlen);
+		if (csumlen > 0) {
+			unsigned char *csum;
+			csum = (unsigned char *)notify_->u.notify->payload +
+			    csumoff;
+			checksum = wxT("0x");
+			for (int i=0; i<csumlen; i++) {
+				checksum += wxString::Format(wxT("%02x"),
+				    csum[i]);
+			}
+		} else {
+			checksum = _("no checksum information available");
+		}
 	} else if (module_.Cmp(wxT("SFS")) == 0) {
 		/* XXX CEH: Should verify that evlen >= sizeof(*sfs) */
 		sfs = (struct sfs_open_message *)
