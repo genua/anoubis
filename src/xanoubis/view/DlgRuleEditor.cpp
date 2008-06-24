@@ -736,7 +736,7 @@ DlgRuleEditor::OnSfsBinaryModifyButton(wxCommandEvent& event)
 		policy->setBinaryName(fileDlg.GetPath());
 		sfsBinaryTextCtrl->Clear();
 		sfsBinaryTextCtrl->AppendText(policy->getBinaryName());
-		ruleListCtrl->SetItem(selectedId_, RULEDITOR_LIST_COLUMN_BIN,
+		ruleListCtrl->SetItem(selectedIndex_, RULEDITOR_LIST_COLUMN_BIN,
 		    policy->getBinaryName());
 	}
 }
@@ -745,6 +745,7 @@ void
 DlgRuleEditor::OnSfsUpdateChkSumButton(wxCommandEvent& event)
 {
 	RuleEditorFillWidgetsVisitor	 updateVisitor(this);
+	RuleEditorFillTableVisitor	 updateTable(this, selectedIndex_);
 	SfsPolicy			*policy;
 	unsigned char			*csum;
 
@@ -759,9 +760,7 @@ DlgRuleEditor::OnSfsUpdateChkSumButton(wxCommandEvent& event)
 	policy->setHashValue(csum);
 	updateVisitor.setPropagation(false);
 	policy->accept(updateVisitor);
-
-	ruleListCtrl->SetItem(selectedId_, RULEDITOR_LIST_COLUMN_HASH,
-	    policy->getHashValue());
+	policy->accept(updateTable);
 }
 
 void
