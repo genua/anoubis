@@ -72,6 +72,10 @@ RuleEditorChecksumVisitor::compare(Policy *policy)
 			}
 		} else {
 			appPolicy = (AppPolicy *)policy;
+
+			if (appPolicy->isDefault())
+				return;
+
 			if (appPolicy->isModified()) {
 				if (!appPolicy->getCurrentHash().Cmp(unknown)) {
 					appPolicy->calcCurrentHash(csum);
@@ -80,6 +84,7 @@ RuleEditorChecksumVisitor::compare(Policy *policy)
 				regHash = appPolicy->getHashValue();
 			}
 		}
+
 		if (regHash.Cmp(curHash))
 			mismatch_ = true;
 	}
