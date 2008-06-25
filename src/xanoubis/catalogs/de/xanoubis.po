@@ -385,6 +385,10 @@ msgstr "Logging"
 #: src/anoubis/src/xanoubis/control/CommunicatorCtrl.cpp:290
 #: src/anoubis/src/xanoubis/control/CommunicatorCtrl.cpp:295
 #: src/anoubis/src/xanoubis/view/MainFrame.cpp:89
+#: src/anoubis/src/xanoubis/control/CommunicatorCtrl.cpp:161
+#: src/anoubis/src/xanoubis/control/CommunicatorCtrl.cpp:317
+#: src/anoubis/src/xanoubis/control/CommunicatorCtrl.cpp:322
+#: src/anoubis/src/xanoubis/control/CommunicatorCtrl.cpp:327
 msgid "none"
 msgstr "keine"
 
@@ -631,6 +635,8 @@ msgstr "inet6"
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:475
 #: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:856
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:496
+#: src/anoubis/src/xanoubis/model/AppPolicy.cpp:358
+#: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:1065
 msgid "any"
 msgstr "alle"
 
@@ -761,6 +767,8 @@ msgstr "Status:"
 #: src/anoubis/src/xanoubis/control/RuleEditorFillWidgetsVisitor.cpp:463
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:413
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:681
+#: src/anoubis/src/xanoubis/control/RuleEditorFillWidgetsVisitor.cpp:386
+#: src/anoubis/src/xanoubis/control/RuleEditorFillWidgetsVisitor.cpp:478
 msgid "mismatch"
 msgstr "Abweichung"
 
@@ -886,6 +894,7 @@ msgstr "Zu Port"
 #: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:220
 #: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:224
 #: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:384
+#: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:467
 msgid "Table columns"
 msgstr "Tabellenspalte"
 
@@ -893,6 +902,7 @@ msgstr "Tabellenspalte"
 #: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:221
 #: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:225
 #: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:385
+#: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:468
 msgid "Please select the columns you're interested in"
 msgstr "Bitte selektieren sie die Spalten die sie interessieren"
 
@@ -905,6 +915,8 @@ msgstr "Bitte selektieren sie die Spalten die sie interessieren"
 #: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:511
 #: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:409
 #: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:628
+#: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:492
+#: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:728
 msgid "Choose a binary"
 msgstr "Wählen sie eine Binäre Datei aus"
 
@@ -1507,6 +1519,8 @@ msgstr "keine "
 #: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:683
 #: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:842
 #: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:867
+#: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:1052
+#: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:1076
 msgid "unable to calculate checksum"
 msgstr "kann Prüfsumme nicht errechnen"
 
@@ -1514,6 +1528,8 @@ msgstr "kann Prüfsumme nicht errechnen"
 #: src/anoubis/src/xanoubis/control/RuleEditorFillWidgetsVisitor.cpp:478
 #: src/anoubis/src/xanoubis/control/RuleEditorFillWidgetsVisitor.cpp:378
 #: src/anoubis/src/xanoubis/control/RuleEditorFillWidgetsVisitor.cpp:460
+#: src/anoubis/src/xanoubis/control/RuleEditorFillWidgetsVisitor.cpp:381
+#: src/anoubis/src/xanoubis/control/RuleEditorFillWidgetsVisitor.cpp:473
 msgid "match"
 msgstr "Übereinstimmung"
 
@@ -1534,22 +1550,27 @@ msgid "default "
 msgstr "Standard "
 
 #: src/anoubis/src/xanoubis/control/CommunicatorCtrl.cpp:100
+#: src/anoubis/src/xanoubis/control/CommunicatorCtrl.cpp:106
 msgid "Error: couldn't create communication thread"
 msgstr "Fehler: konnte Verbindungs-Thread nicht erstellen"
 
 #: src/anoubis/src/xanoubis/control/CommunicatorCtrl.cpp:108
+#: src/anoubis/src/xanoubis/control/CommunicatorCtrl.cpp:114
 msgid "Error: couldn't start communication thread"
 msgstr "Fehler: konnte Verbindungs-Thread nicht starten"
 
 #: src/anoubis/src/xanoubis/control/CommunicatorCtrl.cpp:112
+#: src/anoubis/src/xanoubis/control/CommunicatorCtrl.cpp:118
 msgid "connecting to "
 msgstr "Verbinde mit "
 
 #: src/anoubis/src/xanoubis/control/CommunicatorCtrl.cpp:126
+#: src/anoubis/src/xanoubis/control/CommunicatorCtrl.cpp:132
 msgid "Error: no proper shutdown of communication"
 msgstr "Fehler: Verbindung wurde nicht ordentlich beendet"
 
 #: src/anoubis/src/xanoubis/control/CommunicatorCtrl.cpp:128
+#: src/anoubis/src/xanoubis/control/CommunicatorCtrl.cpp:134
 msgid "disconnecting from "
 msgstr "beende verbindung mit "
 
@@ -1560,25 +1581,30 @@ msgstr "localhost"
 
 #: src/anoubis/src/xanoubis/control/CommunicatorCtrl.cpp:278
 #: src/anoubis/src/xanoubis/control/CommunicatorCtrl.cpp:280
+#: src/anoubis/src/xanoubis/control/CommunicatorCtrl.cpp:312
 msgid "Connection established with localhost:"
 msgstr "Verbindung erstellt zu localhost:"
 
 #: src/anoubis/src/xanoubis/control/CommunicatorCtrl.cpp:284
 #: src/anoubis/src/xanoubis/control/CommunicatorCtrl.cpp:286
+#: src/anoubis/src/xanoubis/control/CommunicatorCtrl.cpp:318
 msgid "Disconnected from localhost"
 msgstr "Verbindung mit localhost unterbrochen"
 
 #: src/anoubis/src/xanoubis/control/CommunicatorCtrl.cpp:289
 #: src/anoubis/src/xanoubis/control/CommunicatorCtrl.cpp:291
+#: src/anoubis/src/xanoubis/control/CommunicatorCtrl.cpp:323
 msgid "Connection to localhost failed!"
 msgstr "Verbindung zum localhost Fehlgeschlagen!"
 
 #: src/anoubis/src/xanoubis/control/CommunicatorCtrl.cpp:294
 #: src/anoubis/src/xanoubis/control/CommunicatorCtrl.cpp:296
+#: src/anoubis/src/xanoubis/control/CommunicatorCtrl.cpp:328
 msgid "Communication error. Disconnected!"
 msgstr "Kommunikations Fehler. Verbindung Beendet!"
 
 #: src/anoubis/src/xanoubis/main.cpp:135 src/anoubis/src/xanoubis/main.cpp:142
+#: src/anoubis/src/xanoubis/main.cpp:150
 msgid "Language setting: "
 msgstr "Spracheinstellung: "
 
@@ -1587,6 +1613,7 @@ msgid "help"
 msgstr "Hilfe"
 
 #: src/anoubis/src/xanoubis/main.cpp:220 src/anoubis/src/xanoubis/main.cpp:228
+#: src/anoubis/src/xanoubis/main.cpp:246
 msgid "this help"
 msgstr "Diese Hilfe"
 
@@ -1595,16 +1622,19 @@ msgid "socket"
 msgstr "Socket"
 
 #: src/anoubis/src/xanoubis/main.cpp:227 src/anoubis/src/xanoubis/main.cpp:235
+#: src/anoubis/src/xanoubis/main.cpp:253
 msgid "communication socket of anoubis daemon"
 msgstr "Kommunikations socket vom Anoubis deamon"
 
 #: src/anoubis/src/xanoubis/main.cpp:396 src/anoubis/src/xanoubis/main.cpp:404
+#: src/anoubis/src/xanoubis/main.cpp:455
 msgid "no loaded RuleSet; export failed!"
 msgstr "kein geladener Regel Satz; Export Fehlgeschlagen!"
 
 #: src/anoubis/src/xanoubis/model/NotifyAnswer.cpp:57
 #: src/anoubis/src/xanoubis/model/NotifyAnswer.cpp:58
 #: src/anoubis/src/xanoubis/model/NotifyAnswer.cpp:51
+#: src/anoubis/src/xanoubis/model/NotifyAnswer.cpp:52
 msgid "this message was "
 msgstr "Diese Nachricht wurde "
 
@@ -1617,12 +1647,14 @@ msgstr "%d mal "
 #: src/anoubis/src/xanoubis/model/NotifyAnswer.cpp:64
 #: src/anoubis/src/xanoubis/model/NotifyAnswer.cpp:65
 #: src/anoubis/src/xanoubis/model/NotifyAnswer.cpp:57
+#: src/anoubis/src/xanoubis/model/NotifyAnswer.cpp:58
 msgid "till process ends "
 msgstr "bis Prozess Ende "
 
 #: src/anoubis/src/xanoubis/model/NotifyAnswer.cpp:67
 #: src/anoubis/src/xanoubis/model/NotifyAnswer.cpp:68
 #: src/anoubis/src/xanoubis/model/NotifyAnswer.cpp:60
+#: src/anoubis/src/xanoubis/model/NotifyAnswer.cpp:61
 #, c-format
 msgid "for %d "
 msgstr "für %d"
@@ -1630,60 +1662,70 @@ msgstr "für %d"
 #: src/anoubis/src/xanoubis/model/NotifyAnswer.cpp:71
 #: src/anoubis/src/xanoubis/model/NotifyAnswer.cpp:72
 #: src/anoubis/src/xanoubis/model/NotifyAnswer.cpp:64
+#: src/anoubis/src/xanoubis/model/NotifyAnswer.cpp:65
 msgid "second "
 msgstr "Sekunde "
 
 #: src/anoubis/src/xanoubis/model/NotifyAnswer.cpp:73
 #: src/anoubis/src/xanoubis/model/NotifyAnswer.cpp:74
 #: src/anoubis/src/xanoubis/model/NotifyAnswer.cpp:66
+#: src/anoubis/src/xanoubis/model/NotifyAnswer.cpp:67
 msgid "seconds "
 msgstr "Sekunden "
 
 #: src/anoubis/src/xanoubis/model/NotifyAnswer.cpp:77
 #: src/anoubis/src/xanoubis/model/NotifyAnswer.cpp:78
 #: src/anoubis/src/xanoubis/model/NotifyAnswer.cpp:70
+#: src/anoubis/src/xanoubis/model/NotifyAnswer.cpp:71
 msgid "minute "
 msgstr "Minute "
 
 #: src/anoubis/src/xanoubis/model/NotifyAnswer.cpp:79
 #: src/anoubis/src/xanoubis/model/NotifyAnswer.cpp:80
 #: src/anoubis/src/xanoubis/model/NotifyAnswer.cpp:72
+#: src/anoubis/src/xanoubis/model/NotifyAnswer.cpp:73
 msgid "minutes "
 msgstr "Minuten "
 
 #: src/anoubis/src/xanoubis/model/NotifyAnswer.cpp:83
 #: src/anoubis/src/xanoubis/model/NotifyAnswer.cpp:84
 #: src/anoubis/src/xanoubis/model/NotifyAnswer.cpp:76
+#: src/anoubis/src/xanoubis/model/NotifyAnswer.cpp:77
 msgid "hour "
 msgstr "Stunde "
 
 #: src/anoubis/src/xanoubis/model/NotifyAnswer.cpp:85
 #: src/anoubis/src/xanoubis/model/NotifyAnswer.cpp:86
 #: src/anoubis/src/xanoubis/model/NotifyAnswer.cpp:78
+#: src/anoubis/src/xanoubis/model/NotifyAnswer.cpp:79
 msgid "hours "
 msgstr "Stunden "
 
 #: src/anoubis/src/xanoubis/model/NotifyAnswer.cpp:89
 #: src/anoubis/src/xanoubis/model/NotifyAnswer.cpp:90
 #: src/anoubis/src/xanoubis/model/NotifyAnswer.cpp:82
+#: src/anoubis/src/xanoubis/model/NotifyAnswer.cpp:83
 msgid "day "
 msgstr "Tag "
 
 #: src/anoubis/src/xanoubis/model/NotifyAnswer.cpp:91
 #: src/anoubis/src/xanoubis/model/NotifyAnswer.cpp:92
 #: src/anoubis/src/xanoubis/model/NotifyAnswer.cpp:84
+#: src/anoubis/src/xanoubis/model/NotifyAnswer.cpp:85
 msgid "days "
 msgstr "Tage "
 
 #: src/anoubis/src/xanoubis/model/NotifyAnswer.cpp:100
 #: src/anoubis/src/xanoubis/model/NotifyAnswer.cpp:101
 #: src/anoubis/src/xanoubis/model/NotifyAnswer.cpp:93
+#: src/anoubis/src/xanoubis/model/NotifyAnswer.cpp:94
 msgid "forever "
 msgstr "für immer"
 
 #: src/anoubis/src/xanoubis/model/NotifyAnswer.cpp:105
 #: src/anoubis/src/xanoubis/model/NotifyAnswer.cpp:106
 #: src/anoubis/src/xanoubis/model/NotifyAnswer.cpp:98
+#: src/anoubis/src/xanoubis/model/NotifyAnswer.cpp:99
 msgid "allowed."
 msgstr "erlaubt."
 
@@ -1736,6 +1778,13 @@ msgstr "kein Wert"
 #: src/anoubis/src/xanoubis/model/AlfPolicy.cpp:328
 #: src/anoubis/src/xanoubis/model/AlfPolicy.cpp:480
 #: src/anoubis/src/xanoubis/model/AlfPolicy.cpp:743
+#: src/anoubis/src/xanoubis/model/SfsPolicy.cpp:159
+#: src/anoubis/src/xanoubis/model/AppPolicy.cpp:269
+#: src/anoubis/src/xanoubis/model/AlfPolicy.cpp:295
+#: src/anoubis/src/xanoubis/model/AlfPolicy.cpp:414
+#: src/anoubis/src/xanoubis/model/AlfPolicy.cpp:442
+#: src/anoubis/src/xanoubis/model/AlfPolicy.cpp:594
+#: src/anoubis/src/xanoubis/model/AlfPolicy.cpp:855
 msgid "(unknown)"
 msgstr "(unbekannt)"
 
@@ -1794,6 +1843,8 @@ msgstr "Kontext"
 #: src/anoubis/src/xanoubis/model/SfsPolicy.cpp:183
 #: src/anoubis/src/xanoubis/model/SfsPolicy.cpp:215
 #: src/anoubis/src/xanoubis/model/AppPolicy.cpp:259
+#: src/anoubis/src/xanoubis/model/SfsPolicy.cpp:285
+#: src/anoubis/src/xanoubis/model/AppPolicy.cpp:366
 msgid "(unknown hash type)"
 msgstr "(unbekannter Hash Typ)"
 
@@ -1802,6 +1853,7 @@ msgstr "(unbekannter Hash Typ)"
 #: src/anoubis/src/xanoubis/model/AlfPolicy.cpp:402
 #: src/anoubis/src/xanoubis/model/AlfPolicy.cpp:403
 #: src/anoubis/src/xanoubis/model/AlfPolicy.cpp:433
+#: src/anoubis/src/xanoubis/model/AlfPolicy.cpp:547
 msgid "(unknown"
 msgstr "(Unbekannt"
 
@@ -1812,6 +1864,11 @@ msgstr "(Unbekannt"
 #: src/anoubis/src/xanoubis/model/Notification.cpp:251
 #: src/anoubis/src/xanoubis/model/Policy.cpp:225
 #: src/anoubis/src/xanoubis/model/Notification.cpp:274
+#: src/anoubis/src/xanoubis/control/RuleEditorChecksumVisitor.cpp:60
+#: src/anoubis/src/xanoubis/control/RuleEditorFillWidgetsVisitor.cpp:360
+#: src/anoubis/src/xanoubis/control/RuleEditorFillWidgetsVisitor.cpp:460
+#: src/anoubis/src/xanoubis/model/SfsPolicy.cpp:170
+#: src/anoubis/src/xanoubis/model/AppPolicy.cpp:199
 msgid "unknown"
 msgstr "Unbekannt"
 
@@ -1833,6 +1890,8 @@ msgstr "empfangen"
 #: src/anoubis/src/xanoubis/model/Notification.cpp:306
 #: src/anoubis/src/xanoubis/model/Notification.cpp:343
 #: src/anoubis/src/xanoubis/model/Notification.cpp:361
+#: src/anoubis/src/xanoubis/model/Notification.cpp:346
+#: src/anoubis/src/xanoubis/model/Notification.cpp:372
 msgid "no notify data available"
 msgstr "keine Meldungen verfügbar"
 
@@ -1923,21 +1982,26 @@ msgstr "extrahieren der Pfadinformation fehlgeschlagen"
 #: src/anoubis/src/xanoubis/model/Notification.cpp:350
 #: src/anoubis/src/xanoubis/model/Notification.cpp:370
 #: src/anoubis/src/xanoubis/model/Notification.cpp:382
+#: src/anoubis/src/xanoubis/model/Notification.cpp:381
+#: src/anoubis/src/xanoubis/model/Notification.cpp:393
 msgid "no checksum information available"
 msgstr "keine Prüfsummen Information verfügbar"
 
 #: src/anoubis/src/xanoubis/model/Notification.cpp:353
 #: src/anoubis/src/xanoubis/model/Notification.cpp:385
+#: src/anoubis/src/xanoubis/model/Notification.cpp:396
 msgid "unable to extract checksum information"
 msgstr "extrahieren der Prüfsummen Information Fehlgeschlagen"
 
 #: src/anoubis/src/xanoubis/model/PolicyRuleSet.cpp:120
 #: src/anoubis/src/xanoubis/model/PolicyRuleSet.cpp:126
+#: src/anoubis/src/xanoubis/model/PolicyRuleSet.cpp:132
 msgid "System error during import of policy file "
 msgstr "Systemfehler beim importieren der Policy Files"
 
 #: src/anoubis/src/xanoubis/model/PolicyRuleSet.cpp:127
 #: src/anoubis/src/xanoubis/model/PolicyRuleSet.cpp:133
+#: src/anoubis/src/xanoubis/model/PolicyRuleSet.cpp:139
 msgid "Successfully imported policy file "
 msgstr "Policy Files erfolgreich importiert"
 
@@ -1945,21 +2009,26 @@ msgstr "Policy Files erfolgreich importiert"
 #: src/anoubis/src/xanoubis/model/PolicyRuleSet.cpp:142
 #: src/anoubis/src/xanoubis/model/PolicyRuleSet.cpp:140
 #: src/anoubis/src/xanoubis/model/PolicyRuleSet.cpp:148
+#: src/anoubis/src/xanoubis/model/PolicyRuleSet.cpp:146
+#: src/anoubis/src/xanoubis/model/PolicyRuleSet.cpp:154
 msgid "Failed import of policy file "
 msgstr "Policy File Import fehlgeschlagen"
 
 #: src/anoubis/src/xanoubis/model/PolicyRuleSet.cpp:148
 #: src/anoubis/src/xanoubis/model/PolicyRuleSet.cpp:154
+#: src/anoubis/src/xanoubis/model/PolicyRuleSet.cpp:160
 msgid "Unknown error during import of policy file "
 msgstr "Unbekannter fehler beim Importieren der Policy Files"
 
 #: src/anoubis/src/xanoubis/model/PolicyRuleSet.cpp:181
 #: src/anoubis/src/xanoubis/model/PolicyRuleSet.cpp:187
+#: src/anoubis/src/xanoubis/model/PolicyRuleSet.cpp:355
 msgid "Policies exported successfully to "
 msgstr "Erfolgreicher Policy-Export nach"
 
 #: src/anoubis/src/xanoubis/model/PolicyRuleSet.cpp:186
 #: src/anoubis/src/xanoubis/model/PolicyRuleSet.cpp:192
+#: src/anoubis/src/xanoubis/model/PolicyRuleSet.cpp:360
 msgid "Could not open file for export: "
 msgstr "Konnte File für Export nicht öffnen: "
 
@@ -1989,6 +2058,7 @@ msgstr " zu "
 
 #: src/anoubis/src/xanoubis/model/NotifyAnswer.cpp:108
 #: src/anoubis/src/xanoubis/model/NotifyAnswer.cpp:100
+#: src/anoubis/src/xanoubis/model/NotifyAnswer.cpp:101
 msgid "forbidden."
 msgstr "Verboten."
 
@@ -1996,6 +2066,8 @@ msgstr "Verboten."
 #: src/anoubis/src/xanoubis/control/RuleEditorFillWidgetsVisitor.cpp:401
 #: src/anoubis/src/xanoubis/control/RuleEditorFillWidgetsVisitor.cpp:388
 #: src/anoubis/src/xanoubis/control/RuleEditorFillWidgetsVisitor.cpp:390
+#: src/anoubis/src/xanoubis/control/RuleEditorFillWidgetsVisitor.cpp:398
+#: src/anoubis/src/xanoubis/control/RuleEditorFillWidgetsVisitor.cpp:400
 msgid "no application selected"
 msgstr "keine Applikation ausgewählt"
 
@@ -2231,10 +2303,12 @@ msgid "VAR_FILENAME"
 msgstr ""
 
 #: src/anoubis/src/xanoubis/control/CommunicatorCtrl.cpp:181
+#: src/anoubis/src/xanoubis/control/CommunicatorCtrl.cpp:210
 msgid "Error while allocating memory"
 msgstr "Fehler beim Reservieren von Speicher"
 
 #: src/anoubis/src/xanoubis/control/CommunicatorCtrl.cpp:185
+#: src/anoubis/src/xanoubis/control/CommunicatorCtrl.cpp:214
 msgid "Error while reading file"
 msgstr "Fehler beim Lesen von Datei"
 
@@ -2308,10 +2382,12 @@ msgid "Profile: admin"
 msgstr "Profil: admin"
 
 #: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:492
+#: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:600
 msgid "Could not create new rule."
 msgstr "Neue Regel konnte nicht erstellt werden."
 
 #: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:492
+#: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:600
 msgid "Error"
 msgstr "Fehler"
 
@@ -2321,9 +2397,11 @@ msgid ""
 " \t\t    Back to Rule"
 msgstr ""
 "Prüfsummen stimmen für letzte Regel nicht überein.\n"
-" \t\t	 Zurück zur letzten Regel"
+" \t\t\t Zurück zur letzten Regel"
 
 #: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:879
+#: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:1085
+#: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:1087
 msgid "Back to Rule?"
 msgstr "Zurück zur letzten Regel"
 
@@ -2339,3 +2417,118 @@ msgstr "Überprüfen"
 #: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:619
 msgid "To enable stateful filtering use the timeout 600."
 msgstr "Um Stateful Filtering zu aktivieren, wählen sie den Timeout 600."
+
+#: src/anoubis/src/xanoubis/control/Communicator.cpp:327
+msgid "Error while allocate memory."
+msgstr "Fehler bei Speicherreservierung."
+
+#: src/anoubis/src/xanoubis/control/Communicator.cpp:358
+msgid "Error while sending "
+msgstr "Fehler beim Senden "
+
+#: src/anoubis/src/xanoubis/control/Communicator.cpp:359
+msgid "Policy to deamon."
+msgstr "der Policy zum Deamon."
+
+#: src/anoubis/src/xanoubis/control/Communicator.cpp:402
+msgid "Error while requesting "
+msgstr "Fehler beim Erfragen "
+
+#: src/anoubis/src/xanoubis/control/Communicator.cpp:403
+msgid "Policy from deamon"
+msgstr "der Policy vom Deamon"
+
+#: src/anoubis/src/xanoubis/control/CommunicatorCtrl.cpp:204
+msgid "Error with length of file\n"
+msgstr "Fehler beim Lesen der Tmp-Datei\n"
+
+#: src/anoubis/src/xanoubis/control/CommunicatorCtrl.cpp:219
+msgid "Couldn't remove tmp file"
+msgstr "Datein konnte nicht entfernt werden."
+
+#: src/anoubis/src/xanoubis/control/CommunicatorCtrl.cpp:226
+msgid "Couldn't send Policy to deamon: Not connected"
+msgstr "Policy konnte nicht zum Deamon gesendet werden: Nicht verbunden"
+
+#: src/anoubis/src/xanoubis/control/CommunicatorCtrl.cpp:386
+#: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:1180
+msgid "add"
+msgstr ""
+
+#: src/anoubis/src/xanoubis/control/CommunicatorCtrl.cpp:390
+msgid "get"
+msgstr ""
+
+#: src/anoubis/src/xanoubis/control/CommunicatorCtrl.cpp:394
+#: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:1180
+msgid "cal"
+msgstr ""
+
+#: src/anoubis/src/xanoubis/main.cpp:472 src/anoubis/src/xanoubis/main.cpp:513
+msgid "Error: xanoubis is not connected to the daemon"
+msgstr "Fehler: xanoubis ist nicht mit dem Deamon verbunden"
+
+#: src/anoubis/src/xanoubis/main.cpp:476
+msgid "seek for profile "
+msgstr ""
+
+#: src/anoubis/src/xanoubis/main.cpp:476
+msgid " at "
+msgstr ""
+
+#: src/anoubis/src/xanoubis/main.cpp:496
+msgid "Error: could not find profile: "
+msgstr ""
+
+#: src/anoubis/src/xanoubis/model/Notification.cpp:357
+msgid " / Program: "
+msgstr ""
+
+#: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:567
+#: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:798
+msgid "Wrong file access permission"
+msgstr "Sie haben nicht die nötigen Rechte."
+
+#: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:568
+#: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:799
+msgid "File is not set readable for the user."
+msgstr "Datei ist nicht lessbar."
+
+#: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:571
+#: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:572
+#: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:802
+#: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:803
+msgid "File does not exist"
+msgstr "Datei existiert nicht."
+
+#: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:824
+msgid "Mismatch of Checksums in one or more Rule.\n"
+msgstr "Prüfsummen für eine oder mehrere Dateien stimmen nicht überein.\n"
+
+#: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:825
+msgid "Do you want to store anyway?"
+msgstr "Wollen Sie die Policy dennoch anwenden?"
+
+#: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:827
+msgid "Mismatch of Checksums"
+msgstr "Prüfsummen stimmen nicht überein."
+
+#: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:1084
+msgid "Checksums don't match for this Rule.\n"
+msgstr "Prüfsummen stimmen für diese Regel nicht überein.\n"
+
+#: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:1182
+msgid "Permission denied for this file."
+msgstr "Zugriff verweigert für diese Datei."
+
+#: src/anoubis/src/xanoubis/view/DlgRuleEditor.cpp:1183
+msgid "Permission denied"
+msgstr "Zugriff verweigert."
+
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:532
+msgid "10.0.1.1"
+msgstr ""
+
+#: src/anoubis/src/xanoubis/view/DlgRuleEditorBase.cpp:552
+msgid "192.168.0.1"
+msgstr ""

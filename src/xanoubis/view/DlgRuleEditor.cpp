@@ -809,8 +809,8 @@ DlgRuleEditor::OnRuleSetSave(wxCommandEvent& event)
 
 	if (ruleSet_->findMismatchHash())
 	{
-		message = _("Mismatch of Checksums in one or more Rule.\n \
-		    Do you want to store anyway?");
+		message = _("Mismatch of Checksums in one or more Rule.\n");
+		message += _("Do you want to store anyway?");
 		int answer = wxMessageBox(message,
 		    _("Mismatch of Checksums"), wxYES_NO, this);
 		if (answer == wxNO) {
@@ -1075,8 +1075,8 @@ DlgRuleEditor::CheckLastSelection(void)
 	}
 
 	if (mismatch) {
-		message = _("Checksums don't match for this Rule.\n \
-		    Back to Rule");
+		message = _("Checksums don't match for this Rule.\n");
+		message += _("Back to Rule?");
 		int answer = wxMessageBox(message,
 		    _("Back to Rule?"),
 		    wxYES_NO, this);
