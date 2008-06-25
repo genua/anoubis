@@ -16,10 +16,6 @@ share/xanoubis/profiles/medium
 @exec chmod 700 /etc/anoubis/policy /etc/anoubis/policy/admin
 @exec chmod 700 /etc/anoubis/policy/user
 @exec chmod 600 /etc/anoubis/policy/*/*
-@exec mknod /dev/eventdev c 89 0
-@exec mknod /dev/anoubis c 90 0
-@unexec rm -rf /dev/eventdev
-@unexec rm -rf /dev/anoubis
 @unexec rm -rf /etc/anoubis
 sbin/anoubisd
 sbin/anoubisctl

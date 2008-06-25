@@ -1,0 +1,8 @@
+@comment $OpenBSD$
+bin/bsd.anoubis
+@exec cp ${PREFIX}/bin/bsd.anoubis /bsd.anoubis
+@exec mknod /dev/eventdev c 89 0
+@exec mknod /dev/anoubis c 90 0
+@unexec rm -rf /dev/eventdev
+@unexec rm -rf /dev/anoubis
+@unexec rm -rf /bsd.anoubis

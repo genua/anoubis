@@ -1,0 +1,13 @@
+The kernel was installed to /bsd.anoubis
+
+To boot the specific kernel wait until the boot prompt appears and
+enter:
+
+	boot> bsd.anoubis
+
+or adapt boot.conf in the following way:
+
+	echo 'set image bsd.anoubis' >> /etc/boot.conf
+
+Remove the package by using 'pkg_delete anoubis-kernel-0.4p0'
+which takes care of the extinction of /bsd.anoubis from your system.
