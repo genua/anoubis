@@ -1081,8 +1081,12 @@ apn_print_hash(u_int8_t *hash, int len, FILE *file)
 	if (hash == NULL || file == NULL)
 		return;
 
+	fprintf(file, "\"");
+
 	for (i = 0; i < len; i++)
 		fprintf(file, "%2.2x", (unsigned char)hash[i]);
+
+	fprintf(file, "\"");
 }
 
 static void
