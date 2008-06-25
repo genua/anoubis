@@ -12,7 +12,7 @@ share/xanoubis/profiles/medium
 @exec cp ${PREFIX}/share/xanoubis/profiles/admin /etc/anoubis/policy/admin/default
 @exec cp ${PREFIX}/share/xanoubis/profiles/admin /etc/anoubis/policy/admin/0
 @exec cp ${PREFIX}/share/xanoubis/profiles/admin /etc/anoubis/policy/user/0
-@exec chown -R _anoubisd:_anoubisd /etc/anoubis/policy/user
+@exec chown -R _anoubisd:_anoubisd /etc/anoubis/policy
 @exec chmod 700 /etc/anoubis/policy /etc/anoubis/policy/admin
 @exec chmod 700 /etc/anoubis/policy/user
 @exec chmod 600 /etc/anoubis/policy/*/*
