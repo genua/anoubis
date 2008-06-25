@@ -429,6 +429,10 @@ pe_update_db_one(struct apn_ruleset *oldrs, uid_t uid, int prio)
 			pproc->kcache = kernelcache_clear(pproc->kcache);
 			kernelcache_send2master(pproc->kcache, pproc->pid);
 		}
+		if (pproc->csum && pproc->pathhint) {
+			pe_set_ctx(pproc, pproc->uid, pproc->csum,
+			    pproc->pathhint);
+		}
 	}
 	DEBUG(DBG_TRACE, "<pe_update_db_one");
 }
