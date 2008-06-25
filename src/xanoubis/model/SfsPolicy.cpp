@@ -176,6 +176,7 @@ SfsPolicy::getCurrentHash(void)
 void
 SfsPolicy::setCurrentHash(wxString currHash)
 {
+	sfsRule_->rule.sfscheck.app->hashtype = APN_HASH_SHA256;
 	currHash_ = currHash;
 }
 
@@ -218,8 +219,9 @@ SfsPolicy::calcCurrentHash(unsigned char csum[MAX_APN_HASH_LEN])
 		file->Close();
 	}
 
-	currHash_ = convertToString(csum);
-	setCurrentSum(csum);
+	sfsRule_->rule.sfscheck.app->hashtype = APN_HASH_SHA256;
+	currHash_ = this->convertToString(csum);
+	this->setCurrentSum(csum);
 
 	return (1);
 }
@@ -231,6 +233,9 @@ SfsPolicy::setHashValue(unsigned char csum[MAX_APN_HASH_LEN])
 
 	switch (sfsRule_->rule.sfscheck.app->hashtype) {
 	case APN_HASH_SHA256:
+		len = APN_HASH_SHA256_LEN;
+		break;
+	case APN_HASH_NONE:
 		len = APN_HASH_SHA256_LEN;
 		break;
 	default:
@@ -279,6 +284,10 @@ SfsPolicy::convertToString(unsigned char *csum)
 	switch (sfsRule_->rule.sfscheck.app->hashtype) {
 	case APN_HASH_SHA256:
 		length = APN_HASH_SHA256_LEN;
+		break;
+	case APN_HASH_NONE:
+		length = 0;
+		result = _("unknown");
 		break;
 	default:
 		length = 0;

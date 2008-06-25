@@ -551,13 +551,6 @@ DlgRuleEditor::OnAppValidateChkSumButton(wxCommandEvent& event)
 	ret = policy->calcCurrentHash(csum);
 
 	if (ret == 1) {
-		currHash = wxT("0x");
-		for (unsigned int i=0; i<MAX_APN_HASH_LEN; i++) {
-			currHash += wxString::Format(wxT("%2.2x"),
-			(unsigned char)csum[i]);
-		}
-		policy->setCurrentHash(currHash);
-		policy->setCurrentSum(csum);
 		updateVisitor.setPropagation(false);
 		policy->accept(updateVisitor);
 	} else if (ret == 0) {
@@ -784,12 +777,6 @@ DlgRuleEditor::OnSfsValidateChkSumButton(wxCommandEvent& event)
 
 	ret = policy->calcCurrentHash(csum);
 	if ( ret == 1) {
-		currHash = wxT("0x");
-		for (unsigned int i=0; i<MAX_APN_HASH_LEN; i++) {
-			currHash += wxString::Format(wxT("%2.2x"),
-			(unsigned char)csum[i]);
-		}
-		policy->setCurrentHash(currHash);
 		updateWidgets.setPropagation(false);
 		policy->accept(updateWidgets);
 	} else if (ret == 0) {

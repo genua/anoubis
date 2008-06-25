@@ -52,7 +52,7 @@ class EscalationNotify : public Notification {
 		NotifyAnswer	*getAnswer(void);
 		anoubis_token_t	 getToken(void);
 		wxString	 getBinaryName(void);
-		void		 getChecksum(unsigned char *);
+		bool		 getChecksum(unsigned char *);
 		int		 getProtocolNo(void);
 };
 

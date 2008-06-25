@@ -205,6 +205,7 @@ AppPolicy::getCurrentHash(void)
 void
 AppPolicy::setCurrentHash(wxString currHash)
 {
+	appRule_->app->hashtype = APN_HASH_SHA256;
 	currHash_ = currHash;
 }
 
@@ -247,9 +248,10 @@ AppPolicy::calcCurrentHash(unsigned char csum[MAX_APN_HASH_LEN])
 		file->Close();
 	}
 
+	appRule_->app->hashtype = APN_HASH_SHA256;
 	currHash_ = convertToString(csum);
 
-	setCurrentSum(csum);
+	this->setCurrentSum(csum);
 
 	return (1);
 }
@@ -284,6 +286,10 @@ AppPolicy::setHashValue(unsigned char csum[MAX_APN_HASH_LEN])
 
 	switch (appRule_->app->hashtype) {
 	case APN_HASH_SHA256:
+		len = APN_HASH_SHA256_LEN;
+		break;
+	case APN_HASH_NONE:
+		appRule_->app->hashtype = APN_HASH_SHA256;
 		len = APN_HASH_SHA256_LEN;
 		break;
 	default:
@@ -360,6 +366,10 @@ AppPolicy::convertToString(unsigned char *csum)
 	switch (appRule_->app->hashtype) {
 	case APN_HASH_SHA256:
 		length = APN_HASH_SHA256_LEN;
+		break;
+	case APN_HASH_NONE:
+		length = 0;
+		result = _("unknown");
 		break;
 	default:
 		length = 0;

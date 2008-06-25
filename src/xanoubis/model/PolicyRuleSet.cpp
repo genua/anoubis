@@ -265,6 +265,7 @@ PolicyRuleSet::createAnswerPolicy(EscalationNotify *escalation)
 	NotifyAnswer			*answer;
 	RuleSetSearchPolicyVisitor	*seeker;
 	struct apn_alfrule		*newAlfRule;
+	bool				 hasChecksum;
 
 	/* get the policy caused this escalation */
 	seeker = new RuleSetSearchPolicyVisitor(escalation->getRuleId());
@@ -279,7 +280,7 @@ PolicyRuleSet::createAnswerPolicy(EscalationNotify *escalation)
 	parentPolicy = triggerPolicy->getParent();
 
 	filename = escalation->getBinaryName();
-	escalation->getChecksum(csum);
+	hasChecksum = escalation->getChecksum(csum);
 
 	newAlfRule = assembleAlfPolicy((AlfPolicy *)triggerPolicy, escalation);
 
@@ -297,8 +298,15 @@ PolicyRuleSet::createAnswerPolicy(EscalationNotify *escalation)
 		 * any-rule. Thus we have to copy the any block and insert
 		 * the new rule to the new block.
 		 */
-		apn_copyinsert(ruleSet_, newAlfRule, escalation->getRuleId(),
-		    filename.To8BitData(), csum, APN_HASH_SHA256);
+		if (hasChecksum) {
+			apn_copyinsert(ruleSet_, newAlfRule,
+			    escalation->getRuleId(), filename.To8BitData(),
+			    csum, APN_HASH_SHA256);
+		} else {
+			apn_copyinsert(ruleSet_, newAlfRule,
+			    escalation->getRuleId(), filename.To8BitData(),
+			    csum, APN_HASH_NONE);
+		}
 	}
 
 	answer = escalation->getAnswer();
@@ -389,7 +397,7 @@ PolicyRuleSet::createAppPolicy(int insertBeforeId)
 		return (-1);
 	}
 
-	newAppRule->app->hashtype = APN_HASH_SHA256;
+	newAppRule->app->hashtype = APN_HASH_NONE;
 
 	if (apn_insert(ruleSet_, newAppRule, insertBeforeId) == 0) {
 		newId = newAppRule->id;
@@ -482,7 +490,7 @@ PolicyRuleSet::createSfsPolicy(int insertBeforeId)
 		return (-1);
 	}
 
-	newSfsRule->rule.sfscheck.app->hashtype = APN_HASH_SHA256;
+	newSfsRule->rule.sfscheck.app->hashtype = APN_HASH_NONE;
 
 	if (TAILQ_EMPTY(&(ruleSet_->sfs_queue))) {
 		sfsRootRule = CALLOC_STRUCT(apn_rule);

@@ -120,7 +120,7 @@ EscalationNotify::getBinaryName(void)
 	return (result);
 }
 
-void
+bool
 EscalationNotify::getChecksum(unsigned char csum[MAX_APN_HASH_LEN])
 {
 	int	offset;
@@ -130,7 +130,12 @@ EscalationNotify::getChecksum(unsigned char csum[MAX_APN_HASH_LEN])
 	length = get_value(notify_->u.notify->csumlen);
 
 	bzero(csum, MAX_APN_HASH_LEN);
-	bcopy(csum, notify_->u.notify->payload+offset, length);
+	bcopy(notify_->u.notify->payload+offset, csum, length);
+
+	if (length == 0)
+		return false;
+	else
+		return true;
 }
 
 int
