@@ -61,7 +61,7 @@ class PolicyRuleSet : public wxEvtHandler
 		PolicyList		 varList_;
 
 		void clean(void);
-		void create(wxString);
+		void create(wxString, bool);
 		void create(struct apn_ruleset *);
 		void createAnswerPolicy(EscalationNotify *);
 		void OnAnswerEscalation(wxCommandEvent&);
@@ -72,7 +72,7 @@ class PolicyRuleSet : public wxEvtHandler
 
 	public:
 		PolicyRuleSet(struct apn_ruleset *);
-		PolicyRuleSet(wxString);
+		PolicyRuleSet(wxString, bool);
 		~PolicyRuleSet(void);
 
 		void accept(PolicyVisitor&);
@@ -86,6 +86,7 @@ class PolicyRuleSet : public wxEvtHandler
 		void clearModified(void);
 		bool findMismatchHash(void);
 		bool deletePolicy(int);
+		bool isEmpty(void);
 };
 
 #endif	/* _POLICYRULESET_H_ */

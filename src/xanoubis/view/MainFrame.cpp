@@ -277,7 +277,7 @@ MainFrame::OnMbFileImportSelect(wxCommandEvent& event)
 			    wildcard, wxOPEN);
 
 	if (fileDlg.ShowModal() == wxID_OK) {
-		wxGetApp().importPolicyFile(fileDlg.GetPath());
+		wxGetApp().importPolicyFile(fileDlg.GetPath(), true);
 	}
 }
 

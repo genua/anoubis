@@ -67,6 +67,8 @@ AnoubisGuiApp::AnoubisGuiApp(void)
 	SetAppName(wxT("xanoubis"));
 	wxInitAllImageHandlers();
 
+	profile_ = wxT("none");
+	onInitProfile_ = true;
 	paths_.SetInstallPrefix(wxT(GENERALPREFIX));
 }
 
@@ -151,10 +153,6 @@ bool AnoubisGuiApp::OnInit()
 		status(_("Language setting: ") + language_.GetCanonicalName());
 	}
 
-	if (!userOptions_->Read(wxT("Anoubis/Profile"), &profile_)) {
-		profile_ = wxT("admin");
-		profileFromDiskToDaemon(profile_);
-	}
 	((ModAnoubis*)modules_[ANOUBIS])->setProfile(profile_);
 
 	return (true);
@@ -430,10 +428,24 @@ AnoubisGuiApp::importPolicyRuleSet(struct apn_ruleset *rule)
 
 	event.SetClientData((void*)ruleSet_);
 	sendEvent(event);
+
+	if (onInitProfile_) {
+		onInitProfile_ = false;
+		if (!userOptions_->Read(wxT("Anoubis/Profile"), &profile_)) {
+			if (ruleSet_->isEmpty()) {
+				profile_ = wxT("admin");
+				profileFromDiskToDaemon(profile_);
+			} else {
+				profile_ = wxT("medium");
+				profileFromDaemonToDisk(profile_);
+			}
+		}
+		((ModAnoubis*)modules_[ANOUBIS])->setProfile(profile_);
+	}
 }
 
 void
-AnoubisGuiApp::importPolicyFile(wxString fileName)
+AnoubisGuiApp::importPolicyFile(wxString fileName, bool checkPerm)
 {
 	wxCommandEvent		 event(anEVT_LOAD_RULESET);
 
@@ -441,7 +453,7 @@ AnoubisGuiApp::importPolicyFile(wxString fileName)
 		delete oldRuleSet_;
 	}
 	oldRuleSet_ = ruleSet_;
-	ruleSet_ = new PolicyRuleSet(fileName);
+	ruleSet_ = new PolicyRuleSet(fileName, checkPerm);
 
 	event.SetClientData((void*)ruleSet_);
 	sendEvent(event);
@@ -467,6 +479,7 @@ bool
 AnoubisGuiApp::profileFromDiskToDaemon(wxString profileName)
 {
 	wxString	fileName;
+	wxString	tmpFileName;
 	wxString	logMsg;
 
 	if ((comCtrl_ == NULL) || !comCtrl_->isConnected()) {
@@ -499,8 +512,16 @@ AnoubisGuiApp::profileFromDiskToDaemon(wxString profileName)
 	}
 
 	profile_ = profileName;
-	comCtrl_->usePolicy(fileName);
-	importPolicyFile(fileName);
+
+	/*
+	 * Create a tmp file as a copy of the local profile,
+	 * because usePolicy() will remove the given file!
+	 */
+	/* XXX ch: no return values / error are tested here! */
+	tmpFileName = wxFileName::CreateTempFileName(wxT("xanoubis"));
+	wxCopyFile(fileName, tmpFileName);
+	comCtrl_->usePolicy(tmpFileName);
+	importPolicyFile(fileName, false);
 
 	return (true);
 }

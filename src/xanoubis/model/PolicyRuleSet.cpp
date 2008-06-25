@@ -69,11 +69,11 @@ PolicyRuleSet::PolicyRuleSet(struct apn_ruleset *ruleSet)
 	    wxCommandEventHandler(PolicyRuleSet::OnAnswerEscalation));
 }
 
-PolicyRuleSet::PolicyRuleSet(wxString fileName)
+PolicyRuleSet::PolicyRuleSet(wxString fileName, bool checkPerm)
 {
 	ruleSet_ = NULL;
 
-	create(fileName);
+	create(fileName, checkPerm);
 	Connect(anEVT_ANSWER_ESCALATION,
 	    wxCommandEventHandler(PolicyRuleSet::OnAnswerEscalation));
 }
@@ -117,15 +117,22 @@ PolicyRuleSet::clean(void)
 }
 
 void
-PolicyRuleSet::create(wxString fileName)
+PolicyRuleSet::create(wxString fileName, bool checkPerm)
 {
 	wxString		 logEntry;
 	int			 rc;
+	int			 flags;
 	struct apn_ruleset	*ruleSet;
 	struct apn_errmsg	*errMsg;
 
 	ruleSet = NULL;
-	rc = apn_parse(fileName.fn_str(), &ruleSet, 0);
+	flags = 0;
+
+	if (!checkPerm) {
+		flags |= APN_FLAG_NOPERMCHECK;
+	}
+
+	rc = apn_parse(fileName.fn_str(), &ruleSet, flags);
 
 	switch (rc) {
 	case -1:
@@ -565,4 +572,11 @@ PolicyRuleSet::deletePolicy(int id)
 	wxGetApp().sendEvent(event);
 
 	return (true);
+}
+
+bool
+PolicyRuleSet::isEmpty(void)
+{
+	return (alfList_.IsEmpty() && sfsList_.IsEmpty() &&
+	    varList_.IsEmpty());
 }

@@ -1439,8 +1439,9 @@ popfile(void)
 int
 parse_rules(const char *filename, struct apn_ruleset *apnrspx)
 {
+	int doPermCheck = !(apnrspx->flags & APN_FLAG_NOPERMCHECK);
 	TAILQ_INIT(&files);
-	if ((file = pushfile(filename, 1)) == NULL)
+	if ((file = pushfile(filename, doPermCheck)) == NULL)
 		return (1);
 	return __parse_rules_common(apnrspx);
 }

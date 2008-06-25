@@ -156,7 +156,7 @@ dist_profile_SCRIPTS = \
 	profiles/admin
 
 install-data-hook:
-	-chmod 400 $(DESTDIR)/$(profiledir)/*
+	-chmod 444 $(DESTDIR)/$(profiledir)/*
 
 xanoubis_SOURCES= \
 	model/AlertNotify.cpp \

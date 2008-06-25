@@ -79,6 +79,7 @@ class AnoubisGuiApp : public wxApp
 		wxString		 profile_;
 		wxStandardPaths		 paths_;
 		wxLocale		 language_;
+		bool			 onInitProfile_;
 		PolicyRuleSet		*ruleSet_;
 		PolicyRuleSet		*oldRuleSet_;
 		MainFrame		*mainFrame;
@@ -119,7 +120,7 @@ class AnoubisGuiApp : public wxApp
 		Module		*getModule(enum moduleIdx);
 		wxString	 getDataDir(void);
 		void		 importPolicyRuleSet(struct apn_ruleset*);
-		void		 importPolicyFile(wxString);
+		void		 importPolicyFile(wxString, bool);
 		void		 exportPolicyFile(wxString);
 		bool		 getCommConnectionState(void);
 		wxConfig	*getUserOptions(void);
