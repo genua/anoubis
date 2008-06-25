@@ -1,4 +1,18 @@
 alf {
+	any
+	{
+		# DNS
+		allow connect tcp from any         to any port 53
+		allow send    udp from any         to any port 53
+		allow receive udp from any port 53 to any
+
+		# X
+		allow connect tcp from any to 127.0.0.1 port 6000 - 6099
+		allow connect tcp from any to ::1       port 6000 - 6099
+
+		default log ask
+		context new any
+	}
 }
 sfs {
 }

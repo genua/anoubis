@@ -11,6 +11,9 @@ URL:		http://www.genua.de
 Source0:	%{name}-%{version}.tar.gz
 Source1:	anoubisd.init
 Source2:	anoubisd.udev
+Source10:	policy.admin.0
+Source11:	policy.user.0
+Source12:	policy.admin.default
 Vendor:		GeNUA mbH
 BuildRoot:	%(mktemp -d %{_tmppath}/%{name}-%{version}-build.XXXX)
 
@@ -73,6 +76,13 @@ make install DESTDIR=$RPM_BUILD_ROOT
 mkdir -p $RPM_BUILD_ROOT/etc/rc.d/init.d
 cp $RPM_SOURCE_DIR/anoubisd.init $RPM_BUILD_ROOT/etc/rc.d/init.d/anoubisd
 chmod 755 $RPM_BUILD_ROOT/etc/rc.d/init.d/anoubisd
+DEF_POLICY_DIR=$RPM_BUILD_ROOT/usr/share/anoubis/default_policy
+mkdir -p $DEF_POLICY_DIR/admin $DEF_POLICY_DIR/user
+for a in admin user ; do
+    for f in $RPM_SOURCE_DIR//policy.$a.* ; do
+	cp $f $DEF_POLICY_DIR/$a/${f##*/policy.$a.}
+    done ;
+done
 
 mkdir -p $RPM_BUILD_ROOT/etc/udev/rules.d
 cp $RPM_SOURCE_DIR/anoubisd.udev \
@@ -104,6 +114,13 @@ mkdir -p /etc/anoubis/policy/pubkeys
 chmod 700 /etc/anoubis/policy
 chmod 700 /etc/anoubis/policy/admin /etc/anoubis/policy/user
 chmod 700 /etc/anoubis/policy/pubkeys
+for p in admin/0 user/0 admin/default; do
+    if [ ! -e /etc/anoubis/policy/$p ] ; then
+	cp /usr/share/anoubis/default_policy/$p /etc/anoubis/policy/$p
+	chmod 600 /etc/anoubis/policy/$p
+	chown _anoubisd: /etc/anoubis/policy/$p
+    fi
+done
 chown _anoubisd: /etc/anoubis/policy
 chown _anoubisd: /etc/anoubis/policy/admin /etc/anoubis/policy/user
 chown _anoubisd: /etc/anoubis/policy/pubkeys
@@ -124,6 +141,7 @@ rmdir /etc/anoubis/policy /etc/anoubis 2>/dev/null || true
 /etc/rc.d/*
 /etc/udev/*
 /sbin/*
+/usr/share/anoubis/*
 %{_mandir}/man8/*
 
 ### files of subpackage xanoubis ###########################

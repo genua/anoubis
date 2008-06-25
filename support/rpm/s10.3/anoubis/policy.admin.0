@@ -4,3 +4,5 @@ alf {
 		default allow
 	}
 }
+sfs {
+}

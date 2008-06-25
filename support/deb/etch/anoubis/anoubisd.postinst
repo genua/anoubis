@@ -44,15 +44,15 @@ then
 fi
 
 # copy new default policy
-/usr/share/anoubisd/install_policy \
+/usr/share/anoubisd/install_policy -q\
 	/usr/share/anoubisd/default_policy/admin \
 	/etc/anoubis/policy/admin
 
-/usr/share/anoubisd/install_policy \
+/usr/share/anoubisd/install_policy -q\
 	/usr/share/anoubisd/default_policy/user \
 	/etc/anoubis/policy/user
 
-/usr/share/anoubisd/install_policy -n -o \
+/usr/share/anoubisd/install_policy -q -n -o \
 	/usr/share/anoubisd/default_policy/profiles \
 	/etc/anoubis/profiles
 

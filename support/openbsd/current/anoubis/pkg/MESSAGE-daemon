@@ -1,6 +1,4 @@
-To have the anoubisd start at boot time, you may insert the following
-into ${SYSCONFDIR}/rc.local:
+Please remember to restart the anoubisd after an upgrade.
 
-if [ -x ${PREFIX}/sbin/anoubisd ]; then
-	echo -n ' anoubisd';   ${PREFIX}/sbin/anoubisd
-fi
+You can do so by running the following command as root:
+    /sbin/anoubisctl restart
