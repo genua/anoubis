@@ -31,7 +31,7 @@ endif
 
 # Note:  Libraries must come first as applications might depend on them.
 SUBDIRS = $(BSDCOMPAT) libapn libanoubischat libanoubisprotocol anoubisd \
-    xanoubis anoubisctl libapn sfssig
+    xanoubis anoubisctl sfssig
 
 flawfinder:
 	for t in $(SUBDIRS); do cd $$t && make $@ && cd ..; done

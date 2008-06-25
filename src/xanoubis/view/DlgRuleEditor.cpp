@@ -434,7 +434,7 @@ DlgRuleEditor::updateAlfSrcPort(int port)
 
 	policy->setAlfSrcPort(port);
 	policy->accept(updateTable);
-	policy->accept(updateWidgets);
+	/* policy->accept(updateWidgets); */
 }
 
 void
@@ -451,7 +451,7 @@ DlgRuleEditor::updateAlfDstPort(int port)
 
 	policy->setAlfDstPort(port);
 	policy->accept(updateTable);
-	policy->accept(updateWidgets);
+	/* policy->accept(updateWidgets); */
 }
 
 void
@@ -966,11 +966,14 @@ DlgRuleEditor::OnAlfDstNetmaskSpinCtrlText(wxCommandEvent&)
 void
 DlgRuleEditor::OnAlfSrcPortComboBox(wxCommandEvent& event)
 {
-	unsigned long int	port;
+	unsigned long int       port;
 
-	if ((alfSrcPortComboBox->GetValue()).ToULong(&port)) {
-		updateAlfSrcPort(port);
+	if (!alfSrcPortComboBox->GetValue().Cmp(wxT("any"))) {
+		port = 0;
+	} else {
+		alfSrcPortComboBox->GetValue().ToULong(&port);
 	}
+	updateAlfSrcPort(port);
 }
 
 void
@@ -978,9 +981,12 @@ DlgRuleEditor::OnAlfDstPortComboBox(wxCommandEvent& event)
 {
 	unsigned long int       port;
 
-	if (alfDstPortComboBox->GetValue().ToULong(&port)) {
-		updateAlfDstPort(port);
+	if (!alfDstPortComboBox->GetValue().Cmp(wxT("any"))) {
+		port = 0;
+	} else {
+		alfDstPortComboBox->GetValue().ToULong(&port);
 	}
+	updateAlfDstPort(port);
 }
 
 void

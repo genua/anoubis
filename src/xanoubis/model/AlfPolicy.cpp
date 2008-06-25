@@ -175,25 +175,33 @@ AlfPolicy::setType(int type)
 void
 AlfPolicy::setAlfSrcAddress(wxString address, int netmask, int af)
 {
-	int		rc;
+	int		rc = 0;
 	char		ipAddrBuffer[256];
 	AppPolicy	*parent;
 	struct apn_host *fromHost;
 
-	if (alfRule_->rule.afilt.filtspec.fromhost == NULL) {
-		fromHost = (struct apn_host*)calloc(1, sizeof(struct apn_host));
-		alfRule_->rule.afilt.filtspec.fromhost = fromHost;
+	if (!address.Cmp(wxT("any"))) {
+		if (alfRule_->rule.afilt.filtspec.fromhost != NULL) {
+			apn_free_host(alfRule_->rule.afilt.filtspec.fromhost);
+			alfRule_->rule.afilt.filtspec.fromhost = NULL;
+		}
 	} else {
-		fromHost = alfRule_->rule.afilt.filtspec.fromhost;
+		if (alfRule_->rule.afilt.filtspec.fromhost == NULL) {
+			fromHost = (struct apn_host*)calloc(1,
+			    sizeof(struct apn_host));
+			alfRule_->rule.afilt.filtspec.fromhost = fromHost;
+		} else {
+			fromHost = alfRule_->rule.afilt.filtspec.fromhost;
+		}
+		fromHost->addr.len = netmask;
+		fromHost->addr.af = af;
+
+		strlcpy(ipAddrBuffer, (const char*)address.mb_str(wxConvUTF8),
+		    sizeof(ipAddrBuffer));
+
+		rc = inet_pton(fromHost->addr.af, ipAddrBuffer,
+		    &(fromHost->addr.apa.addr32));
 	}
-	fromHost->addr.len = netmask;
-	fromHost->addr.af = af;
-
-	strlcpy(ipAddrBuffer, (const char*)address.mb_str(wxConvUTF8),
-	    sizeof(ipAddrBuffer));
-
-	rc = inet_pton(fromHost->addr.af, ipAddrBuffer,
-	    &(fromHost->addr.apa.addr32));
 
 	if (rc) {
 		parent = (AppPolicy *)this->getParent();
@@ -205,25 +213,34 @@ AlfPolicy::setAlfSrcAddress(wxString address, int netmask, int af)
 void
 AlfPolicy::setAlfDstAddress(wxString address, int netmask, int af)
 {
-	int             rc;
+	int             rc = 0;
 	char            ipAddrBuffer[256];
 	AppPolicy	*parent;
 	struct apn_host *toHost;
 
-	if (alfRule_->rule.afilt.filtspec.tohost == NULL) {
-		toHost = (struct apn_host*)calloc(1, sizeof(struct apn_host));
-		alfRule_->rule.afilt.filtspec.tohost = toHost;
+	if (!address.Cmp(wxT("any"))) {
+		if (alfRule_->rule.afilt.filtspec.tohost != NULL) {
+			apn_free_host(alfRule_->rule.afilt.filtspec.tohost);
+			alfRule_->rule.afilt.filtspec.tohost = NULL;
+		}
 	} else {
-		toHost = alfRule_->rule.afilt.filtspec.tohost;
+		if (alfRule_->rule.afilt.filtspec.tohost == NULL) {
+			toHost = (struct apn_host*)calloc(1,
+			    sizeof(struct apn_host));
+			alfRule_->rule.afilt.filtspec.tohost = toHost;
+		} else {
+			toHost = alfRule_->rule.afilt.filtspec.tohost;
+		}
+
+		toHost->addr.len = netmask;
+		toHost->addr.af = af;
+
+		strlcpy(ipAddrBuffer, (const char*)address.mb_str(wxConvUTF8),
+		    sizeof(ipAddrBuffer));
+
+		rc = inet_pton(toHost->addr.af, ipAddrBuffer,
+		    &(toHost->addr.apa.addr32));
 	}
-	toHost->addr.len = netmask;
-	toHost->addr.af = af;
-
-	strlcpy(ipAddrBuffer, (const char*)address.mb_str(wxConvUTF8),
-	    sizeof(ipAddrBuffer));
-
-	rc = inet_pton(toHost->addr.af, address.mb_str(),
-	    &(toHost->addr.apa.addr32));
 
 	if (rc) {
 		parent = (AppPolicy *)this->getParent();
@@ -237,14 +254,21 @@ AlfPolicy::setAlfSrcPort(int port)
 	AppPolicy	*parent;
 	struct apn_port *fromPort;
 
-	if (alfRule_->rule.afilt.filtspec.fromport == NULL) {
-		fromPort = (struct apn_port*)calloc(1, sizeof(struct apn_port));
-		alfRule_->rule.afilt.filtspec.fromport = fromPort;
+	if (port == 0) {
+		if (alfRule_->rule.afilt.filtspec.fromport != NULL) {
+			apn_free_port(alfRule_->rule.afilt.filtspec.fromport);
+			alfRule_->rule.afilt.filtspec.fromport = NULL;
+		}
 	} else {
-		fromPort = alfRule_->rule.afilt.filtspec.fromport;
+		if (alfRule_->rule.afilt.filtspec.fromport == NULL) {
+			fromPort = (struct apn_port*)calloc(1,
+			    sizeof(struct apn_port));
+			alfRule_->rule.afilt.filtspec.fromport = fromPort;
+		} else {
+			fromPort = alfRule_->rule.afilt.filtspec.fromport;
+		}
+		fromPort->port = htons(port);
 	}
-	fromPort->port = htons(port);
-
 	parent = (AppPolicy *)this->getParent();
 	parent->setModified(true);
 }
@@ -255,14 +279,21 @@ AlfPolicy::setAlfDstPort(int port)
 	AppPolicy	*parent;
 	struct apn_port *toPort;
 
-	if (alfRule_->rule.afilt.filtspec.toport == NULL) {
-		toPort = (struct apn_port*)calloc(1, sizeof(struct apn_port));
-		alfRule_->rule.afilt.filtspec.toport = toPort;
+	if (port == 0) {
+		if (alfRule_->rule.afilt.filtspec.toport != NULL) {
+			apn_free_port(alfRule_->rule.afilt.filtspec.toport);
+			alfRule_->rule.afilt.filtspec.toport = NULL;
+		}
 	} else {
-		toPort = alfRule_->rule.afilt.filtspec.toport;
+		if (alfRule_->rule.afilt.filtspec.toport == NULL) {
+			toPort = (struct apn_port*)calloc(1,
+			    sizeof(struct apn_port));
+			alfRule_->rule.afilt.filtspec.toport = toPort;
+		} else {
+			toPort = alfRule_->rule.afilt.filtspec.toport;
+		}
+		toPort->port = htons(port);
 	}
-	toPort->port = htons(port);
-
 	parent = (AppPolicy *)this->getParent();
 	parent->setModified(true);
 }
@@ -662,29 +693,7 @@ AlfPolicy::getFromPortList(void)
 wxString
 AlfPolicy::getFromPortName(void)
 {
-	wxString	 result;
-	bool		 isList;
-	struct apn_port	*fromPort;
-
-	isList = false;
-
-	if (alfRule_->type == APN_ALF_FILTER) {
-		fromPort = alfRule_->rule.afilt.filtspec.fromport;
-		while (fromPort) {
-			result += getPortName(fromPort);
-			fromPort = fromPort->next;
-			if (fromPort) {
-				isList = true;
-				result += wxT(", ");
-			}
-		}
-		if (isList) {
-			result.Prepend(wxT("{"));
-			result.Append(wxT("}"));
-		}
-	}
-
-	return (result);
+	return (listToString(getFromPortList()));
 }
 
 wxArrayString
@@ -760,29 +769,7 @@ AlfPolicy::getToPortList(void)
 wxString
 AlfPolicy::getToPortName(void)
 {
-	wxString	 result;
-	bool		 isList;
-	struct apn_port	*toPort;
-
-	isList = false;
-
-	if (alfRule_->type == APN_ALF_FILTER) {
-		toPort = alfRule_->rule.afilt.filtspec.toport;
-		while (toPort) {
-			result += getPortName(toPort);
-			toPort = toPort->next;
-			if (toPort) {
-				isList = true;
-				result += wxT(", ");
-			}
-		}
-		if (isList) {
-			result.Prepend(wxT("{"));
-			result.Append(wxT("}"));
-		}
-	}
-
-	return (result);
+	return (listToString(getToPortList()));
 }
 
 void
