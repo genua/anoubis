@@ -1026,8 +1026,10 @@ DlgRuleEditor::CheckLastSelection(void)
 	policy	  = NULL;
 
 	policy = (Policy *)ruleListCtrl->GetItemData(selectedIndex_);
-	if (!policy)
+	if (!policy) {
+		selectedIndex_ = 0;
 		return (false);
+	}
 
 	if (policy->IsKindOf(CLASSINFO(SfsPolicy))) {
 		sfsPolicy = (SfsPolicy *)policy;

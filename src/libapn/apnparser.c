@@ -1830,6 +1830,7 @@ apn_remove_alf(struct apn_rule *rule, int id)
 			} else {
 				rule->rule.alf = hp->next;
 			}
+			hp->next = NULL;
 			apn_free_alfrule(hp);
 			return (0);
 		}
@@ -1867,6 +1868,7 @@ apn_remove_sfs(struct apn_rule *rule, int id)
 			} else {
 				rule->rule.sfs = hp->next;
 			}
+			hp->next = NULL;
 			apn_free_sfsrule(hp);
 			return (0);
 		}
