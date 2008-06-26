@@ -309,3 +309,21 @@ SfsPolicy::isDefault(void)
 	/* sfs policies are never default */
 	return (false);
 }
+
+void
+SfsPolicy::setLogNo(int logNo)
+{
+	sfsRule_->rule.sfscheck.log = logNo;
+}
+
+int
+SfsPolicy::getLogNo(void)
+{
+	return sfsRule_->rule.sfscheck.log;
+}
+
+wxString
+SfsPolicy::getLogName(void)
+{
+	return (SUPER(Policy)->getLogName(getLogNo()));
+}

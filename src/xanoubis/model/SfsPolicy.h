@@ -87,6 +87,9 @@ class SfsPolicy : public Policy
 		void		 setModified(bool);
 		wxString	 convertToString(unsigned char*);
 		bool		 isDefault(void);
+		int		 getLogNo(void);
+		wxString	 getLogName(void);
+		void		 setLogNo(int);
 };
 
 #endif	/* _SFSPOLICY_H_ */

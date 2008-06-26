@@ -89,6 +89,7 @@ class AlfPolicy : public Policy
 		wxString	getServiceName(void);
 
 		/* valid for type one of APN_ALF_{FILTER,CAPABILITY,DEFAULT} */
+		void		setLogNo(int);
 		int		getLogNo(void);
 		wxString	getLogName(void);
 

@@ -499,6 +499,25 @@ AlfPolicy::getLogNo(void)
 	return (result);
 }
 
+void
+AlfPolicy::setLogNo(int logNo)
+{
+
+	switch (alfRule_->type) {
+	case APN_ALF_FILTER:
+		alfRule_->rule.afilt.filtspec.log = logNo;
+		break;
+	case APN_ALF_CAPABILITY:
+		alfRule_->rule.acap.log = logNo;
+		break;
+	case APN_ALF_DEFAULT:
+		alfRule_->rule.apndefault.log = logNo;
+		break;
+	default:
+		break;
+	}
+}
+
 wxString
 AlfPolicy::getLogName(void)
 {

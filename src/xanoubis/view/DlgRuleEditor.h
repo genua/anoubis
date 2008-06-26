@@ -120,9 +120,14 @@ class DlgRuleEditor : public DlgRuleEditorBase
 		void updateAlfDstAddr(wxString, int, int);
 		void updateAlfSrcPort(int);
 		void updateAlfDstPort(int);
+		void updateLog(int);
 
 	protected:
 		AnShortcuts	*shortcuts_;
+
+		void OnCommonLogNone(wxCommandEvent&);
+		void OnCommonLogLog(wxCommandEvent&);
+		void OnCommonLogAlert(wxCommandEvent&);
 
 		void OnClose(wxCloseEvent& event);
 		void OnTableOptionButtonClick(wxCommandEvent&);

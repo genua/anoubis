@@ -235,6 +235,9 @@ class DlgRuleEditorBase : public wxFrame
 		virtual void OnCommonHighProfileButton( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnCommonMediumProfileButton( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnCommonAdminProfileButton( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnCommonLogNone( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnCommonLogLog( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnCommonLogAlert( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnAppNameComboBox( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnAppBinaryTextCtrl( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnAppBinaryModifyButton( wxCommandEvent& event ){ event.Skip(); }

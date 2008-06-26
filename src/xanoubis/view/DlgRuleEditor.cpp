@@ -455,6 +455,47 @@ DlgRuleEditor::updateAlfDstPort(int port)
 }
 
 void
+DlgRuleEditor::updateLog(int logNo)
+{
+	Policy				*policy;
+	AlfPolicy			*alfPolicy;
+	SfsPolicy			*sfsPolicy;
+	RuleEditorFillTableVisitor       updateTable(this, selectedIndex_);
+
+	policy = (Policy *)ruleListCtrl->GetItemData(selectedIndex_);
+	if (!policy)
+		return;
+
+	if (policy->IsKindOf(CLASSINFO(SfsPolicy))) {
+		sfsPolicy = (SfsPolicy *)policy;
+		sfsPolicy->setLogNo(logNo);
+	} else {
+		alfPolicy = (AlfPolicy *)policy;
+		alfPolicy->setLogNo(logNo);
+	}
+
+	policy->accept(updateTable);
+}
+
+void
+DlgRuleEditor::OnCommonLogNone(wxCommandEvent& event)
+{
+	updateLog(APN_LOG_NONE);
+}
+
+void
+DlgRuleEditor::OnCommonLogLog(wxCommandEvent& event)
+{
+	updateLog(APN_LOG_NORMAL);
+}
+
+void
+DlgRuleEditor::OnCommonLogAlert(wxCommandEvent& event)
+{
+	updateLog(APN_LOG_ALERT);
+}
+
+void
 DlgRuleEditor::OnTableOptionButtonClick(wxCommandEvent& event)
 {
 	wxArrayString		 choices;

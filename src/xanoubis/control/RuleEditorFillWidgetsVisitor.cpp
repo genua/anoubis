@@ -468,6 +468,7 @@ RuleEditorFillWidgetsVisitor::visitSfsPolicy(SfsPolicy *sfsPolicy)
 	ruleEditor_->sfsBinaryTextCtrl->AppendText(sfsPolicy->getBinaryName());
 	ruleEditor_->sfsRegisteredSumValueText->SetLabel(regHash);
 	ruleEditor_->sfsCurrentSumValueText->SetLabel(currHash);
+	showLog(sfsPolicy->getLogNo());
 
 	if (regHash.Cmp(currHash) == 0) {
 		ruleEditor_->sfsStatusValueText->SetLabel(_("match"));

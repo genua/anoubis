@@ -145,6 +145,8 @@ RuleEditorFillTableVisitor::showSfs(SfsPolicy *sfsPolicy, long idx)
 	    sfsPolicy->getHashTypeName());
 	ruleEditor_->ruleListCtrl->SetItem(idx, RULEDITOR_LIST_COLUMN_HASH,
 	    sfsPolicy->getHashValue());
+	ruleEditor_->ruleListCtrl->SetItem(idx, RULEDITOR_LIST_COLUMN_LOG,
+	    sfsPolicy->getLogName());
 }
 
 void
