@@ -530,6 +530,18 @@ AlfPolicy::setDirection(int direction)
 	AppPolicy *parent;
 
 	if (alfRule_->type == APN_ALF_FILTER) {
+		if (getProtocolNo() == IPPROTO_UDP) {
+			switch (direction) {
+			case APN_CONNECT:
+				direction = APN_SEND;
+				break;
+			case APN_ACCEPT:
+				direction = APN_RECEIVE;
+				break;
+			default:
+				break;
+			}
+		}
 		alfRule_->rule.afilt.filtspec.netaccess = direction;
 		parent = (AppPolicy *)this->getParent();
 		parent->setModified(true);
@@ -558,9 +570,36 @@ void
 AlfPolicy::setProtocol(int protocol)
 {
 	AppPolicy *parent;
+	int direction;
 
 	if (alfRule_->type == APN_ALF_FILTER) {
 		alfRule_->rule.afilt.filtspec.proto = protocol;
+		direction = alfRule_->rule.afilt.filtspec.netaccess;
+		if (protocol == IPPROTO_UDP) {
+			switch (direction) {
+			case APN_CONNECT:
+				direction = APN_SEND;
+				break;
+			case APN_ACCEPT:
+				direction = APN_RECEIVE;
+				break;
+			default:
+				break;
+			}
+		} else {
+			switch (direction) {
+			case APN_SEND:
+				direction = APN_CONNECT;
+				break;
+			case APN_RECEIVE:
+				direction = APN_ACCEPT;
+				break;
+			default:
+				break;
+			}
+		}
+		alfRule_->rule.afilt.filtspec.netaccess = direction;
+
 		parent = (AppPolicy *)this->getParent();
 		parent->setModified(true);
 	}

@@ -164,6 +164,7 @@ class DlgRuleEditor : public DlgRuleEditorBase
 
 		void OnAlfAcceptRadioButton(wxCommandEvent&);
 		void OnAlfConnectRadioButton(wxCommandEvent&);
+		void OnAlfBothRadioButton(wxCommandEvent&);
 
 		void OnSfsBinaryModifyButton(wxCommandEvent&);
 		void OnSfsUpdateChkSumButton(wxCommandEvent&);

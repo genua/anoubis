@@ -755,6 +755,12 @@ DlgRuleEditor::OnAlfConnectRadioButton(wxCommandEvent& event)
 }
 
 void
+DlgRuleEditor::OnAlfBothRadioButton(wxCommandEvent& event)
+{
+	updateDirection(APN_BOTH);
+}
+
+void
 DlgRuleEditor::OnSfsBinaryModifyButton(wxCommandEvent& event)
 {
 	SfsPolicy	*policy;

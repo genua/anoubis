@@ -161,9 +161,13 @@ RuleEditorFillWidgetsVisitor::showProtocol(int protocol)
 	switch (protocol) {
 	case IPPROTO_TCP:
 		ruleEditor_->alfTcpRadioButton->SetValue(true);
+		ruleEditor_->alfConnectRadioButton->SetLabel(_("connect"));
+		ruleEditor_->alfAcceptRadioButton->SetLabel(_("accept"));
 		break;
 	case IPPROTO_UDP:
 		ruleEditor_->alfUdpRadioButton->SetValue(true);
+		ruleEditor_->alfConnectRadioButton->SetLabel(_("send"));
+		ruleEditor_->alfAcceptRadioButton->SetLabel(_("receive"));
 		break;
 	case RULEDITOR_DISABLE:
 		ruleEditor_->alfProtocolText->Disable();
@@ -323,18 +327,25 @@ RuleEditorFillWidgetsVisitor::showDirection(int direction)
 	ruleEditor_->alfDirectionText->Enable();
 	ruleEditor_->alfAcceptRadioButton->Enable();
 	ruleEditor_->alfConnectRadioButton->Enable();
+	ruleEditor_->alfBothRadioButton->Enable();
 
 	switch (direction) {
+	case APN_SEND:
 	case APN_CONNECT:
 		ruleEditor_->alfConnectRadioButton->SetValue(true);
 		break;
+	case APN_RECEIVE:
 	case APN_ACCEPT:
 		ruleEditor_->alfAcceptRadioButton->SetValue(true);
+		break;
+	case APN_BOTH:
+		ruleEditor_->alfBothRadioButton->SetValue(true);
 		break;
 	case RULEDITOR_DISABLE:
 		ruleEditor_->alfDirectionText->Disable();
 		ruleEditor_->alfAcceptRadioButton->Disable();
 		ruleEditor_->alfConnectRadioButton->Disable();
+		ruleEditor_->alfBothRadioButton->Disable();
 		/* FALLTHROUGH */
 	default:
 		ruleEditor_->alfConnectRadioButton->SetValue(true);

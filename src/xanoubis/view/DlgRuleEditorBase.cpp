@@ -246,7 +246,7 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	wxStaticBoxSizer* logBox;
 	logBox = new wxStaticBoxSizer( new wxStaticBox( commonNbPanel, -1, _("Logging") ), wxVERTICAL );
 	
-	commonNoneLogRadioButton = new wxRadioButton( commonNbPanel, wxID_ANY, _("none "), wxDefaultPosition, wxDefaultSize, wxRB_GROUP );
+	commonNoneLogRadioButton = new wxRadioButton( commonNbPanel, wxID_ANY, _("none "), wxDefaultPosition, wxDefaultSize, 0 );
 	logBox->Add( commonNoneLogRadioButton, 0, wxALL, 5 );
 	
 	commonDoLogRadioButton = new wxRadioButton( commonNbPanel, wxID_ANY, _("log"), wxDefaultPosition, wxDefaultSize, 0 );
@@ -531,6 +531,11 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	alfConnectRadioButton = new wxRadioButton( alfNbPanel, wxID_ANY, _("connect"), wxDefaultPosition, wxDefaultSize, 0 );
 	alfConnectOptionSizer->Add( alfConnectRadioButton, 0, wxALL, 5 );
 	
+	alfBothRadioButton = new wxRadioButton( alfNbPanel, wxID_ANY, _("both"), wxDefaultPosition, wxDefaultSize, 0 );
+	alfBothRadioButton->Hide();
+	
+	alfConnectOptionSizer->Add( alfBothRadioButton, 0, wxALL, 5 );
+	
 	alfConnectionBox->Add( alfConnectOptionSizer, 0, wxEXPAND, 5 );
 	
 	alfConnectAddrSizer = new wxFlexGridSizer( 2, 6, 0, 0 );
@@ -639,7 +644,7 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	alfNbPanel->SetSizer( alfPanelMainSizer );
 	alfNbPanel->Layout();
 	alfPanelMainSizer->Fit( alfNbPanel );
-	ruleEditNotebook->AddPage( alfNbPanel, _("ALF"), false );
+	ruleEditNotebook->AddPage( alfNbPanel, _("ALF"), true );
 	sfsNbPanel = new wxScrolledWindow( ruleEditNotebook, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxVSCROLL );
 	sfsNbPanel->SetScrollRate( 5, 5 );
 	wxFlexGridSizer* sfsSizer;
@@ -732,7 +737,7 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	macroNbPanel->SetSizer( macroSizer );
 	macroNbPanel->Layout();
 	macroSizer->Fit( macroNbPanel );
-	ruleEditNotebook->AddPage( macroNbPanel, _("Macro"), true );
+	ruleEditNotebook->AddPage( macroNbPanel, _("Macro"), false );
 	
 	sz_main->Add( ruleEditNotebook, 1, wxEXPAND | wxALL, 5 );
 	
@@ -775,6 +780,7 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	alfAllCapRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorBase::OnAlfAllCapRadioButton ), NULL, this );
 	alfAcceptRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorBase::OnAlfAcceptRadioButton ), NULL, this );
 	alfConnectRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorBase::OnAlfConnectRadioButton ), NULL, this );
+	alfBothRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorBase::OnAlfBothRadioButton ), NULL, this );
 	alfSrcAddrComboBox->Connect( wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler( DlgRuleEditorBase::OnAlfSrcAddrComboBox ), NULL, this );
 	alfSrcAddrComboBox->Connect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( DlgRuleEditorBase::OnAlfSrcAddrComboBox ), NULL, this );
 	alfSrcAddrNetSpinCtrl->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( DlgRuleEditorBase::OnAlfSrcNetmaskSpinCtrl ), NULL, this );
