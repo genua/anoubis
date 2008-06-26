@@ -99,6 +99,12 @@ EscalationNotify::getToken(void)
 	return (notify_->u.notify->token);
 }
 
+anoubis_cookie_t
+EscalationNotify::getTaskCookie(void)
+{
+	return (get_value(notify_->u.notify->task_cookie));
+}
+
 wxString
 EscalationNotify::getBinaryName(void)
 {

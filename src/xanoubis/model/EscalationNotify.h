@@ -28,6 +28,27 @@
 #ifndef _ESCALATIONNOTIFY_H_
 #define _ESCALATIONNOTIFY_H_
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#include <sys/types.h>
+
+#ifdef LINUX
+#include <linux/eventdev.h>
+#include <linux/anoubis.h>
+#include <linux/anoubis_alf.h>
+#include <linux/anoubis_sfs.h>
+#endif
+
+#ifdef OPENBSD
+#include <dev/eventdev.h>
+#include <dev/anoubis.h>
+#include <dev/anoubis_alf.h>
+#include <dev/anoubis_sfs.h>
+#endif
+
+
 #include <anoubis_msg.h>
 #include <wx/string.h>
 
@@ -51,6 +72,7 @@ class EscalationNotify : public Notification {
 		void		 answer(NotifyAnswer *);
 		NotifyAnswer	*getAnswer(void);
 		anoubis_token_t	 getToken(void);
+		anoubis_cookie_t getTaskCookie(void);
 		wxString	 getBinaryName(void);
 		bool		 getChecksum(unsigned char *);
 		int		 getProtocolNo(void);

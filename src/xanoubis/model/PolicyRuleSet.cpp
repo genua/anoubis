@@ -340,7 +340,7 @@ PolicyRuleSet::createAnswerPolicy(EscalationNotify *escalation)
 		if (answer->getType() == NOTIFY_ANSWER_TIME) {
 			newAlfRule->scope->timeout = answer->getTime();
 		} else {
-			newAlfRule->scope->task = escalation->getToken();
+			newAlfRule->scope->task = escalation->getTaskCookie();
 		}
 	}
 
