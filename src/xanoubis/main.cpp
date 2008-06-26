@@ -554,3 +554,12 @@ AnoubisGuiApp::getCurrentProfileName(void)
 {
 	return (profile_);
 }
+
+bool
+AnoubisGuiApp::hasRuleSet(void)
+{
+	if (ruleSet_ == NULL)
+		return (false);
+	else
+		return (true);
+}

@@ -204,6 +204,12 @@ DlgRuleEditor::DlgRuleEditor(wxWindow* parent) : DlgRuleEditorBase(parent)
 
 	shortcuts_ = new AnShortcuts(this);
 
+	if (wxGetApp().hasRuleSet() == false) {
+		this->controlRuleSetSaveButton->Disable();
+		this->controlRuleCreateButton->Disable();
+		this->controlRuleDeleteButton->Disable();
+	}
+
 	parent->Connect(anEVT_RULEEDITOR_SHOW,
 	    wxCommandEventHandler(DlgRuleEditor::OnShow), NULL, this);
 	parent->Connect(anEVT_LOAD_RULESET,
@@ -889,6 +895,10 @@ void
 DlgRuleEditor::OnLoadRuleSet(wxCommandEvent& event)
 {
 	PolicyRuleSet *ruleSet;
+
+	this->controlRuleSetSaveButton->Enable();
+	this->controlRuleCreateButton->Enable();
+	this->controlRuleDeleteButton->Enable();
 
 	ruleSet = (PolicyRuleSet *)event.GetClientData();
 	loadRuleSet(ruleSet);
