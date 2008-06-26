@@ -936,7 +936,7 @@
                         <object class="notebookpage" expanded="1">
                             <property name="bitmap"></property>
                             <property name="label">Common</property>
-                            <property name="select">1</property>
+                            <property name="select">0</property>
                             <object class="wxScrolledWindow" expanded="1">
                                 <property name="bg"></property>
                                 <property name="context_help"></property>
@@ -2763,7 +2763,7 @@
                                             <property name="style"></property>
                                             <property name="subclass"></property>
                                             <property name="tooltip"></property>
-                                            <property name="value">Combo!</property>
+                                            <property name="value"></property>
                                             <property name="window_extra_style"></property>
                                             <property name="window_name"></property>
                                             <property name="window_style"></property>
@@ -5228,7 +5228,7 @@
                                                             <property name="style"></property>
                                                             <property name="subclass"></property>
                                                             <property name="tooltip"></property>
-                                                            <property name="value">10.0.1.1</property>
+                                                            <property name="value"></property>
                                                             <property name="window_extra_style"></property>
                                                             <property name="window_name"></property>
                                                             <property name="window_style"></property>
@@ -5543,7 +5543,7 @@
                                                             <property name="style"></property>
                                                             <property name="subclass"></property>
                                                             <property name="tooltip"></property>
-                                                            <property name="value">192.168.0.1</property>
+                                                            <property name="value"></property>
                                                             <property name="window_extra_style"></property>
                                                             <property name="window_name"></property>
                                                             <property name="window_style"></property>
@@ -5858,7 +5858,7 @@
                                                             <property name="style"></property>
                                                             <property name="subclass"></property>
                                                             <property name="tooltip"></property>
-                                                            <property name="value">53</property>
+                                                            <property name="value"></property>
                                                             <property name="window_extra_style"></property>
                                                             <property name="window_name"></property>
                                                             <property name="window_style"></property>
@@ -6003,7 +6003,7 @@
                                                             <property name="style"></property>
                                                             <property name="subclass"></property>
                                                             <property name="tooltip"></property>
-                                                            <property name="value">53</property>
+                                                            <property name="value"></property>
                                                             <property name="window_extra_style"></property>
                                                             <property name="window_name"></property>
                                                             <property name="window_style"></property>
@@ -6872,7 +6872,7 @@
                         <object class="notebookpage" expanded="1">
                             <property name="bitmap"></property>
                             <property name="label">Macro</property>
-                            <property name="select">0</property>
+                            <property name="select">1</property>
                             <object class="wxScrolledWindow" expanded="0">
                                 <property name="bg"></property>
                                 <property name="context_help"></property>

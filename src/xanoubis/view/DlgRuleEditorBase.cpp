@@ -298,7 +298,7 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	commonNbPanel->SetSizer( commonMainSizer );
 	commonNbPanel->Layout();
 	commonMainSizer->Fit( commonNbPanel );
-	ruleEditNotebook->AddPage( commonNbPanel, _("Common"), true );
+	ruleEditNotebook->AddPage( commonNbPanel, _("Common"), false );
 	applicationNbPanel = new wxScrolledWindow( ruleEditNotebook, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxVSCROLL );
 	applicationNbPanel->SetScrollRate( 5, 5 );
 	wxFlexGridSizer* appMainPanelSizer;
@@ -310,7 +310,7 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	appNameText->Wrap( -1 );
 	appMainPanelSizer->Add( appNameText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	appNameComboBox = new wxComboBox( applicationNbPanel, wxID_ANY, _("Combo!"), wxDefaultPosition, wxDefaultSize, 0, NULL, 0 ); 
+	appNameComboBox = new wxComboBox( applicationNbPanel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0 ); 
 	appMainPanelSizer->Add( appNameComboBox, 0, wxALL|wxALIGN_CENTER_VERTICAL|wxEXPAND, 5 );
 	
 	
@@ -541,7 +541,7 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	alfSrcAddrText->Wrap( -1 );
 	alfConnectAddrSizer->Add( alfSrcAddrText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	alfSrcAddrComboBox = new wxComboBox( alfNbPanel, wxID_ANY, _("10.0.1.1"), wxDefaultPosition, wxDefaultSize, 0, NULL, 0 ); 
+	alfSrcAddrComboBox = new wxComboBox( alfNbPanel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0 ); 
 	alfConnectAddrSizer->Add( alfSrcAddrComboBox, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	alfSrcAddrDelimiterText = new wxStaticText( alfNbPanel, wxID_ANY, _(" / "), wxDefaultPosition, wxDefaultSize, 0 );
@@ -561,7 +561,7 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	alfDstAddrText->Wrap( -1 );
 	alfConnectAddrSizer->Add( alfDstAddrText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	alfDstAddrComboBox = new wxComboBox( alfNbPanel, wxID_ANY, _("192.168.0.1"), wxDefaultPosition, wxDefaultSize, 0, NULL, 0 ); 
+	alfDstAddrComboBox = new wxComboBox( alfNbPanel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0 ); 
 	alfConnectAddrSizer->Add( alfDstAddrComboBox, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	alfDstAddrDelimiterText = new wxStaticText( alfNbPanel, wxID_ANY, _(" / "), wxDefaultPosition, wxDefaultSize, 0 );
@@ -581,7 +581,7 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	alfSrcPortText->Wrap( -1 );
 	alfConnectAddrSizer->Add( alfSrcPortText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	alfSrcPortComboBox = new wxComboBox( alfNbPanel, wxID_ANY, _("53"), wxDefaultPosition, wxDefaultSize, 0, NULL, 0 );
+	alfSrcPortComboBox = new wxComboBox( alfNbPanel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0 );
 	alfSrcPortComboBox->Append( _("80") );
 	alfSrcPortComboBox->Append( _("443") );
 	alfSrcPortComboBox->Append( _("$www") );
@@ -604,7 +604,7 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	alfDstPortText->Wrap( -1 );
 	alfConnectAddrSizer->Add( alfDstPortText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	alfDstPortComboBox = new wxComboBox( alfNbPanel, wxID_ANY, _("53"), wxDefaultPosition, wxDefaultSize, 0, NULL, 0 );
+	alfDstPortComboBox = new wxComboBox( alfNbPanel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0 );
 	alfDstPortComboBox->Append( _("80") );
 	alfDstPortComboBox->Append( _("443") );
 	alfDstPortComboBox->Append( _("$www") );
@@ -732,7 +732,7 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	macroNbPanel->SetSizer( macroSizer );
 	macroNbPanel->Layout();
 	macroSizer->Fit( macroNbPanel );
-	ruleEditNotebook->AddPage( macroNbPanel, _("Macro"), false );
+	ruleEditNotebook->AddPage( macroNbPanel, _("Macro"), true );
 	
 	sz_main->Add( ruleEditNotebook, 1, wxEXPAND | wxALL, 5 );
 	
