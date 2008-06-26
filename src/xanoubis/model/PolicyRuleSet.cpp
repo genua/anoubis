@@ -247,6 +247,11 @@ PolicyRuleSet::assembleAlfPolicy(AlfPolicy *old, EscalationNotify *escalation)
 	case APN_ALF_DEFAULT:
 		newAlfRule->type = APN_ALF_FILTER;
 		afilt = &(newAlfRule->rule.afilt);
+		if (answer->wasAllowed()) {
+			afilt->action = APN_ACTION_ALLOW;
+		} else {
+			afilt->action = APN_ACTION_DENY;
+		}
 		afilt->filtspec.af = 0; /* any */
 		afilt->filtspec.proto = escalation->getProtocolNo();
 		apn_free_port(afilt->filtspec.fromport);
@@ -272,6 +277,7 @@ PolicyRuleSet::createAnswerPolicy(EscalationNotify *escalation)
 	NotifyAnswer			*answer;
 	RuleSetSearchPolicyVisitor	*seeker;
 	struct apn_alfrule		*newAlfRule;
+	struct apn_alfrule		*newTmpAlfRule;
 	bool				 hasChecksum;
 
 	/* get the policy caused this escalation */
@@ -300,20 +306,33 @@ PolicyRuleSet::createAnswerPolicy(EscalationNotify *escalation)
 		apn_insert_alfrule(ruleSet_, newAlfRule,
 		    escalation->getRuleId());
 	} else {
+		int hashType;
 		/*
 		 * This escalation was caused by a rule been placed within an
 		 * any-rule. Thus we have to copy the any block and insert
 		 * the new rule to the new block.
 		 */
 		if (hasChecksum) {
-			apn_copyinsert(ruleSet_, newAlfRule,
-			    escalation->getRuleId(), filename.To8BitData(),
-			    csum, APN_HASH_SHA256);
+			hashType = APN_HASH_SHA256;
 		} else {
-			apn_copyinsert(ruleSet_, newAlfRule,
-			    escalation->getRuleId(), filename.To8BitData(),
-			    csum, APN_HASH_NONE);
+			hashType = APN_HASH_NONE;
 		}
+		apn_copyinsert(ruleSet_, newAlfRule, escalation->getRuleId(),
+		    filename.To8BitData(), csum, hashType);
+
+		/*
+		 * XXX ch: we also add an allow rule to the any-block,
+		 * because the current running application may not leave it.
+		 * Refere to bug #630 for this topic.
+		 */
+		newTmpAlfRule = assembleAlfPolicy((AlfPolicy *)triggerPolicy,
+		    escalation);
+		if (newTmpAlfRule->scope == NULL) {
+			newTmpAlfRule->scope = CALLOC_STRUCT(apn_scope);
+		}
+		newTmpAlfRule->scope->task = escalation->getToken();
+		apn_insert_alfrule(ruleSet_, newTmpAlfRule,
+		    escalation->getRuleId());
 	}
 
 	answer = escalation->getAnswer();
