@@ -148,7 +148,7 @@
                     <property name="border">5</property>
                     <property name="flag">wxEXPAND | wxALL</property>
                     <property name="proportion">1</property>
-                    <object class="wxNotebook" expanded="1">
+                    <object class="wxNotebook" expanded="0">
                         <property name="bg"></property>
                         <property name="bitmapsize"></property>
                         <property name="context_help"></property>
@@ -197,7 +197,7 @@
                         <object class="notebookpage" expanded="1">
                             <property name="bitmap"></property>
                             <property name="label">Rules</property>
-                            <property name="select">1</property>
+                            <property name="select">0</property>
                             <object class="wxPanel" expanded="0">
                                 <property name="bg"></property>
                                 <property name="context_help"></property>
@@ -515,7 +515,7 @@
                         <object class="notebookpage" expanded="1">
                             <property name="bitmap"></property>
                             <property name="label">Application View</property>
-                            <property name="select">0</property>
+                            <property name="select">1</property>
                             <object class="wxPanel" expanded="0">
                                 <property name="bg"></property>
                                 <property name="context_help"></property>
@@ -943,10 +943,10 @@
                                                                 <object class="wxStaticText" expanded="1">
                                                                     <property name="bg"></property>
                                                                     <property name="context_help"></property>
-                                                                    <property name="enabled">1</property>
+                                                                    <property name="enabled">0</property>
                                                                     <property name="fg"></property>
                                                                     <property name="font"></property>
-                                                                    <property name="hidden">0</property>
+                                                                    <property name="hidden">1</property>
                                                                     <property name="id">wxID_ANY</property>
                                                                     <property name="label">Grouping:</property>
                                                                     <property name="maximum_size"></property>
@@ -994,10 +994,10 @@
                                                                 <object class="wxRadioButton" expanded="1">
                                                                     <property name="bg"></property>
                                                                     <property name="context_help"></property>
-                                                                    <property name="enabled">1</property>
+                                                                    <property name="enabled">0</property>
                                                                     <property name="fg"></property>
                                                                     <property name="font"></property>
-                                                                    <property name="hidden">0</property>
+                                                                    <property name="hidden">1</property>
                                                                     <property name="id">wxID_GroupingProg</property>
                                                                     <property name="label">Program</property>
                                                                     <property name="maximum_size"></property>
@@ -1046,10 +1046,10 @@
                                                                 <object class="wxRadioButton" expanded="1">
                                                                     <property name="bg"></property>
                                                                     <property name="context_help"></property>
-                                                                    <property name="enabled">1</property>
+                                                                    <property name="enabled">0</property>
                                                                     <property name="fg"></property>
                                                                     <property name="font"></property>
-                                                                    <property name="hidden">0</property>
+                                                                    <property name="hidden">1</property>
                                                                     <property name="id">wxID_GroupingContex</property>
                                                                     <property name="label">Context</property>
                                                                     <property name="maximum_size"></property>

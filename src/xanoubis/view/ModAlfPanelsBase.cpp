@@ -87,7 +87,7 @@ ModAlfMainPanelBase::ModAlfMainPanelBase( wxWindow* parent, wxWindowID id, const
 	pan_Rules->SetSizer( sz_AlfRules );
 	pan_Rules->Layout();
 	sz_AlfRules->Fit( pan_Rules );
-	note_MainAlf->AddPage( pan_Rules, _("Rules"), true );
+	note_MainAlf->AddPage( pan_Rules, _("Rules"), false );
 	pan_TabAppView = new wxPanel( note_MainAlf, wxID_ANY, wxDefaultPosition, wxSize( -1,-1 ), wxTAB_TRAVERSAL );
 	wxBoxSizer* sz_AlfAppView;
 	sz_AlfAppView = new wxBoxSizer( wxHORIZONTAL );
@@ -142,12 +142,21 @@ ModAlfMainPanelBase::ModAlfMainPanelBase( wxWindow* parent, wxWindowID id, const
 	
 	tx_AppGroupChoice1 = new wxStaticText( pan_TabAppView, wxID_ANY, _("Grouping:"), wxDefaultPosition, wxDefaultSize, wxALIGN_RIGHT );
 	tx_AppGroupChoice1->Wrap( -1 );
+	tx_AppGroupChoice1->Enable( false );
+	tx_AppGroupChoice1->Hide();
+	
 	sz_AVEastHeader->Add( tx_AppGroupChoice1, 0, wxALIGN_RIGHT|wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	rad_GroupChoiceTwo1 = new wxRadioButton( pan_TabAppView, wxID_GroupingProg, _("Program"), wxDefaultPosition, wxDefaultSize, 0 );
+	rad_GroupChoiceTwo1->Enable( false );
+	rad_GroupChoiceTwo1->Hide();
+	
 	sz_AVEastHeader->Add( rad_GroupChoiceTwo1, 0, wxALL, 5 );
 	
 	rad_GroupChoiceOne1 = new wxRadioButton( pan_TabAppView, wxID_GroupingContex, _("Context"), wxDefaultPosition, wxDefaultSize, 0 );
+	rad_GroupChoiceOne1->Enable( false );
+	rad_GroupChoiceOne1->Hide();
+	
 	sz_AVEastHeader->Add( rad_GroupChoiceOne1, 0, wxALL, 5 );
 	
 	sz_AppViewRulesEast->Add( sz_AVEastHeader, 0, wxEXPAND, 5 );
@@ -167,7 +176,7 @@ ModAlfMainPanelBase::ModAlfMainPanelBase( wxWindow* parent, wxWindowID id, const
 	pan_TabAppView->SetSizer( sz_AlfAppView );
 	pan_TabAppView->Layout();
 	sz_AlfAppView->Fit( pan_TabAppView );
-	note_MainAlf->AddPage( pan_TabAppView, _("Application View"), false );
+	note_MainAlf->AddPage( pan_TabAppView, _("Application View"), true );
 	pan_TabOptions = new wxPanel( note_MainAlf, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
 	note_MainAlf->AddPage( pan_TabOptions, _("Options"), false );
 	

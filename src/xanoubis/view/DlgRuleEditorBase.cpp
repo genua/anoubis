@@ -203,7 +203,7 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	wxStaticBoxSizer* commonTimeBox;
 	commonTimeBox = new wxStaticBoxSizer( new wxStaticBox( commonNbPanel, -1, _("Duration") ), wxVERTICAL );
 	
-	commonProcEndRadioButton = new wxRadioButton( commonNbPanel, wxID_ANY, _("until end of process"), wxDefaultPosition, wxDefaultSize, 0 );
+	commonProcEndRadioButton = new wxRadioButton( commonNbPanel, wxID_ANY, _("until end of process"), wxDefaultPosition, wxDefaultSize, wxRB_GROUP );
 	commonTimeBox->Add( commonProcEndRadioButton, 0, wxALL, 1 );
 	
 	wxBoxSizer* commonTimeSizer;
@@ -286,7 +286,7 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	commonNbPanel->SetSizer( commonMainSizer );
 	commonNbPanel->Layout();
 	commonMainSizer->Fit( commonNbPanel );
-	ruleEditNotebook->AddPage( commonNbPanel, _("Common"), false );
+	ruleEditNotebook->AddPage( commonNbPanel, _("Common"), true );
 	applicationNbPanel = new wxScrolledWindow( ruleEditNotebook, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxVSCROLL );
 	applicationNbPanel->SetScrollRate( 5, 5 );
 	wxFlexGridSizer* appMainPanelSizer;
@@ -627,7 +627,7 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	alfNbPanel->SetSizer( alfPanelMainSizer );
 	alfNbPanel->Layout();
 	alfPanelMainSizer->Fit( alfNbPanel );
-	ruleEditNotebook->AddPage( alfNbPanel, _("ALF"), true );
+	ruleEditNotebook->AddPage( alfNbPanel, _("ALF"), false );
 	sfsNbPanel = new wxScrolledWindow( ruleEditNotebook, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxVSCROLL );
 	sfsNbPanel->SetScrollRate( 5, 5 );
 	wxFlexGridSizer* sfsSizer;
