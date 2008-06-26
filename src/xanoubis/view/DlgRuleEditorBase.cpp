@@ -72,18 +72,30 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	
 	controlFilterText = new wxStaticText( this, wxID_ANY, _("Search:"), wxDefaultPosition, wxDefaultSize, 0 );
 	controlFilterText->Wrap( -1 );
+	controlFilterText->Enable( false );
+	controlFilterText->Hide();
+	
 	controlRuleSizer->Add( controlFilterText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	controlFilterTextCtrl = new wxTextCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_DONTWRAP|wxTE_NO_VSCROLL );
+	controlFilterTextCtrl->Enable( false );
+	controlFilterTextCtrl->Hide();
+	
 	controlRuleSizer->Add( controlFilterTextCtrl, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	controlFilterInText = new wxStaticText( this, wxID_ANY, _("in"), wxDefaultPosition, wxDefaultSize, 0 );
 	controlFilterInText->Wrap( -1 );
+	controlFilterInText->Enable( false );
+	controlFilterInText->Hide();
+	
 	controlRuleSizer->Add( controlFilterInText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	wxString controlFilterChoiceChoices[] = { _("all"), _("Application"), _("Ip") };
 	int controlFilterChoiceNChoices = sizeof( controlFilterChoiceChoices ) / sizeof( wxString );
 	controlFilterChoice = new wxChoice( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, controlFilterChoiceNChoices, controlFilterChoiceChoices, 0 );
+	controlFilterChoice->Enable( false );
+	controlFilterChoice->Hide();
+	
 	controlRuleSizer->Add( controlFilterChoice, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	sz_main->Add( controlRuleSizer, 0, wxEXPAND, 5 );
