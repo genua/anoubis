@@ -54,6 +54,7 @@
 #include <wx/combobox.h>
 #include <wx/notebook.h>
 #include <wx/frame.h>
+#include <wx/panel.h>
 
 ///////////////////////////////////////////////////////////////////////////
 
@@ -101,20 +102,9 @@ class DlgRuleEditorBase : public wxFrame
 		wxRadioButton* commonAdminProfileRadioButton;
 		wxStaticText* commonCommentText;
 		wxTextCtrl* commonCommentTextCtrl;
-		wxRadioButton* commonProcEndRadioButton;
-		wxRadioButton* commonTimeRadioButton;
-		wxSpinCtrl* commonTimeSpinCtrl;
-		wxChoice* commonTimeUnitChoice;
-		wxRadioButton* commonAlwaysRadioButton;
 		wxRadioButton* commonNoneLogRadioButton;
 		wxRadioButton* commonDoLogRadioButton;
 		wxRadioButton* commonAlertLogRadioButton;
-		wxStaticText* commonCreatedText;
-		wxStaticText* commonCreateTextValue;
-		wxStaticText* commonModifiedText;
-		wxStaticText* commonModifiedTextValue;
-		wxStaticText* commonModificatorText;
-		wxStaticText* commonModificatorTextValue;
 		wxScrolledWindow* applicationNbPanel;
 		wxStaticText* appNameText;
 		wxComboBox* appNameComboBox;
@@ -279,6 +269,36 @@ class DlgRuleEditorBase : public wxFrame
 	
 	public:
 		DlgRuleEditorBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Anoubis Rule Editor"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( -1,-1 ), long style = wxDEFAULT_FRAME_STYLE|wxTAB_TRAVERSAL );
+	
+};
+
+///////////////////////////////////////////////////////////////////////////////
+/// Class MyPanel1
+///////////////////////////////////////////////////////////////////////////////
+class MyPanel1 : public wxPanel 
+{
+	private:
+	
+	protected:
+		wxRadioButton* commonProcEndRadioButton;
+		wxRadioButton* commonTimeRadioButton;
+		wxSpinCtrl* commonTimeSpinCtrl;
+		wxChoice* commonTimeUnitChoice;
+		wxRadioButton* commonAlwaysRadioButton;
+		wxStaticText* commonCreatedText;
+		wxStaticText* commonCreateTextValue;
+		wxStaticText* commonModifiedText;
+		wxStaticText* commonModifiedTextValue;
+		wxStaticText* commonModificatorText;
+		wxStaticText* commonModificatorTextValue;
+		wxRadioButton* commonProcEndRadioButton1;
+		wxRadioButton* commonTimeRadioButton1;
+		wxSpinCtrl* commonTimeSpinCtrl1;
+		wxChoice* commonTimeUnitChoice1;
+		wxRadioButton* commonAlwaysRadioButton1;
+	
+	public:
+		MyPanel1( wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 500,300 ), long style = wxTAB_TRAVERSAL );
 	
 };
 
