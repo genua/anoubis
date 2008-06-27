@@ -908,6 +908,7 @@ DlgRuleEditor::OnLoadRuleSet(wxCommandEvent& event)
 
 	ruleSet = (PolicyRuleSet *)event.GetClientData();
 	loadRuleSet(ruleSet);
+	selectLine(selectedIndex_);
 }
 
 void
@@ -923,7 +924,7 @@ DlgRuleEditor::OnLineSelected(wxListEvent& event)
 	if (autoCheck_) {
 		if (!CheckLastSelection()) {
 			selecter = (wxListView *)ruleListCtrl;
-			selecter->Focus(selectedId_);
+			selecter->Focus(selectedIndex_);
 			return;
 		}
 	}
@@ -1240,4 +1241,13 @@ DlgRuleEditor::OnChecksumError(wxCommandEvent& event)
 	}
 
 	wxEndBusyCursor();
+}
+
+void
+DlgRuleEditor::selectLine(unsigned long index)
+{
+	wxListView			*selecter;
+
+	selecter = (wxListView*)ruleListCtrl;
+	selecter->Select(index);
 }

@@ -193,6 +193,8 @@ class DlgRuleEditor : public DlgRuleEditorBase
 		void OnAnoubisShaCsum(wxCommandEvent&);
 		void OnChecksumError(wxCommandEvent&);
 
+		void selectLine(unsigned long);
+
 	public:
 		DlgRuleEditor(wxWindow *);
 		~DlgRuleEditor(void);

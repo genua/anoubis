@@ -43,6 +43,7 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	wxBoxSizer* sz_main;
 	sz_main = new wxBoxSizer( wxVERTICAL );
 	
+	sz_main->SetMinSize( wxSize( 780,-1 ) ); 
 	wxBoxSizer* controlRuleSizer;
 	controlRuleSizer = new wxBoxSizer( wxHORIZONTAL );
 	
@@ -267,13 +268,18 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	ruleEditNotebook->AddPage( commonNbPanel, _("Common"), true );
 	applicationNbPanel = new wxScrolledWindow( ruleEditNotebook, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxVSCROLL );
 	applicationNbPanel->SetScrollRate( 5, 5 );
+	wxBoxSizer* bSizer10;
+	bSizer10 = new wxBoxSizer( wxVERTICAL );
+	
 	wxFlexGridSizer* appMainPanelSizer;
 	appMainPanelSizer = new wxFlexGridSizer( 2, 5, 0, 0 );
 	appMainPanelSizer->SetFlexibleDirection( wxBOTH );
-	appMainPanelSizer->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+	appMainPanelSizer->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_ALL );
 	
 	appNameText = new wxStaticText( applicationNbPanel, wxID_ANY, _("Name:"), wxDefaultPosition, wxDefaultSize, 0 );
 	appNameText->Wrap( -1 );
+	appNameText->SetMinSize( wxSize( 165,-1 ) );
+	
 	appMainPanelSizer->Add( appNameText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	appNameComboBox = new wxComboBox( applicationNbPanel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0 ); 
@@ -336,7 +342,7 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	appMainPanelSizer->Add( appContextText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	appContextTextCtrl = new wxTextCtrl( applicationNbPanel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
-	appMainPanelSizer->Add( appContextTextCtrl, 0, wxALL|wxALIGN_CENTER_VERTICAL|wxEXPAND, 5 );
+	appMainPanelSizer->Add( appContextTextCtrl, 0, wxALIGN_CENTER_VERTICAL|wxALL|wxEXPAND, 5 );
 	
 	appContextModifyButton = new wxButton( applicationNbPanel, wxID_ANY, _("modify"), wxDefaultPosition, wxDefaultSize, 0 );
 	appMainPanelSizer->Add( appContextModifyButton, 0, wxALL|wxALIGN_CENTER_VERTICAL|wxALIGN_RIGHT, 5 );
@@ -350,58 +356,69 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	
 	appMainPanelSizer->Add( appInheritanceAddButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
+	bSizer10->Add( appMainPanelSizer, 1, wxEXPAND, 5 );
+	
+	wxFlexGridSizer* fgSizer10;
+	fgSizer10 = new wxFlexGridSizer( 1, 5, 0, 0 );
+	fgSizer10->SetFlexibleDirection( wxBOTH );
+	fgSizer10->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_ALL );
+	
 	appRegisteredSumLabelText = new wxStaticText( applicationNbPanel, wxID_ANY, _("Checksum (registered):"), wxDefaultPosition, wxDefaultSize, 0 );
 	appRegisteredSumLabelText->Wrap( -1 );
-	appMainPanelSizer->Add( appRegisteredSumLabelText, 0, wxALL, 5 );
+	appRegisteredSumLabelText->SetMinSize( wxSize( 165,-1 ) );
+	
+	fgSizer10->Add( appRegisteredSumLabelText, 0, wxALIGN_BOTTOM|wxALL, 5 );
 	
 	appRegisteredSumValueText = new wxStaticText( applicationNbPanel, wxID_ANY, _("0"), wxDefaultPosition, wxDefaultSize, 0 );
 	appRegisteredSumValueText->Wrap( -1 );
-	appMainPanelSizer->Add( appRegisteredSumValueText, 0, wxALL, 5 );
+	fgSizer10->Add( appRegisteredSumValueText, 0, wxALIGN_BOTTOM|wxALL, 5 );
 	
 	
-	appMainPanelSizer->Add( 0, 0, 1, wxEXPAND, 5 );
+	fgSizer10->Add( 0, 0, 1, wxEXPAND, 5 );
 	
 	
-	appMainPanelSizer->Add( 0, 0, 1, wxEXPAND, 5 );
+	fgSizer10->Add( 0, 0, 1, wxEXPAND, 5 );
 	
 	
-	appMainPanelSizer->Add( 0, 0, 1, wxEXPAND, 5 );
+	fgSizer10->Add( 0, 0, 1, wxEXPAND, 5 );
 	
 	appCurrentSumLabelText = new wxStaticText( applicationNbPanel, wxID_ANY, _("Checksum (current):"), wxDefaultPosition, wxDefaultSize, 0 );
 	appCurrentSumLabelText->Wrap( -1 );
-	appMainPanelSizer->Add( appCurrentSumLabelText, 0, wxALL, 5 );
+	fgSizer10->Add( appCurrentSumLabelText, 0, wxALIGN_TOP|wxLEFT, 5 );
 	
 	appCurrentSumValueText = new wxStaticText( applicationNbPanel, wxID_ANY, _("0"), wxDefaultPosition, wxDefaultSize, 0 );
 	appCurrentSumValueText->Wrap( -1 );
-	appMainPanelSizer->Add( appCurrentSumValueText, 0, wxALL, 5 );
+	fgSizer10->Add( appCurrentSumValueText, 0, wxLEFT, 5 );
 	
+	bSizer10->Add( fgSizer10, 0, wxEXPAND, 5 );
 	
-	appMainPanelSizer->Add( 0, 0, 1, wxEXPAND, 5 );
-	
-	
-	appMainPanelSizer->Add( 0, 0, 1, wxEXPAND, 5 );
-	
-	
-	appMainPanelSizer->Add( 0, 0, 1, wxEXPAND, 5 );
+	wxFlexGridSizer* fgSizer101;
+	fgSizer101 = new wxFlexGridSizer( 2, 5, 0, 0 );
+	fgSizer101->SetFlexibleDirection( wxBOTH );
+	fgSizer101->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_ALL );
 	
 	appStatusLabelText = new wxStaticText( applicationNbPanel, wxID_ANY, _("Status:"), wxDefaultPosition, wxDefaultSize, 0 );
 	appStatusLabelText->Wrap( -1 );
-	appMainPanelSizer->Add( appStatusLabelText, 0, wxALL, 5 );
+	appStatusLabelText->SetMinSize( wxSize( 165,-1 ) );
+	
+	fgSizer101->Add( appStatusLabelText, 0, wxALIGN_TOP|wxALL, 5 );
 	
 	appStatusValueText = new wxStaticText( applicationNbPanel, wxID_ANY, _("mismatch"), wxDefaultPosition, wxDefaultSize, 0 );
 	appStatusValueText->Wrap( -1 );
-	appMainPanelSizer->Add( appStatusValueText, 0, wxALL, 5 );
+	fgSizer101->Add( appStatusValueText, 0, wxALIGN_TOP|wxALL, 5 );
 	
 	appValidateChkSumButton = new wxButton( applicationNbPanel, wxID_ANY, _("validate"), wxDefaultPosition, wxDefaultSize, 0 );
-	appMainPanelSizer->Add( appValidateChkSumButton, 0, wxALL, 5 );
+	fgSizer101->Add( appValidateChkSumButton, 0, wxALIGN_TOP|wxALL, 5 );
 	
 	appUpdateChkSumButton = new wxButton( applicationNbPanel, wxID_ANY, _("update"), wxDefaultPosition, wxDefaultSize, 0 );
-	appMainPanelSizer->Add( appUpdateChkSumButton, 0, wxALL, 5 );
+	fgSizer101->Add( appUpdateChkSumButton, 0, wxALIGN_TOP|wxALL, 5 );
 	
-	applicationNbPanel->SetSizer( appMainPanelSizer );
+	bSizer10->Add( fgSizer101, 1, wxEXPAND, 5 );
+	
+	applicationNbPanel->SetSizer( bSizer10 );
 	applicationNbPanel->Layout();
-	appMainPanelSizer->Fit( applicationNbPanel );
-	ruleEditNotebook->AddPage( applicationNbPanel, _("Application"), false );
+	bSizer10->Fit( applicationNbPanel );
+	ruleEditNotebook->AddPage( applicationNbPanel, _("Application"), true );
 	alfNbPanel = new wxScrolledWindow( ruleEditNotebook, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxVSCROLL );
 	alfNbPanel->SetScrollRate( 5, 5 );
 	wxBoxSizer* alfPanelMainSizer;

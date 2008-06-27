@@ -134,9 +134,6 @@ class DlgRuleEditorBase : public wxFrame
 		
 		wxStaticText* appCurrentSumLabelText;
 		wxStaticText* appCurrentSumValueText;
-		
-		
-		
 		wxStaticText* appStatusLabelText;
 		wxStaticText* appStatusValueText;
 		wxButton* appValidateChkSumButton;
