@@ -30,6 +30,14 @@
 RuleSetSearchPolicyVisitor::RuleSetSearchPolicyVisitor(int id)
 {
 	seekId_ = id;
+	seekHash_ = wxEmptyString;
+	matchingPolicy_ = NULL;
+}
+
+RuleSetSearchPolicyVisitor::RuleSetSearchPolicyVisitor(wxString binary)
+{
+	seekId_ = 0;
+	seekHash_ = binary;
 	matchingPolicy_ = NULL;
 }
 
@@ -40,10 +48,21 @@ RuleSetSearchPolicyVisitor::~RuleSetSearchPolicyVisitor(void)
 void
 RuleSetSearchPolicyVisitor::compare(Policy *policy)
 {
-	/* first match strategie */
+	/* first match strategy */
 	if (matchingPolicy_ == NULL) {
 		if (policy->getId() == seekId_) {
 			matchingPolicy_ = policy;
+		}
+	}
+}
+
+void
+RuleSetSearchPolicyVisitor::compareHash(AppPolicy *appPolicy)
+{
+	/* first match strategy */
+	if (matchingPolicy_ == NULL) {
+		if (appPolicy->getHashValue().Cmp(seekHash_) == 0) {
+			matchingPolicy_ = appPolicy;
 		}
 	}
 }
@@ -63,6 +82,7 @@ RuleSetSearchPolicyVisitor::hasMatchingPolicy(void)
 void
 RuleSetSearchPolicyVisitor::visitAppPolicy(AppPolicy *appPolicy)
 {
+	compareHash(appPolicy);
 	compare((Policy *)appPolicy);
 }
 

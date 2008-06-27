@@ -28,18 +28,23 @@
 #ifndef _RULESETSEARCHPOLICYVISITOR_H_
 #define _RULESETSEARCHPOLICYVISITOR_H_
 
+#include <wx/string.h>
+
 #include "PolicyVisitor.h"
 
 class RuleSetSearchPolicyVisitor : public PolicyVisitor
 {
 	private:
-		int	 seekId_;
-		Policy	*matchingPolicy_;
+		int		 seekId_;
+		wxString	 seekHash_;
+		Policy		*matchingPolicy_;
 
 		void	compare(Policy *);
+		void	compareHash(AppPolicy *);
 
 	public:
 		RuleSetSearchPolicyVisitor(int);
+		RuleSetSearchPolicyVisitor(wxString);
 		~RuleSetSearchPolicyVisitor(void);
 
 		Policy	*getMatchingPolicy(void);

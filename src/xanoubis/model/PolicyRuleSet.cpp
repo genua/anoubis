@@ -271,6 +271,7 @@ void
 PolicyRuleSet::createAnswerPolicy(EscalationNotify *escalation)
 {
 	unsigned char			 csum[APN_HASH_SHA256_LEN];
+	wxString			 hashValue;
 	wxString			 filename;
 	Policy				*triggerPolicy;
 	Policy				*parentPolicy;
@@ -296,6 +297,10 @@ PolicyRuleSet::createAnswerPolicy(EscalationNotify *escalation)
 	hasChecksum = escalation->getChecksum(csum);
 
 	newAlfRule = assembleAlfPolicy((AlfPolicy *)triggerPolicy, escalation);
+	if (newAlfRule == NULL) {
+		wxGetApp().status(_("Couldn't clone and insert policy."));
+		return;
+	}
 
 	if (!parentPolicy->isDefault()) {
 		/*
@@ -306,7 +311,8 @@ PolicyRuleSet::createAnswerPolicy(EscalationNotify *escalation)
 		apn_insert_alfrule(ruleSet_, newAlfRule,
 		    escalation->getRuleId());
 	} else {
-		int hashType;
+		int				 hashType;
+		RuleSetSearchPolicyVisitor	*seekDouble;
 		/*
 		 * This escalation was caused by a rule been placed within an
 		 * any-rule. Thus we have to copy the any block and insert
@@ -314,12 +320,24 @@ PolicyRuleSet::createAnswerPolicy(EscalationNotify *escalation)
 		 */
 		if (hasChecksum) {
 			hashType = APN_HASH_SHA256;
+			/* XXX ch: move this into a method */
+			hashValue = wxT("0x");
+			for (unsigned int i=0; i<APN_HASH_SHA256_LEN; i++) {
+				hashValue += wxString::Format(wxT("%2.2x"),
+				    (unsigned char)csum[i]);
+			}
 		} else {
 			hashType = APN_HASH_NONE;
+			hashValue = wxEmptyString;
 		}
-		apn_copyinsert(ruleSet_, newAlfRule, escalation->getRuleId(),
-		    filename.To8BitData(), csum, hashType);
-
+		seekDouble = new RuleSetSearchPolicyVisitor(hashValue);
+		this->accept(*seekDouble);
+		if (!seekDouble->hasMatchingPolicy()) {
+			apn_copyinsert(ruleSet_, newAlfRule,
+			    escalation->getRuleId(), filename.To8BitData(),
+			    csum, hashType);
+		}
+		delete seekDouble;
 		/*
 		 * XXX ch: we also add an allow rule to the any-block,
 		 * because the current running application may not leave it.
@@ -327,6 +345,11 @@ PolicyRuleSet::createAnswerPolicy(EscalationNotify *escalation)
 		 */
 		newTmpAlfRule = assembleAlfPolicy((AlfPolicy *)triggerPolicy,
 		    escalation);
+		if (newAlfRule == NULL) {
+			wxGetApp().status(
+			    _("Couldn't clone and insert policy."));
+			return;
+		}
 		if (newTmpAlfRule->scope == NULL) {
 			newTmpAlfRule->scope = CALLOC_STRUCT(apn_scope);
 		}
@@ -362,7 +385,10 @@ PolicyRuleSet::OnAnswerEscalation(wxCommandEvent& event)
 	EscalationNotify	*escalation;
 
 	escalation = (EscalationNotify *)event.GetClientObject();
-	createAnswerPolicy(escalation);
+	if (escalation->getAnswer()->causeTmpRule() ||
+	    escalation->getAnswer()->causePermRule()) {
+		createAnswerPolicy(escalation);
+	}
 }
 
 void
