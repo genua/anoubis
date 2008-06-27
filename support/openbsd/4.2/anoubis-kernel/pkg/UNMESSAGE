@@ -1,0 +1,2 @@
+If you changed your /etc/boot.conf file in order to boot bsd.anoubis
+by default you should back out those changes now.

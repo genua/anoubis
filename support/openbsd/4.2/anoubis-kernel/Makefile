@@ -1,9 +1,12 @@
 # $OpenBSD$
+#
+# Versioning scheme of the Anoubis kernel package
+# MS6		0.3
+# MS7		0.4
+# MS7.revised	0.4 (p0)
 
 ONLY_FOR_ARCHS= i386
 COMMENT=        anoubis Kernel
-# MS6 0.3
-# MS7 0.4
 V=              0.4
 
 DISTNAME=       anoubis-kernel-${V}
@@ -25,6 +28,6 @@ NO_REGRESS=             Yes
 PKG_ARCH=               i386
 
 do-install:
-@cp ${WRKSRC}/bsd.anoubis ${PREFIX}/bin/bsd.anoubis
+	@cp ${WRKSRC}/bsd.anoubis ${PREFIX}/bin/bsd.anoubis
 
 .include <bsd.port.mk>
