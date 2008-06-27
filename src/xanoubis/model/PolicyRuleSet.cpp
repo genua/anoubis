@@ -490,6 +490,9 @@ PolicyRuleSet::createAlfPolicy(int insertBeforeId)
 	}
 
 	newAlfRule->type = APN_ALF_FILTER;
+	newAlfRule->rule.afilt.filtspec.proto = IPPROTO_TCP;
+	newAlfRule->rule.afilt.filtspec.af = AF_INET;
+	newAlfRule->rule.afilt.filtspec.netaccess = APN_CONNECT;
 
 	if (parentPolicy->IsKindOf(CLASSINFO(AppPolicy))) {
 		rc = apn_add2app_alfrule(ruleSet_, newAlfRule, insertBeforeId);

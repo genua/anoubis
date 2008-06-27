@@ -161,8 +161,6 @@ install-data-hook:
 xanoubis_SOURCES= \
 	model/AlertNotify.cpp \
 	model/AlertNotify.h \
-	model/ApnTranslator.cpp \
-	model/ApnTranslator.h \
 	model/EscalationNotify.cpp \
 	model/EscalationNotify.h \
 	model/LogNotify.cpp \
