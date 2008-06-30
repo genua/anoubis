@@ -210,6 +210,7 @@ PolicyRuleSet::assembleAlfPolicy(AlfPolicy *old, EscalationNotify *escalation)
 	} else {
 		if (newAlfRule->scope != NULL) {
 			free(newAlfRule->scope);
+			newAlfRule->scope = NULL;
 		}
 	}
 
@@ -226,13 +227,17 @@ PolicyRuleSet::assembleAlfPolicy(AlfPolicy *old, EscalationNotify *escalation)
 		}
 		if (old->getDirectionNo() == APN_ACCEPT) {
 			apn_free_port(afilt->filtspec.fromport);
+			afilt->filtspec.fromport = NULL;
 			if (hasLocalHost(old->getFromHostList())) {
 				apn_free_host(afilt->filtspec.fromhost);
+				afilt->filtspec.fromhost = NULL;
 			}
 		} else {
 			apn_free_port(afilt->filtspec.toport);
+			afilt->filtspec.toport = NULL;
 			if (hasLocalHost(old->getToHostList())) {
 				apn_free_host(afilt->filtspec.tohost);
+				afilt->filtspec.tohost = NULL;
 			}
 		}
 		break;
@@ -255,11 +260,15 @@ PolicyRuleSet::assembleAlfPolicy(AlfPolicy *old, EscalationNotify *escalation)
 		afilt->filtspec.af = 0; /* any */
 		afilt->filtspec.proto = escalation->getProtocolNo();
 		apn_free_port(afilt->filtspec.fromport);
+		afilt->filtspec.fromport = NULL;
 		apn_free_port(afilt->filtspec.toport);
+		afilt->filtspec.toport = NULL;
 		if (old->getDirectionNo() == APN_ACCEPT) {
 			apn_free_host(afilt->filtspec.tohost);
+			afilt->filtspec.tohost = NULL;
 		} else {
 			apn_free_host(afilt->filtspec.fromhost);
+			afilt->filtspec.fromhost = NULL;
 		}
 		break;
 	}
