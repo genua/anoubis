@@ -101,7 +101,6 @@ struct apn_app {
 	int		 hashtype;
 	u_int8_t	 hashvalue[MAX_APN_HASH_LEN];
 
-	struct apn_app	*tail;
 	struct apn_app	*next;
 };
 
@@ -121,14 +120,12 @@ struct apn_host {
 	struct apn_addr		 addr;
 	int			 negate;
 	struct apn_host		*next;
-	struct apn_host		*tail;
 };
 
 struct apn_port {
 	u_int16_t		 port;
 	u_int16_t		 port2;
 	struct apn_port		*next;
-	struct apn_port		*tail;
 };
 
 struct apn_afiltspec {
@@ -189,7 +186,6 @@ struct apn_alfrule {
 	} rule;
 
 	struct apn_alfrule	*next;
-	struct apn_alfrule	*tail;
 };
 
 struct apn_sfscheck {
@@ -212,7 +208,6 @@ struct apn_sfsrule {
 	} rule;
 
 	struct apn_sfsrule	*next;
-	struct apn_sfsrule	*tail;
 };
 
 enum {

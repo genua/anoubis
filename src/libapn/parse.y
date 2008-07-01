@@ -112,6 +112,31 @@ void		 freeport(struct apn_port *);
 static struct apn_ruleset	*apnrsp = NULL;
 static int			 counter = 1;
 
+struct alfrulehead {
+	struct apn_alfrule *head;
+	struct apn_alfrule *tail;
+};
+
+struct sfsrulehead {
+	struct apn_sfsrule *head;
+	struct apn_sfsrule *tail;
+};
+
+struct hosthead {
+	struct apn_host *head;
+	struct apn_host *tail;
+};
+
+struct apphead {
+	struct apn_app *head;
+	struct apn_app *tail;
+};
+
+struct porthead {
+	struct apn_port *head;
+	struct apn_port *tail;
+};
+
 typedef struct {
 	union {
 		int64_t			 number;
@@ -141,10 +166,15 @@ typedef struct {
 		struct apn_sfscheck	 sfscheck;
 		struct apn_addr		 addr;
 		struct apn_app		*app;
+		struct apphead		 apphead;
 		struct apn_port		*port;
+		struct porthead		 porthead;
 		struct apn_host		*host;
+		struct hosthead		 hosthead;
 		struct apn_alfrule	*alfrule;
+		struct alfrulehead	 alfrulehead;
 		struct apn_sfsrule	*sfsrule;
+		struct sfsrulehead	 sfsrulehead;
 		struct apn_rule		*ruleset;
 		struct apn_scope	*scope;
 	} v;
@@ -160,12 +190,15 @@ typedef struct {
 %token	RECEIVE TIMEOUT STATEFUL TASK UNTIL
 %token	<v.string>		STRING
 %token	<v.number>		NUMBER
-%type	<v.app>			app app_l apps sfsapp
+%type	<v.app>			app apps sfsapp
+%type	<v.apphead>		app_l
 %type	<v.hashtype>		hashtype
 %type	<v.hashspec>		hashspec
 %type	<v.addr>		address
-%type	<v.host>		host host_l hostspec
-%type	<v.port>		port port_l ports portspec
+%type	<v.host>		host hostspec
+%type	<v.hosthead>		host_l
+%type	<v.port>		port ports portspec
+%type	<v.porthead>		port_l
 %type	<v.hosts>		hosts
 %type	<v.number>		not capability defaultspec
 %type	<v.netaccess>		netaccess
@@ -175,13 +208,15 @@ typedef struct {
 %type	<v.action>		action
 %type	<v.log>			log
 %type	<v.afrule>		alffilterrule
-%type	<v.alfrule>		alfrule alfrule_l
+%type	<v.alfrule>		alfrule
+%type	<v.alfrulehead>		alfrule_l
 %type	<v.ruleset>		alfruleset
 %type	<v.acaprule>		alfcaprule
 %type	<v.dfltrule>		defaultrule alfdefault sfsdefault sbdefault;
 %type	<v.ctxrule>		ctxrule
 %type	<v.sfscheck>		sfscheckrule
-%type	<v.sfsrule>		sfsrule sfsrule_l
+%type	<v.sfsrule>		sfsrule
+%type	<v.sfsrulehead>		sfsrule_l
 %type	<v.timeout>		statetimeout
 %type	<v.scope>		scope
 %%
@@ -314,12 +349,12 @@ alfruleset	: apps optnl '{' optnl alfrule_l '}' nl {
 			if ((rule = calloc(1, sizeof(struct apn_rule)))
 			    == NULL) {
 				apn_free_app($1);
-				apn_free_alfrule($5);
+				apn_free_alfrule($5.head);
 				YYERROR;
 			}
 
 			rule->app = $1;
-			rule->rule.alf = $5;
+			rule->rule.alf = $5.head;
 			rule->type = APN_ALF;
 			rule->id = counter++;
 
@@ -328,7 +363,7 @@ alfruleset	: apps optnl '{' optnl alfrule_l '}' nl {
 				/* Account for errors in apn_add_alfrule */
 				file->errors++;
 				apn_free_app($1);
-				apn_free_alfrule($5);
+				apn_free_alfrule($5.head);
 				free(rule);
 				YYERROR;
 			}
@@ -338,15 +373,20 @@ alfruleset	: apps optnl '{' optnl alfrule_l '}' nl {
 alfrule_l	: alfrule_l alfrule nl		{
 			if ($2 == NULL)
 				$$ = $1;
-			else if ($1 == NULL)
-				$$ = $2;
 			else {
-				$1->tail->next = $2;
-				$1->tail = $2->tail;
+				$2->next = NULL;
+				if ($1.tail) {
+					$1.tail->next = $2;
+				} else {
+					$1.head = $2;
+				}
+				$1.tail = $2;
 				$$ = $1;
 			}
 		}
-		| /* Empty */			{ $$ = NULL; }
+		| /* Empty */			{
+			$$.head = $$.tail = NULL;
+		}
 		;
 
 scope		: /* Empty */ {
@@ -410,7 +450,6 @@ alfrule		: alffilterrule	scope		{
 
 			rule->type = APN_ALF_FILTER;
 			rule->rule.afilt = $1;
-			rule->tail = rule;
 			rule->id = counter++;
 			rule->scope = $2;
 
@@ -425,7 +464,6 @@ alfrule		: alffilterrule	scope		{
 
 			rule->type = APN_ALF_CAPABILITY;
 			rule->rule.acap = $1;
-			rule->tail = rule;
 			rule->id = counter++;
 			rule->scope = $2;
 
@@ -440,7 +478,6 @@ alfrule		: alffilterrule	scope		{
 
 			rule->type = APN_ALF_DEFAULT;
 			rule->rule.apndefault = $1;
-			rule->tail = rule;
 			rule->id = counter++;
 			rule->scope = $2;
 
@@ -455,7 +492,6 @@ alfrule		: alffilterrule	scope		{
 
 			rule->type = APN_ALF_CTX;
 			rule->rule.apncontext = $1;
-			rule->tail = rule;
 			rule->id = counter++;
 			rule->scope = $2;
 
@@ -544,7 +580,7 @@ hosts		: FROM hostspec portspec TO hostspec portspec	{
 		}
 		;
 
-hostspec	: '{' host_l '}'		{ $$ = $2; }
+hostspec	: '{' host_l '}'		{ $$ = $2.head; }
 		| host				{ $$ = $1; }
 		| ANY				{ $$ = NULL; }
 		| '$' STRING			{
@@ -561,15 +597,19 @@ hostspec	: '{' host_l '}'		{ $$ = $2; }
 host_l		: host_l comma host		{
 			if ($3 == NULL)
 				$$ = $1;
-			else if ($1 == NULL)
-				$$ = $3;
 			else {
-				$1->tail->next = $3;
-				$1->tail = $3->tail;
+				if ($1.tail) {
+					$1.tail->next = $3;
+				} else {
+					$1.head = $3;
+				}
+				$1.tail = $3;
 				$$ = $1;
 			}
 		}
-		| host				{ $$ = $1; }
+		| host				{
+			$$.head = $$.tail = $1;
+		}
 		;
 
 host		: not address			{
@@ -581,7 +621,6 @@ host		: not address			{
 
 			host->negate = $1;
 			host->addr = $2;
-			host->tail = host;
 
 			$$ = host;
 		}
@@ -600,7 +639,7 @@ portspec	: PORT ports			{ $$ = $2; }
 		| /* empty */			{ $$ = NULL; }
 		;
 
-ports		: '{' port_l '}'		{ $$ = $2; }
+ports		: '{' port_l '}'		{ $$ = $2.head; }
 		| port				{ $$ = $1; }
 		| '$' STRING			{
 			struct var	*var;
@@ -616,15 +655,19 @@ ports		: '{' port_l '}'		{ $$ = $2; }
 port_l		: port_l comma port		{
 			if ($3 == NULL)
 				$$ = $1;
-			else if ($1 == NULL)
-				$$ = $3;
 			else {
-				$1->tail->next = $3;
-				$1->tail = $3->tail;
+				if ($1.tail) {
+					$1.tail->next = $3;
+				} else {
+					$1.head = $3;
+				}
+				$1.tail = $3;
 				$$ = $1;
 			}
 		}
-		| port				{ $$ = $1; }
+		| port				{
+			$$.head = $$.tail = $1;
+		}
 		;
 
 port		: NUMBER minus NUMBER		{
@@ -632,8 +675,6 @@ port		: NUMBER minus NUMBER		{
 			port = calloc(1, sizeof(struct apn_port));
 			if (port == NULL)
 				YYERROR;
-
-			port->tail = port;
 
 			if (portbynumber($1, &port->port) == -1) {
 				free(port);
@@ -662,8 +703,6 @@ port		: NUMBER minus NUMBER		{
 				YYERROR;
 			}
 
-			port->tail = port;
-
 			if (portbyname($1, &port->port) == -1) {
 				free($1);
 				free(port);
@@ -679,8 +718,6 @@ port		: NUMBER minus NUMBER		{
 			port = calloc(1, sizeof(struct apn_port));
 			if (port == NULL)
 				YYERROR;
-
-			port->tail = port;
 
 			if (portbynumber($1, &port->port) == -1) {
 				free(port);
@@ -714,15 +751,15 @@ sfsmodule	: SFS optnl '{' optnl sfsrule_l '}'	{
 
 			if ((rule = calloc(1, sizeof(struct apn_rule)))
 			    == NULL) {
-				apn_free_sfsrule($5);
+				apn_free_sfsrule($5.head);
 				YYERROR;
 			}
 
-			rule->rule.sfs = $5;
+			rule->rule.sfs = $5.head;
 			rule->type = APN_SFS;
 
 			if (apn_add_sfsrule(rule, apnrsp) != 0) {
-				apn_free_sfsrule($5);
+				apn_free_sfsrule($5.head);
 				free(rule);
 				YYERROR;
 			}
@@ -733,15 +770,20 @@ sfsmodule	: SFS optnl '{' optnl sfsrule_l '}'	{
 sfsrule_l	: sfsrule_l sfsrule nl		{
 			if ($2 == NULL)
 				$$ = $1;
-			else if ($1 == NULL)
-				$$ = $2;
 			else {
-				$1->tail->next = $2;
-				$1->tail = $2->tail;
+				$2->next = NULL;
+				if ($1.tail) {
+					$1.tail->next = $2;
+				} else {
+					$1.head = $2;
+				}
+				$1.tail = $2;
 				$$ = $1;
 			}
 		}
-		| /* Empty */			{ $$ = NULL; }
+		| /* Empty */			{
+			$$.head = $$.tail = NULL;
+		}
 		;
 
 sfsrule		: sfscheckrule scope		{
@@ -755,7 +797,6 @@ sfsrule		: sfscheckrule scope		{
 
 			rule->type = APN_SFS_CHECK;
 			rule->rule.sfscheck = $1;
-			rule->tail = rule;
 			rule->id = counter++;
 			rule->scope = $2;
 
@@ -770,7 +811,6 @@ sfsrule		: sfscheckrule scope		{
 
 			rule->type = APN_SFS_DEFAULT;
 			rule->rule.apndefault = $1;
-			rule->tail = rule;
 			rule->id = counter++;
 			rule->scope = $2;
 
@@ -908,7 +948,7 @@ defaultspec	: action			{ $$ = $1; }
 		/*
 		 * Common elements
 		 */
-apps		: '{' app_l '}'			{ $$ = $2; }
+apps		: '{' app_l '}'			{ $$ = $2.head; }
 		| app				{ $$ = $1; }
 		| ANY				{ $$ = NULL; }
 		| '$' STRING			{
@@ -925,15 +965,19 @@ apps		: '{' app_l '}'			{ $$ = $2; }
 app_l		: app_l comma optnl app		{
 			if ($4 == NULL)
 				$$ = $1;
-			else if ($1 == NULL)
-				$$ = $4;
 			else {
-				$1->tail->next = $4;
-				$1->tail = $4->tail;
+				if ($1.tail) {
+					$1.tail->next = $4;
+				} else {
+					$1.head = $4;
+				}
+				$1.tail = $4;
 				$$ = $1;
 			}
 		}
-		| app				{ $$ = $1; }
+		| app				{
+			$$.head = $$.tail = $1;
+		}
 		;
 
 app		: STRING hashspec		{
@@ -951,8 +995,6 @@ app		: STRING hashspec		{
 			}
 			app->hashtype = $2.type;
 			bcopy($2.value, app->hashvalue, sizeof(app->hashvalue));
-			app->tail = app;
-
 			free($1);
 
 			$$ = app;
@@ -973,8 +1015,6 @@ sfsapp		: STRING			{
 				YYERROR;
 			}
 			app->hashtype = APN_HASH_NONE;
-			app->tail = app;
-
 			free($1);
 
 			$$ = app;

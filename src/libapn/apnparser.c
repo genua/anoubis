@@ -427,7 +427,6 @@ apn_copyinsert(struct apn_ruleset *rs, struct apn_alfrule *arule, int id,
 	previous = NULL;
 	while (hp) {
 		if (hp->id == id) {
-			arule->tail = hp->tail;
 			arule->next = hp;
 
 			if (previous)
@@ -1369,7 +1368,6 @@ apn_searchinsert_alfrule(struct apnrule_queue *queue, struct apn_alfrule
 		while (hp) {
 			if (hp->id == id) {
 				if (arule) {
-					arule->tail = hp->tail;
 					arule->next = hp;
 
 					if (previous)
@@ -1404,7 +1402,6 @@ apn_searchinsert_sfsrule(struct apnrule_queue *queue, struct apn_sfsrule
 		while (hp) {
 			if (hp->id == id) {
 				if (srule) {
-					srule->tail = hp->tail;
 					srule->next = hp;
 
 					if (previous)
@@ -1480,7 +1477,7 @@ apn_copy_rule(struct apn_rule *rule)
 struct apn_alfrule *
 apn_copy_alfrules(struct apn_alfrule *rule)
 {
-	struct apn_alfrule	*newrule = NULL, *newhead, *hp;
+	struct apn_alfrule	*newrule = NULL, *newhead, *hp, *newtail = NULL;
 
 	hp = rule;
 	newhead = NULL;
@@ -1528,13 +1525,12 @@ apn_copy_alfrules(struct apn_alfrule *rule)
 			continue;
 		}
 
-		newrule->tail = newrule;
 		if (newhead == NULL)
 			newhead = newrule;
 		else {
-			newhead->tail->next = newrule;
-			newhead->tail = newrule;
+			newtail->next = newrule;
 		}
+		newtail = newrule;
 
 		hp = hp->next;
 	}
@@ -1602,7 +1598,7 @@ apn_copy_apndefault(struct apn_default *src, struct apn_default *dst)
 static struct apn_host *
 apn_copy_hosts(struct apn_host *host)
 {
-	struct apn_host	*hp, *newhost, *newhead;
+	struct apn_host	*hp, *newhost, *newhead, *newtail = NULL;
 
 	newhead = NULL;
 	hp = host;
@@ -1611,13 +1607,12 @@ apn_copy_hosts(struct apn_host *host)
 			goto errout;
 
 		bcopy(hp, newhost, sizeof(struct apn_host));
-		newhost->tail = newhost;
 		if (newhead == NULL)
 			newhead = newhost;
 		else {
-			newhead->tail->next = newhost;
-			newhead->tail = newhost;
+			newtail->next = newhost;
 		}
+		newtail = newhost;
 
 		hp = hp->next;
 	}
@@ -1632,7 +1627,7 @@ errout:
 static struct apn_port *
 apn_copy_ports(struct apn_port *port)
 {
-	struct apn_port	*hp, *newport, *newhead;
+	struct apn_port	*hp, *newport, *newhead, *newtail = NULL;
 
 	newhead = NULL;
 	hp = port;
@@ -1641,13 +1636,12 @@ apn_copy_ports(struct apn_port *port)
 			goto errout;
 
 		bcopy(hp, newport, sizeof(struct apn_port));
-		newport->tail = newport;
 		if (newhead == NULL)
 			newhead = newport;
 		else {
-			newhead->tail->next = newport;
-			newhead->tail = newport;
+			newtail->next = newport;
 		}
+		newtail = newport;
 
 		hp = hp->next;
 	}
@@ -1702,7 +1696,7 @@ static int
 apn_clean_alfrule(struct apn_alfrule **rule,
     int (*check)(struct apn_scope *, void*), void *data)
 {
-	struct apn_alfrule	*hp, *newtail = NULL;
+	struct apn_alfrule	*hp;
 	struct apn_alfrule	**prevp;
 	int ret = 0;
 
@@ -1710,18 +1704,12 @@ apn_clean_alfrule(struct apn_alfrule **rule,
 	while ((hp = *prevp)) {
 		if (hp->scope && (*check)(hp->scope, data)) {
 			(*prevp) = hp->next;
-			hp->next = hp->tail = NULL;
+			hp->next = NULL;
 			apn_free_alfrule(hp);
 			ret++;
 		} else {
-			newtail = hp;
 			prevp = &hp->next;
 		}
-	}
-	hp = *rule;
-	while(hp) {
-		hp->tail = newtail;
-		hp = hp->next;
 	}
 	return ret;
 }
@@ -1730,7 +1718,7 @@ static int
 apn_clean_sfsrule(struct apn_sfsrule **rule,
     int (*check)(struct apn_scope *, void*), void *data)
 {
-	struct apn_sfsrule	*hp, *newtail = NULL;
+	struct apn_sfsrule	*hp;
 	struct apn_sfsrule	**prevp;
 	int ret = 0;
 
@@ -1742,14 +1730,8 @@ apn_clean_sfsrule(struct apn_sfsrule **rule,
 			apn_free_sfsrule(hp);
 			ret++;
 		} else {
-			newtail = hp;
 			prevp = &hp->next;
 		}
-	}
-	hp = *rule;
-	while(hp) {
-		hp->tail = newtail;
-		hp = hp->next;
 	}
 	return ret;
 }
@@ -1826,7 +1808,6 @@ apn_remove_alf(struct apn_rule *rule, int id)
 		if (hp->id == id) {
 			if (previous) {
 				previous->next = hp->next;
-				previous->tail = hp->tail;
 			} else {
 				rule->rule.alf = hp->next;
 			}
@@ -1864,7 +1845,6 @@ apn_remove_sfs(struct apn_rule *rule, int id)
 		if (hp->id == id) {
 			if (previous) {
 				previous->next = hp->next;
-				previous->tail = hp->tail;
 			} else {
 				rule->rule.sfs = hp->next;
 			}
