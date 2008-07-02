@@ -62,8 +62,7 @@ xanoubis_CXXFLAGS = \
 xanoubis_DEPEND_LIBS = \
 	$(libapn) \
 	$(libanoubischat) \
-	$(libanoubisprotocol) \
-	$(SSL_LIBS)
+	$(libanoubisprotocol)
 
 if NEEDBSDCOMPAT
 xanoubis_CPPFLAGS += -I$(top_srcdir)/$(bsdcompatdir)
@@ -81,7 +80,8 @@ xanoubis_LDADD = \
 	@GTK_LIBS@ \
 	@GLIB_LIBS@ \
 	@NOTIFY_LIBS@ \
-	$(xanoubis_DEPEND_LIBS)
+	$(xanoubis_DEPEND_LIBS) \
+	$(SSL_LIBS)
 
 catalogdir = $(datadir)/$(bin_PROGRAMS)/catalogs/de
 utildir = $(datadir)/$(bin_PROGRAMS)/utils
