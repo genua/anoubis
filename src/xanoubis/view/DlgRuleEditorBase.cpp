@@ -55,7 +55,7 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	
 	wxString controlCreationChoiceChoices[] = { _("Application"), _("AppFilter"), _("SFS"), _("Variable") };
 	int controlCreationChoiceNChoices = sizeof( controlCreationChoiceChoices ) / sizeof( wxString );
-	controlCreationChoice = new wxChoice( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, controlCreationChoiceNChoices, controlCreationChoiceChoices, 0 );
+	controlCreationChoice = new wxChoice( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, controlCreationChoiceNChoices, controlCreationChoiceChoices, wxTAB_TRAVERSAL );
 	controlRuleSizer->Add( controlCreationChoice, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	controlRuleCreateButton = new wxButton( this, wxID_ANY, _("create"), wxDefaultPosition, wxDefaultSize, 0 );
@@ -104,7 +104,7 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	wxBoxSizer* controlRuleSetSizer;
 	controlRuleSetSizer = new wxBoxSizer( wxHORIZONTAL );
 	
-	controlRuleSetText = new wxStaticText( this, wxID_ANY, _("Ruleset:"), wxDefaultPosition, wxDefaultSize, 0 );
+	controlRuleSetText = new wxStaticText( this, wxID_ANY, _("Ruleset:"), wxDefaultPosition, wxDefaultSize, 0|wxTAB_TRAVERSAL );
 	controlRuleSetText->Wrap( -1 );
 	controlRuleSetText->SetMinSize( wxSize( 100,-1 ) );
 	
@@ -134,8 +134,8 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	ruleListCtrl = new wxListCtrl( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLC_HRULES|wxLC_REPORT|wxLC_SINGLE_SEL );
 	sz_main->Add( ruleListCtrl, 1, wxALL|wxEXPAND, 5 );
 	
-	ruleEditNotebook = new wxNotebook( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0|wxVSCROLL );
-	commonNbPanel = new wxScrolledWindow( ruleEditNotebook, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxVSCROLL );
+	ruleEditNotebook = new wxNotebook( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0|wxTAB_TRAVERSAL|wxVSCROLL );
+	commonNbPanel = new wxScrolledWindow( ruleEditNotebook, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxTAB_TRAVERSAL|wxTRANSPARENT_WINDOW|wxVSCROLL );
 	commonNbPanel->SetScrollRate( 5, 5 );
 	wxBoxSizer* commonMainSizer;
 	commonMainSizer = new wxBoxSizer( wxHORIZONTAL );
@@ -265,8 +265,8 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	commonNbPanel->SetSizer( commonMainSizer );
 	commonNbPanel->Layout();
 	commonMainSizer->Fit( commonNbPanel );
-	ruleEditNotebook->AddPage( commonNbPanel, _("Common"), true );
-	applicationNbPanel = new wxScrolledWindow( ruleEditNotebook, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxVSCROLL );
+	ruleEditNotebook->AddPage( commonNbPanel, _("Common"), false );
+	applicationNbPanel = new wxScrolledWindow( ruleEditNotebook, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxTAB_TRAVERSAL|wxVSCROLL );
 	applicationNbPanel->SetScrollRate( 5, 5 );
 	wxBoxSizer* bSizer10;
 	bSizer10 = new wxBoxSizer( wxVERTICAL );
@@ -282,7 +282,7 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	
 	appMainPanelSizer->Add( appNameText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	appNameComboBox = new wxComboBox( applicationNbPanel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0 ); 
+	appNameComboBox = new wxComboBox( applicationNbPanel, wxID_ANY, _("Combo!"), wxDefaultPosition, wxDefaultSize, 0, NULL, 0 ); 
 	appMainPanelSizer->Add( appNameComboBox, 0, wxALL|wxALIGN_CENTER_VERTICAL|wxEXPAND, 5 );
 	
 	
@@ -418,8 +418,8 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	applicationNbPanel->SetSizer( bSizer10 );
 	applicationNbPanel->Layout();
 	bSizer10->Fit( applicationNbPanel );
-	ruleEditNotebook->AddPage( applicationNbPanel, _("Application"), true );
-	alfNbPanel = new wxScrolledWindow( ruleEditNotebook, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxVSCROLL );
+	ruleEditNotebook->AddPage( applicationNbPanel, _("Application"), false );
+	alfNbPanel = new wxScrolledWindow( ruleEditNotebook, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxTAB_TRAVERSAL|wxTRANSPARENT_WINDOW|wxVSCROLL );
 	alfNbPanel->SetScrollRate( 5, 5 );
 	wxBoxSizer* alfPanelMainSizer;
 	alfPanelMainSizer = new wxBoxSizer( wxVERTICAL );
@@ -628,7 +628,7 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	alfNbPanel->Layout();
 	alfPanelMainSizer->Fit( alfNbPanel );
 	ruleEditNotebook->AddPage( alfNbPanel, _("ALF"), true );
-	sfsNbPanel = new wxScrolledWindow( ruleEditNotebook, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxVSCROLL );
+	sfsNbPanel = new wxScrolledWindow( ruleEditNotebook, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxTAB_TRAVERSAL|wxVSCROLL );
 	sfsNbPanel->SetScrollRate( 5, 5 );
 	wxFlexGridSizer* sfsSizer;
 	sfsSizer = new wxFlexGridSizer( 3, 4, 0, 0 );
@@ -694,7 +694,7 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	sfsNbPanel->Layout();
 	sfsSizer->Fit( sfsNbPanel );
 	ruleEditNotebook->AddPage( sfsNbPanel, _("SFS"), false );
-	macroNbPanel = new wxScrolledWindow( ruleEditNotebook, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxVSCROLL );
+	macroNbPanel = new wxScrolledWindow( ruleEditNotebook, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxTAB_TRAVERSAL|wxVSCROLL );
 	macroNbPanel->SetScrollRate( 5, 5 );
 	wxFlexGridSizer* macroSizer;
 	macroSizer = new wxFlexGridSizer( 3, 2, 0, 0 );
