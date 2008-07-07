@@ -189,7 +189,7 @@ SfsPolicy::calcCurrentHash(unsigned char csum[MAX_APN_HASH_LEN])
 	wxFile		*file;
 	struct stat	fileStat;
 
-	stat(getBinaryName().mb_str(wxConvUTF8), &fileStat);
+	stat((char *)getBinaryName().c_str(), &fileStat);
 	if (! (fileStat.st_mode & S_IRUSR))
 		return -2;
 
