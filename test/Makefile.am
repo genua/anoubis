@@ -29,8 +29,11 @@ if NEEDBSDCOMPAT
 BSDCOMPAT=bsdcompat
 endif
 
-SUBDIRS = libapn libanoubischat libanoubisprotocol anoubisd xanoubis \
-    $(BSDCOMPAT)
+if XANOUBIS
+GUI=xanoubis
+endif
+
+SUBDIRS = libapn libanoubischat libanoubisprotocol anoubisd $(GUI) $(BSDCOMPAT)
 
 # targets must exist, but need not to do anything
 flawfinder:

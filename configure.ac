@@ -161,6 +161,20 @@ AC_ARG_ENABLE(static-anoubisctl,
 	[linkanoubisctlstatic=no])
 AM_CONDITIONAL(STATIC_LINKING, [test "x$linkanoubisctlstatic" = "xyes"])
 
+dnl provide configure option for conditional "xanoubis"
+dnl the implicit default is to enable "xanoubis"
+AC_ARG_ENABLE(xanoubis,
+	AC_HELP_STRING([--enable-xanoubis], [build Anoubis-GUI]),
+	[case "${enableval}" in
+		yes) with_xanoubis=yes ;;
+		no)  with_xanoubis=no ;;
+		*)
+			AC_MSG_ERROR(bad value ${enableval} for
+				--enable-xanoubis) ;;
+	esac],
+	[with_xanoubis=yes])
+AM_CONDITIONAL(XANOUBIS, [test "x$with_xanoubis" = "xyes"])
+
 dnl determine wx-specific settings
 dnl
 dnl since wxwidgets does not provide a proper pkg-config interface, we have to

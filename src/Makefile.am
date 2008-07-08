@@ -29,9 +29,13 @@ if NEEDBSDCOMPAT
 BSDCOMPAT=bsdcompat
 endif
 
+if XANOUBIS
+GUI=xanoubis
+endif
+
 # Note:  Libraries must come first as applications might depend on them.
 SUBDIRS = $(BSDCOMPAT) libapn libanoubischat libanoubisprotocol anoubisd \
-    xanoubis anoubisctl sfssig
+	$(GUI) anoubisctl sfssig
 
 flawfinder:
 	for t in $(SUBDIRS); do cd $$t && make $@ && cd ..; done
