@@ -183,6 +183,7 @@ typedef struct {
 #define YYSTYPE_IS_DECLARED
 
 %}
+%expect 0
 
 %token	ALLOW DENY ALF SFS SB VS CAP CONTEXT RAW ALL OTHER LOG CONNECT ACCEPT
 %token	INET INET6 FROM TO PORT ANY SHA256 TCP UDP DEFAULT NEW ASK ALERT
@@ -764,7 +765,6 @@ sfsmodule	: SFS optnl '{' optnl sfsrule_l '}'	{
 				YYERROR;
 			}
 		}
-		| SFS optnl '{' optnl '}'
 		;
 
 sfsrule_l	: sfsrule_l sfsrule nl		{
