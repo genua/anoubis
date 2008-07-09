@@ -169,6 +169,7 @@ class DlgRuleEditor : public DlgRuleEditorBase
 		void OnSfsBinaryModifyButton(wxCommandEvent&);
 		void OnSfsUpdateChkSumButton(wxCommandEvent&);
 		void OnSfsValidateChkSumButton(wxCommandEvent&);
+		void OnSfsBinaryTextCtrl(wxCommandEvent&);
 
 		void OnAlfSrcAddrComboBox(wxCommandEvent&);
 		void OnAlfDstAddrComboBox(wxCommandEvent&);

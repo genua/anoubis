@@ -259,6 +259,7 @@ class DlgRuleEditorBase : public wxFrame
 		virtual void OnAlfSrcPortComboBox( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnAlfDstPortComboBox( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnAlfStateTimeoutChange( wxSpinEvent& event ){ event.Skip(); }
+		virtual void OnSfsBinaryTextCtrl( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnSfsBinaryModifyButton( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnSfsValidateChkSumButton( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnSfsUpdateChkSumButton( wxCommandEvent& event ){ event.Skip(); }

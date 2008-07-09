@@ -251,16 +251,25 @@ DlgRuleEditor::updateAppName(wxString appName)
 void
 DlgRuleEditor::updateBinName(wxString binName)
 {
-	AppPolicy			*policy;
+	Policy				*policy;
+	AppPolicy			*appPolicy;
+	SfsPolicy			*sfsPolicy;
 	RuleEditorFillTableVisitor	 updateTable(this, selectedIndex_);
 	RuleEditorFillWidgetsVisitor	 updateWidgets(this);
 
-	policy = (AppPolicy *)ruleListCtrl->GetItemData(selectedIndex_);
+	policy = (Policy *)ruleListCtrl->GetItemData(selectedIndex_);
 	if (policy == NULL) {
 		return;
 	}
+	
+	if (policy->IsKindOf(CLASSINFO(SfsPolicy))) {
+		sfsPolicy = (SfsPolicy *)policy;
+		sfsPolicy->setBinaryName(binName);
+	} else {
+		appPolicy = (AppPolicy *)policy;
+		appPolicy->setBinaryName(binName);
+	}
 
-	policy->setBinaryName(binName);
 	policy->accept(updateTable);
 	policy->accept(updateWidgets);
 }
@@ -534,6 +543,12 @@ DlgRuleEditor::OnAppBinaryTextCtrl(wxCommandEvent& event)
 }
 
 void
+DlgRuleEditor::OnSfsBinaryTextCtrl(wxCommandEvent& event)
+{
+	updateBinName(sfsBinaryTextCtrl->GetValue());
+}
+
+void
 DlgRuleEditor::OnAppBinaryModifyButton(wxCommandEvent& event)
 {
 	wxString	 caption = _("Choose a binary");
@@ -763,28 +778,22 @@ DlgRuleEditor::OnAlfBothRadioButton(wxCommandEvent& event)
 void
 DlgRuleEditor::OnSfsBinaryModifyButton(wxCommandEvent& event)
 {
-	SfsPolicy	*policy;
+	wxString	 caption = _("Choose a binary");
+	wxString	 wildcard = wxT("*");
+	wxString	 defaultDir = wxT("/usr/bin/");
+	wxString	 defaultFilename = wxEmptyString;
+	wxFileDialog	*fileDlg;
 
 	if (wxIsBusy())
 		return;
 
-	policy = (SfsPolicy *)ruleListCtrl->GetItemData(selectedIndex_);
-	if (!policy)
-		return;
+	wxBeginBusyCursor();
+	fileDlg = new wxFileDialog(NULL, caption, defaultDir, defaultFilename,
+	    wildcard, wxOPEN);
+	wxEndBusyCursor();
 
-	wxString	 caption = _("Choose a binary");
-	wxString	 wildcard = wxT("*");
-	wxString	 defaultDir = wxT("/usr/bin/");
-	wxString	 defaultFilename = policy->getBinaryName();
-	wxFileDialog	 fileDlg(NULL, caption, defaultDir, defaultFilename,
-			    wildcard, wxOPEN);
-
-	if (fileDlg.ShowModal() == wxID_OK) {
-		policy->setBinaryName(fileDlg.GetPath());
-		sfsBinaryTextCtrl->Clear();
-		sfsBinaryTextCtrl->AppendText(policy->getBinaryName());
-		ruleListCtrl->SetItem(selectedIndex_, RULEDITOR_LIST_COLUMN_BIN,
-		    policy->getBinaryName());
+	if (fileDlg->ShowModal() == wxID_OK) {
+		updateBinName(fileDlg->GetPath());
 	}
 }
 
