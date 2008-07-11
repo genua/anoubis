@@ -87,7 +87,7 @@ ModAlfMainPanelImpl::OnLoadRuleSet(wxCommandEvent& event)
 
 	/* trigger new * calculation of column width */
 	for (int i=0; i<MODALF_LIST_COLUMN_EOL; i++) {
-		lst_Rules->SetColumnWidth(i, wxLIST_AUTOSIZE);
+		lst_Rules->SetColumnWidth(i, wxLIST_AUTOSIZE_USEHEADER);
 	}
 	event.Skip();
 }
