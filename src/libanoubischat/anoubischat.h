@@ -88,8 +88,7 @@ struct achat_channel {
 	enum acc_tail		tail;	 /* SERVER, CLIENT */
 	enum acc_state		state;	 /* INITIALISED, ESTABLISHED, ... */
 	struct sockaddr_storage	addr;	 /* where we want to go to */
-	int			sockfd;
-	int			connfd;
+	int			fd;	 /* The socket file descriptor */
 
 	/* credentials of users connect via a unix domain socket */
 	uid_t			euid;

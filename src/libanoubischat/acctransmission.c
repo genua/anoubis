@@ -51,7 +51,7 @@ acc_flush(struct achat_channel *chan)
 	if (!chan->sendbuffer)
 		return ACHAT_RC_OK;
 	while((len = acc_bufferlen(buf))) {
-		int ret = write(chan->connfd, acc_bufferptr(buf), len);
+		int ret = write(chan->fd, acc_bufferptr(buf), len);
 		if (ret < 0) {
 			if (errno == EAGAIN) {
 				if (chan->event)

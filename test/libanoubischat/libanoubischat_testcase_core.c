@@ -49,7 +49,7 @@ START_TEST(tc_core_creation)
 
 	c = acc_create();
 	fail_if(c == NULL, "pointer empty");
-	fail_if(c->sockfd != -1, "not correctly initialized @sockfd");
+	fail_if(c->fd != -1, "not correctly initialized @sockfd");
 	mark_point();
 
 	rc = acc_destroy(NULL);

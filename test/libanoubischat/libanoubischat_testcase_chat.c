@@ -322,7 +322,7 @@ START_TEST(tc_chat_localip)
 
 	bzero(&ss, sizeof(ss));
 	sslen = sizeof(ss);
-	if (getsockname(s->sockfd, (struct sockaddr *)&ss, &sslen) == -1)
+	if (getsockname(s->fd, (struct sockaddr *)&ss, &sslen) == -1)
 		fail("error while asking about server socket name [%s]",
 		    strerror(errno));
 	fail_if(ss_sin->sin_port == 0,

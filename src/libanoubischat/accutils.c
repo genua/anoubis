@@ -56,11 +56,11 @@ acc_statetransit(struct achat_channel *acc, enum acc_state newstate)
 		ACC_CHKSTATE(acc, ACC_STATE_INITIALISED);
 		switch (acc->tail) {
 		case ACC_TAIL_SERVER:
-			if (acc->sockfd >= 0)
+			if (acc->fd >= 0)
 				acc->state = newstate;
 			break;
 		case ACC_TAIL_CLIENT:
-			if (acc->connfd >= 0)
+			if (acc->fd >= 0)
 				acc->state = newstate;
 			break;
 		default:
@@ -69,7 +69,7 @@ acc_statetransit(struct achat_channel *acc, enum acc_state newstate)
 		break;
 	case ACC_STATE_ESTABLISHED:
 		ACC_CHKSTATE(acc, ACC_STATE_NOTCONNECTED);
-		if (acc->connfd >= 0)
+		if (acc->fd >= 0)
 			acc->state = newstate;
 		break;
 	case ACC_STATE_TRANSFERING:
@@ -127,7 +127,7 @@ acc_io(struct achat_channel *acc, ssize_t (*f) (int, void *, size_t),
 	ACC_CHKPARAM(buf  != NULL);
 
 	while ((*size > pos) && (rc == ACHAT_RC_OK)) {
-		res = (f)(acc->connfd, buf + pos, *size - pos);
+		res = (f)(acc->fd, buf + pos, *size - pos);
 		switch (res) {
 		case -1:
 			/*

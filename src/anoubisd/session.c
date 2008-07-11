@@ -206,12 +206,12 @@ session_connect(int fd, short event, void *arg)
 		return;
 	}
 
-	event_set(&(session->ev_rdata), session->channel->connfd,
+	event_set(&(session->ev_rdata), session->channel->fd,
 	    EV_READ | EV_PERSIST, session_rxclient, session);
-	event_set(&(session->ev_wdata), session->channel->connfd,
+	event_set(&(session->ev_wdata), session->channel->fd,
 	    EV_WRITE, session_txclient, session);
 	event_add(&(session->ev_rdata), NULL);
-	session->connfd = session->channel->connfd;
+	session->connfd = session->channel->fd;
 	session->channel->event = &session->ev_wdata;
 	msg_init(session->connfd, "session");
 
@@ -229,7 +229,7 @@ session_rxclient(int fd, short event, void *arg)
 
 	session = (struct session *)arg;
 	while(1) {
-		ret = get_client_msg(session->channel->connfd, &m);
+		ret = get_client_msg(session->channel->fd, &m);
 		if (ret == 0) {
 			session_destroy(session);
 			DEBUG(DBG_TRACE, "<session_rxclient (receivemsg)");
@@ -388,7 +388,7 @@ session_main(struct anoubisd_config *conf, int pipe_m2s[2], int pipe_m2p[2],
 
 	/* setup keeper of incoming unix domain socket connections */
 	if (seg.keeper_uds != NULL) {
-		event_set(&(seg.ev_connect), (seg.keeper_uds)->sockfd,
+		event_set(&(seg.ev_connect), (seg.keeper_uds)->fd,
 		    EV_READ | EV_PERSIST, session_connect, &ev_info);
 		event_add(&(seg.ev_connect), NULL);
 	}

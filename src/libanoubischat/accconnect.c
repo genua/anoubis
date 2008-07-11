@@ -61,17 +61,17 @@ acc_prepare(struct achat_channel *acc)
 	case ACC_TAIL_SERVER:
 		size = acc_sockaddrsize(&acc->addr);
 
-		acc->sockfd = socket(acc->addr.ss_family, SOCK_STREAM, 0);
-		if (acc->sockfd == -1)
+		acc->fd = socket(acc->addr.ss_family, SOCK_STREAM, 0);
+		if (acc->fd == -1)
 			return (ACHAT_RC_ERROR);
 
-		if (fcntl(acc->sockfd, F_SETFD, FD_CLOEXEC) == -1)
+		if (fcntl(acc->fd, F_SETFD, FD_CLOEXEC) == -1)
 			return (ACHAT_RC_ERROR);
 
 		if (acc->addr.ss_family == AF_UNIX)
 			unlink(((struct sockaddr_un*)&(acc->addr))->sun_path);
 
-		rc = bind(acc->sockfd, (struct sockaddr*)&(acc->addr), size);
+		rc = bind(acc->fd, (struct sockaddr*)&(acc->addr), size);
 		if (rc == -1)
 			return (ACHAT_RC_ERROR);
 
@@ -89,16 +89,16 @@ acc_prepare(struct achat_channel *acc)
 				return (ACHAT_RC_ERROR);
 		}
 
-		rc = listen(acc->sockfd, ACHAT_MAX_BACKLOG);
+		rc = listen(acc->fd, ACHAT_MAX_BACKLOG);
 		if (rc == -1)
 			return (ACHAT_RC_ERROR);
 		break;
 	case ACC_TAIL_CLIENT:
-		acc->connfd = socket(acc->addr.ss_family, SOCK_STREAM, 0);
-		if (acc->connfd == -1)
+		acc->fd = socket(acc->addr.ss_family, SOCK_STREAM, 0);
+		if (acc->fd == -1)
 			return (ACHAT_RC_ERROR);
 
-		if (fcntl(acc->connfd, F_SETFD, FD_CLOEXEC) == -1)
+		if (fcntl(acc->fd, F_SETFD, FD_CLOEXEC) == -1)
 			return (ACHAT_RC_ERROR);
 
 		break;
@@ -113,40 +113,45 @@ acc_prepare(struct achat_channel *acc)
 achat_rc
 acc_open(struct achat_channel *acc)
 {
-	struct sockaddr_storage remote;
 	socklen_t size;
 	int rc;
 
 	ACC_CHKPARAM(acc != NULL);
 	ACC_CHKSTATE(acc, ACC_STATE_NOTCONNECTED);
-
+	
 	if (acc->tail == ACC_TAIL_SERVER) {
-		size = (socklen_t) sizeof(remote);
-		/* retry if we were interrupted (e.g by a signal) */
-		do {
-			acc->connfd = accept(acc->sockfd,
-			    (struct sockaddr *)&remote, &size);
-		} while ((acc->connfd == -1) && (errno == EINTR));
-		if (acc->connfd == -1)
+		struct achat_channel	*nc = acc_opendup(acc);
+
+		if (nc == NULL)
 			return (ACHAT_RC_ERROR);
+		
+		acc_close(acc);
+		memcpy(acc, nc, sizeof(struct achat_channel));
+		/* Change state back, otherwise acc_statetransit will fail */
+		acc->state = ACC_STATE_NOTCONNECTED;
+
+		/* Destroy temporary nc */
+		/* set state to NONE to prevent closing the socket */
+		nc->state = ACC_STATE_NONE;
+		acc_destroy(nc);
 	} else {
 		size = acc_sockaddrsize(&(acc->addr));
 		/* retry if we were interrupted (e.g by a signal) */
 		do {
-			rc = connect(acc->connfd,
+			rc = connect(acc->fd,
 			    (struct sockaddr *)&acc->addr, size);
 		} while (rc == EINTR);
 		if (rc != 0) {
-			close(acc->connfd);
-			acc->connfd = -1;
+			close(acc->fd);
+			acc->fd = -1;
 			return (ACHAT_RC_ERROR);
 		}
 	}
 
 	rc = acc_getpeerids(acc);
 	if (rc != ACHAT_RC_OK) {
-		close(acc->connfd);
-		acc->connfd = -1;
+		close(acc->fd);
+		acc->fd = -1;
 		return (ACHAT_RC_ERROR);
 	}
 
@@ -157,23 +162,35 @@ struct achat_channel *
 acc_opendup(struct achat_channel *acc)
 {
 	struct achat_channel	*nc;
+	struct sockaddr_storage	remote;
+	socklen_t		size;
 
 	if (acc == NULL || acc->sendbuffer || acc->event)
 		return (NULL);
+
+	if (acc->tail != ACC_TAIL_SERVER)
+		return (NULL); /* Operation only allowed on server-tail */
 
 	nc = acc_create();
 	if (nc == NULL)
 		return (NULL);
 
 	memcpy(nc, acc, sizeof(struct achat_channel));
-	nc->sockfd = dup(acc->sockfd);
-	if (nc->sockfd == -1) {
+	nc->tail = ACC_TAIL_CLIENT;
+
+	/* retry if we were interrupted (e.g by a signal) */
+	size = (socklen_t) sizeof(remote);
+	do {
+		nc->fd = accept(acc->fd,
+		    (struct sockaddr *)&remote, &size);
+	} while ((nc->fd == -1) && (errno == EINTR));
+	if (nc->fd == -1) {
 		acc_clear(nc);
 		acc_destroy(nc);
 		return (NULL);
 	}
 
-	if (acc_open(nc) != ACHAT_RC_OK) {
+	if (acc_statetransit(nc, ACC_STATE_ESTABLISHED) != ACHAT_RC_OK) {
 		acc_clear(nc);
 		acc_destroy(nc);
 		return (NULL);
@@ -193,8 +210,7 @@ acc_close(struct achat_channel *acc)
 		acc->sendbuffer = NULL;
 	}
 	acc->event = NULL;
-	close(acc->sockfd);
-	close(acc->connfd);
+	close(acc->fd);
 
 	if ((acc->addr.ss_family == AF_UNIX) && (acc->tail == ACC_TAIL_SERVER))
 		unlink(((struct sockaddr_un*)&(acc->addr))->sun_path);
@@ -219,7 +235,7 @@ acc_getpeerids(struct achat_channel *acc)
 		return (ACHAT_RC_OK);
 	}
 
-	rc = getpeereid(acc->connfd, &acc->euid, &acc->egid);
+	rc = getpeereid(acc->fd, &acc->euid, &acc->egid);
 	if (rc == -1)
 		return (ACHAT_RC_ERROR);
 

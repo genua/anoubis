@@ -78,10 +78,10 @@ acc_clear(struct achat_channel *acc)
 	ACC_CHKPARAM(acc != NULL);
 
 	bzero(acc, sizeof(struct achat_channel));
-	acc->sockfd = -1;
-	acc->connfd = -1;
+	acc->fd = -1;
 	acc->sendbuffer = NULL;
 	acc->event = NULL;
+	acc->state = ACC_STATE_NONE;
 
 	return (ACHAT_RC_OK);
 }
