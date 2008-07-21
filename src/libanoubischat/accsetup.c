@@ -79,6 +79,8 @@ acc_clear(struct achat_channel *acc)
 
 	bzero(acc, sizeof(struct achat_channel));
 	acc->fd = -1;
+	acc->euid = -1;
+	acc->egid = -1;
 	acc->sendbuffer = NULL;
 	acc->event = NULL;
 	acc->state = ACC_STATE_NONE;

@@ -118,13 +118,13 @@ acc_open(struct achat_channel *acc)
 
 	ACC_CHKPARAM(acc != NULL);
 	ACC_CHKSTATE(acc, ACC_STATE_NOTCONNECTED);
-	
+
 	if (acc->tail == ACC_TAIL_SERVER) {
 		struct achat_channel	*nc = acc_opendup(acc);
 
 		if (nc == NULL)
 			return (ACHAT_RC_ERROR);
-		
+
 		acc_close(acc);
 		memcpy(acc, nc, sizeof(struct achat_channel));
 		/* Change state back, otherwise acc_statetransit will fail */
@@ -185,6 +185,12 @@ acc_opendup(struct achat_channel *acc)
 		    (struct sockaddr *)&remote, &size);
 	} while ((nc->fd == -1) && (errno == EINTR));
 	if (nc->fd == -1) {
+		acc_clear(nc);
+		acc_destroy(nc);
+		return (NULL);
+	}
+
+	if (acc_getpeerids(nc) != ACHAT_RC_OK) {
 		acc_clear(nc);
 		acc_destroy(nc);
 		return (NULL);

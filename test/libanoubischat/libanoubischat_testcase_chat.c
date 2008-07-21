@@ -252,32 +252,28 @@ tc_chat_lip_client(short port)
 
 START_TEST(tc_chat_localunixdomain)
 {
-	pid_t pid, childpid;
+	pid_t childpid;
 	char sockname[FILENAME_MAX];
 
 	bzero(sockname, sizeof(sockname));
 	snprintf(sockname, sizeof(sockname) - 1, "%s%s%s%08d",
 	    TCCHAT_SOCKETDIR, TCCHAT_SOCKETPREFIX, "server", getpid());
 
-	switch (childpid = fork()) {
+	switch (childpid = check_fork()) {
 	case -1:
 		fail("couldn't fork");
 		break;
 	case 0:
 		/* child / clinet */
 		tc_chat_lud_client(sockname);
+		check_waitpid_and_exit(0);
 		break;
 	default:
 		/* parent / server */
 		tc_chat_lud_server(sockname);
+		check_waitpid_and_exit(childpid);
 		break;
 	}
-	/* cleanup childs */
-	do {
-		if ((pid = wait(NULL)) == -1 &&
-		    errno != EINTR && errno != ECHILD)
-			fail("errors while cleanup childs (wait)");
-	} while (pid != -1 || (pid == -1 && errno == EINTR));
 	if (access(sockname, F_OK) == 0)
 		fail("unix domain test: socket not removed!");
 }
@@ -292,7 +288,7 @@ START_TEST(tc_chat_localip)
 	char			 buffer[16];
 	size_t			 size;
 	achat_rc		 rc = ACHAT_RC_ERROR;
-	pid_t			 pid, childpid;
+	pid_t			 childpid;
 	socklen_t                sslen;
 
 	s = acc_create();
@@ -329,13 +325,14 @@ START_TEST(tc_chat_localip)
 	    "couldn't determine port of server socket");
 	mark_point();
 
-	switch (childpid = fork()) {
+	switch (childpid = check_fork()) {
 	case -1:
 		fail("couldn't fork");
 		break;
 	case 0:
 		/* child / clinet */
 		tc_chat_lip_client(ntohs(ss_sin->sin_port));
+		check_waitpid_and_exit(0);
 		break;
 	default:
 		/* parent / server */
@@ -378,14 +375,10 @@ START_TEST(tc_chat_localip)
 		rc = acc_destroy(s);
 		fail_if(rc != ACHAT_RC_OK, "server destroy failed with rc=%d",
 		    rc);
+
+		check_waitpid_and_exit(childpid);
 		break;
 	}
-	/* cleanup childs */
-	do {
-		if ((pid = wait(NULL)) == -1 &&
-		    errno != EINTR && errno != ECHILD)
-			fail("errors while cleanup childs (wait)");
-	} while (pid != -1 || (pid == -1 && errno == EINTR));
 }
 END_TEST
 
