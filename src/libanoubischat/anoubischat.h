@@ -56,16 +56,6 @@ enum acc_tail {
 	ACC_TAIL_CLIENT
 };
 
-/* anoubis chat channel states */
-enum acc_state {
-	ACC_STATE_NONE = 0,
-	ACC_STATE_INITIALISED,
-	ACC_STATE_NOTCONNECTED,
-	ACC_STATE_ESTABLISHED,
-	ACC_STATE_TRANSFERING,
-	ACC_STATE_CLOSED
-};
-
 /* anoubis chat return codes */
 enum achat_rc {
 	ACHAT_RC_OK = 0,
@@ -73,7 +63,6 @@ enum achat_rc {
 	ACHAT_RC_NYI,		/* not yet implemented */
 	ACHAT_RC_EOF,		/* connection end */
 	ACHAT_RC_INVALPARAM,	/* invalid argument */
-	ACHAT_RC_WRONGSTATE,	/* invalid state */
 	ACHAT_RC_OOMEM		/* out of memory */
 };
 typedef enum achat_rc achat_rc;
@@ -86,7 +75,6 @@ struct event;
 struct achat_channel {
 	enum acc_sslmode	sslmode; /* CLEAR, ENCIPHERED */
 	enum acc_tail		tail;	 /* SERVER, CLIENT */
-	enum acc_state		state;	 /* INITIALISED, ESTABLISHED, ... */
 	struct sockaddr_storage	addr;	 /* where we want to go to */
 	int			fd;	 /* The socket file descriptor */
 

@@ -78,7 +78,10 @@ acc_sendmsg(struct achat_channel *acc, const char *msg, size_t size)
 	ACC_CHKPARAM(acc  != NULL);
 	ACC_CHKPARAM(msg  != NULL);
 	ACC_CHKPARAM(0 < size && size <= ACHAT_MAX_MSGSIZE);
-	ACC_CHKSTATE(acc, ACC_STATE_ESTABLISHED);
+
+	/* Can only send a message, if you have an open socket */
+	if (acc->fd == -1)
+		return (ACHAT_RC_ERROR);
 
 	if (acc->sendbuffer) {
 		rc = acc_flush(acc);
@@ -106,9 +109,8 @@ acc_sendmsg(struct achat_channel *acc, const char *msg, size_t size)
 		goto release_buffer;
 	sendptr = acc_bufferptr(acc->sendbuffer);
 
-	acc->state = ACC_STATE_TRANSFERING;
 	rc = acc_flush(acc);
-	acc->state = ACC_STATE_ESTABLISHED;
+
 	return rc;
 release_buffer:
 	acc_bufferfree(acc->sendbuffer);
@@ -129,15 +131,16 @@ acc_receivemsg(struct achat_channel *acc, char *msg, size_t *size)
 	ACC_CHKPARAM(acc  != NULL);
 	ACC_CHKPARAM(msg  != NULL);
 	ACC_CHKPARAM(0 < *size && *size <=  ACHAT_MAX_MSGSIZE);
-	ACC_CHKSTATE(acc, ACC_STATE_ESTABLISHED);
+
+	/* Can only receive a message, if you have an open socket */
+	if (acc->fd == -1)
+		return (ACHAT_RC_ERROR);
 
 	rc = acc_bufferinit(&pkgbuffer);
 	if (rc != ACHAT_RC_OK) {
 		/* no memory leak in OOM situations */
 		/*@i1*/return rc;
 	}
-
-	acc->state = ACC_STATE_TRANSFERING;
 
 	len = sizeof(pkgsizenet);
 	rc = acc_io(acc, read, (char*)&pkgsizenet, &len);
@@ -167,7 +170,6 @@ acc_receivemsg(struct achat_channel *acc, char *msg, size_t *size)
 	*size = len;
 
 out:
-	acc->state = ACC_STATE_ESTABLISHED;
 	acc_bufferfree(&pkgbuffer);
 
 	return (rc);

@@ -80,19 +80,14 @@ tc_connect_lud_client(const char *sockname)
 	rc = acc_prepare(c);
 	fail_if(rc != ACHAT_RC_OK, "client prepare failed with rc=%d [%s]",
 	    rc, strerror(errno));
-	if (c->state != ACC_STATE_NOTCONNECTED)
-		fail("client state not set correctly: expect %d got %d",
-		    ACC_STATE_NOTCONNECTED, c->state);
 
 	sleep(4); /* give the server time to open his socket */
 	rc = acc_open(c);
 	fail_if(rc != ACHAT_RC_OK, "client open failed with rc=%d [%s]",
 	    rc, strerror(errno));
+
 	fail_if(c->euid == -1, "euid != -1 expected, is %i", c->euid);
 	fail_if(c->egid == -1, "egid != -1 expected, is %i", c->egid);
-	if (c->state != ACC_STATE_ESTABLISHED)
-		fail("client state not set correctly: expect %d got %d",
-		    ACC_STATE_ESTABLISHED, c->state);
 
 	rc = acc_destroy(c);
 	fail_if(rc != ACHAT_RC_OK, "client destroy failed with rc=%d", rc);
@@ -130,16 +125,10 @@ tc_connect_lud_server(const char *sockname)
 	rc = acc_prepare(s);
 	fail_if(rc != ACHAT_RC_OK, "server prepare failed with rc=%d [%s]",
 	    rc, strerror(errno));
-	if (s->state != ACC_STATE_NOTCONNECTED)
-		fail("server state not set correctly: expect %d got %d",
-		    ACC_STATE_NOTCONNECTED, s->state);
 
 	rc = acc_open(s);
 	fail_if(rc != ACHAT_RC_OK, "server open failed with rc=%d [%s]",
 	    rc, strerror(errno));
-	if (s->state != ACC_STATE_ESTABLISHED)
-		fail("server state not set correctly: expect %d got %d",
-		    ACC_STATE_ESTABLISHED, s->state);
 
 	fail_if(s->euid != geteuid(), "server retrieved bogus uid %d, "
 	    "expected %d", s->euid, geteuid());
@@ -181,9 +170,6 @@ tc_connect_lud_serverdup(const char *sockname)
 	rc = acc_prepare(s);
 	fail_if(rc != ACHAT_RC_OK, "server prepare failed with rc=%d [%s]",
 	    rc, strerror(errno));
-	if (s->state != ACC_STATE_NOTCONNECTED)
-		fail("server state not set correctly: expect %d got %d",
-		    ACC_STATE_NOTCONNECTED, s->state);
 
 	s2 = acc_opendup(s);
 	fail_if(s2 == NULL, "server opendup failed [%s]", strerror(errno));
@@ -191,12 +177,6 @@ tc_connect_lud_serverdup(const char *sockname)
 	    "expected %d", s2->euid, geteuid());
 	fail_if(s2->egid != getegid(), "server retrieved bogus gid %d, "
 	    "expected %d", s2->egid, getegid());
-	if (s2->state != ACC_STATE_ESTABLISHED)
-		fail("server wrong dup state: expect %d got %d",
-		    ACC_STATE_ESTABLISHED, s->state);
-	if (s->state != ACC_STATE_NOTCONNECTED)
-		fail("server wrong org state: expect %d got %d",
-		    ACC_STATE_NOTCONNECTED, s->state);
 
 	rc = acc_destroy(s);
 	fail_if(rc != ACHAT_RC_OK, "server org destroy failed with rc=%d",
@@ -238,9 +218,6 @@ tc_connect_lip_client(short port)
 	rc = acc_prepare(c);
 	fail_if(rc != ACHAT_RC_OK, "client prepare failed with rc=%d [%s]",
 	    rc, strerror(errno));
-	if (c->state != ACC_STATE_NOTCONNECTED)
-		fail("client state not set correctly: expect %d got %d",
-		    ACC_STATE_NOTCONNECTED, c->state);
 
 	sleep(4); /* give the server time to open his socket */
 	rc = acc_open(c);
@@ -248,9 +225,6 @@ tc_connect_lip_client(short port)
 	    rc, strerror(errno));
 	fail_unless(c->euid == -1, "euid: -1 expected but is %i", c->euid);
 	fail_unless(c->egid == -1, "egid: -1 expected but is %i", c->egid);
-	if (c->state != ACC_STATE_ESTABLISHED)
-		fail("client state not set correctly: expect %d got %d",
-		    ACC_STATE_ESTABLISHED, c->state);
 
 	rc = acc_destroy(c);
 	fail_if(rc != ACHAT_RC_OK, "client destroy failed with rc=%d", rc);
@@ -367,9 +341,6 @@ START_TEST(tc_connect_localunixdomain_clientclose)
 	rc = acc_prepare(c);
 	fail_if(rc != ACHAT_RC_OK, "client prepare failed with rc=%d [%s]",
 	    rc, strerror(errno));
-	if (c->state != ACC_STATE_NOTCONNECTED)
-		fail("client state not set correctly: expect %d got %d",
-		    ACC_STATE_NOTCONNECTED, c->state);
 	mark_point();
 
 	s = acc_create();
@@ -391,9 +362,6 @@ START_TEST(tc_connect_localunixdomain_clientclose)
 	rc = acc_prepare(s);
 	fail_if(rc != ACHAT_RC_OK, "server prepare failed with rc=%d [%s]",
 	    rc, strerror(errno));
-	if (s->state != ACC_STATE_NOTCONNECTED)
-		fail("server state not set correctly: expect %d got %d",
-		    ACC_STATE_NOTCONNECTED, s->state);
 	mark_point();
 
 	if (access(sockname, F_OK) != 0)
@@ -477,9 +445,6 @@ START_TEST(tc_connect_localip)
 	rc = acc_prepare(s);
 	fail_if(rc != ACHAT_RC_OK, "server prepare failed with rc=%d [%s]",
 	    rc, strerror(errno));
-	if (s->state != ACC_STATE_NOTCONNECTED)
-		fail("server state not set correctly: expect %d got %d",
-		    ACC_STATE_NOTCONNECTED, s->state);
 	mark_point();
 
 	bzero(&ss, sizeof(ss));
@@ -509,9 +474,6 @@ START_TEST(tc_connect_localip)
 			s->euid);
 		fail_unless(s->egid == -1, "egid: -1 expected but is %i",
 			s->egid);
-		if (s->state != ACC_STATE_ESTABLISHED)
-			fail("server state not set correctly: expect %d got %d",
-			    ACC_STATE_ESTABLISHED, s->state);
 
 		rc = acc_destroy(s);
 		fail_if(rc != ACHAT_RC_OK, "server destroy failed with rc=%d",

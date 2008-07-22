@@ -45,8 +45,6 @@ START_TEST(tc_recvmsg_parameter)
 	fail_if(acc_receivemsg(&c, buf, &size) != ACHAT_RC_INVALPARAM);
 	size = ACHAT_MAX_MSGSIZE + 1;
 	fail_if(acc_receivemsg(&c, buf, &size) != ACHAT_RC_INVALPARAM);
-	size = 5;
-	fail_if(acc_receivemsg(&c, buf, &size) != ACHAT_RC_WRONGSTATE);
 }
 END_TEST
 

@@ -55,7 +55,14 @@ acc_prepare(struct achat_channel *acc)
 	int rc;
 
 	ACC_CHKPARAM(acc != NULL);
-	ACC_CHKSTATE(acc, ACC_STATE_INITIALISED);
+
+	if (acc->sslmode == ACC_SSLMODE_NONE) {
+		// SSL-mode not explicit set
+		return (ACHAT_RC_ERROR);
+	}
+
+	/* You don't need to check for a valid acc->addr */
+	/* If not set/supported, creation of socket will fail */
 
 	switch (acc->tail) {
 	case ACC_TAIL_SERVER:
@@ -103,11 +110,12 @@ acc_prepare(struct achat_channel *acc)
 
 		break;
 	default:
+		/* Tail not set */
 		return (ACHAT_RC_ERROR);
 		break;
 	}
 
-	return acc_statetransit(acc, ACC_STATE_NOTCONNECTED);
+	return (ACHAT_RC_OK);
 }
 
 achat_rc
@@ -117,7 +125,10 @@ acc_open(struct achat_channel *acc)
 	int rc;
 
 	ACC_CHKPARAM(acc != NULL);
-	ACC_CHKSTATE(acc, ACC_STATE_NOTCONNECTED);
+
+	/* Will fail, if no socket is open */
+	if (acc->fd == -1)
+		return (ACHAT_RC_ERROR);
 
 	if (acc->tail == ACC_TAIL_SERVER) {
 		struct achat_channel	*nc = acc_opendup(acc);
@@ -127,12 +138,9 @@ acc_open(struct achat_channel *acc)
 
 		acc_close(acc);
 		memcpy(acc, nc, sizeof(struct achat_channel));
-		/* Change state back, otherwise acc_statetransit will fail */
-		acc->state = ACC_STATE_NOTCONNECTED;
 
 		/* Destroy temporary nc */
-		/* set state to NONE to prevent closing the socket */
-		nc->state = ACC_STATE_NONE;
+		nc->fd = -1; /* You still need the socket! Copied to acc */
 		acc_destroy(nc);
 	} else {
 		size = acc_sockaddrsize(&(acc->addr));
@@ -155,7 +163,7 @@ acc_open(struct achat_channel *acc)
 		return (ACHAT_RC_ERROR);
 	}
 
-	return acc_statetransit(acc, ACC_STATE_ESTABLISHED);
+	return (ACHAT_RC_OK);
 }
 
 struct achat_channel *
@@ -196,12 +204,6 @@ acc_opendup(struct achat_channel *acc)
 		return (NULL);
 	}
 
-	if (acc_statetransit(nc, ACC_STATE_ESTABLISHED) != ACHAT_RC_OK) {
-		acc_clear(nc);
-		acc_destroy(nc);
-		return (NULL);
-	}
-
 	return (nc);
 }
 
@@ -216,12 +218,14 @@ acc_close(struct achat_channel *acc)
 		acc->sendbuffer = NULL;
 	}
 	acc->event = NULL;
+
 	close(acc->fd);
+	acc->fd = -1;
 
 	if ((acc->addr.ss_family == AF_UNIX) && (acc->tail == ACC_TAIL_SERVER))
 		unlink(((struct sockaddr_un*)&(acc->addr))->sun_path);
 
-	return acc_statetransit(acc, ACC_STATE_CLOSED);
+	return (ACHAT_RC_OK);
 }
 
 achat_rc
@@ -234,7 +238,7 @@ acc_getpeerids(struct achat_channel *acc)
 	 * Currently we can retrieve the user information only from
 	 * unix domain sockets. -- CH
 	 */
-	if (acc->addr.ss_family != PF_UNIX) {
+	if (acc->addr.ss_family != AF_UNIX) {
 		/* XXX HJH */
 		acc->euid = -1;
 		acc->egid = -1;

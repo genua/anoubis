@@ -55,9 +55,7 @@ acc_destroy(struct achat_channel *acc)
 
 	ACC_CHKPARAM(acc != NULL);
 
-	if ((acc->state == ACC_STATE_NOTCONNECTED) ||
-	    (acc->state == ACC_STATE_ESTABLISHED)  ||
-	    (acc->state == ACC_STATE_TRANSFERING))
+	if (acc->fd != -1)
 		rc = acc_close(acc);
 
 	if (acc->sendbuffer) {
@@ -66,10 +64,7 @@ acc_destroy(struct achat_channel *acc)
 	}
 	free((void*)acc);
 
-	if (rc != ACHAT_RC_OK)
-		return (rc);
-
-	return (ACHAT_RC_OK);
+	return (rc);
 }
 
 achat_rc
@@ -83,7 +78,6 @@ acc_clear(struct achat_channel *acc)
 	acc->egid = -1;
 	acc->sendbuffer = NULL;
 	acc->event = NULL;
-	acc->state = ACC_STATE_NONE;
 
 	return (ACHAT_RC_OK);
 }
@@ -93,10 +87,13 @@ acc_settail(struct achat_channel *acc, enum acc_tail newtail)
 {
 	ACC_CHKPARAM(acc != NULL);
 	ACC_CHKPARAM((0 <= newtail)&&(newtail < 3));
-	ACC_CHKSTATE(acc, ACC_STATE_NONE);
+
+	/* Operation only allowed, if you have no open connection */
+	if (acc->fd != -1)
+		return (ACHAT_RC_ERROR);
 
 	acc->tail = newtail;
-	return acc_statetransit(acc, ACC_STATE_INITIALISED);
+	return (ACHAT_RC_OK);
 }
 
 achat_rc
@@ -104,14 +101,17 @@ acc_setsslmode(struct achat_channel *acc, enum acc_sslmode newsslmode)
 {
 	ACC_CHKPARAM(acc != NULL);
 	ACC_CHKPARAM((0 <= newsslmode)&&(newsslmode < 3));
-	ACC_CHKSTATE(acc, ACC_STATE_NONE);
+
+	/* Operation only allowed, if you have no open connection */
+	if (acc->fd != -1)
+		return (ACHAT_RC_ERROR);
 
 	/* currently no encryption is implemented */
 	if (newsslmode == ACC_SSLMODE_ENCIPHERED)
 		return (ACHAT_RC_NYI);
 
 	acc->sslmode = newsslmode;
-	return acc_statetransit(acc, ACC_STATE_INITIALISED);
+	return (ACHAT_RC_OK);
 }
 
 achat_rc
@@ -119,9 +119,13 @@ acc_setaddr(struct achat_channel *acc, struct sockaddr_storage *newsa)
 {
 	ACC_CHKPARAM(acc   != NULL);
 	ACC_CHKPARAM(newsa != NULL);
-	ACC_CHKSTATE(acc, ACC_STATE_NONE);
+
+	/* Operation only allowed, if you have no open connection */
+	if (acc->fd != -1)
+		return (ACHAT_RC_ERROR);
 
 	bzero(&acc->addr, sizeof(acc->addr));
 	bcopy(newsa, &acc->addr, sizeof(acc->addr));
-	return acc_statetransit(acc, ACC_STATE_INITIALISED);
+
+	return (ACHAT_RC_OK);
 }

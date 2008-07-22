@@ -109,13 +109,9 @@ tc_Communicator_lud_server(const char *sockname)
 
 	rc = acc_prepare(s);
 	fail_if(rc != ACHAT_RC_OK, "server prepare failed");
-	if (s->state != ACC_STATE_NOTCONNECTED)
-		fail("server state not set correctly", __LINE__);
 
 	rc = acc_open(s);
 	fail_if(rc != ACHAT_RC_OK, "server open failed");
-	if (s->state != ACC_STATE_ESTABLISHED)
-		fail("server state not set correctly", __LINE__);
 	mark_point();
 
 	policy = anoubis_policy_comm_create(&policy_dispatch, NULL);

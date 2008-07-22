@@ -78,17 +78,11 @@ tc_chat_lud_client(const char *sockname)
 	rc = acc_prepare(c);
 	fail_if(rc != ACHAT_RC_OK, "client prepare failed with rc=%d [%s]",
 	    rc, strerror(errno));
-	if (c->state != ACC_STATE_NOTCONNECTED)
-		fail("client state not set correctly: expect %d got %d",
-		    ACC_STATE_NOTCONNECTED, c->state);
 
 	sleep(4); /* give the server time to open his socket */
 	rc = acc_open(c);
 	fail_if(rc != ACHAT_RC_OK, "client open failed with rc=%d [%s]",
 	    rc, strerror(errno));
-	if (c->state != ACC_STATE_ESTABLISHED)
-		fail("client state not set correctly: expect %d got %d",
-		    ACC_STATE_ESTABLISHED, c->state);
 	mark_point();
 
 	bzero(buffer, sizeof(buffer));
@@ -143,16 +137,10 @@ tc_chat_lud_server(const char *sockname)
 	rc = acc_prepare(s);
 	fail_if(rc != ACHAT_RC_OK, "server prepare failed with rc=%d [%s]",
 	    rc, strerror(errno));
-	if (s->state != ACC_STATE_NOTCONNECTED)
-		fail("server state not set correctly: expect %d got %d",
-		    ACC_STATE_NOTCONNECTED, s->state);
 
 	rc = acc_open(s);
 	fail_if(rc != ACHAT_RC_OK, "server open failed with rc=%d [%s]",
 	    rc, strerror(errno));
-	if (s->state != ACC_STATE_ESTABLISHED)
-		fail("server state not set correctly: expect %d got %d",
-		    ACC_STATE_ESTABLISHED, s->state);
 	mark_point();
 
 	rc = acc_sendmsg(s, msg, sizeof(msg));
@@ -213,17 +201,11 @@ tc_chat_lip_client(short port)
 	rc = acc_prepare(c);
 	fail_if(rc != ACHAT_RC_OK, "client prepare failed with rc=%d [%s]",
 	    rc, strerror(errno));
-	if (c->state != ACC_STATE_NOTCONNECTED)
-		fail("client state not set correctly: expect %d got %d",
-		    ACC_STATE_NOTCONNECTED, c->state);
 
 	sleep(4); /* give the server time to open his socket */
 	rc = acc_open(c);
 	fail_if(rc != ACHAT_RC_OK, "client open failed with rc=%d [%s]",
 	    rc, strerror(errno));
-	if (c->state != ACC_STATE_ESTABLISHED)
-		fail("client state not set correctly: expect %d got %d",
-		    ACC_STATE_ESTABLISHED, c->state);
 	mark_point();
 
 	rc = acc_sendmsg(c, msg, sizeof(msg));
@@ -311,9 +293,6 @@ START_TEST(tc_chat_localip)
 	rc = acc_prepare(s);
 	fail_if(rc != ACHAT_RC_OK, "server prepare failed with rc=%d [%s]",
 	    rc, strerror(errno));
-	if (s->state != ACC_STATE_NOTCONNECTED)
-		fail("server state not set correctly: expect %d got %d",
-		    ACC_STATE_NOTCONNECTED, s->state);
 	mark_point();
 
 	bzero(&ss, sizeof(ss));
@@ -339,9 +318,6 @@ START_TEST(tc_chat_localip)
 		rc = acc_open(s);
 		fail_if(rc != ACHAT_RC_OK, "server open failed with rc=%d [%s]",
 		    rc, strerror(errno));
-		if (s->state != ACC_STATE_ESTABLISHED)
-			fail("server state not set correctly: expect %d got %d",
-			    ACC_STATE_ESTABLISHED, s->state);
 		mark_point();
 
 		bzero(buffer, sizeof(buffer));

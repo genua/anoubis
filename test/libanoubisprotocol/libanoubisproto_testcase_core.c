@@ -127,14 +127,10 @@ void tp_chat_lud_client(const char *sockname)
 
 	rc = acc_prepare(c);
 	fail_if(rc != ACHAT_RC_OK, "client prepare failed");
-	if (c->state != ACC_STATE_NOTCONNECTED)
-		fail("client state not set correctly", __LINE__);
 
 	sleep(4); /* give the server time to open his socket */
 	rc = acc_open(c);
 	fail_if(rc != ACHAT_RC_OK, "client open failed");
-	if (c->state != ACC_STATE_ESTABLISHED)
-		fail("client state not set correctly", __LINE__);
 	mark_point();
 
 	client = anoubis_client_create(c);
@@ -293,13 +289,9 @@ void tp_chat_lud_server(const char *sockname)
 
 	rc = acc_prepare(s);
 	fail_if(rc != ACHAT_RC_OK, "server prepare failed");
-	if (s->state != ACC_STATE_NOTCONNECTED)
-		fail("server state not set correctly", __LINE__);
 
 	rc = acc_open(s);
 	fail_if(rc != ACHAT_RC_OK, "server open failed");
-	if (s->state != ACC_STATE_ESTABLISHED)
-		fail("server state not set correctly", __LINE__);
 	mark_point();
 
 	policy = anoubis_policy_comm_create(&policy_dispatch, NULL);

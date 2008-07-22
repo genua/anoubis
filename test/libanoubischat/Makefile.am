@@ -55,6 +55,7 @@ test_libanoubischat_SOURCES = \
 	libanoubischat_testcase_core.c     \
 	libanoubischat_testcase_connect.c  \
 	libanoubischat_testcase_chat.c     \
+	libanoubischat_testcase_prepare.c  \
 	libanoubischat_testcase_recvmsg.c  \
 	libanoubischat_testsuite.c         \
 	libanoubischat_testrunner.c

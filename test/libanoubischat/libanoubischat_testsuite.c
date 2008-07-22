@@ -30,6 +30,7 @@
 extern TCase *libanoubischat_testcase_core(void);
 extern TCase *libanoubischat_testcase_connect(void);
 extern TCase *libanoubischat_testcase_chat(void);
+extern TCase *libanoubischat_testcase_prepare(void);
 extern TCase *libanoubischat_testcase_recvmsg(void);
 
 
@@ -49,6 +50,10 @@ libanoubischat_testsuite(void)
 	/* Chat test case */
 	TCase *tc_chat = libanoubischat_testcase_chat();
 	suite_add_tcase(s, tc_chat);
+
+	/* Preparation test case */
+	TCase *tc_prepare = libanoubischat_testcase_prepare();
+	suite_add_tcase(s, tc_prepare);
 
 	/* recvmsg test case */
 	TCase *tc_recvmsg = libanoubischat_testcase_recvmsg();

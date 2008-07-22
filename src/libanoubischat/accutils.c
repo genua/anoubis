@@ -35,59 +35,6 @@
 #include "accutils.h"
 #include "anoubischat.h"
 
-achat_rc
-acc_statetransit(struct achat_channel *acc, enum acc_state newstate)
-{
-	ACC_CHKPARAM(acc != NULL);
-	ACC_CHKPARAM((0 <= newstate)&&(newstate < 6));
-
-	switch (newstate) {
-	case ACC_STATE_NONE:
-		acc->state = newstate;
-		break;
-	case ACC_STATE_INITIALISED:
-		ACC_CHKSTATE(acc, ACC_STATE_NONE);
-		if ((acc->addr.ss_family != 0)  &&
-		    (acc->tail != ACC_TAIL_NONE) &&
-		    (acc->sslmode != ACC_SSLMODE_NONE))
-			acc->state = newstate;
-		break;
-	case ACC_STATE_NOTCONNECTED:
-		ACC_CHKSTATE(acc, ACC_STATE_INITIALISED);
-		switch (acc->tail) {
-		case ACC_TAIL_SERVER:
-			if (acc->fd >= 0)
-				acc->state = newstate;
-			break;
-		case ACC_TAIL_CLIENT:
-			if (acc->fd >= 0)
-				acc->state = newstate;
-			break;
-		default:
-			break;
-		}
-		break;
-	case ACC_STATE_ESTABLISHED:
-		ACC_CHKSTATE(acc, ACC_STATE_NOTCONNECTED);
-		if (acc->fd >= 0)
-			acc->state = newstate;
-		break;
-	case ACC_STATE_TRANSFERING:
-		/* XXX by ch: missing requirements for state transission */
-		return (ACHAT_RC_NYI);
-		break;
-	case ACC_STATE_CLOSED:
-		acc->state = newstate;
-		break;
-	default:
-		/* this should never be reached */
-		return (ACHAT_RC_ERROR);
-		break;
-	}
-
-	return (ACHAT_RC_OK);
-}
-
 socklen_t
 acc_sockaddrsize(struct sockaddr_storage *sa)
 {

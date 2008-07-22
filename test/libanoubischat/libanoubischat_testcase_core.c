@@ -205,25 +205,16 @@ START_TEST(tc_core_state_initialised)
 	fail_if(rc != ACHAT_RC_OK, "setaddr failed with rc=%d", rc);
 	if (memcmp(&c->addr, &sa, sizeof(sa)) != 0)
 		fail("socket address not set correctly");
-	if (c->state != ACC_STATE_NONE)
-		fail("tainted state by setaddr: expect %d got %d",
-		    ACC_STATE_NONE, c->state);
 	mark_point();
 
 	rc = acc_settail(c, ACC_TAIL_SERVER);
 	fail_if(rc != ACHAT_RC_OK, "settail failed with rc=%d", rc);
 	fail_if(c->tail != ACC_TAIL_SERVER, "tail not set correctly");
-	if (c->state != ACC_STATE_NONE)
-		fail("tainted state by settail: expect %d got %d",
-		    ACC_STATE_NONE, c->state);
 	mark_point();
 
 	rc = acc_setsslmode(c, ACC_SSLMODE_CLEAR);
 	fail_if(rc != ACHAT_RC_OK, "setsslmode failed with rc=%d", rc);
 	fail_if(c->sslmode != ACC_SSLMODE_CLEAR, "sslmode not set correctly");
-	if (c->state != ACC_STATE_INITIALISED)
-		fail("state not set correctly: expect %d got %d",
-		    ACC_STATE_INITIALISED, c->state);
 
 	rc = acc_destroy(c);
 	fail_if(rc != ACHAT_RC_OK, "destroy failed with rc=%d", rc);
