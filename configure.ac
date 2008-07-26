@@ -134,6 +134,25 @@ AC_CONFIG_FILES([
 	lint/lint
 ])
 
+AC_CHECK_PROGS(LCOV, lcov, false)
+AC_CHECK_PROGS(GENHTML, genhtml, false)
+
+dnl conditionally enable code coverage
+AC_ARG_ENABLE(gcov,
+	AC_HELP_STRING([--enable-gcov], [turn on code coverage analysis tools]),
+	[case "${enableval}" in
+		yes) gcovenabled=yes;
+		     AM_CFLAGS="$AM_CFLAGS -fprofile-arcs -ftest-coverage" ;
+		     AM_CXXFLAGS="$AM_CXXFLAGS -fprofile-arcs -ftest-coverage" ;
+		     AM_LDFLAGS="$AM_LDFLAGS -lgcov" ;;
+		no)  gcovenabled=no ;;
+		*)
+		    AC_MSG_ERROR(bad value ${enableval} for
+				 --enable-gcov) ;;
+	esac],
+	[gcovenabled=no])
+AM_CONDITIONAL(GCOV_ENABLED, [test "x$gcovenabled" = "xyes"])
+
 dnl on some systems like openbsd, anoubisd must be linked statically
 AC_ARG_ENABLE(static-anoubisd,
 	AC_HELP_STRING([--enable-static-anoubisd], [link anoubisd statically]),
