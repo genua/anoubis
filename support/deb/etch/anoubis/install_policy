@@ -71,8 +71,8 @@ foreach my $file (@files) {
 	else {
 		# translate name to uid
 		$name = getpwnam($file);
-		if ($name !~ /^\d+$/ ) {
-			info("user $name not found, ignoring\n");
+		if (! defined $name or $name !~ /^\d+$/ ) {
+			info("user $file not found, ignoring\n");
 			next;
 		}
 	}
