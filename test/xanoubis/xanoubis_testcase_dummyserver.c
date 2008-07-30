@@ -195,7 +195,7 @@ xanoubis_testcase_dummyserver(int argc, char *argv[])
 	tc_argv = argv;
 	tc_argc = argc;
 
-	tcase_set_timeout(tc_ds, 20);
+	tcase_set_timeout(tc_ds, 60);
 	tcase_add_test(tc_ds, tc_dummyserver_args);
 	tcase_add_test(tc_ds, tc_dummyserver_run);
 
