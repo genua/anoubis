@@ -96,7 +96,7 @@ if GCOV_ENABLED
 lcov: check
 	$(LCOV_LCOV) --directory . --capture \
 	    --output-file anoubis.info; \
-	LANG=C $(LCOV_GENHTML) --prefix . \
+	LANG=C $(LCOV_GENHTML) --prefix $(CURDIR) \
 	    --output-directory $(LCOV_OUTPUT) \
 	    --title "Anoubis Code Coverage" \
 	    --show-details anoubis.info;
