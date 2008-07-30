@@ -55,9 +55,44 @@ libbsdcompat_so_SOURCES = \
 libbsdcompat_so_CFLAGS = -fPIC -shared $(shared_AM_CFLAGS)
 libbsdcompat_so_LDFLAGS = -nostartfiles -shared $(shared_AM_LDFLAGS)
 
-# no linting is done here, as we are not developing new source here. The
-# functions here are rather source imports from OpenBSD.
+libbsdcompat_a_SOURCES_lint = \
+	getpeereid.c_lint \
+	inet_net_pton.c_lint \
+	strlcat.c_lint \
+	strlcpy.c_lint \
+	strtonum.c_lint
 
-splint:
-flawfinder:
-lint:
+libbsdcompat_a_SOURCES_splint = \
+	getpeereid.c_splint \
+	inet_net_pton.c_splint \
+	strlcat.c_splint \
+	strlcpy.c_splint \
+	strtonum.c_splint \
+	bsdcompat.h_splint \
+	queue.h_splint
+
+libbsdcompat_a_SOURCES_flawfinder = \
+	getpeereid.c_flawfinder \
+	inet_net_pton.c_flawfinder \
+	strlcat.c_flawfinder \
+	strlcpy.c_flawfinder \
+	strtonum.c_flawfinder \
+	bsdcompat.h_flawfinder \
+	queue.h_flawfinder
+
+
+flawfinder_FLAGS=
+splint_FLAGS=$(INCLUDES)
+lint_FLAGS=$(INCLUDES)
+
+lint:		$(libbsdcompat_a_SOURCES_lint)
+splint:		$(libbsdcompat_a_SOURCES_splint)
+flawfinder:	$(libbsdcompat_a_SOURCES_flawfinder)
+
+include $(top_srcdir)/lint/Makefile.lint
+
+clean-local:
+	@rm -f $(libanoubischat_a_SOURCES_lint)
+	@rm -f $(libanoubischat_a_SOURCES_splint)
+	@rm -f $(libanoubischat_a_SOURCES_flawfinder)
+
