@@ -45,9 +45,18 @@ test_libapn_CPPFLAGS = \
 
 test_libapn_LDFLAGS = \
 	-L$(top_builddir)/$(libapndir) -dynamic
-test_libapn_LDADD = @CHECK_LIBS@ -lapn
 
+# conditionally static link of libraries to accomplish correct Code Coverage
+if GCOV_ENABLED
+test_libapn_LDADD = \
+	@CHECK_LIBS@ \
+	$(top_builddir)/$(libapndir)/libapn.a
+test_libapn_DEPENDENCIES = \
+	$(top_builddir)/$(libapndir)/libapn.a
+else
+test_libapn_LDADD = @CHECK_LIBS@ -lapn
 test_libapn_DEPENDENCIES = $(libapn)
+endif
 
 if NEEDBSDCOMPAT
 test_libapn_LDADD += $(libbsdcompat)

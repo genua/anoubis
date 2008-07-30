@@ -42,8 +42,19 @@ test_libanoubischat_CPPFLAGS = -I$(top_srcdir)/$(anoubischatdir)
 test_libanoubischat_LDFLAGS = \
 	$(AM_LDFLAGS) -dynamic \
 	-L$(top_builddir)/$(anoubischatdir)
+
+# conditionally static link of libraries to accomplish correct Code Coverage
+if GCOV_ENABLED
+test_libanoubischat_LDADD = \
+	@CHECK_LIBS@ \
+	$(top_builddir)/$(anoubischatdir)/libanoubischat.a
+test_libanoubischat_DEPENDENCIES = \
+	$(top_builddir)/$(anoubischatdir)/libanoubischat.a
+else
 test_libanoubischat_LDADD = @CHECK_LIBS@ -lanoubischat
 test_libanoubischat_DEPENDENCIES = $(libanoubischat)
+endif
+
 
 if NEEDBSDCOMPAT
 test_libanoubischat_DEPENDENCIES += $(libbsdcompat)

@@ -29,10 +29,12 @@ anoubisprotocoldir	= src/libanoubisprotocol
 anoubischatdir		= src/libanoubischat
 bsdcompatdir		= src/bsdcompat
 libanoubischat = $(top_builddir)/$(anoubischatdir)/libanoubischat.so
+libanoubischata = $(top_builddir)/$(anoubischatdir)/libanoubischat.a
 libbsdcompat = $(top_builddir)/$(bsdcompatdir)/libbsdcompat.a
 libanoubisps = $(top_builddir)/$(anoubisprotocoldir)/libanoubisps.so
 libanoubispsa = $(top_builddir)/$(anoubisprotocoldir)/libanoubisps.a
 libanoubispc = $(top_builddir)/$(anoubisprotocoldir)/libanoubispc.so
+libanoubispca = $(top_builddir)/$(anoubisprotocoldir)/libanoubispc.a
 
 # set TESTS_ENVIRONMENT for checks
 RPATH = $(top_builddir)/$(anoubisprotocoldir):$(top_builddir)/$(anoubischatdir):$(top_builddir)/$(bsdcompatdir)
@@ -53,13 +55,27 @@ test_libanoubisproto_LDFLAGS = \
 	-L$(top_builddir)/$(anoubischatdir) -dynamic
 test_libanoubisnotify_LDFLAGS = \
 	-L. -L$(top_builddir)/$(anoubisprotocoldir)
-test_libanoubisproto_LDADD = @CHECK_LIBS@ -lanoubisps -lanoubispc \
-	-lanoubischat
-test_libanoubisnotify_LDADD = @CHECK_LIBS@ -lanoubisps -lanoubischat
 
-test_libanoubisproto_DEPENDENCIES =	\
+# conditionally static link of libraries to accomplish correct Code Coverage
+if GCOV_ENABLED
+test_libanoubisproto_LDADD = \
+	@CHECK_LIBS@ $(libanoubispsa) $(libanoubispca) $(libanoubischata) 
+test_libanoubisnotify_LDADD = \
+	@CHECK_LIBS@ $(libanoubispsa) $(libanoubischata)
+test_libanoubisproto_DEPENDENCIES = \
+	$(libanoubispsa) $(libanoubispca) $(libanoubischata)
+test_libanoubisnotify_DEPENDENCIES = \
+	$(libanoubispsa) $(libanoubischata)
+else
+test_libanoubisproto_LDADD = \
+	@CHECK_LIBS@ -lanoubisps -lanoubispc -lanoubischat
+test_libanoubisnotify_LDADD = \
+	@CHECK_LIBS@ -lanoubisps -lanoubischat
+test_libanoubisproto_DEPENDENCIES = \
 	$(libanoubisps) $(libanoubispc) $(libanoubischat)
-test_libanoubisnotify_DEPENDENCIES = $(libanoubisps) libanoubischat.so
+test_libanoubisnotify_DEPENDENCIES = \
+	$(libanoubisps) libanoubischat.so
+endif
 
 if NEEDBSDCOMPAT
 CPPFLAGS += -I$(top_srcdir)/$(bsdcompatdir)
