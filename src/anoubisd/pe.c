@@ -3017,6 +3017,7 @@ pe_addrmatch_host(struct apn_host *host, void *addr, unsigned short af)
 	struct sockaddr_in6	*in6;
 	in_addr_t		 mask;
 	int			 match;
+	int			 negate;
 
 	DEBUG(DBG_PE_DECALF, "pe_addrmatch_host: host %p addr %p af %d", host,
 	    addr, af);
@@ -3035,6 +3036,7 @@ pe_addrmatch_host(struct apn_host *host, void *addr, unsigned short af)
 
 	hp = host;
 	while (hp) {
+		negate = hp->negate;
 		switch (af) {
 		case AF_INET:
 			in = (struct sockaddr_in *)addr;
@@ -3052,16 +3054,20 @@ pe_addrmatch_host(struct apn_host *host, void *addr, unsigned short af)
 		default:
 			log_warnx("pe_addrmatch_host: unknown address family "
 			    "%d", af);
-			match = 0;
+			match = negate = 0;
 		}
-		if (match)
+		if ((!negate && match) || (negate && !match))
 			break;
 		hp = hp->next;
 	}
 
-	DEBUG(DBG_PE_DECALF, "pe_addrmatch_host: match %d", match);
+	DEBUG(DBG_PE_DECALF, "pe_addrmatch_host: match %d, negate %d", match,
+	    negate);
 
-	return (match);
+	if (negate)
+	    return (!match);
+	else
+	    return (match);
 }
 
 int
