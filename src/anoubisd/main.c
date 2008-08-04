@@ -27,6 +27,10 @@
 
 #include "config.h"
 
+#ifdef S_SPLINT_S
+#include "splint-includes.h"
+#endif
+
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
@@ -48,10 +52,6 @@
 #include <syslog.h>
 #include <time.h>
 #include <unistd.h>
-
-#ifdef S_SPLINT_S
-#include "splint-includes.h"
-#endif
 
 #ifdef LINUX
 #include <linux/anoubis_sfs.h>
@@ -240,6 +240,7 @@ main(int argc, char *argv[])
 	int			loggers[3];
 	struct timeval		tv;
 	char		       *endptr;
+	unsigned long		version;
 
 	/* Ensure that fds 0, 1 and 2 are open or directed to /dev/null */
 	sanitise_stdfd();
@@ -436,6 +437,20 @@ main(int argc, char *argv[])
 		close(eventfds[0]);
 		main_shutdown(1);
 	}
+	if (ioctl(eventfds[1], ANOUBIS_GETVERSION, &version) < 0) {
+		log_warn("ANOUBIS_GETVERSION: Cannot retrieve version number");
+		close(eventfds[0]);
+		close(eventfds[1]);
+		main_shutdown(1);
+	}
+	if (version != ANOUBISCORE_VERSION) {
+		log_warnx("Anoubis Version mismatch: real=%lx expected=%lx",
+		    version, ANOUBISCORE_VERSION);
+		close(eventfds[0]);
+		close(eventfds[1]);
+		main_shutdown(1);
+	}
+
 	/*
 	 * ioctl is declared with varadic parameters, which is
 	 * impossible to annotate properly. We therefore temporarily

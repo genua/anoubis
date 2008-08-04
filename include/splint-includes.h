@@ -34,13 +34,19 @@
  *
  * cf. http://thread.gmane.org/gmane.comp.programming.splint.general/290
  *
- * For saftey raisins, this file will only be processed when parsed with
+ * For saftey reasons, this file will only be processed when parsed with
  * splint.
  */
 
 #ifdef S_SPLINT_S
 
 #define _GNU_SOURCE
+
+/* Header files installed on dev-gutsy depend on this define. */
+#ifndef __i386__
+#define __i386__
+#endif
+
 #include <unistd.h>
 
 typedef	/*@unsignedintegraltype@*/ unsigned char u_int8_t;
