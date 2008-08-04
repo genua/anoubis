@@ -261,7 +261,7 @@ DlgRuleEditor::updateBinName(wxString binName)
 	if (policy == NULL) {
 		return;
 	}
-	
+
 	if (policy->IsKindOf(CLASSINFO(SfsPolicy))) {
 		sfsPolicy = (SfsPolicy *)policy;
 		sfsPolicy->setBinaryName(binName);
@@ -838,20 +838,26 @@ DlgRuleEditor::OnSfsValidateChkSumButton(wxCommandEvent& event)
 		return;
 
 	ret = policy->calcCurrentHash(csum);
-	if ( ret == 1) {
+
+	switch (ret) {
+	case  1:
 		updateWidgets.setPropagation(false);
 		policy->accept(updateWidgets);
-	} else if (ret == 0) {
+		break;
+	case  0:
 		wxGetApp().calChecksum(policy->getBinaryName());
 		wxBeginBusyCursor();
-	} else if (ret == -2) {
+		break;
+	case (-2):
 		message = _("Wrong file access permission");
 		title = _("File is not set readable for the user.");
 		wxMessageBox(message, title, wxICON_INFORMATION);
-	} else {
+		break;
+	default:
 		message = _("File does not exist");
 		title = _("File does not exist");
 		wxMessageBox(message, title, wxICON_INFORMATION);
+		break;
 	}
 
 }
@@ -1244,6 +1250,10 @@ DlgRuleEditor::OnChecksumError(wxCommandEvent& event)
 		wxEndBusyCursor();
 		message = _("Permission denied for this file.");
 		title = _("Permission denied");
+		wxMessageBox(message, title, wxICON_INFORMATION);
+	} else if (errMsg.Cmp(_("notcon")) == 0) {
+		message = _("Not connected to daemon.");
+		title = _("Not connected");
 		wxMessageBox(message, title, wxICON_INFORMATION);
 	} else {
 		policy->accept(updateWidgets);

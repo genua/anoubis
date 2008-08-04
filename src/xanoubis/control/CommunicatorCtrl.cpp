@@ -167,25 +167,59 @@ CommunicatorCtrl::getRemoteStation(void)
 void
 CommunicatorCtrl::requestPolicy(void)
 {
-	com_->policyRequest();
+	if (connectionState_ == CONNECTION_CONNECTED)
+		com_->policyRequest();
+	else
+		wxGetApp().log(
+		    _("Couldn't request Policy from deamon: Not connected"));
 }
 
 void
 CommunicatorCtrl::checksumAdd(wxString file)
 {
-	com_->addChecksum(file);
+	wxCommandEvent aEvent(anEVT_CHECKSUM_ERROR);
+
+	if (connectionState_ == CONNECTION_CONNECTED)
+		com_->addChecksum(file);
+	else {
+		wxGetApp().log(
+		    _("Couldn't add Checksum to deamon: Not connected"));
+
+		aEvent.SetString(_("notcon"));
+		wxGetApp().sendEvent(aEvent);
+	}
 }
 
 void
 CommunicatorCtrl::checksumGet(wxString file)
 {
-	com_->getChecksum(file, CSUM_GET_SHADOW);
+	wxCommandEvent aEvent(anEVT_CHECKSUM_ERROR);
+
+	if (connectionState_ == CONNECTION_CONNECTED)
+		com_->getChecksum(file, CSUM_GET_SHADOW);
+	else {
+		wxGetApp().log(
+		    _("Couldn't get Checksum from deamon: Not connected"));
+
+		aEvent.SetString(_("notcon"));
+		wxGetApp().sendEvent(aEvent);
+	}
 }
 
 void
 CommunicatorCtrl::checksumCal(wxString file)
 {
-	com_->getChecksum(file, CSUM_GET_CURRENT);
+	wxCommandEvent aEvent(anEVT_CHECKSUM_ERROR);
+
+	if (connectionState_ == CONNECTION_CONNECTED)
+		com_->getChecksum(file, CSUM_GET_CURRENT);
+	else {
+		wxGetApp().log(
+		    _("Couldn't calculate Checksum by deamon: Not connected"));
+
+		aEvent.SetString(_("notcon"));
+		wxGetApp().sendEvent(aEvent);
+	}
 }
 
 void
@@ -339,8 +373,13 @@ CommunicatorCtrl::OnAnswerEscalation(wxCommandEvent& event)
 {
 	Notification *notify;
 
-	notify = (Notification *)event.GetClientObject();
-	com_->sendEscalationAnswer(notify);
+	if (connectionState_ == CONNECTION_CONNECTED) {
+		notify = (Notification *)event.GetClientObject();
+		com_->sendEscalationAnswer(notify);
+	} else {
+		wxGetApp().log(
+		    _("Couldn't send escalation answer: Not connected"));
+	}
 }
 
 void

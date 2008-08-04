@@ -189,10 +189,15 @@ SfsPolicy::calcCurrentHash(unsigned char csum[MAX_APN_HASH_LEN])
 	wxFile		*file;
 	struct stat	fileStat;
 
-	stat((char *)getBinaryName().c_str(), &fileStat);
+	/* At first we looking for any UNIX file permissions	*/
+	if (stat((const char *)getBinaryName().mb_str(wxConvLocal),
+	    &fileStat) < 0)
+		return -1;
+
 	if (! (fileStat.st_mode & S_IRUSR))
 		return -2;
 
+	/* Now we looking if Sfs let us access the file		*/
 	if (wxFile::Exists(getBinaryName().c_str())) {
 		if (!wxFile::Access(getBinaryName().c_str(), wxFile::read))
 			return (0);
@@ -210,7 +215,7 @@ SfsPolicy::calcCurrentHash(unsigned char csum[MAX_APN_HASH_LEN])
 			if (ret == 0) {
 				break;
 			}
-			if (ret < 0) {
+			if (ret == (size_t)wxInvalidOffset) {
 				return (-1);
 			}
 			SHA256_Update(&shaCtx, buf, ret);
