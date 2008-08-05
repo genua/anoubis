@@ -343,8 +343,8 @@ dump(char *file)
 				break;
 		}
 		if (t->result) {
-			fprintf(stderr, "Policy Request failed: %d\n",
-			    t->result);
+			fprintf(stderr, "Policy Request failed: %d (%s)\n",
+			    t->result, strerror(t->result));
 			anoubis_transaction_destroy(t);
 			return 3;
 		}
@@ -425,7 +425,8 @@ sfs_sumop(char *file, int operation)
 			break;
 	}
 	if (t->result) {
-		fprintf(stderr, "Checksum Request failed: %d\n", t->result);
+		fprintf(stderr, "Checksum Request failed: %d (%s)\n", t->result,
+		    strerror(t->result));
 		anoubis_transaction_destroy(t);
 		destroy_channel();
 		return 6;
@@ -574,7 +575,8 @@ load(char *rulesopt)
 			break;
 	}
 	if (t->result) {
-		fprintf(stderr, "Policy Request failed: %d\n", t->result);
+		fprintf(stderr, "Policy Request failed: %d (%s)\n", t->result,
+		    strerror(t->result));
 		anoubis_transaction_destroy(t);
 		return 3;
 	}
@@ -649,8 +651,8 @@ static int monitor(int argc, char **argv)
 			break;
 	}
 	if (t->result) {
-		fprintf(stderr, "Notify registration failed with %d\n",
-		    t->result);
+		fprintf(stderr, "Notify registration failed with %d (%s)\n",
+		    t->result, strerror(t->result));
 		anoubis_transaction_destroy(t);
 		destroy_channel();
 		return 5;
