@@ -1008,6 +1008,7 @@ dispatch_s2m(int fd, short sig, void *arg)
 {
 	struct event_info_session *ev_info = (struct event_info_session *)arg;
 	anoubisd_msg_t *msg;
+	int		ret;
 
 	DEBUG(DBG_TRACE, ">dispatch_s2m");
 
@@ -1016,9 +1017,14 @@ dispatch_s2m(int fd, short sig, void *arg)
 		return;
 	}
 
-	if (send_msg(fd, msg)) {
+	if ((ret = send_msg(fd, msg)) == 1) {
 		msg = dequeue(&eventq_s2m);
 		DEBUG(DBG_QUEUE, " <eventq_s2m: %x",
+		    ((struct eventdev_reply *)msg->msg)->msg_token);
+		free(msg);
+	} else if (ret == -1) {
+		msg = dequeue(&eventq_s2m);
+		DEBUG(DBG_QUEUE, " <eventq_s2m: dropping %x",
 		    ((struct eventdev_reply *)msg->msg)->msg_token);
 		free(msg);
 	}
@@ -1035,6 +1041,7 @@ dispatch_s2p(int fd, short sig, void *arg)
 {
 	struct event_info_session *ev_info = (struct event_info_session *)arg;
 	anoubisd_msg_t *msg;
+	int		ret;
 
 	DEBUG(DBG_TRACE, ">dispatch_s2p");
 
@@ -1043,9 +1050,14 @@ dispatch_s2p(int fd, short sig, void *arg)
 		return;
 	}
 
-	if (send_msg(fd, msg)) {
+	if ((ret = send_msg(fd, msg)) == 1) {
 		msg = dequeue(&eventq_s2p);
 		DEBUG(DBG_QUEUE, " <eventq_s2p: %x",
+		    ((struct eventdev_reply *)msg->msg)->msg_token);
+		free(msg);
+	} else if (ret == -1) {
+		msg = dequeue(&eventq_s2p);
+		DEBUG(DBG_QUEUE, " <eventq_s2p: dropping %x",
 		    ((struct eventdev_reply *)msg->msg)->msg_token);
 		free(msg);
 	}

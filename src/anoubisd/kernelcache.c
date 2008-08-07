@@ -45,6 +45,7 @@
 #endif
 
 #include "anoubisd.h"
+#include "amsg.h"
 #include "kernelcache.h"
 
 static struct anoubis_kernel_policy_header*
@@ -132,6 +133,10 @@ kernelcache_send2master(struct anoubis_kernel_policy_header *kcache, pid_t pid)
 		empty_policy.size = 0;
 		kcache = &empty_policy;
 	}
+
+	if ((sizeof(struct anoubis_kernel_policy_header) + kcache->size) >
+	    MSG_BUF_SIZE)
+		return 0;
 
 	kcache->pid = pid;
 

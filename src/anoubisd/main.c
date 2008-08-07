@@ -635,6 +635,7 @@ dispatch_m2s(int fd, short event, /*@dependent@*/ void *arg)
 	/*@dependent@*/
 	anoubisd_msg_t *msg;
 	struct event_info_main *ev_info = (struct event_info_main*)arg;
+	int		ret;
 
 	DEBUG(DBG_TRACE, ">dispatch_m2s");
 
@@ -645,9 +646,14 @@ dispatch_m2s(int fd, short event, /*@dependent@*/ void *arg)
 
 	/* msg was checked for non-nullness just above */
 	/*@-nullderef@*/ /*@-nullpass@*/
-	if (send_msg(fd, msg)) {
+	if ((ret = send_msg(fd, msg)) == 1) {
 		msg = dequeue(&eventq_m2s);
 		DEBUG(DBG_QUEUE, " <eventq_m2s: %x",
+		    ((struct eventdev_hdr *)msg->msg)->msg_token);
+		free(msg);
+	} else if (ret == -1) {
+		msg = dequeue(&eventq_m2s);
+		DEBUG(DBG_QUEUE, " <eventq_m2s: dropping %x",
 		    ((struct eventdev_hdr *)msg->msg)->msg_token);
 		free(msg);
 	}
@@ -753,6 +759,7 @@ dispatch_m2p(int fd, short event, /*@dependent@*/ void *arg)
 	/*@dependent@*/
 	anoubisd_msg_t *msg;
 	struct event_info_main *ev_info = (struct event_info_main*)arg;
+	int		ret;
 
 	DEBUG(DBG_TRACE, ">dispatch_m2p");
 
@@ -763,9 +770,14 @@ dispatch_m2p(int fd, short event, /*@dependent@*/ void *arg)
 
 	/* msg was checked for non-nullness just above */
 	/*@-nullderef@*/ /*@-nullpass@*/
-	if (send_msg(fd, msg)) {
+	if ((ret = send_msg(fd, msg)) == 1) {
 		msg = dequeue(&eventq_m2p);
 		DEBUG(DBG_QUEUE, " <eventq_m2p: %x",
+		    ((struct eventdev_hdr *)msg->msg)->msg_token);
+		free(msg);
+	} else if (ret == -1) {
+		msg = dequeue(&eventq_m2p);
+		DEBUG(DBG_QUEUE, " <eventq_m2p: dropping %x",
 		    ((struct eventdev_hdr *)msg->msg)->msg_token);
 		free(msg);
 	}

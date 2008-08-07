@@ -84,6 +84,10 @@ msg_init(int fd, char *name)
 	for (idx=0; idx < MSG_BUFS; idx++) {
 		if (fds[idx].rbufp == NULL) {
 
+			/*
+			 * We use MSG_BUF_SIZE*2, so we can always read
+			 * up to MSG_BUF_SIZE bytes!
+			 */
 			if ((fds[idx].rbufp = malloc(MSG_BUF_SIZE*2)) == NULL) {
 				log_warn("msg_init: can't allocate memory");
 				master_terminate(ENOMEM);
@@ -165,6 +169,10 @@ _fill_buf(struct msg_buf *mbp)
 		mbp->rtailp = mbp->rheadp + size;
 	}
 
+	/*
+	 * We've allocated MSG_BUF_SIZE*2 in msg_init(), thus requesting
+	 * MSG_BUF_SIZE to be read is ok!
+	 */
 	size = read(mbp->fd, mbp->rtailp, MSG_BUF_SIZE);
 	if (size <= 0)
 		goto err;
@@ -305,7 +313,8 @@ eof:
  *  - Zero on EOF
  *  - One otherwise. *msgp is NULL if message is incomplete
  */
-int get_client_msg(int fd, struct anoubis_msg **msgp)
+int
+get_client_msg(int fd, struct anoubis_msg **msgp)
 {
 	struct msg_buf		*mbp;
 	u_int32_t		 len;
@@ -339,9 +348,13 @@ send_msg(int fd, anoubisd_msg_t *msg)
 {
 	struct msg_buf *mbp;
 
+	if (msg->size > MSG_BUF_SIZE) {
+		log_warnx("send_msg: message %p to large %d", msg, msg->size);
+		return -1;
+	}
 	if ((mbp = _get_mbp(fd)) == NULL) {
-		log_warn("msg_buf not initialized");
-		return 0;
+		log_warnx("msg_buf not initialized");
+		return -1;
 	}
 	if (mbp->wtailp != mbp->wheadp) {
 		_flush_buf(mbp);
@@ -376,7 +389,8 @@ send_reply(int fd, anoubisd_msg_t *msg)
 	return 1;
 }
 
-int msg_pending(int fd)
+int
+msg_pending(int fd)
 {
 	struct msg_buf * mbp;
 

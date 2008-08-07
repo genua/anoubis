@@ -61,15 +61,24 @@ static void
 dispatch_log_write(int fd, short event, void *arg)
 {
 	anoubisd_msg_t		*msg;
+	int			 ret;
 
 	__logging = 1;
 	if ((msg = queue_peek(&__eventq_log)) == NULL) {
 		__logging = 0;
 		return;
 	}
-	if (send_msg(__log_fd, msg)) {
+	if ((ret = send_msg(__log_fd, msg)) == 1) {
 		msg = dequeue(&__eventq_log);
 		free(msg);
+	} else if (ret == -1) {
+		/*
+		 * Tricky:  First dequeue pending message, then log and
+		 * thus queue a new message.
+		 */
+		msg = dequeue(&__eventq_log);
+		free(msg);
+		log_warnx("dispatch_log_write: dropping message %p", msg);
 	}
 	if (queue_peek(&__eventq_log) || msg_pending(__log_fd))
 		event_add(&__log_event, NULL);
