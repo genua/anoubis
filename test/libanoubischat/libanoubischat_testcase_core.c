@@ -50,6 +50,13 @@ START_TEST(tc_core_creation)
 	c = acc_create();
 	fail_if(c == NULL, "pointer empty");
 	fail_if(c->fd != -1, "not correctly initialized @sockfd");
+	fail_if(c->euid != -1, "not correctly initialized @euid");
+	fail_if(c->egid != -1, "not correctly initialized @egid");
+	fail_if(c->tail != ACC_TAIL_NONE, "not correctly initialized @tail");
+	fail_if(c->sslmode != ACC_SSLMODE_NONE,
+		"not correctly initialized @sslmode");
+	fail_if(c->blocking != ACC_BLOCKING,
+		"not correctly initialized @blocking");
 	mark_point();
 
 	rc = acc_destroy(NULL);
@@ -118,6 +125,42 @@ START_TEST(tc_core_sslmode)
 	rc = acc_setsslmode(c, ACC_SSLMODE_CLEAR);
 	fail_if(rc != ACHAT_RC_OK, "setsslmode failed with rc=%d", rc);
 	fail_if(c->sslmode != ACC_SSLMODE_CLEAR, "sslmode not set correctly");
+	mark_point();
+
+	rc = acc_destroy(c);
+	fail_if(rc != ACHAT_RC_OK, "destroy failed with rc=%d", rc);
+}
+END_TEST
+
+START_TEST(tc_core_blocking)
+{
+	struct achat_channel    *c  = NULL;
+	achat_rc                 rc = ACHAT_RC_ERROR;
+
+	c = acc_create();
+	fail_if(c == NULL, "couldn't create channel");
+	mark_point();
+
+	rc = acc_setblockingmode(c, ACC_BLOCKING);
+	fail_if(rc != ACHAT_RC_OK, "acc_setblockingmode failed with rc=%d", rc);
+	fail_if(c->blocking != ACC_BLOCKING, "blocking not set correctly");
+	mark_point();
+
+	rc = acc_setblockingmode(c, ACC_NON_BLOCKING);
+	fail_if(rc != ACHAT_RC_OK, "acc_setblockingmode failed with rc=%d", rc);
+	fail_if(c->blocking != ACC_NON_BLOCKING, "blocking not set correctly");
+	mark_point();
+
+	rc = acc_setblockingmode(c, -1);
+	fail_if(rc != ACHAT_RC_INVALPARAM,
+	    "blockingmode expected to fail with rc=%d but returned rc=%d",
+	    ACHAT_RC_INVALPARAM, rc);
+	mark_point();
+
+	rc = acc_setblockingmode(c, 2);
+	fail_if(rc != ACHAT_RC_INVALPARAM,
+	    "blockingmode expected to fail with rc=%d but returned rc=%d",
+	    ACHAT_RC_INVALPARAM, rc);
 	mark_point();
 
 	rc = acc_destroy(c);
@@ -230,6 +273,7 @@ libanoubischat_testcase_core(void)
 	tcase_add_test(tc_core, tc_core_creation);
 	tcase_add_test(tc_core, tc_core_tail);
 	tcase_add_test(tc_core, tc_core_sslmode);
+	tcase_add_test(tc_core, tc_core_blocking);
 	tcase_add_test(tc_core, tc_core_addr);
 	tcase_add_test(tc_core, tc_core_state_initialised);
 

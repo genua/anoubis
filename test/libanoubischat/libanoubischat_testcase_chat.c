@@ -47,17 +47,21 @@
 #define TCCHAT_SOCKETDIR	"/tmp/"
 #define TCCHAT_SOCKETPREFIX	"achat_socket."
 
-const char msg[] = "Hello World";
+const char *msgs[] = {
+	"Hello World",
+	"Hi there!"
+};
 
 void
-tc_chat_lud_client(const char *sockname)
+tc_chat_lud_client(const char *sockname, int num_msgs)
 {
-	struct sockaddr_storage	 ss;
+	struct sockaddr_storage	ss;
 	struct sockaddr_un	*ss_sun = (struct sockaddr_un *)&ss;
 	struct achat_channel    *c  = NULL;
-	char			 buffer[16];
-	size_t			 size;
-	achat_rc		 rc = ACHAT_RC_ERROR;
+	char			buffer[16];
+	size_t			size;
+	achat_rc		rc = ACHAT_RC_ERROR;
+	int			i;
 
 	c = acc_create();
 	fail_if(c == NULL, "couldn't create client channel");
@@ -85,22 +89,29 @@ tc_chat_lud_client(const char *sockname)
 	    rc, strerror(errno));
 	mark_point();
 
-	bzero(buffer, sizeof(buffer));
-	size = sizeof(msg);
-	rc = acc_receivemsg(c, buffer, &size);
-	fail_if(rc != ACHAT_RC_OK, "client receive msg failed with rc=%d [%s]",
-	    rc, strerror(errno));
-	if (strncmp(buffer, msg, sizeof(msg)) != 0)
-		fail("client received msg mismatch [%s] != [%s]", msg, buffer);
-	if (size != sizeof(msg))
-		fail("client recieved msg size mismatch %d != %d", size,
-		    sizeof(msg));
-	mark_point();
+	for (i = 0; i < num_msgs; i++) {
+		bzero(buffer, sizeof(buffer));
+		size = sizeof(msgs[i]);
+		rc = acc_receivemsg(c, buffer, &size);
+		fail_if(rc != ACHAT_RC_OK,
+			"client receive msg failed with rc=%d [%s]", rc,
+			strerror(errno));
+		if (strncmp(buffer, msgs[i], sizeof(msgs[i])) != 0)
+			fail("client received msg mismatch [%s] != [%s]",
+			msgs[i], buffer);
+		if (size != sizeof(msgs[i]))
+			fail("client recieved msg size mismatch %d != %d",
+				size, sizeof(msgs[i]));
+		mark_point();
+	}
 
-	rc = acc_sendmsg(c, msg, sizeof(msg));
-	fail_if(rc != ACHAT_RC_OK, "client send msg failed with rc=%d [%s]",
-	    rc, strerror(errno));
-	mark_point();
+	for (i = 0; i < num_msgs; i++) {
+		rc = acc_sendmsg(c, msgs[i], sizeof(msgs[i]));
+		fail_if(rc != ACHAT_RC_OK,
+			"client send msg failed with rc=%d [%s]", rc,
+			strerror(errno));
+		mark_point();
+	}
 
 	rc = acc_destroy(c);
 	fail_if(rc != ACHAT_RC_OK, "client destroy failed with rc=%d", rc);
@@ -109,14 +120,15 @@ tc_chat_lud_client(const char *sockname)
 }
 
 void
-tc_chat_lud_server(const char *sockname)
+tc_chat_lud_server(const char *sockname, int num_msgs)
 {
-	struct sockaddr_storage	 ss;
+	struct sockaddr_storage	ss;
 	struct sockaddr_un	*ss_sun = (struct sockaddr_un *)&ss;
 	struct achat_channel    *s  = NULL;
-	char			 buffer[16];
-	size_t			 size;
-	achat_rc		 rc = ACHAT_RC_ERROR;
+	char			buffer[16];
+	size_t			size;
+	achat_rc		rc = ACHAT_RC_ERROR;
+	int			i;
 
 	s = acc_create();
 	fail_if(s == NULL, "couldn't create server channel");
@@ -143,22 +155,29 @@ tc_chat_lud_server(const char *sockname)
 	    rc, strerror(errno));
 	mark_point();
 
-	rc = acc_sendmsg(s, msg, sizeof(msg));
-	fail_if(rc != ACHAT_RC_OK, "server send msg failed with rc=%d [%s]",
-	    rc, strerror(errno));
-	mark_point();
+	for (i = 0; i < num_msgs; i++) {
+		rc = acc_sendmsg(s, msgs[i], sizeof(msgs[i]));
+		fail_if(rc != ACHAT_RC_OK,
+			"server send msg failed with rc=%d [%s]", rc,
+			strerror(errno));
+		mark_point();
+	}
 
-	bzero(buffer, sizeof(buffer));
-	size = sizeof(msg);
-	rc = acc_receivemsg(s, buffer, &size);
-	fail_if(rc != ACHAT_RC_OK, "server receive msg failed with rc=%d [%s]",
-	    rc, strerror(errno));
-	if (strncmp(buffer, msg, sizeof(msg)) != 0)
-		fail("server received msg mismatch [%s] != [%s]", msg, buffer);
-	if (size != sizeof(msg))
-		fail("server recieved msg size mismatch %d != %d", size,
-		    sizeof(msg));
-	mark_point();
+	for (i = 0; i < num_msgs; i++) {
+		bzero(buffer, sizeof(buffer));
+		size = sizeof(msgs[i]);
+		rc = acc_receivemsg(s, buffer, &size);
+		fail_if(rc != ACHAT_RC_OK,
+			"server receive msg failed with rc=%d [%s]", rc,
+			strerror(errno));
+		if (strncmp(buffer, msgs[i], sizeof(msgs[i])) != 0)
+			fail("server received msg mismatch [%s] != [%s]",
+				msgs[i], buffer);
+		if (size != sizeof(msgs[i]))
+			fail("server recieved msg size mismatch %d != %d",
+				size, sizeof(msgs[i]));
+		mark_point();
+	}
 
 	/* the client will close the channel now;
 	 * we'll give him another couple of seconds.
@@ -208,21 +227,22 @@ tc_chat_lip_client(short port)
 	    rc, strerror(errno));
 	mark_point();
 
-	rc = acc_sendmsg(c, msg, sizeof(msg));
+	rc = acc_sendmsg(c, msgs[0], sizeof(msgs[0]));
 	fail_if(rc != ACHAT_RC_OK, "client send msg failed with rc=%d [%s]",
 	    rc, strerror(errno));
 	mark_point();
 
 	bzero(buffer, sizeof(buffer));
-	size = sizeof(msg);
+	size = sizeof(msgs[0]);
 	rc = acc_receivemsg(c, buffer, &size);
 	fail_if(rc != ACHAT_RC_OK, "client receive msg failed with rc=%d [%s]",
 	    rc, strerror(errno));
-	if (strncmp(buffer, msg, sizeof(msg)) != 0)
-		fail("client received msg mismatch [%s] != [%s]", msg, buffer);
-	if (size != sizeof(msg))
+	if (strncmp(buffer, msgs[0], sizeof(msgs[0])) != 0)
+		fail("client received msg mismatch [%s] != [%s]",
+			msgs[0], buffer);
+	if (size != sizeof(msgs[0]))
 		fail("server recieved msg size mismatch %d != %d", size,
-		    sizeof(msg));
+		    sizeof(msgs[0]));
 	mark_point();
 
 	rc = acc_destroy(c);
@@ -247,12 +267,12 @@ START_TEST(tc_chat_localunixdomain)
 		break;
 	case 0:
 		/* child / clinet */
-		tc_chat_lud_client(sockname);
+		tc_chat_lud_client(sockname, 1);
 		check_waitpid_and_exit(0);
 		break;
 	default:
 		/* parent / server */
-		tc_chat_lud_server(sockname);
+		tc_chat_lud_server(sockname, 1);
 		check_waitpid_and_exit(childpid);
 		break;
 	}
@@ -321,20 +341,20 @@ START_TEST(tc_chat_localip)
 		mark_point();
 
 		bzero(buffer, sizeof(buffer));
-		size = sizeof(msg);
+		size = sizeof(msgs[0]);
 		rc = acc_receivemsg(s, buffer, &size);
 		fail_if(rc != ACHAT_RC_OK,
 		    "server receive msg failed with rc=%d [%s]", rc,
 		    strerror(errno));
-		if (strncmp(buffer, msg, sizeof(msg)) != 0)
+		if (strncmp(buffer, msgs[0], sizeof(msgs[0])) != 0)
 			fail("server received msg mismatch [%s] != [%s]",
-			    msg, buffer);
-		if (size != sizeof(msg))
+			    msgs[0], buffer);
+		if (size != sizeof(msgs[0]))
 			fail("server recieved msg size mismatch %d != %d", size,
-			    sizeof(msg));
+			    sizeof(msgs[0]));
 		mark_point();
 
-		rc = acc_sendmsg(s, msg, sizeof(msg));
+		rc = acc_sendmsg(s, msgs[0], sizeof(msgs[0]));
 		fail_if(rc != ACHAT_RC_OK,
 		    "server send msg failed with rc=%d [%s]", rc,
 		    strerror(errno));
@@ -358,6 +378,34 @@ START_TEST(tc_chat_localip)
 }
 END_TEST
 
+START_TEST(tc_chat_two_messages)
+{
+	pid_t childpid;
+	char sockname[FILENAME_MAX];
+
+	bzero(sockname, sizeof(sockname));
+	snprintf(sockname, sizeof(sockname) - 1, "%s%s%s%08d",
+	    TCCHAT_SOCKETDIR, TCCHAT_SOCKETPREFIX, "server", getpid());
+
+	switch (childpid = check_fork()) {
+	case -1:
+		fail("couldn't fork");
+		break;
+	case 0:
+		/* child / clinet */
+		tc_chat_lud_client(sockname, 2);
+		check_waitpid_and_exit(0);
+		break;
+	default:
+		/* parent / server */
+		tc_chat_lud_server(sockname, 2);
+		check_waitpid_and_exit(childpid);
+		break;
+	}
+	if (access(sockname, F_OK) == 0)
+		fail("unix domain test: socket not removed!");
+}
+END_TEST
 
 TCase *
 libanoubischat_testcase_chat(void)
@@ -368,6 +416,7 @@ libanoubischat_testcase_chat(void)
 	tcase_set_timeout(tc_chat, 10);
 	tcase_add_test(tc_chat, tc_chat_localunixdomain);
 	tcase_add_test(tc_chat, tc_chat_localip);
+	tcase_add_test(tc_chat, tc_chat_two_messages);
 
 	return (tc_chat);
 }

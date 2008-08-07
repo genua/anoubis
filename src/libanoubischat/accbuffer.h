@@ -46,6 +46,8 @@ size_t	 acc_bufferlen(achat_buffer *);
 
 achat_rc acc_bufferappend(/*@out@*/achat_buffer *, const void *,
     size_t);
+achat_rc acc_bufferconsume(achat_buffer *, size_t);
+achat_rc acc_buffertrunc(achat_buffer *, size_t);
 /*@null@*/ /*@exposed@*/void *acc_bufferappend_space(/*@out@*/achat_buffer *,
     size_t);
 __END_DECLS

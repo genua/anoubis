@@ -34,6 +34,7 @@
 .Nm acc_clear ,
 .Nm acc_settail ,
 .Nm acc_setsslmode ,
+.Nm acc_setblockingmode ,
 .Nm acc_setaddr ,
 .Nm acc_prepare ,
 .Nm acc_open ,
@@ -53,6 +54,8 @@
 .Fn "acc_settail" "struct achat_channel *" "enum acc_tail"
 .Ft "achat_rc"
 .Fn "acc_setsslmode" "struct achat_channel *" "enum acc_tail"
+.Ft "achat_rc"
+.Fn "acc_setblockingmode" "struct achat_channel *" "enum acc_blockingmode"
 .Ft "achat_rc"
 .Fn "acc_setaddr" "struct achat_channel *" "sockaddr *"
 .Ft "achat_rc"
@@ -119,6 +122,18 @@ Allowed values are
 .Fa ACC_SSLMODE_CLEAR
 and
 .Fa ACC_SSLMODE_ENCIPHERED
+.Pp
+Use
+.Fn acc_setblockingmode "struct achat_channel *" "enum acc_blockingmode newmode"
+to set a new blockingmode
+.Fa newmode
+for a given channel.
+This is the switch to enable the non-blocking mode.
+By default the channel blocks until a complete message arrives.
+Allowed values are
+.Fa ACC_BLOCKING
+and
+.Fa ACC_NON_BLOCKING
 .Pp
 Use
 .Fn acc_setaddr "struct achat_channel *" "sockaddr *"
@@ -299,6 +314,100 @@ if (rc != ACHAT_RC_OK)
 bzero(buffer, sizeof(buffer));
 rc = acc_receivemsg(s, buffer, sizeof(buffer));
 if (rc != ACHAT_RC_OK)
+	...
+
+rc = acc_close(c);
+if (rc != ACHAT_RC_OK)
+	...
+rc = acc_destroy(s);
+if (rc != ACHAT_RC_OK)
+	...
+.Ed
+.Pp
+The following example code shows how to read from a channel, when the
+non-blocking mode is enabled.
+.Bd -literal -offset indent-two
+struct achat_channel    *s  = NULL;
+achat_rc                 rc = ACHAT_RC_ERROR;
+char			 buffer[32];
+size_t			 bufsize = sizeof(buffer);
+
+ ...
+
+s = acc_create();
+if (s == NULL)
+	...
+rc = acc_setblockingmode(s, ACC_NON_BLOCKING);
+if (rc != ACHAT_RC_OK)
+	...
+
+rc = acc_prepare(s);
+if (rc != ACHAT_RC_OK)
+	...
+rc = acc_open(s);
+if (rc != ACHAT_RC_OK)
+	...
+
+/* a client has connected - do your service */
+bzero(buffer, bufsize);
+while (rc != ACHAT_RC_OK) {
+	rc = acc_receivemsg(s, buffer, &bufsize);
+	/**
+	 * rc == ACHAT_RC_OK
+	 *  if you have a complete message
+	 * rc == ACHAT_RC_PENDING
+	 *  if still some data are missing
+	 *  to complete a message
+	 */
+}
+
+rc = acc_close(c);
+if (rc != ACHAT_RC_OK)
+	...
+rc = acc_destroy(s);
+if (rc != ACHAT_RC_OK)
+	...
+.Ed
+.Pp
+The following example code shows how to write into a channel, when the
+non-blocking mode is enabled.
+.Bd -literal -offset indent-two
+struct achat_channel    *s  = NULL;
+achat_rc                 rc = ACHAT_RC_ERROR;
+char			 buffer[32];
+size_t			 bufsize = sizeof(buffer);
+
+ ...
+
+s = acc_create();
+if (s == NULL)
+	...
+rc = acc_setblockingmode(s, ACC_NON_BLOCKING);
+if (rc != ACHAT_RC_OK)
+	...
+
+rc = acc_prepare(s);
+if (rc != ACHAT_RC_OK)
+	...
+rc = acc_open(s);
+if (rc != ACHAT_RC_OK)
+	...
+
+/* a client has connected - do your service */
+rc = acc_sendmsg(s, buffer, bugsize);
+if (rc == ACHAT_RC_PENDING) {
+	/* Some data needs still to be written */
+	while (rc != ACHAT_RC_OK) {
+		rc = acc_flush(s);
+		/**
+		 * rc == ACHAT_RC_OK
+		 *  if the compete message was flushed
+		 * rc == ACHAT_RC_PENDING
+		 *  if still some data needs to be flushed
+		 */
+	}
+}
+else if (ACHAT_RC_OK)
 	...
 
 rc = acc_close(c);

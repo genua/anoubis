@@ -48,6 +48,20 @@
 #include "accbuffer.h"
 #include "anoubischat.h"
 
+static achat_rc
+acc_fcntl(int fd, int flags)
+{
+	int cur_flags;
+
+	if ((cur_flags = fcntl(fd, F_GETFL, 0)) == -1)
+		return ACHAT_RC_ERROR;
+
+	if (fcntl(fd, F_SETFL, cur_flags | flags) == -1)
+		return ACHAT_RC_ERROR;
+	else
+		return ACHAT_RC_OK;
+}
+
 achat_rc
 acc_prepare(struct achat_channel *acc)
 {
@@ -72,7 +86,7 @@ acc_prepare(struct achat_channel *acc)
 		if (acc->fd == -1)
 			return (ACHAT_RC_ERROR);
 
-		if (fcntl(acc->fd, F_SETFD, FD_CLOEXEC) == -1)
+		if (acc_fcntl(acc->fd, FD_CLOEXEC) != ACHAT_RC_OK)
 			return (ACHAT_RC_ERROR);
 
 		if (acc->addr.ss_family == AF_UNIX)
@@ -105,8 +119,13 @@ acc_prepare(struct achat_channel *acc)
 		if (acc->fd == -1)
 			return (ACHAT_RC_ERROR);
 
-		if (fcntl(acc->fd, F_SETFD, FD_CLOEXEC) == -1)
+		if (acc_fcntl(acc->fd, FD_CLOEXEC) != ACHAT_RC_OK)
 			return (ACHAT_RC_ERROR);
+
+		if (acc->blocking == ACC_NON_BLOCKING) {
+			if (acc_fcntl(acc->fd, O_NONBLOCK) != ACHAT_RC_OK)
+				return (ACHAT_RC_ERROR);
+		}
 
 		break;
 	default:
@@ -136,11 +155,15 @@ acc_open(struct achat_channel *acc)
 		if (nc == NULL)
 			return (ACHAT_RC_ERROR);
 
+		/* Close the server-socket */
 		acc_close(acc);
+
 		memcpy(acc, nc, sizeof(struct achat_channel));
 
 		/* Destroy temporary nc */
 		nc->fd = -1; /* You still need the socket! Copied to acc */
+		nc->sendbuffer = NULL;
+		nc->recvbuffer = NULL;
 		acc_destroy(nc);
 	} else {
 		size = acc_sockaddrsize(&(acc->addr));
@@ -173,7 +196,7 @@ acc_opendup(struct achat_channel *acc)
 	struct sockaddr_storage	remote;
 	socklen_t		size;
 
-	if (acc == NULL || acc->sendbuffer || acc->event)
+	if (acc == NULL || acc->event)
 		return (NULL);
 
 	if (acc->tail != ACC_TAIL_SERVER)
@@ -183,15 +206,17 @@ acc_opendup(struct achat_channel *acc)
 	if (nc == NULL)
 		return (NULL);
 
-	memcpy(nc, acc, sizeof(struct achat_channel));
-	nc->tail = ACC_TAIL_CLIENT;
+	acc_settail(nc, ACC_TAIL_CLIENT);
+	acc_setsslmode(nc, acc->sslmode);
+	acc_setblockingmode(nc, acc->blocking);
+	acc_setaddr(nc, &acc->addr);
 
 	/* retry if we were interrupted (e.g by a signal) */
 	size = (socklen_t) sizeof(remote);
 	do {
 		nc->fd = accept(acc->fd,
 		    (struct sockaddr *)&remote, &size);
-	} while ((nc->fd == -1) && (errno == EINTR));
+	} while ((nc->fd == -1) && (errno == EINTR || errno == EAGAIN));
 	if (nc->fd == -1) {
 		acc_clear(nc);
 		acc_destroy(nc);
@@ -204,6 +229,14 @@ acc_opendup(struct achat_channel *acc)
 		return (NULL);
 	}
 
+	if (acc->blocking == ACC_NON_BLOCKING) {
+		if (acc_fcntl(nc->fd, O_NONBLOCK) != ACHAT_RC_OK) {
+			acc_clear(nc);
+			acc_destroy(nc);
+			return (NULL);
+		}
+	}
+
 	return (nc);
 }
 
@@ -212,11 +245,8 @@ acc_close(struct achat_channel *acc)
 {
 	ACC_CHKPARAM(acc != NULL);
 
-	if (acc->sendbuffer) {
-		acc_bufferfree(acc->sendbuffer);
-		free(acc->sendbuffer);
-		acc->sendbuffer = NULL;
-	}
+	acc_bufferclear(acc->sendbuffer);
+	acc_bufferclear(acc->recvbuffer);
 	acc->event = NULL;
 
 	close(acc->fd);

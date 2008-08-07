@@ -42,38 +42,94 @@
 #include "accbuffer.h"
 #include "accutils.h"
 
+static size_t
+acc_read(int fd, void *buf, size_t nbyte)
+{
+	int num = 0;
+
+	while (num < nbyte) {
+		int result;
+
+		result = read(fd, buf + num, nbyte - num);
+
+		if (result == -1) {
+			if (errno == EINTR)
+				continue;
+			else
+				return (num > 0) ? num : -1;
+		}
+
+		num += result;
+
+		if (result == 0) /* No more data available for reading */
+			return num;
+	}
+
+	return num;
+}
+
+static size_t
+acc_write(int fd, void *buf, size_t nbyte)
+{
+	int num = 0;
+
+	while (num < nbyte) {
+		int result;
+
+		result = write(fd, buf + num, nbyte - num);
+
+		if (result == -1) {
+			if (errno == EINTR)
+				continue;
+			else
+				return (num > 0) ? num : -1;
+		}
+
+		num += result;
+	}
+
+	return num;
+}
+
 achat_rc
 acc_flush(struct achat_channel *chan)
 {
-	struct achat_buffer	*buf = chan->sendbuffer;
-	unsigned int		 len;
+	void	*buf;
+	size_t	bsize, bwritten;
 
-	if (!chan->sendbuffer)
+	ACC_CHKPARAM(chan != NULL);
+
+	buf = acc_bufferptr(chan->sendbuffer);
+	bsize = acc_bufferlen(chan->sendbuffer);
+
+	if (bsize == 0) {
+		/* Nothing to do */
 		return ACHAT_RC_OK;
-	while((len = acc_bufferlen(buf))) {
-		int ret = write(chan->fd, acc_bufferptr(buf), len);
-		if (ret < 0) {
-			if (errno == EAGAIN) {
-				if (chan->event)
-					event_add(chan->event, NULL);
-				return ACHAT_RC_OK;
-			}
-			return  ACHAT_RC_ERROR;
-		}
-		buf->offset += ret;
 	}
-	acc_bufferfree(buf);
-	free(chan->sendbuffer);
-	chan->sendbuffer = NULL;
-	return ACHAT_RC_OK;
+
+	bwritten = acc_write(chan->fd, buf, bsize);
+
+	if (bwritten > 0) {
+		achat_rc rc;
+
+		/* Remove chunk of data from buffer */
+		rc = acc_bufferconsume(chan->sendbuffer, bwritten);
+
+		if (rc != ACHAT_RC_OK)
+			return ACHAT_RC_ERROR;
+	}
+
+	if (bwritten == -1)
+		return (errno == EAGAIN) ? ACHAT_RC_PENDING : ACHAT_RC_ERROR;
+	else /* bwritten > 0 */
+		return (bwritten == bsize) ? ACHAT_RC_OK : ACHAT_RC_PENDING;
 }
 
 achat_rc
 acc_sendmsg(struct achat_channel *acc, const char *msg, size_t size)
 {
-	u_int32_t	 pkgsizenet = 0;
-	achat_rc	 rc = ACHAT_RC_ERROR;
-	char		*sendptr;
+	u_int32_t	pkgsize;
+	achat_rc	rc;
 
 	ACC_CHKPARAM(acc  != NULL);
 	ACC_CHKPARAM(msg  != NULL);
@@ -83,50 +139,78 @@ acc_sendmsg(struct achat_channel *acc, const char *msg, size_t size)
 	if (acc->fd == -1)
 		return (ACHAT_RC_ERROR);
 
-	if (acc->sendbuffer) {
-		rc = acc_flush(acc);
-		if (rc != ACHAT_RC_OK)
-			return rc;
-	}
-	/* We already have a buffer and were unable to flush it. */
-	if (acc->sendbuffer)
-		return ACHAT_RC_ERROR;
-	acc->sendbuffer = malloc(sizeof(struct achat_buffer));
-	if (!acc->sendbuffer)
-		return ACHAT_RC_OOMEM;
-	rc = acc_bufferinit(acc->sendbuffer);
+	/* (1) Size of following message (in network byte order!) */
+	pkgsize = htonl(sizeof(pkgsize) + size);
+	rc = acc_bufferappend(acc->sendbuffer, &pkgsize, sizeof(pkgsize));
 	if (rc != ACHAT_RC_OK)
-		/* no memory leak in OOM situations */
-		/*@i1*/return (rc);
+		return rc;
 
-	pkgsizenet = htonl(sizeof(pkgsizenet) + size);
-	rc = acc_bufferappend(acc->sendbuffer, &pkgsizenet,
-	    sizeof(pkgsizenet));
-	if (rc != ACHAT_RC_OK)
-		goto release_buffer;
+	/* (2) Append the message */
 	rc = acc_bufferappend(acc->sendbuffer, msg, size);
-	if (rc != ACHAT_RC_OK)
-		goto release_buffer;
-	sendptr = acc_bufferptr(acc->sendbuffer);
+	if (rc != ACHAT_RC_OK) {
+		/* Remove the size from the buffer to keep it consistent */
+		acc_buffertrunc(acc->sendbuffer, sizeof(pkgsize));
+		return rc;
+	}
 
-	rc = acc_flush(acc);
+	/* Flush (at least a part of) the message */
+	return acc_flush(acc);
+}
 
-	return rc;
-release_buffer:
-	acc_bufferfree(acc->sendbuffer);
-	free(acc->sendbuffer);
-	acc->sendbuffer = NULL;
-	return rc;
+static achat_rc
+acc_fillrecvbuffer(struct achat_channel *acc, size_t size)
+{
+	const size_t	bsize = acc_bufferlen(acc->recvbuffer);
+	size_t		nread;
+	char		*readbuf;
+	int		mincnt = size;
+	int		needcnt;
+
+	if (acc->blocking == ACC_NON_BLOCKING) {
+		/* Read as much as possible */
+		mincnt = 4096;
+	}
+
+	ACC_CHKPARAM(mincnt <= 4096);
+
+	needcnt = mincnt - bsize;
+	if (needcnt <= 0) {
+		/* You have enough data in your buffer */
+		return (ACHAT_RC_OK);
+	}
+
+	/* Make space in receive-buffer */
+	readbuf = acc_bufferappend_space(acc->recvbuffer, needcnt);
+	if (readbuf == NULL)
+		return (ACHAT_RC_ERROR);
+
+	nread = acc_read(acc->fd, readbuf, needcnt);
+
+	if (nread == -1) {
+		/* Buffer not filled, remove allocated space again */
+		achat_rc rc = acc_buffertrunc(acc->recvbuffer, needcnt);
+		if (rc != ACHAT_RC_OK)
+			return (ACHAT_RC_ERROR);
+
+		return (errno == EAGAIN) ? ACHAT_RC_PENDING : ACHAT_RC_ERROR;
+	}
+
+	if (nread < needcnt) {
+		/* nread might be < needcnt, truncate the buffer to have the */
+		/* correct buffer size */
+		achat_rc rc = acc_buffertrunc(acc->recvbuffer, needcnt - nread);
+		if (rc != ACHAT_RC_OK)
+			return (ACHAT_RC_ERROR);
+	}
+
+	return (nread > 0) ? ACHAT_RC_OK : ACHAT_RC_EOF;
 }
 
 achat_rc
 acc_receivemsg(struct achat_channel *acc, char *msg, size_t *size)
 {
-	achat_buffer	 pkgbuffer;
-	u_int32_t	 pkgsizenet = 0;
-	size_t		 len;
-	achat_rc	 rc;
-	char		*receiveptr;
+	size_t		bsize;
+	u_int32_t	pkgsize = 0;
 
 	ACC_CHKPARAM(acc  != NULL);
 	ACC_CHKPARAM(msg  != NULL);
@@ -136,41 +220,59 @@ acc_receivemsg(struct achat_channel *acc, char *msg, size_t *size)
 	if (acc->fd == -1)
 		return (ACHAT_RC_ERROR);
 
-	rc = acc_bufferinit(&pkgbuffer);
-	if (rc != ACHAT_RC_OK) {
-		/* no memory leak in OOM situations */
-		/*@i1*/return rc;
+	bsize =  acc_bufferlen(acc->recvbuffer);
+
+	if (bsize < sizeof(pkgsize)) {
+		/* Don't have enough data to receive size of message */
+		achat_rc rc = acc_fillrecvbuffer(acc, sizeof(pkgsize));
+
+		if (rc != ACHAT_RC_OK) /* error, eof, pending */
+			return (rc);
 	}
 
-	len = sizeof(pkgsizenet);
-	rc = acc_io(acc, read, (char*)&pkgsizenet, &len);
-	if (rc != ACHAT_RC_OK)
-		goto out;
+	bsize = acc_bufferlen(acc->recvbuffer);
 
-	pkgsizenet = ntohl(pkgsizenet);
-	if (pkgsizenet <= sizeof(pkgsizenet)) {
-		rc = ACHAT_RC_ERROR;
-		goto out;
+	if (bsize >= sizeof(pkgsize)) {
+		/* Enough data received to build up package size */
+		memcpy(&pkgsize, acc_bufferptr(acc->recvbuffer),
+			sizeof(pkgsize));
+		pkgsize = ntohl(pkgsize); /* Convert to host byte order */
+
+		if (pkgsize == sizeof(pkgsize)) { /* Empty body */
+			*size = 0;
+			return (ACHAT_RC_OK);
+		}
+		if (pkgsize < sizeof(pkgsize)) /* Corrupted buffer */
+			return (ACHAT_RC_ERROR);
+	}
+	else {
+		/* Not enough data received */
+		return ACHAT_RC_PENDING;
 	}
 
-	len = pkgsizenet - sizeof(pkgsizenet);
-	if (*size < len || len > ACHAT_MAX_MSGSIZE) {
-		rc = ACHAT_RC_ERROR;
-		goto out;
+	if (bsize < pkgsize) {
+		/* Complete message not buffered, re-read */
+		achat_rc rc = acc_fillrecvbuffer(acc, pkgsize);
+
+		if (rc != ACHAT_RC_OK) /* error, eof, pending */
+			return (rc);
 	}
 
-	(void)acc_bufferappend_space(&pkgbuffer, len);
-	receiveptr = acc_bufferptr(&pkgbuffer);
+	bsize = acc_bufferlen(acc->recvbuffer);
+	if (bsize < pkgsize) {
+		/* Don't have enough data to return complete message */
+		return ACHAT_RC_PENDING;
+	}
 
-	rc = acc_io(acc, read, receiveptr, &len);
-	if (rc != ACHAT_RC_OK)
-		goto out;
+	/* Complete message available */
+	if (*size >= pkgsize - sizeof(pkgsize)) {
+		*size = pkgsize - sizeof(pkgsize);
+		memcpy(msg, acc_bufferptr(acc->recvbuffer) + sizeof(pkgsize),
+			*size);
 
-	memcpy(msg, receiveptr, len);
-	*size = len;
-
-out:
-	acc_bufferfree(&pkgbuffer);
-
-	return (rc);
+		/* Remove message from buffer */
+		return acc_bufferconsume(acc->recvbuffer, pkgsize);
+	}
+	else /* msg is not big enough to hold the complete message */
+		return ACHAT_RC_NOSPACE;
 }

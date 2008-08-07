@@ -62,11 +62,13 @@ test_libanoubischat_CPPFLAGS += -I$(top_srcdir)/$(bsdcompatdir)
 test_libanoubischat_LDADD += $(libbsdcompat)
 endif
 
-test_libanoubischat_SOURCES = \
-	libanoubischat_testcase_core.c     \
-	libanoubischat_testcase_connect.c  \
-	libanoubischat_testcase_chat.c     \
-	libanoubischat_testcase_prepare.c  \
-	libanoubischat_testcase_recvmsg.c  \
-	libanoubischat_testsuite.c         \
+test_libanoubischat_SOURCES =                  \
+	libanoubischat_testcase_buffer.c       \
+	libanoubischat_testcase_core.c         \
+	libanoubischat_testcase_connect.c      \
+	libanoubischat_testcase_chat.c         \
+	libanoubischat_testcase_chatnonblock.c \
+	libanoubischat_testcase_prepare.c      \
+	libanoubischat_testcase_recvmsg.c      \
+	libanoubischat_testsuite.c             \
 	libanoubischat_testrunner.c

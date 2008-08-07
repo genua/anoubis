@@ -44,8 +44,6 @@
 __BEGIN_DECLS
 void acc_sockaddrcpy(struct sockaddr_storage *, struct sockaddr_storage *);
 socklen_t acc_sockaddrsize(struct sockaddr_storage *);
-achat_rc acc_io(struct achat_channel *, ssize_t (*f) (int, void *, size_t),
-    char *, size_t *);
 __END_DECLS
 
 #endif	/* _ACCUTILS_H_ */

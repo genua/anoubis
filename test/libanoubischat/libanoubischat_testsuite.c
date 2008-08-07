@@ -27,9 +27,11 @@
 
 #include <check.h>
 
+extern TCase *libanoubischat_testcase_buffer(void);
 extern TCase *libanoubischat_testcase_core(void);
 extern TCase *libanoubischat_testcase_connect(void);
 extern TCase *libanoubischat_testcase_chat(void);
+extern TCase *libanoubischat_testcase_chatnonblock(void);
 extern TCase *libanoubischat_testcase_prepare(void);
 extern TCase *libanoubischat_testcase_recvmsg(void);
 
@@ -38,6 +40,10 @@ Suite *
 libanoubischat_testsuite(void)
 {
 	Suite *s = suite_create("Suite");
+
+	/* Buffer test case */
+	TCase *tc_buffer = libanoubischat_testcase_buffer();
+	suite_add_tcase(s, tc_buffer);
 
 	/* Core test case */
 	TCase *tc_core = libanoubischat_testcase_core();
@@ -50,6 +56,10 @@ libanoubischat_testsuite(void)
 	/* Chat test case */
 	TCase *tc_chat = libanoubischat_testcase_chat();
 	suite_add_tcase(s, tc_chat);
+
+	/* NonBlocking Chat test case */
+	TCase *tc_chatnonblock = libanoubischat_testcase_chatnonblock();
+	suite_add_tcase(s, tc_chatnonblock);
 
 	/* Preparation test case */
 	TCase *tc_prepare = libanoubischat_testcase_prepare();

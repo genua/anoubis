@@ -118,10 +118,48 @@ acc_bufferappend(achat_buffer *buffer, const void *data, size_t len)
 	return (ACHAT_RC_OK);
 }
 
+static int accbuffer_compact(/*@null@*/ achat_buffer *);
+
+/* Removes data from the beginning of the buffer*/
+achat_rc
+acc_bufferconsume(achat_buffer *buffer, size_t len)
+{
+	int buflen;
+
+	ACC_CHKPARAM(buffer != NULL);
+
+	buflen = buffer->end - buffer->offset;
+
+	if ((len < 0)  || (len > buflen))
+		return ACHAT_RC_ERROR;
+
+	buffer->offset += len;
+
+	if (buffer->offset == buffer->end) { /* Make compact */
+		buffer->offset = 0;
+		buffer->end = 0;
+	}
+
+	return (ACHAT_RC_OK);
+}
+
+/* Removes data from the end of the buffer */
+achat_rc
+acc_buffertrunc(achat_buffer *buffer, size_t len)
+{
+	ACC_CHKPARAM(buffer != NULL);
+
+	if (len > acc_bufferlen(buffer))
+		return ACHAT_RC_ERROR;
+
+	buffer->end -= len;
+	return (ACHAT_RC_OK);
+}
+
 static int
 accbuffer_compact(/*@null@*/ achat_buffer *buffer)
 {
-	if (NULL != buffer || NULL != buffer->buf)
+	if (NULL == buffer || NULL == buffer->buf)
 		return(1);
 
 	/*

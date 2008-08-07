@@ -56,6 +56,12 @@ enum acc_tail {
 	ACC_TAIL_CLIENT
 };
 
+/* anoubis chat blocking mode */
+enum acc_blockingmode {
+	ACC_BLOCKING = 0,
+	ACC_NON_BLOCKING
+};
+
 /* anoubis chat return codes */
 enum achat_rc {
 	ACHAT_RC_OK = 0,
@@ -63,7 +69,9 @@ enum achat_rc {
 	ACHAT_RC_NYI,		/* not yet implemented */
 	ACHAT_RC_EOF,		/* connection end */
 	ACHAT_RC_INVALPARAM,	/* invalid argument */
-	ACHAT_RC_OOMEM		/* out of memory */
+	ACHAT_RC_OOMEM,		/* out of memory */
+	ACHAT_RC_PENDING,	/* Pending data to be send/receive */
+	ACHAT_RC_NOSPACE	/* Not enough space to receive/send a message */
 };
 typedef enum achat_rc achat_rc;
 
@@ -75,6 +83,7 @@ struct event;
 struct achat_channel {
 	enum acc_sslmode	sslmode; /* CLEAR, ENCIPHERED */
 	enum acc_tail		tail;	 /* SERVER, CLIENT */
+	enum acc_blockingmode	blocking;/* BLOCKING, NON_BLOCKING */
 	struct sockaddr_storage	addr;	 /* where we want to go to */
 	int			fd;	 /* The socket file descriptor */
 
@@ -82,6 +91,7 @@ struct achat_channel {
 	uid_t			euid;
 	gid_t			egid;
 	struct achat_buffer	*sendbuffer;
+	struct achat_buffer	*recvbuffer;
 	struct event		*event;
 };
 
@@ -94,6 +104,7 @@ achat_rc /*@alt void@*/ acc_destroy(/*@only@*/struct achat_channel *);
 achat_rc /*@alt void@*/ acc_clear(/*@out@*/struct achat_channel *);
 achat_rc acc_settail(struct achat_channel *, enum acc_tail);
 achat_rc acc_setsslmode(struct achat_channel *, enum acc_sslmode);
+achat_rc acc_setblockingmode(struct achat_channel *, enum acc_blockingmode);
 achat_rc acc_setaddr(struct achat_channel *, struct sockaddr_storage *);
 
 /* Subsystem Connect */

@@ -39,11 +39,50 @@
 struct achat_channel *
 acc_create(void)
 {
-	struct achat_channel *c;
+	struct achat_channel	*c;
+	struct achat_buffer	*sb, *rb;
 
+	/* Create storage for send/recv-buffer */
+	sb = malloc(sizeof(struct achat_buffer));
+	if (sb == NULL)
+		return NULL;
+
+	rb = malloc(sizeof(struct achat_buffer));
+	if (rb == NULL) {
+		free(sb);
+		return NULL;
+	}
+
+	/* Initialize send/recv-buffer */
+	if (acc_bufferinit(sb) != ACHAT_RC_OK) {
+		free(sb);
+		free(rb);
+
+		return NULL;
+	}
+
+	if (acc_bufferinit(rb) != ACHAT_RC_OK) {
+		acc_bufferfree(sb);
+		free(sb);
+		free(rb);
+
+		return NULL;
+	}
+
+	/* Create the channel, assign send/recv-buffer */
 	c = (struct achat_channel*)malloc(sizeof(struct achat_channel));
-	if (c != NULL)
+	if (c != NULL) {
+		c->sendbuffer = sb;
+		c->recvbuffer = rb;
+
 		acc_clear(c);
+	}
+	else {
+		acc_bufferfree(sb);
+		acc_bufferfree(rb);
+		free(sb);
+		free(rb);
+	}
 
 	return (c);
 }
@@ -58,10 +97,17 @@ acc_destroy(struct achat_channel *acc)
 	if (acc->fd != -1)
 		rc = acc_close(acc);
 
-	if (acc->sendbuffer) {
+	if (acc->sendbuffer != NULL) {
 		acc_bufferfree(acc->sendbuffer);
 		free(acc->sendbuffer);
+		acc->sendbuffer = NULL;
 	}
+	if (acc->recvbuffer != NULL) {
+		acc_bufferfree(acc->recvbuffer);
+		free(acc->recvbuffer);
+		acc->recvbuffer = NULL;
+	}
+
 	free((void*)acc);
 
 	return (rc);
@@ -72,11 +118,15 @@ acc_clear(struct achat_channel *acc)
 {
 	ACC_CHKPARAM(acc != NULL);
 
-	bzero(acc, sizeof(struct achat_channel));
+	acc->sslmode = ACC_SSLMODE_NONE;
+	acc->tail = ACC_TAIL_NONE;
+	acc->blocking = ACC_BLOCKING;
+	memset(&acc->addr, 0, sizeof(struct sockaddr_storage));
 	acc->fd = -1;
 	acc->euid = -1;
 	acc->egid = -1;
-	acc->sendbuffer = NULL;
+	acc_bufferclear(acc->sendbuffer);
+	acc_bufferclear(acc->recvbuffer);
 	acc->event = NULL;
 
 	return (ACHAT_RC_OK);
@@ -111,6 +161,20 @@ acc_setsslmode(struct achat_channel *acc, enum acc_sslmode newsslmode)
 		return (ACHAT_RC_NYI);
 
 	acc->sslmode = newsslmode;
+	return (ACHAT_RC_OK);
+}
+
+achat_rc
+acc_setblockingmode(struct achat_channel *acc, enum acc_blockingmode newmode)
+{
+	ACC_CHKPARAM(acc != NULL);
+	ACC_CHKPARAM((0 <= newmode)&&(newmode < 2));
+
+	/* Operation only allowed, if you have no open connection */
+	if (acc->fd != -1)
+		return (ACHAT_RC_ERROR);
+
+	acc->blocking = newmode;
 	return (ACHAT_RC_OK);
 }
 
