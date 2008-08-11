@@ -37,6 +37,7 @@
 #include <event.h>
 #ifdef LINUX
 #include <grp.h>
+#include <bsdcompat.h>
 #endif
 
 #include "anoubisd.h"
@@ -136,7 +137,7 @@ vlog(int pri, const char *fmt, va_list ap)
 				master_terminate(ENOMEM);
 				return;
 			}
-			strcpy(msg->msg, nfmt);
+			strlcpy(msg->msg, nfmt, strlen(nfmt)+1);
 			free(nfmt);
 			enqueue(&__eventq_log, msg);
 			event_add(&__log_event, NULL);
@@ -292,7 +293,7 @@ logger_main(struct anoubisd_config *conf, int pipe_m2l[2], int pipe_p2l[2],
 
 	if ((pw = getpwnam(ANOUBISD_USER)) == NULL)
 		fatal("getpwnam");
-	
+
 	pid = fork();
 	if (pid < 0)
 		fatal("fork");
@@ -351,4 +352,3 @@ logger_main(struct anoubisd_config *conf, int pipe_m2l[2], int pipe_p2l[2],
 		fatal("logger_main: event_dispatch");
 	_exit(0);
 }
-
