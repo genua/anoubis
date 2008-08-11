@@ -145,7 +145,7 @@ Communicator::connect(void)
 	ss_sun->sun_family = AF_UNIX;
 	strlcpy(ss_sun->sun_path, socketPath_.fn_str(),
 	    sizeof(ss_sun->sun_path));
-	rc = acc_setaddr(channel_, &ss);
+	rc = acc_setaddr(channel_, &ss, sizeof(struct sockaddr_un));
 	if (rc != ACHAT_RC_OK) {
 		acc_destroy(channel_);
 		channel_ = NULL;

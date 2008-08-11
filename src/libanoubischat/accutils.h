@@ -28,22 +28,10 @@
 #ifndef _ACCUTILS_H_
 #define _ACCUTILS_H_
 
-#include <sys/cdefs.h>
-
-#include "anoubischat.h"
-
 #define ACC_CHKPARAM(cond) \
 	do { \
 		if (!(cond)) \
 			return (ACHAT_RC_INVALPARAM); \
 	} while (0)
-
-
-#define accwrite (ssize_t (*)(int, void *, size_t))write
-
-__BEGIN_DECLS
-void acc_sockaddrcpy(struct sockaddr_storage *, struct sockaddr_storage *);
-socklen_t acc_sockaddrsize(struct sockaddr_storage *);
-__END_DECLS
 
 #endif	/* _ACCUTILS_H_ */

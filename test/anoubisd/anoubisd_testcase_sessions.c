@@ -81,7 +81,7 @@ START_TEST(tc_Sessions_one)
 	bzero(&ss, sizeof(ss));
 	ss_sun->sun_family = AF_UNIX;
 	strlcpy(ss_sun->sun_path, sockname, sizeof(ss_sun->sun_path));
-	rc = acc_setaddr(c, &ss);
+	rc = acc_setaddr(c, &ss, sizeof(struct sockaddr_un));
 	fail_if(rc != ACHAT_RC_OK, "setaddr failed with rc=%d", rc);
 	mark_point();
 
@@ -139,9 +139,9 @@ START_TEST(tc_Sessions_two)
 	bzero(&ss, sizeof(ss));
 	ss_sun->sun_family = AF_UNIX;
 	strlcpy(ss_sun->sun_path, sockname, sizeof(ss_sun->sun_path));
-	rc = acc_setaddr(c1, &ss);
+	rc = acc_setaddr(c1, &ss, sizeof(struct sockaddr_un));
 	fail_if(rc != ACHAT_RC_OK, "1st channel setaddr failed with rc=%d", rc);
-	rc = acc_setaddr(c2, &ss);
+	rc = acc_setaddr(c2, &ss, sizeof(struct sockaddr_un));
 	fail_if(rc != ACHAT_RC_OK, "2nd channel setaddr failed with rc=%d", rc);
 	mark_point();
 
@@ -205,7 +205,7 @@ START_TEST(tc_Sessions_three)
 	bzero(&ss, sizeof(ss));
 	ss_sun->sun_family = AF_UNIX;
 	strlcpy(ss_sun->sun_path, sockname, sizeof(ss_sun->sun_path));
-	rc = acc_setaddr(c, &ss);
+	rc = acc_setaddr(c, &ss, sizeof(struct sockaddr_un));
 	fail_if(rc != ACHAT_RC_OK, "setaddr failed with rc=%d", rc);
 	mark_point();
 

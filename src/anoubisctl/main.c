@@ -438,7 +438,7 @@ sfs_sumop(char *file, int operation)
 		    + SHA256_DIGEST_LENGTH)) {
 			fprintf(stderr, "Short checksum in reply (len=%d)\n",
 			    t->msg->length);
-		    	return 6;
+			return 6;
 		}
 		for (i=0; i<SHA256_DIGEST_LENGTH; ++i) {
 			printf("%02x", t->msg->u.ackpayload->payload[i]);
@@ -735,7 +735,7 @@ create_channel(void)
 
 	if (opts & ANOUBISCTL_OPT_VERBOSE2)
 		fprintf(stderr, "acc_setaddr\n");
-	rc = acc_setaddr(channel, &ss);
+	rc = acc_setaddr(channel, &ss, sizeof(struct sockaddr_un));
 	if (rc != ACHAT_RC_OK) {
 		acc_destroy(channel);
 		channel = NULL;

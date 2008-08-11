@@ -120,7 +120,7 @@ void tp_chat_lud_client(const char *sockname)
 	bzero(&ss, sizeof(ss));
 	ss_sun->sun_family = AF_UNIX;
 	strlcpy(ss_sun->sun_path, sockname, sizeof(ss_sun->sun_path));
-	rc = acc_setaddr(c, &ss);
+	rc = acc_setaddr(c, &ss, sizeof(struct sockaddr_un));
 	if (rc != ACHAT_RC_OK)
 		fail("client setaddr failed", __LINE__);
 	mark_point();
@@ -282,7 +282,7 @@ void tp_chat_lud_server(const char *sockname)
 	bzero(&ss, sizeof(ss));
 	ss_sun->sun_family = AF_UNIX;
 	strlcpy(ss_sun->sun_path, sockname, sizeof(ss_sun->sun_path));
-	rc = acc_setaddr(s, &ss);
+	rc = acc_setaddr(s, &ss, sizeof(struct sockaddr_un));
 	if (rc != ACHAT_RC_OK)
 		fail("server setaddr failed", __LINE__);
 	mark_point();

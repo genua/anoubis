@@ -65,7 +65,6 @@ acc_fcntl(int fd, int flags)
 achat_rc
 acc_prepare(struct achat_channel *acc)
 {
-	socklen_t size;
 	int rc;
 
 	ACC_CHKPARAM(acc != NULL);
@@ -80,8 +79,6 @@ acc_prepare(struct achat_channel *acc)
 
 	switch (acc->tail) {
 	case ACC_TAIL_SERVER:
-		size = acc_sockaddrsize(&acc->addr);
-
 		acc->fd = socket(acc->addr.ss_family, SOCK_STREAM, 0);
 		if (acc->fd == -1)
 			return (ACHAT_RC_ERROR);
@@ -92,7 +89,8 @@ acc_prepare(struct achat_channel *acc)
 		if (acc->addr.ss_family == AF_UNIX)
 			unlink(((struct sockaddr_un*)&(acc->addr))->sun_path);
 
-		rc = bind(acc->fd, (struct sockaddr*)&(acc->addr), size);
+		rc = bind(acc->fd, (struct sockaddr*)&(acc->addr),
+			acc->addrsize);
 		if (rc == -1)
 			return (ACHAT_RC_ERROR);
 
@@ -140,7 +138,6 @@ acc_prepare(struct achat_channel *acc)
 achat_rc
 acc_open(struct achat_channel *acc)
 {
-	socklen_t size;
 	int rc;
 
 	ACC_CHKPARAM(acc != NULL);
@@ -166,11 +163,10 @@ acc_open(struct achat_channel *acc)
 		nc->recvbuffer = NULL;
 		acc_destroy(nc);
 	} else {
-		size = acc_sockaddrsize(&(acc->addr));
 		/* retry if we were interrupted (e.g by a signal) */
 		do {
 			rc = connect(acc->fd,
-			    (struct sockaddr *)&acc->addr, size);
+			    (struct sockaddr *)&acc->addr, acc->addrsize);
 		} while (rc == EINTR);
 		if (rc != 0) {
 			close(acc->fd);
@@ -209,7 +205,7 @@ acc_opendup(struct achat_channel *acc)
 	acc_settail(nc, ACC_TAIL_CLIENT);
 	acc_setsslmode(nc, acc->sslmode);
 	acc_setblockingmode(nc, acc->blocking);
-	acc_setaddr(nc, &acc->addr);
+	acc_setaddr(nc, &acc->addr, acc->addrsize);
 
 	/* retry if we were interrupted (e.g by a signal) */
 	size = (socklen_t) sizeof(remote);

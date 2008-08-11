@@ -106,7 +106,7 @@ START_TEST(tc_set_addr)
 	sa_in->sin_len = sizeof(struct sockaddr_in);
 #endif
 
-	rc = acc_setaddr(c, &sa);
+	rc = acc_setaddr(c, &sa, sizeof(struct sockaddr_in));
 	fail_if(rc != ACHAT_RC_OK, "Couldn't set addr");
 	mark_point();
 
@@ -168,7 +168,7 @@ START_TEST(tc_set_tail_addr)
 	sa_in->sin_len = sizeof(struct sockaddr_in);
 #endif
 
-	rc = acc_setaddr(c, &sa);
+	rc = acc_setaddr(c, &sa, sizeof(struct sockaddr_in));
 	fail_if(rc != ACHAT_RC_OK, "Couldn't set addr");
 	mark_point();
 
@@ -204,7 +204,7 @@ START_TEST(tc_set_sslmode_addr)
 	sa_in->sin_len = sizeof(struct sockaddr_in);
 #endif
 
-	rc = acc_setaddr(c, &sa);
+	rc = acc_setaddr(c, &sa, sizeof(struct sockaddr_in));
 	fail_if(rc != ACHAT_RC_OK, "Couldn't set addr");
 	mark_point();
 
@@ -244,7 +244,7 @@ START_TEST(tc_set_tail_sslmode_addr)
 	sa_in->sin_len = sizeof(struct sockaddr_in);
 #endif
 
-	rc = acc_setaddr(c, &sa);
+	rc = acc_setaddr(c, &sa, sizeof(struct sockaddr_in));
 	fail_if(rc != ACHAT_RC_OK, "Couldn't set addr");
 	mark_point();
 

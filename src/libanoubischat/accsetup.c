@@ -122,6 +122,7 @@ acc_clear(struct achat_channel *acc)
 	acc->tail = ACC_TAIL_NONE;
 	acc->blocking = ACC_BLOCKING;
 	memset(&acc->addr, 0, sizeof(struct sockaddr_storage));
+	acc->addrsize = 0;
 	acc->fd = -1;
 	acc->euid = -1;
 	acc->egid = -1;
@@ -179,7 +180,8 @@ acc_setblockingmode(struct achat_channel *acc, enum acc_blockingmode newmode)
 }
 
 achat_rc
-acc_setaddr(struct achat_channel *acc, struct sockaddr_storage *newsa)
+acc_setaddr(struct achat_channel *acc, struct sockaddr_storage *newsa,
+	size_t addrsize)
 {
 	ACC_CHKPARAM(acc   != NULL);
 	ACC_CHKPARAM(newsa != NULL);
@@ -190,6 +192,7 @@ acc_setaddr(struct achat_channel *acc, struct sockaddr_storage *newsa)
 
 	bzero(&acc->addr, sizeof(acc->addr));
 	bcopy(newsa, &acc->addr, sizeof(acc->addr));
+	acc->addrsize = addrsize;
 
 	return (ACHAT_RC_OK);
 }

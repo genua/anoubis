@@ -35,7 +35,6 @@ libanoubischat_a_SOURCES = \
 	accsetup.c  \
 	acctransmission.c \
 	accconnect.c \
-	accutils.c \
 	accutils.h \
 	accbuffer.c \
 	accbuffer.h \
@@ -67,14 +66,12 @@ libanoubischat_a_SOURCES_lint = \
 	accsetup.c_lint  \
 	acctransmission.c_lint \
 	accconnect.c_lint \
-	accutils.c_lint \
 	accbuffer.c_lint
 
 libanoubischat_a_SOURCES_splint = \
 	accsetup.c_splint  \
 	acctransmission.c_splint \
 	accconnect.c_splint \
-	accutils.c_splint \
 	accutils.h_splint \
 	accbuffer.c_splint \
 	accbuffer.h_splint
@@ -83,7 +80,6 @@ libanoubischat_a_SOURCES_flawfinder = \
 	accsetup.c_flawfinder  \
 	acctransmission.c_flawfinder \
 	accconnect.c_flawfinder \
-	accutils.c_flawfinder \
 	accutils.h_flawfinder \
 	accbuffer.c_flawfinder \
 	accbuffer.h_flawfinder

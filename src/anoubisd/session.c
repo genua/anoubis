@@ -1124,7 +1124,7 @@ session_setupuds(struct sessionGroup *seg, struct anoubisd_config * conf)
 	((struct sockaddr_un *)&ss)->sun_family = AF_UNIX;
 	strlcpy(((struct sockaddr_un *)&ss)->sun_path, conf->unixsocket,
 	    sizeof(((struct sockaddr_un *)&ss)->sun_path));
-	rc = acc_setaddr(seg->keeper_uds, &ss);
+	rc = acc_setaddr(seg->keeper_uds, &ss, sizeof(struct sockaddr_un));
 	if (rc != ACHAT_RC_OK) {
 		log_warn("session_setupuds: acc_setaddr");
 		acc_destroy(seg->keeper_uds);

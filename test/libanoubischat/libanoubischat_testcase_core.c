@@ -50,6 +50,7 @@ START_TEST(tc_core_creation)
 	c = acc_create();
 	fail_if(c == NULL, "pointer empty");
 	fail_if(c->fd != -1, "not correctly initialized @sockfd");
+	fail_if(c->addrsize != 0, "not correctly initialized @addrsize");
 	fail_if(c->euid != -1, "not correctly initialized @euid");
 	fail_if(c->egid != -1, "not correctly initialized @egid");
 	fail_if(c->tail != ACC_TAIL_NONE, "not correctly initialized @tail");
@@ -181,13 +182,13 @@ START_TEST(tc_core_addr)
 	fail_if(c == NULL, "couldn't create channel");
 	mark_point();
 
-	rc = acc_setaddr(NULL, NULL);
+	rc = acc_setaddr(NULL, NULL, 0);
 	fail_if(rc != ACHAT_RC_INVALPARAM,
 	    "setaddr expected to fail with rc=%d but returned rc=%d",
 	    ACHAT_RC_INVALPARAM, rc);
 	mark_point();
 
-	rc = acc_setaddr(c, NULL);
+	rc = acc_setaddr(c, NULL, 0);
 	fail_if(rc != ACHAT_RC_INVALPARAM,
 	    "setaddr expected to fail with rc=%d but returned rc=%d",
 	    ACHAT_RC_INVALPARAM, rc);
@@ -199,10 +200,12 @@ START_TEST(tc_core_addr)
 #ifdef OPENBSD
 	sa_un->sun_len = SUN_LEN(sa_un);
 #endif
-	rc = acc_setaddr(c, &sa);
+	rc = acc_setaddr(c, &sa, sizeof(struct sockaddr_un));
 	fail_if(rc != ACHAT_RC_OK, "setaddr failed with rc=%d", rc);
 	if (memcmp(&c->addr, &sa, sizeof(sa)) != 0)
 		fail("socket address not set correctly");
+	fail_if(c->addrsize != sizeof(struct sockaddr_un),
+		"socket address not set correctly");
 	mark_point();
 
 	bzero(&sa, sizeof(sa));
@@ -212,10 +215,12 @@ START_TEST(tc_core_addr)
 #ifdef OPENBSD
 	sa_in->sin_len = sizeof(struct sockaddr_in);
 #endif
-	rc = acc_setaddr(c, &sa);
+	rc = acc_setaddr(c, &sa, sizeof(struct sockaddr_in));
 	fail_if(rc != ACHAT_RC_OK, "setaddr failed with rc=%d", rc);
 	if (memcmp(&c->addr, &sa, sizeof(sa)) != 0)
 		fail("socket address not set correctly");
+	fail_if(c->addrsize != sizeof(struct sockaddr_in),
+		"socket address not set correctly");
 	mark_point();
 
 	/* XXX by ch: test of AF_INET6 is missing here */
@@ -244,10 +249,12 @@ START_TEST(tc_core_state_initialised)
 	sa_in->sin_len = sizeof(struct sockaddr_in);
 #endif
 
-	rc = acc_setaddr(c, &sa);
+	rc = acc_setaddr(c, &sa, sizeof(struct sockaddr_in));
 	fail_if(rc != ACHAT_RC_OK, "setaddr failed with rc=%d", rc);
 	if (memcmp(&c->addr, &sa, sizeof(sa)) != 0)
 		fail("socket address not set correctly");
+	fail_if(c->addrsize != sizeof(struct sockaddr_in),
+		"socket address not set correctly");
 	mark_point();
 
 	rc = acc_settail(c, ACC_TAIL_SERVER);

@@ -57,7 +57,7 @@
 .Ft "achat_rc"
 .Fn "acc_setblockingmode" "struct achat_channel *" "enum acc_blockingmode"
 .Ft "achat_rc"
-.Fn "acc_setaddr" "struct achat_channel *" "sockaddr *"
+.Fn "acc_setaddr" "struct achat_channel *" "struct sockaddr_storage *" "size_t"
 .Ft "achat_rc"
 .Fn "acc_prepare" "struct achat_channel *"
 .Ft "achat_rc"
@@ -136,11 +136,13 @@ and
 .Fa ACC_NON_BLOCKING
 .Pp
 Use
-.Fn acc_setaddr "struct achat_channel *" "sockaddr *"
+.Fn acc_setaddr "struct achat_channel *" "struct sockaddr_storage *" "size_t"
 to specify where to listen or where to connect to.
 Remember to use
 .Xr htons 3
 e.g for setting the port number in the correct byteorder.
+The third paramater specifies the size of the sockaddr structure inside the
+storage.
 .Pp
 After you have specified all concerning settings you may call
 .Fn acc_prepare "struct achat_channel *"
@@ -246,7 +248,8 @@ if(rc != ACHAT_RC_OK)
 bzero(&sun, sizeof(sun));
 sun.sun_family = AF_UNIX;
 snprintf(sun.sun_path, sizeof(sun.sun_path), SERVERSOCKET);
-rc = acc_seteaddr(c, (struct sockaddr *)&sun);
+rc = acc_setaddr(c, (struct sockaddr *)&sun,
+	sizeof(struct sockaddr_un));
 if (rc != ACHAT_RC_OK)
 	...
 
@@ -299,7 +302,8 @@ bzero(&sin, sizeof(sin));
 sin.sin_family = AF_INET;
 sin.sin_port = htons(ACHAT_SERVER_PORT);
 inet_aton("127.0.0.1", &(sin.sin_addr));
-rc = acc_setaddr(s, (struct sockaddr *)&sin);
+rc = acc_setaddr(s, (struct sockaddr *)&sin,
+	sizeof(struct sockaddr_in));
 if (rc != ACHAT_RC_OK)
 	...
 

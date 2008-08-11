@@ -78,7 +78,7 @@ tc_chatnb_channel_init(int *port)
 	ss_sin->sin_port = 0;
 	inet_aton("127.0.0.1", &(ss_sin->sin_addr));
 
-	if (acc_setaddr(acc, &ss) != ACHAT_RC_OK) {
+	if (acc_setaddr(acc, &ss, sizeof(struct sockaddr_in)) != ACHAT_RC_OK) {
 		acc_destroy(acc);
 		return (NULL);
 	}
@@ -809,7 +809,7 @@ START_TEST(tc_chatnb_eof)
 
 		/* Receive a message after client socket is closed */
 		FD_ZERO(&rfds);
-           	FD_SET(cc->fd, &rfds);
+		FD_SET(cc->fd, &rfds);
 		select(cc->fd + 1, &rfds, NULL, NULL, NULL);
 
 		rc = acc_receivemsg(cc, msg, &smsg);

@@ -72,7 +72,7 @@ tc_connect_lud_client(const char *sockname)
 	bzero(&ss, sizeof(ss));
 	ss_sun->sun_family = AF_UNIX;
 	strlcpy(ss_sun->sun_path, sockname, sizeof(ss_sun->sun_path));
-	rc = acc_setaddr(c, &ss);
+	rc = acc_setaddr(c, &ss, sizeof(struct sockaddr_un));
 	if (rc != ACHAT_RC_OK)
 		fail("client setaddr failed with rc=%d", rc);
 	mark_point();
@@ -117,7 +117,7 @@ tc_connect_lud_server(const char *sockname)
 	bzero(&ss, sizeof(ss));
 	ss_sun->sun_family = AF_UNIX;
 	strlcpy(ss_sun->sun_path, sockname, sizeof(ss_sun->sun_path));
-	rc = acc_setaddr(s, &ss);
+	rc = acc_setaddr(s, &ss, sizeof(struct sockaddr_un));
 	if (rc != ACHAT_RC_OK)
 		fail("server setaddr failed with rc=%d", rc);
 	mark_point();
@@ -162,7 +162,7 @@ tc_connect_lud_serverdup(const char *sockname)
 	bzero(&ss, sizeof(ss));
 	ss_sun->sun_family = AF_UNIX;
 	strlcpy(ss_sun->sun_path, sockname, sizeof(ss_sun->sun_path));
-	rc = acc_setaddr(s, &ss);
+	rc = acc_setaddr(s, &ss, sizeof(struct sockaddr_un));
 	if (rc != ACHAT_RC_OK)
 		fail("server setaddr failed with rc=%d", rc);
 	mark_point();
@@ -210,7 +210,7 @@ tc_connect_lip_client(short port)
 	ss_sin->sin_family = AF_INET;
 	ss_sin->sin_port = htons(port);
 	inet_aton("127.0.0.1", &(ss_sin->sin_addr));
-	rc = acc_setaddr(c, &ss);
+	rc = acc_setaddr(c, &ss, sizeof(struct sockaddr_in));
 	if (rc != ACHAT_RC_OK)
 		fail("client setaddr failed with rc=%d", rc);
 	mark_point();
@@ -333,7 +333,7 @@ START_TEST(tc_connect_localunixdomain_clientclose)
 	bzero(&ss, sizeof(ss));
 	ss_sun->sun_family = AF_UNIX;
 	strlcpy(ss_sun->sun_path, sockname, sizeof(ss_sun->sun_path));
-	rc = acc_setaddr(c, &ss);
+	rc = acc_setaddr(c, &ss, sizeof(struct sockaddr_un));
 	if (rc != ACHAT_RC_OK)
 		fail("client setaddr failed with rc=%d", rc);
 	mark_point();
@@ -354,7 +354,7 @@ START_TEST(tc_connect_localunixdomain_clientclose)
 	fail_if(rc != ACHAT_RC_OK, "server setsslmode failed with rc=%d", rc);
 	mark_point();
 
-	rc = acc_setaddr(s, &ss);
+	rc = acc_setaddr(s, &ss, sizeof(struct sockaddr_un));
 	if (rc != ACHAT_RC_OK)
 		fail("server setaddr failed with rc=%d", rc);
 	mark_point();
@@ -437,7 +437,7 @@ START_TEST(tc_connect_localip)
 	ss_sin->sin_family = AF_INET;
 	ss_sin->sin_port = 0;
 	inet_aton("127.0.0.1", &(ss_sin->sin_addr));
-	rc = acc_setaddr(s, &ss);
+	rc = acc_setaddr(s, &ss, sizeof(struct sockaddr_in));
 	if (rc != ACHAT_RC_OK)
 		fail("server setaddr failed with rc=%d", rc);
 	mark_point();

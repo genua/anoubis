@@ -81,11 +81,12 @@ struct event;
 
 /* The channel */
 struct achat_channel {
-	enum acc_sslmode	sslmode; /* CLEAR, ENCIPHERED */
-	enum acc_tail		tail;	 /* SERVER, CLIENT */
-	enum acc_blockingmode	blocking;/* BLOCKING, NON_BLOCKING */
-	struct sockaddr_storage	addr;	 /* where we want to go to */
-	int			fd;	 /* The socket file descriptor */
+	enum acc_sslmode	sslmode;	/* CLEAR, ENCIPHERED */
+	enum acc_tail		tail;		/* SERVER, CLIENT */
+	enum acc_blockingmode	blocking;	/* BLOCKING, NON_BLOCKING */
+	struct sockaddr_storage	addr;		/* where we want to go to */
+	size_t			addrsize;	/* Size of addr */
+	int			fd;		 /* The socket fd */
 
 	/* credentials of users connect via a unix domain socket */
 	uid_t			euid;
@@ -105,7 +106,7 @@ achat_rc /*@alt void@*/ acc_clear(/*@out@*/struct achat_channel *);
 achat_rc acc_settail(struct achat_channel *, enum acc_tail);
 achat_rc acc_setsslmode(struct achat_channel *, enum acc_sslmode);
 achat_rc acc_setblockingmode(struct achat_channel *, enum acc_blockingmode);
-achat_rc acc_setaddr(struct achat_channel *, struct sockaddr_storage *);
+achat_rc acc_setaddr(struct achat_channel *, struct sockaddr_storage *, size_t);
 
 /* Subsystem Connect */
 achat_rc acc_prepare(struct achat_channel *);
