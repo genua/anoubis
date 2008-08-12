@@ -1289,6 +1289,15 @@ pe_decide_alffilt(struct pe_proc *proc, struct apn_rule *rule,
 	if (msg->protocol != IPPROTO_UDP && msg->protocol != IPPROTO_TCP)
 		return (-1);
 
+	/* For TCP, we only decide on ACCEPT/CONNECT but allow SEND/RECVMSG */
+	if ((msg->op == ALF_SENDMSG || msg->op == ALF_RECVMSG) &&
+	    msg->protocol == IPPROTO_TCP) {
+		if (log)
+			*log = APN_LOG_NONE;
+		return POLICY_ALLOW;
+	}
+
+
 	decision = -1;
 	for (hp = rule->rule.alf; hp; hp = hp->next) {
 		/*
@@ -1373,6 +1382,10 @@ pe_decide_alffilt(struct pe_proc *proc, struct apn_rule *rule,
 					continue;
 			} else if (msg->op == ALF_SENDMSG || msg->op ==
 			    ALF_RECVMSG) {
+				/*
+				 * this case is now handled above, this code
+				 * is no longer in use
+				 */
 				if (pe_addrmatch_out(msg, hp) == 0 &&
 				    pe_addrmatch_in(msg, hp) == 0)
 					continue;
