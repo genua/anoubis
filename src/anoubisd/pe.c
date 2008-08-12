@@ -62,8 +62,8 @@
 #ifdef LINUX
 #include <queue.h>
 #include <bsdcompat.h>
-#include <linux/anoubis_sfs.h>
 #include <linux/anoubis_alf.h>
+#include <linux/anoubis_sfs.h>
 #include <linux/anoubis.h>
 #endif
 #ifdef OPENBSD
@@ -73,31 +73,16 @@
 #include <dev/anoubis.h>
 #endif
 
-#ifdef LINUX
-#include <linux/anoubis_sfs.h>
-#include <linux/anoubis_alf.h>
-#endif
-#ifdef OPENBSD
-#include <dev/anoubis_alf.h>
-#include <dev/anoubis_sfs.h>
-#define POLICY_ALLOW	0
-#define POLICY_DENY	1
-#define POLICY_ASK	2
-#endif
-
 #include <anoubis_protocol.h>
 
 #include "anoubisd.h"
 #include "sfs.h"
 #include "kernelcache.h"
+#include "pe.h"
 
 struct pe_user {
 	TAILQ_ENTRY(pe_user)	 entry;
 	uid_t			 uid;
-
-#define PE_PRIO_ADMIN	0
-#define PE_PRIO_USER1	1
-#define PE_PRIO_MAX	2
 	struct apn_ruleset	*prio[PE_PRIO_MAX];
 };
 TAILQ_HEAD(policies, pe_user) *pdb;
@@ -115,26 +100,6 @@ struct pe_context {
 	struct apn_context	*ctx;
 	struct apn_ruleset	*ruleset;
 };
-
-struct pe_proc {
-	TAILQ_ENTRY(pe_proc)	 entry;
-	int			 refcount;
-	pid_t			 pid;
-	uid_t			 uid;
-
-	u_int8_t		*csum;
-	char			*pathhint;
-	anoubis_cookie_t	 task_cookie;
-	struct pe_proc		*parent_proc;
-
-	/* Per priority contexts */
-	struct pe_context	*context[PE_PRIO_MAX];
-	int			 valid_ctx;
-
-	/* Pointer to kernel cache */
-	struct anoubis_kernel_policy_header	*kcache;
-};
-TAILQ_HEAD(tracker, pe_proc) tracker;
 
 static char * prio_to_string[PE_PRIO_MAX] = {
 #ifndef lint
@@ -186,22 +151,9 @@ int			 pe_decide_sfsdflt(struct apn_rule *, struct
 anoubisd_reply_t	*pe_dispatch_policy(struct anoubisd_msg_comm *);
 char			*pe_dump_sfsmsg(struct sfs_open_message *, int);
 
-struct pe_proc		*pe_get_proc(anoubis_cookie_t);
-void			 pe_put_proc(struct pe_proc * proc);
-struct pe_proc		*pe_alloc_proc(uid_t, anoubis_cookie_t,
-			     anoubis_cookie_t);
-void			 pe_track_proc(struct pe_proc *);
-void			 pe_untrack_proc(struct pe_proc *);
-void			 pe_set_parent_proc(struct pe_proc * proc,
-			     struct pe_proc * newparent);
 int			 pe_load_db(struct policies *);
 void			 pe_flush_db(struct policies *);
-int			 pe_update_db(struct policies *, struct policies *);
-void			 pe_update_db_one(struct apn_ruleset *, uid_t, int);
-int			 pe_update_ctx(struct pe_proc *, struct pe_context **,
-			     int, struct policies *);
 int			 pe_replace_rs(struct apn_ruleset *, uid_t, int);
-void			 pe_flush_tracker(void);
 int			 pe_load_dir(const char *, int, struct policies *);
 static int		 pe_clean_policy(const char *, const char *, int);
 struct apn_ruleset	*pe_load_policy(const char *, int flags);
@@ -210,13 +162,9 @@ int			 pe_insert_rs(struct apn_ruleset *, uid_t, int,
 struct pe_user		*pe_get_user(uid_t, struct policies *);
 struct apn_ruleset	*pe_get_ruleset(uid_t, int, struct policies *);
 void			 pe_inherit_ctx(struct pe_proc *);
-void			 pe_set_ctx(struct pe_proc *, uid_t, const u_int8_t *,
-			     const char *);
 struct pe_context	*pe_search_ctx(struct apn_ruleset *, const u_int8_t *,
 			     const char *);
 struct pe_context	*pe_alloc_ctx(struct apn_rule *, struct apn_ruleset *);
-void			 pe_put_ctx(struct pe_context *);
-void			 pe_reference_ctx(struct pe_context *);
 int			 pe_decide_ctx(struct pe_proc *, const u_int8_t *,
 			     const char *);
 void			 pe_dump_dbgctx(const char *, struct pe_proc *);
@@ -250,7 +198,7 @@ pe_init(void)
 	struct pubkeys	*pk;
 	int		 count;
 
-	TAILQ_INIT(&tracker);
+	pe_proc_init();
 	LIST_INIT(&preqs);
 
 	if ((pp = calloc(1, sizeof(struct policies))) == NULL) {
@@ -329,7 +277,7 @@ pe_reconfigure(void)
 	oldpdb = pdb;
 	pdb = newpdb;
 
-	if (pe_update_db(newpdb, oldpdb) == -1) {
+	if (pe_proc_update_db(newpdb, oldpdb) == -1) {
 		log_warnx("pe_reconfigure: database update failed");
 		pe_flush_db(newpdb);
 		return;
@@ -355,86 +303,6 @@ pe_flush_db(struct policies *ppdb)
 			apn_free_ruleset(p->prio[i]);
 		free(p);
 	}
-}
-
-int
-pe_update_db(struct policies *newpdb, struct policies *oldpdb)
-{
-	struct pe_proc		*pproc;
-	struct pe_context	*newctx;
-	int			 i;
-
-	if (newpdb == NULL || oldpdb == NULL) {
-		log_warnx("pe_update_db: empty database pointers");
-		return (-1);
-	}
-
-	TAILQ_FOREACH(pproc, &tracker, entry) {
-		if (pproc->kcache != NULL) {
-			pproc->kcache = kernelcache_clear(pproc->kcache);
-			kernelcache_send2master(pproc->kcache, pproc->pid);
-		}
-		for (i = 0; i < PE_PRIO_MAX; i++) {
-			DEBUG(DBG_PE_POLICY, "pe_update_db: proc %p prio %d "
-			    "context %p", pproc, i, pproc->context[i]);
-
-			if (pe_update_ctx(pproc, &newctx, i, newpdb) == -1)
-				return (-1);
-			pe_put_ctx(pproc->context[i]);
-			pproc->context[i] = newctx;
-		}
-	}
-
-	return (0);
-}
-
-/*
- * This function is not allowed to fail! It must remove all references
- * to the old ruleset from tracked processes.
- * NOTE: If pproc->context[prio] is not NULL then pproc->context[prio]->ruleset
- *       cannot be NULL either. oldrs == NULL is allowed, however.
- */
-void
-pe_update_db_one(struct apn_ruleset *oldrs, uid_t uid, int prio)
-{
-	struct pe_context	*newctx, *oldctx;
-	struct pe_proc		*pproc;
-
-	DEBUG(DBG_TRACE, ">pe_update_db_one");
-	TAILQ_FOREACH(pproc, &tracker, entry) {
-		if (pproc->context[prio] == NULL)
-			continue;
-		/*
-		 * XXX CEH: For now we change the rules of a process if
-		 * XXX CEH:  - it is running with rules from the ruleset that
-		 * XXX CEH:    is being replaced   or
-		 * XXX CEH:  - its registered user ID matches that of the
-		 * XXX CEH:    user that is replacing its rules.
-		 */
-		if (pproc->uid != uid
-		    && pproc->context[prio]->ruleset != oldrs)
-			continue;
-		if (pproc->context[prio]->ruleset != oldrs)
-			continue;
-		if (pe_update_ctx(pproc, &newctx, prio, pdb) == -1) {
-			log_warn("Failed to replace context");
-			newctx = NULL;
-		}
-		oldctx = pproc->context[prio];
-		DEBUG(DBG_TRACE, " pe_update_db_one: old=%x new=%x",
-		    oldctx, newctx);
-		pproc->context[prio] = newctx;
-		pe_put_ctx(oldctx);
-		if (pproc->kcache != NULL) {
-			pproc->kcache = kernelcache_clear(pproc->kcache);
-			kernelcache_send2master(pproc->kcache, pproc->pid);
-		}
-		if (pproc->csum && pproc->pathhint) {
-			pe_set_ctx(pproc, pproc->uid, pproc->csum,
-			    pproc->pathhint);
-		}
-	}
-	DEBUG(DBG_TRACE, "<pe_update_db_one");
 }
 
 /*
@@ -478,22 +346,24 @@ pe_update_ctx(struct pe_proc *pproc, struct pe_context **newctx, int prio,
 
 	DEBUG(DBG_TRACE, ">pe_update_ctx");
 	context = NULL;
-	newrules = pe_get_ruleset(pproc->uid, prio, newpdb);
+	newrules = pe_get_ruleset(pe_proc_get_uid(pproc), prio, newpdb);
 	DEBUG(DBG_TRACE, " pe_update_ctx: newrules = %x", newrules);
 	if (newrules) {
 		u_int8_t		*csum = NULL;
 		char			*pathhint = NULL;
 		struct apn_rule		*oldrule;
 		struct apn_app		*oldapp;
+		struct pe_context	*ctx;
 
 		/*
 		 * XXX CEH: In some cases we might want to look for
 		 * XXX CEH: a new any rule if the old context for the priority
 		 * XXX CEH: or its associated ruleset is NULL.
 		 */
-		if (pproc->context[prio] == NULL)
+		ctx = pe_proc_get_context(pproc, prio);
+		if (ctx == NULL)
 			goto out;
-		oldrule = pproc->context[prio]->rule;
+		oldrule = ctx->rule;
 		if (!oldrule)
 			goto out;
 		oldapp = oldrule->app;
@@ -513,18 +383,6 @@ out:
 	*newctx = context;
 
 	return (0);
-}
-
-void
-pe_flush_tracker(void)
-{
-	struct pe_proc	*p, *pnext;
-
-	for (p = TAILQ_FIRST(&tracker); p != TAILQ_END(&tracker); p = pnext) {
-		pnext = TAILQ_NEXT(p, entry);
-		TAILQ_REMOVE(&tracker, p, entry);
-		pe_put_proc(p);
-	}
 }
 
 int
@@ -828,7 +686,7 @@ pe_replace_rs(struct apn_ruleset *rs, uid_t uid, int prio)
 	}
 	oldrs = user->prio[prio];
 	user->prio[prio] = rs;
-	pe_update_db_one(oldrs, uid, prio);
+	pe_proc_update_db_one(oldrs, uid, prio);
 	apn_free_ruleset(oldrs);
 	DEBUG(DBG_TRACE, "<pe_replace_rs");
 	return 0;
@@ -986,6 +844,8 @@ pe_handle_sfsexec(struct eventdev_hdr *hdr)
 {
 	struct sfs_open_message		*msg;
 	struct pe_proc			*proc = NULL;
+	struct pe_context		*ctx0, *ctx1;
+	struct pe_proc_ident		*pident;
 
 	if (hdr == NULL) {
 		log_warnx("pe_handle_sfsexec: empty header");
@@ -1004,42 +864,44 @@ pe_handle_sfsexec(struct eventdev_hdr *hdr)
 		    msg->common.task_cookie);
 		return (NULL);
 	}
-	/* if not yet set, fill in checksum and pathhint */
+	/* fill in checksum and pathhint */
+	pident = pe_proc_ident(proc);
 	if (msg->flags & ANOUBIS_OPEN_FLAG_CSUM) {
-		if (proc->csum == NULL) {
-			proc->csum = calloc(1, sizeof(msg->csum));
-			if (proc->csum == NULL) {
+		if (pident->csum == NULL) {
+			pident->csum = calloc(1, sizeof(msg->csum));
+			if (pident->csum == NULL) {
 				log_warn("calloc");
 				master_terminate(ENOMEM);	/* XXX HSH */
 			}
 		}
-		bcopy(msg->csum, proc->csum, sizeof(msg->csum));
+		bcopy(msg->csum, pident->csum, sizeof(msg->csum));
 	} else {
-		if (proc->csum) {
-			free(proc->csum);
-			proc->csum = NULL;
+		if (pident->csum) {
+			free(pident->csum);
+			pident->csum = NULL;
 		}
 	}
-	if (proc->pathhint) {
-		free(proc->pathhint);
-		proc->pathhint = NULL;
+	if (pident->pathhint) {
+		free(pident->pathhint);
+		pident->pathhint = NULL;
 	}
 	if (msg->flags & ANOUBIS_OPEN_FLAG_PATHHINT) {
-		if ((proc->pathhint = strdup(msg->pathhint)) == NULL) {
+		if ((pident->pathhint = strdup(msg->pathhint)) == NULL) {
 			log_warn("strdup");
 			master_terminate(ENOMEM);	/* XXX HSH */
 		}
 	}
-	proc->pid = hdr->msg_pid;
-	pe_set_ctx(proc, hdr->msg_uid, proc->csum, proc->pathhint);
+	pe_proc_set_pid(proc, hdr->msg_pid);
+	pe_set_ctx(proc, hdr->msg_uid, pident->csum, pident->pathhint);
 
+	ctx0 = pe_proc_get_context(proc, 0);
+	ctx1 = pe_proc_get_context(proc, 1);
 	/* Get our policy */
 	DEBUG(DBG_PE_PROC, "pe_handle_sfsexec: using policies %p %p "
 	    "for %s csum 0x%08lx...",
-	    proc->context[0] ? proc->context[0]->rule : NULL,
-	    proc->context[1] ? proc->context[1]->rule : NULL,
-	    proc->pathhint ? proc->pathhint : "",
-	    proc->csum ? htonl(*(unsigned long *)proc->csum) : 0);
+	    ctx0 ? ctx0->rule : NULL, ctx1 ? ctx1->rule : NULL,
+	    pident->pathhint ? pident->pathhint : "",
+	    pident->csum ? htonl(*(unsigned long *)pident->csum) : 0);
 	pe_put_proc(proc);
 	return (NULL);
 }
@@ -1080,12 +942,15 @@ pe_handle_process(struct eventdev_hdr *hdr)
 	}
 
 	if (proc) {
+		struct pe_proc_ident *pident = pe_proc_ident(proc);
 		DEBUG(DBG_PE_PROC, "pe_handle_process: token 0x%08llx pid %d "
 		    "uid %u op %d proc %p csum 0x%08x... parent "
 		    "token 0x%08llx",
-		    proc->task_cookie, proc->pid, hdr->msg_uid, msg->op,
-		    proc, proc->csum ? htonl(*(unsigned long *)proc->csum) : 0,
-		    proc->parent_proc ? proc->parent_proc->task_cookie : 0);
+		    pe_proc_task_cookie(proc), pe_proc_get_pid(proc),
+		    hdr->msg_uid, msg->op,
+		    proc,
+		    pident->csum ? htonl(*(unsigned long *)pident->csum) : 0,
+		    pe_proc_task_cookie(pe_proc_get_parent(proc)));
 		pe_put_proc(proc);
 	}
 	return (NULL);
@@ -1119,8 +984,8 @@ pe_handle_alf(struct eventdev_hdr *hdr)
 		pe_track_proc(proc);
 	}
 
-	if (proc->pid == -1)
-		proc->pid = hdr->msg_pid;
+	if (pe_proc_get_pid(proc) == -1)
+		pe_proc_set_pid(proc, hdr->msg_pid);
 
 	reply = pe_decide_alf(proc, hdr);
 	pe_put_proc(proc);
@@ -1157,12 +1022,12 @@ pe_decide_alf(struct pe_proc *proc, struct eventdev_hdr *hdr)
 	rule_id = 0;
 	decision = -1;
 
-	for (i = 0; proc->valid_ctx && i < PE_PRIO_MAX; i++) {
+	for (i = 0; pe_proc_valid_context(proc) && i < PE_PRIO_MAX; i++) {
 		DEBUG(DBG_PE_DECALF, "pe_decide_alf: prio %d context %p", i,
-		    proc->context[i]);
+		    pe_proc_get_context(proc, i));
 
-		ret = pe_alf_evaluate(proc, proc->context[i], msg, &log,
-		    &rule_id);
+		ret = pe_alf_evaluate(proc, pe_proc_get_context(proc, i),
+		    msg, &log, &rule_id);
 
 		if (ret != -1) {
 			decision = ret;
@@ -1218,10 +1083,11 @@ pe_decide_alf(struct pe_proc *proc, struct eventdev_hdr *hdr)
 	reply->rule_id = rule_id;
 	reply->timeout = (time_t)0;
 	if (decision == POLICY_ASK) {
+		struct pe_proc_ident *pident = pe_proc_ident(proc);
 		reply->ask = 1;
 		reply->timeout = 300;	/* XXX 5 Minutes for now. */
-		reply->csum = proc->csum;
-		reply->path = proc->pathhint;
+		reply->csum = pident->csum;
+		reply->path = pident->pathhint;
 	}
 	reply->reply = decision;
 	reply->len = 0;
@@ -1499,8 +1365,7 @@ pe_kcache_alf(struct apn_alfrule *rule, int decision, struct pe_proc *proc,
 		break;
 	}
 
-	proc->kcache = kernelcache_add(proc->kcache, policy);
-	kernelcache_send2master(proc->kcache, proc->pid);
+	pe_proc_kcache_add(proc, policy);
 
 	free(policy);
 }
@@ -1799,6 +1664,7 @@ pe_dump_ctx(struct eventdev_hdr *hdr, struct pe_proc *proc, int prio)
 	struct pe_context	*ctx;
 	unsigned long		 csumctx;
 	char			*dump, *progctx;
+	struct pe_proc_ident	*pident;
 
 	/* hdr must be non-NULL, proc might be NULL */
 	if (hdr == NULL)
@@ -1807,8 +1673,9 @@ pe_dump_ctx(struct eventdev_hdr *hdr, struct pe_proc *proc, int prio)
 	csumctx = 0;
 	progctx = "<none>";
 
-	if (proc && 0 <= prio && prio <= PE_PRIO_MAX && proc->valid_ctx) {
-		ctx = proc->context[prio];
+	if (proc && 0 <= prio && prio <= PE_PRIO_MAX &&
+	    pe_proc_valid_context(proc)) {
+		ctx = pe_proc_get_context(proc, prio);
 
 		if (ctx && ctx->rule) {
 			if (ctx->rule->app) {
@@ -1820,11 +1687,13 @@ pe_dump_ctx(struct eventdev_hdr *hdr, struct pe_proc *proc, int prio)
 		}
 	}
 
+	pident = pe_proc_ident(proc);
 	if (asprintf(&dump, "uid %hu pid %hu program %s checksum 0x%08x... "
 	    "context program %s checksum 0x%08lx...",
 	    hdr->msg_uid, hdr->msg_pid,
-	    (proc && proc->pathhint) ? proc->pathhint : "<none>",
-	    (proc && proc->csum) ? htonl(*(unsigned long *)proc->csum) : 0,
+	    (pident && pident->pathhint) ? pident->pathhint : "<none>",
+	    (pident && pident->csum) ?
+	    htonl(*(unsigned long *)pident->csum) : 0,
 	    progctx, csumctx) == -1) {
 		dump = NULL;
 	}
@@ -2396,123 +2265,6 @@ reply:
 	return reply;
 }
 
-struct pe_proc *
-pe_get_proc(anoubis_cookie_t cookie)
-{
-	struct pe_proc	*p, *proc;
-
-	proc = NULL;
-	TAILQ_FOREACH(p, &tracker, entry) {
-		if (p->task_cookie == cookie) {
-			proc = p;
-			break;
-		}
-	}
-	if (proc) {
-		DEBUG(DBG_PE_TRACKER, "pe_get_proc: proc %p pid %d cookie "
-		    "0x%08llx", proc, (int)proc->pid, proc->task_cookie);
-		proc->refcount++;
-	}
-
-	return (proc);
-}
-
-void
-pe_put_proc(struct pe_proc *proc)
-{
-	int	i;
-
-	if (!proc || --(proc->refcount))
-		return;
-	if (proc->parent_proc != proc)
-		pe_put_proc(proc->parent_proc);
-	if (proc->csum)
-		free(proc->csum);
-	if (proc->pathhint)
-		free(proc->pathhint);
-
-	for (i = 0; i < PE_PRIO_MAX; i++)
-		pe_put_ctx(proc->context[i]);
-
-	kernelcache_clear(proc->kcache);
-
-	free(proc);
-}
-
-struct pe_proc *
-pe_alloc_proc(uid_t uid, anoubis_cookie_t cookie,
-    anoubis_cookie_t parent_cookie)
-{
-	struct pe_proc	*proc, *parent;
-
-	if ((proc = calloc(1, sizeof(struct pe_proc))) == NULL)
-		goto oom;
-	proc->task_cookie = cookie;
-	parent = pe_get_proc(parent_cookie);
-	proc->parent_proc = parent;
-	proc->pid = -1;
-	proc->uid = uid;
-	proc->refcount = 1;
-	proc->kcache = NULL;
-	if (parent) {
-		if (parent->pathhint) {
-			proc->pathhint = strdup(parent->pathhint);
-			if (!proc->pathhint)
-				goto oom;
-		}
-		if (parent->csum) {
-			proc->csum = malloc(ANOUBIS_SFS_CS_LEN);
-			if (!proc->csum)
-				goto oom;
-			memcpy(proc->csum, parent->csum, ANOUBIS_SFS_CS_LEN);
-		}
-	}
-
-	DEBUG(DBG_PE_TRACKER, "pe_alloc_proc: proc %p uid %u cookie 0x%08llx "
-	    "parent cookie 0x%08llx", proc, uid, proc->task_cookie,
-	    proc->parent_proc ? parent_cookie : 0);
-
-	return (proc);
-oom:
-	log_warn("pe_alloc_proc: cannot allocate memory");
-	master_terminate(ENOMEM);
-	return (NULL);	/* XXX HSH */
-}
-
-void
-pe_set_parent_proc(struct pe_proc *proc, struct pe_proc *newparent)
-{
-	struct pe_proc *oldparent = proc->parent_proc;
-
-	proc->parent_proc = newparent;
-	if (proc != newparent)
-		newparent->refcount++;
-	if (oldparent && oldparent != proc)
-		pe_put_proc(oldparent);
-}
-
-void
-pe_track_proc(struct pe_proc *proc)
-{
-	if (proc == NULL) {
-		log_warnx("pe_track_proc: empty process");
-		return;
-	}
-	DEBUG(DBG_PE_TRACKER, "pe_track_proc: proc %p cookie 0x%08llx",
-	    proc, proc->task_cookie);
-	proc->refcount++;
-	TAILQ_INSERT_TAIL(&tracker, proc, entry);
-}
-
-void
-pe_untrack_proc(struct pe_proc *proc)
-{
-	if (!proc)
-		return;
-	TAILQ_REMOVE(&tracker, proc, entry);
-	pe_put_proc(proc);
-}
-
 /*
  * Inherit the parent process context. This might not necessarily be
  * the direct parent process, but some grand parent.  This happens on
@@ -2532,21 +2284,20 @@ pe_inherit_ctx(struct pe_proc *proc)
 	}
 
 	/* Get parents context */
-	parent = proc->parent_proc;
+	parent = pe_proc_get_parent(proc);
 	DEBUG(DBG_PE_CTX, "pe_inherit_ctx: parent %p 0x%08llx", parent,
-	    parent ? parent->task_cookie : 0);
+	    pe_proc_task_cookie(parent));
 
-	if (parent && !parent->valid_ctx) {
+	if (parent && !pe_proc_valid_context(parent)) {
 		DEBUG(DBG_PE_CTX, "pe_inherit_ctx: parent %p 0x%08llx has no "
-		    "context", parent, parent->task_cookie);
+		    "context", parent, pe_proc_task_cookie(parent));
 	}
 
-	if (parent && parent->valid_ctx) {
+	if (parent && pe_proc_valid_context(parent)) {
 		for (i = 0; i < PE_PRIO_MAX; i++) {
-			proc->context[i] = parent->context[i];
-			pe_reference_ctx(proc->context[i]);
+			struct pe_context *ctx = pe_proc_get_context(parent, i);
+			pe_proc_set_context(proc, i, ctx);
 		}
-		proc->valid_ctx = 1;
 		pe_set_parent_proc(proc, parent);
 
 		pe_dump_dbgctx("pe_inherit_ctx", proc);
@@ -2574,6 +2325,7 @@ pe_set_ctx(struct pe_proc *proc, uid_t uid, const u_int8_t *csum,
 {
 	struct pe_user		*user;
 	int			 i;
+	struct pe_context	*tmpctx;
 
 	/* We can both handle csum and pathhint being NULL. */
 	if (proc == NULL) {
@@ -2586,12 +2338,12 @@ pe_set_ctx(struct pe_proc *proc, uid_t uid, const u_int8_t *csum,
 	 * that allows us to switch context.  If no, we keep the context and
 	 * just return.  Otherwise, we continue and search our new context.
 	 */
-	if (proc->valid_ctx) {
+	if (pe_proc_valid_context(proc)) {
+		tmpctx = pe_proc_get_context(proc, 0);
 		DEBUG(DBG_PE_CTX, "pe_set_ctx: proc %p 0x%08llx has context "
-		    "%p rule %p ctx %p", proc, proc->task_cookie,
-		    proc->context[0],
-		    proc->context[0] ? proc->context[0]->rule : NULL,
-		    proc->context[0] ? proc->context[0]->ctx : NULL);
+		    "%p rule %p ctx %p", proc, pe_proc_task_cookie(proc),
+		    tmpctx, tmpctx ? tmpctx->rule : NULL,
+		    tmpctx ? tmpctx->ctx : NULL);
 
 		if (pe_decide_ctx(proc, csum, pathhint) != 1) {
 			DEBUG(DBG_PE_CTX, "pe_set_ctx: keeping context");
@@ -2601,9 +2353,9 @@ pe_set_ctx(struct pe_proc *proc, uid_t uid, const u_int8_t *csum,
 	}
 
 	/*
-	 * If our parent is either not tracked or has no context (which
-	 * actually should not happen), or we are allowed to switch context
-	 * we use the first matching application rule as new context.
+	 * If we are not tracked (which actually should not happen), or we
+	 * are allowed to switch context we use the first matching
+	 * application rule as new context.
 	 */
 	if ((user = pe_get_user(uid, pdb)) == NULL &&
 	    (user = pe_get_user(-1, pdb)) == NULL) {
@@ -2613,26 +2365,28 @@ pe_set_ctx(struct pe_proc *proc, uid_t uid, const u_int8_t *csum,
 		 * which will never allow us to leave it.
 		 */
 		for (i = 0; i < PE_PRIO_MAX; i++)
-			proc->context[i] = NULL;
-		proc->valid_ctx = 1;
+			pe_proc_set_context(proc, i, NULL);
 	} else {
+		/*
+		 * pe_search_ctx will get a reference, pe_proc_set_context
+		 * will get another one. We need to drop one of them.
+		 */
 		for (i = 0; i < PE_PRIO_MAX; i++) {
 			struct apn_ruleset *ruleset;
 			ruleset = pe_get_ruleset(uid, i, pdb);
-			pe_put_ctx(proc->context[i]);
-			proc->context[i] = pe_search_ctx(ruleset, csum,
-			    pathhint);
+			tmpctx = pe_search_ctx(ruleset, csum, pathhint);
+			pe_proc_set_context(proc, i, tmpctx);
+			pe_put_ctx(tmpctx);
 		}
-		proc->valid_ctx = 1;
 	}
 	pe_set_parent_proc(proc, proc);
 	if (uid >= 0)
-		proc->uid = uid;
+		pe_proc_set_uid(proc, uid);
 
+	tmpctx = pe_proc_get_context(proc, 0);
 	DEBUG(DBG_PE_CTX, "pe_set_ctx: proc %p 0x%08llx got context "
-	    "%p rule %p ctx %p", proc, proc->task_cookie,
-	    proc->context[0], proc->context[0] ? proc->context[0]->rule : NULL,
-	    proc->context[0] ? proc->context[0]->ctx : NULL);
+	    "%p rule %p ctx %p", proc, pe_proc_task_cookie(proc),
+	    tmpctx, tmpctx ? tmpctx->rule : NULL, tmpctx ? tmpctx->ctx : NULL);
 }
 
 struct pe_context *
@@ -2776,7 +2530,7 @@ pe_decide_ctx(struct pe_proc *proc, const u_int8_t *csum, const char *pathhint)
 	struct apn_app	*hp;
 	int		 cmp, decision, i;
 
-	if (!proc->valid_ctx)
+	if (!pe_proc_valid_context(proc))
 		return (0);
 	/*
 	 * NOTE: Once we actually use the pathhint in policiy decision
@@ -2795,12 +2549,13 @@ pe_decide_ctx(struct pe_proc *proc, const u_int8_t *csum, const char *pathhint)
 	 */
 	decision = -1;
 	for (i = 0; i < PE_PRIO_MAX; i++) {
+		struct pe_context *ctx = pe_proc_get_context(proc, i);
 		/* No context means, no decision, just go on. */
-		if (proc->context[i] == NULL) {
+		if (ctx == NULL) {
 			continue;
 		}
 		/* Context without rule means, not switching. */
-		if (proc->context[i]->ctx == NULL) {
+		if (ctx->ctx == NULL) {
 			decision = 0;
 			break;
 		}
@@ -2809,7 +2564,7 @@ pe_decide_ctx(struct pe_proc *proc, const u_int8_t *csum, const char *pathhint)
 		 * empty.  In that case, initialize the compare result cmp to 0
 		 * (ie. match).
 		 */
-		hp = proc->context[i]->ctx->application;
+		hp = ctx->ctx->application;
 		if (hp == NULL)
 			cmp = 0;
 		while (hp) {
@@ -2841,23 +2596,12 @@ pe_decide_ctx(struct pe_proc *proc, const u_int8_t *csum, const char *pathhint)
 void
 pe_dump(void)
 {
-	struct pe_proc		*proc;
 	struct pe_user		*user;
 	struct apn_ruleset	*rs;
 	struct apn_rule		*rp;
 	int			 i;
 
-	log_info("tracked processes:");
-	TAILQ_FOREACH(proc, &tracker, entry) {
-		log_info("proc %p token 0x%08llx pproc %p pid %d csum 0x%08x "
-		    "pathhint \"%s\" ctx %p %p rules %p %p", proc,
-		    proc->task_cookie, proc->parent_proc, (int)proc->pid,
-		    proc->csum ? htonl(*(unsigned long *)proc->csum) : 0,
-		    proc->pathhint ? proc->pathhint : "",
-		    proc->context[0], proc->context[1],
-		    proc->context[0] ? proc->context[0]->rule : NULL,
-		    proc->context[1] ? proc->context[1]->rule : NULL);
-	}
+	pe_proc_dump();
 
 	log_info("policies (pdb %p)", pdb);
 	TAILQ_FOREACH(user, pdb, entry) {
@@ -2886,9 +2630,9 @@ pe_dump_dbgctx(const char *prefix, struct pe_proc *proc)
 	}
 
 	for (i = 0; i < PE_PRIO_MAX; i++) {
+		struct pe_context *ctx = pe_proc_get_context(proc, i);
 		DEBUG(DBG_PE_CTX, "%s: prio %d rule %p ctx %p", prefix, i,
-		    proc->context[i] ? proc->context[i]->rule : NULL,
-		    proc->context[i] ? proc->context[i]->ctx : NULL);
+		    ctx ? ctx->rule : NULL, ctx ? ctx->ctx : NULL);
 	}
 }
 
@@ -3338,6 +3082,19 @@ pe_get_pubkey(uid_t uid)
 	}
 
 	return (NULL);
+}
+
+int pe_context_uses_rs(struct pe_context *ctx, struct apn_ruleset *rs)
+{
+	return ctx && rs && (ctx->ruleset == rs);
+}
+
+struct apn_rule *
+pe_context_get_rule(struct pe_context *ctx)
+{
+	if (!ctx)
+		return NULL;
+	return ctx->rule;
 }
 
 /*@=memchecks@*/

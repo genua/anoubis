@@ -65,6 +65,7 @@ anoubisd_SOURCES= \
 	main.c \
 	policy.c \
 	pe.c \
+	pe_proc.c \
 	printconf.c \
 	session.c \
 	log.c \
@@ -77,12 +78,14 @@ anoubisd_SOURCES= \
 	amsg.h \
 	aqueue.h \
 	sfs.h \
+	pe.h \
 	kernelcache.h
 
 anoubisd_SOURCES_flawfinder= \
 	main.c_flawfinder \
 	policy.c_flawfinder \
 	pe.c_flawfinder \
+	pe_proc.c_flawfinder \
 	printconf.c_flawfinder \
 	session.c_flawfinder \
 	uidswap.c_flawfinder \
@@ -101,6 +104,7 @@ anoubisd_SOURCES_lint= \
 	main.c_lint \
 	policy.c_lint \
 	pe.c_lint \
+	pe_proc.c_lint \
 	printconf.c_lint \
 	session.c_lint \
 	uidswap.c_lint \
@@ -112,6 +116,7 @@ anoubisd_SOURCES_splint= \
 	main.c_splint \
 	policy.c_splint \
 	pe.c_splint \
+	pe_proc.c_splint \
 	printconf.c_splint \
 	session.c_splint \
 	uidswap.c_splint \
