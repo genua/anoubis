@@ -45,6 +45,9 @@ if test -n "$LIBOBJS"; then
 	AC_DEFINE(NEEDBSDCOMPAT, 1, "need a libbsdcompat.a")
 fi
 
+dnl enable large file support
+AC_SYS_LARGEFILE
+
 dnl check for presence of the stack protector
 AX_CHECK_COMPILER_FLAGS(-fstack-protector,
 [
