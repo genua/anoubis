@@ -77,13 +77,13 @@ ModSfsAddPolicyVisitor::ruleListAppend(Policy *policy)
 }
 
 void
-ModSfsAddPolicyVisitor::visitAppPolicy(AppPolicy *appPolicy)
+ModSfsAddPolicyVisitor::visitAppPolicy(AppPolicy*)
 {
 	/* no app policies shown in SFS module */
 }
 
 void
-ModSfsAddPolicyVisitor::visitAlfPolicy(AlfPolicy *alfPolicy)
+ModSfsAddPolicyVisitor::visitAlfPolicy(AlfPolicy*)
 {
 	/* no ALF policies shown in SFS module */
 }
@@ -106,6 +106,6 @@ ModSfsAddPolicyVisitor::visitSfsPolicy(SfsPolicy *sfsPolicy)
 }
 
 void
-ModSfsAddPolicyVisitor::visitVarPolicy(VarPolicy *variable)
+ModSfsAddPolicyVisitor::visitVarPolicy(VarPolicy*)
 {
 }

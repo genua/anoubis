@@ -30,8 +30,10 @@
 
 extern Suite	*bsdcompat_testsuite(void);
 
+#define __used __attribute__((unused))
+
 int
-main(int argc, char *argv[])
+main(int argc, char **argv __used)
 {
 	int	 number_failed = -1;
 	Suite	*suite;

@@ -493,25 +493,25 @@ DlgRuleEditor::updateLog(int logNo)
 }
 
 void
-DlgRuleEditor::OnCommonLogNone(wxCommandEvent& event)
+DlgRuleEditor::OnCommonLogNone(wxCommandEvent& )
 {
 	updateLog(APN_LOG_NONE);
 }
 
 void
-DlgRuleEditor::OnCommonLogLog(wxCommandEvent& event)
+DlgRuleEditor::OnCommonLogLog(wxCommandEvent& )
 {
 	updateLog(APN_LOG_NORMAL);
 }
 
 void
-DlgRuleEditor::OnCommonLogAlert(wxCommandEvent& event)
+DlgRuleEditor::OnCommonLogAlert(wxCommandEvent& )
 {
 	updateLog(APN_LOG_ALERT);
 }
 
 void
-DlgRuleEditor::OnTableOptionButtonClick(wxCommandEvent& event)
+DlgRuleEditor::OnTableOptionButtonClick(wxCommandEvent& )
 {
 	wxArrayString		 choices;
 	wxMultiChoiceDialog	*multiChoiceDlg;
@@ -531,25 +531,25 @@ DlgRuleEditor::OnTableOptionButtonClick(wxCommandEvent& event)
 }
 
 void
-DlgRuleEditor::OnAppNameComboBox(wxCommandEvent& event)
+DlgRuleEditor::OnAppNameComboBox(wxCommandEvent& )
 {
 	updateAppName(appNameComboBox->GetValue());
 }
 
 void
-DlgRuleEditor::OnAppBinaryTextCtrl(wxCommandEvent& event)
+DlgRuleEditor::OnAppBinaryTextCtrl(wxCommandEvent& )
 {
 	updateBinName(appBinaryTextCtrl->GetValue());
 }
 
 void
-DlgRuleEditor::OnSfsBinaryTextCtrl(wxCommandEvent& event)
+DlgRuleEditor::OnSfsBinaryTextCtrl(wxCommandEvent& )
 {
 	updateBinName(sfsBinaryTextCtrl->GetValue());
 }
 
 void
-DlgRuleEditor::OnAppBinaryModifyButton(wxCommandEvent& event)
+DlgRuleEditor::OnAppBinaryModifyButton(wxCommandEvent& )
 {
 	wxString	 caption = _("Choose a binary");
 	wxString	 wildcard = wxT("*");
@@ -571,7 +571,7 @@ DlgRuleEditor::OnAppBinaryModifyButton(wxCommandEvent& event)
 }
 
 void
-DlgRuleEditor::OnAppUpdateChkSumButton(wxCommandEvent& event)
+DlgRuleEditor::OnAppUpdateChkSumButton(wxCommandEvent& )
 {
 	AppPolicy			*policy;
 	RuleEditorFillTableVisitor       updateTable(this, selectedIndex_);
@@ -593,7 +593,7 @@ DlgRuleEditor::OnAppUpdateChkSumButton(wxCommandEvent& event)
 }
 
 void
-DlgRuleEditor::OnAppValidateChkSumButton(wxCommandEvent& event)
+DlgRuleEditor::OnAppValidateChkSumButton(wxCommandEvent& )
 {
 	AppPolicy			*policy;
 	RuleEditorFillWidgetsVisitor	 updateVisitor(this);
@@ -630,7 +630,7 @@ DlgRuleEditor::OnAppValidateChkSumButton(wxCommandEvent& event)
 }
 
 void
-DlgRuleEditor::OnRuleCreateButton(wxCommandEvent& event)
+DlgRuleEditor::OnRuleCreateButton(wxCommandEvent& )
 {
 	int id = -1;
 
@@ -660,13 +660,13 @@ DlgRuleEditor::OnRuleCreateButton(wxCommandEvent& event)
 }
 
 void
-DlgRuleEditor::OnRuleDeleteButton(wxCommandEvent& event)
+DlgRuleEditor::OnRuleDeleteButton(wxCommandEvent& )
 {
 	ruleSet_->deletePolicy(selectedId_);
 }
 
 void
-DlgRuleEditor::OnClose(wxCloseEvent& event)
+DlgRuleEditor::OnClose(wxCloseEvent& )
 {
 	wxCommandEvent  showEvent(anEVT_RULEEDITOR_SHOW);
 	showEvent.SetInt(false);
@@ -674,109 +674,109 @@ DlgRuleEditor::OnClose(wxCloseEvent& event)
 }
 
 void
-DlgRuleEditor::OnAlfAllowRadioButton(wxCommandEvent& event)
+DlgRuleEditor::OnAlfAllowRadioButton(wxCommandEvent& )
 {
 	updateAction(APN_ACTION_ALLOW);
 }
 
 void
-DlgRuleEditor::OnAlfDenyRadioButton(wxCommandEvent& event)
+DlgRuleEditor::OnAlfDenyRadioButton(wxCommandEvent& )
 {
 	updateAction(APN_ACTION_DENY);
 }
 
 void
-DlgRuleEditor::OnAlfAskRadioButton(wxCommandEvent& event)
+DlgRuleEditor::OnAlfAskRadioButton(wxCommandEvent& )
 {
 	updateAction(APN_ACTION_ASK);
 }
 
 void
-DlgRuleEditor::OnAlfFilterRadioButton(wxCommandEvent& event)
+DlgRuleEditor::OnAlfFilterRadioButton(wxCommandEvent& )
 {
 	updateType(APN_ALF_FILTER);
 }
 
 void
-DlgRuleEditor::OnAlfCapRadioButton(wxCommandEvent& event)
+DlgRuleEditor::OnAlfCapRadioButton(wxCommandEvent& )
 {
 	updateType(APN_ALF_CAPABILITY);
 }
 
 void
-DlgRuleEditor::OnAlfDefaultRadioButton(wxCommandEvent& event)
+DlgRuleEditor::OnAlfDefaultRadioButton(wxCommandEvent& )
 {
 	updateType(APN_ALF_DEFAULT);
 }
 
 void
-DlgRuleEditor::OnAlfTcpRadioButton(wxCommandEvent& event)
+DlgRuleEditor::OnAlfTcpRadioButton(wxCommandEvent& )
 {
 	updateProtocol(IPPROTO_TCP);
 }
 
 void
-DlgRuleEditor::OnAlfUdpRadioButton(wxCommandEvent& event)
+DlgRuleEditor::OnAlfUdpRadioButton(wxCommandEvent& )
 {
 	updateProtocol(IPPROTO_UDP);
 }
 
 void
-DlgRuleEditor::OnAlfInetRadioButton(wxCommandEvent& event)
+DlgRuleEditor::OnAlfInetRadioButton(wxCommandEvent& )
 {
 	updateAddrFamily(AF_INET);
 }
 
 void
-DlgRuleEditor::OnAlfInet6RadioButton(wxCommandEvent& event)
+DlgRuleEditor::OnAlfInet6RadioButton(wxCommandEvent& )
 {
 	updateAddrFamily(AF_INET6);
 }
 
 void
-DlgRuleEditor::OnAlfAnyRadioButton(wxCommandEvent& event)
+DlgRuleEditor::OnAlfAnyRadioButton(wxCommandEvent& )
 {
 	updateAddrFamily(0);
 }
 
 void
-DlgRuleEditor::OnAlfRawCapRadioButton(wxCommandEvent& event)
+DlgRuleEditor::OnAlfRawCapRadioButton(wxCommandEvent& )
 {
 	updateCapType(APN_ALF_CAPRAW);
 }
 
 void
-DlgRuleEditor::OnAlfOtherCapRadioButton(wxCommandEvent& event)
+DlgRuleEditor::OnAlfOtherCapRadioButton(wxCommandEvent& )
 {
 	updateCapType(APN_ALF_CAPOTHER);
 }
 
 void
-DlgRuleEditor::OnAlfAllCapRadioButton(wxCommandEvent& event)
+DlgRuleEditor::OnAlfAllCapRadioButton(wxCommandEvent& )
 {
 	updateCapType(APN_ALF_CAPALL);
 }
 
 void
-DlgRuleEditor::OnAlfAcceptRadioButton(wxCommandEvent& event)
+DlgRuleEditor::OnAlfAcceptRadioButton(wxCommandEvent& )
 {
 	updateDirection(APN_ACCEPT);
 }
 
 void
-DlgRuleEditor::OnAlfConnectRadioButton(wxCommandEvent& event)
+DlgRuleEditor::OnAlfConnectRadioButton(wxCommandEvent& )
 {
 	updateDirection(APN_CONNECT);
 }
 
 void
-DlgRuleEditor::OnAlfBothRadioButton(wxCommandEvent& event)
+DlgRuleEditor::OnAlfBothRadioButton(wxCommandEvent& )
 {
 	updateDirection(APN_BOTH);
 }
 
 void
-DlgRuleEditor::OnSfsBinaryModifyButton(wxCommandEvent& event)
+DlgRuleEditor::OnSfsBinaryModifyButton(wxCommandEvent& )
 {
 	wxString	 caption = _("Choose a binary");
 	wxString	 wildcard = wxT("*");
@@ -798,7 +798,7 @@ DlgRuleEditor::OnSfsBinaryModifyButton(wxCommandEvent& event)
 }
 
 void
-DlgRuleEditor::OnSfsUpdateChkSumButton(wxCommandEvent& event)
+DlgRuleEditor::OnSfsUpdateChkSumButton(wxCommandEvent& )
 {
 	RuleEditorFillWidgetsVisitor	 updateVisitor(this);
 	RuleEditorFillTableVisitor	 updateTable(this, selectedIndex_);
@@ -820,7 +820,7 @@ DlgRuleEditor::OnSfsUpdateChkSumButton(wxCommandEvent& event)
 }
 
 void
-DlgRuleEditor::OnSfsValidateChkSumButton(wxCommandEvent& event)
+DlgRuleEditor::OnSfsValidateChkSumButton(wxCommandEvent& )
 {
 	SfsPolicy			*policy;
 	wxString			 currHash;
@@ -869,7 +869,7 @@ DlgRuleEditor::OnShow(wxCommandEvent& event)
 }
 
 void
-DlgRuleEditor::OnRuleSetSave(wxCommandEvent& event)
+DlgRuleEditor::OnRuleSetSave(wxCommandEvent& )
 {
 	wxString	tmpPreFix;
 	wxString	tmpName;
@@ -953,7 +953,7 @@ DlgRuleEditor::OnLineSelected(wxListEvent& event)
 }
 
 void
-DlgRuleEditor::OnSrcAddrAddButton(wxCommandEvent& event)
+DlgRuleEditor::OnSrcAddrAddButton(wxCommandEvent& )
 {
 }
 
@@ -964,7 +964,7 @@ DlgRuleEditor::OnAlfStateTimeoutChange(wxSpinEvent& event)
 }
 
 void
-DlgRuleEditor::OnAlfSrcAddrComboBox(wxCommandEvent& event)
+DlgRuleEditor::OnAlfSrcAddrComboBox(wxCommandEvent& )
 {
 	int af = alfInet6RadioButton->GetValue() ? AF_INET6 : AF_INET;
 
@@ -977,7 +977,7 @@ DlgRuleEditor::OnAlfSrcAddrComboBox(wxCommandEvent& event)
 }
 
 void
-DlgRuleEditor::OnAlfDstAddrComboBox(wxCommandEvent& event)
+DlgRuleEditor::OnAlfDstAddrComboBox(wxCommandEvent& )
 {
 	if (alfAnyRadioButton->GetValue()) {
 		updateAddrFamily(AF_INET);
@@ -1037,7 +1037,7 @@ DlgRuleEditor::OnAlfDstNetmaskSpinCtrlText(wxCommandEvent&)
 }
 
 void
-DlgRuleEditor::OnAlfSrcPortComboBox(wxCommandEvent& event)
+DlgRuleEditor::OnAlfSrcPortComboBox(wxCommandEvent& )
 {
 	unsigned long int       port;
 
@@ -1050,7 +1050,7 @@ DlgRuleEditor::OnAlfSrcPortComboBox(wxCommandEvent& event)
 }
 
 void
-DlgRuleEditor::OnAlfDstPortComboBox(wxCommandEvent& event)
+DlgRuleEditor::OnAlfDstPortComboBox(wxCommandEvent&)
 {
 	unsigned long int       port;
 

@@ -59,8 +59,8 @@ tc_connect_lud_client(const char *sockname)
 
 	c = acc_create();
 	fail_if(c == NULL, "couldn't create client channel");
-	fail_if(c->euid != -1, "euid expected -1 but is %i", c->euid);
-	fail_if(c->egid != -1, "egid expected -1 but is %i", c->egid);
+	fail_if(c->euid != (uid_t)-1, "euid expected -1 but is %i", c->euid);
+	fail_if(c->egid != (gid_t)-1, "egid expected -1 but is %i", c->egid);
 	mark_point();
 
 	rc = acc_settail(c, ACC_TAIL_CLIENT);
@@ -86,8 +86,8 @@ tc_connect_lud_client(const char *sockname)
 	fail_if(rc != ACHAT_RC_OK, "client open failed with rc=%d [%s]",
 	    rc, strerror(errno));
 
-	fail_if(c->euid == -1, "euid != -1 expected, is %i", c->euid);
-	fail_if(c->egid == -1, "egid != -1 expected, is %i", c->egid);
+	fail_if(c->euid == (uid_t)-1, "euid != -1 expected, is %i", c->euid);
+	fail_if(c->egid == (gid_t)-1, "egid != -1 expected, is %i", c->egid);
 
 	rc = acc_destroy(c);
 	fail_if(rc != ACHAT_RC_OK, "client destroy failed with rc=%d", rc);
@@ -105,8 +105,8 @@ tc_connect_lud_server(const char *sockname)
 
 	s = acc_create();
 	fail_if(s == NULL, "couldn't create server channel");
-	fail_if(s->euid != -1, "euid expected -1 but is %i", s->euid);
-	fail_if(s->egid != -1, "egid expected -1 but is %i", s->egid);
+	fail_if(s->euid != (uid_t)-1, "euid expected -1 but is %i", s->euid);
+	fail_if(s->egid != (gid_t)-1, "egid expected -1 but is %i", s->egid);
 
 	rc = acc_settail(s, ACC_TAIL_SERVER);
 	fail_if(rc != ACHAT_RC_OK, "server settail failed with rc=%d", rc);
@@ -150,8 +150,8 @@ tc_connect_lud_serverdup(const char *sockname)
 
 	s = acc_create();
 	fail_if(s == NULL, "couldn't create server channel");
-	fail_if(s->euid != -1, "euid expected -1 but is %i", s->euid);
-	fail_if(s->egid != -1, "egid expected -1 but is %i", s->egid);
+	fail_if(s->euid != (uid_t)-1, "euid expected -1 but is %i", s->euid);
+	fail_if(s->egid != (gid_t)-1, "egid expected -1 but is %i", s->egid);
 
 	rc = acc_settail(s, ACC_TAIL_SERVER);
 	fail_if(rc != ACHAT_RC_OK, "server settail failed with rc=%d", rc);
@@ -197,8 +197,8 @@ tc_connect_lip_client(short port)
 
 	c = acc_create();
 	fail_if(c == NULL, "couldn't create client channel");
-	fail_if(c->euid != -1, "euid expected -1 but is %i", c->euid);
-	fail_if(c->egid != -1, "egid expected -1 but is %i", c->egid);
+	fail_if(c->euid != (uid_t)-1, "euid expected -1 but is %i", c->euid);
+	fail_if(c->egid != (gid_t)-1, "egid expected -1 but is %i", c->egid);
 
 	rc = acc_settail(c, ACC_TAIL_CLIENT);
 	fail_if(rc != ACHAT_RC_OK, "client settail failed with rc=%d", rc);
@@ -223,8 +223,10 @@ tc_connect_lip_client(short port)
 	rc = acc_open(c);
 	fail_if(rc != ACHAT_RC_OK, "client open failed with rc=%d [%s]",
 	    rc, strerror(errno));
-	fail_unless(c->euid == -1, "euid: -1 expected but is %i", c->euid);
-	fail_unless(c->egid == -1, "egid: -1 expected but is %i", c->egid);
+	fail_unless(c->euid == (uid_t)-1, "euid: -1 expected but is %i",
+	    c->euid);
+	fail_unless(c->egid == (gid_t)-1, "egid: -1 expected but is %i",
+	    c->egid);
 
 	rc = acc_destroy(c);
 	fail_if(rc != ACHAT_RC_OK, "client destroy failed with rc=%d", rc);
@@ -321,8 +323,8 @@ START_TEST(tc_connect_localunixdomain_clientclose)
 
 	c = acc_create();
 	fail_if(c == NULL, "couldn't create client channel");
-	fail_if(c->euid != -1, "euid expected -1 but is %i", c->euid);
-	fail_if(c->egid != -1, "egid expected -1 but is %i", c->egid);
+	fail_if(c->euid != (uid_t)-1, "euid expected -1 but is %i", c->euid);
+	fail_if(c->egid != (gid_t)-1, "egid expected -1 but is %i", c->egid);
 
 	rc = acc_settail(c, ACC_TAIL_CLIENT);
 	fail_if(rc != ACHAT_RC_OK, "client settail failed with rc=%d", rc);
@@ -345,8 +347,8 @@ START_TEST(tc_connect_localunixdomain_clientclose)
 
 	s = acc_create();
 	fail_if(s == NULL, "couldn't create server channel");
-	fail_if(c->euid != -1, "euid expected -1 but is %i", c->euid);
-	fail_if(c->egid != -1, "egid expected -1 but is %i", c->egid);
+	fail_if(c->euid != (uid_t)-1, "euid expected -1 but is %i", c->euid);
+	fail_if(c->egid != (gid_t)-1, "egid expected -1 but is %i", c->egid);
 
 	rc = acc_settail(s, ACC_TAIL_SERVER);
 	fail_if(rc != ACHAT_RC_OK, "server settail failed with rc=%d", rc);
@@ -424,8 +426,8 @@ START_TEST(tc_connect_localip)
 
 	s = acc_create();
 	fail_if(s == NULL, "couldn't create server channel");
-	fail_if(s->euid != -1, "euid expected -1 but is %i", s->euid);
-	fail_if(s->egid != -1, "egid expected -1 but is %i", s->egid);
+	fail_if(s->euid != (uid_t)-1, "euid expected -1 but is %i", s->euid);
+	fail_if(s->egid != (gid_t)-1, "egid expected -1 but is %i", s->egid);
 
 	rc = acc_settail(s, ACC_TAIL_SERVER);
 	fail_if(rc != ACHAT_RC_OK, "server settail failed with rc=%d", rc);
@@ -470,9 +472,9 @@ START_TEST(tc_connect_localip)
 		rc = acc_open(s);
 		fail_if(rc != ACHAT_RC_OK, "server open failed with rc=%d [%s]",
 		    rc, strerror(errno));
-		fail_unless(s->euid == -1, "euid: -1 expected but is %i",
+		fail_unless(s->euid == (uid_t)-1, "euid: -1 expected but is %i",
 			s->euid);
-		fail_unless(s->egid == -1, "egid: -1 expected but is %i",
+		fail_unless(s->egid == (gid_t)-1, "egid: -1 expected but is %i",
 			s->egid);
 
 		rc = acc_destroy(s);

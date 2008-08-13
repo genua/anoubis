@@ -226,10 +226,10 @@ get_msg(int fd)
 	}
 
 	/* we need at least a short (check for an int) in the buffer */
-	if (mbp->rtailp - mbp->rheadp < sizeof(int))
+	if ((unsigned int)(mbp->rtailp - mbp->rheadp) < sizeof(int))
 		if (!_fill_buf(mbp))
 			goto eof;
-	if (mbp->rtailp - mbp->rheadp < sizeof(int))
+	if ((unsigned int)(mbp->rtailp - mbp->rheadp) < sizeof(int))
 		return NULL;
 
 	/* check for a complete message */
@@ -274,10 +274,10 @@ get_event(int fd)
 	}
 
 	/* we need at least a short (check for an int) in the buffer */
-	if (mbp->rtailp - mbp->rheadp < sizeof(int))
+	if ((unsigned int)(mbp->rtailp - mbp->rheadp) < sizeof(int))
 		if (!_fill_buf(mbp))
 			goto eof;
-	if (mbp->rtailp - mbp->rheadp < sizeof(int))
+	if ((unsigned int)(mbp->rtailp - mbp->rheadp) < sizeof(int))
 		return NULL;
 
 	/* check for a complete message */
@@ -323,16 +323,16 @@ get_client_msg(int fd, struct anoubis_msg **msgp)
 
 	if ((mbp = _get_mbp(fd)) == NULL)
 		return 0;
-	if (mbp->rtailp - mbp->rheadp < sizeof(len))
+	if ((unsigned int)(mbp->rtailp - mbp->rheadp) < sizeof(len))
 		if (!_fill_buf(mbp))
 			return 0;
-	if (mbp->rtailp - mbp->rheadp < sizeof(len))
+	if ((unsigned int)(mbp->rtailp - mbp->rheadp) < sizeof(len))
 		return 1;
 	len = ntohl(*(u_int32_t*)mbp->rheadp);
-	if (mbp->rtailp - mbp->rheadp < len)
+	if ((unsigned int)(mbp->rtailp - mbp->rheadp) < len)
 		if (!_fill_buf(mbp))
 			return 0;
-	if (mbp->rtailp - mbp->rheadp < len)
+	if ((unsigned int)(mbp->rtailp - mbp->rheadp) < len)
 		return 1;
 	m = anoubis_msg_new(len - sizeof(len) - CSUM_LEN);
 	if (!m)

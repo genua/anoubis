@@ -124,13 +124,13 @@ static int accbuffer_compact(/*@null@*/ achat_buffer *);
 achat_rc
 acc_bufferconsume(achat_buffer *buffer, size_t len)
 {
-	int buflen;
+	size_t buflen;
 
 	ACC_CHKPARAM(buffer != NULL);
 
 	buflen = buffer->end - buffer->offset;
 
-	if ((len < 0)  || (len > buflen))
+	if (len > buflen)
 		return ACHAT_RC_ERROR;
 
 	buffer->offset += len;

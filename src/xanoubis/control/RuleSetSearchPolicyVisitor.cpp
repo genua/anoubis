@@ -99,7 +99,7 @@ RuleSetSearchPolicyVisitor::visitSfsPolicy(SfsPolicy *sfsPolicy)
 }
 
 void
-RuleSetSearchPolicyVisitor::visitVarPolicy(VarPolicy *varPolicy)
+RuleSetSearchPolicyVisitor::visitVarPolicy(VarPolicy*)
 {
 	/* var rules don't have an id -- do  nothing */
 }

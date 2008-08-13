@@ -51,8 +51,8 @@ START_TEST(tc_core_creation)
 	fail_if(c == NULL, "pointer empty");
 	fail_if(c->fd != -1, "not correctly initialized @sockfd");
 	fail_if(c->addrsize != 0, "not correctly initialized @addrsize");
-	fail_if(c->euid != -1, "not correctly initialized @euid");
-	fail_if(c->egid != -1, "not correctly initialized @egid");
+	fail_if(c->euid != (uid_t)-1, "not correctly initialized @euid");
+	fail_if(c->egid != (gid_t)-1, "not correctly initialized @egid");
 	fail_if(c->tail != ACC_TAIL_NONE, "not correctly initialized @tail");
 	fail_if(c->sslmode != ACC_SSLMODE_NONE,
 		"not correctly initialized @sslmode");

@@ -324,7 +324,7 @@ sfs_readchecksum(const char *csum_file, unsigned char *md)
 }
 
 int
-sfs_getchecksum(u_int64_t kdev, const char *kpath, uid_t uid,
+sfs_getchecksum(u_int64_t kdev __used, const char *kpath, uid_t uid,
     unsigned char *md)
 {
 #ifdef LINUX

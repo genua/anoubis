@@ -42,6 +42,8 @@
 #include <anoubis_transaction.h>
 #include "crc32.h"
 
+#define __used __attribute__((unused))
+
 #ifndef EPROTO
 #define EPROTO EINVAL
 #endif
@@ -570,7 +572,7 @@ err:
 
 /* ARGUSED */
 static int anoubis_client_process_event(struct anoubis_client * client,
-    struct anoubis_msg * m, u_int32_t opcode, anoubis_token_t token)
+    struct anoubis_msg * m, u_int32_t opcode, anoubis_token_t token __used)
 {
 	switch(opcode) {
 	case ANOUBIS_N_ASK:

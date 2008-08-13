@@ -395,7 +395,7 @@ ModAnoubisMainPanelImpl::OnTypeChoosen(wxCommandEvent& event)
 }
 
 void
-ModAnoubisMainPanelImpl::OnFirstBtnClick(wxCommandEvent& event)
+ModAnoubisMainPanelImpl::OnFirstBtnClick(wxCommandEvent&)
 {
 	ModAnoubis *module;
 
@@ -406,7 +406,7 @@ ModAnoubisMainPanelImpl::OnFirstBtnClick(wxCommandEvent& event)
 }
 
 void
-ModAnoubisMainPanelImpl::OnPreviousBtnClick(wxCommandEvent& event)
+ModAnoubisMainPanelImpl::OnPreviousBtnClick(wxCommandEvent&)
 {
 	ModAnoubis *module;
 
@@ -417,7 +417,7 @@ ModAnoubisMainPanelImpl::OnPreviousBtnClick(wxCommandEvent& event)
 }
 
 void
-ModAnoubisMainPanelImpl::OnNextBtnClick(wxCommandEvent& event)
+ModAnoubisMainPanelImpl::OnNextBtnClick(wxCommandEvent&)
 {
 	ModAnoubis *module;
 
@@ -428,7 +428,7 @@ ModAnoubisMainPanelImpl::OnNextBtnClick(wxCommandEvent& event)
 }
 
 void
-ModAnoubisMainPanelImpl::OnLastBtnClick(wxCommandEvent& event)
+ModAnoubisMainPanelImpl::OnLastBtnClick(wxCommandEvent&)
 {
 	ModAnoubis *module;
 
@@ -473,54 +473,54 @@ ModAnoubisMainPanelImpl::answer(bool permission)
 }
 
 void
-ModAnoubisMainPanelImpl::OnAllowBtnClick(wxCommandEvent& event)
+ModAnoubisMainPanelImpl::OnAllowBtnClick(wxCommandEvent&)
 {
 	answer(true);
 }
 
 void
-ModAnoubisMainPanelImpl::OnDenyBtnClick(wxCommandEvent& event)
+ModAnoubisMainPanelImpl::OnDenyBtnClick(wxCommandEvent&)
 {
 	answer(false);
 }
 
 void
-ModAnoubisMainPanelImpl::OnEscalationDisable(wxCommandEvent& event)
+ModAnoubisMainPanelImpl::OnEscalationDisable(wxCommandEvent&)
 {
 	setOptionsWidgetsVisability();
 	sendNotifierOptions();
 }
 
 void
-ModAnoubisMainPanelImpl::OnAlertDisable(wxCommandEvent& event)
+ModAnoubisMainPanelImpl::OnAlertDisable(wxCommandEvent&)
 {
 	setOptionsWidgetsVisability();
 	sendNotifierOptions();
 }
 
 void
-ModAnoubisMainPanelImpl::OnEscalationNoTimeout(wxCommandEvent& event)
+ModAnoubisMainPanelImpl::OnEscalationNoTimeout(wxCommandEvent&)
 {
 	setOptionsWidgetsVisability();
 	sendNotifierOptions();
 }
 
 void
-ModAnoubisMainPanelImpl::OnAlertNoTimeout(wxCommandEvent& event)
+ModAnoubisMainPanelImpl::OnAlertNoTimeout(wxCommandEvent&)
 {
 	setOptionsWidgetsVisability();
 	sendNotifierOptions();
 }
 
 void
-ModAnoubisMainPanelImpl::OnEscalationTimeout(wxSpinEvent& event)
+ModAnoubisMainPanelImpl::OnEscalationTimeout(wxSpinEvent&)
 {
 	setOptionsWidgetsVisability();
 	sendNotifierOptions();
 }
 
 void
-ModAnoubisMainPanelImpl::OnAlertTimeout(wxSpinEvent& event)
+ModAnoubisMainPanelImpl::OnAlertTimeout(wxSpinEvent&)
 {
 	setOptionsWidgetsVisability();
 	sendNotifierOptions();

@@ -57,11 +57,7 @@ switch_uid(uid_t uid, struct credentials *cred)
 	if (!pw)
 		return -ESRCH;
 	cred->euid = geteuid();
-	if (cred->euid < 0)
-		return -errno;
 	cred->egid = getegid();
-	if (cred->egid < 0)
-		return -errno;
 	cred->ngroups = getgroups(NGROUPS_MAX, cred->groups);
 	if (cred->ngroups < 0)
 		return -errno;
@@ -75,7 +71,7 @@ switch_uid(uid_t uid, struct credentials *cred)
 	return 0;
 restore:
 	err = -errno;
-	if (restore_uid(cred < 0)) {
+	if (restore_uid(cred) < 0) {
 		log_warnx("FATAL: Failed to change user ID and "
 		    "cannot change back");
 		master_terminate(EPERM);

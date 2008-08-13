@@ -65,11 +65,14 @@
 #include <string.h>
 #include <unistd.h>
 
+#define __used __attribute__((unused))
+
 static char **tc_argv;
 static int    tc_argc;
 
 int policy_dispatch(struct anoubis_policy_comm * policy, u_int64_t token,
-    u_int32_t uid, void * buf,  size_t len, void *arg, int flags)
+    u_int32_t uid __used, void * buf __used,  size_t len __used,
+    void *arg __used, int flags __used)
 {
 	return anoubis_policy_comm_answer(policy, token, 0, NULL, 0, 1);
 }

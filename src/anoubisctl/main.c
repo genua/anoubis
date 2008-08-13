@@ -118,7 +118,7 @@ struct anoubis_client		*client;
 __dead void
 usage(void)
 {
-	int	i;
+	unsigned int	i;
 	extern char	*__progname;
 
 	fprintf(stderr, "usage: %s [-fnv] <command> [<file>]\n", __progname);
@@ -150,10 +150,11 @@ usage(void)
 int
 main(int argc, char *argv[])
 {
-	int	ch, i, done;
-	int	error = 0;
-	char	*command = NULL;
-	char	*rulesopt = NULL;
+	int		ch, done;
+	unsigned int	i;
+	int		error = 0;
+	char		*command = NULL;
+	char		*rulesopt = NULL;
 
 	if (argc < 2)
 		usage();
@@ -314,7 +315,8 @@ dump(char *file)
 	struct anoubis_transaction * t;
 	struct anoubis_msg * m;
 	Policy_GetByUid req;
-	int prio, len;
+	int	prio;
+	size_t	len;
 
 	error = create_channel();
 	if (error) {

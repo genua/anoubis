@@ -360,7 +360,7 @@ pe_handle_sfsexec(struct eventdev_hdr *hdr)
 		log_warnx("pe_handle_sfsexec: empty header");
 		return (NULL);
 	}
-	if (hdr->msg_size < (sizeof(struct eventdev_hdr) +
+	if ((unsigned short)hdr->msg_size < (sizeof(struct eventdev_hdr) +
 	    sizeof(struct sfs_open_message))) {
 		log_warnx("pe_handle_sfsexec: short message");
 		return (NULL);
@@ -425,7 +425,7 @@ pe_handle_process(struct eventdev_hdr *hdr)
 		log_warnx("pe_handle_process: empty header");
 		return (NULL);
 	}
-	if (hdr->msg_size < (sizeof(struct eventdev_hdr) +
+	if ((unsigned short)hdr->msg_size < (sizeof(struct eventdev_hdr) +
 	    sizeof(struct ac_process_message))) {
 		log_warnx("pe_handle_process: short message");
 		return (NULL);
@@ -476,7 +476,7 @@ pe_handle_alf(struct eventdev_hdr *hdr)
 		log_warnx("pe_handle_alf: empty header");
 		return (NULL);
 	}
-	if (hdr->msg_size < (sizeof(struct eventdev_hdr) +
+	if ((unsigned short)hdr->msg_size < (sizeof(struct eventdev_hdr) +
 	    sizeof(struct alf_event))) {
 		log_warnx("pe_handle_alf: short message");
 		return (NULL);
@@ -519,7 +519,7 @@ pe_decide_alf(struct pe_proc *proc, struct eventdev_hdr *hdr)
 		log_warnx("pe_decide_alf: empty header");
 		return (NULL);
 	}
-	if (hdr->msg_size < (sizeof(struct eventdev_hdr) +
+	if ((unsigned short)hdr->msg_size < (sizeof(struct eventdev_hdr) +
 	    sizeof(struct alf_event))) {
 		log_warnx("pe_decide_alf: short message");
 		return (NULL);
@@ -1221,7 +1221,7 @@ pe_handle_sfs(anoubisd_msg_sfsopen_t *sfsmsg)
 		return (NULL);
 	}
 	hdr = (struct eventdev_hdr *)&sfsmsg->hdr;
-	if (hdr->msg_size < (sizeof(struct eventdev_hdr) +
+	if ((unsigned short)hdr->msg_size < (sizeof(struct eventdev_hdr) +
 	    sizeof(struct sfs_open_message))) {
 		log_warnx("pe_handle_sfs: short message");
 		return (NULL);
@@ -1456,7 +1456,7 @@ pe_decide_sfsdflt(struct apn_rule *rule, struct sfs_open_message *msg, int *log,
  * "format" is specified for symmetry with pe_dump_alfmsg().
  */
 char *
-pe_dump_sfsmsg(struct sfs_open_message *msg, int format)
+pe_dump_sfsmsg(struct sfs_open_message *msg, int format __used)
 {
 	char	*dump, *access;
 
@@ -1581,7 +1581,7 @@ pe_set_ctx(struct pe_proc *proc, uid_t uid, const u_int8_t *csum,
 		pe_put_ctx(tmpctx);
 	}
 	pe_proc_set_parent(proc, proc);
-	if (uid >= 0)
+	if (uid != (uid_t)-1)
 		pe_proc_set_uid(proc, uid);
 
 	tmpctx = pe_proc_get_context(proc, 0);
@@ -1592,7 +1592,7 @@ pe_set_ctx(struct pe_proc *proc, uid_t uid, const u_int8_t *csum,
 
 struct pe_context *
 pe_search_ctx(struct apn_ruleset *rs, const u_int8_t *csum,
-    const char *pathhint)
+    const char *pathhint __used)
 {
 	struct pe_context	*context;
 	struct apn_rule		*prule, *rule;
@@ -1726,7 +1726,8 @@ pe_reference_ctx(struct pe_context *ctx)
  * NOTE: bcmp returns 0 on match, otherwise non-zero.  Do not confuse this...
  */
 int
-pe_decide_ctx(struct pe_proc *proc, const u_int8_t *csum, const char *pathhint)
+pe_decide_ctx(struct pe_proc *proc, const u_int8_t *csum,
+    const char *pathhint __used)
 {
 	struct apn_app	*hp;
 	int		 cmp, decision, i;

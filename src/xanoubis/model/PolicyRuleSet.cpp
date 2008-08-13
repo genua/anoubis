@@ -592,7 +592,7 @@ PolicyRuleSet::createSfsPolicy(int insertBeforeId)
 }
 
 int
-PolicyRuleSet::createVarPolicy(int insertBeforeId)
+PolicyRuleSet::createVarPolicy(int)
 {
 	/* XXX ch: currently no variables are supported */
 	return (-1);

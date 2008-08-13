@@ -93,7 +93,7 @@ struct event_info_policy {
 
 /* ARGSUSED */
 static void
-policy_sighandler(int sig, short event, void *arg)
+policy_sighandler(int sig, short event __used, void *arg __used)
 {
 	switch (sig) {
 	case SIGUSR1:
@@ -111,8 +111,8 @@ policy_sighandler(int sig, short event, void *arg)
 }
 
 pid_t
-policy_main(struct anoubisd_config *conf, int pipe_m2s[2], int pipe_m2p[2],
-    int pipe_s2p[2], int loggers[3])
+policy_main(struct anoubisd_config *conf __used, int pipe_m2s[2],
+    int pipe_m2p[2], int pipe_s2p[2], int loggers[3])
 /*@globals undef eventq_p2m, undef eventq_p2s, undef replyq@*/
 {
 	struct event	 ev_sigterm, ev_sigint, ev_sigquit, ev_sigusr1,
@@ -243,7 +243,7 @@ policy_main(struct anoubisd_config *conf, int pipe_m2s[2], int pipe_m2p[2],
 }
 
 static void
-dispatch_timer(int sig, short event, void *arg)
+dispatch_timer(int sig __used, short event __used, void *arg)
 {
 	struct event_info_policy *ev_info = (struct event_info_policy*)arg;
 	struct reply_wait *msg_wait;
@@ -304,7 +304,7 @@ dispatch_timer(int sig, short event, void *arg)
 }
 
 static void
-dispatch_m2p(int fd, short sig, void *arg)
+dispatch_m2p(int fd, short sig __used, void *arg)
 {
 	struct reply_wait *msg_wait;
 	anoubisd_msg_t *msg, *msg_reply;
@@ -447,7 +447,7 @@ dispatch_m2p(int fd, short sig, void *arg)
 }
 
 static void
-dispatch_p2m(int fd, short sig, void *arg)
+dispatch_p2m(int fd, short sig __used, void *arg)
 {
 	anoubisd_msg_t *msg;
 	struct event_info_policy *ev_info = (struct event_info_policy*)arg;
@@ -561,7 +561,7 @@ oom:
 }
 
 static void
-dispatch_s2p(int fd, short sig, void *arg)
+dispatch_s2p(int fd, short sig __used, void *arg)
 {
 	struct event_info_policy *ev_info = (struct event_info_policy*)arg;
 	struct reply_wait rep_tmp, *rep_wait;
@@ -649,7 +649,7 @@ dispatch_s2p(int fd, short sig, void *arg)
 }
 
 static void
-dispatch_p2s(int fd, short sig, void *arg)
+dispatch_p2s(int fd, short sig __used, void *arg)
 {
 	anoubisd_msg_t *msg;
 	struct event_info_policy *ev_info = (struct event_info_policy*)arg;

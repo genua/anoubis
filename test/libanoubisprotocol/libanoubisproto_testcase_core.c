@@ -55,18 +55,20 @@
 #include <bsdcompat.h>
 #endif
 
+#define __used __attribute__((unused))
 #define NNOTIFIES 100
 struct {
 	anoubis_token_t token;
 	char sent_reply;
 	char got_verdict;
 } notifies[NNOTIFIES];
-int nnotifies;
+unsigned int nnotifies;
 
 void handle_notify(struct anoubis_client * client, struct anoubis_msg * m)
 {
-	int i, opcode;
-	anoubis_token_t token;
+	unsigned int		i;
+	int			opcode;
+	anoubis_token_t	token;
 
 	fail_if(nnotifies >= NNOTIFIES, "Did not expect that many messages");
 	fail_if(!VERIFY_FIELD(m, token, token), "Short message");
@@ -93,7 +95,8 @@ void handle_notify(struct anoubis_client * client, struct anoubis_msg * m)
 	    "Short Message");
 	fail_if(i == nnotifies, "result for nonexisting message");
 	fail_if(notifies[i].got_verdict == 1, "Already got verdict");
-	fail_if(get_value(m->u.notifyresult->error) != i, "Wrong verdict");
+	fail_if(get_value(m->u.notifyresult->error) != i,
+	    "Wrong verdict");
 	notifies[i].got_verdict = 1;
 }
 
@@ -106,7 +109,8 @@ void tp_chat_lud_client(const char *sockname)
 	struct achat_channel    *c  = NULL;
 	achat_rc		 rc = ACHAT_RC_ERROR;
 	struct anoubis_client	*client;
-	int			 i, ret;
+	unsigned int		 i;
+	int			 ret;
 	struct anoubis_transaction * curr, * policy = NULL;
 
 	c = acc_create();
@@ -222,8 +226,9 @@ void tp_chat_lud_client(const char *sockname)
 
 
 /* Simplified callback function which does not care about the event. */
-static void notify_callback(struct anoubis_notify_head * head, int verdict,
-    void * cbdata)
+static void notify_callback(struct anoubis_notify_head * head,
+    int verdict __used,
+    void * cbdata __used)
 {
 	anoubis_notify_destroy_head(head);
 }
@@ -257,7 +262,8 @@ static void do_notify(struct anoubis_notify_group * grp)
 }
 
 int policy_dispatch(struct anoubis_policy_comm * policy, u_int64_t token,
-    u_int32_t uid, void * buf,  size_t len, void *arg, int flags)
+    u_int32_t uid __used, void * buf __used,  size_t len __used,
+    void *arg __used, int flags __used)
 {
 	return anoubis_policy_comm_answer(policy, token, 0, NULL, 0, 1);
 }

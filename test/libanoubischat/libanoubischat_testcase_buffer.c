@@ -152,7 +152,8 @@ END_TEST
 START_TEST(tc_buffer_add_gt_defaultsz)
 {
 	int		*append_buf;
-	int		sz_buf, i;
+	size_t		sz_buf;
+	unsigned int	i;
 	size_t		bsize;
 	void		*buf;
 	achat_rc	rc;
@@ -194,7 +195,8 @@ END_TEST
 START_TEST(tc_buffer_add2_gt_defaultsz)
 {
 	int		*append_buf1, *append_buf2;
-	int		sz_buf1, sz_buf2, i;
+	size_t		sz_buf1, sz_buf2;
+	unsigned int	i;
 	size_t		bsize;
 	void		*buf;
 	achat_rc	rc;
@@ -226,7 +228,7 @@ START_TEST(tc_buffer_add2_gt_defaultsz)
 	mark_point();
 
 	bsize = acc_bufferlen(buffer);
-	fail_if(bsize != sz_buf1 + sz_buf2,
+	fail_if(bsize != (sz_buf1 + sz_buf2),
 		"Length of buffer is wrong, is %i but %i expected",
 		bsize, sz_buf1 + sz_buf2);
 	mark_point();
@@ -248,9 +250,9 @@ START_TEST(tc_buffer_add_lt_gt_defaultsz)
 {
 	const char	append_buf1[]	= {'1', '2', '3', '4', '5'};
 	int		*append_buf2;
-	const int	sz_buf1		= sizeof(append_buf1);
-	int		sz_buf2;
-	int		i;
+	size_t		sz_buf1		= sizeof(append_buf1);
+	size_t		sz_buf2;
+	unsigned int	i;
 	size_t		bsize;
 	void		*buf;
 	achat_rc	rc;
@@ -284,7 +286,7 @@ START_TEST(tc_buffer_add_lt_gt_defaultsz)
 	mark_point();
 
 	bsize = acc_bufferlen(buffer);
-	fail_if(bsize != sz_buf1 + sz_buf2,
+	fail_if(bsize != (sz_buf1 + sz_buf2),
 		"Length of buffer is wrong, is %i but %i expected",
 		bsize, sz_buf1 + sz_buf2);
 	mark_point();

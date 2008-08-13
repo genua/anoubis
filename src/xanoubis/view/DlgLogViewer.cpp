@@ -134,7 +134,7 @@ DlgLogViewer::addNotification(Notification *notify)
 }
 
 void
-DlgLogViewer::OnClose(wxCloseEvent& event)
+DlgLogViewer::OnClose(wxCloseEvent&)
 {
 	wxCommandEvent	showEvent(anEVT_LOGVIEWER_SHOW);
 	showEvent.SetInt(false);

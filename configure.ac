@@ -260,8 +260,8 @@ esac
 dnl
 dnl enable some warnings and treat them as errors
 dnl
-AM_CFLAGS="-Werror -Wformat-security -Wall $AM_CFLAGS"
-AM_CXXFLAGS="-Werror -Wformat-security -Wall $AM_CXXFLAGS"
+AM_CFLAGS="-Werror -Wformat-security -W -Wall $AM_CFLAGS"
+AM_CXXFLAGS="-Werror -Wformat-security -W -Wall $AM_CXXFLAGS"
 
 dnl
 dnl resolve symbols at startup

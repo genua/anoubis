@@ -147,7 +147,7 @@ static Queue requestq;
 static Queue headq;
 
 static void
-session_sighandler(int sig, short event, void *arg)
+session_sighandler(int sig, short event __used, void *arg __used)
 {
 	DEBUG(DBG_TRACE, ">session_sighandler");
 	switch (sig) {
@@ -160,7 +160,7 @@ session_sighandler(int sig, short event, void *arg)
 }
 
 static void
-session_connect(int fd, short event, void *arg)
+session_connect(int fd __used, short event __used, void *arg)
 {
 	struct event_info_session * info = arg;
 	struct session		*session = NULL;
@@ -219,7 +219,7 @@ session_connect(int fd, short event, void *arg)
 }
 
 static void
-session_rxclient(int fd, short event, void *arg)
+session_rxclient(int fd __used, short event __used, void *arg)
 {
 	struct session		*session;
 	struct anoubis_msg	*m;
@@ -269,7 +269,7 @@ err:
 }
 
 static void
-session_txclient(int fd, short event, void *arg)
+session_txclient(int fd __used, short event __used, void *arg)
 {
 	struct session	*sess = arg;
 	/* acc_flush will re-add the event if needed. */
@@ -553,7 +553,7 @@ dispatch_policy(struct anoubis_policy_comm *comm, u_int64_t token,
 
 /* Handle Notify and Alert Messages - coming from master */
 static void
-dispatch_m2s(int fd, short sig, void *arg)
+dispatch_m2s(int fd, short sig __used, void *arg)
 {
 	struct event_info_session *ev_info = (struct event_info_session*)arg;
 	struct anoubis_notify_head * head;
@@ -561,7 +561,7 @@ dispatch_m2s(int fd, short sig, void *arg)
 	anoubisd_msg_t *msg;
 	struct eventdev_hdr *hdr;
 	struct session * sess;
-	int extra;
+	unsigned int extra;
 
 	DEBUG(DBG_TRACE, ">dispatch_m2s");
 
@@ -651,7 +651,7 @@ dispatch_m2s(int fd, short sig, void *arg)
 
 /* Handle Request Messages - coming from policy */
 static void
-dispatch_p2s(int fd, short sig, void *arg)
+dispatch_p2s(int fd, short sig __used, void *arg)
 {
 	struct event_info_session *ev_info = (struct event_info_session*)arg;
 	anoubisd_msg_t *msg;
@@ -706,7 +706,7 @@ void
 dispatch_p2s_log_request(anoubisd_msg_t *msg,
     struct event_info_session *ev_info)
 {
-	int extra;
+	unsigned int extra;
 	struct anoubisd_msg_logrequest * req;
 	struct anoubis_notify_head * head;
 	struct anoubis_msg * m;
@@ -777,7 +777,7 @@ dispatch_p2s_evt_request(anoubisd_msg_t	*msg,
 	struct eventdev_hdr *hdr;
 	struct session	*sess;
 	struct cbdata	*cbdata;
-	int extra;
+	unsigned int extra;
 	int sent;
 	u_int64_t task = 0;
 	u_int32_t rule_id = 0;
@@ -916,7 +916,8 @@ cbdata_cmp(void *msg1, void *msg2)
 }
 
 static void
-dispatch_p2s_evt_cancel(anoubisd_msg_t *msg, struct event_info_session *ev_info)
+dispatch_p2s_evt_cancel(anoubisd_msg_t *msg,
+    struct event_info_session *ev_info __used)
 {
 	struct anoubis_notify_head *head;
 	struct cbdata	*cbdata;
@@ -950,7 +951,8 @@ pol_reply_cmp(void *msg1, void *msg2)
 }
 
 static void
-dispatch_p2s_pol_reply(anoubisd_msg_t *msg, struct event_info_session *ev_info)
+dispatch_p2s_pol_reply(anoubisd_msg_t *msg,
+    struct event_info_session *ev_info __used)
 {
 	anoubisd_reply_t *reply;
 	struct anoubisd_msg_comm_store msg_comm_store_tmp, *msg_comm;
@@ -1004,7 +1006,7 @@ dispatch_m2s_pol_reply(anoubisd_msg_t *msg, struct event_info_session *ev_info)
 }
 
 static void
-dispatch_s2m(int fd, short sig, void *arg)
+dispatch_s2m(int fd, short sig __used, void *arg)
 {
 	struct event_info_session *ev_info = (struct event_info_session *)arg;
 	anoubisd_msg_t *msg;
@@ -1037,7 +1039,7 @@ dispatch_s2m(int fd, short sig, void *arg)
 }
 
 static void
-dispatch_s2p(int fd, short sig, void *arg)
+dispatch_s2p(int fd, short sig __used, void *arg)
 {
 	struct event_info_session *ev_info = (struct event_info_session *)arg;
 	anoubisd_msg_t *msg;

@@ -66,6 +66,8 @@
 
 #define SFS_CHECKSUMROOT		"/var/lib/sfs"
 
+#define __used __attribute__((unused))
+
 enum {
 	ANOUBISD_LOG_RAW,
 	ANOUBISD_LOG_APN
@@ -131,7 +133,7 @@ struct anoubisd_msg_comm {
 	u_int64_t	token;
 	u_int32_t	uid;
 	u_int32_t	flags;		/* Only for POLREQUEST */
-	short		len;		/* of following msg */
+	unsigned short	len;		/* of following msg */
 	char		msg[0];
 };
 typedef struct anoubisd_msg_comm anoubisd_msg_comm_t;

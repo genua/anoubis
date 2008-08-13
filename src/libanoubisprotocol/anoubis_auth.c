@@ -67,7 +67,7 @@ int anoubis_auth_process(struct anoubis_auth * auth,
 		auth->state = ANOUBIS_AUTH_FAILURE;
 		return -EINVAL;
 	}
-	if (auth->chan->euid == -1) {
+	if (auth->chan->euid == (uid_t)-1) {
 		auth->error = ANOUBIS_E_PERM;
 		auth->state = ANOUBIS_AUTH_FAILURE;
 		auth->uid = -1;

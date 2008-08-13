@@ -137,7 +137,7 @@ achat_rc
 acc_settail(struct achat_channel *acc, enum acc_tail newtail)
 {
 	ACC_CHKPARAM(acc != NULL);
-	ACC_CHKPARAM((0 <= newtail)&&(newtail < 3));
+	ACC_CHKPARAM(newtail < 3);
 
 	/* Operation only allowed, if you have no open connection */
 	if (acc->fd != -1)
@@ -151,7 +151,7 @@ achat_rc
 acc_setsslmode(struct achat_channel *acc, enum acc_sslmode newsslmode)
 {
 	ACC_CHKPARAM(acc != NULL);
-	ACC_CHKPARAM((0 <= newsslmode)&&(newsslmode < 3));
+	ACC_CHKPARAM(newsslmode < 3);
 
 	/* Operation only allowed, if you have no open connection */
 	if (acc->fd != -1)
@@ -169,7 +169,7 @@ achat_rc
 acc_setblockingmode(struct achat_channel *acc, enum acc_blockingmode newmode)
 {
 	ACC_CHKPARAM(acc != NULL);
-	ACC_CHKPARAM((0 <= newmode)&&(newmode < 2));
+	ACC_CHKPARAM(newmode < 2);
 
 	/* Operation only allowed, if you have no open connection */
 	if (acc->fd != -1)

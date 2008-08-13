@@ -150,7 +150,7 @@ RuleEditorFillTableVisitor::showSfs(SfsPolicy *sfsPolicy, long idx)
 }
 
 void
-RuleEditorFillTableVisitor::showVar(VarPolicy *varPolicy, long idx)
+RuleEditorFillTableVisitor::showVar(VarPolicy *, long)
 {
 	/* XXX ch: vars currently not supported */
 }

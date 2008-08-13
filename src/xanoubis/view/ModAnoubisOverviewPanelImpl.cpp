@@ -71,19 +71,19 @@ ModAnoubisOverviewPanelImpl::setProfile(wxString newProfile)
 }
 
 void
-ModAnoubisOverviewPanelImpl::OnHighProfileRadioButton(wxCommandEvent& event)
+ModAnoubisOverviewPanelImpl::OnHighProfileRadioButton(wxCommandEvent&)
 {
 	setProfile(wxT("high"));
 }
 
 void
-ModAnoubisOverviewPanelImpl::OnMediumProfileRadioButton(wxCommandEvent& event)
+ModAnoubisOverviewPanelImpl::OnMediumProfileRadioButton(wxCommandEvent&)
 {
 	setProfile(wxT("medium"));
 }
 
 void
-ModAnoubisOverviewPanelImpl::OnAdminProfileRadioButton(wxCommandEvent& event)
+ModAnoubisOverviewPanelImpl::OnAdminProfileRadioButton(wxCommandEvent&)
 {
 	setProfile(wxT("admin"));
 }

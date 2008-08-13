@@ -59,7 +59,7 @@ static Queue		__eventq_log;
 static int		__logging = 0;
 
 static void
-dispatch_log_write(int fd, short event, void *arg)
+dispatch_log_write(int fd __used, short event __used, void *arg __used)
 {
 	anoubisd_msg_t		*msg;
 	int			 ret;
@@ -255,7 +255,7 @@ early_errx(int eval, const char *emsg)
 	early_err(eval, emsg);
 }
 
-void dispatch_log_read(int fd, short sig, void *arg)
+void dispatch_log_read(int fd, short sig __used, void *arg __used)
 {
 	anoubisd_msg_t * msg;
 	__logging = 1;
@@ -272,7 +272,7 @@ void dispatch_log_read(int fd, short sig, void *arg)
 extern char	*__progname;
 
 static void
-logger_sighandler(int sig, short event, void *arg)
+logger_sighandler(int sig __used, short event __used, void *arg __used)
 {
 	/*
 	 * XXX CEH: Maybe we should delay the exit somewhat to make
@@ -282,7 +282,8 @@ logger_sighandler(int sig, short event, void *arg)
 }
 
 pid_t
-logger_main(struct anoubisd_config *conf, int pipe_m2l[2], int pipe_p2l[2],
+logger_main(struct anoubisd_config *conf __used, int pipe_m2l[2],
+    int pipe_p2l[2],
     int pipe_s2l[2])
 {
 	pid_t pid;

@@ -45,7 +45,7 @@
 static size_t
 acc_read(int fd, void *buf, size_t nbyte)
 {
-	int num = 0;
+	size_t num = 0;
 
 	while (num < nbyte) {
 		int result;
@@ -56,7 +56,7 @@ acc_read(int fd, void *buf, size_t nbyte)
 			if (errno == EINTR)
 				continue;
 			else
-				return (num > 0) ? num : -1;
+				return (num == 0) ? (size_t)-1 : num;
 		}
 
 		num += result;
@@ -71,7 +71,7 @@ acc_read(int fd, void *buf, size_t nbyte)
 static size_t
 acc_write(int fd, void *buf, size_t nbyte)
 {
-	int num = 0;
+	size_t num = 0;
 
 	while (num < nbyte) {
 		int result;
@@ -82,7 +82,7 @@ acc_write(int fd, void *buf, size_t nbyte)
 			if (errno == EINTR)
 				continue;
 			else
-				return (num > 0) ? num : -1;
+				return (num == 0) ? (size_t)-1 : num;
 		}
 
 		num += result;
@@ -119,7 +119,7 @@ acc_flush(struct achat_channel *chan)
 			return ACHAT_RC_ERROR;
 	}
 
-	if (bwritten == -1)
+	if (bwritten == (unsigned int)-1)
 		return (errno == EAGAIN) ? ACHAT_RC_PENDING : ACHAT_RC_ERROR;
 	else /* bwritten > 0 */
 		return (bwritten == bsize) ? ACHAT_RC_OK : ACHAT_RC_PENDING;
@@ -164,7 +164,7 @@ acc_fillrecvbuffer(struct achat_channel *acc, size_t size)
 	size_t		nread;
 	char		*readbuf;
 	int		mincnt = size;
-	int		needcnt;
+	unsigned int	needcnt;
 
 	if (acc->blocking == ACC_NON_BLOCKING) {
 		/* Read as much as possible */
@@ -186,7 +186,7 @@ acc_fillrecvbuffer(struct achat_channel *acc, size_t size)
 
 	nread = acc_read(acc->fd, readbuf, needcnt);
 
-	if (nread == -1) {
+	if (nread == (unsigned int)-1) {
 		/* Buffer not filled, remove allocated space again */
 		achat_rc rc = acc_buffertrunc(acc->recvbuffer, needcnt);
 		if (rc != ACHAT_RC_OK)

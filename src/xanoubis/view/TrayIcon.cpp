@@ -132,7 +132,7 @@ TrayIcon::OnLogViewerShow(wxCommandEvent& event)
 }
 
 void
-TrayIcon::OnLeftButtonClick(wxTaskBarIconEvent& event)
+TrayIcon::OnLeftButtonClick(wxTaskBarIconEvent&)
 {
 	if (messageEscalationCount_ > 0 || messageAlertCount_ > 0) {
 		this->systemNotifyCallback();
@@ -144,7 +144,7 @@ TrayIcon::OnLeftButtonClick(wxTaskBarIconEvent& event)
 }
 
 void
-TrayIcon::OnGuiRestore(wxCommandEvent& event)
+TrayIcon::OnGuiRestore(wxCommandEvent&)
 {
 	wxCommandEvent  showEvent(anEVT_MAINFRAME_SHOW);
 	showEvent.SetInt(true);
@@ -152,7 +152,7 @@ TrayIcon::OnGuiRestore(wxCommandEvent& event)
 }
 
 void
-TrayIcon::OnGuiExit(wxCommandEvent& event)
+TrayIcon::OnGuiExit(wxCommandEvent&)
 {
 	wxGetApp().quit();
 }

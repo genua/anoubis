@@ -186,12 +186,12 @@ ModAlfAddPolicyVisitor::visitAlfPolicy(AlfPolicy *alfPolicy)
 }
 
 void
-ModAlfAddPolicyVisitor::visitSfsPolicy(SfsPolicy *sfsPolicy)
+ModAlfAddPolicyVisitor::visitSfsPolicy(SfsPolicy*)
 {
 	/* no SFS policies shown in ALF module */
 }
 
 void
-ModAlfAddPolicyVisitor::visitVarPolicy(VarPolicy *variable)
+ModAlfAddPolicyVisitor::visitVarPolicy(VarPolicy*)
 {
 }

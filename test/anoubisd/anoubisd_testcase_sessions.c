@@ -68,6 +68,7 @@ START_TEST(tc_Sessions_one)
 	struct sockaddr_un	*ss_sun = (struct sockaddr_un *)&ss;
 	struct achat_channel	*c  = NULL;
 	achat_rc		 rc = ACHAT_RC_ERROR;
+	int			 ret;
 	struct anoubis_client   *client;
 
 	c = acc_create();
@@ -97,8 +98,8 @@ START_TEST(tc_Sessions_one)
 	fail_if(!client, "Failed to create client");
 	mark_point();
 
-	rc = anoubis_client_connect(client, ANOUBIS_PROTO_BOTH);
-	fail_if(rc < 0, "client connect failed with code %d", rc);
+	ret = anoubis_client_connect(client, ANOUBIS_PROTO_BOTH);
+	fail_if(ret < 0, "client connect failed with code %d", ret);
 	mark_point();
 
 	anoubis_client_close(client);
@@ -117,6 +118,7 @@ START_TEST(tc_Sessions_two)
 	struct achat_channel	*c2  = NULL;
 	achat_rc		 rc = ACHAT_RC_ERROR;
 	struct anoubis_client   *client1, *client2;
+	int			 ret;
 
 	c1 = acc_create();
 	fail_if(c1 == NULL, "couldn't create first channel");
@@ -168,12 +170,12 @@ START_TEST(tc_Sessions_two)
 	fail_if(!client1, "2nd client create failed");
 	mark_point();
 
-	rc = anoubis_client_connect(client1, ANOUBIS_PROTO_BOTH);
-	fail_if(rc < 0, "1st client connect failed with %d", rc);
+	ret = anoubis_client_connect(client1, ANOUBIS_PROTO_BOTH);
+	fail_if(ret < 0, "1st client connect failed with %d", ret);
 	mark_point();
 
-	rc = anoubis_client_connect(client2, ANOUBIS_PROTO_BOTH);
-	fail_if(rc < 0, "2nd client connect failed with %d", rc);
+	ret = anoubis_client_connect(client2, ANOUBIS_PROTO_BOTH);
+	fail_if(ret < 0, "2nd client connect failed with %d", ret);
 	mark_point();
 
 	rc = acc_destroy(c1);
@@ -193,6 +195,7 @@ START_TEST(tc_Sessions_three)
 	struct anoubis_client   *client;
 	struct anoubis_transaction * t;
 	int count = 0;
+	int ret;
 
 	c = acc_create();
 	fail_if(c == NULL, "couldn't create channel");
@@ -221,8 +224,8 @@ START_TEST(tc_Sessions_three)
 	fail_if(!client, "Failed to create client");
 	mark_point();
 
-	rc = anoubis_client_connect(client, ANOUBIS_PROTO_BOTH);
-	fail_if(rc < 0, "client connect failed with code %d", rc);
+	ret = anoubis_client_connect(client, ANOUBIS_PROTO_BOTH);
+	fail_if(ret < 0, "client connect failed with code %d", ret);
 	mark_point();
 
 	t = anoubis_client_register_start(client, 0x123, 0, 0,

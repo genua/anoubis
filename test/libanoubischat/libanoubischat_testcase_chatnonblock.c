@@ -159,7 +159,7 @@ tc_chatnb_read_arg(int fd, void *arg, size_t *sarg)
 	if (read(fd, sarg, sizeof(size_t)) != sizeof(size_t))
 		return 0;
 
-	if (read(fd, arg, *sarg) != *sarg)
+	if ((size_t)(read(fd, arg, *sarg)) != *sarg)
 		return 0;
 
 	return 1;
@@ -171,7 +171,7 @@ tc_chatnb_write_arg(int fd, void* arg, size_t sarg)
 	if (write(fd, &sarg, sizeof(size_t)) != sizeof(sarg))
 		return 0;
 
-	if (write(fd, arg, sarg) != sarg)
+	if ((size_t)(write(fd, arg, sarg)) != sarg)
 		return 0;
 
 	return 1;

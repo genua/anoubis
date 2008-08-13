@@ -41,7 +41,7 @@
 void	print_mainconf(struct anoubisd_config *);
 
 void
-print_mainconf(struct anoubisd_config *conf)
+print_mainconf(struct anoubisd_config *conf __used)
 {
 	/* XXX HSH: Todo */
 }

@@ -125,7 +125,7 @@ usage(void)
  * context, thus any C-function can be used.
  */
 static void
-sighandler(int sig, short event, void *arg)
+sighandler(int sig, short event __used, void *arg __used)
 {
 	int	die = 0;
 
@@ -204,7 +204,7 @@ save_pid(pid_t pid)
 }
 
 static void
-dispatch_timer(int sig, short event, /*@dependent@*/ void * arg)
+dispatch_timer(int sig __used, short event __used, /*@dependent@*/ void * arg)
 {
 	struct event_info_main	*ev_info = arg;
 
@@ -257,11 +257,7 @@ main(int argc, char *argv[])
 		case 'D':
 			errno = 0;    /* To distinguish success/failure */
 			debug_flags = strtol(optarg, &endptr, 0);
-
-			if ((errno == ERANGE &&
-			    (debug_flags == LONG_MAX ||
-			     debug_flags == LONG_MIN)) ||
-			    (errno != 0 && debug_flags == 0)) {
+			if (errno) {
 				perror("strtol");
 				usage();
 			}
@@ -630,7 +626,7 @@ msg_factory(int mtype, int size)
 }
 
 static void
-dispatch_m2s(int fd, short event, /*@dependent@*/ void *arg)
+dispatch_m2s(int fd, short event __used, /*@dependent@*/ void *arg)
 {
 	/*@dependent@*/
 	anoubisd_msg_t *msg;
@@ -667,7 +663,7 @@ dispatch_m2s(int fd, short event, /*@dependent@*/ void *arg)
 }
 
 static void
-dispatch_s2m(int fd, short event, void *arg)
+dispatch_s2m(int fd, short event __used, void *arg)
 {
 	/*@dependent@*/
 	anoubisd_msg_t *msg;
@@ -754,7 +750,7 @@ dispatch_s2m(int fd, short event, void *arg)
 }
 
 static void
-dispatch_m2p(int fd, short event, /*@dependent@*/ void *arg)
+dispatch_m2p(int fd, short event __used, /*@dependent@*/ void *arg)
 {
 	/*@dependent@*/
 	anoubisd_msg_t *msg;
@@ -791,7 +787,7 @@ dispatch_m2p(int fd, short event, /*@dependent@*/ void *arg)
 }
 
 static void
-dispatch_p2m(int fd, short event, /*@dependent@*/ void *arg)
+dispatch_p2m(int fd, short event __used, /*@dependent@*/ void *arg)
 {
 	/*@dependent@*/
 	struct event_info_main *ev_info = (struct event_info_main*)arg;
@@ -822,7 +818,7 @@ dispatch_p2m(int fd, short event, /*@dependent@*/ void *arg)
 }
 
 static void
-dispatch_m2dev(int fd, short event, /*@dependent@*/ void *arg)
+dispatch_m2dev(int fd, short event __used, /*@dependent@*/ void *arg)
 {
 	/*@dependent@*/
 	anoubisd_msg_t *msg;
@@ -868,7 +864,7 @@ dispatch_m2dev(int fd, short event, /*@dependent@*/ void *arg)
 }
 
 static void
-dispatch_dev2m(int fd, short event, void *arg)
+dispatch_dev2m(int fd, short event __used, void *arg)
 {
 	struct eventdev_hdr * hdr;
 	/*@dependent@*/
@@ -892,8 +888,9 @@ dispatch_dev2m(int fd, short event, void *arg)
 
 		/* we shortcut and ack events for our own children */
 		if ((hdr->msg_flags & EVENTDEV_NEED_REPLY) &&
-		    (hdr->msg_pid == se_pid || hdr->msg_pid == policy_pid
-		     || hdr->msg_pid == logger_pid)) {
+		    (hdr->msg_pid == (u_int32_t)se_pid ||
+		     hdr->msg_pid == (u_int32_t)policy_pid
+		     || hdr->msg_pid == (u_int32_t)logger_pid)) {
 
 			msg_reply = msg_factory(ANOUBISD_MSG_EVENTREPLY,
 			    sizeof(struct eventdev_reply));

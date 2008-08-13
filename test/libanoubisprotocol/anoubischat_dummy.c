@@ -36,6 +36,8 @@
 #include "queue.h"
 #endif
 
+#define __used __attribute__((unused))
+
 #include <anoubischat_dummy.h>
 
 struct mymsgbuf {
@@ -73,48 +75,51 @@ achat_rc acc_destroy(struct achat_channel * chan)
 	return ACHAT_RC_OK;
 }
 
-achat_rc acc_clear(struct achat_channel * chan)
+achat_rc acc_clear(struct achat_channel * chan __used)
 {
 	return ACHAT_RC_OK;
 }
 
-achat_rc acc_settail(struct achat_channel * chan, enum acc_tail tail)
+achat_rc acc_settail(struct achat_channel * chan __used,
+		enum acc_tail tail __used)
 {
 	return ACHAT_RC_OK;
 }
 
-achat_rc acc_setsslmode(struct achat_channel * chan, enum acc_sslmode mode)
+achat_rc acc_setsslmode(struct achat_channel * chan __used,
+		enum acc_sslmode mode __used)
 {
 	return ACHAT_RC_OK;
 }
 
-achat_rc acc_setaddr(struct achat_channel * chan, struct sockaddr_storage * ss)
+achat_rc acc_setaddr(struct achat_channel * chan __used,
+		struct sockaddr_storage * ss __used)
 {
 	return ACHAT_RC_OK;
 }
 
 /* Subsystem Connect */
-achat_rc acc_prepare(struct achat_channel * chan)
+achat_rc acc_prepare(struct achat_channel * chan __used)
 {
 	return ACHAT_RC_OK;
 }
 
-achat_rc acc_open(struct achat_channel * chan)
+achat_rc acc_open(struct achat_channel * chan __used)
 {
 	return ACHAT_RC_OK;
 }
 
-struct achat_channel *acc_opendup(struct achat_channel * chan)
+struct achat_channel *acc_opendup(struct achat_channel * chan __used)
 {
 	return ACHAT_RC_OK;
 }
 
-achat_rc acc_close(struct achat_channel * chan)
+achat_rc acc_close(struct achat_channel * chan __used)
 {
 	return ACHAT_RC_OK;
 }
 
-achat_rc acc_getpeerids(struct achat_channel * chan)
+achat_rc acc_getpeerids(struct achat_channel * chan __used)
 {
 	return ACHAT_RC_NYI;
 }

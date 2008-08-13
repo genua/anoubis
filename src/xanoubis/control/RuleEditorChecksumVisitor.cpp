@@ -123,7 +123,7 @@ RuleEditorChecksumVisitor::visitAppPolicy(AppPolicy *appPolicy)
 }
 
 void
-RuleEditorChecksumVisitor::visitAlfPolicy(AlfPolicy *alfPolicy)
+RuleEditorChecksumVisitor::visitAlfPolicy(AlfPolicy*)
 {
 	/* There are no Hash sums in AlfPolicy */
 }
@@ -139,7 +139,7 @@ RuleEditorChecksumVisitor::visitSfsPolicy(SfsPolicy *sfsPolicy)
 }
 
 void
-RuleEditorChecksumVisitor::visitVarPolicy(VarPolicy *varPolicy)
+RuleEditorChecksumVisitor::visitVarPolicy(VarPolicy*)
 {
 	/* There are no Hash sums in VarPolicy */
 }

@@ -135,7 +135,7 @@ MainFrame::onLogViewerShow(wxCommandEvent& event)
 }
 
 void
-MainFrame::onMainFrameShow(wxCommandEvent& event)
+MainFrame::onMainFrameShow(wxCommandEvent&)
 {
 	this->Show();
 }
@@ -231,7 +231,7 @@ MainFrame::OnOpenEscalations(wxCommandEvent& event)
 }
 
 void
-MainFrame::OnMbHelpAboutSelect(wxCommandEvent& event)
+MainFrame::OnMbHelpAboutSelect(wxCommandEvent&)
 {
 	wxAboutDialogInfo info;
 
@@ -267,7 +267,7 @@ MainFrame::OnMbFileCloseSelect(wxCommandEvent&)
 }
 
 void
-MainFrame::OnMbFileImportSelect(wxCommandEvent& event)
+MainFrame::OnMbFileImportSelect(wxCommandEvent&)
 {
 	wxString	caption = _("Choose a policy file:");
 	wxString	wildcard = wxT("*");
@@ -282,7 +282,7 @@ MainFrame::OnMbFileImportSelect(wxCommandEvent& event)
 }
 
 void
-MainFrame::OnMbFileExportSelect(wxCommandEvent& event)
+MainFrame::OnMbFileExportSelect(wxCommandEvent&)
 {
 	wxString	caption = _("Choose a file to write the policies to:");
 	wxString	wildcard = wxT("*");
@@ -297,7 +297,7 @@ MainFrame::OnMbFileExportSelect(wxCommandEvent& event)
 }
 
 void
-MainFrame::OnMbFileQuitSelect(wxCommandEvent& event)
+MainFrame::OnMbFileQuitSelect(wxCommandEvent&)
 {
 	wxGetApp().quit();
 }
@@ -332,7 +332,7 @@ MainFrame::OnMbToolsLogViewerSelect(wxCommandEvent& event)
 }
 
 void
-MainFrame::OnMbHelpHelpSelect(wxCommandEvent& event)
+MainFrame::OnMbHelpHelpSelect(wxCommandEvent&)
 {
 	printf("Menu Item Help->Help selected\n");
 }
@@ -344,7 +344,7 @@ MainFrame::OnMbFileConnectSelect(wxCommandEvent& event)
 }
 
 void
-MainFrame::OnMbEditPreferencesSelect(wxCommandEvent& event)
+MainFrame::OnMbEditPreferencesSelect(wxCommandEvent&)
 {
 	wxCommandEvent  showEvent(anEVT_ANOUBISOPTIONS_SHOW);
 	showEvent.SetInt(true);
@@ -352,7 +352,7 @@ MainFrame::OnMbEditPreferencesSelect(wxCommandEvent& event)
 }
 
 void
-MainFrame::OnClose(wxCloseEvent& event)
+MainFrame::OnClose(wxCloseEvent&)
 {
 	this->Hide();
 }

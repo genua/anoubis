@@ -45,7 +45,7 @@ void
 dump(void *data, size_t len)
 {
 	unsigned long	*p;
-	int		 i;
+	unsigned int	 i;
 
 	p = (unsigned long *)data;
 
@@ -71,7 +71,7 @@ verify(void *data, size_t len, void *check)
 		printf("however result is\t");
 		dump(data, len);
 	}
-	
+
 	return (res);
 }
 

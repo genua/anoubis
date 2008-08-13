@@ -500,7 +500,7 @@ RuleEditorFillWidgetsVisitor::visitSfsPolicy(SfsPolicy *sfsPolicy)
 }
 
 void
-RuleEditorFillWidgetsVisitor::visitVarPolicy(VarPolicy *variable)
+RuleEditorFillWidgetsVisitor::visitVarPolicy(VarPolicy*)
 {
 	ruleEditor_->applicationNbPanel->Disable();
 	ruleEditor_->alfNbPanel->Disable();

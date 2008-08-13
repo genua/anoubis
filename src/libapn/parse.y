@@ -1168,7 +1168,7 @@ int llgetc(struct file * file)
 				return EOF;
 			iov = &file->u.u_iov.vec[vec];
 			idx = file->u.u_iov.cidx;
-			if (idx >= iov->iov_len) {
+			if ((unsigned int)idx >= iov->iov_len) {
 				file->u.u_iov.cidx = 0;
 				file->u.u_iov.cvec++;
 				continue;

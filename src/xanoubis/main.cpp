@@ -253,7 +253,12 @@ AnoubisGuiApp::OnInitCmdLine(wxCmdLineParser& parser)
 			wxCMD_LINE_VAL_STRING,
 			wxCMD_LINE_PARAM_OPTIONAL
 		}, {
-			wxCMD_LINE_NONE
+			wxCMD_LINE_NONE,
+			NULL,
+			NULL,
+			NULL,
+			wxCMD_LINE_VAL_NONE,
+			0
 		}
 	};
 
