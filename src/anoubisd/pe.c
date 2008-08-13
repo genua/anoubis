@@ -80,13 +80,6 @@
 #include "kernelcache.h"
 #include "pe.h"
 
-struct pe_user {
-	TAILQ_ENTRY(pe_user)	 entry;
-	uid_t			 uid;
-	struct apn_ruleset	*prio[PE_PRIO_MAX];
-};
-TAILQ_HEAD(policies, pe_user) *pdb;
-
 struct pe_pubkey {
 	TAILQ_ENTRY(pe_pubkey)	 entry;
 	uid_t			 uid;
@@ -100,26 +93,6 @@ struct pe_context {
 	struct apn_context	*ctx;
 	struct apn_ruleset	*ruleset;
 };
-
-static char * prio_to_string[PE_PRIO_MAX] = {
-#ifndef lint
-	[ PE_PRIO_ADMIN ] = ANOUBISD_POLICYCHROOT "/" ANOUBISD_ADMINDIR,
-	[ PE_PRIO_USER1 ] = ANOUBISD_POLICYCHROOT "/" ANOUBISD_USERDIR,
-#endif
-};
-
-struct policy_request {
-	LIST_ENTRY(policy_request) next;
-	u_int64_t	 token;
-	u_int32_t	 ptype;
-	u_int32_t	 authuid;
-	int		 fd;
-	int		 prio;
-	uid_t		 uid;
-	char		*tmpname;
-	char		*realname;
-};
-LIST_HEAD(, policy_request) preqs;
 
 anoubisd_reply_t	*policy_engine(anoubisd_msg_t *);
 anoubisd_reply_t	*pe_dispatch_event(struct eventdev_hdr *);
@@ -142,25 +115,14 @@ char			*pe_dump_alfmsg(struct alf_event *,
 char			*pe_dump_ctx(struct eventdev_hdr *, struct pe_proc *,
 			     int);
 anoubisd_reply_t	*pe_handle_sfs(anoubisd_msg_sfsopen_t *);
-anoubisd_reply_t	*pe_decide_sfs(struct pe_user *,
-			    anoubisd_msg_sfsopen_t*, time_t now);
+anoubisd_reply_t	*pe_decide_sfs(uid_t, anoubisd_msg_sfsopen_t*,
+			     time_t now);
 int			 pe_decide_sfscheck(struct apn_rule *, struct
 			     sfs_open_message *, int *, u_int32_t *, time_t);
 int			 pe_decide_sfsdflt(struct apn_rule *, struct
 			     sfs_open_message *, int *, u_int32_t *, time_t);
-anoubisd_reply_t	*pe_dispatch_policy(struct anoubisd_msg_comm *);
 char			*pe_dump_sfsmsg(struct sfs_open_message *, int);
 
-int			 pe_load_db(struct policies *);
-void			 pe_flush_db(struct policies *);
-int			 pe_replace_rs(struct apn_ruleset *, uid_t, int);
-int			 pe_load_dir(const char *, int, struct policies *);
-static int		 pe_clean_policy(const char *, const char *, int);
-struct apn_ruleset	*pe_load_policy(const char *, int flags);
-int			 pe_insert_rs(struct apn_ruleset *, uid_t, int,
-			     struct policies *);
-struct pe_user		*pe_get_user(uid_t, struct policies *);
-struct apn_ruleset	*pe_get_ruleset(uid_t, int, struct policies *);
 void			 pe_inherit_ctx(struct pe_proc *);
 struct pe_context	*pe_search_ctx(struct apn_ruleset *, const u_int8_t *,
 			     const char *);
@@ -176,8 +138,6 @@ int			 pe_addrmatch_host(struct apn_host *, void *,
 			     unsigned short);
 int			 pe_addrmatch_port(struct apn_port *, void *,
 			     unsigned short);
-static char		*pe_policy_file_name(uid_t uid, int prio);
-static int		 pe_open_policy_file(uid_t uid, int prio);
 static int		 pe_in_scope(struct apn_scope *,
 			     struct anoubis_event_common *, time_t);
 int			 pe_load_pubkeys(const char *, struct pubkeys *);
@@ -194,18 +154,9 @@ EVP_PKEY		*pe_get_pubkey(uid_t);
 void
 pe_init(void)
 {
-	struct policies	*pp;
 	struct pubkeys	*pk;
-	int		 count;
 
 	pe_proc_init();
-	LIST_INIT(&preqs);
-
-	if ((pp = calloc(1, sizeof(struct policies))) == NULL) {
-		log_warn("calloc");
-		master_terminate(ENOMEM);	/* XXX HSH */
-	}
-	TAILQ_INIT(pp);
 	if ((pk = calloc(1, sizeof(struct pubkeys))) == NULL) {
 		log_warn("calloc");
 		master_terminate(ENOMEM);	/* XXX HSH */
@@ -213,23 +164,17 @@ pe_init(void)
 	TAILQ_INIT(pk);
 
 	/* We die gracefully if loading of public keys fails. */
-	if ((count = pe_load_pubkeys(ANOUBISD_PUBKEYDIR, pk)) == -1)
+	if (pe_load_pubkeys(ANOUBISD_PUBKEYDIR, pk) == -1)
 		fatal("pe_init: failed to load policy keys");
 	pubkeys = pk;
-
-	/* We die gracefully if loading fails. */
-	if ((count = pe_load_db(pp)) == -1)
-		fatal("pe_init: failed to initialize policy database");
-	pdb = pp;
-
-	log_info("pe_init: %d policies loaded to pdb %p", count, pp);
+	pe_user_init();
 }
 
 void
 pe_shutdown(void)
 {
-	pe_flush_tracker();
-	pe_flush_db(pdb);
+	pe_proc_flush();
+	pe_user_flush_db(NULL);
 	pe_flush_pubkeys(pubkeys);
 }
 
@@ -237,8 +182,6 @@ void
 pe_reconfigure(void)
 {
 	struct pubkeys	*newpk, *oldpk;
-	struct policies	*newpdb, *oldpdb;
-	int		 count;
 
 	if ((newpk = calloc(1, sizeof(struct pubkeys))) == NULL) {
 		log_warn("calloc");
@@ -246,16 +189,9 @@ pe_reconfigure(void)
 	}
 	TAILQ_INIT(newpk);
 
-	if ((newpdb = calloc(1, sizeof(struct policies))) == NULL) {
-		log_warn("calloc");
-		master_terminate(ENOMEM);       /* XXX HSH */
-	}
-	TAILQ_INIT(newpdb);
-
-	if ((count = pe_load_pubkeys(ANOUBISD_PUBKEYDIR, newpk)) == -1) {
+	if (pe_load_pubkeys(ANOUBISD_PUBKEYDIR, newpk) == -1) {
 		log_warnx("pe_reconfigure: could not load public keys");
 		free(newpk);
-		free(newpdb);
 		return;
 	}
 
@@ -267,42 +203,7 @@ pe_reconfigure(void)
 	pubkeys = newpk;
 	pe_flush_pubkeys(oldpk);
 
-	if ((count = pe_load_db(newpdb)) == -1) {
-		log_warnx("pe_reconfigure: could not reload policy database");
-		free(newpdb);
-		return;
-	}
-
-	/* Switch to new policy database */
-	oldpdb = pdb;
-	pdb = newpdb;
-
-	if (pe_proc_update_db(newpdb, oldpdb) == -1) {
-		log_warnx("pe_reconfigure: database update failed");
-		pe_flush_db(newpdb);
-		return;
-	}
-
-	pe_flush_db(oldpdb);
-
-	log_info("pe_reconfigure: loaded %d policies to new pdb %p, "
-	    "flushed old pdb %p", count, newpdb, oldpdb);
-}
-
-void
-pe_flush_db(struct policies *ppdb)
-{
-	struct pe_user	*p, *pnext;
-	int		 i;
-
-	for (p = TAILQ_FIRST(ppdb); p != TAILQ_END(ppdb); p = pnext) {
-		pnext = TAILQ_NEXT(p, entry);
-		TAILQ_REMOVE(ppdb, p, entry);
-
-		for (i = 0; i < PE_PRIO_MAX; i++)
-			apn_free_ruleset(p->prio[i]);
-		free(p);
-	}
+	pe_user_reconfigure();
 }
 
 /*
@@ -310,13 +211,13 @@ pe_flush_db(struct policies *ppdb)
  * If the members rule and ctx of struct pe_context are set, they
  * reference rules in the old pdb.  If similar rules are available in
  * the new pdb (ie. checksum of the application can be found), update
- * the references.
+ * the references. Otherwise, reset them to NULL.
  *
- * Otherwise, reset them to NULL.
+ * If pdb is NULL the currently active policy database is used.
  */
 int
 pe_update_ctx(struct pe_proc *pproc, struct pe_context **newctx, int prio,
-    struct policies *newpdb)
+    struct pe_policy_db *pdb)
 {
 	struct apn_ruleset	*newrules;
 	struct pe_context	*context;
@@ -333,10 +234,6 @@ pe_update_ctx(struct pe_proc *pproc, struct pe_context **newctx, int prio,
 		log_warnx("pe_update_ctx: illegal priority %d", prio);
 		return (-1);
 	}
-	if (newpdb == NULL) {
-		log_warnx("pe_update_ctx: empty database pointers %p", newpdb);
-		return (-1);
-	}
 
 	/*
 	 * Try to get policies for our uid from the new pdb.  If the
@@ -346,7 +243,7 @@ pe_update_ctx(struct pe_proc *pproc, struct pe_context **newctx, int prio,
 
 	DEBUG(DBG_TRACE, ">pe_update_ctx");
 	context = NULL;
-	newrules = pe_get_ruleset(pe_proc_get_uid(pproc), prio, newpdb);
+	newrules = pe_user_get_ruleset(pe_proc_get_uid(pproc), prio, pdb);
 	DEBUG(DBG_TRACE, " pe_update_ctx: newrules = %x", newrules);
 	if (newrules) {
 		u_int8_t		*csum = NULL;
@@ -383,394 +280,6 @@ out:
 	*newctx = context;
 
 	return (0);
-}
-
-int
-pe_load_db(struct policies *p)
-{
-	int	count = 0;
-
-	if (p == NULL) {
-		log_warnx("pe_load_db: bogus database pointer");
-		return (-1);
-	}
-
-	/* load admin policies */
-	count = pe_load_dir(ANOUBISD_POLICYCHROOT "/" ANOUBISD_ADMINDIR,
-	    PE_PRIO_ADMIN, p);
-
-	/* load user policies */
-	count += pe_load_dir(ANOUBISD_POLICYCHROOT "/" ANOUBISD_USERDIR,
-	    PE_PRIO_USER1, p);
-
-	return (count);
-}
-
-int
-pe_load_dir(const char *dirname, int prio, struct policies *p)
-{
-	DIR			*dir;
-	struct dirent		*dp;
-	struct apn_ruleset	*rs;
-	int			 count;
-	uid_t			 uid;
-	const char		*errstr;
-	char			*filename, *t;
-	int			 flags = APN_FLAG_NOSCOPE;
-
-	DEBUG(DBG_PE_POLICY, "pe_load_dir: %s %p", dirname, p);
-
-	if (prio < 0 || prio >= PE_PRIO_MAX) {
-		log_warnx("pe_load_dir: illegal priority %d", prio);
-		return (0);
-	}
-
-	if (p == NULL) {
-		log_warnx("pe_load_dir: illegal database");
-		return (0);
-	}
-
-	if ((dir = opendir(dirname)) == NULL) {
-		log_warn("opendir");
-		return (0);
-	}
-
-	if (prio != PE_PRIO_USER1)
-		flags |= APN_FLAG_NOASK;
-
-	count = 0;
-
-	/* iterate over directory entries */
-	while ((dp = readdir(dir)) != NULL) {
-		if (dp->d_type != DT_REG)
-			continue;
-
-		/* Skip files starting with a dot. */
-		if (dp->d_name[0] == '.')
-			continue;
-		/*
-		 * Validate the file name: It has to be either
-		 * ANOUBISD_DEFAULTNAME or a numeric uid.
-		 * Signatures have the format "<uid>.sig", we just
-		 * skip those.
-		 */
-		if (strcmp(dp->d_name, ANOUBISD_DEFAULTNAME) == 0)
-			uid = -1;
-		else if ((t = strrchr(dp->d_name, '.')) != NULL &&
-		    strcmp(t, ".sig") == 0) {
-			continue;
-		} else {
-			uid = strtonum(dp->d_name, 0, UID_MAX, &errstr);
-			if (errstr) {
-				log_warnx("pe_load_dir: filename \"%s/%s\" %s",
-				    dirname, dp->d_name, errstr);
-				continue;
-			}
-		}
-		if (asprintf(&filename, "%s/%s", dirname, dp->d_name) == -1) {
-			log_warnx("asprintf: Out of memory");
-			continue;
-		}
-		/*
-		 * Only clean user policies.  Temporary rules in admin
-		 * policies are not allowed.
-		 */
-		if (prio == PE_PRIO_USER1 &&
-		    pe_clean_policy(filename, dirname, 1) != 0) {
-			log_warnx("Cannot clean %s", filename);
-			free(filename);
-			continue;
-		}
-		/* XXX Right now, only use administrators key, ie. uid == 0 */
-		if (pe_verify_sig(filename, 0) != 1) {
-			log_warnx("not loading \"%s\", invalid siganture",
-			    filename);
-			free(filename);
-			continue;
-		}
-		rs = pe_load_policy(filename, flags);
-		free(filename);
-
-		/* If parsing fails, we just continue */
-		if (rs == NULL)
-			continue;
-
-		if (pe_insert_rs(rs, uid, prio, p) != 0) {
-			apn_free_ruleset(rs);
-			log_warnx("could not insert policy %s/%s", dirname,
-			    dp->d_name);
-			continue;
-		}
-		count++;
-	}
-
-	if (closedir(dir) == -1)
-		log_warn("closedir");
-
-	DEBUG(DBG_PE_POLICY, "pe_load_dir: %d policies inserted", count);
-
-	return (count);
-}
-
-static int
-scope_check(struct apn_scope * scope, void * data)
-{
-	time_t		now = *(time_t *)data;
-
-	/* now == 0 means clean all scopes. */
-	if (!now)
-		return 1;
-	/* Clean it if the scope has a timeout and it has expired. */
-	if (scope->timeout && now > scope->timeout)
-		return 1;
-	/* Clean it if the scope has a task and the task does no exist */
-	if (scope->task) {
-		struct pe_proc *proc = pe_get_proc(scope->task);
-		if (!proc)
-			return 1;
-		pe_put_proc(proc);
-	}
-	/* Keep it. */
-	return 0;
-}
-
-static int
-pe_clean_policy(const char *filename, const char *dirname, int all)
-{
-	time_t			 now = 0;
-	int			 err = -1;
-	struct apn_ruleset	*rs = NULL;
-	char			*tmpname = NULL;
-	FILE			*tmp = NULL;
-
-	if (!all) {
-		if (time(&now) == (time_t)-1) {
-			int err = errno;
-			log_warn("Cannot get current time");
-			master_terminate(err);
-			return -1;
-		}
-	}
-	if (apn_parse(filename, &rs, 0)) {
-		log_warnx("apn_parse: Parsing failed");
-		goto out;
-	}
-	if (apn_clean_ruleset(rs, &scope_check, &now)) {
-		/* Something changed. Dump modified rules. */
-		mode_t	oldmask;
-		if (dirname) {
-			if (asprintf(&tmpname, "%s/.cleantmp", dirname) == -1) {
-				log_warnx("asprintf: Out of memory");
-				goto out;
-			}
-			oldmask = umask(0077);
-			tmp = fopen(tmpname, "w");
-		} else {
-			oldmask = umask(0077);
-			tmp = fopen(filename, "w");
-		}
-		umask(oldmask);
-		if (!tmp) {
-			log_warnx("fopen");
-			goto out;
-		}
-		if (apn_print_ruleset(rs, 0, tmp)) {
-			log_warnx("apn_print_ruleset failed");
-			if (tmpname)
-				unlink(tmpname);
-			goto out;
-		}
-		if (tmpname && rename(tmpname, filename) < 0) {
-			log_warn("rename");
-			unlink(tmpname);
-			goto out;
-		}
-	}
-	err = 0;
-out:
-	if (rs)
-		apn_free_ruleset(rs);
-	if (tmp)
-		fclose(tmp);
-	if (tmpname)
-		free(tmpname);
-	return err;
-}
-
-struct apn_ruleset *
-pe_load_policy(const char *name, int flags)
-{
-	struct apn_ruleset	*rs;
-	int			 ret;
-
-	DEBUG(DBG_PE_POLICY, "pe_load_policy: %s", name);
-
-	ret = apn_parse(name, &rs, flags);
-	if (ret == -1) {
-		log_warn("could not parse \"%s\"", name);
-		return (NULL);
-	}
-	if (ret == 1) {
-		log_warnx("could not parse \"%s\"", name);
-		return (NULL);
-	}
-
-	return (rs);
-}
-
-int
-pe_insert_rs(struct apn_ruleset *rs, uid_t uid, int prio, struct policies *p)
-{
-	struct pe_user		*user;
-
-	if (rs == NULL) {
-		log_warnx("pe_insert_rs: empty ruleset");
-		return (1);
-	}
-	if (p == NULL) {
-		log_warnx("pe_insert_rs: empty database pointer");
-		return (1);
-	}
-	if (prio < 0 || prio >= PE_PRIO_MAX) {
-		log_warnx("pe_insert_rs: illegal priority %d", prio);
-		return (1);
-	}
-
-	/* Find or create user */
-	if ((user = pe_get_user(uid, p)) == NULL) {
-		if ((user = calloc(1, sizeof(struct pe_user))) == NULL) {
-			log_warn("calloc");
-			master_terminate(ENOMEM);	/* XXX HSH */
-		}
-		user->uid = uid;
-		TAILQ_INSERT_TAIL(p, user, entry);
-	} else if (user->prio[prio]) {
-		DEBUG(DBG_PE_POLICY, "pe_insert_rs: freeing %p prio %d user %p",
-		    user->prio[prio], prio, user);
-		apn_free_ruleset(user->prio[prio]);
-		user->prio[prio] = NULL;
-	}
-
-	user->prio[prio] = rs;
-
-	DEBUG(DBG_PE_POLICY, "pe_insert_rs: uid %d (%p prio %p, %p)",
-	    (int)uid, user, user->prio[0], user->prio[1]);
-
-	return (0);
-}
-
-int
-pe_replace_rs(struct apn_ruleset *rs, uid_t uid, int prio)
-{
-	struct apn_ruleset	*oldrs;
-	struct pe_user		*user;
-
-	if (rs == NULL) {
-		log_warnx("pe_replac_rs: empty ruleset");
-		return (1);
-	}
-	if (prio < 0  || prio >= PE_PRIO_MAX) {
-		log_warnx("pe_replace_rs: illegal priority %d", prio);
-		return (1);
-	}
-	DEBUG(DBG_TRACE, ">pe_replace_rs");
-	if ((user = pe_get_user(uid, pdb)) == NULL) {
-		user = calloc(1, sizeof(struct pe_user));
-		if (user == NULL) {
-			log_warn("calloc");
-			master_terminate(ENOMEM);
-			return 1;
-		}
-		user->uid = uid;
-		TAILQ_INSERT_TAIL(pdb, user, entry);
-	}
-	oldrs = user->prio[prio];
-	user->prio[prio] = rs;
-	pe_proc_update_db_one(oldrs, uid, prio);
-	apn_free_ruleset(oldrs);
-	DEBUG(DBG_TRACE, "<pe_replace_rs");
-	return 0;
-}
-
-struct pe_user *
-pe_get_user(uid_t uid, struct policies *p)
-{
-	struct pe_user	*puser, *user;
-
-	if (p == NULL) {
-		log_warnx("pe_get_user: bogus database pointer");
-		return (NULL);
-	}
-
-	user = NULL;
-	TAILQ_FOREACH(puser, p, entry) {
-		if (puser->uid != uid)
-			continue;
-		user = puser;
-		break;
-	}
-
-	DEBUG(DBG_PE_POLICY, "pe_get_user: uid %d user %p", (int)uid, user);
-
-	return (user);
-}
-
-struct apn_ruleset *
-pe_get_ruleset(uid_t uid, int prio, struct policies *p)
-{
-	struct pe_user *user;
-
-	DEBUG(DBG_TRACE, " pe_get_ruleset");
-	user = pe_get_user(uid, p);
-	if (user && user->prio[prio])
-		return user->prio[prio];
-	user = pe_get_user(-1, p);
-	if (!user)
-		return NULL;
-	return user->prio[prio];
-}
-
-static char *
-__pe_policy_file_name(uid_t uid, int prio, char *pre)
-{
-	char *name;
-
-	if (asprintf(&name, "/%s/%s%d", prio_to_string[prio], pre, uid) == -1)
-		return NULL;
-	return name;
-}
-
-static char *
-pe_policy_file_name(uid_t uid, int prio)
-{
-	return __pe_policy_file_name(uid, prio, "");
-}
-
-static int
-pe_open_policy_file(uid_t uid, int prio)
-{
-	int err, fd;
-	char	*name = pe_policy_file_name(uid, prio);
-
-	if (!name)
-		return -ENOMEM;
-	fd = open(name, O_RDONLY);
-	err = errno;
-	free(name);
-	if (fd >= 0)
-		return fd;
-	if (err != ENOENT)
-		return -err;
-
-	err = asprintf(&name, "/%s/%s", prio_to_string[prio],
-	    ANOUBISD_DEFAULTNAME);
-	if (err == -1)
-		return -ENOMEM;
-	fd = open(name, O_RDONLY);
-	free(name);
-	if (fd >= 0)
-		return fd;
-	return -errno;
 }
 
 anoubisd_reply_t *
@@ -857,7 +366,7 @@ pe_handle_sfsexec(struct eventdev_hdr *hdr)
 		return (NULL);
 	}
 	msg = (struct sfs_open_message *)(hdr+1);
-	proc = pe_get_proc(msg->common.task_cookie);
+	proc = pe_proc_get(msg->common.task_cookie);
 	if (proc == NULL) {
 		DEBUG(DBG_PE_PROC, "pe_handle_process: untracked "
 		    "process %u 0x%08llx execs", hdr->msg_pid,
@@ -902,7 +411,7 @@ pe_handle_sfsexec(struct eventdev_hdr *hdr)
 	    ctx0 ? ctx0->rule : NULL, ctx1 ? ctx1->rule : NULL,
 	    pident->pathhint ? pident->pathhint : "",
 	    pident->csum ? htonl(*(unsigned long *)pident->csum) : 0);
-	pe_put_proc(proc);
+	pe_proc_put(proc);
 	return (NULL);
 }
 
@@ -926,15 +435,15 @@ pe_handle_process(struct eventdev_hdr *hdr)
 	switch (msg->op) {
 	case ANOUBIS_PROCESS_OP_FORK:
 		/* Use cookie of new process */
-		proc = pe_alloc_proc(hdr->msg_uid, msg->task_cookie,
+		proc = pe_proc_alloc(hdr->msg_uid, msg->task_cookie,
 		    msg->common.task_cookie);
 		pe_inherit_ctx(proc);
-		pe_track_proc(proc);
+		pe_proc_track(proc);
 		break;
 	case ANOUBIS_PROCESS_OP_EXIT:
 		/* NOTE: Do NOT use msg->common.task_cookie here! */
-		proc = pe_get_proc(msg->task_cookie);
-		pe_untrack_proc(proc);
+		proc = pe_proc_get(msg->task_cookie);
+		pe_proc_untrack(proc);
 		break;
 	default:
 		log_warnx("pe_handle_process: undefined operation %d", msg->op);
@@ -951,7 +460,7 @@ pe_handle_process(struct eventdev_hdr *hdr)
 		    proc,
 		    pident->csum ? htonl(*(unsigned long *)pident->csum) : 0,
 		    pe_proc_task_cookie(pe_proc_get_parent(proc)));
-		pe_put_proc(proc);
+		pe_proc_put(proc);
 	}
 	return (NULL);
 }
@@ -975,20 +484,20 @@ pe_handle_alf(struct eventdev_hdr *hdr)
 	msg = (struct alf_event *)(hdr + 1);
 
 	/* get process from tracker list */
-	if ((proc = pe_get_proc(msg->common.task_cookie)) == NULL) {
+	if ((proc = pe_proc_get(msg->common.task_cookie)) == NULL) {
 		DEBUG(DBG_PE_ALF, "pe_handle_alf: untrackted process %u",
 		    hdr->msg_pid);
 		/* Untracked process: create it, set context and track it. */
-		proc = pe_alloc_proc(hdr->msg_uid, msg->common.task_cookie, 0);
+		proc = pe_proc_alloc(hdr->msg_uid, msg->common.task_cookie, 0);
 		pe_set_ctx(proc, hdr->msg_uid, NULL, NULL);
-		pe_track_proc(proc);
+		pe_proc_track(proc);
 	}
 
 	if (pe_proc_get_pid(proc) == -1)
 		pe_proc_set_pid(proc, hdr->msg_pid);
 
 	reply = pe_decide_alf(proc, hdr);
-	pe_put_proc(proc);
+	pe_proc_put(proc);
 
 	DEBUG(DBG_TRACE, "<policy_engine");
 	return (reply);
@@ -1022,7 +531,7 @@ pe_decide_alf(struct pe_proc *proc, struct eventdev_hdr *hdr)
 	rule_id = 0;
 	decision = -1;
 
-	for (i = 0; pe_proc_valid_context(proc) && i < PE_PRIO_MAX; i++) {
+	for (i = 0; i < PE_PRIO_MAX; i++) {
 		DEBUG(DBG_PE_DECALF, "pe_decide_alf: prio %d context %p", i,
 		    pe_proc_get_context(proc, i));
 
@@ -1673,8 +1182,7 @@ pe_dump_ctx(struct eventdev_hdr *hdr, struct pe_proc *proc, int prio)
 	csumctx = 0;
 	progctx = "<none>";
 
-	if (proc && 0 <= prio && prio <= PE_PRIO_MAX &&
-	    pe_proc_valid_context(proc)) {
+	if (proc && 0 <= prio && prio <= PE_PRIO_MAX) {
 		ctx = pe_proc_get_context(proc, prio);
 
 		if (ctx && ctx->rule) {
@@ -1705,7 +1213,6 @@ anoubisd_reply_t *
 pe_handle_sfs(anoubisd_msg_sfsopen_t *sfsmsg)
 {
 	anoubisd_reply_t		*reply = NULL;
-	struct pe_user			*user;
 	struct eventdev_hdr		*hdr;
 	time_t				 now;
 
@@ -1720,23 +1227,19 @@ pe_handle_sfs(anoubisd_msg_sfsopen_t *sfsmsg)
 		return (NULL);
 	}
 
-	user = pe_get_user(hdr->msg_uid, pdb);
-	if (user == NULL)
-		user = pe_get_user(-1, pdb);
-
 	if (time(&now) == (time_t)-1) {
 		int code = errno;
 		log_warn("pe_handle_sfs: Cannot get time");
 		master_terminate(code);
 		return (NULL);
 	}
-	reply = pe_decide_sfs(user, sfsmsg, now);
+	reply = pe_decide_sfs(hdr->msg_uid, sfsmsg, now);
 
 	return (reply);
 }
 
 anoubisd_reply_t *
-pe_decide_sfs(struct pe_user *user, anoubisd_msg_sfsopen_t *sfsmsg, time_t now)
+pe_decide_sfs(uid_t uid, anoubisd_msg_sfsopen_t *sfsmsg, time_t now)
 {
 	static char		 prefix[] = "SFS";
 	static char		*verdict[3] = { "allowed", "denied", "asked" };
@@ -1763,35 +1266,34 @@ pe_decide_sfs(struct pe_user *user, anoubisd_msg_sfsopen_t *sfsmsg, time_t now)
 	log = 0;
 
 	if (msg->flags & ANOUBIS_OPEN_FLAG_CSUM) {
-		if (user != NULL) {
-			for (i = 0; i < PE_PRIO_MAX; i++) {
-				struct apn_ruleset	*rs = user->prio[i];
-				struct apn_rule		*rule;
+		for (i = 0; i < PE_PRIO_MAX; i++) {
+			struct apn_ruleset	*rs;
+			struct apn_rule		*rule;
 
-				if (rs == NULL)
-					continue;
+			rs = pe_user_get_ruleset(uid, i, NULL);
+			if (rs == NULL)
+				continue;
 
-				if (TAILQ_EMPTY(&rs->sfs_queue))
-					continue;
+			if (TAILQ_EMPTY(&rs->sfs_queue))
+				continue;
 
 				TAILQ_FOREACH(rule, &rs->sfs_queue, entry) {
-					ret = pe_decide_sfscheck(rule, msg,
-					    &log, &rule_id, now);
+				ret = pe_decide_sfscheck(rule, msg,
+				    &log, &rule_id, now);
 
-					if (ret == -1)
-						ret = pe_decide_sfsdflt(rule,
-						    msg, &log, &rule_id, now);
+				if (ret == -1)
+					ret = pe_decide_sfsdflt(rule,
+					    msg, &log, &rule_id, now);
 
-					if (ret != -1) {
-						decision = ret;
-						prio = i;
-					}
-					if (ret == POLICY_DENY)
-						break;
+				if (ret != -1) {
+					decision = ret;
+					prio = i;
 				}
-				if (decision == POLICY_DENY)
+				if (ret == POLICY_DENY)
 					break;
 			}
+			if (decision == POLICY_DENY)
+				break;
 		}
 		/* Look into checksum from /var/lib/sfs */
 		if ((decision == -1) &&
@@ -1809,7 +1311,7 @@ pe_decide_sfs(struct pe_user *user, anoubisd_msg_sfsopen_t *sfsmsg, time_t now)
 		decision = POLICY_ALLOW;
 
 	if (log != APN_LOG_NONE) {
-		context = pe_dump_ctx(hdr, pe_get_proc(msg->common.task_cookie),
+		context = pe_dump_ctx(hdr, pe_proc_get(msg->common.task_cookie),
 		    prio);
 		dump = pe_dump_sfsmsg(msg, ANOUBISD_LOG_APN);
 	}
@@ -1977,294 +1479,6 @@ pe_dump_sfsmsg(struct sfs_open_message *msg, int format)
 	return (dump);
 }
 
-static struct
-policy_request *policy_request_find(u_int64_t token)
-{
-	struct policy_request * req;
-	LIST_FOREACH(req, &preqs, next) {
-		if (req->token == token)
-			return req;
-	}
-	return NULL;
-}
-
-static void
-put_request(struct policy_request *req)
-{
-	if (req->tmpname) {
-		unlink(req->tmpname);
-		free(req->tmpname);
-	}
-	if (req->realname) {
-		free(req->realname);
-	}
-	if (req->fd >= 0)
-		close(req->fd);
-	free(req);
-}
-
-anoubisd_reply_t *
-pe_dispatch_policy(struct anoubisd_msg_comm *comm)
-{
-	anoubisd_reply_t	*reply = NULL;
-	Policy_Generic		*gen;
-	Policy_GetByUid		*getbyuid;
-	Policy_SetByUid		*setbyuid;
-	u_int32_t		uid;
-	u_int32_t		prio;
-	int			error = 0;
-	int			fd;
-	struct policy_request	*req;
-	char			*buf;
-	int			len;
-
-	if (comm == NULL) {
-		log_warnx("pe_dispatch_policy: empty comm");
-		return (NULL);
-	}
-
-	DEBUG(DBG_TRACE, ">pe_dispatch_policy");
-	/*
-	 * See if we have a policy request for this token. It is an error if
-	 *  - there is no request and POLICY_FLAG_START is clear   or
-	 *  - there is a request and POLICY_FLAG_START ist set.
-	 */
-	req = policy_request_find(comm->token);
-	if ((req == NULL) == ((comm->flags & POLICY_FLAG_START) == 0)) {
-		if (req) {
-			error = EBUSY;
-		} else {
-			error = ESRCH;
-		}
-		goto reply;
-	}
-	/* No request yet, start one. */
-	if (req == NULL) {
-		if (comm->len < sizeof(Policy_Generic)) {
-			error = EINVAL;
-			goto reply;
-		}
-		gen = (Policy_Generic *)comm->msg;
-		req = calloc(1, sizeof(struct policy_request));
-		if (!req) {
-			error = ENOMEM;
-			goto reply;
-		}
-		req->token = comm->token;
-		req->ptype = get_value(gen->ptype);
-		req->authuid = comm->uid;
-		req->fd = -1;
-		LIST_INSERT_HEAD(&preqs, req, next);
-	}
-	DEBUG(DBG_TRACE, " pe_dispatch_policy: ptype = %d, flags = %d "
-	    "token = %lld", req->ptype, comm->flags, req->token);
-	switch (req->ptype) {
-	case ANOUBIS_PTYPE_GETBYUID:
-		if ((comm->flags & POLICY_FLAG_END) == 0
-		    || (comm->len < sizeof(Policy_GetByUid))) {
-			error = EINVAL;
-			goto reply;
-		}
-		getbyuid = (Policy_GetByUid *)comm->msg;
-		uid = get_value(getbyuid->uid);
-		prio = get_value(getbyuid->prio);
-		/*
-		 * XXX CEH: Do more/better permission checks here!
-		 * XXX CEH: Authorized user ID is in comm->uid.
-		 * XXX CEH: Currently this assumes Admin == root == uid 0
-		 */
-		error = EPERM;
-		if (comm->uid != uid && comm->uid != 0)
-			goto reply;
-		fd = pe_open_policy_file(uid, prio);
-		req->uid = uid;
-		req->prio = prio;
-		if (fd == -ENOENT) {
-			error = 0;
-			goto reply;
-		}
-		error = EIO;
-		if (fd < 0) {
-			/* ENOENT indicates an empty policy and not an error. */
-			if (fd == -ENOENT)
-				error = 0;
-			goto reply;
-		}
-		error = - send_policy_data(comm->token, fd);
-		close(fd);
-		if (error)
-			goto reply;
-		break;
-	case ANOUBIS_PTYPE_SETBYUID:
-		buf = comm->msg;
-		len = comm->len;
-		if (comm->flags & POLICY_FLAG_START) {
-			char	*tmp;
-			if (comm->len < sizeof(Policy_SetByUid)) {
-				error = EINVAL;
-				goto reply;
-			}
-			error = ENOMEM;
-			setbyuid = (Policy_SetByUid *)comm->msg;
-			uid = get_value(setbyuid->uid);
-			prio = get_value(setbyuid->prio);
-			/*
-			 * XXX CEH: Do more/better permission checks here!
-			 * XXX CEH: Authorized user ID is in comm->uid.
-			 * XXX CEH: Currently this assumes Admin = root = uid 0
-			 */
-			if (uid != req->authuid && req->authuid != 0) {
-				error = EPERM;
-				goto reply;
-			}
-			if (prio == PE_PRIO_ADMIN && req->authuid != 0) {
-				error = EPERM;
-				goto reply;
-			}
-			req->realname = pe_policy_file_name(uid, prio);
-			req->uid = uid;
-			req->prio = prio;
-			if (!req->realname)
-				goto reply;
-			tmp = __pe_policy_file_name(uid, prio, ".tmp.");
-			if (!tmp)
-				goto reply;
-			/* splint doesn't understand the %llu modifier */
-			if (asprintf(&req->tmpname, "%s.%llu", tmp,
-			    /*@i@*/ req->token) == -1) {
-				free(tmp);
-				req->tmpname = NULL;
-				goto reply;
-			}
-			free(tmp);
-			DEBUG(DBG_TRACE, "  open: %s", req->tmpname);
-			req->fd = open(req->tmpname,
-			    O_WRONLY|O_CREAT|O_EXCL, 0400);
-			if (req->fd < 0) {
-				error = errno;
-				goto reply;
-			}
-			DEBUG(DBG_TRACE, "  open: %s fd = %d", req->tmpname,
-			    req->fd);
-			buf += sizeof(Policy_SetByUid);
-			len -= sizeof(Policy_SetByUid);
-		}
-		if (req->authuid != comm->uid) {
-			error = EPERM;
-			goto reply;
-		}
-		while(len) {
-			int ret = write(req->fd, buf, len);
-			if (ret < 0) {
-				DEBUG(DBG_TRACE, "  write error fd=%d",
-				    req->fd);
-				error = errno;
-				goto reply;
-			}
-			buf += ret;
-			len -= ret;
-		}
-		if (comm->flags & POLICY_FLAG_END) {
-			char	*bkup, *tmp;
-			time_t	 t;
-			int	 ret;
-			struct apn_ruleset * ruleset = NULL;
-
-			/* Only accept syntactically correct rules. */
-			if (pe_clean_policy(req->tmpname,
-			    prio_to_string[req->prio], 0)) {
-				error = EINVAL;
-				goto reply;
-			}
-			if (apn_parse(req->tmpname, &ruleset,
-			    (req->prio != PE_PRIO_USER1)?APN_FLAG_NOASK:0)) {
-				if (ruleset)
-					free(ruleset);
-				error = EINVAL;
-				goto reply;
-			}
-			/* Backup old rules */
-			if (time(&t) == (time_t)-1) {
-				error = errno;
-				apn_free_ruleset(ruleset);
-				goto reply;
-			}
-			tmp = __pe_policy_file_name(req->uid, req->prio,
-			    ".save.");
-			if (tmp == NULL) {
-				error = ENOMEM;
-				apn_free_ruleset(ruleset);
-				goto reply;
-			}
-			ret = asprintf(&bkup, "%s.%lld", tmp, (long long)t);
-			free(tmp);
-			if (ret == -1) {
-				errno = ENOMEM;
-				apn_free_ruleset(ruleset);
-				goto reply;
-			}
-			DEBUG(DBG_TRACE, "    link: %s->%s", req->realname,
-			    bkup);
-			if (link(req->realname, bkup) < 0) {
-				if (errno != ENOENT && errno != EEXIST) {
-					error = errno;
-					free(bkup);
-					apn_free_ruleset(ruleset);
-					goto reply;
-				}
-			}
-			free(bkup);
-			DEBUG(DBG_TRACE, "    rename: %s->%s", req->tmpname,
-			    req->realname);
-			if (rename(req->tmpname, req->realname) < 0) {
-				error = errno;
-				apn_free_ruleset(ruleset);
-				goto reply;
-			}
-			DEBUG(DBG_TRACE, "    pe_replace_rs uid=%d prio=%d\n",
-			    req->uid, req->prio);
-			if (pe_replace_rs(ruleset, req->uid, req->prio)) {
-				error = EIO;
-				apn_free_ruleset(ruleset);
-				goto reply;
-			}
-			/*
-			 * XXX CEH: Try to generate a log event about the
-			 * XXX CEH: policy change here to let other UIs know
-			 * XXX CEH: that policies changed.
-			 */
-			error = 0;
-			goto reply;
-		}
-		break;
-	default:
-		/* Unknown opcode. */
-		error = EINVAL;
-		goto reply;
-	}
-	if (req && (comm->flags & POLICY_FLAG_END)) {
-		LIST_REMOVE(req, next);
-		put_request(req);
-	}
-	DEBUG(DBG_TRACE, "<pe_dispatch_policy (NULL)");
-	return NULL;
-reply:
-	if (req) {
-		LIST_REMOVE(req, next);
-		put_request(req);
-	}
-	reply = calloc(1, sizeof(struct anoubisd_reply));
-	reply->token = comm->token;
-	reply->ask = 0;
-	reply->rule_id = 0;
-	reply->len = 0;
-	reply->flags = POLICY_FLAG_START|POLICY_FLAG_END;
-	reply->timeout = 0;
-	reply->reply = error;
-	DEBUG(DBG_TRACE, "<pe_dispatch_policy: %d", error);
-	return reply;
-}
-
 /*
  * Inherit the parent process context. This might not necessarily be
  * the direct parent process, but some grand parent.  This happens on
@@ -2298,7 +1512,7 @@ pe_inherit_ctx(struct pe_proc *proc)
 			struct pe_context *ctx = pe_proc_get_context(parent, i);
 			pe_proc_set_context(proc, i, ctx);
 		}
-		pe_set_parent_proc(proc, parent);
+		pe_proc_set_parent(proc, parent);
 
 		pe_dump_dbgctx("pe_inherit_ctx", proc);
 	} else {
@@ -2323,7 +1537,6 @@ void
 pe_set_ctx(struct pe_proc *proc, uid_t uid, const u_int8_t *csum,
     const char *pathhint)
 {
-	struct pe_user		*user;
 	int			 i;
 	struct pe_context	*tmpctx;
 
@@ -2356,30 +1569,18 @@ pe_set_ctx(struct pe_proc *proc, uid_t uid, const u_int8_t *csum,
 	 * If we are not tracked (which actually should not happen), or we
 	 * are allowed to switch context we use the first matching
 	 * application rule as new context.
+	 * Note that pe_search_ctx will get a reference to the new context
+	 * and pe_proc_set_context will get another one. We need to drop one
+	 * of them.
 	 */
-	if ((user = pe_get_user(uid, pdb)) == NULL &&
-	    (user = pe_get_user(-1, pdb)) == NULL) {
-		/*
-		 * If we have not found any context bound to the UID
-		 * or the default user (-1), we use an empty context,
-		 * which will never allow us to leave it.
-		 */
-		for (i = 0; i < PE_PRIO_MAX; i++)
-			pe_proc_set_context(proc, i, NULL);
-	} else {
-		/*
-		 * pe_search_ctx will get a reference, pe_proc_set_context
-		 * will get another one. We need to drop one of them.
-		 */
-		for (i = 0; i < PE_PRIO_MAX; i++) {
-			struct apn_ruleset *ruleset;
-			ruleset = pe_get_ruleset(uid, i, pdb);
-			tmpctx = pe_search_ctx(ruleset, csum, pathhint);
-			pe_proc_set_context(proc, i, tmpctx);
-			pe_put_ctx(tmpctx);
-		}
+	for (i = 0; i < PE_PRIO_MAX; i++) {
+		struct apn_ruleset *ruleset;
+		ruleset = pe_user_get_ruleset(uid, i, NULL);
+		tmpctx = pe_search_ctx(ruleset, csum, pathhint);
+		pe_proc_set_context(proc, i, tmpctx);
+		pe_put_ctx(tmpctx);
 	}
-	pe_set_parent_proc(proc, proc);
+	pe_proc_set_parent(proc, proc);
 	if (uid >= 0)
 		pe_proc_set_uid(proc, uid);
 
@@ -2530,8 +1731,6 @@ pe_decide_ctx(struct pe_proc *proc, const u_int8_t *csum, const char *pathhint)
 	struct apn_app	*hp;
 	int		 cmp, decision, i;
 
-	if (!pe_proc_valid_context(proc))
-		return (0);
 	/*
 	 * NOTE: Once we actually use the pathhint in policiy decision
 	 * NOTE: this shortcut will no longer be valid.
@@ -2596,26 +1795,8 @@ pe_decide_ctx(struct pe_proc *proc, const u_int8_t *csum, const char *pathhint)
 void
 pe_dump(void)
 {
-	struct pe_user		*user;
-	struct apn_ruleset	*rs;
-	struct apn_rule		*rp;
-	int			 i;
-
 	pe_proc_dump();
-
-	log_info("policies (pdb %p)", pdb);
-	TAILQ_FOREACH(user, pdb, entry) {
-		log_info("uid %d", (int)user->uid);
-		for (i = 0; i < PE_PRIO_MAX; i++) {
-			if (user->prio[i] == NULL)
-				continue;
-			rs = user->prio[i];
-			log_info("\truleset %p at priority %d", rs, i);
-			TAILQ_FOREACH(rp, &rs->alf_queue, entry)
-				log_info("\t\talf rule %p for %s", rp,
-				rp->app ? rp->app->name : "any");
-		}
-	}
+	pe_user_dump();
 }
 
 void

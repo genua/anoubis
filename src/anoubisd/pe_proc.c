@@ -80,19 +80,19 @@ pe_proc_init(void)
 }
 
 void
-pe_flush_tracker(void)
+pe_proc_flush(void)
 {
 	struct pe_proc	*p, *pnext;
 
 	for (p = TAILQ_FIRST(&tracker); p != TAILQ_END(&tracker); p = pnext) {
 		pnext = TAILQ_NEXT(p, entry);
 		TAILQ_REMOVE(&tracker, p, entry);
-		pe_put_proc(p);
+		pe_proc_put(p);
 	}
 }
 
 struct pe_proc *
-pe_get_proc(anoubis_cookie_t cookie)
+pe_proc_get(anoubis_cookie_t cookie)
 {
 	struct pe_proc	*p, *proc;
 
@@ -104,7 +104,7 @@ pe_get_proc(anoubis_cookie_t cookie)
 		}
 	}
 	if (proc) {
-		DEBUG(DBG_PE_TRACKER, "pe_get_proc: proc %p pid %d cookie "
+		DEBUG(DBG_PE_TRACKER, "pe_proc_get: proc %p pid %d cookie "
 		    "0x%08llx", proc, (int)proc->pid, proc->task_cookie);
 		proc->refcount++;
 	}
@@ -113,14 +113,14 @@ pe_get_proc(anoubis_cookie_t cookie)
 }
 
 void
-pe_put_proc(struct pe_proc *proc)
+pe_proc_put(struct pe_proc *proc)
 {
 	int	i;
 
 	if (!proc || --(proc->refcount))
 		return;
 	if (proc->parent != proc)
-		pe_put_proc(proc->parent);
+		pe_proc_put(proc->parent);
 	if (proc->ident.csum)
 		free(proc->ident.csum);
 	if (proc->ident.pathhint)
@@ -135,7 +135,7 @@ pe_put_proc(struct pe_proc *proc)
 }
 
 struct pe_proc *
-pe_alloc_proc(uid_t uid, anoubis_cookie_t cookie,
+pe_proc_alloc(uid_t uid, anoubis_cookie_t cookie,
     anoubis_cookie_t parent_cookie)
 {
 	struct pe_proc	*proc, *parent;
@@ -143,7 +143,7 @@ pe_alloc_proc(uid_t uid, anoubis_cookie_t cookie,
 	if ((proc = calloc(1, sizeof(struct pe_proc))) == NULL)
 		goto oom;
 	proc->task_cookie = cookie;
-	parent = pe_get_proc(parent_cookie);
+	parent = pe_proc_get(parent_cookie);
 	proc->parent = parent;
 	proc->pid = -1;
 	proc->uid = uid;
@@ -165,19 +165,19 @@ pe_alloc_proc(uid_t uid, anoubis_cookie_t cookie,
 		}
 	}
 
-	DEBUG(DBG_PE_TRACKER, "pe_alloc_proc: proc %p uid %u cookie 0x%08llx "
+	DEBUG(DBG_PE_TRACKER, "pe_proc_alloc: proc %p uid %u cookie 0x%08llx "
 	    "parent cookie 0x%08llx", proc, uid, proc->task_cookie,
 	    proc->parent ? parent_cookie : 0);
 
 	return (proc);
 oom:
-	log_warn("pe_alloc_proc: cannot allocate memory");
+	log_warn("pe_proc_alloc: cannot allocate memory");
 	master_terminate(ENOMEM);
 	return (NULL);	/* XXX HSH */
 }
 
 void
-pe_set_parent_proc(struct pe_proc *proc, struct pe_proc *newparent)
+pe_proc_set_parent(struct pe_proc *proc, struct pe_proc *newparent)
 {
 	struct pe_proc *oldparent = proc->parent;
 
@@ -185,11 +185,11 @@ pe_set_parent_proc(struct pe_proc *proc, struct pe_proc *newparent)
 	if (proc != newparent)
 		newparent->refcount++;
 	if (oldparent && oldparent != proc)
-		pe_put_proc(oldparent);
+		pe_proc_put(oldparent);
 }
 
 void
-pe_track_proc(struct pe_proc *proc)
+pe_proc_track(struct pe_proc *proc)
 {
 	if (proc == NULL) {
 		log_warnx("pe_track_proc: empty process");
@@ -202,14 +202,19 @@ pe_track_proc(struct pe_proc *proc)
 }
 
 void
-pe_untrack_proc(struct pe_proc *proc)
+pe_proc_untrack(struct pe_proc *proc)
 {
 	if (!proc)
 		return;
 	TAILQ_REMOVE(&tracker, proc, entry);
-	pe_put_proc(proc);
+	pe_proc_put(proc);
 }
 
+/*
+ * NOTE (CEH): This function is deprecated. There should be no need to use
+ * NOTE (CEH): it in new code. Either this will go away RSN or we will need
+ * NOTE (CEH): a valid_context flag per priority.
+ */
 int
 pe_proc_valid_context(struct pe_proc *proc)
 {
@@ -304,7 +309,7 @@ pe_proc_dump(void)
 }
 
 int
-pe_proc_update_db(struct policies *newpdb, struct policies *oldpdb)
+pe_proc_update_db(struct pe_policy_db *newpdb, struct pe_policy_db *oldpdb)
 {
 	struct pe_proc		*pproc;
 	struct pe_context	*newctx;
@@ -363,7 +368,7 @@ pe_proc_update_db_one(struct apn_ruleset *oldrs, uid_t uid, int prio)
 		if (pe_proc_get_uid(pproc) != uid &&
 		    pe_context_uses_rs(oldctx, oldrs) == 0)
 			continue;
-		if (pe_update_ctx(pproc, &newctx, prio, pdb) == -1) {
+		if (pe_update_ctx(pproc, &newctx, prio, NULL) == -1) {
 			log_warn("Failed to replace context");
 			newctx = NULL;
 		}

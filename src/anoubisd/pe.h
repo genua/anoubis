@@ -38,7 +38,8 @@
 
 struct pe_proc;
 struct pe_context;
-struct policies;
+struct pe_policy_db;
+struct pe_user;
 
 struct pe_proc_ident {
 	unsigned char *csum;
@@ -48,15 +49,15 @@ struct pe_proc_ident {
 /* pe_proc access functions */
 void			 pe_proc_init(void);
 void			 pe_proc_dump(void);
-void			 pe_flush_tracker(void);
-struct pe_proc		*pe_get_proc(anoubis_cookie_t cookie);
-void			 pe_put_proc(struct pe_proc *proc);
-struct pe_proc		*pe_alloc_proc(uid_t uid, anoubis_cookie_t cookie,
+void			 pe_proc_flush(void);
+struct pe_proc		*pe_proc_get(anoubis_cookie_t cookie);
+void			 pe_proc_put(struct pe_proc *proc);
+struct pe_proc		*pe_proc_alloc(uid_t uid, anoubis_cookie_t cookie,
 			     anoubis_cookie_t parent_cookie);
-void			 pe_set_parent_proc(struct pe_proc *proc,
+void			 pe_proc_set_parent(struct pe_proc *proc,
 			     struct pe_proc *newparent);
-void			 pe_track_proc(struct pe_proc *proc);
-void			 pe_untrack_proc(struct pe_proc *proc);
+void			 pe_proc_track(struct pe_proc *proc);
+void			 pe_proc_untrack(struct pe_proc *proc);
 struct pe_context	*pe_proc_get_context(struct pe_proc *, int prio);
 void			 pe_proc_set_context(struct pe_proc *, int prio,
 			     struct pe_context *);
@@ -73,21 +74,29 @@ struct apn_rule		*pe_context_get_rule(struct pe_context *);
 void			 pe_reference_ctx(struct pe_context *);
 void			 pe_put_ctx(struct pe_context *);
 struct pe_proc_ident	*pe_proc_ident(struct pe_proc *);
-int			 pe_proc_update_db(struct policies *,
-			     struct policies *);
+int			 pe_proc_update_db(struct pe_policy_db *,
+			     struct pe_policy_db *);
 void			 pe_proc_update_db_one(struct apn_ruleset *,
 			     uid_t, int);
 int			 pe_context_uses_rs(struct pe_context *,
 			     struct apn_ruleset *);
 
-
-extern struct policies *pdb;	/* Required by pe_update_ctx in pe_proc.c */
 /* Context change functions */
 int			 pe_update_ctx(struct pe_proc *, struct pe_context **,
-			     int, struct policies *);
+			     int, struct pe_policy_db *);
 void			 pe_set_ctx(struct pe_proc *, uid_t, const u_int8_t *,
 			     const char *);
 void			 pe_proc_kcache_add(struct pe_proc *proc,
 			     struct anoubis_kernel_policy *policy);
 
+/* User and Policy Management */
+struct apn_ruleset	*pe_user_get_ruleset(uid_t, int, struct pe_policy_db *);
+anoubisd_reply_t	*pe_dispatch_policy(struct anoubisd_msg_comm *);
+void			 pe_user_init(void);
+void			 pe_user_flush_db(struct pe_policy_db *);
+void			 pe_user_dump(void);
+void			 pe_user_reconfigure(void);
+
+/* Signature management functions */
+int			 pe_verify_sig(const char *, uid_t);
 #endif	/* _PE_H_ */
