@@ -33,6 +33,8 @@
 #include <crc32.h>
 
 #define __used __attribute__((unused))
+/* Used to avoid printf warnings on 64-bit architectures. */
+#define XL(X) (unsigned long long)(X)
 
 #define ASSERT(X)							\
 	if (!(X)) {							\
@@ -58,7 +60,7 @@
 #define DUMP_NETU(PTR,FIELD)						\
 	printf(" %s = %u", #FIELD, get_value((PTR)->FIELD));
 #define DUMP_NETULL(PTR,FIELD)						\
-	printf(" %s = %llu", #FIELD, get_value((PTR)->FIELD));
+	printf(" %s = %llu", #FIELD, XL(get_value((PTR)->FIELD)));
 
 static void DUMP_DATA_LABEL(const void * _buf, size_t len, const char *label)
 {
@@ -102,7 +104,7 @@ static void dump_stringlist(Anoubis_StringListMessage * m, size_t len)
 static void dump_ack(Anoubis_AckMessage * m, size_t len __used)
 {
 	DUMP_NETX(m, opcode);
-	printf(" token = 0x%llx", m->token);
+	printf(" token = 0x%llx", XL(m->token));
 	DUMP_NETX(m, error);
 }
 
@@ -154,7 +156,7 @@ static void dump_notify(Anoubis_NotifyMessage * m, size_t len, int arg)
 {
 	int payloadlen = len - sizeof(*m);
 
-	printf(" token = 0x%llx", m->token);
+	printf(" token = 0x%llx", XL(m->token));
 	DUMP_NETU(m, pid);
 	DUMP_NETU(m, rule_id);
 	DUMP_NETULL(m, task_cookie);
@@ -181,7 +183,7 @@ static void dump_notify(Anoubis_NotifyMessage * m, size_t len, int arg)
 
 static void dump_notifyreg(Anoubis_NotifyRegMessage * m, size_t len __used)
 {
-	printf(" token = 0x%llx", m->token);
+	printf(" token = 0x%llx", XL(m->token));
 	DUMP_NETU(m, uid);
 	DUMP_NETU(m, rule_id);
 	DUMP_NETU(m, subsystem);
@@ -190,7 +192,7 @@ static void dump_notifyreg(Anoubis_NotifyRegMessage * m, size_t len __used)
 static void dump_notifyresult(Anoubis_NotifyResultMessage * m,
     size_t len __used)
 {
-	printf(" token = 0x%llx", m->token);
+	printf(" token = 0x%llx", XL(m->token));
 	DUMP_NETU(m, error);
 	DUMP_NETU(m, uid);
 }

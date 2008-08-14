@@ -671,9 +671,9 @@ apn_print_scope(struct apn_scope *scope, FILE * file)
 	if (!scope)
 		return 0;
 	if (scope->task)
-		fprintf(file, " task %lld", scope->task);
+		fprintf(file, " task %llu", (unsigned long long)scope->task);
 	if (scope->timeout)
-		fprintf(file, " until %ld", (long int)scope->timeout);
+		fprintf(file, " until %lu", (long int)scope->timeout);
 	return 0;
 }
 
