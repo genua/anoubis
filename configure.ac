@@ -116,6 +116,7 @@ AC_CONFIG_FILES([
 	src/anoubisd/Makefile
 	src/libanoubischat/Makefile
 	src/libanoubisprotocol/Makefile
+	src/libanoubisui/Makefile
 	src/bsdcompat/Makefile
 	src/xanoubis/Makefile
 	src/anoubisctl/Makefile

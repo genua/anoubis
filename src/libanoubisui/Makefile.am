@@ -25,17 +25,14 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ##########################################################################
 
-if NEEDBSDCOMPAT
-BSDCOMPAT=bsdcompat
-endif
+#SUBDIRS = ...
 
-if XANOUBIS
-GUI=xanoubis
-endif
+lib_LIBRARIES = libanoubisui.a
 
-# Note:  Libraries must come first as applications might depend on them.
-SUBDIRS = $(BSDCOMPAT) libapn libanoubischat libanoubisprotocol \
-	libanoubisui anoubisd $(GUI) anoubisctl sfssig
+# Make auto-tooling happy!
+libanoubisui_a_SOURCES = dummy.c
+
+#libanoubisui_a_LIBADD = ...
 
 flawfinder:
 	for t in $(SUBDIRS); do cd $$t && make $@ && cd ..; done

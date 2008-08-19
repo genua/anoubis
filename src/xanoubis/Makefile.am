@@ -35,6 +35,8 @@ anoubischatdir = src/libanoubischat
 libanoubischat = $(top_builddir)/$(anoubischatdir)/libanoubischat.a
 anoubisprotocoldir = src/libanoubisprotocol
 libanoubisprotocol = $(top_builddir)/$(anoubisprotocoldir)/libanoubispc.a
+anoubisuidir = src/libanoubisui
+libanoubisui = $(top_builddir)/$(anoubisuidir)/libanoubisui.a
 
 xanoubis_CPPFLAGS = \
 	-I$(top_builddir)/src \
@@ -43,6 +45,7 @@ xanoubis_CPPFLAGS = \
 	-I$(top_srcdir)/$(anoubischatdir) \
 	-I$(top_srcdir)/$(anoubisprotocoldir) \
 	-I$(top_srcdir)/$(anoubisprotocoldir)/client \
+	-I$(top_srcdir)/$(anoubisuidir) \
 	-I$(top_srcdir)/$(xanoubisdir) \
 	-I$(top_srcdir)/$(xanoubisdir)/model \
 	-I$(top_srcdir)/$(xanoubisdir)/view  \
@@ -62,7 +65,8 @@ xanoubis_CXXFLAGS = \
 xanoubis_DEPEND_LIBS = \
 	$(libapn) \
 	$(libanoubischat) \
-	$(libanoubisprotocol)
+	$(libanoubisprotocol) \
+	$(libanoubisui)
 
 if NEEDBSDCOMPAT
 xanoubis_CPPFLAGS += -I$(top_srcdir)/$(bsdcompatdir)
