@@ -8,7 +8,7 @@ Standards-Version: 3.7.3
 
 Package: anoubisd
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, adduser
+Depends: ${shlibs:Depends}, ${misc:Depends}, adduser, perl-modules
 Description: Central daemon of the Anoubis Security Suite
  XXX: long description
 
