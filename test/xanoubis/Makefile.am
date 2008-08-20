@@ -61,6 +61,10 @@ test_xanoubis_server_LDADD = \
 	$(test_xanoubis_server_DEPENDENCIES) \
 	@CHECK_LIBS@
 
+# We link with check.a which is compiled without -fPIE, therefore
+# we must use shared_AM_LDFLAGS in order not to link with -pie.
+test_xanoubis_server_LDFLAGS = $(shared_AM_LDFLAGS)
+
 test_xanoubis_server_SOURCES = \
 	xanoubis_dummyserver_testrunner.c \
 	xanoubis_dummyserver_testsuite.c \

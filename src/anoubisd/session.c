@@ -519,7 +519,7 @@ dispatch_policy(struct anoubis_policy_comm *comm, u_int64_t token,
 	anoubisd_msg_comm_t *msg_comm;
 	struct anoubisd_msg_comm_store *msg_store;
 
-	DEBUG(DBG_TRACE, ">dispatch_policy token = %lld", token);
+	DEBUG(DBG_TRACE, ">dispatch_policy token = %lld", (long long)token);
 
 	msg = msg_factory(ANOUBISD_MSG_POLREQUEST,
 	    sizeof(anoubisd_msg_comm_t) + len);
@@ -978,7 +978,7 @@ dispatch_p2s_pol_reply(anoubisd_msg_t *msg,
 	ret = anoubis_policy_comm_answer(msg_comm->comm, reply->token,
 	    reply->reply, buf, reply->len, end != 0);
 	DEBUG(DBG_TRACE, " >anoubis_policy_comm_answer: %lld %d %d",
-	    reply->token, ret, reply->reply);
+	    (long long)reply->token, ret, reply->reply);
 
 	DEBUG(DBG_QUEUE, " <requestq: %x", reply->token);
 	if (end) {

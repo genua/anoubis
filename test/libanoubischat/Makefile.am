@@ -39,8 +39,10 @@ noinst_PROGRAMS = test_libanoubischat
 
 test_libanoubischat_CFLAGS = $(AM_CFLAGS) @CHECK_CFLAGS@
 test_libanoubischat_CPPFLAGS = -I$(top_srcdir)/$(anoubischatdir)
+# We link with check.a which is compiled without -fPIE, therefore
+# we must use shared_AM_LDFLAGS in order not to link with -pie.
 test_libanoubischat_LDFLAGS = \
-	$(AM_LDFLAGS) -dynamic \
+	$(shared_AM_LDFLAGS) -dynamic \
 	-L$(top_builddir)/$(anoubischatdir)
 
 # conditionally static link of libraries to accomplish correct Code Coverage

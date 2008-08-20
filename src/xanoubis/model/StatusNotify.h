@@ -30,6 +30,7 @@
 
 #include <anoubis_msg.h>
 #include <wx/string.h>
+#include <typeinfo>
 
 #include "Notification.h"
 

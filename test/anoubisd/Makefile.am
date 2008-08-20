@@ -51,6 +51,10 @@ test_anoubisd_CPPFLAGS = \
 	-I$(top_builddir)/src \
 	@CHECK_CFLAGS@
 
+# We link with check.a which is compiled without -fPIE, therefore
+# we must use shared_AM_LDFLAGS in order not to link with -pie.
+test_anoubisd_LDFLAGS = $(shared_AM_LDFLAGS)
+
 test_anoubisd_LDADD = \
 	@CHECK_LIBS@ \
 	$(libanoubispc) \

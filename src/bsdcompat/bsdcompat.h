@@ -14,7 +14,7 @@
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-5B * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
  * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
  * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
  * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
@@ -39,12 +39,12 @@
 #include <stddef.h>
 #include <unistd.h>
 
-#ifndef __always_inline
-# define __always_inline __attribute__ ((always_inline))
+#ifndef attr_always_inline
+# define attr_always_inline __attribute__ ((always_inline))
 #endif
 
-#ifndef __unused
-# define __unused __attribute__ ((unused))
+#ifndef attr_unused
+# define attr_unused __attribute__ ((unused))
 #endif
 
 __BEGIN_DECLS
@@ -58,7 +58,7 @@ extern size_t /*@alt void@*/ __strlcpy_nrm(char *dest, const char *src,
 #if __USE_FORTIFY_LEVEL > 0 && !defined __cplusplus
 
 #define strlcpy(dest, src, len) __strlcpy_chk (dest, src, len)
-static __always_inline __unused size_t /*@alt void@*/ __strlcpy_chk(
+static attr_always_inline attr_unused size_t /*@alt void@*/ __strlcpy_chk(
     char *dest, const char *src, size_t len) {
 	if (__bos(dest) != (size_t) -1 && __bos(dest)  < len ) {
 		__chk_fail();
@@ -78,7 +78,7 @@ extern size_t __strlcat_nrm(char *dest, const char *src, size_t len);
 #if __USE_FORTIFY_LEVEL > 0 && !defined __cplusplus
 
 #define strlcat(dest, src, len) __strlcat_chk (dest, src, len)
-static __always_inline __unused size_t __strlcat_chk(char *dest,
+static attr_always_inline attr_unused size_t __strlcat_chk(char *dest,
     const char *src, size_t len) {
 	if (__bos(dest) != (size_t) -1 && __bos(dest)  < len ) {
 		__chk_fail();

@@ -546,7 +546,7 @@ statetimeout	: STATEFUL			{
 				YYERROR;
 			}
 			if ($2 > UINT_MAX) {
-				yyerror("number %lld too large", $2);
+				yyerror("number %lld too large", (long long)$2);
 				YYERROR;
 			}
 			$$ = $2;

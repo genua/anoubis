@@ -38,8 +38,10 @@ INCLUDES = -I$(top_srcdir)/$(libbsdcompatdir)
 
 test_bsdcompat_CFLAGS = $(AM_CFLAGS) @CHECK_CFLAGS@
 
+# We link with check.a which is compiled without -fPIE, therefore
+# we must use shared_AM_LDFLAGS in order not to link with -pie.
 test_bsdcompat_LDFLAGS = -L$(top_builddir)/$(libbsdcompatdir) -dynamic \
-	$(AM_LDFLAGS)
+	$(shared_AM_LDFLAGS)
 LDADD = @CHECK_LIBS@ -lbsdcompat
 
 test_bsdcompat_DEPENDENCIES = $(libbsdcompat)
