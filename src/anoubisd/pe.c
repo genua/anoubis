@@ -87,13 +87,6 @@ struct pe_pubkey {
 };
 TAILQ_HEAD(pubkeys, pe_pubkey) *pubkeys;
 
-struct pe_context {
-	int			 refcount;
-	struct apn_rule		*rule;
-	struct apn_context	*ctx;
-	struct apn_ruleset	*ruleset;
-};
-
 anoubisd_reply_t	*policy_engine(anoubisd_msg_t *);
 anoubisd_reply_t	*pe_dispatch_event(struct eventdev_hdr *);
 anoubisd_reply_t	*pe_handle_process(struct eventdev_hdr *);
@@ -112,8 +105,6 @@ void			 pe_kcache_alf(struct apn_alfrule *, int,
 			     struct pe_proc *, struct alf_event *);
 char			*pe_dump_alfmsg(struct alf_event *,
 			     struct eventdev_hdr *, int);
-char			*pe_dump_ctx(struct eventdev_hdr *, struct pe_proc *,
-			     int);
 anoubisd_reply_t	*pe_handle_sfs(anoubisd_msg_sfsopen_t *);
 anoubisd_reply_t	*pe_decide_sfs(uid_t, anoubisd_msg_sfsopen_t*,
 			     time_t now);
@@ -123,13 +114,6 @@ int			 pe_decide_sfsdflt(struct apn_rule *, struct
 			     sfs_open_message *, int *, u_int32_t *, time_t);
 char			*pe_dump_sfsmsg(struct sfs_open_message *, int);
 
-void			 pe_inherit_ctx(struct pe_proc *);
-struct pe_context	*pe_search_ctx(struct apn_ruleset *, const u_int8_t *,
-			     const char *);
-struct pe_context	*pe_alloc_ctx(struct apn_rule *, struct apn_ruleset *);
-int			 pe_decide_ctx(struct pe_proc *, const u_int8_t *,
-			     const char *);
-void			 pe_dump_dbgctx(const char *, struct pe_proc *);
 int			 pe_addrmatch_out(struct alf_event *, struct
 			     apn_alfrule *);
 int			 pe_addrmatch_in(struct alf_event *, struct
@@ -206,82 +190,6 @@ pe_reconfigure(void)
 	pe_user_reconfigure();
 }
 
-/*
- * Update a context.
- * If the members rule and ctx of struct pe_context are set, they
- * reference rules in the old pdb.  If similar rules are available in
- * the new pdb (ie. checksum of the application can be found), update
- * the references. Otherwise, reset them to NULL.
- *
- * If pdb is NULL the currently active policy database is used.
- */
-int
-pe_update_ctx(struct pe_proc *pproc, struct pe_context **newctx, int prio,
-    struct pe_policy_db *pdb)
-{
-	struct apn_ruleset	*newrules;
-	struct pe_context	*context;
-
-	if (pproc == NULL) {
-		log_warnx("pe_update_ctx: empty process");
-		return (-1);
-	}
-	if (newctx == NULL) {
-		log_warnx("pe_update_ctx: invalid new context pointer");
-		return (-1);
-	}
-	if (prio < 0 || prio >= PE_PRIO_MAX) {
-		log_warnx("pe_update_ctx: illegal priority %d", prio);
-		return (-1);
-	}
-
-	/*
-	 * Try to get policies for our uid from the new pdb.  If the
-	 * new pdb does not provide policies for our uid, try to get the
-	 * default policies.
-	 */
-
-	DEBUG(DBG_TRACE, ">pe_update_ctx");
-	context = NULL;
-	newrules = pe_user_get_ruleset(pe_proc_get_uid(pproc), prio, pdb);
-	DEBUG(DBG_TRACE, " pe_update_ctx: newrules = %x", newrules);
-	if (newrules) {
-		u_int8_t		*csum = NULL;
-		char			*pathhint = NULL;
-		struct apn_rule		*oldrule;
-		struct apn_app		*oldapp;
-		struct pe_context	*ctx;
-
-		/*
-		 * XXX CEH: In some cases we might want to look for
-		 * XXX CEH: a new any rule if the old context for the priority
-		 * XXX CEH: or its associated ruleset is NULL.
-		 */
-		ctx = pe_proc_get_context(pproc, prio);
-		if (ctx == NULL)
-			goto out;
-		oldrule = ctx->rule;
-		if (!oldrule)
-			goto out;
-		oldapp = oldrule->app;
-		if (oldapp) {
-			if (oldapp->hashtype == APN_HASH_SHA256)
-				csum = oldapp->hashvalue;
-			pathhint = oldapp->name;
-		}
-		context = pe_search_ctx(newrules, csum, pathhint);
-	}
-out:
-
-	DEBUG(DBG_PE_POLICY, "pe_update_ctx: context %p rule %p ctx %p",
-	    context, context ? context->rule : NULL, context ? context->ctx :
-	    NULL);
-
-	*newctx = context;
-
-	return (0);
-}
-
 anoubisd_reply_t *
 policy_engine(anoubisd_msg_t *request)
 {
@@ -352,9 +260,6 @@ anoubisd_reply_t *
 pe_handle_sfsexec(struct eventdev_hdr *hdr)
 {
 	struct sfs_open_message		*msg;
-	struct pe_proc			*proc = NULL;
-	struct pe_context		*ctx0, *ctx1;
-	struct pe_proc_ident		*pident;
 
 	if (hdr == NULL) {
 		log_warnx("pe_handle_sfsexec: empty header");
@@ -366,52 +271,11 @@ pe_handle_sfsexec(struct eventdev_hdr *hdr)
 		return (NULL);
 	}
 	msg = (struct sfs_open_message *)(hdr+1);
-	proc = pe_proc_get(msg->common.task_cookie);
-	if (proc == NULL) {
-		DEBUG(DBG_PE_PROC, "pe_handle_process: untracked "
-		    "process %u 0x%08llx execs", hdr->msg_pid,
-		    msg->common.task_cookie);
-		return (NULL);
-	}
-	/* fill in checksum and pathhint */
-	pident = pe_proc_ident(proc);
-	if (msg->flags & ANOUBIS_OPEN_FLAG_CSUM) {
-		if (pident->csum == NULL) {
-			pident->csum = calloc(1, sizeof(msg->csum));
-			if (pident->csum == NULL) {
-				log_warn("calloc");
-				master_terminate(ENOMEM);	/* XXX HSH */
-			}
-		}
-		bcopy(msg->csum, pident->csum, sizeof(msg->csum));
-	} else {
-		if (pident->csum) {
-			free(pident->csum);
-			pident->csum = NULL;
-		}
-	}
-	if (pident->pathhint) {
-		free(pident->pathhint);
-		pident->pathhint = NULL;
-	}
-	if (msg->flags & ANOUBIS_OPEN_FLAG_PATHHINT) {
-		if ((pident->pathhint = strdup(msg->pathhint)) == NULL) {
-			log_warn("strdup");
-			master_terminate(ENOMEM);	/* XXX HSH */
-		}
-	}
-	pe_proc_set_pid(proc, hdr->msg_pid);
-	pe_set_ctx(proc, hdr->msg_uid, pident->csum, pident->pathhint);
+	pe_proc_exec(msg->common.task_cookie,
+	    hdr->msg_uid, hdr->msg_pid,
+	    (msg->flags & ANOUBIS_OPEN_FLAG_CSUM) ? msg->csum : NULL,
+	    (msg->flags & ANOUBIS_OPEN_FLAG_PATHHINT) ? msg->pathhint : NULL);
 
-	ctx0 = pe_proc_get_context(proc, 0);
-	ctx1 = pe_proc_get_context(proc, 1);
-	/* Get our policy */
-	DEBUG(DBG_PE_PROC, "pe_handle_sfsexec: using policies %p %p "
-	    "for %s csum 0x%08lx...",
-	    ctx0 ? ctx0->rule : NULL, ctx1 ? ctx1->rule : NULL,
-	    pident->pathhint ? pident->pathhint : "",
-	    pident->csum ? htonl(*(unsigned long *)pident->csum) : 0);
-	pe_proc_put(proc);
 	return (NULL);
 }
 
@@ -419,7 +283,6 @@ anoubisd_reply_t *
 pe_handle_process(struct eventdev_hdr *hdr)
 {
 	struct ac_process_message	*msg;
-	struct pe_proc			*proc = NULL;
 
 	if (hdr == NULL) {
 		log_warnx("pe_handle_process: empty header");
@@ -435,32 +298,16 @@ pe_handle_process(struct eventdev_hdr *hdr)
 	switch (msg->op) {
 	case ANOUBIS_PROCESS_OP_FORK:
 		/* Use cookie of new process */
-		proc = pe_proc_alloc(hdr->msg_uid, msg->task_cookie,
+		pe_proc_fork(hdr->msg_uid, msg->task_cookie,
 		    msg->common.task_cookie);
-		pe_inherit_ctx(proc);
-		pe_proc_track(proc);
 		break;
 	case ANOUBIS_PROCESS_OP_EXIT:
 		/* NOTE: Do NOT use msg->common.task_cookie here! */
-		proc = pe_proc_get(msg->task_cookie);
-		pe_proc_untrack(proc);
+		pe_proc_exit(msg->task_cookie);
 		break;
 	default:
 		log_warnx("pe_handle_process: undefined operation %d", msg->op);
 		break;
-	}
-
-	if (proc) {
-		struct pe_proc_ident *pident = pe_proc_ident(proc);
-		DEBUG(DBG_PE_PROC, "pe_handle_process: token 0x%08llx pid %d "
-		    "uid %u op %d proc %p csum 0x%08x... parent "
-		    "token 0x%08llx",
-		    pe_proc_task_cookie(proc), pe_proc_get_pid(proc),
-		    hdr->msg_uid, msg->op,
-		    proc,
-		    pident->csum ? htonl(*(unsigned long *)pident->csum) : 0,
-		    pe_proc_task_cookie(pe_proc_get_parent(proc)));
-		pe_proc_put(proc);
 	}
 	return (NULL);
 }
@@ -485,12 +332,10 @@ pe_handle_alf(struct eventdev_hdr *hdr)
 
 	/* get process from tracker list */
 	if ((proc = pe_proc_get(msg->common.task_cookie)) == NULL) {
+		/* Untracked process: insert it. */
 		DEBUG(DBG_PE_ALF, "pe_handle_alf: untrackted process %u",
 		    hdr->msg_pid);
-		/* Untracked process: create it, set context and track it. */
-		proc = pe_proc_alloc(hdr->msg_uid, msg->common.task_cookie, 0);
-		pe_set_ctx(proc, hdr->msg_uid, NULL, NULL);
-		pe_proc_track(proc);
+		proc = pe_proc_insert(msg->common.task_cookie, hdr->msg_uid);
 	}
 
 	if (pe_proc_get_pid(proc) == -1)
@@ -555,7 +400,7 @@ pe_decide_alf(struct pe_proc *proc, struct eventdev_hdr *hdr)
 	}
 
 	if (log != APN_LOG_NONE) {
-		context = pe_dump_ctx(hdr, proc, prio);
+		context = pe_context_dump(hdr, proc, prio);
 		dump = pe_dump_alfmsg(msg, hdr, ANOUBISD_LOG_APN);
 	}
 
@@ -614,7 +459,7 @@ pe_alf_evaluate(struct pe_proc *proc, struct pe_context *context,
 
 	if (context == NULL)
 		return (-1);
-	if ((rule = context->rule) == NULL) {
+	if ((rule = pe_context_get_rule(context)) == NULL) {
 		log_warnx("pe_alf_evaluate: empty rule");
 		return (-1);
 	}
@@ -1163,52 +1008,6 @@ pe_dump_alfmsg(struct alf_event *msg, struct eventdev_hdr *hdr, int format)
 	return (dump);
 }
 
-/*
- * Decode a context in a printable string.  This strings is allocated
- * and needs to be freed by the caller.
- */
-char *
-pe_dump_ctx(struct eventdev_hdr *hdr, struct pe_proc *proc, int prio)
-{
-	struct pe_context	*ctx;
-	unsigned long		 csumctx;
-	char			*dump, *progctx;
-	struct pe_proc_ident	*pident;
-
-	/* hdr must be non-NULL, proc might be NULL */
-	if (hdr == NULL)
-		return (NULL);
-
-	csumctx = 0;
-	progctx = "<none>";
-
-	if (proc && 0 <= prio && prio <= PE_PRIO_MAX) {
-		ctx = pe_proc_get_context(proc, prio);
-
-		if (ctx && ctx->rule) {
-			if (ctx->rule->app) {
-				csumctx = htonl(*(unsigned long *)
-				    ctx->rule->app->hashvalue);
-				progctx = ctx->rule->app->name;
-			} else
-				progctx = "any";
-		}
-	}
-
-	pident = pe_proc_ident(proc);
-	if (asprintf(&dump, "uid %hu pid %hu program %s checksum 0x%08x... "
-	    "context program %s checksum 0x%08lx...",
-	    hdr->msg_uid, hdr->msg_pid,
-	    (pident && pident->pathhint) ? pident->pathhint : "<none>",
-	    (pident && pident->csum) ?
-	    htonl(*(unsigned long *)pident->csum) : 0,
-	    progctx, csumctx) == -1) {
-		dump = NULL;
-	}
-
-	return (dump);
-}
-
 anoubisd_reply_t *
 pe_handle_sfs(anoubisd_msg_sfsopen_t *sfsmsg)
 {
@@ -1311,8 +1110,8 @@ pe_decide_sfs(uid_t uid, anoubisd_msg_sfsopen_t *sfsmsg, time_t now)
 		decision = POLICY_ALLOW;
 
 	if (log != APN_LOG_NONE) {
-		context = pe_dump_ctx(hdr, pe_proc_get(msg->common.task_cookie),
-		    prio);
+		context = pe_context_dump(hdr,
+		    pe_proc_get(msg->common.task_cookie), prio);
 		dump = pe_dump_sfsmsg(msg, ANOUBISD_LOG_APN);
 	}
 
@@ -1479,343 +1278,11 @@ pe_dump_sfsmsg(struct sfs_open_message *msg, int format __used)
 	return (dump);
 }
 
-/*
- * Inherit the parent process context. This might not necessarily be
- * the direct parent process, but some grand parent.  This happens on
- * fork(2).  Moreover, we set a reference to that particular parent.
- *
- * If our parent was never tracked, we get a new context.
- */
-void
-pe_inherit_ctx(struct pe_proc *proc)
-{
-	struct pe_proc	*parent;
-	int		 i;
-
-	if (proc == NULL) {
-		log_warnx("pe_inherit_ctx: empty process");
-		return;
-	}
-
-	/* Get parents context */
-	parent = pe_proc_get_parent(proc);
-	DEBUG(DBG_PE_CTX, "pe_inherit_ctx: parent %p 0x%08llx", parent,
-	    pe_proc_task_cookie(parent));
-
-	if (parent && !pe_proc_valid_context(parent)) {
-		DEBUG(DBG_PE_CTX, "pe_inherit_ctx: parent %p 0x%08llx has no "
-		    "context", parent, pe_proc_task_cookie(parent));
-	}
-
-	if (parent && pe_proc_valid_context(parent)) {
-		for (i = 0; i < PE_PRIO_MAX; i++) {
-			struct pe_context *ctx = pe_proc_get_context(parent, i);
-			pe_proc_set_context(proc, i, ctx);
-		}
-		pe_proc_set_parent(proc, parent);
-
-		pe_dump_dbgctx("pe_inherit_ctx", proc);
-	} else {
-		/*
-		 * No parent available, derive new context:  We have
-		 * neither an UID, nor pathname and checksum.  Thus the only
-		 * possible context will be derived from the admin/default
-		 * rule set.  If this is not available, the process will
-		 * get no context and susequent policy decisions will not
-		 * yield a valid result (ie. != -1).  In that case,
-		 * the policy engine will enforce the decision POLICY_DENY.
-		 */
-		pe_set_ctx(proc, -1, NULL, NULL);
-	}
-}
-
-/*
- * Set our context.  If we never inherited one, search for an apropriate
- * application rule and use that one as our context from now on.
- */
-void
-pe_set_ctx(struct pe_proc *proc, uid_t uid, const u_int8_t *csum,
-    const char *pathhint)
-{
-	int			 i;
-	struct pe_context	*tmpctx;
-
-	/* We can both handle csum and pathhint being NULL. */
-	if (proc == NULL) {
-		log_warnx("pe_set_ctx: empty process");
-		return;
-	}
-
-	/*
-	 * If we have inherited a context, check if it has context rule
-	 * that allows us to switch context.  If no, we keep the context and
-	 * just return.  Otherwise, we continue and search our new context.
-	 */
-	if (pe_proc_valid_context(proc)) {
-		tmpctx = pe_proc_get_context(proc, 0);
-		DEBUG(DBG_PE_CTX, "pe_set_ctx: proc %p 0x%08llx has context "
-		    "%p rule %p ctx %p", proc, pe_proc_task_cookie(proc),
-		    tmpctx, tmpctx ? tmpctx->rule : NULL,
-		    tmpctx ? tmpctx->ctx : NULL);
-
-		if (pe_decide_ctx(proc, csum, pathhint) != 1) {
-			DEBUG(DBG_PE_CTX, "pe_set_ctx: keeping context");
-			return;
-		}
-		DEBUG(DBG_PE_CTX, "pe_set_ctx: switching context");
-	}
-
-	/*
-	 * If we are not tracked (which actually should not happen), or we
-	 * are allowed to switch context we use the first matching
-	 * application rule as new context.
-	 * Note that pe_search_ctx will get a reference to the new context
-	 * and pe_proc_set_context will get another one. We need to drop one
-	 * of them.
-	 */
-	for (i = 0; i < PE_PRIO_MAX; i++) {
-		struct apn_ruleset *ruleset;
-		ruleset = pe_user_get_ruleset(uid, i, NULL);
-		tmpctx = pe_search_ctx(ruleset, csum, pathhint);
-		pe_proc_set_context(proc, i, tmpctx);
-		pe_put_ctx(tmpctx);
-	}
-	pe_proc_set_parent(proc, proc);
-	if (uid != (uid_t)-1)
-		pe_proc_set_uid(proc, uid);
-
-	tmpctx = pe_proc_get_context(proc, 0);
-	DEBUG(DBG_PE_CTX, "pe_set_ctx: proc %p 0x%08llx got context "
-	    "%p rule %p ctx %p", proc, pe_proc_task_cookie(proc),
-	    tmpctx, tmpctx ? tmpctx->rule : NULL, tmpctx ? tmpctx->ctx : NULL);
-}
-
-struct pe_context *
-pe_search_ctx(struct apn_ruleset *rs, const u_int8_t *csum,
-    const char *pathhint __used)
-{
-	struct pe_context	*context;
-	struct apn_rule		*prule, *rule;
-	struct apn_alfrule	*alfrule;
-	struct apn_app		*hp;
-
-	DEBUG(DBG_PE_CTX, "pe_search_ctx: ruleset %p csum 0x%08x...", rs,
-	    csum ? htonl(*(unsigned long *)csum) : 0);
-
-	/*
-	 * We do not check csum and pathhint for being NULL, as we
-	 * handle empty checksums and pathhint is actually not used, yet.
-	 * The point is, that a process without a checksum can match
-	 * a rule specifying "any" as application (see below).
-	 */
-	if (rs == NULL)
-		return (NULL);
-
-	/*
-	 * XXX HSH Right now only ALF rules provide a context.  This is
-	 * XXX HSH likely to change when sandboxing is implemented.
-	 */
-	if (TAILQ_EMPTY(&rs->alf_queue))
-		return (NULL);
-
-	rule = NULL;
-	TAILQ_FOREACH(prule, &rs->alf_queue, entry) {
-		/*
-		 * A rule without application will always match.  This is
-		 * especially important, when no checksum is available,
-		 * as we still have to walk the full tailq.  Thus we use
-		 * "continue" below
-		 */
-		if (prule->app == NULL) {
-			rule = prule;
-			break;
-		}
-		if (csum == NULL)
-			continue;
-
-		/*
-		 * Otherwise walk chain of applications and check
-		 * against hashvalue.
-		 */
-		for (hp = prule->app; hp && rule == NULL; hp = hp->next) {
-			if (bcmp(hp->hashvalue, csum, sizeof(hp->hashvalue)))
-				continue;
-			rule = prule;
-		}
-		if (rule)
-			break;
-	}
-	if (rule == NULL) {
-		DEBUG(DBG_PE_CTX, "pe_search_ctx: no rule found");
-		return (NULL);
-	}
-	context = pe_alloc_ctx(rule, rs);
-	if (!context) {
-		master_terminate(ENOMEM);
-		return NULL;
-	}
-
-	/*
-	 * Now we have a rule chain, search for a context rule.  It is
-	 * ok, if we do not find a context rule.  This will mean, that
-	 * we have to stay in the current context on exec(2).
-	 */
-	for (alfrule = rule->rule.alf; alfrule; alfrule = alfrule->next) {
-		if (alfrule->type != APN_ALF_CTX)
-			continue;
-		context->ctx = &alfrule->rule.apncontext;
-		break;
-	}
-
-	DEBUG(DBG_PE_CTX, "pe_search_ctx: context %p rule %p %s", context,
-	    rule, context->ctx ? (context->ctx->application ?
-	    context->ctx->application->name : "any") : "<none>");
-
-	return (context);
-}
-
-/*
- * NOTE: rs must not be NULL.
- */
-struct pe_context *
-pe_alloc_ctx(struct apn_rule *rule, struct apn_ruleset *rs)
-{
-	struct pe_context	*ctx;
-
-	if (!rs) {
-		log_warnx("NULL rulset in pe_alloc_ctx?");
-		return NULL;
-	}
-	if ((ctx = calloc(1, sizeof(struct pe_context))) == NULL) {
-		log_warn("calloc");
-		master_terminate(ENOMEM);	/* XXX HSH */
-		return NULL;
-	}
-	ctx->rule = rule;
-	ctx->ruleset = rs;
-	ctx->refcount = 1;
-
-	return (ctx);
-}
-
-void
-pe_put_ctx(struct pe_context *ctx)
-{
-	if (!ctx || --(ctx->refcount))
-		return;
-
-	free(ctx);
-}
-
-void
-pe_reference_ctx(struct pe_context *ctx)
-{
-	if (!ctx)
-		return;
-
-	ctx->refcount++;
-}
-
-/*
- * Decide, if it is ok to switch context for an application specified
- * by csum and pathhint.  Right now, pathhint is not used, only csum.
- *
- * Returns 1 if switching is ok, 0 if not and -1 if no decision can
- * be made.
- *
- * NOTE: bcmp returns 0 on match, otherwise non-zero.  Do not confuse this...
- */
-int
-pe_decide_ctx(struct pe_proc *proc, const u_int8_t *csum,
-    const char *pathhint __used)
-{
-	struct apn_app	*hp;
-	int		 cmp, decision, i;
-
-	/*
-	 * NOTE: Once we actually use the pathhint in policiy decision
-	 * NOTE: this shortcut will no longer be valid.
-	 */
-	if (!csum)
-		return (0);
-
-	/*
-	 * Iterate over all priorities, starting with the highest.
-	 * If a priority does not provide a context, we just continue.
-	 *
-	 * I f a priority provides a context, we have to evaluate that one.
-	 * If switiching is not allowed we stop return the decision.
-	 * Other wise we continue with the evaluation.
-	 */
-	decision = -1;
-	for (i = 0; i < PE_PRIO_MAX; i++) {
-		struct pe_context *ctx = pe_proc_get_context(proc, i);
-		/* No context means, no decision, just go on. */
-		if (ctx == NULL) {
-			continue;
-		}
-		/* Context without rule means, not switching. */
-		if (ctx->ctx == NULL) {
-			decision = 0;
-			break;
-		}
-		/*
-		 * If the rule says "context new any", application will be
-		 * empty.  In that case, initialize the compare result cmp to 0
-		 * (ie. match).
-		 */
-		hp = ctx->ctx->application;
-		if (hp == NULL)
-			cmp = 0;
-		while (hp) {
-			cmp = bcmp(hp->hashvalue, csum, sizeof(hp->hashvalue));
-			if (cmp == 0)
-				break;
-			hp = hp->next;
-		}
-
-		/*
-		 * If cmp is 0, there was a matching rule, ie. switching
-		 * is allowed.
-		 */
-		if (cmp == 0) {
-			decision = 1;
-
-			DEBUG(DBG_PE_CTX,
-			    "pe_decide_ctx: found \"%s\" csm 0x%08x... for "
-			    "priority %d", (hp && hp->name) ? hp->name : "any"
-			    , (hp && hp->hashvalue) ?
-			    htonl(*(unsigned long *)hp->hashvalue) : 0, i);
-		} else
-			decision = 0;
-	}
-
-	return (decision);
-}
-
 void
 pe_dump(void)
 {
 	pe_proc_dump();
 	pe_user_dump();
-}
-
-void
-pe_dump_dbgctx(const char *prefix, struct pe_proc *proc)
-{
-	int	i;
-
-	if (proc == NULL) {
-		DEBUG(DBG_PE_CTX, "%s: prio %d rule %p ctx %p", prefix, -1,
-		    NULL, NULL);
-		return;
-	}
-
-	for (i = 0; i < PE_PRIO_MAX; i++) {
-		struct pe_context *ctx = pe_proc_get_context(proc, i);
-		DEBUG(DBG_PE_CTX, "%s: prio %d rule %p ctx %p", prefix, i,
-		    ctx ? ctx->rule : NULL, ctx ? ctx->ctx : NULL);
-	}
 }
 
 /*
@@ -2264,19 +1731,6 @@ pe_get_pubkey(uid_t uid)
 	}
 
 	return (NULL);
-}
-
-int pe_context_uses_rs(struct pe_context *ctx, struct apn_ruleset *rs)
-{
-	return ctx && rs && (ctx->ruleset == rs);
-}
-
-struct apn_rule *
-pe_context_get_rule(struct pe_context *ctx)
-{
-	if (!ctx)
-		return NULL;
-	return ctx->rule;
 }
 
 /*@=memchecks@*/

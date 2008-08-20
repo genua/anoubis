@@ -67,6 +67,7 @@ anoubisd_SOURCES= \
 	pe.c \
 	pe_proc.c \
 	pe_user.c \
+	pe_context.c \
 	printconf.c \
 	session.c \
 	log.c \
@@ -88,6 +89,7 @@ anoubisd_SOURCES_flawfinder= \
 	pe.c_flawfinder \
 	pe_proc.c_flawfinder \
 	pe_user.c_flawfinder \
+	pe_context.c_flawfinder \
 	printconf.c_flawfinder \
 	session.c_flawfinder \
 	uidswap.c_flawfinder \
@@ -108,6 +110,7 @@ anoubisd_SOURCES_lint= \
 	pe.c_lint \
 	pe_proc.c_lint \
 	pe_user.c_lint \
+	pe_context.c_lint \
 	printconf.c_lint \
 	session.c_lint \
 	uidswap.c_lint \
@@ -121,6 +124,7 @@ anoubisd_SOURCES_splint= \
 	pe.c_splint \
 	pe_proc.c_splint \
 	pe_user.c_splint \
+	pe_context.c_splint \
 	printconf.c_splint \
 	session.c_splint \
 	uidswap.c_splint \

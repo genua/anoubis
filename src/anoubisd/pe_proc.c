@@ -54,6 +54,13 @@
 #include "kernelcache.h"
 #include "pe.h"
 
+static void		 pe_proc_ident_set(struct pe_proc_ident *,
+			     const u_int8_t *, const char *);
+static void		 pe_proc_track(struct pe_proc *);
+static void		 pe_proc_untrack(struct pe_proc *);
+static struct pe_proc	*pe_proc_alloc(uid_t uid, anoubis_cookie_t,
+			     anoubis_cookie_t);
+
 struct pe_proc {
 	TAILQ_ENTRY(pe_proc)	 entry;
 	int			 refcount;
@@ -72,6 +79,37 @@ struct pe_proc {
 	struct anoubis_kernel_policy_header	*kcache;
 };
 TAILQ_HEAD(tracker, pe_proc) tracker;
+
+static void
+pe_proc_ident_set(struct pe_proc_ident *pident, const u_int8_t *csum,
+    const char *pathhint)
+{
+	if (csum) {
+		if (pident->csum == NULL) {
+			pident->csum = calloc(1, ANOUBIS_SFS_CS_LEN);
+			if (pident->csum == NULL)
+				goto oom;
+		}
+		bcopy(csum, pident->csum, ANOUBIS_SFS_CS_LEN);
+	} else {
+		if (pident->csum) {
+			free(pident->csum);
+			pident->csum = NULL;
+		}
+	}
+	if (pident->pathhint) {
+		free(pident->pathhint);
+		pident->pathhint = NULL;
+	}
+	if (pathhint) {
+		if ((pident->pathhint = strdup(pathhint)) == NULL)
+			goto oom;
+	}
+	return;
+oom:
+	log_warnx("pe_proc_ident_set: out of memory");
+	master_terminate(ENOMEM);
+}
 
 void
 pe_proc_init(void)
@@ -127,14 +165,14 @@ pe_proc_put(struct pe_proc *proc)
 		free(proc->ident.pathhint);
 
 	for (i = 0; i < PE_PRIO_MAX; i++)
-		pe_put_ctx(proc->context[i]);
+		pe_context_put(proc->context[i]);
 
 	kernelcache_clear(proc->kcache);
 
 	free(proc);
 }
 
-struct pe_proc *
+static struct pe_proc *
 pe_proc_alloc(uid_t uid, anoubis_cookie_t cookie,
     anoubis_cookie_t parent_cookie)
 {
@@ -150,19 +188,11 @@ pe_proc_alloc(uid_t uid, anoubis_cookie_t cookie,
 	proc->refcount = 1;
 	proc->kcache = NULL;
 	proc->valid_ctx = 0;
+	proc->ident.pathhint = NULL;
+	proc->ident.csum = NULL;
 	if (parent) {
-		if (parent->ident.pathhint) {
-			proc->ident.pathhint = strdup(parent->ident.pathhint);
-			if (!proc->ident.pathhint)
-				goto oom;
-		}
-		if (parent->ident.csum) {
-			proc->ident.csum = malloc(ANOUBIS_SFS_CS_LEN);
-			if (!proc->ident.csum)
-				goto oom;
-			memcpy(proc->ident.csum, parent->ident.csum,
-			    ANOUBIS_SFS_CS_LEN);
-		}
+		pe_proc_ident_set(&proc->ident, parent->ident.csum,
+		    parent->ident.pathhint);
 	}
 
 	DEBUG(DBG_PE_TRACKER, "pe_proc_alloc: proc %p uid %u cookie 0x%08llx "
@@ -188,7 +218,7 @@ pe_proc_set_parent(struct pe_proc *proc, struct pe_proc *newparent)
 		pe_proc_put(oldparent);
 }
 
-void
+static void
 pe_proc_track(struct pe_proc *proc)
 {
 	if (proc == NULL) {
@@ -201,7 +231,7 @@ pe_proc_track(struct pe_proc *proc)
 	TAILQ_INSERT_TAIL(&tracker, proc, entry);
 }
 
-void
+static void
 pe_proc_untrack(struct pe_proc *proc)
 {
 	if (!proc)
@@ -236,9 +266,9 @@ pe_proc_set_context(struct pe_proc *proc, int prio, struct pe_context *ctx)
 		return;
 
 	if (ctx)
-		pe_reference_ctx(ctx);
+		pe_context_reference(ctx);
 	if (proc->context[prio])
-		pe_put_ctx(proc->context[prio]);
+		pe_context_put(proc->context[prio]);
 	proc->context[prio] = ctx;
 	proc->valid_ctx = 1;
 }
@@ -261,12 +291,6 @@ pe_proc_task_cookie(struct pe_proc *proc)
 	if (!proc)
 		return 0;
 	return proc->task_cookie;
-}
-
-struct pe_proc *
-pe_proc_get_parent(struct pe_proc *proc)
-{
-	return proc ? proc->parent : NULL;
 }
 
 struct pe_proc_ident *
@@ -308,36 +332,121 @@ pe_proc_dump(void)
 	}
 }
 
-int
-pe_proc_update_db(struct pe_policy_db *newpdb, struct pe_policy_db *oldpdb)
+/*
+ * Insert an existing but previously untracked process. If possible always
+ * use pe_proc_fork instead. This is only for processes that were running
+ * before the anoubisd started.
+ */
+struct pe_proc *
+pe_proc_insert(anoubis_cookie_t cookie, uid_t uid)
+{
+	struct pe_proc *proc;
+
+	proc = pe_proc_alloc(uid, cookie, 0);
+	pe_context_set(proc, uid, NULL);
+	pe_proc_track(proc);
+	return proc;
+}
+
+/*
+ * Insert a newly forked processes and set its context.
+ */
+void
+pe_proc_fork(uid_t uid, anoubis_cookie_t child, anoubis_cookie_t parent)
+{
+	struct pe_proc	*proc;
+
+	proc = pe_proc_alloc(uid, child, parent);
+	if (!proc)
+		return;
+	pe_proc_track(proc);
+	pe_context_inherit(proc, proc->parent);
+	DEBUG(DBG_PE_PROC, "pe_proc_fork: token 0x%08llx pid %d "
+	    "uid %u proc %p csum 0x%08x... parent token 0x%08llx",
+	    child, proc->pid, uid, proc,
+	    proc->ident.csum ?
+	    htonl(*(unsigned long *)proc->ident.csum) : 0,
+	    parent);
+	pe_proc_put(proc);
+}
+
+/*
+ * Remove a process upon exit.
+ */
+void pe_proc_exit(anoubis_cookie_t cookie)
+{
+	struct pe_proc	*proc;
+
+	proc = pe_proc_get(cookie);
+	if (!proc)
+		return;
+	pe_proc_untrack(proc);
+	DEBUG(DBG_PE_PROC, "pe_proc_exit: token 0x%08llx pid %d "
+	    "uid %u proc %p", cookie, proc->pid, proc->uid, proc);
+	pe_proc_put(proc);
+}
+
+/*
+ * Update process attributes after an exec system call.
+ */
+void pe_proc_exec(anoubis_cookie_t cookie, uid_t uid, pid_t pid,
+    const u_int8_t *csum, const char *pathhint)
+{
+	struct pe_proc		*proc = pe_proc_get(cookie);
+	struct pe_context	*ctx0, *ctx1;
+
+	if (proc == NULL) {
+		/* Previously untracked process. Track it. */
+		DEBUG(DBG_PE_PROC, "pe_proc_exec: untracked "
+		    "process %u 0x%08llx execs", pid, cookie);
+		proc = pe_proc_insert(cookie, uid);
+	}
+	/* fill in checksum and pathhint */
+	pe_proc_ident_set(&proc->ident, csum, pathhint);
+	pe_proc_set_pid(proc, pid);
+	pe_context_set(proc, uid, &proc->ident);
+
+	ctx0 = pe_proc_get_context(proc, 0);
+	ctx1 = pe_proc_get_context(proc, 1);
+	/* Get our policy */
+	DEBUG(DBG_PE_PROC, "pe_proc_exec: using policies %p %p "
+	    "for %s csum 0x%08lx...", pe_context_get_rule(ctx0),
+	    pe_context_get_rule(ctx1), pathhint ? pathhint : "",
+	    csum ? htonl(*(unsigned long *)csum) : 0);
+	pe_proc_put(proc);
+}
+
+void
+pe_context_refresh(struct pe_proc *proc, int prio, struct pe_policy_db *pdb)
+{
+	struct pe_context	*newctx;
+
+	DEBUG(DBG_PE_POLICY, "pe_context_refresh: proc %p prio %d context %p",
+	    proc, prio, pe_proc_get_context(proc, prio));
+	if (pe_context_update(proc, &newctx, prio, pdb) == -1) {
+		log_warnx("Failed to replace context");
+		newctx = 0;
+	}
+	pe_proc_set_context(proc, prio, newctx);
+	pe_context_put(newctx);
+	pe_proc_kcache_clear(proc);
+}
+
+void
+pe_proc_update_db(struct pe_policy_db *newpdb)
 {
 	struct pe_proc		*pproc;
-	struct pe_context	*newctx;
 	int			 i;
 
-	if (newpdb == NULL || oldpdb == NULL) {
-		log_warnx("pe_proc_update_db: empty database pointers");
-		return (-1);
+	if (newpdb == NULL) {
+		log_warnx("pe_proc_update_db: empty database pointer");
+		return;
 	}
 
 	TAILQ_FOREACH(pproc, &tracker, entry) {
-		if (pproc->kcache != NULL) {
-			pproc->kcache = kernelcache_clear(pproc->kcache);
-			kernelcache_send2master(pproc->kcache, pproc->pid);
-		}
-		for (i = 0; i < PE_PRIO_MAX; i++) {
-			DEBUG(DBG_PE_POLICY, "pe_proc_update_db: proc %p "
-			    "prio %d context %p", pproc, i,
-			    pe_proc_get_context(pproc, i));
-
-			if (pe_update_ctx(pproc, &newctx, i, newpdb) == -1)
-				return (-1);
-			pe_proc_set_context(pproc, i, newctx);
-			pe_put_ctx(newctx);
-		}
+		for (i = 0; i < PE_PRIO_MAX; i++)
+			pe_context_refresh(pproc, i, newpdb);
 	}
-
-	return (0);
 }
 
 /*
@@ -349,7 +458,7 @@ pe_proc_update_db(struct pe_policy_db *newpdb, struct pe_policy_db *oldpdb)
 void
 pe_proc_update_db_one(struct apn_ruleset *oldrs, uid_t uid, int prio)
 {
-	struct pe_context	*newctx, *oldctx;
+	struct pe_context	*oldctx;
 	struct pe_proc		*pproc;
 	struct pe_proc_ident	*pident;
 
@@ -368,22 +477,10 @@ pe_proc_update_db_one(struct apn_ruleset *oldrs, uid_t uid, int prio)
 		if (pe_proc_get_uid(pproc) != uid &&
 		    pe_context_uses_rs(oldctx, oldrs) == 0)
 			continue;
-		if (pe_update_ctx(pproc, &newctx, prio, NULL) == -1) {
-			log_warn("Failed to replace context");
-			newctx = NULL;
-		}
-		DEBUG(DBG_TRACE, " pe_proc_update_db_one: old=%x new=%x",
-		    oldctx, newctx);
-		pe_proc_set_context(pproc, prio, newctx);
-		pe_put_ctx(newctx);
-		if (pproc->kcache != NULL) {
-			pproc->kcache = kernelcache_clear(pproc->kcache);
-			kernelcache_send2master(pproc->kcache, pproc->pid);
-		}
+		pe_context_refresh(pproc, prio, NULL);
 		pident = pe_proc_ident(pproc);
 		if (pident->csum && pident->pathhint) {
-			pe_set_ctx(pproc, pe_proc_get_uid(pproc),
-			    pident->csum, pident->pathhint);
+			pe_context_set(pproc, pe_proc_get_uid(pproc), pident);
 		}
 	}
 	DEBUG(DBG_TRACE, "<pe_proc_update_db_one");
@@ -394,4 +491,13 @@ pe_proc_kcache_add(struct pe_proc *proc, struct anoubis_kernel_policy *policy)
 {
 	proc->kcache = kernelcache_add(proc->kcache, policy);
 	kernelcache_send2master(proc->kcache, proc->pid);
+}
+
+void
+pe_proc_kcache_clear(struct pe_proc *proc)
+{
+	if (proc->kcache) {
+		proc->kcache = kernelcache_clear(proc->kcache);
+		kernelcache_send2master(proc->kcache, proc->pid);
+	}
 }

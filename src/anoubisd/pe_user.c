@@ -115,10 +115,10 @@ pe_user_init(void)
 
 	/* We die gracefully if loading fails. */
 	if ((count = pe_user_load_db(pp)) == -1)
-		fatal("pe_init: failed to initialize policy database");
+		fatal("pe_user_init: failed to initialize policy database");
 	pdb = pp;
 
-	log_info("pe_init: %d policies loaded to pdb %p", count, pp);
+	log_info("pe_user_init: %d policies loaded to pdb %p", count, pp);
 }
 
 void
@@ -133,7 +133,8 @@ pe_user_reconfigure(void)
 	}
 	TAILQ_INIT(newpdb);
 	if ((count = pe_user_load_db(newpdb)) == -1) {
-		log_warnx("pe_reconfigure: could not reload policy database");
+		log_warnx("pe_user_reconfigure: "
+		    "could not reload policy database");
 		free(newpdb);
 		return;
 	}
@@ -142,15 +143,10 @@ pe_user_reconfigure(void)
 	oldpdb = pdb;
 	pdb = newpdb;
 
-	if (pe_proc_update_db(newpdb, oldpdb) == -1) {
-		log_warnx("pe_reconfigure: database update failed");
-		pe_user_flush_db(newpdb);
-		return;
-	}
-
+	pe_proc_update_db(newpdb);
 	pe_user_flush_db(oldpdb);
 
-	log_info("pe_reconfigure: loaded %d policies to new pdb %p, "
+	log_info("pe_user_reconfigure: loaded %d policies to new pdb %p, "
 	    "flushed old pdb %p", count, newpdb, oldpdb);
 }
 
