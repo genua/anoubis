@@ -222,10 +222,10 @@ static void
 pe_proc_track(struct pe_proc *proc)
 {
 	if (proc == NULL) {
-		log_warnx("pe_track_proc: empty process");
+		log_warnx("pe_proc_track: empty process");
 		return;
 	}
-	DEBUG(DBG_PE_TRACKER, "pe_track_proc: proc %p cookie 0x%08llx",
+	DEBUG(DBG_PE_TRACKER, "pe_proc_track: proc %p cookie 0x%08llx",
 	    proc, proc->task_cookie);
 	proc->refcount++;
 	TAILQ_INSERT_TAIL(&tracker, proc, entry);

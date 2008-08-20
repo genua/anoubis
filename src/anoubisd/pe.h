@@ -31,6 +31,12 @@
 #include <sys/types.h>
 #include <anoubisd.h>
 #include <apn.h>
+#ifdef LINUX
+#include <linux/eventdev.h>
+#endif
+#ifdef OPENBSD
+#include <dev/eventdev.h>
+#endif
 
 #define PE_PRIO_ADMIN	0
 #define PE_PRIO_USER1	1
@@ -40,6 +46,8 @@ struct pe_proc;
 struct pe_context;
 struct pe_policy_db;
 struct pe_user;
+struct pe_pubkey_db;
+
 
 struct pe_proc_ident {
 	unsigned char *csum;
@@ -106,6 +114,19 @@ void			 pe_user_flush_db(struct pe_policy_db *);
 void			 pe_user_dump(void);
 void			 pe_user_reconfigure(void);
 
-/* Signature management functions */
-int			 pe_verify_sig(const char *, uid_t);
+/* Public Key Management */
+void			 pe_pubkey_init(void);
+void			 pe_pubkey_reconfigure(void);
+void			 pe_pubkey_flush_db(struct pe_pubkey_db *);
+int			 pe_pubkey_verifysig(const char *, uid_t);
+
+/* General policy evaluation functions */
+int			 pe_in_scope(struct apn_scope *,
+			     struct anoubis_event_common *, time_t);
+
+/* Subsystem entry points for Policy decisions. */
+anoubisd_reply_t	*pe_decide_alf(struct pe_proc *, struct eventdev_hdr *);
+anoubisd_reply_t	*pe_decide_sfs(uid_t, anoubisd_msg_sfsopen_t*,
+			     time_t now);
+
 #endif	/* _PE_H_ */

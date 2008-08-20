@@ -266,7 +266,7 @@ pe_user_load_dir(const char *dirname, int prio, struct pe_policy_db *p)
 			continue;
 		}
 		/* XXX Right now, only use administrators key, ie. uid == 0 */
-		if (pe_verify_sig(filename, 0) != 1) {
+		if (pe_pubkey_verifysig(filename, 0) != 1) {
 			log_warnx("not loading \"%s\", invalid siganture",
 			    filename);
 			free(filename);
@@ -661,7 +661,8 @@ pe_dispatch_policy(struct anoubisd_msg_comm *comm)
 		LIST_INSERT_HEAD(&preqs, req, next);
 	}
 	DEBUG(DBG_TRACE, " pe_dispatch_policy: ptype = %d, flags = %d "
-	    "token = %lld", req->ptype, comm->flags, req->token);
+	    "token = %llu", req->ptype, comm->flags,
+	    (unsigned long long)req->token);
 	switch (req->ptype) {
 	case ANOUBIS_PTYPE_GETBYUID:
 		if ((comm->flags & POLICY_FLAG_END) == 0
@@ -735,7 +736,7 @@ pe_dispatch_policy(struct anoubisd_msg_comm *comm)
 				goto reply;
 			/* splint doesn't understand the %llu modifier */
 			if (asprintf(&req->tmpname, "%s.%llu", tmp,
-			    /*@i@*/ req->token) == -1) {
+			    /*@i@*/ (unsigned long long)req->token) == -1) {
 				free(tmp);
 				req->tmpname = NULL;
 				goto reply;

@@ -216,7 +216,6 @@ pe_context_inherit(struct pe_proc *proc, struct pe_proc *parent)
 		return;
 	}
 
-	/* Get parents context */
 	DEBUG(DBG_PE_CTX, "pe_context_inherit: parent %p 0x%08llx", parent,
 	    pe_proc_task_cookie(parent));
 
@@ -232,7 +231,7 @@ pe_context_inherit(struct pe_proc *proc, struct pe_proc *parent)
 		}
 		pe_proc_set_parent(proc, parent);
 
-		pe_dump_dbgctx("pe_inherit_ctx", proc);
+		pe_dump_dbgctx("pe_context_inherit", proc);
 	} else {
 		/*
 		 * No parent available, derive new context:  We have
