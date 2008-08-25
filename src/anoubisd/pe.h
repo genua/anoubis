@@ -54,27 +54,27 @@ struct pe_proc_ident {
 	char *pathhint;
 };
 
+/* Proc Ident management functions. */
+void			 pe_proc_ident_set(struct pe_proc_ident *, const
+			     u_int8_t *, const char *);
+void			 pe_proc_ident_put(struct pe_proc_ident *);
+
 /* pe_proc access functions */
 void			 pe_proc_init(void);
 void			 pe_proc_dump(void);
 void			 pe_proc_flush(void);
 struct pe_proc		*pe_proc_get(anoubis_cookie_t cookie);
 void			 pe_proc_put(struct pe_proc *proc);
-void			 pe_proc_set_parent(struct pe_proc *proc,
-			     struct pe_proc *newparent);
-struct pe_proc		*pe_proc_insert(anoubis_cookie_t cookie,
-			     uid_t uid);
 void			 pe_proc_fork(uid_t, anoubis_cookie_t,
 			     anoubis_cookie_t);
 void			 pe_proc_exec(anoubis_cookie_t, uid_t, pid_t,
 			     const u_int8_t *csum, const char *pathhint);
 void			 pe_proc_exit(anoubis_cookie_t);
-struct pe_context	*pe_proc_get_context(struct pe_proc *, int prio);
-void			 pe_proc_set_context(struct pe_proc *, int prio,
+struct pe_context	*pe_proc_get_context(struct pe_proc *, int);
+void			 pe_proc_set_context(struct pe_proc *, int,
 			     struct pe_context *);
 void			 pe_proc_set_uid(struct pe_proc *, uid_t);
 uid_t			 pe_proc_get_uid(struct pe_proc *);
-int			 pe_proc_valid_context(struct pe_proc *);
 anoubis_cookie_t	 pe_proc_task_cookie(struct pe_proc *);
 pid_t			 pe_proc_get_pid(struct pe_proc *);
 void			 pe_proc_set_pid(struct pe_proc *, pid_t);
@@ -88,18 +88,17 @@ int			 pe_context_uses_rs(struct pe_context *,
 			     struct apn_ruleset *);
 
 /* Context change functions */
-int			 pe_context_update(struct pe_proc *,
-			     struct pe_context **, int, struct pe_policy_db *);
-void			 pe_context_set(struct pe_proc *, uid_t,
+void			 pe_context_refresh(struct pe_proc *, int,
+			     struct pe_policy_db *);
+void			 pe_context_exec(struct pe_proc *, uid_t,
 			     struct pe_proc_ident *);
-void			 pe_context_inherit(struct pe_proc *, struct pe_proc *);
+void			 pe_context_fork(struct pe_proc *, struct pe_proc *);
 char			*pe_context_dump(struct eventdev_hdr *,
 			     struct pe_proc *, int);
 
 /* Rule change/reload functions */
 void			 pe_proc_update_db(struct pe_policy_db *);
-void			 pe_proc_update_db_one(struct apn_ruleset *,
-			     uid_t, int);
+void			 pe_proc_update_db_one(struct apn_ruleset *, int);
 
 /* Kernel Cache related functions */
 void			 pe_proc_kcache_add(struct pe_proc *proc,

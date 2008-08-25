@@ -232,18 +232,18 @@ pe_handle_alf(struct eventdev_hdr *hdr)
 
 	/* get process from tracker list */
 	if ((proc = pe_proc_get(msg->common.task_cookie)) == NULL) {
-		/* Untracked process: insert it. */
+		/*
+		 * Untracked process: Do not insert it here because
+		 * we do not have proper csum/path data for this process.
+		 */
 		DEBUG(DBG_PE_ALF, "pe_handle_alf: untrackted process %u",
 		    hdr->msg_pid);
-		proc = pe_proc_insert(msg->common.task_cookie, hdr->msg_uid);
+	} else {
+		if (pe_proc_get_pid(proc) == -1)
+			pe_proc_set_pid(proc, hdr->msg_pid);
 	}
-
-	if (pe_proc_get_pid(proc) == -1)
-		pe_proc_set_pid(proc, hdr->msg_pid);
-
 	reply = pe_decide_alf(proc, hdr);
 	pe_proc_put(proc);
-
 	DEBUG(DBG_TRACE, "<policy_engine");
 	return (reply);
 }

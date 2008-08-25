@@ -471,7 +471,7 @@ pe_user_replace_rs(struct apn_ruleset *rs, uid_t uid, int prio)
 	}
 	oldrs = user->prio[prio];
 	user->prio[prio] = rs;
-	pe_proc_update_db_one(oldrs, uid, prio);
+	pe_proc_update_db_one(oldrs, prio);
 	apn_free_ruleset(oldrs);
 	DEBUG(DBG_TRACE, "<pe_user_replace_rs");
 	return 0;

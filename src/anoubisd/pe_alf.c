@@ -69,7 +69,7 @@
 #include "anoubisd.h"
 #include "pe.h"
 
-static int		 pe_alf_evaluate(struct pe_proc *, struct pe_context *,
+static int		 pe_alf_evaluate(struct pe_proc *, int, uid_t,
 			     struct alf_event *, int *, u_int32_t *);
 static int		 pe_decide_alffilt(struct pe_proc *, struct apn_rule *,
 			     struct alf_event *, int *, u_int32_t *, time_t);
@@ -89,7 +89,6 @@ static int		 pe_addrmatch_host(struct apn_host *, void *,
 			     unsigned short);
 static int		 pe_addrmatch_port(struct apn_port *, void *,
 			     unsigned short);
-
 
 anoubisd_reply_t *
 pe_decide_alf(struct pe_proc *proc, struct eventdev_hdr *hdr)
@@ -123,9 +122,8 @@ pe_decide_alf(struct pe_proc *proc, struct eventdev_hdr *hdr)
 		DEBUG(DBG_PE_DECALF, "pe_decide_alf: prio %d context %p", i,
 		    pe_proc_get_context(proc, i));
 
-		ret = pe_alf_evaluate(proc, pe_proc_get_context(proc, i),
-		    msg, &log, &rule_id);
-
+		ret = pe_alf_evaluate(proc, i, hdr->msg_uid, msg,
+		    &log, &rule_id);
 		if (ret != -1) {
 			decision = ret;
 			prio = i;
@@ -193,21 +191,31 @@ pe_decide_alf(struct pe_proc *proc, struct eventdev_hdr *hdr)
 }
 
 static int
-pe_alf_evaluate(struct pe_proc *proc, struct pe_context *context,
+pe_alf_evaluate(struct pe_proc *proc, int prio, uid_t uid,
     struct alf_event *msg, int *log, u_int32_t *rule_id)
 {
 	struct apn_rule	*rule;
 	int		 decision;
 	time_t		 t;
 
-	if (context == NULL)
+	if (proc) {
+		rule = pe_context_get_rule(pe_proc_get_context(proc, prio));
+	} else {
+		struct apn_ruleset *rs = pe_user_get_ruleset(uid, prio, NULL);
+		if (rs) {
+			TAILQ_FOREACH(rule, &rs->alf_queue, entry)
+				if (rule->app == NULL)
+					break;
+		} else {
+			rule = NULL;
+		}
+	}
+	if (rule == NULL) {
 		return (-1);
-	if ((rule = pe_context_get_rule(context)) == NULL) {
 		log_warnx("pe_alf_evaluate: empty rule");
-		return (-1);
 	}
 	if (msg == NULL) {
-		log_warnx("pe_alf_evaluate:: empty alf event");
+		log_warnx("pe_alf_evaluate: empty alf event");
 		return (-1);
 	}
 

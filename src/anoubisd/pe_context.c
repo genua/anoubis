@@ -25,6 +25,88 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * CONTEXT CHANGE LOGIC
+ *
+ * Each process has two completely separate contexts:
+ * - the Administrator context at priority 0 (PE_PRIO_ADMIN)   and
+ * - the User context at priority 1 (PE_PRIO_USER).
+ * Additionally each process known the pathname and checksum of the
+ * file that it currently executes.
+ *
+ * Each context contains the following information:
+ * - The ruleset that this context refers to.
+ * - ALF rules from that ruleset.
+ * - Context switching rules from that ruleset.
+ * - The path and checksum that was used to search for the current
+ *   ALF and context switching rules in the ruleset.
+ *
+ * Let us assume for the moment that all processes are properly tracked
+ * (i.e. the Anoubis daemon know about them) and have ALF and context
+ * switching rules assigned.
+ *
+ * There are three interesting operations. Each of these is applied to
+ * the admin and the user context separately:
+ * - FORK: In case of a fork the child process simply inherits the
+ *         context of its parents. Additionally the process itself
+ *         inherits the the pathname and checksum of the running binary
+ *         from its parent.
+ *         SPECIAL CASES:
+ *         - The parent process is not yet tracked. (A)
+ *         - The parent process is tracked but has no context. (B)
+ * - EXEC: In case of an exec system call the process's pathname and checksum
+ *         are always set to the values that correspond to the new binary.
+ *         Additionally context switch might happen:
+ *         If the current context switching rules do not permit a context
+ *         switch to the new binary the old context including its rules
+ *         is retained. Otherwise a new context is created. This context
+ *         contains the current processes path and checksum and additionally
+ *         the rules from the currently active ruleset that corresponds to
+ *         them.
+ *         SPECIAL CASES:
+ *         - The process that execs is not yet tracked. (A)
+ *         - The process is tracked but has a NULL context. (B)
+ *         - The process has a context but this context contains no
+ *           context switching rules. (D)
+ * - RELOAD: In case of a rule reload, the path and checksum in the each
+ *         context of each tracked process is used to search for a new
+ *         context in the new rules.  This new context is used for the
+ *         process from then on.
+ *         SPECIAL CASES:
+ *         - The process has no context. (A)
+ *         - The process has a context but no new context is found in the
+ *           new rules. (C)
+ *
+ * Dealing with special cases:
+ * (A) Untracked processes: An untracked process must remain untracked until
+ *     a proper pathname and checksum for the process is available. This only
+ *     happens during exec. I.e.: An untracked process that forks generates
+ *     an untracked child, an untracked process that execs will be tracked
+ *     from then on.
+ *     NOTE: Untracked processes originate from processes that were already
+ *     running at the time the Anoubis Daemon was started.
+ * (B) Processes without a context: If a process has no context, it never
+ *     had one before. In case of a fork or a rule reload, this is not changed.
+ *     In case of an exec there are two possibilities:
+ *     - If there is no ruleset for that is applicable to the process and the
+ *       given priority. Nothing is changed.
+ *     - If there is a ruleset a new context for the process is created based
+ *       on the checksum and pathname of the current process. This context
+ *       is created even if no matching context is found in this ruleset.
+ *       In the latter case all further context switching is forbidden. The
+ *       process can only change its rules in case of a rule reload.
+ * (C) Rule reload and no context is found: This case is handled in the
+ *     same way as described above for exec: A new context is created
+ *     anyway but that context contains no context switch rules and no
+ *     ALF rules. The pathname and checksum are copied from the existing
+ *     context.
+ * (D) Finally if a process with a valid context execs and that context
+ *     does not contain any context switching rules, context switching
+ *     is not allowed. This has already been mentioned in case (B) above
+ *     and applies also to case (C).
+ */
+
+
 #include "config.h"
 
 #ifdef S_SPLINT_S
@@ -60,101 +142,96 @@ struct pe_context {
 	struct apn_rule		*rule;
 	struct apn_context	*ctx;
 	struct apn_ruleset	*ruleset;
+	struct pe_proc_ident	 ident;
 };
 
 static void			 pe_dump_dbgctx(const char *, struct pe_proc *);
 static struct pe_context	*pe_context_search(struct apn_ruleset *,
 				     struct pe_proc_ident *);
-static int			 pe_context_decide(struct pe_proc *,
+static int			 pe_context_decide(struct pe_proc *, int,
 				     struct pe_proc_ident *);
 static struct pe_context	*pe_context_alloc(struct apn_rule *,
-				     struct apn_ruleset *);
+				     struct apn_ruleset *,
+				     struct pe_proc_ident *);
+static void			 pe_context_switch(struct pe_proc *, int,
+				     struct pe_proc_ident *, uid_t);
+static void			 pe_context_norules(struct pe_proc *, int);
+
 
 /*
- * Update a context.
- * If the members rule and ctx of struct pe_context are set, they
- * reference rules in the old pdb.  If similar rules are available in
- * the new pdb (ie. checksum of the application can be found), update
- * the references. Otherwise, reset them to NULL.
- *
- * If pdb is NULL the currently active policy database is used.
+ * Set the process context if no ruleset is present to search for
+ * the context.
+ * - If the process never had a context for the priority, leave it alone.
+ * - Otherwise create a norules context with the pident from the old context
+ *   but without actual rules.
  */
-int
-pe_context_update(struct pe_proc *pproc, struct pe_context **newctx, int prio,
-    struct pe_policy_db *pdb)
+void
+pe_context_norules(struct pe_proc *proc, int prio)
 {
-	struct apn_ruleset	*newrules;
-	struct pe_context	*context;
-
-	if (pproc == NULL) {
-		log_warnx("pe_update_ctx: empty process");
-		return (-1);
+	struct pe_context *ctx = pe_proc_get_context(proc, prio);
+	/* No old context => We're done. */
+	if (!ctx)
+		return;
+	/* Old context already is a norules context => We're done. */
+	if (ctx->ruleset == NULL && ctx->rule == NULL && ctx->ctx == NULL)
+		return;
+	ctx = pe_context_alloc(NULL, NULL, &ctx->ident);
+	if (!ctx) {
+		master_terminate(ENOMEM);
+		return;
 	}
-	if (newctx == NULL) {
-		log_warnx("pe_context_update: invalid new context pointer");
-		return (-1);
-	}
-	if (prio < 0 || prio >= PE_PRIO_MAX) {
-		log_warnx("pe_context_update: illegal priority %d", prio);
-		return (-1);
-	}
-
-	/*
-	 * Try to get policies for our uid from the new pdb.  If the
-	 * new pdb does not provide policies for our uid, try to get the
-	 * default policies.
-	 */
-
-	DEBUG(DBG_TRACE, ">pe_context_update");
-	context = NULL;
-	newrules = pe_user_get_ruleset(pe_proc_get_uid(pproc), prio, pdb);
-	DEBUG(DBG_TRACE, " pe_context_update: newrules = %x", newrules);
-	if (newrules) {
-		u_int8_t		*csum = NULL;
-		char			*pathhint = NULL;
-		struct apn_rule		*oldrule;
-		struct apn_app		*oldapp;
-		struct pe_context	*ctx;
-		struct pe_proc_ident	tmpident;
-
-		/*
-		 * XXX CEH: In some cases we might want to look for
-		 * XXX CEH: a new any rule if the old context for the priority
-		 * XXX CEH: or its associated ruleset is NULL.
-		 */
-		ctx = pe_proc_get_context(pproc, prio);
-		if (ctx == NULL)
-			goto out;
-		oldrule = ctx->rule;
-		if (!oldrule)
-			goto out;
-		oldapp = oldrule->app;
-		if (oldapp) {
-			if (oldapp->hashtype == APN_HASH_SHA256)
-				csum = oldapp->hashvalue;
-			pathhint = oldapp->name;
-		}
-		/*
-		 * XXX CEH: This tmpident will go away once we have
-		 * XXX CEH: proper idents in the old context.
-		 */
-		tmpident.csum = csum;
-		tmpident.pathhint = pathhint;
-		context = pe_context_search(newrules, &tmpident);
-	}
-out:
-
-	DEBUG(DBG_PE_POLICY, "pe_context_update: context %p rule %p ctx %p",
-	    context, context ? context->rule : NULL, context ? context->ctx :
-	    NULL);
-
-	*newctx = context;
-
-	return (0);
+	pe_proc_set_context(proc, prio, ctx);
 }
 
 /*
- * Decode a context in a printable string.  This strings is allocated
+ * Update a context at a rules reload.
+ * - If there are no rules a norules context is used.
+ * - If there is an old context we search a new one based on the search
+ *   parameters of that context.
+ * - If there are rules but no old context we search for rules based on
+ *   the processes identifier.
+ * pdb contains the database that should be used to lookup rulesets. If pdb
+ * is NULL the currently active policy database is used.
+ */
+void
+pe_context_refresh(struct pe_proc *proc, int prio, struct pe_policy_db *pdb)
+{
+	struct apn_ruleset	*newrules;
+	struct pe_context	*context, *oldctx;
+
+	if (proc == NULL) {
+		log_warnx("pe_update_ctx: empty process");
+		return;
+	}
+	if (prio < 0 || prio >= PE_PRIO_MAX) {
+		log_warnx("pe_context_refresh: illegal priority %d", prio);
+		return;
+	}
+
+	DEBUG(DBG_TRACE, ">pe_context_refresh");
+	context = NULL;
+	newrules = pe_user_get_ruleset(pe_proc_get_uid(proc), prio, pdb);
+	DEBUG(DBG_TRACE, " pe_context_refresh: newrules = %x", newrules);
+	if (!newrules) {
+		pe_context_norules(proc, prio);
+		return;
+	}
+	oldctx = pe_proc_get_context(proc, prio);
+	if (oldctx) {
+		context = pe_context_search(newrules, &oldctx->ident);
+	} else {
+		context = pe_context_search(newrules, pe_proc_ident(proc));
+	}
+	DEBUG(DBG_PE_POLICY, "pe_context_refresh: context %p rule %p ctx %p",
+	    context, context ? context->rule : NULL, context ? context->ctx :
+	    NULL);
+	pe_proc_set_context(proc, prio, context);
+	pe_context_put(context);
+	return;
+}
+
+/*
+ * Decode a context in a printable string.  This string is allocated
  * and needs to be freed by the caller.
  */
 char *
@@ -200,113 +277,113 @@ pe_context_dump(struct eventdev_hdr *hdr, struct pe_proc *proc, int prio)
 }
 
 /*
- * Inherit the parent process context. This might not necessarily be
- * the direct parent process, but some grand parent.  This happens on
- * fork(2).  Moreover, we set a reference to that particular parent.
- *
- * If our parent was never tracked, we get a new context.
+ * Inherit the parent process context. This happens on fork(2).
+ * - If our parent was never tracked, we simulate an exec.
+ * - If the parent has a non NULL context for a prio. Use it.
+ * - Otherwise if there are no rules for that uid/prio, use a norules
+ *   context.
+ * - If there are rules for the  process, use them to find a new context
+ *   based on the current process's proc->ident.
  */
 void
-pe_context_inherit(struct pe_proc *proc, struct pe_proc *parent)
+pe_context_fork(struct pe_proc *proc, struct pe_proc *parent)
 {
-	int		 i;
+	int	i;
 
 	if (proc == NULL) {
-		log_warnx("pe_context_inherit: empty process");
+		log_warnx("pe_context_fork: empty process");
 		return;
 	}
 
-	DEBUG(DBG_PE_CTX, "pe_context_inherit: parent %p 0x%08llx", parent,
+	DEBUG(DBG_PE_CTX, "pe_context_fork: parent %p 0x%08llx", parent,
 	    pe_proc_task_cookie(parent));
-
-	if (parent && !pe_proc_valid_context(parent)) {
-		DEBUG(DBG_PE_CTX, "pe_context_inherit: parent %p 0x%08llx "
-		    "has no context", parent, pe_proc_task_cookie(parent));
-	}
-
-	if (parent && pe_proc_valid_context(parent)) {
-		for (i = 0; i < PE_PRIO_MAX; i++) {
-			struct pe_context *ctx = pe_proc_get_context(parent, i);
+	for (i = 0; i < PE_PRIO_MAX; i++) {
+		struct pe_context	*ctx = pe_proc_get_context(parent, i);
+		if (ctx) {
 			pe_proc_set_context(proc, i, ctx);
+			continue;
 		}
-		pe_proc_set_parent(proc, parent);
-
-		pe_dump_dbgctx("pe_context_inherit", proc);
-	} else {
-		/*
-		 * No parent available, derive new context:  We have
-		 * neither an UID, nor pathname and checksum.  Thus the only
-		 * possible context will be derived from the admin/default
-		 * rule set.  If this is not available, the process will
-		 * get no context and susequent policy decisions will not
-		 * yield a valid result (ie. != -1).  In that case,
-		 * the policy engine will enforce the decision POLICY_DENY.
-		 */
-		pe_context_set(proc, -1, NULL);
+		DEBUG(DBG_PE_CTX, "pe_context_fork: parent %p "
+		    "0x%08llx has no context at prio %d",
+		    parent, pe_proc_task_cookie(parent),  i);
+		pe_context_switch(proc, i, pe_proc_ident(proc),
+		    pe_proc_get_uid(proc));
 	}
+	pe_dump_dbgctx("pe_context_fork", proc);
 }
 
 /*
- * Set our context.  If we never inherited one, search for an apropriate
- * application rule and use that one as our context from now on.
+ * Select a new context for priority prio of the process proc based on the
+ * pident and uid given as parameters.
+ */
+static void
+pe_context_switch(struct pe_proc *proc, int prio,
+    struct pe_proc_ident *pident, uid_t uid)
+{
+	struct pe_context	*tmpctx;
+	struct apn_ruleset	*ruleset;
+
+	ruleset = pe_user_get_ruleset(uid, prio, NULL);
+	if (!ruleset) {
+		pe_context_norules(proc, prio);
+		return;
+	}
+	tmpctx = pe_context_search(ruleset, pident);
+	pe_proc_set_context(proc, prio, tmpctx);
+	DEBUG(DBG_PE_CTX, "pe_context_switch: proc %p 0x%08llx prio %d "
+	    "got context %p rule %p ctx %p", proc, 
+	    pe_proc_task_cookie(proc), prio,
+	    tmpctx, tmpctx ? tmpctx->rule : NULL,
+	    tmpctx ? tmpctx->ctx : NULL);
+	/*
+	 * pe_context_search got a reference to the new context and
+	 * pe_proc_set_context got another one. Drop one of them.
+	 */
+	pe_context_put(tmpctx);
+}
+
+/*
+ * Change a context at exec time.
+ * - If pe_context_decide forbids changing the context. Do not change it.
+ * - Otherwise the context at the prio either allowed the context switch
+ *   or it is still invalid (NULL) which implicitly allows us to switch
+ *   contexts. In that case search a new context using pe_context_switch.
+ *   This will properly handle the case where the old context is NULL.
  */
 void
-pe_context_set(struct pe_proc *proc, uid_t uid, struct pe_proc_ident *pident)
+pe_context_exec(struct pe_proc *proc, uid_t uid, struct pe_proc_ident *pident)
 {
 	int			 i;
-	struct pe_context	*tmpctx;
 
 	/* We can handle pident being NULL. */
 	if (proc == NULL) {
-		log_warnx("pe_context_set: empty process");
+		log_warnx("pe_context_exec: empty process");
 		return;
 	}
 
 	/*
-	 * If we have inherited a context, check if it has context rule
-	 * that allows us to switch context.  If no, we keep the context and
-	 * just return.  Otherwise, we continue and search our new context.
-	 */
-	if (pe_proc_valid_context(proc)) {
-		tmpctx = pe_proc_get_context(proc, 0);
-		DEBUG(DBG_PE_CTX, "pe_context_set: proc %p 0x%08llx "
-		    "has context %p rule %p ctx %p",
-		    proc, pe_proc_task_cookie(proc),
-		    tmpctx, tmpctx ? tmpctx->rule : NULL,
-		    tmpctx ? tmpctx->ctx : NULL);
-
-		if (pe_context_decide(proc, pident) != 1) {
-			DEBUG(DBG_PE_CTX, "pe_context_set: keeping context");
-			return;
-		}
-		DEBUG(DBG_PE_CTX, "pe_context_set: switching context");
-	}
-
-	/*
-	 * If we are not tracked (which actually should not happen), or we
-	 * are allowed to switch context we use the first matching
-	 * application rule as new context.
-	 * Note that pe_context_search will get a reference to the new context
-	 * and pe_proc_set_context will get another one. We need to drop one
-	 * of them.
+	 * Switch context if we are allowed to do so by our context rules
+	 * or if we are not tracked. Actually, the latter should not happen.
 	 */
 	for (i = 0; i < PE_PRIO_MAX; i++) {
-		struct apn_ruleset *ruleset;
-		ruleset = pe_user_get_ruleset(uid, i, NULL);
-		tmpctx = pe_context_search(ruleset, pident);
-		pe_proc_set_context(proc, i, tmpctx);
-		pe_context_put(tmpctx);
+		/* Do not switch if are rules forbid it. */
+		if (pe_context_decide(proc, i, pident) == 0)
+			continue;
+		DEBUG(DBG_PE_CTX,
+		    "pe_context_exec: prio %d switching context", i);
+		pe_context_switch(proc, i, pident, uid);
 	}
-	pe_proc_set_parent(proc, proc);
 	if (uid != (uid_t)-1)
 		pe_proc_set_uid(proc, uid);
-
-	tmpctx = pe_proc_get_context(proc, 0);
-	DEBUG(DBG_PE_CTX, "pe_context_set: proc %p 0x%08llx got context "
-	    "%p rule %p ctx %p", proc, pe_proc_task_cookie(proc),
-	    tmpctx, tmpctx ? tmpctx->rule : NULL, tmpctx ? tmpctx->ctx : NULL);
 }
 
+/*
+ * Search for a context in the given ruleset. This function will only
+ * return NULL if the ruleset is also NULL. Otherwise it will return
+ * a context from the ruleset. If no such context can be found it will
+ * return a non-NULL context which has no real rules but formally belongs
+ * to the ruleset.
+ */
 static struct pe_context *
 pe_context_search(struct apn_ruleset *rs, struct pe_proc_ident *pident)
 {
@@ -332,9 +409,6 @@ pe_context_search(struct apn_ruleset *rs, struct pe_proc_ident *pident)
 	 * XXX HSH Right now only ALF rules provide a context.  This is
 	 * XXX HSH likely to change when sandboxing is implemented.
 	 */
-	if (TAILQ_EMPTY(&rs->alf_queue))
-		return (NULL);
-
 	rule = NULL;
 	TAILQ_FOREACH(prule, &rs->alf_queue, entry) {
 		/*
@@ -363,26 +437,27 @@ pe_context_search(struct apn_ruleset *rs, struct pe_proc_ident *pident)
 		if (rule)
 			break;
 	}
-	if (rule == NULL) {
+	if (rule == NULL)
 		DEBUG(DBG_PE_CTX, "pe_context_search: no rule found");
-		return (NULL);
-	}
-	context = pe_context_alloc(rule, rs);
+	context = pe_context_alloc(rule, rs, pident);
 	if (!context) {
 		master_terminate(ENOMEM);
 		return NULL;
 	}
 
 	/*
-	 * Now we have a rule chain, search for a context rule.  It is
+	 * If we have a rule chain, search for a context rule.  It is
 	 * ok, if we do not find a context rule.  This will mean, that
 	 * we have to stay in the current context on exec(2).
 	 */
-	for (alfrule = rule->rule.alf; alfrule; alfrule = alfrule->next) {
-		if (alfrule->type != APN_ALF_CTX)
-			continue;
-		context->ctx = &alfrule->rule.apncontext;
-		break;
+	if (rule) {
+		for (alfrule = rule->rule.alf; alfrule;
+		    alfrule = alfrule->next) {
+			if (alfrule->type != APN_ALF_CTX)
+				continue;
+			context->ctx = &alfrule->rule.apncontext;
+			break;
+		}
 	}
 
 	DEBUG(DBG_PE_CTX, "pe_context_search: context %p rule %p %s", context,
@@ -396,14 +471,11 @@ pe_context_search(struct apn_ruleset *rs, struct pe_proc_ident *pident)
  * NOTE: rs must not be NULL.
  */
 static struct pe_context *
-pe_context_alloc(struct apn_rule *rule, struct apn_ruleset *rs)
+pe_context_alloc(struct apn_rule *rule, struct apn_ruleset *rs,
+    struct pe_proc_ident *pident)
 {
 	struct pe_context	*ctx;
 
-	if (!rs) {
-		log_warnx("NULL rulset in pe_context_alloc?");
-		return NULL;
-	}
 	if ((ctx = calloc(1, sizeof(struct pe_context))) == NULL) {
 		log_warn("calloc");
 		master_terminate(ENOMEM);	/* XXX HSH */
@@ -412,6 +484,10 @@ pe_context_alloc(struct apn_rule *rule, struct apn_ruleset *rs)
 	ctx->rule = rule;
 	ctx->ruleset = rs;
 	ctx->refcount = 1;
+	ctx->ident.csum = NULL;
+	ctx->ident.pathhint = NULL;
+	if (pident)
+		pe_proc_ident_set(&ctx->ident, pident->csum, pident->pathhint);
 
 	return (ctx);
 }
@@ -421,7 +497,7 @@ pe_context_put(struct pe_context *ctx)
 {
 	if (!ctx || --(ctx->refcount))
 		return;
-
+	pe_proc_ident_put(&ctx->ident);
 	free(ctx);
 }
 
@@ -438,16 +514,15 @@ pe_context_reference(struct pe_context *ctx)
  * Decide, if it is ok to switch context for an application specified
  * by csum and pathhint.  Right now, pathhint is not used, only csum.
  *
- * Returns 1 if switching is ok, 0 if not and -1 if no decision can
- * be made.
+ * Returns 1 if switching is ok, 0 if not.
  *
  * NOTE: bcmp returns 0 on match, otherwise non-zero.  Do not confuse this...
  */
 static int
-pe_context_decide(struct pe_proc *proc, struct pe_proc_ident *pident)
+pe_context_decide(struct pe_proc *proc, int prio, struct pe_proc_ident *pident)
 {
-	struct apn_app	*hp;
-	int		 cmp, decision, i;
+	struct apn_app		*hp;
+	struct pe_context	*ctx;
 
 	/*
 	 * NOTE: Once we actually use the pathhint in policiy decision
@@ -456,59 +531,35 @@ pe_context_decide(struct pe_proc *proc, struct pe_proc_ident *pident)
 	if (pident == NULL || pident->csum == NULL)
 		return (0);
 
+	ctx = pe_proc_get_context(proc, prio);
+	/* No context: Allow a context switch. */
+	if (ctx == NULL)
+		return 1;
+	/* Context without rule means, not switching. */
+	if (ctx->ctx == NULL)
+		return 0;
 	/*
-	 * Iterate over all priorities, starting with the highest.
-	 * If a priority does not provide a context, we just continue.
-	 *
-	 * If a priority provides a context, we have to evaluate that one.
-	 * If switiching is not allowed we stop return the decision.
-	 * Other wise we continue with the evaluation.
+	 * If the rule says "context new any", application will be
+	 * empty.  In that case, we must allow the switch.
 	 */
-	decision = -1;
-	for (i = 0; i < PE_PRIO_MAX; i++) {
-		struct pe_context *ctx = pe_proc_get_context(proc, i);
-		/* No context means, no decision, just go on. */
-		if (ctx == NULL) {
-			continue;
-		}
-		/* Context without rule means, not switching. */
-		if (ctx->ctx == NULL) {
-			decision = 0;
-			break;
-		}
-		/*
-		 * If the rule says "context new any", application will be
-		 * empty.  In that case, initialize the compare result cmp to 0
-		 * (ie. match).
-		 */
-		hp = ctx->ctx->application;
-		if (hp == NULL)
-			cmp = 0;
+	hp = ctx->ctx->application;
+	if (hp) {
 		while (hp) {
-			cmp = bcmp(hp->hashvalue, pident->csum,
-			    sizeof(hp->hashvalue));
-			if (cmp == 0)
+			if (bcmp(hp->hashvalue, pident->csum,
+			    sizeof(hp->hashvalue)) == 0)
 				break;
 			hp = hp->next;
 		}
-
-		/*
-		 * If cmp is 0, there was a matching rule, ie. switching
-		 * is allowed.
-		 */
-		if (cmp == 0) {
-			decision = 1;
-
-			DEBUG(DBG_PE_CTX,
-			    "pe_context_decide: found \"%s\" csm 0x%08x... for "
-			    "priority %d", (hp && hp->name) ? hp->name : "any"
-			    , (hp && hp->hashvalue) ?
-			    htonl(*(unsigned long *)hp->hashvalue) : 0, i);
-		} else
-			decision = 0;
+		if (hp == NULL)
+			return 0;
 	}
-
-	return (decision);
+	/* If we reach this point context switching is allowed. */
+	DEBUG(DBG_PE_CTX,
+	    "pe_context_decide: found \"%s\" csm 0x%08x... for "
+	    "priority %d", (hp && hp->name) ? hp->name : "any",
+	    (hp && hp->hashvalue) ?
+	    htonl(*(unsigned long *)hp->hashvalue) : 0, prio);
+	return 1;
 }
 
 static void
@@ -532,7 +583,7 @@ pe_dump_dbgctx(const char *prefix, struct pe_proc *proc)
 int
 pe_context_uses_rs(struct pe_context *ctx, struct apn_ruleset *rs)
 {
-	return ctx && rs && (ctx->ruleset == rs);
+	return ctx && rs && (ctx->ruleset == rs || ctx->ruleset == NULL);
 }
 
 struct apn_rule *
