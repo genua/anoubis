@@ -25,18 +25,57 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ##########################################################################
 
+BUILT_SOURCES = apncvslog.c date.c
+#AM_YFLAGS = -d
+libapnvm_a_CFLAGS = -std=gnu99 $(AM_CFLAGS)
+
+noinst_LIBRARIES = libapnvm.a
+
+libapnvm_a_SOURCES = \
+	apncvs.c \
+	apncvslog.l \
+	date.y
+
+noinst_HEADERS = apncvs.h
+
+bsdcompatdir   = src/bsdcompat
+libbsdcompat   = $(top_builddir)/$(bsdcompatdir)/libbsdcompat.a
+
+libapnvm_a_CPPFLAGS = -I .. -I$(top_builddir)/src -I$(top_srcdir)/include
+libapnvm_a_LIBADD =
+
 if NEEDBSDCOMPAT
-BSDCOMPAT=bsdcompat
+libapnvm_a_CPPFLAGS += -I$(top_srcdir)/$(bsdcompatdir)
 endif
 
-if XANOUBIS
-GUI=xanoubis
-endif
+libapnvm_a_SOURCES_lint = \
+	apncvs.c_lint  \
+	apncvs.h_lint
 
-SUBDIRS = libapn libanoubischat libanoubisprotocol libanoubisui anoubisd \
-	$(GUI) $(BSDCOMPAT)
+libapnvm_a_SOURCES_splint = \
+	apncvs.c_splint  \
+	apncvs.h_splint
 
-# targets must exist, but need not to do anything
-flawfinder:
-lint:
-splint:
+libapnvm_a_SOURCES_flawfinder = \
+	apncvs.c_flawfinder  \
+	apncvs.h_flawfinder
+
+flawfinder_FLAGS=
+splint_FLAGS=$(libapnvm_a_CPPFLAGS)
+lint_FLAGS=$(libapnvm_a_CPPFLAGS)
+
+lint:		$(libapnvm_a_SOURCES_lint)
+splint:		$(libapnvm_a_SOURCES_splint)
+flawfinder:	$(libapnvm_a_SOURCES_flawfinder)
+
+include $(top_srcdir)/lint/Makefile.lint
+
+clean-local:
+	@rm -f $(libapnvm_a_SOURCES_lint)
+	@rm -f $(libapnvm_a_SOURCES_splint)
+	@rm -f $(libapnvm_a_SOURCES_flawfinder)
+
+# As we're in maintainer mode we have to remove generated source files
+# manually.
+dist-hook:
+	$(MAKE) maintainer-clean-generic

@@ -25,18 +25,4 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ##########################################################################
 
-if NEEDBSDCOMPAT
-BSDCOMPAT=bsdcompat
-endif
-
-if XANOUBIS
-GUI=xanoubis
-endif
-
-SUBDIRS = libapn libanoubischat libanoubisprotocol libanoubisui anoubisd \
-	$(GUI) $(BSDCOMPAT)
-
-# targets must exist, but need not to do anything
-flawfinder:
-lint:
-splint:
+SUBDIRS = apnvm

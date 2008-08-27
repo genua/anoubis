@@ -69,6 +69,7 @@ dnl checks for programs
 AC_PROG_CC
 AC_PROG_CXX
 AC_PROG_RANLIB
+AC_PROG_LEX
 AC_PROG_YACC
 
 AC_PATH_PROG(FLAWFINDER, flawfinder)
@@ -117,6 +118,7 @@ AC_CONFIG_FILES([
 	src/libanoubischat/Makefile
 	src/libanoubisprotocol/Makefile
 	src/libanoubisui/Makefile
+	src/libanoubisui/apnvm/Makefile
 	src/bsdcompat/Makefile
 	src/xanoubis/Makefile
 	src/anoubisctl/Makefile
@@ -129,6 +131,8 @@ AC_CONFIG_FILES([
 	test/anoubisd/Makefile
 	test/bsdcompat/Makefile
 	test/libapn/Makefile
+	test/libanoubisui/Makefile
+	test/libanoubisui/apnvm/Makefile
 	include/Makefile
 	include/linux/Makefile
 	include/dev/Makefile

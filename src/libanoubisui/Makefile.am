@@ -25,14 +25,14 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ##########################################################################
 
-#SUBDIRS = ...
+SUBDIRS = apnvm
 
 lib_LIBRARIES = libanoubisui.a
 
 # Make auto-tooling happy!
 libanoubisui_a_SOURCES = dummy.c
 
-#libanoubisui_a_LIBADD = ...
+libanoubisui_a_LIBADD = apnvm/libapnvm.a
 
 flawfinder:
 	for t in $(SUBDIRS); do cd $$t && make $@ && cd ..; done

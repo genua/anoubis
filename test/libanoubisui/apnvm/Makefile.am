@@ -25,18 +25,35 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ##########################################################################
 
+TESTS = test_apnvm
+
+bsdcompatdir	= src/bsdcompat
+libbsdcompat	= $(top_builddir)/$(bsdcompatdir)/libbsdcompat.a
+apnvmdir	= src/libanoubisui/apnvm
+apnvm		= $(top_builddir)/$(apnvmdir)/libapnvm.a
+
+# set TESTS_ENVIRONMENT for checks
+RPATH = $(top_builddir)/$(apnvmdir):$(top_builddir)/$(bsdcompatdir)
+TESTS_ENVIRONMENT = LD_LIBRARY_PATH=$(RPATH)
+
+noinst_PROGRAMS = test_apnvm
+
+test_apnvm_CFLAGS = $(AM_CFLAGS) @CHECK_CFLAGS@
+test_apnvm_CPPFLAGS = -I$(top_srcdir)/$(apnvmdir)
+test_apnvm_LDFLAGS = \
+	$(AM_LDFLAGS) -dynamic \
+	-L$(top_builddir)/$(apnvmdir)
+
+# conditionally static link of libraries to accomplish correct Code Coverage
+test_apnvm_DEPENDENCIES = $(apnvm)
+test_apnvm_LDADD = @CHECK_LIBS@ $(test_apnvm_DEPENDENCIES) -lfl
+
 if NEEDBSDCOMPAT
-BSDCOMPAT=bsdcompat
+test_apnvm_DEPENDENCIES += $(libbsdcompat)
+test_apnvm_CPPFLAGS += -I$(top_srcdir)/$(bsdcompatdir)
+test_apnvm_LDADD += $(libbsdcompat)
 endif
 
-if XANOUBIS
-GUI=xanoubis
-endif
-
-SUBDIRS = libapn libanoubischat libanoubisprotocol libanoubisui anoubisd \
-	$(GUI) $(BSDCOMPAT)
-
-# targets must exist, but need not to do anything
-flawfinder:
-lint:
-splint:
+test_apnvm_SOURCES =		\
+	apnvm_testrunner.c	\
+	apnvm_tc_cvs.c
