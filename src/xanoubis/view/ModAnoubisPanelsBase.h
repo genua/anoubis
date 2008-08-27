@@ -51,6 +51,8 @@
 #include <wx/image.h>
 #include <wx/checkbox.h>
 #include <wx/statbox.h>
+#include <wx/listctrl.h>
+#include <wx/textctrl.h>
 #include <wx/notebook.h>
 #include <wx/statbmp.h>
 
@@ -122,6 +124,21 @@ class ModAnoubisMainPanelBase : public wxPanel
 		wxSpinCtrl* m_spinAlertNotifyTimeout;
 		wxStaticText* tx_AlertNotifyTimeoutLabel;
 		wxCheckBox* controlAutoCheck;
+		wxPanel* tb_MainAnoubisVersions;
+		wxListCtrl* VersionListCtrl;
+		wxTextCtrl* VersionShowCommentTextCtrl;
+		wxStaticText* VersionSelectLabel;
+		wxButton* VersionRestoreButton;
+		wxStaticText* VersionSaveLabel;
+		wxButton* VersionSaveButton;
+		wxStaticText* VersionCommentLabel;
+		wxTextCtrl* VersionEnterCommentTextCtrl;
+		wxStaticText* VersionVersionLabel;
+		wxButton* VersionImportButton;
+		wxButton* VersionExportButton;
+		wxButton* VersionDeleteButton;
+		wxButton* VersionShowButton;
+		wxButton* VersionProfileButton;
 		
 		// Virtual event handlers, overide them in your derived class
 		virtual void OnTypeChoosen( wxCommandEvent& event ){ event.Skip(); }
