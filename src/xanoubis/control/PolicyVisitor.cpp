@@ -30,6 +30,7 @@
 PolicyVisitor::PolicyVisitor(void)
 {
 	propagate_ = true;
+	isAdmin_ = false;
 }
 
 PolicyVisitor::~PolicyVisitor(void)
@@ -46,4 +47,16 @@ bool
 PolicyVisitor::shallBeenPropagated(void)
 {
 	return (propagate_);
+}
+
+void
+PolicyVisitor::setAdmin(bool isAdmin)
+{
+	isAdmin_ = isAdmin;
+}
+
+bool
+PolicyVisitor::isAdmin(void)
+{
+	return (isAdmin_);
 }

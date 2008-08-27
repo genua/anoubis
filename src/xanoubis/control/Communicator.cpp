@@ -375,7 +375,7 @@ Communicator::Entry(void)
 			/* XXX KM: prio = 1 is just user policy
 			 *	   prio = 0 loading admin, too;
 			 */
-			prio = 1;
+			prio = 0;
 		}
 
 		if (startPolicyRequest == COMMUNICATOR_FLAG_INIT && prio < 2) {
@@ -454,6 +454,7 @@ Communicator::Entry(void)
 				wxCommandEvent event(
 				    anEVT_ANOUBISD_RULESET_ARRIVED);
 				event.SetClientData(ruleSet);
+				event.SetInt(prio);
 				eventDestination_->AddPendingEvent(event);
 			} else {
 				/* XXX: KM we need here better error handling */

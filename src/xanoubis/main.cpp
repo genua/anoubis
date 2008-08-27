@@ -55,8 +55,10 @@ IMPLEMENT_APP(AnoubisGuiApp)
 
 AnoubisGuiApp::AnoubisGuiApp(void)
 {
-	ruleSet_ = NULL;
-	oldRuleSet_ = NULL;
+	userRuleSet_ = NULL;
+	oldUserRuleSet_ = NULL;
+	adminRuleSet_ = NULL;
+	oldAdminRuleSet_ = NULL;
 	mainFrame = NULL;
 	logViewer_ = NULL;
 	ruleEditor_ = NULL;
@@ -78,8 +80,17 @@ AnoubisGuiApp::~AnoubisGuiApp(void)
 	if (trayIcon != NULL)
 		delete trayIcon;
 
-	if (ruleSet_ != NULL) {
-		delete ruleSet_;
+	if (userRuleSet_ != NULL) {
+		delete userRuleSet_;
+	}
+	if (oldUserRuleSet_ != NULL) {
+		delete oldUserRuleSet_;
+	}
+	if (adminRuleSet_ != NULL) {
+		delete adminRuleSet_;
+	}
+	if (oldAdminRuleSet_ != NULL) {
+		delete oldAdminRuleSet_;
 	}
 
 	if (userOptions_ != NULL) {
@@ -183,8 +194,8 @@ AnoubisGuiApp::sendEvent(wxCommandEvent& event)
 	wxPostEvent(comCtrl_, event);
 	wxPostEvent(trayIcon, event);
 
-	if (ruleSet_ != NULL) {
-		wxPostEvent(ruleSet_, event);
+	if (userRuleSet_ != NULL) {
+		wxPostEvent(userRuleSet_, event);
 	}
 }
 
@@ -422,22 +433,36 @@ AnoubisGuiApp::getCommConnectionState(void)
 }
 
 void
-AnoubisGuiApp::importPolicyRuleSet(struct apn_ruleset *rule)
+AnoubisGuiApp::importPolicyRuleSet(int prio, struct apn_ruleset *rule)
 {
 	wxCommandEvent		 event(anEVT_LOAD_RULESET);
 
-	if (ruleSet_ != NULL) {
-		delete ruleSet_;
+	if ((prio == 1) && (oldUserRuleSet_ != NULL)) {
+		delete oldUserRuleSet_;
 	}
-	ruleSet_ = new PolicyRuleSet(rule);
+	if ((prio == 0) && (oldAdminRuleSet_ != NULL)) {
+		delete oldAdminRuleSet_;
+	}
 
-	event.SetClientData((void*)ruleSet_);
+	if (prio == 0) {
+		oldAdminRuleSet_ = adminRuleSet_;
+		adminRuleSet_ = new PolicyRuleSet(prio, rule);
+	} else {
+		oldUserRuleSet_ = userRuleSet_;
+		userRuleSet_ = new PolicyRuleSet(prio, rule);
+	}
+
+	if (prio == 0) {
+		event.SetClientData((void*)adminRuleSet_);
+	} else {
+		event.SetClientData((void*)userRuleSet_);
+	}
 	sendEvent(event);
 
 	if (onInitProfile_) {
 		onInitProfile_ = false;
 		if (!userOptions_->Read(wxT("Anoubis/Profile"), &profile_)) {
-			if (ruleSet_->isEmpty()) {
+			if (userRuleSet_->isEmpty()) {
 				profile_ = wxT("admin");
 				profileFromDiskToDaemon(profile_);
 			} else {
@@ -454,21 +479,21 @@ AnoubisGuiApp::importPolicyFile(wxString fileName, bool checkPerm)
 {
 	wxCommandEvent		 event(anEVT_LOAD_RULESET);
 
-	if (oldRuleSet_ != NULL) {
-		delete oldRuleSet_;
+	if (oldUserRuleSet_ != NULL) {
+		delete oldUserRuleSet_;
 	}
-	oldRuleSet_ = ruleSet_;
-	ruleSet_ = new PolicyRuleSet(fileName, checkPerm);
+	oldUserRuleSet_ = userRuleSet_;
+	userRuleSet_ = new PolicyRuleSet(1, fileName, checkPerm);
 
-	event.SetClientData((void*)ruleSet_);
+	event.SetClientData((void*)userRuleSet_);
 	sendEvent(event);
 }
 
 void
 AnoubisGuiApp::exportPolicyFile(wxString fileName)
 {
-	if (ruleSet_ != NULL) {
-		ruleSet_->exportToFile(fileName);
+	if (userRuleSet_ != NULL) {
+		userRuleSet_->exportToFile(fileName);
 	} else {
 		status(_("no loaded RuleSet; export failed!"));
 	}
@@ -541,7 +566,7 @@ AnoubisGuiApp::profileFromDaemonToDisk(wxString profileName)
 		return (false);
 	}
 
-	if (ruleSet_ == NULL) {
+	if (userRuleSet_ == NULL) {
 		return (false);
 	}
 
@@ -563,7 +588,7 @@ AnoubisGuiApp::getCurrentProfileName(void)
 bool
 AnoubisGuiApp::hasRuleSet(void)
 {
-	if (ruleSet_ == NULL)
+	if (userRuleSet_ == NULL)
 		return (false);
 	else
 		return (true);

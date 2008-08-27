@@ -385,10 +385,12 @@ CommunicatorCtrl::OnAnswerEscalation(wxCommandEvent& event)
 void
 CommunicatorCtrl::OnAnoubisdRuleSet(wxCommandEvent& event)
 {
-	struct apn_ruleset *ruleSet;
+	int			 prio;
+	struct apn_ruleset	*ruleSet;
 
+	prio = event.GetInt();
 	ruleSet = (struct apn_ruleset*)event.GetClientData();
-	wxGetApp().importPolicyRuleSet(ruleSet);
+	wxGetApp().importPolicyRuleSet(prio, ruleSet);
 }
 
 void

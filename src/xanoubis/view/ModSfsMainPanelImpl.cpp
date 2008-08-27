@@ -45,7 +45,6 @@
 
 #include "AnEvents.h"
 #include "Policy.h"
-#include "PolicyRuleSet.h"
 #include "ModSfsAddPolicyVisitor.h"
 
 #include "ModSfsMainPanelImpl.h"
@@ -57,6 +56,9 @@ ModSfsMainPanelImpl::ModSfsMainPanelImpl(wxWindow* parent,
 	columnNames_[MODSFS_LIST_COLUMN_PROG] = _("Program");
 	columnNames_[MODSFS_LIST_COLUMN_HASHT] = _("Hash-Type");
 	columnNames_[MODSFS_LIST_COLUMN_HASH] = _("Hash");
+
+	userRuleSet_ = NULL;
+	adminRuleSet_ = NULL;
 
 	for (int i=0; i<MODSFS_LIST_COLUMN_EOL; i++) {
 		lst_Rules->InsertColumn(i, columnNames_[i], wxLIST_FORMAT_LEFT,
@@ -76,7 +78,20 @@ ModSfsMainPanelImpl::OnLoadRuleSet(wxCommandEvent& event)
 
 	lst_Rules->DeleteAllItems();
 	ruleSet = (PolicyRuleSet *)event.GetClientData();
-	ruleSet->accept(addVisitor);
+	if (ruleSet->isReadOnly()) {
+		adminRuleSet_ = ruleSet;
+	} else {
+		userRuleSet_ = ruleSet;
+	}
+
+	if (userRuleSet_ != NULL) {
+		addVisitor.setAdmin(false);
+		userRuleSet_->accept(addVisitor);
+	}
+	if (adminRuleSet_!= NULL) {
+		addVisitor.setAdmin(true);
+		adminRuleSet_->accept(addVisitor);
+	}
 
 	/* trigger new * calculation of column width */
 	for (int i=0; i<MODSFS_LIST_COLUMN_EOL; i++) {

@@ -30,6 +30,7 @@
 
 #include "AnEvents.h"
 #include "ModAlfPanelsBase.h"
+#include "PolicyRuleSet.h"
 
 enum modAlfListColumns {
 	MODALF_LIST_COLUMN_PRIO = 0,
@@ -47,7 +48,9 @@ enum modAlfListColumns {
 class ModAlfMainPanelImpl : public ModAlfMainPanelBase
 {
 	private:
-		wxString	columnNames_[MODALF_LIST_COLUMN_EOL];
+		wxString	 columnNames_[MODALF_LIST_COLUMN_EOL];
+		PolicyRuleSet	*userRuleSet_;
+		PolicyRuleSet	*adminRuleSet_;
 
 		void OnLoadRuleSet(wxCommandEvent&);
 

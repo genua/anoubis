@@ -40,12 +40,16 @@ RuleEditorAddPolicyVisitor::~RuleEditorAddPolicyVisitor(void)
 long
 RuleEditorAddPolicyVisitor::appendPolicy(Policy *policy)
 {
-	long idx;
+	long		idx;
+	wxString	ruleType;
 
 	idx = ruleEditor_->ruleListCtrl->GetItemCount();
-	ruleEditor_->ruleListCtrl->InsertItem(idx, wxString::Format(wxT("%d"),
-	    policy->getId()));
+	ruleType = wxString::Format(wxT("%d"), policy->getId());
+	if (isAdmin()) {
+		ruleType += wxT(" A");
+	}
 
+	ruleEditor_->ruleListCtrl->InsertItem(idx, ruleType);
 	ruleEditor_->ruleListCtrl->SetItemPtrData(idx, (wxUIntPtr)policy);
 
 	return (idx);

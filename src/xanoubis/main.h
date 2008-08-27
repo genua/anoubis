@@ -80,8 +80,10 @@ class AnoubisGuiApp : public wxApp
 		wxStandardPaths		 paths_;
 		wxLocale		 language_;
 		bool			 onInitProfile_;
-		PolicyRuleSet		*ruleSet_;
-		PolicyRuleSet		*oldRuleSet_;
+		PolicyRuleSet		*userRuleSet_;
+		PolicyRuleSet		*oldUserRuleSet_;
+		PolicyRuleSet		*adminRuleSet_;
+		PolicyRuleSet		*oldAdminRuleSet_;
 		MainFrame		*mainFrame;
 		DlgLogViewer		*logViewer_;
 		DlgRuleEditor		*ruleEditor_;
@@ -119,7 +121,7 @@ class AnoubisGuiApp : public wxApp
 		wxIcon		*loadIcon(wxString);
 		Module		*getModule(enum moduleIdx);
 		wxString	 getDataDir(void);
-		void		 importPolicyRuleSet(struct apn_ruleset*);
+		void		 importPolicyRuleSet(int, struct apn_ruleset*);
 		void		 importPolicyFile(wxString, bool);
 		void		 exportPolicyFile(wxString);
 		bool		 getCommConnectionState(void);

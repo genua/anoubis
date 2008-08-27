@@ -74,13 +74,21 @@ ModAlfAddPolicyVisitor::~ModAlfAddPolicyVisitor(void)
 long
 ModAlfAddPolicyVisitor::ruleListAppend(Policy *policy)
 {
-	long idx;
+	long		idx;
+	wxString	ruleType;
 
 	idx = alfPanel_->lst_Rules->GetItemCount();
 	alfPanel_->lst_Rules->InsertItem(idx, wxString::Format(wxT("%d"),
 	    idx));
 
 	alfPanel_->lst_Rules->SetItemPtrData(idx, (wxUIntPtr)policy);
+
+	if (isAdmin()) {
+		ruleType = wxT("admin");
+	} else {
+		ruleType = wxT("user");
+	}
+	alfPanel_->lst_Rules->SetItem(idx, MODALF_LIST_COLUMN_ADMIN, ruleType);
 
 	return (idx);
 }

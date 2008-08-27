@@ -137,7 +137,8 @@ DlgRuleEditor::DlgRuleEditor(wxWindow* parent) : DlgRuleEditorBase(parent)
 	selectedId_ = 0;
 	selectedIndex_ = 0;
 	autoCheck_ = false;
-	ruleSet_ = NULL;
+	userRuleSet_ = NULL;
+	adminRuleSet_ = NULL;
 
 	columnNames_[RULEDITOR_LIST_COLUMN_PRIO] = _("ID");
 	columnWidths_[RULEDITOR_LIST_COLUMN_PRIO] = wxLIST_AUTOSIZE;
@@ -636,16 +637,16 @@ DlgRuleEditor::OnRuleCreateButton(wxCommandEvent& )
 
 	switch (controlCreationChoice->GetSelection()) {
 	case 0: /* Application */
-		id = ruleSet_->createAppPolicy(selectedId_);
+		id = userRuleSet_->createAppPolicy(selectedId_);
 		break;
 	case 1: /* ALF */
-		id = ruleSet_->createAlfPolicy(selectedId_);
+		id = userRuleSet_->createAlfPolicy(selectedId_);
 		break;
 	case 2: /* SFS */
-		id = ruleSet_->createSfsPolicy(selectedId_);
+		id = userRuleSet_->createSfsPolicy(selectedId_);
 		break;
 	case 3: /* Variable */
-		id = ruleSet_->createVarPolicy(selectedId_);
+		id = userRuleSet_->createVarPolicy(selectedId_);
 		break;
 	default:
 		break;
@@ -655,14 +656,14 @@ DlgRuleEditor::OnRuleCreateButton(wxCommandEvent& )
 		wxMessageBox(_("Could not create new rule."), _("Error"),
 		    wxOK, this);
 	} else {
-		loadRuleSet(ruleSet_);
+		loadRuleSet(userRuleSet_);
 	}
 }
 
 void
 DlgRuleEditor::OnRuleDeleteButton(wxCommandEvent& )
 {
-	ruleSet_->deletePolicy(selectedId_);
+	userRuleSet_->deletePolicy(selectedId_);
 }
 
 void
@@ -875,7 +876,7 @@ DlgRuleEditor::OnRuleSetSave(wxCommandEvent& )
 	wxString	tmpName;
 	wxString	message;
 
-	if (ruleSet_->findMismatchHash())
+	if (userRuleSet_->findMismatchHash())
 	{
 		message = _("Mismatch of Checksums in one or more Rule.\n");
 		message += _("Do you want to store anyway?");
@@ -886,7 +887,7 @@ DlgRuleEditor::OnRuleSetSave(wxCommandEvent& )
 		}
 	}
 
-	ruleSet_->clearModified();
+	userRuleSet_->clearModified();
 
 	/* XXX: KM there should be a better way, like apn_parse_xxx */
 	tmpPreFix = wxT("xanoubis");
@@ -902,14 +903,24 @@ DlgRuleEditor::loadRuleSet(PolicyRuleSet *ruleSet)
 
 	ruleListCtrl->DeleteAllItems();
 	/* we just remember the ruleSet for further usage */
-	ruleSet_ = ruleSet;
-	ruleSet_->accept(addVisitor);
+	if (ruleSet->isReadOnly()) {
+		adminRuleSet_ = ruleSet;
+	} else {
+		userRuleSet_ = ruleSet;
+	}
+	if (userRuleSet_ != NULL) {
+		addVisitor.setAdmin(false);
+		userRuleSet_->accept(addVisitor);
+	}
+	if (adminRuleSet_!= NULL) {
+		addVisitor.setAdmin(true);
+		adminRuleSet_->accept(addVisitor);
+	}
 
 	/* trigger new calculation of column width */
 	for (int i=0; i<RULEDITOR_LIST_COLUMN_EOL; i++) {
 		ruleListCtrl->SetColumnWidth(i, columnWidths_[i]);
 	}
-
 }
 
 void

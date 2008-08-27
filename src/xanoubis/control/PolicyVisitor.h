@@ -37,6 +37,7 @@ class PolicyVisitor
 {
 	private:
 		bool	propagate_;
+		bool	isAdmin_;
 
 	public:
 		PolicyVisitor(void);
@@ -44,6 +45,8 @@ class PolicyVisitor
 
 		virtual void setPropagation(bool);
 		virtual bool shallBeenPropagated(void);
+		virtual void setAdmin(bool);
+		virtual bool isAdmin(void);
 
 		virtual void visitAppPolicy(AppPolicy *) = 0;
 		virtual void visitAlfPolicy(AlfPolicy *) = 0;

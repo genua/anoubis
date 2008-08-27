@@ -30,6 +30,7 @@
 
 #include "AnEvents.h"
 #include "ModSfsPanelsBase.h"
+#include "PolicyRuleSet.h"
 
 enum modSfsListColumns {
 	MODSFS_LIST_COLUMN_PRIO = 0,
@@ -43,7 +44,9 @@ enum modSfsListColumns {
 class ModSfsMainPanelImpl : public ModSfsMainPanelBase
 {
 	private:
-		wxString	columnNames_[MODSFS_LIST_COLUMN_EOL];
+		wxString	 columnNames_[MODSFS_LIST_COLUMN_EOL];
+		PolicyRuleSet	*userRuleSet_;
+		PolicyRuleSet	*adminRuleSet_;
 
 		void OnLoadRuleSet(wxCommandEvent&);
 

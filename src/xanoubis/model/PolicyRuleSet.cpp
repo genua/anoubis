@@ -60,18 +60,22 @@
 
 #define CALLOC_STRUCT(type) (struct type *)calloc(1, sizeof(struct type))
 
-PolicyRuleSet::PolicyRuleSet(struct apn_ruleset *ruleSet)
+PolicyRuleSet::PolicyRuleSet(int priority, struct apn_ruleset *ruleSet)
 {
 	ruleSet_ = NULL;
+	priority_ = priority;
+	origin_ = wxT("Daemon");
 
 	create(ruleSet);
 	Connect(anEVT_ANSWER_ESCALATION,
 	    wxCommandEventHandler(PolicyRuleSet::OnAnswerEscalation));
 }
 
-PolicyRuleSet::PolicyRuleSet(wxString fileName, bool checkPerm)
+PolicyRuleSet::PolicyRuleSet(int priority, wxString fileName, bool checkPerm)
 {
 	ruleSet_ = NULL;
+	priority_ = priority;
+	origin_ = fileName;
 
 	create(fileName, checkPerm);
 	Connect(anEVT_ANSWER_ESCALATION,
@@ -377,7 +381,7 @@ PolicyRuleSet::createAnswerPolicy(EscalationNotify *escalation)
 	}
 
 
-	PolicyRuleSet	*nrs = new PolicyRuleSet(ruleSet_);
+	PolicyRuleSet	*nrs = new PolicyRuleSet(priority_, ruleSet_);
 	wxCommandEvent           event(anEVT_LOAD_RULESET);
 	event.SetClientData((void*)nrs);
 	wxGetApp().sendEvent(event);
@@ -636,4 +640,24 @@ PolicyRuleSet::isEmpty(void)
 {
 	return (alfList_.IsEmpty() && sfsList_.IsEmpty() &&
 	    varList_.IsEmpty());
+}
+
+bool
+PolicyRuleSet::isReadOnly(void)
+{
+	bool result;
+
+	if (priority_ > 0) {
+		result = false;
+	} else {
+		result = true;
+	}
+
+	return (result);
+}
+
+wxString
+PolicyRuleSet::getOrigin(void)
+{
+	return (origin_);
 }

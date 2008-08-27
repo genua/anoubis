@@ -42,11 +42,17 @@ RuleEditorFillTableVisitor::~RuleEditorFillTableVisitor(void)
 void
 RuleEditorFillTableVisitor::clean(long idx)
 {
+	wxString ruleType;
+
+	ruleType = wxString::Format(wxT("%d"), idx);
+	if (isAdmin()) {
+		ruleType += wxT(" A");
+	}
+
 	for (int i=0; i<RULEDITOR_LIST_COLUMN_EOL; i++) {
 		ruleEditor_->ruleListCtrl->SetItem(idx, i, wxEmptyString);
 	}
-	ruleEditor_->ruleListCtrl->SetItem(idx, 0,
-	    wxString::Format(wxT("%d"), idx));
+	ruleEditor_->ruleListCtrl->SetItem(idx, 0, ruleType);
 }
 
 void

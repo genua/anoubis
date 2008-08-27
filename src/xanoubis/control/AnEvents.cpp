@@ -149,6 +149,7 @@ DEFINE_LOCAL_EVENT_TYPE(anEVT_LOAD_RULESET)
 /*
  * Send a Event if the rules of the anoubisd arrived, with the
  * file name of the tmp-File which holds the rules.
+ * The Int field holds the priority of the ruleset.
  */
 DEFINE_LOCAL_EVENT_TYPE(anEVT_ANOUBISD_RULESET_ARRIVED)
 

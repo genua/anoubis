@@ -99,7 +99,8 @@ class DlgRuleEditor : public DlgRuleEditorBase
 		unsigned long	selectedId_;
 		unsigned long	selectedIndex_;
 		bool		autoCheck_;
-		PolicyRuleSet	*ruleSet_;
+		PolicyRuleSet	*userRuleSet_;
+		PolicyRuleSet	*adminRuleSet_;
 		wxString	columnNames_[RULEDITOR_LIST_COLUMN_EOL];
 		int		columnWidths_[RULEDITOR_LIST_COLUMN_EOL];
 		AddrLineList	extraSrcAddrList;
