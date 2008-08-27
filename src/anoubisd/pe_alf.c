@@ -267,7 +267,15 @@ pe_decide_alffilt(struct pe_proc *proc, struct apn_rule *rule,
 			*log = APN_LOG_NONE;
 		return POLICY_ALLOW;
 	}
-
+	/*
+	 * For UDP, we do always allow CONNECT events as these do not really
+	 * generate network traffic.
+	 */
+	if (msg->protocol == IPPROTO_UDP && msg->op == ALF_CONNECT) {
+		if (log)
+			*log = APN_LOG_NONE;
+		return POLICY_ALLOW;
+	}
 
 	decision = -1;
 	for (hp = rule->rule.alf; hp; hp = hp->next) {
