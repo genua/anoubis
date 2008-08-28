@@ -27,7 +27,7 @@
 
 #include <wx/intl.h>
 #include <wx/string.h>
-#include <wx/timer.h>
+#include <time.h>
 
 #include "NotifyAnswer.h"
 
@@ -134,11 +134,11 @@ NotifyAnswer::causePermRule(void)
 time_t
 NotifyAnswer::getTime(void)
 {
-	long	now;
+	time_t	now;
 	long	factor;
 	time_t	result;
 
-	now = wxGetLocalTime(); /* number of seconds since ... 1970 */
+	now = time(NULL); /* number of seconds since ... 1970 */
 	factor = 1;
 	result = 0;
 

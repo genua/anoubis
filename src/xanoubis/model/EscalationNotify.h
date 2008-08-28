@@ -77,6 +77,7 @@ class EscalationNotify : public Notification {
 		wxString	 getBinaryName(void);
 		bool		 getChecksum(unsigned char *);
 		int		 getProtocolNo(void);
+		int		 getDirectionNo(void);
 };
 
 #endif	/* _ESCALATIONNOTIFY_H_ */

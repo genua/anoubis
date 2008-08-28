@@ -199,6 +199,7 @@ PolicyRuleSet::assembleAlfPolicy(AlfPolicy *old, EscalationNotify *escalation)
 {
 	struct apn_alfrule	*newAlfRule;
 	struct apn_afiltrule	*afilt;
+	struct apn_acaprule	*acap;
 	NotifyAnswer		*answer;
 
 	newAlfRule = old->cloneRule();
@@ -229,6 +230,7 @@ PolicyRuleSet::assembleAlfPolicy(AlfPolicy *old, EscalationNotify *escalation)
 		} else {
 			afilt->action = APN_ACTION_DENY;
 		}
+		afilt->filtspec.netaccess = old->getDirectionNo();
 		if (old->getDirectionNo() == APN_ACCEPT) {
 			apn_free_port(afilt->filtspec.fromport);
 			afilt->filtspec.fromport = NULL;
@@ -254,26 +256,48 @@ PolicyRuleSet::assembleAlfPolicy(AlfPolicy *old, EscalationNotify *escalation)
 		}
 		break;
 	case APN_ALF_DEFAULT:
-		newAlfRule->type = APN_ALF_FILTER;
-		afilt = &(newAlfRule->rule.afilt);
-		if (answer->wasAllowed()) {
-			afilt->action = APN_ACTION_ALLOW;
-		} else {
-			afilt->action = APN_ACTION_DENY;
+		short proto = escalation->getProtocolNo();
+		int log = old->getLogNo();
+		if (proto == IPPROTO_TCP || proto == IPPROTO_UDP) {
+			newAlfRule->type = APN_ALF_FILTER;
+			afilt = &(newAlfRule->rule.afilt);
+			afilt->filtspec.log = log;
+			afilt->filtspec.netaccess =
+			    escalation->getDirectionNo();
+			if (answer->wasAllowed()) {
+				afilt->action = APN_ACTION_ALLOW;
+			} else {
+				afilt->action = APN_ACTION_DENY;
+			}
+			afilt->filtspec.af = 0; /* any */
+			afilt->filtspec.proto = escalation->getProtocolNo();
+			apn_free_port(afilt->filtspec.fromport);
+			afilt->filtspec.fromport = NULL;
+			apn_free_port(afilt->filtspec.toport);
+			afilt->filtspec.toport = NULL;
+			if (old->getDirectionNo() == APN_ACCEPT) {
+				apn_free_host(afilt->filtspec.tohost);
+				afilt->filtspec.tohost = NULL;
+			} else {
+				apn_free_host(afilt->filtspec.fromhost);
+				afilt->filtspec.fromhost = NULL;
+				}
+			break;
 		}
-		afilt->filtspec.af = 0; /* any */
-		afilt->filtspec.proto = escalation->getProtocolNo();
-		apn_free_port(afilt->filtspec.fromport);
-		afilt->filtspec.fromport = NULL;
-		apn_free_port(afilt->filtspec.toport);
-		afilt->filtspec.toport = NULL;
-		if (old->getDirectionNo() == APN_ACCEPT) {
-			apn_free_host(afilt->filtspec.tohost);
-			afilt->filtspec.tohost = NULL;
-		} else {
-			apn_free_host(afilt->filtspec.fromhost);
-			afilt->filtspec.fromhost = NULL;
+		if (proto == IPPROTO_ICMP) {
+			newAlfRule->type = APN_ALF_CAPABILITY;
+			acap = &(newAlfRule->rule.acap);
+			acap->log = log;
+			if (answer->wasAllowed()) {
+				acap->action = APN_ACTION_ALLOW;
+			} else {
+				acap->action = APN_ACTION_DENY;
+			}
+			acap->capability = APN_ALF_CAPRAW;;
+			break;
 		}
+		/* XXX CEH: Free newAlfRule? */
+		newAlfRule = NULL;
 		break;
 	}
 
@@ -366,7 +390,11 @@ PolicyRuleSet::createAnswerPolicy(EscalationNotify *escalation)
 		if (newTmpAlfRule->scope == NULL) {
 			newTmpAlfRule->scope = CALLOC_STRUCT(apn_scope);
 		}
-		newTmpAlfRule->scope->task = escalation->getToken();
+		newTmpAlfRule->scope->task = escalation->getTaskCookie();
+		answer = escalation->getAnswer();
+		if (answer->getType() == NOTIFY_ANSWER_TIME) {
+			newAlfRule->scope->timeout = answer->getTime();
+		}
 		apn_insert_alfrule(ruleSet_, newTmpAlfRule,
 		    escalation->getRuleId());
 	}

@@ -117,7 +117,8 @@ Notification::assembleAddress(bool isLocal)
 
 	inet_ntop(alf->family, address, ipAddrBuffer, sizeof(ipAddrBuffer));
 	localAddr += wxString::From8BitData(ipAddrBuffer);
-	localAddr += wxString::Format(wxT(" Port %u"), port);
+	if (alf->protocol == IPPROTO_TCP || alf->protocol == IPPROTO_UDP)
+		localAddr += wxString::Format(wxT(" Port %u"), port);
 
 	return (localAddr);
 }
@@ -274,6 +275,19 @@ Notification::getOperation(void)
 			operation = _("unknown");
 			break;
 		}
+		switch (alf->protocol) {
+		case IPPROTO_TCP:
+			operation += wxT(" (TCP)");
+			break;
+		case IPPROTO_UDP:
+			operation += wxT(" (UDP)");
+			break;
+		case IPPROTO_ICMP:
+			operation += wxT(" (ICMP)");
+			break;
+		default:
+			operation += wxT(" (unknown protocol)");
+		}
 	} else if (module_.Cmp(wxT("SFS")) == 0) {
 		/* XXX CEH: Should verify that evlen >= sizeof(*sfs) */
 		sfs = (struct sfs_open_message *)
@@ -316,8 +330,13 @@ Notification::getPath(void)
 		alf = (struct alf_event *)
 		    ((notify_->u.notify)->payload + evoff);
 		path = wxT("from ");
-		path += localAlfAddress() + wxT("  to  ");
-		path += remoteAlfAddress();
+		if (alf->op == ALF_RECVMSG || alf->op == ALF_ACCEPT) {
+			path += remoteAlfAddress() + wxT("  to  ");
+			path += localAlfAddress();
+		} else {
+			path += localAlfAddress() + wxT("  to  ");
+			path += remoteAlfAddress();
+		}
 	} else if (module_.Cmp(wxT("SFS")) == 0) {
 		/* XXX CEH: Should verify that evlen >= sizeof(*sfs) */
 		sfs = (struct sfs_open_message *)

@@ -155,3 +155,26 @@ EscalationNotify::getProtocolNo(void)
 
 	return (alf->protocol);
 }
+
+int
+EscalationNotify::getDirectionNo(void)
+{
+	struct alf_event	*alf;
+	int			 evoff  =  0;
+
+	evoff = get_value(notify_->u.notify->evoff);
+	alf = (struct alf_event *)((notify_->u.notify)->payload + evoff);
+
+	switch (alf->op) {
+	case ALF_CONNECT:
+		return APN_CONNECT;
+	case ALF_ACCEPT:
+		return APN_ACCEPT;
+	case ALF_SENDMSG:
+		return APN_SEND;
+	case ALF_RECVMSG:
+		return APN_RECEIVE;
+	default:
+		return APN_BOTH;
+	}
+}
