@@ -98,7 +98,7 @@ lcov: check
 	    --output-file anoubis.info; \
 	LANG=C $(LCOV_GENHTML) --prefix $(CURDIR) \
 	    --output-directory $(LCOV_OUTPUT) \
-	    --title "Anoubis Code Coverage" \
+	    --title "Anoubis Code Coverage: $(PACKAGE)-$(VERSION)" \
 	    --show-details anoubis.info;
 
 lcov-clean:
