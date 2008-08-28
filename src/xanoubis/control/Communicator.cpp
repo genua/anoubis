@@ -355,8 +355,11 @@ Communicator::Entry(void)
 
 		if (startPolicyUse == COMMUNICATOR_FLAG_DONE) {
 			if (reqTa->result) {
+				wxString err = wxString::Format(_T("%d"),
+				    reqTa->result);
 				errString = _("Error while sending ");
-				errString += _("Policy to deamon.");
+				errString += _("Policy to deamon: ");
+				errString += err;
 				sendError(COM_POLICY_USE_ERR, errString);
 			}
 			anoubis_transaction_destroy(reqTa);

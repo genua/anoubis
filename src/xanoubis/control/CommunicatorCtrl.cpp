@@ -48,6 +48,7 @@
 #include <anoubis_msg.h>
 #include <wx/string.h>
 #include <wx/file.h>
+#include <wx/msgdlg.h>
 
 #include "AnEvents.h"
 #include "CommunicatorCtrl.h"
@@ -416,6 +417,8 @@ CommunicatorCtrl::OnCommunicatorError(wxCommandEvent& event)
 {
 	wxString	errMsg;
 	int		errNum;
+	wxString	message;
+	wxString	title;
 
 	errMsg = event.GetString();
 	errNum = event.GetInt();
@@ -434,6 +437,16 @@ CommunicatorCtrl::OnCommunicatorError(wxCommandEvent& event)
 	case COM_CSUM_CAL_FAIL:
 		aEvent.SetString(_("cal"));
 		wxGetApp().sendEvent(aEvent);
+		break;
+	case COM_POLICY_USE_ERR:
+		message = _("Error while sending policy to daemon");
+		title = _("Error!");
+		wxMessageBox(message, title, wxICON_ERROR);
+
+		if (errMsg.IsEmpty())
+			return;
+
+		wxGetApp().log(errMsg);
 		break;
 	default:
 		if (errMsg.IsEmpty()) {
