@@ -41,4 +41,9 @@ CONFIGURE_ARGS+=	--enable-static-anoubisd
 
 REGRESS_DEPENDS=	${BUILD_DEPENDS}
 
+# Enforce the derivation of the file 'date.c' as the provided version
+# is incompatible with OpenBSD (Bug #741)
+post-configure:
+	@rm ${WRKSRC}/src/libanoubisui/apnvm/date.c
+
 .include <bsd.port.mk>
