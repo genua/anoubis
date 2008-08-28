@@ -31,34 +31,43 @@ libapnvm_a_CFLAGS = -std=gnu99 $(AM_CFLAGS)
 
 noinst_LIBRARIES = libapnvm.a
 
-libapnvm_a_SOURCES = \
-	apncvs.c \
-	apncvslog.l \
+libapnvm_a_SOURCES =	\
+	apncvs.c	\
+	apncvslog.l	\
+	apnvm.c		\
 	date.y
 
-noinst_HEADERS = apncvs.h
+noinst_HEADERS = apncvs.h apnvm.h
 
 bsdcompatdir   = src/bsdcompat
 libbsdcompat   = $(top_builddir)/$(bsdcompatdir)/libbsdcompat.a
 
-libapnvm_a_CPPFLAGS = -I .. -I$(top_builddir)/src -I$(top_srcdir)/include
+libapnvm_a_CFLAGS += -I$(top_builddir)/src -I$(top_srcdir)/include
 libapnvm_a_LIBADD =
 
 if NEEDBSDCOMPAT
-libapnvm_a_CPPFLAGS += -I$(top_srcdir)/$(bsdcompatdir)
+libapnvm_a_CFLAGS += -I$(top_srcdir)/$(bsdcompatdir)
 endif
 
-libapnvm_a_SOURCES_lint = \
-	apncvs.c_lint  \
-	apncvs.h_lint
+libapnvm_a_CPPFLAGS = $(libapnvm_a_CFLAGS)
 
-libapnvm_a_SOURCES_splint = \
-	apncvs.c_splint  \
-	apncvs.h_splint
+libapnvm_a_SOURCES_lint =	\
+	apncvs.c_lint		\
+	apncvs.h_lint		\
+	apnvm.c_lint		\
+	apnvm.h_lint
 
-libapnvm_a_SOURCES_flawfinder = \
-	apncvs.c_flawfinder  \
-	apncvs.h_flawfinder
+libapnvm_a_SOURCES_splint =	\
+	apncvs.c_splint		\
+	apncvs.h_splint		\
+	apnvm.c_splint		\
+	apnvm.h_splint
+
+libapnvm_a_SOURCES_flawfinder =	\
+	apncvs.c_flawfinder	\
+	apncvs.h_flawfinder	\
+	apnvm.c_flawfinder	\
+	apnvm.h_flawfinder
 
 flawfinder_FLAGS=
 splint_FLAGS=$(libapnvm_a_CPPFLAGS)

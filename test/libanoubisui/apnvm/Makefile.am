@@ -38,7 +38,7 @@ TESTS_ENVIRONMENT = LD_LIBRARY_PATH=$(RPATH)
 
 noinst_PROGRAMS = test_apnvm
 
-test_apnvm_CFLAGS = $(AM_CFLAGS) @CHECK_CFLAGS@
+test_apnvm_CFLAGS = -I$(top_builddir)/src -I$(top_srcdir)/include $(AM_CFLAGS) @CHECK_CFLAGS@
 test_apnvm_CPPFLAGS = -I$(top_srcdir)/$(apnvmdir)
 test_apnvm_LDFLAGS = \
 	$(AM_LDFLAGS) -dynamic \
@@ -56,4 +56,5 @@ endif
 
 test_apnvm_SOURCES =		\
 	apnvm_testrunner.c	\
-	apnvm_tc_cvs.c
+	apnvm_tc_cvs.c		\
+	apnvm_tc_vm.c

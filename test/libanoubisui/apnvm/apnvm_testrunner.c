@@ -29,6 +29,7 @@
 #include <check.h>
 
 extern TCase *apnvm_tc_cvs(void);
+extern TCase *apnvm_tc_vm(void);
 
 static Suite*
 apnvm_testsuite(void)
@@ -36,6 +37,7 @@ apnvm_testsuite(void)
 	Suite *s = suite_create("Suite");
 
 	suite_add_tcase(s, apnvm_tc_cvs());
+	suite_add_tcase(s, apnvm_tc_vm());
 
 	return (s);
 }
