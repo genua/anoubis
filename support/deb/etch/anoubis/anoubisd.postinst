@@ -55,9 +55,9 @@ fi
 # update xanoubis profiles
 # we just overwrite the old files until we have a better mechanism
 # for updates
-rm /etc/anoubis/profiles/admin
-rm /etc/anoubis/profiles/medium
-rm /etc/anoubis/profiles/high
+rm -f /etc/anoubis/profiles/admin
+rm -f /etc/anoubis/profiles/medium
+rm -f /etc/anoubis/profiles/high
 /usr/share/anoubisd/install_policy -q -n -o \
 	/usr/share/anoubisd/default_policy/profiles \
 	/etc/anoubis/profiles
