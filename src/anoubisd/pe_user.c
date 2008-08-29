@@ -776,11 +776,6 @@ pe_dispatch_policy(struct anoubisd_msg_comm *comm)
 			struct apn_ruleset * ruleset = NULL;
 
 			/* Only accept syntactically correct rules. */
-			if (pe_user_clean_policy(req->tmpname,
-			    prio_to_string[req->prio], 0)) {
-				error = EINVAL;
-				goto reply;
-			}
 			if (apn_parse(req->tmpname, &ruleset,
 			    (req->prio != PE_PRIO_USER1)?APN_FLAG_NOASK:0)) {
 				if (ruleset)

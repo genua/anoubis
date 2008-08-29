@@ -329,6 +329,10 @@ PolicyRuleSet::createAnswerPolicy(EscalationNotify *escalation)
 
 	/* get the enclosing app policy */
 	parentPolicy = triggerPolicy->getParent();
+	if (!parentPolicy) {
+		wxGetApp().status(_("Could not modify Policy (no such rule)"));
+		return;
+	}
 
 	filename = escalation->getBinaryName();
 	hasChecksum = escalation->getChecksum(csum);
@@ -408,15 +412,10 @@ PolicyRuleSet::createAnswerPolicy(EscalationNotify *escalation)
 		}
 	}
 
-
-	PolicyRuleSet	*nrs = new PolicyRuleSet(priority_, ruleSet_);
-	wxCommandEvent           event(anEVT_LOAD_RULESET);
-	event.SetClientData((void*)nrs);
-	wxGetApp().sendEvent(event);
-
 	wxString	tmpFileName;
 	tmpFileName = wxFileName::CreateTempFileName(wxT("xanoubis"));
-	nrs->exportToFile(tmpFileName);
+	this->exportToFile(tmpFileName);
+	wxGetApp().importPolicyFile(tmpFileName, false);
 	wxGetApp().usePolicy(tmpFileName);
 }
 

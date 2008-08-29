@@ -509,6 +509,7 @@ pe_decide_alfcap(struct apn_rule *rule, struct alf_event *msg, int *log,
 	decision = -1;
 	hp = rule->rule.alf;
 	while (hp) {
+		int thisdec = -1;
 		/* Skip non-capability rules. */
 		if (hp->type != APN_ALF_CAPABILITY ||
 		    !pe_in_scope(hp->scope, &msg->common, now)) {
@@ -525,13 +526,24 @@ pe_decide_alfcap(struct apn_rule *rule, struct alf_event *msg, int *log,
 		 *
 		 * APN_ALF_CAPALL: Allow anything.
 		 */
+		switch (hp->rule.acap.action) {
+		case APN_ACTION_ALLOW:
+			thisdec = POLICY_ALLOW;
+			break;
+		case APN_ACTION_DENY:
+			thisdec = POLICY_DENY;
+			break;
+		case APN_ACTION_ASK:
+			thisdec = POLICY_ASK;
+			break;
+		}
 		switch (hp->rule.acap.capability) {
 		case APN_ALF_CAPRAW:
 			if (msg->type == SOCK_RAW)
-				decision = POLICY_ALLOW;
+				decision = thisdec;
 #ifdef LINUX
 			if (msg->type == SOCK_PACKET)
-				decision = POLICY_ALLOW;
+				decision = thisdec;
 #endif
 			break;
 		case APN_ALF_CAPOTHER:
@@ -540,10 +552,10 @@ pe_decide_alfcap(struct apn_rule *rule, struct alf_event *msg, int *log,
 #else
 			if (msg->type != SOCK_RAW)
 #endif
-				decision = POLICY_ALLOW;
+				decision = thisdec;
 			break;
 		case APN_ALF_CAPALL:
-			decision = POLICY_ALLOW;
+			decision = thisdec;
 			break;
 		default:
 			log_warnx("pe_decide_alfcap: unknown capability %d",
