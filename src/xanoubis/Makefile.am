@@ -46,6 +46,7 @@ xanoubis_CPPFLAGS = \
 	-I$(top_srcdir)/$(anoubisprotocoldir) \
 	-I$(top_srcdir)/$(anoubisprotocoldir)/client \
 	-I$(top_srcdir)/$(anoubisuidir) \
+	-I$(top_srcdir)/$(anoubisuidir)/apnvm \
 	-I$(top_srcdir)/$(xanoubisdir) \
 	-I$(top_srcdir)/$(xanoubisdir)/model \
 	-I$(top_srcdir)/$(xanoubisdir)/view  \
@@ -85,7 +86,8 @@ xanoubis_LDADD = \
 	@GLIB_LIBS@ \
 	@NOTIFY_LIBS@ \
 	$(xanoubis_DEPEND_LIBS) \
-	$(SSL_LIBS)
+	$(SSL_LIBS) \
+	-lfl
 
 catalogdir = $(datadir)/$(bin_PROGRAMS)/catalogs/de
 utildir = $(datadir)/$(bin_PROGRAMS)/utils

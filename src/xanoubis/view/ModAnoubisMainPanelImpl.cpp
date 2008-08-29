@@ -45,6 +45,10 @@
 #include <dev/anoubis_sfs.h>
 #endif
 
+/* XXX ch: for demo usage only */
+#include <apnvm.h>
+#include <wx/datetime.h>
+
 #include "main.h"
 #include "AnEvents.h"
 #include "ModAnoubis.h"
@@ -81,6 +85,9 @@ ModAnoubisMainPanelImpl::ModAnoubisMainPanelImpl(wxWindow* parent,
 
 	/* read and restore Escalations Settings */
 	readOptions();
+
+	/* get and show list of versions */
+	updateVersionList();
 
 	parent->Connect(anEVT_ESCALATIONS_SHOW,
 	    wxCommandEventHandler(ModAnoubisMainPanelImpl::OnEscalationsShow),
@@ -190,6 +197,106 @@ ModAnoubisMainPanelImpl::setOptionsWidgetsVisability(void)
 			tx_AlertNotifyTimeoutLabel->Enable();
 		}
 	}
+}
+
+/* XXX ch: this metohod (updateVersionList) is for demo usage only */
+void
+ModAnoubisMainPanelImpl::updateVersionList(void)
+{
+	apnvm		*vm;
+	apnvm_result	 rc;
+	wxString	 repository;
+	wxString	 userName;
+
+	struct apnvm_version		*version;
+	struct apnvm_version_head	 version_head;
+
+	/* Initialize table */
+	columnNames_[MODANOUBIS_VMLIST_COLUMN_ID] = _("ID");
+	columnNames_[MODANOUBIS_VMLIST_COLUMN_DATE] = _("Date");
+	columnNames_[MODANOUBIS_VMLIST_COLUMN_TIME] = _("Time");
+
+	for (int i=0; i<MODANOUBIS_VMLIST_COLUMN_EOL; i++) {
+		VersionListCtrl->InsertColumn(i, columnNames_[i],
+		    wxLIST_FORMAT_LEFT, wxLIST_AUTOSIZE);
+	}
+	VersionListCtrl->InsertItem(0, wxEmptyString);
+	VersionListCtrl->SetItem(0, MODANOUBIS_VMLIST_COLUMN_DATE,
+	    _("(Initializing version management...)"));
+
+	/* XXX ch: don't use hard-coded path like this. */
+	repository = wxGetApp().getDataDir() + wxT("/.xanoubis/apnvmroot");
+	userName = wxGetUserId();
+	 
+	/* Initialize version management */
+	vm = apnvm_init(repository.fn_str(), userName.fn_str());
+	if (vm == NULL) {
+		VersionListCtrl->SetItem(0, MODANOUBIS_VMLIST_COLUMN_DATE,
+		    _("(Repository not initialized.)"));
+		VersionListCtrl->SetColumnWidth(MODANOUBIS_VMLIST_COLUMN_DATE,
+		    wxLIST_AUTOSIZE);
+		return;
+	}
+	rc = apnvm_prepare(vm);
+	if (rc != APNVM_OK) {
+		VersionListCtrl->SetItem(0, MODANOUBIS_VMLIST_COLUMN_DATE,
+		    _("(Repository not initialized.)"));
+		VersionListCtrl->SetColumnWidth(MODANOUBIS_VMLIST_COLUMN_DATE,
+		    wxLIST_AUTOSIZE);
+		apnvm_destroy(vm);
+		return;
+	}
+	TAILQ_INIT(&version_head);
+
+	/* Claim versions */
+	rc = apnvm_list(vm, userName.fn_str(), &version_head);
+	if (rc != APNVM_OK) {
+		VersionListCtrl->SetItem(0, MODANOUBIS_VMLIST_COLUMN_DATE,
+		    _("(Repository not initialized.)"));
+		VersionListCtrl->SetColumnWidth(MODANOUBIS_VMLIST_COLUMN_DATE,
+		    wxLIST_AUTOSIZE);
+		apnvm_destroy(vm);
+		return;
+	}
+
+	if (TAILQ_EMPTY(&version_head)) {
+		VersionListCtrl->SetItem(0, MODANOUBIS_VMLIST_COLUMN_DATE,
+		    _("(No versions found.)"));
+		VersionListCtrl->SetColumnWidth(MODANOUBIS_VMLIST_COLUMN_DATE,
+		    wxLIST_AUTOSIZE);
+		apnvm_destroy(vm);
+		return;
+	}
+
+	VersionListCtrl->DeleteAllItems();
+	TAILQ_FOREACH(version, &version_head, entries) {
+		long		idx;
+		wxDateTime	date(version->tstamp);
+
+		idx = VersionListCtrl->GetItemCount();
+		VersionListCtrl->InsertItem(idx, wxString::Format(wxT("%d"),
+		    idx));
+		VersionListCtrl->SetItem(idx, MODANOUBIS_VMLIST_COLUMN_DATE,
+		    date.FormatDate());
+		VersionListCtrl->SetItem(idx, MODANOUBIS_VMLIST_COLUMN_TIME,
+		    date.FormatTime());
+	}
+	VersionListCtrl->SetColumnWidth(MODANOUBIS_VMLIST_COLUMN_ID,
+	    wxLIST_AUTOSIZE_USEHEADER);
+	VersionListCtrl->SetColumnWidth(MODANOUBIS_VMLIST_COLUMN_DATE,
+	    wxLIST_AUTOSIZE);
+	VersionListCtrl->SetColumnWidth(MODANOUBIS_VMLIST_COLUMN_TIME,
+	    wxLIST_AUTOSIZE);
+
+	/* Clean version list */
+	version = TAILQ_FIRST(&version_head);
+	while (version != NULL) {
+		TAILQ_REMOVE(&version_head, version, entries);
+		free(version);
+		version = TAILQ_FIRST(&version_head);
+	}
+
+	apnvm_destroy(vm);
 }
 
 void

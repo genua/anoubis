@@ -31,8 +31,8 @@ lib_LIBRARIES = libanoubisui.a
 
 # Make auto-tooling happy!
 libanoubisui_a_SOURCES = dummy.c
-
-libanoubisui_a_LIBADD = apnvm/libapnvm.a
+libanoubisui_a_DEPENDENCIES = apnvm/libapnvm.a
+libanoubisui_a_LIBADD = apnvm/*.o
 
 flawfinder:
 	for t in $(SUBDIRS); do cd $$t && make $@ && cd ..; done

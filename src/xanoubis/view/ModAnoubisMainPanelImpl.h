@@ -32,12 +32,21 @@
 #include "ModAnoubisPanelsBase.h"
 #include "Notification.h"
 
+enum modAnoubisVersionListColumns {
+	MODANOUBIS_VMLIST_COLUMN_ID = 0,
+	MODANOUBIS_VMLIST_COLUMN_DATE,
+	MODANOUBIS_VMLIST_COLUMN_TIME,
+	MODANOUBIS_VMLIST_COLUMN_EOL
+};
+
 class ModAnoubisMainPanelImpl : public ModAnoubisMainPanelBase
 {
 	private:
 		enum notifyListTypes	 list_;
-		Notification		*currentNotify_;
-		wxConfig		*userOptions_;
+
+		Notification	*currentNotify_;
+		wxConfig	*userOptions_;
+		wxString	 columnNames_[MODANOUBIS_VMLIST_COLUMN_EOL];
 
 		void answer(bool);
 		void displayAlert(void);
@@ -47,6 +56,7 @@ class ModAnoubisMainPanelImpl : public ModAnoubisMainPanelBase
 		void sendNotifierOptions(void);
 		void readOptions(void);
 		void setOptionsWidgetsVisability(void);
+		void updateVersionList(void);
 
 	protected:
 		void OnTypeChoosen(wxCommandEvent&);

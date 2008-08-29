@@ -26,9 +26,9 @@
 ##########################################################################
 
 BUILT_SOURCES = apncvslog.c date.c
-#AM_YFLAGS = -d
+AM_YFLAGS = -papnvm
 libapnvm_a_CFLAGS = -std=gnu99 $(AM_CFLAGS)
-
+AM_LFLAGS = -olex.yy.c
 noinst_LIBRARIES = libapnvm.a
 
 libapnvm_a_SOURCES =	\

@@ -1,4 +1,6 @@
 %option nounput
+%option prefix="apnvm_"
+%option noyywrap
 
 %s DESCR REVL1 REVL2 COMMENT
 %x END
@@ -151,6 +153,7 @@ apncvs_empty()
 
 ^=+"\n" {
 	BEGIN(END); /* EOF */
+	return 1;
 }
 
 <DESCR>(.*)\n {
@@ -226,7 +229,7 @@ apncvs_log_parse(FILE *f, struct apncvs_log *log)
 	currev = NULL;
 
 	/* Invoke the parser */
-	yylex();
+	apnvm_lex();
 
 	return (0);
 }

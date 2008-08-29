@@ -383,7 +383,7 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	wxBoxSizer* VersionListSizer;
 	VersionListSizer = new wxBoxSizer( wxVERTICAL );
 	
-	VersionListCtrl = new wxListCtrl( tb_MainAnoubisVersions, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLC_HRULES|wxLC_ICON|wxLC_LIST|wxLC_REPORT );
+	VersionListCtrl = new wxListCtrl( tb_MainAnoubisVersions, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLC_HRULES|wxLC_REPORT );
 	VersionListSizer->Add( VersionListCtrl, 80, wxALL|wxEXPAND, 5 );
 	
 	wxStaticBoxSizer* VersionCommentSizer;
