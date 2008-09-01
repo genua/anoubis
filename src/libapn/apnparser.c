@@ -1487,11 +1487,11 @@ apn_copy_alfrules(struct apn_alfrule *rule)
 
 		newrule->type = hp->type;
 		newrule->id = hp->id;
-		if (rule->scope) {
+		if (hp->scope) {
 			newrule->scope = calloc(1, sizeof(struct apn_scope));
 			if (newrule->scope == NULL)
 				goto errout;
-			*(newrule->scope) = *(rule->scope);
+			*(newrule->scope) = *(hp->scope);
 		} else {
 			newrule->scope = NULL;
 		}
