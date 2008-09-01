@@ -164,6 +164,9 @@ RuleEditorFillTableVisitor::showVar(VarPolicy *, long)
 void
 RuleEditorFillTableVisitor::visitAppPolicy(AppPolicy *appPolicy)
 {
+	/* Never visit the SFS dummy application block itself! */
+	if (appPolicy->getType() == APN_SFS)
+		return;
 	showApp(appPolicy, selectedLine_);
 }
 

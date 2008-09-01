@@ -82,6 +82,9 @@ RuleSetSearchPolicyVisitor::hasMatchingPolicy(void)
 void
 RuleSetSearchPolicyVisitor::visitAppPolicy(AppPolicy *appPolicy)
 {
+	/* Never visit the SFS dummy application block itself! */
+	if (appPolicy->getType() == APN_SFS)
+		return;
 	compareHash(appPolicy);
 	compare((Policy *)appPolicy);
 }

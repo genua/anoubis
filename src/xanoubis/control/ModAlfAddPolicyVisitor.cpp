@@ -101,6 +101,9 @@ ModAlfAddPolicyVisitor::visitAppPolicy(AppPolicy *appPolicy)
 	wxTreeCtrl	*tree;
 	wxString	&treeLabel = *(new wxString(wxT("")));
 
+	/* Never visit the SFS dummy application block itself! */
+	if (appPolicy->getType() == APN_SFS)
+		return;
 	if(appPolicy->getType() == APN_ALF) {
 		/* fill list of all rules */
 		idx = ruleListAppend(appPolicy);

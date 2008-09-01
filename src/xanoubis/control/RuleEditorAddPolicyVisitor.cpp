@@ -58,6 +58,9 @@ RuleEditorAddPolicyVisitor::appendPolicy(Policy *policy)
 void
 RuleEditorAddPolicyVisitor::visitAppPolicy(AppPolicy *appPolicy)
 {
+	/* Never visit the SFS dummy application block itself! */
+	if (appPolicy->getType() == APN_SFS)
+		return;
 	if (appPolicy->getType() == APN_ALF) {
 		showApp(appPolicy, appendPolicy(appPolicy));
 	}

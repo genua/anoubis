@@ -116,6 +116,9 @@ RuleEditorChecksumVisitor::hasMismatch(void)
 void
 RuleEditorChecksumVisitor::visitAppPolicy(AppPolicy *appPolicy)
 {
+	/* Never visit the SFS dummy application block itself! */
+	if (appPolicy->getType() == APN_SFS)
+		return;
 	if (state_ == -1)
 		compare((Policy *)appPolicy);
 	else

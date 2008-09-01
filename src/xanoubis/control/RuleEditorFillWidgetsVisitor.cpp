@@ -361,6 +361,9 @@ RuleEditorFillWidgetsVisitor::visitAppPolicy(AppPolicy *appPolicy)
 	wxString        regHash;
 	wxString	unknown;
 
+	/* Never visit the SFS dummy application block itself! */
+	if (appPolicy->getType() == APN_SFS)
+		return;
 	clear();
 
 	ruleEditor_->applicationNbPanel->Enable();
