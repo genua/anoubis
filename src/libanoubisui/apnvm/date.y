@@ -1,5 +1,5 @@
 %{
-/*	$Id: 8dd7ca,v 1.1 2008/08/27 10:42:15 fritsch Exp $	*/
+/*	$Id: 8dd7ca,v 1.2 2008/08/29 12:34:09 ehrhardt Exp $	*/
 /*	$OpenBSD: date.y,v 1.18 2008/02/16 01:00:00 cnst Exp $	*/
 
 /*

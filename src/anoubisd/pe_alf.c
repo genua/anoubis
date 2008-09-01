@@ -302,12 +302,26 @@ pe_decide_alffilt(struct pe_proc *proc, struct apn_rule *rule,
 		    msg->op);
 		/*
 		 * Operation
+		 * NOTE CEH: Currently TCP SEND and TCP RECEIVE events
+		 * NOTE CEH: do not reach this point at all. However, if
+		 * NOTE CEH: they do so again in the future, they should
+		 * NOTE CEH: be treated by the corresponding CONNECT/ACCEPT
+		 * NOTE CEH: rules. This is the reason for the two
+		 * NOTE CEH: SENDMSG and RECVMSG cases below.
 		 */
 		switch (msg->op) {
 		case ALF_ANY:
 			/* XXX HSH ? */
 			continue;
 
+		case ALF_SENDMSG:
+			if (msg->protocol == IPPROTO_TCP)
+				break;
+			/*
+			 * Treat no TCP SENDMSG packets according to the
+			 * proper SEND rule.
+			 */
+			/* FALLTHROUGH */
 		case ALF_CONNECT:
 			if (hp->rule.afilt.filtspec.netaccess != APN_CONNECT &&
 			    hp->rule.afilt.filtspec.netaccess != APN_SEND &&
@@ -315,17 +329,20 @@ pe_decide_alffilt(struct pe_proc *proc, struct apn_rule *rule,
 				continue;
 			break;
 
+		case ALF_RECVMSG:
+			if (msg->protocol == IPPROTO_TCP)
+				break;
+			/*
+			 * Treat non TCP RECVMSG packets according to the
+			 * proper RECEIVE rule.
+			 */
+			/* FALLTHROUGH */
 		case ALF_ACCEPT:
 			if (hp->rule.afilt.filtspec.netaccess != APN_ACCEPT &&
 			    hp->rule.afilt.filtspec.netaccess != APN_RECEIVE &&
 			    hp->rule.afilt.filtspec.netaccess != APN_BOTH)
 				continue;
 			break;
-
-		case ALF_SENDMSG:
-		case ALF_RECVMSG:
-			break;
-
 		default:
 			continue;
 		}
