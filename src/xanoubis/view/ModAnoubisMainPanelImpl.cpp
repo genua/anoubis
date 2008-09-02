@@ -116,6 +116,8 @@ ModAnoubisMainPanelImpl::~ModAnoubisMainPanelImpl(void)
 	    m_spinAlertNotifyTimeout->GetValue());
 	userOptions_->Write(wxT("/Options/AutoChecksumCheck"),
 	    controlAutoCheck->IsChecked());
+	userOptions_->Write(wxT("/Options/AutoConnect"),
+	    autoConnectBox->IsChecked());
 }
 
 void
@@ -128,6 +130,7 @@ ModAnoubisMainPanelImpl::readOptions(void)
 	bool NoAlertTimeout = false;
 	int AlertTimeout = 10;
 	bool AutoChecksum = false;
+	bool AutoConnect = false;
 
 	/* read the stored Notifications Options */
 	userOptions_->Read(wxT("/Options/SendEscalations"), &SendEscalation);
@@ -141,6 +144,7 @@ ModAnoubisMainPanelImpl::readOptions(void)
 	userOptions_->Read(wxT("/Options/AlertTimeout"), &AlertTimeout);
 
 	userOptions_->Read(wxT("/Options/AutoChecksumCheck"), &AutoChecksum);
+	userOptions_->Read(wxT("/Options/AutoConnect"), &AutoConnect);
 
 	/* restore the stored Notifications Options */
 	cb_SendEscalations->SetValue(SendEscalation);
@@ -155,6 +159,9 @@ ModAnoubisMainPanelImpl::readOptions(void)
 	wxCommandEvent showEvent(anEVT_SEND_AUTO_CHECK);
 	showEvent.SetInt(AutoChecksum);
 	wxGetApp().sendEvent(showEvent);
+
+	autoConnectBox->SetValue(AutoConnect);
+	wxGetApp().connectCommunicator(AutoConnect);
 
 	/* set widgets visability and send options event */
 	setOptionsWidgetsVisability();
@@ -227,7 +234,7 @@ ModAnoubisMainPanelImpl::updateVersionList(void)
 	/* XXX ch: don't use hard-coded path like this. */
 	repository = wxGetApp().getDataDir() + wxT("/.xanoubis/apnvmroot");
 	userName = wxGetUserId();
-	 
+
 	/* Initialize version management */
 	vm = apnvm_init(repository.fn_str(), userName.fn_str());
 	if (vm == NULL) {

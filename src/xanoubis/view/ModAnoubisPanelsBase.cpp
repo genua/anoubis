@@ -312,7 +312,7 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	
 	sbSizer3->Add( fgSizer2, 1, wxEXPAND, 5 );
 	
-	bSizer13->Add( sbSizer3, 30, wxEXPAND, 5 );
+	bSizer13->Add( sbSizer3, 0, wxEXPAND, 5 );
 	
 	wxStaticBoxSizer* sbSizer4;
 	sbSizer4 = new wxStaticBoxSizer( new wxStaticBox( tb_MainAnoubisOptions, -1, _("Alert Notifier Settings") ), wxVERTICAL );
@@ -354,7 +354,7 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	
 	sbSizer4->Add( fgSizer3, 1, wxEXPAND, 5 );
 	
-	bSizer13->Add( sbSizer4, 30, wxEXPAND, 5 );
+	bSizer13->Add( sbSizer4, 0, wxEXPAND, 5 );
 	
 	wxStaticBoxSizer* sbSizer12;
 	sbSizer12 = new wxStaticBoxSizer( new wxStaticBox( tb_MainAnoubisOptions, -1, _("Rule Editor") ), wxVERTICAL );
@@ -368,7 +368,21 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	
 	sbSizer12->Add( bSizer19, 1, wxEXPAND, 5 );
 	
-	bSizer13->Add( sbSizer12, 30, wxEXPAND, 5 );
+	bSizer13->Add( sbSizer12, 0, wxEXPAND, 5 );
+	
+	wxStaticBoxSizer* sbSizer6;
+	sbSizer6 = new wxStaticBoxSizer( new wxStaticBox( tb_MainAnoubisOptions, -1, _("Connection") ), wxVERTICAL );
+	
+	wxBoxSizer* bSizer191;
+	bSizer191 = new wxBoxSizer( wxVERTICAL );
+	
+	autoConnectBox = new wxCheckBox( tb_MainAnoubisOptions, wxID_ANY, _("Auto Connect to Daemon"), wxDefaultPosition, wxDefaultSize, 0 );
+	
+	bSizer191->Add( autoConnectBox, 0, wxALL, 5 );
+	
+	sbSizer6->Add( bSizer191, 1, wxEXPAND, 5 );
+	
+	bSizer13->Add( sbSizer6, 0, wxEXPAND, 5 );
 	
 	sz_MainAnoubisOptions->Add( bSizer13, 1, wxEXPAND, 5 );
 	

@@ -124,6 +124,7 @@ class ModAnoubisMainPanelBase : public wxPanel
 		wxSpinCtrl* m_spinAlertNotifyTimeout;
 		wxStaticText* tx_AlertNotifyTimeoutLabel;
 		wxCheckBox* controlAutoCheck;
+		wxCheckBox* autoConnectBox;
 		wxPanel* tb_MainAnoubisVersions;
 		wxListCtrl* VersionListCtrl;
 		wxTextCtrl* VersionShowCommentTextCtrl;
