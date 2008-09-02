@@ -51,6 +51,7 @@ xanoubis_CPPFLAGS = \
 	-I$(top_srcdir)/$(xanoubisdir)/model \
 	-I$(top_srcdir)/$(xanoubisdir)/view  \
 	-I$(top_srcdir)/$(xanoubisdir)/control \
+	-I$(top_srcdir)/$(xanoubisdir)/pattern \
 	$(WX_CPPFLAGS) \
 	$(AM_CPPFLAGS)
 
@@ -247,8 +248,6 @@ xanoubis_SOURCES= \
 	control/CommunicatorCtrl.h \
 	control/Communicator.cpp \
 	control/Communicator.h \
-	control/PolicyVisitor.cpp \
-	control/PolicyVisitor.h \
 	control/RuleEditorAddPolicyVisitor.cpp \
 	control/RuleEditorAddPolicyVisitor.h \
 	control/RuleEditorFillWidgetsVisitor.cpp \
@@ -263,6 +262,10 @@ xanoubis_SOURCES= \
 	control/RuleSetSearchPolicyVisitor.h \
 	control/RuleEditorChecksumVisitor.cpp \
 	control/RuleEditorChecksumVisitor.h \
+	pattern/PolicyVisitor.cpp \
+	pattern/PolicyVisitor.h \
+	pattern/Singleton.cpp \
+	pattern/Singleton.h \
 	ctassert.h \
 	main.cpp \
 	main.h
