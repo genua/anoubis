@@ -586,6 +586,12 @@ AnoubisGuiApp::getCurrentProfileName(void)
 }
 
 bool
+AnoubisGuiApp::showingMainFrame(void)
+{
+	return (mainFrame->isShowing());
+}
+
+bool
 AnoubisGuiApp::hasRuleSet(void)
 {
 	if (userRuleSet_ == NULL)

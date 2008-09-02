@@ -138,7 +138,12 @@ TrayIcon::OnLeftButtonClick(wxTaskBarIconEvent&)
 		this->systemNotifyCallback();
 	} else {
 		wxCommandEvent  showEvent(anEVT_MAINFRAME_SHOW);
-		showEvent.SetInt(true);
+
+		if (wxGetApp().showingMainFrame())
+			showEvent.SetInt(false);
+		else
+			showEvent.SetInt(true);
+
 		wxGetApp().sendEvent(showEvent);
 	}
 }

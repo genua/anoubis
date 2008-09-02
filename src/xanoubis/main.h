@@ -130,6 +130,7 @@ class AnoubisGuiApp : public wxApp
 		bool		 profileFromDaemonToDisk(wxString);
 		wxString	 getCurrentProfileName(void);
 		bool		 hasRuleSet(void);
+		bool		 showingMainFrame(void);
 };
 
 DECLARE_APP(AnoubisGuiApp)

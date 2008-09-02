@@ -49,6 +49,7 @@
 MainFrame::MainFrame(wxWindow *parent) : MainFrameBase(parent)
 {
 	shortcuts_ = new AnShortcuts(this);
+	show_ = true;
 	messageAlertCount_ = 0;
 	messageEscalationCount_ = 0;
 	aboutIcon_ = wxGetApp().loadIcon(wxT("ModAnoubis_black_48.png"));
@@ -135,9 +136,15 @@ MainFrame::onLogViewerShow(wxCommandEvent& event)
 }
 
 void
-MainFrame::onMainFrameShow(wxCommandEvent&)
+MainFrame::onMainFrameShow(wxCommandEvent& event)
 {
-	this->Show();
+	if (event.GetInt()) {
+		this->Show();
+		show_ = true;
+	} else {
+		this->Hide();
+		show_ = false;
+	}
 }
 
 void
@@ -264,6 +271,7 @@ void
 MainFrame::OnMbFileCloseSelect(wxCommandEvent&)
 {
 	this->Hide();
+	show_ = false;
 }
 
 void
@@ -355,6 +363,7 @@ void
 MainFrame::OnClose(wxCloseEvent&)
 {
 	this->Hide();
+	show_ = false;
 }
 
 void
@@ -389,4 +398,10 @@ MainFrame::OnAnoubisOptionShow(wxCommandEvent& event)
 	wxCommandEvent selectEvent(wxEVT_COMMAND_MENU_SELECTED, id);
 	selectEvent.SetInt(id);
 	this->AddPendingEvent(selectEvent);
+}
+
+bool
+MainFrame::isShowing(void)
+{
+	return (show_);
 }

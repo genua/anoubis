@@ -47,6 +47,7 @@ class MainFrame : public MainFrameBase
 		AnShortcuts *shortcuts_;
 		unsigned int     messageAlertCount_;
 		unsigned int     messageEscalationCount_;
+		bool		 show_;
 		wxIcon		*aboutIcon_;
 
 		void setMessageString(void);
@@ -86,6 +87,7 @@ class MainFrame : public MainFrameBase
 
 		void setDaemonConnection(bool);
 		void setConnectionString(wxString);
+		bool isShowing();
 };
 
 #endif /* __MAINFRAME_H__ */
