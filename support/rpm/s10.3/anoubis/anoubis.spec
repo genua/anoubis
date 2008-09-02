@@ -26,6 +26,7 @@ BuildRequires:	libevent
 BuildRequires:	wxGTK-devel >= 2.8
 BuildRequires:	libattr-devel
 BuildRequires:	libstdc++-devel
+BuildRequires:	flex
 
 
 # long descpritive part of the packaged software goes here
