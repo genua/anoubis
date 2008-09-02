@@ -267,6 +267,21 @@ xanoubis_SOURCES= \
 	main.cpp \
 	main.h
 
+#
+# For unit tests of the components of xanoubis, we build a shared library.
+# This library is for testing purpose only. We tear apart the unittest and
+# the test candidate. Thus we are able to run tests and baseline-tests
+# propperly.
+# To reduce the compile time and to test what's in the final product, we
+# reuse the already compiled objects of xanoubis. Ensure those are
+# built with -fPIC.
+#
+noinst_PROGRAMS = libGUIcomponents.so
+libGUIcomponents_so_SOURCES =
+libGUIcomponents_so_DEPENDENCIES = $(xanoubis_OBJECTS)
+libGUIcomponents_so_LINK = \
+	$(CXX) -fstack-protector -shared -Wl,-soname,$@ -o $@ $^
+
 # XXX by ch: the target for po files is experimental and
 # will not been done automatically
 %.po:
