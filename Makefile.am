@@ -65,7 +65,6 @@ if HAVE_FLAWFINDER
 REPORTS += flawfinder.report
 flawfinder: flawfinder.report
 flawfinder.report:
-	find $(top_builddir) -name \*_flawfinder -exec rm {} \;
 	for t in $(SUBDIRS); do cd $$t && make flawfinder && cd ..; done
 	cat `find $(top_builddir) -name \*_flawfinder` > $@
 
@@ -75,7 +74,6 @@ if HAVE_SPLINT
 REPORTS += splint.report
 splint: splint.report
 splint.report:
-	find $(top_builddir) -name \*_splint -exec rm {} \;
 	for t in $(SUBDIRS); do cd $$t && make splint && cd ..; done
 	cat `find $(top_builddir) -name \*_splint` > $@
 endif
@@ -84,7 +82,6 @@ if HAVE_LINT
 REPORTS += lint.report
 lint: lint.report
 lint.report:
-	find $(top_builddir) -name \*_lint -exec rm {} \;
 	for t in $(SUBDIRS); do cd $$t && make lint && cd ..; done
 	cat `find $(top_builddir) -name \*_lint` > $@
 endif
