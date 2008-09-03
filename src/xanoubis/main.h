@@ -58,6 +58,7 @@
 #include "Module.h"
 #include "TrayIcon.h"
 #include "PolicyRuleSet.h"
+#include "Debug.h"
 
 #define ANOUBISD_SOCKETNAME	"/var/run/anoubisd.sock"
 

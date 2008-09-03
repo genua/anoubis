@@ -211,6 +211,7 @@ void
 AnoubisGuiApp::status(wxString msg)
 {
 	mainFrame->SetStatusText(msg, 0);
+	Debug::instance()->log(msg, DEBUG_STATUS);
 }
 
 void
@@ -220,6 +221,8 @@ AnoubisGuiApp::log(wxString msg)
 	wxCommandEvent	 event(anEVT_ADD_NOTIFICATION);
 
 	notify = new LogNotify(msg);
+	Debug::instance()->log(msg, DEBUG_LOG);
+
 	event.SetClientObject((wxClientData*)notify);
 	sendEvent(event);
 	/*
@@ -227,6 +230,7 @@ AnoubisGuiApp::log(wxString msg)
 	 * it's still alive for the receiver. The notify will be stored by
 	 * ModAnoubis and been deleted by it.
 	 */
+
 }
 
 void
@@ -236,6 +240,8 @@ AnoubisGuiApp::alert(wxString msg)
 	wxCommandEvent	 event(anEVT_ADD_NOTIFICATION);
 
 	notify = new AlertNotify(msg);
+	Debug::instance()->log(msg, DEBUG_ALERT);
+
 	event.SetClientObject((wxClientData*)notify);
 	sendEvent(event);
 	/*
@@ -264,6 +270,14 @@ AnoubisGuiApp::OnInitCmdLine(wxCmdLineParser& parser)
 			wxCMD_LINE_VAL_STRING,
 			wxCMD_LINE_PARAM_OPTIONAL
 		}, {
+			wxCMD_LINE_OPTION,
+			wxT("d"),
+			wxT("debug"),
+			_("Debug output with \'num\' als level"),
+			wxCMD_LINE_VAL_NUMBER,
+			wxCMD_LINE_PARAM_OPTIONAL
+
+		}, {
 			wxCMD_LINE_NONE,
 			NULL,
 			NULL,
@@ -280,8 +294,18 @@ AnoubisGuiApp::OnInitCmdLine(wxCmdLineParser& parser)
 bool
 AnoubisGuiApp::OnCmdLineParsed(wxCmdLineParser& parser)
 {
+	long int	debug_level = 0;
+	wxString	mesg;
+
 	if (!parser.Found(wxT("s"), &socketParam_)) {
 		socketParam_ = wxT(ANOUBISD_SOCKETNAME);
+	}
+
+	if (parser.Found(wxT("d"), &debug_level)) {
+		Debug::instance()->setLevel(debug_level);
+		mesg = wxT("Debug enabled with level ");
+		mesg += wxString::Format(_T("%ld"), debug_level);
+		Debug::instance()->log(mesg, DEBUG_ALERT);
 	}
 
 	return (true);

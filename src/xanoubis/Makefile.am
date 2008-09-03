@@ -248,6 +248,8 @@ xanoubis_SOURCES= \
 	control/CommunicatorCtrl.h \
 	control/Communicator.cpp \
 	control/Communicator.h \
+	control/Debug.h \
+	control/Debug.cpp \
 	control/RuleEditorAddPolicyVisitor.cpp \
 	control/RuleEditorAddPolicyVisitor.h \
 	control/RuleEditorFillWidgetsVisitor.cpp \
