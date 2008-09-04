@@ -25,36 +25,83 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <ctype.h>
+#include <string.h>
 #include <stdlib.h>
-#include <check.h>
 
-extern TCase *apnvm_tc_cvs(void);
-extern TCase *apnvm_tc_vm(void);
-extern TCase *apnvm_tc_md(void);
+#include "apnvmutil.h"
 
-static Suite*
-apnvm_testsuite(void)
+char*
+apnvm_trim(char *s)
 {
-	Suite *s = suite_create("Suite");
+	char *p = s;
+	char *q;
 
-	suite_add_tcase(s, apnvm_tc_cvs());
-	suite_add_tcase(s, apnvm_tc_vm());
-	suite_add_tcase(s, apnvm_tc_md());
+	/* Trim leading whitespaces */
+	while (isspace(*p) && *p != '\0')
+		p++;
+
+	/* Trim trailing whitespaces */
+	q = s + strlen(s) - 1; /* Points to the last character */
+	while (isspace(*q) && (q != s)) {
+		*q = '\0';
+		q--;
+	}
+
+	return p;
+}
+
+char *
+apnvm_emptystring()
+{
+	char *s = malloc(1);
+	*s = '\0';
 
 	return (s);
 }
 
-int
-main (void)
+char *
+apnvm_append(char *s, const char *l, size_t n)
 {
-	int number_failed = -1;
+	size_t	ns, nl;
+	char	*r;
 
-	Suite *suite = apnvm_testsuite();
-	SRunner *suiterunner = srunner_create(suite);
+	/* Len of s */
+	ns = (s != NULL) ? strlen(s) : 0;
 
-	srunner_run_all(suiterunner, CK_NORMAL);
-	number_failed = srunner_ntests_failed(suiterunner);
-	srunner_free(suiterunner);
+	/* Len of l */
+	if (l != NULL)
+		nl= (strlen(l) < n) ? strlen(l) : n;
+	else
+		nl = 0;
 
-	return ((number_failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE);
+	r = realloc(s, ns + nl + 1);
+
+	if (ns > 0)
+		strncat(r, l, nl);
+	else
+		strncpy(r, l, nl);
+
+	return (r);
+}
+
+char *
+apnvm_appendline(char *s, const char *l)
+{
+	char	*newstr	= s;
+	size_t	oldsize, newsize;
+
+	oldsize = (s != NULL) ? strlen(s) : 0;
+	newsize = oldsize + ((l != NULL) ? strlen(l) : 0) + 2;
+
+	newstr = realloc(newstr, newsize);
+
+	if (oldsize > 0) {
+		strcat(newstr, "\n");
+		strcat(newstr, l);
+	}
+	else
+		strcpy(newstr, l);
+
+	return (newstr);
 }

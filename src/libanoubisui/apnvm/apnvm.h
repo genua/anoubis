@@ -45,7 +45,7 @@ struct apnvm_version {
 TAILQ_HEAD(apnvm_version_head, apnvm_version);
 
 typedef enum {
-	APNVM_OK,	/* The operation was successful */
+	APNVM_OK = 0,	/* The operation was successful */
 	APNVM_VMS,	/* An error was encountered from the underlaying */
 			/* version management system */
 	APNVM_ARG	/* Invalid argument */

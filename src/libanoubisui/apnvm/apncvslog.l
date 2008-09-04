@@ -38,6 +38,7 @@
 #include <string.h>
 
 #include "apncvs.h"
+#include "apnvmutil.h"
 
 #define ECHO if (fwrite(yytext, yyleng, 1, yyout) != 1) {}
 
@@ -46,98 +47,53 @@ extern time_t cvs_date_parse(const char*); /* Defined in date.y */
 static struct apncvs_log *cvslog; /* Structure filled by the parser */
 static struct apncvs_rev *currev; /* Current revision */
 
-static char*
-apncvs_trim(char *s)
-{
-	char *p = s;
-	char *q;
-
-	/* Trim leading whitespaces */
-	while (isspace(*p) && *p != '\0')
-		p++;
-
-	/* Trim trailing whitespaces */
-	q = s + strlen(s) - 1; /* Points to the last character */
-	while (isspace(*q) && (q != s)) {
-		*q = '\0';
-		q--;
-	}
-
-	return p;
-}
-
-static char*
-apncvs_appendline(char *s, const char *l)
-{
-	char	*newstr	= s;
-	size_t	oldsize	= strlen(s);
-	size_t	newsize	= oldsize + strlen(l) + 1;
-
-	newstr = realloc(newstr, newsize);
-
-	if (oldsize > 0)
-		strcat(newstr, "\n");
-
-	strcat(newstr, l);
-
-	return (newstr);
-}
-
-static char*
-apncvs_empty()
-{
-	char *s = malloc(1);
-	*s = '\0';
-
-	return (s);
-}
-
 %}
 
 %%
 
 ^"RCS file:".*$ {
-	cvslog->rcs_file = strdup(apncvs_trim(yytext + 9));
+	cvslog->rcs_file = strdup(apnvm_trim(yytext + 9));
 }
 
 ^"Working file:".*$ {
-	cvslog->working_file = strdup(apncvs_trim(yytext + 13));
+	cvslog->working_file = strdup(apnvm_trim(yytext + 13));
 }
 
 ^"head:".*$ {
-	cvslog->head = strdup(apncvs_trim(yytext + 5));
+	cvslog->head = strdup(apnvm_trim(yytext + 5));
 }
 
 ^"branch:".*$ {
-	cvslog->branch = strdup(apncvs_trim(yytext + 7));
+	cvslog->branch = strdup(apnvm_trim(yytext + 7));
 }
 
 ^"locks:".*$ {
-	cvslog->locks = strdup(apncvs_trim(yytext + 6));
+	cvslog->locks = strdup(apnvm_trim(yytext + 6));
 }
 
 ^"access list:".*$ {
-	cvslog->access_list = strdup(apncvs_trim(yytext + 12));
+	cvslog->access_list = strdup(apnvm_trim(yytext + 12));
 }
 
 ^"symbolic names:".*$ {
-	cvslog->symbolic_names = strdup(apncvs_trim(yytext + 15));
+	cvslog->symbolic_names = strdup(apnvm_trim(yytext + 15));
 }
 
 ^"keyword substitution:".*$ {
-	cvslog->keyword_substitution = strdup(apncvs_trim(yytext + 21));
+	cvslog->keyword_substitution = strdup(apnvm_trim(yytext + 21));
 }
 
 ^"total revisions: "([0-9]*) {
-	cvslog->total_revisions = atoi(apncvs_trim(yytext + 17));
+	cvslog->total_revisions = atoi(apnvm_trim(yytext + 17));
 }
 
 "selected revisions: "([0-9]*)$ {
-	cvslog->selected_revisions = atoi(apncvs_trim(yytext + 20));
+	cvslog->selected_revisions = atoi(apnvm_trim(yytext + 20));
 }
 
 ^"description:\n" {
-	cvslog->description = apncvs_empty(); /* Prepare the description */
+	/* Prepare the description */
+	cvslog->description = apnvm_emptystring();
 
 	BEGIN(DESCR); /* The following lines contains the description */
 }
@@ -158,13 +114,13 @@ apncvs_empty()
 
 <DESCR>(.*)\n {
 	/* Append a line to the description-field */
-	char *line = apncvs_trim(yytext);
-	cvslog->description = apncvs_appendline(cvslog->description, line);
+	char *line = apnvm_trim(yytext);
+	cvslog->description = apnvm_appendline(cvslog->description, line);
 }
 
 <REVL1>(.*)\n {
 	/* strlen("revision") = 8 */
-	currev->revno = strdup(apncvs_trim(yytext + 8));
+	currev->revno = strdup(apnvm_trim(yytext + 8));
 
 	BEGIN(REVL2); /* Next line is second line of revision */
 }
@@ -174,7 +130,7 @@ apncvs_empty()
 	 * The second line contains a semicolon-separated list of
 	 * key-value-pairs
 	 */
-	char *str = apncvs_trim(yytext);
+	char *str = apnvm_trim(yytext);
 	char *colon;
 
 	colon = index(str, ':');
@@ -182,8 +138,8 @@ apncvs_empty()
 		char *key, *value;
 
 		*colon = '\0';
-		key = apncvs_trim(str);
-		value = apncvs_trim(colon + 1);
+		key = apnvm_trim(str);
+		value = apnvm_trim(colon + 1);
 
 		if (strcmp(key, "date") == 0)
 			currev->date = cvs_date_parse(value);
@@ -198,16 +154,16 @@ apncvs_empty()
 	/* End of second line of a revision */
 
 	/* Best time to prepare revision comment */
-	currev->comment = apncvs_empty();
+	currev->comment = apnvm_emptystring();
 
 	BEGIN(COMMENT); /* Next you have the comment of the revision */
 }
 
 <COMMENT>(.*)\n {
 	/* Append line to revision-comment */
-	char *line = apncvs_trim(yytext);
+	char *line = apnvm_trim(yytext);
 
-	currev->comment = apncvs_appendline(currev->comment, line);
+	currev->comment = apnvm_appendline(currev->comment, line);
 }
 
 \n {}

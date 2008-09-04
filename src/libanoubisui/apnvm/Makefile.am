@@ -25,49 +25,63 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ##########################################################################
 
-BUILT_SOURCES = apncvslog.c date.c
+BUILT_SOURCES = apncvslog.c date.c apnmd.c
+
 AM_YFLAGS = -papnvm
-libapnvm_a_CFLAGS = -std=gnu99 $(AM_CFLAGS)
 AM_LFLAGS = -olex.yy.c
+
 noinst_LIBRARIES = libapnvm.a
 
 libapnvm_a_SOURCES =	\
 	apncvs.c	\
 	apncvslog.l	\
+	apnmd.l		\
 	apnvm.c		\
+	apnvmutil.c	\
 	date.y
 
-noinst_HEADERS = apncvs.h apnvm.h
+noinst_HEADERS = apncvs.h apnmd.h apnvm.h apnvmutil.h
 
 bsdcompatdir   = src/bsdcompat
 libbsdcompat   = $(top_builddir)/$(bsdcompatdir)/libbsdcompat.a
 
-libapnvm_a_CFLAGS += -I$(top_builddir)/src -I$(top_srcdir)/include
-libapnvm_a_LIBADD =
+# Extra includes & dependencies
+apnvm_includes = -I$(top_builddir)/src -I$(top_srcdir)/include
+apnvm_dependencies =
 
 if NEEDBSDCOMPAT
-libapnvm_a_CFLAGS += -I$(top_srcdir)/$(bsdcompatdir)
+apnvm_includes += -I$(top_srcdir)/$(bsdcompatdir)
+apnvm_dependencies += $(libbsdcompat)
 endif
 
-libapnvm_a_CPPFLAGS = $(libapnvm_a_CFLAGS)
+libapnvm_a_CFLAGS = -std=gnu99 $(AM_CFLAGS)
+libapnvm_a_CPPFLAGS = $(apnvm_includes) $(AM_CPPFLAGS)
+libapnvm_a_DEPENDENCIES	= $(apnvm_dependencies)
+libapnvm_a_LIBADD =
 
 libapnvm_a_SOURCES_lint =	\
 	apncvs.c_lint		\
 	apncvs.h_lint		\
 	apnvm.c_lint		\
-	apnvm.h_lint
+	apnvm.h_lint		\
+	apnvmutil.c_lint	\
+	apnvmutil.h_lint
 
 libapnvm_a_SOURCES_splint =	\
 	apncvs.c_splint		\
 	apncvs.h_splint		\
 	apnvm.c_splint		\
-	apnvm.h_splint
+	apnvm.h_splint		\
+	apnvmutil.c_splint	\
+	apnvmutil.h_splint
 
 libapnvm_a_SOURCES_flawfinder =	\
 	apncvs.c_flawfinder	\
 	apncvs.h_flawfinder	\
 	apnvm.c_flawfinder	\
-	apnvm.h_flawfinder
+	apnvm.h_flawfinder	\
+	apnvmutil.c_flawfinder	\
+	apnvmutil.h_flawfinder
 
 flawfinder_FLAGS=
 splint_FLAGS=$(libapnvm_a_CPPFLAGS)
