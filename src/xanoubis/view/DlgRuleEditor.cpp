@@ -122,12 +122,12 @@ AddrLine::add(wxSizer *sizer, size_t index)
 void
 AddrLine::remove(void)
 {
-	sizer_->Remove(lead_);
-	sizer_->Remove(addr_);
-	sizer_->Remove(delimiter_);
-	sizer_->Remove(net_);
-	sizer_->Remove(remove_);
-	sizer_->Remove(add_);
+	sizer_->Detach(lead_);
+	sizer_->Detach(addr_);
+	sizer_->Detach(delimiter_);
+	sizer_->Detach(net_);
+	sizer_->Detach(remove_);
+	sizer_->Detach(add_);
 	sizer_->Fit(parent_);
 	sizer_->Layout();
 }
