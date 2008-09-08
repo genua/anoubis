@@ -486,7 +486,9 @@ AnoubisGuiApp::importPolicyRuleSet(int prio, struct apn_ruleset *rule)
 	if (onInitProfile_) {
 		onInitProfile_ = false;
 		if (!userOptions_->Read(wxT("Anoubis/Profile"), &profile_)) {
-			if (userRuleSet_->isEmpty()) {
+			if (userRuleSet_ == NULL) {
+				profile_ = wxT("none");
+			} else if (userRuleSet_->isEmpty()) {
 				profile_ = wxT("admin");
 				profileFromDiskToDaemon(profile_);
 			} else {
