@@ -165,7 +165,7 @@ pe_handle_sfsexec(struct eventdev_hdr *hdr)
 		log_warnx("pe_handle_sfsexec: empty header");
 		return (NULL);
 	}
-	if ((unsigned short)hdr->msg_size < (sizeof(struct eventdev_hdr) +
+	if (hdr->msg_size < (sizeof(struct eventdev_hdr) +
 	    sizeof(struct sfs_open_message))) {
 		log_warnx("pe_handle_sfsexec: short message");
 		return (NULL);
@@ -188,7 +188,7 @@ pe_handle_process(struct eventdev_hdr *hdr)
 		log_warnx("pe_handle_process: empty header");
 		return (NULL);
 	}
-	if ((unsigned short)hdr->msg_size < (sizeof(struct eventdev_hdr) +
+	if (hdr->msg_size < (sizeof(struct eventdev_hdr) +
 	    sizeof(struct ac_process_message))) {
 		log_warnx("pe_handle_process: short message");
 		return (NULL);
@@ -223,7 +223,7 @@ pe_handle_alf(struct eventdev_hdr *hdr)
 		log_warnx("pe_handle_alf: empty header");
 		return (NULL);
 	}
-	if ((unsigned short)hdr->msg_size < (sizeof(struct eventdev_hdr) +
+	if (hdr->msg_size < (sizeof(struct eventdev_hdr) +
 	    sizeof(struct alf_event))) {
 		log_warnx("pe_handle_alf: short message");
 		return (NULL);
@@ -260,7 +260,7 @@ pe_handle_sfs(anoubisd_msg_sfsopen_t *sfsmsg)
 		return (NULL);
 	}
 	hdr = (struct eventdev_hdr *)&sfsmsg->hdr;
-	if ((unsigned short)hdr->msg_size < (sizeof(struct eventdev_hdr) +
+	if (hdr->msg_size < (sizeof(struct eventdev_hdr) +
 	    sizeof(struct sfs_open_message))) {
 		log_warnx("pe_handle_sfs: short message");
 		return (NULL);

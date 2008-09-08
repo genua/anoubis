@@ -106,7 +106,7 @@ pe_decide_alf(struct pe_proc *proc, struct eventdev_hdr *hdr)
 		log_warnx("pe_decide_alf: empty header");
 		return (NULL);
 	}
-	if ((unsigned short)hdr->msg_size < (sizeof(struct eventdev_hdr) +
+	if (hdr->msg_size < (sizeof(struct eventdev_hdr) +
 	    sizeof(struct alf_event))) {
 		log_warnx("pe_decide_alf: short message");
 		return (NULL);
