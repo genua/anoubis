@@ -49,11 +49,6 @@
 #include <sys/types.h>
 #include "apn.h"
 
-/* Implemented in parse.y */
-extern int	parse_rules(const char *, struct apn_ruleset *);
-extern int	parse_rules_iovec(const char *, struct iovec *, int count,
-		    struct apn_ruleset *);
-
 /* Only for internal use */
 static int	apn_print_app(struct apn_app *, FILE *);
 static int	apn_print_alfrule(struct apn_alfrule *, int, FILE *);
@@ -121,7 +116,7 @@ __apn_parse_common(const char *filename, struct apn_ruleset **rsp, int flags)
 	TAILQ_INIT(&rs->var_queue);
 	TAILQ_INIT(&rs->err_queue);
 	rs->flags = flags;
-	rs->maxid = 0;
+	rs->maxid = 1;
 	*rsp = rs;
 
 	return 0;
@@ -181,6 +176,24 @@ apn_hash_equal(int type, const u_int8_t *h1, const u_int8_t *h2)
 	return (memcmp(h1, h2, len) == 0);
 }
 
+static int
+apn_chain_contains_id_alf(struct apn_alfrule *rule, int id)
+{
+	for (; rule; rule = rule->next)
+		if (rule->id && rule->id == id)
+			return 1;
+	return 0;
+}
+
+static int
+apn_chain_contains_id_sfs(struct apn_sfsrule *rule, int id)
+{
+	for (; rule; rule = rule->next)
+		if (rule->id && rule->id == id)
+			return 1;
+	return 0;
+}
+
 /*
  * Add a rule or a list of rules to the ALF ruleset.
  *
@@ -197,6 +210,7 @@ apn_add_alfrule(struct apn_rule *rule, struct apn_ruleset *ruleset,
 {
 	int ret = 0;
 	struct apn_rule *tmp;
+	struct apn_alfrule *arule;
 
 	if (ruleset == NULL || rule == NULL)
 		return (1);
@@ -220,6 +234,28 @@ apn_add_alfrule(struct apn_rule *rule, struct apn_ruleset *ruleset,
 		goto duplicate;
 	}
 
+	/*
+	 * Issue an error if the ruleset has non-zero IDs that are already
+	 * in use or if the ruleset contains duplicate IDs.
+	 */
+	arule = rule->rule.alf;
+	if (rule->id) {
+		if (!apn_valid_id(ruleset, rule->id))
+			goto invalidid;
+		if (apn_chain_contains_id_alf(arule, rule->id))
+			goto invalidid;
+		if (arule->id >= ruleset->maxid)
+			ruleset->maxid = arule->id + 1;
+	}
+	for (; arule; arule = arule->next) {
+		if (arule->id == 0)
+			continue;
+		if (!apn_valid_id(ruleset, arule->id))
+			goto invalidid;
+		if (apn_chain_contains_id_alf(arule->next, arule->id))
+			goto invalidid;
+	}
+
 	TAILQ_INSERT_TAIL(&ruleset->alf_queue, rule, entry);
 
 	if (ruleset->flags & APN_FLAG_VERBOSE)
@@ -229,6 +265,10 @@ apn_add_alfrule(struct apn_rule *rule, struct apn_ruleset *ruleset,
 duplicate:
 	if (filename)
 		apn_error(ruleset, filename, lineno, "Rule will never match!");
+	return (1);
+invalidid:
+	if (filename)
+		apn_error(ruleset, filename, lineno, "Duplicate rule IDs");
 	return (1);
 }
 
@@ -243,12 +283,39 @@ duplicate:
  * In case of an error, no rules are added, thus caller can free them safely.
  */
 int
-apn_add_sfsrule(struct apn_rule *rule, struct apn_ruleset *ruleset)
+apn_add_sfsrule(struct apn_rule *rule, struct apn_ruleset *ruleset,
+    const char *filename, int lineno)
 {
 	int ret = 0;
+	struct apn_sfsrule *srule;
 
 	if (ruleset == NULL || rule == NULL)
 		return (1);
+
+	if (!TAILQ_EMPTY(&ruleset->sfs_queue))
+		goto duplicate;
+
+	/*
+	 * Issue an error if the ruleset has non-zero IDs that are already
+	 * in use or if the ruleset contains duplicate IDs.
+	 */
+	srule = rule->rule.sfs;
+	if (rule->id) {
+		if (!apn_valid_id(ruleset, rule->id))
+			goto invalidid;
+		if (apn_chain_contains_id_sfs(srule, rule->id))
+			goto invalidid;
+	}
+	for (; srule; srule = srule->next) {
+		if (srule->id == 0)
+			continue;
+		if (!apn_valid_id(ruleset, srule->id))
+			goto invalidid;
+		if (apn_chain_contains_id_sfs(srule->next, srule->id))
+			goto invalidid;
+		if (srule->id >= ruleset->maxid)
+			ruleset->maxid = srule->id + 1;
+	}
 
 	TAILQ_INSERT_TAIL(&ruleset->sfs_queue, rule, entry);
 
@@ -256,6 +323,14 @@ apn_add_sfsrule(struct apn_rule *rule, struct apn_ruleset *ruleset)
 		ret = apn_print_rule(rule, ruleset->flags, stdout);
 
 	return (ret);
+duplicate:
+	if (filename)
+		apn_error(ruleset, filename, lineno, "More than on SFS block");
+	return (1);
+invalidid:
+	if (filename)
+		apn_error(ruleset, filename, lineno, "Duplicate rule IDs");
+	return (1);
 }
 
 /*
@@ -301,8 +376,9 @@ apn_insert(struct apn_ruleset *rs, struct apn_rule *rule, int id)
 }
 
 /*
- * Insert alf rule before alf rule with identification ID.  The IDs of
- * the passed struct apn_alfrule is updated.
+ * Insert alf rule @arule before alf rule with identification @id.  The ID of
+ * the new rule is retained. If the ID of the new rule is 0 a new ID is
+ * assigned. Trying to use an ID of an existing rule will cause an error.
  *
  * Return codes:
  * -1: a systemcall failed and errno is set
@@ -318,19 +394,25 @@ apn_insert_alfrule(struct apn_ruleset *rs, struct apn_alfrule *arule, int id)
 	if (rs == NULL || arule == NULL || id < 1 || rs->maxid == INT_MAX)
 		return (1);
 
+	if (arule->id && !apn_valid_id(rs, arule->id))
+		return 1;
 	queue = &rs->alf_queue;
 	if ((p = apn_searchinsert_alfrule(queue, arule, id)) == NULL)
 		return (1);
-
-	arule->id = rs->maxid;
-	rs->maxid += 1;
+	if (arule->id == 0) {
+		arule->id = rs->maxid++;
+	} else {
+		if (arule->id >= rs->maxid)
+			rs->maxid = arule->id + 1;
+	}
 
 	return (0);
 }
 
 /*
- * Insert sfs rule before sfs rule with identification ID.  The IDs of
- * the passed struct apn_sfsrule is updated.
+ * Insert sfs rule before sfs rule with identification ID.  The ID of
+ * the new rule is retained. If the ID of the new rule is 0 a new ID is
+ * assigned. Trying to use an ID of an existing rule will cause an error.
  *
  * Return codes:
  * -1: a systemcall failed and errno is set
@@ -346,19 +428,27 @@ apn_insert_sfsrule(struct apn_ruleset *rs, struct apn_sfsrule *srule, int id)
 	if (rs == NULL || srule == NULL || id < 1 || rs->maxid == INT_MAX)
 		return (1);
 
+	if (srule->id && !apn_valid_id(rs, srule->id))
+		return 1;
 	queue = &rs->sfs_queue;
 	if ((p = apn_searchinsert_sfsrule(queue, srule, id)) == NULL)
 		return (1);
 
-	srule->id = rs->maxid;
-	rs->maxid += 1;
+	if (srule->id == 0) {
+		srule->id = rs->maxid++;
+	} else {
+		if (srule->id >= rs->maxid)
+			rs->maxid = srule->id + 1;
+	}
 
 	return (0);
 }
 
 /*
- * Add struct apn_alfrule arule to struct apn_rule identified by id. The
- * IDs of the passed struct apn_alfrule is updated.
+ * Add struct apn_alfrule arule to the start of the struct apn_rule identified
+ * by @id. The ID of the new rule is retained. If the ID of the new rule
+ * is 0 a new ID is assigned. Trying to use an ID of an existing rule will
+ * cause an error.
  *
  * Return codes:
  * -1: a systemcall failed and errno is set
@@ -378,9 +468,15 @@ apn_add2app_alfrule(struct apn_ruleset *rs, struct apn_alfrule *arule, int id)
 	}
 
 	if (app->rule.alf == NULL) {
+		if (arule->id && !apn_valid_id(rs, arule->id))
+			return (1);
 		app->rule.alf = arule;
-		arule->id = rs->maxid;
-		rs->maxid += 1;
+		if (arule->id == 0) {
+			arule->id = rs->maxid++;
+		} else {
+			if (arule->id >= rs->maxid)
+				rs->maxid = arule->id + 1;
+		}
 	} else {
 		return (apn_insert_alfrule(rs, arule, app->rule.alf->id));
 	}
@@ -760,6 +856,7 @@ apn_print_sfsrule(struct apn_sfsrule *rule, int flags, FILE *file)
 
 	return (ret);
 }
+
 static int
 apn_print_afiltrule(struct apn_afiltrule *rule, FILE *file)
 {
@@ -1317,18 +1414,15 @@ apn_update_ids(struct apn_rule *rule, struct apn_ruleset *rs)
 {
 	struct apn_alfrule	*alf;
 	struct apn_sfsrule	*sfs;
-	int			 counter;
 
 	if (rule == NULL || rs == NULL)
 		return (1);
-
-	counter = rs->maxid;
 
 	switch (rule->type) {
 	case APN_ALF:
 		alf = rule->rule.alf;
 		while (alf) {
-			alf->id = counter++;
+			alf->id = rs->maxid++;
 			alf = alf->next;
 		}
 		break;
@@ -1336,7 +1430,7 @@ apn_update_ids(struct apn_rule *rule, struct apn_ruleset *rs)
 	case APN_SFS:
 		sfs = rule->rule.sfs;
 		while (sfs) {
-			sfs->id = counter++;
+			sfs->id = rs->maxid++;
 			sfs = sfs->next;
 		}
 		break;
@@ -1345,8 +1439,7 @@ apn_update_ids(struct apn_rule *rule, struct apn_ruleset *rs)
 		return (1);
 	}
 
-	rule->id = counter++;
-	rs->maxid = counter;
+	rule->id = rs->maxid++;
 
 	return (0);
 }
@@ -1931,4 +2024,59 @@ apn_remove(struct apn_ruleset *rs, int id)
 	}
 
 	return (2);
+}
+
+int
+apn_valid_id(struct apn_ruleset *rs, int id)
+{
+	struct apn_rule		*rule;
+	TAILQ_FOREACH(rule, &rs->alf_queue, entry) {
+		struct apn_alfrule	*arule;
+		for (arule = rule->rule.alf; arule; arule = arule->next) {
+			if (arule->id && arule->id == id)
+				return 0;
+		}
+		if (rule->id && rule->id == id)
+			return 0;
+	}
+	if (!TAILQ_EMPTY(&rs->sfs_queue)) {
+		struct apn_sfsrule	*srule;
+		rule = TAILQ_FIRST(&rs->sfs_queue);
+		for (srule = rule->rule.sfs; srule; srule = srule->next) {
+			if (srule->id && srule->id == id)
+				return 0;
+		}
+	}
+	return 1;
+}
+
+/*
+ * NOTE: rs->maxid must be bigger than any ID already assigned inside
+ * NOTe: the rule set before calling this function.
+ */
+void
+apn_assign_ids(struct apn_ruleset *rs)
+{
+	struct apn_rule		*rule;
+	TAILQ_FOREACH(rule, &rs->alf_queue, entry) {
+		struct apn_alfrule	*arule;
+		for (arule = rule->rule.alf; arule; arule = arule->next) {
+			if (arule->id)
+				continue;
+			arule->id = rs->maxid++;
+		}
+		if (rule->id == 0)
+			rule->id = rs->maxid++;
+	}
+	if (!TAILQ_EMPTY(&rs->sfs_queue)) {
+		struct apn_sfsrule	*srule;
+
+		rule = TAILQ_FIRST(&rs->sfs_queue);
+		for (srule = rule->rule.sfs; srule; srule = srule->next) {
+			if (srule->id == 0)
+				srule->id = rs->maxid++;
+		}
+		if (rule->id == 0)
+			rule->id = rs->maxid++;
+	}
 }

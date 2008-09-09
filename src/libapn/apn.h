@@ -262,7 +262,8 @@ int	apn_parse_iovec(const char *filename, struct iovec *vec, int count,
 	    struct apn_ruleset **rsp, int flags);
 int	apn_add_alfrule(struct apn_rule *, struct apn_ruleset *,
 	    const char *, int lineno);
-int	apn_add_sfsrule(struct apn_rule *, struct apn_ruleset *);
+int	apn_add_sfsrule(struct apn_rule *, struct apn_ruleset *,
+	    const char *, int lineno);
 int	apn_print_rule(struct apn_rule *, int, FILE *);
 int	apn_print_ruleset(struct apn_ruleset *, int, FILE *);
 int	apn_error(struct apn_ruleset *, const char *, int lineno,
@@ -287,6 +288,14 @@ struct apn_alfrule *apn_copy_alfrules(struct apn_alfrule *);
 void	apn_free_host(struct apn_host *);
 void	apn_free_port(struct apn_port *);
 int	apn_remove(struct apn_ruleset *, int);
+int	apn_valid_id(struct apn_ruleset *, int);
+void	apn_assign_ids(struct apn_ruleset *);
+
+/* Implemented in parse.y */
+int	parse_rules(const char *, struct apn_ruleset *);
+int	parse_rules_iovec(const char *, struct iovec *, int count,
+	    struct apn_ruleset *);
+
 __END_DECLS
 
 #endif /* _APN_H_ */

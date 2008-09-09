@@ -110,7 +110,6 @@ void		 freehost(struct apn_host *);
 void		 freeport(struct apn_port *);
 
 static struct apn_ruleset	*apnrsp = NULL;
-static int			 counter = 1;
 
 struct alfrulehead {
 	struct apn_alfrule *head;
@@ -188,7 +187,7 @@ typedef struct {
 %token	ALLOW DENY ALF SFS SB VS CAP CONTEXT RAW ALL OTHER LOG CONNECT ACCEPT
 %token	INET INET6 FROM TO PORT ANY SHA256 TCP UDP DEFAULT NEW ASK ALERT
 %token	READ WRITE EXEC CHMOD ERROR APPLICATION RULE HOST TFILE BOTH SEND
-%token	RECEIVE TIMEOUT STATEFUL TASK UNTIL
+%token	RECEIVE TIMEOUT STATEFUL TASK UNTIL COLON
 %token	<v.string>		STRING
 %token	<v.number>		NUMBER
 %type	<v.app>			app apps sfsapp
@@ -201,7 +200,7 @@ typedef struct {
 %type	<v.port>		port ports portspec
 %type	<v.porthead>		port_l
 %type	<v.hosts>		hosts
-%type	<v.number>		not capability defaultspec
+%type	<v.number>		not capability defaultspec ruleid
 %type	<v.netaccess>		netaccess
 %type	<v.af>			af
 %type	<v.proto>		proto
@@ -316,6 +315,14 @@ comma		: ','
 minus		: '-'
 		;
 
+ruleid		: NUMBER COLON			{
+			$$ = $1;
+		}
+		| /* empty */			{
+			$$ = 0;
+		}
+		;
+
 optnl		: '\n' optnl
 		| /*empty */
 		;
@@ -344,27 +351,27 @@ alfruleset_l	: alfruleset_l alfruleset
 		| alfruleset
 		;
 
-alfruleset	: apps optnl '{' optnl alfrule_l '}' nl {
+alfruleset	: ruleid apps optnl '{' optnl alfrule_l '}' nl {
 			struct apn_rule	*rule;
 
 			if ((rule = calloc(1, sizeof(struct apn_rule)))
 			    == NULL) {
-				apn_free_app($1);
-				apn_free_alfrule($5.head);
+				apn_free_app($2);
+				apn_free_alfrule($6.head);
 				YYERROR;
 			}
 
-			rule->app = $1;
-			rule->rule.alf = $5.head;
+			rule->app = $2;
+			rule->rule.alf = $6.head;
 			rule->type = APN_ALF;
-			rule->id = counter++;
+			rule->id = $1;
 
 			if (apn_add_alfrule(rule, apnrsp, file->name,
 			    yylval.lineno) != 0) {
 				/* Account for errors in apn_add_alfrule */
 				file->errors++;
-				apn_free_app($1);
-				apn_free_alfrule($5.head);
+				apn_free_app($2);
+				apn_free_alfrule($6.head);
 				free(rule);
 				YYERROR;
 			}
@@ -440,23 +447,23 @@ scope		: /* Empty */ {
 		}
 		;
 
-alfrule		: alffilterrule	scope		{
+alfrule		: ruleid alffilterrule	scope		{
 			struct apn_alfrule	*rule;
 
 			rule = calloc(1, sizeof(struct apn_alfrule));
 			if (rule == NULL) {
-				apn_free_filter(&$1.filtspec);
+				apn_free_filter(&$2.filtspec);
 				YYERROR;
 			}
 
 			rule->type = APN_ALF_FILTER;
-			rule->rule.afilt = $1;
-			rule->id = counter++;
-			rule->scope = $2;
+			rule->rule.afilt = $2;
+			rule->id = $1;
+			rule->scope = $3;
 
 			$$ = rule;
 		}
-		| alfcaprule scope		{
+		| ruleid alfcaprule scope		{
 			struct apn_alfrule	*rule;
 
 			rule = calloc(1, sizeof(struct apn_alfrule));
@@ -464,13 +471,13 @@ alfrule		: alffilterrule	scope		{
 				YYERROR;
 
 			rule->type = APN_ALF_CAPABILITY;
-			rule->rule.acap = $1;
-			rule->id = counter++;
-			rule->scope = $2;
+			rule->rule.acap = $2;
+			rule->id = $1;
+			rule->scope = $3;
 
 			$$ = rule;
 		}
-		| alfdefault scope		{
+		| ruleid alfdefault scope		{
 			struct apn_alfrule	*rule;
 
 			rule = calloc(1, sizeof(struct apn_alfrule));
@@ -478,13 +485,13 @@ alfrule		: alffilterrule	scope		{
 				YYERROR;
 
 			rule->type = APN_ALF_DEFAULT;
-			rule->rule.apndefault = $1;
-			rule->id = counter++;
-			rule->scope = $2;
+			rule->rule.apndefault = $2;
+			rule->id = $1;
+			rule->scope = $3;
 
 			$$ = rule;
 		}
-		| ctxrule scope			{
+		| ruleid ctxrule scope			{
 			struct apn_alfrule	*rule;
 
 			rule = calloc(1, sizeof(struct apn_alfrule));
@@ -492,9 +499,9 @@ alfrule		: alffilterrule	scope		{
 				YYERROR;
 
 			rule->type = APN_ALF_CTX;
-			rule->rule.apncontext = $1;
-			rule->id = counter++;
-			rule->scope = $2;
+			rule->rule.apncontext = $2;
+			rule->id = $1;
+			rule->scope = $3;
 
 			$$ = rule;
 		}
@@ -758,8 +765,10 @@ sfsmodule	: SFS optnl '{' optnl sfsrule_l '}'	{
 
 			rule->rule.sfs = $5.head;
 			rule->type = APN_SFS;
+			rule->id = 0;
 
-			if (apn_add_sfsrule(rule, apnrsp) != 0) {
+			if (apn_add_sfsrule(rule, apnrsp, file->name,
+			    yylval.lineno) != 0) {
 				apn_free_sfsrule($5.head);
 				free(rule);
 				YYERROR;
@@ -786,23 +795,23 @@ sfsrule_l	: sfsrule_l sfsrule nl		{
 		}
 		;
 
-sfsrule		: sfscheckrule scope		{
+sfsrule		: ruleid sfscheckrule scope		{
 			struct apn_sfsrule	*rule;
 
 			rule = calloc(1, sizeof(struct apn_sfsrule));
 			if (rule == NULL) {
-				apn_free_app($1.app);
+				apn_free_app($2.app);
 				YYERROR;
 			}
 
 			rule->type = APN_SFS_CHECK;
-			rule->rule.sfscheck = $1;
-			rule->id = counter++;
-			rule->scope = $2;
+			rule->rule.sfscheck = $2;
+			rule->id = $1;
+			rule->scope = $3;
 
 			$$ = rule;
 		}
-		| sfsdefault scope		{
+		| ruleid sfsdefault scope		{
 			struct apn_sfsrule	*rule;
 
 			rule = calloc(1, sizeof(struct apn_alfrule));
@@ -810,9 +819,9 @@ sfsrule		: sfscheckrule scope		{
 				YYERROR;
 
 			rule->type = APN_SFS_DEFAULT;
-			rule->rule.apndefault = $1;
-			rule->id = counter++;
-			rule->scope = $2;
+			rule->rule.apndefault = $2;
+			rule->id = $1;
+			rule->scope = $3;
 
 			$$ = rule;
 		}
@@ -1091,6 +1100,7 @@ lookup(char *s)
 {
 	/* this has to be sorted always */
 	static const struct keywords keywords[] = {
+		{ ":",		COLON },
 		{ "accept",	ACCEPT },
 		{ "alert",	ALERT },
 		{ "alf",	ALF },
@@ -1318,7 +1328,8 @@ yylex(void)
 	}
 
 #define allowed_to_end_number(x) \
-	(isspace(x) || x == ')' || x ==',' || x == '/' || x == '}' || x == '=')
+	(isspace(x) || x == ')' || x ==',' || x == '/' || x == '}' \
+	 || x == ':' || x == '=')
 
 	if (c == '-' || isdigit(c)) {
 		do {
@@ -1502,7 +1513,6 @@ __parse_rules_common(struct apn_ruleset *apnrspx)
 	int errors = 0;
 
 	apnrsp = apnrspx;
-	counter = 1;
 
 	yyparse();
 	errors = file->errors;
@@ -1513,7 +1523,7 @@ __parse_rules_common(struct apn_ruleset *apnrspx)
 	free(file->name);
 	free(file);
 
-	apnrspx->maxid = counter;
+	apn_assign_ids(apnrspx);
 
 	return (errors ? 1 : 0);
 }

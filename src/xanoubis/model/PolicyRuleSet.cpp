@@ -590,7 +590,7 @@ PolicyRuleSet::createSfsPolicy(int insertBeforeId)
 	if (TAILQ_EMPTY(&(ruleSet_->sfs_queue))) {
 		sfsRootRule = CALLOC_STRUCT(apn_rule);
 		sfsRootRule->type = APN_SFS;
-		apn_add_sfsrule(sfsRootRule, ruleSet_);
+		apn_add_sfsrule(sfsRootRule, ruleSet_, NULL, 0);
 	}
 	/* we assume sfs_queue will contain only one element */
 	sfsRootRule = TAILQ_FIRST(&(ruleSet_->sfs_queue));
