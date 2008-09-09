@@ -140,10 +140,50 @@ mkpath(const char *path)
 	return 0;
 }
 
+char *
+insert_escape_seq(char *path)
+{
+	char *newpath = NULL;
+	int k, i;
+	int j = 1;
+
+	i = strlen(path);
+	k = 0;
+	while (k <= i) {
+		if (path[k] == '*')
+			j++;
+		k++;
+	}
+
+	newpath = (char *)malloc(strlen(path) + j + 1);
+	if (newpath == NULL)
+		return NULL;
+
+	for (k = j = 0; j <= i; j++, k++) {
+		if (path[j] == '*') {
+			newpath[k] = '*';
+			k++;
+		}
+		newpath[k] = path[j];
+	}
+	k = strlen(newpath);
+	while (k > 0) {
+		if (newpath[k] == '/')
+			break;
+		k--;
+	}
+	k++;
+	memmove(&newpath[k+1], &newpath[k], ((strlen(newpath) + 1) - k));
+	newpath[k] = '*';
+
+	return newpath;
+}
+
 static int
 convert_user_path(const char * path, char **dir)
 {
-	int i;
+	int	i;
+	char	*newpath = NULL;
 
 	*dir = NULL;
 	if (!path || path[0] != '/')
@@ -169,10 +209,19 @@ convert_user_path(const char * path, char **dir)
 	}
 	if (path[i] == '/')
 		return -EINVAL;
+
 #ifdef OPENBSD
 {
-	if (asprintf(dir, "%s%s", SFS_CHECKSUMROOT, path) == -1)
+	newpath = insert_escape_seq((char *)path);
+	if (newpath == NULL)
 		return -ENOMEM;
+
+	if (asprintf(dir, "%s%s", SFS_CHECKSUMROOT, newpath) == -1) {
+		free(newpath);
+		return -ENOMEM;
+	}
+
+	free(newpath);
 	return 0;
 }
 #endif
@@ -181,6 +230,7 @@ convert_user_path(const char * path, char **dir)
 	struct stat	 statbuf;
 	dev_t		 dev;
 	char		*tmppath = strdup(path);
+	char		*tmp = NULL;
 	int		 error = -EINVAL;
 	int		 samei = -1;
 	unsigned long	 major, minor;
@@ -217,15 +267,24 @@ convert_user_path(const char * path, char **dir)
 		goto err;
 	major = (dev >> 8);
 	minor = (dev & 0xff);
+
+	tmp = (char *)(path+samei);
+	newpath = insert_escape_seq(tmp);
+	if (newpath == NULL)
+		return -ENOMEM;
+
 	if (asprintf(dir, "%s/%lu:%lu%s",
-	    SFS_CHECKSUMROOT, major, minor, path+samei) == -1) {
+	    SFS_CHECKSUMROOT, major, minor, newpath) == -1) {
 		error = -ENOMEM;
 		goto err;
 	}
 	free(tmppath);
+	free(newpath);
 	return 0;
 err:
 	free(tmppath);
+	if (newpath)
+		free(newpath);
 	return error;
 }
 #endif
@@ -330,6 +389,7 @@ sfs_getchecksum(u_int64_t kdev __used, const char *kpath, uid_t uid,
 #ifdef LINUX
 {
 	char		*path;
+	char		*newpath;
 	int		 ret;
 	unsigned long	 major, minor;
 
@@ -339,23 +399,39 @@ sfs_getchecksum(u_int64_t kdev __used, const char *kpath, uid_t uid,
 	 */
 	major = (kdev >> 20);
 	minor = (kdev & ((1UL << 20) - 1));
-	if (asprintf(&path, "%s/%lu:%lu%s/%d",
-	    SFS_CHECKSUMROOT, major, minor, kpath, uid) == -1)
+	newpath = insert_escape_seq((char *)kpath);
+	if (newpath == NULL)
 		return -ENOMEM;
+
+	if (asprintf(&path, "%s/%lu:%lu%s/%d",
+	    SFS_CHECKSUMROOT, major, minor, newpath, uid) == -1) {
+		free(newpath);
+		return -ENOMEM;
+	}
 	ret = sfs_readchecksum(path, md);
 	free(path);
+	free(newpath);
 	return ret;
 }
 #endif
 #ifdef OPENBSD
 {
 	char	*path;
+	char	*newpath;
 	int	 ret;
 
-	if (asprintf(&path, "%s%s/%d", SFS_CHECKSUMROOT, kpath, uid) == -1)
+	newpath = insert_escape_seq((char *)kpath);
+	if (newpath == NULL)
 		return -ENOMEM;
+
+	if (asprintf(&path, "%s%s/%d", SFS_CHECKSUMROOT, newpath, uid) == -1) {
+		free(newpath);
+		return -ENOMEM;
+	}
+
 	ret = sfs_readchecksum(path, md);
 	free(path);
+	free(newpath);
 	return ret;
 }
 #endif
