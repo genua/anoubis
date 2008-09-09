@@ -31,7 +31,7 @@
 #         Nethertheless that test is quite useful and still should be shipped.
 # TESTS = test_xanoubis_server
 
-TESTS = testSuite_Patterns
+TESTS = testSuite_Patterns testSuite_Profiles
 noinst_PROGRAMS = test_xanoubis_server $(TESTS)
 
 uidir		   = src/libanoubisui
@@ -60,6 +60,11 @@ libprotocolclient_CPPFLAGS = \
 	-I$(top_srcdir)/$(anoubisprotocoldir) \
 	-I$(top_srcdir)/$(anoubisprotocoldir)/client
 libGUIcomponents_CPPFLAGS = \
+	$(libanouibisui_CPPFLAGS) \
+	$(libapn_CPPFLAGS) \
+	$(libanoubischat_CPPFLAGS) \
+	$(libprotocolclient_CPPFLAGS) \
+	-I$(top_srcdir)/include \
 	-I$(top_srcdir)/$(xanoubisdir) \
 	-I$(top_srcdir)/$(xanoubisdir)/model \
 	-I$(top_srcdir)/$(xanoubisdir)/view \
@@ -144,3 +149,26 @@ testSuite_Patterns_SOURCES = \
 	testrunner.cpp \
 	suite_Patterns/testSuite.cpp \
 	suite_Patterns/tc_Singleton.cpp
+
+#
+# Testsuite: Profile
+#
+testSuite_Profiles_CPPFLAGS = $(libGUIcomponents_CPPFLAGS)
+testSuite_Profiles_CXXFLAGS = $(libGUIcomponents_CXXFLAGS) @CHECK_CFLAGS@
+testSuite_Profiles_LDFLAGS = $(shared_AM_LDFLAGS) -dynamic -L $(RPATH)
+testSuite_Profiles_DEPENDENCIES = $(libGUIcomponents_DEPENDENCIES)
+testSuite_Profiles_LDADD = \
+	-lGUIcomponents \
+	$(libGUIcomponents_LDADD) \
+	@CHECK_LIBS@
+
+if NEEDBSDCOMPAT
+testSuite_Profiles_CPPFLAGS += -I$(top_srcdir)/$(bsdcompatdir)
+testSuite_Profiles_DEPENDENCIES += $(libbsdcompat)
+testSuite_Profiles_LDADD += $(libbsdcompat)
+endif
+
+testSuite_Profiles_SOURCES = \
+	testrunner.cpp \
+	suite_Profiles/testSuite.cpp \
+	suite_Profiles/tc_ProfileMgr.cpp

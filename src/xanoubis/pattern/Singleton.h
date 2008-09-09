@@ -29,35 +29,41 @@
 #define _SINGLETON_H_
 
 /**
- * Design pattern: singleton.
+ * Design pattern: Singleton.
  *
- * Using this pattern ensures the existance of only one instance of
+ * Using this pattern ensures the existence of only one instance of
  * an object. Use this to avoid global variables and please ensure
  * the correct usage of this pattern by implementing these items:
  *   o The constructor of a derived class must call the singleton
- *	constructor to ensure a propper setup.
+ *	constructor to ensure a proper setup.
  *
  *   o You have to set the singleton class as friend of the derived class.
  *
- *   o You have to include the source file Singleton.cpp.
+ *   o You have to include the source file Singleton.cpp in your source file.
  *
  *   o Please see the following example:
+ * @code
  *	class Test : public Singleton<Test>
  *	{
- *		friend class Singleton<Test>;
  *		public:
  *			~Test(void);
  *			static Test* instance(void);
  *			void xyz(void);
+ *
  *		protected:
  *			Test(void);
+ *
+ *		friend class Singleton<Test>;
  *	};
+ *
  *	Test::instance(void) {
  *		return Singleton<Test>::instance();
  *	}
+ *
  *	Test::Test(void) : Singleton<Test>() {
  *		...
  *	}
+ * @endcode
  *
  *   o For usage of such a derived class just type:
  *	Test::instance()->xyz();
@@ -70,7 +76,7 @@ class Singleton
 		 * Destructor of a singleton.
 		 * This will destroy the object of this singleton. Use with
 		 * care!
-		 * @param None;
+		 * @param None
 		 * @return Nothing.
 		 */
 		virtual ~Singleton(void);
@@ -79,7 +85,7 @@ class Singleton
 		 * Get the object of this singleton.
 		 * This will return the object. If it does not already
 		 * exist, it's been created.
-		 * @paran None;
+		 * @param None
 		 * @return A pointer to the object.
 		 */
 		static T* instance(void);
@@ -87,8 +93,8 @@ class Singleton
 	protected:
 		/**
 		 * Constructor of a singleton.
-		 * This is protected so it can't be called "accidantally".
-		 * @param None.
+		 * This is protected so it can't be called "accidentally".
+		 * @param None
 		 * @return Nothing.
 		 */
 		Singleton(void);

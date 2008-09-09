@@ -200,6 +200,8 @@ xanoubis_SOURCES= \
 	model/PolicyRuleSet.h \
 	model/VarPolicy.cpp \
 	model/VarPolicy.h \
+	model/ProfileMgr.cpp \
+	model/ProfileMgr.h\
 	view/AnStatusBar.cpp \
 	view/AnStatusBar.h \
 	view/AnFader.cpp \
@@ -285,7 +287,8 @@ noinst_PROGRAMS = libGUIcomponents.so
 libGUIcomponents_so_SOURCES =
 libGUIcomponents_so_DEPENDENCIES = $(xanoubis_OBJECTS)
 libGUIcomponents_so_LINK = \
-	$(CXX) -fstack-protector -shared -Wl,-soname,$@ -o $@ $^
+	$(CXX) -fstack-protector -shared -Wl,-soname,$@ \
+	    -o $@ $(xanoubis_OBJECTS)
 
 # XXX by ch: the target for po files is experimental and
 # will not been done automatically

@@ -78,7 +78,7 @@ ModSfsMainPanelImpl::OnLoadRuleSet(wxCommandEvent& event)
 
 	lst_Rules->DeleteAllItems();
 	ruleSet = (PolicyRuleSet *)event.GetClientData();
-	if (ruleSet->isReadOnly()) {
+	if (ruleSet->isAdmin()) {
 		adminRuleSet_ = ruleSet;
 	} else {
 		userRuleSet_ = ruleSet;

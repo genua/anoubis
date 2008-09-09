@@ -903,7 +903,7 @@ DlgRuleEditor::loadRuleSet(PolicyRuleSet *ruleSet)
 
 	ruleListCtrl->DeleteAllItems();
 	/* we just remember the ruleSet for further usage */
-	if (ruleSet->isReadOnly()) {
+	if (ruleSet->isAdmin()) {
 		adminRuleSet_ = ruleSet;
 	} else {
 		userRuleSet_ = ruleSet;

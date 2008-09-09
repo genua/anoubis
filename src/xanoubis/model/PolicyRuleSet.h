@@ -57,6 +57,7 @@ class PolicyRuleSet : public wxEvtHandler
 	private:
 		int			 priority_;
 		wxString		 origin_;
+		long			 id_;
 		struct apn_ruleset	*ruleSet_;
 		PolicyList		 alfList_;
 		PolicyList		 sfsList_;
@@ -89,9 +90,10 @@ class PolicyRuleSet : public wxEvtHandler
 		bool findMismatchHash(void);
 		bool deletePolicy(int);
 		bool isEmpty(void);
-		bool isReadOnly(void);
+		bool isAdmin(void);
 
 		wxString getOrigin(void);
+		long getId(void) const;
 };
 
 #endif	/* _POLICYRULESET_H_ */

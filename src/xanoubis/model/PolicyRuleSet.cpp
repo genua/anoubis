@@ -44,6 +44,7 @@
 #include <wx/ffile.h>
 #include <wx/window.h>
 #include <wx/progdlg.h>
+#include <wx/utils.h>
 
 #include <apn.h>
 #include <errno.h>
@@ -62,6 +63,7 @@
 
 PolicyRuleSet::PolicyRuleSet(int priority, struct apn_ruleset *ruleSet)
 {
+	id_ = wxNewId();
 	ruleSet_ = NULL;
 	priority_ = priority;
 	origin_ = wxT("Daemon");
@@ -73,6 +75,7 @@ PolicyRuleSet::PolicyRuleSet(int priority, struct apn_ruleset *ruleSet)
 
 PolicyRuleSet::PolicyRuleSet(int priority, wxString fileName, bool checkPerm)
 {
+	id_ = wxNewId();
 	ruleSet_ = NULL;
 	priority_ = priority;
 	origin_ = fileName;
@@ -670,7 +673,7 @@ PolicyRuleSet::isEmpty(void)
 }
 
 bool
-PolicyRuleSet::isReadOnly(void)
+PolicyRuleSet::isAdmin(void)
 {
 	bool result;
 
@@ -687,4 +690,10 @@ wxString
 PolicyRuleSet::getOrigin(void)
 {
 	return (origin_);
+}
+
+long
+PolicyRuleSet::getId(void) const
+{
+	return (id_);
 }
