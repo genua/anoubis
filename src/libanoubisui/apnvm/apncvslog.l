@@ -1,4 +1,5 @@
 %option nounput
+%option noinput
 %option prefix="apnvm_"
 %option noyywrap
 
