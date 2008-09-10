@@ -25,82 +25,32 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <config.h>
+
+#ifndef NEEDBSDCOMPAT
+#include <sys/queue.h>
+#else
+#include <queue.h>
+#endif
+
+#include <sys/types.h>
 #include <sys/stat.h>
-#include <sys/wait.h>
 
 #include <check.h>
-#include <stdlib.h>
 #include <string.h>
+#include <stdlib.h>
+#include <unistd.h>
 
 #include <apnvm.h>
 
-char cvsroot[32];
-char user[32];
-
-static int
-vm_tc_exec(const char* cmd, ...)
-{
-	va_list ap;
-	char str[128], syscmd[128];
-	int rc;
-
-	va_start(ap, cmd);
-	vsnprintf(str, sizeof(str), cmd, ap);
-	va_end(ap);
-
-	snprintf(syscmd, sizeof(syscmd), "(%s) >/dev/null 2>&1", str);
-
-	rc = system(syscmd);
-	return WIFEXITED(rc) ? WEXITSTATUS(rc) : -1;
-}
-
-void
-vm_setup(void)
-{
-	char workdir[32];
-	char *s;
-
-	strcpy(cvsroot, "/tmp/tc_vm_XXXXXX");
-	strcpy(workdir, "/tmp/tc_vm_XXXXXX");
-	strcpy(user, "user1");
-	s = mkdtemp(cvsroot);
-	s = mkdtemp(workdir);
-
-	vm_tc_exec("cvs -d \"%s\" init", cvsroot);
-	vm_tc_exec("mkdir \"%s/user1\"", cvsroot);
-	vm_tc_exec("chmod 700 \"%s/user1\"", cvsroot);
-	vm_tc_exec("cd \"%s\" && cvs -d \"%s\" checkout user1",
-	    workdir, cvsroot);
-	vm_tc_exec("echo \"Zeile 1\" > \"%s/user1/user2\"", workdir);
-	vm_tc_exec("cd \"%s\" && cvs -d \"%s\" add user1/user2",
-		workdir, cvsroot);
-	vm_tc_exec(
-	"cd \"%s\" && cvs -d \"%s\" commit -m \"1st revision\" user1/user2",
-	workdir, cvsroot);
-	vm_tc_exec("echo \"Zeile 2\" >> \"%s/user1/user2\"", workdir);
-	vm_tc_exec(
-	"cd \"%s\" && cvs -d \"%s\" commit -m \"2nd revision\" user1/user2",
-	workdir, cvsroot);
-	vm_tc_exec("echo \"Zeile 3\" >> \"%s/user1/user2\"", workdir);
-	vm_tc_exec(
-	"cd \"%s\" && cvs -d \"%s\" commit -m \"3rd revision\" user1/user2",
-	workdir, cvsroot);
-
-	vm_tc_exec("rm -rf \"%s\"", workdir);
-}
-
-void
-vm_teardown(void)
-{
-	vm_tc_exec("rm -rf \"%s\"", cvsroot);
-}
+#include "apnvm_tc_fixtures.h"
 
 START_TEST(vm_tc_prepare_havemodule)
 {
 	apnvm		*vm;
 	apnvm_result	vmrc;
 
-	vm = apnvm_init(cvsroot, user);
+	vm = apnvm_init(apnvm_cvsroot, apnvm_user);
 	fail_if(vm == NULL, "Initialization of apnvm failed");
 
 	vmrc = apnvm_prepare(vm);
@@ -118,14 +68,14 @@ START_TEST(vm_tc_prepare_nomodule)
 	apnvm_result	vmrc;
 	int		rc;
 
-	vm = apnvm_init(cvsroot, "anotheruser");
+	vm = apnvm_init(apnvm_cvsroot, "anotheruser");
 	fail_if(vm == NULL, "Initialization of apnvm failed");
 
 	vmrc = apnvm_prepare(vm);
 	fail_if(vmrc != APNVM_OK, "Failed to prepare library");
 
 	/* apnvm_init should create the module for the user */
-	strcpy(path, cvsroot);
+	strcpy(path, apnvm_cvsroot);
 	strcat(path, "/anotheruser");
 
 	rc = stat(path, &fstat);
@@ -152,7 +102,7 @@ START_TEST(vm_tc_count)
 	apnvm_result	vmrc;
 	int		count = 0;
 
-	vm = apnvm_init(cvsroot, user);
+	vm = apnvm_init(apnvm_cvsroot, apnvm_user);
 	fail_if(vm == NULL, "Initialization of apnvm failed");
 
 	vmrc = apnvm_prepare(vm);
@@ -172,7 +122,7 @@ START_TEST(vm_tc_count_unknown_user)
 	apnvm_result	vmrc;
 	int		count = 0;
 
-	vm = apnvm_init(cvsroot, user);
+	vm = apnvm_init(apnvm_cvsroot, apnvm_user);
 	fail_if(vm == NULL, "Initialization of apnvm failed");
 
 	vmrc = apnvm_prepare(vm);
@@ -191,7 +141,7 @@ START_TEST(vm_tc_count_nullcount)
 	apnvm		*vm;
 	apnvm_result	vmrc;
 
-	vm = apnvm_init(cvsroot, user);
+	vm = apnvm_init(apnvm_cvsroot, apnvm_user);
 	fail_if(vm == NULL, "Initialization of apnvm failed");
 
 	vmrc = apnvm_prepare(vm);
@@ -212,7 +162,7 @@ START_TEST(vm_tc_list)
 	struct apnvm_version		*version;
 	int				exp_num;
 
-	vm = apnvm_init(cvsroot, user);
+	vm = apnvm_init(apnvm_cvsroot, apnvm_user);
 	fail_if(vm == NULL, "Initialization of apnvm failed");
 
 	vmrc = apnvm_prepare(vm);
@@ -224,19 +174,38 @@ START_TEST(vm_tc_list)
 
 	exp_num = 3;
 	TAILQ_FOREACH(version, &version_head, entries) {
+		int cmp_cmt, cmp_as;
+
 		fail_if(version->no != exp_num,
 		    "Unexpected version-#: %i, is %i", version->no, exp_num);
+
+		switch (version->no) {
+		case 1:
+			cmp_cmt = strcmp(version->comment, "1st revision");
+			cmp_as = (version->auto_store == 0);
+			break;
+		case 2:
+			cmp_cmt = strcmp(version->comment, "2nd revision");
+			cmp_as = (version->auto_store == 1);
+			break;
+		case 3:
+			cmp_cmt = strcmp(version->comment, "3rd revision");
+			cmp_as = (version->auto_store == 2);
+			break;
+		default:
+			cmp_cmt = 4711;
+			cmp_as = 4711;
+			break;
+		}
+		fail_if(cmp_cmt != 0, "Unexpected comment for v%i: %s",
+		    version->no, version->comment);
+		fail_if(!cmp_as, "Unexpected auto_store-value for v%i: %i",
+		    version->no, version->auto_store);
 
 		exp_num--;
 	}
 
-	while (version_head.tqh_first != NULL) {
-		version = version_head.tqh_first;
-
-		TAILQ_REMOVE(&version_head, version_head.tqh_first, entries);
-		free(version);
-	}
-
+	apnvm_version_head_free(&version_head);
 	apnvm_destroy(vm);
 }
 END_TEST
@@ -248,7 +217,7 @@ START_TEST(vm_tc_list_no_user)
 	struct apnvm_version_head	version_head;
 	struct apnvm_version		*version;
 
-	vm = apnvm_init(cvsroot, user);
+	vm = apnvm_init(apnvm_cvsroot, apnvm_user);
 	fail_if(vm == NULL, "Initialization of apnvm failed");
 
 	vmrc = apnvm_prepare(vm);
@@ -271,7 +240,7 @@ START_TEST(vm_tc_list_no_head)
 	apnvm				*vm;
 	apnvm_result			vmrc;
 
-	vm = apnvm_init(cvsroot, user);
+	vm = apnvm_init(apnvm_cvsroot, apnvm_user);
 	fail_if(vm == NULL, "Initialization of apnvm failed");
 
 	vmrc = apnvm_prepare(vm);
@@ -290,7 +259,7 @@ apnvm_tc_vm(void)
 	TCase *tc = tcase_create("VM");
 
 	tcase_set_timeout(tc, 10);
-	tcase_add_checked_fixture(tc, vm_setup, vm_teardown);
+	tcase_add_checked_fixture(tc, apnvm_setup, apnvm_teardown);
 
 	tcase_add_test(tc, vm_tc_prepare_havemodule);
 	tcase_add_test(tc, vm_tc_prepare_nomodule);

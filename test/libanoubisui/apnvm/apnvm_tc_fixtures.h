@@ -25,42 +25,13 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <stdlib.h>
-#include <check.h>
+#ifndef _APNVM_TC_FIXTURES_H_
+#define _APNVM_TC_FIXTURES_H_
 
-extern TCase *apnvm_tc_cvs(void);
-extern TCase *apnvm_tc_vm(void);
-extern TCase *apnvm_tc_vm_fetch(void);
-extern TCase *apnvm_tc_vm_insert(void);
-extern TCase *apnvm_tc_vm_remove(void);
-extern TCase *apnvm_tc_md(void);
+char apnvm_cvsroot[32];
+char apnvm_user[32];
 
-static Suite*
-apnvm_testsuite(void)
-{
-	Suite *s = suite_create("Suite");
+void apnvm_setup(void);
+void apnvm_teardown(void);
 
-	suite_add_tcase(s, apnvm_tc_cvs());
-	suite_add_tcase(s, apnvm_tc_md());
-	suite_add_tcase(s, apnvm_tc_vm());
-	suite_add_tcase(s, apnvm_tc_vm_fetch());
-	suite_add_tcase(s, apnvm_tc_vm_insert());
-	suite_add_tcase(s, apnvm_tc_vm_remove());
-
-	return (s);
-}
-
-int
-main (void)
-{
-	int number_failed = -1;
-
-	Suite *suite = apnvm_testsuite();
-	SRunner *suiterunner = srunner_create(suite);
-
-	srunner_run_all(suiterunner, CK_NORMAL);
-	number_failed = srunner_ntests_failed(suiterunner);
-	srunner_free(suiterunner);
-
-	return ((number_failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE);
-}
+#endif	/* _APNVM_TC_FIXTURES_H_ */

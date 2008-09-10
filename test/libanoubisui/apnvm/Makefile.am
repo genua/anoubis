@@ -31,11 +31,14 @@ bsdcompatdir	= src/bsdcompat
 libbsdcompat	= $(top_builddir)/$(bsdcompatdir)/libbsdcompat.a
 apnvmdir	= src/libanoubisui/apnvm
 apnvm		= $(top_builddir)/$(apnvmdir)/libapnvm.a
+libapndir	= src/libapn
+libapn		= $(top_builddir)/$(libapndir)/libapn.a
 
 # set TESTS_ENVIRONMENT for checks
 RPATH = $(top_builddir)/$(apnvmdir):$(top_builddir)/$(bsdcompatdir)
 TESTS_ENVIRONMENT = LD_LIBRARY_PATH=$(RPATH)
 
+noinst_HEADERS = apnvm_tc_fixtures.h
 noinst_PROGRAMS = test_apnvm
 
 test_apnvm_CFLAGS = \
@@ -50,7 +53,7 @@ test_apnvm_LDFLAGS = \
 	-L$(top_builddir)/$(apnvmdir)
 
 # conditionally static link of libraries to accomplish correct Code Coverage
-test_apnvm_DEPENDENCIES = $(apnvm)
+test_apnvm_DEPENDENCIES = $(apnvm) $(libapn)
 test_apnvm_LDADD = @CHECK_LIBS@ $(test_apnvm_DEPENDENCIES) -lfl
 
 if NEEDBSDCOMPAT
@@ -62,5 +65,9 @@ endif
 test_apnvm_SOURCES =		\
 	apnvm_testrunner.c	\
 	apnvm_tc_cvs.c		\
+	apnvm_tc_fixtures.c	\
 	apnvm_tc_md.c		\
-	apnvm_tc_vm.c
+	apnvm_tc_vm.c		\
+	apnvm_tc_vm_fetch.c	\
+	apnvm_tc_vm_insert.c	\
+	apnvm_tc_vm_remove.c

@@ -25,18 +25,29 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <config.h>
+
 #ifdef S_SPLINT_S
 #include "splint-includes.h"
 #endif
 
+#ifndef NEEDBSDCOMPAT
+#include <sys/queue.h>
+#else
+#include <queue.h>
+#endif
+
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <sys/mman.h>
 
+#include <fcntl.h>
 #include <dirent.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "apncvs.h"
+#include "apnmd.h"
 #include "apnvm.h"
 
 #ifndef APNVM_WORKDIR
@@ -61,8 +72,30 @@
 	APNVM_CHECKPTR(vm, rc);		\
 	APNVM_CHECKCVS((&vm->cvs), rc)
 
+#ifndef APNVM_SEPARATOR
+	#define APNVM_SEPARATOR "#@#@#@#@#@#@#@#@#@#@"
+#endif
+
+#ifndef APNVM_COMMENT
+	#define APNVM_COMMENT "comment"
+#endif
+
+#ifndef APNVM_AUTOSTORE
+	#define APNVM_AUTOSTORE "autostore"
+#endif
+
+#ifndef APNVM_DEFCOMMENT
+	#define APNVM_DEFCOMMENT "*****"
+#endif
+
 struct _apnvm {
 	struct apncvs cvs;
+};
+
+struct file_ruleset {
+	int	fd;
+	char	*buf;
+	size_t	sbuf;
 };
 
 static int
@@ -143,6 +176,30 @@ apnvm_havefile(struct apncvs *cvs, const char *file)
 }
 
 static int
+apnvm_createfile(struct apncvs *cvs, const char *file)
+{
+	char	path[256];
+	FILE	*fh;
+	int	result;
+
+	APNVM_CHECKCVS(cvs, 0);
+	APNVM_CHECKSTR(file, 0);
+
+	snprintf(path, sizeof(path), "%s/%s/%s",
+	    cvs->workdir, cvs->module, file);
+
+	/* Create an empty file */
+	if ((fh = fopen(path, "w")) == NULL)
+		return (0);
+	fclose(fh);
+
+	/* Append to repository */
+	result = apncvs_add(cvs, file);
+
+	return (result == 0);
+}
+
+static int
 apnvm_createmodule(struct apncvs *cvs)
 {
 	char path[256];
@@ -152,6 +209,116 @@ apnvm_createmodule(struct apncvs *cvs)
 
 	snprintf(path, sizeof(path), "%s/%s", cvs->cvsroot, cvs->module);
 	return (mkdir(path, mode) == 0);
+}
+
+static FILE *
+apnvm_simpleopen(struct apncvs *cvs, const char *file, const char *mode)
+{
+	char path[256];
+
+	snprintf(path, sizeof(path), "%s/%s/%s",
+	    cvs->workdir, cvs->module, file);
+
+	return fopen(path, mode);
+}
+
+static int
+apnvm_openfile(struct apncvs *cvs, const char *file, struct file_ruleset *frs)
+{
+	char	path[256], *buf;
+	int	fd;
+	off_t	sbuf;
+
+	snprintf(path, sizeof(path), "%s/%s/%s",
+	    cvs->workdir, cvs->module, file);
+
+	/* Open file for reading */
+	if ((fd = open(path, O_RDONLY)) == -1)
+		return (0);
+
+	/* Detect filesize by jumping to the end */
+	sbuf = lseek(fd, 0, SEEK_END);
+	if (sbuf == (off_t)-1) {
+		close(fd);
+		return (0);
+	}
+
+	/* Jump back to the start */
+	if (lseek(fd, 0, SEEK_SET) == (off_t)-1) {
+		close(fd);
+		return (0);
+	}
+
+	if (sbuf > 0) {
+		buf = mmap(NULL, sbuf, PROT_READ, MAP_PRIVATE, fd, 0);
+		if (buf == MAP_FAILED) {
+			close(fd);
+			return (0);
+		}
+	}
+	else
+		buf = NULL;
+
+	frs->fd = fd;
+	frs->buf = buf;
+	frs->sbuf = sbuf;
+
+	return (1);
+}
+
+static int
+apnvm_closefile(struct file_ruleset *frs)
+{
+	int rc = 1;
+
+	if (munmap(frs->buf, frs->sbuf) == -1)
+		rc = 0;
+
+	if (close(frs->fd) == -1)
+		rc = 0;
+
+	return (rc);
+}
+
+static int
+apnvm_find_profile(const char *buf, size_t sbuf, const char *profile,
+    void **start, size_t *len)
+{
+	char		s[64], *p;
+	int		have_profile;
+	char		*p_start;
+	size_t		p_len;
+
+	have_profile = (profile != NULL) && (strlen(profile) > 0);
+
+	/* Build up profile's separator */
+	if (have_profile)
+		snprintf(s, sizeof(s), "%s%s\n", APNVM_SEPARATOR, profile);
+	else
+		snprintf(s, sizeof(s), "%s\n", APNVM_SEPARATOR);
+
+	/* Search for separator */
+	p = strstr(buf, s);
+	if (p == NULL)
+		return (0); /* Not found -> no such profile */
+
+	/* Position where profile's ruleset starts */
+	p_start = p + strlen(s);
+
+	/*
+	 * Search for end of ruleset.
+	 * This is the start of the next ruleset or eof
+	 */
+	p = strstr(p_start, APNVM_SEPARATOR);
+	if (p != NULL)
+		p_len = (p - p_start);
+	else
+		p_len = sbuf - (p_start - buf);
+
+	*start = p_start;
+	*len = p_len;
+
+	return (1);
 }
 
 static int
@@ -167,6 +334,12 @@ revno_to_no(const char *revno)
 		return atoi(p + 1);
 	else
 		return (0);
+}
+
+static void
+no_to_revno(int no, char *revno, size_t len)
+{
+	snprintf(revno, len, "1.%i", no);
 }
 
 apnvm *
@@ -268,7 +441,8 @@ apnvm_list(apnvm *vm, const char *user, struct apnvm_version_head *version_list)
 
 	/* Collect all revisions and create versions from it */
 	TAILQ_FOREACH(rev, &log.rev_queue, entry) {
-		struct apnvm_version *version;
+		struct apnvm_version	*version;
+		apnmd			*md;
 
 		version = malloc(sizeof(struct apnvm_version));
 		if (version == NULL)
@@ -276,8 +450,251 @@ apnvm_list(apnvm *vm, const char *user, struct apnvm_version_head *version_list)
 
 		version->no = revno_to_no(rev->revno);
 		version->tstamp = rev->date;
+		version->comment = NULL;
+
+		/* Parse metadata from revision-comment */
+		md = apnmd_parse(rev->comment);
+		if (md != NULL) {
+			char *comment = apnmd_get(md, APNVM_COMMENT);
+			int auto_store = apnmd_get_int(md, APNVM_AUTOSTORE);
+
+			if (comment != NULL)
+				version->comment = strdup(comment);
+			version->auto_store = auto_store;
+
+			apnmd_destroy(md);
+		}
 
 		TAILQ_INSERT_TAIL(version_list, version, entries);
+	}
+
+	return (APNVM_OK);
+}
+
+void
+apnvm_version_head_free(struct apnvm_version_head *head)
+{
+	if (head == NULL)
+		return;
+
+	while (!TAILQ_EMPTY(head)) {
+		struct apnvm_version *version = TAILQ_FIRST(head);
+
+		TAILQ_REMOVE(head, version, entries);
+
+		free(version->comment);
+		free(version);
+	}
+}
+
+apnvm_result
+apnvm_fetch(apnvm *vm, const char *user, int no, const char *profile,
+    struct apn_ruleset **rs)
+{
+	struct file_ruleset	frs = {0, 0, 0};
+	struct iovec		iov;
+	char			revno[12];
+	int			result;
+
+	APNVM_CHECKVM(vm, APNVM_ARG);
+	APNVM_CHECKSTR(user, APNVM_ARG);
+	APNVM_CHECKPTR(rs, APNVM_ARG);
+
+	/* Convert to CVS-revision no */
+	no_to_revno(no, revno, sizeof(revno));
+
+	if (!apnvm_havefile(&vm->cvs, user)) {
+		/* No file for the user -> no versions */
+		*rs = NULL;
+		return (APNVM_OK);
+	}
+
+	/* Update to requested revision */
+	result = apncvs_update(&vm->cvs, user, revno);
+	if (result != 0) {
+		*rs = NULL;
+		return (APNVM_VMS);
+	}
+
+	/*
+	 * Open file. Put the result into the frs-structure. It contains a
+	 * file-destriptor and the complete content of the file.
+	 */
+	result = apnvm_openfile(&vm->cvs, user, &frs);
+	if (!result) {
+		*rs = NULL;
+		return (APNVM_VMS);
+	}
+
+	/*
+	 * The frs-structure holds the complete content of the file.
+	 * Next find out the section, where the requested profile is stored.
+	 * Put the result into the iov-structure.
+	 */
+	result = apnvm_find_profile(frs.buf, frs.sbuf, profile,
+	    &(iov.iov_base), &(iov.iov_len));
+	if (!result) {
+		/* Profile not found */
+		apnvm_closefile(&frs);
+		*rs = NULL;
+
+		return (APNVM_OK);
+	}
+
+	/* Parse ruleset */
+	result = apn_parse_iovec("<iov>", &iov, 1, rs, 0);
+
+	/* Close file again */
+	apnvm_closefile(&frs);
+
+	return (result == 0) ? APNVM_OK : APNVM_PARSE;
+}
+
+apnvm_result
+apnvm_insert(apnvm *vm, const char *user, const char *profile,
+    struct apn_ruleset *rs, struct apnvm_md *vmd)
+{
+	struct file_ruleset	frs = {0, 0, 0};
+	int			result, have_profile;
+	char			*content, *rev_comment;
+	void			*p_start;
+	size_t			p_len;
+	FILE			*fh;
+
+	APNVM_CHECKVM(vm, APNVM_ARG);
+	APNVM_CHECKSTR(user, APNVM_ARG);
+	APNVM_CHECKPTR(rs, APNVM_ARG);
+
+	if (apnvm_havefile(&vm->cvs, user)) {
+		/* Update to HEAD to receive the latest content */
+		result = apncvs_update(&vm->cvs, user, NULL);
+		if (result != 0)
+			return (APNVM_VMS);
+	}
+	else {
+		/* File not in repository, append now */
+		result = apnvm_createfile(&vm->cvs, user);
+		if (!result)
+			return (APNVM_VMS);
+	}
+
+	/* Open the file to receive the content */
+	result = apnvm_openfile(&vm->cvs, user, &frs);
+	if (!result) {
+		return (APNVM_VMS);
+	}
+
+	/* Backup content */
+	content = malloc(frs.sbuf + 1);
+	strncpy(content, frs.buf, frs.sbuf);
+	*(content + frs.sbuf) = '\0';
+
+	/* Close file again, will be overwritten */
+	apnvm_closefile(&frs);
+
+	/* Search for the profile */
+	have_profile = apnvm_find_profile(content, strlen(content),
+	    profile, &p_start, &p_len);
+
+	/* Open file again, content will be overwritten */
+	fh = apnvm_simpleopen(&vm->cvs, user, "w");
+
+	/* (1) Write everything above the profile */
+	if (have_profile) {
+		size_t nmemb = (char*)p_start - content;
+		size_t nwritten = fwrite(content, 1, nmemb, fh);
+
+		if (nwritten != nmemb) {
+			fclose(fh);
+			free(content);
+
+			return (APNVM_VMS);
+		}
+	}
+	else {
+		/* Simply write back the content, new profile appended */
+		size_t nmemb = strlen(content);
+		size_t nwritten = fwrite(content, 1, nmemb, fh);
+
+		if (nwritten != nmemb) {
+			fclose(fh);
+			free(content);
+
+			return (APNVM_VMS);
+		}
+
+		/* Insert starting tag because this is a new profile */
+		if ((profile != NULL) && (strlen(profile) > 0))
+			fprintf(fh, "\n%s%s\n", APNVM_SEPARATOR, profile);
+		else
+			fprintf(fh, "\n%s\n", APNVM_SEPARATOR);
+	}
+
+	/* (2) Dump profile */
+	apn_print_ruleset(rs, 0, fh);
+
+	/* (3) Write everything behind the profile */
+	if (have_profile) {
+		size_t nmemb =
+		    strlen(content) -
+		    ((char*)p_start - content) -
+		    p_len;
+		size_t nwritten = fwrite(p_start + p_len, 1, nmemb, fh);
+
+		if (nwritten != nmemb) {
+			fclose(fh);
+			free(content);
+
+			return (APNVM_VMS);
+		}
+	}
+
+	/* Flush and close */
+	free(content);
+	fflush(fh);
+	fclose(fh);
+
+	/* Build up comment, contains metadata of the version */
+	rev_comment = NULL;
+	if (vmd != NULL) {
+		apnmd *md = apnmd_parse(NULL);
+
+		if (md != NULL) {
+			if (vmd->comment != NULL)
+				apnmd_put(md, APNVM_COMMENT, vmd->comment);
+
+			apnmd_put_int(md, APNVM_AUTOSTORE, vmd->auto_store);
+
+			/* Make comment-string */
+			rev_comment = apnmd_serialize(md);
+
+			apnmd_destroy(md);
+		}
+	}
+
+	/* Commit the changes */
+	result = apncvs_commit(&vm->cvs, user,
+	    ((rev_comment != NULL) ? rev_comment : APNVM_DEFCOMMENT));
+
+	return (result == 0) ? APNVM_OK : APNVM_VMS;
+}
+
+apnvm_result
+apnvm_remove(apnvm *vm, const char *user, int no)
+{
+	char	revno[12];
+	int	result;
+
+	APNVM_CHECKVM(vm, APNVM_ARG);
+	APNVM_CHECKSTR(user, APNVM_ARG);
+
+	/* Convert to CVS-revision no */
+	no_to_revno(no, revno, sizeof(revno));
+
+	result = apncvs_remrev(&vm->cvs, user, revno);
+	if (result != 0) {
+		/* Failed to remove revision */
+		return (APNVM_VMS);
 	}
 
 	return (APNVM_OK);

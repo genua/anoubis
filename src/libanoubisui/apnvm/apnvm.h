@@ -36,18 +36,26 @@ struct _apnvm;
 typedef struct _apnvm apnvm;
 
 struct apnvm_version {
-	int	no;
-	time_t	tstamp;
+	int	no;		/* Version number */
+	time_t	tstamp;		/* Timestamp of version */
+	char	*comment;	/* A comment */
+	int	auto_store;	/* Auto-store-flag */
 
 	TAILQ_ENTRY(apnvm_version) entries;
 };
 
 TAILQ_HEAD(apnvm_version_head, apnvm_version);
 
+struct apnvm_md {
+	char	*comment;
+	int	auto_store;
+};
+
 typedef enum {
 	APNVM_OK = 0,	/* The operation was successful */
 	APNVM_VMS,	/* An error was encountered from the underlaying */
 			/* version management system */
+	APNVM_PARSE,	/* Failed to parse a ruleset */
 	APNVM_ARG	/* Invalid argument */
 } apnvm_result;
 
@@ -98,9 +106,73 @@ apnvm_result apnvm_count(apnvm *, const char *, int *);
  *
  * The third parameter is the head of a version-list. The function appends
  * detected versions to the list. The list is not initialized. You need to
- * call TAILQ_INIT(...) from outside. Do not forget to destroy the list again!
+ * call TAILQ_INIT(...) from outside. You can use apnvm_version_head_free() to
+ * destroy the list again.
  */
 apnvm_result apnvm_list(apnvm *, const char *, struct apnvm_version_head *);
+
+/**
+ * Helper function to destroy the list created by apnvm_list().
+ */
+void apnvm_version_head_free(struct apnvm_version_head *);
+
+/**
+ * Fetches a ruleset from the versioning-system.
+ *
+ * The second parameter holds the username. This username can vary from the
+ * user specified during initialization! This is the user, for whom the
+ * policy-set applies.
+ *
+ * The third parameter holds the version-number to be fetched. Use apnvm_list()
+ * to receive a list of versions-numbers! If you apply am unknown number,
+ * APNVM_VMS is returned.
+ *
+ * The fourth parameter specifies the profile to be fetched. Say NULL, if
+ * only one ruleset exists for the user. If more than one ruleset exists (one
+ * ruleset for each profile), than you have to specify the name of the profile.
+ * If the profile does not exists in the versioning-system, still APNVM_OK is
+ * returned but *rs is set to NULL.
+ *
+ * APNVM_PARSE is returned if a ruleset was fetched but the following
+ * parsing-operation failed.
+ */
+apnvm_result apnvm_fetch(apnvm *, const char *, int, const char *,
+    struct apn_ruleset **);
+
+/**
+ * Inserts a ruleset into the versioning-system.
+ *
+ * The second parameter holds the username. This username can vary from the
+ * user specified during initialization! This is the user, for whom the
+ * policy-set applies. When no rulesets exists for the user, a new version-line
+ * is created.
+ *
+ * The third parameter holds the name of the profile. Say NULL, if only one
+ * ruleset exists for the user. If more than one ruleset exists (one ruleset
+ * for each profile), than you have to specify the name of the profile. If the
+ * profile already exists for the user, the ruleset behind the profile is
+ * overwritten, otherwise the profile is appended to the profile list.
+ *
+ * Last you specify metadata for the version, which can be NULL. In this case
+ * you are not specifying any metadata.
+ */
+apnvm_result apnvm_insert(apnvm *, const char *, const char *,
+    struct apn_ruleset *, struct apnvm_md *);
+
+/**
+ * Remoes a version from the versioning-system.
+ *
+ * The second parameter holds the username. This username can vary from the
+ * user specified during initialization! This is the user, for whom the
+ * policy-set applies.
+ *
+ * The third parameter specuifies the version to be removed. Use apnvm_list()
+ * to receive a list of versions-numbers.
+ *
+ * On success APNVM_OK is returned. If the user and/or version does not exist,
+ * APNVM_VMS is returned.
+ */
+apnvm_result apnvm_remove(apnvm *, const char *, int);
 
 __END_DECLS
 
