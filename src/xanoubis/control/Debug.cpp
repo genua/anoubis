@@ -43,15 +43,15 @@ Debug::log(wxString message, int level)
 	if (level_ >= level)
 		switch (level) {
 		case DEBUG_ALERT:
-			printf("Alert\t%s\n",
+			fprintf(stderr, "Alert\t%s\n",
 			    (const char*)message.mb_str(wxConvUTF8));
 			break;
 		case DEBUG_LOG:
-			printf("Log\t%s\n",
+			fprintf(stderr, "Log\t%s\n",
 			    (const char*)message.mb_str(wxConvUTF8));
 			break;
 		case DEBUG_STATUS:
-			printf("Status\t%s\n",
+			fprintf(stderr, "Status\t%s\n",
 			    (const char*)message.mb_str(wxConvUTF8));
 			break;
 		default:
