@@ -452,14 +452,13 @@ main(int argc, char *argv[])
 	 * impossible to annotate properly. We therefore temporarily
 	 * disable checking for passed NULL pointers.
 	 */
-	/*@-nullpass@*/
-	if (ioctl(eventfds[1], ANOUBIS_DECLARE_LISTENER, 0) < 0) {
+	if (ioctl(eventfds[1], ANOUBIS_DECLARE_FD, eventfds[0]) < 0) {
 		log_warn("ioctl");
 		close(eventfds[0]);
 		close(eventfds[1]);
 		main_shutdown(1);
 	}
-	if (ioctl(eventfds[1], ANOUBIS_DECLARE_FD, eventfds[0]) < 0) {
+	if (ioctl(eventfds[1], ANOUBIS_DECLARE_LISTENER, eventfds[0]) < 0) {
 		log_warn("ioctl");
 		close(eventfds[0]);
 		close(eventfds[1]);

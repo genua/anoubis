@@ -27,6 +27,10 @@
 
 #include "config.h"
 
+#ifdef S_SPLINT_S
+#include "splint-includes.h"
+#endif
+
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/un.h>
@@ -35,6 +39,7 @@
 #include <sys/mman.h>
 #include <fcntl.h>
 #include <signal.h>
+#include <sys/ioctl.h>
 
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -47,16 +52,14 @@
 #include <string.h>
 #include <unistd.h>
 
-#ifdef S_SPLINT_S
-#include "splint-includes.h"
-#endif
-
 #ifdef LINUX
 #include <bsdcompat.h>
 #include <openssl/sha.h>
+#include <linux/anoubis.h>
 #endif
 #ifdef OPENBSD
 #include <sha2.h>
+#include <dev/anoubis.h>
 #endif
 
 #include <anoubis_protocol.h>
@@ -472,7 +475,34 @@ sfs_getsum(char *file)
 static int
 sfs_calcsum(char *file)
 {
-	return sfs_sumop(file, ANOUBIS_CHECKSUM_OP_CALC);
+	int i, fd, afd;
+	struct anoubis_ioctl_csum cs;
+	
+	afd = open("/dev/anoubis", O_RDONLY);
+	if (afd < 0) {
+		perror("open(/dev/anoubis)");
+		return 6;
+	}
+	fd = open(file, O_RDONLY);
+	if (fd < 0) {
+		perror("open");
+		close(afd);
+		return 6;
+	}
+	cs.fd = fd;
+	if (ioctl(afd, ANOUBIS_GETCSUM, &cs) < 0) {
+		perror("ioctl");
+		close(fd);
+		close(afd);
+		return 6;
+	}
+	close(fd);
+	close(afd);
+	for (i=0; i<ANOUBIS_CS_LEN; ++i) {
+		printf("%02x", cs.csum[i]);
+	}
+	printf("\n");
+	return 0;
 }
 
 static int
