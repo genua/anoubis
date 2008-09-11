@@ -68,8 +68,6 @@ MainFrameBase::MainFrameBase( wxWindow* parent, wxWindowID id, const wxString& t
 	an_menubar->Append( me_menubarTools, _("Tools") );
 	
 	me_menubarHelp = new wxMenu();
-	wxMenuItem* mi_mbHelpHelp = new wxMenuItem( me_menubarHelp, ID_MIHELPHELP, wxString( _("Help") ) , wxEmptyString, wxITEM_NORMAL );
-	me_menubarHelp->Append( mi_mbHelpHelp );
 	wxMenuItem* mi_mbHelpAbout = new wxMenuItem( me_menubarHelp, ID_MIHELPABOUT, wxString( _("About") ) , wxEmptyString, wxITEM_NORMAL );
 	me_menubarHelp->Append( mi_mbHelpAbout );
 	an_menubar->Append( me_menubarHelp, _("Help") );
@@ -150,6 +148,5 @@ MainFrameBase::MainFrameBase( wxWindow* parent, wxWindowID id, const wxString& t
 	this->Connect( mi_mbEditPreferences->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnMbEditPreferencesSelect ) );
 	this->Connect( mi_mbToolsRuleEditor->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnMbToolsRuleEditorSelect ) );
 	this->Connect( mi_mbToolsLogViewer->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnMbToolsLogViewerSelect ) );
-	this->Connect( mi_mbHelpHelp->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnMbHelpHelpSelect ) );
 	this->Connect( mi_mbHelpAbout->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnMbHelpAboutSelect ) );
 }

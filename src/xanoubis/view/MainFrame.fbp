@@ -28,7 +28,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
 <wxFormBuilder_Project>
     <FileVersion major="1" minor="8" />
-    <object class="Project" expanded="1">
+    <object class="Project" expanded="0">
         <property name="bitmaps"></property>
         <property name="class_decoration"></property>
         <property name="code_generation">C++</property>
@@ -274,20 +274,6 @@
                     <property name="label">Help</property>
                     <property name="name">me_menubarHelp</property>
                     <property name="permission">protected</property>
-                    <object class="wxMenuItem" expanded="1">
-                        <property name="bitmap"></property>
-                        <property name="checked">0</property>
-                        <property name="enabled">1</property>
-                        <property name="help"></property>
-                        <property name="id">ID_MIHELPHELP</property>
-                        <property name="kind">wxITEM_NORMAL</property>
-                        <property name="label">Help</property>
-                        <property name="name">mi_mbHelpHelp</property>
-                        <property name="shortcut"></property>
-                        <property name="unchecked_bitmap"></property>
-                        <event name="OnMenuSelection">OnMbHelpHelpSelect</event>
-                        <event name="OnUpdateUI"></event>
-                    </object>
                     <object class="wxMenuItem" expanded="1">
                         <property name="bitmap"></property>
                         <property name="checked">0</property>
