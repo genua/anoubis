@@ -148,6 +148,11 @@ ModAlfAddPolicyVisitor::visitAlfPolicy(AlfPolicy *alfPolicy)
 	list = alfPanel_->lst_Rules;
 	tree = alfPanel_->tr_AV_Rules;
 
+	if (alfPolicy->hasScope()) {
+		list->SetItem(idx, MODALF_LIST_COLUMN_SCOPE,
+		    wxT("T"));
+	}
+
 	switch (alfPolicy->getTypeNo()) {
 	case APN_ALF_FILTER:
 		/* fill list of all rules */

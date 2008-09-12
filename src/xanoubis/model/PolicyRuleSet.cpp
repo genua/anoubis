@@ -233,7 +233,8 @@ PolicyRuleSet::assembleAlfPolicy(AlfPolicy *old, EscalationNotify *escalation)
 		} else {
 			afilt->action = APN_ACTION_DENY;
 		}
-		afilt->filtspec.netaccess = old->getDirectionNo();
+		afilt->filtspec.netaccess = escalation->getDirectionNo();
+
 		if (old->getDirectionNo() == APN_ACCEPT) {
 			apn_free_port(afilt->filtspec.fromport);
 			afilt->filtspec.fromport = NULL;
@@ -352,6 +353,7 @@ PolicyRuleSet::createAnswerPolicy(EscalationNotify *escalation)
 		 * an any-rule. Thus we can just insert the new policy before
 		 * the troggering rule.
 		 */
+		newAlfRule->id = 0;
 		apn_insert_alfrule(ruleSet_, newAlfRule,
 		    escalation->getRuleId());
 	} else {

@@ -42,6 +42,7 @@
 #include <arpa/inet.h>
 #include <wx/string.h>
 #include <wx/intl.h>
+#include <wx/datetime.h>
 
 #include <apn.h>
 
@@ -472,6 +473,42 @@ AlfPolicy::getServiceName(void)
 	default:
 		result = _("(unknown)");
 		break;
+	}
+
+	return (result);
+}
+
+bool
+AlfPolicy::hasScope(void)
+{
+	return (alfRule_->scope == NULL ? false : true);
+}
+
+wxString
+AlfPolicy::getScopeName(void)
+{
+	wxString	result;
+
+	result = wxEmptyString;
+
+	if (!hasScope()) {
+		return (wxEmptyString);
+	}
+
+	if (alfRule_->scope->timeout != 0) {
+		wxDateTime	date(alfRule_->scope->timeout);
+		result  = _("until ");
+		result += wxT(" ");
+		result += date.Format();
+	}
+	if (!result.IsEmpty() && (alfRule_->scope->task != 0)) {
+		result += wxT(" ");
+		result += _("and");
+		result += wxT(" ");
+	}
+	if (alfRule_->scope->task != 0) {
+		result += wxString::Format(wxT("task %llu"),
+		     (unsigned long long)alfRule_->scope->task);
 	}
 
 	return (result);

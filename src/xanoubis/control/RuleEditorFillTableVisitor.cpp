@@ -84,6 +84,11 @@ RuleEditorFillTableVisitor::showAlf(AlfPolicy *alfPolicy, long idx)
 
 	clean(idx);
 
+	if (alfPolicy->hasScope()) {
+		list->SetItem(idx, RULEDITOR_LIST_COLUMN_SCOPE,
+		    alfPolicy->getScopeName());
+	}
+
 	list->SetItem(idx, RULEDITOR_LIST_COLUMN_RULE, wxT("ALF"));
 	switch (type) {
 	case APN_ALF_FILTER:

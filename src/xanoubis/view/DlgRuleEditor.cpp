@@ -164,6 +164,9 @@ DlgRuleEditor::DlgRuleEditor(wxWindow* parent) : DlgRuleEditorBase(parent)
 	columnNames_[RULEDITOR_LIST_COLUMN_TYPE] = _("Type");
 	columnWidths_[RULEDITOR_LIST_COLUMN_TYPE] = wxLIST_AUTOSIZE;
 
+	columnNames_[RULEDITOR_LIST_COLUMN_SCOPE] = _("Scope");
+	columnWidths_[RULEDITOR_LIST_COLUMN_SCOPE] = wxLIST_AUTOSIZE;
+
 	columnNames_[RULEDITOR_LIST_COLUMN_ACTION] = _("Action");
 	columnWidths_[RULEDITOR_LIST_COLUMN_ACTION] = wxLIST_AUTOSIZE_USEHEADER;
 
