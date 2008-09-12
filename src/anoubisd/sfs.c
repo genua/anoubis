@@ -43,6 +43,8 @@
 #include "splint-includes.h"
 #endif
 
+#include <dirent.h>
+
 #ifdef LINUX
 #include <linux/anoubis_sfs.h>
 #include <bsdcompat.h>
@@ -62,9 +64,12 @@
 #include "sfs.h"
 
 static int	sfs_readchecksum(const char *csum_file, unsigned char *md);
+static int	sfs_deletechecksum(const char *csum_file);
 static int	sfs_sha256(const char * filename,
 		    unsigned char md[SHA256_DIGEST_LENGTH], uid_t auth_uid);
 static int	convert_user_path(const char * path, char **dir);
+static int	check_empty_dir(const char *path);
+char *		insert_escape_seq(const char *path);
 
 /*
  * NOTE: This function is not reentrant for several reasons:
@@ -141,7 +146,7 @@ mkpath(const char *path)
 }
 
 char *
-insert_escape_seq(char *path)
+insert_escape_seq(const char *path)
 {
 	char *newpath = NULL;
 	int k, i;
@@ -212,7 +217,7 @@ convert_user_path(const char * path, char **dir)
 
 #ifdef OPENBSD
 {
-	newpath = insert_escape_seq((char *)path);
+	newpath = insert_escape_seq(path);
 	if (newpath == NULL)
 		return -ENOMEM;
 
@@ -230,7 +235,6 @@ convert_user_path(const char * path, char **dir)
 	struct stat	 statbuf;
 	dev_t		 dev;
 	char		*tmppath = strdup(path);
-	char		*tmp = NULL;
 	int		 error = -EINVAL;
 	int		 samei = -1;
 	unsigned long	 major, minor;
@@ -268,8 +272,7 @@ convert_user_path(const char * path, char **dir)
 	major = (dev >> 8);
 	minor = (dev & 0xff);
 
-	tmp = (char *)(path+samei);
-	newpath = insert_escape_seq(tmp);
+	newpath = insert_escape_seq(path+samei);
 	if (newpath == NULL)
 		return -ENOMEM;
 
@@ -338,7 +341,7 @@ sfs_checksumop(const char *path, unsigned int operation, uid_t uid,
 		}
 		ret = 0;
 	} else if (operation == ANOUBIS_CHECKSUM_OP_DEL) {
-		ret = unlink(csum_file);
+		ret = sfs_deletechecksum(csum_file);
 		if (ret < 0)
 			ret = -errno;
 	} else if (operation == ANOUBIS_CHECKSUM_OP_GET) {
@@ -399,7 +402,7 @@ sfs_getchecksum(u_int64_t kdev __used, const char *kpath, uid_t uid,
 	 */
 	major = (kdev >> 20);
 	minor = (kdev & ((1UL << 20) - 1));
-	newpath = insert_escape_seq((char *)kpath);
+	newpath = insert_escape_seq(kpath);
 	if (newpath == NULL)
 		return -ENOMEM;
 
@@ -420,7 +423,7 @@ sfs_getchecksum(u_int64_t kdev __used, const char *kpath, uid_t uid,
 	char	*newpath;
 	int	 ret;
 
-	newpath = insert_escape_seq((char *)kpath);
+	newpath = insert_escape_seq(kpath);
 	if (newpath == NULL)
 		return -ENOMEM;
 
@@ -436,4 +439,61 @@ sfs_getchecksum(u_int64_t kdev __used, const char *kpath, uid_t uid,
 }
 #endif
 	return -EOPNOTSUPP;
+}
+
+static int
+sfs_deletechecksum(const char *csum_file)
+{
+	int	 ret = 0;
+	int	 root_len = strlen(SFS_CHECKSUMROOT);
+	int	 k, path_len;
+	char	*tmppath = strdup(csum_file);
+
+	ret = unlink(csum_file);
+	if (ret < 0) {
+		free(tmppath);
+		return ret;
+	}
+
+	path_len = strlen(tmppath);
+	k = path_len;
+	while (k > root_len) {
+		if (tmppath[k] == '/') {
+			tmppath[k] = '\0';
+			ret = check_empty_dir(tmppath);
+			if (ret < 0)
+				return ret;
+
+			if (ret == 1)
+				break;
+			ret = rmdir(tmppath);
+			if (ret < 0) {
+				free(tmppath);
+				return ret;
+			}
+		}
+		k--;
+	}
+
+	free(tmppath);
+	return 0;
+}
+
+static int
+check_empty_dir(const char *path)
+{
+	DIR	*dir = NULL;
+	int	 cnt = 0;
+
+	dir = opendir(path);
+	if (dir == NULL)
+		return -1;
+
+	while (readdir(dir) != NULL) {
+		cnt++;
+		if (cnt > 2)
+			return 1;
+	}
+
+	return 0;
 }
