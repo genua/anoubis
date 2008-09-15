@@ -292,9 +292,6 @@ Notification::getOperation(void)
 		/* XXX CEH: Should verify that evlen >= sizeof(*sfs) */
 		sfs = (struct sfs_open_message *)
 		    ((notify_->u.notify)->payload + evoff);
-		if (! (sfs->flags & ANOUBIS_OPEN_FLAG_STRICT)) {
-			operation += wxT("open ");
-		}
 		if (sfs->flags & ANOUBIS_OPEN_FLAG_READ) {
 			operation += wxT("read ");
 		}
