@@ -78,14 +78,10 @@ char *		insert_escape_seq(const char *path);
  * - The switch_uid/restore_uid pair of functions is not reentrant either.
  */
 static int
-sfs_sha256(const char * filename, unsigned char md[SHA256_DIGEST_LENGTH],
-    uid_t auth_uid)
+sfs_open(const char *filename, uid_t auth_uid)
 {
-	SHA256_CTX			c;
-	int				fd;
 	static struct credentials	savedcred;
-	static char			buf[40960];
-
+	int fd;
 	if (switch_uid(auth_uid, &savedcred) < 0)
 		return -1;
 	fd = open(filename, O_RDONLY);
@@ -96,6 +92,21 @@ sfs_sha256(const char * filename, unsigned char md[SHA256_DIGEST_LENGTH],
 	}
 	if (fd < 0)
 		return -1;
+	return fd;
+}
+
+/*
+ * NOTE: This function is not reentrant because sfs_open isn't.
+ */
+static int
+sfs_sha256(const char * filename, unsigned char md[SHA256_DIGEST_LENGTH],
+    uid_t auth_uid)
+{
+	SHA256_CTX			c;
+	int				fd;
+	static char			buf[40960];
+
+	fd = sfs_open(filename, auth_uid);
 	SHA256_Init(&c);
 	while(1) {
 		int ret = read(fd, buf, sizeof(buf));
@@ -309,17 +320,27 @@ sfs_checksumop(const char *path, unsigned int operation, uid_t uid,
 		goto out;
 	}
 	if (operation == ANOUBIS_CHECKSUM_OP_ADD
-	    || operation == ANOUBIS_CHECKSUM_OP_CALC) {
+	    || operation == ANOUBIS_CHECKSUM_OP_CALC
+	    || operation == ANOUBIS_CHECKSUM_OP_ADDSUM) {
 		int fd;
 		int written = 0;
 
-		ret = sfs_sha256(path, md, uid);
-		if (ret < 0)
+		if (operation == ANOUBIS_CHECKSUM_OP_ADDSUM) {
+			ret = sfs_open(path, uid);
+			if (ret >= 0)
+				close(ret);
+		} else {
+			ret = sfs_sha256(path, md, uid);
+		}
+		if (ret < 0) {
+			ret = -EPERM;
 			goto out;
+		}
 		ret = mkpath(csum_path);
 		if (ret < 0)
 			goto out;
-		if (operation == ANOUBIS_CHECKSUM_OP_ADD) {
+		if (operation == ANOUBIS_CHECKSUM_OP_ADD
+		    || operation == ANOUBIS_CHECKSUM_OP_ADDSUM) {
 			fd = open(csum_file, O_WRONLY|O_CREAT|O_TRUNC, 0600);
 			if (fd < 0) {
 				ret = -errno;

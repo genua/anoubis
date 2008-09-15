@@ -64,6 +64,7 @@ struct pe_proc {
 	int			 refcount;
 	pid_t			 pid;
 	uid_t			 uid;
+	uid_t			 sfsdisable_uid;
 
 	struct pe_proc_ident	 ident;
 	anoubis_cookie_t	 task_cookie;
@@ -141,22 +142,35 @@ pe_proc_flush(void)
 struct pe_proc *
 pe_proc_get(anoubis_cookie_t cookie)
 {
-	struct pe_proc	*p, *proc;
+	struct pe_proc	*proc;
 
-	proc = NULL;
-	TAILQ_FOREACH(p, &tracker, entry) {
-		if (p->task_cookie == cookie) {
-			proc = p;
+	TAILQ_FOREACH(proc, &tracker, entry) {
+		if (proc->task_cookie == cookie)
 			break;
-		}
 	}
 	if (proc) {
 		DEBUG(DBG_PE_TRACKER, "pe_proc_get: proc %p pid %d cookie "
 		    "0x%08llx", proc, (int)proc->pid, proc->task_cookie);
 		proc->refcount++;
 	}
-
 	return (proc);
+}
+
+static struct pe_proc *
+pe_proc_get_by_pid(pid_t pid)
+{
+	struct pe_proc	*proc;
+
+	TAILQ_FOREACH(proc, &tracker, entry) {
+		if (proc->pid == pid)
+			break;
+	}
+	if (proc) {
+		DEBUG(DBG_PE_TRACKER, "pe_proc_get: proc %p pid %d cookie "
+		    "0x%08llx", proc, (int)proc->pid, proc->task_cookie);
+		proc->refcount++;
+	}
+	return proc;
 }
 
 void
@@ -186,6 +200,7 @@ pe_proc_alloc(uid_t uid, anoubis_cookie_t cookie, struct pe_proc_ident *pident)
 	proc->task_cookie = cookie;
 	proc->pid = -1;
 	proc->uid = uid;
+	proc->sfsdisable_uid = (uid_t)-1;
 	proc->refcount = 1;
 	proc->kcache = NULL;
 	proc->ident.pathhint = NULL;
@@ -436,4 +451,28 @@ pe_proc_kcache_clear(struct pe_proc *proc)
 		proc->kcache = kernelcache_clear(proc->kcache);
 		kernelcache_send2master(proc->kcache, proc->pid);
 	}
+}
+
+int
+pe_proc_set_sfsdisable(pid_t pid, uid_t uid)
+{
+	struct pe_proc	*proc = pe_proc_get_by_pid(pid);
+
+	if (!proc)
+		return 0;
+	if (proc->sfsdisable_uid != (uid_t)-1)
+		return 0;
+	if (proc->uid != uid)
+		return 0;
+	proc->sfsdisable_uid = uid;
+	pe_proc_put(proc);
+	return 1;
+}
+
+int
+pe_proc_is_sfsdisable(struct pe_proc *proc, uid_t uid)
+{
+	if (!proc)
+		return 0;
+	return (uid != (uid_t)-1) && (proc->sfsdisable_uid == uid);
 }

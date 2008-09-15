@@ -207,7 +207,7 @@ static void dump_policyreply(Anoubis_PolicyReplyMessage * m, size_t len)
 	DUMP_DATA(m->payload, len-sizeof(*m));
 }
 
-static void dump_checksumrequest(Anoubis_CheckSumRequestMessage * m,
+static void dump_checksumrequest(Anoubis_ChecksumRequestMessage * m,
     size_t len __used)
 {
 	DUMP_NETU(m, operation);

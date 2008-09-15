@@ -54,7 +54,9 @@ struct anoubis_msg {
 		Anoubis_NotifyResultMessage * notifyresult;
 		Anoubis_PolicyRequestMessage * policyrequest;
 		Anoubis_PolicyReplyMessage * policyreply;
-		Anoubis_CheckSumRequestMessage * checksumrequest;
+		Anoubis_ChecksumRequestMessage * checksumrequest;
+		Anoubis_ChecksumAddMessage * checksumadd;
+		Anoubis_SfsDisableMessage * sfsdisable;
 		void * buf;
 	} u;
 };

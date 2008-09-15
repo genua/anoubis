@@ -412,7 +412,7 @@ sfs_sumop(char *file, int operation)
 		return error;
 	}
 
-	t = anoubis_client_csumrequest_start(client, operation, file);
+	t = anoubis_client_csumrequest_start(client, operation, file, NULL, 0);
 	if (!t) {
 		destroy_channel();
 		fprintf(stderr, "Cannot send checksum request\n");

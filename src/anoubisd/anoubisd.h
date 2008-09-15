@@ -106,6 +106,7 @@ enum {
 	ANOUBISD_MSG_SFSOPEN,
 	ANOUBISD_MSG_EVENTASK,
 	ANOUBISD_MSG_KCACHE,
+	ANOUBISD_MSG_SFSDISABLE,
 } anoubisd_msg;
 
 /* format of ANOUBISD_MSG_EVENTDEV is struct eventdev_hdr */
@@ -145,6 +146,13 @@ struct anoubisd_msg_checksum_op {
 	char		msg[0];
 };
 typedef struct anoubisd_msg_checksum_op anoubisd_msg_checksum_op_t;
+
+struct anoubisd_msg_sfsdisable {
+	u_int64_t	token;
+	u_int32_t	uid;
+	u_int32_t	pid;
+};
+typedef struct anoubisd_msg_sfsdisable anoubisd_msg_sfsdisable_t;
 
 struct anoubisd_reply {
 	short		ask;		/* flag - ask GUI */

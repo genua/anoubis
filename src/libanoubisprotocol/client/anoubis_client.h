@@ -62,7 +62,9 @@ int anoubis_client_notifyreply(struct anoubis_client * client,
 int anoubis_client_hasnotifies(struct anoubis_client * client);
 int anoubis_client_wait(struct anoubis_client * client);
 struct anoubis_transaction *anoubis_client_csumrequest_start(
-    struct anoubis_client *client, int op, char *path);
+    struct anoubis_client *client, int op, char *path, u_int8_t *, short);
+struct anoubis_transaction *anoubis_client_sfsdisable_start(
+    struct anoubis_client *client, pid_t pid);
 
 __END_DECLS
 

@@ -79,6 +79,8 @@ anoubis_cookie_t	 pe_proc_task_cookie(struct pe_proc *);
 pid_t			 pe_proc_get_pid(struct pe_proc *);
 void			 pe_proc_set_pid(struct pe_proc *, pid_t);
 struct pe_proc_ident	*pe_proc_ident(struct pe_proc *);
+int			 pe_proc_set_sfsdisable(pid_t, uid_t);
+int			 pe_proc_is_sfsdisable(struct pe_proc *, uid_t);
 
 /* pe_context access functions */
 struct apn_rule		*pe_context_get_rule(struct pe_context *);

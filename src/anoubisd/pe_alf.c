@@ -177,6 +177,10 @@ pe_decide_alf(struct pe_proc *proc, struct eventdev_hdr *hdr)
 	reply->ask = 0;
 	reply->rule_id = rule_id;
 	reply->timeout = (time_t)0;
+	if (decision == POLICY_DENY)
+		reply->reply = EPERM;
+	else
+		reply->reply = 0;
 	if (decision == POLICY_ASK) {
 		struct pe_proc_ident *pident = pe_proc_ident(proc);
 		reply->ask = 1;
@@ -184,7 +188,6 @@ pe_decide_alf(struct pe_proc *proc, struct eventdev_hdr *hdr)
 		reply->csum = pident->csum;
 		reply->path = pident->pathhint;
 	}
-	reply->reply = decision;
 	reply->len = 0;
 
 	return (reply);

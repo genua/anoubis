@@ -139,6 +139,11 @@ static void	session_txclient(int, short, void *);
 static void	session_setupuds(struct sessionGroup *,
 		struct anoubisd_config *);
 static void	session_destroy(struct session *);
+static int	dispatch_generic_reply(void *cbdata, int error,
+		    void *data, int len, int flags, int orig_opcode);
+static void	dispatch_sfsdisable(struct anoubis_server *,
+		    struct anoubis_msg *, uid_t, void *);
+static int	dispatch_sfsdisable_reply(void *, int, void *, int, int);
 
 static Queue eventq_s2p;
 static Queue eventq_s2m;
@@ -197,6 +202,8 @@ session_connect(int fd __used, short event __used, void *arg)
 	}
 	anoubis_dispatch_create(session->proto, ANOUBIS_P_CSUMREQUEST,
 	       dispatch_checksum, info);
+	anoubis_dispatch_create(session->proto, ANOUBIS_P_SFSDISABLE,
+		dispatch_sfsdisable, info);
 	LIST_INSERT_HEAD(&(seg->sessionList), session, nextSession);
 	if (anoubis_server_start(session->proto) < 0) {
 		log_warn("Failed to send initial hello");
@@ -483,8 +490,48 @@ dispatch_checksum(struct anoubis_server *server, struct anoubis_msg *m,
 	DEBUG(DBG_TRACE, "<dispatch_checksum");
 }
 
+static void
+dispatch_sfsdisable(struct anoubis_server *server, struct anoubis_msg *m,
+    uid_t uid, void *arg)
+{
+	anoubisd_msg_t			*s2p_msg;
+	anoubisd_msg_sfsdisable_t	*msg_disable;
+	struct achat_channel		*chan;
+	struct event_info_session	*ev_info;
+	int err;
+
+	ev_info = (struct event_info_session*)arg;
+	DEBUG(DBG_TRACE, ">dispatch_sfsdisable %d");
+	if (!VERIFY_LENGTH(m, sizeof(Anoubis_SfsDisableMessage))) {
+		dispatch_generic_reply(server, EINVAL, NULL, 0,
+		    POLICY_FLAG_START|POLICY_FLAG_END, ANOUBIS_P_SFSDISABLE);
+		return;
+	}
+	chan = anoubis_server_getchannel(server);
+	s2p_msg = msg_factory(ANOUBISD_MSG_SFSDISABLE,
+	    sizeof(anoubisd_msg_sfsdisable_t));
+	msg_disable = (anoubisd_msg_sfsdisable_t *)s2p_msg->msg;
+	msg_disable->uid = uid;
+	msg_disable->pid = get_value(m->u.sfsdisable->pid);
+	err = anoubis_policy_comm_addrequest(ev_info->policy, chan,
+	    POLICY_FLAG_START|POLICY_FLAG_END, &dispatch_sfsdisable_reply,
+	    server, &msg_disable->token);
+	if (err < 0) {
+		dispatch_generic_reply(server, EAGAIN, NULL, 0,
+		    POLICY_FLAG_START|POLICY_FLAG_END, ANOUBIS_P_SFSDISABLE);
+		free(msg_disable);
+		return;
+	}
+	enqueue(&eventq_s2p, s2p_msg);
+	DEBUG(DBG_QUEUE, " >eventq_s2p");
+	event_add(ev_info->ev_s2p, NULL);
+
+	DEBUG(DBG_TRACE, "<dispatch_sfsdisable");
+}
+
 static int
-dispatch_checksum_reply(void *cbdata, int error, void *data, int len, int flags)
+dispatch_generic_reply(void *cbdata, int error, void *data, int len, int flags,
+    int orig_opcode)
 {
 	struct anoubis_server	*server = cbdata;
 	struct anoubis_msg	*m;
@@ -494,12 +541,12 @@ dispatch_checksum_reply(void *cbdata, int error, void *data, int len, int flags)
 	if (!m)
 		return -ENOMEM;
 	if (flags != (POLICY_FLAG_START|POLICY_FLAG_END)) {
-		log_warn("dispatch_checksum_reply: flags is %x");
+		log_warn("dispatch_generic_reply: flags is %x");
 		return -EINVAL;
 	}
 	set_value(m->u.ackpayload->type, ANOUBIS_REPLY);
 	set_value(m->u.ackpayload->error, error);
-	set_value(m->u.ackpayload->opcode, ANOUBIS_P_CSUMREQUEST);
+	set_value(m->u.ackpayload->opcode, orig_opcode);
 	m->u.ack->token = 0;
 	if (len)
 		memcpy(m->u.ackpayload->payload, data, len);
@@ -508,6 +555,21 @@ dispatch_checksum_reply(void *cbdata, int error, void *data, int len, int flags)
 	if (ret < 0)
 		return ret;
 	return 0;
+}
+
+static int
+dispatch_checksum_reply(void *cbdata, int error, void *data, int len, int flags)
+{
+	return dispatch_generic_reply(cbdata, error, data, len, flags,
+	    ANOUBIS_P_CSUMREQUEST);
+}
+
+static int
+dispatch_sfsdisable_reply(void *cbdata, int error, void *data, int len,
+    int flags)
+{
+	return dispatch_generic_reply(cbdata, error, data, len, flags,
+	    ANOUBIS_P_SFSDISABLE);
 }
 
 static int

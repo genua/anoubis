@@ -142,24 +142,9 @@ static inline u_int64_t __ntohll(u_int64_t arg)
 
 #define		ANOUBIS_P_MIN		0x3000
 
-#if 0
-/*
- * These are currently not implemented and replaced with a more general
- * interface.
- */
-#define		ANOUBIS_P_INSERT	0x3000
-#define		ANOUBIS_P_INSERTOK	0x3001
-#define		ANOUBIS_P_DELETE	0x3002
-#define		ANOUBIS_P_NEWVERSION	0x3010
-#define		ANOUBIS_P_LISTVERSIONS	0x3011
-#define		ANOUBIS_P_VERSIONS	0x3012
-#define		ANOUBIS_P_DELVERSION	0x3013
-#define		ANOUBIS_P_GETRULES	0x3020
-#define		ANOUBIS_P_RULELIST	0x3021
-
-#endif
-
 #define		ANOUBIS_P_CSUMREQUEST	0x3100
+
+#define		ANOUBIS_P_SFSDISABLE	0x3200
 
 #define		ANOUBIS_P_REQUEST	0x3800
 #define		ANOUBIS_P_REPLY		0x3801
@@ -210,7 +195,7 @@ typedef struct {
 	anoubis_token_t	token;
 	u32n		opcode;
 	u32n		error;
-	u_int8_t 	payload[0];
+	u_int8_t	payload[0];
 } __attribute__((packed)) Anoubis_AckPayloadMessage;
 
 typedef struct {
@@ -312,14 +297,28 @@ typedef struct {
 	char	payload[0];
 } __attribute__((packed)) Policy_SetByUid;
 
-#define ANOUBIS_CHECKSUM_OP_ADD		0x0001UL
+#define ANOUBIS_CHECKSUM_OP_ADD		0x0001UL	/* Deprecated */
 #define ANOUBIS_CHECKSUM_OP_DEL		0x0002UL
 #define ANOUBIS_CHECKSUM_OP_GET		0x0003UL
-#define ANOUBIS_CHECKSUM_OP_CALC	0x0004UL
+#define ANOUBIS_CHECKSUM_OP_CALC	0x0004UL	/* Deprecated */
+#define ANOUBIS_CHECKSUM_OP_ADDSUM	0x0005UL
 
 typedef struct {
 	u32n	type;
 	u32n	operation;
 	char	path[0];
-} __attribute__((packed)) Anoubis_CheckSumRequestMessage;
+} __attribute__((packed)) Anoubis_ChecksumRequestMessage;
+
+typedef struct {
+	u32n	type;
+	u32n	operation;
+	u16n	cslen;
+	char payload[0];	/* cslen bytes checksum followed by path. */
+} __attribute__((packed)) Anoubis_ChecksumAddMessage;
+
+typedef struct {
+	u32n	type;
+	u32n	pid;
+} __attribute__((packed)) Anoubis_SfsDisableMessage;
+
 #endif

@@ -80,6 +80,8 @@ pe_decide_sfs(uid_t uid, anoubisd_msg_sfsopen_t *sfsmsg, time_t now)
 	u_int32_t		 rule_id = 0;
 	char			*dump = NULL;
 	char			*context = NULL;
+	struct pe_proc		*proc = NULL;
+	int			 do_disable = 0;
 
 	hdr = &sfsmsg->hdr;
 	msg = (struct sfs_open_message *)(hdr+1);
@@ -95,11 +97,19 @@ pe_decide_sfs(uid_t uid, anoubisd_msg_sfsopen_t *sfsmsg, time_t now)
 	rule_id = 0;
 	log = 0;
 
+	proc = pe_proc_get(msg->common.task_cookie);
+	if (proc && pe_proc_is_sfsdisable(proc, hdr->msg_uid)) {
+		do_disable = 1;
+		pe_proc_put(proc);
+	}
+
 	if (msg->flags & ANOUBIS_OPEN_FLAG_CSUM) {
 		for (i = 0; i < PE_PRIO_MAX; i++) {
 			struct apn_ruleset	*rs;
 			struct apn_rule		*rule;
 
+			if (do_disable && (i == PE_PRIO_USER1))
+				continue;
 			rs = pe_user_get_ruleset(uid, i, NULL);
 			if (rs == NULL)
 				continue;
@@ -169,7 +179,10 @@ pe_decide_sfs(uid_t uid, anoubisd_msg_sfsopen_t *sfsmsg, time_t now)
 	if (context)
 		free(context);
 
-	reply->reply = decision;
+	if (decision == POLICY_DENY)
+		reply->reply = EPERM;
+	else
+		reply->reply = 0;
 	reply->ask = 0;		/* false */
 	reply->rule_id = rule_id;
 	reply->timeout = (time_t)0;

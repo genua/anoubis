@@ -662,6 +662,84 @@ dispatch_m2s(int fd, short event __used, /*@dependent@*/ void *arg)
 }
 
 static void
+dispatch_checksumop(anoubisd_msg_t *msg, struct event_info_main *ev_info)
+{
+	struct anoubis_msg rawmsg;
+	anoubisd_msg_checksum_op_t *msg_comm =
+	    (anoubisd_msg_checksum_op_t *)msg->msg;
+	char * path = NULL;
+	int err = -EFAULT, op = 0, extra = 0;
+	anoubisd_reply_t * reply;
+	u_int8_t digest[SHA256_DIGEST_LENGTH];
+	int i, plen;
+
+	rawmsg.length = msg_comm->len;
+	rawmsg.u.buf = msg_comm->msg;
+	if (!VERIFY_LENGTH(&rawmsg, sizeof(Anoubis_ChecksumRequestMessage)))
+		goto out;
+	op = get_value(rawmsg.u.checksumrequest->operation);
+	if (op == ANOUBIS_CHECKSUM_OP_ADDSUM) {
+		int cslen;
+		if (!VERIFY_LENGTH(&rawmsg, sizeof(Anoubis_ChecksumAddMessage)))
+			goto out;
+		cslen = get_value(rawmsg.u.checksumadd->cslen);
+		if (cslen != SHA256_DIGEST_LENGTH) {
+			err = -EINVAL;
+			goto out;
+		}
+		if (!VERIFY_LENGTH(&rawmsg,
+		    sizeof(Anoubis_ChecksumAddMessage) + cslen))
+			goto out;
+		memcpy(digest, rawmsg.u.checksumadd->payload, cslen);
+		path = rawmsg.u.checksumadd->payload + cslen;
+		plen = rawmsg.length - CSUM_LEN
+		    - sizeof(Anoubis_ChecksumAddMessage);
+	} else {
+		path = rawmsg.u.checksumrequest->path;
+		plen = rawmsg.length - CSUM_LEN
+		    - sizeof(Anoubis_ChecksumRequestMessage);
+	}
+	for (i=0; i<plen; ++i) {
+		if (path[i] == 0)
+			break;
+	}
+	if (i >= plen)
+		goto out;
+	err = sfs_checksumop(path, op, msg_comm->uid, digest);
+	extra = 0;
+	if (err == 0) {
+		switch (op) {
+		case ANOUBIS_CHECKSUM_OP_CALC:
+		case ANOUBIS_CHECKSUM_OP_ADD:
+		case ANOUBIS_CHECKSUM_OP_GET:
+			extra = SHA256_DIGEST_LENGTH;
+			break;
+		default:
+			extra = 0;
+			break;
+		}
+	}
+out:
+	msg = msg_factory(ANOUBISD_MSG_POLREPLY,
+	    sizeof(anoubisd_reply_t) + extra);
+	if (!msg) {
+		master_terminate(ENOMEM);
+		return;
+	}
+	reply = (anoubisd_reply_t*)msg->msg;
+	reply->token = msg_comm->token;
+	reply->timeout = 0;
+	reply->reply = -err;
+	reply->flags = POLICY_FLAG_START | POLICY_FLAG_END;
+	reply->len = extra;
+	if (extra)
+		memcpy(reply->msg, digest, extra);
+	enqueue(&eventq_m2s, msg);
+	DEBUG(DBG_QUEUE, " >eventq_m2s: %x", reply->token);
+	event_add(ev_info->ev_m2s, NULL);
+}
+
+static void
 dispatch_s2m(int fd, short event __used, void *arg)
 {
 	/*@dependent@*/
@@ -677,60 +755,9 @@ dispatch_s2m(int fd, short event __used, void *arg)
 			return;
 		}
 		switch(msg->mtype) {
-		case ANOUBISD_MSG_CHECKSUM_OP: {
-			struct anoubis_msg rawmsg;
-			anoubisd_msg_checksum_op_t *msg_comm =
-			    (anoubisd_msg_checksum_op_t *)msg->msg;
-			char * path = NULL;
-			int err, op = 0, extra;
-			anoubisd_reply_t * reply;
-			anoubisd_msg_t *msg;
-			u_int8_t digest[SHA256_DIGEST_LENGTH];
-
-			rawmsg.length = msg_comm->len;
-			rawmsg.u.buf = msg_comm->msg;
-			if (VERIFY_LENGTH(&rawmsg,
-			    sizeof(Anoubis_CheckSumRequestMessage))) {
-				path = rawmsg.u.checksumrequest->path;
-				op = get_value(
-				    rawmsg.u.checksumrequest->operation);
-			}
-			if (path) {
-				int i, plen = rawmsg.length - CSUM_LEN
-				    - sizeof(Anoubis_CheckSumRequestMessage);
-				for (i=0; i<plen; ++i) {
-					if (path[i] == 0)
-						break;
-				}
-				if (i >= plen)
-					path = NULL;
-			}
-			err = -EFAULT;
-			if (path)
-				err = sfs_checksumop(path, op, msg_comm->uid,
-				    digest);
-			extra = 0;
-			if (err == 0 && op != ANOUBIS_CHECKSUM_OP_DEL)
-				extra = SHA256_DIGEST_LENGTH;
-			msg = msg_factory(ANOUBISD_MSG_POLREPLY,
-			    sizeof(anoubisd_reply_t) + extra);
-			if (!msg) {
-				master_terminate(ENOMEM);
-				break;
-			}
-			reply = (anoubisd_reply_t*)msg->msg;
-			reply->token = msg_comm->token;
-			reply->timeout = 0;
-			reply->reply = -err;
-			reply->flags = POLICY_FLAG_START | POLICY_FLAG_END;
-			reply->len = extra;
-			if (extra)
-				memcpy(reply->msg, digest, extra);
-			enqueue(&eventq_m2s, msg);
-			DEBUG(DBG_QUEUE, " >eventq_m2s: %x", reply->token);
-			event_add(ev_info->ev_m2s, NULL);
+		case ANOUBISD_MSG_CHECKSUM_OP:
+			dispatch_checksumop(msg, ev_info);
 			break;
-		}
 		default:
 			DEBUG(DBG_QUEUE, " >s2m: %x",
 			    ((struct eventdev_hdr *)msg->msg)->msg_token);

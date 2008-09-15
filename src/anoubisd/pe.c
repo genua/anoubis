@@ -57,6 +57,7 @@
 #include <dev/anoubis.h>
 #endif
 
+#include <anoubis_protocol.h>
 #include "anoubisd.h"
 #include "pe.h"
 
@@ -110,6 +111,20 @@ policy_engine(anoubisd_msg_t *request)
 	} case ANOUBISD_MSG_POLREQUEST: {
 		anoubisd_msg_comm_t *comm = (anoubisd_msg_comm_t *)request->msg;
 		reply = pe_dispatch_policy(comm);
+		break;
+	} case ANOUBISD_MSG_SFSDISABLE: {
+		anoubisd_msg_sfsdisable_t *sfsdisable;
+		sfsdisable = (anoubisd_msg_sfsdisable_t *)request->msg;
+		reply = calloc(1, sizeof(struct anoubisd_reply));
+		reply->token = sfsdisable->token;
+		reply->ask = 0;
+		reply->rule_id = 0;
+		reply->len = 0;
+		reply->flags = POLICY_FLAG_START|POLICY_FLAG_END;
+		reply->timeout = 0;
+		reply->reply = EPERM;
+		if (pe_proc_set_sfsdisable(sfsdisable->pid, sfsdisable->uid))
+			reply->reply = 0;
 		break;
 	} default:
 		reply = NULL;

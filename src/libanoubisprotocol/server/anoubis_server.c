@@ -639,7 +639,7 @@ int anoubis_server_process(struct anoubis_server * server, void * buf,
 	default:
 		/*
 		 * Default is deny. Please fit new opcodes into the
-		 * catagories above.
+		 * categories above.
 		 */
 		disp = anoubis_find_dispatcher(server, opcode);
 		if (!disp)
