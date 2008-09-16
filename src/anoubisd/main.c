@@ -709,8 +709,6 @@ dispatch_checksumop(anoubisd_msg_t *msg, struct event_info_main *ev_info)
 	extra = 0;
 	if (err == 0) {
 		switch (op) {
-		case ANOUBIS_CHECKSUM_OP_CALC:
-		case ANOUBIS_CHECKSUM_OP_ADD:
 		case ANOUBIS_CHECKSUM_OP_GET:
 			extra = SHA256_DIGEST_LENGTH;
 			break;

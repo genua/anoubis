@@ -73,6 +73,8 @@
 
 #include "anoubisctl.h"
 #include "apn.h"
+#include "csum/csum.h"
+
 
 void		usage(void) __dead;
 static int	daemon_start(void);
@@ -115,7 +117,7 @@ static int	opts = 0;
 
 
 static struct achat_channel	*channel;
-struct anoubis_client		*client;
+struct anoubis_client		*client = NULL;
 
 
 __dead void
@@ -401,18 +403,23 @@ dump(char *file)
 }
 
 static int
-sfs_sumop(char *file, int operation)
+sfs_sumop(char *file, int operation, u_int8_t *cs)
 {
 	int				 error = 0;
+	int				 len = 0;
 	struct anoubis_transaction	*t;
 
-	error = create_channel();
-	if (error) {
-		fprintf(stderr, "Cannot connect to anoubis daemon\n");
-		return error;
+	if (!client) {
+		error = create_channel();
+		if (error) {
+			fprintf(stderr, "Cannot connect to anoubis daemon\n");
+			return error;
+		}
 	}
 
-	t = anoubis_client_csumrequest_start(client, operation, file, NULL, 0);
+	if (cs)
+		len = ANOUBIS_CS_LEN;
+	t = anoubis_client_csumrequest_start(client, operation, file, cs, len);
 	if (!t) {
 		destroy_channel();
 		fprintf(stderr, "Cannot send checksum request\n");
@@ -437,7 +444,7 @@ sfs_sumop(char *file, int operation)
 		return 6;
 	}
 	destroy_channel();
-	if (operation != ANOUBIS_CHECKSUM_OP_DEL) {
+	if (operation == ANOUBIS_CHECKSUM_OP_GET) {
 		int i;
 		if (!VERIFY_LENGTH(t->msg, sizeof(Anoubis_AckPayloadMessage)
 		    + SHA256_DIGEST_LENGTH)) {
@@ -445,9 +452,14 @@ sfs_sumop(char *file, int operation)
 			    t->msg->length);
 			return 6;
 		}
-		for (i=0; i<SHA256_DIGEST_LENGTH; ++i) {
+		for (i=0; i<SHA256_DIGEST_LENGTH; ++i)
 			printf("%02x", t->msg->u.ackpayload->payload[i]);
-		}
+		printf("\n");
+	} else if (operation == ANOUBIS_CHECKSUM_OP_ADDSUM) {
+		/* Print the checksum that has been added. */
+		int i;
+		for (i=0; i<SHA256_DIGEST_LENGTH; ++i)
+			printf("%02x", cs[i]);
 		printf("\n");
 	}
 	anoubis_transaction_destroy(t);
@@ -457,49 +469,53 @@ sfs_sumop(char *file, int operation)
 static int
 sfs_addsum(char *file)
 {
-	return sfs_sumop(file, ANOUBIS_CHECKSUM_OP_ADD);
+	u_int8_t cs[ANOUBIS_CS_LEN];
+	int len = ANOUBIS_CS_LEN;
+	int ret;
+
+	create_channel();
+	ret = anoubis_csum_calc(file, cs, &len);
+	if (ret < 0) {
+		errno = -ret;
+		perror("anoubis_csum_calc");
+		return 6;
+	}
+	if (len != ANOUBIS_CS_LEN) {
+		fprintf(stderr, "Bad csum length from anoubis_csum_calc\n");
+		return 6;
+	}
+	return sfs_sumop(file, ANOUBIS_CHECKSUM_OP_ADDSUM, cs);
 }
 
 static int
 sfs_delsum(char *file)
 {
-	return sfs_sumop(file, ANOUBIS_CHECKSUM_OP_DEL);
+	return sfs_sumop(file, ANOUBIS_CHECKSUM_OP_DEL, NULL);
 }
 
 static int
 sfs_getsum(char *file)
 {
-	return sfs_sumop(file, ANOUBIS_CHECKSUM_OP_GET);
+	return sfs_sumop(file, ANOUBIS_CHECKSUM_OP_GET, NULL);
 }
 
 static int
 sfs_calcsum(char *file)
 {
-	int i, fd, afd;
-	struct anoubis_ioctl_csum cs;
-	
-	afd = open("/dev/anoubis", O_RDONLY);
-	if (afd < 0) {
-		perror("open(/dev/anoubis)");
+	int i, ret;
+	u_int8_t cs[ANOUBIS_CS_LEN];
+	int len = ANOUBIS_CS_LEN;
+
+	create_channel();
+	ret = anoubis_csum_calc(file, cs, &len);
+	destroy_channel();
+	if (ret < 0) {
+		errno = -ret;
+		perror("anoubis_csum_calc");
 		return 6;
 	}
-	fd = open(file, O_RDONLY);
-	if (fd < 0) {
-		perror("open");
-		close(afd);
-		return 6;
-	}
-	cs.fd = fd;
-	if (ioctl(afd, ANOUBIS_GETCSUM, &cs) < 0) {
-		perror("ioctl");
-		close(fd);
-		close(afd);
-		return 6;
-	}
-	close(fd);
-	close(afd);
-	for (i=0; i<ANOUBIS_CS_LEN; ++i) {
-		printf("%02x", cs.csum[i]);
+	for (i=0; i<len; ++i) {
+		printf("%02x", cs[i]);
 	}
 	printf("\n");
 	return 0;
@@ -729,6 +745,7 @@ create_channel(void)
 	struct sockaddr_storage ss;
 	struct sockaddr_un     *ss_sun = (struct sockaddr_un *)&ss;
 	int			error = 0;
+	struct anoubis_transaction *t;
 
 	if (opts & ANOUBISCTL_OPT_VERBOSE)
 		fprintf(stderr, ">create_channel\n");
@@ -820,7 +837,25 @@ create_channel(void)
 		error = 5;
 		goto err;
 	}
-
+	t = anoubis_client_sfsdisable_start(client, getpid());
+	while(1) {
+		int ret = anoubis_client_wait(client);
+		if (ret <= 0) {
+			anoubis_transaction_destroy(t);
+			destroy_channel();
+			return 5;
+		}
+		if (t->flags & ANOUBIS_T_DONE)
+			break;
+	}
+	error = t->result;
+	anoubis_transaction_destroy(t);
+	if (error) {
+		destroy_channel();
+		errno = error;
+		perror("Cannot disable SFS checks");
+		return 5;
+	}
 err:
 	if (opts & ANOUBISCTL_OPT_VERBOSE)
 		fprintf(stderr, "<create_channel\n");

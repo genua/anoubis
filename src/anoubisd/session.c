@@ -1013,8 +1013,7 @@ pol_reply_cmp(void *msg1, void *msg2)
 }
 
 static void
-dispatch_p2s_pol_reply(anoubisd_msg_t *msg,
-    struct event_info_session *ev_info __used)
+dispatch_p2s_pol_reply(anoubisd_msg_t *msg, struct event_info_session *ev_info)
 {
 	anoubisd_reply_t *reply;
 	struct anoubisd_msg_comm_store msg_comm_store_tmp, *msg_comm;
@@ -1026,24 +1025,21 @@ dispatch_p2s_pol_reply(anoubisd_msg_t *msg,
 	reply = (anoubisd_reply_t *)msg->msg;
 	msg_comm_store_tmp.token = reply->token;
 	msg_comm = queue_find(&requestq, &msg_comm_store_tmp,  pol_reply_cmp);
-	if (msg_comm == NULL) {
-		log_warn("dispatch_p2s_pol_reply: comm not found for 0x%x",
-		    reply->token);
+	if (msg_comm == NULL)
 		DEBUG(DBG_TRACE, "<dispatch_p2s_pol_reply (not found)");
-		return;
-	}
 
 	if (reply->len)
 		buf = reply->msg;
 
 	end = reply->flags & POLICY_FLAG_END;
-	ret = anoubis_policy_comm_answer(msg_comm->comm, reply->token,
+	ret = anoubis_policy_comm_answer(
+	    msg_comm ? msg_comm->comm : ev_info->policy, reply->token,
 	    reply->reply, buf, reply->len, end != 0);
 	DEBUG(DBG_TRACE, " >anoubis_policy_comm_answer: %lld %d %d",
 	    (long long)reply->token, ret, reply->reply);
 
 	DEBUG(DBG_QUEUE, " <requestq: %x", reply->token);
-	if (end) {
+	if (msg_comm && end) {
 		queue_delete(&requestq, msg_comm);
 		free(msg_comm);
 	}

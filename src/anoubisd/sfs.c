@@ -52,12 +52,6 @@
 #include <dev/anoubis_sfs.h>
 #endif
 
-#ifdef OPENBSD
-#include <sha2.h>
-#else
-#include <openssl/sha.h>
-#endif
-
 #include <anoubis_protocol.h>
 
 #include "anoubisd.h"
@@ -65,8 +59,6 @@
 
 static int	sfs_readchecksum(const char *csum_file, unsigned char *md);
 static int	sfs_deletechecksum(const char *csum_file);
-static int	sfs_sha256(const char * filename,
-		    unsigned char md[SHA256_DIGEST_LENGTH], uid_t auth_uid);
 static int	convert_user_path(const char * path, char **dir);
 static int	check_empty_dir(const char *path);
 char *		insert_escape_seq(const char *path);
@@ -93,34 +85,6 @@ sfs_open(const char *filename, uid_t auth_uid)
 	if (fd < 0)
 		return -1;
 	return fd;
-}
-
-/*
- * NOTE: This function is not reentrant because sfs_open isn't.
- */
-static int
-sfs_sha256(const char * filename, unsigned char md[SHA256_DIGEST_LENGTH],
-    uid_t auth_uid)
-{
-	SHA256_CTX			c;
-	int				fd;
-	static char			buf[40960];
-
-	fd = sfs_open(filename, auth_uid);
-	SHA256_Init(&c);
-	while(1) {
-		int ret = read(fd, buf, sizeof(buf));
-		if (ret == 0)
-			break;
-		if (ret < 0) {
-			close(fd);
-			return -1;
-		}
-		SHA256_Update(&c, buf, ret);
-	}
-	SHA256_Final(md, &c);
-	close(fd);
-	return 0;
 }
 
 int
@@ -307,7 +271,7 @@ err:
 
 int
 sfs_checksumop(const char *path, unsigned int operation, uid_t uid,
-    u_int8_t md[SHA256_DIGEST_LENGTH])
+    u_int8_t md[ANOUBIS_CS_LEN])
 {
 	char *csum_path = NULL, *csum_file = NULL;
 	int ret;
@@ -319,19 +283,13 @@ sfs_checksumop(const char *path, unsigned int operation, uid_t uid,
 		ret = -ENOMEM;
 		goto out;
 	}
-	if (operation == ANOUBIS_CHECKSUM_OP_ADD
-	    || operation == ANOUBIS_CHECKSUM_OP_CALC
-	    || operation == ANOUBIS_CHECKSUM_OP_ADDSUM) {
+	if (operation == ANOUBIS_CHECKSUM_OP_ADDSUM) {
 		int fd;
 		int written = 0;
 
-		if (operation == ANOUBIS_CHECKSUM_OP_ADDSUM) {
-			ret = sfs_open(path, uid);
-			if (ret >= 0)
-				close(ret);
-		} else {
-			ret = sfs_sha256(path, md, uid);
-		}
+		ret = sfs_open(path, uid);
+		if (ret >= 0)
+			close(ret);
 		if (ret < 0) {
 			ret = -EPERM;
 			goto out;
@@ -339,27 +297,23 @@ sfs_checksumop(const char *path, unsigned int operation, uid_t uid,
 		ret = mkpath(csum_path);
 		if (ret < 0)
 			goto out;
-		if (operation == ANOUBIS_CHECKSUM_OP_ADD
-		    || operation == ANOUBIS_CHECKSUM_OP_ADDSUM) {
-			fd = open(csum_file, O_WRONLY|O_CREAT|O_TRUNC, 0600);
-			if (fd < 0) {
+		fd = open(csum_file, O_WRONLY|O_CREAT|O_TRUNC, 0600);
+		if (fd < 0) {
+			ret = -errno;
+			goto out;
+		}
+
+		while (written < ANOUBIS_CS_LEN) {
+			ret = write(fd, md + written, ANOUBIS_CS_LEN - written);
+			if (ret < 0) {
 				ret = -errno;
+				unlink(csum_file);
+				close(fd);
 				goto out;
 			}
-
-			while (written < SHA256_DIGEST_LENGTH) {
-				ret = write(fd, md + written,
-				    SHA256_DIGEST_LENGTH - written);
-				if (ret < 0) {
-					ret = -errno;
-					unlink(csum_file);
-					close(fd);
-					goto out;
-				}
-				written += ret;
-			}
-			close(fd);
+			written += ret;
 		}
+		close(fd);
 		ret = 0;
 	} else if (operation == ANOUBIS_CHECKSUM_OP_DEL) {
 		ret = sfs_deletechecksum(csum_file);
@@ -367,6 +321,8 @@ sfs_checksumop(const char *path, unsigned int operation, uid_t uid,
 			ret = -errno;
 	} else if (operation == ANOUBIS_CHECKSUM_OP_GET) {
 		ret = sfs_readchecksum(csum_file, md);
+	} else {
+		ret = -ENOSYS;
 	}
 
 out:
@@ -388,9 +344,8 @@ sfs_readchecksum(const char *csum_file, unsigned char *md)
 	if (fd < 0)
 		return -errno;
 
-	while (bytes_read < SHA256_DIGEST_LENGTH) {
-		ret = read(fd, md + bytes_read,
-		    SHA256_DIGEST_LENGTH - bytes_read);
+	while (bytes_read < ANOUBIS_CS_LEN) {
+		ret = read(fd, md + bytes_read, ANOUBIS_CS_LEN - bytes_read);
 		if (ret < 0) {
 			ret = -errno;
 			break;

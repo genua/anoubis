@@ -108,7 +108,8 @@ pe_decide_sfs(uid_t uid, anoubisd_msg_sfsopen_t *sfsmsg, time_t now)
 			struct apn_ruleset	*rs;
 			struct apn_rule		*rule;
 
-			if (do_disable && (i == PE_PRIO_USER1))
+			if (do_disable
+			    && (i == PE_PRIO_USER1 || hdr->msg_uid == 0))
 				continue;
 			rs = pe_user_get_ruleset(uid, i, NULL);
 			if (rs == NULL)
@@ -136,6 +137,9 @@ pe_decide_sfs(uid_t uid, anoubisd_msg_sfsopen_t *sfsmsg, time_t now)
 				break;
 		}
 		/* Look into checksum from /var/lib/sfs */
+		if (decision == -1 && do_disable && (hdr->msg_uid == 0
+		    || sfsmsg->anoubisd_csum_set == ANOUBISD_CSUM_USER))
+			decision = POLICY_ALLOW;
 		if ((decision == -1) &&
 		    (sfsmsg->anoubisd_csum_set != ANOUBISD_CSUM_NONE)) {
 			if (memcmp(msg->csum, sfsmsg->anoubisd_csum,

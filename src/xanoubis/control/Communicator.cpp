@@ -34,6 +34,9 @@
 #include <errno.h>
 #include <sys/un.h>
 
+/* libanoubisui */
+#include <csum/csum.h>
+
 #include <unistd.h>
 
 #ifdef LINUX
@@ -478,8 +481,20 @@ Communicator::Entry(void)
 		}
 
 		if (startChecksumAdd == COMMUNICATOR_FLAG_INIT) {
+			u_int8_t cs[ANOUBIS_CS_LEN];
+			int len = ANOUBIS_CS_LEN, ret;
+
+			ret = anoubis_csum_calc(addFile_, cs, &len);
+			if (ret < 0) {
+				free(addFile_);
+				errString = wxT("Cannot calculate checksum");
+				sendError(COM_CSUM_ADD_FAIL, errString);
+				checksumAdd_ = false;
+				startChecksumAdd = COMMUNICATOR_FLAG_NONE;
+				continue;
+			}
 			reqTa =  anoubis_client_csumrequest_start(client_,
-			    ANOUBIS_CHECKSUM_OP_ADD, addFile_, NULL, 0);
+			    ANOUBIS_CHECKSUM_OP_ADDSUM, addFile_, cs, len);
 			if(!reqTa) {
 				notDone = false;
 				commRC =  CONNECTION_RXTX_ERROR;
@@ -504,21 +519,39 @@ Communicator::Entry(void)
 			startChecksumAdd = COMMUNICATOR_FLAG_NONE;
 		}
 
+		/* Request to calculate actual checksum of file contents */
+		if (checksumGet_ && csumOp_ == CSUM_GET_CURRENT) {
+			u_int8_t cs[SHA256_DIGEST_LENGTH];
+			int len = SHA256_DIGEST_LENGTH, ret;
+
+			ret = anoubis_csum_calc(addFile_, cs, &len);
+			if (ret < 0 || len != SHA256_DIGEST_LENGTH) {
+				errString = wxT("Cannot calculate checksum");
+				sendError(COM_CSUM_CAL_FAIL, errString);
+			}
+			free(getFile_);
+			checksumGet_ = false;
+			startChecksumGet = COMMUNICATOR_FLAG_NONE;
+			for (unsigned int i = 0; i<SHA256_DIGEST_LENGTH; ++i) {
+				wxCsum += wxString::Format(wxT("%2.2x"), cs[i]);
+				csum[i] = cs[i];
+			}
+			wxCommandEvent event(anEVT_ANOUBISD_CSUM_CUR_ARRIVED);
+			event.SetString(wxCsum);
+			event.SetClientData(csum);
+			eventDestination_->AddPendingEvent(event);
+			continue;
+		}
 		/* Request to get a checksum for a file */
-		if (checksumGet_ && startChecksumGet == COMMUNICATOR_FLAG_NONE
+		if (checksumGet_ && csumOp_ != CSUM_GET_CURRENT
+		    && startChecksumGet == COMMUNICATOR_FLAG_NONE
 		    && startChecksumAdd  == COMMUNICATOR_FLAG_NONE
 		    && startPolicyRequest == COMMUNICATOR_FLAG_NONE
 		    && startPolicyUse == COMMUNICATOR_FLAG_NONE) {
 
-			if (csumOp_ == CSUM_GET_CURRENT) {
-				reqTa = anoubis_client_csumrequest_start(
-				    client_, ANOUBIS_CHECKSUM_OP_CALC,
-				    getFile_, NULL, 0);
-			} else {
-				reqTa = anoubis_client_csumrequest_start(
-				    client_, ANOUBIS_CHECKSUM_OP_GET,
-				    getFile_, NULL, 0);
-			}
+			reqTa = anoubis_client_csumrequest_start(
+			    client_, ANOUBIS_CHECKSUM_OP_GET,
+			    getFile_, NULL, 0);
 			if(!reqTa) {
 				notDone = false;
 				commRC =  CONNECTION_RXTX_ERROR;
@@ -536,11 +569,7 @@ Communicator::Entry(void)
 		if (startChecksumGet == COMMUNICATOR_FLAG_DONE) {
 			if (reqTa->result) {
 				errString = wxEmptyString;
-				if (csumOp_ == CSUM_GET_CURRENT)
-					sendError(COM_CSUM_CAL_FAIL, errString);
-				else
-					sendError(COM_CSUM_GET_FAIL, errString);
-
+				sendError(COM_CSUM_GET_FAIL, errString);
 				startChecksumGet = COMMUNICATOR_FLAG_NONE;
 				free(getFile_);
 				checksumGet_ = false;

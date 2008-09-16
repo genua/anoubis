@@ -937,7 +937,7 @@ anoubis_client_csumrequest_start(struct anoubis_client *client,
 }
 
 struct anoubis_transaction *
-annoubis_client_sfsrequest_start(struct anoubis_client *client, pid_t pid)
+anoubis_client_sfsdisable_start(struct anoubis_client *client, pid_t pid)
 {
 	struct anoubis_msg		*m;
 	struct anoubis_transaction	*t = NULL;

@@ -25,22 +25,55 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ##########################################################################
 
-SUBDIRS = apnvm csum
+noinst_LIBRARIES = libcsum.a
+libcsum_a_SOURCES =	\
+	csum.c	\
+	csum.h
 
-lib_LIBRARIES = libanoubisui.a
+bsdcompatdir   = src/bsdcompat
+libbsdcompat   = $(top_builddir)/$(bsdcompatdir)/libbsdcompat.a
 
-# Make auto-tooling happy!
-libanoubisui_a_SOURCES = dummy.c
-libanoubisui_a_DEPENDENCIES = apnvm/libapnvm.a csum/libcsum.a
-libanoubisui_a_LIBADD = apnvm/*.o csum/*.o
+# Extra includes & dependencies
+csum_includes = -I$(top_builddir)/src -I$(top_srcdir)/include
+csum_dependencies =
 
-flawfinder:
-	for t in $(SUBDIRS); do cd $$t && make $@ && cd ..; done
+if NEEDBSDCOMPAT
+csum_includes += -I$(top_srcdir)/$(bsdcompatdir)
+csum_dependencies += $(libbsdcompat)
+endif
 
-lint:
-	for t in $(SUBDIRS); do cd $$t && make $@ && cd ..; done
+libcsum_a_CFLAGS = -std=gnu99 $(AM_CFLAGS)
+libcsum_a_CPPFLAGS = $(csum_includes) $(AM_CPPFLAGS)
+libcsum_a_DEPENDENCIES	= $(csum_dependencies)
+libcsum_a_LIBADD =
 
-splint:
-	for t in $(SUBDIRS); do cd $$t && make $@ && cd ..; done
+libcsum_a_SOURCES_lint =	\
+	csum.c_lint
 
-linting: flawfinder lint splint
+libcsum_a_SOURCES_splint =	\
+	csum.c_splint		\
+	csum.h_splint
+
+libcsum_a_SOURCES_flawfinder =	\
+	csum.c_flawfinder	\
+	csum.h_flawfinder
+
+flawfinder_FLAGS=
+splint_FLAGS=$(libcsum_a_CPPFLAGS)
+lint_FLAGS=$(libcsum_a_CPPFLAGS)
+
+lint:		$(libcsum_a_SOURCES_lint)
+splint:		$(libcsum_a_SOURCES_splint)
+flawfinder:	$(libcsum_a_SOURCES_flawfinder)
+
+include $(top_srcdir)/lint/Makefile.lint
+
+clean-local:
+	@rm -f $(libcsum_a_SOURCES_lint)
+	@rm -f $(libcsum_a_SOURCES_splint)
+	@rm -f $(libcsum_a_SOURCES_flawfinder)
+
+# As we're in maintainer mode we have to remove generated source files
+# manually.
+dist-hook:
+	$(MAKE) maintainer-clean-generic

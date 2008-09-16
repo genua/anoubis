@@ -297,10 +297,8 @@ typedef struct {
 	char	payload[0];
 } __attribute__((packed)) Policy_SetByUid;
 
-#define ANOUBIS_CHECKSUM_OP_ADD		0x0001UL	/* Deprecated */
 #define ANOUBIS_CHECKSUM_OP_DEL		0x0002UL
 #define ANOUBIS_CHECKSUM_OP_GET		0x0003UL
-#define ANOUBIS_CHECKSUM_OP_CALC	0x0004UL	/* Deprecated */
 #define ANOUBIS_CHECKSUM_OP_ADDSUM	0x0005UL
 
 typedef struct {
