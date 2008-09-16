@@ -59,6 +59,9 @@ void
 RuleEditorFillTableVisitor::showApp(AppPolicy *appPolicy, long idx)
 {
 	clean(idx);
+
+	appPolicy->setIndex(idx);
+
 	if (appPolicy->getType() == APN_ALF) {
 		ruleEditor_->ruleListCtrl->SetItem(idx,
 		    RULEDITOR_LIST_COLUMN_APP, appPolicy->getApplicationName());
@@ -83,6 +86,8 @@ RuleEditorFillTableVisitor::showAlf(AlfPolicy *alfPolicy, long idx)
 	list = ruleEditor_->ruleListCtrl;
 
 	clean(idx);
+
+	alfPolicy->setIndex(idx);
 
 	if (alfPolicy->hasScope()) {
 		list->SetItem(idx, RULEDITOR_LIST_COLUMN_SCOPE,
@@ -147,6 +152,8 @@ void
 RuleEditorFillTableVisitor::showSfs(SfsPolicy *sfsPolicy, long idx)
 {
 	clean(idx);
+
+	sfsPolicy->setIndex(idx);
 
 	ruleEditor_->ruleListCtrl->SetItem(idx, RULEDITOR_LIST_COLUMN_RULE,
 	    wxT("SFS"));

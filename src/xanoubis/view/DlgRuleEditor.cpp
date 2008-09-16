@@ -57,6 +57,7 @@
 #include "RuleEditorAddPolicyVisitor.h"
 #include "RuleEditorFillWidgetsVisitor.h"
 #include "RuleEditorFillTableVisitor.h"
+#include "RuleSetSearchPolicyVisitor.h"
 
 #include <wx/listimpl.cpp>
 WX_DEFINE_LIST(AddrLineList);
@@ -140,7 +141,7 @@ DlgRuleEditor::DlgRuleEditor(wxWindow* parent) : DlgRuleEditorBase(parent)
 	userRuleSet_ = NULL;
 	adminRuleSet_ = NULL;
 
-	columnNames_[RULEDITOR_LIST_COLUMN_PRIO] = _("ID");
+	columnNames_[RULEDITOR_LIST_COLUMN_PRIO] = _("Index");
 	columnWidths_[RULEDITOR_LIST_COLUMN_PRIO] = wxLIST_AUTOSIZE;
 
 	columnNames_[RULEDITOR_LIST_COLUMN_RULE] = _("Rule");
@@ -1079,12 +1080,24 @@ DlgRuleEditor::OnAlfDstPortComboBox(wxCommandEvent&)
 void
 DlgRuleEditor::OnShowRule(wxCommandEvent& event)
 {
-	wxListView *selecter;
+	wxListView	*selecter;
+	unsigned long	 id;
+	Policy		*policy;
 
 	/* show RuleEditor Dialog and corresponding Ruleid entry */
 	this->Show();
 	selecter = (wxListView*)ruleListCtrl;
-	selecter->Select(event.GetExtraLong());
+	id = event.GetExtraLong();
+	RuleSetSearchPolicyVisitor seeker(id);
+	userRuleSet_->accept(seeker);
+	if (! seeker.hasMatchingPolicy()) {
+		adminRuleSet_->accept(seeker);
+		if (! seeker.hasMatchingPolicy())
+			return;
+	}
+	policy = seeker.getMatchingPolicy();
+
+	selecter->Select(policy->getIndex());
 }
 
 void

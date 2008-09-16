@@ -44,7 +44,8 @@ class Policy: public wxObject
 	DECLARE_CLASS(Policy)
 
 	private:
-		Policy	*parent_;
+		Policy		*parent_;
+		unsigned long	 index_;
 
 	public:
 		Policy(void);
@@ -62,6 +63,9 @@ class Policy: public wxObject
 		wxString getVarTypeName(int);
 		wxString getRuleTypeName(int);
 		wxString guessAppName(wxString);
+
+		void setIndex(unsigned long);
+		unsigned long getIndex(void);
 };
 
 WX_DECLARE_LIST(Policy, PolicyList);

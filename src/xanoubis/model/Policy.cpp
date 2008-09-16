@@ -57,11 +57,13 @@ IMPLEMENT_CLASS(Policy, wxObject)
 Policy::Policy(void)
 {
 	parent_ = NULL;
+	index_ = 0;
 }
 
 Policy::Policy(Policy *parent)
 {
 	parent_ = parent;
+	index_ = 0;
 }
 
 Policy::~Policy(void)
@@ -225,4 +227,16 @@ Policy::guessAppName(wxString binary)
 		result = _("unknown");
 	}
 	return (result);
+}
+
+unsigned long
+Policy::getIndex(void)
+{
+	return (index_);
+}
+
+void
+Policy::setIndex(unsigned long index)
+{
+	index_ = index;
 }
