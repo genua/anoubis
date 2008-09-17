@@ -63,6 +63,19 @@ static int	convert_user_path(const char * path, char **dir);
 static int	check_empty_dir(const char *path);
 char *		insert_escape_seq(const char *path);
 
+#if 0
+
+/*
+ * NOTE CEH: We keep this function ifdef'ed out for the moment because we
+ * NOTE CEH: might need something like this again once we support file change
+ * NOTE CEH: notifications based on checksums. However, PLEASE think twice
+ * NOTE CEH: before reusing this function because its use is most likely a
+ * NOTE CEH: hint that there is a design flaw somewhere.
+ * NOTE CEH: Additionally this function might cause a DOS on the anoubisd
+ * NOTE CEH: because calling open on a large file might trigger checksum
+ * NOTE CEH: calculation in the kernel.
+ */
+
 /*
  * NOTE: This function is not reentrant for several reasons:
  * - Both credentials and buf can be quite large (65k supplementary group
@@ -86,6 +99,7 @@ sfs_open(const char *filename, uid_t auth_uid)
 		return -1;
 	return fd;
 }
+#endif
 
 int
 mkpath(const char *path)
@@ -287,13 +301,6 @@ sfs_checksumop(const char *path, unsigned int operation, uid_t uid,
 		int fd;
 		int written = 0;
 
-		ret = sfs_open(path, uid);
-		if (ret >= 0)
-			close(ret);
-		if (ret < 0) {
-			ret = -EPERM;
-			goto out;
-		}
 		ret = mkpath(csum_path);
 		if (ret < 0)
 			goto out;
