@@ -61,62 +61,62 @@ generate_file(void)
 	/* To avoid races, we keep the file open. */
 
 	fprintf(sfp, "alf {\n");
-	fprintf(sfp, "/bin/sh sha256 \\\n");
+	fprintf(sfp, "10: /bin/sh sha256 \\\n");
 	fprintf(sfp, "a123456789abcdef0123456789abcdef0123456789abcdef"
 	    "0123456789abcdef {\n");
-	fprintf(sfp, "allow connect tcp all\n");
-	fprintf(sfp, "allow accept tcp from any to any\n");
-	fprintf(sfp, "allow connect tcp from any to 1.2.3.4\n");
-	fprintf(sfp, "allow accept tcp from any to 1.2.3.4 port www\n");
-	fprintf(sfp, "allow connect tcp from 1.2.3.4 to any\n");
-	fprintf(sfp, "allow accept tcp from 1.2.3.4 port www to any\n");
-	fprintf(sfp, "allow connect tcp from 1.2.3.0/24 to 4.0.0.0/8\n");
-	fprintf(sfp, "default deny\n");
-	fprintf(sfp, "context new any\n");
+	fprintf(sfp, "1: allow connect tcp all\n");
+	fprintf(sfp, "2: allow accept tcp from any to any\n");
+	fprintf(sfp, "3: allow connect tcp from any to 1.2.3.4\n");
+	fprintf(sfp, "4: allow accept tcp from any to 1.2.3.4 port www\n");
+	fprintf(sfp, "5: allow connect tcp from 1.2.3.4 to any\n");
+	fprintf(sfp, "6: allow accept tcp from 1.2.3.4 port www to any\n");
+	fprintf(sfp, "7: allow connect tcp from 1.2.3.0/24 to 4.0.0.0/8\n");
+	fprintf(sfp, "8: default deny\n");
+	fprintf(sfp, "9: context new any\n");
 	fprintf(sfp, "}\n");
-	fprintf(sfp, "/usr/bin/ssh sha256 \\\n");
+	fprintf(sfp, "14: /usr/bin/ssh sha256 \\\n");
 	fprintf(sfp, "b123456789abcdef0123456789abcdef0123456789abcdef"
 	    "0123456789abcdef {\n");
-	fprintf(sfp, "default deny\n");
-	fprintf(sfp, "allow connect tcp all\n");
-	fprintf(sfp, "context new { /sbin/dhclient sha256 \\\n");
+	fprintf(sfp, "11: default deny\n");
+	fprintf(sfp, "12: allow connect tcp all\n");
+	fprintf(sfp, "13: context new { /sbin/dhclient sha256 \\\n");
 	fprintf(sfp, "c123456789abcdef0123456789abcdef0123456789abcdef"
 	    "0123456789abcdef,\n");
 	fprintf(sfp, "/bin/sh \\\n");
 	fprintf(sfp, "d123456789abcdef0123456789abcdef0123456789abcdef"
 	    "0123456789abcdef }\n");
 	fprintf(sfp, "}\n");
-	fprintf(sfp, "/sbin/dhclient sha256 \\\n");
+	fprintf(sfp, "18: /sbin/dhclient sha256 \\\n");
 	fprintf(sfp, "c123456789abcdef0123456789abcdef0123456789abcdef"
 	    "0123456789abcdef {\n");
-	fprintf(sfp, "default deny\n");
-	fprintf(sfp, "allow raw\n");
-	fprintf(sfp, "allow send udp all\n");
+	fprintf(sfp, "15: default deny\n");
+	fprintf(sfp, "16: allow raw\n");
+	fprintf(sfp, "17: allow send udp all\n");
 	fprintf(sfp, "}\n");
 	fprintf(sfp, "\n");
-	fprintf(sfp, "/bin/sh \\\n");
+	fprintf(sfp, "22: /bin/sh \\\n");
 	fprintf(sfp, "d123456789abcdef0123456789abcdef0123456789abcdef"
 	    "0123456789abcdef {\n");
-	fprintf(sfp, "default deny\n");
-	fprintf(sfp, "context new any\n");
-	fprintf(sfp, "allow connect tcp from any to 1.2.3.4 port www\n");
+	fprintf(sfp, "19: default deny\n");
+	fprintf(sfp, "20: context new any\n");
+	fprintf(sfp, "21: allow connect tcp from any to 1.2.3.4 port www\n");
 	fprintf(sfp, "}\n");
-	fprintf(sfp, "/usr/bin/ssh \\\n");	/* This rule has ID 25 */
+	fprintf(sfp, "25: /usr/bin/ssh \\\n");
 	fprintf(sfp, "e123456789abcdef0123456789abcdef0123456789abcdef"
 	    "0123456789abcdef {\n");
-	fprintf(sfp, "default deny\n");		/* This is rule 23 */
-	fprintf(sfp, "allow connect alert tcp all\n"); /* This is rule 24 */
+	fprintf(sfp, "23: default deny\n");		/* This is rule 23 */
+	fprintf(sfp, "24: allow connect alert tcp all\n"); /* This is rule 24 */
 	fprintf(sfp, "}\n");
-	fprintf(sfp, "/sbin/dhclient \\\n");
+	fprintf(sfp, "29: /sbin/dhclient \\\n");
 	fprintf(sfp, "f123456789abcdef0123456789abcdef0123456789abcdef"
 	    "0123456789abcdef {\n");
-	fprintf(sfp, "default deny\n");
-	fprintf(sfp, "allow raw\n");
-	fprintf(sfp, "allow send log udp all\n");
+	fprintf(sfp, "26: default deny\n");
+	fprintf(sfp, "27: allow raw\n");
+	fprintf(sfp, "28: allow send log udp all\n");
 	fprintf(sfp, "}\n");
-	fprintf(sfp, "any {\n");
-	fprintf(sfp, "default deny\n");
-	fprintf(sfp, "context new any\n");
+	fprintf(sfp, "32: any {\n");
+	fprintf(sfp, "30: default deny\n");
+	fprintf(sfp, "31: context new any\n");
 	fprintf(sfp, "}\n");
 	fprintf(sfp, "}\n");
 
@@ -133,7 +133,7 @@ generate_alfrule(void)
 	if ((alf = calloc(1, sizeof(struct apn_alfrule))) == NULL)
 		return (NULL);
 
-	alf->type = APN_ALF_FILTER;
+	alf->apn_type = APN_ALF_FILTER;
 	alf->rule.afilt.action = APN_ACTION_ALLOW;
 	alf->rule.afilt.filtspec.log = 0;
 	alf->rule.afilt.filtspec.af = AF_INET;
@@ -172,8 +172,10 @@ generate_rule(void)
 	app->hashtype = APN_HASH_SHA256;
 	*(unsigned long *)app->hashvalue = htonl(0xdeadbeef);
 
-	rule->type = APN_ALF;
-	rule->rule.alf = alf;
+	rule->apn_type = APN_ALF;
+	rule->apn_id = 0;
+	TAILQ_INIT(&rule->rule.alf);
+	TAILQ_INSERT_TAIL(&rule->rule.alf, alf, entry);
 	rule->app = app;
 
 	return (rule);
@@ -181,10 +183,11 @@ generate_rule(void)
 
 START_TEST(tc_Insert1)
 {
-	struct apn_rule		*rule;
+	struct apn_rule		*rule, *rule2;
 	struct apn_ruleset	*rs;
 	char			*file;
 	int			 ret;
+	unsigned int		 saved;
 
 	file = generate_file();
 	ret = apn_parse(file, &rs, 0);
@@ -202,8 +205,8 @@ START_TEST(tc_Insert1)
 		apn_print_errors(rs, stderr);
 	fail_if(ret != 0, "Printing failed");
 
-	fail_if(rs->maxid != 33, "Maximum ID in ruleset is %d, but should be"
-	    " 33!", rs->maxid);
+	fail_if(rs->maxid != 32, "Maximum ID in ruleset is %d, but should be"
+	    " 32!", rs->maxid);
 
 	rule = generate_rule();
 	fail_if(rule == NULL, "generate_rule() failed");
@@ -215,9 +218,10 @@ START_TEST(tc_Insert1)
 	ret = apn_insert(rs, rule, 25);
 	if (ret != 0)
 		apn_print_errors(rs, stderr);
+	rule2 = generate_rule();
 	fail_if(ret != 0, "Insert failed");
-	fail_if(rule->id != 34, "ID update failed, got %d expected 34",
-	    rule->id);
+	fail_if(rule->apn_id < 33, "ID update failed, got %d expected >= 33",
+	    rule->apn_id);
 
 	/*
 	 * Dump the new rule set, so the perl wrapper can check the
@@ -229,18 +233,21 @@ START_TEST(tc_Insert1)
 		apn_print_errors(rs, stderr);
 	fail_if(ret != 0, "Printing failed");
 
+	saved = rule->apn_id;
 	/* Try to put in before application rule with bogus ID 1234 */
-	ret = apn_insert(rs, rule, 1234);
+	ret = apn_insert(rs, rule2, 1234);
 	fail_if(ret != 1, "Insert did not fail, but should have!");
-	fail_if(rule->id != 34, "Rule ID was modified!");
+	fail_if(rule->apn_id != saved, "Rule ID was modified (%d => %d)!",
+	    saved, rule->apn_id);
 
 	/*
 	 * Try to put in before rule with the ID 23, which is not an
 	 * application rule.
 	 */
-	ret = apn_insert(rs, rule, 23);
+	ret = apn_insert(rs, rule2, 23);
 	fail_if(ret != 1, "Insert did not fail, but should have!");
-	fail_if(rule->id != 34, "Rule ID was modified!");
+	fail_if(rule->apn_id != saved, "Rule ID was modified (%d => %d)!",
+	    saved, rule->apn_id);
 
 	apn_free_ruleset(rs);
 }
@@ -248,10 +255,11 @@ END_TEST
 
 START_TEST(tc_Insert2)
 {
-	struct apn_alfrule	*rule;
+	struct apn_alfrule	*rule1, *rule2, *rule3;
 	struct apn_ruleset	*rs;
 	char			*file;
 	int			 ret;
+	unsigned int		 s1, s2;
 
 	file = generate_file();
 	ret = apn_parse(file, &rs, 0);
@@ -274,30 +282,30 @@ START_TEST(tc_Insert2)
 	 * generate_file() above!
 	 * Rule 24 is in the middle of a rule chain.
 	 */
-	rule = generate_alfrule();
-	fail_if(rule == NULL, "generate_alfrule() failed");
+	rule1 = generate_alfrule();
+	fail_if(rule1 == NULL, "generate_alfrule() failed");
 
-	ret = apn_insert_alfrule(rs, rule, 24);
+	ret = apn_insert_alfrule(rs, rule1, 24);
 	if (ret != 0)
 		apn_print_errors(rs, stderr);
 	fail_if(ret != 0, "Insert failed");
-	fail_if(rule->id != 33, "ID update failed, got %d expected 33",
-	    rule->id);
+	fail_if(rule1->apn_id < 33, "ID update failed, got %d expected >= 33",
+	    rule1->apn_id);
 
 	/*
 	 * Put in before alf filter rule with ID 23, see comment in
 	 * generate_file() above!
 	 * Rule 23 is the head of a rule chain.
 	 */
-	rule = generate_alfrule();
-	fail_if(rule == NULL, "generate_alfrule() failed");
+	rule2 = generate_alfrule();
+	fail_if(rule2 == NULL, "generate_alfrule() failed");
 
-	ret = apn_insert_alfrule(rs, rule, 23);
+	ret = apn_insert_alfrule(rs, rule2, 23);
 	if (ret != 0)
 		apn_print_errors(rs, stderr);
 	fail_if(ret != 0, "Insert failed");
-	fail_if(rule->id != 34, "ID update failed, got %d expected 34",
-	    rule->id);
+	fail_if(rule2->apn_id < 33, "ID update failed, got %d expected >= 33",
+	    rule2->apn_id);
 
 	/*
 	 * Dump the new rule set, so the perl wrapper can check the
@@ -310,14 +318,18 @@ START_TEST(tc_Insert2)
 	fail_if(ret != 0, "Printing failed");
 
 	/* Try to put in before alf rule with bogus ID 1234 */
-	ret = apn_insert_alfrule(rs, rule, 1234);
+	s1 = rule1->apn_id; s2 = rule2->apn_id;
+	rule3 = generate_alfrule();
+	ret = apn_insert_alfrule(rs, rule3, 1234);
 	fail_if(ret != 1, "Insert did not fail, but should have!");
-	fail_if(rule->id != 34, "Rule ID was modified!");
+	fail_if(rule1->apn_id != s1, "Rule ID was modified!");
+	fail_if(rule2->apn_id != s2, "Rule ID was modified!");
 
 	/* Try to put in before application rule 25 */
-	ret = apn_insert_alfrule(rs, rule, 25);
+	ret = apn_insert_alfrule(rs, rule3, 25);
 	fail_if(ret != 1, "Insert did not fail, but should have!");
-	fail_if(rule->id != 34, "Rule ID was modified!");
+	fail_if(rule1->apn_id != s1, "Rule ID was modified!");
+	fail_if(rule2->apn_id != s2, "Rule ID was modified!");
 
 	apn_free_ruleset(rs);
 }
@@ -362,9 +374,10 @@ START_TEST(tc_Copy1)
 	if (ret != 0)
 		apn_print_errors(rs, stderr);
 	fail_if(ret != 0, "Copy + insert failed");
-	fail_if(rule->id != 39, "Rule should have new id 39, but has %d",
-	    rule->id);
-	fail_if(rs->maxid != 43, "Wrong maxid, is %d should be 43", rs->maxid);
+	fail_if(rule->apn_id < 33, "Rule should have new id >= 33, but has %d",
+	    rule->apn_id);
+	fail_if(rs->maxid < 42, "Wrong maxid, is %d should be >= 42",
+	    rs->maxid);
 
 	/*
 	 * Second, insert+copy for a default rule.
@@ -380,9 +393,10 @@ START_TEST(tc_Copy1)
 	if (ret != 0)
 		apn_print_errors(rs, stderr);
 	fail_if(ret != 0, "Copy + insert failed");
-	fail_if(rule->id != 43, "Rule should have new id 43, but has %d",
-	    rule->id);
-	fail_if(rs->maxid != 47, "Wrong maxid, is %d should be 47", rs->maxid);
+	fail_if(rule->apn_id < 33, "Rule should have new id >= 33, but has %d",
+	    rule->apn_id);
+	fail_if(rs->maxid < 46, "Wrong maxid, is %d should be >= 46",
+	    rs->maxid);
 
 	/*
 	 * Dump the new rule set, so the perl wrapper can check the

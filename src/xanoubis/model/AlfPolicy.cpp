@@ -148,19 +148,19 @@ AlfPolicy::accept(PolicyVisitor &visitor)
 struct apn_alfrule *
 AlfPolicy::cloneRule(void)
 {
-	return (apn_copy_alfrules(alfRule_));
+	return (apn_copy_one_alfrule(alfRule_));
 }
 
 int
 AlfPolicy::getId(void)
 {
-	return (alfRule_->id);
+	return (alfRule_->apn_id);
 }
 
 bool
 AlfPolicy::isDefault(void)
 {
-	return (alfRule_->type == APN_ALF_DEFAULT);
+	return (alfRule_->apn_type == APN_ALF_DEFAULT);
 }
 
 void
@@ -168,7 +168,7 @@ AlfPolicy::setType(int type)
 {
 	AppPolicy *parent;
 
-	alfRule_->type = type;
+	alfRule_->apn_type = type;
 	parent = (AppPolicy *)this->getParent();
 	parent->setModified(true);
 }
@@ -302,7 +302,7 @@ AlfPolicy::setAlfDstPort(int port)
 int
 AlfPolicy::getTypeNo(void)
 {
-	return (alfRule_->type);
+	return (alfRule_->apn_type);
 }
 
 wxString
@@ -310,7 +310,7 @@ AlfPolicy::getTypeName(void)
 {
 	wxString result;
 
-	switch (alfRule_->type) {
+	switch (alfRule_->apn_type) {
 	case APN_ALF_FILTER:
 		result = wxT("filter");
 		break;
@@ -336,7 +336,7 @@ AlfPolicy::setAction(int action)
 {
 	AppPolicy *parent;
 
-	switch (alfRule_->type) {
+	switch (alfRule_->apn_type) {
 		case APN_ALF_FILTER:
 			alfRule_->rule.afilt.action = action;
 			break;
@@ -358,7 +358,7 @@ AlfPolicy::getActionNo(void)
 {
 	int result = APN_ACTION_DENY;
 
-	switch (alfRule_->type) {
+	switch (alfRule_->apn_type) {
 	case APN_ALF_FILTER:
 		result = alfRule_->rule.afilt.action;
 		break;
@@ -387,7 +387,7 @@ AlfPolicy::getContextList(void)
 	wxArrayString    result;
 	struct apn_app  *app;
 
-	if (alfRule_->type == APN_ALF_CTX) {
+	if (alfRule_->apn_type == APN_ALF_CTX) {
 		app = alfRule_->rule.apncontext.application;
 		do {
 			if (app == NULL) {
@@ -414,7 +414,7 @@ AlfPolicy::getContextName(void)
 
 	ctx = &(alfRule_->rule.apncontext);
 
-	if ((alfRule_->type == APN_ALF_CTX) && (ctx->application != NULL)) {
+	if ((alfRule_->apn_type == APN_ALF_CTX) && (ctx->application != NULL)) {
 		result = wxString::From8BitData(ctx->application->name);
 	} else {
 		result = wxT("any");
@@ -519,7 +519,7 @@ AlfPolicy::getLogNo(void)
 {
 	int result = APN_LOG_NONE;
 
-	switch (alfRule_->type) {
+	switch (alfRule_->apn_type) {
 	case APN_ALF_FILTER:
 		result = alfRule_->rule.afilt.filtspec.log;
 		break;
@@ -540,7 +540,7 @@ void
 AlfPolicy::setLogNo(int logNo)
 {
 
-	switch (alfRule_->type) {
+	switch (alfRule_->apn_type) {
 	case APN_ALF_FILTER:
 		alfRule_->rule.afilt.filtspec.log = logNo;
 		break;
@@ -566,7 +566,7 @@ AlfPolicy::setDirection(int direction)
 {
 	AppPolicy *parent;
 
-	if (alfRule_->type == APN_ALF_FILTER) {
+	if (alfRule_->apn_type == APN_ALF_FILTER) {
 		if (getProtocolNo() == IPPROTO_UDP) {
 			switch (direction) {
 			case APN_CONNECT:
@@ -590,7 +590,7 @@ AlfPolicy::getDirectionNo(void)
 {
 	int result = -1;
 
-	if (alfRule_->type == APN_ALF_FILTER) {
+	if (alfRule_->apn_type == APN_ALF_FILTER) {
 		result = alfRule_->rule.afilt.filtspec.netaccess;
 	}
 
@@ -609,7 +609,7 @@ AlfPolicy::setProtocol(int protocol)
 	AppPolicy *parent;
 	int direction;
 
-	if (alfRule_->type == APN_ALF_FILTER) {
+	if (alfRule_->apn_type == APN_ALF_FILTER) {
 		alfRule_->rule.afilt.filtspec.proto = protocol;
 		direction = alfRule_->rule.afilt.filtspec.netaccess;
 		if (protocol == IPPROTO_UDP) {
@@ -647,7 +647,7 @@ AlfPolicy::getProtocolNo(void)
 {
 	int result = -1;
 
-	if (alfRule_->type == APN_ALF_FILTER) {
+	if (alfRule_->apn_type == APN_ALF_FILTER) {
 		result = alfRule_->rule.afilt.filtspec.proto;
 	}
 
@@ -682,7 +682,7 @@ AlfPolicy::setAddrFamily(int addrFamily)
 {
 	AppPolicy *parent;
 
-	if (alfRule_->type == APN_ALF_FILTER) {
+	if (alfRule_->apn_type == APN_ALF_FILTER) {
 		alfRule_->rule.afilt.filtspec.af = addrFamily;
 		parent = (AppPolicy *)this->getParent();
 		parent->setModified(true);
@@ -694,7 +694,7 @@ AlfPolicy::getAddrFamilyNo(void)
 {
 	int result = -1;
 
-	if (alfRule_->type == APN_ALF_FILTER) {
+	if (alfRule_->apn_type == APN_ALF_FILTER) {
 		result = alfRule_->rule.afilt.filtspec.af;
 	}
 
@@ -730,7 +730,7 @@ AlfPolicy::getFromHostList(void)
 	wxArrayString	 result;
 	struct apn_host	*fromHost;
 
-	if (alfRule_->type == APN_ALF_FILTER) {
+	if (alfRule_->apn_type == APN_ALF_FILTER) {
 		fromHost = alfRule_->rule.afilt.filtspec.fromhost;
 		do {
 			result.Add(getHostName(fromHost));
@@ -771,7 +771,7 @@ AlfPolicy::getFromPortList(void)
 	wxArrayString    result;
 	struct apn_port *fromPort;
 
-	if (alfRule_->type == APN_ALF_FILTER) {
+	if (alfRule_->apn_type == APN_ALF_FILTER) {
 		fromPort = alfRule_->rule.afilt.filtspec.fromport;
 		do {
 			result.Add(getPortName(fromPort));
@@ -797,7 +797,7 @@ AlfPolicy::getToHostList(void)
 	wxArrayString    result;
 	struct apn_host *toHost;
 
-	if (alfRule_->type == APN_ALF_FILTER) {
+	if (alfRule_->apn_type == APN_ALF_FILTER) {
 		toHost = alfRule_->rule.afilt.filtspec.tohost;
 		do {
 			result.Add(getHostName(toHost));
@@ -820,7 +820,7 @@ AlfPolicy::getToHostName(void)
 
 	isList = false;
 
-	if (alfRule_->type == APN_ALF_FILTER) {
+	if (alfRule_->apn_type == APN_ALF_FILTER) {
 		toHost = alfRule_->rule.afilt.filtspec.tohost;
 		do {
 			result += getHostName(toHost);
@@ -847,7 +847,7 @@ AlfPolicy::getToPortList(void)
 	wxArrayString    result;
 	struct apn_port *toPort;
 
-	if (alfRule_->type == APN_ALF_FILTER) {
+	if (alfRule_->apn_type == APN_ALF_FILTER) {
 		toPort = alfRule_->rule.afilt.filtspec.toport;
 		do {
 			result.Add(getPortName(toPort));
@@ -872,7 +872,7 @@ AlfPolicy::setStateTimeout(int timeout)
 {
 	AppPolicy *parent;
 
-	if (alfRule_->type == APN_ALF_FILTER) {
+	if (alfRule_->apn_type == APN_ALF_FILTER) {
 		alfRule_->rule.afilt.filtspec.statetimeout = timeout;
 		parent = (AppPolicy *)this->getParent();
 		parent->setModified(true);
@@ -885,7 +885,7 @@ AlfPolicy::getStateTimeout(void)
 	wxString result;
 	int timeout = -1;
 
-	if (alfRule_->type == APN_ALF_FILTER) {
+	if (alfRule_->apn_type == APN_ALF_FILTER) {
 		timeout = alfRule_->rule.afilt.filtspec.statetimeout;
 	}
 
@@ -899,7 +899,7 @@ AlfPolicy::setCapType(int capability)
 {
 	AppPolicy *parent;
 
-	if (alfRule_->type == APN_ALF_CAPABILITY) {
+	if (alfRule_->apn_type == APN_ALF_CAPABILITY) {
 		alfRule_->rule.acap.capability = capability;
 		parent = (AppPolicy *)this->getParent();
 		parent->setModified(true);
@@ -911,7 +911,7 @@ AlfPolicy::getCapTypeNo(void)
 {
 	int result = -1;
 
-	if (alfRule_->type == APN_ALF_CAPABILITY) {
+	if (alfRule_->apn_type == APN_ALF_CAPABILITY) {
 		result = alfRule_->rule.acap.capability;
 	}
 

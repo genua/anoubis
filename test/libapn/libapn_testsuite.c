@@ -47,6 +47,7 @@ libapn_testsuite(void)
 	TCase *tc_crash_parse_files = libapn_testcase_crash_parse_files();
 	TCase *tc_crash_print_error = libapn_testcase_crash_print_errors();
 	TCase *tc_iovec = libapn_testcase_iovec();
+	tcase_set_timeout(tc_iovec, 60);
 
 	suite_add_tcase(s, tc_errorcodes);
 	suite_add_tcase(s, tc_invalidparams);

@@ -281,11 +281,11 @@ pe_decide_alffilt(struct pe_proc *proc, struct apn_rule *rule,
 	}
 
 	decision = -1;
-	for (hp = rule->rule.alf; hp; hp = hp->next) {
+	TAILQ_FOREACH(hp, &rule->rule.alf, entry) {
 		/*
 		 * Skip non-filter rules.
 		 */
-		if (hp->type != APN_ALF_FILTER
+		if (hp->apn_type != APN_ALF_FILTER
 		    || !pe_in_scope(hp->scope, &msg->common, now))
 			continue;
 
@@ -435,7 +435,7 @@ pe_decide_alffilt(struct pe_proc *proc, struct apn_rule *rule,
 		if (log)
 			*log = hp->rule.afilt.filtspec.log;
 		if (rule_id)
-			*rule_id = hp->id;
+			*rule_id = hp->apn_id;
 		break;
 	}
 
@@ -527,13 +527,11 @@ pe_decide_alfcap(struct apn_rule *rule, struct alf_event *msg, int *log,
 		return (-1);
 
 	decision = -1;
-	hp = rule->rule.alf;
-	while (hp) {
+	TAILQ_FOREACH(hp, &rule->rule.alf, entry) {
 		int thisdec = -1;
 		/* Skip non-capability rules. */
-		if (hp->type != APN_ALF_CAPABILITY ||
+		if (hp->apn_type != APN_ALF_CAPABILITY ||
 		    !pe_in_scope(hp->scope, &msg->common, now)) {
-			hp = hp->next;
 			continue;
 		}
 		/*
@@ -587,10 +585,9 @@ pe_decide_alfcap(struct apn_rule *rule, struct alf_event *msg, int *log,
 			if (log)
 				*log = hp->rule.acap.log;
 			if (rule_id)
-				*rule_id = hp->id;
+				*rule_id = hp->apn_id;
 			break;
 		}
-		hp = hp->next;
 	}
 
 	return (decision);
@@ -612,12 +609,10 @@ pe_decide_alfdflt(struct apn_rule *rule, struct alf_event *msg, int *log,
 	}
 
 	decision = -1;
-	hp = rule->rule.alf;
-	while (hp) {
+	TAILQ_FOREACH(hp, &rule->rule.alf, entry) {
 		/* Skip non-default rules. */
-		if (hp->type != APN_ALF_DEFAULT
+		if (hp->apn_type != APN_ALF_DEFAULT
 		    || !pe_in_scope(hp->scope, &msg->common, now)) {
-			hp = hp->next;
 			continue;
 		}
 		/*
@@ -643,10 +638,9 @@ pe_decide_alfdflt(struct apn_rule *rule, struct alf_event *msg, int *log,
 			if (log)
 				*log = hp->rule.apndefault.log;
 			if (rule_id)
-				*rule_id = hp->id;
+				*rule_id = hp->apn_id;
 			break;
 		}
-		hp = hp->next;
 	}
 
 	return (decision);

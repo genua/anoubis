@@ -39,11 +39,13 @@
 	fail_if(!TAILQ_EMPTY(queue), ## __VA_ARGS__, NULL)
 
 #define fail_if_sfsempty(queue, ...) \
-	fail_if(TAILQ_EMPTY(queue) || TAILQ_FIRST(queue)->rule.sfs == NULL, \
+	fail_if(TAILQ_EMPTY(queue)	\
+	    || TAILQ_EMPTY(&(TAILQ_FIRST(queue)->rule.sfs)), \
 	    ## __VA_ARGS__, NULL)
 
 #define fail_if_sfsfull(queue, ...) \
-	fail_if(!TAILQ_EMPTY(queue) && TAILQ_FIRST(queue)->rule.sfs != NULL, \
+	fail_if(!TAILQ_EMPTY(queue) \
+	    && !TAILQ_EMPTY(&(TAILQ_FIRST(queue)->rule.sfs)), \
 	    ## __VA_ARGS__, NULL)
 
 static struct apn_ruleset *

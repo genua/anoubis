@@ -30,7 +30,7 @@ libapn_a_CFLAGS = -std=gnu99 $(AM_CFLAGS)
 
 lib_LIBRARIES = libapn.a
 
-include_HEADERS = apn.h
+include_HEADERS = apn.h rbtree.h
 
 bsdcompatdir = src/bsdcompat
 libbsdcompat = $(top_builddir)/$(bsdcompatdir)/libbsdcompat.a
@@ -43,6 +43,7 @@ endif
 
 libapn_a_SOURCES = \
 	apnparser.c  \
+	rbtree.c  \
 	parse.y \
 	$(include_HEADERS)
 
@@ -60,14 +61,19 @@ libapn_so_LDFLAGS += -L$(top_builddir)/$(bsdcompatdir)
 endif
 
 libapn_a_SOURCES_lint = \
-	apnparser.c_lint
+	apnparser.c_lint \
+	rbtree.c_lint
 
 libapn_a_SOURCES_splint = \
 	apnparser.c_splint  \
-	apn.h_splint
+	rbtree.c_splint  \
+	apn.h_splint \
+	rbtree.h_splint
 
 libapn_a_SOURCES_flawfinder = \
 	apnparser.c_flawfinder  \
+	rbtree.c_flawfinder  \
+	rbtree.h_flawfinder  \
 	apn.h_flawfinder
 
 flawfinder_FLAGS=

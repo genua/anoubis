@@ -212,11 +212,11 @@ pe_decide_sfscheck(struct apn_rule *rule, struct sfs_open_message *msg,
 	}
 
 	decision = -1;
-	for (hp = rule->rule.sfs; hp; hp = hp->next) {
+	TAILQ_FOREACH(hp, &rule->rule.sfs, entry) {
 		/*
 		 * skip non-check rules
 		 */
-		if (hp->type != APN_SFS_CHECK
+		if (hp->apn_type != APN_SFS_CHECK
 		    || !pe_in_scope(hp->scope, &msg->common, now))
 			continue;
 
@@ -235,7 +235,7 @@ pe_decide_sfscheck(struct apn_rule *rule, struct sfs_open_message *msg,
 		if (log)
 			*log = hp->rule.sfscheck.log;
 		if (rule_id)
-			*rule_id = hp->id;
+			*rule_id = hp->apn_id;
 
 		break;
 	}
@@ -256,12 +256,10 @@ pe_decide_sfsdflt(struct apn_rule *rule, struct sfs_open_message *msg, int *log,
 	}
 
 	decision = -1;
-	hp = rule->rule.sfs;
-	while (hp) {
+	TAILQ_FOREACH(hp, &rule->rule.sfs, entry) {
 		/* Skip non-default rules. */
-		if (hp->type != APN_SFS_DEFAULT
+		if (hp->apn_type != APN_SFS_DEFAULT
 		    || !pe_in_scope(hp->scope, &msg->common, now)) {
-			hp = hp->next;
 			continue;
 		}
 		/*
@@ -287,10 +285,9 @@ pe_decide_sfsdflt(struct apn_rule *rule, struct sfs_open_message *msg, int *log,
 			if (log)
 				*log = hp->rule.apndefault.log;
 			if (rule_id)
-				*rule_id = hp->id;
+				*rule_id = hp->apn_id;
 			break;
 		}
-		hp = hp->next;
 	}
 
 	return (decision);

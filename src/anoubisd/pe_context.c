@@ -331,7 +331,7 @@ pe_context_switch(struct pe_proc *proc, int prio,
 	tmpctx = pe_context_search(ruleset, pident);
 	pe_proc_set_context(proc, prio, tmpctx);
 	DEBUG(DBG_PE_CTX, "pe_context_switch: proc %p 0x%08llx prio %d "
-	    "got context %p rule %p ctx %p", proc, 
+	    "got context %p rule %p ctx %p", proc,
 	    pe_proc_task_cookie(proc), prio,
 	    tmpctx, tmpctx ? tmpctx->rule : NULL,
 	    tmpctx ? tmpctx->ctx : NULL);
@@ -389,7 +389,7 @@ pe_context_search(struct apn_ruleset *rs, struct pe_proc_ident *pident)
 {
 	struct pe_context	*context;
 	struct apn_rule		*prule, *rule;
-	struct apn_alfrule	*alfrule;
+	struct apn_alfrule		*alfrule;
 	struct apn_app		*hp;
 
 	DEBUG(DBG_PE_CTX, "pe_context_search: ruleset %p csum 0x%08x...", rs,
@@ -451,9 +451,8 @@ pe_context_search(struct apn_ruleset *rs, struct pe_proc_ident *pident)
 	 * we have to stay in the current context on exec(2).
 	 */
 	if (rule) {
-		for (alfrule = rule->rule.alf; alfrule;
-		    alfrule = alfrule->next) {
-			if (alfrule->type != APN_ALF_CTX)
+		TAILQ_FOREACH(alfrule, &rule->rule.alf, entry) {
+			if (alfrule->apn_type != APN_ALF_CTX)
 				continue;
 			context->ctx = &alfrule->rule.apncontext;
 			break;

@@ -106,6 +106,11 @@ to the rule set
 .Em ruleset
 of type
 .Em struct apn_ruleset .
+This function will verify the rule IDs provided but will
+.Em not
+assign rule IDs for rules with an unspecified (zero) ID.
+Try to use
+.Fn apn_insert instead .
 .Pp
 .It Fn apn_add_sfsrule rule ruleset
 The function
@@ -118,6 +123,11 @@ to the rule set
 .Em ruleset
 of type
 .Em struct apn_ruleset .
+This function will verify the rule IDs provided but will
+.Em not
+assign rule IDs for rules with an unspecified (zero) ID.
+Try to use
+.Fn apn_insert instead .
 .Pp
 .It Fn apn_print_rule rule flags file
 The function
@@ -323,56 +333,50 @@ prints all messages in this queue to
 The next central data structure is
 .Em struct apn_rule :
 .Bd -literal
+
+TAILQ_HEAD(apn_alfchain, apn_alfrule);
+TAILQ_HEAD(apn_sfschain, apn_sfsrule);
 struct apn_rule {
+	struct rb_entry         _rbentry;
+#define apn_id    _rbentry.key
+#define apn_type  _rbentry.dtype
 	TAILQ_ENTRY(apn_rule)    entry;
-	u_int8_t                 type;
-	int                      id;
 
 	struct apn_app          *app;
 
 	union {
-		struct apn_alfrule      *alf;
-		struct apn_sfsrule      *sfs;
+		struct apn_alfchain      *alf;
+		struct apn_sfschain      *sfs;
 	} rule;
-
-	struct apn_rule         *tail;
-	struct apn_rule         *next;
 };
 .Ed
 .Pp
 The ALF uses a set of several rules for each application.
 Such a set of rules is a list of
 .Em struct apn_rule
-structures linked via the fields
-.Em next
-and
-.Em tail .
+structures linked via the field
+.Em entry .
 .Pp
-The first structure of such a list defines the application using the field
-.Em app .
-This field is either by empty (ie. any application would match this set
+The field
+.Em app
+defines the applications that this rule block applies to.
+This field can either be empty (ie. any application would match this set
 of rules) or points to a stucture
 .Em struct apn_app
 specifying one or more applications.
-The first structures of such rule chains are linked together using a TAILQ,
-defined by the field
-.Em entry .
-The TAILQ head is the field
-.Em alf_queue
-in
-.Em struct apn_ruleset .
-This means, a ALF rule set consists of chains of rules linked together,
-where each chain defines the structures of type
-.Em struct apn_rule
-for a particular application or a set of applications.
+The individual filter, access and context rules of the block are
+chained together in a tail queue headed by
+.Em rule.alf .
 .Pp
-SFS rules use a set of
-.Em struct apn_rule
-linked together using a TAILQ, the head is the field
+SFS rules do not depeend on the application.
+Thus the
 .Em sfs_queue
-in
-.Em struct apn_ruleset .
-Thus a SFS rule set consists of linked list of structures of type
+of a ruleset consists of a single
+.Em struct apn_rule
+which in turn contains a list of all sfs access rules.
+The head of this list is the
+.Em rule.sfs
+field in the
 .Em struct apn_rule .
 .\" The following requests should be uncommented and used where appropriate.
 .\" This next request is for sections 2, 3, and 9 function return values only.

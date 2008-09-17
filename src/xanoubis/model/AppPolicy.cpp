@@ -74,24 +74,20 @@ AppPolicy::AppPolicy(struct apn_rule *appRule) : Policy(NULL)
 	appName_ = wxEmptyString;
 	modified_ = false;
 
-	switch (appRule_->type) {
+	switch (appRule_->apn_type) {
 	case APN_ALF:
-		alfRule = appRule_->rule.alf;
-		while (alfRule) {
+		TAILQ_FOREACH(alfRule, &appRule_->rule.alf, entry) {
 			newAlf = new AlfPolicy(this, alfRule);
 			ruleList_.Append(newAlf);
-			if (alfRule->type == APN_ALF_CTX) {
+			if (alfRule->apn_type == APN_ALF_CTX) {
 				context_ = newAlf;
 			}
-			alfRule = alfRule->next;
 		}
 		break;
 	case APN_SFS:
-		sfsRule = appRule_->rule.sfs;
-		while (sfsRule) {
+		TAILQ_FOREACH(sfsRule, &appRule_->rule.sfs, entry) {
 			newSfs = new SfsPolicy(this, sfsRule);
 			ruleList_.Append(newSfs);
-			sfsRule = sfsRule->next;
 		}
 		break;
 	case APN_SB:
@@ -335,7 +331,7 @@ AppPolicy::hasContext(void)
 int
 AppPolicy::getType(void)
 {
-	return(appRule_->type);
+	return(appRule_->apn_type);
 }
 
 bool
@@ -353,7 +349,7 @@ AppPolicy::setModified(bool modified)
 int
 AppPolicy::getId(void)
 {
-	return(appRule_->id);
+	return(appRule_->apn_id);
 }
 
 wxString

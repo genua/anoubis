@@ -223,7 +223,7 @@ PolicyRuleSet::assembleAlfPolicy(AlfPolicy *old, EscalationNotify *escalation)
 	}
 
 	answer = escalation->getAnswer();
-	newAlfRule->type = old->getTypeNo();
+	newAlfRule->apn_type = old->getTypeNo();
 
 	switch (old->getTypeNo()) {
 	case APN_ALF_FILTER:
@@ -263,7 +263,7 @@ PolicyRuleSet::assembleAlfPolicy(AlfPolicy *old, EscalationNotify *escalation)
 		short proto = escalation->getProtocolNo();
 		int log = old->getLogNo();
 		if (proto == IPPROTO_TCP || proto == IPPROTO_UDP) {
-			newAlfRule->type = APN_ALF_FILTER;
+			newAlfRule->apn_type = APN_ALF_FILTER;
 			afilt = &(newAlfRule->rule.afilt);
 			afilt->filtspec.log = log;
 			afilt->filtspec.netaccess =
@@ -289,7 +289,7 @@ PolicyRuleSet::assembleAlfPolicy(AlfPolicy *old, EscalationNotify *escalation)
 			break;
 		}
 		if (proto == IPPROTO_ICMP) {
-			newAlfRule->type = APN_ALF_CAPABILITY;
+			newAlfRule->apn_type = APN_ALF_CAPABILITY;
 			acap = &(newAlfRule->rule.acap);
 			acap->log = log;
 			if (answer->wasAllowed()) {
@@ -353,7 +353,7 @@ PolicyRuleSet::createAnswerPolicy(EscalationNotify *escalation)
 		 * an any-rule. Thus we can just insert the new policy before
 		 * the troggering rule.
 		 */
-		newAlfRule->id = 0;
+		newAlfRule->apn_id = 0;
 		apn_insert_alfrule(ruleSet_, newAlfRule,
 		    escalation->getRuleId());
 	} else {
@@ -487,7 +487,7 @@ PolicyRuleSet::createAppPolicy(int insertBeforeId)
 		return (-1);
 	}
 
-	newAppRule->type = APN_ALF;
+	newAppRule->apn_type = APN_ALF;
 	newAppRule->app = CALLOC_STRUCT(apn_app);
 	if (newAppRule->app == NULL) {
 		free(newAppRule);
@@ -497,7 +497,7 @@ PolicyRuleSet::createAppPolicy(int insertBeforeId)
 	newAppRule->app->hashtype = APN_HASH_NONE;
 
 	if (apn_insert(ruleSet_, newAppRule, insertBeforeId) == 0) {
-		newId = newAppRule->id;
+		newId = newAppRule->apn_id;
 		clean();
 		create(ruleSet_);
 		event.SetClientData((void*)this);
@@ -534,7 +534,7 @@ PolicyRuleSet::createAlfPolicy(int insertBeforeId)
 		return (-1);
 	}
 
-	newAlfRule->type = APN_ALF_FILTER;
+	newAlfRule->apn_type = APN_ALF_FILTER;
 	newAlfRule->rule.afilt.filtspec.proto = IPPROTO_TCP;
 	newAlfRule->rule.afilt.filtspec.af = AF_INET;
 	newAlfRule->rule.afilt.filtspec.netaccess = APN_CONNECT;
@@ -546,7 +546,7 @@ PolicyRuleSet::createAlfPolicy(int insertBeforeId)
 	}
 
 	if (rc == 0) {
-		newId = newAlfRule->id;
+		newId = newAlfRule->apn_id;
 		clean();
 		create(ruleSet_);
 		event.SetClientData((void*)this);
@@ -583,7 +583,7 @@ PolicyRuleSet::createSfsPolicy(int insertBeforeId)
 		return (-1);
 	}
 
-	newSfsRule->type = APN_SFS_CHECK;
+	newSfsRule->apn_type = APN_SFS_CHECK;
 	newSfsRule->rule.sfscheck.app = CALLOC_STRUCT(apn_app);
 	if (newSfsRule->rule.sfscheck.app == NULL) {
 		free(newSfsRule);
@@ -594,7 +594,7 @@ PolicyRuleSet::createSfsPolicy(int insertBeforeId)
 
 	if (TAILQ_EMPTY(&(ruleSet_->sfs_queue))) {
 		sfsRootRule = CALLOC_STRUCT(apn_rule);
-		sfsRootRule->type = APN_SFS;
+		sfsRootRule->apn_type = APN_SFS;
 		apn_add_sfsrule(sfsRootRule, ruleSet_, NULL, 0);
 	}
 	/* we assume sfs_queue will contain only one element */
@@ -603,19 +603,23 @@ PolicyRuleSet::createSfsPolicy(int insertBeforeId)
 	if (parentPolicy->IsKindOf(CLASSINFO(SfsPolicy))) {
 		rc = apn_insert_sfsrule(ruleSet_, newSfsRule, insertBeforeId);
 	} else {
-		if (sfsRootRule->rule.sfs != NULL) {
+		if (!TAILQ_EMPTY(&sfsRootRule->rule.sfs)) {
+			struct apn_sfsrule * srule;
+			srule = TAILQ_FIRST(&sfsRootRule->rule.sfs);
 			rc = apn_insert_sfsrule(ruleSet_, newSfsRule,
-			    sfsRootRule->rule.sfs->id);
+			    srule->apn_id);
 		} else {
-			sfsRootRule->rule.sfs = newSfsRule;
-			newSfsRule->id = ruleSet_->maxid;
-			ruleSet_->maxid += 1;
+			/* XXX CEH: This should be somewhere in libapn */
+			newSfsRule->apn_id = 0;
+			TAILQ_INSERT_HEAD(&sfsRootRule->rule.sfs,
+			    newSfsRule, entry);
+			apn_assign_ids(ruleSet_);
 			rc = 0;
 		}
 	}
 
 	if (rc == 0) {
-		newId = newSfsRule->id;
+		newId = newSfsRule->apn_id;
 		clean();
 		create(ruleSet_);
 		event.SetClientData((void*)this);

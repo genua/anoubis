@@ -85,7 +85,7 @@ SfsPolicy::accept(PolicyVisitor& visitor)
 int
 SfsPolicy::getId(void)
 {
-	return (sfsRule_->id);
+	return (sfsRule_->apn_id);
 }
 
 void

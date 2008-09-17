@@ -24,9 +24,9 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-TESTS = test_libapn test_printing test_insertcopy
+TESTS = test_libapn test_printing test_insertcopy test_rbtree
 
-noinst_PROGRAMS = test_libapn test_printing test_insertcopy
+noinst_PROGRAMS = test_libapn test_printing test_insertcopy test_rbtree
 
 libapndir       = src/libapn
 bsdcompatdir    = src/bsdcompat
@@ -43,8 +43,10 @@ test_libapn_CPPFLAGS = \
 	-I$(top_srcdir)/include \
 	@CHECK_CFLAGS@
 
-test_libapn_LDFLAGS = \
-	-L$(top_builddir)/$(libapndir) -dynamic
+LDFLAGS += \
+	-L$(top_builddir)/$(libapndir) \
+	-L$(top_builddir)/$(bsdcompatdir) \
+	-dynamic
 
 # conditionally static link of libraries to accomplish correct Code Coverage
 if GCOV_ENABLED
@@ -82,9 +84,14 @@ test_printing_LDADD = @CHECK_LIBS@ -lapn
 
 test_printing_DEPENDENCIES = $(libapn)
 
+test_rbtree_DEPENDENCIES = $(libapn)
+test_rbtree_LDADD = -lapn
+
 if NEEDBSDCOMPAT
 test_printing_LDADD += $(libbsdcompat)
 test_printing_DEPENDENCIES += $(libbsdcompat)
+test_rbtree_DEPENDENCIES += $(libbsdcompat)
+test_rbtree_LDADD += -lbsdcompat
 endif
 
 test_printing_SOURCES = \
@@ -112,3 +119,6 @@ test_insertcopy_SOURCES = \
 	insertcopy_testcase_copy.c \
 	insertcopy_testsuite.c \
 	insertcopy_testrunner.c
+
+test_rbtree_SOURCES = test_rbtree.c
+test_rbtree_CPPFLAGS = -I$(top_srcdir)/$(libapndir)
