@@ -30,6 +30,32 @@ if STATIC_LINKING
 STATIC = -static
 endif
 
+bsdcompatdir		= src/bsdcompat
+libapndir		= src/libapn
+libanoubischatdir	= src/libanoubischat
+libanoubisprotocoldir	= src/libanoubisprotocol
+libanoubisuidir		= src/libanoubisui
+
+libapn	       = $(top_builddir)/$(libapndir)/libapn.a
+libbsdcompat   = $(top_builddir)/$(bsdcompatdir)/libbsdcompat.a
+libanoubischat = $(top_builddir)/$(libanoubischatdir)/libanoubischat.a
+libanoubispc   = $(top_builddir)/$(libanoubisprotocoldir)/libanoubispc.a
+libanoubisui   = $(top_builddir)/$(libanoubisuidir)/libanoubisui.a
+
+INCLUDES = \
+	-I$(top_builddir)/src                        \
+	-I$(top_srcdir)/include                      \
+	-I$(top_srcdir)/$(libapndir)                 \
+	-I$(top_srcdir)/$(libanoubischatdir)            \
+	-I$(top_srcdir)/$(libanoubisprotocoldir)/client \
+	-I$(top_srcdir)/$(libanoubisprotocoldir)        \
+	-I$(top_srcdir)/$(libanoubisuidir)
+
+sfssig_DEPENDENCIES = $(libapn) $(libanoubispc) $(libanoubischat) \
+	$(libanoubisui)
+
+sfssig_LDADD = $(sfssig_DEPENDENCIES)
+
 CFLAGS += $(SSL_CFLAGS)
 
 LIBS += $(SSL_LIBS)
@@ -42,6 +68,7 @@ sfssig_SOURCES= \
 sfssig_CPPFLAGS = -I$(top_srcdir)/include -I$(top_builddir)/src
 if NEEDBSDCOMPAT
 sfssig_CPPFLAGS += -I$(top_srcdir)/src/bsdcompat
+sfssig_LDADD += $(libbsdcompat)
 endif
 
 sfssig_SOURCES_flawfinder= \
@@ -59,8 +86,8 @@ flawfinder_FLAGS=
 # annotations for splint. We therefore have to disable checking for
 # complete definitions, as splint cannot know the internal semantics of
 # OpenSSL at this point.
-splint_FLAGS=+unixlib $(sfssig_CPPFLAGS) -compdef
-lint_FLAGS=$(sfssig_CPPFLAGS)
+splint_FLAGS=+unixlib $(sfssig_CPPFLAGS) -compdef $(INCLUDES)
+lint_FLAGS=$(sfssig_CPPFLAGS) $(INCLUDES)
 
 flawfinder:	$(sfssig_SOURCES_flawfinder)
 splint:		$(sfssig_SOURCES_splint)
