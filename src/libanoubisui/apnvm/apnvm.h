@@ -35,6 +35,14 @@
 struct _apnvm;
 typedef struct _apnvm apnvm;
 
+struct apnvm_user {
+	char	*username;
+
+	LIST_ENTRY(apnvm_user) entry;
+};
+
+LIST_HEAD(apnvm_user_head, apnvm_user);
+
 struct apnvm_version {
 	int	no;		/* Version number */
 	time_t	tstamp;		/* Timestamp of version */
@@ -47,8 +55,8 @@ struct apnvm_version {
 TAILQ_HEAD(apnvm_version_head, apnvm_version);
 
 struct apnvm_md {
-	char	*comment;
-	int	auto_store;
+	const char	*comment;
+	int		auto_store;
 };
 
 typedef enum {
@@ -56,7 +64,8 @@ typedef enum {
 	APNVM_VMS,	/* An error was encountered from the underlaying */
 			/* version management system */
 	APNVM_PARSE,	/* Failed to parse a ruleset */
-	APNVM_ARG	/* Invalid argument */
+	APNVM_ARG,	/* Invalid argument */
+	APNVM_OOM	/* Out of memory */
 } apnvm_result;
 
 __BEGIN_DECLS
@@ -85,6 +94,15 @@ void apnvm_destroy(apnvm *);
  * library-operation.
  */
 apnvm_result apnvm_prepare(apnvm *vm);
+
+/**
+ * Receive a list of managed users.
+ * These are the user, for whom the policy-sets apply.
+ *
+ * The result is written into the list. Do not forget to initialize the list
+ * with LIST_INIT().
+ */
+apnvm_result apnvm_getuser(apnvm *, struct apnvm_user_head *);
 
 /**
  * Determines the number of versions for a specified user.

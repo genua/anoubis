@@ -462,6 +462,8 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	VersionDetailsSizer->Add( VersionDeleteButton, 0, wxALL, 5 );
 	
 	VersionShowButton = new wxButton( tb_MainAnoubisVersions, wxID_ANY, _("show"), wxDefaultPosition, wxDefaultSize, 0 );
+	VersionShowButton->Hide();
+	
 	VersionDetailsSizer->Add( VersionShowButton, 0, wxALL, 5 );
 	
 	VersionProfileButton = new wxButton( tb_MainAnoubisVersions, wxID_ANY, _("profile ..."), wxDefaultPosition, wxDefaultSize, 0 );
@@ -541,4 +543,53 @@ ModAnoubisOverviewPanelBase::ModAnoubisOverviewPanelBase( wxWindow* parent, wxWi
 	highProfileRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( ModAnoubisOverviewPanelBase::OnHighProfileRadioButton ), NULL, this );
 	mediumProfileRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( ModAnoubisOverviewPanelBase::OnMediumProfileRadioButton ), NULL, this );
 	adminProfileRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( ModAnoubisOverviewPanelBase::OnAdminProfileRadioButton ), NULL, this );
+}
+
+ModAnoubisProfileDialogBase::ModAnoubisProfileDialogBase( wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style ) : wxDialog( parent, id, title, pos, size, style )
+{
+	this->SetSizeHints( wxDefaultSize, wxDefaultSize );
+	
+	wxBoxSizer* bSizer20;
+	bSizer20 = new wxBoxSizer( wxVERTICAL );
+	
+	DialogLabel = new wxStaticText( this, wxID_ANY, _("..."), wxDefaultPosition, wxDefaultSize, 0 );
+	DialogLabel->Wrap( -1 );
+	bSizer20->Add( DialogLabel, 0, wxALL, 5 );
+	
+	wxBoxSizer* bSizer21;
+	bSizer21 = new wxBoxSizer( wxHORIZONTAL );
+	
+	HighCheckBox = new wxCheckBox( this, wxID_ANY, _("high"), wxDefaultPosition, wxDefaultSize, 0 );
+	
+	bSizer21->Add( HighCheckBox, 0, wxALL, 5 );
+	
+	MediumCheckBox = new wxCheckBox( this, wxID_ANY, _("medium"), wxDefaultPosition, wxDefaultSize, 0 );
+	
+	bSizer21->Add( MediumCheckBox, 0, wxALL, 5 );
+	
+	AdminCheckBox = new wxCheckBox( this, wxID_ANY, _("admin"), wxDefaultPosition, wxDefaultSize, 0 );
+	
+	bSizer21->Add( AdminCheckBox, 0, wxALL, 5 );
+	
+	bSizer20->Add( bSizer21, 1, wxEXPAND, 5 );
+	
+	wxBoxSizer* bSizer22;
+	bSizer22 = new wxBoxSizer( wxHORIZONTAL );
+	
+	
+	bSizer22->Add( 0, 0, 1, wxEXPAND, 5 );
+	
+	ActionButton = new wxButton( this, wxID_ANY, _("..."), wxDefaultPosition, wxDefaultSize, 0 );
+	ActionButton->SetDefault(); 
+	ActionButton->Enable( false );
+	
+	bSizer22->Add( ActionButton, 0, wxALL, 5 );
+	
+	CancelButton = new wxButton( this, wxID_ANY, _("Cancel"), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer22->Add( CancelButton, 0, wxALL, 5 );
+	
+	bSizer20->Add( bSizer22, 1, wxEXPAND, 5 );
+	
+	this->SetSizer( bSizer20 );
+	this->Layout();
 }

@@ -50,6 +50,7 @@
 #include "ModAnoubis.h"
 #include "TrayIcon.h"
 #include "PolicyRuleSet.h"
+#include "VersionCtrl.h"
 
 IMPLEMENT_APP(AnoubisGuiApp)
 
@@ -96,6 +97,9 @@ AnoubisGuiApp::~AnoubisGuiApp(void)
 	if (userOptions_ != NULL) {
 		delete userOptions_;
 	}
+
+	/* Destroy versionmanagement */
+	delete VersionCtrl::getInstance();
 }
 
 void
@@ -130,6 +134,10 @@ bool AnoubisGuiApp::OnInit()
 	if (!wxDirExists(paths_.GetUserDataDir())) {
 		wxMkdir(paths_.GetUserDataDir());
 	}
+
+	/* Initialization of versionmanagement */
+	VersionCtrl::getInstance(); /* Make sure c'tor is invoked */
+
 	userOptions_ = new wxFileConfig(GetAppName(), wxEmptyString,
 	    wxEmptyString, wxEmptyString,
 	    wxCONFIG_USE_SUBDIR | wxCONFIG_USE_LOCAL_FILE);
@@ -431,6 +439,33 @@ AnoubisGuiApp::getIconPath(wxString iconName)
 	return iconFileName;
 }
 
+wxString
+AnoubisGuiApp::getRulesetPath(const wxString &profile, bool resolve)
+{
+	wxString fileName = paths_.GetUserDataDir() + wxT("/") + profile;
+
+	if (!resolve)
+		return (fileName);
+
+	if (!wxFileExists(fileName)) {
+		fileName = paths_.GetDataDir();
+		fileName += wxT("/profiles/") + profile;
+	}
+
+	if (!wxFileExists(fileName)) {
+		/*
+		 * We didn't find our icon (where --prefix told us)!
+		 * Try to take executable path into account. This should
+		 * fix a missing --prefix as the matter in our build and test
+		 * environment with aegis.
+		 */
+		fileName = wxPathOnly(paths_.GetExecutablePath()) +
+		    wxT("/../../..") + fileName;
+	}
+
+	return (fileName);
+}
+
 wxIcon *
 AnoubisGuiApp::loadIcon(wxString iconName)
 {
@@ -543,25 +578,8 @@ AnoubisGuiApp::profileFromDiskToDaemon(wxString profileName)
 		return (false);
 	}
 
-	logMsg = _("seek for profile ") + profileName + _(" at ");
-	fileName = paths_.GetUserDataDir() + wxT("/") + profileName;
-	log(logMsg + fileName);
-	if (!wxFileExists(fileName)) {
-		fileName = paths_.GetDataDir();
-		fileName += wxT("/profiles/") + profileName;
-		log(logMsg + fileName);
-	}
-	if (!wxFileExists(fileName)) {
-		/*
-		 * We didn't find our icon (where --prefix told us)!
-		 * Try to take executable path into account. This should
-		 * fix a missing --prefix as the matter in our build and test
-		 * environment with aegis.
-		 */
-		fileName  = wxPathOnly(paths_.GetExecutablePath()) +
-		    wxT("/../../..") + fileName;
-		log(logMsg + fileName);
-	}
+	fileName = getRulesetPath(profileName, true);
+
 	if (!wxFileExists(fileName)) {
 		status(_("Error: could not find profile: ") + profileName);
 		return (false);
@@ -596,7 +614,7 @@ AnoubisGuiApp::profileFromDaemonToDisk(wxString profileName)
 		return (false);
 	}
 
-	fileName = paths_.GetUserDataDir() + wxT("/") + profileName;
+	fileName = getRulesetPath(profileName, false);
 	if (wxFileExists(fileName)) {
 		wxRemoveFile(fileName);
 	}

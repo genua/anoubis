@@ -4,7 +4,6 @@
 %option noyywrap
 
 %s DESCR REVL1 REVL2 COMMENT
-%x END
 
 %{
 /*
@@ -109,7 +108,7 @@ static struct apncvs_rev *currev; /* Current revision */
 }
 
 ^=+"\n" {
-	BEGIN(END); /* EOF */
+	BEGIN(INITIAL); /* Reset to starting state */
 	return 1;
 }
 

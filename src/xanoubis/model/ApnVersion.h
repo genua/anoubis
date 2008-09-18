@@ -25,43 +25,61 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _COMMUNICATORCTRL_H_
-#define _COMMUNICATORCTRL_H_
+#ifndef _APNVERSION_H_
+#define _APNVERSION_H_
 
-#include <wx/event.h>
-#include <wx/string.h>
+#include <wx/datetime.h>
 
-#include "Communicator.h"
+#include <apnvm.h>
 
-class CommunicatorCtrl : public wxEvtHandler {
-	private:
-		wxString		socketPath_;
-		connectionStateType	connectionState_;
-		Communicator		*com_;
-
-		bool createVersion();
-
+/**
+ * Detail information about a single version.
+ *
+ * VersionCtrl::getVersion() is used to receive some detail information
+ * about a specific version. This class holds all the information.
+ */
+class ApnVersion
+{
 	public:
-		CommunicatorCtrl(wxString);
-		~CommunicatorCtrl(void);
+		ApnVersion(const ApnVersion &);
 
-		void		connect(void);
-		void		disconnect(void);
-		bool		isConnected(void);
-		wxString	getRemoteStation(void);
-		void		requestPolicy(void);
-		void		usePolicy(wxString);
-		void		checksumAdd(wxString);
-		void		checksumGet(wxString);
-		void		checksumCal(wxString);
+		/**
+		 * Returns the version-number of the version.
+		 */
+		int getVersionNo(void) const;
 
-		void	OnNotifyReceived(wxCommandEvent&);
-		void	OnAnoubisdRuleSet(wxCommandEvent&);
-		void	OnConnection(wxCommandEvent&);
-		void	OnAnswerEscalation(wxCommandEvent&);
-		void	OnAnoubisdCurCsum(wxCommandEvent&);
-		void	OnAnoubisdShaCsum(wxCommandEvent&);
-		void	OnCommunicatorError(wxCommandEvent&);
+		/**
+		 * Returns the date/time, when the version was created.
+		 */
+		wxDateTime getTimestamp(void) const;
+
+		/**
+		 * Returns the name of the user which belongs to the version.
+		 */
+		wxString getUsername(void) const;
+
+		/**
+		 * Returns the comment of the version.
+		 */
+		wxString getComment(void) const;
+
+		/**
+		 * Checks weather the version was created automatically by
+		 * the system or manually by the user.
+		 */
+		bool isAutoStore(void) const;
+
+	private:
+		ApnVersion(void) {}
+		ApnVersion(struct apnvm_version *, const char *);
+
+		int		no_;
+		wxDateTime	tstamp_;
+		wxString	user_;
+		wxString	comment_;
+		bool		auto_store_;
+
+	friend class VersionCtrl;
 };
 
-#endif	/* _COMMUNICATORCTRL_H_ */
+#endif	/* _APNVERSION_H_ */

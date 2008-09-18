@@ -168,6 +168,8 @@ install-data-hook:
 xanoubis_SOURCES= \
 	model/AlertNotify.cpp \
 	model/AlertNotify.h \
+	model/ApnVersion.cpp \
+	model/ApnVersion.h \
 	model/EscalationNotify.cpp \
 	model/EscalationNotify.h \
 	model/LogNotify.cpp \
@@ -230,6 +232,8 @@ xanoubis_SOURCES= \
 	view/ModAnoubisOverviewPanelImpl.h \
 	view/ModAnoubisPanelsBase.cpp \
 	view/ModAnoubisPanelsBase.h \
+	view/ModAnoubisProfileDialogImpl.cpp \
+	view/ModAnoubisProfileDialogImpl.h \
 	view/ModOverviewMainPanelImpl.cpp \
 	view/ModOverviewMainPanelImpl.h \
 	view/ModOverviewPanelsBase.cpp \
@@ -266,6 +270,8 @@ xanoubis_SOURCES= \
 	control/RuleSetSearchPolicyVisitor.h \
 	control/RuleEditorChecksumVisitor.cpp \
 	control/RuleEditorChecksumVisitor.h \
+	control/VersionCtrl.cpp \
+	control/VersionCtrl.h \
 	pattern/PolicyVisitor.cpp \
 	pattern/PolicyVisitor.h \
 	pattern/Singleton.cpp \

@@ -37,10 +37,15 @@
 #include <queue.h>
 #endif
 
+#ifdef OPENBSD
+#include <sys/syslimits.h>
+#endif
+
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/mman.h>
 
+#include <dirent.h>
 #include <fcntl.h>
 #include <dirent.h>
 #include <stdlib.h>
@@ -110,7 +115,8 @@ apnvm_rmdir(const char *path)
 		return (-1);
 
 	while ((dp = readdir(dir)) != NULL) {
-		char		childpath[256];
+		char		childpath[PATH_MAX];
+		int		nwritten;
 		struct stat	fstat;
 
 		if ((strcmp(dp->d_name, ".") == 0) ||
@@ -118,8 +124,12 @@ apnvm_rmdir(const char *path)
 			continue;
 
 		/* Build path of directory entry */
-		snprintf(childpath, sizeof(childpath), "%s/%s",
+		nwritten = snprintf(childpath, sizeof(childpath), "%s/%s",
 		    path, dp->d_name);
+		if ((nwritten >= PATH_MAX) || (nwritten < 0)) {
+			closedir(dir);
+			return (0);
+		}
 
 		if (stat(childpath, &fstat) != 0) {
 			closedir(dir);
@@ -144,12 +154,16 @@ apnvm_rmdir(const char *path)
 static int
 apnvm_havemodule(struct apncvs *cvs)
 {
-	char		path[256];
+	char		path[PATH_MAX];
+	int		nwritten;
 	struct stat	fstat;
 
 	APNVM_CHECKCVS(cvs, 0);
 
-	snprintf(path, sizeof(path), "%s/%s", cvs->cvsroot, cvs->module);
+	nwritten = snprintf(path, sizeof(path), "%s/%s",
+	    cvs->cvsroot, cvs->module);
+	if ((nwritten >= PATH_MAX) || (nwritten < 0))
+		return (0);
 
 	if (stat(path, &fstat) != 0)
 		return (0);
@@ -160,14 +174,17 @@ apnvm_havemodule(struct apncvs *cvs)
 static int
 apnvm_havefile(struct apncvs *cvs, const char *file)
 {
-	char		path[256];
+	char		path[PATH_MAX];
+	int		nwritten;
 	struct stat	fstat;
 
 	APNVM_CHECKCVS(cvs, 0);
 	APNVM_CHECKSTR(file, 0);
 
-	snprintf(path, sizeof(path), "%s/%s/%s",
+	nwritten = snprintf(path, sizeof(path), "%s/%s/%s",
 	    cvs->workdir, cvs->module, file);
+	if ((nwritten >= PATH_MAX) || (nwritten < 0))
+		return (0);
 
 	if (stat(path, &fstat) != 0)
 		return (0);
@@ -178,15 +195,18 @@ apnvm_havefile(struct apncvs *cvs, const char *file)
 static int
 apnvm_createfile(struct apncvs *cvs, const char *file)
 {
-	char	path[256];
+	char	path[PATH_MAX];
+	int	nwritten;
 	FILE	*fh;
 	int	result;
 
 	APNVM_CHECKCVS(cvs, 0);
 	APNVM_CHECKSTR(file, 0);
 
-	snprintf(path, sizeof(path), "%s/%s/%s",
+	nwritten = snprintf(path, sizeof(path), "%s/%s/%s",
 	    cvs->workdir, cvs->module, file);
+	if ((nwritten >= PATH_MAX) || (nwritten < 0))
+		return (0);
 
 	/* Create an empty file */
 	if ((fh = fopen(path, "w")) == NULL)
@@ -202,22 +222,30 @@ apnvm_createfile(struct apncvs *cvs, const char *file)
 static int
 apnvm_createmodule(struct apncvs *cvs)
 {
-	char path[256];
-	const mode_t mode = S_IRWXU;
+	char		path[PATH_MAX];
+	int		nwritten;
+	const mode_t	mode = S_IRWXU;
 
 	APNVM_CHECKCVS(cvs, 0);
 
-	snprintf(path, sizeof(path), "%s/%s", cvs->cvsroot, cvs->module);
+	nwritten = snprintf(path, sizeof(path), "%s/%s",
+	    cvs->cvsroot, cvs->module);
+	if ((nwritten >= PATH_MAX) || (nwritten < 0))
+		return (0);
+
 	return (mkdir(path, mode) == 0);
 }
 
 static FILE *
 apnvm_simpleopen(struct apncvs *cvs, const char *file, const char *mode)
 {
-	char path[256];
+	char	path[PATH_MAX];
+	int	nwritten;
 
-	snprintf(path, sizeof(path), "%s/%s/%s",
+	nwritten = snprintf(path, sizeof(path), "%s/%s/%s",
 	    cvs->workdir, cvs->module, file);
+	if ((nwritten >= PATH_MAX) || (nwritten < 0))
+		return (NULL);
 
 	return fopen(path, mode);
 }
@@ -225,12 +253,15 @@ apnvm_simpleopen(struct apncvs *cvs, const char *file, const char *mode)
 static int
 apnvm_openfile(struct apncvs *cvs, const char *file, struct file_ruleset *frs)
 {
-	char	path[256], *buf;
+	char	path[PATH_MAX], *buf;
+	int	nwritten;
 	int	fd;
 	off_t	sbuf;
 
-	snprintf(path, sizeof(path), "%s/%s/%s",
+	nwritten = snprintf(path, sizeof(path), "%s/%s/%s",
 	    cvs->workdir, cvs->module, file);
+	if ((nwritten >= PATH_MAX) || (nwritten < 0))
+		return (0);
 
 	/* Open file for reading */
 	if ((fd = open(path, O_RDONLY)) == -1)
@@ -285,6 +316,7 @@ apnvm_find_profile(const char *buf, size_t sbuf, const char *profile,
     void **start, size_t *len)
 {
 	char		s[64], *p;
+	int		nwritten;
 	int		have_profile;
 	char		*p_start;
 	size_t		p_len;
@@ -293,9 +325,13 @@ apnvm_find_profile(const char *buf, size_t sbuf, const char *profile,
 
 	/* Build up profile's separator */
 	if (have_profile)
-		snprintf(s, sizeof(s), "%s%s\n", APNVM_SEPARATOR, profile);
+		nwritten = snprintf(s, sizeof(s), "%s%s\n",
+		    APNVM_SEPARATOR, profile);
 	else
-		snprintf(s, sizeof(s), "%s\n", APNVM_SEPARATOR);
+		nwritten = snprintf(s, sizeof(s), "%s\n", APNVM_SEPARATOR);
+
+	if ((nwritten >= (int)sizeof(s)) || (nwritten < 0))
+		return (0);
 
 	/* Search for separator */
 	p = strstr(buf, s);
@@ -336,10 +372,11 @@ revno_to_no(const char *revno)
 		return (0);
 }
 
-static void
+static int
 no_to_revno(int no, char *revno, size_t len)
 {
-	snprintf(revno, len, "1.%i", no);
+	int nwritten = snprintf(revno, len, "1.%i", no);
+	return ((nwritten >= 0) && ((unsigned int)nwritten < len));
 }
 
 apnvm *
@@ -389,6 +426,55 @@ apnvm_prepare(apnvm *vm)
 	/* Checkout module */
 	if (apncvs_checkout(&vm->cvs) != 0)
 		return (APNVM_VMS);
+
+	return (APNVM_OK);
+}
+
+apnvm_result
+apnvm_getuser(apnvm *vm, struct apnvm_user_head *user_list)
+{
+	char		path[PATH_MAX];
+	int		nwritten;
+	DIR		*dir;
+	struct	dirent	*de;
+
+	APNVM_CHECKVM(vm, APNVM_ARG);
+	APNVM_CHECKPTR(user_list, APNVM_ARG);
+
+	/* Build path of module-directory */
+	nwritten = snprintf(path, sizeof(path), "%s/%s", vm->cvs.workdir,
+	    vm->cvs.module);
+	if (nwritten >= PATH_MAX || nwritten < 0)
+		return (APNVM_OOM);
+
+	/*
+	 * Scan module-directory for files.
+	 * For each managed user a separate file is created.
+	 */
+	if ((dir = opendir(path)) == NULL)
+		return (APNVM_VMS);
+
+	while ((de = readdir(dir)) != NULL) {
+		if (de->d_type == DT_REG) {
+			struct apnvm_user *user;
+
+			user = malloc(sizeof(struct apnvm_user));
+			if (user == NULL) {
+				closedir(dir);
+				return (APNVM_OOM);
+			}
+
+			user->username = strdup(de->d_name);
+			if (user->username == NULL) {
+				closedir(dir);
+				return (APNVM_OOM);
+			}
+
+			LIST_INSERT_HEAD(user_list, user, entry);
+		}
+	}
+
+	closedir(dir);
 
 	return (APNVM_OK);
 }
@@ -501,7 +587,8 @@ apnvm_fetch(apnvm *vm, const char *user, int no, const char *profile,
 	APNVM_CHECKPTR(rs, APNVM_ARG);
 
 	/* Convert to CVS-revision no */
-	no_to_revno(no, revno, sizeof(revno));
+	if (!no_to_revno(no, revno, sizeof(revno)))
+		return (APNVM_OOM);
 
 	if (!apnvm_havefile(&vm->cvs, user)) {
 		/* No file for the user -> no versions */
@@ -689,7 +776,8 @@ apnvm_remove(apnvm *vm, const char *user, int no)
 	APNVM_CHECKSTR(user, APNVM_ARG);
 
 	/* Convert to CVS-revision no */
-	no_to_revno(no, revno, sizeof(revno));
+	if (!no_to_revno(no, revno, sizeof(revno)))
+		return (APNVM_OOM);
 
 	result = apncvs_remrev(&vm->cvs, user, revno);
 	if (result != 0) {

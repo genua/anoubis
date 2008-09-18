@@ -25,43 +25,54 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _COMMUNICATORCTRL_H_
-#define _COMMUNICATORCTRL_H_
+#ifndef _MODANOUBISPROFILEDIALOGIMPL_H_
+#define _MODANOUBISPROFILEDIALOGIMPL_H_
 
-#include <wx/event.h>
-#include <wx/string.h>
+#include "ModAnoubisPanelsBase.h"
 
-#include "Communicator.h"
-
-class CommunicatorCtrl : public wxEvtHandler {
-	private:
-		wxString		socketPath_;
-		connectionStateType	connectionState_;
-		Communicator		*com_;
-
-		bool createVersion();
-
+class ModAnoubisProfileDialogImpl : public ModAnoubisProfileDialogBase
+{
 	public:
-		CommunicatorCtrl(wxString);
-		~CommunicatorCtrl(void);
+		ModAnoubisProfileDialogImpl(wxWindow*);
+		~ModAnoubisProfileDialogImpl(void);
 
-		void		connect(void);
-		void		disconnect(void);
-		bool		isConnected(void);
-		wxString	getRemoteStation(void);
-		void		requestPolicy(void);
-		void		usePolicy(wxString);
-		void		checksumAdd(wxString);
-		void		checksumGet(wxString);
-		void		checksumCal(wxString);
+		bool isHighProfileSelected() const;
+		bool isMediumProfileSelected() const;
+		bool isAdminProfileSelected() const;
 
-		void	OnNotifyReceived(wxCommandEvent&);
-		void	OnAnoubisdRuleSet(wxCommandEvent&);
-		void	OnConnection(wxCommandEvent&);
-		void	OnAnswerEscalation(wxCommandEvent&);
-		void	OnAnoubisdCurCsum(wxCommandEvent&);
-		void	OnAnoubisdShaCsum(wxCommandEvent&);
-		void	OnCommunicatorError(wxCommandEvent&);
+	protected:
+		void OnActionButtonClick(wxCommandEvent&);
+		void OnCancelButtonClick(wxCommandEvent&);
+		void OnCheckBoxClick(wxCommandEvent&);
+
+		virtual bool canBeEnabled() const = 0;
 };
 
-#endif	/* _COMMUNICATORCTRL_H_ */
+class ModAnoubisRestoreProfileDialog : public ModAnoubisProfileDialogImpl
+{
+	public:
+		ModAnoubisRestoreProfileDialog(wxWindow*);
+
+	protected:
+		bool canBeEnabled() const;
+};
+
+class ModAnoubisImportProfileDialog : public ModAnoubisProfileDialogImpl
+{
+	public:
+		ModAnoubisImportProfileDialog(wxWindow*);
+
+	protected:
+		bool canBeEnabled() const;
+};
+
+class ModAnoubisExportProfileDialog : public ModAnoubisProfileDialogImpl
+{
+	public:
+		ModAnoubisExportProfileDialog(wxWindow*);
+
+	protected:
+		bool canBeEnabled() const;
+};
+
+#endif	/* _MODANOUBISPROFILEDIALOGIMPL_H_ */

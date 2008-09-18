@@ -33,9 +33,11 @@
 #include "Notification.h"
 
 enum modAnoubisVersionListColumns {
-	MODANOUBIS_VMLIST_COLUMN_ID = 0,
+	MODANOUBIS_VMLIST_COLUMN_TYPE = 0,
 	MODANOUBIS_VMLIST_COLUMN_DATE,
 	MODANOUBIS_VMLIST_COLUMN_TIME,
+	MODANOUBIS_VMLIST_COLUMN_USER,
+	MODANOUBIS_VMLIST_COLUMN_VERSION,
 	MODANOUBIS_VMLIST_COLUMN_EOL
 };
 
@@ -56,7 +58,10 @@ class ModAnoubisMainPanelImpl : public ModAnoubisMainPanelBase
 		void sendNotifierOptions(void);
 		void readOptions(void);
 		void setOptionsWidgetsVisability(void);
-		void updateVersionList(void);
+		void versionListInit(void);
+		void versionListUpdate(void);
+		void versionListSetMsg(const wxString &);
+		int versionListCanAccess(bool) const;
 
 	protected:
 		void OnTypeChoosen(wxCommandEvent&);
@@ -77,6 +82,16 @@ class ModAnoubisMainPanelImpl : public ModAnoubisMainPanelBase
 		void OnEscalationsShow(wxCommandEvent&);
 		void OnAnoubisOptionShow(wxCommandEvent&);
 		void OnAutoCheck(wxCommandEvent&);
+
+		void OnNotebookTabChanged(wxNotebookEvent&);
+		void OnVersionListCtrlSelected(wxListEvent&);
+		void OnVersionRestoreButtonClick(wxCommandEvent&);
+		void OnVersionSaveButtonClick(wxCommandEvent&);
+		void OnVersionImportButtonClick(wxCommandEvent&);
+		void OnVersionExportButtonClick(wxCommandEvent&);
+		void OnVersionDeleteButtonClick(wxCommandEvent&);
+		void OnVersionShowButtonClick(wxCommandEvent&);
+		void OnVersionProfileButtonClick(wxCommandEvent&);
 
 	public:
 		ModAnoubisMainPanelImpl(wxWindow*, wxWindowID);

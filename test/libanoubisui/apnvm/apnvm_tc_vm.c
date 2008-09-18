@@ -253,6 +253,72 @@ START_TEST(vm_tc_list_no_head)
 }
 END_TEST
 
+START_TEST(vm_tc_getuser)
+{
+	apnvm			*vm;
+	apnvm_result		vmrc;
+	struct apnvm_user_head	user_head;
+	int			have_u2, have_u3;
+
+	vm = apnvm_init(apnvm_cvsroot, apnvm_user);
+	fail_if(vm == NULL, "Initialization of apnvm failed");
+
+	vmrc = apnvm_prepare(vm);
+	fail_if(vmrc != APNVM_OK, "Failed to prepare library");
+
+	LIST_INIT(&user_head);
+	vmrc = apnvm_getuser(vm, &user_head);
+	fail_if(vmrc != APNVM_OK,
+	    "Unexpected result from getuser-operation: %i", vmrc);
+
+	have_u2 = 0;
+	have_u3 = 0;
+
+	while (!LIST_EMPTY(&user_head)) {
+		struct apnvm_user *user = LIST_FIRST(&user_head);
+		LIST_REMOVE(user, entry);
+
+		if (strcmp(user->username, "user2") == 0) {
+			fail_if(have_u2, "Already have user2");
+			have_u2 = 1;
+		}
+		else if (strcmp(user->username, "user3") == 0) {
+			fail_if(have_u3, "Already have user3");
+			have_u3 = 1;
+		}
+		else
+			fail("Unexpected user: %s", user->username);
+
+		free(user->username);
+		free(user);
+	}
+
+	fail_if(!have_u2, "Missing user2");
+	fail_if(!have_u3, "Missing user3");
+
+	apnvm_destroy(vm);
+}
+END_TEST
+
+START_TEST(vm_tc_getuser_nolist)
+{
+	apnvm			*vm;
+	apnvm_result		vmrc;
+
+	vm = apnvm_init(apnvm_cvsroot, apnvm_user);
+	fail_if(vm == NULL, "Initialization of apnvm failed");
+
+	vmrc = apnvm_prepare(vm);
+	fail_if(vmrc != APNVM_OK, "Failed to prepare library");
+
+	vmrc = apnvm_getuser(vm, NULL);
+	fail_if(vmrc != APNVM_ARG,
+	    "Unexpected result from getuser-operation: %i", vmrc);
+
+	apnvm_destroy(vm);
+}
+END_TEST
+
 TCase *
 apnvm_tc_vm(void)
 {
@@ -269,6 +335,8 @@ apnvm_tc_vm(void)
 	tcase_add_test(tc, vm_tc_list);
 	tcase_add_test(tc, vm_tc_list_no_user);
 	tcase_add_test(tc, vm_tc_list_no_head);
+	tcase_add_test(tc, vm_tc_getuser);
+	tcase_add_test(tc, vm_tc_getuser_nolist);
 
 	return (tc);
 }

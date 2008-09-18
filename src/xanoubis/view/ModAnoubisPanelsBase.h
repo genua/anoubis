@@ -55,6 +55,7 @@
 #include <wx/textctrl.h>
 #include <wx/notebook.h>
 #include <wx/statbmp.h>
+#include <wx/dialog.h>
 
 ///////////////////////////////////////////////////////////////////////////
 
@@ -185,6 +186,27 @@ class ModAnoubisOverviewPanelBase : public wxPanel
 	
 	public:
 		ModAnoubisOverviewPanelBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( -1,-1 ), long style = wxTAB_TRAVERSAL );
+	
+};
+
+///////////////////////////////////////////////////////////////////////////////
+/// Class ModAnoubisProfileDialogBase
+///////////////////////////////////////////////////////////////////////////////
+class ModAnoubisProfileDialogBase : public wxDialog 
+{
+	private:
+	
+	protected:
+		wxStaticText* DialogLabel;
+		wxCheckBox* HighCheckBox;
+		wxCheckBox* MediumCheckBox;
+		wxCheckBox* AdminCheckBox;
+		
+		wxButton* ActionButton;
+		wxButton* CancelButton;
+	
+	public:
+		ModAnoubisProfileDialogBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("..."), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 358,134 ), long style = wxDEFAULT_DIALOG_STYLE );
 	
 };
 

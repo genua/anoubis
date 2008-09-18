@@ -52,6 +52,7 @@
 
 #include "AnEvents.h"
 #include "CommunicatorCtrl.h"
+#include "VersionCtrl.h"
 #include "main.h"
 #include "Notification.h"
 #include "EscalationNotify.h"
@@ -254,6 +255,9 @@ CommunicatorCtrl::usePolicy(wxString tmpName)
 			wxGetApp().log(_("Couldn't remove tmp file"));
 
 		com_->policyUse(buf, len);
+
+		if (!createVersion())
+			wxGetApp().log(_("Failed to create version"));
 	}
 	else
 	{
@@ -455,4 +459,19 @@ CommunicatorCtrl::OnCommunicatorError(wxCommandEvent& event)
 		wxGetApp().log(errMsg);
 		break;
 	}
+}
+
+bool
+CommunicatorCtrl::createVersion()
+{
+	VersionCtrl *versionCtrl = VersionCtrl::getInstance();
+
+	if (!versionCtrl->isPrepared())
+		return (false);
+
+	wxString profile = wxGetApp().getCurrentProfileName();
+	wxString now = wxDateTime::Now().Format();
+	wxString comment = _("Version automatically created at ") + now;
+
+	return versionCtrl->createVersion(profile, comment, true);
 }

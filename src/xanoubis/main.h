@@ -119,6 +119,7 @@ class AnoubisGuiApp : public wxApp
 		wxString	 getCatalogPath(void);
 		wxString	 getUtilsPath(void);
 		wxString	 getIconPath(wxString);
+		wxString	 getRulesetPath(const wxString &, bool);
 		wxIcon		*loadIcon(wxString);
 		Module		*getModule(enum moduleIdx);
 		wxString	 getDataDir(void);

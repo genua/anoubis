@@ -25,43 +25,52 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _COMMUNICATORCTRL_H_
-#define _COMMUNICATORCTRL_H_
+#include "ApnVersion.h"
 
-#include <wx/event.h>
-#include <wx/string.h>
+ApnVersion::ApnVersion(struct apnvm_version *version, const char *username)
+{
+	this->no_ = version->no;
+	this->tstamp_ = version->tstamp;
+	this->user_ = wxString(username, wxConvLibc);
+	this->comment_ = wxString(version->comment, wxConvLibc);
+	this->auto_store_ = (version->auto_store != 0);
+}
 
-#include "Communicator.h"
+ApnVersion::ApnVersion(const ApnVersion &other)
+{
+	this->no_ = other.no_;
+	this->tstamp_ = other.tstamp_;
+	this->user_ = other.user_;
+	this->comment_ = other.comment_;
+	this->auto_store_ = other.auto_store_;
+}
 
-class CommunicatorCtrl : public wxEvtHandler {
-	private:
-		wxString		socketPath_;
-		connectionStateType	connectionState_;
-		Communicator		*com_;
+int
+ApnVersion::getVersionNo(void) const
+{
+	return (this->no_);
+}
 
-		bool createVersion();
+wxDateTime
+ApnVersion::getTimestamp(void) const
+{
+	return (this->tstamp_);
+}
 
-	public:
-		CommunicatorCtrl(wxString);
-		~CommunicatorCtrl(void);
+wxString
+ApnVersion::getUsername(void) const
+{
+	return (this->user_);
+}
 
-		void		connect(void);
-		void		disconnect(void);
-		bool		isConnected(void);
-		wxString	getRemoteStation(void);
-		void		requestPolicy(void);
-		void		usePolicy(wxString);
-		void		checksumAdd(wxString);
-		void		checksumGet(wxString);
-		void		checksumCal(wxString);
+wxString
+ApnVersion::getComment(void) const
+{
+	return (this->comment_);
+}
 
-		void	OnNotifyReceived(wxCommandEvent&);
-		void	OnAnoubisdRuleSet(wxCommandEvent&);
-		void	OnConnection(wxCommandEvent&);
-		void	OnAnswerEscalation(wxCommandEvent&);
-		void	OnAnoubisdCurCsum(wxCommandEvent&);
-		void	OnAnoubisdShaCsum(wxCommandEvent&);
-		void	OnCommunicatorError(wxCommandEvent&);
-};
-
-#endif	/* _COMMUNICATORCTRL_H_ */
+bool
+ApnVersion::isAutoStore(void) const
+{
+	return (this->auto_store_);
+}
