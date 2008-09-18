@@ -51,9 +51,8 @@
 
 /* Only for internal use */
 static int	apn_print_app(struct apn_app *, FILE *);
-static int	apn_print_alfrule(struct apn_rule *, int, FILE *);
-static int	apn_print_sfsrule(struct apn_rule *, int, FILE *);
 static void	apn_print_hash(u_int8_t *, int, FILE *);
+static int	apn_print_scope(struct apn_scope *scope, FILE * file);
 static int	apn_print_afiltrule(struct apn_afiltrule *, FILE *);
 static int	apn_print_host(struct apn_host *, FILE *);
 static int	apn_print_address(struct apn_addr *, FILE *);
@@ -85,6 +84,8 @@ static struct apn_host *apn_copy_hosts(struct apn_host *);
 static struct apn_port *apn_copy_ports(struct apn_port *);
 static int	 apn_set_application(struct apn_rule *, const char *,
 		     const u_int8_t *, int);
+static void	apn_assign_ids_chain(struct apn_ruleset *, struct apn_chain *);
+static void	apn_assign_ids_one(struct apn_ruleset *, struct apn_rule *);
 static void	apn_insert_id(struct apn_ruleset *, struct rb_entry *, void *);
 static void	apn_assign_id(struct apn_ruleset *, struct rb_entry *, void *);
 
@@ -537,6 +538,18 @@ apn_copyinsert(struct apn_ruleset *rs, struct apn_rule *arule,
 	return (0);
 }
 
+static int
+apn_print_chain(struct apn_chain * chain, int flags, FILE * file)
+{
+	struct apn_rule * r;
+	TAILQ_FOREACH(r, chain, entry) {
+		int ret = apn_print_rule(r, flags, file);
+		if (ret)
+			return (ret);
+	}
+	return (0);
+}
+
 /*
  * Print a rule.
  *
@@ -553,26 +566,46 @@ apn_print_rule(struct apn_rule *rule, int flags, FILE *file)
 	if (rule == NULL || file == NULL)
 		return (1);
 
+	if (rule->apn_type != APN_SFS) {
+		fprintf(file, "%ld: ", rule->apn_id);
+	}
 	switch (rule->apn_type) {
 	case APN_ALF:
-		/* ALF rules are application specific. */
-		if (flags & APN_FLAG_VERBOSE2)
-			fprintf(file, "%ld: ", rule->apn_id);
+	case APN_SB:
 		if ((ret = apn_print_app(rule->app, file)) != 0)
 			return (ret);
 		fprintf(file, " {\n");
-		ret = apn_print_alfrule(rule, flags, file);
-		fprintf(file, "}\n");
+		ret = apn_print_chain(&rule->rule.chain, flags, file);
+		fprintf(file, "}");
 		break;
 	case APN_SFS:
-		/* SFS rule are not application specific. */
-		ret = apn_print_sfsrule(rule, flags, file);
+		ret = apn_print_chain(&rule->rule.chain, flags, file);
+		break;
+	case APN_ALF_FILTER:
+		ret = apn_print_afiltrule(&rule->rule.afilt, file);
+		break;
+	case APN_ALF_CAPABILITY:
+		ret = apn_print_acaprule(&rule->rule.acap, file);
+		break;
+	case APN_DEFAULT:
+		ret = apn_print_defaultrule(&rule->rule.apndefault,
+		    file);
+		break;
+	case APN_ALF_CTX:
+		ret = apn_print_contextrule(&rule->rule.apncontext, file);
+		break;
+	case APN_SFS_CHECK:
+		ret = apn_print_scheckrule(&rule->rule.sfscheck, file);
 		break;
 	default:
-		ret = 1;
-		break;
+		return (1);
 	}
-
+	if (ret)
+		return (ret);
+	if (rule->scope)
+		ret = apn_print_scope(rule->scope, file);
+	if (rule->apn_type != APN_SFS)
+		fprintf(file, "\n");
 	return (ret);
 }
 
@@ -761,89 +794,6 @@ apn_print_scope(struct apn_scope *scope, FILE * file)
 	if (scope->timeout)
 		fprintf(file, " until %lu", (long int)scope->timeout);
 	return 0;
-}
-
-static int
-apn_print_alfrule(struct apn_rule *block, int flags, FILE *file)
-{
-	struct apn_rule	*arule;
-	int			 ret = 0;
-
-	if (file == NULL)
-		return (1);
-
-	TAILQ_FOREACH(arule, &block->rule.chain, entry) {
-		if (flags & APN_FLAG_VERBOSE2)
-			fprintf(file, "%ld: ", arule->apn_id);
-
-		switch (arule->apn_type) {
-		case APN_ALF_FILTER:
-			ret = apn_print_afiltrule(&arule->rule.afilt, file);
-			break;
-		case APN_ALF_CAPABILITY:
-			ret = apn_print_acaprule(&arule->rule.acap, file);
-			break;
-		case APN_DEFAULT:
-			ret = apn_print_defaultrule(&arule->rule.apndefault,
-			    file);
-			break;
-		case APN_ALF_CTX:
-			ret = apn_print_contextrule(&arule->rule.apncontext,
-			    file);
-			break;
-		default:
-			return (1);
-		}
-
-		if (ret)
-			break;
-		if (arule->scope)
-			ret = apn_print_scope(arule->scope, file);
-		if (ret)
-			break;
-
-		fprintf(file, "\n");
-	}
-
-	return (ret);
-}
-
-static int
-apn_print_sfsrule(struct apn_rule *block, int flags, FILE *file)
-{
-	struct apn_rule		*srule;
-	int			 ret = 0;
-
-	if (file == NULL)
-		return (1);
-
-	TAILQ_FOREACH(srule, &block->rule.chain, entry) {
-		if (flags & APN_FLAG_VERBOSE2)
-			fprintf(file, "%ld: ", srule->apn_id);
-
-		switch (srule->apn_type) {
-		case APN_SFS_CHECK:
-			ret = apn_print_scheckrule(&srule->rule.sfscheck, file);
-			break;
-		case APN_DEFAULT:
-			ret = apn_print_defaultrule(&srule->rule.apndefault,
-			    file);
-			break;
-		default:
-			return (1);
-		}
-
-		if (ret)
-			break;
-		if (srule->scope)
-			ret = apn_print_scope(srule->scope, file);
-		if (ret)
-			break;
-
-		fprintf(file, "\n");
-	}
-
-	return (ret);
 }
 
 static int
@@ -1806,6 +1756,29 @@ apn_valid_id(struct apn_ruleset *rs, unsigned int id)
 	return (rb_find(rs->idtree, id) == NULL);
 }
 
+static void
+apn_assign_ids_one(struct apn_ruleset *rs, struct apn_rule *r)
+{
+	switch (r->apn_type) {
+	case APN_ALF:
+	case APN_SFS:
+	case APN_SB:
+	case APN_VS:
+		apn_assign_ids_chain(rs, &r->rule.chain);
+		break;
+	}
+	if (r->apn_id == 0)
+		apn_assign_id(rs, &r->_rbentry, r);
+}
+
+static void
+apn_assign_ids_chain(struct apn_ruleset *rs, struct apn_chain *chain)
+{
+	struct apn_rule *r;
+	TAILQ_FOREACH(r, chain, entry)
+		apn_assign_ids_one(rs, r);
+}
+
 /*
  * NOTE: rs->maxid must be bigger than any ID already assigned inside
  * NOTE: the rule set before calling this function.
@@ -1813,28 +1786,8 @@ apn_valid_id(struct apn_ruleset *rs, unsigned int id)
 void
 apn_assign_ids(struct apn_ruleset *rs)
 {
-	struct apn_rule		*rule;
-	TAILQ_FOREACH(rule, &rs->alf_queue, entry) {
-		struct apn_rule	*arule;
-		TAILQ_FOREACH(arule, &rule->rule.chain, entry) {
-			if (arule->apn_id)
-				continue;
-			apn_assign_id(rs, &arule->_rbentry, arule);
-		}
-		if (rule->apn_id == 0)
-			apn_assign_id(rs, &rule->_rbentry, rule);
-	}
-	if (!TAILQ_EMPTY(&rs->sfs_queue)) {
-		struct apn_rule	*srule;
-		rule = TAILQ_FIRST(&rs->sfs_queue);
-		TAILQ_FOREACH(srule, &rule->rule.chain, entry) {
-			if (srule->apn_id)
-				continue;
-			apn_assign_id(rs, &srule->_rbentry, srule);
-		}
-		if (rule->apn_id == 0)
-			apn_assign_id(rs, &rule->_rbentry, rule);
-	}
+	apn_assign_ids_chain(rs, &rs->alf_queue);
+	apn_assign_ids_chain(rs, &rs->sfs_queue);
 }
 
 static void
@@ -1853,10 +1806,6 @@ apn_insert_id(struct apn_ruleset *rs, struct rb_entry *e, void *data)
 		rs->maxid = e->key;
 }
 
-/*
- * XXX CEH: Might need something else than a simple rand() because
- * XXX CEH: RAND_MAX might not be large enough.
- */
 static void
 apn_assign_id(struct apn_ruleset *rs, struct rb_entry *e, void *data)
 {
