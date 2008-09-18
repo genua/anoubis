@@ -204,8 +204,6 @@ convert_user_path(const char * path, char **dir)
 	if (path[i] == '/')
 		return -EINVAL;
 
-#ifdef OPENBSD
-{
 	newpath = insert_escape_seq(path);
 	if (newpath == NULL)
 		return -ENOMEM;
@@ -217,70 +215,6 @@ convert_user_path(const char * path, char **dir)
 
 	free(newpath);
 	return 0;
-}
-#endif
-#ifdef LINUX
-{
-	struct stat	 statbuf;
-	dev_t		 dev;
-	char		*tmppath = strdup(path);
-	int		 error = -EINVAL;
-	int		 samei = -1;
-	unsigned long	 major, minor;
-
-	if (!tmppath)
-		return -ENOMEM;
-	if (lstat(tmppath, &statbuf) < 0) {
-		error = -errno;
-		goto err;
-	}
-	if (!S_ISREG(statbuf.st_mode))
-		goto err;
-	dev = statbuf.st_dev;
-	if (!dev)
-		goto err;
-
-	while(i > 0) {
-		while(tmppath[i] != '/')
-			i--;
-		/* Keep the slash */
-		tmppath[i+1] = 0;
-		if (lstat(tmppath, &statbuf) < 0) {
-			error = -errno;
-			goto err;
-		}
-		if (!S_ISDIR(statbuf.st_mode))
-			goto err;
-		if (statbuf.st_dev != dev)
-			break;
-		samei = i;
-		i--;	/* Skip slah */
-	}
-	if (samei < 0)
-		goto err;
-	major = (dev >> 8);
-	minor = (dev & 0xff);
-
-	newpath = insert_escape_seq(path+samei);
-	if (newpath == NULL)
-		return -ENOMEM;
-
-	if (asprintf(dir, "%s/%lu:%lu%s",
-	    SFS_CHECKSUMROOT, major, minor, newpath) == -1) {
-		error = -ENOMEM;
-		goto err;
-	}
-	free(tmppath);
-	free(newpath);
-	return 0;
-err:
-	free(tmppath);
-	if (newpath)
-		free(newpath);
-	return error;
-}
-#endif
-	return -EOPNOTSUPP;
 }
 
 int
@@ -372,36 +306,6 @@ int
 sfs_getchecksum(u_int64_t kdev __used, const char *kpath, uid_t uid,
     unsigned char *md)
 {
-#ifdef LINUX
-{
-	char		*path;
-	char		*newpath;
-	int		 ret;
-	unsigned long	 major, minor;
-
-	/*
-	 * XXX CEH: Ultimately the kernel should report major and minor
-	 * XXX CEH: numbers. Currently this duplicates kernel source code.
-	 */
-	major = (kdev >> 20);
-	minor = (kdev & ((1UL << 20) - 1));
-	newpath = insert_escape_seq(kpath);
-	if (newpath == NULL)
-		return -ENOMEM;
-
-	if (asprintf(&path, "%s/%lu:%lu%s/%d",
-	    SFS_CHECKSUMROOT, major, minor, newpath, uid) == -1) {
-		free(newpath);
-		return -ENOMEM;
-	}
-	ret = sfs_readchecksum(path, md);
-	free(path);
-	free(newpath);
-	return ret;
-}
-#endif
-#ifdef OPENBSD
-{
 	char	*path;
 	char	*newpath;
 	int	 ret;
@@ -419,9 +323,6 @@ sfs_getchecksum(u_int64_t kdev __used, const char *kpath, uid_t uid,
 	free(path);
 	free(newpath);
 	return ret;
-}
-#endif
-	return -EOPNOTSUPP;
 }
 
 static int
