@@ -57,7 +57,7 @@ class AlfPolicy : public Policy
 	DECLARE_DYNAMIC_CLASS(AlfPolicy)
 
 	private:
-		struct apn_alfrule	*alfRule_;
+		struct apn_rule		*alfRule_;
 
 		wxString	getHostName(struct apn_host *);
 		wxString        getPortName(struct apn_port *);
@@ -65,11 +65,11 @@ class AlfPolicy : public Policy
 
 	public:
 		AlfPolicy(void);
-		AlfPolicy(AppPolicy *, struct apn_alfrule *);
+		AlfPolicy(AppPolicy *, struct apn_rule *);
 		~AlfPolicy(void);
 
 		virtual void		 accept(PolicyVisitor&);
-		struct apn_alfrule	*cloneRule(void);
+		struct apn_rule		*cloneRule(void);
 
 		int		getId(void);
 		bool		isDefault(void);

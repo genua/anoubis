@@ -63,7 +63,7 @@ SfsPolicy::SfsPolicy(void)
 {
 }
 
-SfsPolicy::SfsPolicy(AppPolicy *parent, struct apn_sfsrule *sfsRule)
+SfsPolicy::SfsPolicy(AppPolicy *parent, struct apn_rule *sfsRule)
     : Policy(parent)
 {
 	sfsRule_ = sfsRule;

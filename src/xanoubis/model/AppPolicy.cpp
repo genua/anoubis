@@ -62,8 +62,8 @@ AppPolicy::AppPolicy(void)
 
 AppPolicy::AppPolicy(struct apn_rule *appRule) : Policy(NULL)
 {
-	struct apn_alfrule	*alfRule;
-	struct apn_sfsrule	*sfsRule;
+	struct apn_rule		*alfRule;
+	struct apn_rule		*sfsRule;
 	AlfPolicy		*newAlf;
 	SfsPolicy		*newSfs;
 
@@ -76,7 +76,7 @@ AppPolicy::AppPolicy(struct apn_rule *appRule) : Policy(NULL)
 
 	switch (appRule_->apn_type) {
 	case APN_ALF:
-		TAILQ_FOREACH(alfRule, &appRule_->rule.alf, entry) {
+		TAILQ_FOREACH(alfRule, &appRule_->rule.chain, entry) {
 			newAlf = new AlfPolicy(this, alfRule);
 			ruleList_.Append(newAlf);
 			if (alfRule->apn_type == APN_ALF_CTX) {
@@ -85,7 +85,7 @@ AppPolicy::AppPolicy(struct apn_rule *appRule) : Policy(NULL)
 		}
 		break;
 	case APN_SFS:
-		TAILQ_FOREACH(sfsRule, &appRule_->rule.sfs, entry) {
+		TAILQ_FOREACH(sfsRule, &appRule_->rule.chain, entry) {
 			newSfs = new SfsPolicy(this, sfsRule);
 			ruleList_.Append(newSfs);
 		}

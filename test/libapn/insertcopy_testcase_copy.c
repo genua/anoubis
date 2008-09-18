@@ -125,12 +125,12 @@ generate_file(void)
 	return(sfn);
 }
 
-struct apn_alfrule *
+struct apn_rule *
 generate_alfrule(void)
 {
-	struct apn_alfrule	*alf;
+	struct apn_rule	*alf;
 
-	if ((alf = calloc(1, sizeof(struct apn_alfrule))) == NULL)
+	if ((alf = calloc(1, sizeof(struct apn_rule))) == NULL)
 		return (NULL);
 
 	alf->apn_type = APN_ALF_FILTER;
@@ -147,13 +147,13 @@ generate_alfrule(void)
 struct apn_rule *
 generate_rule(void)
 {
-	struct apn_alfrule	*alf;
+	struct apn_rule		*alf;
 	struct apn_rule		*rule;
 	struct apn_app		*app;
 
 	if ((alf = generate_alfrule()) == NULL)
 		return (NULL);
-	if ((rule = calloc(1, sizeof(struct apn_alfrule))) == NULL) {
+	if ((rule = calloc(1, sizeof(struct apn_rule))) == NULL) {
 		free(alf);
 		return (NULL);
 	}
@@ -174,8 +174,8 @@ generate_rule(void)
 
 	rule->apn_type = APN_ALF;
 	rule->apn_id = 0;
-	TAILQ_INIT(&rule->rule.alf);
-	TAILQ_INSERT_TAIL(&rule->rule.alf, alf, entry);
+	TAILQ_INIT(&rule->rule.chain);
+	TAILQ_INSERT_TAIL(&rule->rule.chain, alf, entry);
 	rule->app = app;
 
 	return (rule);
@@ -255,7 +255,7 @@ END_TEST
 
 START_TEST(tc_Insert2)
 {
-	struct apn_alfrule	*rule1, *rule2, *rule3;
+	struct apn_rule		*rule1, *rule2, *rule3;
 	struct apn_ruleset	*rs;
 	char			*file;
 	int			 ret;
@@ -338,7 +338,7 @@ END_TEST
 START_TEST(tc_Copy1)
 {
 	u_int8_t		 fakecs[APN_HASH_SHA256_LEN];
-	struct apn_alfrule	*rule;
+	struct apn_rule		*rule;
 	struct apn_ruleset	*rs;
 	char			*file;
 	int			 ret;

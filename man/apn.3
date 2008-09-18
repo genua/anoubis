@@ -51,10 +51,10 @@
 .Ft int
 .Fn apn_insert "struct apn_ruleset *" "struct apn_rule *" "int"
 .Ft int
-.Fn apn_insert_alfrule "struct apn_ruleset *" "struct apn_alfrule *" "int"
+.Fn apn_insert_alfrule "struct apn_ruleset *" "struct apn_rule *" "int"
 .Ft int
 .\" The following line cannot be wrapped, the parameters have to be on one line
-.Fn apn_copyinsert "struct apn_ruleset *" "struct apn_alfrule *" "int" "const char *" "const char *" "int"
+.Fn apn_copyinsert "struct apn_ruleset *" "struct apn_rule *" "int" "const char *" "const char *" "int"
 .Ft void
 .Fn apn_free_ruleset "struct apn_ruleset *ruleset"
 .Ft int
@@ -188,13 +188,13 @@ If that particular rule is not found, the rule is not added to the rule set.
 Otherwise, it is inserted and the IDs in the rule are updated according
 to the IDs already used in the rule set.
 .Pp
-.It Fn apn_insert_alfrule ruleset alfrule id
+.It Fn apn_insert_alfrule ruleset rule id
 The fucntion
 .Fn apn_insert_alfrule
 inserts an ALF rule
-.Em alfrule
+.Em rule
 of type
-.Em struct apn_alfrule
+.Em struct apn_rule
 to the rule set
 .Em ruleset
 of type
@@ -208,7 +208,7 @@ If that particular rule is not found, the rule is not added to the rule set.
 Otherwise, it is inserted and the ID of the rule is updated according
 to the IDs already used in the rule set.
 .Pp
-.It Fn apn_copyinsert ruleset alfrule id filename checksum type
+.It Fn apn_copyinsert ruleset rule id filename checksum type
 The function
 .Fn apn_copyinsert
 copies the full application rule from the rule set
@@ -216,7 +216,7 @@ copies the full application rule from the rule set
 that includes the ALF rule with ID
 .Em id
 and inserts the provided ALF rule
-.Em alfrule
+.Em rule
 in the new rule set before that particular rule.
 The application specification is derived from the provided filename
 .Em filename
@@ -334,19 +334,17 @@ The next central data structure is
 .Em struct apn_rule :
 .Bd -literal
 
-TAILQ_HEAD(apn_alfchain, apn_alfrule);
-TAILQ_HEAD(apn_sfschain, apn_sfsrule);
+TAILQ_HEAD(apn_chain, apn_rule);
 struct apn_rule {
 	struct rb_entry         _rbentry;
 #define apn_id    _rbentry.key
 #define apn_type  _rbentry.dtype
 	TAILQ_ENTRY(apn_rule)    entry;
-
 	struct apn_app          *app;
 
 	union {
-		struct apn_alfchain      *alf;
-		struct apn_sfschain      *sfs;
+		/* Other types of rules */
+		struct apn_chain      *chain;
 	} rule;
 };
 .Ed
@@ -366,16 +364,16 @@ of rules) or points to a stucture
 specifying one or more applications.
 The individual filter, access and context rules of the block are
 chained together in a tail queue headed by
-.Em rule.alf .
+.Em rule.chain .
 .Pp
-SFS rules do not depeend on the application.
+SFS rules do not depend on the application.
 Thus the
 .Em sfs_queue
 of a ruleset consists of a single
 .Em struct apn_rule
 which in turn contains a list of all sfs access rules.
 The head of this list is the
-.Em rule.sfs
+.Em rule.chain
 field in the
 .Em struct apn_rule .
 .\" The following requests should be uncommented and used where appropriate.

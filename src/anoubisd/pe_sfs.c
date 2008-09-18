@@ -199,7 +199,7 @@ static int
 pe_decide_sfscheck(struct apn_rule *rule, struct sfs_open_message *msg,
     int *log, u_int32_t *rule_id, time_t now)
 {
-	struct apn_sfsrule	*hp;
+	struct apn_rule		*hp;
 	int			 decision;
 
 	if (rule == NULL) {
@@ -212,7 +212,7 @@ pe_decide_sfscheck(struct apn_rule *rule, struct sfs_open_message *msg,
 	}
 
 	decision = -1;
-	TAILQ_FOREACH(hp, &rule->rule.sfs, entry) {
+	TAILQ_FOREACH(hp, &rule->rule.chain, entry) {
 		/*
 		 * skip non-check rules
 		 */
@@ -247,7 +247,7 @@ static int
 pe_decide_sfsdflt(struct apn_rule *rule, struct sfs_open_message *msg, int *log,
     u_int32_t *rule_id, time_t now)
 {
-	struct apn_sfsrule	*hp;
+	struct apn_rule		*hp;
 	int			 decision;
 
 	if (rule == NULL) {
@@ -256,9 +256,9 @@ pe_decide_sfsdflt(struct apn_rule *rule, struct sfs_open_message *msg, int *log,
 	}
 
 	decision = -1;
-	TAILQ_FOREACH(hp, &rule->rule.sfs, entry) {
+	TAILQ_FOREACH(hp, &rule->rule.chain, entry) {
 		/* Skip non-default rules. */
-		if (hp->apn_type != APN_SFS_DEFAULT
+		if (hp->apn_type != APN_DEFAULT
 		    || !pe_in_scope(hp->scope, &msg->common, now)) {
 			continue;
 		}

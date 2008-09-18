@@ -452,7 +452,7 @@ RuleEditorFillWidgetsVisitor::visitAlfPolicy(AlfPolicy *alfPolicy)
 		showLog(alfPolicy->getLogNo());
 		showCapability(alfPolicy->getCapTypeNo());
 		break;
-	case APN_ALF_DEFAULT:
+	case APN_DEFAULT:
 		ruleEditor_->alfDefaultRadioButton->SetValue(true);
 		showAction(alfPolicy->getActionNo());
 		showLog(alfPolicy->getLogNo());

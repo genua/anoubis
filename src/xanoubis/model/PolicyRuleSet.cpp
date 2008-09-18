@@ -197,10 +197,10 @@ PolicyRuleSet::hasLocalHost(wxArrayString list)
 	return (result);
 }
 
-struct apn_alfrule *
+struct apn_rule *
 PolicyRuleSet::assembleAlfPolicy(AlfPolicy *old, EscalationNotify *escalation)
 {
-	struct apn_alfrule	*newAlfRule;
+	struct apn_rule		*newAlfRule;
 	struct apn_afiltrule	*afilt;
 	struct apn_acaprule	*acap;
 	NotifyAnswer		*answer;
@@ -259,7 +259,7 @@ PolicyRuleSet::assembleAlfPolicy(AlfPolicy *old, EscalationNotify *escalation)
 			newAlfRule->rule.acap.action = APN_ACTION_DENY;
 		}
 		break;
-	case APN_ALF_DEFAULT:
+	case APN_DEFAULT:
 		short proto = escalation->getProtocolNo();
 		int log = old->getLogNo();
 		if (proto == IPPROTO_TCP || proto == IPPROTO_UDP) {
@@ -318,8 +318,8 @@ PolicyRuleSet::createAnswerPolicy(EscalationNotify *escalation)
 	Policy				*parentPolicy;
 	NotifyAnswer			*answer;
 	RuleSetSearchPolicyVisitor	*seeker;
-	struct apn_alfrule		*newAlfRule;
-	struct apn_alfrule		*newTmpAlfRule;
+	struct apn_rule			*newAlfRule;
+	struct apn_rule			*newTmpAlfRule;
 	bool				 hasChecksum;
 
 	/* get the policy caused this escalation */
@@ -518,7 +518,7 @@ PolicyRuleSet::createAlfPolicy(int insertBeforeId)
 	wxCommandEvent			 event(anEVT_LOAD_RULESET);
 	RuleSetSearchPolicyVisitor	 seeker(insertBeforeId);
 	Policy				*parentPolicy;
-	struct apn_alfrule		*newAlfRule;
+	struct apn_rule			*newAlfRule;
 
 	this->accept(seeker);
 	if (! seeker.hasMatchingPolicy()) {
@@ -527,7 +527,7 @@ PolicyRuleSet::createAlfPolicy(int insertBeforeId)
 
 	newId = -1;
 	rc = -1;
-	newAlfRule = CALLOC_STRUCT(apn_alfrule);
+	newAlfRule = CALLOC_STRUCT(apn_rule);
 	parentPolicy = seeker.getMatchingPolicy();
 
 	if (newAlfRule == NULL) {
@@ -567,7 +567,7 @@ PolicyRuleSet::createSfsPolicy(int insertBeforeId)
 	RuleSetSearchPolicyVisitor	 seeker(insertBeforeId);
 	Policy				*parentPolicy;
 	struct apn_rule			*sfsRootRule;
-	struct apn_sfsrule		*newSfsRule;
+	struct apn_rule			*newSfsRule;
 
 	this->accept(seeker);
 	if (! seeker.hasMatchingPolicy()) {
@@ -576,7 +576,7 @@ PolicyRuleSet::createSfsPolicy(int insertBeforeId)
 
 	newId = -1;
 	rc = -1;
-	newSfsRule = CALLOC_STRUCT(apn_sfsrule);
+	newSfsRule = CALLOC_STRUCT(apn_rule);
 	parentPolicy = seeker.getMatchingPolicy();
 
 	if (newSfsRule == NULL) {
@@ -595,7 +595,7 @@ PolicyRuleSet::createSfsPolicy(int insertBeforeId)
 	if (TAILQ_EMPTY(&(ruleSet_->sfs_queue))) {
 		sfsRootRule = CALLOC_STRUCT(apn_rule);
 		sfsRootRule->apn_type = APN_SFS;
-		apn_add_sfsrule(sfsRootRule, ruleSet_, NULL, 0);
+		apn_add_sfsblock(sfsRootRule, ruleSet_, NULL, 0);
 	}
 	/* we assume sfs_queue will contain only one element */
 	sfsRootRule = TAILQ_FIRST(&(ruleSet_->sfs_queue));
@@ -603,15 +603,15 @@ PolicyRuleSet::createSfsPolicy(int insertBeforeId)
 	if (parentPolicy->IsKindOf(CLASSINFO(SfsPolicy))) {
 		rc = apn_insert_sfsrule(ruleSet_, newSfsRule, insertBeforeId);
 	} else {
-		if (!TAILQ_EMPTY(&sfsRootRule->rule.sfs)) {
-			struct apn_sfsrule * srule;
-			srule = TAILQ_FIRST(&sfsRootRule->rule.sfs);
+		if (!TAILQ_EMPTY(&sfsRootRule->rule.chain)) {
+			struct apn_rule * srule;
+			srule = TAILQ_FIRST(&sfsRootRule->rule.chain);
 			rc = apn_insert_sfsrule(ruleSet_, newSfsRule,
 			    srule->apn_id);
 		} else {
 			/* XXX CEH: This should be somewhere in libapn */
 			newSfsRule->apn_id = 0;
-			TAILQ_INSERT_HEAD(&sfsRootRule->rule.sfs,
+			TAILQ_INSERT_HEAD(&sfsRootRule->rule.chain,
 			    newSfsRule, entry);
 			apn_assign_ids(ruleSet_);
 			rc = 0;

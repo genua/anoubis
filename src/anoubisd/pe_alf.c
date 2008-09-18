@@ -77,14 +77,14 @@ static int		 pe_decide_alfcap(struct apn_rule *, struct
 			     alf_event *, int *, u_int32_t *, time_t);
 static int		 pe_decide_alfdflt(struct apn_rule *, struct
 			     alf_event *, int *, u_int32_t *, time_t);
-static void		 pe_kcache_alf(struct apn_alfrule *, int,
+static void		 pe_kcache_alf(struct apn_rule *, int,
 			     struct pe_proc *, struct alf_event *);
 static char		*pe_dump_alfmsg(struct alf_event *,
 			     struct eventdev_hdr *, int);
 static int		 pe_addrmatch_out(struct alf_event *, struct
-			     apn_alfrule *);
+			     apn_rule *);
 static int		 pe_addrmatch_in(struct alf_event *, struct
-			     apn_alfrule *);
+			     apn_rule *);
 static int		 pe_addrmatch_host(struct apn_host *, void *,
 			     unsigned short);
 static int		 pe_addrmatch_port(struct apn_port *, void *,
@@ -247,7 +247,7 @@ static int
 pe_decide_alffilt(struct pe_proc *proc, struct apn_rule *rule,
     struct alf_event *msg, int *log, u_int32_t *rule_id, time_t now)
 {
-	struct apn_alfrule	*hp;
+	struct apn_rule		*hp;
 	int			 decision;
 
 	if (rule == NULL) {
@@ -281,7 +281,7 @@ pe_decide_alffilt(struct pe_proc *proc, struct apn_rule *rule,
 	}
 
 	decision = -1;
-	TAILQ_FOREACH(hp, &rule->rule.alf, entry) {
+	TAILQ_FOREACH(hp, &rule->rule.chain, entry) {
 		/*
 		 * Skip non-filter rules.
 		 */
@@ -443,7 +443,7 @@ pe_decide_alffilt(struct pe_proc *proc, struct apn_rule *rule,
 }
 
 static void
-pe_kcache_alf(struct apn_alfrule *rule, int decision, struct pe_proc *proc,
+pe_kcache_alf(struct apn_rule *rule, int decision, struct pe_proc *proc,
     struct alf_event *msg)
 {
 	struct anoubis_kernel_policy *policy;
@@ -511,7 +511,7 @@ pe_decide_alfcap(struct apn_rule *rule, struct alf_event *msg, int *log,
     u_int32_t *rule_id, time_t now)
 {
 	int			 decision;
-	struct apn_alfrule	*hp;
+	struct apn_rule		*hp;
 
 	if (rule == NULL) {
 		log_warnx("pe_decide_alfcap: empty rule");
@@ -527,7 +527,7 @@ pe_decide_alfcap(struct apn_rule *rule, struct alf_event *msg, int *log,
 		return (-1);
 
 	decision = -1;
-	TAILQ_FOREACH(hp, &rule->rule.alf, entry) {
+	TAILQ_FOREACH(hp, &rule->rule.chain, entry) {
 		int thisdec = -1;
 		/* Skip non-capability rules. */
 		if (hp->apn_type != APN_ALF_CAPABILITY ||
@@ -600,7 +600,7 @@ static int
 pe_decide_alfdflt(struct apn_rule *rule, struct alf_event *msg, int *log,
     u_int32_t *rule_id, time_t now)
 {
-	struct apn_alfrule	*hp;
+	struct apn_rule		*hp;
 	int			 decision;
 
 	if (rule == NULL) {
@@ -609,9 +609,9 @@ pe_decide_alfdflt(struct apn_rule *rule, struct alf_event *msg, int *log,
 	}
 
 	decision = -1;
-	TAILQ_FOREACH(hp, &rule->rule.alf, entry) {
+	TAILQ_FOREACH(hp, &rule->rule.chain, entry) {
 		/* Skip non-default rules. */
-		if (hp->apn_type != APN_ALF_DEFAULT
+		if (hp->apn_type != APN_DEFAULT
 		    || !pe_in_scope(hp->scope, &msg->common, now)) {
 			continue;
 		}
@@ -797,7 +797,7 @@ pe_dump_alfmsg(struct alf_event *msg, struct eventdev_hdr *hdr, int format)
  * Check outgoing connection. 1 on match, 0 otherwise.
  */
 static int
-pe_addrmatch_out(struct alf_event *msg, struct apn_alfrule *rule)
+pe_addrmatch_out(struct alf_event *msg, struct apn_rule *rule)
 {
 	struct apn_host	*fromhost, *tohost;
 	struct apn_port	*fromport, *toport;
@@ -841,7 +841,7 @@ pe_addrmatch_out(struct alf_event *msg, struct apn_alfrule *rule)
  * Check incoming connection. 1 on match, 0 otherwise.
  */
 static int
-pe_addrmatch_in(struct alf_event *msg, struct apn_alfrule *rule)
+pe_addrmatch_in(struct alf_event *msg, struct apn_rule *rule)
 {
 	struct apn_host	*fromhost, *tohost;
 	struct apn_port	*fromport, *toport;

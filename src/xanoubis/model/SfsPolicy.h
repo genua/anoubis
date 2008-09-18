@@ -57,14 +57,14 @@ class SfsPolicy : public Policy
 	DECLARE_DYNAMIC_CLASS(SfsPolicy)
 
 	private:
-		struct apn_sfsrule	*sfsRule_;
+		struct apn_rule		*sfsRule_;
 		wxString		 currHash_;
 		unsigned char		*currSum_;
 		bool			 modified_;
 
 	public:
 		SfsPolicy(void);
-		SfsPolicy(AppPolicy *, struct apn_sfsrule *);
+		SfsPolicy(AppPolicy *, struct apn_rule *);
 		~SfsPolicy(void);
 
 		virtual void accept(PolicyVisitor&);

@@ -62,7 +62,7 @@ AlfPolicy::AlfPolicy(void)
 
 }
 
-AlfPolicy::AlfPolicy(AppPolicy *parent, struct apn_alfrule *alfRule)
+AlfPolicy::AlfPolicy(AppPolicy *parent, struct apn_rule *alfRule)
     : Policy(parent)
 {
 	alfRule_ = alfRule;
@@ -145,10 +145,10 @@ AlfPolicy::accept(PolicyVisitor &visitor)
 	visitor.visitAlfPolicy(this);
 }
 
-struct apn_alfrule *
+struct apn_rule *
 AlfPolicy::cloneRule(void)
 {
-	return (apn_copy_one_alfrule(alfRule_));
+	return (apn_copy_one_rule(alfRule_));
 }
 
 int
@@ -160,7 +160,7 @@ AlfPolicy::getId(void)
 bool
 AlfPolicy::isDefault(void)
 {
-	return (alfRule_->apn_type == APN_ALF_DEFAULT);
+	return (alfRule_->apn_type == APN_DEFAULT);
 }
 
 void
@@ -317,7 +317,7 @@ AlfPolicy::getTypeName(void)
 	case APN_ALF_CAPABILITY:
 		result = wxT("capability");
 		break;
-	case APN_ALF_DEFAULT:
+	case APN_DEFAULT:
 		result = wxT("default");
 		break;
 	case APN_ALF_CTX:
@@ -343,7 +343,7 @@ AlfPolicy::setAction(int action)
 		case APN_ALF_CAPABILITY:
 			alfRule_->rule.acap.action = action;
 			break;
-		case APN_ALF_DEFAULT:
+		case APN_DEFAULT:
 			alfRule_->rule.apndefault.action = action;
 			break;
 		default:
@@ -365,7 +365,7 @@ AlfPolicy::getActionNo(void)
 	case APN_ALF_CAPABILITY:
 		result = alfRule_->rule.acap.action;
 		break;
-	case APN_ALF_DEFAULT:
+	case APN_DEFAULT:
 		result = alfRule_->rule.apndefault.action;
 		break;
 	default:
@@ -526,7 +526,7 @@ AlfPolicy::getLogNo(void)
 	case APN_ALF_CAPABILITY:
 		result = alfRule_->rule.acap.log;
 		break;
-	case APN_ALF_DEFAULT:
+	case APN_DEFAULT:
 		result = alfRule_->rule.apndefault.log;
 		break;
 	default:
@@ -547,7 +547,7 @@ AlfPolicy::setLogNo(int logNo)
 	case APN_ALF_CAPABILITY:
 		alfRule_->rule.acap.log = logNo;
 		break;
-	case APN_ALF_DEFAULT:
+	case APN_DEFAULT:
 		alfRule_->rule.apndefault.log = logNo;
 		break;
 	default:

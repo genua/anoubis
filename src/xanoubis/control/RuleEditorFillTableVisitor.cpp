@@ -130,7 +130,7 @@ RuleEditorFillTableVisitor::showAlf(AlfPolicy *alfPolicy, long idx)
 		list->SetItem(idx, RULEDITOR_LIST_COLUMN_CAP,
 		    alfPolicy->getCapTypeName());
 		break;
-	case APN_ALF_DEFAULT:
+	case APN_DEFAULT:
 		list->SetItem(idx, RULEDITOR_LIST_COLUMN_TYPE,
 		    alfPolicy->getTypeName());
 		list->SetItem(idx, RULEDITOR_LIST_COLUMN_LOG,

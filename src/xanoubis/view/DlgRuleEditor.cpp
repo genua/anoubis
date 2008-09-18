@@ -711,7 +711,7 @@ DlgRuleEditor::OnAlfCapRadioButton(wxCommandEvent& )
 void
 DlgRuleEditor::OnAlfDefaultRadioButton(wxCommandEvent& )
 {
-	updateType(APN_ALF_DEFAULT);
+	updateType(APN_DEFAULT);
 }
 
 void

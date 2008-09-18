@@ -183,7 +183,7 @@ ModAlfAddPolicyVisitor::visitAlfPolicy(AlfPolicy *alfPolicy)
 		tree->AppendItem(lastTreeRoot_, treeLabel, -1, -1,
 		     new MyTreeItemData(alfPolicy));
 		break;
-	case APN_ALF_DEFAULT:
+	case APN_DEFAULT:
 		/* fill list of all rules */
 		list->SetItem(idx, MODALF_LIST_COLUMN_ACTION,
 		    alfPolicy->getActionName());

@@ -166,50 +166,40 @@ struct apn_context {
 	struct apn_app		*application;
 };
 
-enum {
-	APN_ALF_FILTER, APN_ALF_CAPABILITY, APN_ALF_DEFAULT, APN_ALF_CTX
-};
-
-#define apn_type	_rbentry.dtype
-#define apn_id		_rbentry.key
-
-/*
- * XXX HSH This should be optimized by putting each type on a separate
- * XXX HSH chain.
- */
-struct apn_alfrule {
-	struct rb_entry			 _rbentry;
-	struct apn_scope		*scope;
-	TAILQ_ENTRY(apn_alfrule)	 entry;
-	union {
-		struct apn_afiltrule	afilt;
-		struct apn_acaprule	acap;
-		struct apn_default	apndefault;
-		struct apn_context	apncontext;
-	} rule;
-};
-
 struct apn_sfscheck {
 	struct apn_app	*app;
 	int		 log;
 };
 
 enum {
-	APN_SFS_CHECK, APN_SFS_DEFAULT
+	APN_ALF,		/* rule.chain, scope == NULL */
+	APN_SFS,		/* rule.chain, scope == NULL */
+	APN_SB,			/* rule.chain, scope == NULL */
+	APN_VS,			/* rule.chain, scope == NULL */
+	APN_ALF_FILTER,		/* rule.afilt, app == NULL */
+	APN_ALF_CAPABILITY,	/* rule.acap, app == NULL */
+	APN_DEFAULT,		/* rule.apndefault, app == NULL */
+	APN_ALF_CTX,		/* rule.apncontext, app == NULL */
+	APN_SFS_CHECK,		/* rule.sfscheck, app == NULL */
 };
 
-struct apn_sfsrule {
-	struct rb_entry		 _rbentry;
-	struct apn_scope	*scope;
-	TAILQ_ENTRY(apn_sfsrule)	 entry;
+#define apn_type	_rbentry.dtype
+#define apn_id		_rbentry.key
+
+TAILQ_HEAD(apn_chain, apn_rule);
+struct apn_rule {
+	struct rb_entry			 _rbentry;
+	TAILQ_ENTRY(apn_rule)		 entry;
+	struct apn_scope		*scope;
+	struct apn_app			*app;
 	union {
-		struct apn_sfscheck	sfscheck;
+		struct apn_afiltrule	afilt;
+		struct apn_acaprule	acap;
 		struct apn_default	apndefault;
+		struct apn_context	apncontext;
+		struct apn_sfscheck	sfscheck;
+		struct apn_chain	chain;
 	} rule;
-};
-
-enum {
-	APN_ALF,  APN_SFS, APN_SB, APN_VS
 };
 
 struct apn_scope {
@@ -217,30 +207,13 @@ struct apn_scope {
 	anoubis_cookie_t	task;
 };
 
-TAILQ_HEAD(apn_alfchain, apn_alfrule);
-TAILQ_HEAD(apn_sfschain, apn_sfsrule);
-
-/* Complete state of one rule. */
-struct apn_rule {
-	struct rb_entry		 _rbentry;
-	TAILQ_ENTRY(apn_rule)	 entry;
-
-	struct apn_app		*app;
-
-	union {
-		struct apn_alfchain	alf;
-		struct apn_sfschain	sfs;
-	} rule;
-};
-
 /* Error message */
 struct apn_errmsg {
 	TAILQ_ENTRY(apn_errmsg)	 entry;
 	char			*msg;
 };
-TAILQ_HEAD(apnerr_queue, apn_errmsg);
 
-TAILQ_HEAD(apnrule_queue, apn_rule);
+TAILQ_HEAD(apnerr_queue, apn_errmsg);
 
 /* Complete APN ruleset. */
 struct apn_ruleset {
@@ -250,8 +223,8 @@ struct apn_ruleset {
 	struct rb_entry		*idtree;
 
 	/* Rulesets and variables */
-	struct apnrule_queue	 alf_queue;
-	struct apnrule_queue	 sfs_queue;
+	struct apn_chain	 alf_queue;
+	struct apn_chain	 sfs_queue;
 	struct apnvar_queue	 var_queue;
 
 	/* Error messages from the parser */
@@ -262,9 +235,9 @@ __BEGIN_DECLS
 int	apn_parse(const char *, struct apn_ruleset **, int);
 int	apn_parse_iovec(const char *filename, struct iovec *vec, int count,
 	    struct apn_ruleset **rsp, int flags);
-int	apn_add_alfrule(struct apn_rule *, struct apn_ruleset *,
+int	apn_add_alfblock(struct apn_rule *, struct apn_ruleset *,
 	    const char *, int lineno);
-int	apn_add_sfsrule(struct apn_rule *, struct apn_ruleset *,
+int	apn_add_sfsblock(struct apn_rule *, struct apn_ruleset *,
 	    const char *, int lineno);
 int	apn_print_rule(struct apn_rule *, int, FILE *);
 int	apn_print_ruleset(struct apn_ruleset *, int, FILE *);
@@ -274,26 +247,23 @@ int	apn_verror(struct apn_ruleset *, const char *, int lineno,
 	    const char *, va_list);
 void	apn_print_errors(struct apn_ruleset *, FILE *);
 int	apn_insert(struct apn_ruleset *, struct apn_rule *, unsigned int);
-int	apn_insert_alfrule(struct apn_ruleset *, struct apn_alfrule *,
+int	apn_insert_alfrule(struct apn_ruleset *, struct apn_rule *,
 	    unsigned int);
-int	apn_insert_sfsrule(struct apn_ruleset *, struct apn_sfsrule *,
+int	apn_insert_sfsrule(struct apn_ruleset *, struct apn_rule *,
 	    unsigned int);
-int	apn_add2app_alfrule(struct apn_ruleset *, struct apn_alfrule *,
+int	apn_add2app_alfrule(struct apn_ruleset *, struct apn_rule *,
 	    unsigned int);
-int	apn_copyinsert(struct apn_ruleset *, struct apn_alfrule *,
+int	apn_copyinsert(struct apn_ruleset *, struct apn_rule *,
 	    unsigned int, const char *, const u_int8_t *, int);
 void	apn_free_ruleset(struct apn_ruleset *);
-void	apn_free_one_alfrule(struct apn_alfrule *, struct apn_ruleset *);
-void	apn_free_one_sfsrule(struct apn_sfsrule *, struct apn_ruleset *);
-void	apn_free_alfrules(struct apn_alfchain *, struct apn_ruleset *);
-void	apn_free_sfsrules(struct apn_sfschain *, struct apn_ruleset *);
+void	apn_free_one_rule(struct apn_rule *, struct apn_ruleset *);
+void	apn_free_chain(struct apn_chain *, struct apn_ruleset *);
 void	apn_free_app(struct apn_app *);
-void	apn_free_block(struct apn_rule *block, struct apn_ruleset *);
 void	apn_free_filter(struct apn_afiltspec *filtspec);
 int	apn_clean_ruleset(struct apn_ruleset *rs,
 	    int (*)(struct apn_scope *, void *), void *);
-struct apn_alfrule *apn_copy_one_alfrule(struct apn_alfrule *);
-int	apn_copy_alfrules(struct apn_alfchain *src, struct apn_alfchain *dst);
+struct apn_rule *apn_copy_one_rule(struct apn_rule *);
+int	apn_copy_chain(struct apn_chain *src, struct apn_chain *dst);
 void	apn_free_host(struct apn_host *);
 void	apn_free_port(struct apn_port *);
 int	apn_remove(struct apn_ruleset *, unsigned int);

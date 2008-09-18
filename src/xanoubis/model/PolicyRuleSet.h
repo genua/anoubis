@@ -70,7 +70,7 @@ class PolicyRuleSet : public wxEvtHandler
 		void OnAnswerEscalation(wxCommandEvent&);
 		bool hasLocalHost(wxArrayString);
 
-		struct apn_alfrule *assembleAlfPolicy(AlfPolicy *,
+		struct apn_rule *assembleAlfPolicy(AlfPolicy *,
 		   EscalationNotify *);
 
 	public:

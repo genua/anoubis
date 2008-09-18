@@ -111,14 +111,6 @@ void		 freeport(struct apn_port *);
 
 static struct apn_ruleset	*apnrsp = NULL;
 
-struct alfrulehead {
-	struct apn_alfchain *chain;
-};
-
-struct sfsrulehead {
-	struct apn_sfschain *chain;
-};
-
 struct hosthead {
 	struct apn_host *head;
 	struct apn_host *tail;
@@ -168,11 +160,8 @@ typedef struct {
 		struct porthead		 porthead;
 		struct apn_host		*host;
 		struct hosthead		 hosthead;
-		struct apn_alfrule	*alfrule;
-		struct alfrulehead	 alfrulehead;
-		struct apn_sfsrule	*sfsrule;
-		struct sfsrulehead	 sfsrulehead;
-		struct apn_rule		*ruleset;
+		struct apn_rule		*rule;
+		struct apn_chain	*rulehead;
 		struct apn_scope	*scope;
 	} v;
 	int lineno;
@@ -205,16 +194,13 @@ typedef struct {
 %type	<v.afspec>		alffilterspec
 %type	<v.action>		action
 %type	<v.log>			log
+%type	<v.rule>		alfruleset alfrule sfsrule
+%type	<v.rulehead>		alfrule_l sfsrule_l
 %type	<v.afrule>		alffilterrule
-%type	<v.alfrule>		alfrule
-%type	<v.alfrulehead>		alfrule_l
-%type	<v.ruleset>		alfruleset
 %type	<v.acaprule>		alfcaprule
 %type	<v.dfltrule>		defaultrule alfdefault sfsdefault sbdefault;
 %type	<v.ctxrule>		ctxrule
 %type	<v.sfscheck>		sfscheckrule
-%type	<v.sfsrule>		sfsrule
-%type	<v.sfsrulehead>		sfsrule_l
 %type	<v.timeout>		statetimeout
 %type	<v.scope>		scope
 %%
@@ -355,29 +341,30 @@ alfruleset	: ruleid apps optnl '{' optnl alfrule_l '}' nl {
 			if ((rule = calloc(1, sizeof(struct apn_rule)))
 			    == NULL) {
 				apn_free_app($2);
-				apn_free_alfrules($6.chain, NULL);
-				free($6.chain);
+				apn_free_chain($6, NULL);
+				free($6);
 				YYERROR;
 			}
 
 			rule->app = $2;
+			rule->scope = NULL;
 			rule->apn_type = APN_ALF;
 			rule->apn_id = $1;
-			TAILQ_INIT(&rule->rule.alf);
-			while(!TAILQ_EMPTY($6.chain)) {
-				struct apn_alfrule *arule;
-				arule = TAILQ_FIRST($6.chain);
-				TAILQ_REMOVE($6.chain, arule, entry);
-				TAILQ_INSERT_TAIL(&rule->rule.alf,
+			TAILQ_INIT(&rule->rule.chain);
+			while(!TAILQ_EMPTY($6)) {
+				struct apn_rule *arule;
+				arule = TAILQ_FIRST($6);
+				TAILQ_REMOVE($6, arule, entry);
+				TAILQ_INSERT_TAIL(&rule->rule.chain,
 				    arule, entry);
 			}
-			free($6.chain);
+			free($6);
 
-			if (apn_add_alfrule(rule, apnrsp, file->name,
+			if (apn_add_alfblock(rule, apnrsp, file->name,
 			    yylval.lineno) != 0) {
 				/* Account for errors in apn_add_alfrule */
 				file->errors++;
-				apn_free_block(rule, NULL);
+				apn_free_one_rule(rule, NULL);
 				YYERROR;
 			}
 		}
@@ -387,18 +374,17 @@ alfrule_l	: alfrule_l alfrule nl		{
 			if ($2 == NULL)
 				$$ = $1;
 			else {
-				TAILQ_INSERT_TAIL($1.chain, $2, entry);
+				TAILQ_INSERT_TAIL($1, $2, entry);
 				$$ = $1;
 			}
 		}
 		| /* Empty */			{
-			/* TAILQ_INIT(&$$.chain); */
-			$$.chain = calloc(1, sizeof(struct apn_alfchain));
-			if ($$.chain == NULL) {
+			$$ = calloc(1, sizeof(struct apn_chain));
+			if ($$ == NULL) {
 				yyerror("Out of memory");
 				YYERROR;
 			}
-			TAILQ_INIT($$.chain);
+			TAILQ_INIT($$);
 		}
 		;
 
@@ -453,9 +439,9 @@ scope		: /* Empty */ {
 		;
 
 alfrule		: ruleid alffilterrule	scope		{
-			struct apn_alfrule	*rule;
+			struct apn_rule	*rule;
 
-			rule = calloc(1, sizeof(struct apn_alfrule));
+			rule = calloc(1, sizeof(struct apn_rule));
 			if (rule == NULL) {
 				apn_free_filter(&$2.filtspec);
 				YYERROR;
@@ -465,13 +451,14 @@ alfrule		: ruleid alffilterrule	scope		{
 			rule->rule.afilt = $2;
 			rule->apn_id = $1;
 			rule->scope = $3;
+			rule->app = NULL;
 
 			$$ = rule;
 		}
 		| ruleid alfcaprule scope		{
-			struct apn_alfrule	*rule;
+			struct apn_rule	*rule;
 
-			rule = calloc(1, sizeof(struct apn_alfrule));
+			rule = calloc(1, sizeof(struct apn_rule));
 			if (rule == NULL)
 				YYERROR;
 
@@ -479,27 +466,29 @@ alfrule		: ruleid alffilterrule	scope		{
 			rule->rule.acap = $2;
 			rule->apn_id = $1;
 			rule->scope = $3;
+			rule->app = NULL;
 
 			$$ = rule;
 		}
 		| ruleid alfdefault scope		{
-			struct apn_alfrule	*rule;
+			struct apn_rule	*rule;
 
-			rule = calloc(1, sizeof(struct apn_alfrule));
+			rule = calloc(1, sizeof(struct apn_rule));
 			if (rule == NULL)
 				YYERROR;
 
-			rule->apn_type = APN_ALF_DEFAULT;
+			rule->apn_type = APN_DEFAULT;
 			rule->rule.apndefault = $2;
 			rule->apn_id = $1;
 			rule->scope = $3;
+			rule->app = NULL;
 
 			$$ = rule;
 		}
 		| ruleid ctxrule scope			{
-			struct apn_alfrule	*rule;
+			struct apn_rule	*rule;
 
-			rule = calloc(1, sizeof(struct apn_alfrule));
+			rule = calloc(1, sizeof(struct apn_rule));
 			if (rule == NULL)
 				YYERROR;
 
@@ -507,6 +496,7 @@ alfrule		: ruleid alffilterrule	scope		{
 			rule->rule.apncontext = $2;
 			rule->apn_id = $1;
 			rule->scope = $3;
+			rule->app = NULL;
 
 			$$ = rule;
 		}
@@ -764,26 +754,26 @@ sfsmodule	: SFS optnl '{' optnl sfsrule_l '}'	{
 
 			if ((rule = calloc(1, sizeof(struct apn_rule)))
 			    == NULL) {
-				apn_free_sfsrules($5.chain, NULL);
-				free($5.chain);
+				apn_free_chain($5, NULL);
+				free($5);
 				YYERROR;
 			}
 
 			rule->apn_type = APN_SFS;
 			rule->apn_id = 0;
 			rule->app = NULL;
-			TAILQ_INIT(&rule->rule.sfs);
-			while (!TAILQ_EMPTY($5.chain)) {
-				struct apn_sfsrule *srule;
-				srule = TAILQ_FIRST($5.chain);
-				TAILQ_REMOVE($5.chain, srule, entry);
-				TAILQ_INSERT_TAIL(&rule->rule.sfs,
+			TAILQ_INIT(&rule->rule.chain);
+			while (!TAILQ_EMPTY($5)) {
+				struct apn_rule *srule;
+				srule = TAILQ_FIRST($5);
+				TAILQ_REMOVE($5, srule, entry);
+				TAILQ_INSERT_TAIL(&rule->rule.chain,
 				    srule, entry);
 			}
-			free($5.chain);
-			if (apn_add_sfsrule(rule, apnrsp, file->name,
+			free($5);
+			if (apn_add_sfsblock(rule, apnrsp, file->name,
 			    yylval.lineno) != 0) {
-				apn_free_block(rule, NULL);
+				apn_free_one_rule(rule, NULL);
 				YYERROR;
 			}
 		}
@@ -793,24 +783,24 @@ sfsrule_l	: sfsrule_l sfsrule nl		{
 			if ($2 == NULL)
 				$$ = $1;
 			else {
-				TAILQ_INSERT_TAIL($1.chain, $2, entry);
+				TAILQ_INSERT_TAIL($1, $2, entry);
 				$$ = $1;
 			}
 		}
 		| /* Empty */			{
-			$$.chain = calloc(1, sizeof(struct apn_sfschain));
-			if ($$.chain == NULL) {
+			$$ = calloc(1, sizeof(struct apn_chain));
+			if ($$ == NULL) {
 				yyerror("Out of memory");
 				YYERROR;
 			}
-			TAILQ_INIT($$.chain);
+			TAILQ_INIT($$);
 		}
 		;
 
 sfsrule		: ruleid sfscheckrule scope		{
-			struct apn_sfsrule	*rule;
+			struct apn_rule	*rule;
 
-			rule = calloc(1, sizeof(struct apn_sfsrule));
+			rule = calloc(1, sizeof(struct apn_rule));
 			if (rule == NULL) {
 				apn_free_app($2.app);
 				YYERROR;
@@ -820,20 +810,22 @@ sfsrule		: ruleid sfscheckrule scope		{
 			rule->rule.sfscheck = $2;
 			rule->apn_id = $1;
 			rule->scope = $3;
+			rule->app = NULL;
 
 			$$ = rule;
 		}
 		| ruleid sfsdefault scope		{
-			struct apn_sfsrule	*rule;
+			struct apn_rule	*rule;
 
-			rule = calloc(1, sizeof(struct apn_alfrule));
+			rule = calloc(1, sizeof(struct apn_rule));
 			if (rule == NULL)
 				YYERROR;
 
-			rule->apn_type = APN_SFS_DEFAULT;
+			rule->apn_type = APN_DEFAULT;
 			rule->rule.apndefault = $2;
 			rule->apn_id = $1;
 			rule->scope = $3;
+			rule->app = NULL;
 
 			$$ = rule;
 		}

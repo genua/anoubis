@@ -389,7 +389,7 @@ pe_context_search(struct apn_ruleset *rs, struct pe_proc_ident *pident)
 {
 	struct pe_context	*context;
 	struct apn_rule		*prule, *rule;
-	struct apn_alfrule		*alfrule;
+	struct apn_rule		*alfrule;
 	struct apn_app		*hp;
 
 	DEBUG(DBG_PE_CTX, "pe_context_search: ruleset %p csum 0x%08x...", rs,
@@ -451,7 +451,7 @@ pe_context_search(struct apn_ruleset *rs, struct pe_proc_ident *pident)
 	 * we have to stay in the current context on exec(2).
 	 */
 	if (rule) {
-		TAILQ_FOREACH(alfrule, &rule->rule.alf, entry) {
+		TAILQ_FOREACH(alfrule, &rule->rule.chain, entry) {
 			if (alfrule->apn_type != APN_ALF_CTX)
 				continue;
 			context->ctx = &alfrule->rule.apncontext;
