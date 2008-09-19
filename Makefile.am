@@ -104,6 +104,5 @@ lcov-clean:
 endif
 
 .PHONY: flawfinder lint splint flawfinder.report lint.report splint.report
-
 clean-local:
 	rm -f $(REPORTS)
