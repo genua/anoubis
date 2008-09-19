@@ -45,6 +45,28 @@
 
 #include "apnvm_tc_fixtures.h"
 
+START_TEST(vm_tc_prepare_no_cvsroot)
+{
+	char		cvsroot[32];
+	char		user[16];
+	char		*s;
+	apnvm		*vm;
+	apnvm_result	vmrc;
+
+	strcpy(cvsroot, "/tmp/tc_vm_XXXXXX");
+	strcpy(user, "user1");
+	s = mkdtemp(cvsroot);
+
+	vm = apnvm_init(cvsroot, user);
+	fail_if(vm == NULL, "Initialization of apnvm failed");
+
+	vmrc = apnvm_prepare(vm);
+	fail_if(vmrc != APNVM_OK, "Failed to prepare library");
+
+	apnvm_destroy(vm);
+}
+END_TEST
+
 START_TEST(vm_tc_prepare_havemodule)
 {
 	apnvm		*vm;
@@ -337,6 +359,19 @@ apnvm_tc_vm(void)
 	tcase_add_test(tc, vm_tc_list_no_head);
 	tcase_add_test(tc, vm_tc_getuser);
 	tcase_add_test(tc, vm_tc_getuser_nolist);
+
+	return (tc);
+}
+
+TCase *
+apnvm_tc_vm_no_fixture(void)
+{
+	TCase *tc = tcase_create("VM_NO_FIXTURE");
+
+	tcase_set_timeout(tc, 10);
+
+	/* Testcase without fixtures */
+	tcase_add_test(tc, vm_tc_prepare_no_cvsroot);
 
 	return (tc);
 }

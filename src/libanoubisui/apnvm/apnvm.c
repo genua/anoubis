@@ -419,6 +419,11 @@ apnvm_prepare(apnvm *vm)
 {
 	APNVM_CHECKVM(vm, APNVM_ARG);
 
+	if (apncvs_init(&vm->cvs) != 0) {
+		/* Initialization failed, repository cannot be created */
+		return (APNVM_VMS);
+	}
+
 	/* Check weather the module exists */
 	if (!apnvm_havemodule(&vm->cvs) && !apnvm_createmodule(&vm->cvs))
 		return (APNVM_VMS);

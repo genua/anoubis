@@ -25,11 +25,19 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <config.h>
+
+#ifdef OPENBSD
+#include <sys/syslimits.h>
+#endif
+
 #ifndef S_SPLINT_S
 #include <sys/stat.h>
 #endif
+#include <sys/param.h>
 #include <sys/wait.h>
 
+#include <libgen.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -81,16 +89,54 @@ apncvs_makecmd(char *cmd, size_t len, struct apncvs *cvs, int needstdout,
 static int
 apncvs_fileexists(struct apncvs *cvs, const char *file)
 {
-	char		path[256];
+	char		path[PATH_MAX];
+	int		nwritten;
 	struct stat	fstat;
 
 	APNCVS_CHECKAPNCVS(cvs);
 	APNCVS_CHECKSTR(file);
 
-	snprintf(path, sizeof(path), "%s/%s/%s",
+	nwritten = snprintf(path, sizeof(path), "%s/%s/%s",
 	    cvs->workdir, cvs->module, file);
+	if ((nwritten >= PATH_MAX)  << (nwritten < 0))
+		return (-1);
 
 	return stat(path, &fstat);
+}
+
+int
+apncvs_init(struct apncvs *cvs)
+{
+	char		cmd[LEN_CMDLINE];
+	char		*dirc, *dname;
+	struct stat	fstat;
+	int		rc, nwritten;
+
+	APNCVS_CHECKAPNCVS(cvs);
+
+	/* Make sure parent directory of cvs->cvsroot exists */
+	if ((dirc = strdup(cvs->cvsroot)) == NULL)
+		return (-1);
+	dname = dirname(dirc);
+
+	if (stat(dname, &fstat) != 0) {
+		/* Create the parent directory */
+		if (mkdir(dname, S_IRWXU | S_IRGRP | S_IXGRP) != 0) {
+			free(dirc);
+			return (-1);
+		}
+	}
+
+	free(dirc);
+
+	nwritten = snprintf(cmd, sizeof(cmd),
+	    "cvs -d \"%s\" init >/dev/null 2>&1",
+	    cvs->cvsroot);
+	if ((nwritten >= (int)sizeof(cmd)) || (nwritten < 0))
+		return (-1);
+
+	rc = system(cmd);
+	return WIFEXITED(rc) ? WEXITSTATUS(rc) : -1;
 }
 
 int

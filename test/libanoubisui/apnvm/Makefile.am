@@ -65,6 +65,7 @@ endif
 test_apnvm_SOURCES =		\
 	apnvm_testrunner.c	\
 	apnvm_tc_cvs.c		\
+	apnvm_tc_cvs_init.c	\
 	apnvm_tc_fixtures.c	\
 	apnvm_tc_md.c		\
 	apnvm_tc_vm.c		\

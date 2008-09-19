@@ -29,7 +29,9 @@
 #include <check.h>
 
 extern TCase *apnvm_tc_cvs(void);
+extern TCase *apnvm_tc_cvs_init(void);
 extern TCase *apnvm_tc_vm(void);
+extern TCase *apnvm_tc_vm_no_fixture(void);
 extern TCase *apnvm_tc_vm_fetch(void);
 extern TCase *apnvm_tc_vm_insert(void);
 extern TCase *apnvm_tc_vm_remove(void);
@@ -41,8 +43,10 @@ apnvm_testsuite(void)
 	Suite *s = suite_create("Suite");
 
 	suite_add_tcase(s, apnvm_tc_cvs());
+	suite_add_tcase(s, apnvm_tc_cvs_init());
 	suite_add_tcase(s, apnvm_tc_md());
 	suite_add_tcase(s, apnvm_tc_vm());
+	suite_add_tcase(s, apnvm_tc_vm_no_fixture());
 	suite_add_tcase(s, apnvm_tc_vm_fetch());
 	suite_add_tcase(s, apnvm_tc_vm_insert());
 	suite_add_tcase(s, apnvm_tc_vm_remove());

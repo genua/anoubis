@@ -89,6 +89,16 @@ struct apncvs_log {
 };
 
 /**
+ * Initializes a repository.
+ *
+ * The repository is located ar "cvs->cvsroot".
+ *
+ * The return code of the "cvs init" command is returned, thus a 0 means
+ * success.
+ */
+int apncvs_init(struct apncvs *);
+
+/**
  * Checks out a CVS repository.
  *
  * The repository is located at "cvs->cvsroot" and the "cvs->module"-module
