@@ -684,15 +684,12 @@ pe_dispatch_policy(struct anoubisd_msg_comm *comm)
 		fd = pe_policy_open(uid, prio);
 		req->uid = uid;
 		req->prio = prio;
-		if (fd == -ENOENT) {
-			error = 0;
-			goto reply;
-		}
-		error = EIO;
+		/* ENOENT indicates an empty policy and not an error. */
 		if (fd < 0) {
-			/* ENOENT indicates an empty policy and not an error. */
 			if (fd == -ENOENT)
 				error = 0;
+			else
+				error = EIO;
 			goto reply;
 		}
 		error = - send_policy_data(comm->token, fd);

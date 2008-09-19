@@ -140,7 +140,6 @@
 struct pe_context {
 	int			 refcount;
 	struct apn_rule		*rule;
-	struct apn_context	*ctx;
 	struct apn_ruleset	*ruleset;
 	struct pe_proc_ident	 ident;
 };
@@ -173,7 +172,7 @@ pe_context_norules(struct pe_proc *proc, int prio)
 	if (!ctx)
 		return;
 	/* Old context already is a norules context => We're done. */
-	if (ctx->ruleset == NULL && ctx->rule == NULL && ctx->ctx == NULL)
+	if (ctx->ruleset == NULL && ctx->rule == NULL)
 		return;
 	ctx = pe_context_alloc(NULL, NULL, &ctx->ident);
 	if (!ctx) {
@@ -222,9 +221,8 @@ pe_context_refresh(struct pe_proc *proc, int prio, struct pe_policy_db *pdb)
 	} else {
 		context = pe_context_search(newrules, pe_proc_ident(proc));
 	}
-	DEBUG(DBG_PE_POLICY, "pe_context_refresh: context %p rule %p ctx %p",
-	    context, context ? context->rule : NULL, context ? context->ctx :
-	    NULL);
+	DEBUG(DBG_PE_POLICY, "pe_context_refresh: context %p rule %p",
+	    context, context ? context->rule : NULL);
 	pe_proc_set_context(proc, prio, context);
 	pe_context_put(context);
 	return;
@@ -331,10 +329,9 @@ pe_context_switch(struct pe_proc *proc, int prio,
 	tmpctx = pe_context_search(ruleset, pident);
 	pe_proc_set_context(proc, prio, tmpctx);
 	DEBUG(DBG_PE_CTX, "pe_context_switch: proc %p 0x%08llx prio %d "
-	    "got context %p rule %p ctx %p", proc,
+	    "got context %p rule %p", proc,
 	    pe_proc_task_cookie(proc), prio,
-	    tmpctx, tmpctx ? tmpctx->rule : NULL,
-	    tmpctx ? tmpctx->ctx : NULL);
+	    tmpctx, tmpctx ? tmpctx->rule : NULL);
 	/*
 	 * pe_context_search got a reference to the new context and
 	 * pe_proc_set_context got another one. Drop one of them.
@@ -389,7 +386,6 @@ pe_context_search(struct apn_ruleset *rs, struct pe_proc_ident *pident)
 {
 	struct pe_context	*context;
 	struct apn_rule		*prule, *rule;
-	struct apn_rule		*alfrule;
 	struct apn_app		*hp;
 
 	DEBUG(DBG_PE_CTX, "pe_context_search: ruleset %p csum 0x%08x...", rs,
@@ -445,23 +441,8 @@ pe_context_search(struct apn_ruleset *rs, struct pe_proc_ident *pident)
 		return NULL;
 	}
 
-	/*
-	 * If we have a rule chain, search for a context rule.  It is
-	 * ok, if we do not find a context rule.  This will mean, that
-	 * we have to stay in the current context on exec(2).
-	 */
-	if (rule) {
-		TAILQ_FOREACH(alfrule, &rule->rule.chain, entry) {
-			if (alfrule->apn_type != APN_ALF_CTX)
-				continue;
-			context->ctx = &alfrule->rule.apncontext;
-			break;
-		}
-	}
-
-	DEBUG(DBG_PE_CTX, "pe_context_search: context %p rule %p %s", context,
-	    rule, context->ctx ? (context->ctx->application ?
-	    context->ctx->application->name : "any") : "<none>");
+	DEBUG(DBG_PE_CTX, "pe_context_search: context %p rule %p",
+	    context, rule);
 
 	return (context);
 }
@@ -520,8 +501,10 @@ pe_context_reference(struct pe_context *ctx)
 static int
 pe_context_decide(struct pe_proc *proc, int prio, struct pe_proc_ident *pident)
 {
-	struct apn_app		*hp;
+	struct apn_app		*hp = NULL;
+	struct apn_rule		*rule;
 	struct pe_context	*ctx;
+	int			 ret;
 
 	/*
 	 * NOTE: Once we actually use the pathhint in policiy decision
@@ -535,23 +518,34 @@ pe_context_decide(struct pe_proc *proc, int prio, struct pe_proc_ident *pident)
 	if (ctx == NULL)
 		return 1;
 	/* Context without rule means, not switching. */
-	if (ctx->ctx == NULL)
+	if (ctx->rule == NULL)
 		return 0;
-	/*
-	 * If the rule says "context new any", application will be
-	 * empty.  In that case, we must allow the switch.
-	 */
-	hp = ctx->ctx->application;
-	if (hp) {
+	ret = 0;	/* deny by default */
+	TAILQ_FOREACH(rule, &ctx->rule->rule.chain, entry) {
+		if (rule->apn_type != APN_ALF_CTX)
+			continue;
+		/*
+		 * If the rule says "context new any", application will be
+		 * empty.  In that case, we must allow the switch.
+		 */
+		hp = rule->rule.apncontext.application;
+		if (!hp) {
+			ret = 1;	/* allow */
+			break;
+		}
 		while (hp) {
 			if (bcmp(hp->hashvalue, pident->csum,
-			    sizeof(hp->hashvalue)) == 0)
+			    sizeof(hp->hashvalue)) == 0) {
+			    	ret = 1;	/* allow */
 				break;
+			}
 			hp = hp->next;
 		}
-		if (hp == NULL)
-			return 0;
+		if (ret)
+			break;
 	}
+	if (!ret)
+		return 0;
 	/* If we reach this point context switching is allowed. */
 	DEBUG(DBG_PE_CTX,
 	    "pe_context_decide: found \"%s\" csm 0x%08x... for "
@@ -574,8 +568,8 @@ pe_dump_dbgctx(const char *prefix, struct pe_proc *proc)
 
 	for (i = 0; i < PE_PRIO_MAX; i++) {
 		struct pe_context *ctx = pe_proc_get_context(proc, i);
-		DEBUG(DBG_PE_CTX, "%s: prio %d rule %p ctx %p", prefix, i,
-		    ctx ? ctx->rule : NULL, ctx ? ctx->ctx : NULL);
+		DEBUG(DBG_PE_CTX, "%s: prio %d rule %p", prefix, i,
+		    ctx ? ctx->rule : NULL);
 	}
 }
 

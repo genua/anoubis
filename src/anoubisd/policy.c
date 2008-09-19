@@ -527,14 +527,12 @@ int send_policy_data(u_int64_t token, int fd)
 	/*@observer@*/
 	struct anoubisd_reply * comm;
 	int flags = POLICY_FLAG_START;
-	int size = sizeof(anoubisd_msg_t) + sizeof(struct anoubisd_reply)
-	    + 3000;
+	int size = sizeof(struct anoubisd_reply) + 3000;
 
 	while(1) {
-		msg = malloc(size);
+		msg = msg_factory(ANOUBISD_MSG_POLREPLY, size);
 		if (!msg)
 			goto oom;
-		msg = msg_factory(ANOUBISD_MSG_POLREPLY, size);
 		comm = (struct anoubisd_reply *)msg->msg;
 		comm->token = token;
 		comm->reply = 0;
