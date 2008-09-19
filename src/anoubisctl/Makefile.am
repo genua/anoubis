@@ -52,8 +52,8 @@ INCLUDES = \
 	-I$(top_srcdir)/$(libanoubisuidir)
 
 
-anoubisctl_DEPENDENCIES = $(libapn) $(libanoubispc) $(libanoubischat) \
-	$(libanoubisui)
+anoubisctl_DEPENDENCIES = $(libanoubisui) $(libapn) $(libanoubispc) \
+	$(libanoubischat)
 
 anoubisctl_LDADD = $(anoubisctl_DEPENDENCIES)
 

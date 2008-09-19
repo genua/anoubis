@@ -70,6 +70,7 @@
 #include <anoubis_dump.h>
 
 #include <anoubischat.h>
+#include <apnvm/apnvm.h>
 
 #include "anoubisctl.h"
 #include "apn.h"
@@ -114,6 +115,7 @@ struct cmd {
 static char    *anoubis_socket = "/var/run/anoubisd.sock";
 
 static int	opts = 0;
+static char	*profile = "none";
 
 
 static struct achat_channel	*channel;
@@ -126,7 +128,8 @@ usage(void)
 	unsigned int	i;
 	extern char	*__progname;
 
-	fprintf(stderr, "usage: %s [-fnv] <command> [<file>]\n", __progname);
+	fprintf(stderr, "usage: %s [-fnv] [-p profile] <command> [<file>]\n",
+	    __progname);
 	fprintf(stderr, "    <command>:\n");
 	for (i=0; i < sizeof(commands)/sizeof(struct cmd); i++) {
 		if (commands[i].file)
@@ -150,6 +153,7 @@ usage(void)
  *  4 - options parse error
  *  5 - communication error
  *  6 - checksum request error
+ *  7 - Versioning error
  */
 
 int
@@ -164,7 +168,7 @@ main(int argc, char *argv[])
 	if (argc < 2)
 		usage();
 
-	while ((ch = getopt(argc, argv, "fnv")) != -1) {
+	while ((ch = getopt(argc, argv, "fnvp:")) != -1) {
 		switch (ch) {
 
 		case 'n':
@@ -178,6 +182,9 @@ main(int argc, char *argv[])
 			break;
 		case 'f':
 			opts |= ANOUBISCTL_OPT_FORCE;
+			break;
+		case 'p':
+			profile = optarg;
 			break;
 
 		default:
@@ -522,6 +529,60 @@ sfs_calcsum(char *file)
 }
 
 static int
+make_version(struct apn_ruleset *ruleset, const char *profile)
+{
+	const char		*home = getenv("HOME");
+	const char		*user = getenv("USER");
+	char			cvsroot[PATH_MAX];
+	int			nwritten;
+	struct apnvm_md		md;
+	apnvm			*vm;
+	apnvm_result		vmrc;
+
+	if (home == NULL) {
+		fprintf(stderr, "Could not detect home-directory\n");
+		return (0);
+	}
+	if (user == NULL) {
+		fprintf(stderr, "Could not detect username\n");
+		return (0);
+	}
+
+	nwritten = snprintf(cvsroot, sizeof(cvsroot),
+	    "%s/.xanoubis/apnvmroot", home);
+	if ((nwritten >= PATH_MAX) || (nwritten < 0)) {
+		fprintf(stderr, "Could not build CVSROOT-path\n");
+		return (0);
+	}
+
+	vm = apnvm_init(cvsroot, user);
+	if (vm == NULL) {
+		fprintf(stderr, "Failed to initialize version management\n");
+		return (0);
+	}
+
+	vmrc = apnvm_prepare(vm);
+	if (vmrc != APNVM_OK) {
+		fprintf(stderr, "Preparation of version management failed");
+		apnvm_destroy(vm);
+		return (0);
+	}
+
+	md.comment = "Automatically created by anoubisctl";
+	md.auto_store = 1;
+
+	vmrc = apnvm_insert(vm, user, profile, ruleset, &md);
+	if (vmrc != APNVM_OK) {
+		fprintf(stderr, "Failed to create a new version\n");
+		apnvm_destroy(vm);
+		return (0);
+	}
+
+	apnvm_destroy(vm);
+	return (1);
+}
+
+static int
 load(char *rulesopt)
 {
 	int fd;
@@ -542,30 +603,46 @@ load(char *rulesopt)
 		fprintf(stderr, "Rules must be loaded from a regular file\n");
 		return 3;
 	}
+	if (profile == NULL ||
+	    (strcmp(profile, "high") && strcmp(profile, "medium") &&
+	    strcmp(profile, "admin") && strcmp(profile, "none"))) {
+		fprintf(stderr, "Need a profile, one of high, medium, admin\n");
+		return 4;
+	}
 	if (opts & ANOUBISCTL_OPT_VERBOSE)
 		flags |= APN_FLAG_VERBOSE;
 	if (opts & ANOUBISCTL_OPT_VERBOSE2)
 		flags |= APN_FLAG_VERBOSE2;
-	if ((opts & ANOUBISCTL_OPT_FORCE) == 0) {
-		if (apn_parse(rulesopt, &ruleset, flags)) {
-			error = 1;
-			if (ruleset) {
-				apn_print_errors(ruleset, stderr);
-				free(ruleset);
-			} else {
-				fprintf(stderr, "FATAL: Out of memory\n");
-			}
-			return error;
+	if (apn_parse(rulesopt, &ruleset, flags)) {
+		if (ruleset)
+			apn_print_errors(ruleset, stderr);
+		else
+			fprintf(stderr, "FATAL: Out of memory\n");
+
+		if ((opts & ANOUBISCTL_OPT_FORCE) == 0) {
+			apn_free_ruleset(ruleset);
+			return 1;
 		}
-		apn_free_ruleset(ruleset);
 	}
-	if (opts & ANOUBISCTL_OPT_NOACTION)
+	if (opts & ANOUBISCTL_OPT_NOACTION) {
+		apn_free_ruleset(ruleset);
 		return 0;
+	}
+
 	error = create_channel();
 	if (error) {
 		fprintf(stderr, "Cannot connect to anoubisd\n");
+		apn_free_ruleset(ruleset);
 		return error;
 	}
+
+	if (!make_version(ruleset, profile)) {
+		apn_free_ruleset(ruleset);
+		return 7;
+	}
+
+	apn_free_ruleset(ruleset);
+
 	fd = open(rulesopt, O_RDONLY);
 	if (fd < 0) {
 		perror("open");
@@ -629,6 +706,7 @@ load(char *rulesopt)
 		return 3;
 	}
 	destroy_channel();
+
 	return 0;
 }
 

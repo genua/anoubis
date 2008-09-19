@@ -35,6 +35,7 @@
 .Sh SYNOPSIS
 .Nm anoubisctl
 .Op Fl fnv
+.Op -p profile
 .Ar command
 .Op file
 .Sh DESCRIPTION
@@ -57,6 +58,10 @@ This option is intended for debugging purposes.
 Its use is not recommended.
 .It Fl v
 Produce more verbose output.
+.It Fl p
+Mandatory for the load command. This is the profile, the ruleset is valid for.
+Choose one of the following profiles:
+.Ar high, medium, admin .
 .It Ar command
 .Pp
 start - start the
