@@ -1,3 +1,4 @@
 sbin/anoubisd
 sbin/anoubisctl
 sbin/sfssig
+etc/udev/*
