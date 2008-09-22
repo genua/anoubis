@@ -39,6 +39,8 @@
 
 #include <unistd.h>
 
+#include <poll.h>
+
 #ifdef LINUX
 #include <linux/eventdev.h>
 #include <openssl/sha.h>
@@ -216,6 +218,7 @@ Communicator::Entry(void)
 	int				 ret;
 	struct iovec			*iov;
 	struct apn_ruleset		*ruleSet;
+	struct pollfd			fds[1];
 
 	iov	= NULL;
 	ruleSet = NULL;
@@ -251,6 +254,9 @@ Communicator::Entry(void)
 		shutdown(CONNECTION_FAILED);
 		return (NULL);
 	}
+
+	fds[0].fd = channel_->fd;
+	fds[0].events = POLLIN;
 
 	currTa = anoubis_client_connect_start(client_, ANOUBIS_PROTO_BOTH);
 	if (currTa == NULL) {
@@ -625,26 +631,38 @@ Communicator::Entry(void)
 			continue;
 		}
 
-		rc = acc_receivemsg(channel_, (char*)(msg->u.buf), &size);
-		if (rc != ACHAT_RC_OK) {
+		if (poll(fds, 1, 200) < 0) {
+			errString = _T("Error in Communicator");
+			sendError(COM_GENERIC_ERR, errString);
 			notDone = false;
-			commRC = CONNECTION_RXTX_ERROR;
 			continue;
 		}
 
-		anoubis_msg_resize(msg, size);
+		if (fds[0].revents) {
+			fds[0].revents = 0;
+			rc = acc_receivemsg(channel_, (char*)(msg->u.buf),
+			    &size);
+			if (rc != ACHAT_RC_OK) {
+				notDone = false;
+				commRC = CONNECTION_RXTX_ERROR;
+				continue;
+			}
 
-		if (anoubis_client_process(client_, msg) != 1) {
-			startStatDeRegistration = COMMUNICATOR_FLAG_INIT;
-		}
+			anoubis_msg_resize(msg, size);
 
-		if (anoubis_client_hasnotifies(client_) != 0) {
-			wxCommandEvent event(anEVT_COM_NOTIFYRECEIVED);
-			struct anoubis_msg *notifyMsg = NULL;
+			if (anoubis_client_process(client_, msg) != 1) {
+				startStatDeRegistration =
+				    COMMUNICATOR_FLAG_INIT;
+			}
 
-			notifyMsg = anoubis_client_getnotify(client_);
-			event.SetClientData(notifyMsg);
-			eventDestination_->AddPendingEvent(event);
+			if (anoubis_client_hasnotifies(client_) != 0) {
+				wxCommandEvent event(anEVT_COM_NOTIFYRECEIVED);
+				struct anoubis_msg *notifyMsg = NULL;
+
+				notifyMsg = anoubis_client_getnotify(client_);
+				event.SetClientData(notifyMsg);
+				eventDestination_->AddPendingEvent(event);
+			}
 		}
 
 		for (ali=answerList_.begin(); ali!=answerList_.end(); ali++) {

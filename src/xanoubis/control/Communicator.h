@@ -57,7 +57,8 @@ enum communicatorError {
 	COM_CSUM_ADD_FAIL,
 	COM_CSUM_GET_FAIL,
 	COM_CSUM_CAL_FAIL,
-	COM_FILE_WRITE_ERR
+	COM_FILE_WRITE_ERR,
+	COM_GENERIC_ERR
 };
 enum checksumOperation {
 	CSUM_GET_CURRENT = 0,
