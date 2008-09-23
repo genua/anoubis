@@ -94,12 +94,13 @@ getToken(void)
 	return (++token);
 }
 
-Communicator::Communicator(wxEvtHandler *eventDestination, wxString socketPath)
-    : wxThread(wxTHREAD_DETACHED)
+Communicator::Communicator(wxEvtHandler *eventDestination, wxString socketPath,
+    pid_t parent) : wxThread(wxTHREAD_DETACHED)
 {
 	socketPath_ = socketPath;
 	eventDestination_ = eventDestination;
 	isConnected_ = CONNECTION_DISCONNECTED;
+	parentPid_ = parent;
 	channel_ = NULL;
 	client_  = NULL;
 	policyReq_ = false;
@@ -632,6 +633,9 @@ Communicator::Entry(void)
 		}
 
 		if (poll(fds, 1, 200) < 0) {
+			if (errno == EINTR)
+				continue;
+
 			errString = _T("Error in Communicator");
 			sendError(COM_GENERIC_ERR, errString);
 			notDone = false;
@@ -654,14 +658,16 @@ Communicator::Entry(void)
 				startStatDeRegistration =
 				    COMMUNICATOR_FLAG_INIT;
 			}
-
 			if (anoubis_client_hasnotifies(client_) != 0) {
 				wxCommandEvent event(anEVT_COM_NOTIFYRECEIVED);
 				struct anoubis_msg *notifyMsg = NULL;
 
 				notifyMsg = anoubis_client_getnotify(client_);
-				event.SetClientData(notifyMsg);
-				eventDestination_->AddPendingEvent(event);
+				if (!checkNotify(notifyMsg)) {
+					event.SetClientData(notifyMsg);
+					eventDestination_->AddPendingEvent(
+					    event);
+				}
 			}
 		}
 
@@ -687,6 +693,32 @@ Communicator::Entry(void)
 	shutdown(commRC);
 
 	return (NULL);
+}
+
+bool
+Communicator::checkNotify(struct anoubis_msg *notifyMsg)
+{
+	int type;
+	pid_t pid;
+	NotifyAnswer *answer;
+	EscalationNotify *notify = new EscalationNotify(notifyMsg);
+
+	if (notifyMsg->u.general == NULL)
+		return false;
+
+	type = get_value((notifyMsg->u.general)->type);
+
+	if (type == ANOUBIS_N_ASK) {
+		pid = get_value((notifyMsg->u.notify)->pid);
+		if (pid == parentPid_) {
+			answer = new NotifyAnswer(NOTIFY_ANSWER_ONCE, true);
+			notify->setAnswer(answer);
+			sendEscalationAnswer(notify);
+			return true;
+		}
+	}
+
+	return false;
 }
 
 void

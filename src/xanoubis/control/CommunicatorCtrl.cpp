@@ -30,6 +30,7 @@
 #endif
 
 #include <sys/types.h>
+#include <unistd.h>
 
 #ifdef LINUX
 #include <linux/eventdev.h>
@@ -100,7 +101,7 @@ CommunicatorCtrl::connect(void)
 		 * com_, was deleted by 'Delete()' (which also removed the
 		 * object). Thus com_ can be filled with a new object.
 		 */
-		com_ = new Communicator(this, socketPath_);
+		com_ = new Communicator(this, socketPath_, getpid());
 
 		rc = com_->Create();
 		if (rc != wxTHREAD_NO_ERROR) {

@@ -77,6 +77,7 @@ class Communicator : public wxThread {
 		bool			 checksumAdd_;
 		bool			 checksumGet_;
 		int			 csumOp_;
+		pid_t			 parentPid_;
 		connectionStateType	 isConnected_;
 		NotifyList		 answerList_;
 		wxEvtHandler		*eventDestination_;
@@ -87,9 +88,10 @@ class Communicator : public wxThread {
 		achat_rc	connect(void);
 		void		shutdown(connectionStateType);
 		void		sendError(int, wxString);
+		bool		checkNotify(struct anoubis_msg *);
 
 	public:
-		Communicator(wxEvtHandler *, wxString);
+		Communicator(wxEvtHandler *, wxString, pid_t parent);
 
 		virtual void	*Entry(void);
 

@@ -77,6 +77,12 @@ EscalationNotify::isAnswered(void)
 }
 
 void
+EscalationNotify::setAnswer(NotifyAnswer *answer)
+{
+	answer_ = answer;
+}
+
+void
 EscalationNotify::answer(NotifyAnswer *answer)
 {
 	wxCommandEvent	event(anEVT_ANSWER_ESCALATION);

@@ -71,6 +71,7 @@ class EscalationNotify : public Notification {
 
 		bool		 isAnswered(void);
 		void		 answer(NotifyAnswer *);
+		void		 setAnswer(NotifyAnswer *);
 		NotifyAnswer	*getAnswer(void);
 		anoubis_token_t	 getToken(void);
 		anoubis_cookie_t getTaskCookie(void);
