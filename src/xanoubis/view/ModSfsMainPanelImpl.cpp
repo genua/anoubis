@@ -68,6 +68,11 @@ ModSfsMainPanelImpl::ModSfsMainPanelImpl(wxWindow* parent,
 	parent->Connect(anEVT_LOAD_RULESET,
 	    wxCommandEventHandler(ModSfsMainPanelImpl::OnLoadRuleSet),
 	    NULL, this);
+
+	initSfsMain();
+	SfsMainDirCtrl->Connect(wxEVT_COMMAND_TREE_SEL_CHANGED,
+	    wxTreeEventHandler(ModSfsMainPanelImpl::OnSfsMainDirCtrlSelChanged),
+	    NULL, this);
 }
 
 void
@@ -98,4 +103,26 @@ ModSfsMainPanelImpl::OnLoadRuleSet(wxCommandEvent& event)
 		lst_Rules->SetColumnWidth(i, wxLIST_AUTOSIZE_USEHEADER);
 	}
 	event.Skip();
+}
+
+void
+ModSfsMainPanelImpl::OnSfsMainDirCtrlSelChanged(wxTreeEvent &)
+{
+	/* Update CurrPathLabel accordingly */
+	SfsMainCurrPathLabel->SetLabel(SfsMainDirCtrl->GetPath());
+}
+
+void
+ModSfsMainPanelImpl::initSfsMain()
+{
+	/* Insert columns into list-ctrl */
+	SfsMainListCtrl->InsertColumn(MODSFSMAIN_FILELIST_COLUMN_FILE,
+		_("File"), wxLIST_FORMAT_LEFT, wxLIST_AUTOSIZE);
+	SfsMainListCtrl->InsertColumn(MODSFSMAIN_FILELIST_COLUMN_CHECKSUM,
+		_("Checksum"), wxLIST_FORMAT_LEFT, wxLIST_AUTOSIZE);
+	SfsMainListCtrl->InsertColumn(MODSFSMAIN_FILELIST_COLUMN_SIGNATURE,
+		_("Signature"), wxLIST_FORMAT_LEFT, wxLIST_AUTOSIZE);
+
+	/* Setting up CurrPathLabel with initial path */
+	SfsMainCurrPathLabel->SetLabel(SfsMainDirCtrl->GetPath());
 }

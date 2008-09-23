@@ -83,6 +83,8 @@ class ModAnoubisMainPanelImpl : public ModAnoubisMainPanelBase
 		void OnAnoubisOptionShow(wxCommandEvent&);
 		void OnAutoCheck(wxCommandEvent&);
 
+		void OnPrivKeyValidityChanged(wxCommandEvent&);
+
 		void OnNotebookTabChanged(wxNotebookEvent&);
 		void OnVersionListCtrlSelected(wxListEvent&);
 		void OnVersionRestoreButtonClick(wxCommandEvent&);

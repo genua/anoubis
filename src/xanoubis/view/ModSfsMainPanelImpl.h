@@ -40,6 +40,12 @@ enum modSfsListColumns {
 	MODSFS_LIST_COLUMN_EOL
 };
 
+enum modSfsMainFileListColumns {
+	MODSFSMAIN_FILELIST_COLUMN_FILE = 0,
+	MODSFSMAIN_FILELIST_COLUMN_CHECKSUM,
+	MODSFSMAIN_FILELIST_COLUMN_SIGNATURE,
+	MODSFSMAIN_FILELIST_COLUMN_EOL
+};
 
 class ModSfsMainPanelImpl : public ModSfsMainPanelBase
 {
@@ -49,6 +55,9 @@ class ModSfsMainPanelImpl : public ModSfsMainPanelBase
 		PolicyRuleSet	*adminRuleSet_;
 
 		void OnLoadRuleSet(wxCommandEvent&);
+
+		void initSfsMain();
+		void OnSfsMainDirCtrlSelChanged(wxTreeEvent&);
 
 	public:
 		ModSfsMainPanelImpl(wxWindow*, wxWindowID);

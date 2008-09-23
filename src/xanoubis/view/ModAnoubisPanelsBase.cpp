@@ -384,6 +384,68 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	
 	bSizer13->Add( sbSizer6, 0, wxEXPAND, 5 );
 	
+	wxStaticBoxSizer* sbSizer7;
+	sbSizer7 = new wxStaticBoxSizer( new wxStaticBox( tb_MainAnoubisOptions, -1, _("Private Key") ), wxVERTICAL );
+	
+	wxFlexGridSizer* fgSizer6;
+	fgSizer6 = new wxFlexGridSizer( 4, 2, 0, 0 );
+	fgSizer6->SetFlexibleDirection( wxBOTH );
+	fgSizer6->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+	
+	m_staticText27 = new wxStaticText( tb_MainAnoubisOptions, wxID_ANY, _("Configure Privatekey:"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText27->Wrap( -1 );
+	m_staticText27->SetFont( wxFont( wxNORMAL_FONT->GetPointSize(), 70, 90, 90, false, wxEmptyString ) );
+	
+	fgSizer6->Add( m_staticText27, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
+	
+	PrivKeyChooseButton = new wxButton( tb_MainAnoubisOptions, wxID_ANY, _("Choose Key"), wxDefaultPosition, wxDefaultSize, 0 );
+	fgSizer6->Add( PrivKeyChooseButton, 0, wxALL, 5 );
+	
+	m_staticText28 = new wxStaticText( tb_MainAnoubisOptions, wxID_ANY, _("Fingerprint:"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText28->Wrap( -1 );
+	fgSizer6->Add( m_staticText28, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
+	
+	PrivKeyFingerprintText = new wxStaticText( tb_MainAnoubisOptions, wxID_ANY, _("..."), wxDefaultPosition, wxDefaultSize, 0 );
+	PrivKeyFingerprintText->Wrap( -1 );
+	fgSizer6->Add( PrivKeyFingerprintText, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
+	
+	m_staticText30 = new wxStaticText( tb_MainAnoubisOptions, wxID_ANY, _("Distinguished Name:"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText30->Wrap( -1 );
+	fgSizer6->Add( m_staticText30, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
+	
+	PrivKeyDnText = new wxStaticText( tb_MainAnoubisOptions, wxID_ANY, _("..."), wxDefaultPosition, wxDefaultSize, 0 );
+	PrivKeyDnText->Wrap( -1 );
+	fgSizer6->Add( PrivKeyDnText, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
+	
+	m_staticText32 = new wxStaticText( tb_MainAnoubisOptions, wxID_ANY, _("Passphrase validity:"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText32->Wrap( -1 );
+	fgSizer6->Add( m_staticText32, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
+	
+	wxBoxSizer* bSizer24;
+	bSizer24 = new wxBoxSizer( wxHORIZONTAL );
+	
+	wxString PrivKeyValidityChoiceChoices[] = { _("Until end of session"), _("Until specified time") };
+	int PrivKeyValidityChoiceNChoices = sizeof( PrivKeyValidityChoiceChoices ) / sizeof( wxString );
+	PrivKeyValidityChoice = new wxChoice( tb_MainAnoubisOptions, wxID_ANY, wxDefaultPosition, wxDefaultSize, PrivKeyValidityChoiceNChoices, PrivKeyValidityChoiceChoices, 0 );
+	bSizer24->Add( PrivKeyValidityChoice, 0, wxALL, 5 );
+	
+	PrivKeyValiditySpinCtrl = new wxSpinCtrl( tb_MainAnoubisOptions, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 86400, 0 );
+	PrivKeyValiditySpinCtrl->Enable( false );
+	
+	bSizer24->Add( PrivKeyValiditySpinCtrl, 0, wxALL, 5 );
+	
+	PrivKeyValidityText = new wxStaticText( tb_MainAnoubisOptions, wxID_ANY, _("Validity end in Seconds"), wxDefaultPosition, wxDefaultSize, 0 );
+	PrivKeyValidityText->Wrap( -1 );
+	PrivKeyValidityText->Enable( false );
+	
+	bSizer24->Add( PrivKeyValidityText, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
+	
+	fgSizer6->Add( bSizer24, 1, wxEXPAND, 5 );
+	
+	sbSizer7->Add( fgSizer6, 1, wxEXPAND, 5 );
+	
+	bSizer13->Add( sbSizer7, 0, wxEXPAND, 5 );
+	
 	sz_MainAnoubisOptions->Add( bSizer13, 1, wxEXPAND, 5 );
 	
 	tb_MainAnoubisOptions->SetSizer( sz_MainAnoubisOptions );

@@ -126,6 +126,16 @@ class ModAnoubisMainPanelBase : public wxPanel
 		wxStaticText* tx_AlertNotifyTimeoutLabel;
 		wxCheckBox* controlAutoCheck;
 		wxCheckBox* autoConnectBox;
+		wxStaticText* m_staticText27;
+		wxButton* PrivKeyChooseButton;
+		wxStaticText* m_staticText28;
+		wxStaticText* PrivKeyFingerprintText;
+		wxStaticText* m_staticText30;
+		wxStaticText* PrivKeyDnText;
+		wxStaticText* m_staticText32;
+		wxChoice* PrivKeyValidityChoice;
+		wxSpinCtrl* PrivKeyValiditySpinCtrl;
+		wxStaticText* PrivKeyValidityText;
 		wxPanel* tb_MainAnoubisVersions;
 		wxListCtrl* VersionListCtrl;
 		wxTextCtrl* VersionShowCommentTextCtrl;

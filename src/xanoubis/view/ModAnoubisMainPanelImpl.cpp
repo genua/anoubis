@@ -101,6 +101,10 @@ ModAnoubisMainPanelImpl::ModAnoubisMainPanelImpl(wxWindow* parent,
 	    wxNotebookEventHandler(
 	       ModAnoubisMainPanelImpl::OnNotebookTabChanged),
 	    NULL, this);
+	PrivKeyValidityChoice->Connect(wxEVT_COMMAND_CHOICE_SELECTED,
+	    wxCommandEventHandler(
+	       ModAnoubisMainPanelImpl::OnPrivKeyValidityChanged),
+	    NULL, this);
 	VersionListCtrl->Connect(wxEVT_COMMAND_LIST_ITEM_SELECTED,
 	    wxListEventHandler(
 	       ModAnoubisMainPanelImpl::OnVersionListCtrlSelected),
@@ -723,6 +727,18 @@ ModAnoubisMainPanelImpl::OnAutoCheck(wxCommandEvent& event)
 	wxCommandEvent showEvent(anEVT_SEND_AUTO_CHECK);
 	showEvent.SetInt(event.IsChecked());
 	wxGetApp().sendEvent(showEvent);
+}
+
+void
+ModAnoubisMainPanelImpl::OnPrivKeyValidityChanged(wxCommandEvent&)
+{
+	/* Test weather "Until session end" is selected */
+	bool sessionEndSelected =
+	    (PrivKeyValidityChoice->GetCurrentSelection() == 0);
+
+	/* Enable/disable related controls accordingly */
+	PrivKeyValiditySpinCtrl->Enable(!sessionEndSelected);
+	PrivKeyValidityText->Enable(!sessionEndSelected);
 }
 
 void
