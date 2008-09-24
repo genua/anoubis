@@ -595,7 +595,8 @@ PolicyRuleSet::createSfsPolicy(int insertBeforeId)
 	if (TAILQ_EMPTY(&(ruleSet_->sfs_queue))) {
 		sfsRootRule = CALLOC_STRUCT(apn_rule);
 		sfsRootRule->apn_type = APN_SFS;
-		apn_add_sfsblock(sfsRootRule, ruleSet_, NULL, 0);
+		/* XXX CEH: xanoubis should not have to call this function! */
+		apn_add_sfsblock(ruleSet_, sfsRootRule, NULL, 0);
 	}
 	/* we assume sfs_queue will contain only one element */
 	sfsRootRule = TAILQ_FIRST(&(ruleSet_->sfs_queue));

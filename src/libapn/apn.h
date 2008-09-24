@@ -171,6 +171,20 @@ struct apn_sfscheck {
 	int		 log;
 };
 
+#define		SBA_READ	0x0001
+#define		SBA_WRITE	0x0002
+#define		SBA_EXEC	0x0004
+#define		SBA_ALL		0x0007
+
+struct apn_sbaccess {
+	char * path;
+	char * subject;
+	int uid;
+	unsigned int amask;
+	int log;
+	int action;
+};
+
 enum {
 	APN_ALF,		/* rule.chain, scope == NULL */
 	APN_SFS,		/* rule.chain, scope == NULL */
@@ -181,6 +195,7 @@ enum {
 	APN_DEFAULT,		/* rule.apndefault, app == NULL */
 	APN_ALF_CTX,		/* rule.apncontext, app == NULL */
 	APN_SFS_CHECK,		/* rule.sfscheck, app == NULL */
+	APN_SB_ACCESS,		/* rule.sbaccess, app = NULL */
 };
 
 #define apn_type	_rbentry.dtype
@@ -199,6 +214,7 @@ struct apn_rule {
 		struct apn_context	apncontext;
 		struct apn_sfscheck	sfscheck;
 		struct apn_chain	chain;
+		struct apn_sbaccess	sbaccess;
 	} rule;
 };
 
@@ -225,6 +241,7 @@ struct apn_ruleset {
 	/* Rulesets and variables */
 	struct apn_chain	 alf_queue;
 	struct apn_chain	 sfs_queue;
+	struct apn_chain	 sb_queue;
 	struct apnvar_queue	 var_queue;
 
 	/* Error messages from the parser */
@@ -235,9 +252,11 @@ __BEGIN_DECLS
 int	apn_parse(const char *, struct apn_ruleset **, int);
 int	apn_parse_iovec(const char *filename, struct iovec *vec, int count,
 	    struct apn_ruleset **rsp, int flags);
-int	apn_add_alfblock(struct apn_rule *, struct apn_ruleset *,
+int	apn_add_alfblock(struct apn_ruleset *, struct apn_rule *,
 	    const char *, int lineno);
-int	apn_add_sfsblock(struct apn_rule *, struct apn_ruleset *,
+int	apn_add_sfsblock(struct apn_ruleset *, struct apn_rule *,
+	    const char *, int lineno);
+int	apn_add_sbblock(struct apn_ruleset *, struct apn_rule *,
 	    const char *, int lineno);
 int	apn_print_rule(struct apn_rule *, int, FILE *);
 int	apn_print_ruleset(struct apn_ruleset *, int, FILE *);
@@ -251,6 +270,8 @@ int	apn_insert_alfrule(struct apn_ruleset *, struct apn_rule *,
 	    unsigned int);
 int	apn_insert_sfsrule(struct apn_ruleset *, struct apn_rule *,
 	    unsigned int);
+int	apn_insert_sbrule(struct apn_ruleset *, struct apn_rule *,
+	    unsigned int id);
 int	apn_add2app_alfrule(struct apn_ruleset *, struct apn_rule *,
 	    unsigned int);
 int	apn_copyinsert(struct apn_ruleset *, struct apn_rule *,
@@ -260,6 +281,7 @@ void	apn_free_one_rule(struct apn_rule *, struct apn_ruleset *);
 void	apn_free_chain(struct apn_chain *, struct apn_ruleset *);
 void	apn_free_app(struct apn_app *);
 void	apn_free_filter(struct apn_afiltspec *filtspec);
+void	apn_free_sbaccess(struct apn_sbaccess *);
 int	apn_clean_ruleset(struct apn_ruleset *rs,
 	    int (*)(struct apn_scope *, void *), void *);
 struct apn_rule *apn_copy_one_rule(struct apn_rule *);

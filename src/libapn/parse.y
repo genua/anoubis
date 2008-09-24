@@ -150,6 +150,7 @@ typedef struct {
 		struct apn_afiltspec	 afspec;
 		struct apn_afiltrule	 afrule;
 		struct apn_acaprule	 acaprule;
+		struct apn_sbaccess	 sbaccess;
 		struct apn_default	 dfltrule;
 		struct apn_context	 ctxrule;
 		struct apn_sfscheck	 sfscheck;
@@ -174,7 +175,7 @@ typedef struct {
 %token	ALLOW DENY ALF SFS SB VS CAP CONTEXT RAW ALL OTHER LOG CONNECT ACCEPT
 %token	INET INET6 FROM TO PORT ANY SHA256 TCP UDP DEFAULT NEW ASK ALERT
 %token	READ WRITE EXEC CHMOD ERROR APPLICATION RULE HOST TFILE BOTH SEND
-%token	RECEIVE TIMEOUT STATEFUL TASK UNTIL COLON
+%token	RECEIVE TIMEOUT STATEFUL TASK UNTIL COLON PATH KEY UID
 %token	<v.string>		STRING
 %token	<v.number>		NUMBER
 %type	<v.app>			app apps sfsapp
@@ -187,18 +188,19 @@ typedef struct {
 %type	<v.port>		port ports portspec
 %type	<v.porthead>		port_l
 %type	<v.hosts>		hosts
-%type	<v.number>		not capability defaultspec ruleid
+%type	<v.number>		not capability defaultspec ruleid sbrwx
 %type	<v.netaccess>		netaccess
 %type	<v.af>			af
 %type	<v.proto>		proto
 %type	<v.afspec>		alffilterspec
 %type	<v.action>		action
 %type	<v.log>			log
-%type	<v.rule>		alfruleset alfrule sfsrule
-%type	<v.rulehead>		alfrule_l sfsrule_l
+%type	<v.rule>		alfruleset sbruleset alfrule sfsrule sbrule
+%type	<v.rulehead>		alfrule_l sfsrule_l sbrule_l
 %type	<v.afrule>		alffilterrule
 %type	<v.acaprule>		alfcaprule
-%type	<v.dfltrule>		defaultrule alfdefault sfsdefault sbdefault;
+%type	<v.sbaccess>		sbaccess sbpred sbpath sbuid sbkey
+%type	<v.dfltrule>		defaultrule alfdefault sfsdefault sbdefault
 %type	<v.ctxrule>		ctxrule
 %type	<v.sfscheck>		sfscheckrule
 %type	<v.timeout>		statetimeout
@@ -360,9 +362,9 @@ alfruleset	: ruleid apps optnl '{' optnl alfrule_l '}' nl {
 			}
 			free($6);
 
-			if (apn_add_alfblock(rule, apnrsp, file->name,
+			if (apn_add_alfblock(apnrsp, rule, file->name,
 			    yylval.lineno) != 0) {
-				/* Account for errors in apn_add_alfrule */
+				/* Account for errors in apn_add_alfblock */
 				file->errors++;
 				apn_free_one_rule(rule, NULL);
 				YYERROR;
@@ -421,6 +423,21 @@ scope		: /* Empty */ {
 
 			$$ = scope;
 		}
+		| UNTIL NUMBER TASK NUMBER {
+			struct apn_scope *scope;
+
+			if (apnrsp->flags & APN_FLAG_NOSCOPE) {
+				yyerror("Scopes not permitted");
+				YYERROR;
+			}
+			scope = calloc(1, sizeof(struct apn_scope));
+			if (!scope)
+				YYERROR;
+			scope->task = $4;
+			scope->timeout = $2;
+
+			$$ = scope;
+		}
 		| UNTIL NUMBER {
 			struct apn_scope *scope;
 
@@ -444,6 +461,7 @@ alfrule		: ruleid alffilterrule	scope		{
 			rule = calloc(1, sizeof(struct apn_rule));
 			if (rule == NULL) {
 				apn_free_filter(&$2.filtspec);
+				free($3);
 				YYERROR;
 			}
 
@@ -459,8 +477,10 @@ alfrule		: ruleid alffilterrule	scope		{
 			struct apn_rule	*rule;
 
 			rule = calloc(1, sizeof(struct apn_rule));
-			if (rule == NULL)
+			if (rule == NULL) {
+				free($3);
 				YYERROR;
+			}
 
 			rule->apn_type = APN_ALF_CAPABILITY;
 			rule->rule.acap = $2;
@@ -474,8 +494,10 @@ alfrule		: ruleid alffilterrule	scope		{
 			struct apn_rule	*rule;
 
 			rule = calloc(1, sizeof(struct apn_rule));
-			if (rule == NULL)
+			if (rule == NULL) {
+				free($3);
 				YYERROR;
+			}
 
 			rule->apn_type = APN_DEFAULT;
 			rule->rule.apndefault = $2;
@@ -489,8 +511,10 @@ alfrule		: ruleid alffilterrule	scope		{
 			struct apn_rule	*rule;
 
 			rule = calloc(1, sizeof(struct apn_rule));
-			if (rule == NULL)
+			if (rule == NULL) {
+				free($3);
 				YYERROR;
+			}
 
 			rule->apn_type = APN_ALF_CTX;
 			rule->rule.apncontext = $2;
@@ -771,7 +795,7 @@ sfsmodule	: SFS optnl '{' optnl sfsrule_l '}'	{
 				    srule, entry);
 			}
 			free($5);
-			if (apn_add_sfsblock(rule, apnrsp, file->name,
+			if (apn_add_sfsblock(apnrsp, rule, file->name,
 			    yylval.lineno) != 0) {
 				apn_free_one_rule(rule, NULL);
 				YYERROR;
@@ -802,6 +826,7 @@ sfsrule		: ruleid sfscheckrule scope		{
 
 			rule = calloc(1, sizeof(struct apn_rule));
 			if (rule == NULL) {
+				free($3);
 				apn_free_app($2.app);
 				YYERROR;
 			}
@@ -818,8 +843,10 @@ sfsrule		: ruleid sfscheckrule scope		{
 			struct apn_rule	*rule;
 
 			rule = calloc(1, sizeof(struct apn_rule));
-			if (rule == NULL)
+			if (rule == NULL) {
+				free($3);
 				YYERROR;
+			}
 
 			rule->apn_type = APN_DEFAULT;
 			rule->rule.apndefault = $2;
@@ -851,52 +878,183 @@ sbruleset_l	: sbruleset_l sbruleset
 		| sbruleset
 		;
 
-sbruleset	: apps				{
-		} optnl '{' optnl sbrules '}' nl
+sbruleset	: ruleid apps optnl '{' optnl sbrule_l '}' nl {
+			struct apn_rule	*rule;
+
+			if ((rule = calloc(1, sizeof(struct apn_rule)))
+			    == NULL) {
+				apn_free_app($2);
+				apn_free_chain($6, NULL);
+				free($6);
+				YYERROR;
+			}
+
+			rule->app = $2;
+			rule->scope = NULL;
+			rule->apn_type = APN_SB;
+			rule->apn_id = $1;
+			TAILQ_INIT(&rule->rule.chain);
+			while(!TAILQ_EMPTY($6)) {
+				struct apn_rule *sbrule;
+				sbrule = TAILQ_FIRST($6);
+				TAILQ_REMOVE($6, sbrule, entry);
+				TAILQ_INSERT_TAIL(&rule->rule.chain,
+				    sbrule, entry);
+			}
+			free($6);
+
+			if (apn_add_sbblock(apnrsp, rule, file->name,
+			    yylval.lineno) != 0) {
+				/* Account for errors in apn_add_sbblock */
+				file->errors++;
+				apn_free_one_rule(rule, NULL);
+				YYERROR;
+			}
+		}
 		;
 
-sbrules		: sbrule_l
+sbrule_l	: sbrule_l sbrule nl		{
+			if ($2 == NULL)
+				$$ = $1;
+			else {
+				TAILQ_INSERT_TAIL($1, $2, entry);
+				$$ = $1;
+			}
+		}
+		| /* Empty */			{
+			$$ = calloc(1, sizeof(struct apn_chain));
+			if ($$ == NULL) {
+				yyerror("Out of memory");
+				YYERROR;
+			}
+			TAILQ_INIT($$);
+		}
 		;
 
-sbrule_l	: sbrule_l sbrule nl
-		| sbrule nl
+sbrule		: ruleid sbaccess scope {
+			struct apn_rule	*rule;
+
+			rule = calloc(1, sizeof(struct apn_rule));
+			if (rule == NULL) {
+				apn_free_sbaccess(&$2);
+				free($3);
+				YYERROR;
+			}
+
+			rule->apn_type = APN_SB_ACCESS;
+			rule->rule.sbaccess = $2;
+			rule->apn_id = $1;
+			rule->scope = $3;
+			rule->app = NULL;
+
+			$$ = rule;
+		}
+		| ruleid sbdefault scope {
+			struct apn_rule	*rule;
+
+			rule = calloc(1, sizeof(struct apn_rule));
+			if (rule == NULL) {
+				free($3);
+				YYERROR;
+			}
+
+			rule->apn_type = APN_DEFAULT;
+			rule->rule.apndefault = $2;
+			rule->apn_id = $1;
+			rule->scope = $3;
+			rule->app = NULL;
+
+			$$ = rule;
+		}
 		;
 
-sbrule		: sbfilterrule
-		| sbdefault
-		| ctxrule
+sbaccess	: action log sbpred sbrwx {
+			$$ = $3;
+			$$.action = $1;
+			$$.log = $2;
+			$$.amask = $4;
+		}
 		;
 
-sbfilterrule	: action sbfilterspec
+sbpred		: ANY {
+			$$.path = NULL;
+			$$.subject = NULL;
+			$$.uid = -1;
+		}
+		| sbpath {
+			$$ = $1;
+		}
+		| sbkey {
+			$$ = $1;
+		}
+		| sbuid {
+			$$ = $1;
+		}
+		| sbpath sbkey {
+			$$ = $1;
+			$$.subject = $2.subject;
+		}
+		| sbpath sbuid {
+			$$ = $1;
+			$$.uid = $2.uid;
+		}
 		;
 
-sbfilterspec	: fsaccspec log pathspec
-
-fsaccspec	: '{' faccess_l '}'
-		| faccess
-		| ANY
+sbpath		: PATH STRING {
+			$$.path = $2;
+			$$.subject = NULL;
+			$$.uid = -1;
+		}
 		;
 
-faccess_l	: faccess_l comma faccess
-		| faccess
+sbkey		: KEY STRING {
+			$$.path = NULL;
+			$$.subject = $2;
+			$$.uid = -1;
+		}
 		;
 
-faccess		: READ
-		| WRITE
-		| EXEC
-		| CHMOD
-		;
+sbuid		: UID NUMBER {
+			if ($2 < 0) {
+				yyerror("Invalid uid %d", $2);
+				YYERROR;
+			}
+			$$.path = NULL;
+			$$.subject = NULL;
+			$$.uid = $2;
+		};
 
-pathspec	: '{' path_l '}'
-		| path
-		| ANY
-		;
-
-path_l		: path_l comma path
-		| path
-		;
-
-path		: STRING			{ free($1); }
+sbrwx		: STRING {
+			int i;
+			$$ = 0;
+			for (i=0; $1[i]; ++i) {
+				int nm = 0;
+				switch($1[i]) {
+				case 'r': case 'R':
+					nm = SBA_READ; 
+					break;
+				case 'w': case 'W':
+					nm = SBA_WRITE;
+					break;
+				case 'x': case 'X':
+					nm = SBA_EXEC;
+					break;
+				default:
+					free($1);
+					yyerror("Bad character %c "
+					    "in permission string", $1[i]);
+					YYERROR;
+				}
+				if ($$ & nm) {
+					free($1);
+					yyerror("Duplicat character % "
+					    "in permission string", $1[i]);
+					YYERROR;
+				}
+				$$ |= nm;
+			}
+			free($1);
+		}
 		;
 
 sbdefault	: defaultrule
@@ -1126,14 +1284,17 @@ lookup(char *s)
 		{ "host",	HOST },
 		{ "inet",	INET },
 		{ "inet6",	INET6 },
+		{ "key",	KEY },
 		{ "log",	LOG },
 		{ "new",	NEW },
 		{ "other",	OTHER },
+		{ "path",	PATH },
 		{ "port",	PORT },
 		{ "raw",	RAW },
 		{ "read",	READ },
 		{ "receive",	RECEIVE },
 		{ "rule",	RULE },
+		{ "sandbox",	SB },
 		{ "sb",		SB },
 		{ "send",	SEND },
 		{ "sfs",	SFS },
@@ -1144,6 +1305,7 @@ lookup(char *s)
 		{ "timeout",	TIMEOUT },
 		{ "to",		TO },
 		{ "udp",	UDP },
+		{ "uid",	UID },
 		{ "until",	UNTIL },
 		{ "vs",		VS },
 		{ "write",	WRITE },

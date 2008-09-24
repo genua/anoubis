@@ -103,11 +103,11 @@ START_TEST(tc_Invalidparameters)
 	ret = apn_add_alfblock(NULL, NULL, NULL, 0);
 	fail_if(ret != 1, "apn_add_alfblock(NULL, NULL) did not return "
 	    "required value \"1\"");
-	ret = apn_add_alfblock(NULL, &rs, NULL, 0);
-	fail_if(ret != 1, "apn_add_alfblock(NULL, &rs) did not return "
+	ret = apn_add_alfblock(&rs, NULL, NULL, 0);
+	fail_if(ret != 1, "apn_add_alfblock(&rs, NULL) did not return "
 	    "required value \"1\"");
-	ret = apn_add_alfblock(&rule, NULL, NULL, 0);
-	fail_if(ret != 1, "apn_add_alfblock(&rule, NULL) did not return "
+	ret = apn_add_alfblock(NULL, &rule, NULL, 0);
+	fail_if(ret != 1, "apn_add_alfblock(NULL, &rule) did not return "
 	    "required value \"1\"");
 
 	bzero(&rule, sizeof(rule));

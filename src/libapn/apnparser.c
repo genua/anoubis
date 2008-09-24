@@ -59,6 +59,7 @@ static int	apn_print_address(struct apn_addr *, FILE *);
 static int	apn_print_port(struct apn_port *, FILE *);
 static int	apn_print_acaprule(struct apn_acaprule *, FILE *);
 static int	apn_print_defaultrule(struct apn_default *, FILE *);
+static int	apn_print_sbaccess(struct apn_sbaccess *, FILE *);
 static int	apn_print_contextrule(struct apn_context *, FILE *);
 static int	apn_print_scheckrule(struct apn_sfscheck *, FILE *);
 static int	apn_print_action(int, int, FILE *);
@@ -110,6 +111,7 @@ __apn_parse_common(const char *filename, struct apn_ruleset **rsp, int flags)
 		return (-1);
 	TAILQ_INIT(&rs->alf_queue);
 	TAILQ_INIT(&rs->sfs_queue);
+	TAILQ_INIT(&rs->sb_queue);
 	TAILQ_INIT(&rs->var_queue);
 	TAILQ_INIT(&rs->err_queue);
 	rs->flags = flags;
@@ -135,6 +137,7 @@ apn_parse(const char *filename, struct apn_ruleset **rsp, int flags)
 		rs->idtree = NULL;
 		apn_free_chain(&rs->alf_queue, NULL);
 		apn_free_chain(&rs->sfs_queue, NULL);
+		apn_free_chain(&rs->sb_queue, NULL);
 		apn_free_varq(&rs->var_queue);
 	}
 
@@ -156,6 +159,7 @@ apn_parse_iovec(const char *filename, struct iovec *vec, int count,
 		rs->idtree = NULL;
 		apn_free_chain(&rs->alf_queue, NULL);
 		apn_free_chain(&rs->sfs_queue, NULL);
+		apn_free_chain(&rs->sb_queue, NULL);
 		apn_free_varq(&rs->var_queue);
 	}
 	return ret;
@@ -213,31 +217,31 @@ apn_duplicate_ids(struct apn_rule *rule)
  *
  * In case of an error, no rules are added, thus caller can free them safely.
  */
-int
-apn_add_alfblock(struct apn_rule *rule, struct apn_ruleset *ruleset,
-    const char * filename, int lineno)
+static int
+__apn_add_block_common(struct apn_ruleset *ruleset, struct apn_chain *chain,
+    struct apn_rule *block, const char *filename, int lineno)
 {
 	int ret = 0;
 	struct apn_rule *tmp;
-	struct apn_rule *arule;
+	struct apn_rule *subrule;
 
-	if (ruleset == NULL || rule == NULL)
+	if (ruleset == NULL || block == NULL)
 		return (1);
 
 	/*
 	 * Issue an error if the ruleset appears after an any rule or
 	 * another application rule for the same application.
 	 */
-	TAILQ_FOREACH(tmp, &ruleset->alf_queue, entry) {
+	TAILQ_FOREACH(tmp, chain, entry) {
 		if (tmp->app == NULL)
 			goto duplicate;
-		if (rule->app == NULL)
+		if (block->app == NULL)
 			continue;
-		if (strcmp(rule->app->name, tmp->app->name) != 0)
+		if (strcmp(block->app->name, tmp->app->name) != 0)
 			continue;
-		if (rule->app->hashtype != tmp->app->hashtype)
+		if (block->app->hashtype != tmp->app->hashtype)
 			continue;
-		if (!apn_hash_equal(rule->app->hashtype, rule->app->hashvalue,
+		if (!apn_hash_equal(block->app->hashtype, block->app->hashvalue,
 		    tmp->app->hashvalue))
 			continue;
 		goto duplicate;
@@ -247,24 +251,24 @@ apn_add_alfblock(struct apn_rule *rule, struct apn_ruleset *ruleset,
 	 * Issue an error if the ruleset has non-zero IDs that are already
 	 * in use or if the ruleset contains duplicate IDs.
 	 */
-	if (apn_duplicate_ids(rule))
+	if (apn_duplicate_ids(block))
 		goto invalidid;
-	if (rule->apn_id && !apn_valid_id(ruleset, rule->apn_id))
+	if (block->apn_id && !apn_valid_id(ruleset, block->apn_id))
 		goto invalidid;
-	TAILQ_FOREACH(arule, &rule->rule.chain, entry) {
-		if (arule->apn_id && !apn_valid_id(ruleset, arule->apn_id))
+	TAILQ_FOREACH(subrule, &block->rule.chain, entry) {
+		if (subrule->apn_id && !apn_valid_id(ruleset, subrule->apn_id))
 			goto invalidid;
 	}
-	if (rule->apn_id)
-		apn_insert_id(ruleset, &rule->_rbentry, rule);
-	TAILQ_FOREACH(arule, &rule->rule.chain, entry) {
-		if (arule->apn_id)
-			apn_insert_id(ruleset, &arule->_rbentry, arule);
+	if (block->apn_id)
+		apn_insert_id(ruleset, &block->_rbentry, block);
+	TAILQ_FOREACH(subrule, &block->rule.chain, entry) {
+		if (subrule->apn_id)
+			apn_insert_id(ruleset, &subrule->_rbentry, subrule);
 	}
-	TAILQ_INSERT_TAIL(&ruleset->alf_queue, rule, entry);
+	TAILQ_INSERT_TAIL(chain, block, entry);
 
 	if (ruleset->flags & APN_FLAG_VERBOSE)
-		ret = apn_print_rule(rule, ruleset->flags, stdout);
+		ret = apn_print_rule(block, ruleset->flags, stdout);
 
 	return (ret);
 duplicate:
@@ -277,62 +281,37 @@ invalidid:
 	return (1);
 }
 
-/*
- * Add a rule or a list of rules to the SFS ruleset.
- *
- * Return codes:
- * -1: a systemcall failed and errno is set
- *  0: rule was added.
- *  1: invalid parameters
- *
- * In case of an error, no rules are added, thus caller can free them safely.
- */
+
 int
-apn_add_sfsblock(struct apn_rule *rule, struct apn_ruleset *ruleset,
+apn_add_alfblock(struct apn_ruleset *ruleset, struct apn_rule *block,
+    const char * filename, int lineno)
+{
+	return __apn_add_block_common(ruleset, &ruleset->alf_queue,
+	    block, filename, lineno);
+}
+
+int
+apn_add_sfsblock(struct apn_ruleset *ruleset, struct apn_rule *block,
     const char *filename, int lineno)
 {
-	int ret = 0;
-	struct apn_rule *srule;
-
-	if (ruleset == NULL || rule == NULL)
+	if (!block)
 		return (1);
-
-	if (!TAILQ_EMPTY(&ruleset->sfs_queue))
+	if (block->app)
 		goto duplicate;
-
-	/*
-	 * Issue an error if the ruleset has non-zero IDs that are already
-	 * in use or if the ruleset contains duplicate IDs.
-	 */
-	if (apn_duplicate_ids(rule))
-		return 0;
-	if (rule->apn_id || !apn_valid_id(ruleset, rule->apn_id))
-		goto invalidid;
-	TAILQ_FOREACH(srule, &rule->rule.chain, entry) {
-		if (srule->apn_id && !apn_valid_id(ruleset, srule->apn_id))
-			goto invalidid;
-	}
-
-	if (rule->apn_id)
-		apn_insert_id(ruleset, &rule->_rbentry, rule);
-	TAILQ_FOREACH(srule, &rule->rule.chain, entry) {
-		if (srule->apn_id)
-			apn_insert_id(ruleset, &srule->_rbentry, srule);
-	}
-	TAILQ_INSERT_TAIL(&ruleset->sfs_queue, rule, entry);
-
-	if (ruleset->flags & APN_FLAG_VERBOSE)
-		ret = apn_print_rule(rule, ruleset->flags, stdout);
-
-	return (ret);
+	return __apn_add_block_common(ruleset, &ruleset->sfs_queue,
+	    block, filename, lineno);
 duplicate:
 	if (filename)
-		apn_error(ruleset, filename, lineno, "More than on SFS block");
+		apn_error(ruleset, filename, lineno, "SFS block with app");
 	return (1);
-invalidid:
-	if (filename)
-		apn_error(ruleset, filename, lineno, "Duplicate rule IDs");
-	return (1);
+}
+
+int
+apn_add_sbblock(struct apn_ruleset *ruleset, struct apn_rule *block,
+    const char *filename, int lineno)
+{
+	return __apn_add_block_common(ruleset, &ruleset->sb_queue,
+	    block, filename, lineno);
 }
 
 /*
@@ -361,6 +340,9 @@ apn_insert(struct apn_ruleset *rs, struct apn_rule *rule, unsigned int id)
 		break;
 	case APN_SFS:
 		queue = &rs->sfs_queue;
+		break;
+	case APN_SB:
+		queue = &rs->sb_queue;
 		break;
 	default:
 		return (1);
@@ -434,6 +416,23 @@ apn_insert_sfsrule(struct apn_ruleset *rs, struct apn_rule *srule,
     unsigned int id)
 {
 	return apn_insert_rule_common(rs, &rs->sfs_queue, srule, id);
+}
+
+/*
+ * Insert sandbox rule before sandbox rule with identification ID.  The ID of
+ * the new rule is retained. If the ID of the new rule is 0 a new ID is
+ * assigned. Trying to use an ID of an existing rule will cause an error.
+ *
+ * Return codes:
+ * -1: a systemcall failed and errno is set
+ *  0: rule was inserted
+ *  1: invalid parameters
+ */
+int
+apn_insert_sbrule(struct apn_ruleset *rs, struct apn_rule *sbrule,
+    unsigned int id)
+{
+	return apn_insert_rule_common(rs, &rs->sb_queue, sbrule, id);
 }
 
 /*
@@ -597,6 +596,9 @@ apn_print_rule(struct apn_rule *rule, int flags, FILE *file)
 	case APN_SFS_CHECK:
 		ret = apn_print_scheckrule(&rule->rule.sfscheck, file);
 		break;
+	case APN_SB_ACCESS:
+		ret = apn_print_sbaccess(&rule->rule.sbaccess, file);
+		break;
 	default:
 		return (1);
 	}
@@ -621,34 +623,25 @@ apn_print_rule(struct apn_rule *rule, int flags, FILE *file)
 int
 apn_print_ruleset(struct apn_ruleset *rs, int flags, FILE *file)
 {
-	struct apn_rule		*rule;
-	struct apn_chain	*queue;
-	int			 ret = 0;
-
 	if (rs == NULL || file == NULL)
 		return (1);
 
 	fprintf(file, "alf {\n");
-	queue = &rs->alf_queue;
-	if (!TAILQ_EMPTY(queue)) {
-		TAILQ_FOREACH(rule, queue, entry) {
-			if ((ret = apn_print_rule(rule, flags, file)) != 0)
-				return (ret);
-		}
-	}
+	if (apn_print_chain(&rs->alf_queue, flags, file))
+		return 1;
 	fprintf(file, "}\n");
 
 	fprintf(file, "sfs {\n");
-	queue = &rs->sfs_queue;
-	if (!TAILQ_EMPTY(&rs->sfs_queue)) {
-		TAILQ_FOREACH(rule, queue, entry) {
-			if ((ret = apn_print_rule(rule, flags, file)) != 0)
-				return (ret);
-		}
-	}
+	if (apn_print_chain(&rs->sfs_queue, flags, file))
+		return 1;
 	fprintf(file, "}\n");
 
-	return (0);
+	fprintf(file, "sandbox {\n");
+	if (apn_print_chain(&rs->sb_queue, flags, file))
+		return 1;
+	fprintf(file, "}\n");
+
+	return 0;
 }
 
 int
@@ -721,7 +714,7 @@ void
 apn_free_ruleset(struct apn_ruleset *rs)
 {
 	struct apnerr_queue	*errq;
-	struct apn_chain	*alfq, *sfsq;
+	struct apn_chain	*alfq, *sfsq, *sbq;
 	struct apnvar_queue	*varq;
 
 	if (rs == NULL)
@@ -730,12 +723,14 @@ apn_free_ruleset(struct apn_ruleset *rs)
 	errq = &rs->err_queue;
 	alfq = &rs->alf_queue;
 	sfsq = &rs->sfs_queue;
+	sbq = &rs->sb_queue;
 	varq = &rs->var_queue;
 
 	apn_free_errq(errq);
 	rs->idtree = NULL;
 	apn_free_chain(alfq, NULL);
 	apn_free_chain(sfsq, NULL);
+	apn_free_chain(sbq, NULL);
 	apn_free_varq(varq);
 
 	free(rs);
@@ -1124,6 +1119,36 @@ apn_print_hash(u_int8_t *hash, int len, FILE *file)
 	fprintf(file, "\"");
 }
 
+static int
+apn_print_sbaccess(struct apn_sbaccess *sba, FILE *file)
+{
+	if (sba->uid >= 0 && sba->subject)
+		return 1;
+	if ((sba->amask & SBA_ALL) == 0)
+		return 1;
+	if (apn_print_action(sba->action, 1, file))
+		return 1;
+	if (apn_print_log(sba->log, file))
+		return 1;
+	if (!sba->path && !sba->subject && sba->uid < 0) {
+		fprintf(file, " any");
+	} else {
+		if (sba->path)
+			fprintf(file, " path %s ", sba->path);
+		if (sba->subject)
+			fprintf(file, " key %s ", sba->subject);
+		if (sba->uid >= 0)
+			fprintf(file, " uid %d ", sba->uid);
+	}
+	if (sba->amask & SBA_READ)
+		fprintf(file, "r");
+	if (sba->amask & SBA_WRITE)
+		fprintf(file, "w");
+	if (sba->amask & SBA_EXEC)
+		fprintf(file, "x");
+	return 0;
+}
+
 static void
 apn_free_errq(struct apnerr_queue *errq)
 {
@@ -1198,6 +1223,25 @@ apn_free_filter(struct apn_afiltspec *filtspec)
 	}
 }
 
+/*
+ * NOTE: Does _not_ free the sbaccess structure itself because
+ * NOTE: it is usually embedded in the surrounding structure!
+ */
+void
+apn_free_sbaccess(struct apn_sbaccess *sba)
+{
+	if (!sba)
+		return;
+	if (sba->path) {
+		free(sba->path);
+		sba->path = NULL;
+	}
+	if (sba->subject) {
+		free(sba->subject);
+		sba->subject = NULL;
+	}
+}
+
 void
 apn_free_chain(struct apn_chain *chain, struct apn_ruleset *rs)
 {
@@ -1222,15 +1266,15 @@ apn_free_one_rule(struct apn_rule *rule, struct apn_ruleset *rs)
 	case APN_ALF_FILTER:
 		apn_free_filter(&rule->rule.afilt.filtspec);
 		break;
-
+	case APN_SB_ACCESS:
+		apn_free_sbaccess(&rule->rule.sbaccess);
+		break;
 	case APN_ALF_CAPABILITY:
 		/* nothing to free */
 		break;
-
 	case APN_DEFAULT:
 		/* nothing to free */
 		break;
-
 	case APN_ALF_CTX:
 		apn_free_app(rule->rule.apncontext.application);
 		break;
@@ -1687,6 +1731,7 @@ apn_clean_ruleset(struct apn_ruleset *rs,
 
 	ret = apn_clean_ruleq(rs, &rs->alf_queue, check, data);
 	ret += apn_clean_ruleq(rs, &rs->sfs_queue, check, data);
+	ret += apn_clean_ruleq(rs, &rs->sb_queue, check, data);
 	return ret;
 }
 
@@ -1747,6 +1792,8 @@ apn_remove(struct apn_ruleset *rs, unsigned int id)
 		return 0;
 	if (apn_remove_chain_deep(rs, &rs->sfs_queue, id) == 0)
 		return 0;
+	if (apn_remove_chain_deep(rs, &rs->sb_queue, id) == 0)
+		return 0;
 	return (2);
 }
 
@@ -1788,9 +1835,10 @@ apn_assign_ids(struct apn_ruleset *rs)
 {
 	apn_assign_ids_chain(rs, &rs->alf_queue);
 	apn_assign_ids_chain(rs, &rs->sfs_queue);
+	apn_assign_ids_chain(rs, &rs->sb_queue);
 }
 
-static void
+	static void
 apn_insert_id(struct apn_ruleset *rs, struct rb_entry *e, void *data)
 {
 	/* Explicitly specified ID in ruleset. Turn off compat IDs */
@@ -1806,7 +1854,7 @@ apn_insert_id(struct apn_ruleset *rs, struct rb_entry *e, void *data)
 		rs->maxid = e->key;
 }
 
-static void
+	static void
 apn_assign_id(struct apn_ruleset *rs, struct rb_entry *e, void *data)
 {
 	unsigned long nid;
