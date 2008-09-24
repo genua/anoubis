@@ -196,6 +196,12 @@ BEGIN_DECLARE_EVENT_TYPES()
 	 * string which checksum request failed
 	 */
 	DECLARE_LOCAL_EVENT_TYPE(anEVT_CHECKSUM_ERROR, wxNewEventType())
+
+	/*
+	 * The content of SfsDirectory has changed. The view needs to be
+	 * updated.
+	 */
+	DECLARE_LOCAL_EVENT_TYPE(anEVT_SFSDIR_CHANGED, wxNewEventType())
 END_DECLARE_EVENT_TYPES()
 
 #endif	/* _ANEVENTS_H_ */

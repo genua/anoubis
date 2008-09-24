@@ -46,6 +46,7 @@
 #include "AnEvents.h"
 #include "Policy.h"
 #include "ModSfsAddPolicyVisitor.h"
+#include "SfsCtrl.h"
 
 #include "ModSfsMainPanelImpl.h"
 
@@ -70,9 +71,11 @@ ModSfsMainPanelImpl::ModSfsMainPanelImpl(wxWindow* parent,
 	    NULL, this);
 
 	initSfsMain();
-	SfsMainDirCtrl->Connect(wxEVT_COMMAND_TREE_SEL_CHANGED,
-	    wxTreeEventHandler(ModSfsMainPanelImpl::OnSfsMainDirCtrlSelChanged),
-	    NULL, this);
+}
+
+ModSfsMainPanelImpl::~ModSfsMainPanelImpl()
+{
+	destroySfsMain();
 }
 
 void
@@ -108,13 +111,53 @@ ModSfsMainPanelImpl::OnLoadRuleSet(wxCommandEvent& event)
 void
 ModSfsMainPanelImpl::OnSfsMainDirCtrlSelChanged(wxTreeEvent &)
 {
+	/* Update controller */
+	sfsCtrl_->setPath(SfsMainDirCtrl->GetPath());
+}
+
+void
+ModSfsMainPanelImpl::OnSfsDirChanged(wxCommandEvent&)
+{
+	/* Display changes */
+	updateSfsList();
+
 	/* Update CurrPathLabel accordingly */
 	SfsMainCurrPathLabel->SetLabel(SfsMainDirCtrl->GetPath());
 }
 
 void
+ ModSfsMainPanelImpl::OnSfsMainFilterButtonClicked(wxCommandEvent&)
+{
+	sfsCtrl_->setFilter(SfsMainFilterTextCtrl->GetValue());
+}
+
+void
+ModSfsMainPanelImpl::OnSfsMainInverseCheckboxClicked(wxCommandEvent&)
+{
+	sfsCtrl_->setFilterInversed(SfsMainFilterInvertCheckBox->IsChecked());
+}
+
+void
 ModSfsMainPanelImpl::initSfsMain()
 {
+	sfsCtrl_ = new SfsCtrl;
+
+	sfsCtrl_->Connect(anEVT_SFSDIR_CHANGED,
+	    wxCommandEventHandler(ModSfsMainPanelImpl::OnSfsDirChanged),
+	    NULL, this);
+
+	SfsMainDirCtrl->Connect(wxEVT_COMMAND_TREE_SEL_CHANGED,
+	    wxTreeEventHandler(ModSfsMainPanelImpl::OnSfsMainDirCtrlSelChanged),
+	    NULL, this);
+	SfsMainFilterButton->Connect(wxEVT_COMMAND_BUTTON_CLICKED,
+	    wxCommandEventHandler(
+	       ModSfsMainPanelImpl::OnSfsMainFilterButtonClicked),
+	    NULL, this);
+	SfsMainFilterInvertCheckBox->Connect(wxEVT_COMMAND_CHECKBOX_CLICKED,
+	    wxCommandEventHandler(
+	       ModSfsMainPanelImpl::OnSfsMainInverseCheckboxClicked),
+	    NULL, this);
+
 	/* Insert columns into list-ctrl */
 	SfsMainListCtrl->InsertColumn(MODSFSMAIN_FILELIST_COLUMN_FILE,
 		_("File"), wxLIST_FORMAT_LEFT, wxLIST_AUTOSIZE);
@@ -125,4 +168,66 @@ ModSfsMainPanelImpl::initSfsMain()
 
 	/* Setting up CurrPathLabel with initial path */
 	SfsMainCurrPathLabel->SetLabel(SfsMainDirCtrl->GetPath());
+	sfsCtrl_->setPath(SfsMainDirCtrl->GetPath());
+}
+
+void
+ModSfsMainPanelImpl::destroySfsMain()
+{
+	delete sfsCtrl_;
+}
+
+void
+ModSfsMainPanelImpl::updateSfsList()
+{
+	const SfsDirectory &dir = sfsCtrl_->getSfsDirectory();
+
+	SfsMainListCtrl->DeleteAllItems();
+
+	for (unsigned int i = 0; i < dir.getNumEntries(); i++) {
+		const SfsEntry &entry = dir.getEntry(i);
+		wxString checksumColumn, signatureColumn;
+
+		switch (entry.getChecksumAttr()) {
+		case SfsEntry::SFSENTRY_CHECKSUM_UNKNOWN:
+			checksumColumn = _("Unknown");
+			break;
+		case SfsEntry::SFSENTRY_CHECKSUM_NOMATCH:
+			checksumColumn = _("Nok");
+			break;
+		case SfsEntry::SFSENTRY_CHECKUM_MATCH:
+			checksumColumn = _("Ok");
+			break;
+		}
+
+		switch (entry.getSignatureAttr()) {
+		case SfsEntry::SFSENTRY_SIGNATURE_UNKNOWN:
+			signatureColumn = _("Unknown");
+			break;
+		case SfsEntry::SFSENTRY_SIGNATURE_INVALID:
+			signatureColumn = _("Invalid");
+			break;
+		case SfsEntry::SFSENTRY_SIGNATURE_NOMATCH:
+			signatureColumn = _("Nok");
+			break;
+		case SfsEntry::SFSENTRY_SIGNATURE_MATCH:
+			signatureColumn = _("Ok");
+			break;
+		}
+
+		SfsMainListCtrl->InsertItem(i, wxEmptyString);
+		SfsMainListCtrl->SetItem(i,
+		    MODSFSMAIN_FILELIST_COLUMN_FILE, entry.getPath());
+		SfsMainListCtrl->SetItem(i,
+		    MODSFSMAIN_FILELIST_COLUMN_CHECKSUM, checksumColumn);
+		SfsMainListCtrl->SetItem(i,
+		    MODSFSMAIN_FILELIST_COLUMN_SIGNATURE, signatureColumn);
+	}
+
+	SfsMainListCtrl->SetColumnWidth(MODSFSMAIN_FILELIST_COLUMN_FILE,
+	    wxLIST_AUTOSIZE);
+	SfsMainListCtrl->SetColumnWidth(MODSFSMAIN_FILELIST_COLUMN_CHECKSUM,
+	    wxLIST_AUTOSIZE);
+	SfsMainListCtrl->SetColumnWidth(MODSFSMAIN_FILELIST_COLUMN_SIGNATURE,
+	    wxLIST_AUTOSIZE);
 }

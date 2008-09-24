@@ -25,53 +25,51 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __ModSfsMainPanelImpl__
-#define __ModSfsMainPanelImpl__
+#ifndef _SFSCTRL_H_
+#define _SFSCTRL_H_
 
-#include "AnEvents.h"
-#include "ModSfsPanelsBase.h"
-#include "PolicyRuleSet.h"
+#include <wx/event.h>
 
-enum modSfsListColumns {
-	MODSFS_LIST_COLUMN_PRIO = 0,
-	MODSFS_LIST_COLUMN_PROG,
-	MODSFS_LIST_COLUMN_HASHT,
-	MODSFS_LIST_COLUMN_HASH,
-	MODSFS_LIST_COLUMN_EOL
-};
+#include "SfsDirectory.h"
 
-enum modSfsMainFileListColumns {
-	MODSFSMAIN_FILELIST_COLUMN_FILE = 0,
-	MODSFSMAIN_FILELIST_COLUMN_CHECKSUM,
-	MODSFSMAIN_FILELIST_COLUMN_SIGNATURE,
-	MODSFSMAIN_FILELIST_COLUMN_EOL
-};
-
-class SfsCtrl;
-
-class ModSfsMainPanelImpl : public ModSfsMainPanelBase
+/**
+ * The SfsController acts as a bridge between an SfsDirectory and the view.
+ * Operations on the directory are started here and changes on the directory
+ * are reported back to the view.
+ *
+ * The the content of the assigned SfsDirectory has changed, an wxCommandEvent
+ * with  event-type anEVT_SFSDIR_CHANGED is created.
+ */
+class SfsCtrl : public wxEvtHandler
 {
-	private:
-		wxString	 columnNames_[MODSFS_LIST_COLUMN_EOL];
-		PolicyRuleSet	*userRuleSet_;
-		PolicyRuleSet	*adminRuleSet_;
-		SfsCtrl		*sfsCtrl_;
-
-		void OnLoadRuleSet(wxCommandEvent&);
-
-		void initSfsMain();
-		void destroySfsMain();
-		void updateSfsList();
-		void OnSfsMainDirCtrlSelChanged(wxTreeEvent&);
-		void OnSfsDirChanged(wxCommandEvent&);
-		void OnSfsMainFilterButtonClicked(wxCommandEvent&);
-		void OnSfsMainInverseCheckboxClicked(wxCommandEvent&);
-
 	public:
-		ModSfsMainPanelImpl(wxWindow*, wxWindowID);
-		~ModSfsMainPanelImpl();
+		/**
+		 * @see SfsDirectory::getPath()
+		 */
+		wxString getPath() const;
+		void setPath(const wxString &);
 
-		friend class ModSfsAddPolicyVisitor;
+		/**
+		 * @see SfsDirectory::getFilter()
+		 */
+		wxString getFilter() const;
+		void setFilter(const wxString &);
+
+		/**
+		 * @see SfsDirectory::isFilterInversed()
+		 */
+		bool isFilterInversed() const;
+		void setFilterInversed(bool);
+
+		/**
+		 * Returns the instance of the SfsDirectory.
+		 */
+		const SfsDirectory &getSfsDirectory() const;
+
+	private:
+		SfsDirectory sfsDir_;
+
+		void sendChangedEvent();
 };
 
-#endif /* __ModSfsMainPanelImpl__ */
+#endif	/* _SFSCTRL_H_ */

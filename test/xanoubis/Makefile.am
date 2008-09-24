@@ -31,7 +31,7 @@
 #         Nethertheless that test is quite useful and still should be shipped.
 # TESTS = test_xanoubis_server
 
-TESTS = testSuite_Patterns testSuite_Profiles
+TESTS = testSuite_Patterns testSuite_Profiles testSuite_Sfs
 noinst_PROGRAMS = test_xanoubis_server $(TESTS)
 
 uidir		   = src/libanoubisui
@@ -172,3 +172,26 @@ testSuite_Profiles_SOURCES = \
 	testrunner.cpp \
 	suite_Profiles/testSuite.cpp \
 	suite_Profiles/tc_ProfileMgr.cpp
+
+#
+# Testsuite: Sfs
+#
+testSuite_Sfs_CPPFLAGS = $(libGUIcomponents_CPPFLAGS)
+testSuite_Sfs_CXXFLAGS = $(libGUIcomponents_CXXFLAGS) @CHECK_CFLAGS@
+testSuite_Sfs_LDFLAGS = $(shared_AM_LDFLAGS) -dynamic -L $(RPATH)
+testSuite_Sfs_DEPENDENCIES = $(libGUIcomponents_DEPENDENCIES)
+testSuite_Sfs_LDADD = \
+	-lGUIcomponents \
+	$(libGUIcomponents_LDADD) \
+	@CHECK_LIBS@
+
+if NEEDBSDCOMPAT
+testSuite_Sfs_CPPFLAGS += -I$(top_srcdir)/$(bsdcompatdir)
+testSuite_Sfs_DEPENDENCIES += $(libbsdcompat)
+testSuite_Sfs_LDADD += $(libbsdcompat)
+endif
+
+testSuite_Sfs_SOURCES = \
+	testrunner.cpp \
+	suite_Sfs/testSuite.cpp \
+	suite_Sfs/tc_SfsDir.cpp

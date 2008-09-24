@@ -25,53 +25,20 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __ModSfsMainPanelImpl__
-#define __ModSfsMainPanelImpl__
+#include <check.h>
 
-#include "AnEvents.h"
-#include "ModSfsPanelsBase.h"
-#include "PolicyRuleSet.h"
+extern TCase *getTc_SfsDir(void);
 
-enum modSfsListColumns {
-	MODSFS_LIST_COLUMN_PRIO = 0,
-	MODSFS_LIST_COLUMN_PROG,
-	MODSFS_LIST_COLUMN_HASHT,
-	MODSFS_LIST_COLUMN_HASH,
-	MODSFS_LIST_COLUMN_EOL
-};
-
-enum modSfsMainFileListColumns {
-	MODSFSMAIN_FILELIST_COLUMN_FILE = 0,
-	MODSFSMAIN_FILELIST_COLUMN_CHECKSUM,
-	MODSFSMAIN_FILELIST_COLUMN_SIGNATURE,
-	MODSFSMAIN_FILELIST_COLUMN_EOL
-};
-
-class SfsCtrl;
-
-class ModSfsMainPanelImpl : public ModSfsMainPanelBase
+Suite *
+getTestSuite(void)
 {
-	private:
-		wxString	 columnNames_[MODSFS_LIST_COLUMN_EOL];
-		PolicyRuleSet	*userRuleSet_;
-		PolicyRuleSet	*adminRuleSet_;
-		SfsCtrl		*sfsCtrl_;
+	Suite *testSuite;
+	TCase *tc_SfsDir;
 
-		void OnLoadRuleSet(wxCommandEvent&);
+	testSuite = suite_create("Sfs");
+	tc_SfsDir = getTc_SfsDir();
 
-		void initSfsMain();
-		void destroySfsMain();
-		void updateSfsList();
-		void OnSfsMainDirCtrlSelChanged(wxTreeEvent&);
-		void OnSfsDirChanged(wxCommandEvent&);
-		void OnSfsMainFilterButtonClicked(wxCommandEvent&);
-		void OnSfsMainInverseCheckboxClicked(wxCommandEvent&);
+	suite_add_tcase(testSuite, tc_SfsDir);
 
-	public:
-		ModSfsMainPanelImpl(wxWindow*, wxWindowID);
-		~ModSfsMainPanelImpl();
-
-		friend class ModSfsAddPolicyVisitor;
-};
-
-#endif /* __ModSfsMainPanelImpl__ */
+	return (testSuite);
+}

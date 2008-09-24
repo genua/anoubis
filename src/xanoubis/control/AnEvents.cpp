@@ -183,3 +183,9 @@ DEFINE_LOCAL_EVENT_TYPE(anEVT_COMMUNICATOR_ERROR)
  * which checksum request failed
  */
 DEFINE_LOCAL_EVENT_TYPE(anEVT_CHECKSUM_ERROR)
+
+/*
+ * The content of SfsDirectory has changed. The view needs to be
+ * updated.
+ */
+DEFINE_LOCAL_EVENT_TYPE(anEVT_SFSDIR_CHANGED)

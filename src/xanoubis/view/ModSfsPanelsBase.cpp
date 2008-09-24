@@ -110,7 +110,7 @@ ModSfsMainPanelBase::ModSfsMainPanelBase( wxWindow* parent, wxWindowID id, const
 	
 	gbSizer2->Add( SfsMainDirCtrl, wxGBPosition( 1, 0 ), wxGBSpan( 4, 1 ), wxEXPAND | wxALL, 5 );
 	
-	SfsMainListCtrl = new wxListCtrl( pan_SfsMain, wxID_ANY, wxDefaultPosition, wxSize( -1,-1 ), wxLC_EDIT_LABELS|wxLC_HRULES|wxLC_REPORT|wxLC_SINGLE_SEL );
+	SfsMainListCtrl = new wxListCtrl( pan_SfsMain, wxID_ANY, wxDefaultPosition, wxSize( -1,-1 ), wxLC_HRULES|wxLC_REPORT|wxLC_SINGLE_SEL );
 	SfsMainListCtrl->SetMinSize( wxSize( 500,280 ) );
 	
 	gbSizer2->Add( SfsMainListCtrl, wxGBPosition( 2, 1 ), wxGBSpan( 1, 1 ), wxALL|wxEXPAND, 5 );

@@ -192,6 +192,10 @@ xanoubis_SOURCES= \
 	model/StatusNotify.h \
 	model/AlfPolicy.cpp \
 	model/AlfPolicy.h \
+	model/SfsDirectory.cpp \
+	model/SfsDirectory.h \
+	model/SfsEntry.cpp \
+	model/SfsEntry.h \
 	model/SfsPolicy.cpp \
 	model/SfsPolicy.h \
 	model/AppPolicy.cpp \
@@ -270,6 +274,8 @@ xanoubis_SOURCES= \
 	control/RuleSetSearchPolicyVisitor.h \
 	control/RuleEditorChecksumVisitor.cpp \
 	control/RuleEditorChecksumVisitor.h \
+	control/SfsCtrl.cpp \
+	control/SfsCtrl.h \
 	control/VersionCtrl.cpp \
 	control/VersionCtrl.h \
 	pattern/PolicyVisitor.cpp \

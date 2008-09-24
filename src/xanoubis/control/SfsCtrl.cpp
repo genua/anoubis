@@ -25,53 +25,59 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __ModSfsMainPanelImpl__
-#define __ModSfsMainPanelImpl__
-
 #include "AnEvents.h"
-#include "ModSfsPanelsBase.h"
-#include "PolicyRuleSet.h"
+#include "SfsCtrl.h"
 
-enum modSfsListColumns {
-	MODSFS_LIST_COLUMN_PRIO = 0,
-	MODSFS_LIST_COLUMN_PROG,
-	MODSFS_LIST_COLUMN_HASHT,
-	MODSFS_LIST_COLUMN_HASH,
-	MODSFS_LIST_COLUMN_EOL
-};
-
-enum modSfsMainFileListColumns {
-	MODSFSMAIN_FILELIST_COLUMN_FILE = 0,
-	MODSFSMAIN_FILELIST_COLUMN_CHECKSUM,
-	MODSFSMAIN_FILELIST_COLUMN_SIGNATURE,
-	MODSFSMAIN_FILELIST_COLUMN_EOL
-};
-
-class SfsCtrl;
-
-class ModSfsMainPanelImpl : public ModSfsMainPanelBase
+wxString
+SfsCtrl::getPath() const
 {
-	private:
-		wxString	 columnNames_[MODSFS_LIST_COLUMN_EOL];
-		PolicyRuleSet	*userRuleSet_;
-		PolicyRuleSet	*adminRuleSet_;
-		SfsCtrl		*sfsCtrl_;
+	return (sfsDir_.getPath());
+}
 
-		void OnLoadRuleSet(wxCommandEvent&);
+void
+SfsCtrl::setPath(const wxString &path)
+{
+	if (sfsDir_.setPath(path))
+		sendChangedEvent();
+}
 
-		void initSfsMain();
-		void destroySfsMain();
-		void updateSfsList();
-		void OnSfsMainDirCtrlSelChanged(wxTreeEvent&);
-		void OnSfsDirChanged(wxCommandEvent&);
-		void OnSfsMainFilterButtonClicked(wxCommandEvent&);
-		void OnSfsMainInverseCheckboxClicked(wxCommandEvent&);
+wxString
+SfsCtrl::getFilter() const
+{
+	return (sfsDir_.getFilter());
+}
 
-	public:
-		ModSfsMainPanelImpl(wxWindow*, wxWindowID);
-		~ModSfsMainPanelImpl();
+void
+SfsCtrl::setFilter(const wxString &filter)
+{
+	if (sfsDir_.setFilter(filter))
+		sendChangedEvent();
+}
 
-		friend class ModSfsAddPolicyVisitor;
-};
+bool
+SfsCtrl::isFilterInversed() const
+{
+	return (sfsDir_.isFilterInversed());
+}
 
-#endif /* __ModSfsMainPanelImpl__ */
+void
+SfsCtrl::setFilterInversed(bool inversed)
+{
+	if (sfsDir_.setFilterInversed(inversed))
+		sendChangedEvent();
+}
+
+const SfsDirectory &
+SfsCtrl::getSfsDirectory() const
+{
+	return (this->sfsDir_);
+}
+
+void
+SfsCtrl::sendChangedEvent()
+{
+	wxCommandEvent event(anEVT_SFSDIR_CHANGED);
+	event.SetEventObject(this);
+
+	ProcessEvent(event);
+}

@@ -25,53 +25,69 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __ModSfsMainPanelImpl__
-#define __ModSfsMainPanelImpl__
+#include "SfsEntry.h"
 
-#include "AnEvents.h"
-#include "ModSfsPanelsBase.h"
-#include "PolicyRuleSet.h"
-
-enum modSfsListColumns {
-	MODSFS_LIST_COLUMN_PRIO = 0,
-	MODSFS_LIST_COLUMN_PROG,
-	MODSFS_LIST_COLUMN_HASHT,
-	MODSFS_LIST_COLUMN_HASH,
-	MODSFS_LIST_COLUMN_EOL
-};
-
-enum modSfsMainFileListColumns {
-	MODSFSMAIN_FILELIST_COLUMN_FILE = 0,
-	MODSFSMAIN_FILELIST_COLUMN_CHECKSUM,
-	MODSFSMAIN_FILELIST_COLUMN_SIGNATURE,
-	MODSFSMAIN_FILELIST_COLUMN_EOL
-};
-
-class SfsCtrl;
-
-class ModSfsMainPanelImpl : public ModSfsMainPanelBase
+SfsEntry::SfsEntry()
 {
-	private:
-		wxString	 columnNames_[MODSFS_LIST_COLUMN_EOL];
-		PolicyRuleSet	*userRuleSet_;
-		PolicyRuleSet	*adminRuleSet_;
-		SfsCtrl		*sfsCtrl_;
+	this->path_ = wxEmptyString;
+	this->checksumAttr_ = SFSENTRY_CHECKSUM_UNKNOWN;
+	this->signatureAttr_ = SFSENTRY_SIGNATURE_UNKNOWN;
+}
 
-		void OnLoadRuleSet(wxCommandEvent&);
+SfsEntry::SfsEntry(const wxString &path)
+{
+	this->path_ = path;
+	this->checksumAttr_ = SFSENTRY_CHECKSUM_UNKNOWN;
+	this->signatureAttr_ = SFSENTRY_SIGNATURE_UNKNOWN;
+}
 
-		void initSfsMain();
-		void destroySfsMain();
-		void updateSfsList();
-		void OnSfsMainDirCtrlSelChanged(wxTreeEvent&);
-		void OnSfsDirChanged(wxCommandEvent&);
-		void OnSfsMainFilterButtonClicked(wxCommandEvent&);
-		void OnSfsMainInverseCheckboxClicked(wxCommandEvent&);
+SfsEntry::SfsEntry(const wxString &path, ChecksumAttr csAttr,
+    SignatureAttr sigAttr)
+{
+	this->path_ = path;
+	this->checksumAttr_ = csAttr;
+	this->signatureAttr_ = sigAttr;
+}
 
-	public:
-		ModSfsMainPanelImpl(wxWindow*, wxWindowID);
-		~ModSfsMainPanelImpl();
+SfsEntry::SfsEntry(const SfsEntry &other)
+{
+	this->path_ = other.path_;
+	this->checksumAttr_ = other.checksumAttr_;
+	this->signatureAttr_ = other.signatureAttr_;
+}
 
-		friend class ModSfsAddPolicyVisitor;
-};
+wxString
+SfsEntry::getPath() const
+{
+	return (this->path_);
+}
 
-#endif /* __ModSfsMainPanelImpl__ */
+void
+SfsEntry::setPath(const wxString &path)
+{
+	this->path_ = path;
+}
+
+SfsEntry::ChecksumAttr
+SfsEntry::getChecksumAttr() const
+{
+	return (this->checksumAttr_);
+}
+
+void
+SfsEntry::setChecksumAttr(ChecksumAttr attr)
+{
+	this->checksumAttr_ = attr;
+}
+
+SfsEntry::SignatureAttr
+SfsEntry::getSignatureAttr() const
+{
+	return (this->signatureAttr_);
+}
+
+void
+SfsEntry::setSignatureAttr(SignatureAttr attr)
+{
+	this->signatureAttr_ = attr;
+}
