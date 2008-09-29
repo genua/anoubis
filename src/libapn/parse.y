@@ -48,6 +48,7 @@
 #include <string.h>
 #include <syslog.h>
 #include <unistd.h>
+#include <assert.h>
 
 #ifdef LINUX
 #include <bsdcompat.h>
@@ -175,7 +176,7 @@ typedef struct {
 %token	ALLOW DENY ALF SFS SB VS CAP CONTEXT RAW ALL OTHER LOG CONNECT ACCEPT
 %token	INET INET6 FROM TO PORT ANY SHA256 TCP UDP DEFAULT NEW ASK ALERT
 %token	READ WRITE EXEC CHMOD ERROR APPLICATION RULE HOST TFILE BOTH SEND
-%token	RECEIVE TIMEOUT STATEFUL TASK UNTIL COLON PATH KEY UID
+%token	RECEIVE TIMEOUT STATEFUL TASK UNTIL COLON PATH KEY UID CSUM
 %token	<v.string>		STRING
 %token	<v.number>		NUMBER
 %type	<v.app>			app apps sfsapp
@@ -199,7 +200,7 @@ typedef struct {
 %type	<v.rulehead>		alfrule_l sfsrule_l sbrule_l
 %type	<v.afrule>		alffilterrule
 %type	<v.acaprule>		alfcaprule
-%type	<v.sbaccess>		sbaccess sbpred sbpath sbuid sbkey
+%type	<v.sbaccess>		sbaccess sbpred sbpath sbuid sbkey sbcsum
 %type	<v.dfltrule>		defaultrule alfdefault sfsdefault sbdefault
 %type	<v.ctxrule>		ctxrule
 %type	<v.sfscheck>		sfscheckrule
@@ -977,9 +978,9 @@ sbaccess	: action log sbpred sbrwx {
 		;
 
 sbpred		: ANY {
+			$$.cstype = SBCS_NONE;
+			$$.cs.subject = NULL;	/* Just to be sure */
 			$$.path = NULL;
-			$$.subject = NULL;
-			$$.uid = -1;
 		}
 		| sbpath {
 			$$ = $1;
@@ -990,27 +991,37 @@ sbpred		: ANY {
 		| sbuid {
 			$$ = $1;
 		}
+		| sbcsum {
+			$$ = $1;
+		}
 		| sbpath sbkey {
 			$$ = $1;
-			$$.subject = $2.subject;
+			$$.cstype = $2.cstype;
+			$$.cs.subject = $2.cs.subject;
 		}
 		| sbpath sbuid {
 			$$ = $1;
-			$$.uid = $2.uid;
+			$$.cstype = $2.cstype;
+			$$.cs.uid = $2.cs.uid;
+		}
+		| sbpath sbcsum {
+			$$ = $1;
+			$$.cstype = $2.cstype;
+			$$.cs.csum = $2.cs.csum;
 		}
 		;
 
 sbpath		: PATH STRING {
 			$$.path = $2;
-			$$.subject = NULL;
-			$$.uid = -1;
+			$$.cstype = SBCS_NONE;
+			$$.cs.subject = NULL;
 		}
 		;
 
 sbkey		: KEY STRING {
 			$$.path = NULL;
-			$$.subject = $2;
-			$$.uid = -1;
+			$$.cstype = SBCS_KEY;
+			$$.cs.subject = $2;
 		}
 		;
 
@@ -1020,8 +1031,20 @@ sbuid		: UID NUMBER {
 				YYERROR;
 			}
 			$$.path = NULL;
-			$$.subject = NULL;
-			$$.uid = $2;
+			$$.cstype = SBCS_UID;
+			$$.cs.uid = $2;
+		};
+sbcsum		: CSUM hashspec {
+			$$.path = NULL;
+			assert(sizeof($2.value) == ANOUBIS_CS_LEN);
+			$$.cs.csum = malloc(sizeof($2.value));
+			if ($$.cs.csum == NULL) {
+				$$.cstype = SBCS_NONE;
+				yyerror("Out of memory");
+			} else {
+				$$.cstype = SBCS_CSUM;
+				bcopy($2.value, $$.cs.csum, sizeof($2.value));
+			}
 		};
 
 sbrwx		: STRING {
@@ -1276,6 +1299,7 @@ lookup(char *s)
 		{ "chmod",	CHMOD },
 		{ "connect",	CONNECT },
 		{ "context",	CONTEXT },
+		{ "csum",	CSUM },
 		{ "default",	DEFAULT },
 		{ "deny",	DENY },
 		{ "exec",	EXEC },

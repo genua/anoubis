@@ -1122,24 +1122,43 @@ apn_print_hash(u_int8_t *hash, int len, FILE *file)
 static int
 apn_print_sbaccess(struct apn_sbaccess *sba, FILE *file)
 {
-	if (sba->uid >= 0 && sba->subject)
-		return 1;
+	int i;
 	if ((sba->amask & SBA_ALL) == 0)
 		return 1;
 	if (apn_print_action(sba->action, 1, file))
 		return 1;
 	if (apn_print_log(sba->log, file))
 		return 1;
-	if (!sba->path && !sba->subject && sba->uid < 0) {
+	if (!sba->path && sba->cstype == SBCS_NONE) {
 		fprintf(file, " any");
 	} else {
 		if (sba->path)
-			fprintf(file, " path %s ", sba->path);
-		if (sba->subject)
-			fprintf(file, " key %s ", sba->subject);
-		if (sba->uid >= 0)
-			fprintf(file, " uid %d ", sba->uid);
+			fprintf(file, " path %s", sba->path);
+		switch (sba->cstype) {
+		case SBCS_NONE:
+			break;
+		case SBCS_UID:
+			if (sba->cs.uid < 0)
+				return 1;
+			fprintf(file, " uid %d", sba->cs.uid);
+			break;
+		case SBCS_CSUM:
+			if (!sba->cs.csum)
+				return 1;
+			fprintf(file, " csum ");
+			for (i=0; i<ANOUBIS_CS_LEN; ++i)
+				fprintf(file, "%02x", sba->cs.csum[i]);
+			break;
+		case SBCS_KEY:
+			if (!sba->cs.subject)
+				return  1;
+			fprintf(file, " key %s ", sba->cs.subject);
+			break;
+		default:
+			return 1;
+		}
 	}
+	fprintf(file, " ");
 	if (sba->amask & SBA_READ)
 		fprintf(file, "r");
 	if (sba->amask & SBA_WRITE)
@@ -1236,9 +1255,15 @@ apn_free_sbaccess(struct apn_sbaccess *sba)
 		free(sba->path);
 		sba->path = NULL;
 	}
-	if (sba->subject) {
-		free(sba->subject);
-		sba->subject = NULL;
+	switch (sba->cstype) {
+	case SBCS_KEY:
+		free(sba->cs.subject);
+		sba->cs.subject = NULL;
+		break;
+	case SBCS_CSUM:
+		free(sba->cs.csum);
+		sba->cs.csum = NULL;
+		break;
 	}
 }
 

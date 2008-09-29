@@ -176,13 +176,22 @@ struct apn_sfscheck {
 #define		SBA_EXEC	0x0004
 #define		SBA_ALL		0x0007
 
+#define		SBCS_NONE	0
+#define		SBCS_CSUM	1
+#define		SBCS_UID	2
+#define		SBCS_KEY	3
+
 struct apn_sbaccess {
-	char * path;
-	char * subject;
-	int uid;
-	unsigned int amask;
-	int log;
-	int action;
+	char			*path;
+	int			 cstype;
+	union {
+		char		*subject;
+		int		 uid;
+		u_int8_t	*csum;
+	} cs;
+	unsigned int		 amask;
+	int			 log;
+	int			 action;
 };
 
 enum {
