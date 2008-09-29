@@ -70,6 +70,7 @@ anoubisd_SOURCES= \
 	pe_context.c \
 	pe_alf.c \
 	pe_sfs.c \
+	pe_sandbox.c \
 	pe_pubkey.c \
 	printconf.c \
 	session.c \
@@ -95,6 +96,7 @@ anoubisd_SOURCES_flawfinder= \
 	pe_context.c_flawfinder \
 	pe_alf.c_flawfinder \
 	pe_sfs.c_flawfinder \
+	pe_sandbox.c_flawfinder \
 	pe_pubkey.c_flawfinder \
 	printconf.c_flawfinder \
 	session.c_flawfinder \
@@ -119,6 +121,7 @@ anoubisd_SOURCES_lint= \
 	pe_context.c_lint \
 	pe_alf.c_lint \
 	pe_sfs.c_lint \
+	pe_sandbox.c_lint \
 	pe_pubkey.c_lint \
 	printconf.c_lint \
 	session.c_lint \
@@ -136,6 +139,7 @@ anoubisd_SOURCES_splint= \
 	pe_context.c_splint \
 	pe_alf.c_splint \
 	pe_sfs.c_splint \
+	pe_sandbox.c_splint \
 	pe_pubkey.c_splint \
 	printconf.c_splint \
 	session.c_splint \

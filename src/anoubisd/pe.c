@@ -263,10 +263,33 @@ pe_handle_alf(struct eventdev_hdr *hdr)
 	return (reply);
 }
 
+static anoubisd_reply_t *
+reply_merge(anoubisd_reply_t *r1, anoubisd_reply_t *r2)
+{
+	if (!r1)
+		return r2;
+	if (!r2)
+		return r1;
+	if (r1->ask == 0 && r1->reply)
+		goto use1;
+	if (r2->ask == 0 && r2->reply)
+		goto use2;
+	if (r1->ask)
+		goto use1;
+	if (r2->ask)
+		goto use2;
+use1:
+	free(r2);
+	return r1;
+use2:
+	free(r1);
+	return r2;
+}
+
 anoubisd_reply_t *
 pe_handle_sfs(anoubisd_msg_sfsopen_t *sfsmsg)
 {
-	anoubisd_reply_t		*reply = NULL;
+	anoubisd_reply_t		*reply = NULL, *reply2 = NULL;
 	struct eventdev_hdr		*hdr;
 	time_t				 now;
 
@@ -288,8 +311,9 @@ pe_handle_sfs(anoubisd_msg_sfsopen_t *sfsmsg)
 		return (NULL);
 	}
 	reply = pe_decide_sfs(hdr->msg_uid, sfsmsg, now);
-
-	return (reply);
+	reply2 = pe_decide_sandbox(hdr->msg_uid, sfsmsg, now);
+	/* XXX CEH: This might need more thought. */
+	return reply_merge(reply, reply2);
 }
 
 void

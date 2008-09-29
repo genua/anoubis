@@ -129,5 +129,7 @@ int			 pe_in_scope(struct apn_scope *,
 anoubisd_reply_t	*pe_decide_alf(struct pe_proc *, struct eventdev_hdr *);
 anoubisd_reply_t	*pe_decide_sfs(uid_t, anoubisd_msg_sfsopen_t*,
 			     time_t now);
+anoubisd_reply_t	*pe_decide_sandbox(uid_t, anoubisd_msg_sfsopen_t *,
+			     time_t now);
 
 #endif	/* _PE_H_ */
