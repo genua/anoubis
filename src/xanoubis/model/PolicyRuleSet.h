@@ -58,6 +58,7 @@ class PolicyRuleSet : public wxEvtHandler
 		int			 priority_;
 		wxString		 origin_;
 		long			 id_;
+		uid_t			 uid_;
 		struct apn_ruleset	*ruleSet_;
 		PolicyList		 alfList_;
 		PolicyList		 sfsList_;
@@ -74,8 +75,8 @@ class PolicyRuleSet : public wxEvtHandler
 		   EscalationNotify *);
 
 	public:
-		PolicyRuleSet(int, struct apn_ruleset *);
-		PolicyRuleSet(int, wxString, bool);
+		PolicyRuleSet(int, uid_t, struct apn_ruleset *);
+		PolicyRuleSet(int, uid_t, wxString, bool);
 		~PolicyRuleSet(void);
 
 		void accept(PolicyVisitor&);
@@ -94,6 +95,7 @@ class PolicyRuleSet : public wxEvtHandler
 
 		wxString getOrigin(void);
 		long getId(void) const;
+		uid_t getUid(void) const;
 };
 
 #endif	/* _POLICYRULESET_H_ */

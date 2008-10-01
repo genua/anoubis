@@ -61,7 +61,7 @@ createPolicyRuleSet(int priority)
 		fail("Couldn't create apn rule set.");
 	}
 
-	return (new PolicyRuleSet(priority, rs));
+	return (new PolicyRuleSet(priority, geteuid(), rs));
 }
 
 START_TEST(ProfileMgr_Profiles)
@@ -216,8 +216,11 @@ START_TEST(ProfileMgr_store_multi_user_admin)
 	id = pm->getUserRsId(ProfileMgr::PROFILE_HIGH);
 	fail_if(id != rs1->getId(), "Found a different rule set (not rs1).");
 
-	id = pm->getAdminRsId(ProfileMgr::PROFILE_HIGH);
+	id = pm->getAdminRsId(ProfileMgr::PROFILE_HIGH, geteuid());
 	fail_if(id != rs2->getId(), "Found a different rule set (not rs2).");
+
+	id = pm->getAdminRsId(ProfileMgr::PROFILE_HIGH, 33);
+	fail_if(id != -1, "Found admin rule set for unknown user.");
 
 	id = pm->getUserRsId(ProfileMgr::PROFILE_NONE);
 	fail_if(id != -1, "Found rule set where no one should be.");
@@ -236,10 +239,13 @@ START_TEST(ProfileMgr_getAdminId)
 	result = pm->storeRuleSet(ProfileMgr::PROFILE_NONE, rs);
 	fail_if(result != true, "Couldn't store rule set.");
 
-	id = pm->getAdminRsId(ProfileMgr::PROFILE_NONE);
+	id = pm->getAdminRsId(ProfileMgr::PROFILE_NONE, geteuid());
 	fail_if(id != rs->getId(), "Couldn't find admin rule set.");
 
-	id = pm->getAdminRsId(ProfileMgr::PROFILE_HIGH);
+	id = pm->getAdminRsId(ProfileMgr::PROFILE_NONE, 33);
+	fail_if(id != -1, "Found admin rule set for unknown user.");
+
+	id = pm->getAdminRsId(ProfileMgr::PROFILE_HIGH, geteuid());
 	fail_if(id != -1, "Found unexpeced admin rule set.");
 
 	id = pm->getUserRsId(ProfileMgr::PROFILE_NONE);
@@ -268,10 +274,10 @@ START_TEST(ProfileMgr_getUserId)
 	id = pm->getUserRsId(ProfileMgr::PROFILE_HIGH);
 	fail_if(id != -1, "Found unexpeced user rule set.");
 
-	id = pm->getAdminRsId(ProfileMgr::PROFILE_NONE);
+	id = pm->getAdminRsId(ProfileMgr::PROFILE_NONE, geteuid());
 	fail_if(id != -1, "Found unexpeced admin rule set.");
 
-	id = pm->getAdminRsId();
+	id = pm->getAdminRsId(geteuid());
 	fail_if(id != -1, "Found unexpeced admin rule set.");
 }
 END_TEST

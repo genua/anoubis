@@ -61,9 +61,11 @@
 
 #define CALLOC_STRUCT(type) (struct type *)calloc(1, sizeof(struct type))
 
-PolicyRuleSet::PolicyRuleSet(int priority, struct apn_ruleset *ruleSet)
+PolicyRuleSet::PolicyRuleSet(int priority, uid_t uid,
+    struct apn_ruleset *ruleSet)
 {
 	id_ = wxNewId();
+	uid_ = uid;
 	ruleSet_ = NULL;
 	priority_ = priority;
 	origin_ = wxT("Daemon");
@@ -73,9 +75,11 @@ PolicyRuleSet::PolicyRuleSet(int priority, struct apn_ruleset *ruleSet)
 	    wxCommandEventHandler(PolicyRuleSet::OnAnswerEscalation));
 }
 
-PolicyRuleSet::PolicyRuleSet(int priority, wxString fileName, bool checkPerm)
+PolicyRuleSet::PolicyRuleSet(int priority, uid_t uid, wxString fileName,
+    bool checkPerm)
 {
 	id_ = wxNewId();
+	uid_ = uid;
 	ruleSet_ = NULL;
 	priority_ = priority;
 	origin_ = fileName;
@@ -703,4 +707,10 @@ long
 PolicyRuleSet::getId(void) const
 {
 	return (id_);
+}
+
+uid_t
+PolicyRuleSet::getUid(void) const
+{
+	return (uid_);
 }

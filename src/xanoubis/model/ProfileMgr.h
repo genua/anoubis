@@ -40,8 +40,8 @@
  * This class is for managing profiles.
  * You can store as many rule sets as you want to profile NONE.
  * To all other profiles only two rule sets (one for each user
- * or admin set) are store able. If a rule set already exists, it's
- * re-mapped to profile NONE.
+ * or admin set) are storeable. If a rule set already exists, it's
+ * remaped to profile NONE.
  * Be aware that unused/not-acquired rule sets mapped to profile
  * NONE are deleted during a store operation.
  */
@@ -69,7 +69,7 @@ class ProfileMgr
 		/**
 		 * Acquire a rule set.
 		 * This increments the reference counter of a given rule set.
-		 * @param[in] 1st The id of rule set to acquire.
+		 * @param[in] 1st The id of rule set to aquire.
 		 * @return True on success.
 		 * @see releaseRuleSet()
 		 */
@@ -101,6 +101,15 @@ class ProfileMgr
 		profile_t getProfile(void) const;
 
 		/**
+		 * Get the name of the current profile.
+		 * Get the readable name of the current profile.
+		 * @param None.
+		 * @return The name of the current profile.
+		 * @see getProfile()
+		 */
+		wxString getProfileName(void) const;
+
+		/**
 		 * Set current profile.
 		 * @param[in] 1st The new profile.
 		 * @return Nothing.
@@ -111,7 +120,7 @@ class ProfileMgr
 		/**
 		 * Get user rule set id.
 		 * Get the id of the rule set assigned to the given
-		 * profile and being the user rule set.
+		 * profile and beeing the user rule set.
 		 * @param[in] 1st The profile in question.
 		 * @return The id of the rule set or -1 if nothing found.
 		 */
@@ -120,7 +129,7 @@ class ProfileMgr
 		/**
 		 * Get user rule set id.
 		 * Get the id of the rule set assigned to the current
-		 * profile and being the user rule set.
+		 * profile and beeing the user rule set.
 		 * @param None.
 		 * @return The id of the rule set or -1 if nothing found.
 		 * @override
@@ -129,26 +138,27 @@ class ProfileMgr
 
 		/**
 		 * Get admin rule set id.
-		 * Get the id of the rule set assigned to the given
-		 * profile and being the admin rule set.
+		 * Get the id of the rule set assigned to the given profile,
+		 * the user by it's id and beeing the admin rule set.
 		 * @param[in] 1st The profile in question.
+		 * @param[in] 2nd The uid of the user.
 		 * @return The id of the rule set or -1 if nothing found.
 		 */
-		long getAdminRsId(profile_t) const;
+		long getAdminRsId(profile_t, uid_t) const;
 
 		/**
 		 * Get admin rule set id.
-		 * Get the id of the rule set assigned to the current
-		 * profile and being the admin rule set.
-		 * @param None.
+		 * Get the id of the rule set assigned to the current profile,
+		 * the user by it's id and beeing the admin rule set.
+		 * @param[in] 1st The uid of the user.
 		 * @return The id of the rule set or -1 if nothing found.
 		 * @override
 		 */
-		long getAdminRsId(void) const;
+		long getAdminRsId(uid_t) const;
 
 		/**
 		 * Store rule set.
-		 * Store a given rule set to the (also given profile).
+		 * Store a given rule set to the (also given) profile.
 		 *
 		 * If the rule set is already stored, but mapped to a different
 		 * profile, it's re-mapped to the given profile.
@@ -230,6 +240,14 @@ class ProfileMgr
 				bool isAdmin(void) const;
 
 				/**
+				 * Answers the question weather the assigned
+				 * rule set belongs to the given user.
+				 * @param[in] 1st The uid of the user.
+				 * @return True if the id's are matching.
+				 */
+				bool belongsTo(uid_t) const;
+
+				/**
 				 * Get use-status.
 				 * @param None.
 				 * @return True if reference count > 0
@@ -245,7 +263,7 @@ class ProfileMgr
 				profile_t getProfile(void) const;
 
 				/**
-				 * Re-map the rule set to the new profile.
+				 * Remap the rule set to the new profile.
 				 * @param[in] 1st The new profile.
 				 * @return Nothing.
 				 * @see getProfile()
@@ -281,16 +299,17 @@ class ProfileMgr
 
 		/**
 		 * Seek for rule set id.
-		 * This method is used to get the id of a rule set mapped
-		 * to the given profile and being admin rule set according
-		 * to the given flag.
+		 * This method is used to get the id of a rule set mapped to the
+		 * given profile, the user by it's id and beeing admin rule set
+		 * according to the given flag.
 		 * @param[in] 1st The profile to search in.
 		 * @param[in] 2nd The flag if the admin rule set is requested.
+		 * @param[in] 3rd The user in question.
 		 * @return The id of the rule set or -1 if none was found.
 		 * @see getUserRsId()
 		 * @see getAdminRsId()
 		 */
-		long seekId(profile_t, bool) const;
+		long seekId(profile_t, bool, uid_t) const;
 };
 
 #endif	/* _PROFILEMGR_H_ */

@@ -101,6 +101,32 @@ ProfileMgr::getProfile(void) const
 	return (currentProfile_);
 }
 
+wxString
+ProfileMgr::getProfileName(void) const
+{
+	wxString result;
+
+	switch (currentProfile_) {
+	case PROFILE_HIGH:
+		result = wxT("high");
+		break;
+	case PROFILE_MEDIUM:
+		result = wxT("medium");
+		break;
+	case PROFILE_ADMIN:
+		result = wxT("admin");
+		break;
+	case PROFILE_NONE:
+		result = _T("none");
+		break;
+	default:
+		result = _T("unknown");
+		break;
+	}
+
+	return (result);
+}
+
 void
 ProfileMgr::setProfile(profile_t profile)
 {
@@ -110,7 +136,7 @@ ProfileMgr::setProfile(profile_t profile)
 long
 ProfileMgr::getUserRsId(profile_t profile) const
 {
-	return (seekId(profile, false));
+	return (seekId(profile, false, geteuid()));
 }
 
 long
@@ -120,15 +146,15 @@ ProfileMgr::getUserRsId(void) const
 }
 
 long
-ProfileMgr::getAdminRsId(profile_t profile) const
+ProfileMgr::getAdminRsId(profile_t profile, uid_t uid) const
 {
-	return (seekId(profile, true));
+	return (seekId(profile, true, uid));
 }
 
 long
-ProfileMgr::getAdminRsId(void) const
+ProfileMgr::getAdminRsId(uid_t uid) const
 {
-	return (getAdminRsId(currentProfile_));
+	return (getAdminRsId(currentProfile_, uid));
 }
 
 
@@ -200,7 +226,7 @@ ProfileMgr::wipeList(void)
 }
 
 long
-ProfileMgr::seekId(profile_t profile, bool isAdmin) const
+ProfileMgr::seekId(profile_t profile, bool isAdmin, uid_t uid) const
 {
 	std::list<RuleSetListEntry *>::const_iterator	it;
 	long						result;
@@ -208,8 +234,9 @@ ProfileMgr::seekId(profile_t profile, bool isAdmin) const
 	result = -1;
 
 	for (it=ruleSetList_.begin(); it!=ruleSetList_.end(); it++) {
-		if (((*it)->getProfile() == profile) &&
-		    ((*it)->isAdmin()    == isAdmin)    ) {
+		if (((*it)->getProfile()   == profile) &&
+		    ((*it)->isAdmin()      == isAdmin) &&
+		    (*it)->belongsTo(uid) ) {
 			result = (*it)->getId();
 			break;
 		}
@@ -262,6 +289,16 @@ bool
 ProfileMgr::RuleSetListEntry::isAdmin(void) const
 {
 	return (ruleSet_->isAdmin());
+}
+
+bool
+ProfileMgr::RuleSetListEntry::belongsTo(uid_t uid) const
+{
+	if (ruleSet_->getUid() == uid) {
+		return (true);
+	} else {
+		return (false);
+	}
 }
 
 bool

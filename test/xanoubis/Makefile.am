@@ -79,7 +79,7 @@ libGUIcomponents_CXXFLAGS = \
 	$(GLIB_CFLAGS) \
 	$(NOTIFY_CFLAGS) \
 	$(SSL_CFLAGS)
-libGUIcomponents_DEPENDENCIES = \
+libGUIcomponents_DEPENDS = \
 	$(libGUIcomponents) \
 	$(libanoubischat) \
 	$(libprotocolclient) \
@@ -133,7 +133,7 @@ test_xanoubis_server_SOURCES = \
 testSuite_Patterns_CPPFLAGS = $(libGUIcomponents_CPPFLAGS)
 testSuite_Patterns_CXXFLAGS = $(libGUIcomponents_CXXFLAGS) @CHECK_CFLAGS@
 testSuite_Patterns_LDFLAGS = $(shared_AM_LDFLAGS) -dynamic -L $(RPATH)
-testSuite_Patterns_DEPENDENCIES = $(libGUIcomponents_DEPENDENCIES)
+testSuite_Patterns_DEPENDENCIES = $(libGUIcomponents_DEPENDS)
 testSuite_Patterns_LDADD = \
 	-lGUIcomponents \
 	$(libGUIcomponents_LDADD) \
@@ -156,7 +156,7 @@ testSuite_Patterns_SOURCES = \
 testSuite_Profiles_CPPFLAGS = $(libGUIcomponents_CPPFLAGS)
 testSuite_Profiles_CXXFLAGS = $(libGUIcomponents_CXXFLAGS) @CHECK_CFLAGS@
 testSuite_Profiles_LDFLAGS = $(shared_AM_LDFLAGS) -dynamic -L $(RPATH)
-testSuite_Profiles_DEPENDENCIES = $(libGUIcomponents_DEPENDENCIES)
+testSuite_Profiles_DEPENDENCIES = $(libGUIcomponents_DEPENDS)
 testSuite_Profiles_LDADD = \
 	-lGUIcomponents \
 	$(libGUIcomponents_LDADD) \
@@ -171,7 +171,8 @@ endif
 testSuite_Profiles_SOURCES = \
 	testrunner.cpp \
 	suite_Profiles/testSuite.cpp \
-	suite_Profiles/tc_ProfileMgr.cpp
+	suite_Profiles/tc_ProfileMgr.cpp \
+	suite_Profiles/tc_ProfileCtrl.cpp
 
 #
 # Testsuite: Sfs
@@ -179,7 +180,7 @@ testSuite_Profiles_SOURCES = \
 testSuite_Sfs_CPPFLAGS = $(libGUIcomponents_CPPFLAGS)
 testSuite_Sfs_CXXFLAGS = $(libGUIcomponents_CXXFLAGS) @CHECK_CFLAGS@
 testSuite_Sfs_LDFLAGS = $(shared_AM_LDFLAGS) -dynamic -L $(RPATH)
-testSuite_Sfs_DEPENDENCIES = $(libGUIcomponents_DEPENDENCIES)
+testSuite_Sfs_DEPENDENCIES = $(libGUIcomponents_DEPENDS)
 testSuite_Sfs_LDADD = \
 	-lGUIcomponents \
 	$(libGUIcomponents_LDADD) \

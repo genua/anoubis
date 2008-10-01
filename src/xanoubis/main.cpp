@@ -505,10 +505,10 @@ AnoubisGuiApp::importPolicyRuleSet(int prio, struct apn_ruleset *rule)
 
 	if (prio == 0) {
 		oldAdminRuleSet_ = adminRuleSet_;
-		adminRuleSet_ = new PolicyRuleSet(prio, rule);
+		adminRuleSet_ = new PolicyRuleSet(prio, geteuid(), rule);
 	} else {
 		oldUserRuleSet_ = userRuleSet_;
-		userRuleSet_ = new PolicyRuleSet(prio, rule);
+		userRuleSet_ = new PolicyRuleSet(prio, geteuid(), rule);
 	}
 
 	if (prio == 0) {
@@ -544,7 +544,7 @@ AnoubisGuiApp::importPolicyFile(wxString fileName, bool checkPerm)
 		delete oldUserRuleSet_;
 	}
 	oldUserRuleSet_ = userRuleSet_;
-	userRuleSet_ = new PolicyRuleSet(1, fileName, checkPerm);
+	userRuleSet_ = new PolicyRuleSet(1, geteuid(), fileName, checkPerm);
 
 	event.SetClientData((void*)userRuleSet_);
 	sendEvent(event);
