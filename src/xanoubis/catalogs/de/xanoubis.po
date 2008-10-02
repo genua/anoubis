@@ -2337,22 +2337,22 @@ msgstr "Benachrichtigung bei Eskalationen"
 #: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:280
 #: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:327
 msgid "Check to disable the messaging via Notifier"
-msgstr "Um Benachrichtigung bei Eskalotion zu aktivieren"
+msgstr "Um Benachrichtigung bei Eskalation zu aktivieren"
 
 #: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:287
 #: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:334
 msgid "No Timeout"
-msgstr "Verfallszeit der Benachrichtigung"
+msgstr "Kein zeitliche Restriktion"
 
 #: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:290
 #: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:336
 msgid "Check to let the Notifier never timeout"
-msgstr "Um Benachrichtigungen nicht verfallen zu lassen."
+msgstr "Zeitliche Restriktion von Benachrichtigungen verhindern"
 
 #: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:305
 #: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:349
 msgid "Timeout in Seconds"
-msgstr "Verfallszeit in Sekunden"
+msgstr "Zeitliche Restriktion in Sekunden"
 
 #: src/anoubis/src/xanoubis/view/ModAnoubisPanelsBase.cpp:318
 msgid "Alert Notifier Settings"
