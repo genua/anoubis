@@ -143,6 +143,7 @@ static inline u_int64_t __ntohll(u_int64_t arg)
 #define		ANOUBIS_P_MIN		0x3000
 
 #define		ANOUBIS_P_CSUMREQUEST	0x3100
+#define		ANOUBIS_P_CSUM_LIST	0x3101
 
 #define		ANOUBIS_P_SFSDISABLE	0x3200
 
@@ -197,6 +198,13 @@ typedef struct {
 	u32n		error;
 	u_int8_t	payload[0];
 } __attribute__((packed)) Anoubis_AckPayloadMessage;
+
+typedef struct {
+	u32n		type;
+	u32n		flags;
+	u32n		error;
+	u_int8_t	payload[0];
+} __attribute__((packed)) Anoubis_ChecksumPayloadMessage;
 
 typedef struct {
 	u32n	type;
@@ -300,6 +308,7 @@ typedef struct {
 #define ANOUBIS_CHECKSUM_OP_DEL		0x0002UL
 #define ANOUBIS_CHECKSUM_OP_GET		0x0003UL
 #define ANOUBIS_CHECKSUM_OP_ADDSUM	0x0005UL
+#define ANOUBIS_CHECKSUM_OP_LIST	0x0006UL
 
 typedef struct {
 	u32n	type;

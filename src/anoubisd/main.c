@@ -47,6 +47,7 @@
 #include <signal.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include <dirent.h>
 #include <stdlib.h>
 #include <string.h>
 #include <syslog.h>
@@ -107,6 +108,9 @@ struct event_info_main {
 	struct timeval	*tv;
 	int anoubisfd;
 };
+
+void	send_checksum_list(u_int64_t token, const char *path,
+		struct event_info_main *ev_info);
 
 static char *pid_file_name = ANOUBISD_PIDFILENAME;
 
@@ -661,6 +665,101 @@ dispatch_m2s(int fd, short event __used, /*@dependent@*/ void *arg)
 	DEBUG(DBG_TRACE, "<dispatch_m2s");
 }
 
+void
+send_checksum_list(u_int64_t token, const char *path,
+    struct event_info_main *ev_info)
+{
+	anoubisd_reply_t	*reply;
+	anoubisd_msg_t		*msg;
+	char			*tmp = NULL;
+	int			 flags = POLICY_FLAG_START;
+	int			 size = sizeof(struct anoubisd_reply) + 3000;
+	int			 cnt = 0;
+	int			 error = 0;
+	int			 len = 0;
+	DIR			*sfs_dir;
+	struct	dirent		*sfs_ent;
+
+	sfs_dir = opendir(path);
+	if (!sfs_dir) {
+		error = errno;
+		goto err;
+	}
+
+	sfs_ent = readdir(sfs_dir);
+	while (1) {
+		msg = msg_factory(ANOUBISD_MSG_POLREPLY, size);
+		if (!msg) {
+			log_warn("send_checksum_list: can't allocate memory");
+			master_terminate(ENOMEM);
+			return;
+		}
+		reply = (anoubisd_reply_t*)msg->msg;
+		reply->flags = flags;
+		reply->token = token;
+		reply->timeout = 0;
+		reply->reply = 0;
+
+		while (sfs_ent != NULL) {
+			if ((strcmp(sfs_ent->d_name, ".") == 0) ||
+			    (strcmp(sfs_ent->d_name, "..") == 0)) {
+			    sfs_ent = readdir(sfs_dir);
+				continue;
+			}
+
+			tmp = remove_escape_seq(sfs_ent->d_name);
+			if (!tmp) {
+				log_warn("send_checksum_list: \
+						can't allocate memory");
+				master_terminate(ENOMEM);
+				return;
+			}
+
+			len = strlen(tmp) + 1;
+			cnt += len;
+			if (cnt > 3000) {
+				cnt -= len;
+				free(tmp);
+				break;
+			}
+			memcpy(&reply->msg[cnt - len], tmp, len);
+			free(tmp);
+			sfs_ent = readdir(sfs_dir);
+		}
+
+		reply->len = cnt;
+		cnt = 0;
+
+		if (sfs_ent == NULL)
+			reply->flags |= POLICY_FLAG_END;
+
+		enqueue(&eventq_m2s, msg);
+		event_add(ev_info->ev_m2s, NULL);
+		flags = 0;
+
+		if (sfs_ent == NULL)
+			break;
+	}
+
+	closedir(sfs_dir);
+	return;
+
+err:
+	msg = msg_factory(ANOUBISD_MSG_POLREPLY, size);
+	if (!msg) {
+		log_warn("send_checksum_list: can't allocate memory");
+		master_terminate(ENOMEM);
+	}
+	reply = (anoubisd_reply_t*)msg->msg;
+	reply->token = token;
+	reply->timeout = 0;
+	reply->flags = flags;
+	reply->reply = error;
+	reply->flags |= POLICY_FLAG_END;
+	enqueue(&eventq_m2s, msg);
+	event_add(ev_info->ev_m2s, NULL);
+}
+
 static void
 dispatch_checksumop(anoubisd_msg_t *msg, struct event_info_main *ev_info)
 {
@@ -668,6 +767,7 @@ dispatch_checksumop(anoubisd_msg_t *msg, struct event_info_main *ev_info)
 	anoubisd_msg_checksum_op_t *msg_comm =
 	    (anoubisd_msg_checksum_op_t *)msg->msg;
 	char * path = NULL;
+	char *result = NULL;
 	int err = -EFAULT, op = 0, extra = 0;
 	anoubisd_reply_t * reply;
 	u_int8_t digest[SHA256_DIGEST_LENGTH];
@@ -678,7 +778,25 @@ dispatch_checksumop(anoubisd_msg_t *msg, struct event_info_main *ev_info)
 	if (!VERIFY_LENGTH(&rawmsg, sizeof(Anoubis_ChecksumRequestMessage)))
 		goto out;
 	op = get_value(rawmsg.u.checksumrequest->operation);
-	if (op == ANOUBIS_CHECKSUM_OP_ADDSUM) {
+	if (op == ANOUBIS_CHECKSUM_OP_LIST) {
+		plen = rawmsg.length - CSUM_LEN
+		    - sizeof(Anoubis_ChecksumRequestMessage);
+		path = rawmsg.u.checksumrequest->path;
+		for (i=0; i<plen; ++i) {
+		if (path[i] == 0)
+			break;
+		}
+		if (i >= plen)
+			goto out;
+
+		err = convert_user_path(path, &result, 1);
+		if (err < 0)
+			goto out;
+
+		send_checksum_list(msg_comm->token, result, ev_info);
+		free(result);
+		return;
+	} else if (op == ANOUBIS_CHECKSUM_OP_ADDSUM) {
 		int cslen;
 		if (!VERIFY_LENGTH(&rawmsg, sizeof(Anoubis_ChecksumAddMessage)))
 			goto out;

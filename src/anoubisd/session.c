@@ -119,6 +119,8 @@ static void	dispatch_checksum(struct anoubis_server *server,
 		    struct anoubis_msg *msg, uid_t uid, void *arg);
 static int	dispatch_checksum_reply(void *cbdata, int error, void *data,
 		    int len, int end);
+static int	dispatch_checksum_list_reply(void *cbdata, int error,
+		    void *data, int len, int end);
 static void	dispatch_m2s(int, short, void *);
 static void	dispatch_s2m(int, short, void *);
 static void	dispatch_s2p(int, short, void *);
@@ -461,7 +463,7 @@ dispatch_checksum(struct anoubis_server *server, struct anoubis_msg *m,
 	anoubisd_msg_t			*s2m_msg;
 	anoubisd_msg_checksum_op_t	*msg_csum;
 	struct achat_channel		*chan;
-	int err;
+	int err, opp;
 
 	struct event_info_session *ev_info = (struct event_info_session*)arg;
 
@@ -474,10 +476,16 @@ dispatch_checksum(struct anoubis_server *server, struct anoubis_msg *m,
 	msg_csum->uid = uid;
 	msg_csum->len = m->length;
 	memcpy(msg_csum->msg, m->u.checksumrequest, m->length);
-
-	err = anoubis_policy_comm_addrequest(ev_info->policy, chan,
-	    POLICY_FLAG_START | POLICY_FLAG_END, &dispatch_checksum_reply,
-	    server, &msg_csum->token);
+	opp = get_value(m->u.checksumrequest->operation);
+	if (opp == ANOUBIS_CHECKSUM_OP_LIST) {
+		err = anoubis_policy_comm_addrequest(ev_info->policy, chan,
+		POLICY_FLAG_START | POLICY_FLAG_END,
+		&dispatch_checksum_list_reply, server, &msg_csum->token);
+	} else {
+		err = anoubis_policy_comm_addrequest(ev_info->policy, chan,
+		POLICY_FLAG_START | POLICY_FLAG_END, &dispatch_checksum_reply,
+		server, &msg_csum->token);
+	}
 	if (err < 0) {
 		log_warn("Dropping checksum request (error %d)", err);
 		free(s2m_msg);
@@ -550,6 +558,29 @@ dispatch_generic_reply(void *cbdata, int error, void *data, int len, int flags,
 	m->u.ack->token = 0;
 	if (len)
 		memcpy(m->u.ackpayload->payload, data, len);
+	ret = anoubis_msg_send(anoubis_server_getchannel(server), m);
+	anoubis_msg_free(m);
+	if (ret < 0)
+		return ret;
+	return 0;
+}
+
+static int
+dispatch_checksum_list_reply(void *cbdata, int error, void *data, int len,
+    int flags)
+{
+	struct anoubis_server	*server = cbdata;
+	struct anoubis_msg	*m;
+	int			 ret;
+
+	m = anoubis_msg_new(sizeof(Anoubis_ChecksumPayloadMessage)+len);
+	if (!m)
+		return -ENOMEM;
+	set_value(m->u.checksumpayload->type, ANOUBIS_P_CSUM_LIST);
+	set_value(m->u.checksumpayload->error, error);
+	set_value(m->u.checksumpayload->flags, flags);
+	if (len)
+		memcpy(m->u.checksumpayload->payload, data, len);
 	ret = anoubis_msg_send(anoubis_server_getchannel(server), m);
 	anoubis_msg_free(m);
 	if (ret < 0)

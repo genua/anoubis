@@ -77,6 +77,23 @@ static void DUMP_DATA_LABEL(const void * _buf, size_t len, const char *label)
 }
 #define DUMP_DATA(BUF,LEN)	DUMP_DATA_LABEL((BUF),(LEN),"data")
 
+static void dump_checksumpayload(Anoubis_ChecksumPayloadMessage * m, size_t len)
+{
+	int i;
+	int cnt = len - sizeof(*m);
+	unsigned const char * cbuf = m->payload;
+	if (!cnt)
+		return;
+	printf(" data =");
+	for(i = 0; i<cnt; ++i) {
+		if (cbuf[i] == 0)
+			printf(" ");
+		else
+			printf("%c", cbuf[i]);
+	}
+}
+
+
 static void dump_general(Anoubis_GeneralMessage * m, size_t len)
 {
 	if (len > sizeof(*m))
@@ -245,6 +262,7 @@ void __anoubis_dump(struct anoubis_msg * m, const char * str)
 	CASE(ANOUBIS_P_REQUEST, policyrequest)
 	CASE(ANOUBIS_P_REPLY, policyreply)
 	CASE(ANOUBIS_P_CSUMREQUEST, checksumrequest)
+	CASE(ANOUBIS_P_CSUM_LIST, checksumpayload)
 	default:
 		printf(" type = %x", opcode);
 		dump_general(m->u.general, m->length-CSUM_LEN);

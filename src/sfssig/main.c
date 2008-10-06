@@ -97,6 +97,7 @@ typedef int (*func_char_t)(char *);
 void		 usage(void) __dead;
 static int	 sfs_add(char *file);
 static int	 sfs_del(char *file);
+static int	 sfs_list(char *file);
 static int	 sfs_sumop(char *file, int operation, u_int8_t *cs);
 static int	 create_channel(void);
 static void	 destroy_channel(void);
@@ -110,10 +111,11 @@ struct cmd {
 } commands[] = {
 	{ "add",   (func_int_t)sfs_add, 1},
 	{ "del",   (func_int_t)sfs_del, 1},
+	{ "list",  (func_int_t)sfs_list, 1},
 };
 
 static struct achat_channel	*channel;
-struct anoubis_client		*client = NULL;
+struct anoubis_client		*client;
 static int			 opts = 0;
 static char			*anoubis_socket = "/var/run/anoubisd.sock";
 
@@ -470,7 +472,6 @@ sfs_sumop(char *file, int operation, u_int8_t *cs)
 		}
 	}
 
-
 	if (cs)
 		len = ANOUBIS_CS_LEN;
 	t = anoubis_client_csumrequest_start(client, operation, file, cs, len);
@@ -516,6 +517,32 @@ sfs_sumop(char *file, int operation, u_int8_t *cs)
 		for (i = 0; i < SHA256_DIGEST_LENGTH; i++)
 			printf("%02x", cs[i]);
 		printf("\n");
+	} else if (operation == ANOUBIS_CHECKSUM_OP_LIST) {
+		struct anoubis_msg *m = t->msg;
+		int i = 0;
+		int cnt = 0;
+
+		/* Print the list of path */
+		if (!VERIFY_LENGTH(t->msg,
+		    sizeof(Anoubis_ChecksumPayloadMessage))) {
+			fprintf(stderr, "Short reply (len=%d)\n",
+			    t->msg->length);
+			return 6;
+		}
+		while (m) {
+			cnt = m->length - sizeof(Anoubis_ChecksumPayloadMessage)
+			    - CSUM_LEN - 1;
+			printf("%s/", file);
+			for (i = 0; i < cnt; i++) {
+				if (m->u.checksumpayload->payload[i] == '\0') {
+					printf("\n%s/", file);
+					continue;
+				}
+				printf("%c", m->u.checksumpayload->payload[i]);
+			}
+			m = m->next;
+			printf("\n");
+		}
 	}
 	anoubis_transaction_destroy(t);
 	return error;
@@ -532,7 +559,6 @@ sfs_add(char *file)
 	ret = anoubis_csum_calc(file, cs, &len);
 	if (ret < 0) {
 		errno = -ret;
-		fprintf(stderr, "WTF\n");
 		perror("anoubis_csum_calc");
 		return 6;
 	}
@@ -547,6 +573,16 @@ static int
 sfs_del(char *file)
 {
 	return sfs_sumop(file, ANOUBIS_CHECKSUM_OP_DEL, NULL);
+}
+
+static int
+sfs_list(char *file)
+{
+	int len = strlen(file) - 1;
+	if (file[len] == '/')
+		file[len] = '\0';
+
+	return sfs_sumop(file, ANOUBIS_CHECKSUM_OP_LIST, NULL);
 }
 
 static int
@@ -649,6 +685,8 @@ create_channel(void)
 		goto err;
 	}
 
+	if (opts & SFSSIG_OPT_VERBOSE2)
+		fprintf(stderr, "anoubis_client_sfsdisable\n");
 	t = anoubis_client_sfsdisable_start(client, getpid());
 	while(1) {
 		int ret = anoubis_client_wait(client);

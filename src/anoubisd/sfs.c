@@ -59,9 +59,8 @@
 
 static int	sfs_readchecksum(const char *csum_file, unsigned char *md);
 static int	sfs_deletechecksum(const char *csum_file);
-static int	convert_user_path(const char * path, char **dir);
 static int	check_empty_dir(const char *path);
-char *		insert_escape_seq(const char *path);
+char *		insert_escape_seq(const char *path, int dir);
 
 #if 0
 
@@ -135,7 +134,7 @@ mkpath(const char *path)
 }
 
 char *
-insert_escape_seq(const char *path)
+insert_escape_seq(const char *path, int dir)
 {
 	char *newpath = NULL;
 	int k, i;
@@ -160,21 +159,69 @@ insert_escape_seq(const char *path)
 		}
 		newpath[k] = path[j];
 	}
-	k = strlen(newpath);
-	while (k > 0) {
-		if (newpath[k] == '/')
-			break;
-		k--;
+
+	if (!dir) {
+		k = strlen(newpath);
+		while (k > 0) {
+			if (newpath[k] == '/')
+				break;
+			k--;
+		}
+		k++;
+		memmove(&newpath[k+1], &newpath[k],
+		    ((strlen(newpath) + 1) - k));
+		newpath[k] = '*';
 	}
-	k++;
-	memmove(&newpath[k+1], &newpath[k], ((strlen(newpath) + 1) - k));
-	newpath[k] = '*';
 
 	return newpath;
 }
 
-static int
-convert_user_path(const char * path, char **dir)
+char *
+remove_escape_seq(const char *name)
+{
+	char *newpath = NULL;
+	unsigned int size =  strlen(name);
+	unsigned int k = 0;
+	unsigned int i, mod;
+	int cnt = 0;
+	int stars = 0;
+
+	for (k = 0; k <= size; k++) {
+		if (name[k] == '*')
+			stars++;
+	}
+
+	cnt = stars / 2;
+	mod = stars % 2;
+
+	size = (strlen(name) - cnt) + 1;
+	if (!mod)
+		size++;
+	newpath = (char *)malloc(size);
+	if (!newpath)
+		return NULL;
+
+	for (k = 0, i = mod; i <= strlen(name) && k <= size; i++, k++ ) {
+		if (name[i] == '*') {
+			if (name[i+1] != '*') {
+				continue;
+			}
+			i++;
+		}
+		newpath[k] = name[i];
+	}
+	k--;
+	if (!mod) {
+		newpath[k] = '/';
+		k++;
+	}
+	newpath[k] = '\0';
+
+	return newpath;
+}
+
+int
+convert_user_path(const char * path, char **dir, int is_dir)
 {
 	int	i;
 	char	*newpath = NULL;
@@ -204,7 +251,7 @@ convert_user_path(const char * path, char **dir)
 	if (path[i] == '/')
 		return -EINVAL;
 
-	newpath = insert_escape_seq(path);
+	newpath = insert_escape_seq(path, is_dir);
 	if (newpath == NULL)
 		return -ENOMEM;
 
@@ -224,9 +271,10 @@ sfs_checksumop(const char *path, unsigned int operation, uid_t uid,
 	char *csum_path = NULL, *csum_file = NULL;
 	int ret;
 
-	ret = convert_user_path(path, &csum_path);
+	ret = convert_user_path(path, &csum_path, 0);
 	if (ret < 0)
 		return ret;
+
 	if (asprintf(&csum_file, "%s/%d", csum_path, uid) == -1) {
 		ret = -ENOMEM;
 		goto out;
@@ -310,7 +358,7 @@ sfs_getchecksum(u_int64_t kdev __used, const char *kpath, uid_t uid,
 	char	*newpath;
 	int	 ret;
 
-	newpath = insert_escape_seq(kpath);
+	newpath = insert_escape_seq(kpath, 0);
 	if (newpath == NULL)
 		return -ENOMEM;
 

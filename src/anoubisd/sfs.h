@@ -36,5 +36,6 @@ int sfs_checksumop(const char *path, unsigned int operation, uid_t uid,
     unsigned char *md);
 int sfs_getchecksum(u_int64_t kdev, const char *kpath, uid_t uid,
     unsigned char *md);
-
+int convert_user_path(const char *path, char **dir, int is_dir);
+char *remove_escape_seq(const char *name);
 #endif	/* _SFS_H_ */

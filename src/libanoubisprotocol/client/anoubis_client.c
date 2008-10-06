@@ -824,6 +824,36 @@ err:
 	client->flags &= ~FLAG_POLICY_PENDING;
 }
 
+static void anoubis_client_list_ack_steps(struct anoubis_transaction * t,
+    struct anoubis_msg * m)
+{
+	struct anoubis_client * client = t->cbdata;
+	int ret = anoubis_client_verify(client, m);
+	int flags;
+	if (ret < 0)
+		goto err;
+	ret = -EPROTO;
+	if (!VERIFY_LENGTH(m, sizeof(Anoubis_ChecksumPayloadMessage))
+	    || get_value(m->u.checksumpayload->type) != ANOUBIS_P_CSUM_LIST)
+		goto err;
+	ret = - get_value(m->u.checksumpayload->error);
+	if (ret)
+		goto err;
+	flags = get_value(m->u.checksumpayload->flags);
+	/* Start must be set exactly once on the first message. */
+	if ((t->msg == NULL) == ((flags & POLICY_FLAG_START) == 0)) {
+		ret = -EPROTO;
+		goto err;
+	}
+	if ((flags & POLICY_FLAG_END) == 0)
+		return;
+err:
+	/* Do not free the message because of ANOUBIS_T_WANTMESSAGE */
+	anoubis_transaction_done(t, -ret);
+	LIST_REMOVE(t, next);
+	client->flags &= ~FLAG_POLICY_PENDING;
+}
+
 struct anoubis_transaction *
 anoubis_client_policyrequest_start(struct anoubis_client * client,
     void * data, size_t datalen)
@@ -885,7 +915,8 @@ anoubis_client_csumrequest_start(struct anoubis_client *client,
 {
 	struct anoubis_msg * m;
 	struct anoubis_transaction * t = NULL;
-	static const u_int32_t nextops[] = { ANOUBIS_REPLY, -1 };
+	static const u_int32_t generalops[] = { ANOUBIS_REPLY, -1 };
+	static const u_int32_t listops[] = { ANOUBIS_P_CSUM_LIST, -1 };
 	char * dstpath = NULL;
 
 	if ((client->proto & ANOUBIS_PROTO_POLICY) == 0)
@@ -915,9 +946,15 @@ anoubis_client_csumrequest_start(struct anoubis_client *client,
 		set_value(m->u.checksumadd->cslen, cslen);
 		memcpy(m->u.checksumadd->payload, csum, cslen);
 	}
-	t = anoubis_transaction_create(0,
-	    ANOUBIS_T_INITSELF|ANOUBIS_T_DEQUEUE|ANOUBIS_T_WANTMESSAGE,
-	    &anoubis_client_ack_steps, NULL, client);
+	if (op == ANOUBIS_CHECKSUM_OP_LIST) {
+		t = anoubis_transaction_create(0,
+		ANOUBIS_T_INITSELF|ANOUBIS_T_WANT_ALL,
+		&anoubis_client_list_ack_steps, NULL, client);
+	} else {
+		t = anoubis_transaction_create(0,
+		    ANOUBIS_T_INITSELF|ANOUBIS_T_DEQUEUE|ANOUBIS_T_WANTMESSAGE,
+		    &anoubis_client_ack_steps, NULL, client);
+	}
 	if (!t) {
 		anoubis_msg_free(m);
 		return NULL;
@@ -930,7 +967,12 @@ anoubis_client_csumrequest_start(struct anoubis_client *client,
 		anoubis_transaction_destroy(t);
 		return NULL;
 	}
-	anoubis_transaction_setopcodes(t, nextops);
+
+	if (op == ANOUBIS_CHECKSUM_OP_LIST)
+		anoubis_transaction_setopcodes(t, listops);
+	else
+		anoubis_transaction_setopcodes(t, generalops);
+
 	LIST_INSERT_HEAD(&client->ops, t, next);
 	client->flags |= FLAG_POLICY_PENDING;
 	return t;
