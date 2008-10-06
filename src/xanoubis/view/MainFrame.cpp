@@ -158,7 +158,8 @@ MainFrame::setConnectionString(wxString host)
 {
 	wxString label;
 
-	if  (!host.Cmp(wxT("none"))) {
+	/* XXX: ch this is ugly */
+	if  (!host.Cmp(wxT("none")) || !host.Cmp(wxT("keine"))) {
 		label = _("not connected");
 		an_menubar->Check(ID_MIFILECONNECT, false);
 	} else {
