@@ -31,7 +31,7 @@
 #         Nethertheless that test is quite useful and still should be shipped.
 # TESTS = test_xanoubis_server
 
-TESTS = testSuite_Patterns testSuite_Profiles testSuite_Sfs
+TESTS = testSuite_Patterns testSuite_Profiles testSuite_Sfs testSuite_JobCtrl
 noinst_PROGRAMS = test_xanoubis_server $(TESTS)
 
 uidir		   = src/libanoubisui
@@ -70,6 +70,7 @@ libGUIcomponents_CPPFLAGS = \
 	-I$(top_srcdir)/$(xanoubisdir)/view \
 	-I$(top_srcdir)/$(xanoubisdir)/control \
 	-I$(top_srcdir)/$(xanoubisdir)/pattern \
+	-I$(top_srcdir)/$(xanoubisdir)/job \
 	$(WX_CPPFLAGS)
 libGUIcomponents_CXXFLAGS = \
 	-fno-strict-aliasing \
@@ -196,3 +197,26 @@ testSuite_Sfs_SOURCES = \
 	testrunner.cpp \
 	suite_Sfs/testSuite.cpp \
 	suite_Sfs/tc_SfsDir.cpp
+
+#
+# Testsuite: JobCtrl
+#
+testSuite_JobCtrl_CPPFLAGS = $(libGUIcomponents_CPPFLAGS)
+testSuite_JobCtrl_CXXFLAGS = $(libGUIcomponents_CXXFLAGS) @CHECK_CFLAGS@
+testSuite_JobCtrl_LDFLAGS = $(shared_AM_LDFLAGS) -dynamic -L $(RPATH)
+testSuite_JobCtrl_DEPENDENCIES = $(libGUIcomponents_DEPENDS)
+testSuite_JobCtrl_LDADD = \
+	-lGUIcomponents \
+	$(libGUIcomponents_LDADD) \
+	@CHECK_LIBS@
+
+if NEEDBSDCOMPAT
+testSuite_JobCtrl_CPPFLAGS += -I$(top_srcdir)/$(bsdcompatdir)
+testSuite_JobCtrl_DEPENDENCIES += $(libbsdcompat)
+testSuite_JobCtrl_LDADD += $(libbsdcompat)
+endif
+
+testSuite_JobCtrl_SOURCES = \
+	testrunner.cpp \
+	suite_JobCtrl/testSuite.cpp \
+	suite_JobCtrl/tc_JobCtrl.cpp

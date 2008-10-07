@@ -202,6 +202,11 @@ BEGIN_DECLARE_EVENT_TYPES()
 	 * updated.
 	 */
 	DECLARE_LOCAL_EVENT_TYPE(anEVT_SFSDIR_CHANGED, wxNewEventType())
+
+	/*
+	 * Calculation of a checksum has finished.
+	 */
+	DECLARE_LOCAL_EVENT_TYPE(anEVT_CSUMCALC_RESULT, wxNewEventType())
 END_DECLARE_EVENT_TYPES()
 
 #endif	/* _ANEVENTS_H_ */

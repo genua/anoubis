@@ -40,6 +40,7 @@
 #include "CommunicatorCtrl.h"
 #include "DlgLogViewer.h"
 #include "DlgRuleEditor.h"
+#include "JobCtrl.h"
 #include "LogNotify.h"
 #include "main.h"
 #include "MainFrame.h"
@@ -98,6 +99,9 @@ AnoubisGuiApp::~AnoubisGuiApp(void)
 		delete userOptions_;
 	}
 
+	/* Destroy job-controller */
+	delete JobCtrl::getInstance();
+
 	/* Destroy versionmanagement */
 	delete VersionCtrl::getInstance();
 }
@@ -137,6 +141,9 @@ bool AnoubisGuiApp::OnInit()
 
 	/* Initialization of versionmanagement */
 	VersionCtrl::getInstance(); /* Make sure c'tor is invoked */
+
+	/* Initialization of job-controller */
+	JobCtrl::getInstance(); /* Make sure c'tor is invoked */
 
 	userOptions_ = new wxFileConfig(GetAppName(), wxEmptyString,
 	    wxEmptyString, wxEmptyString,

@@ -52,6 +52,7 @@ xanoubis_CPPFLAGS = \
 	-I$(top_srcdir)/$(xanoubisdir)/view  \
 	-I$(top_srcdir)/$(xanoubisdir)/control \
 	-I$(top_srcdir)/$(xanoubisdir)/pattern \
+	-I$(top_srcdir)/$(xanoubisdir)/job \
 	$(WX_CPPFLAGS) \
 	$(AM_CPPFLAGS)
 
@@ -284,6 +285,18 @@ xanoubis_SOURCES= \
 	pattern/PolicyVisitor.h \
 	pattern/Singleton.cpp \
 	pattern/Singleton.h \
+	job/CsumCalcTask.cpp \
+	job/CsumCalcTask.h \
+	job/CsumCalcThread.cpp \
+	job/CsumCalcThread.h \
+	job/JobCtrl.cpp \
+	job/JobCtrl.h \
+	job/JobThread.cpp \
+	job/JobThread.h \
+	job/Task.cpp \
+	job/Task.h \
+	job/TaskEvent.cpp \
+	job/TaskEvent.h \
 	ctassert.h \
 	main.cpp \
 	main.h
