@@ -139,7 +139,8 @@
 
 struct pe_context {
 	int			 refcount;
-	struct apn_rule		*rule;
+	struct apn_rule		*alfrule;
+	struct apn_rule		*sbrule;
 	struct apn_ruleset	*ruleset;
 	struct pe_proc_ident	 ident;
 };
@@ -149,8 +150,7 @@ static struct pe_context	*pe_context_search(struct apn_ruleset *,
 				     struct pe_proc_ident *);
 static int			 pe_context_decide(struct pe_proc *, int,
 				     struct pe_proc_ident *);
-static struct pe_context	*pe_context_alloc(struct apn_rule *,
-				     struct apn_ruleset *,
+static struct pe_context	*pe_context_alloc(struct apn_ruleset *,
 				     struct pe_proc_ident *);
 static void			 pe_context_switch(struct pe_proc *, int,
 				     struct pe_proc_ident *, uid_t);
@@ -172,9 +172,9 @@ pe_context_norules(struct pe_proc *proc, int prio)
 	if (!ctx)
 		return;
 	/* Old context already is a norules context => We're done. */
-	if (ctx->ruleset == NULL && ctx->rule == NULL)
+	if (ctx->ruleset == NULL && ctx->alfrule == NULL && ctx->sbrule == NULL)
 		return;
-	ctx = pe_context_alloc(NULL, NULL, &ctx->ident);
+	ctx = pe_context_alloc(NULL, &ctx->ident);
 	if (!ctx) {
 		master_terminate(ENOMEM);
 		return;
@@ -221,8 +221,9 @@ pe_context_refresh(struct pe_proc *proc, int prio, struct pe_policy_db *pdb)
 	} else {
 		context = pe_context_search(newrules, pe_proc_ident(proc));
 	}
-	DEBUG(DBG_PE_POLICY, "pe_context_refresh: context %p rule %p",
-	    context, context ? context->rule : NULL);
+	DEBUG(DBG_PE_POLICY, "pe_context_refresh: context %p alfrule %p "
+	    "sbrule %p", context, context ? context->alfrule : NULL,
+	    context ? context->sbrule : NULL);
 	pe_proc_set_context(proc, prio, context);
 	pe_context_put(context);
 	return;
@@ -250,11 +251,11 @@ pe_context_dump(struct eventdev_hdr *hdr, struct pe_proc *proc, int prio)
 	if (proc && 0 <= prio && prio <= PE_PRIO_MAX) {
 		ctx = pe_proc_get_context(proc, prio);
 
-		if (ctx && ctx->rule) {
-			if (ctx->rule->app) {
+		if (ctx && ctx->alfrule) {
+			if (ctx->alfrule->app) {
 				csumctx = htonl(*(unsigned long *)
-				    ctx->rule->app->hashvalue);
-				progctx = ctx->rule->app->name;
+				    ctx->alfrule->app->hashvalue);
+				progctx = ctx->alfrule->app->name;
 			} else
 				progctx = "any";
 		}
@@ -329,9 +330,9 @@ pe_context_switch(struct pe_proc *proc, int prio,
 	tmpctx = pe_context_search(ruleset, pident);
 	pe_proc_set_context(proc, prio, tmpctx);
 	DEBUG(DBG_PE_CTX, "pe_context_switch: proc %p 0x%08llx prio %d "
-	    "got context %p rule %p", proc,
-	    pe_proc_task_cookie(proc), prio,
-	    tmpctx, tmpctx ? tmpctx->rule : NULL);
+	    "got context %p alfrule %p sbrule %p", proc,
+	    pe_proc_task_cookie(proc), prio, tmpctx,
+	    tmpctx ? tmpctx->alfrule : NULL,tmpctx ? tmpctx->sbrule : NULL);
 	/*
 	 * pe_context_search got a reference to the new context and
 	 * pe_proc_set_context got another one. Drop one of them.
@@ -374,6 +375,35 @@ pe_context_exec(struct pe_proc *proc, uid_t uid, struct pe_proc_ident *pident)
 		pe_proc_set_uid(proc, uid);
 }
 
+static struct apn_rule *
+pe_context_search_chain(struct apn_chain *chain, struct pe_proc_ident *pident)
+{
+	struct apn_rule		*r;
+	struct apn_app		*hp;
+	TAILQ_FOREACH(r, chain, entry) {
+		/*
+		 * A rule without application will always match.  This is
+		 * especially important, when no checksum is available,
+		 * as we still have to walk the full tailq.  Thus we use
+		 * "continue" below
+		 */
+		if (r->app == NULL)
+			return r;
+		if (!pident || pident->csum == NULL)
+			continue;
+		/*
+		 * If we have a valid checksum walk chain of applications
+		 * and check against hashvalue.
+		 */
+		for (hp = r->app; hp; hp = hp->next) {
+			if (bcmp(hp->hashvalue, pident->csum,
+			    sizeof(hp->hashvalue)) == 0)
+				return r;
+		}
+	}
+	return NULL;
+}
+
 /*
  * Search for a context in the given ruleset. This function will only
  * return NULL if the ruleset is also NULL. Otherwise it will return
@@ -385,8 +415,6 @@ static struct pe_context *
 pe_context_search(struct apn_ruleset *rs, struct pe_proc_ident *pident)
 {
 	struct pe_context	*context;
-	struct apn_rule		*prule, *rule;
-	struct apn_app		*hp;
 
 	DEBUG(DBG_PE_CTX, "pe_context_search: ruleset %p csum 0x%08x...", rs,
 	    (pident && pident->csum) ?
@@ -401,48 +429,16 @@ pe_context_search(struct apn_ruleset *rs, struct pe_proc_ident *pident)
 	if (rs == NULL)
 		return (NULL);
 
-	/*
-	 * XXX HSH Right now only ALF rules provide a context.  This is
-	 * XXX HSH likely to change when sandboxing is implemented.
-	 */
-	rule = NULL;
-	TAILQ_FOREACH(prule, &rs->alf_queue, entry) {
-		/*
-		 * A rule without application will always match.  This is
-		 * especially important, when no checksum is available,
-		 * as we still have to walk the full tailq.  Thus we use
-		 * "continue" below
-		 */
-		if (prule->app == NULL) {
-			rule = prule;
-			break;
-		}
-		if (!pident || pident->csum == NULL)
-			continue;
-
-		/*
-		 * Otherwise walk chain of applications and check
-		 * against hashvalue.
-		 */
-		for (hp = prule->app; hp && rule == NULL; hp = hp->next) {
-			if (bcmp(hp->hashvalue, pident->csum,
-			    sizeof(hp->hashvalue)) != 0)
-				continue;
-			rule = prule;
-		}
-		if (rule)
-			break;
-	}
-	if (rule == NULL)
-		DEBUG(DBG_PE_CTX, "pe_context_search: no rule found");
-	context = pe_context_alloc(rule, rs, pident);
+	context = pe_context_alloc(rs, pident);
 	if (!context) {
 		master_terminate(ENOMEM);
 		return NULL;
 	}
+	context->alfrule = pe_context_search_chain(&rs->alf_queue, pident);
+	context->sbrule = pe_context_search_chain(&rs->sb_queue, pident);
 
-	DEBUG(DBG_PE_CTX, "pe_context_search: context %p rule %p",
-	    context, rule);
+	DEBUG(DBG_PE_CTX, "pe_context_search: context %p alfrule %p sbrule %p",
+	    context, context->alfrule, context->sbrule);
 
 	return (context);
 }
@@ -451,8 +447,7 @@ pe_context_search(struct apn_ruleset *rs, struct pe_proc_ident *pident)
  * NOTE: rs must not be NULL.
  */
 static struct pe_context *
-pe_context_alloc(struct apn_rule *rule, struct apn_ruleset *rs,
-    struct pe_proc_ident *pident)
+pe_context_alloc(struct apn_ruleset *rs, struct pe_proc_ident *pident)
 {
 	struct pe_context	*ctx;
 
@@ -461,7 +456,8 @@ pe_context_alloc(struct apn_rule *rule, struct apn_ruleset *rs,
 		master_terminate(ENOMEM);	/* XXX HSH */
 		return NULL;
 	}
-	ctx->rule = rule;
+	ctx->alfrule = NULL;
+	ctx->sbrule = NULL;
 	ctx->ruleset = rs;
 	ctx->refcount = 1;
 	ctx->ident.csum = NULL;
@@ -518,10 +514,10 @@ pe_context_decide(struct pe_proc *proc, int prio, struct pe_proc_ident *pident)
 	if (ctx == NULL)
 		return 1;
 	/* Context without rule means, not switching. */
-	if (ctx->rule == NULL)
+	if (ctx->alfrule == NULL)
 		return 0;
 	ret = 0;	/* deny by default */
-	TAILQ_FOREACH(rule, &ctx->rule->rule.chain, entry) {
+	TAILQ_FOREACH(rule, &ctx->alfrule->rule.chain, entry) {
 		if (rule->apn_type != APN_ALF_CTX)
 			continue;
 		/*
@@ -536,7 +532,7 @@ pe_context_decide(struct pe_proc *proc, int prio, struct pe_proc_ident *pident)
 		while (hp) {
 			if (bcmp(hp->hashvalue, pident->csum,
 			    sizeof(hp->hashvalue)) == 0) {
-			    	ret = 1;	/* allow */
+				ret = 1;	/* allow */
 				break;
 			}
 			hp = hp->next;
@@ -568,8 +564,8 @@ pe_dump_dbgctx(const char *prefix, struct pe_proc *proc)
 
 	for (i = 0; i < PE_PRIO_MAX; i++) {
 		struct pe_context *ctx = pe_proc_get_context(proc, i);
-		DEBUG(DBG_PE_CTX, "%s: prio %d rule %p", prefix, i,
-		    ctx ? ctx->rule : NULL);
+		DEBUG(DBG_PE_CTX, "%s: prio %d alfrule %p sbrule %p", prefix,
+		    i, ctx ? ctx->alfrule : NULL, ctx ? ctx->sbrule : NULL);
 	}
 }
 
@@ -580,9 +576,17 @@ pe_context_uses_rs(struct pe_context *ctx, struct apn_ruleset *rs)
 }
 
 struct apn_rule *
-pe_context_get_rule(struct pe_context *ctx)
+pe_context_get_alfrule(struct pe_context *ctx)
 {
 	if (!ctx)
 		return NULL;
-	return ctx->rule;
+	return ctx->alfrule;
+}
+
+struct apn_rule *
+pe_context_get_sbrule(struct pe_context *ctx)
+{
+	if (!ctx)
+		return NULL;
+	return ctx->sbrule;
 }

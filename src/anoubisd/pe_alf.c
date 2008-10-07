@@ -79,8 +79,7 @@ static int		 pe_decide_alfdflt(struct apn_rule *, struct
 			     alf_event *, int *, u_int32_t *, time_t);
 static void		 pe_kcache_alf(struct apn_rule *, int,
 			     struct pe_proc *, struct alf_event *);
-static char		*pe_dump_alfmsg(struct alf_event *,
-			     struct eventdev_hdr *, int);
+static char		*pe_dump_alfmsg(struct alf_event *);
 static int		 pe_addrmatch_out(struct alf_event *, struct
 			     apn_rule *);
 static int		 pe_addrmatch_in(struct alf_event *, struct
@@ -142,7 +141,7 @@ pe_decide_alf(struct pe_proc *proc, struct eventdev_hdr *hdr)
 
 	if (log != APN_LOG_NONE) {
 		context = pe_context_dump(hdr, proc, prio);
-		dump = pe_dump_alfmsg(msg, hdr, ANOUBISD_LOG_APN);
+		dump = pe_dump_alfmsg(msg);
 	}
 
 	/* Logging */
@@ -185,8 +184,13 @@ pe_decide_alf(struct pe_proc *proc, struct eventdev_hdr *hdr)
 		struct pe_proc_ident *pident = pe_proc_ident(proc);
 		reply->ask = 1;
 		reply->timeout = 300;	/* XXX 5 Minutes for now. */
-		reply->csum = pident->csum;
-		reply->path = pident->pathhint;
+		if (pident) {
+			reply->csum = pident->csum;
+			reply->path = pident->pathhint;
+		} else {
+			reply->csum = NULL;
+			reply->path = NULL;
+		}
 	}
 	reply->len = 0;
 
@@ -202,7 +206,7 @@ pe_alf_evaluate(struct pe_proc *proc, int prio, uid_t uid,
 	time_t		 t;
 
 	if (proc) {
-		rule = pe_context_get_rule(pe_proc_get_context(proc, prio));
+		rule = pe_context_get_alfrule(pe_proc_get_context(proc, prio));
 	} else {
 		struct apn_ruleset *rs = pe_user_get_ruleset(uid, prio, NULL);
 		if (rs) {
@@ -286,7 +290,7 @@ pe_decide_alffilt(struct pe_proc *proc, struct apn_rule *rule,
 		 * Skip non-filter rules.
 		 */
 		if (hp->apn_type != APN_ALF_FILTER
-		    || !pe_in_scope(hp->scope, &msg->common, now))
+		    || !pe_in_scope(hp->scope, msg->common.task_cookie, now))
 			continue;
 
 		DEBUG(DBG_PE_DECALF, "pe_decide_alffilt: family %d == %d/%p?",
@@ -531,7 +535,7 @@ pe_decide_alfcap(struct apn_rule *rule, struct alf_event *msg, int *log,
 		int thisdec = -1;
 		/* Skip non-capability rules. */
 		if (hp->apn_type != APN_ALF_CAPABILITY ||
-		    !pe_in_scope(hp->scope, &msg->common, now)) {
+		    !pe_in_scope(hp->scope, msg->common.task_cookie, now)) {
 			continue;
 		}
 		/*
@@ -612,7 +616,7 @@ pe_decide_alfdflt(struct apn_rule *rule, struct alf_event *msg, int *log,
 	TAILQ_FOREACH(hp, &rule->rule.chain, entry) {
 		/* Skip non-default rules. */
 		if (hp->apn_type != APN_DEFAULT
-		    || !pe_in_scope(hp->scope, &msg->common, now)) {
+		    || !pe_in_scope(hp->scope, msg->common.task_cookie, now)) {
 			continue;
 		}
 		/*
@@ -651,7 +655,7 @@ pe_decide_alfdflt(struct apn_rule *rule, struct alf_event *msg, int *log,
  * allocated and needs to be freed by the caller.
  */
 static char *
-pe_dump_alfmsg(struct alf_event *msg, struct eventdev_hdr *hdr, int format)
+pe_dump_alfmsg(struct alf_event *msg)
 {
 	unsigned short	 lport, pport;
 	char		*op, *af, *type, *proto, *dump;
@@ -767,26 +771,8 @@ pe_dump_alfmsg(struct alf_event *msg, struct eventdev_hdr *hdr, int format)
 		proto = "<unknown>";
 	}
 
-	switch (format) {
-	case ANOUBISD_LOG_RAW:
-		if (asprintf(&dump, "%s (%u): uid %u pid %u %s (%u) %s (%u) "
-		    "%s (%u) local %s:%hu peer %s:%hu", op, msg->op,
-		    hdr->msg_uid, hdr->msg_pid, type, msg->type, proto,
-		    msg->protocol, af, msg->family, local, lport, peer, pport)
-		    == -1) {
-			dump = NULL;
-		}
-		break;
-
-	case ANOUBISD_LOG_APN:
-		if (asprintf(&dump, "%s %s %s from %s port %hu to %s port %hu",
-		    op, af, proto, local, lport, peer, pport) == -1) {
-			dump = NULL;
-		}
-		break;
-
-	default:
-		log_warnx("pe_dump_alfmsg: illegal logging format %d", format);
+	if (asprintf(&dump, "%s %s %s from %s port %hu to %s port %hu",
+	    op, af, proto, local, lport, peer, pport) == -1) {
 		dump = NULL;
 	}
 

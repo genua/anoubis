@@ -217,7 +217,7 @@ pe_decide_sfscheck(struct apn_rule *rule, struct sfs_open_message *msg,
 		 * skip non-check rules
 		 */
 		if (hp->apn_type != APN_SFS_CHECK
-		    || !pe_in_scope(hp->scope, &msg->common, now))
+		    || !pe_in_scope(hp->scope, msg->common.task_cookie, now))
 			continue;
 
 		if (strcmp(hp->rule.sfscheck.app->name, msg->pathhint))
@@ -259,7 +259,7 @@ pe_decide_sfsdflt(struct apn_rule *rule, struct sfs_open_message *msg, int *log,
 	TAILQ_FOREACH(hp, &rule->rule.chain, entry) {
 		/* Skip non-default rules. */
 		if (hp->apn_type != APN_DEFAULT
-		    || !pe_in_scope(hp->scope, &msg->common, now)) {
+		    || !pe_in_scope(hp->scope, msg->common.task_cookie, now)) {
 			continue;
 		}
 		/*

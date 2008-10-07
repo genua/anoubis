@@ -1054,13 +1054,13 @@ sbrwx		: STRING {
 				int nm = 0;
 				switch($1[i]) {
 				case 'r': case 'R':
-					nm = SBA_READ; 
+					nm = APN_SBA_READ;
 					break;
 				case 'w': case 'W':
-					nm = SBA_WRITE;
+					nm = APN_SBA_WRITE;
 					break;
 				case 'x': case 'X':
-					nm = SBA_EXEC;
+					nm = APN_SBA_EXEC;
 					break;
 				default:
 					free($1);

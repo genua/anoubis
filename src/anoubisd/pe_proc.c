@@ -311,13 +311,14 @@ pe_proc_dump(void)
 		ctx0 = proc->context[0];
 		ctx1 = proc->context[1];
 		log_info("proc %p token 0x%08llx pid %d csum 0x%08x "
-		    "pathhint \"%s\" ctx %p %p rules %p %p", proc,
-		    proc->task_cookie, (int)proc->pid,
+		    "pathhint \"%s\" ctx %p %p alfrules %p %p sbrules %p %p",
+		    proc, proc->task_cookie, (int)proc->pid,
 		    proc->ident.csum ?
 		    htonl(*(unsigned long *)proc->ident.csum) : 0,
 		    proc->ident.pathhint ? proc->ident.pathhint : "",
 		    ctx0, ctx1,
-		    pe_context_get_rule(ctx0), pe_context_get_rule(ctx1));
+		    pe_context_get_alfrule(ctx0), pe_context_get_alfrule(ctx1),
+		    pe_context_get_sbrule(ctx0), pe_context_get_sbrule(ctx1));
 	}
 }
 
@@ -385,10 +386,11 @@ void pe_proc_exec(anoubis_cookie_t cookie, uid_t uid, pid_t pid,
 	ctx0 = pe_proc_get_context(proc, 0);
 	ctx1 = pe_proc_get_context(proc, 1);
 	/* Get our policy */
-	DEBUG(DBG_PE_PROC, "pe_proc_exec: using policies %p %p "
-	    "for %s csum 0x%08lx...", pe_context_get_rule(ctx0),
-	    pe_context_get_rule(ctx1), pathhint ? pathhint : "",
-	    csum ? htonl(*(unsigned long *)csum) : 0);
+	DEBUG(DBG_PE_PROC, "pe_proc_exec: using alrules %p %p sbrules %p %p "
+	    "for %s csum 0x%08lx...",
+	    pe_context_get_alfrule(ctx0), pe_context_get_alfrule(ctx1),
+	    pe_context_get_sbrule(ctx0), pe_context_get_sbrule(ctx1),
+	    pathhint ? pathhint : "", csum ? htonl(*(unsigned long *)csum) : 0);
 	pe_proc_put(proc);
 }
 

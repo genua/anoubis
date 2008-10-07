@@ -1123,7 +1123,7 @@ static int
 apn_print_sbaccess(struct apn_sbaccess *sba, FILE *file)
 {
 	int i;
-	if ((sba->amask & SBA_ALL) == 0)
+	if ((sba->amask & APN_SBA_ALL) == 0)
 		return 1;
 	if (apn_print_action(sba->action, 1, file))
 		return 1;
@@ -1159,11 +1159,11 @@ apn_print_sbaccess(struct apn_sbaccess *sba, FILE *file)
 		}
 	}
 	fprintf(file, " ");
-	if (sba->amask & SBA_READ)
+	if (sba->amask & APN_SBA_READ)
 		fprintf(file, "r");
-	if (sba->amask & SBA_WRITE)
+	if (sba->amask & APN_SBA_WRITE)
 		fprintf(file, "w");
-	if (sba->amask & SBA_EXEC)
+	if (sba->amask & APN_SBA_EXEC)
 		fprintf(file, "x");
 	return 0;
 }

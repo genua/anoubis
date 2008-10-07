@@ -91,6 +91,12 @@ pe_reconfigure(void)
 	pe_user_reconfigure();
 }
 
+/*
+ * XXX CEH: If we want to take privilege separation seriously, we
+ * XXX CEH: must check the length of each request and make sure that
+ * XXX CEH: it is sufficiently large for the payload it is expected to
+ * XXX CEH: contain.
+ */
 anoubisd_reply_t *
 policy_engine(anoubisd_msg_t *request)
 {
@@ -291,7 +297,9 @@ pe_handle_sfs(anoubisd_msg_sfsopen_t *sfsmsg)
 {
 	anoubisd_reply_t		*reply = NULL, *reply2 = NULL;
 	struct eventdev_hdr		*hdr;
+	struct pe_proc			*proc;
 	time_t				 now;
+	struct anoubis_event_common	*common;
 
 	if (sfsmsg == NULL) {
 		log_warnx("pe_handle_sfs: empty message");
@@ -311,7 +319,9 @@ pe_handle_sfs(anoubisd_msg_sfsopen_t *sfsmsg)
 		return (NULL);
 	}
 	reply = pe_decide_sfs(hdr->msg_uid, sfsmsg, now);
-	reply2 = pe_decide_sandbox(hdr->msg_uid, sfsmsg, now);
+	common = (struct anoubis_event_common *)(hdr + 1);
+	proc = pe_proc_get(common->task_cookie);
+	reply2 = pe_decide_sandbox(proc, hdr);
 	/* XXX CEH: This might need more thought. */
 	return reply_merge(reply, reply2);
 }
@@ -324,14 +334,14 @@ pe_dump(void)
 }
 
 int
-pe_in_scope(struct apn_scope *scope, struct anoubis_event_common *common,
+pe_in_scope(struct apn_scope *scope, anoubis_cookie_t task,
     time_t now)
 {
 	if (!scope)
 		return 1;
 	if (scope->timeout && now > scope->timeout)
 		return 0;
-	if (scope->task && common->task_cookie != scope->task)
+	if (scope->task && task != scope->task)
 		return 0;
 	return 1;
 }

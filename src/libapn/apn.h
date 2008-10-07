@@ -171,10 +171,10 @@ struct apn_sfscheck {
 	int		 log;
 };
 
-#define		SBA_READ	0x0001
-#define		SBA_WRITE	0x0002
-#define		SBA_EXEC	0x0004
-#define		SBA_ALL		0x0007
+#define		APN_SBA_READ	0x0001
+#define		APN_SBA_WRITE	0x0002
+#define		APN_SBA_EXEC	0x0004
+#define		APN_SBA_ALL	0x0007
 
 #define		SBCS_NONE	0
 #define		SBCS_CSUM	1

@@ -83,7 +83,8 @@ int			 pe_proc_set_sfsdisable(pid_t, uid_t);
 int			 pe_proc_is_sfsdisable(struct pe_proc *, uid_t);
 
 /* pe_context access functions */
-struct apn_rule		*pe_context_get_rule(struct pe_context *);
+struct apn_rule		*pe_context_get_alfrule(struct pe_context *);
+struct apn_rule		*pe_context_get_sbrule(struct pe_context *);
 void			 pe_context_reference(struct pe_context *);
 void			 pe_context_put(struct pe_context *);
 int			 pe_context_uses_rs(struct pe_context *,
@@ -123,13 +124,13 @@ int			 pe_pubkey_verifysig(const char *, uid_t);
 
 /* General policy evaluation functions */
 int			 pe_in_scope(struct apn_scope *,
-			     struct anoubis_event_common *, time_t);
+			     anoubis_cookie_t, time_t);
 
 /* Subsystem entry points for Policy decisions. */
 anoubisd_reply_t	*pe_decide_alf(struct pe_proc *, struct eventdev_hdr *);
 anoubisd_reply_t	*pe_decide_sfs(uid_t, anoubisd_msg_sfsopen_t*,
 			     time_t now);
-anoubisd_reply_t	*pe_decide_sandbox(uid_t, anoubisd_msg_sfsopen_t *,
-			     time_t now);
+anoubisd_reply_t	*pe_decide_sandbox(struct pe_proc *proc,
+			     struct eventdev_hdr *);
 
 #endif	/* _PE_H_ */
