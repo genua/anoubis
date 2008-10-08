@@ -36,6 +36,8 @@
 
 #include <apncvs.h>
 
+#define TEST_TIMEOUT	20
+
 char cvsroot[32];
 char workdir[32];
 
@@ -923,7 +925,7 @@ apnvm_tc_cvs(void)
 	TCase *tc = tcase_create("CVS");
 
 	tcase_add_checked_fixture(tc, cvs_setup, cvs_teardown);
-	tcase_set_timeout(tc, 10);
+	tcase_set_timeout(tc, TEST_TIMEOUT);
 
 	tcase_add_test(tc, cvs_tc_checkout);
 	tcase_add_test(tc, cvs_tc_checkout_wrong_repository);

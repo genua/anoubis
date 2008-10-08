@@ -45,6 +45,8 @@
 
 #include "apnvm_tc_fixtures.h"
 
+#define TEST_TIMEOUT	20
+
 START_TEST(vm_tc_prepare_no_cvsroot)
 {
 	char		*cvsroot;
@@ -352,7 +354,7 @@ apnvm_tc_vm(void)
 {
 	TCase *tc = tcase_create("VM");
 
-	tcase_set_timeout(tc, 10);
+	tcase_set_timeout(tc, TEST_TIMEOUT);
 	tcase_add_checked_fixture(tc, apnvm_setup, apnvm_teardown);
 
 	tcase_add_test(tc, vm_tc_prepare_havemodule);
@@ -374,7 +376,7 @@ apnvm_tc_vm_no_fixture(void)
 {
 	TCase *tc = tcase_create("VM_NO_FIXTURE");
 
-	tcase_set_timeout(tc, 10);
+	tcase_set_timeout(tc, TEST_TIMEOUT);
 
 	/* Testcase without fixtures */
 	tcase_add_test(tc, vm_tc_prepare_no_cvsroot);

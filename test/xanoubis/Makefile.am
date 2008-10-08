@@ -24,15 +24,23 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+if GCOV_ENABLED
+#	These test suites were disabled when configuring with GCOV_ENABLED
+#	as they break the code coverage report. For details see BUG #837
+else
 # XXX ST: #423
-#         This test was disabled due to the fact that it heavily depends on
+#         These tests were disabled due to the fact that they heavily rely on
 #         on a running anoubisd which can't be expected to be run during
 #         'make distcheck'.
 #         Nethertheless that test is quite useful and still should be shipped.
-# TESTS = test_xanoubis_server
-
-TESTS = testSuite_Patterns testSuite_Profiles testSuite_Sfs testSuite_JobCtrl
+# TESTS = test_xanoubis_server testSuite_JobCtrl testSuite_Patterns \
+# 	testSuite_Profiles testSuite_Sfs
+TESTS = \
+	testSuite_Patterns \
+	testSuite_Profiles \
+	testSuite_Sfs
 noinst_PROGRAMS = test_xanoubis_server $(TESTS)
+endif
 
 uidir		   = src/libanoubisui
 apndir		   = src/libapn

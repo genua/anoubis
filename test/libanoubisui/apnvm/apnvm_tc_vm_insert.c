@@ -32,6 +32,8 @@
 
 #include "apnvm_tc_fixtures.h"
 
+#define TEST_TIMEOUT	20
+
 #define fail_if_alfempty(queue, ...) \
 	fail_if(TAILQ_EMPTY(queue), ## __VA_ARGS__, NULL)
 
@@ -439,7 +441,7 @@ apnvm_tc_vm_insert(void)
 {
 	TCase *tc = tcase_create("VM_INSERT");
 
-	tcase_set_timeout(tc, 10);
+	tcase_set_timeout(tc, TEST_TIMEOUT);
 	tcase_add_checked_fixture(tc, apnvm_setup, apnvm_teardown);
 
 	tcase_add_test(tc, vm_tc_insert_with_profile_overwrite_first);
