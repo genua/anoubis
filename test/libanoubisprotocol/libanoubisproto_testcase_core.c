@@ -327,16 +327,11 @@ void tp_chat_lud_server(const char *sockname)
 	mark_point();
 }
 
-#define TPCONNECT_SOCKETDIR	"/tmp/"
-#define TPCONNECT_SOCKETPREFIX	"aproto_socket."
-
 START_TEST(tp_core_comm)
 {
-	char sockname[FILENAME_MAX];
+	char *sockname;
+	sockname = tempnam(NULL, "ac");
 
-	bzero(sockname, sizeof(sockname));
-	snprintf(sockname, sizeof(sockname) - 1, "%s%s%s%08d",
-	    TPCONNECT_SOCKETDIR, TPCONNECT_SOCKETPREFIX, "server", getpid());
 	switch (fork()) {
 	case -1:
 		fail("couldn't fork");

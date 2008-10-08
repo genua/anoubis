@@ -46,9 +46,6 @@
 #include <bsdcompat.h>
 #endif
 
-#define TCCONNECT_SOCKETDIR	"/tmp/"
-#define TCCONNECT_SOCKETPREFIX	"achat_socket."
-
 void
 tc_connect_lud_client(const char *sockname)
 {
@@ -238,11 +235,9 @@ tc_connect_lip_client(short port)
 START_TEST(tc_connect_localunixdomain)
 {
 	pid_t childpid;
-	char sockname[FILENAME_MAX];
+	char *sockname;
 
-	bzero(sockname, sizeof(sockname));
-	snprintf(sockname, sizeof(sockname) - 1, "%s%s%s%08d",
-	    TCCONNECT_SOCKETDIR, TCCONNECT_SOCKETPREFIX, "server", getpid());
+	sockname = tempnam(NULL, "ac");
 
 	switch (childpid = check_fork()) {
 	case -1:
@@ -274,11 +269,9 @@ END_TEST
 START_TEST(tc_connect_localunixdomain_swapped)
 {
 	pid_t childpid;
-	char sockname[FILENAME_MAX];
+	char *sockname;
 
-	bzero(sockname, sizeof(sockname));
-	snprintf(sockname, sizeof(sockname) - 1, "%s%s%s%08d",
-	    TCCONNECT_SOCKETDIR, TCCONNECT_SOCKETPREFIX, "server", getpid());
+	sockname = tempnam(NULL, "ac");
 
 	switch (childpid = check_fork()) {
 	case -1:
@@ -310,16 +303,14 @@ END_TEST
  */
 START_TEST(tc_connect_localunixdomain_clientclose)
 {
-	char sockname[FILENAME_MAX];
+	char *sockname;
 	struct sockaddr_storage	 ss;
 	struct sockaddr_un	*ss_sun = (struct sockaddr_un *)&ss;
 	struct achat_channel    *s  = NULL;
 	struct achat_channel    *c  = NULL;
 	achat_rc		 rc = ACHAT_RC_ERROR;
 
-	bzero(sockname, sizeof(sockname));
-	snprintf(sockname, sizeof(sockname) - 1, "%s%s%s%08d",
-	    TCCONNECT_SOCKETDIR, TCCONNECT_SOCKETPREFIX, "server", getpid());
+	sockname = tempnam(NULL, "ac");
 
 	c = acc_create();
 	fail_if(c == NULL, "couldn't create client channel");
@@ -387,11 +378,9 @@ END_TEST
 START_TEST(tc_connect_localunixdomain_dup)
 {
 	pid_t childpid;
-	char sockname[FILENAME_MAX];
+	char *sockname;
 
-	bzero(sockname, sizeof(sockname));
-	snprintf(sockname, sizeof(sockname) - 1, "%s%s%s%08d",
-	    TCCONNECT_SOCKETDIR, TCCONNECT_SOCKETPREFIX, "server", getpid());
+	sockname = tempnam(NULL, "ac");
 
 	switch (childpid = check_fork()) {
 	case -1:

@@ -47,13 +47,19 @@
 
 START_TEST(vm_tc_prepare_no_cvsroot)
 {
-	char		cvsroot[32];
+	char		*cvsroot;
 	char		user[16];
 	char		*s;
+	char		*tmpdir;
 	apnvm		*vm;
 	apnvm_result	vmrc;
 
-	strcpy(cvsroot, "/tmp/tc_vm_XXXXXX");
+	tmpdir = getenv("TMPDIR");
+	if (tmpdir == NULL)
+		tmpdir = "/tmp";
+	if (asprintf(&cvsroot, "%s/tc_vm_XXXXXX", tmpdir) == -1)
+		fail_if(1, "asprintf");
+
 	strcpy(user, "user1");
 	s = mkdtemp(cvsroot);
 

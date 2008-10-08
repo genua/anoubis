@@ -56,7 +56,7 @@
 #include "apnvm.h"
 
 #ifndef APNVM_WORKDIR
-#define APNVM_WORKDIR "/tmp/apnvm_XXXXXX"
+#define APNVM_WORKDIR "apnvm_XXXXXX"
 #endif
 
 #define APNVM_CHECKPTR(ptr, rc) \
@@ -383,20 +383,44 @@ apnvm *
 apnvm_init(const char *repository, const char *user)
 {
 	struct _apnvm *vm;
+	char *tmpdir, *workdir;
 
 	APNVM_CHECKSTR(repository, NULL);
 	APNVM_CHECKSTR(user, NULL);
 
-	if ((vm = malloc(sizeof(struct _apnvm))) == NULL)
+	if ((vm = calloc(1, sizeof(struct _apnvm))) == NULL)
 		return (NULL);
 
 	vm->cvs.cvsroot = strdup(repository);
+	if (vm->cvs.cvsroot == NULL)
+		goto error;
 	vm->cvs.module = strdup(user);
+	if (vm->cvs.module == NULL)
+		goto error;
 
-	vm->cvs.workdir = strdup(APNVM_WORKDIR);
-	vm->cvs.workdir = mkdtemp(vm->cvs.workdir);
+	tmpdir = getenv("TMPDIR");
+	if (!tmpdir)
+		tmpdir = "/tmp";
+	if (asprintf(&workdir, "%s/%s", tmpdir, APNVM_WORKDIR) == -1) {
+		workdir = NULL;
+		goto error;
+	}
+
+	vm->cvs.workdir = mkdtemp(workdir);
+	if (vm->cvs.workdir == NULL)
+		goto error;
 
 	return (vm);
+
+error:
+	if (vm->cvs.cvsroot)
+		free(vm->cvs.cvsroot);
+	if (vm->cvs.module)
+		free(vm->cvs.module);
+	if (workdir)
+		free(workdir);
+	free(vm);
+	return (NULL);
 }
 
 void

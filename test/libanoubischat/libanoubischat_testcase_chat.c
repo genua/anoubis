@@ -44,9 +44,6 @@
 #include <bsdcompat.h>
 #endif
 
-#define TCCHAT_SOCKETDIR	"/tmp/"
-#define TCCHAT_SOCKETPREFIX	"achat_socket."
-
 const char *msgs[] = {
 	"Hello World",
 	"Hi there!"
@@ -255,11 +252,9 @@ tc_chat_lip_client(short port)
 START_TEST(tc_chat_localunixdomain)
 {
 	pid_t childpid;
-	char sockname[FILENAME_MAX];
+	char *sockname;
 
-	bzero(sockname, sizeof(sockname));
-	snprintf(sockname, sizeof(sockname) - 1, "%s%s%s%08d",
-	    TCCHAT_SOCKETDIR, TCCHAT_SOCKETPREFIX, "server", getpid());
+	sockname = tempnam(NULL, "ac");
 
 	switch (childpid = check_fork()) {
 	case -1:
@@ -381,11 +376,9 @@ END_TEST
 START_TEST(tc_chat_two_messages)
 {
 	pid_t childpid;
-	char sockname[FILENAME_MAX];
+	char *sockname;
 
-	bzero(sockname, sizeof(sockname));
-	snprintf(sockname, sizeof(sockname) - 1, "%s%s%s%08d",
-	    TCCHAT_SOCKETDIR, TCCHAT_SOCKETPREFIX, "server", getpid());
+	sockname = tempnam(NULL, "ac");
 
 	switch (childpid = check_fork()) {
 	case -1:
