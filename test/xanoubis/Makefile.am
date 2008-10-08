@@ -39,7 +39,7 @@ TESTS = \
 	testSuite_Patterns \
 	testSuite_Profiles \
 	testSuite_Sfs
-noinst_PROGRAMS = test_xanoubis_server $(TESTS)
+noinst_PROGRAMS = test_xanoubis_server testSuite_JobCtrl $(TESTS)
 endif
 
 uidir		   = src/libanoubisui
