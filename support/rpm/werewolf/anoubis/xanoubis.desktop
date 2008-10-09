@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=xanoubis
+Comment=GUI of the Anoubis Security Suite
+Icon=/usr/share/pixmaps/xanoubis.png
+Categories=Application;System;X-Red-Hat-Extra;
+Exec=xanoubis
+Type=Application
+Terminal=false
+Encoding=UTF-8

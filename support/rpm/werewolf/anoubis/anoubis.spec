@@ -14,6 +14,8 @@ Source2:	anoubisd.udev
 Source10:	policy.admin.0
 Source11:	policy.user.0
 Source12:	policy.admin.default
+Source20:	xanoubis.png
+Source21:	xanoubis.desktop
 Vendor:		GeNUA mbH
 BuildRoot:	%(mktemp -d %{_tmppath}/%{name}-%{version}-build.XXXX)
 
@@ -27,6 +29,7 @@ BuildRequires:	wxGTK-devel >= 2.8
 BuildRequires:	libattr-devel
 BuildRequires:	libstdc++-devel
 BuildRequires:	flex
+BuildRequires:	desktop-file-utils
 
 
 # long descpritive part of the packaged software goes here
@@ -94,6 +97,17 @@ rm -fr $RPM_BUILD_ROOT%{_includedir}
 rm -f  $RPM_BUILD_ROOT%{_libdir}/*.a
 rm -fr $RPM_BUILD_ROOT%{_mandir}/man3
 
+# add Desktop entries
+mkdir -p $RPM_BUILD_ROOT%{_datadir}/pixmaps
+mkdir -p $RPM_BUILD_ROOT%{_datadir}/applications
+install -p %{_sourcedir}/xanoubis.png \
+	$RPM_BUILD_ROOT%{_datadir}/pixmaps/xanoubis.png
+desktop-file-install --dir $RPM_BUILD_ROOT%{_datadir}/applications \
+	--add-category X-Red-Hat-Extra \
+	--add-category Application \
+	--add-category System \
+	%{_sourcedir}/xanoubis.desktop
+
 %clean
 [ "$RPM_BUILD_ROOT" != "/" ] && [ -d $RPM_BUILD_ROOT ] \
   && rm -rf $RPM_BUILD_ROOT
@@ -148,13 +162,20 @@ rmdir /etc/anoubis/policy /etc/anoubis 2>/dev/null || true
 ### files of subpackage xanoubis ###########################
 %files -n xanoubis
 %defattr(-,root,root)
+%attr(0644,root,root) %{_datadir}/applications/xanoubis.desktop
+%attr(0644,root,root) %{_datadir}/pixmaps/xanoubis.png
 %doc AUTHORS INSTALL NEWS README ChangeLog
 %{_prefix}/bin/xanoubis
 %{_mandir}/man1/xanoubis*.1.gz
 %{_prefix}/share/xanoubis/*
+%{_datadir}/applications/xanoubis.desktop
+%{_datadir}/pixmaps/xanoubis.png
 
 
 ### changelog ##############################################
 %changelog
+* Thu Oct 09 2008 Sebastian Trahm
+- add desktop entry and icon file
+
 * Fri Feb 01 2008 Sebastian Trahm
 - first packaging for Fedora Core 8 (werewolf)
