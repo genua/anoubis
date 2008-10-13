@@ -256,9 +256,11 @@ MainFrame::OnMbHelpAboutSelect(wxCommandEvent&)
 	info.AddDeveloper(wxT("Christian Hiesl"));
 	info.AddDeveloper(wxT("Hans-Joerg Hoexer"));
 	info.AddDeveloper(wxT("Joachim Ayasse"));
+	info.AddDeveloper(wxT("Konrad Merz"));
 	info.AddDeveloper(wxT("Michael Gernoth"));
 	info.AddDeveloper(wxT("Pedro Martelleto"));
 	info.AddDeveloper(wxT("Reinhard Tartler"));
+	info.AddDeveloper(wxT("Robin Doer"));
 	info.AddDeveloper(wxT("Sebastian Trahm"));
 	info.AddDeveloper(wxT("Stefan Fritsch"));
 
