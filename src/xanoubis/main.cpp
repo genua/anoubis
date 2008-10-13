@@ -34,46 +34,44 @@
 #include <wx/icon.h>
 #include <wx/stdpaths.h>
 #include <wx/string.h>
+#include <wx/textfile.h>
+#include <wx/tokenzr.h>
 
-#include "AnEvents.h"
 #include "AlertNotify.h"
+#include "AnEvents.h"
 #include "CommunicatorCtrl.h"
 #include "DlgLogViewer.h"
 #include "DlgRuleEditor.h"
 #include "JobCtrl.h"
 #include "LogNotify.h"
-#include "main.h"
 #include "MainFrame.h"
-#include "Module.h"
-#include "ModOverview.h"
+#include "main.h"
 #include "ModAlf.h"
-#include "ModSfs.h"
 #include "ModAnoubis.h"
-#include "TrayIcon.h"
+#include "ModOverview.h"
+#include "ModSfs.h"
+#include "Module.h"
 #include "PolicyRuleSet.h"
+#include "TrayIcon.h"
 #include "VersionCtrl.h"
 
 IMPLEMENT_APP(AnoubisGuiApp)
 
 AnoubisGuiApp::AnoubisGuiApp(void)
 {
-	userRuleSet_ = NULL;
-	oldUserRuleSet_ = NULL;
-	adminRuleSet_ = NULL;
-	oldAdminRuleSet_ = NULL;
 	mainFrame = NULL;
 	logViewer_ = NULL;
 	ruleEditor_ = NULL;
 	comCtrl_ = NULL;
 	trayIcon = NULL;
 	userOptions_ = NULL;
+	onInitProfile_ = true;
 
 	SetAppName(wxT("xanoubis"));
 	wxInitAllImageHandlers();
 
-	profile_ = wxT("none");
-	onInitProfile_ = true;
 	paths_.SetInstallPrefix(wxT(GENERALPREFIX));
+	fillUserList();
 }
 
 AnoubisGuiApp::~AnoubisGuiApp(void)
@@ -81,19 +79,6 @@ AnoubisGuiApp::~AnoubisGuiApp(void)
 	/* mainFrame not handled here, coz object already destroyed */
 	if (trayIcon != NULL)
 		delete trayIcon;
-
-	if (userRuleSet_ != NULL) {
-		delete userRuleSet_;
-	}
-	if (oldUserRuleSet_ != NULL) {
-		delete oldUserRuleSet_;
-	}
-	if (adminRuleSet_ != NULL) {
-		delete adminRuleSet_;
-	}
-	if (oldAdminRuleSet_ != NULL) {
-		delete oldAdminRuleSet_;
-	}
 
 	if (userOptions_ != NULL) {
 		delete userOptions_;
@@ -104,6 +89,9 @@ AnoubisGuiApp::~AnoubisGuiApp(void)
 
 	/* Destroy versionmanagement */
 	delete VersionCtrl::getInstance();
+
+	delete ProfileCtrl::getInstance();
+	userList_.clear();
 }
 
 void
@@ -111,7 +99,8 @@ AnoubisGuiApp::quit(void)
 {
 	bool result = mainFrame->OnQuit();
 
-	userOptions_->Write(wxT("Anoubis/Profile"), profile_);
+	userOptions_->Write(wxT("Anoubis/Profile"),
+	    ProfileCtrl::getInstance()->getProfile());
 
 	if(result) {
 		trayIcon->RemoveIcon();
@@ -179,7 +168,9 @@ bool AnoubisGuiApp::OnInit()
 		status(_("Language setting: ") + language_.GetCanonicalName());
 	}
 
-	((ModAnoubis*)modules_[ANOUBIS])->setProfile(profile_);
+	ProfileCtrl::getInstance()->switchProfile(ProfileMgr::PROFILE_MEDIUM);
+	((ModAnoubis*)modules_[ANOUBIS])->setProfile(
+	    ProfileCtrl::getInstance()->getProfileName());
 
 	return (true);
 }
@@ -187,6 +178,10 @@ bool AnoubisGuiApp::OnInit()
 void
 AnoubisGuiApp::sendEvent(wxCommandEvent& event)
 {
+	long		 id;
+	ProfileCtrl	*profileCtrl;
+	PolicyRuleSet	*rs;
+
 	/* XXX [ST]: BUG #424
 	 * The following ``wxPostEvent'' is not needed therefore comment it out.
 	 * Nethertheless we have to cleanup and normalise the concept of
@@ -209,8 +204,16 @@ AnoubisGuiApp::sendEvent(wxCommandEvent& event)
 	wxPostEvent(comCtrl_, event);
 	wxPostEvent(trayIcon, event);
 
-	if (userRuleSet_ != NULL) {
-		wxPostEvent(userRuleSet_, event);
+	profileCtrl = ProfileCtrl::getInstance();
+	id = profileCtrl->getUserId();
+	if (id != -1) {
+		if (profileCtrl->lockToShow(id, this)) {
+			rs = profileCtrl->getRuleSetToShow(id, this);
+			if (rs != NULL) {
+				wxPostEvent(rs, event);
+			}
+			profileCtrl->unlockFromShow(id, this);
+		}
 	}
 }
 
@@ -359,9 +362,9 @@ AnoubisGuiApp::requestPolicy(void)
 }
 
 void
-AnoubisGuiApp::usePolicy(wxString tmpFile)
+AnoubisGuiApp::usePolicy(wxString tmpFile, uid_t uid, int prio)
 {
-	comCtrl_->usePolicy(tmpFile);
+	comCtrl_->usePolicy(tmpFile, uid, prio);
 }
 
 void
@@ -499,72 +502,83 @@ AnoubisGuiApp::getCommConnectionState(void)
 }
 
 void
-AnoubisGuiApp::importPolicyRuleSet(int prio, struct apn_ruleset *rule)
+AnoubisGuiApp::importPolicyRuleSet(int prio, uid_t uid,
+    struct apn_ruleset * rule)
 {
-	wxCommandEvent		 event(anEVT_LOAD_RULESET);
+	wxCommandEvent	 event(anEVT_LOAD_RULESET);
+	PolicyRuleSet	*rs;
+	ProfileCtrl	*profileCtrl;
 
-	if ((prio == 1) && (oldUserRuleSet_ != NULL)) {
-		delete oldUserRuleSet_;
-	}
-	if ((prio == 0) && (oldAdminRuleSet_ != NULL)) {
-		delete oldAdminRuleSet_;
-	}
+	rs = new PolicyRuleSet(prio, uid, rule);
+	profileCtrl = ProfileCtrl::getInstance();
 
-	if (prio == 0) {
-		oldAdminRuleSet_ = adminRuleSet_;
-		adminRuleSet_ = new PolicyRuleSet(prio, geteuid(), rule);
-	} else {
-		oldUserRuleSet_ = userRuleSet_;
-		userRuleSet_ = new PolicyRuleSet(prio, geteuid(), rule);
-	}
-
-	if (prio == 0) {
-		event.SetClientData((void*)adminRuleSet_);
-	} else {
-		event.SetClientData((void*)userRuleSet_);
-	}
-	sendEvent(event);
+	event.SetClientData((void*)rs);
 
 	if (onInitProfile_) {
+		ProfileMgr::profile_t	profile;
+		long			rProfile;
 		onInitProfile_ = false;
-		if (!userOptions_->Read(wxT("Anoubis/Profile"), &profile_)) {
-			if (userRuleSet_ == NULL) {
-				profile_ = wxT("none");
-			} else if (userRuleSet_->isEmpty()) {
-				profile_ = wxT("admin");
-				profileFromDiskToDaemon(profile_);
+		if (!userOptions_->Read(wxT("Anoubis/Profile"), &rProfile)) {
+			if (rs == NULL) {
+				profile = ProfileMgr::PROFILE_NONE;
+			} else if (rs->isEmpty()) {
+				profile = ProfileMgr::PROFILE_ADMIN;
+				profileCtrl->switchProfile(profile);
+				profileFromDiskToDaemon(
+				    profileCtrl->getProfileName());
 			} else {
-				profile_ = wxT("medium");
-				profileFromDaemonToDisk(profile_);
+				profile = ProfileMgr::PROFILE_MEDIUM;
+				profileCtrl->switchProfile(profile);
+				profileFromDaemonToDisk(
+				    profileCtrl->getProfileName());
 			}
+		} else {
+			profile = (ProfileMgr::profile_t)rProfile;
+			profileCtrl->switchProfile(profile);
 		}
-		((ModAnoubis*)modules_[ANOUBIS])->setProfile(profile_);
+		((ModAnoubis*)modules_[ANOUBIS])->setProfile(
+		    profileCtrl->getProfileName());
 	}
+
+	profileCtrl->store(rs);
+	sendEvent(event);
 }
 
 void
 AnoubisGuiApp::importPolicyFile(wxString fileName, bool checkPerm)
 {
 	wxCommandEvent		 event(anEVT_LOAD_RULESET);
+	PolicyRuleSet		*ruleSet;
 
-	if (oldUserRuleSet_ != NULL) {
-		delete oldUserRuleSet_;
-	}
-	oldUserRuleSet_ = userRuleSet_;
-	userRuleSet_ = new PolicyRuleSet(1, geteuid(), fileName, checkPerm);
-
-	event.SetClientData((void*)userRuleSet_);
+	ruleSet = new PolicyRuleSet(1, geteuid(), fileName, checkPerm);
+	ProfileCtrl::getInstance()->store(ruleSet);
 	sendEvent(event);
 }
 
+/* XXX ch: this code should be moved to ProfileCtrl. */
 void
 AnoubisGuiApp::exportPolicyFile(wxString fileName)
 {
-	if (userRuleSet_ != NULL) {
-		userRuleSet_->exportToFile(fileName);
-	} else {
+	long		 rsid;
+	ProfileCtrl	*profileCtrl;
+	PolicyRuleSet	*ruleSet;
+
+	profileCtrl = ProfileCtrl::getInstance();
+	rsid = profileCtrl->getUserId();
+	if (rsid == -1) {
 		status(_("no loaded RuleSet; export failed!"));
+		return;
 	}
+
+	if (! profileCtrl->lockToShow(rsid, this)) {
+		status(_("Couldn't access RuleSet; export failed!"));
+		return;
+	}
+
+	ruleSet = profileCtrl->getRuleSetToShow(rsid, this);
+	ruleSet->exportToFile(fileName);
+
+	profileCtrl->unlockFromShow(rsid, this);
 }
 
 wxConfig *
@@ -573,6 +587,7 @@ AnoubisGuiApp::getUserOptions(void)
 	return (userOptions_);
 }
 
+/* XXX ch: this code should be moved to ProfileCtrl. */
 bool
 AnoubisGuiApp::profileFromDiskToDaemon(wxString profileName)
 {
@@ -585,14 +600,29 @@ AnoubisGuiApp::profileFromDiskToDaemon(wxString profileName)
 		return (false);
 	}
 
-	fileName = getRulesetPath(profileName, true);
-
+	logMsg = _("seek for profile ") + profileName + _(" at ");
+	fileName = paths_.GetUserDataDir() + wxT("/") + profileName;
+	log(logMsg + fileName);
+	if (!wxFileExists(fileName)) {
+		fileName = paths_.GetDataDir();
+		fileName += wxT("/profiles/") + profileName;
+		log(logMsg + fileName);
+	}
+	if (!wxFileExists(fileName)) {
+		/*
+		 * We didn't find our profile (where --prefix told us)!
+		 * Try to take executable path into account. This should
+		 * fix a missing --prefix as the matter in our build and test
+		 * environment with aegis.
+		 */
+		fileName  = wxPathOnly(paths_.GetExecutablePath()) +
+		    wxT("/../../..") + fileName;
+		log(logMsg + fileName);
+	}
 	if (!wxFileExists(fileName)) {
 		status(_("Error: could not find profile: ") + profileName);
 		return (false);
 	}
-
-	profile_ = profileName;
 
 	/*
 	 * Create a tmp file as a copy of the local profile,
@@ -601,7 +631,7 @@ AnoubisGuiApp::profileFromDiskToDaemon(wxString profileName)
 	/* XXX ch: no return values / error are tested here! */
 	tmpFileName = wxFileName::CreateTempFileName(wxT("xanoubis"));
 	wxCopyFile(fileName, tmpFileName);
-	comCtrl_->usePolicy(tmpFileName);
+	comCtrl_->usePolicy(tmpFileName, geteuid(), 1);
 	importPolicyFile(fileName, false);
 
 	return (true);
@@ -617,11 +647,11 @@ AnoubisGuiApp::profileFromDaemonToDisk(wxString profileName)
 		return (false);
 	}
 
-	if (userRuleSet_ == NULL) {
+	if (ProfileCtrl::getInstance()->getUserId() == -1) {
 		return (false);
 	}
 
-	fileName = getRulesetPath(profileName, false);
+	fileName = paths_.GetUserDataDir() + wxT("/") + profileName;
 	if (wxFileExists(fileName)) {
 		wxRemoveFile(fileName);
 	}
@@ -630,23 +660,98 @@ AnoubisGuiApp::profileFromDaemonToDisk(wxString profileName)
 	return (true);
 }
 
-wxString
-AnoubisGuiApp::getCurrentProfileName(void)
-{
-	return (profile_);
-}
-
 bool
 AnoubisGuiApp::showingMainFrame(void)
 {
 	return (mainFrame->isShowing());
 }
 
-bool
-AnoubisGuiApp::hasRuleSet(void)
+void
+AnoubisGuiApp::fillUserList(void)
 {
-	if (userRuleSet_ == NULL)
-		return (false);
-	else
-		return (true);
+	wxTextFile		pwdFile(wxT("/etc/passwd"));
+	wxStringTokenizer	tokens;
+	wxString		line;
+	wxString		user;
+	wxString		uid;
+
+	if (geteuid() != 0) {
+		uid = wxString::Format(wxT("%d"), geteuid());
+		userList_[wxGetUserId()] = uid;
+		return;
+	}
+
+	if (!pwdFile.Open()) {
+		/* We couldn't open /etc/passwd !!! */
+		return;
+	}
+
+	for (line=pwdFile.GetFirstLine();
+	    !pwdFile.Eof();
+	    line=pwdFile.GetNextLine()) {
+		tokens.SetString(line, wxT(":"));
+		user = tokens.GetNextToken();
+		tokens.GetNextToken(); /* Just drop the 2nd token. */
+		uid = tokens.GetNextToken();
+		userList_[user] = uid;
+	}
+}
+
+wxArrayString
+AnoubisGuiApp::getListOfUsersName(void) const
+{
+	std::map<wxString,wxString>::const_iterator	it;
+	wxArrayString					result;
+
+	for (it=userList_.begin(); it!=userList_.end(); it++) {
+		result.Add((*it).first);
+	}
+
+	return (result);
+}
+
+wxArrayString
+AnoubisGuiApp::getListOfUsersId(void) const
+{
+	std::map<wxString,wxString>::const_iterator	it;
+	wxArrayString					result;
+
+	for (it=userList_.begin(); it!=userList_.end(); it++) {
+		result.Add((*it).second);
+	}
+
+	return (result);
+}
+
+uid_t
+AnoubisGuiApp::getUserIdByName(wxString name) const
+{
+	unsigned long uid;
+
+	if (userList_.count(name) == 0) {
+		uid = 0 - 1;
+	} else {
+		userList_.find(name)->second.ToULong(&uid);
+	}
+
+	return ((uid_t)uid);
+}
+
+wxString
+AnoubisGuiApp::getUserNameById(uid_t uid) const
+{
+	std::map<wxString,wxString>::const_iterator	it;
+	wxString					result;
+	unsigned long					tmpUid;
+
+	result = _("unknown");
+
+	for (it=userList_.begin(); it!=userList_.end(); it++) {
+		(*it).second.ToULong(&tmpUid);
+		if (tmpUid == (unsigned long)uid) {
+			result = (*it).first;
+		}
+	}
+
+	return (result);
 }

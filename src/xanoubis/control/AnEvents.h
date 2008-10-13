@@ -149,8 +149,10 @@ BEGIN_DECLARE_EVENT_TYPES()
 	DECLARE_LOCAL_EVENT_TYPE(anEVT_ANSWER_ESCALATION, wxNewEventType())
 
 	/*
-	 * Transport a pointer to a new ruleset, stored in the main application
-	 * to the display objects via ClientData.
+	 * A new rule set was loaded/stored to the profile manager.
+	 * Your current one may be out of date.
+	 *
+	 * Use GetExtraLong() to get the new rule set id.
 	 */
 	DECLARE_LOCAL_EVENT_TYPE(anEVT_LOAD_RULESET, wxNewEventType())
 

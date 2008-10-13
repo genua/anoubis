@@ -44,10 +44,12 @@
 #include <apn.h>
 
 #include "AnEvents.h"
-#include "Policy.h"
+#include "main.h"
 #include "ModAlfAddPolicyVisitor.h"
-
 #include "ModAlfMainPanelImpl.h"
+#include "Policy.h"
+#include "PolicyRuleSet.h"
+#include "ProfileCtrl.h"
 
 ModAlfMainPanelImpl::ModAlfMainPanelImpl(wxWindow* parent,
     wxWindowID id) : ModAlfMainPanelBase(parent, id)
@@ -63,8 +65,8 @@ ModAlfMainPanelImpl::ModAlfMainPanelImpl(wxWindow* parent,
 	columnNames_[MODALF_LIST_COLUMN_ADMIN] = _("Admin");
 	columnNames_[MODALF_LIST_COLUMN_OS] = _("OS");
 
-	userRuleSet_ = NULL;
-	adminRuleSet_ = NULL;
+	userRuleSetId_ = -1;
+	adminRuleSetId_ = -1;
 
 	for (int i=0; i<MODALF_LIST_COLUMN_EOL; i++) {
 		lst_Rules->InsertColumn(i, columnNames_[i], wxLIST_FORMAT_LEFT,
@@ -81,24 +83,52 @@ ModAlfMainPanelImpl::OnLoadRuleSet(wxCommandEvent& event)
 {
 	ModAlfAddPolicyVisitor	 addVisitor(this);
 	PolicyRuleSet		*ruleSet;
+	ProfileCtrl		*profileCtrl;
+
+	profileCtrl = ProfileCtrl::getInstance();
 
 	lst_Rules->DeleteAllItems();
 	tr_AV_Rules->DeleteAllItems();
-
-	ruleSet = (PolicyRuleSet *)event.GetClientData();
-	if (ruleSet->isAdmin()) {
-		adminRuleSet_ = ruleSet;
-	} else {
-		userRuleSet_ = ruleSet;
+	profileCtrl->unlockFromShow(userRuleSetId_, this);
+	profileCtrl->unlockFromShow(adminRuleSetId_, this);
+	userRuleSetId_ = profileCtrl->getUserId();
+	if (profileCtrl->lockToShow(userRuleSetId_, this)) {
+		ruleSet = profileCtrl->getRuleSetToShow(userRuleSetId_, this);
+		if (ruleSet != NULL) {
+			addVisitor.setAdmin(false);
+			ruleSet->accept(addVisitor);
+		}
 	}
 
-	if (userRuleSet_ != NULL) {
-		addVisitor.setAdmin(false);
-		userRuleSet_->accept(addVisitor);
+	adminRuleSetId_ = profileCtrl->getAdminId(geteuid());
+	if (profileCtrl->lockToShow(adminRuleSetId_, this)) {
+		ruleSet = profileCtrl->getRuleSetToShow(adminRuleSetId_, this);
+		if (ruleSet != NULL) {
+			addVisitor.setAdmin(true);
+			ruleSet->accept(addVisitor);
+		}
 	}
-	if (adminRuleSet_!= NULL) {
-		addVisitor.setAdmin(true);
-		adminRuleSet_->accept(addVisitor);
+
+	if (geteuid() == 0) {
+		unsigned long	uid;
+		long		rsid;
+		wxArrayString	userList = wxGetApp().getListOfUsersId();
+
+		for (size_t i=0; i<userList.GetCount(); i++) {
+			userList.Item(i).ToULong(&uid);
+			rsid = profileCtrl->getAdminId((uid_t)uid);
+			if (rsid == -1) {
+				continue;
+			}
+			if (!profileCtrl->lockToShow(rsid, this)) {
+				continue;
+			}
+			ruleSet = profileCtrl->getRuleSetToShow(rsid, this);
+			if (ruleSet != NULL) {
+				addVisitor.setAdmin(true);
+				ruleSet->accept(addVisitor);
+			}
+		}
 	}
 
 	/* trigger new * calculation of column width */

@@ -50,6 +50,7 @@
 #include "AppPolicy.h"
 #include "AlfPolicy.h"
 #include "VarPolicy.h"
+#include "main.h"
 
 #include "ModAlfAddPolicyVisitor.h"
 
@@ -84,9 +85,14 @@ ModAlfAddPolicyVisitor::ruleListAppend(Policy *policy)
 	alfPanel_->lst_Rules->SetItemPtrData(idx, (wxUIntPtr)policy);
 
 	if (isAdmin()) {
-		ruleType = wxT("admin");
+		ruleType  = wxT("admin ruleset of ");
+		ruleType += wxGetApp().getUserNameById(
+		    policy->getRsParent()->getUid());
+		alfPanel_->lst_Rules->SetItemBackgroundColour(idx,
+		    wxTheColourDatabase->Find(wxT("LIGHT GREY")));
+
 	} else {
-		ruleType = wxT("user");
+		ruleType = wxGetUserId();
 	}
 	alfPanel_->lst_Rules->SetItem(idx, MODALF_LIST_COLUMN_ADMIN, ruleType);
 

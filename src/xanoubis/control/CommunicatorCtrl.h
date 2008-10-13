@@ -50,7 +50,7 @@ class CommunicatorCtrl : public wxEvtHandler {
 		bool		isConnected(void);
 		wxString	getRemoteStation(void);
 		void		requestPolicy(void);
-		void		usePolicy(wxString);
+		void		usePolicy(wxString, uid_t, int);
 		void		checksumAdd(wxString);
 		void		checksumGet(wxString);
 		void		checksumCal(wxString);

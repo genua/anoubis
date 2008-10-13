@@ -57,13 +57,17 @@
 
 IMPLEMENT_DYNAMIC_CLASS(AlfPolicy, Policy)
 
-AlfPolicy::AlfPolicy(void)
+AlfPolicy::AlfPolicy(PolicyRuleSet *parent) : Policy(parent)
 {
 
 }
 
-AlfPolicy::AlfPolicy(AppPolicy *parent, struct apn_rule *alfRule)
-    : Policy(parent)
+ AlfPolicy::AlfPolicy(void) : Policy(NULL, NULL)
+{
+}
+
+AlfPolicy::AlfPolicy(AppPolicy *parent, struct apn_rule *alfRule,
+    PolicyRuleSet *rsParent) : Policy(rsParent, parent)
 {
 	alfRule_ = alfRule;
 }

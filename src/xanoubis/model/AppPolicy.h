@@ -51,7 +51,8 @@ class AppPolicy : public Policy
 
 	public:
 		AppPolicy(void);
-		AppPolicy(struct apn_rule *);
+		AppPolicy(PolicyRuleSet *);
+		AppPolicy(struct apn_rule *, PolicyRuleSet *);
 		~AppPolicy(void);
 
 		virtual void accept(PolicyVisitor&);

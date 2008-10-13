@@ -38,6 +38,7 @@
 #define SUPER(cls)	((cls *)this)
 
 class PolicyVisitor;
+class PolicyRuleSet;
 
 class Policy: public wxObject
 {
@@ -45,18 +46,20 @@ class Policy: public wxObject
 
 	private:
 		Policy		*parent_;
+		PolicyRuleSet	*rsParent_;
 		unsigned long	 index_;
 
 	public:
-		Policy(void);
-		Policy(Policy *);
+		Policy(PolicyRuleSet *);
+		Policy(PolicyRuleSet *, Policy *);
 		virtual ~Policy(void);
 
 		virtual void accept(PolicyVisitor&) = 0;
 		virtual int  getId(void) = 0;
 		virtual bool isDefault(void) = 0;
 
-		Policy	*getParent(void);
+		Policy		*getParent(void);
+		PolicyRuleSet	*getRsParent(void);
 		wxString getActionName(int);
 		wxString getDirectionName(int);
 		wxString getLogName(int);

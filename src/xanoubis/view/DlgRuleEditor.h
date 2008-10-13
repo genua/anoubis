@@ -35,6 +35,7 @@
 #include <wx/list.h>
 #include <wx/string.h>
 #include <wx/filename.h>
+#include <wx/dynarray.h>
 
 #include "AnEvents.h"
 #include "AnShortcuts.h"
@@ -53,6 +54,7 @@ enum ruleEditorPanels {
 enum ruleEditorListColumns {
 	RULEDITOR_LIST_COLUMN_PRIO = 0,
 	RULEDITOR_LIST_COLUMN_RULE,
+	RULEDITOR_LIST_COLUMN_USER,
 	RULEDITOR_LIST_COLUMN_APP,
 	RULEDITOR_LIST_COLUMN_BIN,
 	RULEDITOR_LIST_COLUMN_HASHT,
@@ -93,6 +95,7 @@ class AddrLine
 		void remove(void);
 };
 WX_DECLARE_LIST(AddrLine, AddrLineList);
+WX_DEFINE_ARRAY_LONG(long, ArrayOfLongs);
 
 class DlgRuleEditor : public DlgRuleEditorBase
 {
@@ -100,12 +103,13 @@ class DlgRuleEditor : public DlgRuleEditorBase
 		unsigned long	selectedId_;
 		unsigned long	selectedIndex_;
 		bool		autoCheck_;
-		PolicyRuleSet	*userRuleSet_;
-		PolicyRuleSet	*adminRuleSet_;
 		wxString	columnNames_[RULEDITOR_LIST_COLUMN_EOL];
 		int		columnWidths_[RULEDITOR_LIST_COLUMN_EOL];
 		AddrLineList	extraSrcAddrList;
 		AddrLineList	extraDstAddrList;
+		long		userRuleSetId_;
+		long		adminRuleSetId_;
+		ArrayOfLongs	foreignAdminRsIds_;
 
 		void OnShow(wxCommandEvent&);
 
@@ -183,7 +187,7 @@ class DlgRuleEditor : public DlgRuleEditorBase
 		void OnAlfDstPortComboBox(wxCommandEvent&);
 		void OnAlfStateTimeoutChange(wxCommandEvent&);
 
-		void loadRuleSet(PolicyRuleSet*);
+		void loadRuleSet(void);
 		void OnSrcAddrAddButton(wxCommandEvent&);
 
 		void OnAlfStateTimeoutChange(wxSpinEvent&);

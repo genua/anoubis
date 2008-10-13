@@ -237,7 +237,7 @@ VersionCtrl::restoreVersion(unsigned int no,
 			}
 		}
 
-		if (wxGetApp().getCurrentProfileName() == profile) {
+		if (ProfileCtrl::getInstance()->getProfileName() == profile) {
 			/* Current profile, reactivate */
 			if (rs == 0) {
 				/*
@@ -252,12 +252,14 @@ VersionCtrl::restoreVersion(unsigned int no,
 			}
 
 			if (rs != 0)
-				wxGetApp().importPolicyRuleSet(1, rs);
+				wxGetApp().importPolicyRuleSet(1, geteuid(),
+				    rs);
 		}
 	}
 
 	/* Send result back to daemon */
-	wxGetApp().profileFromDiskToDaemon(wxGetApp().getCurrentProfileName());
+	wxGetApp().profileFromDiskToDaemon(
+	    ProfileCtrl::getInstance()->getProfileName());
 
 	return (true);
 }

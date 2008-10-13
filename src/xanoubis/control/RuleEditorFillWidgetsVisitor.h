@@ -47,6 +47,7 @@ class RuleEditorFillWidgetsVisitor : public PolicyVisitor
 		void showSrcPort(wxString);
 		void showDstPort(wxString);
 		void showDirection(int);
+		void showUser(uid_t);
 
 	public:
 		RuleEditorFillWidgetsVisitor(DlgRuleEditor *);

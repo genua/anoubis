@@ -26,6 +26,7 @@
  */
 
 #include "RuleEditorAddPolicyVisitor.h"
+#include "main.h"
 
 RuleEditorAddPolicyVisitor::RuleEditorAddPolicyVisitor(
     DlgRuleEditor *ruleEditor) : RuleEditorFillTableVisitor(ruleEditor, 0)
@@ -40,17 +41,28 @@ RuleEditorAddPolicyVisitor::~RuleEditorAddPolicyVisitor(void)
 long
 RuleEditorAddPolicyVisitor::appendPolicy(Policy *policy)
 {
-	long		idx;
-	wxString	ruleType;
+	long		 idx;
+	wxString	 ruleType;
+	PolicyRuleSet	*rs;
 
 	idx = ruleEditor_->ruleListCtrl->GetItemCount();
 	ruleType = wxString::Format(wxT("%d"), policy->getId());
-	if (isAdmin()) {
-		ruleType += wxT(" A");
-	}
 
 	ruleEditor_->ruleListCtrl->InsertItem(idx, ruleType);
 	ruleEditor_->ruleListCtrl->SetItemPtrData(idx, (wxUIntPtr)policy);
+
+	rs = policy->getRsParent();
+	if (rs != NULL) {
+		ruleEditor_->ruleListCtrl->SetItem(idx,
+		    RULEDITOR_LIST_COLUMN_USER,
+		    wxGetApp().getUserNameById(rs->getUid()));
+
+	}
+
+	if (isAdmin()) {
+		ruleEditor_->ruleListCtrl->SetItemBackgroundColour(idx,
+		    wxTheColourDatabase->Find(wxT("LIGHT GREY")));
+	}
 
 	return (idx);
 }

@@ -54,16 +54,18 @@ WX_DEFINE_LIST(PolicyList);
 
 IMPLEMENT_CLASS(Policy, wxObject)
 
-Policy::Policy(void)
+Policy::Policy(PolicyRuleSet *rsParent)
 {
 	parent_ = NULL;
 	index_ = 0;
+	rsParent_ = rsParent;
 }
 
-Policy::Policy(Policy *parent)
+Policy::Policy(PolicyRuleSet *rsParent, Policy *parent)
 {
 	parent_ = parent;
 	index_ = 0;
+	rsParent_ = rsParent;
 }
 
 Policy::~Policy(void)
@@ -74,6 +76,12 @@ Policy *
 Policy::getParent(void)
 {
 	return (parent_);
+}
+
+PolicyRuleSet *
+Policy::getRsParent(void)
+{
+	return (rsParent_);
 }
 
 wxString

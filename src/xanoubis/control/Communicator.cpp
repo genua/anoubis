@@ -105,6 +105,7 @@ Communicator::Communicator(wxEvtHandler *eventDestination, wxString socketPath,
 	client_  = NULL;
 	policyReq_ = false;
 	policyUse_ = false;
+	policyUser_ = 0;
 	policyLen_ = 0;
 	checksumAdd_ = false;
 	checksumGet_ = false;
@@ -209,10 +210,12 @@ Communicator::Entry(void)
 	wxString			 tmpPreFix;
 	wxString			 wxCsum;
 	wxString			 errString;
+	wxArrayString			 uidList;
 	Policy_GetByUid			req;
 	Policy_SetByUid			*ureq;
 	char				*buf;
 	int				 prio;
+	int				 uidListIdx;
 	unsigned char			 csum[MAX_APN_HASH_LEN];
 	size_t				 length, total, size;
 	int				 iovcnt;
@@ -244,6 +247,8 @@ Communicator::Entry(void)
 	total			= 0;
 	wxCsum			= wxEmptyString;
 	tmpPreFix		= wxT("xanoubis");
+	uidList			= wxGetApp().getListOfUsersId();
+	uidListIdx		= uidList.GetCount();
 
 	if (connect() != ACHAT_RC_OK) {
 		shutdown(CONNECTION_FAILED);
@@ -269,6 +274,7 @@ Communicator::Entry(void)
 		struct anoubis_msg	*msg, *reqmsg, *tmp;
 		achat_rc		 rc = ACHAT_RC_ERROR;
 		NotifyList::iterator	 ali;
+		unsigned long		 uid;
 
 		if (currTa && (currTa->flags & ANOUBIS_T_DONE)) {
 			/* the current transaction was done */
@@ -341,8 +347,12 @@ Communicator::Entry(void)
 			}
 
 			set_value(ureq->ptype, ANOUBIS_PTYPE_SETBYUID);
-			set_value(ureq->uid, geteuid());
-			set_value(ureq->prio, 1);
+			set_value(ureq->uid, policyUser_);
+			if (geteuid() == 0) {
+				set_value(ureq->prio, policyPrio_);
+			} else {
+				set_value(ureq->prio, 1);
+			}
 
 			if (length)
 				memcpy(ureq->payload, policyBuf_, length);
@@ -392,8 +402,13 @@ Communicator::Entry(void)
 		}
 
 		if (startPolicyRequest == COMMUNICATOR_FLAG_INIT && prio < 2) {
+			if (uidListIdx == 0) {
+				uid = geteuid();
+			} else {
+				uidList.Item(uidListIdx - 1).ToULong(&uid);
+			}
 			set_value(req.ptype, ANOUBIS_PTYPE_GETBYUID);
-			set_value(req.uid, geteuid());
+			set_value(req.uid, (uid_t)uid);
 			set_value(req.prio, prio);
 			reqTa = anoubis_client_policyrequest_start(client_,
 					&req, sizeof(req));
@@ -412,6 +427,19 @@ Communicator::Entry(void)
 
 		if (startPolicyRequest == COMMUNICATOR_FLAG_DONE) {
 			if(reqTa->result) {
+				if (prio == 0) {
+					/*
+					 * We requested a admin ruleset. Maybe
+					 * there's no ruleset or the user does
+					 * not exist at all. We don't shutdown
+					 * the communication and just step
+					 * foreward to the next user.
+					 */
+					startPolicyRequest =
+					    COMMUNICATOR_FLAG_INIT;
+					uidListIdx--;
+					continue;
+				}
 				errString = _("Error while requesting ");
 				errString += _("Policy from deamon");
 				sendError(COM_POLICY_REQ_ERR, errString);
@@ -468,12 +496,18 @@ Communicator::Entry(void)
 				    anEVT_ANOUBISD_RULESET_ARRIVED);
 				event.SetClientData(ruleSet);
 				event.SetInt(prio);
+				event.SetExtraLong(uid);
 				eventDestination_->AddPendingEvent(event);
 			} else {
 				/* XXX: KM we need here better error handling */
 			}
 
-			prio++;
+			if (prio  < 1) {
+				uidListIdx--;
+			}
+			if (uidListIdx == 0) {
+				prio++;
+			}
 			if(prio < 2)
 				startPolicyRequest = COMMUNICATOR_FLAG_INIT;
 			else
@@ -736,13 +770,15 @@ Communicator::policyRequest(void)
 }
 
 void
-Communicator::policyUse(char *policyBuf, int len)
+Communicator::policyUse(char *policyBuf, uid_t uid, int prio, int len)
 {
 	if (len <= 0)
 		return;
 
 	policyLen_ = len;
 	policyUse_ = true;
+	policyUser_ = uid;
+	policyPrio_ = prio;
 	policyBuf_ = policyBuf;
 }
 

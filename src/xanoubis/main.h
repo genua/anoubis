@@ -49,6 +49,7 @@
 #include <wx/cmdline.h>
 
 #include <apn.h>
+#include <map>
 
 #include "CommunicatorCtrl.h"
 #include "ctassert.h"
@@ -59,6 +60,7 @@
 #include "TrayIcon.h"
 #include "PolicyRuleSet.h"
 #include "Debug.h"
+#include "ProfileCtrl.h"
 
 #define ANOUBISD_SOCKETNAME	"/var/run/anoubisd.sock"
 
@@ -77,14 +79,10 @@ class AnoubisGuiApp : public wxApp
 {
 	private:
 		wxString		 socketParam_;
-		wxString		 profile_;
 		wxStandardPaths		 paths_;
 		wxLocale		 language_;
 		bool			 onInitProfile_;
-		PolicyRuleSet		*userRuleSet_;
-		PolicyRuleSet		*oldUserRuleSet_;
-		PolicyRuleSet		*adminRuleSet_;
-		PolicyRuleSet		*oldAdminRuleSet_;
+		std::map<wxString,wxString> userList_;
 		MainFrame		*mainFrame;
 		DlgLogViewer		*logViewer_;
 		DlgRuleEditor		*ruleEditor_;
@@ -92,6 +90,8 @@ class AnoubisGuiApp : public wxApp
 		TrayIcon		*trayIcon;
 		Module			*modules_[ANOUBIS_MODULESNO];
 		wxConfig		*userOptions_;
+
+		void fillUserList(void);
 
 	public:
 		AnoubisGuiApp(void);
@@ -112,7 +112,7 @@ class AnoubisGuiApp : public wxApp
 		void		 toggleRuleEditorVisability(void);
 		void		 connectCommunicator(bool);
 		void		 requestPolicy(void);
-		void		 usePolicy(wxString);
+		void		 usePolicy(wxString, uid_t, int);
 		void		 sendChecksum(wxString);
 		void		 getChecksum(wxString);
 		void		 calChecksum(wxString);
@@ -123,16 +123,19 @@ class AnoubisGuiApp : public wxApp
 		wxIcon		*loadIcon(wxString);
 		Module		*getModule(enum moduleIdx);
 		wxString	 getDataDir(void);
-		void		 importPolicyRuleSet(int, struct apn_ruleset*);
+		void	 importPolicyRuleSet(int, uid_t, struct apn_ruleset*);
 		void		 importPolicyFile(wxString, bool);
 		void		 exportPolicyFile(wxString);
 		bool		 getCommConnectionState(void);
 		wxConfig	*getUserOptions(void);
 		bool		 profileFromDiskToDaemon(wxString);
 		bool		 profileFromDaemonToDisk(wxString);
-		wxString	 getCurrentProfileName(void);
-		bool		 hasRuleSet(void);
 		bool		 showingMainFrame(void);
+
+		wxArrayString	 getListOfUsersName(void) const;
+		wxArrayString	 getListOfUsersId(void) const;
+		uid_t		 getUserIdByName(wxString) const;
+		wxString	 getUserNameById(uid_t) const;
 };
 
 DECLARE_APP(AnoubisGuiApp)

@@ -44,7 +44,6 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	sz_main = new wxBoxSizer( wxVERTICAL );
 	
 	sz_main->SetMinSize( wxSize( 780,-1 ) ); 
-	wxBoxSizer* controlRuleSizer;
 	controlRuleSizer = new wxBoxSizer( wxHORIZONTAL );
 	
 	controlRuleText = new wxStaticText( this, wxID_ANY, _("Rule:"), wxDefaultPosition, wxDefaultSize, 0 );
@@ -60,6 +59,14 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	
 	controlRuleCreateButton = new wxButton( this, wxID_ANY, _("create"), wxDefaultPosition, wxDefaultSize, 0 );
 	controlRuleSizer->Add( controlRuleCreateButton, 0, wxALL, 5 );
+	
+	controlUserLabel = new wxStaticText( this, wxID_ANY, _("for user"), wxDefaultPosition, wxDefaultSize, 0 );
+	controlUserLabel->Wrap( -1 );
+	controlRuleSizer->Add( controlUserLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	
+	wxArrayString controlUserChoiceChoices;
+	controlUserChoice = new wxChoice( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, controlUserChoiceChoices, 0 );
+	controlRuleSizer->Add( controlUserChoice, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	controlRuleText1 = new wxStaticText( this, wxID_ANY, _("/ Rule:"), wxDefaultPosition, wxDefaultSize, 0 );
 	controlRuleText1->Wrap( -1 );
@@ -783,158 +790,4 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	sfsBinaryModifyButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::OnSfsBinaryModifyButton ), NULL, this );
 	sfsValidateChkSumButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::OnSfsValidateChkSumButton ), NULL, this );
 	sfsUpdateChkSumButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::OnSfsUpdateChkSumButton ), NULL, this );
-}
-
-MyPanel1::MyPanel1( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size, long style ) : wxPanel( parent, id, pos, size, style )
-{
-	this->Enable( false );
-	this->Hide();
-	
-	wxBoxSizer* bSizer10;
-	bSizer10 = new wxBoxSizer( wxVERTICAL );
-	
-	wxStaticBoxSizer* commonTimeBox;
-	commonTimeBox = new wxStaticBoxSizer( new wxStaticBox( this, -1, _("Duration") ), wxVERTICAL );
-	
-	commonProcEndRadioButton = new wxRadioButton( this, wxID_ANY, _("until end of process"), wxDefaultPosition, wxDefaultSize, wxRB_GROUP );
-	commonProcEndRadioButton->Enable( false );
-	commonProcEndRadioButton->Hide();
-	
-	commonTimeBox->Add( commonProcEndRadioButton, 0, wxALL, 1 );
-	
-	wxBoxSizer* commonTimeSizer;
-	commonTimeSizer = new wxBoxSizer( wxHORIZONTAL );
-	
-	commonTimeRadioButton = new wxRadioButton( this, wxID_ANY, _("duration"), wxDefaultPosition, wxDefaultSize, 0 );
-	commonTimeRadioButton->Enable( false );
-	commonTimeRadioButton->Hide();
-	commonTimeRadioButton->SetMinSize( wxSize( 100,-1 ) );
-	
-	commonTimeSizer->Add( commonTimeRadioButton, 0, wxALIGN_CENTER_VERTICAL|wxALL, 1 );
-	
-	commonTimeSpinCtrl = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS|wxSP_WRAP, 1, 999, 1 );
-	commonTimeSpinCtrl->Enable( false );
-	commonTimeSpinCtrl->Hide();
-	commonTimeSpinCtrl->SetMinSize( wxSize( 50,-1 ) );
-	
-	commonTimeSizer->Add( commonTimeSpinCtrl, 0, wxALL|wxALIGN_CENTER_VERTICAL, 1 );
-	
-	wxString commonTimeUnitChoiceChoices[] = { _("second"), _("minute"), _("hour"), _("day") };
-	int commonTimeUnitChoiceNChoices = sizeof( commonTimeUnitChoiceChoices ) / sizeof( wxString );
-	commonTimeUnitChoice = new wxChoice( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, commonTimeUnitChoiceNChoices, commonTimeUnitChoiceChoices, 0 );
-	commonTimeUnitChoice->Enable( false );
-	commonTimeUnitChoice->Hide();
-	
-	commonTimeSizer->Add( commonTimeUnitChoice, 0, wxALIGN_CENTER|wxALL, 1 );
-	
-	commonTimeBox->Add( commonTimeSizer, 0, 0, 1 );
-	
-	commonAlwaysRadioButton = new wxRadioButton( this, wxID_ANY, _("always"), wxDefaultPosition, wxDefaultSize, 0 );
-	commonAlwaysRadioButton->Enable( false );
-	commonAlwaysRadioButton->Hide();
-	
-	commonTimeBox->Add( commonAlwaysRadioButton, 0, wxALL, 1 );
-	
-	bSizer10->Add( commonTimeBox, 1, wxEXPAND, 5 );
-	
-	wxStaticBoxSizer* commonModifyBox;
-	commonModifyBox = new wxStaticBoxSizer( new wxStaticBox( this, -1, _("Modification") ), wxVERTICAL );
-	
-	wxFlexGridSizer* commonModifySizer;
-	commonModifySizer = new wxFlexGridSizer( 2, 2, 0, 0 );
-	commonModifySizer->SetFlexibleDirection( wxBOTH );
-	commonModifySizer->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
-	
-	commonCreatedText = new wxStaticText( this, wxID_ANY, _("created:"), wxDefaultPosition, wxDefaultSize, 0 );
-	commonCreatedText->Wrap( -1 );
-	commonCreatedText->Enable( false );
-	commonCreatedText->Hide();
-	
-	commonModifySizer->Add( commonCreatedText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
-	
-	commonCreateTextValue = new wxStaticText( this, wxID_ANY, _("information not available"), wxDefaultPosition, wxDefaultSize, 0 );
-	commonCreateTextValue->Wrap( -1 );
-	commonCreateTextValue->Enable( false );
-	commonCreateTextValue->Hide();
-	
-	commonModifySizer->Add( commonCreateTextValue, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
-	
-	commonModifiedText = new wxStaticText( this, wxID_ANY, _("modified:"), wxDefaultPosition, wxDefaultSize, 0 );
-	commonModifiedText->Wrap( -1 );
-	commonModifiedText->Enable( false );
-	commonModifiedText->Hide();
-	
-	commonModifySizer->Add( commonModifiedText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
-	
-	commonModifiedTextValue = new wxStaticText( this, wxID_ANY, _("information not available"), wxDefaultPosition, wxDefaultSize, 0 );
-	commonModifiedTextValue->Wrap( -1 );
-	commonModifiedTextValue->Enable( false );
-	commonModifiedTextValue->Hide();
-	
-	commonModifySizer->Add( commonModifiedTextValue, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
-	
-	commonModificatorText = new wxStaticText( this, wxID_ANY, _("modified by:"), wxDefaultPosition, wxDefaultSize, 0 );
-	commonModificatorText->Wrap( -1 );
-	commonModificatorText->Enable( false );
-	commonModificatorText->Hide();
-	
-	commonModifySizer->Add( commonModificatorText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
-	
-	commonModificatorTextValue = new wxStaticText( this, wxID_ANY, _("information not available"), wxDefaultPosition, wxDefaultSize, 0 );
-	commonModificatorTextValue->Wrap( -1 );
-	commonModificatorTextValue->Enable( false );
-	commonModificatorTextValue->Hide();
-	
-	commonModifySizer->Add( commonModificatorTextValue, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
-	
-	commonModifyBox->Add( commonModifySizer, 0, wxEXPAND, 5 );
-	
-	bSizer10->Add( commonModifyBox, 1, wxEXPAND, 5 );
-	
-	wxStaticBoxSizer* commonTimeBox1;
-	commonTimeBox1 = new wxStaticBoxSizer( new wxStaticBox( this, -1, _("Duration") ), wxVERTICAL );
-	
-	commonProcEndRadioButton1 = new wxRadioButton( this, wxID_ANY, _("until end of process"), wxDefaultPosition, wxDefaultSize, wxRB_GROUP );
-	commonProcEndRadioButton1->Enable( false );
-	commonProcEndRadioButton1->Hide();
-	
-	commonTimeBox1->Add( commonProcEndRadioButton1, 0, wxALL, 1 );
-	
-	wxBoxSizer* commonTimeSizer1;
-	commonTimeSizer1 = new wxBoxSizer( wxHORIZONTAL );
-	
-	commonTimeRadioButton1 = new wxRadioButton( this, wxID_ANY, _("duration"), wxDefaultPosition, wxDefaultSize, 0 );
-	commonTimeRadioButton1->Enable( false );
-	commonTimeRadioButton1->Hide();
-	commonTimeRadioButton1->SetMinSize( wxSize( 100,-1 ) );
-	
-	commonTimeSizer1->Add( commonTimeRadioButton1, 0, wxALIGN_CENTER_VERTICAL|wxALL, 1 );
-	
-	commonTimeSpinCtrl1 = new wxSpinCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS|wxSP_WRAP, 1, 999, 1 );
-	commonTimeSpinCtrl1->Enable( false );
-	commonTimeSpinCtrl1->Hide();
-	commonTimeSpinCtrl1->SetMinSize( wxSize( 50,-1 ) );
-	
-	commonTimeSizer1->Add( commonTimeSpinCtrl1, 0, wxALL|wxALIGN_CENTER_VERTICAL, 1 );
-	
-	wxString commonTimeUnitChoice1Choices[] = { _("second"), _("minute"), _("hour"), _("day") };
-	int commonTimeUnitChoice1NChoices = sizeof( commonTimeUnitChoice1Choices ) / sizeof( wxString );
-	commonTimeUnitChoice1 = new wxChoice( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, commonTimeUnitChoice1NChoices, commonTimeUnitChoice1Choices, 0 );
-	commonTimeUnitChoice1->Enable( false );
-	commonTimeUnitChoice1->Hide();
-	
-	commonTimeSizer1->Add( commonTimeUnitChoice1, 0, wxALIGN_CENTER|wxALL, 1 );
-	
-	commonTimeBox1->Add( commonTimeSizer1, 0, 0, 1 );
-	
-	commonAlwaysRadioButton1 = new wxRadioButton( this, wxID_ANY, _("always"), wxDefaultPosition, wxDefaultSize, 0 );
-	commonAlwaysRadioButton1->Enable( false );
-	commonAlwaysRadioButton1->Hide();
-	
-	commonTimeBox1->Add( commonAlwaysRadioButton1, 0, wxALL, 1 );
-	
-	bSizer10->Add( commonTimeBox1, 1, wxEXPAND, 5 );
-	
-	this->SetSizer( bSizer10 );
-	this->Layout();
 }

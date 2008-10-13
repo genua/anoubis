@@ -805,7 +805,7 @@ ModAnoubisMainPanelImpl::OnVersionSaveButtonClick(wxCommandEvent&)
 		return;
 
 	/* Save current profile */
-	wxString profile = wxGetApp().getCurrentProfileName();
+	wxString profile = ProfileCtrl::getInstance()->getProfileName();
 
 	/* Comment from GUI */
 	wxString comment = VersionEnterCommentTextCtrl->GetValue();

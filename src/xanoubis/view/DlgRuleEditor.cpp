@@ -38,9 +38,11 @@
 #include <queue.h>
 #endif
 
-#include <wx/filedlg.h>
+#include <wx/defs.h> /* mandatory but missing in choicdlg.h */
 #include <wx/choicdlg.h>
+#include <wx/filedlg.h>
 #include <wx/msgdlg.h>
+#include <wx/progdlg.h>
 
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -135,17 +137,22 @@ AddrLine::remove(void)
 
 DlgRuleEditor::DlgRuleEditor(wxWindow* parent) : DlgRuleEditorBase(parent)
 {
+	wxArrayString userList;
+
 	selectedId_ = 0;
 	selectedIndex_ = 0;
 	autoCheck_ = false;
-	userRuleSet_ = NULL;
-	adminRuleSet_ = NULL;
+	userRuleSetId_ = -1;
+	adminRuleSetId_ = -1;
 
 	columnNames_[RULEDITOR_LIST_COLUMN_PRIO] = _("Index");
 	columnWidths_[RULEDITOR_LIST_COLUMN_PRIO] = wxLIST_AUTOSIZE;
 
 	columnNames_[RULEDITOR_LIST_COLUMN_RULE] = _("Rule");
 	columnWidths_[RULEDITOR_LIST_COLUMN_RULE] = wxLIST_AUTOSIZE;
+
+	columnNames_[RULEDITOR_LIST_COLUMN_USER] = _("User");
+	columnWidths_[RULEDITOR_LIST_COLUMN_USER] = wxLIST_AUTOSIZE;
 
 	columnNames_[RULEDITOR_LIST_COLUMN_APP] = _("Application");
 	columnWidths_[RULEDITOR_LIST_COLUMN_APP] = wxLIST_AUTOSIZE_USEHEADER;
@@ -209,10 +216,16 @@ DlgRuleEditor::DlgRuleEditor(wxWindow* parent) : DlgRuleEditorBase(parent)
 
 	shortcuts_ = new AnShortcuts(this);
 
-	if (wxGetApp().hasRuleSet() == false) {
+	if (ProfileCtrl::getInstance()->getUserId() != -1) {
 		this->controlRuleSetSaveButton->Disable();
 		this->controlRuleCreateButton->Disable();
 		this->controlRuleDeleteButton->Disable();
+	}
+
+	userList = wxGetApp().getListOfUsersName();
+	controlUserChoice->Clear();
+	for (size_t i=0; i<userList.GetCount(); i++) {
+		controlUserChoice->Append(userList.Item(i));
 	}
 
 	parent->Connect(anEVT_RULEEDITOR_SHOW,
@@ -637,20 +650,43 @@ DlgRuleEditor::OnAppValidateChkSumButton(wxCommandEvent& )
 void
 DlgRuleEditor::OnRuleCreateButton(wxCommandEvent& )
 {
-	int id = -1;
+	int		 id;
+	uid_t		 uid;
+	long		 rsid;
+	PolicyRuleSet	*ruleSet;
+	ProfileCtrl	*profileCtrl;
+
+	id = -1;
+	profileCtrl = ProfileCtrl::getInstance();
+
+	if (geteuid() != 0) {
+		rsid = userRuleSetId_;
+	} else {
+		wxArrayString userList = wxGetApp().getListOfUsersName();
+		uid = wxGetApp().getUserIdByName(
+		    userList.Item(controlUserChoice->GetSelection()));
+		rsid = profileCtrl->getAdminId(uid);
+	}
+
+	ruleSet = profileCtrl->getRuleSetToShow(rsid, this);
+	if (ruleSet == NULL) {
+		wxMessageBox(_("Error: Couldn't access rule set to create."),
+		    _("Rule Editor"), wxOK, this);
+		return;
+	}
 
 	switch (controlCreationChoice->GetSelection()) {
 	case 0: /* Application */
-		id = userRuleSet_->createAppPolicy(selectedId_);
+		id = ruleSet->createAppPolicy(selectedId_);
 		break;
 	case 1: /* ALF */
-		id = userRuleSet_->createAlfPolicy(selectedId_);
+		id = ruleSet->createAlfPolicy(selectedId_);
 		break;
 	case 2: /* SFS */
-		id = userRuleSet_->createSfsPolicy(selectedId_);
+		id = ruleSet->createSfsPolicy(selectedId_);
 		break;
 	case 3: /* Variable */
-		id = userRuleSet_->createVarPolicy(selectedId_);
+		id = ruleSet->createVarPolicy(selectedId_);
 		break;
 	default:
 		break;
@@ -660,14 +696,33 @@ DlgRuleEditor::OnRuleCreateButton(wxCommandEvent& )
 		wxMessageBox(_("Could not create new rule."), _("Error"),
 		    wxOK, this);
 	} else {
-		loadRuleSet(userRuleSet_);
+		loadRuleSet();
 	}
 }
 
 void
 DlgRuleEditor::OnRuleDeleteButton(wxCommandEvent& )
 {
-	userRuleSet_->deletePolicy(selectedId_);
+	Policy		*policy;
+	PolicyRuleSet	*rs;
+
+	policy = (Policy *)ruleListCtrl->GetItemData(selectedIndex_);
+	if (policy == NULL) {
+		return;
+	}
+
+	rs = policy->getRsParent();
+	if (rs == NULL) {
+		return;
+	}
+
+	if ((geteuid() != 0) && rs->isAdmin()) {
+		wxMessageBox(_("No permission to edit admin ruleset."),
+		    _("Rule Editor"), wxOK, this);
+		return;
+	}
+
+	rs->deletePolicy(selectedId_);
 }
 
 void
@@ -876,11 +931,20 @@ DlgRuleEditor::OnShow(wxCommandEvent& event)
 void
 DlgRuleEditor::OnRuleSetSave(wxCommandEvent& )
 {
-	wxString	tmpPreFix;
-	wxString	tmpName;
-	wxString	message;
+	wxString	 tmpPreFix;
+	wxString	 tmpName;
+	wxString	 message;
+	PolicyRuleSet	*rs;
+	ProfileCtrl	*profileCtrl;
 
-	if (userRuleSet_->findMismatchHash())
+	profileCtrl = ProfileCtrl::getInstance();
+	rs = profileCtrl->getRuleSetToShow(userRuleSetId_, this);
+	if (rs == NULL) {
+		wxMessageBox(_("Error: Couldn't access rule set to store."),
+		    _("Rule Editor"), wxOK, this);
+		return;
+	}
+	if (rs->findMismatchHash())
 	{
 		message = _("Mismatch of Checksums in one or more Rule.\n");
 		message += _("Do you want to store anyway?");
@@ -891,34 +955,75 @@ DlgRuleEditor::OnRuleSetSave(wxCommandEvent& )
 		}
 	}
 
-	userRuleSet_->clearModified();
+	rs->clearModified();
 
 	/* XXX: KM there should be a better way, like apn_parse_xxx */
 	tmpPreFix = wxT("xanoubis");
 	tmpName = wxFileName::CreateTempFileName(tmpPreFix);
-	wxGetApp().exportPolicyFile(tmpName);
-	wxGetApp().usePolicy(tmpName);
+	rs->exportToFile(tmpName);
+	wxGetApp().usePolicy(tmpName, geteuid(), 1);
+
+	if (geteuid() == 0) {
+		wxProgressDialog progDlg(_("Rule Editor"),
+		    _("Sending admin rule sets ..."),
+		    foreignAdminRsIds_.GetCount(), this);
+		for (size_t i=0; i<foreignAdminRsIds_.GetCount(); i++) {
+			progDlg.Update(i);
+			rs = profileCtrl->getRuleSetToShow(
+			    foreignAdminRsIds_.Item(i), this);
+			tmpName = wxFileName::CreateTempFileName(tmpPreFix);
+			rs->exportToFile(tmpName);
+			wxGetApp().usePolicy(tmpName, rs->getUid(), 0);
+		}
+	}
 }
 
 void
-DlgRuleEditor::loadRuleSet(PolicyRuleSet *ruleSet)
+DlgRuleEditor::loadRuleSet(void)
 {
 	RuleEditorAddPolicyVisitor	 addVisitor(this);
+	PolicyRuleSet			*ruleSet;
+	ProfileCtrl			*profileCtrl;
+	unsigned long			 uid;
+
+	profileCtrl = ProfileCtrl::getInstance();
 
 	ruleListCtrl->DeleteAllItems();
-	/* we just remember the ruleSet for further usage */
-	if (ruleSet->isAdmin()) {
-		adminRuleSet_ = ruleSet;
-	} else {
-		userRuleSet_ = ruleSet;
-	}
-	if (userRuleSet_ != NULL) {
+
+	ruleSet = profileCtrl->getRuleSetToShow(userRuleSetId_, this);
+	if (ruleSet != NULL) {
 		addVisitor.setAdmin(false);
-		userRuleSet_->accept(addVisitor);
+		ruleSet->accept(addVisitor);
 	}
-	if (adminRuleSet_!= NULL) {
+
+	ruleSet = profileCtrl->getRuleSetToShow(adminRuleSetId_, this);
+	if (ruleSet != NULL) {
 		addVisitor.setAdmin(true);
-		adminRuleSet_->accept(addVisitor);
+		ruleSet->accept(addVisitor);
+	}
+
+	if (geteuid() == 0) {
+		long		rsid;
+		wxArrayString	userList = wxGetApp().getListOfUsersId();
+
+		for (size_t i=0; i<userList.GetCount(); i++) {
+			userList.Item(i).ToULong(&uid);
+
+			rsid = profileCtrl->getAdminId((uid_t)uid);
+			if (rsid == -1) {
+				continue;
+			}
+			if (!profileCtrl->lockToShow(rsid, this)) {
+				continue;
+			}
+
+			foreignAdminRsIds_.Add(rsid);
+			ruleSet = profileCtrl->getRuleSetToShow(rsid, this);
+			if (ruleSet != NULL) {
+				addVisitor.setAdmin(true);
+				ruleSet->accept(addVisitor);
+			}
+		}
 	}
 
 	/* trigger new calculation of column width */
@@ -928,16 +1033,34 @@ DlgRuleEditor::loadRuleSet(PolicyRuleSet *ruleSet)
 }
 
 void
-DlgRuleEditor::OnLoadRuleSet(wxCommandEvent& event)
+DlgRuleEditor::OnLoadRuleSet(wxCommandEvent& WXUNUSED(event))
 {
-	PolicyRuleSet *ruleSet;
+	ProfileCtrl	*profileCtrl;
+
+	profileCtrl = ProfileCtrl::getInstance();
 
 	this->controlRuleSetSaveButton->Enable();
 	this->controlRuleCreateButton->Enable();
 	this->controlRuleDeleteButton->Enable();
 
-	ruleSet = (PolicyRuleSet *)event.GetClientData();
-	loadRuleSet(ruleSet);
+	profileCtrl->unlockFromShow(userRuleSetId_, this);
+	userRuleSetId_ = profileCtrl->getUserId();
+	if (! profileCtrl->lockToShow(userRuleSetId_, this)) {
+		userRuleSetId_ = -1;
+	}
+
+	profileCtrl->unlockFromShow(adminRuleSetId_, this);
+	adminRuleSetId_ = profileCtrl->getAdminId(geteuid());
+	if (!profileCtrl->lockToShow(adminRuleSetId_, this)) {
+		adminRuleSetId_ = -1;
+	}
+
+	for (size_t i=0; i<foreignAdminRsIds_.GetCount(); i++) {
+		profileCtrl->unlockFromShow(foreignAdminRsIds_.Item(i), this);
+		foreignAdminRsIds_.RemoveAt(i);
+	}
+
+	loadRuleSet();
 	selectLine(selectedIndex_);
 }
 
@@ -1083,15 +1206,30 @@ DlgRuleEditor::OnShowRule(wxCommandEvent& event)
 	wxListView	*selecter;
 	unsigned long	 id;
 	Policy		*policy;
+	PolicyRuleSet	*rs;
+	ProfileCtrl	*profileCtrl;
+
+	profileCtrl = ProfileCtrl::getInstance();
+
+	rs = profileCtrl->getRuleSetToShow(userRuleSetId_, this);
+	if (rs == NULL) {
+		wxMessageBox(_("Error: Couldn't access rule set to store."),
+		    _("Rule Editor"), wxOK, this);
+		return;
+	}
 
 	/* show RuleEditor Dialog and corresponding Ruleid entry */
 	this->Show();
 	selecter = (wxListView*)ruleListCtrl;
 	id = event.GetExtraLong();
 	RuleSetSearchPolicyVisitor seeker(id);
-	userRuleSet_->accept(seeker);
+	rs->accept(seeker);
 	if (! seeker.hasMatchingPolicy()) {
-		adminRuleSet_->accept(seeker);
+		rs = profileCtrl->getRuleSetToShow(adminRuleSetId_, this);
+		if (rs == NULL) {
+			return;
+		}
+		rs->accept(seeker);
 		if (! seeker.hasMatchingPolicy())
 			return;
 	}

@@ -28,6 +28,7 @@
 #include <wx/arrstr.h>
 
 #include "DlgRuleEditor.h"
+#include "main.h"
 #include "RuleEditorFillWidgetsVisitor.h"
 
 #define RULEDITOR_DEFAULT	-1
@@ -354,6 +355,24 @@ RuleEditorFillWidgetsVisitor::showDirection(int direction)
 }
 
 void
+RuleEditorFillWidgetsVisitor::showUser(uid_t uid)
+{
+	wxString	userName;
+	wxArrayString	userList;
+
+	userList = wxGetApp().getListOfUsersName();
+	userName = wxGetApp().getUserNameById(uid);
+
+	for (size_t i=0; i<userList.GetCount(); i++) {
+		if (userName.Cmp(userList.Item(i)) == 0) {
+			ruleEditor_->controlUserChoice->SetSelection(i);
+			return;
+		}
+	}
+	ruleEditor_->controlUserChoice->SetSelection(wxNOT_FOUND);
+}
+
+void
 RuleEditorFillWidgetsVisitor::visitAppPolicy(AppPolicy *appPolicy)
 {
 	wxString	name;
@@ -371,6 +390,7 @@ RuleEditorFillWidgetsVisitor::visitAppPolicy(AppPolicy *appPolicy)
 	ruleEditor_->sfsNbPanel->Disable();
 	ruleEditor_->ruleEditNotebook->ChangeSelection(RULEDITOR_PANEL_APP);
 
+	showUser(appPolicy->getRsParent()->getUid());
 	unknown = _("unknown");
 	name = appPolicy->getApplicationName();
 	ruleEditor_->appNameComboBox->SetValue(name);
@@ -413,20 +433,27 @@ RuleEditorFillWidgetsVisitor::visitAppPolicy(AppPolicy *appPolicy)
 		ruleEditor_->appCurrentSumValueText->SetLabel(
 		    _("no application selected"));
 	}
+
+	if ((geteuid() != 0) &&
+	    (isAdmin() || appPolicy->getRsParent()->isAdmin())) {
+		ruleEditor_->applicationNbPanel->Disable();
+	}
 }
 
 void
 RuleEditorFillWidgetsVisitor::visitAlfPolicy(AlfPolicy *alfPolicy)
 {
 	int type;
-	clear();
 
+	clear();
 	visitAppPolicy((AppPolicy *)alfPolicy->getParent());
+
 	ruleEditor_->applicationNbPanel->Disable();
 	ruleEditor_->alfNbPanel->Enable();
 	ruleEditor_->sfsNbPanel->Disable();
 	ruleEditor_->ruleEditNotebook->ChangeSelection(RULEDITOR_PANEL_ALF);
 
+	showUser(alfPolicy->getRsParent()->getUid());
 	type = alfPolicy->getTypeNo();
 
 	switch (type) {
@@ -461,6 +488,10 @@ RuleEditorFillWidgetsVisitor::visitAlfPolicy(AlfPolicy *alfPolicy)
 		break;
 	}
 	ruleEditor_->alfNbPanel->SetFocus();
+	if ((geteuid() != 0) &&
+	    (isAdmin() || alfPolicy->getRsParent()->isAdmin())) {
+		ruleEditor_->alfNbPanel->Disable();
+	}
 }
 
 void
@@ -476,6 +507,7 @@ RuleEditorFillWidgetsVisitor::visitSfsPolicy(SfsPolicy *sfsPolicy)
 	ruleEditor_->sfsNbPanel->Enable();
 	ruleEditor_->ruleEditNotebook->ChangeSelection(RULEDITOR_PANEL_SFS);
 
+	showUser(sfsPolicy->getRsParent()->getUid());
 	currHash = sfsPolicy->getCurrentHash();
 	regHash = sfsPolicy->getHashValue();
 
@@ -500,6 +532,11 @@ RuleEditorFillWidgetsVisitor::visitSfsPolicy(SfsPolicy *sfsPolicy)
 	}
 
 	ruleEditor_->ruleListCtrl->SetFocus();
+
+	if ((geteuid() != 0) &&
+	    (isAdmin() || sfsPolicy->getRsParent()->isAdmin())) {
+		ruleEditor_->sfsNbPanel->Disable();
+	}
 }
 
 void

@@ -104,11 +104,11 @@ PolicyRuleSet::create(struct apn_ruleset *ruleSet)
 	ruleSet_ = ruleSet;
 
 	TAILQ_FOREACH(appRule, &(ruleSet->alf_queue), entry) {
-		alfList_.Append(new AppPolicy(appRule));
+		alfList_.Append(new AppPolicy(appRule, this));
 	}
 
 	TAILQ_FOREACH(appRule, &(ruleSet->sfs_queue), entry) {
-		sfsList_.Append(new AppPolicy(appRule));
+		sfsList_.Append(new AppPolicy(appRule, this));
 	}
 
 	TAILQ_FOREACH(variable, &(ruleSet->var_queue), entry) {
@@ -425,7 +425,7 @@ PolicyRuleSet::createAnswerPolicy(EscalationNotify *escalation)
 	tmpFileName = wxFileName::CreateTempFileName(wxT("xanoubis"));
 	this->exportToFile(tmpFileName);
 	wxGetApp().importPolicyFile(tmpFileName, false);
-	wxGetApp().usePolicy(tmpFileName);
+	wxGetApp().usePolicy(tmpFileName, geteuid(), 1);
 }
 
 void

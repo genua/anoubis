@@ -226,7 +226,7 @@ CommunicatorCtrl::checksumCal(wxString file)
 }
 
 void
-CommunicatorCtrl::usePolicy(wxString tmpName)
+CommunicatorCtrl::usePolicy(wxString tmpName, uid_t uid, int prio)
 {
 	if (connectionState_ == CONNECTION_CONNECTED)
 	{
@@ -255,7 +255,7 @@ CommunicatorCtrl::usePolicy(wxString tmpName)
 		if (!wxRemoveFile(tmpName))
 			wxGetApp().log(_("Couldn't remove tmp file"));
 
-		com_->policyUse(buf, len);
+		com_->policyUse(buf, uid, prio, len);
 
 		if (!createVersion())
 			wxGetApp().log(_("Failed to create version"));
@@ -392,11 +392,13 @@ void
 CommunicatorCtrl::OnAnoubisdRuleSet(wxCommandEvent& event)
 {
 	int			 prio;
+	long			 uid;
 	struct apn_ruleset	*ruleSet;
 
 	prio = event.GetInt();
+	uid = event.GetExtraLong();
 	ruleSet = (struct apn_ruleset*)event.GetClientData();
-	wxGetApp().importPolicyRuleSet(prio, ruleSet);
+	wxGetApp().importPolicyRuleSet(prio, uid, ruleSet);
 }
 
 void
@@ -466,11 +468,12 @@ bool
 CommunicatorCtrl::createVersion()
 {
 	VersionCtrl *versionCtrl = VersionCtrl::getInstance();
+	ProfileCtrl *profileCtrl = ProfileCtrl::getInstance();
 
 	if (!versionCtrl->isPrepared())
 		return (false);
 
-	wxString profile = wxGetApp().getCurrentProfileName();
+	wxString profile = profileCtrl->getProfileName();
 	wxString now = wxDateTime::Now().Format();
 	wxString comment = _("Version automatically created at ") + now;
 

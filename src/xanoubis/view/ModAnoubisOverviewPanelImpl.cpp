@@ -54,8 +54,7 @@ ModAnoubisOverviewPanelImpl::setProfile(wxString newProfile)
 {
 	wxString	currProfile;
 
-	currProfile = wxGetApp().getCurrentProfileName();
-
+	currProfile = ProfileCtrl::getInstance()->getProfileName();
 	if (newProfile.Cmp(currProfile) == 0) {
 		/* nothing to do */
 	} else if (!wxGetApp().profileFromDaemonToDisk(currProfile)) {

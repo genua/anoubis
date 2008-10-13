@@ -26,6 +26,9 @@
  */
 
 #include "RuleEditorFillTableVisitor.h"
+#include "main.h"
+
+#define ADMIN_FLAG	wxT("(A)")
 
 RuleEditorFillTableVisitor::RuleEditorFillTableVisitor(
     DlgRuleEditor *ruleEditor, long selectedLine)
@@ -42,31 +45,43 @@ RuleEditorFillTableVisitor::~RuleEditorFillTableVisitor(void)
 void
 RuleEditorFillTableVisitor::clean(long idx)
 {
-	wxString ruleType;
-
-	ruleType = wxString::Format(wxT("%d"), idx);
 	if (isAdmin()) {
-		ruleType += wxT(" A");
+		ruleEditor_->ruleListCtrl->SetItemBackgroundColour(idx,
+		    wxTheColourDatabase->Find(wxT("LIGHT GREY")));
 	}
 
 	for (int i=0; i<RULEDITOR_LIST_COLUMN_EOL; i++) {
 		ruleEditor_->ruleListCtrl->SetItem(idx, i, wxEmptyString);
 	}
-	ruleEditor_->ruleListCtrl->SetItem(idx, 0, ruleType);
+	ruleEditor_->ruleListCtrl->SetItem(idx, 0,
+	    wxString::Format(wxT("%d"), idx));
 }
 
 void
 RuleEditorFillTableVisitor::showApp(AppPolicy *appPolicy, long idx)
 {
-	clean(idx);
+	wxString	 ruleType;
+	PolicyRuleSet	*rs;
 
+	clean(idx);
 	appPolicy->setIndex(idx);
 
+	rs = appPolicy->getRsParent();
+	if (rs != NULL) {
+		ruleEditor_->ruleListCtrl->SetItem(idx,
+		    RULEDITOR_LIST_COLUMN_USER,
+		    wxGetApp().getUserNameById(rs->getUid()));
+	}
+
 	if (appPolicy->getType() == APN_ALF) {
+		ruleType = wxT("APP");
+		if (isAdmin()) {
+			ruleType += ADMIN_FLAG;
+		}
 		ruleEditor_->ruleListCtrl->SetItem(idx,
 		    RULEDITOR_LIST_COLUMN_APP, appPolicy->getApplicationName());
 		ruleEditor_->ruleListCtrl->SetItem(idx,
-		    RULEDITOR_LIST_COLUMN_RULE, wxT("APP"));
+		    RULEDITOR_LIST_COLUMN_RULE, ruleType);
 		ruleEditor_->ruleListCtrl->SetItem(idx,
 		    RULEDITOR_LIST_COLUMN_BIN, appPolicy->getBinaryName());
 		ruleEditor_->ruleListCtrl->SetItem(idx,
@@ -80,21 +95,33 @@ void
 RuleEditorFillTableVisitor::showAlf(AlfPolicy *alfPolicy, long idx)
 {
 	int		 type;
+	wxString	 ruleType;
 	wxListCtrl	*list;
+	PolicyRuleSet	*rs;
 
 	type = alfPolicy->getTypeNo();
 	list = ruleEditor_->ruleListCtrl;
 
 	clean(idx);
-
 	alfPolicy->setIndex(idx);
+
+	rs = alfPolicy->getRsParent();
+	if (rs != NULL) {
+		ruleEditor_->ruleListCtrl->SetItem(idx,
+		    RULEDITOR_LIST_COLUMN_USER,
+		    wxGetApp().getUserNameById(rs->getUid()));
+	}
 
 	if (alfPolicy->hasScope()) {
 		list->SetItem(idx, RULEDITOR_LIST_COLUMN_SCOPE,
 		    alfPolicy->getScopeName());
 	}
 
-	list->SetItem(idx, RULEDITOR_LIST_COLUMN_RULE, wxT("ALF"));
+	ruleType = wxT("ALF");
+	if (isAdmin()) {
+		ruleType += ADMIN_FLAG;
+	}
+	list->SetItem(idx, RULEDITOR_LIST_COLUMN_RULE, ruleType);
 	switch (type) {
 	case APN_ALF_FILTER:
 		list->SetItem(idx, RULEDITOR_LIST_COLUMN_TYPE,
@@ -151,12 +178,25 @@ RuleEditorFillTableVisitor::showAlf(AlfPolicy *alfPolicy, long idx)
 void
 RuleEditorFillTableVisitor::showSfs(SfsPolicy *sfsPolicy, long idx)
 {
-	clean(idx);
+	wxString	 ruleType;
+	PolicyRuleSet	*rs;
 
+	clean(idx);
 	sfsPolicy->setIndex(idx);
 
+	rs = sfsPolicy->getRsParent();
+	if (rs != NULL) {
+		ruleEditor_->ruleListCtrl->SetItem(idx,
+		    RULEDITOR_LIST_COLUMN_USER,
+		    wxGetApp().getUserNameById(rs->getUid()));
+	}
+
+	ruleType = wxT("SFS");
+	if (isAdmin()) {
+		ruleType += ADMIN_FLAG;
+	}
 	ruleEditor_->ruleListCtrl->SetItem(idx, RULEDITOR_LIST_COLUMN_RULE,
-	    wxT("SFS"));
+	    ruleType);
 	ruleEditor_->ruleListCtrl->SetItem(idx, RULEDITOR_LIST_COLUMN_BIN,
 	    sfsPolicy->getBinaryName());
 	ruleEditor_->ruleListCtrl->SetItem(idx, RULEDITOR_LIST_COLUMN_HASHT,

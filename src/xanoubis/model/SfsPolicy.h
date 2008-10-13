@@ -64,7 +64,8 @@ class SfsPolicy : public Policy
 
 	public:
 		SfsPolicy(void);
-		SfsPolicy(AppPolicy *, struct apn_rule *);
+		SfsPolicy(PolicyRuleSet *);
+		SfsPolicy(AppPolicy *, struct apn_rule *, PolicyRuleSet *);
 		~SfsPolicy(void);
 
 		virtual void accept(PolicyVisitor&);

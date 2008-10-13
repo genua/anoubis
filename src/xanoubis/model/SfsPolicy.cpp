@@ -59,12 +59,16 @@
 
 IMPLEMENT_DYNAMIC_CLASS(SfsPolicy, Policy)
 
-SfsPolicy::SfsPolicy(void)
+SfsPolicy::SfsPolicy(void) : Policy(NULL, NULL)
 {
 }
 
-SfsPolicy::SfsPolicy(AppPolicy *parent, struct apn_rule *sfsRule)
-    : Policy(parent)
+SfsPolicy::SfsPolicy(PolicyRuleSet *rsParent) : Policy(rsParent)
+{
+}
+
+SfsPolicy::SfsPolicy(AppPolicy *parent, struct apn_rule *sfsRule,
+    PolicyRuleSet *rsParent) : Policy(rsParent, parent)
 {
 	sfsRule_ = sfsRule;
 	currHash_ = wxEmptyString;

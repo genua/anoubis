@@ -65,7 +65,8 @@ class AlfPolicy : public Policy
 
 	public:
 		AlfPolicy(void);
-		AlfPolicy(AppPolicy *, struct apn_rule *);
+		AlfPolicy(PolicyRuleSet *);
+		AlfPolicy(AppPolicy *, struct apn_rule *, PolicyRuleSet *);
 		~AlfPolicy(void);
 
 		virtual void		 accept(PolicyVisitor&);

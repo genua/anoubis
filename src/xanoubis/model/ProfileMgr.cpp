@@ -186,7 +186,8 @@ ProfileMgr::storeRuleSet(profile_t profile, PolicyRuleSet* ruleSet)
 	if (profile != PROFILE_NONE) {
 		for (it=ruleSetList_.begin(); it!=ruleSetList_.end(); it++) {
 			if (((*it)->getProfile() == profile) &&
-			    ((*it)->isAdmin()    == ruleSet->isAdmin())) {
+			    ((*it)->isAdmin()    == ruleSet->isAdmin()) &&
+			    (*it)->belongsTo(ruleSet->getUid())) {
 				(*it)->setProfile(PROFILE_NONE);
 				break;
 			}

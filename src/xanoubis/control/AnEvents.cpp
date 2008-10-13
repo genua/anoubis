@@ -141,8 +141,10 @@ DEFINE_LOCAL_EVENT_TYPE(anEVT_ADD_NOTIFICATION)
 DEFINE_LOCAL_EVENT_TYPE(anEVT_ANSWER_ESCALATION)
 
 /*
- * Transport a pointer to a new ruleset, stored in the main application
- * to the display objects via ClientData.
+ * A new rule set was loaded/stored to the profile manager.
+ * Your current one may be out of date.
+ *
+ * Use GetExtraLong() to get the new rule set id.
  */
 DEFINE_LOCAL_EVENT_TYPE(anEVT_LOAD_RULESET)
 

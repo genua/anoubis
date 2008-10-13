@@ -73,6 +73,8 @@ class Communicator : public wxThread {
 		char			*getFile_;
 		bool			 policyReq_;
 		bool			 policyUse_;
+		uid_t			 policyUser_;
+		int			 policyPrio_;
 		int			 policyLen_;
 		bool			 checksumAdd_;
 		bool			 checksumGet_;
@@ -97,7 +99,7 @@ class Communicator : public wxThread {
 
 		void sendEscalationAnswer(Notification *);
 		void policyRequest(void);
-		void policyUse(char *, int);
+		void policyUse(char *, uid_t, int, int);
 		void addChecksum(wxString);
 		void getChecksum(wxString, int);
 };
