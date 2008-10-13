@@ -88,9 +88,10 @@ for a in admin user ; do
     done ;
 done
 
-mkdir -p $RPM_BUILD_ROOT/etc/udev/rules.d
-cp $RPM_SOURCE_DIR/anoubisd.udev \
-  $RPM_BUILD_ROOT/etc/udev/rules.d/06-anoubis.rules
+# install udev rules of anoubis devices
+mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/udev/rules.d
+install -m 0644 $RPM_SOURCE_DIR/anoubisd.udev \
+	$RPM_BUILD_ROOT%{_sysconfdir}/udev/rules.d/06-anoubis.rules
 
 # remove files that should not be part of the rpm
 rm -fr $RPM_BUILD_ROOT%{_includedir}
@@ -154,9 +155,9 @@ rmdir /etc/anoubis/policy /etc/anoubis 2>/dev/null || true
 %files -n anoubisd
 %defattr(-,root,root)
 /etc/rc.d/*
-/etc/udev/*
 /sbin/*
 /usr/share/anoubis/*
+%{_sysconfdir}/udev/rules.d/06-anoubis.rules
 %{_mandir}/man8/*
 
 ### files of subpackage xanoubis ###########################
@@ -174,6 +175,9 @@ rmdir /etc/anoubis/policy /etc/anoubis 2>/dev/null || true
 
 ### changelog ##############################################
 %changelog
+* Fri Oct 10 2008 Sebastian Trahm
+- fix udev permission for /dev/anoubis
+
 * Thu Oct 09 2008 Sebastian Trahm
 - add desktop entry and icon file
 
