@@ -84,9 +84,6 @@ AnoubisGuiApp::~AnoubisGuiApp(void)
 		delete userOptions_;
 	}
 
-	/* Destroy job-controller */
-	delete JobCtrl::getInstance();
-
 	/* Destroy versionmanagement */
 	delete VersionCtrl::getInstance();
 
@@ -173,6 +170,17 @@ bool AnoubisGuiApp::OnInit()
 	    ProfileCtrl::getInstance()->getProfileName());
 
 	return (true);
+}
+
+int
+AnoubisGuiApp::OnExit(void)
+{
+	int result = wxApp::OnExit();
+
+	/* Destroy job-controller */
+	delete JobCtrl::getInstance();
+
+	return (result);
 }
 
 void
