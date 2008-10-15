@@ -49,10 +49,10 @@
 #include <wx/panel.h>
 #include <wx/bitmap.h>
 #include <wx/image.h>
-#include <wx/checkbox.h>
-#include <wx/statbox.h>
 #include <wx/listctrl.h>
 #include <wx/textctrl.h>
+#include <wx/statbox.h>
+#include <wx/checkbox.h>
 #include <wx/notebook.h>
 #include <wx/statbmp.h>
 #include <wx/dialog.h>
@@ -111,6 +111,21 @@ class ModAnoubisMainPanelBase : public wxPanel
 		
 		wxRadioButton* rb_always;
 		wxButton* bt_deny;
+		wxPanel* tb_MainAnoubisVersions;
+		wxListCtrl* VersionListCtrl;
+		wxTextCtrl* VersionShowCommentTextCtrl;
+		wxStaticText* VersionSelectLabel;
+		wxButton* VersionRestoreButton;
+		wxStaticText* VersionSaveLabel;
+		wxButton* VersionSaveButton;
+		wxStaticText* VersionCommentLabel;
+		wxTextCtrl* VersionEnterCommentTextCtrl;
+		wxStaticText* VersionVersionLabel;
+		wxButton* VersionImportButton;
+		wxButton* VersionExportButton;
+		wxButton* VersionDeleteButton;
+		wxButton* VersionShowButton;
+		wxButton* VersionProfileButton;
 		wxPanel* tb_MainAnoubisOptions;
 		wxCheckBox* cb_SendEscalations;
 		
@@ -136,21 +151,6 @@ class ModAnoubisMainPanelBase : public wxPanel
 		wxChoice* PrivKeyValidityChoice;
 		wxSpinCtrl* PrivKeyValiditySpinCtrl;
 		wxStaticText* PrivKeyValidityText;
-		wxPanel* tb_MainAnoubisVersions;
-		wxListCtrl* VersionListCtrl;
-		wxTextCtrl* VersionShowCommentTextCtrl;
-		wxStaticText* VersionSelectLabel;
-		wxButton* VersionRestoreButton;
-		wxStaticText* VersionSaveLabel;
-		wxButton* VersionSaveButton;
-		wxStaticText* VersionCommentLabel;
-		wxTextCtrl* VersionEnterCommentTextCtrl;
-		wxStaticText* VersionVersionLabel;
-		wxButton* VersionImportButton;
-		wxButton* VersionExportButton;
-		wxButton* VersionDeleteButton;
-		wxButton* VersionShowButton;
-		wxButton* VersionProfileButton;
 		
 		// Virtual event handlers, overide them in your derived class
 		virtual void OnTypeChoosen( wxCommandEvent& event ){ event.Skip(); }

@@ -76,7 +76,6 @@ class ModSfsMainPanelBase : public wxPanel
 		wxStaticText* tx_RulesOperation1stHeader;
 		wxStaticLine* ln_RulesOperationSep;
 		wxStaticText* tx_RulesOperation2ndHeader;
-		wxPanel* pan_TabOptions;
 		wxPanel* pan_SfsMain;
 		wxStaticText* SfsMainCurrPathLabel;
 		wxGenericDirCtrl* SfsMainDirCtrl;

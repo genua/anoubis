@@ -86,7 +86,6 @@ class ModAlfMainPanelBase : public wxPanel
 		wxRadioButton* rad_GroupChoiceTwo1;
 		wxRadioButton* rad_GroupChoiceOne1;
 		wxTreeCtrl* tr_AV_Rules;
-		wxPanel* pan_TabOptions;
 	
 	public:
 		ModAlfMainPanelBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 1067,-1 ), long style = wxTAB_TRAVERSAL );

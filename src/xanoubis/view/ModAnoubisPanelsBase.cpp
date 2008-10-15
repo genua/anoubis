@@ -259,6 +259,95 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	tb_MainAnoubisNotification->Layout();
 	sz_MainAnoubisNotify->Fit( tb_MainAnoubisNotification );
 	tb_MainAnoubisNotify->AddPage( tb_MainAnoubisNotification, _("Notifications"), true );
+	tb_MainAnoubisVersions = new wxPanel( tb_MainAnoubisNotify, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	wxBoxSizer* MainAnoubisVersionsSizer;
+	MainAnoubisVersionsSizer = new wxBoxSizer( wxHORIZONTAL );
+	
+	wxBoxSizer* VersionListSizer;
+	VersionListSizer = new wxBoxSizer( wxVERTICAL );
+	
+	VersionListCtrl = new wxListCtrl( tb_MainAnoubisVersions, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLC_HRULES|wxLC_REPORT );
+	VersionListSizer->Add( VersionListCtrl, 80, wxALL|wxEXPAND, 5 );
+	
+	wxStaticBoxSizer* VersionCommentSizer;
+	VersionCommentSizer = new wxStaticBoxSizer( new wxStaticBox( tb_MainAnoubisVersions, -1, _("Comment of selected version:") ), wxVERTICAL );
+	
+	VersionShowCommentTextCtrl = new wxTextCtrl( tb_MainAnoubisVersions, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE|wxTE_READONLY );
+	VersionShowCommentTextCtrl->Enable( false );
+	
+	VersionCommentSizer->Add( VersionShowCommentTextCtrl, 1, wxALL|wxEXPAND, 5 );
+	
+	VersionListSizer->Add( VersionCommentSizer, 20, wxEXPAND, 5 );
+	
+	MainAnoubisVersionsSizer->Add( VersionListSizer, 70, wxEXPAND, 5 );
+	
+	wxBoxSizer* VersionButtonSizer;
+	VersionButtonSizer = new wxBoxSizer( wxVERTICAL );
+	
+	wxFlexGridSizer* VersionActionSizer;
+	VersionActionSizer = new wxFlexGridSizer( 2, 2, 0, 0 );
+	VersionActionSizer->SetFlexibleDirection( wxBOTH );
+	VersionActionSizer->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+	
+	VersionSelectLabel = new wxStaticText( tb_MainAnoubisVersions, wxID_ANY, _("Selected Version:"), wxDefaultPosition, wxSize( -1,-1 ), 0 );
+	VersionSelectLabel->Wrap( -1 );
+	VersionActionSizer->Add( VersionSelectLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	
+	VersionRestoreButton = new wxButton( tb_MainAnoubisVersions, wxID_ANY, _("restore"), wxDefaultPosition, wxDefaultSize, 0 );
+	VersionActionSizer->Add( VersionRestoreButton, 0, wxALL, 0 );
+	
+	VersionSaveLabel = new wxStaticText( tb_MainAnoubisVersions, wxID_ANY, _("Save current rules\nas new version:"), wxDefaultPosition, wxSize( -1,-1 ), 0 );
+	VersionSaveLabel->Wrap( -1 );
+	VersionActionSizer->Add( VersionSaveLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	
+	VersionSaveButton = new wxButton( tb_MainAnoubisVersions, wxID_ANY, _("save"), wxDefaultPosition, wxDefaultSize, 0 );
+	VersionActionSizer->Add( VersionSaveButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 0 );
+	
+	VersionButtonSizer->Add( VersionActionSizer, 0, wxEXPAND, 5 );
+	
+	VersionCommentLabel = new wxStaticText( tb_MainAnoubisVersions, wxID_ANY, _("Comment for new version:"), wxDefaultPosition, wxDefaultSize, 0 );
+	VersionCommentLabel->Wrap( -1 );
+	VersionCommentLabel->SetFont( wxFont( 9, 70, 90, 90, false, wxEmptyString ) );
+	
+	VersionButtonSizer->Add( VersionCommentLabel, 0, wxALL, 5 );
+	
+	VersionEnterCommentTextCtrl = new wxTextCtrl( tb_MainAnoubisVersions, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE );
+	VersionButtonSizer->Add( VersionEnterCommentTextCtrl, 0, wxALL|wxEXPAND, 5 );
+	
+	wxStaticBoxSizer* VersionDetailsSizer;
+	VersionDetailsSizer = new wxStaticBoxSizer( new wxStaticBox( tb_MainAnoubisVersions, -1, _("Details...") ), wxVERTICAL );
+	
+	VersionVersionLabel = new wxStaticText( tb_MainAnoubisVersions, wxID_ANY, _("Version:"), wxDefaultPosition, wxDefaultSize, 0 );
+	VersionVersionLabel->Wrap( -1 );
+	VersionDetailsSizer->Add( VersionVersionLabel, 0, wxALL, 5 );
+	
+	VersionImportButton = new wxButton( tb_MainAnoubisVersions, wxID_ANY, _("import ..."), wxDefaultPosition, wxDefaultSize, 0 );
+	VersionDetailsSizer->Add( VersionImportButton, 0, wxALL, 5 );
+	
+	VersionExportButton = new wxButton( tb_MainAnoubisVersions, wxID_ANY, _("export ..."), wxDefaultPosition, wxDefaultSize, 0 );
+	VersionDetailsSizer->Add( VersionExportButton, 0, wxALL, 5 );
+	
+	VersionDeleteButton = new wxButton( tb_MainAnoubisVersions, wxID_ANY, _("delete"), wxDefaultPosition, wxDefaultSize, 0 );
+	VersionDetailsSizer->Add( VersionDeleteButton, 0, wxALL, 5 );
+	
+	VersionShowButton = new wxButton( tb_MainAnoubisVersions, wxID_ANY, _("show"), wxDefaultPosition, wxDefaultSize, 0 );
+	VersionShowButton->Hide();
+	
+	VersionDetailsSizer->Add( VersionShowButton, 0, wxALL, 5 );
+	
+	VersionProfileButton = new wxButton( tb_MainAnoubisVersions, wxID_ANY, _("profile ..."), wxDefaultPosition, wxDefaultSize, 0 );
+	VersionProfileButton->SetToolTip( _("a single profile") );
+	
+	VersionDetailsSizer->Add( VersionProfileButton, 0, wxALL, 5 );
+	
+	VersionButtonSizer->Add( VersionDetailsSizer, 1, wxEXPAND, 5 );
+	
+	MainAnoubisVersionsSizer->Add( VersionButtonSizer, 30, wxEXPAND, 5 );
+	
+	tb_MainAnoubisVersions->SetSizer( MainAnoubisVersionsSizer );
+	tb_MainAnoubisVersions->Layout();
+	MainAnoubisVersionsSizer->Fit( tb_MainAnoubisVersions );
+	tb_MainAnoubisNotify->AddPage( tb_MainAnoubisVersions, _("Version control"), false );
 	tb_MainAnoubisOptions = new wxPanel( tb_MainAnoubisNotify, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
 	wxBoxSizer* sz_MainAnoubisOptions;
 	sz_MainAnoubisOptions = new wxBoxSizer( wxVERTICAL );
@@ -452,95 +541,6 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	tb_MainAnoubisOptions->Layout();
 	sz_MainAnoubisOptions->Fit( tb_MainAnoubisOptions );
 	tb_MainAnoubisNotify->AddPage( tb_MainAnoubisOptions, _("Options"), false );
-	tb_MainAnoubisVersions = new wxPanel( tb_MainAnoubisNotify, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
-	wxBoxSizer* MainAnoubisVersionsSizer;
-	MainAnoubisVersionsSizer = new wxBoxSizer( wxHORIZONTAL );
-	
-	wxBoxSizer* VersionListSizer;
-	VersionListSizer = new wxBoxSizer( wxVERTICAL );
-	
-	VersionListCtrl = new wxListCtrl( tb_MainAnoubisVersions, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLC_HRULES|wxLC_REPORT );
-	VersionListSizer->Add( VersionListCtrl, 80, wxALL|wxEXPAND, 5 );
-	
-	wxStaticBoxSizer* VersionCommentSizer;
-	VersionCommentSizer = new wxStaticBoxSizer( new wxStaticBox( tb_MainAnoubisVersions, -1, _("Comment of selected version:") ), wxVERTICAL );
-	
-	VersionShowCommentTextCtrl = new wxTextCtrl( tb_MainAnoubisVersions, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE|wxTE_READONLY );
-	VersionShowCommentTextCtrl->Enable( false );
-	
-	VersionCommentSizer->Add( VersionShowCommentTextCtrl, 1, wxALL|wxEXPAND, 5 );
-	
-	VersionListSizer->Add( VersionCommentSizer, 20, wxEXPAND, 5 );
-	
-	MainAnoubisVersionsSizer->Add( VersionListSizer, 70, wxEXPAND, 5 );
-	
-	wxBoxSizer* VersionButtonSizer;
-	VersionButtonSizer = new wxBoxSizer( wxVERTICAL );
-	
-	wxFlexGridSizer* VersionActionSizer;
-	VersionActionSizer = new wxFlexGridSizer( 2, 2, 0, 0 );
-	VersionActionSizer->SetFlexibleDirection( wxBOTH );
-	VersionActionSizer->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
-	
-	VersionSelectLabel = new wxStaticText( tb_MainAnoubisVersions, wxID_ANY, _("Selected Version:"), wxDefaultPosition, wxSize( -1,-1 ), 0 );
-	VersionSelectLabel->Wrap( -1 );
-	VersionActionSizer->Add( VersionSelectLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
-	
-	VersionRestoreButton = new wxButton( tb_MainAnoubisVersions, wxID_ANY, _("restore"), wxDefaultPosition, wxDefaultSize, 0 );
-	VersionActionSizer->Add( VersionRestoreButton, 0, wxALL, 0 );
-	
-	VersionSaveLabel = new wxStaticText( tb_MainAnoubisVersions, wxID_ANY, _("Save current rules\nas new version:"), wxDefaultPosition, wxSize( -1,-1 ), 0 );
-	VersionSaveLabel->Wrap( -1 );
-	VersionActionSizer->Add( VersionSaveLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
-	
-	VersionSaveButton = new wxButton( tb_MainAnoubisVersions, wxID_ANY, _("save"), wxDefaultPosition, wxDefaultSize, 0 );
-	VersionActionSizer->Add( VersionSaveButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 0 );
-	
-	VersionButtonSizer->Add( VersionActionSizer, 0, wxEXPAND, 5 );
-	
-	VersionCommentLabel = new wxStaticText( tb_MainAnoubisVersions, wxID_ANY, _("Comment for new version:"), wxDefaultPosition, wxDefaultSize, 0 );
-	VersionCommentLabel->Wrap( -1 );
-	VersionCommentLabel->SetFont( wxFont( 9, 70, 90, 90, false, wxEmptyString ) );
-	
-	VersionButtonSizer->Add( VersionCommentLabel, 0, wxALL, 5 );
-	
-	VersionEnterCommentTextCtrl = new wxTextCtrl( tb_MainAnoubisVersions, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE );
-	VersionButtonSizer->Add( VersionEnterCommentTextCtrl, 0, wxALL|wxEXPAND, 5 );
-	
-	wxStaticBoxSizer* VersionDetailsSizer;
-	VersionDetailsSizer = new wxStaticBoxSizer( new wxStaticBox( tb_MainAnoubisVersions, -1, _("Details...") ), wxVERTICAL );
-	
-	VersionVersionLabel = new wxStaticText( tb_MainAnoubisVersions, wxID_ANY, _("Version:"), wxDefaultPosition, wxDefaultSize, 0 );
-	VersionVersionLabel->Wrap( -1 );
-	VersionDetailsSizer->Add( VersionVersionLabel, 0, wxALL, 5 );
-	
-	VersionImportButton = new wxButton( tb_MainAnoubisVersions, wxID_ANY, _("import ..."), wxDefaultPosition, wxDefaultSize, 0 );
-	VersionDetailsSizer->Add( VersionImportButton, 0, wxALL, 5 );
-	
-	VersionExportButton = new wxButton( tb_MainAnoubisVersions, wxID_ANY, _("export ..."), wxDefaultPosition, wxDefaultSize, 0 );
-	VersionDetailsSizer->Add( VersionExportButton, 0, wxALL, 5 );
-	
-	VersionDeleteButton = new wxButton( tb_MainAnoubisVersions, wxID_ANY, _("delete"), wxDefaultPosition, wxDefaultSize, 0 );
-	VersionDetailsSizer->Add( VersionDeleteButton, 0, wxALL, 5 );
-	
-	VersionShowButton = new wxButton( tb_MainAnoubisVersions, wxID_ANY, _("show"), wxDefaultPosition, wxDefaultSize, 0 );
-	VersionShowButton->Hide();
-	
-	VersionDetailsSizer->Add( VersionShowButton, 0, wxALL, 5 );
-	
-	VersionProfileButton = new wxButton( tb_MainAnoubisVersions, wxID_ANY, _("profile ..."), wxDefaultPosition, wxDefaultSize, 0 );
-	VersionProfileButton->SetToolTip( _("a single profile") );
-	
-	VersionDetailsSizer->Add( VersionProfileButton, 0, wxALL, 5 );
-	
-	VersionButtonSizer->Add( VersionDetailsSizer, 1, wxEXPAND, 5 );
-	
-	MainAnoubisVersionsSizer->Add( VersionButtonSizer, 30, wxEXPAND, 5 );
-	
-	tb_MainAnoubisVersions->SetSizer( MainAnoubisVersionsSizer );
-	tb_MainAnoubisVersions->Layout();
-	MainAnoubisVersionsSizer->Fit( tb_MainAnoubisVersions );
-	tb_MainAnoubisNotify->AddPage( tb_MainAnoubisVersions, _("Version control"), false );
 	
 	sz_MainAnoubisMain->Add( tb_MainAnoubisNotify, 1, wxEXPAND | wxALL, 5 );
 	

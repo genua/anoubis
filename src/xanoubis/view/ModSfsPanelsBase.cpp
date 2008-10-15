@@ -87,9 +87,7 @@ ModSfsMainPanelBase::ModSfsMainPanelBase( wxWindow* parent, wxWindowID id, const
 	pan_Rules->SetSizer( sz_SfsRules );
 	pan_Rules->Layout();
 	sz_SfsRules->Fit( pan_Rules );
-	note_MainSfs->AddPage( pan_Rules, _("Rules"), true );
-	pan_TabOptions = new wxPanel( note_MainSfs, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
-	note_MainSfs->AddPage( pan_TabOptions, _("Options"), false );
+	note_MainSfs->AddPage( pan_Rules, _("Rules"), false );
 	pan_SfsMain = new wxPanel( note_MainSfs, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
 	wxBoxSizer* bSizer10;
 	bSizer10 = new wxBoxSizer( wxVERTICAL );

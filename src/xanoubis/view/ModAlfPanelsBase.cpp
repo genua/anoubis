@@ -177,8 +177,6 @@ ModAlfMainPanelBase::ModAlfMainPanelBase( wxWindow* parent, wxWindowID id, const
 	pan_TabAppView->Layout();
 	sz_AlfAppView->Fit( pan_TabAppView );
 	note_MainAlf->AddPage( pan_TabAppView, _("Application View"), true );
-	pan_TabOptions = new wxPanel( note_MainAlf, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
-	note_MainAlf->AddPage( pan_TabOptions, _("Options"), false );
 	
 	sz_MainALFMain->Add( note_MainAlf, 1, wxEXPAND | wxALL, 5 );
 	
