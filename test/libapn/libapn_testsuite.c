@@ -33,6 +33,7 @@ extern TCase *libapn_testcase_crash_apn_free_ruleset(void);
 extern TCase *libapn_testcase_crash_parse_files(void);
 extern TCase *libapn_testcase_crash_print_errors(void);
 extern TCase *libapn_testcase_iovec(void);
+extern TCase *libapn_testcase_firstinsert(void);
 
 Suite *
 libapn_testsuite(void)
@@ -48,6 +49,7 @@ libapn_testsuite(void)
 	TCase *tc_crash_print_error = libapn_testcase_crash_print_errors();
 	TCase *tc_iovec = libapn_testcase_iovec();
 	tcase_set_timeout(tc_iovec, 60);
+	TCase *tc_firstinsert = libapn_testcase_firstinsert();
 
 	suite_add_tcase(s, tc_errorcodes);
 	suite_add_tcase(s, tc_invalidparams);
@@ -55,6 +57,7 @@ libapn_testsuite(void)
 	suite_add_tcase(s, tc_crash_parse_files);
 	suite_add_tcase(s, tc_crash_print_error);
 	suite_add_tcase(s, tc_iovec);
+	suite_add_tcase(s, tc_firstinsert);
 
 	return (s);
 }

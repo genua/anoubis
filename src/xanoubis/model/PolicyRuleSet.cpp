@@ -481,6 +481,7 @@ int
 PolicyRuleSet::createAppPolicy(int insertBeforeId)
 {
 	int		 newId;
+	int		 rc;
 	wxCommandEvent	 event(anEVT_LOAD_RULESET);
 	struct apn_rule	*newAppRule;
 
@@ -500,7 +501,12 @@ PolicyRuleSet::createAppPolicy(int insertBeforeId)
 
 	newAppRule->app->hashtype = APN_HASH_NONE;
 
-	if (apn_insert(ruleSet_, newAppRule, insertBeforeId) == 0) {
+	if (TAILQ_EMPTY(&ruleSet_->alf_queue)) {
+		rc = apn_add(ruleSet_, newAppRule);
+	} else {
+		rc = apn_insert(ruleSet_, newAppRule, insertBeforeId);
+	}
+	if (rc == 0) {
 		newId = newAppRule->apn_id;
 		clean();
 		create(ruleSet_);
@@ -574,14 +580,15 @@ PolicyRuleSet::createSfsPolicy(int insertBeforeId)
 	struct apn_rule			*newSfsRule;
 
 	this->accept(seeker);
-	if (! seeker.hasMatchingPolicy()) {
-		return (-1);
-	}
 
 	newId = -1;
 	rc = -1;
 	newSfsRule = CALLOC_STRUCT(apn_rule);
-	parentPolicy = seeker.getMatchingPolicy();
+	if (! seeker.hasMatchingPolicy()) {
+		parentPolicy = NULL;
+	} else {
+		parentPolicy = seeker.getMatchingPolicy();
+	}
 
 	if (newSfsRule == NULL) {
 		return (-1);
@@ -594,33 +601,22 @@ PolicyRuleSet::createSfsPolicy(int insertBeforeId)
 		return (-1);
 	}
 
+	newSfsRule->apn_id = 0;
 	newSfsRule->rule.sfscheck.app->hashtype = APN_HASH_NONE;
 
 	if (TAILQ_EMPTY(&(ruleSet_->sfs_queue))) {
 		sfsRootRule = CALLOC_STRUCT(apn_rule);
 		sfsRootRule->apn_type = APN_SFS;
-		/* XXX CEH: xanoubis should not have to call this function! */
-		apn_add_sfsblock(ruleSet_, sfsRootRule, NULL, 0);
+		apn_add(ruleSet_, sfsRootRule);
 	}
 	/* we assume sfs_queue will contain only one element */
 	sfsRootRule = TAILQ_FIRST(&(ruleSet_->sfs_queue));
 
-	if (parentPolicy->IsKindOf(CLASSINFO(SfsPolicy))) {
+	if (parentPolicy && parentPolicy->IsKindOf(CLASSINFO(SfsPolicy))) {
 		rc = apn_insert_sfsrule(ruleSet_, newSfsRule, insertBeforeId);
 	} else {
-		if (!TAILQ_EMPTY(&sfsRootRule->rule.chain)) {
-			struct apn_rule * srule;
-			srule = TAILQ_FIRST(&sfsRootRule->rule.chain);
-			rc = apn_insert_sfsrule(ruleSet_, newSfsRule,
-			    srule->apn_id);
-		} else {
-			/* XXX CEH: This should be somewhere in libapn */
-			newSfsRule->apn_id = 0;
-			TAILQ_INSERT_HEAD(&sfsRootRule->rule.chain,
-			    newSfsRule, entry);
-			apn_assign_ids(ruleSet_);
-			rc = 0;
-		}
+		rc = apn_add2app_sfsrule(ruleSet_, newSfsRule,
+		    sfsRootRule->apn_id);
 	}
 
 	if (rc == 0) {

@@ -89,6 +89,8 @@ static void	apn_assign_ids_chain(struct apn_ruleset *, struct apn_chain *);
 static void	apn_assign_ids_one(struct apn_ruleset *, struct apn_rule *);
 static void	apn_insert_id(struct apn_ruleset *, struct rb_entry *, void *);
 static void	apn_assign_id(struct apn_ruleset *, struct rb_entry *, void *);
+static int	apn_add2app_commonrule(struct apn_ruleset *, struct apn_chain *,
+		    struct apn_rule *, unsigned int);
 
 /*
  * Parse the specified file or iovec and return the ruleset, which is allocated
@@ -315,6 +317,48 @@ apn_add_sbblock(struct apn_ruleset *ruleset, struct apn_rule *block,
 }
 
 /*
+ * Add rule to head of concerning queue of rule set.
+ * The IDs of the passed struct apn_rule will be updated!
+ *
+ * Return codes:
+ * -1: a systemcall failed and errno is set
+ *  0: rule was inserted.
+ *  1: invalid parameters
+ *
+ * In case of an error, no rules are added, thus caller can free them safely.
+ */
+int
+apn_add(struct apn_ruleset *rs, struct apn_rule *rule)
+{
+	struct apn_chain	*queue;
+
+	if (rs == NULL || rule == NULL || rs->maxid == UINT_MAX)
+		return (1);
+
+	switch (rule->apn_type) {
+	case APN_ALF:
+		queue = &rs->alf_queue;
+		break;
+	case APN_SFS:
+		queue = &rs->sfs_queue;
+		break;
+	case APN_SB:
+		queue = &rs->sb_queue;
+		break;
+	default:
+		return (1);
+	}
+
+	/* Assign new IDs to the rule block before inserting it. */
+	if (apn_update_ids(rule, rs))
+		return (1);
+
+	TAILQ_INSERT_HEAD(queue, rule, entry);
+
+	return (0);
+}
+
+/*
  * Insert rule to rule set before rule with the identification ID.
  * The IDs of the passed struct apn_rule will be updated!
  *
@@ -331,7 +375,7 @@ apn_insert(struct apn_ruleset *rs, struct apn_rule *rule, unsigned int id)
 	struct apn_chain	*queue;
 	struct apn_rule		*p;
 
-	if (rs == NULL || rule == NULL || id < 1 || rs->maxid == INT_MAX)
+	if (rs == NULL || rule == NULL || id < 1 || rs->maxid == UINT_MAX)
 		return (1);
 
 	switch (rule->apn_type) {
@@ -366,9 +410,9 @@ apn_insert_rule_common(struct apn_ruleset *rs,
 {
 	struct apn_rule		*p;
 
-	if (!rs || rs->maxid == INT_MAX)
+	if (!rs || rs->maxid == UINT_MAX)
 		return 1;
-	if (arule == NULL || id < 1 || rs->maxid == INT_MAX)
+	if (arule == NULL || id < 1 || rs->maxid == UINT_MAX)
 		return (1);
 
 	if (arule->apn_id && !apn_valid_id(rs, arule->apn_id))
@@ -447,30 +491,79 @@ apn_insert_sbrule(struct apn_ruleset *rs, struct apn_rule *sbrule,
  *  1: invalid parameters
  */
 int
-apn_add2app_alfrule(struct apn_ruleset *rs, struct apn_rule *arule,
+apn_add2app_alfrule(struct apn_ruleset *rs, struct apn_rule *rule,
     unsigned int id)
+{
+	return (apn_add2app_commonrule(rs, &rs->alf_queue, rule, id));
+}
+
+/*
+ * Add struct apn_rule arule to the start of the struct apn_rule identified
+ * by @id. The ID of the new rule is retained. If the ID of the new rule
+ * is 0 a new ID is assigned. Trying to use an ID of an existing rule will
+ * cause an error.
+ *
+ * Return codes:
+ * -1: a systemcall failed and errno is set
+ *  0: rule was added
+ *  1: invalid parameters
+ */
+int
+apn_add2app_sfsrule(struct apn_ruleset *rs, struct apn_rule *rule,
+    unsigned int id)
+{
+	return (apn_add2app_commonrule(rs, &rs->sfs_queue, rule, id));
+}
+
+/*
+ * Add struct apn_rule arule to the start of the struct apn_rule identified
+ * by @id. The ID of the new rule is retained. If the ID of the new rule
+ * is 0 a new ID is assigned. Trying to use an ID of an existing rule will
+ * cause an error.
+ *
+ * Return codes:
+ * -1: a systemcall failed and errno is set
+ *  0: rule was added
+ *  1: invalid parameters
+ */
+static int
+apn_add2app_commonrule(struct apn_ruleset *rs, struct apn_chain *queue,
+    struct apn_rule *rule, unsigned int id)
 {
 	struct apn_rule		*app;
 
-	if (rs == NULL || arule == NULL || id < 1 || rs->maxid == INT_MAX)
+	if (rs == NULL || rule == NULL || id < 1 || rs->maxid == UINT_MAX)
 		return (1);
 
-	if ((app = apn_search_rule(&rs->alf_queue, id)) == NULL) {
+	if ((app = apn_search_rule(queue, id)) == NULL) {
 		return (1);
 	}
 
 	if (TAILQ_EMPTY(&app->rule.chain)) {
-		if (arule->apn_id && !apn_valid_id(rs, arule->apn_id))
+		if (rule->apn_id && !apn_valid_id(rs, rule->apn_id))
 			return (1);
-		TAILQ_INSERT_HEAD(&app->rule.chain, arule, entry);
-		if (arule->apn_id == 0) {
-			apn_assign_id(rs, &arule->_rbentry, arule);
+		TAILQ_INSERT_HEAD(&app->rule.chain, rule, entry);
+		if (rule->apn_id == 0) {
+			apn_assign_id(rs, &rule->_rbentry, rule);
 		} else {
-			apn_insert_id(rs, &arule->_rbentry, arule);
+			apn_insert_id(rs, &rule->_rbentry, rule);
 		}
 	} else {
 		struct apn_rule *hp = TAILQ_FIRST(&app->rule.chain);
-		return (apn_insert_alfrule(rs, arule, hp->apn_id));
+		switch (app->apn_type) {
+		case APN_ALF:
+			return (apn_insert_alfrule(rs, rule, hp->apn_id));
+			break;
+		case APN_SFS:
+			return (apn_insert_sfsrule(rs, rule, hp->apn_id));
+			break;
+		case APN_SB:
+			return (apn_insert_sbrule(rs, rule, hp->apn_id));
+			break;
+		default:
+			return (1);
+			break;
+		}
 	}
 
 	return (0);
@@ -492,7 +585,7 @@ apn_copyinsert(struct apn_ruleset *rs, struct apn_rule *arule,
 	struct apn_rule		*hp;
 	struct apn_rule		*rule, *newrule;
 
-	if (rs == NULL || arule == NULL || id < 1 || rs->maxid == INT_MAX)
+	if (rs == NULL || arule == NULL || id < 1 || rs->maxid == UINT_MAX)
 		return (1);
 
 	/* find app_rule that includes rule with ID id */
@@ -1809,7 +1902,7 @@ apn_remove_chain_deep(struct apn_ruleset *rs, struct apn_chain *chain,
 int
 apn_remove(struct apn_ruleset *rs, unsigned int id)
 {
-	if (rs == NULL || id < 1 || rs->maxid == INT_MAX) {
+	if (rs == NULL || id < 1 || rs->maxid == UINT_MAX) {
 		return (1);
 	}
 
