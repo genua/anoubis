@@ -88,7 +88,6 @@ ModAlfMainPanelImpl::OnLoadRuleSet(wxCommandEvent& event)
 	profileCtrl = ProfileCtrl::getInstance();
 
 	lst_Rules->DeleteAllItems();
-	tr_AV_Rules->DeleteAllItems();
 	profileCtrl->unlockFromShow(userRuleSetId_, this);
 	profileCtrl->unlockFromShow(adminRuleSetId_, this);
 	userRuleSetId_ = profileCtrl->getUserId();

@@ -57,11 +57,9 @@
 class ModAlfAddPolicyVisitor : public PolicyVisitor
 {
 	private:
-		wxTreeItemId		 lastTreeRoot_;
 		ModAlfMainPanelImpl	*alfPanel_;
 
 		long		ruleListAppend(Policy *);
-		void    addTreeContext(wxString);
 
 	public:
 		ModAlfAddPolicyVisitor(ModAlfMainPanelImpl *);

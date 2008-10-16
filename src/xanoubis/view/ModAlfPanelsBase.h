@@ -46,17 +46,12 @@
 #include <wx/panel.h>
 #include <wx/bitmap.h>
 #include <wx/image.h>
-#include <wx/listbox.h>
-#include <wx/radiobut.h>
-#include <wx/treectrl.h>
 #include <wx/notebook.h>
 #include <wx/statbmp.h>
 
 ///////////////////////////////////////////////////////////////////////////
 
 #define wxID_RulesOperationSep 7500
-#define wxID_GroupingProg 7501
-#define wxID_GroupingContex 7502
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Class ModAlfMainPanelBase
@@ -74,18 +69,6 @@ class ModAlfMainPanelBase : public wxPanel
 		wxStaticText* tx_RulesOperation1stHeader;
 		wxStaticLine* ln_RulesOperationSep;
 		wxStaticText* tx_RulesOperation2ndHeader;
-		wxPanel* pan_TabAppView;
-		wxStaticText* tx_AppSelHeader1;
-		wxListBox* lst_AppSelApplications1;
-		wxStaticLine* ln_GroupChoiceSepLine1;
-		wxStaticText* tx_AppGroupInfo1;
-		wxStaticLine* ln_AppViewVertSep;
-		wxStaticText* tx_AppGroupHeader;
-		
-		wxStaticText* tx_AppGroupChoice1;
-		wxRadioButton* rad_GroupChoiceTwo1;
-		wxRadioButton* rad_GroupChoiceOne1;
-		wxTreeCtrl* tr_AV_Rules;
 	
 	public:
 		ModAlfMainPanelBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 1067,-1 ), long style = wxTAB_TRAVERSAL );
