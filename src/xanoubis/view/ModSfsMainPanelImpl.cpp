@@ -190,6 +190,10 @@ ModSfsMainPanelImpl::initSfsMain()
 	    wxCommandEventHandler(
 	       ModSfsMainPanelImpl::OnSfsMainInverseCheckboxClicked),
 	    NULL, this);
+	SfsMainFilterTextCtrl->Connect(wxEVT_COMMAND_TEXT_ENTER,
+	    wxCommandEventHandler(
+	       ModSfsMainPanelImpl::OnSfsMainFilterButtonClicked),
+	    NULL, this);
 
 	/* Insert columns into list-ctrl */
 	SfsMainListCtrl->InsertColumn(MODSFSMAIN_FILELIST_COLUMN_FILE,
