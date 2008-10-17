@@ -25,39 +25,40 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "Task.h"
-#include "TaskEvent.h"
+#include "ComTask.h"
 
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_CSUMCALC)
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_REGISTER)
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_POLICY_SEND)
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_POLICY_REQUEST)
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_CSUM_ADD)
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_CSUM_GET)
-
-TaskEvent::TaskEvent(Task *task, int id)
-    : wxEvent(id, task->getEventType())
+ComTask::ComTask(void) : Task(Task::TYPE_COM)
 {
-	this->task_ = task;
+	this->comHandler_ = 0;
+	resetComTaskResult();
 }
 
-TaskEvent::TaskEvent(const TaskEvent &other)
-    : wxEvent(other.GetId(), other.GetEventType())
+ComTask::ComTaskResult
+ComTask::getComTaskResult(void) const
 {
-	SetEventObject(other.GetEventObject());
-	SetTimestamp(other.GetTimestamp());
-
-	this->task_ = other.task_;
+	return (this->result_);
 }
 
-wxEvent *
-TaskEvent::Clone(void) const
+void
+ComTask::setComTaskResult(ComTaskResult result)
 {
-	return new TaskEvent(*this);
+	this->result_ = result;
 }
 
-Task *
-TaskEvent::getTask(void) const
+void
+ComTask::resetComTaskResult(void)
 {
-	return (this->task_);
+	this->result_ = RESULT_INIT;
+}
+
+ComHandler *
+ComTask::getComHandler(void) const
+{
+	return (this->comHandler_);
+}
+
+void
+ComTask::setComHandler(ComHandler *comHandler)
+{
+	this->comHandler_ = comHandler;
 }

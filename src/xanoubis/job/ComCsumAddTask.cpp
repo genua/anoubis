@@ -36,71 +36,89 @@
 #include <dev/anoubis.h>
 #endif
 
+#ifdef NEEDBSDCOMPAT
+#include <bsdcompat.h>
+#endif
+
+#include <client/anoubis_client.h>
+#include <client/anoubis_transaction.h>
 #include <csum/csum.h>
+#include <anoubis_protocol.h>
 
-#include "CsumCalcTask.h"
-#include "JobCtrl.h"
+#include "ComCsumAddTask.h"
+#include "ComHandler.h"
+#include "TaskEvent.h"
 
-CsumCalcTask::CsumCalcTask(void) : Task(Task::TYPE_CSUMCALC)
+ComCsumAddTask::ComCsumAddTask(void)
 {
-	reset();
+	setFile(wxT(""));
+}
+
+ComCsumAddTask::ComCsumAddTask(const wxString &file)
+{
+	setFile(file);
 }
 
 wxString
-CsumCalcTask::getPath(void) const
+ComCsumAddTask::getFile(void) const
 {
-	return (this->path_);
+	return (this->file_);
 }
 
 void
-CsumCalcTask::setPath(const wxString &path)
+ComCsumAddTask::setFile(const wxString &file)
 {
-	this->path_ = path;
+	this->file_ = file;
 }
 
 wxEventType
-CsumCalcTask::getEventType(void) const
+ComCsumAddTask::getEventType(void) const
 {
-	return (anTASKEVT_CSUMCALC);
+	return (anTASKEVT_CSUM_ADD);
 }
 
 void
-CsumCalcTask::exec(void)
+ComCsumAddTask::exec(void)
 {
-	int cslen = ANOUBIS_CS_LEN;
+	/* Request to add a checksum for a file */
+	struct anoubis_transaction	*ta;
+	u_int8_t			cs[ANOUBIS_CS_LEN];
+	int				len, ret;
+	char				path[file_.Len() + 1];
 
-	reset();
-	this->result_ = anoubis_csum_calc(path_.fn_str(), this->cs_, &cslen);
-}
+	resetComTaskResult();
 
-int
-CsumCalcTask::getResult(void) const
-{
-	return (this->result_);
-}
+	strlcpy(path, file_.fn_str(), sizeof(path));
 
-const u_int8_t *
-CsumCalcTask::getCsum(void) const
-{
-	return (this->cs_);
-}
+	/* Calculate checksum */
+	len = ANOUBIS_CS_LEN;
+	ret = anoubis_csum_calc(path, cs, &len);
+	if (ret < 0) {
+		setComTaskResult(RESULT_LOCAL_ERROR);
+		return;
+	}
 
-wxString
-CsumCalcTask::getCsumStr(void) const
-{
-	wxString str;
+	/* Send request to daemon */
+	ta =  anoubis_client_csumrequest_start(getComHandler()->getClient(),
+	    ANOUBIS_CHECKSUM_OP_ADDSUM, path, cs, len);
+	if(!ta) {
+		setComTaskResult(RESULT_COM_ERROR);
+		return;
+	}
 
-	for (int i = 0; i < ANOUBIS_CS_LEN; i++)
-		str += wxString::Format(wxT("%.2x"), this->cs_[i]);
+	/* Wait for completition */
+	while (!(ta->flags & ANOUBIS_T_DONE)) {
+		if (!getComHandler()->waitForMessage()) {
+			setComTaskResult(RESULT_COM_ERROR);
+			return;
+		}
+	}
 
-	return (str);
-}
+	/* Result */
+	if (ta->result)
+		setComTaskResult(RESULT_REMOTE_ERROR);
+	else
+		setComTaskResult(RESULT_SUCCESS);
 
-void
-CsumCalcTask::reset(void)
-{
-	this->result_ = -99;
-
-	for (int i = 0; i < ANOUBIS_CS_LEN; i++)
-		this->cs_[i] = 0;
+	anoubis_transaction_destroy(ta);
 }

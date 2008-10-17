@@ -25,39 +25,33 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "Task.h"
-#include "TaskEvent.h"
+#ifndef _JOBCTRLAPP_H_
+#define _JOBCTRLAPP_H_
 
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_CSUMCALC)
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_REGISTER)
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_POLICY_SEND)
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_POLICY_REQUEST)
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_CSUM_ADD)
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_CSUM_GET)
+#include <wx/app.h>
+#include <wx/list.h>
 
-TaskEvent::TaskEvent(Task *task, int id)
-    : wxEvent(id, task->getEventType())
+class TaskEvent;
+class TestHandler;
+
+WX_DECLARE_LIST(TestHandler, TestHandlerList);
+
+class JobCtrlApp : public wxAppConsole
 {
-	this->task_ = task;
-}
+	public:
+		bool OnInit();
+		int OnRun();
+		int OnExit();
 
-TaskEvent::TaskEvent(const TaskEvent &other)
-    : wxEvent(other.GetId(), other.GetEventType())
-{
-	SetEventObject(other.GetEventObject());
-	SetTimestamp(other.GetTimestamp());
+	private:
+		TestHandlerList handlerList_;
 
-	this->task_ = other.task_;
-}
+		bool canExit() const;
+		int getResult() const;
+};
 
-wxEvent *
-TaskEvent::Clone(void) const
-{
-	return new TaskEvent(*this);
-}
+DECLARE_APP(JobCtrlApp);
 
-Task *
-TaskEvent::getTask(void) const
-{
-	return (this->task_);
-}
+int jobCtrlAppEntry(int, char **);
+
+#endif	/* _JOBCTRLAPP_H_ */

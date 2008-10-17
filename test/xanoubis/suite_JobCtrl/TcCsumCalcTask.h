@@ -25,39 +25,37 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "Task.h"
-#include "TaskEvent.h"
+#ifndef _TCCSUMCALCTASK_H_
+#define _TCCSUMCALCTASK_H_
 
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_CSUMCALC)
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_REGISTER)
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_POLICY_SEND)
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_POLICY_REQUEST)
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_CSUM_ADD)
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_CSUM_GET)
+#include "TestHandler.h"
 
-TaskEvent::TaskEvent(Task *task, int id)
-    : wxEvent(id, task->getEventType())
+class CsumCalcTask;
+
+class TcCsumCalcTask : public TestHandler
 {
-	this->task_ = task;
-}
+	public:
+		TcCsumCalcTask();
+		~TcCsumCalcTask();
 
-TaskEvent::TaskEvent(const TaskEvent &other)
-    : wxEvent(other.GetId(), other.GetEventType())
-{
-	SetEventObject(other.GetEventObject());
-	SetTimestamp(other.GetTimestamp());
+		void startTest();
+		bool canExitTest() const;
+		int getTestResult() const;
 
-	this->task_ = other.task_;
-}
+	protected:
+		void OnTaskEvent(TaskEvent &);
 
-wxEvent *
-TaskEvent::Clone(void) const
-{
-	return new TaskEvent(*this);
-}
+	private:
+		CsumCalcTask	*task1_;
+		CsumCalcTask	*task2_;
+		bool		haveResult1_;
+		bool		haveResult2_;
+		bool		haveResult3_;
+		int		result_;
 
-Task *
-TaskEvent::getTask(void) const
-{
-	return (this->task_);
-}
+		void checkCsumFile1();
+		void checkCsumFile2();
+		void checkCsumFile3();
+};
+
+#endif	/* _TCCSUMCALCTASK_H_ */

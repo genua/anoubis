@@ -28,17 +28,16 @@
 #ifndef _JOBCTRL_H_
 #define _JOBCTRL_H_
 
-#include <list>
-#include <queue>
-
 #include <wx/event.h>
-#include <wx/thread.h>
 
 #include "JobThread.h"
 #include "Singleton.h"
+#include "SynchronizedQueue.h"
 #include "Task.h"
 
 WX_DECLARE_LIST(JobThread, JobThreadList);
+
+class ComThread;
 
 /**
  * The job controller.
@@ -49,6 +48,15 @@ WX_DECLARE_LIST(JobThread, JobThreadList);
  *
  * A task implements the Task-interface. The pure virtual function Task::exec()
  * contains the logic of the task.
+ *
+ * The background-thread(s) are started by calling start() and stopped again by
+ * calling stop(). If the job-constroller is not started, no scheduled task is
+ * executed.
+ *
+ * You also might what to call connected()/disconnect()! This establishs a
+ * connection to anoubisd. This connection is used for any ComTask-derivated
+ * tasks. getSocketPath()/setSocketPath() configures the unix-domain-socket
+ * used for communication.
  *
  * The task-execution is scheduled by invoking JobCtrl::addTask(). When
  * task-execution has finished, a TaskEvent is generated which contains the
@@ -66,6 +74,64 @@ class JobCtrl : public wxEvtHandler, public Singleton<JobCtrl>
 		 * Returns the singleton instance of the class.
 		 */
 		static JobCtrl *getInstance(void);
+
+		/**
+		 * Returns the path to socket used for communication with
+		 * anoubisd.
+		 *
+		 * The GUI establishes the connection to anoubisd over a domain
+		 * socket.
+		 *
+		 * @return Path to domain-socket
+		 */
+		wxString getSocketPath(void) const;
+
+		/**
+		 * Updates the path to the socket used for communication with
+		 * anoubisd.
+		 *
+		 * If you do not specify your own path, a feasible
+		 * default-value is used.
+		 *
+		 * @param path The new path to domain-socket
+		 * @note The method needs to be called before JobCtrl::start()
+		 *       is invoked!
+		 */
+		void setSocketPath(const wxString &);
+
+		/**
+		 * Starts the JobCtrl.
+		 *
+		 * This method creates the background-threads. As a result you
+		 * are able to execute any scheduled tasks.
+		 *
+		 * @note You need to call the method to be able to execute your
+		 *       scheduled tasks!
+		 */
+		bool start(void);
+
+		/**
+		 * Stops the JobCtrl.
+		 *
+		 * The background-threads are stopped. If this method is
+		 * called, non of the scheduled tasks are processed.
+		 */
+		void stop(void);
+
+		/**
+		 * Establishes a connection to anoubisd.
+		 *
+		 * You need to call this method, if you want to execute any
+		 * ComTask-derivated tasks.
+		 *
+		 * @return true on success, false otherwise.
+		 */
+		bool connect(void);
+
+		/**
+		 * Disconnects again from anoubisd.
+		 */
+		void disconnect(void);
 
 		/**
 		 * Registers and schedules a task for execution.
@@ -95,12 +161,12 @@ class JobCtrl : public wxEvtHandler, public Singleton<JobCtrl>
 		Task *popTask(Task::Type);
 
 	private:
-		std::queue<Task *> csumCalcTaskQueue_;
-		wxMutex csumCalcTaskMutex_;
+		wxString socketPath_;
+		SynchronizedQueue<Task> csumCalcTaskQueue_;
+		SynchronizedQueue<Task> comTaskQueue_;
 		JobThreadList threadList_;
 
-		void pushCsumCalcTask(Task *);
-		Task *popCsumCalcTask(void);
+		ComThread *findComThread(void) const;
 
 	friend class JobThread;
 	friend class Singleton<JobCtrl>;

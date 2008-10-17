@@ -25,39 +25,37 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "Task.h"
-#include "TaskEvent.h"
+#ifndef _TCCOMTASK_H_
+#define _TCCOMTASK_H_
 
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_CSUMCALC)
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_REGISTER)
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_POLICY_SEND)
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_POLICY_REQUEST)
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_CSUM_ADD)
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_CSUM_GET)
+#include "TestHandler.h"
 
-TaskEvent::TaskEvent(Task *task, int id)
-    : wxEvent(id, task->getEventType())
+class TcComTask : public TestHandler
 {
-	this->task_ = task;
-}
+	public:
+		TcComTask();
+		~TcComTask();
 
-TaskEvent::TaskEvent(const TaskEvent &other)
-    : wxEvent(other.GetId(), other.GetEventType())
-{
-	SetEventObject(other.GetEventObject());
-	SetTimestamp(other.GetTimestamp());
+		void startTest();
+		void taskEvent(const TaskEvent &);
+		bool canExitTest() const;
+		int getTestResult() const;
 
-	this->task_ = other.task_;
-}
+	protected:
+		void OnRegister(TaskEvent &);
+		void OnPolicyReceived(TaskEvent &);
+		void OnPolicySend(TaskEvent &);
+		void OnCsumAdd(TaskEvent &);
+		void OnCsumGet(TaskEvent &);
 
-wxEvent *
-TaskEvent::Clone(void) const
-{
-	return new TaskEvent(*this);
-}
+	private:
+		int			policyRequestCounter_;
+		bool			exit_;
+		int			result_;
 
-Task *
-TaskEvent::getTask(void) const
-{
-	return (this->task_);
-}
+		static wxString getFileContent(const wxString &);
+		static wxString getPolicyAsString(struct apn_ruleset *);
+		static struct apn_ruleset *getPolicyFromFile(const wxString &);
+};
+
+#endif	/* _TCCOMTASK_H_ */

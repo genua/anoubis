@@ -94,8 +94,10 @@ class PolicyRuleSet : public wxEvtHandler
 		bool isAdmin(void);
 
 		wxString getOrigin(void);
+		wxString toString(void) const;
 		long getId(void) const;
 		uid_t getUid(void) const;
+		int getPriority(void) const;
 };
 
 #endif	/* _POLICYRULESET_H_ */

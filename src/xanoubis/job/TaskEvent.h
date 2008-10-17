@@ -30,6 +30,52 @@
 
 #include <wx/event.h>
 
+/**
+ * @name Event-types associated with TaskEvent.
+ */
+//@{
+BEGIN_DECLARE_EVENT_TYPES()
+	/**
+	 * Event-type of TaskEvent when a checksum-calculation has finished.
+	 * @see CsumCalcTask
+	 */
+	DECLARE_LOCAL_EVENT_TYPE(anTASKEVT_CSUMCALC, wxNewEventType())
+
+	/**
+	 * Event-type of TaskEvent when the registration at anoubisd has
+	 * finished.
+	 * @see ComRegistrationTask
+	 */
+	DECLARE_LOCAL_EVENT_TYPE(anTASKEVT_REGISTER, wxNewEventType())
+
+	/**
+	 * Event-type of TaskEvent when a policy was sent to anoubisd.
+	 * @see ComPolicySendTask
+	 */
+	DECLARE_LOCAL_EVENT_TYPE(anTASKEVT_POLICY_SEND, wxNewEventType())
+
+	/**
+	 * Event-type of TaskEvent when a policy-requested was answered by
+	 * anoubisd.
+	 * @see ComPolicyRequestTask
+	 */
+	DECLARE_LOCAL_EVENT_TYPE(anTASKEVT_POLICY_REQUEST, wxNewEventType())
+
+	/**
+	 * Event-type of TaskEvent when a checksum was sent to anoubisd.
+	 * @see ComCsumAddTask
+	 */
+	DECLARE_LOCAL_EVENT_TYPE(anTASKEVT_CSUM_ADD, wxNewEventType())
+
+	/**
+	 * Event-type of TaskEvent when a checksum-request was answered by
+	 * anoubisd.
+	 * @see ComCsumGetTask
+	 */
+	DECLARE_LOCAL_EVENT_TYPE(anTASKEVT_CSUM_GET, wxNewEventType())
+END_DECLARE_EVENT_TYPES()
+//@}
+
 class Task;
 
 /**

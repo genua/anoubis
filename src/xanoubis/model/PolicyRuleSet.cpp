@@ -699,6 +699,39 @@ PolicyRuleSet::getOrigin(void)
 	return (origin_);
 }
 
+wxString
+PolicyRuleSet::toString(void) const
+{
+	wxString tmpFile = wxFileName::CreateTempFileName(wxT(""));
+	wxString content = wxT("");
+	int result = 1;
+
+	wxFFile f(tmpFile, wxT("w"));
+
+	if (f.IsOpened()) {
+		result = apn_print_ruleset(ruleSet_, 0, f.fp());
+
+		f.Flush();
+		f.Close();
+	}
+
+	if (result != 0) {
+		wxRemoveFile(tmpFile);
+		return (content);
+	}
+
+	if (f.Open(tmpFile, wxT("r"))) {
+		if (!f.ReadAll(&content))
+			content = wxT("");
+
+		f.Close();
+	}
+
+	wxRemoveFile(tmpFile);
+
+	return (content);
+}
+
 long
 PolicyRuleSet::getId(void) const
 {
@@ -709,4 +742,10 @@ uid_t
 PolicyRuleSet::getUid(void) const
 {
 	return (uid_);
+}
+
+int
+PolicyRuleSet::getPriority(void) const
+{
+	return (priority_);
 }

@@ -25,39 +25,58 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "Task.h"
-#include "TaskEvent.h"
+#ifndef _SYNCHRONIZEDQUEUE_H_
+#define _SYNCHRONIZEDQUEUE_H_
 
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_CSUMCALC)
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_REGISTER)
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_POLICY_SEND)
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_POLICY_REQUEST)
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_CSUM_ADD)
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_CSUM_GET)
+#include <queue>
 
-TaskEvent::TaskEvent(Task *task, int id)
-    : wxEvent(id, task->getEventType())
-{
-	this->task_ = task;
-}
+#include <wx/thread.h>
 
-TaskEvent::TaskEvent(const TaskEvent &other)
-    : wxEvent(other.GetId(), other.GetEventType())
-{
-	SetEventObject(other.GetEventObject());
-	SetTimestamp(other.GetTimestamp());
+/**
+ * A queue.
+ *
+ * You can insert an element at the end of the queue
+ * (SynchronizedQueue::push()) and remove an element from the beginning
+ * (SynchronizedQueue::pop()).
+ *
+ * Access to the queue is synchronized with an mutex.
+ */
+template <class T>
+class SynchronizedQueue {
+	public:
+		/**
+		 * Inserts an element at the end of the queue.
+		 *
+		 * @param t Element to be inserted
+		 */
+		void push(T *t)
+		{
+			wxMutexLocker locker(mutex_);
+			queue_.push(t);
+		}
 
-	this->task_ = other.task_;
-}
+		/**
+		 * Removes an element from the beginning of the queue.
+		 *
+		 * @return Element which was removed. If the queue is empty,
+		 *         0 is returned.
+		 */
+		T *pop()
+		{
+			wxMutexLocker locker(mutex_);
 
-wxEvent *
-TaskEvent::Clone(void) const
-{
-	return new TaskEvent(*this);
-}
+			if (queue_.empty())
+				return (0);
 
-Task *
-TaskEvent::getTask(void) const
-{
-	return (this->task_);
-}
+			T *t = queue_.front();
+			queue_.pop();
+
+			return (t);
+		}
+
+	private:
+		std::queue<T *> queue_;
+		wxMutex mutex_;
+};
+
+#endif	/* _SYNCHRONIZEDQUEUE_H_ */

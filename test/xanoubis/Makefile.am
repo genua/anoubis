@@ -34,7 +34,7 @@ else
 #         'make distcheck'.
 #         Nethertheless that test is quite useful and still should be shipped.
 # TESTS = test_xanoubis_server testSuite_JobCtrl testSuite_Patterns \
-# 	testSuite_Profiles testSuite_Sfs
+#	  testSuite_Profiles testSuite_Sfs
 TESTS = \
 	testSuite_Patterns \
 	testSuite_Profiles \
@@ -226,5 +226,12 @@ endif
 
 testSuite_JobCtrl_SOURCES = \
 	testrunner.cpp \
+	suite_JobCtrl/JobCtrlApp.cpp \
+	suite_JobCtrl/JobCtrlApp.h \
+	suite_JobCtrl/TestHandler.h \
+	suite_JobCtrl/TcComTask.cpp \
+	suite_JobCtrl/TcComTask.h \
+	suite_JobCtrl/TcCsumCalcTask.cpp \
+	suite_JobCtrl/TcCsumCalcTask.h \
 	suite_JobCtrl/testSuite.cpp \
 	suite_JobCtrl/tc_JobCtrl.cpp

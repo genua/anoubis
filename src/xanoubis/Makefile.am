@@ -288,6 +288,22 @@ xanoubis_SOURCES= \
 	pattern/PolicyVisitor.h \
 	pattern/Singleton.cpp \
 	pattern/Singleton.h \
+	pattern/SynchronizedQueue.h \
+	job/ComCsumAddTask.cpp \
+	job/ComCsumAddTask.h \
+	job/ComCsumGetTask.cpp \
+	job/ComCsumGetTask.h \
+	job/ComHandler.h \
+	job/ComPolicyRequestTask.cpp \
+	job/ComPolicyRequestTask.h \
+	job/ComPolicySendTask.cpp \
+	job/ComPolicySendTask.h \
+	job/ComRegistrationTask.cpp \
+	job/ComRegistrationTask.h \
+	job/ComTask.cpp \
+	job/ComTask.h \
+	job/ComThread.cpp \
+	job/ComThread.h \
 	job/CsumCalcTask.cpp \
 	job/CsumCalcTask.h \
 	job/CsumCalcThread.cpp \

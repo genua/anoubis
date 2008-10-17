@@ -25,39 +25,67 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "Task.h"
-#include "TaskEvent.h"
+#ifndef _COMCSUMADDTASK_H_
+#define _COMCSUMADDTASK_H_
 
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_CSUMCALC)
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_REGISTER)
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_POLICY_SEND)
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_POLICY_REQUEST)
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_CSUM_ADD)
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_CSUM_GET)
+#include "ComTask.h"
 
-TaskEvent::TaskEvent(Task *task, int id)
-    : wxEvent(id, task->getEventType())
+/**
+ * Task to register the checksum of a file at anoubisd.
+ *
+ * You have to specify the filename with ComCsumAddTask::setFile(). The
+ * checksum of this file is calculated and send to anoubisd.
+ */
+class ComCsumAddTask : public ComTask
 {
-	this->task_ = task;
-}
+	public:
+		/**
+		 * Default c'tor.
+		 *
+		 * You explicity need to set the filename by calling setFile().
+		 */
+		ComCsumAddTask(void);
 
-TaskEvent::TaskEvent(const TaskEvent &other)
-    : wxEvent(other.GetId(), other.GetEventType())
-{
-	SetEventObject(other.GetEventObject());
-	SetTimestamp(other.GetTimestamp());
+		/**
+		 * Constructs a ComCsumAddTask with an assigned filename.
+		 *
+		 * @param file The source-file
+		 * @see setFile()
+		 */
+		ComCsumAddTask(const wxString &);
 
-	this->task_ = other.task_;
-}
+		/**
+		 * Returns the source-file.
+		 *
+		 * The this file the checksum is calculated and send to
+		 * anoubisd.
+		 *
+		 * @return The source-file
+		 */
+		wxString getFile(void) const;
 
-wxEvent *
-TaskEvent::Clone(void) const
-{
-	return new TaskEvent(*this);
-}
+		/**
+		 * Updates the source-file.
+		 *
+		 * This method needs to be called <i>before</i> the tesk is
+		 * executed!
+		 *
+		 * @param file The new source-file
+		 */
+		void setFile(const wxString &);
 
-Task *
-TaskEvent::getTask(void) const
-{
-	return (this->task_);
-}
+		/**
+		 * Implementation of Task::getEventType().
+		 */
+		wxEventType getEventType(void) const;
+
+		/**
+		 * Implementation of Task::exec().
+		 */
+		void exec(void);
+
+	private:
+		wxString	file_;
+};
+
+#endif	/* _COMCSUMADDTASK_H_ */

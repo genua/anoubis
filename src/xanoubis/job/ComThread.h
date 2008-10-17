@@ -25,39 +25,62 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "Task.h"
-#include "TaskEvent.h"
+#ifndef _COMTHREAD_H_
+#define _COMTHREAD_H_
 
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_CSUMCALC)
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_REGISTER)
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_POLICY_SEND)
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_POLICY_REQUEST)
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_CSUM_ADD)
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_CSUM_GET)
+#include "ComHandler.h"
+#include "JobThread.h"
+#include "Notification.h"
 
-TaskEvent::TaskEvent(Task *task, int id)
-    : wxEvent(id, task->getEventType())
+/**
+ * The thread, which is responsible for tasks of the Task::TYPE_COM.
+ */
+class ComThread : public JobThread, protected ComHandler
 {
-	this->task_ = task;
-}
+	public:
+		ComThread(JobCtrl *, const wxString &);
 
-TaskEvent::TaskEvent(const TaskEvent &other)
-    : wxEvent(other.GetId(), other.GetEventType())
-{
-	SetEventObject(other.GetEventObject());
-	SetTimestamp(other.GetTimestamp());
+		/**
+		 * Connects to anoubisd.
+		 * This method needs to be called before the thread is started!
+		 *
+		 * @return true on success, false otherwise.
+		 */
+		bool connect(void);
 
-	this->task_ = other.task_;
-}
+		/**
+		 * Disconnects from anoubisd.
+		 */
+		void disconnect(void);
 
-wxEvent *
-TaskEvent::Clone(void) const
-{
-	return new TaskEvent(*this);
-}
+		/**
+		 * Tests weather a connection to anoubisd is established.
+		 * @return true if you have a connection to anoubisd, false
+		 *         otherwise.
+		 */
+		bool isConnected(void) const;
 
-Task *
-TaskEvent::getTask(void) const
-{
-	return (this->task_);
-}
+		void *Entry(void);
+
+	protected:
+		/**
+		 * Implementation of ComHandler::getClient().
+		 */
+		struct anoubis_client *getClient(void) const;
+
+		/**
+		 * Implementation of ComHandler::waitForMessage().
+		 */
+		bool waitForMessage(void);
+
+	private:
+		wxString		socketPath_;
+		struct achat_channel	*channel_;
+		struct anoubis_client	*client_;
+		NotifyList		answerList_;
+
+		bool checkNotify(struct anoubis_msg *);
+		void sendEscalationAnswer(Notification *);
+};
+
+#endif	/* _COMTHREAD_H_ */

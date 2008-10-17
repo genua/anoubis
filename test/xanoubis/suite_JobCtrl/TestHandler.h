@@ -25,39 +25,21 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "Task.h"
-#include "TaskEvent.h"
+#ifndef _TESTHANDLER_H_
+#define _TESTHANDLER_H_
 
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_CSUMCALC)
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_REGISTER)
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_POLICY_SEND)
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_POLICY_REQUEST)
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_CSUM_ADD)
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_CSUM_GET)
+#include <wx/event.h>
 
-TaskEvent::TaskEvent(Task *task, int id)
-    : wxEvent(id, task->getEventType())
+class TaskEvent;
+
+class TestHandler : public wxEvtHandler
 {
-	this->task_ = task;
-}
+	public:
+		virtual ~TestHandler() {}
 
-TaskEvent::TaskEvent(const TaskEvent &other)
-    : wxEvent(other.GetId(), other.GetEventType())
-{
-	SetEventObject(other.GetEventObject());
-	SetTimestamp(other.GetTimestamp());
+		virtual void startTest() = 0;
+		virtual bool canExitTest() const = 0;
+		virtual int getTestResult() const = 0;
+};
 
-	this->task_ = other.task_;
-}
-
-wxEvent *
-TaskEvent::Clone(void) const
-{
-	return new TaskEvent(*this);
-}
-
-Task *
-TaskEvent::getTask(void) const
-{
-	return (this->task_);
-}
+#endif	/* _TESTHANDLER_H_ */

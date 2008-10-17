@@ -25,39 +25,43 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "Task.h"
-#include "TaskEvent.h"
+#ifndef _COMHANDLER_H_
+#define _COMHANDLER_H_
 
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_CSUMCALC)
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_REGISTER)
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_POLICY_SEND)
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_POLICY_REQUEST)
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_CSUM_ADD)
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_CSUM_GET)
-
-TaskEvent::TaskEvent(Task *task, int id)
-    : wxEvent(id, task->getEventType())
+/**
+ * The communication handler.
+ *
+ * Provides an generic communication-interface. So, ComTask-implementations
+ * have an access to message-handling with the Anoubis-daemon without having
+ * detail-knowledge about message-handling.
+ *
+ * @see ComTask::getComHandler()
+ */
+class ComHandler
 {
-	this->task_ = task;
-}
+	public:
+		virtual ~ComHandler() {}
 
-TaskEvent::TaskEvent(const TaskEvent &other)
-    : wxEvent(other.GetId(), other.GetEventType())
-{
-	SetEventObject(other.GetEventObject());
-	SetTimestamp(other.GetTimestamp());
+		/**
+		 * Returns the anoubis-client.
+		 *
+		 * The task can create a transaction with the help of the
+		 * specified client.
+		 *
+		 * @return The anoubis-client
+		 */
+		virtual struct anoubis_client *getClient() const = 0;
 
-	this->task_ = other.task_;
-}
+		/**
+		 * Waits for new data from the communication-channel.
+		 *
+		 * The method blocks until a new block of data arrived. You
+		 * need to call this method until the ANOUBIS_T_DONE-flag is
+		 * set in your transaction.
+		 *
+		 * @return true on success, false on error.
+		 */
+		virtual bool waitForMessage() = 0;
+};
 
-wxEvent *
-TaskEvent::Clone(void) const
-{
-	return new TaskEvent(*this);
-}
-
-Task *
-TaskEvent::getTask(void) const
-{
-	return (this->task_);
-}
+#endif	/* _COMHANDLER_H_ */

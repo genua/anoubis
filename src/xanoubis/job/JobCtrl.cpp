@@ -27,6 +27,7 @@
 
 #include <wx/thread.h>
 
+#include "ComThread.h"
 #include "CsumCalcThread.h"
 #include "JobCtrl.h"
 #include "Singleton.cpp"
@@ -36,13 +37,57 @@ WX_DEFINE_LIST(JobThreadList);
 
 JobCtrl::JobCtrl(void)
 {
-	/* Checksum calculation thread */
-	CsumCalcThread *csumCalcThread = new CsumCalcThread(this);
-	csumCalcThread->start();
-	threadList_.push_back(csumCalcThread);
+	/* Default configuration */
+	this->socketPath_ = wxT("/var/run/anoubisd.sock");
 }
 
 JobCtrl::~JobCtrl(void)
+{
+	stop();
+}
+
+JobCtrl *
+JobCtrl::getInstance(void)
+{
+	return (instance());
+}
+
+wxString
+JobCtrl::getSocketPath(void) const
+{
+	return (this->socketPath_);
+}
+
+void
+JobCtrl::setSocketPath(const wxString &path)
+{
+	this->socketPath_ = path;
+}
+
+bool
+JobCtrl::start(void)
+{
+	/* Checksum calculation thread */
+	CsumCalcThread *csumCalcThread = new CsumCalcThread(this);
+	threadList_.push_back(csumCalcThread);
+	if (!csumCalcThread->start()) {
+		stop();
+		return (false);
+	}
+
+	/* Communication thread */
+	ComThread *comThread = new ComThread(this, socketPath_);
+	threadList_.push_back(comThread);
+	if (!comThread->start()) {
+		stop();
+		return (false);
+	}
+
+	return (true);
+}
+
+void
+JobCtrl::stop(void)
 {
 	/* Stop and destroy all background threads */
 	while (!threadList_.empty()) {
@@ -54,10 +99,18 @@ JobCtrl::~JobCtrl(void)
 	}
 }
 
-JobCtrl *
-JobCtrl::getInstance(void)
+bool
+JobCtrl::connect(void)
 {
-	return (instance());
+	ComThread *t = findComThread(); /* Should never return 0 */
+	return (t->connect());
+}
+
+void
+JobCtrl::disconnect(void)
+{
+	ComThread *t = findComThread(); /* Should never return 0 */
+	t->disconnect();
 }
 
 void
@@ -65,7 +118,10 @@ JobCtrl::addTask(Task *task)
 {
 	switch (task->getType()) {
 	case Task::TYPE_CSUMCALC:
-		pushCsumCalcTask(task);
+		csumCalcTaskQueue_.push(task);
+		break;
+	case Task::TYPE_COM:
+		comTaskQueue_.push(task);
 		break;
 	}
 }
@@ -75,29 +131,27 @@ JobCtrl::popTask(Task::Type type)
 {
 	switch (type) {
 	case Task::TYPE_CSUMCALC:
-		return popCsumCalcTask();
+		return (csumCalcTaskQueue_.pop());
+	case Task::TYPE_COM:
+		return (comTaskQueue_.pop());
 	}
 
-	return (0);
+	return (0); /* Never reached */
 }
 
-void
-JobCtrl::pushCsumCalcTask(Task *task)
+ComThread *
+JobCtrl::findComThread(void) const
 {
-	wxMutexLocker locker(csumCalcTaskMutex_);
-	csumCalcTaskQueue_.push(task);
-}
+	const JobThreadList::const_iterator end = threadList_.end();
 
-Task *
-JobCtrl::popCsumCalcTask(void)
-{
-	wxMutexLocker locker(csumCalcTaskMutex_);
+	for (JobThreadList::const_iterator it = threadList_.begin();
+	    it != end; ++it) {
 
-	if (csumCalcTaskQueue_.empty())
-		return (0);
+		ComThread *t = dynamic_cast<ComThread*>(*it);
 
-	Task *task = csumCalcTaskQueue_.front();
-	csumCalcTaskQueue_.pop();
+		if (t != 0)
+			return (t);
+	}
 
-	return (task);
+	return (0); /* Should be never reached */
 }
