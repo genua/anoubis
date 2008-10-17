@@ -427,10 +427,7 @@ DlgRuleEditor::updateAlfSrcAddr(wxString address, int netmask, int af)
 
 	policy->setAlfSrcAddress(address, netmask, af);
 	policy->accept(updateTable);
-	/*
-	 * ST: disabled as wxSpinCtrl::SetValue ends up in an endless event loop
-	 * policy->accept(updateWidgets);
-	 */
+	policy->accept(updateWidgets);
 }
 
 void
@@ -447,10 +444,7 @@ DlgRuleEditor::updateAlfDstAddr(wxString address, int netmask, int af)
 
 	policy->setAlfDstAddress(address, netmask, af);
 	policy->accept(updateTable);
-	/*
-	 * ST: disabled as wxSpinCtrl::SetValue ends up in an endless event loop
-	 * policy->accept(updateWidgets);
-	 */
+	policy->accept(updateWidgets);
 }
 
 void
@@ -467,7 +461,7 @@ DlgRuleEditor::updateAlfSrcPort(int port)
 
 	policy->setAlfSrcPort(port);
 	policy->accept(updateTable);
-	/* policy->accept(updateWidgets); */
+	policy->accept(updateWidgets);
 }
 
 void
@@ -484,7 +478,7 @@ DlgRuleEditor::updateAlfDstPort(int port)
 
 	policy->setAlfDstPort(port);
 	policy->accept(updateTable);
-	/* policy->accept(updateWidgets); */
+	policy->accept(updateWidgets);
 }
 
 void
@@ -555,15 +549,15 @@ DlgRuleEditor::OnAppNameComboBox(wxCommandEvent& )
 }
 
 void
-DlgRuleEditor::OnAppBinaryTextCtrl(wxCommandEvent& )
+DlgRuleEditor::OnAppBinaryTextCtrl(wxCommandEvent& event)
 {
-	updateBinName(appBinaryTextCtrl->GetValue());
+	updateBinName(event.GetString());
 }
 
 void
-DlgRuleEditor::OnSfsBinaryTextCtrl(wxCommandEvent& )
+DlgRuleEditor::OnSfsBinaryTextCtrl(wxCommandEvent& event)
 {
-	updateBinName(sfsBinaryTextCtrl->GetValue());
+	updateBinName(event.GetString());
 }
 
 void
@@ -1102,7 +1096,7 @@ DlgRuleEditor::OnAlfStateTimeoutChange(wxSpinEvent& event)
 }
 
 void
-DlgRuleEditor::OnAlfSrcAddrComboBox(wxCommandEvent& )
+DlgRuleEditor::onAlfSrcAddrTextCtrlEnter(wxCommandEvent& event)
 {
 	int af = alfInet6RadioButton->GetValue() ? AF_INET6 : AF_INET;
 
@@ -1110,20 +1104,20 @@ DlgRuleEditor::OnAlfSrcAddrComboBox(wxCommandEvent& )
 		updateAddrFamily(AF_INET);
 	}
 
-	updateAlfSrcAddr(alfSrcAddrComboBox->GetValue(),
-	    alfSrcAddrNetSpinCtrl->GetValue(), af);
+	updateAlfSrcAddr(event.GetString(), alfSrcAddrNetSpinCtrl->GetValue(),
+	    af);
 }
 
 void
-DlgRuleEditor::OnAlfDstAddrComboBox(wxCommandEvent& )
+DlgRuleEditor::onAlfDstAddrTextCtrlEnter(wxCommandEvent& event)
 {
 	if (alfAnyRadioButton->GetValue()) {
 		updateAddrFamily(AF_INET);
 	}
 
 	int af = alfInet6RadioButton->GetValue() ? AF_INET6 : AF_INET;
-	updateAlfDstAddr(alfDstAddrComboBox->GetValue(),
-	    alfDstAddrNetSpinCtrl->GetValue(), af);
+	updateAlfDstAddr(event.GetString(), alfDstAddrNetSpinCtrl->GetValue(),
+	    af);
 }
 
 void
@@ -1133,21 +1127,19 @@ DlgRuleEditor::OnAlfSrcNetmaskSpinCtrl(wxSpinEvent& event)
 		updateAddrFamily(AF_INET);
 	}
 
-	int af = alfInet6RadioButton->GetValue() ? AF_INET6 : AF_INET;
-	updateAlfSrcAddr(alfSrcAddrComboBox->GetValue(),
-	    event.GetPosition(), af);
-}
-
-void
-DlgRuleEditor::OnAlfSrcNetmaskSpinCtrlText(wxCommandEvent&)
-{
-	if (alfAnyRadioButton->GetValue()) {
-		updateAddrFamily(AF_INET);
+	/*
+	 * We get multiple (self-generated) events, because a SetValue()
+	 * also causes an event. Thus we stop here if the value is not
+	 * going to be changed.
+	 */
+	if (alfSrcAddrNetSpinCtrl->GetValue() == event.GetPosition()) {
+		event.Veto();
+		return;
 	}
 
 	int af = alfInet6RadioButton->GetValue() ? AF_INET6 : AF_INET;
-	updateAlfSrcAddr(alfSrcAddrComboBox->GetValue(),
-	    alfSrcAddrNetSpinCtrl->GetValue(), af);
+	updateAlfSrcAddr(alfSrcAddrTextCtrl->GetValue(),
+	    event.GetPosition(), af);
 }
 
 void
@@ -1157,45 +1149,43 @@ DlgRuleEditor::OnAlfDstNetmaskSpinCtrl(wxSpinEvent& event)
 		updateAddrFamily(AF_INET);
 	}
 
+	/*
+	 * We get multiple (self-generated) events, because a SetValue()
+	 * also causes an event. Thus we stop here if the value is not
+	 * going to be changed.
+	 */
+	if (alfSrcAddrNetSpinCtrl->GetValue() == event.GetPosition()) {
+		event.Veto();
+		return;
+	}
+
 	int af = alfInet6RadioButton->GetValue() ? AF_INET6 : AF_INET;
-	updateAlfDstAddr(alfDstAddrComboBox->GetValue(),
+	updateAlfDstAddr(alfDstAddrTextCtrl->GetValue(),
 	    event.GetPosition(), af);
 }
 
 void
-DlgRuleEditor::OnAlfDstNetmaskSpinCtrlText(wxCommandEvent&)
-{
-	if (alfAnyRadioButton->GetValue()) {
-		updateAddrFamily(AF_INET);
-	}
-
-	int af = alfInet6RadioButton->GetValue() ? AF_INET6 : AF_INET;
-	updateAlfDstAddr(alfDstAddrComboBox->GetValue(),
-	    alfDstAddrNetSpinCtrl->GetValue(), af);
-}
-
-void
-DlgRuleEditor::OnAlfSrcPortComboBox(wxCommandEvent& )
+DlgRuleEditor::onAlfSrcPortTextCtrlEnter(wxCommandEvent& event)
 {
 	unsigned long int       port;
 
-	if (!alfSrcPortComboBox->GetValue().Cmp(wxT("any"))) {
+	if (!event.GetString().Cmp(wxT("any"))) {
 		port = 0;
 	} else {
-		alfSrcPortComboBox->GetValue().ToULong(&port);
+		event.GetString().ToULong(&port);
 	}
 	updateAlfSrcPort(port);
 }
 
 void
-DlgRuleEditor::OnAlfDstPortComboBox(wxCommandEvent&)
+DlgRuleEditor::onAlfDstPortTextCtrlEnter(wxCommandEvent& event)
 {
 	unsigned long int       port;
 
-	if (!alfDstPortComboBox->GetValue().Cmp(wxT("any"))) {
+	if (!event.GetString().Cmp(wxT("any"))) {
 		port = 0;
 	} else {
-		alfDstPortComboBox->GetValue().ToULong(&port);
+		event.GetString().ToULong(&port);
 	}
 	updateAlfDstPort(port);
 }

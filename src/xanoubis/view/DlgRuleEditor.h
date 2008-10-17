@@ -177,14 +177,12 @@ class DlgRuleEditor : public DlgRuleEditorBase
 		void OnSfsValidateChkSumButton(wxCommandEvent&);
 		void OnSfsBinaryTextCtrl(wxCommandEvent&);
 
-		void OnAlfSrcAddrComboBox(wxCommandEvent&);
-		void OnAlfDstAddrComboBox(wxCommandEvent&);
+		void onAlfSrcAddrTextCtrlEnter(wxCommandEvent&);
+		void onAlfDstAddrTextCtrlEnter(wxCommandEvent&);
 		void OnAlfSrcNetmaskSpinCtrl(wxSpinEvent&);
-		void OnAlfSrcNetmaskSpinCtrlText(wxCommandEvent&);
 		void OnAlfDstNetmaskSpinCtrl(wxSpinEvent&);
-		void OnAlfDstNetmaskSpinCtrlText(wxCommandEvent&);
-		void OnAlfSrcPortComboBox(wxCommandEvent&);
-		void OnAlfDstPortComboBox(wxCommandEvent&);
+		void onAlfSrcPortTextCtrlEnter(wxCommandEvent&);
+		void onAlfDstPortTextCtrlEnter(wxCommandEvent&);
 		void OnAlfStateTimeoutChange(wxCommandEvent&);
 
 		void loadRuleSet(void);

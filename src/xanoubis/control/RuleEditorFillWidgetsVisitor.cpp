@@ -61,16 +61,16 @@ RuleEditorFillWidgetsVisitor::clear(void)
 	showDirection(RULEDITOR_DISABLE);
 
 	ruleEditor_->alfSrcAddrText->Disable();
-	ruleEditor_->alfSrcAddrComboBox->Disable();
-	ruleEditor_->alfSrcAddrComboBox->SetValue(wxEmptyString);
+	ruleEditor_->alfSrcAddrTextCtrl->Disable();
+	ruleEditor_->alfSrcAddrTextCtrl->ChangeValue(wxEmptyString);
 	ruleEditor_->alfSrcAddrDelimiterText->Disable();
 	ruleEditor_->alfSrcAddrNetSpinCtrl->Disable();
 	ruleEditor_->alfSrcAddrNetSpinCtrl->SetValue(0);
 	ruleEditor_->alfSrcAddrDelButton->Disable();
 	ruleEditor_->alfSrcAddrAddButton->Disable();
 	ruleEditor_->alfDstAddrText->Disable();
-	ruleEditor_->alfDstAddrComboBox->Disable();
-	ruleEditor_->alfDstAddrComboBox->SetValue(wxEmptyString);
+	ruleEditor_->alfDstAddrTextCtrl->Disable();
+	ruleEditor_->alfDstAddrTextCtrl->ChangeValue(wxEmptyString);
 	ruleEditor_->alfDstAddrDelimiterText->Disable();
 	ruleEditor_->alfDstAddrNetSpinCtrl->Disable();
 	ruleEditor_->alfDstAddrNetSpinCtrl->SetValue(0);
@@ -78,11 +78,11 @@ RuleEditorFillWidgetsVisitor::clear(void)
 	ruleEditor_->alfDstAddrAddButton->Disable();
 
 	ruleEditor_->alfSrcPortText->Disable();
-	ruleEditor_->alfSrcPortComboBox->Disable();
-	ruleEditor_->alfSrcPortComboBox->SetValue(wxEmptyString);
+	ruleEditor_->alfSrcPortTextCtrl->Disable();
+	ruleEditor_->alfSrcPortTextCtrl->ChangeValue(wxEmptyString);
 	ruleEditor_->alfDstPortText->Disable();
-	ruleEditor_->alfDstPortComboBox->Disable();
-	ruleEditor_->alfDstPortComboBox->SetValue(wxEmptyString);
+	ruleEditor_->alfDstPortTextCtrl->Disable();
+	ruleEditor_->alfDstPortTextCtrl->ChangeValue(wxEmptyString);
 
 	ruleEditor_->alfStateTimeoutText->Disable();
 	ruleEditor_->alfStateTimeoutSpinCtrl->Disable();
@@ -248,7 +248,7 @@ RuleEditorFillWidgetsVisitor::showSrcAddr(wxArrayString hosts)
 	wxWindow	*window;
 
 	ruleEditor_->alfSrcAddrText->Enable();
-	ruleEditor_->alfSrcAddrComboBox->Enable();
+	ruleEditor_->alfSrcAddrTextCtrl->Enable();
 	ruleEditor_->alfSrcAddrDelimiterText->Enable();
 	ruleEditor_->alfSrcAddrNetSpinCtrl->Enable();
 	ruleEditor_->alfSrcAddrDelButton->Enable();
@@ -261,7 +261,7 @@ RuleEditorFillWidgetsVisitor::showSrcAddr(wxArrayString hosts)
 			net = wxT("0");
 		}
 		if (i == 0) {
-			ruleEditor_->alfSrcAddrComboBox->SetValue(host);
+			ruleEditor_->alfSrcAddrTextCtrl->ChangeValue(host);
 			ruleEditor_->alfSrcAddrNetSpinCtrl->SetValue(net);
 		} else {
 			window = ruleEditor_->alfNbPanel;
@@ -281,7 +281,7 @@ RuleEditorFillWidgetsVisitor::showDstAddr(wxArrayString hosts)
 	wxWindow	*window;
 
 	ruleEditor_->alfDstAddrText->Enable();
-	ruleEditor_->alfDstAddrComboBox->Enable();
+	ruleEditor_->alfDstAddrTextCtrl->Enable();
 	ruleEditor_->alfDstAddrDelimiterText->Enable();
 	ruleEditor_->alfDstAddrNetSpinCtrl->Enable();
 	ruleEditor_->alfDstAddrDelButton->Enable();
@@ -294,7 +294,7 @@ RuleEditorFillWidgetsVisitor::showDstAddr(wxArrayString hosts)
 			net = wxT("0");
 		}
 		if (i == 0) {
-			ruleEditor_->alfDstAddrComboBox->SetValue(host);
+			ruleEditor_->alfDstAddrTextCtrl->ChangeValue(host);
 			ruleEditor_->alfDstAddrNetSpinCtrl->SetValue(net);
 		} else {
 			window = ruleEditor_->alfNbPanel;
@@ -310,16 +310,16 @@ void
 RuleEditorFillWidgetsVisitor:: showSrcPort(wxString port)
 {
 	ruleEditor_->alfSrcPortText->Enable();
-	ruleEditor_->alfSrcPortComboBox->Enable();
-	ruleEditor_->alfSrcPortComboBox->SetValue(port);
+	ruleEditor_->alfSrcPortTextCtrl->Enable();
+	ruleEditor_->alfSrcPortTextCtrl->ChangeValue(port);
 }
 
 void
 RuleEditorFillWidgetsVisitor:: showDstPort(wxString port)
 {
 	ruleEditor_->alfDstPortText->Enable();
-	ruleEditor_->alfDstPortComboBox->Enable();
-	ruleEditor_->alfDstPortComboBox->SetValue(port);
+	ruleEditor_->alfDstPortTextCtrl->Enable();
+	ruleEditor_->alfDstPortTextCtrl->ChangeValue(port);
 }
 
 void

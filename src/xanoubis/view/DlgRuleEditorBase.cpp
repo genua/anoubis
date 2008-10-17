@@ -536,8 +536,10 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	alfSrcAddrText->Wrap( -1 );
 	alfConnectAddrSizer->Add( alfSrcAddrText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	alfSrcAddrComboBox = new wxComboBox( alfNbPanel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0 ); 
-	alfConnectAddrSizer->Add( alfSrcAddrComboBox, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	alfSrcAddrTextCtrl = new wxTextCtrl( alfNbPanel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER );
+	alfSrcAddrTextCtrl->SetMinSize( wxSize( 200,-1 ) );
+	
+	alfConnectAddrSizer->Add( alfSrcAddrTextCtrl, 0, wxALL|wxALIGN_CENTER_VERTICAL|wxEXPAND, 5 );
 	
 	alfSrcAddrDelimiterText = new wxStaticText( alfNbPanel, wxID_ANY, _(" / "), wxDefaultPosition, wxDefaultSize, 0 );
 	alfSrcAddrDelimiterText->Wrap( -1 );
@@ -556,8 +558,8 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	alfDstAddrText->Wrap( -1 );
 	alfConnectAddrSizer->Add( alfDstAddrText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	alfDstAddrComboBox = new wxComboBox( alfNbPanel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0 ); 
-	alfConnectAddrSizer->Add( alfDstAddrComboBox, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	alfDstAddrTextCtrl = new wxTextCtrl( alfNbPanel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER );
+	alfConnectAddrSizer->Add( alfDstAddrTextCtrl, 0, wxALL|wxALIGN_CENTER_VERTICAL|wxEXPAND, 5 );
 	
 	alfDstAddrDelimiterText = new wxStaticText( alfNbPanel, wxID_ANY, _(" / "), wxDefaultPosition, wxDefaultSize, 0 );
 	alfDstAddrDelimiterText->Wrap( -1 );
@@ -576,12 +578,8 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	alfSrcPortText->Wrap( -1 );
 	alfConnectAddrSizer->Add( alfSrcPortText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	alfSrcPortComboBox = new wxComboBox( alfNbPanel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0 );
-	alfSrcPortComboBox->Append( _("80") );
-	alfSrcPortComboBox->Append( _("443") );
-	alfSrcPortComboBox->Append( _("$www") );
-	alfSrcPortComboBox->Append( _("21,22") );
-	alfConnectAddrSizer->Add( alfSrcPortComboBox, 0, wxALL, 5 );
+	alfSrcPortTextCtrl = new wxTextCtrl( alfNbPanel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER );
+	alfConnectAddrSizer->Add( alfSrcPortTextCtrl, 0, wxALL|wxALIGN_CENTER_VERTICAL|wxEXPAND, 5 );
 	
 	
 	alfConnectAddrSizer->Add( 0, 0, 1, wxEXPAND, 5 );
@@ -599,12 +597,8 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	alfDstPortText->Wrap( -1 );
 	alfConnectAddrSizer->Add( alfDstPortText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	alfDstPortComboBox = new wxComboBox( alfNbPanel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0 );
-	alfDstPortComboBox->Append( _("80") );
-	alfDstPortComboBox->Append( _("443") );
-	alfDstPortComboBox->Append( _("$www") );
-	alfDstPortComboBox->Append( _("21,22") );
-	alfConnectAddrSizer->Add( alfDstPortComboBox, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	alfDstPortTextCtrl = new wxTextCtrl( alfNbPanel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER );
+	alfConnectAddrSizer->Add( alfDstPortTextCtrl, 0, wxALL|wxEXPAND|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	
 	alfConnectAddrSizer->Add( 0, 0, 1, wxEXPAND, 5 );
@@ -771,20 +765,14 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	alfAcceptRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorBase::OnAlfAcceptRadioButton ), NULL, this );
 	alfConnectRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorBase::OnAlfConnectRadioButton ), NULL, this );
 	alfBothRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorBase::OnAlfBothRadioButton ), NULL, this );
-	alfSrcAddrComboBox->Connect( wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler( DlgRuleEditorBase::OnAlfSrcAddrComboBox ), NULL, this );
-	alfSrcAddrComboBox->Connect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( DlgRuleEditorBase::OnAlfSrcAddrComboBox ), NULL, this );
+	alfSrcAddrTextCtrl->Connect( wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler( DlgRuleEditorBase::onAlfSrcAddrTextCtrlEnter ), NULL, this );
 	alfSrcAddrNetSpinCtrl->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( DlgRuleEditorBase::OnAlfSrcNetmaskSpinCtrl ), NULL, this );
-	alfSrcAddrNetSpinCtrl->Connect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( DlgRuleEditorBase::OnAlfSrcNetmaskSpinCtrlText ), NULL, this );
 	alfSrcAddrAddButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::OnSrcAddrAddButton ), NULL, this );
-	alfDstAddrComboBox->Connect( wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler( DlgRuleEditorBase::OnAlfDstAddrComboBox ), NULL, this );
-	alfDstAddrComboBox->Connect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( DlgRuleEditorBase::OnAlfDstAddrComboBox ), NULL, this );
+	alfDstAddrTextCtrl->Connect( wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler( DlgRuleEditorBase::onAlfDstAddrTextCtrlEnter ), NULL, this );
 	alfDstAddrNetSpinCtrl->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( DlgRuleEditorBase::OnAlfDstNetmaskSpinCtrl ), NULL, this );
-	alfDstAddrNetSpinCtrl->Connect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( DlgRuleEditorBase::OnAlfDstNetmaskSpinCtrlText ), NULL, this );
 	alfDstAddrAddButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::OnDstAddrAddButton ), NULL, this );
-	alfSrcPortComboBox->Connect( wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler( DlgRuleEditorBase::OnAlfSrcPortComboBox ), NULL, this );
-	alfSrcPortComboBox->Connect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( DlgRuleEditorBase::OnAlfSrcPortComboBox ), NULL, this );
-	alfDstPortComboBox->Connect( wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler( DlgRuleEditorBase::OnAlfDstPortComboBox ), NULL, this );
-	alfDstPortComboBox->Connect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( DlgRuleEditorBase::OnAlfDstPortComboBox ), NULL, this );
+	alfSrcPortTextCtrl->Connect( wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler( DlgRuleEditorBase::onAlfSrcPortTextCtrlEnter ), NULL, this );
+	alfDstPortTextCtrl->Connect( wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler( DlgRuleEditorBase::onAlfDstPortTextCtrlEnter ), NULL, this );
 	alfStateTimeoutSpinCtrl->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( DlgRuleEditorBase::OnAlfStateTimeoutChange ), NULL, this );
 	sfsBinaryTextCtrl->Connect( wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler( DlgRuleEditorBase::OnSfsBinaryTextCtrl ), NULL, this );
 	sfsBinaryModifyButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::OnSfsBinaryModifyButton ), NULL, this );

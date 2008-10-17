@@ -167,25 +167,25 @@ class DlgRuleEditorBase : public wxFrame
 		wxRadioButton* alfBothRadioButton;
 		wxFlexGridSizer* alfConnectAddrSizer;
 		wxStaticText* alfSrcAddrText;
-		wxComboBox* alfSrcAddrComboBox;
+		wxTextCtrl* alfSrcAddrTextCtrl;
 		wxStaticText* alfSrcAddrDelimiterText;
 		wxSpinCtrl* alfSrcAddrNetSpinCtrl;
 		wxButton* alfSrcAddrDelButton;
 		wxButton* alfSrcAddrAddButton;
 		wxStaticText* alfDstAddrText;
-		wxComboBox* alfDstAddrComboBox;
+		wxTextCtrl* alfDstAddrTextCtrl;
 		wxStaticText* alfDstAddrDelimiterText;
 		wxSpinCtrl* alfDstAddrNetSpinCtrl;
 		wxButton* alfDstAddrDelButton;
 		wxButton* alfDstAddrAddButton;
 		wxStaticText* alfSrcPortText;
-		wxComboBox* alfSrcPortComboBox;
+		wxTextCtrl* alfSrcPortTextCtrl;
 		
 		
 		
 		
 		wxStaticText* alfDstPortText;
-		wxComboBox* alfDstPortComboBox;
+		wxTextCtrl* alfDstPortTextCtrl;
 		
 		
 		
@@ -250,16 +250,14 @@ class DlgRuleEditorBase : public wxFrame
 		virtual void OnAlfAcceptRadioButton( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnAlfConnectRadioButton( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnAlfBothRadioButton( wxCommandEvent& event ){ event.Skip(); }
-		virtual void OnAlfSrcAddrComboBox( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onAlfSrcAddrTextCtrlEnter( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnAlfSrcNetmaskSpinCtrl( wxSpinEvent& event ){ event.Skip(); }
-		virtual void OnAlfSrcNetmaskSpinCtrlText( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnSrcAddrAddButton( wxCommandEvent& event ){ event.Skip(); }
-		virtual void OnAlfDstAddrComboBox( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onAlfDstAddrTextCtrlEnter( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnAlfDstNetmaskSpinCtrl( wxSpinEvent& event ){ event.Skip(); }
-		virtual void OnAlfDstNetmaskSpinCtrlText( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnDstAddrAddButton( wxCommandEvent& event ){ event.Skip(); }
-		virtual void OnAlfSrcPortComboBox( wxCommandEvent& event ){ event.Skip(); }
-		virtual void OnAlfDstPortComboBox( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onAlfSrcPortTextCtrlEnter( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onAlfDstPortTextCtrlEnter( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnAlfStateTimeoutChange( wxSpinEvent& event ){ event.Skip(); }
 		virtual void OnSfsBinaryTextCtrl( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnSfsBinaryModifyButton( wxCommandEvent& event ){ event.Skip(); }
