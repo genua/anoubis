@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=1
+Type=Application
+Encoding=UTF-8
+Name=xanoubis
+Comment=GUI of the Anoubis Security Suite
+TryExec=xanoubis
+Exec=xanoubis
+Icon=xanoubis
+Categories=Application;Network
+Terminal=false

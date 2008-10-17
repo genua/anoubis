@@ -95,6 +95,7 @@ catalogdir = $(datadir)/$(bin_PROGRAMS)/catalogs/de
 utildir = $(datadir)/$(bin_PROGRAMS)/utils
 icondir = $(datadir)/$(bin_PROGRAMS)/icons
 profiledir = $(datadir)/$(bin_PROGRAMS)/profiles
+desktopdir = $(datadir)/applications
 
 dist_catalog_DATA = \
 	catalogs/de/xanoubis.mo \
@@ -162,6 +163,8 @@ dist_profile_SCRIPTS = \
 	profiles/high \
 	profiles/medium \
 	profiles/admin
+dist_desktop_DATA = \
+	xanoubis.desktop
 
 install-data-hook:
 	-chmod 444 $(DESTDIR)/$(profiledir)/*

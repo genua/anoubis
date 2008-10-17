@@ -96,6 +96,11 @@ rm -fr $RPM_BUILD_ROOT%{_includedir}
 rm -f  $RPM_BUILD_ROOT%{_libdir}/*.a
 rm -fr $RPM_BUILD_ROOT%{_mandir}/man3
 
+# install desktop icons
+mkdir -p $RPM_BUILD_ROOT%{_datadir}/pixmaps
+install -p $RPM_BUILD_ROOT%{_datadir}/xanoubis/icons/xanoubis.png \
+	$RPM_BUILD_ROOT%{_datadir}/pixmaps/xanoubis.png
+
 %clean
 [ "$RPM_BUILD_ROOT" != "/" ] && [ -d $RPM_BUILD_ROOT ] \
   && rm -rf $RPM_BUILD_ROOT
@@ -154,10 +159,15 @@ rmdir /etc/anoubis/policy /etc/anoubis 2>/dev/null || true
 %{_prefix}/bin/xanoubis
 %{_mandir}/man1/xanoubis*.1.gz
 %{_prefix}/share/xanoubis/*
+%attr(0644,root,root) %{_datadir}/applications/xanoubis.desktop
+%attr(0644,root,root) %{_datadir}/pixmaps/xanoubis.png
 
 
 ### changelog ##############################################
 %changelog
+* Wed Oct 15 2008 Sebastian Trahm
+- add installation of desktop icon and file
+
 * Mon Oct 13 2008 Sebastian Trahm
 - fix udev permission for /dev/anoubis
 

@@ -14,8 +14,6 @@ Source2:	anoubisd.udev
 Source10:	policy.admin.0
 Source11:	policy.user.0
 Source12:	policy.admin.default
-Source20:	xanoubis.png
-Source21:	xanoubis.desktop
 Vendor:		GeNUA mbH
 BuildRoot:	%(mktemp -d %{_tmppath}/%{name}-%{version}-build.XXXX)
 
@@ -98,16 +96,10 @@ rm -fr $RPM_BUILD_ROOT%{_includedir}
 rm -f  $RPM_BUILD_ROOT%{_libdir}/*.a
 rm -fr $RPM_BUILD_ROOT%{_mandir}/man3
 
-# add Desktop entries
+# install desktop icons
 mkdir -p $RPM_BUILD_ROOT%{_datadir}/pixmaps
-mkdir -p $RPM_BUILD_ROOT%{_datadir}/applications
-install -p %{_sourcedir}/xanoubis.png \
+install -p $RPM_BUILD_ROOT%{_datadir}/xanoubis/icons/xanoubis.png \
 	$RPM_BUILD_ROOT%{_datadir}/pixmaps/xanoubis.png
-desktop-file-install --dir $RPM_BUILD_ROOT%{_datadir}/applications \
-	--add-category X-Red-Hat-Extra \
-	--add-category Application \
-	--add-category System \
-	%{_sourcedir}/xanoubis.desktop
 
 %clean
 [ "$RPM_BUILD_ROOT" != "/" ] && [ -d $RPM_BUILD_ROOT ] \
@@ -163,18 +155,20 @@ rmdir /etc/anoubis/policy /etc/anoubis 2>/dev/null || true
 ### files of subpackage xanoubis ###########################
 %files -n xanoubis
 %defattr(-,root,root)
-%attr(0644,root,root) %{_datadir}/applications/xanoubis.desktop
-%attr(0644,root,root) %{_datadir}/pixmaps/xanoubis.png
 %doc AUTHORS INSTALL NEWS README ChangeLog
 %{_prefix}/bin/xanoubis
 %{_mandir}/man1/xanoubis*.1.gz
 %{_prefix}/share/xanoubis/*
-%{_datadir}/applications/xanoubis.desktop
-%{_datadir}/pixmaps/xanoubis.png
+%attr(0644,root,root) %{_datadir}/applications/xanoubis.desktop
+%attr(0644,root,root) %{_datadir}/pixmaps/xanoubis.png
 
 
 ### changelog ##############################################
 %changelog
+* Wed Oct 15 2008 Sebastian Trahm
+- remove explicit sources of desktop file and icon and use
+  the ones already provided by the pristine source
+
 * Fri Oct 10 2008 Sebastian Trahm
 - fix udev permission for /dev/anoubis
 

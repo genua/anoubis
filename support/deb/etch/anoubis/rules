@@ -72,7 +72,7 @@ install-arch:
 	$(MAKE) DESTDIR=$(CURDIR)/debian/tmp install
 
 	mkdir -p debian/tmp/usr/share/applications
-	cp debian/xanoubis.desktop debian/tmp/usr/share/applications
+	cp src/xanoubis/xanoubis.desktop debian/tmp/usr/share/applications
 	mkdir -p debian/tmp/usr/share/pixmaps
 	cp src/xanoubis/icons/xanoubis.png debian/tmp/usr/share/pixmaps/xanoubis.png
 

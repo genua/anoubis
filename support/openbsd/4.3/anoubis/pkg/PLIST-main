@@ -16,10 +16,8 @@ bin/xanoubis
 @comment @man man/man3/anoubis_server.3
 @comment @man man/man3/anoubis_transaction.3
 @comment @man man/man3/anoubischat.3
-@comment share/xanoubis/utils/
 @comment share/xanoubis/utils/xanoubis_guessApp.sh
-share/xanoubis/
-share/xanoubis/icons/
+share/applications/xanoubis.desktop
 share/xanoubis/icons/ModAlf_alert_16.png
 share/xanoubis/icons/ModAlf_alert_48.png
 share/xanoubis/icons/ModAlf_black_16.png
@@ -77,7 +75,6 @@ share/xanoubis/icons/ModSfs_problem_48.png
 share/xanoubis/icons/ModSfs_question_16.png
 share/xanoubis/icons/ModSfs_question_48.png
 share/xanoubis/icons/xanoubis.png
-share/xanoubis/profiles/
 share/xanoubis/profiles/admin
 share/xanoubis/profiles/high
 share/xanoubis/profiles/medium

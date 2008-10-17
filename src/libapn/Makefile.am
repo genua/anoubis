@@ -30,7 +30,7 @@ libapn_a_CFLAGS = -std=gnu99 $(AM_CFLAGS)
 
 lib_LIBRARIES = libapn.a
 
-include_HEADERS = apn.h rbtree.h
+noinst_HEADERS = apn.h rbtree.h
 
 bsdcompatdir = src/bsdcompat
 libbsdcompat = $(top_builddir)/$(bsdcompatdir)/libbsdcompat.a
@@ -45,7 +45,7 @@ libapn_a_SOURCES = \
 	apnparser.c  \
 	rbtree.c  \
 	parse.y \
-	$(include_HEADERS)
+	$(noinst_HEADERS)
 
 # For testing with aegis (especially against the baseline) we need to run
 # the test-binary (containing the current tests), operating on the old/baseline

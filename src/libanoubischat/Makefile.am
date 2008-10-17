@@ -26,7 +26,7 @@
 
 lib_LIBRARIES = libanoubischat.a
 
-include_HEADERS = anoubischat.h
+noinst_HEADERS = anoubischat.h
 
 bsdcompatdir   = src/bsdcompat
 libbsdcompat   = $(top_builddir)/$(bsdcompatdir)/libbsdcompat.a
@@ -38,7 +38,7 @@ libanoubischat_a_SOURCES = \
 	accutils.h \
 	accbuffer.c \
 	accbuffer.h \
-	$(include_HEADERS)
+	$(noinst_HEADERS)
 
 libanoubischat_a_CPPFLAGS = -I .. -I$(top_builddir)/src -I$(top_srcdir)/include
 libanoubischat_a_LIBADD =
