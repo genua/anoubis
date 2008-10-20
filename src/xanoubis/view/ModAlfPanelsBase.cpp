@@ -50,39 +50,13 @@ ModAlfMainPanelBase::ModAlfMainPanelBase( wxWindow* parent, wxWindowID id, const
 	wxBoxSizer* sz_AlfRules;
 	sz_AlfRules = new wxBoxSizer( wxHORIZONTAL );
 	
-	wxBoxSizer* sz_RulesNS;
-	sz_RulesNS = new wxBoxSizer( wxVERTICAL );
-	
-	wxBoxSizer* sz_RulesWE;
-	sz_RulesWE = new wxBoxSizer( wxHORIZONTAL );
-	
 	wxBoxSizer* sz_Rules;
 	sz_Rules = new wxBoxSizer( wxVERTICAL );
 	
 	lst_Rules = new wxListCtrl( pan_Rules, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLC_HRULES|wxLC_REPORT|wxLC_SINGLE_SEL );
 	sz_Rules->Add( lst_Rules, 1, wxALL|wxEXPAND, 5 );
 	
-	sz_RulesWE->Add( sz_Rules, 66, wxEXPAND, 5 );
-	
-	wxBoxSizer* sz_RulesOperations;
-	sz_RulesOperations = new wxBoxSizer( wxVERTICAL );
-	
-	tx_RulesOperation1stHeader = new wxStaticText( pan_Rules, wxID_ANY, _("Rule:"), wxDefaultPosition, wxDefaultSize, 0 );
-	tx_RulesOperation1stHeader->Wrap( -1 );
-	sz_RulesOperations->Add( tx_RulesOperation1stHeader, 0, wxALL, 5 );
-	
-	ln_RulesOperationSep = new wxStaticLine( pan_Rules, wxID_RulesOperationSep, wxDefaultPosition, wxDefaultSize, wxLI_HORIZONTAL );
-	sz_RulesOperations->Add( ln_RulesOperationSep, 0, wxEXPAND | wxALL, 5 );
-	
-	tx_RulesOperation2ndHeader = new wxStaticText( pan_Rules, wxID_ANY, _("Information:\n\nThis outlines the rules of the ALF.\nThey are displayed depending on\ntheir priority."), wxDefaultPosition, wxDefaultSize, 0 );
-	tx_RulesOperation2ndHeader->Wrap( -1 );
-	sz_RulesOperations->Add( tx_RulesOperation2ndHeader, 0, wxALL, 5 );
-	
-	sz_RulesWE->Add( sz_RulesOperations, 34, wxEXPAND, 5 );
-	
-	sz_RulesNS->Add( sz_RulesWE, 1, wxEXPAND, 5 );
-	
-	sz_AlfRules->Add( sz_RulesNS, 1, wxEXPAND, 5 );
+	sz_AlfRules->Add( sz_Rules, 66, wxEXPAND, 5 );
 	
 	pan_Rules->SetSizer( sz_AlfRules );
 	pan_Rules->Layout();

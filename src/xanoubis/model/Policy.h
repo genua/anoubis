@@ -65,7 +65,6 @@ class Policy: public wxObject
 		wxString getLogName(int);
 		wxString getVarTypeName(int);
 		wxString getRuleTypeName(int);
-		wxString guessAppName(wxString);
 
 		void setIndex(unsigned long);
 		unsigned long getIndex(void);

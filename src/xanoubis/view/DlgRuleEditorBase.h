@@ -51,7 +51,6 @@
 #include <wx/scrolwin.h>
 #include <wx/bitmap.h>
 #include <wx/image.h>
-#include <wx/combobox.h>
 #include <wx/notebook.h>
 #include <wx/frame.h>
 
@@ -108,27 +107,12 @@ class DlgRuleEditorBase : public wxFrame
 		wxRadioButton* commonDoLogRadioButton;
 		wxRadioButton* commonAlertLogRadioButton;
 		wxScrolledWindow* applicationNbPanel;
-		wxStaticText* appNameText;
-		wxComboBox* appNameComboBox;
-		
-		
-		
 		wxStaticText* appBinaryText;
-		wxButton* appGuessButton;
-		wxStaticText* appGuessText;
-		
-		
-		
-		
 		wxTextCtrl* appBinaryTextCtrl;
 		wxButton* appBinaryModifyButton;
-		
-		wxButton* appBinaryAddButton;
 		wxStaticText* appContextText;
 		wxTextCtrl* appContextTextCtrl;
 		wxButton* appContextModifyButton;
-		
-		wxButton* appInheritanceAddButton;
 		wxStaticText* appRegisteredSumLabelText;
 		wxStaticText* appRegisteredSumValueText;
 		
@@ -228,7 +212,6 @@ class DlgRuleEditorBase : public wxFrame
 		virtual void OnCommonLogNone( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnCommonLogLog( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnCommonLogAlert( wxCommandEvent& event ){ event.Skip(); }
-		virtual void OnAppNameComboBox( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnAppBinaryTextCtrl( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnAppBinaryModifyButton( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnAppValidateChkSumButton( wxCommandEvent& event ){ event.Skip(); }

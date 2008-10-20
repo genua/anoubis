@@ -76,7 +76,6 @@ AppPolicy::AppPolicy(struct apn_rule *appRule, PolicyRuleSet *parent)
 	appRule_ = appRule;
 	currHash_ = wxEmptyString;
 	currSum_ = NULL;
-	appName_ = wxEmptyString;
 	modified_ = false;
 
 	switch (appRule_->apn_type) {
@@ -120,19 +119,6 @@ AppPolicy::accept(PolicyVisitor& visitor)
 			(*i)->accept(visitor);
 		}
 	}
-}
-
-wxString
-AppPolicy::getApplicationName(void)
-{
-	return (appName_);
-}
-
-void
-AppPolicy::setApplicationName(wxString appName)
-{
-	appName_ = appName;
-	modified_ = true;
 }
 
 void

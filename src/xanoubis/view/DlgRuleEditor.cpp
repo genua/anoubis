@@ -154,9 +154,6 @@ DlgRuleEditor::DlgRuleEditor(wxWindow* parent) : DlgRuleEditorBase(parent)
 	columnNames_[RULEDITOR_LIST_COLUMN_USER] = _("User");
 	columnWidths_[RULEDITOR_LIST_COLUMN_USER] = wxLIST_AUTOSIZE;
 
-	columnNames_[RULEDITOR_LIST_COLUMN_APP] = _("Application");
-	columnWidths_[RULEDITOR_LIST_COLUMN_APP] = wxLIST_AUTOSIZE_USEHEADER;
-
 	columnNames_[RULEDITOR_LIST_COLUMN_BIN] = _("Binary");
 	columnWidths_[RULEDITOR_LIST_COLUMN_BIN] = wxLIST_AUTOSIZE;
 
@@ -247,23 +244,6 @@ DlgRuleEditor::DlgRuleEditor(wxWindow* parent) : DlgRuleEditorBase(parent)
 DlgRuleEditor::~DlgRuleEditor(void)
 {
 	delete shortcuts_;
-}
-
-void
-DlgRuleEditor::updateAppName(wxString appName)
-{
-	AppPolicy			*policy;
-	RuleEditorFillTableVisitor	 updateTable(this, selectedIndex_);
-	RuleEditorFillWidgetsVisitor	 updateWidgets(this);
-
-	policy = (AppPolicy *)ruleListCtrl->GetItemData(selectedIndex_);
-	if (policy == NULL) {
-		return;
-	}
-
-	policy->setApplicationName(appName);
-	policy->accept(updateTable);
-	policy->accept(updateWidgets);
 }
 
 void
@@ -540,12 +520,6 @@ DlgRuleEditor::OnTableOptionButtonClick(wxCommandEvent& )
 	}
 
 	delete multiChoiceDlg;
-}
-
-void
-DlgRuleEditor::OnAppNameComboBox(wxCommandEvent& )
-{
-	updateAppName(appNameComboBox->GetValue());
 }
 
 void

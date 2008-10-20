@@ -79,8 +79,6 @@ RuleEditorFillTableVisitor::showApp(AppPolicy *appPolicy, long idx)
 			ruleType += ADMIN_FLAG;
 		}
 		ruleEditor_->ruleListCtrl->SetItem(idx,
-		    RULEDITOR_LIST_COLUMN_APP, appPolicy->getApplicationName());
-		ruleEditor_->ruleListCtrl->SetItem(idx,
 		    RULEDITOR_LIST_COLUMN_RULE, ruleType);
 		ruleEditor_->ruleListCtrl->SetItem(idx,
 		    RULEDITOR_LIST_COLUMN_BIN, appPolicy->getBinaryName());

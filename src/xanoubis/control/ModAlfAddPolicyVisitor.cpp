@@ -104,8 +104,6 @@ ModAlfAddPolicyVisitor::visitAppPolicy(AppPolicy *appPolicy)
 		idx = ruleListAppend(appPolicy);
 		list = alfPanel_->lst_Rules;
 
-		list->SetItem(idx, MODALF_LIST_COLUMN_APP,
-		    appPolicy->getBinaryName());
 		list->SetItem(idx, MODALF_LIST_COLUMN_PROG,
 		    appPolicy->getBinaryName());
 		if (appPolicy->hasContext()) {

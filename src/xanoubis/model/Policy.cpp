@@ -217,26 +217,6 @@ Policy::getRuleTypeName(int type)
 	return (result);
 }
 
-wxString
-Policy::guessAppName(wxString binary)
-{
-	wxString        result;
-	wxString        command;
-	wxArrayString   output;
-	wxArrayString   errors;
-
-	command = wxT("sh ");
-	command += wxGetApp().getUtilsPath() + wxT("/xanoubis_guessApp.sh ");
-	command += binary;
-
-	if (wxExecute(command, output, errors) == 0) {
-		result = output.Item(0).BeforeFirst('#');
-	} else {
-		result = _("unknown");
-	}
-	return (result);
-}
-
 unsigned long
 Policy::getIndex(void)
 {

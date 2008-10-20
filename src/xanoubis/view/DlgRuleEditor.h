@@ -36,6 +36,7 @@
 #include <wx/string.h>
 #include <wx/filename.h>
 #include <wx/dynarray.h>
+#include <wx/combobox.h>
 
 #include "AnEvents.h"
 #include "AnShortcuts.h"
@@ -55,7 +56,6 @@ enum ruleEditorListColumns {
 	RULEDITOR_LIST_COLUMN_PRIO = 0,
 	RULEDITOR_LIST_COLUMN_RULE,
 	RULEDITOR_LIST_COLUMN_USER,
-	RULEDITOR_LIST_COLUMN_APP,
 	RULEDITOR_LIST_COLUMN_BIN,
 	RULEDITOR_LIST_COLUMN_HASHT,
 	RULEDITOR_LIST_COLUMN_HASH,
@@ -113,7 +113,6 @@ class DlgRuleEditor : public DlgRuleEditorBase
 
 		void OnShow(wxCommandEvent&);
 
-		void updateAppName(wxString);
 		void updateBinName(wxString);
 		void updateAction(int);
 		void updateType(int);
@@ -145,7 +144,6 @@ class DlgRuleEditor : public DlgRuleEditorBase
 		void OnRuleDeleteButton(wxCommandEvent&);
 		void OnRuleSetSave(wxCommandEvent&);
 
-		void OnAppNameComboBox(wxCommandEvent&);
 		void OnAppBinaryTextCtrl(wxCommandEvent&);
 		void OnAppBinaryModifyButton(wxCommandEvent&);
 

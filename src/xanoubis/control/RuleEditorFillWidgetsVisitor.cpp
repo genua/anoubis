@@ -392,8 +392,6 @@ RuleEditorFillWidgetsVisitor::visitAppPolicy(AppPolicy *appPolicy)
 
 	showUser(appPolicy->getRsParent()->getUid());
 	unknown = _("unknown");
-	name = appPolicy->getApplicationName();
-	ruleEditor_->appNameComboBox->SetValue(name);
 
 	name = appPolicy->getBinaryName();
 	ruleEditor_->appBinaryTextCtrl->ChangeValue(name);

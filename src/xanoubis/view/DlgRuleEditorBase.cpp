@@ -279,70 +279,21 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	bSizer10 = new wxBoxSizer( wxVERTICAL );
 	
 	wxFlexGridSizer* appMainPanelSizer;
-	appMainPanelSizer = new wxFlexGridSizer( 2, 5, 0, 0 );
+	appMainPanelSizer = new wxFlexGridSizer( 2, 3, 0, 0 );
 	appMainPanelSizer->SetFlexibleDirection( wxBOTH );
 	appMainPanelSizer->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_ALL );
-	
-	appNameText = new wxStaticText( applicationNbPanel, wxID_ANY, _("Name:"), wxDefaultPosition, wxDefaultSize, 0 );
-	appNameText->Wrap( -1 );
-	appNameText->SetMinSize( wxSize( 165,-1 ) );
-	
-	appMainPanelSizer->Add( appNameText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
-	
-	appNameComboBox = new wxComboBox( applicationNbPanel, wxID_ANY, _("Combo!"), wxDefaultPosition, wxDefaultSize, 0, NULL, 0 ); 
-	appMainPanelSizer->Add( appNameComboBox, 0, wxALL|wxALIGN_CENTER_VERTICAL|wxEXPAND, 5 );
-	
-	
-	appMainPanelSizer->Add( 0, 0, 1, wxEXPAND, 5 );
-	
-	
-	appMainPanelSizer->Add( 0, 0, 1, wxEXPAND, 5 );
-	
-	
-	appMainPanelSizer->Add( 0, 0, 1, wxEXPAND, 5 );
 	
 	appBinaryText = new wxStaticText( applicationNbPanel, wxID_ANY, _("Binaries:"), wxDefaultPosition, wxDefaultSize, 0 );
 	appBinaryText->Wrap( -1 );
 	appMainPanelSizer->Add( appBinaryText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	wxBoxSizer* appGuessSizer;
-	appGuessSizer = new wxBoxSizer( wxHORIZONTAL );
-	
-	appGuessButton = new wxButton( applicationNbPanel, wxID_ANY, _("guess ..."), wxDefaultPosition, wxDefaultSize, 0 );
-	appGuessSizer->Add( appGuessButton, 0, wxALL, 5 );
-	
-	appGuessText = new wxStaticText( applicationNbPanel, wxID_ANY, _("(by application)"), wxDefaultPosition, wxDefaultSize, 0 );
-	appGuessText->Wrap( -1 );
-	appGuessSizer->Add( appGuessText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
-	
-	appMainPanelSizer->Add( appGuessSizer, 1, wxEXPAND, 5 );
-	
-	
-	appMainPanelSizer->Add( 0, 0, 1, wxEXPAND, 5 );
-	
-	
-	appMainPanelSizer->Add( 0, 0, 1, wxEXPAND, 5 );
-	
-	
-	appMainPanelSizer->Add( 0, 0, 1, wxEXPAND, 5 );
-	
-	
-	appMainPanelSizer->Add( 0, 0, 1, wxEXPAND, 5 );
-	
 	appBinaryTextCtrl = new wxTextCtrl( applicationNbPanel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER );
+	appBinaryTextCtrl->SetMinSize( wxSize( 300,-1 ) );
+	
 	appMainPanelSizer->Add( appBinaryTextCtrl, 0, wxALL|wxEXPAND|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	appBinaryModifyButton = new wxButton( applicationNbPanel, wxID_ANY, _("modify"), wxDefaultPosition, wxDefaultSize, 0 );
 	appMainPanelSizer->Add( appBinaryModifyButton, 0, wxALL|wxALIGN_RIGHT|wxALIGN_CENTER_VERTICAL, 5 );
-	
-	
-	appMainPanelSizer->Add( 35, 0, 1, wxEXPAND, 5 );
-	
-	appBinaryAddButton = new wxButton( applicationNbPanel, wxID_ANY, _("+"), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
-	appBinaryAddButton->Enable( false );
-	appBinaryAddButton->Hide();
-	
-	appMainPanelSizer->Add( appBinaryAddButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	appContextText = new wxStaticText( applicationNbPanel, wxID_ANY, _("Context:"), wxDefaultPosition, wxDefaultSize, 0 );
 	appContextText->Wrap( -1 );
@@ -354,16 +305,7 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	appContextModifyButton = new wxButton( applicationNbPanel, wxID_ANY, _("modify"), wxDefaultPosition, wxDefaultSize, 0 );
 	appMainPanelSizer->Add( appContextModifyButton, 0, wxALL|wxALIGN_CENTER_VERTICAL|wxALIGN_RIGHT, 5 );
 	
-	
-	appMainPanelSizer->Add( 0, 0, 1, wxEXPAND, 5 );
-	
-	appInheritanceAddButton = new wxButton( applicationNbPanel, wxID_ANY, _("+"), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
-	appInheritanceAddButton->Enable( false );
-	appInheritanceAddButton->Hide();
-	
-	appMainPanelSizer->Add( appInheritanceAddButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
-	
-	bSizer10->Add( appMainPanelSizer, 1, wxEXPAND, 5 );
+	bSizer10->Add( appMainPanelSizer, 0, wxEXPAND, 5 );
 	
 	wxFlexGridSizer* fgSizer10;
 	fgSizer10 = new wxFlexGridSizer( 1, 5, 0, 0 );
@@ -425,7 +367,7 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	applicationNbPanel->SetSizer( bSizer10 );
 	applicationNbPanel->Layout();
 	bSizer10->Fit( applicationNbPanel );
-	ruleEditNotebook->AddPage( applicationNbPanel, _("Application"), false );
+	ruleEditNotebook->AddPage( applicationNbPanel, _("Application"), true );
 	alfNbPanel = new wxScrolledWindow( ruleEditNotebook, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxTAB_TRAVERSAL|wxTRANSPARENT_WINDOW|wxVSCROLL );
 	alfNbPanel->SetScrollRate( 5, 5 );
 	wxBoxSizer* alfPanelMainSizer;
@@ -694,7 +636,7 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	sfsNbPanel->SetSizer( sfsSizer );
 	sfsNbPanel->Layout();
 	sfsSizer->Fit( sfsNbPanel );
-	ruleEditNotebook->AddPage( sfsNbPanel, _("SFS"), true );
+	ruleEditNotebook->AddPage( sfsNbPanel, _("SFS"), false );
 	macroNbPanel = new wxScrolledWindow( ruleEditNotebook, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxTAB_TRAVERSAL|wxVSCROLL );
 	macroNbPanel->SetScrollRate( 5, 5 );
 	wxFlexGridSizer* macroSizer;
@@ -742,8 +684,6 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	commonNoneLogRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorBase::OnCommonLogNone ), NULL, this );
 	commonDoLogRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorBase::OnCommonLogLog ), NULL, this );
 	commonAlertLogRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorBase::OnCommonLogAlert ), NULL, this );
-	appNameComboBox->Connect( wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler( DlgRuleEditorBase::OnAppNameComboBox ), NULL, this );
-	appNameComboBox->Connect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( DlgRuleEditorBase::OnAppNameComboBox ), NULL, this );
 	appBinaryTextCtrl->Connect( wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler( DlgRuleEditorBase::OnAppBinaryTextCtrl ), NULL, this );
 	appBinaryModifyButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::OnAppBinaryModifyButton ), NULL, this );
 	appValidateChkSumButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::OnAppValidateChkSumButton ), NULL, this );
