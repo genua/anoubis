@@ -658,14 +658,6 @@ Communicator::Entry(void)
 			startChecksumGet = COMMUNICATOR_FLAG_NONE;
 		}
 
-		size = 4096;
-		msg = anoubis_msg_new(size);
-		if (msg == NULL) {
-			/* XXX: is this error path ok? -- ch */
-			startStatDeRegistration = COMMUNICATOR_FLAG_INIT;
-			continue;
-		}
-
 		if (poll(fds, 1, 200) < 0) {
 			if (errno == EINTR)
 				continue;
@@ -676,6 +668,14 @@ Communicator::Entry(void)
 			continue;
 		}
 
+		size = 4096;
+		msg = anoubis_msg_new(size);
+		if (msg == NULL) {
+			/* XXX: is this error path ok? -- ch */
+			startStatDeRegistration = COMMUNICATOR_FLAG_INIT;
+			continue;
+		}
+
 		if (fds[0].revents) {
 			fds[0].revents = 0;
 			rc = acc_receivemsg(channel_, (char*)(msg->u.buf),
@@ -683,11 +683,13 @@ Communicator::Entry(void)
 			if (rc != ACHAT_RC_OK) {
 				notDone = false;
 				commRC = CONNECTION_RXTX_ERROR;
+				anoubis_msg_free(msg);
 				continue;
 			}
 
 			anoubis_msg_resize(msg, size);
 
+			/* This will free the message. */
 			if (anoubis_client_process(client_, msg) != 1) {
 				startStatDeRegistration =
 				    COMMUNICATOR_FLAG_INIT;
@@ -703,6 +705,8 @@ Communicator::Entry(void)
 					    event);
 				}
 			}
+		} else {
+			anoubis_msg_free(msg);
 		}
 
 		for (ali=answerList_.begin(); ali!=answerList_.end(); ali++) {
