@@ -47,7 +47,7 @@ CLEANFILES = \
 man_MANS = man/anoubisd.8 man/anoubischat.3 man/anoubisctl.8 man/apn.3 \
 	man/anoubis_msg.3 man/anoubis_transaction.3 man/anoubis_client.3 \
 	man/anoubis_server.3 man/anoubis_auth.3 man/anoubis_notify.3 \
-	$(xanoubis_mans)
+	man/sfssig.8 $(xanoubis_mans)
 
 EXTRA_DIST = $(man_MANS) @WXFB_PROJECT_FILES@ autogen.sh VERSION
 

@@ -1,0 +1,186 @@
+.\"	$OpenBSD: mdoc.template,v 1.9 2004/07/02 10:36:57 jmc Exp $
+.\"
+.\" Copyright (c) 2008 GeNUA mbH <info@genua.de>
+.\"
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+.\" "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+.\" LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+.\" A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+.\" OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+.\" SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
+.\" TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+.\" PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+.\" LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+.\" NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+.\" SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\" The following requests are required for all man pages.
+.Dd October 17, 2008
+.Dt SFSSIG 8
+.Os Anoubis
+.Sh NAME
+.Nm sfssig
+.Nd manage checksums for Anoubis Daemon
+.Sh SYNOPSIS
+.Nm sfssig
+.Op dvr
+.Op -f fileset
+.Op -u uid
+.Op -k key
+.Op -sum
+.Op -sig
+.Op -both
+.Op -orphaned | -notfile
+.Op -hassum | -hasnosum
+.Op -hassig | -hasnosig
+.Ar command
+.Op file
+.Sh DESCRIPTION
+The
+.Nm
+program manages the checksums form the
+.Xr anoubisd 8
+daemon.
+.Pp
+Options:
+.Pp
+.Bl -tag -width Ds
+.It Fl d 
+Debug mode.
+Prints debug information to the console.
+.It Fl v
+Produce more verbose output.
+.El
+.Pp
+Path specification:
+.Pp
+.Bl -tag -width Ds
+.It Fl r
+Apply command to all files under each directory, recursively.
+.It Fl f
+Accept input form a file. - for stdin
+.El
+.Pp
+Type specification:
+.Pp
+.Bl -tag -width Ds
+.It Fl u 
+Apply command for checksums with
+.Ar uid .
+If argument is
+.Ar all ,
+all registered uids will be used.
+You need root privileges to do this.
+.It Fl k
+Apply command for checksums with
+.Ar key .
+If argument is
+.Ar all ,
+all registered key will be used.
+You need root privileges to do this.
+.El
+.Pp
+Filter specification:
+.Pp
+.Bl -tag -width DST
+.It Fl sum
+Apply command for a checksum.
+.It Fl sig
+Apply command for a signature.
+.It Fl both
+Apply command for checksum and signature.
+.It Fl orphaned
+Apply command to nominal conditions without an entry in the file system.
+.It Fl notfile
+Apply command to nominal conditions which have no regular file entry in the file system.
+.It Fl hassum
+Apply command to nominal conditions which have a checksum.
+.It Fl hasnosum
+Apply command to nominal conditions which have no checksum.
+.It Fl hassig
+Apply command to nominal conditions which have a signature.
+.It Fl hasnosig
+Apply command to nominal conditions which have no signature.
+
+.It Ar command
+.Pp
+.Pp
+add - add checksum to the shadow tree matching the current content of
+.Ar file .
+.Pp
+del - delete checksum of
+.Ar file
+from the shadow tree.
+.Pp
+get - returns the checksum of
+.Ar file
+found in the shadow tree.
+.Pp
+list - list all entries found in the shadow tree.
+.Pp
+validate - validates all nominal conditions from 
+.Ar file
+given as argument.
+.El
+.Pp
+.Nm
+connects via the
+.Em libanoubischat
+protocol to the
+.Xr anoubisd 8
+daemon and issues the given
+.Ar command
+as a message to the daemon.
+.\" The following requests should be uncommented and used where appropriate.
+.\" This next request is for sections 1, 6, 7 & 8 only.
+.\" .Sh ENVIRONMENT
+.Sh FILES
+The program binary is
+.Ar /sbin/sfssig .
+.Pp
+.Ar /var/run/anoubisd.sock
+is the default value for the
+named
+.Ar socket
+connection from the GUI or clients
+connecting over the
+.Ar libanoubischat
+and
+.Ar libanoubisprotocol
+libraries.
+.Sh EXAMPLES
+Add a entry for a file to the shadowtree:
+.Pp
+.Dl # sfssig add /tmp/test.txt
+.Pp
+Delete a entry for all files given by stdin from the shadowtree:
+.Pp
+.Dl # sfssig -f - del
+.Pp
+Get all checksum entries with signatures of the shadowtree recursively from directory
+.Pa /tmp
+of the user with uid 1001
+.Pp
+.Dl # sfssig -r -hassig -u 1001 get /tmp
+.Pp
+.\" .Sh DIAGNOSTICS
+.Sh SEE ALSO
+.Xr anoubisd 8
+.Xr anoubisctl 8
+.\" .Sh STANDARDS
+.\" .Sh HISTORY
+.Sh AUTHORS
+Konrad Merz
+.\" .Sh CAVEATS
+.\" .Sh BUGS
