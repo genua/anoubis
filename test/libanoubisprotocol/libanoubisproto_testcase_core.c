@@ -155,7 +155,7 @@ void tp_chat_lud_client(const char *sockname)
 			if (geteuid() == 0) {
 				fail_if(curr->result, "Transaction error");
 			} else {
-				if (k==0 || k==1 || k== 10) {
+				if (k==0 || k==1 || k==10) {
 					fail_if(curr->result != 0,
 					    "Transaction error");
 				} else {
@@ -176,7 +176,6 @@ void tp_chat_lud_client(const char *sockname)
 				trans = "close";
 				curr = anoubis_client_close_start(client);
 				fail_if(!curr, "close start failed");
-				k++;
 			} else if (k < 5) {
 				curr = anoubis_client_register_start(client,
 				    0x123000+k, geteuid()+k, 0, 0);
@@ -329,30 +328,25 @@ void tp_chat_lud_server(const char *sockname)
 
 START_TEST(tp_core_comm)
 {
-	char *sockname;
-	sockname = tempnam(NULL, "ac");
+	char sockname[] = "/tmp/acXXXXXX";
+	pid_t pid;
 
-	switch (fork()) {
+	if (mkstemp(sockname) < 0)
+		fail("Error in mkstemp");
+
+	switch ((pid = check_fork())) {
 	case -1:
 		fail("couldn't fork");
 		break;
 	case 0:
 		tp_chat_lud_client(sockname);
+		check_waitpid_and_exit(0);
 		break;
 	default:
 		tp_chat_lud_server(sockname);
+		check_waitpid_and_exit(pid);
 		break;
 	}
-	while(1) {
-		pid_t pid = wait(NULL);
-		if (pid >= 0)
-			continue;
-		if (pid == -1 && errno == ECHILD)
-			break;
-		fail_if(errno != EINTR, "error %d while waiting for children");
-	}
-	fail_if(access(sockname, F_OK) == 0, "socket %s not removed",
-	    sockname);
 }
 END_TEST
 

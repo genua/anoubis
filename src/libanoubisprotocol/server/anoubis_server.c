@@ -430,19 +430,19 @@ static int anoubis_process_closereq(struct anoubis_server * server, int opcode)
 	int ret;
 
 	/*
-	 * Treat CLOSEACK identical ot CLOSEREQ except that we also
+	 * Treat CLOSEACK identical to CLOSEREQ except that we also
 	 * close the read end of connection in case of a close ack.
 	 */
 	if (opcode == ANOUBIS_C_CLOSEACK) {
 		server->connect_flags |= FLAG_GOTCLOSEACK;
-		if (server->connect_flags |= FLAG_SENTCLOSEACK)
+		if (server->connect_flags & FLAG_SENTCLOSEACK)
 			channel_close(server);
 	}
 	server->connect_flags |= FLAG_GOTCLOSEREQ;
 	/*
 	 * Requests in the policy protocol are initiated by the client.
 	 * we do not allow these after the client sent a close request.
-	 * Notify request must be treated on an individual basis.
+	 * Notify requests must be treated on an individual basis.
 	 */
 	server->proto &= ANOUBIS_PROTO_NOTIFY;
 	/* If we already sent a CLOSEREQ we are done. */
@@ -452,10 +452,10 @@ static int anoubis_process_closereq(struct anoubis_server * server, int opcode)
 	if (!m)
 		return -ENOMEM;
 	set_value(m->u.general->type, ANOUBIS_C_CLOSEREQ);
+	server->connect_flags |= FLAG_SENTCLOSEREQ;
 	ret = anoubis_server_send(server, m);
 	if (ret < 0)
 		return ret;
-	server->connect_flags |= FLAG_SENTCLOSEREQ;
 	return 0;
 }
 
