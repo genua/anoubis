@@ -674,8 +674,11 @@ int anoubis_client_process(struct anoubis_client * client,
 		case ANOUBIS_N_LOGNOTIFY:
 		case ANOUBIS_N_RESYOU:
 		case ANOUBIS_N_RESOTHER:
-			return anoubis_client_process_event(client, m, opcode,
+			ret = anoubis_client_process_event(client, m, opcode,
 			    token);
+			if (ret < 0)
+				anoubis_msg_free(m);
+			return ret;
 		case ANOUBIS_N_REGISTER:
 		case ANOUBIS_N_UNREGISTER:
 		case ANOUBIS_N_DELEGATE:
