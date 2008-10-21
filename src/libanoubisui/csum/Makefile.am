@@ -34,7 +34,11 @@ bsdcompatdir   = src/bsdcompat
 libbsdcompat   = $(top_builddir)/$(bsdcompatdir)/libbsdcompat.a
 
 # Extra includes & dependencies
-csum_includes = -I$(top_builddir)/src -I$(top_srcdir)/include
+csum_includes = -I$(top_srcdir)/src \
+		-I$(top_builddir)/src \
+		-I$(top_srcdir)/include \
+		-I$(top_srcdir)/src/libanoubisprotocol \
+		-I$(top_srcdir)/src/libanoubischat
 csum_dependencies =
 
 if NEEDBSDCOMPAT

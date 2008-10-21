@@ -38,7 +38,7 @@
 __BEGIN_DECLS
 
 int	anoubis_csum_calc(const char *file, u_int8_t *cs, int *cslen);
-
+char**	anoubis_csum_list(struct anoubis_msg *m, int *listcnt);
 __END_DECLS
 
 #endif	/* _CSUM_H_ */

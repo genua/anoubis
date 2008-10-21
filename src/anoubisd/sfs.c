@@ -423,9 +423,11 @@ check_empty_dir(const char *path)
 
 	while (readdir(dir) != NULL) {
 		cnt++;
-		if (cnt > 2)
+		if (cnt > 2) {
+			closedir(dir);
 			return 1;
+		}
 	}
-
+	closedir(dir);
 	return 0;
 }

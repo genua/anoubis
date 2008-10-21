@@ -669,6 +669,10 @@ void
 send_checksum_list(u_int64_t token, const char *path,
     struct event_info_main *ev_info)
 {
+	/* Since only pathname components are transferred, it is sufficient
+	 * that the payload size (3000) is larger than NAME_MAX (255),
+	 * it does not need to be larger than PATH_MAX (4096)
+	 */
 	anoubisd_reply_t	*reply;
 	anoubisd_msg_t		*msg;
 	char			*tmp = NULL;

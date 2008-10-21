@@ -30,16 +30,20 @@
 #ifdef S_SPLINT_S
 #include "splint-includes.h"
 #endif
-
+#include <stdio.h>
 #include <unistd.h>
+#include <stdlib.h>
 #include <fcntl.h>
 #include <errno.h>
 #include <string.h>
 #include <sys/ioctl.h>
 #include <sys/types.h>
 
+#include <anoubis_msg.h>
+
 #ifdef LINUX
 #include <linux/anoubis.h>
+#include <bsdcompat.h>
 #endif
 
 #ifdef OPENBSD
@@ -77,4 +81,68 @@ anoubis_csum_calc(const char *file, u_int8_t * csbuf, int *cslen)
 	memcpy(csbuf, cs.csum, ANOUBIS_CS_LEN);
 	*cslen = ANOUBIS_CS_LEN;
 	return 0;
+}
+
+char**
+anoubis_csum_list(struct anoubis_msg *m, int *listcnt)
+{
+	char	**result = NULL;
+	char	**tmp = NULL;
+	int	  cnt,
+		  end,
+		  msg_end,
+		  name_size;
+
+	if (m == NULL || listcnt == NULL)
+		goto err;
+
+	/* Return Message from Daemon cannot return partial names */
+	end = cnt = 0;
+	while (m) {
+		if (!VERIFY_LENGTH(m, sizeof(Anoubis_ChecksumPayloadMessage))) {
+			goto err;
+		}
+
+		msg_end = m->length - sizeof(Anoubis_ChecksumPayloadMessage)
+		    - CSUM_LEN - 1;
+		if (msg_end < 1 ||
+		    m->u.checksumpayload->payload[msg_end] != '\0') {
+			goto err;
+		}
+		end = 0;
+		while (end <= msg_end) {
+			name_size = strlen(
+			    (char *)&m->u.checksumpayload->payload[end]) + 1;
+			cnt++;
+			tmp = (char **)realloc(result, cnt * sizeof(char *));
+			if (!tmp) {
+				cnt--;
+				goto err;
+			}
+			result = tmp;
+			result[cnt-1] = calloc(name_size, sizeof(char));
+			if (!result)
+				goto err;
+			strlcpy(result[cnt-1],
+			    (char *)&m->u.checksumpayload->payload[end],
+			    name_size);
+			end += name_size;
+		}
+		m = m->next;
+	}
+
+	*listcnt = cnt;
+	return result;
+
+err:
+	if (result) {
+		for(end = 0; end < cnt; end++) {
+			if (result[end])
+				free(result[end]);
+		}
+		free(result);
+	}
+
+	*listcnt = 0;
+	return NULL;
 }
