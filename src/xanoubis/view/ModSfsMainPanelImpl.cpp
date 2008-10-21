@@ -175,6 +175,15 @@ ModSfsMainPanelImpl::initSfsMain()
 {
 	sfsCtrl_ = new SfsCtrl;
 
+	sfsListOkIcon_ = wxGetApp().loadIcon(wxT("General_ok_16.png"));
+	sfsListWarnIcon_ = wxGetApp().loadIcon(wxT("General_problem_16.png"));
+	sfsListErrorIcon_ = wxGetApp().loadIcon(wxT("General_error_16.png"));
+
+	sfsListImageList_.Add(wxNullIcon);
+	sfsListImageList_.Add(*sfsListOkIcon_);
+	sfsListImageList_.Add(*sfsListWarnIcon_);
+	sfsListImageList_.Add(*sfsListErrorIcon_);
+
 	sfsCtrl_->Connect(anEVT_SFSDIR_CHANGED,
 	    wxCommandEventHandler(ModSfsMainPanelImpl::OnSfsDirChanged),
 	    NULL, this);
@@ -197,11 +206,14 @@ ModSfsMainPanelImpl::initSfsMain()
 
 	/* Insert columns into list-ctrl */
 	SfsMainListCtrl->InsertColumn(MODSFSMAIN_FILELIST_COLUMN_FILE,
-		_("File"), wxLIST_FORMAT_LEFT, wxLIST_AUTOSIZE);
+	    _("File"), wxLIST_FORMAT_LEFT, wxLIST_AUTOSIZE);
 	SfsMainListCtrl->InsertColumn(MODSFSMAIN_FILELIST_COLUMN_CHECKSUM,
-		_("Checksum"), wxLIST_FORMAT_LEFT, wxLIST_AUTOSIZE);
+	    _("Checksum"), wxLIST_FORMAT_CENTRE, wxLIST_AUTOSIZE_USEHEADER);
 	SfsMainListCtrl->InsertColumn(MODSFSMAIN_FILELIST_COLUMN_SIGNATURE,
-		_("Signature"), wxLIST_FORMAT_LEFT, wxLIST_AUTOSIZE);
+	    _("Signature"), wxLIST_FORMAT_CENTRE, wxLIST_AUTOSIZE_USEHEADER);
+
+	/* Assign icons to list */
+	SfsMainListCtrl->SetImageList(&sfsListImageList_, wxIMAGE_LIST_SMALL);
 
 	/* Setting up CurrPathLabel with initial path */
 	SfsMainCurrPathLabel->SetLabel(SfsMainDirCtrl->GetPath());
@@ -212,6 +224,9 @@ void
 ModSfsMainPanelImpl::destroySfsMain()
 {
 	delete sfsCtrl_;
+	delete sfsListOkIcon_;
+	delete sfsListWarnIcon_;
+	delete sfsListErrorIcon_;
 }
 
 void
@@ -223,32 +238,32 @@ ModSfsMainPanelImpl::updateSfsList()
 
 	for (unsigned int i = 0; i < dir.getNumEntries(); i++) {
 		const SfsEntry &entry = dir.getEntry(i);
-		wxString checksumColumn, signatureColumn;
+		int checksumIconIndex = 0, signatureIconIndex = 0;
 
 		switch (entry.getChecksumAttr()) {
 		case SfsEntry::SFSENTRY_CHECKSUM_UNKNOWN:
-			checksumColumn = _("Unknown");
+			checksumIconIndex = 0;
 			break;
 		case SfsEntry::SFSENTRY_CHECKSUM_NOMATCH:
-			checksumColumn = _("Nok");
+			checksumIconIndex = 3;
 			break;
 		case SfsEntry::SFSENTRY_CHECKUM_MATCH:
-			checksumColumn = _("Ok");
+			checksumIconIndex = 1;
 			break;
 		}
 
 		switch (entry.getSignatureAttr()) {
 		case SfsEntry::SFSENTRY_SIGNATURE_UNKNOWN:
-			signatureColumn = _("Unknown");
+			signatureIconIndex = 0;
 			break;
 		case SfsEntry::SFSENTRY_SIGNATURE_INVALID:
-			signatureColumn = _("Invalid");
+			signatureIconIndex = 2;
 			break;
 		case SfsEntry::SFSENTRY_SIGNATURE_NOMATCH:
-			signatureColumn = _("Nok");
+			signatureIconIndex = 3;
 			break;
 		case SfsEntry::SFSENTRY_SIGNATURE_MATCH:
-			signatureColumn = _("Ok");
+			signatureIconIndex = 1;
 			break;
 		}
 
@@ -256,15 +271,17 @@ ModSfsMainPanelImpl::updateSfsList()
 		SfsMainListCtrl->SetItem(i,
 		    MODSFSMAIN_FILELIST_COLUMN_FILE, entry.getPath());
 		SfsMainListCtrl->SetItem(i,
-		    MODSFSMAIN_FILELIST_COLUMN_CHECKSUM, checksumColumn);
+		    MODSFSMAIN_FILELIST_COLUMN_CHECKSUM, wxEmptyString,
+		    checksumIconIndex);
 		SfsMainListCtrl->SetItem(i,
-		    MODSFSMAIN_FILELIST_COLUMN_SIGNATURE, signatureColumn);
+		    MODSFSMAIN_FILELIST_COLUMN_SIGNATURE, wxEmptyString,
+		    signatureIconIndex);
 	}
 
-	SfsMainListCtrl->SetColumnWidth(MODSFSMAIN_FILELIST_COLUMN_FILE,
-	    wxLIST_AUTOSIZE);
-	SfsMainListCtrl->SetColumnWidth(MODSFSMAIN_FILELIST_COLUMN_CHECKSUM,
-	    wxLIST_AUTOSIZE);
-	SfsMainListCtrl->SetColumnWidth(MODSFSMAIN_FILELIST_COLUMN_SIGNATURE,
-	    wxLIST_AUTOSIZE);
+	if (SfsMainListCtrl->GetItemCount() > 0)
+		SfsMainListCtrl->SetColumnWidth(MODSFSMAIN_FILELIST_COLUMN_FILE,
+		    wxLIST_AUTOSIZE);
+	else
+		SfsMainListCtrl->SetColumnWidth(MODSFSMAIN_FILELIST_COLUMN_FILE,
+		    wxLIST_AUTOSIZE_USEHEADER);
 }

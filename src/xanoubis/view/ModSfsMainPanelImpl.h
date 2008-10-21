@@ -58,6 +58,10 @@ class ModSfsMainPanelImpl : public ModSfsMainPanelBase
 
 		void OnLoadRuleSet(wxCommandEvent&);
 
+		wxIcon		*sfsListOkIcon_;
+		wxIcon		*sfsListWarnIcon_;
+		wxIcon		*sfsListErrorIcon_;
+		wxImageList	sfsListImageList_;
 		void initSfsMain();
 		void destroySfsMain();
 		void updateSfsList();
