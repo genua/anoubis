@@ -258,7 +258,7 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	tb_MainAnoubisNotification->SetSizer( sz_MainAnoubisNotify );
 	tb_MainAnoubisNotification->Layout();
 	sz_MainAnoubisNotify->Fit( tb_MainAnoubisNotification );
-	tb_MainAnoubisNotify->AddPage( tb_MainAnoubisNotification, _("Notifications"), true );
+	tb_MainAnoubisNotify->AddPage( tb_MainAnoubisNotification, _("Notifications"), false );
 	tb_MainAnoubisVersions = new wxPanel( tb_MainAnoubisNotify, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
 	wxBoxSizer* MainAnoubisVersionsSizer;
 	MainAnoubisVersionsSizer = new wxBoxSizer( wxHORIZONTAL );
@@ -412,6 +412,7 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	fgSizer3->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
 	
 	cb_SendAlerts = new wxCheckBox( tb_MainAnoubisOptions, wxID_ANY, _("send Alerts"), wxDefaultPosition, wxDefaultSize, 0 );
+	cb_SendAlerts->SetValue(true);
 	
 	cb_SendAlerts->SetToolTip( _("Check to disable the messaging via Notifier") );
 	
@@ -453,6 +454,8 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	
 	controlAutoCheck = new wxCheckBox( tb_MainAnoubisOptions, wxID_ANY, _("Auto Checksum Check"), wxDefaultPosition, wxDefaultSize, 0 );
 	
+	controlAutoCheck->SetToolTip( _("Check to automatically validate updated application rules") );
+	
 	bSizer19->Add( controlAutoCheck, 0, wxALL, 5 );
 	
 	sbSizer12->Add( bSizer19, 1, wxEXPAND, 5 );
@@ -466,6 +469,7 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	bSizer191 = new wxBoxSizer( wxVERTICAL );
 	
 	autoConnectBox = new wxCheckBox( tb_MainAnoubisOptions, wxID_ANY, _("Auto Connect to Daemon"), wxDefaultPosition, wxDefaultSize, 0 );
+	autoConnectBox->SetValue(true);
 	
 	bSizer191->Add( autoConnectBox, 0, wxALL, 5 );
 	
@@ -540,7 +544,7 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	tb_MainAnoubisOptions->SetSizer( sz_MainAnoubisOptions );
 	tb_MainAnoubisOptions->Layout();
 	sz_MainAnoubisOptions->Fit( tb_MainAnoubisOptions );
-	tb_MainAnoubisNotify->AddPage( tb_MainAnoubisOptions, _("Options"), false );
+	tb_MainAnoubisNotify->AddPage( tb_MainAnoubisOptions, _("Options"), true );
 	
 	sz_MainAnoubisMain->Add( tb_MainAnoubisNotify, 1, wxEXPAND | wxALL, 5 );
 	

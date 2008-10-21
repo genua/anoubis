@@ -1,4 +1,5 @@
 usr/share/xanoubis/*
 usr/bin/xanoubis
 usr/share/applications/*
+usr/share/autostart/*
 usr/share/pixmaps/*

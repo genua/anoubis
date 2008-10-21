@@ -96,10 +96,12 @@ rm -fr $RPM_BUILD_ROOT%{_includedir}
 rm -f  $RPM_BUILD_ROOT%{_libdir}/*.a
 rm -fr $RPM_BUILD_ROOT%{_mandir}/man3
 
-# install desktop icons
-mkdir -p $RPM_BUILD_ROOT%{_datadir}/pixmaps
+# install and register desktop icon and file
+mkdir -p $RPM_BUILD_ROOT%{_datadir}/{pixmaps,autostart}
 install -p $RPM_BUILD_ROOT%{_datadir}/xanoubis/icons/xanoubis.png \
-	$RPM_BUILD_ROOT%{_datadir}/pixmaps/xanoubis.png
+	$RPM_BUILD_ROOT%{_datadir}/pixmaps
+install -p $RPM_BUILD_ROOT%{_datadir}/applications/xanoubis.desktop \
+	$RPM_BUILD_ROOT%{_datadir}/autostart
 
 %clean
 [ "$RPM_BUILD_ROOT" != "/" ] && [ -d $RPM_BUILD_ROOT ] \
@@ -160,11 +162,15 @@ rmdir /etc/anoubis/policy /etc/anoubis 2>/dev/null || true
 %{_mandir}/man1/xanoubis*.1.gz
 %{_prefix}/share/xanoubis/*
 %attr(0644,root,root) %{_datadir}/applications/xanoubis.desktop
+%attr(0644,root,root) %{_datadir}/autostart/xanoubis.desktop
 %attr(0644,root,root) %{_datadir}/pixmaps/xanoubis.png
 
 
 ### changelog ##############################################
 %changelog
+* Mon Oct 20 2008 Sebastian Trahm
+- register desktop file in autostart
+
 * Wed Oct 15 2008 Sebastian Trahm
 - remove explicit sources of desktop file and icon and use
   the ones already provided by the pristine source
