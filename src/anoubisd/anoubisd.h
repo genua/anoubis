@@ -94,6 +94,7 @@ struct anoubisd_msg {
 	char		msg[0];
 };
 typedef struct anoubisd_msg anoubisd_msg_t;
+
 enum {
 	ANOUBISD_MSG_POLREQUEST,
 	ANOUBISD_MSG_POLREPLY,
@@ -107,6 +108,7 @@ enum {
 	ANOUBISD_MSG_EVENTASK,
 	ANOUBISD_MSG_KCACHE,
 	ANOUBISD_MSG_SFSDISABLE,
+	ANOUBISD_MSG_POLICYCHANGE,
 } anoubisd_msg;
 
 /* format of ANOUBISD_MSG_EVENTDEV is struct eventdev_hdr */
@@ -178,6 +180,13 @@ struct anoubisd_msg_logrequest
 	/* Eventdev data follows. */
 };
 
+/* format of ANOUBISD_MSG_POLICYCHANGE */
+struct anoubisd_msg_pchange
+{
+	u_int32_t	uid;
+	u_int32_t	prio;
+};
+
 enum {
 	PROC_MAIN,
 	PROC_POLICY,
@@ -232,6 +241,7 @@ void	pe_dump(void);
 int	send_policy_data(u_int64_t token, int fd);
 
 void	send_lognotify(struct eventdev_hdr *, u_int32_t, u_int32_t, u_int32_t);
+void	send_policychange(u_int32_t uid, u_int32_t prio);
 
 struct credentials {
 	uid_t   euid;

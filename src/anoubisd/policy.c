@@ -521,6 +521,23 @@ send_lognotify(struct eventdev_hdr *hdr, u_int32_t error, u_int32_t loglevel,
 	enqueue(&eventq_p2s, msg);
 }
 
+void
+send_policychange(u_int32_t uid, u_int32_t prio)
+{
+	anoubisd_msg_t			*msg;
+	struct anoubisd_msg_pchange	*pchange;
+
+	msg = msg_factory(ANOUBISD_MSG_POLICYCHANGE, sizeof(*pchange));
+	if (!msg) {
+		log_warn("send_lognotify: can't allocate memory");
+		return;
+	}
+	pchange = (struct anoubisd_msg_pchange*)msg->msg;
+	pchange->uid = uid;
+	pchange->prio = prio;
+	enqueue(&eventq_p2s, msg);
+}
+
 int send_policy_data(u_int64_t token, int fd)
 {
 	anoubisd_msg_t * msg;

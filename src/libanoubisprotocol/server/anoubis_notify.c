@@ -256,27 +256,28 @@ anoubis_notify_create_head(struct anoubis_msg * m,
 	struct anoubis_notify_head * head;
 	int opcode;
 
-	if (!VERIFY_LENGTH(m, sizeof(Anoubis_NotifyMessage))) {
-		anoubis_msg_free(m);
-		return NULL;
-	}
 	opcode = get_value(m->u.general->type);
 	switch(opcode) {
+	case ANOUBIS_N_POLICYCHANGE:
+		if (!VERIFY_LENGTH(m, sizeof(Anoubis_PolicyChangeMessage)))
+			return NULL;
+		break;
 	case ANOUBIS_N_NOTIFY:
 	case ANOUBIS_N_ASK:
-		set_value(m->u.notify->error, 0);
-		set_value(m->u.notify->loglevel, 0);
 	case ANOUBIS_N_LOGNOTIFY:
+		if (!VERIFY_LENGTH(m, sizeof(Anoubis_NotifyMessage)))
+			return NULL;
+		if (opcode != ANOUBIS_N_LOGNOTIFY) {
+			set_value(m->u.notify->error, 0);
+			set_value(m->u.notify->loglevel, 0);
+		}
 		break;
 	default:
-		anoubis_msg_free(m);
 		return NULL;
 	}
 	head = malloc(sizeof(struct anoubis_notify_head));
-	if (!head) {
-		anoubis_msg_free(m);
+	if (!head)
 		return NULL;
-	}
 	LIST_INIT(&head->events);
 	head->m = m;
 	head->verdict = ANOUBIS_E_IO;
@@ -301,23 +302,39 @@ int anoubis_notify(struct anoubis_notify_group * ng,
 {
 	struct anoubis_notify_event * nev;
 	struct anoubis_msg * m = head->m;
-	int ret;
+	int ret, opcode;
+	u_int32_t uid, ruleid, subsystem;
+	anoubis_token_t token;
 
-	int opcode = get_value(m->u.general->type);
-	u_int32_t uid = get_value(m->u.notify->uid);
-	u_int32_t ruleid = get_value(m->u.notify->rule_id);
-	u_int32_t subsystem = get_value(m->u.notify->subsystem);
-	anoubis_token_t token = m->u.notify->token;
+	opcode = get_value(m->u.general->type);
+	if (opcode == ANOUBIS_N_POLICYCHANGE) {
+		uid = get_value(m->u.policychange->uid);
+		subsystem = ANOUBIS_SOURCE_STAT;
+		ruleid = 0;
+		token = 0;
+		/*
+		 * Only root receives policy change messages for other
+		 * users. XXX CEH: This check should be somewhere else!
+		 */
+		if (ng->uid != 0 && ng->uid != uid)
+			return 0;
+	} else {
+		uid = get_value(m->u.notify->uid);
+		ruleid = get_value(m->u.notify->rule_id);
+		subsystem = get_value(m->u.notify->subsystem);
+		token = m->u.notify->token;
+		if (token == 0)
+			return -EINVAL;
+	}
 
-	if (token == 0)
-		return -EINVAL;
 	if (!reg_match_all(ng, uid, ruleid, subsystem))
 		return 0;
 	LIST_FOREACH(nev, &ng->pending, next) {
 		if (nev->token == token)
 			return -EEXIST;
 	}
-	if (opcode == ANOUBIS_N_NOTIFY || opcode == ANOUBIS_N_LOGNOTIFY) {
+	if (opcode == ANOUBIS_N_NOTIFY || opcode == ANOUBIS_N_LOGNOTIFY
+	    || opcode == ANOUBIS_N_POLICYCHANGE) {
 		ret = anoubis_msg_send(ng->chan, m);
 		if (ret < 0)
 			return ret;

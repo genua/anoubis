@@ -129,6 +129,8 @@ static void	dispatch_p2s_evt_request(anoubisd_msg_t *,
 		    struct event_info_session *);
 static void	dispatch_p2s_log_request(anoubisd_msg_t *,
 		    struct event_info_session *);
+void		dispatch_p2s_policychange(anoubisd_msg_t *,
+		    struct event_info_session *);
 static void	dispatch_p2s_evt_cancel(anoubisd_msg_t *,
 		    struct event_info_session *);
 static void	dispatch_p2s_pol_reply(anoubisd_msg_t *,
@@ -669,7 +671,7 @@ dispatch_m2s(int fd, short sig __used, void *arg)
 			continue;
 		}
 		if (msg->mtype != ANOUBISD_MSG_EVENTDEV) {
-			log_warn("dispatch_m2s: bad mtype %d", msg->mtype);
+			log_warnx("dispatch_m2s: bad mtype %d", msg->mtype);
 			continue;
 		}
 
@@ -777,6 +779,10 @@ dispatch_p2s(int fd, short sig __used, void *arg)
 				->hdr.msg_token);
 			dispatch_p2s_log_request(msg, ev_info);
 			break;
+		case ANOUBISD_MSG_POLICYCHANGE:
+			DEBUG(DBG_QUEUE, " >p2s: policychange");
+			dispatch_p2s_policychange(msg, ev_info);
+			break;
 
 		case ANOUBISD_MSG_EVENTCANCEL:
 			DEBUG(DBG_QUEUE, " >p2s: %x",
@@ -785,7 +791,7 @@ dispatch_p2s(int fd, short sig __used, void *arg)
 			break;
 
 		default:
-			log_warn("dispatch_p2s: bad mtype %d", msg->mtype);
+			log_warnx("dispatch_p2s: bad mtype %d", msg->mtype);
 			break;
 		}
 
@@ -795,15 +801,64 @@ dispatch_p2s(int fd, short sig __used, void *arg)
 	}
 }
 
+static void
+__send_notify(struct anoubis_msg *m, struct event_info_session *ev_info)
+{
+	struct session			*sess;
+	struct anoubis_notify_head	*head;
+
+	head = anoubis_notify_create_head(m, NULL, NULL);
+	if (!head) {
+		/* malloc failure, then we don't send the message */
+		anoubis_msg_free(m);
+		DEBUG(DBG_TRACE, "<dispatch_p2s (free)");
+		return;
+	}
+	DEBUG(DBG_TRACE, " >anoubis_notify_create_head");
+
+	LIST_FOREACH(sess, &ev_info->seg->sessionList, nextSession) {
+		struct anoubis_notify_group * ng;
+
+		if (sess->proto == NULL)
+			continue;
+		ng = anoubis_server_getnotify(sess->proto);
+		if (!ng)
+			continue;
+		anoubis_notify(ng, head);
+	}
+	anoubis_notify_destroy_head(head);
+	DEBUG(DBG_TRACE, " >anoubis_notify_destroy_head");
+}
+
+void
+dispatch_p2s_policychange(anoubisd_msg_t *msg,
+    struct event_info_session *ev_info)
+{
+	struct anoubisd_msg_pchange	*pchange;
+	struct anoubis_msg		*m;
+
+	DEBUG(DBG_TRACE, ">dispatch_p2s_policychange");
+
+	pchange = (struct anoubisd_msg_pchange *)msg->msg;
+	m = anoubis_msg_new(sizeof(Anoubis_PolicyChangeMessage));
+	if (!m) {
+		DEBUG(DBG_TRACE, "<dispatch_p2s_policychange (bad new)");
+		return;
+	}
+	set_value(m->u.policychange->type, ANOUBIS_N_POLICYCHANGE);
+	set_value(m->u.policychange->uid, pchange->uid);
+	set_value(m->u.policychange->prio, pchange->prio);
+	__send_notify(m, ev_info);
+	DEBUG(DBG_TRACE, "<dispatch_p2s_policychange");
+}
+
 void
 dispatch_p2s_log_request(anoubisd_msg_t *msg,
     struct event_info_session *ev_info)
 {
 	unsigned int extra;
 	struct anoubisd_msg_logrequest * req;
-	struct anoubis_notify_head * head;
 	struct anoubis_msg * m;
-	struct session * sess;
 	anoubis_cookie_t task = 0;
 
 	DEBUG(DBG_TRACE, ">dispatch_p2s_log_request");
@@ -836,28 +891,8 @@ dispatch_p2s_log_request(anoubisd_msg_t *msg,
 	set_value(m->u.notify->evoff, 0);
 	set_value(m->u.notify->evlen, extra);
 	memcpy(m->u.notify->payload, (&req->hdr)+1, extra);
-	head = anoubis_notify_create_head(m, NULL, NULL);
-	if (!head) {
-		/* malloc failure, then we don't send the message */
-		anoubis_msg_free(m);
-		DEBUG(DBG_TRACE, "<dispatch_p2s (free)");
-		return;
-	}
-	DEBUG(DBG_TRACE, " >anoubis_notify_create_head");
-
-	LIST_FOREACH(sess, &ev_info->seg->sessionList, nextSession) {
-		struct anoubis_notify_group * ng;
-
-		if (sess->proto == NULL)
-			continue;
-		ng = anoubis_server_getnotify(sess->proto);
-		if (!ng)
-			continue;
-		anoubis_notify(ng, head);
-		DEBUG(DBG_TRACE, " >anoubis_notify: %x", req->hdr.msg_token);
-	}
-	anoubis_notify_destroy_head(head);
-	DEBUG(DBG_TRACE, " >anoubis_notify_destroy_head");
+	__send_notify(m, ev_info);
+	DEBUG(DBG_TRACE, "<dispatch_p2s_log_request");
 }
 
 void

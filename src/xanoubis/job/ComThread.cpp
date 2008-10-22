@@ -209,7 +209,17 @@ ComThread::waitForMessage(void)
 			struct anoubis_msg *notifyMsg = NULL;
 
 			notifyMsg = anoubis_client_getnotify(client_);
-			if (!checkNotify(notifyMsg)) {
+			switch(get_value(notifyMsg->u.general->type)) {
+			case ANOUBIS_N_POLICYCHANGE:
+				/*
+				 * XXX CEH: Policy change must be handled
+				 * XXX CEH: properly.
+				 */
+				anoubis_msg_free(notifyMsg);
+				break;
+			default:
+				if (checkNotify(notifyMsg))
+					break;
 				wxCommandEvent event(anEVT_COM_NOTIFYRECEIVED);
 				event.SetClientData(notifyMsg);
 				sendEvent(event);

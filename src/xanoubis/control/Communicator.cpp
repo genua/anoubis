@@ -698,8 +698,19 @@ Communicator::Entry(void)
 				wxCommandEvent event(anEVT_COM_NOTIFYRECEIVED);
 				struct anoubis_msg *notifyMsg = NULL;
 
-				notifyMsg = anoubis_client_getnotify(client_);
-				if (!checkNotify(notifyMsg)) {
+				switch(get_value(notifyMsg->u.general->type)) {
+				case ANOUBIS_N_POLICYCHANGE:
+					/*
+					 * XXX CEH: Policy change must be
+					 * XXX CEH: handled properly
+					 */
+					anoubis_msg_free(notifyMsg);
+					break;
+				default:
+					notifyMsg = anoubis_client_getnotify(
+					    client_);
+					if (checkNotify(notifyMsg))
+						break;
 					event.SetClientData(notifyMsg);
 					eventDestination_->AddPendingEvent(
 					    event);

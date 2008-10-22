@@ -825,11 +825,7 @@ pe_dispatch_policy(struct anoubisd_msg_comm *comm)
 				apn_free_ruleset(ruleset);
 				goto reply;
 			}
-			/*
-			 * XXX CEH: Try to generate a log event about the
-			 * XXX CEH: policy change here to let other UIs know
-			 * XXX CEH: that policies changed.
-			 */
+			send_policychange(req->uid, req->prio);
 			error = 0;
 			goto reply;
 		}

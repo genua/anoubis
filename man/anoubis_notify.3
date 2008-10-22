@@ -182,9 +182,12 @@ for ASK events that need an answer or
 .Em ANOUBIS_N_NOTIFY
 or
 .Em ANOUBIS_N_LOGNOTIFY
-for notifications.
-The message will be destroyed together with the head.
-The caller must no longer use this message.
+for notifications or
+.Em ANOUBIS_N_POLICYCHANGE
+for policy change messages.
+If the function returns non-NULL the message will be destroyed together
+with the head and caller must no longer use this message.
+In case of an error, i.e. NULL is returned, the caller must free the message.
 .It anoubis_notify
 Send the notification described by the notify head to the given notify group.
 .It anoubis_notify_answer

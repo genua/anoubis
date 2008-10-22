@@ -163,6 +163,7 @@ static inline u_int64_t __ntohll(u_int64_t arg)
 #define		ANOUBIS_N_RESOTHER	0x4013
 #define		ANOUBIS_N_NOTIFY	0x4014
 #define		ANOUBIS_N_LOGNOTIFY	0x4015
+#define		ANOUBIS_N_POLICYCHANGE	0x4016
 #define		ANOUBIS_N_CTXREQ	0x4020
 #define		ANOUBIS_N_CTXREPLY	0x4021
 
@@ -258,6 +259,12 @@ typedef struct {
 	u16n	evoff, evlen;
 	char	payload[0];
 } __attribute__((packed)) Anoubis_NotifyMessage;
+
+typedef struct {
+	u32n	type;
+	u32n	uid;
+	u32n	prio;
+} __attribute__((packed)) Anoubis_PolicyChangeMessage;
 
 typedef struct {
 	u32n	type;
