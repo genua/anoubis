@@ -715,8 +715,8 @@ ModAnoubisMainPanelImpl::OnEscalationsShow(wxCommandEvent& event)
 void
 ModAnoubisMainPanelImpl::OnAnoubisOptionShow(wxCommandEvent& event)
 {
-	/* select tab "Options" */
-	tb_MainAnoubisNotify->ChangeSelection(1);
+	/* select the 3rd tab: "Options" */
+	tb_MainAnoubisNotify->ChangeSelection(2);
 
 	event.Skip();
 }
