@@ -84,6 +84,7 @@ class PolicyRuleSet : public wxEvtHandler
 
 		int createAppPolicy(int);
 		int createAlfPolicy(int);
+		int createAlfCtxPolicy(int, wxString);
 		int createSfsPolicy(int);
 		int createVarPolicy(int);
 

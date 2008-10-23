@@ -83,6 +83,7 @@ class AlfPolicy : public Policy
 		int		getActionNo(void);
 		wxString	getActionName(void);
 
+		void		setContextName(wxString);
 		wxArrayString	getContextList(void);
 		wxString	getContextName(void);
 

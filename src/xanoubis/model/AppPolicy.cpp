@@ -303,6 +303,14 @@ AppPolicy::getHashValue(void)
 	return (result);
 }
 
+void
+AppPolicy::setContextName(wxString ctxName)
+{
+	if (hasContext()) {
+		context_->setContextName(ctxName);
+	}
+}
+
 AlfPolicy *
 AppPolicy::getContext(void)
 {

@@ -86,6 +86,11 @@ RuleEditorFillTableVisitor::showApp(AppPolicy *appPolicy, long idx)
 		    RULEDITOR_LIST_COLUMN_HASHT, appPolicy->getHashTypeName());
 		ruleEditor_->ruleListCtrl->SetItem(idx,
 		    RULEDITOR_LIST_COLUMN_HASH, appPolicy->getHashValue());
+		if (appPolicy->hasContext()) {
+			ruleEditor_->ruleListCtrl->SetItem(idx,
+			    RULEDITOR_LIST_COLUMN_CTX,
+			    appPolicy->getContext()->getContextName());
+		}
 	}
 }
 

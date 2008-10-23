@@ -98,6 +98,9 @@ RuleEditorFillWidgetsVisitor::clear(void)
 	ruleEditor_->extraDstAddrList.Clear();
 	ruleEditor_->Layout();
 
+	ruleEditor_->appBinaryTextCtrl->Clear();
+	ruleEditor_->appContextTextCtrl->Clear();
+	ruleEditor_->appContextDeleteButton->Disable();
 }
 
 void
@@ -396,6 +399,7 @@ RuleEditorFillWidgetsVisitor::visitAppPolicy(AppPolicy *appPolicy)
 	name = appPolicy->getBinaryName();
 	ruleEditor_->appBinaryTextCtrl->ChangeValue(name);
 	if (appPolicy->hasContext()) {
+		ruleEditor_->appContextDeleteButton->Enable();
 		name = appPolicy->getContext()->getContextName();
 		ruleEditor_->appContextTextCtrl->ChangeValue(name);
 	}
@@ -481,6 +485,9 @@ RuleEditorFillWidgetsVisitor::visitAlfPolicy(AlfPolicy *alfPolicy)
 		ruleEditor_->alfDefaultRadioButton->SetValue(true);
 		showAction(alfPolicy->getActionNo());
 		showLog(alfPolicy->getLogNo());
+		break;
+	case APN_ALF_CTX:
+		visitAppPolicy((AppPolicy *)alfPolicy->getParent());
 		break;
 	default:
 		break;

@@ -569,6 +569,61 @@ PolicyRuleSet::createAlfPolicy(int insertBeforeId)
 }
 
 int
+PolicyRuleSet::createAlfCtxPolicy(int insertBeforeId, wxString ctx)
+{
+	int				 newId;
+	int				 rc;
+	wxCommandEvent			 event(anEVT_LOAD_RULESET);
+	RuleSetSearchPolicyVisitor	 seeker(insertBeforeId);
+	Policy				*parentPolicy;
+	struct apn_rule			*newCtxRule;
+
+	this->accept(seeker);
+	if (! seeker.hasMatchingPolicy()) {
+		return (-1);
+	}
+
+	newId = -1;
+	rc = -1;
+	newCtxRule = CALLOC_STRUCT(apn_rule);
+	parentPolicy = seeker.getMatchingPolicy();
+
+	if (newCtxRule == NULL) {
+		return (-1);
+	}
+
+	newCtxRule->apn_type = APN_ALF_CTX;
+
+	newCtxRule->rule.apncontext.application = CALLOC_STRUCT(apn_app);
+	if (newCtxRule->rule.apncontext.application == NULL) {
+		free(newCtxRule);
+		return (-1);
+	}
+
+	newCtxRule->rule.apncontext.application->name = strdup(ctx.fn_str());
+	newCtxRule->rule.apncontext.application->hashtype = APN_HASH_NONE;
+
+	if (parentPolicy->IsKindOf(CLASSINFO(AppPolicy))) {
+		rc = apn_add2app_alfrule(ruleSet_, newCtxRule, insertBeforeId);
+	} else if (parentPolicy->IsKindOf(CLASSINFO(AlfPolicy))) {
+		rc = apn_insert_alfrule(ruleSet_, newCtxRule, insertBeforeId);
+	}
+
+	if (rc == 0) {
+		newId = newCtxRule->apn_id;
+		clean();
+		create(ruleSet_);
+		event.SetClientData((void*)this);
+		wxGetApp().sendEvent(event);
+	} else {
+		free(newCtxRule->rule.apncontext.application);
+		free(newCtxRule);
+	}
+
+	return (newId);
+}
+
+int
 PolicyRuleSet::createSfsPolicy(int insertBeforeId)
 {
 	int				 newId;

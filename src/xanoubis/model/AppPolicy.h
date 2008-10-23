@@ -66,6 +66,7 @@ class AppPolicy : public Policy
 		wxString	 getHashTypeName(void);
 		void		 setHashValue(unsigned char *);
 		wxString	 getHashValue(void);
+		void		 setContextName(wxString);
 		AlfPolicy	*getContext(void);
 		bool		 hasContext(void);
 		int		 getType(void);

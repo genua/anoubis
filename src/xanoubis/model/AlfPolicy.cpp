@@ -45,6 +45,7 @@
 #include <wx/datetime.h>
 
 #include <apn.h>
+#include <csum/csum.h>
 
 #ifdef NEEDBSDCOMPAT
 #include <bsdcompat.h>
@@ -383,6 +384,36 @@ wxString
 AlfPolicy::getActionName(void)
 {
 	return (SUPER(Policy)->getActionName(getActionNo()));
+}
+
+void
+AlfPolicy::setContextName(wxString ctxName)
+{
+	if (alfRule_->apn_type != APN_ALF_CTX) {
+		return;
+	}
+
+	/* It's easier to create a new app: always free the existing */
+	if (alfRule_->rule.apncontext.application != NULL) {
+		apn_free_app(alfRule_->rule.apncontext.application);
+		alfRule_->rule.apncontext.application = NULL;
+	}
+	if (ctxName.Cmp(wxT("any")) != 0) {
+		int hashsize;
+		alfRule_->rule.apncontext.application =
+			(struct apn_app *)calloc(1, sizeof(struct apn_app));
+		if (alfRule_->rule.apncontext.application == NULL) {
+			return;
+		}
+		alfRule_->rule.apncontext.application->name =
+		    strdup(ctxName.fn_str());
+		hashsize = APN_HASH_SHA256_LEN;
+		alfRule_->rule.apncontext.application->hashtype =
+		    APN_HASH_SHA256;
+		anoubis_csum_calc(alfRule_->rule.apncontext.application->name,
+		    alfRule_->rule.apncontext.application->hashvalue,
+		    &hashsize);
+	}
 }
 
 wxArrayString

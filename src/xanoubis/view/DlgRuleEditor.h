@@ -114,6 +114,7 @@ class DlgRuleEditor : public DlgRuleEditorBase
 		void OnShow(wxCommandEvent&);
 
 		void updateBinName(wxString);
+		void updateContextName(wxString);
 		void updateAction(int);
 		void updateType(int);
 		void updateProtocol(int);
@@ -146,6 +147,9 @@ class DlgRuleEditor : public DlgRuleEditorBase
 
 		void OnAppBinaryTextCtrl(wxCommandEvent&);
 		void OnAppBinaryModifyButton(wxCommandEvent&);
+		void onAppContextTextCtrl(wxCommandEvent&);
+		void onAppContextModifyButton(wxCommandEvent&);
+		void onAppContextDeleteButton(wxCommandEvent&);
 
 		void OnAlfAllowRadioButton(wxCommandEvent&);
 		void OnAlfDenyRadioButton(wxCommandEvent&);

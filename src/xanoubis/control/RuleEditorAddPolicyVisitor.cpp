@@ -81,7 +81,9 @@ RuleEditorAddPolicyVisitor::visitAppPolicy(AppPolicy *appPolicy)
 void
 RuleEditorAddPolicyVisitor::visitAlfPolicy(AlfPolicy *alfPolicy)
 {
-	showAlf(alfPolicy, appendPolicy(alfPolicy));
+	if (alfPolicy->getTypeNo() != APN_ALF_CTX) {
+		showAlf(alfPolicy, appendPolicy(alfPolicy));
+	}
 }
 
 void

@@ -273,6 +273,32 @@ DlgRuleEditor::updateBinName(wxString binName)
 }
 
 void
+DlgRuleEditor::updateContextName(wxString ctxName)
+{
+	Policy				*policy;
+	AppPolicy			*appPolicy;
+	RuleEditorFillTableVisitor	 updateTable(this, selectedIndex_);
+	RuleEditorFillWidgetsVisitor	 updateWidgets(this);
+
+	policy = (Policy *)ruleListCtrl->GetItemData(selectedIndex_);
+	if (policy == NULL) {
+		return;
+	}
+
+	if (policy->IsKindOf(CLASSINFO(AppPolicy))) {
+		appPolicy = (AppPolicy *)policy;
+		if (appPolicy->hasContext()) {
+			appPolicy->setContextName(ctxName);
+			policy->accept(updateTable);
+			policy->accept(updateWidgets);
+		} else {
+			appPolicy->getRsParent()->createAlfCtxPolicy(
+			    appPolicy->getId(), ctxName);
+		}
+	}
+}
+
+void
 DlgRuleEditor::updateAction(int action)
 {
 	AlfPolicy			*policy;
@@ -529,6 +555,44 @@ DlgRuleEditor::OnAppBinaryTextCtrl(wxCommandEvent& event)
 }
 
 void
+DlgRuleEditor::onAppContextTextCtrl(wxCommandEvent& )
+{
+	updateContextName(appContextTextCtrl->GetValue());
+}
+
+void
+DlgRuleEditor::onAppContextDeleteButton(wxCommandEvent&)
+{
+	Policy		*policy;
+	AppPolicy	*appPolicy;
+	PolicyRuleSet	*rs;
+
+	policy = (Policy *)ruleListCtrl->GetItemData(selectedIndex_);
+	if (policy == NULL) {
+		return;
+	}
+
+	appPolicy = wxDynamicCast(policy, AppPolicy);
+	if ((appPolicy == NULL) || !appPolicy->hasContext()) {
+		return;
+	}
+
+	rs = policy->getRsParent();
+	if (rs == NULL) {
+		return;
+	}
+
+	if ((geteuid() != 0) && rs->isAdmin()) {
+		wxMessageBox(_("No permission to edit admin ruleset."),
+		    _("Rule Editor"), wxOK, this);
+		return;
+	}
+
+	rs->deletePolicy(appPolicy->getContext()->getId());
+
+}
+
+void
 DlgRuleEditor::OnSfsBinaryTextCtrl(wxCommandEvent& event)
 {
 	updateBinName(event.GetString());
@@ -553,6 +617,28 @@ DlgRuleEditor::OnAppBinaryModifyButton(wxCommandEvent& )
 
 	if (fileDlg->ShowModal() == wxID_OK) {
 		updateBinName(fileDlg->GetPath());
+	}
+}
+
+void
+DlgRuleEditor::onAppContextModifyButton(wxCommandEvent& )
+{
+	wxString	 caption = _("Choose a binary as context");
+	wxString	 wildcard = wxT("*");
+	wxString	 defaultDir = wxT("/usr/bin/");
+	wxString	 defaultFilename = wxEmptyString;
+	wxFileDialog	*fileDlg;
+
+	if (wxIsBusy())
+		return;
+
+	wxBeginBusyCursor();
+	fileDlg = new wxFileDialog(NULL, caption, defaultDir, defaultFilename,
+	    wildcard, wxOPEN);
+	wxEndBusyCursor();
+
+	if (fileDlg->ShowModal() == wxID_OK) {
+		updateContextName(fileDlg->GetPath());
 	}
 }
 
