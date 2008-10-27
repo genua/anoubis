@@ -698,6 +698,7 @@ Communicator::Entry(void)
 				wxCommandEvent event(anEVT_COM_NOTIFYRECEIVED);
 				struct anoubis_msg *notifyMsg = NULL;
 
+				notifyMsg = anoubis_client_getnotify(client_);
 				switch(get_value(notifyMsg->u.general->type)) {
 				case ANOUBIS_N_POLICYCHANGE:
 					/*
@@ -707,8 +708,6 @@ Communicator::Entry(void)
 					anoubis_msg_free(notifyMsg);
 					break;
 				default:
-					notifyMsg = anoubis_client_getnotify(
-					    client_);
 					if (checkNotify(notifyMsg))
 						break;
 					event.SetClientData(notifyMsg);
