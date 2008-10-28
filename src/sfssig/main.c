@@ -110,6 +110,7 @@ static int	 create_channel(void);
 static void	 destroy_channel(void);
 static int	 sfs_tree(char *path, int op);
 static int	 sfs_add_tree(char *path, int op);
+static uid_t	*request_uids(char *file, int *count);
 
 #define SYSSIGNAME "security.anoubis_syssig"
 
@@ -128,6 +129,8 @@ struct cmd {
 static struct achat_channel	*channel;
 struct anoubis_client		*client;
 static int			 opts = 0;
+uid_t				 uid = 0;
+int				 checksum_flag = ANOUBIS_CSUM_NONE;
 static char			*anoubis_socket = "/var/run/anoubisd.sock";
 
 __dead void
@@ -400,7 +403,7 @@ main(int argc, char *argv[])
 	int		 error = 0;
 	int		 end;
 
-	while ((ch = getopt(argc, argv, "A:URLf:ndvr")) != -1) {
+	while ((ch = getopt(argc, argv, "A:URLf:u:ndvr")) != -1) {
 		switch (ch) {
 		case 'n':
 			opts |= SFSSIG_OPT_NOACTION;
@@ -420,6 +423,20 @@ main(int argc, char *argv[])
 			break;
 		case 'f':
 			file = optarg;
+			break;
+		case 'u':
+			if (getuid() != 0) {
+				fprintf(stderr,
+				    "You need root privilegs to do this.\n");
+				return 1;
+			}
+			if (strcmp(optarg, "all") == 0) {
+				checksum_flag = ANOUBIS_CSUM_UID_ALL;
+				uid = 0;
+			} else {
+				checksum_flag = ANOUBIS_CSUM_UID;
+				uid = (uid_t)atoi(optarg);
+			}
 			break;
 		case 'A':
 			argcsumstr = optarg;
@@ -576,7 +593,8 @@ sfs_sumop(char *file, int operation, u_int8_t *cs)
 		len = ANOUBIS_CS_LEN;
 	if (opts & SFSSIG_OPT_DEBUG2)
 		fprintf(stderr, "start checksum request\n");
-	t = anoubis_client_csumrequest_start(client, operation, file, cs, len);
+	t = anoubis_client_csumrequest_start(client, operation, file, cs, len,
+	    uid, checksum_flag);
 	if (!t) {
 		fprintf(stderr, "%s: Cannot send checksum request\n", file);
 		return NULL;
@@ -596,13 +614,83 @@ sfs_sumop(char *file, int operation, u_int8_t *cs)
 	return t;
 }
 
+static uid_t*
+request_uids(char *file, int *count)
+{
+	int ret;
+	uid_t *uids;
+	int cnt = 0;
+	struct stat sb;
+	struct anoubis_transaction	*t;
+	char				**result;
+
+	if (opts & SFSSIG_OPT_DEBUG)
+		fprintf(stderr, ">request_uids\n");
+
+	if (!file || !count || checksum_flag != ANOUBIS_CSUM_UID_ALL) {
+		if (opts & SFSSIG_OPT_DEBUG2)
+			fprintf(stderr, "error in requesting uids\n");
+		return NULL;
+	}
+
+	ret = stat(file, &sb);
+	if (ret != 0) {
+		perror(file);
+		return NULL;
+	}
+	if (!S_ISREG(sb.st_mode)) {
+		return NULL;
+	}
+
+	t = sfs_sumop(file, ANOUBIS_CHECKSUM_OP_UID_LIST, NULL);
+	if (!t)
+		return NULL;
+	if (t->result) {
+		fprintf(stderr, "%s Checksum Request failed: %d (%s)\n", file,
+		    t->result, strerror(t->result));
+		anoubis_transaction_destroy(t);
+		return NULL;
+	}
+
+	result = anoubis_csum_list(t->msg, &cnt);
+	if (!result || cnt <= 0) {
+		if (opts & SFSSIG_OPT_DEBUG2)
+			fprintf(stderr, "no result.\n");
+		anoubis_transaction_destroy(t);
+		return NULL;
+	}
+
+	uids = (uid_t *)calloc(cnt, sizeof(uid_t));
+	if (!uids) {
+		perror(file);
+		anoubis_transaction_destroy(t);
+		return NULL;
+	}
+	for (ret = 0; ret < cnt; ret++) {
+		if (opts & SFSSIG_OPT_DEBUG2)
+			fprintf(stderr, "request_uids %d: %s\n", ret,
+			    result[ret]);
+		uids[ret] = (uid_t)atoi(result[ret]);
+	}
+
+	*count = cnt;
+	anoubis_transaction_destroy(t);
+	
+	if (opts & SFSSIG_OPT_DEBUG)
+		fprintf(stderr, "<request_uids\n");
+
+	return uids;
+}
+
 static int
 sfs_add(char *file)
 {
-	struct anoubis_transaction	*t;
+	struct anoubis_transaction	*t = NULL;
 	u_int8_t			 cs[ANOUBIS_CS_LEN];
+	uid_t				*result = NULL;
 	int				 len = ANOUBIS_CS_LEN;
 	int				 ret;
+	int				 cnt = 0;
 	int				 i;
 	int				 error = 0;
 
@@ -626,14 +714,32 @@ sfs_add(char *file)
 		fprintf(stderr, " Bad csum length from anoubis_csum_calc\n");
 		return 1;
 	}
-	t = sfs_sumop(file, ANOUBIS_CHECKSUM_OP_ADDSUM, cs);
-	if (!t)
-		return 1;
-	if (t->result) {
-		fprintf(stderr, "%s Checksum Request failed: %d (%s)\n", file,
-		    t->result, strerror(t->result));
-		anoubis_transaction_destroy(t);
-		return 1;
+	if (checksum_flag == ANOUBIS_CSUM_UID_ALL) {
+		result = request_uids(file, &cnt);
+		if (!result) {
+			return 1;
+		}
+	} else {
+		result = (uid_t *)calloc(1, sizeof(uid_t *));
+		if (!result) {
+			perror("sfs_add");
+			return 1;
+		}
+		result[0] = uid;
+		cnt = 1;
+	}
+	for ( i = 0; i < cnt; i++) {
+		uid = result[i];
+		checksum_flag = ANOUBIS_CSUM_UID;
+		t = sfs_sumop(file, ANOUBIS_CHECKSUM_OP_ADDSUM, cs);
+		if (!t)
+			return 1;
+		if (t->result) {
+			fprintf(stderr, "Checksum Request failed: %d (%s)\n",
+			t->result, strerror(t->result));
+			anoubis_transaction_destroy(t);
+			return 1;
+		}
 	}
 	/* Print the checksum that has been added, if verbose output activated*/
 	if (opts & SFSSIG_OPT_VERBOSE2)
@@ -654,26 +760,48 @@ sfs_add(char *file)
 static int
 sfs_del(char *file)
 {
-	struct anoubis_transaction *t;
+	struct anoubis_transaction	*t;
+	uid_t				*result = NULL;
+	int				 cnt = 0;
+	int				 i;
 
 	if (opts & SFSSIG_OPT_DEBUG)
 		fprintf(stderr, ">sfs_del\n");
 	if (opts & SFSSIG_OPT_DEBUG2)
 		fprintf(stderr, "%s\n", file);
 
-	t = sfs_sumop(file, ANOUBIS_CHECKSUM_OP_DEL, NULL);
-	if (!t)
-		return 1;
-	if (t->result) {
-		if (t->result == ENOENT) {
-			fprintf(stderr, "No entry found for %s\n", file);
+	if (checksum_flag == ANOUBIS_CSUM_UID_ALL) {
+		result = request_uids(file, &cnt);
+		if (!result) {
+			return 1;
+		}
+	} else {
+		result = (uid_t *)calloc(1, sizeof(uid_t *));
+		if (!result) {
+			perror("sfs_del");
+			return 1;
+		}
+		result[0] = uid;
+		cnt = 1;
+	}
+	for ( i = 0; i < cnt; i++) {
+		uid = result[i];
+		checksum_flag = ANOUBIS_CSUM_UID;
+		t = sfs_sumop(file, ANOUBIS_CHECKSUM_OP_DEL, NULL);
+		if (!t)
+			return 1;
+		if (t->result) {
+			if (t->result == ENOENT) {
+				fprintf(stderr, "No entry found for %s\n",
+				    file);
+				anoubis_transaction_destroy(t);
+				return 1;
+			}
+			fprintf(stderr, "Checksum Request failed: %d (%s)\n",
+			t->result, strerror(t->result));
 			anoubis_transaction_destroy(t);
 			return 1;
 		}
-		fprintf(stderr, "%s: Checksum Request failed: %d (%s)\n", file,
-		t->result, strerror(t->result));
-		anoubis_transaction_destroy(t);
-		return 1;
 	}
 	if (opts & SFSSIG_OPT_VERBOSE2)
 		printf("del: ");
@@ -689,43 +817,66 @@ static int
 sfs_getsum(char *file)
 {
 	struct anoubis_transaction	*t;
-	int				 i;
+	int				 i, j;
+	int				 cnt = 0;
+	uid_t				*result = NULL;
 
 	if (opts & SFSSIG_OPT_DEBUG)
 		fprintf(stderr, ">sfs_getsum\n");
 
-	t = sfs_sumop(file, ANOUBIS_CHECKSUM_OP_GET, NULL);
-	if (!t) {
-		if (opts & SFSSIG_OPT_DEBUG2)
-			fprintf(stderr, "sfs_sumop returned NULL");
-		return 1;
+	if (checksum_flag == ANOUBIS_CSUM_UID_ALL) {
+		result = request_uids(file, &cnt);
+		if (!result) {
+			return 1;
+		}
+	} else {
+		result = (uid_t *)calloc(1, sizeof(uid_t *));
+		if (!result) {
+			perror("sfs_getsum");
+			return 1;
+		}
+		result[0] = uid;
+		cnt = 1;
 	}
-	if (t->result) {
-		if (t->result == ENOENT) {
-			fprintf(stderr, "No entry found for %s\n", file);
+	for ( j = 0; j < cnt; j++) {
+		if (opts & SFSSIG_OPT_DEBUG2)
+			fprintf(stderr, "sfs_getsum for uid %d\n", result[j]);
+		uid = result[j];
+		checksum_flag = ANOUBIS_CSUM_UID;
+
+		t = sfs_sumop(file, ANOUBIS_CHECKSUM_OP_GET, NULL);
+		if (!t) {
+			if (opts & SFSSIG_OPT_DEBUG2)
+				fprintf(stderr, "sfs_sumop returned NULL");
+			return 1;
+		}
+		if (t->result) {
+			if (t->result == ENOENT) {
+				fprintf(stderr, "No entry found for %s\n",
+				    file);
+				anoubis_transaction_destroy(t);
+				return 1;
+			}
+			fprintf(stderr, "Checksum Request failed: %d (%s)\n",
+			    t->result, strerror(t->result));
 			anoubis_transaction_destroy(t);
 			return 1;
 		}
-		fprintf(stderr, "%s Checksum Request failed: %d (%s)\n", file,
-		    t->result, strerror(t->result));
+		if (!VERIFY_LENGTH(t->msg, sizeof(Anoubis_AckPayloadMessage)
+		    + SHA256_DIGEST_LENGTH)) {
+			fprintf(stderr, "Short checksum in reply (len=%d)\n",
+			    t->msg->length);
+			anoubis_transaction_destroy(t);
+			return 1;
+		}
+		printf("%d: %s\t",result[j], file);
+		for (i=0; i<SHA256_DIGEST_LENGTH; ++i)
+			printf("%02x", t->msg->u.ackpayload->payload[i]);
+
+		printf("\n");
+
 		anoubis_transaction_destroy(t);
-		return 1;
 	}
-
-	if (!VERIFY_LENGTH(t->msg, sizeof(Anoubis_AckPayloadMessage)
-	    + SHA256_DIGEST_LENGTH)) {
-		fprintf(stderr, "Short checksum in reply (len=%d)\n",
-		    t->msg->length);
-		anoubis_transaction_destroy(t);
-		return 1;
-	}
-	printf("%s\t", file);
-	for (i=0; i<SHA256_DIGEST_LENGTH; ++i)
-		printf("%02x", t->msg->u.ackpayload->payload[i]);
-
-	printf("\n");
-
-	anoubis_transaction_destroy(t);
 
 	if (opts & SFSSIG_OPT_DEBUG)
 		fprintf(stderr, "<sfs_getsum\n");
@@ -738,7 +889,7 @@ sfs_list(char *file)
 {
 	struct anoubis_transaction	 *t;
 	char				**result;
-	int				  cnt = 0;
+	int				  sfs_cnt = 0;
 	int				  len;
 	int				  i;
 	int				  ret;
@@ -756,27 +907,7 @@ sfs_list(char *file)
 		return 1;
 	}
 	if (S_ISREG(sb.st_mode)) {
-		t = sfs_sumop(file, ANOUBIS_CHECKSUM_OP_GET, NULL);
-		if (!t) {
-			fprintf(stderr, "sfs_sumop returned NULL\n");
-			return 1;
-		}
-		if (t->result) {
-			if (t->result == ENOENT) {
-				fprintf(stderr, "No entry found for %s\n",
-				    file);
-				anoubis_transaction_destroy(t);
-				return 1;
-			}
-			fprintf(stderr, "%s Checksum Request failed: %d (%s)\n",
-			file, t->result, strerror(t->result));
-			anoubis_transaction_destroy(t);
-			return 1;
-		} else {
-			printf("%s\n", file);
-		}
-		anoubis_transaction_destroy(t);
-		return 0;
+		return sfs_getsum(file);	
 	}
 
 	len = strlen(file) - 1;
@@ -799,8 +930,7 @@ sfs_list(char *file)
 		anoubis_transaction_destroy(t);
 		return 1;
 	}
-
-	result = anoubis_csum_list(t->msg, &cnt);
+	result = anoubis_csum_list(t->msg, &sfs_cnt);
 	if (!result) {
 		fprintf(stderr, "anoubis_csum_list: no result\n");
 		anoubis_transaction_destroy(t);
@@ -809,16 +939,17 @@ sfs_list(char *file)
 
 	anoubis_transaction_destroy(t);
 
-	for (i = 0; i < cnt; i++) {
+	for (i = 0; i < sfs_cnt; i++) {
 		len = strlen(result[i]) - 1;
 		if (result[i][len] == '/')
 			continue;
 		printf("%s/%s\n", file, result[i]);
 	}
 
-	for (i = 0; i < cnt; i++)
+	for (i = 0; i < sfs_cnt; i++)
 		free(result[i]);
 	free(result);
+
 	if (opts & SFSSIG_OPT_DEBUG)
 		fprintf(stderr, "<sfs_list\n");
 

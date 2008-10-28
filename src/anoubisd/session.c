@@ -465,6 +465,7 @@ dispatch_checksum(struct anoubis_server *server, struct anoubis_msg *m,
 	anoubisd_msg_t			*s2m_msg;
 	anoubisd_msg_checksum_op_t	*msg_csum;
 	struct achat_channel		*chan;
+	int				 flags;
 	int err, opp;
 
 	struct event_info_session *ev_info = (struct event_info_session*)arg;
@@ -479,7 +480,16 @@ dispatch_checksum(struct anoubis_server *server, struct anoubis_msg *m,
 	msg_csum->len = m->length;
 	memcpy(msg_csum->msg, m->u.checksumrequest, m->length);
 	opp = get_value(m->u.checksumrequest->operation);
-	if (opp == ANOUBIS_CHECKSUM_OP_LIST) {
+	flags = get_value(m->u.checksumrequest->flags);
+	if (((flags != ANOUBIS_CSUM_NONE) && (uid != 0)) ||
+	    ((opp == ANOUBIS_CHECKSUM_OP_UID_LIST) && (uid != 0))) {
+		log_warn("Dropping checksum request missing privilegs uid: %d",
+		    uid);
+		free(s2m_msg);
+		return;
+	}
+	if (opp == ANOUBIS_CHECKSUM_OP_LIST ||
+	    opp == ANOUBIS_CHECKSUM_OP_UID_LIST) {
 		err = anoubis_policy_comm_addrequest(ev_info->policy, chan,
 		POLICY_FLAG_START | POLICY_FLAG_END,
 		&dispatch_checksum_list_reply, server, &msg_csum->token);

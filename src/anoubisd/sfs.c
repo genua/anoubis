@@ -101,6 +101,17 @@ sfs_open(const char *filename, uid_t auth_uid)
 #endif
 
 int
+check_for_uid(const char *path)
+{
+	struct stat sb;
+
+	if (stat(path, &sb) == 0)
+		return 1;
+	else
+		return 0;
+}
+
+int
 mkpath(const char *path)
 {
 	char *tmppath;
@@ -177,7 +188,7 @@ insert_escape_seq(const char *path, int dir)
 }
 
 char *
-remove_escape_seq(const char *name)
+remove_escape_seq(const char *name, int is_uid)
 {
 	char *newpath = NULL;
 	unsigned int size =  strlen(name);
@@ -211,7 +222,7 @@ remove_escape_seq(const char *name)
 		newpath[k] = name[i];
 	}
 	k--;
-	if (!mod) {
+	if (!mod && !is_uid) {
 		newpath[k] = '/';
 		k++;
 	}

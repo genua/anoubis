@@ -535,7 +535,8 @@ Communicator::Entry(void)
 				continue;
 			}
 			reqTa =  anoubis_client_csumrequest_start(client_,
-			    ANOUBIS_CHECKSUM_OP_ADDSUM, addFile_, cs, len);
+			    ANOUBIS_CHECKSUM_OP_ADDSUM, addFile_, cs, len, 0,
+			    ANOUBIS_CSUM_NONE);
 			if(!reqTa) {
 				notDone = false;
 				commRC =  CONNECTION_RXTX_ERROR;
@@ -592,7 +593,7 @@ Communicator::Entry(void)
 
 			reqTa = anoubis_client_csumrequest_start(
 			    client_, ANOUBIS_CHECKSUM_OP_GET,
-			    getFile_, NULL, 0);
+			    getFile_, NULL, 0, 0, ANOUBIS_CSUM_NONE);
 			if(!reqTa) {
 				notDone = false;
 				commRC =  CONNECTION_RXTX_ERROR;

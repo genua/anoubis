@@ -109,8 +109,8 @@ struct event_info_main {
 	int anoubisfd;
 };
 
-void	send_checksum_list(u_int64_t token, const char *path,
-		struct event_info_main *ev_info);
+void	send_checksum_list(u_int64_t token, const char *path, uid_t uid,
+		struct event_info_main *ev_info, int is_uid);
 
 static char *pid_file_name = ANOUBISD_PIDFILENAME;
 
@@ -666,8 +666,8 @@ dispatch_m2s(int fd, short event __used, /*@dependent@*/ void *arg)
 }
 
 void
-send_checksum_list(u_int64_t token, const char *path,
-    struct event_info_main *ev_info)
+send_checksum_list(u_int64_t token, const char *path, uid_t uid,
+    struct event_info_main *ev_info, int is_uid)
 {
 	/* Since only pathname components are transferred, it is sufficient
 	 * that the payload size (3000) is larger than NAME_MAX (255),
@@ -681,8 +681,9 @@ send_checksum_list(u_int64_t token, const char *path,
 	int			 cnt = 0;
 	int			 error = 0;
 	int			 len = 0;
+	int			 stars, i, ret;
 	DIR			*sfs_dir;
-	struct	dirent		*sfs_ent;
+	struct dirent		*sfs_ent;
 
 	sfs_dir = opendir(path);
 	if (!sfs_dir) {
@@ -710,11 +711,34 @@ send_checksum_list(u_int64_t token, const char *path,
 			    sfs_ent = readdir(sfs_dir);
 				continue;
 			}
+			len = strlen(sfs_ent->d_name);
+			for (i = 0, stars = 0; i < len; i++) {
+				if (sfs_ent->d_name[i] == '*')
+					stars++;
+			}
+			if (stars%2) {
+				ret = asprintf(&tmp,
+				    "%s/%s/%d", path, sfs_ent->d_name, uid);
+				if (ret < 0) {
+					log_warn("send_checksum_list: "
+					    "can't allocate memory");
+					master_terminate(ENOMEM);
+					return;
+				}
+				ret = check_for_uid(tmp);
+				if (ret == 0) {
+					sfs_ent = readdir(sfs_dir);
+					free(tmp);
+					continue;
+				} else {
+					free(tmp);
+				}
+			}
 
-			tmp = remove_escape_seq(sfs_ent->d_name);
+			tmp = remove_escape_seq(sfs_ent->d_name, is_uid);
 			if (!tmp) {
-				log_warn("send_checksum_list: \
-						can't allocate memory");
+				log_warn("send_checksum_list: " 
+				    "can't allocate memory");
 				master_terminate(ENOMEM);
 				return;
 			}
@@ -744,7 +768,6 @@ send_checksum_list(u_int64_t token, const char *path,
 		if (sfs_ent == NULL)
 			break;
 	}
-
 	closedir(sfs_dir);
 	return;
 
@@ -772,6 +795,9 @@ dispatch_checksumop(anoubisd_msg_t *msg, struct event_info_main *ev_info)
 	    (anoubisd_msg_checksum_op_t *)msg->msg;
 	char * path = NULL;
 	char *result = NULL;
+	int	flags;
+	int	cslen;
+	uid_t	req_uid;
 	int err = -EFAULT, op = 0, extra = 0;
 	anoubisd_reply_t * reply;
 	u_int8_t digest[SHA256_DIGEST_LENGTH];
@@ -782,7 +808,15 @@ dispatch_checksumop(anoubisd_msg_t *msg, struct event_info_main *ev_info)
 	if (!VERIFY_LENGTH(&rawmsg, sizeof(Anoubis_ChecksumRequestMessage)))
 		goto out;
 	op = get_value(rawmsg.u.checksumrequest->operation);
-	if (op == ANOUBIS_CHECKSUM_OP_LIST) {
+	req_uid = get_value(rawmsg.u.checksumrequest->uid);
+	flags = get_value(rawmsg.u.checksumrequest->flags);
+
+	if (!(flags & ANOUBIS_CSUM_UID))
+		req_uid = msg_comm->uid;
+
+	switch (op) {
+	case ANOUBIS_CHECKSUM_OP_LIST:
+	case ANOUBIS_CHECKSUM_OP_UID_LIST:
 		plen = rawmsg.length - CSUM_LEN
 		    - sizeof(Anoubis_ChecksumRequestMessage);
 		path = rawmsg.u.checksumrequest->path;
@@ -790,18 +824,29 @@ dispatch_checksumop(anoubisd_msg_t *msg, struct event_info_main *ev_info)
 		if (path[i] == 0)
 			break;
 		}
-		if (i >= plen)
+		if (i >= plen) {
 			goto out;
+		}
 
-		err = convert_user_path(path, &result, 1);
-		if (err < 0)
-			goto out;
+		if (op == ANOUBIS_CHECKSUM_OP_LIST) {
+			err = convert_user_path(path, &result, 1);
+			if (err < 0) {
+				goto out;
+			}
+			send_checksum_list(msg_comm->token, result,
+			    req_uid, ev_info, 0);
+		} else {
+			err = convert_user_path(path, &result, 0);
+			if (err < 0) {
+				goto out;
+			}
+			send_checksum_list(msg_comm->token, result,
+			    req_uid, ev_info, 1);
+		}
 
-		send_checksum_list(msg_comm->token, result, ev_info);
 		free(result);
 		return;
-	} else if (op == ANOUBIS_CHECKSUM_OP_ADDSUM) {
-		int cslen;
+	case ANOUBIS_CHECKSUM_OP_ADDSUM:
 		if (!VERIFY_LENGTH(&rawmsg, sizeof(Anoubis_ChecksumAddMessage)))
 			goto out;
 		cslen = get_value(rawmsg.u.checksumadd->cslen);
@@ -816,18 +861,22 @@ dispatch_checksumop(anoubisd_msg_t *msg, struct event_info_main *ev_info)
 		path = rawmsg.u.checksumadd->payload + cslen;
 		plen = rawmsg.length - CSUM_LEN
 		    - sizeof(Anoubis_ChecksumAddMessage);
-	} else {
+		break;
+	default:
 		path = rawmsg.u.checksumrequest->path;
 		plen = rawmsg.length - CSUM_LEN
 		    - sizeof(Anoubis_ChecksumRequestMessage);
+		break;
 	}
+
 	for (i=0; i<plen; ++i) {
 		if (path[i] == 0)
 			break;
 	}
 	if (i >= plen)
 		goto out;
-	err = sfs_checksumop(path, op, msg_comm->uid, digest);
+
+	err = sfs_checksumop(path, op, req_uid, digest);
 	extra = 0;
 	if (err == 0) {
 		switch (op) {

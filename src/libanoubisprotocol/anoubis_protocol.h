@@ -169,6 +169,13 @@ static inline u_int64_t __ntohll(u_int64_t arg)
 
 #define		ANOUBIS_N_MAX		0x4FFF
 
+/* Checksum Request Flags */
+#define		ANOUBIS_CSUM_NONE	0x0000
+#define		ANOUBIS_CSUM_UID	0x0001
+#define		ANOUBIS_CSUM_KEY	0x0002
+#define		ANOUBIS_CSUM_UID_ALL	0x0004
+#define		ANOUBIS_CSUM_KEY_ALL	0x0008
+
 #define ANOUBIS_IS_NOTIFY(X) ((ANOUBIS_N_MIN)<=(X) && (X) <= (ANOUBIS_N_MAX))
 #define ANOUBIS_IS_POLICY(X) ((ANOUBIS_P_MIN)<=(X) && (X) <= (ANOUBIS_P_MAX))
 
@@ -316,16 +323,21 @@ typedef struct {
 #define ANOUBIS_CHECKSUM_OP_GET		0x0003UL
 #define ANOUBIS_CHECKSUM_OP_ADDSUM	0x0005UL
 #define ANOUBIS_CHECKSUM_OP_LIST	0x0006UL
+#define ANOUBIS_CHECKSUM_OP_UID_LIST	0x0007UL
 
 typedef struct {
 	u32n	type;
 	u32n	operation;
+	u32n	flags;
+	u32n	uid;
 	char	path[0];
 } __attribute__((packed)) Anoubis_ChecksumRequestMessage;
 
 typedef struct {
 	u32n	type;
 	u32n	operation;
+	u32n	flags;
+	u32n	uid;
 	u16n	cslen;
 	char payload[0];	/* cslen bytes checksum followed by path. */
 } __attribute__((packed)) Anoubis_ChecksumAddMessage;

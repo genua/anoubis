@@ -919,7 +919,7 @@ anoubis_client_policyrequest_start(struct anoubis_client * client,
 
 struct anoubis_transaction *
 anoubis_client_csumrequest_start(struct anoubis_client *client,
-    int op, char *path, u_int8_t *csum, short cslen)
+    int op, char *path, u_int8_t *csum, short cslen, uid_t uid, int flags)
 {
 	struct anoubis_msg * m;
 	struct anoubis_transaction * t = NULL;
@@ -927,6 +927,10 @@ anoubis_client_csumrequest_start(struct anoubis_client *client,
 	static const u_int32_t listops[] = { ANOUBIS_P_CSUM_LIST, -1 };
 	char * dstpath = NULL;
 
+	if ((flags == ANOUBIS_CSUM_NONE) && (uid != 0))
+		return NULL;
+	if ((flags == ANOUBIS_CSUM_UID_ALL) && (uid != 0))
+		return NULL;
 	if ((client->proto & ANOUBIS_PROTO_POLICY) == 0)
 		return NULL;
 	if (client->state != ANOUBIS_STATE_CONNECTED)
@@ -943,6 +947,8 @@ anoubis_client_csumrequest_start(struct anoubis_client *client,
 		m = anoubis_msg_new(sizeof(Anoubis_ChecksumAddMessage)
 		    + cslen + strlen(path) + 1);
 		dstpath = m->u.checksumadd->payload + cslen;
+		set_value(m->u.checksumadd->uid, uid);
+		set_value(m->u.checksumadd->flags, flags);
 	} else {
 		m = anoubis_msg_new(sizeof(Anoubis_ChecksumRequestMessage)
 		    + strlen(path) + 1);
@@ -954,7 +960,8 @@ anoubis_client_csumrequest_start(struct anoubis_client *client,
 		set_value(m->u.checksumadd->cslen, cslen);
 		memcpy(m->u.checksumadd->payload, csum, cslen);
 	}
-	if (op == ANOUBIS_CHECKSUM_OP_LIST) {
+	if (op == ANOUBIS_CHECKSUM_OP_LIST ||
+	    op == ANOUBIS_CHECKSUM_OP_UID_LIST) {
 		t = anoubis_transaction_create(0,
 		ANOUBIS_T_INITSELF|ANOUBIS_T_WANT_ALL,
 		&anoubis_client_list_ack_steps, NULL, client);
@@ -968,6 +975,8 @@ anoubis_client_csumrequest_start(struct anoubis_client *client,
 		return NULL;
 	}
 	set_value(m->u.checksumrequest->type, ANOUBIS_P_CSUMREQUEST);
+	set_value(m->u.checksumrequest->uid, uid);
+	set_value(m->u.checksumrequest->flags, flags);
 	set_value(m->u.checksumrequest->operation, op);
 	strlcpy(dstpath, path, strlen(path)+1);
 	if (anoubis_client_send(client, m) < 0) {
@@ -976,7 +985,8 @@ anoubis_client_csumrequest_start(struct anoubis_client *client,
 		return NULL;
 	}
 
-	if (op == ANOUBIS_CHECKSUM_OP_LIST)
+	if (op == ANOUBIS_CHECKSUM_OP_LIST ||
+	    op == ANOUBIS_CHECKSUM_OP_UID_LIST)
 		anoubis_transaction_setopcodes(t, listops);
 	else
 		anoubis_transaction_setopcodes(t, generalops);
