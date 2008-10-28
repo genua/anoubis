@@ -203,10 +203,21 @@ have_match:
 	 * Matching rule is in @match. This might be a default rule
 	 * or a real match.
 	 */
-	res->decision = match->rule.sbaccess.action;
+	if (match->apn_type == APN_DEFAULT) {
+		res->decision = match->rule.apndefault.action;
+		if (match->rule.apndefault.log > res->log)
+			res->log = match->rule.apndefault.log;
+	} else if (match->apn_type == APN_SB_ACCESS) {
+		res->decision = match->rule.sbaccess.action;
+		if (match->rule.sbaccess.log > res->log)
+			res->log = match->rule.sbaccess.log;
+	} else {
+		log_warnx("Inconsistent rule type");
+		goto err;
+	}
 	res->rule_id = match->apn_id;
-	if (match->rule.sbaccess.log > res->log)
-		res->log = match->rule.sbaccess.log;
+	DEBUG(DBG_SANDBOX, " pe_sb_evaluate: decision = %d rule %d",
+	    res->decision, res->rule_id);
 	return;
 err:
 	res->decision = POLICY_DENY;
@@ -253,6 +264,7 @@ pe_decide_sandbox(struct pe_proc *proc, struct eventdev_hdr *hdr)
 	if (!sbevent)
 		return NULL;
 
+	DEBUG(DBG_SANDBOX, " pe_decide_sandbox");
 	for (i=0; i<3; ++i) {
 		res[i].rule_id = 0;
 		res[i].decision = -1;
@@ -269,6 +281,9 @@ pe_decide_sandbox(struct pe_proc *proc, struct eventdev_hdr *hdr)
 		if (proc) {
 			sbrules = pe_context_get_sbrule(
 			    pe_proc_get_context(proc, i));
+			DEBUG(DBG_SANDBOX, " pe_decide_sandbox: context rules "
+			    "prio %d rules %p", i, sbrules);
+
 		} else {
 			struct apn_ruleset	*rs;
 			rs = pe_user_get_ruleset(sbevent->uid, i, NULL);
@@ -279,6 +294,8 @@ pe_decide_sandbox(struct pe_proc *proc, struct eventdev_hdr *hdr)
 			} else {
 				sbrules = NULL;
 			}
+			DEBUG(DBG_SANDBOX, " pe_decide_sandbox: default rules "
+			    "prio %d rules %p", i, sbrules);
 		}
 		/*
 		 * Give the next priority a chance if we do not have
@@ -314,6 +331,8 @@ pe_decide_sandbox(struct pe_proc *proc, struct eventdev_hdr *hdr)
 		if (final.decision != -1 && final.decision != POLICY_ALLOW)
 			break;
 	}
+	DEBUG(DBG_SANDBOX, ">pe_decide_sandbox: decision = %d, prio = %d",
+	    final.decision, i);
 	reply = calloc(1, sizeof(struct anoubisd_reply));
 	if (!reply) {
 		log_warn("pe_decide_sb: cannot allocate memory");
@@ -392,5 +411,6 @@ pe_decide_sandbox(struct pe_proc *proc, struct eventdev_hdr *hdr)
 		reply->csum = pident->csum;
 		reply->path = pident->pathhint;
 	}
+	DEBUG(DBG_SANDBOX, "<pe_decide_sandbox");
 	return reply;
 }

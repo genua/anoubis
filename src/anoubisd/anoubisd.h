@@ -276,5 +276,6 @@ u_int32_t debug_stderr;
 #define DBG_PE_CTX	0x0800
 #define DBG_PE_DECALF	0x1000
 #define DBG_SESSION	0x2000
+#define DBG_SANDBOX	0x4000
 
 #endif /* !_ANOUBISD_H */
