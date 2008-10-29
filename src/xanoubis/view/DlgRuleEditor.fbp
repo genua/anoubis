@@ -4194,7 +4194,7 @@
                                                             <property name="id">wxID_ANY</property>
                                                             <property name="label">accept</property>
                                                             <property name="maximum_size"></property>
-                                                            <property name="minimum_size"></property>
+                                                            <property name="minimum_size">80,-1</property>
                                                             <property name="name">alfAcceptRadioButton</property>
                                                             <property name="permission">protected</property>
                                                             <property name="pos"></property>

@@ -464,6 +464,8 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	alfConnectOptionSizer->Add( alfDirectionText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	alfAcceptRadioButton = new wxRadioButton( alfNbPanel, wxID_ANY, _("accept"), wxDefaultPosition, wxDefaultSize, wxRB_GROUP );
+	alfAcceptRadioButton->SetMinSize( wxSize( 80,-1 ) );
+	
 	alfConnectOptionSizer->Add( alfAcceptRadioButton, 0, wxALL, 5 );
 	
 	alfConnectRadioButton = new wxRadioButton( alfNbPanel, wxID_ANY, _("connect"), wxDefaultPosition, wxDefaultSize, 0 );
