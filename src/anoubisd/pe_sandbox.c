@@ -73,6 +73,7 @@ struct sandbox_event {
 struct result {
 	int log;
 	int rule_id;
+	int prio;
 	int decision;
 };
 
@@ -133,14 +134,14 @@ err:
 
 static void
 pe_sb_evaluate(struct apn_rule *sbrules, struct sandbox_event *sbevent,
-    struct result *res, unsigned int atype)
+    struct result *res, unsigned int atype, int prio)
 {
 	struct apn_rule		*sbrule;
 	struct apn_rule		*match = NULL;
 	time_t			 now;
 
 	if ((sbevent->amask & atype) == 0) {
-		/* Do not touch rule_id or log level. */
+		/* Do not touch rule_id, prio or log level. */
 		res->decision = POLICY_ALLOW;
 		return;
 	}
@@ -216,12 +217,14 @@ have_match:
 		goto err;
 	}
 	res->rule_id = match->apn_id;
-	DEBUG(DBG_SANDBOX, " pe_sb_evaluate: decision = %d rule %d",
-	    res->decision, res->rule_id);
+	res->prio = prio;
+	DEBUG(DBG_SANDBOX, " pe_sb_evaluate: decision = %d rule %d prio %d",
+	    res->decision, res->rule_id,  res->prio);
 	return;
 err:
 	res->decision = POLICY_DENY;
 	res->rule_id = 0;
+	res->prio = 0;
 	res->log = APN_LOG_NONE;
 }
 
@@ -267,6 +270,7 @@ pe_decide_sandbox(struct pe_proc *proc, struct eventdev_hdr *hdr)
 	DEBUG(DBG_SANDBOX, " pe_decide_sandbox");
 	for (i=0; i<3; ++i) {
 		res[i].rule_id = 0;
+		res[i].prio = 0;
 		res[i].decision = -1;
 		res[i].log = APN_LOG_NONE;
 	}
@@ -308,9 +312,9 @@ pe_decide_sandbox(struct pe_proc *proc, struct eventdev_hdr *hdr)
 		 * priority. However, the only possibilities are
 		 * uninitilized (-1) or POLICY_ALLOW.
 		 */
-		pe_sb_evaluate(sbrules, sbevent, &res[0], APN_SBA_READ);
-		pe_sb_evaluate(sbrules, sbevent, &res[1], APN_SBA_WRITE);
-		pe_sb_evaluate(sbrules, sbevent, &res[2], APN_SBA_EXEC);
+		pe_sb_evaluate(sbrules, sbevent, &res[0], APN_SBA_READ, i);
+		pe_sb_evaluate(sbrules, sbevent, &res[1], APN_SBA_WRITE, i);
+		pe_sb_evaluate(sbrules, sbevent, &res[2], APN_SBA_EXEC, i);
 		/*
 		 * If any of the events results in DENY we are done here.
 		 * If any of the events results in ASK we are done, too.
@@ -345,6 +349,7 @@ pe_decide_sandbox(struct pe_proc *proc, struct eventdev_hdr *hdr)
 	 */
 	if (final.decision == -1) {
 		final.rule_id = 0;
+		final.prio = 0;
 		final.decision = POLICY_ALLOW;
 		final.log = APN_LOG_NONE;
 	} else {
@@ -354,12 +359,14 @@ pe_decide_sandbox(struct pe_proc *proc, struct eventdev_hdr *hdr)
 		 */
 		final.log = -1;
 		final.rule_id = 0;
+		final.prio = 0;
 		for (j=0; j<3; ++j) {
 			if (res[j].decision != final.decision)
 				continue;
 			if (res[j].log > final.log) {
 				final.log = res[j].log;
 				final.rule_id = res[j].rule_id;
+				final.prio = res[j].prio;
 			}
 		}
 	}
@@ -368,8 +375,7 @@ pe_decide_sandbox(struct pe_proc *proc, struct eventdev_hdr *hdr)
 	if (final.log == -1)
 		final.log = APN_LOG_NONE;
 	if (final.log != APN_LOG_NONE) {
-		if (i < PE_PRIO_MAX)
-			context = pe_context_dump(hdr, proc, i);
+		context = pe_context_dump(hdr, proc, final.prio);
 		dump = pe_sb_dumpevent(sbevent);
 	}
 
@@ -378,14 +384,16 @@ pe_decide_sandbox(struct pe_proc *proc, struct eventdev_hdr *hdr)
 	case APN_LOG_NONE:
 		break;
 	case APN_LOG_NORMAL:
-		log_info("SANDBOX prio %d rule %d %s %s (%s)", i,
+		log_info("SANDBOX prio %d rule %d %s %s (%s)", final.prio,
 		    final.rule_id, verdict[final.decision], dump, context);
-		send_lognotify(hdr, final.decision, final.log, final.rule_id);
+		send_lognotify(hdr, final.decision, final.log, final.rule_id,
+		    final.prio);
 		break;
 	case APN_LOG_ALERT:
-		log_warnx("SANDBOX prio %d rule %d %s %s (%s)", i,
+		log_warnx("SANDBOX prio %d rule %d %s %s (%s)", final.prio,
 		    final.rule_id, verdict[final.decision], dump, context);
-		send_lognotify(hdr, final.decision, final.log, final.rule_id);
+		send_lognotify(hdr, final.decision, final.log, final.rule_id,
+		    final.prio);
 		break;
 	default:
 		log_warnx("pe_decide_sandbox: unknown log type %d", final.log);
@@ -399,6 +407,7 @@ pe_decide_sandbox(struct pe_proc *proc, struct eventdev_hdr *hdr)
 
 	reply->ask = 0;
 	reply->rule_id = final.rule_id;
+	reply->prio = final.prio;
 	reply->timeout = (time_t)0;
 	if (final.decision == POLICY_DENY)
 		reply->reply = EPERM;

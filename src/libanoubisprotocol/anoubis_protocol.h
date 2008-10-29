@@ -252,6 +252,7 @@ typedef struct {
 	u64n	task_cookie;
 	u32n	pid;
 	u32n	rule_id;
+	u32n	prio;
 	u32n	uid;
 	u32n	subsystem;
 	u32n	operation;

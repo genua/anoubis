@@ -365,6 +365,7 @@ dispatch_m2p(int fd, short sig __used, void *arg)
 			switch(msg->mtype) {
 			case ANOUBISD_MSG_SFSOPEN:
 				sfsmsg->rule_id = reply->rule_id;
+				sfsmsg->prio = reply->prio;
 				break;
 			case ANOUBISD_MSG_EVENTDEV: {
 				anoubisd_msg_t *nmsg;
@@ -383,6 +384,7 @@ dispatch_m2p(int fd, short sig __used, void *arg)
 				eventask =
 				    (anoubisd_msg_eventask_t *)nmsg->msg;
 				eventask->rule_id = reply->rule_id;
+				eventask->prio = reply->prio;
 				eventask->evoff = 0;
 				eventask->evlen = extra;
 				bcopy(hdr, eventask->payload, hdr->msg_size);
@@ -496,7 +498,7 @@ token_cmp(void *msg1, void *msg2)
 
 void
 send_lognotify(struct eventdev_hdr *hdr, u_int32_t error, u_int32_t loglevel,
-    u_int32_t rule_id)
+    u_int32_t rule_id, u_int32_t prio)
 {
 	int size;
 	anoubisd_msg_t * msg;
@@ -517,6 +519,7 @@ send_lognotify(struct eventdev_hdr *hdr, u_int32_t error, u_int32_t loglevel,
 	req->error = error;
 	req->loglevel = loglevel;
 	req->rule_id = rule_id;
+	req->prio = prio;
 	bcopy(hdr, &req->hdr, hdr->msg_size);
 	enqueue(&eventq_p2s, msg);
 }

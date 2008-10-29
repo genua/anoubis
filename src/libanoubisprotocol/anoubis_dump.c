@@ -176,6 +176,7 @@ static void dump_notify(Anoubis_NotifyMessage * m, size_t len, int arg)
 	printf(" token = 0x%llx", XL(m->token));
 	DUMP_NETU(m, pid);
 	DUMP_NETU(m, rule_id);
+	DUMP_NETU(m, prio);
 	DUMP_NETULL(m, task_cookie);
 	DUMP_NETU(m, uid);
 	DUMP_NETU(m, subsystem);

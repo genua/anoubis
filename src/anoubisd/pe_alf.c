@@ -151,12 +151,12 @@ pe_decide_alf(struct pe_proc *proc, struct eventdev_hdr *hdr)
 	case APN_LOG_NORMAL:
 		log_info("%s prio %d rule %d %s %s (%s)", prefix, prio,
 		    rule_id, verdict[decision], dump, context);
-		send_lognotify(hdr, decision, log, rule_id);
+		send_lognotify(hdr, decision, log, rule_id, prio);
 		break;
 	case APN_LOG_ALERT:
 		log_warnx("%s prio %d rule %d %s %s (%s)", prefix, prio,
 		    rule_id, verdict[decision], dump, context);
-		send_lognotify(hdr, decision, log, rule_id);
+		send_lognotify(hdr, decision, log, rule_id, prio);
 		break;
 	default:
 		log_warnx("pe_decide_alf: unknown log type %d", log);
@@ -175,6 +175,7 @@ pe_decide_alf(struct pe_proc *proc, struct eventdev_hdr *hdr)
 
 	reply->ask = 0;
 	reply->rule_id = rule_id;
+	reply->prio = prio;
 	reply->timeout = (time_t)0;
 	if (decision == POLICY_DENY)
 		reply->reply = EPERM;

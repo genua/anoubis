@@ -167,12 +167,12 @@ pe_decide_sfs(uid_t uid, anoubisd_msg_sfsopen_t *sfsmsg, time_t now)
 	case APN_LOG_NORMAL:
 		log_info("%s prio %d rule %d %s %s (%s)", prefix, prio,
 		    rule_id, verdict[decision], dump, context);
-		send_lognotify(hdr, decision, log, rule_id);
+		send_lognotify(hdr, decision, log, rule_id, prio);
 		break;
 	case APN_LOG_ALERT:
 		log_warnx("%s %s %s (%s)", prefix, prio, rule_id,
 		    verdict[decision], dump, context);
-		send_lognotify(hdr, decision, log, rule_id);
+		send_lognotify(hdr, decision, log, rule_id, prio);
 		break;
 	default:
 		log_warnx("pe_decide_sfs: unknown log type %d", log);
@@ -189,6 +189,7 @@ pe_decide_sfs(uid_t uid, anoubisd_msg_sfsopen_t *sfsmsg, time_t now)
 		reply->reply = 0;
 	reply->ask = 0;		/* false */
 	reply->rule_id = rule_id;
+	reply->prio = prio;
 	reply->timeout = (time_t)0;
 	reply->len = 0;
 

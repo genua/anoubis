@@ -850,6 +850,7 @@ reply:
 	reply->token = comm->token;
 	reply->ask = 0;
 	reply->rule_id = 0;
+	reply->prio = 0;
 	reply->len = 0;
 	reply->flags = POLICY_FLAG_START|POLICY_FLAG_END;
 	reply->timeout = 0;

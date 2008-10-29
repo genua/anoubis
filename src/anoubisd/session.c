@@ -713,6 +713,7 @@ dispatch_m2s(int fd, short sig __used, void *arg)
 		set_value(m->u.notify->pid, hdr->msg_pid);
 		set_value(m->u.notify->task_cookie, task);
 		set_value(m->u.notify->rule_id, 0);
+		set_value(m->u.notify->prio, 0);
 		set_value(m->u.notify->uid, hdr->msg_uid);
 		set_value(m->u.notify->subsystem, hdr->msg_source);
 		set_value(m->u.notify->operation, 0 /* XXX ?? */);
@@ -889,6 +890,7 @@ dispatch_p2s_log_request(anoubisd_msg_t *msg,
 	set_value(m->u.notify->pid, req->hdr.msg_pid);
 	set_value(m->u.notify->task_cookie, task);
 	set_value(m->u.notify->rule_id, req->rule_id);
+	set_value(m->u.notify->prio, req->prio);
 	set_value(m->u.notify->uid, req->hdr.msg_uid);
 	set_value(m->u.notify->subsystem, req->hdr.msg_source);
 	set_value(m->u.notify->operation, 0 /* XXX ?? */);
@@ -918,7 +920,7 @@ dispatch_p2s_evt_request(anoubisd_msg_t	*msg,
 	unsigned int extra;
 	int sent;
 	u_int64_t task = 0;
-	u_int32_t rule_id = 0;
+	u_int32_t rule_id = 0, prio = 0;
 	int plen = 0, cslen = 0;
 
 	DEBUG(DBG_TRACE, ">dispatch_p2s_evt_request");
@@ -930,6 +932,7 @@ dispatch_p2s_evt_request(anoubisd_msg_t	*msg,
 	case ANOUBISD_MSG_EVENTASK:
 		eventask = (anoubisd_msg_eventask_t *)(msg->msg);
 		rule_id = eventask->rule_id;
+		prio = eventask->prio;
 		hdr = (struct eventdev_hdr *)
 		    (eventask->payload + eventask->evoff);
 		plen = eventask->pathlen;
@@ -938,6 +941,7 @@ dispatch_p2s_evt_request(anoubisd_msg_t	*msg,
 	case ANOUBISD_MSG_SFSOPEN:
 		hdr = &((anoubisd_msg_sfsopen_t*)msg->msg)->hdr;
 		rule_id = ((anoubisd_msg_sfsopen_t*)msg->msg)->rule_id;
+		prio = ((anoubisd_msg_sfsopen_t*)msg->msg)->prio;
 		break;
 	default:
 		log_warn("dispatch_p2s_evt_request: bad mtype %d", msg->mtype);
@@ -973,6 +977,7 @@ dispatch_p2s_evt_request(anoubisd_msg_t	*msg,
 	set_value(m->u.notify->pid, hdr->msg_pid);
 	set_value(m->u.notify->task_cookie, task);
 	set_value(m->u.notify->rule_id, rule_id);
+	set_value(m->u.notify->prio, prio);
 	set_value(m->u.notify->uid, hdr->msg_uid);
 	set_value(m->u.notify->subsystem, hdr->msg_source);
 	set_value(m->u.notify->operation, 0 /* XXX ?? */);
