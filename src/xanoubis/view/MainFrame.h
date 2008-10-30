@@ -37,6 +37,8 @@
 #include "MainFrameBase.h"
 #include "Module.h"
 
+class TaskEvent;
+
 class MainFrame : public MainFrameBase
 {
 	private:
@@ -50,6 +52,7 @@ class MainFrame : public MainFrameBase
 		bool		 show_;
 		wxIcon		*aboutIcon_;
 
+		void setConnectionString(bool, const wxString &);
 		void setMessageString(void);
 
 		void onRuleEditorShow(wxCommandEvent&);
@@ -70,7 +73,7 @@ class MainFrame : public MainFrameBase
 		void OnMbToolsLogViewerSelect(wxCommandEvent&);
 		void OnMbHelpHelpSelect(wxCommandEvent&);
 		void OnTbModuleSelect(wxCommandEvent&);
-		void OnRemoteStation(wxCommandEvent&);
+		void OnConnectionStateChange(wxCommandEvent&);
 		void OnOpenAlerts(wxCommandEvent&);
 		void OnOpenEscalations(wxCommandEvent&);
 		void OnClose(wxCloseEvent& event);
@@ -85,8 +88,6 @@ class MainFrame : public MainFrameBase
 		bool OnQuit(void);
 		void addModules(Module* []);
 
-		void setDaemonConnection(bool);
-		void setConnectionString(wxString);
 		bool isShowing();
 };
 

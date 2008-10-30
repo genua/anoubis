@@ -39,11 +39,22 @@
  * (SynchronizedQueue::push()) and remove an element from the beginning
  * (SynchronizedQueue::pop()).
  *
- * Access to the queue is synchronized with an mutex.
+ * Access to the queue is synchronized with an mutex. Additionally a semaphore
+ * can be enabled. In this case pop() waits until the queue is not empty.
  */
 template <class T>
 class SynchronizedQueue {
 	public:
+		/**
+		 * C'tor.
+		 *
+		 * @param sem If set to true, the push() and post() operations
+		 *            are additionally protected by a semaphore.
+		 */
+		SynchronizedQueue(bool sem) {
+			semEnabled_ = sem;
+		}
+
 		/**
 		 * Inserts an element at the end of the queue.
 		 *
@@ -51,25 +62,47 @@ class SynchronizedQueue {
 		 */
 		void push(T *t)
 		{
-			wxMutexLocker locker(mutex_);
+			mutex_.Lock();
 			queue_.push(t);
+			mutex_.Unlock();
+
+			if (semEnabled_)
+				sem_.Post();
 		}
 
 		/**
 		 * Removes an element from the beginning of the queue.
 		 *
-		 * @return Element which was removed. If the queue is empty,
-		 *         0 is returned.
+		 * @param timeout If a semaphore is enable for the queue, you
+		 *                can specify how long to wait for the
+		 *                semaphore. A timeout of 0 means to block
+		 *                indefinitely. If no semaphore is enabled, the
+		 *                argument is ignored.
+		 *
+		 * @return Element which was removed. If the queue is empty
+		 *         and/or the semaphore wait-timeout exceeded, 0 is
+		 *         returned.
 		 */
-		T *pop()
+		T *pop(int timeout = 0)
 		{
-			wxMutexLocker locker(mutex_);
+			if (semEnabled_) {
+				wxSemaError err = sem_.WaitTimeout(timeout);
 
-			if (queue_.empty())
+				if (err == wxSEMA_TIMEOUT)
+					return (0);
+			}
+
+			mutex_.Lock();
+
+			if (queue_.empty()) {
+				mutex_.Unlock();
 				return (0);
+			}
 
 			T *t = queue_.front();
 			queue_.pop();
+
+			mutex_.Unlock();
 
 			return (t);
 		}
@@ -77,6 +110,8 @@ class SynchronizedQueue {
 	private:
 		std::queue<T *> queue_;
 		wxMutex mutex_;
+		bool semEnabled_;
+		wxSemaphore sem_;
 };
 
 #endif	/* _SYNCHRONIZEDQUEUE_H_ */

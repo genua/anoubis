@@ -41,11 +41,15 @@
 #include <anoubis_msg.h>
 #include <anoubis_transaction.h>
 
+#include "AlertNotify.h"
 #include "AnEvents.h"
 #include "ComTask.h"
 #include "ComThread.h"
 #include "EscalationNotify.h"
+#include "LogNotify.h"
+#include "main.h"
 #include "NotifyAnswer.h"
+#include "StatusNotify.h"
 
 ComThread::ComThread(JobCtrl *jobCtrl, const wxString &socketPath)
     : JobThread(jobCtrl)
@@ -53,6 +57,12 @@ ComThread::ComThread(JobCtrl *jobCtrl, const wxString &socketPath)
 	this->socketPath_ = socketPath;
 	this->channel_ = 0;
 	this->client_ = 0;
+	answerQueue_ = new SynchronizedQueue<Notification>(false);
+}
+
+ComThread::~ComThread()
+{
+	delete answerQueue_;
 }
 
 bool
@@ -114,6 +124,11 @@ ComThread::connect(void)
 		return (false);
 	}
 
+	if (anoubis_client_connect(client_, ANOUBIS_PROTO_BOTH) != 0) {
+		disconnect();
+		return (false);
+	}
+
 	return (true);
 }
 
@@ -141,19 +156,33 @@ ComThread::isConnected(void) const
 void *
 ComThread::Entry(void)
 {
+	bool fetchOnIdle = false; /* Workaround! See #854 */
+
 	while (!exitThread()) {
 		Task *task = getNextTask(Task::TYPE_COM);
 		ComTask *comTask = dynamic_cast<ComTask*>(task);
 
-		if (comTask == 0)
-			continue;
+		if (comTask != 0) {
+			comTask->setComHandler(this);
+			comTask->exec();
 
-		comTask->setComHandler(this);
-		comTask->exec();
+			ComRegistrationTask *regTask =
+			    dynamic_cast<ComRegistrationTask*>(comTask);
+			if (regTask != 0) {
+				if (regTask->getAction() ==
+				    ComRegistrationTask::ACTION_REGISTER) {
+					fetchOnIdle = true;
+				}
+			}
 
-		TaskEvent event(comTask, wxID_ANY);
-		sendEvent(event);
+			TaskEvent event(comTask, wxID_ANY);
+			sendEvent(event);
+		} else if (fetchOnIdle)
+			waitForMessage();
 	}
+
+	/* Thread is short before exit, disconnect again */
+	disconnect();
 
 	return (0);
 }
@@ -167,13 +196,13 @@ ComThread::getClient(void) const
 bool
 ComThread::waitForMessage(void)
 {
-	size_t			size = 4096;
-	struct anoubis_msg	*msg;
 	struct pollfd		fds[1];
 	int			result;
 
-	if ((msg = anoubis_msg_new(size)) == 0)
+	if ((channel_ == 0) || (client_ == 0)) {
+		/* Not connected */
 		return (false);
+	}
 
 	fds[0].fd = channel_->fd;
 	fds[0].events = POLLIN;
@@ -188,20 +217,25 @@ ComThread::waitForMessage(void)
 
 		return (false);
 	}
-	if (result == 0) {
-		/* Timeout */
-		return (true);
-	}
 
-	if (fds[0].revents) {
+	if (result > 0 && fds[0].revents) {
+		size_t			size = 4096;
+		struct anoubis_msg	*msg;
+
+		if ((msg = anoubis_msg_new(size)) == 0)
+			return (false);
+
 		fds[0].revents = 0;
 		achat_rc rc = acc_receivemsg(
 		    channel_, (char*)(msg->u.buf), &size);
-		if (rc != ACHAT_RC_OK)
+		if (rc != ACHAT_RC_OK) {
+			anoubis_msg_free(msg);
 			return (false);
+		}
 
 		anoubis_msg_resize(msg, size);
 
+		/* This will free the message. */
 		if (anoubis_client_process(client_, msg) != 1)
 			return (false);
 
@@ -220,14 +254,33 @@ ComThread::waitForMessage(void)
 			default:
 				if (checkNotify(notifyMsg))
 					break;
-				wxCommandEvent event(anEVT_COM_NOTIFYRECEIVED);
-				event.SetClientData(notifyMsg);
-				sendEvent(event);
+				sendNotify(notifyMsg);
+				break;
 			}
 		}
 	}
 
+	Notification *notification;
+	while ((notification = answerQueue_->pop()) != 0) {
+		anoubis_token_t		 token;
+		int			 allowed;
+		EscalationNotify	*escalation;
+
+		escalation = (EscalationNotify *)notification;
+
+		token = escalation->getToken();
+		allowed = escalation->getAnswer()->wasAllowed();
+		anoubis_client_notifyreply(client_, token,
+		    allowed ? 0 : EPERM, 0);
+	}
+
 	return (true);
+}
+
+bool
+ComThread::startHook(void)
+{
+	return (connect());
 }
 
 bool
@@ -248,7 +301,7 @@ ComThread::checkNotify(struct anoubis_msg *notifyMsg)
 		if (pid == getpid()) {
 			answer = new NotifyAnswer(NOTIFY_ANSWER_ONCE, true);
 			notify->setAnswer(answer);
-			sendEscalationAnswer(notify);
+			pushNotification(notify);
 			return true;
 		}
 	}
@@ -257,9 +310,74 @@ ComThread::checkNotify(struct anoubis_msg *notifyMsg)
 }
 
 void
-ComThread::sendEscalationAnswer(Notification *notify)
+ComThread::sendNotify(struct anoubis_msg *notifyMsg)
 {
-	if ((notify != NULL) && IS_ESCALATIONOBJ(notify)) {
-		answerList_.Append(notify);
+	wxCommandEvent		 addEvent(anEVT_ADD_NOTIFICATION);
+	int			 type;
+	int			 subsystem;
+	Notification		*notify = 0;
+
+	type = get_value((notifyMsg->u.general)->type);
+	subsystem = get_value((notifyMsg->u.notify)->subsystem);
+	if (ANOUBIS_IS_NOTIFY(type)) {
+		switch (type) {
+		case ANOUBIS_N_ASK:
+			notify = new EscalationNotify(notifyMsg);
+			break;
+		case ANOUBIS_N_NOTIFY:
+			if (subsystem == ANOUBIS_SOURCE_STAT) {
+				notify = new StatusNotify(notifyMsg);
+			} else {
+				notify = new LogNotify(notifyMsg);
+			}
+			break;
+		case ANOUBIS_N_RESYOU:
+			/*
+			 * XXX ST: #461
+			 * The handling of ANOUBIS_N_RESYOU has to be
+			 * implemented asap.
+			 * Currently we just fake the handling to prevent
+			 * xanoubis from aborting.
+			 */
+			return;
+			break;
+		case ANOUBIS_N_RESOTHER:
+			/*
+			 * XXX ST: #461
+			 * The handling of ANOUBIS_N_RESOTHER has to be
+			 * implemented asap.
+			 * Currently we just fake the handling to prevent
+			 * xanoubis from aborting.
+			 */
+			return;
+			break;
+		case ANOUBIS_N_LOGNOTIFY:
+			switch (get_value((notifyMsg->u.notify)->loglevel)) {
+			case APN_LOG_NONE:
+				/* don't show notifies of loglevel 0/none */
+				break;
+			case APN_LOG_NORMAL:
+				notify = new LogNotify(notifyMsg);
+				break;
+			case APN_LOG_ALERT:
+				notify = new AlertNotify(notifyMsg);
+				break;
+			default:
+				break;
+			}
+			break;
+		default:
+			break;
+		}
+
+		addEvent.SetClientObject((wxClientData*)notify);
+		wxGetApp().sendEvent(addEvent);
 	}
+}
+
+void
+ComThread::pushNotification(Notification *notify)
+{
+	if ((notify != NULL) && IS_ESCALATIONOBJ(notify))
+		answerQueue_->push(notify);
 }

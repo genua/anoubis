@@ -42,19 +42,35 @@ JobThread::start(void)
 	 * Create the thread
 	 * Depending on the result, you need to start the thread.
 	 */
-	wxThreadError result = Create();
+	wxThreadError	result = Create();
+	bool		success = true;
 
-	if (result == wxTHREAD_NO_ERROR)
-		return (Run() == wxTHREAD_NO_ERROR);
+	if (result == wxTHREAD_NO_ERROR) {
+		/* Thread was created, try to start it */
+		if (Run() == wxTHREAD_NO_ERROR)
+			success = true;
+		else
+			success = false;
+	}
 	else if (result != wxTHREAD_RUNNING)
-		return (false);
+		success = false;
 
-	return (true);
+	if (success) {
+		/*
+		 * Thread is running, invoke startHook() to complete the
+		 * procedure.
+		 */
+		success = startHook();
+	}
+
+	return (success);
 }
 
 void
 JobThread::stop(void)
 {
+	stopHook();
+
 	/* Ask for quit and wait... */
 	exitThread_ = true;
 	Wait();
@@ -64,6 +80,17 @@ bool
 JobThread::isRunning(void) const
 {
 	return (IsAlive());
+}
+
+bool
+JobThread::startHook(void)
+{
+	return (true);
+}
+
+void
+JobThread::stopHook(void)
+{
 }
 
 bool

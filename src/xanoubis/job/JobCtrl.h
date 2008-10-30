@@ -38,6 +38,7 @@
 WX_DECLARE_LIST(JobThread, JobThreadList);
 
 class ComThread;
+class Notification;
 
 /**
  * The job controller.
@@ -68,6 +69,15 @@ class ComThread;
 class JobCtrl : public wxEvtHandler, public Singleton<JobCtrl>
 {
 	public:
+		/**
+		 * State of connection to anoubisd.
+		 */
+		enum ConnectionState {
+			CONNECTION_CONNECTED = 0, /*!< You are connected. */
+			CONNECTION_DISCONNECTED,  /*!< You are disconnected. */
+			CONNECTION_FAILED         /*!< Operation failed */
+		};
+
 		~JobCtrl(void);
 
 		/**
@@ -124,14 +134,32 @@ class JobCtrl : public wxEvtHandler, public Singleton<JobCtrl>
 		 * You need to call this method, if you want to execute any
 		 * ComTask-derivated tasks.
 		 *
-		 * @return true on success, false otherwise.
+		 * @return The state of the connection
 		 */
-		bool connect(void);
+		ConnectionState connect(void);
 
 		/**
 		 * Disconnects again from anoubisd.
+		 *
+		 * @return ConnectionState::CONNECTION_DISCONNECTED
 		 */
-		void disconnect(void);
+		ConnectionState disconnect(void);
+
+		/**
+		 * Tests weather a connection to anoubisd is already
+		 * established.
+		 *
+		 * @return true if you have a connection, false otherwise.
+		 */
+		bool isConnected(void) const;
+
+		/**
+		 * Asks the send the answer of the specified daemon back to
+		 * anoubisd.
+		 *
+		 * @param notify The requested notification
+		 */
+		void answerNotification(Notification *);
 
 		/**
 		 * Registers and schedules a task for execution.
@@ -162,8 +190,8 @@ class JobCtrl : public wxEvtHandler, public Singleton<JobCtrl>
 
 	private:
 		wxString socketPath_;
-		SynchronizedQueue<Task> csumCalcTaskQueue_;
-		SynchronizedQueue<Task> comTaskQueue_;
+		SynchronizedQueue<Task> *csumCalcTaskQueue_;
+		SynchronizedQueue<Task> *comTaskQueue_;
 		JobThreadList threadList_;
 
 		ComThread *findComThread(void) const;

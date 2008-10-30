@@ -264,10 +264,6 @@ xanoubis_SOURCES= \
 	control/AnShortcuts.h \
 	control/AnEvents.cpp \
 	control/AnEvents.h \
-	control/CommunicatorCtrl.cpp \
-	control/CommunicatorCtrl.h \
-	control/Communicator.cpp \
-	control/Communicator.h \
 	control/Debug.h \
 	control/Debug.cpp \
 	control/RuleEditorAddPolicyVisitor.cpp \

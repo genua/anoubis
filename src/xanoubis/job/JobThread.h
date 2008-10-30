@@ -56,6 +56,9 @@ class JobCtrl;
  * }
  * </pre>
  *
+ * You can hook into the start- and stop-procedure by reimplementing
+ * startHook() and stopHook().
+ *
  * The thread is started with start() and stopped with stop().
  */
 class JobThread : public wxThread
@@ -81,6 +84,27 @@ class JobThread : public wxThread
 
 	protected:
 		JobThread(JobCtrl *);
+
+		/**
+		 * Hook is executed during start of thread.
+		 *
+		 * When the thread was started successfully, this method is
+		 * called and the result is returned by start().
+		 *
+		 * The default-implementation just simply returns true.
+		 *
+		 * @see start()
+		 */
+		virtual bool startHook(void);
+
+		/**
+		 * Hook is executed before the thread is exited.
+		 *
+		 * The default-implementation makes nothing.
+		 *
+		 * @see stop()
+		 */
+		virtual void stopHook(void);
 
 		/**
 		 * Tests weather the thread should leave the main-loop.

@@ -27,23 +27,34 @@
 
 #include <wx/thread.h>
 
+#include "AnEvents.h"
 #include "ComThread.h"
 #include "CsumCalcThread.h"
 #include "JobCtrl.h"
-#include "Singleton.cpp"
+#include "main.h"
 
 #include <wx/listimpl.cpp>
 WX_DEFINE_LIST(JobThreadList);
+
+#ifndef CALCTASKQUEUE_POP_TIMEOUT
+	#define CALCTASKQUEUE_POP_TIMEOUT 500
+#endif
 
 JobCtrl::JobCtrl(void)
 {
 	/* Default configuration */
 	this->socketPath_ = wxT("/var/run/anoubisd.sock");
+
+	csumCalcTaskQueue_ = new SynchronizedQueue<Task>(true);
+	comTaskQueue_ = new SynchronizedQueue<Task>(false);
 }
 
 JobCtrl::~JobCtrl(void)
 {
 	stop();
+
+	delete csumCalcTaskQueue_;
+	delete comTaskQueue_;
 }
 
 JobCtrl *
@@ -75,14 +86,6 @@ JobCtrl::start(void)
 		return (false);
 	}
 
-	/* Communication thread */
-	ComThread *comThread = new ComThread(this, socketPath_);
-	threadList_.push_back(comThread);
-	if (!comThread->start()) {
-		stop();
-		return (false);
-	}
-
 	return (true);
 }
 
@@ -99,18 +102,66 @@ JobCtrl::stop(void)
 	}
 }
 
-bool
+JobCtrl::ConnectionState
 JobCtrl::connect(void)
 {
-	ComThread *t = findComThread(); /* Should never return 0 */
-	return (t->connect());
+	if (!isConnected()) {
+		ConnectionState	state;
+		ComThread	*t = new ComThread(this, socketPath_);
+
+		if (t->start()) {
+			threadList_.push_back(t);
+			state = CONNECTION_CONNECTED;
+		} else {
+			delete t;
+			state = CONNECTION_FAILED;
+		}
+
+		wxCommandEvent event(anEVT_COM_CONNECTION);
+		event.SetInt(state);
+		event.SetString(wxT("localhost"));
+
+		ProcessEvent(event);
+
+		return (state);
+	} else
+		return (CONNECTION_CONNECTED);
+}
+
+JobCtrl::ConnectionState
+JobCtrl::disconnect(void)
+{
+	if (isConnected()) {
+		ComThread *t = findComThread();
+
+		t->stop();
+		threadList_.DeleteObject(t);
+		delete t;
+
+		wxCommandEvent event(anEVT_COM_CONNECTION);
+		event.SetInt(CONNECTION_DISCONNECTED);
+		event.SetString(wxT("localhost"));
+
+		ProcessEvent(event);
+	}
+
+	return (CONNECTION_DISCONNECTED);
+}
+
+bool
+JobCtrl::isConnected(void) const
+{
+	ComThread *t = findComThread();
+	return (t != 0 ? t->isRunning() : false);
 }
 
 void
-JobCtrl::disconnect(void)
+JobCtrl::answerNotification(Notification *notify)
 {
-	ComThread *t = findComThread(); /* Should never return 0 */
-	t->disconnect();
+	ComThread *t = findComThread();
+
+	if (t != 0)
+		t->pushNotification(notify);
 }
 
 void
@@ -118,10 +169,10 @@ JobCtrl::addTask(Task *task)
 {
 	switch (task->getType()) {
 	case Task::TYPE_CSUMCALC:
-		csumCalcTaskQueue_.push(task);
+		csumCalcTaskQueue_->push(task);
 		break;
 	case Task::TYPE_COM:
-		comTaskQueue_.push(task);
+		comTaskQueue_->push(task);
 		break;
 	}
 }
@@ -131,9 +182,9 @@ JobCtrl::popTask(Task::Type type)
 {
 	switch (type) {
 	case Task::TYPE_CSUMCALC:
-		return (csumCalcTaskQueue_.pop());
+		return (csumCalcTaskQueue_->pop(CALCTASKQUEUE_POP_TIMEOUT));
 	case Task::TYPE_COM:
-		return (comTaskQueue_.pop());
+		return (comTaskQueue_->pop());
 	}
 
 	return (0); /* Never reached */
@@ -153,5 +204,5 @@ JobCtrl::findComThread(void) const
 			return (t);
 	}
 
-	return (0); /* Should be never reached */
+	return (0); /* No such thread */
 }

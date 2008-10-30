@@ -421,11 +421,7 @@ PolicyRuleSet::createAnswerPolicy(EscalationNotify *escalation)
 		}
 	}
 
-	wxString	tmpFileName;
-	tmpFileName = wxFileName::CreateTempFileName(wxT("xanoubis"));
-	this->exportToFile(tmpFileName);
-	wxGetApp().importPolicyFile(tmpFileName, false);
-	wxGetApp().usePolicy(tmpFileName, geteuid(), 1);
+	wxGetApp().usePolicy(this);
 }
 
 void

@@ -57,7 +57,7 @@ class TrayIcon : public wxTaskBarIcon
 		TrayIcon(void);
 		~TrayIcon(void);
 
-		void OnRemoteStation(wxCommandEvent&);
+		void OnConnectionStateChange(wxCommandEvent&);
 		void OnOpenAlerts(wxCommandEvent&);
 		void OnOpenEscalations(wxCommandEvent&);
 		void OnLogViewerShow(wxCommandEvent&);

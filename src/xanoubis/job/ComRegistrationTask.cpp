@@ -81,15 +81,23 @@ ComRegistrationTask::getEventType(void) const
 void
 ComRegistrationTask::exec(void)
 {
-	/* Dummy initialization to keep compiler happy */
-	RegState state = STATE_DONE;
+	struct anoubis_client	*client = getComHandler()->getClient();
+	RegState		state = STATE_DONE;
 
 	resetComTaskResult();
+
+	if (client == 0) {
+		/*
+		 * You don't have a connection
+		 * Leave task-state on RESULT_INIT.
+		 */
+		return;
+	}
 
 	/* Start-state depends on action */
 	switch (action_) {
 	case ACTION_REGISTER:
-		state = STATE_CONNECT;
+		state = STATE_REGISTER;
 		break;
 	case ACTION_UNREGISTER:
 		state = STATE_UNREGISTER;
@@ -98,21 +106,11 @@ ComRegistrationTask::exec(void)
 
 	while (state != STATE_DONE) {
 		struct anoubis_transaction *ta = 0;
-		struct anoubis_client *client = getComHandler()->getClient();
 
 		/* Dummy initialization to keep compiler happy */
 		RegState next = STATE_DONE;
 
 		switch (state) {
-		case STATE_CONNECT:
-			ta = anoubis_client_connect_start(client,
-			    ANOUBIS_PROTO_BOTH);
-			next = STATE_REGISTER;
-			break;
-		case STATE_CLOSE:
-			ta = anoubis_client_close_start(client);
-			next = STATE_DONE;
-			break;
 		case STATE_REGISTER:
 			ta = anoubis_client_register_start(client,
 			    getToken(), geteuid(), 0, 0);
@@ -131,10 +129,6 @@ ComRegistrationTask::exec(void)
 		case STATE_STAT_UNREGISTER:
 			ta = anoubis_client_unregister_start(client,
 			    getToken(), 0, 0, ANOUBIS_SOURCE_STAT);
-			/*
-			 * XXX anoubis_client_close_start needs to be fixed
-			 */
-			//next = STATE_CLOSE;
 			next = STATE_DONE;
 			break;
 		case STATE_DONE:

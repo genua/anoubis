@@ -53,6 +53,7 @@
 #include "AnShortcuts.h"
 #include "AnEvents.h"
 #include "DlgRuleEditor.h"
+#include "JobCtrl.h"
 #include "main.h"
 #include "Policy.h"
 #include "PolicyRuleSet.h"
@@ -233,12 +234,12 @@ DlgRuleEditor::DlgRuleEditor(wxWindow* parent) : DlgRuleEditorBase(parent)
 	    wxCommandEventHandler(DlgRuleEditor::OnShowRule), NULL, this);
 	parent->Connect(anEVT_SEND_AUTO_CHECK,
 	    wxCommandEventHandler(DlgRuleEditor::OnAutoCheck), NULL, this);
-	parent->Connect(anEVT_ANOUBISD_CSUM_CUR,
-	    wxCommandEventHandler(DlgRuleEditor::OnAnoubisCurCsum), NULL, this);
-	parent->Connect(anEVT_ANOUBISD_CSUM_SHA,
-	    wxCommandEventHandler(DlgRuleEditor::OnAnoubisShaCsum), NULL, this);
-	parent->Connect(anEVT_CHECKSUM_ERROR,
-	    wxCommandEventHandler(DlgRuleEditor::OnChecksumError), NULL, this);
+	JobCtrl::getInstance()->Connect(anTASKEVT_CSUM_ADD,
+	    wxTaskEventHandler(DlgRuleEditor::OnChecksumAdd), NULL, this);
+	JobCtrl::getInstance()->Connect(anTASKEVT_CSUM_GET,
+	    wxTaskEventHandler(DlgRuleEditor::OnChecksumAdd), NULL, this);
+	JobCtrl::getInstance()->Connect(anTASKEVT_CSUMCALC,
+	    wxTaskEventHandler(DlgRuleEditor::OnChecksumCalc), NULL, this);
 }
 
 DlgRuleEditor::~DlgRuleEditor(void)
@@ -1010,12 +1011,7 @@ DlgRuleEditor::OnRuleSetSave(wxCommandEvent& )
 	}
 
 	rs->clearModified();
-
-	/* XXX: KM there should be a better way, like apn_parse_xxx */
-	tmpPreFix = wxT("xanoubis");
-	tmpName = wxFileName::CreateTempFileName(tmpPreFix);
-	rs->exportToFile(tmpName);
-	wxGetApp().usePolicy(tmpName, geteuid(), 1);
+	wxGetApp().usePolicy(rs);
 
 	if (geteuid() == 0) {
 		wxProgressDialog progDlg(_("Rule Editor"),
@@ -1025,9 +1021,7 @@ DlgRuleEditor::OnRuleSetSave(wxCommandEvent& )
 			progDlg.Update(i);
 			rs = profileCtrl->getRuleSetToShow(
 			    foreignAdminRsIds_.Item(i), this);
-			tmpName = wxFileName::CreateTempFileName(tmpPreFix);
-			rs->exportToFile(tmpName);
-			wxGetApp().usePolicy(tmpName, rs->getUid(), 0);
+			wxGetApp().usePolicy(rs);
 		}
 	}
 }
@@ -1385,20 +1379,47 @@ DlgRuleEditor::CheckLastSelection(void)
 }
 
 void
-DlgRuleEditor::OnAnoubisCurCsum(wxCommandEvent& event)
+DlgRuleEditor::OnChecksumCalc(TaskEvent &event)
 {
 	wxString			 sum;
 	RuleEditorFillWidgetsVisitor	 updateWidgets(this);
 	unsigned char			 csum[MAX_APN_HASH_LEN];
 	Policy				*policy;
 
-	sum = wxT("0x");
-	sum += event.GetString();
-	bcopy((unsigned char *) event.GetClientData(), csum, MAX_APN_HASH_LEN);
+	CsumCalcTask *task = dynamic_cast<CsumCalcTask*>(event.getTask());
+
+	if (task == 0) {
+		/* Calculation failed */
+		wxString message = _("Undefined result received!");
+		wxString title = _("Undefined result");
+
+		wxEndBusyCursor();
+		wxMessageBox(message, title, wxICON_INFORMATION);
+
+		event.Skip();
+		return;
+	}
+
+	if (task->getResult() != 0) {
+		/* Calculation failed */
+		wxString message = _("Permission denied for this file.");
+		wxString title = _("Permission denied");
+
+		wxEndBusyCursor();
+		wxMessageBox(message, title, wxICON_INFORMATION);
+
+		event.Skip();
+		return;
+	}
+
+	sum = wxT("0x") + task->getCsumStr();
+	bcopy(task->getCsum(), csum, MAX_APN_HASH_LEN);
 
 	policy = (Policy *)ruleListCtrl->GetItemData(selectedIndex_);
-	if (!policy)
+	if (!policy) {
+		event.Skip();
 		return;
+	}
 
 	if(policy->IsKindOf(CLASSINFO(SfsPolicy))) {
 		SfsPolicy *sfsPolicy = (SfsPolicy *)policy;
@@ -1417,23 +1438,74 @@ DlgRuleEditor::OnAnoubisCurCsum(wxCommandEvent& event)
 		wxEndBusyCursor();
 	}
 
+	event.Skip();
 }
 
 void
-DlgRuleEditor::OnAnoubisShaCsum(wxCommandEvent& event)
+DlgRuleEditor::OnChecksumAdd(TaskEvent &event)
+{
+	ComCsumAddTask *task = dynamic_cast<ComCsumAddTask*>(event.getTask());
+
+	if (task == 0) {
+		wxString message = _("Undefined result received!");
+		wxString title = _("Undefined result");
+
+		wxEndBusyCursor();
+		wxMessageBox(message, title, wxICON_INFORMATION);
+	}
+
+	if (task != 0 && task->getComTaskResult() != ComTask::RESULT_SUCCESS) {
+		wxString message = _("Permission denied for this file.");
+		wxString title = _("Permission denied");
+
+		wxEndBusyCursor();
+		wxMessageBox(message, title, wxICON_INFORMATION);
+	}
+
+	event.Skip();
+}
+
+void
+DlgRuleEditor::OnChecksumGet(TaskEvent& event)
 {
 	wxString			 sum;
 	RuleEditorFillWidgetsVisitor	 updateWidgets(this);
 	unsigned char			 csum[MAX_APN_HASH_LEN];
 	Policy				*policy;
 
-	sum = wxT("0x");
-	sum += event.GetString();
-	bcopy((unsigned char *) event.GetClientData(), csum, MAX_APN_HASH_LEN);
+	ComCsumGetTask *task = dynamic_cast<ComCsumGetTask*>(event.getTask());
+
+	if (task == 0) {
+		wxString message = _("Undefined result received!");
+		wxString title = _("Undefined result");
+
+		wxEndBusyCursor();
+		wxMessageBox(message, title, wxICON_INFORMATION);
+
+		event.Skip();
+		return;
+	}
+
+	if (task->getComTaskResult() != ComTask::RESULT_SUCCESS) {
+		/* Error-path */
+		wxString message = _("Failed to receive checksum from daemon.");
+		wxString title = _("Checksum failure");
+
+		wxEndBusyCursor();
+		wxMessageBox(message, title, wxICON_INFORMATION);
+
+		event.Skip();
+		return;
+	}
+
+	sum = wxT("0x") + task->getCsumStr();
+	task->getCsum(csum, MAX_APN_HASH_LEN);
 
 	policy = (Policy *)ruleListCtrl->GetItemData(selectedIndex_);
-	if (!policy)
+	if (!policy) {
+		event.Skip();
 		return;
+	}
 
 	SfsPolicy *sfsPolicy = (SfsPolicy *)policy;
 
@@ -1444,37 +1516,8 @@ DlgRuleEditor::OnAnoubisShaCsum(wxCommandEvent& event)
 
 	policy->accept(updateWidgets);
 	wxEndBusyCursor();
-}
 
-void
-DlgRuleEditor::OnChecksumError(wxCommandEvent& event)
-{
-	RuleEditorFillWidgetsVisitor	 updateWidgets(this);
-	SfsPolicy			*policy;
-	wxString			 errMsg;
-	wxString			 message;
-	wxString			 title;
-
-	policy = (SfsPolicy *)ruleListCtrl->GetItemData(selectedIndex_);
-	if (!policy)
-		return;
-
-	errMsg = event.GetString();
-
-	if ((errMsg.Cmp(_("add")) == 0) || (errMsg.Cmp(_("cal")) == 0)) {
-		wxEndBusyCursor();
-		message = _("Permission denied for this file.");
-		title = _("Permission denied");
-		wxMessageBox(message, title, wxICON_INFORMATION);
-	} else if (errMsg.Cmp(_("notcon")) == 0) {
-		message = _("Not connected to daemon.");
-		title = _("Not connected");
-		wxMessageBox(message, title, wxICON_INFORMATION);
-	} else {
-		policy->accept(updateWidgets);
-	}
-
-	wxEndBusyCursor();
+	event.Skip();
 }
 
 void

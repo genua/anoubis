@@ -36,6 +36,7 @@
 #endif
 
 #include "AnEvents.h"
+#include "JobCtrl.h"
 #include "main.h"
 #include "TrayIcon.h"
 
@@ -70,8 +71,9 @@ TrayIcon::TrayIcon(void)
 	notification = notify_notification_new("Anoubis", "", NULL, NULL);
 
 	update();
-	Connect(anEVT_COM_REMOTESTATION,
-	    wxCommandEventHandler(TrayIcon::OnRemoteStation), NULL, this);
+	JobCtrl::getInstance()->Connect(anEVT_COM_CONNECTION,
+	    wxCommandEventHandler(TrayIcon::OnConnectionStateChange),
+	    NULL, this);
 	Connect(anEVT_OPEN_ALERTS,
 	    wxCommandEventHandler(TrayIcon::OnOpenAlerts), NULL, this);
 	Connect(anEVT_OPEN_ESCALATIONS,
@@ -98,9 +100,9 @@ TrayIcon::~TrayIcon(void)
 }
 
 void
-TrayIcon::OnRemoteStation(wxCommandEvent& event)
+TrayIcon::OnConnectionStateChange(wxCommandEvent& event)
 {
-	daemon_ = *(wxString *)(event.GetClientObject());
+	daemon_ = event.GetString();
 	update();
 	event.Skip();
 }

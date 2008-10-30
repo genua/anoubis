@@ -38,7 +38,8 @@ else
 TESTS = \
 	testSuite_Patterns \
 	testSuite_Profiles \
-	testSuite_Sfs
+	testSuite_Sfs \
+	pidtest
 noinst_PROGRAMS = test_xanoubis_server testSuite_JobCtrl $(TESTS)
 endif
 
@@ -235,3 +236,11 @@ testSuite_JobCtrl_SOURCES = \
 	suite_JobCtrl/TcCsumCalcTask.h \
 	suite_JobCtrl/testSuite.cpp \
 	suite_JobCtrl/tc_JobCtrl.cpp
+
+#
+# pidtest
+#
+pidtest_SOURCES = pidtest.cpp
+pidtest__CPPFLAGS = $(WX_CPPFLAGS)
+pidtest_CXXFLAGS = $(WX_CXXFLAGS)
+pidtest_LDADD = @WX_LIBS@

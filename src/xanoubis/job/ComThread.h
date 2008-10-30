@@ -31,6 +31,7 @@
 #include "ComHandler.h"
 #include "JobThread.h"
 #include "Notification.h"
+#include "SynchronizedQueue.h"
 
 /**
  * The thread, which is responsible for tasks of the Task::TYPE_COM.
@@ -39,6 +40,31 @@ class ComThread : public JobThread, protected ComHandler
 {
 	public:
 		ComThread(JobCtrl *, const wxString &);
+		~ComThread();
+
+		void *Entry(void);
+		void pushNotification(Notification *);
+
+	protected:
+		/**
+		 * Implementation of ComHandler::getClient().
+		 */
+		struct anoubis_client *getClient(void) const;
+
+		/**
+		 * Implementation of ComHandler::waitForMessage().
+		 */
+		bool waitForMessage(void);
+
+		/**
+		 * Re-implementation of JobThread::startHook().
+		 *
+		 * During the start of the thread, the connection to anoubisd
+		 * should be established.
+		 *
+		 * @see connect()
+		 */
+		bool startHook(void);
 
 		/**
 		 * Connects to anoubisd.
@@ -60,27 +86,14 @@ class ComThread : public JobThread, protected ComHandler
 		 */
 		bool isConnected(void) const;
 
-		void *Entry(void);
-
-	protected:
-		/**
-		 * Implementation of ComHandler::getClient().
-		 */
-		struct anoubis_client *getClient(void) const;
-
-		/**
-		 * Implementation of ComHandler::waitForMessage().
-		 */
-		bool waitForMessage(void);
-
 	private:
-		wxString		socketPath_;
-		struct achat_channel	*channel_;
-		struct anoubis_client	*client_;
-		NotifyList		answerList_;
+		SynchronizedQueue<Notification>	*answerQueue_;
+		wxString			socketPath_;
+		struct achat_channel		*channel_;
+		struct anoubis_client		*client_;
 
 		bool checkNotify(struct anoubis_msg *);
-		void sendEscalationAnswer(Notification *);
+		void sendNotify(struct anoubis_msg *);
 };
 
 #endif	/* _COMTHREAD_H_ */

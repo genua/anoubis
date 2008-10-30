@@ -25,43 +25,52 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _COMMUNICATORCTRL_H_
-#define _COMMUNICATORCTRL_H_
+#include <wx/app.h>
+#include <wx/thread.h>
 
-#include <wx/event.h>
-#include <wx/string.h>
-
-#include "Communicator.h"
-
-class CommunicatorCtrl : public wxEvtHandler {
-	private:
-		wxString		socketPath_;
-		connectionStateType	connectionState_;
-		Communicator		*com_;
-
-		bool createVersion();
-
+class PidTestThread : public wxThread
+{
 	public:
-		CommunicatorCtrl(wxString);
-		~CommunicatorCtrl(void);
+		PidTestThread() : wxThread(wxTHREAD_JOINABLE)
+		{
+		}
 
-		void		connect(void);
-		void		disconnect(void);
-		bool		isConnected(void);
-		wxString	getRemoteStation(void);
-		void		requestPolicy(void);
-		void		usePolicy(wxString, uid_t, int);
-		void		checksumAdd(wxString);
-		void		checksumGet(wxString);
-		void		checksumCal(wxString);
+		void *Entry()
+		{
+			pid_ = getpid();
+			return (0);
+		}
 
-		void	OnNotifyReceived(wxCommandEvent&);
-		void	OnAnoubisdRuleSet(wxCommandEvent&);
-		void	OnConnection(wxCommandEvent&);
-		void	OnAnswerEscalation(wxCommandEvent&);
-		void	OnAnoubisdCurCsum(wxCommandEvent&);
-		void	OnAnoubisdShaCsum(wxCommandEvent&);
-		void	OnCommunicatorError(wxCommandEvent&);
+		pid_t getPid(void) const
+		{
+			return (pid_);
+		}
+
+	private:
+		pid_t pid_;
 };
 
-#endif	/* _COMMUNICATORCTRL_H_ */
+class PidTestApp : public wxAppConsole
+{
+	public:
+		int OnRun()
+		{
+			PidTestThread	thread;
+			pid_t		appPid = getpid();
+
+			if (thread.Create() != wxTHREAD_NO_ERROR)
+				return (1);
+
+			if (thread.Run() != wxTHREAD_NO_ERROR)
+				return (2);
+
+			thread.Wait();
+
+			if (thread.getPid() != appPid)
+				return (3);
+
+			return (0);
+		}
+};
+
+IMPLEMENT_APP(PidTestApp)

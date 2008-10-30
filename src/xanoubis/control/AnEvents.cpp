@@ -77,14 +77,12 @@ DEFINE_LOCAL_EVENT_TYPE(anEVT_ANOUBISOPTIONS_SHOW)
 DEFINE_LOCAL_EVENT_TYPE(anEVT_SHOW_RULE)
 
 /*
- * A connection to the daemon was sucessfully established.
- * This event is intended of been used between the communicator
- * thread and communicator control only.
+ * The connection-state to the daemon has changed.
  *
- * The integer field contains the connectionState enum stating:
- * a successfull connection     => CONNECTION_CONNECTED
- * normal disconnect            => CONNECTION_DISCONNECTED
- * an error (failed to connect) => CONNECTION_FAILED
+ * The integer field contains the ConnectionState enum stating the
+ * state of the connection.
+ * In case of a connected-message the string-field contains the
+ * hostname, where the daemon is running.
  */
 DEFINE_LOCAL_EVENT_TYPE(anEVT_COM_CONNECTION)
 
@@ -115,18 +113,6 @@ DEFINE_LOCAL_EVENT_TYPE(anEVT_OPEN_ALF_ESCALATIONS)
 DEFINE_LOCAL_EVENT_TYPE(anEVT_OPEN_SFS_ESCALATIONS)
 
 /*
- * A connection to the daemon was sucessfully established.
- * The remote station is transmitted as client data.
- */
-DEFINE_LOCAL_EVENT_TYPE(anEVT_COM_REMOTESTATION)
-
-/*
- * A notification was received. The client data points to the
- * corresponding client protocol message.
- */
-DEFINE_LOCAL_EVENT_TYPE(anEVT_COM_NOTIFYRECEIVED)
-
-/*
  * Transports a notification as client object.
  * A notification will been stored and deleted by ModAnoubis.
  * _ANY_ receiver of this evnet has to call event.Skip().
@@ -147,44 +133,6 @@ DEFINE_LOCAL_EVENT_TYPE(anEVT_ANSWER_ESCALATION)
  * Use GetExtraLong() to get the new rule set id.
  */
 DEFINE_LOCAL_EVENT_TYPE(anEVT_LOAD_RULESET)
-
-/*
- * Send a Event if the rules of the anoubisd arrived, with the
- * file name of the tmp-File which holds the rules.
- * The Int field holds the priority of the ruleset.
- */
-DEFINE_LOCAL_EVENT_TYPE(anEVT_ANOUBISD_RULESET_ARRIVED)
-
-/*
- * Send a Event if the checksum of a file from the shadowtree arrived.
- */
-DEFINE_LOCAL_EVENT_TYPE(anEVT_ANOUBISD_CSUM_SHA_ARRIVED)
-
-/*
- * Send a Event if the current checksum of a file arrived.
- */
-DEFINE_LOCAL_EVENT_TYPE(anEVT_ANOUBISD_CSUM_CUR_ARRIVED)
-
-/*
- * Send a Event if the checksum of a file from the shadowtree arrived.
- */
-DEFINE_LOCAL_EVENT_TYPE(anEVT_ANOUBISD_CSUM_SHA)
-
-/*
- * Send a Event if the current checksum of a file arrived.
- */
-DEFINE_LOCAL_EVENT_TYPE(anEVT_ANOUBISD_CSUM_CUR)
-
-/* An error Event from Communicator to CommunicatorCtrl. The Error
- * Code is stored as an int
- */
-DEFINE_LOCAL_EVENT_TYPE(anEVT_COMMUNICATOR_ERROR)
-
-/*
- * An error happend while requesting checksum. The event storing an string
- * which checksum request failed
- */
-DEFINE_LOCAL_EVENT_TYPE(anEVT_CHECKSUM_ERROR)
 
 /*
  * The content of SfsDirectory has changed. The view needs to be

@@ -38,6 +38,7 @@ DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_CSUM_GET)
 TaskEvent::TaskEvent(Task *task, int id)
     : wxEvent(id, task->getEventType())
 {
+	this->m_propagationLevel = wxEVENT_PROPAGATE_MAX;
 	this->task_ = task;
 }
 
@@ -47,6 +48,7 @@ TaskEvent::TaskEvent(const TaskEvent &other)
 	SetEventObject(other.GetEventObject());
 	SetTimestamp(other.GetTimestamp());
 
+	this->m_propagationLevel = wxEVENT_PROPAGATE_MAX;
 	this->task_ = other.task_;
 }
 

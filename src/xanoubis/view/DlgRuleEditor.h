@@ -42,6 +42,7 @@
 #include "AnShortcuts.h"
 #include "DlgRuleEditorBase.h"
 #include "PolicyRuleSet.h"
+#include "TaskEvent.h"
 
 enum ruleEditorPanels {
 	RULEDITOR_PANEL_COMMON = 0,
@@ -196,9 +197,9 @@ class DlgRuleEditor : public DlgRuleEditorBase
 
 		bool CheckLastSelection(void);
 
-		void OnAnoubisCurCsum(wxCommandEvent&);
-		void OnAnoubisShaCsum(wxCommandEvent&);
-		void OnChecksumError(wxCommandEvent&);
+		void OnChecksumCalc(TaskEvent &);
+		void OnChecksumAdd(TaskEvent &);
+		void OnChecksumGet(TaskEvent &);
 
 		void selectLine(unsigned long);
 

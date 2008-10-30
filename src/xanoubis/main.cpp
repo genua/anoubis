@@ -32,6 +32,7 @@
 #include <wx/cmdline.h>
 #include <wx/fileconf.h>
 #include <wx/icon.h>
+#include <wx/msgdlg.h> /* XXX Used by bad AnoubisGuiApp::OnPolicySend */
 #include <wx/stdpaths.h>
 #include <wx/string.h>
 #include <wx/textfile.h>
@@ -39,7 +40,6 @@
 
 #include "AlertNotify.h"
 #include "AnEvents.h"
-#include "CommunicatorCtrl.h"
 #include "DlgLogViewer.h"
 #include "DlgRuleEditor.h"
 #include "JobCtrl.h"
@@ -62,7 +62,6 @@ AnoubisGuiApp::AnoubisGuiApp(void)
 	mainFrame = NULL;
 	logViewer_ = NULL;
 	ruleEditor_ = NULL;
-	comCtrl_ = NULL;
 	trayIcon = NULL;
 	userOptions_ = NULL;
 	onInitProfile_ = true;
@@ -104,7 +103,6 @@ AnoubisGuiApp::quit(void)
 		mainFrame->Destroy();
 		delete logViewer_;
 		delete ruleEditor_;
-		delete comCtrl_;
 	}
 }
 
@@ -129,7 +127,21 @@ bool AnoubisGuiApp::OnInit()
 	VersionCtrl::getInstance(); /* Make sure c'tor is invoked */
 
 	/* Initialization of job-controller */
-	JobCtrl::getInstance(); /* Make sure c'tor is invoked */
+	JobCtrl *jobCtrl = JobCtrl::getInstance();
+
+	jobCtrl->Connect(anTASKEVT_REGISTER,
+	    wxTaskEventHandler(AnoubisGuiApp::OnDaemonRegistration),
+	    NULL, this);
+	jobCtrl->Connect(anTASKEVT_POLICY_REQUEST,
+	    wxTaskEventHandler(AnoubisGuiApp::OnPolicyRequest), NULL, this);
+	jobCtrl->Connect(anTASKEVT_POLICY_SEND,
+	    wxTaskEventHandler(AnoubisGuiApp::OnPolicySend), NULL, this);
+
+	Connect(anEVT_ANSWER_ESCALATION,
+	    wxCommandEventHandler(AnoubisGuiApp::OnAnswerEscalation),
+	    NULL, this);
+
+	jobCtrl->start();
 
 	userOptions_ = new wxFileConfig(GetAppName(), wxEmptyString,
 	    wxEmptyString, wxEmptyString,
@@ -137,7 +149,6 @@ bool AnoubisGuiApp::OnInit()
 	mainFrame = new MainFrame((wxWindow*)NULL);
 	logViewer_ = new DlgLogViewer(mainFrame);
 	ruleEditor_ = new DlgRuleEditor(mainFrame);
-	comCtrl_ = new CommunicatorCtrl(socketParam_);
 	trayIcon = new TrayIcon();
 
 	modules_[OVERVIEW] = new ModOverview(mainFrame);
@@ -178,7 +189,9 @@ AnoubisGuiApp::OnExit(void)
 	int result = wxApp::OnExit();
 
 	/* Destroy job-controller */
-	delete JobCtrl::getInstance();
+	JobCtrl *jobCtrl = JobCtrl::getInstance();
+	jobCtrl->stop();
+	delete jobCtrl;
 
 	return (result);
 }
@@ -209,7 +222,6 @@ AnoubisGuiApp::sendEvent(wxCommandEvent& event)
 	 */
 
 	wxPostEvent(mainFrame, event);
-	wxPostEvent(comCtrl_, event);
 	wxPostEvent(trayIcon, event);
 
 	profileCtrl = ProfileCtrl::getInstance();
@@ -321,11 +333,10 @@ bool
 AnoubisGuiApp::OnCmdLineParsed(wxCmdLineParser& parser)
 {
 	long int	debug_level = 0;
-	wxString	mesg;
+	wxString	socketPath, mesg;
 
-	if (!parser.Found(wxT("s"), &socketParam_)) {
-		socketParam_ = wxT(ANOUBISD_SOCKETNAME);
-	}
+	if (parser.Found(wxT("s"), &socketPath))
+		JobCtrl::getInstance()->setSocketPath(socketPath);
 
 	if (parser.Found(wxT("d"), &debug_level)) {
 		Debug::instance()->setLevel(debug_level);
@@ -353,44 +364,73 @@ AnoubisGuiApp::toggleLogViewerVisability(void)
 	wxGetApp().sendEvent(showEvent);
 }
 
-void
+bool
 AnoubisGuiApp::connectCommunicator(bool doConnect)
 {
+	if (doConnect == getCommConnectionState()) {
+		/* No change of state */
+		return (false);
+	}
+
 	if (doConnect) {
-		comCtrl_->connect();
+		/* Start with establishing the connection */
+		JobCtrl *jobCtrl = JobCtrl::getInstance();
+		JobCtrl::ConnectionState state = jobCtrl->connect();
+
+		if (state == JobCtrl::CONNECTION_CONNECTED) {
+			/* Next make registration */
+			regTask_.setAction(
+			    ComRegistrationTask::ACTION_REGISTER);
+			jobCtrl->addTask(&regTask_);
+
+			return (true);
+		} else
+			return (false);
 	} else {
-		comCtrl_->disconnect();
+		/* Start with unregistration */
+		regTask_.setAction(ComRegistrationTask::ACTION_UNREGISTER);
+		JobCtrl::getInstance()->addTask(&regTask_);
+
+		return (true);
 	}
 }
 
 void
 AnoubisGuiApp::requestPolicy(void)
 {
-	comCtrl_->requestPolicy();
+	adminPolicyRequestTask_.setRequestParameter(0, geteuid());
+	userPolicyRequestTask_.setRequestParameter(1, geteuid());
+
+	JobCtrl::getInstance()->addTask(&adminPolicyRequestTask_);
+	JobCtrl::getInstance()->addTask(&userPolicyRequestTask_);
 }
 
 void
-AnoubisGuiApp::usePolicy(wxString tmpFile, uid_t uid, int prio)
+AnoubisGuiApp::usePolicy(PolicyRuleSet *ruleset)
 {
-	comCtrl_->usePolicy(tmpFile, uid, prio);
+	policySendTask_.setPolicy(ruleset);
+	JobCtrl::getInstance()->addTask(&policySendTask_);
 }
 
 void
-AnoubisGuiApp::sendChecksum(wxString File)
+AnoubisGuiApp::sendChecksum(const wxString &File)
 {
-	comCtrl_->checksumAdd(File);
+	csumAddTask_.setFile(File);
+	JobCtrl::getInstance()->addTask(&csumAddTask_);
 }
 
 void
-AnoubisGuiApp::getChecksum(wxString File)
+AnoubisGuiApp::getChecksum(const wxString &File)
 {
-	comCtrl_->checksumGet(File);
+	csumGetTask_.setFile(File);
+	JobCtrl::getInstance()->addTask(&csumGetTask_);
 }
 
 void
-AnoubisGuiApp::calChecksum(wxString File)
+AnoubisGuiApp::calChecksum(const wxString &File)
 {
-	comCtrl_->checksumCal(File);
+	csumCalcTask_.setPath(File);
+	JobCtrl::getInstance()->addTask(&csumCalcTask_);
 }
 
 wxString
@@ -506,7 +546,7 @@ AnoubisGuiApp::getDataDir(void)
 bool
 AnoubisGuiApp::getCommConnectionState(void)
 {
-	return (comCtrl_->isConnected());
+	return (JobCtrl::getInstance()->isConnected());
 }
 
 void
@@ -597,13 +637,13 @@ AnoubisGuiApp::getUserOptions(void)
 
 /* XXX ch: this code should be moved to ProfileCtrl. */
 bool
-AnoubisGuiApp::profileFromDiskToDaemon(wxString profileName)
+AnoubisGuiApp::profileFromDiskToDaemon(const wxString &profileName)
 {
 	wxString	fileName;
 	wxString	tmpFileName;
 	wxString	logMsg;
 
-	if ((comCtrl_ == NULL) || !comCtrl_->isConnected()) {
+	if (!JobCtrl::getInstance()->isConnected()) {
 		status(_("Error: xanoubis is not connected to the daemon"));
 		return (false);
 	}
@@ -636,21 +676,18 @@ AnoubisGuiApp::profileFromDiskToDaemon(wxString profileName)
 	 * Create a tmp file as a copy of the local profile,
 	 * because usePolicy() will remove the given file!
 	 */
-	/* XXX ch: no return values / error are tested here! */
-	tmpFileName = wxFileName::CreateTempFileName(wxT("xanoubis"));
-	wxCopyFile(fileName, tmpFileName);
-	comCtrl_->usePolicy(tmpFileName, geteuid(), 1);
+	usePolicy(new PolicyRuleSet(1, geteuid(), fileName, false));
 	importPolicyFile(fileName, false);
 
 	return (true);
 }
 
 bool
-AnoubisGuiApp::profileFromDaemonToDisk(wxString profileName)
+AnoubisGuiApp::profileFromDaemonToDisk(const wxString &profileName)
 {
 	wxString	fileName;
 
-	if ((comCtrl_ == NULL) || !comCtrl_->isConnected()) {
+	if (!JobCtrl::getInstance()->isConnected()) {
 		status(_("Error: xanoubis is not connected to the daemon"));
 		return (false);
 	}
@@ -762,4 +799,70 @@ AnoubisGuiApp::getUserNameById(uid_t uid) const
 	}
 
 	return (result);
+}
+
+void
+AnoubisGuiApp::OnDaemonRegistration(TaskEvent &event)
+{
+	ComRegistrationTask *task =
+	    dynamic_cast<ComRegistrationTask*>(event.getTask());
+
+	if (task == 0)
+		return;
+
+	if (task->getAction() == ComRegistrationTask::ACTION_REGISTER) {
+		if (task->getComTaskResult() == ComTask::RESULT_SUCCESS) {
+			/* No success load policies from daemon */
+			wxGetApp().requestPolicy();
+		} else {
+			/* Registration failed, disconnect again */
+			connectCommunicator(false);
+		}
+	} else { /* ACTION_UNREGISTER */
+		/* Disconnect independent from unregistration-result */
+		JobCtrl::getInstance()->disconnect();
+	}
+
+	event.Skip();
+}
+
+void
+AnoubisGuiApp::OnPolicyRequest(TaskEvent &event)
+{
+	ComPolicyRequestTask *task =
+	    dynamic_cast<ComPolicyRequestTask*>(event.getTask());
+
+	if (task == 0)
+		return;
+
+	/* XXX Error-path? */
+	importPolicyRuleSet(task->getPriority(), task->getUid(),
+	    task->getPolicyApn());
+
+	event.Skip();
+}
+
+void
+AnoubisGuiApp::OnPolicySend(TaskEvent &event)
+{
+	ComPolicySendTask *task =
+	    dynamic_cast<ComPolicySendTask*>(event.getTask());
+
+	if (task == 0)
+		return;
+
+	/* XXX bad error-handling */
+	if (task->getComTaskResult() != ComTask::RESULT_SUCCESS) {
+		wxString message = _("Error while sending policy to daemon");
+		wxString title = _("Error!");
+
+		wxMessageBox(message, title, wxICON_ERROR);
+	}
+}
+
+void
+AnoubisGuiApp::OnAnswerEscalation(wxCommandEvent &event)
+{
+	Notification *notify = (Notification*)event.GetClientObject();
+	JobCtrl::getInstance()->answerNotification(notify);
 }

@@ -51,18 +51,21 @@
 #include <apn.h>
 #include <map>
 
-#include "CommunicatorCtrl.h"
 #include "ctassert.h"
+#include "ComCsumAddTask.h"
+#include "ComCsumGetTask.h"
+#include "ComPolicyRequestTask.h"
+#include "ComPolicySendTask.h"
+#include "ComRegistrationTask.h"
 #include "DlgLogViewer.h"
 #include "DlgRuleEditor.h"
+#include "CsumCalcTask.h"
 #include "MainFrame.h"
 #include "Module.h"
 #include "TrayIcon.h"
 #include "PolicyRuleSet.h"
 #include "Debug.h"
 #include "ProfileCtrl.h"
-
-#define ANOUBISD_SOCKETNAME	"/var/run/anoubisd.sock"
 
 enum moduleIdx {
 	OVERVIEW = 0,
@@ -78,7 +81,6 @@ compile_time_assert((LAST_MODULE_INDEX == ANOUBIS_MODULESNO), \
 class AnoubisGuiApp : public wxApp
 {
 	private:
-		wxString		 socketParam_;
 		wxStandardPaths		 paths_;
 		wxLocale		 language_;
 		bool			 onInitProfile_;
@@ -86,12 +88,25 @@ class AnoubisGuiApp : public wxApp
 		MainFrame		*mainFrame;
 		DlgLogViewer		*logViewer_;
 		DlgRuleEditor		*ruleEditor_;
-		CommunicatorCtrl	*comCtrl_;
 		TrayIcon		*trayIcon;
 		Module			*modules_[ANOUBIS_MODULESNO];
 		wxConfig		*userOptions_;
 
 		void fillUserList(void);
+
+		ComRegistrationTask	regTask_;
+		ComPolicyRequestTask	adminPolicyRequestTask_;
+		ComPolicyRequestTask	userPolicyRequestTask_;
+		ComPolicySendTask	policySendTask_;
+		ComCsumAddTask		csumAddTask_;
+		ComCsumGetTask		csumGetTask_;
+		CsumCalcTask		csumCalcTask_;
+
+	protected:
+		void OnDaemonRegistration(TaskEvent &);
+		void OnPolicyRequest(TaskEvent &);
+		void OnPolicySend(TaskEvent &);
+		void OnAnswerEscalation(wxCommandEvent &);
 
 	public:
 		AnoubisGuiApp(void);
@@ -111,12 +126,12 @@ class AnoubisGuiApp : public wxApp
 
 		void		 toggleLogViewerVisability(void);
 		void		 toggleRuleEditorVisability(void);
-		void		 connectCommunicator(bool);
+		bool		 connectCommunicator(bool);
 		void		 requestPolicy(void);
-		void		 usePolicy(wxString, uid_t, int);
-		void		 sendChecksum(wxString);
-		void		 getChecksum(wxString);
-		void		 calChecksum(wxString);
+		void		 usePolicy(PolicyRuleSet *);
+		void		 sendChecksum(const wxString &);
+		void		 getChecksum(const wxString &);
+		void		 calChecksum(const wxString &);
 		wxString	 getCatalogPath(void);
 		wxString	 getUtilsPath(void);
 		wxString	 getIconPath(wxString);
@@ -129,8 +144,8 @@ class AnoubisGuiApp : public wxApp
 		void		 exportPolicyFile(wxString);
 		bool		 getCommConnectionState(void);
 		wxConfig	*getUserOptions(void);
-		bool		 profileFromDiskToDaemon(wxString);
-		bool		 profileFromDaemonToDisk(wxString);
+		bool		 profileFromDiskToDaemon(const wxString &);
+		bool		 profileFromDaemonToDisk(const wxString &);
 		bool		 showingMainFrame(void);
 
 		wxArrayString	 getListOfUsersName(void) const;

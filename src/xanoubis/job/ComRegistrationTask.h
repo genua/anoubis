@@ -99,9 +99,7 @@ class ComRegistrationTask : public ComTask
 		 * The following enumeration defines the states.
 		 */
 		enum RegState {
-			STATE_CONNECT = 0,
-			STATE_CLOSE,
-			STATE_REGISTER,
+			STATE_REGISTER = 0,
 			STATE_UNREGISTER,
 			STATE_STAT_REGISTER,
 			STATE_STAT_UNREGISTER,

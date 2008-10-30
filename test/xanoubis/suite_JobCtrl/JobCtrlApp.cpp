@@ -51,8 +51,10 @@ JobCtrlApp::OnInit()
 		return (false);
 	}
 
-	if (!jobCtrl->connect()) {
+	JobCtrl::ConnectionState state = jobCtrl->connect();
+	if (state != JobCtrl::CONNECTION_CONNECTED) {
 		fprintf(stderr, "No connection to anoubisd\n");
+		fprintf(stderr, "State: %i\n", state);
 		return (false);
 	}
 

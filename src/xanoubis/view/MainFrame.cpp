@@ -37,6 +37,7 @@
 #include "AnEvents.h"
 #include "AnShortcuts.h"
 #include "AnStatusBar.h"
+#include "JobCtrl.h"
 #include "MainFrameBase.h"
 #include "Module.h"
 #include "ModAnoubis.h"
@@ -54,8 +55,10 @@ MainFrame::MainFrame(wxWindow *parent) : MainFrameBase(parent)
 	messageEscalationCount_ = 0;
 	aboutIcon_ = wxGetApp().loadIcon(wxT("ModAnoubis_black_48.png"));
 
-	Connect(anEVT_COM_REMOTESTATION,
-	    wxCommandEventHandler(MainFrame::OnRemoteStation), NULL, this);
+	JobCtrl *jobCtrl = JobCtrl::getInstance();
+	jobCtrl->Connect(anEVT_COM_CONNECTION,
+	    wxCommandEventHandler(MainFrame::OnConnectionStateChange),
+	    NULL, this);
 	Connect(anEVT_LOGVIEWER_SHOW,
 	    wxCommandEventHandler(MainFrame::onLogViewerShow), NULL, this);
 	Connect(anEVT_RULEEDITOR_SHOW,
@@ -69,7 +72,8 @@ MainFrame::MainFrame(wxWindow *parent) : MainFrameBase(parent)
 	Connect(anEVT_ESCALATIONS_SHOW,
 	    wxCommandEventHandler(MainFrame::OnEscalationsShow), NULL, this);
 	Connect(anEVT_ANOUBISOPTIONS_SHOW,
-	    wxCommandEventHandler(MainFrame::OnAnoubisOptionShow), NULL, this);
+	    wxCommandEventHandler(MainFrame::OnAnoubisOptionShow),
+	    NULL, this);
 }
 
 MainFrame::~MainFrame()
@@ -85,7 +89,7 @@ MainFrame::OnInit(void)
 	an_statusbar = new AnStatusBar(this);
 
 	setMessageString();
-	setConnectionString(_("none"));
+	setConnectionString(false, wxEmptyString);
 
 	SetStatusBar(an_statusbar);
 	GetStatusBar()->Show();
@@ -148,25 +152,18 @@ MainFrame::onMainFrameShow(wxCommandEvent& event)
 }
 
 void
-MainFrame::setDaemonConnection(bool state)
-{
-	an_menubar->Check(ID_MIFILECONNECT, state);
-}
-
-void
-MainFrame::setConnectionString(wxString host)
+MainFrame::setConnectionString(bool connected, const wxString &host)
 {
 	wxString label;
 
-	/* XXX: ch this is ugly */
-	if  (!host.Cmp(wxT("none")) || !host.Cmp(wxT("keine"))) {
-		label = _("not connected");
-		an_menubar->Check(ID_MIFILECONNECT, false);
-	} else {
+	if (connected) {
+		/* XXX Evil i18n-style */
 		label = _("connected with\n");
 		label += host;
-		an_menubar->Check(ID_MIFILECONNECT, true);
+	} else {
+		label = _("not connected");
 	}
+
 	tx_connected->SetLabel(label);
 	Layout();
 }
@@ -217,10 +214,34 @@ MainFrame::OnTbModuleSelect(wxCommandEvent& event)
 }
 
 void
-MainFrame::OnRemoteStation(wxCommandEvent& event)
+MainFrame::OnConnectionStateChange(wxCommandEvent& event)
 {
-	setConnectionString(*(wxString *)(event.GetClientObject()));
-	wxGetApp().requestPolicy();
+	JobCtrl::ConnectionState newState =
+	    (JobCtrl::ConnectionState)event.GetInt();
+	bool connected = (newState == JobCtrl::CONNECTION_CONNECTED);
+	wxString hostname = event.GetString();
+	wxString logMessage;
+
+	/* XXX Evil i18n-style */
+	switch (newState) {
+	case JobCtrl::CONNECTION_CONNECTED:
+		logMessage = _("Connection established with ") + hostname;
+		wxGetApp().log(logMessage);
+		break;
+	case JobCtrl::CONNECTION_DISCONNECTED:
+		logMessage = _("Disconnected from ") + hostname;
+		wxGetApp().log(logMessage);
+		break;
+	case JobCtrl::CONNECTION_FAILED:
+		logMessage = _("Connection to ") + hostname + _(" failed!");
+		wxGetApp().alert(logMessage);
+		break;
+	}
+
+	setConnectionString(connected, hostname);
+	an_menubar->Check(ID_MIFILECONNECT, connected);
+	wxGetApp().status(logMessage);
+
 	event.Skip();
 }
 
