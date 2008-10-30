@@ -302,6 +302,8 @@ xanoubis_SOURCES= \
 	job/ComPolicySendTask.h \
 	job/ComRegistrationTask.cpp \
 	job/ComRegistrationTask.h \
+	job/ComSfsListTask.cpp \
+	job/ComSfsListTask.h \
 	job/ComTask.cpp \
 	job/ComTask.h \
 	job/ComThread.cpp \

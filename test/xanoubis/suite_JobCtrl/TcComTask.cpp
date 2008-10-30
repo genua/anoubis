@@ -38,12 +38,13 @@
 #include <ComPolicyRequestTask.h>
 #include <ComPolicySendTask.h>
 #include <ComRegistrationTask.h>
+#include <ComSfsListTask.h>
 #include <JobCtrl.h>
 
 #include "TcComTask.h"
 
 const wxString policyCsum =
-    wxT("93a271ecf12c6b8266576e2faf4a7257403bb3659cb22dc7a3fe3a31cdeb9bfd");
+    wxT("ea7fdf8d2b537ea25e0b50b74b3b40c2ea225d93ca895af6957d2fe46dbb6f1e");
 
 TcComTask::TcComTask()
 {
@@ -61,6 +62,8 @@ TcComTask::TcComTask()
 	    wxTaskEventHandler(TcComTask::OnCsumAdd), NULL, this);
 	JobCtrl::getInstance()->Connect(anTASKEVT_CSUM_GET,
 	    wxTaskEventHandler(TcComTask::OnCsumGet), NULL, this);
+	JobCtrl::getInstance()->Connect(anTASKEVT_SFS_LIST,
+	    wxTaskEventHandler(TcComTask::OnSfsList), NULL, this);
 }
 
 TcComTask::~TcComTask()
@@ -261,6 +264,37 @@ TcComTask::OnCsumGet(TaskEvent &event)
 		fprintf(stderr, "Expected: %s\n",
 		    (const char*)policyCsum.fn_str());
 
+		result_ = 4711;
+		exit_ = true;
+		return;
+	}
+
+	/*
+	 * Receive the sfs-list
+	 */
+	ComSfsListTask *next = new ComSfsListTask;
+	next->setRequestParameter(getuid(), wxFileName::GetHomeDir());
+	JobCtrl::getInstance()->addTask(next);
+}
+
+void
+TcComTask::OnSfsList(TaskEvent &event)
+{
+	ComSfsListTask *t = dynamic_cast<ComSfsListTask*>(event.getTask());
+	wxArrayString result = t->getFileList();
+	delete t;
+
+	if (result.Count() != 1) {
+		fprintf(stderr, "Unexpected # of entries in sfs-list: %i\n",
+		    result.Count());
+		result_ = 4711;
+		exit_ = true;
+		return;
+	}
+
+	if (result[0] != wxT("policy")) {
+		fprintf(stderr, "Unexpected content of sfs-list: %s\n",
+		    (const char*)result[0].fn_str());
 		result_ = 4711;
 		exit_ = true;
 		return;

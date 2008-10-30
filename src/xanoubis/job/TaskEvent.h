@@ -73,6 +73,12 @@ BEGIN_DECLARE_EVENT_TYPES()
 	 * @see ComCsumGetTask
 	 */
 	DECLARE_LOCAL_EVENT_TYPE(anTASKEVT_CSUM_GET, wxNewEventType())
+
+	/**
+	 * Event-type of TaskEvent when a sfs-list was answered by anoubisd.
+	 * @see ComSfsListTask
+	 */
+	DECLARE_LOCAL_EVENT_TYPE(anTASKEVT_SFS_LIST, wxNewEventType())
 END_DECLARE_EVENT_TYPES()
 //@}
 

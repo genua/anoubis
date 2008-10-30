@@ -47,6 +47,7 @@ class TcComTask : public TestHandler
 		void OnPolicySend(TaskEvent &);
 		void OnCsumAdd(TaskEvent &);
 		void OnCsumGet(TaskEvent &);
+		void OnSfsList(TaskEvent &);
 
 	private:
 		int			policyRequestCounter_;
