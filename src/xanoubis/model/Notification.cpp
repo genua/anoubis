@@ -183,6 +183,10 @@ Notification::getLogMessage(void){
 	int	type;
 
 	if (logMessage_.IsEmpty()) {
+		if (isAdmin()) {
+			logMessage_ += wxString::Format(_("(A): "));
+		}
+
 		if (getRuleId()) {
 			logMessage_ += wxString::Format(_("Rule %d: "),
 			    getRuleId());
@@ -209,6 +213,18 @@ Notification::getRuleId(void)
 	}
 
 	return (ruleId);
+}
+
+bool
+Notification::isAdmin(void)
+{
+	bool result = false;
+
+	if (notify_ != NULL) {
+		result = get_value((notify_->u.notify)->prio) ? true : false;
+	}
+
+	return (result);
 }
 
 wxString

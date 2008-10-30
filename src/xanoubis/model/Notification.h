@@ -75,6 +75,7 @@ class Notification {
 		virtual wxString getOrigin(void);
 		virtual wxString getCheckSum(void);
 		virtual unsigned int getRuleId(void);
+		virtual bool isAdmin(void);
 };
 
 WX_DECLARE_LIST(Notification, NotifyList);

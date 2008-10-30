@@ -127,6 +127,11 @@ DlgLogViewer::addNotification(Notification *notify)
 	    notify->getLogMessage());
 	lc_logList->SetItemPtrData(listIdx, (wxUIntPtr)notify);
 
+	if (notify->isAdmin()) {
+		lc_logList->SetItemBackgroundColour(listIdx,
+		    wxTheColourDatabase->Find(wxT("LIGHT GREY")));
+	}
+
 	/* trigger new calculation of column width (all icons has same size) */
 	lc_logList->SetColumnWidth(LOGVIEWER_COLUMN_TIME, wxLIST_AUTOSIZE);
 	lc_logList->SetColumnWidth(LOGVIEWER_COLUMN_MODULE, wxLIST_AUTOSIZE);
