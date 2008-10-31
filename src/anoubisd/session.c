@@ -521,7 +521,7 @@ dispatch_sfsdisable(struct anoubis_server *server, struct anoubis_msg *m,
 	int err;
 
 	ev_info = (struct event_info_session*)arg;
-	DEBUG(DBG_TRACE, ">dispatch_sfsdisable %d");
+	DEBUG(DBG_TRACE, ">dispatch_sfsdisable");
 	if (!VERIFY_LENGTH(m, sizeof(Anoubis_SfsDisableMessage))) {
 		dispatch_generic_reply(server, EINVAL, NULL, 0,
 		    POLICY_FLAG_START|POLICY_FLAG_END, ANOUBIS_P_SFSDISABLE);
@@ -561,7 +561,7 @@ dispatch_generic_reply(void *cbdata, int error, void *data, int len, int flags,
 	if (!m)
 		return -ENOMEM;
 	if (flags != (POLICY_FLAG_START|POLICY_FLAG_END)) {
-		log_warn("dispatch_generic_reply: flags is %x");
+		log_warn("dispatch_generic_reply: flags is %x", flags);
 		return -EINVAL;
 	}
 	set_value(m->u.ackpayload->type, ANOUBIS_REPLY);
@@ -646,10 +646,10 @@ dispatch_policy(struct anoubis_policy_comm *comm, u_int64_t token,
 	msg_store->comm = comm;
 
 	enqueue(&requestq, msg_store);
-	DEBUG(DBG_QUEUE, " >requestq: %x", token);
+	DEBUG(DBG_QUEUE, " >requestq: %llx", (unsigned long long)token);
 
 	enqueue(&eventq_s2p, msg);
-	DEBUG(DBG_QUEUE, " >eventq_s2p: %x", token);
+	DEBUG(DBG_QUEUE, " >eventq_s2p: %llx", (unsigned long long)token);
 	event_add(ev_info->ev_s2p, NULL);
 
 	DEBUG(DBG_TRACE, "<dispatch_policy");
@@ -1119,7 +1119,7 @@ dispatch_p2s_pol_reply(anoubisd_msg_t *msg, struct event_info_session *ev_info)
 	DEBUG(DBG_TRACE, " >anoubis_policy_comm_answer: %lld %d %d",
 	    (long long)reply->token, ret, reply->reply);
 
-	DEBUG(DBG_QUEUE, " <requestq: %x", reply->token);
+	DEBUG(DBG_QUEUE, " <requestq: %llx", (unsigned long long)reply->token);
 	if (msg_comm && end) {
 		queue_delete(&requestq, msg_comm);
 		free(msg_comm);

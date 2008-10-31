@@ -197,12 +197,12 @@ save_pid(pid_t pid)
 
 	fp = fopen(pid_file_name, "w");
 	if (fp == NULL) {
-		log_warn(pid_file_name);
+		log_warn("%s", pid_file_name);
 		fatal("cannot write pid file");
 	}
 	fprintf(fp, "%d\n", pid);
 	if (fclose(fp)) {
-		log_warn(pid_file_name);
+		log_warn("%s", pid_file_name);
 		fatal("cannot write pid file");
 	}
 }
@@ -737,7 +737,7 @@ send_checksum_list(u_int64_t token, const char *path, uid_t uid,
 
 			tmp = remove_escape_seq(sfs_ent->d_name, is_uid);
 			if (!tmp) {
-				log_warn("send_checksum_list: " 
+				log_warn("send_checksum_list: "
 				    "can't allocate memory");
 				master_terminate(ENOMEM);
 				return;
@@ -904,7 +904,8 @@ out:
 	if (extra)
 		memcpy(reply->msg, digest, extra);
 	enqueue(&eventq_m2s, msg);
-	DEBUG(DBG_QUEUE, " >eventq_m2s: %x", reply->token);
+	DEBUG(DBG_QUEUE, " >eventq_m2s: %llx",
+	    (unsigned long long)reply->token);
 	event_add(ev_info->ev_m2s, NULL);
 }
 

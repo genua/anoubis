@@ -387,7 +387,7 @@ void pe_proc_exec(anoubis_cookie_t cookie, uid_t uid, pid_t pid,
 	ctx1 = pe_proc_get_context(proc, 1);
 	/* Get our policy */
 	DEBUG(DBG_PE_PROC, "pe_proc_exec: using alrules %p %p sbrules %p %p "
-	    "for %s csum 0x%08lx...",
+	    "for %s csum 0x%08x...",
 	    pe_context_get_alfrule(ctx0), pe_context_get_alfrule(ctx1),
 	    pe_context_get_sbrule(ctx0), pe_context_get_sbrule(ctx1),
 	    pathhint ? pathhint : "", csum ? htonl(*(unsigned long *)csum) : 0);

@@ -170,8 +170,8 @@ pe_decide_sfs(uid_t uid, anoubisd_msg_sfsopen_t *sfsmsg, time_t now)
 		send_lognotify(hdr, decision, log, rule_id, prio);
 		break;
 	case APN_LOG_ALERT:
-		log_warnx("%s %s %s (%s)", prefix, prio, rule_id,
-		    verdict[decision], dump, context);
+		log_warnx("%s prio %d rule %d %s %s (%s)", prefix, prio,
+		    rule_id, verdict[decision], dump, context);
 		send_lognotify(hdr, decision, log, rule_id, prio);
 		break;
 	default:

@@ -210,7 +210,7 @@ pe_context_refresh(struct pe_proc *proc, int prio, struct pe_policy_db *pdb)
 	DEBUG(DBG_TRACE, ">pe_context_refresh");
 	context = NULL;
 	newrules = pe_user_get_ruleset(pe_proc_get_uid(proc), prio, pdb);
-	DEBUG(DBG_TRACE, " pe_context_refresh: newrules = %x", newrules);
+	DEBUG(DBG_TRACE, " pe_context_refresh: newrules = %p", newrules);
 	if (!newrules) {
 		pe_context_norules(proc, prio);
 		return;
@@ -557,8 +557,8 @@ pe_dump_dbgctx(const char *prefix, struct pe_proc *proc)
 	int	i;
 
 	if (proc == NULL) {
-		DEBUG(DBG_PE_CTX, "%s: prio %d rule %p ctx %p", prefix, -1,
-		    NULL, NULL);
+		DEBUG(DBG_PE_CTX, "%s: prio %d rule (null) ctx (null)",
+		    prefix, -1);
 		return;
 	}
 

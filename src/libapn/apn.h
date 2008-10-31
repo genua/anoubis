@@ -270,7 +270,8 @@ int	apn_add_sbblock(struct apn_ruleset *, struct apn_rule *,
 int	apn_print_rule(struct apn_rule *, int, FILE *);
 int	apn_print_ruleset(struct apn_ruleset *, int, FILE *);
 int	apn_error(struct apn_ruleset *, const char *, int lineno,
-	    const char *fmt, ...);
+	    const char *fmt, ...)
+	    __attribute__((format(printf, 4, 5)));
 int	apn_verror(struct apn_ruleset *, const char *, int lineno,
 	    const char *, va_list);
 void	apn_print_errors(struct apn_ruleset *, FILE *);

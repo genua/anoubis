@@ -216,13 +216,17 @@ void	policy_msg2master(anoubisd_msg_t *);
 
 void	log_init(int fd);
 
-void	log_warn(const char *, ...);
+void	log_warn(const char *, ...)
+    __attribute__ ((format (printf, 1, 2)));
 
-void	log_warnx(const char *, ...);
+void	log_warnx(const char *, ...)
+    __attribute__ ((format (printf, 1, 2)));
 
-void	log_info(const char *, ...);
+void	log_info(const char *, ...)
+    __attribute__ ((format (printf, 1, 2)));
 
-void	log_debug(const char *, ...);
+void	log_debug(const char *, ...)
+    __attribute__ ((format (printf, 1, 2)));
 
 /*@noreturn@*/
 __dead void	fatalx(const char *);

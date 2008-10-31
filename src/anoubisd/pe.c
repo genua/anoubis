@@ -228,7 +228,8 @@ pe_handle_process(struct eventdev_hdr *hdr)
 		pe_proc_exit(msg->task_cookie);
 		break;
 	default:
-		log_warnx("pe_handle_process: undefined operation %d", msg->op);
+		log_warnx("pe_handle_process: undefined operation %ld",
+		    msg->op);
 		break;
 	}
 	return (NULL);

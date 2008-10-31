@@ -625,7 +625,8 @@ dispatch_s2p(int fd, short sig __used, void *arg)
 			bcopy(reply, rep, sizeof(anoubisd_reply_t)+reply->len);
 			free(reply);
 			enqueue(&eventq_p2s, msg_rep);
-			DEBUG(DBG_QUEUE, " >eventq_p2s: %x", rep->token);
+			DEBUG(DBG_QUEUE, " >eventq_p2s: %llx",
+			    (unsigned long long)rep->token);
 			event_add(ev_info->ev_p2s, NULL);
 			free(msg);
 			break;
