@@ -102,12 +102,16 @@ dist_catalog_DATA = \
 	catalogs/de/xanoubis.po
 dist_util_SCRIPTS = utils/xanoubis_guessApp.sh
 dist_icon_DATA = \
+	icons/General_alert_16.png \
+	icons/General_alert_48.png \
 	icons/General_error_16.png \
 	icons/General_error_48.png \
 	icons/General_ok_16.png \
 	icons/General_ok_48.png \
 	icons/General_problem_16.png \
 	icons/General_problem_48.png \
+	icons/General_question_16.png \
+	icons/General_question_48.png \
 	icons/ModAlf_alert_16.png \
 	icons/ModAlf_alert_48.png \
 	icons/ModAlf_black_16.png \

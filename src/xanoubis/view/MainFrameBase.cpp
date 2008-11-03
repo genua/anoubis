@@ -79,30 +79,41 @@ MainFrameBase::MainFrameBase( wxWindow* parent, wxWindowID id, const wxString& t
 	wxBoxSizer* sz_mfMainLeft;
 	sz_mfMainLeft = new wxBoxSizer( wxVERTICAL );
 	
-	pa_MainLeftStatus = new wxPanel( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
-	pa_MainLeftStatus->SetMinSize( wxSize( 150,-1 ) );
-	pa_MainLeftStatus->SetMaxSize( wxSize( 150,-1 ) );
+	wxStaticBoxSizer* statusBoxSizer;
+	statusBoxSizer = new wxStaticBoxSizer( new wxStaticBox( this, -1, _("Status") ), wxVERTICAL );
 	
-	wxStaticBoxSizer* bz_statuswindow;
-	bz_statuswindow = new wxStaticBoxSizer( new wxStaticBox( pa_MainLeftStatus, -1, _("Status") ), wxVERTICAL );
+	wxFlexGridSizer* statusBoxContextSizer;
+	statusBoxContextSizer = new wxFlexGridSizer( 2, 3, 0, 0 );
+	statusBoxContextSizer->SetFlexibleDirection( wxBOTH );
+	statusBoxContextSizer->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
 	
-	tx_messages = new wxStaticText( pa_MainLeftStatus, wxID_ANY, _("No messages"), wxDefaultPosition, wxDefaultSize, 0 );
-	tx_messages->Wrap( -1 );
-	bz_statuswindow->Add( tx_messages, 0, wxALL, 5 );
+	statusBoxMsgIcon = new wxStaticBitmap( this, wxID_ANY, wxNullBitmap, wxDefaultPosition, wxDefaultSize, 0 );
+	statusBoxContextSizer->Add( statusBoxMsgIcon, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
+	statusBoxMsgLable = new wxStaticText( this, wxID_ANY, _("Messages:"), wxDefaultPosition, wxDefaultSize, 0 );
+	statusBoxMsgLable->Wrap( -1 );
+	statusBoxContextSizer->Add( statusBoxMsgLable, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	bz_statuswindow->Add( 0, 20, 1, wxEXPAND, 5 );
+	statusBoxMsgText = new wxStaticText( this, wxID_ANY, _("0"), wxDefaultPosition, wxDefaultSize, 0 );
+	statusBoxMsgText->Wrap( -1 );
+	statusBoxContextSizer->Add( statusBoxMsgText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	tx_connected = new wxStaticText( pa_MainLeftStatus, wxID_ANY, _("connected with localhost"), wxDefaultPosition, wxDefaultSize, 0 );
-	tx_connected->Wrap( -1 );
-	tx_connected->SetMaxSize( wxSize( 150,-1 ) );
+	statusBoxComIcon = new wxStaticBitmap( this, wxID_ANY, wxNullBitmap, wxDefaultPosition, wxDefaultSize, 0 );
+	statusBoxContextSizer->Add( statusBoxComIcon, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	bz_statuswindow->Add( tx_connected, 0, wxALL, 5 );
+	statusBoxComLabel = new wxStaticText( this, wxID_ANY, _("Connected:"), wxDefaultPosition, wxDefaultSize, 0 );
+	statusBoxComLabel->Wrap( -1 );
+	statusBoxComLabel->SetMaxSize( wxSize( 150,-1 ) );
 	
-	pa_MainLeftStatus->SetSizer( bz_statuswindow );
-	pa_MainLeftStatus->Layout();
-	bz_statuswindow->Fit( pa_MainLeftStatus );
-	sz_mfMainLeft->Add( pa_MainLeftStatus, 0, wxEXPAND|wxFIXED_MINSIZE|wxLEFT|wxRIGHT|wxTOP, 5 );
+	statusBoxContextSizer->Add( statusBoxComLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	
+	statusBoxComText = new wxStaticText( this, wxID_ANY, _("no"), wxDefaultPosition, wxDefaultSize, 0 );
+	statusBoxComText->Wrap( -1 );
+	statusBoxContextSizer->Add( statusBoxComText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	
+	statusBoxSizer->Add( statusBoxContextSizer, 1, wxEXPAND, 5 );
+	
+	sz_mfMainLeft->Add( statusBoxSizer, 0, wxALL|wxEXPAND, 5 );
 	
 	wxBoxSizer* sz_MainLeftLine;
 	sz_MainLeftLine = new wxBoxSizer( wxHORIZONTAL );

@@ -51,6 +51,10 @@ class MainFrame : public MainFrameBase
 		unsigned int     messageEscalationCount_;
 		bool		 show_;
 		wxIcon		*aboutIcon_;
+		wxIcon		*okIcon_;
+		wxIcon		*errorIcon_;
+		wxIcon		*alertIcon_;
+		wxIcon		*escalationIcon_;
 
 		void setConnectionString(bool, const wxString &);
 		void setMessageString(void);

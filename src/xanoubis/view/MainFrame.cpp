@@ -54,6 +54,10 @@ MainFrame::MainFrame(wxWindow *parent) : MainFrameBase(parent)
 	messageAlertCount_ = 0;
 	messageEscalationCount_ = 0;
 	aboutIcon_ = wxGetApp().loadIcon(wxT("ModAnoubis_black_48.png"));
+	okIcon_ = wxGetApp().loadIcon(wxT("General_ok_16.png"));
+	errorIcon_ = wxGetApp().loadIcon(wxT("General_error_16.png"));
+	alertIcon_ = wxGetApp().loadIcon(wxT("General_alert_16.png"));
+	escalationIcon_ = wxGetApp().loadIcon(wxT("General_question_16.png"));
 
 	JobCtrl *jobCtrl = JobCtrl::getInstance();
 	jobCtrl->Connect(anEVT_COM_CONNECTION,
@@ -155,39 +159,39 @@ void
 MainFrame::setConnectionString(bool connected, const wxString &host)
 {
 	wxString label;
+	label = host;
 
 	if (connected) {
-		/* XXX Evil i18n-style */
-		label = _("connected with\n");
-		label += host;
+		statusBoxComText->SetLabel(_("ok"));
+		statusBoxComIcon->SetIcon(*okIcon_);
 	} else {
-		label = _("not connected");
+		statusBoxComText->SetLabel(_("no"));
+		statusBoxComIcon->SetIcon(*errorIcon_);
+		an_menubar->Check(ID_MIFILECONNECT, false);
 	}
 
-	tx_connected->SetLabel(label);
 	Layout();
 }
 
 void
 MainFrame::setMessageString(void)
 {
-	wxString label;
-
-	label = _("Messages: ");
-
 	/* escalations represent the highest priority */
 	if (messageEscalationCount_ > 0) {
-		label += wxString::Format(wxT("%d\n"), messageEscalationCount_);
+		statusBoxMsgIcon->SetIcon(*escalationIcon_);
+		statusBoxMsgText->SetLabel(wxString::Format(wxT("%d"),
+		    messageEscalationCount_));
 	} else {
 		if (messageAlertCount_ > 0) {
-			label += wxString::Format(wxT("%d\n"),
-			    messageAlertCount_);
+			statusBoxMsgIcon->SetIcon(*alertIcon_);
+			statusBoxMsgText->SetLabel(wxString::Format(wxT("%d"),
+			    messageAlertCount_));
 		} else {
-			label = _("No messages\n");
+			statusBoxMsgIcon->SetIcon(wxNullIcon);
+			statusBoxMsgText->SetLabel(wxT("0"));
 		}
 	}
 
-	tx_messages->SetLabel(label);
 	Layout();
 }
 

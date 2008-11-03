@@ -42,10 +42,10 @@
 #include <wx/font.h>
 #include <wx/colour.h>
 #include <wx/settings.h>
+#include <wx/statbmp.h>
 #include <wx/stattext.h>
 #include <wx/sizer.h>
 #include <wx/statbox.h>
-#include <wx/panel.h>
 #include <wx/statline.h>
 #include <wx/toolbar.h>
 #include <wx/scrolwin.h>
@@ -80,10 +80,12 @@ class MainFrameBase : public wxFrame
 		wxMenu* me_menubarTools;
 		wxMenu* me_menubarHelp;
 		wxBoxSizer* sz_mainframeMain;
-		wxPanel* pa_MainLeftStatus;
-		wxStaticText* tx_messages;
-		
-		wxStaticText* tx_connected;
+		wxStaticBitmap* statusBoxMsgIcon;
+		wxStaticText* statusBoxMsgLable;
+		wxStaticText* statusBoxMsgText;
+		wxStaticBitmap* statusBoxComIcon;
+		wxStaticText* statusBoxComLabel;
+		wxStaticText* statusBoxComText;
 		wxStaticLine* li_MainLineLeft;
 		wxScrolledWindow* sw_MainLeftToolbar;
 		wxToolBar* tb_LeftToolbarModule;
