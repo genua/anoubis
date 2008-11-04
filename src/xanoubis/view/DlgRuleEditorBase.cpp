@@ -52,7 +52,7 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	
 	controlRuleSizer->Add( controlRuleText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	wxString controlCreationChoiceChoices[] = { _("Application"), _("AppFilter"), _("SFS"), _("Variable") };
+	wxString controlCreationChoiceChoices[] = { _("Application"), _("AppFilter"), _("SFS") };
 	int controlCreationChoiceNChoices = sizeof( controlCreationChoiceChoices ) / sizeof( wxString );
 	controlCreationChoice = new wxChoice( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, controlCreationChoiceNChoices, controlCreationChoiceChoices, wxTAB_TRAVERSAL );
 	controlRuleSizer->Add( controlCreationChoice, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
@@ -645,33 +645,6 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	sfsNbPanel->Layout();
 	sfsSizer->Fit( sfsNbPanel );
 	ruleEditNotebook->AddPage( sfsNbPanel, _("SFS"), false );
-	macroNbPanel = new wxScrolledWindow( ruleEditNotebook, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxTAB_TRAVERSAL|wxVSCROLL );
-	macroNbPanel->SetScrollRate( 5, 5 );
-	wxFlexGridSizer* macroSizer;
-	macroSizer = new wxFlexGridSizer( 3, 2, 0, 0 );
-	macroSizer->SetFlexibleDirection( wxBOTH );
-	macroSizer->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
-	
-	macroTypeLabelText = new wxStaticText( macroNbPanel, wxID_ANY, _("Type:"), wxDefaultPosition, wxDefaultSize, 0 );
-	macroTypeLabelText->Wrap( -1 );
-	macroSizer->Add( macroTypeLabelText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
-	
-	wxString macroTypeChoiceChoices[] = { _("VAR_APPLICATION"), _("VAR_RULE"), _("VAR_DEFAULT"), _("VAR_HOST"), _("VAR_PORT"), _("VAR_FILENAME") };
-	int macroTypeChoiceNChoices = sizeof( macroTypeChoiceChoices ) / sizeof( wxString );
-	macroTypeChoice = new wxChoice( macroNbPanel, wxID_ANY, wxDefaultPosition, wxDefaultSize, macroTypeChoiceNChoices, macroTypeChoiceChoices, 0 );
-	macroSizer->Add( macroTypeChoice, 0, wxALL, 5 );
-	
-	macroValueLabelText = new wxStaticText( macroNbPanel, wxID_ANY, _("Value:"), wxDefaultPosition, wxDefaultSize, 0 );
-	macroValueLabelText->Wrap( -1 );
-	macroSizer->Add( macroValueLabelText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
-	
-	macroValueextCtrl = new wxTextCtrl( macroNbPanel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
-	macroSizer->Add( macroValueextCtrl, 0, wxALL|wxEXPAND, 5 );
-	
-	macroNbPanel->SetSizer( macroSizer );
-	macroNbPanel->Layout();
-	macroSizer->Fit( macroNbPanel );
-	ruleEditNotebook->AddPage( macroNbPanel, _("Macro"), false );
 	
 	sz_main->Add( ruleEditNotebook, 1, wxEXPAND | wxALL, 5 );
 	

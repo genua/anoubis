@@ -195,11 +195,6 @@ class DlgRuleEditorBase : public wxFrame
 		wxStaticText* sfsStatusValueText;
 		wxButton* sfsValidateChkSumButton;
 		wxButton* sfsUpdateChkSumButton;
-		wxScrolledWindow* macroNbPanel;
-		wxStaticText* macroTypeLabelText;
-		wxChoice* macroTypeChoice;
-		wxStaticText* macroValueLabelText;
-		wxTextCtrl* macroValueextCtrl;
 		
 		// Virtual event handlers, overide them in your derived class
 		virtual void OnClose( wxCloseEvent& event ){ event.Skip(); }
