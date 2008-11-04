@@ -61,6 +61,12 @@ JobThread::start(void)
 		 * procedure.
 		 */
 		success = startHook();
+
+		if (!success) {
+			/* Stop thread again */
+			exitThread_ = true;
+			Wait();
+		}
 	}
 
 	return (success);

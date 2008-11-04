@@ -27,6 +27,8 @@
 
 #include <JobCtrl.h>
 
+#include <wx/cmdline.h>
+
 #include "JobCtrlApp.h"
 #include "TcComTask.h"
 #include "TcCsumCalcTask.h"
@@ -46,6 +48,11 @@ JobCtrlApp::OnInit()
 
 	JobCtrl *jobCtrl = JobCtrl::getInstance();
 
+	if (testcase_ == wxT("tc_jobctrl_nodaemon")) {
+		/* Setup an unknown socket-path -> connection will fail */
+		jobCtrl->setSocketPath(wxT("blablubb"));
+	}
+
 	if (!jobCtrl->start()) {
 		fprintf(stderr, "Failed to start JobCtrl\n");
 		return (false);
@@ -55,11 +62,16 @@ JobCtrlApp::OnInit()
 	if (state != JobCtrl::CONNECTION_CONNECTED) {
 		fprintf(stderr, "No connection to anoubisd\n");
 		fprintf(stderr, "State: %i\n", state);
-		return (false);
-	}
 
-	handlerList_.push_back(new TcCsumCalcTask);
-	handlerList_.push_back(new TcComTask);
+		if (testcase_ != wxT("tc_jobctrl_nodaemon")) {
+			/* Expected behaviour for tc_jobctrl_nodaemon */
+			return false;
+		}
+	}
+	else {
+		handlerList_.push_back(new TcCsumCalcTask);
+		handlerList_.push_back(new TcComTask);
+	}
 
 	return (true);
 }
@@ -100,6 +112,39 @@ JobCtrlApp::OnExit()
 	wxPendingEventsLocker = 0;
 
 	return (0);
+}
+
+void
+JobCtrlApp::OnInitCmdLine(wxCmdLineParser &parser)
+{
+	static const wxCmdLineEntryDesc cmdLineDescription[] = {
+		{
+			wxCMD_LINE_OPTION,
+			wxT("t"),
+			wxT("tc"),
+			_("Name of testcase"),
+			wxCMD_LINE_VAL_STRING,
+			wxCMD_LINE_OPTION_MANDATORY
+		}, {
+			wxCMD_LINE_NONE,
+			NULL,
+			NULL,
+			NULL,
+			wxCMD_LINE_VAL_NONE,
+			0
+		}
+	};
+
+	parser.SetDesc(cmdLineDescription);
+	parser.SetSwitchChars(wxT("-"));
+}
+
+bool
+JobCtrlApp::OnCmdLineParsed(wxCmdLineParser &parser)
+{
+	parser.Found(wxT("t"), &this->testcase_);
+	fprintf(stderr, "Testcase: %s\n", (const char*)testcase_.fn_str());
+	return (true);
 }
 
 bool

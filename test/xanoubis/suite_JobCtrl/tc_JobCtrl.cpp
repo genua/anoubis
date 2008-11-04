@@ -31,9 +31,23 @@
 
 START_TEST(tc_jobctrl)
 {
-	int argc = 1;
+	int argc = 3;
 	const char *argv[] = {
-		__FUNCTION__
+		__FUNCTION__,
+		"-t", "tc_jobctrl"
+	};
+
+	int result = jobCtrlAppEntry(argc, (char**)argv);
+	fail_if(result != 0, "Unexpected result: %i", result);
+}
+END_TEST
+
+START_TEST(tc_jobctrl_nodaemon)
+{
+	int argc = 3;
+	const char *argv[] = {
+		__FUNCTION__,
+		"-t", "tc_jobctrl_nodaemon"
 	};
 
 	int result = jobCtrlAppEntry(argc, (char**)argv);
@@ -50,6 +64,19 @@ getTc_JobCtrl(void)
 	tcase_set_timeout(testCase, 10);
 
 	tcase_add_test(testCase, tc_jobctrl);
+
+	return (testCase);
+}
+
+TCase *
+getTc_JobCtrl_NoConnection(void)
+{
+	TCase *testCase;
+
+	testCase = tcase_create("JobCtrlNoConnection");
+	tcase_set_timeout(testCase, 10);
+
+	tcase_add_test(testCase, tc_jobctrl_nodaemon);
 
 	return (testCase);
 }

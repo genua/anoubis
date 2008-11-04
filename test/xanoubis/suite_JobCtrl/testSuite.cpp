@@ -28,17 +28,21 @@
 #include <check.h>
 
 extern TCase *getTc_JobCtrl(void);
+extern TCase *getTc_JobCtrl_NoConnection(void);
 
 Suite *
 getTestSuite(void)
 {
 	Suite *testSuite;
-	TCase *tc_JobCtrl;
+	TCase *tc_JobCtrl, *tc_JobCtrl_NoConnection;
 
 	testSuite = suite_create("JobCtrl");
+
 	tc_JobCtrl = getTc_JobCtrl();
+	tc_JobCtrl_NoConnection = getTc_JobCtrl_NoConnection();
 
 	suite_add_tcase(testSuite, tc_JobCtrl);
+	suite_add_tcase(testSuite, tc_JobCtrl_NoConnection);
 
 	return (testSuite);
 }

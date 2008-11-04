@@ -43,11 +43,16 @@ class JobCtrlApp : public wxAppConsole
 		int OnRun();
 		int OnExit();
 
+		void OnInitCmdLine(wxCmdLineParser &);
+		bool OnCmdLineParsed(wxCmdLineParser &);
+
 	private:
 		TestHandlerList handlerList_;
 
 		bool canExit() const;
 		int getResult() const;
+
+		wxString testcase_;
 };
 
 DECLARE_APP(JobCtrlApp);
