@@ -295,6 +295,10 @@ xanoubis_SOURCES= \
 	pattern/Singleton.cpp \
 	pattern/Singleton.h \
 	pattern/SynchronizedQueue.h \
+	pattern/Subject.cpp \
+	pattern/Subject.h \
+	pattern/Observer.cpp \
+	pattern/Observer.h \
 	job/ComCsumAddTask.cpp \
 	job/ComCsumAddTask.h \
 	job/ComCsumGetTask.cpp \

@@ -25,24 +25,72 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <check.h>
+#include "Observer.h"
+#include "Subject.h"
 
-extern TCase *getTc_Singleton(void);
-extern TCase *getTc_Observer(void);
+#include <wx/listimpl.cpp>
+WX_DEFINE_LIST(ObserverList);
 
-Suite *
-getTestSuite(void)
+Observer::Observer(Subject *subject)
 {
-	Suite *testSuite;
-	TCase *tc_Singleton;
-	TCase *tc_Observer;
+	subjects_ = new SubjectList();
+	addSubject(subject);
+}
 
-	testSuite = suite_create("Patterns");
-	tc_Singleton = getTc_Singleton();
-	tc_Observer = getTc_Observer();
+Observer::~Observer(void)
+{
+	SubjectList::iterator	it;
 
-	suite_add_tcase(testSuite, tc_Singleton);
-	suite_add_tcase(testSuite, tc_Observer);
+	if (subjects_ == NULL) {
+		return;
+	}
 
-	return (testSuite);
+	it = subjects_->begin();
+	while (it != subjects_->end()) {
+		removeSubject(*it);
+		it++;
+	}
+
+	delete subjects_;
+}
+
+bool
+Observer::addSubject(Subject *subject)
+{
+	bool result;
+
+	/* Is this a valid subject been added? */
+	if ((subject == NULL) || (subjects_ == NULL)) {
+		return (false);
+	}
+
+	/* Is the given subject already in the list? */
+	if (subjects_->IndexOf(subject) != wxNOT_FOUND) {
+		return (false);
+	}
+
+	subjects_->Append(subject);
+	result = subject->addObserver(this);
+
+	return (result);
+}
+
+bool
+Observer::removeSubject(Subject *subject)
+{
+	bool result;
+
+	if ((subject == NULL) || (subjects_ == NULL)) {
+		return (false);
+	}
+
+	/* remove this observer from subject */
+	result = subject->removeObserver(this);
+	if (result == false) {
+		return (false);
+	}
+
+	/* remove subject for list of observed subjects */
+	result = subjects_->DeleteObject(subject);
+	return (result);
 }

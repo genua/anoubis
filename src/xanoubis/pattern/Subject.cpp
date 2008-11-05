@@ -25,24 +25,78 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <check.h>
+#include "Subject.h"
 
-extern TCase *getTc_Singleton(void);
-extern TCase *getTc_Observer(void);
+#include <wx/listimpl.cpp>
+WX_DEFINE_LIST(SubjectList);
 
-Suite *
-getTestSuite(void)
+Subject::Subject(void)
 {
-	Suite *testSuite;
-	TCase *tc_Singleton;
-	TCase *tc_Observer;
+	changeCount_ = 0;
+	observers_.Clear();
+}
 
-	testSuite = suite_create("Patterns");
-	tc_Singleton = getTc_Singleton();
-	tc_Observer = getTc_Observer();
+Subject::~Subject(void)
+{
+	ObserverList::iterator	it;
 
-	suite_add_tcase(testSuite, tc_Singleton);
-	suite_add_tcase(testSuite, tc_Observer);
+	it = observers_.begin();
+	while (it != observers_.end()) {
+		(*it)->removeSubject(this);
+		it++;
+	}
+	observers_.Clear();
+}
 
-	return (testSuite);
+bool
+Subject::addObserver(Observer *observer)
+{
+	/* Is this a valid observer been added? */
+	if (observer == NULL) {
+		return (false);
+	}
+
+	/* Is the given observer already in the list? */
+	if (observers_.IndexOf(observer) != wxNOT_FOUND) {
+		return (false);
+	}
+
+	observers_.Append(observer);
+
+	return (true);
+}
+
+bool
+Subject::removeObserver(Observer *observer)
+{
+	return (observers_.DeleteObject(observer));
+}
+
+void
+Subject::startChange(void)
+{
+	changeCount_++;
+}
+
+void
+Subject::finishChange(void)
+{
+	if (changeCount_ > 0) {
+		changeCount_--;
+	}
+	if (changeCount_ == 0) {
+		notifyObservers();
+	}
+}
+
+void
+Subject::notifyObservers(void)
+{
+	ObserverList::iterator	it;
+
+	it = observers_.begin();
+	while (it != observers_.end()) {
+		(*it)->update(this);
+		it++;
+	}
 }
