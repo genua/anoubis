@@ -8,6 +8,14 @@ alf {
 
 	any {
 		default allow
+	}
+}
+context {
+	/usr/sbin/avahi-daemon @@
+	{
+	}
+
+	any {
 		context new any
 	}
 }

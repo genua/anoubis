@@ -5,6 +5,10 @@ alf {
 		allow send udp from any to any port 123
 		allow receive udp from any port 123 to any
 		default log deny
+	}
+}
+context {
+	any {
 		context new any
 	}
 }

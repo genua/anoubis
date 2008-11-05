@@ -4,7 +4,6 @@ alf {
 
 		# connect required for port forwarding
 		ask connect log tcp all
-		context new any
 		default log deny
 	}
 
@@ -23,7 +22,6 @@ alf {
 		# for non-standard ports, ask
 		ask   connect tcp from any to any
 
-		context new any
 		default log deny
 	}
 
@@ -56,6 +54,23 @@ alf {
 		allow connect tcp from any to ::1       port 6000 - 6099
 
 		default log ask
+	}
+}
+context {
+	/usr/sbin/sshd @@ {
+		context new any
+	}
+
+	/usr/bin/ssh @@ {
+		context new any
+	}
+
+	/usr/lib/iceweasel/firefox-bin @@
+	{
+	}
+
+	any
+	{
 		context new any
 	}
 }

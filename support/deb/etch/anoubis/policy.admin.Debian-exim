@@ -12,7 +12,11 @@ alf {
 		# ident
 		allow connect tcp from any to any port 113
 
-		context new any
 		default log deny
+	}
+}
+context {
+	any {
+		context new any
 	}
 }
