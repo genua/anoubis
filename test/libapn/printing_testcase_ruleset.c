@@ -72,19 +72,12 @@ generate_file(void)
 	fprintf(sfp, "allow accept tcp from 1.2.3.4 port www to any\n");
 	fprintf(sfp, "allow connect tcp from 1.2.3.0/24 to 4.0.0.0/8\n");
 	fprintf(sfp, "default deny\n");
-	fprintf(sfp, "context new any\n");
 	fprintf(sfp, "}\n");
 	fprintf(sfp, "/usr/bin/ssh sha256 \\\n");
 	fprintf(sfp, "b123456789abcdef0123456789abcdef0123456789abcdef"
 	    "0123456789abcdef {\n");
 	fprintf(sfp, "default deny\n");
 	fprintf(sfp, "allow connect tcp all\n");
-	fprintf(sfp, "context new { /sbin/dhclient sha256 \\\n");
-	fprintf(sfp, "c123456789abcdef0123456789abcdef0123456789abcdef"
-	    "0123456789abcdef,\n");
-	fprintf(sfp, "/bin/sh \\\n");
-	fprintf(sfp, "d123456789abcdef0123456789abcdef0123456789abcdef"
-	    "0123456789abcdef }\n");
 	fprintf(sfp, "}\n");
 	fprintf(sfp, "/sbin/dhclient sha256 \\\n");
 	fprintf(sfp, "c123456789abcdef0123456789abcdef0123456789abcdef"
@@ -98,7 +91,6 @@ generate_file(void)
 	fprintf(sfp, "d123456789abcdef0123456789abcdef0123456789abcdef"
 	    "0123456789abcdef {\n");
 	fprintf(sfp, "default deny\n");
-	fprintf(sfp, "context new any\n");
 	fprintf(sfp, "allow connect tcp from any to 1.2.3.4 port www\n");
 	fprintf(sfp, "}\n");
 	fprintf(sfp, "/usr/bin/ssh \\\n");
@@ -116,7 +108,6 @@ generate_file(void)
 	fprintf(sfp, "}\n");
 	fprintf(sfp, "any {\n");
 	fprintf(sfp, "default deny\n");
-	fprintf(sfp, "context new any\n");
 	fprintf(sfp, "}\n");
 	fprintf(sfp, "}\n");
 

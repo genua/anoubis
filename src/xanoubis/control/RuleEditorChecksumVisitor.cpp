@@ -52,6 +52,7 @@ RuleEditorChecksumVisitor::compare(Policy *policy)
 {
 	SfsPolicy *sfsPolicy;
 	AppPolicy *appPolicy;
+	CtxPolicy *ctxPolicy;
 	wxString   regHash;
 	wxString   curHash;
 	wxString   unknown;
@@ -69,6 +70,15 @@ RuleEditorChecksumVisitor::compare(Policy *policy)
 				}
 				curHash = sfsPolicy->getCurrentHash();
 				regHash = sfsPolicy->getHashValue();
+			}
+		} else if (policy->IsKindOf(CLASSINFO(CtxPolicy))) {
+			ctxPolicy = (CtxPolicy *)policy;
+			if (ctxPolicy->isModified()) {
+				if (!ctxPolicy->getCurrentHash().Cmp(unknown)) {
+					ctxPolicy->calcCurrentHash(csum);
+				}
+				curHash = ctxPolicy->getCurrentHash();
+				regHash = ctxPolicy->getHashValue();
 			}
 		} else {
 			appPolicy = (AppPolicy *)policy;
@@ -95,11 +105,15 @@ RuleEditorChecksumVisitor::setModifiedTo(Policy *policy)
 {
 	SfsPolicy *sfsPolicy;
 	AppPolicy *appPolicy;
+	CtxPolicy *ctxPolicy;
 
 	if (policy) {
 		if (policy->IsKindOf(CLASSINFO(SfsPolicy))) {
 			sfsPolicy = (SfsPolicy *)policy;
 			sfsPolicy->setModified(state_);
+		} else if (policy->IsKindOf(CLASSINFO(CtxPolicy))) {
+			ctxPolicy = (CtxPolicy *)policy;
+			ctxPolicy->setModified(state_);
 		} else {
 			appPolicy = (AppPolicy *)policy;
 			appPolicy->setModified(state_);
@@ -129,6 +143,15 @@ void
 RuleEditorChecksumVisitor::visitAlfPolicy(AlfPolicy*)
 {
 	/* There are no Hash sums in AlfPolicy */
+}
+
+void
+RuleEditorChecksumVisitor::visitCtxPolicy(CtxPolicy *ctxPolicy)
+{
+	if (state_ == -1)
+		compare(ctxPolicy);
+	else
+		setModifiedTo(ctxPolicy);
 }
 
 void

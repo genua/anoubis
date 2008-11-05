@@ -325,9 +325,6 @@ AlfPolicy::getTypeName(void)
 	case APN_DEFAULT:
 		result = wxT("default");
 		break;
-	case APN_ALF_CTX:
-		result = wxT("context");
-		break;
 	default:
 		result = _("(unknown)");
 		break;
@@ -384,78 +381,6 @@ wxString
 AlfPolicy::getActionName(void)
 {
 	return (SUPER(Policy)->getActionName(getActionNo()));
-}
-
-void
-AlfPolicy::setContextName(wxString ctxName)
-{
-	if (alfRule_->apn_type != APN_ALF_CTX) {
-		return;
-	}
-
-	/* It's easier to create a new app: always free the existing */
-	if (alfRule_->rule.apncontext.application != NULL) {
-		apn_free_app(alfRule_->rule.apncontext.application);
-		alfRule_->rule.apncontext.application = NULL;
-	}
-	if (ctxName.Cmp(wxT("any")) != 0) {
-		int hashsize;
-		alfRule_->rule.apncontext.application =
-			(struct apn_app *)calloc(1, sizeof(struct apn_app));
-		if (alfRule_->rule.apncontext.application == NULL) {
-			return;
-		}
-		alfRule_->rule.apncontext.application->name =
-		    strdup(ctxName.fn_str());
-		hashsize = APN_HASH_SHA256_LEN;
-		alfRule_->rule.apncontext.application->hashtype =
-		    APN_HASH_SHA256;
-		anoubis_csum_calc(alfRule_->rule.apncontext.application->name,
-		    alfRule_->rule.apncontext.application->hashvalue,
-		    &hashsize);
-	}
-}
-
-wxArrayString
-AlfPolicy::getContextList(void)
-{
-	wxArrayString    result;
-	struct apn_app  *app;
-
-	if (alfRule_->apn_type == APN_ALF_CTX) {
-		app = alfRule_->rule.apncontext.application;
-		do {
-			if (app == NULL) {
-				result.Add(wxT("any"));
-			} else {
-				result.Add(wxString::From8BitData(app->name));
-			}
-			if ((app == NULL) || (app->next == NULL)) {
-				break;
-			}
-			app = app->next;
-		} while (app);
-	}
-
-	return (result);
-}
-
-
-wxString
-AlfPolicy::getContextName(void)
-{
-	wxString		 result;
-	struct apn_context	*ctx;
-
-	ctx = &(alfRule_->rule.apncontext);
-
-	if ((alfRule_->apn_type == APN_ALF_CTX) && (ctx->application != NULL)) {
-		result = wxString::From8BitData(ctx->application->name);
-	} else {
-		result = wxT("any");
-	}
-
-	return (result);
 }
 
 wxString

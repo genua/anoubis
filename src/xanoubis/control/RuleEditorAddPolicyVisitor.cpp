@@ -73,7 +73,8 @@ RuleEditorAddPolicyVisitor::visitAppPolicy(AppPolicy *appPolicy)
 	/* Never visit the SFS dummy application block itself! */
 	if (appPolicy->getType() == APN_SFS)
 		return;
-	if (appPolicy->getType() == APN_ALF) {
+	if (appPolicy->getType() == APN_ALF
+	    || appPolicy->getType() == APN_CTX) {
 		showApp(appPolicy, appendPolicy(appPolicy));
 	}
 }
@@ -81,9 +82,13 @@ RuleEditorAddPolicyVisitor::visitAppPolicy(AppPolicy *appPolicy)
 void
 RuleEditorAddPolicyVisitor::visitAlfPolicy(AlfPolicy *alfPolicy)
 {
-	if (alfPolicy->getTypeNo() != APN_ALF_CTX) {
-		showAlf(alfPolicy, appendPolicy(alfPolicy));
-	}
+	showAlf(alfPolicy, appendPolicy(alfPolicy));
+}
+
+void
+RuleEditorAddPolicyVisitor::visitCtxPolicy(CtxPolicy *ctxPolicy)
+{
+	showCtx(ctxPolicy, appendPolicy(ctxPolicy));
 }
 
 void

@@ -30,6 +30,7 @@
 
 #include "AppPolicy.h"
 #include "AlfPolicy.h"
+#include "CtxPolicy.h"
 #include "SfsPolicy.h"
 #include "VarPolicy.h"
 
@@ -50,6 +51,7 @@ class PolicyVisitor
 
 		virtual void visitAppPolicy(AppPolicy *) = 0;
 		virtual void visitAlfPolicy(AlfPolicy *) = 0;
+		virtual void visitCtxPolicy(CtxPolicy *) = 0;
 		virtual void visitSfsPolicy(SfsPolicy *) = 0;
 		virtual void visitVarPolicy(VarPolicy *) = 0;
 };

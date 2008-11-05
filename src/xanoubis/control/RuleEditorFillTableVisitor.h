@@ -42,6 +42,7 @@ class RuleEditorFillTableVisitor : public PolicyVisitor
 		virtual void showApp(AppPolicy *, long);
 		virtual void showAlf(AlfPolicy *, long);
 		virtual void showSfs(SfsPolicy *, long);
+		virtual void showCtx(CtxPolicy *, long);
 		virtual void showVar(VarPolicy *, long);
 
 	public:
@@ -50,6 +51,7 @@ class RuleEditorFillTableVisitor : public PolicyVisitor
 
 		virtual void visitAppPolicy(AppPolicy *);
 		virtual void visitAlfPolicy(AlfPolicy *);
+		virtual void visitCtxPolicy(CtxPolicy *);
 		virtual void visitSfsPolicy(SfsPolicy *);
 		virtual void visitVarPolicy(VarPolicy *);
 };

@@ -73,8 +73,13 @@ RuleEditorFillTableVisitor::showApp(AppPolicy *appPolicy, long idx)
 		    wxGetApp().getUserNameById(rs->getUid()));
 	}
 
-	if (appPolicy->getType() == APN_ALF) {
-		ruleType = wxT("APP");
+	if (appPolicy->getType() == APN_ALF
+	    || appPolicy->getType() == APN_CTX) {
+		if (appPolicy->getType() == APN_CTX) {
+			ruleType = wxT("CTX");
+		} else {
+			ruleType = wxT("APP");
+		}
 		if (isAdmin()) {
 			ruleType += ADMIN_FLAG;
 		}
@@ -86,11 +91,6 @@ RuleEditorFillTableVisitor::showApp(AppPolicy *appPolicy, long idx)
 		    RULEDITOR_LIST_COLUMN_HASHT, appPolicy->getHashTypeName());
 		ruleEditor_->ruleListCtrl->SetItem(idx,
 		    RULEDITOR_LIST_COLUMN_HASH, appPolicy->getHashValue());
-		if (appPolicy->hasContext()) {
-			ruleEditor_->ruleListCtrl->SetItem(idx,
-			    RULEDITOR_LIST_COLUMN_CTX,
-			    appPolicy->getContext()->getContextName());
-		}
 	}
 }
 
@@ -168,13 +168,48 @@ RuleEditorFillTableVisitor::showAlf(AlfPolicy *alfPolicy, long idx)
 		list->SetItem(idx, RULEDITOR_LIST_COLUMN_ACTION,
 		    alfPolicy->getActionName());
 		break;
-	case APN_ALF_CTX:
-		list->SetItem(idx, RULEDITOR_LIST_COLUMN_CTX,
-		    alfPolicy->getContextName());
-		break;
 	default:
 		break;
 
+	}
+}
+
+void
+RuleEditorFillTableVisitor::showCtx(CtxPolicy *ctxPolicy, long idx)
+{
+	int		 type;
+	wxString	 ruleType;
+	wxListCtrl	*list;
+	PolicyRuleSet	*rs;
+
+	type = ctxPolicy->getTypeNo();
+	list = ruleEditor_->ruleListCtrl;
+
+	clean(idx);
+	ctxPolicy->setIndex(idx);
+
+	rs = ctxPolicy->getRsParent();
+	if (rs != NULL) {
+		list->SetItem(idx, RULEDITOR_LIST_COLUMN_USER,
+		    wxGetApp().getUserNameById(rs->getUid()));
+	}
+
+	ruleType = wxT(" NEW");
+	if (isAdmin()) {
+		ruleType += ADMIN_FLAG;
+	}
+	list->SetItem(idx, RULEDITOR_LIST_COLUMN_RULE, ruleType);
+	switch (type) {
+	case APN_CTX_RULE:
+		ruleEditor_->ruleListCtrl->SetItem(idx,
+		    RULEDITOR_LIST_COLUMN_BIN, ctxPolicy->getBinaryName());
+		ruleEditor_->ruleListCtrl->SetItem(idx,
+		    RULEDITOR_LIST_COLUMN_HASHT, ctxPolicy->getHashTypeName());
+		ruleEditor_->ruleListCtrl->SetItem(idx,
+		    RULEDITOR_LIST_COLUMN_HASH, ctxPolicy->getHashValue());
+		break;
+	default:
+		break;
 	}
 }
 
@@ -229,6 +264,12 @@ void
 RuleEditorFillTableVisitor::visitAlfPolicy(AlfPolicy *alfPolicy)
 {
 	showAlf(alfPolicy, selectedLine_);
+}
+
+void
+RuleEditorFillTableVisitor::visitCtxPolicy(CtxPolicy *ctxPolicy)
+{
+	showCtx(ctxPolicy, selectedLine_);
 }
 
 void

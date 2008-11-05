@@ -60,7 +60,6 @@ vm_tc_create_ruleset(int type)
 	if (type == 0) {
 		iov.iov_base = "alf {\n\
 	any {\n\
-		context new any\n\
 		default allow\n\
 	}\n\
 }\n";
@@ -74,7 +73,6 @@ a193a2edb06ff39630fed8195c0b043651867b91fccc8db67e4222367736ba73\n\
 	else {
 		iov.iov_base = "alf {\n\
 	any {\n\
-		context new any\n\
 		default allow\n\
 	}\n\
 }\n\

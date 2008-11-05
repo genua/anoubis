@@ -67,12 +67,11 @@ AppPolicy::AppPolicy(PolicyRuleSet *parent) : Policy(parent)
 AppPolicy::AppPolicy(struct apn_rule *appRule, PolicyRuleSet *parent)
     : Policy(parent, NULL)
 {
-	struct apn_rule		*alfRule;
-	struct apn_rule		*sfsRule;
+	struct apn_rule		*rule;
 	AlfPolicy		*newAlf;
 	SfsPolicy		*newSfs;
+	CtxPolicy		*newCtx;
 
-	context_ = NULL;
 	appRule_ = appRule;
 	currHash_ = wxEmptyString;
 	currSum_ = NULL;
@@ -80,20 +79,22 @@ AppPolicy::AppPolicy(struct apn_rule *appRule, PolicyRuleSet *parent)
 
 	switch (appRule_->apn_type) {
 	case APN_ALF:
-		TAILQ_FOREACH(alfRule, &appRule_->rule.chain, entry) {
-			newAlf = new AlfPolicy(this, alfRule, parent);
+		TAILQ_FOREACH(rule, &appRule_->rule.chain, entry) {
+			newAlf = new AlfPolicy(this, rule, parent);
 			ruleList_.Append(newAlf);
-			if (alfRule->apn_type == APN_ALF_CTX) {
-				context_ = newAlf;
-			}
 		}
 		break;
 	case APN_SFS:
-		TAILQ_FOREACH(sfsRule, &appRule_->rule.chain, entry) {
-			newSfs = new SfsPolicy(this, sfsRule, parent);
+		TAILQ_FOREACH(rule, &appRule_->rule.chain, entry) {
+			newSfs = new SfsPolicy(this, rule, parent);
 			ruleList_.Append(newSfs);
 		}
 		break;
+	case APN_CTX:
+		TAILQ_FOREACH(rule, &appRule_->rule.chain, entry) {
+			newCtx = new CtxPolicy(this, rule, parent);
+			ruleList_.Append(newCtx);
+		}
 	case APN_SB:
 	case APN_VS:
 	default:
@@ -301,30 +302,6 @@ AppPolicy::getHashValue(void)
 	result = convertToString(appRule_->app->hashvalue);
 
 	return (result);
-}
-
-void
-AppPolicy::setContextName(wxString ctxName)
-{
-	if (hasContext()) {
-		context_->setContextName(ctxName);
-	}
-}
-
-AlfPolicy *
-AppPolicy::getContext(void)
-{
-	return (context_);
-}
-
-bool
-AppPolicy::hasContext(void)
-{
-	if (context_ == NULL) {
-		return (false);
-	} else {
-		return (true);
-	}
 }
 
 int

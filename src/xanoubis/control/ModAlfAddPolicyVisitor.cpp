@@ -106,10 +106,6 @@ ModAlfAddPolicyVisitor::visitAppPolicy(AppPolicy *appPolicy)
 
 		list->SetItem(idx, MODALF_LIST_COLUMN_PROG,
 		    appPolicy->getBinaryName());
-		if (appPolicy->hasContext()) {
-			list->SetItem(idx, MODALF_LIST_COLUMN_CTX,
-			    appPolicy->getContext()->getContextName());
-		}
 	}
 }
 
@@ -149,8 +145,6 @@ ModAlfAddPolicyVisitor::visitAlfPolicy(AlfPolicy *alfPolicy)
 		    alfPolicy->getActionName());
 		list->SetItem(idx, MODALF_LIST_COLUMN_SERVICE, wxT("default"));
 		break;
-	case APN_ALF_CTX:
-		break;
 	default:
 		break;
 	}
@@ -160,6 +154,12 @@ void
 ModAlfAddPolicyVisitor::visitSfsPolicy(SfsPolicy*)
 {
 	/* no SFS policies shown in ALF module */
+}
+
+void
+ModAlfAddPolicyVisitor::visitCtxPolicy(CtxPolicy*)
+{
+	/* no CTX rules shown in ALF module */
 }
 
 void

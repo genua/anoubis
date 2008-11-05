@@ -62,6 +62,7 @@ class PolicyRuleSet : public wxEvtHandler
 		struct apn_ruleset	*ruleSet_;
 		PolicyList		 alfList_;
 		PolicyList		 sfsList_;
+		PolicyList		 ctxList_;
 		PolicyList		 varList_;
 
 		void clean(void);
@@ -84,7 +85,7 @@ class PolicyRuleSet : public wxEvtHandler
 
 		int createAppPolicy(int);
 		int createAlfPolicy(int);
-		int createAlfCtxPolicy(int, wxString);
+		int createCtxPolicy(int, wxString);
 		int createSfsPolicy(int);
 		int createVarPolicy(int);
 

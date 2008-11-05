@@ -96,6 +96,12 @@ RuleSetSearchPolicyVisitor::visitAlfPolicy(AlfPolicy *alfPolicy)
 }
 
 void
+RuleSetSearchPolicyVisitor::visitCtxPolicy(CtxPolicy *ctxPolicy)
+{
+	compare((Policy *)ctxPolicy);
+}
+
+void
 RuleSetSearchPolicyVisitor::visitSfsPolicy(SfsPolicy *sfsPolicy)
 {
 	compare((Policy *)sfsPolicy);

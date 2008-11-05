@@ -199,10 +199,11 @@ enum {
 	APN_SFS,		/* rule.chain, scope == NULL */
 	APN_SB,			/* rule.chain, scope == NULL */
 	APN_VS,			/* rule.chain, scope == NULL */
+	APN_CTX,		/* rule.chain, scope = NULL */
 	APN_ALF_FILTER,		/* rule.afilt, app == NULL */
 	APN_ALF_CAPABILITY,	/* rule.acap, app == NULL */
 	APN_DEFAULT,		/* rule.apndefault, app == NULL */
-	APN_ALF_CTX,		/* rule.apncontext, app == NULL */
+	APN_CTX_RULE,		/* rule.apncontext, app == NULL */
 	APN_SFS_CHECK,		/* rule.sfscheck, app == NULL */
 	APN_SB_ACCESS,		/* rule.sbaccess, app = NULL */
 };
@@ -251,6 +252,7 @@ struct apn_ruleset {
 	struct apn_chain	 alf_queue;
 	struct apn_chain	 sfs_queue;
 	struct apn_chain	 sb_queue;
+	struct apn_chain	 ctx_queue;
 	struct apnvar_queue	 var_queue;
 
 	/* Error messages from the parser */
@@ -266,6 +268,8 @@ int	apn_add_alfblock(struct apn_ruleset *, struct apn_rule *,
 int	apn_add_sfsblock(struct apn_ruleset *, struct apn_rule *,
 	    const char *, int lineno);
 int	apn_add_sbblock(struct apn_ruleset *, struct apn_rule *,
+	    const char *, int lineno);
+int	apn_add_ctxblock(struct apn_ruleset *, struct apn_rule *,
 	    const char *, int lineno);
 int	apn_print_rule(struct apn_rule *, int, FILE *);
 int	apn_print_ruleset(struct apn_ruleset *, int, FILE *);
@@ -283,9 +287,15 @@ int	apn_insert_sfsrule(struct apn_ruleset *, struct apn_rule *,
 	    unsigned int);
 int	apn_insert_sbrule(struct apn_ruleset *, struct apn_rule *,
 	    unsigned int id);
+int	apn_insert_ctxrule(struct apn_ruleset *, struct apn_rule *,
+	    unsigned int id);
 int	apn_add2app_alfrule(struct apn_ruleset *, struct apn_rule *,
 	    unsigned int);
 int	apn_add2app_sfsrule(struct apn_ruleset *, struct apn_rule *,
+	    unsigned int);
+int	apn_add2app_sbrule(struct apn_ruleset *, struct apn_rule *,
+	    unsigned int);
+int	apn_add2app_ctxrule(struct apn_ruleset *, struct apn_rule *,
 	    unsigned int);
 int	apn_copyinsert(struct apn_ruleset *, struct apn_rule *,
 	    unsigned int, const char *, const u_int8_t *, int);

@@ -47,6 +47,7 @@ class RuleEditorChecksumVisitor : public PolicyVisitor
 
 		virtual void visitAppPolicy(AppPolicy *);
 		virtual void visitAlfPolicy(AlfPolicy *);
+		virtual void visitCtxPolicy(CtxPolicy *);
 		virtual void visitSfsPolicy(SfsPolicy *);
 		virtual void visitVarPolicy(VarPolicy *);
 };

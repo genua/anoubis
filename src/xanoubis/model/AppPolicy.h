@@ -34,6 +34,7 @@
 
 #include "Policy.h"
 class AlfPolicy;
+class CtxPolicy;
 
 class AppPolicy : public Policy
 {
@@ -41,7 +42,6 @@ class AppPolicy : public Policy
 
 	private:
 		PolicyList	 ruleList_;
-		AlfPolicy	*context_;
 		struct apn_rule	*appRule_;
 		bool		 modified_;
 
@@ -66,9 +66,6 @@ class AppPolicy : public Policy
 		wxString	 getHashTypeName(void);
 		void		 setHashValue(unsigned char *);
 		wxString	 getHashValue(void);
-		void		 setContextName(wxString);
-		AlfPolicy	*getContext(void);
-		bool		 hasContext(void);
 		int		 getType(void);
 		bool		 isModified(void);
 		void		 setModified(bool);

@@ -89,6 +89,12 @@ ModSfsAddPolicyVisitor::visitAlfPolicy(AlfPolicy*)
 }
 
 void
+ModSfsAddPolicyVisitor::visitCtxPolicy(CtxPolicy*)
+{
+	/* no ALF policies shown in CTX module */
+}
+
+void
 ModSfsAddPolicyVisitor::visitSfsPolicy(SfsPolicy *sfsPolicy)
 {
 	long		 idx;

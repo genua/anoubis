@@ -398,14 +398,8 @@ RuleEditorFillWidgetsVisitor::visitAppPolicy(AppPolicy *appPolicy)
 
 	name = appPolicy->getBinaryName();
 	ruleEditor_->appBinaryTextCtrl->ChangeValue(name);
-	if (appPolicy->hasContext()) {
-		ruleEditor_->appContextDeleteButton->Enable();
-		name = appPolicy->getContext()->getContextName();
-		ruleEditor_->appContextTextCtrl->ChangeValue(name);
-	}
 
-	if (appPolicy->getBinaryName().Cmp(wxT("any")))
-	{
+	if (appPolicy->getBinaryName().Cmp(wxT("any"))) {
 		currHash = appPolicy->getCurrentHash();
 		regHash = appPolicy->getHashValue();
 
@@ -486,9 +480,6 @@ RuleEditorFillWidgetsVisitor::visitAlfPolicy(AlfPolicy *alfPolicy)
 		showAction(alfPolicy->getActionNo());
 		showLog(alfPolicy->getLogNo());
 		break;
-	case APN_ALF_CTX:
-		visitAppPolicy((AppPolicy *)alfPolicy->getParent());
-		break;
 	default:
 		break;
 	}
@@ -496,6 +487,62 @@ RuleEditorFillWidgetsVisitor::visitAlfPolicy(AlfPolicy *alfPolicy)
 	if ((geteuid() != 0) &&
 	    (isAdmin() || alfPolicy->getRsParent()->isAdmin())) {
 		ruleEditor_->alfNbPanel->Disable();
+	}
+}
+
+void
+RuleEditorFillWidgetsVisitor::visitCtxPolicy(CtxPolicy *ctxPolicy)
+{
+	wxString	name;
+	wxString        currHash;
+	wxString        regHash;
+	wxString	unknown;
+
+	ruleEditor_->applicationNbPanel->Enable();
+	ruleEditor_->alfNbPanel->Disable();
+	ruleEditor_->sfsNbPanel->Disable();
+	ruleEditor_->ruleEditNotebook->ChangeSelection(RULEDITOR_PANEL_APP);
+
+	showUser(ctxPolicy->getRsParent()->getUid());
+	unknown = _("unknown");
+
+	name = ctxPolicy->getBinaryName();
+	ruleEditor_->appBinaryTextCtrl->ChangeValue(name);
+
+	if (ctxPolicy->getBinaryName().Cmp(wxT("any"))) {
+		currHash = ctxPolicy->getCurrentHash();
+		regHash = ctxPolicy->getHashValue();
+
+		ruleEditor_->appRegisteredSumValueText->SetLabel(regHash);
+		ruleEditor_->appCurrentSumValueText->SetLabel(currHash);
+		ruleEditor_->appValidateChkSumButton->Enable();
+
+		if (regHash.Cmp(currHash) == 0) {
+			ruleEditor_->appStatusValueText->SetLabel(_("match"));
+			ruleEditor_->appUpdateChkSumButton->Disable();
+		} else {
+			if (currHash.Cmp(unknown)) {
+				ruleEditor_->appStatusValueText->SetLabel(
+				    _("mismatch"));
+				ruleEditor_->appUpdateChkSumButton->Enable();
+			} else {
+				ruleEditor_->appStatusValueText->
+				    SetLabel(unknown);
+				ruleEditor_->appUpdateChkSumButton->Disable();
+			}
+		}
+	} else {
+		ruleEditor_->appUpdateChkSumButton->Disable();
+		ruleEditor_->appValidateChkSumButton->Disable();
+		ruleEditor_->appRegisteredSumValueText->SetLabel(
+		    _("no application selected"));
+		ruleEditor_->appCurrentSumValueText->SetLabel(
+		    _("no application selected"));
+	}
+
+	if ((geteuid() != 0) &&
+	    (isAdmin() || ctxPolicy->getRsParent()->isAdmin())) {
+		ruleEditor_->applicationNbPanel->Disable();
 	}
 }
 

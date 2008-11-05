@@ -153,7 +153,7 @@ typedef struct {
 		struct apn_acaprule	 acaprule;
 		struct apn_sbaccess	 sbaccess;
 		struct apn_default	 dfltrule;
-		struct apn_context	 ctxrule;
+		struct apn_context	 ctxruleapps;
 		struct apn_sfscheck	 sfscheck;
 		struct apn_addr		 addr;
 		struct apn_app		*app;
@@ -197,12 +197,13 @@ typedef struct {
 %type	<v.action>		action
 %type	<v.log>			log
 %type	<v.rule>		alfruleset sbruleset alfrule sfsrule sbrule
-%type	<v.rulehead>		alfrule_l sfsrule_l sbrule_l
+%type	<v.rule>		ctxrule
+%type	<v.rulehead>		alfrule_l sfsrule_l sbrule_l ctxrule_l
 %type	<v.afrule>		alffilterrule
 %type	<v.acaprule>		alfcaprule
 %type	<v.sbaccess>		sbaccess sbpred sbpath sbuid sbkey sbcsum
 %type	<v.dfltrule>		defaultrule alfdefault sfsdefault sbdefault
-%type	<v.ctxrule>		ctxrule
+%type	<v.ctxruleapps>		ctxruleapps
 %type	<v.sfscheck>		sfscheckrule
 %type	<v.timeout>		statetimeout
 %type	<v.scope>		scope
@@ -325,6 +326,7 @@ module		: alfmodule
 		| sfsmodule
 		| sbmodule
 		| vsmodule
+		| ctxmodule
 		;
 
 		/*
@@ -502,23 +504,6 @@ alfrule		: ruleid alffilterrule	scope		{
 
 			rule->apn_type = APN_DEFAULT;
 			rule->rule.apndefault = $2;
-			rule->apn_id = $1;
-			rule->scope = $3;
-			rule->app = NULL;
-
-			$$ = rule;
-		}
-		| ruleid ctxrule scope			{
-			struct apn_rule	*rule;
-
-			rule = calloc(1, sizeof(struct apn_rule));
-			if (rule == NULL) {
-				free($3);
-				YYERROR;
-			}
-
-			rule->apn_type = APN_ALF_CTX;
-			rule->rule.apncontext = $2;
 			rule->apn_id = $1;
 			rule->scope = $3;
 			rule->app = NULL;
@@ -1083,6 +1068,93 @@ sbrwx		: STRING {
 sbdefault	: defaultrule
 		;
 
+
+ctxmodule	: CONTEXT optnl '{' optnl ctxruleset_l '}'
+		| CONTEXT optnl '{' optnl '}'
+		;
+
+ctxruleset_l	: ctxruleset_l ctxruleset
+		| ctxruleset
+		;
+
+ctxruleset	: ruleid apps optnl '{' optnl ctxrule_l '}' nl {
+			struct apn_rule	*rule;
+
+			if ((rule = calloc(1, sizeof(struct apn_rule)))
+			    == NULL) {
+				apn_free_app($2);
+				apn_free_chain($6, NULL);
+				free($6);
+				YYERROR;
+			}
+
+			rule->app = $2;
+			rule->scope = NULL;
+			rule->apn_type = APN_CTX;
+			rule->apn_id = $1;
+			TAILQ_INIT(&rule->rule.chain);
+			while(!TAILQ_EMPTY($6)) {
+				struct apn_rule *arule;
+				arule = TAILQ_FIRST($6);
+				TAILQ_REMOVE($6, arule, entry);
+				TAILQ_INSERT_TAIL(&rule->rule.chain,
+				    arule, entry);
+			}
+			free($6);
+
+			if (apn_add_ctxblock(apnrsp, rule, file->name,
+			    yylval.lineno) != 0) {
+				/* Account for errors in apn_add_alfblock */
+				file->errors++;
+				apn_free_one_rule(rule, NULL);
+				YYERROR;
+			}
+		}
+		;
+
+ctxrule_l	: ctxrule_l ctxrule nl		{
+			if ($2 == NULL)
+				$$ = $1;
+			else {
+				TAILQ_INSERT_TAIL($1, $2, entry);
+				$$ = $1;
+			}
+		}
+		| /* Empty */			{
+			$$ = calloc(1, sizeof(struct apn_chain));
+			if ($$ == NULL) {
+				yyerror("Out of memory");
+				YYERROR;
+			}
+			TAILQ_INIT($$);
+		}
+		;
+
+ctxrule		: ruleid ctxruleapps scope			{
+			struct apn_rule	*rule;
+
+			rule = calloc(1, sizeof(struct apn_rule));
+			if (rule == NULL) {
+				free($3);
+				YYERROR;
+			}
+
+			rule->apn_type = APN_CTX_RULE;
+			rule->rule.apncontext = $2;
+			rule->apn_id = $1;
+			rule->scope = $3;
+			rule->app = NULL;
+
+			$$ = rule;
+		}
+		;
+
+ctxruleapps	: CONTEXT NEW apps		{
+			$$.application = $3;
+		}
+		;
+
+
 		/*
 		 * VS
 		 */
@@ -1108,14 +1180,6 @@ vsrule		: action vsspec
 		;
 
 vsspec		: STRING			{ free($1); }
-		;
-
-		/*
-		 * Context
-		 */
-ctxrule		: CONTEXT NEW apps		{
-			$$.application = $3;
-		}
 		;
 
 		/*

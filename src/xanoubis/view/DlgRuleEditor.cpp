@@ -253,6 +253,7 @@ DlgRuleEditor::updateBinName(wxString binName)
 	Policy				*policy;
 	AppPolicy			*appPolicy;
 	SfsPolicy			*sfsPolicy;
+	CtxPolicy			*ctxPolicy;
 	RuleEditorFillTableVisitor	 updateTable(this, selectedIndex_);
 	RuleEditorFillWidgetsVisitor	 updateWidgets(this);
 
@@ -264,6 +265,9 @@ DlgRuleEditor::updateBinName(wxString binName)
 	if (policy->IsKindOf(CLASSINFO(SfsPolicy))) {
 		sfsPolicy = (SfsPolicy *)policy;
 		sfsPolicy->setBinaryName(binName);
+	} else if (policy->IsKindOf(CLASSINFO(CtxPolicy))) {
+		ctxPolicy = (CtxPolicy *)policy;
+		ctxPolicy->setBinaryName(binName);
 	} else {
 		appPolicy = (AppPolicy *)policy;
 		appPolicy->setBinaryName(binName);
@@ -271,32 +275,6 @@ DlgRuleEditor::updateBinName(wxString binName)
 
 	policy->accept(updateTable);
 	policy->accept(updateWidgets);
-}
-
-void
-DlgRuleEditor::updateContextName(wxString ctxName)
-{
-	Policy				*policy;
-	AppPolicy			*appPolicy;
-	RuleEditorFillTableVisitor	 updateTable(this, selectedIndex_);
-	RuleEditorFillWidgetsVisitor	 updateWidgets(this);
-
-	policy = (Policy *)ruleListCtrl->GetItemData(selectedIndex_);
-	if (policy == NULL) {
-		return;
-	}
-
-	if (policy->IsKindOf(CLASSINFO(AppPolicy))) {
-		appPolicy = (AppPolicy *)policy;
-		if (appPolicy->hasContext()) {
-			appPolicy->setContextName(ctxName);
-			policy->accept(updateTable);
-			policy->accept(updateWidgets);
-		} else {
-			appPolicy->getRsParent()->createAlfCtxPolicy(
-			    appPolicy->getId(), ctxName);
-		}
-	}
 }
 
 void
@@ -558,39 +536,6 @@ DlgRuleEditor::OnAppBinaryTextCtrl(wxCommandEvent& event)
 void
 DlgRuleEditor::onAppContextTextCtrl(wxCommandEvent& )
 {
-	updateContextName(appContextTextCtrl->GetValue());
-}
-
-void
-DlgRuleEditor::onAppContextDeleteButton(wxCommandEvent&)
-{
-	Policy		*policy;
-	AppPolicy	*appPolicy;
-	PolicyRuleSet	*rs;
-
-	policy = (Policy *)ruleListCtrl->GetItemData(selectedIndex_);
-	if (policy == NULL) {
-		return;
-	}
-
-	appPolicy = wxDynamicCast(policy, AppPolicy);
-	if ((appPolicy == NULL) || !appPolicy->hasContext()) {
-		return;
-	}
-
-	rs = policy->getRsParent();
-	if (rs == NULL) {
-		return;
-	}
-
-	if ((geteuid() != 0) && rs->isAdmin()) {
-		wxMessageBox(_("No permission to edit admin ruleset."),
-		    _("Rule Editor"), wxOK, this);
-		return;
-	}
-
-	rs->deletePolicy(appPolicy->getContext()->getId());
-
 }
 
 void
@@ -622,31 +567,9 @@ DlgRuleEditor::OnAppBinaryModifyButton(wxCommandEvent& )
 }
 
 void
-DlgRuleEditor::onAppContextModifyButton(wxCommandEvent& )
-{
-	wxString	 caption = _("Choose a binary as context");
-	wxString	 wildcard = wxT("*");
-	wxString	 defaultDir = wxT("/usr/bin/");
-	wxString	 defaultFilename = wxEmptyString;
-	wxFileDialog	*fileDlg;
-
-	if (wxIsBusy())
-		return;
-
-	wxBeginBusyCursor();
-	fileDlg = new wxFileDialog(NULL, caption, defaultDir, defaultFilename,
-	    wildcard, wxOPEN);
-	wxEndBusyCursor();
-
-	if (fileDlg->ShowModal() == wxID_OK) {
-		updateContextName(fileDlg->GetPath());
-	}
-}
-
-void
 DlgRuleEditor::OnAppUpdateChkSumButton(wxCommandEvent& )
 {
-	AppPolicy			*policy;
+	Policy				*policy;
 	RuleEditorFillTableVisitor       updateTable(this, selectedIndex_);
 	RuleEditorFillWidgetsVisitor	 updateWidgets(this);
 	unsigned char			 *csum;
@@ -655,20 +578,29 @@ DlgRuleEditor::OnAppUpdateChkSumButton(wxCommandEvent& )
 	if (wxIsBusy())
 		return;
 
-	policy = (AppPolicy *)ruleListCtrl->GetItemData(selectedIndex_);
+	policy = (Policy*)ruleListCtrl->GetItemData(selectedIndex_);
 	if (!policy)
 		return;
 
-	csum = policy->getCurrentSum();
-	policy->setHashValue(csum);
-	policy->accept(updateTable);
-	policy->accept(updateWidgets);
+	if (policy->IsKindOf(CLASSINFO(AppPolicy))) {
+		AppPolicy	*appPolicy = (AppPolicy*)policy;
+		csum = appPolicy->getCurrentSum();
+		appPolicy->setHashValue(csum);
+		appPolicy->accept(updateTable);
+		appPolicy->accept(updateWidgets);
+	} else if (policy->IsKindOf(CLASSINFO(CtxPolicy))) {
+		CtxPolicy	*ctxPolicy = (CtxPolicy*)policy;
+		csum = ctxPolicy->getCurrentSum();
+		ctxPolicy->setHashValue(csum);
+		ctxPolicy->accept(updateTable);
+		ctxPolicy->accept(updateWidgets);
+	}
 }
 
 void
 DlgRuleEditor::OnAppValidateChkSumButton(wxCommandEvent& )
 {
-	AppPolicy			*policy;
+	Policy				*genpolicy;
 	RuleEditorFillWidgetsVisitor	 updateVisitor(this);
 	unsigned char			 csum[MAX_APN_HASH_LEN];
 	wxString			 currHash;
@@ -679,26 +611,48 @@ DlgRuleEditor::OnAppValidateChkSumButton(wxCommandEvent& )
 	if (wxIsBusy())
 		return;
 
-	policy = (AppPolicy *)ruleListCtrl->GetItemData(selectedIndex_);
-	if (!policy)
+	genpolicy = (Policy *)ruleListCtrl->GetItemData(selectedIndex_);
+	if (!genpolicy)
 		return;
 
-	ret = policy->calcCurrentHash(csum);
+	if (genpolicy->IsKindOf(CLASSINFO(AppPolicy))) {
+		AppPolicy	*policy = (AppPolicy*)genpolicy;
 
-	if (ret == 1) {
-		updateVisitor.setPropagation(false);
-		policy->accept(updateVisitor);
-	} else if (ret == 0) {
-		wxGetApp().calChecksum(policy->getBinaryName());
-		wxBeginBusyCursor();
-	} else if (ret == -2) {
-		message = _("Wrong file access permission");
-		title = _("File is not set readable for the user.");
-		wxMessageBox(message, title, wxICON_INFORMATION);
-	} else {
-		message = _("File does not exist");
-		title = _("File does not exist");
-		wxMessageBox(message, title, wxICON_INFORMATION);
+		ret = policy->calcCurrentHash(csum);
+		if (ret == 1) {
+			updateVisitor.setPropagation(false);
+			policy->accept(updateVisitor);
+		} else if (ret == 0) {
+			wxGetApp().calChecksum(policy->getBinaryName());
+			wxBeginBusyCursor();
+		} else if (ret == -2) {
+			message = _("Wrong file access permission");
+			title = _("File is not set readable for the user.");
+			wxMessageBox(message, title, wxICON_INFORMATION);
+		} else {
+			message = _("File does not exist");
+			title = _("File does not exist");
+			wxMessageBox(message, title, wxICON_INFORMATION);
+		}
+	} else if (genpolicy->IsKindOf(CLASSINFO(CtxPolicy))) {
+		CtxPolicy	*policy = (CtxPolicy*)genpolicy;
+
+		ret = policy->calcCurrentHash(csum);
+		if (ret == 1) {
+			updateVisitor.setPropagation(false);
+			policy->accept(updateVisitor);
+		} else if (ret == 0) {
+			wxGetApp().calChecksum(policy->getBinaryName());
+			wxBeginBusyCursor();
+		} else if (ret == -2) {
+			message = _("Wrong file access permission");
+			title = _("File is not set readable for the user.");
+			wxMessageBox(message, title, wxICON_INFORMATION);
+		} else {
+			message = _("File does not exist");
+			title = _("File does not exist");
+			wxMessageBox(message, title, wxICON_INFORMATION);
+		}
 	}
 }
 
@@ -1527,4 +1481,16 @@ DlgRuleEditor::selectLine(unsigned long index)
 
 	selecter = (wxListView*)ruleListCtrl;
 	selecter->Select(index);
+}
+
+void
+DlgRuleEditor::onAppContextDeleteButton(wxCommandEvent&)
+{
+	/* XXX CEH: This button should be removed. */
+}
+
+void
+DlgRuleEditor::onAppContextModifyButton(wxCommandEvent&)
+{
+	/* XXX CEH: This button should be removed. */
 }

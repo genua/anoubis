@@ -44,7 +44,7 @@
 #include "TcComTask.h"
 
 const wxString policyCsum =
-    wxT("ea7fdf8d2b537ea25e0b50b74b3b40c2ea225d93ca895af6957d2fe46dbb6f1e");
+    wxT("09c2012a32bb5b776c8e0adc186df5b45279dd87dda249e877ec876b33d190f9");
 
 TcComTask::TcComTask()
 {

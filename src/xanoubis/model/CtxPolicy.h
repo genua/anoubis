@@ -25,27 +25,67 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _RULEEDITORADDPOLICYVISITOR_H_
-#define _RULEEDITORADDPOLICYVISITOR_H_
+#ifndef _CTXPOLICY_H_
+#define _CTXPOLICY_H_
 
-#include "DlgRuleEditor.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#include <sys/param.h>
+#include <sys/socket.h>
+
+#ifndef LINUX
+#include <sys/queue.h>
+#else
+#include <queue.h>
+#endif
+
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <wx/string.h>
+#include <wx/arrstr.h>
+
+#include <apn.h>
+
+#include "Policy.h"
+#include "AppPolicy.h"
 #include "PolicyVisitor.h"
-#include "RuleEditorFillTableVisitor.h"
 
-class RuleEditorAddPolicyVisitor : public RuleEditorFillTableVisitor
+class CtxPolicy : public Policy
 {
+	DECLARE_DYNAMIC_CLASS(CtxPolicy)
+
 	private:
-		long appendPolicy(Policy *);
+		struct apn_rule		*ctxRule_;
+		bool			 modified_;
+		wxString		 currHash_;
+		unsigned char		*currSum_;
 
 	public:
-		RuleEditorAddPolicyVisitor(DlgRuleEditor *);
-		~RuleEditorAddPolicyVisitor(void);
+		CtxPolicy(void);
+		CtxPolicy(PolicyRuleSet *);
+		CtxPolicy(AppPolicy *, struct apn_rule *, PolicyRuleSet *);
+		~CtxPolicy(void);
 
-		virtual void visitAppPolicy(AppPolicy *);
-		virtual void visitAlfPolicy(AlfPolicy *);
-		virtual void visitCtxPolicy(CtxPolicy *);
-		virtual void visitSfsPolicy(SfsPolicy *);
-		virtual void visitVarPolicy(VarPolicy *);
+		virtual void	accept(PolicyVisitor&);
+		virtual bool	isDefault(void) { return false; }
+
+		int		getId(void);
+		int		getTypeNo(void);
+		wxString	getBinaryName(void);
+		wxString	getHashTypeName(void);
+		wxString	getHashValue(void);
+		wxString	convertToString(unsigned char *);
+		void		setBinaryName(wxString name);
+		bool		isModified(void);
+		void		setModified(bool);
+		void		setHashValue(unsigned char *);
+		unsigned char*	getCurrentSum(void);
+		void		setCurrentSum(unsigned char *);
+		wxString	getCurrentHash(void);
+		void		setCurrentHash(wxString currHash);
+		int		calcCurrentHash(unsigned char *);
 };
 
-#endif	/* _RULEEDITORADDPOLICYVISITOR_H_ */
+#endif	/* _CTXPOLICY_H_ */

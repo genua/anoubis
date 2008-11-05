@@ -60,7 +60,6 @@ vm_tc_write_alf(FILE *f, const char *profile)
 
 	fprintf(f, "alf {\n");
 	fprintf(f, "	any {\n");
-	fprintf(f, "		context new any\n");
 	fprintf(f, "		default allow\n");
 	fprintf(f, "	}\n");
 	fprintf(f, "}\n");
@@ -90,7 +89,6 @@ vm_tc_write_alfsfs(FILE *f, const char *profile)
 
 	fprintf(f, "alf {\n");
 	fprintf(f, "	any {\n");
-	fprintf(f, "		context new any\n");
 	fprintf(f, "		default allow\n");
 	fprintf(f, "	}\n");
 	fprintf(f, "}\n");

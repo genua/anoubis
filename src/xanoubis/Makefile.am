@@ -206,6 +206,8 @@ xanoubis_SOURCES= \
 	model/StatusNotify.h \
 	model/AlfPolicy.cpp \
 	model/AlfPolicy.h \
+	model/CtxPolicy.cpp \
+	model/CtxPolicy.h \
 	model/SfsDirectory.cpp \
 	model/SfsDirectory.h \
 	model/SfsEntry.cpp \

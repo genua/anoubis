@@ -111,6 +111,10 @@ PolicyRuleSet::create(struct apn_ruleset *ruleSet)
 		sfsList_.Append(new AppPolicy(appRule, this));
 	}
 
+	TAILQ_FOREACH(appRule, &(ruleSet->ctx_queue), entry) {
+		ctxList_.Append(new AppPolicy(appRule, this));
+	}
+
 	TAILQ_FOREACH(variable, &(ruleSet->var_queue), entry) {
 		varList_.Append(new VarPolicy(variable));
 	}
@@ -123,6 +127,8 @@ PolicyRuleSet::clean(void)
 	alfList_.Clear();
 	sfsList_.DeleteContents(true);
 	sfsList_.Clear();
+	ctxList_.DeleteContents(true);
+	ctxList_.Clear();
 	varList_.DeleteContents(true);
 	varList_.Clear();
 }
@@ -447,6 +453,9 @@ PolicyRuleSet::accept(PolicyVisitor& visitor)
 	for (i=sfsList_.begin(); i != sfsList_.end(); ++i) {
 		(*i)->accept(visitor);
 	}
+	for (i=ctxList_.begin(); i != ctxList_.end(); ++i) {
+		(*i)->accept(visitor);
+	}
 	for (i=varList_.begin(); i != varList_.end(); ++i) {
 		(*i)->accept(visitor);
 	}
@@ -565,7 +574,7 @@ PolicyRuleSet::createAlfPolicy(int insertBeforeId)
 }
 
 int
-PolicyRuleSet::createAlfCtxPolicy(int insertBeforeId, wxString ctx)
+PolicyRuleSet::createCtxPolicy(int insertBeforeId, wxString ctx)
 {
 	int				 newId;
 	int				 rc;
@@ -588,7 +597,7 @@ PolicyRuleSet::createAlfCtxPolicy(int insertBeforeId, wxString ctx)
 		return (-1);
 	}
 
-	newCtxRule->apn_type = APN_ALF_CTX;
+	newCtxRule->apn_type = APN_CTX_RULE;
 
 	newCtxRule->rule.apncontext.application = CALLOC_STRUCT(apn_app);
 	if (newCtxRule->rule.apncontext.application == NULL) {
@@ -600,9 +609,9 @@ PolicyRuleSet::createAlfCtxPolicy(int insertBeforeId, wxString ctx)
 	newCtxRule->rule.apncontext.application->hashtype = APN_HASH_NONE;
 
 	if (parentPolicy->IsKindOf(CLASSINFO(AppPolicy))) {
-		rc = apn_add2app_alfrule(ruleSet_, newCtxRule, insertBeforeId);
+		rc = apn_add2app_ctxrule(ruleSet_, newCtxRule, insertBeforeId);
 	} else if (parentPolicy->IsKindOf(CLASSINFO(AlfPolicy))) {
-		rc = apn_insert_alfrule(ruleSet_, newCtxRule, insertBeforeId);
+		rc = apn_insert_ctxrule(ruleSet_, newCtxRule, insertBeforeId);
 	}
 
 	if (rc == 0) {
@@ -727,7 +736,7 @@ bool
 PolicyRuleSet::isEmpty(void)
 {
 	return (alfList_.IsEmpty() && sfsList_.IsEmpty() &&
-	    varList_.IsEmpty());
+	    varList_.IsEmpty() && ctxList_.IsEmpty());
 }
 
 bool

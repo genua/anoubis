@@ -114,6 +114,7 @@ __apn_parse_common(const char *filename, struct apn_ruleset **rsp, int flags)
 	TAILQ_INIT(&rs->alf_queue);
 	TAILQ_INIT(&rs->sfs_queue);
 	TAILQ_INIT(&rs->sb_queue);
+	TAILQ_INIT(&rs->ctx_queue);
 	TAILQ_INIT(&rs->var_queue);
 	TAILQ_INIT(&rs->err_queue);
 	rs->flags = flags;
@@ -140,6 +141,7 @@ apn_parse(const char *filename, struct apn_ruleset **rsp, int flags)
 		apn_free_chain(&rs->alf_queue, NULL);
 		apn_free_chain(&rs->sfs_queue, NULL);
 		apn_free_chain(&rs->sb_queue, NULL);
+		apn_free_chain(&rs->ctx_queue, NULL);
 		apn_free_varq(&rs->var_queue);
 	}
 
@@ -162,6 +164,7 @@ apn_parse_iovec(const char *filename, struct iovec *vec, int count,
 		apn_free_chain(&rs->alf_queue, NULL);
 		apn_free_chain(&rs->sfs_queue, NULL);
 		apn_free_chain(&rs->sb_queue, NULL);
+		apn_free_chain(&rs->ctx_queue, NULL);
 		apn_free_varq(&rs->var_queue);
 	}
 	return ret;
@@ -316,6 +319,14 @@ apn_add_sbblock(struct apn_ruleset *ruleset, struct apn_rule *block,
 	    block, filename, lineno);
 }
 
+int
+apn_add_ctxblock(struct apn_ruleset *ruleset, struct apn_rule *block,
+    const char *filename, int lineno)
+{
+	return __apn_add_block_common(ruleset, &ruleset->ctx_queue, block,
+	    filename, lineno);
+}
+
 /*
  * Add rule to head of concerning queue of rule set.
  * The IDs of the passed struct apn_rule will be updated!
@@ -344,6 +355,9 @@ apn_add(struct apn_ruleset *rs, struct apn_rule *rule)
 		break;
 	case APN_SB:
 		queue = &rs->sb_queue;
+		break;
+	case APN_CTX:
+		queue = &rs->ctx_queue;
 		break;
 	default:
 		return (1);
@@ -388,6 +402,9 @@ apn_insert(struct apn_ruleset *rs, struct apn_rule *rule, unsigned int id)
 	case APN_SB:
 		queue = &rs->sb_queue;
 		break;
+	case APN_CTX:
+		queue = &rs->ctx_queue;
+		break;
 	default:
 		return (1);
 	}
@@ -404,40 +421,43 @@ apn_insert(struct apn_ruleset *rs, struct apn_rule *rule, unsigned int id)
 	return (0);
 }
 
-static int
-apn_insert_rule_common(struct apn_ruleset *rs,
-    struct apn_chain *queue, struct apn_rule *arule, unsigned int id)
-{
-	struct apn_rule		*p;
-
-	if (!rs || rs->maxid == UINT_MAX)
-		return 1;
-	if (arule == NULL || id < 1 || rs->maxid == UINT_MAX)
-		return (1);
-
-	if (arule->apn_id && !apn_valid_id(rs, arule->apn_id))
-		return 1;
-	if ((p = apn_searchinsert_rule(queue, arule, id)) == NULL)
-		return (1);
-	if (arule->apn_id == 0) {
-		apn_assign_id(rs, &arule->_rbentry, arule);
-	} else {
-		apn_insert_id(rs, &arule->_rbentry, arule);
-	}
-
-	return (0);
-}
-
 /*
- * Insert alf rule @arule before alf rule with identification @id.  The ID of
- * the new rule is retained. If the ID of the new rule is 0 a new ID is
- * assigned. Trying to use an ID of an existing rule will cause an error.
+ * Insert a rule @rule before rule with identification @id in the chain
+ * @queue.  The ID of the new rule is retained. If the ID of the new rule
+ * is 0 a new ID is assigned. Trying to use an ID of an existing rule will
+ * cause an error.
  *
  * Return codes:
  * -1: a systemcall failed and errno is set
  *  0: rule was inserted
  *  1: invalid parameters
  */
+
+static int
+apn_insert_rule_common(struct apn_ruleset *rs,
+    struct apn_chain *queue, struct apn_rule *rule, unsigned int id)
+{
+	struct apn_rule		*p;
+
+	if (!rs || rs->maxid == UINT_MAX)
+		return 1;
+	if (rule == NULL || id < 1 || rs->maxid == UINT_MAX)
+		return (1);
+
+	if (rule->apn_id && !apn_valid_id(rs, rule->apn_id))
+		return 1;
+	if ((p = apn_searchinsert_rule(queue, rule, id)) == NULL)
+		return (1);
+	if (rule->apn_id == 0) {
+		apn_assign_id(rs, &rule->_rbentry, rule);
+	} else {
+		apn_insert_id(rs, &rule->_rbentry, rule);
+	}
+
+	return (0);
+}
+
+/* ALF wrapper for apn_insert_rule_common */
 int
 apn_insert_alfrule(struct apn_ruleset *rs, struct apn_rule *arule,
     unsigned int id)
@@ -445,16 +465,7 @@ apn_insert_alfrule(struct apn_ruleset *rs, struct apn_rule *arule,
 	return apn_insert_rule_common(rs, &rs->alf_queue, arule, id);
 }
 
-/*
- * Insert sfs rule before sfs rule with identification ID.  The ID of
- * the new rule is retained. If the ID of the new rule is 0 a new ID is
- * assigned. Trying to use an ID of an existing rule will cause an error.
- *
- * Return codes:
- * -1: a systemcall failed and errno is set
- *  0: rule was inserted
- *  1: invalid parameters
- */
+/* SFS wrapper for apn_insert_rule_common */
 int
 apn_insert_sfsrule(struct apn_ruleset *rs, struct apn_rule *srule,
     unsigned int id)
@@ -462,16 +473,7 @@ apn_insert_sfsrule(struct apn_ruleset *rs, struct apn_rule *srule,
 	return apn_insert_rule_common(rs, &rs->sfs_queue, srule, id);
 }
 
-/*
- * Insert sandbox rule before sandbox rule with identification ID.  The ID of
- * the new rule is retained. If the ID of the new rule is 0 a new ID is
- * assigned. Trying to use an ID of an existing rule will cause an error.
- *
- * Return codes:
- * -1: a systemcall failed and errno is set
- *  0: rule was inserted
- *  1: invalid parameters
- */
+/* SANDBOX wrapper for apn_insert_rule_common */
 int
 apn_insert_sbrule(struct apn_ruleset *rs, struct apn_rule *sbrule,
     unsigned int id)
@@ -479,17 +481,15 @@ apn_insert_sbrule(struct apn_ruleset *rs, struct apn_rule *sbrule,
 	return apn_insert_rule_common(rs, &rs->sb_queue, sbrule, id);
 }
 
-/*
- * Add struct apn_rule arule to the start of the struct apn_rule identified
- * by @id. The ID of the new rule is retained. If the ID of the new rule
- * is 0 a new ID is assigned. Trying to use an ID of an existing rule will
- * cause an error.
- *
- * Return codes:
- * -1: a systemcall failed and errno is set
- *  0: rule was added
- *  1: invalid parameters
- */
+/* CONTEXT wrapper for apn_insert_rule_common */
+int
+apn_insert_ctxrule(struct apn_ruleset *rs, struct apn_rule *ctxrule,
+    unsigned int id)
+{
+	return apn_insert_rule_common(rs, &rs->sb_queue, ctxrule, id);
+}
+
+/* ALF wrapper for apn_add2app_commonrule */
 int
 apn_add2app_alfrule(struct apn_ruleset *rs, struct apn_rule *rule,
     unsigned int id)
@@ -497,22 +497,28 @@ apn_add2app_alfrule(struct apn_ruleset *rs, struct apn_rule *rule,
 	return (apn_add2app_commonrule(rs, &rs->alf_queue, rule, id));
 }
 
-/*
- * Add struct apn_rule arule to the start of the struct apn_rule identified
- * by @id. The ID of the new rule is retained. If the ID of the new rule
- * is 0 a new ID is assigned. Trying to use an ID of an existing rule will
- * cause an error.
- *
- * Return codes:
- * -1: a systemcall failed and errno is set
- *  0: rule was added
- *  1: invalid parameters
- */
+/* SFS wrapper for apn_add2app_commonrule */
 int
 apn_add2app_sfsrule(struct apn_ruleset *rs, struct apn_rule *rule,
     unsigned int id)
 {
 	return (apn_add2app_commonrule(rs, &rs->sfs_queue, rule, id));
+}
+
+/* SANDBOX wrapper for apn_add2app_commonrule */
+int
+apn_add2app_sbrule(struct apn_ruleset *rs, struct apn_rule *rule,
+    unsigned int id)
+{
+	return (apn_add2app_commonrule(rs, &rs->sb_queue, rule, id));
+}
+
+/* CONTEXT wrapper for apn_add2app_commonrule */
+int
+apn_add2app_ctxrule(struct apn_ruleset *rs, struct apn_rule *rule,
+    unsigned int id)
+{
+	return (apn_add2app_commonrule(rs, &rs->ctx_queue, rule, id));
 }
 
 /*
@@ -664,6 +670,7 @@ apn_print_rule(struct apn_rule *rule, int flags, FILE *file)
 	switch (rule->apn_type) {
 	case APN_ALF:
 	case APN_SB:
+	case APN_CTX:
 		if ((ret = apn_print_app(rule->app, file)) != 0)
 			return (ret);
 		fprintf(file, " {\n");
@@ -683,7 +690,7 @@ apn_print_rule(struct apn_rule *rule, int flags, FILE *file)
 		ret = apn_print_defaultrule(&rule->rule.apndefault,
 		    file);
 		break;
-	case APN_ALF_CTX:
+	case APN_CTX_RULE:
 		ret = apn_print_contextrule(&rule->rule.apncontext, file);
 		break;
 	case APN_SFS_CHECK:
@@ -731,6 +738,11 @@ apn_print_ruleset(struct apn_ruleset *rs, int flags, FILE *file)
 
 	fprintf(file, "sandbox {\n");
 	if (apn_print_chain(&rs->sb_queue, flags, file))
+		return 1;
+	fprintf(file, "}\n");
+
+	fprintf(file, "context {\n");
+	if (apn_print_chain(&rs->ctx_queue, flags, file))
 		return 1;
 	fprintf(file, "}\n");
 
@@ -807,7 +819,7 @@ void
 apn_free_ruleset(struct apn_ruleset *rs)
 {
 	struct apnerr_queue	*errq;
-	struct apn_chain	*alfq, *sfsq, *sbq;
+	struct apn_chain	*alfq, *sfsq, *sbq, *ctxq;
 	struct apnvar_queue	*varq;
 
 	if (rs == NULL)
@@ -817,6 +829,7 @@ apn_free_ruleset(struct apn_ruleset *rs)
 	alfq = &rs->alf_queue;
 	sfsq = &rs->sfs_queue;
 	sbq = &rs->sb_queue;
+	ctxq = &rs->ctx_queue;
 	varq = &rs->var_queue;
 
 	apn_free_errq(errq);
@@ -824,6 +837,7 @@ apn_free_ruleset(struct apn_ruleset *rs)
 	apn_free_chain(alfq, NULL);
 	apn_free_chain(sfsq, NULL);
 	apn_free_chain(sbq, NULL);
+	apn_free_chain(ctxq, NULL);
 	apn_free_varq(varq);
 
 	free(rs);
@@ -1379,6 +1393,7 @@ apn_free_one_rule(struct apn_rule *rule, struct apn_ruleset *rs)
 	case APN_SFS:
 	case APN_SB:
 	case APN_VS:
+	case APN_CTX:
 		apn_free_chain(&rule->rule.chain, rs);
 		break;
 	case APN_ALF_FILTER:
@@ -1393,7 +1408,7 @@ apn_free_one_rule(struct apn_rule *rule, struct apn_ruleset *rs)
 	case APN_DEFAULT:
 		/* nothing to free */
 		break;
-	case APN_ALF_CTX:
+	case APN_CTX_RULE:
 		apn_free_app(rule->rule.apncontext.application);
 		break;
 	case APN_SFS_CHECK:
@@ -1482,6 +1497,7 @@ apn_update_ids(struct apn_rule *rule, struct apn_ruleset *rs)
 	case APN_SFS:
 	case APN_VS:
 	case APN_SB:
+	case APN_CTX:
 		TAILQ_FOREACH(r, &rule->rule.chain, entry)
 			apn_assign_id(rs, &r->_rbentry, r);
 		break;
@@ -1570,7 +1586,10 @@ apn_copy_rule(struct apn_rule *rule)
 	return (newrule);
 }
 
-/* XXX CEH: This function should support copying of SFS rules. */
+/*
+ * XXX CEH: This function should support copying of SFS, SANDBOX and CONTEXT
+ * XXX CEH: rules.
+ */
 struct apn_rule *
 apn_copy_one_rule(struct apn_rule *old)
 {
@@ -1609,8 +1628,6 @@ apn_copy_one_rule(struct apn_rule *old)
 			goto errout;
 		break;
 
-	case APN_ALF_CTX:
-		/*FALLTHROUGH*/
 	default:
 		/* just ignore and go on */
 		goto errout;
@@ -1637,7 +1654,7 @@ apn_copy_chain(struct apn_chain *src, struct apn_chain *dst)
 	struct apn_rule	*oldrule, *newrule;
 	TAILQ_FOREACH(oldrule, src, entry) {
 		/* XXX CEH: Is this really a good idead? */
-		if (oldrule->apn_type == APN_ALF_CTX)
+		if (oldrule->apn_type == APN_CTX_RULE)
 			continue;
 		newrule = apn_copy_one_rule(oldrule);
 		if (!newrule)
@@ -1809,6 +1826,7 @@ apn_clean_rule(struct apn_ruleset *rs, struct apn_rule *block,
 	case APN_SFS:
 	case APN_VS:
 	case APN_SB:
+	case APN_CTX:
 		break;
 	default:
 		return 0;
@@ -1850,6 +1868,7 @@ apn_clean_ruleset(struct apn_ruleset *rs,
 	ret = apn_clean_ruleq(rs, &rs->alf_queue, check, data);
 	ret += apn_clean_ruleq(rs, &rs->sfs_queue, check, data);
 	ret += apn_clean_ruleq(rs, &rs->sb_queue, check, data);
+	ret += apn_clean_ruleq(rs, &rs->ctx_queue, check, data);
 	return ret;
 }
 
@@ -1883,6 +1902,7 @@ apn_remove_chain_deep(struct apn_ruleset *rs, struct apn_chain *chain,
 		case APN_SFS:
 		case APN_VS:
 		case APN_SB:
+		case APN_CTX:
 			if (apn_remove_chain_deep(rs, &p->rule.chain, id) == 0)
 				return 0;
 		}
@@ -1912,6 +1932,8 @@ apn_remove(struct apn_ruleset *rs, unsigned int id)
 		return 0;
 	if (apn_remove_chain_deep(rs, &rs->sb_queue, id) == 0)
 		return 0;
+	if (apn_remove_chain_deep(rs, &rs->ctx_queue, id) == 0)
+		return 0;
 	return (2);
 }
 
@@ -1929,6 +1951,7 @@ apn_assign_ids_one(struct apn_ruleset *rs, struct apn_rule *r)
 	case APN_SFS:
 	case APN_SB:
 	case APN_VS:
+	case APN_CTX:
 		apn_assign_ids_chain(rs, &r->rule.chain);
 		break;
 	}
@@ -1954,9 +1977,10 @@ apn_assign_ids(struct apn_ruleset *rs)
 	apn_assign_ids_chain(rs, &rs->alf_queue);
 	apn_assign_ids_chain(rs, &rs->sfs_queue);
 	apn_assign_ids_chain(rs, &rs->sb_queue);
+	apn_assign_ids_chain(rs, &rs->ctx_queue);
 }
 
-	static void
+static void
 apn_insert_id(struct apn_ruleset *rs, struct rb_entry *e, void *data)
 {
 	/* Explicitly specified ID in ruleset. Turn off compat IDs */
@@ -1972,7 +1996,7 @@ apn_insert_id(struct apn_ruleset *rs, struct rb_entry *e, void *data)
 		rs->maxid = e->key;
 }
 
-	static void
+static void
 apn_assign_id(struct apn_ruleset *rs, struct rb_entry *e, void *data)
 {
 	unsigned long nid;

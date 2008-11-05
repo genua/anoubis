@@ -141,6 +141,7 @@ struct pe_context {
 	int			 refcount;
 	struct apn_rule		*alfrule;
 	struct apn_rule		*sbrule;
+	struct apn_rule		*ctxrule;
 	struct apn_ruleset	*ruleset;
 	struct pe_proc_ident	 ident;
 };
@@ -172,7 +173,8 @@ pe_context_norules(struct pe_proc *proc, int prio)
 	if (!ctx)
 		return;
 	/* Old context already is a norules context => We're done. */
-	if (ctx->ruleset == NULL && ctx->alfrule == NULL && ctx->sbrule == NULL)
+	if (ctx->ruleset == NULL && ctx->alfrule == NULL
+	    && ctx->sbrule == NULL && ctx->ctxrule == NULL)
 		return;
 	ctx = pe_context_alloc(NULL, &ctx->ident);
 	if (!ctx) {
@@ -222,8 +224,8 @@ pe_context_refresh(struct pe_proc *proc, int prio, struct pe_policy_db *pdb)
 		context = pe_context_search(newrules, pe_proc_ident(proc));
 	}
 	DEBUG(DBG_PE_POLICY, "pe_context_refresh: context %p alfrule %p "
-	    "sbrule %p", context, context ? context->alfrule : NULL,
-	    context ? context->sbrule : NULL);
+	    "sbrule %p ctxrule %p", context, context ? context->alfrule : NULL,
+	    context ? context->sbrule : NULL, context?context->ctxrule:NULL);
 	pe_proc_set_context(proc, prio, context);
 	pe_context_put(context);
 	return;
@@ -330,9 +332,10 @@ pe_context_switch(struct pe_proc *proc, int prio,
 	tmpctx = pe_context_search(ruleset, pident);
 	pe_proc_set_context(proc, prio, tmpctx);
 	DEBUG(DBG_PE_CTX, "pe_context_switch: proc %p 0x%08llx prio %d "
-	    "got context %p alfrule %p sbrule %p", proc,
+	    "got context %p alfrule %p sbrule %p ctxrule %p", proc,
 	    pe_proc_task_cookie(proc), prio, tmpctx,
-	    tmpctx ? tmpctx->alfrule : NULL,tmpctx ? tmpctx->sbrule : NULL);
+	    tmpctx ? tmpctx->alfrule : NULL,tmpctx ? tmpctx->sbrule : NULL,
+	    tmpctx ? tmpctx->ctxrule : NULL);
 	/*
 	 * pe_context_search got a reference to the new context and
 	 * pe_proc_set_context got another one. Drop one of them.
@@ -436,9 +439,11 @@ pe_context_search(struct apn_ruleset *rs, struct pe_proc_ident *pident)
 	}
 	context->alfrule = pe_context_search_chain(&rs->alf_queue, pident);
 	context->sbrule = pe_context_search_chain(&rs->sb_queue, pident);
+	context->ctxrule = pe_context_search_chain(&rs->ctx_queue, pident);
 
-	DEBUG(DBG_PE_CTX, "pe_context_search: context %p alfrule %p sbrule %p",
-	    context, context->alfrule, context->sbrule);
+	DEBUG(DBG_PE_CTX, "pe_context_search: context %p alfrule %p sbrule %p "
+	    "ctxrule %p", context, context->alfrule, context->sbrule,
+	    context->ctxrule);
 
 	return (context);
 }
@@ -458,6 +463,7 @@ pe_context_alloc(struct apn_ruleset *rs, struct pe_proc_ident *pident)
 	}
 	ctx->alfrule = NULL;
 	ctx->sbrule = NULL;
+	ctx->ctxrule = NULL;
 	ctx->ruleset = rs;
 	ctx->refcount = 1;
 	ctx->ident.csum = NULL;
@@ -514,11 +520,11 @@ pe_context_decide(struct pe_proc *proc, int prio, struct pe_proc_ident *pident)
 	if (ctx == NULL)
 		return 1;
 	/* Context without rule means, not switching. */
-	if (ctx->alfrule == NULL)
+	if (ctx->ctxrule == NULL)
 		return 0;
 	ret = 0;	/* deny by default */
-	TAILQ_FOREACH(rule, &ctx->alfrule->rule.chain, entry) {
-		if (rule->apn_type != APN_ALF_CTX)
+	TAILQ_FOREACH(rule, &ctx->ctxrule->rule.chain, entry) {
+		if (rule->apn_type != APN_CTX_RULE)
 			continue;
 		/*
 		 * If the rule says "context new any", application will be
@@ -564,8 +570,9 @@ pe_dump_dbgctx(const char *prefix, struct pe_proc *proc)
 
 	for (i = 0; i < PE_PRIO_MAX; i++) {
 		struct pe_context *ctx = pe_proc_get_context(proc, i);
-		DEBUG(DBG_PE_CTX, "%s: prio %d alfrule %p sbrule %p", prefix,
-		    i, ctx ? ctx->alfrule : NULL, ctx ? ctx->sbrule : NULL);
+		DEBUG(DBG_PE_CTX, "%s: prio %d alfrule %p sbrule %p "
+		    "ctxrule %p", prefix, i, ctx ? ctx->alfrule : NULL,
+		    ctx ? ctx->sbrule : NULL, ctx ? ctx->ctxrule : NULL);
 	}
 }
 
