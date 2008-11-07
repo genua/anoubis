@@ -225,7 +225,8 @@ pe_context_refresh(struct pe_proc *proc, int prio, struct pe_policy_db *pdb)
 	}
 	DEBUG(DBG_PE_POLICY, "pe_context_refresh: context %p alfrule %p "
 	    "sbrule %p ctxrule %p", context, context ? context->alfrule : NULL,
-	    context ? context->sbrule : NULL, context?context->ctxrule:NULL);
+	    context ? context->sbrule : NULL,
+	    context ? context->ctxrule : NULL);
 	pe_proc_set_context(proc, prio, context);
 	pe_context_put(context);
 	return;

@@ -110,11 +110,6 @@ class DlgRuleEditorBase : public wxFrame
 		wxStaticText* appBinaryText;
 		wxTextCtrl* appBinaryTextCtrl;
 		wxButton* appBinaryModifyButton;
-		
-		wxStaticText* appContextText;
-		wxTextCtrl* appContextTextCtrl;
-		wxButton* appContextModifyButton;
-		wxButton* appContextDeleteButton;
 		wxStaticText* appRegisteredSumLabelText;
 		wxStaticText* appRegisteredSumValueText;
 		
@@ -211,9 +206,6 @@ class DlgRuleEditorBase : public wxFrame
 		virtual void OnCommonLogAlert( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnAppBinaryTextCtrl( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnAppBinaryModifyButton( wxCommandEvent& event ){ event.Skip(); }
-		virtual void onAppContextTextCtrl( wxCommandEvent& event ){ event.Skip(); }
-		virtual void onAppContextModifyButton( wxCommandEvent& event ){ event.Skip(); }
-		virtual void onAppContextDeleteButton( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnAppValidateChkSumButton( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnAppUpdateChkSumButton( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnAlfAllowRadioButton( wxCommandEvent& event ){ event.Skip(); }

@@ -91,6 +91,31 @@ static void	apn_insert_id(struct apn_ruleset *, struct rb_entry *, void *);
 static void	apn_assign_id(struct apn_ruleset *, struct rb_entry *, void *);
 static int	apn_add2app_commonrule(struct apn_ruleset *, struct apn_chain *,
 		    struct apn_rule *, unsigned int);
+static int	apn_verify_types(int parent, int child);
+
+
+/*
+ * Return true if an APN rule of type child is allowed inside an APN
+ * rule of type parent.
+ */
+static int
+apn_verify_types(int parent, int child)
+{
+	switch(parent) {
+	case APN_ALF:
+		return (child == APN_DEFAULT || child == APN_ALF_FILTER
+		    || child == APN_ALF_CAPABILITY);
+	case APN_SB:
+		return (child == APN_DEFAULT || child == APN_SB_ACCESS);
+	case APN_SFS:
+		return (child == APN_SFS_CHECK || child == APN_DEFAULT);
+	case APN_CTX:
+		return (child == APN_CTX_RULE);
+	default:
+		return 0;
+	}
+	return 0;
+}
 
 /*
  * Parse the specified file or iovec and return the ruleset, which is allocated
@@ -374,7 +399,9 @@ apn_add(struct apn_ruleset *rs, struct apn_rule *rule)
 
 /*
  * Insert rule to rule set before rule with the identification ID.
- * The IDs of the passed struct apn_rule will be updated!
+ * If ID is 0 and the queue to insert is empty, the rule is inserted
+ * at the start of the queue. The IDs of the passed struct apn_rule
+ * will be updated!
  *
  * Return codes:
  * -1: a systemcall failed and errno is set
@@ -387,9 +414,9 @@ int
 apn_insert(struct apn_ruleset *rs, struct apn_rule *rule, unsigned int id)
 {
 	struct apn_chain	*queue;
-	struct apn_rule		*p;
+	struct apn_rule		*p = NULL;
 
-	if (rs == NULL || rule == NULL || id < 1 || rs->maxid == UINT_MAX)
+	if (rs == NULL || rule == NULL || rs->maxid == UINT_MAX)
 		return (1);
 
 	switch (rule->apn_type) {
@@ -409,14 +436,23 @@ apn_insert(struct apn_ruleset *rs, struct apn_rule *rule, unsigned int id)
 		return (1);
 	}
 
-	if ((p = apn_search_rule(queue, id)) == NULL)
+	if (id == 0 && !TAILQ_EMPTY(queue)) {
 		return (1);
+	} else if (id) {
+		p = apn_search_rule(queue, id);
+		if (p == NULL)
+			return (1);
+	}
 
 	/* Assign new IDs to the rule block before inserting it. */
 	if (apn_update_ids(rule, rs))
 		return (1);
 
-	TAILQ_INSERT_BEFORE(p, rule, entry);
+	if (p) {
+		TAILQ_INSERT_BEFORE(p, rule, entry);
+	} else {
+		TAILQ_INSERT_HEAD(queue, rule, entry);
+	}
 
 	return (0);
 }
@@ -462,6 +498,8 @@ int
 apn_insert_alfrule(struct apn_ruleset *rs, struct apn_rule *arule,
     unsigned int id)
 {
+	if (!apn_verify_types(APN_ALF, arule->apn_type))
+		return (1);
 	return apn_insert_rule_common(rs, &rs->alf_queue, arule, id);
 }
 
@@ -470,6 +508,8 @@ int
 apn_insert_sfsrule(struct apn_ruleset *rs, struct apn_rule *srule,
     unsigned int id)
 {
+	if (!apn_verify_types(APN_SFS, srule->apn_type))
+		return (1);
 	return apn_insert_rule_common(rs, &rs->sfs_queue, srule, id);
 }
 
@@ -478,6 +518,8 @@ int
 apn_insert_sbrule(struct apn_ruleset *rs, struct apn_rule *sbrule,
     unsigned int id)
 {
+	if (!apn_verify_types(APN_SB, sbrule->apn_type))
+		return (1);
 	return apn_insert_rule_common(rs, &rs->sb_queue, sbrule, id);
 }
 
@@ -486,7 +528,9 @@ int
 apn_insert_ctxrule(struct apn_ruleset *rs, struct apn_rule *ctxrule,
     unsigned int id)
 {
-	return apn_insert_rule_common(rs, &rs->sb_queue, ctxrule, id);
+	if (!apn_verify_types(APN_CTX, ctxrule->apn_type))
+		return (1);
+	return apn_insert_rule_common(rs, &rs->ctx_queue, ctxrule, id);
 }
 
 /* ALF wrapper for apn_add2app_commonrule */
@@ -494,6 +538,8 @@ int
 apn_add2app_alfrule(struct apn_ruleset *rs, struct apn_rule *rule,
     unsigned int id)
 {
+	if (!apn_verify_types(APN_ALF, rule->apn_type))
+		return (1);
 	return (apn_add2app_commonrule(rs, &rs->alf_queue, rule, id));
 }
 
@@ -502,6 +548,8 @@ int
 apn_add2app_sfsrule(struct apn_ruleset *rs, struct apn_rule *rule,
     unsigned int id)
 {
+	if (!apn_verify_types(APN_SFS, rule->apn_type))
+		return (1);
 	return (apn_add2app_commonrule(rs, &rs->sfs_queue, rule, id));
 }
 
@@ -510,6 +558,8 @@ int
 apn_add2app_sbrule(struct apn_ruleset *rs, struct apn_rule *rule,
     unsigned int id)
 {
+	if (!apn_verify_types(APN_SB, rule->apn_type))
+		return (1);
 	return (apn_add2app_commonrule(rs, &rs->sb_queue, rule, id));
 }
 
@@ -518,6 +568,8 @@ int
 apn_add2app_ctxrule(struct apn_ruleset *rs, struct apn_rule *rule,
     unsigned int id)
 {
+	if (!apn_verify_types(APN_CTX, rule->apn_type))
+		return (1);
 	return (apn_add2app_commonrule(rs, &rs->ctx_queue, rule, id));
 }
 

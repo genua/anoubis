@@ -129,6 +129,13 @@ AppPolicy::setBinaryName(wxString name)
 
 	app = appRule_->app;
 
+	if (name == wxT("any")) {
+		appRule_->app = NULL;
+		if (app)
+			apn_free_app(app);
+		modified_ = true;
+		return;
+	}
 	if(app == NULL) {
 		app = (struct apn_app *)calloc(1, sizeof(struct apn_app));
 		if (app == NULL)

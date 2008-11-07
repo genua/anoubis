@@ -56,7 +56,6 @@ ModAlfMainPanelImpl::ModAlfMainPanelImpl(wxWindow* parent,
 {
 	columnNames_[MODALF_LIST_COLUMN_PRIO] = _("Prio");
 	columnNames_[MODALF_LIST_COLUMN_PROG] = _("Program");
-	columnNames_[MODALF_LIST_COLUMN_CTX] = _("Context");
 	columnNames_[MODALF_LIST_COLUMN_SERVICE] = _("Service");
 	columnNames_[MODALF_LIST_COLUMN_ROLE] = _("Role");
 	columnNames_[MODALF_LIST_COLUMN_ACTION] = _("Action");

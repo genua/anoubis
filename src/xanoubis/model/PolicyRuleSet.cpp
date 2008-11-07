@@ -296,9 +296,7 @@ PolicyRuleSet::assembleAlfPolicy(AlfPolicy *old, EscalationNotify *escalation)
 				apn_free_host(afilt->filtspec.fromhost);
 				afilt->filtspec.fromhost = NULL;
 				}
-			break;
-		}
-		if (proto == IPPROTO_ICMP) {
+		} else if (proto == IPPROTO_ICMP) {
 			newAlfRule->apn_type = APN_ALF_CAPABILITY;
 			acap = &(newAlfRule->rule.acap);
 			acap->log = log;
@@ -308,10 +306,10 @@ PolicyRuleSet::assembleAlfPolicy(AlfPolicy *old, EscalationNotify *escalation)
 				acap->action = APN_ACTION_DENY;
 			}
 			acap->capability = APN_ALF_CAPRAW;;
-			break;
+		} else {
+			apn_free_one_rule(newAlfRule, NULL);
+			newAlfRule = NULL;
 		}
-		/* XXX CEH: Free newAlfRule? */
-		newAlfRule = NULL;
 		break;
 	}
 
@@ -483,7 +481,7 @@ PolicyRuleSet::exportToFile(wxString fileName)
 }
 
 int
-PolicyRuleSet::createAppPolicy(int insertBeforeId)
+PolicyRuleSet::createAppPolicy(int type, int insertBeforeId)
 {
 	int		 newId;
 	int		 rc;
@@ -497,7 +495,7 @@ PolicyRuleSet::createAppPolicy(int insertBeforeId)
 		return (-1);
 	}
 
-	newAppRule->apn_type = APN_ALF;
+	newAppRule->apn_type = type;
 	newAppRule->app = CALLOC_STRUCT(apn_app);
 	if (newAppRule->app == NULL) {
 		free(newAppRule);
@@ -505,12 +503,21 @@ PolicyRuleSet::createAppPolicy(int insertBeforeId)
 	}
 
 	newAppRule->app->hashtype = APN_HASH_NONE;
-
-	if (TAILQ_EMPTY(&ruleSet_->alf_queue)) {
-		rc = apn_add(ruleSet_, newAppRule);
-	} else {
-		rc = apn_insert(ruleSet_, newAppRule, insertBeforeId);
+	switch(type) {
+	case APN_ALF:
+		if (TAILQ_EMPTY(&ruleSet_->alf_queue))
+			insertBeforeId = 0;
+		break;
+	case APN_SB:
+		if (TAILQ_EMPTY(&ruleSet_->sb_queue))
+			insertBeforeId = 0;
+		break;
+	case APN_CTX:
+		if (TAILQ_EMPTY(&ruleSet_->ctx_queue))
+			insertBeforeId = 0;
+		break;
 	}
+	rc = apn_insert(ruleSet_, newAppRule, insertBeforeId);
 	if (rc == 0) {
 		newId = newAppRule->apn_id;
 		clean();
@@ -574,14 +581,14 @@ PolicyRuleSet::createAlfPolicy(int insertBeforeId)
 }
 
 int
-PolicyRuleSet::createCtxPolicy(int insertBeforeId, wxString ctx)
+PolicyRuleSet::createCtxNewPolicy(int insertBeforeId)
 {
 	int				 newId;
 	int				 rc;
 	wxCommandEvent			 event(anEVT_LOAD_RULESET);
 	RuleSetSearchPolicyVisitor	 seeker(insertBeforeId);
 	Policy				*parentPolicy;
-	struct apn_rule			*newCtxRule;
+	struct apn_rule			*newrule;
 
 	this->accept(seeker);
 	if (! seeker.hasMatchingPolicy()) {
@@ -590,39 +597,35 @@ PolicyRuleSet::createCtxPolicy(int insertBeforeId, wxString ctx)
 
 	newId = -1;
 	rc = -1;
-	newCtxRule = CALLOC_STRUCT(apn_rule);
+	newrule = CALLOC_STRUCT(apn_rule);
 	parentPolicy = seeker.getMatchingPolicy();
 
-	if (newCtxRule == NULL) {
+	if (newrule == NULL) {
+		return (-1);
+	}
+	newrule->apn_type = APN_CTX_RULE;
+	newrule->rule.apncontext.application = CALLOC_STRUCT(apn_app);
+	if (newrule->rule.apncontext.application == NULL) {
+		free(newrule);
 		return (-1);
 	}
 
-	newCtxRule->apn_type = APN_CTX_RULE;
-
-	newCtxRule->rule.apncontext.application = CALLOC_STRUCT(apn_app);
-	if (newCtxRule->rule.apncontext.application == NULL) {
-		free(newCtxRule);
-		return (-1);
-	}
-
-	newCtxRule->rule.apncontext.application->name = strdup(ctx.fn_str());
-	newCtxRule->rule.apncontext.application->hashtype = APN_HASH_NONE;
-
+	newrule->rule.apncontext.application->hashtype = APN_HASH_NONE;
 	if (parentPolicy->IsKindOf(CLASSINFO(AppPolicy))) {
-		rc = apn_add2app_ctxrule(ruleSet_, newCtxRule, insertBeforeId);
-	} else if (parentPolicy->IsKindOf(CLASSINFO(AlfPolicy))) {
-		rc = apn_insert_ctxrule(ruleSet_, newCtxRule, insertBeforeId);
+		rc = apn_add2app_ctxrule(ruleSet_, newrule, insertBeforeId);
+	} else if (parentPolicy->IsKindOf(CLASSINFO(CtxPolicy))) {
+		rc = apn_insert_ctxrule(ruleSet_, newrule, insertBeforeId);
 	}
 
 	if (rc == 0) {
-		newId = newCtxRule->apn_id;
+		newId = newrule->apn_id;
 		clean();
 		create(ruleSet_);
 		event.SetClientData((void*)this);
 		wxGetApp().sendEvent(event);
 	} else {
-		free(newCtxRule->rule.apncontext.application);
-		free(newCtxRule);
+		free(newrule->rule.apncontext.application);
+		free(newrule);
 	}
 
 	return (newId);
@@ -690,13 +693,6 @@ PolicyRuleSet::createSfsPolicy(int insertBeforeId)
 	}
 
 	return (newId);
-}
-
-int
-PolicyRuleSet::createVarPolicy(int)
-{
-	/* XXX ch: currently no variables are supported */
-	return (-1);
 }
 
 void

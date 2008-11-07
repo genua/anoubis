@@ -99,8 +99,6 @@ RuleEditorFillWidgetsVisitor::clear(void)
 	ruleEditor_->Layout();
 
 	ruleEditor_->appBinaryTextCtrl->Clear();
-	ruleEditor_->appContextTextCtrl->Clear();
-	ruleEditor_->appContextDeleteButton->Disable();
 }
 
 void

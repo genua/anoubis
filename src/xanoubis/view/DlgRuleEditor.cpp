@@ -164,9 +164,6 @@ DlgRuleEditor::DlgRuleEditor(wxWindow* parent) : DlgRuleEditorBase(parent)
 	columnNames_[RULEDITOR_LIST_COLUMN_HASH] = _("Hash");
 	columnWidths_[RULEDITOR_LIST_COLUMN_HASH] = 80;
 
-	columnNames_[RULEDITOR_LIST_COLUMN_CTX] = _("Context");
-	columnWidths_[RULEDITOR_LIST_COLUMN_CTX] = wxLIST_AUTOSIZE_USEHEADER;
-
 	columnNames_[RULEDITOR_LIST_COLUMN_TYPE] = _("Type");
 	columnWidths_[RULEDITOR_LIST_COLUMN_TYPE] = wxLIST_AUTOSIZE_USEHEADER;
 
@@ -675,18 +672,35 @@ DlgRuleEditor::OnRuleCreateButton(wxCommandEvent& )
 		return;
 	}
 
+	/*
+	 * Indices in the selection:
+	 *  0 == ALF Application
+	 *  1 == ALF Filter
+	 *  2 == Sandbox Application
+	 *  3 == Sandobx Filter
+	 *  4 == Context Application
+	 *  5 == Context Filter
+	 *  6 == SFS
+	 */
 	switch (controlCreationChoice->GetSelection()) {
-	case 0: /* Application */
-		id = ruleSet->createAppPolicy(selectedId_);
+	case 0: /* ALF Application */
+		id = ruleSet->createAlfAppPolicy(selectedId_);
 		break;
-	case 1: /* ALF */
+	case 1: /* ALF Filter*/
 		id = ruleSet->createAlfPolicy(selectedId_);
 		break;
-	case 2: /* SFS */
-		id = ruleSet->createSfsPolicy(selectedId_);
+	case 2: /* Sandbox Application */
+	case 3: /* Sandbox Filter */
+		/* XXX CEH: This needs implementation. */
 		break;
-	case 3: /* Variable */
-		id = ruleSet->createVarPolicy(selectedId_);
+	case 4: /* Context Application */
+		id = ruleSet->createCtxAppPolicy(selectedId_);
+		break;
+	case 5: /* Context NEW */
+		id = ruleSet->createCtxNewPolicy(selectedId_);
+		break;
+	case 6: /* SFS */
+		id = ruleSet->createSfsPolicy(selectedId_);
 		break;
 	default:
 		break;
@@ -1453,16 +1467,4 @@ DlgRuleEditor::selectLine(unsigned long index)
 
 	selecter = (wxListView*)ruleListCtrl;
 	selecter->Select(index);
-}
-
-void
-DlgRuleEditor::onAppContextDeleteButton(wxCommandEvent&)
-{
-	/* XXX CEH: This button should be removed. */
-}
-
-void
-DlgRuleEditor::onAppContextModifyButton(wxCommandEvent&)
-{
-	/* XXX CEH: This button should be removed. */
 }

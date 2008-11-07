@@ -71,6 +71,7 @@ class PolicyRuleSet : public wxEvtHandler
 		void createAnswerPolicy(EscalationNotify *);
 		void OnAnswerEscalation(wxCommandEvent&);
 		bool hasLocalHost(wxArrayString);
+		int createAppPolicy(int type, int id);
 
 		struct apn_rule *assembleAlfPolicy(AlfPolicy *,
 		   EscalationNotify *);
@@ -83,11 +84,18 @@ class PolicyRuleSet : public wxEvtHandler
 		void accept(PolicyVisitor&);
 		void exportToFile(wxString);
 
-		int createAppPolicy(int);
+		int createAlfAppPolicy(int id) {
+			return createAppPolicy(APN_ALF, id);
+		};
+		int createSBAppPolicy(int id) {
+			return createAppPolicy(APN_SB, id);
+		};
+		int createCtxAppPolicy(int id) {
+			return createAppPolicy(APN_CTX, id);
+		};
 		int createAlfPolicy(int);
-		int createCtxPolicy(int, wxString);
+		int createCtxNewPolicy(int);
 		int createSfsPolicy(int);
-		int createVarPolicy(int);
 
 		void clearModified(void);
 		bool findMismatchHash(void);
