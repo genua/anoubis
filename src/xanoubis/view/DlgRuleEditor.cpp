@@ -383,7 +383,6 @@ DlgRuleEditor::updateTimeout(int timeout)
 {
 	AlfPolicy			*policy;
 	RuleEditorFillTableVisitor	 updateTable(this, selectedIndex_);
-	RuleEditorFillWidgetsVisitor	 updateWidgets(this);
 
 	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedIndex_);
 	if (policy == NULL) {
@@ -392,10 +391,6 @@ DlgRuleEditor::updateTimeout(int timeout)
 
 	policy->setStateTimeout(timeout);
 	policy->accept(updateTable);
-	/*
-	 * ST: disabled as wxSpinCtrl::SetValue ends up in an endless event loop
-	 * policy->accept(updateWidgets);
-	 */
 }
 
 void
@@ -403,7 +398,6 @@ DlgRuleEditor::updateAlfSrcAddr(wxString address, int netmask, int af)
 {
 	AlfPolicy                       *policy;
 	RuleEditorFillTableVisitor       updateTable(this, selectedIndex_);
-	RuleEditorFillWidgetsVisitor     updateWidgets(this);
 
 	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedIndex_);
 	if (policy == NULL) {
@@ -412,7 +406,6 @@ DlgRuleEditor::updateAlfSrcAddr(wxString address, int netmask, int af)
 
 	policy->setAlfSrcAddress(address, netmask, af);
 	policy->accept(updateTable);
-	policy->accept(updateWidgets);
 }
 
 void
@@ -420,7 +413,6 @@ DlgRuleEditor::updateAlfDstAddr(wxString address, int netmask, int af)
 {
 	AlfPolicy                       *policy;
 	RuleEditorFillTableVisitor       updateTable(this, selectedIndex_);
-	RuleEditorFillWidgetsVisitor     updateWidgets(this);
 
 	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedIndex_);
 	if (policy == NULL) {
@@ -429,7 +421,6 @@ DlgRuleEditor::updateAlfDstAddr(wxString address, int netmask, int af)
 
 	policy->setAlfDstAddress(address, netmask, af);
 	policy->accept(updateTable);
-	policy->accept(updateWidgets);
 }
 
 void
@@ -1135,16 +1126,6 @@ DlgRuleEditor::OnAlfSrcNetmaskSpinCtrl(wxSpinEvent& event)
 		updateAddrFamily(AF_INET);
 	}
 
-	/*
-	 * We get multiple (self-generated) events, because a SetValue()
-	 * also causes an event. Thus we stop here if the value is not
-	 * going to be changed.
-	 */
-	if (alfSrcAddrNetSpinCtrl->GetValue() == event.GetPosition()) {
-		event.Veto();
-		return;
-	}
-
 	int af = alfInet6RadioButton->GetValue() ? AF_INET6 : AF_INET;
 	updateAlfSrcAddr(alfSrcAddrTextCtrl->GetValue(),
 	    event.GetPosition(), af);
@@ -1157,15 +1138,6 @@ DlgRuleEditor::OnAlfDstNetmaskSpinCtrl(wxSpinEvent& event)
 		updateAddrFamily(AF_INET);
 	}
 
-	/*
-	 * We get multiple (self-generated) events, because a SetValue()
-	 * also causes an event. Thus we stop here if the value is not
-	 * going to be changed.
-	 */
-	if (alfSrcAddrNetSpinCtrl->GetValue() == event.GetPosition()) {
-		event.Veto();
-		return;
-	}
 
 	int af = alfInet6RadioButton->GetValue() ? AF_INET6 : AF_INET;
 	updateAlfDstAddr(alfDstAddrTextCtrl->GetValue(),
