@@ -92,7 +92,6 @@ flawfinder:	$(libbsdcompat_a_SOURCES_flawfinder)
 include $(top_srcdir)/lint/Makefile.lint
 
 clean-local:
-	@rm -f $(libanoubischat_a_SOURCES_lint)
-	@rm -f $(libanoubischat_a_SOURCES_splint)
-	@rm -f $(libanoubischat_a_SOURCES_flawfinder)
-
+	@rm -f $(libbsdcompat_a_SOURCES_lint)
+	@rm -f $(libbsdcompat_a_SOURCES_splint)
+	@rm -f $(libbsdcompat_a_SOURCES_flawfinder)

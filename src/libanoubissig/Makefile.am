@@ -25,25 +25,38 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ##########################################################################
 
-if NEEDBSDCOMPAT
-BSDCOMPAT=bsdcompat
-endif
 
-if XANOUBIS
-GUI=xanoubis
-endif
+lib_LIBRARIES = libanoubissig.a
+libapndir	= src/libapn
 
-# Note:  Libraries must come first as applications might depend on them.
-SUBDIRS = $(BSDCOMPAT) libapn libanoubischat libanoubisprotocol \
-	libanoubisui libanoubissig anoubisd $(GUI) anoubisctl sfssig
+LIBS += $(SSL_LIBS)
 
-flawfinder:
-	for t in $(SUBDIRS); do cd $$t && make $@ && cd ..; done
+INCLUDES = \
+	   -I$(top_builddir)/src	\
+	   -I$(top_srcdir)/include	\
+	   -I$(top_srcdir)/$(libapndir) \
+	   -I$(top_srcdir)/$(bsdcompatdir)
 
-lint:
-	for t in $(SUBDIRS); do cd $$t && make $@ && cd ..; done
+# Make auto-tooling happy and yourself!
+libanoubissig_a_SOURCES = anoubis_sig.c anoubis_sig.h
+libanoubissig_a_SOURCES_lint = anoubis_sig.c_lint anoubis_sig.h_lint
+libanoubissig_a_SOURCES_splint = anoubis_sig.c_splint anoubis_sig.h_splint
+libanoubissig_a_SOURCES_flawfinder = anoubis_sig.c_flawfinder \
+				     anoubis_sig.h_flawfinder
 
-splint:
-	for t in $(SUBDIRS); do cd $$t && make $@ && cd ..; done
+flawfinder_FLAGS=
+splint_FLAGS=$(INCLUDES)
+lint_FLAGS=$(INCLUDES)
 
-linting: flawfinder lint splint
+lint: $(libanoubissig_a_SOURCES_lint)
+splint: $(libanoubissig_a_SOURCES_splint)
+flawfinder: $(libanoubissig_a_SOURCES_flawfinder)
+
+linting: lint splint flawfinder
+
+include $(top_srcdir)/lint/Makefile.lint
+
+clean-local:
+	@rm -f $(libanoubissig_a_SOURCES_lint)
+	@rm -f $(libanoubissig_a_SOURCES_flawfinder)
+	@rm -f $(libanoubissig_a_SOURCES_splint)

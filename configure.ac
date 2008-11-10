@@ -118,6 +118,7 @@ AC_CONFIG_FILES([
 	src/libanoubischat/Makefile
 	src/libanoubisprotocol/Makefile
 	src/libanoubisui/Makefile
+	src/libanoubissig/Makefile
 	src/libanoubisui/apnvm/Makefile
 	src/libanoubisui/csum/Makefile
 	src/bsdcompat/Makefile
@@ -129,6 +130,7 @@ AC_CONFIG_FILES([
 	test/libanoubischat/Makefile
 	test/libanoubisprotocol/Makefile
 	test/xanoubis/Makefile
+	test/libanoubissig/Makefile
 	test/anoubisd/Makefile
 	test/bsdcompat/Makefile
 	test/libapn/Makefile

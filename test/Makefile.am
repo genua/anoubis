@@ -34,7 +34,7 @@ GUI=xanoubis
 endif
 
 SUBDIRS = libapn libanoubischat libanoubisprotocol libanoubisui anoubisd \
-	$(GUI) $(BSDCOMPAT)
+	libanoubissig $(GUI) $(BSDCOMPAT)
 
 # targets must exist, but need not to do anything
 flawfinder:
