@@ -329,6 +329,7 @@ PolicyRuleSet::createAnswerPolicy(EscalationNotify *escalation)
 	struct apn_rule			*newAlfRule;
 	struct apn_rule			*newTmpAlfRule;
 	bool				 hasChecksum;
+	wxCommandEvent			 event(anEVT_LOAD_RULESET);
 
 	/* get the policy caused this escalation */
 	seeker = new RuleSetSearchPolicyVisitor(escalation->getRuleId());
@@ -425,7 +426,14 @@ PolicyRuleSet::createAnswerPolicy(EscalationNotify *escalation)
 		}
 	}
 
+	/* this PolicyRuleSet has changed, update myself */
+	clean();
+	create(this->ruleSet_);
+
 	wxGetApp().usePolicy(this);
+
+	event.SetClientData(this);
+	wxGetApp().sendEvent(event);
 }
 
 void
