@@ -95,13 +95,17 @@ SfsPolicy::getId(void)
 void
 SfsPolicy::setBinaryName(wxString name)
 {
-	struct apn_app	*app;
+	if (sfsRule_->rule.sfscheck.app == NULL) {
+		sfsRule_->rule.sfscheck.app = (struct apn_app *)calloc(1,
+		    sizeof(struct apn_app));
+		sfsRule_->rule.sfscheck.app->hashtype = APN_HASH_SHA256;
+	}
 
-	app = sfsRule_->rule.sfscheck.app;
-
-	free(app->name);
-	app->name = strdup(name.fn_str());
-	modified_ = true;
+	if (sfsRule_->rule.sfscheck.app != NULL) {
+		free(sfsRule_->rule.sfscheck.app->name);
+		sfsRule_->rule.sfscheck.app->name = strdup(name.fn_str());
+		modified_ = true;
+	}
 }
 
 wxString
@@ -135,6 +139,12 @@ SfsPolicy::setCurrentSum(unsigned char *csum)
 			return;
 	}
 
+	if (sfsRule_->rule.sfscheck.app == NULL) {
+		sfsRule_->rule.sfscheck.app = (struct apn_app *)calloc(1,
+		    sizeof(struct apn_app));
+		sfsRule_->rule.sfscheck.app->hashtype = APN_HASH_SHA256;
+	}
+
 	switch (sfsRule_->rule.sfscheck.app->hashtype) {
 	case APN_HASH_SHA256:
 		len = APN_HASH_SHA256_LEN;
@@ -154,6 +164,10 @@ SfsPolicy::getHashTypeName(void)
 	struct apn_app	*app;
 
 	app = sfsRule_->rule.sfscheck.app;
+
+	if (app == NULL) {
+		return (wxEmptyString);
+	}
 
 	switch (app->hashtype) {
 	case APN_HASH_SHA256:
@@ -180,7 +194,11 @@ SfsPolicy::getCurrentHash(void)
 void
 SfsPolicy::setCurrentHash(wxString currHash)
 {
-	sfsRule_->rule.sfscheck.app->hashtype = APN_HASH_SHA256;
+	if (sfsRule_->rule.sfscheck.app == NULL) {
+		sfsRule_->rule.sfscheck.app = (struct apn_app *)calloc(1,
+		    sizeof(struct apn_app));
+		sfsRule_->rule.sfscheck.app->hashtype = APN_HASH_SHA256;
+	}
 	currHash_ = currHash;
 }
 
@@ -228,7 +246,12 @@ SfsPolicy::calcCurrentHash(unsigned char csum[MAX_APN_HASH_LEN])
 		file->Close();
 	}
 
-	sfsRule_->rule.sfscheck.app->hashtype = APN_HASH_SHA256;
+	if (sfsRule_->rule.sfscheck.app == NULL) {
+		sfsRule_->rule.sfscheck.app = (struct apn_app *)calloc(1,
+		    sizeof(struct apn_app));
+		sfsRule_->rule.sfscheck.app->hashtype = APN_HASH_SHA256;
+	}
+
 	currHash_ = this->convertToString(csum);
 	this->setCurrentSum(csum);
 
@@ -239,6 +262,12 @@ void
 SfsPolicy::setHashValue(unsigned char csum[MAX_APN_HASH_LEN])
 {
 	int len;
+
+	if (sfsRule_->rule.sfscheck.app == NULL) {
+		sfsRule_->rule.sfscheck.app = (struct apn_app *)calloc(1,
+		    sizeof(struct apn_app));
+		sfsRule_->rule.sfscheck.app->hashtype = APN_HASH_SHA256;
+	}
 
 	switch (sfsRule_->rule.sfscheck.app->hashtype) {
 	case APN_HASH_SHA256:
@@ -262,8 +291,13 @@ SfsPolicy::getHashValue(void)
 	wxString	 result;
 	struct apn_app	*app;
 
-	app = sfsRule_->rule.sfscheck.app;
+	if (sfsRule_->rule.sfscheck.app == NULL) {
+		sfsRule_->rule.sfscheck.app = (struct apn_app *)calloc(1,
+		    sizeof(struct apn_app));
+		sfsRule_->rule.sfscheck.app->hashtype = APN_HASH_SHA256;
+	}
 
+	app = sfsRule_->rule.sfscheck.app;
 	result = convertToString(app->hashvalue);
 
 	return (result);
@@ -290,6 +324,12 @@ SfsPolicy::convertToString(unsigned char *csum)
 	length = 0;
 	result = wxT("0x");
 
+	if (sfsRule_->rule.sfscheck.app == NULL) {
+		sfsRule_->rule.sfscheck.app = (struct apn_app *)calloc(1,
+		    sizeof(struct apn_app));
+		sfsRule_->rule.sfscheck.app->hashtype = APN_HASH_SHA256;
+	}
+
 	switch (sfsRule_->rule.sfscheck.app->hashtype) {
 	case APN_HASH_SHA256:
 		length = APN_HASH_SHA256_LEN;
@@ -315,8 +355,7 @@ SfsPolicy::convertToString(unsigned char *csum)
 bool
 SfsPolicy::isDefault(void)
 {
-	/* sfs policies are never default */
-	return (false);
+	return (sfsRule_->apn_type == APN_DEFAULT);
 }
 
 void
