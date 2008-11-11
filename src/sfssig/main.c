@@ -31,6 +31,7 @@
 #include "splint-includes.h"
 #endif
 
+#include <limits.h>
 #include <assert.h>
 #include <err.h>
 #include <errno.h>
@@ -394,6 +395,7 @@ main(int argc, char *argv[])
 	char		*file = NULL;
 	char		*command = NULL;
 	char		*arg = NULL;
+	char		 realarg[PATH_MAX];
 	char		**args = NULL;
 	char		**tmp = NULL;
 	char		 ch;
@@ -536,6 +538,11 @@ main(int argc, char *argv[])
 		if(strcmp(command, commands[i].command) == 0) {
 			for (j = 0; j < file_cnt; j++) {
 				arg = args[j];
+				arg = realpath(arg, realarg);
+				if (!arg) {
+					perror(args[j]);
+					continue;
+				}
 				if (commands[i].file) {
 					if (arg == NULL) {
 						fprintf(stderr, "no file\n");
@@ -675,7 +682,7 @@ request_uids(char *file, int *count)
 
 	*count = cnt;
 	anoubis_transaction_destroy(t);
-	
+
 	if (opts & SFSSIG_OPT_DEBUG)
 		fprintf(stderr, "<request_uids\n");
 
@@ -907,7 +914,7 @@ sfs_list(char *file)
 		return 1;
 	}
 	if (S_ISREG(sb.st_mode)) {
-		return sfs_getsum(file);	
+		return sfs_getsum(file);
 	}
 
 	len = strlen(file) - 1;
