@@ -57,7 +57,9 @@ DlgLogViewer::DlgLogViewer(wxWindow* parent) : DlgLogViewerBase(parent)
 	shortcuts_  = new AnShortcuts(this);
 	this->GetSizer()->Layout();
 
-	defaultIconIdx_ = imgList->Add(wxNullIcon);
+	icon = wxGetApp().loadIcon(wxT("ModAnoubis_black_16.png"));
+	defaultIconIdx_ = imgList->Add(*icon);
+
 	icon = wxGetApp().loadIcon(wxT("ModAnoubis_alert_16.png"));
 	alertIconIdx_ = imgList->Add(*icon);
 
