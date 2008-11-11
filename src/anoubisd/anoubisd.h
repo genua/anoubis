@@ -57,14 +57,15 @@
 #define ANOUBISD_SOCKETNAME		"/var/run/anoubisd.sock"
 #define ANOUBISD_PIDFILENAME		"/var/run/anoubisd.pid"
 
-#define ANOUBISD_POLICYDIR		"/etc/anoubis/policy"
-#define ANOUBISD_POLICYCHROOT		"/"
+#define ANOUBISD_POLICYDIR		"/var/lib/anoubis"
+#define ANOUBISD_POLICYCHROOT		"/policy"
 #define ANOUBISD_USERDIR		"user"
 #define ANOUBISD_ADMINDIR		"admin"
 #define ANOUBISD_DEFAULTNAME		"default"
 #define ANOUBISD_PUBKEYDIR		"pubkeys"
 
-#define SFS_CHECKSUMROOT		"/var/lib/sfs"
+#define SFS_CHECKSUMROOT		"/var/lib/anoubis/sfs"
+#define SFS_CHECKSUMCHROOT		"/sfs"
 
 #define __used __attribute__((unused))
 
@@ -268,8 +269,9 @@ int	switch_uid(uid_t uid, struct credentials *cred);
 #define DEBUG
 #endif
 
-u_int32_t debug_flags;
-u_int32_t debug_stderr;
+extern u_int32_t	debug_flags;
+extern u_int32_t	debug_stderr;
+extern gid_t		anoubisd_gid;
 
 #define DBG_MSG_FD	0x0001
 #define DBG_MSG_SEND	0x0002

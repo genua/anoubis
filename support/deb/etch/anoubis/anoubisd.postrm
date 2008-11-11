@@ -2,7 +2,7 @@
 
 set -eu
 
-POLICY_DIR=/etc/anoubis/policy
+POLICY_DIR=/var/lib/anoubis/policy
 
 case "$1" in
 	purge)

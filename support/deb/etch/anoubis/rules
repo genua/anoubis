@@ -110,7 +110,8 @@ binary-common:
 	dh_desktop -pxanoubis
 	dh_strip --dbg-package=anoubis-dbg
 	dh_compress
-	dh_fixperms -X etc/anoubis/policy/admin -X etc/anoubis/policy/user
+	dh_fixperms -X var/lib/anoubis/policy/admin \
+	    -X var/lib/anoubis/policy/user
 	dh_installdeb
 	dh_shlibdeps
 	dh_gencontrol

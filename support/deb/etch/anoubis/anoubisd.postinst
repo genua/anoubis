@@ -7,7 +7,7 @@ if [ "$1" != configure ]
 fi
 
 ANOUBIS_USER=_anoubisd
-POLICY_DIR=/etc/anoubis/policy
+POLICY_DIR=/var/lib/anoubis/policy
 
 if ! getent passwd _anoubisd >/dev/null; then
 	adduser --quiet --system --no-create-home --home /var/run/anoubisd \
@@ -32,9 +32,13 @@ setperms $POLICY_DIR/admin
 setperms $POLICY_DIR/pubkeys
 
 # remove overrides from older packages
-rmoverride $POLICY_DIR/admin/default
-rmoverride $POLICY_DIR/admin/0
-rmoverride $POLICY_DIR/admin/1
+rmoverride /etc/anoubis/policy/admin/default
+rmoverride /etc/anoubis/policy/admin/0
+rmoverride /etc/anoubis/policy/admin/1
+rmoverride /etc/anoubis/policy
+rmoverride /etc/anoubis/policy/user
+rmoverride /etc/anoubis/policy/admin
+rmoverride /etc/anoubis/policy/pubkeys
 
 # migrate broken startlink
 if [ -n "$2" ] &&
@@ -46,11 +50,11 @@ fi
 # copy new default policy
 /usr/share/anoubisd/install_policy -q\
 	/usr/share/anoubisd/default_policy/admin \
-	/etc/anoubis/policy/admin
+	/var/lib/anoubis/policy/admin
 
 /usr/share/anoubisd/install_policy -q\
 	/usr/share/anoubisd/default_policy/user \
-	/etc/anoubis/policy/user
+	/var/lib/anoubis/policy/user
 
 # update xanoubis profiles
 # we just overwrite the old files until we have a better mechanism

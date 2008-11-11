@@ -86,6 +86,10 @@ for a in admin user ; do
     done ;
 done
 
+# install symlink in /etc/anoubis
+mkdir -p $RPM_BUILD_ROOT/etc/anoubis
+ln -s /var/lib/anoubis/policy $RPM_BUILD_ROOT/etc/anoubis/policy
+
 # install udev rules of anoubis devices
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/udev/rules.d
 install -m 0644 $RPM_SOURCE_DIR/anoubisd.udev \
@@ -114,26 +118,33 @@ if ! getent passwd _anoubisd >/dev/null; then
 	useradd -M -r -s /sbin/nologin -d /var/run/anoubisd \
 	    -g _anoubisd _anoubisd
 fi
+POLDIR=/etc/anoubis/policy
+for d in user admin ; do
+	# move old dirs aside to make place for symlinks
+	if [ -e $POLDIR/$d ] && [ ! -L $POLDIR/$d ] ; then
+		mv $POLDIR/$d $POLDIR/$d.rpm-bak
+	fi
+done
 
 %post -n anoubisd
 chkconfig --add anoubisd
 chkconfig anoubisd on
-mkdir -p /etc/anoubis/policy/admin
-mkdir -p /etc/anoubis/policy/user
-mkdir -p /etc/anoubis/policy/pubkeys
-chmod 700 /etc/anoubis/policy
-chmod 700 /etc/anoubis/policy/admin /etc/anoubis/policy/user
-chmod 700 /etc/anoubis/policy/pubkeys
+mkdir -p /var/lib/anoubis/policy/admin
+mkdir -p /var/lib/anoubis/policy/user
+mkdir -p /var/lib/anoubis/policy/pubkeys
+chmod 700 /var/lib/anoubis/policy
+chmod 700 /var/lib/anoubis/policy/admin /var/lib/anoubis/policy/user
+chmod 700 /var/lib/anoubis/policy/pubkeys
 for p in admin/0 user/0 admin/default; do
-    if [ ! -e /etc/anoubis/policy/$p ] ; then
-	cp /usr/share/anoubis/default_policy/$p /etc/anoubis/policy/$p
-	chmod 600 /etc/anoubis/policy/$p
-	chown _anoubisd: /etc/anoubis/policy/$p
+    if [ ! -e /var/lib/anoubis/policy/$p ] ; then
+	cp /usr/share/anoubis/default_policy/$p /var/lib/anoubis/policy/$p
+	chmod 600 /var/lib/anoubis/policy/$p
+	chown _anoubisd: /var/lib/anoubis/policy/$p
     fi
 done
-chown _anoubisd: /etc/anoubis/policy
-chown _anoubisd: /etc/anoubis/policy/admin /etc/anoubis/policy/user
-chown _anoubisd: /etc/anoubis/policy/pubkeys
+chown _anoubisd: /var/lib/anoubis/policy
+chown _anoubisd: /var/lib/anoubis/policy/admin /var/lib/anoubis/policy/user
+chown _anoubisd: /var/lib/anoubis/policy/pubkeys
 if [ ! -e /dev/eventdev ] ; then
 	mknod /dev/eventdev c 10 62
 fi
@@ -141,9 +152,10 @@ fi
 
 %preun -n anoubisd
 chkconfig --del anoubisd
-rmdir /etc/anoubis/policy/admin /etc/anoubis/policy/user 2>/dev/null || true
-rmdir /etc/anoubis/policy/pubkeys 2>/dev/null || true
-rmdir /etc/anoubis/policy /etc/anoubis 2>/dev/null || true
+rmdir /var/lib/anoubis/policy/admin \
+    /var/lib/anoubis/policy/user 2>/dev/null || true
+rmdir /var/lib/anoubis/policy/pubkeys 2>/dev/null || true
+rmdir /var/lib/anoubis/policy /var/lib/anoubis 2>/dev/null || true
 
 ### files of subpackage anoubisd ###########################
 %files -n anoubisd

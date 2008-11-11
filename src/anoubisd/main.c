@@ -95,6 +95,10 @@ pid_t		se_pid = 0;
 pid_t		logger_pid = 0;
 pid_t		policy_pid = 0;
 
+u_int32_t	debug_flags = 0;
+u_int32_t	debug_stderr = 0;
+gid_t		anoubisd_gid;
+
 static Queue eventq_m2p;
 static Queue eventq_m2s;
 static Queue eventq_m2dev;
@@ -245,6 +249,7 @@ main(int argc, char *argv[])
 	struct timeval		tv;
 	char		       *endptr;
 	unsigned long		version;
+	struct passwd		*pw;
 
 	/* Ensure that fds 0, 1 and 2 are open or directed to /dev/null */
 	sanitise_stdfd();
@@ -293,6 +298,11 @@ main(int argc, char *argv[])
 	if (conf.unixsocket == NULL)
 		conf.unixsocket = ANOUBISD_SOCKETNAME;
 
+	if ((pw = getpwnam(ANOUBISD_USER)) == NULL)
+		fatal("getpwnam");
+	if (pw->pw_gid == 0)
+		fatal("Group ID of " ANOUBISD_USER " must not be 0");
+	anoubisd_gid = pw->pw_gid;
 	/*
 	 * XXX HSH: Configfile will be parsed here.
 	 */
@@ -1135,15 +1145,13 @@ dispatch_dev2m(int fd, short event __used, void *arg)
 			    && (kernelmsg->flags & ANOUBIS_OPEN_FLAG_CSUM)) {
 				int ret;
 
-				ret = sfs_getchecksum(kernelmsg->dev,
-				    kernelmsg->pathhint, hdr->msg_uid,
-				    sfsmsg->anoubisd_csum);
+				ret = sfs_getchecksum(kernelmsg->pathhint,
+				    hdr->msg_uid, sfsmsg->anoubisd_csum);
 				if (ret >= 0) {
 					sfsmsg->anoubisd_csum_set =
 					    ANOUBISD_CSUM_USER;
 				} else {
 					ret = sfs_getchecksum(
-					    kernelmsg->dev,
 					    kernelmsg->pathhint,
 					    0, sfsmsg->anoubisd_csum);
 					if (ret >= 0)

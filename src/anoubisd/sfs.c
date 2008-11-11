@@ -129,10 +129,17 @@ mkpath(const char *path)
 	for (i = 1; i < len; i++) {
 		if (path[i] == '/' || path[i] == '\0') {
 			strlcpy(tmppath, path, i+1);
-			if (mkdir(tmppath, 0700) == -1) {
+			if (mkdir(tmppath, 0750) == -1) {
 				if (errno != EEXIST) {
+					int ret = -errno;
 					free(tmppath);
-					return -errno;
+					return ret;
+				}
+			} else {
+				if (chown(tmppath, -1, anoubisd_gid) < 0) {
+					int ret = -errno;
+					free(tmppath);
+					return ret;
 				}
 			}
 		}
@@ -231,8 +238,8 @@ remove_escape_seq(const char *name, int is_uid)
 	return newpath;
 }
 
-int
-convert_user_path(const char * path, char **dir, int is_dir)
+static int
+__convert_user_path(const char * path, char **dir, int is_dir, int is_chroot)
 {
 	int	i;
 	char	*newpath = NULL;
@@ -266,7 +273,8 @@ convert_user_path(const char * path, char **dir, int is_dir)
 	if (newpath == NULL)
 		return -ENOMEM;
 
-	if (asprintf(dir, "%s%s", SFS_CHECKSUMROOT, newpath) == -1) {
+	if (asprintf(dir, "%s%s",
+	    is_chroot ? SFS_CHECKSUMCHROOT : SFS_CHECKSUMROOT, newpath) == -1) {
 		free(newpath);
 		return -ENOMEM;
 	}
@@ -276,13 +284,29 @@ convert_user_path(const char * path, char **dir, int is_dir)
 }
 
 int
-sfs_checksumop(const char *path, unsigned int operation, uid_t uid,
-    u_int8_t md[ANOUBIS_CS_LEN])
+convert_user_path(const char * path, char **dir, int is_dir)
+{
+	return __convert_user_path(path, dir, is_dir, 0);
+}
+
+#if 0	/* Not used yet. ifdef'ed out to avoid a warning */
+static int
+convert_user_path_chroot(const char * path, char **dir, int is_dir)
+{
+	return __convert_user_path(path, dir, is_dir, 1);
+}
+#endif
+
+static int
+__sfs_checksumop(const char *path, unsigned int operation, uid_t uid,
+    u_int8_t md[ANOUBIS_CS_LEN], int is_chroot)
 {
 	char *csum_path = NULL, *csum_file = NULL;
 	int ret;
 
-	ret = convert_user_path(path, &csum_path, 0);
+	if (is_chroot && (operation != ANOUBIS_CHECKSUM_OP_GET))
+		return -EPERM;
+	ret = __convert_user_path(path, &csum_path, 0, is_chroot);
 	if (ret < 0)
 		return ret;
 
@@ -297,9 +321,15 @@ sfs_checksumop(const char *path, unsigned int operation, uid_t uid,
 		ret = mkpath(csum_path);
 		if (ret < 0)
 			goto out;
-		fd = open(csum_file, O_WRONLY|O_CREAT|O_TRUNC, 0600);
+		fd = open(csum_file, O_WRONLY|O_CREAT|O_TRUNC, 0640);
 		if (fd < 0) {
 			ret = -errno;
+			goto out;
+		}
+		if (fchown(fd, -1, anoubisd_gid) < 0) {
+			ret = -errno;
+			close(fd);
+			unlink(csum_file);
 			goto out;
 		}
 
@@ -333,6 +363,20 @@ out:
 	return ret;
 }
 
+int
+sfs_checksumop(const char *path, unsigned int operation, uid_t uid,
+    u_int8_t md[ANOUBIS_CS_LEN])
+{
+	return __sfs_checksumop(path, operation, uid, md, 0);
+}
+
+int
+sfs_checksumop_chroot(const char *path, unsigned int operation, uid_t uid,
+    u_int8_t md[ANOUBIS_CS_LEN])
+{
+	return __sfs_checksumop(path, operation, uid, md, 1);
+}
+
 static int
 sfs_readchecksum(const char *csum_file, unsigned char *md)
 {
@@ -362,26 +406,39 @@ sfs_readchecksum(const char *csum_file, unsigned char *md)
 }
 
 int
-sfs_getchecksum(u_int64_t kdev __used, const char *kpath, uid_t uid,
-    unsigned char *md)
+__sfs_getchecksum(const char *path, uid_t uid, unsigned char *md, int is_chroot)
 {
-	char	*path;
+	char	*abspath;
 	char	*newpath;
 	int	 ret;
 
-	newpath = insert_escape_seq(kpath, 0);
+	newpath = insert_escape_seq(path, 0);
 	if (newpath == NULL)
 		return -ENOMEM;
 
-	if (asprintf(&path, "%s%s/%d", SFS_CHECKSUMROOT, newpath, uid) == -1) {
+	if (asprintf(&abspath, "%s%s/%d",
+	    is_chroot ? SFS_CHECKSUMCHROOT : SFS_CHECKSUMROOT,
+	    newpath, uid) == -1) {
 		free(newpath);
 		return -ENOMEM;
 	}
 
-	ret = sfs_readchecksum(path, md);
-	free(path);
+	ret = sfs_readchecksum(abspath, md);
+	free(abspath);
 	free(newpath);
 	return ret;
+}
+
+int
+sfs_getchecksum(const char *path, uid_t uid, unsigned char *md)
+{
+	return __sfs_getchecksum(path, uid, md, 0);
+}
+
+int
+sfs_getchecksum_chroot(const char *path, uid_t uid, unsigned char *md)
+{
+	return __sfs_getchecksum(path, uid, md, 1);
 }
 
 static int

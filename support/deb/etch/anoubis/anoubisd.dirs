@@ -1,6 +1,6 @@
-etc/anoubis/policy/admin
-etc/anoubis/policy/user
-etc/anoubis/policy/pubkeys
+var/lib/anoubis/policy/admin
+var/lib/anoubis/policy/user
+var/lib/anoubis/policy/pubkeys
 etc/anoubis/profiles
 usr/share/anoubisd/default_policy/admin
 usr/share/anoubisd/default_policy/user
