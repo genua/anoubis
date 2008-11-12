@@ -65,6 +65,7 @@ struct pe_proc {
 	pid_t			 pid;
 	uid_t			 uid;
 	uid_t			 sfsdisable_uid;
+	pid_t			 sfsdisable_pid;
 
 	struct pe_proc_ident	 ident;
 	anoubis_cookie_t	 task_cookie;
@@ -156,23 +157,6 @@ pe_proc_get(anoubis_cookie_t cookie)
 	return (proc);
 }
 
-static struct pe_proc *
-pe_proc_get_by_pid(pid_t pid)
-{
-	struct pe_proc	*proc;
-
-	TAILQ_FOREACH(proc, &tracker, entry) {
-		if (proc->pid == pid)
-			break;
-	}
-	if (proc) {
-		DEBUG(DBG_PE_TRACKER, "pe_proc_get: proc %p pid %d cookie "
-		    "0x%08llx", proc, (int)proc->pid, proc->task_cookie);
-		proc->refcount++;
-	}
-	return proc;
-}
-
 void
 pe_proc_put(struct pe_proc *proc)
 {
@@ -200,6 +184,7 @@ pe_proc_alloc(uid_t uid, anoubis_cookie_t cookie, struct pe_proc_ident *pident)
 	proc->task_cookie = cookie;
 	proc->pid = -1;
 	proc->uid = uid;
+	proc->sfsdisable_pid = (pid_t)-1;
 	proc->sfsdisable_uid = (uid_t)-1;
 	proc->refcount = 1;
 	proc->kcache = NULL;
@@ -296,8 +281,13 @@ pe_proc_get_pid(struct pe_proc *proc)
 
 void pe_proc_set_pid(struct pe_proc *proc, pid_t pid)
 {
-	if (proc)
-		proc->pid = pid;
+	if (!proc)
+		return;
+	proc->pid = pid;
+	if (proc->pid != proc->sfsdisable_pid) {
+		proc->sfsdisable_pid = (pid_t)-1;
+		proc->sfsdisable_uid = (uid_t)-1;
+	}
 }
 
 void
@@ -455,20 +445,35 @@ pe_proc_kcache_clear(struct pe_proc *proc)
 	}
 }
 
+/*
+ * HACK ALERT:
+ * We do set sfsdisable_uid and sfsdisable_pid even if proc->pid == -1.
+ * However, this will not disable sfs for this process/thread right now.
+ * It will only do so once proc->pid has been set proc->sfsdisable_pid.
+ */
 int
 pe_proc_set_sfsdisable(pid_t pid, uid_t uid)
 {
-	struct pe_proc	*proc = pe_proc_get_by_pid(pid);
+	int found = 0;
+	struct pe_proc	*proc;
 
-	if (!proc)
-		return 0;
-	if (proc->sfsdisable_uid != (uid_t)-1)
-		return 0;
-	if (proc->uid != uid)
-		return 0;
-	proc->sfsdisable_uid = uid;
-	pe_proc_put(proc);
-	return 1;
+	TAILQ_FOREACH(proc, &tracker, entry) {
+		DEBUG(DBG_PE_TRACKER, "pe_proc_set_sfsdisable: Trying proc %p "
+		    "pid %d cookie 0x%08llx", proc, (int)proc->pid,
+		    proc->task_cookie);
+		if (proc->sfsdisable_uid != (uid_t)-1)
+			continue;
+		if (proc->uid != uid)
+			continue;
+		if (proc->pid != (pid_t)-1 && proc->pid != pid)
+			continue;
+		DEBUG(DBG_PE_TRACKER, "pe_proc_set_sfsdisable: proc %p pid %d "
+		    "cookie 0x%08llx", proc, (int)proc->pid, proc->task_cookie);
+		proc->sfsdisable_pid = pid;
+		proc->sfsdisable_uid = uid;
+		found = 1;
+	}
+	return found;
 }
 
 int
@@ -476,5 +481,7 @@ pe_proc_is_sfsdisable(struct pe_proc *proc, uid_t uid)
 {
 	if (!proc)
 		return 0;
-	return (uid != (uid_t)-1) && (proc->sfsdisable_uid == uid);
+	return (uid != (uid_t)-1) && (proc->pid != (pid_t)-1)
+	    && (proc->sfsdisable_pid == proc->pid)
+	    && (proc->sfsdisable_uid == uid);
 }

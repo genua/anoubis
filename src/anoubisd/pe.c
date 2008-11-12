@@ -320,10 +320,13 @@ pe_handle_sfs(anoubisd_msg_sfsopen_t *sfsmsg)
 		master_terminate(code);
 		return (NULL);
 	}
-	reply = pe_decide_sfs(hdr->msg_uid, sfsmsg, now);
 	common = (struct anoubis_event_common *)(hdr + 1);
 	proc = pe_proc_get(common->task_cookie);
+	if (proc && pe_proc_get_pid(proc) == -1)
+		pe_proc_set_pid(proc, hdr->msg_pid);
+	reply = pe_decide_sfs(hdr->msg_uid, sfsmsg, now);
 	reply2 = pe_decide_sandbox(proc, hdr);
+	pe_proc_put(proc);
 	/* XXX CEH: This might need more thought. */
 	return reply_merge(reply, reply2);
 }
