@@ -297,7 +297,11 @@ int	apn_add2app_sbrule(struct apn_ruleset *, struct apn_rule *,
 	    unsigned int);
 int	apn_add2app_ctxrule(struct apn_ruleset *, struct apn_rule *,
 	    unsigned int);
-int	apn_copyinsert(struct apn_ruleset *, struct apn_rule *,
+int	apn_copyinsert_alf(struct apn_ruleset *, struct apn_rule *,
+	    unsigned int, const char *, const u_int8_t *, int);
+int	apn_copyinsert_ctx(struct apn_ruleset *, struct apn_rule *,
+	    unsigned int, const char *, const u_int8_t *, int);
+int	apn_copyinsert_sb(struct apn_ruleset *, struct apn_rule *,
 	    unsigned int, const char *, const u_int8_t *, int);
 void	apn_free_ruleset(struct apn_ruleset *);
 void	apn_free_one_rule(struct apn_rule *, struct apn_ruleset *);

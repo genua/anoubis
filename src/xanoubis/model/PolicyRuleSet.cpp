@@ -388,7 +388,7 @@ PolicyRuleSet::createAnswerPolicy(EscalationNotify *escalation)
 		seekDouble = new RuleSetSearchPolicyVisitor(hashValue);
 		this->accept(*seekDouble);
 		if (!seekDouble->hasMatchingPolicy()) {
-			apn_copyinsert(ruleSet_, newAlfRule,
+			apn_copyinsert_alf(ruleSet_, newAlfRule,
 			    escalation->getRuleId(), filename.To8BitData(),
 			    csum, hashType);
 		}

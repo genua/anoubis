@@ -359,11 +359,11 @@ START_TEST(tc_Copy1)
 	fail_if(rule == NULL, "generate_rule() failed");
 
 	memset(fakecs, 0xaa, sizeof(fakecs));
-	ret = apn_copyinsert(rs, rule, 7, "/bin/foobar", fakecs,
+	ret = apn_copyinsert_alf(rs, rule, 7, "/bin/foobar", fakecs,
 	    APN_HASH_SHA256);
 	if (ret != 0)
 		apn_print_errors(rs, stderr);
-	fail_if(ret != 0, "Copy + insert failed");
+	fail_if(ret != 0, "Copy + insert failed with %d", ret);
 	fail_if(rule->apn_id < 29, "Rule should have new id >= 29, but has %d",
 	    rule->apn_id);
 	fail_if(rs->maxid < 38, "Wrong maxid, is %d should be >= 38",
@@ -378,7 +378,7 @@ START_TEST(tc_Copy1)
 	fail_if(rule == NULL, "generate_rule() failed");
 
 	memset(fakecs, 0xaa, sizeof(fakecs));
-	ret = apn_copyinsert(rs, rule, 11, "/bin/foobar", fakecs,
+	ret = apn_copyinsert_alf(rs, rule, 11, "/bin/foobar", fakecs,
 	    APN_HASH_SHA256);
 	if (ret != 0)
 		apn_print_errors(rs, stderr);
@@ -400,9 +400,11 @@ START_TEST(tc_Copy1)
 
 
 	/* Try to copy+insert using the bogus ID 1234 */
-	ret = apn_copyinsert(rs, rule, 1234, "/bin/foobar", fakecs,
+	ret = apn_copyinsert_alf(rs, rule, 1234, "/bin/foobar", fakecs,
 	    APN_HASH_SHA256);
-	fail_if(ret != 1, "Copy+insert did not fail, but should have!");
+	fail_if(ret == 0, "Copy+insert did not fail, but should have!");
+	fail_if(ret < 0, "Copy+insert should fail with ret > 0 but returned %d",
+	    ret);
 
 	apn_free_ruleset(rs);
 }
