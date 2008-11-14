@@ -599,8 +599,14 @@ AnoubisGuiApp::importPolicyFile(wxString fileName, bool checkPerm)
 	PolicyRuleSet		*ruleSet;
 
 	ruleSet = new PolicyRuleSet(1, geteuid(), fileName, checkPerm);
-	ProfileCtrl::getInstance()->store(ruleSet);
-	sendEvent(event);
+	if (!ruleSet->hasErrors()) {
+		ProfileCtrl::getInstance()->store(ruleSet);
+		sendEvent(event);
+	} else {
+		wxMessageBox(
+		    _("Couldn't import policy file: it contains errors."),
+		    _("Error"), wxICON_ERROR);
+	}
 }
 
 /* XXX ch: this code should be moved to ProfileCtrl. */

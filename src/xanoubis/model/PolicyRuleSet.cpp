@@ -66,6 +66,7 @@ PolicyRuleSet::PolicyRuleSet(int priority, uid_t uid,
 {
 	id_ = wxNewId();
 	uid_ = uid;
+	hasErrors_ = false;
 	ruleSet_ = NULL;
 	priority_ = priority;
 	origin_ = wxT("Daemon");
@@ -80,6 +81,7 @@ PolicyRuleSet::PolicyRuleSet(int priority, uid_t uid, wxString fileName,
 {
 	id_ = wxNewId();
 	uid_ = uid;
+	hasErrors_ = false;
 	ruleSet_ = NULL;
 	priority_ = priority;
 	origin_ = fileName;
@@ -158,6 +160,7 @@ PolicyRuleSet::create(wxString fileName, bool checkPerm)
 		logEntry += wxString::From8BitData(strerror(errno));
 		wxGetApp().log(logEntry);
 		wxGetApp().status(logEntry);
+		hasErrors_ = true;
 		break;
 	case 0:
 		logEntry = _("Successfully imported policy file ");
@@ -179,11 +182,13 @@ PolicyRuleSet::create(wxString fileName, bool checkPerm)
 			logEntry += wxString::From8BitData(errMsg->msg);
 			wxGetApp().log(logEntry);
 		}
+		hasErrors_ = true;
 		break;
 	default:
 		logEntry = _("Unknown error during import of policy file ");
 		logEntry += fileName;
 		wxGetApp().log(logEntry);
+		hasErrors_ = true;
 		break;
 	}
 }
@@ -812,4 +817,10 @@ int
 PolicyRuleSet::getPriority(void) const
 {
 	return (priority_);
+}
+
+bool
+PolicyRuleSet::hasErrors(void) const
+{
+	return (hasErrors_);
 }
