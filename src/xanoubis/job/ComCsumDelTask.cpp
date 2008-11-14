@@ -25,43 +25,79 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "Task.h"
+#include <config.h>
+
+#ifdef NEEDBSDCOMPAT
+#include <bsdcompat.h>
+#endif
+
+#include <client/anoubis_client.h>
+#include <client/anoubis_transaction.h>
+
+#include "ComCsumDelTask.h"
+#include "ComHandler.h"
 #include "TaskEvent.h"
 
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_CSUMCALC)
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_REGISTER)
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_POLICY_SEND)
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_POLICY_REQUEST)
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_CSUM_ADD)
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_CSUM_GET)
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_CSUM_DEL)
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_SFS_LIST)
-
-TaskEvent::TaskEvent(Task *task, int id)
-    : wxEvent(id, task->getEventType())
+ComCsumDelTask::ComCsumDelTask(void)
 {
-	this->m_propagationLevel = wxEVENT_PROPAGATE_MAX;
-	this->task_ = task;
+	setFile(wxEmptyString);
 }
 
-TaskEvent::TaskEvent(const TaskEvent &other)
-    : wxEvent(other.GetId(), other.GetEventType())
+ComCsumDelTask::ComCsumDelTask(const wxString &file)
 {
-	SetEventObject(other.GetEventObject());
-	SetTimestamp(other.GetTimestamp());
-
-	this->m_propagationLevel = wxEVENT_PROPAGATE_MAX;
-	this->task_ = other.task_;
+	setFile(file);
 }
 
-wxEvent *
-TaskEvent::Clone(void) const
+wxString
+ComCsumDelTask::getFile(void) const
 {
-	return new TaskEvent(*this);
+	return (this->file_);
 }
 
-Task *
-TaskEvent::getTask(void) const
+void
+ComCsumDelTask::setFile(const wxString &file)
 {
-	return (this->task_);
+	this->file_ = file;
+}
+
+wxEventType
+ComCsumDelTask::getEventType(void) const
+{
+	return (anTASKEVT_CSUM_DEL);
+}
+
+void
+ComCsumDelTask::exec(void)
+{
+	struct anoubis_transaction	*ta;
+	char				path[file_.Len() + 1];
+
+	resetComTaskResult();
+
+	strlcpy(path, this->file_.fn_str(), sizeof(path));
+
+	/* Create request */
+	ta = anoubis_client_csumrequest_start(getComHandler()->getClient(),
+	    ANOUBIS_CHECKSUM_OP_DEL, (char*)path, NULL, 0, 0,
+	    ANOUBIS_CSUM_NONE);
+	if(!ta) {
+		setComTaskResult(RESULT_COM_ERROR);
+		return;
+	}
+
+	/* Wait for completition */
+	while (!(ta->flags & ANOUBIS_T_DONE)) {
+		if (!getComHandler()->waitForMessage()) {
+			setComTaskResult(RESULT_COM_ERROR);
+			return;
+		}
+	}
+
+	if (ta->result) {
+		setComTaskResult(RESULT_REMOTE_ERROR);
+		anoubis_transaction_destroy(ta);
+		return;
+	}
+
+	setComTaskResult(RESULT_SUCCESS);
 }

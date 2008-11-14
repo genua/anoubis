@@ -97,8 +97,21 @@ SfsDirectory::getNumEntries() const
 	return (entryList_.size());
 }
 
-const SfsEntry &
-SfsDirectory::getEntry(unsigned int idx) const
+int
+SfsDirectory::getIndexOf(const wxString &filename, bool path) const
+{
+	for (unsigned int i = 0; i < entryList_.size(); i++) {
+		if (path && (entryList_[i].getPath() == filename))
+			return (i);
+		if (!path && (entryList_[i].getFileName() == filename))
+			return (i);
+	}
+
+	return (-1);
+}
+
+SfsEntry &
+SfsDirectory::getEntry(unsigned int idx)
 {
 	return (entryList_[idx]);
 }

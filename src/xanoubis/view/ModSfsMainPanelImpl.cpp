@@ -159,7 +159,13 @@ ModSfsMainPanelImpl::OnSfsDirChanged(wxCommandEvent&)
 }
 
 void
- ModSfsMainPanelImpl::OnSfsMainFilterButtonClicked(wxCommandEvent&)
+ModSfsMainPanelImpl::OnSfsEntryChanged(wxCommandEvent &event)
+{
+	updateSfsEntry(event.GetInt()); /* Update the entry */
+}
+
+void
+ModSfsMainPanelImpl::OnSfsMainFilterButtonClicked(wxCommandEvent&)
 {
 	sfsCtrl_->setFilter(SfsMainFilterTextCtrl->GetValue());
 }
@@ -168,6 +174,49 @@ void
 ModSfsMainPanelImpl::OnSfsMainInverseCheckboxClicked(wxCommandEvent&)
 {
 	sfsCtrl_->setFilterInversed(SfsMainFilterInvertCheckBox->IsChecked());
+}
+
+void
+ModSfsMainPanelImpl::OnSfsMainValidateButtonClicked(wxCommandEvent&)
+{
+	if (!sfsCtrl_->validateAll()) {
+		wxGetApp().status(
+		    _("Error: xanoubis is not connected to the daemon"));
+	}
+}
+
+void
+ModSfsMainPanelImpl::OnSfsMainApplyButtonClicked(wxCommandEvent&)
+{
+	int selection = SfsMainListCtrl->GetNextItem(-1,
+	    wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED);
+
+	if (selection == -1) {
+		/* No selection */
+		return;
+	}
+
+	bool result = false;
+
+	switch (SfsMainActionChoice->GetCurrentSelection()) {
+	case 0:
+		result = sfsCtrl_->registerChecksum(selection);
+		break;
+	case 1:
+		result = sfsCtrl_->unregisterChecksum(selection);
+		break;
+	case 2:
+		result = sfsCtrl_->validate(selection);
+		break;
+	case 3:
+		result = sfsCtrl_->updateChecksum(selection);
+		break;
+	}
+
+	if (!result) {
+		wxGetApp().status(
+		    _("Error: xanoubis is not connected to the daemon"));
+	}
 }
 
 void
@@ -187,6 +236,9 @@ ModSfsMainPanelImpl::initSfsMain()
 	sfsCtrl_->Connect(anEVT_SFSDIR_CHANGED,
 	    wxCommandEventHandler(ModSfsMainPanelImpl::OnSfsDirChanged),
 	    NULL, this);
+	sfsCtrl_->Connect(anEVT_SFSENTRY_CHANGED,
+	    wxCommandEventHandler(ModSfsMainPanelImpl::OnSfsEntryChanged),
+	    NULL, this);
 
 	SfsMainDirCtrl->Connect(wxEVT_COMMAND_TREE_SEL_CHANGED,
 	    wxTreeEventHandler(ModSfsMainPanelImpl::OnSfsMainDirCtrlSelChanged),
@@ -202,6 +254,14 @@ ModSfsMainPanelImpl::initSfsMain()
 	SfsMainFilterTextCtrl->Connect(wxEVT_COMMAND_TEXT_ENTER,
 	    wxCommandEventHandler(
 	       ModSfsMainPanelImpl::OnSfsMainFilterButtonClicked),
+	    NULL, this);
+	SfsMainFilterValidateButton->Connect(wxEVT_COMMAND_BUTTON_CLICKED,
+	    wxCommandEventHandler(
+	       ModSfsMainPanelImpl::OnSfsMainValidateButtonClicked),
+	    NULL, this);
+	SfsMainActionButton->Connect(wxEVT_COMMAND_BUTTON_CLICKED,
+	    wxCommandEventHandler(
+	       ModSfsMainPanelImpl::OnSfsMainApplyButtonClicked),
 	    NULL, this);
 
 	/* Insert columns into list-ctrl */
@@ -232,50 +292,13 @@ ModSfsMainPanelImpl::destroySfsMain()
 void
 ModSfsMainPanelImpl::updateSfsList()
 {
-	const SfsDirectory &dir = sfsCtrl_->getSfsDirectory();
+	SfsDirectory &dir = sfsCtrl_->getSfsDirectory();
 
 	SfsMainListCtrl->DeleteAllItems();
 
 	for (unsigned int i = 0; i < dir.getNumEntries(); i++) {
-		const SfsEntry &entry = dir.getEntry(i);
-		int checksumIconIndex = 0, signatureIconIndex = 0;
-
-		switch (entry.getChecksumAttr()) {
-		case SfsEntry::SFSENTRY_CHECKSUM_UNKNOWN:
-			checksumIconIndex = 0;
-			break;
-		case SfsEntry::SFSENTRY_CHECKSUM_NOMATCH:
-			checksumIconIndex = 3;
-			break;
-		case SfsEntry::SFSENTRY_CHECKUM_MATCH:
-			checksumIconIndex = 1;
-			break;
-		}
-
-		switch (entry.getSignatureAttr()) {
-		case SfsEntry::SFSENTRY_SIGNATURE_UNKNOWN:
-			signatureIconIndex = 0;
-			break;
-		case SfsEntry::SFSENTRY_SIGNATURE_INVALID:
-			signatureIconIndex = 2;
-			break;
-		case SfsEntry::SFSENTRY_SIGNATURE_NOMATCH:
-			signatureIconIndex = 3;
-			break;
-		case SfsEntry::SFSENTRY_SIGNATURE_MATCH:
-			signatureIconIndex = 1;
-			break;
-		}
-
 		SfsMainListCtrl->InsertItem(i, wxEmptyString);
-		SfsMainListCtrl->SetItem(i,
-		    MODSFSMAIN_FILELIST_COLUMN_FILE, entry.getPath());
-		SfsMainListCtrl->SetItem(i,
-		    MODSFSMAIN_FILELIST_COLUMN_CHECKSUM, wxEmptyString,
-		    checksumIconIndex);
-		SfsMainListCtrl->SetItem(i,
-		    MODSFSMAIN_FILELIST_COLUMN_SIGNATURE, wxEmptyString,
-		    signatureIconIndex);
+		updateSfsEntry(i);
 	}
 
 	if (SfsMainListCtrl->GetItemCount() > 0)
@@ -284,4 +307,56 @@ ModSfsMainPanelImpl::updateSfsList()
 	else
 		SfsMainListCtrl->SetColumnWidth(MODSFSMAIN_FILELIST_COLUMN_FILE,
 		    wxLIST_AUTOSIZE_USEHEADER);
+}
+
+void
+ModSfsMainPanelImpl::updateSfsEntry(int idx)
+{
+	SfsDirectory	&dir = sfsCtrl_->getSfsDirectory();
+	SfsEntry	&entry = dir.getEntry(idx);
+	wxString	checksumInfo;
+	int		checksumIconIndex = 0, signatureIconIndex = 0;
+
+	switch (entry.getChecksumAttr()) {
+	case SfsEntry::SFSENTRY_CHECKSUM_NOT_VALIDATED:
+		checksumInfo = _("not validated");
+		checksumIconIndex = 0;
+		break;
+	case SfsEntry::SFSENTRY_CHECKSUM_UNKNOWN:
+		checksumInfo = _("not registered");
+		checksumIconIndex = 0;
+		break;
+	case SfsEntry::SFSENTRY_CHECKSUM_NOMATCH:
+		checksumInfo = wxEmptyString;
+		checksumIconIndex = 3;
+		break;
+	case SfsEntry::SFSENTRY_CHECKUM_MATCH:
+		checksumInfo = wxEmptyString;
+		checksumIconIndex = 1;
+		break;
+	}
+
+	switch (entry.getSignatureAttr()) {
+	case SfsEntry::SFSENTRY_SIGNATURE_UNKNOWN:
+		signatureIconIndex = 0;
+		break;
+	case SfsEntry::SFSENTRY_SIGNATURE_INVALID:
+		signatureIconIndex = 2;
+		break;
+	case SfsEntry::SFSENTRY_SIGNATURE_NOMATCH:
+		signatureIconIndex = 3;
+		break;
+	case SfsEntry::SFSENTRY_SIGNATURE_MATCH:
+		signatureIconIndex = 1;
+		break;
+	}
+
+	SfsMainListCtrl->SetItem(idx,
+	    MODSFSMAIN_FILELIST_COLUMN_FILE, entry.getPath());
+	SfsMainListCtrl->SetItem(idx,
+	    MODSFSMAIN_FILELIST_COLUMN_CHECKSUM, checksumInfo,
+	    checksumIconIndex);
+	SfsMainListCtrl->SetItem(idx,
+	    MODSFSMAIN_FILELIST_COLUMN_SIGNATURE, wxEmptyString,
+	    signatureIconIndex);
 }

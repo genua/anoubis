@@ -159,6 +159,11 @@ ComThread::Entry(void)
 	bool fetchOnIdle = false; /* Workaround! See #854 */
 
 	while (!exitThread()) {
+		if (!isConnected()) {
+			/* Wait for a connection */
+			continue;
+		}
+
 		Task *task = getNextTask(Task::TYPE_COM);
 		ComTask *comTask = dynamic_cast<ComTask*>(task);
 
@@ -370,8 +375,10 @@ ComThread::sendNotify(struct anoubis_msg *notifyMsg)
 			break;
 		}
 
-		addEvent.SetClientObject((wxClientData*)notify);
-		wxGetApp().sendEvent(addEvent);
+		if (dynamic_cast<AnoubisGuiApp*>(wxTheApp)) {
+			addEvent.SetClientObject((wxClientData*)notify);
+			wxGetApp().sendEvent(addEvent);
+		}
 	}
 }
 

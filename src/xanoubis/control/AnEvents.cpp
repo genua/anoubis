@@ -139,3 +139,9 @@ DEFINE_LOCAL_EVENT_TYPE(anEVT_LOAD_RULESET)
  * updated.
  */
 DEFINE_LOCAL_EVENT_TYPE(anEVT_SFSDIR_CHANGED)
+
+/*
+ * The content of a SfsEntry has changed. The int-attribute of the
+ * wxCommandEvent contains the index of the entry in a SfsDirectory.
+ */
+DEFINE_LOCAL_EVENT_TYPE(anEVT_SFSENTRY_CHANGED)

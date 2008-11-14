@@ -25,61 +25,52 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _COMREGISTRATIONTASK_H_
-#define _COMREGISTRATIONTASK_H_
+#ifndef _COMCSUMDELTASK_H_
+#define _COMCSUMDELTASK_H_
 
 #include "ComTask.h"
 
 /**
- * A task to perform necessary steps to register GUI-communication with the
- * Anoubis-daemon.
+ * Task to delete the checksum of a file from anoubisd.
  *
- * This task needs to be queued before any other communication is performed
- * with the Anoubis-daemon.
+ * You have to specify the filename with ComCsumDelTask::setFile().
  */
-class ComRegistrationTask : public ComTask
+class ComCsumDelTask : public ComTask
 {
 	public:
 		/**
-		 * Type of registration.
+		 * Default c'tor.
+		 *
+		 * You explicity need to set the filename by calling setFile().
 		 */
-		enum Action
-		{
-			ACTION_REGISTER = 0, /*!< Registers at daemon */
-			ACTION_UNREGISTER    /*!< Unregisters from daemon */
-		};
+		ComCsumDelTask(void);
 
 		/**
-		 * Creates the task.
+		 * Constructs a ComCsumDelTask with an assigned filename.
 		 *
-		 * The action is set to ComRegistrationTask::ACTION_REGISTER.
+		 * @param file The source-file
+		 * @see setFile()
 		 */
-		ComRegistrationTask(void);
+		ComCsumDelTask(const wxString &);
 
 		/**
-		 * Creates a ComRegistrationTask with an already assigned
-		 * action.
+		 * Returns the source-file.
 		 *
-		 * @param action The registration action.
+		 * The checksum of the file is removed.
+		 *
+		 * @return The source-file
 		 */
-		ComRegistrationTask(Action);
+		wxString getFile(void) const;
 
 		/**
-		 * Returns the action of the task.
-		 * @return Weather the action registers or unregisters from the
-		 *         daemon.
-		 */
-		Action getAction(void) const;
-
-		/**
-		 * Updates the action of the task.
+		 * Updates the source-file.
 		 *
-		 * This method meeds to be called <i>before</i> the task is
-		 * executed.
+		 * This method needs to be called <i>before</i> the tesk is
+		 * executed!
 		 *
-		 * @param action The new action
+		 * @param file The new source-file
 		 */
-		void setAction(Action);
+		void setFile(const wxString &);
 
 		/**
 		 * Implementation of Task::getEventType().
@@ -92,20 +83,7 @@ class ComRegistrationTask : public ComTask
 		void exec(void);
 
 	private:
-		Action	action_;
-
-		/**
-		 * exec() implements a state-machine.
-		 * The following enumeration defines the states.
-		 */
-		enum RegState {
-			STATE_REGISTER = 0,
-			STATE_UNREGISTER,
-			STATE_STAT_REGISTER,
-			STATE_STAT_UNREGISTER,
-			STATE_SFS_DISABLE,
-			STATE_DONE
-		};
+		wxString	file_;
 };
 
-#endif	/* _COMREGISTRATIONTASK_H_ */
+#endif	/* _COMCSUMDELTASK_H_ */

@@ -147,6 +147,12 @@ BEGIN_DECLARE_EVENT_TYPES()
 	 * updated.
 	 */
 	DECLARE_LOCAL_EVENT_TYPE(anEVT_SFSDIR_CHANGED, wxNewEventType())
+
+	/*
+	 * The content of a SfsEntry has changed. The int-attribute of the
+	 * wxCommandEvent contains the index of the entry in a SfsDirectory.
+	 */
+	DECLARE_LOCAL_EVENT_TYPE(anEVT_SFSENTRY_CHANGED, wxNewEventType())
 END_DECLARE_EVENT_TYPES()
 
 #endif	/* _ANEVENTS_H_ */

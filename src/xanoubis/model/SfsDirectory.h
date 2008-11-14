@@ -97,11 +97,24 @@ class SfsDirectory : private wxDirTraverser
 		unsigned int getNumEntries() const;
 
 		/**
+		 * Returns the index of the SfsEntry with the specified
+		 * filename.
+		 *
+		 * @param filename The filename of the SfsEntry you are
+		 *                 searching for.
+		 * @param path Set to true, if you are searching for a complete
+		 *             path.
+		 * @return The index of the SfsEntry you are looking for. If
+		 *         no such entry exists, -1 is returned.
+		 */
+		int getIndexOf(const wxString &, bool) const;
+
+		/**
 		 * Returns the SfsEntry-instance at the specified index.
 		 * @param idx The requested index (count starts at 0)
 		 * @return The SfsEntry-instance at the specified index
 		 */
-		const SfsEntry &getEntry(unsigned int) const;
+		SfsEntry &getEntry(unsigned int);
 
 	private:
 		wxString path_;

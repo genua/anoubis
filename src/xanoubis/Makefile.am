@@ -303,6 +303,8 @@ xanoubis_SOURCES= \
 	pattern/Observer.h \
 	job/ComCsumAddTask.cpp \
 	job/ComCsumAddTask.h \
+	job/ComCsumDelTask.cpp \
+	job/ComCsumDelTask.h \
 	job/ComCsumGetTask.cpp \
 	job/ComCsumGetTask.h \
 	job/ComHandler.h \

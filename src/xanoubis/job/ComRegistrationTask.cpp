@@ -94,6 +94,21 @@ ComRegistrationTask::exec(void)
 		return;
 	}
 
+	/*
+	 * State-machines:
+	 *
+	 * ACTION_REGISTER:
+	 *  -> STATE_REGISTER
+	 *  -> STATE_STAT_REGISTER
+	 *  -> STATE_SFS_DISABLE
+	 *  -> STATE_DONE
+	 *
+	 * ACTION_UNREGISTER:
+	 *  -> STATE_UNREGISTER'
+	 *  -> STATE_STAT_UNREGISTER
+	 *  -> STATE_DONE
+	 */
+
 	/* Start-state depends on action */
 	switch (action_) {
 	case ACTION_REGISTER:
@@ -124,11 +139,15 @@ ComRegistrationTask::exec(void)
 		case STATE_STAT_REGISTER:
 			ta = anoubis_client_register_start(client,
 			    getToken(), 0, 0, ANOUBIS_SOURCE_STAT);
-			next = STATE_DONE;
+			next = STATE_SFS_DISABLE;
 			break;
 		case STATE_STAT_UNREGISTER:
 			ta = anoubis_client_unregister_start(client,
 			    getToken(), 0, 0, ANOUBIS_SOURCE_STAT);
+			next = STATE_DONE;
+			break;
+		case STATE_SFS_DISABLE:
+			ta = anoubis_client_sfsdisable_start(client, getpid());
 			next = STATE_DONE;
 			break;
 		case STATE_DONE:

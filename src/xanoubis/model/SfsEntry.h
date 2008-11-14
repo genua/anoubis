@@ -28,6 +28,17 @@
 #ifndef _SFSENTRY_H_
 #define _SFSENTRY_H_
 
+#include <config.h>
+
+#include <sys/types.h>
+
+#ifdef LINUX
+#include <linux/anoubis.h>
+#endif
+#ifdef OPENBSD
+#include <dev/anoubis.h>
+#endif
+
 #include <wx/string.h>
 
 /**
@@ -44,8 +55,11 @@ class SfsEntry
 		 */
 		enum ChecksumAttr
 		{
+			/*!< The checksum is not validated. */
+			SFSENTRY_CHECKSUM_NOT_VALIDATED = 0,
+
 			/*!< The entry has no checksum. */
-			SFSENTRY_CHECKSUM_UNKNOWN = 0,
+			SFSENTRY_CHECKSUM_UNKNOWN,
 
 			/*!< The checksum does not match */
 			SFSENTRY_CHECKSUM_NOMATCH,
@@ -69,6 +83,8 @@ class SfsEntry
 			SFSENTRY_SIGNATURE_MATCH
 		};
 
+		SfsEntry(void);
+		SfsEntry(const wxString &);
 		SfsEntry(const SfsEntry &);
 
 		/**
@@ -77,6 +93,22 @@ class SfsEntry
 		 * This includes the complete path and the filename.
 		 */
 		wxString getPath() const;
+
+		/**
+		 * Returns the filename.
+		 *
+		 * This is the filename without the path.
+		 *
+		 * @return Filename <i>without</i> path.
+		 */
+		wxString getFileName(void) const;
+
+		/**
+		 * Updates the path of the SfsEntry.
+		 *
+		 * @param path Complete path of entry.
+		 */
+		void setPath(const wxString &);
 
 		/**
 		 * Returns the checksum-attribute of the file.
@@ -88,20 +120,66 @@ class SfsEntry
 		 */
 		SignatureAttr getSignatureAttr() const;
 
+		/**
+		 * Updates checksumAttr to SFSENTRY_CHECKSUM_UNKNOWN.
+		 *
+		 * Use this method, if you are sure, that the file has no
+		 * checksum.
+		 *
+		 * @return true is returned, when the value of checksumAttr has
+		 *         changed.
+		 */
+		bool setNoChecksum(void);
+
+		/**
+		 * Copies the locally calculated checksum into the SfsEntry.
+		 *
+		 * If both (local and daemon checksum) are available, there are
+		 * compared with each other and the checksumAttr is updated.
+		 *
+		 * @param cs The local calculated checksum. If you specify NULL
+		 *           as a checksum, the checksum is resetted.
+		 * @return true is returned, when the value of checksumAttr has
+		 *         changed.
+		 * @see setDaemonCsum()
+		 * @see getChecksumAttr()
+		 */
+		bool setLocalCsum(const u_int8_t *);
+
+		/**
+		 * Copies the checksum managed by anoubisd into the SfSEntry.
+		 *
+		 * If both (local and daemon checksum) are available, there are
+		 * compared with each other and the checksumAttr is updated.
+		 *
+		 * @param cs The checksum received from anoubisd. If you
+		 *           specify NULL as a checksum, the checksum is
+		 *           resetted.
+		 * @return true is returned, when the value of checksumAttr has
+		 *         changed.
+		 * @see setLocalCsum()
+		 * @see getChecksumAttr()
+		 */
+		bool setDaemonCsum(const u_int8_t *);
+
+		/**
+		 * Resets the SfsEntry.
+		 *
+		 * Checksums are cleared, attributes are resetted.
+		 */
+		void reset(void);
+
 	private:
-		wxString path_;
-		ChecksumAttr checksumAttr_;
-		SignatureAttr signatureAttr_;
+		wxString	path_;
+		wxString	filename_;
+		bool		haveLocalCsum_;
+		bool		haveDaemonCsum_;
+		u_int8_t	localCsum_[ANOUBIS_CS_LEN];
+		u_int8_t	daemonCsum_[ANOUBIS_CS_LEN];
+		ChecksumAttr	checksumAttr_;
+		SignatureAttr	signatureAttr_;
 
-		SfsEntry();
-		SfsEntry(const wxString &, ChecksumAttr, SignatureAttr);
-		SfsEntry(const wxString &);
-
-		void setPath(const wxString &);
-		void setChecksumAttr(ChecksumAttr);
-		void setSignatureAttr(SignatureAttr);
-
-	friend class SfsDirectory;
+		bool updateChecksumAttr(void);
 };
 
 #endif	/* _SFSENTRY_H_ */

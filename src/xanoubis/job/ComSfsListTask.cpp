@@ -130,23 +130,19 @@ ComSfsListTask::exec(void)
 
 	/* Extract filelist from response */
 	list = anoubis_csum_list(ta->msg, &listSize);
-	if (!list) {
-		anoubis_transaction_destroy(ta);
-		setComTaskResult(RESULT_LOCAL_ERROR);
-		return;
-	}
-
 	anoubis_transaction_destroy(ta);
 
 	/* Put filelist from transaction into result of the task */
-	for (int i = 0; i < listSize; i++) {
-		wxString f = wxString(list[i], wxConvFile);
-		fileList_.Add(f);
+	if (list != 0) {
+		for (int i = 0; i < listSize; i++) {
+			wxString f = wxString(list[i], wxConvFile);
+			fileList_.Add(f);
 
-		free(list[i]);
+			free(list[i]);
+		}
+
+		free(list);
 	}
-
-	free(list);
 
 	setComTaskResult(RESULT_SUCCESS);
 }
