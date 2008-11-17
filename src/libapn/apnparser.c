@@ -1089,7 +1089,18 @@ apn_print_contextrule(struct apn_context *rule, FILE *file)
 	if (rule == NULL || file == NULL)
 		return (1);
 
-	fprintf(file, "context new ");
+	fprintf(file, "context ");
+
+	switch (rule->type) {
+	case APN_CTX_NEW:
+		fprintf(file, "new ");
+		break;
+	case APN_CTX_OPEN:
+		fprintf(file, "open ");
+		break;
+	default:
+		return (1);
+	}
 
 	if (apn_print_app(rule->application, file) == 1)
 		return (1);
@@ -1709,11 +1720,12 @@ apn_copy_one_rule(struct apn_rule *old)
 	case APN_CTX_RULE:
 		newrule->rule.apncontext.application = NULL;
 		if (old->rule.apncontext.application) {
-			newrule->rule.apncontext.application = 
+			newrule->rule.apncontext.application =
 			    apn_copy_app(old->rule.apncontext.application);
 			if (newrule->rule.apncontext.application == NULL)
 				goto errout;
 		}
+		newrule->rule.apncontext.type = old->rule.apncontext.type;
 		break;
 	case APN_SFS_CHECK:
 		newrule->rule.sfscheck.log = old->rule.sfscheck.log;

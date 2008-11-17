@@ -162,8 +162,13 @@ struct apn_default {
 	int			log;
 };
 
+enum {
+	APN_CTX_NEW, APN_CTX_OPEN
+};
+
 struct apn_context {
 	struct apn_app		*application;
+	int			 type;
 };
 
 struct apn_sfscheck {

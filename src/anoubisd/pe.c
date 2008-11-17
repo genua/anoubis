@@ -314,16 +314,19 @@ pe_handle_sfs(anoubisd_msg_sfsopen_t *sfsmsg)
 		return (NULL);
 	}
 
+	common = (struct anoubis_event_common *)(hdr + 1);
+	proc = pe_proc_get(common->task_cookie);
+	if (proc && pe_proc_get_pid(proc) == -1)
+		pe_proc_set_pid(proc, hdr->msg_pid);
+
+	pe_context_open(proc, hdr);
+
 	if (time(&now) == (time_t)-1) {
 		int code = errno;
 		log_warn("pe_handle_sfs: Cannot get time");
 		master_terminate(code);
 		return (NULL);
 	}
-	common = (struct anoubis_event_common *)(hdr + 1);
-	proc = pe_proc_get(common->task_cookie);
-	if (proc && pe_proc_get_pid(proc) == -1)
-		pe_proc_set_pid(proc, hdr->msg_pid);
 	reply = pe_decide_sfs(hdr->msg_uid, sfsmsg, now);
 	reply2 = pe_decide_sandbox(proc, hdr);
 	pe_proc_put(proc);

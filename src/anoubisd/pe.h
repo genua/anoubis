@@ -96,6 +96,8 @@ void			 pe_context_refresh(struct pe_proc *, int,
 void			 pe_context_exec(struct pe_proc *, uid_t,
 			     struct pe_proc_ident *);
 void			 pe_context_fork(struct pe_proc *, struct pe_proc *);
+void			 pe_context_open(struct pe_proc *,
+			     struct eventdev_hdr *);
 char			*pe_context_dump(struct eventdev_hdr *,
 			     struct pe_proc *, int);
 

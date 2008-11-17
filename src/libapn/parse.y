@@ -174,7 +174,7 @@ typedef struct {
 %expect 0
 
 %token	ALLOW DENY ALF SFS SB VS CAP CONTEXT RAW ALL OTHER LOG CONNECT ACCEPT
-%token	INET INET6 FROM TO PORT ANY SHA256 TCP UDP DEFAULT NEW ASK ALERT
+%token	INET INET6 FROM TO PORT ANY SHA256 TCP UDP DEFAULT NEW ASK ALERT OPEN
 %token	READ WRITE EXEC CHMOD ERROR APPLICATION RULE HOST TFILE BOTH SEND
 %token	RECEIVE TIMEOUT STATEFUL TASK UNTIL COLON PATH KEY UID CSUM
 %token	<v.string>		STRING
@@ -1151,6 +1151,11 @@ ctxrule		: ruleid ctxruleapps scope			{
 
 ctxruleapps	: CONTEXT NEW apps		{
 			$$.application = $3;
+			$$.type = APN_CTX_NEW;
+		}
+		| CONTEXT OPEN apps		{
+			$$.application = $3;
+			$$.type = APN_CTX_OPEN;
 		}
 		;
 
@@ -1375,6 +1380,7 @@ lookup(char *s)
 		{ "key",	KEY },
 		{ "log",	LOG },
 		{ "new",	NEW },
+		{ "open",	OPEN },
 		{ "other",	OTHER },
 		{ "path",	PATH },
 		{ "port",	PORT },

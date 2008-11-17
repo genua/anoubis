@@ -133,6 +133,8 @@
 #include <dev/anoubis.h>
 #endif
 
+#include <stddef.h>
+
 #include <apn.h>
 #include "anoubisd.h"
 #include "pe.h"
@@ -149,7 +151,7 @@ struct pe_context {
 static void			 pe_dump_dbgctx(const char *, struct pe_proc *);
 static struct pe_context	*pe_context_search(struct apn_ruleset *,
 				     struct pe_proc_ident *);
-static int			 pe_context_decide(struct pe_proc *, int,
+static int			 pe_context_decide(struct pe_proc *, int, int,
 				     struct pe_proc_ident *);
 static struct pe_context	*pe_context_alloc(struct apn_ruleset *,
 				     struct pe_proc_ident *);
@@ -369,7 +371,7 @@ pe_context_exec(struct pe_proc *proc, uid_t uid, struct pe_proc_ident *pident)
 	 */
 	for (i = 0; i < PE_PRIO_MAX; i++) {
 		/* Do not switch if are rules forbid it. */
-		if (pe_context_decide(proc, i, pident) == 0)
+		if (pe_context_decide(proc, APN_CTX_NEW, i, pident) == 0)
 			continue;
 		DEBUG(DBG_PE_CTX,
 		    "pe_context_exec: prio %d switching context", i);
@@ -377,6 +379,60 @@ pe_context_exec(struct pe_proc *proc, uid_t uid, struct pe_proc_ident *pident)
 	}
 	if (uid != (uid_t)-1)
 		pe_proc_set_uid(proc, uid);
+}
+
+/*
+ * Change context on open(2):
+ * - If pe_context_decide forbids changing the context, we don't.
+ * - The logic is similar to pe_context_exec: Otherwise the context at the
+ *   prio either allowed the context switch or it is still invalid (NULL)
+ *   which implicitly allows us to switch contexts.  In that case search
+ *   a new context using pe_context_switch.  Additionally the identity of the
+ *   process is updated.
+ */
+void
+pe_context_open(struct pe_proc *proc, struct eventdev_hdr *hdr)
+{
+	struct sfs_open_message	*sfsmsg;
+	struct pe_proc_ident	 pident;
+	int			 sfslen, pathlen, i;
+
+	if (proc == NULL || hdr == NULL)
+		return;
+
+	sfsmsg = (struct sfs_open_message *)(hdr + 1);
+	if (hdr->msg_size < sizeof(struct eventdev_hdr))
+		return;
+	sfslen = hdr->msg_size - sizeof(struct eventdev_hdr);
+	if (sfslen < (int)sizeof(struct sfs_open_message))
+		return;
+	if (!(sfsmsg->flags & ANOUBIS_OPEN_FLAG_CSUM))
+		return;
+	if (sfsmsg->flags & ANOUBIS_OPEN_FLAG_PATHHINT) {
+		pathlen = sfslen - offsetof(struct sfs_open_message, pathhint);
+		for (i = pathlen - 1; i >= 0; --i) {
+			if (sfsmsg->pathhint[i] == 0)
+				break;
+		}
+		if (i < 0)
+			return;
+	} else {
+		sfsmsg->pathhint[0] = 0;
+	}
+
+	pident.pathhint = sfsmsg->pathhint;
+	pident.csum = sfsmsg->csum;
+
+	for (i = 0; i < PE_PRIO_MAX; i++) {
+		if (pe_context_decide(proc, APN_CTX_OPEN, i, &pident) == 0)
+			continue;
+
+		DEBUG(DBG_PE_CTX,
+		    "pe_context_open: prio %d switching context to %s", i,
+		    pident.pathhint);
+
+		pe_context_switch(proc, i, &pident, hdr->msg_uid);
+	}
 }
 
 static struct apn_rule *
@@ -502,7 +558,8 @@ pe_context_reference(struct pe_context *ctx)
  * NOTE: bcmp returns 0 on match, otherwise non-zero.  Do not confuse this...
  */
 static int
-pe_context_decide(struct pe_proc *proc, int prio, struct pe_proc_ident *pident)
+pe_context_decide(struct pe_proc *proc, int type, int prio,
+    struct pe_proc_ident *pident)
 {
 	struct apn_app		*hp = NULL;
 	struct apn_rule		*rule;
@@ -526,6 +583,8 @@ pe_context_decide(struct pe_proc *proc, int prio, struct pe_proc_ident *pident)
 	ret = 0;	/* deny by default */
 	TAILQ_FOREACH(rule, &ctx->ctxrule->rule.chain, entry) {
 		if (rule->apn_type != APN_CTX_RULE)
+			continue;
+		if (rule->rule.apncontext.type != type)
 			continue;
 		/*
 		 * If the rule says "context new any", application will be
@@ -552,9 +611,9 @@ pe_context_decide(struct pe_proc *proc, int prio, struct pe_proc_ident *pident)
 	/* If we reach this point context switching is allowed. */
 	DEBUG(DBG_PE_CTX,
 	    "pe_context_decide: found \"%s\" csm 0x%08x... for "
-	    "priority %d", (hp && hp->name) ? hp->name : "any",
+	    "type %d priority %d", (hp && hp->name) ? hp->name : "any",
 	    (hp && hp->hashvalue) ?
-	    htonl(*(unsigned long *)hp->hashvalue) : 0, prio);
+	    htonl(*(unsigned long *)hp->hashvalue) : 0, type, prio);
 	return 1;
 }
 
