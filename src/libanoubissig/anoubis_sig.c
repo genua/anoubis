@@ -34,6 +34,7 @@ anoubis_sign_csum(struct anoubis_sig *as,
     unsigned char csum[ANOUBIS_SIG_HASH_SHA256_LEN], unsigned int *len)
 {
 	unsigned char *sigbuf = NULL;
+	unsigned char *result = NULL;
 	unsigned int siglen = 0;
 	EVP_MD_CTX ctx;
 	EVP_PKEY *pkey;
@@ -59,9 +60,18 @@ anoubis_sign_csum(struct anoubis_sig *as,
 		return NULL;
 	}
 	EVP_MD_CTX_cleanup(&ctx);
+	result = calloc((ANOUBIS_SIG_HASH_SHA256_LEN + siglen),
+	    sizeof(unsigned char));
+	if (!result) {
+		*len = 0;
+		return NULL;
+	}
 
-	*len = siglen;
-	return sigbuf;
+	memcpy(result, csum, ANOUBIS_SIG_HASH_SHA256_LEN);
+	memcpy(&result[ANOUBIS_SIG_HASH_SHA256_LEN], sigbuf, siglen);
+	free(sigbuf);
+	*len = siglen + ANOUBIS_SIG_HASH_SHA256_LEN;
+	return result;
 }
 
 int

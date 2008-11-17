@@ -33,9 +33,9 @@
 #define ANOUBISD_CSUM_ROOT	2
 
 int	 sfs_checksumop(const char *path, unsigned int operation, uid_t uid,
-	     unsigned char *md);
+	     unsigned char *md, int len);
 int	 sfs_checksumop_chroot(const char *path, unsigned int operation,
-	     uid_t uid, unsigned char *md);
+	     uid_t uid, unsigned char *md, int len);
 int	 sfs_getchecksum(const char *path, uid_t uid, unsigned char *md);
 int	 sfs_getchecksum_chroot(const char *path, uid_t uid, unsigned char *md);
 int	 convert_user_path(const char *path, char **dir, int is_dir);

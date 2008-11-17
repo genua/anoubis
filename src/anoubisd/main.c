@@ -806,11 +806,11 @@ dispatch_checksumop(anoubisd_msg_t *msg, struct event_info_main *ev_info)
 	char * path = NULL;
 	char *result = NULL;
 	int	flags;
-	int	cslen;
+	int	cslen = 0;
 	uid_t	req_uid;
 	int err = -EFAULT, op = 0, extra = 0;
 	anoubisd_reply_t * reply;
-	u_int8_t digest[SHA256_DIGEST_LENGTH];
+	u_int8_t *digest = NULL;
 	int i, plen;
 
 	rawmsg.length = msg_comm->len;
@@ -856,28 +856,45 @@ dispatch_checksumop(anoubisd_msg_t *msg, struct event_info_main *ev_info)
 
 		free(result);
 		return;
+	case ANOUBIS_CHECKSUM_OP_ADDSIG:
 	case ANOUBIS_CHECKSUM_OP_ADDSUM:
 		if (!VERIFY_LENGTH(&rawmsg, sizeof(Anoubis_ChecksumAddMessage)))
 			goto out;
 		cslen = get_value(rawmsg.u.checksumadd->cslen);
-		if (cslen != SHA256_DIGEST_LENGTH) {
+		if ((cslen != SHA256_DIGEST_LENGTH) &&
+		    (op == ANOUBIS_CHECKSUM_OP_ADDSUM)) {
 			err = -EINVAL;
 			goto out;
 		}
 		if (!VERIFY_LENGTH(&rawmsg,
 		    sizeof(Anoubis_ChecksumAddMessage) + cslen))
 			goto out;
+		digest = (u_int8_t *)calloc(cslen, sizeof(u_int8_t));
+		if (!digest) {
+			err = -ENOMEM;
+			goto out;
+		}
 		memcpy(digest, rawmsg.u.checksumadd->payload, cslen);
 		path = rawmsg.u.checksumadd->payload + cslen;
-		plen = rawmsg.length - CSUM_LEN
+		plen = rawmsg.length - CSUM_LEN - cslen
 		    - sizeof(Anoubis_ChecksumAddMessage);
 		break;
 	default:
+		digest = (u_int8_t *)calloc(SHA256_DIGEST_LENGTH,
+		    sizeof(u_int8_t));
+		if (!digest) {
+			err = -ENOMEM;
+			goto out;
+		}
+		cslen = SHA256_DIGEST_LENGTH;
 		path = rawmsg.u.checksumrequest->path;
 		plen = rawmsg.length - CSUM_LEN
 		    - sizeof(Anoubis_ChecksumRequestMessage);
 		break;
 	}
+
+	if (plen < 0)
+		goto out;
 
 	for (i=0; i<plen; ++i) {
 		if (path[i] == 0)
@@ -886,7 +903,7 @@ dispatch_checksumop(anoubisd_msg_t *msg, struct event_info_main *ev_info)
 	if (i >= plen)
 		goto out;
 
-	err = sfs_checksumop(path, op, req_uid, digest);
+	err = sfs_checksumop(path, op, req_uid, digest, cslen);
 	extra = 0;
 	if (err == 0) {
 		switch (op) {
@@ -913,6 +930,8 @@ out:
 	reply->len = extra;
 	if (extra)
 		memcpy(reply->msg, digest, extra);
+	if (digest)
+		free(digest);
 	enqueue(&eventq_m2s, msg);
 	DEBUG(DBG_QUEUE, " >eventq_m2s: %llx",
 	    (unsigned long long)reply->token);

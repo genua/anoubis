@@ -38,12 +38,12 @@
 .Op -f fileset
 .Op -u uid
 .Op -k key
-.Op -sum
-.Op -sig
-.Op -both
-.Op -orphaned | -notfile
-.Op -hassum | -hasnosum
-.Op -hassig | -hasnosig
+.Op --sum
+.Op --sig
+.Op --both
+.Op --orphaned | --notfile
+.Op --hassum | --hasnosum
+.Op --hassig | --hasnosig
 .Ar command
 .Op file
 .Sh DESCRIPTION
@@ -56,7 +56,7 @@ daemon.
 Options:
 .Pp
 .Bl -tag -width Ds
-.It Fl d 
+.It Fl d
 Debug mode.
 Prints debug information to the console.
 .It Fl v
@@ -75,7 +75,7 @@ Accept input form a file. - for stdin
 Type specification:
 .Pp
 .Bl -tag -width Ds
-.It Fl u 
+.It Fl u
 Apply command for checksums with
 .Ar uid .
 If argument is
@@ -103,7 +103,8 @@ Apply command for checksum and signature.
 .It Fl orphaned
 Apply command to nominal conditions without an entry in the file system.
 .It Fl notfile
-Apply command to nominal conditions which have no regular file entry in the file system.
+Apply command to nominal conditions which have no regular file entry in
+the file system.
 .It Fl hassum
 Apply command to nominal conditions which have a checksum.
 .It Fl hasnosum
@@ -129,7 +130,7 @@ found in the shadow tree.
 .Pp
 list - list all entries found in the shadow tree.
 .Pp
-validate - validates all nominal conditions from 
+validate - validates all nominal conditions from
 .Ar file
 given as argument.
 .El
@@ -168,7 +169,8 @@ Delete a entry for all files given by stdin from the shadowtree:
 .Pp
 .Dl # sfssig -f - del
 .Pp
-Get all checksum entries with signatures of the shadowtree recursively from directory
+Get all checksum entries with signatures of the shadowtree recursively from
+directory
 .Pa /tmp
 of the user with uid 1001
 .Pp

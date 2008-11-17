@@ -42,6 +42,7 @@
 #include <unistd.h>
 #include <ctype.h>
 #include <dirent.h>
+#include <getopt.h>
 
 #include <sys/un.h>
 #include <sys/mman.h>
@@ -63,6 +64,7 @@
 #include <anoubis_msg.h>
 #include <anoubis_transaction.h>
 #include <anoubis_dump.h>
+#include <anoubis_sig.h>
 
 #include <anoubischat.h>
 
@@ -96,6 +98,8 @@
 #define SFSSIG_OPT_FILE			0x0010
 #define SFSSIG_OPT_DEBUG		0x0020
 #define SFSSIG_OPT_DEBUG2		0x0040
+#define SFSSIG_OPT_SIG			0x0080
+#define SFSSIG_OPT_SUM			0x0100
 
 typedef int (*func_int_t)(void);
 typedef int (*func_char_t)(char *);
@@ -106,7 +110,7 @@ static int	 sfs_del(char *file);
 static int	 sfs_getsum(char *file);
 static int	 sfs_list(char *file);
 static struct anoubis_transaction *sfs_sumop(char *file, int operation,
-    u_int8_t *cs);
+    u_int8_t *cs, int cslen);
 static int	 create_channel(void);
 static void	 destroy_channel(void);
 static int	 sfs_tree(char *path, int op);
@@ -127,6 +131,9 @@ struct cmd {
 	{ "get",  (func_int_t)sfs_getsum, 1, ANOUBIS_CHECKSUM_OP_GET},
 };
 
+
+
+static struct anoubis_sig	*as = NULL;
 static struct achat_channel	*channel;
 struct anoubis_client		*client;
 static int			 opts = 0;
@@ -393,6 +400,7 @@ main(int argc, char *argv[])
 	FILE		*fp = NULL;
 	char		*argcsumstr = NULL;
 	char		*file = NULL;
+	char		*keyfile = NULL;
 	char		*command = NULL;
 	char		*arg = NULL;
 	char		 realarg[PATH_MAX];
@@ -401,12 +409,26 @@ main(int argc, char *argv[])
 	char		 ch;
 	char		 fileinput[PATH_MAX];
 	int		 syssigmode = 0;
+	int		 options_index = 0;
 	int		 done = 0;
 	int		 error = 0;
 	int		 end;
 
-	while ((ch = getopt(argc, argv, "A:URLf:u:ndvr")) != -1) {
+	struct option options [] = {
+		{ "sig", 0, 0, 0 },
+		{ "sum", 1, 0, 0 },
+		{ 0, 0, 0, 0 }
+	};
+
+	while ((ch = getopt_long(argc, argv, "A:URLf:k:u:ndvr",
+	    options, &options_index)) != -1) {
 		switch (ch) {
+		case 0:
+			opts |= SFSSIG_OPT_SIG;
+			break;
+		case 1:
+			opts |= SFSSIG_OPT_SUM;
+			break;
 		case 'n':
 			opts |= SFSSIG_OPT_NOACTION;
 			break;
@@ -422,6 +444,9 @@ main(int argc, char *argv[])
 			if (opts & SFSSIG_OPT_DEBUG)
 				opts |= SFSSIG_OPT_DEBUG2;
 			opts |= SFSSIG_OPT_DEBUG;
+			break;
+		case 'k':
+			keyfile = optarg;
 			break;
 		case 'f':
 			file = optarg;
@@ -455,11 +480,14 @@ main(int argc, char *argv[])
 			/* NOTREACHED */
 		}
 	}
+
 	argc -= optind;
 	argv += optind;
+
 	if (argc <= 0 && !file) {
 		usage();
 	}
+
 	if (syssigmode != 0) {
 		switch(syssigmode) {
 		case 'A':
@@ -534,6 +562,17 @@ main(int argc, char *argv[])
 		file_cnt = argc;
 	}
 
+	if (keyfile) {
+		OpenSSL_add_all_algorithms();
+		as = anoubis_sig_priv_init(keyfile, ANOUBIS_SIG_HASH_SHA1,
+		    NULL, 1);
+		if (as == NULL) {
+			fprintf(stderr, "Error while loading keyfile: %s\n",
+			    keyfile);
+			return 1;
+		}
+	}
+
 	for (i = 0; i < sizeof(commands)/sizeof(struct cmd); i++) {
 		if(strcmp(command, commands[i].command) == 0) {
 			for (j = 0; j < file_cnt; j++) {
@@ -570,6 +609,9 @@ main(int argc, char *argv[])
 		}
 	}
 
+	if (as)
+		anoubis_sig_free(as);
+
 	if (client)
 		destroy_channel();
 
@@ -580,7 +622,7 @@ main(int argc, char *argv[])
 }
 
 static struct anoubis_transaction *
-sfs_sumop(char *file, int operation, u_int8_t *cs)
+sfs_sumop(char *file, int operation, u_int8_t *cs, int cslen)
 {
 	struct anoubis_transaction	*t;
 	int				 error = 0;
@@ -596,8 +638,12 @@ sfs_sumop(char *file, int operation, u_int8_t *cs)
 		}
 	}
 
-	if (cs)
-		len = ANOUBIS_CS_LEN;
+	if (cs) {
+		if (operation == ANOUBIS_CHECKSUM_OP_ADDSUM)
+			len = ANOUBIS_CS_LEN;
+		else
+			len = cslen;
+	}
 	if (opts & SFSSIG_OPT_DEBUG2)
 		fprintf(stderr, "start checksum request\n");
 	t = anoubis_client_csumrequest_start(client, operation, file, cs, len,
@@ -649,7 +695,7 @@ request_uids(char *file, int *count)
 		return NULL;
 	}
 
-	t = sfs_sumop(file, ANOUBIS_CHECKSUM_OP_UID_LIST, NULL);
+	t = sfs_sumop(file, ANOUBIS_CHECKSUM_OP_UID_LIST, NULL, 0);
 	if (!t)
 		return NULL;
 	if (t->result) {
@@ -693,7 +739,9 @@ static int
 sfs_add(char *file)
 {
 	struct anoubis_transaction	*t = NULL;
+	unsigned int			 siglen = 0, k;
 	u_int8_t			 cs[ANOUBIS_CS_LEN];
+	u_int8_t			 *sig = NULL;
 	uid_t				*result = NULL;
 	int				 len = ANOUBIS_CS_LEN;
 	int				 ret;
@@ -703,6 +751,12 @@ sfs_add(char *file)
 
 	if (opts & SFSSIG_OPT_DEBUG)
 		fprintf(stderr, ">sfs_add\n");
+
+	if ((opts & SFSSIG_OPT_SIG) && (as == NULL)) {
+		fprintf(stderr, "You must specify a keyfile to add a"
+		    " signature\n");
+		return 1;
+	}
 
 	if (!client) {
 		error = create_channel();
@@ -717,15 +771,26 @@ sfs_add(char *file)
 		perror("anoubis_csum_calc");
 		return 1;
 	}
+
 	if (len != ANOUBIS_CS_LEN) {
 		fprintf(stderr, " Bad csum length from anoubis_csum_calc\n");
 		return 1;
 	}
+
+	if ((opts & SFSSIG_OPT_SIG) && as) {
+		sig = anoubis_sign_csum(as, cs, &siglen);
+		if (!sig) {
+			fprintf(stderr, "Error while anoubis_sign_csum\n");
+			return 1;
+		}
+	}
+
 	if (checksum_flag == ANOUBIS_CSUM_UID_ALL) {
 		result = request_uids(file, &cnt);
 		if (!result) {
 			return 1;
 		}
+		checksum_flag = ANOUBIS_CSUM_UID;
 	} else {
 		result = (uid_t *)calloc(1, sizeof(uid_t *));
 		if (!result) {
@@ -735,10 +800,15 @@ sfs_add(char *file)
 		result[0] = uid;
 		cnt = 1;
 	}
-	for ( i = 0; i < cnt; i++) {
+	for (i = 0; i < cnt; i++) {
 		uid = result[i];
-		checksum_flag = ANOUBIS_CSUM_UID;
-		t = sfs_sumop(file, ANOUBIS_CHECKSUM_OP_ADDSUM, cs);
+		if (sig) {
+			t = sfs_sumop(file, ANOUBIS_CHECKSUM_OP_ADDSIG, sig,
+			    siglen);
+		} else {
+			t = sfs_sumop(file, ANOUBIS_CHECKSUM_OP_ADDSUM, cs,
+			    len);
+		}
 		if (!t)
 			return 1;
 		if (t->result) {
@@ -752,10 +822,16 @@ sfs_add(char *file)
 	if (opts & SFSSIG_OPT_VERBOSE2)
 		printf("add: ");
 	if (opts & SFSSIG_OPT_VERBOSE) {
-		printf("%s\t", file);
+		printf("%s csum:\t", file);
 		for (i = 0; i < SHA256_DIGEST_LENGTH; i++)
 			printf("%02x", cs[i]);
 		printf("\n");
+		if (opts & SFSSIG_OPT_SIG) {
+			printf("%s signature:\t", file);
+			for (k = 0; k < siglen; k++)
+				printf("%2.2x", sig[k]);
+			printf("\n");
+		}
 	}
 
 	if (opts & SFSSIG_OPT_DEBUG)
@@ -782,6 +858,7 @@ sfs_del(char *file)
 		if (!result) {
 			return 1;
 		}
+		checksum_flag = ANOUBIS_CSUM_UID;
 	} else {
 		result = (uid_t *)calloc(1, sizeof(uid_t *));
 		if (!result) {
@@ -793,8 +870,7 @@ sfs_del(char *file)
 	}
 	for ( i = 0; i < cnt; i++) {
 		uid = result[i];
-		checksum_flag = ANOUBIS_CSUM_UID;
-		t = sfs_sumop(file, ANOUBIS_CHECKSUM_OP_DEL, NULL);
+		t = sfs_sumop(file, ANOUBIS_CHECKSUM_OP_DEL, NULL, 0);
 		if (!t)
 			return 1;
 		if (t->result) {
@@ -836,6 +912,7 @@ sfs_getsum(char *file)
 		if (!result) {
 			return 1;
 		}
+		checksum_flag = ANOUBIS_CSUM_UID;
 	} else {
 		result = (uid_t *)calloc(1, sizeof(uid_t *));
 		if (!result) {
@@ -849,9 +926,8 @@ sfs_getsum(char *file)
 		if (opts & SFSSIG_OPT_DEBUG2)
 			fprintf(stderr, "sfs_getsum for uid %d\n", result[j]);
 		uid = result[j];
-		checksum_flag = ANOUBIS_CSUM_UID;
 
-		t = sfs_sumop(file, ANOUBIS_CHECKSUM_OP_GET, NULL);
+		t = sfs_sumop(file, ANOUBIS_CHECKSUM_OP_GET, NULL, 0);
 		if (!t) {
 			if (opts & SFSSIG_OPT_DEBUG2)
 				fprintf(stderr, "sfs_sumop returned NULL");
@@ -924,7 +1000,7 @@ sfs_list(char *file)
 	if (file[len] == '/')
 		file[len] = '\0';
 
-	t = sfs_sumop(file, ANOUBIS_CHECKSUM_OP_LIST, NULL);
+	t = sfs_sumop(file, ANOUBIS_CHECKSUM_OP_LIST, NULL, 0);
 	if (!t)
 		return 1;
 
@@ -1226,7 +1302,7 @@ sfs_tree(char *path, int op)
 		path[len] = '\0';
 
 	tmp = strdup(path);
-	t = sfs_sumop(tmp, ANOUBIS_CHECKSUM_OP_LIST, NULL);
+	t = sfs_sumop(tmp, ANOUBIS_CHECKSUM_OP_LIST, NULL, 0);
 	if (!t)
 		return 1;
 

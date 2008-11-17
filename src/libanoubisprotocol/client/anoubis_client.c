@@ -941,9 +941,15 @@ anoubis_client_csumrequest_start(struct anoubis_client *client,
 		return NULL;
 	if (!csum != !cslen)
 		return NULL;
-	if (!csum == (op == ANOUBIS_CHECKSUM_OP_ADDSUM))
-		return NULL;
+	if (!csum) {
+		if ((op == ANOUBIS_CHECKSUM_OP_ADDSUM) ||
+		    (op == ANOUBIS_CHECKSUM_OP_ADDSIG))
+			return NULL;
+	}
 	if (csum) {
+		if ((op != ANOUBIS_CHECKSUM_OP_ADDSUM) && 
+		    (op != ANOUBIS_CHECKSUM_OP_ADDSIG))
+			return NULL;
 		m = anoubis_msg_new(sizeof(Anoubis_ChecksumAddMessage)
 		    + cslen + strlen(path) + 1);
 		dstpath = m->u.checksumadd->payload + cslen;

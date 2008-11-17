@@ -299,28 +299,47 @@ convert_user_path_chroot(const char * path, char **dir, int is_dir)
 
 static int
 __sfs_checksumop(const char *path, unsigned int operation, uid_t uid,
-    u_int8_t md[ANOUBIS_CS_LEN], int is_chroot)
+    u_int8_t *md, int len, int is_chroot)
 {
 	char *csum_path = NULL, *csum_file = NULL;
 	int ret;
 
 	if (is_chroot && (operation != ANOUBIS_CHECKSUM_OP_GET))
 		return -EPERM;
+
 	ret = __convert_user_path(path, &csum_path, 0, is_chroot);
 	if (ret < 0)
 		return ret;
 
-	if (asprintf(&csum_file, "%s/%d", csum_path, uid) == -1) {
-		ret = -ENOMEM;
+	if (md == NULL) {
+		ret = -EINVAL;
 		goto out;
 	}
-	if (operation == ANOUBIS_CHECKSUM_OP_ADDSUM) {
+
+	if (operation == ANOUBIS_CHECKSUM_OP_ADDSIG) {
+		if (asprintf(&csum_file, "%s/%d.sig", csum_path, uid) == -1) {
+			ret = -ENOMEM;
+			goto out;
+		}
+	} else {
+		if (asprintf(&csum_file, "%s/%d", csum_path, uid) == -1) {
+			ret = -ENOMEM;
+			goto out;
+		}
+	}
+	if ((operation == ANOUBIS_CHECKSUM_OP_ADDSUM) ||
+	    (operation == ANOUBIS_CHECKSUM_OP_ADDSIG)) {
 		int fd;
 		int written = 0;
 
-		ret = mkpath(csum_path);
-		if (ret < 0)
+		if (len < ANOUBIS_CS_LEN) {
+			ret = -EINVAL;
 			goto out;
+		}
+		ret = mkpath(csum_path);
+		if (ret < 0) {
+			goto out;
+		}
 		fd = open(csum_file, O_WRONLY|O_CREAT|O_TRUNC, 0640);
 		if (fd < 0) {
 			ret = -errno;
@@ -333,8 +352,8 @@ __sfs_checksumop(const char *path, unsigned int operation, uid_t uid,
 			goto out;
 		}
 
-		while (written < ANOUBIS_CS_LEN) {
-			ret = write(fd, md + written, ANOUBIS_CS_LEN - written);
+		while (written < len) {
+			ret = write(fd, md + written, len - written);
 			if (ret < 0) {
 				ret = -errno;
 				unlink(csum_file);
@@ -365,16 +384,16 @@ out:
 
 int
 sfs_checksumop(const char *path, unsigned int operation, uid_t uid,
-    u_int8_t md[ANOUBIS_CS_LEN])
+    u_int8_t *md, int len)
 {
-	return __sfs_checksumop(path, operation, uid, md, 0);
+	return __sfs_checksumop(path, operation, uid, md, len, 0);
 }
 
 int
 sfs_checksumop_chroot(const char *path, unsigned int operation, uid_t uid,
-    u_int8_t md[ANOUBIS_CS_LEN])
+    u_int8_t *md, int len)
 {
-	return __sfs_checksumop(path, operation, uid, md, 1);
+	return __sfs_checksumop(path, operation, uid, md, len, 1);
 }
 
 static int
