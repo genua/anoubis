@@ -87,78 +87,68 @@ ModSfsMainPanelBase::ModSfsMainPanelBase( wxWindow* parent, wxWindowID id, const
 	pan_Rules->SetSizer( sz_SfsRules );
 	pan_Rules->Layout();
 	sz_SfsRules->Fit( pan_Rules );
-	note_MainSfs->AddPage( pan_Rules, _("Rules"), false );
+	note_MainSfs->AddPage( pan_Rules, _("Rules"), true );
 	pan_SfsMain = new wxPanel( note_MainSfs, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
 	wxBoxSizer* bSizer10;
-	bSizer10 = new wxBoxSizer( wxVERTICAL );
+	bSizer10 = new wxBoxSizer( wxHORIZONTAL );
 	
-	wxGridBagSizer* gbSizer2;
-	gbSizer2 = new wxGridBagSizer( 0, 0 );
-	gbSizer2->SetFlexibleDirection( wxBOTH );
-	gbSizer2->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_ALL );
+	wxBoxSizer* bSizer12;
+	bSizer12 = new wxBoxSizer( wxVERTICAL );
+	
+	wxBoxSizer* bSizer11;
+	bSizer11 = new wxBoxSizer( wxHORIZONTAL );
+	
+	m_staticText12 = new wxStaticText( pan_SfsMain, wxID_ANY, _("Directory:"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText12->Wrap( -1 );
+	bSizer11->Add( m_staticText12, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
 	
 	SfsMainCurrPathLabel = new wxStaticText( pan_SfsMain, wxID_ANY, _("/usr/local/bin/"), wxDefaultPosition, wxDefaultSize, 0 );
 	SfsMainCurrPathLabel->Wrap( -1 );
-	gbSizer2->Add( SfsMainCurrPathLabel, wxGBPosition( 0, 0 ), wxGBSpan( 1, 1 ), wxALL, 5 );
+	bSizer11->Add( SfsMainCurrPathLabel, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
+	
+	bSizer12->Add( bSizer11, 0, wxEXPAND, 5 );
 	
 	SfsMainDirCtrl = new wxGenericDirCtrl( pan_SfsMain, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxDIRCTRL_DIR_ONLY|wxDIRCTRL_SHOW_FILTERS|wxSUNKEN_BORDER, wxEmptyString, 0 );
 	
 	SfsMainDirCtrl->ShowHidden( false );
 	SfsMainDirCtrl->SetMinSize( wxSize( 200,-1 ) );
 	
-	gbSizer2->Add( SfsMainDirCtrl, wxGBPosition( 1, 0 ), wxGBSpan( 4, 1 ), wxEXPAND | wxALL, 5 );
+	bSizer12->Add( SfsMainDirCtrl, 1, wxEXPAND | wxALL, 5 );
+	
+	bSizer10->Add( bSizer12, 1, wxEXPAND, 5 );
+	
+	wxBoxSizer* bSizer14;
+	bSizer14 = new wxBoxSizer( wxVERTICAL );
+	
+	wxBoxSizer* bSizer15;
+	bSizer15 = new wxBoxSizer( wxHORIZONTAL );
+	
+	m_staticText10 = new wxStaticText( pan_SfsMain, wxID_ANY, _("Filter:"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText10->Wrap( -1 );
+	bSizer15->Add( m_staticText10, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
+	
+	SfsMainFilterTextCtrl = new wxTextCtrl( pan_SfsMain, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER );
+	bSizer15->Add( SfsMainFilterTextCtrl, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
+	
+	SfsMainFilterButton = new wxButton( pan_SfsMain, wxID_ANY, _("Filter"), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer15->Add( SfsMainFilterButton, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
+	
+	SfsMainFilterInvertCheckBox = new wxCheckBox( pan_SfsMain, wxID_ANY, _("Invert"), wxDefaultPosition, wxDefaultSize, 0 );
+	
+	bSizer15->Add( SfsMainFilterInvertCheckBox, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
+	
+	
+	bSizer15->Add( 0, 0, 1, 0, 5 );
+	
+	SfsMainFilterValidateButton = new wxButton( pan_SfsMain, wxID_ANY, _("Validate all"), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer15->Add( SfsMainFilterValidateButton, 0, wxALL, 5 );
+	
+	bSizer14->Add( bSizer15, 0, wxEXPAND, 5 );
 	
 	SfsMainListCtrl = new wxListCtrl( pan_SfsMain, wxID_ANY, wxDefaultPosition, wxSize( -1,-1 ), wxLC_HRULES|wxLC_REPORT|wxLC_SINGLE_SEL );
 	SfsMainListCtrl->SetMinSize( wxSize( 500,280 ) );
 	
-	gbSizer2->Add( SfsMainListCtrl, wxGBPosition( 2, 1 ), wxGBSpan( 1, 1 ), wxALL|wxEXPAND, 5 );
-	
-	wxFlexGridSizer* fgSizer5;
-	fgSizer5 = new wxFlexGridSizer( 1, 5, 0, 0 );
-	fgSizer5->SetFlexibleDirection( wxBOTH );
-	fgSizer5->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
-	
-	m_staticText10 = new wxStaticText( pan_SfsMain, wxID_ANY, _("Filter:"), wxDefaultPosition, wxDefaultSize, 0 );
-	m_staticText10->Wrap( -1 );
-	fgSizer5->Add( m_staticText10, 0, wxALIGN_CENTER|wxALL, 5 );
-	
-	wxGridSizer* gSizer3;
-	gSizer3 = new wxGridSizer( 1, 5, 0, 0 );
-	
-	SfsMainFilterTextCtrl = new wxTextCtrl( pan_SfsMain, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER );
-	gSizer3->Add( SfsMainFilterTextCtrl, 0, wxALL|wxEXPAND, 5 );
-	
-	SfsMainFilterButton = new wxButton( pan_SfsMain, wxID_ANY, _("Filter"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer3->Add( SfsMainFilterButton, 0, wxALL, 5 );
-	
-	SfsMainFilterInvertCheckBox = new wxCheckBox( pan_SfsMain, wxID_ANY, _("Invert"), wxDefaultPosition, wxDefaultSize, 0 );
-	
-	gSizer3->Add( SfsMainFilterInvertCheckBox, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
-	
-	
-	gSizer3->Add( 0, 0, 1, wxEXPAND, 5 );
-	
-	SfsMainFilterValidateButton = new wxButton( pan_SfsMain, wxID_ANY, _("Validate all"), wxDefaultPosition, wxDefaultSize, 0 );
-	gSizer3->Add( SfsMainFilterValidateButton, 0, wxALL, 5 );
-	
-	fgSizer5->Add( gSizer3, 1, wxEXPAND, 5 );
-	
-	gbSizer2->Add( fgSizer5, wxGBPosition( 1, 1 ), wxGBSpan( 1, 1 ), 0, 5 );
-	
-	wxFlexGridSizer* fgSizer6;
-	fgSizer6 = new wxFlexGridSizer( 2, 2, 0, 0 );
-	fgSizer6->SetFlexibleDirection( wxBOTH );
-	fgSizer6->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
-	
-	wxString SfsMainActionChoiceChoices[] = { _("Register"), _("Unregister"), _("Validate"), _("Update") };
-	int SfsMainActionChoiceNChoices = sizeof( SfsMainActionChoiceChoices ) / sizeof( wxString );
-	SfsMainActionChoice = new wxChoice( pan_SfsMain, wxID_ANY, wxDefaultPosition, wxDefaultSize, SfsMainActionChoiceNChoices, SfsMainActionChoiceChoices, 0 );
-	fgSizer6->Add( SfsMainActionChoice, 0, wxALL, 5 );
-	
-	SfsMainActionButton = new wxButton( pan_SfsMain, wxID_ANY, _("Apply"), wxDefaultPosition, wxDefaultSize, 0 );
-	fgSizer6->Add( SfsMainActionButton, 0, wxALL, 5 );
-	
-	gbSizer2->Add( fgSizer6, wxGBPosition( 3, 1 ), wxGBSpan( 1, 1 ), 0, 5 );
+	bSizer14->Add( SfsMainListCtrl, 1, wxALL|wxEXPAND, 5 );
 	
 	wxStaticBoxSizer* sbSizer1;
 	sbSizer1 = new wxStaticBoxSizer( new wxStaticBox( pan_SfsMain, -1, _("Details") ), wxVERTICAL );
@@ -172,32 +162,52 @@ ModSfsMainPanelBase::ModSfsMainPanelBase( wxWindow* parent, wxWindowID id, const
 	
 	fgSizer51->Add( SfsMainSignFilesCheckBox, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
 	
-	SfsMainShowChecksumButton = new wxButton( pan_SfsMain, wxID_ANY, _("Show all Checksums"), wxDefaultPosition, wxDefaultSize, 0 );
-	fgSizer51->Add( SfsMainShowChecksumButton, 0, wxALL, 5 );
-	
 	SfsMainSearchOrphanedButton = new wxButton( pan_SfsMain, wxID_ANY, _("Search Orphaned"), wxDefaultPosition, wxDefaultSize, 0 );
 	fgSizer51->Add( SfsMainSearchOrphanedButton, 0, wxALL, 5 );
 	
-	SfsMainShowChangedButton = new wxButton( pan_SfsMain, wxID_ANY, _("Show Changed"), wxDefaultPosition, wxDefaultSize, 0 );
-	fgSizer51->Add( SfsMainShowChangedButton, 0, wxALL, 5 );
-	
-	
-	fgSizer51->Add( 0, 0, 1, wxEXPAND, 5 );
-	
-	
-	fgSizer51->Add( 0, 0, 1, wxEXPAND, 5 );
+	SfsMainShowChecksumButton = new wxButton( pan_SfsMain, wxID_ANY, _("Show all Checksums"), wxDefaultPosition, wxDefaultSize, 0 );
+	fgSizer51->Add( SfsMainShowChecksumButton, 0, wxALL, 5 );
 	
 	SfsMainImportButton = new wxButton( pan_SfsMain, wxID_ANY, _("Import..."), wxDefaultPosition, wxDefaultSize, 0 );
 	fgSizer51->Add( SfsMainImportButton, 0, wxALIGN_RIGHT|wxALL, 5 );
+	
+	
+	fgSizer51->Add( 0, 0, 1, wxEXPAND, 5 );
+	
+	
+	fgSizer51->Add( 0, 0, 1, wxEXPAND, 5 );
+	
+	SfsMainShowChangedButton = new wxButton( pan_SfsMain, wxID_ANY, _("Show Changed"), wxDefaultPosition, wxDefaultSize, 0 );
+	fgSizer51->Add( SfsMainShowChangedButton, 0, wxALL, 5 );
 	
 	SfsMainExportButton = new wxButton( pan_SfsMain, wxID_ANY, _("Export..."), wxDefaultPosition, wxDefaultSize, 0 );
 	fgSizer51->Add( SfsMainExportButton, 0, wxALIGN_RIGHT|wxALL, 5 );
 	
 	sbSizer1->Add( fgSizer51, 1, wxEXPAND, 5 );
 	
-	gbSizer2->Add( sbSizer1, wxGBPosition( 4, 1 ), wxGBSpan( 1, 1 ), wxEXPAND, 5 );
+	bSizer14->Add( sbSizer1, 0, wxEXPAND, 5 );
 	
-	bSizer10->Add( gbSizer2, 0, wxALIGN_LEFT|wxALIGN_TOP|wxALL, 5 );
+	wxBoxSizer* bSizer151;
+	bSizer151 = new wxBoxSizer( wxHORIZONTAL );
+	
+	
+	bSizer151->Add( 0, 0, 1, wxEXPAND, 5 );
+	
+	m_staticText101 = new wxStaticText( pan_SfsMain, wxID_ANY, _("Current selection:"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText101->Wrap( -1 );
+	bSizer151->Add( m_staticText101, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
+	
+	wxString SfsMainActionChoiceChoices[] = { _("Register"), _("Unregister"), _("Validate"), _("Update") };
+	int SfsMainActionChoiceNChoices = sizeof( SfsMainActionChoiceChoices ) / sizeof( wxString );
+	SfsMainActionChoice = new wxChoice( pan_SfsMain, wxID_ANY, wxDefaultPosition, wxDefaultSize, SfsMainActionChoiceNChoices, SfsMainActionChoiceChoices, 0 );
+	bSizer151->Add( SfsMainActionChoice, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
+	
+	SfsMainActionButton = new wxButton( pan_SfsMain, wxID_ANY, _("Apply"), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer151->Add( SfsMainActionButton, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
+	
+	bSizer14->Add( bSizer151, 0, wxEXPAND, 5 );
+	
+	bSizer10->Add( bSizer14, 2, wxEXPAND, 5 );
 	
 	pan_SfsMain->SetSizer( bSizer10 );
 	pan_SfsMain->Layout();

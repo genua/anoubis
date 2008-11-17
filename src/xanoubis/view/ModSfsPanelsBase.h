@@ -50,9 +50,8 @@
 #include <wx/textctrl.h>
 #include <wx/button.h>
 #include <wx/checkbox.h>
-#include <wx/choice.h>
 #include <wx/statbox.h>
-#include <wx/gbsizer.h>
+#include <wx/choice.h>
 #include <wx/notebook.h>
 #include <wx/statbmp.h>
 
@@ -77,25 +76,28 @@ class ModSfsMainPanelBase : public wxPanel
 		wxStaticLine* ln_RulesOperationSep;
 		wxStaticText* tx_RulesOperation2ndHeader;
 		wxPanel* pan_SfsMain;
+		wxStaticText* m_staticText12;
 		wxStaticText* SfsMainCurrPathLabel;
 		wxGenericDirCtrl* SfsMainDirCtrl;
-		wxListCtrl* SfsMainListCtrl;
 		wxStaticText* m_staticText10;
 		wxTextCtrl* SfsMainFilterTextCtrl;
 		wxButton* SfsMainFilterButton;
 		wxCheckBox* SfsMainFilterInvertCheckBox;
 		
 		wxButton* SfsMainFilterValidateButton;
+		wxListCtrl* SfsMainListCtrl;
+		wxCheckBox* SfsMainSignFilesCheckBox;
+		wxButton* SfsMainSearchOrphanedButton;
+		wxButton* SfsMainShowChecksumButton;
+		wxButton* SfsMainImportButton;
+		
+		
+		wxButton* SfsMainShowChangedButton;
+		wxButton* SfsMainExportButton;
+		
+		wxStaticText* m_staticText101;
 		wxChoice* SfsMainActionChoice;
 		wxButton* SfsMainActionButton;
-		wxCheckBox* SfsMainSignFilesCheckBox;
-		wxButton* SfsMainShowChecksumButton;
-		wxButton* SfsMainSearchOrphanedButton;
-		wxButton* SfsMainShowChangedButton;
-		
-		
-		wxButton* SfsMainImportButton;
-		wxButton* SfsMainExportButton;
 	
 	public:
 		ModSfsMainPanelBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( -1,-1 ), long style = wxTAB_TRAVERSAL );

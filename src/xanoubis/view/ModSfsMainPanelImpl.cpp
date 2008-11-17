@@ -272,6 +272,15 @@ ModSfsMainPanelImpl::initSfsMain()
 	SfsMainListCtrl->InsertColumn(MODSFSMAIN_FILELIST_COLUMN_SIGNATURE,
 	    _("Signature"), wxLIST_FORMAT_CENTRE, wxLIST_AUTOSIZE_USEHEADER);
 
+	/* Adjust initial width of MODSFSMAIN_FILELIST_COLUMN_FILE */
+	int fileColumnWidth = SfsMainListCtrl->GetClientSize().GetWidth();
+	fileColumnWidth -= SfsMainListCtrl->
+	    GetColumnWidth(MODSFSMAIN_FILELIST_COLUMN_CHECKSUM);
+	fileColumnWidth -= SfsMainListCtrl->
+	    GetColumnWidth(MODSFSMAIN_FILELIST_COLUMN_SIGNATURE);
+	SfsMainListCtrl->SetColumnWidth(MODSFSMAIN_FILELIST_COLUMN_FILE,
+	    fileColumnWidth);
+
 	/* Assign icons to list */
 	SfsMainListCtrl->SetImageList(&sfsListImageList_, wxIMAGE_LIST_SMALL);
 
@@ -300,13 +309,6 @@ ModSfsMainPanelImpl::updateSfsList()
 		SfsMainListCtrl->InsertItem(i, wxEmptyString);
 		updateSfsEntry(i);
 	}
-
-	if (SfsMainListCtrl->GetItemCount() > 0)
-		SfsMainListCtrl->SetColumnWidth(MODSFSMAIN_FILELIST_COLUMN_FILE,
-		    wxLIST_AUTOSIZE);
-	else
-		SfsMainListCtrl->SetColumnWidth(MODSFSMAIN_FILELIST_COLUMN_FILE,
-		    wxLIST_AUTOSIZE_USEHEADER);
 }
 
 void
@@ -352,7 +354,7 @@ ModSfsMainPanelImpl::updateSfsEntry(int idx)
 	}
 
 	SfsMainListCtrl->SetItem(idx,
-	    MODSFSMAIN_FILELIST_COLUMN_FILE, entry.getPath());
+	    MODSFSMAIN_FILELIST_COLUMN_FILE, entry.getFileName());
 	SfsMainListCtrl->SetItem(idx,
 	    MODSFSMAIN_FILELIST_COLUMN_CHECKSUM, checksumInfo,
 	    checksumIconIndex);
