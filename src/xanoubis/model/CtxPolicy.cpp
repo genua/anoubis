@@ -205,6 +205,12 @@ CtxPolicy::setBinaryName(wxString name)
 }
 
 bool
+CtxPolicy::isAny(void)
+{
+	return (ctxRule_->rule.apncontext.application == NULL);
+}
+
+bool
 CtxPolicy::isModified(void)
 {
 	return modified_;

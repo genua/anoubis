@@ -73,6 +73,8 @@ RuleEditorChecksumVisitor::compare(Policy *policy)
 			}
 		} else if (policy->IsKindOf(CLASSINFO(CtxPolicy))) {
 			ctxPolicy = (CtxPolicy *)policy;
+			if (ctxPolicy->isAny())
+				return;
 			if (ctxPolicy->isModified()) {
 				if (!ctxPolicy->getCurrentHash().Cmp(unknown)) {
 					ctxPolicy->calcCurrentHash(csum);

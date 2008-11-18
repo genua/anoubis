@@ -78,6 +78,7 @@ class CtxPolicy : public Policy
 		wxString	getHashValue(void);
 		wxString	convertToString(unsigned char *);
 		void		setBinaryName(wxString name);
+		bool		isAny(void);
 		bool		isModified(void);
 		void		setModified(bool);
 		void		setHashValue(unsigned char *);
