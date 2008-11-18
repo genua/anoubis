@@ -241,10 +241,18 @@ ComThread::waitForMessage(void)
 		anoubis_msg_resize(msg, size);
 
 		/* This will free the message. */
-		if (anoubis_client_process(client_, msg) != 1)
+		int result = anoubis_client_process(client_, msg);
+		if (result < 0) {
+			/* Error */
 			return (false);
-
-		if (anoubis_client_hasnotifies(client_) != 0) {
+		} else if (result == 0) {
+			/*
+			 * Message does not fit into current protocol flow.
+			 * Skip it.
+			 */
+			fprintf(stderr, "ComThread: Message does not fit ");
+			fprintf(stderr, "into protocol flow, skipping...\n");
+		} else if (anoubis_client_hasnotifies(client_) != 0) {
 			struct anoubis_msg *notifyMsg = NULL;
 
 			notifyMsg = anoubis_client_getnotify(client_);
