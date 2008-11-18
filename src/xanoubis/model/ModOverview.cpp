@@ -98,7 +98,7 @@ ModOverview::addModules(Module* modules[ANOUBIS_MODULESNO])
 		sz_h->Add(sl_line, 0, wxEXPAND|wxLEFT|wxRIGHT|wxTOP, 5);
 
 		sz_v->Add(sz_h);
-		sz_v->Add(modules[i]->getOverviewPanel(), 1, wxEXPAND, 5);
+		sz_v->Add(modules[i]->getOverviewPanel(), 0, wxEXPAND, 5);
 
 		modules[i]->getOverviewPanel()->Reparent(mainPanel_);
 		modules[i]->getOverviewPanel()->Show(true);

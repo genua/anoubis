@@ -258,7 +258,7 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	tb_MainAnoubisNotification->SetSizer( sz_MainAnoubisNotify );
 	tb_MainAnoubisNotification->Layout();
 	sz_MainAnoubisNotify->Fit( tb_MainAnoubisNotification );
-	tb_MainAnoubisNotify->AddPage( tb_MainAnoubisNotification, _("Notifications"), false );
+	tb_MainAnoubisNotify->AddPage( tb_MainAnoubisNotification, _("Notifications"), true );
 	tb_MainAnoubisVersions = new wxPanel( tb_MainAnoubisNotify, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
 	wxBoxSizer* MainAnoubisVersionsSizer;
 	MainAnoubisVersionsSizer = new wxBoxSizer( wxHORIZONTAL );
@@ -544,7 +544,7 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	tb_MainAnoubisOptions->SetSizer( sz_MainAnoubisOptions );
 	tb_MainAnoubisOptions->Layout();
 	sz_MainAnoubisOptions->Fit( tb_MainAnoubisOptions );
-	tb_MainAnoubisNotify->AddPage( tb_MainAnoubisOptions, _("Options"), true );
+	tb_MainAnoubisNotify->AddPage( tb_MainAnoubisOptions, _("Options"), false );
 	
 	sz_MainAnoubisMain->Add( tb_MainAnoubisNotify, 1, wxEXPAND | wxALL, 5 );
 	
@@ -571,9 +571,6 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 
 ModAnoubisOverviewPanelBase::ModAnoubisOverviewPanelBase( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size, long style ) : wxPanel( parent, id, pos, size, style )
 {
-	wxBoxSizer* sz_OverviewAnoubisMain;
-	sz_OverviewAnoubisMain = new wxBoxSizer( wxVERTICAL );
-	
 	wxFlexGridSizer* fgSizer4;
 	fgSizer4 = new wxFlexGridSizer( 1, 3, 0, 0 );
 	fgSizer4->SetFlexibleDirection( wxBOTH );
@@ -585,30 +582,65 @@ ModAnoubisOverviewPanelBase::ModAnoubisOverviewPanelBase( wxWindow* parent, wxWi
 	anoubisStatusIcon = new wxStaticBitmap( this, wxID_ANY, wxNullBitmap, wxDefaultPosition, wxDefaultSize, 0 );
 	fgSizer4->Add( anoubisStatusIcon, 0, wxALL|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL, 5 );
 	
+	wxBoxSizer* bSizer24;
+	bSizer24 = new wxBoxSizer( wxVERTICAL );
+	
+	m_staticText34 = new wxStaticText( this, wxID_ANY, _("Profile:"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText34->Wrap( -1 );
+	bSizer24->Add( m_staticText34, 0, wxALL, 5 );
+	
+	wxBoxSizer* bSizer25;
+	bSizer25 = new wxBoxSizer( wxHORIZONTAL );
+	
+	
+	bSizer25->Add( 20, 0, 0, wxEXPAND, 5 );
+	
 	wxBoxSizer* profileSizer;
 	profileSizer = new wxBoxSizer( wxVERTICAL );
 	
-	highProfileRadioButton = new wxRadioButton( this, wxID_ANY, _("Profile: high"), wxDefaultPosition, wxDefaultSize, wxRB_GROUP );
+	highProfileRadioButton = new wxRadioButton( this, wxID_ANY, _("high"), wxDefaultPosition, wxDefaultSize, wxRB_GROUP );
 	profileSizer->Add( highProfileRadioButton, 0, wxALL, 5 );
 	
-	mediumProfileRadioButton = new wxRadioButton( this, wxID_ANY, _("Profile: medium"), wxDefaultPosition, wxDefaultSize, 0 );
+	mediumProfileRadioButton = new wxRadioButton( this, wxID_ANY, _("medium"), wxDefaultPosition, wxDefaultSize, 0 );
 	profileSizer->Add( mediumProfileRadioButton, 0, wxALL, 5 );
 	
-	adminProfileRadioButton = new wxRadioButton( this, wxID_ANY, _("Profile: admin"), wxDefaultPosition, wxDefaultSize, 0 );
+	adminProfileRadioButton = new wxRadioButton( this, wxID_ANY, _("admin"), wxDefaultPosition, wxDefaultSize, 0 );
 	profileSizer->Add( adminProfileRadioButton, 0, wxALL, 5 );
 	
-	fgSizer4->Add( profileSizer, 1, wxEXPAND, 5 );
+	bSizer25->Add( profileSizer, 1, wxEXPAND, 5 );
 	
-	sz_OverviewAnoubisMain->Add( fgSizer4, 1, wxEXPAND, 5 );
+	bSizer24->Add( bSizer25, 0, wxEXPAND, 5 );
 	
-	this->SetSizer( sz_OverviewAnoubisMain );
+	m_staticText35 = new wxStaticText( this, wxID_ANY, _("Connection to localhost:"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText35->Wrap( -1 );
+	bSizer24->Add( m_staticText35, 0, wxALL, 5 );
+	
+	wxBoxSizer* bSizer26;
+	bSizer26 = new wxBoxSizer( wxHORIZONTAL );
+	
+	
+	bSizer26->Add( 20, 0, 0, wxEXPAND, 5 );
+	
+	connectButton = new wxButton( this, wxID_ANY, _("Connect"), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer26->Add( connectButton, 0, wxALL, 5 );
+	
+	disconnectButton = new wxButton( this, wxID_ANY, _("Disconnect"), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer26->Add( disconnectButton, 0, wxALL, 5 );
+	
+	bSizer24->Add( bSizer26, 0, wxEXPAND, 5 );
+	
+	fgSizer4->Add( bSizer24, 1, wxEXPAND, 5 );
+	
+	this->SetSizer( fgSizer4 );
 	this->Layout();
-	sz_OverviewAnoubisMain->Fit( this );
+	fgSizer4->Fit( this );
 	
 	// Connect Events
 	highProfileRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( ModAnoubisOverviewPanelBase::OnHighProfileRadioButton ), NULL, this );
 	mediumProfileRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( ModAnoubisOverviewPanelBase::OnMediumProfileRadioButton ), NULL, this );
 	adminProfileRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( ModAnoubisOverviewPanelBase::OnAdminProfileRadioButton ), NULL, this );
+	connectButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModAnoubisOverviewPanelBase::OnConnectClicked ), NULL, this );
+	disconnectButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModAnoubisOverviewPanelBase::OnDisconnectClicked ), NULL, this );
 }
 
 ModAnoubisProfileDialogBase::ModAnoubisProfileDialogBase( wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style ) : wxDialog( parent, id, title, pos, size, style )

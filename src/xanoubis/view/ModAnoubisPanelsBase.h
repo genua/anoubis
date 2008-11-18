@@ -184,14 +184,22 @@ class ModAnoubisOverviewPanelBase : public wxPanel
 	protected:
 		
 		wxStaticBitmap* anoubisStatusIcon;
+		wxStaticText* m_staticText34;
+		
 		wxRadioButton* highProfileRadioButton;
 		wxRadioButton* mediumProfileRadioButton;
 		wxRadioButton* adminProfileRadioButton;
+		wxStaticText* m_staticText35;
+		
+		wxButton* connectButton;
+		wxButton* disconnectButton;
 		
 		// Virtual event handlers, overide them in your derived class
 		virtual void OnHighProfileRadioButton( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnMediumProfileRadioButton( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnAdminProfileRadioButton( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnConnectClicked( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnDisconnectClicked( wxCommandEvent& event ){ event.Skip(); }
 		
 	
 	public:

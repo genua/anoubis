@@ -25,6 +25,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "JobCtrl.h"
 #include "ModAnoubisOverviewPanelImpl.h"
 #include "main.h"
 
@@ -33,6 +34,14 @@ ModAnoubisOverviewPanelImpl::ModAnoubisOverviewPanelImpl(wxWindow* parent, \
 {
 	wxIcon *icon = wxGetApp().loadIcon(wxT("ModAnoubis_black_48.png"));
 	anoubisStatusIcon->SetIcon(*icon);
+
+	setConnectionState(false);
+
+	JobCtrl *jobCtrl = JobCtrl::getInstance();
+	jobCtrl->Connect(anEVT_COM_CONNECTION,
+	    wxCommandEventHandler(
+	       ModAnoubisOverviewPanelImpl::OnConnectionStateChange),
+	    NULL, this);
 }
 
 void
@@ -85,4 +94,34 @@ void
 ModAnoubisOverviewPanelImpl::OnAdminProfileRadioButton(wxCommandEvent&)
 {
 	setProfile(wxT("admin"));
+}
+
+void
+ModAnoubisOverviewPanelImpl::OnConnectClicked(wxCommandEvent&)
+{
+	wxGetApp().connectCommunicator(true);
+}
+
+void
+ModAnoubisOverviewPanelImpl::OnDisconnectClicked(wxCommandEvent&)
+{
+	wxGetApp().connectCommunicator(false);
+}
+
+void
+ModAnoubisOverviewPanelImpl::OnConnectionStateChange(wxCommandEvent& event)
+{
+	JobCtrl::ConnectionState newState =
+	    (JobCtrl::ConnectionState)event.GetInt();
+
+	setConnectionState(newState == JobCtrl::CONNECTION_CONNECTED);
+
+	event.Skip();
+}
+
+void
+ModAnoubisOverviewPanelImpl::setConnectionState(bool connected)
+{
+	connectButton->Enable(!connected);
+	disconnectButton->Enable(connected);
 }

@@ -37,6 +37,11 @@ class ModAnoubisOverviewPanelImpl : public ModAnoubisOverviewPanelBase
 		void OnHighProfileRadioButton(wxCommandEvent&);
 		void OnMediumProfileRadioButton(wxCommandEvent&);
 		void OnAdminProfileRadioButton(wxCommandEvent&);
+		void OnConnectClicked(wxCommandEvent&);
+		void OnDisconnectClicked(wxCommandEvent&);
+
+		void OnConnectionStateChange(wxCommandEvent&);
+		void setConnectionState(bool);
 
 	public:
 		ModAnoubisOverviewPanelImpl(wxWindow* parent, wxWindowID id);
