@@ -11,8 +11,12 @@ alf {
 		allow connect tcp from any to ::1       port 6000 - 6099
 
 		default log ask
-		context new any
 	}
 }
 sfs {
+}
+context {
+	any {
+		context new any
+	}
 }

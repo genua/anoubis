@@ -1,8 +1,12 @@
 alf {
 	any {
-		context new any
 		default allow
 	}
 }
 sfs {
+}
+context {
+	any {
+		context new any
+	}
 }

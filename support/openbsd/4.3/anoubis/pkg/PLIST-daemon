@@ -3,18 +3,29 @@
 @newuser _anoubisd:593:_anoubisd:daemon:anoubisd user:/var/empty:/sbin/nologin
 @man man/man8/anoubisd.8
 @man man/man8/anoubisctl.8
-@exec mkdir -p /etc/anoubis/policy/user /etc/anoubis/policy/admin
-@exec chown _anoubisd:_anoubisd /etc/anoubis/policy/user
-@exec chown _anoubisd:_anoubisd /etc/anoubis/policy/admin
-@exec chown _anoubisd:_anoubisd /etc/anoubis/policy
-@exec chmod 700 /etc/anoubis/policy /etc/anoubis/policy/admin
-@exec chmod 700 /etc/anoubis/policy/user
+share/xanoubis/profiles/admin
+share/xanoubis/profiles/high
+share/xanoubis/profiles/medium
+@exec mkdir -p /var/lib/anoubis/policy/admin
+@exec mkdir -p /var/lib/anoubis/policy/user
+@exec mkdir -p /var/lib/anoubis/policy/pubkeys
+@exec ln -sf /var/lib/anoubis/policy /etc/anoubis/policy
+@unexec rm -f /etc/anoubis/policy
+@exec cp ${PREFIX}/share/xanoubis/profiles/admin /var/lib/anoubis/policy/admin/default
+@exec cp ${PREFIX}/share/xanoubis/profiles/admin /var/lib/anoubis/policy/admin/0
+@exec cp ${PREFIX}/share/xanoubis/profiles/admin /var/lib/anoubis/policy/user/0
+@exec chmod 600 /var/lib/anoubis/policy/admin/0
+@exec chmod 600 /var/lib/anoubis/policy/admin/default
+@exec chmod 600 /var/lib/anoubis/policy/user/0
+@exec chown _anoubisd:_anoubisd /var/lib/anoubis/policy
+@exec chown _anoubisd:_anoubisd /var/lib/anoubis/policy/admin
+@exec chown _anoubisd:_anoubisd /var/lib/anoubis/policy/admin/default
+@exec chown _anoubisd:_anoubisd /var/lib/anoubis/policy/admin/0
+@exec chown _anoubisd:_anoubisd /var/lib/anoubis/policy/user
+@exec chown _anoubisd:_anoubisd /var/lib/anoubis/policy/user/0
+@exec chown _anoubisd:_anoubisd /var/lib/anoubis/policy/pubkeys
+@exec chmod 700 /var/lib/anoubis/policy /var/lib/anoubis/policy/admin
+@exec chmod 700 /var/lib/anoubis/policy/user /var/lib/anoubis/policy/pubkeys
 sbin/anoubisd
 sbin/anoubisctl
 sbin/sfssig
-@exec ln -sf ${PREFIX}/sbin/anoubisd /sbin/anoubisd
-@exec ln -sf ${PREFIX}/sbin/anoubisctl /sbin/anoubisctl
-@exec ln -sf ${PREFIX}/sbin/sfssig /sbin/sfssig
-@unexec rm -f /sbin/anoubisd
-@unexec rm -f /sbin/anoubisctl
-@unexec rm -f /sbin/sfssig
