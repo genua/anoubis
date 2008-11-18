@@ -88,6 +88,7 @@ done
 
 # install symlink in /etc/anoubis
 mkdir -p $RPM_BUILD_ROOT/etc/anoubis
+mkdir -p $RPM_BUILD_ROOT/var/lib/anoubis/policy
 ln -s /var/lib/anoubis/policy $RPM_BUILD_ROOT/etc/anoubis/policy
 
 # install udev rules of anoubis devices
@@ -164,6 +165,8 @@ rmdir /var/lib/anoubis/policy /var/lib/anoubis 2>/dev/null || true
 /sbin/*
 /usr/share/anoubis/*
 %{_sysconfdir}/udev/rules.d/06-anoubis.rules
+%{_sysconfdir}/anoubis/policy
+/var/lib/anoubis/*
 %{_mandir}/man8/*
 
 ### files of subpackage xanoubis ###########################
