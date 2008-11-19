@@ -184,8 +184,9 @@ accbuffer_compact(/*@null@*/ achat_buffer *buffer)
 void *
 acc_bufferappend_space(achat_buffer *buffer, size_t len)
 {
-	size_t newlen;
-	void *p;
+	u_char	*newbuf;
+	size_t	newlen;
+	void	*p;
 
 	if ((buffer == NULL) || (len == 0) || (len > ACHAT_BUFFER_MAX_CHUNK))
 		return (NULL);
@@ -214,10 +215,11 @@ restart:
 	    (newlen > ACHAT_BUFFER_MAX_LEN))
 		return (NULL);
 
-	buffer->buf = realloc(buffer->buf, newlen);
-	if (buffer->buf == NULL)
+	newbuf = realloc(buffer->buf, newlen);
+	if (newbuf == NULL)
 		return (NULL);
 
+	buffer->buf = newbuf;
 	buffer->alloc = newlen;
 	goto restart;
 	/*NOTREACHED*/
