@@ -103,7 +103,8 @@ char			*pe_context_dump(struct eventdev_hdr *,
 
 /* Rule change/reload functions */
 void			 pe_proc_update_db(struct pe_policy_db *);
-void			 pe_proc_update_db_one(struct apn_ruleset *, int);
+void			 pe_proc_update_db_one(struct apn_ruleset *, int,
+			     uid_t);
 
 /* Kernel Cache related functions */
 void			 pe_proc_kcache_add(struct pe_proc *proc,

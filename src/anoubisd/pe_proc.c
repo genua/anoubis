@@ -407,9 +407,11 @@ pe_proc_update_db(struct pe_policy_db *newpdb)
  * to the old ruleset from tracked processes.
  * NOTE: If proc->context[prio] is not NULL then proc->context[prio]->ruleset
  *       cannot be NULL either. oldrs == NULL is allowed, however.
+ *       In the latter case there was no policy before and we refresh all
+ *       processes with the given uid.
  */
 void
-pe_proc_update_db_one(struct apn_ruleset *oldrs, int prio)
+pe_proc_update_db_one(struct apn_ruleset *oldrs, int prio, uid_t uid)
 {
 	struct pe_context	*oldctx;
 	struct pe_proc		*proc;
@@ -419,10 +421,11 @@ pe_proc_update_db_one(struct apn_ruleset *oldrs, int prio)
 		oldctx = pe_proc_get_context(proc, prio);
 		if (oldctx == NULL)
 			continue;
-		if (pe_context_uses_rs(oldctx, oldrs) == 0)
-			continue;
-		pe_context_refresh(proc, prio, NULL);
-		pe_proc_kcache_clear(proc);
+		if ((pe_context_uses_rs(oldctx, oldrs) != 0)
+		    || (oldrs == NULL && pe_proc_get_uid(proc) == uid)) {
+			pe_context_refresh(proc, prio, NULL);
+			pe_proc_kcache_clear(proc);
+		}
 	}
 	DEBUG(DBG_TRACE, "<pe_proc_update_db_one");
 }
