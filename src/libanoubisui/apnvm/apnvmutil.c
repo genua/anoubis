@@ -55,9 +55,12 @@ char *
 apnvm_emptystring()
 {
 	char *s = malloc(1);
-	*s = '\0';
 
-	return (s);
+	if (s != NULL) {
+		*s = '\0';
+		return (s);
+	} else
+		return (NULL);
 }
 
 char *
@@ -77,10 +80,15 @@ apnvm_append(char *s, const char *l, size_t n)
 
 	r = realloc(s, ns + nl + 1);
 
-	if (ns > 0)
-		strncat(r, l, nl);
-	else
-		strncpy(r, l, nl);
+	if (r == NULL)
+		return (NULL);
+
+	if (nl > 0) {
+		if (ns > 0)
+			strncat(r, l, nl);
+		else
+			strncpy(r, l, nl);
+	}
 
 	return (r);
 }
@@ -96,11 +104,15 @@ apnvm_appendline(char *s, const char *l)
 
 	newstr = realloc(newstr, newsize);
 
+	if (newstr == NULL)
+		return (NULL);
+
 	if (oldsize > 0) {
-		strcat(newstr, "\n");
-		strcat(newstr, l);
-	}
-	else
+		if (l != NULL) {
+			strcat(newstr, "\n");
+			strcat(newstr, l);
+		}
+	} else if (l != NULL)
 		strcpy(newstr, l);
 
 	return (newstr);

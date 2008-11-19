@@ -95,6 +95,9 @@ static struct apncvs_rev *currev; /* Current revision */
 	/* Prepare the description */
 	cvslog->description = apnvm_emptystring();
 
+	if (cvslog->description == NULL)
+		return (1);
+
 	BEGIN(DESCR); /* The following lines contains the description */
 }
 
@@ -109,13 +112,21 @@ static struct apncvs_rev *currev; /* Current revision */
 
 ^=+"\n" {
 	BEGIN(INITIAL); /* Reset to starting state */
-	return 1;
+	return 0;
 }
 
 <DESCR>(.*)\n {
 	/* Append a line to the description-field */
 	char *line = apnvm_trim(yytext);
-	cvslog->description = apnvm_appendline(cvslog->description, line);
+	char *new_descr = apnvm_appendline(cvslog->description, line);
+
+	if (new_descr == NULL) {
+		free(cvslog->description);
+		cvslog->description = NULL;
+
+		return (1);
+	} else
+		cvslog->description = new_descr;
 }
 
 <REVL1>(.*)\n {
@@ -156,14 +167,24 @@ static struct apncvs_rev *currev; /* Current revision */
 	/* Best time to prepare revision comment */
 	currev->comment = apnvm_emptystring();
 
+	if (currev->comment == NULL)
+		return (1);
+
 	BEGIN(COMMENT); /* Next you have the comment of the revision */
 }
 
 <COMMENT>(.*)\n {
 	/* Append line to revision-comment */
 	char *line = apnvm_trim(yytext);
+	char *new_comment = apnvm_appendline(currev->comment, line);
 
-	currev->comment = apnvm_appendline(currev->comment, line);
+	if (new_comment == NULL) {
+		free(currev->comment);
+		currev->comment = NULL;
+
+		return (1);
+	} else
+		currev->comment = new_comment;
 }
 
 \n {}
@@ -174,6 +195,8 @@ static struct apncvs_rev *currev; /* Current revision */
 int
 apncvs_log_parse(FILE *f, struct apncvs_log *log)
 {
+	int parse_result;
+
 	yyin = f;
 
 	/* Reset variable used by the parser */
@@ -185,7 +208,7 @@ apncvs_log_parse(FILE *f, struct apncvs_log *log)
 	currev = NULL;
 
 	/* Invoke the parser */
-	apnvm_lex();
+	parse_result = apnvm_lex();
 
-	return (0);
+	return (parse_result);
 }

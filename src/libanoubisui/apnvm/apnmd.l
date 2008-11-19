@@ -197,12 +197,15 @@ char *
 apnmd_serialize(apnmd *md)
 {
 	char		*content = NULL;
+	char		*new_content;
 	struct apnmd_kv	*kv;
 
 	if (md == NULL)
 		return (NULL);
 
 	content = apnvm_appendline(content, "<apnvm-metadata>");
+	if (content == NULL)
+		return (NULL);
 
 	LIST_FOREACH(kv, &md->kv_list, entry) {
 		char *p, *nl;
@@ -214,17 +217,35 @@ apnmd_serialize(apnmd *md)
 		while (1) {
 			nl = index(p, '\n');
 
-			content = apnvm_appendline(content, kv->key);
+			new_content = apnvm_appendline(content, kv->key);
+			
+			if (new_content == NULL) {
+				free(content);
+				return (NULL);
+			} else
+				content = new_content;
 
 			if (r == 0) /* First round always := */
-				content = apnvm_append(content, " := ", 4);
+				new_content = apnvm_append(content, " := ", 4);
 			else /* Any following rounds: append something */
-				content = apnvm_append(content, " += ", 4);
+				new_content = apnvm_append(content, " += ", 4);
+
+			if (new_content == NULL) {
+				free(content);
+				return (NULL);
+			} else
+				content = new_content;
 
 			if (nl != NULL)
-				content = apnvm_append(content, p, (nl - p));
+				new_content = apnvm_append(content, p, (nl - p));
 			else /* Last line */
-				content = apnvm_append(content, p, strlen(p));
+				new_content = apnvm_append(content, p, strlen(p));
+
+			if (new_content == NULL) {
+				free(content);
+				return (NULL);
+			} else
+				content = new_content;
 
 			if (nl != NULL) {
 				p = nl + 1;
@@ -235,7 +256,13 @@ apnmd_serialize(apnmd *md)
 		}
 	}
 
-	content = apnvm_appendline(content, "</apnvm-metadata>");
+	new_content = apnvm_appendline(content, "</apnvm-metadata>");
+
+	if (new_content == NULL) {
+		free(content);
+		return (NULL);
+	} else
+		content = new_content;
 
 	return content;
 }

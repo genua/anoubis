@@ -190,7 +190,7 @@ apncvs_log(struct apncvs *cvs, const char *file, struct apncvs_log *log)
 {
 	char cmd[LEN_CMDLINE];
 	FILE *f;
-	int rc;
+	int rc, parse_rc;
 
 	APNCVS_CHECKAPNCVS(cvs);
 	APNCVS_CHECKSTR(file);
@@ -204,11 +204,11 @@ apncvs_log(struct apncvs *cvs, const char *file, struct apncvs_log *log)
 		return (-1);
 
 	/* Parse output of cvs log command, written into "log" */
-	apncvs_log_parse(f, log);
+	parse_rc = apncvs_log_parse(f, log);
 
 	rc = pclose(f);
 
-	return (rc);
+	return (rc || parse_rc);
 
 }
 
