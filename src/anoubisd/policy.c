@@ -54,6 +54,7 @@
 /* on glibc 2.6+, event.h uses non C89 types :/ */
 #include <event.h>
 #include "anoubisd.h"
+#include "sfs.h"
 #include "aqueue.h"
 #include "amsg.h"
 
@@ -304,6 +305,39 @@ dispatch_timer(int sig __used, short event __used, void *arg)
 }
 
 static void
+dispatch_sfscache_invalidate(anoubisd_msg_t *msg)
+{
+	struct anoubisd_sfscache_invalidate	*invmsg;
+	int					 total;
+
+	DEBUG(DBG_SFSCACHE, ">dispatch_sfscache_invalidate");
+	total = sizeof(*msg) + sizeof(*invmsg);
+	if (msg->size < total) {
+		log_warnx("Short sfscache_invalidate message");
+		return;
+	}
+	invmsg = (struct anoubisd_sfscache_invalidate*)msg->msg;
+	total += invmsg->keylen + invmsg->plen;
+	if (msg->size < total) {
+		log_warnx("Short sfscache_invalidate message");
+		return;
+	}
+	invmsg->payload[invmsg->plen-1] = 0;
+	invmsg->payload[invmsg->plen + invmsg->keylen - 1] = 0;
+	if (invmsg->keylen) {
+		sfshash_invalidate_key(invmsg->payload,
+		    invmsg->payload + invmsg->plen);
+		DEBUG(DBG_SFSCACHE, " dispatch_sfscache_invalidate: path %s "
+		    "key %s", invmsg->payload, invmsg->payload+invmsg->plen);
+	} else {
+		sfshash_invalidate_uid(invmsg->payload, (uid_t)invmsg->uid);
+		DEBUG(DBG_SFSCACHE, " dispatch_sfscache_invalidate: path %s "
+		    "uid %d", invmsg->payload, invmsg->uid);
+	}
+	free(msg);
+}
+
+static void
 dispatch_m2p(int fd, short sig __used, void *arg)
 {
 	struct reply_wait *msg_wait;
@@ -326,6 +360,9 @@ dispatch_m2p(int fd, short sig __used, void *arg)
 		    ((struct eventdev_hdr *)msg->msg)->msg_token);
 
 		switch(msg->mtype) {
+		case ANOUBISD_MSG_SFSCACHE_INVALIDATE:
+			dispatch_sfscache_invalidate(msg);
+			continue;
 		case ANOUBISD_MSG_EVENTDEV:
 			hdr = (struct eventdev_hdr *)msg->msg;
 			break;

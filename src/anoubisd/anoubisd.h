@@ -110,6 +110,7 @@ enum {
 	ANOUBISD_MSG_KCACHE,
 	ANOUBISD_MSG_SFSDISABLE,
 	ANOUBISD_MSG_POLICYCHANGE,
+	ANOUBISD_MSG_SFSCACHE_INVALIDATE,
 } anoubisd_msg;
 
 /* format of ANOUBISD_MSG_EVENTDEV is struct eventdev_hdr */
@@ -173,6 +174,14 @@ struct anoubisd_reply {
 	char		msg[0];
 };
 typedef struct anoubisd_reply anoubisd_reply_t;
+
+struct anoubisd_sfscache_invalidate {
+	u_int32_t	uid;
+	u_int32_t	plen;
+	u_int32_t	keylen;
+	char		payload[0];
+};
+typedef struct anoubisd_sfscache_invalidate anoubisd_sfscache_invalidate_t;
 
 /* format of ANOUBISD_MSG_LOGREQUEST */
 struct anoubisd_msg_logrequest
@@ -288,5 +297,6 @@ extern gid_t		anoubisd_gid;
 #define DBG_PE_DECALF	0x1000
 #define DBG_SESSION	0x2000
 #define DBG_SANDBOX	0x4000
+#define DBG_SFSCACHE	0x8000
 
 #endif /* !_ANOUBISD_H */

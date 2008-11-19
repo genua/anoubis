@@ -28,6 +28,9 @@
 #ifndef _SFS_H_
 #define _SFS_H_
 
+#include <sys/types.h>
+#include <anoubisd.h>
+
 #define ANOUBISD_CSUM_NONE	0
 #define ANOUBISD_CSUM_USER	1
 #define ANOUBISD_CSUM_ROOT	2
@@ -41,5 +44,14 @@ int	 sfs_getchecksum_chroot(const char *path, uid_t uid, unsigned char *md);
 int	 convert_user_path(const char *path, char **dir, int is_dir);
 int	 check_for_uid(const char *path);
 char	*remove_escape_seq(const char *name, int is_uid);
+
+/* Public SFS-Cache functions */
+void	 sfshash_init(void);
+void	 sfshash_flush(void);
+void	 sfshash_invalidate_uid(const char *, uid_t);
+void	 sfshash_invalidate_key(const char *, const char*);
+int	 sfshash_get_uid(const char *, uid_t, u_int8_t cs[ANOUBIS_CS_LEN]);
+int	 sfshash_get_key(const char *, const char *,
+	     u_int8_t cs[ANOUBIS_CS_LEN]);
 
 #endif	/* _SFS_H_ */

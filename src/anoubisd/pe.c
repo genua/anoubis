@@ -60,6 +60,7 @@
 #include <anoubis_protocol.h>
 #include "anoubisd.h"
 #include "pe.h"
+#include "sfs.h"
 
 anoubisd_reply_t	*policy_engine(anoubisd_msg_t *);
 anoubisd_reply_t	*pe_dispatch_event(struct eventdev_hdr *);
@@ -71,6 +72,7 @@ anoubisd_reply_t	*pe_handle_sfs(anoubisd_msg_sfsopen_t *);
 void
 pe_init(void)
 {
+	sfshash_init();
 	pe_proc_init();
 	pe_pubkey_init();
 	pe_user_init();
@@ -87,6 +89,7 @@ pe_shutdown(void)
 void
 pe_reconfigure(void)
 {
+	sfshash_flush();
 	pe_pubkey_reconfigure();
 	pe_user_reconfigure();
 }

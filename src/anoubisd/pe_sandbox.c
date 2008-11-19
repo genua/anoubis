@@ -183,12 +183,25 @@ pe_sb_evaluate(struct apn_rule *sbrules, struct sandbox_event *sbevent,
 		cstype = sbrule->rule.sbaccess.cstype;
 		if (cstype != SBCS_NONE) {
 			u_int8_t	*cs = NULL;
-			/* XXX CEH: Check signature and csum matches. */
+			u_int8_t	 csum[ANOUBIS_CS_LEN];
+			int		 ret = 0;
 			if (cstype == SBCS_CSUM) {
 				cs = sbrule->rule.sbaccess.cs.csum;
 				if (!cs)
 					goto err;
+			} else if (cstype == SBCS_UID) {
+				ret = sfshash_get_uid(sbevent->path,
+				    sbrule->rule.sbaccess.cs.uid, csum);
+				if (ret == 0)
+					cs = csum;
+			} else if (cstype == SBCS_KEY) {
+				ret = sfshash_get_key(sbevent->path,
+				    sbrule->rule.sbaccess.cs.subject, csum);
+				if (ret == 0)
+					cs = csum;
 			}
+			if (ret != 0 && ret != -ENOENT)
+				log_warnx("sfshash_get: Error %d", -ret);
 			if (!cs)
 				continue;
 			if (bcmp(cs, sbevent->cs, ANOUBIS_CS_LEN) != 0)

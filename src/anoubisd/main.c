@@ -798,6 +798,27 @@ err:
 }
 
 static void
+send_sfscache_invalidate_uid(const char *path, uid_t uid,
+    struct event_info_main *ev_info)
+{
+	struct anoubisd_msg			*msg;
+	struct anoubisd_sfscache_invalidate	*invmsg;
+	msg = msg_factory(ANOUBISD_MSG_SFSCACHE_INVALIDATE,
+	    sizeof(struct anoubisd_sfscache_invalidate) + strlen(path) + 1);
+	if (!msg) {
+		master_terminate(ENOMEM);
+		return;
+	}
+	invmsg = (struct anoubisd_sfscache_invalidate*)msg->msg;
+	invmsg->uid = uid;
+	invmsg->plen = strlen(path)+1;
+	invmsg->keylen = 0;
+	memcpy(invmsg->payload, path, strlen(path)+1);
+	enqueue(&eventq_m2p, msg);
+	event_add(ev_info->ev_m2p, NULL);
+}
+
+static void
 dispatch_checksumop(anoubisd_msg_t *msg, struct event_info_main *ev_info)
 {
 	struct anoubis_msg rawmsg;
@@ -909,6 +930,11 @@ dispatch_checksumop(anoubisd_msg_t *msg, struct event_info_main *ev_info)
 		switch (op) {
 		case ANOUBIS_CHECKSUM_OP_GET:
 			extra = SHA256_DIGEST_LENGTH;
+			break;
+		case ANOUBIS_CHECKSUM_OP_ADDSUM:
+		case ANOUBIS_CHECKSUM_OP_DEL:
+			extra = 0;
+			send_sfscache_invalidate_uid(path, req_uid, ev_info);
 			break;
 		default:
 			extra = 0;
