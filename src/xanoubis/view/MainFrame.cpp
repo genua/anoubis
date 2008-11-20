@@ -397,7 +397,9 @@ MainFrame::OnClose(wxCloseEvent&)
 void
 MainFrame::OnEscalationsShow(wxCommandEvent& event)
 {
-	this->Show(event.GetInt());
+	Show(event.GetInt());
+	if (event.GetInt())
+		Raise();
 	Module *module = wxGetApp().getModule(ANOUBIS);
 	int id = module->getToolbarId();
 
