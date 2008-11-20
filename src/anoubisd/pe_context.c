@@ -428,8 +428,8 @@ pe_context_open(struct pe_proc *proc, struct eventdev_hdr *hdr)
 			continue;
 
 		DEBUG(DBG_PE_CTX,
-		    "pe_context_open: prio %d switching context to %s", i,
-		    pident.pathhint);
+		    "pe_context_open: proc %p prio %d switching context to %s",
+		        proc, i, pident.pathhint);
 
 		pe_context_switch(proc, i, &pident, hdr->msg_uid);
 	}
@@ -576,7 +576,7 @@ pe_context_decide(struct pe_proc *proc, int type, int prio,
 	ctx = pe_proc_get_context(proc, prio);
 	/* No context: Allow a context switch. */
 	if (ctx == NULL)
-		return 1;
+		return (type == APN_CTX_NEW);
 	/* Context without rule means, not switching. */
 	if (ctx->ctxrule == NULL)
 		return 0;
