@@ -147,7 +147,8 @@ START_TEST(sign_and_verify_match_tc)
 	as = anoubis_sig_pub_init(pubkey, ANOUBIS_SIG_HASH_SHA1, pass, 0);
 	fail_if(as == NULL, "Could not load Public Key");
 
-	rc = anoubis_verify_csum(as, csum, sign, len);
+	rc = anoubis_verify_csum(as, csum, sign + ANOUBIS_SIG_HASH_SHA256_LEN,
+	    len - ANOUBIS_SIG_HASH_SHA256_LEN);
 	anoubis_sig_free(as);
 	fail_if(rc == 0, "Signatures dont match");
 }
