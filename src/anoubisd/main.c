@@ -1209,7 +1209,8 @@ dispatch_dev2m(int fd, short event __used, void *arg)
 
 		if ((hdr->msg_flags & EVENTDEV_NEED_REPLY) ||
 		    (hdr->msg_source == ANOUBIS_SOURCE_PROCESS) ||
-		    (hdr->msg_source == ANOUBIS_SOURCE_SFSEXEC)) {
+		    (hdr->msg_source == ANOUBIS_SOURCE_SFSEXEC) ||
+		    (hdr->msg_source == ANOUBIS_SOURCE_IPC)) {
 
 			/* Send event to policy process for handling. */
 			enqueue(&eventq_m2p, msg);

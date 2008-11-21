@@ -67,6 +67,7 @@ anoubisd_reply_t	*pe_dispatch_event(struct eventdev_hdr *);
 anoubisd_reply_t	*pe_handle_process(struct eventdev_hdr *);
 anoubisd_reply_t	*pe_handle_sfsexec(struct eventdev_hdr *);
 anoubisd_reply_t	*pe_handle_alf(struct eventdev_hdr *);
+anoubisd_reply_t	*pe_handle_ipc(struct eventdev_hdr *);
 anoubisd_reply_t	*pe_handle_sfs(anoubisd_msg_sfsopen_t *);
 
 void
@@ -172,6 +173,10 @@ pe_dispatch_event(struct eventdev_hdr *hdr)
 		reply = pe_handle_alf(hdr);
 		break;
 
+	case ANOUBIS_SOURCE_IPC:
+		reply = pe_handle_ipc(hdr);
+		break;
+
 	default:
 		log_warnx("pe_dispatch_event: unknown message source %d",
 		    hdr->msg_source);
@@ -272,6 +277,37 @@ pe_handle_alf(struct eventdev_hdr *hdr)
 	pe_proc_put(proc);
 	DEBUG(DBG_TRACE, "<policy_engine");
 	return (reply);
+}
+
+anoubisd_reply_t *
+pe_handle_ipc(struct eventdev_hdr *hdr)
+{
+	struct ac_ipc_message	*msg;
+
+	if (hdr == NULL) {
+		log_warnx("pe_handle_ipc: empty header");
+		return (NULL);
+	}
+	if (hdr->msg_size < (sizeof(struct eventdev_hdr) +
+	    sizeof(struct ac_ipc_message))) {
+		log_warnx("pe_handle_ipc: short message");
+		return (NULL);
+	}
+	msg = (struct ac_ipc_message *)(hdr + 1);
+
+	switch (msg->op) {
+	case ANOUBIS_SOCKET_OP_CONNECT:
+		pe_ipc_connect(msg);
+		break;
+	case ANOUBIS_SOCKET_OP_DESTROY:
+		pe_ipc_destroy(msg);
+		break;
+	default:
+		log_warnx("pe_handle_ipc: undefined operation %d", msg->op);
+		break;
+	}
+
+	return (NULL);
 }
 
 static anoubisd_reply_t *

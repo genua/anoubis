@@ -69,6 +69,7 @@ anoubisd_SOURCES= \
 	pe_user.c \
 	pe_context.c \
 	pe_alf.c \
+	pe_ipc.c \
 	pe_sfs.c \
 	pe_sfscache.c \
 	pe_sandbox.c \

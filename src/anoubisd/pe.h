@@ -136,4 +136,8 @@ anoubisd_reply_t	*pe_decide_sfs(uid_t, anoubisd_msg_sfsopen_t*,
 anoubisd_reply_t	*pe_decide_sandbox(struct pe_proc *proc,
 			     struct eventdev_hdr *);
 
+/* IPC handling */
+void			 pe_ipc_connect(struct ac_ipc_message *);
+void			 pe_ipc_destroy(struct ac_ipc_message *);
+
 #endif	/* _PE_H_ */
