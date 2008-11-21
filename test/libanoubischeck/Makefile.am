@@ -25,18 +25,36 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ##########################################################################
 
-if NEEDBSDCOMPAT
-BSDCOMPAT=bsdcompat
-endif
+#
+# Build the library
+#
+noinst_LIBRARIES = libanoubischeck.a
+noinst_HEADERS = anoubischeck.h
 
-if XANOUBIS
-GUI=xanoubis
-endif
+libanoubischeck_a_SOURCES = anoubischeck.c
+libanoubischeck_a_CFLAGS = @CHECK_CFLAGS@
 
-SUBDIRS = libanoubischeck libapn libanoubischat libanoubisprotocol \
-	libanoubisui anoubisd libanoubissig $(GUI) $(BSDCOMPAT)
+#
+# For unit tests of the components, we build a shared library.
+# This library is for testing purpose only. We tear apart the unittest and
+# the test candidate. Thus we are able to run tests and baseline-tests
+# propperly.
+# To reduce the compile time and to test what's in the final product, we
+# reuse the already compiled objects. Ensure those are built with -fPIC.
+#
+noinst_PROGRAMS = libanoubischeck.so
+libanoubischeck_so_SOURCES =
+libanoubischeck_so_DEPENDENCIES = $(libanoubischeck_a_OBJECTS)
+libanoubischeck_so_LINK = \
+	$(CXX) -fstack-protector -shared -Wl,-soname,$@ \
+	    -o $@ $(libanoubischeck_a_OBJECTS)
 
-# targets must exist, but need not to do anything
-flawfinder:
-lint:
-splint:
+#
+# Test the library
+#
+TESTS = test_libanoubischeck
+TESTS_ENVIRONMENT = LD_LIBRARY_PATH=.
+noinst_PROGRAMS += test_libanoubischeck
+test_libanoubischeck_CFLAGS = @CHECK_CFLAGS@
+test_libanoubischeck_LDADD = @CHECK_LIBS@ -L. -lanoubischeck
+test_libanoubischeck_SOURCES = test_libanoubischeck.c
