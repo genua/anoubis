@@ -62,15 +62,37 @@ void
 ModAnoubisOverviewPanelImpl::setProfile(wxString newProfile)
 {
 	wxString	currProfile;
+	ProfileCtrl	*profileCtrl = ProfileCtrl::getInstance();
 
-	currProfile = ProfileCtrl::getInstance()->getProfileName();
+	currProfile = profileCtrl->getProfileName();
 	if (newProfile.Cmp(currProfile) == 0) {
 		/* nothing to do */
-	} else if (!wxGetApp().profileFromDaemonToDisk(currProfile)) {
+		return;
+	}
+
+	if (!wxGetApp().profileFromDaemonToDisk(currProfile)) {
 		/* no ruleset was loaded */
 		setRadioButtons(currProfile);
 		return;
-	} else if (!wxGetApp().profileFromDiskToDaemon(newProfile)) {
+	}
+
+	/*
+	 * XXX
+	 * You need to switch the profile manually!
+	 * See "XXX"-comment in AnoubisGuiApp::profileFromDiskToDaemon()
+	 */
+	if (newProfile == wxT("high"))
+		profileCtrl->switchProfile(ProfileMgr::PROFILE_HIGH);
+	else if (newProfile == wxT("medium"))
+		profileCtrl->switchProfile(ProfileMgr::PROFILE_MEDIUM);
+	else if (newProfile == wxT("admin"))
+		profileCtrl->switchProfile(ProfileMgr::PROFILE_ADMIN);
+	else {
+		wxGetApp().status(_("Switch of profile failed: ") + newProfile);
+		return;
+	}
+
+	if (!wxGetApp().profileFromDiskToDaemon(newProfile)) {
 		/* didn't find new profile */
 		setRadioButtons(currProfile);
 		return;
