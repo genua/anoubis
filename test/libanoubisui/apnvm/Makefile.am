@@ -50,11 +50,11 @@ test_apnvm_CFLAGS = \
 test_apnvm_CPPFLAGS = -I$(top_srcdir)/$(apnvmdir)
 test_apnvm_LDFLAGS = \
 	$(AM_LDFLAGS) -dynamic \
-	-L$(top_builddir)/$(apnvmdir)
+	-L$(top_builddir)/$(apnvmdir) -lapnvm
 
 # conditionally static link of libraries to accomplish correct Code Coverage
 test_apnvm_DEPENDENCIES = $(apnvm) $(libapn)
-test_apnvm_LDADD = @CHECK_LIBS@ $(test_apnvm_DEPENDENCIES) -lfl
+test_apnvm_LDADD = @CHECK_LIBS@ $(libapn) -lfl
 
 if NEEDBSDCOMPAT
 test_apnvm_DEPENDENCIES += $(libbsdcompat)

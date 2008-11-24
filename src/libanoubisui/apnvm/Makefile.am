@@ -84,6 +84,22 @@ libapnvm_a_SOURCES_flawfinder =	\
 	apnvmutil.c_flawfinder	\
 	apnvmutil.h_flawfinder
 
+#
+# For unit tests of the components of apnvm, we build a shared library.
+# This library is for testing purpose only. We tear apart the unittest and
+# the test candidate. Thus we are able to run tests and baseline-tests
+# propperly.
+# To reduce the compile time and to test what's in the final product, we
+# reuse the already compiled objects of apnvm. Ensure those are
+# built with -fPIC.
+#
+noinst_PROGRAMS = libapnvm.so
+libapnvm_so_SOURCES =
+libapnvm_so_DEPENDENCIES = $(libapnvm_a_OBJECTS)
+libapnvm_so_LINK = \
+	$(CXX) -fstack-protector -shared -Wl,-soname,$@ \
+	    -o $@ $(libapnvm_a_OBJECTS)
+
 flawfinder_FLAGS=
 splint_FLAGS=$(libapnvm_a_CPPFLAGS)
 lint_FLAGS=$(libapnvm_a_CPPFLAGS)
