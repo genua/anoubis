@@ -136,7 +136,26 @@ apncvs_init(struct apncvs *cvs)
 		return (-1);
 
 	rc = system(cmd);
-	return WIFEXITED(rc) ? WEXITSTATUS(rc) : -1;
+
+	if (WIFEXITED(rc) && WEXITSTATUS(rc) == 0) {
+		/* Check permission of repository-directories */
+		char *admindir;
+
+		if (chmod(cvs->cvsroot, S_IRWXU) == -1)
+			return (-1);
+
+		if (asprintf(&admindir, "%s/CVSROOT", cvs->cvsroot) >= 0) {
+			int result = chmod(admindir, S_IRWXU);
+			free(admindir);
+
+			if (result == -1)
+				return (-1);
+		} else
+			return (-1);
+
+		return (0);
+	} else
+		return WIFEXITED(rc) ? WEXITSTATUS(rc) : -1;
 }
 
 int

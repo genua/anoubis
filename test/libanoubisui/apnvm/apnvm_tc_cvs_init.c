@@ -30,6 +30,7 @@
 #include <sys/wait.h>
 
 #include <check.h>
+#include <errno.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -158,6 +159,91 @@ START_TEST(cvs_init_tc_already_existing)
 }
 END_TEST
 
+START_TEST(cvs_init_permission_cvsroot)
+{
+	char		*cvsroot;
+	struct apncvs	cvs;
+	int		result;
+	struct stat	fstat;
+	mode_t		cmask;
+
+	cvsroot = tempnam(NULL, "tccvs");
+
+	/* Change file mode creation mask */
+	cmask = umask(0);
+
+	result = mkdir(cvsroot, S_IRWXU|S_IRWXG|S_IRWXO);
+	fail_if(result != 0, "Failed to create %s: %s",
+	    cvsroot, strerror(errno));
+
+	cvs.cvsroot = cvsroot;
+	cvs.workdir = "bla"; /* Not used */
+	cvs.module = "blubb"; /* Not used */
+
+	result = apncvs_init(&cvs);
+	fail_if(result != 0, "Init operation failed with %i", result);
+
+	result = stat(cvsroot, &fstat);
+	fail_if(result != 0, "No such directory: %s", cvsroot);
+
+	/* Owner has read, write and exec permission */
+	result = fstat.st_mode & S_IRWXU;
+	fail_if(result != S_IRWXU, "Wrong permission for owner (%i)",
+	    fstat.st_mode);
+
+	/* Nobody else can access the directory */
+	result = fstat.st_mode & (S_IRWXG | S_IRWXO);
+	fail_if(result != 0, "Wrong permission for anybody else (%i)",
+	    fstat.st_mode);
+
+	cvs_init_tc_exec("rm -rf \"%s\"", cvsroot);
+
+	/* Switch back to original umask */
+	umask(cmask);
+
+	free(cvsroot);
+}
+END_TEST
+
+START_TEST(cvs_init_permission_cvsroot_cvsroot)
+{
+	char		cvsroot[32];
+	char		cvsroot2[64];
+	char		*s;
+	struct apncvs	cvs;
+	int		result;
+	struct stat	fstat;
+
+	strcpy(cvsroot, "/tmp/tc_cvs_init_XXXXXX");
+	s = mkdtemp(cvsroot);
+
+	strcpy(cvsroot2, cvsroot);
+	strcat(cvsroot2, "/CVSROOT");
+
+	cvs.cvsroot = cvsroot;
+	cvs.workdir = "bla"; /* Not used */
+	cvs.module = "blubb"; /* Not used */
+
+	result = apncvs_init(&cvs);
+	fail_if(result != 0, "Init operation failed with %i", result);
+
+	result = stat(cvsroot2, &fstat);
+	fail_if(result != 0, "No such directory: %s", cvsroot);
+
+	/* Owner has read, write and exec permission */
+	result = fstat.st_mode & S_IRWXU;
+	fail_if(result != S_IRWXU, "Wrong permission for owner (%i)",
+	    fstat.st_mode);
+
+	/* Nobody else can access the directory */
+	result = fstat.st_mode & (S_IRWXG | S_IRWXO);
+	fail_if(result != 0, "Wrong permission for anybody else (%i)",
+	    fstat.st_mode);
+
+	cvs_init_tc_exec("rm -rf \"%s\"", cvsroot);
+}
+END_TEST
+
 TCase *
 apnvm_tc_cvs_init(void)
 {
@@ -166,6 +252,8 @@ apnvm_tc_cvs_init(void)
 	tcase_add_test(tc, cvs_init_tc_create);
 	tcase_add_test(tc, cvs_init_tc_no_parent);
 	tcase_add_test(tc, cvs_init_tc_already_existing);
+	tcase_add_test(tc, cvs_init_permission_cvsroot);
+	tcase_add_test(tc, cvs_init_permission_cvsroot_cvsroot);
 
 	return (tc);
 }
