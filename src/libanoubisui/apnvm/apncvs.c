@@ -45,8 +45,6 @@
 
 #include "apncvs.h"
 
-#define LEN_CMDLINE 256
-
 #define APNCVS_CHECKPTR(p)	\
 	if (p == NULL)		\
 		return (-1);
@@ -63,27 +61,56 @@
 
 extern int apncvs_log_parse(FILE*, struct apncvs_log*);
 
-static void
-apncvs_makecmd(char *cmd, size_t len, struct apncvs *cvs, int needstdout,
+/**
+ * Creates the complete cvs-command, which is executed.
+ *
+ * @param cvs Information about the cvs-repository
+ * @param cdworkdir Set to true, if you want to jump into the working directory
+ *                  before cvscmd is executed
+ * @param needstdout Set to true, if you need the output to stdout. Otherwise
+ *                   the output to stdout is redirected to /dev/null. Please
+ *                   note, that the output to stderr is always redirected to
+ *                   /dev/null!
+ * @param cvscmd The cvs command to be executed
+ * @param ... Arguments for cvscmd
+ * @return The command, which can be passed to a shell. On error, NULL is
+ *         returned. Note, that to have to release the memory allocated for the
+ *         result by yourself using free(3).
+ */
+static char *
+apncvs_makecmd(const struct apncvs *cvs, int cdworkdir, int needstdout,
 	const char *cvscmd, ...)
 {
-	va_list ap;
-	char buf[LEN_CMDLINE];
+	va_list	ap;
+	char	*buf, *cmd;
+	int	result;
 
-	if (cmd == NULL)
-		return;
 	if ((cvscmd == NULL) || (strlen(cvscmd) == 0))
-		return;
+		return (NULL);
 
 	/* Prepare cvscmd */
 	va_start(ap, cvscmd);
-	vsnprintf(buf, sizeof(buf), cvscmd, ap);
+	result = vasprintf(&buf, cvscmd, ap);
 	va_end(ap);
 
+	if (result < 0)
+		return (NULL);
+
 	/* Make the command to be executed */
-	snprintf(cmd, len, "(cd \"%s\" && %s) %s",
-	    cvs->workdir, buf,
-	    (needstdout ? "2>/dev/null" : ">/dev/null 2>&1"));
+	if (cdworkdir)
+		result = asprintf(&cmd, "(cd \"%s\" && %s) %s",
+		    cvs->workdir, buf,
+		    (needstdout ? "2>/dev/null" : ">/dev/null 2>&1"));
+	else
+		result = asprintf(&cmd, "%s %s", buf,
+		    (needstdout ? "2>/dev/null" : ">/dev/null 2>&1"));
+
+	free(buf);
+
+	if (result > 0)
+		return (cmd);
+	else
+		return (NULL);
 }
 
 static int
@@ -104,13 +131,30 @@ apncvs_fileexists(struct apncvs *cvs, const char *file)
 	return stat(path, &fstat);
 }
 
+static void
+apncvs_replace(char *str, char search, char replace)
+{
+	char *p = str;
+
+	if (str == NULL || strlen(str) == 0)
+		return;
+
+	while (p != NULL) {
+		p = strchr(p, search);
+
+		if (p != NULL) {
+			*p = replace;
+			p++;
+		}
+	}
+}
+
 int
 apncvs_init(struct apncvs *cvs)
-{
-	char		cmd[LEN_CMDLINE];
+{	char		*cmd;
 	char		*dirc, *dname;
 	struct stat	fstat;
-	int		rc, nwritten;
+	int		rc;
 
 	APNCVS_CHECKAPNCVS(cvs);
 
@@ -129,13 +173,13 @@ apncvs_init(struct apncvs *cvs)
 
 	free(dirc);
 
-	nwritten = snprintf(cmd, sizeof(cmd),
-	    "cvs -d \"%s\" init >/dev/null 2>&1",
-	    cvs->cvsroot);
-	if ((nwritten >= (int)sizeof(cmd)) || (nwritten < 0))
+	cmd = apncvs_makecmd(cvs, 0, 0, "cvs -d \"%s\" init", cvs->cvsroot);
+
+	if (cmd == NULL)
 		return (-1);
 
 	rc = system(cmd);
+	free(cmd);
 
 	if (WIFEXITED(rc) && WEXITSTATUS(rc) == 0) {
 		/* Check permission of repository-directories */
@@ -161,36 +205,46 @@ apncvs_init(struct apncvs *cvs)
 int
 apncvs_checkout(struct apncvs *cvs)
 {
-	char cmd[LEN_CMDLINE];
-	int rc;
+	char	*cmd;
+	int	rc;
 
 	APNCVS_CHECKAPNCVS(cvs);
-	apncvs_makecmd(cmd, LEN_CMDLINE, cvs, 0,
-	    "cvs -d \"%s\" checkout \"%s\"", cvs->cvsroot, cvs->module);
+	cmd = apncvs_makecmd(cvs, 1, 0, "cvs -d \"%s\" checkout \"%s\"",
+	    cvs->cvsroot, cvs->module);
+
+	if (cmd == NULL)
+		return (-1);
 
 	rc = system(cmd);
+	free(cmd);
+
 	return WIFEXITED(rc) ? WEXITSTATUS(rc) : -1;
 }
 
 int
 apncvs_update(struct apncvs *cvs, const char *file, const char *rev)
 {
-	char cmd[LEN_CMDLINE];
-	int rc;
+	char	*cmd;
+	int	rc;
 
 	APNCVS_CHECKAPNCVS(cvs);
 	APNCVS_CHECKSTR(file);
 
 	if (rev != NULL)
-		apncvs_makecmd(cmd, LEN_CMDLINE, cvs, 0,
+		cmd = apncvs_makecmd(cvs, 1, 0,
 		    "cvs -d \"%s\" update -r \"%s\" \"%s/%s\"",
 		    cvs->cvsroot, rev, cvs->module, file);
 	else
-		apncvs_makecmd(cmd, LEN_CMDLINE, cvs, 0,
+		cmd = apncvs_makecmd(cvs, 1, 0,
 		    "cvs -d \"%s\" update -A \"%s/%s\"",
 		    cvs->cvsroot, cvs->module, file);
 
+	if (cmd == NULL)
+		return (-1);
+
 	rc = system(cmd);
+	free(cmd);
+
 	if (WIFEXITED(rc) && WEXITSTATUS(rc) == 0) {
 		/*
 		 * Choosing a wrong file or revision will also lead into
@@ -207,25 +261,30 @@ apncvs_update(struct apncvs *cvs, const char *file, const char *rev)
 int
 apncvs_log(struct apncvs *cvs, const char *file, struct apncvs_log *log)
 {
-	char cmd[LEN_CMDLINE];
-	FILE *f;
-	int rc, parse_rc;
+	char	*cmd;
+	FILE	*f;
+	int	rc, parse_rc;
 
 	APNCVS_CHECKAPNCVS(cvs);
 	APNCVS_CHECKSTR(file);
 	APNCVS_CHECKPTR(log);
 
-	apncvs_makecmd(cmd, sizeof(cmd), cvs, 1,
-	    "cvs -d \"%s\" log \"%s/%s\"",
+	cmd = apncvs_makecmd(cvs, 1, 1, "cvs -d \"%s\" log \"%s/%s\"",
 	    cvs->cvsroot, cvs->module, file);
 
-	if ((f = popen(cmd, "r")) == NULL)
+	if (cmd == NULL)
 		return (-1);
+
+	if ((f = popen(cmd, "r")) == NULL) {
+		free(cmd);
+		return (-1);
+	}
 
 	/* Parse output of cvs log command, written into "log" */
 	parse_rc = apncvs_log_parse(f, log);
 
 	rc = pclose(f);
+	free(cmd);
 
 	return (rc || parse_rc);
 
@@ -282,8 +341,8 @@ apncvs_log_destroy(struct apncvs_log *log)
 int
 apncvs_commit(struct apncvs *cvs, const char *file, const char *comment)
 {
-	char cmd[LEN_CMDLINE];
-	int rc;
+	char	*cmd, *escaped_comment;
+	int	rc;
 
 	APNCVS_CHECKAPNCVS(cvs);
 	APNCVS_CHECKSTR(file);
@@ -292,36 +351,54 @@ apncvs_commit(struct apncvs *cvs, const char *file, const char *comment)
 	if (comment == NULL)
 		return (-1);
 
-	apncvs_makecmd(cmd, sizeof(cmd), cvs, 0,
-	    "cvs -d \"%s\" commit -m \"%s\" \"%s/%s\"",
-	    cvs->cvsroot, comment, cvs->module, file);
+	/* Escape the comment; replace single quotes with double quotes */
+	escaped_comment = strdup(comment);
+	if (escaped_comment == NULL)
+		return (-1);
+
+	apncvs_replace(escaped_comment, '\'', '"');
+
+	cmd = apncvs_makecmd(cvs, 1, 0,
+	    "cvs -d \"%s\" commit -m '%s' \"%s/%s\"",
+	    cvs->cvsroot, escaped_comment, cvs->module, file);
+
+	free(escaped_comment);
+
+	if (cmd == NULL)
+		return (-1);
 
 	rc = system(cmd);
+	free(cmd);
+
 	return WIFEXITED(rc) ? WEXITSTATUS(rc) : -1;
 }
 
 int
 apncvs_add(struct apncvs *cvs, const char *file)
 {
-	char cmd[LEN_CMDLINE];
-	int rc;
+	char	*cmd;
+	int	rc;
 
 	APNCVS_CHECKAPNCVS(cvs);
 	APNCVS_CHECKSTR(file);
 
-	apncvs_makecmd(cmd, sizeof(cmd), cvs, 0,
-	    "cvs -d \"%s\" add \"%s/%s\"",
+	cmd = apncvs_makecmd(cvs, 1, 0, "cvs -d \"%s\" add \"%s/%s\"",
 	    cvs->cvsroot, cvs->module, file);
 
+	if (cmd == NULL)
+		return (-1);
+
 	rc = system(cmd);
+	free(cmd);
+
 	return WIFEXITED(rc) ? WEXITSTATUS(rc) : -1;
 }
 
 int
 apncvs_remrev(struct apncvs *cvs, const char *file, const char *rev)
 {
-	char cmd[LEN_CMDLINE];
-	int rc;
+	char	*cmd;
+	int	rc;
 
 	APNCVS_CHECKAPNCVS(cvs);
 	APNCVS_CHECKSTR(file);
@@ -334,11 +411,16 @@ apncvs_remrev(struct apncvs *cvs, const char *file, const char *rev)
 	 */
 	rc = apncvs_fileexists(cvs, file);
 	if (rc == 0) {
-		apncvs_makecmd(cmd, sizeof(cmd), cvs, 0,
+		cmd = apncvs_makecmd(cvs, 1, 0,
 		    "cvs -d \"%s\" admin -o\"%s\" \"%s/%s\"",
 		    cvs->cvsroot, rev, cvs->module, file);
 
+		if (cmd == NULL)
+			return (-1);
+
 		rc = system(cmd);
+		free(cmd);
+
 		return WIFEXITED(rc) ? WEXITSTATUS(rc) : -1;
 	}
 	else

@@ -570,6 +570,24 @@ START_TEST(cvs_tc_commit_wrong_file)
 }
 END_TEST
 
+START_TEST(cvs_tc_commit_long_comment)
+{
+	int result;
+
+	result = apncvs_commit(&cvs, "file", "Here you need a long comment.\n\
+Very long...\n\
+Even longer...\n\
+It is not enough, need much more content!\n\
+What should be the content of a comment?\n\
+It depends on you!\n\
+The version management does not take care about the comment.\n\
+Try to describe the new revision!");
+
+	fail_if(result != 0, "Unexpected result from commit command: %i",
+	    result);
+}
+END_TEST
+
 START_TEST(cvs_tc_add)
 {
 	char str[128];
@@ -949,6 +967,7 @@ apnvm_tc_cvs(void)
 	tcase_add_test(tc, cvs_tc_commit_wrong_workdir);
 	tcase_add_test(tc, cvs_tc_commit_wrong_module);
 	tcase_add_test(tc, cvs_tc_commit_wrong_file);
+	tcase_add_test(tc, cvs_tc_commit_long_comment);
 	tcase_add_test(tc, cvs_tc_add);
 	tcase_add_test(tc, cvs_tc_add_no_file);
 	tcase_add_test(tc, cvs_tc_add_added_file);
