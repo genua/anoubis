@@ -28,6 +28,7 @@ BuildRequires:	libattr-devel
 BuildRequires:	libstdc++-devel
 BuildRequires:	flex
 
+%define rcdir %{_sysconfdir}/init.d
 
 # long descpritive part of the packaged software goes here
 %description
@@ -75,9 +76,9 @@ export CFLAGS="$RPM_OPT_FLAGS"
 [ "$RPM_BUILD_ROOT" != "/" ] && [ -d $RPM_BUILD_ROOT ] \
   && rm -rf $RPM_BUILD_ROOT
 make install DESTDIR=$RPM_BUILD_ROOT
-mkdir -p $RPM_BUILD_ROOT/etc/init.d
-cp $RPM_SOURCE_DIR/anoubisd.init $RPM_BUILD_ROOT/etc/init.d/anoubisd
-chmod 755 $RPM_BUILD_ROOT/etc/init.d/anoubisd
+mkdir -p $RPM_BUILD_ROOT%{rcdir}
+cp $RPM_SOURCE_DIR/anoubisd.init $RPM_BUILD_ROOT%{rcdir}/anoubisd
+chmod 755 $RPM_BUILD_ROOT%{rcdir}/anoubisd
 DEF_POLICY_DIR=$RPM_BUILD_ROOT/usr/share/anoubis/default_policy
 mkdir -p $DEF_POLICY_DIR/admin $DEF_POLICY_DIR/user
 for a in admin user ; do
@@ -114,18 +115,17 @@ install -p $RPM_BUILD_ROOT%{_datadir}/applications/xanoubis.desktop \
 
 ### package scripts ########################################
 %pre -n anoubisd
+if [ "$1" -gt 1 ]; then
+    # when upgrading, stop old anoubisd
+    %{rcdir}/anoubisd stop
+fi
 if ! getent passwd _anoubisd >/dev/null; then
 	groupadd -f -r _anoubisd
 	useradd -M -r -s /sbin/nologin -d /var/run/anoubisd \
 	    -g _anoubisd _anoubisd
 fi
 POLDIR=/etc/anoubis/policy
-for d in user admin ; do
-	# move old dirs aside to make place for symlinks
-	if [ -e $POLDIR/$d ] && [ ! -L $POLDIR/$d ] ; then
-		mv $POLDIR/$d $POLDIR/$d.rpm-bak
-	fi
-done
+exit 0
 
 %post -n anoubisd
 chkconfig --add anoubisd
@@ -149,19 +149,37 @@ chown _anoubisd: /var/lib/anoubis/policy/pubkeys
 if [ ! -e /dev/eventdev ] ; then
 	mknod /dev/eventdev c 10 62
 fi
-
+# execute only on new installs (i.e. exactly least 1 version installed)
+if [ "$1" = 1 ]; then
+    %{rcdir}/anoubisd start
+fi
+exit 0
 
 %preun -n anoubisd
-chkconfig --del anoubisd
-rmdir /var/lib/anoubis/policy/admin \
-    /var/lib/anoubis/policy/user 2>/dev/null || true
-rmdir /var/lib/anoubis/policy/pubkeys 2>/dev/null || true
-rmdir /var/lib/anoubis/policy /var/lib/anoubis 2>/dev/null || true
+# execute only on package removal,
+# i.e. if last version is removed (0 versions left)
+if [ "$1" = 0 ] ; then
+    %{rcdir}/anoubisd stop
+    chkconfig --del anoubisd
+    rmdir /var/lib/anoubis/policy/admin \
+	/var/lib/anoubis/policy/user 2>/dev/null || true
+    rmdir /var/lib/anoubis/policy/pubkeys 2>/dev/null || true
+    rmdir /var/lib/anoubis/policy /var/lib/anoubis 2>/dev/null || true
+fi
+exit 0
+
+%postun -n anoubisd
+# execute only on upgrades (i.e. at least 1 version left)
+if [ "$1" -ge 1 ]; then
+    %{rcdir}/anoubisd start
+fi
+exit 0
+
 
 ### files of subpackage anoubisd ###########################
 %files -n anoubisd
 %defattr(-,root,root)
-/etc/init.d/*
+%{rcdir}/*
 /sbin/*
 /usr/share/anoubis/*
 %{_sysconfdir}/udev/rules.d/06-anoubis.rules
@@ -183,6 +201,9 @@ rmdir /var/lib/anoubis/policy /var/lib/anoubis 2>/dev/null || true
 
 ### changelog ##############################################
 %changelog
+* Tue Nov 25 2008 Stefan Fritsch
+- fix install scripts deleting startlinks on upgrade
+
 * Mon Oct 20 2008 Sebastian Trahm
 - register desktop file in autostart
 
