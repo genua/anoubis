@@ -55,6 +55,7 @@ do_start()
 	# XXX: MG: We need a better way to load our modules so early (Bug 262)
 	modprobe alf
 	modprobe sfs
+	modprobe ipc
 
 	start-stop-daemon --start --quiet --exec $DAEMON --test > /dev/null \
 		|| return 1

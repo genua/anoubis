@@ -45,6 +45,7 @@ start() {
 	    # XXX: MG: We need a better way to load our modules so early (Bug 262)
 	    modprobe alf || true
 	    modprobe sfs || true
+	    modprobe ipc || true
 
 		echo -n $"Starting anoubis daemon: "
 	    daemon /sbin/anoubisd $@
