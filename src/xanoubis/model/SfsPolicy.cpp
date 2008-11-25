@@ -38,8 +38,9 @@
 #include <sha2.h>
 #else
 #include <queue.h>
-#include <openssl/sha.h>
 #endif
+
+#include <openssl/sha.h>
 
 #include <netinet/in.h>
 #include <arpa/inet.h>

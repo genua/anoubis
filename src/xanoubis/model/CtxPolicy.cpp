@@ -36,9 +36,10 @@
 #include <sys/queue.h>
 #include <sha2.h>
 #else
-#include <openssl/sha.h>
 #include <queue.h>
 #endif
+
+#include <openssl/sha.h>
 
 #include <wx/string.h>
 #include <wx/intl.h>
