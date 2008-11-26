@@ -44,13 +44,33 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	sz_main = new wxBoxSizer( wxVERTICAL );
 	
 	sz_main->SetMinSize( wxSize( 780,-1 ) ); 
-	controlRuleSizer = new wxBoxSizer( wxHORIZONTAL );
+	wxFlexGridSizer* controlSizer;
+	controlSizer = new wxFlexGridSizer( 2, 4, 0, 0 );
+	controlSizer->SetFlexibleDirection( wxBOTH );
+	controlSizer->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+	
+	controlRuleSetText = new wxStaticText( this, wxID_ANY, _("Ruleset status:"), wxDefaultPosition, wxDefaultSize, 0|wxTAB_TRAVERSAL );
+	controlRuleSetText->Wrap( -1 );
+	controlRuleSetText->SetMinSize( wxSize( 110,-1 ) );
+	
+	controlSizer->Add( controlRuleSetText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	
+	controlRuleSetStatusText = new wxStaticText( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	controlRuleSetStatusText->Wrap( -1 );
+	controlSizer->Add( controlRuleSetStatusText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	
+	controlRuleSetText2 = new wxStaticText( this, wxID_ANY, _("/ Ruleset:"), wxDefaultPosition, wxDefaultSize, 0 );
+	controlRuleSetText2->Wrap( -1 );
+	controlSizer->Add( controlRuleSetText2, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	
+	controlRuleSetSaveButton = new wxButton( this, wxID_ANY, _("store"), wxDefaultPosition, wxDefaultSize, 0 );
+	controlSizer->Add( controlRuleSetSaveButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	controlRuleText = new wxStaticText( this, wxID_ANY, _("Rule:"), wxDefaultPosition, wxDefaultSize, 0 );
 	controlRuleText->Wrap( -1 );
-	controlRuleText->SetMinSize( wxSize( 100,-1 ) );
+	controlSizer->Add( controlRuleText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	controlRuleSizer->Add( controlRuleText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	controlRuleSizer = new wxBoxSizer( wxHORIZONTAL );
 	
 	wxString controlCreationChoiceChoices[] = { _("ALF Application"), _("ALF Filter"), _("Sandbox Application"), _("Sandbox Filter"), _("Context Application"), _("Context New"), _("SFS") };
 	int controlCreationChoiceNChoices = sizeof( controlCreationChoiceChoices ) / sizeof( wxString );
@@ -67,13 +87,6 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	wxArrayString controlUserChoiceChoices;
 	controlUserChoice = new wxChoice( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, controlUserChoiceChoices, 0 );
 	controlRuleSizer->Add( controlUserChoice, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
-	
-	controlRuleText1 = new wxStaticText( this, wxID_ANY, _("/ Rule:"), wxDefaultPosition, wxDefaultSize, 0 );
-	controlRuleText1->Wrap( -1 );
-	controlRuleSizer->Add( controlRuleText1, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
-	
-	controlRuleDeleteButton = new wxButton( this, wxID_ANY, _("delete"), wxDefaultPosition, wxDefaultSize, 0 );
-	controlRuleSizer->Add( controlRuleDeleteButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	
 	controlRuleSizer->Add( 1, 0, 1, wxEXPAND|wxALIGN_CENTER_VERTICAL, 5 );
@@ -106,37 +119,16 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	
 	controlRuleSizer->Add( controlFilterChoice, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	sz_main->Add( controlRuleSizer, 0, wxEXPAND, 5 );
+	controlSizer->Add( controlRuleSizer, 0, 0, 5 );
 	
-	wxBoxSizer* controlRuleSetSizer;
-	controlRuleSetSizer = new wxBoxSizer( wxHORIZONTAL );
+	controlRuleText1 = new wxStaticText( this, wxID_ANY, _("/ Rule:"), wxDefaultPosition, wxDefaultSize, 0 );
+	controlRuleText1->Wrap( -1 );
+	controlSizer->Add( controlRuleText1, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	controlRuleSetText = new wxStaticText( this, wxID_ANY, _("Ruleset:"), wxDefaultPosition, wxDefaultSize, 0|wxTAB_TRAVERSAL );
-	controlRuleSetText->Wrap( -1 );
-	controlRuleSetText->SetMinSize( wxSize( 100,-1 ) );
+	controlRuleDeleteButton = new wxButton( this, wxID_ANY, _("delete"), wxDefaultPosition, wxDefaultSize, 0 );
+	controlSizer->Add( controlRuleDeleteButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	controlRuleSetSizer->Add( controlRuleSetText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
-	
-	controlRuleSetSaveButton = new wxButton( this, wxID_ANY, _("store"), wxDefaultPosition, wxDefaultSize, 0 );
-	controlRuleSetSizer->Add( controlRuleSetSaveButton, 0, wxALL, 5 );
-	
-	
-	controlRuleSetSizer->Add( 0, 0, 1, wxEXPAND, 5 );
-	
-	controlOptionText = new wxStaticText( this, wxID_ANY, _("Table:"), wxDefaultPosition, wxDefaultSize, 0 );
-	controlOptionText->Wrap( -1 );
-	controlOptionText->Enable( false );
-	controlOptionText->Hide();
-	
-	controlRuleSetSizer->Add( controlOptionText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
-	
-	controlOptionButton = new wxButton( this, wxID_ANY, _("Options..."), wxDefaultPosition, wxDefaultSize, 0 );
-	controlOptionButton->Enable( false );
-	controlOptionButton->Hide();
-	
-	controlRuleSetSizer->Add( controlOptionButton, 0, wxALL, 5 );
-	
-	sz_main->Add( controlRuleSetSizer, 0, wxEXPAND, 5 );
+	sz_main->Add( controlSizer, 0, wxEXPAND, 5 );
 	
 	ruleListCtrl = new wxListCtrl( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLC_HRULES|wxLC_REPORT|wxLC_SINGLE_SEL );
 	sz_main->Add( ruleListCtrl, 1, wxALL|wxEXPAND, 5 );
@@ -638,10 +630,9 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	
 	// Connect Events
 	this->Connect( wxEVT_CLOSE_WINDOW, wxCloseEventHandler( DlgRuleEditorBase::OnClose ) );
+	controlRuleSetSaveButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::OnRuleSetSave ), NULL, this );
 	controlRuleCreateButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::OnRuleCreateButton ), NULL, this );
 	controlRuleDeleteButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::OnRuleDeleteButton ), NULL, this );
-	controlRuleSetSaveButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::OnRuleSetSave ), NULL, this );
-	controlOptionButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::OnTableOptionButtonClick ), NULL, this );
 	ruleListCtrl->Connect( wxEVT_COMMAND_LIST_ITEM_SELECTED, wxListEventHandler( DlgRuleEditorBase::OnLineSelected ), NULL, this );
 	commonHighProfileRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorBase::OnCommonHighProfileButton ), NULL, this );
 	commonMediumProfileRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorBase::OnCommonMediumProfileButton ), NULL, this );

@@ -40,8 +40,8 @@
 #include <wx/font.h>
 #include <wx/colour.h>
 #include <wx/settings.h>
-#include <wx/choice.h>
 #include <wx/button.h>
+#include <wx/choice.h>
 #include <wx/textctrl.h>
 #include <wx/sizer.h>
 #include <wx/listctrl.h>
@@ -65,24 +65,23 @@ class DlgRuleEditorBase : public wxFrame
 	private:
 	
 	protected:
-		wxBoxSizer* controlRuleSizer;
+		wxStaticText* controlRuleSetText;
+		wxStaticText* controlRuleSetStatusText;
+		wxStaticText* controlRuleSetText2;
+		wxButton* controlRuleSetSaveButton;
 		wxStaticText* controlRuleText;
+		wxBoxSizer* controlRuleSizer;
 		wxChoice* controlCreationChoice;
 		wxButton* controlRuleCreateButton;
 		wxStaticText* controlUserLabel;
 		wxChoice* controlUserChoice;
-		wxStaticText* controlRuleText1;
-		wxButton* controlRuleDeleteButton;
 		
 		wxStaticText* controlFilterText;
 		wxTextCtrl* controlFilterTextCtrl;
 		wxStaticText* controlFilterInText;
 		wxChoice* controlFilterChoice;
-		wxStaticText* controlRuleSetText;
-		wxButton* controlRuleSetSaveButton;
-		
-		wxStaticText* controlOptionText;
-		wxButton* controlOptionButton;
+		wxStaticText* controlRuleText1;
+		wxButton* controlRuleDeleteButton;
 		wxListCtrl* ruleListCtrl;
 		wxNotebook* ruleEditNotebook;
 		wxScrolledWindow* commonNbPanel;
@@ -193,10 +192,9 @@ class DlgRuleEditorBase : public wxFrame
 		
 		// Virtual event handlers, overide them in your derived class
 		virtual void OnClose( wxCloseEvent& event ){ event.Skip(); }
+		virtual void OnRuleSetSave( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnRuleCreateButton( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnRuleDeleteButton( wxCommandEvent& event ){ event.Skip(); }
-		virtual void OnRuleSetSave( wxCommandEvent& event ){ event.Skip(); }
-		virtual void OnTableOptionButtonClick( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnLineSelected( wxListEvent& event ){ event.Skip(); }
 		virtual void OnCommonHighProfileButton( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnCommonMediumProfileButton( wxCommandEvent& event ){ event.Skip(); }

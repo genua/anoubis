@@ -67,6 +67,7 @@ PolicyRuleSet::PolicyRuleSet(int priority, uid_t uid,
 	id_ = wxNewId();
 	uid_ = uid;
 	hasErrors_ = false;
+	isModified_ = false;
 	ruleSet_ = NULL;
 	priority_ = priority;
 	origin_ = wxT("Daemon");
@@ -82,6 +83,7 @@ PolicyRuleSet::PolicyRuleSet(int priority, uid_t uid, wxString fileName,
 	id_ = wxNewId();
 	uid_ = uid;
 	hasErrors_ = false;
+	isModified_ = false;
 	ruleSet_ = NULL;
 	priority_ = priority;
 	origin_ = fileName;
@@ -714,6 +716,7 @@ PolicyRuleSet::clearModified(void)
 	RuleEditorChecksumVisitor	seeker(0);
 
 	this->accept(seeker);
+	isModified_ = false;
 }
 
 bool
@@ -823,4 +826,16 @@ bool
 PolicyRuleSet::hasErrors(void) const
 {
 	return (hasErrors_);
+}
+
+bool
+PolicyRuleSet::isModified(void) const
+{
+	return (isModified_);
+}
+
+void
+PolicyRuleSet::setModified(bool modified)
+{
+	isModified_ = modified;
 }

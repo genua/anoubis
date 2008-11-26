@@ -217,6 +217,8 @@ DlgRuleEditor::DlgRuleEditor(wxWindow* parent) : DlgRuleEditorBase(parent)
 		this->controlRuleDeleteButton->Disable();
 	}
 
+	controlRuleSetStatusText->SetLabel(wxT("no ruleset loaded"));
+
 	userList = wxGetApp().getListOfUsersName();
 	controlUserChoice->Clear();
 	for (size_t i=0; i<userList.GetCount(); i++) {
@@ -481,18 +483,21 @@ void
 DlgRuleEditor::OnCommonLogNone(wxCommandEvent& )
 {
 	updateLog(APN_LOG_NONE);
+	modified();
 }
 
 void
 DlgRuleEditor::OnCommonLogLog(wxCommandEvent& )
 {
 	updateLog(APN_LOG_NORMAL);
+	modified();
 }
 
 void
 DlgRuleEditor::OnCommonLogAlert(wxCommandEvent& )
 {
 	updateLog(APN_LOG_ALERT);
+	modified();
 }
 
 void
@@ -519,6 +524,7 @@ void
 DlgRuleEditor::OnAppBinaryTextCtrl(wxCommandEvent& event)
 {
 	updateBinName(event.GetString());
+	modified();
 }
 
 void
@@ -530,6 +536,7 @@ void
 DlgRuleEditor::OnSfsBinaryTextCtrl(wxCommandEvent& event)
 {
 	updateBinName(event.GetString());
+	modified();
 }
 
 void
@@ -551,6 +558,7 @@ DlgRuleEditor::OnAppBinaryModifyButton(wxCommandEvent& )
 
 	if (fileDlg->ShowModal() == wxID_OK) {
 		updateBinName(fileDlg->GetPath());
+		modified();
 	}
 }
 
@@ -576,12 +584,14 @@ DlgRuleEditor::OnAppUpdateChkSumButton(wxCommandEvent& )
 		appPolicy->setHashValue(csum);
 		appPolicy->accept(updateTable);
 		appPolicy->accept(updateWidgets);
+		modified();
 	} else if (policy->IsKindOf(CLASSINFO(CtxPolicy))) {
 		CtxPolicy	*ctxPolicy = (CtxPolicy*)policy;
 		csum = ctxPolicy->getCurrentSum();
 		ctxPolicy->setHashValue(csum);
 		ctxPolicy->accept(updateTable);
 		ctxPolicy->accept(updateWidgets);
+		modified();
 	}
 }
 
@@ -610,9 +620,11 @@ DlgRuleEditor::OnAppValidateChkSumButton(wxCommandEvent& )
 		if (ret == 1) {
 			updateVisitor.setPropagation(false);
 			policy->accept(updateVisitor);
+			modified();
 		} else if (ret == 0) {
 			wxGetApp().calChecksum(policy->getBinaryName());
 			wxBeginBusyCursor();
+			modified();
 		} else if (ret == -2) {
 			message = _("Wrong file access permission");
 			title = _("File is not set readable for the user.");
@@ -629,9 +641,11 @@ DlgRuleEditor::OnAppValidateChkSumButton(wxCommandEvent& )
 		if (ret == 1) {
 			updateVisitor.setPropagation(false);
 			policy->accept(updateVisitor);
+			modified();
 		} else if (ret == 0) {
 			wxGetApp().calChecksum(policy->getBinaryName());
 			wxBeginBusyCursor();
+			modified();
 		} else if (ret == -2) {
 			message = _("Wrong file access permission");
 			title = _("File is not set readable for the user.");
@@ -710,6 +724,7 @@ DlgRuleEditor::OnRuleCreateButton(wxCommandEvent& )
 		wxMessageBox(_("Could not create new rule."), _("Error"),
 		    wxOK, this);
 	} else {
+		modified();
 		loadRuleSet();
 	}
 }
@@ -737,6 +752,7 @@ DlgRuleEditor::OnRuleDeleteButton(wxCommandEvent& )
 	}
 
 	rs->deletePolicy(selectedId_);
+	modified();
 }
 
 void
@@ -751,102 +767,119 @@ void
 DlgRuleEditor::OnAlfAllowRadioButton(wxCommandEvent& )
 {
 	updateAction(APN_ACTION_ALLOW);
+	modified();
 }
 
 void
 DlgRuleEditor::OnAlfDenyRadioButton(wxCommandEvent& )
 {
 	updateAction(APN_ACTION_DENY);
+	modified();
 }
 
 void
 DlgRuleEditor::OnAlfAskRadioButton(wxCommandEvent& )
 {
 	updateAction(APN_ACTION_ASK);
+	modified();
 }
 
 void
 DlgRuleEditor::OnAlfFilterRadioButton(wxCommandEvent& )
 {
 	updateType(APN_ALF_FILTER);
+	modified();
 }
 
 void
 DlgRuleEditor::OnAlfCapRadioButton(wxCommandEvent& )
 {
 	updateType(APN_ALF_CAPABILITY);
+	modified();
 }
 
 void
 DlgRuleEditor::OnAlfDefaultRadioButton(wxCommandEvent& )
 {
 	updateType(APN_DEFAULT);
+	modified();
 }
 
 void
 DlgRuleEditor::OnAlfTcpRadioButton(wxCommandEvent& )
 {
 	updateProtocol(IPPROTO_TCP);
+	modified();
 }
 
 void
 DlgRuleEditor::OnAlfUdpRadioButton(wxCommandEvent& )
 {
 	updateProtocol(IPPROTO_UDP);
+	modified();
 }
 
 void
 DlgRuleEditor::OnAlfInetRadioButton(wxCommandEvent& )
 {
 	updateAddrFamily(AF_INET);
+	modified();
 }
 
 void
 DlgRuleEditor::OnAlfInet6RadioButton(wxCommandEvent& )
 {
 	updateAddrFamily(AF_INET6);
+	modified();
 }
 
 void
 DlgRuleEditor::OnAlfAnyRadioButton(wxCommandEvent& )
 {
 	updateAddrFamily(0);
+	modified();
 }
 
 void
 DlgRuleEditor::OnAlfRawCapRadioButton(wxCommandEvent& )
 {
 	updateCapType(APN_ALF_CAPRAW);
+	modified();
 }
 
 void
 DlgRuleEditor::OnAlfOtherCapRadioButton(wxCommandEvent& )
 {
 	updateCapType(APN_ALF_CAPOTHER);
+	modified();
 }
 
 void
 DlgRuleEditor::OnAlfAllCapRadioButton(wxCommandEvent& )
 {
 	updateCapType(APN_ALF_CAPALL);
+	modified();
 }
 
 void
 DlgRuleEditor::OnAlfAcceptRadioButton(wxCommandEvent& )
 {
 	updateDirection(APN_ACCEPT);
+	modified();
 }
 
 void
 DlgRuleEditor::OnAlfConnectRadioButton(wxCommandEvent& )
 {
 	updateDirection(APN_CONNECT);
+	modified();
 }
 
 void
 DlgRuleEditor::OnAlfBothRadioButton(wxCommandEvent& )
 {
 	updateDirection(APN_BOTH);
+	modified();
 }
 
 void
@@ -868,6 +901,7 @@ DlgRuleEditor::OnSfsBinaryModifyButton(wxCommandEvent& )
 
 	if (fileDlg->ShowModal() == wxID_OK) {
 		updateBinName(fileDlg->GetPath());
+		modified();
 	}
 }
 
@@ -891,6 +925,7 @@ DlgRuleEditor::OnSfsUpdateChkSumButton(wxCommandEvent& )
 	updateVisitor.setPropagation(false);
 	policy->accept(updateVisitor);
 	policy->accept(updateTable);
+	modified();
 }
 
 void
@@ -917,10 +952,12 @@ DlgRuleEditor::OnSfsValidateChkSumButton(wxCommandEvent& )
 	case  1:
 		updateWidgets.setPropagation(false);
 		policy->accept(updateWidgets);
+		modified();
 		break;
 	case  0:
 		wxGetApp().calChecksum(policy->getBinaryName());
 		wxBeginBusyCursor();
+		modified();
 		break;
 	case (-2):
 		message = _("Wrong file access permission");
@@ -972,6 +1009,9 @@ DlgRuleEditor::OnRuleSetSave(wxCommandEvent& )
 	rs->clearModified();
 	wxGetApp().usePolicy(rs);
 
+	controlRuleSetStatusText->SetLabel(wxT("sent to daemon"));
+	controlRuleSetSaveButton->Disable();
+
 	if (geteuid() == 0) {
 		wxProgressDialog progDlg(_("Rule Editor"),
 		    _("Sending admin rule sets ..."),
@@ -999,6 +1039,18 @@ DlgRuleEditor::loadRuleSet(void)
 
 	ruleSet = profileCtrl->getRuleSetToShow(userRuleSetId_, this);
 	if (ruleSet != NULL) {
+		wxString text;
+
+		if (ruleSet->isModified()) {
+			modified();
+		} else {
+			text = _("loaded from ") + ruleSet->getOrigin();
+			if (ruleSet->hasErrors()) {
+				text += _(" but has error");
+			}
+			controlRuleSetStatusText->SetLabel(text);
+		}
+
 		addVisitor.setAdmin(false);
 		ruleSet->accept(addVisitor);
 	}
@@ -1106,6 +1158,7 @@ void
 DlgRuleEditor::OnAlfStateTimeoutChange(wxSpinEvent& event)
 {
 	updateTimeout(event.GetPosition());
+	modified();
 }
 
 void
@@ -1119,6 +1172,7 @@ DlgRuleEditor::onAlfSrcAddrTextCtrlEnter(wxCommandEvent& event)
 
 	updateAlfSrcAddr(event.GetString(), alfSrcAddrNetSpinCtrl->GetValue(),
 	    af);
+	modified();
 }
 
 void
@@ -1131,6 +1185,7 @@ DlgRuleEditor::onAlfDstAddrTextCtrlEnter(wxCommandEvent& event)
 	int af = alfInet6RadioButton->GetValue() ? AF_INET6 : AF_INET;
 	updateAlfDstAddr(event.GetString(), alfDstAddrNetSpinCtrl->GetValue(),
 	    af);
+	modified();
 }
 
 void
@@ -1143,6 +1198,7 @@ DlgRuleEditor::OnAlfSrcNetmaskSpinCtrl(wxSpinEvent& event)
 	int af = alfInet6RadioButton->GetValue() ? AF_INET6 : AF_INET;
 	updateAlfSrcAddr(alfSrcAddrTextCtrl->GetValue(),
 	    event.GetPosition(), af);
+	modified();
 }
 
 void
@@ -1156,6 +1212,7 @@ DlgRuleEditor::OnAlfDstNetmaskSpinCtrl(wxSpinEvent& event)
 	int af = alfInet6RadioButton->GetValue() ? AF_INET6 : AF_INET;
 	updateAlfDstAddr(alfDstAddrTextCtrl->GetValue(),
 	    event.GetPosition(), af);
+	modified();
 }
 
 void
@@ -1169,6 +1226,7 @@ DlgRuleEditor::onAlfSrcPortTextCtrlEnter(wxCommandEvent& event)
 		event.GetString().ToULong(&port);
 	}
 	updateAlfSrcPort(port);
+	modified();
 }
 
 void
@@ -1182,6 +1240,7 @@ DlgRuleEditor::onAlfDstPortTextCtrlEnter(wxCommandEvent& event)
 		event.GetString().ToULong(&port);
 	}
 	updateAlfDstPort(port);
+	modified();
 }
 
 void
@@ -1377,6 +1436,7 @@ DlgRuleEditor::OnChecksumCalc(TaskEvent &event)
 		policy->accept(updateWidgets);
 		wxEndBusyCursor();
 	}
+	modified();
 
 	event.Skip();
 }
@@ -1467,4 +1527,26 @@ DlgRuleEditor::selectLine(unsigned long index)
 
 	selecter = (wxListView*)ruleListCtrl;
 	selecter->Select(index);
+}
+
+void
+DlgRuleEditor::modified(void)
+{
+	wxString	 text;
+	ProfileCtrl	*profileCtrl;
+	PolicyRuleSet	*ruleSet;
+
+	text = _("modified");
+
+	profileCtrl = ProfileCtrl::instance();
+	ruleSet = profileCtrl->getRuleSetToShow(userRuleSetId_, this);
+	if (ruleSet != NULL) {
+		ruleSet->setModified(true);
+		if (ruleSet->hasErrors()) {
+			text += _(" but has errors");
+		}
+	}
+
+	controlRuleSetStatusText->SetLabel(text);
+	controlRuleSetSaveButton->Enable();
 }

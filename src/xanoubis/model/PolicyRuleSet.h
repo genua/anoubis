@@ -60,6 +60,7 @@ class PolicyRuleSet : public wxEvtHandler
 		long			 id_;
 		uid_t			 uid_;
 		bool			 hasErrors_;
+		bool			 isModified_;
 		struct apn_ruleset	*ruleSet_;
 		PolicyList		 alfList_;
 		PolicyList		 sfsList_;
@@ -110,6 +111,8 @@ class PolicyRuleSet : public wxEvtHandler
 		uid_t getUid(void) const;
 		int getPriority(void) const;
 		bool hasErrors(void) const;
+		bool isModified(void) const;
+		void setModified(bool);
 };
 
 #endif	/* _POLICYRULESET_H_ */

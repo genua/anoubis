@@ -201,6 +201,7 @@ class DlgRuleEditor : public DlgRuleEditorBase
 		void OnChecksumGet(TaskEvent &);
 
 		void selectLine(unsigned long);
+		void modified(void);
 
 	public:
 		DlgRuleEditor(wxWindow *);
