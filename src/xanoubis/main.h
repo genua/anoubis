@@ -50,6 +50,7 @@
 
 #include <apn.h>
 #include <map>
+#include <list>
 
 #include "ctassert.h"
 #include "ComCsumAddTask.h"
@@ -95,8 +96,7 @@ class AnoubisGuiApp : public wxApp
 		void fillUserList(void);
 
 		ComRegistrationTask	regTask_;
-		ComPolicyRequestTask	adminPolicyRequestTask_;
-		ComPolicyRequestTask	userPolicyRequestTask_;
+		std::list<ComPolicyRequestTask *>	requestTaskList_;
 		ComPolicySendTask	policySendTask_;
 		ComCsumAddTask		csumAddTask_;
 		ComCsumGetTask		csumGetTask_;

@@ -193,6 +193,8 @@ AnoubisGuiApp::OnExit(void)
 	jobCtrl->stop();
 	delete jobCtrl;
 
+	requestTaskList_.clear();
+
 	return (result);
 }
 
@@ -398,11 +400,23 @@ AnoubisGuiApp::connectCommunicator(bool doConnect)
 void
 AnoubisGuiApp::requestPolicy(void)
 {
-	adminPolicyRequestTask_.setRequestParameter(0, geteuid());
-	userPolicyRequestTask_.setRequestParameter(1, geteuid());
+	int idx;
+	unsigned long uid;
+	std::list<ComPolicyRequestTask *>::const_iterator it;
+	wxArrayString userList = getListOfUsersId();
 
-	JobCtrl::getInstance()->addTask(&adminPolicyRequestTask_);
-	JobCtrl::getInstance()->addTask(&userPolicyRequestTask_);
+	if (requestTaskList_.empty()) {
+		requestTaskList_.push_back(new ComPolicyRequestTask(1, geteuid()));
+		for (idx=userList.GetCount() - 1; idx >= 0; idx--) {
+			userList.Item(idx).ToULong(&uid);
+			requestTaskList_.push_back(
+			    new ComPolicyRequestTask(0, (uid_t)uid));
+		}
+	}
+
+	for (it=requestTaskList_.begin(); it != requestTaskList_.end(); it++) {
+		JobCtrl::getInstance()->addTask(*it);
+	}
 }
 
 void
