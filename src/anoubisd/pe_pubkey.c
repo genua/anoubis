@@ -63,6 +63,7 @@ struct pe_pubkey {
 	TAILQ_ENTRY(pe_pubkey)	 entry;
 	uid_t			 uid;
 	EVP_PKEY		*pubkey;
+	X509			*cert;
 };
 TAILQ_HEAD(pe_pubkey_db, pe_pubkey) *pubkeys;
 
@@ -167,9 +168,16 @@ pe_pubkey_load_db(const char *dirname, struct pe_pubkey_db *pubkeys)
 		}
 		free(filename);
 
-		if ((pk->pubkey = PEM_read_PUBKEY(fp, NULL, NULL, NULL))
+		if ((pk->cert = PEM_read_X509(fp, NULL, NULL, NULL))
 		    == NULL) {
-			log_warn("PEM_read_PUBKEY");
+			log_warn("PEM_read_X509");
+			free(pk);
+			fclose(fp);
+			continue;
+		}
+		if ((pk->pubkey = X509_get_pubkey(pk->cert)) == NULL) {
+			log_warn("X509_get_pubkey");
+			X509_free(pk->cert);
 			free(pk);
 			fclose(fp);
 			continue;
@@ -199,6 +207,7 @@ pe_pubkey_flush_db(struct pe_pubkey_db *pk)
 		next = TAILQ_NEXT(p, entry);
 		TAILQ_REMOVE(pk, p, entry);
 
+		X509_free(p->cert);
 		EVP_PKEY_free(p->pubkey);
 		free(p);
 	}

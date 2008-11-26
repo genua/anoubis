@@ -44,7 +44,7 @@
 
 struct sfshash_entry;
 
-#define CSTYPE_NEGATIVE		0x1000	
+#define CSTYPE_NEGATIVE		0x1000
 #define CSTYPE_MASK		0xfff
 #define CSTYPE_UID		1
 #define CSTYPE_KEY		2
@@ -52,8 +52,8 @@ struct sfshash_entry;
 struct sfshash_entry {
 	TAILQ_ENTRY(sfshash_entry)	hash_link;
 	TAILQ_ENTRY(sfshash_entry)	lru_link;
-	int			 	cstype;
-	int			 	slot;
+	int				cstype;
+	int				slot;
 	union {
 		char			*key;
 		uid_t			 uid;
@@ -280,10 +280,11 @@ sfshash_readsum(const char *path, int cstype, const char *key, uid_t uid,
 	switch(cstype) {
 	case CSTYPE_UID:
 		ret = sfs_checksumop_chroot(path, ANOUBIS_CHECKSUM_OP_GET,
-				uid, csum, ANOUBIS_CS_LEN);
+				uid, csum, NULL, NULL, ANOUBIS_CS_LEN, 0);
 		break;
 	case CSTYPE_KEY:
-		/* XXX CEH: Must be implemented! */
+		/* XXX CEH: Must be implemented!
+		 * XXX KM: YES! */
 		key = key;
 		return -ENOSYS;
 		break;

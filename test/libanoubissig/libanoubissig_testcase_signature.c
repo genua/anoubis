@@ -39,10 +39,12 @@
 
 const char pri[] = "private.pem";
 const char pub[] = "public.pem";
+const char cert[] = "key_self.crt";
 const char testfile[] = "data.txt";
 
 char	 workdir[32];
 char	*prikey = NULL,
+	*certfile = NULL,
 	*pubkey = NULL,
 	*infile = NULL,
 	 pass[] = "test";
@@ -79,16 +81,22 @@ static int
 libanoubissig_tc_exec(const char *cmd, ...)
 {
 	va_list ap;
-	char str[128], syscmd[128];
+	char *str, *syscmd;
 	int rc;
 
 	va_start(ap, cmd);
-	vsnprintf(str, sizeof(str), cmd, ap);
+	if (vasprintf(&str, cmd, ap) < 0)
+		return -1;
 	va_end(ap);
 
-	snprintf(syscmd, sizeof(syscmd), "(%s) >/dev/null 2>&1", str);
+	if (asprintf(&syscmd, "(%s) >/dev/null 2>&1", str) < 0)
+		return -1;
 
 	rc = system(syscmd);
+
+	free(str);
+	free(syscmd);
+
 	return WIFEXITED(rc) ? WEXITSTATUS(rc) : -1;
 }
 
@@ -97,10 +105,50 @@ libanoubissig_tc_setup(void)
 {
 	char *s;
 
-	strcpy(workdir, "/tmp/tc_cvs_XXXXXX");
+	strcpy(workdir, "/tmp/tc_sig_XXXXXX");
 	s = mkdtemp(workdir);
 
+	libanoubissig_tc_exec("echo \"[ req ] \" >> %s/openssl.cnf", workdir);
+	libanoubissig_tc_exec("echo \"default_bits = 2048 \" >> %s/openssl.cnf",
+	    workdir);
+	libanoubissig_tc_exec("echo \"default_keyfile = ./private/root.pem\" "
+	    ">> %s/openssl.cnf", workdir);
+	libanoubissig_tc_exec("echo \"default_md = sha1 \" >> %s/openssl.cnf",
+	    workdir);
+	libanoubissig_tc_exec("echo \"prompt = no \" >> %s/openssl.cnf",
+	    workdir);
+	libanoubissig_tc_exec("echo \"distinguished_name = "
+	    "root_ca_distinguished_name \" >> %s/openssl.cnf", workdir);
+	libanoubissig_tc_exec("echo \"x509_extensions = v3_ca \" >> "
+	    "%s/openssl.cnf", workdir);
+	libanoubissig_tc_exec("echo \"[ root_ca_distinguished_name ]"
+	    " \" >> %s/openssl.cnf", workdir);
+	libanoubissig_tc_exec("echo \"countryName = DE \" >> "
+	    "%s/openssl.cnf", workdir);
+	libanoubissig_tc_exec("echo \"stateOrProvinceName = BAYERN \" "
+	    ">> %s/openssl.cnf", workdir);
+	libanoubissig_tc_exec("echo \"localityName = Muenchen \" "
+	    ">> %s/openssl.cnf", workdir);
+	libanoubissig_tc_exec("echo \"0.organizationName = Example Inc"
+	    " \" >> %s/openssl.cnf", workdir);
+	libanoubissig_tc_exec("echo \"commonName = Example Inc Root CA"
+	    " \" >> %s/openssl.cnf", workdir);
+	libanoubissig_tc_exec("echo \"emailAddress = dad@example.com \" "
+	    ">> %s/openssl.cnf", workdir);
+	libanoubissig_tc_exec("echo \"[ v3_ca ] \" >> %s/openssl.cnf", workdir);
+	libanoubissig_tc_exec("echo \"subjectKeyIdentifier=hash "
+	    " \" >> %s/openssl.cnf", workdir);
+	libanoubissig_tc_exec(
+	    "echo \"authorityKeyIdentifier=keyid:always,issuer:always"
+	    " \" >> %s/openssl.cnf", workdir);
+	libanoubissig_tc_exec("echo \"basicConstraints = CA:true "
+	    " \" >> %s/openssl.cnf", workdir);
+
 	libanoubissig_tc_exec("openssl genrsa > %s/%s", workdir, pri);
+	libanoubissig_tc_exec("openssl req -new -days 1 -x509 \
+	    -subj /C=US/ST=Oregon/L=Portland/CN=www.madboa.com -out %s/%s \
+	    -key %s/%s -config %s/openssl.cnf", workdir, cert, workdir, pri,
+	    workdir);
 	libanoubissig_tc_exec("openssl rsa -in %s/%s -pubout -out %s/%s",
 	    workdir, pri, workdir, pub);
 	libanoubissig_tc_exec("echo \"bla\" >  %s/%s", workdir, testfile);
@@ -108,7 +156,9 @@ libanoubissig_tc_setup(void)
 		return;
 	if (asprintf(&pubkey, "%s/%s", workdir, pub) < 0)
 		return;
-	if (asprintf(&infile, "%s/%s", workdir, testfile) <0)
+	if (asprintf(&infile, "%s/%s", workdir, testfile) < 0)
+		return;
+	if (asprintf(&certfile, "%s/%s", workdir, cert) < 0)
 		return;
 }
 
@@ -131,9 +181,8 @@ START_TEST(sign_and_verify_match_tc)
 
 	fail_if(prikey == NULL || pubkey == NULL || infile == NULL,
 	    "Error while setup testcase");
-	OpenSSL_add_all_algorithms();
 
-	as = anoubis_sig_priv_init(prikey, ANOUBIS_SIG_HASH_SHA1, pass, 0);
+	as = anoubis_sig_priv_init(prikey, certfile, pass, 0);
 	fail_if(as == NULL, "Could not load Private Key");
 
 	rc = libanoubis_tc_calc_sum(infile, csum);
@@ -144,7 +193,7 @@ START_TEST(sign_and_verify_match_tc)
 
 	anoubis_sig_free(as);
 
-	as = anoubis_sig_pub_init(pubkey, ANOUBIS_SIG_HASH_SHA1, pass, 0);
+	as = anoubis_sig_pub_init(pubkey, certfile, pass, 0);
 	fail_if(as == NULL, "Could not load Public Key");
 
 	rc = anoubis_verify_csum(as, csum, sign + ANOUBIS_SIG_HASH_SHA256_LEN,

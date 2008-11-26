@@ -28,6 +28,10 @@
 
 #include "config.h"
 
+#ifdef S_SPLINT_S
+#include "splint-includes.h"
+#endif
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -35,32 +39,54 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <dirent.h>
 #include <limits.h>
 #include <string.h>
 #include <strings.h>
 
-#ifdef S_SPLINT_S
-#include "splint-includes.h"
-#endif
-
-#include <dirent.h>
+#include <openssl/x509.h>
+#include <openssl/x509v3.h>
+#include <openssl/pem.h>
+#include <openssl/evp.h>
+#include <openssl/objects.h>
 
 #ifdef LINUX
+#include <queue.h>
 #include <linux/anoubis_sfs.h>
 #include <bsdcompat.h>
 #else
+#include <sys/queue.h>
 #include <dev/anoubis_sfs.h>
 #endif
 
+#include <anoubis_sig.h>
 #include <anoubis_protocol.h>
 
 #include "anoubisd.h"
 #include "sfs.h"
+#define ANOUBIS_CERT_DIR "/var/lib/anoubis/policy/pubkeys"
 
-static int	sfs_readchecksum(const char *csum_file, unsigned char *md);
-static int	sfs_deletechecksum(const char *csum_file);
-static int	check_empty_dir(const char *path);
-char *		insert_escape_seq(const char *path, int dir);
+static int	 sfs_readchecksum(const char *csum_file, unsigned char *md);
+static int	 sfs_readsignature(const char *csum_file, u_int8_t **sign,
+		     int *siglen);
+static int	 sfs_deletechecksum(const char *csum_file);
+static int	 check_empty_dir(const char *path);
+char		*insert_escape_seq(const char *path, int dir);
+static int	 sfs_cert_keyid(unsigned char **keyid, X509 *cert);
+EVP_PKEY	*sfs_pubkey_get_by_uid(uid_t u);
+EVP_PKEY	*sfs_pubkey_get_by_keyid(unsigned char *keyid);
+
+struct sfs_cert {
+	TAILQ_ENTRY(sfs_cert)	 entry;
+	uid_t			 uid;
+	EVP_PKEY		*pkey;
+	unsigned char		*keyid;
+	int			 kidlen;
+	X509			*req;
+};
+TAILQ_HEAD(sfs_cert_db, sfs_cert) *sfs_certs;
+
+static int	 sfs_cert_load_db(const char *, struct sfs_cert_db *);
 
 #if 0
 
@@ -299,10 +325,18 @@ convert_user_path_chroot(const char * path, char **dir, int is_dir)
 
 static int
 __sfs_checksumop(const char *path, unsigned int operation, uid_t uid,
-    u_int8_t *md, int len, int is_chroot)
+    u_int8_t *md, u_int8_t **sign, int *siglen, int len, int idlen,
+    int is_chroot)
 {
 	char *csum_path = NULL, *csum_file = NULL;
-	int ret;
+	char *sigfile = NULL;
+	u_int8_t *verify = NULL;
+	u_int8_t *keyid = NULL;
+	EVP_PKEY *pkey = NULL;
+	int fd;
+	int vlen = 0;
+	int written = 0;
+	int ret, i;
 
 	if (is_chroot && (operation != ANOUBIS_CHECKSUM_OP_GET))
 		return -EPERM;
@@ -311,13 +345,31 @@ __sfs_checksumop(const char *path, unsigned int operation, uid_t uid,
 	if (ret < 0)
 		return ret;
 
-	if (md == NULL) {
-		ret = -EINVAL;
-		goto out;
-	}
+	if (operation == ANOUBIS_CHECKSUM_OP_ADDSIG ||
+	    operation == ANOUBIS_CHECKSUM_OP_GETSIG ||
+	    operation == ANOUBIS_CHECKSUM_OP_DELSIG) {
+		if (idlen <= 0) {
+			ret = -EINVAL;
+			goto out;
+		}
 
-	if (operation == ANOUBIS_CHECKSUM_OP_ADDSIG) {
-		if (asprintf(&csum_file, "%s/%d.sig", csum_path, uid) == -1) {
+		if ((keyid = calloc(idlen, sizeof(u_int8_t))) == NULL) {
+			ret = -ENOMEM;
+			goto out;
+		}
+		memcpy(keyid, md, idlen);
+		if ((pkey = sfs_pubkey_get_by_keyid(keyid)) == NULL) {
+			ret = -EINVAL;
+			goto out;
+		}
+		if ((sigfile = calloc((2*idlen)+1, sizeof(char))) == NULL) {
+			ret = -ENOMEM;
+			goto out;
+		}
+		for (i = 0; i < idlen; i++)
+			sprintf(&sigfile[2*i], "%2.2x", md[i]);
+		sigfile[2*i] = '\0';
+		if (asprintf(&csum_file, "%s/k%s", csum_path, sigfile) == -1) {
 			ret = -ENOMEM;
 			goto out;
 		}
@@ -327,10 +379,29 @@ __sfs_checksumop(const char *path, unsigned int operation, uid_t uid,
 			goto out;
 		}
 	}
+
+	if (operation == ANOUBIS_CHECKSUM_OP_ADDSIG) {
+		/* Before we add the signature we should verify it */
+		vlen = len - ANOUBIS_CS_LEN;
+		if ((verify = calloc(vlen, sizeof(u_int8_t))) == NULL) {
+			ret = -ENOMEM;
+			goto out;
+		}
+		memcpy(verify, md + ANOUBIS_CS_LEN + idlen, vlen);
+		if ((ret = anoubisd_verify_csum(pkey, md + idlen, verify,
+		   vlen)) != 1) {
+			log_warn("could not verify %d", ret);
+			ret =-EINVAL;
+			goto out;
+		}
+	}
+	/* And now we finally adding the signature */
 	if ((operation == ANOUBIS_CHECKSUM_OP_ADDSUM) ||
 	    (operation == ANOUBIS_CHECKSUM_OP_ADDSIG)) {
-		int fd;
-		int written = 0;
+		if (md == NULL) {
+			ret = -EINVAL;
+			goto out;
+		}
 
 		if (len < ANOUBIS_CS_LEN) {
 			ret = -EINVAL;
@@ -353,7 +424,7 @@ __sfs_checksumop(const char *path, unsigned int operation, uid_t uid,
 		}
 
 		while (written < len) {
-			ret = write(fd, md + written, len - written);
+			ret = write(fd, md + idlen + written, len - written);
 			if (ret < 0) {
 				ret = -errno;
 				unlink(csum_file);
@@ -364,17 +435,54 @@ __sfs_checksumop(const char *path, unsigned int operation, uid_t uid,
 		}
 		close(fd);
 		ret = 0;
-	} else if (operation == ANOUBIS_CHECKSUM_OP_DEL) {
+	} else if (operation == ANOUBIS_CHECKSUM_OP_DEL ||
+	    operation == ANOUBIS_CHECKSUM_OP_DELSIG) {
 		ret = sfs_deletechecksum(csum_file);
 		if (ret < 0)
 			ret = -errno;
 	} else if (operation == ANOUBIS_CHECKSUM_OP_GET) {
 		ret = sfs_readchecksum(csum_file, md);
+	} else if (operation == ANOUBIS_CHECKSUM_OP_GETSIG) {
+		if (idlen <= 0) {
+			ret = -EINVAL;
+			goto out;
+		}
+		*siglen = EVP_PKEY_size(pkey) + ANOUBIS_CS_LEN;
+		if ((*sign = calloc(*siglen, sizeof(u_int8_t))) == NULL) {
+			ret = -ENOMEM;
+			goto out;
+		}
+		ret = sfs_readsignature(csum_file, sign, siglen);
+		if (ret < 0) {
+			goto out;
+		}
+		/* Before we send the signature we should verify it */
+		vlen = *siglen - ANOUBIS_CS_LEN;
+		if ((verify = calloc(vlen, sizeof(u_int8_t))) == NULL) {
+			log_warn("calloc");
+			ret = -ENOMEM;
+			goto out;
+		}
+		memcpy(verify, *sign + ANOUBIS_CS_LEN, vlen);
+		if ((ret = anoubisd_verify_csum(pkey, *sign, verify, vlen))
+		    != 1) {
+			log_warn("could not verify %d", ret);
+			ret =-EPERM;
+			free(*sign);
+			*sign = NULL;
+			*siglen = 0;
+			goto out;
+		} else {
+			ret = 0;
+		}
 	} else {
 		ret = -ENOSYS;
 	}
-
 out:
+	if (sigfile)
+		free(sigfile);
+	if (verify)
+		free(verify);
 	if (csum_path)
 		free(csum_path);
 	if (csum_file)
@@ -384,16 +492,55 @@ out:
 
 int
 sfs_checksumop(const char *path, unsigned int operation, uid_t uid,
-    u_int8_t *md, int len)
+    u_int8_t *md, u_int8_t **sign, int *siglen, int len, int idlen)
 {
-	return __sfs_checksumop(path, operation, uid, md, len, 0);
+	return __sfs_checksumop(path, operation, uid, md, sign, siglen, len,
+	    idlen, 0);
 }
 
 int
 sfs_checksumop_chroot(const char *path, unsigned int operation, uid_t uid,
-    u_int8_t *md, int len)
+    u_int8_t *md, u_int8_t **sign, int *siglen, int len, int idlen)
 {
-	return __sfs_checksumop(path, operation, uid, md, len, 1);
+	return __sfs_checksumop(path, operation, uid, md, sign, siglen, len,
+	    idlen, 1);
+}
+
+static int
+sfs_readsignature(const char *csum_file, u_int8_t **sign, int *siglen)
+{
+	int fd;
+	int ret = 0;
+	int bytes_read = 0;
+	int size = *siglen;
+
+	if (csum_file == NULL || sign == NULL || siglen == NULL) {
+		return -EINVAL;
+	}
+
+	fd = open(csum_file, O_RDONLY);
+	if (fd < 0)
+		return -errno;
+
+
+	while (bytes_read < size) {
+		ret = read(fd, *sign + bytes_read, size - bytes_read);
+		if (ret < 0) {
+			ret = -errno;
+			*siglen = 0;
+			break;
+		} else if (ret == 0) {
+			ret = -EIO;
+			*siglen = 0;
+			break;
+		}
+		bytes_read += ret;
+	}
+	close(fd);
+	if (ret < 0) {
+		return ret;
+	}
+	return 0;
 }
 
 static int
@@ -517,4 +664,210 @@ check_empty_dir(const char *path)
 	}
 	closedir(dir);
 	return 0;
+}
+
+void
+sfs_cert_init(void)
+{
+	struct sfs_cert_db	*cdb;
+	int			 count;
+	if ((cdb = calloc(1, sizeof(struct sfs_cert_db))) == NULL) {
+		log_warn("%s: calloc", ANOUBIS_CERT_DIR);
+		master_terminate(ENOMEM);
+	}
+	TAILQ_INIT(cdb);
+
+	if ((count = sfs_cert_load_db(ANOUBIS_CERT_DIR, cdb)) == -1)
+		fatal("sfs_cert_init: failed to load sfs certificates");
+
+	log_info("%d certificates loaded from %s", count, ANOUBIS_CERT_DIR);
+	sfs_certs = cdb;
+}
+
+void
+sfs_cert_reconfigure(void)
+{
+	struct sfs_cert_db	*new, *old;
+	if ((new = calloc(1, sizeof(struct sfs_cert_db))) == NULL) {
+		log_warn("calloc");
+		master_terminate(ENOMEM);
+	}
+	TAILQ_INIT(new);
+
+	if (sfs_cert_load_db(ANOUBIS_CERT_DIR, new) == -1) {
+		log_warnx("sfs_cert_reconfigure: could not load public keys");
+		free(new);
+		return;
+	}
+
+	old = sfs_certs;
+	sfs_certs = new;
+	sfs_cert_flush_db(old);
+}
+
+static int
+sfs_cert_load_db(const char *dirname, struct sfs_cert_db *certs)
+{
+	DIR		*dir;
+	FILE		*fp;
+	struct dirent	*dp;
+	struct sfs_cert	*sc;
+	uid_t		 uid;
+	int		 count;
+	const char	*errstr;
+	char		*filename;
+
+	if (certs == NULL) {
+		log_warnx("sfs_cert_load_db: illegal sfscert queue");
+		return 0;
+	}
+
+	if ((dir = opendir(dirname)) == NULL) {
+		log_warn("opendir %s", dirname);
+		return 0;
+	}
+
+	count = 0;
+
+	while ((dp = readdir(dir)) != NULL) {
+		if (dp->d_type != DT_REG)
+			continue;
+		uid = strtonum(dp->d_name, 0, UID_MAX, &errstr);
+		if (errstr) {
+			log_warnx("sfs_cert_load_db: filename \"%s/%s\" %s",
+			    dirname, dp->d_name, errstr);
+			continue;
+		}
+		if (asprintf(&filename, "%s/%s", dirname, dp->d_name) == -1) {
+			log_warnx("asprintf: Out of memory");
+			continue;
+		}
+		if ((sc = calloc(1, sizeof(struct sfs_cert))) == NULL) {
+			log_warnx("calloc: Out of memory");
+			free(filename);
+			continue;
+		}
+		if ((fp = fopen(filename, "r")) == NULL) {
+			log_warn("fopen %s", filename);
+			free(sc);
+			free(filename);
+			continue;
+		}
+		if((sc->req = PEM_read_X509(fp, NULL, NULL, NULL)) == NULL) {
+			log_warn("PEM_read_X509: %s", filename);
+			free(sc);
+			fclose(fp);
+			continue;
+		}
+		fclose(fp);
+		if ((sc->pkey = X509_get_pubkey(sc->req)) == NULL) {
+			log_warn("X509_get_pubkey: %s", filename);
+			X509_free(sc->req);
+			free(sc);
+			continue;
+		}
+		sc->uid = uid;
+		sc->kidlen = sfs_cert_keyid(&sc->keyid, sc->req);
+		if (sc->kidlen == -1) {
+			log_warn("Error while loading key from uid %d", uid);
+			X509_free(sc->req);
+			EVP_PKEY_free(sc->pkey);
+			free(sc);
+			free(filename);
+			continue;
+		}
+		TAILQ_INSERT_TAIL(certs, sc, entry);
+		count++;
+		free(filename);
+	}
+
+	if (closedir(dir) == -1)
+		log_warn("closedir");
+
+	return count;
+}
+
+static int
+sfs_cert_keyid(unsigned char **keyid, X509 *cert)
+{
+	X509_EXTENSION *ext = NULL;
+	ASN1_OCTET_STRING *o_asn = NULL;
+	int rv = -1, len = -1;
+
+	if (keyid == NULL || cert == NULL)
+		return -1;
+
+	for (rv = X509_get_ext_by_NID(cert, NID_subject_key_identifier, rv);
+	    rv >= 0;
+	    rv = X509_get_ext_by_NID(cert, NID_subject_key_identifier, rv))
+		ext = X509_get_ext(cert, rv);
+
+	o_asn = X509_EXTENSION_get_data(ext);
+	if (!o_asn) {
+		log_warn("X509_EXTENSION_get_data\n");
+		return -1;
+	}
+
+	/* The result of X509_EXTENSION_get_data beginns with
+	 * a number which discripes algorithm (see RFC 3280)
+	 * We just need the KeyID, for that we cut a way these number
+	 */
+	if (!memcmp(o_asn->data, "\004\024", 2)) {
+		len = ASN1_STRING_length(o_asn) - 2;
+		if ((*keyid = calloc(len, sizeof(unsigned char))) == NULL)
+			return -1;
+		memcpy(*keyid, &o_asn->data[2], len);
+	} else {
+		len = ASN1_STRING_length(o_asn);
+		if ((*keyid = calloc(len, sizeof(unsigned char))) == NULL)
+			return -1;
+		memcpy(*keyid, &o_asn->data, len);
+	}
+
+	return (len);
+}
+
+void
+sfs_cert_flush_db(struct sfs_cert_db *sc)
+{
+	struct sfs_cert	*p, *next;
+
+	if (sc == NULL)
+		sc = sfs_certs;
+	for (p = TAILQ_FIRST(sc); p != TAILQ_END(sc); p = next) {
+		next = TAILQ_NEXT(p, entry);
+		TAILQ_REMOVE(sc, p, entry);
+
+		EVP_PKEY_free(p->pkey);
+		X509_free(p->req);
+		free(p->keyid);
+		free(p);
+	}
+}
+
+EVP_PKEY *
+sfs_pubkey_get_by_uid(uid_t uid)
+{
+	struct sfs_cert *p;
+
+	TAILQ_FOREACH(p, sfs_certs, entry) {
+		if (p->uid == uid)
+			return p->pkey;
+	}
+
+	return NULL;
+}
+
+EVP_PKEY *
+sfs_pubkey_get_by_keyid(unsigned char *keyid)
+{
+	struct sfs_cert *p;
+	int ret = 0;
+
+	TAILQ_FOREACH(p, sfs_certs, entry) {
+		if ((ret = memcmp(keyid, p->keyid, p->kidlen)) == 0)
+			return p->pkey;
+	}
+
+	return NULL;
 }

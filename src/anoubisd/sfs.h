@@ -35,15 +35,22 @@
 #define ANOUBISD_CSUM_USER	1
 #define ANOUBISD_CSUM_ROOT	2
 
+struct sfs_cert_db;
+
 int	 sfs_checksumop(const char *path, unsigned int operation, uid_t uid,
-	     unsigned char *md, int len);
+	     unsigned char *md, u_int8_t **sign, int *siglen, int len,
+	     int idlen);
 int	 sfs_checksumop_chroot(const char *path, unsigned int operation,
-	     uid_t uid, unsigned char *md, int len);
+	     uid_t uid, unsigned char *md, u_int8_t **sign, int *siglen,
+	     int len, int idlen);
 int	 sfs_getchecksum(const char *path, uid_t uid, unsigned char *md);
 int	 sfs_getchecksum_chroot(const char *path, uid_t uid, unsigned char *md);
 int	 convert_user_path(const char *path, char **dir, int is_dir);
 int	 check_for_uid(const char *path);
 char	*remove_escape_seq(const char *name, int is_uid);
+void	 sfs_cert_init(void);
+void	 sfs_cert_reconfigure(void);
+void	 sfs_cert_flush_db(struct sfs_cert_db *);
 
 /* Public SFS-Cache functions */
 void	 sfshash_init(void);

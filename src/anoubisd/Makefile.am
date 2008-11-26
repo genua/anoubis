@@ -29,7 +29,9 @@ sbin_PROGRAMS = anoubisd
 bsdcompatdir = src/bsdcompat
 libbsdcompat = $(top_builddir)/$(bsdcompatdir)/libbsdcompat.a
 anoubischatdir = src/libanoubischat
+anoubissigdir = src/libanoubissig
 libanoubischat = $(top_builddir)/$(anoubischatdir)/libanoubischat.a
+libanoubissig = $(top_builddir)/$(anoubissigdir)/libanoubissig.a
 anoubispsdir = src/libanoubisprotocol
 libanoubisps = $(top_builddir)/$(anoubispsdir)/libanoubisps.a
 libapndir = src/libapn
@@ -48,11 +50,12 @@ CPPFLAGS = \
 	   -I$(top_srcdir)/include \
 	   -I$(top_srcdir)/src/anoubisd \
 	   -I$(top_srcdir)/$(anoubischatdir) \
+	   -I$(top_srcdir)/$(anoubissigdir) \
 	   -I$(top_srcdir)/$(anoubispsdir) \
 	   -I$(top_srcdir)/$(anoubispsdir)/server \
 	   -I$(top_srcdir)/$(libapndir)
 
-anoubisd_LDADD = $(libanoubisps) $(libanoubischat) $(libapn)
+anoubisd_LDADD = $(libanoubisps) $(libanoubischat) $(libapn) $(libanoubissig)
 
 if NEEDBSDCOMPAT
 CPPFLAGS += -I$(top_srcdir)/$(bsdcompatdir)

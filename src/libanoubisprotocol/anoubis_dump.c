@@ -229,7 +229,7 @@ static void dump_checksumrequest(Anoubis_ChecksumRequestMessage * m,
     size_t len __used)
 {
 	DUMP_NETU(m, operation);
-	printf(" path = %s", m->path);
+	printf(" path = %s", m->payload);
 }
 
 static void

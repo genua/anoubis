@@ -28,6 +28,16 @@
 #include "anoubis_sig.h"
 
 int pass_cb(char *buf, int size, int rwflag, void *u);
+static int cert_keyid(unsigned char **keyid, X509 *cert);
+
+/* This function returns a memory area filled with the checksum (csum)
+ * and the signature of the checksum (sigbuf)
+ *	-------------------------------------------------
+ *	|	csum	|	sigbuf			|
+ *	-------------------------------------------------
+ * The returned len is the complete len of the memory area
+ * since the len of checksum is known.
+ */
 
 unsigned char *
 anoubis_sign_csum(struct anoubis_sig *as,
@@ -68,7 +78,7 @@ anoubis_sign_csum(struct anoubis_sig *as,
 	}
 
 	memcpy(result, csum, ANOUBIS_SIG_HASH_SHA256_LEN);
-	memcpy(&result[ANOUBIS_SIG_HASH_SHA256_LEN], sigbuf, siglen);
+	memcpy(result + ANOUBIS_SIG_HASH_SHA256_LEN, sigbuf, siglen);
 	free(sigbuf);
 	*len = siglen + ANOUBIS_SIG_HASH_SHA256_LEN;
 	return result;
@@ -83,7 +93,7 @@ anoubis_verify_csum(struct anoubis_sig *as,
 	EVP_MD_CTX ctx;
 	EVP_PKEY *pkey;
 
-	if (as == NULL || csum == NULL)
+	if (as == NULL || csum == NULL || sfs_sign == NULL)
 		return -1;
 
 	pkey = as->pkey;
@@ -101,76 +111,133 @@ anoubis_verify_csum(struct anoubis_sig *as,
 	return result;
 }
 
-struct anoubis_sig *
-anoubis_sig_pub_init(const char *file, const EVP_MD *type, char *pass,
-    int need_pass)
+/* This function will be used inside of the daemon */
+int
+anoubisd_verify_csum(EVP_PKEY *pkey,
+     unsigned char csum[ANOUBIS_SIG_HASH_SHA256_LEN], unsigned char *sfs_sign,
+     int sfs_len)
 {
-	return anoubis_sig_init(file, pass, type, ANOUBIS_SIG_PUB, need_pass);
+	int result = 0;
+	EVP_MD_CTX ctx;
+
+	if (pkey == NULL || csum == NULL || sfs_sign == NULL)
+		return -1;
+
+	EVP_MD_CTX_init(&ctx);
+	if (EVP_VerifyInit(&ctx, ANOUBIS_SIG_HASH_DEFAULT) == 0) {
+		EVP_MD_CTX_cleanup(&ctx);
+		return -1;
+	}
+	EVP_VerifyUpdate(&ctx, csum, ANOUBIS_SIG_HASH_SHA256_LEN);
+	result = EVP_VerifyFinal(&ctx, sfs_sign, sfs_len, pkey);
+
+	EVP_MD_CTX_cleanup(&ctx);
+
+	return result;
 }
 
 struct anoubis_sig *
-anoubis_sig_priv_init(const char *file, const EVP_MD *type, char *pass,
+anoubis_sig_pub_init(const char *keyfile, const char *certfile, char *pass,
     int need_pass)
 {
-	return anoubis_sig_init(file, pass, type, ANOUBIS_SIG_PRIV, need_pass);
+	return anoubis_sig_init(keyfile, certfile, pass,
+	    ANOUBIS_SIG_HASH_DEFAULT, ANOUBIS_SIG_PUB, need_pass);
 }
 
 struct anoubis_sig *
-anoubis_sig_init(const char *file, char *pass, const EVP_MD *type, int pub_priv,
+anoubis_sig_priv_init(const char *keyfile, const char *certfile, char *pass,
     int need_pass)
+{
+	return anoubis_sig_init(keyfile, certfile, pass,
+	    ANOUBIS_SIG_HASH_DEFAULT, ANOUBIS_SIG_PRIV, need_pass);
+}
+
+struct anoubis_sig *
+anoubis_sig_init(const char *keyfile, const char *certfile, char *pass,
+    const EVP_MD *type, int pub_priv, int need_pass)
 {
 
 	struct anoubis_sig *as = NULL;
 	EVP_PKEY *pkey = NULL;
 	FILE *f = NULL;
+	X509	*cert = NULL;
 
-	if (!file)
-		return NULL;
+	OpenSSL_add_all_algorithms();
 
-	f = fopen(file, "rb");
-	if (f == NULL) {
-		perror(file);
+	if (!certfile && !keyfile) {
 		return NULL;
 	}
+	if (keyfile) {
+		f = fopen(keyfile, "r");
+		if (f == NULL) {
+			perror(keyfile);
+			return NULL;
+		}
 
-	switch (pub_priv) {
-	case ANOUBIS_SIG_PUB:
-		if(need_pass) {
-			if (pass)
-				pkey = PEM_read_PUBKEY(f, NULL, NULL, pass);
-			else
-				pkey = PEM_read_PUBKEY(f, NULL, pass_cb,
-				    "Public Key");
-		} else
-			pkey = PEM_read_PUBKEY(f, NULL, NULL, NULL);
+		switch (pub_priv) {
+		case ANOUBIS_SIG_PUB:
+			if(need_pass) {
+				if (pass)
+					pkey = PEM_read_PUBKEY(f, NULL, NULL,
+					    pass);
+				else
+					pkey = PEM_read_PUBKEY(f, NULL, pass_cb,
+					    "Public Key");
+			} else
+				pkey = PEM_read_PUBKEY(f, NULL, NULL, NULL);
 
-		break;
-	case ANOUBIS_SIG_PRIV:
-		if (need_pass) {
-			if (pass)
-				pkey = PEM_read_PrivateKey(f, NULL, NULL, pass);
-			else
-				pkey = PEM_read_PrivateKey(f, NULL, pass_cb,
-				    "Private Key");
-		} else
-			pkey = PEM_read_PrivateKey(f, NULL, NULL, NULL);
-		break;
-	default:
+			break;
+		case ANOUBIS_SIG_PRIV:
+			if (need_pass) {
+				if (pass)
+					pkey = PEM_read_PrivateKey(f, NULL,
+					    NULL, pass);
+				else
+					pkey = PEM_read_PrivateKey(f, NULL,
+					    pass_cb, "Private Key");
+			} else
+				pkey = PEM_read_PrivateKey(f, NULL, NULL, NULL);
+			break;
+		default:
+			fclose(f);
+			return NULL;
+		}
 		fclose(f);
-		return NULL;
+
+		if (!pkey)
+			return NULL;
 	}
-	fclose(f);
+	if (certfile) {
+		if ((f = fopen(certfile, "r")) == NULL) {
+			if (pkey)
+				EVP_PKEY_free(pkey);
+			perror(certfile);
+			return NULL;
+		}
+		if ((cert = PEM_read_X509(f, NULL, NULL, NULL)) == NULL) {
+			if (pkey)
+				EVP_PKEY_free(pkey);
+			fclose(f);
+			return NULL;
+		}
+		fclose(f);
+	}
 
-	if (!pkey)
-		return NULL;
-
-	if ((as = malloc(sizeof(struct anoubis_sig))) == NULL) {
-		EVP_PKEY_free(pkey);
+	if ((as = calloc(1, sizeof(struct anoubis_sig))) == NULL) {
+		if (pkey)
+			EVP_PKEY_free(pkey);
+		if (cert)
+			X509_free(as->cert);
 		return NULL;
 	}
 	as->type = type;
 	as->pkey = pkey;
-
+	as->cert = cert;
+	as->idlen = cert_keyid(&as->keyid, cert);
+	if (as->idlen == -1) {
+		anoubis_sig_free(as);
+		return NULL;
+	}
 	return as;
 }
 
@@ -182,6 +249,10 @@ anoubis_sig_free(struct anoubis_sig *as)
 
 	if (as->pkey)
 		EVP_PKEY_free(as->pkey);
+	if (as->keyid)
+		free(as->keyid);
+	if (as->cert)
+		X509_free(as->cert);
 
 	free(as);
 }
@@ -205,4 +276,42 @@ pass_cb(char *buf, int size, int rwflag __used, void *text)
 	bzero(tmp, len);
 
 	return len;
+}
+
+static int
+cert_keyid(unsigned char **keyid, X509 *cert)
+{
+	X509_EXTENSION *ext = NULL;
+	ASN1_OCTET_STRING *o_asn = NULL;
+	int rv = -1, len = -1;
+
+	if (keyid == NULL || cert == NULL)
+		return -1;
+
+	for (rv = X509_get_ext_by_NID(cert, NID_subject_key_identifier, rv);
+	    rv >= 0;
+	    rv = X509_get_ext_by_NID(cert, NID_subject_key_identifier, rv))
+		ext = X509_get_ext(cert, rv);
+
+	o_asn = X509_EXTENSION_get_data(ext);
+	if (!o_asn)
+		return -1;
+
+	/* The result of X509_EXTENSION_get_data beginns with
+	 * a number which describes algorithm (see RFC 3280)
+	 * We just need the KeyID, for that we cut away this number
+	 */
+	if (!memcmp(o_asn->data, "\004\024", 2)) {
+		len = ASN1_STRING_length(o_asn) - 2;
+		if ((*keyid = calloc(len, sizeof(unsigned char))) == NULL)
+			return -1;
+		memcpy(*keyid, &o_asn->data[2], len);
+	} else {
+		len = ASN1_STRING_length(o_asn);
+		if ((*keyid = calloc(len, sizeof(unsigned char))) == NULL)
+			return -1;
+		memcpy(*keyid, &o_asn->data, len);
+	}
+
+	return (len);
 }

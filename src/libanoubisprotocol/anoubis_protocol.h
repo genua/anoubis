@@ -326,13 +326,17 @@ typedef struct {
 #define ANOUBIS_CHECKSUM_OP_LIST	0x0006UL
 #define ANOUBIS_CHECKSUM_OP_UID_LIST	0x0007UL
 #define ANOUBIS_CHECKSUM_OP_ADDSIG	0x0008UL
+#define ANOUBIS_CHECKSUM_OP_GETSIG	0x0009UL
+#define ANOUBIS_CHECKSUM_OP_SIG_LIST	0x000AUL
+#define ANOUBIS_CHECKSUM_OP_DELSIG	0x000BUL
 
 typedef struct {
 	u32n	type;
 	u32n	operation;
 	u32n	flags;
 	u32n	uid;
-	char	path[0];
+	u16n	idlen;
+	char	payload[0];
 } __attribute__((packed)) Anoubis_ChecksumRequestMessage;
 
 typedef struct {
@@ -340,6 +344,7 @@ typedef struct {
 	u32n	operation;
 	u32n	flags;
 	u32n	uid;
+	u16n	idlen;
 	u16n	cslen;
 	char payload[0];	/* cslen bytes checksum followed by path. */
 } __attribute__((packed)) Anoubis_ChecksumAddMessage;

@@ -97,12 +97,12 @@ ComSfsListTask::exec(void)
 		/* Ask for your own list */
 		ta = anoubis_client_csumrequest_start(
 		    getComHandler()->getClient(), ANOUBIS_CHECKSUM_OP_LIST,
-		    path, NULL, 0, 0, ANOUBIS_CSUM_NONE);
+		    path, NULL, 0, 0, 0, ANOUBIS_CSUM_NONE);
 	} else if (cur_uid == 0) {
 		/* root is allowed to request list for another user, too */
 		ta = anoubis_client_csumrequest_start(
 		    getComHandler()->getClient(), ANOUBIS_CHECKSUM_OP_LIST,
-		    path, NULL, 0, uid_, ANOUBIS_CSUM_UID);
+		    path, NULL, 0, 0, uid_, ANOUBIS_CSUM_UID);
 	} else {
 		/* Non-root user is requesting the list for another user */
 		return;

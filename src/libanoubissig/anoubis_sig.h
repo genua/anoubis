@@ -30,11 +30,15 @@
 
 #include <config.h>
 
-#include <openssl/pem.h>
-#include <openssl/evp.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include <string.h>
+
+#include <openssl/x509.h>
+#include <openssl/evp.h>
+#include <openssl/x509v3.h>
+#include <openssl/pem.h>
+#include <openssl/objects.h>
 
 #ifdef LINUX
 #include <openssl/sha.h>
@@ -60,13 +64,23 @@
 #define ANOUBIS_SIG_HASH_MDC2		EVP_mdc2()
 #define ANOUBIS_SIG_HASH_RIPEMD160	EVP_ripemd160()
 
+/*
+ * XXX KM for now this is the standard HASH until i figured out
+ * how to syncronize it with the daemon
+ */
+#define ANOUBIS_SIG_HASH_DEFAULT	EVP_sha1()
+/* XXX KM */
+
 /* XXX KM:
  * If you add another entry into the struct
  * don't forget to free it in anoubis_sig_free
  */
 struct anoubis_sig {
-	const EVP_MD *type;
-	EVP_PKEY *pkey;
+	const EVP_MD	*type;
+	X509		*cert;
+	unsigned char	*keyid;
+	int		 idlen;
+	EVP_PKEY	*pkey;
 };
 
 unsigned char *anoubis_sign_csum(struct anoubis_sig *as,
@@ -74,12 +88,14 @@ unsigned char *anoubis_sign_csum(struct anoubis_sig *as,
 int anoubis_verify_csum(struct anoubis_sig *as,
     unsigned char csum[ANOUBIS_SIG_HASH_SHA256_LEN], unsigned char *sfs_sign,
     int sfs_len);
-struct anoubis_sig *anoubis_sig_pub_init(const char *file, const EVP_MD *type,
+int anoubisd_verify_csum(EVP_PKEY *pkey,
+     unsigned char csum[ANOUBIS_SIG_HASH_SHA256_LEN], unsigned char *sfs_sign,
+     int sfs_len);
+struct anoubis_sig *anoubis_sig_pub_init(const char *file, const char *cert,
     char *pass, int need_pass);
-struct anoubis_sig *anoubis_sig_priv_init(const char *file, const EVP_MD *type,
+struct anoubis_sig *anoubis_sig_priv_init(const char *file, const char *cert,
     char *pass, int need_pass);
-struct anoubis_sig *anoubis_sig_init(const char *file, char *pass,
-    const EVP_MD *type, int pub_priv, int need_pass);
+struct anoubis_sig *anoubis_sig_init(const char *file, const char *cert,
+    char *pass, const EVP_MD *type, int pub_priv, int need_pass);
 void anoubis_sig_free(struct anoubis_sig *as);
-
 #endif	/* _ANOUBIS_SIG_H_ */

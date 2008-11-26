@@ -917,9 +917,46 @@ anoubis_client_policyrequest_start(struct anoubis_client * client,
 	return t;
 }
 
+/* If a signature is delivered to the daemon the signature, the keyid and the
+ * checksum will be stored in the function parameter payload.
+ *
+ *	*payload:
+ *	---------------------------------------------------------
+ *	|	keyid	|	csum	|	sigbuf		|
+ *	---------------------------------------------------------
+ *
+ * idlen is the length of the keyid and cslen is the length of
+ * csum + sigbuf.
+ *
+ * If a signature is requested from daemon, the keyid only is stored in payload,
+ * cslen will be 0 and the len of the keyid will be stored in idlen.
+ * op == ANOUBIS_CHECKSUM_OP_{GET,DEL}SIG
+ *
+ *	*payload:
+ *	------------------
+ *	|	keyid	 |
+ *	------------------
+ *
+ * In both cases will the memory stored in payload together with the path
+ *
+ *	sent message:
+ *	-----------------------------------------
+ *	|keyid	|(csum)|(sigbuf)|	path	|
+ *	-----------------------------------------
+ *
+ * In a ADDSUM Operation the parameter payload contains just the checksum
+ *
+ *	*payload			sent message
+ *	-----------------		-----------------
+ *	| csum		|	--->	| csum	| path	|
+ *	-----------------		-----------------
+ * The send mesage will also include the path at the end.
+ * In all other operations the memory will be empty.
+ */
 struct anoubis_transaction *
 anoubis_client_csumrequest_start(struct anoubis_client *client,
-    int op, char *path, u_int8_t *csum, short cslen, uid_t uid, int flags)
+    int op, char *path, u_int8_t *payload, short cslen, short idlen, uid_t uid,
+    int flags)
 {
 	struct anoubis_msg * m;
 	struct anoubis_transaction * t = NULL;
@@ -939,34 +976,46 @@ anoubis_client_csumrequest_start(struct anoubis_client *client,
 		return NULL;
 	if (client->flags & FLAG_POLICY_PENDING)
 		return NULL;
-	if (!csum != !cslen)
+	if ((op == ANOUBIS_CHECKSUM_OP_ADDSIG) && idlen == 0)
 		return NULL;
-	if (!csum) {
+	if ((op == ANOUBIS_CHECKSUM_OP_DELSIG) && idlen == 0)
+		return NULL;
+	if ((op == ANOUBIS_CHECKSUM_OP_GETSIG) && idlen == 0)
+		return NULL;
+	if ((op == ANOUBIS_CHECKSUM_OP_SIG_LIST) && idlen == 0)
+		return NULL;
+	if (((op != ANOUBIS_CHECKSUM_OP_DELSIG) &&
+	    (op != ANOUBIS_CHECKSUM_OP_GETSIG) &&
+	    (op != ANOUBIS_CHECKSUM_OP_SIG_LIST) &&
+	    (op != ANOUBIS_CHECKSUM_OP_ADDSIG)) && idlen != 0)
+		return NULL;
+	if (!payload) {
 		if ((op == ANOUBIS_CHECKSUM_OP_ADDSUM) ||
 		    (op == ANOUBIS_CHECKSUM_OP_ADDSIG))
 			return NULL;
 	}
-	if (csum) {
-		if ((op != ANOUBIS_CHECKSUM_OP_ADDSUM) && 
+	if (payload && cslen) {
+		if ((op != ANOUBIS_CHECKSUM_OP_ADDSUM) &&
 		    (op != ANOUBIS_CHECKSUM_OP_ADDSIG))
 			return NULL;
 		m = anoubis_msg_new(sizeof(Anoubis_ChecksumAddMessage)
-		    + cslen + strlen(path) + 1);
-		dstpath = m->u.checksumadd->payload + cslen;
+		    + cslen + idlen + strlen(path) + 1);
+		dstpath = m->u.checksumadd->payload + cslen + idlen;
 		set_value(m->u.checksumadd->uid, uid);
 		set_value(m->u.checksumadd->flags, flags);
 	} else {
 		m = anoubis_msg_new(sizeof(Anoubis_ChecksumRequestMessage)
-		    + strlen(path) + 1);
-		dstpath = m->u.checksumrequest->path;
+		    + strlen(path) + idlen + 1);
+		dstpath = m->u.checksumrequest->payload;
 	}
 	if (!m)
 		return NULL;
-	if (csum) {
+	if (payload) {
 		set_value(m->u.checksumadd->cslen, cslen);
-		memcpy(m->u.checksumadd->payload, csum, cslen);
+		memcpy(m->u.checksumadd->payload, payload, cslen + idlen);
 	}
 	if (op == ANOUBIS_CHECKSUM_OP_LIST ||
+	    op == ANOUBIS_CHECKSUM_OP_SIG_LIST ||
 	    op == ANOUBIS_CHECKSUM_OP_UID_LIST) {
 		t = anoubis_transaction_create(0,
 		ANOUBIS_T_INITSELF|ANOUBIS_T_WANT_ALL,
@@ -983,8 +1032,17 @@ anoubis_client_csumrequest_start(struct anoubis_client *client,
 	set_value(m->u.checksumrequest->type, ANOUBIS_P_CSUMREQUEST);
 	set_value(m->u.checksumrequest->uid, uid);
 	set_value(m->u.checksumrequest->flags, flags);
+	set_value(m->u.checksumrequest->idlen, idlen);
 	set_value(m->u.checksumrequest->operation, op);
-	strlcpy(dstpath, path, strlen(path)+1);
+
+	if (op == ANOUBIS_CHECKSUM_OP_GETSIG ||
+	    op == ANOUBIS_CHECKSUM_OP_SIG_LIST ||
+	    op == ANOUBIS_CHECKSUM_OP_DELSIG) {
+		memcpy(dstpath, payload, idlen);
+		strlcpy(dstpath + idlen, path, strlen(path)+1);
+	} else {
+		strlcpy(dstpath, path, strlen(path)+1);
+	}
 	if (anoubis_client_send(client, m) < 0) {
 		anoubis_msg_free(m);
 		anoubis_transaction_destroy(t);
@@ -992,6 +1050,7 @@ anoubis_client_csumrequest_start(struct anoubis_client *client,
 	}
 
 	if (op == ANOUBIS_CHECKSUM_OP_LIST ||
+	    op == ANOUBIS_CHECKSUM_OP_SIG_LIST ||
 	    op == ANOUBIS_CHECKSUM_OP_UID_LIST)
 		anoubis_transaction_setopcodes(t, listops);
 	else

@@ -471,7 +471,7 @@ dispatch_checksum(struct anoubis_server *server, struct anoubis_msg *m,
 	struct event_info_session *ev_info = (struct event_info_session*)arg;
 
 	DEBUG(DBG_TRACE, ">dispatch_checksum");
-	DEBUG(DBG_TRACE, "%s\n", m->u.checksumrequest->path);
+	DEBUG(DBG_TRACE, "%s\n", m->u.checksumrequest->payload);
 	chan = anoubis_server_getchannel(server);
 	s2m_msg = msg_factory(ANOUBISD_MSG_CHECKSUM_OP,
 	    sizeof(anoubisd_msg_checksum_op_t) + m->length);
@@ -489,6 +489,7 @@ dispatch_checksum(struct anoubis_server *server, struct anoubis_msg *m,
 		return;
 	}
 	if (opp == ANOUBIS_CHECKSUM_OP_LIST ||
+	    opp == ANOUBIS_CHECKSUM_OP_SIG_LIST ||
 	    opp == ANOUBIS_CHECKSUM_OP_UID_LIST) {
 		err = anoubis_policy_comm_addrequest(ev_info->policy, chan,
 		POLICY_FLAG_START | POLICY_FLAG_END,

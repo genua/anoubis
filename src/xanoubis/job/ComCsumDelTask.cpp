@@ -78,7 +78,7 @@ ComCsumDelTask::exec(void)
 
 	/* Create request */
 	ta = anoubis_client_csumrequest_start(getComHandler()->getClient(),
-	    ANOUBIS_CHECKSUM_OP_DEL, (char*)path, NULL, 0, 0,
+	    ANOUBIS_CHECKSUM_OP_DEL, (char*)path, NULL, 0, 0, 0,
 	    ANOUBIS_CSUM_NONE);
 	if(!ta) {
 		setComTaskResult(RESULT_COM_ERROR);

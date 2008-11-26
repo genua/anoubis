@@ -100,7 +100,7 @@ ComCsumAddTask::exec(void)
 
 	/* Send request to daemon */
 	ta =  anoubis_client_csumrequest_start(getComHandler()->getClient(),
-	    ANOUBIS_CHECKSUM_OP_ADDSUM, path, cs, len, 0, ANOUBIS_CSUM_NONE);
+	    ANOUBIS_CHECKSUM_OP_ADDSUM, path, cs, len, 0, 0, ANOUBIS_CSUM_NONE);
 	if(!ta) {
 		setComTaskResult(RESULT_COM_ERROR);
 		return;

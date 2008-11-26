@@ -113,8 +113,8 @@ struct event_info_main {
 	int anoubisfd;
 };
 
-void	send_checksum_list(u_int64_t token, const char *path, uid_t uid,
-		struct event_info_main *ev_info, int is_uid);
+void send_checksum_list(u_int64_t token, const char *path, u_int8_t *keyid,
+    int idlen, uid_t uid, struct event_info_main *ev_info, int is_uid);
 
 static char *pid_file_name = ANOUBISD_PIDFILENAME;
 
@@ -360,6 +360,9 @@ main(int argc, char *argv[])
 	DEBUG(DBG_TRACE, "policy_pid=%d", policy_pid);
 	close(loggers[1]);
 	close(loggers[2]);
+
+	/* Load Public Keys */
+	sfs_cert_init();
 
 #ifdef OPENBSD
 	setproctitle("master");
@@ -617,6 +620,9 @@ sanitise_stdfd(void)
 static void
 reconfigure(void)
 {
+	/* Reload Public Keys */
+	sfs_cert_reconfigure();
+
 	/* Forward SIGHUP to policy process */
 	if (kill(policy_pid, SIGHUP) != 0)
 		log_warn("sending SIGHUP to child %u failed", policy_pid);
@@ -676,8 +682,8 @@ dispatch_m2s(int fd, short event __used, /*@dependent@*/ void *arg)
 }
 
 void
-send_checksum_list(u_int64_t token, const char *path, uid_t uid,
-    struct event_info_main *ev_info, int is_uid)
+send_checksum_list(u_int64_t token, const char *path, u_int8_t *keyid,
+    int idlen, uid_t uid, struct event_info_main *ev_info, int is_uid)
 {
 	/* Since only pathname components are transferred, it is sufficient
 	 * that the payload size (3000) is larger than NAME_MAX (255),
@@ -686,6 +692,7 @@ send_checksum_list(u_int64_t token, const char *path, uid_t uid,
 	anoubisd_reply_t	*reply;
 	anoubisd_msg_t		*msg;
 	char			*tmp = NULL;
+	char			*sigfile = NULL;
 	int			 flags = POLICY_FLAG_START;
 	int			 size = sizeof(struct anoubisd_reply) + 3000;
 	int			 cnt = 0;
@@ -694,6 +701,11 @@ send_checksum_list(u_int64_t token, const char *path, uid_t uid,
 	int			 stars, i, ret;
 	DIR			*sfs_dir;
 	struct dirent		*sfs_ent;
+
+	if (keyid) {
+		if (idlen <= 0)
+			return;
+	}
 
 	sfs_dir = opendir(path);
 	if (!sfs_dir) {
@@ -726,23 +738,56 @@ send_checksum_list(u_int64_t token, const char *path, uid_t uid,
 				if (sfs_ent->d_name[i] == '*')
 					stars++;
 			}
+			/* If the ammount of stars is odd its an sfsentry
+			 * if its even its an directory
+			 */
 			if (stars%2) {
-				ret = asprintf(&tmp,
-				    "%s/%s/%d", path, sfs_ent->d_name, uid);
-				if (ret < 0) {
-					log_warn("send_checksum_list: "
-					    "can't allocate memory");
-					master_terminate(ENOMEM);
-					return;
-				}
-				ret = check_for_uid(tmp);
-				if (ret == 0) {
-					sfs_ent = readdir(sfs_dir);
-					free(tmp);
-					continue;
+				if (keyid == NULL) {
+					ret = asprintf(&tmp,
+					    "%s/%s/%d", path, sfs_ent->d_name,
+					    uid);
+					if (ret < 0) {
+						log_warn("send_checksum_list: "
+						    "can't allocate memory");
+						master_terminate(ENOMEM);
+						return;
+					}
+					ret = check_for_uid(tmp);
+					if (ret == 0) {
+						sfs_ent = readdir(sfs_dir);
+						free(tmp);
+						continue;
+					} else {
+						free(tmp);
+					}
 				} else {
-					free(tmp);
+					if ((sigfile = calloc((2*idlen)+1,
+					    sizeof(char))) == NULL) {
+						ret = -ENOMEM;
+						return;
+					}
+					for (i = 0; i < idlen; i++)
+						sprintf(&sigfile[2*i], "%2.2x",
+						    keyid[i]);
+					sigfile[2*i] = '\0';
+					if (asprintf(&tmp, "%s/%s/k%s",
+					    path, sfs_ent->d_name, sigfile)
+					    == -1) {
+						ret = -ENOMEM;
+						return;
+					}
+					ret = check_for_uid(tmp);
+					if (ret == 0) {
+						sfs_ent = readdir(sfs_dir);
+						free(tmp);
+						free(sigfile);
+						continue;
+					} else {
+						free(sigfile);
+						free(tmp);
+					}
 				}
+
 			}
 
 			tmp = remove_escape_seq(sfs_ent->d_name, is_uid);
@@ -818,6 +863,19 @@ send_sfscache_invalidate_uid(const char *path, uid_t uid,
 	event_add(ev_info->ev_m2p, NULL);
 }
 
+/* If a message arrives regarding a signature the payload of the message
+ * should be including at least the keyid and the regarding path.
+ *	---------------------------------
+ *	|	keyid	|	path	|
+ *	---------------------------------
+ * futhermore should the message include the signature and the checksum
+ * if the requested operation is ADDSIG
+ *	-----------------------------------------------------------------
+ *	|	keyid	|	csum	|	sigbuf	|	path	|
+ *	-----------------------------------------------------------------
+ * idlen is in this the length of the keyid. rawmsg.length is the total
+ * length of the message excluding the path length.
+ */
 static void
 dispatch_checksumop(anoubisd_msg_t *msg, struct event_info_main *ev_info)
 {
@@ -827,11 +885,15 @@ dispatch_checksumop(anoubisd_msg_t *msg, struct event_info_main *ev_info)
 	char * path = NULL;
 	char *result = NULL;
 	int	flags;
-	int	cslen = 0;
+	int	cslen = 0,
+		idlen = 0,		/* Length of KeyID		*/
+		siglen = 0;		/* Length of Signature and csum */
 	uid_t	req_uid;
 	int err = -EFAULT, op = 0, extra = 0;
 	anoubisd_reply_t * reply;
 	u_int8_t *digest = NULL;
+	u_int8_t *key = NULL;
+	u_int8_t *sign = NULL;
 	int i, plen;
 
 	rawmsg.length = msg_comm->len;
@@ -841,16 +903,23 @@ dispatch_checksumop(anoubisd_msg_t *msg, struct event_info_main *ev_info)
 	op = get_value(rawmsg.u.checksumrequest->operation);
 	req_uid = get_value(rawmsg.u.checksumrequest->uid);
 	flags = get_value(rawmsg.u.checksumrequest->flags);
+	idlen = get_value(rawmsg.u.checksumrequest->idlen);
 
 	if (!(flags & ANOUBIS_CSUM_UID))
 		req_uid = msg_comm->uid;
 
 	switch (op) {
+	case ANOUBIS_CHECKSUM_OP_SIG_LIST:
 	case ANOUBIS_CHECKSUM_OP_LIST:
 	case ANOUBIS_CHECKSUM_OP_UID_LIST:
 		plen = rawmsg.length - CSUM_LEN
 		    - sizeof(Anoubis_ChecksumRequestMessage);
-		path = rawmsg.u.checksumrequest->path;
+		path = rawmsg.u.checksumrequest->payload + idlen;
+		if (idlen > 0 && op == ANOUBIS_CHECKSUM_OP_SIG_LIST) {
+			if ((key = calloc(idlen, sizeof(u_int8_t))) == NULL)
+				goto out;
+			memcpy(key, rawmsg.u.checksumrequest->payload, idlen);
+		}
 		for (i=0; i<plen; ++i) {
 		if (path[i] == 0)
 			break;
@@ -859,23 +928,26 @@ dispatch_checksumop(anoubisd_msg_t *msg, struct event_info_main *ev_info)
 			goto out;
 		}
 
-		if (op == ANOUBIS_CHECKSUM_OP_LIST) {
+		if ((op == ANOUBIS_CHECKSUM_OP_LIST) ||
+		    (op == ANOUBIS_CHECKSUM_OP_SIG_LIST)) {
 			err = convert_user_path(path, &result, 1);
 			if (err < 0) {
 				goto out;
 			}
-			send_checksum_list(msg_comm->token, result,
-			    req_uid, ev_info, 0);
+			send_checksum_list(msg_comm->token, result, key,
+			    idlen, req_uid, ev_info, 0);
 		} else {
 			err = convert_user_path(path, &result, 0);
 			if (err < 0) {
 				goto out;
 			}
-			send_checksum_list(msg_comm->token, result,
-			    req_uid, ev_info, 1);
+			send_checksum_list(msg_comm->token, result, NULL,
+			    0, req_uid, ev_info, 1);
 		}
-
-		free(result);
+		if (result)
+			free(result);
+		if (key)
+			free(key);
 		return;
 	case ANOUBIS_CHECKSUM_OP_ADDSIG:
 	case ANOUBIS_CHECKSUM_OP_ADDSUM:
@@ -888,17 +960,31 @@ dispatch_checksumop(anoubisd_msg_t *msg, struct event_info_main *ev_info)
 			goto out;
 		}
 		if (!VERIFY_LENGTH(&rawmsg,
-		    sizeof(Anoubis_ChecksumAddMessage) + cslen))
+		    sizeof(Anoubis_ChecksumAddMessage) + idlen + cslen))
 			goto out;
-		digest = (u_int8_t *)calloc(cslen, sizeof(u_int8_t));
+		digest = (u_int8_t *)calloc(idlen + cslen, sizeof(u_int8_t));
 		if (!digest) {
 			err = -ENOMEM;
 			goto out;
 		}
-		memcpy(digest, rawmsg.u.checksumadd->payload, cslen);
-		path = rawmsg.u.checksumadd->payload + cslen;
-		plen = rawmsg.length - CSUM_LEN - cslen
+		memcpy(digest, rawmsg.u.checksumadd->payload, idlen + cslen);
+		path = rawmsg.u.checksumadd->payload + cslen + idlen;
+		plen = rawmsg.length - CSUM_LEN - cslen - idlen
 		    - sizeof(Anoubis_ChecksumAddMessage);
+		break;
+	case ANOUBIS_CHECKSUM_OP_GETSIG:
+	case ANOUBIS_CHECKSUM_OP_DELSIG:
+		idlen = get_value(rawmsg.u.checksumrequest->idlen);
+		cslen = 0;
+		path = rawmsg.u.checksumrequest->payload + idlen;
+		plen = rawmsg.length - CSUM_LEN - idlen
+		    - sizeof(Anoubis_ChecksumRequestMessage);
+		digest = (u_int8_t *)calloc(idlen, sizeof(u_int8_t));
+		if (!digest) {
+			err = -ENOMEM;
+			goto out;
+		}
+		memcpy(digest, rawmsg.u.checksumrequest->payload, idlen);
 		break;
 	default:
 		digest = (u_int8_t *)calloc(SHA256_DIGEST_LENGTH,
@@ -908,7 +994,7 @@ dispatch_checksumop(anoubisd_msg_t *msg, struct event_info_main *ev_info)
 			goto out;
 		}
 		cslen = SHA256_DIGEST_LENGTH;
-		path = rawmsg.u.checksumrequest->path;
+		path = rawmsg.u.checksumrequest->payload;
 		plen = rawmsg.length - CSUM_LEN
 		    - sizeof(Anoubis_ChecksumRequestMessage);
 		break;
@@ -924,12 +1010,18 @@ dispatch_checksumop(anoubisd_msg_t *msg, struct event_info_main *ev_info)
 	if (i >= plen)
 		goto out;
 
-	err = sfs_checksumop(path, op, req_uid, digest, cslen);
+	err = sfs_checksumop(path, op, req_uid, digest, &sign, &siglen, cslen,
+	    idlen);
 	extra = 0;
 	if (err == 0) {
 		switch (op) {
 		case ANOUBIS_CHECKSUM_OP_GET:
 			extra = SHA256_DIGEST_LENGTH;
+			break;
+		case ANOUBIS_CHECKSUM_OP_GETSIG:
+			/* siglen is the length of signature and the
+			 * regarding checksum */
+			extra = siglen;
 			break;
 		case ANOUBIS_CHECKSUM_OP_ADDSUM:
 		case ANOUBIS_CHECKSUM_OP_DEL:
@@ -954,7 +1046,10 @@ out:
 	reply->reply = -err;
 	reply->flags = POLICY_FLAG_START | POLICY_FLAG_END;
 	reply->len = extra;
-	if (extra)
+	if (sign) {
+		memcpy(reply->msg, sign, extra);
+		free(sign);
+	} else if (extra)
 		memcpy(reply->msg, digest, extra);
 	if (digest)
 		free(digest);
