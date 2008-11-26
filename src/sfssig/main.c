@@ -154,8 +154,9 @@ usage(void)
 	 * NOTE: Capitalized options are supposed to affect system signatures
 	 * NOTE: other options letters will be used for cert signed checksums.
 	 */
-	fprintf(stderr, "usage: %s [-nrv] [-f <fileset> ] command [<file>]\n",
-	    __progname);
+	fprintf(stderr, "usage: %s [-nrv] [-f <fileset> ]\n", __progname);
+	fprintf(stderr, "       [--sig | --sum] [--cert <certificate>]");
+	fprintf(stderr, "       [-k <keyfile>] command [<file>]\n");
 	/* Add System checksum */
 	fprintf(stderr, "       %s -A checksum file\n", __progname);
 	/* Update or add system checksum according to current file contents */

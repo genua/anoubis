@@ -35,15 +35,12 @@
 .Sh SYNOPSIS
 .Nm sfssig
 .Op dvr
-.Op -f fileset
+.Op -f listfile
 .Op -u uid
-.Op -k key
+.Op -k keyfile
+.Op --cert certfile
 .Op --sum
 .Op --sig
-.Op --both
-.Op --orphaned | --notfile
-.Op --hassum | --hasnosum
-.Op --hassig | --hasnosig
 .Ar command
 .Op file
 .Sh DESCRIPTION
@@ -68,8 +65,10 @@ Path specification:
 .Bl -tag -width Ds
 .It Fl r
 Apply command to all files under each directory, recursively.
-.It Fl f
-Accept input form a file. - for stdin
+.It Fl f Ar listfile
+Accept input form file
+.Ar listfile .
+Use "-" for stdin.
 .El
 .Pp
 Type specification:
@@ -82,40 +81,35 @@ If argument is
 .Ar all ,
 all registered uids will be used.
 You need root privileges to do this.
-.It Fl k
-Apply command for checksums with
-.Ar key .
-If argument is
-.Ar all ,
-all registered key will be used.
-You need root privileges to do this.
+.El
+.Pp
+Key files (needed by some operations):
+.Pp
+.Bl -tag -width Ds
+.It Fl k Ar keyfile
+Load private key from 
+.Ar keyfile .
+If not specified,
+.Pa ~/.xanoubis/private.pem
+is used.
+.It Fl -cert Ar certfile
+Load certificate file from
+.Ar certfile .
+If not specified,
+.Pa ~/.xanoubis/default.crt
+is used.
 .El
 .Pp
 Filter specification:
 .Pp
 .Bl -tag -width DST
-.It Fl sum
+.It Fl -sum
 Apply command for a checksum.
-.It Fl sig
+.It Fl -sig
 Apply command for a signature.
-.It Fl both
-Apply command for checksum and signature.
-.It Fl orphaned
-Apply command to nominal conditions without an entry in the file system.
-.It Fl notfile
-Apply command to nominal conditions which have no regular file entry in
-the file system.
-.It Fl hassum
-Apply command to nominal conditions which have a checksum.
-.It Fl hasnosum
-Apply command to nominal conditions which have no checksum.
-.It Fl hassig
-Apply command to nominal conditions which have a signature.
-.It Fl hasnosig
-Apply command to nominal conditions which have no signature.
-
-.It Ar command
+.El
 .Pp
+.Ar command
 .Pp
 add - add checksum to the shadow tree matching the current content of
 .Ar file .
@@ -129,8 +123,6 @@ get - returns the checksum of
 found in the shadow tree.
 .Pp
 list - list all entries found in the shadow tree.
-.Pp
-validate - validates all nominal conditions from
 .Ar file
 given as argument.
 .El
@@ -174,7 +166,7 @@ directory
 .Pa /tmp
 of the user with uid 1001
 .Pp
-.Dl # sfssig -r -hassig -u 1001 get /tmp
+.Dl # sfssig -r -u 1001 get /tmp
 .Pp
 .\" .Sh DIAGNOSTICS
 .Sh SEE ALSO
