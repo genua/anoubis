@@ -164,6 +164,7 @@ main(int argc, char *argv[])
 	int		error = 0;
 	char		*command = NULL;
 	char		*rulesopt = NULL;
+	char		real_path[PATH_MAX];
 
 	if (argc < 2)
 		usage();
@@ -216,13 +217,18 @@ main(int argc, char *argv[])
 					fprintf(stderr, "no rules file\n");
 					error = 4;
 				} else {
+					if ((rulesopt = realpath(rulesopt, real_path))
+					    == NULL) {
+						perror(rulesopt);
+						error = 4;
+						break;
+					}
 					error = ((func_char_t)commands[i].func)(
 					    rulesopt);
 					done = 1;
 				}
 
 			} else {
-
 				if (rulesopt != NULL) {
 					fprintf(stderr, "too many arguments\n");
 					error = 4;
