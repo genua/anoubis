@@ -39,7 +39,9 @@ WANTLIB-daemon+=	c
 CONFIGURE_STYLE=	gnu
 CONFIGURE_ARGS+=	--enable-static-anoubisd
 
-REGRESS_DEPENDS=	${BUILD_DEPENDS}
+#http://srv.anoubis.genua.de/cgi-bin/bugzilla/show_bug.cgi?id=906
+#REGRESS_DEPENDS=	${BUILD_DEPENDS}
+NO_REGRESS=		YES
 
 # Enforce the derivation of the file 'date.c' as the provided version
 # is incompatible with OpenBSD (Bug #741)
