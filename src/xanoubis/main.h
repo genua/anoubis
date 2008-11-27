@@ -97,7 +97,7 @@ class AnoubisGuiApp : public wxApp
 
 		ComRegistrationTask	regTask_;
 		std::list<ComPolicyRequestTask *>	requestTaskList_;
-		ComPolicySendTask	policySendTask_;
+		std::list<ComPolicySendTask *>		sendTaskList_;
 		ComCsumAddTask		csumAddTask_;
 		ComCsumGetTask		csumGetTask_;
 		CsumCalcTask		csumCalcTask_;

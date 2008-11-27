@@ -151,14 +151,14 @@ bool AnoubisGuiApp::OnInit()
 	ruleEditor_ = new DlgRuleEditor(mainFrame);
 	trayIcon = new TrayIcon();
 
+	SetTopWindow(mainFrame);
+	mainFrame->OnInit();
+	mainFrame->Show();
+
 	modules_[OVERVIEW] = new ModOverview(mainFrame);
 	modules_[ALF]      = new ModAlf(mainFrame);
 	modules_[SFS]      = new ModSfs(mainFrame);
 	modules_[ANOUBIS]  = new ModAnoubis(mainFrame);
-
-	mainFrame->Show();
-	SetTopWindow(mainFrame);
-	mainFrame->OnInit();
 
 	((ModOverview*)modules_[OVERVIEW])->addModules(modules_);
 	mainFrame->addModules(modules_);
@@ -194,6 +194,7 @@ AnoubisGuiApp::OnExit(void)
 	delete jobCtrl;
 
 	requestTaskList_.clear();
+	sendTaskList_.clear();
 
 	return (result);
 }
@@ -406,7 +407,8 @@ AnoubisGuiApp::requestPolicy(void)
 	wxArrayString userList = getListOfUsersId();
 
 	if (requestTaskList_.empty()) {
-		requestTaskList_.push_back(new ComPolicyRequestTask(1, geteuid()));
+		requestTaskList_.push_back(new ComPolicyRequestTask(1,
+		    geteuid()));
 		for (idx=userList.GetCount() - 1; idx >= 0; idx--) {
 			userList.Item(idx).ToULong(&uid);
 			requestTaskList_.push_back(
@@ -422,8 +424,11 @@ AnoubisGuiApp::requestPolicy(void)
 void
 AnoubisGuiApp::usePolicy(PolicyRuleSet *ruleset)
 {
-	policySendTask_.setPolicy(ruleset);
-	JobCtrl::getInstance()->addTask(&policySendTask_);
+	ComPolicySendTask *task;
+
+	task = new ComPolicySendTask(ruleset);
+	sendTaskList_.push_back(task);
+	JobCtrl::getInstance()->addTask(task);
 }
 
 void
@@ -878,6 +883,7 @@ AnoubisGuiApp::OnPolicySend(TaskEvent &event)
 
 		wxMessageBox(message, title, wxICON_ERROR);
 	}
+	sendTaskList_.remove(task);
 }
 
 void
