@@ -194,13 +194,17 @@ RuleEditorFillTableVisitor::showCtx(CtxPolicy *ctxPolicy, long idx)
 		    wxGetApp().getUserNameById(rs->getUid()));
 	}
 
-	ruleType = wxT(" NEW");
-	if (isAdmin()) {
-		ruleType += ADMIN_FLAG;
-	}
-	list->SetItem(idx, RULEDITOR_LIST_COLUMN_RULE, ruleType);
+	ruleType = wxT(" ???");
 	switch (type) {
 	case APN_CTX_RULE:
+		switch(ctxPolicy->getSubtypeNo()) {
+		case APN_CTX_NEW:
+			ruleType = wxT(" NEW");
+			break;
+		case APN_CTX_OPEN:
+			ruleType = wxT(" OPEN");
+			break;
+		}
 		ruleEditor_->ruleListCtrl->SetItem(idx,
 		    RULEDITOR_LIST_COLUMN_BIN, ctxPolicy->getBinaryName());
 		ruleEditor_->ruleListCtrl->SetItem(idx,
@@ -211,6 +215,10 @@ RuleEditorFillTableVisitor::showCtx(CtxPolicy *ctxPolicy, long idx)
 	default:
 		break;
 	}
+	if (isAdmin()) {
+		ruleType += ADMIN_FLAG;
+	}
+	list->SetItem(idx, RULEDITOR_LIST_COLUMN_RULE, ruleType);
 }
 
 void

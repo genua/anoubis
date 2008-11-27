@@ -104,6 +104,12 @@ CtxPolicy::getTypeNo(void)
 	return ctxRule_->apn_type;
 }
 
+int
+CtxPolicy::getSubtypeNo(void)
+{
+	return ctxRule_->rule.apncontext.type;
+}
+
 wxString
 CtxPolicy::getBinaryName(void)
 {

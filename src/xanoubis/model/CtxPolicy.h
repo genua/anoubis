@@ -73,6 +73,7 @@ class CtxPolicy : public Policy
 
 		int		getId(void);
 		int		getTypeNo(void);
+		int		getSubtypeNo(void);
 		wxString	getBinaryName(void);
 		wxString	getHashTypeName(void);
 		wxString	getHashValue(void);
