@@ -1155,7 +1155,7 @@
                                                                     <property name="enabled">1</property>
                                                                     <property name="fg"></property>
                                                                     <property name="font"></property>
-                                                                    <property name="hidden">0</property>
+                                                                    <property name="hidden">1</property>
                                                                     <property name="id">wxID_ANY</property>
                                                                     <property name="label">Sign Files</property>
                                                                     <property name="maximum_size"></property>
@@ -1207,7 +1207,7 @@
                                                                     <property name="enabled">1</property>
                                                                     <property name="fg"></property>
                                                                     <property name="font"></property>
-                                                                    <property name="hidden">0</property>
+                                                                    <property name="hidden">1</property>
                                                                     <property name="id">wxID_ANY</property>
                                                                     <property name="label">Search Orphaned</property>
                                                                     <property name="maximum_size"></property>
@@ -1259,7 +1259,7 @@
                                                                     <property name="enabled">1</property>
                                                                     <property name="fg"></property>
                                                                     <property name="font"></property>
-                                                                    <property name="hidden">0</property>
+                                                                    <property name="hidden">1</property>
                                                                     <property name="id">wxID_ANY</property>
                                                                     <property name="label">Show all Checksums</property>
                                                                     <property name="maximum_size"></property>
@@ -1311,7 +1311,7 @@
                                                                     <property name="enabled">1</property>
                                                                     <property name="fg"></property>
                                                                     <property name="font"></property>
-                                                                    <property name="hidden">0</property>
+                                                                    <property name="hidden">1</property>
                                                                     <property name="id">wxID_ANY</property>
                                                                     <property name="label">Import...</property>
                                                                     <property name="maximum_size"></property>
@@ -1383,7 +1383,7 @@
                                                                     <property name="enabled">1</property>
                                                                     <property name="fg"></property>
                                                                     <property name="font"></property>
-                                                                    <property name="hidden">0</property>
+                                                                    <property name="hidden">1</property>
                                                                     <property name="id">wxID_ANY</property>
                                                                     <property name="label">Show Changed</property>
                                                                     <property name="maximum_size"></property>
@@ -1435,7 +1435,7 @@
                                                                     <property name="enabled">1</property>
                                                                     <property name="fg"></property>
                                                                     <property name="font"></property>
-                                                                    <property name="hidden">0</property>
+                                                                    <property name="hidden">1</property>
                                                                     <property name="id">wxID_ANY</property>
                                                                     <property name="label">Export...</property>
                                                                     <property name="maximum_size"></property>

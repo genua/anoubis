@@ -292,8 +292,14 @@ __convert_user_path(const char * path, char **dir, int is_dir, int is_chroot)
 		if (path[i-1] == '.' && path[i-2] == '/')
 			return -EINVAL;
 	}
-	if (path[i] == '/')
-		return -EINVAL;
+	if (path[i] == '/') {
+		/*
+		* Special case: root-directory
+		* This is the only directory where a trailing slash is allowed
+		*/
+		if (!is_dir || i)
+			return -EINVAL;
+	}
 
 	newpath = insert_escape_seq(path, is_dir);
 	if (newpath == NULL)

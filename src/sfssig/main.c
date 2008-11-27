@@ -1124,7 +1124,11 @@ sfs_list(char *file)
 	if (len < 0)
 		return 1;
 
-	if (file[len] == '/')
+	/*
+	 * Remove trailing slash but leave the slash if file is the
+	 * root-directory.
+	 */
+	if ((len > 1) && file[len] == '/')
 		file[len] = '\0';
 
 	if (opts & SFSSIG_OPT_SIG) {
@@ -1164,7 +1168,12 @@ sfs_list(char *file)
 		len = strlen(result[i]) - 1;
 		if (result[i][len] == '/')
 			continue;
-		printf("%s/%s\n", file, result[i]);
+
+		/* Avoid double slash at the beginning */
+		if (strcmp(file, "/") != 0)
+			printf("%s/%s\n", file, result[i]);
+		else
+			printf("/%s\n", result[i]);
 	}
 
 	for (i = 0; i < sfs_cnt; i++)
@@ -1336,7 +1345,11 @@ sfs_add_tree(char *path, int op)
 	if (len < 0)
 		return 1;
 
-	if (path[len] == '/')
+	/*
+	 * Remove trailing slash but leave the slash if file is the
+	 * root-directory.
+	 */
+	if ((len > 1) && path[len] == '/')
 		path[len] = '\0';
 
 	dirp = opendir(path);
@@ -1436,7 +1449,11 @@ sfs_tree(char *path, int op)
 	if (len < 0)
 		return 1;
 
-	if (path[len] == '/')
+	/*
+	 * Remove trailing slash but leave the slash if file is the
+	 * root-directory.
+	 */
+	if ((len > 1) && path[len] == '/')
 		path[len] = '\0';
 
 	tmp = strdup(path);

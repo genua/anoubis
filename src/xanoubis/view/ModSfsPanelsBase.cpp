@@ -160,15 +160,23 @@ ModSfsMainPanelBase::ModSfsMainPanelBase( wxWindow* parent, wxWindowID id, const
 	
 	SfsMainSignFilesCheckBox = new wxCheckBox( pan_SfsMain, wxID_ANY, _("Sign Files"), wxDefaultPosition, wxDefaultSize, 0 );
 	
+	SfsMainSignFilesCheckBox->Hide();
+	
 	fgSizer51->Add( SfsMainSignFilesCheckBox, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
 	
 	SfsMainSearchOrphanedButton = new wxButton( pan_SfsMain, wxID_ANY, _("Search Orphaned"), wxDefaultPosition, wxDefaultSize, 0 );
+	SfsMainSearchOrphanedButton->Hide();
+	
 	fgSizer51->Add( SfsMainSearchOrphanedButton, 0, wxALL, 5 );
 	
 	SfsMainShowChecksumButton = new wxButton( pan_SfsMain, wxID_ANY, _("Show all Checksums"), wxDefaultPosition, wxDefaultSize, 0 );
+	SfsMainShowChecksumButton->Hide();
+	
 	fgSizer51->Add( SfsMainShowChecksumButton, 0, wxALL, 5 );
 	
 	SfsMainImportButton = new wxButton( pan_SfsMain, wxID_ANY, _("Import..."), wxDefaultPosition, wxDefaultSize, 0 );
+	SfsMainImportButton->Hide();
+	
 	fgSizer51->Add( SfsMainImportButton, 0, wxALIGN_RIGHT|wxALL, 5 );
 	
 	
@@ -178,9 +186,13 @@ ModSfsMainPanelBase::ModSfsMainPanelBase( wxWindow* parent, wxWindowID id, const
 	fgSizer51->Add( 0, 0, 1, wxEXPAND, 5 );
 	
 	SfsMainShowChangedButton = new wxButton( pan_SfsMain, wxID_ANY, _("Show Changed"), wxDefaultPosition, wxDefaultSize, 0 );
+	SfsMainShowChangedButton->Hide();
+	
 	fgSizer51->Add( SfsMainShowChangedButton, 0, wxALL, 5 );
 	
 	SfsMainExportButton = new wxButton( pan_SfsMain, wxID_ANY, _("Export..."), wxDefaultPosition, wxDefaultSize, 0 );
+	SfsMainExportButton->Hide();
+	
 	fgSizer51->Add( SfsMainExportButton, 0, wxALIGN_RIGHT|wxALL, 5 );
 	
 	sbSizer1->Add( fgSizer51, 1, wxEXPAND, 5 );

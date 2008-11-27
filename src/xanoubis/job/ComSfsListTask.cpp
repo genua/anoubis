@@ -66,8 +66,11 @@ ComSfsListTask::setRequestParameter(uid_t uid, const wxString &dir)
 {
 	this->uid_ = uid;
 
-	/* Remove the trailing slash */
-	if (dir.EndsWith(wxT("/")))
+	/*
+	 * Remove the trailing slash
+	 * but leave the trailing slash, if the root-directory is specified.
+	 */
+	if ((dir != wxT("/")) && dir.EndsWith(wxT("/")))
 		this->directory_ = dir.Mid(0, dir.Len() - 1);
 	else
 		this->directory_ = dir;
