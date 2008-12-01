@@ -28,6 +28,7 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
+#include "version.h"
 
 #include <wx/app.h>
 #include <wx/filedlg.h>
