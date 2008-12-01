@@ -33,7 +33,6 @@ AC_INIT(anoubis, esyscmd([echo -n `head -1 VERSION`]), info@genua.de)
 AM_INIT_AUTOMAKE
 AM_MAINTAINER_MODE
 AC_CONFIG_HEADER([src/config.h])
-AC_CONFIG_HEADERS([src/version.h])
 
 dnl os specific library replacements
 AC_SEARCH_LIBS([inet_net_pton], [resolv], \
