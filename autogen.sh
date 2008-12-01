@@ -1,6 +1,5 @@
 #!/bin/sh
 # a quick hack script to generate needed autotools files
-# $Id: 2309b5,v 1.13 2008/12/01 09:47:01 fritsch Exp $
 
 # map used commands
 : ${ACLOCAL=aclocal}
@@ -18,6 +17,7 @@
 	fi
 } && {
 	$AUTOHEADER --force
+	perl split_config_h_in.pl
 } && {
 	touch AUTHORS INSTALL NEWS COPYING README ChangeLog
 	echo "running automake" >&2
