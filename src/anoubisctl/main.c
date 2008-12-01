@@ -164,7 +164,7 @@ main(int argc, char *argv[])
 	int		error = 0;
 	char		*command = NULL;
 	char		*rulesopt = NULL;
-	char		real_path[PATH_MAX];
+	char		buf[PATH_MAX];
 
 	if (argc < 2)
 		usage();
@@ -208,34 +208,31 @@ main(int argc, char *argv[])
 
 	done = 0;
 	for (i=0; i < sizeof(commands)/sizeof(struct cmd); i++) {
-
-		if (strcmp(command, commands[i].command) == 0) {
-
-			if (commands[i].file)  {
-
-				if (rulesopt == NULL || argc != 1) {
-					fprintf(stderr, "no rules file\n");
-					error = 4;
-				} else {
-					if ((rulesopt = realpath(rulesopt, real_path))
-					    == NULL) {
-						perror(rulesopt);
-						error = 4;
-						break;
-					}
-					error = ((func_char_t)commands[i].func)(
-					    rulesopt);
-					done = 1;
-				}
-
+		if (strcmp(command, commands[i].command) != 0)
+			continue;
+		if (commands[i].file)  {
+			if (rulesopt == NULL || argc != 1) {
+				fprintf(stderr, "no rules file\n");
+				error = 4;
+				break;
+			}
+			if (strcmp(rulesopt, "-") != 0)
+				rulesopt = realpath(rulesopt, buf);
+			if (rulesopt == NULL) {
+				perror(rulesopt);
+				error = 4;
+				break;
+			}
+			error = ((func_char_t)commands[i].func)(
+			    rulesopt);
+			done = 1;
+		} else {
+			if (rulesopt != NULL) {
+				fprintf(stderr, "too many arguments\n");
+				error = 4;
 			} else {
-				if (rulesopt != NULL) {
-					fprintf(stderr, "too many arguments\n");
-					error = 4;
-				} else {
-					error = commands[i].func();
-					done = 1;
-				}
+				error = commands[i].func();
+				done = 1;
 			}
 		}
 	}
