@@ -176,6 +176,27 @@ START_TEST(SfsDir_inverse_filter_no_match)
 }
 END_TEST
 
+START_TEST(SfsDir_entry_order)
+{
+	SfsDirectory	dir;
+	bool		result;
+	unsigned int	i;
+	wxString	prevName = wxEmptyString;
+
+	result = dir.setPath(wxSfsDir);
+	fail_if(result == false, "Path has not changed");
+
+	for (i = 0; i < dir.getNumEntries(); i++) {
+		SfsEntry &entry = dir.getEntry(i);
+
+		if (entry.getFileName() <= prevName)
+			fail("Entries on directory are not correct order");
+
+		prevName = entry.getFileName();
+	}
+}
+END_TEST
+
 TCase *
 getTc_SfsDir(void)
 {
@@ -190,6 +211,7 @@ getTc_SfsDir(void)
 	tcase_add_test(testCase, SfsDir_filter_no_match);
 	tcase_add_test(testCase, SfsDir_inverse_filter_match);
 	tcase_add_test(testCase, SfsDir_inverse_filter_no_match);
+	tcase_add_test(testCase, SfsDir_entry_order);
 
 	return (testCase);
 }

@@ -137,8 +137,28 @@ wxDirTraverseResult
 SfsDirectory::OnFile(const wxString &filename)
 {
 	if (this->inverseFilter_ ^ filename.Contains(this->filter_)) {
-		SfsEntry entry(filename);
-		entryList_.push_back(entry);
+		/*
+		 * Insert into directory
+		 * Entries are sorted in alphabetic order
+		 */
+		std::vector<SfsEntry>::iterator it = entryList_.begin();
+		SfsEntry newEntry(filename);
+
+		/* Find correct position */
+		for (; it != entryList_.end(); ++it) {
+			SfsEntry &curEntry = (*it);
+
+			if (curEntry.getPath().Cmp(filename) > 0) {
+				entryList_.insert(it, newEntry);
+				return (wxDIR_CONTINUE);
+			}
+		}
+
+		/*
+		 * newEntry is the "greatest" item, append it at the end of
+		 * the directory
+		 */
+		entryList_.push_back(newEntry);
 	}
 
 	return (wxDIR_CONTINUE);
