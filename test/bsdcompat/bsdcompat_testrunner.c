@@ -26,7 +26,8 @@
  */
 
 #include <stdlib.h>
-#include <check.h>
+
+#include <anoubischeck.h>
 
 extern Suite	*bsdcompat_testsuite(void);
 
@@ -35,9 +36,9 @@ extern Suite	*bsdcompat_testsuite(void);
 int
 main(int argc, char **argv __used)
 {
-	int	 number_failed = -1;
 	Suite	*suite;
 	SRunner	*suiterunner;
+	int	 result;
 
 	if (argc != 1)
 		return 2;
@@ -46,8 +47,8 @@ main(int argc, char **argv __used)
 	suiterunner = srunner_create(suite);
 
 	srunner_run_all(suiterunner, CK_NORMAL);
-	number_failed = srunner_ntests_failed(suiterunner);
+	result = check_eval_srunner(suiterunner);
 	srunner_free(suiterunner);
 
-	return ((number_failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE);
+	return (result);
 }

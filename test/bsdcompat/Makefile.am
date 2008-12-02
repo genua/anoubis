@@ -29,12 +29,16 @@ TESTS = test_bsdcompat
 libbsdcompatdir	= src/bsdcompat
 libbsdcompat	= $(top_builddir)/$(libbsdcompatdir)/libbsdcompat.so
 
+libanoubischeckdir = test/libanoubischeck
+libanoubischeck    = $(top_builddir)/$(libanoubischeckdir)/libanoubischeck.a
+
 # set TESTS_ENVIRONMENT for checks
 RPATH = $(top_builddir)/$(libbsdcompatdir)
 TESTS_ENVIRONMENT = LD_LIBRARY_PATH=$(RPATH)
 
 noinst_PROGRAMS = test_bsdcompat
-INCLUDES = -I$(top_srcdir)/$(libbsdcompatdir)
+INCLUDES = -I$(top_srcdir)/$(libbsdcompatdir) \
+	-I$(top_srcdir)/$(libanoubischeckdir)
 
 test_bsdcompat_CFLAGS = $(AM_CFLAGS) @CHECK_CFLAGS@
 
@@ -42,7 +46,7 @@ test_bsdcompat_CFLAGS = $(AM_CFLAGS) @CHECK_CFLAGS@
 # we must use shared_AM_LDFLAGS in order not to link with -pie.
 test_bsdcompat_LDFLAGS = -L$(top_builddir)/$(libbsdcompatdir) -dynamic \
 	$(shared_AM_LDFLAGS)
-LDADD = @CHECK_LIBS@ -lbsdcompat
+LDADD = $(libanoubischeck) @CHECK_LIBS@ -lbsdcompat
 
 test_bsdcompat_DEPENDENCIES = $(libbsdcompat)
 test_bsdcompat_SOURCES = \

@@ -30,6 +30,8 @@ bsdcompatdir	= src/bsdcompat
 libbsdcompat	= $(top_builddir)/$(bsdcompatdir)/libbsdcompat.a
 anoubischatdir	= src/libanoubischat
 libanoubischat	= $(top_builddir)/$(anoubischatdir)/libanoubischat.so
+libanoubischeckdir = test/libanoubischeck
+libanoubischeck    = $(top_builddir)/$(libanoubischeckdir)/libanoubischeck.a
 
 # set TESTS_ENVIRONMENT for checks
 RPATH = $(top_builddir)/$(anoubischatdir):$(top_builddir)/$(bsdcompatdir)
@@ -38,7 +40,8 @@ TESTS_ENVIRONMENT = LD_LIBRARY_PATH=$(RPATH)
 noinst_PROGRAMS = test_libanoubischat
 
 test_libanoubischat_CFLAGS = $(AM_CFLAGS) @CHECK_CFLAGS@
-test_libanoubischat_CPPFLAGS = -I$(top_srcdir)/$(anoubischatdir)
+test_libanoubischat_CPPFLAGS = -I$(top_srcdir)/$(anoubischatdir) \
+	-I$(top_srcdir)/$(libanoubischeckdir)
 # We link with check.a which is compiled without -fPIE, therefore
 # we must use shared_AM_LDFLAGS in order not to link with -pie.
 test_libanoubischat_LDFLAGS = \
@@ -49,11 +52,12 @@ test_libanoubischat_LDFLAGS = \
 if GCOV_ENABLED
 test_libanoubischat_LDADD = \
 	@CHECK_LIBS@ \
+	$(libanoubischeck) \
 	$(top_builddir)/$(anoubischatdir)/libanoubischat.a
 test_libanoubischat_DEPENDENCIES = \
 	$(top_builddir)/$(anoubischatdir)/libanoubischat.a
 else
-test_libanoubischat_LDADD = @CHECK_LIBS@ -lanoubischat
+test_libanoubischat_LDADD = @CHECK_LIBS@ $(libanoubischeck) -lanoubischat
 test_libanoubischat_DEPENDENCIES = $(libanoubischat)
 endif
 

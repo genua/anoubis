@@ -28,6 +28,7 @@ TESTS = test_libanoubisproto test_libanoubisnotify
 anoubisprotocoldir	= src/libanoubisprotocol
 anoubischatdir		= src/libanoubischat
 bsdcompatdir		= src/bsdcompat
+anoubischeckdir		= test/libanoubischeck
 libanoubischat = $(top_builddir)/$(anoubischatdir)/libanoubischat.so
 libanoubischata = $(top_builddir)/$(anoubischatdir)/libanoubischat.a
 libbsdcompat = $(top_builddir)/$(bsdcompatdir)/libbsdcompat.a
@@ -35,6 +36,7 @@ libanoubisps = $(top_builddir)/$(anoubisprotocoldir)/libanoubisps.so
 libanoubispsa = $(top_builddir)/$(anoubisprotocoldir)/libanoubisps.a
 libanoubispc = $(top_builddir)/$(anoubisprotocoldir)/libanoubispc.so
 libanoubispca = $(top_builddir)/$(anoubisprotocoldir)/libanoubispc.a
+libanoubischeck = $(top_builddir)/$(anoubischeckdir)/libanoubischeck.a
 
 # set TESTS_ENVIRONMENT for checks
 RPATH = $(top_builddir)/$(anoubisprotocoldir):$(top_builddir)/$(anoubischatdir):$(top_builddir)/$(bsdcompatdir)
@@ -42,6 +44,7 @@ TESTS_ENVIRONMENT = LD_LIBRARY_PATH=$(RPATH)
 
 noinst_PROGRAMS = test_libanoubisproto test_libanoubisnotify libanoubischat.so
 CPPFLAGS =						\
+	-I$(top_srcdir)/$(anoubischeckdir)		\
 	-I$(top_srcdir)/$(anoubischatdir)		\
 	-I$(top_srcdir)/$(anoubisprotocoldir)/client	\
 	-I$(top_srcdir)/$(anoubisprotocoldir)/server	\
@@ -59,18 +62,19 @@ test_libanoubisnotify_LDFLAGS = \
 # conditionally static link of libraries to accomplish correct Code Coverage
 if GCOV_ENABLED
 test_libanoubisproto_LDADD = \
-	@CHECK_LIBS@ $(libanoubispsa) $(libanoubispca) $(libanoubischata) 
+	@CHECK_LIBS@ $(libanoubischeck) \
+	$(libanoubispsa) $(libanoubispca) $(libanoubischata)
 test_libanoubisnotify_LDADD = \
-	@CHECK_LIBS@ $(libanoubispsa) $(libanoubischata)
+	@CHECK_LIBS@ $(libanoubischeck) $(libanoubispsa) $(libanoubischata)
 test_libanoubisproto_DEPENDENCIES = \
 	$(libanoubispsa) $(libanoubispca) $(libanoubischata)
 test_libanoubisnotify_DEPENDENCIES = \
 	$(libanoubispsa) $(libanoubischata)
 else
 test_libanoubisproto_LDADD = \
-	@CHECK_LIBS@ -lanoubisps -lanoubispc -lanoubischat
+	@CHECK_LIBS@ $(libanoubischeck) -lanoubisps -lanoubispc -lanoubischat
 test_libanoubisnotify_LDADD = \
-	@CHECK_LIBS@ -lanoubisps -lanoubischat
+	@CHECK_LIBS@ $(libanoubischeck) -lanoubisps -lanoubischat
 test_libanoubisproto_DEPENDENCIES = \
 	$(libanoubisps) $(libanoubispc) $(libanoubischat)
 test_libanoubisnotify_DEPENDENCIES = \

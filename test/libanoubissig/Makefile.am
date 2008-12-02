@@ -30,6 +30,8 @@ bsdcompatdir	= src/bsdcompat
 libbsdcompat	= $(top_builddir)/$(bsdcompatdir)/libbsdcompat.a
 anoubissigdir	= src/libanoubissig
 libanoubissig	= $(top_builddir)/$(anoubissigdir)/libanoubissig.a
+anoubischeckdir = test/libanoubischeck
+libanoubischeck = $(top_builddir)/$(anoubischeckdir)/libanoubischeck.a
 
 # set TESTS_ENVIRONMENT for checks
 RPATH = $(top_builddir)/$(anoubissigdir):$(top_builddir)/$(bsdcompatdir)
@@ -40,7 +42,8 @@ noinst_PROGRAMS = test_libanoubissig
 test_libanoubissig_CFLAGS = $(AM_CFLAGS) @CHECK_CFLAGS@ \
 			    -I$(top_srcdir)/include
 test_libanoubissig_CPPFLAGS = -I$(top_srcdir)/$(anoubissigdir) \
-			      -I$(top_srcdir)/include
+			      -I$(top_srcdir)/include \
+			      -I$(top_srcdir)/$(anoubischeckdir)
 
 # We link with check.a which is compiled without -fPIE, therefore
 # we must use shared_AM_LDFLAGS in order not to link with -pie.
@@ -52,12 +55,17 @@ test_libanoubissig_LDFLAGS = \
 if GCOV_ENABLED
 test_libanoubissig_LDADD = \
 	@CHECK_LIBS@ \
+	$(libanoubischeck) \
 	$(SSL_LIBS) \
 	$(top_builddir)/$(anoubissigdir)/libanoubissig.a
 test_libanoubissig_DEPENDENCIES = \
 	$(top_builddir)/$(anoubissigdir)/libanoubissig.a
 else
-test_libanoubissig_LDADD = @CHECK_LIBS@ -lanoubissig $(SSL_LIBS)
+test_libanoubissig_LDADD = \
+	@CHECK_LIBS@ \
+	$(libanoubischeck) \
+	-lanoubissig \
+	$(SSL_LIBS)
 test_libanoubissig_DEPENDENCIES = $(libanoubissig)
 endif
 

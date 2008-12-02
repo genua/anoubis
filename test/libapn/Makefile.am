@@ -30,8 +30,10 @@ noinst_PROGRAMS = test_libapn test_printing test_insertcopy test_rbtree
 
 libapndir       = src/libapn
 bsdcompatdir    = src/bsdcompat
+anoubischeckdir = test/libanoubischeck
 libapn		= $(top_builddir)/$(libapndir)/libapn.so
 libbsdcompat    = $(top_builddir)/$(bsdcompatdir)/libbsdcompat.a
+libanoubischeck = $(top_builddir)/$(anoubischeckdir)/libanoubischeck.a
 
 # set TESTS_ENVIRONMENT for checks
 RPATH = $(top_builddir)/$(libapndir):$(top_builddir)/$(bsdcompatdir)
@@ -41,6 +43,7 @@ test_libapn_CPPFLAGS = \
 	-I$(top_srcdir)/$(libapndir) \
 	-I$(top_srcdir)/$(bsdcompatdir) \
 	-I$(top_srcdir)/include \
+	-I$(top_srcdir)/$(anoubischeckdir) \
 	@CHECK_CFLAGS@
 
 LDFLAGS += \
@@ -51,12 +54,12 @@ LDFLAGS += \
 # conditionally static link of libraries to accomplish correct Code Coverage
 if GCOV_ENABLED
 test_libapn_LDADD = \
-	@CHECK_LIBS@ \
+	@CHECK_LIBS@ $(libanoubischeck) \
 	$(top_builddir)/$(libapndir)/libapn.a
 test_libapn_DEPENDENCIES = \
 	$(top_builddir)/$(libapndir)/libapn.a
 else
-test_libapn_LDADD = @CHECK_LIBS@ -lapn
+test_libapn_LDADD = @CHECK_LIBS@ $(libanoubischeck) -lapn
 test_libapn_DEPENDENCIES = $(libapn)
 endif
 
@@ -77,11 +80,12 @@ test_printing_CPPFLAGS = \
 	-I$(top_srcdir)/$(libapndir) \
 	-I$(top_srcdir)/$(bsdcompatdir) \
 	-I$(top_srcdir)/include \
+	-I$(top_srcdir)/$(anoubischeckdir) \
 	@CHECK_CFLAGS@
 
 test_printing_LDFLAGS = \
 	-L$(top_builddir)/$(libapndir) -dynamic
-test_printing_LDADD = @CHECK_LIBS@ -lapn
+test_printing_LDADD = @CHECK_LIBS@ $(libanoubischeck) -lapn
 
 test_printing_DEPENDENCIES = $(libapn)
 
@@ -104,11 +108,12 @@ test_insertcopy_CPPFLAGS = \
 	-I$(top_srcdir)/$(libapndir) \
 	-I$(top_srcdir)/$(bsdcompatdir) \
 	-I$(top_srcdir)/include \
+	-I$(top_srcdir)/$(anoubischeckdir) \
 	@CHECK_CFLAGS@
 
 test_insertcopy_LDFLAGS = \
 	-L$(top_builddir)/$(libapndir) -dynamic
-test_insertcopy_LDADD = @CHECK_LIBS@ -lapn
+test_insertcopy_LDADD = @CHECK_LIBS@ $(libanoubischeck) -lapn
 test_insertcopy_DEPENDENCIES = $(libapn)
 
 if NEEDBSDCOMPAT

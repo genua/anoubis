@@ -33,6 +33,8 @@ apnvmdir	= src/libanoubisui/apnvm
 apnvm		= $(top_builddir)/$(apnvmdir)/libapnvm.a
 libapndir	= src/libapn
 libapn		= $(top_builddir)/$(libapndir)/libapn.a
+anoubischeckdir = test/libanoubischeck
+libanoubischeck = $(top_builddir)/$(anoubischeckdir)/libanoubischeck.a
 
 # set TESTS_ENVIRONMENT for checks
 RPATH = $(top_builddir)/$(apnvmdir):$(top_builddir)/$(bsdcompatdir)
@@ -47,14 +49,16 @@ test_apnvm_CFLAGS = \
 	$(AM_CFLAGS) \
 	@CHECK_CFLAGS@
 
-test_apnvm_CPPFLAGS = -I$(top_srcdir)/$(apnvmdir)
+test_apnvm_CPPFLAGS = \
+	-I$(top_srcdir)/$(apnvmdir) \
+	-I$(top_srcdir)/$(anoubischeckdir)
 test_apnvm_LDFLAGS = \
 	$(AM_LDFLAGS) -dynamic \
 	-L$(top_builddir)/$(apnvmdir) -lapnvm
 
 # conditionally static link of libraries to accomplish correct Code Coverage
 test_apnvm_DEPENDENCIES = $(apnvm) $(libapn)
-test_apnvm_LDADD = @CHECK_LIBS@ $(libapn) -lfl
+test_apnvm_LDADD = @CHECK_LIBS@ $(libanoubischeck) $(libapn) -lfl
 
 if NEEDBSDCOMPAT
 test_apnvm_DEPENDENCIES += $(libbsdcompat)

@@ -30,6 +30,10 @@
 
 #include <check.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Evaluates failures and type of failures from the given SRunner.
  *
@@ -40,5 +44,9 @@
  * - 2 is returned, if at least one error occured.
  */
 int check_eval_srunner(SRunner *);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif	/* _ANOUBISCHECK_H_ */

@@ -26,25 +26,25 @@
  */
 
 #include <stdlib.h>
-#include <check.h>
+
+#include <anoubischeck.h>
 
 extern Suite *getTestSuite(void);
 
 int
 main(void)
 {
-	int	 failedTests;
+	int	 result;
 	Suite	*testSuite;
 	SRunner	*suiteRunner;
 
-	failedTests = -1;
 	testSuite = getTestSuite();
 	suiteRunner = srunner_create(testSuite);
 
 	srunner_run_all(suiteRunner, CK_NORMAL);
 
-	failedTests = srunner_ntests_failed(suiteRunner);
+	result = check_eval_srunner(suiteRunner);
 	srunner_free(suiteRunner);
 
-	return ((failedTests == 0) ? EXIT_SUCCESS : EXIT_FAILURE);
+	return (result);
 }

@@ -26,7 +26,8 @@
  */
 
 #include <stdlib.h>
-#include <check.h>
+
+#include <anoubischeck.h>
 
 extern TCase *apnvm_tc_cvs(void);
 extern TCase *apnvm_tc_cvs_init(void);
@@ -57,14 +58,14 @@ apnvm_testsuite(void)
 int
 main (void)
 {
-	int number_failed = -1;
+	int result;
 
 	Suite *suite = apnvm_testsuite();
 	SRunner *suiterunner = srunner_create(suite);
 
 	srunner_run_all(suiterunner, CK_NORMAL);
-	number_failed = srunner_ntests_failed(suiterunner);
+	result = check_eval_srunner(suiterunner);
 	srunner_free(suiterunner);
 
-	return ((number_failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE);
+	return (result);
 }

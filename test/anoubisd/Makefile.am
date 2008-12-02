@@ -37,9 +37,11 @@ anoubisddir     = src/anoubisd
 anoubischatdir  = src/libanoubischat
 bsdcompatdir    = src/bsdcompat
 anoubisprotodir = src/libanoubisprotocol
+anoubischeckdir = test/libanoubischeck
 libanoubischat  = $(top_builddir)/$(anoubischatdir)/libanoubischat.a
 libanoubispc    = $(top_builddir)/$(anoubisprotodir)/libanoubispc.a
 libbsdcompat    = $(top_builddir)/$(bsdcompatdir)/libbsdcompat.a
+libanoubischeck = $(top_builddir)/$(anoubischeckdir)/libanoubischeck.a
 
 test_anoubisd_CPPFLAGS = \
 	-I$(top_srcdir)/$(anoubischatdir) \
@@ -48,6 +50,7 @@ test_anoubisd_CPPFLAGS = \
 	-I$(top_srcdir)/$(anoubisprotodir)/client \
 	-I$(top_srcdir)/include \
 	-I$(top_srcdir)/$(bsdcompatdir) \
+	-I$(top_srcdir)/$(anoubischeckdir) \
 	-I$(top_builddir)/src \
 	@CHECK_CFLAGS@
 
@@ -57,6 +60,7 @@ test_anoubisd_LDFLAGS = $(shared_AM_LDFLAGS)
 
 test_anoubisd_LDADD = \
 	@CHECK_LIBS@ \
+	$(libanoubischeck) \
 	$(libanoubispc) \
 	$(libanoubischat)
 

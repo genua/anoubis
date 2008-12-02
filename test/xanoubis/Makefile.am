@@ -49,6 +49,7 @@ xanoubisdir	   = src/xanoubis
 bsdcompatdir	   = src/bsdcompat
 anoubischatdir	   = src/libanoubischat
 anoubisprotocoldir = src/libanoubisprotocol
+anoubischeckdir    = test/libanoubischeck
 
 libanoubisui	  = $(top_builddir)/$(uidir)/libanoubisui.a
 libapn		  = $(top_builddir)/$(apndir)/libapn.a
@@ -57,6 +58,7 @@ libanoubischat	  = $(top_builddir)/$(anoubischatdir)/libanoubischat.a
 libprotocolserver = $(top_builddir)/$(anoubisprotocoldir)/libanoubisps.a
 libprotocolclient = $(top_builddir)/$(anoubisprotocoldir)/libanoubispc.a
 libGUIcomponents  = $(top_builddir)/$(xanoubisdir)/libGUIcomponents.so
+libanoubischeck   = $(top_builddir)/$(anoubischeckdir)/libanoubischeck.a
 
 libanouibisui_CPPFLAGS = -I$(top_srcdir)/$(uidir)
 libapn_CPPFLAGS = -I$(top_srcdir)/$(apndir)
@@ -80,6 +82,7 @@ libGUIcomponents_CPPFLAGS = \
 	-I$(top_srcdir)/$(xanoubisdir)/control \
 	-I$(top_srcdir)/$(xanoubisdir)/pattern \
 	-I$(top_srcdir)/$(xanoubisdir)/job \
+	-I$(top_srcdir)/$(anoubischeckdir) \
 	$(WX_CPPFLAGS)
 libGUIcomponents_CXXFLAGS = \
 	-fno-strict-aliasing \
@@ -100,6 +103,7 @@ libGUIcomponents_LDADD = \
 	$(libprotocolclient) \
 	$(libapn) \
 	$(libanoubisui) \
+	$(libanoubischeck) \
 	@WX_LIBS@ \
 	@GTK_LIBS@ \
 	@GLIB_LIBS@ \
@@ -112,6 +116,7 @@ TESTS_ENVIRONMENT = LD_LIBRARY_PATH=$(RPATH)
 test_xanoubis_server_CFLAGS = $(AM_CFLAGS) @CHECK_CFLAGS@
 test_xanoubis_server_CPPFLAGS = \
 	-I$(top_srcdir)/include \
+	-I$(top_srcdir)/$(anoubischeckdir) \
 	$(libanoubischat_CPPFLAGS) \
 	$(libprotocolserver_CPPFLAGS)
 
@@ -126,7 +131,7 @@ endif
 
 test_xanoubis_server_LDADD = \
 	$(test_xanoubis_server_DEPENDENCIES) \
-	@CHECK_LIBS@
+	$(libanoubischeck) @CHECK_LIBS@
 
 # We link with check.a which is compiled without -fPIE, therefore
 # we must use shared_AM_LDFLAGS in order not to link with -pie.

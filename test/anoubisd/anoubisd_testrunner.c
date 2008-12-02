@@ -26,14 +26,15 @@
  */
 
 #include <stdlib.h>
-#include <check.h>
+
+#include <anoubischeck.h>
 
 extern Suite *anoubisd_testsuite(void);
 extern const char * sockname;
 int
 main (int argc, char * argv[])
 {
-	int number_failed = -1;
+	int result;
 
 	if (argc > 2)
 		return 2;
@@ -43,8 +44,8 @@ main (int argc, char * argv[])
 	SRunner *suiterunner = srunner_create(suite);
 
 	srunner_run_all(suiterunner, CK_NORMAL);
-	number_failed = srunner_ntests_failed(suiterunner);
+	result = check_eval_srunner(suiterunner);
 	srunner_free(suiterunner);
 
-	return ((number_failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE);
+	return (result);
 }

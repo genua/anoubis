@@ -25,20 +25,21 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <stdlib.h>
-#include <check.h>
+
+#include <anoubischeck.h>
 
 extern Suite *xanoubis_dummyserver_testsuite(int, char **);
 
 int
 main (int argc, char *argv[])
 {
-	int number_failed = -1;
+	int result;
 	Suite *suite = xanoubis_dummyserver_testsuite(argc, argv);
 	SRunner *suiterunner = srunner_create(suite);
 
 	srunner_run_all(suiterunner, CK_NORMAL);
-	number_failed = srunner_ntests_failed(suiterunner);
+	result = check_eval_srunner(suiterunner);
 	srunner_free(suiterunner);
 
-	return ((number_failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE);
+	return (result);
 }
