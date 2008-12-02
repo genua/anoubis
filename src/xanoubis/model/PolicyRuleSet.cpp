@@ -73,8 +73,9 @@ PolicyRuleSet::PolicyRuleSet(int priority, uid_t uid,
 	origin_ = wxT("Daemon");
 
 	create(ruleSet);
-	Connect(anEVT_ANSWER_ESCALATION,
-	    wxCommandEventHandler(PolicyRuleSet::OnAnswerEscalation));
+	AnEvents::getInstance()->Connect(anEVT_ANSWER_ESCALATION,
+	    wxCommandEventHandler(PolicyRuleSet::OnAnswerEscalation),
+	    NULL, this);
 }
 
 PolicyRuleSet::PolicyRuleSet(int priority, uid_t uid, wxString fileName,
@@ -89,12 +90,17 @@ PolicyRuleSet::PolicyRuleSet(int priority, uid_t uid, wxString fileName,
 	origin_ = fileName;
 
 	create(fileName, checkPerm);
-	Connect(anEVT_ANSWER_ESCALATION,
-	    wxCommandEventHandler(PolicyRuleSet::OnAnswerEscalation));
+	AnEvents::getInstance()->Connect(anEVT_ANSWER_ESCALATION,
+	    wxCommandEventHandler(PolicyRuleSet::OnAnswerEscalation),
+	    NULL, this);
 }
 
 PolicyRuleSet::~PolicyRuleSet(void)
 {
+	AnEvents::getInstance()->Disconnect(anEVT_ANSWER_ESCALATION,
+	    wxCommandEventHandler(PolicyRuleSet::OnAnswerEscalation),
+	    NULL, this);
+
 	clean();
 	apn_free_ruleset(ruleSet_);
 }
@@ -440,7 +446,7 @@ PolicyRuleSet::createAnswerPolicy(EscalationNotify *escalation)
 	wxGetApp().usePolicy(this);
 
 	event.SetClientData(this);
-	wxGetApp().sendEvent(event);
+	wxPostEvent(AnEvents::getInstance(), event);
 }
 
 void
@@ -453,6 +459,8 @@ PolicyRuleSet::OnAnswerEscalation(wxCommandEvent& event)
 	    escalation->getAnswer()->causePermRule()) {
 		createAnswerPolicy(escalation);
 	}
+
+	event.Skip();
 }
 
 void
@@ -538,7 +546,7 @@ PolicyRuleSet::createAppPolicy(int type, int insertBeforeId)
 		clean();
 		create(ruleSet_);
 		event.SetClientData((void*)this);
-		wxGetApp().sendEvent(event);
+		wxPostEvent(AnEvents::getInstance(), event);
 	} else {
 		free(newAppRule->app);
 		free(newAppRule);
@@ -587,7 +595,7 @@ PolicyRuleSet::createAlfPolicy(int insertBeforeId)
 		clean();
 		create(ruleSet_);
 		event.SetClientData((void*)this);
-		wxGetApp().sendEvent(event);
+		wxPostEvent(AnEvents::getInstance(), event);
 	} else {
 		free(newAlfRule);
 	}
@@ -637,7 +645,7 @@ PolicyRuleSet::createCtxNewPolicy(int insertBeforeId)
 		clean();
 		create(ruleSet_);
 		event.SetClientData((void*)this);
-		wxGetApp().sendEvent(event);
+		wxPostEvent(AnEvents::getInstance(), event);
 	} else {
 		free(newrule->rule.apncontext.application);
 		free(newrule);
@@ -702,7 +710,7 @@ PolicyRuleSet::createSfsPolicy(int insertBeforeId)
 		clean();
 		create(ruleSet_);
 		event.SetClientData((void*)this);
-		wxGetApp().sendEvent(event);
+		wxPostEvent(AnEvents::getInstance(), event);
 	} else {
 		free(newSfsRule);
 	}
@@ -739,7 +747,7 @@ PolicyRuleSet::deletePolicy(int id)
 	clean();
 	create(ruleSet_);
 	event.SetClientData((void*)this);
-	wxGetApp().sendEvent(event);
+	wxPostEvent(AnEvents::getInstance(), event);
 
 	return (true);
 }

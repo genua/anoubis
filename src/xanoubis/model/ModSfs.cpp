@@ -51,12 +51,15 @@ ModSfs::ModSfs(wxWindow *parent) : Module()
 	mainPanel_->Hide();
 	overviewPanel_->Hide();
 
-	parent->Connect(anEVT_ADD_NOTIFICATION,
+	AnEvents::getInstance()->Connect(anEVT_ADD_NOTIFICATION,
 	    wxCommandEventHandler(ModSfs::OnAddNotification), NULL, this);
 }
 
 ModSfs::~ModSfs(void)
 {
+	AnEvents::getInstance()->Disconnect(anEVT_ADD_NOTIFICATION,
+	    wxCommandEventHandler(ModSfs::OnAddNotification), NULL, this);
+
 	delete mainPanel_;
 	delete overviewPanel_;
 	delete icon_;

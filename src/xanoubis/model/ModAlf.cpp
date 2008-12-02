@@ -51,12 +51,15 @@ ModAlf::ModAlf(wxWindow *parent) : Module()
 	mainPanel_->Hide();
 	overviewPanel_->Hide();
 
-	parent->Connect(anEVT_ADD_NOTIFICATION,
+	AnEvents::getInstance()->Connect(anEVT_ADD_NOTIFICATION,
 	    wxCommandEventHandler(ModAlf::OnAddNotification), NULL, this);
 }
 
 ModAlf::~ModAlf(void)
 {
+	AnEvents::getInstance()->Disconnect(anEVT_ADD_NOTIFICATION,
+	    wxCommandEventHandler(ModAlf::OnAddNotification), NULL, this);
+
 	delete mainPanel_;
 	delete overviewPanel_;
 	delete icon_;

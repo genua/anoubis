@@ -87,17 +87,21 @@ ModAnoubis::ModAnoubis(wxWindow *parent) : Module()
 	answeredListIdx_ = 0;
 	allListIdx_ = 0;
 
-	parent->Connect(anEVT_ADD_NOTIFICATION,
+	AnEvents::getInstance()->Connect(anEVT_ADD_NOTIFICATION,
 	    wxCommandEventHandler(ModAnoubis::OnAddNotification), NULL, this);
 }
 
 ModAnoubis::~ModAnoubis(void)
 {
+	AnEvents::getInstance()->Disconnect(anEVT_ADD_NOTIFICATION,
+	    wxCommandEventHandler(ModAnoubis::OnAddNotification), NULL, this);
+
 	notAnsweredList_.DeleteContents(true);
 	alertList_.DeleteContents(true);
 	logList_.DeleteContents(true);
 	answeredList_.DeleteContents(true);
 	allList_.DeleteContents(true);
+
 	delete mainPanel_;
 	delete overviewPanel_;
 	delete icon_;
@@ -139,7 +143,10 @@ ModAnoubis::OnAddNotification(wxCommandEvent& event)
 void
 ModAnoubis::insertNotification(Notification *newNotify)
 {
-	wxString	module;
+	wxString	 module;
+	AnEvents	*anEvents;
+
+	anEvents = AnEvents::getInstance();
 
 	if (IS_ESCALATIONOBJ(newNotify)) {
 		notAnsweredList_.Append(newNotify);
@@ -149,24 +156,24 @@ ModAnoubis::insertNotification(Notification *newNotify)
 			notAnsweredAlf_++;
 			wxCommandEvent showEvent(anEVT_OPEN_ALF_ESCALATIONS);
 			showEvent.SetInt(notAnsweredAlf_);
-			wxGetApp().sendEvent(showEvent);
+			wxPostEvent(anEvents, showEvent);
 		} else if(module.IsSameAs(wxT("SFS"))) {
 			notAnsweredSfs_++;
 			wxCommandEvent showEvent(anEVT_OPEN_SFS_ESCALATIONS);
 			showEvent.SetInt(notAnsweredSfs_);
-			wxGetApp().sendEvent(showEvent);
+			wxPostEvent(anEvents, showEvent);
 		} else {
 			/* Default do nothing */
 		}
 		wxCommandEvent  showEvent(anEVT_OPEN_ESCALATIONS);
 		showEvent.SetInt(notAnsweredList_.GetCount());
-		wxGetApp().sendEvent(showEvent);
+		wxPostEvent(anEvents, showEvent);
 	} else if (IS_ALERTOBJ(newNotify)) {
 		alertList_.Append(newNotify);
 		allList_.Append(newNotify);
 		wxCommandEvent  showEvent(anEVT_OPEN_ALERTS);
 		showEvent.SetInt(alertList_.GetCount());
-		wxGetApp().sendEvent(showEvent);
+		wxPostEvent(anEvents, showEvent);
 	} else {
 		logList_.Append(newNotify);
 		/*
@@ -181,7 +188,10 @@ void
 ModAnoubis::answerEscalationNotify(EscalationNotify *notify,
     NotifyAnswer *answer)
 {
-	wxString	module;
+	wxString	 module;
+	AnEvents	*anEvents;
+
+	anEvents = AnEvents::getInstance();
 
 	if ((notify != NULL) && IS_ESCALATIONOBJ(notify)) {
 		notAnsweredList_.DeleteObject(notify);
@@ -192,18 +202,18 @@ ModAnoubis::answerEscalationNotify(EscalationNotify *notify,
 			notAnsweredAlf_--;
 			wxCommandEvent showEvent(anEVT_OPEN_ALF_ESCALATIONS);
 			showEvent.SetInt(notAnsweredAlf_);
-			wxGetApp().sendEvent(showEvent);
+			wxPostEvent(anEvents, showEvent);
 		} else if (module.IsSameAs(wxT("SFS"))) {
 			notAnsweredSfs_--;
 			wxCommandEvent showEvent(anEVT_OPEN_SFS_ESCALATIONS);
 			showEvent.SetInt(notAnsweredSfs_);
-			wxGetApp().sendEvent(showEvent);
+			wxPostEvent(anEvents, showEvent);
 		} else {
 			/* Default do nothing */
 		}
 		wxCommandEvent  showEvent(anEVT_OPEN_ESCALATIONS);
 		showEvent.SetInt(notAnsweredList_.GetCount());
-		wxGetApp().sendEvent(showEvent);
+		wxPostEvent(anEvents, showEvent);
 	}
 }
 

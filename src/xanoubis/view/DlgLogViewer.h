@@ -32,6 +32,7 @@
 #include "config.h"
 #endif
 
+#include "AnEvents.h"
 #include "AnShortcuts.h"
 #include "DlgLogViewerBase.h"
 #include "Notification.h"
@@ -47,6 +48,8 @@ class DlgLogViewer : public DlgLogViewerBase
 		void OnAddNotification(wxCommandEvent&);
 		void OnShow(wxCommandEvent&);
 		void OnListItemSelected(wxListEvent&);
+
+		ANEVENTS_IDENT_BCAST_METHOD_DECLARATION;
 
 	protected:
 		void OnClose(wxCloseEvent& event);

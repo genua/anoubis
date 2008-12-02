@@ -29,6 +29,7 @@
 #define __ModSfsOverviewPanelImpl__
 
 #include <wx/icon.h>
+
 #include "ModSfsPanelsBase.h"
 
 class ModSfsOverviewPanelImpl : public ModSfsOverviewPanelBase

@@ -80,9 +80,12 @@
 ModAnoubisMainPanelImpl::ModAnoubisMainPanelImpl(wxWindow* parent,
     wxWindowID id) : ModAnoubisMainPanelBase(parent, id)
 {
+	AnEvents *anEvents;
+
 	list_ = NOTIFY_LIST_NOTANSWERED;
 	currentNotify_ = NULL;
 	userOptions_ = wxGetApp().getUserOptions();
+	anEvents = AnEvents::getInstance();
 
 	/* read and restore Escalations Settings */
 	readOptions();
@@ -91,10 +94,10 @@ ModAnoubisMainPanelImpl::ModAnoubisMainPanelImpl(wxWindow* parent,
 	versionListInit();
 	versionListUpdate();
 
-	parent->Connect(anEVT_ESCALATIONS_SHOW,
+	anEvents->Connect(anEVT_ESCALATIONS_SHOW,
 	    wxCommandEventHandler(ModAnoubisMainPanelImpl::OnEscalationsShow),
 	    NULL, this);
-	parent->Connect(anEVT_ANOUBISOPTIONS_SHOW,
+	anEvents->Connect(anEVT_ANOUBISOPTIONS_SHOW,
 	    wxCommandEventHandler(ModAnoubisMainPanelImpl::OnAnoubisOptionShow),
 	    NULL, this);
 	tb_MainAnoubisNotify->Connect(wxEVT_COMMAND_NOTEBOOK_PAGE_CHANGED,
@@ -137,11 +140,14 @@ ModAnoubisMainPanelImpl::ModAnoubisMainPanelImpl(wxWindow* parent,
 	    wxCommandEventHandler(
 	       ModAnoubisMainPanelImpl::OnVersionProfileButtonClick),
 	    NULL, this);
-
 }
 
 ModAnoubisMainPanelImpl::~ModAnoubisMainPanelImpl(void)
 {
+	AnEvents *anEvents;
+
+	anEvents = AnEvents::getInstance();
+
 	/* write Escalations Settings */
 	userOptions_->Write(wxT("/Options/SendEscalations"),
 	    cb_SendEscalations->IsChecked());
@@ -161,6 +167,13 @@ ModAnoubisMainPanelImpl::~ModAnoubisMainPanelImpl(void)
 	    controlAutoCheck->IsChecked());
 	userOptions_->Write(wxT("/Options/AutoConnect"),
 	    autoConnectBox->IsChecked());
+
+	anEvents->Disconnect(anEVT_ESCALATIONS_SHOW,
+	    wxCommandEventHandler(ModAnoubisMainPanelImpl::OnEscalationsShow),
+	    NULL, this);
+	anEvents->Disconnect(anEVT_ANOUBISOPTIONS_SHOW,
+	    wxCommandEventHandler(ModAnoubisMainPanelImpl::OnAnoubisOptionShow),
+	    NULL, this);
 }
 
 void
@@ -201,7 +214,7 @@ ModAnoubisMainPanelImpl::readOptions(void)
 	controlAutoCheck->SetValue(AutoChecksum);
 	wxCommandEvent showEvent(anEVT_SEND_AUTO_CHECK);
 	showEvent.SetInt(AutoChecksum);
-	wxGetApp().sendEvent(showEvent);
+	wxPostEvent(AnEvents::getInstance(), showEvent);
 
 	autoConnectBox->SetValue(AutoConnect);
 	wxGetApp().connectCommunicator(AutoConnect);
@@ -418,9 +431,11 @@ ModAnoubisMainPanelImpl::sendNotifierOptionsEvents(WXTYPE type, bool show,
     long timeout)
 {
 	wxCommandEvent showEvent(type);
+
 	showEvent.SetInt(show);
 	showEvent.SetExtraLong(timeout);
-	wxGetApp().sendEvent(showEvent);
+
+	wxPostEvent(AnEvents::getInstance(), showEvent);
 }
 
 void
@@ -725,8 +740,10 @@ void
 ModAnoubisMainPanelImpl::OnAutoCheck(wxCommandEvent& event)
 {
 	wxCommandEvent showEvent(anEVT_SEND_AUTO_CHECK);
+
 	showEvent.SetInt(event.IsChecked());
-	wxGetApp().sendEvent(showEvent);
+
+	wxPostEvent(AnEvents::getInstance(), showEvent);
 }
 
 void
@@ -951,7 +968,7 @@ ModAnoubisMainPanelImpl::OnVersionShowButtonClick(wxCommandEvent&)
 
 	wxCommandEvent showEvent(anEVT_RULEEDITOR_SHOW);
 	showEvent.SetInt(1);
-	wxGetApp().sendEvent(showEvent);
+	wxPostEvent(AnEvents::getInstance(), showEvent);
 
 	struct apn_ruleset *rs = versionCtrl->fetchRuleSet(idx);
 	wxGetApp().importPolicyRuleSet(1, rs);*/

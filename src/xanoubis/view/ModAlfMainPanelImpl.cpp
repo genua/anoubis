@@ -71,7 +71,14 @@ ModAlfMainPanelImpl::ModAlfMainPanelImpl(wxWindow* parent,
 		    wxLIST_AUTOSIZE);
 	}
 
-	parent->Connect(anEVT_LOAD_RULESET,
+	AnEvents::getInstance()->Connect(anEVT_LOAD_RULESET,
+	    wxCommandEventHandler(ModAlfMainPanelImpl::OnLoadRuleSet),
+	    NULL, this);
+}
+
+ModAlfMainPanelImpl::~ModAlfMainPanelImpl(void)
+{
+	AnEvents::getInstance()->Disconnect(anEVT_LOAD_RULESET,
 	    wxCommandEventHandler(ModAlfMainPanelImpl::OnLoadRuleSet),
 	    NULL, this);
 }
@@ -132,5 +139,6 @@ ModAlfMainPanelImpl::OnLoadRuleSet(wxCommandEvent& event)
 	for (int i=0; i<MODALF_LIST_COLUMN_EOL; i++) {
 		lst_Rules->SetColumnWidth(i, wxLIST_AUTOSIZE_USEHEADER);
 	}
+
 	event.Skip();
 }

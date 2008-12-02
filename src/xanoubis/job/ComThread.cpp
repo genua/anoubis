@@ -385,7 +385,7 @@ ComThread::sendNotify(struct anoubis_msg *notifyMsg)
 
 		if (dynamic_cast<AnoubisGuiApp*>(wxTheApp)) {
 			addEvent.SetClientObject((wxClientData*)notify);
-			wxGetApp().sendEvent(addEvent);
+			wxPostEvent(AnEvents::getInstance(), addEvent);
 		}
 	}
 }

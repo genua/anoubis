@@ -126,6 +126,9 @@ bool AnoubisGuiApp::OnInit()
 	/* Initialization of versionmanagement */
 	VersionCtrl::getInstance(); /* Make sure c'tor is invoked */
 
+	/* Initialization of central event management */
+	AnEvents *anEvents = AnEvents::getInstance();
+
 	/* Initialization of job-controller */
 	JobCtrl *jobCtrl = JobCtrl::getInstance();
 
@@ -137,7 +140,7 @@ bool AnoubisGuiApp::OnInit()
 	jobCtrl->Connect(anTASKEVT_POLICY_SEND,
 	    wxTaskEventHandler(AnoubisGuiApp::OnPolicySend), NULL, this);
 
-	Connect(anEVT_ANSWER_ESCALATION,
+	anEvents->Connect(anEVT_ANSWER_ESCALATION,
 	    wxCommandEventHandler(AnoubisGuiApp::OnAnswerEscalation),
 	    NULL, this);
 
@@ -199,54 +202,6 @@ AnoubisGuiApp::OnExit(void)
 	return (result);
 }
 
-void
-AnoubisGuiApp::sendEvent(wxCommandEvent& event)
-{
-	long		 id;
-	ProfileCtrl	*profileCtrl;
-	PolicyRuleSet	*rs;
-
-	/* XXX [ST]: BUG #424
-	 * The following ``wxPostEvent'' is not needed therefore comment it out.
-	 * Nethertheless we have to cleanup and normalise the concept of
-	 * events within the GUI.
-	 *
-	 * wxPostEvent(mainFrame, event);
-	 *
-	 * XXX [KM] : BUG 522
-	 * If "logViewer" and "ruleEditor" get a "wxPostEvent" a Event-Handler
-	 * from "mainFrame" and the child-Windows gets two event messages per
-	 * "sendEvent". Therefore I brought back the wxPostEvent(mainFrame,
-	 * event);, commented out the two below and connecte "logViewer" and
-	 * "ruleEditor" over their "parent" Window.
-	 *
-	 * wxPostEvent(logViewer_, event);
-	 * wxPostEvent(ruleEditor_, event);
-	 */
-
-	wxPostEvent(mainFrame, event);
-	wxPostEvent(trayIcon, event);
-
-	profileCtrl = ProfileCtrl::getInstance();
-	id = profileCtrl->getUserId();
-	if (id != -1) {
-		if (profileCtrl->lockToShow(id, this)) {
-			rs = profileCtrl->getRuleSetToShow(id, this);
-			if (rs != NULL) {
-				wxPostEvent(rs, event);
-			}
-			profileCtrl->unlockFromShow(id, this);
-		}
-	}
-}
-
-void
-AnoubisGuiApp::sendEvent(wxEventType type)
-{
-	wxCommandEvent anEvent(type);
-	anEvent.SetInt(true);
-	sendEvent(anEvent);
-}
 
 void
 AnoubisGuiApp::status(wxString msg)
@@ -265,7 +220,7 @@ AnoubisGuiApp::log(wxString msg)
 	Debug::instance()->log(msg, DEBUG_LOG);
 
 	event.SetClientObject((wxClientData*)notify);
-	sendEvent(event);
+	wxPostEvent(AnEvents::getInstance(), event);
 	/*
 	 * The created AlertNotify object must not been destroyed here, so
 	 * it's still alive for the receiver. The notify will be stored by
@@ -284,7 +239,7 @@ AnoubisGuiApp::alert(wxString msg)
 	Debug::instance()->log(msg, DEBUG_ALERT);
 
 	event.SetClientObject((wxClientData*)notify);
-	sendEvent(event);
+	wxPostEvent(AnEvents::getInstance(), event);
 	/*
 	 * The created AlertNotify object must not been destroyed here, so
 	 * it's still alive for the receiver. The notify will be stored by
@@ -356,7 +311,7 @@ AnoubisGuiApp::toggleRuleEditorVisability(void)
 {
 	wxCommandEvent  showEvent(anEVT_RULEEDITOR_SHOW);
 	showEvent.SetInt(!ruleEditor_->IsShown());
-	wxGetApp().sendEvent(showEvent);
+	wxPostEvent(AnEvents::getInstance(), showEvent);
 }
 
 void
@@ -364,7 +319,7 @@ AnoubisGuiApp::toggleLogViewerVisability(void)
 {
 	wxCommandEvent  showEvent(anEVT_LOGVIEWER_SHOW);
 	showEvent.SetInt(!logViewer_->IsShown());
-	wxGetApp().sendEvent(showEvent);
+	wxPostEvent(AnEvents::getInstance(), showEvent);
 }
 
 bool
@@ -608,7 +563,7 @@ AnoubisGuiApp::importPolicyRuleSet(int prio, uid_t uid,
 	}
 
 	profileCtrl->store(rs);
-	sendEvent(event);
+	wxPostEvent(AnEvents::getInstance(), event);
 }
 
 void
@@ -620,7 +575,7 @@ AnoubisGuiApp::importPolicyFile(wxString fileName, bool checkPerm)
 	ruleSet = new PolicyRuleSet(1, geteuid(), fileName, checkPerm);
 	if (!ruleSet->hasErrors()) {
 		ProfileCtrl::getInstance()->store(ruleSet);
-		sendEvent(event);
+		wxPostEvent(AnEvents::getInstance(), event);
 	} else {
 		wxMessageBox(
 		    _("Couldn't import policy file: it contains errors."),
@@ -891,4 +846,5 @@ AnoubisGuiApp::OnAnswerEscalation(wxCommandEvent &event)
 {
 	Notification *notify = (Notification*)event.GetClientObject();
 	JobCtrl::getInstance()->answerNotification(notify);
+	event.Skip();
 }

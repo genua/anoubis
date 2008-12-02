@@ -138,13 +138,15 @@ AddrLine::remove(void)
 
 DlgRuleEditor::DlgRuleEditor(wxWindow* parent) : DlgRuleEditorBase(parent)
 {
-	wxArrayString userList;
+	wxArrayString	 userList;
+	AnEvents	*anEvents;
 
 	selectedId_ = 0;
 	selectedIndex_ = 0;
 	autoCheck_ = false;
 	userRuleSetId_ = -1;
 	adminRuleSetId_ = -1;
+	anEvents = AnEvents::getInstance();
 
 	columnNames_[RULEDITOR_LIST_COLUMN_PRIO] = _("Index");
 	columnWidths_[RULEDITOR_LIST_COLUMN_PRIO] = wxLIST_AUTOSIZE_USEHEADER;
@@ -225,24 +227,42 @@ DlgRuleEditor::DlgRuleEditor(wxWindow* parent) : DlgRuleEditorBase(parent)
 		controlUserChoice->Append(userList.Item(i));
 	}
 
-	parent->Connect(anEVT_RULEEDITOR_SHOW,
+	anEvents->Connect(anEVT_RULEEDITOR_SHOW,
 	    wxCommandEventHandler(DlgRuleEditor::OnShow), NULL, this);
-	parent->Connect(anEVT_LOAD_RULESET,
+	anEvents->Connect(anEVT_LOAD_RULESET,
 	    wxCommandEventHandler(DlgRuleEditor::OnLoadRuleSet), NULL, this);
-	parent->Connect(anEVT_SHOW_RULE,
+	anEvents->Connect(anEVT_SHOW_RULE,
 	    wxCommandEventHandler(DlgRuleEditor::OnShowRule), NULL, this);
-	parent->Connect(anEVT_SEND_AUTO_CHECK,
+	anEvents->Connect(anEVT_SEND_AUTO_CHECK,
 	    wxCommandEventHandler(DlgRuleEditor::OnAutoCheck), NULL, this);
+
 	JobCtrl::getInstance()->Connect(anTASKEVT_CSUM_ADD,
 	    wxTaskEventHandler(DlgRuleEditor::OnChecksumAdd), NULL, this);
 	JobCtrl::getInstance()->Connect(anTASKEVT_CSUM_GET,
 	    wxTaskEventHandler(DlgRuleEditor::OnChecksumAdd), NULL, this);
 	JobCtrl::getInstance()->Connect(anTASKEVT_CSUMCALC,
 	    wxTaskEventHandler(DlgRuleEditor::OnChecksumCalc), NULL, this);
+
+	ANEVENTS_IDENT_BCAST_REGISTRATION(DlgRuleEditor);
 }
 
 DlgRuleEditor::~DlgRuleEditor(void)
 {
+	AnEvents *anEvents;
+
+	anEvents = AnEvents::getInstance();
+
+	anEvents->Disconnect(anEVT_RULEEDITOR_SHOW,
+	    wxCommandEventHandler(DlgRuleEditor::OnShow), NULL, this);
+	anEvents->Disconnect(anEVT_LOAD_RULESET,
+	    wxCommandEventHandler(DlgRuleEditor::OnLoadRuleSet), NULL, this);
+	anEvents->Disconnect(anEVT_SHOW_RULE,
+	    wxCommandEventHandler(DlgRuleEditor::OnShowRule), NULL, this);
+	anEvents->Disconnect(anEVT_SEND_AUTO_CHECK,
+	    wxCommandEventHandler(DlgRuleEditor::OnAutoCheck), NULL, this);
+
+	ANEVENTS_IDENT_BCAST_DEREGISTRATION(DlgRuleEditor);
+
 	delete shortcuts_;
 }
 
@@ -759,8 +779,10 @@ void
 DlgRuleEditor::OnClose(wxCloseEvent& )
 {
 	wxCommandEvent  showEvent(anEVT_RULEEDITOR_SHOW);
+
 	showEvent.SetInt(false);
-	wxGetApp().sendEvent(showEvent);
+
+	wxPostEvent(AnEvents::getInstance(), showEvent);
 }
 
 void
@@ -977,6 +999,7 @@ void
 DlgRuleEditor::OnShow(wxCommandEvent& event)
 {
 	this->Show(event.GetInt());
+	event.Skip();
 }
 
 void
@@ -1092,7 +1115,7 @@ DlgRuleEditor::loadRuleSet(void)
 }
 
 void
-DlgRuleEditor::OnLoadRuleSet(wxCommandEvent& WXUNUSED(event))
+DlgRuleEditor::OnLoadRuleSet(wxCommandEvent& event)
 {
 	ProfileCtrl	*profileCtrl;
 
@@ -1121,6 +1144,7 @@ DlgRuleEditor::OnLoadRuleSet(wxCommandEvent& WXUNUSED(event))
 
 	loadRuleSet();
 	selectLine(selectedIndex_);
+	event.Skip();
 }
 
 void
@@ -1253,6 +1277,7 @@ DlgRuleEditor::OnShowRule(wxCommandEvent& event)
 	ProfileCtrl	*profileCtrl;
 
 	profileCtrl = ProfileCtrl::getInstance();
+	event.Skip();
 
 	rs = profileCtrl->getRuleSetToShow(userRuleSetId_, this);
 	if (rs == NULL) {
@@ -1285,6 +1310,7 @@ void
 DlgRuleEditor::OnAutoCheck(wxCommandEvent& event)
 {
 	autoCheck_ = event.GetInt();
+	event.Skip();
 }
 
 bool
@@ -1550,3 +1576,5 @@ DlgRuleEditor::modified(void)
 	controlRuleSetStatusText->SetLabel(text);
 	controlRuleSetSaveButton->Enable();
 }
+
+ANEVENTS_IDENT_BCAST_METHOD_DEFINITION(DlgRuleEditor)

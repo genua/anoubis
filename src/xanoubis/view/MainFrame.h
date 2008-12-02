@@ -32,6 +32,7 @@
 #include "config.h"
 #endif
 
+#include "AnEvents.h"
 #include "AnShortcuts.h"
 #include "AnStatusBar.h"
 #include "MainFrameBase.h"
@@ -62,6 +63,8 @@ class MainFrame : public MainFrameBase
 		void onRuleEditorShow(wxCommandEvent&);
 		void onLogViewerShow(wxCommandEvent&);
 		void onMainFrameShow(wxCommandEvent&);
+
+		ANEVENTS_IDENT_BCAST_METHOD_DECLARATION;
 
 	protected:
 		AnStatusBar *an_statusbar;

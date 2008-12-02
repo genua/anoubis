@@ -61,6 +61,9 @@ AnStatusBar::AnStatusBar(wxWindow *parent) : wxStatusBar(parent, ID_STATUSBAR)
 	wxBoxSizer	*sunkenRuleEditorSizer;
 	wxStaticText	*raisedRuleEditorLabel;
 	wxStaticText	*sunkenRuleEditorLabel;
+	AnEvents	*anEvents;
+
+	anEvents = AnEvents::getInstance();
 
 	/*
 	 * 4 fields, the left one takes all remaining space, two
@@ -192,14 +195,27 @@ AnStatusBar::AnStatusBar(wxWindow *parent) : wxStatusBar(parent, ID_STATUSBAR)
 	sunkenRuleEditorPanel_->Connect(wxEVT_LEAVE_WINDOW,
 	    wxMouseEventHandler(AnStatusBar::OnRuleEditorEnter), NULL, this);
 
-	parent->Connect(anEVT_LOGVIEWER_SHOW,
+	anEvents->Connect(anEVT_LOGVIEWER_SHOW,
 	    wxCommandEventHandler(AnStatusBar::onLogViewerShow), NULL, this);
-	parent->Connect(anEVT_RULEEDITOR_SHOW,
+	anEvents->Connect(anEVT_RULEEDITOR_SHOW,
 	    wxCommandEventHandler(AnStatusBar::onRuleEditorShow), NULL, this);
+
+	ANEVENTS_IDENT_BCAST_REGISTRATION(AnStatusBar);
 }
 
 AnStatusBar::~AnStatusBar(void)
 {
+	AnEvents *anEvents;
+
+	anEvents = AnEvents::getInstance();
+
+	anEvents->Disconnect(anEVT_LOGVIEWER_SHOW,
+	    wxCommandEventHandler(AnStatusBar::onLogViewerShow), NULL, this);
+	anEvents->Disconnect(anEVT_RULEEDITOR_SHOW,
+	    wxCommandEventHandler(AnStatusBar::onRuleEditorShow), NULL, this);
+
+	ANEVENTS_IDENT_BCAST_DEREGISTRATION(AnStatusBar);
+
 	delete raisedLogViewerPanel_;
 	delete sunkenLogViewerPanel_;
 	delete raisedRuleEditorPanel_;
@@ -308,7 +324,7 @@ AnStatusBar::OnLogViewerClick(wxMouseEvent& event)
 	isLogViewerPressed_ = !isLogViewerPressed_;
 	wxCommandEvent  showEvent(anEVT_LOGVIEWER_SHOW);
 	showEvent.SetInt(isLogViewerPressed_);
-	wxGetApp().sendEvent(showEvent);
+	wxPostEvent(AnEvents::getInstance(), showEvent);
 	event.Skip();
 }
 
@@ -325,7 +341,7 @@ AnStatusBar::OnRuleEditorClick(wxMouseEvent& event)
 	isRuleEditorPressed_ = !isRuleEditorPressed_;
 	wxCommandEvent  showEvent(anEVT_RULEEDITOR_SHOW);
 	showEvent.SetInt(isRuleEditorPressed_);
-	wxGetApp().sendEvent(showEvent);
+	wxPostEvent(AnEvents::getInstance(), showEvent);
 	event.Skip();
 }
 
@@ -351,3 +367,5 @@ AnStatusBar::onRuleEditorShow(wxCommandEvent& event)
 	redrawRuleEditorPanel();
 	event.Skip();
 }
+
+ANEVENTS_IDENT_BCAST_METHOD_DEFINITION(AnStatusBar)

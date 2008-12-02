@@ -128,6 +128,8 @@ class DlgRuleEditor : public DlgRuleEditorBase
 		void updateAlfDstPort(int);
 		void updateLog(int);
 
+		ANEVENTS_IDENT_BCAST_METHOD_DECLARATION;
+
 	protected:
 		AnShortcuts	*shortcuts_;
 

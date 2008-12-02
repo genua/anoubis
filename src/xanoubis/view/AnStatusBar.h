@@ -35,6 +35,8 @@
 #include <wx/panel.h>
 #include <wx/statusbr.h>
 
+#include "AnEvents.h"
+
 #define ID_STATUSBAR 1001
 
 enum FIELD_IDX {
@@ -68,6 +70,8 @@ class AnStatusBar : public wxStatusBar
 
 		void onLogViewerShow(wxCommandEvent&);
 		void onRuleEditorShow(wxCommandEvent&);
+
+		ANEVENTS_IDENT_BCAST_METHOD_DECLARATION;
 
 	public:
 		AnStatusBar(wxWindow *);

@@ -33,6 +33,8 @@
 #include <wx/taskbar.h>
 #include <libnotify/notify.h>
 
+#include "AnEvents.h"
+
 class TrayIcon : public wxTaskBarIcon
 {
 	private:
@@ -52,6 +54,8 @@ class TrayIcon : public wxTaskBarIcon
 		void		 update(void);
 		bool		 systemNotify(const gchar*, const gchar*,
 		    NotifyUrgency, const int);
+
+		ANEVENTS_IDENT_BCAST_METHOD_DECLARATION;
 
 	public:
 		TrayIcon(void);

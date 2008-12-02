@@ -53,6 +53,9 @@ END_EVENT_TABLE()
 
 TrayIcon::TrayIcon(void)
 {
+	AnEvents	*anEvents;
+	JobCtrl		*jobCtrl;
+
 	iconNormal_    = wxGetApp().loadIcon(wxT("ModAnoubis_black_48.png"));
 	iconMsgProblem_ = wxGetApp().loadIcon(wxT("ModAnoubis_alert_48.png"));
 	iconMsgQuestion_ =
@@ -69,30 +72,50 @@ TrayIcon::TrayIcon(void)
 	alertTimeout_ = 10;
 
 	notification = notify_notification_new("Anoubis", "", NULL, NULL);
+	anEvents = AnEvents::getInstance();
+	jobCtrl = JobCtrl::getInstance();
 
 	update();
-	JobCtrl::getInstance()->Connect(anEVT_COM_CONNECTION,
+
+	jobCtrl->Connect(anEVT_COM_CONNECTION,
 	    wxCommandEventHandler(TrayIcon::OnConnectionStateChange),
 	    NULL, this);
-	Connect(anEVT_OPEN_ALERTS,
+	anEvents->Connect(anEVT_OPEN_ALERTS,
 	    wxCommandEventHandler(TrayIcon::OnOpenAlerts), NULL, this);
-	Connect(anEVT_OPEN_ESCALATIONS,
+	anEvents->Connect(anEVT_OPEN_ESCALATIONS,
 	    wxCommandEventHandler(TrayIcon::OnOpenEscalations), NULL, this);
-	Connect(anEVT_LOGVIEWER_SHOW,
+	anEvents->Connect(anEVT_LOGVIEWER_SHOW,
 	    wxCommandEventHandler(TrayIcon::OnLogViewerShow), NULL, this);
-	Connect(anEVT_ESCALATIONNOTIFY_OPTIONS,
+	anEvents->Connect(anEVT_ESCALATIONNOTIFY_OPTIONS,
 	    wxCommandEventHandler(TrayIcon::OnEscalationSettingsChanged), NULL,
 	    this);
-	Connect(anEVT_ALERTNOTIFY_OPTIONS,
+	anEvents->Connect(anEVT_ALERTNOTIFY_OPTIONS,
 	    wxCommandEventHandler(TrayIcon::OnAlertSettingsChanged), NULL,
 	    this);
 }
 
 TrayIcon::~TrayIcon(void)
 {
+	AnEvents *anEvents;
+
+	anEvents = AnEvents::getInstance();
+
 	/* free notification object */
 	g_object_unref(G_OBJECT(notification));
 	notify_uninit();
+
+	anEvents->Disconnect(anEVT_OPEN_ALERTS,
+	    wxCommandEventHandler(TrayIcon::OnOpenAlerts), NULL, this);
+	anEvents->Disconnect(anEVT_OPEN_ESCALATIONS,
+	    wxCommandEventHandler(TrayIcon::OnOpenEscalations), NULL, this);
+	anEvents->Disconnect(anEVT_LOGVIEWER_SHOW,
+	    wxCommandEventHandler(TrayIcon::OnLogViewerShow), NULL, this);
+	anEvents->Disconnect(anEVT_ESCALATIONNOTIFY_OPTIONS,
+	    wxCommandEventHandler(TrayIcon::OnEscalationSettingsChanged), NULL,
+	    this);
+	anEvents->Disconnect(anEVT_ALERTNOTIFY_OPTIONS,
+	    wxCommandEventHandler(TrayIcon::OnAlertSettingsChanged), NULL,
+	    this);
 
 	delete iconNormal_;
 	delete iconMsgProblem_;
@@ -112,6 +135,7 @@ TrayIcon::OnOpenAlerts(wxCommandEvent& event)
 {
 	messageAlertCount_ = event.GetInt();
 	update();
+	event.Skip();
 }
 
 void
@@ -119,6 +143,7 @@ TrayIcon::OnOpenEscalations(wxCommandEvent& event)
 {
 	messageEscalationCount_ = event.GetInt();
 	update();
+	event.Skip();
 }
 
 /*
@@ -131,6 +156,7 @@ TrayIcon::OnLogViewerShow(wxCommandEvent& event)
 		messageAlertCount_ = 0;
 		update();
 	}
+	event.Skip();
 }
 
 void
@@ -146,7 +172,7 @@ TrayIcon::OnLeftButtonClick(wxTaskBarIconEvent&)
 		else
 			showEvent.SetInt(true);
 
-		wxGetApp().sendEvent(showEvent);
+		wxPostEvent(AnEvents::getInstance(), showEvent);
 	}
 }
 
@@ -154,8 +180,10 @@ void
 TrayIcon::OnGuiRestore(wxCommandEvent&)
 {
 	wxCommandEvent  showEvent(anEVT_MAINFRAME_SHOW);
+
 	showEvent.SetInt(true);
-	wxGetApp().sendEvent(showEvent);
+
+	wxPostEvent(AnEvents::getInstance(), showEvent);
 }
 
 void
@@ -173,6 +201,7 @@ TrayIcon::OnEscalationSettingsChanged(wxCommandEvent& event)
 		sendEscalation_ = false;
 	}
 	escalationTimeout_ = event.GetExtraLong();
+	event.Skip();
 }
 
 void
@@ -184,6 +213,7 @@ TrayIcon::OnAlertSettingsChanged(wxCommandEvent& event)
 		sendAlert_ = false;
 	}
 	alertTimeout_ = event.GetExtraLong();
+	event.Skip();
 }
 
 void
@@ -277,14 +307,14 @@ TrayIcon::systemNotifyCallback(void)
 	if (messageEscalationCount_ > 0) {
 		showEvent.SetInt(true);
 		showEvent.SetString(wxT("ESCALATIONS"));
-		wxGetApp().sendEvent(showEvent);
+		wxPostEvent(AnEvents::getInstance(), showEvent);
 	}
 
 	/* request notifications view of ALERTS */
 	if (messageAlertCount_ > 0) {
 		showEvent.SetInt(true);
 		showEvent.SetString(wxT("ALERTS"));
-		wxGetApp().sendEvent(showEvent);
+		wxPostEvent(AnEvents::getInstance(), showEvent);
 	}
 }
 

@@ -36,15 +36,21 @@ ModSfsOverviewPanelImpl::ModSfsOverviewPanelImpl(wxWindow* parent,
 {
 	stateIconNormal_ = wxGetApp().loadIcon(wxT("ModSfs_ok_48.png"));
 	stateIconError_ = wxGetApp().loadIcon(wxT("ModSfs_error_48.png"));
-	stateIconNotConnected_ = wxGetApp().loadIcon(wxT("ModSfs_black_48.png"));
+	stateIconNotConnected_ = wxGetApp().loadIcon(
+	    wxT("ModSfs_black_48.png"));
 	notAnswered_.Printf(wxT("%d"), 0);
 
-	parent->Connect(anEVT_OPEN_SFS_ESCALATIONS,
-            wxCommandEventHandler(ModSfsOverviewPanelImpl::OnOpenSfsEscalation), NULL, this);
+	AnEvents::getInstance()->Connect(anEVT_OPEN_SFS_ESCALATIONS,
+	    wxCommandEventHandler(ModSfsOverviewPanelImpl::OnOpenSfsEscalation),
+	    NULL, this);
 }
 
 ModSfsOverviewPanelImpl::~ModSfsOverviewPanelImpl(void)
 {
+	AnEvents::getInstance()->Disconnect(anEVT_OPEN_SFS_ESCALATIONS,
+	    wxCommandEventHandler(ModSfsOverviewPanelImpl::OnOpenSfsEscalation),
+	    NULL, this);
+
 	delete stateIconNormal_;
 	delete stateIconError_;
 	delete stateIconNotConnected_;
@@ -81,4 +87,5 @@ ModSfsOverviewPanelImpl::OnOpenSfsEscalation(wxCommandEvent& event)
 {
 	notAnswered_.Printf(wxT("%d"), event.GetInt());
 	update();
+	event.Skip();
 }

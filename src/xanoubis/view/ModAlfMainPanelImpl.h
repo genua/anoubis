@@ -54,6 +54,7 @@ class ModAlfMainPanelImpl : public ModAlfMainPanelBase
 
 	public:
 		ModAlfMainPanelImpl(wxWindow*, wxWindowID);
+		~ModAlfMainPanelImpl(void);
 
 		friend class ModAlfAddPolicyVisitor;
 };

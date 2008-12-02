@@ -50,6 +50,9 @@
 
 MainFrame::MainFrame(wxWindow *parent) : MainFrameBase(parent)
 {
+	AnEvents	*anEvents;
+	JobCtrl		*jobCtrl;
+
 	shortcuts_ = new AnShortcuts(this);
 	show_ = true;
 	messageAlertCount_ = 0;
@@ -60,29 +63,56 @@ MainFrame::MainFrame(wxWindow *parent) : MainFrameBase(parent)
 	alertIcon_ = wxGetApp().loadIcon(wxT("General_alert_16.png"));
 	escalationIcon_ = wxGetApp().loadIcon(wxT("General_question_16.png"));
 
-	JobCtrl *jobCtrl = JobCtrl::getInstance();
+	anEvents = AnEvents::getInstance();
+	jobCtrl = JobCtrl::getInstance();
+
 	jobCtrl->Connect(anEVT_COM_CONNECTION,
 	    wxCommandEventHandler(MainFrame::OnConnectionStateChange),
 	    NULL, this);
-	Connect(anEVT_LOGVIEWER_SHOW,
+
+	anEvents->Connect(anEVT_LOGVIEWER_SHOW,
 	    wxCommandEventHandler(MainFrame::onLogViewerShow), NULL, this);
-	Connect(anEVT_RULEEDITOR_SHOW,
+	anEvents->Connect(anEVT_RULEEDITOR_SHOW,
 	    wxCommandEventHandler(MainFrame::onRuleEditorShow), NULL, this);
-	Connect(anEVT_MAINFRAME_SHOW,
+	anEvents->Connect(anEVT_MAINFRAME_SHOW,
 	    wxCommandEventHandler(MainFrame::onMainFrameShow), NULL, this);
-	Connect(anEVT_OPEN_ALERTS,
+	anEvents->Connect(anEVT_OPEN_ALERTS,
 	    wxCommandEventHandler(MainFrame::OnOpenAlerts), NULL, this);
-	Connect(anEVT_OPEN_ESCALATIONS,
+	anEvents->Connect(anEVT_OPEN_ESCALATIONS,
 	    wxCommandEventHandler(MainFrame::OnOpenEscalations), NULL, this);
-	Connect(anEVT_ESCALATIONS_SHOW,
+	anEvents->Connect(anEVT_ESCALATIONS_SHOW,
 	    wxCommandEventHandler(MainFrame::OnEscalationsShow), NULL, this);
-	Connect(anEVT_ANOUBISOPTIONS_SHOW,
+	anEvents->Connect(anEVT_ANOUBISOPTIONS_SHOW,
 	    wxCommandEventHandler(MainFrame::OnAnoubisOptionShow),
 	    NULL, this);
+
+	ANEVENTS_IDENT_BCAST_REGISTRATION(MainFrame);
 }
 
 MainFrame::~MainFrame()
 {
+	AnEvents *anEvents;
+
+	anEvents = AnEvents::getInstance();
+
+	anEvents->Disconnect(anEVT_LOGVIEWER_SHOW,
+	    wxCommandEventHandler(MainFrame::onLogViewerShow), NULL, this);
+	anEvents->Disconnect(anEVT_RULEEDITOR_SHOW,
+	    wxCommandEventHandler(MainFrame::onRuleEditorShow), NULL, this);
+	anEvents->Disconnect(anEVT_MAINFRAME_SHOW,
+	    wxCommandEventHandler(MainFrame::onMainFrameShow), NULL, this);
+	anEvents->Disconnect(anEVT_OPEN_ALERTS,
+	    wxCommandEventHandler(MainFrame::OnOpenAlerts), NULL, this);
+	anEvents->Disconnect(anEVT_OPEN_ESCALATIONS,
+	    wxCommandEventHandler(MainFrame::OnOpenEscalations), NULL, this);
+	anEvents->Disconnect(anEVT_ESCALATIONS_SHOW,
+	    wxCommandEventHandler(MainFrame::OnEscalationsShow), NULL, this);
+	anEvents->Disconnect(anEVT_ANOUBISOPTIONS_SHOW,
+	    wxCommandEventHandler(MainFrame::OnAnoubisOptionShow),
+	    NULL, this);
+
+	ANEVENTS_IDENT_BCAST_DEREGISTRATION(MainFrame);
+
 	SetStatusBar(NULL);
 	delete an_statusbar;
 	delete aboutIcon_;
@@ -132,6 +162,7 @@ void
 MainFrame::onRuleEditorShow(wxCommandEvent& event)
 {
 	an_menubar->Check(ID_MITOOLSRULEEDITOR, event.GetInt());
+	event.Skip();
 }
 
 void
@@ -142,6 +173,7 @@ MainFrame::onLogViewerShow(wxCommandEvent& event)
 	setMessageString();
 
 	an_menubar->Check(ID_MITOOLSLOGVIEWER, event.GetInt());
+	event.Skip();
 }
 
 void
@@ -154,6 +186,7 @@ MainFrame::onMainFrameShow(wxCommandEvent& event)
 		this->Hide();
 		show_ = false;
 	}
+	event.Skip();
 }
 
 void
@@ -180,15 +213,18 @@ MainFrame::setMessageString(void)
 	/* escalations represent the highest priority */
 	if (messageEscalationCount_ > 0) {
 		statusBoxMsgIcon->SetIcon(*escalationIcon_);
+		statusBoxMsgIcon->Show();
 		statusBoxMsgText->SetLabel(wxString::Format(wxT("%d"),
 		    messageEscalationCount_));
 	} else {
 		if (messageAlertCount_ > 0) {
 			statusBoxMsgIcon->SetIcon(*alertIcon_);
+			statusBoxMsgIcon->Show();
 			statusBoxMsgText->SetLabel(wxString::Format(wxT("%d"),
 			    messageAlertCount_));
 		} else {
 			statusBoxMsgIcon->SetIcon(wxNullIcon);
+			statusBoxMsgIcon->Hide();
 			statusBoxMsgText->SetLabel(wxT("0"));
 		}
 	}
@@ -216,6 +252,7 @@ MainFrame::OnTbModuleSelect(wxCommandEvent& event)
 	if (id == MODANOUBIS_ID_MAINPANEL) {
 		((ModAnoubisMainPanelImpl *)modulePanel)->update();
 	}
+	event.Skip();
 }
 
 void
@@ -255,6 +292,7 @@ MainFrame::OnOpenAlerts(wxCommandEvent& event)
 {
 	messageAlertCount_ = event.GetInt();
 	setMessageString();
+	event.Skip();
 }
 
 void
@@ -262,6 +300,7 @@ MainFrame::OnOpenEscalations(wxCommandEvent& event)
 {
 	messageEscalationCount_ = event.GetInt();
 	setMessageString();
+	event.Skip();
 }
 
 void
@@ -356,16 +395,20 @@ void
 MainFrame::OnMbToolsRuleEditorSelect(wxCommandEvent& event)
 {
 	wxCommandEvent  showEvent(anEVT_RULEEDITOR_SHOW);
+
 	showEvent.SetInt(event.IsChecked());
-	wxGetApp().sendEvent(showEvent);
+
+	wxPostEvent(AnEvents::getInstance(), showEvent);
 }
 
 void
 MainFrame::OnMbToolsLogViewerSelect(wxCommandEvent& event)
 {
 	wxCommandEvent  showEvent(anEVT_LOGVIEWER_SHOW);
+
 	showEvent.SetInt(event.IsChecked());
-	wxGetApp().sendEvent(showEvent);
+
+	wxPostEvent(AnEvents::getInstance(), showEvent);
 }
 
 void
@@ -384,8 +427,10 @@ void
 MainFrame::OnMbEditPreferencesSelect(wxCommandEvent&)
 {
 	wxCommandEvent  showEvent(anEVT_ANOUBISOPTIONS_SHOW);
+
 	showEvent.SetInt(true);
-	wxGetApp().sendEvent(showEvent);
+
+	wxPostEvent(AnEvents::getInstance(), showEvent);
 }
 
 void
@@ -412,6 +457,8 @@ MainFrame::OnEscalationsShow(wxCommandEvent& event)
 	wxCommandEvent selectEvent(wxEVT_COMMAND_MENU_SELECTED, id);
 	selectEvent.SetInt(id);
 	this->AddPendingEvent(selectEvent);
+
+	event.Skip();
 }
 
 void
@@ -429,6 +476,8 @@ MainFrame::OnAnoubisOptionShow(wxCommandEvent& event)
 	wxCommandEvent selectEvent(wxEVT_COMMAND_MENU_SELECTED, id);
 	selectEvent.SetInt(id);
 	this->AddPendingEvent(selectEvent);
+
+	event.Skip();
 }
 
 bool
@@ -436,3 +485,5 @@ MainFrame::isShowing(void)
 {
 	return (show_);
 }
+
+ANEVENTS_IDENT_BCAST_METHOD_DEFINITION(MainFrame)

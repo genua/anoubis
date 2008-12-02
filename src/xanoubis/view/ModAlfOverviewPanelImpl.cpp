@@ -37,16 +37,21 @@ ModAlfOverviewPanelImpl::ModAlfOverviewPanelImpl(wxWindow* parent,
 {
 	stateIconNormal_ = wxGetApp().loadIcon(wxT("ModAlf_ok_48.png"));
 	stateIconError_ = wxGetApp().loadIcon(wxT("ModAlf_error_48.png"));
-	stateIconNotConnected_ = wxGetApp().loadIcon(wxT("ModAlf_black_48.png"));
+	stateIconNotConnected_ = wxGetApp().loadIcon(
+	    wxT("ModAlf_black_48.png"));
 	notAnswered_.Printf(wxT("%d"), 0);
 
-	parent->Connect(anEVT_OPEN_ALF_ESCALATIONS,
+	AnEvents::getInstance()->Connect(anEVT_OPEN_ALF_ESCALATIONS,
 	    wxCommandEventHandler(ModAlfOverviewPanelImpl::OnOpenAlfEscalation),
 		NULL, this);
 }
 
 ModAlfOverviewPanelImpl::~ModAlfOverviewPanelImpl(void)
 {
+	AnEvents::getInstance()->Disconnect(anEVT_OPEN_ALF_ESCALATIONS,
+	    wxCommandEventHandler(ModAlfOverviewPanelImpl::OnOpenAlfEscalation),
+		NULL, this);
+
 	delete stateIconNormal_;
 	delete stateIconError_;
 	delete stateIconNotConnected_;
@@ -84,4 +89,5 @@ ModAlfOverviewPanelImpl::OnOpenAlfEscalation(wxCommandEvent& event)
 {
 	notAnswered_.Printf(wxT("%d"), event.GetInt());
 	update();
+	event.Skip();
 }

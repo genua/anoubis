@@ -69,7 +69,7 @@ ModSfsMainPanelImpl::ModSfsMainPanelImpl(wxWindow* parent,
 		    wxLIST_AUTOSIZE);
 	}
 
-	parent->Connect(anEVT_LOAD_RULESET,
+	AnEvents::getInstance()->Connect(anEVT_LOAD_RULESET,
 	    wxCommandEventHandler(ModSfsMainPanelImpl::OnLoadRuleSet),
 	    NULL, this);
 
@@ -78,6 +78,10 @@ ModSfsMainPanelImpl::ModSfsMainPanelImpl(wxWindow* parent,
 
 ModSfsMainPanelImpl::~ModSfsMainPanelImpl()
 {
+	AnEvents::getInstance()->Disconnect(anEVT_LOAD_RULESET,
+	    wxCommandEventHandler(ModSfsMainPanelImpl::OnLoadRuleSet),
+	    NULL, this);
+
 	destroySfsMain();
 }
 
@@ -138,6 +142,7 @@ ModSfsMainPanelImpl::OnLoadRuleSet(wxCommandEvent& event)
 	for (int i=0; i<MODSFS_LIST_COLUMN_EOL; i++) {
 		lst_Rules->SetColumnWidth(i, wxLIST_AUTOSIZE_USEHEADER);
 	}
+
 	event.Skip();
 }
 

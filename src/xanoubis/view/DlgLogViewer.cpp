@@ -52,6 +52,9 @@ DlgLogViewer::DlgLogViewer(wxWindow* parent) : DlgLogViewerBase(parent)
 {
 	wxIcon		*icon;
 	wxImageList	*imgList;
+	AnEvents	*anEvents;
+
+	anEvents = AnEvents::getInstance();
 
 	imgList = new wxImageList(16, 16);
 	shortcuts_  = new AnShortcuts(this);
@@ -79,14 +82,27 @@ DlgLogViewer::DlgLogViewer(wxWindow* parent) : DlgLogViewerBase(parent)
 	lc_logList->InsertColumn(LOGVIEWER_COLUMN_MESSAGE, _("Message"),
 	    wxLIST_FORMAT_LEFT, wxLIST_AUTOSIZE);
 
-	parent->Connect(anEVT_ADD_NOTIFICATION,
+	anEvents->Connect(anEVT_ADD_NOTIFICATION,
 	    wxCommandEventHandler(DlgLogViewer::OnAddNotification), NULL, this);
-	parent->Connect(anEVT_LOGVIEWER_SHOW,
+	anEvents->Connect(anEVT_LOGVIEWER_SHOW,
 	    wxCommandEventHandler(DlgLogViewer::OnShow), NULL, this);
+
+	ANEVENTS_IDENT_BCAST_REGISTRATION(DlgLogViewer);
 }
 
 DlgLogViewer::~DlgLogViewer(void)
 {
+	AnEvents	*anEvents;
+
+	anEvents = AnEvents::getInstance();
+
+	anEvents->Disconnect(anEVT_ADD_NOTIFICATION,
+	    wxCommandEventHandler(DlgLogViewer::OnAddNotification), NULL, this);
+	anEvents->Disconnect(anEVT_LOGVIEWER_SHOW,
+	    wxCommandEventHandler(DlgLogViewer::OnShow), NULL, this);
+
+	ANEVENTS_IDENT_BCAST_DEREGISTRATION(DlgLogViewer);
+
 	delete shortcuts_;
 }
 
@@ -104,6 +120,7 @@ DlgLogViewer::OnAddNotification(wxCommandEvent& event)
 	 * The notify was also received by ModAnoubis, which stores
 	 * and destroys it. Thus we must not delete it.
 	 */
+	event.Skip();
 }
 
 void
@@ -144,14 +161,17 @@ void
 DlgLogViewer::OnClose(wxCloseEvent&)
 {
 	wxCommandEvent	showEvent(anEVT_LOGVIEWER_SHOW);
+
 	showEvent.SetInt(false);
-	wxGetApp().sendEvent(showEvent);
+
+	wxPostEvent(AnEvents::getInstance(), showEvent);
 }
 
 void
 DlgLogViewer::OnShow(wxCommandEvent& event)
 {
 	this->Show(event.GetInt());
+	event.Skip();
 }
 
 void
@@ -168,6 +188,8 @@ DlgLogViewer::OnListItemSelected(wxListEvent& event)
 		wxCommandEvent  showEvent(anEVT_SHOW_RULE);
 		showEvent.SetInt(true);
 		showEvent.SetExtraLong(notify->getRuleId());
-		wxGetApp().sendEvent(showEvent);
+		wxPostEvent(AnEvents::getInstance(), showEvent);
 	}
 }
+
+ANEVENTS_IDENT_BCAST_METHOD_DEFINITION(DlgLogViewer)
