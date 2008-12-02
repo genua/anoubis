@@ -39,9 +39,12 @@ WANTLIB-daemon+=	c
 CONFIGURE_STYLE=	gnu
 CONFIGURE_ARGS+=	--enable-static-anoubisd
 
-#http://srv.anoubis.genua.de/cgi-bin/bugzilla/show_bug.cgi?id=906
-#REGRESS_DEPENDS=	${BUILD_DEPENDS}
-NO_REGRESS=		YES
+REGRESS_DEPENDS=	${BUILD_DEPENDS}
+
+# we explicitly have to change into the regression test directory
+# see: http://srv.anoubis.genua.de/cgi-bin/bugzilla/show_bug.cgi?id=906
+do-regress:
+	cd ${WRKSRC}/test && ${MAKE} check
 
 # Enforce the derivation of the file 'date.c' as the provided version
 # is incompatible with OpenBSD (Bug #741)
