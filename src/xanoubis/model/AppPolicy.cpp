@@ -87,6 +87,9 @@ AppPolicy::AppPolicy(struct apn_rule *appRule, PolicyRuleSet *parent)
 		break;
 	case APN_SFS:
 		TAILQ_FOREACH(rule, &appRule_->rule.chain, entry) {
+			/* XXX: Ignore new style SFS policies for now */
+			if (rule->apn_type != APN_SFS_CHECK)
+				continue;
 			newSfs = new SfsPolicy(this, rule, parent);
 			ruleList_.Append(newSfs);
 		}

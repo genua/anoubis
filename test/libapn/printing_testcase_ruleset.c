@@ -110,6 +110,10 @@ generate_file(void)
 	fprintf(sfp, "default deny\n");
 	fprintf(sfp, "}\n");
 	fprintf(sfp, "}\n");
+	fprintf(sfp, "sfs{\n");
+	fprintf(sfp, "path /tmp/blah uid 0 valid allow invalid alert deny "
+	    "unknown log continue\n");
+	fprintf(sfp, "}\n");
 
 	fflush(sfp);
 

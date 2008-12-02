@@ -137,6 +137,7 @@ typedef struct {
 		int			 af;
 		int			 proto;
 		int			 action;
+		int			 sfsaction;
 		int			 log;
 		struct {
 			int		 type;
@@ -153,8 +154,11 @@ typedef struct {
 		struct apn_acaprule	 acaprule;
 		struct apn_sbaccess	 sbaccess;
 		struct apn_default	 dfltrule;
+		struct apn_subject	 subject;
 		struct apn_context	 ctxruleapps;
 		struct apn_sfscheck	 sfscheck;
+		struct apn_sfsaccess	 sfsaccess;
+		struct apn_sfsdefault	 sfsdefault;
 		struct apn_addr		 addr;
 		struct apn_app		*app;
 		struct apphead		 apphead;
@@ -177,6 +181,7 @@ typedef struct {
 %token	INET INET6 FROM TO PORT ANY SHA256 TCP UDP DEFAULT NEW ASK ALERT OPEN
 %token	READ WRITE EXEC CHMOD ERROR APPLICATION RULE HOST TFILE BOTH SEND
 %token	RECEIVE TIMEOUT STATEFUL TASK UNTIL COLON PATH KEY UID CSUM
+%token	SELF SIGNEDSELF VALID INVALID UNKNOWN CONTINUE
 %token	<v.string>		STRING
 %token	<v.number>		NUMBER
 %type	<v.app>			app apps sfsapp
@@ -190,6 +195,7 @@ typedef struct {
 %type	<v.porthead>		port_l
 %type	<v.hosts>		hosts
 %type	<v.number>		not capability defaultspec ruleid sbrwx
+%type	<v.string>		sfspath
 %type	<v.netaccess>		netaccess
 %type	<v.af>			af
 %type	<v.proto>		proto
@@ -202,9 +208,14 @@ typedef struct {
 %type	<v.afrule>		alffilterrule
 %type	<v.acaprule>		alfcaprule
 %type	<v.sbaccess>		sbaccess sbpred sbpath sbuid sbkey sbcsum
-%type	<v.dfltrule>		defaultrule alfdefault sfsdefault sbdefault
+%type	<v.dfltrule>		defaultrule alfdefault sbdefault
 %type	<v.ctxruleapps>		ctxruleapps
 %type	<v.sfscheck>		sfscheckrule
+%type	<v.sfsaccess>		sfsaccessrule
+%type	<v.dfltrule>		sfsvalid sfsinvalid sfsunknown
+%type	<v.subject>		sfssubject
+%type	<v.sfsaction>		sfsaction
+%type	<v.sfsdefault>		sfsdefaultrule
 %type	<v.timeout>		statetimeout
 %type	<v.scope>		scope
 %%
@@ -825,20 +836,36 @@ sfsrule		: ruleid sfscheckrule scope		{
 
 			$$ = rule;
 		}
-		| ruleid sfsdefault scope		{
+		| ruleid sfsaccessrule scope {
 			struct apn_rule	*rule;
 
 			rule = calloc(1, sizeof(struct apn_rule));
 			if (rule == NULL) {
-				free($3);
+				apn_free_sfsaccess(&$2);
+				yyerror("Out of memory");
+				YYERROR;
+			}
+			rule->apn_type = APN_SFS_ACCESS;
+			rule->scope = $3;
+			rule->rule.sfsaccess = $2;
+			rule->apn_id = $1;
+
+			$$ = rule;
+		}
+		| ruleid sfsdefaultrule scope {
+			struct apn_rule	*rule;
+
+			rule = calloc(1, sizeof(struct apn_rule));
+			if (rule == NULL) {
+				apn_free_sfsdefault(&$2);
+				yyerror("Out of memory");
 				YYERROR;
 			}
 
-			rule->apn_type = APN_DEFAULT;
-			rule->rule.apndefault = $2;
-			rule->apn_id = $1;
+			rule->apn_type = APN_SFS_DEFAULT;
 			rule->scope = $3;
-			rule->app = NULL;
+			rule->rule.sfsdefault = $2;
+			rule->apn_id = $1;
 
 			$$ = rule;
 		}
@@ -850,7 +877,74 @@ sfscheckrule	: sfsapp log			{
 		}
 		;
 
-sfsdefault	: defaultrule
+sfsdefaultrule	: DEFAULT sfspath log action {
+			$$.path = $2;
+			$$.log = $3;
+			$$.action = $4;
+		}
+		;
+
+sfsaccessrule	: sfspath sfssubject sfsvalid sfsinvalid sfsunknown {
+			$$.path    = $1;
+			$$.subject = $2;
+			$$.valid   = $3;
+			$$.invalid = $4;
+			$$.unknown = $5;
+		}
+		;
+
+sfsvalid	: VALID log sfsaction {
+			$$.log = $2;
+			$$.action = $3;
+		}
+		| /* Empty */			{
+			$$.log = APN_LOG_NONE;
+			$$.action = APN_ACTION_ALLOW;
+		}
+		;
+
+sfsinvalid	: INVALID log sfsaction {
+			$$.log = $2;
+			$$.action = $3;
+		}
+		| /* Empty */			{
+			$$.log = APN_LOG_NORMAL;
+			$$.action = APN_ACTION_DENY;
+		}
+		;
+
+sfsunknown	: UNKNOWN log sfsaction {
+			$$.log = $2;
+			$$.action = $3;
+		}
+		| /* Empty */			{
+			$$.log = APN_LOG_NONE;
+			$$.action = APN_ACTION_CONTINUE;
+		}
+		;
+
+sfsaction	: CONTINUE			{ $$ = APN_ACTION_CONTINUE; }
+		| action			{ $$ = $1; }
+		;
+
+sfspath		: ANY		{ $$ = NULL; }
+		| PATH STRING	{ $$ = $2; }
+		;
+
+sfssubject	: SELF		{
+			$$.type = APN_CS_UID_SELF;
+		}
+		| SIGNEDSELF {
+			$$.type = APN_CS_KEY_SELF;
+		}
+		| UID NUMBER {
+			$$.type = APN_CS_UID;
+			$$.value.uid = $2;
+		}
+		| KEY STRING {
+			$$.type = APN_CS_KEY;
+			$$.value.keyid = $2;
+		}
 		;
 
 		/*
@@ -1368,6 +1462,7 @@ lookup(char *s)
 		{ "chmod",	CHMOD },
 		{ "connect",	CONNECT },
 		{ "context",	CONTEXT },
+		{ "continue",	CONTINUE },
 		{ "csum",	CSUM },
 		{ "default",	DEFAULT },
 		{ "deny",	DENY },
@@ -1377,6 +1472,7 @@ lookup(char *s)
 		{ "host",	HOST },
 		{ "inet",	INET },
 		{ "inet6",	INET6 },
+		{ "invalid",	INVALID },
 		{ "key",	KEY },
 		{ "log",	LOG },
 		{ "new",	NEW },
@@ -1390,9 +1486,11 @@ lookup(char *s)
 		{ "rule",	RULE },
 		{ "sandbox",	SB },
 		{ "sb",		SB },
+		{ "self",	SELF },
 		{ "send",	SEND },
 		{ "sfs",	SFS },
 		{ "sha256",	SHA256 },
+		{ "signed-self",	SIGNEDSELF },
 		{ "stateful",	STATEFUL },
 		{ "task",	TASK },
 		{ "tcp",	TCP },
@@ -1400,7 +1498,9 @@ lookup(char *s)
 		{ "to",		TO },
 		{ "udp",	UDP },
 		{ "uid",	UID },
+		{ "unknown",	UNKNOWN },
 		{ "until",	UNTIL },
+		{ "valid",	VALID },
 		{ "vs",		VS },
 		{ "write",	WRITE },
 		/* the above list has to be sorted always */

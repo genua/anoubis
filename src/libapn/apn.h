@@ -73,7 +73,7 @@ enum {
 };
 
 enum {
-	APN_ACTION_ALLOW, APN_ACTION_DENY, APN_ACTION_ASK
+	APN_ACTION_ALLOW, APN_ACTION_DENY, APN_ACTION_ASK, APN_ACTION_CONTINUE
 };
 
 enum {
@@ -181,6 +181,7 @@ struct apn_sfscheck {
 #define		APN_SBA_EXEC	0x0004
 #define		APN_SBA_ALL	0x0007
 
+/* XXX: SF,CEH: change this to use APN_CS_* and apn_subject */
 #define		SBCS_NONE	0
 #define		SBCS_CSUM	1
 #define		SBCS_UID	2
@@ -199,6 +200,36 @@ struct apn_sbaccess {
 	int			 action;
 };
 
+#define		APN_CS_NONE	0
+#define		APN_CS_CSUM	1
+#define		APN_CS_UID	2
+#define		APN_CS_KEY	3
+#define		APN_CS_UID_SELF	4
+#define		APN_CS_KEY_SELF	5
+
+struct apn_subject {
+	int			 type;
+	union {
+		char		*keyid;
+		uid_t		 uid;
+		u_int8_t	*csum;
+	} value;
+};
+
+struct apn_sfsaccess {
+	char			*path;
+	struct apn_subject	 subject;
+	struct apn_default	 valid;
+	struct apn_default	 invalid;
+	struct apn_default	 unknown;
+};
+
+struct apn_sfsdefault {
+	char			*path;
+	int			 log;
+	int			 action;
+};
+
 enum {
 	APN_ALF,		/* rule.chain, scope == NULL */
 	APN_SFS,		/* rule.chain, scope == NULL */
@@ -210,6 +241,8 @@ enum {
 	APN_DEFAULT,		/* rule.apndefault, app == NULL */
 	APN_CTX_RULE,		/* rule.apncontext, app == NULL */
 	APN_SFS_CHECK,		/* rule.sfscheck, app == NULL */
+	APN_SFS_ACCESS,		/* rule.sfsaccess, app == NULL */
+	APN_SFS_DEFAULT,	/* rule.sfsdefault, app == NULL */
 	APN_SB_ACCESS,		/* rule.sbaccess, app = NULL */
 };
 
@@ -228,6 +261,8 @@ struct apn_rule {
 		struct apn_default	apndefault;
 		struct apn_context	apncontext;
 		struct apn_sfscheck	sfscheck;
+		struct apn_sfsaccess	sfsaccess;
+		struct apn_sfsdefault	sfsdefault;
 		struct apn_chain	chain;
 		struct apn_sbaccess	sbaccess;
 	} rule;
@@ -314,6 +349,8 @@ void	apn_free_chain(struct apn_chain *, struct apn_ruleset *);
 void	apn_free_app(struct apn_app *);
 void	apn_free_filter(struct apn_afiltspec *filtspec);
 void	apn_free_sbaccess(struct apn_sbaccess *);
+void	apn_free_sfsaccess(struct apn_sfsaccess *);
+void	apn_free_sfsdefault(struct apn_sfsdefault *);
 int	apn_clean_ruleset(struct apn_ruleset *rs,
 	    int (*)(struct apn_scope *, void *), void *);
 struct apn_rule *apn_copy_one_rule(struct apn_rule *);

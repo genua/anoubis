@@ -63,8 +63,10 @@
 
 static int		 pe_decide_sfscheck(struct apn_rule *, struct
 			     sfs_open_message *, int *, u_int32_t *, time_t);
+/*
 static int		 pe_decide_sfsdflt(struct apn_rule *, struct
 			     sfs_open_message *, int *, u_int32_t *, time_t);
+*/
 static char		*pe_dump_sfsmsg(struct sfs_open_message *, int);
 
 
@@ -122,9 +124,12 @@ pe_decide_sfs(uid_t uid, anoubisd_msg_sfsopen_t *sfsmsg, time_t now)
 				ret = pe_decide_sfscheck(rule, msg,
 				    &log, &rule_id, now);
 
+/* disabled because pe_decide_sfsdflt needs to be rewritten */
+/*
 				if (ret == -1)
 					ret = pe_decide_sfsdflt(rule,
 					    msg, &log, &rule_id, now);
+*/
 
 				if (ret != -1) {
 					decision = ret;
@@ -244,6 +249,10 @@ pe_decide_sfscheck(struct apn_rule *rule, struct sfs_open_message *msg,
 	return decision;
 }
 
+/* XXX: SF,CEH: This is for the OLD style sfs default rule, which is no longer
+ * in the policy parser. It won't work with the new style sfs default rules
+ */
+#if 0
 static int
 pe_decide_sfsdflt(struct apn_rule *rule, struct sfs_open_message *msg, int *log,
     u_int32_t *rule_id, time_t now)
@@ -293,6 +302,7 @@ pe_decide_sfsdflt(struct apn_rule *rule, struct sfs_open_message *msg, int *log,
 
 	return (decision);
 }
+#endif
 
 /*
  * Decode a SFS message into a printable string.  The strings is allocated
