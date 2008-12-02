@@ -52,13 +52,21 @@ test_apnvm_CFLAGS = \
 test_apnvm_CPPFLAGS = \
 	-I$(top_srcdir)/$(apnvmdir) \
 	-I$(top_srcdir)/$(anoubischeckdir)
+
+test_apnvm_DEPENDENCIES = $(apnvm) $(libapn)
+
+# conditionally static link of libraries to accomplish correct Code Coverage
+if GCOV_ENABLED
+test_apnvm_LDADD = @CHECK_LIBS@ $(apnvm) $(libanoubischeck) $(libapn) -lfl
+test_apnvm_LDFLAGS = \
+	$(AM_LDFLAGS) \
+	-L$(top_builddir)/$(apnvmdir)
+else
+test_apnvm_LDADD = @CHECK_LIBS@ $(libanoubischeck) $(libapn) -lfl
 test_apnvm_LDFLAGS = \
 	$(AM_LDFLAGS) -dynamic \
 	-L$(top_builddir)/$(apnvmdir) -lapnvm
-
-# conditionally static link of libraries to accomplish correct Code Coverage
-test_apnvm_DEPENDENCIES = $(apnvm) $(libapn)
-test_apnvm_LDADD = @CHECK_LIBS@ $(libanoubischeck) $(libapn) -lfl
+endif
 
 if NEEDBSDCOMPAT
 test_apnvm_DEPENDENCIES += $(libbsdcompat)
