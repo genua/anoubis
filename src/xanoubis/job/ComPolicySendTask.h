@@ -44,6 +44,14 @@ class PolicyRuleSet;
  * - raw <code>struct apn_ruleset</code>
  * Thus one of the getter (getPolicy(), getPolicyApn()) will return a valid
  * (<code>!= 0</code>) pointer.
+ *
+ * Supported error-codes:
+ * - <code>RESULT_OOM</code> Out of memory
+ * - <code>RESULT_COM_ERROR</code> Communication error. Failed to create a
+ *   transaction or to fetch the answer-message.
+ * - <code>RESULT_REMOTE_ERROR</code> Operation(s) performed by anoubisd
+ *   failed. getResultDetails() will return the remote error-code and can be
+ *   evaluated by strerror(3) or similar.
  */
 class ComPolicySendTask : public ComTask
 {

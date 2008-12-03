@@ -45,10 +45,23 @@ ComTask::setComTaskResult(ComTaskResult result)
 	this->result_ = result;
 }
 
+int
+ComTask::getResultDetails(void) const
+{
+	return (this->resultDetails_);
+}
+
+void
+ComTask::setResultDetails(int result)
+{
+	this->resultDetails_ = result;
+}
+
 void
 ComTask::resetComTaskResult(void)
 {
 	this->result_ = RESULT_INIT;
+	this->resultDetails_ = 0;
 }
 
 ComHandler *

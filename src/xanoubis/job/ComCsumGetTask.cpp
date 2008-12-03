@@ -97,6 +97,7 @@ ComCsumGetTask::exec(void)
 
 	if (ta->result) {
 		setComTaskResult(RESULT_REMOTE_ERROR);
+		setResultDetails(ta->result);
 		anoubis_transaction_destroy(ta);
 		return;
 	}

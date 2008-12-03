@@ -92,6 +92,12 @@ ComPolicySendTask::setPolicy(struct apn_ruleset *policy, uid_t uid, int prio)
 	prio_ = prio;
 }
 
+uid_t
+ComPolicySendTask::getUid(void) const
+{
+	return (this->uid_);
+}
+
 int
 ComPolicySendTask::getPriority(void) const
 {
@@ -152,9 +158,10 @@ ComPolicySendTask::exec(void)
 	}
 
 	/* Result */
-	if (ta->result)
+	if (ta->result) {
 		setComTaskResult(RESULT_REMOTE_ERROR);
-	else
+		setResultDetails(ta->result);
+	} else
 		setComTaskResult(RESULT_SUCCESS);
 
 	anoubis_transaction_destroy(ta);

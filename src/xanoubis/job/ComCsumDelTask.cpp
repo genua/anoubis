@@ -89,15 +89,18 @@ ComCsumDelTask::exec(void)
 	while (!(ta->flags & ANOUBIS_T_DONE)) {
 		if (!getComHandler()->waitForMessage()) {
 			setComTaskResult(RESULT_COM_ERROR);
+			anoubis_transaction_destroy(ta);
 			return;
 		}
 	}
 
 	if (ta->result) {
 		setComTaskResult(RESULT_REMOTE_ERROR);
+		setResultDetails(ta->result);
 		anoubis_transaction_destroy(ta);
 		return;
 	}
 
+	anoubis_transaction_destroy(ta);
 	setComTaskResult(RESULT_SUCCESS);
 }

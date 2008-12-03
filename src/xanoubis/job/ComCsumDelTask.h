@@ -34,6 +34,13 @@
  * Task to delete the checksum of a file from anoubisd.
  *
  * You have to specify the filename with ComCsumDelTask::setFile().
+ *
+ * Supported error-codes:
+ * - <code>RESULT_COM_ERROR</code> Communication error. Failed to create a
+ *   transaction or to fetch the answer-message.
+ * - <code>RESULT_REMOTE_ERROR</code> Operation(s) performed by anoubisd
+ *   failed. getResultDetails() will return the remote error-code and can be
+ *   evaluated by strerror(3) or similar.
  */
 class ComCsumDelTask : public ComTask
 {

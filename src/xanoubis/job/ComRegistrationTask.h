@@ -36,6 +36,10 @@
  *
  * This task needs to be queued before any other communication is performed
  * with the Anoubis-daemon.
+ *
+ * Supported error-codes:
+ * - <code>RESULT_COM_ERROR</code> Communication error. Failed to create a
+ *   transaction or to fetch the answer-message.
  */
 class ComRegistrationTask : public ComTask
 {

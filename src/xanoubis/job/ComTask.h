@@ -76,6 +76,24 @@ class ComTask : public Task
 		ComTaskResult getComTaskResult(void) const;
 
 		/**
+		 * Returns a detailed result-code.
+		 *
+		 * This result-code highly depends on
+		 * - on the concrete ComTask-implementation
+		 * - getComTaskResult().
+		 *
+		 * This result-code can be used to provide more details about
+		 * the execution-result of a ComTask. For example, it can
+		 * return a concrete error-code, if an operation failed. Please
+		 * check the documentation of the ComTask derivated classes for
+		 * the concrete meaning of the error-code returned by this
+		 * method.
+		 *
+		 * @return A detailed result-code
+		 */
+		int getResultDetails(void) const;
+
+		/**
 		 * Returns the ComHandler-instance assigned with the task.
 		 *
 		 * The derivated class have an access to message-handling with
@@ -116,10 +134,19 @@ class ComTask : public Task
 		void setComTaskResult(ComTaskResult);
 
 		/**
+		 * Updates the detailed result-code.
+		 *
+		 * @param result The result-code
+		 * @see getResultDetails()
+		 */
+		void setResultDetails(int);
+
+		/**
 		 * Resets the result-code to its original state.
 		 *
-		 * The default-implementation sets the ComTaskResult-attribute
-		 * to Comtask::RESULT_INIT.
+		 * The default-implementation sets
+		 * - the ComTaskResult-attribute to Comtask::RESULT_INIT,
+		 * - the ResultDetails-attribute to 0.
 		 *
 		 * Derivated classes can overwrite the method to perform a
 		 * task-specific reset-operation. Note: Do not forget to invoke
@@ -131,6 +158,7 @@ class ComTask : public Task
 
 	private:
 		ComTaskResult	result_;
+		int		resultDetails_;
 		ComHandler	*comHandler_;
 };
 

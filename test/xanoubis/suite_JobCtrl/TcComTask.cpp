@@ -126,7 +126,16 @@ TcComTask::OnRegister(TaskEvent &event)
 			break;
 		}
 
-		result_ = 4711;
+		result_ = __LINE__;
+		exit_ = true;
+		return;
+	}
+
+	if (t->getResultDetails() != 0) {
+		trace("ResultDetails: %s (%i)\n",
+		    strerror(t->getResultDetails()), t->getResultDetails());
+
+		result_ = __LINE__;
 		exit_ = true;
 		return;
 	}
@@ -165,10 +174,19 @@ TcComTask::OnPolicyReceived(TaskEvent &event)
 	if (t->getComTaskResult() != ComTask::RESULT_SUCCESS) {
 		trace("Failed to receive a policy: %i\n",
 		    t->getComTaskResult());
-		result_ = 4711;
+		result_ = __LINE__;
 		exit_ = true;
 
 		delete (t);
+		return;
+	}
+
+	if (t->getResultDetails() != 0) {
+		trace("ResultDetails: %s (%i)\n",
+		    strerror(t->getResultDetails()), t->getResultDetails());
+
+		result_ = __LINE__;
+		exit_ = true;
 		return;
 	}
 
@@ -186,7 +204,7 @@ TcComTask::OnPolicyReceived(TaskEvent &event)
 	if (content.Strip(wxString::both) != cmp.Strip(wxString::both)) {
 		trace("Unexpected policy received!\n%s\n",
 			(const char*)content.fn_str());
-		result_ = 4711;
+		result_ = __LINE__;
 		exit_ = true;
 		return;
 	}
@@ -230,10 +248,19 @@ TcComTask::OnPolicySend(TaskEvent &event)
 
 	if (t->getComTaskResult() != ComTask::RESULT_SUCCESS) {
 		trace("Failed to send a policy: %i\n", t->getComTaskResult());
-		result_ = 4711;
+		result_ = __LINE__;
 		exit_ = true;
 
 		delete (t);
+		return;
+	}
+
+	if (t->getResultDetails() != 0) {
+		trace("ResultDetails: %s (%i)\n",
+		    strerror(t->getResultDetails()), t->getResultDetails());
+
+		result_ = __LINE__;
+		exit_ = true;
 		return;
 	}
 
@@ -261,10 +288,19 @@ TcComTask::OnCsumAdd(TaskEvent &event)
 
 	if (t->getComTaskResult() != ComTask::RESULT_SUCCESS) {
 		trace("Failed to add a checksum: %i\n", t->getComTaskResult());
-		result_ = 4711;
+		result_ = __LINE__;
 		exit_ = true;
 
 		delete (t);
+		return;
+	}
+
+	if (t->getResultDetails() != 0) {
+		trace("ResultDetails: %s (%i)\n",
+		    strerror(t->getResultDetails()), t->getResultDetails());
+
+		result_ = __LINE__;
+		exit_ = true;
 		return;
 	}
 
@@ -294,10 +330,19 @@ TcComTask::OnCsumGet(TaskEvent &event)
 
 	if (t->getComTaskResult() != ComTask::RESULT_SUCCESS) {
 		trace("Failed to get a checksum: %i\n", t->getComTaskResult());
-		result_ = 4711;
+		result_ = __LINE__;
 		exit_ = true;
 
 		delete (t);
+		return;
+	}
+
+	if (t->getResultDetails() != 0) {
+		trace("ResultDetails: %s (%i)\n",
+		    strerror(t->getResultDetails()), t->getResultDetails());
+
+		result_ = __LINE__;
+		exit_ = true;
 		return;
 	}
 
@@ -310,7 +355,7 @@ TcComTask::OnCsumGet(TaskEvent &event)
 		trace("Is      : %s\n", (const char*)csum.fn_str());
 		trace("Expected: %s\n", (const char*)policyCsum.fn_str());
 
-		result_ = 4711;
+		result_ = __LINE__;
 		exit_ = true;
 		return;
 	}
@@ -342,7 +387,16 @@ TcComTask::OnCsumDel(TaskEvent &event)
 
 	if (result != ComTask::RESULT_SUCCESS) {
 		trace("Failed to remove a checksum!\n");
-		result_ = 4711;
+		result_ = __LINE__;
+		exit_ = true;
+		return;
+	}
+
+	if (t->getResultDetails() != 0) {
+		trace("ResultDetails: %s (%i)\n",
+		    strerror(t->getResultDetails()), t->getResultDetails());
+
+		result_ = __LINE__;
 		exit_ = true;
 		return;
 	}
@@ -370,6 +424,20 @@ TcComTask::OnSfsList(TaskEvent &event)
 	wxArrayString result = t->getFileList();
 	trace("sfs-list-size: %i\n", result.Count());
 
+	/*
+	 * XXX
+	 * Will return ENOENT if result.Count() is 0.
+	 * Known error in anoubisd (#924)
+	 */
+	/*if (t->getResultDetails() != 0) {
+		trace("ResultDetails: %s (%i)\n",
+		    strerror(t->getResultDetails()), t->getResultDetails());
+
+		result_ = __LINE__;
+		exit_ = true;
+		return;
+	}*/
+
 	delete t;
 
 	csumListCounter_++;
@@ -381,7 +449,7 @@ TcComTask::OnSfsList(TaskEvent &event)
 			trace("Unexpected # of entries in sfs-list\n");
 			trace("Expected: 1\n");
 			trace("Is: %i\n", result.Count());
-			result_ = 4711;
+			result_ = __LINE__;
 			exit_ = true;
 			return;
 		}
@@ -389,7 +457,7 @@ TcComTask::OnSfsList(TaskEvent &event)
 		if (result[0] != wxT("policy")) {
 			trace("Unexpected content of sfs-list: %s\n",
 			    (const char*)result[0].fn_str());
-			result_ = 4711;
+			result_ = __LINE__;
 			exit_ = true;
 			return;
 		}
@@ -408,7 +476,7 @@ TcComTask::OnSfsList(TaskEvent &event)
 			trace("Unexpected # of entries in sfs-list\n");
 			trace("Expected: 0\n");
 			trace("Is: %i\n", result.Count());
-			result_ = 4711;
+			result_ = __LINE__;
 			exit_ = true;
 			return;
 		}

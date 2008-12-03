@@ -35,6 +35,16 @@
  *
  * You have to specify the filename with ComCsumAddTask::setFile(). The
  * checksum of this file is calculated and send to anoubisd.
+ *
+ * Supported error-codes:
+ * - <code>RESULT_LOCAL_ERROR</code> Calculation of checksum failed.
+ *   getResultDetails() returns the error-code and can be evaluated by
+ *   strerror(3) or similar.
+ * - <code>RESULT_COM_ERROR</code> Communication error. Failed to create a
+ *   transaction or to fetch the answer-message.
+ * - <code>RESULT_REMOTE_ERROR</code> Operation(s) performed by anoubisd
+ *   failed. getResultDetails() will return the remote error-code and can be
+ *   evaluated by strerror(3) or similar.
  */
 class ComCsumAddTask : public ComTask
 {

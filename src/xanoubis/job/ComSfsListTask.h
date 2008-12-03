@@ -39,6 +39,15 @@
  *
  * When the operation was successful, you can receive the filelist with
  * getFileList().
+ *
+ * Supported error-codes:
+ * - <code>RESULT_INIT</code> The task remains in RESULT_INIT state, if a
+ *   non-root-user tries to fetch the sfslist of another user.
+ * - <code>RESULT_COM_ERROR</code> Communication error. Failed to create a
+ *   transaction or to fetch the answer-message.
+ * - <code>RESULT_REMOTE_ERROR</code> Operation(s) performed by anoubisd
+ *   failed. getResultDetails() will return the remote error-code and can be
+ *   evaluated by strerror(3) or similar.
  */
 class ComSfsListTask : public ComTask
 {

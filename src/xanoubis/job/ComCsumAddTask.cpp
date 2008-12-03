@@ -95,6 +95,7 @@ ComCsumAddTask::exec(void)
 	ret = anoubis_csum_calc(path, cs, &len);
 	if (ret < 0) {
 		setComTaskResult(RESULT_LOCAL_ERROR);
+		setResultDetails(-ret);
 		return;
 	}
 
@@ -115,9 +116,10 @@ ComCsumAddTask::exec(void)
 	}
 
 	/* Result */
-	if (ta->result)
+	if (ta->result) {
 		setComTaskResult(RESULT_REMOTE_ERROR);
-	else
+		setResultDetails(ta->result);
+	} else
 		setComTaskResult(RESULT_SUCCESS);
 
 	anoubis_transaction_destroy(ta);

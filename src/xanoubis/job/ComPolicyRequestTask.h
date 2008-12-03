@@ -42,6 +42,13 @@ class PolicyRuleSet;
  *
  * When the task was successfully executed, you can fetch the requested policy
  * with ComPolicyRequestTask::getPolicy().
+ *
+ * Supported error-codes:
+ * - <code>RESULT_COM_ERROR</code> Communication error. Failed to create a
+ *   transaction or to fetch the answer-message.
+ * - <code>RESULT_REMOTE_ERROR</code> Operation(s) performed by anoubisd
+ *   failed. getResultDetails() will return the remote error-code and can be
+ *   evaluated by strerror(3) or similar.
  */
 class ComPolicyRequestTask : public ComTask
 {
