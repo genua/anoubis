@@ -109,6 +109,7 @@ static int	 sfs_add(char *file);
 static int	 sfs_del(char *file);
 static int	 sfs_get(char *file);
 static int	 sfs_list(char *file);
+static int	 sfs_validate(char *file);
 static struct anoubis_transaction *sfs_sumop(char *file, int operation,
     u_int8_t *cs, int cslen, int idlen);
 static int	 create_channel(void);
@@ -116,6 +117,7 @@ static void	 destroy_channel(void);
 static int	 sfs_tree(char *path, int op);
 static int	 sfs_add_tree(char *path, int op);
 static uid_t	*request_uids(char *file, int *count);
+static int	__sfs_get(char *file, int flag);
 
 #define SYSSIGNAME "security.anoubis_syssig"
 
@@ -129,6 +131,7 @@ struct cmd {
 	{ "del",   (func_int_t)sfs_del, 1, ANOUBIS_CHECKSUM_OP_DEL},
 	{ "list",  (func_int_t)sfs_list, 1, ANOUBIS_CHECKSUM_OP_LIST},
 	{ "get",  (func_int_t)sfs_get, 1, ANOUBIS_CHECKSUM_OP_GET},
+	{ "validate",  (func_int_t)sfs_validate, 1, ANOUBIS_CHECKSUM_OP_GET},
 };
 
 
@@ -983,10 +986,25 @@ sfs_del(char *file)
 static int
 sfs_get(char *file)
 {
+	return __sfs_get(file, 0);
+}
+
+static int
+sfs_validate(char *file)
+{
+	return __sfs_get(file, 1);
+}
+
+static int
+__sfs_get(char *file, int vflag)
+{
 	struct anoubis_transaction	*t;
 	int				 i, j;
 	int				 cnt = 0;
 	int				 siglen = 0;
+	int				 error = 0;
+	int				 len = ANOUBIS_CS_LEN;
+	u_int8_t			 val_check[ANOUBIS_CS_LEN];
 	uid_t				*result = NULL;
 
 	if (opts & SFSSIG_OPT_DEBUG)
@@ -1000,6 +1018,27 @@ sfs_get(char *file)
 		}
 	}
 
+	if (vflag) {
+		if (!client) {
+			error = create_channel();
+			if (error) {
+				perror("sfs_validate");
+				return 1;
+			}
+		}
+		error = anoubis_csum_calc(file, val_check, &len);
+		if (error < 0) {
+			errno = -error;
+			perror("anoubis_csum_calc");
+			return 1;
+		}
+
+		if (len != ANOUBIS_CS_LEN) {
+			fprintf(stderr, "Bad csum length from"
+			    "anoubis_csum_calc\n");
+			return 1;
+		}
+	}
 	if (checksum_flag == ANOUBIS_CSUM_UID_ALL) {
 		result = request_uids(file, &cnt);
 		if (!result) {
@@ -1053,14 +1092,23 @@ sfs_get(char *file)
 				anoubis_transaction_destroy(t);
 				return 1;
 			}
-			siglen = t->msg->length - CSUM_LEN - SHA256_DIGEST_LENGTH
+			if (vflag) {
+				if (memcmp(t->msg->u.ackpayload->payload,
+				    val_check, ANOUBIS_CS_LEN))
+					printf("Signature Missmatch\n");
+				else
+					printf("Signature Match\n");
+				continue;
+			}
+			siglen = t->msg->length - CSUM_LEN
+			    - SHA256_DIGEST_LENGTH
 			    - sizeof(Anoubis_AckPayloadMessage);
 			printf("%d: %s\t",result[j], file);
 			for (i=0; i<SHA256_DIGEST_LENGTH; ++i)
 				printf("%02x",
 				    t->msg->u.ackpayload->payload[i]);
 				printf("\n");
-			
+
 			for (i = SHA256_DIGEST_LENGTH; i
 			    <(SHA256_DIGEST_LENGTH + siglen); i++)
 				printf("%02x",
@@ -1075,6 +1123,14 @@ sfs_get(char *file)
 				    t->msg->length);
 				anoubis_transaction_destroy(t);
 				return 1;
+			}
+			if (vflag) {
+				if (memcmp(t->msg->u.ackpayload->payload,
+				    val_check, ANOUBIS_CS_LEN))
+					printf("Checksum Missmatch\n");
+				else
+					printf("Checksum Match\n");
+				continue;
 			}
 			printf("%d: %s\t",result[j], file);
 			for (i=0; i<SHA256_DIGEST_LENGTH; ++i)
