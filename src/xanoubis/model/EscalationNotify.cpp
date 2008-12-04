@@ -93,7 +93,7 @@ EscalationNotify::answer(NotifyAnswer *answer)
 	answer_ = answer;
 
 	event.SetClientObject((wxClientData *)this);
-	wxGetApp().ProcessEvent(event);
+	wxPostEvent(AnEvents::getInstance(), event);
 
 	profileCtrl = ProfileCtrl::getInstance();
 	id = profileCtrl->getUserId();
