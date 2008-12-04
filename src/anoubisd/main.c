@@ -753,10 +753,17 @@ send_checksum_list(u_int64_t token, const char *path, u_int8_t *keyid,
 						return;
 					}
 					ret = check_for_uid(tmp);
+					/* It is not the searched entry */
 					if (ret == 0) {
 						sfs_ent = readdir(sfs_dir);
 						free(tmp);
 						continue;
+					/* An error occured */
+					} else if (ret == -1) {
+						sfs_ent = readdir(sfs_dir);
+						free(tmp);
+						continue;
+					/* We found our entry */
 					} else {
 						free(tmp);
 					}
@@ -777,11 +784,19 @@ send_checksum_list(u_int64_t token, const char *path, u_int8_t *keyid,
 						return;
 					}
 					ret = check_for_uid(tmp);
+					/* It is not our searched entry */
 					if (ret == 0) {
 						sfs_ent = readdir(sfs_dir);
 						free(tmp);
 						free(sigfile);
 						continue;
+					/* An error occured */
+					} else if (ret == -1) {
+						sfs_ent = readdir(sfs_dir);
+						free(tmp);
+						free(sigfile);
+						continue;
+					/* We found our entry */
 					} else {
 						free(sigfile);
 						free(tmp);

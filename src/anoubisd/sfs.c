@@ -66,16 +66,6 @@
 #include "sfs.h"
 #define ANOUBIS_CERT_DIR "/var/lib/anoubis/policy/pubkeys"
 
-static int	 sfs_readchecksum(const char *csum_file, unsigned char *md);
-static int	 sfs_readsignature(const char *csum_file, u_int8_t **sign,
-		     int *siglen);
-static int	 sfs_deletechecksum(const char *csum_file);
-static int	 check_empty_dir(const char *path);
-char		*insert_escape_seq(const char *path, int dir);
-static int	 sfs_cert_keyid(unsigned char **keyid, X509 *cert);
-EVP_PKEY	*sfs_pubkey_get_by_uid(uid_t u);
-EVP_PKEY	*sfs_pubkey_get_by_keyid(unsigned char *keyid);
-
 struct sfs_cert {
 	TAILQ_ENTRY(sfs_cert)	 entry;
 	uid_t			 uid;
@@ -86,6 +76,15 @@ struct sfs_cert {
 };
 TAILQ_HEAD(sfs_cert_db, sfs_cert) *sfs_certs;
 
+static int	 sfs_readchecksum(const char *csum_file, unsigned char *md);
+static int	 sfs_readsignature(const char *csum_file, u_int8_t **sign,
+		     int *siglen);
+static int	 sfs_deletechecksum(const char *csum_file);
+static int	 check_empty_dir(const char *path);
+char		*insert_escape_seq(const char *path, int dir);
+static int	 sfs_cert_keyid(unsigned char **keyid, X509 *cert);
+struct sfs_cert	*sfs_pubkey_get_by_uid(uid_t u);
+struct sfs_cert	*sfs_pubkey_get_by_keyid(unsigned char *keyid, int klen);
 static int	 sfs_cert_load_db(const char *, struct sfs_cert_db *);
 
 #if 0
@@ -131,6 +130,9 @@ check_for_uid(const char *path)
 {
 	struct stat sb;
 
+	if(!path)
+		return -1;
+
 	if (stat(path, &sb) == 0)
 		return 1;
 	else
@@ -143,6 +145,9 @@ mkpath(const char *path)
 	char *tmppath;
 	int i;
 	int len;
+
+	if (!path)
+		return -EINVAL;
 
 	len = strlen(path) + 1;
 
@@ -181,22 +186,23 @@ char *
 insert_escape_seq(const char *path, int dir)
 {
 	char *newpath = NULL;
-	int k, i;
-	int j = 1;
+	int k, j, size;
+	int stars = 1;
 
-	i = strlen(path);
-	k = 0;
-	while (k <= i) {
+	if (!path)
+		return NULL;
+
+	size = strlen(path);
+	for (k = 0; k <= size; k++) {
 		if (path[k] == '*')
-			j++;
-		k++;
+			stars++;
 	}
 
-	newpath = (char *)malloc(strlen(path) + j + 1);
+	newpath = (char *)malloc(size + stars + 1);
 	if (newpath == NULL)
 		return NULL;
 
-	for (k = j = 0; j <= i; j++, k++) {
+	for (k = j = 0; j <= size; j++, k++) {
 		if (path[j] == '*') {
 			newpath[k] = '*';
 			k++;
@@ -204,6 +210,11 @@ insert_escape_seq(const char *path, int dir)
 		newpath[k] = path[j];
 	}
 
+	/* If the given path is not a file, then it is a new entry
+	 * which has a odd number of stars to mark it as a entry
+	 * to the shadowtree. So we add a star to the beginning
+	 * of the name of the entry.
+	 */
 	if (!dir) {
 		k = strlen(newpath);
 		while (k > 0) {
@@ -224,12 +235,16 @@ char *
 remove_escape_seq(const char *name, int is_uid)
 {
 	char *newpath = NULL;
-	unsigned int size =  strlen(name);
+	unsigned int size = 0;
 	unsigned int k = 0;
 	unsigned int i, mod;
 	int cnt = 0;
 	int stars = 0;
 
+	if (!name)
+		return NULL;
+
+	size = strlen(name);
 	for (k = 0; k <= size; k++) {
 		if (name[k] == '*')
 			stars++;
@@ -336,9 +351,7 @@ __sfs_checksumop(const char *path, unsigned int operation, uid_t uid,
 {
 	char *csum_path = NULL, *csum_file = NULL;
 	char *sigfile = NULL;
-	u_int8_t *verify = NULL;
-	u_int8_t *keyid = NULL;
-	EVP_PKEY *pkey = NULL;
+	struct sfs_cert *cert = NULL;
 	int fd;
 	int vlen = 0;
 	int written = 0;
@@ -358,13 +371,8 @@ __sfs_checksumop(const char *path, unsigned int operation, uid_t uid,
 			ret = -EINVAL;
 			goto out;
 		}
-
-		if ((keyid = calloc(idlen, sizeof(u_int8_t))) == NULL) {
-			ret = -ENOMEM;
-			goto out;
-		}
-		memcpy(keyid, md, idlen);
-		if ((pkey = sfs_pubkey_get_by_keyid(keyid)) == NULL) {
+		if ((cert = sfs_pubkey_get_by_keyid(md, idlen))
+		    == NULL) {
 			ret = -EINVAL;
 			goto out;
 		}
@@ -387,15 +395,12 @@ __sfs_checksumop(const char *path, unsigned int operation, uid_t uid,
 	}
 
 	if (operation == ANOUBIS_CHECKSUM_OP_ADDSIG) {
+		if (cert->uid != uid)
+			return -EPERM;
 		/* Before we add the signature we should verify it */
 		vlen = len - ANOUBIS_CS_LEN;
-		if ((verify = calloc(vlen, sizeof(u_int8_t))) == NULL) {
-			ret = -ENOMEM;
-			goto out;
-		}
-		memcpy(verify, md + ANOUBIS_CS_LEN + idlen, vlen);
-		if ((ret = anoubisd_verify_csum(pkey, md + idlen, verify,
-		   vlen)) != 1) {
+		if ((ret = anoubisd_verify_csum(cert->pkey, md + idlen, md +
+		    ANOUBIS_CS_LEN + idlen, vlen)) != 1) {
 			log_warn("could not verify %d", ret);
 			ret =-EINVAL;
 			goto out;
@@ -443,6 +448,9 @@ __sfs_checksumop(const char *path, unsigned int operation, uid_t uid,
 		ret = 0;
 	} else if (operation == ANOUBIS_CHECKSUM_OP_DEL ||
 	    operation == ANOUBIS_CHECKSUM_OP_DELSIG) {
+		if (operation == ANOUBIS_CHECKSUM_OP_DELSIG)
+			if (cert->uid != uid)
+				return -EPERM;
 		ret = sfs_deletechecksum(csum_file);
 		if (ret < 0)
 			ret = -errno;
@@ -453,7 +461,7 @@ __sfs_checksumop(const char *path, unsigned int operation, uid_t uid,
 			ret = -EINVAL;
 			goto out;
 		}
-		*siglen = EVP_PKEY_size(pkey) + ANOUBIS_CS_LEN;
+		*siglen = EVP_PKEY_size(cert->pkey) + ANOUBIS_CS_LEN;
 		if ((*sign = calloc(*siglen, sizeof(u_int8_t))) == NULL) {
 			ret = -ENOMEM;
 			goto out;
@@ -464,14 +472,8 @@ __sfs_checksumop(const char *path, unsigned int operation, uid_t uid,
 		}
 		/* Before we send the signature we should verify it */
 		vlen = *siglen - ANOUBIS_CS_LEN;
-		if ((verify = calloc(vlen, sizeof(u_int8_t))) == NULL) {
-			log_warn("calloc");
-			ret = -ENOMEM;
-			goto out;
-		}
-		memcpy(verify, *sign + ANOUBIS_CS_LEN, vlen);
-		if ((ret = anoubisd_verify_csum(pkey, *sign, verify, vlen))
-		    != 1) {
+		if ((ret = anoubisd_verify_csum(cert->pkey, *sign, *sign 
+		    + ANOUBIS_CS_LEN, vlen)) != 1) {
 			log_warn("could not verify %d", ret);
 			ret =-EPERM;
 			free(*sign);
@@ -487,8 +489,6 @@ __sfs_checksumop(const char *path, unsigned int operation, uid_t uid,
 out:
 	if (sigfile)
 		free(sigfile);
-	if (verify)
-		free(verify);
 	if (csum_path)
 		free(csum_path);
 	if (csum_file)
@@ -518,11 +518,15 @@ sfs_readsignature(const char *csum_file, u_int8_t **sign, int *siglen)
 	int fd;
 	int ret = 0;
 	int bytes_read = 0;
-	int size = *siglen;
+	int size;
 
 	if (csum_file == NULL || sign == NULL || siglen == NULL) {
 		return -EINVAL;
 	}
+
+	size = *siglen;
+	if (size <= ANOUBIS_CS_LEN)
+		return -EINVAL;
 
 	fd = open(csum_file, O_RDONLY);
 	if (fd < 0)
@@ -555,6 +559,9 @@ sfs_readchecksum(const char *csum_file, unsigned char *md)
 	int fd;
 	int ret = 0;
 	int bytes_read = 0;
+
+	if (!csum_file || !md)
+		return -EINVAL;
 
 	fd = open(csum_file, O_RDONLY);
 	if (fd < 0)
@@ -694,17 +701,19 @@ void
 sfs_cert_reconfigure(void)
 {
 	struct sfs_cert_db	*new, *old;
+	int			 count;
 	if ((new = calloc(1, sizeof(struct sfs_cert_db))) == NULL) {
 		log_warn("calloc");
 		master_terminate(ENOMEM);
 	}
 	TAILQ_INIT(new);
 
-	if (sfs_cert_load_db(ANOUBIS_CERT_DIR, new) == -1) {
+	if ((count = sfs_cert_load_db(ANOUBIS_CERT_DIR, new)) == -1) {
 		log_warnx("sfs_cert_reconfigure: could not load public keys");
 		free(new);
 		return;
 	}
+	log_info("%d certificates loaded from %s", count, ANOUBIS_CERT_DIR);
 
 	old = sfs_certs;
 	sfs_certs = new;
@@ -851,28 +860,32 @@ sfs_cert_flush_db(struct sfs_cert_db *sc)
 	}
 }
 
-EVP_PKEY *
+struct sfs_cert *
 sfs_pubkey_get_by_uid(uid_t uid)
 {
 	struct sfs_cert *p;
 
 	TAILQ_FOREACH(p, sfs_certs, entry) {
 		if (p->uid == uid)
-			return p->pkey;
+			return p;
 	}
 
 	return NULL;
 }
 
-EVP_PKEY *
-sfs_pubkey_get_by_keyid(unsigned char *keyid)
+struct sfs_cert *
+sfs_pubkey_get_by_keyid(unsigned char *keyid, int klen)
 {
 	struct sfs_cert *p;
 	int ret = 0;
 
+	if (keyid == 0)
+		return NULL;
 	TAILQ_FOREACH(p, sfs_certs, entry) {
+		if (klen != p->kidlen)
+			continue;
 		if ((ret = memcmp(keyid, p->keyid, p->kidlen)) == 0)
-			return p->pkey;
+			return p;
 	}
 
 	return NULL;
