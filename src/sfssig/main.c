@@ -528,6 +528,12 @@ main(int argc, char *argv[])
 	command = *argv++;
 	argc--;
 
+	if (command == NULL || argc < 0) {
+		fprintf(stderr, "No command specified\n");
+		usage();
+		/* NOTREACHED */
+	}
+
 	if (file) {
 		if (opts & SFSSIG_OPT_DEBUG)
 			fprintf(stderr, "Input from file handler\n");
