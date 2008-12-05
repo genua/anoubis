@@ -271,6 +271,8 @@ TrayIcon::update(void)
 		} else {
 			tooltip = _("No messages\n");
 			icon = iconNormal_;
+			/* enforce hiding of the system notifier popup */
+			notify_notification_close(notification, NULL);
 		}
 	}
 
