@@ -64,7 +64,9 @@
 
 #include "anoubisd.h"
 #include "sfs.h"
-#define ANOUBIS_CERT_DIR "/var/lib/anoubis/policy/pubkeys"
+
+#define ANOUBISD_CERT_DIR ANOUBISD_POLICYDIR ANOUBISD_POLICYCHROOT "/pubkeys"
+#define ANOUBISD_CERT_DIR_CHROOT ANOUBISD_POLICYCHROOT "/pubkeys"
 
 struct sfs_cert {
 	TAILQ_ENTRY(sfs_cert)	 entry;
@@ -85,6 +87,7 @@ char		*insert_escape_seq(const char *path, int dir);
 static int	 sfs_cert_keyid(unsigned char **keyid, X509 *cert);
 struct sfs_cert	*sfs_pubkey_get_by_uid(uid_t u);
 struct sfs_cert	*sfs_pubkey_get_by_keyid(unsigned char *keyid, int klen);
+static void	 sfs_cert_flush_db(struct sfs_cert_db *sc);
 static int	 sfs_cert_load_db(const char *, struct sfs_cert_db *);
 
 #if 0
@@ -357,7 +360,8 @@ __sfs_checksumop(const char *path, unsigned int operation, uid_t uid,
 	int written = 0;
 	int ret, i;
 
-	if (is_chroot && (operation != ANOUBIS_CHECKSUM_OP_GET))
+	if (is_chroot && operation != ANOUBIS_CHECKSUM_OP_GET
+	    && operation != ANOUBIS_CHECKSUM_OP_GETSIG)
 		return -EPERM;
 
 	ret = __convert_user_path(path, &csum_path, 0, is_chroot);
@@ -680,40 +684,48 @@ check_empty_dir(const char *path)
 }
 
 void
-sfs_cert_init(void)
+sfs_cert_init(int chroot)
 {
 	struct sfs_cert_db	*cdb;
 	int			 count;
+	const char		*certdir = ANOUBISD_CERT_DIR;
+
+	if (chroot)
+		certdir = ANOUBISD_CERT_DIR_CHROOT;
 	if ((cdb = calloc(1, sizeof(struct sfs_cert_db))) == NULL) {
-		log_warn("%s: calloc", ANOUBIS_CERT_DIR);
+		log_warn("%s: calloc", certdir);
 		master_terminate(ENOMEM);
 	}
 	TAILQ_INIT(cdb);
 
-	if ((count = sfs_cert_load_db(ANOUBIS_CERT_DIR, cdb)) == -1)
+	if ((count = sfs_cert_load_db(certdir, cdb)) == -1)
 		fatal("sfs_cert_init: failed to load sfs certificates");
 
-	log_info("%d certificates loaded from %s", count, ANOUBIS_CERT_DIR);
+	log_info("%d certificates loaded from %s", count, certdir);
 	sfs_certs = cdb;
 }
 
 void
-sfs_cert_reconfigure(void)
+sfs_cert_reconfigure(int chroot)
 {
 	struct sfs_cert_db	*new, *old;
 	int			 count;
+	const char		*certdir = ANOUBISD_CERT_DIR;
+
+	if (chroot)
+		certdir = ANOUBISD_CERT_DIR_CHROOT;
 	if ((new = calloc(1, sizeof(struct sfs_cert_db))) == NULL) {
 		log_warn("calloc");
 		master_terminate(ENOMEM);
 	}
 	TAILQ_INIT(new);
 
-	if ((count = sfs_cert_load_db(ANOUBIS_CERT_DIR, new)) == -1) {
+	if ((count = sfs_cert_load_db(certdir, new)) == -1) {
 		log_warnx("sfs_cert_reconfigure: could not load public keys");
 		free(new);
 		return;
 	}
-	log_info("%d certificates loaded from %s", count, ANOUBIS_CERT_DIR);
+	log_info("%d certificates loaded from %s", count, certdir);
 
 	old = sfs_certs;
 	sfs_certs = new;
@@ -842,7 +854,7 @@ sfs_cert_keyid(unsigned char **keyid, X509 *cert)
 	return (len);
 }
 
-void
+static void
 sfs_cert_flush_db(struct sfs_cert_db *sc)
 {
 	struct sfs_cert	*p, *next;

@@ -101,6 +101,7 @@ policy_sighandler(int sig, short event __used, void *arg __used)
 		pe_dump();
 		break;
 	case SIGHUP:
+		sfs_cert_reconfigure(1);
 		pe_reconfigure();
 		break;
 	case SIGTERM:
@@ -232,6 +233,7 @@ policy_main(struct anoubisd_config *conf __used, int pipe_m2s[2],
 	event_add(&ev_timer, &tv);
 
 	/* Start policy engine */
+	sfs_cert_init(1);
 	pe_init();
 
 	DEBUG(DBG_TRACE, "policy event loop");

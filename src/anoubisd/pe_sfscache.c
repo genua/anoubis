@@ -30,6 +30,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <ctype.h>
 #include <sys/types.h>
 
 #ifndef NEEDBSDCOMPAT
@@ -83,6 +84,9 @@ sfshash_init(void)
 }
 
 /*
+ * NOTE: Keys should be printed hex strings. As such they must be
+ * NOTE: handled case insensitive.
+ *
  * XXX CEH: Evaluate hash function
  */
 static unsigned long
@@ -96,8 +100,9 @@ sfshash_fn(const char *path, const char * key, uid_t uid)
 	}
 	if (key) {
 		for (; *key; key++) {
+			char	tmp = tolower(*key);
 			ret <<= 1;
-			ret ^= *key;
+			ret ^= tmp;
 			ret = (ret ^ (ret >> SFSHASH_SHIFT)) & SFSHASH_MASK;
 		}
 	}
@@ -261,7 +266,7 @@ sfshash_find_key(const char *path, const char *key)
 	TAILQ_FOREACH(entry, &sfshash_tab[slot], hash_link) {
 		if ((entry->cstype & CSTYPE_MASK) != CSTYPE_KEY)
 			continue;
-		if (strcmp(entry->u.key, key) != 0)
+		if (strcasecmp(entry->u.key, key) != 0)
 			continue;
 		if (strcmp(path, entry->path) == 0)
 			break;
@@ -272,23 +277,65 @@ sfshash_find_key(const char *path, const char *key)
 }
 
 static int
-sfshash_readsum(const char *path, int cstype, const char *key, uid_t uid,
-		u_int8_t csum[ANOUBIS_CS_LEN])
+chartohex(char ch)
 {
-	int	ret;
+#ifndef S_SPLINT_S
+	switch(ch) {
+	case '0' ... '9':
+		return ch - '0';
+	case 'A' ... 'F':
+		return 10 + ch - 'A';
+	case 'a' ... 'f':
+		return 10 + ch - 'a';
+	}
+#endif
+	return -1;
+}
+
+static int
+sfshash_readsum(const char *path, int cstype, const char *key, uid_t uid,
+    u_int8_t csum[ANOUBIS_CS_LEN])
+{
+	int		 ret, siglen = 0;
+	u_int8_t	*sigdata;
 
 	switch(cstype) {
 	case CSTYPE_UID:
 		ret = sfs_checksumop_chroot(path, ANOUBIS_CHECKSUM_OP_GET,
-				uid, csum, NULL, NULL, ANOUBIS_CS_LEN, 0);
+		    uid, csum, NULL, NULL, ANOUBIS_CS_LEN, 0);
 		break;
-	case CSTYPE_KEY:
-		/* XXX CEH: Must be implemented!
-		 * XXX KM: YES! */
-		key = key;
-		return -ENOSYS;
+	case CSTYPE_KEY: {
+		int		 i, j, len = strlen(key);
+		unsigned char	*hexkey;
+		if (len % 2)
+			return -ENOENT;
+		len /= 2;
+		if ((hexkey = malloc(len)) == NULL)
+			return -ENOMEM;
+		for (i=j=0; i<len; ++i) {
+			int		c1, c2;
+			c1 = chartohex(key[j++]);
+			c2 = chartohex(key[j++]);
+			if (c1 < 0 || c2 < 0) {
+				free(hexkey);
+				return -ENOENT;
+			}
+			hexkey[i] = 16*c1 + c2;
+		}
+		ret = sfs_checksumop_chroot(path, ANOUBIS_CHECKSUM_OP_GETSIG,
+		    uid, hexkey, &sigdata, &siglen, ANOUBIS_CS_LEN, len);
+		free(hexkey);
+		if (ret < 0)
+			break;
+		if (siglen < ANOUBIS_CS_LEN) {
+			free(sigdata);
+			return -ENOENT;
+		}
+		memcpy(csum, sigdata, ANOUBIS_CS_LEN);
+		free(sigdata);
+		ret = 0;
 		break;
-	default:
+	} default:
 		return -EINVAL;
 	}
 	return ret;

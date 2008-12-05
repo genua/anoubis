@@ -362,7 +362,7 @@ main(int argc, char *argv[])
 	close(loggers[2]);
 
 	/* Load Public Keys */
-	sfs_cert_init();
+	sfs_cert_init(0);
 
 #ifdef OPENBSD
 	setproctitle("master");
@@ -621,7 +621,7 @@ static void
 reconfigure(void)
 {
 	/* Reload Public Keys */
-	sfs_cert_reconfigure();
+	sfs_cert_reconfigure(0);
 
 	/* Forward SIGHUP to policy process */
 	if (kill(policy_pid, SIGHUP) != 0)
@@ -873,9 +873,41 @@ send_sfscache_invalidate_uid(const char *path, uid_t uid,
 	invmsg->uid = uid;
 	invmsg->plen = strlen(path)+1;
 	invmsg->keylen = 0;
-	memcpy(invmsg->payload, path, strlen(path)+1);
+	memcpy(invmsg->payload, path, invmsg->plen);
 	enqueue(&eventq_m2p, msg);
 	event_add(ev_info->ev_m2p, NULL);
+}
+
+
+static void
+send_sfscache_invalidate_key(const char *path, u_int8_t *keyid, int keylen,
+    struct event_info_main *ev_info)
+{
+	struct anoubisd_msg			*msg;
+	struct anoubisd_sfscache_invalidate	*invmsg;
+	int					 i, j;
+
+	msg = msg_factory(ANOUBISD_MSG_SFSCACHE_INVALIDATE,
+	    sizeof(struct anoubisd_sfscache_invalidate) + strlen(path) + 1
+	    + 2*keylen+1);
+	if (!msg) {
+		master_terminate(ENOMEM);
+		return;
+	}
+	invmsg = (struct anoubisd_sfscache_invalidate*)msg->msg;
+	invmsg->uid = (uid_t)-1;
+	invmsg->plen = strlen(path)+1;
+	invmsg->keylen = 2*keylen+1;
+	memcpy(invmsg->payload, path, invmsg->plen);
+	i = invmsg->plen;
+	for (j=0; j<keylen; ++j) {
+		sprintf(invmsg->payload + i, "%2.2x", keyid[j]);
+		i += 2;
+	}
+	invmsg->payload[i] = 0;
+	enqueue(&eventq_m2p, msg);
+	event_add(ev_info->ev_m2p, NULL);
+
 }
 
 /* If a message arrives regarding a signature the payload of the message
@@ -1043,6 +1075,11 @@ dispatch_checksumop(anoubisd_msg_t *msg, struct event_info_main *ev_info)
 			extra = 0;
 			send_sfscache_invalidate_uid(path, req_uid, ev_info);
 			break;
+		case ANOUBIS_CHECKSUM_OP_ADDSIG:
+		case ANOUBIS_CHECKSUM_OP_DELSIG:
+			extra = 0;
+			send_sfscache_invalidate_key(path, digest, idlen,
+			    ev_info);
 		default:
 			extra = 0;
 			break;
