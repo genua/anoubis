@@ -91,4 +91,11 @@ class Task
 		Type type_;
 };
 
+/**
+ * A list of tasks.
+ *
+ * Maybe it is useful for someone...
+ */
+WX_DECLARE_LIST(Task, TaskList);
+
 #endif	/* _TASK_H_ */

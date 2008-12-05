@@ -25,11 +25,15 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <wx/intl.h>
+
 #include "AnEvents.h"
+#include "AnUtils.h"
 #include "ComCsumAddTask.h"
 #include "ComCsumDelTask.h"
 #include "ComCsumGetTask.h"
 #include "ComRegistrationTask.h"
+#include "ComSfsListTask.h"
 #include "CsumCalcTask.h"
 #include "JobCtrl.h"
 #include "SfsCtrl.h"
@@ -81,13 +85,16 @@ SfsCtrl::setFilterInversed(bool inversed)
 		sendDirChangedEvent();
 }
 
-bool
+SfsCtrl::CommandResult
 SfsCtrl::validate(unsigned int idx)
 {
+	if (!taskList_.empty())
+		return (RESULT_BUSY);
+
 	if (comEnabled_) {
 		if (idx >= sfsDir_.getNumEntries()) {
 			/* Out of range */
-			return (false);
+			return (RESULT_INVALIDARG);
 		}
 
 		SfsEntry &entry = sfsDir_.getEntry(idx);
@@ -96,39 +103,52 @@ SfsCtrl::validate(unsigned int idx)
 		/* Ask anoubisd for the checksum */
 		ComCsumGetTask *comTask = new ComCsumGetTask;
 		comTask->setFile(entry.getPath());
+
+		pushTask(comTask);
 		JobCtrl::getInstance()->addTask(comTask);
 
 		/* Calculate the checksum */
 		CsumCalcTask *calcTask = new CsumCalcTask;
 		calcTask->setPath(entry.getPath());
+
+		pushTask(calcTask);
 		JobCtrl::getInstance()->addTask(calcTask);
 
-		return (true);
+		return (RESULT_EXECUTE);
 	} else
-		return (false);
+		return (RESULT_NOTCONNECTED);
 }
 
-bool
+SfsCtrl::CommandResult
 SfsCtrl::validateAll(void)
 {
+	if (!taskList_.empty())
+		return (RESULT_BUSY);
+
 	if (comEnabled_) {
 		/* Ask for sfs-list */
-		sfsListTask_.setRequestParameter(getuid(), sfsDir_.getPath());
-		JobCtrl::getInstance()->addTask(&sfsListTask_);
+		ComSfsListTask *task = new ComSfsListTask;
+		task->setRequestParameter(getuid(), sfsDir_.getPath());
 
-		return (true);
+		pushTask(task);
+		JobCtrl::getInstance()->addTask(task);
+
+		return (RESULT_EXECUTE);
 	}
 	else
-		return (false);
+		return (RESULT_NOTCONNECTED);
 }
 
-bool
+SfsCtrl::CommandResult
 SfsCtrl::registerChecksum(unsigned int idx)
 {
+	if (!taskList_.empty())
+		return (RESULT_BUSY);
+
 	if (comEnabled_) {
 		if (idx >= sfsDir_.getNumEntries()) {
 			/* Out of range */
-			return (false);
+			return (RESULT_INVALIDARG);
 		}
 
 		SfsEntry &entry = sfsDir_.getEntry(idx);
@@ -136,20 +156,25 @@ SfsCtrl::registerChecksum(unsigned int idx)
 		/* Send checksum to anoubisd */
 		ComCsumAddTask *task = new ComCsumAddTask;
 		task->setFile(entry.getPath());
+
+		pushTask(task);
 		JobCtrl::getInstance()->addTask(task);
 
-		return (true);
+		return (RESULT_EXECUTE);
 	} else
-		return (false);
+		return (RESULT_NOTCONNECTED);
 }
 
-bool
+SfsCtrl::CommandResult
 SfsCtrl::unregisterChecksum(unsigned int idx)
 {
+	if (!taskList_.empty())
+		return (RESULT_BUSY);
+
 	if (comEnabled_) {
 		if (idx >= sfsDir_.getNumEntries()) {
 			/* Out of range */
-			return (false);
+			return (RESULT_INVALIDARG);
 		}
 
 		SfsEntry &entry = sfsDir_.getEntry(idx);
@@ -157,14 +182,16 @@ SfsCtrl::unregisterChecksum(unsigned int idx)
 		/* Remove checksum from anoubisd */
 		ComCsumDelTask *task = new ComCsumDelTask;
 		task->setFile(entry.getPath());
+
+		pushTask(task);
 		JobCtrl::getInstance()->addTask(task);
 
-		return (true);
+		return (RESULT_EXECUTE);
 	} else
-		return (false);
+		return (RESULT_NOTCONNECTED);
 }
 
-bool
+SfsCtrl::CommandResult
 SfsCtrl::updateChecksum(unsigned int idx)
 {
 	/* Equal to register a checksum */
@@ -175,6 +202,12 @@ SfsDirectory &
 SfsCtrl::getSfsDirectory()
 {
 	return (this->sfsDir_);
+}
+
+const wxArrayString &
+SfsCtrl::getErrors(void) const
+{
+	return (errorList_);
 }
 
 void
@@ -208,20 +241,45 @@ SfsCtrl::OnRegistration(TaskEvent &event)
 void
 SfsCtrl::OnSfsListArrived(TaskEvent &event)
 {
-	if (event.getTask() == &sfsListTask_) {
-		/* Internal task -> stop propagating */
+	ComSfsListTask	*task = dynamic_cast<ComSfsListTask*>(event.getTask());
+	wxArrayString	result; /* Files which has a checksum */
+	PopTaskHelper	taskHelper(this, task);
+
+	if (task == 0) {
+		/* No ComCsumGetTask -> stop propagating */
 		event.Skip(false);
-	} else {
-		/* Belongs to someone other */
+		return;
+	}
+
+	if (taskList_.IndexOf(task) == wxNOT_FOUND) {
+		/* Belongs to someone other, ignore it */
 		event.Skip();
 		return;
 	}
 
-	/* Files which has a checksum */
-	wxArrayString result;
+	event.Skip(false); /* "My" task -> stop propagating */
 
-	if (sfsListTask_.getComTaskResult() == ComTask::RESULT_SUCCESS)
-		result = sfsListTask_.getFileList();
+	if (task->getComTaskResult() == ComTask::RESULT_COM_ERROR) {
+		wxString message = wxString::Format(_(
+		    "Communication error while fetching list of checksumed \
+files of %s."), task->getDirectory().c_str());
+		errorList_.Add(message);
+	} else if (task->getComTaskResult() == ComTask::RESULT_REMOTE_ERROR) {
+		wxString message = wxString::Format(
+		    _("Got error from daemon (%s) while fetching the list of \
+checksumed files of %s"),
+		    wxStrError(task->getResultDetails()).c_str(),
+		    task->getDirectory().c_str());
+		errorList_.Add(message);
+	} else if (task->getComTaskResult() != ComTask::RESULT_SUCCESS) {
+		wxString message = wxString::Format(
+		    _("An unexpected error occured (%i) while fetching the \
+list of checksumed files of %s."),
+		    task->getComTaskResult(),
+		    task->getDirectory().c_str());
+		errorList_.Add(message);
+	} else
+		result = task->getFileList();
 
 	/* Go though each file in the model, each file needs to be updated */
 	for (unsigned int idx = 0; idx < sfsDir_.getNumEntries(); idx++) {
@@ -234,11 +292,15 @@ SfsCtrl::OnSfsListArrived(TaskEvent &event)
 			/* Ask anoubisd for the checksum */
 			ComCsumGetTask *comTask = new ComCsumGetTask;
 			comTask->setFile(entry.getPath());
+
+			pushTask(comTask);
 			JobCtrl::getInstance()->addTask(comTask);
 
 			/* Calculate the checksum */
 			CsumCalcTask *calcTask = new CsumCalcTask;
 			calcTask->setPath(entry.getPath());
+
+			pushTask(calcTask);
 			JobCtrl::getInstance()->addTask(calcTask);
 		} else {
 			/* Update checksum attribute to no-checksum */
@@ -251,7 +313,8 @@ SfsCtrl::OnSfsListArrived(TaskEvent &event)
 void
 SfsCtrl::OnCsumCalc(TaskEvent &event)
 {
-	CsumCalcTask *task = dynamic_cast<CsumCalcTask*>(event.getTask());
+	CsumCalcTask	*task = dynamic_cast<CsumCalcTask*>(event.getTask());
+	PopTaskHelper	taskHelper(this, task);
 
 	if (task == 0) {
 		/* No ComCsumGetTask -> stop propagating */
@@ -259,22 +322,32 @@ SfsCtrl::OnCsumCalc(TaskEvent &event)
 		return;
 	}
 
-	/* Search for SfsEntry */
-	int idx = sfsDir_.getIndexOf(task->getPath(), true);
-	if (idx == -1) {
-		/*
-		 * No such file in model, continue propagating, maybe another
-		 * is interesed in
-		 */
+	if (taskList_.IndexOf(task) == wxNOT_FOUND) {
+		/* Belongs to someone other, ignore it */
 		event.Skip();
 		return;
 	}
 
-	/* This is "my" task -> stop propageting */
-	event.Skip(false);
+	event.Skip(false); /* "My" task -> stop propagating */
+
+	/* Search for SfsEntry */
+	int idx = sfsDir_.getIndexOf(task->getPath(), true);
+	if (idx == -1) {
+		wxString message = wxString::Format(
+		    _("%s not found in file-list!"), task->getPath().c_str());
+		errorList_.Add(message);
+
+		return;
+	}
 
 	if (task->getResult() != 0) {
 		/* Calculation failed */
+		wxString message = wxString::Format(
+		    _("Failed to calculate the checksum for %s: %s"),
+		    task->getPath().c_str(),
+		    wxStrError(task->getResult()).c_str());
+		errorList_.Add(message);
+
 		return;
 	}
 
@@ -284,16 +357,14 @@ SfsCtrl::OnCsumCalc(TaskEvent &event)
 		/* Checksum attribute has changed, inform any listener */
 		sendEntryChangedEvent(idx);
 	}
-
-	/* Created in OnSfsListArrived */
-	delete task;
 }
 
 void
 SfsCtrl::OnCsumGet(TaskEvent &event)
 {
-	ComCsumGetTask *task = dynamic_cast<ComCsumGetTask*>(event.getTask());
-	u_int8_t cs[ANOUBIS_CS_LEN];
+	ComCsumGetTask	*task = dynamic_cast<ComCsumGetTask*>(event.getTask());
+	PopTaskHelper	taskHelper(this, task);
+	u_int8_t	cs[ANOUBIS_CS_LEN];
 
 	if (task == 0) {
 		/* No ComCsumGetTask -> stop propagating */
@@ -301,22 +372,45 @@ SfsCtrl::OnCsumGet(TaskEvent &event)
 		return;
 	}
 
-	/* Search for SfsEntry */
-	int idx = sfsDir_.getIndexOf(task->getFile(), true);
-	if (idx == -1) {
-		/*
-		 * No such file in model, continue propagating, maybe another
-		 * is interesed in
-		 */
+	if (taskList_.IndexOf(task) == wxNOT_FOUND) {
+		/* Belongs to someone other, ignore it */
 		event.Skip();
 		return;
 	}
 
-	/* This is "my" task -> stop propagating */
-	event.Skip(false);
+	event.Skip(false); /* "My" task -> stop propagating */
 
-	if (task->getComTaskResult() != ComTask::RESULT_SUCCESS) {
-		/* Failure */
+	/* Search for SfsEntry */
+	int idx = sfsDir_.getIndexOf(task->getFile(), true);
+	if (idx == -1) {
+		wxString message = wxString::Format(
+		    _("%s not found in file-list!"), task->getFile().c_str());
+		errorList_.Add(message);
+
+		return;
+	}
+
+	if (task->getComTaskResult() == ComTask::RESULT_COM_ERROR) {
+		wxString message = wxString::Format(_(
+		    "Communication error while fetching the checksum for %s."),
+		    task->getFile().c_str());
+		errorList_.Add(message);
+
+		return;
+	} else if (task->getComTaskResult() == ComTask::RESULT_REMOTE_ERROR) {
+		wxString message = wxString::Format(
+		    _("Got error from daemon (%s) while fetching the checksum \
+for %s."), wxStrError(task->getResultDetails()).c_str(),
+		    task->getFile().c_str());
+		errorList_.Add(message);
+
+		return;
+	} else if (task->getComTaskResult() != ComTask::RESULT_SUCCESS) {
+		wxString message = wxString::Format(
+		    _("An unexpected error occured (%i) while fetching the \
+checksum for %s."), task->getComTaskResult(), task->getFile().c_str());
+		errorList_.Add(message);
+
 		return;
 	}
 
@@ -329,15 +423,13 @@ SfsCtrl::OnCsumGet(TaskEvent &event)
 		/* Checksum attribute has changed, inform any listener */
 		sendEntryChangedEvent(idx);
 	}
-
-	/* Created in OnSfsListArrived */
-	delete task;
 }
 
 void
 SfsCtrl::OnCsumAdd(TaskEvent &event)
 {
-	ComCsumAddTask *task = dynamic_cast<ComCsumAddTask*>(event.getTask());
+	ComCsumAddTask	*task = dynamic_cast<ComCsumAddTask*>(event.getTask());
+	PopTaskHelper	taskHelper(this, task);
 
 	if (task == 0) {
 		/* No ComCsumAddTask -> stop propagating */
@@ -345,26 +437,56 @@ SfsCtrl::OnCsumAdd(TaskEvent &event)
 		return;
 	}
 
-	/* Search for SfsEntry */
-	int idx = sfsDir_.getIndexOf(task->getFile(), true);
-	if (idx == -1) {
-		/*
-		 * No such file in model, continue propagating, maybe another
-		 * is interesed in
-		 */
+	if (taskList_.IndexOf(task) == wxNOT_FOUND) {
+		/* Belongs to someone other, ignore it */
 		event.Skip();
 		return;
 	}
 
-	/* This is "my" task -> stop propagating */
-	event.Skip(false);
+	event.Skip(false); /* "My" task -> stop propagating */
 
-	if (task->getComTaskResult() != ComTask::RESULT_SUCCESS) {
-		/* Failure */
+	/* Search for SfsEntry */
+	int idx = sfsDir_.getIndexOf(task->getFile(), true);
+	if (idx == -1) {
+		wxString message = wxString::Format(
+		    _("%s not found in file-list!"), task->getFile().c_str());
+		errorList_.Add(message);
+
 		return;
 	}
 
-	delete task;
+	if (task->getComTaskResult() == ComTask::RESULT_LOCAL_ERROR) {
+		wxString message;
+		message.Printf(
+		    _("Failed to calculate the checksum for %s: %s"),
+		    task->getFile().c_str(),
+		    wxStrError(task->getResultDetails()).c_str());
+		errorList_.Add(message);
+
+		return;
+	} else if (task->getComTaskResult() == ComTask::RESULT_COM_ERROR) {
+		wxString message = wxString::Format(_(
+		    "Communication error while register the checksum for %s."),
+		    task->getFile().c_str());
+		errorList_.Add(message);
+
+		return;
+	} else if (task->getComTaskResult() == ComTask::RESULT_REMOTE_ERROR) {
+		wxString message = wxString::Format(
+		    _("Got error from daemoon (%s) while register the \
+checksum for %s."), wxStrError(task->getResultDetails()).c_str(),
+		    task->getFile().c_str());
+		errorList_.Add(message);
+
+		return;
+	} else if (task->getComTaskResult() != ComTask::RESULT_SUCCESS) {
+		wxString message = wxString::Format(
+		    _("An unexpected error occured (%i) while register the \
+checksum for %s."), task->getComTaskResult(), task->getFile().c_str());
+		errorList_.Add(message);
+
+		return;
+	}
 
 	/* Update model */
 	validate(idx);
@@ -373,7 +495,8 @@ SfsCtrl::OnCsumAdd(TaskEvent &event)
 void
 SfsCtrl::OnCsumDel(TaskEvent &event)
 {
-	ComCsumDelTask *task = dynamic_cast<ComCsumDelTask*>(event.getTask());
+	ComCsumDelTask	*task = dynamic_cast<ComCsumDelTask*>(event.getTask());
+	PopTaskHelper	taskHelper(this, task);
 
 	if (task == 0) {
 		/* No ComCsumAddTask -> stop propagating */
@@ -381,21 +504,41 @@ SfsCtrl::OnCsumDel(TaskEvent &event)
 		return;
 	}
 
-	/* Search for SfsEntry */
-	int idx = sfsDir_.getIndexOf(task->getFile(), true);
-	if (idx == -1) {
-		/*
-		 * No such file in model, continue propagating, maybe another
-		 * is interesed in
-		 */
+	if (taskList_.IndexOf(task) == wxNOT_FOUND) {
+		/* Belongs to someone other, ignore it */
 		event.Skip();
 		return;
 	}
 
-	/* This is "my" task -> stop propagating */
-	event.Skip(false);
+	event.Skip(false); /* "My" task -> stop propagating */
 
-	delete task;
+	/* Search for SfsEntry */
+	int idx = sfsDir_.getIndexOf(task->getFile(), true);
+	if (idx == -1) {
+		wxString message = wxString::Format(
+		    _("%s not found in file-list!"), task->getFile().c_str());
+		errorList_.Add(message);
+
+		return;
+	}
+
+	if (task->getComTaskResult() == ComTask::RESULT_COM_ERROR) {
+		wxString message = wxString::Format(_(
+		    "Communication error while removing the checksum for %s."),
+		    task->getFile().c_str());
+		errorList_.Add(message);
+	} else if (task->getComTaskResult() == ComTask::RESULT_REMOTE_ERROR) {
+		wxString message = wxString::Format(
+		    _("Got error from daemoon (%s) while removing the \
+checksum for %s."), wxStrError(task->getResultDetails()).c_str(),
+		    task->getFile().c_str());
+		errorList_.Add(message);
+	} else if (task->getComTaskResult() != ComTask::RESULT_SUCCESS) {
+		wxString message = wxString::Format(
+		    _("An unexpected error occured (%i) while removing the \
+checksum for %s."), task->getComTaskResult(), task->getFile().c_str());
+		errorList_.Add(message);
+	}
 
 	/* Update model */
 	validate(idx);
@@ -452,4 +595,58 @@ SfsCtrl::sendEntryChangedEvent(int idx)
 	event.SetInt(idx);
 
 	ProcessEvent(event);
+}
+
+void
+SfsCtrl::sendErrorEvent(void)
+{
+	wxCommandEvent event(anEVT_SFSENTRY_ERROR);
+	event.SetEventObject(this);
+
+	ProcessEvent(event);
+}
+
+void
+SfsCtrl::pushTask(Task *task)
+{
+	if (taskList_.size() == 0) {
+		/*
+		 * This is the first task in the list -> an operation began.
+		 * Clear the error-list
+		 */
+		errorList_.Clear();
+	}
+
+	taskList_.push_back(task);
+}
+
+bool
+SfsCtrl::popTask(Task *task)
+{
+	bool result = taskList_.DeleteObject(task);
+
+	if (taskList_.size() == 0) {
+		/*
+		 * This was the last task in the list -> the operation finished
+		 * Check for errors.
+		 */
+		if (!errorList_.empty())
+			sendErrorEvent();
+	}
+
+	return (result);
+}
+
+SfsCtrl::PopTaskHelper::PopTaskHelper(SfsCtrl *sfsCtrl, Task *task)
+{
+	this->sfsCtrl_ = sfsCtrl;
+	this->task_ = task;
+}
+
+SfsCtrl::PopTaskHelper::~PopTaskHelper()
+{
+	if (task_ != 0) {
+		if (sfsCtrl_->popTask(task_))
+			delete task_;
+	}
 }

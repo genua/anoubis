@@ -25,22 +25,27 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "Task.h"
+#ifndef _ANUTILS_H_
+#define _ANUTILS_H_
 
-#include <wx/listimpl.cpp>
-WX_DEFINE_LIST(TaskList);
+/**
+ * @file AnUtils.h
+ *
+ * Global utilities used by the xanoubis-application.
+ */
 
-Task::Task(Type type)
-{
-	this->type_ = type;
-}
+#include <wx/string.h>
 
-Task::~Task(void)
-{
-}
+/**
+ * wxString-version of strerror(3).
+ *
+ * Use this function, if you need a wide-character version of strerror(3). This
+ * is useful if you want to insert the error-string into an UTF-8-string.
+ *
+ * @param errnum The error code
+ * @return A string describing the error code.
+ * @see strerror(3)
+ */
+wxString wxStrError(int errnum);
 
-Task::Type
-Task::getType(void) const
-{
-	return (this->type_);
-}
+#endif	/* _ANUTILS_H_ */

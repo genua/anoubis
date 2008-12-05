@@ -40,6 +40,7 @@
 
 #include "AlertNotify.h"
 #include "AnEvents.h"
+#include "AnUtils.h"
 #include "DlgLogViewer.h"
 #include "DlgRuleEditor.h"
 #include "JobCtrl.h"
@@ -857,14 +858,16 @@ user-policy\nof %s to daemon."), user.c_str());
 		if (isAdmin && (task->getPriority() == 0))
 			message.Printf(_("Got error (%s) from daemon\n\
 after sent admin-policy of %s."),
-			    strerror(task->getResultDetails()), user.c_str());
+			    wxStrError(task->getResultDetails()).c_str(),
+			    user.c_str());
 		else if (isAdmin && (task->getPriority() > 0))
 			message.Printf(_("Got error (%s) from daemon\n\
 after sent user-policy of %s."),
-			    strerror(task->getResultDetails()), user.c_str());
+			    wxStrError(task->getResultDetails()).c_str(),
+			    user.c_str());
 		else
 			message.Printf(_("Got error (%s) from daemon\n\
-after sent policy."), strerror(task->getResultDetails()));
+after sent policy."), wxStrError(task->getResultDetails()).c_str());
 	} else if (taskResult != ComTask::RESULT_SUCCESS) {
 		message.Printf(_("An unexpected error occured.\n\
 Error code: %i"), taskResult);

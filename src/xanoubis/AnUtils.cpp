@@ -25,22 +25,10 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "Task.h"
+#include "AnUtils.h"
 
-#include <wx/listimpl.cpp>
-WX_DEFINE_LIST(TaskList);
-
-Task::Task(Type type)
+wxString wxStrError(int errnum)
 {
-	this->type_ = type;
-}
-
-Task::~Task(void)
-{
-}
-
-Task::Type
-Task::getType(void) const
-{
-	return (this->type_);
+	wxString errstr(strerror(errnum), wxConvLibc);
+	return (errstr);
 }

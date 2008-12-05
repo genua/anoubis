@@ -328,7 +328,8 @@ BEGIN_DECLARE_EVENT_TYPES()
 	 * Show escalation event.
 	 * Request the View of the current Notifications due to user interaction
 	 * caused by clicking on the TrayIcon or Notification Popup when
-	 * Escalations or Alerts were reported by these, to the user of xanoubis.
+	 * Escalations or Alerts were reported by these, to the user of
+	 * xanoubis.
 	 *
 	 * @param GetInt() Visability of MainFrame and ModAnoubis:
 	 *	- = 0 : hide
@@ -398,7 +399,7 @@ BEGIN_DECLARE_EVENT_TYPES()
 	DECLARE_LOCAL_EVENT_TYPE(anEVT_COM_CONNECTION, wxNewEventType())
 
 	/**
-	 * Auto check checksum event. 
+	 * Auto check checksum event.
 	 * Send the new Status for the Auto Checksum Checkbox.
 	 *
 	 * @param GetInt() The status of the checkbox:
@@ -410,7 +411,7 @@ BEGIN_DECLARE_EVENT_TYPES()
 	/**
 	 * Open alerts event.
 	 * Broadcast event about the number of open/new alerts.
-	 * 
+	 *
 	 * @param GetInt() The count of open ALERTS.
 	 */
 	DECLARE_LOCAL_EVENT_TYPE(anEVT_OPEN_ALERTS, wxNewEventType())
@@ -418,7 +419,7 @@ BEGIN_DECLARE_EVENT_TYPES()
 	/**
 	 * Open escalations event.
 	 * Broadcast event about the number of new/not answered escalations.
-	 * 
+	 *
 	 * @param GetInt() The count of open ESCALATIONS.
 	 */
 	DECLARE_LOCAL_EVENT_TYPE(anEVT_OPEN_ESCALATIONS, wxNewEventType())
@@ -427,7 +428,7 @@ BEGIN_DECLARE_EVENT_TYPES()
 	 * Open alf escalations event.
 	 * Broadcast event about the number of new/not answered escalations
 	 * caused by alf policies.
-	 * 
+	 *
 	 * @param GetInt() The count of open ESCALATIONS.
 	 */
 	DECLARE_LOCAL_EVENT_TYPE(anEVT_OPEN_ALF_ESCALATIONS, wxNewEventType())
@@ -436,7 +437,7 @@ BEGIN_DECLARE_EVENT_TYPES()
 	 * Open sfs escalations event.
 	 * Broadcast event about the number of new/not answered escalations
 	 * caused by sfs policies.
-	 * 
+	 *
 	 * @param GetInt() The count of open ESCALATIONS.
 	 */
 	DECLARE_LOCAL_EVENT_TYPE(anEVT_OPEN_SFS_ESCALATIONS, wxNewEventType())
@@ -482,6 +483,16 @@ BEGIN_DECLARE_EVENT_TYPES()
 	 * @param GetInt() The index of the entry in a SfsDirectory.
 	 */
 	DECLARE_LOCAL_EVENT_TYPE(anEVT_SFSENTRY_CHANGED, wxNewEventType())
+
+	/**
+	 * Sfs entry error event.
+	 *
+	 * An error occured while updating one Sfs entrie(s) in a
+	 * SfsDirectory.
+	 *
+	 * Use SfsCtrl::getErrors() to get a list of error-messages.
+	 */
+	DECLARE_LOCAL_EVENT_TYPE(anEVT_SFSENTRY_ERROR, wxNewEventType())
 END_DECLARE_EVENT_TYPES()
 /**
  * @}

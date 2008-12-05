@@ -332,6 +332,8 @@ xanoubis_SOURCES= \
 	job/Task.h \
 	job/TaskEvent.cpp \
 	job/TaskEvent.h \
+	AnUtils.cpp \
+	AnUtils.h \
 	ctassert.h \
 	main.cpp \
 	main.h

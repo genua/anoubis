@@ -69,6 +69,7 @@ class ModSfsMainPanelImpl : public ModSfsMainPanelBase
 		void OnSfsMainDirCtrlSelChanged(wxTreeEvent&);
 		void OnSfsDirChanged(wxCommandEvent&);
 		void OnSfsEntryChanged(wxCommandEvent&);
+		void OnSfsError(wxCommandEvent&);
 		void OnSfsMainFilterButtonClicked(wxCommandEvent&);
 		void OnSfsMainInverseCheckboxClicked(wxCommandEvent&);
 		void OnSfsMainValidateButtonClicked(wxCommandEvent&);

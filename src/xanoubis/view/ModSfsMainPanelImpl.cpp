@@ -43,6 +43,8 @@
 
 #include <apn.h>
 
+#include <wx/msgdlg.h>
+
 #include "AnEvents.h"
 #include "main.h"
 #include "ModSfsAddPolicyVisitor.h"
@@ -170,6 +172,25 @@ ModSfsMainPanelImpl::OnSfsEntryChanged(wxCommandEvent &event)
 }
 
 void
+ModSfsMainPanelImpl::OnSfsError(wxCommandEvent&)
+{
+	const wxArrayString &errors = sfsCtrl_->getErrors();
+	wxString errStr;
+
+	if (errors.Count() > 1) {
+		for (unsigned int i = 0; i < errors.Count() - 1; i++) {
+			errStr += errors[i];
+			errStr += wxT("\n");
+		}
+	}
+
+	if (!errors.IsEmpty())
+		errStr += errors.Last();
+
+	wxMessageBox(errStr, _("SFS error"), wxOK|wxICON_ERROR, this);
+}
+
+void
 ModSfsMainPanelImpl::OnSfsMainFilterButtonClicked(wxCommandEvent&)
 {
 	sfsCtrl_->setFilter(SfsMainFilterTextCtrl->GetValue());
@@ -184,9 +205,24 @@ ModSfsMainPanelImpl::OnSfsMainInverseCheckboxClicked(wxCommandEvent&)
 void
 ModSfsMainPanelImpl::OnSfsMainValidateButtonClicked(wxCommandEvent&)
 {
-	if (!sfsCtrl_->validateAll()) {
+	SfsCtrl::CommandResult result = sfsCtrl_->validateAll();
+
+	switch (result) {
+	case SfsCtrl::RESULT_NOTCONNECTED:
 		wxGetApp().status(
 		    _("Error: xanoubis is not connected to the daemon"));
+		break;
+	case SfsCtrl::RESULT_INVALIDARG:
+		wxGetApp().status(
+		    _("Error: An invalid argument was supplied"));
+		break;
+	case SfsCtrl::RESULT_BUSY:
+		wxGetApp().status(
+		    _("Error: Sfs is still busy with another operation."));
+		break;
+	case SfsCtrl::RESULT_EXECUTE:
+		/* Success */
+		break;
 	}
 }
 
@@ -196,7 +232,7 @@ ModSfsMainPanelImpl::OnSfsMainApplyButtonClicked(wxCommandEvent&)
 	int selection = -1;
 
 	while (true) {
-		bool result = false;
+		SfsCtrl::CommandResult result = SfsCtrl::RESULT_EXECUTE;
 
 		selection = SfsMainListCtrl->GetNextItem(selection,
 		    wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED);
@@ -221,9 +257,22 @@ ModSfsMainPanelImpl::OnSfsMainApplyButtonClicked(wxCommandEvent&)
 			break;
 		}
 
-		if (!result) {
+		switch (result) {
+		case SfsCtrl::RESULT_NOTCONNECTED:
 			wxGetApp().status(
 			  _("Error: xanoubis is not connected to the daemon"));
+			break;
+		case SfsCtrl::RESULT_INVALIDARG:
+			wxGetApp().status(
+			  _("Error: An invalid argument was supplied"));
+			break;
+		case SfsCtrl::RESULT_BUSY:
+			wxGetApp().status(
+			 _("Error: Sfs is still busy with another operation."));
+			break;
+		case SfsCtrl::RESULT_EXECUTE:
+			/* Success */
+			break;
 		}
 	}
 }
@@ -247,6 +296,9 @@ ModSfsMainPanelImpl::initSfsMain()
 	    NULL, this);
 	sfsCtrl_->Connect(anEVT_SFSENTRY_CHANGED,
 	    wxCommandEventHandler(ModSfsMainPanelImpl::OnSfsEntryChanged),
+	    NULL, this);
+	sfsCtrl_->Connect(anEVT_SFSENTRY_ERROR,
+	    wxCommandEventHandler(ModSfsMainPanelImpl::OnSfsError),
 	    NULL, this);
 
 	SfsMainDirCtrl->Connect(wxEVT_COMMAND_TREE_SEL_CHANGED,
