@@ -825,19 +825,56 @@ AnoubisGuiApp::OnPolicyRequest(TaskEvent &event)
 void
 AnoubisGuiApp::OnPolicySend(TaskEvent &event)
 {
-	ComPolicySendTask *task =
-	    dynamic_cast<ComPolicySendTask*>(event.getTask());
+	ComPolicySendTask	*task;
+	ComTask::ComTaskResult	taskResult;
+	wxString		message;
+	bool			isAdmin;
+	wxString		user;
 
+	task = dynamic_cast<ComPolicySendTask*>(event.getTask());
 	if (task == 0)
 		return;
 
-	/* XXX bad error-handling */
-	if (task->getComTaskResult() != ComTask::RESULT_SUCCESS) {
-		wxString message = _("Error while sending policy to daemon");
-		wxString title = _("Error!");
+	isAdmin = (geteuid == 0);
+	taskResult = task->getComTaskResult();
+	user = getUserNameById(task->getUid());
 
-		wxMessageBox(message, title, wxICON_ERROR);
+	if (taskResult == ComTask::RESULT_INIT) {
+		message = _("The task was not executed.");
+	} else if (taskResult == ComTask::RESULT_OOM) {
+		message = _("Out of memory.");
+	} else if (taskResult == ComTask::RESULT_COM_ERROR) {
+		if (isAdmin && (task->getPriority() == 0))
+			message.Printf(
+			    _("Communication error while sending admin-policy\n\
+of %s to daemon."), user.c_str());
+		else if (isAdmin && (task->getPriority() > 0))
+			message.Printf(_("Communication error while sending\
+user-policy\nof %s to daemon."), user.c_str());
+		else
+			message = _("Error while sending policy to daemon.");
+	} else if (taskResult == ComTask::RESULT_REMOTE_ERROR) {
+		if (isAdmin && (task->getPriority() == 0))
+			message.Printf(_("Got error (%s) from daemon\n\
+after sent admin-policy of %s."),
+			    strerror(task->getResultDetails()), user.c_str());
+		else if (isAdmin && (task->getPriority() > 0))
+			message.Printf(_("Got error (%s) from daemon\n\
+after sent user-policy of %s."),
+			    strerror(task->getResultDetails()), user.c_str());
+		else
+			message.Printf(_("Got error (%s) from daemon\n\
+after sent policy."), strerror(task->getResultDetails()));
+	} else if (taskResult != ComTask::RESULT_SUCCESS) {
+		message.Printf(_("An unexpected error occured.\n\
+Error code: %i"), taskResult);
 	}
+
+	if (taskResult != ComTask::RESULT_SUCCESS) {
+		wxMessageBox(message, _("Error while sending policy"),
+		    wxICON_ERROR);
+	}
+
 	sendTaskList_.remove(task);
 }
 
