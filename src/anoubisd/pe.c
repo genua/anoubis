@@ -42,6 +42,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <stddef.h>
 
 #ifdef LINUX
 #include <queue.h>
@@ -62,13 +63,12 @@
 #include "pe.h"
 #include "sfs.h"
 
-anoubisd_reply_t	*policy_engine(anoubisd_msg_t *);
-anoubisd_reply_t	*pe_dispatch_event(struct eventdev_hdr *);
-anoubisd_reply_t	*pe_handle_process(struct eventdev_hdr *);
-anoubisd_reply_t	*pe_handle_sfsexec(struct eventdev_hdr *);
-anoubisd_reply_t	*pe_handle_alf(struct eventdev_hdr *);
-anoubisd_reply_t	*pe_handle_ipc(struct eventdev_hdr *);
-anoubisd_reply_t	*pe_handle_sfs(anoubisd_msg_sfsopen_t *);
+static anoubisd_reply_t	*pe_dispatch_event(struct eventdev_hdr *);
+static anoubisd_reply_t	*pe_handle_process(struct eventdev_hdr *);
+static anoubisd_reply_t	*pe_handle_sfsexec(struct eventdev_hdr *);
+static anoubisd_reply_t	*pe_handle_alf(struct eventdev_hdr *);
+static anoubisd_reply_t	*pe_handle_ipc(struct eventdev_hdr *);
+static anoubisd_reply_t	*pe_handle_sfs(struct eventdev_hdr *);
 
 void
 pe_init(void)
@@ -113,11 +113,6 @@ policy_engine(anoubisd_msg_t *request)
 		struct eventdev_hdr *hdr = (struct eventdev_hdr *)request->msg;
 		reply = pe_dispatch_event(hdr);
 		break;
-	} case ANOUBISD_MSG_SFSOPEN: {
-		anoubisd_msg_sfsopen_t *sfsmsg;
-		sfsmsg = (anoubisd_msg_sfsopen_t *)request->msg;
-		reply = pe_handle_sfs(sfsmsg);
-		break;
 	} case ANOUBISD_MSG_POLREQUEST: {
 		anoubisd_msg_comm_t *comm = (anoubisd_msg_comm_t *)request->msg;
 		reply = pe_dispatch_policy(comm);
@@ -147,7 +142,7 @@ policy_engine(anoubisd_msg_t *request)
 	return (reply);
 }
 
-anoubisd_reply_t *
+static anoubisd_reply_t *
 pe_dispatch_event(struct eventdev_hdr *hdr)
 {
 	anoubisd_reply_t	*reply = NULL;
@@ -177,6 +172,10 @@ pe_dispatch_event(struct eventdev_hdr *hdr)
 		reply = pe_handle_ipc(hdr);
 		break;
 
+	case ANOUBIS_SOURCE_SFS:
+		reply = pe_handle_sfs(hdr);
+		break;
+
 	default:
 		log_warnx("pe_dispatch_event: unknown message source %d",
 		    hdr->msg_source);
@@ -186,7 +185,7 @@ pe_dispatch_event(struct eventdev_hdr *hdr)
 	return (reply);
 }
 
-anoubisd_reply_t *
+static anoubisd_reply_t *
 pe_handle_sfsexec(struct eventdev_hdr *hdr)
 {
 	struct sfs_open_message		*msg;
@@ -209,7 +208,7 @@ pe_handle_sfsexec(struct eventdev_hdr *hdr)
 	return (NULL);
 }
 
-anoubisd_reply_t *
+static anoubisd_reply_t *
 pe_handle_process(struct eventdev_hdr *hdr)
 {
 	struct ac_process_message	*msg;
@@ -243,7 +242,7 @@ pe_handle_process(struct eventdev_hdr *hdr)
 	return (NULL);
 }
 
-anoubisd_reply_t *
+static anoubisd_reply_t *
 pe_handle_alf(struct eventdev_hdr *hdr)
 {
 	struct alf_event	*msg;
@@ -279,7 +278,7 @@ pe_handle_alf(struct eventdev_hdr *hdr)
 	return (reply);
 }
 
-anoubisd_reply_t *
+static anoubisd_reply_t *
 pe_handle_ipc(struct eventdev_hdr *hdr)
 {
 	struct ac_ipc_message	*msg;
@@ -333,42 +332,38 @@ use2:
 	return r2;
 }
 
-anoubisd_reply_t *
-pe_handle_sfs(anoubisd_msg_sfsopen_t *sfsmsg)
+static anoubisd_reply_t *
+pe_handle_sfs(struct eventdev_hdr *hdr)
 {
 	anoubisd_reply_t		*reply = NULL, *reply2 = NULL;
-	struct eventdev_hdr		*hdr;
+	struct pe_file_event		*fevent;
 	struct pe_proc			*proc;
-	time_t				 now;
-	struct anoubis_event_common	*common;
 
-	if (sfsmsg == NULL) {
+	if (hdr == NULL) {
 		log_warnx("pe_handle_sfs: empty message");
 		return (NULL);
 	}
-	hdr = (struct eventdev_hdr *)&sfsmsg->hdr;
 	if (hdr->msg_size < (sizeof(struct eventdev_hdr) +
 	    sizeof(struct sfs_open_message))) {
 		log_warnx("pe_handle_sfs: short message");
 		return (NULL);
 	}
+	if ((fevent = pe_parse_file_event(hdr)) == NULL) {
+		log_warnx("Cannot parse sfsopen message");
+		return NULL;
+	}
 
-	common = (struct anoubis_event_common *)(hdr + 1);
-	proc = pe_proc_get(common->task_cookie);
+	proc = pe_proc_get(fevent->cookie);
 	if (proc && pe_proc_get_pid(proc) == -1)
 		pe_proc_set_pid(proc, hdr->msg_pid);
 
 	pe_context_open(proc, hdr);
+	reply = pe_decide_sfs(proc, fevent, hdr);
+	reply2 = pe_decide_sandbox(proc, fevent, hdr);
 
-	if (time(&now) == (time_t)-1) {
-		int code = errno;
-		log_warn("pe_handle_sfs: Cannot get time");
-		master_terminate(code);
-		return (NULL);
-	}
-	reply = pe_decide_sfs(hdr->msg_uid, sfsmsg, now);
-	reply2 = pe_decide_sandbox(proc, hdr);
 	pe_proc_put(proc);
+	free(fevent);
+
 	/* XXX CEH: This might need more thought. */
 	return reply_merge(reply, reply2);
 }
@@ -391,4 +386,58 @@ pe_in_scope(struct apn_scope *scope, anoubis_cookie_t task,
 	if (scope->task && task != scope->task)
 		return 0;
 	return 1;
+}
+
+struct pe_file_event *
+pe_parse_file_event(struct eventdev_hdr *hdr)
+{
+	struct pe_file_event	*ret = NULL;
+	struct sfs_open_message	*kernmsg;
+	int			 sfslen, pathlen, i;
+
+	if (!hdr)
+		return NULL;
+	kernmsg = (struct sfs_open_message *)(hdr+1);
+	if (hdr->msg_size < sizeof(struct eventdev_hdr))
+		goto err;
+	sfslen = hdr->msg_size - sizeof(struct eventdev_hdr);
+	if (sfslen < (int)sizeof(struct sfs_open_message))
+		goto err;
+	if (kernmsg->flags & ANOUBIS_OPEN_FLAG_PATHHINT) {
+		pathlen = sfslen - offsetof(struct sfs_open_message, pathhint);
+		for (i=pathlen-1; i >= 0; --i)
+			if (kernmsg->pathhint[i] == 0)
+				break;
+		if (i < 0)
+			goto err;
+	} else {
+		kernmsg->pathhint[0] = 0;
+	}
+	ret = malloc(sizeof(struct pe_file_event));
+	if (!ret)
+		return NULL;
+	ret->cookie = kernmsg->common.task_cookie;
+	if (kernmsg->pathhint[0])
+		ret->path = strdup(kernmsg->pathhint);
+	else
+		ret->path = NULL;
+	ret->cslen = 0;
+	if (kernmsg->flags & ANOUBIS_OPEN_FLAG_CSUM) {
+		ret->cslen = ANOUBIS_CS_LEN;
+		bcopy(kernmsg->csum, ret->cs, ANOUBIS_CS_LEN);
+	}
+	ret->amask = 0;
+	/* Treat FOLLOW as a read event. */
+	if (kernmsg->flags & (ANOUBIS_OPEN_FLAG_READ|ANOUBIS_OPEN_FLAG_FOLLOW))
+		ret->amask |= APN_SBA_READ;
+	if (kernmsg->flags & ANOUBIS_OPEN_FLAG_WRITE)
+		ret->amask |= APN_SBA_WRITE;
+	if (kernmsg->flags & ANOUBIS_OPEN_FLAG_EXEC)
+		ret->amask |= APN_SBA_EXEC;
+	ret->uid = hdr->msg_uid;
+	return ret;
+err:
+	if (ret)
+		free(ret);
+	return NULL;
 }

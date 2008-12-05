@@ -780,7 +780,6 @@ dispatch_p2s(int fd, short sig __used, void *arg)
 
 		case ANOUBISD_MSG_EVENTDEV:
 		case ANOUBISD_MSG_EVENTASK:
-		case ANOUBISD_MSG_SFSOPEN:
 			DEBUG(DBG_QUEUE, ">p2s");
 			dispatch_p2s_evt_request(msg, ev_info);
 			break;
@@ -938,11 +937,6 @@ dispatch_p2s_evt_request(anoubisd_msg_t	*msg,
 		    (eventask->payload + eventask->evoff);
 		plen = eventask->pathlen;
 		cslen = eventask->csumlen;
-		break;
-	case ANOUBISD_MSG_SFSOPEN:
-		hdr = &((anoubisd_msg_sfsopen_t*)msg->msg)->hdr;
-		rule_id = ((anoubisd_msg_sfsopen_t*)msg->msg)->rule_id;
-		prio = ((anoubisd_msg_sfsopen_t*)msg->msg)->prio;
 		break;
 	default:
 		log_warn("dispatch_p2s_evt_request: bad mtype %d", msg->mtype);

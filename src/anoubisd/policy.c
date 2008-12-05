@@ -349,7 +349,6 @@ dispatch_m2p(int fd, short sig __used, void *arg)
 	/*@dependent@*/
 	struct eventdev_hdr *hdr;
 	struct eventdev_reply *rep;
-	anoubisd_msg_sfsopen_t *sfsmsg = NULL;
 
 	DEBUG(DBG_TRACE, ">dispatch_m2p");
 
@@ -367,10 +366,6 @@ dispatch_m2p(int fd, short sig __used, void *arg)
 			continue;
 		case ANOUBISD_MSG_EVENTDEV:
 			hdr = (struct eventdev_hdr *)msg->msg;
-			break;
-		case ANOUBISD_MSG_SFSOPEN:
-			sfsmsg = (anoubisd_msg_sfsopen_t *)msg->msg;
-			hdr = (struct eventdev_hdr *)&sfsmsg->hdr;
 			break;
 		default:
 			DEBUG(DBG_TRACE, "<dispatch_m2p (bad type %d)",
@@ -402,46 +397,34 @@ dispatch_m2p(int fd, short sig __used, void *arg)
 		}
 
 		if (reply->ask) {
-			switch(msg->mtype) {
-			case ANOUBISD_MSG_SFSOPEN:
-				sfsmsg->rule_id = reply->rule_id;
-				sfsmsg->prio = reply->prio;
-				break;
-			case ANOUBISD_MSG_EVENTDEV: {
-				anoubisd_msg_t *nmsg;
-				anoubisd_msg_eventask_t *eventask;
-				int extra = hdr->msg_size;
-				int plen = 0;
-				int cslen = 0;
+			anoubisd_msg_t *nmsg;
+			anoubisd_msg_eventask_t *eventask;
+			int extra = hdr->msg_size;
+			int plen = 0;
+			int cslen = 0;
 
-				if (reply->path)
-					plen = 1+strlen(reply->path);
-				if (reply->csum)
-					cslen = SHA256_DIGEST_LENGTH;
-				nmsg = msg_factory(ANOUBISD_MSG_EVENTASK,
-				    sizeof(anoubisd_msg_eventask_t)
-				    + extra + plen + cslen);
-				eventask =
-				    (anoubisd_msg_eventask_t *)nmsg->msg;
-				eventask->rule_id = reply->rule_id;
-				eventask->prio = reply->prio;
-				eventask->evoff = 0;
-				eventask->evlen = extra;
-				bcopy(hdr, eventask->payload, hdr->msg_size);
-				eventask->csumoff = extra;
-				eventask->csumlen = cslen;
-				bcopy(reply->csum, eventask->payload+extra,
-				    cslen);
-				eventask->pathoff = extra+cslen;
-				eventask->pathlen = plen;
-				bcopy(reply->path,
-				    eventask->payload+extra+cslen, plen);
-				hdr = (struct eventdev_hdr *)eventask->payload;
-				free(msg);
-				msg = nmsg;
-				break;
-			}
-			}
+			if (reply->path)
+				plen = 1+strlen(reply->path);
+			if (reply->csum)
+				cslen = SHA256_DIGEST_LENGTH;
+			nmsg = msg_factory(ANOUBISD_MSG_EVENTASK,
+			    sizeof(anoubisd_msg_eventask_t)
+			    + extra + plen + cslen);
+			eventask = (anoubisd_msg_eventask_t *)nmsg->msg;
+			eventask->rule_id = reply->rule_id;
+			eventask->prio = reply->prio;
+			eventask->evoff = 0;
+			eventask->evlen = extra;
+			bcopy(hdr, eventask->payload, hdr->msg_size);
+			eventask->csumoff = extra;
+			eventask->csumlen = cslen;
+			bcopy(reply->csum, eventask->payload+extra, cslen);
+			eventask->pathoff = extra+cslen;
+			eventask->pathlen = plen;
+			bcopy(reply->path, eventask->payload+extra+cslen, plen);
+			hdr = (struct eventdev_hdr *)eventask->payload;
+			free(msg);
+			msg = nmsg;
 			if ((msg_wait = malloc(sizeof(struct reply_wait))) ==
 			    NULL) {
 				free(msg);

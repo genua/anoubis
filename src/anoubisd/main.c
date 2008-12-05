@@ -1313,47 +1313,6 @@ dispatch_dev2m(int fd, short event __used, void *arg)
 		DEBUG(DBG_TRACE, " token %x pid %d", hdr->msg_token,
 		    hdr->msg_pid);
 
-/* XXX RD syslog? */
-
-		/* Lookup stored checksum */
-		if (hdr->msg_source == ANOUBIS_SOURCE_SFS
-		    && (hdr->msg_flags & EVENTDEV_NEED_REPLY)) {
-			anoubisd_msg_t * nmsg;
-			anoubisd_msg_sfsopen_t * sfsmsg;
-			struct sfs_open_message * kernelmsg;
-			int size;
-
-			size = sizeof(*sfsmsg) - sizeof(struct eventdev_hdr)
-			    + hdr->msg_size;
-			nmsg = msg_factory(ANOUBISD_MSG_SFSOPEN, size);
-			sfsmsg = (anoubisd_msg_sfsopen_t *)nmsg->msg;
-			memcpy(&sfsmsg->hdr, hdr, hdr->msg_size);
-			hdr = &sfsmsg->hdr;
-			free(msg);
-			kernelmsg = (struct sfs_open_message *)(hdr+1);
-			sfsmsg->anoubisd_csum_set = ANOUBISD_CSUM_NONE;
-			if ((kernelmsg->flags & ANOUBIS_OPEN_FLAG_PATHHINT)
-			    && (kernelmsg->flags & ANOUBIS_OPEN_FLAG_STATDATA)
-			    && (kernelmsg->flags & ANOUBIS_OPEN_FLAG_CSUM)) {
-				int ret;
-
-				ret = sfs_getchecksum(kernelmsg->pathhint,
-				    hdr->msg_uid, sfsmsg->anoubisd_csum);
-				if (ret >= 0) {
-					sfsmsg->anoubisd_csum_set =
-					    ANOUBISD_CSUM_USER;
-				} else {
-					ret = sfs_getchecksum(
-					    kernelmsg->pathhint,
-					    0, sfsmsg->anoubisd_csum);
-					if (ret >= 0)
-						sfsmsg->anoubisd_csum_set =
-						    ANOUBISD_CSUM_ROOT;
-				}
-			}
-			msg = nmsg;
-		}
-
 		if ((hdr->msg_flags & EVENTDEV_NEED_REPLY) ||
 		    (hdr->msg_source == ANOUBIS_SOURCE_PROCESS) ||
 		    (hdr->msg_source == ANOUBIS_SOURCE_SFSEXEC) ||

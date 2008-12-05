@@ -69,11 +69,6 @@
 
 #define __used __attribute__((unused))
 
-enum {
-	ANOUBISD_LOG_RAW,
-	ANOUBISD_LOG_APN
-};
-
 #ifdef LINUX
 #define __dead
 #define UID_MAX	UINT_MAX
@@ -105,7 +100,6 @@ enum {
 	ANOUBISD_MSG_EVENTCANCEL,
 	ANOUBISD_MSG_SESSION_REG,
 	ANOUBISD_MSG_CHECKSUM_OP,
-	ANOUBISD_MSG_SFSOPEN,
 	ANOUBISD_MSG_EVENTASK,
 	ANOUBISD_MSG_KCACHE,
 	ANOUBISD_MSG_SFSDISABLE,
@@ -125,15 +119,6 @@ struct anoubisd_msg_eventask
 	char		payload[0];
 };
 typedef struct anoubisd_msg_eventask anoubisd_msg_eventask_t;
-
-struct anoubisd_msg_sfsopen {
-	u_int32_t		rule_id;
-	u_int32_t		prio;
-	u_int32_t		anoubisd_csum_set;
-	u_int8_t		anoubisd_csum[ANOUBIS_SFS_CS_LEN];
-	struct eventdev_hdr	hdr;
-};
-typedef struct anoubisd_msg_sfsopen anoubisd_msg_sfsopen_t;
 
 /* format of ANOUBISD_MSG_POLREQUEST */
 struct anoubisd_msg_comm {

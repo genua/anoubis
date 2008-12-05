@@ -61,122 +61,191 @@
 #include "sfs.h"
 #include "pe.h"
 
-static int		 pe_decide_sfscheck(struct apn_rule *, struct
-			     sfs_open_message *, int *, u_int32_t *, time_t);
-/*
-static int		 pe_decide_sfsdflt(struct apn_rule *, struct
-			     sfs_open_message *, int *, u_int32_t *, time_t);
-*/
-static char		*pe_dump_sfsmsg(struct sfs_open_message *, int);
+static char		*pe_dump_sfsmsg(struct pe_file_event *);
 
+static struct apn_default *
+pe_sfs_match_one(struct apn_rule *rule, struct pe_file_event *fevent,
+    time_t now)
+{
+	/* XXX CEH: This static variable is a hack! */
+	static struct apn_default	 tmpresult;
+	char				*prefix = NULL;
+	struct apn_subject		*subject = NULL;
+	u_int8_t			 csum[ANOUBIS_CS_LEN];
+	u_int8_t			*cs = NULL;
+	int				 len, ret;
+
+	if (!pe_in_scope(rule->scope, fevent->cookie, now))
+		return NULL;
+	switch (rule->apn_type) {
+	case APN_SFS_CHECK:
+		/* XXX CEH: No longer supported. */
+		return NULL;
+		break;
+	case APN_SFS_ACCESS:
+		prefix = rule->rule.sfsaccess.path;
+		subject = &rule->rule.sfsaccess.subject;
+		break;
+	case APN_SFS_DEFAULT:
+		tmpresult.log = rule->rule.sfsdefault.log;
+		tmpresult.action = rule->rule.sfsdefault.action;
+		prefix = rule->rule.sfsdefault.path;
+		break;
+	default:
+		log_warnx("Invalid rule type %u in SFS rule %lu",
+		    rule->apn_type, rule->apn_id);
+		return NULL;
+	}
+	if (prefix != NULL) {
+		if (fevent->path == NULL)
+			return NULL;
+		len = strlen(prefix);
+		/* Allow trailing slashes on the prefix. Important for "/" */
+		while(len && prefix[len-1] == '/')
+			len--;
+		if (strncmp(fevent->path, prefix, len) != 0)
+			return NULL;
+		if (fevent->path[len] && fevent->path[len] != '/')
+			return NULL;
+	}
+	if (rule->apn_type == APN_SFS_DEFAULT)
+		return &tmpresult;
+	if (fevent->cslen != ANOUBIS_CS_LEN)
+		return &rule->rule.sfsaccess.unknown;
+
+	cs = NULL;
+	switch (subject->type) {
+	case APN_CS_UID:
+		ret = sfshash_get_uid(fevent->path, subject->value.uid, csum);
+		if (ret == 0)
+			cs = csum;
+		break;
+	case APN_CS_KEY:
+		ret = sfshash_get_key(fevent->path, subject->value.keyid, csum);
+		if (ret == 0)
+			cs = csum;
+		break;
+	case APN_CS_UID_SELF:
+		ret = sfshash_get_uid(fevent->path, fevent->uid, csum);
+		if (ret == 0)
+			cs = csum;
+		break;
+	case APN_CS_KEY_SELF:
+		/* XXX CEH: Not yet implemented. */
+	default:
+		break;
+	}
+	if (cs == NULL)
+		return &rule->rule.sfsaccess.unknown;
+	if (memcmp(cs, fevent->cs, ANOUBIS_CS_LEN) != 0)
+		return &rule->rule.sfsaccess.invalid;
+	return &rule->rule.sfsaccess.valid;
+}
 
 anoubisd_reply_t *
-pe_decide_sfs(uid_t uid, anoubisd_msg_sfsopen_t *sfsmsg, time_t now)
+pe_decide_sfs(struct pe_proc *proc, struct pe_file_event *fevent,
+    struct eventdev_hdr *hdr)
 {
-	static char		 prefix[] = "SFS";
-	static char		*verdict[3] = { "allowed", "denied", "asked" };
+	static const char	*verdict[3] = { "allowed", "denied", "asked" };
 	anoubisd_reply_t	*reply = NULL;
-	struct eventdev_hdr	*hdr;
-	struct sfs_open_message	*msg;
-	int			 ret, log, i, decision, prio;
-	u_int32_t		 rule_id = 0;
-	char			*dump = NULL;
-	char			*context = NULL;
-	struct pe_proc		*proc = NULL;
 	int			 do_disable = 0;
-
-	hdr = &sfsmsg->hdr;
-	msg = (struct sfs_open_message *)(hdr+1);
+	int			 decision = -1;
+	int			 rule_id = 0;
+	int			 i, prio = 0;
+	int			 log = APN_LOG_NONE;
+	char			*context = NULL, *dump = NULL;
+	time_t			 now;
+	char			 cstext[2*ANOUBIS_CS_LEN+1];
 
 	if ((reply = calloc(1, sizeof(struct anoubisd_reply))) == NULL) {
 		log_warn("pe_handle_sfs: cannot allocate memory");
 		master_terminate(ENOMEM);
 		return (NULL);
 	}
-
-	decision = -1;
-	prio = -1;
-	rule_id = 0;
-	log = 0;
-
-	proc = pe_proc_get(msg->common.task_cookie);
-	if (proc && pe_proc_is_sfsdisable(proc, hdr->msg_uid)) {
+	if (proc && pe_proc_is_sfsdisable(proc, fevent->uid))
 		do_disable = 1;
-		pe_proc_put(proc);
+	if (time(&now) == (time_t)-1) {
+		log_warn("pe_decide_sfs: Cannot get current time");
+		goto err;
 	}
 
-	if (msg->flags & ANOUBIS_OPEN_FLAG_CSUM) {
-		for (i = 0; i < PE_PRIO_MAX; i++) {
-			struct apn_ruleset	*rs;
-			struct apn_rule		*rule;
-
-			if (do_disable
-			    && (i == PE_PRIO_USER1 || hdr->msg_uid == 0))
-				continue;
-			rs = pe_user_get_ruleset(uid, i, NULL);
-			if (rs == NULL)
-				continue;
-
-			if (TAILQ_EMPTY(&rs->sfs_queue))
-				continue;
-
-				TAILQ_FOREACH(rule, &rs->sfs_queue, entry) {
-				ret = pe_decide_sfscheck(rule, msg,
-				    &log, &rule_id, now);
-
-/* disabled because pe_decide_sfsdflt needs to be rewritten */
-/*
-				if (ret == -1)
-					ret = pe_decide_sfsdflt(rule,
-					    msg, &log, &rule_id, now);
-*/
-
-				if (ret != -1) {
-					decision = ret;
-					prio = i;
-				}
-				if (ret == POLICY_DENY)
-					break;
-			}
-			if (decision == POLICY_DENY)
-				break;
-		}
-		/* Look into checksum from /var/lib/sfs */
-		if (decision == -1 && do_disable && (hdr->msg_uid == 0
-		    || sfsmsg->anoubisd_csum_set == ANOUBISD_CSUM_USER))
+	for (i = 0; i < PE_PRIO_MAX; i++) {
+		struct apn_ruleset	*rs;
+		struct apn_rule		*sfsrule, *rule;
+		if (i == PE_PRIO_USER1 && do_disable) {
 			decision = POLICY_ALLOW;
-		if ((decision == -1) &&
-		    (sfsmsg->anoubisd_csum_set != ANOUBISD_CSUM_NONE)) {
-			if (memcmp(msg->csum, sfsmsg->anoubisd_csum,
-			    ANOUBIS_SFS_CS_LEN))
-				decision = POLICY_DENY;
+			break;
 		}
-	} else {
-		if (sfsmsg->anoubisd_csum_set != ANOUBISD_CSUM_NONE)
-			decision = POLICY_DENY;
+		rs = pe_user_get_ruleset(fevent->uid, i, NULL);
+		if (rs == NULL)
+			continue;
+		if (TAILQ_EMPTY(&rs->sfs_queue))
+			continue;
+		sfsrule = TAILQ_FIRST(&rs->sfs_queue);
+		if (TAILQ_EMPTY(&sfsrule->rule.chain))
+			continue;
+		TAILQ_FOREACH(rule, &sfsrule->rule.chain, entry) {
+			struct	apn_default	*res;
+			res = pe_sfs_match_one(rule, fevent, now);
+			if (res == NULL)
+				continue;
+			/*
+			 * XXX CEH: This does NOT honour a LOG directive
+			 * XXX CEH: on a CONTINUE action.
+			 */
+			if (res->action == APN_ACTION_CONTINUE)
+				continue;
+			rule_id = rule->apn_id;
+			log = res->log;
+			prio = i;
+			switch (res->action) {
+			case APN_ACTION_ALLOW:
+				decision = POLICY_ALLOW;
+				break;
+			case APN_ACTION_DENY:
+				decision = POLICY_DENY;
+				break;
+			case APN_ACTION_ASK:
+				decision = POLICY_ASK;
+				break;
+			default:
+				log_warnx("Invalid action %d in rule %lu",
+				    res->action, rule->apn_id);
+				decision = POLICY_DENY;
+				break;
+			}
+			break;
+		}
+		if (decision != -1 && decision != POLICY_ALLOW)
+			break;
 	}
 
 	if (decision == -1)
 		decision = POLICY_ALLOW;
 
+	cstext[0] = 0;
 	if (log != APN_LOG_NONE) {
-		context = pe_context_dump(hdr,
-		    pe_proc_get(msg->common.task_cookie), prio);
-		dump = pe_dump_sfsmsg(msg, ANOUBISD_LOG_APN);
+		int i;
+		context = pe_context_dump(hdr, proc, prio);
+		dump = pe_dump_sfsmsg(fevent);
+		if (fevent->cslen == ANOUBIS_CS_LEN) {
+			for (i=0; i<ANOUBIS_CS_LEN; ++i)
+				sprintf(&cstext[2*i], "%02x", fevent->cs[i]);
+			cstext[2*ANOUBIS_CS_LEN] = 0;
+		}
 	}
-
 	/* Logging */
 	switch (log) {
 	case APN_LOG_NONE:
 		break;
 	case APN_LOG_NORMAL:
-		log_info("%s prio %d rule %d %s %s (%s)", prefix, prio,
-		    rule_id, verdict[decision], dump, context);
+		log_info("SFS prio %d rule %d %s %s csum=%s (%s)", prio,
+		    rule_id, verdict[decision], dump, cstext, context);
 		send_lognotify(hdr, decision, log, rule_id, prio);
 		break;
 	case APN_LOG_ALERT:
-		log_warnx("%s prio %d rule %d %s %s (%s)", prefix, prio,
-		    rule_id, verdict[decision], dump, context);
+		log_warnx("SFS prio %d rule %d %s %s csum=%s (%s)", prio,
+		    rule_id, verdict[decision], dump, cstext, context);
 		send_lognotify(hdr, decision, log, rule_id, prio);
 		break;
 	default:
@@ -184,152 +253,60 @@ pe_decide_sfs(uid_t uid, anoubisd_msg_sfsopen_t *sfsmsg, time_t now)
 	}
 
 	if (dump)
-	    free(dump);
+		free(dump);
 	if (context)
 		free(context);
 
+	reply->ask = 0;
+	reply->rule_id = rule_id;
+	reply->prio = prio;
+	reply->timeout = (time_t)0;
 	if (decision == POLICY_DENY)
 		reply->reply = EPERM;
 	else
 		reply->reply = 0;
-	reply->ask = 0;		/* false */
-	reply->rule_id = rule_id;
-	reply->prio = prio;
-	reply->timeout = (time_t)0;
+	if (decision == POLICY_ASK) {
+		struct pe_proc_ident	*pident = pe_proc_ident(proc);
+		reply->ask = 1;
+		reply->timeout = 300;
+		if (pident) {
+			reply->path = pident->pathhint;
+			reply->csum = pident->csum;
+		} else {
+			reply->path = NULL;
+			reply->csum = NULL;
+		}
+	}
 	reply->len = 0;
-
 	return (reply);
+err:
+	reply->reply = EPERM;
+	reply->rule_id = 0;
+	reply->prio = 0;
+	return reply;
 }
-
-static int
-pe_decide_sfscheck(struct apn_rule *rule, struct sfs_open_message *msg,
-    int *log, u_int32_t *rule_id, time_t now)
-{
-	struct apn_rule		*hp;
-	int			 decision;
-
-	if (rule == NULL) {
-		log_warnx("pe_decide_sfscheck: empty rule");
-		return (-1);
-	}
-	if (msg == NULL) {
-		log_warnx("pe_decide_sfscheck: empty sfs event");
-		return (-1);
-	}
-
-	decision = -1;
-	TAILQ_FOREACH(hp, &rule->rule.chain, entry) {
-		/*
-		 * skip non-check rules
-		 */
-		if (hp->apn_type != APN_SFS_CHECK
-		    || !pe_in_scope(hp->scope, msg->common.task_cookie, now))
-			continue;
-
-		if (strcmp(hp->rule.sfscheck.app->name, msg->pathhint))
-			continue;
-
-		decision = POLICY_ALLOW;
-		/*
-		 * If a SFS rule exists for a file, the decision is always
-		 * deny if the checksum does not match.
-		 */
-		if (memcmp(msg->csum, hp->rule.sfscheck.app->hashvalue,
-		    ANOUBIS_SFS_CS_LEN))
-			decision = POLICY_DENY;
-
-		if (log)
-			*log = hp->rule.sfscheck.log;
-		if (rule_id)
-			*rule_id = hp->apn_id;
-
-		break;
-	}
-
-	return decision;
-}
-
-/* XXX: SF,CEH: This is for the OLD style sfs default rule, which is no longer
- * in the policy parser. It won't work with the new style sfs default rules
- */
-#if 0
-static int
-pe_decide_sfsdflt(struct apn_rule *rule, struct sfs_open_message *msg, int *log,
-    u_int32_t *rule_id, time_t now)
-{
-	struct apn_rule		*hp;
-	int			 decision;
-
-	if (rule == NULL) {
-		log_warnx("pe_decide_sfsdflt: empty rule");
-		return (-1);
-	}
-
-	decision = -1;
-	TAILQ_FOREACH(hp, &rule->rule.chain, entry) {
-		/* Skip non-default rules. */
-		if (hp->apn_type != APN_DEFAULT
-		    || !pe_in_scope(hp->scope, msg->common.task_cookie, now)) {
-			continue;
-		}
-		/*
-		 * Default rules are easy, just pick the specified action.
-		 */
-		switch (hp->rule.apndefault.action) {
-		case APN_ACTION_ALLOW:
-			decision = POLICY_ALLOW;
-			break;
-		case APN_ACTION_DENY:
-			decision = POLICY_DENY;
-			break;
-		case APN_ACTION_ASK:
-			decision = POLICY_ASK;
-			break;
-		default:
-		log_warnx("pe_decide_sfsdflt: unknown action %d",
-			    hp->rule.apndefault.action);
-			decision = -1;
-		}
-
-		if (decision != -1) {
-			if (log)
-				*log = hp->rule.apndefault.log;
-			if (rule_id)
-				*rule_id = hp->apn_id;
-			break;
-		}
-	}
-
-	return (decision);
-}
-#endif
 
 /*
  * Decode a SFS message into a printable string.  The strings is allocated
  * and needs to be freed by the caller.
- *
- * "format" is specified for symmetry with pe_dump_alfmsg().
  */
 static char *
-pe_dump_sfsmsg(struct sfs_open_message *msg, int format __used)
+pe_dump_sfsmsg(struct pe_file_event *event)
 {
-	char	*dump, *access;
+	char	*dump, access[4];
+	int	 k = 0;
 
-	if (msg == NULL)
+	if (event == NULL)
 		return (NULL);
 
-	if (msg->flags & ANOUBIS_OPEN_FLAG_READ)
-		access = "read";
-	else if (msg->flags & ANOUBIS_OPEN_FLAG_WRITE)
-		access = "write";
-	else
-		access = "<unknown access>";
-
-	if (asprintf(&dump, "%s %s", access,
-	    msg->flags & ANOUBIS_OPEN_FLAG_PATHHINT ? msg->pathhint : "<none>")
-	    == -1) {
+	if (event->amask & APN_SBA_READ)
+		access[k++] = 'r';
+	if (event->amask & APN_SBA_WRITE)
+		access[k++] = 'w';
+	if (event->amask & APN_SBA_EXEC)
+		access[k++] = 'x';
+	access[k] = 0;
+	if (asprintf(&dump, "%s %s", access, event->path) == -1)
 		dump = NULL;
-	}
-
-	return (dump);
+	return dump;
 }

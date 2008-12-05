@@ -60,16 +60,6 @@
 #include "sfs.h"
 #include "pe.h"
 
-struct sandbox_event {
-	anoubis_cookie_t	 cookie;
-	char			*path;
-	u_int8_t		 cs[ANOUBIS_CS_LEN];
-	unsigned int		 amask;
-	int			 cslen;
-	int			 uid;
-	void			*sigdata; /* XXX CEH: This needs more work */
-};
-
 struct result {
 	int log;
 	int rule_id;
@@ -77,63 +67,8 @@ struct result {
 	int decision;
 };
 
-static struct sandbox_event *
-pe_sb_parse_sfsmsg(struct eventdev_hdr *hdr)
-{
-	struct sandbox_event	*ret = NULL;
-	struct sfs_open_message	*kernmsg;
-	int			 sfslen, pathlen, i;
-
-	if (!hdr)
-		return NULL;
-	kernmsg = (struct sfs_open_message *)(hdr+1);
-	if (hdr->msg_size < sizeof(struct eventdev_hdr))
-		goto err;
-	sfslen = hdr->msg_size - sizeof(struct eventdev_hdr);
-	if (sfslen < (int)sizeof(struct sfs_open_message))
-		goto err;
-	if (kernmsg->flags & ANOUBIS_OPEN_FLAG_PATHHINT) {
-		pathlen = sfslen - offsetof(struct sfs_open_message, pathhint);
-		for (i=pathlen-1; i >= 0; --i)
-			if (kernmsg->pathhint[i] == 0)
-				break;
-		if (i < 0)
-			goto err;
-	} else {
-		kernmsg->pathhint[0] = 0;
-	}
-	ret = malloc(sizeof(struct sandbox_event));
-	if (!ret)
-		return NULL;
-	ret->cookie = kernmsg->common.task_cookie;
-	if (kernmsg->pathhint[0])
-		ret->path = strdup(kernmsg->pathhint);
-	else
-		ret->path = NULL;
-	ret->cslen = 0;
-	if (kernmsg->flags & ANOUBIS_OPEN_FLAG_CSUM) {
-		ret->cslen = ANOUBIS_CS_LEN;
-		bcopy(kernmsg->csum, ret->cs, ANOUBIS_CS_LEN);
-	}
-	ret->amask = 0;
-	/* Treat FOLLOW as a read event. */
-	if (kernmsg->flags & (ANOUBIS_OPEN_FLAG_READ|ANOUBIS_OPEN_FLAG_FOLLOW))
-		ret->amask |= APN_SBA_READ;
-	if (kernmsg->flags & ANOUBIS_OPEN_FLAG_WRITE)
-		ret->amask |= APN_SBA_WRITE;
-	if (kernmsg->flags & ANOUBIS_OPEN_FLAG_EXEC)
-		ret->amask |= APN_SBA_EXEC;
-	ret->uid = hdr->msg_uid;
-	ret->sigdata = NULL;
-	return ret;
-err:
-	if (ret)
-		free(ret);
-	return NULL;
-}
-
 static void
-pe_sb_evaluate(struct apn_rule *sbrules, struct sandbox_event *sbevent,
+pe_sb_evaluate(struct apn_rule *sbrules, struct pe_file_event *sbevent,
     struct result *res, unsigned int atype, int prio)
 {
 	struct apn_rule		*sbrule;
@@ -175,6 +110,9 @@ pe_sb_evaluate(struct apn_rule *sbrules, struct sandbox_event *sbevent,
 			if (!sbevent->path)
 				continue;
 			len = strlen(prefix);
+			/* Allow trailing slashes in prefix. Important for / */
+			while(len && prefix[len-1] == '/')
+				len --;
 			if (strncmp(sbevent->path, prefix, len) != 0)
 				continue;
 			if (sbevent->path[len] && sbevent->path[len] != '/')
@@ -185,6 +123,13 @@ pe_sb_evaluate(struct apn_rule *sbrules, struct sandbox_event *sbevent,
 			u_int8_t	*cs = NULL;
 			u_int8_t	 csum[ANOUBIS_CS_LEN];
 			int		 ret = 0;
+
+			/*
+			 * No match if checksum required but no checksum
+			 * present in event.
+			 */
+			if (sbevent->cslen != ANOUBIS_CS_LEN)
+				continue;
 			if (cstype == SBCS_CSUM) {
 				cs = sbrule->rule.sbaccess.cs.csum;
 				if (!cs)
@@ -242,7 +187,7 @@ err:
 }
 
 static char *
-pe_sb_dumpevent(struct sandbox_event *sbevent)
+pe_sb_dumpevent(struct pe_file_event *sbevent)
 {
 	char	*ret = NULL;
 	char	 mask[4];
@@ -267,9 +212,9 @@ pe_sb_dumpevent(struct sandbox_event *sbevent)
  * a default deny rule.
  */
 anoubisd_reply_t *
-pe_decide_sandbox(struct pe_proc *proc, struct eventdev_hdr *hdr)
+pe_decide_sandbox(struct pe_proc *proc, struct pe_file_event *sbevent,
+    struct eventdev_hdr *hdr)
 {
-	struct sandbox_event	*sbevent = pe_sb_parse_sfsmsg(hdr);
 	struct result		 res[3];
 	struct result		 final;
 	struct anoubisd_reply	*reply;
@@ -352,7 +297,7 @@ pe_decide_sandbox(struct pe_proc *proc, struct eventdev_hdr *hdr)
 	    final.decision, i);
 	reply = calloc(1, sizeof(struct anoubisd_reply));
 	if (!reply) {
-		log_warn("pe_decide_sb: cannot allocate memory");
+		log_warn("pe_decide_sandbox: cannot allocate memory");
 		master_terminate(ENOMEM);
 		return NULL;
 	}
@@ -416,7 +361,6 @@ pe_decide_sandbox(struct pe_proc *proc, struct eventdev_hdr *hdr)
 		free(dump);
 	if (context)
 		free(context);
-	free(sbevent);
 
 	reply->ask = 0;
 	reply->rule_id = final.rule_id;
@@ -430,8 +374,13 @@ pe_decide_sandbox(struct pe_proc *proc, struct eventdev_hdr *hdr)
 		struct pe_proc_ident	*pident = pe_proc_ident(proc);
 		reply->ask = 1;
 		reply->timeout = 300;
-		reply->csum = pident->csum;
-		reply->path = pident->pathhint;
+		if (pident) {
+			reply->csum = pident->csum;
+			reply->path = pident->pathhint;
+		} else {
+			reply->csum = NULL;
+			reply->path = NULL;
+		}
 	}
 	DEBUG(DBG_SANDBOX, "<pe_decide_sandbox");
 	return reply;
