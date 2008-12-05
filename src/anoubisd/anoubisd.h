@@ -247,15 +247,6 @@ void	send_lognotify(struct eventdev_hdr *, u_int32_t, u_int32_t, u_int32_t,
 	    u_int32_t);
 void	send_policychange(u_int32_t uid, u_int32_t prio);
 
-struct credentials {
-	uid_t   euid;
-	gid_t   egid;
-	gid_t   groups[NGROUPS_MAX];
-	int     ngroups;
-};
-int	restore_uid(struct credentials *cred);
-int	switch_uid(uid_t uid, struct credentials *cred);
-
 #ifndef S_SPLINT_S
 #define DEBUG(flag, ...) {if (flag & debug_flags) log_debug(__VA_ARGS__);}
 #else

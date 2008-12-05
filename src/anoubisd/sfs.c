@@ -90,44 +90,6 @@ struct sfs_cert	*sfs_pubkey_get_by_keyid(unsigned char *keyid, int klen);
 static void	 sfs_cert_flush_db(struct sfs_cert_db *sc);
 static int	 sfs_cert_load_db(const char *, struct sfs_cert_db *);
 
-#if 0
-
-/*
- * NOTE CEH: We keep this function ifdef'ed out for the moment because we
- * NOTE CEH: might need something like this again once we support file change
- * NOTE CEH: notifications based on checksums. However, PLEASE think twice
- * NOTE CEH: before reusing this function because its use is most likely a
- * NOTE CEH: hint that there is a design flaw somewhere.
- * NOTE CEH: Additionally this function might cause a DOS on the anoubisd
- * NOTE CEH: because calling open on a large file might trigger checksum
- * NOTE CEH: calculation in the kernel.
- */
-
-/*
- * NOTE: This function is not reentrant for several reasons:
- * - Both credentials and buf can be quite large (65k supplementary group
- *   IDs on Linux) and are thus declared static.
- * - The switch_uid/restore_uid pair of functions is not reentrant either.
- */
-static int
-sfs_open(const char *filename, uid_t auth_uid)
-{
-	static struct credentials	savedcred;
-	int fd;
-	if (switch_uid(auth_uid, &savedcred) < 0)
-		return -1;
-	fd = open(filename, O_RDONLY);
-	if (restore_uid(&savedcred) < 0) {
-		log_warnx("FATAL: Cannot restore credentials");
-		master_terminate(EPERM);
-		return -1;
-	}
-	if (fd < 0)
-		return -1;
-	return fd;
-}
-#endif
-
 int
 check_for_uid(const char *path)
 {
@@ -338,14 +300,6 @@ convert_user_path(const char * path, char **dir, int is_dir)
 {
 	return __convert_user_path(path, dir, is_dir, 0);
 }
-
-#if 0	/* Not used yet. ifdef'ed out to avoid a warning */
-static int
-convert_user_path_chroot(const char * path, char **dir, int is_dir)
-{
-	return __convert_user_path(path, dir, is_dir, 1);
-}
-#endif
 
 static int
 __sfs_checksumop(const char *path, unsigned int operation, uid_t uid,

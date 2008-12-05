@@ -77,13 +77,11 @@ anoubisd_SOURCES= \
 	pe_sfscache.c \
 	pe_sandbox.c \
 	pe_pubkey.c \
-	printconf.c \
 	session.c \
 	log.c \
 	amsg.c \
 	aqueue.c \
 	sfs.c \
-	uidswap.c \
 	kernelcache.c \
 	anoubisd.h \
 	amsg.h \
@@ -104,9 +102,7 @@ anoubisd_SOURCES_flawfinder= \
 	pe_sfscache.c_flawfinder \
 	pe_sandbox.c_flawfinder \
 	pe_pubkey.c_flawfinder \
-	printconf.c_flawfinder \
 	session.c_flawfinder \
-	uidswap.c_flawfinder \
 	log.c_flawfinder \
 	amsg.c_flawfinder \
 	aqueue.c_flawfinder \
@@ -130,9 +126,7 @@ anoubisd_SOURCES_lint= \
 	pe_sfscache.c_lint \
 	pe_sandbox.c_lint \
 	pe_pubkey.c_lint \
-	printconf.c_lint \
 	session.c_lint \
-	uidswap.c_lint \
 	log.c_lint \
 	sfs.c_lint \
 	kernelcache.c_lint
@@ -149,9 +143,7 @@ anoubisd_SOURCES_splint= \
 	pe_sfscache.c_splint \
 	pe_sandbox.c_splint \
 	pe_pubkey.c_splint \
-	printconf.c_splint \
 	session.c_splint \
-	uidswap.c_splint \
 	log.c_splint \
 	amsg.c_splint \
 	aqueue.c_splint \
