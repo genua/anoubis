@@ -193,34 +193,38 @@ ModSfsMainPanelImpl::OnSfsMainValidateButtonClicked(wxCommandEvent&)
 void
 ModSfsMainPanelImpl::OnSfsMainApplyButtonClicked(wxCommandEvent&)
 {
-	int selection = SfsMainListCtrl->GetNextItem(-1,
-	    wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED);
+	int selection = -1;
 
-	if (selection == -1) {
-		/* No selection */
-		return;
-	}
+	while (true) {
+		bool result = false;
 
-	bool result = false;
+		selection = SfsMainListCtrl->GetNextItem(selection,
+		    wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED);
 
-	switch (SfsMainActionChoice->GetCurrentSelection()) {
-	case 0:
-		result = sfsCtrl_->registerChecksum(selection);
-		break;
-	case 1:
-		result = sfsCtrl_->unregisterChecksum(selection);
-		break;
-	case 2:
-		result = sfsCtrl_->validate(selection);
-		break;
-	case 3:
-		result = sfsCtrl_->updateChecksum(selection);
-		break;
-	}
+		if (selection == -1) {
+			/* No selection */
+			break;
+		}
 
-	if (!result) {
-		wxGetApp().status(
-		    _("Error: xanoubis is not connected to the daemon"));
+		switch (SfsMainActionChoice->GetCurrentSelection()) {
+		case 0:
+			result = sfsCtrl_->registerChecksum(selection);
+			break;
+		case 1:
+			result = sfsCtrl_->unregisterChecksum(selection);
+			break;
+		case 2:
+			result = sfsCtrl_->validate(selection);
+			break;
+		case 3:
+			result = sfsCtrl_->updateChecksum(selection);
+			break;
+		}
+
+		if (!result) {
+			wxGetApp().status(
+			  _("Error: xanoubis is not connected to the daemon"));
+		}
 	}
 }
 

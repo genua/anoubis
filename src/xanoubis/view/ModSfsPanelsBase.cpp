@@ -145,7 +145,7 @@ ModSfsMainPanelBase::ModSfsMainPanelBase( wxWindow* parent, wxWindowID id, const
 	
 	bSizer14->Add( bSizer15, 0, wxEXPAND, 5 );
 	
-	SfsMainListCtrl = new wxListCtrl( pan_SfsMain, wxID_ANY, wxDefaultPosition, wxSize( -1,-1 ), wxLC_HRULES|wxLC_REPORT|wxLC_SINGLE_SEL );
+	SfsMainListCtrl = new wxListCtrl( pan_SfsMain, wxID_ANY, wxDefaultPosition, wxSize( -1,-1 ), wxLC_HRULES|wxLC_REPORT );
 	SfsMainListCtrl->SetMinSize( wxSize( 500,280 ) );
 	
 	bSizer14->Add( SfsMainListCtrl, 1, wxALL|wxEXPAND, 5 );
