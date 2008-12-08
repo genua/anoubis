@@ -98,6 +98,13 @@ typedef int (*func_char_t)(char *);
 struct cmd {
 	char	       *command;
 	func_int_t	func;
+	/*
+	 * file:
+	 * 0:	don't need file argument
+	 * 1:	need file argument, resolve relative path names
+	 *	(file must exist)
+	 * 2:	need file argument, don't resolve relative path names
+	 */
 	int		file;
 } commands[] = {
 	{ "start",   daemon_start,   0 },
@@ -105,7 +112,7 @@ struct cmd {
 	{ "status",  daemon_status,  0 },
 	{ "reload",  daemon_reload,  0 },
 	{ "load",    (func_int_t)load, 1 },
-	{ "dump",    (func_int_t)dump, 1 },
+	{ "dump",    (func_int_t)dump, 2 },
 	{ "addsum",  (func_int_t)sfs_addsum, 1},
 	{ "delsum",  (func_int_t)sfs_delsum, 1},
 	{ "getsum",  (func_int_t)sfs_getsum, 1},
@@ -216,7 +223,8 @@ main(int argc, char *argv[])
 				error = 4;
 				break;
 			}
-			if (strcmp(rulesopt, "-") != 0)
+			if (strcmp(rulesopt, "-") != 0 &&
+			    commands[i].file !=2)
 				rulesopt = realpath(rulesopt, buf);
 			if (rulesopt == NULL) {
 				perror(rulesopt);
