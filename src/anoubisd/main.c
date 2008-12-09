@@ -709,7 +709,10 @@ send_checksum_list(u_int64_t token, const char *path, u_int8_t *keyid,
 
 	sfs_dir = opendir(path);
 	if (!sfs_dir) {
-		error = errno;
+		if (errno == ENOENT)
+			error = 0;
+		else
+			error = errno;
 		goto err;
 	}
 
