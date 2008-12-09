@@ -772,9 +772,17 @@ pe_dump_alfmsg(struct alf_event *msg)
 		proto = "<unknown>";
 	}
 
-	if (asprintf(&dump, "%s %s %s from %s port %hu to %s port %hu",
-	    op, af, proto, local, lport, peer, pport) == -1) {
-		dump = NULL;
+	if ((msg->op == ALF_ACCEPT) || (msg->op == ALF_RECVMSG)) {
+		/* switch local and peer */
+		if (asprintf(&dump, "%s %s %s from %s port %hu to %s port %hu",
+		    op, af, proto, peer, pport, local, lport) == -1) {
+			dump = NULL;
+		}
+	} else {
+		if (asprintf(&dump, "%s %s %s from %s port %hu to %s port %hu",
+		    op, af, proto, local, lport, peer, pport) == -1) {
+			dump = NULL;
+		}
 	}
 
 	return (dump);
