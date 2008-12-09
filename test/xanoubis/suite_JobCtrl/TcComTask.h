@@ -42,17 +42,40 @@ class TcComTask : public TestHandler
 		int getTestResult() const;
 
 	protected:
-		void OnRegister(TaskEvent &);
-		void OnPolicyReceived(TaskEvent &);
-		void OnPolicySend(TaskEvent &);
-		void OnCsumAdd(TaskEvent &);
-		void OnCsumGet(TaskEvent &);
-		void OnCsumDel(TaskEvent &);
-		void OnSfsList(TaskEvent &);
+		void nextTest();
+
+		void setupTestRegister(void);
+		void onTestRegister(TaskEvent &);
+
+		void setupTestUnregister(void);
+		void onTestUnregister(TaskEvent &);
+
+		void setupTestPolicyRequest(void);
+		void onTestPolicyRequest(TaskEvent &);
+
+		void setupTestPolicySend(void);
+		void onTestPolicySend(TaskEvent &);
+
+		void setupTestCsumAdd(void);
+		void onTestCsumAdd(TaskEvent &);
+
+		void setupTestCsumGet(void);
+		void onTestCsumGet(TaskEvent &);
+
+		void setupTestCsumGetNoSuchFile(void);
+		void onTestCsumGetNoSuchFile(TaskEvent &);
+
+		void setupTestSfsListNotEmpty(void);
+		void onTestSfsListNotEmpty(TaskEvent &);
+
+		void setupTestCsumDel(void);
+		void onTestCsumDel(TaskEvent &);
+
+		void setupTestSfsListEmpty(void);
+		void onTestSfsListEmpty(TaskEvent &);
 
 	private:
-		int			policyRequestCounter_;
-		int			csumListCounter_;
+		int			testCounter_;
 		bool			exit_;
 		int			result_;
 

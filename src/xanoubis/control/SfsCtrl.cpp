@@ -415,13 +415,20 @@ checksum for %s."), task->getComTaskResult(), task->getFile().c_str());
 	}
 
 	/* Recieve checksum from task */
-	task->getCsum(cs, ANOUBIS_CS_LEN);
-
-	/* Copy checksum intp SfsEntry */
 	SfsEntry &entry = sfsDir_.getEntry(idx);
-	if (entry.setDaemonCsum(cs)) {
-		/* Checksum attribute has changed, inform any listener */
-		sendEntryChangedEvent(idx);
+
+	if (task->getCsum(cs, ANOUBIS_CS_LEN) == ANOUBIS_CS_LEN) {
+		/* File has a checksum, copy into model */
+		if (entry.setDaemonCsum(cs)) {
+			/* Checksum attribute has changed, inform any listener */
+			sendEntryChangedEvent(idx);
+		}
+	} else {
+		/* No checksum, reset in model */
+		if (entry.setDaemonCsum(0)) {
+			/* Checksum attribute has changed, inform any listener */
+			sendEntryChangedEvent(idx);
+		}
 	}
 }
 

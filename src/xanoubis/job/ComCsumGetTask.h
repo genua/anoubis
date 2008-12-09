@@ -50,6 +50,10 @@
  * If the task was successfully executed, you can ask for the checksum using
  * ComCsumGetTask::getCsum().
  *
+ * If no checksum exists for the requested file, getResultDetails() will return
+ * ENOENT, getCsum() will not copy a checksum (returns 0) and getCsumStr() will
+ * return an empty string.
+ *
  * Supported error-codes:
  * - <code>RESULT_COM_ERROR</code> Communication error. Failed to create a
  *   transaction or to fetch the answer-message.
@@ -111,16 +115,20 @@ class ComCsumGetTask : public ComTask
 		 * @param csum Destination buffer, where the resulting checksum
 		 *             is written.
 		 * @param size Size of destination buffer <code>csum</code>.
-		 *             Specifies max. number of byte to be written.
-		 * @return Number of bytes written to the destination buffer.
-		 *         Number of bytes cannot be greater than
-		 *         <code>ANOUBIS_CS_LEN</code>.
+		 * @return On success, <code>ANOUBIS_CS_LEN</code> is returned.
+		 *         <code>ANOUBIS_CS_LEN</code>. A return-code of 0
+		 *         means, that nothing was written. It might happen,
+		 *         if the requested file does not have a registered
+		 *         checksum or the destination buffer is not large
+		 *         enough to hold the whole checksum.
 		 */
 		size_t getCsum(u_int8_t *, size_t) const;
 
 		/**
 		 * Returns an hex-string representation of getCsum().
-		 * @return Hex-string of getCsum().
+		 * @return Hex-string of getCsum(). An empty string is
+		 *         returned, if the requested file foes not have a
+		 *         registered checksum.
 		 * @note The resulting string does <b>not</b> start with the
 		 *       leading hex-indicator <code>0x</code>!
 		 * @see getCsum()

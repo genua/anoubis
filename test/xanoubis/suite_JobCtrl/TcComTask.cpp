@@ -46,30 +46,22 @@
 
 #define trace(format, args...) fprintf (stderr, format , ##args)
 
+#define assertUnless(expr, msg, args...)	\
+	if (!expr) {				\
+		fprintf(stderr, msg, ##args);	\
+		result_ = __LINE__;		\
+		exit_ = true;			\
+		return;				\
+	}
+
 const wxString policyCsum =
     wxT("09c2012a32bb5b776c8e0adc186df5b45279dd87dda249e877ec876b33d190f9");
 
 TcComTask::TcComTask()
 {
-	this->policyRequestCounter_ = 0;
-	this->csumListCounter_ = 0;
+	this->testCounter_ = 0;
 	this->exit_ = false;
 	this->result_ = 0;
-
-	JobCtrl::getInstance()->Connect(anTASKEVT_REGISTER,
-	    wxTaskEventHandler(TcComTask::OnRegister), NULL, this);
-	JobCtrl::getInstance()->Connect(anTASKEVT_POLICY_REQUEST,
-	    wxTaskEventHandler(TcComTask::OnPolicyReceived), NULL, this);
-	JobCtrl::getInstance()->Connect(anTASKEVT_POLICY_SEND,
-	    wxTaskEventHandler(TcComTask::OnPolicySend), NULL, this);
-	JobCtrl::getInstance()->Connect(anTASKEVT_CSUM_ADD,
-	    wxTaskEventHandler(TcComTask::OnCsumAdd), NULL, this);
-	JobCtrl::getInstance()->Connect(anTASKEVT_CSUM_GET,
-	    wxTaskEventHandler(TcComTask::OnCsumGet), NULL, this);
-	JobCtrl::getInstance()->Connect(anTASKEVT_CSUM_DEL,
-	    wxTaskEventHandler(TcComTask::OnCsumDel), NULL, this);
-	JobCtrl::getInstance()->Connect(anTASKEVT_SFS_LIST,
-	    wxTaskEventHandler(TcComTask::OnSfsList), NULL, this);
 
 	trace("TcComTask::TcComTask finished\n");
 }
@@ -82,13 +74,7 @@ TcComTask::~TcComTask()
 void
 TcComTask::startTest()
 {
-	trace("Enter TcComTask::startTest\n");
-
-	ComRegistrationTask *t = new ComRegistrationTask;
-	t->setAction(ComRegistrationTask::ACTION_REGISTER);
-
-	trace("Scheduling ComRegistrationTask: %p\n", t);
-	JobCtrl::getInstance()->addTask(t);
+	nextTest();
 }
 
 bool
@@ -104,91 +90,182 @@ TcComTask::getTestResult() const
 }
 
 void
-TcComTask::OnRegister(TaskEvent &event)
+TcComTask::nextTest()
 {
-	trace("Enter TcComTask::OnRegister\n");
+	JobCtrl *jobCtrl = JobCtrl::getInstance();
+
+	jobCtrl->Disconnect(anTASKEVT_REGISTER);
+	jobCtrl->Disconnect(anTASKEVT_POLICY_REQUEST);
+	jobCtrl->Disconnect(anTASKEVT_POLICY_SEND);
+	jobCtrl->Disconnect(anTASKEVT_CSUM_ADD);
+	jobCtrl->Disconnect(anTASKEVT_CSUM_GET);
+	jobCtrl->Disconnect(anTASKEVT_CSUM_DEL);
+	jobCtrl->Disconnect(anTASKEVT_SFS_LIST);
+
+	testCounter_++;
+
+	switch (testCounter_) {
+	case 1:
+		setupTestRegister();
+		break;
+	case 2:
+		setupTestPolicyRequest();
+		break;
+	case 3:
+		setupTestPolicySend();
+		break;
+	case 4:
+		setupTestPolicyRequest();
+		break;
+	case 5:
+		setupTestCsumAdd();
+		break;
+	case 6:
+		setupTestCsumGet();
+		break;
+	case 7:
+		setupTestCsumGetNoSuchFile();
+		break;
+	case 8:
+		setupTestSfsListNotEmpty();
+		break;
+	case 9:
+		setupTestCsumDel();
+		break;
+	case 10:
+		setupTestSfsListEmpty();
+		break;
+	case 11:
+		setupTestUnregister();
+		break;
+	default:
+		exit_ = true;
+		break;
+	}
+}
+
+void
+TcComTask::setupTestRegister(void)
+{
+	trace("Enter TcComTask::setupTestRegister\n");
+
+	JobCtrl::getInstance()->Connect(anTASKEVT_REGISTER,
+	    wxTaskEventHandler(TcComTask::onTestRegister), NULL, this);
+
+	ComRegistrationTask *t = new ComRegistrationTask;
+	t->setAction(ComRegistrationTask::ACTION_REGISTER);
+
+	trace("Scheduling ComRegistrationTask: %p\n", t);
+	JobCtrl::getInstance()->addTask(t);
+
+	trace("Leaving TcComTask::setupTestRegister\n");
+}
+
+void
+TcComTask::onTestRegister(TaskEvent &event)
+{
+	trace("Enter TcComTask::onTestRegister\n");
 
 	ComRegistrationTask *t =
 	    dynamic_cast<ComRegistrationTask*>(event.getTask());
 	trace("ComRegistrationTask = %p\n", t);
 
-	if (t->getComTaskResult() != ComTask::RESULT_SUCCESS) {
-		trace("ComTaskResult == %i\n", t->getComTaskResult());
+	assertUnless(t->getAction() == ComRegistrationTask::ACTION_REGISTER,
+	    "No registration-task!\n");
 
-		switch (t->getAction()) {
-		case ComRegistrationTask::ACTION_REGISTER:
-			trace("Registration failed: %i\n",
-			    t->getComTaskResult());
-			break;
-		case ComRegistrationTask::ACTION_UNREGISTER:
-			trace("Unregistration failed: %i\n",
-			    t->getComTaskResult());
-			break;
-		}
+	assertUnless(t->getComTaskResult() == ComTask::RESULT_SUCCESS,
+	    "Registration failed!\n"
+	    " * ComTaskResult = %i\n"
+	    " * ResultDetails = %i\n",
+	    t->getComTaskResult(), t->getResultDetails());
 
-		result_ = __LINE__;
-		exit_ = true;
-		return;
-	}
+	assertUnless(t->getResultDetails() == 0,
+	    "ResultDetails: %s (%i)\n",
+	    strerror(t->getResultDetails()), t->getResultDetails());
 
-	if (t->getResultDetails() != 0) {
-		trace("ResultDetails: %s (%i)\n",
-		    strerror(t->getResultDetails()), t->getResultDetails());
-
-		result_ = __LINE__;
-		exit_ = true;
-		return;
-	}
-
-	exit_ = (t->getAction() != ComRegistrationTask::ACTION_REGISTER);
 	delete t;
 
-	trace("exit_ = %i\n", exit_);
-
-	if (!exit_) {
-		/*
-		 * Start with ComPolicyRequestTask
-		 */
-		ComPolicyRequestTask *next = new ComPolicyRequestTask;
-		next->setRequestParameter(1, getuid());
-
-		trace("Scheduling ComPolicyRequestTask: %p\n", next);
-		JobCtrl::getInstance()->addTask(next);
-	}
-
-	trace("Leaving TcComTask::OnRegister\n");
+	trace("Leaving TcComTask::onTestRegister\n");
+	nextTest();
 }
 
 void
-TcComTask::OnPolicyReceived(TaskEvent &event)
+TcComTask::setupTestUnregister(void)
 {
-	trace("Enter TcComTask::OnPolicyReceived\n");
+	trace("Enter TcComTask::setupTestUnregister\n");
 
-	policyRequestCounter_++;
-	trace("policyRequestCounter_ = %i\n", policyRequestCounter_);
+	JobCtrl::getInstance()->Connect(anTASKEVT_REGISTER,
+	    wxTaskEventHandler(TcComTask::onTestUnregister), NULL, this);
+
+	ComRegistrationTask *t = new ComRegistrationTask;
+	t->setAction(ComRegistrationTask::ACTION_UNREGISTER);
+
+	trace("Scheduling ComRegistrationTask: %p\n", t);
+	JobCtrl::getInstance()->addTask(t);
+
+	trace("Leaving TcComTask::setupTestUnregister\n");
+}
+
+void
+TcComTask::onTestUnregister(TaskEvent &event)
+{
+	trace("Enter TcComTask::onTestUnregister\n");
+
+	ComRegistrationTask *t =
+	    dynamic_cast<ComRegistrationTask*>(event.getTask());
+	trace("ComRegistrationTask = %p\n", t);
+
+	assertUnless(t->getAction() == ComRegistrationTask::ACTION_UNREGISTER,
+	    "No unregistration-task!\n");
+
+	assertUnless(t->getComTaskResult() == ComTask::RESULT_SUCCESS,
+	    "Registration failed!\n"
+	    " * ComTaskResult = %i\n"
+	    " * ResultDetails = %i\n",
+	    t->getComTaskResult(), t->getResultDetails());
+
+	assertUnless(t->getResultDetails() == 0,
+	    "ResultDetails: %s (%i)\n",
+	    strerror(t->getResultDetails()), t->getResultDetails());
+
+	delete t;
+
+	trace("TcComTask::onTestUnregister\n");
+	nextTest();
+}
+
+void
+TcComTask::setupTestPolicyRequest(void)
+{
+	trace("Enter TcComTask::setupTestPolicyRequest\n");
+
+	JobCtrl::getInstance()->Connect(anTASKEVT_POLICY_REQUEST,
+	    wxTaskEventHandler(TcComTask::onTestPolicyRequest), NULL, this);
+
+	ComPolicyRequestTask *next = new ComPolicyRequestTask;
+	next->setRequestParameter(1, getuid());
+
+	trace("Scheduling ComPolicyRequestTask: %p\n", next);
+	JobCtrl::getInstance()->addTask(next);
+
+	trace("Leaving TcComTask::setupTestPolicyRequest\n");
+}
+
+void
+TcComTask::onTestPolicyRequest(TaskEvent &event)
+{
+	trace("Enter TcComTask::onTestPolicyRequest\n");
 
 	ComPolicyRequestTask *t =
 	    dynamic_cast<ComPolicyRequestTask*>(event.getTask());
 	trace("ComPolicyRequestTask = %p\n", t);
 
-	if (t->getComTaskResult() != ComTask::RESULT_SUCCESS) {
-		trace("Failed to receive a policy: %i\n",
-		    t->getComTaskResult());
-		result_ = __LINE__;
-		exit_ = true;
+	assertUnless(t->getComTaskResult() == ComTask::RESULT_SUCCESS,
+	    "Failed to receive a policy: %i\n", t->getComTaskResult());
 
-		delete (t);
-		return;
-	}
-
-	if (t->getResultDetails() != 0) {
-		trace("ResultDetails: %s (%i)\n",
-		    strerror(t->getResultDetails()), t->getResultDetails());
-
-		result_ = __LINE__;
-		exit_ = true;
-		return;
-	}
+	assertUnless(t->getResultDetails() == 0,
+	    "ResultDetails: %s (%i)\n",
+	    strerror(t->getResultDetails()), t->getResultDetails());
 
 	struct apn_ruleset *ruleset = t->getPolicyApn();
 	wxString content = getPolicyAsString(ruleset);
@@ -201,114 +278,104 @@ TcComTask::OnPolicyReceived(TaskEvent &event)
 
 	delete t;
 
-	if (content.Strip(wxString::both) != cmp.Strip(wxString::both)) {
-		trace("Unexpected policy received!\n%s\n",
-			(const char*)content.fn_str());
-		result_ = __LINE__;
-		exit_ = true;
-		return;
-	}
+	assertUnless(
+	    content.Strip(wxString::both) == cmp.Strip(wxString::both),
+	    "Unexpected policy received!\n%s\n",
+	    (const char*)content.fn_str());
 
-	if (policyRequestCounter_ == 1) {
-		/*
-		 * Continue with ComPolicySendTask
-		 */
-		wxString file = wxFileName::GetHomeDir() + wxT("/policy");
-
-		ComPolicySendTask *next = new ComPolicySendTask;
-		next->setPolicy(getPolicyFromFile(file), getuid(), 1);
-
-		trace("Scheduling ComPolicySendTask: %p\n", next);
-		JobCtrl::getInstance()->addTask(next);
-	}
-	else {
-		/*
-		 * Continue with ComCsumAddTask
-		 */
-		wxString file = wxFileName::GetHomeDir() + wxT("/policy");
-
-		ComCsumAddTask *next = new ComCsumAddTask;
-		next->setFile(file);
-
-		trace("Scheduling ComCsumAddTask: %p\n", next);
-		JobCtrl::getInstance()->addTask(next);
-	}
-
-	trace("Leaving TcComTask::OnPolicyReceived\n");
+	trace("Leaving TcComTask::onTestPolicyRequest\n");
+	nextTest();
 }
 
 void
-TcComTask::OnPolicySend(TaskEvent &event)
+TcComTask::setupTestPolicySend(void)
 {
-	trace("Enter TcComTask::OnPolicySend\n");
+	trace("Enter TcComTask::setupTestPolicySend\n");
+
+	JobCtrl::getInstance()->Connect(anTASKEVT_POLICY_SEND,
+	    wxTaskEventHandler(TcComTask::onTestPolicySend), NULL, this);
+
+	wxString file = wxFileName::GetHomeDir() + wxT("/policy");
+
+	ComPolicySendTask *next = new ComPolicySendTask;
+	next->setPolicy(getPolicyFromFile(file), getuid(), 1);
+
+	trace("Scheduling ComPolicySendTask: %p\n", next);
+	JobCtrl::getInstance()->addTask(next);
+
+	trace("Leaving TcComTask::setupTestPolicySend\n");
+}
+
+void
+TcComTask::onTestPolicySend(TaskEvent &event)
+{
+	trace("Enter TcComTask::onTestPolicySend\n");
 
 	ComPolicySendTask *t =
 	    dynamic_cast<ComPolicySendTask*>(event.getTask());
 	trace("ComPolicySendTask = %p\n", t);
 
-	if (t->getComTaskResult() != ComTask::RESULT_SUCCESS) {
-		trace("Failed to send a policy: %i\n", t->getComTaskResult());
-		result_ = __LINE__;
-		exit_ = true;
+	assertUnless(t->getComTaskResult() == ComTask::RESULT_SUCCESS,
+	    "Failed to send a policy: %i\n", t->getComTaskResult());
 
-		delete (t);
-		return;
-	}
-
-	if (t->getResultDetails() != 0) {
-		trace("ResultDetails: %s (%i)\n",
-		    strerror(t->getResultDetails()), t->getResultDetails());
-
-		result_ = __LINE__;
-		exit_ = true;
-		return;
-	}
+	assertUnless(t->getResultDetails() == 0,
+	    "ResultDetails: %s (%i)\n",
+	    strerror(t->getResultDetails()), t->getResultDetails());
 
 	delete t;
 
-	/*
-	 * Receive the policy again
-	 */
-	ComPolicyRequestTask *next = new ComPolicyRequestTask;
-	next->setRequestParameter(1, getuid());
-
-	trace("Scheduling ComPolicyRequestTask; %p\n", next);
-	JobCtrl::getInstance()->addTask(next);
-
-	trace("Leaving TcComTask::OnPolicySend\n");
+	trace("Leaving TcComTask::onTestPolicySend\n");
+	nextTest();
 }
 
 void
-TcComTask::OnCsumAdd(TaskEvent &event)
+TcComTask::setupTestCsumAdd(void)
 {
-	trace("Enter TcComTask::OnCsumAdd\n");
+	trace("Enter TcComTask::setupTestCsumAdd\n");
+
+	JobCtrl::getInstance()->Connect(anTASKEVT_CSUM_ADD,
+	    wxTaskEventHandler(TcComTask::onTestCsumAdd), NULL, this);
+
+	wxString file = wxFileName::GetHomeDir() + wxT("/policy");
+
+	ComCsumAddTask *next = new ComCsumAddTask;
+	next->setFile(file);
+
+	trace("Scheduling ComCsumAddTask: %p\n", next);
+	JobCtrl::getInstance()->addTask(next);
+
+	trace("Leaving TcComTask::setupTestCsumAdd\n");
+}
+
+void
+TcComTask::onTestCsumAdd(TaskEvent &event)
+{
+	trace("Enter TcComTask::onTestCsumAdd\n");
 
 	ComCsumAddTask *t = dynamic_cast<ComCsumAddTask*>(event.getTask());
 	trace("ComCsumAddTask = %p\n", t);
 
-	if (t->getComTaskResult() != ComTask::RESULT_SUCCESS) {
-		trace("Failed to add a checksum: %i\n", t->getComTaskResult());
-		result_ = __LINE__;
-		exit_ = true;
+	assertUnless(t->getComTaskResult() == ComTask::RESULT_SUCCESS,
+	    "Failed to add a checksum: %i\n", t->getComTaskResult());
 
-		delete (t);
-		return;
-	}
-
-	if (t->getResultDetails() != 0) {
-		trace("ResultDetails: %s (%i)\n",
-		    strerror(t->getResultDetails()), t->getResultDetails());
-
-		result_ = __LINE__;
-		exit_ = true;
-		return;
-	}
+	assertUnless(t->getResultDetails() == 0,
+	    "ResultDetails: %s (%i)\n",
+	    strerror(t->getResultDetails()), t->getResultDetails());
 
 	delete t;
 
-	/*
-	 * Receive the checksum again
-	 */
+	trace("Leaving TcComTask::onTestCsumAdd\n");
+	nextTest();
+}
+
+void
+TcComTask::setupTestCsumGet(void)
+{
+	trace("Enter TcComTask::setupTestCsumGet\n");
+
+	JobCtrl::getInstance()->Connect(anTASKEVT_CSUM_GET,
+	    wxTaskEventHandler(TcComTask::onTestCsumGet), NULL, this);
+
 	wxString file = wxFileName::GetHomeDir() + wxT("/policy");
 
 	ComCsumGetTask *next = new ComCsumGetTask;
@@ -317,106 +384,116 @@ TcComTask::OnCsumAdd(TaskEvent &event)
 	trace("Scheduling ComCsumGetTask: %p\n", next);
 	JobCtrl::getInstance()->addTask(next);
 
-	trace("Leaving TcComTask::OnCsumAdd\n");
+	trace("Leaving TcComTask::setupTestCsumGet\n");
 }
 
 void
-TcComTask::OnCsumGet(TaskEvent &event)
+TcComTask::onTestCsumGet(TaskEvent &event)
 {
-	trace("TcComTask::OnCsumGet\n");
+	trace("TcComTask::onTestCsumGet\n");
 
 	ComCsumGetTask *t = dynamic_cast<ComCsumGetTask*>(event.getTask());
 	trace("ComCsumGetTask = %p\n", t);
 
-	if (t->getComTaskResult() != ComTask::RESULT_SUCCESS) {
-		trace("Failed to get a checksum: %i\n", t->getComTaskResult());
-		result_ = __LINE__;
-		exit_ = true;
+	assertUnless(t->getComTaskResult() == ComTask::RESULT_SUCCESS,
+	    "Failed to get a checksum!\n"
+	    "ComTaskResult = %i\n"
+	    "ResultDetails = %i\n",
+	    t->getComTaskResult(), t->getResultDetails());
 
-		delete (t);
-		return;
-	}
+	assertUnless(t->getResultDetails() == 0,
+	    "ResultDetails: %s (%i)\n",
+	    strerror(t->getResultDetails()), t->getResultDetails());
 
-	if (t->getResultDetails() != 0) {
-		trace("ResultDetails: %s (%i)\n",
-		    strerror(t->getResultDetails()), t->getResultDetails());
-
-		result_ = __LINE__;
-		exit_ = true;
-		return;
-	}
+	u_int8_t cs[ANOUBIS_CS_LEN];
+	assertUnless(t->getCsum(cs, ANOUBIS_CS_LEN) == ANOUBIS_CS_LEN,
+	    "Unexpected checksum received!");
 
 	wxString csum = t->getCsumStr();
 	trace("Received checksum from task\n");
+
+	assertUnless(csum == policyCsum,
+	    "Unexpected checksum received!\n"
+	    "Is      : %s\n"
+	    "Expected: %s\n",
+	    (const char*)csum.fn_str(), (const char*)policyCsum.fn_str());
+
 	delete t;
+	trace("Leaving TcComTask::onTestCsumGet\n");
+	nextTest();
+}
 
-	if (csum != policyCsum) {
-		trace("Unexpected checksum received!\n");
-		trace("Is      : %s\n", (const char*)csum.fn_str());
-		trace("Expected: %s\n", (const char*)policyCsum.fn_str());
+void
+TcComTask::setupTestCsumGetNoSuchFile(void)
+{
+	trace("Enter TcComTask::setupTestCsumGetNoSuchFile\n");
 
-		result_ = __LINE__;
-		exit_ = true;
-		return;
-	}
+	JobCtrl::getInstance()->Connect(anTASKEVT_CSUM_GET,
+	    wxTaskEventHandler(TcComTask::onTestCsumGetNoSuchFile),
+	    NULL, this);
 
-	/*
-	 * Receive the sfs-list
-	 */
+	wxString file = wxFileName::GetHomeDir() + wxT("/PpolicyY");
+
+	ComCsumGetTask *next = new ComCsumGetTask;
+	next->setFile(file);
+
+	trace("Scheduling ComCsumGetTask: %p\n", next);
+	JobCtrl::getInstance()->addTask(next);
+
+	trace("Leaving TcComTask::setupTestCsumGetNoSuchFile\n");
+}
+
+void
+TcComTask::onTestCsumGetNoSuchFile(TaskEvent &event)
+{
+	trace("TcComTask::onTestCsumGetNoSuchFile\n");
+
+	ComCsumGetTask *t = dynamic_cast<ComCsumGetTask*>(event.getTask());
+	trace("ComCsumGetTask = %p\n", t);
+
+	assertUnless(t->getComTaskResult() == ComTask::RESULT_SUCCESS,
+	    "Failed to get a checksum!\n"
+	    "ComTaskResult = %i\n"
+	    "ResultDetails = %i\n",
+	    t->getComTaskResult(), t->getResultDetails());
+
+	assertUnless(t->getResultDetails() == 2,
+	    "ResultDetails: %s (%i)\n",
+	    strerror(t->getResultDetails()), t->getResultDetails());
+
+	u_int8_t cs[ANOUBIS_CS_LEN];
+	assertUnless(t->getCsum(cs, ANOUBIS_CS_LEN) == 0,
+	   "Task contains a checksum!\n");
+
+	assertUnless(t->getCsumStr().IsEmpty(),
+	   "Task contains a checksum-string!\n");
+
+	delete t;
+	trace("Leaving TcComTask::onTestCsumGetNoSuchFile\n");
+	nextTest();
+}
+
+void
+TcComTask::setupTestSfsListNotEmpty(void)
+{
+	trace("Enter TcComTask::setupTestSfsListNotEmpty\n");
+
+	JobCtrl::getInstance()->Connect(anTASKEVT_SFS_LIST,
+	    wxTaskEventHandler(TcComTask::onTestSfsListNotEmpty), NULL, this);
+
 	ComSfsListTask *next = new ComSfsListTask;
 	next->setRequestParameter(getuid(), wxFileName::GetHomeDir());
 
 	trace("Scheduling ComSfsListTask: %p\n", next);
 	JobCtrl::getInstance()->addTask(next);
 
-	trace("Leaving TcComTask::OnCsumGet\n");
+	trace("Leaving TcComTask::setupTestSfsListNotEmpty\n");
 }
 
 void
-TcComTask::OnCsumDel(TaskEvent &event)
+TcComTask::onTestSfsListNotEmpty(TaskEvent &event)
 {
-	trace("Enter TcComTask::OnCsumDel\n");
-
-	ComCsumDelTask *t = dynamic_cast<ComCsumDelTask*>(event.getTask());
-	trace("ComCsumDelTask = %p\n", t);
-
-	ComTask::ComTaskResult result = t->getComTaskResult();
-	trace("ComTaskResult = %i\n", result);
-
-	delete t;
-
-	if (result != ComTask::RESULT_SUCCESS) {
-		trace("Failed to remove a checksum!\n");
-		result_ = __LINE__;
-		exit_ = true;
-		return;
-	}
-
-	if (t->getResultDetails() != 0) {
-		trace("ResultDetails: %s (%i)\n",
-		    strerror(t->getResultDetails()), t->getResultDetails());
-
-		result_ = __LINE__;
-		exit_ = true;
-		return;
-	}
-
-	/*
-	 * Receive the sfs-list
-	 */
-	ComSfsListTask *next = new ComSfsListTask;
-	next->setRequestParameter(getuid(), wxFileName::GetHomeDir());
-
-	trace("Scheduling ComSfsListTask: %p\n", next);
-	JobCtrl::getInstance()->addTask(next);
-
-	trace("Leaving TcComTask::OnCsumDel\n");
-}
-
-void
-TcComTask::OnSfsList(TaskEvent &event)
-{
-	trace("TcComTask::OnSfsList\n");
+	trace("TcComTask::onTestSfsListNotEmpty\n");
 
 	ComSfsListTask *t = dynamic_cast<ComSfsListTask*>(event.getTask());
 	trace("ComSfsListTask = %p\n", t);
@@ -440,58 +517,117 @@ TcComTask::OnSfsList(TaskEvent &event)
 
 	delete t;
 
-	csumListCounter_++;
-	trace("csumListCounter_ = %i\n", csumListCounter_);
+	/* One entry expected */
+	assertUnless(result.Count() == 1,
+	    "Unexpected # of entries in sfs-list\n"
+	    "Expected: 1\n"
+	    "Is: %i\n", result.Count());
 
-	if (csumListCounter_ == 1) {
-		/* One entry expected */
-		if (result.Count() != 1) {
-			trace("Unexpected # of entries in sfs-list\n");
-			trace("Expected: 1\n");
-			trace("Is: %i\n", result.Count());
-			result_ = __LINE__;
-			exit_ = true;
-			return;
-		}
+	wxString first = result[0];
+	wxString second = wxT("policy");
+	assertUnless(first == second,
+	    "Unexpected content of sfs-list: %s\n",
+	    (const char*)result[0].fn_str());
 
-		if (result[0] != wxT("policy")) {
-			trace("Unexpected content of sfs-list: %s\n",
-			    (const char*)result[0].fn_str());
-			result_ = __LINE__;
-			exit_ = true;
-			return;
-		}
+	trace("Leaving TcComTask::onTestSfsListNotEmpty\n");
+	nextTest();
+}
 
-		/* Remove the checksum */
-		wxString file = wxFileName::GetHomeDir() + wxT("/policy");
+void
+TcComTask::setupTestCsumDel(void)
+{
+	trace("Enter TcComTask::setupTestCsumDel\n");
 
-		ComCsumDelTask *next = new ComCsumDelTask;
-		next->setFile(file);
+	JobCtrl::getInstance()->Connect(anTASKEVT_CSUM_DEL,
+	    wxTaskEventHandler(TcComTask::onTestCsumDel), NULL, this);
 
-		trace("Scheduling ComCsumDelTask: %p\n", next);
-		JobCtrl::getInstance()->addTask(next);
-	} else {
-		/* Empty list expected */
-		if (result.Count() != 0) {
-			trace("Unexpected # of entries in sfs-list\n");
-			trace("Expected: 0\n");
-			trace("Is: %i\n", result.Count());
-			result_ = __LINE__;
-			exit_ = true;
-			return;
-		}
+	wxString file = wxFileName::GetHomeDir() + wxT("/policy");
 
-		/*
-		 * Finally send UnregistrationTask
-		 */
-		ComRegistrationTask *next = new ComRegistrationTask;
-		next->setAction(ComRegistrationTask::ACTION_UNREGISTER);
+	ComCsumDelTask *next = new ComCsumDelTask;
+	next->setFile(file);
 
-		trace("Scheduling ComRegistrationTask: %p\n", next);
-		JobCtrl::getInstance()->addTask(next);
-	}
+	trace("Scheduling ComCsumDelTask: %p\n", next);
+	JobCtrl::getInstance()->addTask(next);
 
-	trace("Leaving TcComTask::OnSfsList\n");
+	trace("Leaving TcComTask::setupTestCsumDel\n");
+}
+
+void
+TcComTask::onTestCsumDel(TaskEvent &event)
+{
+	trace("Enter TcComTask::onTestCsumDel\n");
+
+	ComCsumDelTask *t = dynamic_cast<ComCsumDelTask*>(event.getTask());
+	trace("ComCsumDelTask = %p\n", t);
+
+	assertUnless(t->getComTaskResult() == ComTask::RESULT_SUCCESS,
+	    "Failed to remove a checksum!\n"
+	    "ComTaskResult = %i\n"
+	    "ResultDetails = %i\n",
+	    t->getComTaskResult(), t->getResultDetails());
+
+	assertUnless(t->getResultDetails() == 0,
+	    "ResultDetails: %s (%i)\n",
+	    strerror(t->getResultDetails()), t->getResultDetails());
+
+	delete t;
+
+	trace("Leaving TcComTask::onTestCsumDel\n");
+	nextTest();
+}
+
+void
+TcComTask::setupTestSfsListEmpty(void)
+{
+	trace("Enter TcComTask::setupTestSfsListEmpty\n");
+
+	JobCtrl::getInstance()->Connect(anTASKEVT_SFS_LIST,
+	    wxTaskEventHandler(TcComTask::onTestSfsListEmpty), NULL, this);
+
+	ComSfsListTask *next = new ComSfsListTask;
+	next->setRequestParameter(getuid(), wxFileName::GetHomeDir());
+
+	trace("Scheduling ComSfsListTask: %p\n", next);
+	JobCtrl::getInstance()->addTask(next);
+
+	trace("Leaving TcComTask::setupTestSfsListEmpty\n");
+}
+
+void
+TcComTask::onTestSfsListEmpty(TaskEvent &event)
+{
+	trace("TcComTask::onTestSfsListEmpty\n");
+
+	ComSfsListTask *t = dynamic_cast<ComSfsListTask*>(event.getTask());
+	trace("ComSfsListTask = %p\n", t);
+
+	wxArrayString result = t->getFileList();
+	trace("sfs-list-size: %i\n", result.Count());
+
+	/*
+	 * XXX
+	 * Will return ENOENT if result.Count() is 0.
+	 * Known error in anoubisd (#924)
+	 */
+	/*if (t->getResultDetails() != 0) {
+		trace("ResultDetails: %s (%i)\n",
+		    strerror(t->getResultDetails()), t->getResultDetails());
+
+		result_ = __LINE__;
+		exit_ = true;
+		return;
+	}*/
+
+	delete t;
+
+	/* Empty list expected */
+	assertUnless(result.Count() == 0,
+	    "Unexpected # of entries in sfs-list\n"
+	    "Expected: 0\n"
+	    "Is: %i\n", result.Count());
+
+	trace("Leaving TcComTask::onTestSfsListEmpty\n");
+	nextTest();
 }
 
 wxString

@@ -95,7 +95,14 @@ ComCsumGetTask::exec(void)
 		}
 	}
 
-	if (ta->result) {
+	if (ta->result == ENOENT) {
+		/* No checksum */
+		setComTaskResult(RESULT_SUCCESS);
+		setResultDetails(ta->result);
+		anoubis_transaction_destroy(ta);
+		return;
+	} else if (ta->result) {
+		/* Any other error-code is interpreted as an real error */
 		setComTaskResult(RESULT_REMOTE_ERROR);
 		setResultDetails(ta->result);
 		anoubis_transaction_destroy(ta);
@@ -107,7 +114,7 @@ ComCsumGetTask::exec(void)
 	anoubis_transaction_destroy(ta);
 
 	if(!reqmsg || !VERIFY_LENGTH(reqmsg,
-	    sizeof(Anoubis_PolicyReplyMessage)) ||
+	    sizeof(Anoubis_PolicyReplyMessage) + ANOUBIS_CS_LEN) ||
 	    get_value(reqmsg->u.policyreply->error) != 0) {
 		setComTaskResult(RESULT_REMOTE_ERROR);
 		return;
@@ -122,23 +129,32 @@ ComCsumGetTask::exec(void)
 size_t
 ComCsumGetTask::getCsum(u_int8_t *csum, size_t size) const
 {
-	/* How many bytes to write? */
-	size_t n = (size < ANOUBIS_CS_LEN) ? size : ANOUBIS_CS_LEN;
+	if (getComTaskResult() == RESULT_SUCCESS && getResultDetails() == 0) {
+		if (size >= ANOUBIS_CS_LEN) {
+			memcpy(csum, this->cs_, ANOUBIS_CS_LEN);
+			return (ANOUBIS_CS_LEN);
+		}
+	}
 
-	memcpy(csum, this->cs_, n);
-
-	return (n);
+	/*
+	 * No checksumk received from anoubisd or destination-buffer not large
+	 * enough.
+	 */
+	return (0);
 }
 
 wxString
 ComCsumGetTask::getCsumStr(void) const
 {
-	wxString str;
+	if (getComTaskResult() == RESULT_SUCCESS && getResultDetails() == 0) {
+		wxString str;
 
-	for (int i = 0; i < ANOUBIS_CS_LEN; i++)
-		str += wxString::Format(wxT("%.2x"), this->cs_[i]);
+		for (int i = 0; i < ANOUBIS_CS_LEN; i++)
+			str += wxString::Format(wxT("%.2x"), this->cs_[i]);
 
-	return (str);
+		return (str);
+	} else
+		return (wxEmptyString);
 }
 
 void
