@@ -1,5 +1,5 @@
 %{
-/*	$Id: 8dd7ca,v 1.2 2008/08/29 12:34:09 ehrhardt Exp $	*/
+/*	$Id: 8dd7ca,v 1.3 2008/12/10 08:26:29 fritsch Exp $	*/
 /*	$OpenBSD: date.y,v 1.18 2008/02/16 01:00:00 cnst Exp $	*/
 
 /*
@@ -25,14 +25,13 @@
  * diffs to following versions as small as possible.
  */
 
-#include <sys/timeb.h>
-
+#include <stdio.h>
+#include <time.h>
 #include <ctype.h>
 #include <string.h>
-#include <stdio.h> /* RD: Appended */
-#include <time.h> /* RD: Appended */
 
-/*#include "cvs.h"*/ /* RD: Removed */
+/* Requires time.h on OpenBSD */
+#include <sys/timeb.h>
 
 #define YEAR_EPOCH	1970
 #define YEAR_TMORIGIN	1900
