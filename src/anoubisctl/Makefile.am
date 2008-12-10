@@ -26,6 +26,8 @@
 
 sbin_PROGRAMS = anoubisctl
 
+LIBS += $(SSL_LIBS)
+
 if STATIC_LINKING
 STATIC = -static
 endif

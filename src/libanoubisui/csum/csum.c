@@ -38,6 +38,8 @@
 #include <string.h>
 #include <sys/ioctl.h>
 #include <sys/types.h>
+#include <sys/stat.h>
+
 
 #include <anoubis_msg.h>
 
@@ -47,10 +49,14 @@
 #endif
 
 #ifdef OPENBSD
+#include <sha2.h>
 #include <dev/anoubis.h>
 #endif
 
+#include <openssl/sha.h>
+
 #include "csum.h"
+
 
 int
 anoubis_csum_calc(const char *file, u_int8_t * csbuf, int *cslen)
@@ -79,6 +85,32 @@ anoubis_csum_calc(const char *file, u_int8_t * csbuf, int *cslen)
 	close(fd);
 	close(afd);
 	memcpy(csbuf, cs.csum, ANOUBIS_CS_LEN);
+	*cslen = ANOUBIS_CS_LEN;
+	return 0;
+}
+
+int
+anoubis_csum_link_calc(const char *link, u_int8_t * csbuf, int *cslen)
+{
+	SHA256_CTX	shaCtx;
+	char		buf[PATH_MAX];
+	struct stat	sb;
+	ssize_t		ret;
+
+	if (*cslen < ANOUBIS_CS_LEN)
+		return -EINVAL;
+
+	if(lstat(link, &sb) < 0)
+		return -errno;
+	if (!S_ISLNK(sb.st_mode))
+		return anoubis_csum_calc(link, csbuf, cslen);
+
+	if ((ret = readlink(link, buf, PATH_MAX)) != -1)
+		buf[ret] = '\0';
+	SHA256_Init(&shaCtx);
+	SHA256_Update(&shaCtx, buf, ret);
+	SHA256_Final(csbuf, &shaCtx);
+
 	*cslen = ANOUBIS_CS_LEN;
 	return 0;
 }

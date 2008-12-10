@@ -38,6 +38,7 @@
 __BEGIN_DECLS
 
 int	anoubis_csum_calc(const char *file, u_int8_t *cs, int *cslen);
+int	anoubis_csum_link_calc(const char *link, u_int8_t * csbuf, int *cslen);
 char**	anoubis_csum_list(struct anoubis_msg *m, int *listcnt);
 __END_DECLS
 

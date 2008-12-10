@@ -100,6 +100,7 @@
 #define SFSSIG_OPT_DEBUG2		0x0040
 #define SFSSIG_OPT_SIG			0x0080
 #define SFSSIG_OPT_SUM			0x0100
+#define SFSSIG_OPT_LN			0x0200
 
 typedef int (*func_int_t)(void);
 typedef int (*func_char_t)(char *);
@@ -157,7 +158,7 @@ usage(void)
 	 * NOTE: Capitalized options are supposed to affect system signatures
 	 * NOTE: other options letters will be used for cert signed checksums.
 	 */
-	fprintf(stderr, "usage: %s [-nrv] [-f <fileset> ]\n", __progname);
+	fprintf(stderr, "usage: %s [-nlrv] [-f <fileset> ]\n", __progname);
 	fprintf(stderr, "       [--sig | --sum] [--cert <certificate>]");
 	fprintf(stderr, "       [-k <keyfile>] command [<file>]\n");
 	/* Add System checksum */
@@ -403,8 +404,8 @@ main(int argc, char *argv[])
 {
 	unsigned char	 argcsum[SHA256_DIGEST_LENGTH];
 	unsigned int	 file_cnt = 0;
-	unsigned int	 i = 0, j;
 	struct stat	 sb;
+	unsigned int	 i = 0, j, k;
 	FILE		*fp = NULL;
 	char		*argcsumstr = NULL;
 	char		*file = NULL;
@@ -413,6 +414,8 @@ main(int argc, char *argv[])
 	char		*homepath = NULL;
 	char		*arg = NULL;
 	char		 realarg[PATH_MAX];
+	char		 linkpath[PATH_MAX];
+	char		*linkfile = NULL;
 	char		**args = NULL;
 	char		**tmp = NULL;
 	char		 ch;
@@ -430,7 +433,7 @@ main(int argc, char *argv[])
 		{ 0, 0, 0, 0 }
 	};
 
-	while ((ch = getopt_long(argc, argv, "A:URLf:k:u:ndvr",
+	while ((ch = getopt_long(argc, argv, "A:URLf:k:u:nldvr",
 	    options, &options_index)) != -1) {
 		switch (ch) {
 		case 0:
@@ -449,6 +452,9 @@ main(int argc, char *argv[])
 			break;
 		case 'r':
 			opts |= SFSSIG_OPT_TREE;
+			break;
+		case 'l':
+			opts |= SFSSIG_OPT_LN;
 			break;
 		case 'v':
 			if (opts & SFSSIG_OPT_VERBOSE)
@@ -622,7 +628,38 @@ main(int argc, char *argv[])
 		if(strcmp(command, commands[i].command) == 0) {
 			for (j = 0; j < file_cnt; j++) {
 				arg = args[j];
-				arg = realpath(arg, realarg);
+				if (opts & SFSSIG_OPT_LN) {
+					for (k = strlen(arg); k > 0; k--) {
+						if (arg[k] == '/')
+							break;
+					}
+					if (k == 0 && arg[0] != '/') {
+						linkpath[0] = '.';
+						linkpath[1] = '/';
+						linkpath[2] = '\0';
+						linkfile = arg;
+					} else {
+						k++;
+						strlcpy(linkpath, arg, PATH_MAX);
+						linkpath[k] = '\0';
+						linkfile = arg + k;
+					}
+					if (realpath(linkpath, realarg)
+					    == NULL) {
+						perror(linkpath);
+						return 1;
+					}
+					if (realarg[strlen(realarg)-1] != '/') {
+						if (asprintf(&arg, "%s/%s", realarg,
+						    linkfile) < 0)
+							return 1;
+					} else {
+						if (asprintf(&arg, "%s%s", realarg,
+						    linkfile) < 0)
+							return 1;
+					}
+				} else
+					arg = realpath(arg, realarg);
 				if (!arg) {
 					perror(args[j]);
 					continue;
@@ -828,7 +865,11 @@ sfs_add(char *file)
 			return 1;
 		}
 	}
-	ret = anoubis_csum_calc(file, cs, &len);
+	if (opts & SFSSIG_OPT_LN) {
+		ret = anoubis_csum_link_calc(file, cs, &len);
+	} else {
+		ret = anoubis_csum_calc(file, cs, &len);
+	}
 	if (ret < 0) {
 		errno = -ret;
 		perror("anoubis_csum_calc");

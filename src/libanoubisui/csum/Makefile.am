@@ -30,6 +30,8 @@ libcsum_a_SOURCES =	\
 	csum.c	\
 	csum.h
 
+LIBS += $(SSL_LIBS)
+
 bsdcompatdir   = src/bsdcompat
 libbsdcompat   = $(top_builddir)/$(bsdcompatdir)/libbsdcompat.a
 
@@ -46,10 +48,9 @@ csum_includes += -I$(top_srcdir)/$(bsdcompatdir)
 csum_dependencies += $(libbsdcompat)
 endif
 
-libcsum_a_CFLAGS = -std=gnu99 $(AM_CFLAGS)
+libcsum_a_CFLAGS = -std=gnu99 $(AM_CFLAGS) $(SSL_CFLAGS)
 libcsum_a_CPPFLAGS = $(csum_includes) $(AM_CPPFLAGS)
 libcsum_a_DEPENDENCIES	= $(csum_dependencies)
-libcsum_a_LIBADD =
 
 libcsum_a_SOURCES_lint =	\
 	csum.c_lint
