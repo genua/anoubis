@@ -89,8 +89,12 @@ pe_sb_evaluate(struct apn_rule *sbrules, struct pe_file_event *sbevent,
 		goto err;
 	}
 	TAILQ_FOREACH(sbrule, &sbrules->rule.chain, entry) {
-		char	*prefix;
-		int	 cstype;
+		char		*prefix;
+		int	 	 cstype;
+		u_int8_t	*cs;
+		u_int8_t	 csum[ANOUBIS_CS_LEN];
+		int		 ret;
+
 		if (sbrule->apn_type == APN_DEFAULT) {
 			if (!match)
 				match = sbrule;
@@ -118,40 +122,54 @@ pe_sb_evaluate(struct apn_rule *sbrules, struct pe_file_event *sbevent,
 			if (sbevent->path[len] && sbevent->path[len] != '/')
 				continue;
 		}
-		cstype = sbrule->rule.sbaccess.cstype;
-		if (cstype != SBCS_NONE) {
-			u_int8_t	*cs = NULL;
-			u_int8_t	 csum[ANOUBIS_CS_LEN];
-			int		 ret = 0;
-
-			/*
-			 * No match if checksum required but no checksum
-			 * present in event.
-			 */
-			if (sbevent->cslen != ANOUBIS_CS_LEN)
-				continue;
-			if (cstype == SBCS_CSUM) {
-				cs = sbrule->rule.sbaccess.cs.csum;
-				if (!cs)
-					goto err;
-			} else if (cstype == SBCS_UID) {
-				ret = sfshash_get_uid(sbevent->path,
-				    sbrule->rule.sbaccess.cs.uid, csum);
-				if (ret == 0)
-					cs = csum;
-			} else if (cstype == SBCS_KEY) {
-				ret = sfshash_get_key(sbevent->path,
-				    sbrule->rule.sbaccess.cs.subject, csum);
-				if (ret == 0)
-					cs = csum;
-			}
-			if (ret != 0 && ret != -ENOENT)
-				log_warnx("sfshash_get: Error %d", -ret);
-			if (!cs)
-				continue;
-			if (bcmp(cs, sbevent->cs, ANOUBIS_CS_LEN) != 0)
-				continue;
+		cstype = sbrule->rule.sbaccess.cs.type;
+		if (cstype == APN_CS_NONE) {
+			match = sbrule;
+			goto have_match;
 		}
+		/*
+		 * No match if checksum required but no checksum present
+		 * in event.
+		 */
+		if (sbevent->cslen != ANOUBIS_CS_LEN)
+			continue;
+		cs = NULL;
+		ret = 0;
+		switch (cstype) {
+		case APN_CS_CSUM:
+			cs = sbrule->rule.sbaccess.cs.value.csum;
+			if (!cs)
+				goto err;
+			break;
+		case APN_CS_UID_SELF:
+			ret = sfshash_get_uid(sbevent->path,
+			    sbevent->uid, csum);
+			if (ret == 0)
+				cs = csum;
+			break;
+		case APN_CS_UID:
+			ret = sfshash_get_uid(sbevent->path,
+			    sbrule->rule.sbaccess.cs.value.uid, csum);
+			if (ret == 0)
+				cs = csum;
+			break;
+		case APN_CS_KEY_SELF:
+			/* XXX No (yet) supported. */
+			ret = -ENOSYS;
+			break;
+		case APN_CS_KEY:
+			ret = sfshash_get_key(sbevent->path,
+			    sbrule->rule.sbaccess.cs.value.keyid, csum);
+			if (ret == 0)
+				cs = csum;
+			break;
+		}
+		if (ret != 0 && ret != -ENOENT)
+			log_warnx("sfshash_get: Error %d", -ret);
+		if (!cs)
+			continue;
+		if (bcmp(cs, sbevent->cs, ANOUBIS_CS_LEN) != 0)
+			continue;
 		match = sbrule;
 		goto have_match;
 	}

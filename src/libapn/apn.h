@@ -176,30 +176,6 @@ struct apn_sfscheck {
 	int		 log;
 };
 
-#define		APN_SBA_READ	0x0001
-#define		APN_SBA_WRITE	0x0002
-#define		APN_SBA_EXEC	0x0004
-#define		APN_SBA_ALL	0x0007
-
-/* XXX: SF,CEH: change this to use APN_CS_* and apn_subject */
-#define		SBCS_NONE	0
-#define		SBCS_CSUM	1
-#define		SBCS_UID	2
-#define		SBCS_KEY	3
-
-struct apn_sbaccess {
-	char			*path;
-	int			 cstype;
-	union {
-		char		*subject;
-		int		 uid;
-		u_int8_t	*csum;
-	} cs;
-	unsigned int		 amask;
-	int			 log;
-	int			 action;
-};
-
 #define		APN_CS_NONE	0
 #define		APN_CS_CSUM	1
 #define		APN_CS_UID	2
@@ -214,6 +190,19 @@ struct apn_subject {
 		uid_t		 uid;
 		u_int8_t	*csum;
 	} value;
+};
+
+#define		APN_SBA_READ	0x0001
+#define		APN_SBA_WRITE	0x0002
+#define		APN_SBA_EXEC	0x0004
+#define		APN_SBA_ALL	0x0007
+
+struct apn_sbaccess {
+	char			*path;
+	struct apn_subject	 cs;
+	unsigned int		 amask;
+	int			 log;
+	int			 action;
 };
 
 struct apn_sfsaccess {

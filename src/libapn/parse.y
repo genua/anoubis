@@ -1057,8 +1057,8 @@ sbaccess	: action log sbpred sbrwx {
 		;
 
 sbpred		: ANY {
-			$$.cstype = SBCS_NONE;
-			$$.cs.subject = NULL;	/* Just to be sure */
+			$$.cs.type = APN_CS_NONE;
+			$$.cs.value.keyid = NULL;	/* Just to be sure */
 			$$.path = NULL;
 		}
 		| sbpath {
@@ -1075,32 +1075,32 @@ sbpred		: ANY {
 		}
 		| sbpath sbkey {
 			$$ = $1;
-			$$.cstype = $2.cstype;
-			$$.cs.subject = $2.cs.subject;
+			$$.cs.type = $2.cs.type;
+			$$.cs.value.keyid = $2.cs.value.keyid;
 		}
 		| sbpath sbuid {
 			$$ = $1;
-			$$.cstype = $2.cstype;
-			$$.cs.uid = $2.cs.uid;
+			$$.cs.type = $2.cs.type;
+			$$.cs.value.uid = $2.cs.value.uid;
 		}
 		| sbpath sbcsum {
 			$$ = $1;
-			$$.cstype = $2.cstype;
-			$$.cs.csum = $2.cs.csum;
+			$$.cs.type = $2.cs.type;
+			$$.cs.value.csum = $2.cs.value.csum;
 		}
 		;
 
 sbpath		: PATH STRING {
 			$$.path = $2;
-			$$.cstype = SBCS_NONE;
-			$$.cs.subject = NULL;
+			$$.cs.type = APN_CS_NONE;
+			$$.cs.value.keyid = NULL;
 		}
 		;
 
 sbkey		: KEY STRING {
 			$$.path = NULL;
-			$$.cstype = SBCS_KEY;
-			$$.cs.subject = $2;
+			$$.cs.type = APN_CS_KEY;
+			$$.cs.value.keyid = $2;
 		}
 		;
 
@@ -1110,19 +1110,20 @@ sbuid		: UID NUMBER {
 				YYERROR;
 			}
 			$$.path = NULL;
-			$$.cstype = SBCS_UID;
-			$$.cs.uid = $2;
+			$$.cs.type = APN_CS_UID;
+			$$.cs.value.uid = $2;
 		};
 sbcsum		: CSUM hashspec {
 			$$.path = NULL;
 			assert(sizeof($2.value) == ANOUBIS_CS_LEN);
-			$$.cs.csum = malloc(sizeof($2.value));
-			if ($$.cs.csum == NULL) {
-				$$.cstype = SBCS_NONE;
+			$$.cs.value.csum = malloc(sizeof($2.value));
+			if ($$.cs.value.csum == NULL) {
+				$$.cs.type = APN_CS_NONE;
 				yyerror("Out of memory");
 			} else {
-				$$.cstype = SBCS_CSUM;
-				bcopy($2.value, $$.cs.csum, sizeof($2.value));
+				$$.cs.type = APN_CS_CSUM;
+				bcopy($2.value, $$.cs.value.csum,
+				    sizeof($2.value));
 			}
 		};
 

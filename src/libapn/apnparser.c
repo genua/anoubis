@@ -86,6 +86,8 @@ static int	 apn_copy_apndefault(struct apn_default *,
 		     struct apn_default *);
 static int	 apn_copy_sbaccess(struct apn_sbaccess *,
 		     struct apn_sbaccess *);
+static int	 apn_copy_subject(struct apn_subject *,
+		     struct apn_subject *);
 static struct apn_app	*apn_copy_app(struct apn_app *app);
 static struct apn_host *apn_copy_hosts(struct apn_host *);
 static struct apn_port *apn_copy_ports(struct apn_port *);
@@ -1433,30 +1435,36 @@ apn_print_sbaccess(struct apn_sbaccess *sba, FILE *file)
 		return 1;
 	if (apn_print_log(sba->log, file))
 		return 1;
-	if (!sba->path && sba->cstype == SBCS_NONE) {
+	if (!sba->path && sba->cs.type == APN_CS_NONE) {
 		fprintf(file, " any");
 	} else {
 		if (sba->path)
 			fprintf(file, " path %s", sba->path);
-		switch (sba->cstype) {
-		case SBCS_NONE:
+		switch (sba->cs.type) {
+		case APN_CS_NONE:
 			break;
-		case SBCS_UID:
-			if (sba->cs.uid < 0)
+		case APN_CS_UID_SELF:
+			/* XXX Not (yet) supported. */
+			break;
+		case APN_CS_KEY_SELF:
+			/* XXX Not (yet) supported. */
+			break;
+		case APN_CS_UID:
+			if (sba->cs.value.uid == (uid_t)-1)
 				return 1;
-			fprintf(file, " uid %d", sba->cs.uid);
+			fprintf(file, " uid %d", sba->cs.value.uid);
 			break;
-		case SBCS_CSUM:
-			if (!sba->cs.csum)
+		case APN_CS_CSUM:
+			if (!sba->cs.value.csum)
 				return 1;
 			fprintf(file, " csum ");
 			for (i=0; i<ANOUBIS_CS_LEN; ++i)
-				fprintf(file, "%02x", sba->cs.csum[i]);
+				fprintf(file, "%02x", sba->cs.value.csum[i]);
 			break;
-		case SBCS_KEY:
-			if (!sba->cs.subject)
+		case APN_CS_KEY:
+			if (!sba->cs.value.keyid)
 				return  1;
-			fprintf(file, " key %s ", sba->cs.subject);
+			fprintf(file, " key %s ", sba->cs.value.keyid);
 			break;
 		default:
 			return 1;
@@ -1547,6 +1555,29 @@ apn_free_filter(struct apn_afiltspec *filtspec)
 }
 
 /*
+ * NOTE: Does _not_ free the apn_subject structure itself because
+ * NOTE: it is usually embedded in the surrounding sturcture!
+ */
+static void
+apn_free_subject(struct apn_subject *subject)
+{
+	switch(subject->type) {
+	case APN_CS_KEY:
+		if (subject->value.keyid) {
+			free(subject->value.keyid);
+			subject->value.keyid = NULL;
+		}
+		break;
+	case APN_CS_CSUM:
+		if (subject->value.csum) {
+			free(subject->value.csum);
+			subject->value.csum = NULL;
+		}
+		break;
+	}
+}
+
+/*
  * NOTE: Does _not_ free the sbaccess structure itself because
  * NOTE: it is usually embedded in the surrounding structure!
  */
@@ -1559,16 +1590,7 @@ apn_free_sbaccess(struct apn_sbaccess *sba)
 		free(sba->path);
 		sba->path = NULL;
 	}
-	switch (sba->cstype) {
-	case SBCS_KEY:
-		free(sba->cs.subject);
-		sba->cs.subject = NULL;
-		break;
-	case SBCS_CSUM:
-		free(sba->cs.csum);
-		sba->cs.csum = NULL;
-		break;
-	}
+	apn_free_subject(&sba->cs);
 }
 
 void
@@ -1582,10 +1604,7 @@ apn_free_sfsaccess(struct apn_sfsaccess *sa)
 		sa->path = NULL;
 	}
 
-	if (sa->subject.type == APN_CS_KEY && sa->subject.value.keyid) {
-		free(sa->subject.value.keyid);
-		sa->subject.value.keyid = NULL;
-	}
+	apn_free_subject(&sa->subject);
 }
 
 void
@@ -1865,23 +1884,21 @@ apn_copy_one_rule(struct apn_rule *old)
 		}
 		break;
 	case APN_SFS_ACCESS:
-		newrule->rule.sfsaccess = old->rule.sfsaccess;
+		newrule->rule.sfsaccess.path = NULL;
 		if (old->rule.sfsaccess.path) {
 			newrule->rule.sfsaccess.path =
 			    strdup(old->rule.sfsaccess.path);
 			if (newrule->rule.sfsaccess.path == NULL)
 				goto errout;
 		}
-		if (old->rule.sfsaccess.subject.type == APN_CS_KEY &&
-		    old->rule.sfsaccess.subject.value.keyid != NULL ) {
-			newrule->rule.sfsaccess.subject.value.keyid =
-			    strdup(old->rule.sfsaccess.subject.value.keyid);
-			if (newrule->rule.sfsaccess.subject.value.keyid
-			    == NULL) {
-				if (newrule->rule.sfsaccess.path)
-					free(newrule->rule.sfsaccess.path);
-				goto errout;
-			}
+		newrule->rule.sfsaccess.valid = old->rule.sfsaccess.valid;
+		newrule->rule.sfsaccess.invalid = old->rule.sfsaccess.invalid;
+		newrule->rule.sfsaccess.unknown = old->rule.sfsaccess.unknown;
+		if (apn_copy_subject(&old->rule.sfsaccess.subject,
+		    &newrule->rule.sfsaccess.subject)) {
+		    	if (newrule->rule.sfsaccess.path)
+				free(newrule->rule.sfsaccess.path);
+			goto errout;
 		}
 		break;
 	case APN_SB_ACCESS:
@@ -2003,6 +2020,34 @@ errout:
 	return (NULL);
 }
 
+static int
+apn_copy_subject(struct apn_subject *src, struct apn_subject *dst)
+{
+	dst->type = src->type;
+	switch(src->type) {
+	case APN_CS_NONE:
+	case APN_CS_UID_SELF:
+	case APN_CS_KEY_SELF:
+		dst->value.keyid = NULL;
+		break;
+	case APN_CS_UID:
+		dst->value.uid = src->value.uid;
+		break;
+	case APN_CS_CSUM:
+		dst->value.csum = malloc(ANOUBIS_CS_LEN);
+		if (!dst->value.csum)
+			return -1;
+		memcpy(dst->value.csum, src->value.csum, ANOUBIS_CS_LEN);
+		break;
+	case APN_CS_KEY:
+		dst->value.keyid = strdup(src->value.keyid);
+		if (!dst->value.keyid)
+			return -1;
+		break;
+	}
+	return 0;
+}
+
 static struct apn_port *
 apn_copy_ports(struct apn_port *port)
 {
@@ -2070,7 +2115,6 @@ static int
 apn_copy_sbaccess(struct apn_sbaccess *src, struct apn_sbaccess *dst)
 {
 	dst->path = NULL;
-	dst->cstype = src->cstype;
 	dst->amask = src->amask;
 	dst->log = src->log;
 	dst->action = src->action;
@@ -2079,27 +2123,10 @@ apn_copy_sbaccess(struct apn_sbaccess *src, struct apn_sbaccess *dst)
 		if (dst->path == NULL)
 			return -1;
 	}
-	switch(src->cstype) {
-	case SBCS_NONE:
-		return 0;
-	case SBCS_UID:
-		dst->cs.uid = src->cs.uid;
-		return 0;
-	case SBCS_KEY:
-		dst->cs.subject = NULL;
-		if (src->cs.subject) {
-			dst->cs.subject = strdup(src->cs.subject);
-			if (dst->cs.subject == NULL)
-				break;
-		}
-		return 0;
-	case SBCS_CSUM:
-		dst->cs.csum = malloc(ANOUBIS_CS_LEN);
-		if (dst->cs.csum == NULL)
-			break;
-		bcopy(src->cs.csum, dst->cs.csum, ANOUBIS_CS_LEN);
-		return 0;
-	}
+	if (apn_copy_subject(&src->cs, &dst->cs) < 0)
+		goto errout;
+	return 0;
+errout:
 	if (dst->path) {
 		free(dst->path);
 		dst->path = NULL;
