@@ -265,19 +265,14 @@ pe_decide_sfs(struct pe_proc *proc, struct pe_file_event *fevent,
 		reply->reply = EPERM;
 	else
 		reply->reply = 0;
+	reply->len = 0;
 	if (decision == POLICY_ASK) {
-		struct pe_proc_ident	*pident = pe_proc_ident(proc);
 		reply->ask = 1;
 		reply->timeout = 300;
-		if (pident) {
-			reply->path = pident->pathhint;
-			reply->csum = pident->csum;
-		} else {
-			reply->path = NULL;
-			reply->csum = NULL;
-		}
+		reply->pident = pe_proc_ident(proc);
+		reply->ctxident = pe_context_get_ident(
+		    pe_proc_get_context(proc, reply->prio));
 	}
-	reply->len = 0;
 	return (reply);
 err:
 	reply->reply = EPERM;

@@ -429,7 +429,7 @@ pe_context_open(struct pe_proc *proc, struct eventdev_hdr *hdr)
 
 		DEBUG(DBG_PE_CTX,
 		    "pe_context_open: proc %p prio %d switching context to %s",
-		        proc, i, pident.pathhint);
+		    proc, i, pident.pathhint);
 
 		pe_context_switch(proc, i, &pident, hdr->msg_uid);
 	}
@@ -515,7 +515,7 @@ pe_context_alloc(struct apn_ruleset *rs, struct pe_proc_ident *pident)
 
 	if ((ctx = calloc(1, sizeof(struct pe_context))) == NULL) {
 		log_warn("calloc");
-		master_terminate(ENOMEM);	/* XXX HSH */
+		master_terminate(ENOMEM);
 		return NULL;
 	}
 	ctx->alfrule = NULL;
@@ -656,4 +656,12 @@ pe_context_get_sbrule(struct pe_context *ctx)
 	if (!ctx)
 		return NULL;
 	return ctx->sbrule;
+}
+
+struct pe_proc_ident *
+pe_context_get_ident(struct pe_context *ctx)
+{
+	if (!ctx)
+		return NULL;
+	return &ctx->ident;
 }

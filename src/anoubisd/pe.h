@@ -92,6 +92,7 @@ int			 pe_proc_set_sfsdisable(pid_t, uid_t);
 int			 pe_proc_is_sfsdisable(struct pe_proc *, uid_t);
 
 /* pe_context access functions */
+struct pe_proc_ident	*pe_context_get_ident(struct pe_context *);
 struct apn_rule		*pe_context_get_alfrule(struct pe_context *);
 struct apn_rule		*pe_context_get_sbrule(struct pe_context *);
 void			 pe_context_reference(struct pe_context *);

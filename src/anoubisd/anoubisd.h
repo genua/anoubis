@@ -115,6 +115,8 @@ struct anoubisd_msg_eventask
 	u_int32_t	prio;
 	u_int16_t	csumoff, csumlen;
 	u_int16_t	pathoff, pathlen;
+	u_int16_t	ctxcsumoff, ctxcsumlen;
+	u_int16_t	ctxpathoff, ctxpathlen;
 	u_int16_t	evoff, evlen;
 	char		payload[0];
 };
@@ -153,8 +155,8 @@ struct anoubisd_reply {
 	u_int32_t	flags;		/* Only for POLREPLY */
 	u_int32_t	rule_id;	/* Rule ID if ask is true */
 	u_int32_t	prio;		/* Priority of the rule. */
-	u_int8_t	*csum;
-	char		*path;
+	struct pe_proc_ident *pident;	/* Ident of active program */
+	struct pe_proc_ident *ctxident;	/* Idnet of active context */
 	short		len;		/* of following msg */
 	char		msg[0];
 };

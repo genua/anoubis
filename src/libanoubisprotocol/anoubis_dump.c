@@ -187,6 +187,10 @@ static void dump_notify(Anoubis_NotifyMessage * m, size_t len, int arg)
 	DUMP_NETU(m, pathlen);
 	DUMP_NETU(m, csumoff);
 	DUMP_NETU(m, csumlen);
+	DUMP_NETU(m, ctxpathoff);
+	DUMP_NETU(m, ctxpathlen);
+	DUMP_NETU(m, ctxcsumoff);
+	DUMP_NETU(m, ctxcsumlen);
 	if (arg) {
 		DUMP_NETU(m, error);
 		DUMP_NETU(m, loglevel);
@@ -195,6 +199,10 @@ static void dump_notify(Anoubis_NotifyMessage * m, size_t len, int arg)
 	    get_value(m->csumlen), "csum");
 	dump_part_string(m->payload, payloadlen, get_value(m->pathoff),
 	    get_value(m->pathlen), "path");
+	dump_part_hex(m->payload, payloadlen, get_value(m->ctxcsumoff),
+	    get_value(m->ctxcsumlen), "ctxcsum");
+	dump_part_string(m->payload, payloadlen, get_value(m->ctxpathoff),
+	    get_value(m->ctxpathlen), "ctxpath");
 	dump_part_hex(m->payload, payloadlen, get_value(m->evoff),
 	    get_value(m->evlen), "raw event");
 }

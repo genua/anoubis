@@ -57,6 +57,7 @@
 #include "sfs.h"
 #include "aqueue.h"
 #include "amsg.h"
+#include "pe.h"
 
 #include <anoubis_protocol.h>
 
@@ -339,6 +340,61 @@ dispatch_sfscache_invalidate(anoubisd_msg_t *msg)
 	free(msg);
 }
 
+static int
+pident_size(struct pe_proc_ident *pident)
+{
+	int ret;
+	if (!pident)
+		return 0;
+	ret = 0;
+	if (pident->csum)
+		ret += ANOUBIS_CS_LEN;
+	if (pident->pathhint)
+		ret += 1+strlen(pident->pathhint);
+	return ret;
+}
+
+/*
+ * Helper function. This copies @datalen bytes from @data to the
+ * offset pointed to by @offp in @buf. The value pointed to by @offp
+ * is updated accordingly.
+ * Additionally the offset from @offp and the datalenth @datalen are stored
+ * in @roffp and @rlenp.
+ */
+static void
+do_copy(char *buf, int *offp, const void *data, int datalen,
+    u_int16_t *roffp, u_int16_t *rlenp)
+{
+	if (data)
+		memcpy(buf + *offp, data, datalen);
+	else
+		datalen = 0;
+	*roffp = *offp;
+	*rlenp = datalen;
+	*offp += datalen;
+}
+
+/*
+ * Copy a proc ident by calling @do_copy twice. Once for the csum and
+ * once for the pathhint. The offset pointed to by @offp is updated.
+ * Additionally the target offsets and lengths are of the copies are
+ * stored in @rcsoffp/@rcslenp and @rpathoffp/@rpathlenp respectively.
+ */
+static void
+do_copy_ident(char *buf, int *offp, const struct pe_proc_ident *pident,
+    u_int16_t *rcsoffp, u_int16_t *rcslenp,
+    u_int16_t *rpathoffp, u_int16_t *rpathlenp)
+{
+	if (!pident) {
+		*rcsoffp = *rpathoffp = *offp;
+		*rcslenp = *rpathlenp = 0;
+		return;
+	}
+	do_copy(buf, offp, pident->csum, ANOUBIS_CS_LEN, rcsoffp, rcslenp);
+	do_copy(buf, offp, pident->pathhint, strlen(pident->pathhint)+1,
+	    rpathoffp, rpathlenp);
+}
+
 static void
 dispatch_m2p(int fd, short sig __used, void *arg)
 {
@@ -399,29 +455,25 @@ dispatch_m2p(int fd, short sig __used, void *arg)
 		if (reply->ask) {
 			anoubisd_msg_t *nmsg;
 			anoubisd_msg_eventask_t *eventask;
-			int extra = hdr->msg_size;
-			int plen = 0;
-			int cslen = 0;
+			int extra, off;
 
-			if (reply->path)
-				plen = 1+strlen(reply->path);
-			if (reply->csum)
-				cslen = SHA256_DIGEST_LENGTH;
+			extra = hdr->msg_size;
+			extra += pident_size(reply->pident);
+			extra += pident_size(reply->ctxident);
 			nmsg = msg_factory(ANOUBISD_MSG_EVENTASK,
-			    sizeof(anoubisd_msg_eventask_t)
-			    + extra + plen + cslen);
+			    sizeof(anoubisd_msg_eventask_t) + extra);
 			eventask = (anoubisd_msg_eventask_t *)nmsg->msg;
 			eventask->rule_id = reply->rule_id;
 			eventask->prio = reply->prio;
-			eventask->evoff = 0;
-			eventask->evlen = extra;
-			bcopy(hdr, eventask->payload, hdr->msg_size);
-			eventask->csumoff = extra;
-			eventask->csumlen = cslen;
-			bcopy(reply->csum, eventask->payload+extra, cslen);
-			eventask->pathoff = extra+cslen;
-			eventask->pathlen = plen;
-			bcopy(reply->path, eventask->payload+extra+cslen, plen);
+			off = 0;
+			do_copy(eventask->payload, &off, hdr, hdr->msg_size,
+			    &eventask->evoff, &eventask->evlen);
+			do_copy_ident(eventask->payload, &off, reply->pident,
+			    &eventask->csumoff, &eventask->csumlen,
+			    &eventask->pathoff, &eventask->pathlen);
+			do_copy_ident(eventask->payload, &off, reply->ctxident,
+			    &eventask->ctxcsumoff, &eventask->ctxcsumlen,
+			    &eventask->ctxpathoff, &eventask->ctxpathlen);
 			hdr = (struct eventdev_hdr *)eventask->payload;
 			free(msg);
 			msg = nmsg;

@@ -389,16 +389,11 @@ pe_decide_sandbox(struct pe_proc *proc, struct pe_file_event *sbevent,
 	else
 		reply->reply = 0;
 	if (final.decision == POLICY_ASK) {
-		struct pe_proc_ident	*pident = pe_proc_ident(proc);
 		reply->ask = 1;
 		reply->timeout = 300;
-		if (pident) {
-			reply->csum = pident->csum;
-			reply->path = pident->pathhint;
-		} else {
-			reply->csum = NULL;
-			reply->path = NULL;
-		}
+		reply->pident = pe_proc_ident(proc);
+		reply->ctxident = pe_context_get_ident(
+		    pe_proc_get_context(proc, reply->prio));
 	}
 	DEBUG(DBG_SANDBOX, "<pe_decide_sandbox");
 	return reply;

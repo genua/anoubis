@@ -264,6 +264,8 @@ typedef struct {
 	u32n	error;
 	u16n	csumoff, csumlen;
 	u16n	pathoff, pathlen;
+	u16n	ctxcsumoff, ctxcsumlen;
+	u16n	ctxpathoff, ctxpathlen;
 	u16n	evoff, evlen;
 	char	payload[0];
 } __attribute__((packed)) Anoubis_NotifyMessage;

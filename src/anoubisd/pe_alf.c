@@ -182,16 +182,11 @@ pe_decide_alf(struct pe_proc *proc, struct eventdev_hdr *hdr)
 	else
 		reply->reply = 0;
 	if (decision == POLICY_ASK) {
-		struct pe_proc_ident *pident = pe_proc_ident(proc);
 		reply->ask = 1;
-		reply->timeout = 300;	/* XXX 5 Minutes for now. */
-		if (pident) {
-			reply->csum = pident->csum;
-			reply->path = pident->pathhint;
-		} else {
-			reply->csum = NULL;
-			reply->path = NULL;
-		}
+		reply->timeout = 300;
+		reply->pident = pe_proc_ident(proc);
+		reply->ctxident = pe_context_get_ident(
+		    pe_proc_get_context(proc, reply->prio));
 	}
 	reply->len = 0;
 

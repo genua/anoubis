@@ -907,6 +907,28 @@ dispatch_p2s_log_request(anoubisd_msg_t *msg,
 	DEBUG(DBG_TRACE, "<dispatch_p2s_log_request");
 }
 
+/*
+ * Copy @srclen bytes from @srcbuf to @dstbuf. The data in @srcbuf starts
+ * at offset @srcoff and the target of the copy is the offset pointed to
+ * by @offp. The latter is updated after the data was copied.
+ * The target offset and the total length of the data copied are stored
+ * in @roffp nad @rlenp respectively.
+ */
+static void
+do_copy(char *dstbuf, int *offp, const char *srcbuf, int srcoff, int srclen,
+    u16n *roffp, u16n *rlenp)
+{
+	int		 off = *offp;
+	char		*dstp = dstbuf + *offp;
+	const char	*srcp = srcbuf + srcoff;
+
+	set_value(*roffp, off);
+	set_value(*rlenp, srclen);
+	*offp += srclen;
+	memcpy(dstp, srcp, srclen);
+}
+
+
 void
 dispatch_p2s_evt_request(anoubisd_msg_t	*msg,
     struct event_info_session *ev_info)
@@ -918,10 +940,10 @@ dispatch_p2s_evt_request(anoubisd_msg_t	*msg,
 	struct session	*sess;
 	struct cbdata	*cbdata;
 	unsigned int extra;
-	int sent;
+	int sent, off;
 	u_int64_t task = 0;
 	u_int32_t rule_id = 0, prio = 0;
-	int plen = 0, cslen = 0;
+	int plen = 0, cslen = 0, ctxplen = 0, ctxcslen = 0;
 
 	DEBUG(DBG_TRACE, ">dispatch_p2s_evt_request");
 
@@ -937,6 +959,8 @@ dispatch_p2s_evt_request(anoubisd_msg_t	*msg,
 		    (eventask->payload + eventask->evoff);
 		plen = eventask->pathlen;
 		cslen = eventask->csumlen;
+		ctxplen = eventask->ctxpathlen;
+		ctxcslen = eventask->ctxcsumlen;
 		break;
 	default:
 		log_warn("dispatch_p2s_evt_request: bad mtype %d", msg->mtype);
@@ -951,7 +975,7 @@ dispatch_p2s_evt_request(anoubisd_msg_t	*msg,
 	if (extra >= sizeof(struct anoubis_event_common))
 		task = ((struct anoubis_event_common*)(hdr+1))->task_cookie;
 	m = anoubis_msg_new(sizeof(Anoubis_NotifyMessage)
-	    + extra + plen + cslen);
+	    + extra + plen + cslen + ctxplen + ctxcslen);
 	if (!m) {
 		/* malloc failure, then we don't send the message */
 		DEBUG(DBG_TRACE, "<dispatch_p2s_evt_request (bad new)");
@@ -976,27 +1000,21 @@ dispatch_p2s_evt_request(anoubisd_msg_t	*msg,
 	set_value(m->u.notify->uid, hdr->msg_uid);
 	set_value(m->u.notify->subsystem, hdr->msg_source);
 	set_value(m->u.notify->operation, 0 /* XXX ?? */);
-	set_value(m->u.notify->evoff, 0);
-	set_value(m->u.notify->evlen, extra);
-	memcpy(m->u.notify->payload, &hdr[1], extra);
-	if (cslen) {
-		set_value(m->u.notify->csumoff, extra);
-		set_value(m->u.notify->csumlen, cslen);
-		memcpy(m->u.notify->payload + extra,
-		    eventask->payload + eventask->csumoff, cslen);
-	} else {
-		set_value(m->u.notify->csumoff, 0);
-		set_value(m->u.notify->csumlen, 0);
-	}
-	if (plen) {
-		set_value(m->u.notify->pathoff, extra + cslen);
-		set_value(m->u.notify->pathlen, plen);
-		memcpy(m->u.notify->payload + extra + cslen,
-		    eventask->payload + eventask->pathoff, plen);
-	} else {
-		set_value(m->u.notify->pathoff, 0);
-		set_value(m->u.notify->pathlen, 0);
-	}
+	off = 0;
+	do_copy(m->u.notify->payload, &off, (void*)&hdr[1], extra, 0,
+	    &m->u.notify->evoff, &m->u.notify->evlen);
+	do_copy(m->u.notify->payload, &off, eventask->payload,
+	    eventask->csumoff, cslen, &m->u.notify->csumoff,
+	    &m->u.notify->csumlen);
+	do_copy(m->u.notify->payload, &off, eventask->payload,
+	    eventask->pathoff, plen, &m->u.notify->pathoff,
+	    &m->u.notify->pathlen);
+	do_copy(m->u.notify->payload, &off, eventask->payload,
+	    eventask->ctxcsumoff, ctxcslen, &m->u.notify->ctxcsumoff,
+	    &m->u.notify->ctxcsumlen);
+	do_copy(m->u.notify->payload, &off, eventask->payload,
+	    eventask->ctxpathoff, ctxplen, &m->u.notify->ctxpathoff,
+	    &m->u.notify->ctxpathlen);
 	head = anoubis_notify_create_head(m, notify_callback, cbdata);
 	cbdata->ev_head = head;
 
