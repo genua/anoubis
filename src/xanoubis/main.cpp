@@ -355,6 +355,49 @@ AnoubisGuiApp::connectCommunicator(bool doConnect)
 }
 
 void
+AnoubisGuiApp::autoStart(bool autostart)
+{
+	wxString deskFile = paths_.GetDataDir() + wxT("/xanoubis.desktop");
+	wxString kPath = paths_.GetUserConfigDir() + wxT("/.kde/Autostart");
+	wxString gPath = paths_.GetUserConfigDir() + wxT("/.config/autostart");
+	wxString kAutoFile = kPath + wxT("/xanoubis.desktop");
+	wxString gAutoFile = gPath + wxT("/xanoubis.desktop");
+
+	if (autostart == true) {
+		if (wxDirExists(kPath) == false) {
+			wxMkdir(kPath);
+		}
+		if (wxDirExists(gPath) == false) {
+			wxMkdir(gPath);
+		}
+
+		if (wxFileExists(kAutoFile) == false) {
+			wxCopyFile(deskFile, kAutoFile);
+		}
+		if (wxFileExists(gAutoFile) == false) {
+			wxCopyFile(deskFile, gAutoFile);
+		}
+	} else {
+		if (wxFileExists(kAutoFile) == true) {
+			if (wxRemove(kAutoFile) != 0) {
+				wxString msg = wxString::Format(_
+				    ("Couldn't remove Autostart file: %ls"),
+				    kAutoFile.c_str());
+				wxMessageBox(msg, _("Error"), wxICON_ERROR);
+			}
+		}
+		if (wxFileExists(gAutoFile) == true) {
+			if (wxRemove(gAutoFile) != 0) {
+				wxString msg = wxString::Format(_
+				    ("Couldn't remove Autostart file: %ls"),
+				    gAutoFile.c_str());
+				wxMessageBox(msg, _("Error"), wxICON_ERROR);
+			}
+		}
+	}
+}
+
+void
 AnoubisGuiApp::requestPolicy(void)
 {
 	int idx;

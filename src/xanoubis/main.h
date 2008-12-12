@@ -145,6 +145,7 @@ class AnoubisGuiApp : public wxApp
 		bool		 profileFromDiskToDaemon(const wxString &);
 		bool		 profileFromDaemonToDisk(const wxString &);
 		bool		 showingMainFrame(void);
+		void		 autoStart(bool);
 
 		wxArrayString	 getListOfUsersName(void) const;
 		wxArrayString	 getListOfUsersId(void) const;

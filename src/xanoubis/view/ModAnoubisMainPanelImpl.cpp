@@ -168,6 +168,10 @@ ModAnoubisMainPanelImpl::~ModAnoubisMainPanelImpl(void)
 	userOptions_->Write(wxT("/Options/AutoConnect"),
 	    autoConnectBox->IsChecked());
 
+	/* write Autostart Settings */
+	userOptions_->Write(wxT("/Options/Autostart"),
+	    cb_DoAutostart->IsChecked());
+
 	anEvents->Disconnect(anEVT_ESCALATIONS_SHOW,
 	    wxCommandEventHandler(ModAnoubisMainPanelImpl::OnEscalationsShow),
 	    NULL, this);
@@ -184,11 +188,12 @@ ModAnoubisMainPanelImpl::readOptions(void)
 	int EscalationTimeout = 0;
 	bool SendAlert = false;
 	bool NoAlertTimeout = false;
+	bool DoAutostart = true;
 	int AlertTimeout = 10;
 	bool AutoChecksum = false;
 	bool AutoConnect = false;
 
-	/* read the stored Notifications Options */
+	/* read the stored Option Settings */
 	userOptions_->Read(wxT("/Options/SendEscalations"), &SendEscalation);
 	userOptions_->Read(wxT("/Options/NoEscalationsTimeout"),
 	    &NoEscalationTimeout);
@@ -198,6 +203,9 @@ ModAnoubisMainPanelImpl::readOptions(void)
 	userOptions_->Read(wxT("/Options/SendAlerts"), &SendAlert);
 	userOptions_->Read(wxT("/Options/NoAlertTimeout"), &NoAlertTimeout);
 	userOptions_->Read(wxT("/Options/AlertTimeout"), &AlertTimeout);
+
+	userOptions_->Read(wxT("/Options/Autostart"), &DoAutostart);
+	wxGetApp().autoStart(DoAutostart);
 
 	userOptions_->Read(wxT("/Options/AutoChecksumCheck"), &AutoChecksum);
 	userOptions_->Read(wxT("/Options/AutoConnect"), &AutoConnect);
@@ -210,6 +218,8 @@ ModAnoubisMainPanelImpl::readOptions(void)
 	cb_SendAlerts->SetValue(SendAlert);
 	cb_NoAlertTimeout->SetValue(NoAlertTimeout);
 	m_spinAlertNotifyTimeout->SetValue(AlertTimeout);
+
+	cb_DoAutostart->SetValue(DoAutostart);
 
 	controlAutoCheck->SetValue(AutoChecksum);
 	wxCommandEvent showEvent(anEVT_SEND_AUTO_CHECK);
@@ -744,6 +754,11 @@ ModAnoubisMainPanelImpl::OnAutoCheck(wxCommandEvent& event)
 	showEvent.SetInt(event.IsChecked());
 
 	wxPostEvent(AnEvents::getInstance(), showEvent);
+}
+
+void ModAnoubisMainPanelImpl::OnDoAutostart(wxCommandEvent& event)
+{
+	wxGetApp().autoStart(event.IsChecked());
 }
 
 void

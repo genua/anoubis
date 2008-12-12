@@ -103,11 +103,11 @@ rm -f  $RPM_BUILD_ROOT%{_libdir}/*.a
 rm -fr $RPM_BUILD_ROOT%{_mandir}/man3
 
 # install and register desktop icon and file
-mkdir -p $RPM_BUILD_ROOT%{_datadir}/{pixmaps,autostart}
+mkdir -p $RPM_BUILD_ROOT%{_datadir}/{pixmaps,xanoubis}
 install -p $RPM_BUILD_ROOT%{_datadir}/xanoubis/icons/xanoubis.png \
 	$RPM_BUILD_ROOT%{_datadir}/pixmaps
 install -p $RPM_BUILD_ROOT%{_datadir}/applications/xanoubis.desktop \
-	$RPM_BUILD_ROOT%{_datadir}/autostart
+	$RPM_BUILD_ROOT%{_datadir}/xanoubis
 
 %clean
 [ "$RPM_BUILD_ROOT" != "/" ] && [ -d $RPM_BUILD_ROOT ] \
@@ -194,8 +194,8 @@ exit 0
 %{_prefix}/bin/xanoubis
 %{_mandir}/man1/xanoubis*.1.gz
 %{_prefix}/share/xanoubis/*
+%attr(0644,root,root) %{_datadir}/xanoubis/xanoubis.desktop
 %attr(0644,root,root) %{_datadir}/applications/xanoubis.desktop
-%attr(0644,root,root) %{_datadir}/autostart/xanoubis.desktop
 %attr(0644,root,root) %{_datadir}/pixmaps/xanoubis.png
 
 
@@ -203,9 +203,6 @@ exit 0
 %changelog
 * Tue Nov 25 2008 Stefan Fritsch
 - fix install scripts deleting startlinks on upgrade
-
-* Mon Oct 20 2008 Sebastian Trahm
-- register desktop file in autostart
 
 * Wed Oct 15 2008 Sebastian Trahm
 - add installation of desktop icon and file

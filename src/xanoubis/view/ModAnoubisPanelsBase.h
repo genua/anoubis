@@ -139,6 +139,8 @@ class ModAnoubisMainPanelBase : public wxPanel
 		
 		wxSpinCtrl* m_spinAlertNotifyTimeout;
 		wxStaticText* tx_AlertNotifyTimeoutLabel;
+		wxCheckBox* cb_DoAutostart;
+		
 		wxCheckBox* controlAutoCheck;
 		wxCheckBox* autoConnectBox;
 		wxStaticText* m_staticText27;
@@ -166,6 +168,7 @@ class ModAnoubisMainPanelBase : public wxPanel
 		virtual void OnAlertDisable( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnAlertNoTimeout( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnAlertTimeout( wxSpinEvent& event ){ event.Skip(); }
+		virtual void OnDoAutostart( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnAutoCheck( wxCommandEvent& event ){ event.Skip(); }
 		
 	
