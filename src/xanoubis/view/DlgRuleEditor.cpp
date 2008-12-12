@@ -1152,19 +1152,20 @@ DlgRuleEditor::OnLineSelected(wxListEvent& event)
 {
 	RuleEditorFillWidgetsVisitor	 updateVisitor(this);
 	Policy				*policy;
-	wxListView			*selecter;
+	unsigned long			 newSelection;
 
 	if (wxIsBusy())
 		return;
 
-	if (autoCheck_) {
+	newSelection = event.GetIndex();
+
+	if (autoCheck_ && (newSelection != selectedIndex_)) {
 		if (!CheckLastSelection()) {
-			selecter = (wxListView *)ruleListCtrl;
-			selecter->Focus(selectedIndex_);
+			selectLine(selectedIndex_);
 			return;
 		}
 	}
-	selectedIndex_ = event.GetIndex();
+	selectedIndex_ = newSelection;
 	updateVisitor.setPropagation(false);
 	policy = (Policy *)event.GetData();
 	selectedId_ = policy->getId();
@@ -1395,6 +1396,12 @@ DlgRuleEditor::CheckLastSelection(void)
 			    selectedIndex_);
 			if (!policy)
 				return (false);
+			if (policy->IsKindOf(CLASSINFO(AlfPolicy))) {
+				alfPolicy = (AlfPolicy *)policy;
+				appPolicy = (AppPolicy *)alfPolicy->getParent();
+				selectedIndex_ = appPolicy->getIndex();
+				policy = appPolicy;
+			}
 			policy->accept(updateVisitor);
 			return (false);
 		}
