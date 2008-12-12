@@ -48,6 +48,7 @@ int	 check_for_uid(const char *path);
 char	*remove_escape_seq(const char *name, int is_uid);
 void	 sfs_cert_init(int);
 void	 sfs_cert_reconfigure(int);
+char *	 sfs_cert_keyid_for_uid(uid_t uid);
 
 /* Public SFS-Cache functions */
 void	 sfshash_init(void);

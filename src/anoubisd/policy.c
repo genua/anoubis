@@ -385,14 +385,16 @@ do_copy_ident(char *buf, int *offp, const struct pe_proc_ident *pident,
     u_int16_t *rcsoffp, u_int16_t *rcslenp,
     u_int16_t *rpathoffp, u_int16_t *rpathlenp)
 {
+	int plen = 0;
 	if (!pident) {
 		*rcsoffp = *rpathoffp = *offp;
 		*rcslenp = *rpathlenp = 0;
 		return;
 	}
 	do_copy(buf, offp, pident->csum, ANOUBIS_CS_LEN, rcsoffp, rcslenp);
-	do_copy(buf, offp, pident->pathhint, strlen(pident->pathhint)+1,
-	    rpathoffp, rpathlenp);
+	if (pident->pathhint)
+		plen = strlen(pident->pathhint)+1;
+	do_copy(buf, offp, pident->pathhint, plen, rpathoffp, rpathlenp);
 }
 
 static void

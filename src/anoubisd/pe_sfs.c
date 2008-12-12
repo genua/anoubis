@@ -130,8 +130,17 @@ pe_sfs_match_one(struct apn_rule *rule, struct pe_file_event *fevent,
 		if (ret == 0)
 			cs = csum;
 		break;
-	case APN_CS_KEY_SELF:
-		/* XXX CEH: Not yet implemented. */
+	case APN_CS_KEY_SELF: {
+		char		*keyid;
+		keyid = sfs_cert_keyid_for_uid(fevent->uid);
+		if (!keyid)
+			break;
+		ret = sfshash_get_key(fevent->path, keyid, csum);
+		free(keyid);
+		if (ret == 0)
+			cs = csum;
+		break;
+	}
 	default:
 		break;
 	}

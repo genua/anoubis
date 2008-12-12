@@ -430,7 +430,7 @@ __sfs_checksumop(const char *path, unsigned int operation, uid_t uid,
 		}
 		/* Before we send the signature we should verify it */
 		vlen = *siglen - ANOUBIS_CS_LEN;
-		if ((ret = anoubisd_verify_csum(cert->pkey, *sign, *sign 
+		if ((ret = anoubisd_verify_csum(cert->pkey, *sign, *sign
 		    + ANOUBIS_CS_LEN, vlen)) != 1) {
 			log_warn("could not verify %d", ret);
 			ret =-EPERM;
@@ -855,4 +855,28 @@ sfs_pubkey_get_by_keyid(unsigned char *keyid, int klen)
 	}
 
 	return NULL;
+}
+
+char *
+sfs_cert_keyid_for_uid(uid_t uid)
+{
+	struct sfs_cert		*p;
+	char			*ret;
+	int			 i, j;
+
+	TAILQ_FOREACH(p, sfs_certs, entry) {
+		if (p->uid == uid)
+			break;
+	}
+	if (!p)
+		return NULL;
+	ret = malloc(2*p->kidlen+1);
+	if (!ret)
+		return NULL;
+	for (i=j=0; i<p->kidlen; ++i) {
+		sprintf(ret+j, "%02x", p->keyid[i]);
+		j += 2;
+	}
+	ret[j] = 0;
+	return ret;
 }
