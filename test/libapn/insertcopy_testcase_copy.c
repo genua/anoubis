@@ -196,9 +196,6 @@ START_TEST(tc_Insert1)
 		apn_print_errors(rs, stderr);
 	fail_if(ret != 0, "Printing failed");
 
-	fail_if(rs->maxid != 28, "Maximum ID in ruleset is %d, but should be"
-	    " 28!", rs->maxid);
-
 	rule = generate_rule();
 	fail_if(rule == NULL, "generate_rule() failed");
 
@@ -208,10 +205,7 @@ START_TEST(tc_Insert1)
 	ret = apn_insert(rs, rule, 22);
 	if (ret != 0)
 		apn_print_errors(rs, stderr);
-	rule2 = generate_rule();
-	fail_if(ret != 0, "Insert failed");
-	fail_if(rule->apn_id < 29, "ID update failed, got %d expected >= 29",
-	    rule->apn_id);
+	fail_if(ret != 0, "Insert failed with %d", ret);
 
 	/*
 	 * Dump the new rule set, so the perl wrapper can check the
@@ -224,6 +218,7 @@ START_TEST(tc_Insert1)
 	fail_if(ret != 0, "Printing failed");
 
 	saved = rule->apn_id;
+	rule2 = generate_rule();
 	/* Try to put in before application rule with bogus ID 1234 */
 	ret = apn_insert(rs, rule2, 1234);
 	fail_if(ret != 1, "Insert did not fail, but should have!");
@@ -364,10 +359,6 @@ START_TEST(tc_Copy1)
 	if (ret != 0)
 		apn_print_errors(rs, stderr);
 	fail_if(ret != 0, "Copy + insert failed with %d", ret);
-	fail_if(rule->apn_id < 29, "Rule should have new id >= 29, but has %d",
-	    rule->apn_id);
-	fail_if(rs->maxid < 38, "Wrong maxid, is %d should be >= 38",
-	    rs->maxid);
 
 	/*
 	 * Second, insert+copy for a default rule.
@@ -383,10 +374,6 @@ START_TEST(tc_Copy1)
 	if (ret != 0)
 		apn_print_errors(rs, stderr);
 	fail_if(ret != 0, "Copy + insert failed");
-	fail_if(rule->apn_id < 29, "Rule should have new id >= 29, but has %d",
-	    rule->apn_id);
-	fail_if(rs->maxid < 45, "Wrong maxid, is %d should be >= 45",
-	    rs->maxid);
 
 	/*
 	 * Dump the new rule set, so the perl wrapper can check the

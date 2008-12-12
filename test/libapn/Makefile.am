@@ -26,7 +26,8 @@
 
 TESTS = test_libapn test_printing test_insertcopy test_rbtree
 
-noinst_PROGRAMS = test_libapn test_printing test_insertcopy test_rbtree
+noinst_PROGRAMS = test_libapn test_printing test_insertcopy test_rbtree \
+	copyinsert_helper
 
 libapndir       = src/libapn
 bsdcompatdir    = src/bsdcompat
@@ -46,6 +47,7 @@ test_libapn_CPPFLAGS = \
 	-I$(top_srcdir)/$(anoubischeckdir) \
 	@CHECK_CFLAGS@
 
+copyinsert_helper_CPPFLAGS = $(test_libapn_CPPFLAGS)
 LDFLAGS += \
 	-L$(top_builddir)/$(libapndir) \
 	-L$(top_builddir)/$(bsdcompatdir) \
@@ -68,6 +70,9 @@ test_libapn_LDADD += $(libbsdcompat)
 test_libapn_DEPENDENCIES += $(libbsdcompat)
 endif
 
+copyinsert_helper_DEPENDENCIES = $(test_libapn_DEPENDENCIES)
+copyinsert_helper_LDADD = $(test_libapn_LDADD)
+
 test_libapn_SOURCES = \
 	libapn_testcase_errorcodes.c \
 	libapn_testcase_crash1.c \
@@ -75,6 +80,9 @@ test_libapn_SOURCES = \
 	libapn_testrunner.c \
 	libapn_testcase_iov.c \
 	libapn_testcase_firstinsert.c
+
+copyinsert_helper_SOURCES = \
+	copyinsert_helper.c
 
 test_printing_CPPFLAGS = \
 	-I$(top_srcdir)/$(libapndir) \

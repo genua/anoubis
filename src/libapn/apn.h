@@ -343,6 +343,7 @@ void	apn_free_sfsdefault(struct apn_sfsdefault *);
 int	apn_clean_ruleset(struct apn_ruleset *rs,
 	    int (*)(struct apn_scope *, void *), void *);
 struct apn_rule *apn_copy_one_rule(struct apn_rule *);
+struct apn_rule *apn_find_rule(struct apn_ruleset *, unsigned int);
 int	apn_copy_chain(struct apn_chain *src, struct apn_chain *dst);
 void	apn_free_host(struct apn_host *);
 void	apn_free_port(struct apn_port *);

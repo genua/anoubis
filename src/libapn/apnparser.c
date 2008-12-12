@@ -126,6 +126,22 @@ apn_verify_types(int parent, int child)
 	return 0;
 }
 
+static int
+init_sfs_rule(struct apn_ruleset *rs)
+{
+	struct apn_rule		*nrule;
+	if (!TAILQ_EMPTY(&rs->sfs_queue))
+		return 0;
+	nrule = calloc(1, sizeof(struct apn_rule));
+	if (!nrule)
+		return -1;
+	nrule->apn_id = 0;
+	nrule->apn_type = APN_SFS;
+	nrule->app = NULL;
+	TAILQ_INIT(&nrule->rule.chain);
+	return apn_insert(rs, nrule, 0);
+}
+
 /*
  * Parse the specified file or iovec and return the ruleset, which is allocated
  * and which is to be freed be the caller.
@@ -170,7 +186,10 @@ apn_parse(const char *filename, struct apn_ruleset **rsp, int flags)
 	if (ret)
 		return ret;
 	rs = *(rsp);
-	if ((ret = parse_rules(filename, rs)) != 0) {
+	ret = parse_rules(filename, rs);
+	if (ret == 0)
+		ret = init_sfs_rule(rs);
+	if (ret != 0) {
 		rs->idtree = NULL;
 		apn_free_chain(&rs->alf_queue, NULL);
 		apn_free_chain(&rs->sfs_queue, NULL);
@@ -178,7 +197,6 @@ apn_parse(const char *filename, struct apn_ruleset **rsp, int flags)
 		apn_free_chain(&rs->ctx_queue, NULL);
 		apn_free_varq(&rs->var_queue);
 	}
-
 	return (ret);
 }
 
@@ -193,7 +211,10 @@ apn_parse_iovec(const char *filename, struct iovec *vec, int count,
 	if (ret)
 		return ret;
 	rs = *(rsp);
-	if ((ret = parse_rules_iovec(filename, vec, count, rs)) != 0) {
+	ret = parse_rules_iovec(filename, vec, count, rs);
+	if (ret == 0)
+		ret = init_sfs_rule(rs);
+	if (ret != 0) {
 		rs->idtree = NULL;
 		apn_free_chain(&rs->alf_queue, NULL);
 		apn_free_chain(&rs->sfs_queue, NULL);
@@ -434,6 +455,8 @@ apn_insert(struct apn_ruleset *rs, struct apn_rule *rule, unsigned int id)
 		break;
 	case APN_SFS:
 		queue = &rs->sfs_queue;
+		if (!TAILQ_EMPTY(queue))
+			return (1);
 		break;
 	case APN_SB:
 		queue = &rs->sb_queue;
@@ -620,16 +643,14 @@ apn_add2app_commonrule(struct apn_ruleset *rs, struct apn_chain *queue,
 		switch (app->apn_type) {
 		case APN_ALF:
 			return (apn_insert_alfrule(rs, rule, hp->apn_id));
-			break;
 		case APN_SFS:
 			return (apn_insert_sfsrule(rs, rule, hp->apn_id));
-			break;
 		case APN_SB:
 			return (apn_insert_sbrule(rs, rule, hp->apn_id));
-			break;
+		case APN_CTX:
+			return (apn_insert_ctxrule(rs, rule, hp->apn_id));
 		default:
 			return (1);
-			break;
 		}
 	}
 
@@ -1896,7 +1917,7 @@ apn_copy_one_rule(struct apn_rule *old)
 		newrule->rule.sfsaccess.unknown = old->rule.sfsaccess.unknown;
 		if (apn_copy_subject(&old->rule.sfsaccess.subject,
 		    &newrule->rule.sfsaccess.subject)) {
-		    	if (newrule->rule.sfsaccess.path)
+			if (newrule->rule.sfsaccess.path)
 				free(newrule->rule.sfsaccess.path);
 			goto errout;
 		}
@@ -2302,6 +2323,16 @@ int
 apn_valid_id(struct apn_ruleset *rs, unsigned int id)
 {
 	return (rb_find(rs->idtree, id) == NULL);
+}
+
+struct apn_rule *
+apn_find_rule(struct apn_ruleset *rs, unsigned int id)
+{
+	struct rb_entry		*entry;
+	entry = rb_find(rs->idtree, id);
+	if (entry == NULL)
+		return NULL;
+	return (struct apn_rule*)entry->data;
 }
 
 static void
