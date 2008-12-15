@@ -50,7 +50,6 @@ START_TEST(vm_tc_fetch)
 	fail_if(rs == NULL, "Fetched a NULL-ruleset!");
 	fail_if(TAILQ_FIRST(&rs->err_queue) != NULL, "Parser errors");
 	fail_if(TAILQ_FIRST(&rs->alf_queue) == NULL, "Missing ALF-rule");
-	fail_if(TAILQ_FIRST(&rs->sfs_queue) != NULL, "Unexpected SFS-rule");
 
 	apn_free_ruleset(rs);
 	apnvm_destroy(vm);
@@ -74,7 +73,6 @@ START_TEST(vm_tc_fetch_no_profile)
 	fail_if(rs == NULL, "Fetched a NULL-ruleset!");
 	fail_if(TAILQ_FIRST(&rs->err_queue) != NULL, "Parser errors");
 	fail_if(TAILQ_FIRST(&rs->alf_queue) != NULL, "Missing ALF-rule");
-	fail_if(TAILQ_FIRST(&rs->sfs_queue) == NULL, "Unexpected SFS-rule");
 
 	apn_free_ruleset(rs);
 	apnvm_destroy(vm);
