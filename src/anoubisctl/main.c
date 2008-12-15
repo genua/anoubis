@@ -74,8 +74,6 @@
 
 #include "anoubisctl.h"
 #include "apn.h"
-#include "csum/csum.h"
-
 
 void		usage(void) __dead;
 static int	daemon_start(void);
@@ -85,10 +83,6 @@ static int	daemon_reload(void);
 static int	monitor(int argc, char **argv);
 static int	load(char *);
 static int	dump(char *);
-static int	sfs_addsum(char *file);
-static int	sfs_delsum(char *file);
-static int	sfs_getsum(char *file);
-static int	sfs_calcsum(char *file);
 static int	create_channel(void);
 static void	destroy_channel(void);
 
@@ -113,10 +107,6 @@ struct cmd {
 	{ "reload",  daemon_reload,  0 },
 	{ "load",    (func_int_t)load, 1 },
 	{ "dump",    (func_int_t)dump, 2 },
-	{ "addsum",  (func_int_t)sfs_addsum, 1},
-	{ "delsum",  (func_int_t)sfs_delsum, 1},
-	{ "getsum",  (func_int_t)sfs_getsum, 1},
-	{ "calcsum",  (func_int_t)sfs_calcsum, 1},
 };
 
 static char    *anoubis_socket = "/var/run/anoubisd.sock";
@@ -417,126 +407,6 @@ dump(char *file)
 	if (fp)
 		fclose(fp);
 	destroy_channel();
-	return 0;
-}
-
-static int
-sfs_sumop(char *file, int operation, u_int8_t *cs)
-{
-	int				 error = 0;
-	int				 len = 0;
-	struct anoubis_transaction	*t;
-
-	if (!client) {
-		error = create_channel();
-		if (error) {
-			fprintf(stderr, "Cannot connect to anoubis daemon\n");
-			return error;
-		}
-	}
-
-	if (cs)
-		len = ANOUBIS_CS_LEN;
-	t = anoubis_client_csumrequest_start(client, operation, file, cs, len,
-	    0, 0, ANOUBIS_CSUM_NONE);
-	if (!t) {
-		destroy_channel();
-		fprintf(stderr, "Cannot send checksum request\n");
-		return 6;
-	}
-	while(1) {
-		int ret = anoubis_client_wait(client);
-		if (ret <= 0) {
-			anoubis_transaction_destroy(t);
-			destroy_channel();
-			fprintf(stderr, "Checksum request interrupted\n");
-			return 6;
-		}
-		if (t->flags & ANOUBIS_T_DONE)
-			break;
-	}
-	if (t->result) {
-		fprintf(stderr, "Checksum Request failed: %d (%s)\n", t->result,
-		    strerror(t->result));
-		anoubis_transaction_destroy(t);
-		destroy_channel();
-		return 6;
-	}
-	destroy_channel();
-	if (operation == ANOUBIS_CHECKSUM_OP_GET) {
-		int i;
-		if (!VERIFY_LENGTH(t->msg, sizeof(Anoubis_AckPayloadMessage)
-		    + SHA256_DIGEST_LENGTH)) {
-			fprintf(stderr, "Short checksum in reply (len=%d)\n",
-			    t->msg->length);
-			return 6;
-		}
-		for (i=0; i<SHA256_DIGEST_LENGTH; ++i)
-			printf("%02x", t->msg->u.ackpayload->payload[i]);
-		printf("\n");
-	} else if (operation == ANOUBIS_CHECKSUM_OP_ADDSUM) {
-		/* Print the checksum that has been added. */
-		int i;
-		for (i=0; i<SHA256_DIGEST_LENGTH; ++i)
-			printf("%02x", cs[i]);
-		printf("\n");
-	}
-	anoubis_transaction_destroy(t);
-	return error;
-}
-
-static int
-sfs_addsum(char *file)
-{
-	u_int8_t cs[ANOUBIS_CS_LEN];
-	int len = ANOUBIS_CS_LEN;
-	int ret;
-
-	create_channel();
-	ret = anoubis_csum_calc(file, cs, &len);
-	if (ret < 0) {
-		errno = -ret;
-		perror("anoubis_csum_calc");
-		return 6;
-	}
-	if (len != ANOUBIS_CS_LEN) {
-		fprintf(stderr, "Bad csum length from anoubis_csum_calc\n");
-		return 6;
-	}
-	return sfs_sumop(file, ANOUBIS_CHECKSUM_OP_ADDSUM, cs);
-}
-
-static int
-sfs_delsum(char *file)
-{
-	return sfs_sumop(file, ANOUBIS_CHECKSUM_OP_DEL, NULL);
-}
-
-static int
-sfs_getsum(char *file)
-{
-	return sfs_sumop(file, ANOUBIS_CHECKSUM_OP_GET, NULL);
-}
-
-static int
-sfs_calcsum(char *file)
-{
-	int i, ret;
-	u_int8_t cs[ANOUBIS_CS_LEN];
-	int len = ANOUBIS_CS_LEN;
-
-	create_channel();
-	ret = anoubis_csum_calc(file, cs, &len);
-	destroy_channel();
-	if (ret < 0) {
-		errno = -ret;
-		perror("anoubis_csum_calc");
-		return 6;
-	}
-	for (i=0; i<len; ++i) {
-		printf("%02x", cs[i]);
-	}
-	printf("\n");
 	return 0;
 }
 

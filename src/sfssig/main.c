@@ -930,10 +930,11 @@ sfs_add(char *file)
 		}
 	}
 	/* Print the checksum that has been added, if verbose output activated*/
-	if (opts & SFSSIG_OPT_VERBOSE2)
+	if (opts & SFSSIG_OPT_VERBOSE2) {
 		printf("add: ");
-	if (opts & SFSSIG_OPT_VERBOSE) {
 		printf("%s csum:\t", file);
+	}
+	if (opts & SFSSIG_OPT_VERBOSE) {
 		for (i = 0; i < SHA256_DIGEST_LENGTH; i++)
 			printf("%02x", cs[i]);
 		printf("\n");
