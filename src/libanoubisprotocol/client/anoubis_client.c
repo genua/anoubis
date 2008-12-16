@@ -964,36 +964,52 @@ anoubis_client_csumrequest_start(struct anoubis_client *client,
 	static const u_int32_t listops[] = { ANOUBIS_P_CSUM_LIST, -1 };
 	char * dstpath = NULL;
 
-	if ((flags == ANOUBIS_CSUM_NONE) && (uid != 0))
-		return NULL;
-	if ((flags == ANOUBIS_CSUM_UID_ALL) && (uid != 0))
-		return NULL;
 	if ((client->proto & ANOUBIS_PROTO_POLICY) == 0)
 		return NULL;
 	if (client->state != ANOUBIS_STATE_CONNECTED)
 		return NULL;
-	if (!path || !strlen(path))
-		return NULL;
 	if (client->flags & FLAG_POLICY_PENDING)
 		return NULL;
-	if ((op == ANOUBIS_CHECKSUM_OP_ADDSIG) && idlen == 0)
-		return NULL;
-	if ((op == ANOUBIS_CHECKSUM_OP_DELSIG) && idlen == 0)
-		return NULL;
-	if ((op == ANOUBIS_CHECKSUM_OP_GETSIG) && idlen == 0)
-		return NULL;
-	if ((op == ANOUBIS_CHECKSUM_OP_SIG_LIST) && idlen == 0)
-		return NULL;
-	if (((op != ANOUBIS_CHECKSUM_OP_DELSIG) &&
-	    (op != ANOUBIS_CHECKSUM_OP_GETSIG) &&
-	    (op != ANOUBIS_CHECKSUM_OP_SIG_LIST) &&
-	    (op != ANOUBIS_CHECKSUM_OP_ADDSIG)) && idlen != 0)
-		return NULL;
-	if (!payload) {
-		if ((op == ANOUBIS_CHECKSUM_OP_ADDSUM) ||
-		    (op == ANOUBIS_CHECKSUM_OP_ADDSIG))
+
+	switch (flags) {
+	case ANOUBIS_CSUM_NONE: /* FALL THROUGH */
+	case ANOUBIS_CSUM_UID_ALL:
+		if (uid != 0)
 			return NULL;
+		break;
+	default:
+		break;
 	}
+	/* At first we check if the minimal conditions are done */
+	switch (op) {
+	case ANOUBIS_CHECKSUM_OP_ADDSIG:
+	case ANOUBIS_CHECKSUM_OP_DELSIG:
+	case ANOUBIS_CHECKSUM_OP_GETSIG:
+	case ANOUBIS_CHECKSUM_OP_SIG_LIST: /* FALL TROUGH */
+		if (idlen == 0)
+			return NULL;
+		/* FALL TROUGH */
+	case ANOUBIS_CHECKSUM_OP_ADDSUM:
+		if (!payload)
+			return NULL;
+		break;
+	case ANOUBIS_CHECKSUM_OP_DEL:
+	case ANOUBIS_CHECKSUM_OP_GET:
+	case ANOUBIS_CHECKSUM_OP_UID_LIST:
+	case ANOUBIS_CHECKSUM_OP_LIST:
+		if (idlen != 0)
+			return NULL;
+		break;
+	default:
+		/* UNKNOWN PROTOCOL */
+		return NULL;
+		/* NOT REACHED */
+	}
+	if ((op == ANOUBIS_CHECKSUM_OP_ADDSUM) && (idlen !=0))
+		return NULL;
+	if (!path || !strlen(path))
+		return NULL;
+	/* Everything seems fine, lets start the operation */
 	if (payload && cslen) {
 		if ((op != ANOUBIS_CHECKSUM_OP_ADDSUM) &&
 		    (op != ANOUBIS_CHECKSUM_OP_ADDSIG))
