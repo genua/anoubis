@@ -183,19 +183,25 @@ typedef struct {
 %token	RECEIVE TIMEOUT STATEFUL TASK UNTIL COLON PATH KEY UID CSUM
 %token	SELF SIGNEDSELF VALID INVALID UNKNOWN CONTINUE
 %token	<v.string>		STRING
+%destructor { free($$); }	STRING
 %token	<v.number>		NUMBER
 %type	<v.app>			app apps sfsapp
+%destructor { apn_free_app($$); }
+				app apps sfsapp
 %type	<v.apphead>		app_l
 %type	<v.hashtype>		hashtype
 %type	<v.hashspec>		hashspec
 %type	<v.addr>		address
 %type	<v.host>		host hostspec
+%destructor { freehost($$); }	host hostspec
 %type	<v.hosthead>		host_l
 %type	<v.port>		port ports portspec
+%destructor { freeport($$); }	port ports portspec
 %type	<v.porthead>		port_l
 %type	<v.hosts>		hosts
 %type	<v.number>		not capability defaultspec ruleid sbrwx
 %type	<v.string>		sfspath
+%destructor { free($$); }	sfspath
 %type	<v.netaccess>		netaccess
 %type	<v.af>			af
 %type	<v.proto>		proto
@@ -205,6 +211,8 @@ typedef struct {
 %type	<v.rule>		alfruleset sbruleset alfrule sfsrule sbrule
 %type	<v.rule>		ctxrule
 %type	<v.rulehead>		alfrule_l sfsrule_l sbrule_l ctxrule_l
+%destructor { apn_free_chain($$, NULL); free($$); }
+				alfrule_l sfsrule_l sbrule_l ctxrule_l
 %type	<v.afrule>		alffilterrule
 %type	<v.acaprule>		alfcaprule
 %type	<v.sbaccess>		sbaccess sbpred sbpath sbuid sbkey sbcsum

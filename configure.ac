@@ -71,7 +71,8 @@ AC_PROG_CC
 AC_PROG_CXX
 AC_PROG_RANLIB
 AC_PROG_LEX
-AC_PROG_YACC
+dnl normal yacc does not know %destructor, use bison instead
+AC_CHECK_PROG(YACC, bison, [bison -y])
 
 AC_PATH_PROG(FLAWFINDER, flawfinder)
 AC_PATH_PROG(SPLINT, splint)

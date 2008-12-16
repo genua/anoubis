@@ -27,6 +27,7 @@ BuildRequires:	wxGTK-devel >= 2.8
 BuildRequires:	libattr-devel
 BuildRequires:	libstdc++-devel
 BuildRequires:	flex
+BuildRequires:	bison
 BuildRequires:	desktop-file-utils
 
 %define rcdir %{_sysconfdir}/rc.d/init.d
