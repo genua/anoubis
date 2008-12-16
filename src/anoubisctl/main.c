@@ -247,11 +247,12 @@ main(int argc, char *argv[])
 static int
 daemon_start(void)
 {
-	int	err;
-	int	error = 0;
+	int			 err;
+	int			 error = 0;
+	static const char	*anoubisd = GENERALPREFIX "/sbin/anoubisd";
 
-	if ((err = system("/sbin/anoubisd"))) {
-		perror("system(\"/sbin/anoubisd\")");
+	if ((err = system(anoubisd))) {
+		perror(anoubisd);
 		error = 2;
 	}
 
