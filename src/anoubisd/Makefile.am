@@ -75,6 +75,7 @@ anoubisd_SOURCES= \
 	pe_ipc.c \
 	pe_sfs.c \
 	pe_sfscache.c \
+	pe_prefixhash.c \
 	pe_sandbox.c \
 	pe_pubkey.c \
 	session.c \
@@ -100,6 +101,7 @@ anoubisd_SOURCES_flawfinder= \
 	pe_alf.c_flawfinder \
 	pe_sfs.c_flawfinder \
 	pe_sfscache.c_flawfinder \
+	pe_prefixhash.c_flawfinder \
 	pe_sandbox.c_flawfinder \
 	pe_pubkey.c_flawfinder \
 	session.c_flawfinder \
@@ -124,6 +126,7 @@ anoubisd_SOURCES_lint= \
 	pe_alf.c_lint \
 	pe_sfs.c_lint \
 	pe_sfscache.c_lint \
+	pe_prefixhash.c_lint \
 	pe_sandbox.c_lint \
 	pe_pubkey.c_lint \
 	session.c_lint \
@@ -141,6 +144,7 @@ anoubisd_SOURCES_splint= \
 	pe_alf.c_splint \
 	pe_sfs.c_splint \
 	pe_sfscache.c_splint \
+	pe_prefixhash.c_splint \
 	pe_sandbox.c_splint \
 	pe_pubkey.c_splint \
 	session.c_splint \

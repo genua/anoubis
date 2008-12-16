@@ -68,27 +68,25 @@ struct result {
 };
 
 static void
-pe_sb_evaluate(struct apn_rule *sbrules, struct pe_file_event *sbevent,
-    struct result *res, unsigned int atype, int prio)
+pe_sb_evaluate(struct apn_rule **rulelist, int rulecnt,
+    struct pe_file_event *sbevent, struct result *res, unsigned int atype,
+    int prio)
 {
-	struct apn_rule		*sbrule;
 	struct apn_rule		*match = NULL;
 	time_t			 now;
+	int			 i;
 
 	if ((sbevent->amask & atype) == 0) {
 		/* Do not touch rule_id, prio or log level. */
 		res->decision = POLICY_ALLOW;
 		return;
 	}
-	if (sbrules->apn_type != APN_SB) {
-		log_warnx("pe_sb_evaluate: Non sandbox Policy found");
-		goto err;
-	}
 	if (time(&now) == (time_t)-1) {
 		log_warn("pe_sb_evaluate: Cannot get current time");
 		goto err;
 	}
-	TAILQ_FOREACH(sbrule, &sbrules->rule.chain, entry) {
+	for (i=0; i<rulecnt; ++i) {
+		struct apn_rule	*sbrule = rulelist[i];
 		char		*prefix;
 		int	 	 cstype;
 		u_int8_t	*cs;
@@ -252,7 +250,9 @@ pe_decide_sandbox(struct pe_proc *proc, struct pe_file_event *sbevent,
 	}
 	final.decision = -1;
 	for (i=0; i<PE_PRIO_MAX; ++i) {
-		struct apn_rule		*sbrules;
+		struct apn_rule		 *sbrules;
+		struct apn_rule		**rulelist;
+		int			  rulecnt;
 
 		/*
 		 * If we do not have a process, find the default rules
@@ -283,14 +283,31 @@ pe_decide_sandbox(struct pe_proc *proc, struct pe_file_event *sbevent,
 		 */
 		if (!sbrules)
 			continue;
+		if (!sbrules->userdata) {
+			if (pe_build_prefixhash(sbrules) < 0) {
+				master_terminate(ENOMEM);
+				final.decision = POLICY_DENY;
+				break;
+			}
+		}
+		if (pe_prefixhash_getrules(sbrules->userdata, sbevent->path,
+		    &rulelist, &rulecnt) < 0) {
+			master_terminate(ENOMEM);
+			final.decision = POLICY_DENY;
+			break;
+		}
 		/*
 		 * The three results may be pre-initilized from a higher
 		 * priority. However, the only possibilities are
 		 * uninitilized (-1) or POLICY_ALLOW.
 		 */
-		pe_sb_evaluate(sbrules, sbevent, &res[0], APN_SBA_READ, i);
-		pe_sb_evaluate(sbrules, sbevent, &res[1], APN_SBA_WRITE, i);
-		pe_sb_evaluate(sbrules, sbevent, &res[2], APN_SBA_EXEC, i);
+		pe_sb_evaluate(rulelist, rulecnt, sbevent, &res[0],
+		    APN_SBA_READ, i);
+		pe_sb_evaluate(rulelist, rulecnt, sbevent, &res[1],
+		    APN_SBA_WRITE, i);
+		pe_sb_evaluate(rulelist, rulecnt, sbevent, &res[2],
+		    APN_SBA_EXEC, i);
+		free(rulelist);
 		/*
 		 * If any of the events results in DENY we are done here.
 		 * If any of the events results in ASK we are done, too.

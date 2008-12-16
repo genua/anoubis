@@ -374,6 +374,7 @@ alfruleset	: ruleid apps optnl '{' optnl alfrule_l '}' nl {
 			rule->scope = NULL;
 			rule->apn_type = APN_ALF;
 			rule->apn_id = $1;
+			rule->userdata = NULL;
 			TAILQ_INIT(&rule->rule.chain);
 			while(!TAILQ_EMPTY($6)) {
 				struct apn_rule *arule;
@@ -491,6 +492,7 @@ alfrule		: ruleid alffilterrule	scope		{
 			rule->rule.afilt = $2;
 			rule->apn_id = $1;
 			rule->scope = $3;
+			rule->userdata = NULL;
 			rule->app = NULL;
 
 			$$ = rule;
@@ -508,6 +510,7 @@ alfrule		: ruleid alffilterrule	scope		{
 			rule->rule.acap = $2;
 			rule->apn_id = $1;
 			rule->scope = $3;
+			rule->userdata = NULL;
 			rule->app = NULL;
 
 			$$ = rule;
@@ -525,6 +528,7 @@ alfrule		: ruleid alffilterrule	scope		{
 			rule->rule.apndefault = $2;
 			rule->apn_id = $1;
 			rule->scope = $3;
+			rule->userdata = NULL;
 			rule->app = NULL;
 
 			$$ = rule;
@@ -791,6 +795,7 @@ sfsmodule	: SFS optnl '{' optnl sfsrule_l '}'	{
 			rule->apn_type = APN_SFS;
 			rule->apn_id = 0;
 			rule->app = NULL;
+			rule->userdata = NULL;
 			TAILQ_INIT(&rule->rule.chain);
 			while (!TAILQ_EMPTY($5)) {
 				struct apn_rule *srule;
@@ -840,6 +845,7 @@ sfsrule		: ruleid sfscheckrule scope		{
 			rule->rule.sfscheck = $2;
 			rule->apn_id = $1;
 			rule->scope = $3;
+			rule->userdata = NULL;
 			rule->app = NULL;
 
 			$$ = rule;
@@ -856,6 +862,7 @@ sfsrule		: ruleid sfscheckrule scope		{
 			rule->apn_type = APN_SFS_ACCESS;
 			rule->scope = $3;
 			rule->rule.sfsaccess = $2;
+			rule->userdata = NULL;
 			rule->apn_id = $1;
 
 			$$ = rule;
@@ -873,6 +880,7 @@ sfsrule		: ruleid sfscheckrule scope		{
 			rule->apn_type = APN_SFS_DEFAULT;
 			rule->scope = $3;
 			rule->rule.sfsdefault = $2;
+			rule->userdata = NULL;
 			rule->apn_id = $1;
 
 			$$ = rule;
@@ -981,6 +989,7 @@ sbruleset	: ruleid apps optnl '{' optnl sbrule_l '}' nl {
 			rule->scope = NULL;
 			rule->apn_type = APN_SB;
 			rule->apn_id = $1;
+			rule->userdata = NULL;
 			TAILQ_INIT(&rule->rule.chain);
 			while(!TAILQ_EMPTY($6)) {
 				struct apn_rule *sbrule;
@@ -1033,6 +1042,7 @@ sbrule		: ruleid sbaccess scope {
 			rule->rule.sbaccess = $2;
 			rule->apn_id = $1;
 			rule->scope = $3;
+			rule->userdata = NULL;
 			rule->app = NULL;
 
 			$$ = rule;
@@ -1050,6 +1060,7 @@ sbrule		: ruleid sbaccess scope {
 			rule->rule.apndefault = $2;
 			rule->apn_id = $1;
 			rule->scope = $3;
+			rule->userdata = NULL;
 			rule->app = NULL;
 
 			$$ = rule;
@@ -1194,6 +1205,7 @@ ctxruleset	: ruleid apps optnl '{' optnl ctxrule_l '}' nl {
 			rule->app = $2;
 			rule->scope = NULL;
 			rule->apn_type = APN_CTX;
+			rule->userdata = NULL;
 			rule->apn_id = $1;
 			TAILQ_INIT(&rule->rule.chain);
 			while(!TAILQ_EMPTY($6)) {
@@ -1246,6 +1258,7 @@ ctxrule		: ruleid ctxruleapps scope			{
 			rule->rule.apncontext = $2;
 			rule->apn_id = $1;
 			rule->scope = $3;
+			rule->userdata = NULL;
 			rule->app = NULL;
 
 			$$ = rule;

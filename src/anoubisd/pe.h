@@ -151,4 +151,14 @@ anoubisd_reply_t	*pe_decide_sandbox(struct pe_proc *proc,
 void			 pe_ipc_connect(struct ac_ipc_message *);
 void			 pe_ipc_destroy(struct ac_ipc_message *);
 
+/* Prefix Hash */
+struct pe_prefixhash;
+struct pe_prefixhash	*pe_prefixhash_create(unsigned int);
+void			 pe_prefixhash_destroy(struct pe_prefixhash *);
+int			 pe_prefixhash_add(struct pe_prefixhash *,
+			     const char *str, struct apn_rule *, int idx);
+int			 pe_prefixhash_getrules(struct pe_prefixhash *,
+			     const char *, struct apn_rule ***, int *);
+int			 pe_build_prefixhash(struct apn_rule *);
+
 #endif	/* _PE_H_ */

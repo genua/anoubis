@@ -138,6 +138,7 @@ init_sfs_rule(struct apn_ruleset *rs)
 	nrule->apn_id = 0;
 	nrule->apn_type = APN_SFS;
 	nrule->app = NULL;
+	nrule->userdata = NULL;
 	TAILQ_INIT(&nrule->rule.chain);
 	return apn_insert(rs, nrule, 0);
 }
@@ -171,6 +172,7 @@ __apn_parse_common(const char *filename, struct apn_ruleset **rsp, int flags)
 	rs->compatids = 1;
 	rs->maxid = 1;
 	rs->idtree = NULL;
+	rs->destructor = NULL;
 	*rsp = rs;
 
 	return 0;
@@ -1654,6 +1656,8 @@ apn_free_chain(struct apn_chain *chain, struct apn_ruleset *rs)
 void
 apn_free_one_rule(struct apn_rule *rule, struct apn_ruleset *rs)
 {
+	if (rs && rs->destructor && rule->userdata)
+		(*rs->destructor)(rule->userdata);
 	switch (rule->apn_type) {
 	case APN_ALF:
 	case APN_SFS:
@@ -1839,6 +1843,7 @@ apn_copy_one_rule(struct apn_rule *old)
 	newrule->apn_id = old->apn_id;
 	newrule->app = NULL;
 	newrule->scope = NULL;
+	newrule->userdata = NULL;
 	if (old->scope) {
 		newrule->scope = calloc(1, sizeof(struct apn_scope));
 		if (newrule->scope == NULL)

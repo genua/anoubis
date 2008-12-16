@@ -339,6 +339,7 @@ pe_user_clean_policy(const char *filename, const char *dirname, int all)
 		log_warnx("apn_parse: Parsing failed");
 		goto out;
 	}
+	rs->destructor = (void*)&pe_prefixhash_destroy;
 	if (apn_clean_ruleset(rs, &pe_user_scope_check, &now)) {
 		/* Something changed. Dump modified rules. */
 		mode_t	oldmask;
@@ -398,7 +399,7 @@ pe_user_load_policy(const char *name, int flags)
 		log_warnx("could not parse \"%s\"", name);
 		return (NULL);
 	}
-
+	rs->destructor = (void*)&pe_prefixhash_destroy;
 	return (rs);
 }
 
@@ -780,6 +781,7 @@ pe_dispatch_policy(struct anoubisd_msg_comm *comm)
 				error = EINVAL;
 				goto reply;
 			}
+			ruleset->destructor = (void*)&pe_prefixhash_destroy;
 			/* Backup old rules */
 			if (time(&t) == (time_t)-1) {
 				error = errno;

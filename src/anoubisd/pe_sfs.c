@@ -166,6 +166,7 @@ pe_decide_sfs(struct pe_proc *proc, struct pe_file_event *fevent,
 	time_t			 now;
 	char			 cstext[2*ANOUBIS_CS_LEN+1];
 
+	DEBUG(DBG_TRACE, ">pe_decide_sfs");
 	if ((reply = calloc(1, sizeof(struct anoubisd_reply))) == NULL) {
 		log_warn("pe_handle_sfs: cannot allocate memory");
 		master_terminate(ENOMEM);
@@ -180,7 +181,9 @@ pe_decide_sfs(struct pe_proc *proc, struct pe_file_event *fevent,
 
 	for (i = 0; i < PE_PRIO_MAX; i++) {
 		struct apn_ruleset	*rs;
-		struct apn_rule		*sfsrule, *rule;
+		struct apn_rule		*sfsrule, **rulelist;
+		int			 rulecnt, r;
+
 		if (i == PE_PRIO_USER1 && do_disable) {
 			decision = POLICY_ALLOW;
 			break;
@@ -193,8 +196,24 @@ pe_decide_sfs(struct pe_proc *proc, struct pe_file_event *fevent,
 		sfsrule = TAILQ_FIRST(&rs->sfs_queue);
 		if (TAILQ_EMPTY(&sfsrule->rule.chain))
 			continue;
-		TAILQ_FOREACH(rule, &sfsrule->rule.chain, entry) {
+		if (sfsrule->userdata == NULL) {
+			if (pe_build_prefixhash(sfsrule) < 0) {
+				master_terminate(ENOMEM);
+				decision = POLICY_DENY;
+				break;
+			}
+		}
+		if (pe_prefixhash_getrules(sfsrule->userdata, fevent->path,
+		    &rulelist, &rulecnt) < 0) {
+			master_terminate(ENOMEM);
+			decision = POLICY_DENY;
+			break;
+		}
+		DEBUG(DBG_TRACE, " pe_decide_sfs: %d rules from hash", rulecnt);
+		for (r=0; r<rulecnt; ++r) {
 			struct	apn_default	*res;
+			struct apn_rule *rule = rulelist[r];
+
 			res = pe_sfs_match_one(rule, fevent, now);
 			if (res == NULL)
 				continue;
@@ -225,6 +244,7 @@ pe_decide_sfs(struct pe_proc *proc, struct pe_file_event *fevent,
 			}
 			break;
 		}
+		free(rulelist);
 		if (decision != -1 && decision != POLICY_ALLOW)
 			break;
 	}

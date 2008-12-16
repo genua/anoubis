@@ -242,6 +242,7 @@ TAILQ_HEAD(apn_chain, apn_rule);
 struct apn_rule {
 	struct rb_entry			 _rbentry;
 	TAILQ_ENTRY(apn_rule)		 entry;
+	void				*userdata;
 	struct apn_scope		*scope;
 	struct apn_app			*app;
 	union {
@@ -286,6 +287,8 @@ struct apn_ruleset {
 
 	/* Error messages from the parser */
 	struct apnerr_queue	 err_queue;
+	/* User data destructor. */
+	void (*destructor)(void *);
 };
 
 __BEGIN_DECLS

@@ -441,3 +441,59 @@ err:
 		free(ret);
 	return NULL;
 }
+
+int
+pe_build_prefixhash(struct apn_rule *block)
+{
+	int			 cnt = 0, idx = 1;
+	struct apn_rule		*rule;
+
+	TAILQ_FOREACH(rule, &block->rule.chain, entry)
+		cnt++;
+	block->userdata = pe_prefixhash_create(cnt);
+	if (!block->userdata)
+		return -ENOMEM;
+	DEBUG(DBG_TRACE, ">pe_build_prefixhash");
+	TAILQ_FOREACH(rule, &block->rule.chain, entry) {
+		int		 ret;
+		const char	*prefix;
+		switch (rule->apn_type) {
+		case APN_SFS_CHECK:
+			/* XXX CEH: No longer supported. */
+			continue;
+		case APN_SFS_ACCESS:
+			prefix = rule->rule.sfsaccess.path;
+			break;
+		case APN_SFS_DEFAULT:
+			prefix = rule->rule.sfsdefault.path;
+			break;
+		case APN_DEFAULT:
+			prefix = NULL;
+			break;
+		case APN_SB_ACCESS:
+			prefix = rule->rule.sbaccess.path;
+			break;
+		default:
+			log_warnx("pe_build_prefixhash: Invalid rule "
+			    "type %u in SFS rule %lu",
+			    rule->apn_type, rule->apn_id);
+			pe_prefixhash_destroy(block->userdata);
+			block->userdata = NULL;
+			DEBUG(DBG_TRACE,
+			    "<pe_build_prefixhash: invalid type");
+			return -EINVAL;
+		}
+		ret = pe_prefixhash_add(block->userdata, prefix, rule, idx);
+		if (ret < 0) {
+			pe_prefixhash_destroy(block->userdata);
+			block->userdata = NULL;
+			DEBUG(DBG_TRACE, "<pe_build_prefixhash: "
+			    "add failed with %d", ret);
+			return  ret;
+		}
+		DEBUG(DBG_TRACE, " pe_build_prefixhash: added %p", rule);
+		idx++;
+	}
+	DEBUG(DBG_TRACE, "<pe_build_prefixhash");
+	return 0;
+}
