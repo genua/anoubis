@@ -837,14 +837,18 @@ ModAnoubisMainPanelImpl::OnVersionSaveButtonClick(wxCommandEvent&)
 		return;
 
 	/* Save current profile */
-	wxString profile = ProfileCtrl::getInstance()->getProfileName();
+	/*
+	 * XXX
+	 * Temp. disabled. Needs to be fixed.
+	 */
+	/*wxString profile = ProfileCtrl::getInstance()->getProfileName();*/
+	wxString profile = wxEmptyString;
 
 	/* Comment from GUI */
 	wxString comment = VersionEnterCommentTextCtrl->GetValue();
 
 	VersionCtrl *versionCtrl = VersionCtrl::getInstance();
 	if (versionCtrl->createVersion(profile, comment, false)) {
-
 		/* Success, new version available, update view */
 		versionListUpdate();
 

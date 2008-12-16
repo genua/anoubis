@@ -222,8 +222,6 @@ xanoubis_SOURCES= \
 	model/PolicyRuleSet.h \
 	model/VarPolicy.cpp \
 	model/VarPolicy.h \
-	model/ProfileMgr.cpp \
-	model/ProfileMgr.h\
 	view/AnStatusBar.cpp \
 	view/AnStatusBar.h \
 	view/AnFader.cpp \

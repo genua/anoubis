@@ -699,7 +699,7 @@ DlgRuleEditor::OnRuleCreateButton(wxCommandEvent& )
 		rsid = profileCtrl->getAdminId(uid);
 	}
 
-	ruleSet = profileCtrl->getRuleSetToShow(rsid, this);
+	ruleSet = profileCtrl->getRuleSet(rsid);
 	if (ruleSet == NULL) {
 		wxMessageBox(_("Error: Couldn't access rule set to create."),
 		    _("Rule Editor"), wxOK, this);
@@ -1012,7 +1012,7 @@ DlgRuleEditor::OnRuleSetSave(wxCommandEvent& )
 	ProfileCtrl	*profileCtrl;
 
 	profileCtrl = ProfileCtrl::getInstance();
-	rs = profileCtrl->getRuleSetToShow(userRuleSetId_, this);
+	rs = profileCtrl->getRuleSet(userRuleSetId_);
 	if (rs == NULL) {
 		wxMessageBox(_("Error: Couldn't access rule set to store."),
 		    _("Rule Editor"), wxOK, this);
@@ -1030,7 +1030,7 @@ DlgRuleEditor::OnRuleSetSave(wxCommandEvent& )
 	}
 
 	rs->clearModified();
-	wxGetApp().usePolicy(rs);
+	profileCtrl->sendToDaemon(rs->getId());
 
 	controlRuleSetStatusText->SetLabel(wxT("sent to daemon"));
 	controlRuleSetSaveButton->Disable();
@@ -1041,9 +1041,9 @@ DlgRuleEditor::OnRuleSetSave(wxCommandEvent& )
 		    foreignAdminRsIds_.GetCount(), this);
 		for (size_t i=0; i<foreignAdminRsIds_.GetCount(); i++) {
 			progDlg.Update(i);
-			rs = profileCtrl->getRuleSetToShow(
-			    foreignAdminRsIds_.Item(i), this);
-			wxGetApp().usePolicy(rs);
+			rs = profileCtrl->getRuleSet(
+			    foreignAdminRsIds_.Item(i));
+			profileCtrl->sendToDaemon(rs->getId());
 		}
 	}
 }
@@ -1060,7 +1060,7 @@ DlgRuleEditor::loadRuleSet(void)
 
 	ruleListCtrl->DeleteAllItems();
 
-	ruleSet = profileCtrl->getRuleSetToShow(userRuleSetId_, this);
+	ruleSet = profileCtrl->getRuleSet(userRuleSetId_);
 	if (ruleSet != NULL) {
 		wxString text;
 
@@ -1078,7 +1078,7 @@ DlgRuleEditor::loadRuleSet(void)
 		ruleSet->accept(addVisitor);
 	}
 
-	ruleSet = profileCtrl->getRuleSetToShow(adminRuleSetId_, this);
+	ruleSet = profileCtrl->getRuleSet(adminRuleSetId_);
 	if (ruleSet != NULL) {
 		addVisitor.setAdmin(true);
 		ruleSet->accept(addVisitor);
@@ -1095,12 +1095,9 @@ DlgRuleEditor::loadRuleSet(void)
 			if (rsid == -1) {
 				continue;
 			}
-			if (!profileCtrl->lockToShow(rsid, this)) {
-				continue;
-			}
 
 			foreignAdminRsIds_.Add(rsid);
-			ruleSet = profileCtrl->getRuleSetToShow(rsid, this);
+			ruleSet = profileCtrl->getRuleSet(rsid);
 			if (ruleSet != NULL) {
 				addVisitor.setAdmin(true);
 				ruleSet->accept(addVisitor);
@@ -1125,20 +1122,11 @@ DlgRuleEditor::OnLoadRuleSet(wxCommandEvent& event)
 	this->controlRuleCreateButton->Enable();
 	this->controlRuleDeleteButton->Enable();
 
-	profileCtrl->unlockFromShow(userRuleSetId_, this);
 	userRuleSetId_ = profileCtrl->getUserId();
-	if (! profileCtrl->lockToShow(userRuleSetId_, this)) {
-		userRuleSetId_ = -1;
-	}
 
-	profileCtrl->unlockFromShow(adminRuleSetId_, this);
 	adminRuleSetId_ = profileCtrl->getAdminId(geteuid());
-	if (!profileCtrl->lockToShow(adminRuleSetId_, this)) {
-		adminRuleSetId_ = -1;
-	}
 
 	for (size_t i=0; i<foreignAdminRsIds_.GetCount(); i++) {
-		profileCtrl->unlockFromShow(foreignAdminRsIds_.Item(i), this);
 		foreignAdminRsIds_.RemoveAt(i);
 	}
 
@@ -1280,7 +1268,7 @@ DlgRuleEditor::OnShowRule(wxCommandEvent& event)
 	profileCtrl = ProfileCtrl::getInstance();
 	event.Skip();
 
-	rs = profileCtrl->getRuleSetToShow(userRuleSetId_, this);
+	rs = profileCtrl->getRuleSet(userRuleSetId_);
 	if (rs == NULL) {
 		wxMessageBox(_("Error: Couldn't access rule set to store."),
 		    _("Rule Editor"), wxOK, this);
@@ -1294,7 +1282,7 @@ DlgRuleEditor::OnShowRule(wxCommandEvent& event)
 	RuleSetSearchPolicyVisitor seeker(id);
 	rs->accept(seeker);
 	if (! seeker.hasMatchingPolicy()) {
-		rs = profileCtrl->getRuleSetToShow(adminRuleSetId_, this);
+		rs = profileCtrl->getRuleSet(adminRuleSetId_);
 		if (rs == NULL) {
 			return;
 		}
@@ -1572,7 +1560,7 @@ DlgRuleEditor::modified(void)
 	text = _("modified");
 
 	profileCtrl = ProfileCtrl::instance();
-	ruleSet = profileCtrl->getRuleSetToShow(userRuleSetId_, this);
+	ruleSet = profileCtrl->getRuleSet(userRuleSetId_);
 	if (ruleSet != NULL) {
 		ruleSet->setModified(true);
 		if (ruleSet->hasErrors()) {

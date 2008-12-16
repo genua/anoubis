@@ -45,8 +45,6 @@ class ModAnoubisOverviewPanelImpl : public ModAnoubisOverviewPanelBase
 
 	public:
 		ModAnoubisOverviewPanelImpl(wxWindow* parent, wxWindowID id);
-
-		void setProfile(wxString);
 };
 
 #endif /* __ModAnoubisOverviewPanelImpl__ */

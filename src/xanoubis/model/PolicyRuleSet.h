@@ -74,6 +74,8 @@ class PolicyRuleSet : public wxEvtHandler
 		void OnAnswerEscalation(wxCommandEvent&);
 		bool hasLocalHost(wxArrayString);
 		int createAppPolicy(int type, int id);
+		void log(const wxString &);
+		void status(const wxString &);
 
 		struct apn_rule *assembleAlfPolicy(AlfPolicy *,
 		   EscalationNotify *);

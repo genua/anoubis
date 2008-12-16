@@ -96,9 +96,6 @@ AnoubisGuiApp::quit(void)
 {
 	bool result = mainFrame->OnQuit();
 
-	userOptions_->Write(wxT("Anoubis/Profile"),
-	    ProfileCtrl::getInstance()->getProfile());
-
 	if(result) {
 		trayIcon->RemoveIcon();
 		mainFrame->Destroy();
@@ -136,10 +133,6 @@ bool AnoubisGuiApp::OnInit()
 	jobCtrl->Connect(anTASKEVT_REGISTER,
 	    wxTaskEventHandler(AnoubisGuiApp::OnDaemonRegistration),
 	    NULL, this);
-	jobCtrl->Connect(anTASKEVT_POLICY_REQUEST,
-	    wxTaskEventHandler(AnoubisGuiApp::OnPolicyRequest), NULL, this);
-	jobCtrl->Connect(anTASKEVT_POLICY_SEND,
-	    wxTaskEventHandler(AnoubisGuiApp::OnPolicySend), NULL, this);
 
 	anEvents->Connect(anEVT_ANSWER_ESCALATION,
 	    wxCommandEventHandler(AnoubisGuiApp::OnAnswerEscalation),
@@ -180,10 +173,6 @@ bool AnoubisGuiApp::OnInit()
 		status(_("Language setting: ") + language_.GetCanonicalName());
 	}
 
-	ProfileCtrl::getInstance()->switchProfile(ProfileMgr::PROFILE_MEDIUM);
-	((ModAnoubis*)modules_[ANOUBIS])->setProfile(
-	    ProfileCtrl::getInstance()->getProfileName());
-
 	return (true);
 }
 
@@ -196,9 +185,6 @@ AnoubisGuiApp::OnExit(void)
 	JobCtrl *jobCtrl = JobCtrl::getInstance();
 	jobCtrl->stop();
 	delete jobCtrl;
-
-	requestTaskList_.clear();
-	sendTaskList_.clear();
 
 	return (result);
 }
@@ -398,39 +384,6 @@ AnoubisGuiApp::autoStart(bool autostart)
 }
 
 void
-AnoubisGuiApp::requestPolicy(void)
-{
-	int idx;
-	unsigned long uid;
-	std::list<ComPolicyRequestTask *>::const_iterator it;
-	wxArrayString userList = getListOfUsersId();
-
-	if (requestTaskList_.empty()) {
-		requestTaskList_.push_back(new ComPolicyRequestTask(1,
-		    geteuid()));
-		for (idx=userList.GetCount() - 1; idx >= 0; idx--) {
-			userList.Item(idx).ToULong(&uid);
-			requestTaskList_.push_back(
-			    new ComPolicyRequestTask(0, (uid_t)uid));
-		}
-	}
-
-	for (it=requestTaskList_.begin(); it != requestTaskList_.end(); it++) {
-		JobCtrl::getInstance()->addTask(*it);
-	}
-}
-
-void
-AnoubisGuiApp::usePolicy(PolicyRuleSet *ruleset)
-{
-	ComPolicySendTask *task;
-
-	task = new ComPolicySendTask(ruleset);
-	sendTaskList_.push_back(task);
-	JobCtrl::getInstance()->addTask(task);
-}
-
-void
 AnoubisGuiApp::sendChecksum(const wxString &File)
 {
 	csumAddTask_.setFile(File);
@@ -567,166 +520,10 @@ AnoubisGuiApp::getCommConnectionState(void)
 	return (JobCtrl::getInstance()->isConnected());
 }
 
-void
-AnoubisGuiApp::importPolicyRuleSet(int prio, uid_t uid,
-    struct apn_ruleset * rule)
-{
-	wxCommandEvent	 event(anEVT_LOAD_RULESET);
-	PolicyRuleSet	*rs;
-	ProfileCtrl	*profileCtrl;
-
-	rs = new PolicyRuleSet(prio, uid, rule);
-	profileCtrl = ProfileCtrl::getInstance();
-
-	event.SetClientData((void*)rs);
-
-	if (onInitProfile_) {
-		ProfileMgr::profile_t	profile;
-		long			rProfile;
-		onInitProfile_ = false;
-		if (!userOptions_->Read(wxT("Anoubis/Profile"), &rProfile)) {
-			if (rs == NULL) {
-				profile = ProfileMgr::PROFILE_NONE;
-			} else if (rs->isEmpty()) {
-				profile = ProfileMgr::PROFILE_ADMIN;
-				profileCtrl->switchProfile(profile);
-				profileFromDiskToDaemon(
-				    profileCtrl->getProfileName());
-			} else {
-				profile = ProfileMgr::PROFILE_MEDIUM;
-				profileCtrl->switchProfile(profile);
-				profileFromDaemonToDisk(
-				    profileCtrl->getProfileName());
-			}
-		} else {
-			profile = (ProfileMgr::profile_t)rProfile;
-			profileCtrl->switchProfile(profile);
-		}
-		((ModAnoubis*)modules_[ANOUBIS])->setProfile(
-		    profileCtrl->getProfileName());
-	}
-
-	profileCtrl->store(rs);
-	wxPostEvent(AnEvents::getInstance(), event);
-}
-
-void
-AnoubisGuiApp::importPolicyFile(wxString fileName, bool checkPerm)
-{
-	wxCommandEvent		 event(anEVT_LOAD_RULESET);
-	PolicyRuleSet		*ruleSet;
-
-	ruleSet = new PolicyRuleSet(1, geteuid(), fileName, checkPerm);
-	if (!ruleSet->hasErrors()) {
-		ProfileCtrl::getInstance()->store(ruleSet);
-		wxPostEvent(AnEvents::getInstance(), event);
-	} else {
-		wxMessageBox(
-		    _("Couldn't import policy file: it contains errors."),
-		    _("Error"), wxICON_ERROR);
-	}
-}
-
-/* XXX ch: this code should be moved to ProfileCtrl. */
-void
-AnoubisGuiApp::exportPolicyFile(wxString fileName)
-{
-	long		 rsid;
-	ProfileCtrl	*profileCtrl;
-	PolicyRuleSet	*ruleSet;
-
-	profileCtrl = ProfileCtrl::getInstance();
-	rsid = profileCtrl->getUserId();
-	if (rsid == -1) {
-		status(_("no loaded RuleSet; export failed!"));
-		return;
-	}
-
-	if (! profileCtrl->lockToShow(rsid, this)) {
-		status(_("Couldn't access RuleSet; export failed!"));
-		return;
-	}
-
-	ruleSet = profileCtrl->getRuleSetToShow(rsid, this);
-	ruleSet->exportToFile(fileName);
-
-	profileCtrl->unlockFromShow(rsid, this);
-}
-
 wxConfig *
 AnoubisGuiApp::getUserOptions(void)
 {
 	return (userOptions_);
-}
-
-/* XXX ch: this code should be moved to ProfileCtrl. */
-bool
-AnoubisGuiApp::profileFromDiskToDaemon(const wxString &profileName)
-{
-	wxString	fileName;
-	wxString	tmpFileName;
-	wxString	logMsg;
-
-	if (!JobCtrl::getInstance()->isConnected()) {
-		status(_("Error: xanoubis is not connected to the daemon"));
-		return (false);
-	}
-
-	logMsg = _("seek for profile ") + profileName + _(" at ");
-	fileName = paths_.GetUserDataDir() + wxT("/") + profileName;
-	log(logMsg + fileName);
-	if (!wxFileExists(fileName)) {
-		fileName = paths_.GetDataDir();
-		fileName += wxT("/profiles/") + profileName;
-		log(logMsg + fileName);
-	}
-	if (!wxFileExists(fileName)) {
-		/*
-		 * We didn't find our profile (where --prefix told us)!
-		 * Try to take executable path into account. This should
-		 * fix a missing --prefix as the matter in our build and test
-		 * environment with aegis.
-		 */
-		fileName  = wxPathOnly(paths_.GetExecutablePath()) +
-		    wxT("/../../..") + fileName;
-		log(logMsg + fileName);
-	}
-	if (!wxFileExists(fileName)) {
-		status(_("Error: could not find profile: ") + profileName);
-		return (false);
-	}
-
-	/*
-	 * Create a tmp file as a copy of the local profile,
-	 * because usePolicy() will remove the given file!
-	 */
-	usePolicy(new PolicyRuleSet(1, geteuid(), fileName, false));
-	importPolicyFile(fileName, false);
-
-	return (true);
-}
-
-bool
-AnoubisGuiApp::profileFromDaemonToDisk(const wxString &profileName)
-{
-	wxString	fileName;
-
-	if (!JobCtrl::getInstance()->isConnected()) {
-		status(_("Error: xanoubis is not connected to the daemon"));
-		return (false);
-	}
-
-	if (ProfileCtrl::getInstance()->getUserId() == -1) {
-		return (false);
-	}
-
-	fileName = paths_.GetUserDataDir() + wxT("/") + profileName;
-	if (wxFileExists(fileName)) {
-		wxRemoveFile(fileName);
-	}
-	exportPolicyFile(fileName);
-
-	return (true);
 }
 
 bool
@@ -837,7 +634,7 @@ AnoubisGuiApp::OnDaemonRegistration(TaskEvent &event)
 	if (task->getAction() == ComRegistrationTask::ACTION_REGISTER) {
 		if (task->getComTaskResult() == ComTask::RESULT_SUCCESS) {
 			/* No success load policies from daemon */
-			wxGetApp().requestPolicy();
+			ProfileCtrl::getInstance()->receiveFromDaemon();
 		} else {
 			/* Registration failed, disconnect again */
 			connectCommunicator(false);
@@ -848,80 +645,6 @@ AnoubisGuiApp::OnDaemonRegistration(TaskEvent &event)
 	}
 
 	event.Skip();
-}
-
-void
-AnoubisGuiApp::OnPolicyRequest(TaskEvent &event)
-{
-	ComPolicyRequestTask *task =
-	    dynamic_cast<ComPolicyRequestTask*>(event.getTask());
-
-	if (task == 0)
-		return;
-
-	/* XXX Error-path? */
-	importPolicyRuleSet(task->getPriority(), task->getUid(),
-	    task->getPolicyApn());
-
-	event.Skip();
-}
-
-void
-AnoubisGuiApp::OnPolicySend(TaskEvent &event)
-{
-	ComPolicySendTask	*task;
-	ComTask::ComTaskResult	taskResult;
-	wxString		message;
-	bool			isAdmin;
-	wxString		user;
-
-	task = dynamic_cast<ComPolicySendTask*>(event.getTask());
-	if (task == 0)
-		return;
-
-	isAdmin = (geteuid == 0);
-	taskResult = task->getComTaskResult();
-	user = getUserNameById(task->getUid());
-
-	if (taskResult == ComTask::RESULT_INIT) {
-		message = _("The task was not executed.");
-	} else if (taskResult == ComTask::RESULT_OOM) {
-		message = _("Out of memory.");
-	} else if (taskResult == ComTask::RESULT_COM_ERROR) {
-		if (isAdmin && (task->getPriority() == 0))
-			message.Printf(
-			    _("Communication error while sending admin-policy\n\
-of %s to daemon."), user.c_str());
-		else if (isAdmin && (task->getPriority() > 0))
-			message.Printf(_("Communication error while sending\
-user-policy\nof %s to daemon."), user.c_str());
-		else
-			message = _("Error while sending policy to daemon.");
-	} else if (taskResult == ComTask::RESULT_REMOTE_ERROR) {
-		if (isAdmin && (task->getPriority() == 0))
-			message.Printf(_("Got error (%s) from daemon\n\
-after sent admin-policy of %s."),
-			    wxStrError(task->getResultDetails()).c_str(),
-			    user.c_str());
-		else if (isAdmin && (task->getPriority() > 0))
-			message.Printf(_("Got error (%s) from daemon\n\
-after sent user-policy of %s."),
-			    wxStrError(task->getResultDetails()).c_str(),
-			    user.c_str());
-		else
-			message.Printf(_("Got error (%s) from daemon\n\
-after sent policy."), wxStrError(task->getResultDetails()).c_str());
-	} else if (taskResult != ComTask::RESULT_SUCCESS) {
-		message.Printf(_("An unexpected error occured.\n\
-Error code: %i"), taskResult);
-	}
-
-	if (taskResult != ComTask::RESULT_SUCCESS) {
-		wxMessageBox(message, _("Error while sending policy"),
-		    wxICON_ERROR);
-	}
-
-	sendTaskList_.remove(task);
 }
 
 void

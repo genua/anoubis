@@ -25,12 +25,57 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#include <wx/dir.h>
+#include <wx/msgdlg.h> /* XXX Used by bad AnoubisGuiApp::OnPolicySend */
+#include <wx/stdpaths.h>
+
+#include "main.h"
+#include "AnUtils.h"
+#include "ComPolicyRequestTask.h"
+#include "ComPolicySendTask.h"
+#include "JobCtrl.h"
+#include "PolicyRuleSet.h"
 #include "ProfileCtrl.h"
 
-#include "Singleton.cpp"
+ProfileCtrl::ProfileCtrl(void) : Singleton<ProfileCtrl>()
+{
+	eventBroadcastEnabled_ = true;
+
+	JobCtrl *jobCtrl = JobCtrl::getInstance();
+
+	jobCtrl->Connect(anTASKEVT_POLICY_REQUEST,
+	    wxTaskEventHandler(ProfileCtrl::OnPolicyRequest), NULL, this);
+	jobCtrl->Connect(anTASKEVT_POLICY_SEND,
+	    wxTaskEventHandler(ProfileCtrl::OnPolicySend), NULL, this);
+}
 
 ProfileCtrl::~ProfileCtrl(void)
 {
+	/* Destroy policies */
+	while (!ruleSetList_.empty()) {
+		PolicyRuleSet *rs = ruleSetList_.front();
+		ruleSetList_.pop_front();
+
+		delete rs;
+	}
+
+	/* Destroy tasks */
+	while (!requestTaskList_.empty()) {
+		Task *t = requestTaskList_.front();
+		requestTaskList_.pop_front();
+
+		delete t;
+	}
+	while (!sendTaskList_.empty()) {
+		Task *t = sendTaskList_.front();
+		sendTaskList_.pop_front();
+
+		delete t;
+	}
 }
 
 ProfileCtrl *
@@ -39,167 +84,395 @@ ProfileCtrl::getInstance(void)
 	return (Singleton<ProfileCtrl>::instance());
 }
 
-ProfileMgr::profile_t
-ProfileCtrl::getProfile(void) const
-{
-	return (profileManager_.getProfile());
-}
-
-wxString
-ProfileCtrl::getProfileName(void) const
-{
-	return (profileManager_.getProfileName());
-}
-
-void
-ProfileCtrl::switchProfile(ProfileMgr::profile_t profile)
-{
-	profileManager_.setProfile(profile);
-	/*
-	 * XXX: ch ToDo
-	 * If this is going to be used, we have to
-	 * activateRuleSet(profileManager_.getRuleSet());
-	 */
-}
-
-long
-ProfileCtrl::getUserId(ProfileMgr::profile_t profile) const
-{
-	return (seekId(profile, false, geteuid()));
-}
-
 long
 ProfileCtrl::getUserId(void) const
 {
-	return (getUserId(profileManager_.getProfile()));
-}
-
-long
-ProfileCtrl::getAdminId(ProfileMgr::profile_t profile, uid_t uid) const
-{
-	return (seekId(profile, true, uid));
+	return (seekId(false, geteuid()));
 }
 
 long
 ProfileCtrl::getAdminId(uid_t uid) const
 {
-	return (getAdminId(profileManager_.getProfile(), uid));
+	return (seekId(true, uid));
 }
 
-bool
-ProfileCtrl::lockToShow(long id, void *caller)
+PolicyRuleSet *
+ProfileCtrl::getRuleSet(long id) const
 {
-	bool result;
+	std::list<PolicyRuleSet *>::const_iterator it;
 
-	result = false;
+	for (it = ruleSetList_.begin(); it != ruleSetList_.end(); ++it) {
+		PolicyRuleSet *rs = (*it);
 
-	result = profileManager_.acquireRuleSet(id);
-	if (result == false) {
-		/* No rule set with the given id was stored. */
-		return (false);
+		if (rs->getId() == id)
+			return (rs);
 	}
 
-	showList_.insert(std::pair<long, void *>(id, caller));
+	return (0);
+}
+
+wxArrayString
+ProfileCtrl::getProfileList(void) const
+{
+	wxArrayString	result;
+
+	/* Scan for default-profiles */
+	scanDirectory(getProfilePath(DEFAULT_PROFILE), result);
+
+	/* Scan for user-profiles */
+	scanDirectory(getProfilePath(USER_PROFILE), result);
 
 	return (result);
 }
 
 bool
-ProfileCtrl::unlockFromShow(long id, void *caller)
+ProfileCtrl::haveProfile(const wxString &name) const
 {
-	std::multimap<long, void *>::iterator	it;
-	std::multimap<long, void *>::iterator	itup;
-	std::multimap<long, void *>::iterator	itlow;
-	bool					foundCaller;
+	return wxFileExists(getProfileFile(name, USER_PROFILE)) ||
+	    wxFileExists(getProfileFile(name, DEFAULT_PROFILE));
+}
 
-	if (showList_.count(id) == 0) {
-		/* No rule set with this id was locked. */
+bool
+ProfileCtrl::isProfileWritable(const wxString &name) const
+{
+	return wxFileExists(getProfileFile(name, USER_PROFILE));
+}
+
+bool
+ProfileCtrl::removeProfile(const wxString &name)
+{
+	/*
+	 * Only try to remove the user-profile,
+	 * a default-profile is read-only
+	 */
+	wxString file = getProfileFile(name, USER_PROFILE);
+	if (wxFileExists(file))
+		return (wxRemoveFile(file));
+	else
+		return (false);
+}
+
+bool
+ProfileCtrl::exportToProfile(const wxString &name)
+{
+	/* The user policy */
+	PolicyRuleSet *rs = getRuleSet(seekId(false, geteuid()));
+
+	if (rs == 0) {
+		/* No such policy */
 		return (false);
 	}
 
-	foundCaller = false;
-	itlow = showList_.lower_bound(id);
-	itup  = showList_.upper_bound(id);
-	for (it=itlow; it!=itup; it++) {
-		if ((*it).second == caller) {
-			/*
-			 * The break is important here, because 'it' already
-			 * points to the matching pair of 'id' and 'caller'.
-			 * Thus breaking here keeps the value of 'it', so we
-			 * can use it to erase it.
-			 */
-			foundCaller = true;
-			break;
-		}
-	}
-	if (!foundCaller) {
-		/* This rule set wasn't locked for showing by caller. */
+	if (getProfileSpec(name) == DEFAULT_PROFILE) {
+		/* Only export to user-profile allowed */
 		return (false);
 	}
 
-	if (profileManager_.releaseRuleSet(id) == false) {
-		/* No rule set with the given id was stored. */
-		return (false);
-	}
+	/*
+	 * Store-operation allowed only for user-profiles,
+	 * cannot overwrite default-profiles!
+	 */
+	wxString file = getProfileFile(name, USER_PROFILE);
 
-	showList_.erase(it);
+	/*
+	 * XXX It's hard to determine weather export was successful
+	 * because PolicyRuleSet::exportToFile() returns void.
+	 */
+	rs->exportToFile(file);
+
 	return (true);
 }
 
 bool
-ProfileCtrl::store(ProfileMgr::profile_t profile, PolicyRuleSet *ruleSet)
+ProfileCtrl::exportToFile(const wxString &file)
 {
-	return (profileManager_.storeRuleSet(profile, ruleSet));
+	/* The user policy */
+	PolicyRuleSet *rs = getRuleSet(seekId(false, geteuid()));
+
+	if (rs == 0) {
+		/* No such policy */
+		return (false);
+	}
+
+	/*
+	 * XXX It's hard to determine weather export was successful
+	 * because PolicyRuleSet::exportToFile() returns void.
+	 */
+	rs->exportToFile(file);
+
+	return (true);
 }
 
 bool
-ProfileCtrl::store(PolicyRuleSet *ruleSet)
+ProfileCtrl::importFromProfile(const wxString &name)
 {
-	return (profileManager_.storeRuleSet(ruleSet));
+	PolicyRuleSet	*rs = 0;
+	wxString	file;
+
+	/* Try user-profile */
+	file = getProfileFile(name, USER_PROFILE);
+	if (wxFileExists(file))
+		rs = new PolicyRuleSet(1, geteuid(), file, true);
+
+	if (rs == 0) {
+		/* Try default-profile */
+		file = getProfileFile(name, DEFAULT_PROFILE);
+		if (wxFileExists(file))
+			rs = new PolicyRuleSet(1, geteuid(), file, true);
+	}
+
+	if (rs != 0) {
+		bool success = importPolicy(rs);
+
+		if (!success)
+			delete rs;
+
+		return (success);
+	} else {
+		/* No such profile */
+		return (false);
+	}
 }
 
-PolicyRuleSet *
-ProfileCtrl::getRuleSetToShow(long id, void *caller) const
+bool
+ProfileCtrl::importFromFile(const wxString &file)
 {
-	std::multimap<long, void *>::const_iterator	it;
-	std::multimap<long, void *>::const_iterator	itup;
-	std::multimap<long, void *>::const_iterator	itlow;
-	bool					foundCaller;
+	PolicyRuleSet	*rs;
+	bool		success;
 
-	if (showList_.count(id) == 0) {
-		/* No rule set with this id was locked. */
-		return (NULL);
+	rs = new PolicyRuleSet(1, geteuid(), file, false);
+	success = importPolicy(rs);
+
+	if (!success)
+		delete rs;
+
+	return (success);
+}
+
+bool
+ProfileCtrl::importPolicy(PolicyRuleSet *rs)
+{
+	if (rs == 0 || rs->hasErrors())
+		return (false);
+
+	/* Search and replace user-policy */
+	int id = seekId(rs->isAdmin(), rs->getUid());
+	if (id != -1) {
+		/* Remove previously inserted policy */
+		PolicyRuleSet *oldrs = getRuleSet(id);
+		ruleSetList_.remove(oldrs);
+
+		delete oldrs;
 	}
 
-	foundCaller = false;
-	itlow = showList_.lower_bound(id);
-	itup  = showList_.upper_bound(id);
-	for (it=itlow; it!=itup; it++) {
-		if ((*it).second == caller) {
-			foundCaller = true;
-			break;
+	ruleSetList_.push_back(rs);
+
+	if (eventBroadcastEnabled_) {
+		wxCommandEvent event(anEVT_LOAD_RULESET);
+		event.SetClientData((void*)rs);
+		wxPostEvent(AnEvents::getInstance(), event);
+	}
+
+	return (true);
+}
+
+bool
+ProfileCtrl::receiveFromDaemon(void)
+{
+	int idx;
+	unsigned long uid;
+	TaskList::const_iterator it;
+	wxArrayString userList = wxGetApp().getListOfUsersId();
+
+	if (requestTaskList_.empty()) {
+		requestTaskList_.push_back(new ComPolicyRequestTask(1,
+		    geteuid()));
+		for (idx=userList.GetCount() - 1; idx >= 0; idx--) {
+			userList.Item(idx).ToULong(&uid);
+			requestTaskList_.push_back(
+			    new ComPolicyRequestTask(0, (uid_t)uid));
 		}
 	}
-	if (!foundCaller) {
-		/* This rule set wasn't locked for showing by caller. */
-		return (NULL);
+
+	for (it=requestTaskList_.begin(); it != requestTaskList_.end(); it++) {
+		JobCtrl::getInstance()->addTask(*it);
 	}
 
-	return (profileManager_.getRuleSet(id));
+	return (true);
+}
+
+bool
+ProfileCtrl::sendToDaemon(long id)
+{
+	PolicyRuleSet *rs = getRuleSet(id);
+	ComPolicySendTask *task = new ComPolicySendTask(rs);
+
+	sendTaskList_.push_back(task);
+	JobCtrl::getInstance()->addTask(task);
+
+	return (true);
+}
+
+bool
+ProfileCtrl::isEventBroadcastEnabled(void) const
+{
+	return (eventBroadcastEnabled_);
+}
+
+void
+ProfileCtrl::setEventBroadcastEnabled(bool enabled)
+{
+	eventBroadcastEnabled_ = enabled;
+}
+
+void
+ProfileCtrl::OnPolicyRequest(TaskEvent &event)
+{
+	ComPolicyRequestTask *task =
+	    dynamic_cast<ComPolicyRequestTask*>(event.getTask());
+
+	if (task == 0)
+		return;
+
+	event.Skip();
+
+	if (requestTaskList_.IndexOf(task) == wxNOT_FOUND) {
+		/* This is not "my" task. Ignore it. */
+		return;
+	}
+
+	/* XXX Error-path? */
+	importPolicy(task->getPolicy());
+}
+
+void
+ProfileCtrl::OnPolicySend(TaskEvent &event)
+{
+	ComPolicySendTask	*task;
+	ComTask::ComTaskResult	taskResult;
+	wxString		message;
+	bool			isAdmin;
+	wxString		user;
+
+	task = dynamic_cast<ComPolicySendTask*>(event.getTask());
+	if (task == 0)
+		return;
+
+	event.Skip();
+
+	if (sendTaskList_.IndexOf(task) == wxNOT_FOUND) {
+		/* This is not "my" task. Ignore it. */
+		return;
+	}
+
+	isAdmin = (geteuid == 0);
+	taskResult = task->getComTaskResult();
+	user = wxGetApp().getUserNameById(task->getUid());
+
+	if (taskResult == ComTask::RESULT_INIT) {
+		message = _("The task was not executed.");
+	} else if (taskResult == ComTask::RESULT_OOM) {
+		message = _("Out of memory.");
+	} else if (taskResult == ComTask::RESULT_COM_ERROR) {
+		if (isAdmin && (task->getPriority() == 0))
+			message.Printf(
+			    _("Communication error while sending admin-policy\n\
+of %s to daemon."), user.c_str());
+		else if (isAdmin && (task->getPriority() > 0))
+			message.Printf(_("Communication error while sending\
+user-policy\nof %s to daemon."), user.c_str());
+		else
+			message = _("Error while sending policy to daemon.");
+	} else if (taskResult == ComTask::RESULT_REMOTE_ERROR) {
+		if (isAdmin && (task->getPriority() == 0))
+			message.Printf(_("Got error (%s) from daemon\n\
+after sent admin-policy of %s."),
+			    wxStrError(task->getResultDetails()).c_str(),
+			    user.c_str());
+		else if (isAdmin && (task->getPriority() > 0))
+			message.Printf(_("Got error (%s) from daemon\n\
+after sent user-policy of %s."),
+			    wxStrError(task->getResultDetails()).c_str(),
+			    user.c_str());
+		else
+			message.Printf(_("Got error (%s) from daemon\n\
+after sent policy."), wxStrError(task->getResultDetails()).c_str());
+	} else if (taskResult != ComTask::RESULT_SUCCESS) {
+		message.Printf(_("An unexpected error occured.\n\
+Error code: %i"), taskResult);
+	}
+
+	/* XXX: This is the wrong place to show up a message-box! */
+	if (taskResult != ComTask::RESULT_SUCCESS) {
+		wxMessageBox(message, _("Error while sending policy"),
+		    wxICON_ERROR);
+	}
+
+	sendTaskList_.remove(task);
+}
+
+wxString
+ProfileCtrl::getProfilePath(ProfileSpec spec)
+{
+	switch (spec) {
+	case DEFAULT_PROFILE:
+		return wxStandardPaths::Get().GetDataDir() +
+		    wxT("/profiles");
+	case USER_PROFILE:
+		return wxStandardPaths::Get().GetUserDataDir() +
+		    wxT("/profiles");
+	case NO_PROFILE:
+		return wxEmptyString;
+	}
+
+	return (wxEmptyString); /* Should never be reached */
+}
+
+wxString
+ProfileCtrl::getProfileFile(const wxString &name, ProfileSpec spec)
+{
+	if (spec != NO_PROFILE)
+		return (getProfilePath(spec) + wxT("/") + name);
+	else
+		return wxEmptyString;
+}
+
+ProfileCtrl::ProfileSpec
+ProfileCtrl::getProfileSpec(const wxString &name)
+{
+	if (wxFileExists(getProfileFile(name, USER_PROFILE)))
+		return (USER_PROFILE);
+	else if (wxFileExists(getProfileFile(name, DEFAULT_PROFILE)))
+		return (DEFAULT_PROFILE);
+	else
+		return (NO_PROFILE);
 }
 
 long
-ProfileCtrl::seekId(ProfileMgr::profile_t profile, bool isAdmin,
-    uid_t uid) const
+ProfileCtrl::seekId(bool isAdmin, uid_t uid) const
 {
-	if (isAdmin) {
-		return (profileManager_.getAdminRsId(profile, uid));
-	} else {
-		return (profileManager_.getUserRsId(profile));
+	std::list<PolicyRuleSet *>::const_iterator it;
+
+	for (it = ruleSetList_.begin(); it != ruleSetList_.end(); ++it) {
+		PolicyRuleSet *rs = (*it);
+
+		if ((rs->isAdmin() == isAdmin) && (rs->getUid() == uid))
+			return ((*it)->getId());
 	}
+
+	return (-1);
 }
 
-ProfileCtrl::ProfileCtrl(void) : Singleton<ProfileCtrl>()
+void
+ProfileCtrl::scanDirectory(const wxString &path, wxArrayString &dest)
 {
-	showList_.clear();
+	wxDir		dir(path);
+	wxString	filename;
+	bool		cont;
+
+	cont = dir.GetFirst(&filename, wxEmptyString, wxDIR_FILES);
+	while (cont) {
+		dest.Add(filename);
+		cont = dir.GetNext(&filename);
+	}
 }

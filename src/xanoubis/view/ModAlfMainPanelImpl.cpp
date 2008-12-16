@@ -93,24 +93,18 @@ ModAlfMainPanelImpl::OnLoadRuleSet(wxCommandEvent& event)
 	profileCtrl = ProfileCtrl::getInstance();
 
 	lst_Rules->DeleteAllItems();
-	profileCtrl->unlockFromShow(userRuleSetId_, this);
-	profileCtrl->unlockFromShow(adminRuleSetId_, this);
 	userRuleSetId_ = profileCtrl->getUserId();
-	if (profileCtrl->lockToShow(userRuleSetId_, this)) {
-		ruleSet = profileCtrl->getRuleSetToShow(userRuleSetId_, this);
-		if (ruleSet != NULL) {
-			addVisitor.setAdmin(false);
-			ruleSet->accept(addVisitor);
-		}
+	ruleSet = profileCtrl->getRuleSet(userRuleSetId_);
+	if (ruleSet != NULL) {
+		addVisitor.setAdmin(false);
+		ruleSet->accept(addVisitor);
 	}
 
 	adminRuleSetId_ = profileCtrl->getAdminId(geteuid());
-	if (profileCtrl->lockToShow(adminRuleSetId_, this)) {
-		ruleSet = profileCtrl->getRuleSetToShow(adminRuleSetId_, this);
-		if (ruleSet != NULL) {
-			addVisitor.setAdmin(true);
-			ruleSet->accept(addVisitor);
-		}
+	ruleSet = profileCtrl->getRuleSet(adminRuleSetId_);
+	if (ruleSet != NULL) {
+		addVisitor.setAdmin(true);
+		ruleSet->accept(addVisitor);
 	}
 
 	if (geteuid() == 0) {
@@ -124,10 +118,8 @@ ModAlfMainPanelImpl::OnLoadRuleSet(wxCommandEvent& event)
 			if (rsid == -1) {
 				continue;
 			}
-			if (!profileCtrl->lockToShow(rsid, this)) {
-				continue;
-			}
-			ruleSet = profileCtrl->getRuleSetToShow(rsid, this);
+
+			ruleSet = profileCtrl->getRuleSet(rsid);
 			if (ruleSet != NULL) {
 				addVisitor.setAdmin(true);
 				ruleSet->accept(addVisitor);

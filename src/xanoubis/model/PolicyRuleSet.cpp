@@ -166,36 +166,36 @@ PolicyRuleSet::create(wxString fileName, bool checkPerm)
 		logEntry = _("System error during import of policy file ");
 		logEntry += fileName + wxT(" : ");
 		logEntry += wxString::From8BitData(strerror(errno));
-		wxGetApp().log(logEntry);
-		wxGetApp().status(logEntry);
+		log(logEntry);
+		status(logEntry);
 		hasErrors_ = true;
 		break;
 	case 0:
 		logEntry = _("Successfully imported policy file ");
 		logEntry += fileName;
-		wxGetApp().log(logEntry);
-		wxGetApp().status(logEntry);
+		log(logEntry);
+		status(logEntry);
 		create(ruleSet);
 		break;
 	case 1:
 		logEntry = _("Failed import of policy file ");
 		if (TAILQ_EMPTY(&(ruleSet->err_queue))) {
 			logEntry += fileName;
-			wxGetApp().log(logEntry);
+			log(logEntry);
 			break;
 		}
-		wxGetApp().status(logEntry);
+		status(logEntry);
 		TAILQ_FOREACH(errMsg, &(ruleSet->err_queue), entry) {
 			logEntry = _("Failed import of policy file ");
 			logEntry += wxString::From8BitData(errMsg->msg);
-			wxGetApp().log(logEntry);
+			log(logEntry);
 		}
 		hasErrors_ = true;
 		break;
 	default:
 		logEntry = _("Unknown error during import of policy file ");
 		logEntry += fileName;
-		wxGetApp().log(logEntry);
+		log(logEntry);
 		hasErrors_ = true;
 		break;
 	}
@@ -356,7 +356,7 @@ PolicyRuleSet::createAnswerPolicy(EscalationNotify *escalation)
 	/* get the enclosing app policy */
 	parentPolicy = triggerPolicy->getParent();
 	if (!parentPolicy) {
-		wxGetApp().status(_("Could not modify Policy (no such rule)"));
+		status(_("Could not modify Policy (no such rule)"));
 		return;
 	}
 
@@ -365,7 +365,7 @@ PolicyRuleSet::createAnswerPolicy(EscalationNotify *escalation)
 
 	newAlfRule = assembleAlfPolicy((AlfPolicy *)triggerPolicy, escalation);
 	if (newAlfRule == NULL) {
-		wxGetApp().status(_("Couldn't clone and insert policy."));
+		status(_("Couldn't clone and insert policy."));
 		return;
 	}
 
@@ -414,8 +414,7 @@ PolicyRuleSet::createAnswerPolicy(EscalationNotify *escalation)
 		newTmpAlfRule = assembleAlfPolicy((AlfPolicy *)triggerPolicy,
 		    escalation);
 		if (newAlfRule == NULL) {
-			wxGetApp().status(
-			    _("Couldn't clone and insert policy."));
+			status(_("Couldn't clone and insert policy."));
 			return;
 		}
 		if (newTmpAlfRule->scope == NULL) {
@@ -443,7 +442,7 @@ PolicyRuleSet::createAnswerPolicy(EscalationNotify *escalation)
 	clean();
 	create(this->ruleSet_);
 
-	wxGetApp().usePolicy(this);
+	ProfileCtrl::getInstance()->sendToDaemon(getId());
 
 	event.SetClientData(this);
 	wxPostEvent(AnEvents::getInstance(), event);
@@ -499,8 +498,8 @@ PolicyRuleSet::exportToFile(wxString fileName)
 	} else {
 		logEntry = _("Could not open file for export: ");
 	}         logEntry += fileName;
-	wxGetApp().log(logEntry);
-	wxGetApp().status(logEntry);
+	log(logEntry);
+	status(logEntry);
 }
 
 int
@@ -846,4 +845,26 @@ void
 PolicyRuleSet::setModified(bool modified)
 {
 	isModified_ = modified;
+}
+
+void
+PolicyRuleSet::log(const wxString &msg)
+{
+	/*
+	 * Enable logging if AnoubisGuiApp is available.
+	 * You don't have a AnoubisGuiApp in can of a unit-test.
+	 */
+	if (dynamic_cast<AnoubisGuiApp*>(wxTheApp))
+		wxGetApp().log(msg);
+}
+
+void
+PolicyRuleSet::status(const wxString &msg)
+{
+	/*
+	 * Enable logging if AnoubisGuiApp is available.
+	 * You don't have a AnoubisGuiApp in can of a unit-test.
+	 */
+	if (dynamic_cast<AnoubisGuiApp*>(wxTheApp))
+		wxGetApp().status(msg);
 }

@@ -96,16 +96,12 @@ class AnoubisGuiApp : public wxApp
 		void fillUserList(void);
 
 		ComRegistrationTask	regTask_;
-		std::list<ComPolicyRequestTask *>	requestTaskList_;
-		std::list<ComPolicySendTask *>		sendTaskList_;
 		ComCsumAddTask		csumAddTask_;
 		ComCsumGetTask		csumGetTask_;
 		CsumCalcTask		csumCalcTask_;
 
 	protected:
 		void OnDaemonRegistration(TaskEvent &);
-		void OnPolicyRequest(TaskEvent &);
-		void OnPolicySend(TaskEvent &);
 		void OnAnswerEscalation(wxCommandEvent &);
 
 	public:
@@ -125,8 +121,6 @@ class AnoubisGuiApp : public wxApp
 		void		 toggleLogViewerVisability(void);
 		void		 toggleRuleEditorVisability(void);
 		bool		 connectCommunicator(bool);
-		void		 requestPolicy(void);
-		void		 usePolicy(PolicyRuleSet *);
 		void		 sendChecksum(const wxString &);
 		void		 getChecksum(const wxString &);
 		void		 calChecksum(const wxString &);
@@ -137,13 +131,8 @@ class AnoubisGuiApp : public wxApp
 		wxIcon		*loadIcon(wxString);
 		Module		*getModule(enum moduleIdx);
 		wxString	 getDataDir(void);
-		void	 importPolicyRuleSet(int, uid_t, struct apn_ruleset*);
-		void		 importPolicyFile(wxString, bool);
-		void		 exportPolicyFile(wxString);
 		bool		 getCommConnectionState(void);
 		wxConfig	*getUserOptions(void);
-		bool		 profileFromDiskToDaemon(const wxString &);
-		bool		 profileFromDaemonToDisk(const wxString &);
 		bool		 showingMainFrame(void);
 		void		 autoStart(bool);
 

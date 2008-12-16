@@ -28,22 +28,34 @@
 #ifndef _PROFILECTRL_H_
 #define _PROFILECTRL_H_
 
-#include <map>
+#include <list>
 #include <wx/string.h>
 
 #include "Singleton.h"
-#include "ProfileMgr.h"
+#include "Task.h"
+
+class PolicyRuleSet;
+class TaskEvent;
 
 /**
  * Profile controller.
  *
- * With this class, we control the profile manager. It's, implemented as
- * singleton pattern, available at any place. Don't use the profile manager
- * directly.
- * If we want to implement something like "access control" or an exclusive
- * write-lock, do it here.
+ * This controller is used to manage policies and profiles.
+ *
+ * Any policies used by the application are under control of this class.
+ * Use the method getUserId() resp. getAdminId() to obtain an identifier for
+ * the policy you are interested in. Next call getRuleSet() to fetch the policy
+ * itself.
+ *
+ * You can receive a fresh list of policies from anoubisd by calling
+ * receiveFromDaemon(). A policy can be sent back by calling sendToDaemon().
+ *
+ * There are several ways to import and export policies. On the one hand you
+ * can im/export policies into a profile (importFromProfile(),
+ * exportToProfile()). On the other hand you can im/export a policy into an
+ * arbitrary file (importFromFile(), exportToFile()).
  */
-class ProfileCtrl : public Singleton<ProfileCtrl>
+class ProfileCtrl : public wxEvtHandler, public Singleton<ProfileCtrl>
 {
 	public:
 		/**
@@ -65,151 +77,222 @@ class ProfileCtrl : public Singleton<ProfileCtrl>
 		static ProfileCtrl *getInstance(void);
 
 		/**
-		 * Get profile.
-		 * Retrieve the current profile. This is delegated to the
-		 * profile manager.
-		 * @param None.
-		 * @return The current profile.
-		 * @see ProfileMgr::getProfile()
-		 */
-		ProfileMgr::profile_t getProfile(void) const;
-
-		/**
-		 * Get name of profile.
-		 * Get the readable name of the current profile.
-		 * @param None.
-		 * @return The name of the current profile.
-		 * @see getProfile()
-		 */
-		wxString getProfileName(void) const;
-
-		/**
-		 * Switch to new profile.
-		 * Change the current profile to the given one.
-		 * This is delegated to the profile manager.
-		 * @param[in] 1st The new profile.
-		 * @return Nothing.
-		 * @see ProfileMgr::switchProfile()
-		 */
-		void switchProfile(ProfileMgr::profile_t);
-
-		/**
 		 * Get user rule set id.
-		 * Get the id of the current user rule set mapped to the
-		 * given profile.
-		 * @param[in] 1st The profile in question.
-		 * @return The id of the rule set or -1 if nothing found.
-		 */
-		long getUserId(ProfileMgr::profile_t) const;
-
-		/**
-		 * Get user rule set id.
-		 * Get the id of the current user rule set mapped to the
-		 * current profile.
+		 * Get the id of the current user rule. Use the id to fetch the
+		 * policy with getRuleSet().
 		 * @param None.
 		 * @return The id of the rule set or -1 if nothing found.
-		 * @overload
 		 */
 		long getUserId(void) const;
 
 		/**
 		 * Get admin rule set id.
 		 * Get the id of the current admin rule set mapped to the
-		 * given profile and the specified user.
-		 * @param[in] 1st The profile in question.
-		 * @param[in] 2nd The uid of the user in question.
+		 * specified user. Use the id to fetch the policy with
+		 * getRuleSet().
+		 * @param[in] 1st The uid of the user in question.
 		 * @return The id of the rule set or -1 if nothing found.
-		 */
-		long getAdminId(ProfileMgr::profile_t, uid_t) const;
-
-		/**
-		 * Get admin rule set id.
-		 * Get the id of the current admin rule set mapped to the
-		 * current profile and the specified user.
-		 * @param[in] 1st The uid of the user in question..
-		 * @return The id of the rule set or -1 if nothing found.
-		 * @overload
 		 */
 		long getAdminId(uid_t) const;
 
 		/**
-		 * Lock rule set for showing.
-		 *
-		 * This is mandatory to get access to a rule set via
-		 * getRuleSetToShow(). You can lock the same rule set more
-		 * than once. Different callers may lock the same rule set
-		 * for the same time, so you are not allowed to modify the
-		 * locked rule set. As caller just pass the 'this' value.
+		 * Get rule set.
+		 * To obtain the id, use getUserId() and getAdminId().
 		 *
 		 * @param[in] 1st The id of the rule set in question.
-		 * @param[in] 2nd The caller, this is you.
-		 * @return True on success.
-		 *
-		 * @see unlockFromShow()
-		 * @see getRuleSetToShow()
-		 */
-		bool lockToShow(long, void *);
-
-		/**
-		 * Unlock rule set from showing.
-		 *
-		 * After the call of this method, you must not use the
-		 * rule set or it's policies any more. (They may been
-		 * deleted if the last lock is released).
-		 *
-		 * @param[in] 1st The id of the rule set in question.
-		 * @param[in] 2nd The caller, this is you.
-		 * @return True on success.
-		 *
-		 * @see lockToShow()
-		 */
-		bool unlockFromShow(long, void *);
-
-		/**
-		 * Store rule set.
-		 *
-		 * Store a given rule set to the (also given profile).
-		 * This is directly delegated to the concerning profile
-		 * manager.
-		 *
-		 * @param[in] 1st The profile in question.
-		 * @param[in] 2nd The rule set to store.
-		 * @return True on success.
-		 *
-		 * @see ProfileMgr::store()
-		 */
-		bool store(ProfileMgr::profile_t, PolicyRuleSet *);
-
-		/**
-		 * Store rule set.
-		 *
-		 * Store a given rule set to the current profile.
-		 * This is directly delegated to the concerning profile
-		 * manager.
-		 *
-		 * @param[in] 1st The rule set to store.
-		 * @return True on success.
-		 *
-		 * @see ProfileMgr::store()
-		 * @overload
-		 */
-		bool store(PolicyRuleSet *);
-
-		/**
-		 * Get rule set for showing.
-		 *
-		 * Get access to the rule set with the given id. The rule set
-		 * must not be modified and it's mandatory to previously lock
-		 * the concerning rule set. As caller just pass the 'this'
-		 * value.
-		 *
-		 * @param[in] 1st The id of the rule set in question.
-		 * @param[in] 2nd The caller, this is you.
 		 * @return The requested rule set or NULL if none was found.
 		 *
-		 * @see lockToShow()
+		 * @see getUserId()
+		 * @see getAdminId()
 		 */
-		PolicyRuleSet *getRuleSetToShow(long, void*) const;
+		PolicyRuleSet *getRuleSet(long) const;
+
+		/**
+		 * Returns a list of available profiles.
+		 *
+		 * There are two types of profiles:
+		 * - default profiles: located in the data-directory (normally
+		 *   <i>/usr/share/xanoubis/profiles</i>. These profiles are
+		 *   readonly.
+		 * - user profiles: located in the user-data-directory (
+		 *   normally <i>$HOME/.xanoubis/profiles</i>). These profiles
+		 *   are writable for the user.
+		 *
+		 * @return List of available profiles
+		 */
+		wxArrayString getProfileList(void) const;
+
+		/**
+		 * Tests weather a profile with the specified name exists.
+		 *
+		 * @param name Name of profile to test
+		 * @return true if the profile exists, false otherwise.
+		 */
+		bool haveProfile(const wxString &) const;
+
+		/**
+		 * Tests weather the profile is writable for the user.
+		 *
+		 * This is mandatory for exporting a policy into a profile.
+		 *
+		 * @param name Name of profile to test
+		 * @return true if the profile is wriable for the user, false
+		 *         otherwise.
+		 */
+		bool isProfileWritable(const wxString &) const;
+
+		/**
+		 * Removes the profile with the specified name.
+		 *
+		 * The profile is removed, by removing the related file, thus
+		 * you cannot remove default-profiles because the files are
+		 * write-protected for the user.
+		 *
+		 * @param name Name of profile to be removed
+		 * @return true on success, false otherwise. The operation can
+		 *         fail, if the profile does not exist or the user does
+		 *         not have the permission to remove the file.
+		 */
+		bool removeProfile(const wxString &);
+
+		/**
+		 * Exports the currenly loaded user-policy to the specified
+		 * profile.
+		 *
+		 * Note, that the export is only permitted for user-profiles.
+		 * Trying to export into a default-profile will lead into an
+		 * error! If the profile already exist, the previous content
+		 * is overwritten.
+		 *
+		 * @param name Name of profile
+		 * @return true on success, false otherwise.
+		 */
+		bool exportToProfile(const wxString &);
+
+		/**
+		 * Exports the currently loaded user-policy into an arbitrary
+		 * file.
+		 *
+		 * If the file already exist, the content is overwritten.
+		 *
+		 * @param file Name of file. Note, that the user needs
+		 *             write-permission to the file.
+		 * @return true on success, false otherwise.
+		 */
+		bool exportToFile(const wxString &);
+
+		/**
+		 * Reads a policy from a profile and loads it as the
+		 * user-policy.
+		 *
+		 * The previously loaded user-policy is unloaded before. The
+		 * new policy is not sent to the daemon!
+		 *
+		 * When the policy was successfully imported, an wxCommandEvent
+		 * of type anEVT_LOAD_RULESET is fired.
+		 *
+		 * @param name Name of profile to be loaded
+		 * @return true on success, false otherwise.
+		 */
+		bool importFromProfile(const wxString &);
+
+		/**
+		 * Reads a policy from an arbitrary file and loads it as the
+		 * user-policy.
+		 *
+		 * The previously loaded user-policy is unloaded before. The
+		 * new policy is not sent to the daemon!
+		 *
+		 * When the policy was successfully imported, an wxCommandEvent
+		 * of type anEVT_LOAD_RULESET is fired.
+		 *
+		 * @param file Name of file.
+		 * @return true on success, false otherwise.
+		 */
+		bool importFromFile(const wxString &);
+
+		/**
+		 * Imports and loads the specified policy.
+		 *
+		 * The previously loaded policy of the same priority
+		 * (user- or admin-policy) and the same user (related uid) is
+		 * unloaded before.
+		 *
+		 * The profile-controller takes over the ownership of the
+		 * policy. Thus, the policy is destroyed if necessary.
+		 *
+		 * When the policy was successfully imported, an wxCommandEvent
+		 * of type anEVT_LOAD_RULESET is fired.
+		 *
+		 * @param ruleset The ruleset to import
+		 * @return true is returned, if the policy was imported
+		 *         successfully. The import can fail, if the policy
+		 *         contains errors.
+		 * @see PolicyRuleSet::isAdmin()
+		 * @see PolicyRuleSet::getUid()
+		 * @see PolicyRuleSet::hasErrors()
+		 */
+		bool importPolicy(PolicyRuleSet *);
+
+		/**
+		 * Fetches a list of policies from anoubisd.
+		 *
+		 * Which policies are fetched depends the the user. A
+		 * non-root-user receives its own user-policy and its readonly
+		 * admin-policy. The user root also receive its user-policy and
+		 * additionally the admin-policies of all user.
+		 *
+		 * Previously loaded policies are unloaded before.
+		 *
+		 * The method runs asynchronous and does not block until all
+		 * requested policies has arrived. When the method leaves, the
+		 * procedure is started. For each successfully received and
+		 * loaded policy, an wxCommandEvent of type anEVT_LOAD_RULESET
+		 * is fired.
+		 *
+		 * @return true is returned, if the procdure was started
+		 *         successfully. On error, false is returned. This
+		 *         might happen, if no connection to anoubisd is
+		 *         established.
+		 */
+		bool receiveFromDaemon(void);
+
+		/**
+		 * Sends the policy with the specified id to the daemon.
+		 *
+		 * You can obtain the id by calling getUserId() or
+		 * getAdminId().
+		 *
+		 * The method runs asynchronous and does not block until the
+		 * policy was sent.When the method leaves, the procedure is
+		 * started.
+		 *
+		 * @param id The id of the policy to be sent
+		 * @return true is returned, if the procdure was started
+		 *         successfully. On error, false is returned. This
+		 *         might happen, if no connection to anoubisd is
+		 *         established.
+		 */
+		bool sendToDaemon(long);
+
+		/**
+		 * Tests weather the class broadcasts any events.
+		 *
+		 * Methods can fire events after completition of an operation.
+		 * Any kind of event-broadcasting can be enabled and disabled.
+		 * By default, this feature is enabled.
+		 *
+		 * @param true if event-broadcasting is enabled.
+		 */
+		bool isEventBroadcastEnabled(void) const;
+
+		/**
+		 * Updates the event-broadcasting-capability.
+		 *
+		 * @param enabled Set to true, if event-broadcasting is
+		 *                enabled.
+		 */
+		void setEventBroadcastEnabled(bool);
 
 	protected:
 		/**
@@ -218,21 +301,27 @@ class ProfileCtrl : public Singleton<ProfileCtrl>
 		ProfileCtrl(void);
 
 	private:
-		ProfileMgr			profileManager_;
-		std::multimap<long, void *>	showList_;
+		enum ProfileSpec
+		{
+			NO_PROFILE = 0,
+			DEFAULT_PROFILE,
+			USER_PROFILE
+		};
 
-		/**
-		 * Seek for rule set id.
-		 * Seek for a rule set mapped to the given profile and
-		 * (not) matching user/admin status. This is delegated
-		 * to the concerning profile manager.
-		 *
-		 * @param[in] 1st The profile in question.
-		 * @param[in] 2nd The answer of isAdmin() must match this.
-		 * @param[in] 3rd The concerned user by his id.
-		 * @return The id of the rule set or -1 if none was found.
-		 */
-		long seekId(ProfileMgr::profile_t, bool, uid_t) const;
+		bool				eventBroadcastEnabled_;
+		std::list<PolicyRuleSet *>	ruleSetList_;
+		TaskList			requestTaskList_;
+		TaskList			sendTaskList_;
+
+		void OnPolicyRequest(TaskEvent &);
+		void OnPolicySend(TaskEvent &);
+
+		long seekId(bool, uid_t) const;
+		static wxString getProfilePath(ProfileSpec);
+		static wxString getProfileFile(const wxString &, ProfileSpec);
+		static ProfileSpec getProfileSpec(const wxString &);
+		static void scanDirectory(
+		    const wxString &path, wxArrayString &dest);
 
 	friend class Singleton<ProfileCtrl>;
 };

@@ -27,21 +27,17 @@
 
 #include <check.h>
 
-extern TCase *getTc_ProfileMgr(void);
 extern TCase *getTc_ProfileCtrl(void);
 
 Suite *
 getTestSuite(void)
 {
 	Suite *testSuite;
-	TCase *tc_ProfileMgr;
 	TCase *tc_ProfileCtrl;
 
 	testSuite = suite_create("Profiles");
-	tc_ProfileMgr = getTc_ProfileMgr();
 	tc_ProfileCtrl = getTc_ProfileCtrl();
 
-	suite_add_tcase(testSuite, tc_ProfileMgr);
 	suite_add_tcase(testSuite, tc_ProfileCtrl);
 
 	return (testSuite);

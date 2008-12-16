@@ -98,12 +98,9 @@ EscalationNotify::answer(NotifyAnswer *answer)
 	profileCtrl = ProfileCtrl::getInstance();
 	id = profileCtrl->getUserId();
 	if (id != -1) {
-		if (profileCtrl->lockToShow(id, this)) {
-			rs = profileCtrl->getRuleSetToShow(id, this);
-			if (rs != NULL) {
-				wxPostEvent(rs, event);
-			}
-			profileCtrl->unlockFromShow(id, this);
+		rs = profileCtrl->getRuleSet(id);
+		if (rs != NULL) {
+			wxPostEvent(rs, event);
 		}
 	}
 }

@@ -188,9 +188,13 @@ VersionCtrl::fetchRuleSet(unsigned int no, const wxString &profile) const
 }
 
 bool
-VersionCtrl::restoreVersion(unsigned int no,
-    const std::list<wxString>& profileList)
+VersionCtrl::restoreVersion(unsigned int /*no*/,
+    const std::list<wxString>& /*profileList*/)
 {
+	/*
+	 * Templ. disabled. Needs to be fixed.
+	 */
+	#if 0
 	apnvm_result vmrc;
 
 	if (!isPrepared())
@@ -262,12 +266,18 @@ VersionCtrl::restoreVersion(unsigned int no,
 	    ProfileCtrl::getInstance()->getProfileName());
 
 	return (true);
+	#endif
+	return (false);
 }
 
 bool
-VersionCtrl::createVersion(const wxString &profile, const wxString &comment,
-    bool autoStore)
+VersionCtrl::createVersion(const wxString &/*profile*/,
+    const wxString &/*comment*/, bool /*autoStore*/)
 {
+	/*
+	 * Temp. disabled. Needs to be fixed.
+	 */
+	#if 0
 	struct apn_ruleset	*rs;
 	struct apnvm_md		md;
 	wxString		path;
@@ -295,6 +305,8 @@ VersionCtrl::createVersion(const wxString &profile, const wxString &comment,
 
 	free((void*)md.comment);
 	return (vmrc == APNVM_OK);
+	#endif
+	return (false);
 }
 
 bool

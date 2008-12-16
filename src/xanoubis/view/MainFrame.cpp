@@ -353,7 +353,7 @@ MainFrame::OnMbFileImportSelect(wxCommandEvent&)
 			    wildcard, wxOPEN);
 
 	if (fileDlg.ShowModal() == wxID_OK) {
-		wxGetApp().importPolicyFile(fileDlg.GetPath(), true);
+		ProfileCtrl::getInstance()->importFromFile(fileDlg.GetPath());
 	}
 }
 
@@ -368,7 +368,7 @@ MainFrame::OnMbFileExportSelect(wxCommandEvent&)
 			    wildcard, wxFD_SAVE);
 
 	if (fileDlg.ShowModal() == wxID_OK) {
-		wxGetApp().exportPolicyFile(fileDlg.GetPath());
+		ProfileCtrl::getInstance()->exportToFile(fileDlg.GetPath());
 	}
 }
 
