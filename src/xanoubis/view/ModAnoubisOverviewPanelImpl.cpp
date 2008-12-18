@@ -45,35 +45,6 @@ ModAnoubisOverviewPanelImpl::ModAnoubisOverviewPanelImpl(wxWindow* parent, \
 }
 
 void
-ModAnoubisOverviewPanelImpl::setRadioButtons(wxString profileName)
-{
-	if (profileName.Cmp(wxT("admin")) == 0) {
-		adminProfileRadioButton->SetValue(true);
-	} else if (profileName.Cmp(wxT("medium")) == 0) {
-		mediumProfileRadioButton->SetValue(true);
-	} else if (profileName.Cmp(wxT("high")) == 0) {
-		highProfileRadioButton->SetValue(true);
-	} else {
-		/* do nothing */
-	}
-}
-
-void
-ModAnoubisOverviewPanelImpl::OnHighProfileRadioButton(wxCommandEvent&)
-{
-}
-
-void
-ModAnoubisOverviewPanelImpl::OnMediumProfileRadioButton(wxCommandEvent&)
-{
-}
-
-void
-ModAnoubisOverviewPanelImpl::OnAdminProfileRadioButton(wxCommandEvent&)
-{
-}
-
-void
 ModAnoubisOverviewPanelImpl::OnConnectClicked(wxCommandEvent&)
 {
 	wxGetApp().connectCommunicator(true);

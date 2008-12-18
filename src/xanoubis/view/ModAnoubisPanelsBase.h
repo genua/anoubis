@@ -50,12 +50,14 @@
 #include <wx/bitmap.h>
 #include <wx/image.h>
 #include <wx/listctrl.h>
+#include <wx/statline.h>
 #include <wx/textctrl.h>
 #include <wx/statbox.h>
 #include <wx/checkbox.h>
 #include <wx/notebook.h>
 #include <wx/statbmp.h>
 #include <wx/dialog.h>
+#include <wx/combobox.h>
 
 ///////////////////////////////////////////////////////////////////////////
 
@@ -111,6 +113,20 @@ class ModAnoubisMainPanelBase : public wxPanel
 		
 		wxRadioButton* rb_always;
 		wxButton* bt_deny;
+		wxPanel* tb_Profiles;
+		wxListCtrl* profileList;
+		wxStaticText* m_staticText35;
+		wxStaticText* selectedProfileText;
+		
+		wxButton* profileDeleteButton;
+		wxStaticText* m_staticText38;
+		wxStaticText* loadedProfileText;
+		wxButton* profileLoadButton;
+		wxButton* profileSaveButton;
+		
+		wxStaticLine* m_staticline1;
+		wxStaticText* m_staticText40;
+		wxButton* profileActivateButton;
 		wxPanel* tb_MainAnoubisVersions;
 		wxListCtrl* VersionListCtrl;
 		wxTextCtrl* VersionShowCommentTextCtrl;
@@ -162,6 +178,11 @@ class ModAnoubisMainPanelBase : public wxPanel
 		virtual void OnLastBtnClick( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnAllowBtnClick( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnDenyBtnClick( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnProfileSelectionChanged( wxListEvent& event ){ event.Skip(); }
+		virtual void OnProfileDeleteClicked( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnProfileLoadClicked( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnProfileSaveClicked( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnProfileActivateClicked( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnEscalationDisable( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnEscalationNoTimeout( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnEscalationTimeout( wxSpinEvent& event ){ event.Skip(); }
@@ -187,20 +208,13 @@ class ModAnoubisOverviewPanelBase : public wxPanel
 	protected:
 		
 		wxStaticBitmap* anoubisStatusIcon;
-		wxStaticText* m_staticText34;
 		
-		wxRadioButton* highProfileRadioButton;
-		wxRadioButton* mediumProfileRadioButton;
-		wxRadioButton* adminProfileRadioButton;
 		wxStaticText* m_staticText35;
 		
 		wxButton* connectButton;
 		wxButton* disconnectButton;
 		
 		// Virtual event handlers, overide them in your derived class
-		virtual void OnHighProfileRadioButton( wxCommandEvent& event ){ event.Skip(); }
-		virtual void OnMediumProfileRadioButton( wxCommandEvent& event ){ event.Skip(); }
-		virtual void OnAdminProfileRadioButton( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnConnectClicked( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnDisconnectClicked( wxCommandEvent& event ){ event.Skip(); }
 		
@@ -228,6 +242,29 @@ class ModAnoubisProfileDialogBase : public wxDialog
 	
 	public:
 		ModAnoubisProfileDialogBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("..."), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 358,134 ), long style = wxDEFAULT_DIALOG_STYLE );
+	
+};
+
+///////////////////////////////////////////////////////////////////////////////
+/// Class ModAnoubisProfileSelectionDialogBase
+///////////////////////////////////////////////////////////////////////////////
+class ModAnoubisProfileSelectionDialogBase : public wxDialog 
+{
+	private:
+	
+	protected:
+		wxStaticText* m_staticText40;
+		wxComboBox* profilesCombo;
+		wxStdDialogButtonSizer* buttonSizer;
+		wxButton* buttonSizerOK;
+		wxButton* buttonSizerCancel;
+		
+		// Virtual event handlers, overide them in your derived class
+		virtual void OnTextChanged( wxCommandEvent& event ){ event.Skip(); }
+		
+	
+	public:
+		ModAnoubisProfileSelectionDialogBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Select a profile"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize, long style = wxDEFAULT_DIALOG_STYLE );
 	
 };
 

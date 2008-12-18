@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 GeNUA mbH <info@genua.de>
+ * Copyright (c) 2008 GeNUA mbH <info@genua.de>
  *
  * All rights reserved.
  *
@@ -25,22 +25,36 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __ModAnoubisOverviewPanelImpl__
-#define __ModAnoubisOverviewPanelImpl__
+#include "DlgProfileSelection.h"
+#include "ProfileCtrl.h"
 
-#include "ModAnoubisPanelsBase.h"
-
-class ModAnoubisOverviewPanelImpl : public ModAnoubisOverviewPanelBase
+DlgProfileSelection::DlgProfileSelection(const wxString &selection,
+    wxWindow *parent) : ModAnoubisProfileSelectionDialogBase(parent)
 {
-	private:
-		void OnConnectClicked(wxCommandEvent&);
-		void OnDisconnectClicked(wxCommandEvent&);
+	ProfileCtrl *profileCtrl = ProfileCtrl::getInstance();
+	wxArrayString profileList = profileCtrl->getProfileList();
 
-		void OnConnectionStateChange(wxCommandEvent&);
-		void setConnectionState(bool);
+	/* Filter writeable profiles */
+	for (unsigned int i = 0; i < profileList.GetCount(); i++) {
+		if (profileCtrl->isProfileWritable(profileList[i]))
+			profilesCombo->Append(profileList[i]);
+	}
 
-	public:
-		ModAnoubisOverviewPanelImpl(wxWindow* parent, wxWindowID id);
-};
+	if (profileCtrl->isProfileWritable(selection)) {
+		profilesCombo->SetValue(selection);
+		buttonSizerOK->Enable(selection != wxEmptyString);
+	} else
+		buttonSizerOK->Enable(false);
+}
 
-#endif /* __ModAnoubisOverviewPanelImpl__ */
+wxString
+DlgProfileSelection::getSelectedProfile(void) const
+{
+	return (profilesCombo->GetValue());
+}
+
+void
+DlgProfileSelection::OnTextChanged(wxCommandEvent &)
+{
+	buttonSizerOK->Enable(profilesCombo->GetValue() != wxEmptyString);
+}

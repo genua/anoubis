@@ -230,6 +230,8 @@ xanoubis_SOURCES= \
 	view/DlgLogViewerBase.h \
 	view/DlgLogViewer.cpp \
 	view/DlgLogViewer.h \
+	view/DlgProfileSelection.cpp \
+	view/DlgProfileSelection.h \
 	view/DlgRuleEditorBase.cpp \
 	view/DlgRuleEditorBase.h \
 	view/DlgRuleEditor.cpp \

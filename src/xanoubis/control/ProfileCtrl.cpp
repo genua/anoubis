@@ -135,7 +135,8 @@ ProfileCtrl::haveProfile(const wxString &name) const
 bool
 ProfileCtrl::isProfileWritable(const wxString &name) const
 {
-	return wxFileExists(getProfileFile(name, USER_PROFILE));
+	/* Only the default-profile is readonly */
+	return !wxFileExists(getProfileFile(name, DEFAULT_PROFILE));
 }
 
 bool
@@ -175,6 +176,21 @@ ProfileCtrl::exportToProfile(const wxString &name)
 	wxString file = getProfileFile(name, USER_PROFILE);
 
 	/*
+	 * Make sure, the directory exists. This is the users home-directory,
+	 * so you can try to create the directory.
+	 */
+	wxFileName fn(file);
+	wxFileName::Mkdir(fn.GetPath(),  0700, wxPATH_MKDIR_FULL);
+
+	if (wxFileExists(file)) {
+		/*
+		 * Remove a previous version of the profile,
+		 * it is now re-created.
+		 */
+		wxRemoveFile(file);
+	}
+
+	/*
 	 * XXX It's hard to determine weather export was successful
 	 * because PolicyRuleSet::exportToFile() returns void.
 	 */
@@ -195,7 +211,7 @@ ProfileCtrl::exportToFile(const wxString &file)
 	}
 
 	/*
-	 * XXX It's hard to determine weather export was successful
+	 * XXX It's hard to determine whether export was successful
 	 * because PolicyRuleSet::exportToFile() returns void.
 	 */
 	rs->exportToFile(file);
@@ -218,7 +234,7 @@ ProfileCtrl::importFromProfile(const wxString &name)
 		/* Try default-profile */
 		file = getProfileFile(name, DEFAULT_PROFILE);
 		if (wxFileExists(file))
-			rs = new PolicyRuleSet(1, geteuid(), file, true);
+			rs = new PolicyRuleSet(1, geteuid(), file, false);
 	}
 
 	if (rs != 0) {
@@ -466,6 +482,11 @@ ProfileCtrl::seekId(bool isAdmin, uid_t uid) const
 void
 ProfileCtrl::scanDirectory(const wxString &path, wxArrayString &dest)
 {
+	if (!wxDir::Exists(path)) {
+		/* No such directory */
+		return;
+	}
+
 	wxDir		dir(path);
 	wxString	filename;
 	bool		cont;

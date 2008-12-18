@@ -416,7 +416,7 @@ END_TEST
 START_TEST(ProfileCtrl_isWritableNoSuchFile)
 {
 	bool result = pc->isProfileWritable(wxT("foobar"));
-	fail_unless(result == false, "Profile \"foobar\" is writable.");
+	fail_unless(result == true, "Profile \"foobar\" is writable.");
 }
 END_TEST
 
@@ -582,6 +582,33 @@ START_TEST(ProfileCtrl_exportDefaultProfile)
 }
 END_TEST
 
+START_TEST(ProfileCtrl_exportProfileMissingDirectory)
+{
+	int rm_result = remove_dir("%s/.tc_ProfileCtrl/profiles", tmp_home);
+	fail_unless(rm_result, "Failed to remove users profile dir");
+
+	bool export_result = pc->exportToProfile(wxT("foobar"));
+	fail_unless(export_result == true, "Export to \"foobar\" failed.");
+
+	wxArrayString profiles = pc->getProfileList();
+	fail_unless(profiles.GetCount() == 5,
+	    "Unexpected # of profiles\n"
+	    "Is: %i\n"
+	    "Expected: 5", profiles.GetCount());
+
+	fail_if(profiles.Index(wxT("default1")) == wxNOT_FOUND,
+	   "Profile \"default1\" not in list");
+	fail_if(profiles.Index(wxT("default2")) == wxNOT_FOUND,
+	   "Profile \"default2\" not in list");
+	fail_if(profiles.Index(wxT("default3")) == wxNOT_FOUND,
+	   "Profile \"default3\" not in list");
+	fail_if(profiles.Index(wxT("default4")) == wxNOT_FOUND,
+	   "Profile \"default4\" not in list");
+	fail_if(profiles.Index(wxT("foobar")) == wxNOT_FOUND,
+	   "Profile \"foobar\" not in list");
+}
+END_TEST
+
 TCase *
 getTc_ProfileCtrl(void)
 {
@@ -618,6 +645,7 @@ getTc_ProfileCtrl(void)
 	tcase_add_test(testCase, ProfileCtrl_exportNoProfile);
 	tcase_add_test(testCase, ProfileCtrl_exportUserProfile);
 	tcase_add_test(testCase, ProfileCtrl_exportDefaultProfile);
+	tcase_add_test(testCase, ProfileCtrl_exportProfileMissingDirectory);
 
 	return (testCase);
 }

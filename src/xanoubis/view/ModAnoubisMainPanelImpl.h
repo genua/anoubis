@@ -49,6 +49,8 @@ class ModAnoubisMainPanelImpl : public ModAnoubisMainPanelBase
 		Notification	*currentNotify_;
 		wxConfig	*userOptions_;
 		wxString	 columnNames_[MODANOUBIS_VMLIST_COLUMN_EOL];
+		wxString	 selectedProfile;
+		wxString	 loadedProfile;
 
 		void answer(bool);
 		void displayAlert(void);
@@ -62,6 +64,9 @@ class ModAnoubisMainPanelImpl : public ModAnoubisMainPanelBase
 		void versionListUpdate(void);
 		void versionListSetMsg(const wxString &);
 		int versionListCanAccess(bool) const;
+		void profileTabInit(void);
+		void profileTabUpdate(void);
+		void fillProfileList(void);
 
 	protected:
 		void OnTypeChoosen(wxCommandEvent&);
@@ -85,6 +90,12 @@ class ModAnoubisMainPanelImpl : public ModAnoubisMainPanelBase
 		void OnDoAutostart(wxCommandEvent&);
 
 		void OnPrivKeyValidityChanged(wxCommandEvent&);
+
+		void OnProfileDeleteClicked(wxCommandEvent &);
+		void OnProfileLoadClicked(wxCommandEvent &);
+		void OnProfileSaveClicked(wxCommandEvent &);
+		void OnProfileActivateClicked(wxCommandEvent &);
+		void OnProfileSelectionChanged(wxListEvent &);
 
 		void OnNotebookTabChanged(wxNotebookEvent&);
 		void OnVersionListCtrlSelected(wxListEvent&);

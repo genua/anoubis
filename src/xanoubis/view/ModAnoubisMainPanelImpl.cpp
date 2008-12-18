@@ -50,6 +50,7 @@
 
 #include "main.h"
 #include "AnEvents.h"
+#include "DlgProfileSelection.h"
 #include "ModAnoubis.h"
 #include "ModAnoubisMainPanelImpl.h"
 #include "ModAnoubisProfileDialogImpl.h"
@@ -89,6 +90,9 @@ ModAnoubisMainPanelImpl::ModAnoubisMainPanelImpl(wxWindow* parent,
 
 	/* read and restore Escalations Settings */
 	readOptions();
+
+	/* Initialization of profiles */
+	profileTabInit();
 
 	/* Initialize list of versions */
 	versionListInit();
@@ -270,6 +274,178 @@ ModAnoubisMainPanelImpl::setOptionsWidgetsVisability(void)
 			tx_AlertNotifyTimeoutLabel->Enable();
 		}
 	}
+}
+
+void
+ModAnoubisMainPanelImpl::profileTabInit(void)
+{
+	profileList->InsertColumn(0, wxT(""),
+	    wxLIST_FORMAT_LEFT, wxLIST_AUTOSIZE);
+	profileList->InsertColumn(1, _("Profile"),
+	    wxLIST_FORMAT_LEFT, wxLIST_AUTOSIZE);
+
+	selectedProfile = wxEmptyString;
+	loadedProfile = wxEmptyString;
+	fillProfileList();
+
+	/* Adjust width of profile-column */
+	int width = profileList->GetClientSize().GetWidth();
+	width -= profileList->GetColumnWidth(0);
+	profileList->SetColumnWidth(1, width);
+
+}
+
+void
+ModAnoubisMainPanelImpl::profileTabUpdate(void)
+{
+	ProfileCtrl *profileCtrl = ProfileCtrl::getInstance();
+	bool haveSelected = (selectedProfile != wxEmptyString);
+	bool haveLoaded = (loadedProfile != wxEmptyString);
+
+	if (haveSelected)
+		selectedProfileText->SetLabel(selectedProfile);
+	else
+		selectedProfileText->SetLabel(_("none"));
+
+	if (haveLoaded)
+		loadedProfileText->SetLabel(loadedProfile);
+	else
+		loadedProfileText->SetLabel(_("none"));
+
+	profileDeleteButton->Enable(
+	    profileCtrl->isProfileWritable(selectedProfile));
+	profileLoadButton->Enable(haveSelected);
+	profileActivateButton->Enable(haveSelected);
+}
+
+void
+ModAnoubisMainPanelImpl::fillProfileList(void)
+{
+	ProfileCtrl *profileCtrl = ProfileCtrl::getInstance();
+	wxArrayString profiles = profileCtrl->getProfileList();
+
+	profileList->DeleteAllItems();
+
+	for (unsigned int i = 0; i < profiles.GetCount(); i++) {
+		profileList->InsertItem(i, wxEmptyString);
+
+		if (!profileCtrl->isProfileWritable(profiles[i]))
+			profileList->SetItem(i, 0, _("read-only"));
+
+		profileList->SetItem(i, 1, profiles[i]);
+	}
+}
+
+void
+ModAnoubisMainPanelImpl::OnProfileDeleteClicked(wxCommandEvent &)
+{
+	ProfileCtrl *profileCtrl = ProfileCtrl::getInstance();
+
+	if (profileCtrl->removeProfile(selectedProfile)) {
+		selectedProfile = wxEmptyString;
+		fillProfileList();
+		profileTabUpdate();
+	} else {
+		wxMessageBox(
+		    wxString::Format(_("Failed to remove \"%s\"."),
+		       selectedProfile.c_str()),
+		    _("Remove profile"), wxOK | wxICON_ERROR, this);
+	}
+}
+
+void
+ModAnoubisMainPanelImpl::OnProfileLoadClicked(wxCommandEvent &)
+{
+	ProfileCtrl *profileCtrl = ProfileCtrl::getInstance();
+
+	if (profileCtrl->importFromProfile(selectedProfile)) {
+		loadedProfile = selectedProfile;
+		profileTabUpdate();
+	} else {
+		wxMessageBox(
+		    wxString::Format(_("Failed to import from \"%s\"."),
+		       selectedProfile.c_str()),
+		    _("Load profile"), wxOK | wxICON_ERROR, this);
+	}
+}
+
+void
+ModAnoubisMainPanelImpl::OnProfileSaveClicked(wxCommandEvent &)
+{
+	DlgProfileSelection dlg(loadedProfile, this);
+
+	if (dlg.ShowModal() == wxID_OK) {
+		ProfileCtrl *profileCtrl = ProfileCtrl::getInstance();
+		wxString profile = dlg.getSelectedProfile();
+
+		if (!profileCtrl->isProfileWritable(profile)) {
+			wxMessageBox(
+			    wxString::Format(
+			       _("The profile \"%s\" is not writable!"),
+			       profile.c_str()),
+			    _("Save profile"), wxOK | wxICON_ERROR, this);
+			return;
+		}
+
+		if (profileCtrl->exportToProfile(profile)) {
+			fillProfileList();
+			profileTabUpdate();
+		} else {
+			wxMessageBox(
+			    wxString::Format(_("Failed to export to \"%s\"."),
+			       profile.c_str()),
+			    _("Save profile"), wxOK | wxICON_ERROR, this);
+		}
+	}
+}
+
+void
+ModAnoubisMainPanelImpl::OnProfileActivateClicked(wxCommandEvent &)
+{
+	ProfileCtrl *profileCtrl = ProfileCtrl::getInstance();
+	long userId;
+
+	if (!profileCtrl->importFromProfile(selectedProfile)) {
+		wxMessageBox(
+		    wxString::Format(_("Failed to import from \"%s\"."),
+		       selectedProfile.c_str()),
+		    _("Activate profile"), wxOK | wxICON_ERROR, this);
+		return;
+	}
+
+	userId = profileCtrl->getUserId();
+	if (userId == -1) {
+		wxMessageBox(
+		    _("Could not obtain user-policy."),
+		    _("Activate profile"), wxOK | wxICON_ERROR, this);
+		return;
+	}
+
+	if (!profileCtrl->sendToDaemon(userId)) {
+		wxMessageBox(
+		    _("Could not activate user-policy.\n"
+		      "No connection to anoubisd."),
+		    _("Activate profile"), wxOK | wxICON_ERROR, this);
+		return;
+	}
+
+	loadedProfile = selectedProfile;
+	profileTabUpdate();
+}
+
+void
+ModAnoubisMainPanelImpl::OnProfileSelectionChanged(wxListEvent &event)
+{
+	/* Extract name of selected profile from list */
+	int index = event.GetIndex();
+	wxListItem listItem;
+
+	listItem.SetId(index);
+	listItem.SetColumn(1);
+	profileList->GetItem(listItem);
+
+	selectedProfile = listItem.GetText();
+	profileTabUpdate();
 }
 
 void

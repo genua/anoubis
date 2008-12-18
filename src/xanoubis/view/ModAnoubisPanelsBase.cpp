@@ -258,7 +258,85 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	tb_MainAnoubisNotification->SetSizer( sz_MainAnoubisNotify );
 	tb_MainAnoubisNotification->Layout();
 	sz_MainAnoubisNotify->Fit( tb_MainAnoubisNotification );
-	tb_MainAnoubisNotify->AddPage( tb_MainAnoubisNotification, _("Notifications"), false );
+	tb_MainAnoubisNotify->AddPage( tb_MainAnoubisNotification, _("Notifications"), true );
+	tb_Profiles = new wxPanel( tb_MainAnoubisNotify, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	wxBoxSizer* bSizer25;
+	bSizer25 = new wxBoxSizer( wxHORIZONTAL );
+	
+	wxBoxSizer* bSizer26;
+	bSizer26 = new wxBoxSizer( wxVERTICAL );
+	
+	profileList = new wxListCtrl( tb_Profiles, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLC_HRULES|wxLC_REPORT|wxLC_SINGLE_SEL );
+	bSizer26->Add( profileList, 1, wxALL|wxEXPAND, 5 );
+	
+	wxBoxSizer* bSizer29;
+	bSizer29 = new wxBoxSizer( wxHORIZONTAL );
+	
+	m_staticText35 = new wxStaticText( tb_Profiles, wxID_ANY, _("Profile:"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText35->Wrap( -1 );
+	bSizer29->Add( m_staticText35, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
+	
+	selectedProfileText = new wxStaticText( tb_Profiles, wxID_ANY, _("none"), wxDefaultPosition, wxDefaultSize, 0 );
+	selectedProfileText->Wrap( -1 );
+	bSizer29->Add( selectedProfileText, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
+	
+	
+	bSizer29->Add( 0, 0, 1, wxEXPAND, 5 );
+	
+	profileDeleteButton = new wxButton( tb_Profiles, wxID_ANY, _("Delete"), wxDefaultPosition, wxDefaultSize, 0 );
+	profileDeleteButton->Enable( false );
+	
+	bSizer29->Add( profileDeleteButton, 0, wxALL, 5 );
+	
+	bSizer26->Add( bSizer29, 0, wxEXPAND, 5 );
+	
+	bSizer25->Add( bSizer26, 1, wxEXPAND, 5 );
+	
+	wxBoxSizer* bSizer27;
+	bSizer27 = new wxBoxSizer( wxVERTICAL );
+	
+	wxBoxSizer* bSizer30;
+	bSizer30 = new wxBoxSizer( wxHORIZONTAL );
+	
+	m_staticText38 = new wxStaticText( tb_Profiles, wxID_ANY, _("Last loaded profile:"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText38->Wrap( -1 );
+	bSizer30->Add( m_staticText38, 0, wxALL, 5 );
+	
+	loadedProfileText = new wxStaticText( tb_Profiles, wxID_ANY, _("none"), wxDefaultPosition, wxDefaultSize, 0 );
+	loadedProfileText->Wrap( -1 );
+	bSizer30->Add( loadedProfileText, 0, wxALL, 5 );
+	
+	bSizer27->Add( bSizer30, 0, 0, 5 );
+	
+	profileLoadButton = new wxButton( tb_Profiles, wxID_ANY, _("Load"), wxDefaultPosition, wxDefaultSize, 0 );
+	profileLoadButton->Enable( false );
+	
+	bSizer27->Add( profileLoadButton, 0, wxALL, 5 );
+	
+	profileSaveButton = new wxButton( tb_Profiles, wxID_ANY, _("Save..."), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer27->Add( profileSaveButton, 0, wxALL, 5 );
+	
+	
+	bSizer27->Add( 0, 20, 0, wxEXPAND, 5 );
+	
+	m_staticline1 = new wxStaticLine( tb_Profiles, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLI_HORIZONTAL );
+	bSizer27->Add( m_staticline1, 0, wxEXPAND | wxALL, 5 );
+	
+	m_staticText40 = new wxStaticText( tb_Profiles, wxID_ANY, _("Saving a profile does not activate it! You need to store (activate) the profile, if you want to use it."), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText40->Wrap( 250 );
+	bSizer27->Add( m_staticText40, 0, wxALL, 5 );
+	
+	profileActivateButton = new wxButton( tb_Profiles, wxID_ANY, _("Store (Activate)"), wxDefaultPosition, wxDefaultSize, 0 );
+	profileActivateButton->Enable( false );
+	
+	bSizer27->Add( profileActivateButton, 0, wxALL, 5 );
+	
+	bSizer25->Add( bSizer27, 0, wxEXPAND, 5 );
+	
+	tb_Profiles->SetSizer( bSizer25 );
+	tb_Profiles->Layout();
+	bSizer25->Fit( tb_Profiles );
+	tb_MainAnoubisNotify->AddPage( tb_Profiles, _("Profiles"), false );
 	tb_MainAnoubisVersions = new wxPanel( tb_MainAnoubisNotify, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
 	wxBoxSizer* MainAnoubisVersionsSizer;
 	MainAnoubisVersionsSizer = new wxBoxSizer( wxHORIZONTAL );
@@ -566,7 +644,7 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	tb_MainAnoubisOptions->SetSizer( sz_MainAnoubisOptions );
 	tb_MainAnoubisOptions->Layout();
 	sz_MainAnoubisOptions->Fit( tb_MainAnoubisOptions );
-	tb_MainAnoubisNotify->AddPage( tb_MainAnoubisOptions, _("Options"), true );
+	tb_MainAnoubisNotify->AddPage( tb_MainAnoubisOptions, _("Options"), false );
 	
 	sz_MainAnoubisMain->Add( tb_MainAnoubisNotify, 1, wxEXPAND | wxALL, 5 );
 	
@@ -582,6 +660,11 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	bt_last->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModAnoubisMainPanelBase::OnLastBtnClick ), NULL, this );
 	bt_allow->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModAnoubisMainPanelBase::OnAllowBtnClick ), NULL, this );
 	bt_deny->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModAnoubisMainPanelBase::OnDenyBtnClick ), NULL, this );
+	profileList->Connect( wxEVT_COMMAND_LIST_ITEM_SELECTED, wxListEventHandler( ModAnoubisMainPanelBase::OnProfileSelectionChanged ), NULL, this );
+	profileDeleteButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModAnoubisMainPanelBase::OnProfileDeleteClicked ), NULL, this );
+	profileLoadButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModAnoubisMainPanelBase::OnProfileLoadClicked ), NULL, this );
+	profileSaveButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModAnoubisMainPanelBase::OnProfileSaveClicked ), NULL, this );
+	profileActivateButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModAnoubisMainPanelBase::OnProfileActivateClicked ), NULL, this );
 	cb_SendEscalations->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( ModAnoubisMainPanelBase::OnEscalationDisable ), NULL, this );
 	cb_NoEscalationTimeout->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( ModAnoubisMainPanelBase::OnEscalationNoTimeout ), NULL, this );
 	m_spinEscalationNotifyTimeout->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( ModAnoubisMainPanelBase::OnEscalationTimeout ), NULL, this );
@@ -608,29 +691,11 @@ ModAnoubisOverviewPanelBase::ModAnoubisOverviewPanelBase( wxWindow* parent, wxWi
 	wxBoxSizer* bSizer24;
 	bSizer24 = new wxBoxSizer( wxVERTICAL );
 	
-	m_staticText34 = new wxStaticText( this, wxID_ANY, _("Profile:"), wxDefaultPosition, wxDefaultSize, 0 );
-	m_staticText34->Wrap( -1 );
-	bSizer24->Add( m_staticText34, 0, wxALL, 5 );
-	
 	wxBoxSizer* bSizer25;
 	bSizer25 = new wxBoxSizer( wxHORIZONTAL );
 	
 	
 	bSizer25->Add( 20, 0, 0, wxEXPAND, 5 );
-	
-	wxBoxSizer* profileSizer;
-	profileSizer = new wxBoxSizer( wxVERTICAL );
-	
-	highProfileRadioButton = new wxRadioButton( this, wxID_ANY, _("high"), wxDefaultPosition, wxDefaultSize, wxRB_GROUP );
-	profileSizer->Add( highProfileRadioButton, 0, wxALL, 5 );
-	
-	mediumProfileRadioButton = new wxRadioButton( this, wxID_ANY, _("medium"), wxDefaultPosition, wxDefaultSize, 0 );
-	profileSizer->Add( mediumProfileRadioButton, 0, wxALL, 5 );
-	
-	adminProfileRadioButton = new wxRadioButton( this, wxID_ANY, _("admin"), wxDefaultPosition, wxDefaultSize, 0 );
-	profileSizer->Add( adminProfileRadioButton, 0, wxALL, 5 );
-	
-	bSizer25->Add( profileSizer, 1, wxEXPAND, 5 );
 	
 	bSizer24->Add( bSizer25, 0, wxEXPAND, 5 );
 	
@@ -659,9 +724,6 @@ ModAnoubisOverviewPanelBase::ModAnoubisOverviewPanelBase( wxWindow* parent, wxWi
 	fgSizer4->Fit( this );
 	
 	// Connect Events
-	highProfileRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( ModAnoubisOverviewPanelBase::OnHighProfileRadioButton ), NULL, this );
-	mediumProfileRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( ModAnoubisOverviewPanelBase::OnMediumProfileRadioButton ), NULL, this );
-	adminProfileRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( ModAnoubisOverviewPanelBase::OnAdminProfileRadioButton ), NULL, this );
 	connectButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModAnoubisOverviewPanelBase::OnConnectClicked ), NULL, this );
 	disconnectButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModAnoubisOverviewPanelBase::OnDisconnectClicked ), NULL, this );
 }
@@ -713,4 +775,34 @@ ModAnoubisProfileDialogBase::ModAnoubisProfileDialogBase( wxWindow* parent, wxWi
 	
 	this->SetSizer( bSizer20 );
 	this->Layout();
+}
+
+ModAnoubisProfileSelectionDialogBase::ModAnoubisProfileSelectionDialogBase( wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style ) : wxDialog( parent, id, title, pos, size, style )
+{
+	this->SetSizeHints( wxDefaultSize, wxDefaultSize );
+	
+	wxBoxSizer* bSizer30;
+	bSizer30 = new wxBoxSizer( wxVERTICAL );
+	
+	m_staticText40 = new wxStaticText( this, wxID_ANY, _("Select a profile from the list below or enter a new profile."), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText40->Wrap( 250 );
+	bSizer30->Add( m_staticText40, 0, wxALL, 5 );
+	
+	profilesCombo = new wxComboBox( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0 ); 
+	bSizer30->Add( profilesCombo, 0, wxALL|wxEXPAND, 5 );
+	
+	buttonSizer = new wxStdDialogButtonSizer();
+	buttonSizerOK = new wxButton( this, wxID_OK );
+	buttonSizer->AddButton( buttonSizerOK );
+	buttonSizerCancel = new wxButton( this, wxID_CANCEL );
+	buttonSizer->AddButton( buttonSizerCancel );
+	buttonSizer->Realize();
+	bSizer30->Add( buttonSizer, 1, wxALL|wxEXPAND, 5 );
+	
+	this->SetSizer( bSizer30 );
+	this->Layout();
+	bSizer30->Fit( this );
+	
+	// Connect Events
+	profilesCombo->Connect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( ModAnoubisProfileSelectionDialogBase::OnTextChanged ), NULL, this );
 }

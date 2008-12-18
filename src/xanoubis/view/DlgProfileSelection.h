@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 GeNUA mbH <info@genua.de>
+ * Copyright (c) 2008 GeNUA mbH <info@genua.de>
  *
  * All rights reserved.
  *
@@ -25,22 +25,44 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __ModAnoubisOverviewPanelImpl__
-#define __ModAnoubisOverviewPanelImpl__
+#ifndef _DLGPROFILESELECTION_H_
+#define _DLGPROFILESELECTION_H_
 
 #include "ModAnoubisPanelsBase.h"
 
-class ModAnoubisOverviewPanelImpl : public ModAnoubisOverviewPanelBase
+/**
+ * Dialog to select a profile from a combobox.
+ *
+ * The dialog inserts all <i>writable</i> profiles in a combobox. Furthermore
+ * the user is able to enter a new profile.
+ *
+ * The user can only accept the dialog (by clicking on the [OK] button), if a
+ * valid profile is selected.
+ *
+ * @see ProfileCtrl
+ */
+class DlgProfileSelection : public ModAnoubisProfileSelectionDialogBase
 {
-	private:
-		void OnConnectClicked(wxCommandEvent&);
-		void OnDisconnectClicked(wxCommandEvent&);
-
-		void OnConnectionStateChange(wxCommandEvent&);
-		void setConnectionState(bool);
-
 	public:
-		ModAnoubisOverviewPanelImpl(wxWindow* parent, wxWindowID id);
+		/**
+		 * Constructs the dialog.
+		 * @param selection Name of profile to be selected.
+		 * @param parent Parent window
+		 */
+		DlgProfileSelection(const wxString &, wxWindow *);
+
+		/**
+		 * Returns the name of the selected profile.
+		 * @return Name of selected profile
+		 */
+		wxString getSelectedProfile(void) const;
+
+	protected:
+		/**
+		 * Invoked if the text of the combobox changes.
+		 * @see wxEVT_COMMAND_TEXT_UPDATED
+		 */
+		void OnTextChanged(wxCommandEvent &);
 };
 
-#endif /* __ModAnoubisOverviewPanelImpl__ */
+#endif	/* _DLGPROFILESELECTION_H_ */

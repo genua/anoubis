@@ -123,7 +123,7 @@ class ProfileCtrl : public wxEvtHandler, public Singleton<ProfileCtrl>
 		wxArrayString getProfileList(void) const;
 
 		/**
-		 * Tests weather a profile with the specified name exists.
+		 * Tests whether a profile with the specified name exists.
 		 *
 		 * @param name Name of profile to test
 		 * @return true if the profile exists, false otherwise.
@@ -131,12 +131,12 @@ class ProfileCtrl : public wxEvtHandler, public Singleton<ProfileCtrl>
 		bool haveProfile(const wxString &) const;
 
 		/**
-		 * Tests weather the profile is writable for the user.
+		 * Tests whether the profile is writable for the user.
 		 *
 		 * This is mandatory for exporting a policy into a profile.
 		 *
 		 * @param name Name of profile to test
-		 * @return true if the profile is wriable for the user, false
+		 * @return true if the profile is writable for the user, false
 		 *         otherwise.
 		 */
 		bool isProfileWritable(const wxString &) const;
@@ -276,7 +276,7 @@ class ProfileCtrl : public wxEvtHandler, public Singleton<ProfileCtrl>
 		bool sendToDaemon(long);
 
 		/**
-		 * Tests weather the class broadcasts any events.
+		 * Tests whether the class broadcasts any events.
 		 *
 		 * Methods can fire events after completition of an operation.
 		 * Any kind of event-broadcasting can be enabled and disabled.
@@ -301,27 +301,104 @@ class ProfileCtrl : public wxEvtHandler, public Singleton<ProfileCtrl>
 		ProfileCtrl(void);
 
 	private:
+		/**
+		 * Different types of profiles.
+		 */
 		enum ProfileSpec
 		{
-			NO_PROFILE = 0,
-			DEFAULT_PROFILE,
-			USER_PROFILE
+			NO_PROFILE = 0,		/*!< No valid profile */
+			DEFAULT_PROFILE,	/*!< A default profile. Visible
+						     for every user, but cannot
+						     be overwritten. */
+			USER_PROFILE		/*!< A user-specific profile.
+						     Visible only for the user
+						     and can be overwritten. */
 		};
 
+		/**
+		 * Flags specifies whether the controller is able to broadcast
+		 * any events.
+		 *
+		 * When the controller is used in a test, broadcasting should
+		 * be switched off to prevent errors because the
+		 * main-application is not available.
+		 */
 		bool				eventBroadcastEnabled_;
+
+		/**
+		 * Container of policies maintained by the controller.
+		 */
 		std::list<PolicyRuleSet *>	ruleSetList_;
+
+		/**
+		 * Container for ComPolicyRequestTasks, where the controller
+		 * is the owner.
+		 */
 		TaskList			requestTaskList_;
+
+		/**
+		 * Container for ComPolicySendTasks, where the controller is
+		 * the owner.
+		 */
 		TaskList			sendTaskList_;
 
+		/**
+		 * Invoked when a policy-requested was answered by anoubisd.
+		 * @see anTASKEVT_POLICY_REQUEST
+		 */
 		void OnPolicyRequest(TaskEvent &);
+
+		/**
+		 * Onvoked when a polciy was sent to anoubisd.
+		 * @see anTASKEVT_POLICY_SEND
+		 */
 		void OnPolicySend(TaskEvent &);
 
+		/**
+		 * Searches for a policy in ruleSetList_, which matches the
+		 * specified arguments.
+		 * @param isAdmin Set to true, if you can looking for an
+		 *                admin-policy.
+		 * @param uid Uid of assigned user
+		 * @return The id of the policy. If the policy was not found,
+		 *         -1 is returned.
+		 */
 		long seekId(bool, uid_t) const;
+
+		/**
+		 * Returns the path, where profiles of the specified type are
+		 * stored.
+		 * @param spec Type of profile.
+		 * @return Path, where the profiles are stored. If
+		 *         ProfileCtrl::NO_PROFILE is requested, en empty
+		 *         string is returned.
+		 */
 		static wxString getProfilePath(ProfileSpec);
+
+		/**
+		 * Returns the path to the file, where the specified profile
+		 * is stored.
+		 * @param name Name of profile
+		 * @param spec Type of profile
+		 * @return Path to the file, where the profile is stored.
+		 */
 		static wxString getProfileFile(const wxString &, ProfileSpec);
+
+		/**
+		 * Returns the type of the specified profile.
+		 * @param name Name of profile
+		 * @return Type of profile. If no such profile exists,
+		 *         ProfileCtrl::NO_PROFILE is returned.
+		 */
 		static ProfileSpec getProfileSpec(const wxString &);
-		static void scanDirectory(
-		    const wxString &path, wxArrayString &dest);
+
+		/**
+		 * Scans a directory for files.
+		 * @param path Path of directory to scan
+		 * @param dest Destination array. Filenames (without
+		 *             directory-part) are put into this array.
+		 */
+		static void scanDirectory(const wxString &, wxArrayString &);
 
 	friend class Singleton<ProfileCtrl>;
 };
