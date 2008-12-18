@@ -1001,7 +1001,7 @@ dispatch_p2s_evt_request(anoubisd_msg_t	*msg,
 	set_value(m->u.notify->subsystem, hdr->msg_source);
 	set_value(m->u.notify->operation, 0 /* XXX ?? */);
 	off = 0;
-	do_copy(m->u.notify->payload, &off, (void*)&hdr[1], extra, 0,
+	do_copy(m->u.notify->payload, &off, (void*)&hdr[1], 0, extra,
 	    &m->u.notify->evoff, &m->u.notify->evlen);
 	do_copy(m->u.notify->payload, &off, eventask->payload,
 	    eventask->csumoff, cslen, &m->u.notify->csumoff,
