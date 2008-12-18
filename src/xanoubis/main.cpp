@@ -37,6 +37,7 @@
 #include <wx/string.h>
 #include <wx/textfile.h>
 #include <wx/tokenzr.h>
+#include <wx/filename.h>
 
 #include "AlertNotify.h"
 #include "AnEvents.h"
@@ -351,10 +352,10 @@ AnoubisGuiApp::autoStart(bool autostart)
 
 	if (autostart == true) {
 		if (wxDirExists(kPath) == false) {
-			wxMkdir(kPath);
+			wxFileName::Mkdir(kPath, 0777, wxPATH_MKDIR_FULL);
 		}
 		if (wxDirExists(gPath) == false) {
-			wxMkdir(gPath);
+			wxFileName::Mkdir(gPath, 0777, wxPATH_MKDIR_FULL);
 		}
 
 		if (wxFileExists(kAutoFile) == false) {
