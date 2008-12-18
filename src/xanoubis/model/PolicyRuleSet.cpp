@@ -73,9 +73,6 @@ PolicyRuleSet::PolicyRuleSet(int priority, uid_t uid,
 	origin_ = wxT("Daemon");
 
 	create(ruleSet);
-	AnEvents::getInstance()->Connect(anEVT_ANSWER_ESCALATION,
-	    wxCommandEventHandler(PolicyRuleSet::OnAnswerEscalation),
-	    NULL, this);
 }
 
 PolicyRuleSet::PolicyRuleSet(int priority, uid_t uid, wxString fileName,
@@ -90,17 +87,10 @@ PolicyRuleSet::PolicyRuleSet(int priority, uid_t uid, wxString fileName,
 	origin_ = fileName;
 
 	create(fileName, checkPerm);
-	AnEvents::getInstance()->Connect(anEVT_ANSWER_ESCALATION,
-	    wxCommandEventHandler(PolicyRuleSet::OnAnswerEscalation),
-	    NULL, this);
 }
 
 PolicyRuleSet::~PolicyRuleSet(void)
 {
-	AnEvents::getInstance()->Disconnect(anEVT_ANSWER_ESCALATION,
-	    wxCommandEventHandler(PolicyRuleSet::OnAnswerEscalation),
-	    NULL, this);
-
 	clean();
 	apn_free_ruleset(ruleSet_);
 }
@@ -446,20 +436,6 @@ PolicyRuleSet::createAnswerPolicy(EscalationNotify *escalation)
 
 	event.SetClientData(this);
 	wxPostEvent(AnEvents::getInstance(), event);
-}
-
-void
-PolicyRuleSet::OnAnswerEscalation(wxCommandEvent& event)
-{
-	EscalationNotify	*escalation;
-
-	escalation = (EscalationNotify *)event.GetClientObject();
-	if (escalation->getAnswer()->causeTmpRule() ||
-	    escalation->getAnswer()->causePermRule()) {
-		createAnswerPolicy(escalation);
-	}
-
-	event.Skip();
 }
 
 void

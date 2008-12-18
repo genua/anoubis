@@ -41,18 +41,6 @@
 #include "PolicyRuleSet.h"
 #include "ProfileCtrl.h"
 
-ProfileCtrl::ProfileCtrl(void) : Singleton<ProfileCtrl>()
-{
-	eventBroadcastEnabled_ = true;
-
-	JobCtrl *jobCtrl = JobCtrl::getInstance();
-
-	jobCtrl->Connect(anTASKEVT_POLICY_REQUEST,
-	    wxTaskEventHandler(ProfileCtrl::OnPolicyRequest), NULL, this);
-	jobCtrl->Connect(anTASKEVT_POLICY_SEND,
-	    wxTaskEventHandler(ProfileCtrl::OnPolicySend), NULL, this);
-}
-
 ProfileCtrl::~ProfileCtrl(void)
 {
 	/* Destroy policies */
@@ -76,6 +64,10 @@ ProfileCtrl::~ProfileCtrl(void)
 
 		delete t;
 	}
+
+	AnEvents::getInstance()->Disconnect(anEVT_ANSWER_ESCALATION,
+	    wxCommandEventHandler(ProfileCtrl::OnAnswerEscalation),
+	    NULL, this);
 }
 
 ProfileCtrl *
@@ -496,4 +488,43 @@ ProfileCtrl::scanDirectory(const wxString &path, wxArrayString &dest)
 		dest.Add(filename);
 		cont = dir.GetNext(&filename);
 	}
+}
+
+void
+ProfileCtrl::OnAnswerEscalation(wxCommandEvent &event)
+{
+	EscalationNotify	*escalation;
+	PolicyRuleSet		*ruleset;
+
+	event.Skip(); /* Ensures others can react to this event, too. */
+
+	ruleset = getRuleSet(getUserId());
+	escalation = (EscalationNotify *)event.GetClientObject();
+
+	if ((ruleset == NULL) || (escalation == NULL)) {
+		/* This is strange and should never happen. Unable to act. */
+		return;
+	}
+
+	/* Does the answer involve a temporary or permanent policy? */
+	if (escalation->getAnswer()->causeTmpRule() ||
+	    escalation->getAnswer()->causePermRule()) {
+		ruleset->createAnswerPolicy(escalation);
+	}
+}
+
+ProfileCtrl::ProfileCtrl(void) : Singleton<ProfileCtrl>()
+{
+	eventBroadcastEnabled_ = true;
+
+	JobCtrl *jobCtrl = JobCtrl::getInstance();
+
+	jobCtrl->Connect(anTASKEVT_POLICY_REQUEST,
+	    wxTaskEventHandler(ProfileCtrl::OnPolicyRequest), NULL, this);
+	jobCtrl->Connect(anTASKEVT_POLICY_SEND,
+	    wxTaskEventHandler(ProfileCtrl::OnPolicySend), NULL, this);
+
+	AnEvents::getInstance()->Connect(anEVT_ANSWER_ESCALATION,
+	    wxCommandEventHandler(ProfileCtrl::OnAnswerEscalation),
+	    NULL, this);
 }

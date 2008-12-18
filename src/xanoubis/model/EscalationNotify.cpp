@@ -86,23 +86,11 @@ void
 EscalationNotify::answer(NotifyAnswer *answer)
 {
 	wxCommandEvent	event(anEVT_ANSWER_ESCALATION);
-	long		id;
-	ProfileCtrl	*profileCtrl;
-	PolicyRuleSet	*rs;
 
 	answer_ = answer;
 
 	event.SetClientObject((wxClientData *)this);
 	wxPostEvent(AnEvents::getInstance(), event);
-
-	profileCtrl = ProfileCtrl::getInstance();
-	id = profileCtrl->getUserId();
-	if (id != -1) {
-		rs = profileCtrl->getRuleSet(id);
-		if (rs != NULL) {
-			wxPostEvent(rs, event);
-		}
-	}
 }
 
 NotifyAnswer *

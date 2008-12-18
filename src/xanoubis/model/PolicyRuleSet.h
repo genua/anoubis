@@ -47,12 +47,11 @@
 
 #include <apn.h>
 
-#include "AnEvents.h"
 #include "EscalationNotify.h"
 #include "Policy.h"
 #include "AlfPolicy.h"
 
-class PolicyRuleSet : public wxEvtHandler
+class PolicyRuleSet
 {
 	private:
 		int			 priority_;
@@ -70,8 +69,6 @@ class PolicyRuleSet : public wxEvtHandler
 		void clean(void);
 		void create(wxString, bool);
 		void create(struct apn_ruleset *);
-		void createAnswerPolicy(EscalationNotify *);
-		void OnAnswerEscalation(wxCommandEvent&);
 		bool hasLocalHost(wxArrayString);
 		int createAppPolicy(int type, int id);
 		void log(const wxString &);
@@ -87,6 +84,8 @@ class PolicyRuleSet : public wxEvtHandler
 
 		void accept(PolicyVisitor&);
 		void exportToFile(wxString);
+
+		void createAnswerPolicy(EscalationNotify *);
 
 		int createAlfAppPolicy(int id) {
 			return createAppPolicy(APN_ALF, id);

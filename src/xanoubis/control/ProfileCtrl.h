@@ -31,6 +31,7 @@
 #include <list>
 #include <wx/string.h>
 
+#include "AnEvents.h"
 #include "Singleton.h"
 #include "Task.h"
 
@@ -399,6 +400,19 @@ class ProfileCtrl : public wxEvtHandler, public Singleton<ProfileCtrl>
 		 *             directory-part) are put into this array.
 		 */
 		static void scanDirectory(const wxString &, wxArrayString &);
+
+		/**
+		 * Answer escalation
+		 * An previous received escalation was answered by the user.
+		 * An anEVT_ANSWER_ESCALATION event was sent to inform anyone
+		 * within the gui.\n
+		 * This method will cause the current PolicyRuleSet to create
+		 * a concerning new policy matching the answer.
+		 *
+		 * @param[in] 1st The command event anEVT_ANSWER_ESCALATION.
+		 * @return Nothing.
+		 */
+		void OnAnswerEscalation(wxCommandEvent &);
 
 	friend class Singleton<ProfileCtrl>;
 };
