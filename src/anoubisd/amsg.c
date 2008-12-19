@@ -188,6 +188,21 @@ err:
 	return 0;
 }
 
+int msg_eof(int fd)
+{
+	struct msg_buf		*mbp;
+
+	if ((mbp = _get_mbp(fd)) == NULL) {
+		log_warn("msg_buf not initialized");
+		return 1;
+	}
+	if (mbp->rheadp != mbp->rtailp)
+		return 0;
+	if (_fill_buf(mbp))
+		return 0;
+	return 1;
+}
+
 static void
 _flush_buf(struct msg_buf *mbp)
 {
@@ -252,8 +267,6 @@ get_msg(int fd)
 	DEBUG(DBG_MSG_RECV, "get_msg: fd:%d size:%d", mbp->fd, msg->size);
 	return msg_r;
 eof:
-	log_warnx("get_msg: Unexpected end of file");
-	event_loopexit(NULL);
 	return NULL;
 }
 
@@ -303,7 +316,6 @@ get_event(int fd)
 	return msg_r;
 eof:
 	log_warnx("get_event: Unexpected end of file");
-	event_loopexit(NULL);
 	return NULL;
 }
 

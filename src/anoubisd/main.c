@@ -74,6 +74,7 @@
 /*@noreturn@*/
 static void	usage(void) __dead;
 
+static int	terminate = 0;
 static int	eventfds[2];
 static void	main_cleanup(void);
 /*@noreturn@*/
@@ -106,6 +107,8 @@ static Queue eventq_m2dev;
 struct event_info_main {
 	/*@dependent@*/
 	struct event	*ev_m2s, *ev_m2p, *ev_m2dev;
+	struct event	*ev_s2m, *ev_p2m, *ev_dev2m;
+	struct event	*ev_sigs[10];
 	/*@dependent@*/
 	struct event	*ev_timer;
 	/*@null@*/
@@ -135,28 +138,62 @@ usage(void)
 static void
 sighandler(int sig, short event __used, void *arg __used)
 {
-	int	die = 0;
+	int			 die = 0;
 
 	DEBUG(DBG_TRACE, ">sighandler: %d", sig);
 
 	switch (sig) {
 	case SIGTERM:
-	case SIGINT:
+	case SIGINT: {
+		struct event_info_main	*info;
+		int			 i;
+		sigset_t		 mask;
+
+		if (terminate < 1)
+			terminate = 1;
+		log_warnx("anoubisd: Shutdown requested by signal");
+		info = arg;
+		if (ioctl(eventfds[1], ANOUBIS_UNDECLARE_FD,
+		    eventfds[0]) == 0) {
+			struct timeval tv;
+			tv.tv_sec = 0;
+			tv.tv_usec = 10000;
+			event_del(info->ev_timer);
+			event_del(info->ev_dev2m);
+			event_add(info->ev_dev2m, &tv);
+			sigfillset(&mask);
+			sigdelset(&mask, SIGCHLD);
+			sigprocmask(SIG_SETMASK, &mask, NULL);
+			kill(se_pid, SIGTERM);
+			kill(policy_pid, SIGTERM);
+			kill(logger_pid, SIGTERM);
+			for (i=0; info->ev_sigs[i]; ++i)
+				signal_del(info->ev_sigs[i]);
+			break;
+		}
+		log_warn("Cannot undeclare eventdev queue");
+		/* FALLTHROUGH */
+	}
 	case SIGQUIT:
 		die = 1;
 	case SIGCHLD:
 		if (check_child(se_pid, "session engine")) {
 			se_pid = 0;
-			die = 1;
+			if (!terminate)
+				die = 1;
 		}
 		if (check_child(policy_pid, "policy engine")) {
 			policy_pid = 0;
-			die = 1;
+			if (!terminate)
+				die = 1;
 		}
 		if (check_child(logger_pid, "anoubis logger")) {
 			logger_pid = 0;
-			die = 1;
+			if (!terminate)
+				die = 1;
 		}
+		if (terminate && sig == SIGCHLD)
+			signal_del(arg);
 		if (die) {
 			main_shutdown(0);
 			/*NOTREACHED*/
@@ -215,9 +252,19 @@ static void
 dispatch_timer(int sig __used, short event __used, /*@dependent@*/ void * arg)
 {
 	struct event_info_main	*ev_info = arg;
+	static int		 first = 1;
 
 	DEBUG(DBG_TRACE, ">dispatch_timer");
 
+	/*
+	 * Simulate a SIGCHLD at the first timer event. This will catch
+	 * cases where one of the child process exists before we hit enter
+	 * the event loop in main.
+	 */
+	if (first) {
+		first = 0;
+		sighandler(SIGCHLD, 0, NULL);
+	}
 	/* ioctls cannot be sensibly annotated because of varadic args */
 	/*@i@*/ioctl(ev_info->anoubisfd, ANOUBIS_REQUEST_STATS, 0);
 	event_add(ev_info->ev_timer, ev_info->tv);
@@ -369,16 +416,21 @@ main(int argc, char *argv[])
 #endif
 
 	/* We catch or block signals rather than ignore them. */
-	signal_set(&ev_sigterm, SIGTERM, sighandler, NULL);
-	signal_set(&ev_sigint, SIGINT, sighandler, NULL);
+	signal_set(&ev_sigterm, SIGTERM, sighandler, &ev_info);
+	signal_set(&ev_sigint, SIGINT, sighandler, &ev_info);
 	signal_set(&ev_sigquit, SIGQUIT, sighandler, NULL);
 	signal_set(&ev_sighup, SIGHUP, sighandler, NULL);
-	signal_set(&ev_sigchld, SIGCHLD, sighandler, NULL);
+	signal_set(&ev_sigchld, SIGCHLD, sighandler, &ev_sigchld);
 	signal_add(&ev_sigterm, NULL);
 	signal_add(&ev_sigint, NULL);
 	signal_add(&ev_sigquit, NULL);
 	signal_add(&ev_sighup, NULL);
 	signal_add(&ev_sigchld, NULL);
+	ev_info.ev_sigs[0] = &ev_sigterm;
+	ev_info.ev_sigs[1] = &ev_sigint;
+	ev_info.ev_sigs[2] = &ev_sigquit;
+	ev_info.ev_sigs[3] = &ev_sighup;
+	ev_info.ev_sigs[4] = NULL;
 
 	sigfillset(&mask);
 	sigdelset(&mask, SIGTERM);
@@ -440,6 +492,9 @@ main(int argc, char *argv[])
 	ev_info.ev_m2s = &ev_m2s;
 	ev_info.ev_m2p = &ev_m2p;
 	ev_info.ev_m2dev = &ev_m2dev;
+	ev_info.ev_dev2m = &ev_dev2m;
+	ev_info.ev_p2m = &ev_p2m;
+	ev_info.ev_s2m = &ev_s2m;
 
 	/*
 	 * Open event device to communicate with the kernel.
@@ -497,8 +552,15 @@ main(int argc, char *argv[])
 	if (event_dispatch() == -1)
 		log_warn("main: event_dispatch");
 	DEBUG(DBG_TRACE, "master event loop ended");
-
-	main_cleanup();
+	/*
+	 * We only reach this point in case of a graceful shutdown. Thus
+	 * must of the cleanup is already done. In particular we must
+	 * not wait for our children: session and policy already exited
+	 * and logger will terminate after us.
+	 */
+	unlink(pid_file_name);
+	log_warnx("anoubisd shutdown");
+	flush_log_queue();
 
 	exit(0);
 }
@@ -506,7 +568,6 @@ main(int argc, char *argv[])
 static void
 main_cleanup(void)
 {
-	struct sigaction	sa;
 	pid_t			pid;
 
 	DEBUG(DBG_TRACE, ">main_cleanup");
@@ -514,37 +575,31 @@ main_cleanup(void)
 	close(eventfds[1]);
 	close(eventfds[0]);
 
-	/*
-	 * Ignoring SIGCHLD changes the behaviour of wait(2) et al. in that
-	 * way, that a call to wait(2) will block until all of the calling
-	 * processes child processes terminate, and then returns a value
-	 * of -1 with errno set to ECHILD.  Moreover, an exited child will
-	 * not turn into a zombie.  See signal(3) and sigaction(2).
-	 */
-	bzero(&sa, sizeof(sa));
-	sa.sa_flags |= SA_RESTART;
-	sa.sa_handler = SIG_IGN;
+	if (se_pid)
+		kill(se_pid, SIGQUIT);
+	if (policy_pid)
+		kill(policy_pid, SIGQUIT);
+	if (logger_pid)
+		kill(logger_pid, SIGQUIT);
 
-	if (sigaction(SIGCHLD, &sa, NULL) == -1) {
-		/* Just warn and continue cleaning up the kids. */
-		log_warn("sigaction");
+	/*
+	 * Do NOT wait for the logger. The logger process will terminate
+	 * once we exit and close our pipe to the logger.
+	 */
+	while (se_pid && policy_pid) {
+		if ((pid = wait(NULL)) == -1 &&
+		    errno != EINTR && errno != ECHILD)
+			fatal("wait");
+		if (pid == se_pid)
+			se_pid = 0;
+		if (pid == policy_pid)
+			policy_pid = 0;
+		if (pid == logger_pid)
+			logger_pid = 0;
 	}
 
-	if (se_pid)
-		kill(se_pid, SIGTERM);
-	if (policy_pid)
-		kill(policy_pid, SIGTERM);
-	if (logger_pid)
-		kill(logger_pid, SIGTERM);
-
-	/* XXX HSH: Do all cleanup here. */
-
-	do {
-		if ((pid = wait(NULL)) == -1 &&
-	    errno != EINTR && errno != ECHILD)
-		fatal("wait");
-	} while (pid != -1 || (pid == -1 && errno == EINTR));
-
+	log_warnx("anoubisd is terminating");
+	flush_log_queue();
 	unlink(pid_file_name);
 }
 
@@ -566,10 +621,12 @@ master_terminate(int error)
 	if (master_pid) {
 		if (getpid() == master_pid)
 			main_shutdown(error);
-		else
-			kill(master_pid, SIGTERM);
 	}
-/*	sleep(10); XXX RD - probably not needed */
+	/*
+	 * This will send a SIGCHLD to the master which will then terminate.
+	 * It is not possible to just kill(2) the master because we switched
+	 * UIDs and are no longer allowed to do this.
+	 */
 	_exit(error);
 }
 
@@ -655,6 +712,8 @@ dispatch_m2s(int fd, short event __used, /*@dependent@*/ void *arg)
 	DEBUG(DBG_TRACE, ">dispatch_m2s");
 
 	if ((msg = queue_peek(&eventq_m2s)) == NULL) {
+		if (terminate)
+			goto out;
 		DEBUG(DBG_TRACE, "<dispatch_m2s (no msg) ");
 		return;
 	}
@@ -672,11 +731,18 @@ dispatch_m2s(int fd, short event __used, /*@dependent@*/ void *arg)
 		    ((struct eventdev_hdr *)msg->msg)->msg_token);
 		free(msg);
 	}
+	/* Write was not successful: Check if we lost one of our childs. */
+	if (ret <= 0)
+		sighandler(SIGCHLD, 0, NULL);
 	/*@=nullderef@*/ /*@=nullpass@*/
 
+out:
 	/* If the queue is not empty, to be called again */
 	if (queue_peek(&eventq_m2s) || msg_pending(fd))
 		event_add(ev_info->ev_m2s, NULL);
+	else if (terminate >= 2) {
+		shutdown(fd, SHUT_WR);
+	}
 
 	DEBUG(DBG_TRACE, "<dispatch_m2s");
 }
@@ -1125,10 +1191,8 @@ dispatch_s2m(int fd, short event __used, void *arg)
 
 	for (;;) {
 
-		if ((msg = get_msg(fd)) == NULL) {
-			DEBUG(DBG_TRACE, "<dispatch_s2m");
-			return;
-		}
+		if ((msg = get_msg(fd)) == NULL)
+			break;
 		switch(msg->mtype) {
 		case ANOUBISD_MSG_CHECKSUM_OP:
 			dispatch_checksumop(msg, ev_info);
@@ -1148,6 +1212,9 @@ dispatch_s2m(int fd, short event __used, void *arg)
 
 		DEBUG(DBG_TRACE, "<dispatch_s2m (loop)");
 	}
+	if (msg_eof(fd))
+		event_del(ev_info->ev_s2m);
+	DEBUG(DBG_TRACE, "<dispatch_s2m");
 }
 
 static void
@@ -1161,6 +1228,8 @@ dispatch_m2p(int fd, short event __used, /*@dependent@*/ void *arg)
 	DEBUG(DBG_TRACE, ">dispatch_m2p");
 
 	if ((msg = queue_peek(&eventq_m2p)) == NULL) {
+		if (terminate)
+			goto out;
 		DEBUG(DBG_TRACE, "<dispatch_m2p (no msg)");
 		return;
 	}
@@ -1178,11 +1247,18 @@ dispatch_m2p(int fd, short event __used, /*@dependent@*/ void *arg)
 		    ((struct eventdev_hdr *)msg->msg)->msg_token);
 		free(msg);
 	}
+	/* Write was not successful. See if we lost one of our childs. */
+	if (ret <= 0)
+		sighandler(SIGCHLD, 0, NULL);
 	/*@=nullderef@*/ /*@=nullpass@*/
 
+out:
 	/* If the queue is not empty, we want to be called again */
 	if (queue_peek(&eventq_m2p) || msg_pending(fd))
 		event_add(ev_info->ev_m2p, NULL);
+	else if (terminate >= 2) {
+		shutdown(fd, SHUT_WR);
+	}
 
 	DEBUG(DBG_TRACE, "<dispatch_m2p");
 }
@@ -1197,10 +1273,8 @@ dispatch_p2m(int fd, short event __used, /*@dependent@*/ void *arg)
 	DEBUG(DBG_TRACE, ">dispatch_p2m");
 
 	for (;;) {
-		if ((msg = get_msg(fd)) == NULL) {
-			DEBUG(DBG_TRACE, "<dispatch_p2m");
-			return;
-		}
+		if ((msg = get_msg(fd)) == NULL)
+			break;
 		if (msg->mtype != ANOUBISD_MSG_EVENTREPLY &&
 		    msg->mtype != ANOUBISD_MSG_KCACHE) {
 			DEBUG(DBG_TRACE, "<dispatch_p2m (bad msg)");
@@ -1216,6 +1290,9 @@ dispatch_p2m(int fd, short event __used, /*@dependent@*/ void *arg)
 
 		DEBUG(DBG_TRACE, "<dispatch_p2m (loop)");
 	}
+	if (msg_eof(fd))
+		event_del(ev_info->ev_p2m);
+	DEBUG(DBG_TRACE, "<dispatch_p2m");
 }
 
 static void
@@ -1278,10 +1355,8 @@ dispatch_dev2m(int fd, short event __used, void *arg)
 	DEBUG(DBG_TRACE, ">dispatch_dev2m");
 
 	for (;;) {
-		if ((msg = get_event(fd)) == NULL) {
-			DEBUG(DBG_TRACE, "<dispatch_dev2m");
-			return;
-		}
+		if ((msg = get_event(fd)) == NULL)
+			break;
 		hdr = (struct eventdev_hdr *)msg->msg;
 
 		DEBUG(DBG_QUEUE, " >dev2m: %x %c", hdr->msg_token,
@@ -1336,4 +1411,13 @@ dispatch_dev2m(int fd, short event __used, void *arg)
 
 		DEBUG(DBG_TRACE, "<dispatch_dev2m (loop)");
 	}
+	if (terminate) {
+		event_del(ev_info->ev_dev2m);
+		ev_info->ev_dev2m = NULL;
+		if (terminate < 2)
+			terminate = 2;
+		event_add(ev_info->ev_m2p, NULL);
+		event_add(ev_info->ev_m2s, NULL);
+	}
+	DEBUG(DBG_TRACE, "<dispatch_dev2m");
 }

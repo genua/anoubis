@@ -62,13 +62,10 @@ extern anoubisd_msg_t *get_msg(int);
 
 /*@null@*/
 extern anoubisd_msg_t *get_event(int);
-
 extern int get_client_msg(int, struct anoubis_msg **);
-
 extern int send_msg(int, anoubisd_msg_t *);
-
 extern int send_reply(int, anoubisd_msg_t *);
-
 extern int msg_pending(int);
+extern int msg_eof(int);
 
 #endif /* !_AMSG_H */

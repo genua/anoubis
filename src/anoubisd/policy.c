@@ -86,16 +86,19 @@ static Queue	replyq;
 
 struct event_info_policy {
 	/*@dependent@*/
-	struct event	*ev_p2m, *ev_p2s, *ev_s2p;
+	struct event	*ev_p2m, *ev_p2s, *ev_s2p, *ev_m2p;
 	/*@dependent@*/
 	struct event	*ev_timer;
 	/*@null@*/ /*@temp@*/
 	struct timeval	*tv;
+	struct event	*ev_sigs[10];
 };
+
+static int terminate = 0;
 
 /* ARGSUSED */
 static void
-policy_sighandler(int sig, short event __used, void *arg __used)
+policy_sighandler(int sig, short event __used, void *arg)
 {
 	switch (sig) {
 	case SIGUSR1:
@@ -105,8 +108,22 @@ policy_sighandler(int sig, short event __used, void *arg __used)
 		sfs_cert_reconfigure(1);
 		pe_reconfigure();
 		break;
-	case SIGTERM:
 	case SIGINT:
+	case SIGTERM: {
+		sigset_t			 mask;
+		int				 i;
+		struct event_info_policy	*info;
+
+		info = arg;
+		sigfillset(&mask);
+		sigprocmask(SIG_SETMASK, &mask, NULL);
+		for (i=0; info->ev_sigs[i]; ++i)
+			signal_del(info->ev_sigs[i]);
+		if (terminate < 1)
+			terminate = 1;
+		event_del(info->ev_timer);
+		break;
+	}
 	case SIGQUIT:
 		(void)event_loopexit(NULL);
 		/* FALLTRHOUGH */
@@ -172,8 +189,8 @@ policy_main(struct anoubisd_config *conf __used, int pipe_m2s[2],
 	log_info("policy started (pid %d)", getpid());
 
 	/* We catch or block signals rather than ignoring them. */
-	signal_set(&ev_sigterm, SIGTERM, policy_sighandler, NULL);
-	signal_set(&ev_sigint, SIGINT, policy_sighandler, NULL);
+	signal_set(&ev_sigterm, SIGTERM, policy_sighandler, &ev_info);
+	signal_set(&ev_sigint, SIGINT, policy_sighandler, &ev_info);
 	signal_set(&ev_sigquit, SIGQUIT, policy_sighandler, NULL);
 	signal_set(&ev_sigusr1, SIGUSR1, policy_sighandler, NULL);
 	signal_set(&ev_sighup, SIGHUP, policy_sighandler, NULL);
@@ -182,6 +199,12 @@ policy_main(struct anoubisd_config *conf __used, int pipe_m2s[2],
 	signal_add(&ev_sigquit, NULL);
 	signal_add(&ev_sigusr1, NULL);
 	signal_add(&ev_sighup, NULL);
+	ev_info.ev_sigs[0] = &ev_sigterm;
+	ev_info.ev_sigs[1] = &ev_sigint;
+	ev_info.ev_sigs[2] = &ev_sigquit;
+	ev_info.ev_sigs[3] = &ev_sigusr1;
+	ev_info.ev_sigs[4] = &ev_sighup;
+	ev_info.ev_sigs[5] = NULL;
 
 	sigfillset(&mask);
 	sigdelset(&mask, SIGTERM);
@@ -224,6 +247,7 @@ policy_main(struct anoubisd_config *conf __used, int pipe_m2s[2],
 	ev_info.ev_p2m = &ev_p2m;
 	ev_info.ev_p2s = &ev_p2s;
 	ev_info.ev_s2p = &ev_s2p;
+	ev_info.ev_m2p = &ev_m2p;
 
 	/* Five second timer for statistics ioctl */
 	tv.tv_sec = 5;
@@ -262,22 +286,13 @@ dispatch_timer(int sig __used, short event __used, void *arg)
 
 	DEBUG(DBG_TRACE, ">dispatch_timer");
 
-	if ((msg_wait = queue_peek(&replyq)) == NULL) {
-		event_add(ev_info->ev_timer, ev_info->tv);
-		DEBUG(DBG_TRACE, "<dispatch_timer");
-		return;
-	}
-
 	qep_cur = queue_head(&replyq);
-	if (qep_cur == NULL)
-		return;
-
-	do {
+	while(qep_cur) {
 		qep_next = queue_walk(&replyq, qep_cur);
 
 		msg_wait = qep_cur->entry;
-		if (now > (msg_wait->starttime + msg_wait->timeout)) {
-
+		if (now > (msg_wait->starttime + msg_wait->timeout)
+		    || terminate >= 3) {
 			msg = msg_factory(ANOUBISD_MSG_EVENTREPLY,
 			    sizeof(struct eventdev_reply));
 			rep = (struct eventdev_reply *)msg->msg;
@@ -300,9 +315,9 @@ dispatch_timer(int sig __used, short event __used, void *arg)
 			free(msg_wait);
 		}
 
-	} while ((qep_cur = qep_next));
-
-	event_add(ev_info->ev_timer, ev_info->tv);
+	}
+	if (terminate < 3)
+		event_add(ev_info->ev_timer, ev_info->tv);
 
 	DEBUG(DBG_TRACE, "<dispatch_timer");
 }
@@ -411,10 +426,8 @@ dispatch_m2p(int fd, short sig __used, void *arg)
 	DEBUG(DBG_TRACE, ">dispatch_m2p");
 
 	for (;;) {
-		if ((msg = get_msg(fd)) == NULL) {
-			DEBUG(DBG_TRACE, "<dispatch_m2p (no msg)");
-			return;
-		}
+		if ((msg = get_msg(fd)) == NULL)
+			break;
 		DEBUG(DBG_QUEUE, " >m2p: %x",
 		    ((struct eventdev_hdr *)msg->msg)->msg_token);
 
@@ -523,6 +536,13 @@ dispatch_m2p(int fd, short sig __used, void *arg)
 
 		DEBUG(DBG_TRACE, "<dispatch_m2p (loop)");
 	}
+	if (msg_eof(fd)) {
+		if (terminate < 2)
+			terminate = 2;
+		event_del(ev_info->ev_m2p);
+		event_add(ev_info->ev_p2s, NULL);
+	}
+	DEBUG(DBG_TRACE, "<dispatch_m2p (no msg)");
 }
 
 static void
@@ -669,10 +689,8 @@ dispatch_s2p(int fd, short sig __used, void *arg)
 	DEBUG(DBG_TRACE, ">dispatch_s2p");
 
 	for (;;) {
-		if ((msg = get_msg(fd)) == NULL) {
-			DEBUG(DBG_TRACE, "<dispatch_s2p (no msg)");
-			return;
-		}
+		if ((msg = get_msg(fd)) == NULL)
+			break;
 
 		switch (msg->mtype) {
 
@@ -742,6 +760,12 @@ dispatch_s2p(int fd, short sig __used, void *arg)
 			break;
 		}
 	}
+	if (msg_eof(fd)) {
+		event_del(ev_info->ev_s2p);
+		if (terminate < 3)
+			terminate = 3;
+		dispatch_timer(0, 0, ev_info);
+	}
 	DEBUG(DBG_TRACE, "<dispatch_s2p");
 }
 
@@ -755,6 +779,8 @@ dispatch_p2s(int fd, short sig __used, void *arg)
 	DEBUG(DBG_TRACE, ">dispatch_p2s");
 
 	if ((msg = queue_peek(&eventq_p2s)) == NULL) {
+		if (terminate)
+			goto out;
 		DEBUG(DBG_TRACE, "<dispatch_p2s (no msg)");
 		return;
 	}
@@ -774,9 +800,12 @@ dispatch_p2s(int fd, short sig __used, void *arg)
 	}
 	/*@=nullderef@*/ /*@=nullpass@*/
 
+out:
 	/* If the queue is not empty, we want to be called again */
 	if (queue_peek(&eventq_p2s) || msg_pending(fd))
 		event_add(ev_info->ev_p2s, NULL);
+	else if (terminate >= 2)
+		shutdown(fd, SHUT_WR);
 
 	DEBUG(DBG_TRACE, "<dispatch_p2s");
 }

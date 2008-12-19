@@ -87,6 +87,16 @@ dispatch_log_write(int fd __used, short event __used, void *arg __used)
 }
 
 void
+flush_log_queue(void)
+{
+	anoubisd_msg_t		*msg;
+	while ((msg = dequeue(&__eventq_log))) {
+		syslog(msg->mtype, "%s", msg->msg);
+		free(msg);
+	}
+}
+
+void
 log_init(int fd)
 {
 	msg_init(fd, "logger");
@@ -215,7 +225,7 @@ fatal(const char *emsg)
 		else
 			logit(LOG_CRIT, "fatal in %s: %s",
 			    procnames[anoubisd_process], emsg);
-
+	flush_log_queue();
 	if (anoubisd_process == PROC_MAIN)
 		exit(1);
 	else				/* parent copes via SIGCHLD */
@@ -255,7 +265,7 @@ early_errx(int eval, const char *emsg)
 	early_err(eval, emsg);
 }
 
-void dispatch_log_read(int fd, short sig __used, void *arg __used)
+void dispatch_log_read(int fd, short sig __used, void *arg)
 {
 	anoubisd_msg_t * msg;
 	__logging = 1;
@@ -266,19 +276,31 @@ void dispatch_log_read(int fd, short sig __used, void *arg __used)
 		syslog(msg->mtype, "%s", msg->msg);
 		free(msg);
 	}
+	if (msg_eof(fd))
+		event_del(arg);
 	__logging = 0;
 }
 
 extern char	*__progname;
+static int	 terminate = 0;
 
 static void
-logger_sighandler(int sig __used, short event __used, void *arg __used)
+logger_sighandler(int sig __used, short event __used, void *arg)
 {
+	int		  i;
+	struct event	**sigs;
+	sigset_t	  mask;
+
 	/*
-	 * XXX CEH: Maybe we should delay the exit somewhat to make
-	 * XXX CEH: sure that log messages make it into the syslog.
+	 * Logger will not terminate until all other processes have closed
+	 * their log file handles.
 	 */
-	event_loopexit(NULL);
+	terminate = 1;
+	sigfillset(&mask);
+	sigprocmask(SIG_SETMASK, &mask, NULL);
+	sigs = arg;
+	for (i=0; sigs[i]; ++i)
+		signal_del(sigs[i]);
 }
 
 pid_t
@@ -291,6 +313,7 @@ logger_main(struct anoubisd_config *conf __used, int pipe_m2l[2],
 	struct event	 ev_sigterm, ev_sigint, ev_sigquit;
 	struct passwd	*pw;
 	sigset_t	 mask;
+	static struct event *	sigs[10];
 
 	if ((pw = getpwnam(ANOUBISD_USER)) == NULL)
 		fatal("getpwnam");
@@ -318,12 +341,16 @@ logger_main(struct anoubisd_config *conf __used, int pipe_m2l[2],
 
 	(void)event_init();
 
-	signal_set(&ev_sigterm, SIGTERM,logger_sighandler, NULL);
-	signal_set(&ev_sigint, SIGINT, logger_sighandler, NULL);
-	signal_set(&ev_sigquit, SIGQUIT, logger_sighandler, NULL);
+	signal_set(&ev_sigterm, SIGTERM, logger_sighandler, sigs);
+	signal_set(&ev_sigint, SIGINT, logger_sighandler, sigs);
+	signal_set(&ev_sigquit, SIGQUIT, logger_sighandler, sigs);
 	signal_add(&ev_sigterm, NULL);
 	signal_add(&ev_sigint, NULL);
 	signal_add(&ev_sigquit, NULL);
+	sigs[0] = &ev_sigterm;
+	sigs[1] = &ev_sigint;
+	sigs[2] = &ev_sigquit;
+	sigs[3] = NULL;
 
 	sigfillset(&mask);
 	sigdelset(&mask, SIGTERM);
@@ -340,13 +367,13 @@ logger_main(struct anoubisd_config *conf __used, int pipe_m2l[2],
 	msg_init(pipe_s2l[0], "s2l");
 
 	event_set(&ev_m2l, pipe_m2l[0], EV_READ | EV_PERSIST,
-	    &dispatch_log_read, NULL);
+	    &dispatch_log_read, &ev_m2l);
 	event_add(&ev_m2l, NULL);
 	event_set(&ev_p2l, pipe_p2l[0], EV_READ | EV_PERSIST,
-	    &dispatch_log_read, NULL);
+	    &dispatch_log_read, &ev_p2l);
 	event_add(&ev_p2l, NULL);
 	event_set(&ev_s2l, pipe_s2l[0], EV_READ | EV_PERSIST,
-	    &dispatch_log_read, NULL);
+	    &dispatch_log_read, &ev_s2l);
 	event_add(&ev_s2l, NULL);
 
 	if (event_dispatch() == -1)

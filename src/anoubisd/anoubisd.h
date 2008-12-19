@@ -248,6 +248,7 @@ int	send_policy_data(u_int64_t token, int fd);
 void	send_lognotify(struct eventdev_hdr *, u_int32_t, u_int32_t, u_int32_t,
 	    u_int32_t);
 void	send_policychange(u_int32_t uid, u_int32_t prio);
+void	flush_log_queue(void);
 
 #ifndef S_SPLINT_S
 #define DEBUG(flag, ...) {if (flag & debug_flags) log_debug(__VA_ARGS__);}

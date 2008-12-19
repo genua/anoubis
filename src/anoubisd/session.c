@@ -97,6 +97,7 @@ struct event_info_session {
 	struct event	*ev_m2s, *ev_p2s;
 	struct sessionGroup *seg;
 	struct anoubis_policy_comm *policy;
+	struct event	*ev_sigs[10];
 };
 
 struct cbdata {
@@ -155,13 +156,33 @@ static Queue requestq;
 
 static Queue headq;
 
+static int terminate = 0;
+
 static void
-session_sighandler(int sig, short event __used, void *arg __used)
+session_sighandler(int sig, short event __used, void *arg)
 {
 	DEBUG(DBG_TRACE, ">session_sighandler");
 	switch (sig) {
-	case SIGTERM:
 	case SIGINT:
+	case SIGTERM: {
+		struct event_info_session	*info;
+		struct session			*sess;
+		sigset_t			 mask;
+		int				 i;
+
+		terminate = 1;
+		info = arg;
+		event_del(&info->seg->ev_connect);
+		while ((sess = LIST_FIRST(&info->seg->sessionList)))
+			session_destroy(sess);
+		/* We are terminating: Deregister signal handlers. */
+		sigfillset(&mask);
+		sigprocmask(SIG_SETMASK, &mask, NULL);
+		for (i=0; info->ev_sigs[i]; ++i) {
+			signal_del(info->ev_sigs[i]);
+		}
+		break;
+	}
 	case SIGQUIT:
 		(void)event_loopexit(NULL);
 		/*FALLTRHOUGH*/
@@ -316,7 +337,6 @@ session_main(struct anoubisd_config *conf, int pipe_m2s[2], int pipe_m2p[2],
 	log_init(loggers[2]);
 	close(loggers[0]);
 	close(loggers[1]);
-	log_info("session started (pid %d)", getpid());
 
 	anoubisd_process = PROC_SESSION;
 
@@ -330,6 +350,7 @@ session_main(struct anoubisd_config *conf, int pipe_m2s[2], int pipe_m2p[2],
 		fatal("chroot");
 	if (chdir("/") == -1)
 		fatal("chdir");
+	log_info("session started (pid %d root %s)", getpid(), pw->pw_dir);
 
 #ifdef OPENBSD
 	setproctitle("session engine");
@@ -350,12 +371,16 @@ session_main(struct anoubisd_config *conf, int pipe_m2s[2], int pipe_m2p[2],
 	queue_init(headq);
 
 	/* We catch or block signals rather than ignoring them. */
-	signal_set(&ev_sigterm, SIGTERM, session_sighandler, NULL);
-	signal_set(&ev_sigint, SIGINT, session_sighandler, NULL);
+	signal_set(&ev_sigterm, SIGTERM, session_sighandler, &ev_info);
+	signal_set(&ev_sigint, SIGINT, session_sighandler, &ev_info);
 	signal_set(&ev_sigquit, SIGQUIT, session_sighandler, NULL);
 	signal_add(&ev_sigterm, NULL);
 	signal_add(&ev_sigint, NULL);
 	signal_add(&ev_sigquit, NULL);
+	ev_info.ev_sigs[0] = &ev_sigterm;
+	ev_info.ev_sigs[1] = &ev_sigint;
+	ev_info.ev_sigs[2] = &ev_sigquit;
+	ev_info.ev_sigs[3] = NULL;
 
 	sigfillset(&mask);
 	sigdelset(&mask, SIGTERM);
@@ -673,10 +698,8 @@ dispatch_m2s(int fd, short sig __used, void *arg)
 
 	for (;;) {
 		u_int64_t task;
-		if ((msg = get_msg(fd)) == NULL) {
-			DEBUG(DBG_TRACE, "<dispatch_m2s");
-			return;
-		}
+		if ((msg = get_msg(fd)) == NULL)
+			break;
 		if (msg->mtype == ANOUBISD_MSG_POLREPLY) {
 			dispatch_m2s_pol_reply(msg, ev_info);
 			continue;
@@ -754,6 +777,10 @@ dispatch_m2s(int fd, short sig __used, void *arg)
 
 		DEBUG(DBG_TRACE, "<dispatch_m2s (loop)");
 	}
+	if (msg_eof(fd))
+		event_del(ev_info->ev_m2s);
+
+	DEBUG(DBG_TRACE, "<dispatch_m2s");
 }
 
 /* Handle Request Messages - coming from policy */
@@ -766,10 +793,8 @@ dispatch_p2s(int fd, short sig __used, void *arg)
 	DEBUG(DBG_TRACE, ">dispatch_p2s");
 
 	for (;;) {
-		if ((msg = get_msg(fd)) == NULL) {
-			DEBUG(DBG_TRACE, "<dispatch_p2s");
-			return;
-		}
+		if ((msg = get_msg(fd)) == NULL)
+			break;
 
 		switch (msg->mtype) {
 
@@ -810,6 +835,9 @@ dispatch_p2s(int fd, short sig __used, void *arg)
 
 		DEBUG(DBG_TRACE, "<dispatch_p2s (loop)");
 	}
+	if (msg_eof(fd))
+		event_del(ev_info->ev_p2s);
+	DEBUG(DBG_TRACE, "<dispatch_p2s");
 }
 
 static void
