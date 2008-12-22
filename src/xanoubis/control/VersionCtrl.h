@@ -34,6 +34,8 @@
 #include "ApnVersion.h"
 #include "Singleton.h"
 
+class PolicyRuleSet;
+
 /**
  * Singleton class which encapsulates the version management library.
  *
@@ -148,36 +150,19 @@ class VersionCtrl : public Singleton<VersionCtrl>
 		    const wxString &) const;
 
 		/**
-		 * Restores a version.
-		 *
-		 * The method fetches the rulesets of the specified profiles
-		 * and writes them into the home-directory of the user. If one
-		 * of the specified profiles has no ruleset in the version, it
-		 * is skipped. Next the ruleset of the currently active profile
-		 * is send to the Anoubis-daemon.
-		 *
-		 * This method relies on the last fetchVersionList()-
-		 * invocation!
-		 *
-		 * @param idx Index of the requested version (index-counter
-		 *            starts at 0)
-		 * @param profileList List of profiles to be restored.
-		 * @return true on success, false otherwise.
-		 */
-		bool restoreVersion(unsigned int, const std::list<wxString>&);
-
-		/**
 		 * Creates a new version.
 		 *
 		 * The method takes the ruleset of the specified profile and
 		 * appends it to the versioning-system.
 		 *
+		 * @param policy The policy to to versioned
 		 * @param profile The profile to be versioned
 		 * @param comment The comment of the version to be created
 		 * @param autoStore Value of autoStore-flag
 		 * @return true on success, false otherwise.
 		 */
-		bool createVersion(const wxString &, const wxString &, bool);
+		bool createVersion(PolicyRuleSet *, const wxString &,
+		    const wxString &, bool);
 
 		/**
 		 * Imports a version from a local file.

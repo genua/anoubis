@@ -53,7 +53,6 @@
 #include "DlgProfileSelection.h"
 #include "ModAnoubis.h"
 #include "ModAnoubisMainPanelImpl.h"
-#include "ModAnoubisProfileDialogImpl.h"
 #include "Notification.h"
 #include "LogNotify.h"
 #include "AlertNotify.h"
@@ -111,38 +110,6 @@ ModAnoubisMainPanelImpl::ModAnoubisMainPanelImpl(wxWindow* parent,
 	PrivKeyValidityChoice->Connect(wxEVT_COMMAND_CHOICE_SELECTED,
 	    wxCommandEventHandler(
 	       ModAnoubisMainPanelImpl::OnPrivKeyValidityChanged),
-	    NULL, this);
-	VersionListCtrl->Connect(wxEVT_COMMAND_LIST_ITEM_SELECTED,
-	    wxListEventHandler(
-	       ModAnoubisMainPanelImpl::OnVersionListCtrlSelected),
-	    NULL, this);
-	VersionRestoreButton->Connect(wxEVT_COMMAND_BUTTON_CLICKED,
-	    wxCommandEventHandler(
-	       ModAnoubisMainPanelImpl::OnVersionRestoreButtonClick),
-	    NULL, this);
-	VersionSaveButton->Connect(wxEVT_COMMAND_BUTTON_CLICKED,
-	    wxCommandEventHandler(
-	       ModAnoubisMainPanelImpl::OnVersionSaveButtonClick),
-	    NULL, this);
-	VersionImportButton->Connect(wxEVT_COMMAND_BUTTON_CLICKED,
-	    wxCommandEventHandler(
-	       ModAnoubisMainPanelImpl::OnVersionImportButtonClick),
-	    NULL, this);
-	VersionExportButton->Connect(wxEVT_COMMAND_BUTTON_CLICKED,
-	    wxCommandEventHandler(
-	       ModAnoubisMainPanelImpl::OnVersionExportButtonClick),
-	    NULL, this);
-	VersionDeleteButton->Connect(wxEVT_COMMAND_BUTTON_CLICKED,
-	    wxCommandEventHandler(
-	       ModAnoubisMainPanelImpl::OnVersionDeleteButtonClick),
-	    NULL, this);
-	VersionShowButton->Connect(wxEVT_COMMAND_BUTTON_CLICKED,
-	    wxCommandEventHandler(
-	       ModAnoubisMainPanelImpl::OnVersionShowButtonClick),
-	    NULL, this);
-	VersionProfileButton->Connect(wxEVT_COMMAND_BUTTON_CLICKED,
-	    wxCommandEventHandler(
-	       ModAnoubisMainPanelImpl::OnVersionProfileButtonClick),
 	    NULL, this);
 }
 
@@ -470,9 +437,16 @@ void
 ModAnoubisMainPanelImpl::versionListUpdate(void)
 {
 	VersionCtrl	*versionCtrl;
+	ProfileCtrl	*profileCtrl;
 	unsigned int	count = 0;
 
 	versionCtrl = VersionCtrl::getInstance();
+	profileCtrl = ProfileCtrl::getInstance();
+
+	VersionProfileChoice->Clear();
+	VersionProfileChoice->Append(profileCtrl->getProfileList());
+	VersionProfileChoice->SetSelection(0);
+
 	VersionListCtrl->DeleteAllItems();
 
 	if (!versionCtrl->isInitialized()) {
@@ -981,50 +955,94 @@ ModAnoubisMainPanelImpl::OnVersionListCtrlSelected(wxListEvent&)
 void
 ModAnoubisMainPanelImpl::OnVersionRestoreButtonClick(wxCommandEvent&)
 {
-	int idx;
+	VersionCtrl	*versionCtrl = VersionCtrl::getInstance();
+	ProfileCtrl	*profileCtrl = ProfileCtrl::getInstance();
+	bool		useActiveProfile;
+	wxString	profile;
+	int		idx;
 
 	if ((idx = versionListCanAccess(true)) == -1)
 		return;
 
-	VersionCtrl *versionCtrl = VersionCtrl::getInstance();
+	if (VersionActivePolicyRadioButton->GetValue()) {
+		useActiveProfile = true;
+		profile = wxT("active");
+	} else {
+		useActiveProfile = false;
+		profile = VersionProfileChoice->GetStringSelection();
+	}
 
-	/*
-	 * Put all profiles into the list,
-	 * you want to restore all profiles!
-	 */
-	std::list<wxString> profileList;
+	/* Fetch ruleset from versioning-system */
+	struct apn_ruleset *apn_rs = versionCtrl->fetchRuleSet(idx, profile);
+	if (apn_rs == 0) {
+		wxString msg;
 
-	profileList.push_back(wxT("high"));
-	profileList.push_back(wxT("medium"));
-	profileList.push_back(wxT("admin"));
+		if (useActiveProfile)
+			msg = _("Failed to fetch the active policy.");
+		else
+			msg.Printf(_(
+			    "Failed to fetch the policy\n"
+			    "of the \"%s\" profile"), profile.c_str());
 
-	if (!versionCtrl->restoreVersion(idx, profileList)) {
-		wxString msg = _("Failed to restore the selected version!");
-		wxString title = _("Restore version");
+		wxMessageBox(msg, _("Restore version"),
+		    wxOK | wxICON_ERROR, this);
+		return;
+	}
 
-		wxMessageBox(msg, title, wxOK | wxICON_ERROR, this);
+	/* Import policy into application */
+	PolicyRuleSet *rs = new PolicyRuleSet(1, geteuid(), apn_rs);
+	if (useActiveProfile) {
+		if (!profileCtrl->importPolicy(rs))
+			wxMessageBox(_("Failed to import the active policy."),
+			    _("Restore version"), wxOK | wxICON_ERROR, this);
+	} else {
+		if (!profileCtrl->importPolicy(rs, profile)) {
+			wxString msg = wxString::Format(_(
+			    "Failed to import the policy\n"
+			    "of the \"%s\" profile"), profile.c_str());
+
+			wxMessageBox(msg, _("Restore version"),
+			    wxOK | wxICON_ERROR, this);
+		}
+		delete rs;
 	}
 }
 
 void
 ModAnoubisMainPanelImpl::OnVersionSaveButtonClick(wxCommandEvent&)
 {
+	wxString profile;
+
 	if (!versionListCanAccess(false))
 		return;
 
-	/* Save current profile */
-	/*
-	 * XXX
-	 * Temp. disabled. Needs to be fixed.
-	 */
-	/*wxString profile = ProfileCtrl::getInstance()->getProfileName();*/
-	wxString profile = wxEmptyString;
+	if (VersionActivePolicyRadioButton->GetValue())
+		profile = wxT("active");
+	else
+		profile = VersionProfileChoice->GetStringSelection();
 
 	/* Comment from GUI */
 	wxString comment = VersionEnterCommentTextCtrl->GetValue();
 
 	VersionCtrl *versionCtrl = VersionCtrl::getInstance();
-	if (versionCtrl->createVersion(profile, comment, false)) {
+	ProfileCtrl *profileCtrl = ProfileCtrl::getInstance();
+
+	PolicyRuleSet *rs;
+	if (VersionActivePolicyRadioButton->GetValue())
+		rs = profileCtrl->getRuleSet(profileCtrl->getUserId());
+	else
+		rs  = profileCtrl->getRuleSet(profile);
+
+	if (rs == 0) {
+		wxString msg =
+		    _("Failed to fetch the policy for the selected profile!");
+		wxString title = _("Create version");
+
+		wxMessageBox(msg, title, wxOK | wxICON_ERROR, this);
+		return;
+	}
+
+	if (versionCtrl->createVersion(rs, profile, comment, false)) {
 		/* Success, new version available, update view */
 		versionListUpdate();
 
@@ -1037,6 +1055,9 @@ ModAnoubisMainPanelImpl::OnVersionSaveButtonClick(wxCommandEvent&)
 
 		wxMessageBox(msg, title, wxOK | wxICON_ERROR, this);
 	}
+
+	if (!VersionActivePolicyRadioButton->GetValue())
+		delete rs;
 }
 
 void
@@ -1050,22 +1071,16 @@ ModAnoubisMainPanelImpl::OnVersionImportButtonClick(wxCommandEvent&)
 	if (fileDlg.ShowModal() != wxID_OK)
 		return;
 
-	/* Ask for a profile */
-	ModAnoubisImportProfileDialog profileDlg(this);
-	if (profileDlg.ShowModal() != wxID_OK)
-		return;
+	/* The profile */
+	wxString profile;
+	if (VersionActivePolicyRadioButton->GetValue())
+		profile = wxT("active");
+	else
+		profile = VersionProfileChoice->GetStringSelection();
 
 	wxString file = fileDlg.GetPath();
 	wxString comment = _("Version created at ") +
 	    wxDateTime::Now().Format();
-	wxString profile;
-
-	if (profileDlg.isHighProfileSelected())
-		profile = wxT("high");
-	else if (profileDlg.isMediumProfileSelected())
-		profile = wxT("medium");
-	else
-		profile = wxT("admin");
 
 	VersionCtrl *versionCtrl = VersionCtrl::getInstance();
 	if (versionCtrl->importVersion(file, profile, comment, false)) {
@@ -1088,19 +1103,12 @@ ModAnoubisMainPanelImpl::OnVersionExportButtonClick(wxCommandEvent&)
 	if ((idx = versionListCanAccess(true)) == -1)
 		return;
 
-	/* Ask for a profile */
-	ModAnoubisExportProfileDialog profileDlg(this);
-	if (profileDlg.ShowModal() != wxID_OK)
-		return;
-
+	/* The profile */
 	wxString profile;
-
-	if (profileDlg.isHighProfileSelected())
-		profile = wxT("high");
-	else if (profileDlg.isMediumProfileSelected())
-		profile = wxT("medium");
+	if (VersionActivePolicyRadioButton->GetValue())
+		profile = wxT("active");
 	else
-		profile = wxT("admin");
+		profile = VersionProfileChoice->GetStringSelection();
 
 	/* Ask for a destination file */
 	wxFileDialog fileDlg(this,
@@ -1170,32 +1178,13 @@ ModAnoubisMainPanelImpl::OnVersionShowButtonClick(wxCommandEvent&)
 }
 
 void
-ModAnoubisMainPanelImpl::OnVersionProfileButtonClick(wxCommandEvent&)
+ModAnoubisMainPanelImpl::OnVersionActivePolicyClicked(wxCommandEvent &)
 {
-	int idx;
+	VersionProfileChoice->Enable(false);
+}
 
-	if ((idx = versionListCanAccess(true)) == -1)
-		return;
-
-	/* Ask for profiles */
-	ModAnoubisRestoreProfileDialog dlg(this);
-	if (dlg.ShowModal() != wxID_OK)
-		return;
-
-	std::list<wxString> profileList;
-
-	if (dlg.isHighProfileSelected())
-		profileList.push_back(wxT("high"));
-	if (dlg.isMediumProfileSelected())
-		profileList.push_back(wxT("medium"));
-	if (dlg.isAdminProfileSelected())
-		profileList.push_back(wxT("admin"));
-
-	VersionCtrl *versionCtrl = VersionCtrl::getInstance();
-	if (!versionCtrl->restoreVersion(idx, profileList)) {
-		wxString msg = _("Failed to restore the selected version!");
-		wxString title = _("Restore version");
-
-		wxMessageBox(msg, title, wxOK | wxICON_ERROR, this);
-	}
+void
+ModAnoubisMainPanelImpl::OnVersonProfilePolicyClicked(wxCommandEvent &)
+{
+	VersionProfileChoice->Enable(true);
 }

@@ -40,6 +40,7 @@
 #include "JobCtrl.h"
 #include "PolicyRuleSet.h"
 #include "ProfileCtrl.h"
+#include "VersionCtrl.h"
 
 ProfileCtrl::~ProfileCtrl(void)
 {
@@ -100,6 +101,25 @@ ProfileCtrl::getRuleSet(long id) const
 			return (rs);
 	}
 
+	return (0);
+}
+
+PolicyRuleSet *
+ProfileCtrl::getRuleSet(const wxString &name) const
+{
+	wxString file;
+
+	/* Try user-profile */
+	file = getProfileFile(name, USER_PROFILE);
+	if (wxFileExists(file))
+		return (new PolicyRuleSet(1, geteuid(), file, true));
+
+	/* Try default-profile */
+	file = getProfileFile(name, DEFAULT_PROFILE);
+	if (wxFileExists(file))
+		return (new PolicyRuleSet(1, geteuid(), file, false));
+
+	/* No such profile */
 	return (0);
 }
 
@@ -187,6 +207,10 @@ ProfileCtrl::exportToProfile(const wxString &name)
 	 * because PolicyRuleSet::exportToFile() returns void.
 	 */
 	rs->exportToFile(file);
+
+	/* Make a backup by putting the policy into version-control */
+	if (!makeBackup(name))
+		return (false);
 
 	return (true);
 }
@@ -280,6 +304,47 @@ ProfileCtrl::importPolicy(PolicyRuleSet *rs)
 		event.SetClientData((void*)rs);
 		wxPostEvent(AnEvents::getInstance(), event);
 	}
+
+	return (true);
+}
+
+bool
+ProfileCtrl::importPolicy(PolicyRuleSet *rs, const wxString &name)
+{
+	if (rs == 0 || rs->hasErrors())
+		return (false);
+
+	if (getProfileSpec(name) == DEFAULT_PROFILE) {
+		/* Only export to user-profile allowed */
+		return (false);
+	}
+
+	/*
+	 * Store-operation allowed only for user-profiles,
+	 * cannot overwrite default-profiles!
+	 */
+	wxString file = getProfileFile(name, USER_PROFILE);
+
+	/*
+	 * Make sure, the directory exists. This is the users home-directory,
+	 * so you can try to create the directory.
+	 */
+	wxFileName fn(file);
+	wxFileName::Mkdir(fn.GetPath(),  0700, wxPATH_MKDIR_FULL);
+
+	if (wxFileExists(file)) {
+		/*
+		 * Remove a previous version of the profile,
+		 * it is now re-created.
+		 */
+		wxRemoveFile(file);
+	}
+
+	/*
+	 * XXX It's hard to determine weather export was successful
+	 * because PolicyRuleSet::exportToFile() returns void.
+	 */
+	rs->exportToFile(file);
 
 	return (true);
 }
@@ -414,6 +479,13 @@ Error code: %i"), taskResult);
 	if (taskResult != ComTask::RESULT_SUCCESS) {
 		wxMessageBox(message, _("Error while sending policy"),
 		    wxICON_ERROR);
+	} else {
+		/* The policy was successfully activated, now make a backup */
+		if (!makeBackup(wxT("active"))) {
+			wxMessageBox(
+			    _("Failed to make a backup of the policy."),
+			    _("Error while sending policy"), wxICON_ERROR);
+		}
 	}
 
 	sendTaskList_.remove(task);
@@ -469,6 +541,22 @@ ProfileCtrl::seekId(bool isAdmin, uid_t uid) const
 	}
 
 	return (-1);
+}
+
+bool
+ProfileCtrl::makeBackup(const wxString &profile)
+{
+	/* The user policy */
+	PolicyRuleSet *rs = getRuleSet(seekId(false, geteuid()));
+	if (rs == 0)
+		return (false);
+
+	wxString comment = wxString::Format(
+	    _("Automatically created version while saving the %s profile"),
+	    profile.c_str());
+
+	VersionCtrl *versionCtrl = VersionCtrl::getInstance();
+	return (versionCtrl->createVersion(rs, profile, comment, true));
 }
 
 void

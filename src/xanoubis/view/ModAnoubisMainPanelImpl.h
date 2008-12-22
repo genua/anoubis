@@ -105,7 +105,8 @@ class ModAnoubisMainPanelImpl : public ModAnoubisMainPanelBase
 		void OnVersionExportButtonClick(wxCommandEvent&);
 		void OnVersionDeleteButtonClick(wxCommandEvent&);
 		void OnVersionShowButtonClick(wxCommandEvent&);
-		void OnVersionProfileButtonClick(wxCommandEvent&);
+		void OnVersionActivePolicyClicked(wxCommandEvent &);
+		void OnVersonProfilePolicyClicked(wxCommandEvent &);
 
 	public:
 		ModAnoubisMainPanelImpl(wxWindow*, wxWindowID);

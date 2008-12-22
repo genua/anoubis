@@ -56,8 +56,8 @@
 #include <wx/checkbox.h>
 #include <wx/notebook.h>
 #include <wx/statbmp.h>
-#include <wx/dialog.h>
 #include <wx/combobox.h>
+#include <wx/dialog.h>
 
 ///////////////////////////////////////////////////////////////////////////
 
@@ -128,6 +128,10 @@ class ModAnoubisMainPanelBase : public wxPanel
 		wxStaticText* m_staticText40;
 		wxButton* profileActivateButton;
 		wxPanel* tb_MainAnoubisVersions;
+		wxStaticText* m_staticText41;
+		wxRadioButton* VersionActivePolicyRadioButton;
+		wxRadioButton* VersionProfilePolicyRadioButton;
+		wxChoice* VersionProfileChoice;
 		wxListCtrl* VersionListCtrl;
 		wxTextCtrl* VersionShowCommentTextCtrl;
 		wxStaticText* VersionSelectLabel;
@@ -141,7 +145,6 @@ class ModAnoubisMainPanelBase : public wxPanel
 		wxButton* VersionExportButton;
 		wxButton* VersionDeleteButton;
 		wxButton* VersionShowButton;
-		wxButton* VersionProfileButton;
 		wxPanel* tb_MainAnoubisOptions;
 		wxCheckBox* cb_SendEscalations;
 		
@@ -183,6 +186,15 @@ class ModAnoubisMainPanelBase : public wxPanel
 		virtual void OnProfileLoadClicked( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnProfileSaveClicked( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnProfileActivateClicked( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnVersionActivePolicyClicked( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnVersonProfilePolicyClicked( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnVersionListCtrlSelected( wxListEvent& event ){ event.Skip(); }
+		virtual void OnVersionRestoreButtonClick( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnVersionSaveButtonClick( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnVersionImportButtonClick( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnVersionExportButtonClick( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnVersionDeleteButtonClick( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnVersionShowButtonClick( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnEscalationDisable( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnEscalationNoTimeout( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnEscalationTimeout( wxSpinEvent& event ){ event.Skip(); }
@@ -221,27 +233,6 @@ class ModAnoubisOverviewPanelBase : public wxPanel
 	
 	public:
 		ModAnoubisOverviewPanelBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( -1,-1 ), long style = wxTAB_TRAVERSAL );
-	
-};
-
-///////////////////////////////////////////////////////////////////////////////
-/// Class ModAnoubisProfileDialogBase
-///////////////////////////////////////////////////////////////////////////////
-class ModAnoubisProfileDialogBase : public wxDialog 
-{
-	private:
-	
-	protected:
-		wxStaticText* DialogLabel;
-		wxCheckBox* HighCheckBox;
-		wxCheckBox* MediumCheckBox;
-		wxCheckBox* AdminCheckBox;
-		
-		wxButton* ActionButton;
-		wxButton* CancelButton;
-	
-	public:
-		ModAnoubisProfileDialogBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("..."), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 358,134 ), long style = wxDEFAULT_DIALOG_STYLE );
 	
 };
 

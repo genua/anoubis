@@ -109,6 +109,21 @@ class ProfileCtrl : public wxEvtHandler, public Singleton<ProfileCtrl>
 		PolicyRuleSet *getRuleSet(long) const;
 
 		/**
+		 * Get ruleset for the specified profile.
+		 *
+		 * Use this method if you need to known the policy of a
+		 * profile.
+		 *
+		 * @param name Name of profile.
+		 * @return The policy of the profile. If the profile does not
+		 *         exist, 0 is returned.
+		 * @note The ProfileCtrl is not the owner of the returned
+		 *       policy! Thus make sure to destroy the object by
+		 *       yourself.
+		 */
+		PolicyRuleSet *getRuleSet(const wxString &) const;
+
+		/**
 		 * Returns a list of available profiles.
 		 *
 		 * There are two types of profiles:
@@ -234,6 +249,24 @@ class ProfileCtrl : public wxEvtHandler, public Singleton<ProfileCtrl>
 		 * @see PolicyRuleSet::hasErrors()
 		 */
 		bool importPolicy(PolicyRuleSet *);
+
+		/**
+		 * Imports a policy into a profile.
+		 *
+		 * The policy of the specified profile is replaced with the new
+		 * one. Note, that the policy is not loaded!
+		 *
+		 * The profile-controller does <b>not</b> take over the
+		 * ownership of the policy! Thus you need to destroy it by
+		 * yourself.
+		 *
+		 * @param ruleset The ruleset to import
+		 * @param name Name of destination profile
+		 * @return true is returned, if the policy was imported
+		 *         successfully. The import can fail, if the policy
+		 *         contains errors.
+		 */
+		bool importPolicy(PolicyRuleSet *, const wxString &);
 
 		/**
 		 * Fetches a list of policies from anoubisd.
@@ -365,6 +398,17 @@ class ProfileCtrl : public wxEvtHandler, public Singleton<ProfileCtrl>
 		 *         -1 is returned.
 		 */
 		long seekId(bool, uid_t) const;
+
+		/**
+		 * Creates a backup of the currently loaded user-policy.
+		 *
+		 * The policy is stored under the specified profile in the
+		 * version-management.
+		 *
+		 * @param name Name of profile in version-management.
+		 * @return true on success, false otherwise.
+		 */
+		bool makeBackup(const wxString &);
 
 		/**
 		 * Returns the path, where profiles of the specified type are

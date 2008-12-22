@@ -252,8 +252,6 @@ xanoubis_SOURCES= \
 	view/ModAnoubisOverviewPanelImpl.h \
 	view/ModAnoubisPanelsBase.cpp \
 	view/ModAnoubisPanelsBase.h \
-	view/ModAnoubisProfileDialogImpl.cpp \
-	view/ModAnoubisProfileDialogImpl.h \
 	view/ModOverviewMainPanelImpl.cpp \
 	view/ModOverviewMainPanelImpl.h \
 	view/ModOverviewPanelsBase.cpp \

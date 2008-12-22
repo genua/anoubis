@@ -609,6 +609,33 @@ START_TEST(ProfileCtrl_exportProfileMissingDirectory)
 }
 END_TEST
 
+START_TEST(ProfileCtrl_getUserRuleSet)
+{
+	PolicyRuleSet *rs = pc->getRuleSet(wxT("user2"));
+	fail_unless(rs != 0, "Failed to fetch policy of \"user2\"");
+
+	delete rs;
+}
+END_TEST
+
+START_TEST(ProfileCtrl_getAdminRuleSet)
+{
+	PolicyRuleSet *rs = pc->getRuleSet(wxT("default2"));
+	fail_unless(rs != 0, "Failed to fetch policy of \"default2\"");
+
+	delete rs;
+}
+END_TEST
+
+START_TEST(ProfileCtrl_getUnknownRuleSet)
+{
+	PolicyRuleSet *rs = pc->getRuleSet(wxT("foobar"));
+	fail_unless(rs == 0, "Failed to fetch policy of \"foobar\"");
+
+	delete rs;
+}
+END_TEST
+
 TCase *
 getTc_ProfileCtrl(void)
 {
@@ -646,6 +673,9 @@ getTc_ProfileCtrl(void)
 	tcase_add_test(testCase, ProfileCtrl_exportUserProfile);
 	tcase_add_test(testCase, ProfileCtrl_exportDefaultProfile);
 	tcase_add_test(testCase, ProfileCtrl_exportProfileMissingDirectory);
+	tcase_add_test(testCase, ProfileCtrl_getUserRuleSet);
+	tcase_add_test(testCase, ProfileCtrl_getAdminRuleSet);
+	tcase_add_test(testCase, ProfileCtrl_getUnknownRuleSet);
 
 	return (testCase);
 }

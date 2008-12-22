@@ -188,114 +188,28 @@ VersionCtrl::fetchRuleSet(unsigned int no, const wxString &profile) const
 }
 
 bool
-VersionCtrl::restoreVersion(unsigned int /*no*/,
-    const std::list<wxString>& /*profileList*/)
+VersionCtrl::createVersion(PolicyRuleSet *policy, const wxString &profile,
+    const wxString &comment, bool autoStore)
 {
-	/*
-	 * Templ. disabled. Needs to be fixed.
-	 */
-	#if 0
-	apnvm_result vmrc;
-
-	if (!isPrepared())
-		return (false);
-
-	if (no >= versionList_.size())
-		return (false);
-
-	const ApnVersion &version = getVersion(no);
-
-	for (std::list<wxString>::const_iterator it = profileList.begin();
-	   it != profileList.end(); ++it) {
-
-		struct apn_ruleset	*rs;
-		const wxString		profile = (*it);
-		wxString		path;
-
-		/* Build path of file to be written */
-		if (!profile.IsEmpty())
-			path = wxGetApp().getRulesetPath(profile, false);
-		else
-			path = wxGetApp().getRulesetPath(wxT("none"), false);
-
-		/* Remove file, is rewritten later */
-		if (wxFileExists(path))
-			wxRemoveFile(path);
-
-		/* Fetch profile's ruleset */
-		if (!profile.IsEmpty())
-			vmrc = apnvm_fetch(vm_, version.getUsername().fn_str(),
-			    version.getVersionNo(), profile.fn_str(), &rs);
-		else
-			vmrc = apnvm_fetch(vm_, version.getUsername().fn_str(),
-			    version.getVersionNo(), 0, &rs);
-
-		if ((vmrc == APNVM_OK) && (rs != 0)) {
-			/* Dump ruleset to file */
-			wxFFile f(path, wxT("w"));
-
-			if (f.IsOpened()) {
-				apn_print_ruleset(rs, 0, f.fp());
-				fchmod(fileno(f.fp()), S_IRUSR);
-				f.Close();
-			}
-		}
-
-		if (ProfileCtrl::getInstance()->getProfileName() == profile) {
-			/* Current profile, reactivate */
-			if (rs == 0) {
-				/*
-				 * Version was restored, but the current
-				 * profile has no ruleset. Take default-ruleset
-				 */
-				wxString f =
-				    wxGetApp().getRulesetPath(profile, true);
-
-				if (apn_parse(f.fn_str(), &rs, 0) != 0)
-					rs = 0;
-			}
-
-			if (rs != 0)
-				wxGetApp().importPolicyRuleSet(1, geteuid(),
-				    rs);
-		}
-	}
-
-	/* Send result back to daemon */
-	wxGetApp().profileFromDiskToDaemon(
-	    ProfileCtrl::getInstance()->getProfileName());
-
-	return (true);
-	#endif
-	return (false);
-}
-
-bool
-VersionCtrl::createVersion(const wxString &/*profile*/,
-    const wxString &/*comment*/, bool /*autoStore*/)
-{
-	/*
-	 * Temp. disabled. Needs to be fixed.
-	 */
-	#if 0
 	struct apn_ruleset	*rs;
 	struct apnvm_md		md;
-	wxString		path;
+	wxString		tmpFile;
 	apnvm_result		vmrc;
 
 	if (!isPrepared())
 		return (false);
 
-	/* Dump profile to disk */
-	if (!wxGetApp().profileFromDaemonToDisk(profile))
-		return (false);
+	/* Dump policy to a temporary file */
+	tmpFile = wxFileName::CreateTempFileName(wxT(""));
+	policy->exportToFile(tmpFile); /* XXX Error path? */
 
-	/* File, where ruleset is stored */
-	path = wxGetApp().getRulesetPath(profile, true);
-
-	/* Path content */
-	if ((apn_parse(path.fn_str(), &rs, 0) != 0) || (rs == 0))
+	/* Parse content */
+	if ((apn_parse(tmpFile.fn_str(), &rs, 0) != 0) || (rs == 0)) {
+		wxRemoveFile(tmpFile);
 		return (false);
+	}
+
+	wxRemoveFile(tmpFile);
 
 	md.comment = strdup(comment.fn_str());
 	md.auto_store = autoStore;
@@ -305,8 +219,6 @@ VersionCtrl::createVersion(const wxString &/*profile*/,
 
 	free((void*)md.comment);
 	return (vmrc == APNVM_OK);
-	#endif
-	return (false);
 }
 
 bool

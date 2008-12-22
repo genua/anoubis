@@ -344,6 +344,27 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	wxBoxSizer* VersionListSizer;
 	VersionListSizer = new wxBoxSizer( wxVERTICAL );
 	
+	wxBoxSizer* bSizer31;
+	bSizer31 = new wxBoxSizer( wxHORIZONTAL );
+	
+	m_staticText41 = new wxStaticText( tb_MainAnoubisVersions, wxID_ANY, _("Choose policy:"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText41->Wrap( -1 );
+	bSizer31->Add( m_staticText41, 0, wxALIGN_CENTER_VERTICAL|wxALL|wxEXPAND, 5 );
+	
+	VersionActivePolicyRadioButton = new wxRadioButton( tb_MainAnoubisVersions, wxID_ANY, _("Active policy"), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer31->Add( VersionActivePolicyRadioButton, 0, wxALL, 5 );
+	
+	VersionProfilePolicyRadioButton = new wxRadioButton( tb_MainAnoubisVersions, wxID_ANY, _("Policy from profile"), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer31->Add( VersionProfilePolicyRadioButton, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
+	
+	wxArrayString VersionProfileChoiceChoices;
+	VersionProfileChoice = new wxChoice( tb_MainAnoubisVersions, wxID_ANY, wxDefaultPosition, wxDefaultSize, VersionProfileChoiceChoices, 0 );
+	VersionProfileChoice->Enable( false );
+	
+	bSizer31->Add( VersionProfileChoice, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
+	
+	VersionListSizer->Add( bSizer31, 0, wxALL|wxEXPAND, 5 );
+	
 	VersionListCtrl = new wxListCtrl( tb_MainAnoubisVersions, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLC_HRULES|wxLC_REPORT );
 	VersionListSizer->Add( VersionListCtrl, 80, wxALL|wxEXPAND, 5 );
 	
@@ -412,11 +433,6 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	VersionShowButton->Hide();
 	
 	VersionDetailsSizer->Add( VersionShowButton, 0, wxALL, 5 );
-	
-	VersionProfileButton = new wxButton( tb_MainAnoubisVersions, wxID_ANY, _("profile ..."), wxDefaultPosition, wxDefaultSize, 0 );
-	VersionProfileButton->SetToolTip( _("a single profile") );
-	
-	VersionDetailsSizer->Add( VersionProfileButton, 0, wxALL, 5 );
 	
 	VersionButtonSizer->Add( VersionDetailsSizer, 1, wxEXPAND, 5 );
 	
@@ -665,6 +681,15 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	profileLoadButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModAnoubisMainPanelBase::OnProfileLoadClicked ), NULL, this );
 	profileSaveButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModAnoubisMainPanelBase::OnProfileSaveClicked ), NULL, this );
 	profileActivateButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModAnoubisMainPanelBase::OnProfileActivateClicked ), NULL, this );
+	VersionActivePolicyRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( ModAnoubisMainPanelBase::OnVersionActivePolicyClicked ), NULL, this );
+	VersionProfilePolicyRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( ModAnoubisMainPanelBase::OnVersonProfilePolicyClicked ), NULL, this );
+	VersionListCtrl->Connect( wxEVT_COMMAND_LIST_ITEM_SELECTED, wxListEventHandler( ModAnoubisMainPanelBase::OnVersionListCtrlSelected ), NULL, this );
+	VersionRestoreButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModAnoubisMainPanelBase::OnVersionRestoreButtonClick ), NULL, this );
+	VersionSaveButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModAnoubisMainPanelBase::OnVersionSaveButtonClick ), NULL, this );
+	VersionImportButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModAnoubisMainPanelBase::OnVersionImportButtonClick ), NULL, this );
+	VersionExportButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModAnoubisMainPanelBase::OnVersionExportButtonClick ), NULL, this );
+	VersionDeleteButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModAnoubisMainPanelBase::OnVersionDeleteButtonClick ), NULL, this );
+	VersionShowButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModAnoubisMainPanelBase::OnVersionShowButtonClick ), NULL, this );
 	cb_SendEscalations->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( ModAnoubisMainPanelBase::OnEscalationDisable ), NULL, this );
 	cb_NoEscalationTimeout->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( ModAnoubisMainPanelBase::OnEscalationNoTimeout ), NULL, this );
 	m_spinEscalationNotifyTimeout->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( ModAnoubisMainPanelBase::OnEscalationTimeout ), NULL, this );
@@ -726,55 +751,6 @@ ModAnoubisOverviewPanelBase::ModAnoubisOverviewPanelBase( wxWindow* parent, wxWi
 	// Connect Events
 	connectButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModAnoubisOverviewPanelBase::OnConnectClicked ), NULL, this );
 	disconnectButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModAnoubisOverviewPanelBase::OnDisconnectClicked ), NULL, this );
-}
-
-ModAnoubisProfileDialogBase::ModAnoubisProfileDialogBase( wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style ) : wxDialog( parent, id, title, pos, size, style )
-{
-	this->SetSizeHints( wxDefaultSize, wxDefaultSize );
-	
-	wxBoxSizer* bSizer20;
-	bSizer20 = new wxBoxSizer( wxVERTICAL );
-	
-	DialogLabel = new wxStaticText( this, wxID_ANY, _("..."), wxDefaultPosition, wxDefaultSize, 0 );
-	DialogLabel->Wrap( -1 );
-	bSizer20->Add( DialogLabel, 0, wxALL, 5 );
-	
-	wxBoxSizer* bSizer21;
-	bSizer21 = new wxBoxSizer( wxHORIZONTAL );
-	
-	HighCheckBox = new wxCheckBox( this, wxID_ANY, _("high"), wxDefaultPosition, wxDefaultSize, 0 );
-	
-	bSizer21->Add( HighCheckBox, 0, wxALL, 5 );
-	
-	MediumCheckBox = new wxCheckBox( this, wxID_ANY, _("medium"), wxDefaultPosition, wxDefaultSize, 0 );
-	
-	bSizer21->Add( MediumCheckBox, 0, wxALL, 5 );
-	
-	AdminCheckBox = new wxCheckBox( this, wxID_ANY, _("admin"), wxDefaultPosition, wxDefaultSize, 0 );
-	
-	bSizer21->Add( AdminCheckBox, 0, wxALL, 5 );
-	
-	bSizer20->Add( bSizer21, 1, wxEXPAND, 5 );
-	
-	wxBoxSizer* bSizer22;
-	bSizer22 = new wxBoxSizer( wxHORIZONTAL );
-	
-	
-	bSizer22->Add( 0, 0, 1, wxEXPAND, 5 );
-	
-	ActionButton = new wxButton( this, wxID_ANY, _("..."), wxDefaultPosition, wxDefaultSize, 0 );
-	ActionButton->SetDefault(); 
-	ActionButton->Enable( false );
-	
-	bSizer22->Add( ActionButton, 0, wxALL, 5 );
-	
-	CancelButton = new wxButton( this, wxID_ANY, _("Cancel"), wxDefaultPosition, wxDefaultSize, 0 );
-	bSizer22->Add( CancelButton, 0, wxALL, 5 );
-	
-	bSizer20->Add( bSizer22, 1, wxEXPAND, 5 );
-	
-	this->SetSizer( bSizer20 );
-	this->Layout();
 }
 
 ModAnoubisProfileSelectionDialogBase::ModAnoubisProfileSelectionDialogBase( wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style ) : wxDialog( parent, id, title, pos, size, style )
