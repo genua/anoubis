@@ -42,7 +42,9 @@ const char pub[] = "public.pem";
 const char cert[] = "key_self.crt";
 const char testfile[] = "data.txt";
 
-char	 workdir[32];
+#define WDIR_SIZE 32
+
+char	 workdir[WDIR_SIZE];
 char	*prikey = NULL,
 	*certfile = NULL,
 	*pubkey = NULL,
@@ -105,7 +107,7 @@ libanoubissig_tc_setup(void)
 {
 	char *s;
 
-	strcpy(workdir, "/tmp/tc_sig_XXXXXX");
+	strncpy(workdir, "/tmp/tc_sig_XXXXXX", WDIR_SIZE);
 	s = mkdtemp(workdir);
 
 	libanoubissig_tc_exec("echo \"[ req ] \" >> %s/openssl.cnf", workdir);
@@ -203,6 +205,41 @@ START_TEST(sign_and_verify_match_tc)
 }
 END_TEST
 
+START_TEST(sign_and_verify_mismatch_tc)
+{
+	int			 rc;
+	unsigned int		 i, len = 0;
+	struct anoubis_sig	*as = NULL;
+	unsigned char		 csum[ANOUBIS_SIG_HASH_SHA256_LEN],
+				*sign = NULL;
+
+	fail_if(prikey == NULL || pubkey == NULL || infile == NULL,
+	    "Error while setup testcase");
+
+	as = anoubis_sig_priv_init(prikey, certfile, pass, 0);
+	fail_if(as == NULL, "Could not load Private Key");
+
+	rc = libanoubis_tc_calc_sum(infile, csum);
+	fail_if(rc == 0, "Could not calculate checksum");
+
+	sign = anoubis_sign_csum(as, csum, &len);
+	fail_if(sign == NULL, "Could not sign checksum");
+
+	for(i = ANOUBIS_SIG_HASH_SHA256_LEN; i < len; i++)
+		sign[i] = 2;
+
+	anoubis_sig_free(as);
+
+	as = anoubis_sig_pub_init(pubkey, certfile, pass, 0);
+	fail_if(as == NULL, "Could not load Public Key");
+
+	rc = anoubis_verify_csum(as, csum, sign + ANOUBIS_SIG_HASH_SHA256_LEN,
+	    len - ANOUBIS_SIG_HASH_SHA256_LEN);
+	anoubis_sig_free(as);
+	fail_if(rc == 1, "Signatures match");
+}
+END_TEST
+
 TCase *
 libanoubissig_testcase_signature(void)
 {
@@ -211,6 +248,7 @@ libanoubissig_testcase_signature(void)
 	tcase_add_checked_fixture(testcase, libanoubissig_tc_setup,
 	    libanoubissig_tc_teardown);
 	tcase_add_test(testcase, sign_and_verify_match_tc);
+	tcase_add_test(testcase, sign_and_verify_mismatch_tc);
 
 	return (testcase);
 }

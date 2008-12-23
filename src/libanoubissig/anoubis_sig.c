@@ -85,6 +85,136 @@ anoubis_sign_csum(struct anoubis_sig *as,
 }
 
 int
+anoubis_sig_verify_policy_file(const char *filename, EVP_PKEY *sigkey)
+{
+	char		*sigfile = NULL;
+	unsigned char	*sigbuf = NULL;
+	int		 siglen, fd, ret;
+
+	if (asprintf(&sigfile, "%s.sig", filename) == -1) {
+		return (0);
+	}
+
+	/* If no signature file is available, return successfully */
+	if ((fd = open(sigfile, O_RDONLY)) == -1) {
+		free(sigfile);
+		if (errno == ENOENT)
+			return (1);
+		else
+			return (0);
+	}
+	free(sigfile);
+
+	/* Read in signature */
+	siglen = EVP_PKEY_size(sigkey);
+	if ((sigbuf = calloc(siglen, sizeof(unsigned char))) == NULL) {
+		close(fd);
+		return (0);
+	}
+	while ((ret = read(fd, sigbuf, siglen)) > 0) {
+		if (ret == -1) {
+			close(fd);
+			return (0);
+		}
+	}
+	close(fd);
+
+	ret = anoubis_sig_verify_policy(filename, sigbuf, siglen, sigkey);
+
+	free(sigbuf);
+
+	return ret;
+}
+int
+anoubis_sig_verify_policy(const char *filename, unsigned char *sigbuf,
+    int siglen, EVP_PKEY *sigkey)
+{
+	char		 buffer[1024];
+	EVP_MD_CTX	 ctx;
+	int		 fd, n, result = 0;
+
+	EVP_MD_CTX_init(&ctx);
+	if (EVP_VerifyInit(&ctx, ANOUBIS_SIG_HASH_DEFAULT) == 0) {
+		EVP_MD_CTX_cleanup(&ctx);
+		return (0);
+	}
+
+	/* Open policy file */
+	if ((fd = open(filename, O_RDONLY)) == -1) {
+		EVP_MD_CTX_cleanup(&ctx);
+		return (0);
+	}
+
+	while ((n = read(fd, buffer, sizeof(buffer))) > 0)
+		EVP_VerifyUpdate(&ctx, buffer, n);
+	if (n == -1) {
+		close(fd);
+		EVP_MD_CTX_cleanup(&ctx);
+		return (0);
+	}
+	close(fd);
+
+	/* Verify */
+	if ((result = EVP_VerifyFinal(&ctx, sigbuf, siglen, sigkey)) == -1)
+		result = 0;
+
+	EVP_MD_CTX_cleanup(&ctx);
+
+	return (result);
+}
+
+unsigned char *
+anoubis_sign_policy(struct anoubis_sig *as, char *file, unsigned int *len)
+{
+	unsigned char	*sigbuf = NULL;
+	char		*buf[1024];
+	int		 fd, n;
+	unsigned int	 siglen = 0;
+	EVP_MD_CTX	 ctx;
+	EVP_PKEY	*pkey;
+
+	if (as == NULL || len == NULL || file == NULL)
+		return NULL;
+
+	pkey = as->pkey;
+	siglen = EVP_PKEY_size(pkey);
+
+	/* Open Policy file */
+	if ((fd = open(file, O_RDONLY)) == -1)
+		return NULL;
+
+	if ((sigbuf = calloc(siglen, sizeof(unsigned char))) == NULL) {
+		close(fd);
+		return NULL;
+	}
+
+	EVP_MD_CTX_init(&ctx);
+	if (EVP_SignInit(&ctx, as->type) == 0) {
+		EVP_MD_CTX_cleanup(&ctx);
+		free(sigbuf);
+		return NULL;
+	}
+	while ((n = read(fd, buf, sizeof(buf))) > 0)
+		EVP_SignUpdate(&ctx, buf, n);
+	if (n == -1) {
+		close(fd);
+		free(sigbuf);
+		EVP_MD_CTX_cleanup(&ctx);
+		return NULL;
+	}
+	close(fd);
+	if (EVP_SignFinal(&ctx, sigbuf, &siglen, pkey) == 0) {
+		free(sigbuf);
+		EVP_MD_CTX_cleanup(&ctx);
+		return NULL;
+	}
+	EVP_MD_CTX_cleanup(&ctx);
+
+	*len = siglen;
+	return sigbuf;
+}
+
+int
 anoubis_verify_csum(struct anoubis_sig *as,
      unsigned char csum[ANOUBIS_SIG_HASH_SHA256_LEN], unsigned char *sfs_sign,
      int sfs_len)
@@ -94,17 +224,18 @@ anoubis_verify_csum(struct anoubis_sig *as,
 	EVP_PKEY *pkey;
 
 	if (as == NULL || csum == NULL || sfs_sign == NULL)
-		return -1;
+		return 0;
 
 	pkey = as->pkey;
 
 	EVP_MD_CTX_init(&ctx);
 	if (EVP_VerifyInit(&ctx, as->type) == 0) {
 		EVP_MD_CTX_cleanup(&ctx);
-		return -1;
+		return 0;
 	}
 	EVP_VerifyUpdate(&ctx, csum, ANOUBIS_SIG_HASH_SHA256_LEN);
-	result = EVP_VerifyFinal(&ctx, sfs_sign, sfs_len, pkey);
+	if((result = EVP_VerifyFinal(&ctx, sfs_sign, sfs_len, pkey)) == -1)
+		result = 0;
 
 	EVP_MD_CTX_cleanup(&ctx);
 
@@ -255,6 +386,21 @@ anoubis_sig_free(struct anoubis_sig *as)
 		X509_free(as->cert);
 
 	free(as);
+}
+
+char *
+anoubis_sig_key2char(int idlen, unsigned char *keyid)
+{
+	int i;
+	char *res = NULL;
+
+	if ((res = calloc((2*idlen) + 1 , sizeof(char))) == NULL)
+		return NULL;
+
+	for (i = 0; i < idlen; i++)
+		sprintf(&res[2*i], "%2.2x", keyid[i]);
+	res[2*i] = '\0';
+	return res;
 }
 
 int

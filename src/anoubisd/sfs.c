@@ -312,7 +312,7 @@ __sfs_checksumop(const char *path, unsigned int operation, uid_t uid,
 	int fd;
 	int vlen = 0;
 	int written = 0;
-	int ret, i;
+	int ret;
 
 	if (is_chroot && operation != ANOUBIS_CHECKSUM_OP_GET
 	    && operation != ANOUBIS_CHECKSUM_OP_GETSIG)
@@ -334,13 +334,10 @@ __sfs_checksumop(const char *path, unsigned int operation, uid_t uid,
 			ret = -EINVAL;
 			goto out;
 		}
-		if ((sigfile = calloc((2*idlen)+1, sizeof(char))) == NULL) {
+		if ((sigfile = anoubis_sig_key2char(idlen, md)) != NULL) {
 			ret = -ENOMEM;
 			goto out;
 		}
-		for (i = 0; i < idlen; i++)
-			sprintf(&sigfile[2*i], "%2.2x", md[i]);
-		sigfile[2*i] = '\0';
 		if (asprintf(&csum_file, "%s/k%s", csum_path, sigfile) == -1) {
 			ret = -ENOMEM;
 			goto out;

@@ -1,0 +1,128 @@
+.\"	$OpenBSD: mdoc.template,v 1.9 2004/07/02 10:36:57 jmc Exp $
+.\"
+.\" Copyright (c) 2007 GeNUA mbH <info@genua.de>
+.\"
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+.\" "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+.\" LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+.\" A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+.\" OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+.\" SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
+.\" TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+.\" PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+.\" LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+.\" NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+.\" SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd December 17, 2008
+.Dt ANOUBIS_SIG 3
+.Os Anoubis
+.Sh NAME
+.Nm struct anoubis_sig
+.Nm anoubis_sig_pub_init
+.Nm anoubis_sig_priv_init
+.Nm anoubis_sig_free
+.Nm anoubis_sig_key2char
+.Nm anoubis_sig_sign_csum
+.Nm anoubis_sig_verify_csum
+.Nm anoubisd_sig_verify_csum
+.Nm anoubis_sig_sign_policy
+.Nm anoubis_sig_verify_policy_file
+.Nm anoubis_sig_verify_policy
+.Nd Signature handling of Anoubis
+.Sh SYNOPSIS
+.In anoubis_sig.h
+.Ft struct anoubis_sig *
+.Fn anoubis_sig_init_pub "const char *keyfile, const char *certfile, char *pass, int need_pass"
+.Ft struct anoubis_sig *
+.Fn anoubis_sig_init_priv "const char *keyfile, const char *certfile, char *pass, int need_pass"
+.Ft void
+.Fn anoubis_sig_free "struct anoubis_sig *as"
+.Ft char *
+.Fn anoubis_sig_key2char "int len, unsigned char *key"
+.Ft unsigned char *
+.Fn anoubis_sign_csum "struct anoubis_sig *as, unsigned char csum[ANOUBIS_SIG_HASH_SHA256_LEN], unsigned int *len"
+.Ft int
+.Fn anoubis_csum_verify "struct anoubis_sig *as, unsigned char csum[ANOUBIS_SIG_HASH_SHA256_LEN], unsigned char *sign, int siglen"
+.Ft int
+.Fn anoubisd_csum_verify "EVP_PKEY *pkey, unsigned char csum[ANOUBIS_SIG_HASH_SHA256_LEN], unsigned char *sign, int siglen"
+.Ft unsigned char *
+.Fn anoubis_sign_policy "struct anoubis_sig *as, const char *file, unsigned int *len"
+.Ft int
+.Fn anoubis_verify_policy "const char *filename, unsigned char *sigbuf, int siglen, EVP_PKEY *sigkey"
+.Ft int
+.Fn anoubis_verify_policy_file "const char *filename, EVP_PKEY *sigkey"
+
+.Sh DESCRIPTION
+This library is used to sign and verify checksums or policies.
+.Pp
+The function
+.Nm anoubis_sig_init_pub
+and
+.Nm anoubis_sig_init_priv
+is used to load private or public keys and the certificate. To free the so created
+.Nm anoubis_sig
+struct the function
+.Nm anoubis_sig_free
+is needed.
+.Pp
+To create a signature of a calculated checksum, use
+.Nm anoubis_sign_csum.
+To verify the result use in client applications
+.Nm anoubis_verify_csum
+and within the daemon
+.Nm anoubisd_verify_csum.
+.Pp
+The function 
+.Nm anoubis_sign_policy
+provides to create a signature for a policy file. To verify this signature for this policy
+.Nm anoubis_verify_policy_file
+and 
+.Nm anoubis_verify_policy
+are used. Where
+.Nm anoubis_verify_policy_file
+is using the filename of the policy and
+.Nm anoubis_verify_policy
+a buffer which contains the signature of the policy.
+.Sh RETURN VALUES
+.Nm anoubis_sig_init_pub
+returns the anoubis_struct or NULL on error.
+.Pp
+.Nm anoubis_sig_init_priv
+returns the anoubis_struct or NULL on error.
+.Pp
+.Nm anoubis_sig_key2char
+returns the char representation of the key or NULL on error 
+.Pp
+.Nm anoubis_sign_csum
+returns a unsigned char buffer including the checksum and the signature of the
+checksum or NULL on error.
+.Pp
+.Nm anoubis_verify_csum
+returns 1 if the checksum is verified or 0 on error or not matching signature.
+.Pp
+.Nm anoubis_sign_policy
+return the signature of the policy or NULL on error.
+.Pp
+.Nm anoubis_verify_policy
+return 1 on successful verification or 0 on error or unsuccessful verification.
+.Pp
+.Nm anoubis_verify_policy_file
+return 1 on successful verification or 0 on error or unsuccessful verification.
+
+.Sh SEE ALSO
+.Xr anoubis_client 3 ,
+.Xr anoubis_server 3 ,
+.Sh AUTHORS
+Konrad Merz <konrad.merz@genua.de>

@@ -33,6 +33,9 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <string.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <errno.h>
 
 #include <openssl/x509.h>
 #include <openssl/evp.h>
@@ -85,6 +88,11 @@ struct anoubis_sig {
 
 unsigned char *anoubis_sign_csum(struct anoubis_sig *as,
     unsigned char csum[ANOUBIS_SIG_HASH_SHA256_LEN], unsigned int *len);
+unsigned char *anoubis_sign_policy(struct anoubis_sig *as, char *file,
+    unsigned int *len);
+int anoubis_sig_verify_policy_file(const char *filename, EVP_PKEY *sigkey);
+int anoubis_sig_verify_policy(const char *filename,
+   unsigned char *sigbuf, int siglen, EVP_PKEY *sigkey);
 int anoubis_verify_csum(struct anoubis_sig *as,
     unsigned char csum[ANOUBIS_SIG_HASH_SHA256_LEN], unsigned char *sfs_sign,
     int sfs_len);
@@ -98,4 +106,5 @@ struct anoubis_sig *anoubis_sig_priv_init(const char *file, const char *cert,
 struct anoubis_sig *anoubis_sig_init(const char *file, const char *cert,
     char *pass, const EVP_MD *type, int pub_priv, int need_pass);
 void anoubis_sig_free(struct anoubis_sig *as);
+char *anoubis_sig_key2char(int idlen, unsigned char *keyid);
 #endif	/* _ANOUBIS_SIG_H_ */

@@ -78,5 +78,6 @@ endif
 
 test_libanoubissig_SOURCES =                  \
 	libanoubissig_testcase_signature.c    \
+	libanoubissig_testcase_policy.c    \
 	libanoubissig_testsuite.c             \
 	libanoubissig_testrunner.c

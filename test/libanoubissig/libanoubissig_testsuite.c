@@ -28,6 +28,7 @@
 #include <check.h>
 
 extern TCase *libanoubissig_testcase_signature(void);
+extern TCase *libanoubissig_testcase_policy(void);
 
 Suite *
 libanoubissig_testsuite(void)
@@ -36,8 +37,10 @@ libanoubissig_testsuite(void)
 
 	/* sessions test case */
 	TCase *tc_signature = libanoubissig_testcase_signature();
+	TCase *tc_policy = libanoubissig_testcase_policy();
 
 	suite_add_tcase(s, tc_signature);
+	suite_add_tcase(s, tc_policy);
 
 	return (s);
 }
