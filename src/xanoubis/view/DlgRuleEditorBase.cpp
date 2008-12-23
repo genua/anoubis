@@ -40,638 +40,811 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	this->SetSizeHints( wxDefaultSize, wxDefaultSize );
 	this->Centre( wxBOTH );
 	
-	wxBoxSizer* sz_main;
-	sz_main = new wxBoxSizer( wxVERTICAL );
+	wxBoxSizer* mainSizer;
+	mainSizer = new wxBoxSizer( wxVERTICAL );
 	
-	sz_main->SetMinSize( wxSize( 780,-1 ) ); 
-	wxFlexGridSizer* controlSizer;
-	controlSizer = new wxFlexGridSizer( 2, 4, 0, 0 );
-	controlSizer->SetFlexibleDirection( wxBOTH );
-	controlSizer->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+	wxGridSizer* mainPanelSizer;
+	mainPanelSizer = new wxGridSizer( 2, 2, 0, 0 );
 	
-	controlRuleSetText = new wxStaticText( this, wxID_ANY, _("Ruleset status:"), wxDefaultPosition, wxDefaultSize, 0|wxTAB_TRAVERSAL );
-	controlRuleSetText->Wrap( -1 );
-	controlRuleSetText->SetMinSize( wxSize( 110,-1 ) );
+	wxBoxSizer* appListSizer;
+	appListSizer = new wxBoxSizer( wxVERTICAL );
 	
-	controlSizer->Add( controlRuleSetText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	wxBoxSizer* appListHeadSizer;
+	appListHeadSizer = new wxBoxSizer( wxHORIZONTAL );
 	
-	controlRuleSetStatusText = new wxStaticText( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
-	controlRuleSetStatusText->Wrap( -1 );
-	controlSizer->Add( controlRuleSetStatusText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	appListTypeLabel = new wxStaticText( this, wxID_ANY, _("App-Rules"), wxDefaultPosition, wxDefaultSize, 0 );
+	appListTypeLabel->Wrap( -1 );
+	appListHeadSizer->Add( appListTypeLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	controlRuleSetText2 = new wxStaticText( this, wxID_ANY, _("/ Ruleset:"), wxDefaultPosition, wxDefaultSize, 0 );
-	controlRuleSetText2->Wrap( -1 );
-	controlSizer->Add( controlRuleSetText2, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	wxString appListTypeChoiceChoices[] = { _("ALF"), _("SFS"), _("SB"), _("CTX") };
+	int appListTypeChoiceNChoices = sizeof( appListTypeChoiceChoices ) / sizeof( wxString );
+	appListTypeChoice = new wxChoice( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, appListTypeChoiceNChoices, appListTypeChoiceChoices, 0 );
+	appListHeadSizer->Add( appListTypeChoice, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	controlRuleSetSaveButton = new wxButton( this, wxID_ANY, _("store"), wxDefaultPosition, wxDefaultSize, 0 );
-	controlSizer->Add( controlRuleSetSaveButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	appListCreateButton = new wxButton( this, wxID_ANY, _("create"), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
+	appListCreateButton->Enable( false );
 	
-	controlRuleText = new wxStaticText( this, wxID_ANY, _("Rule:"), wxDefaultPosition, wxDefaultSize, 0 );
-	controlRuleText->Wrap( -1 );
-	controlSizer->Add( controlRuleText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	appListHeadSizer->Add( appListCreateButton, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
 	
-	controlRuleSizer = new wxBoxSizer( wxHORIZONTAL );
 	
-	wxString controlCreationChoiceChoices[] = { _("ALF Application"), _("ALF Filter"), _("Sandbox Application"), _("Sandbox Filter"), _("Context Application"), _("Context New"), _("SFS") };
-	int controlCreationChoiceNChoices = sizeof( controlCreationChoiceChoices ) / sizeof( wxString );
-	controlCreationChoice = new wxChoice( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, controlCreationChoiceNChoices, controlCreationChoiceChoices, wxTAB_TRAVERSAL );
-	controlRuleSizer->Add( controlCreationChoice, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	appListHeadSizer->Add( 0, 0, 1, wxALIGN_CENTER_VERTICAL|wxEXPAND, 5 );
 	
-	controlRuleCreateButton = new wxButton( this, wxID_ANY, _("create"), wxDefaultPosition, wxDefaultSize, 0 );
-	controlRuleSizer->Add( controlRuleCreateButton, 0, wxALL, 5 );
+	appListColumnsButton = new wxButton( this, wxID_ANY, _("..."), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
+	appListColumnsButton->Enable( false );
 	
-	controlUserLabel = new wxStaticText( this, wxID_ANY, _("for user"), wxDefaultPosition, wxDefaultSize, 0 );
-	controlUserLabel->Wrap( -1 );
-	controlRuleSizer->Add( controlUserLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	appListHeadSizer->Add( appListColumnsButton, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
 	
-	wxArrayString controlUserChoiceChoices;
-	controlUserChoice = new wxChoice( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, controlUserChoiceChoices, 0 );
-	controlRuleSizer->Add( controlUserChoice, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	appListSizer->Add( appListHeadSizer, 0, wxEXPAND, 5 );
 	
+	appPolicyListCtrl = new wxListCtrl( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLC_ICON );
+	appListSizer->Add( appPolicyListCtrl, 1, wxALL|wxEXPAND, 5 );
 	
-	controlRuleSizer->Add( 1, 0, 1, wxEXPAND|wxALIGN_CENTER_VERTICAL, 5 );
+	wxBoxSizer* appListFoodSizer;
+	appListFoodSizer = new wxBoxSizer( wxHORIZONTAL );
 	
-	controlFilterText = new wxStaticText( this, wxID_ANY, _("Search:"), wxDefaultPosition, wxDefaultSize, 0 );
-	controlFilterText->Wrap( -1 );
-	controlFilterText->Enable( false );
-	controlFilterText->Hide();
 	
-	controlRuleSizer->Add( controlFilterText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	appListFoodSizer->Add( 0, 0, 1, wxEXPAND, 5 );
 	
-	controlFilterTextCtrl = new wxTextCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_DONTWRAP|wxTE_NO_VSCROLL );
-	controlFilterTextCtrl->Enable( false );
-	controlFilterTextCtrl->Hide();
+	appListPolicyLabel = new wxStaticText( this, wxID_ANY, _("Rule:"), wxDefaultPosition, wxDefaultSize, 0 );
+	appListPolicyLabel->Wrap( -1 );
+	appListFoodSizer->Add( appListPolicyLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	controlRuleSizer->Add( controlFilterTextCtrl, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	appListPolicyText = new wxStaticText( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	appListPolicyText->Wrap( -1 );
+	appListFoodSizer->Add( appListPolicyText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	controlFilterInText = new wxStaticText( this, wxID_ANY, _("in"), wxDefaultPosition, wxDefaultSize, 0 );
-	controlFilterInText->Wrap( -1 );
-	controlFilterInText->Enable( false );
-	controlFilterInText->Hide();
+	appListUpButton = new wxButton( this, wxID_ANY, _("up"), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
+	appListUpButton->Enable( false );
 	
-	controlRuleSizer->Add( controlFilterInText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	appListFoodSizer->Add( appListUpButton, 0, wxALL, 5 );
 	
-	wxString controlFilterChoiceChoices[] = { _("all"), _("Application"), _("Ip") };
-	int controlFilterChoiceNChoices = sizeof( controlFilterChoiceChoices ) / sizeof( wxString );
-	controlFilterChoice = new wxChoice( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, controlFilterChoiceNChoices, controlFilterChoiceChoices, 0 );
-	controlFilterChoice->Enable( false );
-	controlFilterChoice->Hide();
+	appListDownButton = new wxButton( this, wxID_ANY, _("down"), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
+	appListDownButton->Enable( false );
 	
-	controlRuleSizer->Add( controlFilterChoice, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	appListFoodSizer->Add( appListDownButton, 0, wxALL, 5 );
 	
-	controlSizer->Add( controlRuleSizer, 0, 0, 5 );
+	appListDeleteButton = new wxButton( this, wxID_ANY, _("delete"), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
+	appListDeleteButton->Enable( false );
 	
-	controlRuleText1 = new wxStaticText( this, wxID_ANY, _("/ Rule:"), wxDefaultPosition, wxDefaultSize, 0 );
-	controlRuleText1->Wrap( -1 );
-	controlSizer->Add( controlRuleText1, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	appListFoodSizer->Add( appListDeleteButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	controlRuleDeleteButton = new wxButton( this, wxID_ANY, _("delete"), wxDefaultPosition, wxDefaultSize, 0 );
-	controlSizer->Add( controlRuleDeleteButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	appListSizer->Add( appListFoodSizer, 0, wxEXPAND|wxALIGN_RIGHT, 5 );
 	
-	sz_main->Add( controlSizer, 0, wxEXPAND, 5 );
+	mainPanelSizer->Add( appListSizer, 1, wxEXPAND, 5 );
 	
-	ruleListCtrl = new wxListCtrl( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLC_HRULES|wxLC_REPORT|wxLC_SINGLE_SEL );
-	sz_main->Add( ruleListCtrl, 1, wxALL|wxEXPAND, 5 );
+	wxBoxSizer* filterListSizer;
+	filterListSizer = new wxBoxSizer( wxVERTICAL );
 	
-	ruleEditNotebook = new wxNotebook( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0|wxTAB_TRAVERSAL|wxVSCROLL );
-	commonNbPanel = new wxScrolledWindow( ruleEditNotebook, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxTAB_TRAVERSAL|wxTRANSPARENT_WINDOW|wxVSCROLL );
-	commonNbPanel->SetScrollRate( 5, 5 );
-	wxBoxSizer* commonMainSizer;
-	commonMainSizer = new wxBoxSizer( wxHORIZONTAL );
+	wxBoxSizer* filterListHeadSizer;
+	filterListHeadSizer = new wxBoxSizer( wxHORIZONTAL );
 	
-	wxStaticBoxSizer* commonRuleBox;
-	commonRuleBox = new wxStaticBoxSizer( new wxStaticBox( commonNbPanel, -1, _("Rule") ), wxVERTICAL );
+	filterListTypeLabel = new wxStaticText( this, wxID_ANY, _("Filter-Rules"), wxDefaultPosition, wxDefaultSize, 0 );
+	filterListTypeLabel->Wrap( -1 );
+	filterListHeadSizer->Add( filterListTypeLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	wxFlexGridSizer* commonRuleSizer;
-	commonRuleSizer = new wxFlexGridSizer( 5, 2, 0, 0 );
-	commonRuleSizer->SetFlexibleDirection( wxBOTH );
-	commonRuleSizer->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+	wxString filterListTypeChoiceChoices[] = { _("ALF Filter"), _("ALF Capability"), _("SFS Filter"), _("SB AccessFilter"), _("CTX Filter"), _("Default") };
+	int filterListTypeChoiceNChoices = sizeof( filterListTypeChoiceChoices ) / sizeof( wxString );
+	filterListTypeChoice = new wxChoice( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, filterListTypeChoiceNChoices, filterListTypeChoiceChoices, 0 );
+	filterListHeadSizer->Add( filterListTypeChoice, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	commonModuleText = new wxStaticText( commonNbPanel, wxID_ANY, _("Module:"), wxDefaultPosition, wxDefaultSize, 0 );
-	commonModuleText->Wrap( -1 );
-	commonModuleText->Enable( false );
-	commonModuleText->Hide();
+	filterListCreateButton = new wxButton( this, wxID_ANY, _("create"), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
+	filterListCreateButton->Enable( false );
 	
-	commonRuleSizer->Add( commonModuleText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	filterListHeadSizer->Add( filterListCreateButton, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
 	
-	wxString commonModuleChoiceChoices[] = { _("ALF"), _("SFS"), _("Macro") };
-	int commonModuleChoiceNChoices = sizeof( commonModuleChoiceChoices ) / sizeof( wxString );
-	commonModuleChoice = new wxChoice( commonNbPanel, wxID_ANY, wxDefaultPosition, wxDefaultSize, commonModuleChoiceNChoices, commonModuleChoiceChoices, 0 );
-	commonModuleChoice->Enable( false );
-	commonModuleChoice->Hide();
 	
-	commonRuleSizer->Add( commonModuleChoice, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	filterListHeadSizer->Add( 0, 0, 1, wxALIGN_CENTER_VERTICAL|wxEXPAND, 5 );
 	
-	commonStateText = new wxStaticText( commonNbPanel, wxID_ANY, _("State:"), wxDefaultPosition, wxDefaultSize, 0 );
-	commonStateText->Wrap( -1 );
-	commonStateText->Enable( false );
-	commonStateText->Hide();
+	filterListColumnsButton = new wxButton( this, wxID_ANY, _("..."), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
+	filterListColumnsButton->Enable( false );
 	
-	commonRuleSizer->Add( commonStateText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	filterListHeadSizer->Add( filterListColumnsButton, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
 	
-	wxBoxSizer* commonStateSizer;
-	commonStateSizer = new wxBoxSizer( wxHORIZONTAL );
+	filterListSizer->Add( filterListHeadSizer, 0, wxEXPAND, 5 );
 	
-	commonActiveRadioButton = new wxRadioButton( commonNbPanel, wxID_ANY, _("activated"), wxDefaultPosition, wxDefaultSize, wxRB_GROUP );
-	commonActiveRadioButton->Enable( false );
-	commonActiveRadioButton->Hide();
+	filterPolicyListCtrl = new wxListCtrl( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLC_ICON );
+	filterListSizer->Add( filterPolicyListCtrl, 1, wxALL|wxEXPAND, 5 );
 	
-	commonStateSizer->Add( commonActiveRadioButton, 0, wxALL, 5 );
+	wxBoxSizer* filterListFoodSizer;
+	filterListFoodSizer = new wxBoxSizer( wxHORIZONTAL );
 	
-	commonDeactiveRadioButton = new wxRadioButton( commonNbPanel, wxID_ANY, _("deactivated"), wxDefaultPosition, wxDefaultSize, 0 );
-	commonDeactiveRadioButton->Enable( false );
-	commonDeactiveRadioButton->Hide();
 	
-	commonStateSizer->Add( commonDeactiveRadioButton, 0, wxALL, 5 );
+	filterListFoodSizer->Add( 0, 0, 1, wxEXPAND, 5 );
 	
-	commonRuleSizer->Add( commonStateSizer, 1, wxEXPAND, 5 );
+	filterListPolicyLabel = new wxStaticText( this, wxID_ANY, _("Filter:"), wxDefaultPosition, wxDefaultSize, 0 );
+	filterListPolicyLabel->Wrap( -1 );
+	filterListFoodSizer->Add( filterListPolicyLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	commonNameText = new wxStaticText( commonNbPanel, wxID_ANY, _("Name:"), wxDefaultPosition, wxDefaultSize, 0 );
-	commonNameText->Wrap( -1 );
-	commonNameText->Enable( false );
-	commonNameText->Hide();
+	filterListPolicyText = new wxStaticText( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	filterListPolicyText->Wrap( -1 );
+	filterListFoodSizer->Add( filterListPolicyText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	commonRuleSizer->Add( commonNameText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	filterListUpButton = new wxButton( this, wxID_ANY, _("up"), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
+	filterListUpButton->Enable( false );
 	
-	commonNameTextCtrl = new wxTextCtrl( commonNbPanel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
-	commonNameTextCtrl->Enable( false );
-	commonNameTextCtrl->Hide();
+	filterListFoodSizer->Add( filterListUpButton, 0, wxALL, 5 );
 	
-	commonRuleSizer->Add( commonNameTextCtrl, 0, wxALL|wxEXPAND, 5 );
+	filterListDownButton = new wxButton( this, wxID_ANY, _("down"), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
+	filterListDownButton->Enable( false );
 	
-	commonPriorityText = new wxStaticText( commonNbPanel, wxID_ANY, _("Priority:"), wxDefaultPosition, wxDefaultSize, 0 );
-	commonPriorityText->Wrap( -1 );
-	commonPriorityText->Enable( false );
-	commonPriorityText->Hide();
+	filterListFoodSizer->Add( filterListDownButton, 0, wxALL, 5 );
 	
-	commonRuleSizer->Add( commonPriorityText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	filterListDeleteButton = new wxButton( this, wxID_ANY, _("delete"), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
+	filterListDeleteButton->Enable( false );
 	
-	commonPrioritySpinCtrl = new wxSpinCtrl( commonNbPanel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 10, 0 );
-	commonPrioritySpinCtrl->Enable( false );
-	commonPrioritySpinCtrl->Hide();
+	filterListFoodSizer->Add( filterListDeleteButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	commonRuleSizer->Add( commonPrioritySpinCtrl, 0, wxALL, 5 );
+	filterListSizer->Add( filterListFoodSizer, 0, wxEXPAND|wxALIGN_RIGHT, 5 );
 	
-	commonFaderText = new wxStaticText( commonNbPanel, wxID_ANY, _("Profile:"), wxDefaultPosition, wxDefaultSize, 0 );
-	commonFaderText->Wrap( -1 );
-	commonRuleSizer->Add( commonFaderText, 0, wxALL, 5 );
+	mainPanelSizer->Add( filterListSizer, 1, wxEXPAND, 5 );
 	
-	commonHighProfileRadioButton = new wxRadioButton( commonNbPanel, wxID_ANY, _("Profile: high"), wxDefaultPosition, wxDefaultSize, wxRB_GROUP );
-	commonRuleSizer->Add( commonHighProfileRadioButton, 0, wxALL, 5 );
+	appPolicyPanels = new wxNotebook( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0 );
+	appBinaryPage = new wxScrolledWindow( appPolicyPanels, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxVSCROLL );
+	appBinaryPage->SetScrollRate( 5, 5 );
+	appBinaryPage->Enable( false );
 	
+	wxBoxSizer* appBinaryMainSizer;
+	appBinaryMainSizer = new wxBoxSizer( wxVERTICAL );
 	
-	commonRuleSizer->Add( 0, 0, 1, wxEXPAND, 5 );
+	wxFlexGridSizer* appBinaryHaedSizer;
+	appBinaryHaedSizer = new wxFlexGridSizer( 2, 4, 0, 0 );
+	appBinaryHaedSizer->SetFlexibleDirection( wxBOTH );
+	appBinaryHaedSizer->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_ALL );
 	
-	commonMediumProfileRadioButton = new wxRadioButton( commonNbPanel, wxID_ANY, _("Profile: medium"), wxDefaultPosition, wxDefaultSize, 0 );
-	commonRuleSizer->Add( commonMediumProfileRadioButton, 0, wxALL, 5 );
+	appBinaryLabel = new wxStaticText( appBinaryPage, wxID_ANY, _("Binary:"), wxDefaultPosition, wxDefaultSize, 0 );
+	appBinaryLabel->Wrap( -1 );
+	appBinaryHaedSizer->Add( appBinaryLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	
-	commonRuleSizer->Add( 0, 0, 1, wxEXPAND, 5 );
-	
-	commonAdminProfileRadioButton = new wxRadioButton( commonNbPanel, wxID_ANY, _("Profile: admin"), wxDefaultPosition, wxDefaultSize, 0 );
-	commonRuleSizer->Add( commonAdminProfileRadioButton, 0, wxALL, 5 );
-	
-	commonCommentText = new wxStaticText( commonNbPanel, wxID_ANY, _("Comment:"), wxDefaultPosition, wxDefaultSize, 0 );
-	commonCommentText->Wrap( -1 );
-	commonRuleSizer->Add( commonCommentText, 0, wxALL, 5 );
-	
-	commonCommentTextCtrl = new wxTextCtrl( commonNbPanel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE );
-	commonRuleSizer->Add( commonCommentTextCtrl, 1, wxALL|wxEXPAND, 5 );
-	
-	commonRuleBox->Add( commonRuleSizer, 1, wxEXPAND, 5 );
-	
-	commonMainSizer->Add( commonRuleBox, 1, wxEXPAND, 5 );
-	
-	wxBoxSizer* commonRightSideSizer;
-	commonRightSideSizer = new wxBoxSizer( wxVERTICAL );
-	
-	wxStaticBoxSizer* logBox;
-	logBox = new wxStaticBoxSizer( new wxStaticBox( commonNbPanel, -1, _("Logging") ), wxVERTICAL );
-	
-	commonNoneLogRadioButton = new wxRadioButton( commonNbPanel, wxID_ANY, _("none "), wxDefaultPosition, wxDefaultSize, 0 );
-	logBox->Add( commonNoneLogRadioButton, 0, wxALL, 5 );
-	
-	commonDoLogRadioButton = new wxRadioButton( commonNbPanel, wxID_ANY, _("log"), wxDefaultPosition, wxDefaultSize, 0 );
-	logBox->Add( commonDoLogRadioButton, 0, wxALL, 5 );
-	
-	commonAlertLogRadioButton = new wxRadioButton( commonNbPanel, wxID_ANY, _("alert"), wxDefaultPosition, wxDefaultSize, 0 );
-	logBox->Add( commonAlertLogRadioButton, 0, wxALL, 5 );
-	
-	commonRightSideSizer->Add( logBox, 1, wxEXPAND, 5 );
-	
-	commonMainSizer->Add( commonRightSideSizer, 1, wxEXPAND, 5 );
-	
-	commonNbPanel->SetSizer( commonMainSizer );
-	commonNbPanel->Layout();
-	commonMainSizer->Fit( commonNbPanel );
-	ruleEditNotebook->AddPage( commonNbPanel, _("Common"), false );
-	applicationNbPanel = new wxScrolledWindow( ruleEditNotebook, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxTAB_TRAVERSAL|wxVSCROLL );
-	applicationNbPanel->SetScrollRate( 5, 5 );
-	wxBoxSizer* bSizer10;
-	bSizer10 = new wxBoxSizer( wxVERTICAL );
-	
-	wxFlexGridSizer* appMainPanelSizer;
-	appMainPanelSizer = new wxFlexGridSizer( 2, 4, 0, 0 );
-	appMainPanelSizer->SetFlexibleDirection( wxBOTH );
-	appMainPanelSizer->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_ALL );
-	
-	appBinaryText = new wxStaticText( applicationNbPanel, wxID_ANY, _("Binaries:"), wxDefaultPosition, wxDefaultSize, 0 );
-	appBinaryText->Wrap( -1 );
-	appMainPanelSizer->Add( appBinaryText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
-	
-	appBinaryTextCtrl = new wxTextCtrl( applicationNbPanel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER );
+	appBinaryTextCtrl = new wxTextCtrl( appBinaryPage, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER );
 	appBinaryTextCtrl->SetMinSize( wxSize( 300,-1 ) );
 	
-	appMainPanelSizer->Add( appBinaryTextCtrl, 0, wxALL|wxEXPAND|wxALIGN_CENTER_VERTICAL, 5 );
+	appBinaryHaedSizer->Add( appBinaryTextCtrl, 0, wxALL|wxEXPAND|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	appBinaryModifyButton = new wxButton( applicationNbPanel, wxID_ANY, _("modify"), wxDefaultPosition, wxDefaultSize, 0 );
-	appMainPanelSizer->Add( appBinaryModifyButton, 0, wxALL|wxALIGN_RIGHT|wxALIGN_CENTER_VERTICAL, 5 );
+	appBinaryModifyButton = new wxButton( appBinaryPage, wxID_ANY, _("modify"), wxDefaultPosition, wxDefaultSize, 0 );
+	appBinaryHaedSizer->Add( appBinaryModifyButton, 0, wxALL|wxALIGN_RIGHT|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	bSizer10->Add( appMainPanelSizer, 0, wxEXPAND, 5 );
+	appBinaryMainSizer->Add( appBinaryHaedSizer, 0, wxEXPAND, 5 );
 	
-	wxFlexGridSizer* fgSizer10;
-	fgSizer10 = new wxFlexGridSizer( 1, 5, 0, 0 );
-	fgSizer10->SetFlexibleDirection( wxBOTH );
-	fgSizer10->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_ALL );
+	wxFlexGridSizer* appBinaryChecksumSizer;
+	appBinaryChecksumSizer = new wxFlexGridSizer( 2, 2, 0, 0 );
+	appBinaryChecksumSizer->SetFlexibleDirection( wxBOTH );
+	appBinaryChecksumSizer->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_ALL );
 	
-	appRegisteredSumLabelText = new wxStaticText( applicationNbPanel, wxID_ANY, _("Checksum (registered):"), wxDefaultPosition, wxDefaultSize, 0 );
-	appRegisteredSumLabelText->Wrap( -1 );
-	appRegisteredSumLabelText->SetMinSize( wxSize( 165,-1 ) );
+	appBinaryCsumRegLabel = new wxStaticText( appBinaryPage, wxID_ANY, _("Checksum (registered):"), wxDefaultPosition, wxDefaultSize, 0 );
+	appBinaryCsumRegLabel->Wrap( -1 );
+	appBinaryCsumRegLabel->SetMinSize( wxSize( 165,-1 ) );
 	
-	fgSizer10->Add( appRegisteredSumLabelText, 0, wxALIGN_BOTTOM|wxALL, 5 );
+	appBinaryChecksumSizer->Add( appBinaryCsumRegLabel, 0, wxALL, 5 );
 	
-	appRegisteredSumValueText = new wxStaticText( applicationNbPanel, wxID_ANY, _("0"), wxDefaultPosition, wxDefaultSize, 0 );
-	appRegisteredSumValueText->Wrap( -1 );
-	fgSizer10->Add( appRegisteredSumValueText, 0, wxALIGN_BOTTOM|wxALL, 5 );
+	appBinaryCsumRegText = new wxStaticText( appBinaryPage, wxID_ANY, _("0"), wxDefaultPosition, wxDefaultSize, 0 );
+	appBinaryCsumRegText->Wrap( -1 );
+	appBinaryChecksumSizer->Add( appBinaryCsumRegText, 0, wxALL, 5 );
 	
+	appBinaryCsumCurLabel = new wxStaticText( appBinaryPage, wxID_ANY, _("Checksum (current):"), wxDefaultPosition, wxDefaultSize, 0 );
+	appBinaryCsumCurLabel->Wrap( -1 );
+	appBinaryChecksumSizer->Add( appBinaryCsumCurLabel, 0, wxALIGN_TOP|wxALL, 5 );
 	
-	fgSizer10->Add( 0, 0, 1, wxEXPAND, 5 );
+	appBinaryCsumCurText = new wxStaticText( appBinaryPage, wxID_ANY, _("0"), wxDefaultPosition, wxDefaultSize, 0 );
+	appBinaryCsumCurText->Wrap( -1 );
+	appBinaryChecksumSizer->Add( appBinaryCsumCurText, 0, wxALL, 5 );
 	
+	appBinaryMainSizer->Add( appBinaryChecksumSizer, 0, wxEXPAND, 5 );
 	
-	fgSizer10->Add( 0, 0, 1, wxEXPAND, 5 );
+	wxFlexGridSizer* appBinaryStatusSizer;
+	appBinaryStatusSizer = new wxFlexGridSizer( 2, 5, 0, 0 );
+	appBinaryStatusSizer->SetFlexibleDirection( wxBOTH );
+	appBinaryStatusSizer->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_ALL );
 	
+	appBinaryStatusLabel = new wxStaticText( appBinaryPage, wxID_ANY, _("Status:"), wxDefaultPosition, wxDefaultSize, 0 );
+	appBinaryStatusLabel->Wrap( -1 );
+	appBinaryStatusLabel->SetMinSize( wxSize( 165,-1 ) );
 	
-	fgSizer10->Add( 0, 0, 1, wxEXPAND, 5 );
+	appBinaryStatusSizer->Add( appBinaryStatusLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	appCurrentSumLabelText = new wxStaticText( applicationNbPanel, wxID_ANY, _("Checksum (current):"), wxDefaultPosition, wxDefaultSize, 0 );
-	appCurrentSumLabelText->Wrap( -1 );
-	fgSizer10->Add( appCurrentSumLabelText, 0, wxALIGN_TOP|wxLEFT, 5 );
+	appBinaryStatusText = new wxStaticText( appBinaryPage, wxID_ANY, _("mismatch"), wxDefaultPosition, wxDefaultSize, 0 );
+	appBinaryStatusText->Wrap( -1 );
+	appBinaryStatusSizer->Add( appBinaryStatusText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	appCurrentSumValueText = new wxStaticText( applicationNbPanel, wxID_ANY, _("0"), wxDefaultPosition, wxDefaultSize, 0 );
-	appCurrentSumValueText->Wrap( -1 );
-	fgSizer10->Add( appCurrentSumValueText, 0, wxLEFT, 5 );
+	appBinaryValidateButton = new wxButton( appBinaryPage, wxID_ANY, _("validate"), wxDefaultPosition, wxDefaultSize, 0 );
+	appBinaryStatusSizer->Add( appBinaryValidateButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	bSizer10->Add( fgSizer10, 0, wxEXPAND, 5 );
+	appBinaryUpdateButton = new wxButton( appBinaryPage, wxID_ANY, _("update"), wxDefaultPosition, wxDefaultSize, 0 );
+	appBinaryStatusSizer->Add( appBinaryUpdateButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	wxFlexGridSizer* fgSizer101;
-	fgSizer101 = new wxFlexGridSizer( 2, 5, 0, 0 );
-	fgSizer101->SetFlexibleDirection( wxBOTH );
-	fgSizer101->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_ALL );
+	appBinaryMainSizer->Add( appBinaryStatusSizer, 1, wxEXPAND, 5 );
 	
-	appStatusLabelText = new wxStaticText( applicationNbPanel, wxID_ANY, _("Status:"), wxDefaultPosition, wxDefaultSize, 0 );
-	appStatusLabelText->Wrap( -1 );
-	appStatusLabelText->SetMinSize( wxSize( 165,-1 ) );
+	appBinaryPage->SetSizer( appBinaryMainSizer );
+	appBinaryPage->Layout();
+	appBinaryMainSizer->Fit( appBinaryPage );
+	appPolicyPanels->AddPage( appBinaryPage, _("Binaries"), false );
 	
-	fgSizer101->Add( appStatusLabelText, 0, wxALIGN_TOP|wxALL, 5 );
+	mainPanelSizer->Add( appPolicyPanels, 1, wxEXPAND | wxALL, 5 );
 	
-	appStatusValueText = new wxStaticText( applicationNbPanel, wxID_ANY, _("mismatch"), wxDefaultPosition, wxDefaultSize, 0 );
-	appStatusValueText->Wrap( -1 );
-	fgSizer101->Add( appStatusValueText, 0, wxALIGN_TOP|wxALL, 5 );
+	filterPolicyPanels = new wxNotebook( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0 );
+	filterCommonPage = new wxScrolledWindow( filterPolicyPanels, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxVSCROLL );
+	filterCommonPage->SetScrollRate( 5, 5 );
+	filterCommonPage->Enable( false );
 	
-	appValidateChkSumButton = new wxButton( applicationNbPanel, wxID_ANY, _("validate"), wxDefaultPosition, wxDefaultSize, 0 );
-	fgSizer101->Add( appValidateChkSumButton, 0, wxALIGN_TOP|wxALL, 5 );
+	wxFlexGridSizer* filterCommonSizer;
+	filterCommonSizer = new wxFlexGridSizer( 3, 4, 0, 0 );
+	filterCommonSizer->SetFlexibleDirection( wxBOTH );
+	filterCommonSizer->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
 	
-	appUpdateChkSumButton = new wxButton( applicationNbPanel, wxID_ANY, _("update"), wxDefaultPosition, wxDefaultSize, 0 );
-	fgSizer101->Add( appUpdateChkSumButton, 0, wxALIGN_TOP|wxALL, 5 );
+	filterCommonActionText = new wxStaticText( filterCommonPage, wxID_ANY, _("Action:"), wxDefaultPosition, wxDefaultSize, 0 );
+	filterCommonActionText->Wrap( -1 );
+	filterCommonSizer->Add( filterCommonActionText, 0, wxALL, 5 );
 	
-	bSizer10->Add( fgSizer101, 1, wxEXPAND, 5 );
+	filterCommonAllowRadioButton = new wxRadioButton( filterCommonPage, wxID_ANY, _("allow"), wxDefaultPosition, wxDefaultSize, wxRB_GROUP );
+	filterCommonSizer->Add( filterCommonAllowRadioButton, 0, wxALL, 5 );
 	
-	applicationNbPanel->SetSizer( bSizer10 );
-	applicationNbPanel->Layout();
-	bSizer10->Fit( applicationNbPanel );
-	ruleEditNotebook->AddPage( applicationNbPanel, _("Application"), true );
-	alfNbPanel = new wxScrolledWindow( ruleEditNotebook, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxTAB_TRAVERSAL|wxTRANSPARENT_WINDOW|wxVSCROLL );
-	alfNbPanel->SetScrollRate( 5, 5 );
-	wxBoxSizer* alfPanelMainSizer;
-	alfPanelMainSizer = new wxBoxSizer( wxVERTICAL );
+	filterCommonDenyRadioButton = new wxRadioButton( filterCommonPage, wxID_ANY, _("deny"), wxDefaultPosition, wxDefaultSize, 0 );
+	filterCommonSizer->Add( filterCommonDenyRadioButton, 0, wxALL, 5 );
 	
-	wxFlexGridSizer* alfOptionSizer;
-	alfOptionSizer = new wxFlexGridSizer( 2, 4, 0, 0 );
-	alfOptionSizer->SetFlexibleDirection( wxBOTH );
-	alfOptionSizer->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+	filterCommonAskRadioButton = new wxRadioButton( filterCommonPage, wxID_ANY, _("ask"), wxDefaultPosition, wxDefaultSize, 0 );
+	filterCommonSizer->Add( filterCommonAskRadioButton, 0, wxALL, 5 );
 	
-	alfActionText = new wxStaticText( alfNbPanel, wxID_ANY, _("Action:"), wxDefaultPosition, wxDefaultSize, 0 );
-	alfActionText->Wrap( -1 );
-	alfOptionSizer->Add( alfActionText, 0, wxALL, 5 );
+	filterCommonLogText = new wxStaticText( filterCommonPage, wxID_ANY, _("Log:"), wxDefaultPosition, wxDefaultSize, 0 );
+	filterCommonLogText->Wrap( -1 );
+	filterCommonSizer->Add( filterCommonLogText, 0, wxALL, 5 );
 	
-	alfAllowRadioButton = new wxRadioButton( alfNbPanel, wxID_ANY, _("allow"), wxDefaultPosition, wxDefaultSize, wxRB_GROUP );
-	alfOptionSizer->Add( alfAllowRadioButton, 0, wxALL, 5 );
+	filterCommonLogNoneRadioButton = new wxRadioButton( filterCommonPage, wxID_ANY, _("none"), wxDefaultPosition, wxDefaultSize, wxRB_GROUP );
+	filterCommonSizer->Add( filterCommonLogNoneRadioButton, 0, wxALL, 5 );
 	
-	alfDenyRadioButton = new wxRadioButton( alfNbPanel, wxID_ANY, _("deny"), wxDefaultPosition, wxDefaultSize, 0 );
-	alfOptionSizer->Add( alfDenyRadioButton, 0, wxALL, 5 );
+	filterCommonLogNormalRadioButton = new wxRadioButton( filterCommonPage, wxID_ANY, _("normal"), wxDefaultPosition, wxDefaultSize, 0 );
+	filterCommonSizer->Add( filterCommonLogNormalRadioButton, 0, wxALL, 5 );
 	
-	alfAskRadioButton = new wxRadioButton( alfNbPanel, wxID_ANY, _("ask"), wxDefaultPosition, wxDefaultSize, 0 );
-	alfOptionSizer->Add( alfAskRadioButton, 0, wxALL, 5 );
+	filterCommonLogAlertRadioButton = new wxRadioButton( filterCommonPage, wxID_ANY, _("alert"), wxDefaultPosition, wxDefaultSize, 0 );
+	filterCommonSizer->Add( filterCommonLogAlertRadioButton, 0, wxALL, 5 );
 	
-	alfTypeText = new wxStaticText( alfNbPanel, wxID_ANY, _("Type:"), wxDefaultPosition, wxDefaultSize, 0 );
-	alfTypeText->Wrap( -1 );
-	alfOptionSizer->Add( alfTypeText, 0, wxALL, 5 );
+	filterCommonPage->SetSizer( filterCommonSizer );
+	filterCommonPage->Layout();
+	filterCommonSizer->Fit( filterCommonPage );
+	filterPolicyPanels->AddPage( filterCommonPage, _("Action / Log"), false );
+	filterNetworkPage = new wxScrolledWindow( filterPolicyPanels, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxVSCROLL );
+	filterNetworkPage->SetScrollRate( 5, 5 );
+	filterNetworkPage->Enable( false );
+	filterNetworkPage->Hide();
 	
-	alfFilterRadioButton = new wxRadioButton( alfNbPanel, wxID_ANY, _("filter"), wxDefaultPosition, wxDefaultSize, wxRB_GROUP );
-	alfOptionSizer->Add( alfFilterRadioButton, 0, wxALL, 5 );
+	wxFlexGridSizer* filterNetworkMainSizer;
+	filterNetworkMainSizer = new wxFlexGridSizer( 3, 4, 0, 0 );
+	filterNetworkMainSizer->SetFlexibleDirection( wxBOTH );
+	filterNetworkMainSizer->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
 	
-	alfCapRadioButton = new wxRadioButton( alfNbPanel, wxID_ANY, _("capability"), wxDefaultPosition, wxDefaultSize, 0 );
-	alfOptionSizer->Add( alfCapRadioButton, 0, wxALL, 5 );
+	filterNetworkDirectionLabel = new wxStaticText( filterNetworkPage, wxID_ANY, _("Direction:"), wxDefaultPosition, wxDefaultSize, 0 );
+	filterNetworkDirectionLabel->Wrap( -1 );
+	filterNetworkMainSizer->Add( filterNetworkDirectionLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	alfDefaultRadioButton = new wxRadioButton( alfNbPanel, wxID_ANY, _("default"), wxDefaultPosition, wxDefaultSize, 0 );
-	alfOptionSizer->Add( alfDefaultRadioButton, 0, wxALL, 5 );
+	filterNetworkInRadioButton = new wxRadioButton( filterNetworkPage, wxID_ANY, _("accept"), wxDefaultPosition, wxDefaultSize, wxRB_GROUP );
+	filterNetworkInRadioButton->SetMinSize( wxSize( 80,-1 ) );
 	
-	alfPanelMainSizer->Add( alfOptionSizer, 0, wxEXPAND, 5 );
+	filterNetworkMainSizer->Add( filterNetworkInRadioButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	wxStaticBoxSizer* alfConnectionBox;
-	alfConnectionBox = new wxStaticBoxSizer( new wxStaticBox( alfNbPanel, -1, _("Connection") ), wxVERTICAL );
+	filterNetworkOutRadionButton = new wxRadioButton( filterNetworkPage, wxID_ANY, _("connect"), wxDefaultPosition, wxDefaultSize, 0 );
+	filterNetworkMainSizer->Add( filterNetworkOutRadionButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	wxFlexGridSizer* alfConnectOptionSizer;
-	alfConnectOptionSizer = new wxFlexGridSizer( 3, 4, 0, 0 );
-	alfConnectOptionSizer->SetFlexibleDirection( wxBOTH );
-	alfConnectOptionSizer->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+	filterNetworkBothRadioButton = new wxRadioButton( filterNetworkPage, wxID_ANY, _("both"), wxDefaultPosition, wxDefaultSize, 0 );
+	filterNetworkMainSizer->Add( filterNetworkBothRadioButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	alfProtocolText = new wxStaticText( alfNbPanel, wxID_ANY, _("Protocol:"), wxDefaultPosition, wxDefaultSize, 0 );
-	alfProtocolText->Wrap( -1 );
-	alfConnectOptionSizer->Add( alfProtocolText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	filterNetworkAddrFamilyLabel = new wxStaticText( filterNetworkPage, wxID_ANY, _("Address family:"), wxDefaultPosition, wxDefaultSize, 0 );
+	filterNetworkAddrFamilyLabel->Wrap( -1 );
+	filterNetworkMainSizer->Add( filterNetworkAddrFamilyLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	alfTcpRadioButton = new wxRadioButton( alfNbPanel, wxID_ANY, _("tcp"), wxDefaultPosition, wxDefaultSize, wxRB_GROUP );
-	alfConnectOptionSizer->Add( alfTcpRadioButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	filterNetworkInetRadioButton = new wxRadioButton( filterNetworkPage, wxID_ANY, _("inet"), wxDefaultPosition, wxSize( -1,-1 ), wxRB_GROUP );
+	filterNetworkMainSizer->Add( filterNetworkInetRadioButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	alfUdpRadioButton = new wxRadioButton( alfNbPanel, wxID_ANY, _("udp"), wxDefaultPosition, wxDefaultSize, 0 );
-	alfConnectOptionSizer->Add( alfUdpRadioButton, 0, wxALL, 5 );
+	filterNetworkInet6RadioButton = new wxRadioButton( filterNetworkPage, wxID_ANY, _("inet6"), wxDefaultPosition, wxSize( -1,-1 ), 0 );
+	filterNetworkMainSizer->Add( filterNetworkInet6RadioButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
+	filterNetworkAnyRadioButton = new wxRadioButton( filterNetworkPage, wxID_ANY, _("any"), wxDefaultPosition, wxDefaultSize, 0 );
+	filterNetworkMainSizer->Add( filterNetworkAnyRadioButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	alfConnectOptionSizer->Add( 0, 0, 1, wxEXPAND, 5 );
+	filterNetworkProtocolLabel = new wxStaticText( filterNetworkPage, wxID_ANY, _("Protocol:"), wxDefaultPosition, wxDefaultSize, 0 );
+	filterNetworkProtocolLabel->Wrap( -1 );
+	filterNetworkMainSizer->Add( filterNetworkProtocolLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	alfAddrFamilyText = new wxStaticText( alfNbPanel, wxID_ANY, _("Address family:"), wxDefaultPosition, wxDefaultSize, 0 );
-	alfAddrFamilyText->Wrap( -1 );
-	alfConnectOptionSizer->Add( alfAddrFamilyText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	filterNetworkTcpRadioButton = new wxRadioButton( filterNetworkPage, wxID_ANY, _("tcp"), wxDefaultPosition, wxDefaultSize, wxRB_GROUP );
+	filterNetworkMainSizer->Add( filterNetworkTcpRadioButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	alfInetRadioButton = new wxRadioButton( alfNbPanel, wxID_ANY, _("inet"), wxDefaultPosition, wxSize( -1,-1 ), wxRB_GROUP );
-	alfConnectOptionSizer->Add( alfInetRadioButton, 0, wxALL, 5 );
+	filterNetworkUdpRadioButton = new wxRadioButton( filterNetworkPage, wxID_ANY, _("udp"), wxDefaultPosition, wxDefaultSize, 0 );
+	filterNetworkMainSizer->Add( filterNetworkUdpRadioButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	alfInet6RadioButton = new wxRadioButton( alfNbPanel, wxID_ANY, _("inet6"), wxDefaultPosition, wxSize( -1,-1 ), 0 );
-	alfConnectOptionSizer->Add( alfInet6RadioButton, 0, wxALL, 5 );
 	
-	alfAnyRadioButton = new wxRadioButton( alfNbPanel, wxID_ANY, _("any"), wxDefaultPosition, wxDefaultSize, 0 );
-	alfConnectOptionSizer->Add( alfAnyRadioButton, 0, wxALL, 5 );
+	filterNetworkMainSizer->Add( 0, 0, 1, wxEXPAND, 5 );
 	
-	alfCapText = new wxStaticText( alfNbPanel, wxID_ANY, _("Capability:"), wxDefaultPosition, wxDefaultSize, 0 );
-	alfCapText->Wrap( -1 );
-	alfConnectOptionSizer->Add( alfCapText, 0, wxALL, 5 );
+	filterNetworkStateTimeoutLabel = new wxStaticText( filterNetworkPage, wxID_ANY, _("State timeout:"), wxDefaultPosition, wxDefaultSize, 0 );
+	filterNetworkStateTimeoutLabel->Wrap( -1 );
+	filterNetworkMainSizer->Add( filterNetworkStateTimeoutLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	alfRawCapRadioButton = new wxRadioButton( alfNbPanel, wxID_ANY, _("raw"), wxDefaultPosition, wxSize( -1,-1 ), wxRB_GROUP );
-	alfConnectOptionSizer->Add( alfRawCapRadioButton, 0, wxALL, 5 );
+	filterNetworkStateTimeoutSpinCtrl = new wxSpinCtrl( filterNetworkPage, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 604800, 0 );
+	filterNetworkStateTimeoutSpinCtrl->SetToolTip( _("To enable stateful filtering use the timeout 600.") );
 	
-	alfOtherCapRadioButton = new wxRadioButton( alfNbPanel, wxID_ANY, _("other"), wxDefaultPosition, wxSize( -1,-1 ), 0 );
-	alfConnectOptionSizer->Add( alfOtherCapRadioButton, 0, wxALL, 5 );
+	filterNetworkMainSizer->Add( filterNetworkStateTimeoutSpinCtrl, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	alfAllCapRadioButton = new wxRadioButton( alfNbPanel, wxID_ANY, _("all"), wxDefaultPosition, wxDefaultSize, 0 );
-	alfConnectOptionSizer->Add( alfAllCapRadioButton, 0, wxALL, 5 );
+	filterNetworkPage->SetSizer( filterNetworkMainSizer );
+	filterNetworkPage->Layout();
+	filterNetworkMainSizer->Fit( filterNetworkPage );
+	filterPolicyPanels->AddPage( filterNetworkPage, _("Network"), false );
+	filterAddressPage = new wxScrolledWindow( filterPolicyPanels, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxVSCROLL );
+	filterAddressPage->SetScrollRate( 5, 5 );
+	filterAddressPage->Enable( false );
+	filterAddressPage->Hide();
 	
-	alfDirectionText = new wxStaticText( alfNbPanel, wxID_ANY, _("Direction:"), wxDefaultPosition, wxDefaultSize, 0 );
-	alfDirectionText->Wrap( -1 );
-	alfConnectOptionSizer->Add( alfDirectionText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	filterAddressMainSizer = new wxFlexGridSizer( 2, 4, 0, 0 );
+	filterAddressMainSizer->AddGrowableCol( 1 );
+	filterAddressMainSizer->SetFlexibleDirection( wxBOTH );
+	filterAddressMainSizer->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
 	
-	alfAcceptRadioButton = new wxRadioButton( alfNbPanel, wxID_ANY, _("accept"), wxDefaultPosition, wxDefaultSize, wxRB_GROUP );
-	alfAcceptRadioButton->SetMinSize( wxSize( 80,-1 ) );
+	filterAddressSourceLabel = new wxStaticText( filterAddressPage, wxID_ANY, _("Source address:"), wxDefaultPosition, wxDefaultSize, 0 );
+	filterAddressSourceLabel->Wrap( -1 );
+	filterAddressMainSizer->Add( filterAddressSourceLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	alfConnectOptionSizer->Add( alfAcceptRadioButton, 0, wxALL, 5 );
+	filterAddressSourceTextCtrl = new wxTextCtrl( filterAddressPage, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER );
+	filterAddressSourceTextCtrl->SetMinSize( wxSize( 200,-1 ) );
 	
-	alfConnectRadioButton = new wxRadioButton( alfNbPanel, wxID_ANY, _("connect"), wxDefaultPosition, wxDefaultSize, 0 );
-	alfConnectOptionSizer->Add( alfConnectRadioButton, 0, wxALL, 5 );
+	filterAddressMainSizer->Add( filterAddressSourceTextCtrl, 0, wxALL|wxALIGN_CENTER_VERTICAL|wxEXPAND, 5 );
 	
-	alfBothRadioButton = new wxRadioButton( alfNbPanel, wxID_ANY, _("both"), wxDefaultPosition, wxDefaultSize, 0 );
-	alfBothRadioButton->Hide();
+	filterAddressSourceDelimiterLabel = new wxStaticText( filterAddressPage, wxID_ANY, _(" / "), wxDefaultPosition, wxDefaultSize, 0 );
+	filterAddressSourceDelimiterLabel->Wrap( -1 );
+	filterAddressMainSizer->Add( filterAddressSourceDelimiterLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	alfConnectOptionSizer->Add( alfBothRadioButton, 0, wxALL, 5 );
+	filterAddressSoruceNetSpinCtrl = new wxSpinCtrl( filterAddressPage, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize( 55,-1 ), wxSP_ARROW_KEYS, 0, 128, 0 );
+	filterAddressMainSizer->Add( filterAddressSoruceNetSpinCtrl, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	alfConnectionBox->Add( alfConnectOptionSizer, 0, wxEXPAND, 5 );
+	filterAddressSourcePortLabel = new wxStaticText( filterAddressPage, wxID_ANY, _("Source Port:"), wxDefaultPosition, wxDefaultSize, 0 );
+	filterAddressSourcePortLabel->Wrap( -1 );
+	filterAddressMainSizer->Add( filterAddressSourcePortLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	alfConnectAddrSizer = new wxFlexGridSizer( 2, 6, 0, 0 );
-	alfConnectAddrSizer->SetFlexibleDirection( wxBOTH );
-	alfConnectAddrSizer->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+	filterAddressSorucePortTextCtrl = new wxTextCtrl( filterAddressPage, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER );
+	filterAddressMainSizer->Add( filterAddressSorucePortTextCtrl, 0, wxALL|wxALIGN_CENTER_VERTICAL|wxEXPAND, 5 );
 	
-	alfSrcAddrText = new wxStaticText( alfNbPanel, wxID_ANY, _("Source address:"), wxDefaultPosition, wxDefaultSize, 0 );
-	alfSrcAddrText->Wrap( -1 );
-	alfConnectAddrSizer->Add( alfSrcAddrText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	alfSrcAddrTextCtrl = new wxTextCtrl( alfNbPanel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER );
-	alfSrcAddrTextCtrl->SetMinSize( wxSize( 200,-1 ) );
+	filterAddressMainSizer->Add( 0, 0, 1, wxEXPAND, 5 );
 	
-	alfConnectAddrSizer->Add( alfSrcAddrTextCtrl, 0, wxALL|wxALIGN_CENTER_VERTICAL|wxEXPAND, 5 );
 	
-	alfSrcAddrDelimiterText = new wxStaticText( alfNbPanel, wxID_ANY, _(" / "), wxDefaultPosition, wxDefaultSize, 0 );
-	alfSrcAddrDelimiterText->Wrap( -1 );
-	alfConnectAddrSizer->Add( alfSrcAddrDelimiterText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	filterAddressMainSizer->Add( 0, 0, 1, wxEXPAND, 5 );
 	
-	alfSrcAddrNetSpinCtrl = new wxSpinCtrl( alfNbPanel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 128, 0 );
-	alfConnectAddrSizer->Add( alfSrcAddrNetSpinCtrl, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	filterAddressDestinationLabel = new wxStaticText( filterAddressPage, wxID_ANY, _("Destination address:"), wxDefaultPosition, wxDefaultSize, 0 );
+	filterAddressDestinationLabel->Wrap( -1 );
+	filterAddressMainSizer->Add( filterAddressDestinationLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	alfSrcAddrDelButton = new wxButton( alfNbPanel, wxID_ANY, _("-"), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
-	alfConnectAddrSizer->Add( alfSrcAddrDelButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	filterAddressDestinationTextCtrl = new wxTextCtrl( filterAddressPage, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER );
+	filterAddressMainSizer->Add( filterAddressDestinationTextCtrl, 0, wxALL|wxALIGN_CENTER_VERTICAL|wxEXPAND, 5 );
 	
-	alfSrcAddrAddButton = new wxButton( alfNbPanel, wxID_ANY, _("+"), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
-	alfConnectAddrSizer->Add( alfSrcAddrAddButton, 0, wxALL, 5 );
+	filterAddressDestinationDelimiterLabel = new wxStaticText( filterAddressPage, wxID_ANY, _(" / "), wxDefaultPosition, wxDefaultSize, 0 );
+	filterAddressDestinationDelimiterLabel->Wrap( -1 );
+	filterAddressMainSizer->Add( filterAddressDestinationDelimiterLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	alfDstAddrText = new wxStaticText( alfNbPanel, wxID_ANY, _("Destination address:"), wxDefaultPosition, wxDefaultSize, 0 );
-	alfDstAddrText->Wrap( -1 );
-	alfConnectAddrSizer->Add( alfDstAddrText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	filterAddressDestinationNetSpinCtrl = new wxSpinCtrl( filterAddressPage, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize( 55,-1 ), wxSP_ARROW_KEYS, 0, 128, 0 );
+	filterAddressMainSizer->Add( filterAddressDestinationNetSpinCtrl, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	alfDstAddrTextCtrl = new wxTextCtrl( alfNbPanel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER );
-	alfConnectAddrSizer->Add( alfDstAddrTextCtrl, 0, wxALL|wxALIGN_CENTER_VERTICAL|wxEXPAND, 5 );
+	filterAddressDestinationPortLabel = new wxStaticText( filterAddressPage, wxID_ANY, _("Destination Port:"), wxDefaultPosition, wxDefaultSize, 0 );
+	filterAddressDestinationPortLabel->Wrap( -1 );
+	filterAddressMainSizer->Add( filterAddressDestinationPortLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	alfDstAddrDelimiterText = new wxStaticText( alfNbPanel, wxID_ANY, _(" / "), wxDefaultPosition, wxDefaultSize, 0 );
-	alfDstAddrDelimiterText->Wrap( -1 );
-	alfConnectAddrSizer->Add( alfDstAddrDelimiterText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	filterAddressDestinationPortTextCtrl = new wxTextCtrl( filterAddressPage, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER );
+	filterAddressMainSizer->Add( filterAddressDestinationPortTextCtrl, 0, wxALL|wxEXPAND|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	alfDstAddrNetSpinCtrl = new wxSpinCtrl( alfNbPanel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 128, 0 );
-	alfConnectAddrSizer->Add( alfDstAddrNetSpinCtrl, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	filterAddressPage->SetSizer( filterAddressMainSizer );
+	filterAddressPage->Layout();
+	filterAddressMainSizer->Fit( filterAddressPage );
+	filterPolicyPanels->AddPage( filterAddressPage, _("Addresses"), false );
+	filterCapabilityPage = new wxScrolledWindow( filterPolicyPanels, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxVSCROLL );
+	filterCapabilityPage->SetScrollRate( 5, 5 );
+	filterCapabilityPage->Enable( false );
+	filterCapabilityPage->Hide();
 	
-	alfDstAddrDelButton = new wxButton( alfNbPanel, wxID_ANY, _("-"), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
-	alfConnectAddrSizer->Add( alfDstAddrDelButton, 0, wxALL, 5 );
+	wxFlexGridSizer* filterCapabilityMainSizer;
+	filterCapabilityMainSizer = new wxFlexGridSizer( 1, 4, 0, 0 );
+	filterCapabilityMainSizer->SetFlexibleDirection( wxBOTH );
+	filterCapabilityMainSizer->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
 	
-	alfDstAddrAddButton = new wxButton( alfNbPanel, wxID_ANY, _("+"), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
-	alfConnectAddrSizer->Add( alfDstAddrAddButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	filterCapabilityLabel = new wxStaticText( filterCapabilityPage, wxID_ANY, _("Capability:"), wxDefaultPosition, wxDefaultSize, 0 );
+	filterCapabilityLabel->Wrap( -1 );
+	filterCapabilityMainSizer->Add( filterCapabilityLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	alfSrcPortText = new wxStaticText( alfNbPanel, wxID_ANY, _("Source Port:"), wxDefaultPosition, wxDefaultSize, 0 );
-	alfSrcPortText->Wrap( -1 );
-	alfConnectAddrSizer->Add( alfSrcPortText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	filterCapabilityRawRadioButton = new wxRadioButton( filterCapabilityPage, wxID_ANY, _("raw"), wxDefaultPosition, wxDefaultSize, wxRB_GROUP );
+	filterCapabilityMainSizer->Add( filterCapabilityRawRadioButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	alfSrcPortTextCtrl = new wxTextCtrl( alfNbPanel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER );
-	alfConnectAddrSizer->Add( alfSrcPortTextCtrl, 0, wxALL|wxALIGN_CENTER_VERTICAL|wxEXPAND, 5 );
+	filterCapabilityOtherRadioButton = new wxRadioButton( filterCapabilityPage, wxID_ANY, _("other"), wxDefaultPosition, wxDefaultSize, 0 );
+	filterCapabilityMainSizer->Add( filterCapabilityOtherRadioButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
+	filterCapabilityAllRadioButton = new wxRadioButton( filterCapabilityPage, wxID_ANY, _("all"), wxDefaultPosition, wxDefaultSize, 0 );
+	filterCapabilityMainSizer->Add( filterCapabilityAllRadioButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	alfConnectAddrSizer->Add( 0, 0, 1, wxEXPAND, 5 );
+	filterCapabilityPage->SetSizer( filterCapabilityMainSizer );
+	filterCapabilityPage->Layout();
+	filterCapabilityMainSizer->Fit( filterCapabilityPage );
+	filterPolicyPanels->AddPage( filterCapabilityPage, _("Capability"), false );
+	filterSubjectPage = new wxScrolledWindow( filterPolicyPanels, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxVSCROLL );
+	filterSubjectPage->SetScrollRate( 5, 5 );
+	filterSubjectPage->Enable( false );
+	filterSubjectPage->Hide();
 	
+	wxFlexGridSizer* filterSubjectMainSizer;
+	filterSubjectMainSizer = new wxFlexGridSizer( 7, 3, 0, 0 );
+	filterSubjectMainSizer->AddGrowableCol( 1 );
+	filterSubjectMainSizer->SetFlexibleDirection( wxBOTH );
+	filterSubjectMainSizer->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
 	
-	alfConnectAddrSizer->Add( 0, 0, 1, wxEXPAND, 5 );
+	filterSubjectPathLabel = new wxStaticText( filterSubjectPage, wxID_ANY, _("Path:"), wxDefaultPosition, wxDefaultSize, 0 );
+	filterSubjectPathLabel->Wrap( -1 );
+	filterSubjectMainSizer->Add( filterSubjectPathLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
+	filterSubjectPathTextCtrl = new wxTextCtrl( filterSubjectPage, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	filterSubjectMainSizer->Add( filterSubjectPathTextCtrl, 0, wxALL|wxEXPAND, 5 );
 	
-	alfConnectAddrSizer->Add( 0, 0, 1, wxEXPAND, 5 );
+	filterSubjectPathModifyButton = new wxButton( filterSubjectPage, wxID_ANY, _("modify"), wxDefaultPosition, wxDefaultSize, 0 );
+	filterSubjectMainSizer->Add( filterSubjectPathModifyButton, 0, wxALL, 5 );
 	
+	filterSubjectLabel = new wxStaticText( filterSubjectPage, wxID_ANY, _("Subject:"), wxDefaultPosition, wxDefaultSize, 0 );
+	filterSubjectLabel->Wrap( -1 );
+	filterSubjectMainSizer->Add( filterSubjectLabel, 0, wxALL, 5 );
 	
-	alfConnectAddrSizer->Add( 0, 0, 1, wxEXPAND, 5 );
+	filterSubjectAnyRadioButton = new wxRadioButton( filterSubjectPage, wxID_ANY, _("any"), wxDefaultPosition, wxDefaultSize, wxRB_GROUP );
+	filterSubjectMainSizer->Add( filterSubjectAnyRadioButton, 0, wxALL, 5 );
 	
-	alfDstPortText = new wxStaticText( alfNbPanel, wxID_ANY, _("Destination Port:"), wxDefaultPosition, wxDefaultSize, 0 );
-	alfDstPortText->Wrap( -1 );
-	alfConnectAddrSizer->Add( alfDstPortText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	alfDstPortTextCtrl = new wxTextCtrl( alfNbPanel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER );
-	alfConnectAddrSizer->Add( alfDstPortTextCtrl, 0, wxALL|wxEXPAND|wxALIGN_CENTER_VERTICAL, 5 );
+	filterSubjectMainSizer->Add( 0, 0, 1, wxEXPAND, 5 );
 	
 	
-	alfConnectAddrSizer->Add( 0, 0, 1, wxEXPAND, 5 );
+	filterSubjectMainSizer->Add( 0, 0, 1, wxEXPAND, 5 );
 	
+	filterSubjectSelfRadioButton = new wxRadioButton( filterSubjectPage, wxID_ANY, _("self"), wxDefaultPosition, wxDefaultSize, 0 );
+	filterSubjectMainSizer->Add( filterSubjectSelfRadioButton, 0, wxALL, 5 );
 	
-	alfConnectAddrSizer->Add( 0, 0, 1, wxEXPAND, 5 );
 	
+	filterSubjectMainSizer->Add( 0, 0, 1, wxEXPAND, 5 );
 	
-	alfConnectAddrSizer->Add( 0, 0, 1, wxEXPAND, 5 );
 	
+	filterSubjectMainSizer->Add( 0, 0, 1, wxEXPAND, 5 );
 	
-	alfConnectAddrSizer->Add( 0, 0, 1, wxEXPAND, 5 );
+	filterSubjectSelfSignedRadioButton = new wxRadioButton( filterSubjectPage, wxID_ANY, _("self-signed"), wxDefaultPosition, wxDefaultSize, 0 );
+	filterSubjectMainSizer->Add( filterSubjectSelfSignedRadioButton, 0, wxALL, 5 );
 	
-	alfStateTimeoutText = new wxStaticText( alfNbPanel, wxID_ANY, _("State timeout:"), wxDefaultPosition, wxDefaultSize, 0 );
-	alfStateTimeoutText->Wrap( -1 );
-	alfConnectAddrSizer->Add( alfStateTimeoutText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	alfStateTimeoutSpinCtrl = new wxSpinCtrl( alfNbPanel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 604800, 0 );
-	alfStateTimeoutSpinCtrl->SetToolTip( _("To enable stateful filtering use the timeout 600.") );
+	filterSubjectMainSizer->Add( 0, 0, 1, wxEXPAND, 5 );
 	
-	alfConnectAddrSizer->Add( alfStateTimeoutSpinCtrl, 0, wxALL|wxEXPAND|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	alfConnectionBox->Add( alfConnectAddrSizer, 1, wxEXPAND, 5 );
+	filterSubjectMainSizer->Add( 0, 0, 1, wxEXPAND, 5 );
 	
-	alfPanelMainSizer->Add( alfConnectionBox, 1, wxEXPAND, 5 );
+	wxBoxSizer* filterSubjectUidSizer;
+	filterSubjectUidSizer = new wxBoxSizer( wxHORIZONTAL );
 	
-	alfNbPanel->SetSizer( alfPanelMainSizer );
-	alfNbPanel->Layout();
-	alfPanelMainSizer->Fit( alfNbPanel );
-	ruleEditNotebook->AddPage( alfNbPanel, _("ALF"), false );
-	sfsNbPanel = new wxScrolledWindow( ruleEditNotebook, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxTAB_TRAVERSAL|wxVSCROLL );
-	sfsNbPanel->SetScrollRate( 5, 5 );
-	wxFlexGridSizer* sfsSizer;
-	sfsSizer = new wxFlexGridSizer( 3, 4, 0, 0 );
-	sfsSizer->SetFlexibleDirection( wxBOTH );
-	sfsSizer->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+	filterSubjectUidRadioButton = new wxRadioButton( filterSubjectPage, wxID_ANY, _("uid"), wxDefaultPosition, wxSize( 60,-1 ), 0 );
+	filterSubjectUidSizer->Add( filterSubjectUidRadioButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	sfsBinaryLabelText = new wxStaticText( sfsNbPanel, wxID_ANY, _("Binary:"), wxDefaultPosition, wxDefaultSize, 0 );
-	sfsBinaryLabelText->Wrap( -1 );
-	sfsSizer->Add( sfsBinaryLabelText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	filterSubjectUidTextCtrl = new wxTextCtrl( filterSubjectPage, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	filterSubjectUidSizer->Add( filterSubjectUidTextCtrl, 1, wxALL|wxEXPAND|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	sfsBinaryTextCtrl = new wxTextCtrl( sfsNbPanel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize( 200,-1 ), wxTE_PROCESS_ENTER );
-	sfsSizer->Add( sfsBinaryTextCtrl, 1, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	filterSubjectMainSizer->Add( filterSubjectUidSizer, 1, wxEXPAND, 5 );
 	
-	sfsBinaryModifyButton = new wxButton( sfsNbPanel, wxID_ANY, _("modify"), wxDefaultPosition, wxDefaultSize, 0 );
-	sfsSizer->Add( sfsBinaryModifyButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
+	filterSubjectMainSizer->Add( 0, 0, 1, wxEXPAND, 5 );
 	
-	sfsSizer->Add( 0, 0, 1, wxEXPAND, 5 );
 	
-	sfsRegisteredSumLabelText = new wxStaticText( sfsNbPanel, wxID_ANY, _("Checksum (registered):"), wxDefaultPosition, wxDefaultSize, 0 );
-	sfsRegisteredSumLabelText->Wrap( -1 );
-	sfsSizer->Add( sfsRegisteredSumLabelText, 0, wxALL, 5 );
+	filterSubjectMainSizer->Add( 0, 0, 1, wxEXPAND, 5 );
 	
-	sfsRegisteredSumValueText = new wxStaticText( sfsNbPanel, wxID_ANY, _("0"), wxDefaultPosition, wxDefaultSize, 0 );
-	sfsRegisteredSumValueText->Wrap( -1 );
-	sfsSizer->Add( sfsRegisteredSumValueText, 0, wxALL, 5 );
+	wxBoxSizer* filterSubjectKeySizer;
+	filterSubjectKeySizer = new wxBoxSizer( wxHORIZONTAL );
 	
+	filterSubjectKeyLRadioButton = new wxRadioButton( filterSubjectPage, wxID_ANY, _("key"), wxDefaultPosition, wxSize( 60,-1 ), 0 );
+	filterSubjectKeySizer->Add( filterSubjectKeyLRadioButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	sfsSizer->Add( 0, 0, 1, wxEXPAND, 5 );
+	filterSubjectKeyTextCtrl = new wxTextCtrl( filterSubjectPage, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	filterSubjectKeySizer->Add( filterSubjectKeyTextCtrl, 1, wxALL|wxEXPAND|wxALIGN_CENTER_VERTICAL, 5 );
 	
+	filterSubjectMainSizer->Add( filterSubjectKeySizer, 1, wxEXPAND, 5 );
 	
-	sfsSizer->Add( 0, 0, 1, wxEXPAND, 5 );
 	
-	sfsCurrentSumLabelText = new wxStaticText( sfsNbPanel, wxID_ANY, _("Checksum (current):"), wxDefaultPosition, wxDefaultSize, 0 );
-	sfsCurrentSumLabelText->Wrap( -1 );
-	sfsSizer->Add( sfsCurrentSumLabelText, 0, wxALL, 5 );
+	filterSubjectMainSizer->Add( 0, 0, 1, wxEXPAND, 5 );
 	
-	sfsCurrentSumValueText = new wxStaticText( sfsNbPanel, wxID_ANY, _("0"), wxDefaultPosition, wxDefaultSize, 0 );
-	sfsCurrentSumValueText->Wrap( -1 );
-	sfsSizer->Add( sfsCurrentSumValueText, 0, wxALL, 5 );
 	
+	filterSubjectMainSizer->Add( 0, 0, 1, wxEXPAND, 5 );
 	
-	sfsSizer->Add( 0, 0, 1, wxEXPAND, 5 );
+	wxBoxSizer* filterSubjectCsumSizer;
+	filterSubjectCsumSizer = new wxBoxSizer( wxHORIZONTAL );
 	
+	filterSubjectCsumRadioButton = new wxRadioButton( filterSubjectPage, wxID_ANY, _("csum"), wxDefaultPosition, wxSize( 60,-1 ), 0 );
+	filterSubjectCsumSizer->Add( filterSubjectCsumRadioButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	sfsSizer->Add( 0, 0, 1, wxEXPAND, 5 );
+	filterSubjectCsumTextCtrl = new wxTextCtrl( filterSubjectPage, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	filterSubjectCsumSizer->Add( filterSubjectCsumTextCtrl, 1, wxALL|wxEXPAND|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	sfsStatusLabelText = new wxStaticText( sfsNbPanel, wxID_ANY, _("Status:"), wxDefaultPosition, wxDefaultSize, 0 );
-	sfsStatusLabelText->Wrap( -1 );
-	sfsSizer->Add( sfsStatusLabelText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	filterSubjectMainSizer->Add( filterSubjectCsumSizer, 1, wxEXPAND, 5 );
 	
-	sfsStatusValueText = new wxStaticText( sfsNbPanel, wxID_ANY, _("mismatch"), wxDefaultPosition, wxDefaultSize, 0 );
-	sfsStatusValueText->Wrap( -1 );
-	sfsSizer->Add( sfsStatusValueText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	filterSubjectPage->SetSizer( filterSubjectMainSizer );
+	filterSubjectPage->Layout();
+	filterSubjectMainSizer->Fit( filterSubjectPage );
+	filterPolicyPanels->AddPage( filterSubjectPage, _("Subject"), false );
+	filterSfsPage = new wxScrolledWindow( filterPolicyPanels, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxVSCROLL );
+	filterSfsPage->SetScrollRate( 5, 5 );
+	filterSfsPage->Enable( false );
+	filterSfsPage->Hide();
 	
-	sfsValidateChkSumButton = new wxButton( sfsNbPanel, wxID_ANY, _("validate"), wxDefaultPosition, wxDefaultSize, 0 );
-	sfsSizer->Add( sfsValidateChkSumButton, 0, wxALL, 5 );
+	wxFlexGridSizer* filterSfsMainSizer;
+	filterSfsMainSizer = new wxFlexGridSizer( 2, 3, 0, 0 );
+	filterSfsMainSizer->SetFlexibleDirection( wxBOTH );
+	filterSfsMainSizer->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
 	
-	sfsUpdateChkSumButton = new wxButton( sfsNbPanel, wxID_ANY, _("update"), wxDefaultPosition, wxDefaultSize, 0 );
-	sfsSizer->Add( sfsUpdateChkSumButton, 0, wxALL, 5 );
+	filterSfsValidLabel = new wxStaticText( filterSfsPage, wxID_ANY, _("Valid:"), wxDefaultPosition, wxDefaultSize, 0 );
+	filterSfsValidLabel->Wrap( -1 );
+	filterSfsMainSizer->Add( filterSfsValidLabel, 0, wxALL, 5 );
 	
-	sfsNbPanel->SetSizer( sfsSizer );
-	sfsNbPanel->Layout();
-	sfsSizer->Fit( sfsNbPanel );
-	ruleEditNotebook->AddPage( sfsNbPanel, _("SFS"), false );
 	
-	sz_main->Add( ruleEditNotebook, 1, wxEXPAND | wxALL, 5 );
+	filterSfsMainSizer->Add( 0, 0, 1, wxEXPAND, 5 );
 	
-	this->SetSizer( sz_main );
+	
+	filterSfsMainSizer->Add( 0, 0, 1, wxEXPAND, 5 );
+	
+	
+	filterSfsMainSizer->Add( 0, 0, 1, wxEXPAND, 5 );
+	
+	wxString filterSfsValidActionRadioBoxChoices[] = { _("allow"), _("deny"), _("ask") };
+	int filterSfsValidActionRadioBoxNChoices = sizeof( filterSfsValidActionRadioBoxChoices ) / sizeof( wxString );
+	filterSfsValidActionRadioBox = new wxRadioBox( filterSfsPage, wxID_ANY, _("Action"), wxDefaultPosition, wxDefaultSize, filterSfsValidActionRadioBoxNChoices, filterSfsValidActionRadioBoxChoices, 1, wxRA_SPECIFY_ROWS );
+	filterSfsValidActionRadioBox->SetSelection( 0 );
+	filterSfsMainSizer->Add( filterSfsValidActionRadioBox, 0, wxALL, 5 );
+	
+	wxString filterSfsValidLogRadioBoxChoices[] = { _("none"), _("normal"), _("alert") };
+	int filterSfsValidLogRadioBoxNChoices = sizeof( filterSfsValidLogRadioBoxChoices ) / sizeof( wxString );
+	filterSfsValidLogRadioBox = new wxRadioBox( filterSfsPage, wxID_ANY, _("Log"), wxDefaultPosition, wxDefaultSize, filterSfsValidLogRadioBoxNChoices, filterSfsValidLogRadioBoxChoices, 1, wxRA_SPECIFY_ROWS );
+	filterSfsValidLogRadioBox->SetSelection( 2 );
+	filterSfsMainSizer->Add( filterSfsValidLogRadioBox, 0, wxALL, 5 );
+	
+	filterSfsInvalidLabel = new wxStaticText( filterSfsPage, wxID_ANY, _("Invalid:"), wxDefaultPosition, wxDefaultSize, 0 );
+	filterSfsInvalidLabel->Wrap( -1 );
+	filterSfsMainSizer->Add( filterSfsInvalidLabel, 0, wxALL, 5 );
+	
+	
+	filterSfsMainSizer->Add( 0, 0, 1, wxEXPAND, 5 );
+	
+	
+	filterSfsMainSizer->Add( 0, 0, 1, wxEXPAND, 5 );
+	
+	
+	filterSfsMainSizer->Add( 0, 0, 1, wxEXPAND, 5 );
+	
+	wxString filterSfsInvalidActionRadioBoxChoices[] = { _("allow"), _("deny"), _("ask") };
+	int filterSfsInvalidActionRadioBoxNChoices = sizeof( filterSfsInvalidActionRadioBoxChoices ) / sizeof( wxString );
+	filterSfsInvalidActionRadioBox = new wxRadioBox( filterSfsPage, wxID_ANY, _("Action"), wxDefaultPosition, wxDefaultSize, filterSfsInvalidActionRadioBoxNChoices, filterSfsInvalidActionRadioBoxChoices, 1, wxRA_SPECIFY_ROWS );
+	filterSfsInvalidActionRadioBox->SetSelection( 1 );
+	filterSfsMainSizer->Add( filterSfsInvalidActionRadioBox, 0, wxALL, 5 );
+	
+	wxString filterSfsInvalidLogRadioBoxChoices[] = { _("none"), _("normal"), _("alert") };
+	int filterSfsInvalidLogRadioBoxNChoices = sizeof( filterSfsInvalidLogRadioBoxChoices ) / sizeof( wxString );
+	filterSfsInvalidLogRadioBox = new wxRadioBox( filterSfsPage, wxID_ANY, _("Log"), wxDefaultPosition, wxDefaultSize, filterSfsInvalidLogRadioBoxNChoices, filterSfsInvalidLogRadioBoxChoices, 1, wxRA_SPECIFY_ROWS );
+	filterSfsInvalidLogRadioBox->SetSelection( 2 );
+	filterSfsMainSizer->Add( filterSfsInvalidLogRadioBox, 0, wxALL, 5 );
+	
+	filterSfsUnknownLabel = new wxStaticText( filterSfsPage, wxID_ANY, _("Unknown:"), wxDefaultPosition, wxDefaultSize, 0 );
+	filterSfsUnknownLabel->Wrap( -1 );
+	filterSfsMainSizer->Add( filterSfsUnknownLabel, 0, wxALL, 5 );
+	
+	
+	filterSfsMainSizer->Add( 0, 0, 1, wxEXPAND, 5 );
+	
+	
+	filterSfsMainSizer->Add( 0, 0, 1, wxEXPAND, 5 );
+	
+	
+	filterSfsMainSizer->Add( 0, 0, 1, wxEXPAND, 5 );
+	
+	wxString filterSfsUnknownActionRadioBoxChoices[] = { _("allow"), _("deny"), _("ask") };
+	int filterSfsUnknownActionRadioBoxNChoices = sizeof( filterSfsUnknownActionRadioBoxChoices ) / sizeof( wxString );
+	filterSfsUnknownActionRadioBox = new wxRadioBox( filterSfsPage, wxID_ANY, _("Action"), wxDefaultPosition, wxDefaultSize, filterSfsUnknownActionRadioBoxNChoices, filterSfsUnknownActionRadioBoxChoices, 1, wxRA_SPECIFY_ROWS );
+	filterSfsUnknownActionRadioBox->SetSelection( 1 );
+	filterSfsMainSizer->Add( filterSfsUnknownActionRadioBox, 0, wxALL, 5 );
+	
+	wxString filterSfsUnknownLogRadioBoxChoices[] = { _("none"), _("normal"), _("alert") };
+	int filterSfsUnknownLogRadioBoxNChoices = sizeof( filterSfsUnknownLogRadioBoxChoices ) / sizeof( wxString );
+	filterSfsUnknownLogRadioBox = new wxRadioBox( filterSfsPage, wxID_ANY, _("Log"), wxDefaultPosition, wxDefaultSize, filterSfsUnknownLogRadioBoxNChoices, filterSfsUnknownLogRadioBoxChoices, 1, wxRA_SPECIFY_ROWS );
+	filterSfsUnknownLogRadioBox->SetSelection( 2 );
+	filterSfsMainSizer->Add( filterSfsUnknownLogRadioBox, 0, wxALL, 5 );
+	
+	filterSfsPage->SetSizer( filterSfsMainSizer );
+	filterSfsPage->Layout();
+	filterSfsMainSizer->Fit( filterSfsPage );
+	filterPolicyPanels->AddPage( filterSfsPage, _("Action / Log"), false );
+	filterContextPage = new wxScrolledWindow( filterPolicyPanels, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxVSCROLL );
+	filterContextPage->SetScrollRate( 5, 5 );
+	filterContextPage->Enable( false );
+	filterContextPage->Hide();
+	
+	wxBoxSizer* filterContextMainSizer;
+	filterContextMainSizer = new wxBoxSizer( wxVERTICAL );
+	
+	wxFlexGridSizer* filterContextHeadSizer;
+	filterContextHeadSizer = new wxFlexGridSizer( 2, 4, 0, 0 );
+	filterContextHeadSizer->SetFlexibleDirection( wxBOTH );
+	filterContextHeadSizer->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_ALL );
+	
+	filterContextTypeLabel = new wxStaticText( filterContextPage, wxID_ANY, _("Type:"), wxDefaultPosition, wxDefaultSize, 0 );
+	filterContextTypeLabel->Wrap( -1 );
+	filterContextHeadSizer->Add( filterContextTypeLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	
+	wxBoxSizer* filterContextTypeSizer;
+	filterContextTypeSizer = new wxBoxSizer( wxHORIZONTAL );
+	
+	filterContextNewRadioButton = new wxRadioButton( filterContextPage, wxID_ANY, _("new"), wxDefaultPosition, wxDefaultSize, wxRB_GROUP );
+	filterContextTypeSizer->Add( filterContextNewRadioButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	
+	filterContextOpenRadioButton = new wxRadioButton( filterContextPage, wxID_ANY, _("open"), wxDefaultPosition, wxDefaultSize, 0 );
+	filterContextTypeSizer->Add( filterContextOpenRadioButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	
+	filterContextHeadSizer->Add( filterContextTypeSizer, 1, wxEXPAND|wxALIGN_CENTER_VERTICAL, 5 );
+	
+	
+	filterContextHeadSizer->Add( 0, 0, 1, wxEXPAND, 5 );
+	
+	
+	filterContextHeadSizer->Add( 0, 0, 1, wxEXPAND, 5 );
+	
+	filterContextBinaryLabel = new wxStaticText( filterContextPage, wxID_ANY, _("Binary:"), wxDefaultPosition, wxDefaultSize, 0 );
+	filterContextBinaryLabel->Wrap( -1 );
+	filterContextHeadSizer->Add( filterContextBinaryLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	
+	filterContextBinaryTextCtrl = new wxTextCtrl( filterContextPage, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER );
+	filterContextBinaryTextCtrl->SetMinSize( wxSize( 300,-1 ) );
+	
+	filterContextHeadSizer->Add( filterContextBinaryTextCtrl, 0, wxALL|wxEXPAND|wxALIGN_CENTER_VERTICAL, 5 );
+	
+	filterContextBinaryModifyButton = new wxButton( filterContextPage, wxID_ANY, _("modify"), wxDefaultPosition, wxDefaultSize, 0 );
+	filterContextHeadSizer->Add( filterContextBinaryModifyButton, 0, wxALL|wxALIGN_RIGHT|wxALIGN_CENTER_VERTICAL, 5 );
+	
+	filterContextMainSizer->Add( filterContextHeadSizer, 0, wxEXPAND, 5 );
+	
+	wxFlexGridSizer* filterContextChecksumSizer;
+	filterContextChecksumSizer = new wxFlexGridSizer( 2, 2, 0, 0 );
+	filterContextChecksumSizer->SetFlexibleDirection( wxBOTH );
+	filterContextChecksumSizer->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_ALL );
+	
+	filterContextCsumRegLabel = new wxStaticText( filterContextPage, wxID_ANY, _("Checksum (registered):"), wxDefaultPosition, wxDefaultSize, 0 );
+	filterContextCsumRegLabel->Wrap( -1 );
+	filterContextChecksumSizer->Add( filterContextCsumRegLabel, 0, wxALL, 5 );
+	
+	filterContextCsumRegText = new wxStaticText( filterContextPage, wxID_ANY, _("0"), wxDefaultPosition, wxDefaultSize, 0 );
+	filterContextCsumRegText->Wrap( -1 );
+	filterContextChecksumSizer->Add( filterContextCsumRegText, 0, wxALL, 5 );
+	
+	filterContextCsumCurLabel = new wxStaticText( filterContextPage, wxID_ANY, _("Checksum (current):"), wxDefaultPosition, wxDefaultSize, 0 );
+	filterContextCsumCurLabel->Wrap( -1 );
+	filterContextChecksumSizer->Add( filterContextCsumCurLabel, 0, wxALL, 5 );
+	
+	filterContextCsumCurText = new wxStaticText( filterContextPage, wxID_ANY, _("0"), wxDefaultPosition, wxDefaultSize, 0 );
+	filterContextCsumCurText->Wrap( -1 );
+	filterContextChecksumSizer->Add( filterContextCsumCurText, 0, wxALL, 5 );
+	
+	filterContextMainSizer->Add( filterContextChecksumSizer, 0, wxEXPAND, 5 );
+	
+	wxFlexGridSizer* filterContextStatusSizer;
+	filterContextStatusSizer = new wxFlexGridSizer( 2, 5, 0, 0 );
+	filterContextStatusSizer->SetFlexibleDirection( wxBOTH );
+	filterContextStatusSizer->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_ALL );
+	
+	filterContextStatusLabel = new wxStaticText( filterContextPage, wxID_ANY, _("Status:"), wxDefaultPosition, wxDefaultSize, 0 );
+	filterContextStatusLabel->Wrap( -1 );
+	filterContextStatusLabel->SetMinSize( wxSize( 165,-1 ) );
+	
+	filterContextStatusSizer->Add( filterContextStatusLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	
+	filterContextStatusText = new wxStaticText( filterContextPage, wxID_ANY, _("mismatch"), wxDefaultPosition, wxDefaultSize, 0 );
+	filterContextStatusText->Wrap( -1 );
+	filterContextStatusSizer->Add( filterContextStatusText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	
+	filterContextValidateButton = new wxButton( filterContextPage, wxID_ANY, _("validate"), wxDefaultPosition, wxDefaultSize, 0 );
+	filterContextStatusSizer->Add( filterContextValidateButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	
+	filterContextUpdateButton = new wxButton( filterContextPage, wxID_ANY, _("update"), wxDefaultPosition, wxDefaultSize, 0 );
+	filterContextStatusSizer->Add( filterContextUpdateButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	
+	filterContextMainSizer->Add( filterContextStatusSizer, 1, wxEXPAND, 5 );
+	
+	filterContextPage->SetSizer( filterContextMainSizer );
+	filterContextPage->Layout();
+	filterContextMainSizer->Fit( filterContextPage );
+	filterPolicyPanels->AddPage( filterContextPage, _("Context"), false );
+	filterPermissionPage = new wxScrolledWindow( filterPolicyPanels, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxVSCROLL );
+	filterPermissionPage->SetScrollRate( 5, 5 );
+	filterPermissionPage->Enable( false );
+	filterPermissionPage->Hide();
+	
+	wxFlexGridSizer* filterPermissionMainSizer;
+	filterPermissionMainSizer = new wxFlexGridSizer( 1, 4, 0, 0 );
+	filterPermissionMainSizer->SetFlexibleDirection( wxBOTH );
+	filterPermissionMainSizer->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+	
+	filterPermissionLabel = new wxStaticText( filterPermissionPage, wxID_ANY, _("Permission:"), wxDefaultPosition, wxDefaultSize, 0 );
+	filterPermissionLabel->Wrap( -1 );
+	filterPermissionMainSizer->Add( filterPermissionLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	
+	filterPermissionReadCheckBox = new wxCheckBox( filterPermissionPage, wxID_ANY, _("read"), wxDefaultPosition, wxDefaultSize, 0 );
+	
+	filterPermissionMainSizer->Add( filterPermissionReadCheckBox, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	
+	filterPermissionWriteCheckBox = new wxCheckBox( filterPermissionPage, wxID_ANY, _("write"), wxDefaultPosition, wxDefaultSize, 0 );
+	
+	filterPermissionMainSizer->Add( filterPermissionWriteCheckBox, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	
+	filterPermissionExecuteCheckBox = new wxCheckBox( filterPermissionPage, wxID_ANY, _("execute"), wxDefaultPosition, wxDefaultSize, 0 );
+	
+	filterPermissionMainSizer->Add( filterPermissionExecuteCheckBox, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	
+	filterPermissionPage->SetSizer( filterPermissionMainSizer );
+	filterPermissionPage->Layout();
+	filterPermissionMainSizer->Fit( filterPermissionPage );
+	filterPolicyPanels->AddPage( filterPermissionPage, _("Permission"), true );
+	
+	mainPanelSizer->Add( filterPolicyPanels, 1, wxEXPAND | wxALL, 5 );
+	
+	mainSizer->Add( mainPanelSizer, 1, wxEXPAND, 5 );
+	
+	wxBoxSizer* mainFootSizer;
+	mainFootSizer = new wxBoxSizer( wxHORIZONTAL );
+	
+	mainFooterRuleSetLabel = new wxStaticText( this, wxID_ANY, _("RuleSet:"), wxDefaultPosition, wxDefaultSize, 0 );
+	mainFooterRuleSetLabel->Wrap( -1 );
+	mainFootSizer->Add( mainFooterRuleSetLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	
+	mainFooterRuleSetText = new wxStaticText( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	mainFooterRuleSetText->Wrap( -1 );
+	mainFootSizer->Add( mainFooterRuleSetText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	
+	mainFooterReloadButton = new wxButton( this, wxID_ANY, _("relaod"), wxDefaultPosition, wxDefaultSize, 0 );
+	mainFooterReloadButton->Enable( false );
+	
+	mainFootSizer->Add( mainFooterReloadButton, 0, wxALL, 5 );
+	
+	
+	mainFootSizer->Add( 0, 0, 1, wxEXPAND, 5 );
+	
+	mainFooterStatusLabel = new wxStaticText( this, wxID_ANY, _("Status:"), wxDefaultPosition, wxDefaultSize, 0 );
+	mainFooterStatusLabel->Wrap( -1 );
+	mainFootSizer->Add( mainFooterStatusLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	
+	mainFooterStatusText = new wxStaticText( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	mainFooterStatusText->Wrap( -1 );
+	mainFootSizer->Add( mainFooterStatusText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	
+	mainFooterSaveButton = new wxButton( this, wxID_ANY, _("save"), wxDefaultPosition, wxDefaultSize, 0 );
+	mainFooterSaveButton->Enable( false );
+	
+	mainFootSizer->Add( mainFooterSaveButton, 0, wxALL, 5 );
+	
+	mainSizer->Add( mainFootSizer, 0, wxEXPAND, 5 );
+	
+	this->SetSizer( mainSizer );
 	this->Layout();
-	sz_main->Fit( this );
 	
 	// Connect Events
-	this->Connect( wxEVT_CLOSE_WINDOW, wxCloseEventHandler( DlgRuleEditorBase::OnClose ) );
-	controlRuleSetSaveButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::OnRuleSetSave ), NULL, this );
-	controlRuleCreateButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::OnRuleCreateButton ), NULL, this );
-	controlRuleDeleteButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::OnRuleDeleteButton ), NULL, this );
-	ruleListCtrl->Connect( wxEVT_COMMAND_LIST_ITEM_SELECTED, wxListEventHandler( DlgRuleEditorBase::OnLineSelected ), NULL, this );
-	commonHighProfileRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorBase::OnCommonHighProfileButton ), NULL, this );
-	commonMediumProfileRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorBase::OnCommonMediumProfileButton ), NULL, this );
-	commonAdminProfileRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorBase::OnCommonAdminProfileButton ), NULL, this );
-	commonNoneLogRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorBase::OnCommonLogNone ), NULL, this );
-	commonDoLogRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorBase::OnCommonLogLog ), NULL, this );
-	commonAlertLogRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorBase::OnCommonLogAlert ), NULL, this );
 	appBinaryTextCtrl->Connect( wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler( DlgRuleEditorBase::OnAppBinaryTextCtrl ), NULL, this );
 	appBinaryModifyButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::OnAppBinaryModifyButton ), NULL, this );
-	appValidateChkSumButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::OnAppValidateChkSumButton ), NULL, this );
-	appUpdateChkSumButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::OnAppUpdateChkSumButton ), NULL, this );
-	alfAllowRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorBase::OnAlfAllowRadioButton ), NULL, this );
-	alfDenyRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorBase::OnAlfDenyRadioButton ), NULL, this );
-	alfAskRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorBase::OnAlfAskRadioButton ), NULL, this );
-	alfFilterRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorBase::OnAlfFilterRadioButton ), NULL, this );
-	alfCapRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorBase::OnAlfCapRadioButton ), NULL, this );
-	alfDefaultRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorBase::OnAlfDefaultRadioButton ), NULL, this );
-	alfTcpRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorBase::OnAlfTcpRadioButton ), NULL, this );
-	alfUdpRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorBase::OnAlfUdpRadioButton ), NULL, this );
-	alfInetRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorBase::OnAlfInetRadioButton ), NULL, this );
-	alfInet6RadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorBase::OnAlfInet6RadioButton ), NULL, this );
-	alfAnyRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorBase::OnAlfAnyRadioButton ), NULL, this );
-	alfRawCapRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorBase::OnAlfRawCapRadioButton ), NULL, this );
-	alfOtherCapRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorBase::OnAlfOtherCapRadioButton ), NULL, this );
-	alfAllCapRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorBase::OnAlfAllCapRadioButton ), NULL, this );
-	alfAcceptRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorBase::OnAlfAcceptRadioButton ), NULL, this );
-	alfConnectRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorBase::OnAlfConnectRadioButton ), NULL, this );
-	alfBothRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorBase::OnAlfBothRadioButton ), NULL, this );
-	alfSrcAddrTextCtrl->Connect( wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler( DlgRuleEditorBase::onAlfSrcAddrTextCtrlEnter ), NULL, this );
-	alfSrcAddrNetSpinCtrl->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( DlgRuleEditorBase::OnAlfSrcNetmaskSpinCtrl ), NULL, this );
-	alfSrcAddrAddButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::OnSrcAddrAddButton ), NULL, this );
-	alfDstAddrTextCtrl->Connect( wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler( DlgRuleEditorBase::onAlfDstAddrTextCtrlEnter ), NULL, this );
-	alfDstAddrNetSpinCtrl->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( DlgRuleEditorBase::OnAlfDstNetmaskSpinCtrl ), NULL, this );
-	alfDstAddrAddButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::OnDstAddrAddButton ), NULL, this );
-	alfSrcPortTextCtrl->Connect( wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler( DlgRuleEditorBase::onAlfSrcPortTextCtrlEnter ), NULL, this );
-	alfDstPortTextCtrl->Connect( wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler( DlgRuleEditorBase::onAlfDstPortTextCtrlEnter ), NULL, this );
-	alfStateTimeoutSpinCtrl->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( DlgRuleEditorBase::OnAlfStateTimeoutChange ), NULL, this );
-	sfsBinaryTextCtrl->Connect( wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler( DlgRuleEditorBase::OnSfsBinaryTextCtrl ), NULL, this );
-	sfsBinaryModifyButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::OnSfsBinaryModifyButton ), NULL, this );
-	sfsValidateChkSumButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::OnSfsValidateChkSumButton ), NULL, this );
-	sfsUpdateChkSumButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::OnSfsUpdateChkSumButton ), NULL, this );
+	appBinaryValidateButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::OnAppValidateChkSumButton ), NULL, this );
+	appBinaryUpdateButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::OnAppUpdateChkSumButton ), NULL, this );
+	filterCommonAllowRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorBase::OnAlfAllowRadioButton ), NULL, this );
+	filterCommonDenyRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorBase::OnAlfDenyRadioButton ), NULL, this );
+	filterCommonAskRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorBase::OnAlfAskRadioButton ), NULL, this );
+	filterCommonLogNoneRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorBase::OnAlfFilterRadioButton ), NULL, this );
+	filterCommonLogNormalRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorBase::OnAlfCapRadioButton ), NULL, this );
+	filterCommonLogAlertRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorBase::OnAlfDefaultRadioButton ), NULL, this );
+	filterNetworkInRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorBase::OnAlfAcceptRadioButton ), NULL, this );
+	filterNetworkOutRadionButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorBase::OnAlfConnectRadioButton ), NULL, this );
+	filterNetworkInetRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorBase::OnAlfInetRadioButton ), NULL, this );
+	filterNetworkInet6RadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorBase::OnAlfInet6RadioButton ), NULL, this );
+	filterNetworkAnyRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorBase::OnAlfAnyRadioButton ), NULL, this );
+	filterNetworkTcpRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorBase::OnAlfTcpRadioButton ), NULL, this );
+	filterNetworkUdpRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorBase::OnAlfUdpRadioButton ), NULL, this );
+	filterNetworkStateTimeoutSpinCtrl->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( DlgRuleEditorBase::OnAlfStateTimeoutChange ), NULL, this );
+	filterAddressSourceTextCtrl->Connect( wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler( DlgRuleEditorBase::onAlfSrcAddrTextCtrlEnter ), NULL, this );
+	filterAddressSoruceNetSpinCtrl->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( DlgRuleEditorBase::OnAlfSrcNetmaskSpinCtrl ), NULL, this );
+	filterAddressSorucePortTextCtrl->Connect( wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler( DlgRuleEditorBase::onAlfSrcPortTextCtrlEnter ), NULL, this );
+	filterAddressDestinationTextCtrl->Connect( wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler( DlgRuleEditorBase::onAlfDstAddrTextCtrlEnter ), NULL, this );
+	filterAddressDestinationNetSpinCtrl->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( DlgRuleEditorBase::OnAlfDstNetmaskSpinCtrl ), NULL, this );
+	filterAddressDestinationPortTextCtrl->Connect( wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler( DlgRuleEditorBase::onAlfDstPortTextCtrlEnter ), NULL, this );
+	filterCapabilityRawRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorBase::OnAlfAllowRadioButton ), NULL, this );
+	filterCapabilityOtherRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorBase::OnAlfDenyRadioButton ), NULL, this );
+	filterCapabilityAllRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorBase::OnAlfAskRadioButton ), NULL, this );
+	filterContextBinaryTextCtrl->Connect( wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler( DlgRuleEditorBase::OnAppBinaryTextCtrl ), NULL, this );
+	filterContextBinaryModifyButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::OnAppBinaryModifyButton ), NULL, this );
+	filterContextValidateButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::OnAppValidateChkSumButton ), NULL, this );
+	filterContextUpdateButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::OnAppUpdateChkSumButton ), NULL, this );
 }

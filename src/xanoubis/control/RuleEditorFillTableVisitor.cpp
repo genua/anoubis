@@ -42,6 +42,10 @@ RuleEditorFillTableVisitor::~RuleEditorFillTableVisitor(void)
 {
 }
 
+/*
+ * XXX ch: this will be fixed with the next functionality change
+ */
+#if 0
 void
 RuleEditorFillTableVisitor::clean(long idx)
 {
@@ -291,3 +295,5 @@ RuleEditorFillTableVisitor::visitVarPolicy(VarPolicy *varPolicy)
 {
 	showVar(varPolicy, selectedLine_);
 }
+
+#endif

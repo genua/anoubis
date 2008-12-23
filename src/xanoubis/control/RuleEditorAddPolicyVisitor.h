@@ -41,11 +41,14 @@ class RuleEditorAddPolicyVisitor : public RuleEditorFillTableVisitor
 		RuleEditorAddPolicyVisitor(DlgRuleEditor *);
 		~RuleEditorAddPolicyVisitor(void);
 
-		virtual void visitAppPolicy(AppPolicy *);
-		virtual void visitAlfPolicy(AlfPolicy *);
-		virtual void visitCtxPolicy(CtxPolicy *);
-		virtual void visitSfsPolicy(SfsPolicy *);
-		virtual void visitVarPolicy(VarPolicy *);
+/*
+ * XXX ch: this will be fixed with the next functionality change
+ */
+		virtual void visitAppPolicy(AppPolicy *) {};
+		virtual void visitAlfPolicy(AlfPolicy *) {};
+		virtual void visitCtxPolicy(CtxPolicy *) {};
+		virtual void visitSfsPolicy(SfsPolicy *) {};
+		virtual void visitVarPolicy(VarPolicy *) {};
 };
 
 #endif	/* _RULEEDITORADDPOLICYVISITOR_H_ */

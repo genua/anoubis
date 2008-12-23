@@ -76,6 +76,10 @@ enum ruleEditorListColumns {
 	RULEDITOR_LIST_COLUMN_EOL
 };
 
+/*
+ * XXX ch: this will be fixed with the next functionality change
+ */
+#if 0
 class AddrLine
 {
 	private:
@@ -96,6 +100,7 @@ class AddrLine
 };
 WX_DECLARE_LIST(AddrLine, AddrLineList);
 WX_DEFINE_ARRAY_LONG(long, ArrayOfLongs);
+#endif
 
 class DlgRuleEditor : public DlgRuleEditorBase
 {
@@ -105,14 +110,17 @@ class DlgRuleEditor : public DlgRuleEditorBase
 		bool		autoCheck_;
 		wxString	columnNames_[RULEDITOR_LIST_COLUMN_EOL];
 		int		columnWidths_[RULEDITOR_LIST_COLUMN_EOL];
-		AddrLineList	extraSrcAddrList;
-		AddrLineList	extraDstAddrList;
+		//AddrLineList	extraSrcAddrList;
+		//AddrLineList	extraDstAddrList;
 		long		userRuleSetId_;
 		long		adminRuleSetId_;
-		ArrayOfLongs	foreignAdminRsIds_;
+		//ArrayOfLongs	foreignAdminRsIds_;
 
 		void OnShow(wxCommandEvent&);
-
+/*
+ * XXX ch: this will be fixed with the next functionality change
+ */
+#if 0
 		void updateBinName(wxString);
 		void updateContextName(wxString);
 		void updateAction(int);
@@ -204,7 +212,7 @@ class DlgRuleEditor : public DlgRuleEditorBase
 
 		void selectLine(unsigned long);
 		void modified(void);
-
+#endif
 	public:
 		DlgRuleEditor(wxWindow *);
 		~DlgRuleEditor(void);

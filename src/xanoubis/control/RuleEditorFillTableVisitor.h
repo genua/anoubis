@@ -37,6 +37,10 @@ class RuleEditorFillTableVisitor : public PolicyVisitor
 		long		 selectedLine_;
 		DlgRuleEditor	*ruleEditor_;
 
+		/*
+		 *
+		 * XXX ch: this will be fixed with the next functionality change
+		 *
 		void clean(long);
 
 		virtual void showApp(AppPolicy *, long);
@@ -44,16 +48,19 @@ class RuleEditorFillTableVisitor : public PolicyVisitor
 		virtual void showSfs(SfsPolicy *, long);
 		virtual void showCtx(CtxPolicy *, long);
 		virtual void showVar(VarPolicy *, long);
-
+		*/
 	public:
 		RuleEditorFillTableVisitor(DlgRuleEditor *, long);
 		~RuleEditorFillTableVisitor(void);
 
-		virtual void visitAppPolicy(AppPolicy *);
-		virtual void visitAlfPolicy(AlfPolicy *);
-		virtual void visitCtxPolicy(CtxPolicy *);
-		virtual void visitSfsPolicy(SfsPolicy *);
-		virtual void visitVarPolicy(VarPolicy *);
+/*
+ * XXX ch: this will be fixed with the next functionality change
+ */
+		virtual void visitAppPolicy(AppPolicy *) {};
+		virtual void visitAlfPolicy(AlfPolicy *) {};
+		virtual void visitCtxPolicy(CtxPolicy *) {};
+		virtual void visitSfsPolicy(SfsPolicy *) {};
+		virtual void visitVarPolicy(VarPolicy *) {};
 };
 
 #endif	/* _RULEEDITORFILLTABLEVISITOR_H_ */

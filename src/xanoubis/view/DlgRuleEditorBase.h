@@ -40,18 +40,19 @@
 #include <wx/font.h>
 #include <wx/colour.h>
 #include <wx/settings.h>
-#include <wx/button.h>
 #include <wx/choice.h>
-#include <wx/textctrl.h>
+#include <wx/button.h>
 #include <wx/sizer.h>
 #include <wx/listctrl.h>
-#include <wx/radiobut.h>
-#include <wx/spinctrl.h>
-#include <wx/statbox.h>
+#include <wx/textctrl.h>
 #include <wx/scrolwin.h>
 #include <wx/bitmap.h>
 #include <wx/image.h>
 #include <wx/notebook.h>
+#include <wx/radiobut.h>
+#include <wx/spinctrl.h>
+#include <wx/radiobox.h>
+#include <wx/checkbox.h>
 #include <wx/frame.h>
 
 ///////////////////////////////////////////////////////////////////////////
@@ -65,143 +66,163 @@ class DlgRuleEditorBase : public wxFrame
 	private:
 	
 	protected:
-		wxStaticText* controlRuleSetText;
-		wxStaticText* controlRuleSetStatusText;
-		wxStaticText* controlRuleSetText2;
-		wxButton* controlRuleSetSaveButton;
-		wxStaticText* controlRuleText;
-		wxBoxSizer* controlRuleSizer;
-		wxChoice* controlCreationChoice;
-		wxButton* controlRuleCreateButton;
-		wxStaticText* controlUserLabel;
-		wxChoice* controlUserChoice;
+		wxStaticText* appListTypeLabel;
+		wxChoice* appListTypeChoice;
+		wxButton* appListCreateButton;
 		
-		wxStaticText* controlFilterText;
-		wxTextCtrl* controlFilterTextCtrl;
-		wxStaticText* controlFilterInText;
-		wxChoice* controlFilterChoice;
-		wxStaticText* controlRuleText1;
-		wxButton* controlRuleDeleteButton;
-		wxListCtrl* ruleListCtrl;
-		wxNotebook* ruleEditNotebook;
-		wxScrolledWindow* commonNbPanel;
-		wxStaticText* commonModuleText;
-		wxChoice* commonModuleChoice;
-		wxStaticText* commonStateText;
-		wxRadioButton* commonActiveRadioButton;
-		wxRadioButton* commonDeactiveRadioButton;
-		wxStaticText* commonNameText;
-		wxTextCtrl* commonNameTextCtrl;
-		wxStaticText* commonPriorityText;
-		wxSpinCtrl* commonPrioritySpinCtrl;
-		wxStaticText* commonFaderText;
-		wxRadioButton* commonHighProfileRadioButton;
+		wxButton* appListColumnsButton;
+		wxListCtrl* appPolicyListCtrl;
 		
-		wxRadioButton* commonMediumProfileRadioButton;
+		wxStaticText* appListPolicyLabel;
+		wxStaticText* appListPolicyText;
+		wxButton* appListUpButton;
+		wxButton* appListDownButton;
+		wxButton* appListDeleteButton;
+		wxStaticText* filterListTypeLabel;
+		wxChoice* filterListTypeChoice;
+		wxButton* filterListCreateButton;
 		
-		wxRadioButton* commonAdminProfileRadioButton;
-		wxStaticText* commonCommentText;
-		wxTextCtrl* commonCommentTextCtrl;
-		wxRadioButton* commonNoneLogRadioButton;
-		wxRadioButton* commonDoLogRadioButton;
-		wxRadioButton* commonAlertLogRadioButton;
-		wxScrolledWindow* applicationNbPanel;
-		wxStaticText* appBinaryText;
+		wxButton* filterListColumnsButton;
+		wxListCtrl* filterPolicyListCtrl;
+		
+		wxStaticText* filterListPolicyLabel;
+		wxStaticText* filterListPolicyText;
+		wxButton* filterListUpButton;
+		wxButton* filterListDownButton;
+		wxButton* filterListDeleteButton;
+		wxNotebook* appPolicyPanels;
+		wxScrolledWindow* appBinaryPage;
+		wxStaticText* appBinaryLabel;
 		wxTextCtrl* appBinaryTextCtrl;
 		wxButton* appBinaryModifyButton;
-		wxStaticText* appRegisteredSumLabelText;
-		wxStaticText* appRegisteredSumValueText;
+		wxStaticText* appBinaryCsumRegLabel;
+		wxStaticText* appBinaryCsumRegText;
+		wxStaticText* appBinaryCsumCurLabel;
+		wxStaticText* appBinaryCsumCurText;
+		wxStaticText* appBinaryStatusLabel;
+		wxStaticText* appBinaryStatusText;
+		wxButton* appBinaryValidateButton;
+		wxButton* appBinaryUpdateButton;
+		wxNotebook* filterPolicyPanels;
+		wxScrolledWindow* filterCommonPage;
+		wxStaticText* filterCommonActionText;
+		wxRadioButton* filterCommonAllowRadioButton;
+		wxRadioButton* filterCommonDenyRadioButton;
+		wxRadioButton* filterCommonAskRadioButton;
+		wxStaticText* filterCommonLogText;
+		wxRadioButton* filterCommonLogNoneRadioButton;
+		wxRadioButton* filterCommonLogNormalRadioButton;
+		wxRadioButton* filterCommonLogAlertRadioButton;
+		wxScrolledWindow* filterNetworkPage;
+		wxStaticText* filterNetworkDirectionLabel;
+		wxRadioButton* filterNetworkInRadioButton;
+		wxRadioButton* filterNetworkOutRadionButton;
+		wxRadioButton* filterNetworkBothRadioButton;
+		wxStaticText* filterNetworkAddrFamilyLabel;
+		wxRadioButton* filterNetworkInetRadioButton;
+		wxRadioButton* filterNetworkInet6RadioButton;
+		wxRadioButton* filterNetworkAnyRadioButton;
+		wxStaticText* filterNetworkProtocolLabel;
+		wxRadioButton* filterNetworkTcpRadioButton;
+		wxRadioButton* filterNetworkUdpRadioButton;
+		
+		wxStaticText* filterNetworkStateTimeoutLabel;
+		wxSpinCtrl* filterNetworkStateTimeoutSpinCtrl;
+		wxScrolledWindow* filterAddressPage;
+		wxFlexGridSizer* filterAddressMainSizer;
+		wxStaticText* filterAddressSourceLabel;
+		wxTextCtrl* filterAddressSourceTextCtrl;
+		wxStaticText* filterAddressSourceDelimiterLabel;
+		wxSpinCtrl* filterAddressSoruceNetSpinCtrl;
+		wxStaticText* filterAddressSourcePortLabel;
+		wxTextCtrl* filterAddressSorucePortTextCtrl;
+		
+		
+		wxStaticText* filterAddressDestinationLabel;
+		wxTextCtrl* filterAddressDestinationTextCtrl;
+		wxStaticText* filterAddressDestinationDelimiterLabel;
+		wxSpinCtrl* filterAddressDestinationNetSpinCtrl;
+		wxStaticText* filterAddressDestinationPortLabel;
+		wxTextCtrl* filterAddressDestinationPortTextCtrl;
+		wxScrolledWindow* filterCapabilityPage;
+		wxStaticText* filterCapabilityLabel;
+		wxRadioButton* filterCapabilityRawRadioButton;
+		wxRadioButton* filterCapabilityOtherRadioButton;
+		wxRadioButton* filterCapabilityAllRadioButton;
+		wxScrolledWindow* filterSubjectPage;
+		wxStaticText* filterSubjectPathLabel;
+		wxTextCtrl* filterSubjectPathTextCtrl;
+		wxButton* filterSubjectPathModifyButton;
+		wxStaticText* filterSubjectLabel;
+		wxRadioButton* filterSubjectAnyRadioButton;
+		
+		
+		wxRadioButton* filterSubjectSelfRadioButton;
+		
+		
+		wxRadioButton* filterSubjectSelfSignedRadioButton;
+		
+		
+		wxRadioButton* filterSubjectUidRadioButton;
+		wxTextCtrl* filterSubjectUidTextCtrl;
+		
+		
+		wxRadioButton* filterSubjectKeyLRadioButton;
+		wxTextCtrl* filterSubjectKeyTextCtrl;
+		
+		
+		wxRadioButton* filterSubjectCsumRadioButton;
+		wxTextCtrl* filterSubjectCsumTextCtrl;
+		wxScrolledWindow* filterSfsPage;
+		wxStaticText* filterSfsValidLabel;
 		
 		
 		
-		wxStaticText* appCurrentSumLabelText;
-		wxStaticText* appCurrentSumValueText;
-		wxStaticText* appStatusLabelText;
-		wxStaticText* appStatusValueText;
-		wxButton* appValidateChkSumButton;
-		wxButton* appUpdateChkSumButton;
-		wxScrolledWindow* alfNbPanel;
-		wxStaticText* alfActionText;
-		wxRadioButton* alfAllowRadioButton;
-		wxRadioButton* alfDenyRadioButton;
-		wxRadioButton* alfAskRadioButton;
-		wxStaticText* alfTypeText;
-		wxRadioButton* alfFilterRadioButton;
-		wxRadioButton* alfCapRadioButton;
-		wxRadioButton* alfDefaultRadioButton;
-		wxStaticText* alfProtocolText;
-		wxRadioButton* alfTcpRadioButton;
-		wxRadioButton* alfUdpRadioButton;
-		
-		wxStaticText* alfAddrFamilyText;
-		wxRadioButton* alfInetRadioButton;
-		wxRadioButton* alfInet6RadioButton;
-		wxRadioButton* alfAnyRadioButton;
-		wxStaticText* alfCapText;
-		wxRadioButton* alfRawCapRadioButton;
-		wxRadioButton* alfOtherCapRadioButton;
-		wxRadioButton* alfAllCapRadioButton;
-		wxStaticText* alfDirectionText;
-		wxRadioButton* alfAcceptRadioButton;
-		wxRadioButton* alfConnectRadioButton;
-		wxRadioButton* alfBothRadioButton;
-		wxFlexGridSizer* alfConnectAddrSizer;
-		wxStaticText* alfSrcAddrText;
-		wxTextCtrl* alfSrcAddrTextCtrl;
-		wxStaticText* alfSrcAddrDelimiterText;
-		wxSpinCtrl* alfSrcAddrNetSpinCtrl;
-		wxButton* alfSrcAddrDelButton;
-		wxButton* alfSrcAddrAddButton;
-		wxStaticText* alfDstAddrText;
-		wxTextCtrl* alfDstAddrTextCtrl;
-		wxStaticText* alfDstAddrDelimiterText;
-		wxSpinCtrl* alfDstAddrNetSpinCtrl;
-		wxButton* alfDstAddrDelButton;
-		wxButton* alfDstAddrAddButton;
-		wxStaticText* alfSrcPortText;
-		wxTextCtrl* alfSrcPortTextCtrl;
+		wxRadioBox* filterSfsValidActionRadioBox;
+		wxRadioBox* filterSfsValidLogRadioBox;
+		wxStaticText* filterSfsInvalidLabel;
 		
 		
 		
-		
-		wxStaticText* alfDstPortText;
-		wxTextCtrl* alfDstPortTextCtrl;
-		
-		
+		wxRadioBox* filterSfsInvalidActionRadioBox;
+		wxRadioBox* filterSfsInvalidLogRadioBox;
+		wxStaticText* filterSfsUnknownLabel;
 		
 		
-		wxStaticText* alfStateTimeoutText;
-		wxSpinCtrl* alfStateTimeoutSpinCtrl;
-		wxScrolledWindow* sfsNbPanel;
-		wxStaticText* sfsBinaryLabelText;
-		wxTextCtrl* sfsBinaryTextCtrl;
-		wxButton* sfsBinaryModifyButton;
 		
-		wxStaticText* sfsRegisteredSumLabelText;
-		wxStaticText* sfsRegisteredSumValueText;
+		wxRadioBox* filterSfsUnknownActionRadioBox;
+		wxRadioBox* filterSfsUnknownLogRadioBox;
+		wxScrolledWindow* filterContextPage;
+		wxStaticText* filterContextTypeLabel;
+		wxRadioButton* filterContextNewRadioButton;
+		wxRadioButton* filterContextOpenRadioButton;
 		
 		
-		wxStaticText* sfsCurrentSumLabelText;
-		wxStaticText* sfsCurrentSumValueText;
+		wxStaticText* filterContextBinaryLabel;
+		wxTextCtrl* filterContextBinaryTextCtrl;
+		wxButton* filterContextBinaryModifyButton;
+		wxStaticText* filterContextCsumRegLabel;
+		wxStaticText* filterContextCsumRegText;
+		wxStaticText* filterContextCsumCurLabel;
+		wxStaticText* filterContextCsumCurText;
+		wxStaticText* filterContextStatusLabel;
+		wxStaticText* filterContextStatusText;
+		wxButton* filterContextValidateButton;
+		wxButton* filterContextUpdateButton;
+		wxScrolledWindow* filterPermissionPage;
+		wxStaticText* filterPermissionLabel;
+		wxCheckBox* filterPermissionReadCheckBox;
+		wxCheckBox* filterPermissionWriteCheckBox;
+		wxCheckBox* filterPermissionExecuteCheckBox;
+		wxStaticText* mainFooterRuleSetLabel;
+		wxStaticText* mainFooterRuleSetText;
+		wxButton* mainFooterReloadButton;
 		
-		
-		wxStaticText* sfsStatusLabelText;
-		wxStaticText* sfsStatusValueText;
-		wxButton* sfsValidateChkSumButton;
-		wxButton* sfsUpdateChkSumButton;
+		wxStaticText* mainFooterStatusLabel;
+		wxStaticText* mainFooterStatusText;
+		wxButton* mainFooterSaveButton;
 		
 		// Virtual event handlers, overide them in your derived class
-		virtual void OnClose( wxCloseEvent& event ){ event.Skip(); }
-		virtual void OnRuleSetSave( wxCommandEvent& event ){ event.Skip(); }
-		virtual void OnRuleCreateButton( wxCommandEvent& event ){ event.Skip(); }
-		virtual void OnRuleDeleteButton( wxCommandEvent& event ){ event.Skip(); }
-		virtual void OnLineSelected( wxListEvent& event ){ event.Skip(); }
-		virtual void OnCommonHighProfileButton( wxCommandEvent& event ){ event.Skip(); }
-		virtual void OnCommonMediumProfileButton( wxCommandEvent& event ){ event.Skip(); }
-		virtual void OnCommonAdminProfileButton( wxCommandEvent& event ){ event.Skip(); }
-		virtual void OnCommonLogNone( wxCommandEvent& event ){ event.Skip(); }
-		virtual void OnCommonLogLog( wxCommandEvent& event ){ event.Skip(); }
-		virtual void OnCommonLogAlert( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnAppBinaryTextCtrl( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnAppBinaryModifyButton( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnAppValidateChkSumButton( wxCommandEvent& event ){ event.Skip(); }
@@ -212,34 +233,24 @@ class DlgRuleEditorBase : public wxFrame
 		virtual void OnAlfFilterRadioButton( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnAlfCapRadioButton( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnAlfDefaultRadioButton( wxCommandEvent& event ){ event.Skip(); }
-		virtual void OnAlfTcpRadioButton( wxCommandEvent& event ){ event.Skip(); }
-		virtual void OnAlfUdpRadioButton( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnAlfAcceptRadioButton( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnAlfConnectRadioButton( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnAlfInetRadioButton( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnAlfInet6RadioButton( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnAlfAnyRadioButton( wxCommandEvent& event ){ event.Skip(); }
-		virtual void OnAlfRawCapRadioButton( wxCommandEvent& event ){ event.Skip(); }
-		virtual void OnAlfOtherCapRadioButton( wxCommandEvent& event ){ event.Skip(); }
-		virtual void OnAlfAllCapRadioButton( wxCommandEvent& event ){ event.Skip(); }
-		virtual void OnAlfAcceptRadioButton( wxCommandEvent& event ){ event.Skip(); }
-		virtual void OnAlfConnectRadioButton( wxCommandEvent& event ){ event.Skip(); }
-		virtual void OnAlfBothRadioButton( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnAlfTcpRadioButton( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnAlfUdpRadioButton( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnAlfStateTimeoutChange( wxSpinEvent& event ){ event.Skip(); }
 		virtual void onAlfSrcAddrTextCtrlEnter( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnAlfSrcNetmaskSpinCtrl( wxSpinEvent& event ){ event.Skip(); }
-		virtual void OnSrcAddrAddButton( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onAlfSrcPortTextCtrlEnter( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onAlfDstAddrTextCtrlEnter( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnAlfDstNetmaskSpinCtrl( wxSpinEvent& event ){ event.Skip(); }
-		virtual void OnDstAddrAddButton( wxCommandEvent& event ){ event.Skip(); }
-		virtual void onAlfSrcPortTextCtrlEnter( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onAlfDstPortTextCtrlEnter( wxCommandEvent& event ){ event.Skip(); }
-		virtual void OnAlfStateTimeoutChange( wxSpinEvent& event ){ event.Skip(); }
-		virtual void OnSfsBinaryTextCtrl( wxCommandEvent& event ){ event.Skip(); }
-		virtual void OnSfsBinaryModifyButton( wxCommandEvent& event ){ event.Skip(); }
-		virtual void OnSfsValidateChkSumButton( wxCommandEvent& event ){ event.Skip(); }
-		virtual void OnSfsUpdateChkSumButton( wxCommandEvent& event ){ event.Skip(); }
 		
 	
 	public:
-		DlgRuleEditorBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Anoubis Rule Editor"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( -1,-1 ), long style = wxDEFAULT_FRAME_STYLE|wxTAB_TRAVERSAL );
+		DlgRuleEditorBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Anoubis Rule Editor"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 1000,700 ), long style = wxDEFAULT_FRAME_STYLE|wxTAB_TRAVERSAL );
 	
 };
 

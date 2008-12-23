@@ -35,7 +35,10 @@ class RuleEditorFillWidgetsVisitor : public PolicyVisitor
 {
 	private:
 		DlgRuleEditor	*ruleEditor_;
-
+		/*
+		 *
+		 * XXX ch: this will be fixed with the next functionality change
+		 *
 		void clear(void);
 		void showAction(int);
 		void showLog(int);
@@ -48,16 +51,19 @@ class RuleEditorFillWidgetsVisitor : public PolicyVisitor
 		void showDstPort(wxString);
 		void showDirection(int);
 		void showUser(uid_t);
-
+		*/
 	public:
 		RuleEditorFillWidgetsVisitor(DlgRuleEditor *);
 		~RuleEditorFillWidgetsVisitor(void);
 
-		virtual void visitAppPolicy(AppPolicy *);
-		virtual void visitAlfPolicy(AlfPolicy *);
-		virtual void visitCtxPolicy(CtxPolicy *);
-		virtual void visitSfsPolicy(SfsPolicy *);
-		virtual void visitVarPolicy(VarPolicy *);
+/*
+ * XXX ch: this will be fixed with the next functionality change
+ */
+		virtual void visitAppPolicy(AppPolicy *) {};
+		virtual void visitAlfPolicy(AlfPolicy *) {};
+		virtual void visitCtxPolicy(CtxPolicy *) {};
+		virtual void visitSfsPolicy(SfsPolicy *) {};
+		virtual void visitVarPolicy(VarPolicy *) {};
 };
 
 #endif	/* _RULEEDITORFILLWIDGETSVISITOR_H_ */

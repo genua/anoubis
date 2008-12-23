@@ -45,6 +45,10 @@ RuleEditorFillWidgetsVisitor::~RuleEditorFillWidgetsVisitor(void)
 {
 }
 
+/*
+ * XXX ch: this will be fixed with the next functionality change
+ */
+#if 0
 void
 RuleEditorFillWidgetsVisitor::clear(void)
 {
@@ -596,3 +600,4 @@ RuleEditorFillWidgetsVisitor::visitVarPolicy(VarPolicy*)
 	ruleEditor_->alfNbPanel->Disable();
 	ruleEditor_->sfsNbPanel->Enable();
 }
+#endif

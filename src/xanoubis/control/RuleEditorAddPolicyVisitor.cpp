@@ -38,6 +38,10 @@ RuleEditorAddPolicyVisitor::~RuleEditorAddPolicyVisitor(void)
 {
 }
 
+/*
+ * XXX ch: this will be fixed with the next functionality change
+ */
+#if 0
 long
 RuleEditorAddPolicyVisitor::appendPolicy(Policy *policy)
 {
@@ -102,3 +106,4 @@ RuleEditorAddPolicyVisitor::visitVarPolicy(VarPolicy *variable)
 {
 	 showVar(variable, appendPolicy(variable));
 }
+#endif

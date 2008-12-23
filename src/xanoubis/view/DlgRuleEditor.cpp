@@ -25,6 +25,24 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "DlgRuleEditor.h"
+
+DlgRuleEditor::DlgRuleEditor(wxWindow* parent) : DlgRuleEditorBase(parent)
+{
+	AnEvents::getInstance()->Connect(anEVT_RULEEDITOR_SHOW,
+	    wxCommandEventHandler(DlgRuleEditor::OnShow), NULL, this);
+
+}
+
+DlgRuleEditor::~DlgRuleEditor(void)
+{
+
+}
+
+/*
+ * XXX ch: this will be fixed with the next functionality change
+ */
+#if 0
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -994,6 +1012,7 @@ DlgRuleEditor::OnSfsValidateChkSumButton(wxCommandEvent& )
 	}
 
 }
+#endif
 
 void
 DlgRuleEditor::OnShow(wxCommandEvent& event)
@@ -1002,6 +1021,10 @@ DlgRuleEditor::OnShow(wxCommandEvent& event)
 	event.Skip();
 }
 
+/*
+ * XXX ch: this will be fixed with the next functionality change
+ */
+#if 0
 void
 DlgRuleEditor::OnRuleSetSave(wxCommandEvent& )
 {
@@ -1573,3 +1596,5 @@ DlgRuleEditor::modified(void)
 }
 
 ANEVENTS_IDENT_BCAST_METHOD_DEFINITION(DlgRuleEditor)
+
+#endif
