@@ -351,9 +351,14 @@ MainFrame::OnMbFileImportSelect(wxCommandEvent&)
 	wxString	defaultFilename = wxEmptyString;
 	wxFileDialog	fileDlg(NULL, caption, defaultDir, defaultFilename,
 			    wildcard, wxOPEN);
+	ProfileCtrl	*profileCtrl = ProfileCtrl::getInstance();
 
 	if (fileDlg.ShowModal() == wxID_OK) {
-		ProfileCtrl::getInstance()->importFromFile(fileDlg.GetPath());
+		if (!profileCtrl->importFromFile(fileDlg.GetPath())) {
+			wxMessageBox(
+			    _("Couldn't import policy file: it has errors."),
+			    _("Error"), wxICON_ERROR);
+		}
 	}
 }
 

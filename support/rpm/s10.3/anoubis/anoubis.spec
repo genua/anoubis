@@ -107,8 +107,8 @@ rm -fr $RPM_BUILD_ROOT%{_mandir}/man3
 mkdir -p $RPM_BUILD_ROOT%{_datadir}/{pixmaps,xanoubis}
 install -p $RPM_BUILD_ROOT%{_datadir}/xanoubis/icons/xanoubis.png \
 	$RPM_BUILD_ROOT%{_datadir}/pixmaps
-install -p $RPM_BUILD_ROOT%{_datadir}/applications/xanoubis.desktop \
-	$RPM_BUILD_ROOT%{_datadir}/xanoubis
+install -p $RPM_BUILD_ROOT%{_datadir}/xanoubis/xanoubis.desktop \
+	$RPM_BUILD_ROOT%{_datadir}/applications
 
 %clean
 [ "$RPM_BUILD_ROOT" != "/" ] && [ -d $RPM_BUILD_ROOT ] \

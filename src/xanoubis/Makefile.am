@@ -95,7 +95,7 @@ catalogdir = $(datadir)/$(bin_PROGRAMS)/catalogs/de
 utildir = $(datadir)/$(bin_PROGRAMS)/utils
 icondir = $(datadir)/$(bin_PROGRAMS)/icons
 profiledir = $(datadir)/$(bin_PROGRAMS)/profiles
-desktopdir = $(datadir)/applications
+desktopdir = $(datadir)/$(bin_PROGRAMS)
 
 dist_catalog_DATA = \
 	catalogs/de/xanoubis.mo \

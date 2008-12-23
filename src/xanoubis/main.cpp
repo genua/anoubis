@@ -344,7 +344,8 @@ AnoubisGuiApp::connectCommunicator(bool doConnect)
 void
 AnoubisGuiApp::autoStart(bool autostart)
 {
-	wxString deskFile = paths_.GetDataDir() + wxT("/xanoubis.desktop");
+	wxString deskFile = wxStandardPaths::Get().GetDataDir() +
+	    wxT("/xanoubis.desktop");
 	wxString kPath = paths_.GetUserConfigDir() + wxT("/.kde/Autostart");
 	wxString gPath = paths_.GetUserConfigDir() + wxT("/.config/autostart");
 	wxString kAutoFile = kPath + wxT("/xanoubis.desktop");
