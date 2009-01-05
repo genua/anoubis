@@ -58,6 +58,9 @@ static struct event	__log_event;
 static Queue		__eventq_log;
 static int		__logging = 0;
 
+extern char	*__progname;
+static int	 terminate = 0;
+
 static void
 dispatch_log_write(int fd __used, short event __used, void *arg __used)
 {
@@ -90,6 +93,7 @@ void
 flush_log_queue(void)
 {
 	anoubisd_msg_t		*msg;
+	openlog(__progname, LOG_PID, LOG_DAEMON);
 	while ((msg = dequeue(&__eventq_log))) {
 		syslog(msg->mtype, "%s", msg->msg);
 		free(msg);
@@ -280,9 +284,6 @@ void dispatch_log_read(int fd, short sig __used, void *arg)
 		event_del(arg);
 	__logging = 0;
 }
-
-extern char	*__progname;
-static int	 terminate = 0;
 
 static void
 logger_sighandler(int sig __used, short event __used, void *arg)
