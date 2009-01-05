@@ -286,8 +286,7 @@ dispatch_timer(int sig __used, short event __used, void *arg)
 
 	DEBUG(DBG_TRACE, ">dispatch_timer");
 
-	qep_cur = queue_head(&replyq);
-	while(qep_cur) {
+	for(qep_cur = queue_head(&replyq); qep_cur; qep_cur = qep_next) {
 		qep_next = queue_walk(&replyq, qep_cur);
 
 		msg_wait = qep_cur->entry;

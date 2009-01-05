@@ -745,6 +745,10 @@ dispatch_m2s(int fd, short sig __used, void *arg)
 		set_value(m->u.notify->csumlen, 0);
 		set_value(m->u.notify->pathoff, 0);
 		set_value(m->u.notify->pathlen, 0);
+		set_value(m->u.notify->ctxcsumoff, 0);
+		set_value(m->u.notify->ctxcsumlen, 0);
+		set_value(m->u.notify->ctxpathoff, 0);
+		set_value(m->u.notify->ctxpathlen, 0);
 		set_value(m->u.notify->evoff, 0);
 		set_value(m->u.notify->evlen, extra);
 		memcpy(m->u.notify->payload, &hdr[1], extra);

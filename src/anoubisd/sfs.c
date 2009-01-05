@@ -334,7 +334,7 @@ __sfs_checksumop(const char *path, unsigned int operation, uid_t uid,
 			ret = -EINVAL;
 			goto out;
 		}
-		if ((sigfile = anoubis_sig_key2char(idlen, md)) != NULL) {
+		if ((sigfile = anoubis_sig_key2char(idlen, md)) == NULL) {
 			ret = -ENOMEM;
 			goto out;
 		}
