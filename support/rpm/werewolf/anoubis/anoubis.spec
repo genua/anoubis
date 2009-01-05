@@ -104,7 +104,7 @@ rm -f  $RPM_BUILD_ROOT%{_libdir}/*.a
 rm -fr $RPM_BUILD_ROOT%{_mandir}/man3
 
 # install and register desktop icon and file
-mkdir -p $RPM_BUILD_ROOT%{_datadir}/{pixmaps,xanoubis}
+mkdir -p $RPM_BUILD_ROOT%{_datadir}/{applications,pixmaps,xanoubis}
 install -p $RPM_BUILD_ROOT%{_datadir}/xanoubis/icons/xanoubis.png \
 	$RPM_BUILD_ROOT%{_datadir}/pixmaps
 install -p $RPM_BUILD_ROOT%{_datadir}/xanoubis/xanoubis.desktop \

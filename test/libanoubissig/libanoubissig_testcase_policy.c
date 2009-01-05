@@ -176,7 +176,7 @@ START_TEST(sign_and_verify_policy_match_tc)
 
 	/* To simulate the anoubisd behavior we now writing the signature
 	 * to a file named policy.sig */
-	fd = open(polsig, O_WRONLY | O_CREAT);
+	fd = open(polsig, O_WRONLY | O_CREAT, 0600);
 	fail_if(fd == -1, "Could not open file %s", polsig);
 
 	while(n < len) {
@@ -219,7 +219,7 @@ START_TEST(sign_and_verify_policy_mismatch_tc)
 
 	/* To simulate the anoubisd behavior we now writing the signature
 	 * to a file named policy.sig */
-	fd = open(polsig, O_WRONLY | O_CREAT);
+	fd = open(polsig, O_WRONLY | O_CREAT, 0600);
 	fail_if(fd == -1, "Could not open file %s", polsig);
 
 	/* Now playing around with sign to simulate a wrong sig file */
