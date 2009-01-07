@@ -37,7 +37,7 @@ anoubischeckdir = test/libanoubischeck
 libanoubischeck = $(top_builddir)/$(anoubischeckdir)/libanoubischeck.a
 
 # set TESTS_ENVIRONMENT for checks
-RPATH = $(top_builddir)/$(apnvmdir):$(top_builddir)/$(bsdcompatdir)
+RPATH = $(top_builddir)/$(apnvmdir):$(top_builddir)/$(bsdcompatdir):$(top_builddir)/$(libapndir)
 TESTS_ENVIRONMENT = LD_LIBRARY_PATH=$(RPATH)
 
 noinst_HEADERS = apnvm_tc_fixtures.h

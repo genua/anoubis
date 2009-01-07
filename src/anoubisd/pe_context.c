@@ -300,7 +300,7 @@ pe_context_fork(struct pe_proc *proc, struct pe_proc *parent)
 	}
 
 	DEBUG(DBG_PE_CTX, "pe_context_fork: parent %p 0x%08llx", parent,
-	    pe_proc_task_cookie(parent));
+	    (unsigned long long)pe_proc_task_cookie(parent));
 	for (i = 0; i < PE_PRIO_MAX; i++) {
 		struct pe_context	*ctx = pe_proc_get_context(parent, i);
 		if (ctx) {
@@ -309,7 +309,8 @@ pe_context_fork(struct pe_proc *proc, struct pe_proc *parent)
 		}
 		DEBUG(DBG_PE_CTX, "pe_context_fork: parent %p "
 		    "0x%08llx has no context at prio %d",
-		    parent, pe_proc_task_cookie(parent),  i);
+		    parent, (unsigned long long)pe_proc_task_cookie(parent),
+		    i);
 		pe_context_switch(proc, i, pe_proc_ident(proc),
 		    pe_proc_get_uid(proc));
 	}
@@ -336,7 +337,7 @@ pe_context_switch(struct pe_proc *proc, int prio,
 	pe_proc_set_context(proc, prio, tmpctx);
 	DEBUG(DBG_PE_CTX, "pe_context_switch: proc %p 0x%08llx prio %d "
 	    "got context %p alfrule %p sbrule %p ctxrule %p", proc,
-	    pe_proc_task_cookie(proc), prio, tmpctx,
+	    (unsigned long long)pe_proc_task_cookie(proc), prio, tmpctx,
 	    tmpctx ? tmpctx->alfrule : NULL,tmpctx ? tmpctx->sbrule : NULL,
 	    tmpctx ? tmpctx->ctxrule : NULL);
 	/*

@@ -438,7 +438,7 @@ ProfileCtrl::OnPolicySend(TaskEvent &event)
 		return;
 	}
 
-	isAdmin = (geteuid == 0);
+	isAdmin = (geteuid() == 0);
 	taskResult = task->getComTaskResult();
 	user = wxGetApp().getUserNameById(task->getUid());
 

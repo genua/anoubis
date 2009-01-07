@@ -151,7 +151,8 @@ pe_proc_get(anoubis_cookie_t cookie)
 	}
 	if (proc) {
 		DEBUG(DBG_PE_TRACKER, "pe_proc_get: proc %p pid %d cookie "
-		    "0x%08llx", proc, (int)proc->pid, proc->task_cookie);
+		    "0x%08llx", proc, (int)proc->pid,
+		    (unsigned long long)proc->task_cookie);
 		proc->refcount++;
 	}
 	return (proc);
@@ -193,7 +194,7 @@ pe_proc_alloc(uid_t uid, anoubis_cookie_t cookie, struct pe_proc_ident *pident)
 	if (pident)
 		pe_proc_ident_set(&proc->ident, pident->csum, pident->pathhint);
 	DEBUG(DBG_PE_TRACKER, "pe_proc_alloc: proc %p uid %u cookie 0x%08llx ",
-	    proc, uid, proc->task_cookie);
+	    proc, uid, (unsigned long long)proc->task_cookie);
 
 	return (proc);
 oom:
@@ -210,7 +211,7 @@ pe_proc_track(struct pe_proc *proc)
 		return;
 	}
 	DEBUG(DBG_PE_TRACKER, "pe_proc_track: proc %p cookie 0x%08llx",
-	    proc, proc->task_cookie);
+	    proc, (unsigned long long)proc->task_cookie);
 	proc->refcount++;
 	TAILQ_INSERT_TAIL(&tracker, proc, entry);
 }
@@ -302,7 +303,7 @@ pe_proc_dump(void)
 		ctx1 = proc->context[1];
 		log_info("proc %p token 0x%08llx pid %d csum 0x%08x "
 		    "pathhint \"%s\" ctx %p %p alfrules %p %p sbrules %p %p",
-		    proc, proc->task_cookie, (int)proc->pid,
+		    proc, (unsigned long long)proc->task_cookie, (int)proc->pid,
 		    proc->ident.csum ?
 		    htonl(*(unsigned long *)proc->ident.csum) : 0,
 		    proc->ident.pathhint ? proc->ident.pathhint : "",
@@ -328,10 +329,10 @@ pe_proc_fork(uid_t uid, anoubis_cookie_t child, anoubis_cookie_t parent_cookie)
 	pe_context_fork(proc, parent);
 	DEBUG(DBG_PE_PROC, "pe_proc_fork: token 0x%08llx pid %d "
 	    "uid %u proc %p csum 0x%08x... parent token 0x%08llx",
-	    child, proc->pid, uid, proc,
+	    (unsigned long long)child, proc->pid, uid, proc,
 	    proc->ident.csum ?
 	    htonl(*(unsigned long *)proc->ident.csum) : 0,
-	    parent_cookie);
+	    (unsigned long long)parent_cookie);
 	pe_proc_put(parent);
 	pe_proc_put(proc);
 }
@@ -348,7 +349,8 @@ void pe_proc_exit(anoubis_cookie_t cookie)
 		return;
 	pe_proc_untrack(proc);
 	DEBUG(DBG_PE_PROC, "pe_proc_exit: token 0x%08llx pid %d "
-	    "uid %u proc %p", cookie, proc->pid, proc->uid, proc);
+	    "uid %u proc %p", (unsigned long long)cookie, proc->pid, proc->uid,
+	    proc);
 	pe_proc_put(proc);
 }
 
@@ -364,7 +366,8 @@ void pe_proc_exec(anoubis_cookie_t cookie, uid_t uid, pid_t pid,
 	if (proc == NULL) {
 		/* Previously untracked process. Track it. */
 		DEBUG(DBG_PE_PROC, "pe_proc_exec: untracked "
-		    "process %u 0x%08llx execs", pid, cookie);
+		    "process %u 0x%08llx execs", pid,
+		    (unsigned long long)cookie);
 		proc = pe_proc_alloc(uid, cookie, NULL);
 		pe_proc_track(proc);
 	}
@@ -463,7 +466,7 @@ pe_proc_set_sfsdisable(pid_t pid, uid_t uid)
 	TAILQ_FOREACH(proc, &tracker, entry) {
 		DEBUG(DBG_PE_TRACKER, "pe_proc_set_sfsdisable: Trying proc %p "
 		    "pid %d cookie 0x%08llx", proc, (int)proc->pid,
-		    proc->task_cookie);
+		    (unsigned long long)proc->task_cookie);
 		if (proc->sfsdisable_uid != (uid_t)-1)
 			continue;
 		if (proc->uid != uid)
@@ -471,7 +474,8 @@ pe_proc_set_sfsdisable(pid_t pid, uid_t uid)
 		if (proc->pid != (pid_t)-1 && proc->pid != pid)
 			continue;
 		DEBUG(DBG_PE_TRACKER, "pe_proc_set_sfsdisable: proc %p pid %d "
-		    "cookie 0x%08llx", proc, (int)proc->pid, proc->task_cookie);
+		    "cookie 0x%08llx", proc, (int)proc->pid,
+		    (unsigned long long)proc->task_cookie);
 		proc->sfsdisable_pid = pid;
 		proc->sfsdisable_uid = uid;
 		found = 1;
