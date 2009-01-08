@@ -138,9 +138,17 @@ START_TEST(vm_tc_count)
 	vmrc = apnvm_prepare(vm);
 	fail_if(vmrc != APNVM_OK, "Failed to prepare library");
 
-	vmrc = apnvm_count(vm, "user2", &count);
+	vmrc = apnvm_count(vm, "user2", "xxx", &count);
+	fail_if(vmrc != APNVM_OK, "Count operation failed");
+	fail_if(count != 1, "Unexpected number of versions: %i", count);
+
+	vmrc = apnvm_count(vm, "user2", "yyy", &count);
 	fail_if(vmrc != APNVM_OK, "Count operation failed");
 	fail_if(count != 3, "Unexpected number of versions: %i", count);
+
+	vmrc = apnvm_count(vm, "user2", "zzz", &count);
+	fail_if(vmrc != APNVM_OK, "Count operation failed");
+	fail_if(count != 1, "Unexpected number of versions: %i", count);
 
 	apnvm_destroy(vm);
 }
@@ -158,7 +166,7 @@ START_TEST(vm_tc_count_unknown_user)
 	vmrc = apnvm_prepare(vm);
 	fail_if(vmrc != APNVM_OK, "Failed to prepare library");
 
-	vmrc = apnvm_count(vm, "blablub", &count);
+	vmrc = apnvm_count(vm, "blablub", "active", &count);
 	fail_if(vmrc != APNVM_OK, "Count operation failed");
 	fail_if(count != 0, "Unexpected number of versions: %i", count);
 
@@ -177,12 +185,25 @@ START_TEST(vm_tc_count_nullcount)
 	vmrc = apnvm_prepare(vm);
 	fail_if(vmrc != APNVM_OK, "Failed to prepare library");
 
-	vmrc = apnvm_count(vm, "user2", NULL);
+	vmrc = apnvm_count(vm, "user2", "active", NULL);
 	fail_if(vmrc != APNVM_ARG, "Count operation failed");
 
 	apnvm_destroy(vm);
 }
 END_TEST
+
+struct profile_version	{
+	const char	*name;
+	const int	 revs[10];
+};
+
+static struct profile_version	vm_tc_list_versions[] = {
+	{ "xxx", { 1, -1, } },
+	{ "yyy", { 3, 2, 1, -1, } },
+	{ "zzz", { 3, -1, } },
+	{ "active", { -1, } },
+	{ NULL, { -1 } },
+};
 
 START_TEST(vm_tc_list)
 {
@@ -191,6 +212,8 @@ START_TEST(vm_tc_list)
 	struct apnvm_version_head	version_head;
 	struct apnvm_version		*version;
 	int				exp_num;
+	int				i, j, cnt;
+
 
 	vm = apnvm_init(apnvm_cvsroot, apnvm_user);
 	fail_if(vm == NULL, "Initialization of apnvm failed");
@@ -198,44 +221,56 @@ START_TEST(vm_tc_list)
 	vmrc = apnvm_prepare(vm);
 	fail_if(vmrc != APNVM_OK, "Failed to prepare library");
 
-	TAILQ_INIT(&version_head);
-	vmrc = apnvm_list(vm, "user2", &version_head);
-	fail_if(vmrc != APNVM_OK, "List operation failed");
+	for (i=0; vm_tc_list_versions[i].name; ++i) {
+		struct profile_version	*vdesc = &vm_tc_list_versions[i];
+		TAILQ_INIT(&version_head);
+		vmrc = apnvm_list(vm, "user2", vdesc->name, &version_head);
+		fail_if(vmrc != APNVM_OK, "List operation failed");
 
-	exp_num = 3;
-	TAILQ_FOREACH(version, &version_head, entries) {
-		int cmp_cmt, cmp_as;
+		j = 0;
+		cnt = 0;
+		while(vdesc->revs[cnt] >= 0)
+			cnt++;
+		TAILQ_FOREACH(version, &version_head, entries) {
+			int cmp_cmt, cmp_as;
 
-		fail_if(version->no != exp_num,
-		    "Unexpected version-#: %i, is %i", version->no, exp_num);
+			exp_num = vdesc->revs[j++];
+			fail_if(exp_num < 0, "Unexpected version %i",
+			    version->no);
+			fail_if(version->no != cnt+1-j, "Unexpected version-#:"
+			    " is %i, should be %i", version->no, cnt+1-j);
 
-		switch (version->no) {
-		case 1:
-			cmp_cmt = strcmp(version->comment, "1st revision");
-			cmp_as = (version->auto_store == 0);
-			break;
-		case 2:
-			cmp_cmt = strcmp(version->comment, "2nd revision");
-			cmp_as = (version->auto_store == 1);
-			break;
-		case 3:
-			cmp_cmt = strcmp(version->comment, "3rd revision");
-			cmp_as = (version->auto_store == 2);
-			break;
-		default:
-			cmp_cmt = 4711;
-			cmp_as = 4711;
-			break;
+			switch (exp_num) {
+			case 1:
+				cmp_cmt = strcmp(version->comment,
+				    "1st revision");
+				cmp_as = (version->auto_store == 0);
+				break;
+			case 2:
+				cmp_cmt = strcmp(version->comment,
+				    "2nd revision");
+				cmp_as = (version->auto_store == 1);
+				break;
+			case 3:
+				cmp_cmt = strcmp(version->comment,
+				    "3rd revision");
+				cmp_as = (version->auto_store == 2);
+				break;
+			default:
+				cmp_cmt = 4711;
+				cmp_as = 4711;
+				break;
+			}
+			fail_if(cmp_cmt != 0, "Unexpected comment for v%i: %s",
+			    version->no, version->comment);
+			fail_if(!cmp_as,
+			    "Unexpected auto_store-value for v%i: %i",
+			    version->no, version->auto_store);
 		}
-		fail_if(cmp_cmt != 0, "Unexpected comment for v%i: %s",
-		    version->no, version->comment);
-		fail_if(!cmp_as, "Unexpected auto_store-value for v%i: %i",
-		    version->no, version->auto_store);
-
-		exp_num--;
+		apnvm_version_head_free(&version_head);
+		fail_if(vdesc->revs[j] != -1,
+		    "Additional version(s) for profile %s", vdesc->name);
 	}
-
-	apnvm_version_head_free(&version_head);
 	apnvm_destroy(vm);
 }
 END_TEST
@@ -254,7 +289,7 @@ START_TEST(vm_tc_list_no_user)
 	fail_if(vmrc != APNVM_OK, "Failed to prepare library");
 
 	TAILQ_INIT(&version_head);
-	vmrc = apnvm_list(vm, "anotheruser", &version_head);
+	vmrc = apnvm_list(vm, "anotheruser", "active", &version_head);
 	fail_if(vmrc != APNVM_OK, "List operation failed");
 
 	TAILQ_FOREACH(version, &version_head, entries) {
@@ -276,7 +311,7 @@ START_TEST(vm_tc_list_no_head)
 	vmrc = apnvm_prepare(vm);
 	fail_if(vmrc != APNVM_OK, "Failed to prepare library");
 
-	vmrc = apnvm_list(vm, "user2", NULL);
+	vmrc = apnvm_list(vm, "user2", "yyy", NULL);
 	fail_if(vmrc != APNVM_ARG, "List operation failed");
 
 	apnvm_destroy(vm);

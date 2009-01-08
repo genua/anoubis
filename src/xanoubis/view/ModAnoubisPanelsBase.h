@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 GeNUA mbH <info@genua.de>
+ * Copyright (c) 2009 GeNUA mbH <info@genua.de>
  *
  * All rights reserved.
  *
@@ -187,7 +187,8 @@ class ModAnoubisMainPanelBase : public wxPanel
 		virtual void OnProfileSaveClicked( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnProfileActivateClicked( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnVersionActivePolicyClicked( wxCommandEvent& event ){ event.Skip(); }
-		virtual void OnVersonProfilePolicyClicked( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnVersionProfilePolicyClicked( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnVersionProfileChoice( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnVersionListCtrlSelected( wxListEvent& event ){ event.Skip(); }
 		virtual void OnVersionRestoreButtonClick( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnVersionSaveButtonClick( wxCommandEvent& event ){ event.Skip(); }

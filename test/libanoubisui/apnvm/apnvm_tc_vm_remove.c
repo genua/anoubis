@@ -45,10 +45,10 @@ START_TEST(vm_tc_remove)
 	vmrc = apnvm_prepare(vm);
 	fail_if(vmrc != APNVM_OK, "Failed to prepare library");
 
-	vmrc = apnvm_remove(vm, "user2", 1);
+	vmrc = apnvm_remove(vm, "user2", "yyy", 1);
 	fail_if(vmrc != APNVM_OK, "Fetch operation failed");
 
-	vmrc =  apnvm_count(vm, "user2", &count);
+	vmrc =  apnvm_count(vm, "user2", "yyy", &count);
 	fail_if(vmrc != APNVM_OK, "Count operation failed");
 	fail_if(count != 2, "Unexpected number of versions: %i", count);
 
@@ -67,7 +67,7 @@ START_TEST(vm_tc_remove_no_user)
 	vmrc = apnvm_prepare(vm);
 	fail_if(vmrc != APNVM_OK, "Failed to prepare library");
 
-	vmrc = apnvm_remove(vm, NULL, 1);
+	vmrc = apnvm_remove(vm, NULL, "active", 1);
 	fail_if(vmrc != APNVM_ARG,
 	    "Unexpected result from remove-operation: %i", vmrc);
 
@@ -86,7 +86,7 @@ START_TEST(vm_tc_remove_wrong_user)
 	vmrc = apnvm_prepare(vm);
 	fail_if(vmrc != APNVM_OK, "Failed to prepare library");
 
-	vmrc = apnvm_remove(vm, "abc", 1);
+	vmrc = apnvm_remove(vm, "abc", "active", 1);
 	fail_if(vmrc != APNVM_VMS,
 	    "Unexpected result from remove-operation: %i", vmrc);
 
@@ -105,7 +105,7 @@ START_TEST(vm_tc_remove_wrong_no)
 	vmrc = apnvm_prepare(vm);
 	fail_if(vmrc != APNVM_OK, "Failed to prepare library");
 
-	vmrc = apnvm_remove(vm, "user2", 4711);
+	vmrc = apnvm_remove(vm, "user2", "active", 4711);
 	fail_if(vmrc != APNVM_VMS, "Fetch operation failed");
 
 	apnvm_destroy(vm);

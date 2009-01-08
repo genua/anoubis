@@ -95,7 +95,7 @@ class VersionCtrl : public Singleton<VersionCtrl>
 		 *
 		 * @return true on success, false otherwise.
 		 */
-		bool fetchVersionList(void);
+		bool fetchVersionList(const wxString &profile);
 
 		/**
 		 * Returns the number of versions.
@@ -199,6 +199,10 @@ class VersionCtrl : public Singleton<VersionCtrl>
 		bool exportVersion(unsigned int, const wxString &,
 		    const wxString &);
 
+		wxString getVersionProfile() {
+			return versionProfile_;
+		}
+
 	protected:
 		VersionCtrl(void);
 
@@ -206,8 +210,9 @@ class VersionCtrl : public Singleton<VersionCtrl>
 		apnvm	*vm_;
 		bool	prepared_;
 		std::vector<class ApnVersion> versionList_;
+		wxString	versionProfile_;
 
-		bool fetchVersionList(const char *user);
+		bool fetchVersionList(const char *user, const char *profile);
 
 	friend class Singleton<VersionCtrl>;
 

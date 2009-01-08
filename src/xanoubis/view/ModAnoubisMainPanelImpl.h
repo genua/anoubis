@@ -62,6 +62,7 @@ class ModAnoubisMainPanelImpl : public ModAnoubisMainPanelBase
 		void setOptionsWidgetsVisability(void);
 		void versionListInit(void);
 		void versionListUpdate(void);
+		void versionListUpdateFromSelection(void);
 		void versionListSetMsg(const wxString &);
 		int versionListCanAccess(bool) const;
 		void profileTabInit(void);
@@ -106,7 +107,8 @@ class ModAnoubisMainPanelImpl : public ModAnoubisMainPanelBase
 		void OnVersionDeleteButtonClick(wxCommandEvent&);
 		void OnVersionShowButtonClick(wxCommandEvent&);
 		void OnVersionActivePolicyClicked(wxCommandEvent &);
-		void OnVersonProfilePolicyClicked(wxCommandEvent &);
+		void OnVersionProfilePolicyClicked(wxCommandEvent &);
+		void OnVersionProfileChoice(wxCommandEvent &);
 
 	public:
 		ModAnoubisMainPanelImpl(wxWindow*, wxWindowID);

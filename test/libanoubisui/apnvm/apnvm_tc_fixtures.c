@@ -53,11 +53,8 @@ vm_tc_exec(const char* cmd, ...)
 }
 
 static void
-vm_tc_write_alf(FILE *f, const char *profile)
+vm_tc_write_alf(FILE *f)
 {
-	fprintf(f, "#@#@#@#@#@#@#@#@#@#@%s\n",
-	    ((profile != NULL) ? profile : ""));
-
 	fprintf(f, "alf {\n");
 	fprintf(f, "	any {\n");
 	fprintf(f, "		default allow\n");
@@ -68,11 +65,8 @@ vm_tc_write_alf(FILE *f, const char *profile)
 }
 
 static void
-vm_tc_write_sfs(FILE *f, const char *profile)
+vm_tc_write_sfs(FILE *f)
 {
-	fprintf(f, "#@#@#@#@#@#@#@#@#@#@%s\n",
-	    ((profile != NULL) ? profile : ""));
-
 	fprintf(f, "sfs {\n");
 	fprintf(f, "	/bin/ping \
 a193a2edb06ff39630fed8195c0b043651867b91fccc8db67e4222367736ba73\n");
@@ -82,11 +76,8 @@ a193a2edb06ff39630fed8195c0b043651867b91fccc8db67e4222367736ba73\n");
 }
 
 static void
-vm_tc_write_alfsfs(FILE *f, const char *profile)
+vm_tc_write_alfsfs(FILE *f)
 {
-	fprintf(f, "#@#@#@#@#@#@#@#@#@#@%s\n",
-	    ((profile != NULL) ? profile : ""));
-
 	fprintf(f, "alf {\n");
 	fprintf(f, "	any {\n");
 	fprintf(f, "		default allow\n");
@@ -109,13 +100,21 @@ autostore := %i\n\
 </apnvm-metadata>\n", comment, auto_store);
 }
 
+static FILE *
+apnvm_openprofile(const char *dir, const char *profile, const char *mode)
+{
+	char path[128];
+	snprintf(path, sizeof(path), "%s/%s", dir, profile);
+	return fopen(path, mode);
+}
+
 void
 apnvm_setup(void)
 {
 	char workdir[32];
 	char moduledir[64];
-	char user2_file[128];
-	char user3_file[128];
+	char user2_dir[128];
+	char user3_dir[128];
 	char comment[256];
 	char *s;
 	FILE *f;
@@ -127,8 +126,8 @@ apnvm_setup(void)
 	s = mkdtemp(workdir);
 
 	snprintf(moduledir, sizeof(moduledir), "%s/user1", apnvm_cvsroot);
-	snprintf(user2_file, sizeof(user2_file), "%s/user1/user2", workdir);
-	snprintf(user3_file, sizeof(user3_file), "%s/user1/user3", workdir);
+	snprintf(user2_dir, sizeof(user2_dir), "%s/user1/user2", workdir);
+	snprintf(user3_dir, sizeof(user3_dir), "%s/user1/user3", workdir);
 
 	/* Initialize repository and create module inside repository */
 	vm_tc_exec("cvs -d \"%s\" init", apnvm_cvsroot);
@@ -137,35 +136,53 @@ apnvm_setup(void)
 	/* Checkout module to create some files */
 	vm_tc_exec("cd \"%s\" && cvs -d \"%s\" checkout user1",
 	    workdir, apnvm_cvsroot);
+	mkdir(user2_dir, 0755);
+	vm_tc_exec("cd \"%s\" && cvs -d \"%s\" add user1/user2",
+		workdir, apnvm_cvsroot);
+	mkdir(user3_dir, 0755);
+	vm_tc_exec("cd \"%s\" && cvs -d \"%s\" add user1/user3",
+		workdir, apnvm_cvsroot);
 
 	/* Create some revision for user2 */
 
-	f = fopen(user2_file, "w");
-	vm_tc_write_alf(f, "xxx");
-	vm_tc_write_sfs(f, "yyy");
+	f = apnvm_openprofile(user2_dir, "xxx", "w");
+	vm_tc_write_alf(f);
 	fclose(f);
-
-	vm_tc_exec("cd \"%s\" && cvs -d \"%s\" add user1/user2",
+	vm_tc_exec("cd \"%s\" && cvs -d \"%s\" add user1/user2/xxx",
 		workdir, apnvm_cvsroot);
+	f = apnvm_openprofile(user2_dir, "yyy", "w");
+	vm_tc_write_sfs(f);
+	fclose(f);
+	vm_tc_exec("cd \"%s\" && cvs -d \"%s\" add user1/user2/yyy",
+		workdir, apnvm_cvsroot);
+
 	vm_tc_makecomment(comment, sizeof(comment), "1st revision", 0);
 	vm_tc_exec(
 	    "cd \"%s\" && cvs -d \"%s\" commit -m \"%s\" user1/user2",
 	    workdir, apnvm_cvsroot, comment);
 
-	f = fopen(user2_file, "w");
-	vm_tc_write_alf(f, "xxx");
-	vm_tc_write_alfsfs(f, "yyy");
+	f = apnvm_openprofile(user2_dir, "xxx", "w");
+	vm_tc_write_alf(f);
+	fclose(f);
+	f = apnvm_openprofile(user2_dir, "yyy", "w");
+	vm_tc_write_alfsfs(f);
 	fclose(f);
 	vm_tc_makecomment(comment, sizeof(comment), "2nd revision", 1);
 	vm_tc_exec(
 	    "cd \"%s\" && cvs -d \"%s\" commit -m \"%s\" user1/user2",
 	    workdir, apnvm_cvsroot, comment);
 
-	f = fopen(user2_file, "w");
-	vm_tc_write_alf(f, "xxx");
-	vm_tc_write_alfsfs(f, "yyy");
-	vm_tc_write_sfs(f, "zzz");
+	f = apnvm_openprofile(user2_dir, "xxx", "w");
+	vm_tc_write_alf(f);
 	fclose(f);
+	f = apnvm_openprofile(user2_dir, "yyy", "w");
+	vm_tc_write_alf(f);
+	fclose(f);
+	f = apnvm_openprofile(user2_dir, "zzz", "w");
+	vm_tc_write_sfs(f);
+	fclose(f);
+	vm_tc_exec("cd \"%s\" && cvs -d \"%s\" add user1/user2/zzz",
+		workdir, apnvm_cvsroot);
 	vm_tc_makecomment(comment, sizeof(comment), "3rd revision", 2);
 	vm_tc_exec(
 	    "cd \"%s\" && cvs -d \"%s\" commit -m \"%s\" user1/user2",
@@ -173,27 +190,27 @@ apnvm_setup(void)
 
 	/* Create some revisions for user3 */
 
-	f = fopen(user3_file, "w");
-	vm_tc_write_alf(f, NULL);
+	f = apnvm_openprofile(user3_dir, "active", "w");
+	vm_tc_write_alf(f);
 	fclose(f);
 
-	vm_tc_exec("cd \"%s\" && cvs -d \"%s\" add user1/user3",
+	vm_tc_exec("cd \"%s\" && cvs -d \"%s\" add user1/user3/active",
 		workdir, apnvm_cvsroot);
 	vm_tc_makecomment(comment, sizeof(comment), "1st revision", 0);
 	vm_tc_exec(
 	    "cd \"%s\" && cvs -d \"%s\" commit -m \"%s\" user1/user3",
 	    workdir, apnvm_cvsroot, comment);
 
-	f = fopen(user3_file, "w");
-	vm_tc_write_sfs(f, NULL);
+	f = apnvm_openprofile(user3_dir, "active", "w");
+	vm_tc_write_sfs(f);
 	fclose(f);
 	vm_tc_makecomment(comment, sizeof(comment), "2nd revision", 1);
 	vm_tc_exec(
 	    "cd \"%s\" && cvs -d \"%s\" commit -m \"%s\" user1/user3",
 	    workdir, apnvm_cvsroot, comment);
 
-	f = fopen(user3_file, "w");
-	vm_tc_write_alfsfs(f, NULL);
+	f = apnvm_openprofile(user3_dir, "active", "w");
+	vm_tc_write_alfsfs(f);
 	fclose(f);
 	vm_tc_makecomment(comment, sizeof(comment), "3rd revision", 2);
 	vm_tc_exec(

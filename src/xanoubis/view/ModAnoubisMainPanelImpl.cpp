@@ -438,14 +438,38 @@ ModAnoubisMainPanelImpl::versionListUpdate(void)
 {
 	VersionCtrl	*versionCtrl;
 	ProfileCtrl	*profileCtrl;
-	unsigned int	count = 0;
+	wxString	 profile;
 
 	versionCtrl = VersionCtrl::getInstance();
 	profileCtrl = ProfileCtrl::getInstance();
+	profile = versionCtrl->getVersionProfile();
 
 	VersionProfileChoice->Clear();
 	VersionProfileChoice->Append(profileCtrl->getProfileList());
-	VersionProfileChoice->SetSelection(0);
+	if (profile.IsEmpty()) {
+		VersionProfileChoice->SetSelection(0);
+	} else {
+		VersionProfileChoice->SetStringSelection(profile);
+	}
+
+	versionListUpdateFromSelection();
+}
+
+void
+ModAnoubisMainPanelImpl::versionListUpdateFromSelection(void)
+{
+	VersionCtrl	*versionCtrl;
+	ProfileCtrl	*profileCtrl;
+	unsigned int	count = 0;
+	wxString	profile;
+
+	if (VersionActivePolicyRadioButton->GetValue())
+		profile = wxT("active");
+	else
+		profile = VersionProfileChoice->GetStringSelection();
+
+	versionCtrl = VersionCtrl::getInstance();
+	profileCtrl = ProfileCtrl::getInstance();
 
 	VersionListCtrl->DeleteAllItems();
 
@@ -459,7 +483,9 @@ ModAnoubisMainPanelImpl::versionListUpdate(void)
 		return;
 	}
 
-	if (!versionCtrl->fetchVersionList()) {
+	if (profile.IsEmpty())
+		return;
+	if (!versionCtrl->fetchVersionList(profile)) {
 		versionListSetMsg(
 		    _("(Failed to fetch versioning information.)"));
 		return;
@@ -1085,7 +1111,7 @@ ModAnoubisMainPanelImpl::OnVersionImportButtonClick(wxCommandEvent&)
 	VersionCtrl *versionCtrl = VersionCtrl::getInstance();
 	if (versionCtrl->importVersion(file, profile, comment, false)) {
 		/* Success, new version available, update view */
-		versionListUpdate();
+		versionListUpdateFromSelection();
 	}
 	else {
 		wxString msg = _("Failed to import into a new version!");
@@ -1181,10 +1207,18 @@ void
 ModAnoubisMainPanelImpl::OnVersionActivePolicyClicked(wxCommandEvent &)
 {
 	VersionProfileChoice->Enable(false);
+	versionListUpdateFromSelection();
 }
 
 void
-ModAnoubisMainPanelImpl::OnVersonProfilePolicyClicked(wxCommandEvent &)
+ModAnoubisMainPanelImpl::OnVersionProfilePolicyClicked(wxCommandEvent &)
 {
 	VersionProfileChoice->Enable(true);
+	versionListUpdateFromSelection();
+}
+
+void
+ModAnoubisMainPanelImpl::OnVersionProfileChoice(wxCommandEvent &)
+{
+	versionListUpdateFromSelection();
 }

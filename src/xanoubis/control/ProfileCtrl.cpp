@@ -147,7 +147,9 @@ ProfileCtrl::haveProfile(const wxString &name) const
 bool
 ProfileCtrl::isProfileWritable(const wxString &name) const
 {
-	/* Only the default-profile is readonly */
+	/* Do not allow writes to the "active" profile". */
+	if (name == wxString::FromAscii("active"))
+		return (false);
 	return !wxFileExists(getProfileFile(name, DEFAULT_PROFILE));
 }
 

@@ -104,21 +104,21 @@ START_TEST(vm_tc_insert_with_profile_overwrite_first)
 	fail_if(vmrc != APNVM_OK, "Failed to insert ruleset");
 	apn_free_ruleset(rs);
 
-	vmrc = apnvm_fetch(vm, "user2", 4, "xxx", &rs);
+	vmrc = apnvm_fetch(vm, "user2", 2, "xxx", &rs);
 	fail_if(vmrc != APNVM_OK, "Failed to fetch a ruleset");
 	fail_if(rs == NULL, "A NULL-ruleset was fetched!");
 	fail_if_alfempty(&rs->alf_queue, "Wrong size of ALF-queue");
 	fail_if_sfsempty(&rs->sfs_queue, "Wrong size of SFS-queue");
 	apn_free_ruleset(rs);
 
-	vmrc = apnvm_fetch(vm, "user2", 4, "yyy", &rs);
+	vmrc = apnvm_fetch(vm, "user2", 3, "yyy", &rs);
 	fail_if(vmrc != APNVM_OK, "Failed to fetch a ruleset");
 	fail_if(rs == NULL, "A NULL-ruleset was fetched!");
 	fail_if_alfempty(&rs->alf_queue, "Wrong size of ALF-queue");
-	fail_if_sfsempty(&rs->sfs_queue, "Wrong size of SFS-queue");
+	fail_if_sfsfull(&rs->sfs_queue, "Wrong size of SFS-queue");
 	apn_free_ruleset(rs);
 
-	vmrc = apnvm_fetch(vm, "user2", 4, "zzz", &rs);
+	vmrc = apnvm_fetch(vm, "user2", 1, "zzz", &rs);
 	fail_if(vmrc != APNVM_OK, "Failed to fetch a ruleset");
 	fail_if(rs == NULL, "A NULL-ruleset was fetched!");
 	fail_if_alffull(&rs->alf_queue, "Wrong size of ALF-queue");
@@ -146,22 +146,22 @@ START_TEST(vm_tc_insert_with_profile_overwrite_last)
 	fail_if(vmrc != APNVM_OK, "Failed to insert ruleset");
 	apn_free_ruleset(rs);
 
-	vmrc = apnvm_fetch(vm, "user2", 4, "xxx", &rs);
+	vmrc = apnvm_fetch(vm, "user2", 1, "xxx", &rs);
 	fail_if(vmrc != APNVM_OK, "Failed to fetch a ruleset");
 	fail_if(rs == NULL, "A NULL-ruleset was fetched!");
 	fail_if_alfempty(&rs->alf_queue, "Wrong size of ALF-queue");
 	fail_if_sfsfull(&rs->sfs_queue, "Wrong size of SFS-queue");
 	apn_free_ruleset(rs);
 
-	vmrc = apnvm_fetch(vm, "user2", 4, "yyy", &rs);
+	vmrc = apnvm_fetch(vm, "user2", 3, "yyy", &rs);
 	fail_if(vmrc != APNVM_OK, "Failed to fetch a ruleset");
 	fail_if(rs == NULL, "A NULL-ruleset was fetched!");
 	fail_if_alfempty(&rs->alf_queue, "Wrong size of ALF-queue");
-	fail_if_sfsempty(&rs->sfs_queue, "Wrong size of SFS-queue");
+	fail_if_sfsfull(&rs->sfs_queue, "Wrong size of SFS-queue");
 	apn_free_ruleset(rs);
 	rs = NULL;
 
-	vmrc = apnvm_fetch(vm, "user2", 4, "zzz", &rs);
+	vmrc = apnvm_fetch(vm, "user2", 2, "zzz", &rs);
 	fail_if(vmrc != APNVM_OK, "Failed to fetch a ruleset");
 	fail_if(rs == NULL, "A NULL-ruleset was fetched!");
 	fail_if_alfempty(&rs->alf_queue, "Wrong size of ALF-queue");
@@ -189,7 +189,7 @@ START_TEST(vm_tc_insert_with_profile_overwrite_middle)
 	fail_if(vmrc != APNVM_OK, "Failed to insert ruleset");
 	apn_free_ruleset(rs);
 
-	vmrc = apnvm_fetch(vm, "user2", 4, "xxx", &rs);
+	vmrc = apnvm_fetch(vm, "user2", 1, "xxx", &rs);
 	fail_if(vmrc != APNVM_OK, "Failed to fetch a ruleset");
 	fail_if(rs == NULL, "A NULL-ruleset was fetched!");
 	fail_if_alfempty(&rs->alf_queue, "Wrong size of ALF-queue");
@@ -203,7 +203,7 @@ START_TEST(vm_tc_insert_with_profile_overwrite_middle)
 	fail_if_sfsempty(&rs->sfs_queue, "Wrong size of SFS-queue");
 	apn_free_ruleset(rs);
 
-	vmrc = apnvm_fetch(vm, "user2", 4, "zzz", &rs);
+	vmrc = apnvm_fetch(vm, "user2", 1, "zzz", &rs);
 	fail_if(vmrc != APNVM_OK, "Failed to fetch a ruleset");
 	fail_if(rs == NULL, "A NULL-ruleset was fetched!");
 	fail_if_alffull(&rs->alf_queue, "Wrong size of ALF-queue");
@@ -231,28 +231,28 @@ START_TEST(vm_tc_insert_with_profile_new_profile)
 	fail_if(vmrc != APNVM_OK, "Failed to insert ruleset");
 	apn_free_ruleset(rs);
 
-	vmrc = apnvm_fetch(vm, "user2", 4, "xxx", &rs);
+	vmrc = apnvm_fetch(vm, "user2", 1, "xxx", &rs);
 	fail_if(vmrc != APNVM_OK, "Failed to fetch a ruleset");
 	fail_if(rs == NULL, "A NULL-ruleset was fetched!");
 	fail_if_alfempty(&rs->alf_queue, "Wrong size of ALF-queue");
 	fail_if_sfsfull(&rs->sfs_queue, "Wrong size of SFS-queue");
 	apn_free_ruleset(rs);
 
-	vmrc = apnvm_fetch(vm, "user2", 4, "yyy", &rs);
+	vmrc = apnvm_fetch(vm, "user2", 3, "yyy", &rs);
 	fail_if(vmrc != APNVM_OK, "Failed to fetch a ruleset");
 	fail_if(rs == NULL, "A NULL-ruleset was fetched!");
 	fail_if_alfempty(&rs->alf_queue, "Wrong size of ALF-queue");
-	fail_if_sfsempty(&rs->sfs_queue, "Wrong size of SFS-queue");
+	fail_if_sfsfull(&rs->sfs_queue, "Wrong size of SFS-queue");
 	apn_free_ruleset(rs);
 
-	vmrc = apnvm_fetch(vm, "user2", 4, "zzz", &rs);
+	vmrc = apnvm_fetch(vm, "user2", 1, "zzz", &rs);
 	fail_if(vmrc != APNVM_OK, "Failed to fetch a ruleset");
 	fail_if(rs == NULL, "A NULL-ruleset was fetched!");
 	fail_if_alffull(&rs->alf_queue, "Wrong size of ALF-queue");
 	fail_if_sfsempty(&rs->sfs_queue, "Wrong size of SFS-queue");
 	apn_free_ruleset(rs);
 
-	vmrc = apnvm_fetch(vm, "user2", 4, "abc", &rs);
+	vmrc = apnvm_fetch(vm, "user2", 1, "abc", &rs);
 	fail_if(vmrc != APNVM_OK, "Failed to fetch a ruleset");
 	fail_if(rs == NULL, "A NULL-ruleset was fetched!");
 	fail_if_alfempty(&rs->alf_queue, "Wrong size of ALF-queue");
@@ -276,11 +276,11 @@ START_TEST(vm_tc_insert_without_profile_overwrite)
 	fail_if(vmrc != APNVM_OK, "Failed to prepare library");
 
 	rs = vm_tc_create_ruleset(0); /* alf */
-	vmrc = apnvm_insert(vm, "user3", NULL, rs, NULL);
+	vmrc = apnvm_insert(vm, "user3", "active", rs, NULL);
 	fail_if(vmrc != APNVM_OK, "Failed to insert ruleset");
 	apn_free_ruleset(rs);
 
-	vmrc = apnvm_fetch(vm, "user3", 4, NULL, &rs);
+	vmrc = apnvm_fetch(vm, "user3", 4, "active", &rs);
 	fail_if(vmrc != APNVM_OK, "Failed to fetch a ruleset");
 	fail_if(rs == NULL, "A NULL-ruleset was fetched!");
 	fail_if_alfempty(&rs->alf_queue, "Wrong size of ALF-queue");
@@ -332,11 +332,11 @@ START_TEST(vm_tc_insert_without_profile_new_user)
 	fail_if(vmrc != APNVM_OK, "Failed to prepare library");
 
 	rs = vm_tc_create_ruleset(1); /* sfs */
-	vmrc = apnvm_insert(vm, "user4", NULL, rs, NULL);
+	vmrc = apnvm_insert(vm, "user4", "active", rs, NULL);
 	fail_if(vmrc != APNVM_OK, "Failed to insert ruleset");
 	apn_free_ruleset(rs);
 
-	vmrc = apnvm_fetch(vm, "user4", 1, NULL, &rs);
+	vmrc = apnvm_fetch(vm, "user4", 1, "active", &rs);
 	fail_if(vmrc != APNVM_OK, "Failed to fetch a ruleset");
 	fail_if(rs == NULL, "A NULL-ruleset was fetched!");
 	fail_if_alffull(&rs->alf_queue, "Wrong size of ALF-queue");
@@ -412,7 +412,7 @@ START_TEST(vm_tc_insert_fetch_metadata)
 	apn_free_ruleset(rs);
 
 	TAILQ_INIT(&version_head);
-	vmrc = apnvm_list(vm, "user2", &version_head);
+	vmrc = apnvm_list(vm, "user2", "xxx", &version_head);
 	fail_if(vmrc != APNVM_OK, "List operation failed");
 
 	TAILQ_FOREACH(version, &version_head, entries) {

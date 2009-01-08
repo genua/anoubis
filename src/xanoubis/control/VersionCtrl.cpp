@@ -45,6 +45,7 @@ VersionCtrl::VersionCtrl(void)
 	repository = wxGetApp().getDataDir() + wxT("/.xanoubis/apnvmroot");
 	userName = wxGetUserId();
 
+	versionProfile_ = wxEmptyString;
 	vm_ = apnvm_init(repository.fn_str(), userName.fn_str());
 
 	if (vm_ != 0) {
@@ -80,7 +81,7 @@ VersionCtrl::isPrepared(void) const
 }
 
 bool
-VersionCtrl::fetchVersionList(void)
+VersionCtrl::fetchVersionList(const wxString &profile)
 {
 	struct apnvm_user_head	user_head;
 	apnvm_result		vmrc;
@@ -90,6 +91,7 @@ VersionCtrl::fetchVersionList(void)
 		return (false);
 
 	versionList_.clear();
+	versionProfile_ = profile;
 
 	LIST_INIT(&user_head);
 
@@ -100,19 +102,20 @@ VersionCtrl::fetchVersionList(void)
 	while (!LIST_EMPTY(&user_head)) {
 		struct apnvm_user *user = LIST_FIRST(&user_head);
 
-		if (!fetchVersionList(user->username))
+		if (!fetchVersionList(user->username, profile.fn_str()))
 			result = false;
 
 		LIST_REMOVE(user, entry);
 		free(user->username);
 		free(user);
 	}
-
+	if (!result)
+		versionProfile_ = wxEmptyString;
 	return (result);
 }
 
 bool
-VersionCtrl::fetchVersionList(const char *user)
+VersionCtrl::fetchVersionList(const char *user, const char *profile)
 {
 	struct apnvm_version_head	version_head;
 	struct apnvm_version		*version;
@@ -120,7 +123,7 @@ VersionCtrl::fetchVersionList(const char *user)
 
 	TAILQ_INIT(&version_head);
 
-	vmrc = apnvm_list(vm_, user, &version_head);
+	vmrc = apnvm_list(vm_, user, profile, &version_head);
 	if (vmrc != APNVM_OK)
 		return (false);
 
@@ -159,8 +162,10 @@ VersionCtrl::deleteVersion(unsigned int no)
 
 	const ApnVersion &version = getVersion(no);
 
+	if (versionProfile_.IsEmpty())
+		return (false);
 	vmrc = apnvm_remove(vm_, version.getUsername().fn_str(),
-	    version.getVersionNo());
+	    versionProfile_.fn_str(), version.getVersionNo());
 
 	return (vmrc == APNVM_OK);
 }

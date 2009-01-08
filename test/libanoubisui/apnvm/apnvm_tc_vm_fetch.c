@@ -69,12 +69,10 @@ START_TEST(vm_tc_fetch_no_profile)
 	fail_if(vmrc != APNVM_OK, "Failed to prepare library");
 
 	vmrc = apnvm_fetch(vm, "user3", 2, NULL, &rs);
-	fail_if(vmrc != APNVM_OK, "Fetch operation failed");
-	fail_if(rs == NULL, "Fetched a NULL-ruleset!");
-	fail_if(TAILQ_FIRST(&rs->err_queue) != NULL, "Parser errors");
-	fail_if(TAILQ_FIRST(&rs->alf_queue) != NULL, "Missing ALF-rule");
+	fail_if(vmrc != APNVM_ARG,
+	    "Fetch operation did not fail with APNVM_ARG");
+	fail_if(rs != NULL, "Did not fetch a NULL-ruleset!");
 
-	apn_free_ruleset(rs);
 	apnvm_destroy(vm);
 }
 END_TEST
@@ -174,7 +172,8 @@ START_TEST(vm_tc_fetch_no_profile_but_with_profiles)
 	fail_if(vmrc != APNVM_OK, "Failed to prepare library");
 
 	vmrc = apnvm_fetch(vm, "user2", 1, NULL, &rs);
-	fail_if(vmrc != APNVM_OK, "Fetch operation failed");
+	fail_if(vmrc != APNVM_ARG,
+	    "Fetch operation did not fail with APNVM_ARG");
 	fail_if(rs != NULL, "Fetched a ruleset!");
 
 	apnvm_destroy(vm);
