@@ -87,3 +87,5 @@ share/xanoubis/icons/ModSfs_problem_48.png
 share/xanoubis/icons/ModSfs_question_16.png
 share/xanoubis/icons/ModSfs_question_48.png
 share/xanoubis/icons/xanoubis.png
+@exec %D/bin/update-desktop-database
+@unexec %D/bin/update-desktop-database

@@ -34,7 +34,8 @@ MULTI_PACKAGES =	-main -daemon
 
 BUILD_DEPENDS =		::devel/check \
 			::devel/bison
-RUN_DEPENDS-main =	:notification-daemon->=0.3.7:sysutils/notification-daemon
+RUN_DEPENDS-main =	:notification-daemon->=0.3.7:sysutils/notification-daemon \
+			:desktop-file-utils-*:devel/desktop-file-utils
 LIB_DEPENDS-main =	notify::devel/libnotify \
 			wx_base_xml,wx_gtk2_aui,wx_gtk2_qa,wx_base_odbc,wx_gtk2_html,wx_base,wx_gtk2_adv,wx_gtk2_xrc,wx_gtk2_core,wx_base_net,wx_gtk2_richtext,wx_gtk2_dbgrid:wxWidgets-gtk2->=2.8.6:x11/wxWidgets
 
@@ -45,6 +46,9 @@ CONFIGURE_ARGS +=	--enable-static-anoubisd
 
 REGRESS_DEPENDS =	${BUILD_DEPENDS}
 
+EXAMPLEDIR =		${PREFIX}/share/examples/anoubisd
+POLICIES =		policy.admin.ntp policy.user.ntp
+
 # we explicitly have to change into the regression test directory
 # see: http://srv.anoubis.genua.de/cgi-bin/bugzilla/show_bug.cgi?id=906
 do-regress:
@@ -54,5 +58,16 @@ do-regress:
 # is incompatible with OpenBSD (Bug #741)
 post-extract:
 	@rm ${WRKSRC}/src/libanoubisui/apnvm/date.c
+
+# add desktop file and example policies
+post-install:
+	@ ${INSTALL_DATA_DIR} ${PREFIX}/share/applications/
+	@ ${INSTALL_DATA} ${WRKSRC}/src/xanoubis/xanoubis.desktop \
+		${PREFIX}/share/applications/
+
+	@ ${INSTALL_DATA_DIR} ${EXAMPLEDIR}
+.for file in ${POLICIES}
+	@ ${INSTALL_DATA} ${FILESDIR}/${file} ${EXAMPLEDIR}
+.endfor
 
 .include <bsd.port.mk>
