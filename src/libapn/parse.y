@@ -186,8 +186,9 @@ typedef struct {
 %destructor { free($$); }	STRING
 %token	<v.number>		NUMBER
 %type	<v.app>			app apps sfsapp
-%destructor { apn_free_app($$); }
-				app apps sfsapp
+%destructor {
+	apn_free_app($$);
+}				app apps sfsapp
 %type	<v.apphead>		app_l
 %type	<v.hashtype>		hashtype
 %type	<v.hashspec>		hashspec
@@ -198,7 +199,16 @@ typedef struct {
 %type	<v.port>		port ports portspec
 %destructor { freeport($$); }	port ports portspec
 %type	<v.porthead>		port_l
+%destructor {
+	freeport($$.head);
+}				port_l
 %type	<v.hosts>		hosts
+%destructor {
+	freeport($$.fromport);
+	freehost($$.fromhost);
+	freeport($$.toport);
+	freehost($$.tohost);
+}				hosts
 %type	<v.number>		not capability defaultspec ruleid sbrwx
 %type	<v.string>		sfspath
 %destructor { free($$); }	sfspath
@@ -209,10 +219,16 @@ typedef struct {
 %type	<v.action>		action
 %type	<v.log>			log
 %type	<v.rule>		alfruleset sbruleset alfrule sfsrule sbrule
+%destructor {
+	apn_free_one_rule($$, NULL);
+}				alfruleset sbruleset alfrule sfsrule sbrule
 %type	<v.rule>		ctxrule
+%destructor { free($$); }	ctxrule
 %type	<v.rulehead>		alfrule_l sfsrule_l sbrule_l ctxrule_l
-%destructor { apn_free_chain($$, NULL); free($$); }
-				alfrule_l sfsrule_l sbrule_l ctxrule_l
+%destructor {
+	apn_free_chain($$, NULL);
+	free($$);
+}				alfrule_l sfsrule_l sbrule_l ctxrule_l
 %type	<v.afrule>		alffilterrule
 %type	<v.acaprule>		alfcaprule
 %type	<v.sbaccess>		sbaccess sbpred sbpath sbuid sbkey sbcsum
@@ -226,6 +242,7 @@ typedef struct {
 %type	<v.sfsdefault>		sfsdefaultrule
 %type	<v.timeout>		statetimeout
 %type	<v.scope>		scope
+%destructor { free($$); }	scope
 %%
 
 grammar		: /* empty */
