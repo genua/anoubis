@@ -9,13 +9,6 @@ bin/xanoubis
 @comment lib/libapn.a
 @man man/man1/xanoubis.1
 @comment @man man/man1/xanoubis_guessApp.1
-@comment @man man/man3/anoubis_auth.3
-@comment @man man/man3/anoubis_client.3
-@comment @man man/man3/anoubis_msg.3
-@comment @man man/man3/anoubis_notify.3
-@comment @man man/man3/anoubis_server.3
-@comment @man man/man3/anoubis_transaction.3
-@comment @man man/man3/anoubischat.3
 @comment share/xanoubis/utils/xanoubis_guessApp.sh
 share/applications/xanoubis.desktop
 share/xanoubis/catalogs/de/xanoubis.mo

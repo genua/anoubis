@@ -1,8 +1,18 @@
 @comment $OpenBSD$
 @newgroup _anoubisd:593
 @newuser _anoubisd:593:_anoubisd:daemon:anoubisd user:/var/empty:/sbin/nologin
-@man man/man8/anoubisd.8
 @man man/man8/anoubisctl.8
+@man man/man8/anoubisd.8
+@man man/man8/sfssig.8
+@comment man/man3/anoubis_auth.3
+@comment man/man3/anoubischat.3
+@comment man/man3/anoubis_client.3
+@comment man/man3/anoubis_msg.3
+@comment man/man3/anoubis_notify.3
+@comment man/man3/anoubis_server.3
+@comment man/man3/anoubis_sig.3
+@comment man/man3/anoubis_transaction.3
+@comment man/man3/apn.3
 share/xanoubis/profiles/admin
 share/xanoubis/profiles/high
 share/xanoubis/profiles/medium
