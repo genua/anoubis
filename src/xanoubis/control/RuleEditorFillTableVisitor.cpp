@@ -38,262 +38,358 @@ RuleEditorFillTableVisitor::RuleEditorFillTableVisitor(
 	setPropagation(false);
 }
 
-RuleEditorFillTableVisitor::~RuleEditorFillTableVisitor(void)
+void
+RuleEditorFillTableVisitor::visitAlfAppPolicy(AlfAppPolicy *policy)
 {
+	showAppPolicy(policy, selectedLine_);
 }
 
+void
+RuleEditorFillTableVisitor::visitAlfCapabilityFilterPolicy(
+    AlfCapabilityFilterPolicy *policy)
+{
+	showAlfCapabilityFilterPolicy(policy, selectedLine_);
+}
+
+void
+RuleEditorFillTableVisitor::visitAlfFilterPolicy(AlfFilterPolicy *policy)
+{
+	showAlfFilterPolicy(policy, selectedLine_);
+}
+
+void
+RuleEditorFillTableVisitor::visitContextAppPolicy(ContextAppPolicy *policy)
+{
+	showAppPolicy(policy, selectedLine_);
+}
+
+void
+RuleEditorFillTableVisitor::visitContextFilterPolicy(
+    ContextFilterPolicy *policy)
+{
+	showContextFilterPolicy(policy, selectedLine_);
+}
+
+void
+RuleEditorFillTableVisitor::visitDefaultFilterPolicy(
+    DefaultFilterPolicy *policy)
+{
+	showDefaultFilterPolicy(policy, selectedLine_);
+}
+
+void
+RuleEditorFillTableVisitor::visitSbAccessFilterPolicy(
+    SbAccessFilterPolicy *policy)
+{
+	showSbAccessFilterPolicy(policy, selectedLine_);
+}
+
+void
+RuleEditorFillTableVisitor::visitSbAppPolicy(SbAppPolicy *policy)
+{
+	showAppPolicy(policy, selectedLine_);
+}
+
+void
+RuleEditorFillTableVisitor::visitSfsAppPolicy(SfsAppPolicy *policy)
+{
+	showAppPolicy(policy, selectedLine_);
+}
+
+void
+RuleEditorFillTableVisitor::visitSfsFilterPolicy(SfsFilterPolicy *policy)
+{
+	showSfsFilterPolicy(policy, selectedLine_);
+}
+
+void
+RuleEditorFillTableVisitor::clean(Policy *WXUNUSED(policy), long WXUNUSED(idx))
+{
 /*
  * XXX ch: this will be fixed with the next functionality change
  */
 #if 0
-void
-RuleEditorFillTableVisitor::clean(long idx)
-{
-	if (isAdmin()) {
+	for (int i=0; i<RULEDITOR_LIST_COLUMN_EOL; i++) {
+		ruleEditor_->ruleListCtrl->SetItem(idx, i, wxEmptyString);
+	}
+
+	if (policy->getParentRuleSet()->isAdmin()) {
 		ruleEditor_->ruleListCtrl->SetItemBackgroundColour(idx,
 		    wxTheColourDatabase->Find(wxT("LIGHT GREY")));
 	}
 
-	for (int i=0; i<RULEDITOR_LIST_COLUMN_EOL; i++) {
-		ruleEditor_->ruleListCtrl->SetItem(idx, i, wxEmptyString);
+	if (policy->hasScope()) {
+		ruleEditor_->ruleListCtrl->SetItem(idx,
+		    RULEDITOR_LIST_COLUMN_SCOPE, policy->getScopeName());
 	}
+
 	ruleEditor_->ruleListCtrl->SetItem(idx, 0,
 	    wxString::Format(wxT("%d"), idx));
+#endif
 }
 
 void
-RuleEditorFillTableVisitor::showApp(AppPolicy *appPolicy, long idx)
+RuleEditorFillTableVisitor::showAppPolicy(AppPolicy *WXUNUSED(policy),
+    long WXUNUSED(idx))
 {
+/*
+ * XXX ch: this will be fixed with the next functionality change
+ */
+#if 0
 	wxString	 ruleType;
-	PolicyRuleSet	*rs;
+	PolicyRuleSet	*ruleset;
 
-	clean(idx);
-	appPolicy->setIndex(idx);
+	clean(policy, idx);
+	policy->setRuleEditorIndex(idx);
 
-	rs = appPolicy->getRsParent();
-	if (rs != NULL) {
+	ruleType = policy->getTypeIdentifier();
+
+	ruleset = policy->getParentRuleSet();
+	if (ruleset != NULL) {
 		ruleEditor_->ruleListCtrl->SetItem(idx,
 		    RULEDITOR_LIST_COLUMN_USER,
-		    wxGetApp().getUserNameById(rs->getUid()));
+		    wxGetApp().getUserNameById(ruleset->getUid()));
 	}
-
-	if (appPolicy->getType() == APN_ALF
-	    || appPolicy->getType() == APN_CTX) {
-		if (appPolicy->getType() == APN_CTX) {
-			ruleType = wxT("CTX");
-		} else {
-			ruleType = wxT("APP");
-		}
-		if (isAdmin()) {
-			ruleType += ADMIN_FLAG;
-		}
-		ruleEditor_->ruleListCtrl->SetItem(idx,
-		    RULEDITOR_LIST_COLUMN_RULE, ruleType);
-		ruleEditor_->ruleListCtrl->SetItem(idx,
-		    RULEDITOR_LIST_COLUMN_BIN, appPolicy->getBinaryName());
-		ruleEditor_->ruleListCtrl->SetItem(idx,
-		    RULEDITOR_LIST_COLUMN_HASHT, appPolicy->getHashTypeName());
-		ruleEditor_->ruleListCtrl->SetItem(idx,
-		    RULEDITOR_LIST_COLUMN_HASH, appPolicy->getHashValue());
-	}
-}
-
-void
-RuleEditorFillTableVisitor::showAlf(AlfPolicy *alfPolicy, long idx)
-{
-	int		 type;
-	wxString	 ruleType;
-	wxListCtrl	*list;
-	PolicyRuleSet	*rs;
-
-	type = alfPolicy->getTypeNo();
-	list = ruleEditor_->ruleListCtrl;
-
-	clean(idx);
-	alfPolicy->setIndex(idx);
-
-	rs = alfPolicy->getRsParent();
-	if (rs != NULL) {
-		ruleEditor_->ruleListCtrl->SetItem(idx,
-		    RULEDITOR_LIST_COLUMN_USER,
-		    wxGetApp().getUserNameById(rs->getUid()));
-	}
-
-	if (alfPolicy->hasScope()) {
-		list->SetItem(idx, RULEDITOR_LIST_COLUMN_SCOPE,
-		    alfPolicy->getScopeName());
-	}
-
-	ruleType = wxT("ALF");
-	if (isAdmin()) {
+	if ((ruleset != NULL) && ruleset->isAdmin()) {
 		ruleType += ADMIN_FLAG;
 	}
-	list->SetItem(idx, RULEDITOR_LIST_COLUMN_RULE, ruleType);
-	switch (type) {
-	case APN_ALF_FILTER:
-		list->SetItem(idx, RULEDITOR_LIST_COLUMN_TYPE,
-		    alfPolicy->getTypeName());
-		list->SetItem(idx, RULEDITOR_LIST_COLUMN_ACTION,
-		    alfPolicy->getActionName());
-		list->SetItem(idx, RULEDITOR_LIST_COLUMN_LOG,
-		    alfPolicy->getLogName());
-		list->SetItem(idx, RULEDITOR_LIST_COLUMN_AF,
-		    alfPolicy->getAddrFamilyName());
-		list->SetItem(idx, RULEDITOR_LIST_COLUMN_PROTO,
-		    alfPolicy->getProtocolName());
-		list->SetItem(idx, RULEDITOR_LIST_COLUMN_DIR,
-		    alfPolicy->getDirectionName());
-		list->SetItem(idx, RULEDITOR_LIST_COLUMN_FHOST,
-		    alfPolicy->getFromHostName());
-		list->SetItem(idx, RULEDITOR_LIST_COLUMN_FPORT,
-		    alfPolicy->getFromPortName());
-		list->SetItem(idx, RULEDITOR_LIST_COLUMN_THOST,
-		    alfPolicy->getToHostName());
-		list->SetItem(idx, RULEDITOR_LIST_COLUMN_TPORT,
-		    alfPolicy->getToPortName());
-		list->SetItem(idx, RULEDITOR_LIST_COLUMN_STATETIMEOUT,
-		    alfPolicy->getStateTimeout());
-		break;
-	case APN_ALF_CAPABILITY:
-		list->SetItem(idx, RULEDITOR_LIST_COLUMN_TYPE,
-		    alfPolicy->getTypeName());
-		list->SetItem(idx, RULEDITOR_LIST_COLUMN_LOG,
-		    alfPolicy->getLogName());
-		list->SetItem(idx, RULEDITOR_LIST_COLUMN_ACTION,
-		    alfPolicy->getActionName());
-		list->SetItem(idx, RULEDITOR_LIST_COLUMN_CAP,
-		    alfPolicy->getCapTypeName());
-		break;
-	case APN_DEFAULT:
-		list->SetItem(idx, RULEDITOR_LIST_COLUMN_TYPE,
-		    alfPolicy->getTypeName());
-		list->SetItem(idx, RULEDITOR_LIST_COLUMN_LOG,
-		    alfPolicy->getLogName());
-		list->SetItem(idx, RULEDITOR_LIST_COLUMN_ACTION,
-		    alfPolicy->getActionName());
-		break;
-	default:
-		break;
 
-	}
-}
-
-void
-RuleEditorFillTableVisitor::showCtx(CtxPolicy *ctxPolicy, long idx)
-{
-	int		 type;
-	wxString	 ruleType;
-	wxListCtrl	*list;
-	PolicyRuleSet	*rs;
-
-	type = ctxPolicy->getTypeNo();
-	list = ruleEditor_->ruleListCtrl;
-
-	clean(idx);
-	ctxPolicy->setIndex(idx);
-
-	rs = ctxPolicy->getRsParent();
-	if (rs != NULL) {
-		list->SetItem(idx, RULEDITOR_LIST_COLUMN_USER,
-		    wxGetApp().getUserNameById(rs->getUid()));
-	}
-
-	ruleType = wxT(" ???");
-	switch (type) {
-	case APN_CTX_RULE:
-		switch(ctxPolicy->getSubtypeNo()) {
-		case APN_CTX_NEW:
-			ruleType = wxT(" NEW");
-			break;
-		case APN_CTX_OPEN:
-			ruleType = wxT(" OPEN");
-			break;
-		}
-		ruleEditor_->ruleListCtrl->SetItem(idx,
-		    RULEDITOR_LIST_COLUMN_BIN, ctxPolicy->getBinaryName());
-		ruleEditor_->ruleListCtrl->SetItem(idx,
-		    RULEDITOR_LIST_COLUMN_HASHT, ctxPolicy->getHashTypeName());
-		ruleEditor_->ruleListCtrl->SetItem(idx,
-		    RULEDITOR_LIST_COLUMN_HASH, ctxPolicy->getHashValue());
-		break;
-	default:
-		break;
-	}
-	if (isAdmin()) {
-		ruleType += ADMIN_FLAG;
-	}
-	list->SetItem(idx, RULEDITOR_LIST_COLUMN_RULE, ruleType);
-}
-
-void
-RuleEditorFillTableVisitor::showSfs(SfsPolicy *sfsPolicy, long idx)
-{
-	wxString	 ruleType;
-	PolicyRuleSet	*rs;
-
-	clean(idx);
-	sfsPolicy->setIndex(idx);
-
-	rs = sfsPolicy->getRsParent();
-	if (rs != NULL) {
-		ruleEditor_->ruleListCtrl->SetItem(idx,
-		    RULEDITOR_LIST_COLUMN_USER,
-		    wxGetApp().getUserNameById(rs->getUid()));
-	}
-
-	ruleType = wxT("SFS");
-	if (isAdmin()) {
-		ruleType += ADMIN_FLAG;
-	}
+	/* XXX ch: this does not work for lists */
 	ruleEditor_->ruleListCtrl->SetItem(idx, RULEDITOR_LIST_COLUMN_RULE,
 	    ruleType);
 	ruleEditor_->ruleListCtrl->SetItem(idx, RULEDITOR_LIST_COLUMN_BIN,
-	    sfsPolicy->getBinaryName());
+	    policy->getBinaryName());
 	ruleEditor_->ruleListCtrl->SetItem(idx, RULEDITOR_LIST_COLUMN_HASHT,
-	    sfsPolicy->getHashTypeName());
+	   policy->getHashTypeName(0));
 	ruleEditor_->ruleListCtrl->SetItem(idx, RULEDITOR_LIST_COLUMN_HASH,
-	    sfsPolicy->getHashValue());
-	ruleEditor_->ruleListCtrl->SetItem(idx, RULEDITOR_LIST_COLUMN_LOG,
-	    sfsPolicy->getLogName());
-}
-
-void
-RuleEditorFillTableVisitor::showVar(VarPolicy *, long)
-{
-	/* XXX ch: vars currently not supported */
-}
-
-void
-RuleEditorFillTableVisitor::visitAppPolicy(AppPolicy *appPolicy)
-{
-	/* Never visit the SFS dummy application block itself! */
-	if (appPolicy->getType() == APN_SFS)
-		return;
-	showApp(appPolicy, selectedLine_);
-}
-
-void
-RuleEditorFillTableVisitor::visitAlfPolicy(AlfPolicy *alfPolicy)
-{
-	showAlf(alfPolicy, selectedLine_);
-}
-
-void
-RuleEditorFillTableVisitor::visitCtxPolicy(CtxPolicy *ctxPolicy)
-{
-	showCtx(ctxPolicy, selectedLine_);
-}
-
-void
-RuleEditorFillTableVisitor::visitSfsPolicy(SfsPolicy *sfsPolicy)
-{
-	showSfs(sfsPolicy, selectedLine_);
-}
-
-void
-RuleEditorFillTableVisitor::visitVarPolicy(VarPolicy *varPolicy)
-{
-	showVar(varPolicy, selectedLine_);
-}
-
+	   policy->getHashValueName(0));
 #endif
+}
+
+void
+RuleEditorFillTableVisitor::showAlfCapabilityFilterPolicy(
+    AlfCapabilityFilterPolicy *WXUNUSED(policy), long WXUNUSED(idx))
+{
+/*
+ * XXX ch: this will be fixed with the next functionality change
+ */
+#if 0
+	wxString	 ruleType;
+	wxListCtrl	*list;
+	PolicyRuleSet	*ruleset;
+
+	clean(policy, idx);
+	policy->setRuleEditorIndex(idx);
+
+	list = ruleEditor_->ruleListCtrl;
+	ruleset = policy->getParentRuleSet();
+	if (ruleset != NULL) {
+		ruleEditor_->ruleListCtrl->SetItem(idx,
+		    RULEDITOR_LIST_COLUMN_USER,
+		    wxGetApp().getUserNameById(ruleset->getUid()));
+	}
+
+	ruleType = policy->getTypeIdentifier();
+	if ((ruleset != NULL) && ruleset->isAdmin()) {
+		ruleType += ADMIN_FLAG;
+	}
+	list->SetItem(idx, RULEDITOR_LIST_COLUMN_RULE, ruleType);
+
+	list->SetItem(idx, RULEDITOR_LIST_COLUMN_TYPE,
+	    policy->getTypeIdentifier());
+	list->SetItem(idx, RULEDITOR_LIST_COLUMN_LOG, policy->getLogName());
+	list->SetItem(idx, RULEDITOR_LIST_COLUMN_ACTION,
+	    policy->getActionName());
+	list->SetItem(idx, RULEDITOR_LIST_COLUMN_CAP,
+	    policy->getCapabilityTypeName());
+#endif
+}
+
+void
+RuleEditorFillTableVisitor::showAlfFilterPolicy(
+    AlfFilterPolicy *WXUNUSED(policy), long WXUNUSED(idx))
+{
+/*
+ * XXX ch: this will be fixed with the next functionality change
+ */
+#if 0
+	wxString	 ruleType;
+	wxListCtrl	*list;
+	PolicyRuleSet	*ruleset;
+
+	clean(policy, idx);
+	policy->setRuleEditorIndex(idx);
+
+	list = ruleEditor_->ruleListCtrl;
+	ruleset = policy->getParentRuleSet();
+	if (ruleset != NULL) {
+		ruleEditor_->ruleListCtrl->SetItem(idx,
+		    RULEDITOR_LIST_COLUMN_USER,
+		    wxGetApp().getUserNameById(ruleset->getUid()));
+	}
+
+	ruleType = policy->getTypeIdentifier();
+	if ((ruleset != NULL) && ruleset->isAdmin()) {
+		ruleType += ADMIN_FLAG;
+	}
+	list->SetItem(idx, RULEDITOR_LIST_COLUMN_RULE, ruleType);
+
+	list->SetItem(idx, RULEDITOR_LIST_COLUMN_TYPE,
+	    policy->getTypeIdentifier());
+	list->SetItem(idx, RULEDITOR_LIST_COLUMN_ACTION,
+	    policy->getActionName());
+	list->SetItem(idx, RULEDITOR_LIST_COLUMN_LOG, policy->getLogName());
+	list->SetItem(idx, RULEDITOR_LIST_COLUMN_AF,
+	    policy->getAddrFamilyName());
+	list->SetItem(idx, RULEDITOR_LIST_COLUMN_PROTO,
+	    policy->getProtocolName());
+	list->SetItem(idx, RULEDITOR_LIST_COLUMN_DIR,
+	    policy->getDirectionName());
+	list->SetItem(idx, RULEDITOR_LIST_COLUMN_FHOST,
+	    policy->getFromHostName());
+	list->SetItem(idx, RULEDITOR_LIST_COLUMN_FPORT,
+	    policy->getFromPortName());
+	list->SetItem(idx, RULEDITOR_LIST_COLUMN_THOST,
+	    policy->getToHostName());
+	list->SetItem(idx, RULEDITOR_LIST_COLUMN_TPORT,
+	    policy->getToPortName());
+	list->SetItem(idx, RULEDITOR_LIST_COLUMN_STATETIMEOUT,
+	    policy->getStateTimeoutName());
+#endif
+}
+
+void
+RuleEditorFillTableVisitor::showContextFilterPolicy(
+    ContextFilterPolicy *WXUNUSED(policy), long WXUNUSED(idx))
+{
+/*
+ * XXX ch: this will be fixed with the next functionality change
+ */
+#if 0
+	wxString	 ruleType;
+	wxListCtrl	*list;
+	PolicyRuleSet	*ruleset;
+
+	clean(policy, idx);
+	policy->setRuleEditorIndex(idx);
+
+	list = ruleEditor_->ruleListCtrl;
+	ruleset = policy->getParentRuleSet();
+	if (ruleset != NULL) {
+		ruleEditor_->ruleListCtrl->SetItem(idx,
+		    RULEDITOR_LIST_COLUMN_USER,
+		    wxGetApp().getUserNameById(ruleset->getUid()));
+	}
+
+	ruleType = policy->getTypeIdentifier();
+	if ((ruleset != NULL) && ruleset->isAdmin()) {
+		ruleType += ADMIN_FLAG;
+	}
+	list->SetItem(idx, RULEDITOR_LIST_COLUMN_RULE, ruleType);
+	/* XXX ch: this is fixed in the RuleEditor change
+	list->SetItem(idx, RULEDITOR_LIST_COLUMN_BIN, policy->getBinaryName());
+	list->SetItem(idx, RULEDITOR_LIST_COLUMN_HASHT,
+	    policy->getHashTypeName());
+	list->SetItem(idx, RULEDITOR_LIST_COLUMN_HASH, policy->getHashValue());
+	*/
+#endif
+}
+
+void
+RuleEditorFillTableVisitor::showDefaultFilterPolicy(
+    DefaultFilterPolicy *WXUNUSED(policy), long WXUNUSED(idx))
+{
+/*
+ * XXX ch: this will be fixed with the next functionality change
+ */
+#if 0
+	wxString	 ruleType;
+	wxListCtrl	*list;
+	PolicyRuleSet	*ruleset;
+
+	clean(policy, idx);
+	policy->setRuleEditorIndex(idx);
+
+	list = ruleEditor_->ruleListCtrl;
+	ruleset = policy->getParentRuleSet();
+	if (ruleset != NULL) {
+		ruleEditor_->ruleListCtrl->SetItem(idx,
+		    RULEDITOR_LIST_COLUMN_USER,
+		    wxGetApp().getUserNameById(ruleset->getUid()));
+	}
+
+	ruleType = policy->getTypeIdentifier();
+	if ((ruleset != NULL) && ruleset->isAdmin()) {
+		ruleType += ADMIN_FLAG;
+	}
+	list->SetItem(idx, RULEDITOR_LIST_COLUMN_RULE, ruleType);
+
+	list->SetItem(idx, RULEDITOR_LIST_COLUMN_TYPE,
+	    policy->getTypeIdentifier());
+	list->SetItem(idx, RULEDITOR_LIST_COLUMN_LOG, policy->getLogName());
+	list->SetItem(idx, RULEDITOR_LIST_COLUMN_ACTION,
+	    policy->getActionName());
+#endif
+}
+
+void
+RuleEditorFillTableVisitor::showSbAccessFilterPolicy(
+    SbAccessFilterPolicy *WXUNUSED(policy), long WXUNUSED(idx))
+{
+/*
+ * XXX ch: this will be fixed with the next functionality change
+ */
+#if 0
+	wxString	 ruleType;
+	wxListCtrl	*list;
+	PolicyRuleSet	*ruleset;
+
+	clean(policy, idx);
+	policy->setRuleEditorIndex(idx);
+
+	list = ruleEditor_->ruleListCtrl;
+	ruleset = policy->getParentRuleSet();
+	if (ruleset != NULL) {
+		ruleEditor_->ruleListCtrl->SetItem(idx,
+		    RULEDITOR_LIST_COLUMN_USER,
+		    wxGetApp().getUserNameById(ruleset->getUid()));
+	}
+
+	ruleType = policy->getTypeIdentifier();
+	if ((ruleset != NULL) && ruleset->isAdmin()) {
+		ruleType += ADMIN_FLAG;
+	}
+	list->SetItem(idx, RULEDITOR_LIST_COLUMN_RULE, ruleType);
+#endif
+}
+
+void
+RuleEditorFillTableVisitor::showSfsFilterPolicy(
+    SfsFilterPolicy *WXUNUSED(policy), long WXUNUSED(idx))
+{
+/*
+ * XXX ch: this will be fixed with the next functionality change
+ */
+#if 0
+	wxString	 ruleType;
+	wxListCtrl	*list;
+	PolicyRuleSet	*ruleset;
+
+	clean(policy, idx);
+	policy->setRuleEditorIndex(idx);
+
+	list = ruleEditor_->ruleListCtrl;
+	ruleset = policy->getParentRuleSet();
+	if (ruleset != NULL) {
+		ruleEditor_->ruleListCtrl->SetItem(idx,
+		    RULEDITOR_LIST_COLUMN_USER,
+		    wxGetApp().getUserNameById(ruleset->getUid()));
+	}
+
+	ruleType = policy->getTypeIdentifier();
+	if ((ruleset != NULL) && ruleset->isAdmin()) {
+		ruleType += ADMIN_FLAG;
+	}
+	list->SetItem(idx, RULEDITOR_LIST_COLUMN_RULE, ruleType);
+#endif
+}

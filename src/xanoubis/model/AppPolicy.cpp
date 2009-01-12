@@ -25,356 +25,468 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
-#include <sys/param.h>
-#include <sys/socket.h>
-
-#ifndef LINUX
-#include <sys/queue.h>
-#include <sha2.h>
-#else
-#include <queue.h>
-#endif
-
-#include <openssl/sha.h>
-
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
-#include <wx/file.h>
-#include <wx/intl.h>
-
-#include "Policy.h"
-#include "AlfPolicy.h"
-#include "PolicyVisitor.h"
-
 #include "AppPolicy.h"
 
-IMPLEMENT_DYNAMIC_CLASS(AppPolicy, Policy)
+#include "PolicyVisitor.h"
+#include "PolicyUtils.h"
 
-AppPolicy::AppPolicy(void) : Policy(NULL, NULL)
+IMPLEMENT_CLASS(AppPolicy, Policy);
+
+AppPolicy::AppPolicy(PolicyRuleSet *ruleSet, struct apn_rule *rule)
+    : Policy(ruleSet, rule)
 {
-}
-
-AppPolicy::AppPolicy(PolicyRuleSet *parent) : Policy(parent)
-{
-}
-
-AppPolicy::AppPolicy(struct apn_rule *appRule, PolicyRuleSet *parent)
-    : Policy(parent, NULL)
-{
-	struct apn_rule		*rule;
-	AlfPolicy		*newAlf;
-	SfsPolicy		*newSfs;
-	CtxPolicy		*newCtx;
-
-	appRule_ = appRule;
-	currHash_ = wxEmptyString;
-	currSum_ = NULL;
-	modified_ = false;
-
-	switch (appRule_->apn_type) {
-	case APN_ALF:
-		TAILQ_FOREACH(rule, &appRule_->rule.chain, entry) {
-			newAlf = new AlfPolicy(this, rule, parent);
-			ruleList_.Append(newAlf);
-		}
-		break;
-	case APN_SFS:
-		TAILQ_FOREACH(rule, &appRule_->rule.chain, entry) {
-			/* XXX: Ignore new style SFS policies for now */
-			if (rule->apn_type != APN_SFS_CHECK)
-				continue;
-			newSfs = new SfsPolicy(this, rule, parent);
-			ruleList_.Append(newSfs);
-		}
-		break;
-	case APN_CTX:
-		TAILQ_FOREACH(rule, &appRule_->rule.chain, entry) {
-			newCtx = new CtxPolicy(this, rule, parent);
-			ruleList_.Append(newCtx);
-		}
-	case APN_SB:
-	case APN_VS:
-	default:
-		break;
-	}
+	filterList_.Clear();
 }
 
 AppPolicy::~AppPolicy(void)
 {
-	ruleList_.DeleteContents(true);
-	/* the apn structure will be deleted by PolicyRuleSet */
+	filterList_.DeleteContents(true);
+	filterList_.Clear();
+}
+
+struct apn_app *
+AppPolicy::createApnApp(void)
+{
+	struct apn_app *app;
+
+	app = (struct apn_app *)calloc(1, sizeof(struct apn_app));
+	if (app != NULL) {
+		app->hashtype = APN_HASH_NONE;
+	}
+
+	return (app);
+}
+
+struct apn_rule *
+AppPolicy::createApnRule(void)
+{
+	struct apn_rule *rule;
+
+	rule = (struct apn_rule *)calloc(1, sizeof(struct apn_rule));
+
+	return (rule);
 }
 
 void
-AppPolicy::accept(PolicyVisitor& visitor)
+AppPolicy::accept(PolicyVisitor &visitor)
 {
-	PolicyList::iterator	 i;
-
-	visitor.visitAppPolicy(this);
+	PolicyList::iterator i;
 
 	if (visitor.shallBeenPropagated() == true) {
-		for (i=ruleList_.begin(); i != ruleList_.end(); ++i) {
+		for (i=filterList_.begin(); i != filterList_.end(); i++) {
 			(*i)->accept(visitor);
 		}
 	}
 }
 
-void
-AppPolicy::setBinaryName(wxString name)
+unsigned int
+AppPolicy::getBinaryCount(void) const
 {
-	struct apn_app  *app;
+	unsigned int	 count;
+	struct apn_app	*app;
+	struct apn_rule *rule;
 
-	app = appRule_->app;
+	count = 0;
+	app   = NULL;
+	rule  = getApnRule();
 
-	if (name == wxT("any")) {
-		appRule_->app = NULL;
-		if (app)
-			apn_free_app(app);
-		modified_ = true;
-		return;
-	}
-	if(app == NULL) {
-		app = (struct apn_app *)calloc(1, sizeof(struct apn_app));
-		if (app == NULL)
-			return;
-
-		appRule_->app = app;
-		app->hashtype = APN_HASH_SHA256;
-	} else
-		free(app->name);
-
-	app->name = strdup(name.fn_str());
-	modified_ = true;
-}
-
-wxString
-AppPolicy::getBinaryName(void)
-{
-	if (appRule_->app == NULL)
-		return wxString::From8BitData("any");
-	return wxString::From8BitData(appRule_->app->name);
-}
-
-unsigned char*
-AppPolicy::getCurrentSum(void)
-{
-	return (currSum_);
-}
-
-void
-AppPolicy::setCurrentSum(unsigned char *csum)
-{
-	int len;
-
-	if (!currSum_) {
-		currSum_ = (unsigned char*)malloc(MAX_APN_HASH_LEN);
-		if (!currSum_)
-			return;
-	}
-
-	switch (appRule_->app->hashtype) {
-	case APN_HASH_SHA256:
-		len = APN_HASH_SHA256_LEN;
-		break;
-	default:
-		len = 0;
-		break;
-	}
-
-	bcopy(csum, currSum_, len);
-}
-
-wxString
-AppPolicy::getCurrentHash(void)
-{
-	if (currHash_.IsEmpty()) {
-		return _("unknown");
-	} else {
-		return (currHash_);
-	}
-}
-
-void
-AppPolicy::setCurrentHash(wxString currHash)
-{
-	appRule_->app->hashtype = APN_HASH_SHA256;
-	currHash_ = currHash;
-}
-
-int
-AppPolicy::calcCurrentHash(unsigned char csum[MAX_APN_HASH_LEN])
-{
-	SHA256_CTX	 shaCtx;
-	u_int8_t	 buf[4096];
-	size_t		 ret;
-	wxFile		*file;
-	struct stat	 fileStat;
-
-	/* At first we looking for any UNIX file permissions	*/
-	if (stat((const char *)getBinaryName().mb_str(wxConvLocal),
-	    &fileStat) < 0)
-	    return -1;
-
-	if (! (fileStat.st_mode & S_IRUSR))
-		return -2;
-
-	/* Now we looking if Sfs let us access the file		*/
-	if (wxFile::Exists(getBinaryName().c_str())) {
-		if (!wxFile::Access(getBinaryName().c_str(), wxFile::read))
-			return 0;
-	} else {
-		return -1;
-	}
-
-	file = new wxFile(getBinaryName().c_str());
-	bzero(csum, MAX_APN_HASH_LEN);
-
-	if (file->IsOpened()) {
-		SHA256_Init(&shaCtx);
-		while(1) {
-			ret = file->Read(buf, sizeof(buf));
-			if (ret == 0) {
-				break;
-			}
-			if (ret == (size_t)wxInvalidOffset) {
-				return (-1);
-			}
-			SHA256_Update(&shaCtx, buf, ret);
+	if (rule != NULL) {
+		app = rule->app;
+		while (app != NULL) {
+			count++;
+			app = app->next;
 		}
-		SHA256_Final(csum, &shaCtx);
-		file->Close();
 	}
 
-	appRule_->app->hashtype = APN_HASH_SHA256;
-	currHash_ = convertToString(csum);
-
-	this->setCurrentSum(csum);
-
-	return (1);
+	return (count);
 }
 
-wxString
-AppPolicy::getHashTypeName(void)
+bool
+AppPolicy::setBinaryName(wxString binary, unsigned int idx)
 {
-	wxString result;
+	struct apn_app	*app;
+	struct apn_rule *rule;
 
-	if (appRule_->app == NULL)
-		return wxString::From8BitData("");
-	switch (appRule_->app->hashtype) {
-	case APN_HASH_SHA256:
-		result = wxT("SHA256");
-		break;
-	default:
-		result = _("(unknown)");
-		break;
+	rule = getApnRule();
+
+	if ((rule == NULL) || (idx >= getBinaryCount()) || binary.IsEmpty()) {
+		return (false);
 	}
+
+	if (binary.Cmp(wxT("any")) == 0) {
+		startChange();
+		apn_free_app(rule->app);
+		rule->app = NULL;
+		setModified();
+		finishChange();
+		return (true);
+	}
+
+	app = seekAppByIndex(idx);
+	if (app == NULL) {
+		return (false);
+	}
+
+	startChange();
+	free(app->name);
+	app->name = strdup(binary.To8BitData());
+	setModified();
+	finishChange();
+
+	return (true);
+}
+
+bool
+AppPolicy::setBinaryList(wxArrayString binaryList)
+{
+	bool		 result;
+	struct apn_rule *rule;
+
+	rule = getApnRule();
+
+	if (rule == NULL) {
+		return (false);
+	}
+
+	startChange();
+	result = PolicyUtils::setAppList(&(rule->app), binaryList);
+	setModified();
+	finishChange();
 
 	return (result);
 }
 
-void
-AppPolicy::setHashValue(unsigned char csum[MAX_APN_HASH_LEN])
+wxString
+AppPolicy::getBinaryName(unsigned int idx) const
 {
-	int len;
+	wxString	 binary;
+	struct apn_app	*app;
+	struct apn_rule *rule;
 
-	/* XXX: KM there should be a propper error handling */
-	if (appRule_->app == NULL)
-		return;
+	rule = getApnRule();
 
-	switch (appRule_->app->hashtype) {
+	if ((rule == NULL) || (idx > getBinaryCount())) {
+		return (wxEmptyString);
+	}
+
+	if (rule->app == NULL) {
+		return (wxT("any"));
+	}
+
+	binary = wxEmptyString;
+	app = seekAppByIndex(idx);
+
+	if (app != NULL) {
+		binary = wxString::From8BitData(app->name);
+	}
+
+	return (binary);
+}
+
+wxString
+AppPolicy::getBinaryName(void) const
+{
+	return (PolicyUtils::listToString(getBinaryList()));
+}
+
+wxArrayString
+AppPolicy::getBinaryList(void) const
+{
+	wxArrayString	 binaryList;
+	struct apn_rule *rule;
+
+	rule = getApnRule();
+
+	if (rule == NULL) {
+		return (binaryList);
+	}
+
+	binaryList = PolicyUtils::getAppList(rule->app);
+
+	return (binaryList);
+}
+
+bool
+AppPolicy::isAnyBlock(void) const
+{
+	struct apn_rule *rule;
+
+	rule = getApnRule();
+
+	if ((rule == NULL) || (rule->app == NULL)) {
+		/*
+		 * The any-block is defined as a empty app pointer
+		 * (rule_->app == NULL). Thus returning 'true' on
+		 * rule_ == NULL seems not to be correct, but what
+		 * else would be handy?
+		 */
+		return (true);
+	}
+
+	return (false);
+}
+
+bool
+AppPolicy::setHashTypeNo(int hashType, unsigned int idx)
+{
+	struct apn_app	*app;
+	struct apn_rule *rule;
+
+	rule = getApnRule();
+
+	if (rule == NULL) {
+		return (false);
+	}
+
+	app = seekAppByIndex(idx);
+	if (app == NULL) {
+		return (false);
+	}
+
+	startChange();
+	app->hashtype = hashType;
+	setModified();
+	finishChange();
+
+	return (true);
+}
+
+bool
+AppPolicy::setAllToHashTypeNo(int hashType)
+{
+	struct apn_app	*app;
+	struct apn_rule *rule;
+
+	rule = getApnRule();
+
+	if ((rule == NULL) || (rule->app == NULL)) {
+		return (false);
+	}
+
+	startChange();
+	app = rule->app;
+	while (app != NULL) {
+		app->hashtype = hashType;
+		app = app->next;
+	}
+
+	setModified();
+	finishChange();
+
+	return (true);
+}
+
+int
+AppPolicy::getHashTypeNo(unsigned int idx) const
+{
+	struct apn_app	*app;
+	struct apn_rule *rule;
+
+	rule = getApnRule();
+
+	if (rule == NULL) {
+		return (-1);
+	}
+
+	app = seekAppByIndex(idx);
+	if (app == NULL) {
+		return (-1);
+	}
+
+	return (app->hashtype);
+}
+
+wxString
+AppPolicy::getHashTypeName(unsigned int idx) const
+{
+	return (hashTypeToString(getHashTypeNo(idx)));
+}
+
+wxArrayString
+AppPolicy::getHashTypeList(void) const
+{
+	wxArrayString	 hashTypeList;
+	struct apn_app	*app;
+	struct apn_rule *rule;
+
+	hashTypeList.Clear();
+	rule = getApnRule();
+
+	if (rule == NULL) {
+		return (hashTypeList);
+	}
+
+	if (rule->app == NULL) {
+		hashTypeList.Add(hashTypeToString(APN_HASH_NONE));
+	} else {
+		app = rule->app;
+		while (app != NULL) {
+			hashTypeList.Add(hashTypeToString(app->hashtype));
+			app = app->next;
+		}
+	}
+
+	return (hashTypeList);
+}
+
+bool
+AppPolicy::setHashValueNo(unsigned char csum[MAX_APN_HASH_LEN],
+    unsigned int idx)
+{
+	int		 len;
+	struct apn_app	*app;
+	struct apn_rule *rule;
+
+	rule = getApnRule();
+
+	if (rule == NULL) {
+		return (false);
+	}
+
+	app = seekAppByIndex(idx);
+	if (app == NULL) {
+		return (false);
+	}
+
+	startChange();
+	switch (app->hashtype) {
 	case APN_HASH_SHA256:
 		len = APN_HASH_SHA256_LEN;
 		break;
 	case APN_HASH_NONE:
-		appRule_->app->hashtype = APN_HASH_SHA256;
-		len = APN_HASH_SHA256_LEN;
-		break;
+		/* FALLTHROUGH */
 	default:
 		len = 0;
 		break;
 	}
 
-	bcopy(csum, appRule_->app->hashvalue, len);
-	modified_ = true;
-}
+	memcpy(app->hashvalue, csum, len);
+	setModified();
+	finishChange();
 
-wxString
-AppPolicy::getHashValue(void)
-{
-	wxString	result;
-
-	result = convertToString(appRule_->app->hashvalue);
-
-	return (result);
-}
-
-int
-AppPolicy::getType(void)
-{
-	return(appRule_->apn_type);
+	return (true);
 }
 
 bool
-AppPolicy::isModified(void)
+AppPolicy::setHashValueString(wxString csumString, unsigned int idx)
 {
-	return (modified_);
+	unsigned char csum[MAX_APN_HASH_LEN];
+
+	memset(csum, 0, MAX_APN_HASH_LEN);
+	PolicyUtils::stringToCsum(csumString, csum, MAX_APN_HASH_LEN);
+
+	return (setHashValueNo(csum, idx));
 }
 
-void
-AppPolicy::setModified(bool modified)
+bool
+AppPolicy::getHashValueNo(unsigned int idx, unsigned char *csum, int len) const
 {
-	modified_ = modified;
-}
+	int		 needLength;
+	struct apn_app	*app;
+	struct apn_rule *rule;
 
-int
-AppPolicy::getId(void)
-{
-	return(appRule_->apn_id);
-}
+	rule = getApnRule();
 
-wxString
-AppPolicy::convertToString(unsigned char *csum)
-{
-	wxString	result;
-	unsigned int	length;
+	if (rule == NULL) {
+		return (false);
+	}
 
-	length = 0;
-	result = wxT("0x");
+	app = seekAppByIndex(idx);
+	if (app == NULL) {
+		return (false);
+	}
 
-	if (appRule_->app == NULL)
-		return (_("any"));
-
-	switch (appRule_->app->hashtype) {
+	switch (app->hashtype) {
 	case APN_HASH_SHA256:
-		length = APN_HASH_SHA256_LEN;
+		needLength = APN_HASH_SHA256_LEN;
 		break;
 	case APN_HASH_NONE:
-		length = 0;
-		result = _("unknown");
-		break;
+		/* FALLTHROUGH */
 	default:
-		length = 0;
-		result = _("(unknown hash type)");
+		needLength = 0;
 		break;
 	}
 
-	for (unsigned int i=0; i<length; i++) {
-		result += wxString::Format(wxT("%2.2x"),
-		    (unsigned char)csum[i]);
+	if (len >= needLength) {
+		memcpy(csum, app->hashvalue, needLength);
+		return (true);
+	} else {
+		return (false);
 	}
-
-	return (result);
 }
 
-bool
-AppPolicy::isDefault(void)
+wxString
+AppPolicy::getHashValueName(unsigned int idx) const
 {
-	return (appRule_->app == NULL); /* aka any rule */
+	unsigned char	csum[MAX_APN_HASH_LEN];
+	wxString	csumString;
+
+	memset(csum, 0, MAX_APN_HASH_LEN);
+	csumString = wxEmptyString;
+
+	if (getHashValueNo(idx, csum, MAX_APN_HASH_LEN)) {
+		PolicyUtils::csumToString(csum, MAX_APN_HASH_LEN,
+		    csumString);
+	}
+
+	return (csumString);
+}
+
+wxArrayString
+AppPolicy::getHashValueList(void) const
+{
+	unsigned int	idx;
+	wxArrayString	hashValueList;
+
+	/* This is not the best implementation, but it works. */
+	for (idx = 0; idx > getBinaryCount(); idx++) {
+		hashValueList.Add(getHashValueName(idx));
+	}
+
+	return (hashValueList);
+}
+
+struct apn_app *
+AppPolicy::seekAppByIndex(unsigned int idx) const
+{
+	unsigned int	 seekIdx;
+	struct apn_app	*app;
+	struct apn_rule *rule;
+
+	rule = getApnRule();
+
+	if (rule == NULL) {
+		return (NULL);
+	}
+
+	seekIdx = 0;
+	app = rule->app;
+
+	/* Search for app with given index. */
+	while ((app != NULL) && (seekIdx != idx)) {
+		seekIdx++;
+		app = app->next;
+	}
+
+	return (app);
+}
+
+wxString
+AppPolicy::hashTypeToString(int hashType) const
+{
+	wxString hashTypeString;
+
+	switch (hashType) {
+	case APN_HASH_SHA256:
+		hashTypeString = wxT("SHA256");
+		break;
+	case APN_HASH_NONE:
+		hashTypeString = wxT("NONE");
+		break;
+	default:
+		hashTypeString = _("(unknown)");
+		break;
+	}
+
+	return (hashTypeString);
 }

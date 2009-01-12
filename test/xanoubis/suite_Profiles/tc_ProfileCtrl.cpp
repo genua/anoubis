@@ -251,11 +251,11 @@ END_TEST
 START_TEST(ProfileCtrl_getUserId)
 {
 	long id = pc->getUserId();
-	fail_unless(id == userPolicy->getId(),
+	fail_unless(id == userPolicy->getRuleSetId(),
 	    "Fetched wrong user-id\n"
 	    "Is: %i\n"
 	    "Expected: %i",
-	    id, userPolicy->getId());
+	    id, userPolicy->getRuleSetId());
 
 	PolicyRuleSet *rs = pc->getRuleSet(id);
 	fail_unless(rs == userPolicy, "Wrong user-policy fetched!");
@@ -265,11 +265,11 @@ END_TEST
 START_TEST(ProfileCtrl_getAdminId)
 {
 	long id = pc->getAdminId(geteuid());
-	fail_unless(id == adminPolicy->getId(),
+	fail_unless(id == adminPolicy->getRuleSetId(),
 	    "Fetched wrong admin-id\n"
 	    "Is: %i\n"
 	    "Expected: %i",
-	    id, adminPolicy->getId());
+	    id, adminPolicy->getRuleSetId());
 
 	PolicyRuleSet *rs = pc->getRuleSet(id);
 	fail_unless(rs == adminPolicy, "Wrong user-policy fetched!");
@@ -482,10 +482,10 @@ END_TEST
 START_TEST(ProfileCtrl_getUserPolicy)
 {
 	long id = pc->getUserId();
-	fail_unless(id == userPolicy->getId(),
+	fail_unless(id == userPolicy->getRuleSetId(),
 	    "Wrong id policy-id fetched\n"
 	    "Is: %i\n"
-	    "Expected: %i", id, userPolicy->getId());
+	    "Expected: %i", id, userPolicy->getRuleSetId());
 
 	PolicyRuleSet *rs = pc->getRuleSet(id);
 	fail_unless(rs == userPolicy, "Wrong policy fetched");
@@ -495,10 +495,10 @@ END_TEST
 START_TEST(ProfileCtrl_getAdminPolicy)
 {
 	long id = pc->getAdminId(geteuid());
-	fail_unless(id == adminPolicy->getId(),
+	fail_unless(id == adminPolicy->getRuleSetId(),
 	    "Wrong id policy-id fetched\n"
 	    "Is: %i\n"
-	    "Expected: %i", id, userPolicy->getId());
+	    "Expected: %i", id, userPolicy->getRuleSetId());
 
 	PolicyRuleSet *rs = pc->getRuleSet(id);
 	fail_unless(rs == adminPolicy, "Wrong policy fetched");
@@ -517,7 +517,7 @@ END_TEST
 
 START_TEST(ProfileCtrl_getRuleSetWrongId)
 {
-	long id = userPolicy->getId() + adminPolicy->getId();
+	long id = userPolicy->getRuleSetId() + adminPolicy->getRuleSetId();
 	PolicyRuleSet *rs = pc->getRuleSet(id);
 	fail_unless(rs == 0, "Policy fetch where nothing is expected");
 }
@@ -532,7 +532,7 @@ END_TEST
 
 START_TEST(ProfileCtrl_importUserProfile)
 {
-	int oldId = userPolicy->getId();
+	int oldId = userPolicy->getRuleSetId();
 	bool result = pc->importFromProfile(wxT("user5"));
 	fail_unless(result == true, "Import from \"user5\" failed");
 
@@ -544,7 +544,7 @@ END_TEST
 
 START_TEST(ProfileCtrl_importDefaultProfile)
 {
-	int oldId = userPolicy->getId();
+	int oldId = userPolicy->getRuleSetId();
 	bool result = pc->importFromProfile(wxT("default2"));
 	fail_unless(result == true, "Import from \"default2\" failed");
 

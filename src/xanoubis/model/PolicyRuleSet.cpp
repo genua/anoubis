@@ -25,67 +25,43 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
-#include <sys/param.h>
-#include <sys/socket.h>
-
-#ifndef LINUX
-#include <sys/queue.h>
-#else
-#include <queue.h>
-#endif
-
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <wx/string.h>
-#include <wx/ffile.h>
-#include <wx/window.h>
-#include <wx/progdlg.h>
-#include <wx/utils.h>
-
-#include <apn.h>
-#include <errno.h>
-
-#include "AnEvents.h"
-#include "main.h"
-#include "Policy.h"
-#include "AppPolicy.h"
-#include "VarPolicy.h"
 #include "PolicyRuleSet.h"
+
+#include <wx/utils.h>
+#include <wx/ffile.h> //XXX needed?
+
+#include "main.h"
+#include "ProfileCtrl.h"
 #include "PolicyVisitor.h"
 #include "RuleSetSearchPolicyVisitor.h"
+#include "RuleSetClearModifiedVisitor.h"
 #include "RuleEditorChecksumVisitor.h"
-
-#define CALLOC_STRUCT(type) (struct type *)calloc(1, sizeof(struct type))
 
 PolicyRuleSet::PolicyRuleSet(int priority, uid_t uid,
     struct apn_ruleset *ruleSet)
 {
-	id_ = wxNewId();
-	uid_ = uid;
-	hasErrors_ = false;
+	ruleSetId_  = wxNewId();
+	uid_	    = uid;
+	priority_   = priority;
+	ruleSet_    = NULL; /* Set by crate() */
+	origin_     = wxT("native apn ruleset");
+	hasErrors_  = false;
 	isModified_ = false;
-	ruleSet_ = NULL;
-	priority_ = priority;
-	origin_ = wxT("Daemon");
 
 	create(ruleSet);
 }
 
-PolicyRuleSet::PolicyRuleSet(int priority, uid_t uid, wxString fileName,
+PolicyRuleSet::PolicyRuleSet(int priority, uid_t uid, const wxString &fileName,
     bool checkPerm)
 {
-	id_ = wxNewId();
-	uid_ = uid;
-	hasErrors_ = false;
+	ruleSetId_  = wxNewId();
+	uid_	    = uid;
+	priority_   = priority;
+	ruleSet_    = NULL; /* Set by crate() */
+	hasErrors_  = false;
 	isModified_ = false;
-	ruleSet_ = NULL;
-	priority_ = priority;
-	origin_ = fileName;
 
+	origin_.Printf(wxT("loaded from file: %s"), fileName.c_str());
 	create(fileName, checkPerm);
 }
 
@@ -95,30 +71,190 @@ PolicyRuleSet::~PolicyRuleSet(void)
 	apn_free_ruleset(ruleSet_);
 }
 
-void
-PolicyRuleSet::create(struct apn_ruleset *ruleSet)
+bool
+PolicyRuleSet::isEmpty(void) const
 {
-	struct apn_rule *appRule;
-	struct var	*variable;
+	bool isEmpty;
 
-	ruleSet_ = ruleSet;
-
-	TAILQ_FOREACH(appRule, &(ruleSet->alf_queue), entry) {
-		alfList_.Append(new AppPolicy(appRule, this));
+	if (alfList_.IsEmpty() &&
+	    sfsList_.IsEmpty() &&
+	    ctxList_.IsEmpty() &&
+	    sbList_.IsEmpty()     ) {
+		isEmpty = true;
+	} else {
+		isEmpty = false;
 	}
 
-	TAILQ_FOREACH(appRule, &(ruleSet->sfs_queue), entry) {
-		sfsList_.Append(new AppPolicy(appRule, this));
+	return (isEmpty);
+}
+
+bool
+PolicyRuleSet::isAdmin(void) const
+{
+	bool isAdmin;
+
+	if (priority_ > 0) {
+		isAdmin = false;
+	} else {
+		isAdmin = true;
 	}
 
-	TAILQ_FOREACH(appRule, &(ruleSet->ctx_queue), entry) {
-		ctxList_.Append(new AppPolicy(appRule, this));
-	}
+	return (isAdmin);
+}
 
-	TAILQ_FOREACH(variable, &(ruleSet->var_queue), entry) {
-		varList_.Append(new VarPolicy(variable));
+bool
+PolicyRuleSet::hasErrors(void) const
+{
+	return (hasErrors_);
+}
+
+long
+PolicyRuleSet::getRuleSetId(void) const
+{
+	return (ruleSetId_);
+}
+
+struct apn_ruleset *
+PolicyRuleSet::getApnRuleSet(void) const
+{
+	return (ruleSet_);
+}
+
+uid_t
+PolicyRuleSet::getUid(void) const
+{
+	return (uid_);
+}
+
+int
+PolicyRuleSet::getPriority(void) const
+{
+	return (priority_);
+}
+
+void
+PolicyRuleSet::setOrigin(wxString origin)
+{
+	startChange();
+	origin_ = origin;
+	finishChange();
+}
+
+wxString
+PolicyRuleSet::getOrigin(void) const
+{
+	return (origin_);
+}
+
+void
+PolicyRuleSet::accept(PolicyVisitor& visitor)
+{
+	PolicyList::iterator	i;
+
+	for (i=alfList_.begin(); i != alfList_.end(); i++) {
+		(*i)->accept(visitor);
+	}
+	for (i=sfsList_.begin(); i != sfsList_.end(); i++) {
+		(*i)->accept(visitor);
+	}
+	for (i=ctxList_.begin(); i != ctxList_.end(); i++) {
+		(*i)->accept(visitor);
+	}
+	for (i=sbList_.begin(); i != sbList_.end(); i++) {
+		(*i)->accept(visitor);
 	}
 }
+
+wxString
+PolicyRuleSet::toString(void) const
+{
+	int	 result;
+	wxString content;
+	wxString tmpFileName;
+	wxFFile	 tmpFile;
+
+	result = 1;
+	content = wxEmptyString;
+	tmpFileName = wxFileName::CreateTempFileName(wxEmptyString);
+
+	if (!tmpFile.Open(tmpFileName, wxT("w"))) {
+		/* Couldn't open / fill tmp file. */
+		return (wxEmptyString);
+	}
+
+	/* Write the ruleset to tmp file. */
+	result = apn_print_ruleset(ruleSet_, 0, tmpFile.fp());
+	tmpFile.Flush();
+	tmpFile.Close();
+
+	if (result != 0) {
+		/* Something went wrong during file filling! */
+		wxRemoveFile(tmpFileName);
+		return (wxEmptyString);
+	}
+
+	if (tmpFile.Open(tmpFileName, wxT("r"))) {
+		if (!tmpFile.ReadAll(&content)) {
+			/* Error during file read - clear read stuff. */
+			content = wxEmptyString;
+		}
+		tmpFile.Close();
+	}
+
+	wxRemoveFile(tmpFileName);
+
+	return (content);
+}
+
+bool
+PolicyRuleSet::exportToFile(const wxString &fileName) const
+{
+	int	result;
+	wxFFile exportFile;
+
+	if (!exportFile.Open(fileName, wxT("w"))) {
+		/* Couldn't open file for writing. */
+		return (false);
+	}
+
+	result = apn_print_ruleset(ruleSet_, 0, exportFile.fp());
+
+	fchmod(fileno(exportFile.fp()), S_IRUSR);
+	exportFile.Flush();
+	exportFile.Close();
+
+	if (result != 0) {
+		/* Something went wrong - remove broken file. */
+		wxRemoveFile(fileName);
+		return (false);
+	}
+
+	return (true);
+}
+
+void
+PolicyRuleSet::setModified(void)
+{
+	startChange();
+	isModified_ = true;
+	finishChange();
+}
+
+void
+PolicyRuleSet::clearModified(void)
+{
+	RuleSetClearModifiedVisitor resetVisitor;
+
+	this->accept(resetVisitor);
+	isModified_ = false;
+}
+
+bool
+PolicyRuleSet::isModified(void) const
+{
+	return (isModified_);
+}
+
 
 void
 PolicyRuleSet::clean(void)
@@ -129,8 +265,8 @@ PolicyRuleSet::clean(void)
 	sfsList_.Clear();
 	ctxList_.DeleteContents(true);
 	ctxList_.Clear();
-	varList_.DeleteContents(true);
-	varList_.Clear();
+	sbList_.DeleteContents(true);
+	sbList_.Clear();
 }
 
 void
@@ -191,6 +327,34 @@ PolicyRuleSet::create(wxString fileName, bool checkPerm)
 	}
 }
 
+void
+PolicyRuleSet::create(struct apn_ruleset *ruleSet)
+{
+	struct apn_rule *rule;
+
+	ruleSet_ = ruleSet;
+
+	TAILQ_FOREACH(rule, &(ruleSet->alf_queue), entry) {
+		alfList_.Append(new AlfAppPolicy(this, rule));
+	}
+
+	TAILQ_FOREACH(rule, &(ruleSet->sfs_queue), entry) {
+		sfsList_.Append(new SfsAppPolicy(this, rule));
+	}
+
+	TAILQ_FOREACH(rule, &(ruleSet->ctx_queue), entry) {
+		ctxList_.Append(new ContextAppPolicy(this, rule));
+	}
+
+	TAILQ_FOREACH(rule, &(ruleSet->sb_queue), entry) {
+		sbList_.Append(new SbAppPolicy(this, rule));
+	}
+}
+
+/*
+ * XXX ch: re-enable this while adding functionality to the RuleEditor
+ */
+#if 0
 bool
 PolicyRuleSet::hasLocalHost(wxArrayString list)
 {
@@ -432,50 +596,10 @@ PolicyRuleSet::createAnswerPolicy(EscalationNotify *escalation)
 	clean();
 	create(this->ruleSet_);
 
-	ProfileCtrl::getInstance()->sendToDaemon(getId());
-
+	ProfileCtrl::getInstance()->sendToDaemon(getRuleSetId());
 	event.SetClientData(this);
 	wxPostEvent(AnEvents::getInstance(), event);
-}
 
-void
-PolicyRuleSet::accept(PolicyVisitor& visitor)
-{
-	PolicyList::iterator	i;
-
-	for (i=alfList_.begin(); i != alfList_.end(); ++i) {
-		(*i)->accept(visitor);
-	}
-	for (i=sfsList_.begin(); i != sfsList_.end(); ++i) {
-		(*i)->accept(visitor);
-	}
-	for (i=ctxList_.begin(); i != ctxList_.end(); ++i) {
-		(*i)->accept(visitor);
-	}
-	for (i=varList_.begin(); i != varList_.end(); ++i) {
-		(*i)->accept(visitor);
-	}
-}
-
-void
-PolicyRuleSet::exportToFile(wxString fileName)
-{
-	wxString	 logEntry;
-	wxFFile		*exportFile;
-
-	exportFile = new wxFFile(fileName, wxT("w"));
-
-	if (exportFile->IsOpened()) {
-		if (apn_print_ruleset(ruleSet_, 0, exportFile->fp()) == 0) {
-			logEntry = _("Policies exported successfully to ");
-		}
-		fchmod(fileno(exportFile->fp()), S_IRUSR);
-		exportFile->Close();
-	} else {
-		logEntry = _("Could not open file for export: ");
-	}         logEntry += fileName;
-	log(logEntry);
-	status(logEntry);
 }
 
 int
@@ -666,7 +790,7 @@ PolicyRuleSet::createSfsPolicy(int insertBeforeId)
 	newSfsRule->rule.sfscheck.app->hashtype = APN_HASH_NONE;
 
 	if (TAILQ_EMPTY(&(ruleSet_->sfs_queue))) {
-		sfsRootRule = CALLOC_STRUCT(apn_rule);
+		sfsRootRule = 0; // XXX CALLOC_STRUCT(apn_rule);
 		sfsRootRule->apn_type = APN_SFS;
 		apn_add(ruleSet_, sfsRootRule);
 	}
@@ -693,15 +817,6 @@ PolicyRuleSet::createSfsPolicy(int insertBeforeId)
 	return (newId);
 }
 
-void
-PolicyRuleSet::clearModified(void)
-{
-	RuleEditorChecksumVisitor	seeker(0);
-
-	this->accept(seeker);
-	isModified_ = false;
-}
-
 bool
 PolicyRuleSet::findMismatchHash(void)
 {
@@ -710,7 +825,6 @@ PolicyRuleSet::findMismatchHash(void)
 	this->accept(seeker);
 
 	return (seeker.hasMismatch());
-
 }
 
 bool
@@ -726,102 +840,7 @@ PolicyRuleSet::deletePolicy(int id)
 
 	return (true);
 }
-
-bool
-PolicyRuleSet::isEmpty(void)
-{
-	return (alfList_.IsEmpty() && sfsList_.IsEmpty() &&
-	    varList_.IsEmpty() && ctxList_.IsEmpty());
-}
-
-bool
-PolicyRuleSet::isAdmin(void)
-{
-	bool result;
-
-	if (priority_ > 0) {
-		result = false;
-	} else {
-		result = true;
-	}
-
-	return (result);
-}
-
-wxString
-PolicyRuleSet::getOrigin(void)
-{
-	return (origin_);
-}
-
-wxString
-PolicyRuleSet::toString(void) const
-{
-	wxString tmpFile = wxFileName::CreateTempFileName(wxT(""));
-	wxString content = wxT("");
-	int result = 1;
-
-	wxFFile f(tmpFile, wxT("w"));
-
-	if (f.IsOpened()) {
-		result = apn_print_ruleset(ruleSet_, 0, f.fp());
-
-		f.Flush();
-		f.Close();
-	}
-
-	if (result != 0) {
-		wxRemoveFile(tmpFile);
-		return (content);
-	}
-
-	if (f.Open(tmpFile, wxT("r"))) {
-		if (!f.ReadAll(&content))
-			content = wxT("");
-
-		f.Close();
-	}
-
-	wxRemoveFile(tmpFile);
-
-	return (content);
-}
-
-long
-PolicyRuleSet::getId(void) const
-{
-	return (id_);
-}
-
-uid_t
-PolicyRuleSet::getUid(void) const
-{
-	return (uid_);
-}
-
-int
-PolicyRuleSet::getPriority(void) const
-{
-	return (priority_);
-}
-
-bool
-PolicyRuleSet::hasErrors(void) const
-{
-	return (hasErrors_);
-}
-
-bool
-PolicyRuleSet::isModified(void) const
-{
-	return (isModified_);
-}
-
-void
-PolicyRuleSet::setModified(bool modified)
-{
-	isModified_ = modified;
-}
+#endif
 
 void
 PolicyRuleSet::log(const wxString &msg)

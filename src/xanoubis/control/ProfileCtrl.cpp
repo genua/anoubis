@@ -97,7 +97,7 @@ ProfileCtrl::getRuleSet(long id) const
 	for (it = ruleSetList_.begin(); it != ruleSetList_.end(); ++it) {
 		PolicyRuleSet *rs = (*it);
 
-		if (rs->getId() == id)
+		if (rs->getRuleSetId() == id)
 			return (rs);
 	}
 
@@ -547,7 +547,7 @@ ProfileCtrl::seekId(bool isAdmin, uid_t uid) const
 		PolicyRuleSet *rs = (*it);
 
 		if ((rs->isAdmin() == isAdmin) && (rs->getUid() == uid))
-			return ((*it)->getId());
+			return ((*it)->getRuleSetId());
 	}
 
 	return (-1);
@@ -607,7 +607,10 @@ ProfileCtrl::OnAnswerEscalation(wxCommandEvent &event)
 	/* Does the answer involve a temporary or permanent policy? */
 	if (escalation->getAnswer()->causeTmpRule() ||
 	    escalation->getAnswer()->causePermRule()) {
+		/*
+		 * XXX ch: re-enable this with RuleEditor change
 		ruleset->createAnswerPolicy(escalation);
+		*/
 	}
 }
 

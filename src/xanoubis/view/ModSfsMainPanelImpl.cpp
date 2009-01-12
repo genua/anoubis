@@ -101,14 +101,12 @@ ModSfsMainPanelImpl::OnLoadRuleSet(wxCommandEvent& event)
 	userRuleSetId_ = profileCtrl->getUserId();
 	ruleSet = profileCtrl->getRuleSet(userRuleSetId_);
 	if (ruleSet != NULL) {
-		addVisitor.setAdmin(false);
 		ruleSet->accept(addVisitor);
 	}
 
 	adminRuleSetId_ = profileCtrl->getAdminId(geteuid());
 	ruleSet = profileCtrl->getRuleSet(adminRuleSetId_);
 	if (ruleSet != NULL) {
-		addVisitor.setAdmin(true);
 		ruleSet->accept(addVisitor);
 	}
 
@@ -126,7 +124,6 @@ ModSfsMainPanelImpl::OnLoadRuleSet(wxCommandEvent& event)
 
 			ruleSet = profileCtrl->getRuleSet(rsid);
 			if (ruleSet != NULL) {
-				addVisitor.setAdmin(true);
 				ruleSet->accept(addVisitor);
 			}
 		}

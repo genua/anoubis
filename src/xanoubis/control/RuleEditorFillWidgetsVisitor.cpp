@@ -41,12 +41,8 @@ RuleEditorFillWidgetsVisitor::RuleEditorFillWidgetsVisitor(
 	setPropagation(false);
 }
 
-RuleEditorFillWidgetsVisitor::~RuleEditorFillWidgetsVisitor(void)
-{
-}
-
 /*
- * XXX ch: this will be fixed with the next functionality change
+ * XXX ch: fix this in the RuleEditor change see Bug #964
  */
 #if 0
 void

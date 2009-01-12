@@ -32,44 +32,116 @@
 #include "config.h"
 #endif
 
-#include <sys/param.h>
-#include <sys/socket.h>
-
-#ifndef LINUX
-#include <sys/queue.h>
-#else
-#include <queue.h>
-#endif
-
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <wx/string.h>
-
-#include <apn.h>
-
-#include "ModAlfMainPanelImpl.h"
-#include "Policy.h"
 #include "PolicyVisitor.h"
-#include "AppPolicy.h"
-#include "AlfPolicy.h"
-#include "VarPolicy.h"
+#include "ModAlfMainPanelImpl.h"
 
+#include "Policy.h"
+#include "AlfAppPolicy.h"
+#include "AlfCapabilityFilterPolicy.h"
+#include "AlfFilterPolicy.h"
+#include "ContextAppPolicy.h"
+#include "ContextFilterPolicy.h"
+#include "DefaultFilterPolicy.h"
+#include "SbAccessFilterPolicy.h"
+#include "SbAppPolicy.h"
+#include "SfsAppPolicy.h"
+#include "SfsFilterPolicy.h"
+
+/**
+ * PolicyVisitor for ModAlf.
+ * This visitor adds the visited policies to the list of ModAlf (where the
+ * policies can been viewed).
+ */
 class ModAlfAddPolicyVisitor : public PolicyVisitor
 {
-	private:
-		ModAlfMainPanelImpl	*alfPanel_;
-
-		long		ruleListAppend(Policy *);
-
 	public:
+		/**
+		 * Constructor of ModAlfAddPolicyVisitor.
+		 * @param 1st The main panel of ModAlf.
+		 * @return Nothing.
+		 */
 		ModAlfAddPolicyVisitor(ModAlfMainPanelImpl *);
-		~ModAlfAddPolicyVisitor(void);
 
-		virtual void visitAppPolicy(AppPolicy *);
-		virtual void visitAlfPolicy(AlfPolicy *);
-		virtual void visitCtxPolicy(CtxPolicy *);
-		virtual void visitSfsPolicy(SfsPolicy *);
-		virtual void visitVarPolicy(VarPolicy *);
+		/**
+		 * Visit a AlfAppPolicy.
+		 * @param[in] 1st Policy to visit.
+		 */
+		virtual void visitAlfAppPolicy(AlfAppPolicy *);
+
+		/**
+		 * Visit a AlfCapabilityFilterPolicy.
+		 * @param[in] 1st Policy to visit.
+		 */
+		virtual void visitAlfCapabilityFilterPolicy(
+		    AlfCapabilityFilterPolicy *);
+
+		/**
+		 * Visit a AlfFilterPolicy.
+		 * @param[in] 1st Policy to visit.
+		 */
+		virtual void visitAlfFilterPolicy(AlfFilterPolicy *);
+
+		/**
+		 * Visit a ContextAppPolicy.
+		 * ModAlf does not deal with ContextAppPolicies.
+		 * @param[in] 1st Policy to visit.
+		 */
+		virtual void visitContextAppPolicy(ContextAppPolicy *);
+
+		/**
+		 * Visit a ContextFilterPolicy.
+		 * ModAlf does not deal with ContextFilterPolicies.
+		 * @param[in] 1st Policy to visit.
+		 */
+		virtual void visitContextFilterPolicy(
+		    ContextFilterPolicy *);
+
+		/**
+		 * Visit a DefaultFilterPolicy.
+		 * @param[in] 1st Policy to visit.
+		 */
+		virtual void visitDefaultFilterPolicy(DefaultFilterPolicy *);
+
+		/**
+		 * Visit a SbAccessFilterPolicy.
+		 * ModAlf does not deal with SbAccessFilterPolicies.
+		 * @param[in] 1st Policy to visit.
+		 */
+		virtual void visitSbAccessFilterPolicy(
+		    SbAccessFilterPolicy *);
+
+		/**
+		 * Visit a SbAppPolicy.
+		 * ModAlf does not deal with SbAppPolicies.
+		 * @param[in] 1st Policy to visit.
+		 */
+		virtual void visitSbAppPolicy(SbAppPolicy *);
+
+		/**
+		 * Visit a SfsAppPolicy.
+		 * ModAlf does not deal with SfsAppPolicies.
+		 * @param[in] 1st Policy to visit.
+		 */
+		virtual void visitSfsAppPolicy(SfsAppPolicy *);
+
+		/**
+		 * Visit a SfsFilterPolicy.
+		 * ModAlf does not deal with SfsFilterPolicies.
+		 * @param[in] 1st Policy to visit.
+		 */
+		virtual void visitSfsFilterPolicy(SfsFilterPolicy *);
+
+	private:
+		ModAlfMainPanelImpl	*alfPanel_;	/**< The main panel. */
+
+		/**
+		 * RuleList append.
+		 * This method does the work of adding the given policy to
+		 * the wxListCtrl of the main panel of ModAlf.
+		 * @param[in] 1st The policy to add.
+		 * @return The index within the list of the added policy.
+		 */
+		long ruleListAppend(Policy *);
 };
 
 #endif	/* _MODALFADDPOLICYVISITOR_H_ */

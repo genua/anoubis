@@ -104,6 +104,7 @@ WX_DEFINE_ARRAY_LONG(long, ArrayOfLongs);
 
 class DlgRuleEditor : public DlgRuleEditorBase
 {
+
 	private:
 		unsigned long	selectedId_;
 		unsigned long	selectedIndex_;
@@ -132,8 +133,8 @@ class DlgRuleEditor : public DlgRuleEditorBase
 		void updateTimeout(int);
 		void updateAlfSrcAddr(wxString, int, int);
 		void updateAlfDstAddr(wxString, int, int);
-		void updateAlfSrcPort(int);
-		void updateAlfDstPort(int);
+		void updateAlfSrcPort(wxString);
+		void updateAlfDstPort(wxString);
 		void updateLog(int);
 
 		ANEVENTS_IDENT_BCAST_METHOD_DECLARATION;
@@ -220,6 +221,7 @@ class DlgRuleEditor : public DlgRuleEditorBase
 		friend class RuleEditorAddPolicyVisitor;
 		friend class RuleEditorFillWidgetsVisitor;
 		friend class RuleEditorFillTableVisitor;
+
 };
 
 #endif /* __DlgRuleEditor__ */

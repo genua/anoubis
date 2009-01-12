@@ -29,6 +29,7 @@
 #define _SUBJECT_H_
 
 #include <wx/list.h>
+#include <wx/object.h>
 
 #include "Observer.h"
 
@@ -59,8 +60,10 @@
  * }
  * @endcode
  */
-class Subject
+class Subject : public wxObject
 {
+	DECLARE_CLASS(Subject)
+
 	public:
 		/**
 		 * Constructor of subject object.

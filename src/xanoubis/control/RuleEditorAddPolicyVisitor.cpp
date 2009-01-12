@@ -34,76 +34,100 @@ RuleEditorAddPolicyVisitor::RuleEditorAddPolicyVisitor(
 	setPropagation(true);
 }
 
-RuleEditorAddPolicyVisitor::~RuleEditorAddPolicyVisitor(void)
-{
-}
-
 /*
  * XXX ch: this will be fixed with the next functionality change
  */
 #if 0
+void
+RuleEditorAddPolicyVisitor::visitAlfAppPolicy(AlfAppPolicy *policy)
+{
+	showAppPolicy(policy, appendPolicy(policy));
+}
+
+void
+RuleEditorAddPolicyVisitor::visitAlfCapabilityFilterPolicy(
+    AlfCapabilityFilterPolicy *policy)
+{
+	showAlfCapabilityFilterPolicy(policy, appendPolicy(policy));
+}
+
+void
+RuleEditorAddPolicyVisitor::visitAlfFilterPolicy(AlfFilterPolicy *policy)
+{
+	showAlfFilterPolicy(policy, appendPolicy(policy));
+}
+
+void
+RuleEditorAddPolicyVisitor::visitContextAppPolicy(ContextAppPolicy *policy)
+{
+	showAppPolicy(policy, appendPolicy(policy));
+}
+
+void
+RuleEditorAddPolicyVisitor::visitContextFilterPolicy(
+    ContextFilterPolicy *policy)
+{
+	showContextFilterPolicy(policy, appendPolicy(policy));
+}
+
+void
+RuleEditorAddPolicyVisitor::visitDefaultFilterPolicy(
+    DefaultFilterPolicy *policy)
+{
+	showDefaultFilterPolicy(policy, appendPolicy(policy));
+}
+
+void
+RuleEditorAddPolicyVisitor::visitSbAccessFilterPolicy(
+    SbAccessFilterPolicy *policy)
+{
+	showSbAccessFilterPolicy(policy, appendPolicy(policy));
+}
+
+void
+RuleEditorAddPolicyVisitor::visitSbAppPolicy(SbAppPolicy *policy)
+{
+	showAppPolicy(policy, appendPolicy(policy));
+}
+
+void
+RuleEditorAddPolicyVisitor::visitSfsAppPolicy(SfsAppPolicy *policy)
+{
+	showAppPolicy(policy, appendPolicy(policy));
+}
+
+void
+RuleEditorAddPolicyVisitor::visitSfsFilterPolicy(SfsFilterPolicy *policy)
+{
+	showSfsFilterPolicy(policy, appendPolicy(policy));
+}
+
 long
 RuleEditorAddPolicyVisitor::appendPolicy(Policy *policy)
 {
 	long		 idx;
-	wxString	 ruleType;
-	PolicyRuleSet	*rs;
+	wxString	 ruleId;
+	PolicyRuleSet	*ruleset;
 
 	idx = ruleEditor_->ruleListCtrl->GetItemCount();
-	ruleType = wxString::Format(wxT("%d"), policy->getId());
+	ruleId = wxString::Format(wxT("%d"), idx);
 
-	ruleEditor_->ruleListCtrl->InsertItem(idx, ruleType);
+	ruleEditor_->ruleListCtrl->InsertItem(idx, ruleId);
 	ruleEditor_->ruleListCtrl->SetItemPtrData(idx, (wxUIntPtr)policy);
 
-	rs = policy->getRsParent();
-	if (rs != NULL) {
+	ruleset = policy->getParentRuleSet();
+	if (ruleset != NULL) {
 		ruleEditor_->ruleListCtrl->SetItem(idx,
 		    RULEDITOR_LIST_COLUMN_USER,
-		    wxGetApp().getUserNameById(rs->getUid()));
+		    wxGetApp().getUserNameById(ruleset->getUid()));
 
 	}
 
-	if (isAdmin()) {
+	if ((ruleset != NULL) && ruleset->isAdmin()) {
 		ruleEditor_->ruleListCtrl->SetItemBackgroundColour(idx,
 		    wxTheColourDatabase->Find(wxT("LIGHT GREY")));
 	}
 
 	return (idx);
-}
-
-void
-RuleEditorAddPolicyVisitor::visitAppPolicy(AppPolicy *appPolicy)
-{
-	/* Never visit the SFS dummy application block itself! */
-	if (appPolicy->getType() == APN_SFS)
-		return;
-	if (appPolicy->getType() == APN_ALF
-	    || appPolicy->getType() == APN_CTX) {
-		showApp(appPolicy, appendPolicy(appPolicy));
-	}
-}
-
-void
-RuleEditorAddPolicyVisitor::visitAlfPolicy(AlfPolicy *alfPolicy)
-{
-	showAlf(alfPolicy, appendPolicy(alfPolicy));
-}
-
-void
-RuleEditorAddPolicyVisitor::visitCtxPolicy(CtxPolicy *ctxPolicy)
-{
-	showCtx(ctxPolicy, appendPolicy(ctxPolicy));
-}
-
-void
-RuleEditorAddPolicyVisitor::visitSfsPolicy(SfsPolicy *sfsPolicy)
-{
-	showSfs(sfsPolicy, appendPolicy(sfsPolicy));
-}
-
-void
-RuleEditorAddPolicyVisitor::visitVarPolicy(VarPolicy *variable)
-{
-	 showVar(variable, appendPolicy(variable));
 }
 #endif

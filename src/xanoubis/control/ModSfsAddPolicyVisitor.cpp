@@ -25,32 +25,6 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
-#include <sys/param.h>
-#include <sys/socket.h>
-
-#ifndef LINUX
-#include <sys/queue.h>
-#else
-#include <queue.h>
-#endif
-
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <wx/string.h>
-
-#include <apn.h>
-
-#include "ModSfsMainPanelImpl.h"
-#include "Policy.h"
-#include "PolicyVisitor.h"
-#include "AppPolicy.h"
-#include "AlfPolicy.h"
-#include "VarPolicy.h"
-
 #include "ModSfsAddPolicyVisitor.h"
 
 ModSfsAddPolicyVisitor::ModSfsAddPolicyVisitor(ModSfsMainPanelImpl *sfsPanel)
@@ -58,8 +32,109 @@ ModSfsAddPolicyVisitor::ModSfsAddPolicyVisitor(ModSfsMainPanelImpl *sfsPanel)
 	sfsPanel_ = sfsPanel;
 }
 
-ModSfsAddPolicyVisitor::~ModSfsAddPolicyVisitor()
+void
+ModSfsAddPolicyVisitor::visitAlfAppPolicy(AlfAppPolicy *)
 {
+	/* ModSfs does not deal with AlfAppPolicies. */
+}
+
+void
+ModSfsAddPolicyVisitor::visitAlfCapabilityFilterPolicy(
+		    AlfCapabilityFilterPolicy *)
+{
+	/* ModSfs does not deal with AlfCapabilityFilterPolicies. */
+}
+
+void
+ModSfsAddPolicyVisitor::visitAlfFilterPolicy(AlfFilterPolicy *)
+{
+	/* ModSfs does not deal with AlfFilterPolicies. */
+}
+
+void
+ModSfsAddPolicyVisitor::visitContextAppPolicy(ContextAppPolicy *)
+{
+	/* ModSfs does not deal with ContextAppPolicies. */
+}
+
+void
+ModSfsAddPolicyVisitor::visitContextFilterPolicy(
+		    ContextFilterPolicy *)
+{
+	/* ModSfs does not deal with ContextFilterPolicies. */
+}
+
+void
+ModSfsAddPolicyVisitor::visitDefaultFilterPolicy(DefaultFilterPolicy *policy)
+{
+	long		 idx;
+	wxListCtrl	*list;
+
+	idx = ruleListAppend(policy);
+	list = sfsPanel_->lst_Rules;
+
+	/*
+	 * XXX ch: fix this with next change
+	list->SetItem(idx, MODSFS_LIST_COLUMN_PROG,
+	    sfsPolicy->getBinaryName());
+	list->SetItem(idx, MODSFS_LIST_COLUMN_HASHT,
+	    sfsPolicy->getHashTypeName());
+	list->SetItem(idx, MODSFS_LIST_COLUMN_HASH,
+	   sfsPolicy->getHashValue());
+	*/
+}
+
+void
+ModSfsAddPolicyVisitor::visitSbAccessFilterPolicy(
+		    SbAccessFilterPolicy *)
+{
+	/* ModSfs does not deal with SbAccessFilterPolicies. */
+}
+
+void
+ModSfsAddPolicyVisitor::visitSbAppPolicy(SbAppPolicy *)
+{
+	/* ModSfs does not deal with SbAppPolicies. */
+}
+
+void
+ModSfsAddPolicyVisitor::visitSfsAppPolicy(SfsAppPolicy *policy)
+{
+	long		 idx;
+	wxListCtrl	*list;
+
+	idx = ruleListAppend(policy);
+	list = sfsPanel_->lst_Rules;
+
+	/*
+	 * XXX ch: fix this with next change
+	list->SetItem(idx, MODSFS_LIST_COLUMN_PROG,
+	    sfsPolicy->getBinaryName());
+	list->SetItem(idx, MODSFS_LIST_COLUMN_HASHT,
+	    sfsPolicy->getHashTypeName());
+	list->SetItem(idx, MODSFS_LIST_COLUMN_HASH,
+	   sfsPolicy->getHashValue());
+	*/
+}
+
+void
+ModSfsAddPolicyVisitor::visitSfsFilterPolicy(SfsFilterPolicy *policy)
+{
+	long		 idx;
+	wxListCtrl	*list;
+
+	idx = ruleListAppend(policy);
+	list = sfsPanel_->lst_Rules;
+
+	/*
+	 * XXX ch: fix this with next change
+	list->SetItem(idx, MODSFS_LIST_COLUMN_PROG,
+	    sfsPolicy->getBinaryName());
+	list->SetItem(idx, MODSFS_LIST_COLUMN_HASHT,
+	    sfsPolicy->getHashTypeName());
+	list->SetItem(idx, MODSFS_LIST_COLUMN_HASH,
+	   sfsPolicy->getHashValue());
+	*/
 }
 
 long
@@ -74,44 +149,4 @@ ModSfsAddPolicyVisitor::ruleListAppend(Policy *policy)
 	sfsPanel_->lst_Rules->SetItemPtrData(idx, (wxUIntPtr)policy);
 
 	return (idx);
-}
-
-void
-ModSfsAddPolicyVisitor::visitAppPolicy(AppPolicy*)
-{
-	/* no app policies shown in SFS module */
-}
-
-void
-ModSfsAddPolicyVisitor::visitAlfPolicy(AlfPolicy*)
-{
-	/* no ALF policies shown in SFS module */
-}
-
-void
-ModSfsAddPolicyVisitor::visitCtxPolicy(CtxPolicy*)
-{
-	/* no ALF policies shown in CTX module */
-}
-
-void
-ModSfsAddPolicyVisitor::visitSfsPolicy(SfsPolicy *sfsPolicy)
-{
-	long		 idx;
-	wxListCtrl	*list;
-
-	idx = ruleListAppend(sfsPolicy);
-	list = sfsPanel_->lst_Rules;
-
-	list->SetItem(idx, MODSFS_LIST_COLUMN_PROG,
-	    sfsPolicy->getBinaryName());
-	list->SetItem(idx, MODSFS_LIST_COLUMN_HASHT,
-	    sfsPolicy->getHashTypeName());
-	list->SetItem(idx, MODSFS_LIST_COLUMN_HASH,
-	   sfsPolicy->getHashValue());
-}
-
-void
-ModSfsAddPolicyVisitor::visitVarPolicy(VarPolicy*)
-{
 }

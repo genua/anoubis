@@ -27,10 +27,10 @@
 
 #include "RuleEditorChecksumVisitor.h"
 
-#include <wx/intl.h>
-#include <apn.h>
+//#include <wx/intl.h>
+//#include <apn.h>
 
-RuleEditorChecksumVisitor::RuleEditorChecksumVisitor()
+RuleEditorChecksumVisitor::RuleEditorChecksumVisitor(void)
 {
 	mismatch_ = false;
 	state_ = -1;
@@ -42,11 +42,71 @@ RuleEditorChecksumVisitor::RuleEditorChecksumVisitor(int state)
 	state_ = state;
 }
 
-RuleEditorChecksumVisitor::~RuleEditorChecksumVisitor()
+void
+RuleEditorChecksumVisitor::visitAlfAppPolicy(AlfAppPolicy *)
 {
-	/* Destructor */
+
 }
 
+void
+RuleEditorChecksumVisitor::visitAlfCapabilityFilterPolicy(
+    AlfCapabilityFilterPolicy *)
+{
+
+}
+
+void
+RuleEditorChecksumVisitor::visitAlfFilterPolicy(AlfFilterPolicy *)
+{
+
+}
+
+void
+RuleEditorChecksumVisitor::visitContextAppPolicy(ContextAppPolicy *)
+{
+
+}
+
+void
+RuleEditorChecksumVisitor::visitContextFilterPolicy(ContextFilterPolicy *)
+{
+
+}
+
+void
+RuleEditorChecksumVisitor::visitDefaultFilterPolicy(DefaultFilterPolicy *)
+{
+
+}
+
+void
+RuleEditorChecksumVisitor::visitSbAccessFilterPolicy(SbAccessFilterPolicy *)
+{
+
+}
+
+void
+RuleEditorChecksumVisitor::visitSbAppPolicy(SbAppPolicy *)
+{
+
+}
+
+void
+RuleEditorChecksumVisitor::visitSfsAppPolicy(SfsAppPolicy *)
+{
+
+}
+
+void
+RuleEditorChecksumVisitor::visitSfsFilterPolicy(SfsFilterPolicy *)
+{
+
+}
+
+/*
+ * XXX ch: this will be fixed with #963
+ */
+#if 0
 void
 RuleEditorChecksumVisitor::compare(Policy *policy)
 {
@@ -101,6 +161,7 @@ RuleEditorChecksumVisitor::compare(Policy *policy)
 			mismatch_ = true;
 	}
 }
+
 
 void
 RuleEditorChecksumVisitor::setModifiedTo(Policy *policy)
@@ -171,3 +232,4 @@ RuleEditorChecksumVisitor::visitVarPolicy(VarPolicy*)
 {
 	/* There are no Hash sums in VarPolicy */
 }
+#endif

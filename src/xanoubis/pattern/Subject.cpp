@@ -30,6 +30,8 @@
 #include <wx/listimpl.cpp>
 WX_DEFINE_LIST(SubjectList);
 
+IMPLEMENT_CLASS(Subject, wxObject);
+
 Subject::Subject(void)
 {
 	changeCount_ = 0;

@@ -28,27 +28,115 @@
 #ifndef _RULEEDITORADDPOLICYVISITOR_H_
 #define _RULEEDITORADDPOLICYVISITOR_H_
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "DlgRuleEditor.h"
-#include "PolicyVisitor.h"
 #include "RuleEditorFillTableVisitor.h"
 
+#include "Policy.h"
+#include "AlfAppPolicy.h"
+#include "AlfCapabilityFilterPolicy.h"
+#include "AlfFilterPolicy.h"
+#include "ContextAppPolicy.h"
+#include "ContextFilterPolicy.h"
+#include "DefaultFilterPolicy.h"
+#include "SbAccessFilterPolicy.h"
+#include "SbAppPolicy.h"
+#include "SfsAppPolicy.h"
+#include "SfsFilterPolicy.h"
+
+/**
+ * PolicyVisitor for RuleEditor.
+ * This visitor adds the visited policies to the list of RuleEditor.
+ * It uses the methods inherited from RuleEditorFillTableVisitor to fill
+ * the added line with content.
+ */
 class RuleEditorAddPolicyVisitor : public RuleEditorFillTableVisitor
 {
-	private:
-		long appendPolicy(Policy *);
-
 	public:
+		/**
+		 * Constructor of RuleEditorAddPolicyVisitor.
+		 * @param 1st The RuleEditor.
+		 * @return Nothing.
+		 */
 		RuleEditorAddPolicyVisitor(DlgRuleEditor *);
-		~RuleEditorAddPolicyVisitor(void);
 
 /*
  * XXX ch: this will be fixed with the next functionality change
  */
-		virtual void visitAppPolicy(AppPolicy *) {};
-		virtual void visitAlfPolicy(AlfPolicy *) {};
-		virtual void visitCtxPolicy(CtxPolicy *) {};
-		virtual void visitSfsPolicy(SfsPolicy *) {};
-		virtual void visitVarPolicy(VarPolicy *) {};
+
+		/**
+		 * Visit a AlfAppPolicy.
+		 * @param[in] 1st Policy to visit.
+		 */
+		virtual void visitAlfAppPolicy(AlfAppPolicy *) {};
+
+		/**
+		 * Visit a AlfCapabilityFilterPolicy.
+		 * @param[in] 1st Policy to visit.
+		 */
+		virtual void visitAlfCapabilityFilterPolicy(
+		    AlfCapabilityFilterPolicy *) {};
+
+		/**
+		 * Visit a AlfFilterPolicy.
+		 * @param[in] 1st Policy to visit.
+		 */
+		virtual void visitAlfFilterPolicy(AlfFilterPolicy *) {};
+
+		/**
+		 * Visit a ContextAppPolicy.
+		 * @param[in] 1st Policy to visit.
+		 */
+		virtual void visitContextAppPolicy(ContextAppPolicy *) {};
+
+		/**
+		 * Visit a ContextFilterPolicy.
+		 * @param[in] 1st Policy to visit.
+		 */
+		virtual void visitContextFilterPolicy(ContextFilterPolicy *) {};
+
+		/**
+		 * Visit a DefaultFilterPolicy.
+		 * @param[in] 1st Policy to visit.
+		 */
+		virtual void visitDefaultFilterPolicy(DefaultFilterPolicy *) {};
+
+		/**
+		 * Visit a SbAccessFilterPolicy.
+		 * @param[in] 1st Policy to visit.
+		 */
+		virtual void visitSbAccessFilterPolicy(SbAccessFilterPolicy *) {};
+
+		/**
+		 * Visit a SbAppPolicy.
+		 * @param[in] 1st Policy to visit.
+		 */
+		virtual void visitSbAppPolicy(SbAppPolicy *) {};
+
+		/**
+		 * Visit a SfsAppPolicy.
+		 * @param[in] 1st Policy to visit.
+		 */
+		virtual void visitSfsAppPolicy(SfsAppPolicy *) {};
+
+		/**
+		 * Visit a SfsFilterPolicy.
+		 * @param[in] 1st Policy to visit.
+		 */
+		virtual void visitSfsFilterPolicy(SfsFilterPolicy *) {};
+
+	private:
+		/**
+		 * Append policy.
+		 * This method does the work of adding the given policy to
+		 * the wxListCtrl of the RuleEditor.
+		 * @param[in] 1st The policy to add.
+		 * @return The index within the list of the added policy.
+		 */
+		long appendPolicy(Policy *);
 };
 
 #endif	/* _RULEEDITORADDPOLICYVISITOR_H_ */

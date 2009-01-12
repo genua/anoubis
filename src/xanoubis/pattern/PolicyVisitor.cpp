@@ -30,11 +30,14 @@
 PolicyVisitor::PolicyVisitor(void)
 {
 	propagate_ = true;
-	isAdmin_ = false;
 }
 
 PolicyVisitor::~PolicyVisitor(void)
 {
+	/*
+	 * We can't rely on the default destructor here, because it's not
+	 * declared virtual. Thus we need an (empty) implementation.
+	 */
 }
 
 void
@@ -47,16 +50,4 @@ bool
 PolicyVisitor::shallBeenPropagated(void)
 {
 	return (propagate_);
-}
-
-void
-PolicyVisitor::setAdmin(bool isAdmin)
-{
-	isAdmin_ = isAdmin;
-}
-
-bool
-PolicyVisitor::isAdmin(void)
-{
-	return (isAdmin_);
 }

@@ -28,32 +28,137 @@
 #ifndef _POLICYVISITOR_H_
 #define _POLICYVISITOR_H_
 
-#include "AppPolicy.h"
-#include "AlfPolicy.h"
-#include "CtxPolicy.h"
-#include "SfsPolicy.h"
-#include "VarPolicy.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
+//#include "Policy.h"
+//#include "AppPolicy.h"
+//#include "FilterPolicy.h"
+
+#include "AlfAppPolicy.h"
+#include "AlfCapabilityFilterPolicy.h"
+#include "AlfFilterPolicy.h"
+#include "ContextAppPolicy.h"
+#include "ContextFilterPolicy.h"
+#include "DefaultFilterPolicy.h"
+#include "SbAccessFilterPolicy.h"
+#include "SbAppPolicy.h"
+#include "SfsAppPolicy.h"
+#include "SfsFilterPolicy.h"
+
+/**
+ * Design pattern: Visitor.
+ *
+ * This is the common way of separating an algorithm from an object structure
+ * upon which it operates. Use this as base class for new algorithms on
+ * policies.
+ */
 class PolicyVisitor
 {
-	private:
-		bool	propagate_;
-		bool	isAdmin_;
-
 	public:
+		/**
+		 * Constructor for PolicyVisitor.
+		 * @param None.
+		 * @return Nothing.
+		 */
 		PolicyVisitor(void);
+
+		/**
+		 * Destructor for PolicyVisitor.
+		 * Because for abstract classes the destructor has to be
+		 * virtual, we have to declare it. (The default/implicite
+		 * destructor is not virtual and causes warnings).
+		 * @param None.
+		 * @return Nothing.
+		 */
 		virtual ~PolicyVisitor(void);
 
-		virtual void setPropagation(bool);
-		virtual bool shallBeenPropagated(void);
-		virtual void setAdmin(bool);
-		virtual bool isAdmin(void);
+		/**
+		 * Set the propagation.
+		 * If the propagation is 'false', only one policy will been
+		 * visited. Set this to 'true' (the default), the visitor
+		 * will walk down the object structure.
+		 * @param 1st The new propagation flag.
+		 * @return Nothing.
+		 */
+		void setPropagation(bool);
 
-		virtual void visitAppPolicy(AppPolicy *) = 0;
-		virtual void visitAlfPolicy(AlfPolicy *) = 0;
-		virtual void visitCtxPolicy(CtxPolicy *) = 0;
-		virtual void visitSfsPolicy(SfsPolicy *) = 0;
-		virtual void visitVarPolicy(VarPolicy *) = 0;
+		/**
+		 * Get propagation flag.
+		 * Use this to decide if the visitor is given to the next
+		 * object in the structure.
+		 * @param None.
+		 * @return The propagation flag.
+		 */
+		bool shallBeenPropagated(void);
+
+		/**
+		 * Visit an AlfAppPolicy.
+		 * @param[in] 1st Policy to visit.
+		 */
+		virtual void visitAlfAppPolicy(AlfAppPolicy *) = 0;
+
+		/**
+		 * Visit an AlfCapabilityFilterPolicy.
+		 * @param[in] 1st Policy to visit.
+		 */
+		virtual void visitAlfCapabilityFilterPolicy(
+		    AlfCapabilityFilterPolicy *) = 0;
+
+		/**
+		 * Visit an AlfFilterPolicy.
+		 * @param[in] 1st Policy to visit.
+		 */
+		virtual void visitAlfFilterPolicy(AlfFilterPolicy *) = 0;
+
+		/**
+		 * Visit a ContextAppPolicy.
+		 * @param[in] 1st Policy to visit.
+		 */
+		virtual void visitContextAppPolicy(ContextAppPolicy *) = 0;
+
+		/**
+		 * Visit a ContextFilterPolicy.
+		 * @param[in] 1st Policy to visit.
+		 */
+		virtual void visitContextFilterPolicy(
+		    ContextFilterPolicy *) = 0;
+
+		/**
+		 * Visit a DefaultFilterPolicy.
+		 * @param[in] 1st Policy to visit.
+		 */
+		virtual void visitDefaultFilterPolicy(
+		    DefaultFilterPolicy *) = 0;
+
+		/**
+		 * Visit a SbAccessFilterPolicy.
+		 * @param[in] 1st Policy to visit.
+		 */
+		virtual void visitSbAccessFilterPolicy(
+		    SbAccessFilterPolicy *) = 0;
+
+		/**
+		 * Visit a SbAppPolicy.
+		 * @param[in] 1st Policy to visit.
+		 */
+		virtual void visitSbAppPolicy(SbAppPolicy *) = 0;
+
+		/**
+		 * Visit a SfsAppPolicy.
+		 * @param[in] 1st Policy to visit.
+		 */
+		virtual void visitSfsAppPolicy(SfsAppPolicy *) = 0;
+
+		/**
+		 * Visit a SfsFilterPolicy.
+		 * @param[in] 1st Policy to visit.
+		 */
+		virtual void visitSfsFilterPolicy(SfsFilterPolicy *) = 0;
+
+	private:
+		bool	propagate_;	/**< The propagation flag. */
 };
 
 #endif	/* _POLICYVISITOR_H_ */

@@ -40,6 +40,7 @@ else
 TESTS = \
 	testSuite_Patterns \
 	testSuite_Profiles \
+	testSuite_Policies \
 	testSuite_Sfs \
 	pidtest
 noinst_PROGRAMS = test_xanoubis_server testSuite_JobCtrl $(TESTS)
@@ -190,6 +191,41 @@ testSuite_Profiles_SOURCES = \
 	testrunner.cpp \
 	suite_Profiles/testSuite.cpp \
 	suite_Profiles/tc_ProfileCtrl.cpp
+
+#
+# Testsuite: Policy
+#
+testSuite_Policies_CPPFLAGS = $(libGUIcomponents_CPPFLAGS)
+testSuite_Policies_CXXFLAGS = $(libGUIcomponents_CXXFLAGS) @CHECK_CFLAGS@
+testSuite_Policies_LDFLAGS = $(shared_AM_LDFLAGS) -dynamic -L $(RPATH)
+testSuite_Policies_DEPENDENCIES = $(libGUIcomponents_DEPENDS)
+testSuite_Policies_LDADD = \
+	-lGUIcomponents \
+	$(libGUIcomponents_LDADD) \
+	@CHECK_LIBS@
+
+if NEEDBSDCOMPAT
+testSuite_Policies_CPPFLAGS += -I$(top_srcdir)/$(bsdcompatdir)
+testSuite_Policies_DEPENDENCIES += $(libbsdcompat)
+testSuite_Policies_LDADD += $(libbsdcompat)
+endif
+
+testSuite_Policies_SOURCES = \
+	testrunner.cpp \
+	suite_Policies/testSuite.cpp \
+	suite_Policies/PolicyObserver.cpp \
+	suite_Policies/PolicyObserver.h \
+	suite_Policies/policyChecks.h \
+	suite_Policies/tc_AlfAppPolicy.cpp \
+	suite_Policies/tc_AlfCapabilityFilterPolicy.cpp \
+	suite_Policies/tc_AlfFilterPolicy.cpp \
+	suite_Policies/tc_ContextAppPolicy.cpp \
+	suite_Policies/tc_ContextFilterPolicy.cpp \
+	suite_Policies/tc_DefaultFilterPolicy.cpp \
+	suite_Policies/tc_SbAccessFilterPolicy.cpp \
+	suite_Policies/tc_SbAppPolicy.cpp \
+	suite_Policies/tc_SfsAppPolicy.cpp \
+	suite_Policies/tc_SfsFilterPolicy.cpp
 
 #
 # Testsuite: Sfs

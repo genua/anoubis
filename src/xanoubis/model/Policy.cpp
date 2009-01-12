@@ -25,206 +25,129 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
-#include <sys/param.h>
-#include <sys/socket.h>
-
-#ifndef LINUX
-#include <sys/queue.h>
-#else
-#include <queue.h>
-#endif
-
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <wx/arrstr.h>
-#include <wx/intl.h>
-#include <wx/utils.h>
-
-#include <apn.h>
-
-#include "main.h"
 #include "Policy.h"
+
+#include "PolicyRuleSet.h"
+#include <wx/datetime.h>
 
 #include <wx/listimpl.cpp>
 WX_DEFINE_LIST(PolicyList);
 
-IMPLEMENT_CLASS(Policy, wxObject)
+IMPLEMENT_CLASS(Policy, Subject);
 
-Policy::Policy(PolicyRuleSet *rsParent)
+Policy::Policy(PolicyRuleSet *ruleSet, struct apn_rule *rule)
 {
-	parent_ = NULL;
-	index_ = 0;
-	rsParent_ = rsParent;
-}
-
-Policy::Policy(PolicyRuleSet *rsParent, Policy *parent)
-{
-	parent_ = parent;
-	index_ = 0;
-	rsParent_ = rsParent;
+	modified_	= false;
+	parentRuleSet_	= ruleSet;
+	rule_		= rule;
 }
 
 Policy::~Policy(void)
 {
+	/* No need to clean apn_rule; This is done by the ruleset. */
 }
 
-Policy *
-Policy::getParent(void)
+bool
+Policy::isModified(void) const
 {
-	return (parent_);
-}
-
-PolicyRuleSet *
-Policy::getRsParent(void)
-{
-	return (rsParent_);
-}
-
-wxString
-Policy::getActionName(int action)
-{
-	wxString result;
-
-	switch (action) {
-	case APN_ACTION_ALLOW:
-		result = wxT("allow");
-		break;
-	case APN_ACTION_DENY:
-		result = wxT("deny");
-		break;
-	case APN_ACTION_ASK:
-		result = wxT("ask");
-		break;
-	default:
-		result = _("(unknown)");
-		break;
-	}
-
-	return (result);
-}
-
-wxString
-Policy::getDirectionName(int direction)
-{
-	wxString result;
-
-	switch (direction) {
-	case APN_CONNECT:
-		result = wxT("connect");
-		break;
-	case APN_ACCEPT:
-		result = wxT("accept");
-		break;
-	case APN_SEND:
-		result = wxT("send");
-		break;
-	case APN_RECEIVE:
-		result = wxT("receive");
-		break;
-	case APN_BOTH:
-		result = wxT("");
-		break;
-	default:
-		result = _("(unknown)");
-		break;
-	}
-
-	return (result);
-}
-
-wxString
-Policy::getLogName(int log)
-{
-	wxString result;
-
-	switch (log) {
-	case APN_LOG_NONE:
-		result = wxT("none");
-		break;
-	case APN_LOG_NORMAL:
-		result = wxT("normal");
-		break;
-	case APN_LOG_ALERT:
-		result = wxT("alert");
-		break;
-	default:
-		result = _("(unknown)");
-		break;
-	}
-
-	return (result);
-}
-
-wxString
-Policy::getVarTypeName(int type)
-{
-	wxString result;
-
-	switch (type) {
-	case VAR_APPLICATION:
-		result = wxT("Application");
-		break;
-	case VAR_RULE:
-		result = wxT("Rule");
-		break;
-	case VAR_DEFAULT:
-		result = wxT("Default");
-		break;
-	case VAR_HOST:
-		result = wxT("Host");
-		break;
-	case VAR_PORT:
-		result = wxT("Port");
-		break;
-	case VAR_FILENAME:
-		result = wxT("Filename");
-		break;
-	default:
-		result = _("(unknown)");
-		break;
-	}
-
-	return (result);
-}
-
-wxString
-Policy::getRuleTypeName(int type)
-{
-	wxString result;
-
-	switch (type) {
-	case APN_ALF:
-		result = wxT("alf");
-		break;
-	case APN_SFS:
-		result = wxT("sfs");
-		break;
-	case APN_SB:
-		result = wxT("sb");
-		break;
-	case APN_VS:
-		result = wxT("vs");
-		break;
-	default:
-		result = _("(unknown)");
-		break;
-	}
-
-	return (result);
-}
-
-unsigned long
-Policy::getIndex(void)
-{
-	return (index_);
+	return (modified_);
 }
 
 void
-Policy::setIndex(unsigned long index)
+Policy::setModified(void)
 {
-	index_ = index;
+	startChange();
+
+	modified_ = true;
+	if (parentRuleSet_ != NULL) {
+		parentRuleSet_->setModified();
+	}
+
+	finishChange();
+}
+
+void
+Policy::clearModified(void)
+{
+	if (modified_) {
+		startChange();
+		modified_ = false;
+		finishChange();
+	}
+}
+
+PolicyRuleSet *
+Policy::getParentRuleSet(void) const
+{
+	return (parentRuleSet_);
+}
+
+int
+Policy::getApnRuleId(void) const
+{
+	if (rule_ != NULL) {
+		return (rule_->apn_id);
+	}
+
+	return (-1);
+}
+
+bool
+Policy::hasScope(void) const
+{
+	if ((rule_ != NULL) && (rule_->scope != NULL)) {
+		return (true);
+	}
+
+	return (false);
+}
+
+wxString
+Policy::getScopeName(void) const
+{
+	wxString	scope;
+	wxString	task;
+	wxString	timeout;
+
+	scope = wxEmptyString;
+	if ((rule_ != NULL) && hasScope()) {
+		if (rule_->scope->timeout != 0) {
+			wxDateTime date(rule_->scope->timeout);
+			timeout = date.Format();
+		}
+		if (rule_->scope->task != 0) {
+			task.Printf(wxT("%llu"),
+			   (unsigned long long)rule_->scope->task);
+		}
+		if (!timeout.IsEmpty() && task.IsEmpty()) {
+			scope.Printf(wxT("task %s"), task.c_str());
+		} else if (timeout.IsEmpty() && !task.IsEmpty()) {
+			scope.Printf(wxT("until %s"), timeout.c_str());
+		} else {
+			scope.Printf(wxT("until %s and task %s"),
+			    timeout.c_str(), task.c_str());
+		}
+	}
+
+	return (scope);
+}
+
+/* XXX ch: I don't like this, better solution needed here */
+void
+Policy::setRuleEditorIndex(unsigned long idx)
+{
+	ruleEditorIndex_ = idx;
+}
+
+/* XXX ch: I don't like this, better solution needed here */
+unsigned long
+Policy::getRuleEditorIndex(void) const
+{
+	return (ruleEditorIndex_);
+}
+
+struct apn_rule *
+Policy::getApnRule(void) const
+{
+	return (rule_);
 }

@@ -28,28 +28,98 @@
 #ifndef _RULEEDITORCHECKSUMVISITOR_H_
 #define _RULEEDITORCHECKSUMVISITOR_H_
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "PolicyVisitor.h"
 
+#include "Policy.h"
+#include "AppPolicy.h"
+#include "AlfAppPolicy.h"
+#include "AlfCapabilityFilterPolicy.h"
+#include "AlfFilterPolicy.h"
+#include "ContextAppPolicy.h"
+#include "ContextFilterPolicy.h"
+#include "DefaultFilterPolicy.h"
+#include "SbAccessFilterPolicy.h"
+#include "SbAppPolicy.h"
+#include "SfsAppPolicy.h"
+#include "SfsFilterPolicy.h"
+
+/**
+ * PolicyVisitor for RuleEditor.
+ *
+ * XXX ch: this will be fixed with #963
+ * We have to re-think this visitor.
+ * Thus it's fixed within a seperate change for bug #963.
+ */
 class RuleEditorChecksumVisitor : public PolicyVisitor
 {
+	public:
+		/**
+		 */
+		RuleEditorChecksumVisitor(void);
+
+		/**
+		 */
+		RuleEditorChecksumVisitor(int);
+
+		/**
+		 */
+		bool hasMismatch(void);
+		/**
+		 */
+		virtual void visitAlfAppPolicy(AlfAppPolicy *);
+
+		/**
+		 */
+		virtual void visitAlfCapabilityFilterPolicy(
+		    AlfCapabilityFilterPolicy *);
+
+		/**
+		 */
+		virtual void visitAlfFilterPolicy(AlfFilterPolicy *);
+
+		/**
+		 */
+		virtual void visitContextAppPolicy(ContextAppPolicy *);
+
+		/**
+		 */
+		virtual void visitContextFilterPolicy(ContextFilterPolicy *);
+
+		/**
+		 */
+		virtual void visitDefaultFilterPolicy(DefaultFilterPolicy *);
+
+		/**
+		 */
+		virtual void visitSbAccessFilterPolicy(SbAccessFilterPolicy *);
+
+		/**
+		 */
+		virtual void visitSbAppPolicy(SbAppPolicy *);
+
+		/**
+		 */
+		virtual void visitSfsAppPolicy(SfsAppPolicy *);
+
+		/**
+		 */
+		virtual void visitSfsFilterPolicy(SfsFilterPolicy *);
+
 	private:
 		bool mismatch_;
 		int state_;
-		void compare(Policy *policy);
+
+		/**
+		 */
+		void compare(AppPolicy *policy);
+
+		/**
+		 */
 		void setModifiedTo(Policy *policy);
-
-	public:
-		RuleEditorChecksumVisitor(void);
-		RuleEditorChecksumVisitor(int);
-		~RuleEditorChecksumVisitor(void);
-
-		bool hasMismatch(void);
-
-		virtual void visitAppPolicy(AppPolicy *);
-		virtual void visitAlfPolicy(AlfPolicy *);
-		virtual void visitCtxPolicy(CtxPolicy *);
-		virtual void visitSfsPolicy(SfsPolicy *);
-		virtual void visitVarPolicy(VarPolicy *);
 };
 
 #endif	/* _RULEEDITORCHECKSUMVISITOR_H_ */

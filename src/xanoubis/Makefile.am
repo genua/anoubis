@@ -204,24 +204,40 @@ xanoubis_SOURCES= \
 	model/NotifyAnswer.h \
 	model/StatusNotify.cpp \
 	model/StatusNotify.h \
-	model/AlfPolicy.cpp \
-	model/AlfPolicy.h \
-	model/CtxPolicy.cpp \
-	model/CtxPolicy.h \
 	model/SfsDirectory.cpp \
 	model/SfsDirectory.h \
 	model/SfsEntry.cpp \
 	model/SfsEntry.h \
-	model/SfsPolicy.cpp \
-	model/SfsPolicy.h \
-	model/AppPolicy.cpp \
-	model/AppPolicy.h \
-	model/Policy.cpp \
-	model/Policy.h \
 	model/PolicyRuleSet.cpp \
 	model/PolicyRuleSet.h \
-	model/VarPolicy.cpp \
-	model/VarPolicy.h \
+	model/AlfAppPolicy.cpp \
+	model/AlfAppPolicy.h \
+	model/AlfCapabilityFilterPolicy.cpp \
+	model/AlfCapabilityFilterPolicy.h \
+	model/AlfFilterPolicy.cpp \
+	model/AlfFilterPolicy.h \
+	model/AppPolicy.cpp \
+	model/AppPolicy.h \
+	model/ContextAppPolicy.cpp \
+	model/ContextAppPolicy.h \
+	model/ContextFilterPolicy.cpp \
+	model/ContextFilterPolicy.h \
+	model/DefaultFilterPolicy.cpp \
+	model/DefaultFilterPolicy.h \
+	model/FilterPolicy.cpp \
+	model/FilterPolicy.h \
+	model/Policy.cpp \
+	model/Policy.h \
+	model/SbAccessFilterPolicy.cpp \
+	model/SbAccessFilterPolicy.h \
+	model/SbAppPolicy.cpp \
+	model/SbAppPolicy.h \
+	model/SfsAppPolicy.cpp \
+	model/SfsAppPolicy.h \
+	model/SfsFilterPolicy.cpp \
+	model/SfsFilterPolicy.h \
+	model/PolicyUtils.cpp \
+	model/PolicyUtils.h \
 	view/AnStatusBar.cpp \
 	view/AnStatusBar.h \
 	view/AnFader.cpp \
@@ -280,6 +296,8 @@ xanoubis_SOURCES= \
 	control/ModAlfAddPolicyVisitor.h \
 	control/ModSfsAddPolicyVisitor.cpp \
 	control/ModSfsAddPolicyVisitor.h \
+	control/RuleSetClearModifiedVisitor.cpp \
+	control/RuleSetClearModifiedVisitor.h \
 	control/RuleSetSearchPolicyVisitor.cpp \
 	control/RuleSetSearchPolicyVisitor.h \
 	control/RuleEditorChecksumVisitor.cpp \
@@ -334,7 +352,8 @@ xanoubis_SOURCES= \
 	AnUtils.h \
 	ctassert.h \
 	main.cpp \
-	main.h
+	main.h \
+	libapn.h
 
 #
 # For unit tests of the components of xanoubis, we build a shared library.

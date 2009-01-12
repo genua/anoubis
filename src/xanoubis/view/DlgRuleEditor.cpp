@@ -287,52 +287,47 @@ DlgRuleEditor::~DlgRuleEditor(void)
 void
 DlgRuleEditor::updateBinName(wxString binName)
 {
-	Policy				*policy;
-	AppPolicy			*appPolicy;
-	SfsPolicy			*sfsPolicy;
-	CtxPolicy			*ctxPolicy;
+	AppPolicy			*policy;
 	RuleEditorFillTableVisitor	 updateTable(this, selectedIndex_);
 	RuleEditorFillWidgetsVisitor	 updateWidgets(this);
 
-	policy = (Policy *)ruleListCtrl->GetItemData(selectedIndex_);
+	policy = (AppPolicy *)ruleListCtrl->GetItemData(selectedIndex_);
 	if (policy == NULL) {
 		return;
 	}
 
-	if (policy->IsKindOf(CLASSINFO(SfsPolicy))) {
-		sfsPolicy = (SfsPolicy *)policy;
-		sfsPolicy->setBinaryName(binName);
-	} else if (policy->IsKindOf(CLASSINFO(CtxPolicy))) {
-		ctxPolicy = (CtxPolicy *)policy;
-		ctxPolicy->setBinaryName(binName);
-	} else {
-		appPolicy = (AppPolicy *)policy;
-		appPolicy->setBinaryName(binName);
+	if (policy->IsKindOf(CLASSINFO(AppPolicy))) {
+		policy->setBinaryName(binName, 0);
+		policy->accept(updateTable);
+		policy->accept(updateWidgets);
 	}
-
-	policy->accept(updateTable);
-	policy->accept(updateWidgets);
 }
 
 void
 DlgRuleEditor::updateAction(int action)
 {
-	AlfPolicy			*policy;
+	FilterPolicy			*policy;
 	RuleEditorFillTableVisitor	 updateTable(this, selectedIndex_);
 	RuleEditorFillWidgetsVisitor	 updateWidgets(this);
 
-	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedIndex_);
+	policy = (FilterPolicy *)ruleListCtrl->GetItemData(selectedIndex_);
 	if (policy == NULL) {
 		return;
 	}
-	policy->setAction(action);
-	policy->accept(updateTable);
-	policy->accept(updateWidgets);
+
+	if (policy->IsKindOf(CLASSINFO(FilterPolicy))) {
+		policy->setActionNo(action);
+		policy->accept(updateTable);
+		policy->accept(updateWidgets);
+	}
 }
 
 void
-DlgRuleEditor::updateType(int type)
+DlgRuleEditor::updateType(int WXUNUSED(type))
 {
+	/*
+	 * XXX ch: fix this in RuleEditor Change
+	 *
 	AlfPolicy			*policy;
 	RuleEditorFillTableVisitor	 updateTable(this, selectedIndex_);
 	RuleEditorFillWidgetsVisitor	 updateWidgets(this);
@@ -345,17 +340,18 @@ DlgRuleEditor::updateType(int type)
 	policy->setType(type);
 	policy->accept(updateTable);
 	policy->accept(updateWidgets);
+	*/
 }
 
 void
 DlgRuleEditor::updateProtocol(int protocol)
 {
-	AlfPolicy			*policy;
+	AlfFilterPolicy			*policy;
 	RuleEditorFillTableVisitor	 updateTable(this, selectedIndex_);
 	RuleEditorFillWidgetsVisitor	 updateWidgets(this);
 
-	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedIndex_);
-	if (policy == NULL) {
+	policy = (AlfFilterPolicy *)ruleListCtrl->GetItemData(selectedIndex_);
+	if ((policy == NULL) || !policy->IsKindOf(CLASSINFO(AlfFilterPolicy))) {
 		return;
 	}
 
@@ -367,154 +363,167 @@ DlgRuleEditor::updateProtocol(int protocol)
 void
 DlgRuleEditor::updateAddrFamily(int addrFamily)
 {
-	AlfPolicy			*policy;
+	AlfFilterPolicy			*policy;
 	RuleEditorFillTableVisitor	 updateTable(this, selectedIndex_);
 	RuleEditorFillWidgetsVisitor	 updateWidgets(this);
 
-	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedIndex_);
+	policy = (AlfFilterPolicy *)ruleListCtrl->GetItemData(selectedIndex_);
 	if (policy == NULL) {
 		return;
 	}
 
-	policy->setAddrFamily(addrFamily);
-	policy->accept(updateTable);
-	policy->accept(updateWidgets);
+	if (policy->IsKindOf(CLASSINFO(AlfFilterPolicy))) {
+		policy->setAddrFamilyNo(addrFamily);
+		policy->accept(updateTable);
+		policy->accept(updateWidgets);
+	}
 }
 
 void
 DlgRuleEditor::updateCapType(int type)
 {
-	AlfPolicy			*policy;
+	AlfCapabilityFilterPolicy	*policy;
 	RuleEditorFillTableVisitor	 updateTable(this, selectedIndex_);
 	RuleEditorFillWidgetsVisitor	 updateWidgets(this);
 
-	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedIndex_);
+	policy = (AlfCapabilityFilterPolicy *)ruleListCtrl->GetItemData(
+	    selectedIndex_);
 	if (policy == NULL) {
 		return;
 	}
 
-	policy->setCapType(type);
-	policy->accept(updateTable);
-	policy->accept(updateWidgets);
+	if (policy->IsKindOf(CLASSINFO(AlfCapabilityFilterPolicy))) {
+		policy->setCapabilityTypeNo(type);
+		policy->accept(updateTable);
+		policy->accept(updateWidgets);
+	}
 }
 
 void
 DlgRuleEditor::updateDirection(int direction)
 {
-	AlfPolicy			*policy;
+	AlfFilterPolicy			*policy;
 	RuleEditorFillTableVisitor	 updateTable(this, selectedIndex_);
 	RuleEditorFillWidgetsVisitor	 updateWidgets(this);
 
-	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedIndex_);
+	policy = (AlfFilterPolicy *)ruleListCtrl->GetItemData(selectedIndex_);
 	if (policy == NULL) {
 		return;
 	}
 
-	policy->setDirection(direction);
-	policy->accept(updateTable);
-	policy->accept(updateWidgets);
+	if (policy->IsKindOf(CLASSINFO(AlfFilterPolicy))) {
+		policy->setDirectionNo(direction);
+		policy->accept(updateTable);
+		policy->accept(updateWidgets);
+	}
 }
 
 void
 DlgRuleEditor::updateTimeout(int timeout)
 {
-	AlfPolicy			*policy;
+	AlfFilterPolicy			*policy;
 	RuleEditorFillTableVisitor	 updateTable(this, selectedIndex_);
 
-	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedIndex_);
+	policy = (AlfFilterPolicy *)ruleListCtrl->GetItemData(selectedIndex_);
 	if (policy == NULL) {
 		return;
 	}
 
-	policy->setStateTimeout(timeout);
-	policy->accept(updateTable);
+	if (policy->IsKindOf(CLASSINFO(AlfFilterPolicy))) {
+		policy->setStateTimeout(timeout);
+		policy->accept(updateTable);
+	}
 }
 
 void
-DlgRuleEditor::updateAlfSrcAddr(wxString address, int netmask, int af)
+DlgRuleEditor::updateAlfSrcAddr(wxString address, int WXUNUSED(netmask),
+    int WXUNUSED(af))
 {
-	AlfPolicy                       *policy;
+	AlfFilterPolicy			*policy;
 	RuleEditorFillTableVisitor       updateTable(this, selectedIndex_);
 
-	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedIndex_);
+	policy = (AlfFilterPolicy *)ruleListCtrl->GetItemData(selectedIndex_);
 	if (policy == NULL) {
 		return;
 	}
 
-	policy->setAlfSrcAddress(address, netmask, af);
-	policy->accept(updateTable);
+	if (policy->IsKindOf(CLASSINFO(AlfFilterPolicy))) {
+		policy->setFromHostName(address);
+		policy->accept(updateTable);
+	}
 }
 
 void
-DlgRuleEditor::updateAlfDstAddr(wxString address, int netmask, int af)
+DlgRuleEditor::updateAlfDstAddr(wxString address, int WXUNUSED(netmask),
+    int WXUNUSED(af))
 {
-	AlfPolicy                       *policy;
+	AlfFilterPolicy			*policy;
 	RuleEditorFillTableVisitor       updateTable(this, selectedIndex_);
 
-	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedIndex_);
+	policy = (AlfFilterPolicy *)ruleListCtrl->GetItemData(selectedIndex_);
 	if (policy == NULL) {
 		return;
 	}
 
-	policy->setAlfDstAddress(address, netmask, af);
-	policy->accept(updateTable);
-}
-
-void
-DlgRuleEditor::updateAlfSrcPort(int port)
-{
-	AlfPolicy                       *policy;
-	RuleEditorFillTableVisitor       updateTable(this, selectedIndex_);
-	RuleEditorFillWidgetsVisitor     updateWidgets(this);
-
-	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedIndex_);
-	if (policy == NULL) {
-		return;
+	if (policy->IsKindOf(CLASSINFO(AlfFilterPolicy))) {
+		policy->setToHostName(address);
+		policy->accept(updateTable);
 	}
-
-	policy->setAlfSrcPort(port);
-	policy->accept(updateTable);
-	policy->accept(updateWidgets);
 }
 
 void
-DlgRuleEditor::updateAlfDstPort(int port)
+DlgRuleEditor::updateAlfSrcPort(wxString port)
 {
-	AlfPolicy                       *policy;
+	AlfFilterPolicy			*policy;
 	RuleEditorFillTableVisitor       updateTable(this, selectedIndex_);
 	RuleEditorFillWidgetsVisitor     updateWidgets(this);
 
-	policy = (AlfPolicy *)ruleListCtrl->GetItemData(selectedIndex_);
+	policy = (AlfFilterPolicy *)ruleListCtrl->GetItemData(selectedIndex_);
 	if (policy == NULL) {
 		return;
 	}
 
-	policy->setAlfDstPort(port);
-	policy->accept(updateTable);
-	policy->accept(updateWidgets);
+	if (policy->IsKindOf(CLASSINFO(AlfFilterPolicy))) {
+		policy->setFromPortName(port);
+		policy->accept(updateTable);
+		policy->accept(updateWidgets);
+	}
+}
+
+void
+DlgRuleEditor::updateAlfDstPort(wxString port)
+{
+	AlfFilterPolicy			*policy;
+	RuleEditorFillTableVisitor       updateTable(this, selectedIndex_);
+	RuleEditorFillWidgetsVisitor     updateWidgets(this);
+
+	policy = (AlfFilterPolicy *)ruleListCtrl->GetItemData(selectedIndex_);
+	if (policy == NULL) {
+		return;
+	}
+
+	if (policy->IsKindOf(CLASSINFO(AlfFilterPolicy))) {
+		policy->setToPortName(port);
+		policy->accept(updateTable);
+		policy->accept(updateWidgets);
+	}
 }
 
 void
 DlgRuleEditor::updateLog(int logNo)
 {
-	Policy				*policy;
-	AlfPolicy			*alfPolicy;
-	SfsPolicy			*sfsPolicy;
+	FilterPolicy			*policy;
 	RuleEditorFillTableVisitor       updateTable(this, selectedIndex_);
 
-	policy = (Policy *)ruleListCtrl->GetItemData(selectedIndex_);
-	if (!policy)
+	policy = (FilterPolicy *)ruleListCtrl->GetItemData(selectedIndex_);
+	if (!policy) {
 		return;
-
-	if (policy->IsKindOf(CLASSINFO(SfsPolicy))) {
-		sfsPolicy = (SfsPolicy *)policy;
-		sfsPolicy->setLogNo(logNo);
-	} else {
-		alfPolicy = (AlfPolicy *)policy;
-		alfPolicy->setLogNo(logNo);
 	}
 
-	policy->accept(updateTable);
+	if (policy->IsKindOf(CLASSINFO(FilterPolicy))) {
+		policy->setLogNo(logNo);
+		policy->accept(updateTable);
+	}
 }
 
 void
@@ -603,32 +612,26 @@ DlgRuleEditor::OnAppBinaryModifyButton(wxCommandEvent& )
 void
 DlgRuleEditor::OnAppUpdateChkSumButton(wxCommandEvent& )
 {
-	Policy				*policy;
+	AppPolicy			*policy;
 	RuleEditorFillTableVisitor       updateTable(this, selectedIndex_);
 	RuleEditorFillWidgetsVisitor	 updateWidgets(this);
-	unsigned char			 *csum;
+	unsigned char			 csum[MAX_APN_HASH_LEN];
 	wxString			 curHash;
 
 	if (wxIsBusy())
 		return;
 
-	policy = (Policy*)ruleListCtrl->GetItemData(selectedIndex_);
+	policy = (AppPolicy*)ruleListCtrl->GetItemData(selectedIndex_);
 	if (!policy)
 		return;
 
 	if (policy->IsKindOf(CLASSINFO(AppPolicy))) {
-		AppPolicy	*appPolicy = (AppPolicy*)policy;
-		csum = appPolicy->getCurrentSum();
-		appPolicy->setHashValue(csum);
-		appPolicy->accept(updateTable);
-		appPolicy->accept(updateWidgets);
-		modified();
-	} else if (policy->IsKindOf(CLASSINFO(CtxPolicy))) {
-		CtxPolicy	*ctxPolicy = (CtxPolicy*)policy;
-		csum = ctxPolicy->getCurrentSum();
-		ctxPolicy->setHashValue(csum);
-		ctxPolicy->accept(updateTable);
-		ctxPolicy->accept(updateWidgets);
+		/* XXX ch: this does not work for lists */
+		UtilsAppPolicy::calculateHash(policy->getBinaryName(0),
+		    csum, MAX_APN_HASH_LEN);
+		policy->setHashValueNo(csum, 0);
+		policy->accept(updateTable);
+		policy->accept(updateWidgets);
 		modified();
 	}
 }
@@ -652,46 +655,32 @@ DlgRuleEditor::OnAppValidateChkSumButton(wxCommandEvent& )
 		return;
 
 	if (genpolicy->IsKindOf(CLASSINFO(AppPolicy))) {
-		AppPolicy	*policy = (AppPolicy*)genpolicy;
-
-		ret = policy->calcCurrentHash(csum);
-		if (ret == 1) {
+		/* XXX ch: this does not work for lists */
+		ret = UtilsAppPolicy::calculateHash(
+		    ((AppPolicy *)genpolicy)->getBinaryName(0), csum,
+			MAX_APN_HASH_LEN);
+		switch (ret) {
+		case 1:
 			updateVisitor.setPropagation(false);
-			policy->accept(updateVisitor);
+			genpolicy->accept(updateVisitor);
 			modified();
-		} else if (ret == 0) {
-			wxGetApp().calChecksum(policy->getBinaryName());
+			break;
+		case 0:
+			wxGetApp().calChecksum(
+			    ((AppPolicy *)genpolicy)->getBinaryName(0));
 			wxBeginBusyCursor();
 			modified();
-		} else if (ret == -2) {
+			break;
+		case -2:
 			message = _("Wrong file access permission");
 			title = _("File is not set readable for the user.");
 			wxMessageBox(message, title, wxICON_INFORMATION);
-		} else {
+			break;
+		default:
 			message = _("File does not exist");
 			title = _("File does not exist");
 			wxMessageBox(message, title, wxICON_INFORMATION);
-		}
-	} else if (genpolicy->IsKindOf(CLASSINFO(CtxPolicy))) {
-		CtxPolicy	*policy = (CtxPolicy*)genpolicy;
-
-		ret = policy->calcCurrentHash(csum);
-		if (ret == 1) {
-			updateVisitor.setPropagation(false);
-			policy->accept(updateVisitor);
-			modified();
-		} else if (ret == 0) {
-			wxGetApp().calChecksum(policy->getBinaryName());
-			wxBeginBusyCursor();
-			modified();
-		} else if (ret == -2) {
-			message = _("Wrong file access permission");
-			title = _("File is not set readable for the user.");
-			wxMessageBox(message, title, wxICON_INFORMATION);
-		} else {
-			message = _("File does not exist");
-			title = _("File does not exist");
-			wxMessageBox(message, title, wxICON_INFORMATION);
+			break;
 		}
 	}
 }
@@ -699,6 +688,10 @@ DlgRuleEditor::OnAppValidateChkSumButton(wxCommandEvent& )
 void
 DlgRuleEditor::OnRuleCreateButton(wxCommandEvent& )
 {
+	/*
+	 * XXX ch: re-enable this with RuleEditor change
+	 */
+#if 0
 	int		 id;
 	uid_t		 uid;
 	long		 rsid;
@@ -706,6 +699,7 @@ DlgRuleEditor::OnRuleCreateButton(wxCommandEvent& )
 	ProfileCtrl	*profileCtrl;
 
 	id = -1;
+	result = false;
 	profileCtrl = ProfileCtrl::getInstance();
 
 	if (geteuid() != 0) {
@@ -765,11 +759,16 @@ DlgRuleEditor::OnRuleCreateButton(wxCommandEvent& )
 		modified();
 		loadRuleSet();
 	}
+#endif
 }
 
 void
 DlgRuleEditor::OnRuleDeleteButton(wxCommandEvent& )
 {
+	/*
+	 * XXX ch: re-enable this with RuleEditor change
+	 */
+#if 0
 	Policy		*policy;
 	PolicyRuleSet	*rs;
 
@@ -778,7 +777,7 @@ DlgRuleEditor::OnRuleDeleteButton(wxCommandEvent& )
 		return;
 	}
 
-	rs = policy->getRsParent();
+	rs = policy->getParentRuleSet();
 	if (rs == NULL) {
 		return;
 	}
@@ -791,6 +790,7 @@ DlgRuleEditor::OnRuleDeleteButton(wxCommandEvent& )
 
 	rs->deletePolicy(selectedId_);
 	modified();
+#endif
 }
 
 void
@@ -948,6 +948,9 @@ DlgRuleEditor::OnSfsBinaryModifyButton(wxCommandEvent& )
 void
 DlgRuleEditor::OnSfsUpdateChkSumButton(wxCommandEvent& )
 {
+	/*
+	 * XXX ch: this button was already disabled/removed
+	 * XXX ch: fix this in RuleEditor chagne
 	RuleEditorFillWidgetsVisitor	 updateVisitor(this);
 	RuleEditorFillTableVisitor	 updateTable(this, selectedIndex_);
 	SfsPolicy			*policy;
@@ -966,11 +969,15 @@ DlgRuleEditor::OnSfsUpdateChkSumButton(wxCommandEvent& )
 	policy->accept(updateVisitor);
 	policy->accept(updateTable);
 	modified();
+	*/
 }
 
 void
 DlgRuleEditor::OnSfsValidateChkSumButton(wxCommandEvent& )
 {
+	/*
+	 * XXX ch: this button was already disabled/removed
+	 * XXX ch: fix this in RuleEditor chagne
 	SfsPolicy			*policy;
 	wxString			 currHash;
 	RuleEditorFillWidgetsVisitor	 updateWidgets(this);
@@ -1010,7 +1017,7 @@ DlgRuleEditor::OnSfsValidateChkSumButton(wxCommandEvent& )
 		wxMessageBox(message, title, wxICON_INFORMATION);
 		break;
 	}
-
+ */
 }
 #endif
 
@@ -1028,6 +1035,10 @@ DlgRuleEditor::OnShow(wxCommandEvent& event)
 void
 DlgRuleEditor::OnRuleSetSave(wxCommandEvent& )
 {
+	/*
+	 * XXX ch: re-enable with RuleEditor change
+	 */
+#if 0
 	wxString	 tmpPreFix;
 	wxString	 tmpName;
 	wxString	 message;
@@ -1053,7 +1064,7 @@ DlgRuleEditor::OnRuleSetSave(wxCommandEvent& )
 	}
 
 	rs->clearModified();
-	profileCtrl->sendToDaemon(rs->getId());
+	profileCtrl->sendToDaemon(rs->getRuleSetId());
 
 	controlRuleSetStatusText->SetLabel(wxT("sent to daemon"));
 	controlRuleSetSaveButton->Disable();
@@ -1066,9 +1077,10 @@ DlgRuleEditor::OnRuleSetSave(wxCommandEvent& )
 			progDlg.Update(i);
 			rs = profileCtrl->getRuleSet(
 			    foreignAdminRsIds_.Item(i));
-			profileCtrl->sendToDaemon(rs->getId());
+			profileCtrl->sendToDaemon(rs->getRuleSetId());
 		}
 	}
+#endif
 }
 
 void
@@ -1097,13 +1109,11 @@ DlgRuleEditor::loadRuleSet(void)
 			controlRuleSetStatusText->SetLabel(text);
 		}
 
-		addVisitor.setAdmin(false);
 		ruleSet->accept(addVisitor);
 	}
 
 	ruleSet = profileCtrl->getRuleSet(adminRuleSetId_);
 	if (ruleSet != NULL) {
-		addVisitor.setAdmin(true);
 		ruleSet->accept(addVisitor);
 	}
 
@@ -1122,7 +1132,6 @@ DlgRuleEditor::loadRuleSet(void)
 			foreignAdminRsIds_.Add(rsid);
 			ruleSet = profileCtrl->getRuleSet(rsid);
 			if (ruleSet != NULL) {
-				addVisitor.setAdmin(true);
 				ruleSet->accept(addVisitor);
 			}
 		}
@@ -1179,7 +1188,7 @@ DlgRuleEditor::OnLineSelected(wxListEvent& event)
 	selectedIndex_ = newSelection;
 	updateVisitor.setPropagation(false);
 	policy = (Policy *)event.GetData();
-	selectedId_ = policy->getId();
+	selectedId_ = policy->getApnRuleId();
 	if (!policy)
 		return;
 	policy->accept(updateVisitor);
@@ -1254,28 +1263,14 @@ DlgRuleEditor::OnAlfDstNetmaskSpinCtrl(wxSpinEvent& event)
 void
 DlgRuleEditor::onAlfSrcPortTextCtrlEnter(wxCommandEvent& event)
 {
-	unsigned long int       port;
-
-	if (!event.GetString().Cmp(wxT("any"))) {
-		port = 0;
-	} else {
-		event.GetString().ToULong(&port);
-	}
-	updateAlfSrcPort(port);
+	updateAlfSrcPort(event.GetString());
 	modified();
 }
 
 void
 DlgRuleEditor::onAlfDstPortTextCtrlEnter(wxCommandEvent& event)
 {
-	unsigned long int       port;
-
-	if (!event.GetString().Cmp(wxT("any"))) {
-		port = 0;
-	} else {
-		event.GetString().ToULong(&port);
-	}
-	updateAlfDstPort(port);
+	updateAlfDstPort(event.GetString());
 	modified();
 }
 
@@ -1315,7 +1310,7 @@ DlgRuleEditor::OnShowRule(wxCommandEvent& event)
 	}
 	policy = seeker.getMatchingPolicy();
 
-	selecter->Select(policy->getIndex());
+	selecter->Select(policy->getRuleEditorIndex());
 }
 
 void
@@ -1329,20 +1324,13 @@ bool
 DlgRuleEditor::CheckLastSelection(void)
 {
 	Policy				*policy;
-	RuleEditorFillWidgetsVisitor	 updateVisitor(this);
 	AppPolicy			*appPolicy;
-	SfsPolicy			*sfsPolicy;
-	AlfPolicy			*alfPolicy;
+	RuleEditorFillWidgetsVisitor	 updateVisitor(this);
 	unsigned char			 csum[MAX_APN_HASH_LEN];
 	int				 mismatch;
 	wxString			 currHash;
 	wxString			 regHash;
 	wxString			 message;
-
-	sfsPolicy = NULL;
-	alfPolicy = NULL;
-	appPolicy = NULL;
-	policy	  = NULL;
 
 	policy = (Policy *)ruleListCtrl->GetItemData(selectedIndex_);
 	if (!policy) {
@@ -1350,48 +1338,35 @@ DlgRuleEditor::CheckLastSelection(void)
 		return (false);
 	}
 
-	if (policy->IsKindOf(CLASSINFO(SfsPolicy))) {
-		sfsPolicy = (SfsPolicy *)policy;
-		if (!sfsPolicy->isModified())
-			return (true);
+	if (policy->IsKindOf(CLASSINFO(FilterPolicy))) {
+		policy = ((FilterPolicy *)policy)->getParentPolicy();
+		if (!policy) {
+			selectedIndex_ = 0;
+			return (false);
+		}
+	}
 
-		if (sfsPolicy->calcCurrentHash(csum)) {
-			currHash = wxT("0x");
-			for (unsigned int i=0; i<MAX_APN_HASH_LEN; i++)
-			{
-				currHash += wxString::Format(
-				wxT("%2.2x"), (unsigned char)csum[i]);
-			}
+	if (!policy->isModified()) {
+		return (true);
+	}
+
+	mismatch = false;
+	/* XXX ch: this does not work for lists */
+	if (policy->IsKindOf(CLASSINFO(AppPolicy))) {
+		appPolicy = (AppPolicy*)policy;
+		if (appPolicy->getBinaryName(0).Cmp(wxT("any")) == 0) {
+			return (true);
+		}
+		if (UtilsAppPolicy::calculateHash(appPolicy->getBinaryName(0),
+		    csum, MAX_APN_HASH_LEN)) {
+			UtilsAppPolicy::csumToString(csum, MAX_APN_HASH_LEN,
+			    currHash);
 		} else {
 			/* XXX: KM Better Error Handling is needed */
 			currHash = _("unable to calculate checksum");
 			return (true);
 		}
-		regHash = sfsPolicy->getHashValue();
-		mismatch = regHash.Cmp(currHash);
-	} else {
-		if (policy->IsKindOf(CLASSINFO(AlfPolicy))) {
-			alfPolicy = (AlfPolicy *)policy;
-			appPolicy = (AppPolicy *)alfPolicy->getParent();
-		} else {
-			appPolicy = (AppPolicy *)policy;
-		}
-		if (!appPolicy->isModified() ||
-		    !appPolicy->getBinaryName().Cmp(_("any")))
-			return (true);
-		if (appPolicy->calcCurrentHash(csum)) {
-			currHash = wxT("0x");
-			for (unsigned int i=0; i<MAX_APN_HASH_LEN; i++)
-			{
-				currHash += wxString::Format(
-				wxT("%2.2x"), (unsigned char)csum[i]);
-			}
-		} else {
-			/* XXX: KM Better Error Handling is needed */
-			currHash = _("unable to calculate checksum");
-			return (true);
-		}
-		regHash = appPolicy->getHashValue();
+		regHash = appPolicy->getHashValueName(0);
 		mismatch = regHash.Cmp(currHash);
 	}
 
@@ -1405,18 +1380,17 @@ DlgRuleEditor::CheckLastSelection(void)
 			updateVisitor.setPropagation(false);
 			policy = (Policy *)ruleListCtrl->GetItemData(
 			    selectedIndex_);
-			if (!policy)
+			if (policy == NULL) {
 				return (false);
-			if (policy->IsKindOf(CLASSINFO(AlfPolicy))) {
-				alfPolicy = (AlfPolicy *)policy;
-				appPolicy = (AppPolicy *)alfPolicy->getParent();
-				selectedIndex_ = appPolicy->getIndex();
-				policy = appPolicy;
+			}
+			if (policy->IsKindOf(CLASSINFO(FilterPolicy))) {
+				policy =
+				    ((FilterPolicy *)policy)->getParentPolicy();
+				selectedIndex_ = policy->getRuleEditorIndex();
 			}
 			policy->accept(updateVisitor);
 			return (false);
 		}
-
 	}
 	return (true);
 }
@@ -1464,18 +1438,12 @@ DlgRuleEditor::OnChecksumCalc(TaskEvent &event)
 		return;
 	}
 
-	if(policy->IsKindOf(CLASSINFO(SfsPolicy))) {
-		SfsPolicy *sfsPolicy = (SfsPolicy *)policy;
-
-		sfsPolicy->setCurrentSum(csum);
-		sfsPolicy->setCurrentHash(sum);
-		wxGetApp().getChecksum(sfsPolicy->getBinaryName());
+	if(policy->IsKindOf(CLASSINFO(SfsAppPolicy))) {
+		((AppPolicy *)policy)->setHashValueString(sum, 0);
+		wxGetApp().getChecksum(((AppPolicy *)policy)->getBinaryName(0));
 	} else {
-		/* AppPolicy doesn't need to be checked with Shaodwtree*/
-		AppPolicy *appPolicy = (AppPolicy *)policy;
-
-		appPolicy->setCurrentSum(csum);
-		appPolicy->setCurrentHash(sum);
+		/* AppPolicy doesn't need to be checked with Shaodwtree */
+		((AppPolicy *)policy)->setHashValueString(sum, 0);
 
 		policy->accept(updateWidgets);
 		wxEndBusyCursor();
@@ -1551,13 +1519,6 @@ DlgRuleEditor::OnChecksumGet(TaskEvent& event)
 		return;
 	}
 
-	SfsPolicy *sfsPolicy = (SfsPolicy *)policy;
-
-	if (sum.Cmp(sfsPolicy->getCurrentHash())) {
-		/* if not matching update shadowtree */
-		wxGetApp().sendChecksum(sfsPolicy->getBinaryName());
-	}
-
 	policy->accept(updateWidgets);
 	wxEndBusyCursor();
 
@@ -1585,7 +1546,7 @@ DlgRuleEditor::modified(void)
 	profileCtrl = ProfileCtrl::instance();
 	ruleSet = profileCtrl->getRuleSet(userRuleSetId_);
 	if (ruleSet != NULL) {
-		ruleSet->setModified(true);
+		ruleSet->setModified();
 		if (ruleSet->hasErrors()) {
 			text += _(" but has errors");
 		}

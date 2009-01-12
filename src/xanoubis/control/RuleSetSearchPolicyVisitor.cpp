@@ -34,37 +34,11 @@ RuleSetSearchPolicyVisitor::RuleSetSearchPolicyVisitor(int id)
 	matchingPolicy_ = NULL;
 }
 
-RuleSetSearchPolicyVisitor::RuleSetSearchPolicyVisitor(wxString binary)
+RuleSetSearchPolicyVisitor::RuleSetSearchPolicyVisitor(wxString hash)
 {
 	seekId_ = 0;
-	seekHash_ = binary;
+	seekHash_ = hash;
 	matchingPolicy_ = NULL;
-}
-
-RuleSetSearchPolicyVisitor::~RuleSetSearchPolicyVisitor(void)
-{
-}
-
-void
-RuleSetSearchPolicyVisitor::compare(Policy *policy)
-{
-	/* first match strategy */
-	if (matchingPolicy_ == NULL) {
-		if (policy->getId() == seekId_) {
-			matchingPolicy_ = policy;
-		}
-	}
-}
-
-void
-RuleSetSearchPolicyVisitor::compareHash(AppPolicy *appPolicy)
-{
-	/* first match strategy */
-	if (matchingPolicy_ == NULL) {
-		if (appPolicy->getHashValue().Cmp(seekHash_) == 0) {
-			matchingPolicy_ = appPolicy;
-		}
-	}
 }
 
 Policy *
@@ -80,35 +54,93 @@ RuleSetSearchPolicyVisitor::hasMatchingPolicy(void)
 }
 
 void
-RuleSetSearchPolicyVisitor::visitAppPolicy(AppPolicy *appPolicy)
+RuleSetSearchPolicyVisitor::visitAlfAppPolicy(AlfAppPolicy *policy)
 {
-	/* Never visit the SFS dummy application block itself! */
-	if (appPolicy->getType() == APN_SFS)
-		return;
-	compareHash(appPolicy);
-	compare((Policy *)appPolicy);
+	compare(policy);
+	compareHash(policy);
 }
 
 void
-RuleSetSearchPolicyVisitor::visitAlfPolicy(AlfPolicy *alfPolicy)
+RuleSetSearchPolicyVisitor::visitAlfCapabilityFilterPolicy(
+    AlfCapabilityFilterPolicy *policy)
 {
-	compare((Policy *)alfPolicy);
+	compare(policy);
 }
 
 void
-RuleSetSearchPolicyVisitor::visitCtxPolicy(CtxPolicy *ctxPolicy)
+RuleSetSearchPolicyVisitor::visitAlfFilterPolicy(AlfFilterPolicy *policy)
 {
-	compare((Policy *)ctxPolicy);
+	compare(policy);
 }
 
 void
-RuleSetSearchPolicyVisitor::visitSfsPolicy(SfsPolicy *sfsPolicy)
+RuleSetSearchPolicyVisitor::visitContextAppPolicy(ContextAppPolicy *policy)
 {
-	compare((Policy *)sfsPolicy);
+	compare(policy);
+	compareHash(policy);
 }
 
 void
-RuleSetSearchPolicyVisitor::visitVarPolicy(VarPolicy*)
+RuleSetSearchPolicyVisitor::visitContextFilterPolicy(
+    ContextFilterPolicy *policy)
 {
-	/* var rules don't have an id -- do  nothing */
+	compare(policy);
+	// XXX ch: do we have to compareHash((AppPolicy *)policy);
+}
+
+void
+RuleSetSearchPolicyVisitor::visitDefaultFilterPolicy(
+    DefaultFilterPolicy *policy)
+{
+	compare(policy);
+}
+
+void
+RuleSetSearchPolicyVisitor::visitSbAccessFilterPolicy(
+    SbAccessFilterPolicy *policy)
+{
+	compare(policy);
+}
+
+void
+RuleSetSearchPolicyVisitor::visitSbAppPolicy(SbAppPolicy *policy)
+{
+	compare(policy);
+	compareHash(policy);
+}
+
+void
+RuleSetSearchPolicyVisitor::visitSfsAppPolicy(SfsAppPolicy *policy)
+{
+	compare(policy);
+	compareHash(policy);
+}
+
+void
+RuleSetSearchPolicyVisitor::visitSfsFilterPolicy(SfsFilterPolicy *policy)
+{
+	compare(policy);
+}
+
+void
+RuleSetSearchPolicyVisitor::compare(Policy *policy)
+{
+	/* first match strategy */
+	if (matchingPolicy_ == NULL) {
+		if (policy->getApnRuleId() == seekId_) {
+			matchingPolicy_ = policy;
+		}
+	}
+}
+
+void
+RuleSetSearchPolicyVisitor::compareHash(AppPolicy *appPolicy)
+{
+	/* first match strategy */
+	/* XXX ch: does not work for lists */
+	if (matchingPolicy_ == NULL) {
+		if (appPolicy->getHashValueName(0).Cmp(seekHash_) == 0) {
+			matchingPolicy_ = appPolicy;
+		}
+	}
 }

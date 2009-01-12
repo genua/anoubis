@@ -28,9 +28,32 @@
 #ifndef _RULEEDITORFILLWIDGETSVISITOR_H_
 #define _RULEEDITORFILLWIDGETSVISITOR_H_
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "DlgRuleEditor.h"
 #include "PolicyVisitor.h"
 
+#include "Policy.h"
+#include "AlfAppPolicy.h"
+#include "AlfCapabilityFilterPolicy.h"
+#include "AlfFilterPolicy.h"
+#include "ContextAppPolicy.h"
+#include "ContextFilterPolicy.h"
+#include "DefaultFilterPolicy.h"
+#include "SbAccessFilterPolicy.h"
+#include "SbAppPolicy.h"
+#include "SfsAppPolicy.h"
+#include "SfsFilterPolicy.h"
+
+/**
+ * PolicyVistior for RuleEditor.
+ * This visitor fills the widgets of the rule editor.
+ * As the RuleEditor has to be adapted this visitor is fixed
+ * within that change.
+ * XXX ch: fix this in the RuleEditor change see Bug #964
+ */
 class RuleEditorFillWidgetsVisitor : public PolicyVisitor
 {
 	private:
@@ -54,16 +77,21 @@ class RuleEditorFillWidgetsVisitor : public PolicyVisitor
 		*/
 	public:
 		RuleEditorFillWidgetsVisitor(DlgRuleEditor *);
-		~RuleEditorFillWidgetsVisitor(void);
 
 /*
  * XXX ch: this will be fixed with the next functionality change
  */
-		virtual void visitAppPolicy(AppPolicy *) {};
-		virtual void visitAlfPolicy(AlfPolicy *) {};
-		virtual void visitCtxPolicy(CtxPolicy *) {};
-		virtual void visitSfsPolicy(SfsPolicy *) {};
-		virtual void visitVarPolicy(VarPolicy *) {};
+
+		virtual void visitAlfAppPolicy(AlfAppPolicy*) {};
+		virtual void visitAlfCapabilityFilterPolicy(AlfCapabilityFilterPolicy*) {};
+		virtual void visitAlfFilterPolicy(AlfFilterPolicy*) {};
+		virtual void visitContextAppPolicy(ContextAppPolicy*) {};
+		virtual void visitContextFilterPolicy(ContextFilterPolicy*) {};
+		virtual void visitDefaultFilterPolicy(DefaultFilterPolicy*) {};
+		virtual void visitSbAccessFilterPolicy(SbAccessFilterPolicy*) {};
+		virtual void visitSbAppPolicy(SbAppPolicy*) {};
+		virtual void visitSfsAppPolicy(SfsAppPolicy*) {};
+		virtual void visitSfsFilterPolicy(SfsFilterPolicy*) {};
 };
 
 #endif	/* _RULEEDITORFILLWIDGETSVISITOR_H_ */

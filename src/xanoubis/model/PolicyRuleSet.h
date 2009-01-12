@@ -32,59 +32,183 @@
 #include "config.h"
 #endif
 
-#include <sys/param.h>
-#include <sys/socket.h>
-
-#ifndef LINUX
-#include <sys/queue.h>
-#else
-#include <queue.h>
-#endif
-
-#include <netinet/in.h>
-#include <arpa/inet.h>
 #include <wx/string.h>
 
-#include <apn.h>
-
 #include "EscalationNotify.h"
+#include "Subject.h"
+
+#include "libapn.h"
 #include "Policy.h"
-#include "AlfPolicy.h"
+#include "AppPolicy.h"
+#include "FilterPolicy.h"
+#include "AlfAppPolicy.h"
+#include "AlfCapabilityFilterPolicy.h"
+#include "AlfFilterPolicy.h"
+#include "ContextAppPolicy.h"
+#include "ContextFilterPolicy.h"
+#include "DefaultFilterPolicy.h"
+#include "SbAccessFilterPolicy.h"
+#include "SbAppPolicy.h"
+#include "SfsAppPolicy.h"
+#include "SfsFilterPolicy.h"
 
-class PolicyRuleSet
+/**
+ */
+class PolicyRuleSet : public Subject
 {
-	private:
-		int			 priority_;
-		wxString		 origin_;
-		long			 id_;
-		uid_t			 uid_;
-		bool			 hasErrors_;
-		bool			 isModified_;
-		struct apn_ruleset	*ruleSet_;
-		PolicyList		 alfList_;
-		PolicyList		 sfsList_;
-		PolicyList		 ctxList_;
-		PolicyList		 varList_;
-
-		void clean(void);
-		void create(wxString, bool);
-		void create(struct apn_ruleset *);
-		bool hasLocalHost(wxArrayString);
-		int createAppPolicy(int type, int id);
-		void log(const wxString &);
-		void status(const wxString &);
-
-		struct apn_rule *assembleAlfPolicy(AlfPolicy *,
-		   EscalationNotify *);
-
 	public:
+		/**
+		 * Constructor of PolicyRuleSet.
+		 * @param[in] 1st Priority of ruleset (admin or user ruleset).
+		 * @param[in] 2nd UserId of ruleset.
+		 * @param[in] 3rd Native apn ruleset.
+		 * @return Nothing.
+		 */
 		PolicyRuleSet(int, uid_t, struct apn_ruleset *);
-		PolicyRuleSet(int, uid_t, wxString, bool);
+
+		/**
+		 * Constructor of PolicyRuleSet.
+		 * @param[in] 1st Priority of ruleset (admin or user ruleset).
+		 * @param[in] 2nd UserId of ruleset.
+		 * @param[in] 3rd Filename where to read policies from.
+		 * @param[in] 4th If true check access permissions.
+		 * @return Nothing.
+		 */
+		PolicyRuleSet(int, uid_t, const wxString &, bool);
+
+		/**
+		 * Destructor of PolicyRuleSet.
+		 */
 		~PolicyRuleSet(void);
 
-		void accept(PolicyVisitor&);
-		void exportToFile(wxString);
+		/**
+		 * Is ruleset empty?
+		 * @param None.
+		 * @return True if the ruleset contains no rules.
+		 */
+		bool isEmpty(void) const;
 
+		/**
+		 * Is ruleset of admin rules?
+		 * @param None.
+		 * @return True if it's the admin ruleset.
+		 * @see getPriority()
+		 */
+		bool isAdmin(void) const;
+
+		/**
+		 * Does the ruleset contails errors? Is this ruleset valid?
+		 * @param None.
+		 * @return True on syntax and/or parser errors.
+		 */
+		bool hasErrors(void) const;
+
+		/**
+		 * Get PolicyRuleSet id.
+		 * Use this to fetch the id of this ruleset. This id is used
+		 * to identify this ruleset and unique during runtime.\n
+		 * It's set by the constructor using wxNewId().
+		 * @param None.
+		 * @return The id.
+		 */
+		long getRuleSetId(void) const;
+
+		/**
+		 * Get the native apn_ruleset.
+		 * Don't use this method! If you can't avoid it, do it with
+		 * care! Main purpose of this method is to get apn_ruleset
+		 * e.g by VersionCtrl without detour of tmp file.
+		 * @param None.
+		 * @return The native apn_ruleset structure.
+		 */
+		struct apn_ruleset *getApnRuleSet(void) const;
+
+		/**
+		 * Get uid of user this ruleset belongs to.
+		 * @param None.
+		 * @return The uid of user this ruleset belongs to.
+		 */
+		uid_t getUid(void) const;
+
+		/**
+		 * Get priority of this ruleset.
+		 * If the priority is '0', this is the admin ruleset.
+		 * @param None.
+		 * @return The priority of this ruleset.
+		 * @see isAdmin()
+		 */
+		int getPriority(void) const;
+
+		/**
+		 * Set origin.
+		 * Overwrite the origin set during construction.
+		 * <b>!!! USE WITH CARE !!!</b>
+		 * @param[in] 1st The new origin strring.
+		 * @return Nothing.
+		 */
+		void setOrigin(wxString);
+
+		/**
+		 * Get the origin of this ruleset.
+		 * @param None.
+		 * @return The origin string.
+		 */
+		wxString getOrigin(void) const;
+
+		/**
+		 * Accept a visitor.
+		 * This is the starting point of visiton the whole
+		 * policy structure.
+		 * @param[in] 1st The visitor.
+		 * @return Nothing.
+		 */
+		void accept(PolicyVisitor &);
+
+		/**
+		 * Ruleset to string.
+		 * This method returns the ruleset as string. It's
+		 * implementation is quite ugly, because libapn does not
+		 * provide a suitable method. Thus the long way round
+		 * by using tmp file was coded.
+		 * @param None.
+		 * @return The ruleset as string.
+		 */
+		wxString toString(void) const;
+
+		/**
+		 * Write ruleset to file.
+		 * @param[in] 1st The file to write the ruleset to.
+		 * @return True on success.
+		 */
+		bool exportToFile(const wxString &) const;
+
+		/**
+		 * Set ruleset modified flag.
+		 * Mark the ruleset as been modified.
+		 * @param None.
+		 * @return Nothing.
+		 */
+		void setModified(void);
+
+		/**
+		 * Clear ruleset modified flag.
+		 * This will reset the isModified flag of the ruleset.
+		 * @param None.
+		 * @return Nothing.
+		 */
+		void clearModified (void);
+
+		/**
+		 * Is this ruleset modified?
+		 * @param None.
+		 * @return True if ruleset was modified.
+		 */
+		bool isModified(void) const;
+
+		/*
+		 * XXX ch: re-enable this while adding functionality
+		 * XXX ch: to the RuleEditor
+		 *
 		void createAnswerPolicy(EscalationNotify *);
 
 		int createAlfAppPolicy(int id) {
@@ -100,20 +224,53 @@ class PolicyRuleSet
 		int createCtxNewPolicy(int);
 		int createSfsPolicy(int);
 
-		void clearModified(void);
 		bool findMismatchHash(void);
 		bool deletePolicy(int);
-		bool isEmpty(void);
-		bool isAdmin(void);
+		*/
 
-		wxString getOrigin(void);
-		wxString toString(void) const;
-		long getId(void) const;
-		uid_t getUid(void) const;
-		int getPriority(void) const;
-		bool hasErrors(void) const;
-		bool isModified(void) const;
-		void setModified(bool);
+	private:
+		int			 priority_;
+		wxString		 origin_;
+		long			 ruleSetId_;
+		uid_t			 uid_;
+		bool			 hasErrors_;
+		bool			 isModified_;
+		struct apn_ruleset	*ruleSet_;
+		PolicyList		 alfList_;
+		PolicyList		 sfsList_;
+		PolicyList		 ctxList_;
+		PolicyList		 sbList_;
+
+		/**
+		 * Clean the queues
+		 */
+		void clean(void);
+
+		/**
+		 * Create ruleset from file.
+		 * @param[in] 1st Name of file to be parsed.
+		 * @param[in] 2nd Shall check permissions of file.
+		 */
+		void create(wxString, bool);
+
+		/**
+		 * Create policies from parsed ruleset.
+		 */
+		void create(struct apn_ruleset *);
+
+		/*
+		 * XXX ch: re-enable this while adding functionality
+		 * XXX ch: to the RuleEditor
+		 *
+		bool hasLocalHost(wxArrayString);
+		int createAppPolicy(int type, int id);
+
+		struct apn_rule *assembleAlfPolicy(AlfPolicy *,
+		   EscalationNotify *);
+		*/
+
+		void log(const wxString &);
+		void status(const wxString &);
 };
 
 #endif	/* _POLICYRULESET_H_ */

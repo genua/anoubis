@@ -28,39 +28,167 @@
 #ifndef _RULEEDITORFILLTABLEVISITOR_H_
 #define _RULEEDITORFILLTABLEVISITOR_H_
 
-#include "DlgRuleEditor.h"
-#include "PolicyVisitor.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
+#include "PolicyVisitor.h"
+#include "DlgRuleEditor.h"
+
+#include "Policy.h"
+#include "AlfAppPolicy.h"
+#include "AlfCapabilityFilterPolicy.h"
+#include "AlfFilterPolicy.h"
+#include "ContextAppPolicy.h"
+#include "ContextFilterPolicy.h"
+#include "DefaultFilterPolicy.h"
+#include "SbAccessFilterPolicy.h"
+#include "SbAppPolicy.h"
+#include "SfsAppPolicy.h"
+#include "SfsFilterPolicy.h"
+
+/**
+ * PolicyVisitor for RuleEditor.
+ * This visitor clears the selected line of wxListCtrl and fills
+ * it with the corresponding / updated content of the visited policy.
+ * The default behaviour of this visitor is not to propagate.
+ */
 class RuleEditorFillTableVisitor : public PolicyVisitor
 {
-	protected:
-		long		 selectedLine_;
-		DlgRuleEditor	*ruleEditor_;
+	public:
+		/**
+		 * Constructor of RuleEditorFillTableVisitor.
+		 * @param[in] 1st The rule editor.
+		 * @param[in] 2nd The selected line.
+		 * @return Nothing.
+		 */
+		RuleEditorFillTableVisitor(DlgRuleEditor *, long);
 
 		/*
-		 *
 		 * XXX ch: this will be fixed with the next functionality change
-		 *
-		void clean(long);
+		 */
 
-		virtual void showApp(AppPolicy *, long);
-		virtual void showAlf(AlfPolicy *, long);
-		virtual void showSfs(SfsPolicy *, long);
-		virtual void showCtx(CtxPolicy *, long);
-		virtual void showVar(VarPolicy *, long);
-		*/
-	public:
-		RuleEditorFillTableVisitor(DlgRuleEditor *, long);
-		~RuleEditorFillTableVisitor(void);
+		/**
+		 * Visit a AlfAppPolicy.
+		 * @param[in] 1st Policy to visit.
+		 */
+		virtual void visitAlfAppPolicy(AlfAppPolicy *);
 
-/*
- * XXX ch: this will be fixed with the next functionality change
- */
-		virtual void visitAppPolicy(AppPolicy *) {};
-		virtual void visitAlfPolicy(AlfPolicy *) {};
-		virtual void visitCtxPolicy(CtxPolicy *) {};
-		virtual void visitSfsPolicy(SfsPolicy *) {};
-		virtual void visitVarPolicy(VarPolicy *) {};
+		/**
+		 * Visit a AlfCapabilityFilterPolicy.
+		 * @param[in] 1st Policy to visit.
+		 */
+		virtual void visitAlfCapabilityFilterPolicy(
+		    AlfCapabilityFilterPolicy *);
+
+		/**
+		 * Visit a AlfFilterPolicy.
+		 * @param[in] 1st Policy to visit.
+		 */
+		virtual void visitAlfFilterPolicy(AlfFilterPolicy *);
+
+		/**
+		 * Visit a ContextAppPolicy.
+		 * @param[in] 1st Policy to visit.
+		 */
+		virtual void visitContextAppPolicy(ContextAppPolicy *);
+
+		/**
+		 * Visit a ContextFilterPolicy.
+		 * @param[in] 1st Policy to visit.
+		 */
+		virtual void visitContextFilterPolicy(ContextFilterPolicy *);
+
+		/**
+		 * Visit a DefaultFilterPolicy.
+		 * @param[in] 1st Policy to visit.
+		 */
+		virtual void visitDefaultFilterPolicy(DefaultFilterPolicy *);
+
+		/**
+		 * Visit a SbAccessFilterPolicy.
+		 * @param[in] 1st Policy to visit.
+		 */
+		virtual void visitSbAccessFilterPolicy(SbAccessFilterPolicy *);
+
+		/**
+		 * Visit a SbAppPolicy.
+		 * @param[in] 1st Policy to visit.
+		 */
+		virtual void visitSbAppPolicy(SbAppPolicy *);
+
+		/**
+		 * Visit a SfsAppPolicy.
+		 * @param[in] 1st Policy to visit.
+		 */
+		virtual void visitSfsAppPolicy(SfsAppPolicy *);
+
+		/**
+		 * Visit a SfsFilterPolicy.
+		 * @param[in] 1st Policy to visit.
+		 */
+		virtual void visitSfsFilterPolicy(SfsFilterPolicy *);
+
+	protected:
+		long		 selectedLine_;	/**< Modify this line. */
+		DlgRuleEditor	*ruleEditor_;	/**< Keep the RuleEditor. */
+
+		/**
+		 * Clear this line.
+		 * @param[in] 1st The new policy for this line.
+		 * @param[in] 2nd The line to modify.
+		 */
+		void clean(Policy *, long);
+
+		/**
+		 * Fill table with AppPolicy.
+		 * @param[in] 1st The policy providing content for the table.
+		 * @param[in] 2nd The line to modify.
+		 */
+		void showAppPolicy(AppPolicy *, long);
+
+		/**
+		 * Fill table with AlfCapabilityFilterPolicy.
+		 * @param[in] 1st The policy providing content for the table.
+		 * @param[in] 2nd The line to modify.
+		 */
+		void showAlfCapabilityFilterPolicy(AlfCapabilityFilterPolicy *,
+		    long);
+
+		/**
+		 * Fill table with AlfFilterPolicy.
+		 * @param[in] 1st The policy providing content for the table.
+		 * @param[in] 2nd The line to modify.
+		 */
+		void showAlfFilterPolicy(AlfFilterPolicy *, long);
+
+		/**
+		 * Fill table with ContextFilterPolicy.
+		 * @param[in] 1st The policy providing content for the table.
+		 * @param[in] 2nd The line to modify.
+		 */
+		void showContextFilterPolicy(ContextFilterPolicy *, long);
+
+		/**
+		 * Fill table with DefaultFilterPolicy.
+		 * @param[in] 1st The policy providing content for the table.
+		 * @param[in] 2nd The line to modify.
+		 */
+		void showDefaultFilterPolicy(DefaultFilterPolicy *, long);
+
+		/**
+		 * Fill table with SbAccessFilterPolicy.
+		 * @param[in] 1st The policy providing content for the table.
+		 * @param[in] 2nd The line to modify.
+		 */
+		void showSbAccessFilterPolicy(SbAccessFilterPolicy *, long);
+
+		/**
+		 * Fill table with SfsFilterPolicy.
+		 * @param[in] 1st The policy providing content for the table.
+		 * @param[in] 2nd The line to modify.
+		 */
+		void showSfsFilterPolicy(SfsFilterPolicy *, long);
 };
 
 #endif	/* _RULEEDITORFILLTABLEVISITOR_H_ */
