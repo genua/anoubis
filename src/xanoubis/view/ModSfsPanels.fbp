@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
 <!--
- Copyright (c) 2008 GeNUA mbH <info@genua.de>
+ Copyright (c) 2009 GeNUA mbH <info@genua.de>
 
  All rights reserved.
 
@@ -1677,7 +1677,7 @@
             <property name="pos"></property>
             <property name="size">-1,-1</property>
             <property name="subclass"></property>
-            <property name="tooltip">The level of restrictions increases with the&#x0A;profile chosen.&#x0A;Settings of a lower profile&#x0A;are automatically valid in all profiles above.&#x0A;All settings you choose are contingent upon&#x0A;the chosen profile.&#x0A;It may occur that you can&apos;t switch off the&#x0A;module because of restrictions.</property>
+            <property name="tooltip">Displays the status of the Secure File System Module (SFS) while connected.</property>
             <property name="window_extra_style"></property>
             <property name="window_name"></property>
             <property name="window_style">wxTAB_TRAVERSAL</property>

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 GeNUA mbH <info@genua.de>
+ * Copyright (c) 2009 GeNUA mbH <info@genua.de>
  *
  * All rights reserved.
  *
@@ -71,7 +71,7 @@ ModAlfMainPanelBase::ModAlfMainPanelBase( wxWindow* parent, wxWindowID id, const
 
 ModAlfOverviewPanelBase::ModAlfOverviewPanelBase( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size, long style ) : wxPanel( parent, id, pos, size, style )
 {
-	this->SetToolTip( _("The level of restrictions increases with the\nprofile chosen.\nRules and restrictions of a lower profile\nare automatically valid in all profiles above.\nAll settings you choose are contingent upon\nthe chosen profile.\nIt may occur that you can't switch off the\nmodule because of restrictions.") );
+	this->SetToolTip( _("Displays the status of the Application level Firewall (ALF) while connected.") );
 	
 	wxBoxSizer* sz_OverviewALFMain;
 	sz_OverviewALFMain = new wxBoxSizer( wxVERTICAL );

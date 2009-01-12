@@ -162,6 +162,9 @@ class ModAnoubisMainPanelBase : public wxPanel
 		
 		wxCheckBox* controlAutoCheck;
 		wxCheckBox* autoConnectBox;
+		wxCheckBox* toolTipCheckBox;
+		wxSpinCtrl* toolTipSpinCtrl;
+		wxStaticText* m_staticText411;
 		wxStaticText* m_staticText27;
 		wxButton* PrivKeyChooseButton;
 		wxStaticText* m_staticText28;
@@ -204,6 +207,9 @@ class ModAnoubisMainPanelBase : public wxPanel
 		virtual void OnAlertTimeout( wxSpinEvent& event ){ event.Skip(); }
 		virtual void OnDoAutostart( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnAutoCheck( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnToolTipCheckBox( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnToolTipSpinCtrl( wxSpinEvent& event ){ event.Skip(); }
+		virtual void OnToolTipSpinCtrlText( wxCommandEvent& event ){ event.Skip(); }
 		
 	
 	public:

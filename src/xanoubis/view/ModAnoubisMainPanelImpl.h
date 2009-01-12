@@ -68,6 +68,7 @@ class ModAnoubisMainPanelImpl : public ModAnoubisMainPanelBase
 		void profileTabInit(void);
 		void profileTabUpdate(void);
 		void fillProfileList(void);
+		void toolTipParamsUpdate(void);
 
 	protected:
 		void OnTypeChoosen(wxCommandEvent&);
@@ -109,6 +110,9 @@ class ModAnoubisMainPanelImpl : public ModAnoubisMainPanelBase
 		void OnVersionActivePolicyClicked(wxCommandEvent &);
 		void OnVersionProfilePolicyClicked(wxCommandEvent &);
 		void OnVersionProfileChoice(wxCommandEvent &);
+
+		void OnToolTipCheckBox(wxCommandEvent &);
+		void OnToolTipSpinCtrl(wxSpinEvent &);
 
 	public:
 		ModAnoubisMainPanelImpl(wxWindow*, wxWindowID);

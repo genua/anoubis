@@ -47,6 +47,7 @@
 
 #include <wx/filedlg.h>
 #include <wx/msgdlg.h>
+#include <wx/tooltip.h>
 
 #include "main.h"
 #include "AnEvents.h"
@@ -143,6 +144,12 @@ ModAnoubisMainPanelImpl::~ModAnoubisMainPanelImpl(void)
 	userOptions_->Write(wxT("/Options/Autostart"),
 	    cb_DoAutostart->IsChecked());
 
+	/* write ToolTip Settings */
+	userOptions_->Write(wxT("/Options/EnableToolTips"),
+	    toolTipCheckBox->GetValue());
+	userOptions_->Write(wxT("/Options/ToolTipTimeout"),
+	    toolTipSpinCtrl->GetValue());
+
 	anEvents->Disconnect(anEVT_ESCALATIONS_SHOW,
 	    wxCommandEventHandler(ModAnoubisMainPanelImpl::OnEscalationsShow),
 	    NULL, this);
@@ -163,6 +170,8 @@ ModAnoubisMainPanelImpl::readOptions(void)
 	int AlertTimeout = 10;
 	bool AutoChecksum = false;
 	bool AutoConnect = false;
+	bool EnableToolTips = true;
+	int ToolTipTimeout = 1;
 
 	/* read the stored Option Settings */
 	userOptions_->Read(wxT("/Options/SendEscalations"), &SendEscalation);
@@ -180,6 +189,9 @@ ModAnoubisMainPanelImpl::readOptions(void)
 
 	userOptions_->Read(wxT("/Options/AutoChecksumCheck"), &AutoChecksum);
 	userOptions_->Read(wxT("/Options/AutoConnect"), &AutoConnect);
+
+	userOptions_->Read(wxT("/Options/EnableToolTips"), &EnableToolTips);
+	userOptions_->Read(wxT("/Options/ToolTipTimeout"), &ToolTipTimeout);
 
 	/* restore the stored Notifications Options */
 	cb_SendEscalations->SetValue(SendEscalation);
@@ -199,6 +211,10 @@ ModAnoubisMainPanelImpl::readOptions(void)
 
 	autoConnectBox->SetValue(AutoConnect);
 	wxGetApp().connectCommunicator(AutoConnect);
+
+	toolTipCheckBox->SetValue(EnableToolTips);
+	toolTipSpinCtrl->SetValue(ToolTipTimeout);
+	toolTipParamsUpdate();
 
 	/* set widgets visability and send options event */
 	setOptionsWidgetsVisability();
@@ -1221,4 +1237,34 @@ void
 ModAnoubisMainPanelImpl::OnVersionProfileChoice(wxCommandEvent &)
 {
 	versionListUpdateFromSelection();
+}
+
+
+void
+ModAnoubisMainPanelImpl::OnToolTipCheckBox(wxCommandEvent &)
+{
+	toolTipParamsUpdate();
+}
+
+void
+ModAnoubisMainPanelImpl::OnToolTipSpinCtrl(wxSpinEvent &)
+{
+	toolTipParamsUpdate();
+}
+
+void
+ModAnoubisMainPanelImpl::toolTipParamsUpdate(void)
+{
+	bool enable = toolTipCheckBox->GetValue();
+
+	if (enable) {
+		toolTipSpinCtrl->Enable();
+	} else {
+		toolTipSpinCtrl->Disable();
+	}
+	wxToolTip::Enable(enable);
+	if (enable) {
+		int delay = toolTipSpinCtrl->GetValue();
+		wxToolTip::SetDelay(1000*delay);
+	}
 }
