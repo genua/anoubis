@@ -27,6 +27,8 @@
 if GCOV_ENABLED
 #	These test suites were disabled when configuring with GCOV_ENABLED
 #	as they break the code coverage report. For details see BUG #837
+TESTS = \
+	pidtest
 else
 # XXX ST: #423
 #         These tests were disabled due to the fact that they heavily rely on
