@@ -310,10 +310,13 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	
 	profileLoadButton = new wxButton( tb_Profiles, wxID_ANY, _("Load"), wxDefaultPosition, wxDefaultSize, 0 );
 	profileLoadButton->Enable( false );
+	profileLoadButton->SetToolTip( _("Load the selected profile into the rule editor.") );
 	
 	bSizer27->Add( profileLoadButton, 0, wxALL, 5 );
 	
 	profileSaveButton = new wxButton( tb_Profiles, wxID_ANY, _("Save..."), wxDefaultPosition, wxDefaultSize, 0 );
+	profileSaveButton->SetToolTip( _("Save the rule set that is currently loaded into the rule editor as a profile.") );
+	
 	bSizer27->Add( profileSaveButton, 0, wxALL, 5 );
 	
 	
@@ -328,6 +331,7 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	
 	profileActivateButton = new wxButton( tb_Profiles, wxID_ANY, _("Store (Activate)"), wxDefaultPosition, wxDefaultSize, 0 );
 	profileActivateButton->Enable( false );
+	profileActivateButton->SetToolTip( _("Activate the selected profile.") );
 	
 	bSizer27->Add( profileActivateButton, 0, wxALL, 5 );
 	
@@ -336,7 +340,7 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	tb_Profiles->SetSizer( bSizer25 );
 	tb_Profiles->Layout();
 	bSizer25->Fit( tb_Profiles );
-	tb_MainAnoubisNotify->AddPage( tb_Profiles, _("Profiles"), false );
+	tb_MainAnoubisNotify->AddPage( tb_Profiles, _("Profiles"), true );
 	tb_MainAnoubisVersions = new wxPanel( tb_MainAnoubisNotify, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
 	wxBoxSizer* MainAnoubisVersionsSizer;
 	MainAnoubisVersionsSizer = new wxBoxSizer( wxHORIZONTAL );
@@ -378,70 +382,43 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	
 	VersionListSizer->Add( VersionCommentSizer, 20, wxEXPAND, 5 );
 	
-	MainAnoubisVersionsSizer->Add( VersionListSizer, 70, wxEXPAND, 5 );
+	MainAnoubisVersionsSizer->Add( VersionListSizer, 1, 0, 5 );
 	
 	wxBoxSizer* VersionButtonSizer;
 	VersionButtonSizer = new wxBoxSizer( wxVERTICAL );
 	
-	wxFlexGridSizer* VersionActionSizer;
-	VersionActionSizer = new wxFlexGridSizer( 2, 2, 0, 0 );
-	VersionActionSizer->SetFlexibleDirection( wxBOTH );
-	VersionActionSizer->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
 	
-	VersionSelectLabel = new wxStaticText( tb_MainAnoubisVersions, wxID_ANY, _("Selected Version:"), wxDefaultPosition, wxSize( -1,-1 ), 0 );
-	VersionSelectLabel->Wrap( -1 );
-	VersionActionSizer->Add( VersionSelectLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	VersionButtonSizer->Add( 0, 0, 1, wxEXPAND, 5 );
 	
 	VersionRestoreButton = new wxButton( tb_MainAnoubisVersions, wxID_ANY, _("restore"), wxDefaultPosition, wxDefaultSize, 0 );
-	VersionActionSizer->Add( VersionRestoreButton, 0, wxALL, 0 );
+	VersionRestoreButton->SetToolTip( _("Restore the selected version of the profile.") );
 	
-	VersionSaveLabel = new wxStaticText( tb_MainAnoubisVersions, wxID_ANY, _("Save current rules\nas new version:"), wxDefaultPosition, wxSize( -1,-1 ), 0 );
-	VersionSaveLabel->Wrap( -1 );
-	VersionActionSizer->Add( VersionSaveLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	VersionButtonSizer->Add( VersionRestoreButton, 0, wxALL, 5 );
 	
-	VersionSaveButton = new wxButton( tb_MainAnoubisVersions, wxID_ANY, _("save"), wxDefaultPosition, wxDefaultSize, 0 );
-	VersionActionSizer->Add( VersionSaveButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 0 );
+	VersionExportButton1 = new wxButton( tb_MainAnoubisVersions, wxID_ANY, _("export ..."), wxDefaultPosition, wxDefaultSize, 0 );
+	VersionExportButton1->SetToolTip( _("Export the selected Version of the profile to a file.#") );
 	
-	VersionButtonSizer->Add( VersionActionSizer, 0, wxEXPAND, 5 );
-	
-	VersionCommentLabel = new wxStaticText( tb_MainAnoubisVersions, wxID_ANY, _("Comment for new version:"), wxDefaultPosition, wxDefaultSize, 0 );
-	VersionCommentLabel->Wrap( -1 );
-	VersionCommentLabel->SetFont( wxFont( 9, 70, 90, 90, false, wxEmptyString ) );
-	
-	VersionButtonSizer->Add( VersionCommentLabel, 0, wxALL, 5 );
-	
-	VersionEnterCommentTextCtrl = new wxTextCtrl( tb_MainAnoubisVersions, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE );
-	VersionButtonSizer->Add( VersionEnterCommentTextCtrl, 0, wxALL|wxEXPAND, 5 );
-	
-	wxStaticBoxSizer* VersionDetailsSizer;
-	VersionDetailsSizer = new wxStaticBoxSizer( new wxStaticBox( tb_MainAnoubisVersions, -1, _("Details...") ), wxVERTICAL );
-	
-	VersionVersionLabel = new wxStaticText( tb_MainAnoubisVersions, wxID_ANY, _("Version:"), wxDefaultPosition, wxDefaultSize, 0 );
-	VersionVersionLabel->Wrap( -1 );
-	VersionDetailsSizer->Add( VersionVersionLabel, 0, wxALL, 5 );
-	
-	VersionImportButton = new wxButton( tb_MainAnoubisVersions, wxID_ANY, _("import ..."), wxDefaultPosition, wxDefaultSize, 0 );
-	VersionDetailsSizer->Add( VersionImportButton, 0, wxALL, 5 );
-	
-	VersionExportButton = new wxButton( tb_MainAnoubisVersions, wxID_ANY, _("export ..."), wxDefaultPosition, wxDefaultSize, 0 );
-	VersionDetailsSizer->Add( VersionExportButton, 0, wxALL, 5 );
+	VersionButtonSizer->Add( VersionExportButton1, 0, wxALL, 5 );
 	
 	VersionDeleteButton = new wxButton( tb_MainAnoubisVersions, wxID_ANY, _("delete"), wxDefaultPosition, wxDefaultSize, 0 );
-	VersionDetailsSizer->Add( VersionDeleteButton, 0, wxALL, 5 );
+	VersionDeleteButton->SetToolTip( _("Delete the selected version of the profile.") );
+	
+	VersionButtonSizer->Add( VersionDeleteButton, 0, wxALL, 5 );
 	
 	VersionShowButton = new wxButton( tb_MainAnoubisVersions, wxID_ANY, _("show"), wxDefaultPosition, wxDefaultSize, 0 );
 	VersionShowButton->Hide();
 	
-	VersionDetailsSizer->Add( VersionShowButton, 0, wxALL, 5 );
+	VersionButtonSizer->Add( VersionShowButton, 0, wxALL, 5 );
 	
-	VersionButtonSizer->Add( VersionDetailsSizer, 1, wxEXPAND, 5 );
 	
-	MainAnoubisVersionsSizer->Add( VersionButtonSizer, 30, wxEXPAND, 5 );
+	VersionButtonSizer->Add( 0, 0, 3, wxEXPAND, 5 );
+	
+	MainAnoubisVersionsSizer->Add( VersionButtonSizer, 0, wxEXPAND, 5 );
 	
 	tb_MainAnoubisVersions->SetSizer( MainAnoubisVersionsSizer );
 	tb_MainAnoubisVersions->Layout();
 	MainAnoubisVersionsSizer->Fit( tb_MainAnoubisVersions );
-	tb_MainAnoubisNotify->AddPage( tb_MainAnoubisVersions, _("Version control"), true );
+	tb_MainAnoubisNotify->AddPage( tb_MainAnoubisVersions, _("Version control"), false );
 	tb_MainAnoubisOptions = new wxPanel( tb_MainAnoubisNotify, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
 	wxBoxSizer* sz_MainAnoubisOptions;
 	sz_MainAnoubisOptions = new wxBoxSizer( wxVERTICAL );
@@ -708,9 +685,7 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	VersionProfileChoice->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( ModAnoubisMainPanelBase::OnVersionProfileChoice ), NULL, this );
 	VersionListCtrl->Connect( wxEVT_COMMAND_LIST_ITEM_SELECTED, wxListEventHandler( ModAnoubisMainPanelBase::OnVersionListCtrlSelected ), NULL, this );
 	VersionRestoreButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModAnoubisMainPanelBase::OnVersionRestoreButtonClick ), NULL, this );
-	VersionSaveButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModAnoubisMainPanelBase::OnVersionSaveButtonClick ), NULL, this );
-	VersionImportButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModAnoubisMainPanelBase::OnVersionImportButtonClick ), NULL, this );
-	VersionExportButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModAnoubisMainPanelBase::OnVersionExportButtonClick ), NULL, this );
+	VersionExportButton1->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModAnoubisMainPanelBase::OnVersionExportButtonClick ), NULL, this );
 	VersionDeleteButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModAnoubisMainPanelBase::OnVersionDeleteButtonClick ), NULL, this );
 	VersionShowButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModAnoubisMainPanelBase::OnVersionShowButtonClick ), NULL, this );
 	cb_SendEscalations->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( ModAnoubisMainPanelBase::OnEscalationDisable ), NULL, this );

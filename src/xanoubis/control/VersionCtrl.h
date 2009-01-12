@@ -165,22 +165,6 @@ class VersionCtrl : public Singleton<VersionCtrl>
 		    const wxString &, bool);
 
 		/**
-		 * Imports a version from a local file.
-		 *
-		 * The method reads the ruleset from the specified file and
-		 * creates a new version from it. The ruleset is put into the
-		 * specified profile.
-		 *
-		 * @param path Path to file which contains the ruleset
-		 * @param profile The profile to be versioned
-		 * @param comment The comment of the version to be created
-		 * @param autoStore Value of autoStore-flag
-		 * @return true on success, false otherwise.
-		 */
-		bool importVersion(const wxString &, const wxString &,
-		    const wxString &, bool);
-
-		/**
 		 * Exports a version/profile into a local file.
 		 *
 		 * The method fetches the ruleset from the specified

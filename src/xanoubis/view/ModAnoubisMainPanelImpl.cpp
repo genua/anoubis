@@ -104,6 +104,9 @@ ModAnoubisMainPanelImpl::ModAnoubisMainPanelImpl(wxWindow* parent,
 	anEvents->Connect(anEVT_ANOUBISOPTIONS_SHOW,
 	    wxCommandEventHandler(ModAnoubisMainPanelImpl::OnAnoubisOptionShow),
 	    NULL, this);
+	anEvents->Connect(anEVT_LOAD_RULESET,
+	    wxCommandEventHandler(ModAnoubisMainPanelImpl::OnLoadRuleSet),
+	    NULL, this);
 	tb_MainAnoubisNotify->Connect(wxEVT_COMMAND_NOTEBOOK_PAGE_CHANGED,
 	    wxNotebookEventHandler(
 	       ModAnoubisMainPanelImpl::OnNotebookTabChanged),
@@ -317,6 +320,12 @@ ModAnoubisMainPanelImpl::fillProfileList(void)
 
 		profileList->SetItem(i, 1, profiles[i]);
 	}
+}
+
+void
+ModAnoubisMainPanelImpl::OnLoadRuleSet(wxCommandEvent &)
+{
+	versionListUpdateFromSelection();
 }
 
 void
@@ -1013,6 +1022,11 @@ ModAnoubisMainPanelImpl::OnVersionRestoreButtonClick(wxCommandEvent&)
 		useActiveProfile = false;
 		profile = VersionProfileChoice->GetStringSelection();
 	}
+	if (profile.IsEmpty()) {
+		wxMessageBox(_("No profile selected"), _("Restore version"),
+		    wxOK | wxICON_ERROR, this);
+		return;
+	}
 
 	/* Fetch ruleset from versioning-system */
 	struct apn_ruleset *apn_rs = versionCtrl->fetchRuleSet(idx, profile);
@@ -1046,94 +1060,14 @@ ModAnoubisMainPanelImpl::OnVersionRestoreButtonClick(wxCommandEvent&)
 			wxMessageBox(msg, _("Restore version"),
 			    wxOK | wxICON_ERROR, this);
 		}
-		delete rs;
-	}
-}
-
-void
-ModAnoubisMainPanelImpl::OnVersionSaveButtonClick(wxCommandEvent&)
-{
-	wxString profile;
-
-	if (!versionListCanAccess(false))
-		return;
-
-	if (VersionActivePolicyRadioButton->GetValue())
-		profile = wxT("active");
-	else
-		profile = VersionProfileChoice->GetStringSelection();
-
-	/* Comment from GUI */
-	wxString comment = VersionEnterCommentTextCtrl->GetValue();
-
-	VersionCtrl *versionCtrl = VersionCtrl::getInstance();
-	ProfileCtrl *profileCtrl = ProfileCtrl::getInstance();
-
-	PolicyRuleSet *rs;
-	if (VersionActivePolicyRadioButton->GetValue())
-		rs = profileCtrl->getRuleSet(profileCtrl->getUserId());
-	else
-		rs  = profileCtrl->getRuleSet(profile);
-
-	if (rs == 0) {
-		wxString msg =
-		    _("Failed to fetch the policy for the selected profile!");
-		wxString title = _("Create version");
-
-		wxMessageBox(msg, title, wxOK | wxICON_ERROR, this);
-		return;
-	}
-
-	if (versionCtrl->createVersion(rs, profile, comment, false)) {
-		/* Success, new version available, update view */
-		versionListUpdate();
-
-		/* Clean-up comment control */
-		VersionEnterCommentTextCtrl->SetValue(wxT(""));
-	}
-	else {
-		wxString msg = _("Failed to create a new version!");
-		wxString title = _("Create version");
-
-		wxMessageBox(msg, title, wxOK | wxICON_ERROR, this);
-	}
-
-	if (!VersionActivePolicyRadioButton->GetValue())
-		delete rs;
-}
-
-void
-ModAnoubisMainPanelImpl::OnVersionImportButtonClick(wxCommandEvent&)
-{
-	if (!versionListCanAccess(false))
-		return;
-
-	/* Ask for a file */
-	wxFileDialog fileDlg(this, _("Choose a policy file:"));
-	if (fileDlg.ShowModal() != wxID_OK)
-		return;
-
-	/* The profile */
-	wxString profile;
-	if (VersionActivePolicyRadioButton->GetValue())
-		profile = wxT("active");
-	else
-		profile = VersionProfileChoice->GetStringSelection();
-
-	wxString file = fileDlg.GetPath();
-	wxString comment = _("Version created at ") +
-	    wxDateTime::Now().Format();
-
-	VersionCtrl *versionCtrl = VersionCtrl::getInstance();
-	if (versionCtrl->importVersion(file, profile, comment, false)) {
-		/* Success, new version available, update view */
+		if (!versionCtrl->createVersion(rs, profile,
+		    _("automatically created by restore"), true)) {
+			wxMessageBox(_("Old version imported but could not "
+			    "create a new version"), _("Restore version"),
+			    wxOK | wxICON_ERROR, this);
+		}
 		versionListUpdateFromSelection();
-	}
-	else {
-		wxString msg = _("Failed to import into a new version!");
-		wxString title = _("Import version");
-
-		wxMessageBox(msg, title, wxOK | wxICON_ERROR, this);
+		delete rs;
 	}
 }
 

@@ -403,7 +403,8 @@ ProfileCtrl::setEventBroadcastEnabled(bool enabled)
 void
 ProfileCtrl::OnPolicyRequest(TaskEvent &event)
 {
-	ComPolicyRequestTask *task =
+	PolicyRuleSet		*rs;
+	ComPolicyRequestTask	*task =
 	    dynamic_cast<ComPolicyRequestTask*>(event.getTask());
 
 	if (task == 0)
@@ -415,9 +416,16 @@ ProfileCtrl::OnPolicyRequest(TaskEvent &event)
 		/* This is not "my" task. Ignore it. */
 		return;
 	}
-
 	/* XXX Error-path? */
-	importPolicy(task->getPolicy());
+	rs = task->getPolicy();
+	importPolicy(rs);
+	/*
+	 * If this is a new active policy, create a version for it.
+	 * XXX CEH: Also do this for admin rule sets?
+	 */
+	if (!rs->isAdmin() && rs->getUid() == geteuid()) {
+		makeBackup(wxT("active"));
+	}
 }
 
 void

@@ -182,12 +182,13 @@ VersionCtrl::fetchRuleSet(unsigned int no, const wxString &profile) const
 	if (no >= versionList_.size())
 		return (0);
 
+	if (profile.IsEmpty())
+		return (0);
+
 	const ApnVersion &version = getVersion(no);
 
 	vmrc = apnvm_fetch(vm_, version.getUsername().fn_str(),
-	    version.getVersionNo(),
-	    (!profile.IsEmpty() ? profile.fn_str() : (char*)0),
-	    &rs);
+	    version.getVersionNo(), profile.fn_str(), &rs);
 
 	return (vmrc == APNVM_OK) ? rs : 0;
 }
@@ -219,60 +220,6 @@ VersionCtrl::createVersion(PolicyRuleSet *policy, const wxString &profile,
 	md.comment = strdup(comment.fn_str());
 	md.auto_store = autoStore;
 
-	vmrc = apnvm_insert(vm_, wxGetUserId().fn_str(), profile.fn_str(),
-	    rs, &md);
-
-	free((void*)md.comment);
-	return (vmrc == APNVM_OK);
-}
-
-bool
-VersionCtrl::importVersion(const wxString &path, const wxString &profile,
-    const wxString &comment, bool autoStore)
-{
-	struct apn_ruleset	*rs;
-	struct apnvm_md		md;
-	apnvm_result		vmrc;
-	int			fd;
-	struct iovec		iov;
-
-	if ((fd = open(path.fn_str(), O_RDONLY)) == -1)
-		return (false);
-
-	/* Detect filesize by jumping to the end */
-	off_t offs = lseek(fd, 0, SEEK_END);
-	if (offs == (off_t)-1) {
-		close(fd);
-		return (false);
-	}
-	iov.iov_len = offs;
-
-	/* Jump back to the start */
-	if (lseek(fd, 0, SEEK_SET) == (off_t)-1) {
-		close(fd);
-		return (false);
-	}
-
-	iov.iov_base = mmap(NULL, iov.iov_len, PROT_READ, MAP_PRIVATE, fd, 0);
-	if (iov.iov_base == MAP_FAILED) {
-		close(fd);
-		return (false);
-	}
-
-	/* Parse the ruleset */
-	if ((apn_parse_iovec("<iov>", &iov, 1, &rs, 0) != 0) || (rs == 0)) {
-		munmap(iov.iov_base, iov.iov_len);
-		close(fd);
-		return (false);
-	}
-
-	munmap(iov.iov_base, iov.iov_len);
-	close(fd);
-
-	md.comment = strdup(comment.fn_str());
-	md.auto_store = autoStore;
-
-	/* Insert into versioning-system */
 	vmrc = apnvm_insert(vm_, wxGetUserId().fn_str(), profile.fn_str(),
 	    rs, &md);
 

@@ -134,17 +134,12 @@ class ModAnoubisMainPanelBase : public wxPanel
 		wxChoice* VersionProfileChoice;
 		wxListCtrl* VersionListCtrl;
 		wxTextCtrl* VersionShowCommentTextCtrl;
-		wxStaticText* VersionSelectLabel;
+		
 		wxButton* VersionRestoreButton;
-		wxStaticText* VersionSaveLabel;
-		wxButton* VersionSaveButton;
-		wxStaticText* VersionCommentLabel;
-		wxTextCtrl* VersionEnterCommentTextCtrl;
-		wxStaticText* VersionVersionLabel;
-		wxButton* VersionImportButton;
-		wxButton* VersionExportButton;
+		wxButton* VersionExportButton1;
 		wxButton* VersionDeleteButton;
 		wxButton* VersionShowButton;
+		
 		wxPanel* tb_MainAnoubisOptions;
 		wxCheckBox* cb_SendEscalations;
 		
@@ -194,8 +189,6 @@ class ModAnoubisMainPanelBase : public wxPanel
 		virtual void OnVersionProfileChoice( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnVersionListCtrlSelected( wxListEvent& event ){ event.Skip(); }
 		virtual void OnVersionRestoreButtonClick( wxCommandEvent& event ){ event.Skip(); }
-		virtual void OnVersionSaveButtonClick( wxCommandEvent& event ){ event.Skip(); }
-		virtual void OnVersionImportButtonClick( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnVersionExportButtonClick( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnVersionDeleteButtonClick( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnVersionShowButtonClick( wxCommandEvent& event ){ event.Skip(); }

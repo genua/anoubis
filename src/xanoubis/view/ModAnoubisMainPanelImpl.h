@@ -71,6 +71,8 @@ class ModAnoubisMainPanelImpl : public ModAnoubisMainPanelBase
 		void toolTipParamsUpdate(void);
 
 	protected:
+		void OnLoadRuleSet(wxCommandEvent&);
+
 		void OnTypeChoosen(wxCommandEvent&);
 		void OnFirstBtnClick(wxCommandEvent&);
 		void OnPreviousBtnClick(wxCommandEvent&);
@@ -102,8 +104,6 @@ class ModAnoubisMainPanelImpl : public ModAnoubisMainPanelBase
 		void OnNotebookTabChanged(wxNotebookEvent&);
 		void OnVersionListCtrlSelected(wxListEvent&);
 		void OnVersionRestoreButtonClick(wxCommandEvent&);
-		void OnVersionSaveButtonClick(wxCommandEvent&);
-		void OnVersionImportButtonClick(wxCommandEvent&);
 		void OnVersionExportButtonClick(wxCommandEvent&);
 		void OnVersionDeleteButtonClick(wxCommandEvent&);
 		void OnVersionShowButtonClick(wxCommandEvent&);

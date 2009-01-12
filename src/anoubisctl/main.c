@@ -112,8 +112,6 @@ struct cmd {
 static char    *anoubis_socket = "/var/run/anoubisd.sock";
 
 static int	opts = 0;
-static char	*profile = "none";
-
 
 static struct achat_channel	*channel;
 struct anoubis_client		*client = NULL;
@@ -125,7 +123,7 @@ usage(void)
 	unsigned int	i;
 	extern char	*__progname;
 
-	fprintf(stderr, "usage: %s [-fnv] [-p profile] <command> [<file>]\n",
+	fprintf(stderr, "usage: %s [-fnv] <command> [<file>]\n",
 	    __progname);
 	fprintf(stderr, "    <command>:\n");
 	for (i=0; i < sizeof(commands)/sizeof(struct cmd); i++) {
@@ -166,7 +164,7 @@ main(int argc, char *argv[])
 	if (argc < 2)
 		usage();
 
-	while ((ch = getopt(argc, argv, "fnvp:")) != -1) {
+	while ((ch = getopt(argc, argv, "fnv")) != -1) {
 		switch (ch) {
 
 		case 'n':
@@ -181,10 +179,6 @@ main(int argc, char *argv[])
 		case 'f':
 			opts |= ANOUBISCTL_OPT_FORCE;
 			break;
-		case 'p':
-			profile = optarg;
-			break;
-
 		default:
 			usage();
 			/* NOTREACHED */
@@ -302,9 +296,6 @@ daemon_reload(void)
 	int	error = 0;
 
 	error = create_channel();
-
-/* XXX RD anoubis_profile ?? reload */
-
 	destroy_channel();
 	return error;
 }
@@ -412,7 +403,7 @@ dump(char *file)
 }
 
 static int
-make_version(struct apn_ruleset *ruleset, const char *profile)
+make_version(struct apn_ruleset *ruleset)
 {
 	const char		*home = getenv("HOME");
 	const char		*user = getenv("USER");
@@ -454,7 +445,7 @@ make_version(struct apn_ruleset *ruleset, const char *profile)
 	md.comment = "Automatically created by anoubisctl";
 	md.auto_store = 1;
 
-	vmrc = apnvm_insert(vm, user, profile, ruleset, &md);
+	vmrc = apnvm_insert(vm, user, "active", ruleset, &md);
 	if (vmrc != APNVM_OK) {
 		fprintf(stderr, "Failed to create a new version\n");
 		apnvm_destroy(vm);
@@ -486,12 +477,6 @@ load(char *rulesopt)
 		fprintf(stderr, "Rules must be loaded from a regular file\n");
 		return 3;
 	}
-	if (profile == NULL ||
-	    (strcmp(profile, "high") && strcmp(profile, "medium") &&
-	    strcmp(profile, "admin") && strcmp(profile, "none"))) {
-		fprintf(stderr, "Need a profile, one of high, medium, admin\n");
-		return 4;
-	}
 	if (opts & ANOUBISCTL_OPT_VERBOSE)
 		flags |= APN_FLAG_VERBOSE;
 	if (opts & ANOUBISCTL_OPT_VERBOSE2)
@@ -519,9 +504,12 @@ load(char *rulesopt)
 		return error;
 	}
 
-	if (!make_version(ruleset, profile)) {
+	if (!make_version(ruleset)) {
 		apn_free_ruleset(ruleset);
-		return 7;
+		/*
+		 * Do NOT abort here. make_version will print an error
+		 * message but we should load the rule set anyway.
+		 */
 	}
 
 	apn_free_ruleset(ruleset);
