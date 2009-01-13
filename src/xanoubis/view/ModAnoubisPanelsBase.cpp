@@ -258,7 +258,7 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	tb_MainAnoubisNotification->SetSizer( sz_MainAnoubisNotify );
 	tb_MainAnoubisNotification->Layout();
 	sz_MainAnoubisNotify->Fit( tb_MainAnoubisNotification );
-	tb_MainAnoubisNotify->AddPage( tb_MainAnoubisNotification, _("Notifications"), false );
+	tb_MainAnoubisNotify->AddPage( tb_MainAnoubisNotification, _("Notifications"), true );
 	tb_Profiles = new wxPanel( tb_MainAnoubisNotify, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
 	wxBoxSizer* bSizer25;
 	bSizer25 = new wxBoxSizer( wxHORIZONTAL );
@@ -340,7 +340,7 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	tb_Profiles->SetSizer( bSizer25 );
 	tb_Profiles->Layout();
 	bSizer25->Fit( tb_Profiles );
-	tb_MainAnoubisNotify->AddPage( tb_Profiles, _("Profiles"), true );
+	tb_MainAnoubisNotify->AddPage( tb_Profiles, _("Profiles"), false );
 	tb_MainAnoubisVersions = new wxPanel( tb_MainAnoubisNotify, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
 	wxBoxSizer* MainAnoubisVersionsSizer;
 	MainAnoubisVersionsSizer = new wxBoxSizer( wxHORIZONTAL );
@@ -606,24 +606,18 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	
 	fgSizer6->Add( m_staticText27, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
 	
+	wxBoxSizer* bSizer291;
+	bSizer291 = new wxBoxSizer( wxHORIZONTAL );
+	
+	PrivKeyPathText = new wxTextCtrl( tb_MainAnoubisOptions, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_READONLY );
+	bSizer291->Add( PrivKeyPathText, 1, wxALL, 5 );
+	
 	PrivKeyChooseButton = new wxButton( tb_MainAnoubisOptions, wxID_ANY, _("Choose Key"), wxDefaultPosition, wxDefaultSize, 0 );
-	fgSizer6->Add( PrivKeyChooseButton, 0, wxALL, 5 );
+	PrivKeyChooseButton->SetToolTip( _("Selects a private key") );
 	
-	m_staticText28 = new wxStaticText( tb_MainAnoubisOptions, wxID_ANY, _("Fingerprint:"), wxDefaultPosition, wxDefaultSize, 0 );
-	m_staticText28->Wrap( -1 );
-	fgSizer6->Add( m_staticText28, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
+	bSizer291->Add( PrivKeyChooseButton, 0, wxALL, 5 );
 	
-	PrivKeyFingerprintText = new wxStaticText( tb_MainAnoubisOptions, wxID_ANY, _("..."), wxDefaultPosition, wxDefaultSize, 0 );
-	PrivKeyFingerprintText->Wrap( -1 );
-	fgSizer6->Add( PrivKeyFingerprintText, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
-	
-	m_staticText30 = new wxStaticText( tb_MainAnoubisOptions, wxID_ANY, _("Distinguished Name:"), wxDefaultPosition, wxDefaultSize, 0 );
-	m_staticText30->Wrap( -1 );
-	fgSizer6->Add( m_staticText30, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
-	
-	PrivKeyDnText = new wxStaticText( tb_MainAnoubisOptions, wxID_ANY, _("..."), wxDefaultPosition, wxDefaultSize, 0 );
-	PrivKeyDnText->Wrap( -1 );
-	fgSizer6->Add( PrivKeyDnText, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
+	fgSizer6->Add( bSizer291, 1, wxEXPAND, 5 );
 	
 	m_staticText32 = new wxStaticText( tb_MainAnoubisOptions, wxID_ANY, _("Passphrase validity:"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_staticText32->Wrap( -1 );
@@ -653,6 +647,34 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	sbSizer7->Add( fgSizer6, 1, wxEXPAND, 5 );
 	
 	bSizer13->Add( sbSizer7, 0, wxEXPAND, 5 );
+	
+	wxStaticBoxSizer* sbSizer9;
+	sbSizer9 = new wxStaticBoxSizer( new wxStaticBox( tb_MainAnoubisOptions, -1, _("Certificate") ), wxVERTICAL );
+	
+	wxFlexGridSizer* fgSizer8;
+	fgSizer8 = new wxFlexGridSizer( 2, 2, 0, 0 );
+	fgSizer8->SetFlexibleDirection( wxBOTH );
+	fgSizer8->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+	
+	m_staticText28 = new wxStaticText( tb_MainAnoubisOptions, wxID_ANY, _("Fingerprint:"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText28->Wrap( -1 );
+	fgSizer8->Add( m_staticText28, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
+	
+	PrivKeyFingerprintText = new wxStaticText( tb_MainAnoubisOptions, wxID_ANY, _("..."), wxDefaultPosition, wxDefaultSize, 0 );
+	PrivKeyFingerprintText->Wrap( -1 );
+	fgSizer8->Add( PrivKeyFingerprintText, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
+	
+	m_staticText30 = new wxStaticText( tb_MainAnoubisOptions, wxID_ANY, _("Distinguished Name:"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText30->Wrap( -1 );
+	fgSizer8->Add( m_staticText30, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
+	
+	PrivKeyDnText = new wxStaticText( tb_MainAnoubisOptions, wxID_ANY, _("..."), wxDefaultPosition, wxDefaultSize, 0 );
+	PrivKeyDnText->Wrap( -1 );
+	fgSizer8->Add( PrivKeyDnText, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
+	
+	sbSizer9->Add( fgSizer8, 1, wxEXPAND, 5 );
+	
+	bSizer13->Add( sbSizer9, 1, wxEXPAND, 5 );
 	
 	sz_MainAnoubisOptions->Add( bSizer13, 1, wxEXPAND, 5 );
 	
@@ -699,6 +721,9 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	toolTipCheckBox->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( ModAnoubisMainPanelBase::OnToolTipCheckBox ), NULL, this );
 	toolTipSpinCtrl->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( ModAnoubisMainPanelBase::OnToolTipSpinCtrl ), NULL, this );
 	toolTipSpinCtrl->Connect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( ModAnoubisMainPanelBase::OnToolTipSpinCtrlText ), NULL, this );
+	PrivKeyChooseButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModAnoubisMainPanelBase::OnPrivKeyChooseClicked ), NULL, this );
+	PrivKeyValidityChoice->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( ModAnoubisMainPanelBase::OnPrivKeyValidityChanged ), NULL, this );
+	PrivKeyValiditySpinCtrl->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( ModAnoubisMainPanelBase::OnPrivKeyValidityPeriodChanged ), NULL, this );
 }
 
 ModAnoubisOverviewPanelBase::ModAnoubisOverviewPanelBase( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size, long style ) : wxPanel( parent, id, pos, size, style )

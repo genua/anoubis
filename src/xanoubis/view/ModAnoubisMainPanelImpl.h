@@ -94,6 +94,8 @@ class ModAnoubisMainPanelImpl : public ModAnoubisMainPanelBase
 		void OnDoAutostart(wxCommandEvent&);
 
 		void OnPrivKeyValidityChanged(wxCommandEvent&);
+		void OnPrivKeyChooseClicked(wxCommandEvent&);
+		void OnPrivKeyValidityPeriodChanged(wxSpinEvent&);
 
 		void OnProfileDeleteClicked(wxCommandEvent &);
 		void OnProfileLoadClicked(wxCommandEvent &);

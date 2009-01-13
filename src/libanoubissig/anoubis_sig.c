@@ -364,7 +364,10 @@ anoubis_sig_init(const char *keyfile, const char *certfile, char *pass,
 	as->type = type;
 	as->pkey = pkey;
 	as->cert = cert;
-	as->idlen = cert_keyid(&as->keyid, cert);
+	if (cert)
+		as->idlen = cert_keyid(&as->keyid, cert);
+	else
+		as->idlen = 0;
 	if (as->idlen == -1) {
 		anoubis_sig_free(as);
 		return NULL;

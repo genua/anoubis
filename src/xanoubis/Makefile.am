@@ -35,6 +35,8 @@ anoubischatdir = src/libanoubischat
 libanoubischat = $(top_builddir)/$(anoubischatdir)/libanoubischat.a
 anoubisprotocoldir = src/libanoubisprotocol
 libanoubisprotocol = $(top_builddir)/$(anoubisprotocoldir)/libanoubispc.a
+anoubissigdir = src/libanoubissig
+libanoubissig = $(top_builddir)/$(anoubissigdir)/libanoubissig.a
 anoubisuidir = src/libanoubisui
 libanoubisui = $(top_builddir)/$(anoubisuidir)/libanoubisui.a
 
@@ -45,6 +47,7 @@ xanoubis_CPPFLAGS = \
 	-I$(top_srcdir)/$(anoubischatdir) \
 	-I$(top_srcdir)/$(anoubisprotocoldir) \
 	-I$(top_srcdir)/$(anoubisprotocoldir)/client \
+	-I$(top_srcdir)/$(anoubissigdir) \
 	-I$(top_srcdir)/$(anoubisuidir) \
 	-I$(top_srcdir)/$(anoubisuidir)/apnvm \
 	-I$(top_srcdir)/$(xanoubisdir) \
@@ -69,6 +72,7 @@ xanoubis_DEPEND_LIBS = \
 	$(libapn) \
 	$(libanoubischat) \
 	$(libanoubisprotocol) \
+	$(libanoubissig) \
 	$(libanoubisui)
 
 if NEEDBSDCOMPAT
@@ -202,6 +206,8 @@ xanoubis_SOURCES= \
 	model/Notification.h \
 	model/NotifyAnswer.cpp \
 	model/NotifyAnswer.h \
+	model/PrivKey.cpp \
+	model/PrivKey.h \
 	model/StatusNotify.cpp \
 	model/StatusNotify.h \
 	model/SfsDirectory.cpp \
@@ -286,6 +292,8 @@ xanoubis_SOURCES= \
 	control/AnEvents.h \
 	control/Debug.h \
 	control/Debug.cpp \
+	control/KeyCtrl.cpp \
+	control/KeyCtrl.h \
 	control/RuleEditorAddPolicyVisitor.cpp \
 	control/RuleEditorAddPolicyVisitor.h \
 	control/RuleEditorFillWidgetsVisitor.cpp \

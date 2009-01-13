@@ -52,6 +52,7 @@
 #include "main.h"
 #include "AnEvents.h"
 #include "DlgProfileSelection.h"
+#include "KeyCtrl.h"
 #include "ModAnoubis.h"
 #include "ModAnoubisMainPanelImpl.h"
 #include "Notification.h"
@@ -110,10 +111,6 @@ ModAnoubisMainPanelImpl::ModAnoubisMainPanelImpl(wxWindow* parent,
 	tb_MainAnoubisNotify->Connect(wxEVT_COMMAND_NOTEBOOK_PAGE_CHANGED,
 	    wxNotebookEventHandler(
 	       ModAnoubisMainPanelImpl::OnNotebookTabChanged),
-	    NULL, this);
-	PrivKeyValidityChoice->Connect(wxEVT_COMMAND_CHOICE_SELECTED,
-	    wxCommandEventHandler(
-	       ModAnoubisMainPanelImpl::OnPrivKeyValidityChanged),
 	    NULL, this);
 }
 
@@ -218,6 +215,9 @@ ModAnoubisMainPanelImpl::readOptions(void)
 	toolTipCheckBox->SetValue(EnableToolTips);
 	toolTipSpinCtrl->SetValue(ToolTipTimeout);
 	toolTipParamsUpdate();
+
+	PrivKeyPathText->SetValue(
+	    KeyCtrl::getInstance()->getPrivateKey().getFile());
 
 	/* set widgets visability and send options event */
 	setOptionsWidgetsVisability();
@@ -965,13 +965,43 @@ void ModAnoubisMainPanelImpl::OnDoAutostart(wxCommandEvent& event)
 void
 ModAnoubisMainPanelImpl::OnPrivKeyValidityChanged(wxCommandEvent&)
 {
-	/* Test weather "Until session end" is selected */
+	/* Test whether "Until session end" is selected */
 	bool sessionEndSelected =
 	    (PrivKeyValidityChoice->GetCurrentSelection() == 0);
 
 	/* Enable/disable related controls accordingly */
 	PrivKeyValiditySpinCtrl->Enable(!sessionEndSelected);
 	PrivKeyValidityText->Enable(!sessionEndSelected);
+
+	/* Change validity settings of private key */
+	PrivKey &privKey = KeyCtrl::getInstance()->getPrivateKey();
+	if (sessionEndSelected)
+		privKey.setValidity(0); /* Disabled */
+	else
+		privKey.setValidity(PrivKeyValiditySpinCtrl->GetValue());
+}
+
+void
+ModAnoubisMainPanelImpl::OnPrivKeyChooseClicked(wxCommandEvent&)
+{
+	wxFileDialog dlg(this,
+	    _("Choose the file, where your private key is stored."));
+
+	if (dlg.ShowModal() == wxID_OK) {
+		wxString path = dlg.GetPath();
+		PrivKey &privKey = KeyCtrl::getInstance()->getPrivateKey();
+
+		PrivKeyPathText->SetValue(path);
+		privKey.setFile(path);
+	}
+}
+
+void
+ModAnoubisMainPanelImpl::OnPrivKeyValidityPeriodChanged(wxSpinEvent&)
+{
+	/* Change validity settings of private key */
+	PrivKey &privKey = KeyCtrl::getInstance()->getPrivateKey();
+	privKey.setValidity(PrivKeyValiditySpinCtrl->GetValue());
 }
 
 void

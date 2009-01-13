@@ -30,6 +30,7 @@
 
 #include <config.h>
 
+#include <sys/cdefs.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include <string.h>
@@ -86,6 +87,8 @@ struct anoubis_sig {
 	EVP_PKEY	*pkey;
 };
 
+__BEGIN_DECLS
+
 unsigned char *anoubis_sign_csum(struct anoubis_sig *as,
     unsigned char csum[ANOUBIS_SIG_HASH_SHA256_LEN], unsigned int *len);
 unsigned char *anoubis_sign_policy(struct anoubis_sig *as, char *file,
@@ -107,4 +110,7 @@ struct anoubis_sig *anoubis_sig_init(const char *file, const char *cert,
     char *pass, const EVP_MD *type, int pub_priv, int need_pass);
 void anoubis_sig_free(struct anoubis_sig *as);
 char *anoubis_sig_key2char(int idlen, unsigned char *keyid);
+
+__END_DECLS
+
 #endif	/* _ANOUBIS_SIG_H_ */

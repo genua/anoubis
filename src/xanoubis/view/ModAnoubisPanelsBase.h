@@ -161,15 +161,16 @@ class ModAnoubisMainPanelBase : public wxPanel
 		wxSpinCtrl* toolTipSpinCtrl;
 		wxStaticText* m_staticText411;
 		wxStaticText* m_staticText27;
+		wxTextCtrl* PrivKeyPathText;
 		wxButton* PrivKeyChooseButton;
-		wxStaticText* m_staticText28;
-		wxStaticText* PrivKeyFingerprintText;
-		wxStaticText* m_staticText30;
-		wxStaticText* PrivKeyDnText;
 		wxStaticText* m_staticText32;
 		wxChoice* PrivKeyValidityChoice;
 		wxSpinCtrl* PrivKeyValiditySpinCtrl;
 		wxStaticText* PrivKeyValidityText;
+		wxStaticText* m_staticText28;
+		wxStaticText* PrivKeyFingerprintText;
+		wxStaticText* m_staticText30;
+		wxStaticText* PrivKeyDnText;
 		
 		// Virtual event handlers, overide them in your derived class
 		virtual void OnTypeChoosen( wxCommandEvent& event ){ event.Skip(); }
@@ -203,6 +204,9 @@ class ModAnoubisMainPanelBase : public wxPanel
 		virtual void OnToolTipCheckBox( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnToolTipSpinCtrl( wxSpinEvent& event ){ event.Skip(); }
 		virtual void OnToolTipSpinCtrlText( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnPrivKeyChooseClicked( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnPrivKeyValidityChanged( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnPrivKeyValidityPeriodChanged( wxSpinEvent& event ){ event.Skip(); }
 		
 	
 	public:

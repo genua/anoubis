@@ -42,6 +42,7 @@ TESTS = \
 	testSuite_Profiles \
 	testSuite_Policies \
 	testSuite_Sfs \
+	testSuite_Key \
 	pidtest
 noinst_PROGRAMS = test_xanoubis_server testSuite_JobCtrl $(TESTS)
 endif
@@ -52,6 +53,7 @@ xanoubisdir	   = src/xanoubis
 bsdcompatdir	   = src/bsdcompat
 anoubischatdir	   = src/libanoubischat
 anoubisprotocoldir = src/libanoubisprotocol
+anoubissigdir      = src/libanoubissig
 anoubischeckdir    = test/libanoubischeck
 
 libanoubisui	  = $(top_builddir)/$(uidir)/libanoubisui.a
@@ -60,6 +62,7 @@ libbsdcompat	  = $(top_builddir)/$(bsdcompatdir)/libbsdcompat.a
 libanoubischat	  = $(top_builddir)/$(anoubischatdir)/libanoubischat.a
 libprotocolserver = $(top_builddir)/$(anoubisprotocoldir)/libanoubisps.a
 libprotocolclient = $(top_builddir)/$(anoubisprotocoldir)/libanoubispc.a
+libanoubissig     = $(top_builddir)/$(anoubissigdir)/libanoubissig.a
 libGUIcomponents  = $(top_builddir)/$(xanoubisdir)/libGUIcomponents.so
 libanoubischeck   = $(top_builddir)/$(anoubischeckdir)/libanoubischeck.a
 
@@ -99,11 +102,13 @@ libGUIcomponents_DEPENDS = \
 	$(libGUIcomponents) \
 	$(libanoubischat) \
 	$(libprotocolclient) \
+	$(libanoubissig) \
 	$(libapn) \
 	$(libanoubisui)
 libGUIcomponents_LDADD = \
 	$(libanoubischat) \
 	$(libprotocolclient) \
+	$(libanoubissig) \
 	$(libapn) \
 	$(libanoubisui) \
 	$(libanoubischeck) \
@@ -249,6 +254,29 @@ testSuite_Sfs_SOURCES = \
 	testrunner.cpp \
 	suite_Sfs/testSuite.cpp \
 	suite_Sfs/tc_SfsDir.cpp
+
+#
+# Testsuite: Key
+#
+testSuite_Key_CPPFLAGS = $(libGUIcomponents_CPPFLAGS)
+testSuite_Key_CXXFLAGS = $(libGUIcomponents_CXXFLAGS) @CHECK_CFLAGS@
+testSuite_Key_LDFLAGS = $(shared_AM_LDFLAGS) -dynamic -L $(RPATH)
+testSuite_Key_DEPENDENCIES = $(libGUIcomponents_DEPENDS)
+testSuite_Key_LDADD = \
+	-lGUIcomponents \
+	$(libGUIcomponents_LDADD) \
+	@CHECK_LIBS@
+
+if NEEDBSDCOMPAT
+testSuite_Key_CPPFLAGS += -I$(top_srcdir)/$(bsdcompatdir)
+testSuite_Key_DEPENDENCIES += $(libbsdcompat)
+testSuite_Key_LDADD += $(libbsdcompat)
+endif
+
+testSuite_Key_SOURCES = \
+	testrunner.cpp \
+	suite_Key/testSuite.cpp \
+	suite_Key/tc_PrivKey.cpp
 
 #
 # Testsuite: JobCtrl
