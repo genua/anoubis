@@ -640,7 +640,8 @@ main(int argc, char *argv[])
 						linkfile = arg;
 					} else {
 						k++;
-						strlcpy(linkpath, arg, PATH_MAX);
+						strlcpy(linkpath, arg,
+						    PATH_MAX);
 						linkpath[k] = '\0';
 						linkfile = arg + k;
 					}
@@ -650,11 +651,13 @@ main(int argc, char *argv[])
 						return 1;
 					}
 					if (realarg[strlen(realarg)-1] != '/') {
-						if (asprintf(&arg, "%s/%s", realarg,
+						if (asprintf(&arg, "%s/%s",
+						    realarg,
 						    linkfile) < 0)
 							return 1;
 					} else {
-						if (asprintf(&arg, "%s%s", realarg,
+						if (asprintf(&arg, "%s%s",
+						    realarg,
 						    linkfile) < 0)
 							return 1;
 					}
@@ -1475,12 +1478,16 @@ sfs_add_tree(char *path, int op)
 		    !strcmp(d_ent->d_name, ".."))
 			continue;
 
-		if (asprintf(&tmp, "%s/%s", path,
-			    d_ent->d_name) < 0) {
-				perror("asprintf");
-				ret = 1;
-				goto out;
+		if (strcmp(path, "/"))
+			ret = asprintf(&tmp, "%s/%s", path, d_ent->d_name);
+		else
+			ret = asprintf(&tmp, "/%s", d_ent->d_name);
+		if (ret < 0) {
+			perror("asprintf");
+			ret = 1;
+			goto out;
 		}
+		ret = 0;
 
 		switch (d_ent->d_type) {
 		case DT_DIR:
@@ -1598,10 +1605,15 @@ sfs_tree(char *path, int op)
 
 	for (j = 0; j < k; j++)
 	{
-		if (asprintf(&tmp, "%s/%s", path, result[j]) < 0) {
+		if (strcmp(path, "/"))
+			ret = asprintf(&tmp, "%s/%s", path, result[j]);
+		else
+			ret = asprintf(&tmp, "/%s", result[j]);
+		if (ret < 0) {
 			ret = 1;
 			goto out;
 		}
+		ret = 0;
 
 		cnt = strlen(result[j]) - 1;
 		if (result[j][cnt] == '/') {
