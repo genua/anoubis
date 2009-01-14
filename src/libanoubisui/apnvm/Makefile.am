@@ -55,8 +55,7 @@ apnvm_includes += -I$(top_srcdir)/$(bsdcompatdir)
 apnvm_dependencies += $(libbsdcompat)
 endif
 
-# -Wno-error required with flex 2.5.34 on Ubuntu hardy
-libapnvm_a_CFLAGS = -std=gnu99 $(AM_CFLAGS) -Wno-error
+libapnvm_a_CFLAGS = -std=gnu99 $(AM_CFLAGS)
 libapnvm_a_CPPFLAGS = $(apnvm_includes) $(AM_CPPFLAGS)
 libapnvm_a_DEPENDENCIES	= $(apnvm_dependencies)
 libapnvm_a_LIBADD =
