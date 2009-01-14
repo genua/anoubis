@@ -244,6 +244,8 @@ xanoubis_SOURCES= \
 	model/SfsFilterPolicy.h \
 	model/PolicyUtils.cpp \
 	model/PolicyUtils.h \
+	model/ListCtrlColumn.cpp \
+	model/ListCtrlColumn.h \
 	view/AnStatusBar.cpp \
 	view/AnStatusBar.h \
 	view/AnFader.cpp \

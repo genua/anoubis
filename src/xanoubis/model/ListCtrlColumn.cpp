@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 GeNUA mbH <info@genua.de>
+ * Copyright (c) 2009 GeNUA mbH <info@genua.de>
  *
  * All rights reserved.
  *
@@ -25,75 +25,74 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "RuleEditorAddPolicyVisitor.h"
-#include "main.h"
+#include "ListCtrlColumn.h"
 
-RuleEditorAddPolicyVisitor::RuleEditorAddPolicyVisitor(
-    DlgRuleEditor *ruleEditor) : RuleEditorFillTableVisitor(ruleEditor, 0)
+#include <wx/listctrl.h>
+
+ListCtrlColumn::ListCtrlColumn(void)
 {
-	setPropagation(true);
+	index_ = -1;
+	title_ = wxEmptyString;
+	width_ = -1;
+	visability_ = false;
+}
+
+ListCtrlColumn::ListCtrlColumn(const wxString &title)
+{
+	index_ = -1;
+	title_ = title;
+	width_ = wxLIST_AUTOSIZE_USEHEADER;
+	visability_ = true;
 }
 
 void
-RuleEditorAddPolicyVisitor::visitAlfAppPolicy(AlfAppPolicy *policy)
+ListCtrlColumn::setIndex(long index)
 {
-	ruleEditor_->addAppPolicy(policy);
+	index_ = index;
 }
 
-/*
-void
-RuleEditorAddPolicyVisitor::visitAlfCapabilityFilterPolicy(
-    AlfCapabilityFilterPolicy *policy)
+long
+ListCtrlColumn::getIndex(void) const
 {
-}
-
-void
-RuleEditorAddPolicyVisitor::visitAlfFilterPolicy(AlfFilterPolicy *policy)
-{
-}
-*/
-
-void
-RuleEditorAddPolicyVisitor::visitContextAppPolicy(ContextAppPolicy *policy)
-{
-	ruleEditor_->addAppPolicy(policy);
-}
-
-/*
-void
-RuleEditorAddPolicyVisitor::visitContextFilterPolicy(
-    ContextFilterPolicy *policy)
-{
+	if (visability_) {
+		return (index_);
+	} else {
+		return (-1);
+	}
 }
 
 void
-RuleEditorAddPolicyVisitor::visitDefaultFilterPolicy(
-    DefaultFilterPolicy *policy)
+ListCtrlColumn::setTitle(const wxString & title)
 {
+	title_ = title;
+}
+
+wxString
+ListCtrlColumn::getTitle(void) const
+{
+	return (title_);
 }
 
 void
-RuleEditorAddPolicyVisitor::visitSbAccessFilterPolicy(
-    SbAccessFilterPolicy *policy)
+ListCtrlColumn::setWidth(int width)
 {
-}
-*/
-
-void
-RuleEditorAddPolicyVisitor::visitSbAppPolicy(SbAppPolicy *policy)
-{
-	ruleEditor_->addAppPolicy(policy);
+	width_ = width;
 }
 
-void
-RuleEditorAddPolicyVisitor::visitSfsAppPolicy(SfsAppPolicy *policy)
+int
+ListCtrlColumn::getWidth(void) const
 {
-	ruleEditor_->addAppPolicy(policy);
+	return (width_);
 }
 
-/*
 void
-RuleEditorAddPolicyVisitor::visitSfsFilterPolicy(SfsFilterPolicy *policy)
+ListCtrlColumn::setVisability(bool visability)
 {
+	visability_ = visability;
 }
-*/
+
+bool
+ListCtrlColumn::isVisible(void) const
+{
+	return (visability_);
+}

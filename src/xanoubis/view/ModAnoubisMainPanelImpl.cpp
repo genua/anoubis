@@ -325,9 +325,10 @@ ModAnoubisMainPanelImpl::fillProfileList(void)
 }
 
 void
-ModAnoubisMainPanelImpl::OnLoadRuleSet(wxCommandEvent &)
+ModAnoubisMainPanelImpl::OnLoadRuleSet(wxCommandEvent &event)
 {
 	versionListUpdateFromSelection();
+	event.Skip();
 }
 
 void

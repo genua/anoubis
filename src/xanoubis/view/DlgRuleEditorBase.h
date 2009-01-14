@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 GeNUA mbH <info@genua.de>
+ * Copyright (c) 2009 GeNUA mbH <info@genua.de>
  *
  * All rights reserved.
  *
@@ -223,6 +223,9 @@ class DlgRuleEditorBase : public wxFrame
 		wxButton* mainFooterSaveButton;
 		
 		// Virtual event handlers, overide them in your derived class
+		virtual void onClose( wxCloseEvent& event ){ event.Skip(); }
+		virtual void onAppPolicyDeSelect( wxListEvent& event ){ event.Skip(); }
+		virtual void onAppPolicySelect( wxListEvent& event ){ event.Skip(); }
 		virtual void OnAppBinaryTextCtrl( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnAppBinaryModifyButton( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnAppValidateChkSumButton( wxCommandEvent& event ){ event.Skip(); }

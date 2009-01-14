@@ -63,15 +63,11 @@ class RuleEditorAddPolicyVisitor : public RuleEditorFillTableVisitor
 		 */
 		RuleEditorAddPolicyVisitor(DlgRuleEditor *);
 
-/*
- * XXX ch: this will be fixed with the next functionality change
- */
-
 		/**
 		 * Visit a AlfAppPolicy.
 		 * @param[in] 1st Policy to visit.
 		 */
-		virtual void visitAlfAppPolicy(AlfAppPolicy *) {};
+		virtual void visitAlfAppPolicy(AlfAppPolicy *);
 
 		/**
 		 * Visit a AlfCapabilityFilterPolicy.
@@ -90,7 +86,7 @@ class RuleEditorAddPolicyVisitor : public RuleEditorFillTableVisitor
 		 * Visit a ContextAppPolicy.
 		 * @param[in] 1st Policy to visit.
 		 */
-		virtual void visitContextAppPolicy(ContextAppPolicy *) {};
+		virtual void visitContextAppPolicy(ContextAppPolicy *);
 
 		/**
 		 * Visit a ContextFilterPolicy.
@@ -114,29 +110,19 @@ class RuleEditorAddPolicyVisitor : public RuleEditorFillTableVisitor
 		 * Visit a SbAppPolicy.
 		 * @param[in] 1st Policy to visit.
 		 */
-		virtual void visitSbAppPolicy(SbAppPolicy *) {};
+		virtual void visitSbAppPolicy(SbAppPolicy *);
 
 		/**
 		 * Visit a SfsAppPolicy.
 		 * @param[in] 1st Policy to visit.
 		 */
-		virtual void visitSfsAppPolicy(SfsAppPolicy *) {};
+		virtual void visitSfsAppPolicy(SfsAppPolicy *);
 
 		/**
 		 * Visit a SfsFilterPolicy.
 		 * @param[in] 1st Policy to visit.
 		 */
 		virtual void visitSfsFilterPolicy(SfsFilterPolicy *) {};
-
-	private:
-		/**
-		 * Append policy.
-		 * This method does the work of adding the given policy to
-		 * the wxListCtrl of the RuleEditor.
-		 * @param[in] 1st The policy to add.
-		 * @return The index within the list of the added policy.
-		 */
-		long appendPolicy(Policy *);
 };
 
 #endif	/* _RULEEDITORADDPOLICYVISITOR_H_ */

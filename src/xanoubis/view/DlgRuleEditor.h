@@ -32,6 +32,7 @@
 #include "config.h"
 #endif
 
+#if 0
 #include <wx/list.h>
 #include <wx/string.h>
 #include <wx/filename.h>
@@ -79,7 +80,7 @@ enum ruleEditorListColumns {
 /*
  * XXX ch: this will be fixed with the next functionality change
  */
-#if 0
+//#if 0
 class AddrLine
 {
 	private:
@@ -100,7 +101,7 @@ class AddrLine
 };
 WX_DECLARE_LIST(AddrLine, AddrLineList);
 WX_DEFINE_ARRAY_LONG(long, ArrayOfLongs);
-#endif
+//#endif
 
 class DlgRuleEditor : public DlgRuleEditorBase
 {
@@ -121,7 +122,7 @@ class DlgRuleEditor : public DlgRuleEditorBase
 /*
  * XXX ch: this will be fixed with the next functionality change
  */
-#if 0
+//#if 0
 		void updateBinName(wxString);
 		void updateContextName(wxString);
 		void updateAction(int);
@@ -213,7 +214,7 @@ class DlgRuleEditor : public DlgRuleEditorBase
 
 		void selectLine(unsigned long);
 		void modified(void);
-#endif
+		//#endif
 	public:
 		DlgRuleEditor(wxWindow *);
 		~DlgRuleEditor(void);
@@ -221,7 +222,109 @@ class DlgRuleEditor : public DlgRuleEditorBase
 		friend class RuleEditorAddPolicyVisitor;
 		friend class RuleEditorFillWidgetsVisitor;
 		friend class RuleEditorFillTableVisitor;
+};
+#endif
 
+#include "AnEvents.h"
+#include "DlgRuleEditorBase.h"
+#include "ListCtrlColumn.h"
+
+#include "Policy.h"
+#include "AppPolicy.h"
+
+/**
+ * This is the anoubis rule editor.
+ */
+class DlgRuleEditor : public DlgRuleEditorBase
+{
+	public:
+		/**
+		 * Constructor of RuleEditor.
+		 * @param[in] 1st The parent window (aka MainFrame).
+		 */
+		DlgRuleEditor(wxWindow *);
+
+		/**
+		 * Destructor of RuleEditor.
+		 * @param None.
+		 */
+		~DlgRuleEditor(void);
+
+		/**
+		 * Add a row to the appListCtrl.
+		 * The given policy is assigned to the new row.
+		 * @param[in] 1st Concerning app policy
+		 * @return Nothing.
+		 */
+		void addAppPolicy(AppPolicy *);
+
+	private:
+		/**
+		 * Use there indices to access the related column within the
+		 * array appListColumns_
+		 */
+		enum appListColumnIndex {
+			APP_ID = 0,	/**< apn rule id. */
+			APP_TYPE,	/**< type of policy. */
+			APP_USER,	/**< user of ruleset. */
+			APP_BINARY,	/**< name of concerning binary. */
+			APP_EOL		/**< End-Of-List */
+		};
+
+		ListCtrlColumn *appListColumns_[APP_EOL]; /**< app columns */
+
+		long userRuleSetId_;  /**< Id of our ruleSet. */
+		long adminRuleSetId_; /**< Id of our admin ruleSet. */
+
+		/**
+		 * Handle show events.
+		 * @param[in] 1st The event.
+		 * @return Nothing.
+		 */
+		void onShow(wxCommandEvent &);
+
+		/**
+		 * Handle close by window decoration.
+		 * This will not just toggle the visability of this frame.
+		 * Instead an event anEVT_RULEEDITOR_SHOW will been sent to
+		 * inform all parts of the GUI (e.g MainFrame menue or the
+		 * buttons of the status bar) about the closed RuleEditor.
+		 * @param[in] 1st The event.
+		 * @return Nothing.
+		 */
+		void onClose(wxCloseEvent &);
+
+		/**
+		 * Handle new RuleSet events.
+		 * This just receives the event and updates the id's of
+		 * user and admin ruleset. loadRuleSet() is called to
+		 * update the view.
+		 * @param[in] 1st The event.
+		 * @return Nothing.
+		 */
+		void onLoadNewRuleSet(wxCommandEvent &);
+
+		/**
+		 * Handle selection of app policy.
+		 * @param[in] 1st The event.
+		 * @return Nothing.
+		 */
+		virtual void onAppPolicySelect(wxListEvent &);
+
+		/**
+		 * Handle de-selection of app policy.
+		 * @param[in] 1st The event.
+		 * @return Nothing.
+		 */
+		virtual void onAppPolicyDeSelect(wxListEvent &);
+
+		/**
+		 * Load new ruleSet.
+		 * This will clear the appList and load it with new content.
+		 * @param None.
+		 * @return Nothing.
+		 */
+		void loadRuleSet(void);
 };
 
 #endif /* __DlgRuleEditor__ */

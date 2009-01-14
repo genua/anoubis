@@ -27,17 +27,187 @@
 
 #include "DlgRuleEditor.h"
 
+#include "main.h"
+#include "PolicyRuleSet.h"
+#include "ProfileCtrl.h"
+#include "RuleEditorAddPolicyVisitor.h"
+
 DlgRuleEditor::DlgRuleEditor(wxWindow* parent) : DlgRuleEditorBase(parent)
 {
-	AnEvents::getInstance()->Connect(anEVT_RULEEDITOR_SHOW,
-	    wxCommandEventHandler(DlgRuleEditor::OnShow), NULL, this);
+	AnEvents *anEvents;
 
+	anEvents = AnEvents::getInstance();
+
+	anEvents->Connect(anEVT_RULEEDITOR_SHOW,
+	    wxCommandEventHandler(DlgRuleEditor::onShow), NULL, this);
+	anEvents->Connect(anEVT_LOAD_RULESET,
+	    wxCommandEventHandler(DlgRuleEditor::onLoadNewRuleSet), NULL, this);
+
+	appListColumns_[APP_ID] = new ListCtrlColumn(_("ID"));
+	appListColumns_[APP_TYPE] = new ListCtrlColumn(_("Type"));
+	appListColumns_[APP_USER] = new ListCtrlColumn(_("User"));
+	appListColumns_[APP_BINARY] = new ListCtrlColumn(_("Binary"));
+
+	for (size_t i=0; i<APP_EOL; i++) {
+		appListColumns_[i]->setIndex(i);
+		appPolicyListCtrl->InsertColumn(i,
+		    appListColumns_[i]->getTitle());
+		appPolicyListCtrl->SetColumnWidth(i,
+		    appListColumns_[i]->getWidth());
+	}
 }
 
 DlgRuleEditor::~DlgRuleEditor(void)
 {
+	AnEvents *anEvents;
 
+	anEvents = AnEvents::getInstance();
+
+	anEvents->Disconnect(anEVT_RULEEDITOR_SHOW,
+	    wxCommandEventHandler(DlgRuleEditor::onShow), NULL, this);
+	anEvents->Disconnect(anEVT_LOAD_RULESET,
+	    wxCommandEventHandler(DlgRuleEditor::onLoadNewRuleSet), NULL, this);
 }
+
+void
+DlgRuleEditor::addAppPolicy(AppPolicy *policy)
+{
+	long		 idx;
+	wxString	 columnText;
+	ListCtrlColumn	*column;
+	PolicyRuleSet	*ruleset;
+
+	/* Insert new row */
+	idx = appPolicyListCtrl->GetItemCount();
+	appPolicyListCtrl->InsertItem(idx, wxEmptyString);
+	appPolicyListCtrl->SetItemPtrData(idx, (wxUIntPtr)policy);
+
+	ruleset = policy->getParentRuleSet();
+
+	/* Fill id column */
+	column = appListColumns_[APP_ID];
+	if (column->isVisible()) {
+		columnText = wxString::Format(wxT("%d"),
+		    policy->getApnRuleId());
+		appPolicyListCtrl->SetItem(idx, column->getIndex(), columnText);
+	}
+
+	/* Fill type column */
+	column = appListColumns_[APP_TYPE];
+	if (column->isVisible()) {
+		columnText = policy->getTypeIdentifier();
+		if ((ruleset != NULL) && ruleset->isAdmin()) {
+			columnText.Append(wxT("(A)"));
+		}
+		appPolicyListCtrl->SetItem(idx, column->getIndex(), columnText);
+	}
+
+	/* Fill user column */
+	column = appListColumns_[APP_USER];
+	if (column->isVisible()) {
+		columnText = _("(unknown)");
+		if (ruleset != NULL) {
+			columnText = wxGetApp().getUserNameById(
+			    ruleset->getUid());
+		}
+		appPolicyListCtrl->SetItem(idx, column->getIndex(), columnText);
+	}
+
+	/* Fill binary column */
+	column = appListColumns_[APP_BINARY];
+	if (column->isVisible()) {
+		appPolicyListCtrl->SetItem(idx, column->getIndex(),
+		    policy->getBinaryName());
+	}
+
+	/* Set background colour in case of admin policy */
+	if ((ruleset != NULL) && ruleset->isAdmin()) {
+		appPolicyListCtrl->SetItemBackgroundColour(idx,
+		    wxTheColourDatabase->Find(wxT("LIGHT GREY")));
+	}
+}
+
+void
+DlgRuleEditor::onShow(wxCommandEvent &event)
+{
+	this->Show(event.GetInt());
+	event.Skip();
+}
+
+void
+DlgRuleEditor::onClose(wxCloseEvent & WXUNUSED(event))
+{
+	wxCommandEvent  showEvent(anEVT_RULEEDITOR_SHOW);
+
+	showEvent.SetInt(false);
+
+	wxPostEvent(AnEvents::getInstance(), showEvent);
+}
+
+void
+DlgRuleEditor::onLoadNewRuleSet(wxCommandEvent &event)
+{
+	ProfileCtrl	*profileCtrl;
+
+	profileCtrl = ProfileCtrl::getInstance();
+	userRuleSetId_ = profileCtrl->getUserId();
+	adminRuleSetId_ = profileCtrl->getAdminId(geteuid());
+
+	loadRuleSet();
+	event.Skip();
+}
+
+void
+DlgRuleEditor::onAppPolicySelect(wxListEvent & event)
+{
+	wxString	 newLabel;
+	AppPolicy	*policy;
+
+	policy = wxDynamicCast((void*)event.GetData(), AppPolicy);
+	if (policy != NULL) {
+		/* Show selected policy below application list */
+		newLabel.Printf(_("%ls %ls"),
+		    policy->getTypeIdentifier().c_str(),
+		    policy->getBinaryName().c_str());
+		appListPolicyText->SetLabel(newLabel);
+
+		/* Ensure the changes will apear on the screen */
+		Layout();
+	}
+}
+
+void
+DlgRuleEditor::onAppPolicyDeSelect(wxListEvent & WXUNUSED(event))
+{
+	appListPolicyText->SetLabel(wxEmptyString);
+	Layout();
+}
+
+void
+DlgRuleEditor::loadRuleSet(void)
+{
+	RuleEditorAddPolicyVisitor	 addVisitor(this);
+	ProfileCtrl			*profileCtrl;
+	PolicyRuleSet			*ruleSet;
+
+	profileCtrl = ProfileCtrl::getInstance();
+
+	appPolicyListCtrl->DeleteAllItems();
+
+	/* Load ruleset with user-policies. */
+	ruleSet = profileCtrl->getRuleSet(userRuleSetId_);
+	if (ruleSet != NULL) {
+		ruleSet->accept(addVisitor);
+	}
+
+	/* Load ruleset with admin-policies. */
+	ruleSet = profileCtrl->getRuleSet(adminRuleSetId_);
+	if (ruleSet != NULL) {
+		ruleSet->accept(addVisitor);
+	}
+}
+
+
 
 /*
  * XXX ch: this will be fixed with the next functionality change
@@ -691,7 +861,7 @@ DlgRuleEditor::OnRuleCreateButton(wxCommandEvent& )
 	/*
 	 * XXX ch: re-enable this with RuleEditor change
 	 */
-#if 0
+		//#if 0
 	int		 id;
 	uid_t		 uid;
 	long		 rsid;
@@ -759,7 +929,7 @@ DlgRuleEditor::OnRuleCreateButton(wxCommandEvent& )
 		modified();
 		loadRuleSet();
 	}
-#endif
+		//#endif
 }
 
 void
@@ -768,7 +938,7 @@ DlgRuleEditor::OnRuleDeleteButton(wxCommandEvent& )
 	/*
 	 * XXX ch: re-enable this with RuleEditor change
 	 */
-#if 0
+		//#if 0
 	Policy		*policy;
 	PolicyRuleSet	*rs;
 
@@ -790,7 +960,7 @@ DlgRuleEditor::OnRuleDeleteButton(wxCommandEvent& )
 
 	rs->deletePolicy(selectedId_);
 	modified();
-#endif
+		//#endif
 }
 
 void
@@ -1019,7 +1189,7 @@ DlgRuleEditor::OnSfsValidateChkSumButton(wxCommandEvent& )
 	}
  */
 }
-#endif
+//#endif
 
 void
 DlgRuleEditor::OnShow(wxCommandEvent& event)
@@ -1031,14 +1201,14 @@ DlgRuleEditor::OnShow(wxCommandEvent& event)
 /*
  * XXX ch: this will be fixed with the next functionality change
  */
-#if 0
+//#if 0
 void
 DlgRuleEditor::OnRuleSetSave(wxCommandEvent& )
 {
 	/*
 	 * XXX ch: re-enable with RuleEditor change
 	 */
-#if 0
+		//#if 0
 	wxString	 tmpPreFix;
 	wxString	 tmpName;
 	wxString	 message;
@@ -1080,7 +1250,7 @@ DlgRuleEditor::OnRuleSetSave(wxCommandEvent& )
 			profileCtrl->sendToDaemon(rs->getRuleSetId());
 		}
 	}
-#endif
+		//#endif
 }
 
 void
