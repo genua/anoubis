@@ -231,6 +231,7 @@ class DlgRuleEditor : public DlgRuleEditorBase
 
 #include "Policy.h"
 #include "AppPolicy.h"
+#include "ContextFilterPolicy.h"
 
 /**
  * This is the anoubis rule editor.
@@ -258,9 +259,25 @@ class DlgRuleEditor : public DlgRuleEditorBase
 		 */
 		void addAppPolicy(AppPolicy *);
 
+		/**
+		 * Add a new row to the filterListCtrl.
+		 * @param[in] 1st The concerned policy.
+		 * @return The index of the new row.
+		 */
+		long addFilterListRow(FilterPolicy *);
+
+		/**
+		 * Update row of filterList with ContestFilter.
+		 * If the given row relates to a ContextFilterPolicy,
+		 * it's contens will been updated.
+		 * @param[in] 1st The index of the row in question.
+		 * @return Nothing.
+		 */
+		void updateListContextFilter(long);
+
 	private:
 		/**
-		 * Use there indices to access the related column within the
+		 * Use these indices to access the related column within the
 		 * array appListColumns_
 		 */
 		enum appListColumnIndex {
@@ -268,10 +285,22 @@ class DlgRuleEditor : public DlgRuleEditorBase
 			APP_TYPE,	/**< type of policy. */
 			APP_USER,	/**< user of ruleset. */
 			APP_BINARY,	/**< name of concerning binary. */
-			APP_EOL		/**< End-Of-List */
+			APP_EOL		/**< End - Of - List */
 		};
 
-		ListCtrlColumn *appListColumns_[APP_EOL]; /**< app columns */
+		/**
+		 * Use these indices to access the related column within the
+		 * array ctxListColumns_
+		 */
+		enum ctxListColumnIndex {
+			CTX_ID = 0,	/**< apn rule id. */
+			CTX_TYPE,	/**< type of context */
+			CTX_BINARY,	/**< name of binary */
+			CTX_EOL		/**< End - Of - List */
+		};
+
+		ListCtrlColumn *appListColumns_[APP_EOL]; /**< @ appList */
+		ListCtrlColumn *ctxListColumns_[CTX_EOL]; /**< @ filterList */
 
 		long userRuleSetId_;  /**< Id of our ruleSet. */
 		long adminRuleSetId_; /**< Id of our admin ruleSet. */
@@ -325,6 +354,23 @@ class DlgRuleEditor : public DlgRuleEditorBase
 		 * @return Nothing.
 		 */
 		void loadRuleSet(void);
+
+		/**
+		 * Remove all rows and colsumns of the filter list.
+		 * @param None.
+		 * @return Nothing.
+		 */
+		void wipeFilterList(void);
+
+		/**
+		 * Create columns of filterList.
+		 * Only visible columns will been created. The index
+		 * of the created column is been updated.
+		 * @param[in] 1st The array of columns.
+		 * @param[in] 2nd The size of that array.
+		 * @return Nothing.
+		 */
+		void updateFilterColumns(ListCtrlColumn **, size_t);
 };
 
 #endif /* __DlgRuleEditor__ */

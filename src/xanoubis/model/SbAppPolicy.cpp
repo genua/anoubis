@@ -79,5 +79,5 @@ void
 SbAppPolicy::accept(PolicyVisitor &visitor)
 {
 	visitor.visitSbAppPolicy(this);
-	AppPolicy::accept(visitor);
+	acceptOnFilter(visitor);
 }

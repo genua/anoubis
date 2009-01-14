@@ -78,5 +78,5 @@ void
 SfsAppPolicy::accept(PolicyVisitor &visitor)
 {
 	visitor.visitSfsAppPolicy(this);
-	AppPolicy::accept(visitor);
+	acceptOnFilter(visitor);
 }

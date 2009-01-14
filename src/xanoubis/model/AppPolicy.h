@@ -78,7 +78,14 @@ class AppPolicy : public Policy
 		 * @param[in] 1st The visitor.
 		 * @return Nothing.
 		 */
-		virtual void accept(PolicyVisitor &visitor);
+		virtual void accept(PolicyVisitor &) = 0;
+
+		/**
+		 * Propagate visitor to childs/filters.
+		 * @param[in] 1st The visitor.
+		 * @return Nothing.
+		 */
+		void acceptOnFilter(PolicyVisitor &);
 
 		/**
 		 * Count the binaries of this application policy.

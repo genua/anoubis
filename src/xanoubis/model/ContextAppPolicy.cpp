@@ -75,5 +75,5 @@ void
 ContextAppPolicy::accept(PolicyVisitor &visitor)
 {
 	visitor.visitContextAppPolicy(this);
-	AppPolicy::accept(visitor);
+	acceptOnFilter(visitor);
 }

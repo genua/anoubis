@@ -92,7 +92,7 @@ class RuleEditorAddPolicyVisitor : public RuleEditorFillTableVisitor
 		 * Visit a ContextFilterPolicy.
 		 * @param[in] 1st Policy to visit.
 		 */
-		virtual void visitContextFilterPolicy(ContextFilterPolicy *) {};
+		virtual void visitContextFilterPolicy(ContextFilterPolicy *);
 
 		/**
 		 * Visit a DefaultFilterPolicy.

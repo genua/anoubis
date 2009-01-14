@@ -68,7 +68,7 @@ AppPolicy::createApnRule(void)
 }
 
 void
-AppPolicy::accept(PolicyVisitor &visitor)
+AppPolicy::acceptOnFilter(PolicyVisitor &visitor)
 {
 	PolicyList::iterator i;
 

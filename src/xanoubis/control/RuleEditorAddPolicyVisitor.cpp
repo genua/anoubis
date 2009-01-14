@@ -59,13 +59,17 @@ RuleEditorAddPolicyVisitor::visitContextAppPolicy(ContextAppPolicy *policy)
 	ruleEditor_->addAppPolicy(policy);
 }
 
-/*
 void
 RuleEditorAddPolicyVisitor::visitContextFilterPolicy(
     ContextFilterPolicy *policy)
 {
+	long index;
+
+	index = ruleEditor_->addFilterListRow(policy);
+	ruleEditor_->updateListContextFilter(index);
 }
 
+/*
 void
 RuleEditorAddPolicyVisitor::visitDefaultFilterPolicy(
     DefaultFilterPolicy *policy)

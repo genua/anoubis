@@ -55,6 +55,12 @@ DlgRuleEditor::DlgRuleEditor(wxWindow* parent) : DlgRuleEditorBase(parent)
 		appPolicyListCtrl->SetColumnWidth(i,
 		    appListColumns_[i]->getWidth());
 	}
+
+	ctxListColumns_[CTX_ID] = new ListCtrlColumn(_("ID"));
+	ctxListColumns_[CTX_TYPE] = new ListCtrlColumn(_("Type"));
+	ctxListColumns_[CTX_BINARY] = new ListCtrlColumn(_("Binary"));
+
+	updateFilterColumns(ctxListColumns_, CTX_EOL);
 }
 
 DlgRuleEditor::~DlgRuleEditor(void)
@@ -87,7 +93,7 @@ DlgRuleEditor::addAppPolicy(AppPolicy *policy)
 	/* Fill id column */
 	column = appListColumns_[APP_ID];
 	if (column->isVisible()) {
-		columnText = wxString::Format(wxT("%d"),
+		columnText = wxString::Format(wxT("%d:"),
 		    policy->getApnRuleId());
 		appPolicyListCtrl->SetItem(idx, column->getIndex(), columnText);
 	}
@@ -127,6 +133,60 @@ DlgRuleEditor::addAppPolicy(AppPolicy *policy)
 	}
 }
 
+long
+DlgRuleEditor::addFilterListRow(FilterPolicy *policy)
+{
+	long index;
+
+	index = filterPolicyListCtrl->GetItemCount();
+
+	filterPolicyListCtrl->InsertItem(index, wxEmptyString);
+	filterPolicyListCtrl->SetItemPtrData(index, (wxUIntPtr)policy);
+
+	return (index);
+}
+
+void
+DlgRuleEditor::updateListContextFilter(long rowIdx)
+{
+	long			 columnIdx;
+	wxString		 columnText;
+	ListCtrlColumn		*column;
+	ContextFilterPolicy	*policy;
+
+	policy = wxDynamicCast((void*)filterPolicyListCtrl->GetItemData(rowIdx),
+	    ContextFilterPolicy);
+	if (policy == NULL) {
+		/* This is not a ContextFilter row */
+		return;
+	}
+
+	/* Fill id column */
+	column = ctxListColumns_[CTX_ID];
+	if (column->isVisible()) {
+		columnIdx = column->getIndex();
+		columnText = wxString::Format(wxT("%d:"),
+		    policy->getApnRuleId());
+		filterPolicyListCtrl->SetItem(rowIdx, columnIdx, columnText);
+	}
+
+	/* Fill context type */
+	column = ctxListColumns_[CTX_TYPE];
+	if (column->isVisible()) {
+		columnIdx = column->getIndex();
+		columnText = policy->getContextTypeName();
+		filterPolicyListCtrl->SetItem(rowIdx, columnIdx, columnText);
+	}
+
+	/* Fill binary */
+	column = ctxListColumns_[CTX_BINARY];
+	if (column->isVisible()) {
+		columnIdx = column->getIndex();
+		columnText = policy->getBinaryName();
+		filterPolicyListCtrl->SetItem(rowIdx, columnIdx, columnText);
+	}
+}
+
 void
 DlgRuleEditor::onShow(wxCommandEvent &event)
 {
@@ -160,11 +220,16 @@ DlgRuleEditor::onLoadNewRuleSet(wxCommandEvent &event)
 void
 DlgRuleEditor::onAppPolicySelect(wxListEvent & event)
 {
-	wxString	 newLabel;
-	AppPolicy	*policy;
+	RuleEditorAddPolicyVisitor	 addVisitor(this);
+	wxString			 newLabel;
+	AppPolicy			*policy;
 
 	policy = wxDynamicCast((void*)event.GetData(), AppPolicy);
 	if (policy != NULL) {
+		/* Show filters of selected application */
+		updateFilterColumns(ctxListColumns_, CTX_EOL);
+		policy->acceptOnFilter(addVisitor);
+
 		/* Show selected policy below application list */
 		newLabel.Printf(_("%ls %ls"),
 		    policy->getTypeIdentifier().c_str(),
@@ -173,6 +238,7 @@ DlgRuleEditor::onAppPolicySelect(wxListEvent & event)
 
 		/* Ensure the changes will apear on the screen */
 		Layout();
+		Refresh();
 	}
 }
 
@@ -180,7 +246,9 @@ void
 DlgRuleEditor::onAppPolicyDeSelect(wxListEvent & WXUNUSED(event))
 {
 	appListPolicyText->SetLabel(wxEmptyString);
+	wipeFilterList();
 	Layout();
+	Refresh();
 }
 
 void
@@ -207,6 +275,31 @@ DlgRuleEditor::loadRuleSet(void)
 	}
 }
 
+void
+DlgRuleEditor::wipeFilterList(void)
+{
+	filterPolicyListCtrl->ClearAll();
+	Refresh();
+}
+
+void
+DlgRuleEditor::updateFilterColumns(ListCtrlColumn *columnList[], size_t length)
+{
+	long index;
+
+	index = 0;
+
+	for (size_t i=0; i<length; i++) {
+		if (columnList[i]->isVisible()) {
+			columnList[i]->setIndex(index);
+			filterPolicyListCtrl->InsertColumn(index,
+			    columnList[i]->getTitle());
+			filterPolicyListCtrl->SetColumnWidth(index,
+			    columnList[i]->getWidth());
+			index++;
+		}
+	}
+}
 
 
 /*

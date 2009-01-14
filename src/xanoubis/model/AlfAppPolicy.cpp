@@ -82,5 +82,5 @@ void
 AlfAppPolicy::accept(PolicyVisitor &visitor)
 {
 	visitor.visitAlfAppPolicy(this);
-	AppPolicy::accept(visitor);
+	acceptOnFilter(visitor);
 }
