@@ -65,6 +65,8 @@
 #define ZERO_SECONDS	0
 #define TEN_SECONDS	10
 
+#define OPTIONS_TAB	3
+
 #define SHOWSLOT(slotNo,field,value) \
 	do { \
 		slotLabelText##slotNo->Show(); \
@@ -941,8 +943,8 @@ ModAnoubisMainPanelImpl::OnEscalationsShow(wxCommandEvent& event)
 void
 ModAnoubisMainPanelImpl::OnAnoubisOptionShow(wxCommandEvent& event)
 {
-	/* select the 3rd tab: "Options" */
-	tb_MainAnoubisNotify->ChangeSelection(2);
+	/* select the "Options" tab */
+	tb_MainAnoubisNotify->ChangeSelection(OPTIONS_TAB);
 
 	event.Skip();
 }
