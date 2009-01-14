@@ -326,9 +326,7 @@ logger_main(struct anoubisd_config *conf __used, int pipe_m2l[2],
 	if (pid)
 		return pid;
 	anoubisd_process = PROC_LOGGER;
-#ifdef OPENBSD
-	setproctitle("anoubis logger");
-#endif
+	setproctitle("logger");
 
 	if (setgroups(1, &pw->pw_gid) ||
 	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||

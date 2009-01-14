@@ -104,6 +104,11 @@ int getpeereid(int, uid_t *, gid_t *);
 int inet_net_pton(int , const char *, void *, size_t);
 #endif
 
+#ifndef HAVE_SETPROCTITLE
+void setproctitle(const char *fmt, ...);
+void compat_init_setproctitle(int argc, char *argv[]);
+#endif
+
 __END_DECLS
 
 #endif /* __BSDCOMPAT_H__ */

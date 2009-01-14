@@ -52,4 +52,5 @@ test_bsdcompat_DEPENDENCIES = $(libbsdcompat)
 test_bsdcompat_SOURCES = \
 	bsdcompat_testsuite.c \
 	bsdcompat_testrunner.c \
-	bsdcompat_testcase_inet_net_pton.c
+	bsdcompat_testcase_inet_net_pton.c \
+	bsdcompat_testcase_setproctitle.c

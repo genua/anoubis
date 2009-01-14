@@ -25,23 +25,52 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "config.h"
+
+#include <stdarg.h>
 #include <check.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-extern TCase *bsdcompat_testcase_inet_net_pton(void);
-extern TCase *bsdcompat_testcase_setproctitle(void);
+#ifdef NEEDBSDCOMPAT
+#include <bsdcompat.h>
+#endif
 
-Suite *
-bsdcompat_testsuite(void)
+/*
+ * Simple argv manipulation
+ */
+START_TEST(tc_setproctitle)
 {
-	TCase	*tc_inet_net_pton;
-	TCase	*tc_setproctitle;
-	Suite	*s;
+	int argc;
+	char *argv[2];
+	extern char *__progname;
+	char ptitle[1024];
+	char pstr[] = "123456789abcdef";
 
-	s = suite_create("Suite bsdcompat");
-	tc_inet_net_pton = bsdcompat_testcase_inet_net_pton();
-	tc_setproctitle = bsdcompat_testcase_setproctitle();
-	suite_add_tcase(s, tc_inet_net_pton);
-	suite_add_tcase(s, tc_setproctitle);
+	// create fake argc/argv
+	argc = 1;
+	argv[0] = __progname;
+	argv[1] = NULL;
 
-	return (s);
+	// minimal mockup of setproctitle
+	snprintf(ptitle, sizeof(ptitle), "%s: %s", argv[0], pstr);
+
+	// normal usage
+	compat_init_setproctitle(argc, argv);
+	setproctitle(pstr);
+
+	fail_if(strncmp(argv[0], ptitle, sizeof(ptitle)) != 0,
+		"output mismatch");
+}
+END_TEST
+
+TCase *
+bsdcompat_testcase_setproctitle(void)
+{
+	TCase	*testcase_setproctitle = tcase_create("setproctitle()");
+
+	tcase_add_test(testcase_setproctitle, tc_setproctitle);
+
+	return (testcase_setproctitle);
 }

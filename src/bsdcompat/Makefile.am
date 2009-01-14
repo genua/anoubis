@@ -51,6 +51,7 @@ libbsdcompat_so_SOURCES = \
 	strlcat.c \
 	strlcpy.c \
 	strtonum.c \
+	setproctitle.c \
 	$(include_HEADERS)
 libbsdcompat_so_CFLAGS = -fPIC -shared $(shared_AM_CFLAGS)
 libbsdcompat_so_LDFLAGS = -nostartfiles -shared $(shared_AM_LDFLAGS)
@@ -60,7 +61,8 @@ libbsdcompat_a_SOURCES_lint = \
 	inet_net_pton.c_lint \
 	strlcat.c_lint \
 	strlcpy.c_lint \
-	strtonum.c_lint
+	strtonum.c_lint \
+	setproctitle.c_lint
 
 libbsdcompat_a_SOURCES_splint = \
 	getpeereid.c_splint \
@@ -68,6 +70,7 @@ libbsdcompat_a_SOURCES_splint = \
 	strlcat.c_splint \
 	strlcpy.c_splint \
 	strtonum.c_splint \
+	setproctitle.c_splint \
 	bsdcompat.h_splint \
 	queue.h_splint
 
@@ -77,6 +80,7 @@ libbsdcompat_a_SOURCES_flawfinder = \
 	strlcat.c_flawfinder \
 	strlcpy.c_flawfinder \
 	strtonum.c_flawfinder \
+	setproctitle.c_flawfinder \
 	bsdcompat.h_flawfinder \
 	queue.h_flawfinder
 

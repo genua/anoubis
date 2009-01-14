@@ -55,6 +55,7 @@
 #include <unistd.h>
 
 #ifdef LINUX
+#include <bsdcompat.h>
 #include <linux/anoubis_sfs.h>
 #include <openssl/sha.h>
 #else
@@ -341,6 +342,11 @@ main(int argc, char *argv[])
 		}
 	}
 
+#ifndef HAVE_SETPROCTITLE
+	/* Prepare for later setproctitle emulation */
+	compat_init_setproctitle(argc, argv);
+#endif
+
 	/* Defaults. */
 	if (conf.unixsocket == NULL)
 		conf.unixsocket = ANOUBISD_SOCKETNAME;
@@ -411,9 +417,7 @@ main(int argc, char *argv[])
 	/* Load Public Keys */
 	sfs_cert_init(0);
 
-#ifdef OPENBSD
 	setproctitle("master");
-#endif
 
 	/* We catch or block signals rather than ignore them. */
 	signal_set(&ev_sigterm, SIGTERM, sighandler, &ev_info);

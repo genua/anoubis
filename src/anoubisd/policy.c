@@ -38,6 +38,7 @@
 #include <errno.h>
 #ifdef LINUX
 #include <grp.h>
+#include <bsdcompat.h>
 #include <openssl/sha.h>
 #endif
 #ifdef OPENBSD
@@ -176,9 +177,7 @@ policy_main(struct anoubisd_config *conf __used, int pipe_m2s[2],
 	if (chdir(ANOUBISD_POLICYCHROOT) == -1)
 		fatal("chdir");
 
-#ifdef OPENBSD
 	setproctitle("policy engine");
-#endif
 
 	if (setgroups(1, &pw->pw_gid) ||
 	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||

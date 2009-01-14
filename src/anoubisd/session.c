@@ -352,9 +352,7 @@ session_main(struct anoubisd_config *conf, int pipe_m2s[2], int pipe_m2p[2],
 		fatal("chdir");
 	log_info("session started (pid %d root %s)", getpid(), pw->pw_dir);
 
-#ifdef OPENBSD
 	setproctitle("session engine");
-#endif
 
 	if (setgroups(1, &pw->pw_gid) ||
 	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
