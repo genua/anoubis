@@ -28,6 +28,7 @@
 #ifndef _KEYCTRL_H_
 #define _KEYCTRL_H_
 
+#include "LocalCertificate.h"
 #include "PrivKey.h"
 #include "Singleton.h"
 
@@ -38,6 +39,11 @@
  * that the private key is not loaded by default. You need to call
  * PrivKey::load()! Depending on the validity-settings of the private key, the
  * key might be removed from memory automatically!
+ *
+ * You can get the certificate of the user by calling getLocalCertificate().
+ * You need to load the certificate explicity from a file by calling
+ * Certificate::load()! Once loaded, the certificate remains in memory until
+ * the application quits.
  */
 class KeyCtrl : public Singleton<KeyCtrl>
 {
@@ -66,6 +72,15 @@ class KeyCtrl : public Singleton<KeyCtrl>
 		 */
 		PrivKey &getPrivateKey(void);
 
+		/**
+		 * Returns the certificate of the user.
+		 *
+		 * @return Instance of the users certificate.
+		 * @note Obtaining the instance of the certificate does not
+		 *       mean, that the certificate is loaded into the memory!
+		 */
+		LocalCertificate &getLocalCertificate(void);
+
 	protected:
 		/**
 		 * Constructor of KeyCtrl.
@@ -77,6 +92,11 @@ class KeyCtrl : public Singleton<KeyCtrl>
 		 * Instance of the private key.
 		 */
 		PrivKey privKey_;
+
+		/**
+		 * Instance of users certificate.
+		 */
+		LocalCertificate cert_;
 
 	friend class Singleton<KeyCtrl>;
 };

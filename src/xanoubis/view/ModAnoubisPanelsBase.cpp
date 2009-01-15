@@ -597,6 +597,7 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	
 	wxFlexGridSizer* fgSizer6;
 	fgSizer6 = new wxFlexGridSizer( 4, 2, 0, 0 );
+	fgSizer6->AddGrowableCol( 1 );
 	fgSizer6->SetFlexibleDirection( wxBOTH );
 	fgSizer6->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
 	
@@ -652,25 +653,41 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	sbSizer9 = new wxStaticBoxSizer( new wxStaticBox( tb_MainAnoubisOptions, -1, _("Certificate") ), wxVERTICAL );
 	
 	wxFlexGridSizer* fgSizer8;
-	fgSizer8 = new wxFlexGridSizer( 2, 2, 0, 0 );
+	fgSizer8 = new wxFlexGridSizer( 3, 2, 0, 0 );
+	fgSizer8->AddGrowableCol( 1 );
 	fgSizer8->SetFlexibleDirection( wxBOTH );
 	fgSizer8->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+	
+	m_staticText381 = new wxStaticText( tb_MainAnoubisOptions, wxID_ANY, _("Configure certificate:"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText381->Wrap( -1 );
+	fgSizer8->Add( m_staticText381, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
+	
+	wxBoxSizer* bSizer311;
+	bSizer311 = new wxBoxSizer( wxHORIZONTAL );
+	
+	CertPathText = new wxTextCtrl( tb_MainAnoubisOptions, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_READONLY );
+	bSizer311->Add( CertPathText, 1, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
+	
+	CertChooseButton = new wxButton( tb_MainAnoubisOptions, wxID_ANY, _("Choose certificate"), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer311->Add( CertChooseButton, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
+	
+	fgSizer8->Add( bSizer311, 1, wxALIGN_CENTER_VERTICAL|wxEXPAND, 5 );
 	
 	m_staticText28 = new wxStaticText( tb_MainAnoubisOptions, wxID_ANY, _("Fingerprint:"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_staticText28->Wrap( -1 );
 	fgSizer8->Add( m_staticText28, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
 	
-	PrivKeyFingerprintText = new wxStaticText( tb_MainAnoubisOptions, wxID_ANY, _("..."), wxDefaultPosition, wxDefaultSize, 0 );
-	PrivKeyFingerprintText->Wrap( -1 );
-	fgSizer8->Add( PrivKeyFingerprintText, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
+	CertFingerprintText = new wxStaticText( tb_MainAnoubisOptions, wxID_ANY, _("..."), wxDefaultPosition, wxDefaultSize, 0 );
+	CertFingerprintText->Wrap( -1 );
+	fgSizer8->Add( CertFingerprintText, 1, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
 	
 	m_staticText30 = new wxStaticText( tb_MainAnoubisOptions, wxID_ANY, _("Distinguished Name:"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_staticText30->Wrap( -1 );
 	fgSizer8->Add( m_staticText30, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
 	
-	PrivKeyDnText = new wxStaticText( tb_MainAnoubisOptions, wxID_ANY, _("..."), wxDefaultPosition, wxDefaultSize, 0 );
-	PrivKeyDnText->Wrap( -1 );
-	fgSizer8->Add( PrivKeyDnText, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
+	CertDnText = new wxStaticText( tb_MainAnoubisOptions, wxID_ANY, _("..."), wxDefaultPosition, wxDefaultSize, 0 );
+	CertDnText->Wrap( -1 );
+	fgSizer8->Add( CertDnText, 1, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
 	
 	sbSizer9->Add( fgSizer8, 1, wxEXPAND, 5 );
 	
@@ -724,6 +741,7 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	PrivKeyChooseButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModAnoubisMainPanelBase::OnPrivKeyChooseClicked ), NULL, this );
 	PrivKeyValidityChoice->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( ModAnoubisMainPanelBase::OnPrivKeyValidityChanged ), NULL, this );
 	PrivKeyValiditySpinCtrl->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( ModAnoubisMainPanelBase::OnPrivKeyValidityPeriodChanged ), NULL, this );
+	CertChooseButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModAnoubisMainPanelBase::OnCertChooseClicked ), NULL, this );
 }
 
 ModAnoubisOverviewPanelBase::ModAnoubisOverviewPanelBase( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size, long style ) : wxPanel( parent, id, pos, size, style )

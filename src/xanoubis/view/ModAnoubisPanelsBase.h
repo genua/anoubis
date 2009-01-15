@@ -167,10 +167,13 @@ class ModAnoubisMainPanelBase : public wxPanel
 		wxChoice* PrivKeyValidityChoice;
 		wxSpinCtrl* PrivKeyValiditySpinCtrl;
 		wxStaticText* PrivKeyValidityText;
+		wxStaticText* m_staticText381;
+		wxTextCtrl* CertPathText;
+		wxButton* CertChooseButton;
 		wxStaticText* m_staticText28;
-		wxStaticText* PrivKeyFingerprintText;
+		wxStaticText* CertFingerprintText;
 		wxStaticText* m_staticText30;
-		wxStaticText* PrivKeyDnText;
+		wxStaticText* CertDnText;
 		
 		// Virtual event handlers, overide them in your derived class
 		virtual void OnTypeChoosen( wxCommandEvent& event ){ event.Skip(); }
@@ -207,6 +210,7 @@ class ModAnoubisMainPanelBase : public wxPanel
 		virtual void OnPrivKeyChooseClicked( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnPrivKeyValidityChanged( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnPrivKeyValidityPeriodChanged( wxSpinEvent& event ){ event.Skip(); }
+		virtual void OnCertChooseClicked( wxCommandEvent& event ){ event.Skip(); }
 		
 	
 	public:

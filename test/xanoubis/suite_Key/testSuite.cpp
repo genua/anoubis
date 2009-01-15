@@ -28,16 +28,19 @@
 #include <check.h>
 
 extern TCase *getTc_PrivKey(void);
+extern TCase *getTc_LocalCertificate(void);
 
 Suite *
 getTestSuite(void)
 {
 	Suite *testSuite;
-	TCase *tc_PrivKey;
+	TCase *tc_LocalCertificate, *tc_PrivKey;
 
 	testSuite = suite_create("Keys");
+	tc_LocalCertificate = getTc_LocalCertificate();
 	tc_PrivKey = getTc_PrivKey();
 
+	suite_add_tcase(testSuite, tc_LocalCertificate);
 	suite_add_tcase(testSuite, tc_PrivKey);
 
 	return (testSuite);

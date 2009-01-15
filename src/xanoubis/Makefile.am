@@ -190,6 +190,8 @@ xanoubis_SOURCES= \
 	model/ApnVersion.h \
 	model/EscalationNotify.cpp \
 	model/EscalationNotify.h \
+	model/LocalCertificate.cpp \
+	model/LocalCertificate.h \
 	model/LogNotify.cpp \
 	model/LogNotify.h \
 	model/ModAlf.cpp \

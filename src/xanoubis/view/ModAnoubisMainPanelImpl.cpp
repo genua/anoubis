@@ -220,6 +220,7 @@ ModAnoubisMainPanelImpl::readOptions(void)
 
 	PrivKeyPathText->SetValue(
 	    KeyCtrl::getInstance()->getPrivateKey().getFile());
+	certificateParamsUpdate();
 
 	/* set widgets visability and send options event */
 	setOptionsWidgetsVisability();
@@ -1008,6 +1009,22 @@ ModAnoubisMainPanelImpl::OnPrivKeyValidityPeriodChanged(wxSpinEvent&)
 }
 
 void
+ModAnoubisMainPanelImpl::OnCertChooseClicked(wxCommandEvent&)
+{
+	wxFileDialog dlg(this,
+	    _("Choose the file, where your certificate is stored."));
+
+	if (dlg.ShowModal() == wxID_OK) {
+		wxString path = dlg.GetPath();
+		LocalCertificate &cert =
+		    KeyCtrl::getInstance()->getLocalCertificate();
+
+		cert.setFile(path);
+		certificateParamsUpdate();
+	}
+}
+
+void
 ModAnoubisMainPanelImpl::OnNotebookTabChanged(wxNotebookEvent&)
 {
 	if (tb_MainAnoubisNotify->GetCurrentPage() == tb_MainAnoubisVersions) {
@@ -1234,4 +1251,22 @@ ModAnoubisMainPanelImpl::toolTipParamsUpdate(void)
 		int delay = toolTipSpinCtrl->GetValue();
 		wxToolTip::SetDelay(1000*delay);
 	}
+}
+
+void
+ModAnoubisMainPanelImpl::certificateParamsUpdate(void)
+{
+	LocalCertificate &cert = KeyCtrl::getInstance()->getLocalCertificate();
+
+	if (cert.canLoad() && !cert.load()) {
+		wxMessageBox(wxString::Format(
+		    _("Failed to load certificate from\n%s."),
+		    cert.getFile().c_str()),
+		    _("Load certificate"), wxOK | wxICON_ERROR, this);
+
+	}
+
+	CertPathText->SetValue(cert.getFile());
+	CertFingerprintText->SetLabel(cert.getFingerprint());
+	CertDnText->SetLabel(cert.getDistinguishedName());
 }

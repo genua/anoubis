@@ -47,3 +47,9 @@ KeyCtrl::getPrivateKey(void)
 {
 	return (privKey_);
 }
+
+LocalCertificate &
+KeyCtrl::getLocalCertificate(void)
+{
+	return (cert_);
+}
