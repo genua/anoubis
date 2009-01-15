@@ -245,6 +245,7 @@ struct apn_rule {
 	void				*userdata;
 	struct apn_scope		*scope;
 	struct apn_app			*app;
+	struct apn_chain		*pchain;
 	union {
 		struct apn_afiltrule	afilt;
 		struct apn_acaprule	acap;
@@ -353,6 +354,11 @@ void	apn_free_port(struct apn_port *);
 int	apn_remove(struct apn_ruleset *, unsigned int);
 int	apn_valid_id(struct apn_ruleset *, unsigned int);
 void	apn_assign_ids(struct apn_ruleset *);
+int	apn_can_move_up(struct apn_rule *);
+int	apn_can_move_down(struct apn_rule *);
+int	apn_move_up(struct apn_rule *);
+int	apn_move_down(struct apn_rule *);
+
 
 /* Implemented in parse.y */
 int	parse_rules(const char *, struct apn_ruleset *);

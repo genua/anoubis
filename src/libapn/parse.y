@@ -392,6 +392,7 @@ alfruleset	: ruleid apps optnl '{' optnl alfrule_l '}' nl {
 			rule->apn_type = APN_ALF;
 			rule->apn_id = $1;
 			rule->userdata = NULL;
+			rule->pchain = NULL;
 			TAILQ_INIT(&rule->rule.chain);
 			while(!TAILQ_EMPTY($6)) {
 				struct apn_rule *arule;
@@ -399,6 +400,7 @@ alfruleset	: ruleid apps optnl '{' optnl alfrule_l '}' nl {
 				TAILQ_REMOVE($6, arule, entry);
 				TAILQ_INSERT_TAIL(&rule->rule.chain,
 				    arule, entry);
+				arule->pchain = &rule->rule.chain;
 			}
 			free($6);
 
@@ -417,6 +419,7 @@ alfrule_l	: alfrule_l alfrule nl		{
 				$$ = $1;
 			else {
 				TAILQ_INSERT_TAIL($1, $2, entry);
+				$2->pchain = $1;
 				$$ = $1;
 			}
 		}
@@ -510,6 +513,7 @@ alfrule		: ruleid alffilterrule	scope		{
 			rule->apn_id = $1;
 			rule->scope = $3;
 			rule->userdata = NULL;
+			rule->pchain = NULL;
 			rule->app = NULL;
 
 			$$ = rule;
@@ -528,6 +532,7 @@ alfrule		: ruleid alffilterrule	scope		{
 			rule->apn_id = $1;
 			rule->scope = $3;
 			rule->userdata = NULL;
+			rule->pchain = NULL;
 			rule->app = NULL;
 
 			$$ = rule;
@@ -546,6 +551,7 @@ alfrule		: ruleid alffilterrule	scope		{
 			rule->apn_id = $1;
 			rule->scope = $3;
 			rule->userdata = NULL;
+			rule->pchain = NULL;
 			rule->app = NULL;
 
 			$$ = rule;
@@ -813,6 +819,7 @@ sfsmodule	: SFS optnl '{' optnl sfsrule_l '}'	{
 			rule->apn_id = 0;
 			rule->app = NULL;
 			rule->userdata = NULL;
+			rule->pchain = NULL;
 			TAILQ_INIT(&rule->rule.chain);
 			while (!TAILQ_EMPTY($5)) {
 				struct apn_rule *srule;
@@ -820,6 +827,7 @@ sfsmodule	: SFS optnl '{' optnl sfsrule_l '}'	{
 				TAILQ_REMOVE($5, srule, entry);
 				TAILQ_INSERT_TAIL(&rule->rule.chain,
 				    srule, entry);
+				srule->pchain = &rule->rule.chain;
 			}
 			free($5);
 			if (apn_add_sfsblock(apnrsp, rule, file->name,
@@ -835,6 +843,7 @@ sfsrule_l	: sfsrule_l sfsrule nl		{
 				$$ = $1;
 			else {
 				TAILQ_INSERT_TAIL($1, $2, entry);
+				$2->pchain = $1;
 				$$ = $1;
 			}
 		}
@@ -863,6 +872,7 @@ sfsrule		: ruleid sfscheckrule scope		{
 			rule->apn_id = $1;
 			rule->scope = $3;
 			rule->userdata = NULL;
+			rule->pchain = NULL;
 			rule->app = NULL;
 
 			$$ = rule;
@@ -880,6 +890,7 @@ sfsrule		: ruleid sfscheckrule scope		{
 			rule->scope = $3;
 			rule->rule.sfsaccess = $2;
 			rule->userdata = NULL;
+			rule->pchain = NULL;
 			rule->apn_id = $1;
 
 			$$ = rule;
@@ -898,6 +909,7 @@ sfsrule		: ruleid sfscheckrule scope		{
 			rule->scope = $3;
 			rule->rule.sfsdefault = $2;
 			rule->userdata = NULL;
+			rule->pchain = NULL;
 			rule->apn_id = $1;
 
 			$$ = rule;
@@ -1007,6 +1019,7 @@ sbruleset	: ruleid apps optnl '{' optnl sbrule_l '}' nl {
 			rule->apn_type = APN_SB;
 			rule->apn_id = $1;
 			rule->userdata = NULL;
+			rule->pchain = NULL;
 			TAILQ_INIT(&rule->rule.chain);
 			while(!TAILQ_EMPTY($6)) {
 				struct apn_rule *sbrule;
@@ -1014,6 +1027,7 @@ sbruleset	: ruleid apps optnl '{' optnl sbrule_l '}' nl {
 				TAILQ_REMOVE($6, sbrule, entry);
 				TAILQ_INSERT_TAIL(&rule->rule.chain,
 				    sbrule, entry);
+				sbrule->pchain = &rule->rule.chain;
 			}
 			free($6);
 
@@ -1032,6 +1046,7 @@ sbrule_l	: sbrule_l sbrule nl		{
 				$$ = $1;
 			else {
 				TAILQ_INSERT_TAIL($1, $2, entry);
+				$2->pchain = $1;
 				$$ = $1;
 			}
 		}
@@ -1060,6 +1075,7 @@ sbrule		: ruleid sbaccess scope {
 			rule->apn_id = $1;
 			rule->scope = $3;
 			rule->userdata = NULL;
+			rule->pchain = NULL;
 			rule->app = NULL;
 
 			$$ = rule;
@@ -1078,6 +1094,7 @@ sbrule		: ruleid sbaccess scope {
 			rule->apn_id = $1;
 			rule->scope = $3;
 			rule->userdata = NULL;
+			rule->pchain = NULL;
 			rule->app = NULL;
 
 			$$ = rule;
@@ -1223,6 +1240,7 @@ ctxruleset	: ruleid apps optnl '{' optnl ctxrule_l '}' nl {
 			rule->scope = NULL;
 			rule->apn_type = APN_CTX;
 			rule->userdata = NULL;
+			rule->pchain = NULL;
 			rule->apn_id = $1;
 			TAILQ_INIT(&rule->rule.chain);
 			while(!TAILQ_EMPTY($6)) {
@@ -1231,6 +1249,7 @@ ctxruleset	: ruleid apps optnl '{' optnl ctxrule_l '}' nl {
 				TAILQ_REMOVE($6, arule, entry);
 				TAILQ_INSERT_TAIL(&rule->rule.chain,
 				    arule, entry);
+				arule->pchain = &rule->rule.chain;
 			}
 			free($6);
 
@@ -1249,6 +1268,7 @@ ctxrule_l	: ctxrule_l ctxrule nl		{
 				$$ = $1;
 			else {
 				TAILQ_INSERT_TAIL($1, $2, entry);
+				$2->pchain = $1;
 				$$ = $1;
 			}
 		}
@@ -1276,6 +1296,7 @@ ctxrule		: ruleid ctxruleapps scope			{
 			rule->apn_id = $1;
 			rule->scope = $3;
 			rule->userdata = NULL;
+			rule->pchain = NULL;
 			rule->app = NULL;
 
 			$$ = rule;
