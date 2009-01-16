@@ -58,7 +58,7 @@ static struct event	__log_event;
 static Queue		__eventq_log;
 static int		__logging = 0;
 
-extern char	*__progname;
+extern char	*logname;
 static int	 terminate = 0;
 
 static void
@@ -93,7 +93,7 @@ void
 flush_log_queue(void)
 {
 	anoubisd_msg_t		*msg;
-	openlog(__progname, LOG_PID, LOG_DAEMON);
+	openlog(logname, LOG_PID, LOG_DAEMON);
 	while ((msg = dequeue(&__eventq_log))) {
 		syslog(msg->mtype, "%s", msg->msg);
 		free(msg);
@@ -246,16 +246,14 @@ fatalx(const char *emsg)
 void
 early_err(int eval, const char *emsg)
 {
-	extern char *__progname;
-
 	if (emsg == NULL) {
-		fprintf(stderr, "%s: %s", __progname, strerror(errno));
+		fprintf(stderr, "%s: %s", logname, strerror(errno));
 	 } else {
 		if (errno) {
-			fprintf(stderr, "%s: %s: %s", __progname, emsg,
+			fprintf(stderr, "%s: %s: %s", logname, emsg,
 			    strerror(errno));
 		} else {
-			fprintf(stderr, "%s: %s", __progname, emsg);
+			fprintf(stderr, "%s: %s", logname, emsg);
 		}
 	}
 
@@ -333,7 +331,7 @@ logger_main(struct anoubisd_config *conf __used, int pipe_m2l[2],
 	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
 		fatal("can't drop privileges");
 
-	openlog(__progname, LOG_PID | LOG_NDELAY, LOG_DAEMON);
+	openlog(logname, LOG_PID | LOG_NDELAY, LOG_DAEMON);
 	tzset();
 	__log_fd = -1;
 	log_info("logger started (pid %d)", getpid());

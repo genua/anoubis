@@ -101,6 +101,9 @@ u_int32_t	debug_flags = 0;
 u_int32_t	debug_stderr = 0;
 gid_t		anoubisd_gid;
 
+extern char	*__progname;
+char		*logname;
+
 static Queue eventq_m2p;
 static Queue eventq_m2s;
 static Queue eventq_m2dev;
@@ -346,6 +349,11 @@ main(int argc, char *argv[])
 	/* Prepare for later setproctitle emulation */
 	compat_init_setproctitle(argc, argv);
 #endif
+
+	if ((logname = strdup(__progname)) == NULL) {
+		logname = __progname;
+		fatal("can't copy progname");
+	}
 
 	/* Defaults. */
 	if (conf.unixsocket == NULL)
