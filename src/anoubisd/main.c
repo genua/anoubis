@@ -877,15 +877,25 @@ send_checksum_list(u_int64_t token, const char *path, u_int8_t *keyid,
 				}
 
 			}
-
-			tmp = remove_escape_seq(sfs_ent->d_name, is_uid);
+			if (is_uid) {
+				/* If we search for uid we should check for
+				 * signature entrys
+				 */
+				if (sfs_ent->d_name[0] == 'k') {
+					sfs_ent = readdir(sfs_dir);
+					continue;
+				} else {
+					tmp = strdup(sfs_ent->d_name);
+				}
+			} else {
+				tmp = remove_escape_seq(sfs_ent->d_name);
+			}
 			if (!tmp) {
 				log_warn("send_checksum_list: "
 				    "can't allocate memory");
 				master_terminate(ENOMEM);
 				return;
 			}
-
 			len = strlen(tmp) + 1;
 			cnt += len;
 			if (cnt > 3000) {

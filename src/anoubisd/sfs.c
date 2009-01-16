@@ -197,7 +197,7 @@ insert_escape_seq(const char *path, int dir)
 }
 
 char *
-remove_escape_seq(const char *name, int is_uid)
+remove_escape_seq(const char *name)
 {
 	char *newpath = NULL;
 	unsigned int size = 0;
@@ -235,7 +235,7 @@ remove_escape_seq(const char *name, int is_uid)
 		newpath[k] = name[i];
 	}
 	k--;
-	if (!mod && !is_uid) {
+	if (!mod) {
 		newpath[k] = '/';
 		k++;
 	}
