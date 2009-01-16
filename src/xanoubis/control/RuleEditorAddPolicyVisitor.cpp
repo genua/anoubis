@@ -40,18 +40,18 @@ RuleEditorAddPolicyVisitor::visitAlfAppPolicy(AlfAppPolicy *policy)
 	ruleEditor_->addAppPolicy(policy);
 }
 
-/*
 void
 RuleEditorAddPolicyVisitor::visitAlfCapabilityFilterPolicy(
     AlfCapabilityFilterPolicy *policy)
 {
+	ruleEditor_->addAlfCapabilityFilterPolicy(policy);
 }
 
 void
 RuleEditorAddPolicyVisitor::visitAlfFilterPolicy(AlfFilterPolicy *policy)
 {
+	ruleEditor_->addAlfFilterPolicy(policy);
 }
-*/
 
 void
 RuleEditorAddPolicyVisitor::visitContextAppPolicy(ContextAppPolicy *policy)
@@ -63,10 +63,7 @@ void
 RuleEditorAddPolicyVisitor::visitContextFilterPolicy(
     ContextFilterPolicy *policy)
 {
-	long index;
-
-	index = ruleEditor_->addFilterListRow(policy);
-	ruleEditor_->updateListContextFilter(index);
+	ruleEditor_->addContextFilterPolicy(policy);
 }
 
 /*

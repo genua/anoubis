@@ -231,6 +231,8 @@ class DlgRuleEditor : public DlgRuleEditorBase
 
 #include "Policy.h"
 #include "AppPolicy.h"
+#include "AlfFilterPolicy.h"
+#include "AlfCapabilityFilterPolicy.h"
 #include "ContextFilterPolicy.h"
 
 /**
@@ -252,35 +254,51 @@ class DlgRuleEditor : public DlgRuleEditorBase
 		~DlgRuleEditor(void);
 
 		/**
-		 * Add a row to the appListCtrl.
-		 * The given policy is assigned to the new row.
+		 * Add application policy.
+		 * A new row is created (by addListRow()) and filled by
+		 * updateListAppPolicy(). This should be used by
+		 * RuleEditorAddPolicyVisitor only.
 		 * @param[in] 1st Concerning app policy
 		 * @return Nothing.
 		 */
 		void addAppPolicy(AppPolicy *);
 
 		/**
-		 * Add a new row to the filterListCtrl.
-		 * @param[in] 1st The concerned policy.
-		 * @return The index of the new row.
-		 */
-		long addFilterListRow(FilterPolicy *);
-
-		/**
-		 * Update row of filterList with ContestFilter.
-		 * If the given row relates to a ContextFilterPolicy,
-		 * it's contens will been updated.
-		 * @param[in] 1st The index of the row in question.
+		 * Add alf filter policy.
+		 * A new row is created (by addListRow()) and filled by
+		 * updateListAlfFilterPolicy(). This should be used by
+		 * RuleEditorAddPolicyVisitor only.
+		 * @param[in] 1st Concerning app policy
 		 * @return Nothing.
 		 */
-		void updateListContextFilter(long);
+		void addAlfFilterPolicy(AlfFilterPolicy *);
+
+		/**
+		 * Add alf capabiliyt filter policy.
+		 * A new row is created (by addListRow()) and filled by
+		 * updateListAlfCapabilityFilterPolicy(). This should be used
+		 * by RuleEditorAddPolicyVisitor only.
+		 * @param[in] 1st Concerning app policy
+		 * @return Nothing.
+		 */
+		void addAlfCapabilityFilterPolicy(AlfCapabilityFilterPolicy *);
+
+		/**
+		 * Add context filter policy.
+		 * A new row is created (by addListRow()) and filled by
+		 * updateListContextFilterPolicy(). This should be used
+		 * by RuleEditorAddPolicyVisitor only.
+		 * @param[in] 1st Concerning app policy
+		 * @return Nothing.
+		 */
+		void addContextFilterPolicy(ContextFilterPolicy *);
 
 	private:
 		/**
 		 * Use these indices to access the related column within the
-		 * array appListColumns_
+		 * list of application columns.
 		 */
-		enum appListColumnIndex {
+		enum appColumnIndex {
 			APP_ID = 0,	/**< apn rule id. */
 			APP_TYPE,	/**< type of policy. */
 			APP_USER,	/**< user of ruleset. */
@@ -290,17 +308,39 @@ class DlgRuleEditor : public DlgRuleEditorBase
 
 		/**
 		 * Use these indices to access the related column within the
-		 * array ctxListColumns_
+		 * list of alf filter columns.
 		 */
-		enum ctxListColumnIndex {
+		enum alfColumnIndex {
+			ALF_ID = 0,	/**< apn rule id. */
+			ALF_TYPE,	/**< type of context */
+			ALF_ACTION,	/**< action */
+			ALF_LOG,	/**< log */
+			ALF_CAP,	/**< capability type */
+			ALF_DIR,	/**< direction */
+			ALF_PROT,	/**< protocol */
+			ALF_AF,		/**< address family */
+			ALF_FHOST,	/**< from host */
+			ALF_FPORT,	/**< from port */
+			ALF_THOST,	/**< to host */
+			ALF_TPORT,	/**< to port */
+			ALF_TIME,	/**< state timeout */
+			ALF_EOL		/**< End - Of - List */
+		};
+
+		/**
+		 * Use these indices to access the related column within the
+		 * list of context filter columns.
+		 */
+		enum ctxColumnIndex {
 			CTX_ID = 0,	/**< apn rule id. */
 			CTX_TYPE,	/**< type of context */
 			CTX_BINARY,	/**< name of binary */
 			CTX_EOL		/**< End - Of - List */
 		};
 
-		ListCtrlColumn *appListColumns_[APP_EOL]; /**< @ appList */
-		ListCtrlColumn *ctxListColumns_[CTX_EOL]; /**< @ filterList */
+		ListCtrlColumn *appColumns_[APP_EOL]; /**< @ appList */
+		ListCtrlColumn *alfColumns_[ALF_EOL]; /**< @ filterList */
+		ListCtrlColumn *ctxColumns_[CTX_EOL]; /**< @ filterList */
 
 		long userRuleSetId_;  /**< Id of our ruleSet. */
 		long adminRuleSetId_; /**< Id of our admin ruleSet. */
@@ -356,21 +396,87 @@ class DlgRuleEditor : public DlgRuleEditorBase
 		void loadRuleSet(void);
 
 		/**
-		 * Remove all rows and colsumns of the filter list.
+		 * Add a row to a given list and assign the given policy.
+		 * @param[in] 1st The list where the new row is added.
+		 * @param[in] 2nd The concerning policy for the new row.
+		 * @return The index of the new row.
+		 */
+		long addListRow(wxListCtrl *, Policy *);
+
+		/**
+		 * Remove a given row from a given list.
+		 * @param[in] 1st The list the row is removed from.
+		 * @param[in] 2nd The index of the row in question.
+		 * @return Nothing.
+		 */
+		void removeListRow(wxListCtrl *, long);
+
+		/**
+		 * Find the row of a given policy.
+		 * @param[in] 1st The list to search in.
+		 * @param[in] 2nd The policy to search for.
+		 * @return The index of found row or -1.
+		 */
+		long findListRow(wxListCtrl *, Policy *);
+
+		/**
+		 * Clean the application list.
+		 * @param None.
+		 * @return Nothing.
+		 */
+		void wipeAppList(void);
+
+		/**
+		 * Clean the filter list.
 		 * @param None.
 		 * @return Nothing.
 		 */
 		void wipeFilterList(void);
 
 		/**
-		 * Create columns of filterList.
-		 * Only visible columns will been created. The index
-		 * of the created column is been updated.
-		 * @param[in] 1st The array of columns.
-		 * @param[in] 2nd The size of that array.
+		 * Update row.
+		 * Updates the values of a row showing an application policy.
+		 * @param[in] 1st The index of row in question.
 		 * @return Nothing.
 		 */
-		void updateFilterColumns(ListCtrlColumn **, size_t);
+		void updateListAppPolicy(long);
+
+		/**
+		 * Update row.
+		 * Updates the values of a row showing an alf filter policy.
+		 * @param[in] 1st The index of row in question.
+		 * @return Nothing.
+		 */
+		void updateListAlfFilterPolicy(long);
+
+		/**
+		 * Update row.
+		 * Updates the values of a row showing an alf capability
+		 * filter policy.
+		 * @param[in] 1st The index of row in question.
+		 * @return Nothing.
+		 */
+		void updateListAlfCapabilityFilterPolicy(long);
+
+		/**
+		 * Update row.
+		 * Updates the values of a row showing a context filter policy.
+		 * @param[in] 1st The index of row in question.
+		 * @return Nothing.
+		 */
+		void updateListContextFilterPolicy(long);
+
+		/**
+		 * Update columns.
+		 * Updates the columns of the given list. Only the visible
+		 * columns are created and the index of those is updated.
+		 * If the list has already columns, no action is performed.
+		 * @param[in] 1st The list showing the new columns.
+		 * @param[in] 2nd The array of columns.
+		 * @param[in] 3rd The size of that array.
+		 * @return Nothing.
+		 */
+		void updateListColumns(wxListCtrl *,ListCtrlColumn **, size_t);
 };
 
 #endif /* __DlgRuleEditor__ */

@@ -74,13 +74,13 @@ class RuleEditorAddPolicyVisitor : public RuleEditorFillTableVisitor
 		 * @param[in] 1st Policy to visit.
 		 */
 		virtual void visitAlfCapabilityFilterPolicy(
-		    AlfCapabilityFilterPolicy *) {};
+		    AlfCapabilityFilterPolicy *);
 
 		/**
 		 * Visit a AlfFilterPolicy.
 		 * @param[in] 1st Policy to visit.
 		 */
-		virtual void visitAlfFilterPolicy(AlfFilterPolicy *) {};
+		virtual void visitAlfFilterPolicy(AlfFilterPolicy *);
 
 		/**
 		 * Visit a ContextAppPolicy.

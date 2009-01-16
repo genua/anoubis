@@ -43,24 +43,40 @@ DlgRuleEditor::DlgRuleEditor(wxWindow* parent) : DlgRuleEditorBase(parent)
 	anEvents->Connect(anEVT_LOAD_RULESET,
 	    wxCommandEventHandler(DlgRuleEditor::onLoadNewRuleSet), NULL, this);
 
-	appListColumns_[APP_ID] = new ListCtrlColumn(_("ID"));
-	appListColumns_[APP_TYPE] = new ListCtrlColumn(_("Type"));
-	appListColumns_[APP_USER] = new ListCtrlColumn(_("User"));
-	appListColumns_[APP_BINARY] = new ListCtrlColumn(_("Binary"));
+	appColumns_[APP_ID]	= new ListCtrlColumn(_("ID"));
+	appColumns_[APP_TYPE]	= new ListCtrlColumn(_("Type"));
+	appColumns_[APP_USER]	= new ListCtrlColumn(_("User"));
+	appColumns_[APP_BINARY]	= new ListCtrlColumn(_("Binary"));
 
 	for (size_t i=0; i<APP_EOL; i++) {
-		appListColumns_[i]->setIndex(i);
-		appPolicyListCtrl->InsertColumn(i,
-		    appListColumns_[i]->getTitle());
-		appPolicyListCtrl->SetColumnWidth(i,
-		    appListColumns_[i]->getWidth());
+		appColumns_[i]->setIndex(i);
 	}
 
-	ctxListColumns_[CTX_ID] = new ListCtrlColumn(_("ID"));
-	ctxListColumns_[CTX_TYPE] = new ListCtrlColumn(_("Type"));
-	ctxListColumns_[CTX_BINARY] = new ListCtrlColumn(_("Binary"));
+	alfColumns_[ALF_ID]	= new ListCtrlColumn(_("ID"));
+	alfColumns_[ALF_TYPE]	= new ListCtrlColumn(_("Type"));
+	alfColumns_[ALF_ACTION]	= new ListCtrlColumn(_("Action"));
+	alfColumns_[ALF_LOG]	= new ListCtrlColumn(_("Log"));
+	alfColumns_[ALF_CAP]	= new ListCtrlColumn(_("Capability"));
+	alfColumns_[ALF_DIR]	= new ListCtrlColumn(_("Direction"));
+	alfColumns_[ALF_PROT]	= new ListCtrlColumn(_("Protocol"));
+	alfColumns_[ALF_AF]	= new ListCtrlColumn(_("AF"));
+	alfColumns_[ALF_FHOST]	= new ListCtrlColumn(_("from host"));
+	alfColumns_[ALF_FPORT]	= new ListCtrlColumn(_("from port"));
+	alfColumns_[ALF_THOST]	= new ListCtrlColumn(_("to host"));
+	alfColumns_[ALF_TPORT]	= new ListCtrlColumn(_("to port"));
+	alfColumns_[ALF_TIME]	= new ListCtrlColumn(_("state timeout"));
 
-	updateFilterColumns(ctxListColumns_, CTX_EOL);
+	for (size_t i=0; i<ALF_EOL; i++) {
+		alfColumns_[i]->setIndex(i);
+	}
+
+	ctxColumns_[CTX_ID]	= new ListCtrlColumn(_("ID"));
+	ctxColumns_[CTX_TYPE]	= new ListCtrlColumn(_("Type"));
+	ctxColumns_[CTX_BINARY]	= new ListCtrlColumn(_("Binary"));
+
+	for (size_t i=0; i<CTX_EOL; i++) {
+		ctxColumns_[i]->setIndex(i);
+	}
 }
 
 DlgRuleEditor::~DlgRuleEditor(void)
@@ -78,113 +94,41 @@ DlgRuleEditor::~DlgRuleEditor(void)
 void
 DlgRuleEditor::addAppPolicy(AppPolicy *policy)
 {
-	long		 idx;
-	wxString	 columnText;
-	ListCtrlColumn	*column;
-	PolicyRuleSet	*ruleset;
-
-	/* Insert new row */
-	idx = appPolicyListCtrl->GetItemCount();
-	appPolicyListCtrl->InsertItem(idx, wxEmptyString);
-	appPolicyListCtrl->SetItemPtrData(idx, (wxUIntPtr)policy);
-
-	ruleset = policy->getParentRuleSet();
-
-	/* Fill id column */
-	column = appListColumns_[APP_ID];
-	if (column->isVisible()) {
-		columnText = wxString::Format(wxT("%d:"),
-		    policy->getApnRuleId());
-		appPolicyListCtrl->SetItem(idx, column->getIndex(), columnText);
-	}
-
-	/* Fill type column */
-	column = appListColumns_[APP_TYPE];
-	if (column->isVisible()) {
-		columnText = policy->getTypeIdentifier();
-		if ((ruleset != NULL) && ruleset->isAdmin()) {
-			columnText.Append(wxT("(A)"));
-		}
-		appPolicyListCtrl->SetItem(idx, column->getIndex(), columnText);
-	}
-
-	/* Fill user column */
-	column = appListColumns_[APP_USER];
-	if (column->isVisible()) {
-		columnText = _("(unknown)");
-		if (ruleset != NULL) {
-			columnText = wxGetApp().getUserNameById(
-			    ruleset->getUid());
-		}
-		appPolicyListCtrl->SetItem(idx, column->getIndex(), columnText);
-	}
-
-	/* Fill binary column */
-	column = appListColumns_[APP_BINARY];
-	if (column->isVisible()) {
-		appPolicyListCtrl->SetItem(idx, column->getIndex(),
-		    policy->getBinaryName());
-	}
-
-	/* Set background colour in case of admin policy */
-	if ((ruleset != NULL) && ruleset->isAdmin()) {
-		appPolicyListCtrl->SetItemBackgroundColour(idx,
-		    wxTheColourDatabase->Find(wxT("LIGHT GREY")));
-	}
-}
-
-long
-DlgRuleEditor::addFilterListRow(FilterPolicy *policy)
-{
 	long index;
 
-	index = filterPolicyListCtrl->GetItemCount();
-
-	filterPolicyListCtrl->InsertItem(index, wxEmptyString);
-	filterPolicyListCtrl->SetItemPtrData(index, (wxUIntPtr)policy);
-
-	return (index);
+	updateListColumns(appPolicyListCtrl, appColumns_, APP_EOL);
+	index = addListRow(appPolicyListCtrl, policy);
+	updateListAppPolicy(index);
 }
 
 void
-DlgRuleEditor::updateListContextFilter(long rowIdx)
+DlgRuleEditor::addAlfFilterPolicy(AlfFilterPolicy *policy)
 {
-	long			 columnIdx;
-	wxString		 columnText;
-	ListCtrlColumn		*column;
-	ContextFilterPolicy	*policy;
+	long index;
 
-	policy = wxDynamicCast((void*)filterPolicyListCtrl->GetItemData(rowIdx),
-	    ContextFilterPolicy);
-	if (policy == NULL) {
-		/* This is not a ContextFilter row */
-		return;
-	}
+	updateListColumns(filterPolicyListCtrl, alfColumns_, ALF_EOL);
+	index = addListRow(filterPolicyListCtrl, policy);
+	updateListAlfFilterPolicy(index);
+}
 
-	/* Fill id column */
-	column = ctxListColumns_[CTX_ID];
-	if (column->isVisible()) {
-		columnIdx = column->getIndex();
-		columnText = wxString::Format(wxT("%d:"),
-		    policy->getApnRuleId());
-		filterPolicyListCtrl->SetItem(rowIdx, columnIdx, columnText);
-	}
+void
+DlgRuleEditor::addAlfCapabilityFilterPolicy(AlfCapabilityFilterPolicy *policy)
+{
+	long index;
 
-	/* Fill context type */
-	column = ctxListColumns_[CTX_TYPE];
-	if (column->isVisible()) {
-		columnIdx = column->getIndex();
-		columnText = policy->getContextTypeName();
-		filterPolicyListCtrl->SetItem(rowIdx, columnIdx, columnText);
-	}
+	updateListColumns(filterPolicyListCtrl, alfColumns_, ALF_EOL);
+	index = addListRow(filterPolicyListCtrl, policy);
+	updateListAlfCapabilityFilterPolicy(index);
+}
 
-	/* Fill binary */
-	column = ctxListColumns_[CTX_BINARY];
-	if (column->isVisible()) {
-		columnIdx = column->getIndex();
-		columnText = policy->getBinaryName();
-		filterPolicyListCtrl->SetItem(rowIdx, columnIdx, columnText);
-	}
+void
+DlgRuleEditor::addContextFilterPolicy(ContextFilterPolicy *policy)
+{
+	long index;
+
+	updateListColumns(filterPolicyListCtrl, ctxColumns_, CTX_EOL);
+	index = addListRow(filterPolicyListCtrl, policy);
+	updateListContextFilterPolicy(index);
 }
 
 void
@@ -227,7 +171,6 @@ DlgRuleEditor::onAppPolicySelect(wxListEvent & event)
 	policy = wxDynamicCast((void*)event.GetData(), AppPolicy);
 	if (policy != NULL) {
 		/* Show filters of selected application */
-		updateFilterColumns(ctxListColumns_, CTX_EOL);
 		policy->acceptOnFilter(addVisitor);
 
 		/* Show selected policy below application list */
@@ -260,7 +203,9 @@ DlgRuleEditor::loadRuleSet(void)
 
 	profileCtrl = ProfileCtrl::getInstance();
 
-	appPolicyListCtrl->DeleteAllItems();
+	/* Clear list's. */
+	wipeFilterList();
+	wipeAppList();
 
 	/* Load ruleset with user-policies. */
 	ruleSet = profileCtrl->getRuleSet(userRuleSetId_);
@@ -273,31 +218,354 @@ DlgRuleEditor::loadRuleSet(void)
 	if (ruleSet != NULL) {
 		ruleSet->accept(addVisitor);
 	}
+
+	/* As no app is selected, we remove the accidental filled filters. */
+	wipeFilterList();
+}
+
+long
+DlgRuleEditor::addListRow(wxListCtrl *list, Policy *policy)
+{
+	long index;
+
+	index = list->GetItemCount();
+
+	/* Create new line @ given list. */
+	list->InsertItem(index, wxEmptyString);
+	list->SetItemPtrData(index, (wxUIntPtr)policy);
+
+	return (index);
+}
+
+void
+DlgRuleEditor::removeListRow(wxListCtrl *list, long rowIdx)
+{
+	list->DeleteItem(rowIdx);
+}
+
+long
+DlgRuleEditor::findListRow(wxListCtrl *list, Policy *policy)
+{
+	for (int i = list->GetItemCount(); i >= 0; i--) {
+		if (policy == (Policy *)list->GetItemData(i)) {
+			return (i);
+		}
+	}
+
+	return (-1); /* in case of 'not found' */
+}
+
+void
+DlgRuleEditor::wipeAppList(void)
+{
+	/*
+	 * Remove all lines / items. We have to do it by hand, because
+	 * DeleteAllItems() and ClearAll() does not send events.
+	 */
+	for (int i = appPolicyListCtrl->GetItemCount(); i >= 0; i--) {
+		removeListRow(appPolicyListCtrl, i);
+	}
+
+	/* Remove all columns, too and update view. */
+	appPolicyListCtrl->ClearAll();
+	Refresh();
 }
 
 void
 DlgRuleEditor::wipeFilterList(void)
 {
+	/*
+	 * Remove all lines / items. We have to do it by hand, because
+	 * DeleteAllItems() and ClearAll() does not send events.
+	 */
+	for (int i = filterPolicyListCtrl->GetItemCount(); i >= 0; i--) {
+		removeListRow(filterPolicyListCtrl, i);
+	}
+
+	/* Remove all columns, too and update view. */
 	filterPolicyListCtrl->ClearAll();
 	Refresh();
 }
 
 void
-DlgRuleEditor::updateFilterColumns(ListCtrlColumn *columnList[], size_t length)
+DlgRuleEditor::updateListAppPolicy(long rowIdx)
+{
+	long		 columnIdx;
+	wxString	 columnText;
+	void		*data;
+	ListCtrlColumn	*column;
+	AppPolicy	*policy;
+	PolicyRuleSet	*ruleset;
+
+	data   = (void*)appPolicyListCtrl->GetItemData(rowIdx);
+	policy = wxDynamicCast(data, AppPolicy);
+	if (policy == NULL) {
+		/* This row has no AppPolicy assigned! */
+		return;
+	}
+
+	ruleset = policy->getParentRuleSet();
+
+	/* Fill id column */
+	column = appColumns_[APP_ID];
+	if (column->isVisible()) {
+		columnIdx = column->getIndex();
+		columnText.Printf(wxT("%d:"), policy->getApnRuleId());
+		appPolicyListCtrl->SetItem(rowIdx, columnIdx, columnText);
+	}
+
+	/* Fill type column */
+	column = appColumns_[APP_TYPE];
+	if (column->isVisible()) {
+		columnIdx  = column->getIndex();
+		columnText = policy->getTypeIdentifier();
+		if ((ruleset != NULL) && ruleset->isAdmin()) {
+			columnText.Append(wxT("(A)"));
+		}
+		appPolicyListCtrl->SetItem(rowIdx, columnIdx, columnText);
+	}
+
+	/* Fill user column */
+	column = appColumns_[APP_USER];
+	if (column->isVisible()) {
+		columnIdx  = column->getIndex();
+		columnText = _("(unknown)");
+		if (ruleset != NULL) {
+			columnText = wxGetApp().getUserNameById(
+			    ruleset->getUid());
+		}
+		appPolicyListCtrl->SetItem(rowIdx, columnIdx, columnText);
+	}
+
+	/* Fill binary column */
+	column = appColumns_[APP_BINARY];
+	if (column->isVisible()) {
+		columnIdx  = column->getIndex();
+		columnText = policy->getBinaryName();
+		appPolicyListCtrl->SetItem(rowIdx, columnIdx, columnText);
+	}
+
+	/* Set background colour in case of admin policy */
+	if ((ruleset != NULL) && ruleset->isAdmin()) {
+		appPolicyListCtrl->SetItemBackgroundColour(rowIdx,
+		    wxTheColourDatabase->Find(wxT("LIGHT GREY")));
+	}
+}
+
+void
+DlgRuleEditor::updateListAlfFilterPolicy(long rowIdx)
+{
+	long				 columnIdx;
+	wxString			 columnText;
+	void				*data;
+	ListCtrlColumn			*column;
+	AlfFilterPolicy			*policy;
+
+	data   = (void*)filterPolicyListCtrl->GetItemData(rowIdx);
+	policy = wxDynamicCast(data, AlfFilterPolicy);
+	if (policy == NULL) {
+		/* This row has no AlfFilterPolicy assigned! */
+		return;
+	}
+
+	/* Fill id column */
+	column = alfColumns_[ALF_ID];
+	if (column->isVisible()) {
+		columnIdx = column->getIndex();
+		columnText.Printf(wxT("%d:"), policy->getApnRuleId());
+		filterPolicyListCtrl->SetItem(rowIdx, columnIdx, columnText);
+	}
+
+	/* Fill type column */
+	column = alfColumns_[ALF_TYPE];
+	if (column->isVisible()) {
+		columnIdx  = column->getIndex();
+		columnText = policy->getTypeIdentifier();
+		filterPolicyListCtrl->SetItem(rowIdx, columnIdx, columnText);
+	}
+
+	/* Fill action column*/
+	column = alfColumns_[ALF_ACTION];
+	if (column->isVisible()) {
+		columnIdx  = column->getIndex();
+		columnText = policy->getActionName();
+		filterPolicyListCtrl->SetItem(rowIdx, columnIdx, columnText);
+	}
+
+	/* Fill log column */
+	column = alfColumns_[ALF_LOG];
+	if (column->isVisible()) {
+		columnIdx  = column->getIndex();
+		columnText = policy->getLogName();
+		filterPolicyListCtrl->SetItem(rowIdx, columnIdx, columnText);
+	}
+
+	/* Fill direction column */
+	column = alfColumns_[ALF_DIR];
+	if (column->isVisible()) {
+		columnIdx  = column->getIndex();
+		columnText = policy->getDirectionName();
+		filterPolicyListCtrl->SetItem(rowIdx, columnIdx, columnText);
+	}
+
+	/* Fill protocol column */
+	column = alfColumns_[ALF_PROT];
+	if (column->isVisible() && (policy != NULL)) {
+		columnIdx  = column->getIndex();
+		columnText = policy->getProtocolName();
+		filterPolicyListCtrl->SetItem(rowIdx, columnIdx, columnText);
+	}
+
+	/* Fill address family column */
+	column = alfColumns_[ALF_AF];
+	if (column->isVisible() && (policy != NULL)) {
+		columnIdx  = column->getIndex();
+		columnText = policy->getAddrFamilyName();
+		filterPolicyListCtrl->SetItem(rowIdx, columnIdx, columnText);
+	}
+
+	/* Fill from host column */
+	column = alfColumns_[ALF_FHOST];
+	if (column->isVisible() && (policy != NULL)) {
+		columnIdx  = column->getIndex();
+		columnText = policy->getFromHostName();
+		filterPolicyListCtrl->SetItem(rowIdx, columnIdx, columnText);
+	}
+
+	/* Fill from port column */
+	column = alfColumns_[ALF_FPORT];
+	if (column->isVisible() && (policy != NULL)) {
+		columnIdx  = column->getIndex();
+		columnText = policy->getFromPortName();
+		filterPolicyListCtrl->SetItem(rowIdx, columnIdx, columnText);
+	}
+
+	/* Fill to host column */
+	column = alfColumns_[ALF_THOST];
+	if (column->isVisible() && (policy != NULL)) {
+		columnIdx  = column->getIndex();
+		columnText = policy->getToHostName();
+		filterPolicyListCtrl->SetItem(rowIdx, columnIdx, columnText);
+	}
+
+	/* Fill to port column */
+	column = alfColumns_[ALF_TPORT];
+	if (column->isVisible() && (policy != NULL)) {
+		columnIdx  = column->getIndex();
+		columnText = policy->getToPortName();
+		filterPolicyListCtrl->SetItem(rowIdx, columnIdx, columnText);
+	}
+
+	/* Fill state timeout column */
+	column = alfColumns_[ALF_TIME];
+	if (column->isVisible() && (policy != NULL)) {
+		columnIdx  = column->getIndex();
+		columnText = policy->getStateTimeoutName();
+		filterPolicyListCtrl->SetItem(rowIdx, columnIdx, columnText);
+	}
+}
+
+void
+DlgRuleEditor::updateListAlfCapabilityFilterPolicy(long rowIdx)
+{
+	long				 columnIdx;
+	wxString			 columnText;
+	void				*data;
+	ListCtrlColumn			*column;
+	AlfCapabilityFilterPolicy	*policy;
+
+	data   = (void*)filterPolicyListCtrl->GetItemData(rowIdx);
+	policy = wxDynamicCast(data, AlfCapabilityFilterPolicy);
+	if (policy == NULL) {
+		/* This row has no AlfCapabilityFilterPolicy assigned! */
+		return;
+	}
+
+	/* Fill id column */
+	column = alfColumns_[ALF_ID];
+	if (column->isVisible()) {
+		columnIdx = column->getIndex();
+		columnText.Printf(wxT("%d:"), policy->getApnRuleId());
+		filterPolicyListCtrl->SetItem(rowIdx, columnIdx, columnText);
+	}
+
+	/* Fill type column */
+	column = alfColumns_[ALF_TYPE];
+	if (column->isVisible()) {
+		columnIdx  = column->getIndex();
+		columnText = policy->getTypeIdentifier();
+		filterPolicyListCtrl->SetItem(rowIdx, columnIdx, columnText);
+	}
+
+	/* Fill capability column*/
+	column = alfColumns_[ALF_CAP];
+	if (column->isVisible()) {
+		columnIdx  = column->getIndex();
+		columnText = policy->getCapabilityTypeName();
+		filterPolicyListCtrl->SetItem(rowIdx, columnIdx, columnText);
+	}
+}
+
+void
+DlgRuleEditor::updateListContextFilterPolicy(long rowIdx)
+{
+	long			 columnIdx;
+	wxString		 columnText;
+	void			*data;
+	ListCtrlColumn		*column;
+	ContextFilterPolicy	*policy;
+
+	data   = (void*)filterPolicyListCtrl->GetItemData(rowIdx);
+	policy = wxDynamicCast(data, ContextFilterPolicy);
+	if (policy == NULL) {
+		/* This row has no ContextFilterPolicy assigned! */
+		return;
+	}
+
+	/* Fill id column */
+	column = ctxColumns_[CTX_ID];
+	if (column->isVisible()) {
+		columnIdx = column->getIndex();
+		columnText.Printf(wxT("%d:"), policy->getApnRuleId());
+		filterPolicyListCtrl->SetItem(rowIdx, columnIdx, columnText);
+	}
+
+	/* Fill context type */
+	column = ctxColumns_[CTX_TYPE];
+	if (column->isVisible()) {
+		columnIdx  = column->getIndex();
+		columnText = policy->getContextTypeName();
+		filterPolicyListCtrl->SetItem(rowIdx, columnIdx, columnText);
+	}
+
+	/* Fill binary */
+	column = ctxColumns_[CTX_BINARY];
+	if (column->isVisible()) {
+		columnIdx  = column->getIndex();
+		columnText = policy->getBinaryName();
+		filterPolicyListCtrl->SetItem(rowIdx, columnIdx, columnText);
+	}
+}
+
+void
+DlgRuleEditor::updateListColumns(wxListCtrl *list,
+    ListCtrlColumn *columnList[], size_t length)
 {
 	long index;
 
+	if (list->GetColumnCount() != 0) {
+		return; /* List already has columns. */
+	}
 	index = 0;
 
 	for (size_t i=0; i<length; i++) {
-		if (columnList[i]->isVisible()) {
-			columnList[i]->setIndex(index);
-			filterPolicyListCtrl->InsertColumn(index,
-			    columnList[i]->getTitle());
-			filterPolicyListCtrl->SetColumnWidth(index,
-			    columnList[i]->getWidth());
-			index++;
+		if (!columnList[i]->isVisible()) {
+			continue; /* Skip this column. */
 		}
+		columnList[i]->setIndex(index);
+		list->InsertColumn(index, columnList[i]->getTitle());
+		list->SetColumnWidth(index, columnList[i]->getWidth());
+		index++;
 	}
 }
 
