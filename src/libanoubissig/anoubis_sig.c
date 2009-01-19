@@ -268,24 +268,24 @@ anoubisd_verify_csum(EVP_PKEY *pkey,
 }
 
 struct anoubis_sig *
-anoubis_sig_pub_init(const char *keyfile, const char *certfile, char *pass,
-    int need_pass)
+anoubis_sig_pub_init(const char *keyfile, const char *certfile,
+    char *pass, int *error)
 {
 	return anoubis_sig_init(keyfile, certfile, pass,
-	    ANOUBIS_SIG_HASH_DEFAULT, ANOUBIS_SIG_PUB, need_pass);
+	    ANOUBIS_SIG_HASH_DEFAULT, ANOUBIS_SIG_PUB, error);
 }
 
 struct anoubis_sig *
-anoubis_sig_priv_init(const char *keyfile, const char *certfile, char *pass,
-    int need_pass)
+anoubis_sig_priv_init(const char *keyfile, const char *certfile,
+    char *pass, int *error)
 {
 	return anoubis_sig_init(keyfile, certfile, pass,
-	    ANOUBIS_SIG_HASH_DEFAULT, ANOUBIS_SIG_PRIV, need_pass);
+	    ANOUBIS_SIG_HASH_DEFAULT, ANOUBIS_SIG_PRIV, error);
 }
 
 struct anoubis_sig *
 anoubis_sig_init(const char *keyfile, const char *certfile, char *pass,
-    const EVP_MD *type, int pub_priv, int need_pass)
+    const EVP_MD *type, int pub_priv, int *error)
 {
 
 	struct anoubis_sig *as = NULL;
@@ -295,60 +295,62 @@ anoubis_sig_init(const char *keyfile, const char *certfile, char *pass,
 
 	OpenSSL_add_all_algorithms();
 
+	if (!error)
+		return NULL;
 	if (!certfile && !keyfile) {
+		*error = EINVAL;
 		return NULL;
 	}
 	if (keyfile) {
 		f = fopen(keyfile, "r");
 		if (f == NULL) {
-			perror(keyfile);
+			*error = errno;
 			return NULL;
 		}
 
 		switch (pub_priv) {
 		case ANOUBIS_SIG_PUB:
-			if(need_pass) {
-				if (pass)
-					pkey = PEM_read_PUBKEY(f, NULL, NULL,
-					    pass);
-				else
-					pkey = PEM_read_PUBKEY(f, NULL, pass_cb,
-					    "Public Key");
-			} else
-				pkey = PEM_read_PUBKEY(f, NULL, NULL, NULL);
-
+			if (pass)
+				pkey = PEM_read_PUBKEY(f, NULL, NULL,
+				    pass);
+			else
+				pkey = PEM_read_PUBKEY(f, NULL, NULL,
+				    "Public Key");
 			break;
 		case ANOUBIS_SIG_PRIV:
-			if (need_pass) {
-				if (pass)
-					pkey = PEM_read_PrivateKey(f, NULL,
-					    NULL, pass);
-				else
-					pkey = PEM_read_PrivateKey(f, NULL,
-					    pass_cb, "Private Key");
-			} else
-				pkey = PEM_read_PrivateKey(f, NULL, NULL, NULL);
+			if (pass)
+				pkey = PEM_read_PrivateKey(f, NULL,
+				    NULL, pass);
+			else
+				pkey = PEM_read_PrivateKey(f, NULL,
+				    NULL, "Private Key");
 			break;
 		default:
 			fclose(f);
+			*error = EINVAL;
 			return NULL;
 		}
 		fclose(f);
 
-		if (!pkey)
+		if (!pkey) {
+			*error = ERR_get_error();
 			return NULL;
+		}
 	}
+
 	if (certfile) {
 		if ((f = fopen(certfile, "r")) == NULL) {
-			if (pkey)
+			if (pkey) {
 				EVP_PKEY_free(pkey);
-			perror(certfile);
+			}
+			*error = errno;
 			return NULL;
 		}
 		if ((cert = PEM_read_X509(f, NULL, NULL, NULL)) == NULL) {
 			if (pkey)
 				EVP_PKEY_free(pkey);
 			fclose(f);
+			*error = EINVAL;
 			return NULL;
 		}
 		fclose(f);
@@ -359,6 +361,7 @@ anoubis_sig_init(const char *keyfile, const char *certfile, char *pass,
 			EVP_PKEY_free(pkey);
 		if (cert)
 			X509_free(as->cert);
+		*error = ENOMEM;
 		return NULL;
 	}
 	as->type = type;
@@ -368,8 +371,9 @@ anoubis_sig_init(const char *keyfile, const char *certfile, char *pass,
 		as->idlen = cert_keyid(&as->keyid, cert);
 	else
 		as->idlen = 0;
-	if (as->idlen == -1) {
+	if (as->idlen < 0) {
 		anoubis_sig_free(as);
+		*error = -as->idlen;
 		return NULL;
 	}
 	return as;
@@ -432,10 +436,11 @@ cert_keyid(unsigned char **keyid, X509 *cert)
 {
 	X509_EXTENSION *ext = NULL;
 	ASN1_OCTET_STRING *o_asn = NULL;
+	int rc = 0;
 	int rv = -1, len = -1;
 
 	if (keyid == NULL || cert == NULL)
-		return -1;
+		return -EINVAL;
 
 	for (rv = X509_get_ext_by_NID(cert, NID_subject_key_identifier, rv);
 	    rv >= 0;
@@ -443,9 +448,10 @@ cert_keyid(unsigned char **keyid, X509 *cert)
 		ext = X509_get_ext(cert, rv);
 
 	o_asn = X509_EXTENSION_get_data(ext);
-	if (!o_asn)
-		return -1;
-
+	if (!o_asn) {
+		rc = ERR_get_error();
+		return -rc;
+	}
 	/* The result of X509_EXTENSION_get_data beginns with
 	 * a number which describes algorithm (see RFC 3280)
 	 * We just need the KeyID, for that we cut away this number
@@ -453,14 +459,29 @@ cert_keyid(unsigned char **keyid, X509 *cert)
 	if (!memcmp(o_asn->data, "\004\024", 2)) {
 		len = ASN1_STRING_length(o_asn) - 2;
 		if ((*keyid = calloc(len, sizeof(unsigned char))) == NULL)
-			return -1;
+			return -ENOMEM;
 		memcpy(*keyid, &o_asn->data[2], len);
 	} else {
 		len = ASN1_STRING_length(o_asn);
 		if ((*keyid = calloc(len, sizeof(unsigned char))) == NULL)
-			return -1;
+			return -ENOMEM;
 		memcpy(*keyid, &o_asn->data, len);
 	}
 
 	return (len);
+}
+
+char *
+anoubis_sig_cert_name(X509 *cert)
+{
+	char *buf = NULL;
+
+	if ((buf = calloc(ANOUBIS_SIG_NAME_LEN, sizeof(char))) == NULL) {
+		return NULL;
+	}
+
+	X509_NAME_oneline(X509_get_subject_name(cert), buf,
+	    ANOUBIS_SIG_NAME_LEN);
+
+	return (buf);
 }

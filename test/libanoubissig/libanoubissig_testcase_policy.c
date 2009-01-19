@@ -158,7 +158,7 @@ libanoubissig_tc_pol_teardown(void)
 
 START_TEST(sign_and_verify_policy_match_tc)
 {
-	int			 rc, fd;
+	int			 rc, fd, err = 0;
 	unsigned int		 len = 0, n = 0;
 	struct anoubis_sig	*as = NULL;
 	unsigned char		*sign = NULL;
@@ -166,7 +166,7 @@ START_TEST(sign_and_verify_policy_match_tc)
 	fail_if(pol_prikey == NULL || pol_pubkey == NULL || policy == NULL,
 	    "Error while setup testcase");
 
-	as = anoubis_sig_priv_init(pol_prikey, pol_certfile, pol_pass, 0);
+	as = anoubis_sig_priv_init(pol_prikey, pol_certfile, pol_pass, &err);
 	fail_if(as == NULL, "Could not load Private Key");
 
 	sign = anoubis_sign_policy(as, policy, &len);
@@ -190,7 +190,7 @@ START_TEST(sign_and_verify_policy_match_tc)
 	}
 	close(fd);
 
-	as = anoubis_sig_pub_init(pol_pubkey, pol_certfile, pol_pass, 0);
+	as = anoubis_sig_pub_init(pol_pubkey, pol_certfile, pol_pass, &err);
 	fail_if(as == NULL, "Could not load Public Key");
 
 	rc = anoubis_sig_verify_policy_file(policy, as->pkey);
@@ -201,7 +201,7 @@ END_TEST
 
 START_TEST(sign_and_verify_policy_mismatch_tc)
 {
-	int			 rc, fd;
+	int			 rc, fd, err = 0;
 	unsigned int		 len = 0, n = 0;
 	struct anoubis_sig	*as = NULL;
 	unsigned char		*sign = NULL;
@@ -209,7 +209,7 @@ START_TEST(sign_and_verify_policy_mismatch_tc)
 	fail_if(pol_prikey == NULL || pol_pubkey == NULL || policy == NULL,
 	    "Error while setup testcase");
 
-	as = anoubis_sig_priv_init(pol_prikey, pol_certfile, pol_pass, 0);
+	as = anoubis_sig_priv_init(pol_prikey, pol_certfile, pol_pass, &err);
 	fail_if(as == NULL, "Could not load Private Key");
 
 	sign = anoubis_sign_policy(as, policy, &len);
@@ -237,7 +237,7 @@ START_TEST(sign_and_verify_policy_mismatch_tc)
 	}
 	close(fd);
 
-	as = anoubis_sig_pub_init(pol_pubkey, pol_certfile, pol_pass, 0);
+	as = anoubis_sig_pub_init(pol_pubkey, pol_certfile, pol_pass, &err);
 	fail_if(as == NULL, "Could not load Public Key");
 
 	rc = anoubis_sig_verify_policy_file(policy, as->pkey);

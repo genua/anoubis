@@ -659,7 +659,7 @@ main(int argc, char *argv[])
 			}
 		}
 
-		as = anoubis_sig_priv_init(keyfile, cert, NULL, 1);
+		as = anoubis_sig_priv_init(keyfile, cert, NULL, &error);
 		if (as == NULL) {
 			fprintf(stderr, "Error while loading keyfile: %s\n",
 			    keyfile);

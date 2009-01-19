@@ -40,13 +40,14 @@
 .Nm anoubis_sig_sign_policy
 .Nm anoubis_sig_verify_policy_file
 .Nm anoubis_sig_verify_policy
+.Nm anoubis_sig_cert_name
 .Nd Signature handling of Anoubis
 .Sh SYNOPSIS
 .In anoubis_sig.h
 .Ft struct anoubis_sig *
-.Fn anoubis_sig_init_pub "const char *keyfile, const char *certfile, char *pass, int need_pass"
+.Fn anoubis_sig_pub_init "const char *keyfile, const char *certfile, char *pass, int *error"
 .Ft struct anoubis_sig *
-.Fn anoubis_sig_init_priv "const char *keyfile, const char *certfile, char *pass, int need_pass"
+.Fn anoubis_sig_init_priv "const char *keyfile, const char *certfile, char *pass, int *error"
 .Ft void
 .Fn anoubis_sig_free "struct anoubis_sig *as"
 .Ft char *
@@ -63,15 +64,18 @@
 .Fn anoubis_verify_policy "const char *filename, unsigned char *sigbuf, int siglen, EVP_PKEY *sigkey"
 .Ft int
 .Fn anoubis_verify_policy_file "const char *filename, EVP_PKEY *sigkey"
+.Ft char *
+.Fn anoubis_sig_cert_name "X509 *cert"
 
 .Sh DESCRIPTION
 This library is used to sign and verify checksums or policies.
 .Pp
 The function
-.Nm anoubis_sig_init_pub
+.Nm anoubis_sig_pub_init
 and
-.Nm anoubis_sig_init_priv
-is used to load private or public keys and the certificate. To free the so created
+.Nm anoubis_sig_pub_init
+is used to load private or public keys and the certificate. To free the so
+created
 .Nm anoubis_sig
 struct the function
 .Nm anoubis_sig_free
@@ -86,7 +90,8 @@ and within the daemon
 .Pp
 The function 
 .Nm anoubis_sign_policy
-provides to create a signature for a policy file. To verify this signature for this policy
+provides to create a signature for a policy file. To verify this signature for
+this policy
 .Nm anoubis_verify_policy_file
 and 
 .Nm anoubis_verify_policy
@@ -95,12 +100,16 @@ are used. Where
 is using the filename of the policy and
 .Nm anoubis_verify_policy
 a buffer which contains the signature of the policy.
+.Nm anoubis_cert_name
+returns the subject name of a certificate.
 .Sh RETURN VALUES
-.Nm anoubis_sig_init_pub
-returns the anoubis_struct or NULL on error.
+.Nm anoubis_sig_pub_init
+returns the anoubis_struct or NULL on error. In case of a failure the value of
+error is set.
 .Pp
-.Nm anoubis_sig_init_priv
-returns the anoubis_struct or NULL on error.
+.Nm anoubis_sig_priv_init
+returns the anoubis_struct or NULL on error. In case of a failure the value of
+error is set.
 .Pp
 .Nm anoubis_sig_key2char
 returns the char representation of the key or NULL on error 
@@ -120,7 +129,9 @@ return 1 on successful verification or 0 on error or unsuccessful verification.
 .Pp
 .Nm anoubis_verify_policy_file
 return 1 on successful verification or 0 on error or unsuccessful verification.
-
+.Pp
+.Nm anoubis_sig_cert_name
+return subject name or NULL if an error occurs.
 .Sh SEE ALSO
 .Xr anoubis_client 3 ,
 .Xr anoubis_server 3 ,

@@ -90,13 +90,15 @@ PrivKey::canLoad(void) const
 bool
 PrivKey::load(const wxString &pass)
 {
+	int err = 0;
 	if (privKey_ == 0) {
 		/* No key is loaded, read from file */
 		char c_pass[pass.Len() + 1];
 		strlcpy(c_pass, pass.fn_str(), sizeof(c_pass));
 
+		/* XXX KM: The error handling is not finished yet */
 		privKey_ = anoubis_sig_priv_init(
-		    keyFile_.fn_str(), 0, c_pass, 1);
+		    keyFile_.fn_str(), 0, c_pass, &err);
 
 		if (privKey_ != 0) {
 			/*

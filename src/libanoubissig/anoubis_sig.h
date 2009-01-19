@@ -43,6 +43,7 @@
 #include <openssl/x509v3.h>
 #include <openssl/pem.h>
 #include <openssl/objects.h>
+#include <openssl/err.h>
 
 #ifdef LINUX
 #include <openssl/sha.h>
@@ -54,6 +55,7 @@
 #define __used __attribute__((unused))
 
 #define ANOUBIS_SIG_HASH_SHA256_LEN 32
+#define	ANOUBIS_SIG_NAME_LEN 256
 
 #define ANOUBIS_SIG_PUB		0
 #define ANOUBIS_SIG_PRIV	1
@@ -103,13 +105,14 @@ int anoubisd_verify_csum(EVP_PKEY *pkey,
      unsigned char csum[ANOUBIS_SIG_HASH_SHA256_LEN], unsigned char *sfs_sign,
      int sfs_len);
 struct anoubis_sig *anoubis_sig_pub_init(const char *file, const char *cert,
-    char *pass, int need_pass);
+    char *pass, int *error);
 struct anoubis_sig *anoubis_sig_priv_init(const char *file, const char *cert,
-    char *pass, int need_pass);
+    char *pass, int *error);
 struct anoubis_sig *anoubis_sig_init(const char *file, const char *cert,
-    char *pass, const EVP_MD *type, int pub_priv, int need_pass);
+    char *pass, const EVP_MD *type, int pub_priv, int *error);
 void anoubis_sig_free(struct anoubis_sig *as);
 char *anoubis_sig_key2char(int idlen, unsigned char *keyid);
+char *anoubis_sig_cert_name(X509 *cert);
 
 __END_DECLS
 

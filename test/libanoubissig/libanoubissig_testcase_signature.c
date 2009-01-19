@@ -176,6 +176,7 @@ libanoubissig_tc_teardown(void)
 START_TEST(sign_and_verify_match_tc)
 {
 	int			 rc;
+	int			 err = 0;
 	unsigned int		 len = 0;
 	struct anoubis_sig	*as = NULL;
 	unsigned char		 csum[ANOUBIS_SIG_HASH_SHA256_LEN],
@@ -184,7 +185,7 @@ START_TEST(sign_and_verify_match_tc)
 	fail_if(prikey == NULL || pubkey == NULL || infile == NULL,
 	    "Error while setup testcase");
 
-	as = anoubis_sig_priv_init(prikey, certfile, pass, 0);
+	as = anoubis_sig_priv_init(prikey, certfile, NULL, &err);
 	fail_if(as == NULL, "Could not load Private Key");
 
 	rc = libanoubis_tc_calc_sum(infile, csum);
@@ -195,7 +196,7 @@ START_TEST(sign_and_verify_match_tc)
 
 	anoubis_sig_free(as);
 
-	as = anoubis_sig_pub_init(pubkey, certfile, pass, 0);
+	as = anoubis_sig_pub_init(pubkey, certfile, NULL, &err);
 	fail_if(as == NULL, "Could not load Public Key");
 
 	rc = anoubis_verify_csum(as, csum, sign + ANOUBIS_SIG_HASH_SHA256_LEN,
@@ -207,8 +208,9 @@ END_TEST
 
 START_TEST(sign_and_verify_mismatch_tc)
 {
-	int			 rc;
+	int			 rc, err = 0;
 	unsigned int		 i, len = 0;
+	char			*name = NULL;
 	struct anoubis_sig	*as = NULL;
 	unsigned char		 csum[ANOUBIS_SIG_HASH_SHA256_LEN],
 				*sign = NULL;
@@ -216,7 +218,7 @@ START_TEST(sign_and_verify_mismatch_tc)
 	fail_if(prikey == NULL || pubkey == NULL || infile == NULL,
 	    "Error while setup testcase");
 
-	as = anoubis_sig_priv_init(prikey, certfile, pass, 0);
+	as = anoubis_sig_priv_init(prikey, certfile, NULL, &err);
 	fail_if(as == NULL, "Could not load Private Key");
 
 	rc = libanoubis_tc_calc_sum(infile, csum);
@@ -230,8 +232,11 @@ START_TEST(sign_and_verify_mismatch_tc)
 
 	anoubis_sig_free(as);
 
-	as = anoubis_sig_pub_init(pubkey, certfile, pass, 0);
+	as = anoubis_sig_pub_init(pubkey, certfile, NULL, &err);
 	fail_if(as == NULL, "Could not load Public Key");
+
+	name = anoubis_sig_cert_name(as->cert);
+	fail_if(name == NULL, "Could not get DN of certificate\n");
 
 	rc = anoubis_verify_csum(as, csum, sign + ANOUBIS_SIG_HASH_SHA256_LEN,
 	    len - ANOUBIS_SIG_HASH_SHA256_LEN);
