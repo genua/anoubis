@@ -2284,44 +2284,6 @@ apn_clean_ruleset(struct apn_ruleset *rs,
 }
 
 /*
- * Removes the rule with the given id from a ruleset queue. This function
- * recurses into individual alf or sfs queues if neccessary.
- *
- * Return codes:
- * -1: error
- *  0: rule was removed
- *  1: invalid parameters
- *  2: no rule was found
- */
-static int
-apn_remove_chain_deep(struct apn_ruleset *rs, struct apn_chain *chain,
-    unsigned int id)
-{
-	struct apn_rule	*p;
-
-	if (chain == NULL || id < 1)
-		return (1);
-
-	TAILQ_FOREACH(p, chain, entry) {
-		if (p->apn_id == id) {
-			TAILQ_REMOVE(chain, p, entry);
-			apn_free_one_rule(p, rs);
-			return 0;
-		}
-		switch (p->apn_type) {
-		case APN_ALF:
-		case APN_SFS:
-		case APN_VS:
-		case APN_SB:
-		case APN_CTX:
-			if (apn_remove_chain_deep(rs, &p->rule.chain, id) == 0)
-				return 0;
-		}
-	}
-	return (2);
-}
-
-/*
  * Removes the rule with the given id from a ruleset.
  *
  * Return codes:
@@ -2333,19 +2295,26 @@ apn_remove_chain_deep(struct apn_ruleset *rs, struct apn_chain *chain,
 int
 apn_remove(struct apn_ruleset *rs, unsigned int id)
 {
-	if (rs == NULL || id < 1 || rs->maxid == UINT_MAX) {
-		return (1);
-	}
+	struct apn_rule		*rule;
+	struct apn_chain	*pchain;
 
-	if (apn_remove_chain_deep(rs, &rs->alf_queue, id) == 0)
-		return 0;
-	if (apn_remove_chain_deep(rs, &rs->sfs_queue, id) == 0)
-		return 0;
-	if (apn_remove_chain_deep(rs, &rs->sb_queue, id) == 0)
-		return 0;
-	if (apn_remove_chain_deep(rs, &rs->ctx_queue, id) == 0)
-		return 0;
-	return (2);
+	if (rs == NULL || id < 1 || rs->maxid == UINT_MAX)
+		return 1;
+	rule = apn_find_rule(rs, id);
+	if (!rule)
+		return 2;
+	pchain = rule->pchain;
+	if (!pchain)
+		return -1;
+
+	/* Not allowed to remove the SFS application block. */
+	if (pchain == &rs->sfs_queue)
+		return -1;
+
+	TAILQ_REMOVE(pchain, rule, entry);
+	apn_free_one_rule(rule, rs);
+
+	return 0;
 }
 
 int

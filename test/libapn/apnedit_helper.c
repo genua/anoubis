@@ -192,6 +192,20 @@ cmd_copyinsert(struct apn_ruleset *rs, char *args)
 	return 1;
 }
 
+static int
+cmd_remove(struct apn_ruleset *rs, char *args)
+{
+	int		id, ret;
+	char		ch;
+
+	if (sscanf(args, "%d%c", &id, &ch) != 1) {
+		fprintf(stderr, "cmd_remove(%d): Invalid syntax\n", line);
+		return 0;
+	}
+	ret = apn_remove(rs, id);
+	return (ret == 0);
+}
+
 int main(int argc, char **argv)
 {
 	struct apn_ruleset	*rs;
@@ -262,6 +276,8 @@ int main(int argc, char **argv)
 		} else if (strcasecmp(p, "can_down") == 0) {
 			ret = cmd_updown_common(rs, args,
 			    &apn_can_move_down, 1);
+		} else if (strcasecmp(p, "remove") == 0) {
+			ret = cmd_remove(rs, args);
 		} else {
 			fprintf(stderr, "line %d: Unknown command %s\n",
 			    line, p);
