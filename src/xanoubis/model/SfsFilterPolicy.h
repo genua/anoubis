@@ -179,11 +179,18 @@ class SfsFilterPolicy : public FilterPolicy
 		bool setValidAction(int);
 
 		/**
-		 * Get action of valid case.
+		 * Get action number of valid case.
 		 * @param None.
-		 * @return The apn action.
+		 * @return The apn action number.
 		 */
-		int getValidAction(void);
+		int getValidActionNo(void) const;
+
+		/**
+		 * Get action name of valid case.
+		 * @param None.
+		 * @return The apn action name.
+		 */
+		wxString getValidActionName(void) const;
 
 		/**
 		 * Set log in valid case.
@@ -193,11 +200,18 @@ class SfsFilterPolicy : public FilterPolicy
 		bool setValidLog(int);
 
 		/**
-		 * Get log of valid case.
+		 * Get log number of valid case.
 		 * @param None.
-		 * @return The apn log level.
+		 * @return The apn log level number.
 		 */
-		int getValidLog(void);
+		int getValidLogNo(void) const;
+
+		/**
+		 * Get log name of valid case.
+		 * @param None.
+		 * @return The apn log level name.
+		 */
+		wxString getValidLogName(void) const;
 
 		/**
 		 * Set action in invalid case.
@@ -207,11 +221,18 @@ class SfsFilterPolicy : public FilterPolicy
 		bool setInvalidAction(int);
 
 		/**
-		 * Get action of invalid case.
+		 * Get action number of invalid case.
 		 * @param None.
-		 * @return The apn action.
+		 * @return The apn action number.
 		 */
-		int getInvalidAction(void);
+		int getInvalidActionNo(void) const;
+
+		/**
+		 * Get action name of invalid case.
+		 * @param None.
+		 * @return The apn action name.
+		 */
+		wxString getInvalidActionName(void) const;
 
 		/**
 		 * Set log in invalid case.
@@ -221,11 +242,18 @@ class SfsFilterPolicy : public FilterPolicy
 		bool setInvalidLog(int);
 
 		/**
-		 * Get log of invalid case.
+		 * Get log number of invalid case.
 		 * @param None.
-		 * @return The apn log level.
+		 * @return The apn log level number.
 		 */
-		int getInvalidLog(void);
+		int getInvalidLogNo(void) const;
+
+		/**
+		 * Get log name of invalid case.
+		 * @param None.
+		 * @return The apn log level name.
+		 */
+		wxString getInvalidLogName(void) const;
 
 		/**
 		 * Set action in unknown case.
@@ -235,11 +263,18 @@ class SfsFilterPolicy : public FilterPolicy
 		bool setUnknownAction(int);
 
 		/**
-		 * Get action of unknown case.
+		 * Get action number of unknown case.
 		 * @param None.
-		 * @return The apn action.
+		 * @return The apn action number.
 		 */
-		int getUnknownAction(void);
+		int getUnknownActionNo(void) const;
+
+		/**
+		 * Get action name of unknown case.
+		 * @param None.
+		 * @return The apn action name.
+		 */
+		wxString getUnknownActionName(void) const;
 
 		/**
 		 * Set log in unknown case.
@@ -249,11 +284,18 @@ class SfsFilterPolicy : public FilterPolicy
 		bool setUnknownLog(int);
 
 		/**
-		 * Get log of unknown case.
+		 * Get log number of unknown case.
 		 * @param None.
-		 * @return The apn log level.
+		 * @return The apn log level number.
 		 */
-		int getUnknownLog(void);
+		int getUnknownLogNo(void) const;
+
+		/**
+		 * Get log name of unknown case.
+		 * @param None.
+		 * @return The apn log level name.
+		 */
+		wxString getUnknownLogName(void) const;
 
 	private:
 		/**

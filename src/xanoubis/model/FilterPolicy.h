@@ -116,6 +116,23 @@ class FilterPolicy : public Policy
 		 */
 		wxString getActionName(void) const;
 
+	protected:
+		/**
+		 * Translate the apn log numbers APN_LOG_*
+		 * to human readable string.
+		 * @param[in] 1st The number to translate.
+		 * @return The readable string.
+		 */
+		wxString logToString(int) const;
+
+		/**
+		 * Translate the apn action numbers APN_ACTION_*
+		 * to human readable string.
+		 * @param[in] 1st The number to translate.
+		 * @return The readable string.
+		 */
+		wxString actionToString(int) const;
+
 	private:
 		AppPolicy *parentPolicy_; /**< The parent application. */
 };

@@ -217,169 +217,229 @@ END_TEST
 
 START_TEST(SfsFilterPolicy_ValidAction)
 {
-	/* Check initialization. */
-	CHECK_POLICY_GETVALIDACTION(policy, APN_ACTION_ALLOW);
+	wxString action;
 
+	/* Check initialization. */
+	action = wxT("allow");
+	CHECK_POLICY_GETVALIDACTION(policy, APN_ACTION_ALLOW, action);
+
+	action = wxT("continue");
+	if (!policy->setValidAction(APN_ACTION_CONTINUE)) {
+		fail("setActionNo(APN_ACTION_CONTINUE): not successfull.");
+	}
+	CHECK_POLICY_MODIFIED(policy, true);
+	CHECK_OBSERVER_NOTIFIED(observer, true);
+	CHECK_POLICY_GETVALIDACTION(policy, APN_ACTION_CONTINUE, action);
+
+	action = wxT("allow");
 	if (!policy->setValidAction(APN_ACTION_ALLOW)) {
 		fail("setActionNo(APN_ACTION_ALLOW): not successfull.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
-	CHECK_POLICY_GETVALIDACTION(policy, APN_ACTION_ALLOW);
+	CHECK_POLICY_GETVALIDACTION(policy, APN_ACTION_ALLOW, action);
 
+	action = wxT("ask");
 	if (!policy->setValidAction(APN_ACTION_ASK)) {
 		fail("setActionNo(APN_ACTION_ASK): not successfull.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
-	CHECK_POLICY_GETVALIDACTION(policy, APN_ACTION_ASK);
+	CHECK_POLICY_GETVALIDACTION(policy, APN_ACTION_ASK, action);
 
+	action = wxT("deny");
 	if (!policy->setValidAction(APN_ACTION_DENY)) {
 		fail("setActionNo(APN_ACTION_DENY): not successfull.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
-	CHECK_POLICY_GETVALIDACTION(policy, APN_ACTION_DENY);
+	CHECK_POLICY_GETVALIDACTION(policy, APN_ACTION_DENY, action);
 }
 END_TEST
 
 START_TEST(SfsFilterPolicy_ValidLog)
 {
-	/* Check initialization. */
-	CHECK_POLICY_GETVALIDLOG(policy, APN_LOG_NONE);
+	wxString log;
 
+	/* Check initialization. */
+	log = wxT("none");
+	CHECK_POLICY_GETVALIDLOG(policy, APN_LOG_NONE, log);
+
+	log = wxT("normal");
 	if (!policy->setValidLog(APN_LOG_NORMAL)) {
 		fail("setLogNo(APN_LOG_NORMAL): not successfull.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
-	CHECK_POLICY_GETVALIDLOG(policy, APN_LOG_NORMAL);
+	CHECK_POLICY_GETVALIDLOG(policy, APN_LOG_NORMAL, log);
 
+	log = wxT("alert");
 	if (!policy->setValidLog(APN_LOG_ALERT)) {
 		fail("setLogNo(APN_LOG_ALERT): not successfull.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
-	CHECK_POLICY_GETVALIDLOG(policy, APN_LOG_ALERT);
+	CHECK_POLICY_GETVALIDLOG(policy, APN_LOG_ALERT, log);
 
+	log = wxT("none");
 	if (!policy->setValidLog(APN_LOG_NONE)) {
 		fail("setLogNo(APN_LOG_NONE): not successfull.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
-	CHECK_POLICY_GETVALIDLOG(policy, APN_LOG_NONE);
+	CHECK_POLICY_GETVALIDLOG(policy, APN_LOG_NONE, log);
 }
 END_TEST
 
 START_TEST(SfsFilterPolicy_InvalidAction)
 {
-	/* Check initialization. */
-	CHECK_POLICY_GETINVALIDACTION(policy, APN_ACTION_ALLOW);
+	wxString action;
 
+	/* Check initialization. */
+	action = wxT("allow");
+	CHECK_POLICY_GETINVALIDACTION(policy, APN_ACTION_ALLOW, action);
+
+	action = wxT("continue");
+	if (!policy->setInvalidAction(APN_ACTION_CONTINUE)) {
+		fail("setActionNo(APN_ACTION_CONTINUE): not successfull.");
+	}
+	CHECK_POLICY_MODIFIED(policy, true);
+	CHECK_OBSERVER_NOTIFIED(observer, true);
+	CHECK_POLICY_GETINVALIDACTION(policy, APN_ACTION_CONTINUE, action);
+
+	action = wxT("allow");
 	if (!policy->setInvalidAction(APN_ACTION_ALLOW)) {
 		fail("setActionNo(APN_ACTION_ALLOW): not successfull.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
-	CHECK_POLICY_GETINVALIDACTION(policy, APN_ACTION_ALLOW);
+	CHECK_POLICY_GETINVALIDACTION(policy, APN_ACTION_ALLOW, action);
 
+	action = wxT("ask");
 	if (!policy->setInvalidAction(APN_ACTION_ASK)) {
 		fail("setActionNo(APN_ACTION_ASK): not successfull.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
-	CHECK_POLICY_GETINVALIDACTION(policy, APN_ACTION_ASK);
+	CHECK_POLICY_GETINVALIDACTION(policy, APN_ACTION_ASK, action);
 
+	action = wxT("deny");
 	if (!policy->setInvalidAction(APN_ACTION_DENY)) {
 		fail("setActionNo(APN_ACTION_DENY): not successfull.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
-	CHECK_POLICY_GETINVALIDACTION(policy, APN_ACTION_DENY);
+	CHECK_POLICY_GETINVALIDACTION(policy, APN_ACTION_DENY, action);
 }
 END_TEST
 
 START_TEST(SfsFilterPolicy_InvalidLog)
 {
-	/* Check initialization. */
-	CHECK_POLICY_GETINVALIDLOG(policy, APN_LOG_NONE);
+	wxString log;
 
+	/* Check initialization. */
+	log = wxT("none");
+	CHECK_POLICY_GETINVALIDLOG(policy, APN_LOG_NONE, log);
+
+	log = wxT("normal");
 	if (!policy->setInvalidLog(APN_LOG_NORMAL)) {
 		fail("setLogNo(APN_LOG_NORMAL): not successfull.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
-	CHECK_POLICY_GETINVALIDLOG(policy, APN_LOG_NORMAL);
+	CHECK_POLICY_GETINVALIDLOG(policy, APN_LOG_NORMAL, log);
 
+	log = wxT("alert");
 	if (!policy->setInvalidLog(APN_LOG_ALERT)) {
 		fail("setLogNo(APN_LOG_ALERT): not successfull.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
-	CHECK_POLICY_GETINVALIDLOG(policy, APN_LOG_ALERT);
+	CHECK_POLICY_GETINVALIDLOG(policy, APN_LOG_ALERT, log);
 
+	log = wxT("none");
 	if (!policy->setInvalidLog(APN_LOG_NONE)) {
 		fail("setLogNo(APN_LOG_NONE): not successfull.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
-	CHECK_POLICY_GETINVALIDLOG(policy, APN_LOG_NONE);
+	CHECK_POLICY_GETINVALIDLOG(policy, APN_LOG_NONE, log);
 }
 END_TEST
 
 START_TEST(SfsFilterPolicy_UnknownAction)
 {
-	/* Check initialization. */
-	CHECK_POLICY_GETUNKNOWNACTION(policy, APN_ACTION_ALLOW);
+	wxString action;
 
+	/* Check initialization. */
+	action = wxT("allow");
+	CHECK_POLICY_GETUNKNOWNACTION(policy, APN_ACTION_ALLOW, action);
+
+	action = wxT("continue");
+	if (!policy->setUnknownAction(APN_ACTION_CONTINUE)) {
+		fail("setActionNo(APN_ACTION_CONTINUE): not successfull.");
+	}
+	CHECK_POLICY_MODIFIED(policy, true);
+	CHECK_OBSERVER_NOTIFIED(observer, true);
+	CHECK_POLICY_GETUNKNOWNACTION(policy, APN_ACTION_CONTINUE, action);
+
+	action = wxT("allow");
 	if (!policy->setUnknownAction(APN_ACTION_ALLOW)) {
 		fail("setActionNo(APN_ACTION_ALLOW): not successfull.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
-	CHECK_POLICY_GETUNKNOWNACTION(policy, APN_ACTION_ALLOW);
+	CHECK_POLICY_GETUNKNOWNACTION(policy, APN_ACTION_ALLOW, action);
 
+	action = wxT("ask");
 	if (!policy->setUnknownAction(APN_ACTION_ASK)) {
 		fail("setActionNo(APN_ACTION_ASK): not successfull.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
-	CHECK_POLICY_GETUNKNOWNACTION(policy, APN_ACTION_ASK);
+	CHECK_POLICY_GETUNKNOWNACTION(policy, APN_ACTION_ASK, action);
 
+	action = wxT("deny");
 	if (!policy->setUnknownAction(APN_ACTION_DENY)) {
 		fail("setActionNo(APN_ACTION_DENY): not successfull.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
-	CHECK_POLICY_GETUNKNOWNACTION(policy, APN_ACTION_DENY);
+	CHECK_POLICY_GETUNKNOWNACTION(policy, APN_ACTION_DENY, action);
 }
 END_TEST
 
 START_TEST(SfsFilterPolicy_UnknownLog)
 {
-	/* Check initialization. */
-	CHECK_POLICY_GETUNKNOWNLOG(policy, APN_LOG_NONE);
+	wxString log;
 
+	/* Check initialization. */
+	log = wxT("none");
+	CHECK_POLICY_GETUNKNOWNLOG(policy, APN_LOG_NONE, log);
+
+	log = wxT("normal");
 	if (!policy->setUnknownLog(APN_LOG_NORMAL)) {
 		fail("setLogNo(APN_LOG_NORMAL): not successfull.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
-	CHECK_POLICY_GETUNKNOWNLOG(policy, APN_LOG_NORMAL);
+	CHECK_POLICY_GETUNKNOWNLOG(policy, APN_LOG_NORMAL, log);
 
+	log = wxT("alert");
 	if (!policy->setUnknownLog(APN_LOG_ALERT)) {
 		fail("setLogNo(APN_LOG_ALERT): not successfull.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
-	CHECK_POLICY_GETUNKNOWNLOG(policy, APN_LOG_ALERT);
+	CHECK_POLICY_GETUNKNOWNLOG(policy, APN_LOG_ALERT, log);
 
+	log = wxT("none");
 	if (!policy->setUnknownLog(APN_LOG_NONE)) {
 		fail("setLogNo(APN_LOG_NONE): not successfull.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
-	CHECK_POLICY_GETUNKNOWNLOG(policy, APN_LOG_NONE);
+	CHECK_POLICY_GETUNKNOWNLOG(policy, APN_LOG_NONE, log);
 }
 END_TEST
 

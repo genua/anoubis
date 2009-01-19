@@ -70,6 +70,20 @@ DlgRuleEditor::DlgRuleEditor(wxWindow* parent) : DlgRuleEditorBase(parent)
 		alfColumns_[i]->setIndex(i);
 	}
 
+	sfsColumns_[SFS_ID]	= new ListCtrlColumn(_("ID"));
+	sfsColumns_[SFS_PATH]	= new ListCtrlColumn(_("Path"));
+	sfsColumns_[SFS_SUB]	= new ListCtrlColumn(_("Subject"));
+	sfsColumns_[SFS_VA]	= new ListCtrlColumn(_("Valid action"));
+	sfsColumns_[SFS_VL]	= new ListCtrlColumn(_("Valid log"));
+	sfsColumns_[SFS_IA]	= new ListCtrlColumn(_("Invalid action"));
+	sfsColumns_[SFS_IL]	= new ListCtrlColumn(_("Invalid log"));
+	sfsColumns_[SFS_UA]	= new ListCtrlColumn(_("Unknown action"));
+	sfsColumns_[SFS_UL]	= new ListCtrlColumn(_("Unknown log"));
+
+	for (size_t i=0; i<SFS_EOL; i++) {
+		sfsColumns_[i]->setIndex(i);
+	}
+
 	ctxColumns_[CTX_ID]	= new ListCtrlColumn(_("ID"));
 	ctxColumns_[CTX_TYPE]	= new ListCtrlColumn(_("Type"));
 	ctxColumns_[CTX_BINARY]	= new ListCtrlColumn(_("Binary"));
@@ -119,6 +133,16 @@ DlgRuleEditor::addAlfCapabilityFilterPolicy(AlfCapabilityFilterPolicy *policy)
 	updateListColumns(filterPolicyListCtrl, alfColumns_, ALF_EOL);
 	index = addListRow(filterPolicyListCtrl, policy);
 	updateListAlfCapabilityFilterPolicy(index);
+}
+
+void
+DlgRuleEditor::addSfsFilterPolicy(SfsFilterPolicy *policy)
+{
+	long index;
+
+	updateListColumns(filterPolicyListCtrl, sfsColumns_, SFS_EOL);
+	index = addListRow(filterPolicyListCtrl, policy);
+	updateListSfsFilterPolicy(index);
 }
 
 void
@@ -502,6 +526,95 @@ DlgRuleEditor::updateListAlfCapabilityFilterPolicy(long rowIdx)
 	if (column->isVisible()) {
 		columnIdx  = column->getIndex();
 		columnText = policy->getCapabilityTypeName();
+		filterPolicyListCtrl->SetItem(rowIdx, columnIdx, columnText);
+	}
+}
+
+void
+DlgRuleEditor::updateListSfsFilterPolicy(long rowIdx)
+{
+	long		 columnIdx;
+	wxString	 columnText;
+	void		*data;
+	ListCtrlColumn	*column;
+	SfsFilterPolicy	*policy;
+
+	data   = (void*)filterPolicyListCtrl->GetItemData(rowIdx);
+	policy = wxDynamicCast(data, SfsFilterPolicy);
+	if (policy == NULL) {
+		/* This row has no SfsFilterPolicy assigned! */
+		return;
+	}
+
+	/* Fill id column */
+	column = sfsColumns_[SFS_ID];
+	if (column->isVisible()) {
+		columnIdx = column->getIndex();
+		columnText.Printf(wxT("%d:"), policy->getApnRuleId());
+		filterPolicyListCtrl->SetItem(rowIdx, columnIdx, columnText);
+	}
+
+	/* Fill path column */
+	column = sfsColumns_[SFS_PATH];
+	if (column->isVisible()) {
+		columnIdx  = column->getIndex();
+		columnText = policy->getPath();
+		filterPolicyListCtrl->SetItem(rowIdx, columnIdx, columnText);
+	}
+
+	/* Fill subject column */
+	column = sfsColumns_[SFS_SUB];
+	if (column->isVisible()) {
+		columnIdx  = column->getIndex();
+		columnText = policy->getSubjectName();
+		filterPolicyListCtrl->SetItem(rowIdx, columnIdx, columnText);
+	}
+
+	/* Fill valid action column */
+	column = sfsColumns_[SFS_VA];
+	if (column->isVisible()) {
+		columnIdx  = column->getIndex();
+		columnText = policy->getValidActionName();
+		filterPolicyListCtrl->SetItem(rowIdx, columnIdx, columnText);
+	}
+
+	/* Fill valid log column */
+	column = sfsColumns_[SFS_VL];
+	if (column->isVisible()) {
+		columnIdx  = column->getIndex();
+		columnText = policy->getValidLogName();
+		filterPolicyListCtrl->SetItem(rowIdx, columnIdx, columnText);
+	}
+
+	/* Fill invalid action column */
+	column = sfsColumns_[SFS_IA];
+	if (column->isVisible()) {
+		columnIdx  = column->getIndex();
+		columnText = policy->getInvalidActionName();
+		filterPolicyListCtrl->SetItem(rowIdx, columnIdx, columnText);
+	}
+
+	/* Fill invalid log column */
+	column = sfsColumns_[SFS_IL];
+	if (column->isVisible()) {
+		columnIdx  = column->getIndex();
+		columnText = policy->getInvalidLogName();
+		filterPolicyListCtrl->SetItem(rowIdx, columnIdx, columnText);
+	}
+
+	/* Fill unknown action column */
+	column = sfsColumns_[SFS_UA];
+	if (column->isVisible()) {
+		columnIdx  = column->getIndex();
+		columnText = policy->getUnknownActionName();
+		filterPolicyListCtrl->SetItem(rowIdx, columnIdx, columnText);
+	}
+
+	/* Fill unknown log column */
+	column = sfsColumns_[SFS_UL];
+	if (column->isVisible()) {
+		columnIdx  = column->getIndex();
+		columnText = policy->getUnknownLogName();
 		filterPolicyListCtrl->SetItem(rowIdx, columnIdx, columnText);
 	}
 }

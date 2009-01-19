@@ -319,7 +319,7 @@ SfsFilterPolicy::setValidAction(int action)
 }
 
 int
-SfsFilterPolicy::getValidAction(void)
+SfsFilterPolicy::getValidActionNo(void) const
 {
 	int		 action;
 	struct apn_rule *rule;
@@ -332,6 +332,12 @@ SfsFilterPolicy::getValidAction(void)
 	}
 
 	return (action);
+}
+
+wxString
+SfsFilterPolicy::getValidActionName(void) const
+{
+	return (actionToString(getValidActionNo()));
 }
 
 bool
@@ -355,7 +361,7 @@ SfsFilterPolicy::setValidLog(int log)
 }
 
 int
-SfsFilterPolicy::getValidLog(void)
+SfsFilterPolicy::getValidLogNo(void) const
 {
 	int		 log;
 	struct apn_rule *rule;
@@ -368,6 +374,12 @@ SfsFilterPolicy::getValidLog(void)
 	}
 
 	return (log);
+}
+
+wxString
+SfsFilterPolicy::getValidLogName(void) const
+{
+	return (logToString(getValidLogNo()));
 }
 
 bool
@@ -391,7 +403,7 @@ SfsFilterPolicy::setInvalidAction(int action)
 }
 
 int
-SfsFilterPolicy::getInvalidAction(void)
+SfsFilterPolicy::getInvalidActionNo(void) const
 {
 	int		 action;
 	struct apn_rule *rule;
@@ -404,6 +416,12 @@ SfsFilterPolicy::getInvalidAction(void)
 	}
 
 	return (action);
+}
+
+wxString
+SfsFilterPolicy::getInvalidActionName(void) const
+{
+	return (actionToString(getInvalidActionNo()));
 }
 
 bool
@@ -427,7 +445,7 @@ SfsFilterPolicy::setInvalidLog(int log)
 }
 
 int
-SfsFilterPolicy::getInvalidLog(void)
+SfsFilterPolicy::getInvalidLogNo(void) const
 {
 	int		 log;
 	struct apn_rule *rule;
@@ -440,6 +458,12 @@ SfsFilterPolicy::getInvalidLog(void)
 	}
 
 	return (log);
+}
+
+wxString
+SfsFilterPolicy::getInvalidLogName(void) const
+{
+	return (logToString(getInvalidLogNo()));
 }
 
 bool
@@ -463,7 +487,7 @@ SfsFilterPolicy::setUnknownAction(int action)
 }
 
 int
-SfsFilterPolicy::getUnknownAction(void)
+SfsFilterPolicy::getUnknownActionNo(void) const
 {
 	int		 action;
 	struct apn_rule *rule;
@@ -476,6 +500,12 @@ SfsFilterPolicy::getUnknownAction(void)
 	}
 
 	return (action);
+}
+
+wxString
+SfsFilterPolicy::getUnknownActionName(void) const
+{
+	return (actionToString(getUnknownActionNo()));
 }
 
 bool
@@ -499,7 +529,7 @@ SfsFilterPolicy::setUnknownLog(int log)
 }
 
 int
-SfsFilterPolicy::getUnknownLog(void)
+SfsFilterPolicy::getUnknownLogNo(void) const
 {
 	int		 log;
 	struct apn_rule *rule;
@@ -512,6 +542,12 @@ SfsFilterPolicy::getUnknownLog(void)
 	}
 
 	return (log);
+}
+
+wxString
+SfsFilterPolicy::getUnknownLogName(void) const
+{
+	return (logToString(getUnknownLogNo()));
 }
 
 void

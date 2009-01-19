@@ -234,6 +234,7 @@ class DlgRuleEditor : public DlgRuleEditorBase
 #include "AlfFilterPolicy.h"
 #include "AlfCapabilityFilterPolicy.h"
 #include "ContextFilterPolicy.h"
+#include "SfsFilterPolicy.h"
 
 /**
  * This is the anoubis rule editor.
@@ -284,6 +285,16 @@ class DlgRuleEditor : public DlgRuleEditorBase
 		void addAlfCapabilityFilterPolicy(AlfCapabilityFilterPolicy *);
 
 		/**
+		 * Add sfs filter policy.
+		 * A new row is created (by addListRow()) and filled by
+		 * updateListSfsFilterPolicy(). This should be used
+		 * by RuleEditorAddPolicyVisitor only.
+		 * @param[in] 1st Concerning app policy
+		 * @return Nothing.
+		 */
+		void addSfsFilterPolicy(SfsFilterPolicy *);
+
+		/**
 		 * Add context filter policy.
 		 * A new row is created (by addListRow()) and filled by
 		 * updateListContextFilterPolicy(). This should be used
@@ -329,6 +340,23 @@ class DlgRuleEditor : public DlgRuleEditorBase
 
 		/**
 		 * Use these indices to access the related column within the
+		 * list of sfs filter columns.
+		 */
+		enum sfsColumnIndex {
+			SFS_ID = 0,	/**< apn rule id. */
+			SFS_PATH,	/**< path (of subject) */
+			SFS_SUB,	/**< the subject */
+			SFS_VA,		/**< valid action */
+			SFS_VL,		/**< valid log */
+			SFS_IA,		/**< invalid action */
+			SFS_IL,		/**< invalid log */
+			SFS_UA,		/**< unknown action */
+			SFS_UL,		/**< unknown log */
+			SFS_EOL		/**< End - Of - List */
+		};
+
+		/**
+		 * Use these indices to access the related column within the
 		 * list of context filter columns.
 		 */
 		enum ctxColumnIndex {
@@ -340,6 +368,7 @@ class DlgRuleEditor : public DlgRuleEditorBase
 
 		ListCtrlColumn *appColumns_[APP_EOL]; /**< @ appList */
 		ListCtrlColumn *alfColumns_[ALF_EOL]; /**< @ filterList */
+		ListCtrlColumn *sfsColumns_[SFS_EOL]; /**< @ filterList */
 		ListCtrlColumn *ctxColumns_[CTX_EOL]; /**< @ filterList */
 
 		long userRuleSetId_;  /**< Id of our ruleSet. */
@@ -457,6 +486,14 @@ class DlgRuleEditor : public DlgRuleEditorBase
 		 * @return Nothing.
 		 */
 		void updateListAlfCapabilityFilterPolicy(long);
+
+		/**
+		 * Update row.
+		 * Updates the values of a row showing a sfs filter policy.
+		 * @param[in] 1st The index of row in question.
+		 * @return Nothing.
+		 */
+		void updateListSfsFilterPolicy(long);
 
 		/**
 		 * Update row.

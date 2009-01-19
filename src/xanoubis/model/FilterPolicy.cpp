@@ -67,9 +67,21 @@ FilterPolicy::setModified(void)
 wxString
 FilterPolicy::getLogName(void) const
 {
+	return (logToString(getLogNo()));
+}
+
+wxString
+FilterPolicy::getActionName(void) const
+{
+	return (actionToString(getActionNo()));
+}
+
+wxString
+FilterPolicy::logToString(int logNo) const
+{
 	wxString log;
 
-	switch (getLogNo()) {
+	switch (logNo) {
 	case APN_LOG_NONE:
 		log = wxT("none");
 		break;
@@ -88,11 +100,11 @@ FilterPolicy::getLogName(void) const
 }
 
 wxString
-FilterPolicy::getActionName(void) const
+FilterPolicy::actionToString(int actionNo) const
 {
 	wxString action;
 
-	switch (getActionNo()) {
+	switch (actionNo) {
 	case APN_ACTION_ALLOW:
 		action = wxT("allow");
 		break;

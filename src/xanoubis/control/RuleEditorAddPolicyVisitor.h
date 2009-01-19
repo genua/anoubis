@@ -122,7 +122,7 @@ class RuleEditorAddPolicyVisitor : public RuleEditorFillTableVisitor
 		 * Visit a SfsFilterPolicy.
 		 * @param[in] 1st Policy to visit.
 		 */
-		virtual void visitSfsFilterPolicy(SfsFilterPolicy *) {};
+		virtual void visitSfsFilterPolicy(SfsFilterPolicy *);
 };
 
 #endif	/* _RULEEDITORADDPOLICYVISITOR_H_ */

@@ -278,70 +278,88 @@
 /*
  * Valid
  */
-#define CHECK_POLICY_GETVALIDACTION(policy, value)			\
-	do {								\
-		int _getActionNo = policy->getValidAction();		\
-									\
-		if (_getActionNo != value) {				\
-			fail("getValidAction() = %d, expected: %d",	\
-			    _getActionNo, value);			\
-		}							\
+#define CHECK_POLICY_GETVALIDACTION(policy, valueNo, valueName)		    \
+	do {								    \
+		int _getActionNo = policy->getValidActionNo();		    \
+		wxString _getActionName = policy->getValidActionName();	    \
+									    \
+		if ((_getActionNo != valueNo) &&			    \
+		    (_getActionName.Cmp(valueName) != 0)) {		    \
+			fail("Valid action = %d / %ls, expected: %d / %ls", \
+			    _getActionNo, _getActionName.c_str(),	    \
+			    valueNo, valueName.c_str());		    \
+		}							    \
 	} while (0)
 
-#define CHECK_POLICY_GETVALIDLOG(policy, value)				\
-	do {								\
-		int _getLogNo = policy->getValidLog();			\
-									\
-		if (_getLogNo != value) {				\
-			fail("getValidLog() = %d, expected: %d",	\
-			    _getLogNo, value);				\
-		}							\
+#define CHECK_POLICY_GETVALIDLOG(policy, valueNo, valueName)		   \
+	do {								   \
+		int _getLogNo = policy->getValidLogNo();		   \
+		wxString _getLogName = policy->getValidLogName();	   \
+									   \
+		if ((_getLogNo != valueNo) &&				   \
+		    (_getLogName.Cmp(valueName) != 0)) {		   \
+			fail("Valid log() = %d / %ls, expected: %d / %ls", \
+			    _getLogNo, _getLogName.c_str(),		   \
+			    valueNo, valueName.c_str());		   \
+		}							   \
 	} while (0)
 
 /*
  * Invalid
  */
-#define CHECK_POLICY_GETINVALIDACTION(policy, value)			\
-	do {								\
-		int _getActionNo = policy->getInvalidAction();		\
-									\
-		if (_getActionNo != value) {				\
-			fail("getInvalidAction() = %d, expected: %d",	\
-			    _getActionNo, value);			\
-		}							\
+#define CHECK_POLICY_GETINVALIDACTION(policy, valueNo, valueName)	      \
+	do {								      \
+		int _getActionNo = policy->getInvalidActionNo();	      \
+		wxString _getActionName = policy->getInvalidActionName();     \
+									      \
+		if ((_getActionNo != valueNo) &&			      \
+		    (_getActionName.Cmp(valueName) != 0)) {		      \
+			fail("Invalid action = %d / %ls, expected: %d / %ls", \
+			    _getActionNo, _getActionName.c_str(),	      \
+			    valueNo, valueName.c_str());		      \
+		}							      \
 	} while (0)
 
-#define CHECK_POLICY_GETINVALIDLOG(policy, value)			\
-	do {								\
-		int _getLogNo = policy->getInvalidLog();		\
-									\
-		if (_getLogNo != value) {				\
-			fail("getInvalidLog() = %d, expected: %d",	\
-			    _getLogNo, value);				\
-		}							\
+#define CHECK_POLICY_GETINVALIDLOG(policy, valueNo, valueName)		     \
+	do {								     \
+		int _getLogNo = policy->getInvalidLogNo();		     \
+		wxString _getLogName = policy->getInvalidLogName();	     \
+									     \
+		if ((_getLogNo != valueNo) &&				     \
+		    (_getLogName.Cmp(valueName) != 0)) {		     \
+			fail("Invalid log() = %d / %ls, expected: %d / %ls", \
+			    _getLogNo, _getLogName.c_str(),		     \
+			    valueNo, valueName.c_str());		     \
+		}							     \
 	} while (0)
 
 /*
  * Unknown
  */
-#define CHECK_POLICY_GETUNKNOWNACTION(policy, value)			\
-	do {								\
-		int _getActionNo = policy->getUnknownAction();		\
-									\
-		if (_getActionNo != value) {				\
-			fail("getUnknownAction() = %d, expected: %d",	\
-			    _getActionNo, value);			\
-		}							\
+#define CHECK_POLICY_GETUNKNOWNACTION(policy, valueNo, valueName)	      \
+	do {								      \
+		int _getActionNo = policy->getUnknownActionNo();	      \
+		wxString _getActionName = policy->getUnknownActionName();     \
+									      \
+		if ((_getActionNo != valueNo) &&			      \
+		    (_getActionName.Cmp(valueName) != 0)) {		      \
+			fail("Unknown action = %d / %ls, expected: %d / %ls", \
+			    _getActionNo, _getActionName.c_str(),	      \
+			    valueNo, valueName.c_str());		      \
+		}							      \
 	} while (0)
 
-#define CHECK_POLICY_GETUNKNOWNLOG(policy, value)			\
-	do {								\
-		int _getLogNo = policy->getUnknownLog();		\
-									\
-		if (_getLogNo != value) {				\
-			fail("getUnknownLog() = %d, expected: %d",	\
-			    _getLogNo, value);				\
-		}							\
+#define CHECK_POLICY_GETUNKNOWNLOG(policy, valueNo, valueName)		     \
+	do {								     \
+		int _getLogNo = policy->getUnknownLogNo();		     \
+		wxString _getLogName = policy->getUnknownLogName();	     \
+									     \
+		if ((_getLogNo != valueNo) &&				     \
+		    (_getLogName.Cmp(valueName) != 0)) {		     \
+			fail("Unknown log() = %d / %ls, expected: %d / %ls", \
+			    _getLogNo, _getLogName.c_str(),		     \
+			    valueNo, valueName.c_str());		     \
+		}							     \
 	} while (0)
 
 /*

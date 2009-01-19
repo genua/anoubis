@@ -92,9 +92,8 @@ RuleEditorAddPolicyVisitor::visitSfsAppPolicy(SfsAppPolicy *policy)
 	ruleEditor_->addAppPolicy(policy);
 }
 
-/*
 void
 RuleEditorAddPolicyVisitor::visitSfsFilterPolicy(SfsFilterPolicy *policy)
 {
+	ruleEditor_->addSfsFilterPolicy(policy);
 }
-*/
