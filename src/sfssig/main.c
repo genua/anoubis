@@ -43,6 +43,7 @@
 #include <ctype.h>
 #include <dirent.h>
 #include <getopt.h>
+#include <pwd.h>
 
 #include <sys/un.h>
 #include <sys/mman.h>
@@ -423,6 +424,7 @@ main(int argc, char *argv[])
 {
 	unsigned char	 argcsum[SHA256_DIGEST_LENGTH];
 	struct stat	 sb;
+	struct passwd	*pw = NULL;
 	unsigned int	 i = 0, k;
 	char		*argcsumstr = NULL;
 	char		*file = NULL;
@@ -434,6 +436,7 @@ main(int argc, char *argv[])
 	char		 linkpath[PATH_MAX];
 	char		*linkfile = NULL;
 	char		**args = NULL;
+	char		 testarg;
 	char		 ch;
 	int		 j;
 	int		 file_cnt = 0;
@@ -567,7 +570,15 @@ main(int argc, char *argv[])
 				uid = 0;
 			} else {
 				checksum_flag = ANOUBIS_CSUM_UID;
-				uid = (uid_t)atoi(optarg);
+				if (sscanf(optarg, "%u%c", &uid, &testarg) != 1) {
+					if ((pw = getpwnam(optarg)) != NULL) {
+						uid = pw->pw_uid;
+					} else {
+						fprintf(stderr, "Unknown "
+						    "Username: %s\n", optarg);
+						return 1;
+					}
+				}
 			}
 			break;
 		case 'A':
