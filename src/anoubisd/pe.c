@@ -121,6 +121,8 @@ policy_engine(anoubisd_msg_t *request)
 		anoubisd_msg_sfsdisable_t *sfsdisable;
 		sfsdisable = (anoubisd_msg_sfsdisable_t *)request->msg;
 		reply = calloc(1, sizeof(struct anoubisd_reply));
+		if (reply == NULL)
+			break;
 		reply->token = sfsdisable->token;
 		reply->ask = 0;
 		reply->rule_id = 0;

@@ -849,6 +849,12 @@ reply:
 		pe_policy_request_put(req);
 	}
 	reply = calloc(1, sizeof(struct anoubisd_reply));
+
+	if (!reply) {
+		log_warn("calloc");
+		master_terminate(ENOMEM);	/* XXX HSH */
+	}
+
 	reply->token = comm->token;
 	reply->ask = 0;
 	reply->rule_id = 0;
