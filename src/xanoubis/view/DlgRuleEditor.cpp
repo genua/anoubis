@@ -191,6 +191,7 @@ DlgRuleEditor::onAppPolicySelect(wxListEvent & event)
 	RuleEditorAddPolicyVisitor	 addVisitor(this);
 	wxString			 newLabel;
 	AppPolicy			*policy;
+	PolicyRuleSet			*ruleset;
 
 	policy = wxDynamicCast((void*)event.GetData(), AppPolicy);
 	if (policy != NULL) {
@@ -202,7 +203,12 @@ DlgRuleEditor::onAppPolicySelect(wxListEvent & event)
 		    policy->getTypeIdentifier().c_str(),
 		    policy->getBinaryName().c_str());
 		appListPolicyText->SetLabel(newLabel);
-
+		ruleset = policy->getParentRuleSet();
+		if (ruleset && (geteuid() == 0 || !ruleset->isAdmin())) {
+			appListUpButton->Enable(policy->canMoveUp());
+			appListDownButton->Enable(policy->canMoveDown());
+			appListDeleteButton->Enable();
+		}
 		/* Ensure the changes will apear on the screen */
 		Layout();
 		Refresh();
@@ -214,8 +220,125 @@ DlgRuleEditor::onAppPolicyDeSelect(wxListEvent & WXUNUSED(event))
 {
 	appListPolicyText->SetLabel(wxEmptyString);
 	wipeFilterList();
+	appListUpButton->Disable();
+	appListDownButton->Disable();
+	appListDeleteButton->Disable();
 	Layout();
 	Refresh();
+}
+
+void
+DlgRuleEditor::refreshRuleSet(long appsel, long filtsel)
+{
+	long	apptop = appPolicyListCtrl->GetTopItem();
+	long	applen = appPolicyListCtrl->GetCountPerPage();
+	long	filttop = filterPolicyListCtrl->GetTopItem();
+	long	filtlen = filterPolicyListCtrl->GetCountPerPage();
+
+	if (appsel >= 0) {
+		if (appsel < apptop)
+			apptop = appsel;
+		if (appsel >= apptop + applen)
+			apptop = appsel + 1 - applen;
+	} else {
+		appsel = appPolicyListCtrl->GetNextItem(-1, wxLIST_NEXT_ALL,
+		    wxLIST_STATE_SELECTED);
+	}
+	if (filtsel >= 0) {
+		if (filtsel < filttop)
+			filttop = filtsel;
+		if (filtsel >= filttop + filtlen)
+			filttop = filtsel + 1 - filtlen;
+	} else {
+		filtsel = filterPolicyListCtrl->GetNextItem(-1,
+		    wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED);
+	}
+	loadRuleSet();
+	if (appsel >= 0)
+		appPolicyListCtrl->SetItemState(appsel,
+		    wxLIST_STATE_SELECTED, wxLIST_STATE_SELECTED);
+	if (filtsel >= 0) {
+		filterPolicyListCtrl->SetItemState(filtsel,
+		    wxLIST_STATE_SELECTED, wxLIST_STATE_SELECTED);
+	}
+	appPolicyListCtrl->EnsureVisible(apptop);
+	appPolicyListCtrl->EnsureVisible(apptop + applen - 1);
+	filterPolicyListCtrl->EnsureVisible(filttop);
+	filterPolicyListCtrl->EnsureVisible(filttop + filtlen - 1);
+	Layout();
+	Refresh();
+}
+
+void
+DlgRuleEditor::appListUpDown(bool up)
+{
+	long		 item;
+	Policy		*policy;
+	bool		 result;
+
+	item = appPolicyListCtrl->GetNextItem(-1, wxLIST_NEXT_ALL,
+	    wxLIST_STATE_SELECTED);
+	if (item < 0) {
+		appListUpButton->Disable();
+		appListDownButton->Disable();
+		appListDeleteButton->Disable();
+		return;
+	}
+	policy = wxDynamicCast((void*)appPolicyListCtrl->GetItemData(item),
+	    AppPolicy);
+	if (!policy)
+		return;
+	if (up) {
+		result = policy->moveUp();
+		item--;
+	} else {
+		result = policy->moveDown();
+		item++;
+	}
+	if (result)
+		refreshRuleSet(item, -1);
+}
+
+void
+DlgRuleEditor::onAppListDeleteClick(wxCommandEvent &)
+{
+	long		 item, count;
+	Policy		*policy;
+
+	item = appPolicyListCtrl->GetNextItem(-1, wxLIST_NEXT_ALL,
+	    wxLIST_STATE_SELECTED);
+	count = appPolicyListCtrl->GetItemCount();
+	if (item < 0) {
+		appListUpButton->Disable();
+		appListDownButton->Disable();
+		appListDeleteButton->Disable();
+		return;
+	}
+	policy = wxDynamicCast((void*)appPolicyListCtrl->GetItemData(item),
+	    AppPolicy);
+	if (!policy)
+		return;
+	if (item && (item + 1 >= count))
+		item--;
+	if (policy->remove()) {
+		/*
+		 * NOTE CEH: Always select the first element from the
+		 * NOTE CEH: filter list because the old list got removed.
+		 */
+		refreshRuleSet(item, 0);
+	}
+}
+
+void
+DlgRuleEditor::onAppListUpClick(wxCommandEvent &)
+{
+	appListUpDown(true);
+}
+
+void
+DlgRuleEditor::onAppListDownClick(wxCommandEvent &)
+{
+	appListUpDown(false);
 }
 
 void

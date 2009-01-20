@@ -205,6 +205,14 @@ class PolicyRuleSet : public Subject
 		 */
 		bool isModified(void) const;
 
+		/**
+		 * Refresh the policy ruleset after the underlying
+		 * apn_ruleset has been modified.
+		 * @param None.
+		 * @return None.
+		 */
+		void refresh(void);
+
 		/*
 		 * XXX ch: re-enable this while adding functionality
 		 * XXX ch: to the RuleEditor

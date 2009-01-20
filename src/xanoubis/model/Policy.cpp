@@ -132,6 +132,69 @@ Policy::getScopeName(void) const
 	return (scope);
 }
 
+bool
+Policy::canMoveUp(void) const
+{
+	if (apn_can_move_up(getApnRule()))
+		return (true);
+	return (false);
+}
+
+bool
+Policy::canMoveDown(void) const
+{
+	if (apn_can_move_down(getApnRule()))
+		return (true);
+	return (false);
+}
+
+bool
+Policy::moveUp(void)
+{
+	PolicyRuleSet	*prs = getParentRuleSet();
+
+	if (!prs || apn_move_up(getApnRule()) != 0)
+		return (false);
+	prs->refresh();
+	prs->setModified();
+	return (true);
+}
+
+bool
+Policy::moveDown(void)
+{
+	PolicyRuleSet	*prs = getParentRuleSet();
+
+	if (!prs || apn_move_down(getApnRule()) != 0)
+		return (false);
+	prs->refresh();
+	prs->setModified();
+	return (true);
+}
+
+/*
+ * Memory management:
+ * apn_remove will free the rule that was removed. This includes
+ * any rules that might be dependent on the rule itself (i.e. filters
+ * an an ALF application block).
+ * The call to prs->refresh() will make sure that the PolicyRuleSet
+ * no longer references the apn_rule that has been freed. The remaining
+ * rules in the APN rule set still belong to the PolicyRuleSet for
+ * memory management purposes and will ultimately be freed by the
+ * destructor of prs.
+ */
+bool
+Policy::remove(void)
+{
+	long		 id = getApnRuleId();
+	PolicyRuleSet	*prs = getParentRuleSet();
+	if (!prs || apn_remove(prs->getApnRuleSet(), id) != 0)
+		return (false);
+	prs->refresh();
+	prs->setModified();
+	return (true);
+}
+
 /* XXX ch: I don't like this, better solution needed here */
 void
 Policy::setRuleEditorIndex(unsigned long idx)

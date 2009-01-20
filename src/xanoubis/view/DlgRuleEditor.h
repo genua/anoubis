@@ -425,6 +425,16 @@ class DlgRuleEditor : public DlgRuleEditorBase
 		void loadRuleSet(void);
 
 		/**
+		 * Load new ruleSet and refresh the lists.
+		 * @param[in] 1st Select this index in the appList 
+		 * @param[in] 2nd Select this index in the filterList
+		 * @return None.
+		 * Both parameters can be -1 if the previous selection
+		 * should be reused.
+		 */
+		void refreshRuleSet(long, long);
+
+		/**
 		 * Add a row to a given list and assign the given policy.
 		 * @param[in] 1st The list where the new row is added.
 		 * @param[in] 2nd The concerning policy for the new row.
@@ -514,6 +524,36 @@ class DlgRuleEditor : public DlgRuleEditorBase
 		 * @return Nothing.
 		 */
 		void updateListColumns(wxListCtrl *,ListCtrlColumn **, size_t);
+
+		/**
+		 * Move selected rule up
+		 * @param none
+		 * @return Nothing.
+		 */
+		void onAppListUpClick(wxCommandEvent &);
+
+		/**
+		 * Move selected rule down
+		 * @param none
+		 * @return Nothing.
+		 */
+		void onAppListDownClick(wxCommandEvent &);
+
+		/**
+		 * Delete selected rule
+		 * @param none
+		 * @return Nothing.
+		 */
+		void onAppListDeleteClick(wxCommandEvent &);
+
+protected:
+		/**
+		 * Common backend for moving the selected rule up or down
+		 * @param Move upwards if true, otherwise move down
+		 * @return Nothing.
+		 */
+		void appListUpDown(bool);
+
 };
 
 #endif /* __DlgRuleEditor__ */

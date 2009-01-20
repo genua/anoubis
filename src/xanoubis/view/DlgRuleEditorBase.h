@@ -226,6 +226,9 @@ class DlgRuleEditorBase : public wxFrame
 		virtual void onClose( wxCloseEvent& event ){ event.Skip(); }
 		virtual void onAppPolicyDeSelect( wxListEvent& event ){ event.Skip(); }
 		virtual void onAppPolicySelect( wxListEvent& event ){ event.Skip(); }
+		virtual void onAppListUpClick( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onAppListDownClick( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onAppListDeleteClick( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnAppBinaryTextCtrl( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnAppBinaryModifyButton( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnAppValidateChkSumButton( wxCommandEvent& event ){ event.Skip(); }

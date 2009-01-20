@@ -351,6 +351,14 @@ PolicyRuleSet::create(struct apn_ruleset *ruleSet)
 	}
 }
 
+void
+PolicyRuleSet::refresh(void)
+{
+	struct apn_ruleset	*ruleset = ruleSet_;
+	clean();
+	create(ruleset);
+}
+
 /*
  * XXX ch: re-enable this while adding functionality to the RuleEditor
  */

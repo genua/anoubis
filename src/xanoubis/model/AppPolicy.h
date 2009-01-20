@@ -218,7 +218,7 @@ class AppPolicy : public Policy
 		/**
 		 * Get the entire list of hash values.
 		 * @param None.
-		 * @retrun The list of hash values (maybe empty).
+		 * @return The list of hash values (maybe empty).
 		 */
 		wxArrayString getHashValueList(void) const;
 

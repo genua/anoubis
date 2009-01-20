@@ -128,6 +128,41 @@ class Policy : public Subject
 		wxString getScopeName(void) const;
 
 		/**
+		 * Return true if the rule can be moved up
+		 * @param None.
+		 * @return True if the rule can be moved upwards
+		 */
+		bool canMoveUp(void) const;
+
+		/**
+		 * Return true if the rule can be moved down
+		 * @param None.
+		 * @return True if the rule can be moved down
+		 */
+		bool canMoveDown(void) const;
+
+		/**
+		 * Move the rule up in its surrounding rule list.
+		 * @param None.
+		 * @return True is successful.
+		 */
+		bool moveUp(void);
+
+		/**
+		 * Move the rule down in its surrounding rule list.
+		 * @param None.
+		 * @return True if successful.
+		 */
+		bool moveDown(void);
+
+		/**
+		 * Remove the rule from its rule set and free it
+		 * @param None.
+		 * @return True if successful.
+		 */
+		bool remove(void);
+
+		/**
 		 * XXX ch: I don't like this, better solution needed here
 		 */
 		void setRuleEditorIndex(unsigned long);
