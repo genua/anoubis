@@ -33,9 +33,18 @@
 /**
  * Task to retrieve the sfs-list from anoubisd.
  *
- * The sfs-list contains files under a directory, which has a checksum. You
- * need to specify the directory and the user with setRequestParameter() before
- * the task is executed.
+ * The sfs-list is bind to a user or a certificate.
+ *
+ * If a bindiung to a user is configured, the operation lists all checksumed
+ * files under a directory, which belongs to the user.
+ *
+ * If a bindung to a certificate is configured, the operation lists all
+ * checksumed files under a directory, which are signed by the certificate.
+ *
+ * Base directory and uid of the requested user are configured using
+ * setRequestParameter(). The bindung to a certificate is enabled by providing
+ * the key-id if the certificate (setKeyId()). Unless the key-id is configured,
+ * the uid-bindung is used.
  *
  * When the operation was successful, you can receive the filelist with
  * getFileList().
@@ -70,6 +79,11 @@ class ComSfsListTask : public ComTask
 		 *            is scanned for checksums.
 		 */
 		ComSfsListTask(uid_t, const wxString &);
+
+		/**
+		 * D'tor.
+		 */
+		~ComSfsListTask(void);
 
 		/**
 		 * Returns the requested uid.
@@ -111,6 +125,21 @@ class ComSfsListTask : public ComTask
 		void setRequestParameter(uid_t, const wxString &);
 
 		/**
+		 * Provides a key-id used by the list-operation.
+		 *
+		 * Once configured, the checksum-tree of the certificate behind
+		 * the key-id is scanned.
+		 *
+		 * @param keyId The key-id of the certificate
+		 * @param keyIdLen Length of keyId
+		 * @return true if you specified a correct key-id, false
+		 *         otherwise.
+		 *
+		 * @see LocalCertificate
+		 */
+		bool setKeyId(const u_int8_t *, int);
+
+		/**
 		 * Implementation of Task::getEventType().
 		 */
 		wxEventType getEventType(void) const;
@@ -141,6 +170,8 @@ class ComSfsListTask : public ComTask
 		uid_t		uid_;
 		wxString	directory_;
 		wxArrayString	fileList_;
+		u_int8_t	*keyId_;
+		int		keyIdLen_;
 };
 
 #endif	/* _COMSFSLISTTASK_H_ */

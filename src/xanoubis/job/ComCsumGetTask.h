@@ -47,6 +47,9 @@
  * Before the task gets scheduled, you have to specify the file you are
  * requesting (ComCsumGetTask::setFile()).
  *
+ * You can bind the operation to a certificate. In this case, the checksum of
+ * the file is returned, which is signed by the configured certificate.
+ *
  * If the task was successfully executed, you can ask for the checksum using
  * ComCsumGetTask::getCsum().
  *
@@ -80,6 +83,11 @@ class ComCsumGetTask : public ComTask
 		ComCsumGetTask(const wxString &);
 
 		/**
+		 * D'tor.
+		 */
+		~ComCsumGetTask(void);
+
+		/**
 		 * Returns the requested file.
 		 * @return The file you are requesting
 		 */
@@ -95,6 +103,21 @@ class ComCsumGetTask : public ComTask
 		 * @param file The requested filename
 		 */
 		void setFile(const wxString &);
+
+		/**
+		 * Provides a key-id used by the operation.
+		 *
+		 * Once configured, the checksum of the file, which is signed
+		 * with the certificate behind the key-id is returned.
+		 *
+		 * @param keyId The key-id of the certificate
+		 * @param keyIdLen Length of keyId
+		 * @return true if you specified a correct key-id, false
+		 *         otherwise.
+		 *
+		 * @see LocalCertificate
+		 */
+		bool setKeyId(const u_int8_t *, int);
 
 		/**
 		 * Implementation of Task::getEventType().
@@ -143,6 +166,8 @@ class ComCsumGetTask : public ComTask
 
 	private:
 		wxString	file_;
+		u_int8_t	*keyId_;
+		int		keyIdLen_;
 		u_int8_t	cs_[ANOUBIS_CS_LEN];
 };
 

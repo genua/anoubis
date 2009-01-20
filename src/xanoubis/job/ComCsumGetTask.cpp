@@ -41,12 +41,24 @@
 
 ComCsumGetTask::ComCsumGetTask(void)
 {
+	this->keyId_ = 0;
+	this->keyIdLen_ = 0;
+
 	setFile(wxT(""));
 }
 
 ComCsumGetTask::ComCsumGetTask(const wxString &file)
 {
+	this->keyId_ = 0;
+	this->keyIdLen_ = 0;
+
 	setFile(file);
+}
+
+ComCsumGetTask::~ComCsumGetTask(void)
+{
+	if (keyId_ != 0)
+		free(keyId_);
 }
 
 wxString
@@ -61,6 +73,28 @@ ComCsumGetTask::setFile(const wxString &file)
 	this->file_ = file;
 }
 
+bool
+ComCsumGetTask::setKeyId(const u_int8_t *keyId, int len)
+{
+	if ((keyId != 0) && (len > 0)) {
+		u_int8_t *newKeyId = (u_int8_t *)malloc(len);
+
+		if (newKeyId != 0)
+			memcpy(newKeyId, keyId, len);
+		else
+			return (false);
+
+		if (this->keyId_ != 0)
+			free(this->keyId_);
+
+		this->keyId_ = newKeyId;
+		this->keyIdLen_ = len;
+
+		return (true);
+	} else
+		return (false);
+}
+
 wxEventType
 ComCsumGetTask::getEventType(void) const
 {
@@ -72,15 +106,21 @@ ComCsumGetTask::exec(void)
 {
 	struct anoubis_transaction	*ta;
 	struct anoubis_msg		*reqmsg;
+	int				req_op;
 	char				path[file_.Len() + 1];
 
 	resetComTaskResult();
+
+	if ((this->keyId_ != 0) && (this->keyIdLen_ > 0))
+		req_op = ANOUBIS_CHECKSUM_OP_GETSIG;
+	else
+		req_op = ANOUBIS_CHECKSUM_OP_GET;
 
 	strlcpy(path, this->file_.fn_str(), sizeof(path));
 
 	/* Create request */
 	ta = anoubis_client_csumrequest_start(getComHandler()->getClient(),
-	    ANOUBIS_CHECKSUM_OP_GET, (char*)path, NULL, 0, 0, 0,
+	    req_op, (char*)path, this->keyId_, 0, this->keyIdLen_, 0,
 	    ANOUBIS_CSUM_NONE);
 	if(!ta) {
 		setComTaskResult(RESULT_COM_ERROR);

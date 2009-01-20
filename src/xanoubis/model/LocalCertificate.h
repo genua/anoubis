@@ -122,6 +122,17 @@ class LocalCertificate
 		wxString getDistinguishedName(void) const;
 
 		/**
+		 * Returns the raw-certificate.
+		 *
+		 * The method will return the result of a successful
+		 * load-operation.
+		 *
+		 * @return The raw-certificate. If no certificate is loaded, 0
+		 *         is returned.
+		 */
+		struct anoubis_sig *getCertificate(void) const;
+
+		/**
 		 * Tests whether a certificate can be loaded.
 		 *
 		 * A certificate can be loaded, if a file is assigned to the

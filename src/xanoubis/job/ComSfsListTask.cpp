@@ -42,11 +42,22 @@
 
 ComSfsListTask::ComSfsListTask(void)
 {
+	this->keyId_ = 0;
+	this->keyIdLen_ = 0;
 }
 
 ComSfsListTask::ComSfsListTask(uid_t uid, const wxString &dir)
 {
+	this->keyId_ = 0;
+	this->keyIdLen_ = 0;
+
 	setRequestParameter(uid, dir);
+}
+
+ComSfsListTask::~ComSfsListTask(void)
+{
+	if (keyId_ != 0)
+		free(keyId_);
 }
 
 uid_t
@@ -76,6 +87,28 @@ ComSfsListTask::setRequestParameter(uid_t uid, const wxString &dir)
 		this->directory_ = dir;
 }
 
+bool
+ComSfsListTask::setKeyId(const u_int8_t *keyId, int len)
+{
+	if ((keyId != 0) && (len > 0)) {
+		u_int8_t *newKeyId = (u_int8_t *)malloc(len);
+
+		if (newKeyId != 0)
+			memcpy(newKeyId, keyId, len);
+		else
+			return (false);
+
+		if (this->keyId_ != 0)
+			free(this->keyId_);
+
+		this->keyId_ = newKeyId;
+		this->keyIdLen_ = len;
+
+		return (true);
+	} else
+		return (false);
+}
+
 wxEventType
 ComSfsListTask::getEventType(void) const
 {
@@ -87,29 +120,40 @@ ComSfsListTask::exec(void)
 {
 	const uid_t			cur_uid = getuid();
 	struct anoubis_transaction	*ta;
+	int				req_op;
+	uid_t				req_uid;
+	int				req_flags;
 	char				path[directory_.Len() + 1];
 	char				**list;
 	int				listSize;
 
 	resetComTaskResult();
 
-	strlcpy(path, directory_.fn_str(), sizeof(path));
+	/* Operation depends on key-id. If set assume signature-operation */
+	if ((this->keyId_ != 0) && (this->keyIdLen_ > 0))
+		req_op = ANOUBIS_CHECKSUM_OP_SIG_LIST;
+	else
+		req_op = ANOUBIS_CHECKSUM_OP_LIST;
 
-	/* Create request */
 	if (uid_ == cur_uid) {
 		/* Ask for your own list */
-		ta = anoubis_client_csumrequest_start(
-		    getComHandler()->getClient(), ANOUBIS_CHECKSUM_OP_LIST,
-		    path, NULL, 0, 0, 0, ANOUBIS_CSUM_NONE);
+		req_uid = 0;
+		req_flags = ANOUBIS_CSUM_NONE;
 	} else if (cur_uid == 0) {
 		/* root is allowed to request list for another user, too */
-		ta = anoubis_client_csumrequest_start(
-		    getComHandler()->getClient(), ANOUBIS_CHECKSUM_OP_LIST,
-		    path, NULL, 0, 0, uid_, ANOUBIS_CSUM_UID);
+		req_uid = uid_;
+		req_flags = ANOUBIS_CSUM_UID;
 	} else {
 		/* Non-root user is requesting the list for another user */
 		return;
 	}
+
+	strlcpy(path, directory_.fn_str(), sizeof(path));
+
+	/* Create request */
+	ta = anoubis_client_csumrequest_start(
+	    getComHandler()->getClient(), req_op,
+	    path, this->keyId_, 0, this->keyIdLen_, req_uid, req_flags);
 
 	if(!ta) {
 		setComTaskResult(RESULT_COM_ERROR);

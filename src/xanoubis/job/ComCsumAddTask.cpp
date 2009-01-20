@@ -44,6 +44,7 @@
 #include <client/anoubis_transaction.h>
 #include <csum/csum.h>
 #include <anoubis_protocol.h>
+#include <anoubis_sig.h>
 
 #include "ComCsumAddTask.h"
 #include "ComHandler.h"
@@ -51,12 +52,26 @@
 
 ComCsumAddTask::ComCsumAddTask(void)
 {
+	this->keyId_ = 0;
+	this->keyIdLen_ = 0;
+	this->privKey_ = 0;
+
 	setFile(wxT(""));
 }
 
 ComCsumAddTask::ComCsumAddTask(const wxString &file)
 {
+	this->keyId_ = 0;
+	this->keyIdLen_ = 0;
+	this->privKey_ = 0;
+
 	setFile(file);
+}
+
+ComCsumAddTask::~ComCsumAddTask(void)
+{
+	if (keyId_ != 0)
+		free(keyId_);
 }
 
 wxString
@@ -71,6 +86,34 @@ ComCsumAddTask::setFile(const wxString &file)
 	this->file_ = file;
 }
 
+bool
+ComCsumAddTask::setKeyId(const u_int8_t *keyId, int len)
+{
+	if ((keyId != 0) && (len > 0)) {
+		u_int8_t *newKeyId = (u_int8_t *)malloc(len);
+
+		if (newKeyId != 0)
+			memcpy(newKeyId, keyId, len);
+		else
+			return (false);
+
+		if (this->keyId_ != 0)
+			free(this->keyId_);
+
+		this->keyId_ = newKeyId;
+		this->keyIdLen_ = len;
+
+		return (true);
+	} else
+		return (false);
+}
+
+void
+ComCsumAddTask::setPrivateKey(struct anoubis_sig *privKey)
+{
+	this->privKey_ = privKey;
+}
+
 wxEventType
 ComCsumAddTask::getEventType(void) const
 {
@@ -82,26 +125,49 @@ ComCsumAddTask::exec(void)
 {
 	/* Request to add a checksum for a file */
 	struct anoubis_transaction	*ta;
-	u_int8_t			cs[ANOUBIS_CS_LEN];
-	int				len, ret;
+	int				req_op;
+	u_int8_t			*payload;
+	int				payloadLen;
 	char				path[file_.Len() + 1];
 
 	resetComTaskResult();
 
 	strlcpy(path, file_.fn_str(), sizeof(path));
 
-	/* Calculate checksum */
-	len = ANOUBIS_CS_LEN;
-	ret = anoubis_csum_calc(path, cs, &len);
-	if (ret < 0) {
-		setComTaskResult(RESULT_LOCAL_ERROR);
-		setResultDetails(-ret);
-		return;
+	if ((keyId_ != 0) && (keyIdLen_ > 0) && (privKey_ != 0)) {
+		payload = createSigMsg(path, privKey_, keyId_, keyIdLen_,
+		    &payloadLen);
+
+		/* Reset private key, don't need it anymore */
+		privKey_ = 0;
+
+		if (payload == 0) {
+			setComTaskResult(RESULT_LOCAL_ERROR);
+			setResultDetails(errno);
+
+			return;
+		}
+
+		req_op = ANOUBIS_CHECKSUM_OP_ADDSIG;
+	} else {
+		payload = createCsMsg(path, &payloadLen);
+		if (payload == 0) {
+			setComTaskResult(RESULT_LOCAL_ERROR);
+			setResultDetails(errno);
+
+			return;
+		}
+
+		req_op = ANOUBIS_CHECKSUM_OP_ADDSUM;
 	}
 
 	/* Send request to daemon */
 	ta =  anoubis_client_csumrequest_start(getComHandler()->getClient(),
-	    ANOUBIS_CHECKSUM_OP_ADDSUM, path, cs, len, 0, 0, ANOUBIS_CSUM_NONE);
+	    req_op, path, payload, payloadLen - keyIdLen_, keyIdLen_, 0,
+	    ANOUBIS_CSUM_NONE);
+
+	free(payload);
+
 	if(!ta) {
 		setComTaskResult(RESULT_COM_ERROR);
 		return;
@@ -123,4 +189,78 @@ ComCsumAddTask::exec(void)
 		setComTaskResult(RESULT_SUCCESS);
 
 	anoubis_transaction_destroy(ta);
+}
+
+u_int8_t *
+ComCsumAddTask::createCsMsg(const char *path, int *payload_len)
+{
+	u_int8_t	*payload;
+	int		result;
+
+	if ((path == 0) || (payload_len == 0)) {
+		errno = EINVAL;
+		return (0);
+	}
+
+	/* Need a message, which can hold the checksum */
+	*payload_len = ANOUBIS_CS_LEN;
+	payload = (u_int8_t *)malloc(*payload_len);
+	if (payload == 0)
+		return (0);
+
+	/* Calculate checksum */
+	result = anoubis_csum_calc(path, payload, payload_len);
+	if (result < 0) {
+		errno = -result;
+		free(payload);
+		return (0);
+	}
+
+	/* Success */
+	return (payload);
+}
+
+u_int8_t *
+ComCsumAddTask::createSigMsg(const char *path, struct anoubis_sig *key,
+    u_int8_t *keyid, int keyid_len, int *payload_len)
+{
+	u_int8_t	cs[ANOUBIS_CS_LEN], *sig, *payload;
+	int		cs_len;
+	unsigned int	sig_len;
+	int		result;
+
+	if ((path == 0) || (key == 0) || (keyid == 0) || (keyid_len < 0) ||
+	    (payload_len == 0)) {
+		errno = EINVAL;
+		return (0);
+	}
+
+	/* Calculate the checksum of the file */
+	cs_len = ANOUBIS_CS_LEN;
+	result = anoubis_csum_calc(path, cs, &cs_len);
+	if (result < 0) {
+		errno = -result;
+		return (0);
+	}
+
+	/* Sign the checksum */
+	sig = anoubis_sign_csum(key, cs, &sig_len);
+	if (sig == 0)
+		return (0);
+
+	/* Need a message, which can hold key-id and signature */
+	*payload_len = keyid_len + sig_len;
+	payload = (u_int8_t *)malloc(*payload_len);
+	if (payload == 0) {
+		free(sig);
+		return (0);
+	}
+
+	/* Build the message: keyid followed by signature */
+	memcpy(payload, keyid, keyid_len);
+	memcpy(payload + keyid_len, sig, sig_len);
+	free(sig);
+
+	/* Success */
+	return (payload);
 }

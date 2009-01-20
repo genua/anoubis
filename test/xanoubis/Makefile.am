@@ -76,11 +76,13 @@ libprotocolserver_CPPFLAGS = \
 libprotocolclient_CPPFLAGS = \
 	-I$(top_srcdir)/$(anoubisprotocoldir) \
 	-I$(top_srcdir)/$(anoubisprotocoldir)/client
+libanoubissig_CPPFLAGS = -I$(top_srcdir)/$(anoubissigdir)
 libGUIcomponents_CPPFLAGS = \
 	$(libanouibisui_CPPFLAGS) \
 	$(libapn_CPPFLAGS) \
 	$(libanoubischat_CPPFLAGS) \
 	$(libprotocolclient_CPPFLAGS) \
+	$(libanoubissig_CPPFLAGS) \
 	-I$(top_srcdir)/include \
 	-I$(top_srcdir)/$(xanoubisdir) \
 	-I$(top_srcdir)/$(xanoubisdir)/model \

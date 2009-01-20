@@ -139,6 +139,12 @@ PrivKey::isLoaded(void) const
 	return (this->privKey_ != 0);
 }
 
+struct anoubis_sig *
+PrivKey::getKey(void) const
+{
+	return (this->privKey_);
+}
+
 bool
 PrivKey::startTimer(void)
 {

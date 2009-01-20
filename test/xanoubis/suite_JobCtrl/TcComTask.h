@@ -74,6 +74,21 @@ class TcComTask : public TestHandler
 		void setupTestSfsListEmpty(void);
 		void onTestSfsListEmpty(TaskEvent &);
 
+		void setupTestSigAdd(void);
+		void onTestSigAdd(TaskEvent &);
+
+		void setupTestSigGet(void);
+		void onTestSigGet(TaskEvent &);
+
+		void setupTestSigListNotEmpty(void);
+		void onTestSigListNotEmpty(TaskEvent &);
+
+		void setupTestSigDel(void);
+		void onTestSigDel(TaskEvent &);
+
+		void setupTestSigListEmpty(void);
+		void onTestSigListEmpty(TaskEvent &);
+
 	private:
 		int			testCounter_;
 		bool			exit_;

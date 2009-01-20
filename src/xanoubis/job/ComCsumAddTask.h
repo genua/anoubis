@@ -36,6 +36,11 @@
  * You have to specify the filename with ComCsumAddTask::setFile(). The
  * checksum of this file is calculated and send to anoubisd.
  *
+ * You can bind the operation to a certificate. In this case, the checksum is
+ * calculated and signed with the key specified with setPrivateKey(). Then the
+ * signed checksum is assigned to the certificate behind the key-id specified
+ * with setKeyId() and sent back to anoubisd.
+ *
  * Supported error-codes:
  * - <code>RESULT_LOCAL_ERROR</code> Calculation of checksum failed.
  *   getResultDetails() returns the error-code and can be evaluated by
@@ -65,6 +70,11 @@ class ComCsumAddTask : public ComTask
 		ComCsumAddTask(const wxString &);
 
 		/**
+		 * D'tor.
+		 */
+		~ComCsumAddTask(void);
+
+		/**
 		 * Returns the source-file.
 		 *
 		 * The this file the checksum is calculated and send to
@@ -85,6 +95,41 @@ class ComCsumAddTask : public ComTask
 		void setFile(const wxString &);
 
 		/**
+		 * Provides a key-id used by the operation.
+		 *
+		 * Once configured, the signed checksum of the file is assigned
+		 * to the certificate behind the configured key-id.
+		 *
+		 * @param keyId The key-id of the certificate
+		 * @param keyIdLen Length of keyId
+		 * @return true if you specified a correct key-id, false
+		 *         otherwise.
+		 *
+		 * @note Furthermore you need to configure a private-key to use
+		 *       signed checksums.
+		 * @see LocalCertificate
+		 * @see setPrivateKey()
+		 */
+		bool setKeyId(const u_int8_t *, int);
+
+		/**
+		 * Configures a private-key.
+		 *
+		 * The key is used to sign the checksum of the file. As soon as
+		 * the signature is calculated, the internal assignment to the
+		 * private key is removed. Thus, if you want to re-use the same
+		 * instance again, don't forget to call this method again!
+		 *
+		 * @param key The private key
+		 *
+		 * @note Furthermore you need to configure the key-id to use
+		 *       signed checksums.
+		 * @see PrivKey
+		 * @see setKeyId()
+		 */
+		void setPrivateKey(struct anoubis_sig *);
+
+		/**
 		 * Implementation of Task::getEventType().
 		 */
 		wxEventType getEventType(void) const;
@@ -95,7 +140,37 @@ class ComCsumAddTask : public ComTask
 		void exec(void);
 
 	private:
-		wxString	file_;
+		wxString		file_;
+		u_int8_t		*keyId_;
+		int			keyIdLen_;
+		struct anoubis_sig	*privKey_;
+
+		/**
+		 * Creates the payload sent to anoubisd in case of unsigned
+		 * checksums.
+		 *
+		 * The checksum is calculated and assigned to the payload.
+		 *
+		 * @param path Path to file to be checksumed
+		 * @param payload_len Length of returned payload-buffer is
+		 *                    written into this argument.
+		 */
+		static u_int8_t *createCsMsg(const char *, int *);
+
+		/**
+		 * Creates the payload sent to anoubisd in case of signed
+		 * checksums.
+		 *
+		 * The checksum is calculated and signed. Together with the
+		 * key-id, there are appended to the payload.
+		 *
+		 * @param path Path to file to be checksumed
+		 * @param key Private key used to sign the checksum
+		 * @param payload_len Length of returned payload-buffer is
+		 *                    written into this argument.
+		 */
+		static u_int8_t *createSigMsg(const char *,
+		    struct anoubis_sig *, u_int8_t *, int, int *);
 };
 
 #endif	/* _COMCSUMADDTASK_H_ */

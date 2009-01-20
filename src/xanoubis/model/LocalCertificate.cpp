@@ -99,6 +99,12 @@ LocalCertificate::getDistinguishedName(void) const
 		return (wxEmptyString);
 }
 
+struct anoubis_sig *
+LocalCertificate::getCertificate(void) const
+{
+	return (this->cert_);
+}
+
 bool
 LocalCertificate::canLoad(void) const
 {
@@ -114,9 +120,12 @@ LocalCertificate::isLoaded(void) const
 bool
 LocalCertificate::load(void)
 {
+	/* XXX Error handling? */
+	int error = 0;
+
 	/* Read certificate */
 	struct anoubis_sig *cert = anoubis_sig_pub_init(
-	    0, certFile_.fn_str(), 0, 0);
+	    0, certFile_.fn_str(), 0, &error);
 
 	unload(); /* Destroy previously loaded certificate */
 

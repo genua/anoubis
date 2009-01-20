@@ -32,6 +32,7 @@
 #include <wx/filename.h>
 
 #include <apn.h>
+#include <anoubis_sig.h>
 
 #include <ComCsumAddTask.h>
 #include <ComCsumDelTask.h>
@@ -41,6 +42,7 @@
 #include <ComRegistrationTask.h>
 #include <ComSfsListTask.h>
 #include <JobCtrl.h>
+#include <KeyCtrl.h>
 
 #include "TcComTask.h"
 
@@ -136,6 +138,21 @@ TcComTask::nextTest()
 		setupTestSfsListEmpty();
 		break;
 	case 11:
+		setupTestSigAdd();
+		break;
+	case 12:
+		setupTestSigGet();
+		break;
+	case 13:
+		setupTestSigListNotEmpty();
+		break;
+	case 14:
+		setupTestSigDel();
+		break;
+	case 15:
+		setupTestSigListEmpty();
+		break;
+	case 16:
 		setupTestUnregister();
 		break;
 	default:
@@ -627,6 +644,364 @@ TcComTask::onTestSfsListEmpty(TaskEvent &event)
 	    "Is: %i\n", result.Count());
 
 	trace("Leaving TcComTask::onTestSfsListEmpty\n");
+	nextTest();
+}
+
+void
+TcComTask::setupTestSigAdd(void)
+{
+	trace("Enter TcComTask::setupTestSigAdd\n");
+	wxString certFile = wxFileName::GetHomeDir() + wxT("/pubkey");
+	wxString keyFile = wxFileName::GetHomeDir() + wxT("/privkey");
+	wxString file = wxFileName::GetHomeDir() + wxT("/policy");
+
+	JobCtrl::getInstance()->Connect(anTASKEVT_CSUM_ADD,
+	    wxTaskEventHandler(TcComTask::onTestSigAdd), NULL, this);
+
+	KeyCtrl *keyCtrl = KeyCtrl::getInstance();
+
+	LocalCertificate &cert = keyCtrl->getLocalCertificate();
+	cert.setFile(certFile);
+
+	assertUnless(cert.load(),
+	    "Failed to load certificate from %s\n",
+	    (const char *)certFile.fn_str());
+
+	trace(" * KeyId: %s\n", (const char *)cert.getKeyId().fn_str());
+	trace(" * Fingerprint: %s\n",
+	    (const char *)cert.getFingerprint().fn_str());
+	trace(" * DN: %s\n",
+	    (const char *)cert.getDistinguishedName().fn_str());
+
+	PrivKey &privKey = keyCtrl->getPrivateKey();
+	privKey.setFile(keyFile);
+
+	assertUnless(privKey.load(wxT("1234")),
+	    "Failed to load private key from %s\n",
+	    (const char *)keyFile.fn_str());
+
+	struct anoubis_sig *raw_cert = cert.getCertificate();
+
+	ComCsumAddTask *next = new ComCsumAddTask;
+	next->setFile(file);
+	assertUnless(next->setKeyId(raw_cert->keyid, raw_cert->idlen),
+	    "Failed to setup task with key-id.");
+	next->setPrivateKey(privKey.getKey());
+
+	trace("Scheduling ComCsumAddTask: %p\n", next);
+	JobCtrl::getInstance()->addTask(next);
+
+	trace("Leaving TcComTask::setupTestSigAdd\n");
+}
+
+void
+TcComTask::onTestSigAdd(TaskEvent &event)
+{
+	trace("Enter TcComTask::onTestSigAdd\n");
+
+	ComCsumAddTask *t = dynamic_cast<ComCsumAddTask*>(event.getTask());
+	trace("ComCsumAddTask = %p\n", t);
+
+	assertUnless(t->getComTaskResult() == ComTask::RESULT_SUCCESS,
+	    "Failed to add a signed checksum: %i\n", t->getComTaskResult());
+
+	assertUnless(t->getResultDetails() == 0,
+	    "ResultDetails: %s (%i)\n",
+	    strerror(t->getResultDetails()), t->getResultDetails());
+
+	delete t;
+
+	trace("Leaving TcComTask::onTestSigAdd\n");
+	nextTest();
+}
+
+void
+TcComTask::setupTestSigGet(void)
+{
+	trace("Enter TcComTask::setupTestSigGet\n");
+	wxString certFile = wxFileName::GetHomeDir() + wxT("/pubkey");
+	wxString file = wxFileName::GetHomeDir() + wxT("/policy");
+
+	JobCtrl::getInstance()->Connect(anTASKEVT_CSUM_GET,
+	    wxTaskEventHandler(TcComTask::onTestSigGet), NULL, this);
+
+	KeyCtrl *keyCtrl = KeyCtrl::getInstance();
+
+	LocalCertificate &cert = keyCtrl->getLocalCertificate();
+	cert.setFile(certFile);
+
+	assertUnless(cert.load(),
+	    "Failed to load certificate from %s\n",
+	    (const char *)certFile.fn_str());
+
+	trace(" * KeyId: %s\n", (const char *)cert.getKeyId().fn_str());
+	trace(" * Fingerprint: %s\n",
+	    (const char *)cert.getFingerprint().fn_str());
+	trace(" * DN: %s\n",
+	    (const char *)cert.getDistinguishedName().fn_str());
+
+	struct anoubis_sig *raw_cert = cert.getCertificate();
+
+	ComCsumGetTask *next = new ComCsumGetTask;
+	next->setFile(file);
+	assertUnless(next->setKeyId(raw_cert->keyid, raw_cert->idlen),
+	    "Failed to setup task with key-id.");
+
+	trace("Scheduling ComCsumGetTask: %p\n", next);
+	JobCtrl::getInstance()->addTask(next);
+
+	trace("Leaving TcComTask::setupTestSigGet\n");
+}
+
+void
+TcComTask::onTestSigGet(TaskEvent &event)
+{
+	trace("TcComTask::onTestSigGet\n");
+
+	ComCsumGetTask *t = dynamic_cast<ComCsumGetTask*>(event.getTask());
+	trace("ComCsumGetTask = %p\n", t);
+
+	assertUnless(t->getComTaskResult() == ComTask::RESULT_SUCCESS,
+	    "Failed to get a checksum!\n"
+	    "ComTaskResult = %i\n"
+	    "ResultDetails = %i\n",
+	    t->getComTaskResult(), t->getResultDetails());
+
+	assertUnless(t->getResultDetails() == 0,
+	    "ResultDetails: %s (%i)\n",
+	    strerror(t->getResultDetails()), t->getResultDetails());
+
+	u_int8_t cs[ANOUBIS_CS_LEN];
+	assertUnless(t->getCsum(cs, ANOUBIS_CS_LEN) == ANOUBIS_CS_LEN,
+	    "Unexpected checksum received!");
+
+	wxString csum = t->getCsumStr();
+	trace("Received checksum from task\n");
+
+	assertUnless(csum == policyCsum,
+	    "Unexpected checksum received!\n"
+	    "Is      : %s\n"
+	    "Expected: %s\n",
+	    (const char*)csum.fn_str(), (const char*)policyCsum.fn_str());
+
+	delete t;
+	trace("Leaving TcComTask::onTestSigGet\n");
+	nextTest();
+}
+
+void
+TcComTask::setupTestSigListNotEmpty(void)
+{
+	trace("Enter TcComTask::setupTestSigListNotEmpty\n");
+	wxString certFile = wxFileName::GetHomeDir() + wxT("/pubkey");
+
+	JobCtrl::getInstance()->Connect(anTASKEVT_SFS_LIST,
+	    wxTaskEventHandler(TcComTask::onTestSigListNotEmpty), NULL, this);
+
+	KeyCtrl *keyCtrl = KeyCtrl::getInstance();
+
+	LocalCertificate &cert = keyCtrl->getLocalCertificate();
+	cert.setFile(certFile);
+
+	assertUnless(cert.load(),
+	    "Failed to load certificate from %s\n",
+	    (const char *)certFile.fn_str());
+
+	trace(" * KeyId: %s\n", (const char *)cert.getKeyId().fn_str());
+	trace(" * Fingerprint: %s\n",
+	    (const char *)cert.getFingerprint().fn_str());
+	trace(" * DN: %s\n",
+	    (const char *)cert.getDistinguishedName().fn_str());
+
+	struct anoubis_sig *raw_cert = cert.getCertificate();
+
+	ComSfsListTask *next = new ComSfsListTask;
+	next->setRequestParameter(getuid(), wxFileName::GetHomeDir());
+	assertUnless(next->setKeyId(raw_cert->keyid, raw_cert->idlen),
+	    "Failed to setup task with key-id.");
+
+	trace("Scheduling ComSfsListTask: %p\n", next);
+	JobCtrl::getInstance()->addTask(next);
+
+	trace("Leaving TcComTask::setupTestSigListNotEmpty\n");
+}
+
+void
+TcComTask::onTestSigListNotEmpty(TaskEvent &event)
+{
+	trace("TcComTask::onTestSigListNotEmpty\n");
+
+	ComSfsListTask *t = dynamic_cast<ComSfsListTask*>(event.getTask());
+	trace("ComSfsListTask = %p\n", t);
+
+	wxArrayString result = t->getFileList();
+	trace("sfs-list-size: %i\n", result.Count());
+
+	/*
+	 * XXX
+	 * Will return ENOENT if result.Count() is 0.
+	 * Known error in anoubisd (#924)
+	 */
+	/*if (t->getResultDetails() != 0) {
+		trace("ResultDetails: %s (%i)\n",
+		    strerror(t->getResultDetails()), t->getResultDetails());
+
+		result_ = __LINE__;
+		exit_ = true;
+		return;
+	}*/
+
+	delete t;
+
+	/* One entry expected */
+	assertUnless(result.Count() == 1,
+	    "Unexpected # of entries in sfs-list\n"
+	    "Expected: 1\n"
+	    "Is: %i\n", result.Count());
+
+	wxString first = result[0];
+	wxString second = wxT("policy");
+	assertUnless(first == second,
+	    "Unexpected content of sfs-list: %s\n",
+	    (const char*)result[0].fn_str());
+
+	trace("Leaving TcComTask::onTestSigListNotEmpty\n");
+	nextTest();
+}
+
+void
+TcComTask::setupTestSigDel(void)
+{
+	trace("Enter TcComTask::setupTestSigDel\n");
+	wxString certFile = wxFileName::GetHomeDir() + wxT("/pubkey");
+	wxString file = wxFileName::GetHomeDir() + wxT("/policy");
+
+	JobCtrl::getInstance()->Connect(anTASKEVT_CSUM_DEL,
+	    wxTaskEventHandler(TcComTask::onTestSigDel), NULL, this);
+
+	KeyCtrl *keyCtrl = KeyCtrl::getInstance();
+
+	LocalCertificate &cert = keyCtrl->getLocalCertificate();
+	cert.setFile(certFile);
+
+	assertUnless(cert.load(),
+	    "Failed to load certificate from %s\n",
+	    (const char *)certFile.fn_str());
+
+	trace(" * KeyId: %s\n", (const char *)cert.getKeyId().fn_str());
+	trace(" * Fingerprint: %s\n",
+	    (const char *)cert.getFingerprint().fn_str());
+	trace(" * DN: %s\n",
+	    (const char *)cert.getDistinguishedName().fn_str());
+
+	struct anoubis_sig *raw_cert = cert.getCertificate();
+
+	ComCsumDelTask *next = new ComCsumDelTask;
+	next->setFile(file);
+	assertUnless(next->setKeyId(raw_cert->keyid, raw_cert->idlen),
+	    "Failed to setup task with key-id.");
+
+	trace("Scheduling ComCsumDelTask: %p\n", next);
+	JobCtrl::getInstance()->addTask(next);
+
+	trace("Leaving TcComTask::setupTestSigDel\n");
+}
+
+void
+TcComTask::onTestSigDel(TaskEvent &event)
+{
+	trace("Enter TcComTask::onTestSigDel\n");
+
+	ComCsumDelTask *t = dynamic_cast<ComCsumDelTask*>(event.getTask());
+	trace("ComCsumDelTask = %p\n", t);
+
+	assertUnless(t->getComTaskResult() == ComTask::RESULT_SUCCESS,
+	    "Failed to remove a checksum!\n"
+	    "ComTaskResult = %i\n"
+	    "ResultDetails = %i\n",
+	    t->getComTaskResult(), t->getResultDetails());
+
+	assertUnless(t->getResultDetails() == 0,
+	    "ResultDetails: %s (%i)\n",
+	    strerror(t->getResultDetails()), t->getResultDetails());
+
+	delete t;
+
+	trace("Leaving TcComTask::onTestSigDel\n");
+	nextTest();
+}
+
+void
+TcComTask::setupTestSigListEmpty(void)
+{
+	trace("Enter TcComTask::setupTestSigListEmpty\n");
+	wxString certFile = wxFileName::GetHomeDir() + wxT("/pubkey");
+
+	JobCtrl::getInstance()->Connect(anTASKEVT_SFS_LIST,
+	    wxTaskEventHandler(TcComTask::onTestSigListEmpty), NULL, this);
+
+	KeyCtrl *keyCtrl = KeyCtrl::getInstance();
+
+	LocalCertificate &cert = keyCtrl->getLocalCertificate();
+	cert.setFile(certFile);
+
+	assertUnless(cert.load(),
+	    "Failed to load certificate from %s\n",
+	    (const char *)certFile.fn_str());
+
+	trace(" * KeyId: %s\n", (const char *)cert.getKeyId().fn_str());
+	trace(" * Fingerprint: %s\n",
+	    (const char *)cert.getFingerprint().fn_str());
+	trace(" * DN: %s\n",
+	    (const char *)cert.getDistinguishedName().fn_str());
+
+	struct anoubis_sig *raw_cert = cert.getCertificate();
+
+	ComSfsListTask *next = new ComSfsListTask;
+	next->setRequestParameter(getuid(), wxFileName::GetHomeDir());
+	assertUnless(next->setKeyId(raw_cert->keyid, raw_cert->idlen),
+	    "Failed to setup task with key-id.");
+
+	trace("Scheduling ComSfsListTask: %p\n", next);
+	JobCtrl::getInstance()->addTask(next);
+
+	trace("Leaving TcComTask::setupTestSigListEmpty\n");
+}
+
+void
+TcComTask::onTestSigListEmpty(TaskEvent &event)
+{
+	trace("TcComTask::onTestSigListEmpty\n");
+
+	ComSfsListTask *t = dynamic_cast<ComSfsListTask*>(event.getTask());
+	trace("ComSfsListTask = %p\n", t);
+
+	wxArrayString result = t->getFileList();
+	trace("sfs-list-size: %i\n", result.Count());
+
+	/*
+	 * XXX
+	 * Will return ENOENT if result.Count() is 0.
+	 * Known error in anoubisd (#924)
+	 */
+	/*if (t->getResultDetails() != 0) {
+		trace("ResultDetails: %s (%i)\n",
+		    strerror(t->getResultDetails()), t->getResultDetails());
+
+		result_ = __LINE__;
+		exit_ = true;
+		return;
+	}*/
+
+	delete t;
+
+	/* Empty list expected */
+	assertUnless(result.Count() == 0,
+	    "Unexpected # of entries in sfs-list\n"
+	    "Expected: 0\n"
+	    "Is: %i\n", result.Count());
+
+	trace("Leaving TcComTask::onTestSigListEmpty\n");
 	nextTest();
 }
 

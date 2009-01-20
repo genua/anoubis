@@ -164,6 +164,16 @@ class PrivKey : private wxTimer
 		 */
 		bool isLoaded(void) const;
 
+		/**
+		 * Returns the raw-key.
+		 *
+		 * The method will return the result of a successful
+		 * load-operation.
+		 *
+		 * @return The raw-key. If no key is loaded, 0 is returned.
+		 */
+		struct anoubis_sig *getKey(void) const;
+
 	private:
 		/**
 		 * Data structure representing the private key.

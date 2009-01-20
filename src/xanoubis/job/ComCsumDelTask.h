@@ -35,6 +35,9 @@
  *
  * You have to specify the filename with ComCsumDelTask::setFile().
  *
+ * You can bind the operation to a certificate. In this case, the checksum of
+ * the file is removed, which is signed by the configured certificate.
+ *
  * Supported error-codes:
  * - <code>RESULT_COM_ERROR</code> Communication error. Failed to create a
  *   transaction or to fetch the answer-message.
@@ -61,6 +64,11 @@ class ComCsumDelTask : public ComTask
 		ComCsumDelTask(const wxString &);
 
 		/**
+		 * D'tor.
+		 */
+		~ComCsumDelTask(void);
+
+		/**
 		 * Returns the source-file.
 		 *
 		 * The checksum of the file is removed.
@@ -80,6 +88,21 @@ class ComCsumDelTask : public ComTask
 		void setFile(const wxString &);
 
 		/**
+		 * Provides a key-id used by the operation.
+		 *
+		 * Once configured, the checksum of the file, which is signed
+		 * with the certificate behind the key-id is removed.
+		 *
+		 * @param keyId The key-id of the certificate
+		 * @param keyIdLen Length of keyId
+		 * @return true if you specified a correct key-id, false
+		 *         otherwise.
+		 *
+		 * @see LocalCertificate
+		 */
+		bool setKeyId(const u_int8_t *, int);
+
+		/**
 		 * Implementation of Task::getEventType().
 		 */
 		wxEventType getEventType(void) const;
@@ -91,6 +114,8 @@ class ComCsumDelTask : public ComTask
 
 	private:
 		wxString	file_;
+		u_int8_t	*keyId_;
+		int		keyIdLen_;
 };
 
 #endif	/* _COMCSUMDELTASK_H_ */
