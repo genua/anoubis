@@ -1277,6 +1277,7 @@ sfs_list(char *file)
 	struct stat			  sb;
 	char				**result = NULL;
 	char				**filter = NULL;
+	char				 *tmp = NULL;
 	DIR				  *dirp;
 	int				  sfs_cnt = 0;
 	int				  fil_cnt = 0;
@@ -1359,6 +1360,25 @@ sfs_list(char *file)
 			if (!strcmp(d_ent->d_name, ".") ||
 			    !strcmp(d_ent->d_name, ".."))
 				continue;
+			if (strcmp(file, "/") == 0)
+				ret = asprintf(&tmp, "/%s", d_ent->d_name);
+			else
+				ret = asprintf(&tmp, "%s/%s", file,
+				    d_ent->d_name);
+			if (ret < 0)
+				goto err;
+			if (opts & SFSSIG_OPT_SIG) {
+				if (!filter_hassig(tmp)) {
+					free(tmp);
+					continue;
+				}
+			} else {
+				if (!filter_hassum(tmp)) {
+					free(tmp);
+					continue;
+				}
+			}
+			free(tmp);
 			sfs_cnt++;
 			filter = realloc(result, sfs_cnt * sizeof(char *));
 			if (!filter)
@@ -1772,6 +1792,30 @@ sfs_tree(char *path, int op)
 			if (!strcmp(d_ent->d_name, ".") ||
 			    !strcmp(d_ent->d_name, ".."))
 				continue;
+			if (strcmp(path, "/") == 0)
+				ret = asprintf(&tmp, "/%s", d_ent->d_name);
+			else
+				ret = asprintf(&tmp, "%s/%s", path,
+				    d_ent->d_name);
+			if (ret < 0)
+				goto out;
+			if (opts & SFSSIG_OPT_SIG) {
+				if (!filter_hassig(tmp)) {
+					free(tmp);
+					tmp = NULL;
+					continue;
+				}
+			} else {
+				if (!filter_hassum(tmp)) {
+					free(tmp);
+					tmp = NULL;
+					continue;
+				}
+			}
+			ret = 0;
+			free(tmp);
+			tmp = NULL;
+
 			k++;
 			tmpalloc = realloc(result, k * sizeof(char *));
 			if (!tmpalloc)
@@ -1784,8 +1828,8 @@ sfs_tree(char *path, int op)
 		}
 		closedir(dirp);
 	}
-
-	free(tmp);
+	if (tmp)
+		free(tmp);
 	tmp = NULL;
 
 	for (j = 0; j < k; j++)
