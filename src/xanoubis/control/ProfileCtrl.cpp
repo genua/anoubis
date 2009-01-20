@@ -45,12 +45,8 @@
 ProfileCtrl::~ProfileCtrl(void)
 {
 	/* Destroy policies */
-	while (!ruleSetList_.empty()) {
-		PolicyRuleSet *rs = ruleSetList_.front();
-		ruleSetList_.pop_front();
-
-		delete rs;
-	}
+	cleanRuleSetList(ruleSetList_, true);
+	cleanRuleSetList(gcRuleSetList_, true);
 
 	/* Destroy tasks */
 	while (!requestTaskList_.empty()) {
@@ -92,7 +88,7 @@ ProfileCtrl::getAdminId(uid_t uid) const
 PolicyRuleSet *
 ProfileCtrl::getRuleSet(long id) const
 {
-	std::list<PolicyRuleSet *>::const_iterator it;
+	RuleSetList::const_iterator it;
 
 	for (it = ruleSetList_.begin(); it != ruleSetList_.end(); ++it) {
 		PolicyRuleSet *rs = (*it);
@@ -286,17 +282,26 @@ ProfileCtrl::importFromFile(const wxString &file)
 bool
 ProfileCtrl::importPolicy(PolicyRuleSet *rs)
 {
+	/* Try to clean outdated policies */
+	cleanRuleSetList(gcRuleSetList_, false);
+
 	if (rs == 0 || rs->hasErrors())
 		return (false);
 
 	/* Search and replace user-policy */
 	int id = seekId(rs->isAdmin(), rs->getUid());
 	if (id != -1) {
-		/* Remove previously inserted policy */
+		/*
+		 * Move previously inserted policy into "garbage" list if
+		 * locked for deletion
+		 */
 		PolicyRuleSet *oldrs = getRuleSet(id);
 		ruleSetList_.remove(oldrs);
 
-		delete oldrs;
+		if (oldrs->isLocked())
+			gcRuleSetList_.push_back(oldrs);
+		else
+			delete oldrs;
 	}
 
 	ruleSetList_.push_back(rs);
@@ -541,7 +546,7 @@ ProfileCtrl::getProfileSpec(const wxString &name)
 long
 ProfileCtrl::seekId(bool isAdmin, uid_t uid) const
 {
-	std::list<PolicyRuleSet *>::const_iterator it;
+	RuleSetList::const_iterator it;
 
 	for (it = ruleSetList_.begin(); it != ruleSetList_.end(); ++it) {
 		PolicyRuleSet *rs = (*it);
@@ -585,6 +590,21 @@ ProfileCtrl::scanDirectory(const wxString &path, wxArrayString &dest)
 	while (cont) {
 		dest.Add(filename);
 		cont = dir.GetNext(&filename);
+	}
+}
+
+void
+ProfileCtrl::cleanRuleSetList(RuleSetList &list, bool force)
+{
+	RuleSetList::iterator it;
+
+	for (it = list.begin(); it != list.end(); ++it) {
+		PolicyRuleSet *rs = (*it);
+
+		if (!rs->isLocked() || force) {
+			it = list.erase(it);
+			delete rs;
+		}
 	}
 }
 

@@ -236,6 +236,17 @@ teardown(void)
 	pc = NULL;
 }
 
+int
+testProfileCtrl(ProfileCtrl *ctrl, int flags)
+{
+	if (flags == 0)
+		return (ctrl->gcRuleSetList_.size());
+	else {
+		/* Open for other checks */
+		return (0);
+	}
+}
+
 START_TEST(ProfileCtrl_create)
 {
 	if (pc != pc->getInstance()) {
@@ -636,6 +647,48 @@ START_TEST(ProfileCtrl_getUnknownRuleSet)
 }
 END_TEST
 
+START_TEST(ProfileCtrl_MoveGcListNotLocked)
+{
+	long oldId = pc->getUserId();
+	PolicyRuleSet *oldRs = pc->getRuleSet(oldId);
+	fail_unless(oldRs != 0, "Failed to fetch policy");
+
+	fail_unless(pc->importFromProfile(wxT("default2")),
+	    "Failed to import another policy");
+
+	long newId = pc->getUserId();
+	fail_unless(oldId != newId, "Policy has not changed");
+
+	PolicyRuleSet *newRs = pc->getRuleSet(newId);
+	fail_unless(newRs != oldRs, "Policy has not changed");
+
+	/* oldRs is not locked and thus destroyed */
+	fail_unless(testProfileCtrl(pc, 0) == 0, "Gargabe list is not empty");
+}
+END_TEST
+
+START_TEST(ProfileCtrl_MoveGcListLocked)
+{
+	long oldId = pc->getUserId();
+	PolicyRuleSet *oldRs = pc->getRuleSet(oldId);
+	fail_unless(oldRs != 0, "Failed to fetch policy");
+
+	oldRs->lock();
+
+	fail_unless(pc->importFromProfile(wxT("default2")),
+	    "Failed to import another policy");
+
+	long newId = pc->getUserId();
+	fail_unless(oldId != newId, "Policy has not changed");
+
+	PolicyRuleSet *newRs = pc->getRuleSet(newId);
+	fail_unless(newRs != oldRs, "Policy has not changed");
+
+	/* oldRs is locked and thus moved to garbage-list */
+	fail_unless(testProfileCtrl(pc, 0) == 1, "Gargabe list is empty");
+}
+END_TEST
+
 TCase *
 getTc_ProfileCtrl(void)
 {
@@ -676,6 +729,8 @@ getTc_ProfileCtrl(void)
 	tcase_add_test(testCase, ProfileCtrl_getUserRuleSet);
 	tcase_add_test(testCase, ProfileCtrl_getAdminRuleSet);
 	tcase_add_test(testCase, ProfileCtrl_getUnknownRuleSet);
+	tcase_add_test(testCase, ProfileCtrl_MoveGcListNotLocked);
+	tcase_add_test(testCase, ProfileCtrl_MoveGcListLocked);
 
 	return (testCase);
 }

@@ -82,6 +82,42 @@ class PolicyRuleSet : public Subject
 		~PolicyRuleSet(void);
 
 		/**
+		 * Locks the ruleset.
+		 *
+		 * You are able to replace an active user- or admin-policy. If
+		 * a ruleset is locked, it is not deleted by ProfileCtrl, but
+		 * is not addressable anymore (not fetchable by
+		 * ProfileCtrl::getUserId(), ProfileCtrl::getAdminId()). This
+		 * is useful, if you need a reference to an already replaced
+		 * ruleset.
+		 *
+		 * To release the lock, call unlock(). To test the lock-state,
+		 * call isLocked().
+		 *
+		 * @see unlock()
+		 * @see isLocked()
+		 */
+		void lock(void);
+
+		/**
+		 * Releases the ruleset-lock again.
+		 *
+		 * When a ruleset is unlocked again, ProfileCtrl is allowed to
+		 * destroy the ruleset.
+		 */
+		void unlock(void);
+
+		/**
+		 * Tests whether the ruleset is locked.
+		 *
+		 * If the ruleset is locked, the ProfileCtrl is not allowed to
+		 * destroy the instance.
+		 *
+		 * @return true if locked, false otherwise.
+		 */
+		bool isLocked(void) const;
+
+		/**
 		 * Is ruleset empty?
 		 * @param None.
 		 * @return True if the ruleset contains no rules.
@@ -237,6 +273,7 @@ class PolicyRuleSet : public Subject
 		*/
 
 	private:
+		int			 refCnt_;
 		int			 priority_;
 		wxString		 origin_;
 		long			 ruleSetId_;

@@ -350,6 +350,11 @@ class ProfileCtrl : public wxEvtHandler, public Singleton<ProfileCtrl>
 		};
 
 		/**
+		 * A list of ruleset-pointers.
+		 */
+		typedef std::list<PolicyRuleSet *> RuleSetList;
+
+		/**
 		 * Flags specifies whether the controller is able to broadcast
 		 * any events.
 		 *
@@ -362,7 +367,13 @@ class ProfileCtrl : public wxEvtHandler, public Singleton<ProfileCtrl>
 		/**
 		 * Container of policies maintained by the controller.
 		 */
-		std::list<PolicyRuleSet *>	ruleSetList_;
+		RuleSetList			ruleSetList_;
+
+		/**
+		 * Another container of policies.
+		 * Contains rulesets, which can be deleted but still locked.
+		 */
+		RuleSetList			gcRuleSetList_;
 
 		/**
 		 * Container for ComPolicyRequestTasks, where the controller
@@ -446,6 +457,20 @@ class ProfileCtrl : public wxEvtHandler, public Singleton<ProfileCtrl>
 		static void scanDirectory(const wxString &, wxArrayString &);
 
 		/**
+		 * Removes and destroys rulsets from a list.
+		 *
+		 * Rulesets are removed and destroyed, if the ruleset is not
+		 * locked or the force-flag is set.
+		 *
+		 * @param list List of rulesets to be cleaned
+		 * @param force If set to true, the rulesets are removed and
+		 *              destroy independent from the lock-state.
+		 *
+		 * @see PolicyRuleSet::isLocked()
+		 */
+		static void cleanRuleSetList(RuleSetList &, bool);
+
+		/**
 		 * Answer escalation
 		 * An previous received escalation was answered by the user.
 		 * An anEVT_ANSWER_ESCALATION event was sent to inform anyone
@@ -459,6 +484,7 @@ class ProfileCtrl : public wxEvtHandler, public Singleton<ProfileCtrl>
 		void OnAnswerEscalation(wxCommandEvent &);
 
 	friend class Singleton<ProfileCtrl>;
+	friend int testProfileCtrl(ProfileCtrl *, int);
 };
 
 #endif	/* _PROFILECTRL_H_ */

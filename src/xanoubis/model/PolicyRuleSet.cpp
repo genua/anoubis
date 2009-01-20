@@ -40,6 +40,7 @@
 PolicyRuleSet::PolicyRuleSet(int priority, uid_t uid,
     struct apn_ruleset *ruleSet)
 {
+	refCnt_     = 0;
 	ruleSetId_  = wxNewId();
 	uid_	    = uid;
 	priority_   = priority;
@@ -54,6 +55,7 @@ PolicyRuleSet::PolicyRuleSet(int priority, uid_t uid,
 PolicyRuleSet::PolicyRuleSet(int priority, uid_t uid, const wxString &fileName,
     bool checkPerm)
 {
+	refCnt_     = 0;
 	ruleSetId_  = wxNewId();
 	uid_	    = uid;
 	priority_   = priority;
@@ -69,6 +71,25 @@ PolicyRuleSet::~PolicyRuleSet(void)
 {
 	clean();
 	apn_free_ruleset(ruleSet_);
+}
+
+void
+PolicyRuleSet::lock(void)
+{
+	refCnt_++;
+}
+
+void
+PolicyRuleSet::unlock(void)
+{
+	if (refCnt_ > 0)
+		refCnt_--;
+}
+
+bool
+PolicyRuleSet::isLocked(void) const
+{
+	return (refCnt_ > 0);
 }
 
 bool
