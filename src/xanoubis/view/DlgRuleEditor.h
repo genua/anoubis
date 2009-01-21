@@ -554,6 +554,21 @@ protected:
 		 */
 		void appListUpDown(bool);
 
+		/**
+		 * Handle update of App-Rules column header options chosen by
+		 * the user.
+		 * @param None.
+		 * @return Nothing.
+		 */
+		virtual void onAppListColumnsButtonClick(wxCommandEvent &);
+
+		/**
+		 * Handle update of Filter-Rules column header options chosen by
+		 * the user.
+		 * @param None.
+		 * @return Nothing.
+		 */
+		virtual void onFilterListColumnsButtonClick(wxCommandEvent &);
 };
 
 #endif /* __DlgRuleEditor__ */

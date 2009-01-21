@@ -25,9 +25,17 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <wx/defs.h>	/* mandatory but missing in choicdlg.h */
+#include <wx/choicdlg.h>
+#include <wx/dynarray.h>
+#include <wx/arrimpl.cpp>
+
 #include "DlgRuleEditor.h"
 
 #include "main.h"
+#include "AlfAppPolicy.h"
+#include "ContextAppPolicy.h"
+#include "SfsAppPolicy.h"
 #include "PolicyRuleSet.h"
 #include "ProfileCtrl.h"
 #include "RuleEditorAddPolicyVisitor.h"
@@ -209,6 +217,10 @@ DlgRuleEditor::onAppPolicySelect(wxListEvent & event)
 			appListDownButton->Enable(policy->canMoveDown());
 			appListDeleteButton->Enable();
 		}
+
+		/* enable customisation of header columns */
+		filterListColumnsButton->Enable(true);
+
 		/* Ensure the changes will apear on the screen */
 		Layout();
 		Refresh();
@@ -265,6 +277,10 @@ DlgRuleEditor::refreshRuleSet(long appsel, long filtsel)
 	appPolicyListCtrl->EnsureVisible(apptop + applen - 1);
 	filterPolicyListCtrl->EnsureVisible(filttop);
 	filterPolicyListCtrl->EnsureVisible(filttop + filtlen - 1);
+
+	/* disable customisation of header columns */
+	filterListColumnsButton->Enable(false);
+
 	Layout();
 	Refresh();
 }
@@ -342,6 +358,114 @@ DlgRuleEditor::onAppListDownClick(wxCommandEvent &)
 }
 
 void
+DlgRuleEditor::onAppListColumnsButtonClick(wxCommandEvent &)
+{
+	wxArrayString           choices;
+	wxMultiChoiceDialog     *multiChoiceDlg;
+	wxArrayInt              selections;
+
+	/* set visible selections for policy */
+	for (size_t i=1; i<APP_EOL; i++) {
+		choices.Add(appColumns_[i]->getTitle());
+		/* get visible selections */
+		if (appColumns_[i]->isVisible()) {
+			selections.Add(i-1);
+		}
+	}
+
+	/* get chosen column headers from user dialogue */
+	multiChoiceDlg = new wxMultiChoiceDialog(this, _("Table columns"),
+	    _("Please select the columns to be shown"), choices);
+	multiChoiceDlg->SetSelections(selections);
+
+	if (multiChoiceDlg->ShowModal() == wxID_OK) {
+		for (size_t i=1; i < APP_EOL; i++) {
+			appColumns_[i]->setVisability(false);
+		}
+		selections.Clear();
+		selections = multiChoiceDlg->GetSelections();
+		for (size_t i=0; i<selections.GetCount(); i++) {
+			appColumns_[selections.Item(i)+1]->setVisability(true);
+		}
+
+		/* call to enforce redrawing of the current view */
+		loadRuleSet();
+	}
+
+	delete multiChoiceDlg;
+}
+
+void
+DlgRuleEditor::onFilterListColumnsButtonClick(wxCommandEvent &)
+{
+	wxArrayString			choices;
+	wxMultiChoiceDialog		*multiChoiceDlg;
+	wxArrayInt			selections;
+	AppPolicy			*policy;
+	void*				data;
+	long				idx;
+	ListCtrlColumn			**columns = NULL;
+	size_t				last = 0;
+	RuleEditorAddPolicyVisitor	addVisitor(this);
+
+	idx = ((wxListView*)appPolicyListCtrl)->GetFirstSelected();
+	data = (void*)appPolicyListCtrl->GetItemData(idx);
+	policy = wxDynamicCast(data, AppPolicy);
+
+	if (policy != NULL) {
+		if (policy->IsKindOf(CLASSINFO(AlfAppPolicy))) {
+			columns = alfColumns_;
+			last = ALF_EOL;
+		} else if (policy->IsKindOf(CLASSINFO(ContextAppPolicy))) {
+			columns = ctxColumns_;
+			last = CTX_EOL;
+		} else if (policy->IsKindOf(CLASSINFO(SfsAppPolicy))) {
+			columns = sfsColumns_;
+			last = SFS_EOL;
+		/* 
+	 	* XXX [ST]: SB not implemented yet
+		* } else if (policy->IsKindOf(CLASSINFO(SbAppPolicy))) {
+		* 	columns = sbColumns_;
+		* 	last = SB_EOL;
+	 	*/
+		} else {
+			/* fall through */
+		}
+	
+		/* set visible selections depending on policy */
+		for (size_t i=1; i<last; i++) {
+			choices.Add(columns[i]->getTitle());
+			if (columns[i]->isVisible()) {
+				selections.Add(i-1);
+			}
+		}
+
+		/* get chosen column headers from user dialogue */
+		multiChoiceDlg = new wxMultiChoiceDialog(this,
+		    _("Table columns"),
+		    _("Please select the columns to be shown"), choices);
+		multiChoiceDlg->SetSelections(selections);
+
+		if (multiChoiceDlg->ShowModal() == wxID_OK) {
+			for (size_t i=1; i < last; i++) {
+				columns[i]->setVisability(false);
+			}
+			selections.Clear();
+			selections = multiChoiceDlg->GetSelections();
+			for (size_t i=0; i<selections.GetCount(); i++) {
+				columns[selections.Item(i)+1]->setVisability(true);
+			}
+
+			/* call to enforce redrawing of the current view */
+			wipeFilterList();
+			policy->acceptOnFilter(addVisitor);
+		}
+
+		delete multiChoiceDlg;
+	}
+}
+
+void
 DlgRuleEditor::loadRuleSet(void)
 {
 	RuleEditorAddPolicyVisitor	 addVisitor(this);
@@ -368,6 +492,9 @@ DlgRuleEditor::loadRuleSet(void)
 
 	/* As no app is selected, we remove the accidental filled filters. */
 	wipeFilterList();
+
+	/* enable button for customising header columns */
+	appListColumnsButton->Enable(true);
 }
 
 long
@@ -415,6 +542,10 @@ DlgRuleEditor::wipeAppList(void)
 
 	/* Remove all columns, too and update view. */
 	appPolicyListCtrl->ClearAll();
+
+	/* disable button for customising header columns */
+	appListColumnsButton->Enable(false);
+
 	Refresh();
 }
 
