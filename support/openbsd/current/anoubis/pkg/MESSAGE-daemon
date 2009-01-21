@@ -1,4 +1,0 @@
-Please remember to restart the anoubisd after an upgrade.
-
-You can do so by running the following command as root:
-    /sbin/anoubisctl restart
