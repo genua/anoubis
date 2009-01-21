@@ -235,6 +235,10 @@ DlgRuleEditor::onAppPolicySelect(wxListEvent & event)
 			appListUpButton->Enable(policy->canMoveUp());
 			appListDownButton->Enable(policy->canMoveDown());
 			appListDeleteButton->Enable();
+		} else {
+			appListUpButton->Disable();
+			appListDownButton->Disable();
+			appListDeleteButton->Disable();
 		}
 
 		/* enable customisation of header columns */
@@ -243,6 +247,27 @@ DlgRuleEditor::onAppPolicySelect(wxListEvent & event)
 		/* Ensure the changes will apear on the screen */
 		Layout();
 		Refresh();
+	}
+}
+
+void
+DlgRuleEditor::onFilterPolicySelect(wxListEvent & event)
+{
+	Policy		*policy;
+	PolicyRuleSet	*ruleset;
+
+	policy = wxDynamicCast((void*)event.GetData(), Policy);
+	if (!policy)
+		return;
+	ruleset = policy->getParentRuleSet();
+	if (ruleset && geteuid() == 0 || !ruleset->isAdmin()) {
+		filterListUpButton->Enable(policy->canMoveUp());
+		filterListDownButton->Enable(policy->canMoveDown());
+		filterListDeleteButton->Enable();
+	} else {
+		filterListUpButton->Disable();
+		filterListDownButton->Disable();
+		filterListDeleteButton->Disable();
 	}
 }
 
@@ -256,6 +281,14 @@ DlgRuleEditor::onAppPolicyDeSelect(wxListEvent & WXUNUSED(event))
 	appListDeleteButton->Disable();
 	Layout();
 	Refresh();
+}
+
+void
+DlgRuleEditor::onFilterPolicyDeSelect(wxListEvent & WXUNUSED(event))
+{
+	filterListUpButton->Disable();
+	filterListDownButton->Disable();
+	filterListDeleteButton->Disable();
 }
 
 void
@@ -304,25 +337,19 @@ DlgRuleEditor::refreshRuleSet(long appsel, long filtsel)
 	Refresh();
 }
 
-void
-DlgRuleEditor::appListUpDown(bool up)
+long
+DlgRuleEditor::listUpDown(wxListCtrl *list, bool up)
 {
 	long		 item;
 	Policy		*policy;
 	bool		 result;
 
-	item = appPolicyListCtrl->GetNextItem(-1, wxLIST_NEXT_ALL,
-	    wxLIST_STATE_SELECTED);
-	if (item < 0) {
-		appListUpButton->Disable();
-		appListDownButton->Disable();
-		appListDeleteButton->Disable();
-		return;
-	}
-	policy = wxDynamicCast((void*)appPolicyListCtrl->GetItemData(item),
-	    AppPolicy);
+	item = list->GetNextItem(-1, wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED);
+	if (item < 0 || (item == 0 && up))
+		return -1;
+	policy = wxDynamicCast((void*)list->GetItemData(item), Policy);
 	if (!policy)
-		return;
+		return -1;
 	if (up) {
 		result = policy->moveUp();
 		item--;
@@ -330,8 +357,7 @@ DlgRuleEditor::appListUpDown(bool up)
 		result = policy->moveDown();
 		item++;
 	}
-	if (result)
-		refreshRuleSet(item, -1);
+	return item;
 }
 
 void
@@ -343,14 +369,10 @@ DlgRuleEditor::onAppListDeleteClick(wxCommandEvent &)
 	item = appPolicyListCtrl->GetNextItem(-1, wxLIST_NEXT_ALL,
 	    wxLIST_STATE_SELECTED);
 	count = appPolicyListCtrl->GetItemCount();
-	if (item < 0) {
-		appListUpButton->Disable();
-		appListDownButton->Disable();
-		appListDeleteButton->Disable();
+	if (item < 0)
 		return;
-	}
 	policy = wxDynamicCast((void*)appPolicyListCtrl->GetItemData(item),
-	    AppPolicy);
+	    Policy);
 	if (!policy)
 		return;
 	if (item && (item + 1 >= count))
@@ -365,15 +387,64 @@ DlgRuleEditor::onAppListDeleteClick(wxCommandEvent &)
 }
 
 void
+DlgRuleEditor::onFilterListDeleteClick(wxCommandEvent &)
+{
+	long		 item, count;
+	Policy		*policy;
+
+	item = filterPolicyListCtrl->GetNextItem(-1, wxLIST_NEXT_ALL,
+	    wxLIST_STATE_SELECTED);
+	count = filterPolicyListCtrl->GetItemCount();
+	if (item < 0)
+		return;
+	policy = wxDynamicCast((void*)filterPolicyListCtrl->GetItemData(item),
+	    Policy);
+	if (!policy)
+		return;
+	if (item && (item + 1 >= count))
+		item--;
+	if (policy->remove())
+		refreshRuleSet(-1, item);
+}
+
+void
 DlgRuleEditor::onAppListUpClick(wxCommandEvent &)
 {
-	appListUpDown(true);
+	long	item;
+
+	item = listUpDown(appPolicyListCtrl, true);
+	if (item >= 0)
+		refreshRuleSet(item, -1);
+}
+
+void
+DlgRuleEditor::onFilterListUpClick(wxCommandEvent &)
+{
+	long	item;
+
+	item = listUpDown(filterPolicyListCtrl, true);
+	if (item >= 0)
+		refreshRuleSet(-1, item);
 }
 
 void
 DlgRuleEditor::onAppListDownClick(wxCommandEvent &)
 {
-	appListUpDown(false);
+	long	item;
+
+	item = listUpDown(appPolicyListCtrl, false);
+	if (item >= 0)
+		refreshRuleSet(item, -1);
+}
+
+void
+DlgRuleEditor::onFilterListDownClick(wxCommandEvent &)
+{
+	long	item;
+
+	item = listUpDown(filterPolicyListCtrl, false);
+	if (item >= 0)
+		refreshRuleSet(-1, item);
 }
 
 void

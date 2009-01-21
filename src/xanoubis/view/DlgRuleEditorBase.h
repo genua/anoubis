@@ -231,6 +231,11 @@ class DlgRuleEditorBase : public wxFrame
 		virtual void onAppListDownClick( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onAppListDeleteClick( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onFilterListColumnsButtonClick( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onFilterPolicyDeSelect( wxListEvent& event ){ event.Skip(); }
+		virtual void onFilterPolicySelect( wxListEvent& event ){ event.Skip(); }
+		virtual void onFilterListUpClick( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onFilterListDownClick( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onFilterListDeleteClick( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnAppBinaryTextCtrl( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnAppBinaryModifyButton( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnAppValidateChkSumButton( wxCommandEvent& event ){ event.Skip(); }

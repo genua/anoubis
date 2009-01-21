@@ -441,6 +441,20 @@ class DlgRuleEditor : public DlgRuleEditorBase
 		virtual void onAppPolicyDeSelect(wxListEvent &);
 
 		/**
+		 * Handle selection of filter policy.
+		 * @param[in] 1st The event.
+		 * @return Nothing.
+		 */
+		virtual void onFilterPolicySelect(wxListEvent &);
+
+		/**
+		 * Handle de-selection of filter policy.
+		 * @param[in] 1st The event.
+		 * @return Nothing.
+		 */
+		virtual void onFilterPolicyDeSelect(wxListEvent &);
+
+		/**
 		 * Load new ruleSet.
 		 * This will clear the appList and load it with new content.
 		 * @param None.
@@ -578,13 +592,36 @@ class DlgRuleEditor : public DlgRuleEditorBase
 		 */
 		void onAppListDeleteClick(wxCommandEvent &);
 
+		/**
+		 * Move selected rule up
+		 * @param none
+		 * @return Nothing.
+		 */
+		void onFilterListUpClick(wxCommandEvent &);
+
+		/**
+		 * Move selected rule down
+		 * @param none
+		 * @return Nothing.
+		 */
+		void onFilterListDownClick(wxCommandEvent &);
+
+		/**
+		 * Delete selected rule
+		 * @param none
+		 * @return Nothing.
+		 */
+		void onFilterListDeleteClick(wxCommandEvent &);
+
 protected:
 		/**
 		 * Common backend for moving the selected rule up or down
-		 * @param Move upwards if true, otherwise move down
-		 * @return Nothing.
+		 * @param[in] 1st The list Ctrl
+		 * @param[in] 2nd Move upwards if true, otherwise move down
+		 * @return The new index of the rule or negative if the
+		 *     ruleset is unmodified.
 		 */
-		void appListUpDown(bool);
+		long listUpDown(wxListCtrl *, bool);
 
 		/**
 		 * Handle update of App-Rules column header options chosen by

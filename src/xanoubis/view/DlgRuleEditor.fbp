@@ -983,11 +983,11 @@
                                         <event name="OnListEndLabelEdit"></event>
                                         <event name="OnListInsertItem"></event>
                                         <event name="OnListItemActivated"></event>
-                                        <event name="OnListItemDeselected"></event>
+                                        <event name="OnListItemDeselected">onFilterPolicyDeSelect</event>
                                         <event name="OnListItemFocused"></event>
                                         <event name="OnListItemMiddleClick"></event>
                                         <event name="OnListItemRightClick"></event>
-                                        <event name="OnListItemSelected"></event>
+                                        <event name="OnListItemSelected">onFilterPolicySelect</event>
                                         <event name="OnListKeyDown"></event>
                                         <event name="OnMiddleDClick"></event>
                                         <event name="OnMiddleDown"></event>
@@ -1151,7 +1151,7 @@
                                                 <property name="window_extra_style"></property>
                                                 <property name="window_name"></property>
                                                 <property name="window_style"></property>
-                                                <event name="OnButtonClick"></event>
+                                                <event name="OnButtonClick">onFilterListUpClick</event>
                                                 <event name="OnChar"></event>
                                                 <event name="OnEnterWindow"></event>
                                                 <event name="OnEraseBackground"></event>
@@ -1203,7 +1203,7 @@
                                                 <property name="window_extra_style"></property>
                                                 <property name="window_name"></property>
                                                 <property name="window_style"></property>
-                                                <event name="OnButtonClick"></event>
+                                                <event name="OnButtonClick">onFilterListDownClick</event>
                                                 <event name="OnChar"></event>
                                                 <event name="OnEnterWindow"></event>
                                                 <event name="OnEraseBackground"></event>
@@ -1255,7 +1255,7 @@
                                                 <property name="window_extra_style"></property>
                                                 <property name="window_name"></property>
                                                 <property name="window_style"></property>
-                                                <event name="OnButtonClick"></event>
+                                                <event name="OnButtonClick">onFilterListDeleteClick</event>
                                                 <event name="OnChar"></event>
                                                 <event name="OnEnterWindow"></event>
                                                 <event name="OnEraseBackground"></event>
