@@ -61,29 +61,315 @@ SbAccessFilterPolicy::createApnRule(void)
 }
 
 bool
-SbAccessFilterPolicy::setActionNo(int)
+SbAccessFilterPolicy::setActionNo(int action)
 {
-	/* SB filter policies has no action. */
-	return (false);
+	struct apn_rule *rule;
+
+	rule = getApnRule();
+	if (rule == NULL) {
+		return (false);
+	}
+
+	startChange();
+	rule->rule.sbaccess.action = action;
+	setModified();
+	finishChange();
+
+	return (true);
 }
 
 int
 SbAccessFilterPolicy::getActionNo(void) const
 {
-	/* SB filter policies has no action. */
-	return (-1);
+	int		 action;
+	struct apn_rule *rule;
+
+	action = -1;
+	rule   = getApnRule();
+
+	if (rule != NULL) {
+		action = rule->rule.sbaccess.action;
+	}
+
+	return (action);
 }
 
 bool
-SbAccessFilterPolicy::setLogNo(int)
+SbAccessFilterPolicy::setLogNo(int log)
 {
-	/* SB filter policies has no log. */
-	return (false);
+	struct apn_rule *rule;
+
+	rule = getApnRule();
+	if (rule == NULL) {
+		return (false);
+	}
+
+	startChange();
+	rule->rule.sbaccess.log = log;
+	setModified();
+	finishChange();
+
+	return (true);
 }
 
 int
 SbAccessFilterPolicy::getLogNo(void) const
 {
-	/* SB filter policies has no log. */
-	return (-1);
+	int		 log;
+	struct apn_rule *rule;
+
+	log = -1;
+	rule   = getApnRule();
+
+	if (rule != NULL) {
+		log = rule->rule.sbaccess.log;
+	}
+
+	return (log);
+}
+
+bool
+SbAccessFilterPolicy::setPath(wxString path)
+{
+	struct apn_rule *rule;
+
+	rule = getApnRule();
+	if ((rule == NULL) || path.IsEmpty()){
+		return (false);
+	}
+
+	startChange();
+	if (rule->rule.sbaccess.path != NULL) {
+		free(rule->rule.sbaccess.path);
+		rule->rule.sbaccess.path = NULL;
+		setModified();
+	}
+
+	if (path.Cmp(wxT("any")) != 0) {
+		rule->rule.sbaccess.path = strdup(path.fn_str());
+		setModified();
+	}
+
+	finishChange();
+	return (true);
+}
+
+wxString
+SbAccessFilterPolicy::getPath(void) const
+{
+	wxString	 path;
+	struct apn_rule *rule;
+
+	path = wxEmptyString;
+	rule = getApnRule();
+	if (rule != NULL) {
+		if (rule->rule.sbaccess.path == NULL) {
+			path = wxT("any");
+		} else {
+			path = wxString::From8BitData(
+			    rule->rule.sbaccess.path);
+		}
+	}
+
+	return (path);
+}
+
+bool
+SbAccessFilterPolicy::setSubjectSelf(bool selfSigned)
+{
+	struct apn_rule *rule;
+
+	rule = getApnRule();
+	if (rule == NULL) {
+		return (false);
+	}
+
+	startChange();
+	cleanSubject(rule);
+
+	if (selfSigned) {
+		rule->rule.sbaccess.cs.type = APN_CS_KEY_SELF;
+	} else {
+		rule->rule.sbaccess.cs.type = APN_CS_UID_SELF;
+	}
+
+	setModified();
+	finishChange();
+
+	return (true);
+}
+
+bool
+SbAccessFilterPolicy::setSubjectUid(uid_t uid)
+{
+	struct apn_rule *rule;
+
+	rule = getApnRule();
+	if (rule == NULL) {
+		return (false);
+	}
+
+	startChange();
+	cleanSubject(rule);
+
+	rule->rule.sbaccess.cs.type = APN_CS_UID;
+	rule->rule.sbaccess.cs.value.uid = uid;
+
+	setModified();
+	finishChange();
+
+	return (true);
+}
+
+bool
+SbAccessFilterPolicy::setSubjectKey(wxString key)
+{
+	struct apn_rule *rule;
+
+	rule = getApnRule();
+	if (rule == NULL) {
+		return (false);
+	}
+
+	startChange();
+	cleanSubject(rule);
+
+	rule->rule.sbaccess.cs.type = APN_CS_KEY;
+	rule->rule.sbaccess.cs.value.keyid = strdup(key.fn_str());
+
+	setModified();
+	finishChange();
+
+	return (true);
+}
+
+int
+SbAccessFilterPolicy::getSubjectTypeNo(void) const
+{
+	int		 type;
+	struct apn_rule *rule;
+
+	type = APN_CS_NONE;
+	rule = getApnRule();
+	if (rule != NULL) {
+		type = rule->rule.sbaccess.cs.type;
+	}
+
+	return (type);
+}
+
+wxString
+SbAccessFilterPolicy::getSubjectName(void) const
+{
+	wxString	 subjectName;
+	struct apn_rule *rule;
+
+	subjectName = wxEmptyString;
+	rule = getApnRule();
+	if (rule != NULL) {
+		switch (rule->rule.sbaccess.cs.type) {
+		case APN_CS_KEY_SELF:
+			subjectName = wxT("signed-self");
+			break;
+		case APN_CS_UID_SELF:
+			subjectName = wxT("self");
+			break;
+		case APN_CS_KEY:
+			subjectName = wxString::From8BitData(
+			    rule->rule.sbaccess.cs.value.keyid);
+			subjectName.Prepend(wxT("key "));
+			break;
+		case APN_CS_UID:
+			subjectName.Printf(wxT("uid %d"),
+			    rule->rule.sbaccess.cs.value.uid);
+			break;
+		case APN_CS_NONE:
+			subjectName = wxT("none");
+			break;
+		case APN_CS_CSUM:
+			/* Not used by sfs policies. */
+			/* FALLTHROUGH */
+		default:
+			break;
+		}
+	}
+
+	return (subjectName);
+}
+
+bool
+SbAccessFilterPolicy::setAccessMask(unsigned int mask)
+{
+	struct apn_rule *rule;
+
+	rule = getApnRule();
+	if (rule == NULL) {
+		return (false);
+	}
+
+	startChange();
+	rule->rule.sbaccess.amask = mask;
+	setModified();
+	finishChange();
+
+	return (true);
+}
+
+unsigned int
+SbAccessFilterPolicy::getAccessMaskNo(void) const
+{
+	unsigned int	 mask;
+	struct apn_rule *rule;
+
+	mask = 0;
+	rule = getApnRule();
+	if (rule != NULL) {
+		mask = rule->rule.sbaccess.amask;
+	}
+
+	return (mask);
+}
+
+wxString
+SbAccessFilterPolicy::getAccessMaskName(void) const
+{
+	unsigned int	maskNo;
+	wxString	maskName;
+
+	maskNo = getAccessMaskNo();
+	if ((maskNo & APN_SBA_READ) > 0) {
+		maskName.Append(wxT("r"));
+	}
+	if ((maskNo & APN_SBA_WRITE) > 0) {
+		maskName.Append(wxT("w"));
+	}
+	if ((maskNo & APN_SBA_EXEC) > 0) {
+		maskName.Append(wxT("x"));
+	}
+
+	return (maskName);
+}
+
+void
+SbAccessFilterPolicy::cleanSubject(struct apn_rule *rule)
+{
+	if (rule == NULL) {
+		return;
+	}
+
+	switch (rule->rule.sbaccess.cs.type) {
+	case APN_CS_KEY:
+		free(rule->rule.sbaccess.cs.value.keyid);
+		rule->rule.sbaccess.cs.value.keyid = NULL;
+		break;
+	case APN_CS_UID:
+		rule->rule.sbaccess.cs.value.uid = 0 - 1;
+		break;
+	case APN_CS_CSUM:
+		free(rule->rule.sbaccess.cs.value.csum);
+		rule->rule.sbaccess.cs.value.csum = NULL;
+		break;
+	default:
+		break;
+	}
 }

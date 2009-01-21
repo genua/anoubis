@@ -363,6 +363,29 @@
 	} while (0)
 
 /*
+ * Mask
+ */
+#define CHECK_POLICY_GETMASKNO(policy, value)				\
+	do {								\
+		int _getMaskNo = policy->getAccessMaskNo();		\
+									\
+		if (_getMaskNo != value) {				\
+			fail("getAccessMaskNo() = %d, expected: %d",	\
+			    _getMaskNo, value);				\
+		}							\
+	} while (0)
+
+#define CHECK_POLICY_GETMASKNAME(policy, value)				 \
+	do {								 \
+		wxString _getMaskName = policy->getAccessMaskName();	 \
+									 \
+		if (_getMaskName.Cmp(value) != 0) {			 \
+			fail("getAccessMaskName() = %ls, expected: %ls", \
+			    _getMaskName.c_str(), value.c_str());	 \
+		}							 \
+	} while (0)
+
+/*
  * Observer
  */
 #define CHECK_OBSERVER_NOTIFIED(observer, value)			  \

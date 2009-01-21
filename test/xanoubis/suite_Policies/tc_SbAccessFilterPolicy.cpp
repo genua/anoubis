@@ -97,16 +97,35 @@ START_TEST(SbAccessFilterPolicy_LogNo)
 	wxString logName;
 
 	/* Check initialization. */
-	logName = wxT("(unknown)");
-	CHECK_POLICY_GETLOGNO(policy, -1);
+	logName = wxT("none");
+	CHECK_POLICY_GETLOGNO(policy, APN_LOG_NONE);
 	CHECK_POLICY_GETLOGNAME(policy, logName);
 
-	if (policy->setLogNo(APN_LOG_NORMAL)) {
-		fail("setLogNo(): successfull - fail expected.");
+	logName = wxT("normal");
+	if (!policy->setLogNo(APN_LOG_NORMAL)) {
+		fail("setLogNo(APN_LOG_NORMAL): not successfull.");
 	}
-	CHECK_POLICY_MODIFIED(policy, false);
-	CHECK_OBSERVER_NOTIFIED(observer, false);
-	CHECK_POLICY_GETLOGNO(policy, -1);
+	CHECK_POLICY_MODIFIED(policy, true);
+	CHECK_OBSERVER_NOTIFIED(observer, true);
+	CHECK_POLICY_GETLOGNO(policy, APN_LOG_NORMAL);
+	CHECK_POLICY_GETLOGNAME(policy, logName);
+
+	logName = wxT("alert");
+	if (!policy->setLogNo(APN_LOG_ALERT)) {
+		fail("setLogNo(APN_LOG_ALERT): not successfull.");
+	}
+	CHECK_POLICY_MODIFIED(policy, true);
+	CHECK_OBSERVER_NOTIFIED(observer, true);
+	CHECK_POLICY_GETLOGNO(policy, APN_LOG_ALERT);
+	CHECK_POLICY_GETLOGNAME(policy, logName);
+
+	logName = wxT("none");
+	if (!policy->setLogNo(APN_LOG_NONE)) {
+		fail("setLogNo(APN_LOG_NONE): not successfull.");
+	}
+	CHECK_POLICY_MODIFIED(policy, true);
+	CHECK_OBSERVER_NOTIFIED(observer, true);
+	CHECK_POLICY_GETLOGNO(policy, APN_LOG_NONE);
 	CHECK_POLICY_GETLOGNAME(policy, logName);
 }
 END_TEST
@@ -116,17 +135,196 @@ START_TEST(SbAccessFilterPolicy_ActionNo)
 	wxString actionName;
 
 	/* Check initialization. */
-	actionName = wxT("(unknown)");
-	CHECK_POLICY_GETACTIONNO(policy, -1);
+	actionName = wxT("allow");
+	CHECK_POLICY_GETACTIONNO(policy, APN_ACTION_ALLOW);
 	CHECK_POLICY_GETACTIONNAME(policy, actionName);
 
-	if (policy->setActionNo(APN_ACTION_ALLOW)) {
-		fail("setActionNo(): successfull - fail expected.");
+	actionName = wxT("allow");
+	if (!policy->setActionNo(APN_ACTION_ALLOW)) {
+		fail("setActionNo(APN_ACTION_ALLOW): not successfull.");
 	}
-	CHECK_POLICY_MODIFIED(policy, false);
-	CHECK_OBSERVER_NOTIFIED(observer, false);
-	CHECK_POLICY_GETACTIONNO(policy, -1);
+	CHECK_POLICY_MODIFIED(policy, true);
+	CHECK_OBSERVER_NOTIFIED(observer, true);
+	CHECK_POLICY_GETACTIONNO(policy, APN_ACTION_ALLOW);
 	CHECK_POLICY_GETACTIONNAME(policy, actionName);
+
+	actionName = wxT("ask");
+	if (!policy->setActionNo(APN_ACTION_ASK)) {
+		fail("setActionNo(APN_ACTION_ASK): not successfull.");
+	}
+	CHECK_POLICY_MODIFIED(policy, true);
+	CHECK_OBSERVER_NOTIFIED(observer, true);
+	CHECK_POLICY_GETACTIONNO(policy, APN_ACTION_ASK);
+	CHECK_POLICY_GETACTIONNAME(policy, actionName);
+
+	actionName = wxT("deny");
+	if (!policy->setActionNo(APN_ACTION_DENY)) {
+		fail("setActionNo(APN_ACTION_DENY): not successfull.");
+	}
+	CHECK_POLICY_MODIFIED(policy, true);
+	CHECK_OBSERVER_NOTIFIED(observer, true);
+	CHECK_POLICY_GETACTIONNO(policy, APN_ACTION_DENY);
+	CHECK_POLICY_GETACTIONNAME(policy, actionName);
+}
+END_TEST
+
+START_TEST(SbAccessFilterPolicy_Path)
+{
+	wxString path;
+
+	/* Check initialization. */
+	path = wxT("any");
+	CHECK_POLICY_GETPATH(policy, path);
+
+	path = wxT("/usr/local/bin");
+	if (!policy->setPath(path)) {
+		fail("setPath(): not successfull.");
+	}
+	CHECK_POLICY_MODIFIED(policy, true);
+	CHECK_OBSERVER_NOTIFIED(observer, true);
+	CHECK_POLICY_GETPATH(policy, path);
+
+	path = wxT("/usr/xxx/zz");
+	if (!policy->setPath(path)) {
+		fail("setPath(): not successfull.");
+	}
+	CHECK_POLICY_MODIFIED(policy, true);
+	CHECK_OBSERVER_NOTIFIED(observer, true);
+	CHECK_POLICY_GETPATH(policy, path);
+
+	path = wxT("any");
+	if (!policy->setPath(path)) {
+		fail("setPath(): not successfull.");
+	}
+	CHECK_POLICY_MODIFIED(policy, true);
+	CHECK_OBSERVER_NOTIFIED(observer, true);
+	CHECK_POLICY_GETPATH(policy, path);
+}
+END_TEST
+
+START_TEST(SbAccessFilterPolicy_Subject)
+{
+	wxString subject;
+
+	/* Check initialization. */
+	subject = wxT("none");
+	CHECK_POLICY_GETSUBJECTTYPENO(policy, APN_CS_NONE);
+	CHECK_POLICY_GETSUBJECTNAME(policy, subject);
+
+	/* SELF */
+	subject = wxT("self");
+	if (!policy->setSubjectSelf(false)) {
+		fail("setSubjectSelf(false): not successfull.");
+	}
+	CHECK_POLICY_MODIFIED(policy, true);
+	CHECK_OBSERVER_NOTIFIED(observer, true);
+	CHECK_POLICY_GETSUBJECTTYPENO(policy, APN_CS_UID_SELF);
+	CHECK_POLICY_GETSUBJECTNAME(policy, subject);
+
+	/* SELF-SIGNED */
+	subject = wxT("signed-self");
+	if (!policy->setSubjectSelf(true)) {
+		fail("setSubjectSelf(true): not successfull.");
+	}
+	CHECK_POLICY_MODIFIED(policy, true);
+	CHECK_OBSERVER_NOTIFIED(observer, true);
+	CHECK_POLICY_GETSUBJECTTYPENO(policy, APN_CS_KEY_SELF);
+	CHECK_POLICY_GETSUBJECTNAME(policy, subject);
+
+	/* KEY asdfasdf */
+	subject = wxT("key asdfasdf");
+	if (!policy->setSubjectKey(wxT("asdfasdf"))) {
+		fail("setSubjectKey(): not successfull.");
+	}
+	CHECK_POLICY_MODIFIED(policy, true);
+	CHECK_OBSERVER_NOTIFIED(observer, true);
+	CHECK_POLICY_GETSUBJECTTYPENO(policy, APN_CS_KEY);
+	CHECK_POLICY_GETSUBJECTNAME(policy, subject);
+
+	/* UID 123 */
+	subject = wxT("uid 123");
+	if (!policy->setSubjectUid(123)) {
+		fail("setSubjectUid(): not successfull.");
+	}
+	CHECK_POLICY_MODIFIED(policy, true);
+	CHECK_OBSERVER_NOTIFIED(observer, true);
+	CHECK_POLICY_GETSUBJECTTYPENO(policy, APN_CS_UID);
+	CHECK_POLICY_GETSUBJECTNAME(policy, subject);
+}
+END_TEST
+
+START_TEST(SbAccessFilterPolicy_AccessMask)
+{
+	wxString maskName;
+
+	/* Check initialization. */
+	maskName = wxEmptyString;
+	CHECK_POLICY_GETMASKNO(policy, 0);
+	CHECK_POLICY_GETMASKNAME(policy, maskName);
+
+	maskName = wxT("r");
+	if (!policy->setAccessMask(APN_SBA_READ)) {
+		fail("setAccessMask(APN_SBA_READ): not successfull.");
+	}
+	CHECK_POLICY_MODIFIED(policy, true);
+	CHECK_OBSERVER_NOTIFIED(observer, true);
+	CHECK_POLICY_GETMASKNO(policy, APN_SBA_READ);
+	CHECK_POLICY_GETMASKNAME(policy, maskName);
+
+	maskName = wxT("w");
+	if (!policy->setAccessMask(APN_SBA_WRITE)) {
+		fail("setAccessMask(APN_SBA_WRITE): not successfull.");
+	}
+	CHECK_POLICY_MODIFIED(policy, true);
+	CHECK_OBSERVER_NOTIFIED(observer, true);
+	CHECK_POLICY_GETMASKNO(policy, APN_SBA_WRITE);
+	CHECK_POLICY_GETMASKNAME(policy, maskName);
+
+	maskName = wxT("x");
+	if (!policy->setAccessMask(APN_SBA_EXEC)) {
+		fail("setAccessMask(APN_SBA_EXEC): not successfull.");
+	}
+	CHECK_POLICY_MODIFIED(policy, true);
+	CHECK_OBSERVER_NOTIFIED(observer, true);
+	CHECK_POLICY_GETMASKNO(policy, APN_SBA_EXEC);
+	CHECK_POLICY_GETMASKNAME(policy, maskName);
+
+	maskName = wxT("rw");
+	if (!policy->setAccessMask(APN_SBA_READ | APN_SBA_WRITE)) {
+		fail("setAccessMask(READ | WRITE): not successfull.");
+	}
+	CHECK_POLICY_MODIFIED(policy, true);
+	CHECK_OBSERVER_NOTIFIED(observer, true);
+	CHECK_POLICY_GETMASKNO(policy, (APN_SBA_READ | APN_SBA_WRITE));
+	CHECK_POLICY_GETMASKNAME(policy, maskName);
+
+	maskName = wxT("rx");
+	if (!policy->setAccessMask(APN_SBA_READ | APN_SBA_EXEC)) {
+		fail("setAccessMask(READ | EXEC): not successfull.");
+	}
+	CHECK_POLICY_MODIFIED(policy, true);
+	CHECK_OBSERVER_NOTIFIED(observer, true);
+	CHECK_POLICY_GETMASKNO(policy, (APN_SBA_READ | APN_SBA_EXEC));
+	CHECK_POLICY_GETMASKNAME(policy, maskName);
+
+	maskName = wxT("wx");
+	if (!policy->setAccessMask(APN_SBA_WRITE | APN_SBA_EXEC)) {
+		fail("setAccessMask(WRITE | EXEC): not successfull.");
+	}
+	CHECK_POLICY_MODIFIED(policy, true);
+	CHECK_OBSERVER_NOTIFIED(observer, true);
+	CHECK_POLICY_GETMASKNO(policy, (APN_SBA_WRITE | APN_SBA_EXEC));
+	CHECK_POLICY_GETMASKNAME(policy, maskName);
+
+	maskName = wxT("rwx");
+	if (!policy->setAccessMask(APN_SBA_READ|APN_SBA_WRITE|APN_SBA_EXEC)) {
+		fail("setAccessMask(READ | WRITE | EXEC): not successfull.");
+	}
+	CHECK_POLICY_MODIFIED(policy, true);
+	CHECK_OBSERVER_NOTIFIED(observer, true);
+	CHECK_POLICY_GETMASKNO(policy,
+	    (APN_SBA_READ | APN_SBA_WRITE | APN_SBA_EXEC));
+	CHECK_POLICY_GETMASKNAME(policy, maskName);
 }
 END_TEST
 
@@ -144,6 +342,9 @@ getTc_SbAccessFilterPolicy(void)
 	tcase_add_test(testCase, SbAccessFilterPolicy_getTypeIdentifier);
 	tcase_add_test(testCase, SbAccessFilterPolicy_LogNo);
 	tcase_add_test(testCase, SbAccessFilterPolicy_ActionNo);
+	tcase_add_test(testCase, SbAccessFilterPolicy_Path);
+	tcase_add_test(testCase, SbAccessFilterPolicy_Subject);
+	tcase_add_test(testCase, SbAccessFilterPolicy_AccessMask);
 
 	return (testCase);
 }

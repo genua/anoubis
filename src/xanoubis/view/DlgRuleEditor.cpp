@@ -99,6 +99,15 @@ DlgRuleEditor::DlgRuleEditor(wxWindow* parent) : DlgRuleEditorBase(parent)
 	for (size_t i=0; i<CTX_EOL; i++) {
 		ctxColumns_[i]->setIndex(i);
 	}
+
+	sbColumns_[SB_ID]	= new ListCtrlColumn(_("ID"));
+	sbColumns_[SB_PATH]	= new ListCtrlColumn(_("Path"));
+	sbColumns_[SB_SUB]	= new ListCtrlColumn(_("Subject"));
+	sbColumns_[SB_MASK]	= new ListCtrlColumn(_("Mask"));
+
+	for (size_t i=0; i<SB_EOL; i++) {
+		sbColumns_[i]->setIndex(i);
+	}
 }
 
 DlgRuleEditor::~DlgRuleEditor(void)
@@ -161,6 +170,16 @@ DlgRuleEditor::addContextFilterPolicy(ContextFilterPolicy *policy)
 	updateListColumns(filterPolicyListCtrl, ctxColumns_, CTX_EOL);
 	index = addListRow(filterPolicyListCtrl, policy);
 	updateListContextFilterPolicy(index);
+}
+
+void
+DlgRuleEditor::addSbAccessFilterPolicy(SbAccessFilterPolicy *policy)
+{
+	long index;
+
+	updateListColumns(filterPolicyListCtrl, sbColumns_, SB_EOL);
+	index = addListRow(filterPolicyListCtrl, policy);
+	updateListSbAccessFilterPolicy(index);
 }
 
 void
@@ -398,71 +417,80 @@ DlgRuleEditor::onAppListColumnsButtonClick(wxCommandEvent &)
 void
 DlgRuleEditor::onFilterListColumnsButtonClick(wxCommandEvent &)
 {
-	wxArrayString			choices;
-	wxMultiChoiceDialog		*multiChoiceDlg;
-	wxArrayInt			selections;
-	AppPolicy			*policy;
-	void*				data;
-	long				idx;
-	ListCtrlColumn			**columns = NULL;
-	size_t				last = 0;
+	wxArrayString	choices;
+	wxArrayInt	selections;
+	long		idx;
+	size_t		last;
+
 	RuleEditorAddPolicyVisitor	addVisitor(this);
 
-	idx = ((wxListView*)appPolicyListCtrl)->GetFirstSelected();
-	data = (void*)appPolicyListCtrl->GetItemData(idx);
-	policy = wxDynamicCast(data, AppPolicy);
+	void			 *data;
+	AppPolicy		 *policy;
+	wxMultiChoiceDialog	 *multiChoiceDlg;
+	ListCtrlColumn		**columns;
 
-	if (policy != NULL) {
-		if (policy->IsKindOf(CLASSINFO(AlfAppPolicy))) {
-			columns = alfColumns_;
-			last = ALF_EOL;
-		} else if (policy->IsKindOf(CLASSINFO(ContextAppPolicy))) {
-			columns = ctxColumns_;
-			last = CTX_EOL;
-		} else if (policy->IsKindOf(CLASSINFO(SfsAppPolicy))) {
-			columns = sfsColumns_;
-			last = SFS_EOL;
-		/* 
-	 	* XXX [ST]: SB not implemented yet
-		* } else if (policy->IsKindOf(CLASSINFO(SbAppPolicy))) {
-		* 	columns = sbColumns_;
-		* 	last = SB_EOL;
-	 	*/
-		} else {
-			/* fall through */
-		}
-	
-		/* set visible selections depending on policy */
-		for (size_t i=1; i<last; i++) {
-			choices.Add(columns[i]->getTitle());
-			if (columns[i]->isVisible()) {
-				selections.Add(i-1);
-			}
-		}
+	last	= 0;
+	columns = NULL;
+	idx	= ((wxListView*)appPolicyListCtrl)->GetFirstSelected();
+	data	= (void*)appPolicyListCtrl->GetItemData(idx);
+	policy	= wxDynamicCast(data, AppPolicy);
 
-		/* get chosen column headers from user dialogue */
-		multiChoiceDlg = new wxMultiChoiceDialog(this,
-		    _("Table columns"),
-		    _("Please select the columns to be shown"), choices);
-		multiChoiceDlg->SetSelections(selections);
-
-		if (multiChoiceDlg->ShowModal() == wxID_OK) {
-			for (size_t i=1; i < last; i++) {
-				columns[i]->setVisability(false);
-			}
-			selections.Clear();
-			selections = multiChoiceDlg->GetSelections();
-			for (size_t i=0; i<selections.GetCount(); i++) {
-				columns[selections.Item(i)+1]->setVisability(true);
-			}
-
-			/* call to enforce redrawing of the current view */
-			wipeFilterList();
-			policy->acceptOnFilter(addVisitor);
-		}
-
-		delete multiChoiceDlg;
+	if (policy == NULL) {
+		filterListColumnsButton->Disable();
+		return;
 	}
+
+	if (policy->IsKindOf(CLASSINFO(AlfAppPolicy))) {
+		columns = alfColumns_;
+		last = ALF_EOL;
+	} else if (policy->IsKindOf(CLASSINFO(ContextAppPolicy))) {
+		columns = ctxColumns_;
+		last = CTX_EOL;
+	} else if (policy->IsKindOf(CLASSINFO(SfsAppPolicy))) {
+		columns = sfsColumns_;
+		last = SFS_EOL;
+	} else if (policy->IsKindOf(CLASSINFO(SbAppPolicy))) {
+		columns = sbColumns_;
+		last = SB_EOL;
+	} else {
+		/*
+		 * This should never happen! But if, there's a unknown
+		 * app policy, which has to be added to this list.
+		*/
+		filterListColumnsButton->Disable();
+		return;
+	}
+
+	/* set visible selections depending on policy */
+	for (size_t i=1; i<last; i++) {
+		choices.Add(columns[i]->getTitle());
+		if (columns[i]->isVisible()) {
+			selections.Add(i-1);
+		}
+	}
+
+	/* get chosen column headers from user dialogue */
+	multiChoiceDlg = new wxMultiChoiceDialog(this, _("Table columns"),
+	   _("Please select the columns to be shown"), choices);
+	multiChoiceDlg->SetSelections(selections);
+
+	if (multiChoiceDlg->ShowModal() == wxID_OK) {
+		for (size_t i=1; i < last; i++) {
+			columns[i]->setVisability(false);
+		}
+		selections.Clear();
+		selections = multiChoiceDlg->GetSelections();
+
+		for (size_t i=0; i<selections.GetCount(); i++) {
+			columns[selections.Item(i)+1]->setVisability(true);
+		}
+
+		/* call to enforce redrawing of the current view */
+		wipeFilterList();
+		policy->acceptOnFilter(addVisitor);
+	}
+
+	delete multiChoiceDlg;
 }
 
 void
@@ -910,6 +938,55 @@ DlgRuleEditor::updateListContextFilterPolicy(long rowIdx)
 	if (column->isVisible()) {
 		columnIdx  = column->getIndex();
 		columnText = policy->getBinaryName();
+		filterPolicyListCtrl->SetItem(rowIdx, columnIdx, columnText);
+	}
+}
+
+void
+DlgRuleEditor::updateListSbAccessFilterPolicy(long rowIdx)
+{
+	long			 columnIdx;
+	wxString		 columnText;
+	void			*data;
+	ListCtrlColumn		*column;
+	SbAccessFilterPolicy	*policy;
+
+	data   = (void*)filterPolicyListCtrl->GetItemData(rowIdx);
+	policy = wxDynamicCast(data, SbAccessFilterPolicy);
+	if (policy == NULL) {
+		/* This row has no SbAccessFilterPolicy assigned! */
+		return;
+	}
+
+	/* Fill id column */
+	column = sbColumns_[SB_ID];
+	if (column->isVisible()) {
+		columnIdx = column->getIndex();
+		columnText.Printf(wxT("%d:"), policy->getApnRuleId());
+		filterPolicyListCtrl->SetItem(rowIdx, columnIdx, columnText);
+	}
+
+	/* Fill path column */
+	column = sbColumns_[SB_PATH];
+	if (column->isVisible()) {
+		columnIdx  = column->getIndex();
+		columnText = policy->getPath();
+		filterPolicyListCtrl->SetItem(rowIdx, columnIdx, columnText);
+	}
+
+	/* Fill subject column */
+	column = sbColumns_[SB_SUB];
+	if (column->isVisible()) {
+		columnIdx  = column->getIndex();
+		columnText = policy->getSubjectName();
+		filterPolicyListCtrl->SetItem(rowIdx, columnIdx, columnText);
+	}
+
+	/* Fill mask column */
+	column = sbColumns_[SB_MASK];
+	if (column->isVisible()) {
+		columnIdx  = column->getIndex();
+		columnText = policy->getAccessMaskName();
 		filterPolicyListCtrl->SetItem(rowIdx, columnIdx, columnText);
 	}
 }

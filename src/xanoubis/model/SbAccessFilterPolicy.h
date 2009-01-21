@@ -78,9 +78,9 @@ class SbAccessFilterPolicy : public FilterPolicy
 		virtual bool setLogNo(int);
 
 		/**
-		 * Get the apn log type.
+		 * Get the apn log number.
 		 * @param None.
-		 * @return The apn log type.
+		 * @return The apn log number.
 		 */
 		virtual int getLogNo(void) const;
 
@@ -92,13 +92,92 @@ class SbAccessFilterPolicy : public FilterPolicy
 		virtual bool setActionNo(int);
 
 		/**
-		 * Get the apn action type.
+		 * Get the apn action number.
 		 * @param None.
-		 * @return The apn action type.
+		 * @return The apn action number.
 		 */
 		virtual int getActionNo(void) const;
 
+		/**
+		 * Set policy path.
+		 * @param[in] 1st The new path.
+		 * @return True on success.
+		 */
+		bool setPath(wxString);
+
+		/**
+		 * Get policy path.
+		 * @param None.
+		 * @return The policy path.
+		 */
+		wxString getPath(void) const;
+
+		/**
+		 * Set subject self.
+		 * This also modifies the subject type.
+		 * @param[in] 1st True if you want to set SELF-SIGNED (default)
+		 * @return True on success.
+		 */
+		bool setSubjectSelf(bool);
+
+		/**
+		 * Set the subject user id.
+		 * This also modifies the subject type.
+		 * @param[in] 1st ID of user.
+		 * @return True on success.
+		 */
+		bool setSubjectUid(uid_t);
+
+		/**
+		 * Set the subject key.
+		 * This also modifies the subject type.
+		 * @param[in] 1st The key.
+		 * @return True on success.
+		 */
+		bool setSubjectKey(wxString);
+
+		/**
+		 * Get the subject type.
+		 * @param None.
+		 * @return The type of subject.
+		 */
+		int getSubjectTypeNo(void) const;
+
+		/**
+		 * Get readable subject type.
+		 * @param None.
+		 * @return The type of subject.
+		 */
+		wxString getSubjectName(void) const;
+
+		/**
+		 * Set the new access mask of this policy.
+		 * @param[in] 1st New mask (a combination of APN_SBA_*).
+		 * @return True on success.
+		 */
+		bool setAccessMask(unsigned int);
+
+		/**
+		 * Get the access mask number.
+		 * @param None.
+		 * @return The mask as a combination of APN_SBA_*
+		 */
+		unsigned int getAccessMaskNo(void) const;
+
+		/**
+		 * Get the access mask name.
+		 * @param None.
+		 * @return The "readable" mask.
+		 */
+		wxString getAccessMaskName(void) const;
+
 	private:
+		/**
+		 * Clean the subject structure.
+		 * @param[in] 1st The structure to clean.
+		 * @return Nothing.
+		 */
+		void cleanSubject(struct apn_rule *);
 };
 
 #endif	/* _SBACCESSFILTERPOLICY_H_ */

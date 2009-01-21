@@ -233,8 +233,9 @@ class DlgRuleEditor : public DlgRuleEditorBase
 #include "AppPolicy.h"
 #include "AlfFilterPolicy.h"
 #include "AlfCapabilityFilterPolicy.h"
-#include "ContextFilterPolicy.h"
 #include "SfsFilterPolicy.h"
+#include "ContextFilterPolicy.h"
+#include "SbAccessFilterPolicy.h"
 
 /**
  * This is the anoubis rule editor.
@@ -304,6 +305,16 @@ class DlgRuleEditor : public DlgRuleEditorBase
 		 */
 		void addContextFilterPolicy(ContextFilterPolicy *);
 
+		/**
+		 * Add sandbox filter policy.
+		 * A new row is created (by addListRow()) and filled by
+		 * updateListSandboxFilterPolicy(). This should be used
+		 * by RuleEditorAddPolicyVisitor only.
+		 * @param[in] 1st Concerning app policy
+		 * @return Nothing.
+		 */
+		void addSbAccessFilterPolicy(SbAccessFilterPolicy *);
+
 	private:
 		/**
 		 * Use these indices to access the related column within the
@@ -366,10 +377,23 @@ class DlgRuleEditor : public DlgRuleEditorBase
 			CTX_EOL		/**< End - Of - List */
 		};
 
+		/**
+		 * Use these indices to access the related column within the
+		 * list of sandbox filter columns.
+		 */
+		enum sbColumnIndex {
+			SB_ID = 0,	/**< apn rule id. */
+			SB_PATH,	/**< path (of subject) */
+			SB_SUB,		/**< the subject */
+			SB_MASK,	/**< the access mask */
+			SB_EOL		/**< End - Of - List */
+		};
+
 		ListCtrlColumn *appColumns_[APP_EOL]; /**< @ appList */
 		ListCtrlColumn *alfColumns_[ALF_EOL]; /**< @ filterList */
 		ListCtrlColumn *sfsColumns_[SFS_EOL]; /**< @ filterList */
 		ListCtrlColumn *ctxColumns_[CTX_EOL]; /**< @ filterList */
+		ListCtrlColumn *sbColumns_[SB_EOL];   /**< @ filterList */
 
 		long userRuleSetId_;  /**< Id of our ruleSet. */
 		long adminRuleSetId_; /**< Id of our admin ruleSet. */
@@ -426,7 +450,7 @@ class DlgRuleEditor : public DlgRuleEditorBase
 
 		/**
 		 * Load new ruleSet and refresh the lists.
-		 * @param[in] 1st Select this index in the appList 
+		 * @param[in] 1st Select this index in the appList
 		 * @param[in] 2nd Select this index in the filterList
 		 * @return None.
 		 * Both parameters can be -1 if the previous selection
@@ -512,6 +536,14 @@ class DlgRuleEditor : public DlgRuleEditorBase
 		 * @return Nothing.
 		 */
 		void updateListContextFilterPolicy(long);
+
+		/**
+		 * Update row.
+		 * Updates the values of a row showing a sandbox filter policy.
+		 * @param[in] 1st The index of row in question.
+		 * @return Nothing.
+		 */
+		void updateListSbAccessFilterPolicy(long);
 
 		/**
 		 * Update columns.

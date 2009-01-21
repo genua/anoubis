@@ -72,13 +72,14 @@ RuleEditorAddPolicyVisitor::visitDefaultFilterPolicy(
     DefaultFilterPolicy *policy)
 {
 }
+*/
 
 void
 RuleEditorAddPolicyVisitor::visitSbAccessFilterPolicy(
     SbAccessFilterPolicy *policy)
 {
+	ruleEditor_->addSbAccessFilterPolicy(policy);
 }
-*/
 
 void
 RuleEditorAddPolicyVisitor::visitSbAppPolicy(SbAppPolicy *policy)

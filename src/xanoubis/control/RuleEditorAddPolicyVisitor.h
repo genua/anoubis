@@ -104,7 +104,7 @@ class RuleEditorAddPolicyVisitor : public RuleEditorFillTableVisitor
 		 * Visit a SbAccessFilterPolicy.
 		 * @param[in] 1st Policy to visit.
 		 */
-		virtual void visitSbAccessFilterPolicy(SbAccessFilterPolicy *) {};
+		virtual void visitSbAccessFilterPolicy(SbAccessFilterPolicy *);
 
 		/**
 		 * Visit a SbAppPolicy.
