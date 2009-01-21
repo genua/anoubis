@@ -54,6 +54,7 @@ xanoubis_CPPFLAGS = \
 	-I$(top_srcdir)/$(xanoubisdir)/model \
 	-I$(top_srcdir)/$(xanoubisdir)/view  \
 	-I$(top_srcdir)/$(xanoubisdir)/control \
+	-I$(top_srcdir)/$(xanoubisdir)/widgets \
 	-I$(top_srcdir)/$(xanoubisdir)/pattern \
 	-I$(top_srcdir)/$(xanoubisdir)/job \
 	$(WX_CPPFLAGS) \
@@ -116,6 +117,8 @@ dist_icon_DATA = \
 	icons/General_problem_48.png \
 	icons/General_question_16.png \
 	icons/General_question_48.png \
+	icons/General_uparrow_16.png \
+	icons/General_downarrow_16.png \
 	icons/ModAlf_alert_16.png \
 	icons/ModAlf_alert_48.png \
 	icons/ModAlf_black_16.png \
@@ -248,10 +251,6 @@ xanoubis_SOURCES= \
 	model/PolicyUtils.h \
 	model/ListCtrlColumn.cpp \
 	model/ListCtrlColumn.h \
-	view/AnStatusBar.cpp \
-	view/AnStatusBar.h \
-	view/AnFader.cpp \
-	view/AnFader.h \
 	view/DlgLogViewerBase.cpp \
 	view/DlgLogViewerBase.h \
 	view/DlgLogViewer.cpp \
@@ -329,6 +328,10 @@ xanoubis_SOURCES= \
 	pattern/Subject.h \
 	pattern/Observer.cpp \
 	pattern/Observer.h \
+	widgets/AnDetails.cpp \
+	widgets/AnDetails.h \
+	widgets/AnStatusBar.cpp \
+	widgets/AnStatusBar.h \
 	job/ComCsumAddTask.cpp \
 	job/ComCsumAddTask.h \
 	job/ComCsumDelTask.cpp \
