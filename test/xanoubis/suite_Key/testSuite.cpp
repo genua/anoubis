@@ -29,19 +29,22 @@
 
 extern TCase *getTc_PrivKey(void);
 extern TCase *getTc_LocalCertificate(void);
+extern TCase *getTc_KeyCtrl(void);
 
 Suite *
 getTestSuite(void)
 {
 	Suite *testSuite;
-	TCase *tc_LocalCertificate, *tc_PrivKey;
+	TCase *tc_LocalCertificate, *tc_PrivKey, *tc_KeyCtrl;
 
 	testSuite = suite_create("Keys");
 	tc_LocalCertificate = getTc_LocalCertificate();
 	tc_PrivKey = getTc_PrivKey();
+	tc_KeyCtrl = getTc_KeyCtrl();
 
 	suite_add_tcase(testSuite, tc_LocalCertificate);
 	suite_add_tcase(testSuite, tc_PrivKey);
+	suite_add_tcase(testSuite, tc_KeyCtrl);
 
 	return (testSuite);
 }

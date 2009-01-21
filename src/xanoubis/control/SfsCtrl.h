@@ -139,6 +139,44 @@ class SfsCtrl : public wxEvtHandler
 		void setFilterInversed(bool);
 
 		/**
+		 * Tests whether signature-support is enabled.
+		 *
+		 * If it is enabled, the checksums are automatically signed.
+		 * The signed checksum is sent to anoubisd instead of the plain
+		 * checksum.
+		 *
+		 * Note, that the support can be disabled without
+		 * user-interaction! When the private key or certificate gets
+		 * unavailable, the support is disabled automatically because
+		 * of a dependency-problem (you need a private key and
+		 * certificate). But loading both of them again, will enable
+		 * the support.
+		 *
+		 * @return true is returned, if the signature-support is
+		 *         enabled, false otherwise.
+		 * @see KeyCtrl::canUseLocalKeys()
+		 */
+		bool isSignatureEnabled(void) const;
+
+		/**
+		 * Enables the signature-support.
+		 *
+		 * Before the support is enabled, it checks the dependencies.
+		 * You need a private key and a certificate. The support can
+		 * only be enabled, if you have both of them. Disabling the
+		 * feature does not check for the dependencies.
+		 *
+		 * @param enable Set to true, is you want to enable signatures
+		 * @return true is returned, if the signature-support was
+		 *         successfully enabled or diabled. On error false is
+		 *         returned. In case of you want to enable
+		 *         signature-support, either the private key or the
+		 *         certificate is not available.
+		 * @see KeyCtrl::canUseLocalKeys()
+		 */
+		bool setSignatureEnabled(bool);
+
+		/**
 		 * Validates the SfsEntry at the specified index.
 		 *
 		 * The checksumAttr- & signatureAttr-attributes are updated. If
@@ -266,6 +304,7 @@ class SfsCtrl : public wxEvtHandler
 		TaskList	taskList_;
 		wxArrayString	errorList_;
 		bool		comEnabled_;
+		bool		sigEnabled_;
 
 		void enableCommunication(void);
 		void disableCommunication(void);

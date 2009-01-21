@@ -47,6 +47,7 @@
 
 #include "AnEvents.h"
 #include "main.h"
+#include "KeyCtrl.h"
 #include "ModSfsAddPolicyVisitor.h"
 #include "Policy.h"
 #include "PolicyRuleSet.h"
@@ -267,6 +268,36 @@ ModSfsMainPanelImpl::OnSfsMainApplyButtonClicked(wxCommandEvent&)
 }
 
 void
+ModSfsMainPanelImpl::OnSfsMainSigEnabledClicked(wxCommandEvent&)
+{
+	bool enable = SfsMainSignFilesCheckBox->IsChecked();
+
+	if (!sfsCtrl_->setSignatureEnabled(enable)) {
+		wxString msg;
+
+		if (enable)
+			msg = _("Failed to enable signed checksums.\n"
+			    "Please check the configuration of your "
+			    "certificate and private key!");
+		else
+			msg = _("Failed to disable signed checksums.");
+
+		wxMessageBox(msg, _("SFS error"), wxOK|wxICON_ERROR, this);
+		SfsMainSignFilesCheckBox->SetValue(!enable); /* Toggle back */
+	}
+}
+
+void
+ModSfsMainPanelImpl::OnSfsMainKeyLoaded(wxCommandEvent&)
+{
+	bool keysUsable = KeyCtrl::getInstance()->canUseLocalKeys();
+	bool sigEnabled = sfsCtrl_->isSignatureEnabled();
+
+	SfsMainSignFilesCheckBox->Enable(keysUsable);
+	SfsMainSignFilesCheckBox->SetValue(sigEnabled);
+}
+
+void
 ModSfsMainPanelImpl::initSfsMain()
 {
 	sfsCtrl_ = new SfsCtrl;
@@ -289,29 +320,8 @@ ModSfsMainPanelImpl::initSfsMain()
 	sfsCtrl_->Connect(anEVT_SFSENTRY_ERROR,
 	    wxCommandEventHandler(ModSfsMainPanelImpl::OnSfsError),
 	    NULL, this);
-
-	SfsMainDirCtrl->Connect(wxEVT_COMMAND_TREE_SEL_CHANGED,
-	    wxTreeEventHandler(ModSfsMainPanelImpl::OnSfsMainDirCtrlSelChanged),
-	    NULL, this);
-	SfsMainFilterButton->Connect(wxEVT_COMMAND_BUTTON_CLICKED,
-	    wxCommandEventHandler(
-	       ModSfsMainPanelImpl::OnSfsMainFilterButtonClicked),
-	    NULL, this);
-	SfsMainFilterInvertCheckBox->Connect(wxEVT_COMMAND_CHECKBOX_CLICKED,
-	    wxCommandEventHandler(
-	       ModSfsMainPanelImpl::OnSfsMainInverseCheckboxClicked),
-	    NULL, this);
-	SfsMainFilterTextCtrl->Connect(wxEVT_COMMAND_TEXT_ENTER,
-	    wxCommandEventHandler(
-	       ModSfsMainPanelImpl::OnSfsMainFilterButtonClicked),
-	    NULL, this);
-	SfsMainFilterValidateButton->Connect(wxEVT_COMMAND_BUTTON_CLICKED,
-	    wxCommandEventHandler(
-	       ModSfsMainPanelImpl::OnSfsMainValidateButtonClicked),
-	    NULL, this);
-	SfsMainActionButton->Connect(wxEVT_COMMAND_BUTTON_CLICKED,
-	    wxCommandEventHandler(
-	       ModSfsMainPanelImpl::OnSfsMainApplyButtonClicked),
+	AnEvents::getInstance()->Connect(anEVT_LOAD_KEY,
+	    wxCommandEventHandler(ModSfsMainPanelImpl::OnSfsMainKeyLoaded),
 	    NULL, this);
 
 	/* Insert columns into list-ctrl */

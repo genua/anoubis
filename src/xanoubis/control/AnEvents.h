@@ -470,6 +470,17 @@ BEGIN_DECLARE_EVENT_TYPES()
 	DECLARE_LOCAL_EVENT_TYPE(anEVT_LOAD_RULESET, wxNewEventType())
 
 	/**
+	 * Load key event.
+	 * A private key or a certificate was loaded to the key manager.
+	 *
+	 * @param GetInt()
+	 * - If set to 0, the private key was loaded
+	 * - If set to 1, the certificate was loaded
+	 * - Any other value is undefined
+	 */
+	DECLARE_LOCAL_EVENT_TYPE(anEVT_LOAD_KEY, wxNewEventType())
+
+	/**
 	 * Sfs directory changed event.
 	 * The content of SfsDirectory has changed. The view needs to be
 	 * updated.

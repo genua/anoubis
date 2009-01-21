@@ -81,6 +81,19 @@ class KeyCtrl : public Singleton<KeyCtrl>
 		 */
 		LocalCertificate &getLocalCertificate(void);
 
+		/**
+		 * Tests whether local keys are both ready for usage.
+		 *
+		 * Private key (getPrivateKey() and certificate
+		 * (getLocalCertificate()) has a strong binding. This method
+		 * tests, if the private key can be loaded and the certificate
+		 * is loaded.
+		 *
+		 * @return true is returned, if the private key can be loaded
+		 *         and the certificate is loaded.
+		 */
+		bool canUseLocalKeys(void) const;
+
 	protected:
 		/**
 		 * Constructor of KeyCtrl.

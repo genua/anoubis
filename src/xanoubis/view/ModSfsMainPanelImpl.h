@@ -74,6 +74,8 @@ class ModSfsMainPanelImpl : public ModSfsMainPanelBase
 		void OnSfsMainInverseCheckboxClicked(wxCommandEvent&);
 		void OnSfsMainValidateButtonClicked(wxCommandEvent&);
 		void OnSfsMainApplyButtonClicked(wxCommandEvent&);
+		void OnSfsMainSigEnabledClicked(wxCommandEvent&);
+		void OnSfsMainKeyLoaded(wxCommandEvent&);
 
 	public:
 		ModSfsMainPanelImpl(wxWindow*, wxWindowID);

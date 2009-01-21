@@ -278,6 +278,7 @@ endif
 testSuite_Key_SOURCES = \
 	testrunner.cpp \
 	suite_Key/testSuite.cpp \
+	suite_Key/tc_KeyCtrl.cpp \
 	suite_Key/tc_LocalCertificate.cpp \
 	suite_Key/tc_PrivKey.cpp
 

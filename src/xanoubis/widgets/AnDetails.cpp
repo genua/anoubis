@@ -35,7 +35,7 @@ AnDetails::AnDetails(wxWindow *parent, wxWindowID id, const wxPoint & pos,
 	wxBoxSizer* mainSizer;
 	wxBoxSizer* headSizer;
 
-	isVisible_    = true;
+	isVisible_    = false;
 	contentSizer_ = NULL;
 	upArrow_      = wxGetApp().loadIcon(wxT("General_uparrow_16.png"));
 	downArrow_    = wxGetApp().loadIcon(wxT("General_downarrow_16.png"));
@@ -87,6 +87,8 @@ AnDetails::SetSizer(wxSizer *sizer, bool deleteOld)
 		mainSizer->Add(sizer);
 		contentSizer_ = sizer;
 	}
+
+	update();
 }
 
 void
@@ -106,15 +108,16 @@ AnDetails::update(void)
 	/* modify the widgets */
 	if (contentSizer_ != NULL) {
 		contentSizer_->Show(isVisible_);
-		if (isVisible_) {
-			detailsIcon_->SetIcon(*upArrow_);
-			detailsIcon_->SetToolTip(_("hide"));
-			detailsLabel_->SetToolTip(_("hide"));
-		} else {
-			detailsIcon_->SetIcon(*downArrow_);
-			detailsIcon_->SetToolTip(_("show"));
-			detailsLabel_->SetToolTip(_("show"));
-		}
+	}
+
+	if (isVisible_) {
+		detailsIcon_->SetIcon(*upArrow_);
+		detailsIcon_->SetToolTip(_("hide"));
+		detailsLabel_->SetToolTip(_("hide"));
+	} else {
+		detailsIcon_->SetIcon(*downArrow_);
+		detailsIcon_->SetToolTip(_("show"));
+		detailsLabel_->SetToolTip(_("show"));
 	}
 
 	/* update the view */

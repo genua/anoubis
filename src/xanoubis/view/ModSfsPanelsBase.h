@@ -34,6 +34,8 @@
 #ifndef __ModSfsPanelsBase__
 #define __ModSfsPanelsBase__
 
+class AnDetails;
+
 #include <wx/string.h>
 #include <wx/stattext.h>
 #include <wx/gdicmn.h>
@@ -50,7 +52,6 @@
 #include <wx/textctrl.h>
 #include <wx/button.h>
 #include <wx/checkbox.h>
-#include <wx/statbox.h>
 #include <wx/choice.h>
 #include <wx/notebook.h>
 #include <wx/statbmp.h>
@@ -86,6 +87,7 @@ class ModSfsMainPanelBase : public wxPanel
 		
 		wxButton* SfsMainFilterValidateButton;
 		wxListCtrl* SfsMainListCtrl;
+		AnDetails* SfsMainDetailsPanel;
 		wxCheckBox* SfsMainSignFilesCheckBox;
 		wxButton* SfsMainSearchOrphanedButton;
 		wxButton* SfsMainShowChecksumButton;
@@ -98,6 +100,15 @@ class ModSfsMainPanelBase : public wxPanel
 		wxStaticText* m_staticText101;
 		wxChoice* SfsMainActionChoice;
 		wxButton* SfsMainActionButton;
+		
+		// Virtual event handlers, overide them in your derived class
+		virtual void OnSfsMainDirCtrlSelChanged( wxTreeEvent& event ){ event.Skip(); }
+		virtual void OnSfsMainFilterButtonClicked( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnSfsMainInverseCheckboxClicked( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnSfsMainValidateButtonClicked( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnSfsMainSigEnabledClicked( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnSfsMainApplyButtonClicked( wxCommandEvent& event ){ event.Skip(); }
+		
 	
 	public:
 		ModSfsMainPanelBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( -1,-1 ), long style = wxTAB_TRAVERSAL );

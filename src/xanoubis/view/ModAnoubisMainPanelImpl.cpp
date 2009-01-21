@@ -997,6 +997,13 @@ ModAnoubisMainPanelImpl::OnPrivKeyChooseClicked(wxCommandEvent&)
 
 		PrivKeyPathText->SetValue(path);
 		privKey.setFile(path);
+
+		if (privKey.canLoad()) {
+			wxCommandEvent event(anEVT_LOAD_KEY);
+			event.SetInt(0); /* 0 := private key */
+
+			wxPostEvent(AnEvents::getInstance(), event);
+		}
 	}
 }
 
@@ -1269,4 +1276,11 @@ ModAnoubisMainPanelImpl::certificateParamsUpdate(void)
 	CertPathText->SetValue(cert.getFile());
 	CertFingerprintText->SetLabel(cert.getFingerprint());
 	CertDnText->SetLabel(cert.getDistinguishedName());
+
+	if (cert.isLoaded()) {
+		wxCommandEvent event(anEVT_LOAD_KEY);
+		event.SetInt(1); /* 1 := certificate */
+
+		wxPostEvent(AnEvents::getInstance(), event);
+	}
 }

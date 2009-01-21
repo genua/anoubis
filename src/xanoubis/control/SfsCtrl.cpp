@@ -36,11 +36,13 @@
 #include "ComSfsListTask.h"
 #include "CsumCalcTask.h"
 #include "JobCtrl.h"
+#include "KeyCtrl.h"
 #include "SfsCtrl.h"
 
 SfsCtrl::SfsCtrl(void)
 {
 	this->comEnabled_ = false; /* Communication disabled */
+	this->sigEnabled_ = true; /* Signature support enabled */
 
 	JobCtrl::getInstance()->Connect(anTASKEVT_REGISTER,
 	    wxTaskEventHandler(SfsCtrl::OnRegistration), NULL, this);
@@ -83,6 +85,34 @@ SfsCtrl::setFilterInversed(bool inversed)
 {
 	if (sfsDir_.setFilterInversed(inversed))
 		sendDirChangedEvent();
+}
+
+bool
+SfsCtrl::isSignatureEnabled(void) const
+{
+	KeyCtrl *keyCtrl = KeyCtrl::getInstance();
+	return (this->sigEnabled_ && keyCtrl->canUseLocalKeys());
+}
+
+bool
+SfsCtrl::setSignatureEnabled(bool enable)
+{
+	if (enable) {
+		/*
+		 * Signature-support should be enabled, you need a certificate
+		 * and private key to be able to use the signature-support.
+		 */
+		if (KeyCtrl::getInstance()->canUseLocalKeys()) {
+			this->sigEnabled_ = true;
+			return (true);
+		} else {
+			/* Dependency mismatch */
+			return (false);
+		}
+	} else {
+		this->sigEnabled_ = false;
+		return (true);
+	}
 }
 
 SfsCtrl::CommandResult
@@ -420,13 +450,17 @@ checksum for %s."), task->getComTaskResult(), task->getFile().c_str());
 	if (task->getCsum(cs, ANOUBIS_CS_LEN) == ANOUBIS_CS_LEN) {
 		/* File has a checksum, copy into model */
 		if (entry.setDaemonCsum(cs)) {
-			/* Checksum attribute has changed, inform any listener */
+			/*
+			 * Checksum attribute has changed, inform any listener
+			 */
 			sendEntryChangedEvent(idx);
 		}
 	} else {
 		/* No checksum, reset in model */
 		if (entry.setDaemonCsum(0)) {
-			/* Checksum attribute has changed, inform any listener */
+			/*
+			 * Checksum attribute has changed, inform any listener
+			 */
 			sendEntryChangedEvent(idx);
 		}
 	}

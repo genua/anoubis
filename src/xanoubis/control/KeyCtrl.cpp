@@ -53,3 +53,9 @@ KeyCtrl::getLocalCertificate(void)
 {
 	return (cert_);
 }
+
+bool
+KeyCtrl::canUseLocalKeys(void) const
+{
+	return (privKey_.canLoad() && cert_.isLoaded());
+}
