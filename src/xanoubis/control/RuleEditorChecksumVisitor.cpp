@@ -103,6 +103,13 @@ RuleEditorChecksumVisitor::visitSfsFilterPolicy(SfsFilterPolicy *)
 
 }
 
+void
+RuleEditorChecksumVisitor::visitSfsDefaultFilterPolicy(
+    SfsDefaultFilterPolicy *)
+{
+
+}
+
 /*
  * XXX ch: this will be fixed with #963
  */

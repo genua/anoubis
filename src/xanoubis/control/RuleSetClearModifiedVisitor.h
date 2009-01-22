@@ -46,6 +46,7 @@
 #include "SbAccessFilterPolicy.h"
 #include "SbAppPolicy.h"
 #include "SfsAppPolicy.h"
+#include "SfsDefaultFilterPolicy.h"
 #include "SfsFilterPolicy.h"
 
 /**
@@ -122,6 +123,13 @@ class RuleSetClearModifiedVisitor : public PolicyVisitor
 		 * @param[in] 1st Policy to visit.
 		 */
 		virtual void visitSfsFilterPolicy(SfsFilterPolicy *);
+
+		/**
+		 * Visit a SfsDefaultFilterPolicy.
+		 * @param[in] 1st Policy to visit.
+		 */
+		virtual void visitSfsDefaultFilterPolicy(
+		    SfsDefaultFilterPolicy *);
 };
 
 #endif	/* _RULESETCLEARMODIFIEDVISITOR_H_ */

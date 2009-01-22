@@ -129,6 +129,13 @@ class RuleEditorFillTableVisitor : public PolicyVisitor
 		 */
 		virtual void visitSfsFilterPolicy(SfsFilterPolicy *);
 
+		/**
+		 * Visit a SfsDefaultFilterPolicy.
+		 * @param[in] 1st Policy to visit.
+		 */
+		virtual void visitSfsDefaultFilterPolicy(
+		    SfsDefaultFilterPolicy *);
+
 	protected:
 		long		 selectedLine_;	/**< Modify this line. */
 		DlgRuleEditor	*ruleEditor_;	/**< Keep the RuleEditor. */

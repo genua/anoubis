@@ -109,6 +109,11 @@ class RuleEditorChecksumVisitor : public PolicyVisitor
 		 */
 		virtual void visitSfsFilterPolicy(SfsFilterPolicy *);
 
+		/**
+		 */
+		virtual void visitSfsDefaultFilterPolicy(
+		    SfsDefaultFilterPolicy *);
+
 	private:
 		bool mismatch_;
 		int state_;

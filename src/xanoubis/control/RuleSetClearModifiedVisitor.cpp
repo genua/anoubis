@@ -95,3 +95,10 @@ RuleSetClearModifiedVisitor::visitSfsFilterPolicy(SfsFilterPolicy *policy)
 {
 	policy->clearModified();
 }
+
+void
+RuleSetClearModifiedVisitor::visitSfsDefaultFilterPolicy(
+    SfsDefaultFilterPolicy *policy)
+{
+	policy->clearModified();
+}

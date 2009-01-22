@@ -45,6 +45,7 @@
 #include "SbAccessFilterPolicy.h"
 #include "SbAppPolicy.h"
 #include "SfsAppPolicy.h"
+#include "SfsDefaultFilterPolicy.h"
 #include "SfsFilterPolicy.h"
 
 /**
@@ -98,7 +99,7 @@ class RuleEditorAddPolicyVisitor : public RuleEditorFillTableVisitor
 		 * Visit a DefaultFilterPolicy.
 		 * @param[in] 1st Policy to visit.
 		 */
-		virtual void visitDefaultFilterPolicy(DefaultFilterPolicy *) {};
+		virtual void visitDefaultFilterPolicy(DefaultFilterPolicy *);
 
 		/**
 		 * Visit a SbAccessFilterPolicy.
@@ -123,6 +124,13 @@ class RuleEditorAddPolicyVisitor : public RuleEditorFillTableVisitor
 		 * @param[in] 1st Policy to visit.
 		 */
 		virtual void visitSfsFilterPolicy(SfsFilterPolicy *);
+
+		/**
+		 * Visit a SfsDefaultFilterPolicy.
+		 * @param[in] 1st Policy to visit.
+		 */
+		virtual void visitSfsDefaultFilterPolicy(
+		    SfsDefaultFilterPolicy *);
 };
 
 #endif	/* _RULEEDITORADDPOLICYVISITOR_H_ */

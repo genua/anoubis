@@ -123,6 +123,13 @@ RuleSetSearchPolicyVisitor::visitSfsFilterPolicy(SfsFilterPolicy *policy)
 }
 
 void
+RuleSetSearchPolicyVisitor::visitSfsDefaultFilterPolicy(
+    SfsDefaultFilterPolicy *policy)
+{
+	compare(policy);
+}
+
+void
 RuleSetSearchPolicyVisitor::compare(Policy *policy)
 {
 	/* first match strategy */

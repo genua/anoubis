@@ -45,6 +45,7 @@
 #include "SbAccessFilterPolicy.h"
 #include "SbAppPolicy.h"
 #include "SfsAppPolicy.h"
+#include "SfsDefaultFilterPolicy.h"
 #include "SfsFilterPolicy.h"
 
 /**
@@ -132,6 +133,13 @@ class ModSfsAddPolicyVisitor : public PolicyVisitor
 		 * @param[in] 1st Policy to visit.
 		 */
 		virtual void visitSfsFilterPolicy(SfsFilterPolicy *);
+
+		/**
+		 * Visit a SfsDefaultFilterPolicy.
+		 * @param[in] 1st Policy to visit.
+		 */
+		virtual void visitSfsDefaultFilterPolicy(
+		    SfsDefaultFilterPolicy *);
 
 	private:
 		ModSfsMainPanelImpl	*sfsPanel_;	/**< The main panel. */

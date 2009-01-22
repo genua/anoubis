@@ -37,6 +37,7 @@ extern TCase *getTc_SbAccessFilterPolicy(void);
 extern TCase *getTc_SbAppPolicy(void);
 extern TCase *getTc_SfsAppPolicy(void);
 extern TCase *getTc_SfsFilterPolicy(void);
+extern TCase *getTc_SfsDefaultFilterPolicy(void);
 
 Suite *
 getTestSuite(void)
@@ -55,6 +56,7 @@ getTestSuite(void)
 	suite_add_tcase(testSuite, getTc_SbAppPolicy());
 	suite_add_tcase(testSuite, getTc_SfsAppPolicy());
 	suite_add_tcase(testSuite, getTc_SfsFilterPolicy());
+	suite_add_tcase(testSuite, getTc_SfsDefaultFilterPolicy());
 
 	return (testSuite);
 }

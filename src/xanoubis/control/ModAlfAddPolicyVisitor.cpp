@@ -128,6 +128,12 @@ ModAlfAddPolicyVisitor::visitSfsFilterPolicy(SfsFilterPolicy *)
 	/* ModAlf does not deal with SfsFilterPolicies. */
 }
 
+void
+ModAlfAddPolicyVisitor::visitSfsDefaultFilterPolicy(SfsDefaultFilterPolicy *)
+{
+	/* ModAlf does not deal with SfsFilterPolicies. */
+}
+
 long
 ModAlfAddPolicyVisitor::ruleListAppend(Policy *policy)
 {

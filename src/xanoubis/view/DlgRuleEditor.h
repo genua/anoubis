@@ -236,7 +236,9 @@ class DlgRuleEditor : public DlgRuleEditorBase
 #include "AppPolicy.h"
 #include "AlfFilterPolicy.h"
 #include "AlfCapabilityFilterPolicy.h"
+#include "DefaultFilterPolicy.h"
 #include "SfsFilterPolicy.h"
+#include "SfsDefaultFilterPolicy.h"
 #include "ContextFilterPolicy.h"
 #include "SbAccessFilterPolicy.h"
 
@@ -296,6 +298,16 @@ class DlgRuleEditor : public Observer, public DlgRuleEditorBase
 		void addAlfCapabilityFilterPolicy(AlfCapabilityFilterPolicy *);
 
 		/**
+		 * Add default filter policy.
+		 * A new row is created (by addListRow()) and filled by
+		 * updateListDefaultFilterPolicy(). This should be used
+		 * by RuleEditorAddPolicyVisitor only.
+		 * @param[in] 1st Concerning app policy
+		 * @return Nothing.
+		 */
+		void addDefaultFilterPolicy(DefaultFilterPolicy *);
+
+		/**
 		 * Add sfs filter policy.
 		 * A new row is created (by addListRow()) and filled by
 		 * updateListSfsFilterPolicy(). This should be used
@@ -304,6 +316,16 @@ class DlgRuleEditor : public Observer, public DlgRuleEditorBase
 		 * @return Nothing.
 		 */
 		void addSfsFilterPolicy(SfsFilterPolicy *);
+
+		/**
+		 * Add sfs default filter policy.
+		 * A new row is created (by addListRow()) and filled by
+		 * updateListSfsDefaultFilterPolicy(). This should be used
+		 * by RuleEditorAddPolicyVisitor only.
+		 * @param[in] 1st Concerning app policy
+		 * @return Nothing.
+		 */
+		void addSfsDefaultFilterPolicy(SfsDefaultFilterPolicy *);
 
 		/**
 		 * Add context filter policy.
@@ -347,6 +369,7 @@ class DlgRuleEditor : public Observer, public DlgRuleEditorBase
 			ALF_TYPE,	/**< type of context */
 			ALF_ACTION,	/**< action */
 			ALF_LOG,	/**< log */
+			ALF_SCOPE,	/**< scope of this policy */
 			ALF_CAP,	/**< capability type */
 			ALF_DIR,	/**< direction */
 			ALF_PROT,	/**< protocol */
@@ -365,8 +388,10 @@ class DlgRuleEditor : public Observer, public DlgRuleEditorBase
 		 */
 		enum sfsColumnIndex {
 			SFS_ID = 0,	/**< apn rule id. */
+			SFS_TYPE,	/**< type of sfs */
 			SFS_PATH,	/**< path (of subject) */
 			SFS_SUB,	/**< the subject */
+			SFS_SCOPE,	/**< scope of this policy */
 			SFS_VA,		/**< valid action */
 			SFS_VL,		/**< valid log */
 			SFS_IA,		/**< invalid action */
@@ -393,6 +418,10 @@ class DlgRuleEditor : public Observer, public DlgRuleEditorBase
 		 */
 		enum sbColumnIndex {
 			SB_ID = 0,	/**< apn rule id. */
+			SB_TYPE,	/**< type of context */
+			SB_ACTION,	/**< action */
+			SB_LOG,		/**< log */
+			SB_SCOPE,	/**< scope of this policy */
 			SB_PATH,	/**< path (of subject) */
 			SB_SUB,		/**< the subject */
 			SB_MASK,	/**< the access mask */

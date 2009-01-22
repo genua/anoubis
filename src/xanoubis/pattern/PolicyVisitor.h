@@ -45,6 +45,7 @@
 #include "SbAccessFilterPolicy.h"
 #include "SbAppPolicy.h"
 #include "SfsAppPolicy.h"
+#include "SfsDefaultFilterPolicy.h"
 #include "SfsFilterPolicy.h"
 
 /**
@@ -156,6 +157,13 @@ class PolicyVisitor
 		 * @param[in] 1st Policy to visit.
 		 */
 		virtual void visitSfsFilterPolicy(SfsFilterPolicy *) = 0;
+
+		/**
+		 * Visit a SfsDefaultFilterPolicy.
+		 * @param[in] 1st Policy to visit.
+		 */
+		virtual void visitSfsDefaultFilterPolicy(
+		    SfsDefaultFilterPolicy *) = 0;
 
 	private:
 		bool	propagate_;	/**< The propagation flag. */

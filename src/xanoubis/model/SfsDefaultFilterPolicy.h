@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 GeNUA mbH <info@genua.de>
+ * Copyright (c) 2009 GeNUA mbH <info@genua.de>
  *
  * All rights reserved.
  *
@@ -25,31 +25,29 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _SFSAPPPOLICY_H_
-#define _SFSAPPPOLICY_H_
+#ifndef _SFSDEFAULTFILTERPOLICY_H_
+#define _SFSDEFAULTFILTERPOLICY_H_
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include "AppPolicy.h"
-#include "SfsFilterPolicy.h"
-#include "SfsDefaultFilterPolicy.h"
+#include "FilterPolicy.h"
 
 /**
- * This is the sfs application policy.
+ * This is the sfs default policy.
  */
-class SfsAppPolicy : public AppPolicy
+class SfsDefaultFilterPolicy : public FilterPolicy
 {
-	DECLARE_CLASS(SfsAppPolicy)
+	DECLARE_CLASS(SfsDefaultFilterPolicy)
 
 	public:
 		/**
-		 * Constructor of a SfsAppPolicy.
-		 * @param[in] 1st The ruleset this policy belongs to.
+		 * Constructor of a SfsDefaultFilterPolicy.
+		 * @param[in] 1st The parent application policy.
 		 * @param[in] 2nd The apn_rule this policy should represent.
 		 */
-		SfsAppPolicy(PolicyRuleSet *, struct apn_rule *);
+		SfsDefaultFilterPolicy(AppPolicy *, struct apn_rule *);
 
 		/**
 		 * Get the policy type as string.
@@ -71,6 +69,48 @@ class SfsAppPolicy : public AppPolicy
 		 * @return Nothing.
 		 */
 		virtual void accept(PolicyVisitor &);
+
+		/**
+		 * Set the apn log type.
+		 * @param[in] 1st The apn log type.
+		 * @return True on success.
+		 */
+		virtual bool setLogNo(int);
+
+		/**
+		 * Get the apn log type.
+		 * @param None.
+		 * @return The apn log type.
+		 */
+		virtual int getLogNo(void) const;
+
+		/**
+		 * Set the apn action type.
+		 * @param[in] 1st The apn action type.
+		 * @return True on success.
+		 */
+		virtual bool setActionNo(int);
+
+		/**
+		 * Get the apn action type.
+		 * @param None.
+		 * @return The apn action type.
+		 */
+		virtual int getActionNo(void) const;
+
+		/**
+		 * Set policy path.
+		 * @param[in] 1st The new path.
+		 * @return True on success.
+		 */
+		bool setPath(wxString);
+
+		/**
+		 * Get policy path.
+		 * @param None.
+		 * @return The policy path.
+		 */
+		wxString getPath(void) const;
 };
 
-#endif	/* _SFSAPPPOLICY_H_ */
+#endif	/* _SFSDEFAULTFILTERPOLICY_H_ */

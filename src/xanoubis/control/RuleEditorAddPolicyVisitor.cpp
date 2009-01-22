@@ -66,13 +66,12 @@ RuleEditorAddPolicyVisitor::visitContextFilterPolicy(
 	ruleEditor_->addContextFilterPolicy(policy);
 }
 
-/*
 void
 RuleEditorAddPolicyVisitor::visitDefaultFilterPolicy(
     DefaultFilterPolicy *policy)
 {
+	ruleEditor_->addDefaultFilterPolicy(policy);
 }
-*/
 
 void
 RuleEditorAddPolicyVisitor::visitSbAccessFilterPolicy(
@@ -97,4 +96,11 @@ void
 RuleEditorAddPolicyVisitor::visitSfsFilterPolicy(SfsFilterPolicy *policy)
 {
 	ruleEditor_->addSfsFilterPolicy(policy);
+}
+
+void
+RuleEditorAddPolicyVisitor::visitSfsDefaultFilterPolicy(
+    SfsDefaultFilterPolicy *policy)
+{
+	ruleEditor_->addSfsDefaultFilterPolicy(policy);
 }

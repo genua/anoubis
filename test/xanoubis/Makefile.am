@@ -232,7 +232,8 @@ testSuite_Policies_SOURCES = \
 	suite_Policies/tc_SbAccessFilterPolicy.cpp \
 	suite_Policies/tc_SbAppPolicy.cpp \
 	suite_Policies/tc_SfsAppPolicy.cpp \
-	suite_Policies/tc_SfsFilterPolicy.cpp
+	suite_Policies/tc_SfsFilterPolicy.cpp \
+	suite_Policies/tc_SfsDefaultFilterPolicy.cpp
 
 #
 # Testsuite: Sfs

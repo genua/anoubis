@@ -137,6 +137,27 @@ ModSfsAddPolicyVisitor::visitSfsFilterPolicy(SfsFilterPolicy *policy)
 	*/
 }
 
+void
+ModSfsAddPolicyVisitor::visitSfsDefaultFilterPolicy(
+    SfsDefaultFilterPolicy *policy)
+{
+	long		 idx;
+	wxListCtrl	*list;
+
+	idx = ruleListAppend(policy);
+	list = sfsPanel_->lst_Rules;
+
+	/*
+	 * XXX ch: fix this with next change
+	list->SetItem(idx, MODSFS_LIST_COLUMN_PROG,
+	    sfsPolicy->getBinaryName());
+	list->SetItem(idx, MODSFS_LIST_COLUMN_HASHT,
+	    sfsPolicy->getHashTypeName());
+	list->SetItem(idx, MODSFS_LIST_COLUMN_HASH,
+	   sfsPolicy->getHashValue());
+	*/
+}
+
 long
 ModSfsAddPolicyVisitor::ruleListAppend(Policy *policy)
 {

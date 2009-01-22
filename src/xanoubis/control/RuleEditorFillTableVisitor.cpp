@@ -103,6 +103,12 @@ RuleEditorFillTableVisitor::visitSfsFilterPolicy(SfsFilterPolicy *policy)
 }
 
 void
+RuleEditorFillTableVisitor::visitSfsDefaultFilterPolicy(
+    SfsDefaultFilterPolicy *)
+{
+}
+
+void
 RuleEditorFillTableVisitor::clean(Policy *WXUNUSED(policy), long WXUNUSED(idx))
 {
 /*

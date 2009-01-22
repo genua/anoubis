@@ -247,6 +247,8 @@ xanoubis_SOURCES= \
 	model/SfsAppPolicy.h \
 	model/SfsFilterPolicy.cpp \
 	model/SfsFilterPolicy.h \
+	model/SfsDefaultFilterPolicy.cpp \
+	model/SfsDefaultFilterPolicy.h \
 	model/PolicyUtils.cpp \
 	model/PolicyUtils.h \
 	model/ListCtrlColumn.cpp \

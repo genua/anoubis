@@ -46,7 +46,7 @@ SfsAppPolicy::SfsAppPolicy(PolicyRuleSet *ruleSet, struct apn_rule *rule)
 			break;
 		case APN_SFS_DEFAULT:
 			filterList_.Append(
-			    new DefaultFilterPolicy(this, filter));
+			    new SfsDefaultFilterPolicy(this, filter));
 			break;
 		default:
 			/* Unknown filter type of SfsApp, do nothing. */

@@ -92,6 +92,7 @@ class RuleEditorFillWidgetsVisitor : public PolicyVisitor
 		virtual void visitSbAppPolicy(SbAppPolicy*) {};
 		virtual void visitSfsAppPolicy(SfsAppPolicy*) {};
 		virtual void visitSfsFilterPolicy(SfsFilterPolicy*) {};
+		virtual void visitSfsDefaultFilterPolicy(SfsDefaultFilterPolicy*) {};
 };
 
 #endif	/* _RULEEDITORFILLWIDGETSVISITOR_H_ */
