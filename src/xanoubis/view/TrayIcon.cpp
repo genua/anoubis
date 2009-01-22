@@ -71,6 +71,7 @@ TrayIcon::TrayIcon(void)
 	escalationTimeout_ = 0;
 	alertTimeout_ = 10;
 
+	notify_init("Anoubis");
 	notification = notify_notification_new("Anoubis", "", NULL, NULL);
 	anEvents = AnEvents::getInstance();
 	jobCtrl = JobCtrl::getInstance();
@@ -331,8 +332,6 @@ TrayIcon::systemNotify(const gchar *module, const gchar *message,
 
 	NotifyUrgency messagePriority = priority;
 
-	/* mandatory initialisation call */
-	(module != NULL) ? notify_init(module) : notify_init("Anoubis");
 	notify_notification_set_timeout(notification, timeShown);
 	notify_notification_add_action(notification, "default", "default cb",
 	    (NotifyActionCallback)callback, this, NULL);
