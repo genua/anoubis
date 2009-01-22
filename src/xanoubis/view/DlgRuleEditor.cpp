@@ -665,12 +665,36 @@ DlgRuleEditor::wipeFilterList(void)
 }
 
 void
+DlgRuleEditor::updateColumnText(wxListCtrl *list, long rowIdx,
+    ListCtrlColumn *column, wxString text)
+{
+	long		columnIdx;
+
+	if (column->isVisible()) {
+		columnIdx = column->getIndex();
+		list->SetItem(rowIdx, columnIdx, text);
+	}
+}
+
+void
+DlgRuleEditor::updateColumnID(wxListCtrl *list, long rowIdx,
+    ListCtrlColumn *column, Policy *policy)
+{
+	long		columnIdx;
+	wxString	columnText;
+
+	if (column->isVisible()) {
+		columnIdx = column->getIndex();
+		columnText.Printf(wxT("%d:"), policy->getApnRuleId());
+		list->SetItem(rowIdx, columnIdx, columnText);
+	}
+}
+
+void
 DlgRuleEditor::updateListAppPolicy(long rowIdx)
 {
-	long		 columnIdx;
 	wxString	 columnText;
 	void		*data;
-	ListCtrlColumn	*column;
 	AppPolicy	*policy;
 	PolicyRuleSet	*ruleset;
 
@@ -684,43 +708,27 @@ DlgRuleEditor::updateListAppPolicy(long rowIdx)
 	ruleset = policy->getParentRuleSet();
 
 	/* Fill id column */
-	column = appColumns_[APP_ID];
-	if (column->isVisible()) {
-		columnIdx = column->getIndex();
-		columnText.Printf(wxT("%d:"), policy->getApnRuleId());
-		appPolicyListCtrl->SetItem(rowIdx, columnIdx, columnText);
-	}
+	updateColumnID(appPolicyListCtrl, rowIdx, appColumns_[APP_ID], policy);
 
 	/* Fill type column */
-	column = appColumns_[APP_TYPE];
-	if (column->isVisible()) {
-		columnIdx  = column->getIndex();
-		columnText = policy->getTypeIdentifier();
-		if ((ruleset != NULL) && ruleset->isAdmin()) {
-			columnText.Append(wxT("(A)"));
-		}
-		appPolicyListCtrl->SetItem(rowIdx, columnIdx, columnText);
+	columnText = policy->getTypeIdentifier();
+	if ((ruleset != NULL) && ruleset->isAdmin()) {
+		columnText.Append(wxT("(A)"));
 	}
+	updateColumnText(appPolicyListCtrl, rowIdx, appColumns_[APP_TYPE],
+	    columnText);
 
 	/* Fill user column */
-	column = appColumns_[APP_USER];
-	if (column->isVisible()) {
-		columnIdx  = column->getIndex();
-		columnText = _("(unknown)");
-		if (ruleset != NULL) {
-			columnText = wxGetApp().getUserNameById(
-			    ruleset->getUid());
-		}
-		appPolicyListCtrl->SetItem(rowIdx, columnIdx, columnText);
+	columnText = _("(unknown)");
+	if (ruleset != NULL) {
+		columnText = wxGetApp().getUserNameById(ruleset->getUid());
 	}
+	updateColumnText(appPolicyListCtrl, rowIdx, appColumns_[APP_USER],
+	    columnText);
 
 	/* Fill binary column */
-	column = appColumns_[APP_BINARY];
-	if (column->isVisible()) {
-		columnIdx  = column->getIndex();
-		columnText = policy->getBinaryName();
-		appPolicyListCtrl->SetItem(rowIdx, columnIdx, columnText);
-	}
+	updateColumnText(appPolicyListCtrl, rowIdx, appColumns_[APP_BINARY],
+	    policy->getBinaryName());
 
 	/* Set background colour in case of admin policy */
 	if ((ruleset != NULL) && ruleset->isAdmin()) {
@@ -732,10 +740,7 @@ DlgRuleEditor::updateListAppPolicy(long rowIdx)
 void
 DlgRuleEditor::updateListAlfFilterPolicy(long rowIdx)
 {
-	long				 columnIdx;
-	wxString			 columnText;
 	void				*data;
-	ListCtrlColumn			*column;
 	AlfFilterPolicy			*policy;
 
 	data   = (void*)filterPolicyListCtrl->GetItemData(rowIdx);
@@ -746,109 +751,58 @@ DlgRuleEditor::updateListAlfFilterPolicy(long rowIdx)
 	}
 
 	/* Fill id column */
-	column = alfColumns_[ALF_ID];
-	if (column->isVisible()) {
-		columnIdx = column->getIndex();
-		columnText.Printf(wxT("%d:"), policy->getApnRuleId());
-		filterPolicyListCtrl->SetItem(rowIdx, columnIdx, columnText);
-	}
+	updateColumnID(filterPolicyListCtrl, rowIdx, alfColumns_[ALF_ID],
+	    policy);
 
 	/* Fill type column */
-	column = alfColumns_[ALF_TYPE];
-	if (column->isVisible()) {
-		columnIdx  = column->getIndex();
-		columnText = policy->getTypeIdentifier();
-		filterPolicyListCtrl->SetItem(rowIdx, columnIdx, columnText);
-	}
+	updateColumnText(filterPolicyListCtrl, rowIdx, alfColumns_[ALF_TYPE],
+	    policy->getTypeIdentifier());
 
 	/* Fill action column*/
-	column = alfColumns_[ALF_ACTION];
-	if (column->isVisible()) {
-		columnIdx  = column->getIndex();
-		columnText = policy->getActionName();
-		filterPolicyListCtrl->SetItem(rowIdx, columnIdx, columnText);
-	}
+	updateColumnText(filterPolicyListCtrl, rowIdx, alfColumns_[ALF_ACTION],
+	    policy->getActionName());
 
 	/* Fill log column */
-	column = alfColumns_[ALF_LOG];
-	if (column->isVisible()) {
-		columnIdx  = column->getIndex();
-		columnText = policy->getLogName();
-		filterPolicyListCtrl->SetItem(rowIdx, columnIdx, columnText);
-	}
+	updateColumnText(filterPolicyListCtrl, rowIdx, alfColumns_[ALF_LOG],
+	    policy->getLogName());
 
 	/* Fill direction column */
-	column = alfColumns_[ALF_DIR];
-	if (column->isVisible()) {
-		columnIdx  = column->getIndex();
-		columnText = policy->getDirectionName();
-		filterPolicyListCtrl->SetItem(rowIdx, columnIdx, columnText);
-	}
+	updateColumnText(filterPolicyListCtrl, rowIdx, alfColumns_[ALF_DIR],
+	    policy->getDirectionName());
 
 	/* Fill protocol column */
-	column = alfColumns_[ALF_PROT];
-	if (column->isVisible() && (policy != NULL)) {
-		columnIdx  = column->getIndex();
-		columnText = policy->getProtocolName();
-		filterPolicyListCtrl->SetItem(rowIdx, columnIdx, columnText);
-	}
+	updateColumnText(filterPolicyListCtrl, rowIdx, alfColumns_[ALF_PROT],
+	    policy->getProtocolName());
 
 	/* Fill address family column */
-	column = alfColumns_[ALF_AF];
-	if (column->isVisible() && (policy != NULL)) {
-		columnIdx  = column->getIndex();
-		columnText = policy->getAddrFamilyName();
-		filterPolicyListCtrl->SetItem(rowIdx, columnIdx, columnText);
-	}
+	updateColumnText(filterPolicyListCtrl, rowIdx, alfColumns_[ALF_AF],
+	    policy->getAddrFamilyName());
 
 	/* Fill from host column */
-	column = alfColumns_[ALF_FHOST];
-	if (column->isVisible() && (policy != NULL)) {
-		columnIdx  = column->getIndex();
-		columnText = policy->getFromHostName();
-		filterPolicyListCtrl->SetItem(rowIdx, columnIdx, columnText);
-	}
+	updateColumnText(filterPolicyListCtrl, rowIdx, alfColumns_[ALF_FHOST],
+	    policy->getFromHostName());
 
 	/* Fill from port column */
-	column = alfColumns_[ALF_FPORT];
-	if (column->isVisible() && (policy != NULL)) {
-		columnIdx  = column->getIndex();
-		columnText = policy->getFromPortName();
-		filterPolicyListCtrl->SetItem(rowIdx, columnIdx, columnText);
-	}
+	updateColumnText(filterPolicyListCtrl, rowIdx, alfColumns_[ALF_FPORT],
+	    policy->getFromPortName());
 
 	/* Fill to host column */
-	column = alfColumns_[ALF_THOST];
-	if (column->isVisible() && (policy != NULL)) {
-		columnIdx  = column->getIndex();
-		columnText = policy->getToHostName();
-		filterPolicyListCtrl->SetItem(rowIdx, columnIdx, columnText);
-	}
+	updateColumnText(filterPolicyListCtrl, rowIdx, alfColumns_[ALF_THOST],
+	    policy->getToHostName());
 
 	/* Fill to port column */
-	column = alfColumns_[ALF_TPORT];
-	if (column->isVisible() && (policy != NULL)) {
-		columnIdx  = column->getIndex();
-		columnText = policy->getToPortName();
-		filterPolicyListCtrl->SetItem(rowIdx, columnIdx, columnText);
-	}
+	updateColumnText(filterPolicyListCtrl, rowIdx, alfColumns_[ALF_TPORT],
+	    policy->getToPortName());
 
 	/* Fill state timeout column */
-	column = alfColumns_[ALF_TIME];
-	if (column->isVisible() && (policy != NULL)) {
-		columnIdx  = column->getIndex();
-		columnText = policy->getStateTimeoutName();
-		filterPolicyListCtrl->SetItem(rowIdx, columnIdx, columnText);
-	}
+	updateColumnText(filterPolicyListCtrl, rowIdx, alfColumns_[ALF_TIME],
+	    policy->getStateTimeoutName());
 }
 
 void
 DlgRuleEditor::updateListAlfCapabilityFilterPolicy(long rowIdx)
 {
-	long				 columnIdx;
-	wxString			 columnText;
 	void				*data;
-	ListCtrlColumn			*column;
 	AlfCapabilityFilterPolicy	*policy;
 
 	data   = (void*)filterPolicyListCtrl->GetItemData(rowIdx);
@@ -859,37 +813,22 @@ DlgRuleEditor::updateListAlfCapabilityFilterPolicy(long rowIdx)
 	}
 
 	/* Fill id column */
-	column = alfColumns_[ALF_ID];
-	if (column->isVisible()) {
-		columnIdx = column->getIndex();
-		columnText.Printf(wxT("%d:"), policy->getApnRuleId());
-		filterPolicyListCtrl->SetItem(rowIdx, columnIdx, columnText);
-	}
+	updateColumnID(filterPolicyListCtrl, rowIdx, alfColumns_[ALF_ID],
+	    policy);
 
 	/* Fill type column */
-	column = alfColumns_[ALF_TYPE];
-	if (column->isVisible()) {
-		columnIdx  = column->getIndex();
-		columnText = policy->getTypeIdentifier();
-		filterPolicyListCtrl->SetItem(rowIdx, columnIdx, columnText);
-	}
+	updateColumnText(filterPolicyListCtrl, rowIdx, alfColumns_[ALF_TYPE],
+	    policy->getTypeIdentifier());
 
 	/* Fill capability column*/
-	column = alfColumns_[ALF_CAP];
-	if (column->isVisible()) {
-		columnIdx  = column->getIndex();
-		columnText = policy->getCapabilityTypeName();
-		filterPolicyListCtrl->SetItem(rowIdx, columnIdx, columnText);
-	}
+	updateColumnText(filterPolicyListCtrl, rowIdx, alfColumns_[ALF_CAP],
+	    policy->getCapabilityTypeName());
 }
 
 void
 DlgRuleEditor::updateListSfsFilterPolicy(long rowIdx)
 {
-	long		 columnIdx;
-	wxString	 columnText;
 	void		*data;
-	ListCtrlColumn	*column;
 	SfsFilterPolicy	*policy;
 
 	data   = (void*)filterPolicyListCtrl->GetItemData(rowIdx);
@@ -900,85 +839,46 @@ DlgRuleEditor::updateListSfsFilterPolicy(long rowIdx)
 	}
 
 	/* Fill id column */
-	column = sfsColumns_[SFS_ID];
-	if (column->isVisible()) {
-		columnIdx = column->getIndex();
-		columnText.Printf(wxT("%d:"), policy->getApnRuleId());
-		filterPolicyListCtrl->SetItem(rowIdx, columnIdx, columnText);
-	}
+	updateColumnID(filterPolicyListCtrl, rowIdx, sfsColumns_[SFS_ID],
+	    policy);
 
 	/* Fill path column */
-	column = sfsColumns_[SFS_PATH];
-	if (column->isVisible()) {
-		columnIdx  = column->getIndex();
-		columnText = policy->getPath();
-		filterPolicyListCtrl->SetItem(rowIdx, columnIdx, columnText);
-	}
+	updateColumnText(filterPolicyListCtrl, rowIdx, sfsColumns_[SFS_PATH],
+	    policy->getPath());
 
 	/* Fill subject column */
-	column = sfsColumns_[SFS_SUB];
-	if (column->isVisible()) {
-		columnIdx  = column->getIndex();
-		columnText = policy->getSubjectName();
-		filterPolicyListCtrl->SetItem(rowIdx, columnIdx, columnText);
-	}
+	updateColumnText(filterPolicyListCtrl, rowIdx, sfsColumns_[SFS_SUB],
+	    policy->getSubjectName());
 
 	/* Fill valid action column */
-	column = sfsColumns_[SFS_VA];
-	if (column->isVisible()) {
-		columnIdx  = column->getIndex();
-		columnText = policy->getValidActionName();
-		filterPolicyListCtrl->SetItem(rowIdx, columnIdx, columnText);
-	}
+	updateColumnText(filterPolicyListCtrl, rowIdx, sfsColumns_[SFS_VA],
+	    policy->getValidActionName());
 
 	/* Fill valid log column */
-	column = sfsColumns_[SFS_VL];
-	if (column->isVisible()) {
-		columnIdx  = column->getIndex();
-		columnText = policy->getValidLogName();
-		filterPolicyListCtrl->SetItem(rowIdx, columnIdx, columnText);
-	}
+	updateColumnText(filterPolicyListCtrl, rowIdx, sfsColumns_[SFS_VL],
+	    policy->getValidLogName());
 
 	/* Fill invalid action column */
-	column = sfsColumns_[SFS_IA];
-	if (column->isVisible()) {
-		columnIdx  = column->getIndex();
-		columnText = policy->getInvalidActionName();
-		filterPolicyListCtrl->SetItem(rowIdx, columnIdx, columnText);
-	}
+	updateColumnText(filterPolicyListCtrl, rowIdx, sfsColumns_[SFS_IA],
+	    policy->getInvalidActionName());
 
 	/* Fill invalid log column */
-	column = sfsColumns_[SFS_IL];
-	if (column->isVisible()) {
-		columnIdx  = column->getIndex();
-		columnText = policy->getInvalidLogName();
-		filterPolicyListCtrl->SetItem(rowIdx, columnIdx, columnText);
-	}
+	updateColumnText(filterPolicyListCtrl, rowIdx, sfsColumns_[SFS_IL],
+	    policy->getInvalidLogName());
 
 	/* Fill unknown action column */
-	column = sfsColumns_[SFS_UA];
-	if (column->isVisible()) {
-		columnIdx  = column->getIndex();
-		columnText = policy->getUnknownActionName();
-		filterPolicyListCtrl->SetItem(rowIdx, columnIdx, columnText);
-	}
+	updateColumnText(filterPolicyListCtrl, rowIdx, sfsColumns_[SFS_UA],
+	    policy->getUnknownActionName());
 
 	/* Fill unknown log column */
-	column = sfsColumns_[SFS_UL];
-	if (column->isVisible()) {
-		columnIdx  = column->getIndex();
-		columnText = policy->getUnknownLogName();
-		filterPolicyListCtrl->SetItem(rowIdx, columnIdx, columnText);
-	}
+	updateColumnText(filterPolicyListCtrl, rowIdx, sfsColumns_[SFS_UL],
+	    policy->getUnknownLogName());
 }
 
 void
 DlgRuleEditor::updateListContextFilterPolicy(long rowIdx)
 {
-	long			 columnIdx;
-	wxString		 columnText;
 	void			*data;
-	ListCtrlColumn		*column;
 	ContextFilterPolicy	*policy;
 
 	data   = (void*)filterPolicyListCtrl->GetItemData(rowIdx);
@@ -989,37 +889,22 @@ DlgRuleEditor::updateListContextFilterPolicy(long rowIdx)
 	}
 
 	/* Fill id column */
-	column = ctxColumns_[CTX_ID];
-	if (column->isVisible()) {
-		columnIdx = column->getIndex();
-		columnText.Printf(wxT("%d:"), policy->getApnRuleId());
-		filterPolicyListCtrl->SetItem(rowIdx, columnIdx, columnText);
-	}
+	updateColumnID(filterPolicyListCtrl, rowIdx, ctxColumns_[CTX_ID],
+	    policy);
 
 	/* Fill context type */
-	column = ctxColumns_[CTX_TYPE];
-	if (column->isVisible()) {
-		columnIdx  = column->getIndex();
-		columnText = policy->getContextTypeName();
-		filterPolicyListCtrl->SetItem(rowIdx, columnIdx, columnText);
-	}
+	updateColumnText(filterPolicyListCtrl, rowIdx, ctxColumns_[CTX_TYPE],
+	    policy->getContextTypeName());
 
 	/* Fill binary */
-	column = ctxColumns_[CTX_BINARY];
-	if (column->isVisible()) {
-		columnIdx  = column->getIndex();
-		columnText = policy->getBinaryName();
-		filterPolicyListCtrl->SetItem(rowIdx, columnIdx, columnText);
-	}
+	updateColumnText(filterPolicyListCtrl, rowIdx, ctxColumns_[CTX_BINARY],
+	    policy->getBinaryName());
 }
 
 void
 DlgRuleEditor::updateListSbAccessFilterPolicy(long rowIdx)
 {
-	long			 columnIdx;
-	wxString		 columnText;
 	void			*data;
-	ListCtrlColumn		*column;
 	SbAccessFilterPolicy	*policy;
 
 	data   = (void*)filterPolicyListCtrl->GetItemData(rowIdx);
@@ -1030,36 +915,19 @@ DlgRuleEditor::updateListSbAccessFilterPolicy(long rowIdx)
 	}
 
 	/* Fill id column */
-	column = sbColumns_[SB_ID];
-	if (column->isVisible()) {
-		columnIdx = column->getIndex();
-		columnText.Printf(wxT("%d:"), policy->getApnRuleId());
-		filterPolicyListCtrl->SetItem(rowIdx, columnIdx, columnText);
-	}
+	updateColumnID(filterPolicyListCtrl, rowIdx, sbColumns_[SB_ID], policy);
 
 	/* Fill path column */
-	column = sbColumns_[SB_PATH];
-	if (column->isVisible()) {
-		columnIdx  = column->getIndex();
-		columnText = policy->getPath();
-		filterPolicyListCtrl->SetItem(rowIdx, columnIdx, columnText);
-	}
+	updateColumnText(filterPolicyListCtrl, rowIdx, sbColumns_[SB_PATH],
+	    policy->getPath());
 
 	/* Fill subject column */
-	column = sbColumns_[SB_SUB];
-	if (column->isVisible()) {
-		columnIdx  = column->getIndex();
-		columnText = policy->getSubjectName();
-		filterPolicyListCtrl->SetItem(rowIdx, columnIdx, columnText);
-	}
+	updateColumnText(filterPolicyListCtrl, rowIdx, sbColumns_[SB_SUB],
+	    policy->getSubjectName());
 
 	/* Fill mask column */
-	column = sbColumns_[SB_MASK];
-	if (column->isVisible()) {
-		columnIdx  = column->getIndex();
-		columnText = policy->getAccessMaskName();
-		filterPolicyListCtrl->SetItem(rowIdx, columnIdx, columnText);
-	}
+	updateColumnText(filterPolicyListCtrl, rowIdx, sbColumns_[SB_MASK],
+	    policy->getAccessMaskName());
 }
 
 void

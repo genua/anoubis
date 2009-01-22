@@ -510,6 +510,14 @@ class DlgRuleEditor : public DlgRuleEditorBase
 		 */
 		void wipeFilterList(void);
 
+		/* XXX Dokumentation */
+		void updateColumnID(wxListCtrl *, long, ListCtrlColumn *,
+		    Policy *);
+
+		/* XXX Dokumentation */
+		void updateColumnText(wxListCtrl *, long, ListCtrlColumn *,
+		    wxString);
+
 		/**
 		 * Update row.
 		 * Updates the values of a row showing an application policy.
