@@ -40,7 +40,8 @@
 #include "ProfileCtrl.h"
 #include "RuleEditorAddPolicyVisitor.h"
 
-DlgRuleEditor::DlgRuleEditor(wxWindow* parent) : DlgRuleEditorBase(parent)
+DlgRuleEditor::DlgRuleEditor(wxWindow* parent)
+    : Observer(NULL), DlgRuleEditorBase(parent)
 {
 	AnEvents *anEvents;
 
@@ -108,6 +109,11 @@ DlgRuleEditor::DlgRuleEditor(wxWindow* parent) : DlgRuleEditorBase(parent)
 	for (size_t i=0; i<SB_EOL; i++) {
 		sbColumns_[i]->setIndex(i);
 	}
+
+	appPolicyLoadProgIdx_ = 0;
+	appPolicyLoadProgDlg_ = NULL;
+	filterPolicyLoadProgIdx_ = 0;
+	filterPolicyLoadProgDlg_ = NULL;
 }
 
 DlgRuleEditor::~DlgRuleEditor(void)
@@ -123,6 +129,36 @@ DlgRuleEditor::~DlgRuleEditor(void)
 }
 
 void
+DlgRuleEditor::update(Subject *subject)
+{
+	long idx;
+
+	if (subject->IsKindOf(CLASSINFO(AppPolicy))) {
+		idx = findListRow(appPolicyListCtrl, (Policy *)subject);
+		if (idx != -1) {
+			updateListAppPolicy(idx);
+		}
+	} else if (subject->IsKindOf(CLASSINFO(AlfFilterPolicy))) {
+		idx = findListRow(filterPolicyListCtrl, (Policy *)subject);
+		if (idx != -1) {
+			updateListAlfFilterPolicy(idx);
+		}
+	} else if (subject->IsKindOf(CLASSINFO(AlfCapabilityFilterPolicy))) {
+		idx = findListRow(filterPolicyListCtrl, (Policy *)subject);
+		if (idx != -1) {
+			updateListAlfCapabilityFilterPolicy(idx);
+		}
+	} else if (subject->IsKindOf(CLASSINFO(ContextFilterPolicy))) {
+		idx = findListRow(filterPolicyListCtrl, (Policy *)subject);
+		if (idx != -1) {
+			updateListContextFilterPolicy(idx);
+		}
+	} else {
+		/* Unknown subject type - do nothing */
+	}
+}
+
+void
 DlgRuleEditor::addAppPolicy(AppPolicy *policy)
 {
 	long index;
@@ -130,6 +166,7 @@ DlgRuleEditor::addAppPolicy(AppPolicy *policy)
 	updateListColumns(appPolicyListCtrl, appColumns_, APP_EOL);
 	index = addListRow(appPolicyListCtrl, policy);
 	updateListAppPolicy(index);
+	updateProgDlg(appPolicyLoadProgDlg_, &appPolicyLoadProgIdx_, policy);
 }
 
 void
@@ -140,6 +177,8 @@ DlgRuleEditor::addAlfFilterPolicy(AlfFilterPolicy *policy)
 	updateListColumns(filterPolicyListCtrl, alfColumns_, ALF_EOL);
 	index = addListRow(filterPolicyListCtrl, policy);
 	updateListAlfFilterPolicy(index);
+	updateProgDlg(filterPolicyLoadProgDlg_, &filterPolicyLoadProgIdx_,
+	    policy);
 }
 
 void
@@ -150,6 +189,8 @@ DlgRuleEditor::addAlfCapabilityFilterPolicy(AlfCapabilityFilterPolicy *policy)
 	updateListColumns(filterPolicyListCtrl, alfColumns_, ALF_EOL);
 	index = addListRow(filterPolicyListCtrl, policy);
 	updateListAlfCapabilityFilterPolicy(index);
+	updateProgDlg(filterPolicyLoadProgDlg_, &filterPolicyLoadProgIdx_,
+	    policy);
 }
 
 void
@@ -160,6 +201,8 @@ DlgRuleEditor::addSfsFilterPolicy(SfsFilterPolicy *policy)
 	updateListColumns(filterPolicyListCtrl, sfsColumns_, SFS_EOL);
 	index = addListRow(filterPolicyListCtrl, policy);
 	updateListSfsFilterPolicy(index);
+	updateProgDlg(filterPolicyLoadProgDlg_, &filterPolicyLoadProgIdx_,
+	    policy);
 }
 
 void
@@ -170,6 +213,8 @@ DlgRuleEditor::addContextFilterPolicy(ContextFilterPolicy *policy)
 	updateListColumns(filterPolicyListCtrl, ctxColumns_, CTX_EOL);
 	index = addListRow(filterPolicyListCtrl, policy);
 	updateListContextFilterPolicy(index);
+	updateProgDlg(filterPolicyLoadProgDlg_, &filterPolicyLoadProgIdx_,
+	    policy);
 }
 
 void
@@ -180,6 +225,8 @@ DlgRuleEditor::addSbAccessFilterPolicy(SbAccessFilterPolicy *policy)
 	updateListColumns(filterPolicyListCtrl, sbColumns_, SB_EOL);
 	index = addListRow(filterPolicyListCtrl, policy);
 	updateListSbAccessFilterPolicy(index);
+	updateProgDlg(filterPolicyLoadProgDlg_, &filterPolicyLoadProgIdx_,
+	    policy);
 }
 
 void
@@ -203,10 +250,33 @@ void
 DlgRuleEditor::onLoadNewRuleSet(wxCommandEvent &event)
 {
 	ProfileCtrl	*profileCtrl;
+	PolicyRuleSet	*ruleSet;
 
 	profileCtrl = ProfileCtrl::getInstance();
+
+	/* Release old one's */
+	ruleSet = profileCtrl->getRuleSet(userRuleSetId_);
+	if (ruleSet != NULL) {
+		ruleSet->unlock();
+	}
+	ruleSet = profileCtrl->getRuleSet(adminRuleSetId_);
+	if (ruleSet != NULL) {
+		ruleSet->unlock();
+	}
+
+	/* Get new rulesets */
 	userRuleSetId_ = profileCtrl->getUserId();
 	adminRuleSetId_ = profileCtrl->getAdminId(geteuid());
+
+	/* Clain new one's */
+	ruleSet = profileCtrl->getRuleSet(userRuleSetId_);
+	if (ruleSet != NULL) {
+		ruleSet->lock();
+	}
+	ruleSet = profileCtrl->getRuleSet(adminRuleSetId_);
+	if (ruleSet != NULL) {
+		ruleSet->lock();
+	}
 
 	loadRuleSet();
 	event.Skip();
@@ -223,7 +293,7 @@ DlgRuleEditor::onAppPolicySelect(wxListEvent & event)
 	policy = wxDynamicCast((void*)event.GetData(), AppPolicy);
 	if (policy != NULL) {
 		/* Show filters of selected application */
-		policy->acceptOnFilter(addVisitor);
+		addFilterPolicy(policy);
 
 		/* Show selected policy below application list */
 		newLabel.Printf(_("%ls %ls"),
@@ -289,6 +359,20 @@ DlgRuleEditor::onFilterPolicyDeSelect(wxListEvent & WXUNUSED(event))
 	filterListUpButton->Disable();
 	filterListDownButton->Disable();
 	filterListDeleteButton->Disable();
+}
+
+void
+DlgRuleEditor::updateProgDlg(wxProgressDialog *dlg, int *idx, Policy *policy)
+{
+	wxString message;
+
+	message.Printf(_("loading policy with id: %d"), policy->getApnRuleId());
+
+	if (dlg != NULL) {
+		dlg->Update(*idx, message);
+		(*idx)++;
+		sleep(2);
+	}
 }
 
 void
@@ -493,8 +577,6 @@ DlgRuleEditor::onFilterListColumnsButtonClick(wxCommandEvent &)
 	long		idx;
 	size_t		last;
 
-	RuleEditorAddPolicyVisitor	addVisitor(this);
-
 	void			 *data;
 	AppPolicy		 *policy;
 	wxMultiChoiceDialog	 *multiChoiceDlg;
@@ -558,7 +640,7 @@ DlgRuleEditor::onFilterListColumnsButtonClick(wxCommandEvent &)
 
 		/* call to enforce redrawing of the current view */
 		wipeFilterList();
-		policy->acceptOnFilter(addVisitor);
+		addFilterPolicy(policy);
 	}
 
 	delete multiChoiceDlg;
@@ -567,9 +649,7 @@ DlgRuleEditor::onFilterListColumnsButtonClick(wxCommandEvent &)
 void
 DlgRuleEditor::loadRuleSet(void)
 {
-	RuleEditorAddPolicyVisitor	 addVisitor(this);
 	ProfileCtrl			*profileCtrl;
-	PolicyRuleSet			*ruleSet;
 
 	profileCtrl = ProfileCtrl::getInstance();
 
@@ -578,22 +658,86 @@ DlgRuleEditor::loadRuleSet(void)
 	wipeAppList();
 
 	/* Load ruleset with user-policies. */
-	ruleSet = profileCtrl->getRuleSet(userRuleSetId_);
-	if (ruleSet != NULL) {
-		ruleSet->accept(addVisitor);
-	}
+	addPolicyRuleSet(profileCtrl->getRuleSet(userRuleSetId_));
 
 	/* Load ruleset with admin-policies. */
-	ruleSet = profileCtrl->getRuleSet(adminRuleSetId_);
-	if (ruleSet != NULL) {
-		ruleSet->accept(addVisitor);
-	}
+	addPolicyRuleSet(profileCtrl->getRuleSet(adminRuleSetId_));
 
 	/* As no app is selected, we remove the accidental filled filters. */
 	wipeFilterList();
 
 	/* enable button for customising header columns */
 	appListColumnsButton->Enable(true);
+}
+
+void
+DlgRuleEditor::addPolicyRuleSet(PolicyRuleSet *ruleSet)
+{
+	int				policyCount;
+	wxString			title;
+	RuleEditorAddPolicyVisitor	addVisitor(this);
+
+	if (ruleSet == NULL) {
+		return;
+	}
+
+	policyCount = ruleSet->getAppPolicyCount();
+	if (ruleSet->isAdmin()) {
+		title =
+		    _("Rule Editor filling application table (admin ruleset)");
+	} else {
+		title =
+		    _("Rule Editor filling application table (user ruleset)");
+	}
+
+	/* Show progress bar for big rulesets. */
+	if ((policyCount > 10) && (appPolicyLoadProgDlg_ == NULL)) {
+		appPolicyLoadProgDlg_ = new wxProgressDialog(title,
+		    _("Loading application policy..."), policyCount, this);
+		appPolicyLoadProgIdx_ = 0;
+	}
+
+	/* Bring new row into sight. */
+	ruleSet->accept(addVisitor);
+
+	/* Done with loading, remove progress bar. */
+	if (appPolicyLoadProgDlg_ != NULL) {
+		delete appPolicyLoadProgDlg_;
+		appPolicyLoadProgDlg_ = NULL;
+		appPolicyLoadProgIdx_ = 0;
+	}
+}
+
+void
+DlgRuleEditor::addFilterPolicy(AppPolicy *policy)
+{
+	int				filterCount;
+	wxString			title;
+	RuleEditorAddPolicyVisitor	addVisitor(this);
+
+	if (policy == NULL) {
+		return;
+	}
+
+	filterCount = policy->getFilterPolicyCount();
+	title = _("Rule Editor filling filter table...");
+
+	/* Show progress bar for big rulesets. */
+	if ((filterCount > 10) && (filterPolicyLoadProgDlg_ == NULL)) {
+		filterPolicyLoadProgDlg_ = new wxProgressDialog(title,
+		    _("Loading filter policy..."), filterCount, this);
+		filterPolicyLoadProgIdx_ = 0;
+	}
+
+	/* Bring new row into sight. */
+	policy->acceptOnFilter(addVisitor);
+
+	/* Done with loading, remove progress bar. */
+	if (filterPolicyLoadProgDlg_ != NULL) {
+		delete filterPolicyLoadProgDlg_;
+		filterPolicyLoadProgDlg_ = NULL;
+		filterPolicyLoadProgIdx_ = 0;
+	}
 }
 
 long
@@ -607,12 +751,22 @@ DlgRuleEditor::addListRow(wxListCtrl *list, Policy *policy)
 	list->InsertItem(index, wxEmptyString);
 	list->SetItemPtrData(index, (wxUIntPtr)policy);
 
+	addSubject(policy); /* to those been observed. */
+
 	return (index);
 }
 
 void
 DlgRuleEditor::removeListRow(wxListCtrl *list, long rowIdx)
 {
+	Policy	*policy;
+
+	policy = wxDynamicCast((void*)list->GetItemData(rowIdx), Policy);
+	if (policy != NULL) {
+		/* Stop observing subject if it's a policy. */
+		removeSubject(policy);
+	}
+
 	list->DeleteItem(rowIdx);
 }
 
@@ -635,7 +789,7 @@ DlgRuleEditor::wipeAppList(void)
 	 * Remove all lines / items. We have to do it by hand, because
 	 * DeleteAllItems() and ClearAll() does not send events.
 	 */
-	for (int i = appPolicyListCtrl->GetItemCount(); i >= 0; i--) {
+	for (int i = appPolicyListCtrl->GetItemCount() - 1; i >= 0; i--) {
 		removeListRow(appPolicyListCtrl, i);
 	}
 
@@ -655,7 +809,7 @@ DlgRuleEditor::wipeFilterList(void)
 	 * Remove all lines / items. We have to do it by hand, because
 	 * DeleteAllItems() and ClearAll() does not send events.
 	 */
-	for (int i = filterPolicyListCtrl->GetItemCount(); i >= 0; i--) {
+	for (int i = filterPolicyListCtrl->GetItemCount() - 1; i >= 0; i--) {
 		removeListRow(filterPolicyListCtrl, i);
 	}
 

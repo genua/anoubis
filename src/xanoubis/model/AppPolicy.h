@@ -88,6 +88,13 @@ class AppPolicy : public Policy
 		void acceptOnFilter(PolicyVisitor &);
 
 		/**
+		 * Count the filters of this application policy.
+		 * @param None.
+		 * @return Number of filters.
+		 */
+		size_t getFilterPolicyCount(void) const;
+
+		/**
 		 * Count the binaries of this application policy.
 		 * @param None.
 		 * @return The number of binaries.

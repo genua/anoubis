@@ -276,6 +276,18 @@ PolicyRuleSet::isModified(void) const
 	return (isModified_);
 }
 
+size_t
+PolicyRuleSet::getAppPolicyCount(void) const
+{
+	size_t count;
+
+	count  = alfList_.GetCount();
+	count += sfsList_.GetCount();
+	count += ctxList_.GetCount();
+	count += sbList_.GetCount();
+
+	return (count);
+}
 
 void
 PolicyRuleSet::clean(void)

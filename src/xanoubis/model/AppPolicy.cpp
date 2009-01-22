@@ -79,6 +79,12 @@ AppPolicy::acceptOnFilter(PolicyVisitor &visitor)
 	}
 }
 
+size_t
+AppPolicy::getFilterPolicyCount(void) const
+{
+	return (filterList_.GetCount());
+}
+
 unsigned int
 AppPolicy::getBinaryCount(void) const
 {

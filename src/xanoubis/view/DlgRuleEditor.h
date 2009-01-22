@@ -225,9 +225,12 @@ class DlgRuleEditor : public DlgRuleEditorBase
 };
 #endif
 
+#include <wx/progdlg.h>
+
 #include "AnEvents.h"
 #include "DlgRuleEditorBase.h"
 #include "ListCtrlColumn.h"
+#include "Observer.h"
 
 #include "Policy.h"
 #include "AppPolicy.h"
@@ -240,7 +243,7 @@ class DlgRuleEditor : public DlgRuleEditorBase
 /**
  * This is the anoubis rule editor.
  */
-class DlgRuleEditor : public DlgRuleEditorBase
+class DlgRuleEditor : public Observer, public DlgRuleEditorBase
 {
 	public:
 		/**
@@ -254,6 +257,13 @@ class DlgRuleEditor : public DlgRuleEditorBase
 		 * @param None.
 		 */
 		~DlgRuleEditor(void);
+
+		/**
+		 * This is called when an observed policy was modified.
+		 * @param[in] 1st The changed policy (aka subject)
+		 * @return Nothing.
+		 */
+		virtual void update(Subject *);
 
 		/**
 		 * Add application policy.
@@ -398,6 +408,11 @@ class DlgRuleEditor : public DlgRuleEditorBase
 		long userRuleSetId_;  /**< Id of our ruleSet. */
 		long adminRuleSetId_; /**< Id of our admin ruleSet. */
 
+		int appPolicyLoadProgIdx_; /**< current progress position */
+		wxProgressDialog *appPolicyLoadProgDlg_; /**< progress bar */
+		int filterPolicyLoadProgIdx_; /**< current progress position */
+		wxProgressDialog *filterPolicyLoadProgDlg_; /**< progress bar */
+
 		/**
 		 * Handle show events.
 		 * @param[in] 1st The event.
@@ -461,6 +476,29 @@ class DlgRuleEditor : public DlgRuleEditorBase
 		 * @return Nothing.
 		 */
 		void loadRuleSet(void);
+
+		/**
+		 * Add / visit ruleset for loading (app policies).
+		 * @param[in] 1st RuleSet to load.
+		 * @return Nothing.
+		 */
+		void addPolicyRuleSet(PolicyRuleSet *);
+
+		/**
+		 * Add /visit filter of app policy for
+		 * @param[in] 1st AppPolicy with filters.
+		 * @return Nothind.
+		 */
+		void addFilterPolicy(AppPolicy *);
+
+		/**
+		 * Update progress bar.
+		 * @param[in] 1st The progress bar dialog to be updated.
+		 * @param[in] 2nd The index of this progress bar.
+		 * @param[in] 3rd The policy caused the update.
+		 * @return Nothing.
+		 */
+		void updateProgDlg(wxProgressDialog *, int *, Policy *);
 
 		/**
 		 * Load new ruleSet and refresh the lists.

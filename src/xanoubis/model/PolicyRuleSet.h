@@ -249,6 +249,13 @@ class PolicyRuleSet : public Subject
 		 */
 		void refresh(void);
 
+		/**
+		 * Get the number of application policies.
+		 * @param[in] None.
+		 * @return The number of application policies.
+		 */
+		size_t getAppPolicyCount(void) const;
+
 		/*
 		 * XXX ch: re-enable this while adding functionality
 		 * XXX ch: to the RuleEditor
