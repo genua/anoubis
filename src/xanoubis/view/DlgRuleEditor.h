@@ -499,45 +499,62 @@ class DlgRuleEditor : public Observer, public DlgRuleEditorBase
 		virtual void onFilterPolicyDeSelect(wxListEvent &);
 
 		/**
-		 * Load new ruleSet.
-		 * This will clear the appList and load it with new content.
+		 * Move selected application policy one row up.
 		 * @param None.
 		 * @return Nothing.
 		 */
-		void loadRuleSet(void);
+		virtual void onAppListUpClick(wxCommandEvent &);
 
 		/**
-		 * Add / visit ruleset for loading (app policies).
-		 * @param[in] 1st RuleSet to load.
+		 * Move selected application policy one row down.
+		 * @param None.
 		 * @return Nothing.
 		 */
-		void addPolicyRuleSet(PolicyRuleSet *);
+		virtual void onAppListDownClick(wxCommandEvent &);
 
 		/**
-		 * Add /visit filter of app policy for
-		 * @param[in] 1st AppPolicy with filters.
-		 * @return Nothind.
-		 */
-		void addFilterPolicy(AppPolicy *);
-
-		/**
-		 * Update progress bar.
-		 * @param[in] 1st The progress bar dialog to be updated.
-		 * @param[in] 2nd The index of this progress bar.
-		 * @param[in] 3rd The policy caused the update.
+		 * Move selected filter policy one row up.
+		 * @param None.
 		 * @return Nothing.
 		 */
-		void updateProgDlg(wxProgressDialog *, int *, Policy *);
+		virtual void onFilterListUpClick(wxCommandEvent &);
 
 		/**
-		 * Load new ruleSet and refresh the lists.
-		 * @param[in] 1st Select this index in the appList
-		 * @param[in] 2nd Select this index in the filterList
-		 * @return None.
-		 * Both parameters can be -1 if the previous selection
-		 * should be reused.
+		 * Move selected filter policy one row down.
+		 * @param None.
+		 * @return Nothing.
 		 */
-		void refreshRuleSet(long, long);
+		virtual void onFilterListDownClick(wxCommandEvent &);
+
+		/**
+		 * Delete selected application policy.
+		 * @param None.
+		 * @return Nothing.
+		 */
+		virtual void onAppListDeleteClick(wxCommandEvent &);
+
+		/**
+		 * Delete selected filter policy.
+		 * @param None.
+		 * @return Nothing.
+		 */
+		virtual void onFilterListDeleteClick(wxCommandEvent &);
+
+		/**
+		 * Handle update of App-Rules column header options chosen by
+		 * the user.
+		 * @param None.
+		 * @return Nothing.
+		 */
+		virtual void onAppListColumnsButtonClick(wxCommandEvent &);
+
+		/**
+		 * Handle update of Filter-Rules column header options chosen by
+		 * the user.
+		 * @param None.
+		 * @return Nothing.
+		 */
+		virtual void onFilterListColumnsButtonClick(wxCommandEvent &);
 
 		/**
 		 * Add a row to a given list and assign the given policy.
@@ -576,6 +593,68 @@ class DlgRuleEditor : public Observer, public DlgRuleEditorBase
 		 * @return Nothing.
 		 */
 		void wipeFilterList(void);
+
+		/**
+		 * Add / visit ruleset for loading (app policies).
+		 * @param[in] 1st RuleSet to load.
+		 * @return Nothing.
+		 */
+		void addPolicyRuleSet(PolicyRuleSet *);
+
+		/**
+		 * Add /visit filter of app policy for
+		 * @param[in] 1st AppPolicy with filters.
+		 * @return Nothind.
+		 */
+		void addFilterPolicy(AppPolicy *);
+
+		/**
+		 * Load new ruleSet.
+		 * This will clear the appList and load it with new content.
+		 * @param None.
+		 * @return Nothing.
+		 */
+		void loadRuleSet(void);
+
+		/**
+		 * Load new ruleSet and refresh the lists.
+		 * @param[in] 1st Select this index in the appList
+		 * @param[in] 2nd Select this index in the filterList
+		 * @return None.
+		 * Both parameters can be -1 if the previous selection
+		 * should be reused.
+		 */
+		void refreshRuleSet(long, long);
+
+		/**
+		 * Common backend for moving the selected rule up or down
+		 * @param[in] 1st The list Ctrl
+		 * @param[in] 2nd Move upwards if true, otherwise move down
+		 * @return The new index of the rule or negative if the
+		 *     ruleset is unmodified.
+		 */
+		long listUpDown(wxListCtrl *, bool);
+
+		/**
+		 * Update progress bar.
+		 * @param[in] 1st The progress bar dialog to be updated.
+		 * @param[in] 2nd The index of this progress bar.
+		 * @param[in] 3rd The policy caused the update.
+		 * @return Nothing.
+		 */
+		void updateProgDlg(wxProgressDialog *, int *, Policy *);
+
+		/**
+		 * Update columns.
+		 * Updates the columns of the given list. Only the visible
+		 * columns are created and the index of those is updated.
+		 * If the list has already columns, no action is performed.
+		 * @param[in] 1st The list showing the new columns.
+		 * @param[in] 2nd The array of columns.
+		 * @param[in] 3rd The size of that array.
+		 * @return Nothing.
+		 */
+		void updateListColumns(wxListCtrl *,ListCtrlColumn **, size_t);
 
 		/* XXX Dokumentation */
 		void updateColumnID(wxListCtrl *, long, ListCtrlColumn *,
@@ -633,86 +712,6 @@ class DlgRuleEditor : public Observer, public DlgRuleEditorBase
 		 * @return Nothing.
 		 */
 		void updateListSbAccessFilterPolicy(long);
-
-		/**
-		 * Update columns.
-		 * Updates the columns of the given list. Only the visible
-		 * columns are created and the index of those is updated.
-		 * If the list has already columns, no action is performed.
-		 * @param[in] 1st The list showing the new columns.
-		 * @param[in] 2nd The array of columns.
-		 * @param[in] 3rd The size of that array.
-		 * @return Nothing.
-		 */
-		void updateListColumns(wxListCtrl *,ListCtrlColumn **, size_t);
-
-		/**
-		 * Move selected rule up
-		 * @param none
-		 * @return Nothing.
-		 */
-		void onAppListUpClick(wxCommandEvent &);
-
-		/**
-		 * Move selected rule down
-		 * @param none
-		 * @return Nothing.
-		 */
-		void onAppListDownClick(wxCommandEvent &);
-
-		/**
-		 * Delete selected rule
-		 * @param none
-		 * @return Nothing.
-		 */
-		void onAppListDeleteClick(wxCommandEvent &);
-
-		/**
-		 * Move selected rule up
-		 * @param none
-		 * @return Nothing.
-		 */
-		void onFilterListUpClick(wxCommandEvent &);
-
-		/**
-		 * Move selected rule down
-		 * @param none
-		 * @return Nothing.
-		 */
-		void onFilterListDownClick(wxCommandEvent &);
-
-		/**
-		 * Delete selected rule
-		 * @param none
-		 * @return Nothing.
-		 */
-		void onFilterListDeleteClick(wxCommandEvent &);
-
-protected:
-		/**
-		 * Common backend for moving the selected rule up or down
-		 * @param[in] 1st The list Ctrl
-		 * @param[in] 2nd Move upwards if true, otherwise move down
-		 * @return The new index of the rule or negative if the
-		 *     ruleset is unmodified.
-		 */
-		long listUpDown(wxListCtrl *, bool);
-
-		/**
-		 * Handle update of App-Rules column header options chosen by
-		 * the user.
-		 * @param None.
-		 * @return Nothing.
-		 */
-		virtual void onAppListColumnsButtonClick(wxCommandEvent &);
-
-		/**
-		 * Handle update of Filter-Rules column header options chosen by
-		 * the user.
-		 * @param None.
-		 * @return Nothing.
-		 */
-		virtual void onFilterListColumnsButtonClick(wxCommandEvent &);
 };
 
 #endif /* __DlgRuleEditor__ */

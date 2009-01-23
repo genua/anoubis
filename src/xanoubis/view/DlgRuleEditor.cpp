@@ -36,6 +36,7 @@
 #include "AlfAppPolicy.h"
 #include "ContextAppPolicy.h"
 #include "SfsAppPolicy.h"
+#include "FilterPolicy.h"
 #include "PolicyRuleSet.h"
 #include "ProfileCtrl.h"
 #include "RuleEditorAddPolicyVisitor.h"
@@ -133,6 +134,22 @@ DlgRuleEditor::~DlgRuleEditor(void)
 	    wxCommandEventHandler(DlgRuleEditor::onShow), NULL, this);
 	anEvents->Disconnect(anEVT_LOAD_RULESET,
 	    wxCommandEventHandler(DlgRuleEditor::onLoadNewRuleSet), NULL, this);
+
+	for (size_t i=0; i<APP_EOL; i++) {
+		delete appColumns_[i];
+	}
+	for (size_t i=0; i<ALF_EOL; i++) {
+		delete alfColumns_[i];
+	}
+	for (size_t i=0; i<SFS_EOL; i++) {
+		delete sfsColumns_[i];
+	}
+	for (size_t i=0; i<CTX_EOL; i++) {
+		delete ctxColumns_[i];
+	}
+	for (size_t i=0; i<SB_EOL; i++) {
+		delete sbColumns_[i];
+	}
 }
 
 void
@@ -216,7 +233,7 @@ DlgRuleEditor::addDefaultFilterPolicy(DefaultFilterPolicy *policy)
 		index = addListRow(filterPolicyListCtrl, policy);
 		updateListSbAccessFilterPolicy(index);
 	} else {
-		// should never happend
+		/* This should never been reached. */
 	}
 }
 
@@ -265,6 +282,10 @@ DlgRuleEditor::addSbAccessFilterPolicy(SbAccessFilterPolicy *policy)
 	updateProgDlg(filterPolicyLoadProgDlg_, &filterPolicyLoadProgIdx_,
 	    policy);
 }
+
+/*
+ * Private subroutines
+ */
 
 void
 DlgRuleEditor::onShow(wxCommandEvent &event)
@@ -358,14 +379,30 @@ DlgRuleEditor::onAppPolicySelect(wxListEvent & event)
 }
 
 void
+DlgRuleEditor::onAppPolicyDeSelect(wxListEvent & WXUNUSED(event))
+{
+	appListPolicyText->SetLabel(wxEmptyString);
+	appListUpButton->Disable();
+	appListDownButton->Disable();
+	appListDeleteButton->Disable();
+
+	wipeFilterList();
+
+	Layout();
+	Refresh();
+}
+
+void
 DlgRuleEditor::onFilterPolicySelect(wxListEvent & event)
 {
-	Policy		*policy;
+	FilterPolicy	*policy;
 	PolicyRuleSet	*ruleset;
 
-	policy = wxDynamicCast((void*)event.GetData(), Policy);
-	if (!policy)
+	policy = wxDynamicCast((void*)event.GetData(), FilterPolicy);
+	if (policy == NULL) {
 		return;
+	}
+
 	ruleset = policy->getParentRuleSet();
 	if (ruleset && geteuid() == 0 || !ruleset->isAdmin()) {
 		filterListUpButton->Enable(policy->canMoveUp());
@@ -376,18 +413,31 @@ DlgRuleEditor::onFilterPolicySelect(wxListEvent & event)
 		filterListDownButton->Disable();
 		filterListDeleteButton->Disable();
 	}
-}
 
-void
-DlgRuleEditor::onAppPolicyDeSelect(wxListEvent & WXUNUSED(event))
-{
-	appListPolicyText->SetLabel(wxEmptyString);
-	wipeFilterList();
-	appListUpButton->Disable();
-	appListDownButton->Disable();
-	appListDeleteButton->Disable();
-	Layout();
-	Refresh();
+	/* Notebook tab's */
+	if (policy->IsKindOf(CLASSINFO(AlfCapabilityFilterPolicy))) {
+		filterCommonPage->Show();
+		filterCapabilityPage->Show();
+	} else if (policy->IsKindOf(CLASSINFO(AlfFilterPolicy))) {
+		filterCommonPage->Show();
+		filterNetworkPage->Show();
+		filterAddressPage->Show();
+	} else if (policy->IsKindOf(CLASSINFO(SfsFilterPolicy))) {
+		filterCommonPage->Show();
+		filterSubjectPage->Show();
+		filterSfsPage->Show();
+	} else if (policy->IsKindOf(CLASSINFO(SfsDefaultFilterPolicy))) {
+		filterCommonPage->Show();
+		filterSubjectPage->Show();
+	} else if (policy->IsKindOf(CLASSINFO(DefaultFilterPolicy))) {
+		filterCommonPage->Show();
+	} else if (policy->IsKindOf(CLASSINFO(ContextFilterPolicy))) {
+		filterContextPage->Show();
+	} else if (policy->IsKindOf(CLASSINFO(SbAccessFilterPolicy))) {
+		filterCommonPage->Show();
+		filterSubjectPage->Show();
+		filterPermissionPage->Show();
+	}
 }
 
 void
@@ -396,88 +446,60 @@ DlgRuleEditor::onFilterPolicyDeSelect(wxListEvent & WXUNUSED(event))
 	filterListUpButton->Disable();
 	filterListDownButton->Disable();
 	filterListDeleteButton->Disable();
+
+	/* Notebook tab's */
+	filterCommonPage->Hide();
+	filterNetworkPage->Hide();
+	filterAddressPage->Hide();
+	filterCapabilityPage->Hide();
+	filterSubjectPage->Hide();
+	filterSfsPage->Hide();
+	filterContextPage->Hide();
+	filterPermissionPage->Hide();
 }
 
 void
-DlgRuleEditor::updateProgDlg(wxProgressDialog *dlg, int *idx, Policy *policy)
+DlgRuleEditor::onAppListUpClick(wxCommandEvent &)
 {
-	wxString message;
+	long	item;
 
-	message.Printf(_("loading policy with id: %d"), policy->getApnRuleId());
-
-	if (dlg != NULL) {
-		dlg->Update(*idx, message);
-		(*idx)++;
+	item = listUpDown(appPolicyListCtrl, true);
+	if (item >= 0) {
+		refreshRuleSet(item, -1);
 	}
 }
 
 void
-DlgRuleEditor::refreshRuleSet(long appsel, long filtsel)
+DlgRuleEditor::onAppListDownClick(wxCommandEvent &)
 {
-	long	apptop = appPolicyListCtrl->GetTopItem();
-	long	applen = appPolicyListCtrl->GetCountPerPage();
-	long	filttop = filterPolicyListCtrl->GetTopItem();
-	long	filtlen = filterPolicyListCtrl->GetCountPerPage();
+	long	item;
 
-	if (appsel >= 0) {
-		if (appsel < apptop)
-			apptop = appsel;
-		if (appsel >= apptop + applen)
-			apptop = appsel + 1 - applen;
-	} else {
-		appsel = appPolicyListCtrl->GetNextItem(-1, wxLIST_NEXT_ALL,
-		    wxLIST_STATE_SELECTED);
+	item = listUpDown(appPolicyListCtrl, false);
+	if (item >= 0) {
+		refreshRuleSet(item, -1);
 	}
-	if (filtsel >= 0) {
-		if (filtsel < filttop)
-			filttop = filtsel;
-		if (filtsel >= filttop + filtlen)
-			filttop = filtsel + 1 - filtlen;
-	} else {
-		filtsel = filterPolicyListCtrl->GetNextItem(-1,
-		    wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED);
-	}
-	loadRuleSet();
-	if (appsel >= 0)
-		appPolicyListCtrl->SetItemState(appsel,
-		    wxLIST_STATE_SELECTED, wxLIST_STATE_SELECTED);
-	if (filtsel >= 0) {
-		filterPolicyListCtrl->SetItemState(filtsel,
-		    wxLIST_STATE_SELECTED, wxLIST_STATE_SELECTED);
-	}
-	appPolicyListCtrl->EnsureVisible(apptop);
-	appPolicyListCtrl->EnsureVisible(apptop + applen - 1);
-	filterPolicyListCtrl->EnsureVisible(filttop);
-	filterPolicyListCtrl->EnsureVisible(filttop + filtlen - 1);
-
-	/* disable customisation of header columns */
-	filterListColumnsButton->Enable(false);
-
-	Layout();
-	Refresh();
 }
 
-long
-DlgRuleEditor::listUpDown(wxListCtrl *list, bool up)
+void
+DlgRuleEditor::onFilterListUpClick(wxCommandEvent &)
 {
-	long		 item;
-	Policy		*policy;
-	bool		 result;
+	long	item;
 
-	item = list->GetNextItem(-1, wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED);
-	if (item < 0 || (item == 0 && up))
-		return -1;
-	policy = wxDynamicCast((void*)list->GetItemData(item), Policy);
-	if (!policy)
-		return -1;
-	if (up) {
-		result = policy->moveUp();
-		item--;
-	} else {
-		result = policy->moveDown();
-		item++;
+	item = listUpDown(filterPolicyListCtrl, true);
+	if (item >= 0) {
+		refreshRuleSet(-1, item);
 	}
-	return item;
+}
+
+void
+DlgRuleEditor::onFilterListDownClick(wxCommandEvent &)
+{
+	long	item;
+
+	item = listUpDown(filterPolicyListCtrl, false);
+	if (item >= 0) {
+		refreshRuleSet(-1, item);
+	}
 }
 
 void
@@ -524,46 +546,6 @@ DlgRuleEditor::onFilterListDeleteClick(wxCommandEvent &)
 	if (item && (item + 1 >= count))
 		item--;
 	if (policy->remove())
-		refreshRuleSet(-1, item);
-}
-
-void
-DlgRuleEditor::onAppListUpClick(wxCommandEvent &)
-{
-	long	item;
-
-	item = listUpDown(appPolicyListCtrl, true);
-	if (item >= 0)
-		refreshRuleSet(item, -1);
-}
-
-void
-DlgRuleEditor::onFilterListUpClick(wxCommandEvent &)
-{
-	long	item;
-
-	item = listUpDown(filterPolicyListCtrl, true);
-	if (item >= 0)
-		refreshRuleSet(-1, item);
-}
-
-void
-DlgRuleEditor::onAppListDownClick(wxCommandEvent &)
-{
-	long	item;
-
-	item = listUpDown(appPolicyListCtrl, false);
-	if (item >= 0)
-		refreshRuleSet(item, -1);
-}
-
-void
-DlgRuleEditor::onFilterListDownClick(wxCommandEvent &)
-{
-	long	item;
-
-	item = listUpDown(filterPolicyListCtrl, false);
-	if (item >= 0)
 		refreshRuleSet(-1, item);
 }
 
@@ -682,28 +664,87 @@ DlgRuleEditor::onFilterListColumnsButtonClick(wxCommandEvent &)
 	delete multiChoiceDlg;
 }
 
-void
-DlgRuleEditor::loadRuleSet(void)
+long
+DlgRuleEditor::addListRow(wxListCtrl *list, Policy *policy)
 {
-	ProfileCtrl			*profileCtrl;
+	long index;
 
-	profileCtrl = ProfileCtrl::getInstance();
+	index = list->GetItemCount();
 
-	/* Clear list's. */
-	wipeFilterList();
-	wipeAppList();
+	/* Create new line @ given list. */
+	list->InsertItem(index, wxEmptyString);
+	list->SetItemPtrData(index, (wxUIntPtr)policy);
 
-	/* Load ruleset with user-policies. */
-	addPolicyRuleSet(profileCtrl->getRuleSet(userRuleSetId_));
+	addSubject(policy); /* to those been observed. */
 
-	/* Load ruleset with admin-policies. */
-	addPolicyRuleSet(profileCtrl->getRuleSet(adminRuleSetId_));
+	return (index);
+}
 
-	/* As no app is selected, we remove the accidental filled filters. */
-	wipeFilterList();
+void
+DlgRuleEditor::removeListRow(wxListCtrl *list, long rowIdx)
+{
+	Policy	*policy;
 
-	/* enable button for customising header columns */
-	appListColumnsButton->Enable(true);
+	policy = wxDynamicCast((void*)list->GetItemData(rowIdx), Policy);
+	if (policy != NULL) {
+		/* Stop observing subject if it's a policy. */
+		removeSubject(policy);
+	}
+
+	list->DeleteItem(rowIdx);
+}
+
+long
+DlgRuleEditor::findListRow(wxListCtrl *list, Policy *policy)
+{
+	for (int i = list->GetItemCount(); i >= 0; i--) {
+		if (policy == (Policy *)list->GetItemData(i)) {
+			return (i);
+		}
+	}
+
+	return (-1); /* in case of 'not found' */
+}
+
+void
+DlgRuleEditor::wipeAppList(void)
+{
+	/*
+	 * Remove all lines / items. We have to do it by hand, because
+	 * DeleteAllItems() and ClearAll() does not send events.
+	 */
+	for (int i = appPolicyListCtrl->GetItemCount() - 1; i >= 0; i--) {
+		removeListRow(appPolicyListCtrl, i);
+	}
+
+	/* Remove all columns, too and update view. */
+	appPolicyListCtrl->ClearAll();
+
+	/* disable button for customising header columns */
+	appListColumnsButton->Enable(false);
+
+	Refresh();
+}
+
+void
+DlgRuleEditor::wipeFilterList(void)
+{
+	long idx;
+
+	idx = ((wxListView*)filterPolicyListCtrl)->GetFirstSelected();
+	((wxListView*)filterPolicyListCtrl)->Select(idx, false);
+
+	/*
+	 * Remove all lines / items. We have to do it by hand, because
+	 * DeleteAllItems() and ClearAll() does not send events.
+	 */
+	for (int i = filterPolicyListCtrl->GetItemCount() - 1; i >= 0; i--) {
+		removeListRow(filterPolicyListCtrl, i);
+	}
+
+	/* Remove all columns, too and update view. */
+	filterPolicyListCtrl->ClearAll();
+	Refresh();
 }
 
 void
@@ -776,93 +817,131 @@ DlgRuleEditor::addFilterPolicy(AppPolicy *policy)
 	}
 }
 
+void
+DlgRuleEditor::loadRuleSet(void)
+{
+	ProfileCtrl			*profileCtrl;
+
+	profileCtrl = ProfileCtrl::getInstance();
+
+	/* Clear list's. */
+	wipeFilterList();
+	wipeAppList();
+
+	/* Load ruleset with user-policies. */
+	addPolicyRuleSet(profileCtrl->getRuleSet(userRuleSetId_));
+
+	/* Load ruleset with admin-policies. */
+	addPolicyRuleSet(profileCtrl->getRuleSet(adminRuleSetId_));
+
+	/* As no app is selected, we remove the accidental filled filters. */
+	wipeFilterList();
+
+	/* enable button for customising header columns */
+	appListColumnsButton->Enable(true);
+}
+
+void
+DlgRuleEditor::refreshRuleSet(long appsel, long filtsel)
+{
+	long	apptop = appPolicyListCtrl->GetTopItem();
+	long	applen = appPolicyListCtrl->GetCountPerPage();
+	long	filttop = filterPolicyListCtrl->GetTopItem();
+	long	filtlen = filterPolicyListCtrl->GetCountPerPage();
+
+	if (appsel >= 0) {
+		if (appsel < apptop)
+			apptop = appsel;
+		if (appsel >= apptop + applen)
+			apptop = appsel + 1 - applen;
+	} else {
+		appsel = appPolicyListCtrl->GetNextItem(-1, wxLIST_NEXT_ALL,
+		    wxLIST_STATE_SELECTED);
+	}
+	if (filtsel >= 0) {
+		if (filtsel < filttop)
+			filttop = filtsel;
+		if (filtsel >= filttop + filtlen)
+			filttop = filtsel + 1 - filtlen;
+	} else {
+		filtsel = filterPolicyListCtrl->GetNextItem(-1,
+		    wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED);
+	}
+	loadRuleSet();
+	if (appsel >= 0)
+		appPolicyListCtrl->SetItemState(appsel,
+		    wxLIST_STATE_SELECTED, wxLIST_STATE_SELECTED);
+	if (filtsel >= 0) {
+		filterPolicyListCtrl->SetItemState(filtsel,
+		    wxLIST_STATE_SELECTED, wxLIST_STATE_SELECTED);
+	}
+	appPolicyListCtrl->EnsureVisible(apptop);
+	appPolicyListCtrl->EnsureVisible(apptop + applen - 1);
+	filterPolicyListCtrl->EnsureVisible(filttop);
+	filterPolicyListCtrl->EnsureVisible(filttop + filtlen - 1);
+
+	/* disable customisation of header columns */
+	filterListColumnsButton->Enable(false);
+
+	Layout();
+	Refresh();
+}
+
 long
-DlgRuleEditor::addListRow(wxListCtrl *list, Policy *policy)
+DlgRuleEditor::listUpDown(wxListCtrl *list, bool up)
+{
+	long		 item;
+	Policy		*policy;
+	bool		 result;
+
+	item = list->GetNextItem(-1, wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED);
+	if (item < 0 || (item == 0 && up))
+		return -1;
+	policy = wxDynamicCast((void*)list->GetItemData(item), Policy);
+	if (!policy)
+		return -1;
+	if (up) {
+		result = policy->moveUp();
+		item--;
+	} else {
+		result = policy->moveDown();
+		item++;
+	}
+	return item;
+}
+
+void
+DlgRuleEditor::updateProgDlg(wxProgressDialog *dlg, int *idx, Policy *policy)
+{
+	wxString message;
+
+	message.Printf(_("loading policy with id: %d"), policy->getApnRuleId());
+
+	if (dlg != NULL) {
+		dlg->Update(*idx, message);
+		(*idx)++;
+	}
+}
+
+void
+DlgRuleEditor::updateListColumns(wxListCtrl *list,
+    ListCtrlColumn *columnList[], size_t length)
 {
 	long index;
 
-	index = list->GetItemCount();
-
-	/* Create new line @ given list. */
-	list->InsertItem(index, wxEmptyString);
-	list->SetItemPtrData(index, (wxUIntPtr)policy);
-
-	addSubject(policy); /* to those been observed. */
-
-	return (index);
-}
-
-void
-DlgRuleEditor::removeListRow(wxListCtrl *list, long rowIdx)
-{
-	Policy	*policy;
-
-	policy = wxDynamicCast((void*)list->GetItemData(rowIdx), Policy);
-	if (policy != NULL) {
-		/* Stop observing subject if it's a policy. */
-		removeSubject(policy);
+	if (list->GetColumnCount() != 0) {
+		return; /* List already has columns. */
 	}
+	index = 0;
 
-	list->DeleteItem(rowIdx);
-}
-
-long
-DlgRuleEditor::findListRow(wxListCtrl *list, Policy *policy)
-{
-	for (int i = list->GetItemCount(); i >= 0; i--) {
-		if (policy == (Policy *)list->GetItemData(i)) {
-			return (i);
+	for (size_t i=0; i<length; i++) {
+		if (!columnList[i]->isVisible()) {
+			continue; /* Skip this column. */
 		}
-	}
-
-	return (-1); /* in case of 'not found' */
-}
-
-void
-DlgRuleEditor::wipeAppList(void)
-{
-	/*
-	 * Remove all lines / items. We have to do it by hand, because
-	 * DeleteAllItems() and ClearAll() does not send events.
-	 */
-	for (int i = appPolicyListCtrl->GetItemCount() - 1; i >= 0; i--) {
-		removeListRow(appPolicyListCtrl, i);
-	}
-
-	/* Remove all columns, too and update view. */
-	appPolicyListCtrl->ClearAll();
-
-	/* disable button for customising header columns */
-	appListColumnsButton->Enable(false);
-
-	Refresh();
-}
-
-void
-DlgRuleEditor::wipeFilterList(void)
-{
-	/*
-	 * Remove all lines / items. We have to do it by hand, because
-	 * DeleteAllItems() and ClearAll() does not send events.
-	 */
-	for (int i = filterPolicyListCtrl->GetItemCount() - 1; i >= 0; i--) {
-		removeListRow(filterPolicyListCtrl, i);
-	}
-
-	/* Remove all columns, too and update view. */
-	filterPolicyListCtrl->ClearAll();
-	Refresh();
-}
-
-void
-DlgRuleEditor::updateColumnText(wxListCtrl *list, long rowIdx,
-    ListCtrlColumn *column, wxString text)
-{
-	long		columnIdx;
-
-	if (column->isVisible()) {
-		columnIdx = column->getIndex();
-		list->SetItem(rowIdx, columnIdx, text);
+		columnList[i]->setIndex(index);
+		list->InsertColumn(index, columnList[i]->getTitle());
+		list->SetColumnWidth(index, columnList[i]->getWidth());
+		index++;
 	}
 }
 
@@ -877,6 +956,18 @@ DlgRuleEditor::updateColumnID(wxListCtrl *list, long rowIdx,
 		columnIdx = column->getIndex();
 		columnText.Printf(wxT("%d:"), policy->getApnRuleId());
 		list->SetItem(rowIdx, columnIdx, columnText);
+	}
+}
+
+void
+DlgRuleEditor::updateColumnText(wxListCtrl *list, long rowIdx,
+    ListCtrlColumn *column, wxString text)
+{
+	long		columnIdx;
+
+	if (column->isVisible()) {
+		columnIdx = column->getIndex();
+		list->SetItem(rowIdx, columnIdx, text);
 	}
 }
 
@@ -1194,27 +1285,9 @@ DlgRuleEditor::updateListSbAccessFilterPolicy(long rowIdx)
 	}
 }
 
-void
-DlgRuleEditor::updateListColumns(wxListCtrl *list,
-    ListCtrlColumn *columnList[], size_t length)
-{
-	long index;
 
-	if (list->GetColumnCount() != 0) {
-		return; /* List already has columns. */
-	}
-	index = 0;
 
-	for (size_t i=0; i<length; i++) {
-		if (!columnList[i]->isVisible()) {
-			continue; /* Skip this column. */
-		}
-		columnList[i]->setIndex(index);
-		list->InsertColumn(index, columnList[i]->getTitle());
-		list->SetColumnWidth(index, columnList[i]->getWidth());
-		index++;
-	}
-}
+
 
 
 /*
