@@ -408,7 +408,6 @@ DlgRuleEditor::updateProgDlg(wxProgressDialog *dlg, int *idx, Policy *policy)
 	if (dlg != NULL) {
 		dlg->Update(*idx, message);
 		(*idx)++;
-		sleep(2);
 	}
 }
 
