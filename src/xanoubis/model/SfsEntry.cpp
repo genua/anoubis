@@ -44,11 +44,17 @@ SfsEntry::SfsEntry(const SfsEntry &other)
 	this->path_ = other.path_;
 	this->filename_ = other.filename_;
 	this->haveLocalCsum_ = other.haveLocalCsum_;
-	this->haveDaemonCsum_ = other.haveDaemonCsum_;
 	memcpy(this->localCsum_, other.localCsum_, ANOUBIS_CS_LEN);
-	memcpy(this->daemonCsum_, other.daemonCsum_, ANOUBIS_CS_LEN);
-	this->checksumAttr_ = other.checksumAttr_;
-	this->signatureAttr_ = other.signatureAttr_;
+	memcpy(this->csum_[SFSENTRY_CHECKSUM],
+	    other.csum_[SFSENTRY_CHECKSUM],
+	    ANOUBIS_CS_LEN);
+	memcpy(this->csum_[SFSENTRY_SIGNATURE],
+	    other.csum_[SFSENTRY_SIGNATURE],
+	    ANOUBIS_CS_LEN);
+	this->assigned_[SFSENTRY_CHECKSUM] = other.assigned_[SFSENTRY_CHECKSUM];
+	this->assigned_[SFSENTRY_SIGNATURE] = other.assigned_[SFSENTRY_SIGNATURE];
+	this->state_[SFSENTRY_CHECKSUM] = other.state_[SFSENTRY_CHECKSUM];
+	this->state_[SFSENTRY_SIGNATURE] = other.state_[SFSENTRY_SIGNATURE];
 }
 
 wxString
@@ -75,95 +81,111 @@ SfsEntry::getFileName(void) const
 	return (this->filename_);
 }
 
-SfsEntry::ChecksumAttr
-SfsEntry::getChecksumAttr() const
+SfsEntry::ChecksumState
+SfsEntry::getChecksumState(ChecksumType type) const
 {
-	return (this->checksumAttr_);
-}
-
-SfsEntry::SignatureAttr
-SfsEntry::getSignatureAttr() const
-{
-	return (this->signatureAttr_);
+	return (state_[type]);
 }
 
 bool
-SfsEntry::setNoChecksum(void)
+SfsEntry::setChecksum(ChecksumType type, const u_int8_t *cs)
 {
-	/* Remove already assigned checksums */
-	bool b1 = setLocalCsum(0);
-	bool b2 = setDaemonCsum(0);
+	memcpy(csum_[type], cs, ANOUBIS_CS_LEN);
+	assigned_[type] = true;
 
-	return (b1 || b2); /* Track any change in the model */
+	return (validateChecksum(type));
+}
+
+bool
+SfsEntry::setChecksumMissing(ChecksumType type)
+{
+	memset(csum_[type], 0, ANOUBIS_CS_LEN);
+	assigned_[type] = false;
+
+	if (state_[type] != SFSENTRY_MISSING) {
+		state_[type] = SFSENTRY_MISSING;
+		return (true);
+	} else
+		return (false);
+}
+
+bool
+SfsEntry::setChecksumInvalid(ChecksumType type)
+{
+	memset(csum_[type], 0, ANOUBIS_CS_LEN);
+	assigned_[type] = false;
+
+	if (state_[type] != SFSENTRY_INVALID) {
+		state_[type] = SFSENTRY_INVALID;
+		return (true);
+	} else
+		return (false);
+}
+
+bool
+SfsEntry::haveLocalCsum(void) const
+{
+	return (this->haveLocalCsum_);
 }
 
 bool
 SfsEntry::setLocalCsum(const u_int8_t *cs)
 {
-	if (cs != 0) {
-		/* Copy */
-		memcpy(localCsum_, cs, ANOUBIS_CS_LEN);
-		haveLocalCsum_ = true;
-	}
-	else {
-		/* Reset */
-		memset(localCsum_, 0, ANOUBIS_CS_LEN);
-		haveLocalCsum_ = false;
-	}
+	bool c1, c2, c3;
 
-	/* Checksum has changed, update checksumAttr */
-	return (updateChecksumAttr());
+	int result = memcmp(localCsum_, cs, ANOUBIS_CS_LEN);
+	c1 = (result != 0);
+
+	memcpy(localCsum_, cs, ANOUBIS_CS_LEN);
+	haveLocalCsum_ = true;
+
+	c2 = validateChecksum(SFSENTRY_CHECKSUM);
+	c3 = validateChecksum(SFSENTRY_SIGNATURE);
+
+	return (c1 || c2 || c3);
 }
 
 bool
-SfsEntry::setDaemonCsum(const u_int8_t *cs)
-{
-	if (cs != 0) {
-		/* Copy */
-		memcpy(daemonCsum_, cs, ANOUBIS_CS_LEN);
-		haveDaemonCsum_ = true;
-	}
-	else {
-		memset(daemonCsum_, 0, ANOUBIS_CS_LEN);
-		haveDaemonCsum_ = false;
-	}
-
-	/* Checksum has changed, update checksumAttr */
-	return (updateChecksumAttr());
-}
-
-void
 SfsEntry::reset(void)
 {
+	bool c1, c2, c3;
+
+	c1 = haveLocalCsum_;
+	c2 = reset(SFSENTRY_CHECKSUM);
+	c3 = reset(SFSENTRY_SIGNATURE);
+
 	haveLocalCsum_ = false;
-	haveDaemonCsum_ = false;
 	memset(localCsum_, 0, ANOUBIS_CS_LEN);
-	memset(daemonCsum_, 0, ANOUBIS_CS_LEN);
-	checksumAttr_ = SFSENTRY_CHECKSUM_NOT_VALIDATED;
-	signatureAttr_ = SFSENTRY_SIGNATURE_UNKNOWN;
+
+	return (c1 || c2 || c3);
 }
 
 bool
-SfsEntry::updateChecksumAttr(void)
+SfsEntry::reset(ChecksumType type)
 {
-	ChecksumAttr newValue;
+	memset(csum_[type], 0, ANOUBIS_CS_LEN);
+	assigned_[type] = false;
 
-	if (haveLocalCsum_ && haveDaemonCsum_) {
-		int result = memcmp(localCsum_, daemonCsum_, ANOUBIS_CS_LEN);
-
-		if (result == 0)
-			newValue = SFSENTRY_CHECKUM_MATCH;
-		else
-			newValue = SFSENTRY_CHECKSUM_NOMATCH;
-	}
-	else
-		newValue = SFSENTRY_CHECKSUM_UNKNOWN;
-
-	if (checksumAttr_ != newValue) {
-		/* Attribute value has changed */
-		checksumAttr_ = newValue;
+	if (state_[type] != SFSENTRY_NOT_VALIDATED) {
+		state_[type] = SFSENTRY_NOT_VALIDATED;
 		return (true);
+	} else
+		return (false);
+}
+
+bool
+SfsEntry::validateChecksum(ChecksumType type)
+{
+	ChecksumState newState = SFSENTRY_NOT_VALIDATED;
+
+	if (haveLocalCsum_ && assigned_[type]) {
+		int result = memcmp(localCsum_, csum_[type], ANOUBIS_CS_LEN);
+		newState = (result == 0) ? SFSENTRY_MATCH : SFSENTRY_NOMATCH;
 	}
-	else
+
+	if (state_[type] != newState) {
+		state_[type] = newState;
+		return (true);
+	} else
 		return (false);
 }

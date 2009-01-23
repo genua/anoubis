@@ -66,6 +66,7 @@ class ModSfsMainPanelImpl : public ModSfsMainPanelBase
 		void destroySfsMain();
 		void updateSfsList();
 		void updateSfsEntry(int);
+		void applySfsAction(int);
 		void OnSfsMainDirCtrlSelChanged(wxTreeEvent&);
 		void OnSfsDirChanged(wxCommandEvent&);
 		void OnSfsEntryChanged(wxCommandEvent&);

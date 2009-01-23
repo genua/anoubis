@@ -73,6 +73,12 @@ ComCsumDelTask::setFile(const wxString &file)
 }
 
 bool
+ComCsumDelTask::haveKeyId(void) const
+{
+	return ((keyId_ != 0) && (keyIdLen_ > 0));
+}
+
+bool
 ComCsumDelTask::setKeyId(const u_int8_t *keyId, int len)
 {
 	if ((keyId != 0) && (len > 0)) {

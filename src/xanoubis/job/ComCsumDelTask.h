@@ -88,6 +88,13 @@ class ComCsumDelTask : public ComTask
 		void setFile(const wxString &);
 
 		/**
+		 * Tests whether a key-id is assigned to the task.
+		 * @return true is returned, if a key-id is assigned, false
+		 *         otherwise.
+		 */
+		bool haveKeyId(void) const;
+
+		/**
 		 * Provides a key-id used by the operation.
 		 *
 		 * Once configured, the checksum of the file, which is signed

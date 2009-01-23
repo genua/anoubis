@@ -379,6 +379,10 @@ TcComTask::onTestCsumAdd(TaskEvent &event)
 	    "ResultDetails: %s (%i)\n",
 	    strerror(t->getResultDetails()), t->getResultDetails());
 
+	assertUnless(t->haveKeyId() == false, "A key-id is assigned");
+	assertUnless(t->havePrivateKey() == false,
+	    "A private key is assigned");
+
 	delete t;
 
 	trace("Leaving TcComTask::onTestCsumAdd\n");
@@ -421,6 +425,8 @@ TcComTask::onTestCsumGet(TaskEvent &event)
 	assertUnless(t->getResultDetails() == 0,
 	    "ResultDetails: %s (%i)\n",
 	    strerror(t->getResultDetails()), t->getResultDetails());
+
+	assertUnless(t->haveKeyId() == false, "A key-id is assigned");
 
 	u_int8_t cs[ANOUBIS_CS_LEN];
 	assertUnless(t->getCsum(cs, ANOUBIS_CS_LEN) == ANOUBIS_CS_LEN,
@@ -468,7 +474,7 @@ TcComTask::onTestCsumGetNoSuchFile(TaskEvent &event)
 	ComCsumGetTask *t = dynamic_cast<ComCsumGetTask*>(event.getTask());
 	trace("ComCsumGetTask = %p\n", t);
 
-	assertUnless(t->getComTaskResult() == ComTask::RESULT_SUCCESS,
+	assertUnless(t->getComTaskResult() == ComTask::RESULT_REMOTE_ERROR,
 	    "Failed to get a checksum!\n"
 	    "ComTaskResult = %i\n"
 	    "ResultDetails = %i\n",
@@ -477,6 +483,8 @@ TcComTask::onTestCsumGetNoSuchFile(TaskEvent &event)
 	assertUnless(t->getResultDetails() == 2,
 	    "ResultDetails: %s (%i)\n",
 	    strerror(t->getResultDetails()), t->getResultDetails());
+
+	assertUnless(t->haveKeyId() == false, "A key-id is assigned");
 
 	u_int8_t cs[ANOUBIS_CS_LEN];
 	assertUnless(t->getCsum(cs, ANOUBIS_CS_LEN) == 0,
@@ -514,6 +522,8 @@ TcComTask::onTestSfsListNotEmpty(TaskEvent &event)
 
 	ComSfsListTask *t = dynamic_cast<ComSfsListTask*>(event.getTask());
 	trace("ComSfsListTask = %p\n", t);
+
+	assertUnless(t->haveKeyId() == false, "A key-id is assigned");
 
 	wxArrayString result = t->getFileList();
 	trace("sfs-list-size: %i\n", result.Count());
@@ -583,6 +593,8 @@ TcComTask::onTestCsumDel(TaskEvent &event)
 	    "ResultDetails = %i\n",
 	    t->getComTaskResult(), t->getResultDetails());
 
+	assertUnless(t->haveKeyId() == false, "A key-id is assigned");
+
 	assertUnless(t->getResultDetails() == 0,
 	    "ResultDetails: %s (%i)\n",
 	    strerror(t->getResultDetails()), t->getResultDetails());
@@ -617,6 +629,8 @@ TcComTask::onTestSfsListEmpty(TaskEvent &event)
 
 	ComSfsListTask *t = dynamic_cast<ComSfsListTask*>(event.getTask());
 	trace("ComSfsListTask = %p\n", t);
+
+	assertUnless(t->haveKeyId() == false, "A key-id is assigned");
 
 	wxArrayString result = t->getFileList();
 	trace("sfs-list-size: %i\n", result.Count());
@@ -709,6 +723,8 @@ TcComTask::onTestSigAdd(TaskEvent &event)
 	    "ResultDetails: %s (%i)\n",
 	    strerror(t->getResultDetails()), t->getResultDetails());
 
+	assertUnless(t->haveKeyId(), "No key-id is assigned");
+
 	delete t;
 
 	trace("Leaving TcComTask::onTestSigAdd\n");
@@ -770,6 +786,8 @@ TcComTask::onTestSigGet(TaskEvent &event)
 	assertUnless(t->getResultDetails() == 0,
 	    "ResultDetails: %s (%i)\n",
 	    strerror(t->getResultDetails()), t->getResultDetails());
+
+	assertUnless(t->haveKeyId(), "No key-id is assigned");
 
 	u_int8_t cs[ANOUBIS_CS_LEN];
 	assertUnless(t->getCsum(cs, ANOUBIS_CS_LEN) == ANOUBIS_CS_LEN,
@@ -833,6 +851,8 @@ TcComTask::onTestSigListNotEmpty(TaskEvent &event)
 
 	ComSfsListTask *t = dynamic_cast<ComSfsListTask*>(event.getTask());
 	trace("ComSfsListTask = %p\n", t);
+
+	assertUnless(t->haveKeyId(), "No key-id is assigned");
 
 	wxArrayString result = t->getFileList();
 	trace("sfs-list-size: %i\n", result.Count());
@@ -925,6 +945,8 @@ TcComTask::onTestSigDel(TaskEvent &event)
 	    "ResultDetails: %s (%i)\n",
 	    strerror(t->getResultDetails()), t->getResultDetails());
 
+	assertUnless(t->haveKeyId(), "No key-id is assigned");
+
 	delete t;
 
 	trace("Leaving TcComTask::onTestSigDel\n");
@@ -975,6 +997,8 @@ TcComTask::onTestSigListEmpty(TaskEvent &event)
 
 	ComSfsListTask *t = dynamic_cast<ComSfsListTask*>(event.getTask());
 	trace("ComSfsListTask = %p\n", t);
+
+	assertUnless(t->haveKeyId(), "No key-id is assigned");
 
 	wxArrayString result = t->getFileList();
 	trace("sfs-list-size: %i\n", result.Count());

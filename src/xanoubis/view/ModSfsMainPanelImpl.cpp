@@ -44,6 +44,7 @@
 #include <apn.h>
 
 #include <wx/msgdlg.h>
+#include <wx/textdlg.h>
 
 #include "AnEvents.h"
 #include "main.h"
@@ -202,6 +203,10 @@ ModSfsMainPanelImpl::OnSfsMainValidateButtonClicked(wxCommandEvent&)
 		wxGetApp().status(
 		    _("Error: xanoubis is not connected to the daemon"));
 		break;
+	case SfsCtrl::RESULT_NEEDPASS:
+		wxGetApp().status(
+		    _("Error: A passphrase is required."));
+		break;
 	case SfsCtrl::RESULT_INVALIDARG:
 		wxGetApp().status(
 		    _("Error: An invalid argument was supplied"));
@@ -222,8 +227,6 @@ ModSfsMainPanelImpl::OnSfsMainApplyButtonClicked(wxCommandEvent&)
 	int selection = -1;
 
 	while (true) {
-		SfsCtrl::CommandResult result = SfsCtrl::RESULT_EXECUTE;
-
 		selection = SfsMainListCtrl->GetNextItem(selection,
 		    wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED);
 
@@ -232,6 +235,16 @@ ModSfsMainPanelImpl::OnSfsMainApplyButtonClicked(wxCommandEvent&)
 			break;
 		}
 
+		applySfsAction(selection);
+	}
+}
+
+void
+ModSfsMainPanelImpl::applySfsAction(int selection)
+{
+	SfsCtrl::CommandResult result = SfsCtrl::RESULT_EXECUTE;
+
+	do {
 		switch (SfsMainActionChoice->GetCurrentSelection()) {
 		case 0:
 			result = sfsCtrl_->registerChecksum(selection);
@@ -247,23 +260,51 @@ ModSfsMainPanelImpl::OnSfsMainApplyButtonClicked(wxCommandEvent&)
 			break;
 		}
 
-		switch (result) {
-		case SfsCtrl::RESULT_NOTCONNECTED:
-			wxGetApp().status(
-			  _("Error: xanoubis is not connected to the daemon"));
-			break;
-		case SfsCtrl::RESULT_INVALIDARG:
-			wxGetApp().status(
-			  _("Error: An invalid argument was supplied"));
-			break;
-		case SfsCtrl::RESULT_BUSY:
-			wxGetApp().status(
-			 _("Error: Sfs is still busy with another operation."));
-			break;
-		case SfsCtrl::RESULT_EXECUTE:
-			/* Success */
-			break;
+		if (result == SfsCtrl::RESULT_NEEDPASS) {
+			KeyCtrl *keyCtrl = KeyCtrl::getInstance();
+			PrivKey &privKey = keyCtrl->getPrivateKey();
+
+			wxPasswordEntryDialog dlg(this,
+			    _("Enter the passphrase of your private key:"),
+			    _("Enter passphrase"));
+
+			if (dlg.ShowModal() != wxID_OK) /* Canceled */
+				return;
+
+			/*
+			 * Load the private key into memory using the entered
+			 * passphrase.
+			 */
+			if (!privKey.load(dlg.GetValue())) {
+				/* XXX Bad error handling */
+				wxMessageBox(
+				    _("Could not load the private key."),
+				    _("SFS error"), wxOK|wxICON_ERROR, this);
+				return;
+			}
 		}
+	} while (result == SfsCtrl::RESULT_NEEDPASS);
+
+	switch (result) {
+	case SfsCtrl::RESULT_NOTCONNECTED:
+		wxGetApp().status(
+		  _("Error: xanoubis is not connected to the daemon"));
+		break;
+	case SfsCtrl::RESULT_NEEDPASS:
+		wxGetApp().status(
+		  _("Error: A passphrase is still required."));
+		break;
+	case SfsCtrl::RESULT_INVALIDARG:
+		wxGetApp().status(
+		  _("Error: An invalid argument was supplied"));
+		break;
+	case SfsCtrl::RESULT_BUSY:
+		wxGetApp().status(
+		 _("Error: Sfs is still busy with another operation."));
+		break;
+	case SfsCtrl::RESULT_EXECUTE:
+		/* Success */
+		break;
 	}
 }
 
@@ -376,39 +417,49 @@ ModSfsMainPanelImpl::updateSfsEntry(int idx)
 {
 	SfsDirectory	&dir = sfsCtrl_->getSfsDirectory();
 	SfsEntry	&entry = dir.getEntry(idx);
-	wxString	checksumInfo;
+	wxString	checksumInfo, signatureInfo;
 	int		checksumIconIndex = 0, signatureIconIndex = 0;
 
-	switch (entry.getChecksumAttr()) {
-	case SfsEntry::SFSENTRY_CHECKSUM_NOT_VALIDATED:
+	switch (entry.getChecksumState(SfsEntry::SFSENTRY_CHECKSUM)) {
+	case SfsEntry::SFSENTRY_NOT_VALIDATED:
 		checksumInfo = _("not validated");
 		checksumIconIndex = 0;
 		break;
-	case SfsEntry::SFSENTRY_CHECKSUM_UNKNOWN:
+	case SfsEntry::SFSENTRY_MISSING:
 		checksumInfo = _("not registered");
 		checksumIconIndex = 0;
 		break;
-	case SfsEntry::SFSENTRY_CHECKSUM_NOMATCH:
+	case SfsEntry::SFSENTRY_INVALID:
+		checksumInfo = _("invalid");
+		checksumIconIndex = 2;
+		break;
+	case SfsEntry::SFSENTRY_NOMATCH:
 		checksumInfo = wxEmptyString;
 		checksumIconIndex = 3;
 		break;
-	case SfsEntry::SFSENTRY_CHECKUM_MATCH:
+	case SfsEntry::SFSENTRY_MATCH:
 		checksumInfo = wxEmptyString;
 		checksumIconIndex = 1;
 		break;
 	}
 
-	switch (entry.getSignatureAttr()) {
-	case SfsEntry::SFSENTRY_SIGNATURE_UNKNOWN:
+	switch (entry.getChecksumState(SfsEntry::SFSENTRY_SIGNATURE)) {
+	case SfsEntry::SFSENTRY_NOT_VALIDATED:
+		signatureInfo = _("not validated");
 		signatureIconIndex = 0;
 		break;
-	case SfsEntry::SFSENTRY_SIGNATURE_INVALID:
+	case SfsEntry::SFSENTRY_MISSING:
+		signatureInfo = _("not registered");
+		signatureIconIndex = 0;
+		break;
+	case SfsEntry::SFSENTRY_INVALID:
+		signatureInfo = _("invalid");
 		signatureIconIndex = 2;
 		break;
-	case SfsEntry::SFSENTRY_SIGNATURE_NOMATCH:
+	case SfsEntry::SFSENTRY_NOMATCH:
 		signatureIconIndex = 3;
 		break;
-	case SfsEntry::SFSENTRY_SIGNATURE_MATCH:
+	case SfsEntry::SFSENTRY_MATCH:
 		signatureIconIndex = 1;
 		break;
 	}
@@ -419,6 +470,6 @@ ModSfsMainPanelImpl::updateSfsEntry(int idx)
 	    MODSFSMAIN_FILELIST_COLUMN_CHECKSUM, checksumInfo,
 	    checksumIconIndex);
 	SfsMainListCtrl->SetItem(idx,
-	    MODSFSMAIN_FILELIST_COLUMN_SIGNATURE, wxEmptyString,
+	    MODSFSMAIN_FILELIST_COLUMN_SIGNATURE, signatureInfo,
 	    signatureIconIndex);
 }

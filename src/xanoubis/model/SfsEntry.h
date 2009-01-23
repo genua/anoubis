@@ -51,40 +51,51 @@ class SfsEntry
 {
 	public:
 		/**
+		 * List of checksum types managed by the SfsEntry.
+		 */
+		enum ChecksumType
+		{
+			SFSENTRY_CHECKSUM = 0,	/*!< Denotes a plain
+						     checksum. */
+			SFSENTRY_SIGNATURE /*!< Denotes a signed checksum */
+		};
+
+		/**
 		 * List of possible checksum-states.
 		 */
-		enum ChecksumAttr
+		enum ChecksumState
 		{
-			/*!< The checksum is not validated. */
-			SFSENTRY_CHECKSUM_NOT_VALIDATED = 0,
-
-			/*!< The entry has no checksum. */
-			SFSENTRY_CHECKSUM_UNKNOWN,
-
-			/*!< The checksum does not match */
-			SFSENTRY_CHECKSUM_NOMATCH,
-
-			/*!< The checksum matches */
-			SFSENTRY_CHECKUM_MATCH
+			SFSENTRY_NOT_VALIDATED = 0,	/*!< The checksum is
+							     not validated. */
+			SFSENTRY_MISSING,	/*!< The entry has no
+						     checksum. */
+			SFSENTRY_INVALID,	/*!< Invalid checksum or
+						     dependency-problem
+						     (checksums not
+						     compared).*/
+			SFSENTRY_NOMATCH,	/*!< The checksum does not
+						     match */
+			SFSENTRY_MATCH		/*!< The checksum matches */
 		};
 
-		enum SignatureAttr
-		{
-			/*!< The entry has no signature */
-			SFSENTRY_SIGNATURE_UNKNOWN = 0,
-
-			/*!< The signature is invalid */
-			SFSENTRY_SIGNATURE_INVALID,
-
-			/*!< The signature/checksum does not match */
-			SFSENTRY_SIGNATURE_NOMATCH,
-
-			/*!< The signature/checksum matches */
-			SFSENTRY_SIGNATURE_MATCH
-		};
-
+		/**
+		 * Default-c'tor.
+		 *
+		 * Creates an empty, resetted SfsEntry.
+		 */
 		SfsEntry(void);
+
+		/**
+		 * Creates an SfsEntry with the specified path.
+		 *
+		 * @param path Path of SfsEntry
+		 * @see setPath()
+		 */
 		SfsEntry(const wxString &);
+
+		/**
+		 * Copy-c'tor.
+		 */
 		SfsEntry(const SfsEntry &);
 
 		/**
@@ -111,75 +122,115 @@ class SfsEntry
 		void setPath(const wxString &);
 
 		/**
-		 * Returns the checksum-attribute of the file.
+		 * Returns the state of the specified checksum-type.
+		 *
+		 * The state can change depending on the checksums you assigned
+		 * to the SfsEntry.
+		 *
+		 * @param type Type of requested checksum
+		 * @return State of requested checksum-type
 		 */
-		ChecksumAttr getChecksumAttr() const;
+		ChecksumState getChecksumState(ChecksumType) const;
 
 		/**
-		 * Returns the signature-attribute of the file.
+		 * Assings a checksum to the SfSEntry.
+		 *
+		 * The assigned checksum is compared with the local checksum
+		 * (if any). Depending on the compare-result, the
+		 * checksum-state can change.
+		 *
+		 * @param type Type of requested checksum
+		 * @param cs The checksum to be assigned
+		 * @return true is returned, if the checksum-state has changed.
+		 *         The return-code can be used to track changes of the
+		 *         model.
 		 */
-		SignatureAttr getSignatureAttr() const;
+		bool setChecksum(ChecksumType, const u_int8_t *);
 
 		/**
-		 * Updates checksumAttr to SFSENTRY_CHECKSUM_UNKNOWN.
+		 * Removes an assigned checksum from the SfsEntry.
 		 *
-		 * Use this method, if you are sure, that the file has no
-		 * checksum.
+		 * The checksum-state is updated to SfsEntry::SFSENTRY_MISSING.
 		 *
-		 * @return true is returned, when the value of checksumAttr has
-		 *         changed.
+		 * @param type Type of requested checksum
+		 * @return true is returned, if the checksum-state has changed.
+		 *         The return-code can be used to track changes of the
+		 *         model.
 		 */
-		bool setNoChecksum(void);
+		bool setChecksumMissing(ChecksumType);
+
+		/**
+		 * Invalidates an assigned checksum.
+		 *
+		 * The checksum is removed and the checksum-state is updated to
+		 * SfsEntry::SFSENTRY_INVALID.
+		 *
+		 * @param type Type of requested checksum
+		 * @return true is returned, if the checksum-state has changed.
+		 *         The return-code can be used to track changes of the
+		 *         model.
+		 */
+		bool setChecksumInvalid(ChecksumType);
+
+		/**
+		 * Tests whether a local checksum is assigned to the SfsEntry.
+		 *
+		 * @return true is returned, if a local checksum is assigned,
+		 *         false otherwise.
+		 */
+		bool haveLocalCsum(void) const;
 
 		/**
 		 * Copies the locally calculated checksum into the SfsEntry.
 		 *
-		 * If both (local and daemon checksum) are available, there are
-		 * compared with each other and the checksumAttr is updated.
+		 * The assigned checksum is compared with the other checkums
+		 * (if any). Depending on the compare-result, the
+		 * (checksum-states can change.
 		 *
-		 * @param cs The local calculated checksum. If you specify NULL
-		 *           as a checksum, the checksum is resetted.
-		 * @return true is returned, when the value of checksumAttr has
-		 *         changed.
+		 * @param cs The local calculated checksum.
+		 * @return true is returned, if at least a checksum-state has
+		 *         changed. The return-code can be used to track
+		 *         changes of the model.
 		 * @see setDaemonCsum()
 		 * @see getChecksumAttr()
 		 */
 		bool setLocalCsum(const u_int8_t *);
 
 		/**
-		 * Copies the checksum managed by anoubisd into the SfSEntry.
-		 *
-		 * If both (local and daemon checksum) are available, there are
-		 * compared with each other and the checksumAttr is updated.
-		 *
-		 * @param cs The checksum received from anoubisd. If you
-		 *           specify NULL as a checksum, the checksum is
-		 *           resetted.
-		 * @return true is returned, when the value of checksumAttr has
-		 *         changed.
-		 * @see setLocalCsum()
-		 * @see getChecksumAttr()
-		 */
-		bool setDaemonCsum(const u_int8_t *);
-
-		/**
 		 * Resets the SfsEntry.
 		 *
 		 * Checksums are cleared, attributes are resetted.
+		 *
+		 * @return true is returned, if at least a checksum-state has
+		 *         changed. The return-code can be used to track
+		 *         changes of the model.
 		 */
-		void reset(void);
+		bool reset(void);
+
+		/**
+		 * Resets the specified checksum.
+		 *
+		 * The assigned checksum (if any) is removed and the
+		 * checksum-state is updated to
+		 * SfsEntry::SFSENTRY_NOT_VALIDATED.
+		 *
+		 * @param type Type of requested checksum
+		 * @return true is returned, if the checksum-state has changed.
+		 *         The return-code can be used to track changes of the
+		 *         model.
+		 */
+		bool reset(ChecksumType);
 
 	private:
 		wxString	path_;
 		wxString	filename_;
 		bool		haveLocalCsum_;
-		bool		haveDaemonCsum_;
 		u_int8_t	localCsum_[ANOUBIS_CS_LEN];
-		u_int8_t	daemonCsum_[ANOUBIS_CS_LEN];
-		ChecksumAttr	checksumAttr_;
-		SignatureAttr	signatureAttr_;
+		u_int8_t	csum_[2][ANOUBIS_CS_LEN];
+		bool		assigned_[2];
+		ChecksumState	state_[2];
 
-		bool updateChecksumAttr(void);
+		bool validateChecksum(ChecksumType);
 };
 
 #endif	/* _SFSENTRY_H_ */

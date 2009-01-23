@@ -74,6 +74,12 @@ ComCsumGetTask::setFile(const wxString &file)
 }
 
 bool
+ComCsumGetTask::haveKeyId(void) const
+{
+	return ((keyId_ != 0) && (keyIdLen_ > 0));
+}
+
+bool
 ComCsumGetTask::setKeyId(const u_int8_t *keyId, int len)
 {
 	if ((keyId != 0) && (len > 0)) {
@@ -135,13 +141,7 @@ ComCsumGetTask::exec(void)
 		}
 	}
 
-	if (ta->result == ENOENT) {
-		/* No checksum */
-		setComTaskResult(RESULT_SUCCESS);
-		setResultDetails(ta->result);
-		anoubis_transaction_destroy(ta);
-		return;
-	} else if (ta->result) {
+	if (ta->result) {
 		/* Any other error-code is interpreted as an real error */
 		setComTaskResult(RESULT_REMOTE_ERROR);
 		setResultDetails(ta->result);

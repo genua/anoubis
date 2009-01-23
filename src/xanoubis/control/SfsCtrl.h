@@ -62,6 +62,9 @@ class SfsCtrl : public wxEvtHandler
 			RESULT_NOTCONNECTED,	/*!< You are not connected with
 						     anoubisd. The command is
 						     not scheduled. */
+			RESULT_NEEDPASS,	/*!< The controller tries to
+						     get the private key, but
+						     it is not loaded. */
 			RESULT_INVALIDARG,	/*!< You supplied an invalid
 						     argument. The command is
 						     not scheduled. */
@@ -308,6 +311,12 @@ class SfsCtrl : public wxEvtHandler
 
 		void enableCommunication(void);
 		void disableCommunication(void);
+
+		void createComCsumGetTasks(const wxString &, bool, bool);
+		void createComCsumAddTasks(const wxString &);
+		void createComCsumDelTasks(const wxString &);
+		void createSfsListTasks(uid_t, const wxString &);
+		void createCsumCalcTask(const wxString &);
 
 		void pushTask(Task *);
 		bool popTask(Task *);

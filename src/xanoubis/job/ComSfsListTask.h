@@ -125,6 +125,13 @@ class ComSfsListTask : public ComTask
 		void setRequestParameter(uid_t, const wxString &);
 
 		/**
+		 * Tests whether a key-id is assigned to the task.
+		 * @return true is returned, if a key-id is assigned, false
+		 *         otherwise.
+		 */
+		bool haveKeyId(void) const;
+
+		/**
 		 * Provides a key-id used by the list-operation.
 		 *
 		 * Once configured, the checksum-tree of the certificate behind

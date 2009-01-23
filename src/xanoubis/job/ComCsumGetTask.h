@@ -53,6 +53,10 @@
  * If the task was successfully executed, you can ask for the checksum using
  * ComCsumGetTask::getCsum().
  *
+ * If no certificate is deposited for the requested key-id, getResultDetails()
+ * will return EINVAL, getCsum() will not copy a checksum (returns 0) and
+ * getCsumStr() will return an empty string.
+ *
  * If no checksum exists for the requested file, getResultDetails() will return
  * ENOENT, getCsum() will not copy a checksum (returns 0) and getCsumStr() will
  * return an empty string.
@@ -103,6 +107,13 @@ class ComCsumGetTask : public ComTask
 		 * @param file The requested filename
 		 */
 		void setFile(const wxString &);
+
+		/**
+		 * Tests whether a key-id is assigned to the task.
+		 * @return true is returned, if a key-id is assigned, false
+		 *         otherwise.
+		 */
+		bool haveKeyId(void) const;
 
 		/**
 		 * Provides a key-id used by the operation.

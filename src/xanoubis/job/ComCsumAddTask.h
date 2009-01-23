@@ -28,6 +28,13 @@
 #ifndef _COMCSUMADDTASK_H_
 #define _COMCSUMADDTASK_H_
 
+#ifdef LINUX
+#include <linux/anoubis.h>
+#endif
+#ifdef OPENBSD
+#include <dev/anoubis.h>
+#endif
+
 #include "ComTask.h"
 
 /**
@@ -95,6 +102,13 @@ class ComCsumAddTask : public ComTask
 		void setFile(const wxString &);
 
 		/**
+		 * Tests whether a key-id is assigned to the task.
+		 * @return true is returned, if a key-id is assigned, false
+		 *         otherwise.
+		 */
+		bool haveKeyId(void) const;
+
+		/**
 		 * Provides a key-id used by the operation.
 		 *
 		 * Once configured, the signed checksum of the file is assigned
@@ -111,6 +125,13 @@ class ComCsumAddTask : public ComTask
 		 * @see setPrivateKey()
 		 */
 		bool setKeyId(const u_int8_t *, int);
+
+		/**
+		 * Tests whether a private key is assigned to the task.
+		 * @return true is returned, if a private key is assigned,
+		 *         false otherwise.
+		 */
+		bool havePrivateKey(void) const;
 
 		/**
 		 * Configures a private-key.
@@ -139,11 +160,36 @@ class ComCsumAddTask : public ComTask
 		 */
 		void exec(void);
 
+		/**
+		 * Returns the calculated checksum.
+		 *
+		 * The checksum was calculated during the runtime of the task
+		 * and sent to anoubisd.
+		 *
+		 * @param csum Destination buffer, where the resulting checksum
+		 *             is written.
+		 * @param size Size of destination buffer <code>csum</code>.
+		 * @return On success, <code>ANOUBIS_CS_LEN</code> is returned.
+		 *         <code>ANOUBIS_CS_LEN</code>. A return-code of 0
+		 *         means, that nothing was written. It might happen,
+		 *         if the result of the task is not success or the
+		 *         destination buffer is not large enough to hold the
+		 *         whole checksum.
+		 */
+		size_t getCsum(u_int8_t *, size_t) const;
+
+	protected:
+		/**
+		 * @see ComTask::resetComTaskResult()
+		 */
+		void resetComTaskResult(void);
+
 	private:
 		wxString		file_;
 		u_int8_t		*keyId_;
 		int			keyIdLen_;
 		struct anoubis_sig	*privKey_;
+		u_int8_t		cs_[ANOUBIS_CS_LEN];
 
 		/**
 		 * Creates the payload sent to anoubisd in case of unsigned
@@ -155,7 +201,7 @@ class ComCsumAddTask : public ComTask
 		 * @param payload_len Length of returned payload-buffer is
 		 *                    written into this argument.
 		 */
-		static u_int8_t *createCsMsg(const char *, int *);
+		u_int8_t *createCsMsg(const char *, int *);
 
 		/**
 		 * Creates the payload sent to anoubisd in case of signed
@@ -165,12 +211,10 @@ class ComCsumAddTask : public ComTask
 		 * key-id, there are appended to the payload.
 		 *
 		 * @param path Path to file to be checksumed
-		 * @param key Private key used to sign the checksum
 		 * @param payload_len Length of returned payload-buffer is
 		 *                    written into this argument.
 		 */
-		static u_int8_t *createSigMsg(const char *,
-		    struct anoubis_sig *, u_int8_t *, int, int *);
+		u_int8_t *createSigMsg(const char *, int *);
 };
 
 #endif	/* _COMCSUMADDTASK_H_ */

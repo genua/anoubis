@@ -87,6 +87,12 @@ ComCsumAddTask::setFile(const wxString &file)
 }
 
 bool
+ComCsumAddTask::haveKeyId(void) const
+{
+	return ((keyId_ != 0) && (keyIdLen_ > 0));
+}
+
+bool
 ComCsumAddTask::setKeyId(const u_int8_t *keyId, int len)
 {
 	if ((keyId != 0) && (len > 0)) {
@@ -106,6 +112,12 @@ ComCsumAddTask::setKeyId(const u_int8_t *keyId, int len)
 		return (true);
 	} else
 		return (false);
+}
+
+bool
+ComCsumAddTask::havePrivateKey(void) const
+{
+	return (this->privKey_ != 0);
 }
 
 void
@@ -135,8 +147,7 @@ ComCsumAddTask::exec(void)
 	strlcpy(path, file_.fn_str(), sizeof(path));
 
 	if ((keyId_ != 0) && (keyIdLen_ > 0) && (privKey_ != 0)) {
-		payload = createSigMsg(path, privKey_, keyId_, keyIdLen_,
-		    &payloadLen);
+		payload = createSigMsg(path, &payloadLen);
 
 		/* Reset private key, don't need it anymore */
 		privKey_ = 0;
@@ -191,6 +202,32 @@ ComCsumAddTask::exec(void)
 	anoubis_transaction_destroy(ta);
 }
 
+size_t
+ComCsumAddTask::getCsum(u_int8_t *csum, size_t size) const
+{
+	if (getComTaskResult() == RESULT_SUCCESS && getResultDetails() == 0) {
+		if (size >= ANOUBIS_CS_LEN) {
+			memcpy(csum, this->cs_, ANOUBIS_CS_LEN);
+			return (ANOUBIS_CS_LEN);
+		}
+	}
+
+	/*
+	 * No checksumk received from anoubisd or destination-buffer not large
+	 * enough.
+	 */
+	return (0);
+}
+
+void
+ComCsumAddTask::resetComTaskResult(void)
+{
+	ComTask::resetComTaskResult();
+
+	for (int i = 0; i < ANOUBIS_CS_LEN; i++)
+		this->cs_[i] = 0;
+}
+
 u_int8_t *
 ComCsumAddTask::createCsMsg(const char *path, int *payload_len)
 {
@@ -209,47 +246,49 @@ ComCsumAddTask::createCsMsg(const char *path, int *payload_len)
 		return (0);
 
 	/* Calculate checksum */
-	result = anoubis_csum_calc(path, payload, payload_len);
+	result = anoubis_csum_calc(path, cs_, payload_len);
 	if (result < 0) {
 		errno = -result;
 		free(payload);
 		return (0);
 	}
 
+	/* Copy checksum into payload */
+	memcpy(payload, cs_, *payload_len);
+
 	/* Success */
 	return (payload);
 }
 
 u_int8_t *
-ComCsumAddTask::createSigMsg(const char *path, struct anoubis_sig *key,
-    u_int8_t *keyid, int keyid_len, int *payload_len)
+ComCsumAddTask::createSigMsg(const char *path, int *payload_len)
 {
-	u_int8_t	cs[ANOUBIS_CS_LEN], *sig, *payload;
+	u_int8_t	*sig, *payload;
 	int		cs_len;
 	unsigned int	sig_len;
 	int		result;
 
-	if ((path == 0) || (key == 0) || (keyid == 0) || (keyid_len < 0) ||
-	    (payload_len == 0)) {
+	if ((path == 0) || (privKey_ == 0) || (keyId_ == 0) ||
+	    (keyIdLen_ < 0) || (payload_len == 0)) {
 		errno = EINVAL;
 		return (0);
 	}
 
 	/* Calculate the checksum of the file */
 	cs_len = ANOUBIS_CS_LEN;
-	result = anoubis_csum_calc(path, cs, &cs_len);
+	result = anoubis_csum_calc(path, cs_, &cs_len);
 	if (result < 0) {
 		errno = -result;
 		return (0);
 	}
 
 	/* Sign the checksum */
-	sig = anoubis_sign_csum(key, cs, &sig_len);
+	sig = anoubis_sign_csum(privKey_, cs_, &sig_len);
 	if (sig == 0)
 		return (0);
 
 	/* Need a message, which can hold key-id and signature */
-	*payload_len = keyid_len + sig_len;
+	*payload_len = keyIdLen_ + sig_len;
 	payload = (u_int8_t *)malloc(*payload_len);
 	if (payload == 0) {
 		free(sig);
@@ -257,8 +296,8 @@ ComCsumAddTask::createSigMsg(const char *path, struct anoubis_sig *key,
 	}
 
 	/* Build the message: keyid followed by signature */
-	memcpy(payload, keyid, keyid_len);
-	memcpy(payload + keyid_len, sig, sig_len);
+	memcpy(payload, keyId_, keyIdLen_);
+	memcpy(payload + keyIdLen_, sig, sig_len);
 	free(sig);
 
 	/* Success */
