@@ -171,11 +171,6 @@ struct apn_context {
 	int			 type;
 };
 
-struct apn_sfscheck {
-	struct apn_app	*app;
-	int		 log;
-};
-
 #define		APN_CS_NONE	0
 #define		APN_CS_CSUM	1
 #define		APN_CS_UID	2
@@ -229,7 +224,6 @@ enum {
 	APN_ALF_CAPABILITY,	/* rule.acap, app == NULL */
 	APN_DEFAULT,		/* rule.apndefault, app == NULL */
 	APN_CTX_RULE,		/* rule.apncontext, app == NULL */
-	APN_SFS_CHECK,		/* rule.sfscheck, app == NULL */
 	APN_SFS_ACCESS,		/* rule.sfsaccess, app == NULL */
 	APN_SFS_DEFAULT,	/* rule.sfsdefault, app == NULL */
 	APN_SB_ACCESS,		/* rule.sbaccess, app = NULL */
@@ -251,7 +245,6 @@ struct apn_rule {
 		struct apn_acaprule	acap;
 		struct apn_default	apndefault;
 		struct apn_context	apncontext;
-		struct apn_sfscheck	sfscheck;
 		struct apn_sfsaccess	sfsaccess;
 		struct apn_sfsdefault	sfsdefault;
 		struct apn_chain	chain;

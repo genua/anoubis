@@ -460,9 +460,6 @@ pe_build_prefixhash(struct apn_rule *block)
 		int		 ret;
 		const char	*prefix;
 		switch (rule->apn_type) {
-		case APN_SFS_CHECK:
-			/* XXX CEH: No longer supported. */
-			continue;
 		case APN_SFS_ACCESS:
 			prefix = rule->rule.sfsaccess.path;
 			break;

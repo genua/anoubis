@@ -78,10 +78,6 @@ pe_sfs_match_one(struct apn_rule *rule, struct pe_file_event *fevent,
 	if (!pe_in_scope(rule->scope, fevent->cookie, now))
 		return NULL;
 	switch (rule->apn_type) {
-	case APN_SFS_CHECK:
-		/* XXX CEH: No longer supported. */
-		return NULL;
-		break;
 	case APN_SFS_ACCESS:
 		prefix = rule->rule.sfsaccess.path;
 		subject = &rule->rule.sfsaccess.subject;

@@ -63,7 +63,6 @@ static int	apn_print_defaultrule2(struct apn_default *, const char *, int,
 		    FILE *);
 static int	apn_print_sbaccess(struct apn_sbaccess *, FILE *);
 static int	apn_print_contextrule(struct apn_context *, FILE *);
-static int	apn_print_scheckrule(struct apn_sfscheck *, FILE *);
 static int	apn_print_sfsaccessrule(struct apn_sfsaccess *, FILE *);
 static int	apn_print_sfsdefaultrule(struct apn_sfsdefault *, FILE *);
 static int	apn_print_action(int, int, FILE *);
@@ -117,8 +116,7 @@ apn_verify_types(int parent, int child)
 	case APN_SB:
 		return (child == APN_DEFAULT || child == APN_SB_ACCESS);
 	case APN_SFS:
-		return (child == APN_SFS_CHECK || child == APN_SFS_ACCESS
-		    || child == APN_SFS_DEFAULT);
+		return (child == APN_SFS_ACCESS || child == APN_SFS_DEFAULT);
 	case APN_CTX:
 		return (child == APN_CTX_RULE);
 	default:
@@ -833,9 +831,6 @@ apn_print_rule(struct apn_rule *rule, int flags, FILE *file)
 	case APN_CTX_RULE:
 		ret = apn_print_contextrule(&rule->rule.apncontext, file);
 		break;
-	case APN_SFS_CHECK:
-		ret = apn_print_scheckrule(&rule->rule.sfscheck, file);
-		break;
 	case APN_SFS_ACCESS:
 		ret = apn_print_sfsaccessrule(&rule->rule.sfsaccess, file);
 		break;
@@ -1154,22 +1149,6 @@ apn_print_contextrule(struct apn_context *rule, FILE *file)
 	}
 
 	if (apn_print_app(rule->application, file) == 1)
-		return (1);
-
-	return (0);
-}
-
-static int
-apn_print_scheckrule(struct apn_sfscheck *rule, FILE *file)
-{
-	if (rule == NULL || file == NULL)
-		return (1);
-
-	if (apn_print_app(rule->app, file) == 1)
-		return (1);
-	if (rule->log != APN_LOG_NONE)
-		fprintf(file, " ");
-	if (apn_print_log(rule->log, file) == 1)
 		return (1);
 
 	return (0);
@@ -1688,9 +1667,6 @@ apn_free_one_rule(struct apn_rule *rule, struct apn_ruleset *rs)
 	case APN_CTX_RULE:
 		apn_free_app(rule->rule.apncontext.application);
 		break;
-	case APN_SFS_CHECK:
-		apn_free_app(rule->rule.sfscheck.app);
-		break;
 	case APN_SFS_ACCESS:
 		apn_free_sfsaccess(&rule->rule.sfsaccess);
 		break;
@@ -1912,16 +1888,6 @@ apn_copy_one_rule(struct apn_rule *old)
 				goto errout;
 		}
 		newrule->rule.apncontext.type = old->rule.apncontext.type;
-		break;
-	case APN_SFS_CHECK:
-		newrule->rule.sfscheck.log = old->rule.sfscheck.log;
-		newrule->rule.sfscheck.app = NULL;
-		if (old->rule.sfscheck.app) {
-			newrule->rule.sfscheck.app =
-			    apn_copy_app(old->rule.sfscheck.app);
-			if (newrule->rule.sfscheck.app == NULL)
-				goto errout;
-		}
 		break;
 	case APN_SFS_DEFAULT:
 		newrule->rule.sfsdefault = old->rule.sfsdefault;

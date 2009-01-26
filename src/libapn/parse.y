@@ -156,7 +156,6 @@ typedef struct {
 		struct apn_default	 dfltrule;
 		struct apn_subject	 subject;
 		struct apn_context	 ctxruleapps;
-		struct apn_sfscheck	 sfscheck;
 		struct apn_sfsaccess	 sfsaccess;
 		struct apn_sfsdefault	 sfsdefault;
 		struct apn_addr		 addr;
@@ -185,10 +184,10 @@ typedef struct {
 %token	<v.string>		STRING
 %destructor { free($$); }	STRING
 %token	<v.number>		NUMBER
-%type	<v.app>			app apps sfsapp
+%type	<v.app>			app apps
 %destructor {
 	apn_free_app($$);
-}				app apps sfsapp
+}				app apps
 %type	<v.apphead>		app_l
 %type	<v.hashtype>		hashtype
 %type	<v.hashspec>		hashspec
@@ -234,7 +233,6 @@ typedef struct {
 %type	<v.sbaccess>		sbaccess sbpred sbpath sbuid sbkey sbcsum
 %type	<v.dfltrule>		defaultrule alfdefault sbdefault
 %type	<v.ctxruleapps>		ctxruleapps
-%type	<v.sfscheck>		sfscheckrule
 %type	<v.sfsaccess>		sfsaccessrule
 %type	<v.dfltrule>		sfsvalid sfsinvalid sfsunknown
 %type	<v.subject>		sfssubject
@@ -279,19 +277,9 @@ vardefault	: DEFAULT STRING '=' action		{
 		;
 
 varrules	: varalfrule
-		| varsfsrule
 		;
 
 varalfrule	: RULE STRING '=' alfspecs		{
-			if (varset($2, NULL, 0, 0) == -1) {
-				free($2);
-				YYERROR;
-			}
-			free($2);
-		}
-		;
-
-varsfsrule	: RULE STRING '=' sfscheckrule		{
 			if (varset($2, NULL, 0, 0) == -1) {
 				free($2);
 				YYERROR;
@@ -857,27 +845,7 @@ sfsrule_l	: sfsrule_l sfsrule nl		{
 		}
 		;
 
-sfsrule		: ruleid sfscheckrule scope		{
-			struct apn_rule	*rule;
-
-			rule = calloc(1, sizeof(struct apn_rule));
-			if (rule == NULL) {
-				free($3);
-				apn_free_app($2.app);
-				YYERROR;
-			}
-
-			rule->apn_type = APN_SFS_CHECK;
-			rule->rule.sfscheck = $2;
-			rule->apn_id = $1;
-			rule->scope = $3;
-			rule->userdata = NULL;
-			rule->pchain = NULL;
-			rule->app = NULL;
-
-			$$ = rule;
-		}
-		| ruleid sfsaccessrule scope {
+sfsrule		: ruleid sfsaccessrule scope {
 			struct apn_rule	*rule;
 
 			rule = calloc(1, sizeof(struct apn_rule));
@@ -913,12 +881,6 @@ sfsrule		: ruleid sfscheckrule scope		{
 			rule->apn_id = $1;
 
 			$$ = rule;
-		}
-		;
-
-sfscheckrule	: sfsapp log			{
-			$$.app = $1;
-			$$.log = $2;
 		}
 		;
 
@@ -1417,26 +1379,6 @@ app		: STRING hashspec		{
 			$$ = app;
 		}
 		;
-
-sfsapp		: STRING			{
-			struct apn_app	*app;
-
-			if ((app = calloc(1, sizeof(struct apn_app)))
-			    == NULL) {
-				free($1);
-				YYERROR;
-			}
-			if ((app->name = strdup($1)) == NULL) {
-				free($1);
-				free(app);
-				YYERROR;
-			}
-			app->hashtype = APN_HASH_NONE;
-			free($1);
-
-			$$ = app;
-		}
-		| app				{ $$ = $1; }
 
 hashspec	: hashtype STRING		{
 			if (validate_hash($1, $2) == -1) {
