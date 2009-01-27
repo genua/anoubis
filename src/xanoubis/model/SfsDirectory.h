@@ -60,6 +60,33 @@ class SfsDirectory : private wxDirTraverser
 		bool setPath(const wxString &);
 
 		/**
+		 * Tests whether recursive traversal through the filesystem is
+		 * enabled.
+		 *
+		 * If enabled, all subsequent directories are visited, too.
+		 *
+		 * @return true is returned, if recursive traversal is enabled,
+		 *         false otherwise.
+		 * @note Traversing through the filesystem might take a long
+		 *       time!
+		 */
+		bool isDirTraversalEnabled(void) const;
+
+		/**
+		 * Updates the traversal-flag.
+		 *
+		 * If enabled, all subsequent directories are visited, too.
+		 *
+		 * @param enabled Set to true, if you want to enabled the
+		 *                recursive traversal feature.
+		 * @return true, if the SfsEntry-list has changed, false
+		 *         otherwise.
+		 * @note Updating the SfsEntry-list might take a long time, if
+		 *       traversal is enabled!
+		 */
+		bool setDirTraversal(bool);
+
+		/**
 		 * Returns the filename-filter.
 		 * Only files, which filename contains the filter are insered
 		 * into the SfsEntry-list.
@@ -100,14 +127,12 @@ class SfsDirectory : private wxDirTraverser
 		 * Returns the index of the SfsEntry with the specified
 		 * filename.
 		 *
-		 * @param filename The filename of the SfsEntry you are
+		 * @param filename The absolute path the SfsEntry you are
 		 *                 searching for.
-		 * @param path Set to true, if you are searching for a complete
-		 *             path.
 		 * @return The index of the SfsEntry you are looking for. If
 		 *         no such entry exists, -1 is returned.
 		 */
-		int getIndexOf(const wxString &, bool) const;
+		int getIndexOf(const wxString &) const;
 
 		/**
 		 * Returns the SfsEntry-instance at the specified index.
@@ -118,6 +143,7 @@ class SfsDirectory : private wxDirTraverser
 
 	private:
 		wxString path_;
+		bool recursive_;
 		wxString filter_;
 		bool inverseFilter_;
 		std::vector<SfsEntry> entryList_;

@@ -30,6 +30,7 @@
 SfsDirectory::SfsDirectory()
 {
 	this->path_ = wxEmptyString;
+	this->recursive_ = false;
 	this->filter_ = wxEmptyString;
 	this->inverseFilter_ = false;
 }
@@ -50,6 +51,24 @@ SfsDirectory::setPath(const wxString &path)
 		return (true);
 	}
 	else
+		return (false);
+}
+
+bool
+SfsDirectory::isDirTraversalEnabled(void) const
+{
+	return (this->recursive_);
+}
+
+bool
+SfsDirectory::setDirTraversal(bool enabled)
+{
+	if (enabled != this->recursive_) {
+		this->recursive_ = enabled;
+		updateEntryList();
+
+		return (true);
+	} else
 		return (false);
 }
 
@@ -98,12 +117,10 @@ SfsDirectory::getNumEntries() const
 }
 
 int
-SfsDirectory::getIndexOf(const wxString &filename, bool path) const
+SfsDirectory::getIndexOf(const wxString &filename) const
 {
 	for (unsigned int i = 0; i < entryList_.size(); i++) {
-		if (path && (entryList_[i].getPath() == filename))
-			return (i);
-		if (!path && (entryList_[i].getFileName() == filename))
+		if (entryList_[i].getPath() == filename)
 			return (i);
 	}
 
@@ -129,8 +146,7 @@ SfsDirectory::updateEntryList()
 wxDirTraverseResult
 SfsDirectory::OnDir(const wxString &)
 {
-	/* No recursion */
-	return (wxDIR_IGNORE);
+	return (this->recursive_ ? wxDIR_CONTINUE : wxDIR_IGNORE);
 }
 
 wxDirTraverseResult

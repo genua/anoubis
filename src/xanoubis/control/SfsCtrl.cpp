@@ -415,7 +415,7 @@ SfsCtrl::OnCsumCalc(TaskEvent &event)
 	event.Skip(false); /* "My" task -> stop propagating */
 
 	/* Search for SfsEntry */
-	int idx = sfsDir_.getIndexOf(task->getPath(), true);
+	int idx = sfsDir_.getIndexOf(task->getPath());
 	if (idx == -1) {
 		wxString message = wxString::Format(
 		    _("%s not found in file-list!"), task->getPath().c_str());
@@ -465,7 +465,7 @@ SfsCtrl::OnCsumGet(TaskEvent &event)
 	event.Skip(false); /* "My" task -> stop propagating */
 
 	/* Search for SfsEntry */
-	int idx = sfsDir_.getIndexOf(task->getFile(), true);
+	int idx = sfsDir_.getIndexOf(task->getFile());
 	if (idx == -1) {
 		wxString message = wxString::Format(
 		    _("%s not found in file-list!"), task->getFile().c_str());
@@ -548,7 +548,7 @@ SfsCtrl::OnCsumAdd(TaskEvent &event)
 	event.Skip(false); /* "My" task -> stop propagating */
 
 	/* Search for SfsEntry */
-	int idx = sfsDir_.getIndexOf(task->getFile(), true);
+	int idx = sfsDir_.getIndexOf(task->getFile());
 	if (idx == -1) {
 		wxString message = wxString::Format(
 		    _("%s not found in file-list!"), task->getFile().c_str());
@@ -626,7 +626,7 @@ SfsCtrl::OnCsumDel(TaskEvent &event)
 	event.Skip(false); /* "My" task -> stop propagating */
 
 	/* Search for SfsEntry */
-	int idx = sfsDir_.getIndexOf(task->getFile(), true);
+	int idx = sfsDir_.getIndexOf(task->getFile());
 	if (idx == -1) {
 		wxString message = wxString::Format(
 		    _("%s not found in file-list!"), task->getFile().c_str());

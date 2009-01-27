@@ -49,9 +49,9 @@ class AnDetails;
 #include <wx/bitmap.h>
 #include <wx/image.h>
 #include <wx/dirctrl.h>
+#include <wx/checkbox.h>
 #include <wx/textctrl.h>
 #include <wx/button.h>
-#include <wx/checkbox.h>
 #include <wx/choice.h>
 #include <wx/notebook.h>
 #include <wx/statbmp.h>
@@ -80,6 +80,7 @@ class ModSfsMainPanelBase : public wxPanel
 		wxStaticText* m_staticText12;
 		wxStaticText* SfsMainCurrPathLabel;
 		wxGenericDirCtrl* SfsMainDirCtrl;
+		wxCheckBox* SfsMainDirTraversalCheckbox;
 		wxStaticText* m_staticText10;
 		wxTextCtrl* SfsMainFilterTextCtrl;
 		wxButton* SfsMainFilterButton;
@@ -103,6 +104,7 @@ class ModSfsMainPanelBase : public wxPanel
 		
 		// Virtual event handlers, overide them in your derived class
 		virtual void OnSfsMainDirCtrlSelChanged( wxTreeEvent& event ){ event.Skip(); }
+		virtual void OnSfsMainDirTraversalChecked( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnSfsMainFilterButtonClicked( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnSfsMainInverseCheckboxClicked( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnSfsMainValidateButtonClicked( wxCommandEvent& event ){ event.Skip(); }

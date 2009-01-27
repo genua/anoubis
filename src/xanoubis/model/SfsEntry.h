@@ -106,6 +106,21 @@ class SfsEntry
 		wxString getPath() const;
 
 		/**
+		 * Returns the path of the SfsEntry relative to the specified
+		 * base-path.
+		 *
+		 * Appending the returned path to the base-path again will
+		 * result into the absolute path speciefied with setPath().
+		 *
+		 * @param basePath The base-path. Removed from the absolute
+		 *        path.
+		 * @return The path relative to the absolute path specified
+		 *         with setPath().
+		 * @see setPath()
+		 */
+		wxString getRelativePath(const wxString &) const;
+
+		/**
 		 * Returns the filename.
 		 *
 		 * This is the filename without the path.

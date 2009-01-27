@@ -70,6 +70,7 @@ class ModSfsMainPanelImpl : public ModSfsMainPanelBase
 		void applySfsAction(const IndexArray &);
 		void OnSfsMainDirCtrlSelChanged(wxTreeEvent&);
 		void OnSfsDirChanged(wxCommandEvent&);
+		void OnSfsMainDirTraversalChecked(wxCommandEvent&);
 		void OnSfsEntryChanged(wxCommandEvent&);
 		void OnSfsError(wxCommandEvent&);
 		void OnSfsMainFilterButtonClicked(wxCommandEvent&);

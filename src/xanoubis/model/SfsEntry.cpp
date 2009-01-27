@@ -64,6 +64,19 @@ SfsEntry::getPath() const
 	return (this->path_);
 }
 
+wxString
+SfsEntry::getRelativePath(const wxString &basePath) const
+{
+	wxString path = this->path_;
+
+	if (this->path_.StartsWith(basePath, &path)) {
+		if (path.StartsWith(wxT("/")))
+			path = path.Mid(1);
+	}
+
+	return (path);
+}
+
 void
 SfsEntry::setPath(const wxString &path)
 {

@@ -157,6 +157,16 @@ ModSfsMainPanelImpl::OnSfsDirChanged(wxCommandEvent&)
 }
 
 void
+ModSfsMainPanelImpl::OnSfsMainDirTraversalChecked(wxCommandEvent&)
+{
+	SfsDirectory &dir = sfsCtrl_->getSfsDirectory();
+	dir.setDirTraversal(SfsMainDirTraversalCheckbox->GetValue());
+
+	/* Display changes */
+	updateSfsList();
+}
+
+void
 ModSfsMainPanelImpl::OnSfsEntryChanged(wxCommandEvent &event)
 {
 	updateSfsEntry(event.GetInt()); /* Update the entry */
@@ -391,6 +401,9 @@ ModSfsMainPanelImpl::initSfsMain()
 	/* Setting up CurrPathLabel with initial path */
 	SfsMainCurrPathLabel->SetLabel(SfsMainDirCtrl->GetPath());
 	sfsCtrl_->setPath(SfsMainDirCtrl->GetPath());
+
+	SfsDirectory &dir = sfsCtrl_->getSfsDirectory();
+	SfsMainDirTraversalCheckbox->SetValue(dir.isDirTraversalEnabled());
 }
 
 void
@@ -420,6 +433,7 @@ ModSfsMainPanelImpl::updateSfsEntry(int idx)
 {
 	SfsDirectory	&dir = sfsCtrl_->getSfsDirectory();
 	SfsEntry	&entry = dir.getEntry(idx);
+	wxString	baseDir = dir.getPath();
 	wxString	checksumInfo, signatureInfo;
 	int		checksumIconIndex = 0, signatureIconIndex = 0;
 
@@ -468,7 +482,7 @@ ModSfsMainPanelImpl::updateSfsEntry(int idx)
 	}
 
 	SfsMainListCtrl->SetItem(idx,
-	    MODSFSMAIN_FILELIST_COLUMN_FILE, entry.getFileName());
+	    MODSFSMAIN_FILELIST_COLUMN_FILE, entry.getRelativePath(baseDir));
 	SfsMainListCtrl->SetItem(idx,
 	    MODSFSMAIN_FILELIST_COLUMN_CHECKSUM, checksumInfo,
 	    checksumIconIndex);
