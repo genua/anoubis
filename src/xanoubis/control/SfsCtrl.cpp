@@ -118,29 +118,42 @@ SfsCtrl::setSignatureEnabled(bool enable)
 }
 
 SfsCtrl::CommandResult
-SfsCtrl::validate(unsigned int idx)
+SfsCtrl::validate(const IndexArray &arr)
 {
 	if (!taskList_.empty())
 		return (RESULT_BUSY);
 
 	if (comEnabled_) {
-		if (idx >= sfsDir_.getNumEntries()) {
-			/* Out of range */
-			return (RESULT_INVALIDARG);
+		for (size_t i = 0; i < arr.Count(); i++) {
+			unsigned int idx = arr.Item(i);
+
+			if (idx >= sfsDir_.getNumEntries()) {
+				/* Out of range */
+				return (RESULT_INVALIDARG);
+			}
+
+			SfsEntry &entry = sfsDir_.getEntry(idx);
+			entry.reset();
+
+			/* Ask anoubisd for the checksums */
+			createComCsumGetTasks(entry.getPath(), true, true);
+
+			/* Calculate the checksum */
+			createCsumCalcTask(entry.getPath());
 		}
-
-		SfsEntry &entry = sfsDir_.getEntry(idx);
-		entry.reset();
-
-		/* Ask anoubisd for the checksums */
-		createComCsumGetTasks(entry.getPath(), true, true);
-
-		/* Calculate the checksum */
-		createCsumCalcTask(entry.getPath());
 
 		return (RESULT_EXECUTE);
 	} else
 		return (RESULT_NOTCONNECTED);
+}
+
+SfsCtrl::CommandResult
+SfsCtrl::validate(unsigned int idx)
+{
+	IndexArray arr;
+	arr.Add(idx);
+
+	return (validate(arr));
 }
 
 SfsCtrl::CommandResult
@@ -155,11 +168,11 @@ SfsCtrl::validateAll(void)
 			for (unsigned int idx = 0;
 			    idx < sfsDir_.getNumEntries(); idx++) {
 				SfsEntry &entry = sfsDir_.getEntry(idx);
-				
+
 				if (entry.reset(SfsEntry::SFSENTRY_SIGNATURE))
 					sendEntryChangedEvent(idx);
 			}
-		
+
 		}
 
 		/* Ask for sfs-list */
@@ -172,37 +185,76 @@ SfsCtrl::validateAll(void)
 }
 
 SfsCtrl::CommandResult
-SfsCtrl::registerChecksum(unsigned int idx)
+SfsCtrl::registerChecksum(const IndexArray &arr)
 {
 	if (!taskList_.empty())
 		return (RESULT_BUSY);
 
 	if (comEnabled_) {
-		if (idx >= sfsDir_.getNumEntries()) {
-			/* Out of range */
-			return (RESULT_INVALIDARG);
+		for (size_t i = 0; i < arr.Count(); i++) {
+			unsigned int idx = arr.Item(i);
+
+			if (idx >= sfsDir_.getNumEntries()) {
+				/* Out of range */
+				return (RESULT_INVALIDARG);
+			}
+
+			if (isSignatureEnabled()) {
+				/* Need a loaded private key */
+				KeyCtrl *keyCtrl = KeyCtrl::getInstance();
+				PrivKey &privKey = keyCtrl->getPrivateKey();
+
+				if (!privKey.isLoaded())
+					return (RESULT_NEEDPASS);
+			}
+
+			SfsEntry &entry = sfsDir_.getEntry(idx);
+
+			/* Send checksum to anoubisd */
+			createComCsumAddTasks(entry.getPath());
+
+			if (!entry.haveLocalCsum()) {
+				/*
+				 * You also need a local checksum to be able to
+				 * compare it with the remote one
+				 */
+				createCsumCalcTask(entry.getPath());
+			}
 		}
 
-		if (isSignatureEnabled()) {
-			/* Need a loaded private key */
-			KeyCtrl *keyCtrl = KeyCtrl::getInstance();
-			PrivKey &privKey = keyCtrl->getPrivateKey();
+		return (RESULT_EXECUTE);
+	} else
+		return (RESULT_NOTCONNECTED);
+}
 
-			if (!privKey.isLoaded())
-				return (RESULT_NEEDPASS);
-		}
+SfsCtrl::CommandResult
+SfsCtrl::registerChecksum(unsigned int idx)
+{
+	IndexArray arr;
+	arr.Add(idx);
 
-		SfsEntry &entry = sfsDir_.getEntry(idx);
+	return (registerChecksum(arr));
+}
 
-		/* Send checksum to anoubisd */
-		createComCsumAddTasks(entry.getPath());
+SfsCtrl::CommandResult
+SfsCtrl::unregisterChecksum(const IndexArray &arr)
+{
+	if (!taskList_.empty())
+		return (RESULT_BUSY);
 
-		if (!entry.haveLocalCsum()) {
-			/*
-			 * You also need a local checksum to be able to compare
-			 * it with the remote one
-			 */
-			createCsumCalcTask(entry.getPath());
+	if (comEnabled_) {
+		for (size_t i = 0; i < arr.Count(); i++) {
+			unsigned int idx = arr.Item(i);
+
+			if (idx >= sfsDir_.getNumEntries()) {
+				/* Out of range */
+				return (RESULT_INVALIDARG);
+			}
+
+			SfsEntry &entry = sfsDir_.getEntry(idx);
+
+			/* Remove checksum from anoubisd */
+			createComCsumDelTasks(entry.getPath());
 		}
 
 		return (RESULT_EXECUTE);
@@ -213,23 +265,17 @@ SfsCtrl::registerChecksum(unsigned int idx)
 SfsCtrl::CommandResult
 SfsCtrl::unregisterChecksum(unsigned int idx)
 {
-	if (!taskList_.empty())
-		return (RESULT_BUSY);
+	IndexArray arr;
+	arr.Add(idx);
 
-	if (comEnabled_) {
-		if (idx >= sfsDir_.getNumEntries()) {
-			/* Out of range */
-			return (RESULT_INVALIDARG);
-		}
+	return (unregisterChecksum(arr));
+}
 
-		SfsEntry &entry = sfsDir_.getEntry(idx);
-
-		/* Remove checksum from anoubisd */
-		createComCsumDelTasks(entry.getPath());
-
-		return (RESULT_EXECUTE);
-	} else
-		return (RESULT_NOTCONNECTED);
+SfsCtrl::CommandResult
+SfsCtrl::updateChecksum(const IndexArray &arr)
+{
+	/* Equal to register a checksum */
+	return (registerChecksum(arr));
 }
 
 SfsCtrl::CommandResult

@@ -46,6 +46,7 @@ enum modSfsMainFileListColumns {
 	MODSFSMAIN_FILELIST_COLUMN_EOL
 };
 
+class IndexArray;
 class SfsCtrl;
 
 class ModSfsMainPanelImpl : public ModSfsMainPanelBase
@@ -66,7 +67,7 @@ class ModSfsMainPanelImpl : public ModSfsMainPanelBase
 		void destroySfsMain();
 		void updateSfsList();
 		void updateSfsEntry(int);
-		void applySfsAction(int);
+		void applySfsAction(const IndexArray &);
 		void OnSfsMainDirCtrlSelChanged(wxTreeEvent&);
 		void OnSfsDirChanged(wxCommandEvent&);
 		void OnSfsEntryChanged(wxCommandEvent&);

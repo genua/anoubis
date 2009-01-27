@@ -224,7 +224,8 @@ ModSfsMainPanelImpl::OnSfsMainValidateButtonClicked(wxCommandEvent&)
 void
 ModSfsMainPanelImpl::OnSfsMainApplyButtonClicked(wxCommandEvent&)
 {
-	int selection = -1;
+	int		selection = -1;
+	IndexArray	selectionArray;
 
 	while (true) {
 		selection = SfsMainListCtrl->GetNextItem(selection,
@@ -235,12 +236,14 @@ ModSfsMainPanelImpl::OnSfsMainApplyButtonClicked(wxCommandEvent&)
 			break;
 		}
 
-		applySfsAction(selection);
+		selectionArray.Add(selection);
 	}
+
+	applySfsAction(selectionArray);
 }
 
 void
-ModSfsMainPanelImpl::applySfsAction(int selection)
+ModSfsMainPanelImpl::applySfsAction(const IndexArray &selection)
 {
 	SfsCtrl::CommandResult result = SfsCtrl::RESULT_EXECUTE;
 

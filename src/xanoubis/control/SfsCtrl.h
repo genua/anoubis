@@ -34,6 +34,11 @@
 #include "Task.h"
 
 /**
+ * Array is a list of indexes.
+ */
+WX_DEFINE_ARRAY_INT(unsigned int, IndexArray);
+
+/**
  * The SfsController acts as a bridge between an SfsDirectory and the view.
  * Operations on the directory are started here and changes on the directory
  * are reported back to the view.
@@ -180,20 +185,36 @@ class SfsCtrl : public wxEvtHandler
 		bool setSignatureEnabled(bool);
 
 		/**
-		 * Validates the SfsEntry at the specified index.
+		 * Validates the SfsEntries at the specified indexes.
 		 *
-		 * The checksumAttr- & signatureAttr-attributes are updated. If
-		 * an attribute has changed, an wxCommandEvent of type
-		 * anEVT_SFSENTRY_CHANGED is fired.
+		 * The SfsEntry-instances might be updated. For each changed
+		 * entry a wxCommandEvent of type anEVT_SFSENTRY_CHANGED is
+		 * fired.
 		 *
 		 * Note: This is a non-blocking procedure. It means that method
-		 * leaves at soon as possible. Bu you can rely on the
+		 * leaves at soon as possible. But you can rely on the
 		 * anEVT_SFSENTRY_CHANGED-event.
+		 *
+		 * @param arr The array contains indexes of SfsEntry-instances
+		 *            to be validated.
+		 * @return The result of the command. If one of the indexes is
+		 *         out of range, SfsCtrl::RESULT_INVALIDARG is returned
+		 *         and the validation stops (remaining indexes are not
+		 *         validated).
+		 */
+		CommandResult validate(const IndexArray &);
+
+		/**
+		 * Validates the SfsEntry at the specified index.
+		 *
+		 * This is a shortcut for the validate(IndexArray) method, if
+		 * you only want to validate an single SfsEntry.
 		 *
 		 * @param idx Index of SfsEntry to validate. If the index is
 		 *           out of range, SfsCtrl::RESULT_INVALIDARG is
 		 *           returned.
 		 * @return The result of the command.
+		 * @see validate(IndexArray)
 		 */
 		CommandResult validate(unsigned int);
 
@@ -213,50 +234,107 @@ class SfsCtrl : public wxEvtHandler
 		CommandResult validateAll(void);
 
 		/**
+		 * Registers the checksums of the SfsEntries at the specified
+		 * indexes at anoubisd.
+		 *
+		 * The SfsEntry-instances might be updated. For each changed
+		 * entry a wxCommandEvent of type anEVT_SFSENTRY_CHANGED is
+		 * fired.
+		 *
+		 * Note: This is a non-blocking procedure. It means that method
+		 * leaves at soon as possible. But you can rely on the
+		 * anEVT_SFSENTRY_CHANGED-event.
+		 *
+		 * The array contains indexes of SfsEntry-instances
+		 *            to be validated.
+		 *
+		 * @param idx The array contains indexes of SfsEntry-instances
+		 *            to be registered.
+		 * @return The result of the command. If one of the indexes is
+		 *         out of range, SfsCtrl::RESULT_INVALIDARG is returned
+		 *         and the operation stops (remaining entries are not
+		 *         registered).
+		 */
+		CommandResult registerChecksum(const IndexArray &);
+
+		/**
 		 * Registers the checksum of the SfsEntry at the given index
 		 * at anoubisd.
 		 *
-		 * The checksumAttr- & signatureAttr-attributes are updated. If
-		 * an attribute has changed, an wxCommandEvent of type
-		 * anEVT_SFSENTRY_CHANGED is fired.
-		 *
-		 * Note: This is a non-blocking procedure. It means that method
-		 * leaves at soon as possible. Bu you can rely on the
-		 * anEVT_SFSENTRY_CHANGED-event.
+		 * This is a shortcut for the registerChecksum(IndexArray)
+		 * method, if you only want to register an single SfsEntry.
 		 *
 		 * @param idx Index of SfsEntry to register. If the index is
 		 *            out of range, SfsCtrl::RESULT_INVALIDARG is
 		 *            returned.
 		 * @return The result of the command.
+		 * @see registerChecksum(IndexArray)
 		 */
 		CommandResult registerChecksum(unsigned int);
 
 		/**
-		 * Removes the checksum of the SfsEntry at the given index from
-		 * anoubisd.
+		 * Removes the checksum of the SfsEntries at the given indexes
+		 * from anoubisd.
 		 *
-		 * The checksumAttr- & signatureAttr-attributes are updated. If
-		 * an attribute has changed, an wxCommandEvent of type
-		 * anEVT_SFSENTRY_CHANGED is fired.
+		 * The SfsEntry-instances might be updated. For each changed
+		 * entry a wxCommandEvent of type anEVT_SFSENTRY_CHANGED is
+		 * fired.
 		 *
 		 * Note: This is a non-blocking procedure. It means that method
 		 * leaves at soon as possible. Bu you can rely on the
 		 * anEVT_SFSENTRY_CHANGED-event.
 		 *
+		 * @param idx The array contains indexes of SfsEntry-instances
+		 *            to be unregistered.
+		 * @return The result of the command. If one of the indexes is
+		 *         out of range, SfsCtrl::RESULT_INVALIDARG is returned
+		 *         and the operation stops (remaining entries are not
+		 *         unregistered).
+		 */
+		CommandResult unregisterChecksum(const IndexArray &);
+
+		/**
+		 * Removes the checksum of the SfsEntry at the given index from
+		 * anoubisd.
+		 *
+		 * This is a shortcut for the unregisterChecksum(IndexArray)
+		 * method, if you only want to unregister an single SfsEntry.
+		 *
 		 * @param idx Index of SfsEntry to unregister. If the index is
 		 *            out of range, SfsCtrl::RESULT_INVALIDARG is
 		 *            returned.
 		 * @return The result of the command.
+		 * @see unregisterChecksum(IndexArray)
 		 */
 		CommandResult unregisterChecksum(unsigned int);
+
+		/**
+		 * Updates the checksum of the SfsEntries at the given indexes
+		 * at anoubisd.
+		 *
+		 * The SfsEntry-instances might be updated. For each changed
+		 * entry a wxCommandEvent of type anEVT_SFSENTRY_CHANGED is
+		 * fired.
+		 *
+		 * Note: This is a non-blocking procedure. It means that method
+		 * leaves at soon as possible. Bu you can rely on the
+		 * anEVT_SFSENTRY_CHANGED-event.
+		 *
+		 * @param idx The array contains indexes of SfsEntry-instances
+		 *            to be updated.
+		 * @return The result of the command. If one of the indexes is
+		 *         out of range, SfsCtrl::RESULT_INVALIDARG is returned
+		 *         and the operation stops (remaining entries are not
+		 *         updated).
+		 */
+		CommandResult updateChecksum(const IndexArray &);
 
 		/**
 		 * Updates the checksum of the SfsEntry at the given index at
 		 * anoubisd.
 		 *
-		 * The checksumAttr- & signatureAttr-attributes are updated. If
-		 * an attribute has changed, an wxCommandEvent of type
-		 * anEVT_SFSENTRY_CHANGED is fired.
+		 * This is a shortcut for the updateChecksum(IndexArray)
+		 * method, if you only want to update an single SfsEntry.
 		 *
 		 * Note: This is a non-blocking procedure. It means that method
 		 * leaves at soon as possible. Bu you can rely on the
@@ -266,6 +344,7 @@ class SfsCtrl : public wxEvtHandler
 		 *            of range, SfsCtrl::RESULT_INVALIDARG is
 		 *            returned.
 		 * @return The result of the command.
+		 * @see updateChecksum(IndexArray)
 		 */
 		CommandResult updateChecksum(unsigned int);
 

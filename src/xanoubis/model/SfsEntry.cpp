@@ -52,7 +52,8 @@ SfsEntry::SfsEntry(const SfsEntry &other)
 	    other.csum_[SFSENTRY_SIGNATURE],
 	    ANOUBIS_CS_LEN);
 	this->assigned_[SFSENTRY_CHECKSUM] = other.assigned_[SFSENTRY_CHECKSUM];
-	this->assigned_[SFSENTRY_SIGNATURE] = other.assigned_[SFSENTRY_SIGNATURE];
+	this->assigned_[SFSENTRY_SIGNATURE] =
+	    other.assigned_[SFSENTRY_SIGNATURE];
 	this->state_[SFSENTRY_CHECKSUM] = other.state_[SFSENTRY_CHECKSUM];
 	this->state_[SFSENTRY_SIGNATURE] = other.state_[SFSENTRY_SIGNATURE];
 }
