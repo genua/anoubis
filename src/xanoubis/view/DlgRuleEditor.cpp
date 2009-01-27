@@ -40,6 +40,7 @@
 #include "PolicyRuleSet.h"
 #include "ProfileCtrl.h"
 #include "RuleEditorAddPolicyVisitor.h"
+#include "DlgRuleEditorFilterPage.h"
 
 DlgRuleEditor::DlgRuleEditor(wxWindow* parent)
     : Observer(NULL), DlgRuleEditorBase(parent)
@@ -155,7 +156,8 @@ DlgRuleEditor::~DlgRuleEditor(void)
 void
 DlgRuleEditor::update(Subject *subject)
 {
-	long idx;
+	long		 idx;
+	AppPolicy	*parent;
 
 	if (subject->IsKindOf(CLASSINFO(AppPolicy))) {
 		idx = findListRow(appPolicyListCtrl, (Policy *)subject);
@@ -172,10 +174,35 @@ DlgRuleEditor::update(Subject *subject)
 		if (idx != -1) {
 			updateListAlfCapabilityFilterPolicy(idx);
 		}
+	} else if (subject->IsKindOf(CLASSINFO(SfsFilterPolicy))) {
+		idx = findListRow(filterPolicyListCtrl, (Policy *)subject);
+		if (idx != -1) {
+			updateListSfsFilterPolicy(idx);
+		}
 	} else if (subject->IsKindOf(CLASSINFO(ContextFilterPolicy))) {
 		idx = findListRow(filterPolicyListCtrl, (Policy *)subject);
 		if (idx != -1) {
 			updateListContextFilterPolicy(idx);
+		}
+	} else if (subject->IsKindOf(CLASSINFO(SbAccessFilterPolicy))) {
+		idx = findListRow(filterPolicyListCtrl, (Policy *)subject);
+		if (idx != -1) {
+			updateListSbAccessFilterPolicy(idx);
+		}
+	} else if (subject->IsKindOf(CLASSINFO(DefaultFilterPolicy))) {
+		idx = findListRow(filterPolicyListCtrl, (Policy *)subject);
+		parent = ((FilterPolicy*)subject)->getParentPolicy();
+		if ((idx != -1) && (parent != NULL)) {
+			if (parent->IsKindOf(CLASSINFO(AlfAppPolicy))) {
+				updateListAlfFilterPolicy(idx);
+			} else if (parent->IsKindOf(CLASSINFO(SbAppPolicy))) {
+				updateListSbAccessFilterPolicy(idx);
+			}
+		}
+	} else if (subject->IsKindOf(CLASSINFO(SfsDefaultFilterPolicy))) {
+		idx = findListRow(filterPolicyListCtrl, (Policy *)subject);
+		if (idx != -1) {
+			updateListSfsFilterPolicy(idx);
 		}
 	} else {
 		/* Unknown subject type - do nothing */
@@ -395,8 +422,9 @@ DlgRuleEditor::onAppPolicyDeSelect(wxListEvent & WXUNUSED(event))
 void
 DlgRuleEditor::onFilterPolicySelect(wxListEvent & event)
 {
-	FilterPolicy	*policy;
-	PolicyRuleSet	*ruleset;
+	FilterPolicy		*policy;
+	PolicyRuleSet		*ruleset;
+	DlgRuleEditorFilterPage *filterPage;
 
 	policy = wxDynamicCast((void*)event.GetData(), FilterPolicy);
 	if (policy == NULL) {
@@ -414,48 +442,39 @@ DlgRuleEditor::onFilterPolicySelect(wxListEvent & event)
 		filterListDeleteButton->Disable();
 	}
 
-	/* Notebook tab's */
-	if (policy->IsKindOf(CLASSINFO(AlfCapabilityFilterPolicy))) {
-		filterCommonPage->Show();
-		filterCapabilityPage->Show();
-	} else if (policy->IsKindOf(CLASSINFO(AlfFilterPolicy))) {
-		filterCommonPage->Show();
-		filterNetworkPage->Show();
-		filterAddressPage->Show();
-	} else if (policy->IsKindOf(CLASSINFO(SfsFilterPolicy))) {
-		filterCommonPage->Show();
-		filterSubjectPage->Show();
-		filterSfsPage->Show();
-	} else if (policy->IsKindOf(CLASSINFO(SfsDefaultFilterPolicy))) {
-		filterCommonPage->Show();
-		filterSubjectPage->Show();
-	} else if (policy->IsKindOf(CLASSINFO(DefaultFilterPolicy))) {
-		filterCommonPage->Show();
-	} else if (policy->IsKindOf(CLASSINFO(ContextFilterPolicy))) {
-		filterContextPage->Show();
-	} else if (policy->IsKindOf(CLASSINFO(SbAccessFilterPolicy))) {
-		filterCommonPage->Show();
-		filterSubjectPage->Show();
-		filterPermissionPage->Show();
+	/* Tell the notebook tabs to show themself. */
+	for (int i=filterPolicyPanels->GetPageCount() - 1; i>=0; i--) {
+		filterPage = dynamic_cast<DlgRuleEditorFilterPage *>(
+		    filterPolicyPanels->GetPage(i));
+		if (filterPage != NULL) {
+			filterPage->select(policy);
+		}
 	}
+
+	Layout();
+	Refresh();
 }
 
 void
 DlgRuleEditor::onFilterPolicyDeSelect(wxListEvent & WXUNUSED(event))
 {
+	DlgRuleEditorFilterPage *filterPage;
+
 	filterListUpButton->Disable();
 	filterListDownButton->Disable();
 	filterListDeleteButton->Disable();
 
-	/* Notebook tab's */
-	filterCommonPage->Hide();
-	filterNetworkPage->Hide();
-	filterAddressPage->Hide();
-	filterCapabilityPage->Hide();
-	filterSubjectPage->Hide();
-	filterSfsPage->Hide();
-	filterContextPage->Hide();
-	filterPermissionPage->Hide();
+	/* Tell the notebook tabs to hide themself. */
+	for (int i=filterPolicyPanels->GetPageCount() -1; i>=0; i--) {
+		filterPage = dynamic_cast<DlgRuleEditorFilterPage *>(
+		    filterPolicyPanels->GetPage(i));
+		if (filterPage != NULL) {
+			filterPage->deselect();
+		}
+	}
+
+	Layout();
+	Refresh();
 }
 
 void

@@ -34,6 +34,8 @@
 #ifndef __DlgRuleEditorBase__
 #define __DlgRuleEditorBase__
 
+class DlgRuleEditorFilterActionPage;
+
 #include <wx/string.h>
 #include <wx/stattext.h>
 #include <wx/gdicmn.h>
@@ -49,11 +51,12 @@
 #include <wx/bitmap.h>
 #include <wx/image.h>
 #include <wx/notebook.h>
+#include <wx/panel.h>
+#include <wx/frame.h>
 #include <wx/radiobut.h>
 #include <wx/spinctrl.h>
 #include <wx/radiobox.h>
 #include <wx/checkbox.h>
-#include <wx/frame.h>
 
 ///////////////////////////////////////////////////////////////////////////
 
@@ -104,116 +107,7 @@ class DlgRuleEditorBase : public wxFrame
 		wxButton* appBinaryValidateButton;
 		wxButton* appBinaryUpdateButton;
 		wxNotebook* filterPolicyPanels;
-		wxScrolledWindow* filterCommonPage;
-		wxStaticText* filterCommonActionText;
-		wxRadioButton* filterCommonAllowRadioButton;
-		wxRadioButton* filterCommonDenyRadioButton;
-		wxRadioButton* filterCommonAskRadioButton;
-		wxStaticText* filterCommonLogText;
-		wxRadioButton* filterCommonLogNoneRadioButton;
-		wxRadioButton* filterCommonLogNormalRadioButton;
-		wxRadioButton* filterCommonLogAlertRadioButton;
-		wxScrolledWindow* filterNetworkPage;
-		wxStaticText* filterNetworkDirectionLabel;
-		wxRadioButton* filterNetworkInRadioButton;
-		wxRadioButton* filterNetworkOutRadionButton;
-		wxRadioButton* filterNetworkBothRadioButton;
-		wxStaticText* filterNetworkAddrFamilyLabel;
-		wxRadioButton* filterNetworkInetRadioButton;
-		wxRadioButton* filterNetworkInet6RadioButton;
-		wxRadioButton* filterNetworkAnyRadioButton;
-		wxStaticText* filterNetworkProtocolLabel;
-		wxRadioButton* filterNetworkTcpRadioButton;
-		wxRadioButton* filterNetworkUdpRadioButton;
-		
-		wxStaticText* filterNetworkStateTimeoutLabel;
-		wxSpinCtrl* filterNetworkStateTimeoutSpinCtrl;
-		wxScrolledWindow* filterAddressPage;
-		wxFlexGridSizer* filterAddressMainSizer;
-		wxStaticText* filterAddressSourceLabel;
-		wxTextCtrl* filterAddressSourceTextCtrl;
-		wxStaticText* filterAddressSourceDelimiterLabel;
-		wxSpinCtrl* filterAddressSoruceNetSpinCtrl;
-		wxStaticText* filterAddressSourcePortLabel;
-		wxTextCtrl* filterAddressSorucePortTextCtrl;
-		
-		
-		wxStaticText* filterAddressDestinationLabel;
-		wxTextCtrl* filterAddressDestinationTextCtrl;
-		wxStaticText* filterAddressDestinationDelimiterLabel;
-		wxSpinCtrl* filterAddressDestinationNetSpinCtrl;
-		wxStaticText* filterAddressDestinationPortLabel;
-		wxTextCtrl* filterAddressDestinationPortTextCtrl;
-		wxScrolledWindow* filterCapabilityPage;
-		wxStaticText* filterCapabilityLabel;
-		wxRadioButton* filterCapabilityRawRadioButton;
-		wxRadioButton* filterCapabilityOtherRadioButton;
-		wxRadioButton* filterCapabilityAllRadioButton;
-		wxScrolledWindow* filterSubjectPage;
-		wxStaticText* filterSubjectPathLabel;
-		wxTextCtrl* filterSubjectPathTextCtrl;
-		wxButton* filterSubjectPathModifyButton;
-		wxStaticText* filterSubjectLabel;
-		wxRadioButton* filterSubjectAnyRadioButton;
-		
-		
-		wxRadioButton* filterSubjectSelfRadioButton;
-		
-		
-		wxRadioButton* filterSubjectSelfSignedRadioButton;
-		
-		
-		wxRadioButton* filterSubjectUidRadioButton;
-		wxTextCtrl* filterSubjectUidTextCtrl;
-		
-		
-		wxRadioButton* filterSubjectKeyLRadioButton;
-		wxTextCtrl* filterSubjectKeyTextCtrl;
-		
-		
-		wxRadioButton* filterSubjectCsumRadioButton;
-		wxTextCtrl* filterSubjectCsumTextCtrl;
-		wxScrolledWindow* filterSfsPage;
-		wxStaticText* filterSfsValidLabel;
-		
-		
-		
-		wxRadioBox* filterSfsValidActionRadioBox;
-		wxRadioBox* filterSfsValidLogRadioBox;
-		wxStaticText* filterSfsInvalidLabel;
-		
-		
-		
-		wxRadioBox* filterSfsInvalidActionRadioBox;
-		wxRadioBox* filterSfsInvalidLogRadioBox;
-		wxStaticText* filterSfsUnknownLabel;
-		
-		
-		
-		wxRadioBox* filterSfsUnknownActionRadioBox;
-		wxRadioBox* filterSfsUnknownLogRadioBox;
-		wxScrolledWindow* filterContextPage;
-		wxStaticText* filterContextTypeLabel;
-		wxRadioButton* filterContextNewRadioButton;
-		wxRadioButton* filterContextOpenRadioButton;
-		
-		
-		wxStaticText* filterContextBinaryLabel;
-		wxTextCtrl* filterContextBinaryTextCtrl;
-		wxButton* filterContextBinaryModifyButton;
-		wxStaticText* filterContextCsumRegLabel;
-		wxStaticText* filterContextCsumRegText;
-		wxStaticText* filterContextCsumCurLabel;
-		wxStaticText* filterContextCsumCurText;
-		wxStaticText* filterContextStatusLabel;
-		wxStaticText* filterContextStatusText;
-		wxButton* filterContextValidateButton;
-		wxButton* filterContextUpdateButton;
-		wxScrolledWindow* filterPermissionPage;
-		wxStaticText* filterPermissionLabel;
-		wxCheckBox* filterPermissionReadCheckBox;
-		wxCheckBox* filterPermissionWriteCheckBox;
-		wxCheckBox* filterPermissionExecuteCheckBox;
+		DlgRuleEditorFilterActionPage* filterActionPage;
 		wxStaticText* mainFooterRuleSetLabel;
 		wxStaticText* mainFooterRuleSetText;
 		wxButton* mainFooterReloadButton;
@@ -240,30 +134,305 @@ class DlgRuleEditorBase : public wxFrame
 		virtual void OnAppBinaryModifyButton( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnAppValidateChkSumButton( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnAppUpdateChkSumButton( wxCommandEvent& event ){ event.Skip(); }
-		virtual void OnAlfAllowRadioButton( wxCommandEvent& event ){ event.Skip(); }
-		virtual void OnAlfDenyRadioButton( wxCommandEvent& event ){ event.Skip(); }
-		virtual void OnAlfAskRadioButton( wxCommandEvent& event ){ event.Skip(); }
-		virtual void OnAlfFilterRadioButton( wxCommandEvent& event ){ event.Skip(); }
-		virtual void OnAlfCapRadioButton( wxCommandEvent& event ){ event.Skip(); }
-		virtual void OnAlfDefaultRadioButton( wxCommandEvent& event ){ event.Skip(); }
-		virtual void OnAlfAcceptRadioButton( wxCommandEvent& event ){ event.Skip(); }
-		virtual void OnAlfConnectRadioButton( wxCommandEvent& event ){ event.Skip(); }
-		virtual void OnAlfInetRadioButton( wxCommandEvent& event ){ event.Skip(); }
-		virtual void OnAlfInet6RadioButton( wxCommandEvent& event ){ event.Skip(); }
-		virtual void OnAlfAnyRadioButton( wxCommandEvent& event ){ event.Skip(); }
-		virtual void OnAlfTcpRadioButton( wxCommandEvent& event ){ event.Skip(); }
-		virtual void OnAlfUdpRadioButton( wxCommandEvent& event ){ event.Skip(); }
-		virtual void OnAlfStateTimeoutChange( wxSpinEvent& event ){ event.Skip(); }
-		virtual void onAlfSrcAddrTextCtrlEnter( wxCommandEvent& event ){ event.Skip(); }
-		virtual void OnAlfSrcNetmaskSpinCtrl( wxSpinEvent& event ){ event.Skip(); }
-		virtual void onAlfSrcPortTextCtrlEnter( wxCommandEvent& event ){ event.Skip(); }
-		virtual void onAlfDstAddrTextCtrlEnter( wxCommandEvent& event ){ event.Skip(); }
-		virtual void OnAlfDstNetmaskSpinCtrl( wxSpinEvent& event ){ event.Skip(); }
-		virtual void onAlfDstPortTextCtrlEnter( wxCommandEvent& event ){ event.Skip(); }
 		
 	
 	public:
 		DlgRuleEditorBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Anoubis Rule Editor"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 1000,700 ), long style = wxDEFAULT_FRAME_STYLE|wxTAB_TRAVERSAL );
+	
+};
+
+///////////////////////////////////////////////////////////////////////////////
+/// Class DlgRuleEditorFilterActionPageBase
+///////////////////////////////////////////////////////////////////////////////
+class DlgRuleEditorFilterActionPageBase : public wxPanel 
+{
+	private:
+	
+	protected:
+		wxScrolledWindow* mainPage;
+		wxStaticText* actionLabel;
+		wxRadioButton* allowRadioButton;
+		wxRadioButton* denyRadioButton;
+		wxRadioButton* askRadioButton;
+		wxStaticText* logLabel;
+		wxRadioButton* noneRadioButton;
+		wxRadioButton* normalRadioButton;
+		wxRadioButton* alertRadioButton;
+		
+		// Virtual event handlers, overide them in your derived class
+		virtual void onAllowRadioButton( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onDenyRadioButton( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onAskRadioButton( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onNoneRadioButton( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onNormalRadioButton( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onAlertRadioButton( wxCommandEvent& event ){ event.Skip(); }
+		
+	
+	public:
+		DlgRuleEditorFilterActionPageBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 500,300 ), long style = wxTAB_TRAVERSAL );
+	
+};
+
+///////////////////////////////////////////////////////////////////////////////
+/// Class DlgRuleEditorFilterNetworkPageBase
+///////////////////////////////////////////////////////////////////////////////
+class DlgRuleEditorFilterNetworkPageBase : public wxPanel 
+{
+	private:
+	
+	protected:
+		wxScrolledWindow* mainPage;
+		wxStaticText* directionLabel;
+		wxRadioButton* inRadioButton;
+		wxRadioButton* outRadionButton;
+		wxRadioButton* bothRadioButton;
+		wxStaticText* addressFamilyLabel;
+		wxRadioButton* inetRadioButton;
+		wxRadioButton* inet6RadioButton;
+		wxRadioButton* anyRadioButton;
+		wxStaticText* protocolLabel;
+		wxRadioButton* tcpRadioButton;
+		wxRadioButton* udpRadioButton;
+		
+		wxStaticText* stateTimeoutLabel;
+		wxSpinCtrl* stateTimeoutSpinCtrl;
+		
+		// Virtual event handlers, overide them in your derived class
+		virtual void onInRadioButton( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onOutRadioButton( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onBothRadioButton( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onInetRadioButton( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onInet6RadioButton( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onAnyRadioButton( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onTcpRadioButton( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onUdpRadioButton( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onStateTimeoutSpinCtrl( wxSpinEvent& event ){ event.Skip(); }
+		
+	
+	public:
+		DlgRuleEditorFilterNetworkPageBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 500,300 ), long style = wxTAB_TRAVERSAL );
+	
+};
+
+///////////////////////////////////////////////////////////////////////////////
+/// Class DlgRuleEditorFilterAddressPageBase
+///////////////////////////////////////////////////////////////////////////////
+class DlgRuleEditorFilterAddressPageBase : public wxPanel 
+{
+	private:
+	
+	protected:
+		wxScrolledWindow* mainPage;
+		wxFlexGridSizer* mainSizer;
+		wxStaticText* sourceAddressLabel;
+		wxTextCtrl* sourceAddressTextCtrl;
+		wxStaticText* sourceAddressDelimiterLabel;
+		wxSpinCtrl* soruceAddressNetmaskSpinCtrl;
+		wxStaticText* sourcePortLabel;
+		wxTextCtrl* sorucePortTextCtrl;
+		
+		
+		wxStaticText* destinationAddressLabel;
+		wxTextCtrl* destinationAddressTextCtrl;
+		wxStaticText* destinationAddressDelimiterLabel;
+		wxSpinCtrl* destinationAddressNetmaskSpinCtrl;
+		wxStaticText* destinationPortLabel;
+		wxTextCtrl* destinationPortTextCtrl;
+		
+		// Virtual event handlers, overide them in your derived class
+		virtual void onSourceAddressTextEnter( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onSourceAddressNetmaskSpinCtrl( wxSpinEvent& event ){ event.Skip(); }
+		virtual void onSourcePortTextEnter( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onDestinationAddressTextEnter( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onDestinationAddressNetmaskSpinCtrl( wxSpinEvent& event ){ event.Skip(); }
+		virtual void onDestinationPortTextEnter( wxCommandEvent& event ){ event.Skip(); }
+		
+	
+	public:
+		DlgRuleEditorFilterAddressPageBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 500,300 ), long style = wxTAB_TRAVERSAL );
+	
+};
+
+///////////////////////////////////////////////////////////////////////////////
+/// Class DlgRuleEditorFilterCapabilityPageBase
+///////////////////////////////////////////////////////////////////////////////
+class DlgRuleEditorFilterCapabilityPageBase : public wxPanel 
+{
+	private:
+	
+	protected:
+		wxScrolledWindow* mainPage;
+		wxStaticText* capabilityLabel;
+		wxRadioButton* rawRadioButton;
+		wxRadioButton* otherRadioButton;
+		wxRadioButton* allRadioButton;
+		
+		// Virtual event handlers, overide them in your derived class
+		virtual void onRawRadioButton( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onOtherRadioButton( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onAllRadioButton( wxCommandEvent& event ){ event.Skip(); }
+		
+	
+	public:
+		DlgRuleEditorFilterCapabilityPageBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 500,300 ), long style = wxTAB_TRAVERSAL );
+	
+};
+
+///////////////////////////////////////////////////////////////////////////////
+/// Class DlgRuleEditorFilterSubjectPageBase
+///////////////////////////////////////////////////////////////////////////////
+class DlgRuleEditorFilterSubjectPageBase : public wxPanel 
+{
+	private:
+	
+	protected:
+		wxScrolledWindow* mainPage;
+		wxStaticText* pathLabel;
+		wxTextCtrl* pathTextCtrl;
+		wxButton* modifyButton;
+		wxStaticText* subjectLabel;
+		wxRadioButton* anyRadioButton;
+		
+		
+		wxRadioButton* selfRadioButton;
+		
+		
+		wxRadioButton* selfSignedRadioButton;
+		
+		
+		wxRadioButton* uidRadioButton;
+		wxTextCtrl* uidTextCtrl;
+		
+		
+		wxRadioButton* keyRadioButton;
+		wxTextCtrl* keyTextCtrl;
+		
+		
+		wxRadioButton* csumRadioButton;
+		wxTextCtrl* csumTextCtrl;
+		
+		// Virtual event handlers, overide them in your derived class
+		virtual void onModifyButton( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onAnyRadioButton( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onSelfRadioButton( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onSelfSignedRadioButton( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onUidRadioButton( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onUidTextEnter( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onKeyRadioButton( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onKeyTextEnter( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onCsumRadioButton( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onCsumTextEnter( wxCommandEvent& event ){ event.Skip(); }
+		
+	
+	public:
+		DlgRuleEditorFilterSubjectPageBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 500,300 ), long style = wxTAB_TRAVERSAL );
+	
+};
+
+///////////////////////////////////////////////////////////////////////////////
+/// Class DlgRuleEditorFilterSfsPageBase
+///////////////////////////////////////////////////////////////////////////////
+class DlgRuleEditorFilterSfsPageBase : public wxPanel 
+{
+	private:
+	
+	protected:
+		wxScrolledWindow* mainPage;
+		wxStaticText* validLabel;
+		
+		
+		
+		wxRadioBox* validActionRadioBox;
+		wxRadioBox* validLogRadioBox;
+		wxStaticText* invalidLabel;
+		
+		
+		
+		wxRadioBox* invalidActionRadioBox;
+		wxRadioBox* invalidLogRadioBox;
+		wxStaticText* unknownLabel;
+		
+		
+		
+		wxRadioBox* unknownActionRadioBox;
+		wxRadioBox* unknownLogRadioBox;
+		
+		// Virtual event handlers, overide them in your derived class
+		virtual void onValidActionRadioBox( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onValidLogRadioBox( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onInvalidActionRadioBox( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onInvalidLogRadioBox( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onUnknownActionRadioBox( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onUnknownLogRadioBox( wxCommandEvent& event ){ event.Skip(); }
+		
+	
+	public:
+		DlgRuleEditorFilterSfsPageBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 500,300 ), long style = wxTAB_TRAVERSAL );
+	
+};
+
+///////////////////////////////////////////////////////////////////////////////
+/// Class DlgRuleEditorFilterContextPageBase
+///////////////////////////////////////////////////////////////////////////////
+class DlgRuleEditorFilterContextPageBase : public wxPanel 
+{
+	private:
+	
+	protected:
+		wxScrolledWindow* mainPage;
+		wxStaticText* typeLabel;
+		wxRadioButton* newRadioButton;
+		wxRadioButton* openRadioButton;
+		
+		
+		wxStaticText* binaryLabel;
+		wxTextCtrl* binaryTextCtrl;
+		wxButton* modifyButton;
+		wxStaticText* registeredCsumLabel;
+		wxStaticText* registeredCsumText;
+		wxStaticText* currentCsumLabel;
+		wxStaticText* currentCsumText;
+		wxStaticText* statusLabel;
+		wxStaticText* statusText;
+		wxButton* validateButton;
+		wxButton* updateButton;
+		
+		// Virtual event handlers, overide them in your derived class
+		virtual void onNewRadioButton( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onOpenRadioButton( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onBinaryTextEnter( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onModifyButton( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onValidateButton( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onUpdateButton( wxCommandEvent& event ){ event.Skip(); }
+		
+	
+	public:
+		DlgRuleEditorFilterContextPageBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 500,300 ), long style = wxTAB_TRAVERSAL );
+	
+};
+
+///////////////////////////////////////////////////////////////////////////////
+/// Class DlgRuleEditorFilterPermissionPageBase
+///////////////////////////////////////////////////////////////////////////////
+class DlgRuleEditorFilterPermissionPageBase : public wxPanel 
+{
+	private:
+	
+	protected:
+		wxScrolledWindow* mainPage;
+		wxStaticText* permissionLabel;
+		wxCheckBox* readCheckBox;
+		wxCheckBox* writeCheckBox;
+		wxCheckBox* executeCheckBox;
+		
+		// Virtual event handlers, overide them in your derived class
+		virtual void onReadCheckBox( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onWriteCheckBox( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onExecuteCheckBox( wxCommandEvent& event ){ event.Skip(); }
+		
+	
+	public:
+		DlgRuleEditorFilterPermissionPageBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 500,300 ), long style = wxTAB_TRAVERSAL );
 	
 };
 

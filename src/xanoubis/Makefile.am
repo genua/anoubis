@@ -263,6 +263,24 @@ xanoubis_SOURCES= \
 	view/DlgRuleEditorBase.h \
 	view/DlgRuleEditor.cpp \
 	view/DlgRuleEditor.h \
+	view/DlgRuleEditorFilterActionPage.cpp \
+	view/DlgRuleEditorFilterActionPage.h \
+	view/DlgRuleEditorFilterAddressPage.cpp \
+	view/DlgRuleEditorFilterAddressPage.h \
+	view/DlgRuleEditorFilterCapabilityPage.cpp \
+	view/DlgRuleEditorFilterCapabilityPage.h \
+	view/DlgRuleEditorFilterContextPage.cpp \
+	view/DlgRuleEditorFilterContextPage.h \
+	view/DlgRuleEditorFilterNetworkPage.cpp \
+	view/DlgRuleEditorFilterNetworkPage.h \
+	view/DlgRuleEditorFilterPage.cpp \
+	view/DlgRuleEditorFilterPage.h \
+	view/DlgRuleEditorFilterPermissionPage.cpp \
+	view/DlgRuleEditorFilterPermissionPage.h \
+	view/DlgRuleEditorFilterSfsPage.cpp \
+	view/DlgRuleEditorFilterSfsPage.h \
+	view/DlgRuleEditorFilterSubjectPage.cpp \
+	view/DlgRuleEditorFilterSubjectPage.h \
 	view/MainFrameBase.cpp \
 	view/MainFrameBase.h \
 	view/MainFrame.cpp \
