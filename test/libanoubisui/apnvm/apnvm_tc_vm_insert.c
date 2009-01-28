@@ -66,8 +66,7 @@ vm_tc_create_ruleset(int type)
 	}
 	else if (type == 1) {
 		iov.iov_base = "sfs {\n\
-	/bin/ping \
-a193a2edb06ff39630fed8195c0b043651867b91fccc8db67e4222367736ba73\n\
+	any self valid allow invalid deny\n\
 }\n";
 	}
 	else {
@@ -77,8 +76,7 @@ a193a2edb06ff39630fed8195c0b043651867b91fccc8db67e4222367736ba73\n\
 	}\n\
 }\n\
 sfs {\n\
-	/bin/ping \
-a193a2edb06ff39630fed8195c0b043651867b91fccc8db67e4222367736ba73\n\
+	any self valid allow invalid deny\n\
 }\n";
 	}
 	iov.iov_len = strlen(iov.iov_base);

@@ -68,8 +68,7 @@ static void
 vm_tc_write_sfs(FILE *f)
 {
 	fprintf(f, "sfs {\n");
-	fprintf(f, "	/bin/ping \
-a193a2edb06ff39630fed8195c0b043651867b91fccc8db67e4222367736ba73\n");
+	fprintf(f, "	any self valid allow invalid deny\n");
 	fprintf(f, "}\n");
 
 	fflush(f);
