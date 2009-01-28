@@ -68,7 +68,7 @@ class PolicyUtils
 		 * @param[out] 3rd Converted string.
 		 * @return True on success.
 		 */
-		static bool csumToString(unsigned char *, size_t, wxString);
+		static bool csumToString(unsigned char *, size_t, wxString &);
 
 		/**
 		 * Calculate checksum of binary.

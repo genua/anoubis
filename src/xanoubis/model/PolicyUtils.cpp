@@ -50,10 +50,10 @@ PolicyUtils::stringToCsum(wxString str,
 
 bool
 PolicyUtils::csumToString(unsigned char csum[MAX_APN_HASH_LEN],
-    size_t len, wxString str)
+    size_t len, wxString &str)
 {
-	str.Clear();
-
+	if (len == 0 || len > MAX_APN_HASH_LEN)
+		return (false);
 	str = wxT("0x");
 	for (size_t i = 0; i < len; i++) {
 		str += wxString::Format(wxT("%2.2x"),
