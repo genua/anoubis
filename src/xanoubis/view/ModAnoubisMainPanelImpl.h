@@ -69,7 +69,6 @@ class ModAnoubisMainPanelImpl : public ModAnoubisMainPanelBase
 		void profileTabUpdate(void);
 		void fillProfileList(void);
 		void toolTipParamsUpdate(void);
-		void certificateParamsUpdate(void);
 
 	protected:
 		void OnLoadRuleSet(wxCommandEvent&);
@@ -93,12 +92,6 @@ class ModAnoubisMainPanelImpl : public ModAnoubisMainPanelBase
 		void OnAnoubisOptionShow(wxCommandEvent&);
 		void OnAutoCheck(wxCommandEvent&);
 		void OnDoAutostart(wxCommandEvent&);
-
-		void OnPrivKeyValidityChanged(wxCommandEvent&);
-		void OnPrivKeyChooseClicked(wxCommandEvent&);
-		void OnPrivKeyValidityPeriodChanged(wxSpinEvent&);
-
-		void OnCertChooseClicked(wxCommandEvent&);
 
 		void OnProfileDeleteClicked(wxCommandEvent &);
 		void OnProfileLoadClicked(wxCommandEvent &);

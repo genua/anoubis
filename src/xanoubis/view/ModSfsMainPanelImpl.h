@@ -63,11 +63,16 @@ class ModSfsMainPanelImpl : public ModSfsMainPanelBase
 		wxIcon		*sfsListWarnIcon_;
 		wxIcon		*sfsListErrorIcon_;
 		wxImageList	sfsListImageList_;
+
 		void initSfsMain();
 		void destroySfsMain();
 		void updateSfsList();
 		void updateSfsEntry(int);
 		void applySfsAction(const IndexArray &);
+
+		void initSfsOptions(void);
+		void certificateParamsUpdate(void);
+
 		void OnSfsMainDirCtrlSelChanged(wxTreeEvent&);
 		void OnSfsDirChanged(wxCommandEvent&);
 		void OnSfsMainDirTraversalChecked(wxCommandEvent&);
@@ -79,6 +84,11 @@ class ModSfsMainPanelImpl : public ModSfsMainPanelBase
 		void OnSfsMainApplyButtonClicked(wxCommandEvent&);
 		void OnSfsMainSigEnabledClicked(wxCommandEvent&);
 		void OnSfsMainKeyLoaded(wxCommandEvent&);
+
+		void OnPrivKeyValidityChanged(wxCommandEvent&);
+		void OnPrivKeyChooseClicked(wxCommandEvent&);
+		void OnPrivKeyValidityPeriodChanged(wxSpinEvent&);
+		void OnCertChooseClicked(wxCommandEvent&);
 
 	public:
 		ModSfsMainPanelImpl(wxWindow*, wxWindowID);

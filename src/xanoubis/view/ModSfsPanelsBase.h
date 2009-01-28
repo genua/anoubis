@@ -53,6 +53,8 @@ class AnDetails;
 #include <wx/textctrl.h>
 #include <wx/button.h>
 #include <wx/choice.h>
+#include <wx/spinctrl.h>
+#include <wx/statbox.h>
 #include <wx/notebook.h>
 #include <wx/statbmp.h>
 
@@ -101,6 +103,21 @@ class ModSfsMainPanelBase : public wxPanel
 		wxStaticText* m_staticText101;
 		wxChoice* SfsMainActionChoice;
 		wxButton* SfsMainActionButton;
+		wxPanel* pan_Options;
+		wxStaticText* m_staticText121;
+		wxTextCtrl* PrivKeyPathText;
+		wxButton* PrivKeyChooseButton;
+		wxStaticText* m_staticText13;
+		wxChoice* PrivKeyValidityChoice;
+		wxSpinCtrl* PrivKeyValiditySpinCtrl;
+		wxStaticText* PrivKeyValidityText;
+		wxStaticText* m_staticText15;
+		wxTextCtrl* CertPathText;
+		wxButton* CertChooseButton;
+		wxStaticText* m_staticText16;
+		wxStaticText* CertFingerprintText;
+		wxStaticText* m_staticText18;
+		wxStaticText* CertDnText;
 		
 		// Virtual event handlers, overide them in your derived class
 		virtual void OnSfsMainDirCtrlSelChanged( wxTreeEvent& event ){ event.Skip(); }
@@ -110,6 +127,10 @@ class ModSfsMainPanelBase : public wxPanel
 		virtual void OnSfsMainValidateButtonClicked( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnSfsMainSigEnabledClicked( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnSfsMainApplyButtonClicked( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnPrivKeyChooseClicked( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnPrivKeyValidityChanged( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnPrivKeyValidityPeriodChanged( wxSpinEvent& event ){ event.Skip(); }
+		virtual void OnCertChooseClicked( wxCommandEvent& event ){ event.Skip(); }
 		
 	
 	public:

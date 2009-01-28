@@ -218,10 +218,6 @@ ModAnoubisMainPanelImpl::readOptions(void)
 	toolTipSpinCtrl->SetValue(ToolTipTimeout);
 	toolTipParamsUpdate();
 
-	PrivKeyPathText->SetValue(
-	    KeyCtrl::getInstance()->getPrivateKey().getFile());
-	certificateParamsUpdate();
-
 	/* set widgets visability and send options event */
 	setOptionsWidgetsVisability();
 	sendNotifierOptions();
@@ -967,71 +963,6 @@ void ModAnoubisMainPanelImpl::OnDoAutostart(wxCommandEvent& event)
 }
 
 void
-ModAnoubisMainPanelImpl::OnPrivKeyValidityChanged(wxCommandEvent&)
-{
-	/* Test whether "Until session end" is selected */
-	bool sessionEndSelected =
-	    (PrivKeyValidityChoice->GetCurrentSelection() == 0);
-
-	/* Enable/disable related controls accordingly */
-	PrivKeyValiditySpinCtrl->Enable(!sessionEndSelected);
-	PrivKeyValidityText->Enable(!sessionEndSelected);
-
-	/* Change validity settings of private key */
-	PrivKey &privKey = KeyCtrl::getInstance()->getPrivateKey();
-	if (sessionEndSelected)
-		privKey.setValidity(0); /* Disabled */
-	else
-		privKey.setValidity(PrivKeyValiditySpinCtrl->GetValue());
-}
-
-void
-ModAnoubisMainPanelImpl::OnPrivKeyChooseClicked(wxCommandEvent&)
-{
-	wxFileDialog dlg(this,
-	    _("Choose the file, where your private key is stored."));
-
-	if (dlg.ShowModal() == wxID_OK) {
-		wxString path = dlg.GetPath();
-		PrivKey &privKey = KeyCtrl::getInstance()->getPrivateKey();
-
-		PrivKeyPathText->SetValue(path);
-		privKey.setFile(path);
-
-		if (privKey.canLoad()) {
-			wxCommandEvent event(anEVT_LOAD_KEY);
-			event.SetInt(0); /* 0 := private key */
-
-			wxPostEvent(AnEvents::getInstance(), event);
-		}
-	}
-}
-
-void
-ModAnoubisMainPanelImpl::OnPrivKeyValidityPeriodChanged(wxSpinEvent&)
-{
-	/* Change validity settings of private key */
-	PrivKey &privKey = KeyCtrl::getInstance()->getPrivateKey();
-	privKey.setValidity(PrivKeyValiditySpinCtrl->GetValue());
-}
-
-void
-ModAnoubisMainPanelImpl::OnCertChooseClicked(wxCommandEvent&)
-{
-	wxFileDialog dlg(this,
-	    _("Choose the file, where your certificate is stored."));
-
-	if (dlg.ShowModal() == wxID_OK) {
-		wxString path = dlg.GetPath();
-		LocalCertificate &cert =
-		    KeyCtrl::getInstance()->getLocalCertificate();
-
-		cert.setFile(path);
-		certificateParamsUpdate();
-	}
-}
-
-void
 ModAnoubisMainPanelImpl::OnNotebookTabChanged(wxNotebookEvent&)
 {
 	if (tb_MainAnoubisNotify->GetCurrentPage() == tb_MainAnoubisVersions) {
@@ -1257,30 +1188,5 @@ ModAnoubisMainPanelImpl::toolTipParamsUpdate(void)
 	if (enable) {
 		int delay = toolTipSpinCtrl->GetValue();
 		wxToolTip::SetDelay(1000*delay);
-	}
-}
-
-void
-ModAnoubisMainPanelImpl::certificateParamsUpdate(void)
-{
-	LocalCertificate &cert = KeyCtrl::getInstance()->getLocalCertificate();
-
-	if (cert.canLoad() && !cert.load()) {
-		wxMessageBox(wxString::Format(
-		    _("Failed to load certificate from\n%s."),
-		    cert.getFile().c_str()),
-		    _("Load certificate"), wxOK | wxICON_ERROR, this);
-
-	}
-
-	CertPathText->SetValue(cert.getFile());
-	CertFingerprintText->SetLabel(cert.getFingerprint());
-	CertDnText->SetLabel(cert.getDistinguishedName());
-
-	if (cert.isLoaded()) {
-		wxCommandEvent event(anEVT_LOAD_KEY);
-		event.SetInt(1); /* 1 := certificate */
-
-		wxPostEvent(AnEvents::getInstance(), event);
 	}
 }
