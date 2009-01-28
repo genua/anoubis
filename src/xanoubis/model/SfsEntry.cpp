@@ -25,6 +25,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <wx/filename.h>
+
 #include "SfsEntry.h"
 
 SfsEntry::SfsEntry()
@@ -95,10 +97,34 @@ SfsEntry::getFileName(void) const
 	return (this->filename_);
 }
 
+wxDateTime
+SfsEntry::getLastModified(void) const
+{
+	wxDateTime dt;
+
+	if (wxFileExists(this->path_)) {
+		wxFileName fn(this->path_);
+		fn.GetTimes(0, &dt, 0);
+	}
+
+	return (dt);
+}
+
 SfsEntry::ChecksumState
 SfsEntry::getChecksumState(ChecksumType type) const
 {
 	return (state_[type]);
+}
+
+wxString
+SfsEntry::getChecksum(ChecksumType type) const
+{
+	wxString result;
+
+	if (assigned_[type])
+		result = cs2str(csum_[type]);
+
+	return (result);
 }
 
 bool
@@ -140,6 +166,17 @@ bool
 SfsEntry::haveLocalCsum(void) const
 {
 	return (this->haveLocalCsum_);
+}
+
+wxString
+SfsEntry::getLocalCsum(void) const
+{
+	wxString result;
+
+	if (haveLocalCsum_)
+		result = cs2str(localCsum_);
+
+	return (result);
 }
 
 bool
@@ -202,4 +239,16 @@ SfsEntry::validateChecksum(ChecksumType type)
 		return (true);
 	} else
 		return (false);
+}
+
+wxString
+SfsEntry::cs2str(const u_int8_t *cs)
+{
+	wxString str;
+
+	for (int i = 0; i < ANOUBIS_CS_LEN; i++) {
+		str += wxString::Format(wxT("%2.2x"), cs[i]);
+	}
+
+	return (str);
 }

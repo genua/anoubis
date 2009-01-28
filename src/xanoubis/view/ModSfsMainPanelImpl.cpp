@@ -51,6 +51,7 @@
 #include "main.h"
 #include "KeyCtrl.h"
 #include "ModSfsAddPolicyVisitor.h"
+#include "ModSfsDetailsDlg.h"
 #include "Policy.h"
 #include "PolicyRuleSet.h"
 #include "ProfileCtrl.h"
@@ -156,6 +157,16 @@ ModSfsMainPanelImpl::OnSfsDirChanged(wxCommandEvent&)
 
 	/* Update CurrPathLabel accordingly */
 	SfsMainCurrPathLabel->SetLabel(SfsMainDirCtrl->GetPath());
+}
+
+void
+ModSfsMainPanelImpl::OnSfsMainListItemActivated(wxListEvent &event)
+{
+	SfsDirectory &dir = sfsCtrl_->getSfsDirectory();
+	SfsEntry &entry = dir.getEntry(event.GetIndex());
+
+	ModSfsDetailsDlg dlg(entry, this);
+	dlg.ShowModal();
 }
 
 void

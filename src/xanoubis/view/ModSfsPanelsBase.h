@@ -57,6 +57,7 @@ class AnDetails;
 #include <wx/statbox.h>
 #include <wx/notebook.h>
 #include <wx/statbmp.h>
+#include <wx/dialog.h>
 
 ///////////////////////////////////////////////////////////////////////////
 
@@ -125,6 +126,7 @@ class ModSfsMainPanelBase : public wxPanel
 		virtual void OnSfsMainFilterButtonClicked( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnSfsMainInverseCheckboxClicked( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnSfsMainValidateButtonClicked( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnSfsMainListItemActivated( wxListEvent& event ){ event.Skip(); }
 		virtual void OnSfsMainSigEnabledClicked( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnSfsMainApplyButtonClicked( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnPrivKeyChooseClicked( wxCommandEvent& event ){ event.Skip(); }
@@ -155,6 +157,34 @@ class ModSfsOverviewPanelBase : public wxPanel
 	
 	public:
 		ModSfsOverviewPanelBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( -1,-1 ), long style = wxTAB_TRAVERSAL );
+	
+};
+
+///////////////////////////////////////////////////////////////////////////////
+/// Class ModSfsDetailsDlgBase
+///////////////////////////////////////////////////////////////////////////////
+class ModSfsDetailsDlgBase : public wxDialog 
+{
+	private:
+	
+	protected:
+		wxStaticText* m_staticText20;
+		wxTextCtrl* pathTextCtrl;
+		wxStaticText* m_staticText21;
+		wxTextCtrl* modifiedTextCtrl;
+		wxStaticText* m_staticText22;
+		wxTextCtrl* checksumTextCtrl;
+		wxStaticText* m_staticText23;
+		wxTextCtrl* regChecksumTextCtrl;
+		wxStaticText* m_staticText24;
+		wxStaticText* checksumStateLabel;
+		wxStaticText* m_staticText26;
+		wxStaticText* signatureStateLabel;
+		wxStdDialogButtonSizer* m_sdbSizer1;
+		wxButton* m_sdbSizer1OK;
+	
+	public:
+		ModSfsDetailsDlgBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxEmptyString, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize, long style = wxDEFAULT_DIALOG_STYLE|wxRESIZE_BORDER );
 	
 };
 

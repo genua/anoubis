@@ -39,6 +39,7 @@
 #include <dev/anoubis.h>
 #endif
 
+#include <wx/datetime.h>
 #include <wx/string.h>
 
 /**
@@ -137,6 +138,16 @@ class SfsEntry
 		void setPath(const wxString &);
 
 		/**
+		 * Returns the modification timestamp of the file.
+		 *
+		 * If the file does not exist, ther returned datetime-value
+		 * is unset.
+		 *
+		 * @return Last modification timestamp of the file
+		 */
+		wxDateTime getLastModified(void) const;
+
+		/**
 		 * Returns the state of the specified checksum-type.
 		 *
 		 * The state can change depending on the checksums you assigned
@@ -146,6 +157,17 @@ class SfsEntry
 		 * @return State of requested checksum-type
 		 */
 		ChecksumState getChecksumState(ChecksumType) const;
+
+		/**
+		 * Returns the hex-string of a checksum.
+		 *
+		 * If the requested checksum is not assigned to the entry, an
+		 * empty string is returned.
+		 *
+		 * @param type Type of requested checksum
+		 * @return An hex-string representing the requested checksum.
+		 */
+		wxString getChecksum(ChecksumType) const;
 
 		/**
 		 * Assings a checksum to the SfSEntry.
@@ -194,6 +216,16 @@ class SfsEntry
 		 *         false otherwise.
 		 */
 		bool haveLocalCsum(void) const;
+
+		/**
+		 * Returns the hex-string of the local checksum.
+		 *
+		 * If no checksum is assigned to the entry, an empty string is
+		 * returned.
+		 *
+		 * @return An hex-string representing the local checksum.
+		 */
+		wxString getLocalCsum(void) const;
 
 		/**
 		 * Copies the locally calculated checksum into the SfsEntry.
@@ -246,6 +278,7 @@ class SfsEntry
 		ChecksumState	state_[2];
 
 		bool validateChecksum(ChecksumType);
+		static wxString cs2str(const u_int8_t *);
 };
 
 #endif	/* _SFSENTRY_H_ */

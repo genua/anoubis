@@ -301,6 +301,8 @@ xanoubis_SOURCES= \
 	view/ModOverviewMainPanelImpl.h \
 	view/ModOverviewPanelsBase.cpp \
 	view/ModOverviewPanelsBase.h \
+	view/ModSfsDetailsDlg.cpp \
+	view/ModSfsDetailsDlg.h \
 	view/ModSfsMainPanelImpl.cpp \
 	view/ModSfsMainPanelImpl.h \
 	view/ModSfsOverviewPanelImpl.cpp \
