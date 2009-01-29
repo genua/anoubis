@@ -52,6 +52,7 @@ class DlgRuleEditorFilterActionPage;
 #include <wx/image.h>
 #include <wx/notebook.h>
 #include <wx/panel.h>
+#include <wx/splitter.h>
 #include <wx/frame.h>
 #include <wx/radiobut.h>
 #include <wx/spinctrl.h>
@@ -69,6 +70,8 @@ class DlgRuleEditorBase : public wxFrame
 	private:
 	
 	protected:
+		wxSplitterWindow* splitterWindow;
+		wxPanel* appPanel;
 		wxStaticText* appListTypeLabel;
 		wxChoice* appListTypeChoice;
 		wxButton* appListCreateButton;
@@ -81,18 +84,6 @@ class DlgRuleEditorBase : public wxFrame
 		wxButton* appListUpButton;
 		wxButton* appListDownButton;
 		wxButton* appListDeleteButton;
-		wxStaticText* filterListTypeLabel;
-		wxChoice* filterListTypeChoice;
-		wxButton* filterListCreateButton;
-		
-		wxButton* filterListColumnsButton;
-		wxListCtrl* filterPolicyListCtrl;
-		
-		wxStaticText* filterListPolicyLabel;
-		wxStaticText* filterListPolicyText;
-		wxButton* filterListUpButton;
-		wxButton* filterListDownButton;
-		wxButton* filterListDeleteButton;
 		wxNotebook* appPolicyPanels;
 		wxScrolledWindow* appBinaryPage;
 		wxStaticText* appBinaryLabel;
@@ -106,6 +97,19 @@ class DlgRuleEditorBase : public wxFrame
 		wxStaticText* appBinaryStatusText;
 		wxButton* appBinaryValidateButton;
 		wxButton* appBinaryUpdateButton;
+		wxPanel* filterPanel;
+		wxStaticText* filterListTypeLabel;
+		wxChoice* filterListTypeChoice;
+		wxButton* filterListCreateButton;
+		
+		wxButton* filterListColumnsButton;
+		wxListCtrl* filterPolicyListCtrl;
+		
+		wxStaticText* filterListPolicyLabel;
+		wxStaticText* filterListPolicyText;
+		wxButton* filterListUpButton;
+		wxButton* filterListDownButton;
+		wxButton* filterListDeleteButton;
 		wxNotebook* filterPolicyPanels;
 		DlgRuleEditorFilterActionPage* filterActionPage;
 		wxStaticText* mainFooterRuleSetLabel;
@@ -124,20 +128,26 @@ class DlgRuleEditorBase : public wxFrame
 		virtual void onAppListUpClick( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onAppListDownClick( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onAppListDeleteClick( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnAppBinaryTextCtrl( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnAppBinaryModifyButton( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnAppValidateChkSumButton( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnAppUpdateChkSumButton( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onFilterListColumnsButtonClick( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onFilterPolicyDeSelect( wxListEvent& event ){ event.Skip(); }
 		virtual void onFilterPolicySelect( wxListEvent& event ){ event.Skip(); }
 		virtual void onFilterListUpClick( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onFilterListDownClick( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onFilterListDeleteClick( wxCommandEvent& event ){ event.Skip(); }
-		virtual void OnAppBinaryTextCtrl( wxCommandEvent& event ){ event.Skip(); }
-		virtual void OnAppBinaryModifyButton( wxCommandEvent& event ){ event.Skip(); }
-		virtual void OnAppValidateChkSumButton( wxCommandEvent& event ){ event.Skip(); }
-		virtual void OnAppUpdateChkSumButton( wxCommandEvent& event ){ event.Skip(); }
 		
 	
 	public:
 		DlgRuleEditorBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Anoubis Rule Editor"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 1000,700 ), long style = wxDEFAULT_FRAME_STYLE|wxTAB_TRAVERSAL );
+		void splitterWindowOnIdle( wxIdleEvent& )
+		{
+		splitterWindow->SetSashPosition( 482 );
+		splitterWindow->Disconnect( wxEVT_IDLE, wxIdleEventHandler( DlgRuleEditorBase::splitterWindowOnIdle ), NULL, this );
+		}
+		
 	
 };
 

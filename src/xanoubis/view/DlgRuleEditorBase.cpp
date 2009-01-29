@@ -45,25 +45,26 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	wxBoxSizer* mainSizer;
 	mainSizer = new wxBoxSizer( wxVERTICAL );
 	
-	wxGridSizer* mainPanelSizer;
-	mainPanelSizer = new wxGridSizer( 2, 2, 0, 0 );
-	
-	wxBoxSizer* appListSizer;
-	appListSizer = new wxBoxSizer( wxVERTICAL );
+	splitterWindow = new wxSplitterWindow( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxSP_3D|wxSP_LIVE_UPDATE );
+	splitterWindow->SetMinimumPaneSize( 200 );
+	splitterWindow->Connect( wxEVT_IDLE, wxIdleEventHandler( DlgRuleEditorBase::splitterWindowOnIdle ), NULL, this );
+	appPanel = new wxPanel( splitterWindow, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	wxBoxSizer* appMainSizer;
+	appMainSizer = new wxBoxSizer( wxVERTICAL );
 	
 	wxBoxSizer* appListHeadSizer;
 	appListHeadSizer = new wxBoxSizer( wxHORIZONTAL );
 	
-	appListTypeLabel = new wxStaticText( this, wxID_ANY, _("App-Rules"), wxDefaultPosition, wxDefaultSize, 0 );
+	appListTypeLabel = new wxStaticText( appPanel, wxID_ANY, _("App-Rules"), wxDefaultPosition, wxDefaultSize, 0 );
 	appListTypeLabel->Wrap( -1 );
 	appListHeadSizer->Add( appListTypeLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	wxString appListTypeChoiceChoices[] = { _("ALF"), _("SFS"), _("SB"), _("CTX") };
 	int appListTypeChoiceNChoices = sizeof( appListTypeChoiceChoices ) / sizeof( wxString );
-	appListTypeChoice = new wxChoice( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, appListTypeChoiceNChoices, appListTypeChoiceChoices, 0 );
+	appListTypeChoice = new wxChoice( appPanel, wxID_ANY, wxDefaultPosition, wxDefaultSize, appListTypeChoiceNChoices, appListTypeChoiceChoices, 0 );
 	appListHeadSizer->Add( appListTypeChoice, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	appListCreateButton = new wxButton( this, wxID_ANY, _("create"), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
+	appListCreateButton = new wxButton( appPanel, wxID_ANY, _("create"), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
 	appListCreateButton->Enable( false );
 	
 	appListHeadSizer->Add( appListCreateButton, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
@@ -71,16 +72,16 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	
 	appListHeadSizer->Add( 0, 0, 1, wxALIGN_CENTER_VERTICAL|wxEXPAND, 5 );
 	
-	appListColumnsButton = new wxButton( this, wxID_ANY, _("..."), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
+	appListColumnsButton = new wxButton( appPanel, wxID_ANY, _("..."), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
 	appListColumnsButton->Enable( false );
 	appListColumnsButton->SetToolTip( _("customise columns of app-rules list") );
 	
 	appListHeadSizer->Add( appListColumnsButton, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
 	
-	appListSizer->Add( appListHeadSizer, 0, wxEXPAND, 5 );
+	appMainSizer->Add( appListHeadSizer, 0, wxEXPAND, 5 );
 	
-	appPolicyListCtrl = new wxListCtrl( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLC_HRULES|wxLC_REPORT|wxLC_SINGLE_SEL );
-	appListSizer->Add( appPolicyListCtrl, 1, wxALL|wxEXPAND, 5 );
+	appPolicyListCtrl = new wxListCtrl( appPanel, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLC_HRULES|wxLC_REPORT|wxLC_SINGLE_SEL );
+	appMainSizer->Add( appPolicyListCtrl, 1, wxALL|wxEXPAND, 5 );
 	
 	wxBoxSizer* appListFoodSizer;
 	appListFoodSizer = new wxBoxSizer( wxHORIZONTAL );
@@ -88,101 +89,32 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	
 	appListFoodSizer->Add( 0, 0, 1, wxEXPAND, 5 );
 	
-	appListPolicyLabel = new wxStaticText( this, wxID_ANY, _("Rule:"), wxDefaultPosition, wxDefaultSize, 0 );
+	appListPolicyLabel = new wxStaticText( appPanel, wxID_ANY, _("Rule:"), wxDefaultPosition, wxDefaultSize, 0 );
 	appListPolicyLabel->Wrap( -1 );
 	appListFoodSizer->Add( appListPolicyLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	appListPolicyText = new wxStaticText( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	appListPolicyText = new wxStaticText( appPanel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
 	appListPolicyText->Wrap( -1 );
 	appListFoodSizer->Add( appListPolicyText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	appListUpButton = new wxButton( this, wxID_ANY, _("up"), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
+	appListUpButton = new wxButton( appPanel, wxID_ANY, _("up"), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
 	appListUpButton->Enable( false );
 	
 	appListFoodSizer->Add( appListUpButton, 0, wxALL, 5 );
 	
-	appListDownButton = new wxButton( this, wxID_ANY, _("down"), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
+	appListDownButton = new wxButton( appPanel, wxID_ANY, _("down"), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
 	appListDownButton->Enable( false );
 	
 	appListFoodSizer->Add( appListDownButton, 0, wxALL, 5 );
 	
-	appListDeleteButton = new wxButton( this, wxID_ANY, _("delete"), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
+	appListDeleteButton = new wxButton( appPanel, wxID_ANY, _("delete"), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
 	appListDeleteButton->Enable( false );
 	
 	appListFoodSizer->Add( appListDeleteButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	appListSizer->Add( appListFoodSizer, 0, wxEXPAND|wxALIGN_RIGHT, 5 );
+	appMainSizer->Add( appListFoodSizer, 0, wxEXPAND|wxALIGN_RIGHT, 5 );
 	
-	mainPanelSizer->Add( appListSizer, 1, wxEXPAND, 5 );
-	
-	wxBoxSizer* filterListSizer;
-	filterListSizer = new wxBoxSizer( wxVERTICAL );
-	
-	wxBoxSizer* filterListHeadSizer;
-	filterListHeadSizer = new wxBoxSizer( wxHORIZONTAL );
-	
-	filterListTypeLabel = new wxStaticText( this, wxID_ANY, _("Filter-Rules"), wxDefaultPosition, wxDefaultSize, 0 );
-	filterListTypeLabel->Wrap( -1 );
-	filterListHeadSizer->Add( filterListTypeLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
-	
-	wxString filterListTypeChoiceChoices[] = { _("ALF Filter"), _("ALF Capability"), _("SFS Filter"), _("SB AccessFilter"), _("CTX Filter"), _("Default") };
-	int filterListTypeChoiceNChoices = sizeof( filterListTypeChoiceChoices ) / sizeof( wxString );
-	filterListTypeChoice = new wxChoice( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, filterListTypeChoiceNChoices, filterListTypeChoiceChoices, 0 );
-	filterListHeadSizer->Add( filterListTypeChoice, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
-	
-	filterListCreateButton = new wxButton( this, wxID_ANY, _("create"), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
-	filterListCreateButton->Enable( false );
-	
-	filterListHeadSizer->Add( filterListCreateButton, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
-	
-	
-	filterListHeadSizer->Add( 0, 0, 1, wxALIGN_CENTER_VERTICAL|wxEXPAND, 5 );
-	
-	filterListColumnsButton = new wxButton( this, wxID_ANY, _("..."), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
-	filterListColumnsButton->Enable( false );
-	filterListColumnsButton->SetToolTip( _("customise columns of filter-rules list") );
-	
-	filterListHeadSizer->Add( filterListColumnsButton, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
-	
-	filterListSizer->Add( filterListHeadSizer, 0, wxEXPAND, 5 );
-	
-	filterPolicyListCtrl = new wxListCtrl( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLC_HRULES|wxLC_REPORT|wxLC_SINGLE_SEL );
-	filterListSizer->Add( filterPolicyListCtrl, 1, wxALL|wxEXPAND, 5 );
-	
-	wxBoxSizer* filterListFoodSizer;
-	filterListFoodSizer = new wxBoxSizer( wxHORIZONTAL );
-	
-	
-	filterListFoodSizer->Add( 0, 0, 1, wxEXPAND, 5 );
-	
-	filterListPolicyLabel = new wxStaticText( this, wxID_ANY, _("Filter:"), wxDefaultPosition, wxDefaultSize, 0 );
-	filterListPolicyLabel->Wrap( -1 );
-	filterListFoodSizer->Add( filterListPolicyLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
-	
-	filterListPolicyText = new wxStaticText( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
-	filterListPolicyText->Wrap( -1 );
-	filterListFoodSizer->Add( filterListPolicyText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
-	
-	filterListUpButton = new wxButton( this, wxID_ANY, _("up"), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
-	filterListUpButton->Enable( false );
-	
-	filterListFoodSizer->Add( filterListUpButton, 0, wxALL, 5 );
-	
-	filterListDownButton = new wxButton( this, wxID_ANY, _("down"), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
-	filterListDownButton->Enable( false );
-	
-	filterListFoodSizer->Add( filterListDownButton, 0, wxALL, 5 );
-	
-	filterListDeleteButton = new wxButton( this, wxID_ANY, _("delete"), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
-	filterListDeleteButton->Enable( false );
-	
-	filterListFoodSizer->Add( filterListDeleteButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
-	
-	filterListSizer->Add( filterListFoodSizer, 0, wxEXPAND|wxALIGN_RIGHT, 5 );
-	
-	mainPanelSizer->Add( filterListSizer, 1, wxEXPAND, 5 );
-	
-	appPolicyPanels = new wxNotebook( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0 );
+	appPolicyPanels = new wxNotebook( appPanel, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0 );
 	appBinaryPage = new wxScrolledWindow( appPolicyPanels, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxVSCROLL );
 	appBinaryPage->SetScrollRate( 5, 5 );
 	appBinaryPage->Enable( false );
@@ -262,17 +194,90 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	appBinaryMainSizer->Fit( appBinaryPage );
 	appPolicyPanels->AddPage( appBinaryPage, _("Binaries"), false );
 	
-	mainPanelSizer->Add( appPolicyPanels, 1, wxEXPAND | wxALL, 5 );
+	appMainSizer->Add( appPolicyPanels, 1, wxEXPAND | wxALL, 5 );
 	
-	filterPolicyPanels = new wxNotebook( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0 );
+	appPanel->SetSizer( appMainSizer );
+	appPanel->Layout();
+	appMainSizer->Fit( appPanel );
+	filterPanel = new wxPanel( splitterWindow, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	wxBoxSizer* filterMainSizer;
+	filterMainSizer = new wxBoxSizer( wxVERTICAL );
+	
+	wxBoxSizer* filterListHeadSizer;
+	filterListHeadSizer = new wxBoxSizer( wxHORIZONTAL );
+	
+	filterListTypeLabel = new wxStaticText( filterPanel, wxID_ANY, _("Filter-Rules"), wxDefaultPosition, wxDefaultSize, 0 );
+	filterListTypeLabel->Wrap( -1 );
+	filterListHeadSizer->Add( filterListTypeLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	
+	wxString filterListTypeChoiceChoices[] = { _("ALF Filter"), _("ALF Capability"), _("SFS Filter"), _("SB AccessFilter"), _("CTX Filter"), _("Default") };
+	int filterListTypeChoiceNChoices = sizeof( filterListTypeChoiceChoices ) / sizeof( wxString );
+	filterListTypeChoice = new wxChoice( filterPanel, wxID_ANY, wxDefaultPosition, wxDefaultSize, filterListTypeChoiceNChoices, filterListTypeChoiceChoices, 0 );
+	filterListHeadSizer->Add( filterListTypeChoice, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	
+	filterListCreateButton = new wxButton( filterPanel, wxID_ANY, _("create"), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
+	filterListCreateButton->Enable( false );
+	
+	filterListHeadSizer->Add( filterListCreateButton, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
+	
+	
+	filterListHeadSizer->Add( 0, 0, 1, wxALIGN_CENTER_VERTICAL|wxEXPAND, 5 );
+	
+	filterListColumnsButton = new wxButton( filterPanel, wxID_ANY, _("..."), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
+	filterListColumnsButton->Enable( false );
+	filterListColumnsButton->SetToolTip( _("customise columns of filter-rules list") );
+	
+	filterListHeadSizer->Add( filterListColumnsButton, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
+	
+	filterMainSizer->Add( filterListHeadSizer, 0, wxEXPAND, 5 );
+	
+	filterPolicyListCtrl = new wxListCtrl( filterPanel, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLC_HRULES|wxLC_REPORT|wxLC_SINGLE_SEL );
+	filterMainSizer->Add( filterPolicyListCtrl, 1, wxALL|wxEXPAND, 5 );
+	
+	wxBoxSizer* filterListFoodSizer;
+	filterListFoodSizer = new wxBoxSizer( wxHORIZONTAL );
+	
+	
+	filterListFoodSizer->Add( 0, 0, 1, wxEXPAND, 5 );
+	
+	filterListPolicyLabel = new wxStaticText( filterPanel, wxID_ANY, _("Filter:"), wxDefaultPosition, wxDefaultSize, 0 );
+	filterListPolicyLabel->Wrap( -1 );
+	filterListFoodSizer->Add( filterListPolicyLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	
+	filterListPolicyText = new wxStaticText( filterPanel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	filterListPolicyText->Wrap( -1 );
+	filterListFoodSizer->Add( filterListPolicyText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	
+	filterListUpButton = new wxButton( filterPanel, wxID_ANY, _("up"), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
+	filterListUpButton->Enable( false );
+	
+	filterListFoodSizer->Add( filterListUpButton, 0, wxALL, 5 );
+	
+	filterListDownButton = new wxButton( filterPanel, wxID_ANY, _("down"), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
+	filterListDownButton->Enable( false );
+	
+	filterListFoodSizer->Add( filterListDownButton, 0, wxALL, 5 );
+	
+	filterListDeleteButton = new wxButton( filterPanel, wxID_ANY, _("delete"), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
+	filterListDeleteButton->Enable( false );
+	
+	filterListFoodSizer->Add( filterListDeleteButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	
+	filterMainSizer->Add( filterListFoodSizer, 0, wxEXPAND|wxALIGN_RIGHT, 5 );
+	
+	filterPolicyPanels = new wxNotebook( filterPanel, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0 );
 	filterActionPage = new DlgRuleEditorFilterActionPage( filterPolicyPanels, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
 	filterActionPage->Hide();
 	
 	filterPolicyPanels->AddPage( filterActionPage, _("Action / Log"), false );
 	
-	mainPanelSizer->Add( filterPolicyPanels, 1, wxEXPAND | wxALL, 5 );
+	filterMainSizer->Add( filterPolicyPanels, 1, wxEXPAND | wxALL, 5 );
 	
-	mainSizer->Add( mainPanelSizer, 1, wxEXPAND, 5 );
+	filterPanel->SetSizer( filterMainSizer );
+	filterPanel->Layout();
+	filterMainSizer->Fit( filterPanel );
+	splitterWindow->SplitVertically( appPanel, filterPanel, 482 );
+	mainSizer->Add( splitterWindow, 1, wxEXPAND, 5 );
 	
 	wxBoxSizer* mainFootSizer;
 	mainFootSizer = new wxBoxSizer( wxHORIZONTAL );
@@ -319,16 +324,16 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	appListUpButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::onAppListUpClick ), NULL, this );
 	appListDownButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::onAppListDownClick ), NULL, this );
 	appListDeleteButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::onAppListDeleteClick ), NULL, this );
+	appBinaryTextCtrl->Connect( wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler( DlgRuleEditorBase::OnAppBinaryTextCtrl ), NULL, this );
+	appBinaryModifyButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::OnAppBinaryModifyButton ), NULL, this );
+	appBinaryValidateButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::OnAppValidateChkSumButton ), NULL, this );
+	appBinaryUpdateButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::OnAppUpdateChkSumButton ), NULL, this );
 	filterListColumnsButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::onFilterListColumnsButtonClick ), NULL, this );
 	filterPolicyListCtrl->Connect( wxEVT_COMMAND_LIST_ITEM_DESELECTED, wxListEventHandler( DlgRuleEditorBase::onFilterPolicyDeSelect ), NULL, this );
 	filterPolicyListCtrl->Connect( wxEVT_COMMAND_LIST_ITEM_SELECTED, wxListEventHandler( DlgRuleEditorBase::onFilterPolicySelect ), NULL, this );
 	filterListUpButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::onFilterListUpClick ), NULL, this );
 	filterListDownButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::onFilterListDownClick ), NULL, this );
 	filterListDeleteButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::onFilterListDeleteClick ), NULL, this );
-	appBinaryTextCtrl->Connect( wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler( DlgRuleEditorBase::OnAppBinaryTextCtrl ), NULL, this );
-	appBinaryModifyButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::OnAppBinaryModifyButton ), NULL, this );
-	appBinaryValidateButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::OnAppValidateChkSumButton ), NULL, this );
-	appBinaryUpdateButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::OnAppUpdateChkSumButton ), NULL, this );
 }
 
 DlgRuleEditorFilterActionPageBase::DlgRuleEditorFilterActionPageBase( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size, long style ) : wxPanel( parent, id, pos, size, style )
