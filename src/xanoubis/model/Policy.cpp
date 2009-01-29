@@ -195,6 +195,12 @@ Policy::remove(void)
 	return (true);
 }
 
+struct apn_rule *
+Policy::cloneRule(void)
+{
+	return apn_copy_one_rule(rule_);
+}
+
 /* XXX ch: I don't like this, better solution needed here */
 void
 Policy::setRuleEditorIndex(unsigned long idx)

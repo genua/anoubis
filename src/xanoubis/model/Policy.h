@@ -107,6 +107,15 @@ class Policy : public Subject
 		virtual wxString getTypeIdentifier(void) const = 0;
 
 		/**
+		 * Return the type ID of the policy.
+		 * @param None.
+		 * @return The type of policy.
+		 */
+		int getTypeID(void) {
+			return rule_->apn_type;
+		};
+
+		/**
 		 * Get the native/apn rule id.
 		 * @param None.
 		 * @return The apn id of this policy.
@@ -161,6 +170,14 @@ class Policy : public Subject
 		 * @return True if successful.
 		 */
 		bool remove(void);
+
+		/**
+		 * Return a copy of the apn_rule associated with the Policy.
+		 * The caller is responsible for freeing the apn_rule.
+		 * @param None.
+		 * @return A copy of the apn_rule.
+		 */
+		struct apn_rule *cloneRule(void);
 
 		/**
 		 * XXX ch: I don't like this, better solution needed here

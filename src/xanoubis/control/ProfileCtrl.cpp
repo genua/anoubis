@@ -627,10 +627,7 @@ ProfileCtrl::OnAnswerEscalation(wxCommandEvent &event)
 	/* Does the answer involve a temporary or permanent policy? */
 	if (escalation->getAnswer()->causeTmpRule() ||
 	    escalation->getAnswer()->causePermRule()) {
-		/*
-		 * XXX ch: re-enable this with RuleEditor change
 		ruleset->createAnswerPolicy(escalation);
-		*/
 	}
 }
 

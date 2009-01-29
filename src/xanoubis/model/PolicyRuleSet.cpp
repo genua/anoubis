@@ -26,9 +26,11 @@
  */
 
 #include "PolicyRuleSet.h"
+#include "PolicyUtils.h"
 
 #include <wx/utils.h>
-#include <wx/ffile.h> //XXX needed?
+#include <wx/ffile.h>
+#include <wx/string.h>
 
 #include "main.h"
 #include "ProfileCtrl.h"
@@ -415,8 +417,11 @@ PolicyRuleSet::hasLocalHost(wxArrayString list)
 	return (result);
 }
 
+#endif
+
 struct apn_rule *
-PolicyRuleSet::assembleAlfPolicy(AlfPolicy *old, EscalationNotify *escalation)
+PolicyRuleSet::assembleAlfPolicy(AlfFilterPolicy *old,
+    EscalationNotify *escalation)
 {
 	struct apn_rule		*newAlfRule;
 	struct apn_afiltrule	*afilt;
@@ -424,14 +429,20 @@ PolicyRuleSet::assembleAlfPolicy(AlfPolicy *old, EscalationNotify *escalation)
 	NotifyAnswer		*answer;
 
 	newAlfRule = old->cloneRule();
-
 	if (newAlfRule == NULL) {
 		return (NULL);
 	}
 
 	if (escalation->getAnswer()->causeTmpRule()) {
 		if (newAlfRule->scope == NULL) {
-			newAlfRule->scope = CALLOC_STRUCT(apn_scope);
+			struct apn_scope	*scope = new apn_scope;
+			if (!scope) {
+				apn_free_one_rule(newAlfRule, NULL);
+				return NULL;
+			}
+			scope->timeout = 0;
+			scope->task = 0;
+			newAlfRule->scope = scope;
 		}
 	} else {
 		if (newAlfRule->scope != NULL) {
@@ -441,9 +452,7 @@ PolicyRuleSet::assembleAlfPolicy(AlfPolicy *old, EscalationNotify *escalation)
 	}
 
 	answer = escalation->getAnswer();
-	newAlfRule->apn_type = old->getTypeNo();
-
-	switch (old->getTypeNo()) {
+	switch (newAlfRule->apn_type) { 
 	case APN_ALF_FILTER:
 		afilt = &(newAlfRule->rule.afilt);
 		if (answer->wasAllowed()) {
@@ -456,21 +465,16 @@ PolicyRuleSet::assembleAlfPolicy(AlfPolicy *old, EscalationNotify *escalation)
 		if (old->getDirectionNo() == APN_ACCEPT) {
 			apn_free_port(afilt->filtspec.fromport);
 			afilt->filtspec.fromport = NULL;
-			if (hasLocalHost(old->getFromHostList())) {
-				apn_free_host(afilt->filtspec.fromhost);
-				afilt->filtspec.fromhost = NULL;
-			}
+			apn_free_host(afilt->filtspec.fromhost);
+			afilt->filtspec.fromhost = NULL;
 		} else {
 			apn_free_port(afilt->filtspec.toport);
 			afilt->filtspec.toport = NULL;
-			if (hasLocalHost(old->getToHostList())) {
-				apn_free_host(afilt->filtspec.tohost);
-				afilt->filtspec.tohost = NULL;
-			}
+			apn_free_host(afilt->filtspec.tohost);
+			afilt->filtspec.tohost = NULL;
 		}
 		break;
 	case APN_ALF_CAPABILITY:
-		newAlfRule->rule.acap.capability = old->getCapTypeNo();
 		if (answer->wasAllowed()) {
 			newAlfRule->rule.acap.action = APN_ACTION_ALLOW;
 		} else {
@@ -530,8 +534,8 @@ PolicyRuleSet::createAnswerPolicy(EscalationNotify *escalation)
 	unsigned char			 csum[APN_HASH_SHA256_LEN];
 	wxString			 hashValue;
 	wxString			 filename;
-	Policy				*triggerPolicy;
-	Policy				*parentPolicy;
+	FilterPolicy			*triggerPolicy;
+	AppPolicy			*parentPolicy;
 	NotifyAnswer			*answer;
 	RuleSetSearchPolicyVisitor	*seeker;
 	struct apn_rule			*newAlfRule;
@@ -545,11 +549,25 @@ PolicyRuleSet::createAnswerPolicy(EscalationNotify *escalation)
 	if (! seeker->hasMatchingPolicy()) {
 		return;
 	}
-	triggerPolicy = seeker->getMatchingPolicy();
+	/* XXX CEH: Must first check that this cast is in fact OK. */
+	triggerPolicy = wxDynamicCast(seeker->getMatchingPolicy(),
+	    FilterPolicy);
 	delete seeker;
+	switch (triggerPolicy->getTypeID()) {
+	case APN_ALF_FILTER:
+	case APN_ALF_CAPABILITY:
+		break;
+	case APN_DEFAULT:
+		if (triggerPolicy->getParentPolicy()->getTypeID() == APN_ALF)
+			break;
+		/* FALLTHROUGH */
+	default:
+		/* XXX CEH: Cannot deal with other types yet. */
+		return;
+	}
 
 	/* get the enclosing app policy */
-	parentPolicy = triggerPolicy->getParent();
+	parentPolicy = triggerPolicy->getParentPolicy();
 	if (!parentPolicy) {
 		status(_("Could not modify Policy (no such rule)"));
 		return;
@@ -558,17 +576,18 @@ PolicyRuleSet::createAnswerPolicy(EscalationNotify *escalation)
 	filename = escalation->getBinaryName();
 	hasChecksum = escalation->getChecksum(csum);
 
-	newAlfRule = assembleAlfPolicy((AlfPolicy *)triggerPolicy, escalation);
+	newAlfRule = assembleAlfPolicy((AlfFilterPolicy*)triggerPolicy,
+	    escalation);
 	if (newAlfRule == NULL) {
 		status(_("Couldn't clone and insert policy."));
 		return;
 	}
 
-	if (!parentPolicy->isDefault()) {
+	if (!parentPolicy->isAnyBlock()) {
 		/*
-		 * This escalation was caused by a rule not been element of
-		 * an any-rule. Thus we can just insert the new policy before
-		 * the troggering rule.
+		 * This escalation was caused by a rule that is not an
+		 * element of an any-rule. Thus we can just insert the new
+		 * policy before the triggering rule.
 		 */
 		newAlfRule->apn_id = 0;
 		apn_insert_alfrule(ruleSet_, newAlfRule,
@@ -583,12 +602,8 @@ PolicyRuleSet::createAnswerPolicy(EscalationNotify *escalation)
 		 */
 		if (hasChecksum) {
 			hashType = APN_HASH_SHA256;
-			/* XXX ch: move this into a method */
-			hashValue = wxT("0x");
-			for (unsigned int i=0; i<APN_HASH_SHA256_LEN; i++) {
-				hashValue += wxString::Format(wxT("%2.2x"),
-				    (unsigned char)csum[i]);
-			}
+			PolicyUtils::csumToString(csum,
+			    MAX_APN_HASH_LEN, hashValue);
 		} else {
 			hashType = APN_HASH_NONE;
 			hashValue = wxEmptyString;
@@ -596,6 +611,7 @@ PolicyRuleSet::createAnswerPolicy(EscalationNotify *escalation)
 		seekDouble = new RuleSetSearchPolicyVisitor(hashValue);
 		this->accept(*seekDouble);
 		if (!seekDouble->hasMatchingPolicy()) {
+			/* XXX CEH: Handle errors returned by copyinsert_alf */
 			apn_copyinsert_alf(ruleSet_, newAlfRule,
 			    escalation->getRuleId(), filename.To8BitData(),
 			    csum, hashType);
@@ -606,14 +622,18 @@ PolicyRuleSet::createAnswerPolicy(EscalationNotify *escalation)
 		 * because the current running application may not leave it.
 		 * Refere to bug #630 for this topic.
 		 */
-		newTmpAlfRule = assembleAlfPolicy((AlfPolicy *)triggerPolicy,
-		    escalation);
+		newTmpAlfRule = assembleAlfPolicy(
+		    (AlfFilterPolicy *)triggerPolicy, escalation);
 		if (newAlfRule == NULL) {
 			status(_("Couldn't clone and insert policy."));
 			return;
 		}
 		if (newTmpAlfRule->scope == NULL) {
-			newTmpAlfRule->scope = CALLOC_STRUCT(apn_scope);
+			struct apn_scope	*scope;
+			scope = new apn_scope;
+			scope->timeout = 0;
+			scope->task = 0;
+			newTmpAlfRule->scope = scope;
 		}
 		newTmpAlfRule->scope->task = escalation->getTaskCookie();
 		answer = escalation->getAnswer();
@@ -643,6 +663,7 @@ PolicyRuleSet::createAnswerPolicy(EscalationNotify *escalation)
 
 }
 
+#if 0
 int
 PolicyRuleSet::createAppPolicy(int type, int insertBeforeId)
 {

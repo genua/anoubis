@@ -133,6 +133,8 @@ void
 RuleSetSearchPolicyVisitor::compare(Policy *policy)
 {
 	/* first match strategy */
+	if (!seekId_)
+		return;
 	if (matchingPolicy_ == NULL) {
 		if (policy->getApnRuleId() == seekId_) {
 			matchingPolicy_ = policy;
@@ -145,6 +147,8 @@ RuleSetSearchPolicyVisitor::compareHash(AppPolicy *appPolicy)
 {
 	/* first match strategy */
 	/* XXX ch: does not work for lists */
+	if (seekId_)
+		return;
 	if (matchingPolicy_ == NULL) {
 		if (appPolicy->getHashValueName(0).Cmp(seekHash_) == 0) {
 			matchingPolicy_ = appPolicy;

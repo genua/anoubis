@@ -256,12 +256,12 @@ class PolicyRuleSet : public Subject
 		 */
 		size_t getAppPolicyCount(void) const;
 
+		void createAnswerPolicy(EscalationNotify *);
+
 		/*
 		 * XXX ch: re-enable this while adding functionality
 		 * XXX ch: to the RuleEditor
 		 *
-		void createAnswerPolicy(EscalationNotify *);
-
 		int createAlfAppPolicy(int id) {
 			return createAppPolicy(APN_ALF, id);
 		};
@@ -316,10 +316,10 @@ class PolicyRuleSet : public Subject
 		 *
 		bool hasLocalHost(wxArrayString);
 		int createAppPolicy(int type, int id);
-
-		struct apn_rule *assembleAlfPolicy(AlfPolicy *,
-		   EscalationNotify *);
 		*/
+
+		struct apn_rule *assembleAlfPolicy(AlfFilterPolicy *,
+		   EscalationNotify *);
 
 		void log(const wxString &);
 		void status(const wxString &);
