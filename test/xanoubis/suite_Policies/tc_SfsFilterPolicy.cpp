@@ -102,7 +102,7 @@ START_TEST(SfsFilterPolicy_LogNo)
 	CHECK_POLICY_GETLOGNAME(policy, logName);
 
 	if (policy->setLogNo(APN_LOG_NORMAL)) {
-		fail("setLogNo(): successfull - fail expected.");
+		fail("setLogNo(): successful - fail expected.");
 	}
 	CHECK_POLICY_MODIFIED(policy, false);
 	CHECK_OBSERVER_NOTIFIED(observer, false);
@@ -121,7 +121,7 @@ START_TEST(SfsFilterPolicy_ActionNo)
 	CHECK_POLICY_GETACTIONNAME(policy, actionName);
 
 	if (policy->setActionNo(APN_ACTION_ALLOW)) {
-		fail("setActionNo(): successfull - fail expected.");
+		fail("setActionNo(): successful - fail expected.");
 	}
 	CHECK_POLICY_MODIFIED(policy, false);
 	CHECK_OBSERVER_NOTIFIED(observer, false);
@@ -140,7 +140,7 @@ START_TEST(SfsFilterPolicy_Path)
 
 	path = wxT("/usr/local/bin");
 	if (!policy->setPath(path)) {
-		fail("setPath(): not successfull.");
+		fail("setPath(): not successful.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
@@ -148,7 +148,7 @@ START_TEST(SfsFilterPolicy_Path)
 
 	path = wxT("/usr/xxx/zz");
 	if (!policy->setPath(path)) {
-		fail("setPath(): not successfull.");
+		fail("setPath(): not successful.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
@@ -156,7 +156,7 @@ START_TEST(SfsFilterPolicy_Path)
 
 	path = wxT("any");
 	if (!policy->setPath(path)) {
-		fail("setPath(): not successfull.");
+		fail("setPath(): not successful.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
@@ -176,7 +176,7 @@ START_TEST(SfsFilterPolicy_Subject)
 	/* SELF */
 	subject = wxT("self");
 	if (!policy->setSubjectSelf(false)) {
-		fail("setSubjectSelf(false): not successfull.");
+		fail("setSubjectSelf(false): not successful.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
@@ -186,7 +186,7 @@ START_TEST(SfsFilterPolicy_Subject)
 	/* SELF-SIGNED */
 	subject = wxT("signed-self");
 	if (!policy->setSubjectSelf(true)) {
-		fail("setSubjectSelf(true): not successfull.");
+		fail("setSubjectSelf(true): not successful.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
@@ -196,7 +196,7 @@ START_TEST(SfsFilterPolicy_Subject)
 	/* KEY asdfasdf */
 	subject = wxT("key asdfasdf");
 	if (!policy->setSubjectKey(wxT("asdfasdf"))) {
-		fail("setSubjectKey(): not successfull.");
+		fail("setSubjectKey(): not successful.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
@@ -206,7 +206,7 @@ START_TEST(SfsFilterPolicy_Subject)
 	/* UID 123 */
 	subject = wxT("uid 123");
 	if (!policy->setSubjectUid(123)) {
-		fail("setSubjectUid(): not successfull.");
+		fail("setSubjectUid(): not successful.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
@@ -225,7 +225,7 @@ START_TEST(SfsFilterPolicy_ValidAction)
 
 	action = wxT("continue");
 	if (!policy->setValidAction(APN_ACTION_CONTINUE)) {
-		fail("setActionNo(APN_ACTION_CONTINUE): not successfull.");
+		fail("setActionNo(APN_ACTION_CONTINUE): not successful.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
@@ -233,7 +233,7 @@ START_TEST(SfsFilterPolicy_ValidAction)
 
 	action = wxT("allow");
 	if (!policy->setValidAction(APN_ACTION_ALLOW)) {
-		fail("setActionNo(APN_ACTION_ALLOW): not successfull.");
+		fail("setActionNo(APN_ACTION_ALLOW): not successful.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
@@ -241,7 +241,7 @@ START_TEST(SfsFilterPolicy_ValidAction)
 
 	action = wxT("ask");
 	if (!policy->setValidAction(APN_ACTION_ASK)) {
-		fail("setActionNo(APN_ACTION_ASK): not successfull.");
+		fail("setActionNo(APN_ACTION_ASK): not successful.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
@@ -249,7 +249,7 @@ START_TEST(SfsFilterPolicy_ValidAction)
 
 	action = wxT("deny");
 	if (!policy->setValidAction(APN_ACTION_DENY)) {
-		fail("setActionNo(APN_ACTION_DENY): not successfull.");
+		fail("setActionNo(APN_ACTION_DENY): not successful.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
@@ -267,7 +267,7 @@ START_TEST(SfsFilterPolicy_ValidLog)
 
 	log = wxT("normal");
 	if (!policy->setValidLog(APN_LOG_NORMAL)) {
-		fail("setLogNo(APN_LOG_NORMAL): not successfull.");
+		fail("setLogNo(APN_LOG_NORMAL): not successful.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
@@ -275,7 +275,7 @@ START_TEST(SfsFilterPolicy_ValidLog)
 
 	log = wxT("alert");
 	if (!policy->setValidLog(APN_LOG_ALERT)) {
-		fail("setLogNo(APN_LOG_ALERT): not successfull.");
+		fail("setLogNo(APN_LOG_ALERT): not successful.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
@@ -283,7 +283,7 @@ START_TEST(SfsFilterPolicy_ValidLog)
 
 	log = wxT("none");
 	if (!policy->setValidLog(APN_LOG_NONE)) {
-		fail("setLogNo(APN_LOG_NONE): not successfull.");
+		fail("setLogNo(APN_LOG_NONE): not successful.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
@@ -301,7 +301,7 @@ START_TEST(SfsFilterPolicy_InvalidAction)
 
 	action = wxT("continue");
 	if (!policy->setInvalidAction(APN_ACTION_CONTINUE)) {
-		fail("setActionNo(APN_ACTION_CONTINUE): not successfull.");
+		fail("setActionNo(APN_ACTION_CONTINUE): not successful.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
@@ -309,7 +309,7 @@ START_TEST(SfsFilterPolicy_InvalidAction)
 
 	action = wxT("allow");
 	if (!policy->setInvalidAction(APN_ACTION_ALLOW)) {
-		fail("setActionNo(APN_ACTION_ALLOW): not successfull.");
+		fail("setActionNo(APN_ACTION_ALLOW): not successful.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
@@ -317,7 +317,7 @@ START_TEST(SfsFilterPolicy_InvalidAction)
 
 	action = wxT("ask");
 	if (!policy->setInvalidAction(APN_ACTION_ASK)) {
-		fail("setActionNo(APN_ACTION_ASK): not successfull.");
+		fail("setActionNo(APN_ACTION_ASK): not successful.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
@@ -325,7 +325,7 @@ START_TEST(SfsFilterPolicy_InvalidAction)
 
 	action = wxT("deny");
 	if (!policy->setInvalidAction(APN_ACTION_DENY)) {
-		fail("setActionNo(APN_ACTION_DENY): not successfull.");
+		fail("setActionNo(APN_ACTION_DENY): not successful.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
@@ -343,7 +343,7 @@ START_TEST(SfsFilterPolicy_InvalidLog)
 
 	log = wxT("normal");
 	if (!policy->setInvalidLog(APN_LOG_NORMAL)) {
-		fail("setLogNo(APN_LOG_NORMAL): not successfull.");
+		fail("setLogNo(APN_LOG_NORMAL): not successful.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
@@ -351,7 +351,7 @@ START_TEST(SfsFilterPolicy_InvalidLog)
 
 	log = wxT("alert");
 	if (!policy->setInvalidLog(APN_LOG_ALERT)) {
-		fail("setLogNo(APN_LOG_ALERT): not successfull.");
+		fail("setLogNo(APN_LOG_ALERT): not successful.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
@@ -359,7 +359,7 @@ START_TEST(SfsFilterPolicy_InvalidLog)
 
 	log = wxT("none");
 	if (!policy->setInvalidLog(APN_LOG_NONE)) {
-		fail("setLogNo(APN_LOG_NONE): not successfull.");
+		fail("setLogNo(APN_LOG_NONE): not successful.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
@@ -377,7 +377,7 @@ START_TEST(SfsFilterPolicy_UnknownAction)
 
 	action = wxT("continue");
 	if (!policy->setUnknownAction(APN_ACTION_CONTINUE)) {
-		fail("setActionNo(APN_ACTION_CONTINUE): not successfull.");
+		fail("setActionNo(APN_ACTION_CONTINUE): not successful.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
@@ -385,7 +385,7 @@ START_TEST(SfsFilterPolicy_UnknownAction)
 
 	action = wxT("allow");
 	if (!policy->setUnknownAction(APN_ACTION_ALLOW)) {
-		fail("setActionNo(APN_ACTION_ALLOW): not successfull.");
+		fail("setActionNo(APN_ACTION_ALLOW): not successful.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
@@ -393,7 +393,7 @@ START_TEST(SfsFilterPolicy_UnknownAction)
 
 	action = wxT("ask");
 	if (!policy->setUnknownAction(APN_ACTION_ASK)) {
-		fail("setActionNo(APN_ACTION_ASK): not successfull.");
+		fail("setActionNo(APN_ACTION_ASK): not successful.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
@@ -401,7 +401,7 @@ START_TEST(SfsFilterPolicy_UnknownAction)
 
 	action = wxT("deny");
 	if (!policy->setUnknownAction(APN_ACTION_DENY)) {
-		fail("setActionNo(APN_ACTION_DENY): not successfull.");
+		fail("setActionNo(APN_ACTION_DENY): not successful.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
@@ -419,7 +419,7 @@ START_TEST(SfsFilterPolicy_UnknownLog)
 
 	log = wxT("normal");
 	if (!policy->setUnknownLog(APN_LOG_NORMAL)) {
-		fail("setLogNo(APN_LOG_NORMAL): not successfull.");
+		fail("setLogNo(APN_LOG_NORMAL): not successful.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
@@ -427,7 +427,7 @@ START_TEST(SfsFilterPolicy_UnknownLog)
 
 	log = wxT("alert");
 	if (!policy->setUnknownLog(APN_LOG_ALERT)) {
-		fail("setLogNo(APN_LOG_ALERT): not successfull.");
+		fail("setLogNo(APN_LOG_ALERT): not successful.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
@@ -435,7 +435,7 @@ START_TEST(SfsFilterPolicy_UnknownLog)
 
 	log = wxT("none");
 	if (!policy->setUnknownLog(APN_LOG_NONE)) {
-		fail("setLogNo(APN_LOG_NONE): not successfull.");
+		fail("setLogNo(APN_LOG_NONE): not successful.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);

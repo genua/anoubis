@@ -100,7 +100,7 @@ START_TEST(AlfFilterPolicy_LogNo)
 
 	logName = wxT("normal");
 	if (!policy->setLogNo(APN_LOG_NORMAL)) {
-		fail("setLogNo(APN_LOG_NORMAL): not successfull.");
+		fail("setLogNo(APN_LOG_NORMAL): not successful.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
@@ -109,7 +109,7 @@ START_TEST(AlfFilterPolicy_LogNo)
 
 	logName = wxT("alert");
 	if (!policy->setLogNo(APN_LOG_ALERT)) {
-		fail("setLogNo(APN_LOG_ALERT): not successfull.");
+		fail("setLogNo(APN_LOG_ALERT): not successful.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
@@ -118,7 +118,7 @@ START_TEST(AlfFilterPolicy_LogNo)
 
 	logName = wxT("none");
 	if (!policy->setLogNo(APN_LOG_NONE)) {
-		fail("setLogNo(APN_LOG_NONE): not successfull.");
+		fail("setLogNo(APN_LOG_NONE): not successful.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
@@ -138,7 +138,7 @@ START_TEST(AlfFilterPolicy_ActionNo)
 
 	actionName = wxT("allow");
 	if (!policy->setActionNo(APN_ACTION_ALLOW)) {
-		fail("setActionNo(APN_ACTION_ALLOW): not successfull.");
+		fail("setActionNo(APN_ACTION_ALLOW): not successful.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
@@ -147,7 +147,7 @@ START_TEST(AlfFilterPolicy_ActionNo)
 
 	actionName = wxT("ask");
 	if (!policy->setActionNo(APN_ACTION_ASK)) {
-		fail("setActionNo(APN_ACTION_ASK): not successfull.");
+		fail("setActionNo(APN_ACTION_ASK): not successful.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
@@ -156,7 +156,7 @@ START_TEST(AlfFilterPolicy_ActionNo)
 
 	actionName = wxT("deny");
 	if (!policy->setActionNo(APN_ACTION_DENY)) {
-		fail("setActionNo(APN_ACTION_DENY): not successfull.");
+		fail("setActionNo(APN_ACTION_DENY): not successful.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
@@ -176,7 +176,7 @@ START_TEST(AlfFilterPolicy_Protocol)
 
 	protocolName = wxT("tcp");
 	if (!policy->setProtocol(IPPROTO_TCP)) {
-		fail("setProtocol(IPPROTO_TCP): not successfull.");
+		fail("setProtocol(IPPROTO_TCP): not successful.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
@@ -185,7 +185,7 @@ START_TEST(AlfFilterPolicy_Protocol)
 
 	protocolName = wxT("udp");
 	if (!policy->setProtocol(IPPROTO_UDP)) {
-		fail("setProtocol(IPPROTO_UDP): not successfull.");
+		fail("setProtocol(IPPROTO_UDP): not successful.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
@@ -194,7 +194,7 @@ START_TEST(AlfFilterPolicy_Protocol)
 
 	protocolName = wxT("any");
 	if (!policy->setProtocol(0)) {
-		fail("setProtocol(0): not successfull.");
+		fail("setProtocol(0): not successful.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
@@ -221,7 +221,7 @@ START_TEST(AlfFilterPolicy_DirectionNo)
 	}
 	directionName = wxT("accept");
 	if (!policy->setDirectionNo(APN_ACCEPT)) {
-		fail("setDirectionNo(APN_ACCEPT): not successfull.");
+		fail("setDirectionNo(APN_ACCEPT): not successful.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
@@ -231,7 +231,7 @@ START_TEST(AlfFilterPolicy_DirectionNo)
 
 	directionName = wxT("connect");
 	if (!policy->setDirectionNo(APN_CONNECT)) {
-		fail("setDirectionNo(APN_CONNECT): not successfull.");
+		fail("setDirectionNo(APN_CONNECT): not successful.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
@@ -241,7 +241,7 @@ START_TEST(AlfFilterPolicy_DirectionNo)
 
 	directionName = wxT("both");
 	if (!policy->setDirectionNo(APN_BOTH)) {
-		fail("setDirectionNo(APN_BOTH): not successfull.");
+		fail("setDirectionNo(APN_BOTH): not successful.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
@@ -257,7 +257,7 @@ START_TEST(AlfFilterPolicy_DirectionNo)
 	}
 	directionName = wxT("send");
 	if (!policy->setDirectionNo(APN_SEND)) {
-		fail("setDirectionNo(APN_SEND): not successfull.");
+		fail("setDirectionNo(APN_SEND): not successful.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
@@ -267,7 +267,7 @@ START_TEST(AlfFilterPolicy_DirectionNo)
 
 	directionName = wxT("receive");
 	if (!policy->setDirectionNo(APN_RECEIVE)) {
-		fail("setDirectionNo(APN_RECEIVE): not successfull.");
+		fail("setDirectionNo(APN_RECEIVE): not successful.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
@@ -277,7 +277,7 @@ START_TEST(AlfFilterPolicy_DirectionNo)
 
 	directionName = wxT("both");
 	if (!policy->setDirectionNo(APN_BOTH)) {
-		fail("setDirectionNo(APN_BOTH): not successfull.");
+		fail("setDirectionNo(APN_BOTH): not successful.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
@@ -298,7 +298,7 @@ START_TEST(AlfFilterPolicy_AddrFamilyNo)
 
 	addrFamilyName = wxT("inet");
 	if (!policy->setAddrFamilyNo(AF_INET)) {
-		fail("setAddrFamilyNo(AF_INET): not successfull.");
+		fail("setAddrFamilyNo(AF_INET): not successful.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
@@ -307,7 +307,7 @@ START_TEST(AlfFilterPolicy_AddrFamilyNo)
 
 	addrFamilyName = wxT("inet6");
 	if (!policy->setAddrFamilyNo(AF_INET6)) {
-		fail("setAddrFamilyNo(AF_INET6): not successfull.");
+		fail("setAddrFamilyNo(AF_INET6): not successful.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
@@ -316,7 +316,7 @@ START_TEST(AlfFilterPolicy_AddrFamilyNo)
 
 	addrFamilyName = wxT("any");
 	if (!policy->setAddrFamilyNo(0)) {
-		fail("setAddrFamilyNo(0): not successfull.");
+		fail("setAddrFamilyNo(0): not successful.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);

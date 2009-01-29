@@ -103,7 +103,7 @@ START_TEST(SbAccessFilterPolicy_LogNo)
 
 	logName = wxT("normal");
 	if (!policy->setLogNo(APN_LOG_NORMAL)) {
-		fail("setLogNo(APN_LOG_NORMAL): not successfull.");
+		fail("setLogNo(APN_LOG_NORMAL): not successful.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
@@ -112,7 +112,7 @@ START_TEST(SbAccessFilterPolicy_LogNo)
 
 	logName = wxT("alert");
 	if (!policy->setLogNo(APN_LOG_ALERT)) {
-		fail("setLogNo(APN_LOG_ALERT): not successfull.");
+		fail("setLogNo(APN_LOG_ALERT): not successful.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
@@ -121,7 +121,7 @@ START_TEST(SbAccessFilterPolicy_LogNo)
 
 	logName = wxT("none");
 	if (!policy->setLogNo(APN_LOG_NONE)) {
-		fail("setLogNo(APN_LOG_NONE): not successfull.");
+		fail("setLogNo(APN_LOG_NONE): not successful.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
@@ -141,7 +141,7 @@ START_TEST(SbAccessFilterPolicy_ActionNo)
 
 	actionName = wxT("allow");
 	if (!policy->setActionNo(APN_ACTION_ALLOW)) {
-		fail("setActionNo(APN_ACTION_ALLOW): not successfull.");
+		fail("setActionNo(APN_ACTION_ALLOW): not successful.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
@@ -150,7 +150,7 @@ START_TEST(SbAccessFilterPolicy_ActionNo)
 
 	actionName = wxT("ask");
 	if (!policy->setActionNo(APN_ACTION_ASK)) {
-		fail("setActionNo(APN_ACTION_ASK): not successfull.");
+		fail("setActionNo(APN_ACTION_ASK): not successful.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
@@ -159,7 +159,7 @@ START_TEST(SbAccessFilterPolicy_ActionNo)
 
 	actionName = wxT("deny");
 	if (!policy->setActionNo(APN_ACTION_DENY)) {
-		fail("setActionNo(APN_ACTION_DENY): not successfull.");
+		fail("setActionNo(APN_ACTION_DENY): not successful.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
@@ -178,7 +178,7 @@ START_TEST(SbAccessFilterPolicy_Path)
 
 	path = wxT("/usr/local/bin");
 	if (!policy->setPath(path)) {
-		fail("setPath(): not successfull.");
+		fail("setPath(): not successful.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
@@ -186,7 +186,7 @@ START_TEST(SbAccessFilterPolicy_Path)
 
 	path = wxT("/usr/xxx/zz");
 	if (!policy->setPath(path)) {
-		fail("setPath(): not successfull.");
+		fail("setPath(): not successful.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
@@ -194,7 +194,7 @@ START_TEST(SbAccessFilterPolicy_Path)
 
 	path = wxT("any");
 	if (!policy->setPath(path)) {
-		fail("setPath(): not successfull.");
+		fail("setPath(): not successful.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
@@ -214,7 +214,7 @@ START_TEST(SbAccessFilterPolicy_Subject)
 	/* SELF */
 	subject = wxT("self");
 	if (!policy->setSubjectSelf(false)) {
-		fail("setSubjectSelf(false): not successfull.");
+		fail("setSubjectSelf(false): not successful.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
@@ -224,7 +224,7 @@ START_TEST(SbAccessFilterPolicy_Subject)
 	/* SELF-SIGNED */
 	subject = wxT("signed-self");
 	if (!policy->setSubjectSelf(true)) {
-		fail("setSubjectSelf(true): not successfull.");
+		fail("setSubjectSelf(true): not successful.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
@@ -234,7 +234,7 @@ START_TEST(SbAccessFilterPolicy_Subject)
 	/* KEY asdfasdf */
 	subject = wxT("key asdfasdf");
 	if (!policy->setSubjectKey(wxT("asdfasdf"))) {
-		fail("setSubjectKey(): not successfull.");
+		fail("setSubjectKey(): not successful.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
@@ -244,7 +244,7 @@ START_TEST(SbAccessFilterPolicy_Subject)
 	/* UID 123 */
 	subject = wxT("uid 123");
 	if (!policy->setSubjectUid(123)) {
-		fail("setSubjectUid(): not successfull.");
+		fail("setSubjectUid(): not successful.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
@@ -264,7 +264,7 @@ START_TEST(SbAccessFilterPolicy_AccessMask)
 
 	maskName = wxT("r");
 	if (!policy->setAccessMask(APN_SBA_READ)) {
-		fail("setAccessMask(APN_SBA_READ): not successfull.");
+		fail("setAccessMask(APN_SBA_READ): not successful.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
@@ -273,7 +273,7 @@ START_TEST(SbAccessFilterPolicy_AccessMask)
 
 	maskName = wxT("w");
 	if (!policy->setAccessMask(APN_SBA_WRITE)) {
-		fail("setAccessMask(APN_SBA_WRITE): not successfull.");
+		fail("setAccessMask(APN_SBA_WRITE): not successful.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
@@ -282,7 +282,7 @@ START_TEST(SbAccessFilterPolicy_AccessMask)
 
 	maskName = wxT("x");
 	if (!policy->setAccessMask(APN_SBA_EXEC)) {
-		fail("setAccessMask(APN_SBA_EXEC): not successfull.");
+		fail("setAccessMask(APN_SBA_EXEC): not successful.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
@@ -291,7 +291,7 @@ START_TEST(SbAccessFilterPolicy_AccessMask)
 
 	maskName = wxT("rw");
 	if (!policy->setAccessMask(APN_SBA_READ | APN_SBA_WRITE)) {
-		fail("setAccessMask(READ | WRITE): not successfull.");
+		fail("setAccessMask(READ | WRITE): not successful.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
@@ -300,7 +300,7 @@ START_TEST(SbAccessFilterPolicy_AccessMask)
 
 	maskName = wxT("rx");
 	if (!policy->setAccessMask(APN_SBA_READ | APN_SBA_EXEC)) {
-		fail("setAccessMask(READ | EXEC): not successfull.");
+		fail("setAccessMask(READ | EXEC): not successful.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
@@ -309,7 +309,7 @@ START_TEST(SbAccessFilterPolicy_AccessMask)
 
 	maskName = wxT("wx");
 	if (!policy->setAccessMask(APN_SBA_WRITE | APN_SBA_EXEC)) {
-		fail("setAccessMask(WRITE | EXEC): not successfull.");
+		fail("setAccessMask(WRITE | EXEC): not successful.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
@@ -318,7 +318,7 @@ START_TEST(SbAccessFilterPolicy_AccessMask)
 
 	maskName = wxT("rwx");
 	if (!policy->setAccessMask(APN_SBA_READ|APN_SBA_WRITE|APN_SBA_EXEC)) {
-		fail("setAccessMask(READ | WRITE | EXEC): not successfull.");
+		fail("setAccessMask(READ | WRITE | EXEC): not successful.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);

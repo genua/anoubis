@@ -64,19 +64,19 @@
 
 #define APN_DFLT_STATETIMEOUT	600
 
-enum {
+enum apn_hash_type {
 	APN_HASH_NONE, APN_HASH_SHA256
 };
 
-enum {
+enum apn_direction {
 	APN_CONNECT, APN_ACCEPT, APN_SEND, APN_RECEIVE, APN_BOTH
 };
 
-enum {
+enum apn_action_type {
 	APN_ACTION_ALLOW, APN_ACTION_DENY, APN_ACTION_ASK, APN_ACTION_CONTINUE
 };
 
-enum {
+enum apn_log_level {
 	APN_LOG_NONE, APN_LOG_NORMAL, APN_LOG_ALERT
 };
 

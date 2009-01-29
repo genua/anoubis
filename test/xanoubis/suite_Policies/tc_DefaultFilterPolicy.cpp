@@ -100,7 +100,7 @@ START_TEST(DefaultFilterPolicy_LogNo)
 
 	logName = wxT("normal");
 	if (!policy->setLogNo(APN_LOG_NORMAL)) {
-		fail("setLogNo(APN_LOG_NORMAL): not successfull.");
+		fail("setLogNo(APN_LOG_NORMAL): not successful.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
@@ -109,7 +109,7 @@ START_TEST(DefaultFilterPolicy_LogNo)
 
 	logName = wxT("alert");
 	if (!policy->setLogNo(APN_LOG_ALERT)) {
-		fail("setLogNo(APN_LOG_ALERT): not successfull.");
+		fail("setLogNo(APN_LOG_ALERT): not successful.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
@@ -118,7 +118,7 @@ START_TEST(DefaultFilterPolicy_LogNo)
 
 	logName = wxT("none");
 	if (!policy->setLogNo(APN_LOG_NONE)) {
-		fail("setLogNo(APN_LOG_NONE): not successfull.");
+		fail("setLogNo(APN_LOG_NONE): not successful.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
@@ -138,7 +138,7 @@ START_TEST(DefaultFilterPolicy_ActionNo)
 
 	actionName = wxT("allow");
 	if (!policy->setActionNo(APN_ACTION_ALLOW)) {
-		fail("setActionNo(APN_ACTION_ALLOW): not successfull.");
+		fail("setActionNo(APN_ACTION_ALLOW): not successful.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
@@ -147,7 +147,7 @@ START_TEST(DefaultFilterPolicy_ActionNo)
 
 	actionName = wxT("ask");
 	if (!policy->setActionNo(APN_ACTION_ASK)) {
-		fail("setActionNo(APN_ACTION_ASK): not successfull.");
+		fail("setActionNo(APN_ACTION_ASK): not successful.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
@@ -156,7 +156,7 @@ START_TEST(DefaultFilterPolicy_ActionNo)
 
 	actionName = wxT("deny");
 	if (!policy->setActionNo(APN_ACTION_DENY)) {
-		fail("setActionNo(APN_ACTION_DENY): not successfull.");
+		fail("setActionNo(APN_ACTION_DENY): not successful.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);

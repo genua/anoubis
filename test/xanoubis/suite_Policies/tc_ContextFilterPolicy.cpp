@@ -142,7 +142,7 @@ START_TEST(ContextFilterPolicy_LogNo)
 	CHECK_POLICY_GETLOGNAME(policy, logName);
 
 	if (policy->setLogNo(APN_LOG_NORMAL)) {
-		fail("setLogNo(): successfull - fail expected.");
+		fail("setLogNo(): successful - fail expected.");
 	}
 	CHECK_POLICY_MODIFIED(policy, false);
 	CHECK_OBSERVER_NOTIFIED(observer, false);
@@ -161,7 +161,7 @@ START_TEST(ContextFilterPolicy_ActionNo)
 	CHECK_POLICY_GETACTIONNAME(policy, actionName);
 
 	if (policy->setActionNo(APN_ACTION_ALLOW)) {
-		fail("setActionNo(): successfull - fail expected.");
+		fail("setActionNo(): successful - fail expected.");
 	}
 	CHECK_POLICY_MODIFIED(policy, false);
 	CHECK_OBSERVER_NOTIFIED(observer, false);
@@ -181,7 +181,7 @@ START_TEST(ContextFilterPolicy_ContextTypeNo)
 
 	contextTypeName = wxT("open");
 	if (!policy->setContextTypeNo(APN_CTX_OPEN)) {
-		fail("setContextTypeNo(APN_CTX_OPEN): not successfull.");
+		fail("setContextTypeNo(APN_CTX_OPEN): not successful.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
@@ -190,7 +190,7 @@ START_TEST(ContextFilterPolicy_ContextTypeNo)
 
 	contextTypeName = wxT("new");
 	if (!policy->setContextTypeNo(APN_CTX_NEW)) {
-		fail("setContextTypeNo(APN_CTX_NEW): not successfull.");
+		fail("setContextTypeNo(APN_CTX_NEW): not successful.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
@@ -263,7 +263,7 @@ START_TEST(ContextFilterPolicy_setBinaryName_one)
 	/* test: index 0 - expected to succeed */
 	setName = wxT("/usr/bin/find");
 	if (!policy->setBinaryName(setName, 0)) {
-		fail("setBinaryName(): not successfull.");
+		fail("setBinaryName(): not successful.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
@@ -280,7 +280,7 @@ START_TEST(ContextFilterPolicy_setBinaryName_one)
 	/* test: index 0 - expected to succeed */
 	setName = wxT("any");
 	if (!policy->setBinaryName(setName, 0)) {
-		fail("setBinaryName(): not successfull.");
+		fail("setBinaryName(): not successful.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
@@ -365,7 +365,7 @@ START_TEST(ContextFilterPolicy_setBinaryName_two)
 	/* test: index 1 - expected to succeed */
 	setName = wxT("/usr/bin/less");
 	if (!policy->setBinaryName(setName, 1)) {
-		fail("setBinaryName(): not successfull.");
+		fail("setBinaryName(): not successful.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
@@ -393,7 +393,7 @@ START_TEST(ContextFilterPolicy_setBinaryName_two)
 	/* test: index 0 - expected to succeed */
 	setName = wxT("/usr/bin/tail");
 	if (!policy->setBinaryName(setName, 0)) {
-		fail("setBinaryName(): not successfull.");
+		fail("setBinaryName(): not successful.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
@@ -407,7 +407,7 @@ START_TEST(ContextFilterPolicy_setBinaryName_two)
 	/* test: index 0 - expected to succeed */
 	setName = wxT("any");
 	if (!policy->setBinaryName(setName, 0)) {
-		fail("setBinaryName(): not successfull.");
+		fail("setBinaryName(): not successful.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
@@ -429,7 +429,7 @@ START_TEST(ContextFilterPolicy_setBinaryList)
 
 	/* test replace one element - expect to succeed */
 	if (!policy->setBinaryList(initList)) {
-		fail("setBinaryList() not successfull.");
+		fail("setBinaryList() not successful.");
 	}
 
 	CHECK_POLICY_MODIFIED(policy, true);
@@ -449,7 +449,7 @@ START_TEST(ContextFilterPolicy_setBinaryList)
 	initList.Add(wxT("/usr/bin/ccbbaa"));
 
 	if (!policy->setBinaryList(initList)) {
-		fail("setBinaryList() not successfull.");
+		fail("setBinaryList() not successful.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
