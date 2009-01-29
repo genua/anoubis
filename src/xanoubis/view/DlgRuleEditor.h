@@ -581,6 +581,43 @@ class DlgRuleEditor : public Observer, public DlgRuleEditorBase
 		long findListRow(wxListCtrl *, Policy *);
 
 		/**
+		 * Get the index of the selected row.
+		 * @param[in] 1st The list to get the selected row from.
+		 * @return The index of the selected row or -1
+		 * @see getSelectedPolicy()
+		 */
+		long getSelectedIndex(wxListCtrl *);
+
+		/**
+		 * Get the policy of the selected row.
+		 * @param[in] 1st The list to get the selected row from.
+		 * @return The policy of the selected row or NULL.
+		 * @see getSelectedIndex()
+		 */
+		Policy *getSelectedPolicy(wxListCtrl *);
+
+		/**
+		 * Select the a row and make it visible. Try to scroll
+		 * away as few as possible from a previously visible
+		 * part of the list.
+		 * @param[in] 1st The list to select the row.
+		 * @param[in] 2nd The index of the first element that
+		 *    was previously visible.
+		 * @param[in] 3rd The index of the row to select.
+		 * @return Nothing.
+		 */
+		void selectFrame(wxListCtrl *, long, long);
+
+		/**
+		 * Deselect row.
+		 * This will deselect the selected row of the given list.
+		 * This will cause a deselect event.
+		 * @param[in] 1st The list to deselect the row.
+		 * @return Nothing.
+		 */
+		void deselect(wxListCtrl *);
+
+		/**
 		 * Clean the application list.
 		 * @param None.
 		 * @return Nothing.
@@ -615,25 +652,6 @@ class DlgRuleEditor : public Observer, public DlgRuleEditorBase
 		 * @return Nothing.
 		 */
 		void loadRuleSet(void);
-
-		/**
-		 * Load new ruleSet and refresh the lists.
-		 * @param[in] 1st Select this index in the appList
-		 * @param[in] 2nd Select this index in the filterList
-		 * @return None.
-		 * Both parameters can be -1 if the previous selection
-		 * should be reused.
-		 */
-		void refreshRuleSet(long, long);
-
-		/**
-		 * Common backend for moving the selected rule up or down
-		 * @param[in] 1st The list Ctrl
-		 * @param[in] 2nd Move upwards if true, otherwise move down
-		 * @return The new index of the rule or negative if the
-		 *     ruleset is unmodified.
-		 */
-		long listUpDown(wxListCtrl *, bool);
 
 		/**
 		 * Update progress bar.
