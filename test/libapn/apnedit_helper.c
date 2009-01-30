@@ -193,6 +193,60 @@ cmd_copyinsert(struct apn_ruleset *rs, char *args)
 }
 
 static int
+cmd_insert(struct apn_ruleset *rs, char *args)
+{
+	char			 ch;
+	char			 typestr[100];
+	int			 anchor, srcid, type, ret;
+	struct apn_rule		*src;
+
+	if (sscanf(args, "%s %d %d%c", typestr, &anchor, &srcid, &ch) != 3) {
+		fprintf(stderr, "cmd_insert(%d): Invald syntax\n", line);
+		return 0;
+	}
+	type = get_type(typestr);
+	if (type < 0)
+		return 0;
+	src = apn_find_rule(rs, srcid);
+	if (src == NULL) {
+		fprintf(stderr, "cmd_insert(%d): Cannot find rule %d\n",
+		    line, srcid);
+		return 0;
+	}
+	src = apn_copy_one_rule(src);
+	if (src == NULL) {
+		fprintf(stderr, "cmd_insert(%d): Cannot copy src rule\n",
+		    line);
+		return 0;
+	}
+	src->apn_id = 0;
+	switch(type) {
+	case APN_ALF:
+		ret = apn_insert_alfrule(rs, src, anchor);
+		break;
+	case APN_SB:
+		ret = apn_insert_sbrule(rs, src, anchor);
+		break;
+	case APN_SFS:
+		ret = apn_insert_sfsrule(rs, src, anchor);
+		break;
+	case APN_CTX:
+		ret = apn_insert_ctxrule(rs, src, anchor);
+		break;
+	default:
+		fprintf(stderr, "cmd_insert(%d): Bad type %s/%d\n",
+		    line, typestr, type);
+		return 0;
+	}
+	if (ret != 0) {
+		fprintf(stderr, "cmd_insert(%d): insert failed with %d\n",
+		    line, ret);
+		return 0;
+	}
+	return 1;
+}
+
+static int
 cmd_remove(struct apn_ruleset *rs, char *args)
 {
 	int		id, ret;
@@ -267,6 +321,8 @@ int main(int argc, char **argv)
 			ret = cmd_print(rs, args);
 		} else if (strcasecmp(p, "copyinsert") == 0) {
 			ret = cmd_copyinsert(rs, args);
+		} else if (strcasecmp(p, "insert") == 0) {
+			ret = cmd_insert(rs, args);
 		} else if (strcasecmp(p, "up") == 0) {
 			ret = cmd_updown_common(rs, args, &apn_move_up, 0);
 		} else if (strcasecmp(p, "down") == 0) {

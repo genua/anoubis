@@ -45,10 +45,12 @@
 #ifndef LINUX
 #include <sys/queue.h>
 #include <dev/anoubis.h>
+#include <dev/anoubis_alf.h>
 #include <sys/uio.h>
 #else
 #include <queue.h>
 #include <linux/anoubis.h>
+#include <linux/anoubis_alf.h>
 #endif
 
 #include "rbtree.h"
@@ -107,7 +109,7 @@ struct apn_app {
 
 struct apn_addr {
 	sa_family_t		af;
-	u_int8_t		len;
+	u_int8_t		len;	/* The netmask */
 	union {
 		struct in_addr		v4;
 		struct in6_addr		v6;
@@ -286,27 +288,26 @@ struct apn_ruleset {
 };
 
 __BEGIN_DECLS
+
+/*
+ * Functions for parsing and error reporting.
+ */
 int	apn_parse(const char *, struct apn_ruleset **, int);
 int	apn_parse_iovec(const char *filename, struct iovec *vec, int count,
 	    struct apn_ruleset **rsp, int flags);
-int	apn_add_alfblock(struct apn_ruleset *, struct apn_rule *,
-	    const char *, int lineno);
-int	apn_add_sfsblock(struct apn_ruleset *, struct apn_rule *,
-	    const char *, int lineno);
-int	apn_add_sbblock(struct apn_ruleset *, struct apn_rule *,
-	    const char *, int lineno);
-int	apn_add_ctxblock(struct apn_ruleset *, struct apn_rule *,
-	    const char *, int lineno);
 int	apn_print_rule(struct apn_rule *, int, FILE *);
 int	apn_print_ruleset(struct apn_ruleset *, int, FILE *);
-int	apn_error(struct apn_ruleset *, const char *, int lineno,
-	    const char *fmt, ...)
-	    __attribute__((format(printf, 4, 5)));
-int	apn_verror(struct apn_ruleset *, const char *, int lineno,
-	    const char *, va_list);
 void	apn_print_errors(struct apn_ruleset *, FILE *);
+
+/*
+ * Use these function to add an application block to a ruleset.
+ */
 int	apn_add(struct apn_ruleset *, struct apn_rule *);
 int	apn_insert(struct apn_ruleset *, struct apn_rule *, unsigned int);
+
+/*
+ * Use these functions to insert a single filter rule into a ruleset
+ */
 int	apn_insert_alfrule(struct apn_ruleset *, struct apn_rule *,
 	    unsigned int);
 int	apn_insert_sfsrule(struct apn_ruleset *, struct apn_rule *,
@@ -315,48 +316,48 @@ int	apn_insert_sbrule(struct apn_ruleset *, struct apn_rule *,
 	    unsigned int id);
 int	apn_insert_ctxrule(struct apn_ruleset *, struct apn_rule *,
 	    unsigned int id);
-int	apn_add2app_alfrule(struct apn_ruleset *, struct apn_rule *,
-	    unsigned int);
-int	apn_add2app_sfsrule(struct apn_ruleset *, struct apn_rule *,
-	    unsigned int);
-int	apn_add2app_sbrule(struct apn_ruleset *, struct apn_rule *,
-	    unsigned int);
-int	apn_add2app_ctxrule(struct apn_ruleset *, struct apn_rule *,
-	    unsigned int);
+
+/*
+ * Use these functions to copy an application block and simultaneously
+ * add a new rule to that block.
+ */
 int	apn_copyinsert_alf(struct apn_ruleset *, struct apn_rule *,
 	    unsigned int, const char *, const u_int8_t *, int);
 int	apn_copyinsert_ctx(struct apn_ruleset *, struct apn_rule *,
 	    unsigned int, const char *, const u_int8_t *, int);
 int	apn_copyinsert_sb(struct apn_ruleset *, struct apn_rule *,
 	    unsigned int, const char *, const u_int8_t *, int);
+
+/*
+ * Functions used to free misc. rule structures
+ */
 void	apn_free_ruleset(struct apn_ruleset *);
 void	apn_free_one_rule(struct apn_rule *, struct apn_ruleset *);
-void	apn_free_chain(struct apn_chain *, struct apn_ruleset *);
+void	apn_free_host(struct apn_host *);
+void	apn_free_port(struct apn_port *);
 void	apn_free_app(struct apn_app *);
-void	apn_free_filter(struct apn_afiltspec *filtspec);
-void	apn_free_sbaccess(struct apn_sbaccess *);
-void	apn_free_sfsaccess(struct apn_sfsaccess *);
-void	apn_free_sfsdefault(struct apn_sfsdefault *);
+
+/*
+ * Searching, Copying cleaning
+ */
 int	apn_clean_ruleset(struct apn_ruleset *rs,
 	    int (*)(struct apn_scope *, void *), void *);
 struct apn_rule *apn_copy_one_rule(struct apn_rule *);
 struct apn_rule *apn_find_rule(struct apn_ruleset *, unsigned int);
 int	apn_copy_chain(struct apn_chain *src, struct apn_chain *dst);
-void	apn_free_host(struct apn_host *);
-void	apn_free_port(struct apn_port *);
+
+/*
+ * Remove a rule from a ruleset.
+ */
 int	apn_remove(struct apn_ruleset *, unsigned int);
-int	apn_valid_id(struct apn_ruleset *, unsigned int);
-void	apn_assign_ids(struct apn_ruleset *);
+
+/*
+ * Move rules up/down within their rule chain.
+ */
 int	apn_can_move_up(struct apn_rule *);
 int	apn_can_move_down(struct apn_rule *);
 int	apn_move_up(struct apn_rule *);
 int	apn_move_down(struct apn_rule *);
-
-
-/* Implemented in parse.y */
-int	parse_rules(const char *, struct apn_ruleset *);
-int	parse_rules_iovec(const char *, struct iovec *, int count,
-	    struct apn_ruleset *);
 
 __END_DECLS
 

@@ -312,9 +312,7 @@ START_TEST(tc_Insert2)
 
 	/* Try to put in before application rule 22 */
 	ret = apn_insert_alfrule(rs, rule3, 22);
-	fail_if(ret != 1, "Insert did not fail, but should have!");
-	fail_if(rule1->apn_id != s1, "Rule ID was modified!");
-	fail_if(rule2->apn_id != s2, "Rule ID was modified!");
+	fail_if(ret != 0, "Insert with application block failed");
 
 	apn_free_ruleset(rs);
 }

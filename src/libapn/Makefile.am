@@ -30,7 +30,7 @@ libapn_a_CFLAGS = -std=gnu99 $(AM_CFLAGS)
 
 lib_LIBRARIES = libapn.a
 
-noinst_HEADERS = apn.h rbtree.h
+noinst_HEADERS = apn.h apninternals.h rbtree.h
 
 bsdcompatdir = src/bsdcompat
 libbsdcompat = $(top_builddir)/$(bsdcompatdir)/libbsdcompat.a
@@ -68,13 +68,15 @@ libapn_a_SOURCES_splint = \
 	apnparser.c_splint  \
 	rbtree.c_splint  \
 	apn.h_splint \
+	apninternals.h_splint \
 	rbtree.h_splint
 
 libapn_a_SOURCES_flawfinder = \
 	apnparser.c_flawfinder  \
 	rbtree.c_flawfinder  \
 	rbtree.h_flawfinder  \
-	apn.h_flawfinder
+	apn.h_flawfinder \
+	apninternals.h_flawfinder
 
 flawfinder_FLAGS=
 # XXX tartler: the libapn source needs annotations to enable splint

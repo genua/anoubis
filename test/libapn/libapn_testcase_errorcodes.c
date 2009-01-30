@@ -33,6 +33,7 @@
 #include <netinet/in.h>
 
 #include <apn.h>
+#include <apninternals.h>
 #include <check.h>
 #include <stdio.h>
 #include <stdlib.h>

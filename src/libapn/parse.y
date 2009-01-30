@@ -55,6 +55,7 @@
 #endif	/* LINUX */
 
 #include "apn.h"
+#include "apninternals.h"
 
 #define APN_FILE	1
 #define APN_IOVEC	2

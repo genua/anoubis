@@ -126,11 +126,11 @@ add2app(int type, struct apn_ruleset *rs, struct apn_rule *rule, int id)
 {
 	switch(type) {
 	case APN_ALF:
-		return apn_add2app_alfrule(rs, rule, id);
+		return apn_insert_alfrule(rs, rule, id);
 	case APN_SB:
-		return apn_add2app_sbrule(rs, rule, id);
+		return apn_insert_sbrule(rs, rule, id);
 	case APN_CTX:
-		return apn_add2app_ctxrule(rs, rule, id);
+		return apn_insert_ctxrule(rs, rule, id);
 	}
 	return 1;
 }
@@ -194,17 +194,17 @@ START_TEST(firstinsert_sfs)
 	rule = TAILQ_FIRST(&(rs->sfs_queue));
 	fail_if(rule == NULL, "Ruleset not initialized");
 
-	rc = apn_add2app_sfsrule(rs, filter1, 333);
+	rc = apn_insert_sfsrule(rs, filter1, 333);
 	fail_if(rc == 0, "Could insert first filter (fail expected)!");
 
-	rc = apn_add2app_sfsrule(rs, filter1, rule->apn_id);
+	rc = apn_insert_sfsrule(rs, filter1, rule->apn_id);
 	fail_if(rc != 0, "Couldn't add first filter (rc=%d, rs=%p, id=%d).", rc,
 	    rs, rule->apn_id);
 
-	rc = apn_add2app_sfsrule(rs, filter2, 444);
+	rc = apn_insert_sfsrule(rs, filter2, 444);
 	fail_if(rc == 0, "Could insert second filter (fail expected)!");
 
-	rc = apn_add2app_sfsrule(rs, filter2, rule->apn_id);
+	rc = apn_insert_sfsrule(rs, filter2, rule->apn_id);
 	fail_if(rc != 0, "Couldn't add second filter.");
 }
 END_TEST
