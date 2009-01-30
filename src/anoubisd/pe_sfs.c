@@ -147,6 +147,43 @@ pe_sfs_match_one(struct apn_rule *rule, struct pe_file_event *fevent,
 	return &rule->rule.sfsaccess.valid;
 }
 
+int
+pe_sfs_getrules(uid_t uid, int prio, const char *path,
+	struct apn_rule ***rulelist)
+{
+	struct apn_ruleset	*rs;
+	struct apn_rule		*sfsrules;
+	int			 rulecnt;
+
+	rs = pe_user_get_ruleset(uid, prio, NULL);
+	if (rs == NULL)
+		return 0;
+	if (TAILQ_EMPTY(&rs->sfs_queue))
+		return 0;
+	sfsrules = TAILQ_FIRST(&rs->sfs_queue);
+
+	DEBUG(DBG_PE_SFS, " pe_sfs_getrules: rules prio %d rules %p",
+				prio, sfsrules);
+
+	if (TAILQ_EMPTY(&sfsrules->rule.chain))
+		return 0;
+	if (sfsrules->userdata == NULL) {
+		if (pe_build_prefixhash(sfsrules) < 0) {
+			return (-1);
+		}
+	}
+
+	if (pe_prefixhash_getrules(sfsrules->userdata, path,
+		rulelist, &rulecnt) < 0) {
+		return (-1);
+	}
+	
+	if (rulecnt == 0)
+		free(rulelist);
+
+	return rulecnt;
+}
+
 anoubisd_reply_t *
 pe_decide_sfs(struct pe_proc *proc, struct pe_file_event *fevent,
     struct eventdev_hdr *hdr)
@@ -162,7 +199,7 @@ pe_decide_sfs(struct pe_proc *proc, struct pe_file_event *fevent,
 	time_t			 now;
 	char			 cstext[2*ANOUBIS_CS_LEN+1];
 
-	DEBUG(DBG_TRACE, ">pe_decide_sfs");
+	DEBUG(DBG_PE_SFS, ">pe_decide_sfs");
 	if ((reply = calloc(1, sizeof(struct anoubisd_reply))) == NULL) {
 		log_warn("pe_handle_sfs: cannot allocate memory");
 		master_terminate(ENOMEM);
@@ -176,36 +213,26 @@ pe_decide_sfs(struct pe_proc *proc, struct pe_file_event *fevent,
 	}
 
 	for (i = 0; i < PE_PRIO_MAX; i++) {
-		struct apn_ruleset	*rs;
-		struct apn_rule		*sfsrule, **rulelist;
-		int			 rulecnt, r;
+		struct apn_rule		**rulelist = NULL;
+		int			  rulecnt, r;
 
 		if (i == PE_PRIO_USER1 && do_disable) {
 			decision = POLICY_ALLOW;
 			break;
 		}
-		rs = pe_user_get_ruleset(fevent->uid, i, NULL);
-		if (rs == NULL)
+
+		rulecnt = pe_sfs_getrules(fevent->uid, i, fevent->path,
+					&rulelist);
+
+		if (rulecnt == 0)
 			continue;
-		if (TAILQ_EMPTY(&rs->sfs_queue))
-			continue;
-		sfsrule = TAILQ_FIRST(&rs->sfs_queue);
-		if (TAILQ_EMPTY(&sfsrule->rule.chain))
-			continue;
-		if (sfsrule->userdata == NULL) {
-			if (pe_build_prefixhash(sfsrule) < 0) {
-				master_terminate(ENOMEM);
-				decision = POLICY_DENY;
-				break;
-			}
-		}
-		if (pe_prefixhash_getrules(sfsrule->userdata, fevent->path,
-		    &rulelist, &rulecnt) < 0) {
+		else if (rulecnt < 0) {
 			master_terminate(ENOMEM);
 			decision = POLICY_DENY;
 			break;
 		}
-		DEBUG(DBG_TRACE, " pe_decide_sfs: %d rules from hash", rulecnt);
+
+		DEBUG(DBG_PE_SFS," pe_decide_sfs: %d rules from hash", rulecnt);
 		for (r=0; r<rulecnt; ++r) {
 			struct	apn_default	*res;
 			struct apn_rule *rule = rulelist[r];
@@ -307,7 +334,7 @@ err:
 }
 
 /*
- * Decode a SFS message into a printable string.  The strings is allocated
+ * Decode a SFS message into a printable string.  The string is allocated
  * and needs to be freed by the caller.
  */
 static char *

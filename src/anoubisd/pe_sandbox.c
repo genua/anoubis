@@ -202,6 +202,63 @@ err:
 	res->log = APN_LOG_NONE;
 }
 
+int
+pe_sb_getrules (struct pe_proc *proc, uid_t uid, int prio, const char *path,
+    struct apn_rule	***rulelist)
+{
+	struct apn_rule	 *sbrules;
+	int		  rulecnt;
+
+	/*
+	 * If we do not have a process, find the default rules
+	 * for the given UID (if any) and try to apply these.
+	 */
+	if (proc) {
+		sbrules = pe_context_get_sbrule(
+		    pe_proc_get_context(proc, prio));
+		DEBUG(DBG_SANDBOX, " pe_sb_getrules: context rules "
+		    "prio %d rules %p", prio, sbrules);
+
+	} else {
+		struct apn_ruleset	*rs;
+		rs = pe_user_get_ruleset(uid, prio, NULL);
+		if (rs) {
+			TAILQ_FOREACH(sbrules, &rs->sb_queue, entry)
+				if (sbrules->app == NULL)
+					break;
+		} else {
+			sbrules = NULL;
+		}
+		DEBUG(DBG_SANDBOX, " pe_sb_getrules: default rules "
+		    "prio %d rules %p", prio, sbrules);
+	}
+
+	/*
+	 * Give the next priority a chance if we do not have
+	 * any policy. This is default allow.
+	 */
+	if (!sbrules)
+		return (0);
+
+	if (!sbrules->userdata) {
+		if (pe_build_prefixhash(sbrules) < 0) {
+			master_terminate(ENOMEM);
+			return (-1);
+		}
+	}
+
+	if (pe_prefixhash_getrules(sbrules->userdata, path,
+				rulelist, &rulecnt) < 0) {
+		master_terminate(ENOMEM);
+		return (-1);
+	}
+
+	if (rulecnt == 0)
+		free(rulelist);
+
+	return (rulecnt);
+}
+
 static char *
 pe_sb_dumpevent(struct pe_file_event *sbevent)
 {
@@ -241,7 +298,7 @@ pe_decide_sandbox(struct pe_proc *proc, struct pe_file_event *sbevent,
 	if (!sbevent)
 		return NULL;
 
-	DEBUG(DBG_SANDBOX, " pe_decide_sandbox");
+	DEBUG(DBG_SANDBOX, ">pe_decide_sandbox");
 	for (i=0; i<3; ++i) {
 		res[i].rule_id = 0;
 		res[i].prio = 0;
@@ -250,56 +307,23 @@ pe_decide_sandbox(struct pe_proc *proc, struct pe_file_event *sbevent,
 	}
 	final.decision = -1;
 	for (i=0; i<PE_PRIO_MAX; ++i) {
-		struct apn_rule		 *sbrules;
-		struct apn_rule		**rulelist;
+		struct apn_rule		**rulelist = NULL;
 		int			  rulecnt;
 
-		/*
-		 * If we do not have a process, find the default rules
-		 * for the given UID (if any) and try to apply these.
-		 */
-		if (proc) {
-			sbrules = pe_context_get_sbrule(
-			    pe_proc_get_context(proc, i));
-			DEBUG(DBG_SANDBOX, " pe_decide_sandbox: context rules "
-			    "prio %d rules %p", i, sbrules);
+		rulecnt = pe_sb_getrules(proc, sbevent->uid, i, sbevent->path,
+					&rulelist);
 
-		} else {
-			struct apn_ruleset	*rs;
-			rs = pe_user_get_ruleset(sbevent->uid, i, NULL);
-			if (rs) {
-				TAILQ_FOREACH(sbrules, &rs->sb_queue, entry)
-					if (sbrules->app == NULL)
-						break;
-			} else {
-				sbrules = NULL;
-			}
-			DEBUG(DBG_SANDBOX, " pe_decide_sandbox: default rules "
-			    "prio %d rules %p", i, sbrules);
-		}
-		/*
-		 * Give the next priority a chance if we do not have
-		 * any policy. This is default allow.
-		 */
-		if (!sbrules)
+		if (rulecnt == 0)
 			continue;
-		if (!sbrules->userdata) {
-			if (pe_build_prefixhash(sbrules) < 0) {
-				master_terminate(ENOMEM);
-				final.decision = POLICY_DENY;
-				break;
-			}
-		}
-		if (pe_prefixhash_getrules(sbrules->userdata, sbevent->path,
-		    &rulelist, &rulecnt) < 0) {
-			master_terminate(ENOMEM);
+		else if (rulecnt < 0) {
 			final.decision = POLICY_DENY;
 			break;
 		}
+
 		/*
-		 * The three results may be pre-initilized from a higher
+		 * The three results may be pre-initialized from a higher
 		 * priority. However, the only possibilities are
-		 * uninitilized (-1) or POLICY_ALLOW.
+		 * uniniatilized (-1) or POLICY_ALLOW.
 		 */
 		pe_sb_evaluate(rulelist, rulecnt, sbevent, &res[0],
 		    APN_SBA_READ, i);
@@ -328,11 +352,11 @@ pe_decide_sandbox(struct pe_proc *proc, struct pe_file_event *sbevent,
 		if (final.decision != -1 && final.decision != POLICY_ALLOW)
 			break;
 	}
-	DEBUG(DBG_SANDBOX, ">pe_decide_sandbox: decision = %d, prio = %d",
+	DEBUG(DBG_SANDBOX, " pe_decide_sandbox: decision = %d, prio = %d",
 	    final.decision, i);
 	reply = calloc(1, sizeof(struct anoubisd_reply));
 	if (!reply) {
-		log_warn("pe_decide_sandbox: cannot allocate memory");
+		log_warn(" pe_decide_sandbox: cannot allocate memory");
 		master_terminate(ENOMEM);
 		return NULL;
 	}
@@ -389,7 +413,7 @@ pe_decide_sandbox(struct pe_proc *proc, struct pe_file_event *sbevent,
 		    final.prio);
 		break;
 	default:
-		log_warnx("pe_decide_sandbox: unknown log type %d", final.log);
+		log_warnx(" pe_decide_sandbox: unknown log type %d", final.log);
 	}
 
 	if (dump)

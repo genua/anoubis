@@ -63,6 +63,13 @@ struct pe_file_event {
 	int			 uid;
 };
 
+struct pe_path_event {
+	anoubis_cookie_t	 cookie;
+	unsigned int		 op;
+	int			 uid;
+	char			*path[2];
+};
+
 /* Proc Ident management functions. */
 void			 pe_proc_ident_set(struct pe_proc_ident *, const
 			     u_int8_t *, const char *);
@@ -139,6 +146,12 @@ int			 pe_pubkey_verifysig(const char *, uid_t);
 int			 pe_in_scope(struct apn_scope *,
 			     anoubis_cookie_t, time_t);
 struct pe_file_event	*pe_parse_file_event(struct eventdev_hdr *hdr);
+struct pe_path_event	*pe_parse_path_event(struct eventdev_hdr *hdr);
+int			 pe_compare(struct pe_proc *proc,
+			     struct pe_path_event *, int, time_t);
+int			 pe_compare_path(struct apn_rule **, int,
+			     struct pe_path_event *, time_t);
+
 
 /* Subsystem entry points for Policy decisions. */
 anoubisd_reply_t	*pe_decide_alf(struct pe_proc *, struct eventdev_hdr *);
@@ -146,6 +159,11 @@ anoubisd_reply_t	*pe_decide_sfs(struct pe_proc *,
 			     struct pe_file_event *, struct eventdev_hdr *);
 anoubisd_reply_t	*pe_decide_sandbox(struct pe_proc *proc,
 			     struct pe_file_event *, struct eventdev_hdr *);
+int			 pe_sfs_getrules(uid_t, int, const char *,
+			     struct apn_rule ***);
+int			 pe_sb_getrules(struct pe_proc *, uid_t, int, 
+			     const char *, struct apn_rule ***);
+
 
 /* IPC handling */
 void			 pe_ipc_connect(struct ac_ipc_message *);
