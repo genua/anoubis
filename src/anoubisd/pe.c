@@ -364,6 +364,8 @@ pe_handle_sfs(struct eventdev_hdr *hdr)
 	reply2 = pe_decide_sandbox(proc, fevent, hdr);
 
 	pe_proc_put(proc);
+	if (fevent->path)
+		free(fevent->path);
 	free(fevent);
 
 	/* XXX CEH: This might need more thought. */
