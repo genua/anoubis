@@ -30,9 +30,18 @@
 
 #include "DlgRuleEditorBase.h"
 #include "DlgRuleEditorFilterPage.h"
+#include "FilterPolicy.h"
+#include "SbAccessFilterPolicy.h"
 
 /**
+ * This is the filter permission page.
  *
+ * This page is responsible only for SbAccessFilterPolicies.
+ *
+ * This is a derrived class from DlgRuleEditorFilterPage to inherrit the
+ * mechanims of selection and deselection and observing the policy. In
+ * addition we derrived from DlgRuleEditorFilterPermissionPageBase to gain
+ * access to the widgets and implement the event methods of them.
  */
 class DlgRuleEditorFilterPermissionPage : public DlgRuleEditorFilterPage,
     public DlgRuleEditorFilterPermissionPageBase
@@ -50,20 +59,69 @@ class DlgRuleEditorFilterPermissionPage : public DlgRuleEditorFilterPage,
 		    long style = wxTAB_TRAVERSAL);
 
 		/**
-		 *
+		 * Update the widgets.
+		 * This is called whenever the assigned policy was modified
+		 * or during selection to fill all widgets with the appropriate
+		 * value.
+		 * @param[in] 1st The policy been observed and modified.
+		 * @return Nothing.
 		 */
 		virtual void update(Subject *);
 
 		/**
-		 *
+		 * Select this page.
+		 * This will check for the type of policy. If the policy is
+		 * one of the types this page is interrested in the
+		 * base class method will been called and this page is shown.
+		 * @param[in] 1st The selected filter policy.
+		 * @return Nothing.
 		 */
 		virtual void select(FilterPolicy *);
 
+		/**
+		 * Deselect this page.
+		 * This will runn the base class method and hide this page.
+		 * @param None.
+		 * @return Noting.
+		 */
+		virtual void deselect(void);
+
 	private:
 		/**
-		 *
+		 * This holds the policy been edited by this page.
 		 */
-		virtual void clear(void);
+		SbAccessFilterPolicy *policy_;
+
+		/**
+		 * Update direction widgets.
+		 * @param None.
+		 * @return Nothing.
+		 */
+		void showPermission(void);
+
+		/**
+		 * Handle events from readCheckBox
+		 * This will set the APN_SBA_READ to the policy.
+		 * @param[in] 1st The event.
+		 * @return Nothing.
+		 */
+		virtual void onReadCheckBox(wxCommandEvent &);
+
+		/**
+		 * Handle events from writeCheckBox
+		 * This will set the APN_SBA_WRITE to the policy.
+		 * @param[in] 1st The event.
+		 * @return Nothing.
+		 */
+		virtual void onWriteCheckBox(wxCommandEvent &);
+
+		/**
+		 * Handle events from executeCheckBox
+		 * This will set the APN_SBA_EXEC to the policy.
+		 * @param[in] 1st The event.
+		 * @return Nothing.
+		 */
+		virtual void onExecuteCheckBox(wxCommandEvent &);
 };
 
 #endif	/* _DLGRULEEDITORFILTERPERMISSIONPAGE_H_ */

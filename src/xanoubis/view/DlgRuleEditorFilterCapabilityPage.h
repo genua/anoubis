@@ -30,9 +30,18 @@
 
 #include "DlgRuleEditorBase.h"
 #include "DlgRuleEditorFilterPage.h"
+#include "FilterPolicy.h"
+#include "AlfCapabilityFilterPolicy.h"
 
 /**
+ * This is the filter capability page.
  *
+ * This page is responsible only for AlfCapabilityFilterPolicies.
+ *
+ * This is a derrived class from DlgRuleEditorFilterPage to inherrit the
+ * mechanims of selection and deselection and observing the policy. In
+ * addition we derrived from DlgRuleEditorFilterNetworkPageBase to gain
+ * access to the widgets and implement the event methods of them.
  */
 class DlgRuleEditorFilterCapabilityPage : public DlgRuleEditorFilterPage,
     public DlgRuleEditorFilterCapabilityPageBase
@@ -50,20 +59,69 @@ class DlgRuleEditorFilterCapabilityPage : public DlgRuleEditorFilterPage,
 		    long style = wxTAB_TRAVERSAL);
 
 		/**
-		 *
+		 * Update the widgets.
+		 * This is called whenever the assigned policy was modified
+		 * or during selection to fill all widgets with the appropriate
+		 * value.
+		 * @param[in] 1st The policy been observed and modified.
+		 * @return Nothing.
 		 */
 		virtual void update(Subject *);
 
 		/**
-		 *
+		 * Select this page.
+		 * This will check for the type of policy. If the policy is
+		 * one of the types this page is interrested in the
+		 * base class method will been called and this page is shown.
+		 * @param[in] 1st The selected filter policy.
+		 * @return Nothing.
 		 */
 		virtual void select(FilterPolicy *);
 
+		/**
+		 * Deselect this page.
+		 * This will runn the base class method and hide this page.
+		 * @param None.
+		 * @return Noting.
+		 */
+		virtual void deselect(void);
+
 	private:
 		/**
-		 *
+		 * This holds the policy been edited by this page.
 		 */
-		virtual void clear(void);
+		AlfCapabilityFilterPolicy *policy_;
+
+		/**
+		 * Update direction widgets.
+		 * @param None.
+		 * @return Nothing.
+		 */
+		void showCapability(void);
+
+		/**
+		 * Handle events from rawRadioButton.
+		 * This will set the APN_ALF_CAPRAW to the policy.
+		 * @param[in] 1st The event.
+		 * @return Nothing.
+		 */
+		virtual void onRawRadioButton(wxCommandEvent &);
+
+		/**
+		 * Handle events from otherRadioButton.
+		 * This will set the APN_ALF_CAPOTHER to the policy.
+		 * @param[in] 1st The event.
+		 * @return Nothing.
+		 */
+		virtual void onOtherRadioButton(wxCommandEvent &);
+
+		/**
+		 * Handle events from allRadioButton.
+		 * This will set the APN_ALF_CAPALL to the policy.
+		 * @param[in] 1st The event.
+		 * @return Nothing.
+		 */
+		virtual void onAllRadioButton(wxCommandEvent &);
 };
 
 #endif	/* _DLGRULEEDITORFILTERCAPABILITYPAGE_H_ */

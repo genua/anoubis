@@ -30,9 +30,18 @@
 
 #include "DlgRuleEditorBase.h"
 #include "DlgRuleEditorFilterPage.h"
+#include "FilterPolicy.h"
+#include "ContextFilterPolicy.h"
 
 /**
+ * This is the filter context page.
  *
+ * This page is responsible only for ContextFilterPolicies.
+ *
+ * This is a derrived class from DlgRuleEditorFilterPage to inherrit the
+ * mechanims of selection and deselection and observing the policy. In
+ * addition we derrived from DlgRuleEditorFilterContextPageBase to gain
+ * access to the widgets and implement the event methods of them.
  */
 class DlgRuleEditorFilterContextPage : public DlgRuleEditorFilterPage,
     public DlgRuleEditorFilterContextPageBase
@@ -50,20 +59,38 @@ class DlgRuleEditorFilterContextPage : public DlgRuleEditorFilterPage,
 		    long style = wxTAB_TRAVERSAL);
 
 		/**
-		 *
+		 * Update the widgets.
+		 * This is called whenever the assigned policy was modified
+		 * or during selection to fill all widgets with the appropriate
+		 * value.
+		 * @param[in] 1st The policy been observed and modified.
+		 * @return Nothing.
 		 */
 		virtual void update(Subject *);
 
 		/**
-		 *
+		 * Select this page.
+		 * This will check for the type of policy. If the policy is
+		 * one of the types this page is interrested in the
+		 * base class method will been called and this page is shown.
+		 * @param[in] 1st The selected filter policy.
+		 * @return Nothing.
 		 */
 		virtual void select(FilterPolicy *);
 
+		/**
+		 * Deselect this page.
+		 * This will runn the base class method and hide this page.
+		 * @param None.
+		 * @return Noting.
+		 */
+		virtual void deselect(void);
+
 	private:
 		/**
-		 *
+		 * This holds the policy been edited by this page.
 		 */
-		virtual void clear(void);
+		ContextFilterPolicy *policy_;
 };
 
 #endif	/* _DLGRULEEDITORFILTERCONTEXTPAGE_H_ */

@@ -39,17 +39,73 @@ DlgRuleEditorFilterCapabilityPage::update(Subject *subject)
 {
 	if (subject != policy_) {
 		/* This is not our policy! */
-		return;
+		showCapability();
 	}
 }
 
 void
 DlgRuleEditorFilterCapabilityPage::select(FilterPolicy *policy)
 {
-	DlgRuleEditorFilterPage::select(policy);
+	if (policy->IsKindOf(CLASSINFO(AlfCapabilityFilterPolicy))) {
+		policy_ = wxDynamicCast(policy, AlfCapabilityFilterPolicy);
+		DlgRuleEditorFilterPage::select(policy);
+		Show();
+	}
 }
 
 void
-DlgRuleEditorFilterCapabilityPage::clear(void)
+DlgRuleEditorFilterCapabilityPage::deselect(void)
 {
+	policy_ = NULL;
+	DlgRuleEditorFilterPage::deselect();
+	Hide();
+}
+
+void
+DlgRuleEditorFilterCapabilityPage::showCapability(void)
+{
+	if (policy_ == NULL) {
+		return;
+	}
+
+	switch (policy_->getCapabilityTypeNo()) {
+	case APN_ALF_CAPRAW:
+		rawRadioButton->SetValue(true);
+		break;
+	case APN_ALF_CAPOTHER:
+		otherRadioButton->SetValue(true);
+		break;
+	case APN_ALF_CAPALL:
+		allRadioButton->SetValue(true);
+		break;
+	default:
+		rawRadioButton->SetValue(false);
+		otherRadioButton->SetValue(false);
+		allRadioButton->SetValue(false);
+		break;
+	}
+}
+
+void
+DlgRuleEditorFilterCapabilityPage::onRawRadioButton(wxCommandEvent &)
+{
+	if (policy_ != NULL) {
+		policy_->setCapabilityTypeNo(APN_ALF_CAPRAW);
+	}
+}
+
+void
+DlgRuleEditorFilterCapabilityPage::onOtherRadioButton(wxCommandEvent &)
+{
+	if (policy_ != NULL) {
+		policy_->setCapabilityTypeNo(APN_ALF_CAPOTHER);
+	}
+}
+
+void
+DlgRuleEditorFilterCapabilityPage::onAllRadioButton(wxCommandEvent &)
+{
+	if (policy_ != NULL) {
+		policy_->setCapabilityTypeNo(APN_ALF_CAPALL);
+	}
 }

@@ -32,6 +32,13 @@
 ///////////////////////////////////////////////////////////////////////////
 
 #include "DlgRuleEditorFilterActionPage.h"
+#include "DlgRuleEditorFilterAddressPage.h"
+#include "DlgRuleEditorFilterCapabilityPage.h"
+#include "DlgRuleEditorFilterContextPage.h"
+#include "DlgRuleEditorFilterNetworkPage.h"
+#include "DlgRuleEditorFilterPermissionPage.h"
+#include "DlgRuleEditorFilterSfsPage.h"
+#include "DlgRuleEditorFilterSubjectPage.h"
 
 #include "DlgRuleEditorBase.h"
 
@@ -270,6 +277,34 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	filterActionPage->Hide();
 	
 	filterPolicyPanels->AddPage( filterActionPage, _("Action / Log"), false );
+	filterNetworkPage = new DlgRuleEditorFilterNetworkPage( filterPolicyPanels, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	filterNetworkPage->Hide();
+	
+	filterPolicyPanels->AddPage( filterNetworkPage, _("Network"), false );
+	fitlerAddressPage = new DlgRuleEditorFilterAddressPage( filterPolicyPanels, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	fitlerAddressPage->Hide();
+	
+	filterPolicyPanels->AddPage( fitlerAddressPage, _("Address"), false );
+	filterCapabilityPage = new DlgRuleEditorFilterCapabilityPage( filterPolicyPanels, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	filterCapabilityPage->Hide();
+	
+	filterPolicyPanels->AddPage( filterCapabilityPage, _("Capability"), false );
+	filterSubjectPage = new DlgRuleEditorFilterSubjectPage( filterPolicyPanels, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	filterSubjectPage->Hide();
+	
+	filterPolicyPanels->AddPage( filterSubjectPage, _("Subject"), false );
+	filterSfsPage = new DlgRuleEditorFilterSfsPage( filterPolicyPanels, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	filterSfsPage->Hide();
+	
+	filterPolicyPanels->AddPage( filterSfsPage, _("Valid / Invalid / Unknown"), false );
+	filterContextPage = new DlgRuleEditorFilterContextPage( filterPolicyPanels, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	filterContextPage->Hide();
+	
+	filterPolicyPanels->AddPage( filterContextPage, _("Context"), false );
+	filterPermissionPage = new DlgRuleEditorFilterPermissionPage( filterPolicyPanels, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	filterPermissionPage->Hide();
+	
+	filterPolicyPanels->AddPage( filterPermissionPage, _("Permission"), false );
 	
 	filterMainSizer->Add( filterPolicyPanels, 1, wxEXPAND | wxALL, 5 );
 	
@@ -341,7 +376,7 @@ DlgRuleEditorFilterActionPageBase::DlgRuleEditorFilterActionPageBase( wxWindow* 
 	wxBoxSizer* pageSizer;
 	pageSizer = new wxBoxSizer( wxVERTICAL );
 	
-	mainPage = new wxScrolledWindow( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxVSCROLL );
+	mainPage = new wxScrolledWindow( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxTAB_TRAVERSAL|wxVSCROLL );
 	mainPage->SetScrollRate( 5, 5 );
 	wxFlexGridSizer* mainSizer;
 	mainSizer = new wxFlexGridSizer( 3, 4, 0, 0 );
@@ -396,7 +431,7 @@ DlgRuleEditorFilterNetworkPageBase::DlgRuleEditorFilterNetworkPageBase( wxWindow
 	wxBoxSizer* pageSizer;
 	pageSizer = new wxBoxSizer( wxVERTICAL );
 	
-	mainPage = new wxScrolledWindow( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxVSCROLL );
+	mainPage = new wxScrolledWindow( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxTAB_TRAVERSAL|wxVSCROLL );
 	mainPage->SetScrollRate( 5, 5 );
 	wxFlexGridSizer* mainSizer;
 	mainSizer = new wxFlexGridSizer( 3, 4, 0, 0 );
@@ -412,8 +447,8 @@ DlgRuleEditorFilterNetworkPageBase::DlgRuleEditorFilterNetworkPageBase( wxWindow
 	
 	mainSizer->Add( inRadioButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	outRadionButton = new wxRadioButton( mainPage, wxID_ANY, _("connect"), wxDefaultPosition, wxDefaultSize, 0 );
-	mainSizer->Add( outRadionButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	outRadioButton = new wxRadioButton( mainPage, wxID_ANY, _("connect"), wxDefaultPosition, wxDefaultSize, 0 );
+	mainSizer->Add( outRadioButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	bothRadioButton = new wxRadioButton( mainPage, wxID_ANY, _("both"), wxDefaultPosition, wxDefaultSize, 0 );
 	mainSizer->Add( bothRadioButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
@@ -463,7 +498,7 @@ DlgRuleEditorFilterNetworkPageBase::DlgRuleEditorFilterNetworkPageBase( wxWindow
 	
 	// Connect Events
 	inRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorFilterNetworkPageBase::onInRadioButton ), NULL, this );
-	outRadionButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorFilterNetworkPageBase::onOutRadioButton ), NULL, this );
+	outRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorFilterNetworkPageBase::onOutRadioButton ), NULL, this );
 	bothRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorFilterNetworkPageBase::onBothRadioButton ), NULL, this );
 	inetRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorFilterNetworkPageBase::onInetRadioButton ), NULL, this );
 	inet6RadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorFilterNetworkPageBase::onInet6RadioButton ), NULL, this );
@@ -478,9 +513,9 @@ DlgRuleEditorFilterAddressPageBase::DlgRuleEditorFilterAddressPageBase( wxWindow
 	wxBoxSizer* pageSizer;
 	pageSizer = new wxBoxSizer( wxVERTICAL );
 	
-	mainPage = new wxScrolledWindow( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxVSCROLL );
+	mainPage = new wxScrolledWindow( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxTAB_TRAVERSAL|wxVSCROLL );
 	mainPage->SetScrollRate( 5, 5 );
-	mainSizer = new wxFlexGridSizer( 2, 4, 0, 0 );
+	mainSizer = new wxFlexGridSizer( 2, 2, 0, 0 );
 	mainSizer->AddGrowableCol( 1 );
 	mainSizer->SetFlexibleDirection( wxBOTH );
 	mainSizer->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
@@ -494,25 +529,12 @@ DlgRuleEditorFilterAddressPageBase::DlgRuleEditorFilterAddressPageBase( wxWindow
 	
 	mainSizer->Add( sourceAddressTextCtrl, 0, wxALL|wxALIGN_CENTER_VERTICAL|wxEXPAND, 5 );
 	
-	sourceAddressDelimiterLabel = new wxStaticText( mainPage, wxID_ANY, _(" / "), wxDefaultPosition, wxDefaultSize, 0 );
-	sourceAddressDelimiterLabel->Wrap( -1 );
-	mainSizer->Add( sourceAddressDelimiterLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
-	
-	soruceAddressNetmaskSpinCtrl = new wxSpinCtrl( mainPage, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize( 55,-1 ), wxSP_ARROW_KEYS, 0, 128, 0 );
-	mainSizer->Add( soruceAddressNetmaskSpinCtrl, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
-	
 	sourcePortLabel = new wxStaticText( mainPage, wxID_ANY, _("Source Port:"), wxDefaultPosition, wxDefaultSize, 0 );
 	sourcePortLabel->Wrap( -1 );
 	mainSizer->Add( sourcePortLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	sorucePortTextCtrl = new wxTextCtrl( mainPage, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER );
-	mainSizer->Add( sorucePortTextCtrl, 0, wxALL|wxALIGN_CENTER_VERTICAL|wxEXPAND, 5 );
-	
-	
-	mainSizer->Add( 0, 0, 1, wxEXPAND, 5 );
-	
-	
-	mainSizer->Add( 0, 0, 1, wxEXPAND, 5 );
+	sourcePortTextCtrl = new wxTextCtrl( mainPage, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER );
+	mainSizer->Add( sourcePortTextCtrl, 0, wxALL|wxALIGN_CENTER_VERTICAL|wxEXPAND, 5 );
 	
 	destinationAddressLabel = new wxStaticText( mainPage, wxID_ANY, _("Destination address:"), wxDefaultPosition, wxDefaultSize, 0 );
 	destinationAddressLabel->Wrap( -1 );
@@ -520,13 +542,6 @@ DlgRuleEditorFilterAddressPageBase::DlgRuleEditorFilterAddressPageBase( wxWindow
 	
 	destinationAddressTextCtrl = new wxTextCtrl( mainPage, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER );
 	mainSizer->Add( destinationAddressTextCtrl, 0, wxALL|wxALIGN_CENTER_VERTICAL|wxEXPAND, 5 );
-	
-	destinationAddressDelimiterLabel = new wxStaticText( mainPage, wxID_ANY, _(" / "), wxDefaultPosition, wxDefaultSize, 0 );
-	destinationAddressDelimiterLabel->Wrap( -1 );
-	mainSizer->Add( destinationAddressDelimiterLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
-	
-	destinationAddressNetmaskSpinCtrl = new wxSpinCtrl( mainPage, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize( 55,-1 ), wxSP_ARROW_KEYS, 0, 128, 0 );
-	mainSizer->Add( destinationAddressNetmaskSpinCtrl, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	destinationPortLabel = new wxStaticText( mainPage, wxID_ANY, _("Destination Port:"), wxDefaultPosition, wxDefaultSize, 0 );
 	destinationPortLabel->Wrap( -1 );
@@ -544,11 +559,13 @@ DlgRuleEditorFilterAddressPageBase::DlgRuleEditorFilterAddressPageBase( wxWindow
 	this->Layout();
 	
 	// Connect Events
+	sourceAddressTextCtrl->Connect( wxEVT_KILL_FOCUS, wxFocusEventHandler( DlgRuleEditorFilterAddressPageBase::onSourceAddressTextKillFocus ), NULL, this );
 	sourceAddressTextCtrl->Connect( wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler( DlgRuleEditorFilterAddressPageBase::onSourceAddressTextEnter ), NULL, this );
-	soruceAddressNetmaskSpinCtrl->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( DlgRuleEditorFilterAddressPageBase::onSourceAddressNetmaskSpinCtrl ), NULL, this );
-	sorucePortTextCtrl->Connect( wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler( DlgRuleEditorFilterAddressPageBase::onSourcePortTextEnter ), NULL, this );
+	sourcePortTextCtrl->Connect( wxEVT_KILL_FOCUS, wxFocusEventHandler( DlgRuleEditorFilterAddressPageBase::onSourcePortTextKillFocus ), NULL, this );
+	sourcePortTextCtrl->Connect( wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler( DlgRuleEditorFilterAddressPageBase::onSourcePortTextEnter ), NULL, this );
+	destinationAddressTextCtrl->Connect( wxEVT_KILL_FOCUS, wxFocusEventHandler( DlgRuleEditorFilterAddressPageBase::onDestinationAddressTextKillFocus ), NULL, this );
 	destinationAddressTextCtrl->Connect( wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler( DlgRuleEditorFilterAddressPageBase::onDestinationAddressTextEnter ), NULL, this );
-	destinationAddressNetmaskSpinCtrl->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( DlgRuleEditorFilterAddressPageBase::onDestinationAddressNetmaskSpinCtrl ), NULL, this );
+	destinationPortTextCtrl->Connect( wxEVT_KILL_FOCUS, wxFocusEventHandler( DlgRuleEditorFilterAddressPageBase::onDestinationPortTextKillFocus ), NULL, this );
 	destinationPortTextCtrl->Connect( wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler( DlgRuleEditorFilterAddressPageBase::onDestinationPortTextEnter ), NULL, this );
 }
 
@@ -557,7 +574,7 @@ DlgRuleEditorFilterCapabilityPageBase::DlgRuleEditorFilterCapabilityPageBase( wx
 	wxBoxSizer* pageSizer;
 	pageSizer = new wxBoxSizer( wxVERTICAL );
 	
-	mainPage = new wxScrolledWindow( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxVSCROLL );
+	mainPage = new wxScrolledWindow( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxTAB_TRAVERSAL|wxVSCROLL );
 	mainPage->SetScrollRate( 5, 5 );
 	wxFlexGridSizer* mainSizer;
 	mainSizer = new wxFlexGridSizer( 1, 4, 0, 0 );
@@ -596,7 +613,7 @@ DlgRuleEditorFilterSubjectPageBase::DlgRuleEditorFilterSubjectPageBase( wxWindow
 	wxBoxSizer* pageSizer;
 	pageSizer = new wxBoxSizer( wxVERTICAL );
 	
-	mainPage = new wxScrolledWindow( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxVSCROLL );
+	mainPage = new wxScrolledWindow( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxTAB_TRAVERSAL|wxVSCROLL );
 	mainPage->SetScrollRate( 5, 5 );
 	wxFlexGridSizer* mainSizer;
 	mainSizer = new wxFlexGridSizer( 7, 3, 0, 0 );
@@ -608,7 +625,7 @@ DlgRuleEditorFilterSubjectPageBase::DlgRuleEditorFilterSubjectPageBase( wxWindow
 	pathLabel->Wrap( -1 );
 	mainSizer->Add( pathLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	pathTextCtrl = new wxTextCtrl( mainPage, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	pathTextCtrl = new wxTextCtrl( mainPage, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER );
 	mainSizer->Add( pathTextCtrl, 0, wxALL|wxEXPAND, 5 );
 	
 	modifyButton = new wxButton( mainPage, wxID_ANY, _("modify"), wxDefaultPosition, wxDefaultSize, 0 );
@@ -619,6 +636,8 @@ DlgRuleEditorFilterSubjectPageBase::DlgRuleEditorFilterSubjectPageBase( wxWindow
 	mainSizer->Add( subjectLabel, 0, wxALL, 5 );
 	
 	anyRadioButton = new wxRadioButton( mainPage, wxID_ANY, _("any"), wxDefaultPosition, wxDefaultSize, wxRB_GROUP );
+	anyRadioButton->Hide();
+	
 	mainSizer->Add( anyRadioButton, 0, wxALL, 5 );
 	
 	
@@ -651,7 +670,7 @@ DlgRuleEditorFilterSubjectPageBase::DlgRuleEditorFilterSubjectPageBase( wxWindow
 	uidRadioButton = new wxRadioButton( mainPage, wxID_ANY, _("uid"), wxDefaultPosition, wxSize( 60,-1 ), 0 );
 	uidSizer->Add( uidRadioButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	uidTextCtrl = new wxTextCtrl( mainPage, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	uidTextCtrl = new wxTextCtrl( mainPage, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER );
 	uidSizer->Add( uidTextCtrl, 1, wxALL|wxEXPAND|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	mainSizer->Add( uidSizer, 1, wxEXPAND, 5 );
@@ -668,7 +687,7 @@ DlgRuleEditorFilterSubjectPageBase::DlgRuleEditorFilterSubjectPageBase( wxWindow
 	keyRadioButton = new wxRadioButton( mainPage, wxID_ANY, _("key"), wxDefaultPosition, wxSize( 60,-1 ), 0 );
 	keySizer->Add( keyRadioButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	keyTextCtrl = new wxTextCtrl( mainPage, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	keyTextCtrl = new wxTextCtrl( mainPage, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER );
 	keySizer->Add( keyTextCtrl, 1, wxALL|wxEXPAND|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	mainSizer->Add( keySizer, 1, wxEXPAND, 5 );
@@ -685,8 +704,8 @@ DlgRuleEditorFilterSubjectPageBase::DlgRuleEditorFilterSubjectPageBase( wxWindow
 	csumRadioButton = new wxRadioButton( mainPage, wxID_ANY, _("csum"), wxDefaultPosition, wxSize( 60,-1 ), 0 );
 	csumSizer->Add( csumRadioButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	csumTextCtrl = new wxTextCtrl( mainPage, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
-	csumSizer->Add( csumTextCtrl, 1, wxALL|wxEXPAND|wxALIGN_CENTER_VERTICAL, 5 );
+	csumTextCtrl = new wxTextCtrl( mainPage, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER );
+	csumSizer->Add( csumTextCtrl, 1, wxALL|wxALIGN_CENTER_VERTICAL|wxEXPAND, 5 );
 	
 	mainSizer->Add( csumSizer, 1, wxEXPAND, 5 );
 	
@@ -699,15 +718,20 @@ DlgRuleEditorFilterSubjectPageBase::DlgRuleEditorFilterSubjectPageBase( wxWindow
 	this->Layout();
 	
 	// Connect Events
+	pathTextCtrl->Connect( wxEVT_KILL_FOCUS, wxFocusEventHandler( DlgRuleEditorFilterSubjectPageBase::onPathTextKillFocus ), NULL, this );
+	pathTextCtrl->Connect( wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler( DlgRuleEditorFilterSubjectPageBase::onPathTextEnter ), NULL, this );
 	modifyButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorFilterSubjectPageBase::onModifyButton ), NULL, this );
 	anyRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorFilterSubjectPageBase::onAnyRadioButton ), NULL, this );
 	selfRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorFilterSubjectPageBase::onSelfRadioButton ), NULL, this );
 	selfSignedRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorFilterSubjectPageBase::onSelfSignedRadioButton ), NULL, this );
 	uidRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorFilterSubjectPageBase::onUidRadioButton ), NULL, this );
+	uidTextCtrl->Connect( wxEVT_KILL_FOCUS, wxFocusEventHandler( DlgRuleEditorFilterSubjectPageBase::onUidTextKillFocus ), NULL, this );
 	uidTextCtrl->Connect( wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler( DlgRuleEditorFilterSubjectPageBase::onUidTextEnter ), NULL, this );
 	keyRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorFilterSubjectPageBase::onKeyRadioButton ), NULL, this );
+	keyTextCtrl->Connect( wxEVT_KILL_FOCUS, wxFocusEventHandler( DlgRuleEditorFilterSubjectPageBase::onKeyTextKillFocus ), NULL, this );
 	keyTextCtrl->Connect( wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler( DlgRuleEditorFilterSubjectPageBase::onKeyTextEnter ), NULL, this );
 	csumRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorFilterSubjectPageBase::onCsumRadioButton ), NULL, this );
+	csumTextCtrl->Connect( wxEVT_KILL_FOCUS, wxFocusEventHandler( DlgRuleEditorFilterSubjectPageBase::onCsumTextKillFocus ), NULL, this );
 	csumTextCtrl->Connect( wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler( DlgRuleEditorFilterSubjectPageBase::onCsumTextEnter ), NULL, this );
 }
 
@@ -716,7 +740,7 @@ DlgRuleEditorFilterSfsPageBase::DlgRuleEditorFilterSfsPageBase( wxWindow* parent
 	wxBoxSizer* pageSizer;
 	pageSizer = new wxBoxSizer( wxVERTICAL );
 	
-	mainPage = new wxScrolledWindow( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxVSCROLL );
+	mainPage = new wxScrolledWindow( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxTAB_TRAVERSAL|wxVSCROLL );
 	mainPage->SetScrollRate( 5, 5 );
 	wxFlexGridSizer* mainSizer;
 	mainSizer = new wxFlexGridSizer( 2, 3, 0, 0 );
@@ -738,13 +762,13 @@ DlgRuleEditorFilterSfsPageBase::DlgRuleEditorFilterSfsPageBase( wxWindow* parent
 	
 	wxString validActionRadioBoxChoices[] = { _("allow"), _("deny"), _("ask") };
 	int validActionRadioBoxNChoices = sizeof( validActionRadioBoxChoices ) / sizeof( wxString );
-	validActionRadioBox = new wxRadioBox( mainPage, wxID_ANY, _("Action"), wxDefaultPosition, wxDefaultSize, validActionRadioBoxNChoices, validActionRadioBoxChoices, 1, wxRA_SPECIFY_ROWS );
+	validActionRadioBox = new wxRadioBox( mainPage, wxID_ANY, _("Action"), wxDefaultPosition, wxDefaultSize, validActionRadioBoxNChoices, validActionRadioBoxChoices, 1, wxRA_SPECIFY_ROWS|wxTAB_TRAVERSAL );
 	validActionRadioBox->SetSelection( 0 );
 	mainSizer->Add( validActionRadioBox, 0, wxALL, 5 );
 	
 	wxString validLogRadioBoxChoices[] = { _("none"), _("normal"), _("alert") };
 	int validLogRadioBoxNChoices = sizeof( validLogRadioBoxChoices ) / sizeof( wxString );
-	validLogRadioBox = new wxRadioBox( mainPage, wxID_ANY, _("Log"), wxDefaultPosition, wxDefaultSize, validLogRadioBoxNChoices, validLogRadioBoxChoices, 1, wxRA_SPECIFY_ROWS );
+	validLogRadioBox = new wxRadioBox( mainPage, wxID_ANY, _("Log"), wxDefaultPosition, wxDefaultSize, validLogRadioBoxNChoices, validLogRadioBoxChoices, 1, wxRA_SPECIFY_ROWS|wxTAB_TRAVERSAL );
 	validLogRadioBox->SetSelection( 2 );
 	mainSizer->Add( validLogRadioBox, 0, wxALL, 5 );
 	
@@ -763,13 +787,13 @@ DlgRuleEditorFilterSfsPageBase::DlgRuleEditorFilterSfsPageBase( wxWindow* parent
 	
 	wxString invalidActionRadioBoxChoices[] = { _("allow"), _("deny"), _("ask") };
 	int invalidActionRadioBoxNChoices = sizeof( invalidActionRadioBoxChoices ) / sizeof( wxString );
-	invalidActionRadioBox = new wxRadioBox( mainPage, wxID_ANY, _("Action"), wxDefaultPosition, wxDefaultSize, invalidActionRadioBoxNChoices, invalidActionRadioBoxChoices, 1, wxRA_SPECIFY_ROWS );
+	invalidActionRadioBox = new wxRadioBox( mainPage, wxID_ANY, _("Action"), wxDefaultPosition, wxDefaultSize, invalidActionRadioBoxNChoices, invalidActionRadioBoxChoices, 1, wxRA_SPECIFY_ROWS|wxTAB_TRAVERSAL );
 	invalidActionRadioBox->SetSelection( 1 );
 	mainSizer->Add( invalidActionRadioBox, 0, wxALL, 5 );
 	
 	wxString invalidLogRadioBoxChoices[] = { _("none"), _("normal"), _("alert") };
 	int invalidLogRadioBoxNChoices = sizeof( invalidLogRadioBoxChoices ) / sizeof( wxString );
-	invalidLogRadioBox = new wxRadioBox( mainPage, wxID_ANY, _("Log"), wxDefaultPosition, wxDefaultSize, invalidLogRadioBoxNChoices, invalidLogRadioBoxChoices, 1, wxRA_SPECIFY_ROWS );
+	invalidLogRadioBox = new wxRadioBox( mainPage, wxID_ANY, _("Log"), wxDefaultPosition, wxDefaultSize, invalidLogRadioBoxNChoices, invalidLogRadioBoxChoices, 1, wxRA_SPECIFY_ROWS|wxTAB_TRAVERSAL );
 	invalidLogRadioBox->SetSelection( 2 );
 	mainSizer->Add( invalidLogRadioBox, 0, wxALL, 5 );
 	
@@ -788,13 +812,13 @@ DlgRuleEditorFilterSfsPageBase::DlgRuleEditorFilterSfsPageBase( wxWindow* parent
 	
 	wxString unknownActionRadioBoxChoices[] = { _("allow"), _("deny"), _("ask") };
 	int unknownActionRadioBoxNChoices = sizeof( unknownActionRadioBoxChoices ) / sizeof( wxString );
-	unknownActionRadioBox = new wxRadioBox( mainPage, wxID_ANY, _("Action"), wxDefaultPosition, wxDefaultSize, unknownActionRadioBoxNChoices, unknownActionRadioBoxChoices, 1, wxRA_SPECIFY_ROWS );
+	unknownActionRadioBox = new wxRadioBox( mainPage, wxID_ANY, _("Action"), wxDefaultPosition, wxDefaultSize, unknownActionRadioBoxNChoices, unknownActionRadioBoxChoices, 1, wxRA_SPECIFY_ROWS|wxTAB_TRAVERSAL );
 	unknownActionRadioBox->SetSelection( 1 );
 	mainSizer->Add( unknownActionRadioBox, 0, wxALL, 5 );
 	
 	wxString unknownLogRadioBoxChoices[] = { _("none"), _("normal"), _("alert") };
 	int unknownLogRadioBoxNChoices = sizeof( unknownLogRadioBoxChoices ) / sizeof( wxString );
-	unknownLogRadioBox = new wxRadioBox( mainPage, wxID_ANY, _("Log"), wxDefaultPosition, wxDefaultSize, unknownLogRadioBoxNChoices, unknownLogRadioBoxChoices, 1, wxRA_SPECIFY_ROWS );
+	unknownLogRadioBox = new wxRadioBox( mainPage, wxID_ANY, _("Log"), wxDefaultPosition, wxDefaultSize, unknownLogRadioBoxNChoices, unknownLogRadioBoxChoices, 1, wxRA_SPECIFY_ROWS|wxTAB_TRAVERSAL );
 	unknownLogRadioBox->SetSelection( 2 );
 	mainSizer->Add( unknownLogRadioBox, 0, wxALL, 5 );
 	
@@ -820,7 +844,7 @@ DlgRuleEditorFilterContextPageBase::DlgRuleEditorFilterContextPageBase( wxWindow
 	wxBoxSizer* pageSizer;
 	pageSizer = new wxBoxSizer( wxVERTICAL );
 	
-	mainPage = new wxScrolledWindow( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxVSCROLL );
+	mainPage = new wxScrolledWindow( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxTAB_TRAVERSAL|wxVSCROLL );
 	mainPage->SetScrollRate( 5, 5 );
 	wxBoxSizer* mainSizer;
 	mainSizer = new wxBoxSizer( wxVERTICAL );
@@ -922,6 +946,7 @@ DlgRuleEditorFilterContextPageBase::DlgRuleEditorFilterContextPageBase( wxWindow
 	// Connect Events
 	newRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorFilterContextPageBase::onNewRadioButton ), NULL, this );
 	openRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorFilterContextPageBase::onOpenRadioButton ), NULL, this );
+	binaryTextCtrl->Connect( wxEVT_KILL_FOCUS, wxFocusEventHandler( DlgRuleEditorFilterContextPageBase::onBinaryTestKillFocus ), NULL, this );
 	binaryTextCtrl->Connect( wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler( DlgRuleEditorFilterContextPageBase::onBinaryTextEnter ), NULL, this );
 	modifyButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorFilterContextPageBase::onModifyButton ), NULL, this );
 	validateButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorFilterContextPageBase::onValidateButton ), NULL, this );
@@ -933,7 +958,7 @@ DlgRuleEditorFilterPermissionPageBase::DlgRuleEditorFilterPermissionPageBase( wx
 	wxBoxSizer* pageSizer;
 	pageSizer = new wxBoxSizer( wxVERTICAL );
 	
-	mainPage = new wxScrolledWindow( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxVSCROLL );
+	mainPage = new wxScrolledWindow( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxTAB_TRAVERSAL|wxVSCROLL );
 	mainPage->SetScrollRate( 5, 5 );
 	wxFlexGridSizer* mainSizer;
 	mainSizer = new wxFlexGridSizer( 1, 4, 0, 0 );

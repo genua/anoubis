@@ -37,19 +37,196 @@ DlgRuleEditorFilterNetworkPage::DlgRuleEditorFilterNetworkPage(wxWindow *parent,
 void
 DlgRuleEditorFilterNetworkPage::update(Subject *subject)
 {
-	if (subject != policy_) {
-		/* This is not our policy! */
-		return;
+	if (subject == policy_) {
+		/* This is our policy. */
+		showDirection();
+		showAddressFamily();
+		showProtocol();
+		showStateTimeout();
 	}
 }
 
 void
 DlgRuleEditorFilterNetworkPage::select(FilterPolicy *policy)
 {
-	DlgRuleEditorFilterPage::select(policy);
+	if (policy->IsKindOf(CLASSINFO(AlfFilterPolicy))) {
+		policy_ = wxDynamicCast(policy, AlfFilterPolicy);
+		DlgRuleEditorFilterPage::select(policy);
+		Show();
+	}
 }
 
 void
-DlgRuleEditorFilterNetworkPage::clear(void)
+DlgRuleEditorFilterNetworkPage::deselect(void)
 {
+	policy_ = NULL;
+	DlgRuleEditorFilterPage::deselect();
+	Hide();
+}
+
+void
+DlgRuleEditorFilterNetworkPage::showDirection(void)
+{
+	if (policy_ == NULL) {
+		return;
+	}
+
+	switch (policy_->getDirectionNo()) {
+	case APN_SEND:
+		inRadioButton->SetLabel(wxT("receive"));
+		outRadioButton->SetLabel(wxT("send"));
+		outRadioButton->SetValue(true);
+		break;
+	case APN_CONNECT:
+		inRadioButton->SetLabel(wxT("accept"));
+		outRadioButton->SetLabel(wxT("connect"));
+		outRadioButton->SetValue(true);
+		break;
+	case APN_RECEIVE:
+		outRadioButton->SetLabel(wxT("send"));
+		inRadioButton->SetLabel(wxT("receive"));
+		inRadioButton->SetValue(true);
+		break;
+	case APN_ACCEPT:
+		outRadioButton->SetLabel(wxT("connect"));
+		inRadioButton->SetLabel(wxT("accept"));
+		inRadioButton->SetValue(true);
+		break;
+	case APN_BOTH:
+		bothRadioButton->SetValue(true);
+		break;
+	default:
+		inRadioButton->SetValue(false);
+		outRadioButton->SetValue(false);
+		bothRadioButton->SetValue(false);
+	}
+
+	Layout();
+	Refresh();
+}
+
+void
+DlgRuleEditorFilterNetworkPage::showAddressFamily(void)
+{
+	if (policy_ == NULL) {
+		return;
+	}
+
+	switch (policy_->getAddrFamilyNo()) {
+	case AF_INET:
+		inetRadioButton->SetValue(true);
+		break;
+	case AF_INET6:
+		inet6RadioButton->SetValue(true);
+		break;
+	case 0: /* ANY */
+		anyRadioButton->SetValue(true);
+		break;
+	default:
+		inetRadioButton->SetValue(false);
+		inet6RadioButton->SetValue(false);
+		anyRadioButton->SetValue(false);
+	}
+}
+
+void
+DlgRuleEditorFilterNetworkPage::showProtocol(void)
+{
+	if (policy_ == NULL) {
+		return;
+	}
+
+	switch (policy_->getProtocolNo()) {
+	case IPPROTO_TCP:
+		tcpRadioButton->SetValue(true);
+		break;
+	case IPPROTO_UDP:
+		udpRadioButton->SetValue(true);
+		break;
+	default:
+		tcpRadioButton->SetValue(false);
+		udpRadioButton->SetValue(false);
+	}
+}
+
+void
+DlgRuleEditorFilterNetworkPage::showStateTimeout(void)
+{
+	if (policy_ != NULL) {
+		stateTimeoutSpinCtrl->SetValue(policy_->getStateTimeoutNo());
+	}
+}
+
+void
+DlgRuleEditorFilterNetworkPage::onInRadioButton(wxCommandEvent &)
+{
+	if (policy_ != NULL) {
+		/* In case of udp, policy will change this to APN_RECEIVE. */
+		policy_->setDirectionNo(APN_ACCEPT);
+	}
+}
+
+void
+DlgRuleEditorFilterNetworkPage::onOutRadioButton(wxCommandEvent &)
+{
+	if (policy_ != NULL) {
+		/* In case of udp, policy will change this to APN_SEND. */
+		policy_->setDirectionNo(APN_CONNECT);
+	}
+}
+
+void
+DlgRuleEditorFilterNetworkPage::onBothRadioButton(wxCommandEvent &)
+{
+	if (policy_ != NULL) {
+		policy_->setDirectionNo(APN_BOTH);
+	}
+}
+
+void
+DlgRuleEditorFilterNetworkPage::onInetRadioButton(wxCommandEvent &)
+{
+	if (policy_ != NULL) {
+		policy_->setAddrFamilyNo(AF_INET);
+	}
+}
+
+void
+DlgRuleEditorFilterNetworkPage::onInet6RadioButton(wxCommandEvent &)
+{
+	if (policy_ != NULL) {
+		policy_->setAddrFamilyNo(AF_INET6);
+	}
+}
+
+void
+DlgRuleEditorFilterNetworkPage::onAnyRadioButton(wxCommandEvent &)
+{
+	if (policy_ != NULL) {
+		policy_->setAddrFamilyNo(0);
+	}
+}
+
+void
+DlgRuleEditorFilterNetworkPage::onTcpRadioButton(wxCommandEvent &)
+{
+	if (policy_ != NULL) {
+		policy_->setProtocol(IPPROTO_TCP);
+	}
+}
+
+void
+DlgRuleEditorFilterNetworkPage::onUdpRadioButton(wxCommandEvent &)
+{
+	if (policy_ != NULL) {
+		policy_->setProtocol(IPPROTO_UDP);
+	}
+}
+
+void
+DlgRuleEditorFilterNetworkPage::onStateTimeoutSpinCtrl(wxSpinEvent & event)
+{
+	if (policy_ != NULL) {
+		policy_->setStateTimeout((int)event.GetPosition());
+	}
 }

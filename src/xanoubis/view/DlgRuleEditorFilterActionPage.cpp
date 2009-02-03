@@ -45,8 +45,8 @@ DlgRuleEditorFilterActionPage::update(Subject *subject)
 {
 	if (subject == policy_) {
 		/* This is our policy. */
-		showAction(policy_->getActionNo());
-		showLog(policy_->getLogNo());
+		showAction();
+		showLog();
 	}
 }
 
@@ -58,6 +58,7 @@ DlgRuleEditorFilterActionPage::select(FilterPolicy *policy)
 	    policy->IsKindOf(CLASSINFO(SbAccessFilterPolicy)) ||
 	    policy->IsKindOf(CLASSINFO(DefaultFilterPolicy)) ||
 	    policy->IsKindOf(CLASSINFO(SfsDefaultFilterPolicy)) ) {
+		policy_ = policy;
 		DlgRuleEditorFilterPage::select(policy);
 		Show();
 	}
@@ -66,26 +67,19 @@ DlgRuleEditorFilterActionPage::select(FilterPolicy *policy)
 void
 DlgRuleEditorFilterActionPage::deselect(void)
 {
+	policy_ = NULL;
 	DlgRuleEditorFilterPage::deselect();
 	Hide();
 }
 
 void
-DlgRuleEditorFilterActionPage::clear(void)
+DlgRuleEditorFilterActionPage::showAction(void)
 {
-	showAction(-1);
-	showLog(-1);
-}
+	if (policy_ == NULL) {
+		return;
+	}
 
-void
-DlgRuleEditorFilterActionPage::showAction(int action)
-{
-	actionLabel->Enable();
-	allowRadioButton->Enable();
-	denyRadioButton->Enable();
-	askRadioButton->Enable();
-
-	switch (action) {
+	switch (policy_->getActionNo()) {
 	case APN_ACTION_ALLOW:
 		allowRadioButton->SetValue(true);
 		break;
@@ -96,23 +90,20 @@ DlgRuleEditorFilterActionPage::showAction(int action)
 		askRadioButton->SetValue(true);
 		break;
 	default:
-		denyRadioButton->SetValue(true);
-		actionLabel->Disable();
-		allowRadioButton->Disable();
-		denyRadioButton->Disable();
-		askRadioButton->Disable();
+		allowRadioButton->SetValue(false);
+		denyRadioButton->SetValue(false);
+		askRadioButton->SetValue(false);
 	}
 }
 
 void
-DlgRuleEditorFilterActionPage::showLog(int log)
+DlgRuleEditorFilterActionPage::showLog(void)
 {
-	logLabel->Enable();
-	noneRadioButton->Enable();
-	normalRadioButton->Enable();
-	alertRadioButton->Enable();
+	if (policy_ == NULL) {
+		return;
+	}
 
-	switch (log) {
+	switch (policy_->getLogNo()) {
 	case APN_LOG_NONE:
 		noneRadioButton->SetValue(true);
 		break;
@@ -123,12 +114,8 @@ DlgRuleEditorFilterActionPage::showLog(int log)
 		alertRadioButton->SetValue(true);
 		break;
 	default:
-		logLabel->Disable();
-		noneRadioButton->Disable();
 		noneRadioButton->SetValue(false);
-		normalRadioButton->Disable();
 		normalRadioButton->SetValue(false);
-		alertRadioButton->Disable();
 		alertRadioButton->SetValue(false);
 	}
 }

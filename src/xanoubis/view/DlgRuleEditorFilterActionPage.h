@@ -34,6 +34,9 @@
 /**
  * This is the filter action page.
  *
+ * This page is responsible for AlfFilterPolicies, AlfCapabilityFilterPolicies,
+ * SbAccessFilterPolicies, DefaultFilterPolicies and SfsDefaultFilterPolicies.
+ *
  * This is a derrived class from DlgRuleEditorFilterPage to inherrit the
  * mechanims of selection and deselection and observing the policy. In
  * addition we derrived from DlgRuleEditorFilterActionPageBase to gain
@@ -84,34 +87,23 @@ class DlgRuleEditorFilterActionPage : public DlgRuleEditorFilterPage,
 
 	private:
 		/**
-		 * Clean the widgets.
-		 * Use this to wipe the values from the widgets.
-		 * @param None.
-		 * @return Nothing.
-		 * @see showAction()
-		 * @see showLog()
+		 * This holds the policy been edited by this page.
 		 */
-		virtual void clear(void);
+		FilterPolicy *policy_;
 
 		/**
 		 * Update action widgets.
-		 * This will enable all widgets related to 'action'.
-		 * The given action value is shown by the widgets.
-		 * For invalid action values the widgets are disabled.
-		 * @param[in] 1st The apn action value.
+		 * @param None.
 		 * @return Nothing.
 		 */
-		void showAction(int);
+		void showAction(void);
 
 		/**
 		 * Update log widgets.
-		 * This will enable all widgets related to 'log'.
-		 * The given log value is shown by the widgets.
-		 * For invalid log values the widgets are disabled.
-		 * @param[in] 1st The apn log value.
+		 * @param None.
 		 * @return Nothing.
 		 */
-		void showLog(int);
+		void showLog(void);
 
 		/**
 		 * Handle events from allowRadioButton.

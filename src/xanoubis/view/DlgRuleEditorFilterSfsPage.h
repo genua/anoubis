@@ -30,9 +30,18 @@
 
 #include "DlgRuleEditorBase.h"
 #include "DlgRuleEditorFilterPage.h"
+#include "FilterPolicy.h"
+#include "SfsFilterPolicy.h"
 
 /**
+ * This is the filter sfs page.
  *
+ * This page is responsible only for SfsFilterPolicies.
+ *
+ * This is a derrived class from DlgRuleEditorFilterPage to inherrit the
+ * mechanims of selection and deselection and observing the policy. In
+ * addition we derrived from DlgRuleEditorFilterSfsPageBase to gain
+ * access to the widgets and implement the event methods of them.
  */
 class DlgRuleEditorFilterSfsPage : public DlgRuleEditorFilterPage,
     public DlgRuleEditorFilterSfsPageBase
@@ -50,20 +59,107 @@ class DlgRuleEditorFilterSfsPage : public DlgRuleEditorFilterPage,
 		    long style = wxTAB_TRAVERSAL);
 
 		/**
-		 *
+		 * Update the widgets.
+		 * This is called whenever the assigned policy was modified
+		 * or during selection to fill all widgets with the appropriate
+		 * value.
+		 * @param[in] 1st The policy been observed and modified.
+		 * @return Nothing.
 		 */
 		virtual void update(Subject *);
 
 		/**
-		 *
+		 * Select this page.
+		 * This will check for the type of policy. If the policy is
+		 * one of the types this page is interrested in the
+		 * base class method will been called and this page is shown.
+		 * @param[in] 1st The selected filter policy.
+		 * @return Nothing.
 		 */
 		virtual void select(FilterPolicy *);
 
+		/**
+		 * Deselect this page.
+		 * This will runn the base class method and hide this page.
+		 * @param None.
+		 * @return Noting.
+		 */
+		virtual void deselect(void);
+
 	private:
 		/**
-		 *
+		 * This holds the policy been edited by this page.
 		 */
-		virtual void clear(void);
+		SfsFilterPolicy *policy_;
+
+		/**
+		 * Update valid widgets.
+		 * @param None.
+		 * @return Nothing.
+		 */
+		void showValid(void);
+
+		/**
+		 * Update invalid widgets.
+		 * @param None.
+		 * @return Nothing.
+		 */
+		void showInvalid(void);
+
+		/**
+		 * Update unknown widgets.
+		 * @param None.
+		 * @return Nothing.
+		 */
+		void showUnknown(void);
+
+		/**
+		 * Handle events from validActionRadioBox.
+		 * This will set the conserning action to the policy.
+		 * @param[in] 1st The event.
+		 * @return Nothing.
+		 */
+		virtual void onValidActionRadioBox(wxCommandEvent &);
+
+		/**
+		 * Handle events from validLogRadioBox.
+		 * This will set the conserning log to the policy.
+		 * @param[in] 1st The event.
+		 * @return Nothing.
+		 */
+		virtual void onValidLogRadioBox(wxCommandEvent &);
+
+		/**
+		 * Handle events from invalidActionRadioBox.
+		 * This will set the conserning action to the policy.
+		 * @param[in] 1st The event.
+		 * @return Nothing.
+		 */
+		virtual void onInvalidActionRadioBox(wxCommandEvent &);
+
+		/**
+		 * Handle events from invalidLogRadioBox.
+		 * This will set the conserning log to the policy.
+		 * @param[in] 1st The event.
+		 * @return Nothing.
+		 */
+		virtual void onInvalidLogRadioBox(wxCommandEvent &);
+
+		/**
+		 * Handle events from unknownActionRadioBox.
+		 * This will set the conserning action to the policy.
+		 * @param[in] 1st The event.
+		 * @return Nothing.
+		 */
+		virtual void onUnknownActionRadioBox(wxCommandEvent &);
+
+		/**
+		 * Handle events from unknownLogRadioBox.
+		 * This will set the conserning log to the policy.
+		 * @param[in] 1st The event.
+		 * @return Nothing.
+		 */
+		virtual void onUnknownLogRadioBox(wxCommandEvent &);
 };
 
 #endif	/* _DLGRULEEDITORFILTERSFSPAGE_H_ */

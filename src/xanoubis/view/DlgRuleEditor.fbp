@@ -2234,6 +2234,342 @@
                                                     <event name="OnUpdateUI"></event>
                                                 </object>
                                             </object>
+                                            <object class="notebookpage" expanded="1">
+                                                <property name="bitmap"></property>
+                                                <property name="label">Network</property>
+                                                <property name="select">0</property>
+                                                <object class="wxPanel" expanded="1">
+                                                    <property name="bg"></property>
+                                                    <property name="context_help"></property>
+                                                    <property name="enabled">1</property>
+                                                    <property name="fg"></property>
+                                                    <property name="font"></property>
+                                                    <property name="hidden">1</property>
+                                                    <property name="id">wxID_ANY</property>
+                                                    <property name="maximum_size"></property>
+                                                    <property name="minimum_size"></property>
+                                                    <property name="name">filterNetworkPage</property>
+                                                    <property name="permission">protected</property>
+                                                    <property name="pos"></property>
+                                                    <property name="size"></property>
+                                                    <property name="subclass">DlgRuleEditorFilterNetworkPage; DlgRuleEditorFilterNetworkPage.h</property>
+                                                    <property name="tooltip"></property>
+                                                    <property name="window_extra_style"></property>
+                                                    <property name="window_name"></property>
+                                                    <property name="window_style">wxTAB_TRAVERSAL</property>
+                                                    <event name="OnChar"></event>
+                                                    <event name="OnEnterWindow"></event>
+                                                    <event name="OnEraseBackground"></event>
+                                                    <event name="OnKeyDown"></event>
+                                                    <event name="OnKeyUp"></event>
+                                                    <event name="OnKillFocus"></event>
+                                                    <event name="OnLeaveWindow"></event>
+                                                    <event name="OnLeftDClick"></event>
+                                                    <event name="OnLeftDown"></event>
+                                                    <event name="OnLeftUp"></event>
+                                                    <event name="OnMiddleDClick"></event>
+                                                    <event name="OnMiddleDown"></event>
+                                                    <event name="OnMiddleUp"></event>
+                                                    <event name="OnMotion"></event>
+                                                    <event name="OnMouseEvents"></event>
+                                                    <event name="OnMouseWheel"></event>
+                                                    <event name="OnPaint"></event>
+                                                    <event name="OnRightDClick"></event>
+                                                    <event name="OnRightDown"></event>
+                                                    <event name="OnRightUp"></event>
+                                                    <event name="OnSetFocus"></event>
+                                                    <event name="OnSize"></event>
+                                                    <event name="OnUpdateUI"></event>
+                                                </object>
+                                            </object>
+                                            <object class="notebookpage" expanded="1">
+                                                <property name="bitmap"></property>
+                                                <property name="label">Address</property>
+                                                <property name="select">0</property>
+                                                <object class="wxPanel" expanded="1">
+                                                    <property name="bg"></property>
+                                                    <property name="context_help"></property>
+                                                    <property name="enabled">1</property>
+                                                    <property name="fg"></property>
+                                                    <property name="font"></property>
+                                                    <property name="hidden">1</property>
+                                                    <property name="id">wxID_ANY</property>
+                                                    <property name="maximum_size"></property>
+                                                    <property name="minimum_size"></property>
+                                                    <property name="name">fitlerAddressPage</property>
+                                                    <property name="permission">protected</property>
+                                                    <property name="pos"></property>
+                                                    <property name="size"></property>
+                                                    <property name="subclass">DlgRuleEditorFilterAddressPage; DlgRuleEditorFilterAddressPage.h</property>
+                                                    <property name="tooltip"></property>
+                                                    <property name="window_extra_style"></property>
+                                                    <property name="window_name"></property>
+                                                    <property name="window_style">wxTAB_TRAVERSAL</property>
+                                                    <event name="OnChar"></event>
+                                                    <event name="OnEnterWindow"></event>
+                                                    <event name="OnEraseBackground"></event>
+                                                    <event name="OnKeyDown"></event>
+                                                    <event name="OnKeyUp"></event>
+                                                    <event name="OnKillFocus"></event>
+                                                    <event name="OnLeaveWindow"></event>
+                                                    <event name="OnLeftDClick"></event>
+                                                    <event name="OnLeftDown"></event>
+                                                    <event name="OnLeftUp"></event>
+                                                    <event name="OnMiddleDClick"></event>
+                                                    <event name="OnMiddleDown"></event>
+                                                    <event name="OnMiddleUp"></event>
+                                                    <event name="OnMotion"></event>
+                                                    <event name="OnMouseEvents"></event>
+                                                    <event name="OnMouseWheel"></event>
+                                                    <event name="OnPaint"></event>
+                                                    <event name="OnRightDClick"></event>
+                                                    <event name="OnRightDown"></event>
+                                                    <event name="OnRightUp"></event>
+                                                    <event name="OnSetFocus"></event>
+                                                    <event name="OnSize"></event>
+                                                    <event name="OnUpdateUI"></event>
+                                                </object>
+                                            </object>
+                                            <object class="notebookpage" expanded="1">
+                                                <property name="bitmap"></property>
+                                                <property name="label">Capability</property>
+                                                <property name="select">0</property>
+                                                <object class="wxPanel" expanded="1">
+                                                    <property name="bg"></property>
+                                                    <property name="context_help"></property>
+                                                    <property name="enabled">1</property>
+                                                    <property name="fg"></property>
+                                                    <property name="font"></property>
+                                                    <property name="hidden">1</property>
+                                                    <property name="id">wxID_ANY</property>
+                                                    <property name="maximum_size"></property>
+                                                    <property name="minimum_size"></property>
+                                                    <property name="name">filterCapabilityPage</property>
+                                                    <property name="permission">protected</property>
+                                                    <property name="pos"></property>
+                                                    <property name="size"></property>
+                                                    <property name="subclass">DlgRuleEditorFilterCapabilityPage; DlgRuleEditorFilterCapabilityPage.h</property>
+                                                    <property name="tooltip"></property>
+                                                    <property name="window_extra_style"></property>
+                                                    <property name="window_name"></property>
+                                                    <property name="window_style">wxTAB_TRAVERSAL</property>
+                                                    <event name="OnChar"></event>
+                                                    <event name="OnEnterWindow"></event>
+                                                    <event name="OnEraseBackground"></event>
+                                                    <event name="OnKeyDown"></event>
+                                                    <event name="OnKeyUp"></event>
+                                                    <event name="OnKillFocus"></event>
+                                                    <event name="OnLeaveWindow"></event>
+                                                    <event name="OnLeftDClick"></event>
+                                                    <event name="OnLeftDown"></event>
+                                                    <event name="OnLeftUp"></event>
+                                                    <event name="OnMiddleDClick"></event>
+                                                    <event name="OnMiddleDown"></event>
+                                                    <event name="OnMiddleUp"></event>
+                                                    <event name="OnMotion"></event>
+                                                    <event name="OnMouseEvents"></event>
+                                                    <event name="OnMouseWheel"></event>
+                                                    <event name="OnPaint"></event>
+                                                    <event name="OnRightDClick"></event>
+                                                    <event name="OnRightDown"></event>
+                                                    <event name="OnRightUp"></event>
+                                                    <event name="OnSetFocus"></event>
+                                                    <event name="OnSize"></event>
+                                                    <event name="OnUpdateUI"></event>
+                                                </object>
+                                            </object>
+                                            <object class="notebookpage" expanded="1">
+                                                <property name="bitmap"></property>
+                                                <property name="label">Subject</property>
+                                                <property name="select">0</property>
+                                                <object class="wxPanel" expanded="1">
+                                                    <property name="bg"></property>
+                                                    <property name="context_help"></property>
+                                                    <property name="enabled">1</property>
+                                                    <property name="fg"></property>
+                                                    <property name="font"></property>
+                                                    <property name="hidden">1</property>
+                                                    <property name="id">wxID_ANY</property>
+                                                    <property name="maximum_size"></property>
+                                                    <property name="minimum_size"></property>
+                                                    <property name="name">filterSubjectPage</property>
+                                                    <property name="permission">protected</property>
+                                                    <property name="pos"></property>
+                                                    <property name="size"></property>
+                                                    <property name="subclass">DlgRuleEditorFilterSubjectPage; DlgRuleEditorFilterSubjectPage.h</property>
+                                                    <property name="tooltip"></property>
+                                                    <property name="window_extra_style"></property>
+                                                    <property name="window_name"></property>
+                                                    <property name="window_style">wxTAB_TRAVERSAL</property>
+                                                    <event name="OnChar"></event>
+                                                    <event name="OnEnterWindow"></event>
+                                                    <event name="OnEraseBackground"></event>
+                                                    <event name="OnKeyDown"></event>
+                                                    <event name="OnKeyUp"></event>
+                                                    <event name="OnKillFocus"></event>
+                                                    <event name="OnLeaveWindow"></event>
+                                                    <event name="OnLeftDClick"></event>
+                                                    <event name="OnLeftDown"></event>
+                                                    <event name="OnLeftUp"></event>
+                                                    <event name="OnMiddleDClick"></event>
+                                                    <event name="OnMiddleDown"></event>
+                                                    <event name="OnMiddleUp"></event>
+                                                    <event name="OnMotion"></event>
+                                                    <event name="OnMouseEvents"></event>
+                                                    <event name="OnMouseWheel"></event>
+                                                    <event name="OnPaint"></event>
+                                                    <event name="OnRightDClick"></event>
+                                                    <event name="OnRightDown"></event>
+                                                    <event name="OnRightUp"></event>
+                                                    <event name="OnSetFocus"></event>
+                                                    <event name="OnSize"></event>
+                                                    <event name="OnUpdateUI"></event>
+                                                </object>
+                                            </object>
+                                            <object class="notebookpage" expanded="1">
+                                                <property name="bitmap"></property>
+                                                <property name="label">Valid / Invalid / Unknown</property>
+                                                <property name="select">0</property>
+                                                <object class="wxPanel" expanded="1">
+                                                    <property name="bg"></property>
+                                                    <property name="context_help"></property>
+                                                    <property name="enabled">1</property>
+                                                    <property name="fg"></property>
+                                                    <property name="font"></property>
+                                                    <property name="hidden">1</property>
+                                                    <property name="id">wxID_ANY</property>
+                                                    <property name="maximum_size"></property>
+                                                    <property name="minimum_size"></property>
+                                                    <property name="name">filterSfsPage</property>
+                                                    <property name="permission">protected</property>
+                                                    <property name="pos"></property>
+                                                    <property name="size"></property>
+                                                    <property name="subclass">DlgRuleEditorFilterSfsPage; DlgRuleEditorFilterSfsPage.h</property>
+                                                    <property name="tooltip"></property>
+                                                    <property name="window_extra_style"></property>
+                                                    <property name="window_name"></property>
+                                                    <property name="window_style">wxTAB_TRAVERSAL</property>
+                                                    <event name="OnChar"></event>
+                                                    <event name="OnEnterWindow"></event>
+                                                    <event name="OnEraseBackground"></event>
+                                                    <event name="OnKeyDown"></event>
+                                                    <event name="OnKeyUp"></event>
+                                                    <event name="OnKillFocus"></event>
+                                                    <event name="OnLeaveWindow"></event>
+                                                    <event name="OnLeftDClick"></event>
+                                                    <event name="OnLeftDown"></event>
+                                                    <event name="OnLeftUp"></event>
+                                                    <event name="OnMiddleDClick"></event>
+                                                    <event name="OnMiddleDown"></event>
+                                                    <event name="OnMiddleUp"></event>
+                                                    <event name="OnMotion"></event>
+                                                    <event name="OnMouseEvents"></event>
+                                                    <event name="OnMouseWheel"></event>
+                                                    <event name="OnPaint"></event>
+                                                    <event name="OnRightDClick"></event>
+                                                    <event name="OnRightDown"></event>
+                                                    <event name="OnRightUp"></event>
+                                                    <event name="OnSetFocus"></event>
+                                                    <event name="OnSize"></event>
+                                                    <event name="OnUpdateUI"></event>
+                                                </object>
+                                            </object>
+                                            <object class="notebookpage" expanded="1">
+                                                <property name="bitmap"></property>
+                                                <property name="label">Context</property>
+                                                <property name="select">0</property>
+                                                <object class="wxPanel" expanded="1">
+                                                    <property name="bg"></property>
+                                                    <property name="context_help"></property>
+                                                    <property name="enabled">1</property>
+                                                    <property name="fg"></property>
+                                                    <property name="font"></property>
+                                                    <property name="hidden">1</property>
+                                                    <property name="id">wxID_ANY</property>
+                                                    <property name="maximum_size"></property>
+                                                    <property name="minimum_size"></property>
+                                                    <property name="name">filterContextPage</property>
+                                                    <property name="permission">protected</property>
+                                                    <property name="pos"></property>
+                                                    <property name="size"></property>
+                                                    <property name="subclass">DlgRuleEditorFilterContextPage; DlgRuleEditorFilterContextPage.h</property>
+                                                    <property name="tooltip"></property>
+                                                    <property name="window_extra_style"></property>
+                                                    <property name="window_name"></property>
+                                                    <property name="window_style">wxTAB_TRAVERSAL</property>
+                                                    <event name="OnChar"></event>
+                                                    <event name="OnEnterWindow"></event>
+                                                    <event name="OnEraseBackground"></event>
+                                                    <event name="OnKeyDown"></event>
+                                                    <event name="OnKeyUp"></event>
+                                                    <event name="OnKillFocus"></event>
+                                                    <event name="OnLeaveWindow"></event>
+                                                    <event name="OnLeftDClick"></event>
+                                                    <event name="OnLeftDown"></event>
+                                                    <event name="OnLeftUp"></event>
+                                                    <event name="OnMiddleDClick"></event>
+                                                    <event name="OnMiddleDown"></event>
+                                                    <event name="OnMiddleUp"></event>
+                                                    <event name="OnMotion"></event>
+                                                    <event name="OnMouseEvents"></event>
+                                                    <event name="OnMouseWheel"></event>
+                                                    <event name="OnPaint"></event>
+                                                    <event name="OnRightDClick"></event>
+                                                    <event name="OnRightDown"></event>
+                                                    <event name="OnRightUp"></event>
+                                                    <event name="OnSetFocus"></event>
+                                                    <event name="OnSize"></event>
+                                                    <event name="OnUpdateUI"></event>
+                                                </object>
+                                            </object>
+                                            <object class="notebookpage" expanded="1">
+                                                <property name="bitmap"></property>
+                                                <property name="label">Permission</property>
+                                                <property name="select">0</property>
+                                                <object class="wxPanel" expanded="1">
+                                                    <property name="bg"></property>
+                                                    <property name="context_help"></property>
+                                                    <property name="enabled">1</property>
+                                                    <property name="fg"></property>
+                                                    <property name="font"></property>
+                                                    <property name="hidden">1</property>
+                                                    <property name="id">wxID_ANY</property>
+                                                    <property name="maximum_size"></property>
+                                                    <property name="minimum_size"></property>
+                                                    <property name="name">filterPermissionPage</property>
+                                                    <property name="permission">protected</property>
+                                                    <property name="pos"></property>
+                                                    <property name="size"></property>
+                                                    <property name="subclass">DlgRuleEditorFilterPermissionPage; DlgRuleEditorFilterPermissionPage.h</property>
+                                                    <property name="tooltip"></property>
+                                                    <property name="window_extra_style"></property>
+                                                    <property name="window_name"></property>
+                                                    <property name="window_style">wxTAB_TRAVERSAL</property>
+                                                    <event name="OnChar"></event>
+                                                    <event name="OnEnterWindow"></event>
+                                                    <event name="OnEraseBackground"></event>
+                                                    <event name="OnKeyDown"></event>
+                                                    <event name="OnKeyUp"></event>
+                                                    <event name="OnKillFocus"></event>
+                                                    <event name="OnLeaveWindow"></event>
+                                                    <event name="OnLeftDClick"></event>
+                                                    <event name="OnLeftDown"></event>
+                                                    <event name="OnLeftUp"></event>
+                                                    <event name="OnMiddleDClick"></event>
+                                                    <event name="OnMiddleDown"></event>
+                                                    <event name="OnMiddleUp"></event>
+                                                    <event name="OnMotion"></event>
+                                                    <event name="OnMouseEvents"></event>
+                                                    <event name="OnMouseWheel"></event>
+                                                    <event name="OnPaint"></event>
+                                                    <event name="OnRightDClick"></event>
+                                                    <event name="OnRightDown"></event>
+                                                    <event name="OnRightUp"></event>
+                                                    <event name="OnSetFocus"></event>
+                                                    <event name="OnSize"></event>
+                                                    <event name="OnUpdateUI"></event>
+                                                </object>
+                                            </object>
                                         </object>
                                     </object>
                                 </object>
@@ -2643,7 +2979,7 @@
                         <property name="tooltip"></property>
                         <property name="window_extra_style"></property>
                         <property name="window_name"></property>
-                        <property name="window_style">wxHSCROLL|wxVSCROLL</property>
+                        <property name="window_style">wxHSCROLL|wxTAB_TRAVERSAL|wxVSCROLL</property>
                         <event name="OnChar"></event>
                         <event name="OnEnterWindow"></event>
                         <event name="OnEraseBackground"></event>
@@ -3169,7 +3505,7 @@
                         <property name="tooltip"></property>
                         <property name="window_extra_style"></property>
                         <property name="window_name"></property>
-                        <property name="window_style">wxHSCROLL|wxVSCROLL</property>
+                        <property name="window_style">wxHSCROLL|wxTAB_TRAVERSAL|wxVSCROLL</property>
                         <event name="OnChar"></event>
                         <event name="OnEnterWindow"></event>
                         <event name="OnEraseBackground"></event>
@@ -3323,7 +3659,7 @@
                                     <property name="label">connect</property>
                                     <property name="maximum_size"></property>
                                     <property name="minimum_size"></property>
-                                    <property name="name">outRadionButton</property>
+                                    <property name="name">outRadioButton</property>
                                     <property name="permission">protected</property>
                                     <property name="pos"></property>
                                     <property name="size"></property>
@@ -3966,7 +4302,7 @@
                         <property name="tooltip"></property>
                         <property name="window_extra_style"></property>
                         <property name="window_name"></property>
-                        <property name="window_style">wxHSCROLL|wxVSCROLL</property>
+                        <property name="window_style">wxHSCROLL|wxTAB_TRAVERSAL|wxVSCROLL</property>
                         <event name="OnChar"></event>
                         <event name="OnEnterWindow"></event>
                         <event name="OnEraseBackground"></event>
@@ -3991,7 +4327,7 @@
                         <event name="OnSize"></event>
                         <event name="OnUpdateUI"></event>
                         <object class="wxFlexGridSizer" expanded="0">
-                            <property name="cols">4</property>
+                            <property name="cols">2</property>
                             <property name="flexible_direction">wxBOTH</property>
                             <property name="growablecols">1</property>
                             <property name="growablerows"></property>
@@ -4084,7 +4420,7 @@
                                     <event name="OnEraseBackground"></event>
                                     <event name="OnKeyDown"></event>
                                     <event name="OnKeyUp"></event>
-                                    <event name="OnKillFocus"></event>
+                                    <event name="OnKillFocus">onSourceAddressTextKillFocus</event>
                                     <event name="OnLeaveWindow"></event>
                                     <event name="OnLeftDClick"></event>
                                     <event name="OnLeftDown"></event>
@@ -4105,112 +4441,6 @@
                                     <event name="OnTextEnter">onSourceAddressTextEnter</event>
                                     <event name="OnTextMaxLen"></event>
                                     <event name="OnTextURL"></event>
-                                    <event name="OnUpdateUI"></event>
-                                </object>
-                            </object>
-                            <object class="sizeritem" expanded="1">
-                                <property name="border">5</property>
-                                <property name="flag">wxALL|wxALIGN_CENTER_VERTICAL</property>
-                                <property name="proportion">0</property>
-                                <object class="wxStaticText" expanded="1">
-                                    <property name="bg"></property>
-                                    <property name="context_help"></property>
-                                    <property name="enabled">1</property>
-                                    <property name="fg"></property>
-                                    <property name="font"></property>
-                                    <property name="hidden">0</property>
-                                    <property name="id">wxID_ANY</property>
-                                    <property name="label"> / </property>
-                                    <property name="maximum_size"></property>
-                                    <property name="minimum_size"></property>
-                                    <property name="name">sourceAddressDelimiterLabel</property>
-                                    <property name="permission">protected</property>
-                                    <property name="pos"></property>
-                                    <property name="size"></property>
-                                    <property name="style"></property>
-                                    <property name="subclass"></property>
-                                    <property name="tooltip"></property>
-                                    <property name="window_extra_style"></property>
-                                    <property name="window_name"></property>
-                                    <property name="window_style"></property>
-                                    <property name="wrap">-1</property>
-                                    <event name="OnChar"></event>
-                                    <event name="OnEnterWindow"></event>
-                                    <event name="OnEraseBackground"></event>
-                                    <event name="OnKeyDown"></event>
-                                    <event name="OnKeyUp"></event>
-                                    <event name="OnKillFocus"></event>
-                                    <event name="OnLeaveWindow"></event>
-                                    <event name="OnLeftDClick"></event>
-                                    <event name="OnLeftDown"></event>
-                                    <event name="OnLeftUp"></event>
-                                    <event name="OnMiddleDClick"></event>
-                                    <event name="OnMiddleDown"></event>
-                                    <event name="OnMiddleUp"></event>
-                                    <event name="OnMotion"></event>
-                                    <event name="OnMouseEvents"></event>
-                                    <event name="OnMouseWheel"></event>
-                                    <event name="OnPaint"></event>
-                                    <event name="OnRightDClick"></event>
-                                    <event name="OnRightDown"></event>
-                                    <event name="OnRightUp"></event>
-                                    <event name="OnSetFocus"></event>
-                                    <event name="OnSize"></event>
-                                    <event name="OnUpdateUI"></event>
-                                </object>
-                            </object>
-                            <object class="sizeritem" expanded="1">
-                                <property name="border">5</property>
-                                <property name="flag">wxALL|wxALIGN_CENTER_VERTICAL</property>
-                                <property name="proportion">0</property>
-                                <object class="wxSpinCtrl" expanded="1">
-                                    <property name="bg"></property>
-                                    <property name="context_help"></property>
-                                    <property name="enabled">1</property>
-                                    <property name="fg"></property>
-                                    <property name="font"></property>
-                                    <property name="hidden">0</property>
-                                    <property name="id">wxID_ANY</property>
-                                    <property name="initial">0</property>
-                                    <property name="max">128</property>
-                                    <property name="maximum_size"></property>
-                                    <property name="min">0</property>
-                                    <property name="minimum_size"></property>
-                                    <property name="name">soruceAddressNetmaskSpinCtrl</property>
-                                    <property name="permission">protected</property>
-                                    <property name="pos"></property>
-                                    <property name="size">55,-1</property>
-                                    <property name="style">wxSP_ARROW_KEYS</property>
-                                    <property name="subclass"></property>
-                                    <property name="tooltip"></property>
-                                    <property name="value"></property>
-                                    <property name="window_extra_style"></property>
-                                    <property name="window_name"></property>
-                                    <property name="window_style"></property>
-                                    <event name="OnChar"></event>
-                                    <event name="OnEnterWindow"></event>
-                                    <event name="OnEraseBackground"></event>
-                                    <event name="OnKeyDown"></event>
-                                    <event name="OnKeyUp"></event>
-                                    <event name="OnKillFocus"></event>
-                                    <event name="OnLeaveWindow"></event>
-                                    <event name="OnLeftDClick"></event>
-                                    <event name="OnLeftDown"></event>
-                                    <event name="OnLeftUp"></event>
-                                    <event name="OnMiddleDClick"></event>
-                                    <event name="OnMiddleDown"></event>
-                                    <event name="OnMiddleUp"></event>
-                                    <event name="OnMotion"></event>
-                                    <event name="OnMouseEvents"></event>
-                                    <event name="OnMouseWheel"></event>
-                                    <event name="OnPaint"></event>
-                                    <event name="OnRightDClick"></event>
-                                    <event name="OnRightDown"></event>
-                                    <event name="OnRightUp"></event>
-                                    <event name="OnSetFocus"></event>
-                                    <event name="OnSize"></event>
-                                    <event name="OnSpinCtrl">onSourceAddressNetmaskSpinCtrl</event>
-                                    <event name="OnSpinCtrlText"></event>
                                     <event name="OnUpdateUI"></event>
                                 </object>
                             </object>
@@ -4280,7 +4510,7 @@
                                     <property name="maximum_size"></property>
                                     <property name="maxlength">0</property>
                                     <property name="minimum_size"></property>
-                                    <property name="name">sorucePortTextCtrl</property>
+                                    <property name="name">sourcePortTextCtrl</property>
                                     <property name="permission">protected</property>
                                     <property name="pos"></property>
                                     <property name="size"></property>
@@ -4296,7 +4526,7 @@
                                     <event name="OnEraseBackground"></event>
                                     <event name="OnKeyDown"></event>
                                     <event name="OnKeyUp"></event>
-                                    <event name="OnKillFocus"></event>
+                                    <event name="OnKillFocus">onSourcePortTextKillFocus</event>
                                     <event name="OnLeaveWindow"></event>
                                     <event name="OnLeftDClick"></event>
                                     <event name="OnLeftDown"></event>
@@ -4318,26 +4548,6 @@
                                     <event name="OnTextMaxLen"></event>
                                     <event name="OnTextURL"></event>
                                     <event name="OnUpdateUI"></event>
-                                </object>
-                            </object>
-                            <object class="sizeritem" expanded="1">
-                                <property name="border">5</property>
-                                <property name="flag">wxEXPAND</property>
-                                <property name="proportion">1</property>
-                                <object class="spacer" expanded="1">
-                                    <property name="height">0</property>
-                                    <property name="permission">protected</property>
-                                    <property name="width">0</property>
-                                </object>
-                            </object>
-                            <object class="sizeritem" expanded="1">
-                                <property name="border">5</property>
-                                <property name="flag">wxEXPAND</property>
-                                <property name="proportion">1</property>
-                                <object class="spacer" expanded="1">
-                                    <property name="height">0</property>
-                                    <property name="permission">protected</property>
-                                    <property name="width">0</property>
                                 </object>
                             </object>
                             <object class="sizeritem" expanded="1">
@@ -4422,7 +4632,7 @@
                                     <event name="OnEraseBackground"></event>
                                     <event name="OnKeyDown"></event>
                                     <event name="OnKeyUp"></event>
-                                    <event name="OnKillFocus"></event>
+                                    <event name="OnKillFocus">onDestinationAddressTextKillFocus</event>
                                     <event name="OnLeaveWindow"></event>
                                     <event name="OnLeftDClick"></event>
                                     <event name="OnLeftDown"></event>
@@ -4443,112 +4653,6 @@
                                     <event name="OnTextEnter">onDestinationAddressTextEnter</event>
                                     <event name="OnTextMaxLen"></event>
                                     <event name="OnTextURL"></event>
-                                    <event name="OnUpdateUI"></event>
-                                </object>
-                            </object>
-                            <object class="sizeritem" expanded="1">
-                                <property name="border">5</property>
-                                <property name="flag">wxALL|wxALIGN_CENTER_VERTICAL</property>
-                                <property name="proportion">0</property>
-                                <object class="wxStaticText" expanded="1">
-                                    <property name="bg"></property>
-                                    <property name="context_help"></property>
-                                    <property name="enabled">1</property>
-                                    <property name="fg"></property>
-                                    <property name="font"></property>
-                                    <property name="hidden">0</property>
-                                    <property name="id">wxID_ANY</property>
-                                    <property name="label"> / </property>
-                                    <property name="maximum_size"></property>
-                                    <property name="minimum_size"></property>
-                                    <property name="name">destinationAddressDelimiterLabel</property>
-                                    <property name="permission">protected</property>
-                                    <property name="pos"></property>
-                                    <property name="size"></property>
-                                    <property name="style"></property>
-                                    <property name="subclass"></property>
-                                    <property name="tooltip"></property>
-                                    <property name="window_extra_style"></property>
-                                    <property name="window_name"></property>
-                                    <property name="window_style"></property>
-                                    <property name="wrap">-1</property>
-                                    <event name="OnChar"></event>
-                                    <event name="OnEnterWindow"></event>
-                                    <event name="OnEraseBackground"></event>
-                                    <event name="OnKeyDown"></event>
-                                    <event name="OnKeyUp"></event>
-                                    <event name="OnKillFocus"></event>
-                                    <event name="OnLeaveWindow"></event>
-                                    <event name="OnLeftDClick"></event>
-                                    <event name="OnLeftDown"></event>
-                                    <event name="OnLeftUp"></event>
-                                    <event name="OnMiddleDClick"></event>
-                                    <event name="OnMiddleDown"></event>
-                                    <event name="OnMiddleUp"></event>
-                                    <event name="OnMotion"></event>
-                                    <event name="OnMouseEvents"></event>
-                                    <event name="OnMouseWheel"></event>
-                                    <event name="OnPaint"></event>
-                                    <event name="OnRightDClick"></event>
-                                    <event name="OnRightDown"></event>
-                                    <event name="OnRightUp"></event>
-                                    <event name="OnSetFocus"></event>
-                                    <event name="OnSize"></event>
-                                    <event name="OnUpdateUI"></event>
-                                </object>
-                            </object>
-                            <object class="sizeritem" expanded="1">
-                                <property name="border">5</property>
-                                <property name="flag">wxALL|wxALIGN_CENTER_VERTICAL</property>
-                                <property name="proportion">0</property>
-                                <object class="wxSpinCtrl" expanded="1">
-                                    <property name="bg"></property>
-                                    <property name="context_help"></property>
-                                    <property name="enabled">1</property>
-                                    <property name="fg"></property>
-                                    <property name="font"></property>
-                                    <property name="hidden">0</property>
-                                    <property name="id">wxID_ANY</property>
-                                    <property name="initial">0</property>
-                                    <property name="max">128</property>
-                                    <property name="maximum_size"></property>
-                                    <property name="min">0</property>
-                                    <property name="minimum_size"></property>
-                                    <property name="name">destinationAddressNetmaskSpinCtrl</property>
-                                    <property name="permission">protected</property>
-                                    <property name="pos"></property>
-                                    <property name="size">55,-1</property>
-                                    <property name="style">wxSP_ARROW_KEYS</property>
-                                    <property name="subclass"></property>
-                                    <property name="tooltip"></property>
-                                    <property name="value"></property>
-                                    <property name="window_extra_style"></property>
-                                    <property name="window_name"></property>
-                                    <property name="window_style"></property>
-                                    <event name="OnChar"></event>
-                                    <event name="OnEnterWindow"></event>
-                                    <event name="OnEraseBackground"></event>
-                                    <event name="OnKeyDown"></event>
-                                    <event name="OnKeyUp"></event>
-                                    <event name="OnKillFocus"></event>
-                                    <event name="OnLeaveWindow"></event>
-                                    <event name="OnLeftDClick"></event>
-                                    <event name="OnLeftDown"></event>
-                                    <event name="OnLeftUp"></event>
-                                    <event name="OnMiddleDClick"></event>
-                                    <event name="OnMiddleDown"></event>
-                                    <event name="OnMiddleUp"></event>
-                                    <event name="OnMotion"></event>
-                                    <event name="OnMouseEvents"></event>
-                                    <event name="OnMouseWheel"></event>
-                                    <event name="OnPaint"></event>
-                                    <event name="OnRightDClick"></event>
-                                    <event name="OnRightDown"></event>
-                                    <event name="OnRightUp"></event>
-                                    <event name="OnSetFocus"></event>
-                                    <event name="OnSize"></event>
-                                    <event name="OnSpinCtrl">onDestinationAddressNetmaskSpinCtrl</event>
-                                    <event name="OnSpinCtrlText"></event>
                                     <event name="OnUpdateUI"></event>
                                 </object>
                             </object>
@@ -4634,7 +4738,7 @@
                                     <event name="OnEraseBackground"></event>
                                     <event name="OnKeyDown"></event>
                                     <event name="OnKeyUp"></event>
-                                    <event name="OnKillFocus"></event>
+                                    <event name="OnKillFocus">onDestinationPortTextKillFocus</event>
                                     <event name="OnLeaveWindow"></event>
                                     <event name="OnLeftDClick"></event>
                                     <event name="OnLeftDown"></event>
@@ -4734,7 +4838,7 @@
                         <property name="tooltip"></property>
                         <property name="window_extra_style"></property>
                         <property name="window_name"></property>
-                        <property name="window_style">wxHSCROLL|wxVSCROLL</property>
+                        <property name="window_style">wxHSCROLL|wxTAB_TRAVERSAL|wxVSCROLL</property>
                         <event name="OnChar"></event>
                         <event name="OnEnterWindow"></event>
                         <event name="OnEraseBackground"></event>
@@ -5053,7 +5157,7 @@
                         <property name="tooltip"></property>
                         <property name="window_extra_style"></property>
                         <property name="window_name"></property>
-                        <property name="window_style">wxHSCROLL|wxVSCROLL</property>
+                        <property name="window_style">wxHSCROLL|wxTAB_TRAVERSAL|wxVSCROLL</property>
                         <event name="OnChar"></event>
                         <event name="OnEnterWindow"></event>
                         <event name="OnEraseBackground"></event>
@@ -5159,7 +5263,7 @@
                                     <property name="permission">protected</property>
                                     <property name="pos"></property>
                                     <property name="size"></property>
-                                    <property name="style"></property>
+                                    <property name="style">wxTE_PROCESS_ENTER</property>
                                     <property name="subclass"></property>
                                     <property name="tooltip"></property>
                                     <property name="value"></property>
@@ -5171,7 +5275,7 @@
                                     <event name="OnEraseBackground"></event>
                                     <event name="OnKeyDown"></event>
                                     <event name="OnKeyUp"></event>
-                                    <event name="OnKillFocus"></event>
+                                    <event name="OnKillFocus">onPathTextKillFocus</event>
                                     <event name="OnLeaveWindow"></event>
                                     <event name="OnLeftDClick"></event>
                                     <event name="OnLeftDown"></event>
@@ -5189,7 +5293,7 @@
                                     <event name="OnSetFocus"></event>
                                     <event name="OnSize"></event>
                                     <event name="OnText"></event>
-                                    <event name="OnTextEnter"></event>
+                                    <event name="OnTextEnter">onPathTextEnter</event>
                                     <event name="OnTextMaxLen"></event>
                                     <event name="OnTextURL"></event>
                                     <event name="OnUpdateUI"></event>
@@ -5308,7 +5412,7 @@
                                     <property name="enabled">1</property>
                                     <property name="fg"></property>
                                     <property name="font"></property>
-                                    <property name="hidden">0</property>
+                                    <property name="hidden">1</property>
                                     <property name="id">wxID_ANY</property>
                                     <property name="label">any</property>
                                     <property name="maximum_size"></property>
@@ -5594,7 +5698,7 @@
                                             <property name="permission">protected</property>
                                             <property name="pos"></property>
                                             <property name="size"></property>
-                                            <property name="style"></property>
+                                            <property name="style">wxTE_PROCESS_ENTER</property>
                                             <property name="subclass"></property>
                                             <property name="tooltip"></property>
                                             <property name="value"></property>
@@ -5606,7 +5710,7 @@
                                             <event name="OnEraseBackground"></event>
                                             <event name="OnKeyDown"></event>
                                             <event name="OnKeyUp"></event>
-                                            <event name="OnKillFocus"></event>
+                                            <event name="OnKillFocus">onUidTextKillFocus</event>
                                             <event name="OnLeaveWindow"></event>
                                             <event name="OnLeftDClick"></event>
                                             <event name="OnLeftDown"></event>
@@ -5732,7 +5836,7 @@
                                             <property name="permission">protected</property>
                                             <property name="pos"></property>
                                             <property name="size"></property>
-                                            <property name="style"></property>
+                                            <property name="style">wxTE_PROCESS_ENTER</property>
                                             <property name="subclass"></property>
                                             <property name="tooltip"></property>
                                             <property name="value"></property>
@@ -5744,7 +5848,7 @@
                                             <event name="OnEraseBackground"></event>
                                             <event name="OnKeyDown"></event>
                                             <event name="OnKeyUp"></event>
-                                            <event name="OnKillFocus"></event>
+                                            <event name="OnKillFocus">onKeyTextKillFocus</event>
                                             <event name="OnLeaveWindow"></event>
                                             <event name="OnLeftDClick"></event>
                                             <event name="OnLeftDown"></event>
@@ -5853,7 +5957,7 @@
                                     </object>
                                     <object class="sizeritem" expanded="1">
                                         <property name="border">5</property>
-                                        <property name="flag">wxALL|wxEXPAND|wxALIGN_CENTER_VERTICAL</property>
+                                        <property name="flag">wxALL|wxALIGN_CENTER_VERTICAL|wxEXPAND</property>
                                         <property name="proportion">1</property>
                                         <object class="wxTextCtrl" expanded="1">
                                             <property name="bg"></property>
@@ -5870,7 +5974,7 @@
                                             <property name="permission">protected</property>
                                             <property name="pos"></property>
                                             <property name="size"></property>
-                                            <property name="style"></property>
+                                            <property name="style">wxTE_PROCESS_ENTER</property>
                                             <property name="subclass"></property>
                                             <property name="tooltip"></property>
                                             <property name="value"></property>
@@ -5882,7 +5986,7 @@
                                             <event name="OnEraseBackground"></event>
                                             <event name="OnKeyDown"></event>
                                             <event name="OnKeyUp"></event>
-                                            <event name="OnKillFocus"></event>
+                                            <event name="OnKillFocus">onCsumTextKillFocus</event>
                                             <event name="OnLeaveWindow"></event>
                                             <event name="OnLeftDClick"></event>
                                             <event name="OnLeftDown"></event>
@@ -5984,7 +6088,7 @@
                         <property name="tooltip"></property>
                         <property name="window_extra_style"></property>
                         <property name="window_name"></property>
-                        <property name="window_style">wxHSCROLL|wxVSCROLL</property>
+                        <property name="window_style">wxHSCROLL|wxTAB_TRAVERSAL|wxVSCROLL</property>
                         <event name="OnChar"></event>
                         <event name="OnEnterWindow"></event>
                         <event name="OnEraseBackground"></event>
@@ -6128,7 +6232,7 @@
                                     <property name="tooltip"></property>
                                     <property name="window_extra_style"></property>
                                     <property name="window_name"></property>
-                                    <property name="window_style"></property>
+                                    <property name="window_style">wxTAB_TRAVERSAL</property>
                                     <event name="OnChar"></event>
                                     <event name="OnEnterWindow"></event>
                                     <event name="OnEraseBackground"></event>
@@ -6182,7 +6286,7 @@
                                     <property name="tooltip"></property>
                                     <property name="window_extra_style"></property>
                                     <property name="window_name"></property>
-                                    <property name="window_style"></property>
+                                    <property name="window_style">wxTAB_TRAVERSAL</property>
                                     <event name="OnChar"></event>
                                     <event name="OnEnterWindow"></event>
                                     <event name="OnEraseBackground"></event>
@@ -6317,7 +6421,7 @@
                                     <property name="tooltip"></property>
                                     <property name="window_extra_style"></property>
                                     <property name="window_name"></property>
-                                    <property name="window_style"></property>
+                                    <property name="window_style">wxTAB_TRAVERSAL</property>
                                     <event name="OnChar"></event>
                                     <event name="OnEnterWindow"></event>
                                     <event name="OnEraseBackground"></event>
@@ -6371,7 +6475,7 @@
                                     <property name="tooltip"></property>
                                     <property name="window_extra_style"></property>
                                     <property name="window_name"></property>
-                                    <property name="window_style"></property>
+                                    <property name="window_style">wxTAB_TRAVERSAL</property>
                                     <event name="OnChar"></event>
                                     <event name="OnEnterWindow"></event>
                                     <event name="OnEraseBackground"></event>
@@ -6506,7 +6610,7 @@
                                     <property name="tooltip"></property>
                                     <property name="window_extra_style"></property>
                                     <property name="window_name"></property>
-                                    <property name="window_style"></property>
+                                    <property name="window_style">wxTAB_TRAVERSAL</property>
                                     <event name="OnChar"></event>
                                     <event name="OnEnterWindow"></event>
                                     <event name="OnEraseBackground"></event>
@@ -6560,7 +6664,7 @@
                                     <property name="tooltip"></property>
                                     <property name="window_extra_style"></property>
                                     <property name="window_name"></property>
-                                    <property name="window_style"></property>
+                                    <property name="window_style">wxTAB_TRAVERSAL</property>
                                     <event name="OnChar"></event>
                                     <event name="OnEnterWindow"></event>
                                     <event name="OnEraseBackground"></event>
@@ -6663,7 +6767,7 @@
                         <property name="tooltip"></property>
                         <property name="window_extra_style"></property>
                         <property name="window_name"></property>
-                        <property name="window_style">wxHSCROLL|wxVSCROLL</property>
+                        <property name="window_style">wxHSCROLL|wxTAB_TRAVERSAL|wxVSCROLL</property>
                         <event name="OnChar"></event>
                         <event name="OnEnterWindow"></event>
                         <event name="OnEraseBackground"></event>
@@ -6976,7 +7080,7 @@
                                             <event name="OnEraseBackground"></event>
                                             <event name="OnKeyDown"></event>
                                             <event name="OnKeyUp"></event>
-                                            <event name="OnKillFocus"></event>
+                                            <event name="OnKillFocus">onBinaryTestKillFocus</event>
                                             <event name="OnLeaveWindow"></event>
                                             <event name="OnLeftDClick"></event>
                                             <event name="OnLeftDown"></event>
@@ -7576,7 +7680,7 @@
                         <property name="tooltip"></property>
                         <property name="window_extra_style"></property>
                         <property name="window_name"></property>
-                        <property name="window_style">wxHSCROLL|wxVSCROLL</property>
+                        <property name="window_style">wxHSCROLL|wxTAB_TRAVERSAL|wxVSCROLL</property>
                         <event name="OnChar"></event>
                         <event name="OnEnterWindow"></event>
                         <event name="OnEraseBackground"></event>

@@ -30,9 +30,18 @@
 
 #include "DlgRuleEditorBase.h"
 #include "DlgRuleEditorFilterPage.h"
+#include "FilterPolicy.h"
+#include "AlfFilterPolicy.h"
 
 /**
+ * This is the filter network page.
  *
+ * This page is responsible only for AlfFilterPolicies.
+ *
+ * This is a derrived class from DlgRuleEditorFilterPage to inherrit the
+ * mechanims of selection and deselection and observing the policy. In
+ * addition we derrived from DlgRuleEditorFilterNetworkPageBase to gain
+ * access to the widgets and implement the event methods of them.
  */
 class DlgRuleEditorFilterAddressPage : public DlgRuleEditorFilterPage,
     public DlgRuleEditorFilterAddressPageBase
@@ -50,20 +59,121 @@ class DlgRuleEditorFilterAddressPage : public DlgRuleEditorFilterPage,
 		    long style = wxTAB_TRAVERSAL);
 
 		/**
-		 *
+		 * Update the widgets.
+		 * This is called whenever the assigned policy was modified
+		 * or during selection to fill all widgets with the appropriate
+		 * value.
+		 * @param[in] 1st The policy been observed and modified.
+		 * @return Nothing.
 		 */
 		virtual void update(Subject *);
 
 		/**
-		 *
+		 * Select this page.
+		 * This will check for the type of policy. If the policy is
+		 * one of the types this page is interrested in the
+		 * base class method will been called and this page is shown.
+		 * @param[in] 1st The selected filter policy.
+		 * @return Nothing.
 		 */
 		virtual void select(FilterPolicy *);
 
+		/**
+		 * Deselect this page.
+		 * This will runn the base class method and hide this page.
+		 * @param None.
+		 * @return Noting.
+		 */
+		virtual void deselect(void);
+
 	private:
 		/**
-		 *
+		 * This holds the policy been edited by this page.
 		 */
-		virtual void clear(void);
+		AlfFilterPolicy *policy_;
+
+		/**
+		 * Update source widgets.
+		 * @param None.
+		 * @return Nothing.
+		 */
+		void showSource(void);
+
+		/**
+		 * Update destination widgets.
+		 * @param None.
+		 * @return Nothing.
+		 */
+		void showDestination(void);
+
+		/**
+		 * Handle events from sourceAddressTextCtrl (on hit <enter>).
+		 * This will set the address to the policy.
+		 * @param[in] 1st The event.
+		 * @return Nothing.
+		 */
+		virtual void onSourceAddressTextEnter(wxCommandEvent &);
+
+		/**
+		 * Handle focus events from sourceAddressTextCtrl
+		 * (e.g on hit <tab>).\n
+		 * This will set the address to the policy.
+		 * @param[in] 1st The event.
+		 * @return Nothing.
+		 */
+		virtual void onSourceAddressTextKillFocus(wxFocusEvent &);
+
+		/**
+		 * Handle events from sourcePortTextCtrl (on hit <enter>).
+		 * This will set the port to the policy.
+		 * @param[in] 1st The event.
+		 * @return Nothing.
+		 */
+		virtual void onSourcePortTextEnter(wxCommandEvent &);
+
+		/**
+		 * Handle focus events from sourcePortTextCtrl
+		 * (e.g on hit <tab>).\n
+		 * This will set the port to the policy.
+		 * @param[in] 1st The event.
+		 * @return Nothing.
+		 */
+		virtual void onSourcePortTextKillFocus(wxFocusEvent &);
+
+		/**
+		 * Handle events from destinationAddressTextCtrl
+		 * (on hit <enter>).\n
+		 * This will set the address to the policy.
+		 * @param[in] 1st The event.
+		 * @return Nothing.
+		 */
+		virtual void onDestinationAddressTextEnter(wxCommandEvent &);
+
+		/**
+		 * Handle focus events from destinationAddressTextCtrl
+		 * (e.g on hit <tab>).\n
+		 * This will set the address to the policy.
+		 * @param[in] 1st The event.
+		 * @return Nothing.
+		 */
+		virtual void onDestinationAddressTextKillFocus(wxFocusEvent &);
+
+		/**
+		 * Handle events from destinationPortTextCtrl (on hit <enter>).
+		 * This will set the port to the policy.
+		 * @param[in] 1st The event.
+		 * @return Nothing.
+		 */
+		virtual void onDestinationPortTextEnter(wxCommandEvent &);
+
+		/**
+		 * Handle focus events from destinationPortTextCtrl
+		 * (e.g on hit <tab>).\n
+		 * This will set the port to the policy.
+		 * @param[in] 1st The event.
+		 * @return Nothing.
+		 */
+		virtual void onDestinationPortTextKillFocus(wxFocusEvent &);
 };
 
 #endif	/* _DLGRULEEDITORFILTERADDRESSPAGE_H_ */

@@ -29,13 +29,13 @@
 
 DlgRuleEditorFilterPage::DlgRuleEditorFilterPage(void) : Observer(NULL)
 {
-	policy_ = NULL;
+	filterPolicy_ = NULL;
 }
 
 void
 DlgRuleEditorFilterPage::select(FilterPolicy *policy)
 {
-	policy_ = policy;
+	filterPolicy_ = policy;
 	addSubject(policy);
 	update(policy);
 }
@@ -43,7 +43,6 @@ DlgRuleEditorFilterPage::select(FilterPolicy *policy)
 void
 DlgRuleEditorFilterPage::deselect(void)
 {
-	clear();
-	removeSubject(policy_);
-	policy_ = NULL;
+	removeSubject(filterPolicy_);
+	filterPolicy_ = NULL;
 }

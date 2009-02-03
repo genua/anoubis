@@ -37,19 +37,114 @@ DlgRuleEditorFilterAddressPage::DlgRuleEditorFilterAddressPage(wxWindow *parent,
 void
 DlgRuleEditorFilterAddressPage::update(Subject *subject)
 {
-	if (subject != policy_) {
-		/* This is not our policy! */
-		return;
+	if (subject == policy_) {
+		/* This is our policy. */
+		showSource();
+		showDestination();
 	}
 }
 
 void
 DlgRuleEditorFilterAddressPage::select(FilterPolicy *policy)
 {
-	DlgRuleEditorFilterPage::select(policy);
+	if (policy->IsKindOf(CLASSINFO(AlfFilterPolicy))) {
+		policy_ = wxDynamicCast(policy, AlfFilterPolicy);
+		DlgRuleEditorFilterPage::select(policy);
+		Show();
+	}
 }
 
 void
-DlgRuleEditorFilterAddressPage::clear(void)
+DlgRuleEditorFilterAddressPage::deselect(void)
 {
+	policy_ = NULL;
+	DlgRuleEditorFilterPage::deselect();
+	Hide();
+}
+
+void
+DlgRuleEditorFilterAddressPage::showSource(void)
+{
+	if (policy_ != NULL) {
+		sourceAddressTextCtrl->ChangeValue(policy_->getFromHostName());
+		sourcePortTextCtrl->ChangeValue(policy_->getFromPortName());
+	}
+}
+
+void
+DlgRuleEditorFilterAddressPage::showDestination(void)
+{
+	if (policy_ != NULL) {
+		destinationAddressTextCtrl->ChangeValue(
+		    policy_->getToHostName());
+		destinationPortTextCtrl->ChangeValue(policy_->getToPortName());
+	}
+}
+
+void
+DlgRuleEditorFilterAddressPage::onSourceAddressTextEnter(wxCommandEvent & event)
+{
+	if (policy_ != NULL) {
+		policy_->setFromHostName(event.GetString());
+	}
+}
+
+void
+DlgRuleEditorFilterAddressPage::onSourceAddressTextKillFocus(wxFocusEvent &)
+{
+	if (policy_ != NULL) {
+		policy_->setFromHostName(sourceAddressTextCtrl->GetValue());
+	}
+}
+
+void
+DlgRuleEditorFilterAddressPage::onSourcePortTextEnter(wxCommandEvent & event)
+{
+	if (policy_ != NULL) {
+		policy_->setFromPortName(event.GetString());
+	}
+}
+
+void
+DlgRuleEditorFilterAddressPage::onSourcePortTextKillFocus(wxFocusEvent &)
+{
+	if (policy_ != NULL) {
+		policy_->setFromPortName(sourcePortTextCtrl->GetValue());
+	}
+}
+
+void
+DlgRuleEditorFilterAddressPage::onDestinationAddressTextEnter(
+    wxCommandEvent & event)
+{
+	if (policy_ != NULL) {
+		policy_->setToHostName(event.GetString());
+	}
+}
+
+void
+DlgRuleEditorFilterAddressPage::onDestinationAddressTextKillFocus(
+    wxFocusEvent &)
+{
+	if (policy_ != NULL) {
+		policy_->setToHostName(destinationAddressTextCtrl->GetValue());
+	}
+}
+
+void
+DlgRuleEditorFilterAddressPage::onDestinationPortTextEnter(
+    wxCommandEvent & event)
+{
+	if (policy_ != NULL) {
+		policy_->setToPortName(event.GetString());
+	}
+}
+
+void
+DlgRuleEditorFilterAddressPage::onDestinationPortTextKillFocus(
+    wxFocusEvent &)
+{
+	if (policy_ != NULL) {
+		policy_->setToPortName(destinationPortTextCtrl->GetValue());
+	}
 }

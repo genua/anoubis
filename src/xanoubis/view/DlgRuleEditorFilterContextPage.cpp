@@ -35,21 +35,24 @@ DlgRuleEditorFilterContextPage::DlgRuleEditorFilterContextPage(wxWindow *parent,
 }
 
 void
-DlgRuleEditorFilterContextPage::update(Subject *subject)
+DlgRuleEditorFilterContextPage::update(Subject *)
 {
-	if (subject != policy_) {
-		/* This is not our policy! */
-		return;
-	}
 }
 
 void
 DlgRuleEditorFilterContextPage::select(FilterPolicy *policy)
 {
-	DlgRuleEditorFilterPage::select(policy);
+	if (policy->IsKindOf(CLASSINFO(ContextFilterPolicy))) {
+		policy_ = wxDynamicCast(policy, ContextFilterPolicy);
+		DlgRuleEditorFilterPage::select(policy);
+		Show();
+	}
 }
 
 void
-DlgRuleEditorFilterContextPage::clear(void)
+DlgRuleEditorFilterContextPage::deselect(void)
 {
+	policy_ = NULL;
+	DlgRuleEditorFilterPage::deselect();
+	Hide();
 }

@@ -34,6 +34,8 @@ PolicyUtils::stringToCsum(wxString str,
     unsigned char csum[MAX_APN_HASH_LEN], size_t len)
 {
 	wxString workOn;
+	wxChar c;
+	unsigned char d;
 
 	memset(csum, 0, len);
 
@@ -43,7 +45,29 @@ PolicyUtils::stringToCsum(wxString str,
 		workOn = str;
 	}
 
-	memcpy(csum, workOn.To8BitData(), len);
+	/* XXX ch: this is a quick-hack and should been improved */
+	for (size_t i=0; i<len*2; i++) {
+		c = workOn.GetChar(i);
+
+		if ((47 < c) && (c < 58)) {
+			// is digit
+			d = c - 48;
+		} else if ((64 < c) && (c < 71)) {
+			// is A - F
+			d = c - 55;
+		} else if ((96 < c) && (c < 103)) {
+			// is a - f
+			d = c - 87;
+		} else {
+			// not in range
+			d = 0;
+		}
+		if ((i%2) == 0) {
+			csum[i/2] = d << 4;
+		} else {
+			csum[i/2] += d;
+		}
+	}
 
 	return (true);
 }

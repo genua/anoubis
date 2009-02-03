@@ -37,19 +37,91 @@ DlgRuleEditorFilterPermissionPage::DlgRuleEditorFilterPermissionPage(
 void
 DlgRuleEditorFilterPermissionPage::update(Subject *subject)
 {
-	if (subject != policy_) {
+	if (subject == policy_) {
 		/* This is not our policy! */
-		return;
+		showPermission();
 	}
 }
 
 void
 DlgRuleEditorFilterPermissionPage::select(FilterPolicy *policy)
 {
-	DlgRuleEditorFilterPage::select(policy);
+	if (policy->IsKindOf(CLASSINFO(SbAccessFilterPolicy))) {
+		policy_ = wxDynamicCast(policy, SbAccessFilterPolicy);
+		DlgRuleEditorFilterPage::select(policy);
+		Show();
+	}
 }
 
 void
-DlgRuleEditorFilterPermissionPage::clear(void)
+DlgRuleEditorFilterPermissionPage::deselect(void)
 {
+	policy_ = NULL;
+	DlgRuleEditorFilterPage::deselect();
+	Hide();
+}
+
+void
+DlgRuleEditorFilterPermissionPage::showPermission(void)
+{
+	unsigned int mask;
+
+	mask = policy_->getAccessMaskNo();
+	if ((mask & APN_SBA_READ) != 0) {
+		readCheckBox->SetValue(true);
+	}
+	if ((mask & APN_SBA_WRITE) != 0) {
+		writeCheckBox->SetValue(true);
+	}
+	if ((mask & APN_SBA_EXEC) != 0) {
+		executeCheckBox->SetValue(true);
+	}
+}
+
+void
+DlgRuleEditorFilterPermissionPage::onReadCheckBox(wxCommandEvent & event)
+{
+	unsigned int mask;
+
+	if (policy_ != NULL) {
+		mask  = policy_->getAccessMaskNo();
+		if  (event.IsChecked()) {
+			mask |= APN_SBA_READ;
+		} else {
+			mask &= ~APN_SBA_READ;
+		}
+		policy_->setAccessMask(mask);
+	}
+}
+
+void
+DlgRuleEditorFilterPermissionPage::onWriteCheckBox(wxCommandEvent & event)
+{
+	unsigned int mask;
+
+	if (policy_ != NULL) {
+		mask  = policy_->getAccessMaskNo();
+		if  (event.IsChecked()) {
+			mask |= APN_SBA_WRITE;
+		} else {
+			mask &= ~APN_SBA_WRITE;
+		}
+		policy_->setAccessMask(mask);
+	}
+}
+
+void
+DlgRuleEditorFilterPermissionPage::onExecuteCheckBox(wxCommandEvent & event)
+{
+	unsigned int mask;
+
+	if (policy_ != NULL) {
+		mask  = policy_->getAccessMaskNo();
+		if (event.IsChecked()) {
+			mask |= APN_SBA_EXEC;
+		} else {
+			mask &= ~APN_SBA_EXEC;
+		}
+		policy_->setAccessMask(mask);
+	}
 }

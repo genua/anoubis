@@ -35,6 +35,13 @@
 #define __DlgRuleEditorBase__
 
 class DlgRuleEditorFilterActionPage;
+class DlgRuleEditorFilterAddressPage;
+class DlgRuleEditorFilterCapabilityPage;
+class DlgRuleEditorFilterContextPage;
+class DlgRuleEditorFilterNetworkPage;
+class DlgRuleEditorFilterPermissionPage;
+class DlgRuleEditorFilterSfsPage;
+class DlgRuleEditorFilterSubjectPage;
 
 #include <wx/string.h>
 #include <wx/stattext.h>
@@ -112,6 +119,13 @@ class DlgRuleEditorBase : public wxFrame
 		wxButton* filterListDeleteButton;
 		wxNotebook* filterPolicyPanels;
 		DlgRuleEditorFilterActionPage* filterActionPage;
+		DlgRuleEditorFilterNetworkPage* filterNetworkPage;
+		DlgRuleEditorFilterAddressPage* fitlerAddressPage;
+		DlgRuleEditorFilterCapabilityPage* filterCapabilityPage;
+		DlgRuleEditorFilterSubjectPage* filterSubjectPage;
+		DlgRuleEditorFilterSfsPage* filterSfsPage;
+		DlgRuleEditorFilterContextPage* filterContextPage;
+		DlgRuleEditorFilterPermissionPage* filterPermissionPage;
 		wxStaticText* mainFooterRuleSetLabel;
 		wxStaticText* mainFooterRuleSetText;
 		wxButton* mainFooterReloadButton;
@@ -194,7 +208,7 @@ class DlgRuleEditorFilterNetworkPageBase : public wxPanel
 		wxScrolledWindow* mainPage;
 		wxStaticText* directionLabel;
 		wxRadioButton* inRadioButton;
-		wxRadioButton* outRadionButton;
+		wxRadioButton* outRadioButton;
 		wxRadioButton* bothRadioButton;
 		wxStaticText* addressFamilyLabel;
 		wxRadioButton* inetRadioButton;
@@ -236,25 +250,21 @@ class DlgRuleEditorFilterAddressPageBase : public wxPanel
 		wxFlexGridSizer* mainSizer;
 		wxStaticText* sourceAddressLabel;
 		wxTextCtrl* sourceAddressTextCtrl;
-		wxStaticText* sourceAddressDelimiterLabel;
-		wxSpinCtrl* soruceAddressNetmaskSpinCtrl;
 		wxStaticText* sourcePortLabel;
-		wxTextCtrl* sorucePortTextCtrl;
-		
-		
+		wxTextCtrl* sourcePortTextCtrl;
 		wxStaticText* destinationAddressLabel;
 		wxTextCtrl* destinationAddressTextCtrl;
-		wxStaticText* destinationAddressDelimiterLabel;
-		wxSpinCtrl* destinationAddressNetmaskSpinCtrl;
 		wxStaticText* destinationPortLabel;
 		wxTextCtrl* destinationPortTextCtrl;
 		
 		// Virtual event handlers, overide them in your derived class
+		virtual void onSourceAddressTextKillFocus( wxFocusEvent& event ){ event.Skip(); }
 		virtual void onSourceAddressTextEnter( wxCommandEvent& event ){ event.Skip(); }
-		virtual void onSourceAddressNetmaskSpinCtrl( wxSpinEvent& event ){ event.Skip(); }
+		virtual void onSourcePortTextKillFocus( wxFocusEvent& event ){ event.Skip(); }
 		virtual void onSourcePortTextEnter( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onDestinationAddressTextKillFocus( wxFocusEvent& event ){ event.Skip(); }
 		virtual void onDestinationAddressTextEnter( wxCommandEvent& event ){ event.Skip(); }
-		virtual void onDestinationAddressNetmaskSpinCtrl( wxSpinEvent& event ){ event.Skip(); }
+		virtual void onDestinationPortTextKillFocus( wxFocusEvent& event ){ event.Skip(); }
 		virtual void onDestinationPortTextEnter( wxCommandEvent& event ){ event.Skip(); }
 		
 	
@@ -322,15 +332,20 @@ class DlgRuleEditorFilterSubjectPageBase : public wxPanel
 		wxTextCtrl* csumTextCtrl;
 		
 		// Virtual event handlers, overide them in your derived class
+		virtual void onPathTextKillFocus( wxFocusEvent& event ){ event.Skip(); }
+		virtual void onPathTextEnter( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onModifyButton( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onAnyRadioButton( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onSelfRadioButton( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onSelfSignedRadioButton( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onUidRadioButton( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onUidTextKillFocus( wxFocusEvent& event ){ event.Skip(); }
 		virtual void onUidTextEnter( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onKeyRadioButton( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onKeyTextKillFocus( wxFocusEvent& event ){ event.Skip(); }
 		virtual void onKeyTextEnter( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onCsumRadioButton( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onCsumTextKillFocus( wxFocusEvent& event ){ event.Skip(); }
 		virtual void onCsumTextEnter( wxCommandEvent& event ){ event.Skip(); }
 		
 	
@@ -410,6 +425,7 @@ class DlgRuleEditorFilterContextPageBase : public wxPanel
 		// Virtual event handlers, overide them in your derived class
 		virtual void onNewRadioButton( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onOpenRadioButton( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onBinaryTestKillFocus( wxFocusEvent& event ){ event.Skip(); }
 		virtual void onBinaryTextEnter( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onModifyButton( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onValidateButton( wxCommandEvent& event ){ event.Skip(); }

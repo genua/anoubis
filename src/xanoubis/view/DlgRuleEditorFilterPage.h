@@ -76,20 +76,11 @@ class DlgRuleEditorFilterPage : public Observer
 		 */
 		virtual void deselect(void);
 
-	protected:
+	private:
 		/**
 		 * This holds the policy been edited by this page.
 		 */
-		FilterPolicy *policy_;
-
-		/**
-		 * Clean the widgets.
-		 * Within the derrived classses this method shall been used
-		 * to wipe the values from the widgets.
-		 * @param None.
-		 * @return Nothing.
-		 */
-		virtual void clear(void) = 0;
+		FilterPolicy *filterPolicy_;
 };
 
 #endif	/* _DLGRULEEDITORFILTERPAGE_H_ */

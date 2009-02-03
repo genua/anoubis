@@ -30,9 +30,19 @@
 
 #include "DlgRuleEditorBase.h"
 #include "DlgRuleEditorFilterPage.h"
+#include "FilterPolicy.h"
+#include "SfsFilterPolicy.h"
+#include "SbAccessFilterPolicy.h"
 
 /**
+ * This is the filter subject page.
  *
+ * This page is responsible for SfsFilterPolicies and SbAccessFilterPolicies.
+ *
+ * This is a derrived class from DlgRuleEditorFilterPage to inherrit the
+ * mechanims of selection and deselection and observing the policy. In
+ * addition we derrived from DlgRuleEditorFilterSubjectPageBase to gain
+ * access to the widgets and implement the event methods of them.
  */
 class DlgRuleEditorFilterSubjectPage : public DlgRuleEditorFilterPage,
     public DlgRuleEditorFilterSubjectPageBase
@@ -50,20 +60,179 @@ class DlgRuleEditorFilterSubjectPage : public DlgRuleEditorFilterPage,
 		    long style = wxTAB_TRAVERSAL);
 
 		/**
-		 *
+		 * Update the widgets.
+		 * This is called whenever the assigned policy was modified
+		 * or during selection to fill all widgets with the appropriate
+		 * value.
+		 * @param[in] 1st The policy been observed and modified.
+		 * @return Nothing.
 		 */
 		virtual void update(Subject *);
 
 		/**
-		 *
+		 * Select this page.
+		 * This will check for the type of policy. If the policy is
+		 * one of the types this page is interrested in the
+		 * base class method will been called and this page is shown.
+		 * @param[in] 1st The selected filter policy.
+		 * @return Nothing.
 		 */
 		virtual void select(FilterPolicy *);
 
+		/**
+		 * Deselect this page.
+		 * This will runn the base class method and hide this page.
+		 * @param None.
+		 * @return Noting.
+		 */
+		virtual void deselect(void);
+
 	private:
 		/**
-		 *
+		 * This holds the sfs policy been edited by this page.
 		 */
-		virtual void clear(void);
+		SfsFilterPolicy *sfsPolicy_;
+
+		/**
+		 * This holds the sb policy been edited by this page.
+		 */
+		SbAccessFilterPolicy *sbPolicy_;
+
+		/**
+		 * Update path widgets.
+		 * This will take the value form the sfs policy.
+		 * @param None.
+		 * @return Nothing.
+		 */
+		void showSfsPath(void);
+
+		/**
+		 * Update path widgets.
+		 * This will take the value form the sb policy.
+		 * @param None.
+		 * @return Nothing.
+		 */
+		void showSbPath(void);
+
+		/**
+		 * Update subject widgets.
+		 * @param None.
+		 * @return Nothing.
+		 */
+		void showSubject(void);
+
+		/**
+		 * Handle events from pathTextCtrl.
+		 * This will set the path to the policy.
+		 * @param[in] 1st The event.
+		 * @return Nothing.
+		 */
+		virtual void onPathTextEnter(wxCommandEvent &);
+
+		/**
+		 * Handle events from modifyButton.
+		 * This will open a file chooser and
+		 * set the path to the policy.
+		 * @param[in] 1st The event.
+		 * @return Nothing.
+		 */
+		virtual void onModifyButton(wxCommandEvent &);
+
+		/**
+		 * Handle events from anyRadioButton.
+		 * This will set the path to the policy.
+		 * @param[in] 1st The event.
+		 * @return Nothing.
+		 */
+		virtual void onAnyRadioButton(wxCommandEvent &);
+
+		/**
+		 * Handle events from selfRadioButton.
+		 * This will set the path to the policy.
+		 * @param[in] 1st The event.
+		 * @return Nothing.
+		 */
+		virtual void onSelfRadioButton(wxCommandEvent &);
+
+		/**
+		 * Handle events from selfSignedRadioButton.
+		 * This will set the path to the policy.
+		 * @param[in] 1st The event.
+		 * @return Nothing.
+		 */
+		virtual void onSelfSignedRadioButton(wxCommandEvent &);
+
+		/**
+		 * Handle events from uidRadioButton.
+		 * This will set the path to the policy.
+		 * @param[in] 1st The event.
+		 * @return Nothing.
+		 */
+		virtual void onUidRadioButton(wxCommandEvent &);
+
+		/**
+		 * Handle events from uidTextCtrl (on hit <enter>).
+		 * This will set the uid to the policy.
+		 * @param[in] 1st The event.
+		 * @return Nothing.
+		 */
+		virtual void onUidTextEnter(wxCommandEvent &);
+
+		/**
+		 * Handle focus events from uidTextCtrl (e.g on hit <tab>).
+		 * This will set the uid to the policy.
+		 * @param[in] 1st The event.
+		 * @return Nothing.
+		 */
+		virtual void onUidTextKillFocus(wxFocusEvent &);
+
+		/**
+		 * Handle events from keyRadioButton.
+		 * This will set the path to the policy.
+		 * @param[in] 1st The event.
+		 * @return Nothing.
+		 */
+		virtual void onKeyRadioButton(wxCommandEvent &);
+
+		/**
+		 * Handle events from keyTextCtrl (on hit <enter>).
+		 * This will set the key to the policy.
+		 * @param[in] 1st The event.
+		 * @return Nothing.
+		 */
+		virtual void onKeyTextEnter(wxCommandEvent &);
+
+		/**
+		 * Handle focus events from keyTextCtrl (e.g on hit <tab>).
+		 * This will set the key to the policy.
+		 * @param[in] 1st The event.
+		 * @return Nothing.
+		 */
+		virtual void onKeyTextKillFocus(wxFocusEvent &);
+
+		/**
+		 * Handle events from csumRadioButton.
+		 * This will set the path to the policy.
+		 * @param[in] 1st The event.
+		 * @return Nothing.
+		 */
+		virtual void onCsumRadioButton(wxCommandEvent &);
+
+		/**
+		 * Handle events from csumTextCtrl (on hit <enter>).
+		 * This will set the csum to the policy.
+		 * @param[in] 1st The event.
+		 * @return Nothing.
+		 */
+		virtual void onCsumTextEnter(wxCommandEvent &);
+
+		/**
+		 * Handle focus events from csumTextCtrl (e.g on hit <tab>).
+		 * This will set the csum to the policy.
+		 * @param[in] 1st The event.
+		 * @return Nothing.
+		 */
+		virtual void onCsumTextKillFocus(wxFocusEvent &);
 };
 
 #endif	/* _DLGRULEEDITORFILTERSUBJECTPAGE_H_ */
