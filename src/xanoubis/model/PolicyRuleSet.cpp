@@ -291,6 +291,40 @@ PolicyRuleSet::getAppPolicyCount(void) const
 	return (count);
 }
 
+bool
+PolicyRuleSet::createAppPolicy(unsigned int type, unsigned int id)
+{
+	AppPolicy *policy;
+
+	switch (type) {
+	case APN_ALF:
+		policy = new AlfAppPolicy(this);
+		break;
+	case APN_CTX:
+		policy = new ContextAppPolicy(this);
+		break;
+	case APN_SB:
+		policy = new SbAppPolicy(this);
+		break;
+	default:
+		policy = NULL;
+		break;
+	}
+
+	if (policy == NULL) {
+		return (false);
+	}
+
+	if (policy->addToRuleSet(id)) {
+		setModified();
+		refresh();
+		return (true);
+	} else {
+		delete policy;
+		return (false);
+	}
+}
+
 void
 PolicyRuleSet::clean(void)
 {
@@ -452,7 +486,7 @@ PolicyRuleSet::assembleAlfPolicy(AlfFilterPolicy *old,
 	}
 
 	answer = escalation->getAnswer();
-	switch (newAlfRule->apn_type) { 
+	switch (newAlfRule->apn_type) {
 	case APN_ALF_FILTER:
 		afilt = &(newAlfRule->rule.afilt);
 		if (answer->wasAllowed()) {

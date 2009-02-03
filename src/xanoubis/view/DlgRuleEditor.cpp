@@ -28,6 +28,8 @@
 #include <wx/defs.h>	/* mandatory but missing in choicdlg.h */
 #include <wx/choicdlg.h>
 #include <wx/dynarray.h>
+#include <wx/msgdlg.h>
+
 #include <wx/arrimpl.cpp>
 
 #include "DlgRuleEditor.h"
@@ -407,6 +409,7 @@ DlgRuleEditor::onAppPolicySelect(wxListEvent & event)
 
 		/* enable customisation of header columns */
 		filterListColumnsButton->Enable(true);
+		filterListCreateButton->Enable(true);
 
 		/* Ensure the changes will apear on the screen */
 		Layout();
@@ -421,6 +424,7 @@ DlgRuleEditor::onAppPolicyDeSelect(wxListEvent & WXUNUSED(event))
 	appListUpButton->Disable();
 	appListDownButton->Disable();
 	appListDeleteButton->Disable();
+	filterListCreateButton->Disable();
 
 	wipeFilterList();
 
@@ -763,6 +767,75 @@ DlgRuleEditor::onFilterListColumnsButtonClick(wxCommandEvent &)
 	delete multiChoiceDlg;
 }
 
+void
+DlgRuleEditor::onAppListCreateButton(wxCommandEvent &)
+{
+	bool		 rc;
+	unsigned int	 id;
+	unsigned int	 type;
+	long		 index;
+	long		 top;
+	wxString	 typeSelection;
+	Policy		*policy;
+	ProfileCtrl	*profileCtrl;
+	PolicyRuleSet	*ruleSet;
+
+	rc = false;
+	index  = getSelectedIndex(appPolicyListCtrl);
+	top = appPolicyListCtrl->GetTopItem();
+	profileCtrl = ProfileCtrl::getInstance();
+	ruleSet = profileCtrl->getRuleSet(userRuleSetId_);
+
+	/* Where should the new policy been inserted? */
+	policy = getSelectedPolicy(appPolicyListCtrl);
+	if (policy != NULL) {
+		id = policy->getApnRuleId();
+	} else {
+		id = 0;
+	}
+
+	/* What kind of policy shall been created? */
+	typeSelection = appListTypeChoice->GetStringSelection();
+	if (typeSelection.Cmp(wxT("ALF")) == 0) {
+		type = APN_ALF;
+	} else if (typeSelection.Cmp(wxT("CTX")) == 0) {
+		type = APN_CTX;
+	} else if (typeSelection.Cmp(wxT("SB")) == 0) {
+		type = APN_SB;
+	} else {
+		/* No valid policy type. */
+		return;
+	}
+
+	/* If there's not ruleset, create one ... */
+	if (ruleSet == NULL) {
+		ruleSet = createEmptyPolicyRuleSet();
+		wxMessageBox(
+		    _("Because of missing ruleset, a new one was created."),
+		    _("Rule Editor"), wxOK | wxICON_INFORMATION, this);
+	}
+
+	if (ruleSet != NULL) {
+		wipeAppList();
+		rc = ruleSet->createAppPolicy(type, id);
+		loadRuleSet();
+	}
+
+	if (rc) {
+		if (index < 0) {
+			/* No rule was selected */
+			index = 0;
+		}
+		selectFrame(appPolicyListCtrl, top, index);
+	} else {
+		/* XXX ch: this breaks coding style guide lines */
+		wxMessageBox(
+		    _("Couldn't create new rule.\nMaybe the types of selected \
+ and been created policy mismatch!"),
+		    _("Rule Editor"), wxOK | wxICON_ERROR, this);
+	}
+}
+
 long
 DlgRuleEditor::addListRow(wxListCtrl *list, Policy *policy)
 {
@@ -989,6 +1062,32 @@ DlgRuleEditor::loadRuleSet(void)
 
 	/* enable button for customising header columns */
 	appListColumnsButton->Enable(true);
+}
+
+PolicyRuleSet *
+DlgRuleEditor::createEmptyPolicyRuleSet(void)
+{
+	struct iovec		 iv;
+	struct apn_ruleset	*rs;
+	PolicyRuleSet		*ruleSet;
+
+	iv.iov_base = (void *)" ";
+	iv.iov_len = strlen((char *)iv.iov_base) - 1;
+
+	if (apn_parse_iovec("<iov>", &iv, 1, &rs, 0) != 0) {
+		/* This should never happen! */
+		ruleSet = NULL;
+	} else {
+		ruleSet = new PolicyRuleSet(1, geteuid(), rs);
+	}
+
+	if (ruleSet != NULL) {
+		ruleSet->lock();
+		ProfileCtrl::getInstance()->importPolicy(ruleSet);
+		userRuleSetId_ = ruleSet->getRuleSetId();
+	}
+
+	return (ruleSet);
 }
 
 void

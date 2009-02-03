@@ -557,6 +557,11 @@ class DlgRuleEditor : public Observer, public DlgRuleEditorBase
 		virtual void onFilterListColumnsButtonClick(wxCommandEvent &);
 
 		/**
+		 *
+		 */
+		virtual void onAppListCreateButton(wxCommandEvent &);
+
+		/**
 		 * Add a row to a given list and assign the given policy.
 		 * @param[in] 1st The list where the new row is added.
 		 * @param[in] 2nd The concerning policy for the new row.
@@ -652,6 +657,13 @@ class DlgRuleEditor : public Observer, public DlgRuleEditorBase
 		 * @return Nothing.
 		 */
 		void loadRuleSet(void);
+
+		/**
+		 * Create an empty PolicyRuleSet.
+		 * @param None.
+		 * @return Created PolicyRuleSet.
+		 */
+		PolicyRuleSet *createEmptyPolicyRuleSet(void);
 
 		/**
 		 * Update progress bar.

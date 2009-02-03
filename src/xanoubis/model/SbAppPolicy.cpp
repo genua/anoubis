@@ -56,6 +56,11 @@ SbAppPolicy::SbAppPolicy(PolicyRuleSet *ruleSet, struct apn_rule *rule)
 	}
 }
 
+SbAppPolicy::SbAppPolicy(PolicyRuleSet *ruleSet)
+    : AppPolicy(ruleSet, SbAppPolicy::createApnRule())
+{
+}
+
 wxString
 SbAppPolicy::getTypeIdentifier(void) const
 {

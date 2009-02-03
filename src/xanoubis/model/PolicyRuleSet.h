@@ -256,6 +256,10 @@ class PolicyRuleSet : public Subject
 		 */
 		size_t getAppPolicyCount(void) const;
 
+		/**
+		 */
+		bool createAppPolicy(unsigned int, unsigned int);
+
 		void createAnswerPolicy(EscalationNotify *);
 
 		/*

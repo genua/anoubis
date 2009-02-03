@@ -136,6 +136,7 @@ class DlgRuleEditorBase : public wxFrame
 		
 		// Virtual event handlers, overide them in your derived class
 		virtual void onClose( wxCloseEvent& event ){ event.Skip(); }
+		virtual void onAppListCreateButton( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onAppListColumnsButtonClick( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onAppPolicyDeSelect( wxListEvent& event ){ event.Skip(); }
 		virtual void onAppPolicySelect( wxListEvent& event ){ event.Skip(); }
@@ -146,6 +147,7 @@ class DlgRuleEditorBase : public wxFrame
 		virtual void OnAppBinaryModifyButton( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnAppValidateChkSumButton( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnAppUpdateChkSumButton( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onFilterListCreateButton( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onFilterListColumnsButtonClick( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onFilterPolicyDeSelect( wxListEvent& event ){ event.Skip(); }
 		virtual void onFilterPolicySelect( wxListEvent& event ){ event.Skip(); }

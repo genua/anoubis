@@ -273,7 +273,7 @@
                                                 <property name="proportion">0</property>
                                                 <object class="wxChoice" expanded="1">
                                                     <property name="bg"></property>
-                                                    <property name="choices">&apos;ALF&apos; &apos;SFS&apos; &apos;SB&apos; &apos;CTX&apos;</property>
+                                                    <property name="choices">&apos;ALF&apos; &apos;SB&apos; &apos;CTX&apos;</property>
                                                     <property name="context_help"></property>
                                                     <property name="enabled">1</property>
                                                     <property name="fg"></property>
@@ -325,7 +325,7 @@
                                                     <property name="bg"></property>
                                                     <property name="context_help"></property>
                                                     <property name="default">0</property>
-                                                    <property name="enabled">0</property>
+                                                    <property name="enabled">1</property>
                                                     <property name="fg"></property>
                                                     <property name="font"></property>
                                                     <property name="hidden">0</property>
@@ -343,7 +343,7 @@
                                                     <property name="window_extra_style"></property>
                                                     <property name="window_name"></property>
                                                     <property name="window_style"></property>
-                                                    <event name="OnButtonClick"></event>
+                                                    <event name="OnButtonClick">onAppListCreateButton</event>
                                                     <event name="OnChar"></event>
                                                     <event name="OnEnterWindow"></event>
                                                     <event name="OnEraseBackground"></event>
@@ -1698,7 +1698,7 @@
                                                     <property name="window_extra_style"></property>
                                                     <property name="window_name"></property>
                                                     <property name="window_style"></property>
-                                                    <event name="OnButtonClick"></event>
+                                                    <event name="OnButtonClick">onFilterListCreateButton</event>
                                                     <event name="OnChar"></event>
                                                     <event name="OnEnterWindow"></event>
                                                     <event name="OnEraseBackground"></event>

@@ -52,6 +52,11 @@ ContextAppPolicy::ContextAppPolicy(PolicyRuleSet *ruleSet,
 	}
 }
 
+ContextAppPolicy::ContextAppPolicy(PolicyRuleSet *ruleSet)
+    : AppPolicy(ruleSet, ContextAppPolicy::createApnRule())
+{
+}
+
 wxString
 ContextAppPolicy::getTypeIdentifier(void) const
 {

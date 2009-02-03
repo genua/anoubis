@@ -52,6 +52,14 @@ class SbAppPolicy : public AppPolicy
 		SbAppPolicy(PolicyRuleSet *, struct apn_rule *);
 
 		/**
+		 * Constructor of a SbAppPolicy.
+		 * This should be used a new apn_rule should been created
+		 * (and later been inserted/added to a PolicyRuleSet).
+		 * @param[in] 1st The ruleset this policy belongs to.
+		 */
+		SbAppPolicy(PolicyRuleSet *);
+
+		/**
 		 * Get the policy type as string.
 		 * @param None.
 		 * @return String with the policy type.

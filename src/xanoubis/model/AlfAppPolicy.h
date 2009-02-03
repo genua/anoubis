@@ -47,10 +47,20 @@ class AlfAppPolicy : public AppPolicy
 	public:
 		/**
 		 * Constructor of a AlfAppPolicy.
+		 * This should be used during creation of a PolicyRuleSet,
+		 * when the concerning apn_rule already exists.
 		 * @param[in] 1st The ruleset this policy belongs to.
 		 * @param[in] 2nd The apn_rule this policy should represent.
 		 */
 		AlfAppPolicy(PolicyRuleSet *, struct apn_rule *);
+
+		/**
+		 * Constructor of a AlfAppPolicy.
+		 * This should be used a new apn_rule should been created
+		 * (and later been inserted/added to a PolicyRuleSet).
+		 * @param[in] 1st The ruleset this policy belongs to.
+		 */
+		AlfAppPolicy(PolicyRuleSet *);
 
 		/**
 		 * Get the policy type as string.

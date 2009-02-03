@@ -59,6 +59,11 @@ AlfAppPolicy::AlfAppPolicy(PolicyRuleSet *ruleSet, struct apn_rule *rule)
 	}
 }
 
+AlfAppPolicy::AlfAppPolicy(PolicyRuleSet *ruleSet)
+    : AppPolicy(ruleSet, AlfAppPolicy::createApnRule())
+{
+}
+
 wxString
 AlfAppPolicy::getTypeIdentifier(void) const
 {
