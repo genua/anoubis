@@ -179,7 +179,7 @@ pe_sfs_getrules(uid_t uid, int prio, const char *path,
 	}
 	
 	if (rulecnt == 0)
-		free(rulelist);
+		free(*rulelist);
 
 	return rulecnt;
 }

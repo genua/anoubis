@@ -254,7 +254,7 @@ pe_sb_getrules (struct pe_proc *proc, uid_t uid, int prio, const char *path,
 	}
 
 	if (rulecnt == 0)
-		free(rulelist);
+		free(*rulelist);
 
 	return (rulecnt);
 }
