@@ -62,7 +62,7 @@ clean:
 install: install-indep install-arch
 install-indep:
 
-DEFPOLICYDIR=/usr/share/anoubisd/default_policy
+DEFPOLICYDIR=/usr/share/anoubisd/policy_templates
 install-arch:
 	dh_testdir
 	dh_testroot

@@ -80,7 +80,7 @@ make install DESTDIR=$RPM_BUILD_ROOT
 mkdir -p $RPM_BUILD_ROOT%{rcdir}
 cp $RPM_SOURCE_DIR/anoubisd.init $RPM_BUILD_ROOT%{rcdir}/anoubisd
 chmod 755 $RPM_BUILD_ROOT%{rcdir}/anoubisd
-DEF_POLICY_DIR=$RPM_BUILD_ROOT/usr/share/anoubis/default_policy
+DEF_POLICY_DIR=$RPM_BUILD_ROOT/usr/share/anoubis/policy_templates
 mkdir -p $DEF_POLICY_DIR/admin $DEF_POLICY_DIR/user
 for a in admin user ; do
     for f in $RPM_SOURCE_DIR//policy.$a.* ; do
@@ -139,7 +139,7 @@ chmod 700 /var/lib/anoubis/policy/admin /var/lib/anoubis/policy/user
 chmod 700 /var/lib/anoubis/policy/pubkeys
 for p in admin/0 user/0 admin/default; do
     if [ ! -e /var/lib/anoubis/policy/$p ] ; then
-	cp /usr/share/anoubis/default_policy/$p /var/lib/anoubis/policy/$p
+	cp /usr/share/anoubis/policy_templates/$p /var/lib/anoubis/policy/$p
 	chmod 600 /var/lib/anoubis/policy/$p
 	chown _anoubisd: /var/lib/anoubis/policy/$p
     fi

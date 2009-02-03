@@ -75,20 +75,6 @@ context {
 	}
 }
 sfs {
-	/bin/ping @@
-	/bin/ping6 @@
-	/bin/mount @@
-	/bin/umount @@
-	/usr/bin/at @@
-	/usr/bin/chfn @@
-	/usr/bin/chsh @@
-	/usr/bin/gpasswd @@
-	/usr/bin/gpg @@
-	/usr/bin/mtr @@
-	/usr/bin/newgrp @@
-	/usr/bin/passwd @@
-	/usr/bin/procmail @@
-	/usr/bin/sudo @@
-	/usr/bin/sudoedit @@
-	/usr/bin/traceroute.lbl @@
+	path /home self valid allow invalid log deny unknown continue
+	path /home signed-self valid allow invalid log deny unknown continue
 }
