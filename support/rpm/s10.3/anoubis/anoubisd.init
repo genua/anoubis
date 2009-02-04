@@ -30,9 +30,13 @@ ANOUBISD_BIN=/sbin/anoubisd
 test -x $ANOUBISD_BIN || exit 1
 rc_reset
 
-#
-# See how we were called.
-#
+do_test() {
+	if $ANOUBISD_BIN -n >/dev/null 2>&1 ; then
+		return 0
+	else
+		return $?
+	fi
+}
 
 start() {
 	# Check if it is already running
@@ -61,10 +65,23 @@ stop() {
 
 case "$1" in
 start)
+	if ! do_test ; then
+		echo "This anoubisd is not compatible with the running kernel."
+		echo "Reboot with a (newer) anoubis kernel."
+		exit 3
+	fi
+
 	start $2
 	;;
 stop)
 	stop
+	;;
+configtest)
+	if ! do_test ; then
+		echo "This anoubisd is not compatible with the running kernel."
+		exit 3
+	fi
+	exit 0
 	;;
 try-restart)
         ## Stop the service and if this succeeds (i.e. the

@@ -22,6 +22,7 @@ DAEMON=/sbin/$NAME
 DAEMON_ARGS=""
 SCRIPTNAME=/etc/init.d/$NAME
 PIDFILE=/var/run/$NAME.pid
+CTRL=/sbin/anoubisctl
 
 # Exit if the package is not installed
 [ -x "$DAEMON" ] || exit 0
@@ -36,16 +37,20 @@ PIDFILE=/var/run/$NAME.pid
 # Depend on lsb-base (>= 3.0-6) to ensure that this file is present.
 . /lib/lsb/init-functions
 
+do_test()
+{
+	if $DAEMON -n >/dev/null 2>&1 ; then
+		return 0
+	else
+		return $?
+	fi
+}
+
 #
 # Function that starts the daemon/service
 #
 do_start()
 {
-	# Return
-	#   0 if daemon has been started
-	#   1 if daemon was already running
-	#   2 if daemon could not be started
-
 	if [ ! -d /var/run/anoubisd ]; then
 		mkdir /var/run/anoubisd
 		chmod 0755 /var/run/anoubisd
@@ -57,11 +62,7 @@ do_start()
 	modprobe sfs
 	modprobe ipc
 
-	start-stop-daemon --start --quiet --exec $DAEMON --test > /dev/null \
-		|| return 1
-	start-stop-daemon --start --quiet --exec $DAEMON -- \
-		$DAEMON_ARGS \
-		|| return 2
+	$DAEMON $DAEMON_ARGS || return 2
 }
 
 #
@@ -69,43 +70,34 @@ do_start()
 #
 do_stop()
 {
-	# Return
-	#   0 if daemon has been stopped
-	#   1 if daemon was already stopped
-	#   2 if daemon could not be stopped
-	#   other if a failure occurred
-	start-stop-daemon --stop --quiet --signal=TERM \
-	    --retry=10 --name $NAME --pidfile $PIDFILE
-	RETVAL="$?"
-	[ "$RETVAL" = 2 ] && return 2
-	# Wait for children to finish too if this is a daemon that forks
-	# and if the daemon is only ever run from this initscript.
-	# If the above conditions are not satisfied then add some other code
-	# that waits for the process to drop all resources that could be
-	# needed by services started subsequently.  A last resort is to
-	# sleep for some time.
-	start-stop-daemon --stop --quiet --oknodo \
-	    --retry=10 --exec $DAEMON
-	[ "$?" = 2 ] && return 2
-	return "$RETVAL"
+	if [ ! -e $PIDFILE ] ; then
+		return 0
+	fi
+	$CTRL stop
 }
 
 #
 # Function that sends a SIGHUP to the daemon/service
 #
 do_reload() {
-	#
-	# If the daemon can reload its configuration without
-	# restarting (for example, when it is sent a SIGHUP),
-	# then implement that here.
-	#
-	start-stop-daemon --stop --signal 1 --quiet --name $NAME
-	return 0
+	PID=`pidofproc -p $PIDFILE`
+	if [ -n "$PID" ]; then
+		kill -HUP $PID
+		return 0
+	else
+		return 1
+	fi
 }
 
 case "$1" in
   start)
 	log_daemon_msg "Starting $DESC" "$NAME"
+	if ! do_test ; then
+		log_end_msg 1
+		log_failure_msg "This anoubisd is not compatible with the running kernel."
+		log_failure_msg "Reboot with a (newer) anoubis kernel."
+		exit 3
+	fi
 	do_start
 	case "$?" in
 		0|1) log_end_msg 0 ;;
@@ -119,6 +111,15 @@ case "$1" in
 		0|1) log_end_msg 0 ;;
 		2) log_end_msg 1 ;;
 	esac
+	;;
+  configtest)
+	if ! do_test ; then
+		log_end_msg 1
+		log_failure_msg "This anoubisd is not compatible with the running kernel."
+		exit 3
+	else
+		exit 0
+	fi
 	;;
   #reload|force-reload)
 	#

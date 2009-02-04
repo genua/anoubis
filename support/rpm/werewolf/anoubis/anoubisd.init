@@ -29,9 +29,13 @@ test -x /sbin/anoubisd || exit 1
 
 RETVAL=0
 
-#
-# See how we were called.
-#
+do_test() {
+	if /sbin/anoubisd -n >/dev/null 2>&1 ; then
+		return 0
+	else
+		return $?
+	fi
+}
 
 start() {
 	# Check if it is already running
@@ -80,10 +84,23 @@ reload() {
 
 case "$1" in
 start)
+	if ! do_test ; then
+		echo "This anoubisd is not compatible with the running kernel."
+		echo "Reboot with a (newer) anoubis kernel."
+		exit 3
+	fi
+
 	start $2
 	;;
 stop)
 	stop
+	;;
+configtest)
+	if ! do_test ; then
+		echo "This anoubisd is not compatible with the running kernel."
+		exit 3
+	fi
+	exit 0
 	;;
 reload)
 	reload
