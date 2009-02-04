@@ -42,12 +42,16 @@
 
 ComSfsListTask::ComSfsListTask(void)
 {
+	this->recursive_ = false;
+	this->orphaned_ = false;
 	this->keyId_ = 0;
 	this->keyIdLen_ = 0;
 }
 
 ComSfsListTask::ComSfsListTask(uid_t uid, const wxString &dir)
 {
+	this->recursive_ = false;
+	this->orphaned_ = false;
 	this->keyId_ = 0;
 	this->keyIdLen_ = 0;
 
@@ -88,6 +92,30 @@ ComSfsListTask::setRequestParameter(uid_t uid, const wxString &dir)
 }
 
 bool
+ComSfsListTask::isRecursive(void) const
+{
+	return (this->recursive_);
+}
+
+void
+ComSfsListTask::setRecursive(bool recursive)
+{
+	this->recursive_ = recursive;
+}
+
+bool
+ComSfsListTask::fetchOrphaned(void) const
+{
+	return (this->orphaned_);
+}
+
+void
+ComSfsListTask::setFetchOrphaned(bool enabled)
+{
+	this->orphaned_ = enabled;
+}
+
+bool
 ComSfsListTask::haveKeyId(void) const
 {
 	return ((keyId_ != 0) && (keyIdLen_ > 0));
@@ -124,14 +152,10 @@ ComSfsListTask::getEventType(void) const
 void
 ComSfsListTask::exec(void)
 {
-	const uid_t			cur_uid = getuid();
-	struct anoubis_transaction	*ta;
-	int				req_op;
-	uid_t				req_uid;
-	int				req_flags;
-	char				path[directory_.Len() + 1];
-	char				**list;
-	int				listSize;
+	const uid_t	cur_uid = getuid();
+	int		req_op;
+	uid_t		req_uid;
+	int		req_flags;
 
 	resetComTaskResult();
 
@@ -154,51 +178,7 @@ ComSfsListTask::exec(void)
 		return;
 	}
 
-	strlcpy(path, directory_.fn_str(), sizeof(path));
-
-	/* Create request */
-	ta = anoubis_client_csumrequest_start(
-	    getComHandler()->getClient(), req_op,
-	    path, this->keyId_, 0, this->keyIdLen_, req_uid, req_flags);
-
-	if(!ta) {
-		setComTaskResult(RESULT_COM_ERROR);
-		return;
-	}
-
-	/* Wait for completition */
-	while (!(ta->flags & ANOUBIS_T_DONE)) {
-		if (!getComHandler()->waitForMessage()) {
-			anoubis_transaction_destroy(ta);
-			setComTaskResult(RESULT_COM_ERROR);
-			return;
-		}
-	}
-
-	if (ta->result) {
-		setComTaskResult(RESULT_REMOTE_ERROR);
-		setResultDetails(ta->result);
-		anoubis_transaction_destroy(ta);
-		return;
-	}
-
-	/* Extract filelist from response */
-	list = anoubis_csum_list(ta->msg, &listSize);
-	anoubis_transaction_destroy(ta);
-
-	/* Put filelist from transaction into result of the task */
-	if (list != 0) {
-		for (int i = 0; i < listSize; i++) {
-			wxString f = wxString(list[i], wxConvFile);
-			fileList_.Add(f);
-
-			free(list[i]);
-		}
-
-		free(list);
-	}
-
-	setComTaskResult(RESULT_SUCCESS);
+	fetchSfsList(req_op, "", req_uid, req_flags);
 }
 
 wxArrayString
@@ -213,4 +193,121 @@ ComSfsListTask::resetComTaskResult(void)
 	ComTask::resetComTaskResult();
 
 	fileList_.Clear();
+}
+
+void
+ComSfsListTask::fetchSfsList(int op, const char *basepath, uid_t uid, int flags)
+{
+	struct anoubis_transaction	*ta;
+	char				*path;
+	char				**list;
+	int				listSize;
+
+	int result;
+	if (directory_ != wxT("/"))
+		result = asprintf(&path, "%s/%s",
+		    (const char *)directory_.fn_str(), basepath);
+	else
+		result = asprintf(&path, "/%s", basepath);
+
+	if (result == -1) {
+		setComTaskResult(RESULT_OOM);
+		free(path);
+		return;
+	} else {
+		/* Remove trailing slash, if any */
+		if (strlen(path) > 1 && *(path + strlen(path) - 1) == '/')
+			*(path + strlen(path) -1) = '\0';
+	}
+
+	/* Create request */
+	ta = anoubis_client_csumrequest_start(getComHandler()->getClient(),
+	    op, path, this->keyId_, 0, this->keyIdLen_, uid, flags);
+
+	if(!ta) {
+		setComTaskResult(RESULT_COM_ERROR);
+		free(path);
+		return;
+	}
+
+	/* Wait for completition */
+	while (!(ta->flags & ANOUBIS_T_DONE)) {
+		if (!getComHandler()->waitForMessage()) {
+			anoubis_transaction_destroy(ta);
+			setComTaskResult(RESULT_COM_ERROR);
+			free(path);
+			return;
+		}
+	}
+
+	if (ta->result) {
+		setComTaskResult(RESULT_REMOTE_ERROR);
+		setResultDetails(ta->result);
+		anoubis_transaction_destroy(ta);
+		free(path);
+		return;
+	}
+
+	/* Extract filelist from response */
+	list = anoubis_csum_list(ta->msg, &listSize);
+	anoubis_transaction_destroy(ta);
+
+	/* Put filelist from transaction into result of the task */
+	if (list != 0) {
+		for (int i = 0; i < listSize; i++) {
+			wxString f = wxString::FromAscii(list[i]);
+
+			if (strlen(basepath) > 0) {
+				/* Prepend the basepath, if exists */
+				wxString pp = wxString::FromAscii(basepath);
+
+				if (!pp.EndsWith(wxT("/")))
+					pp += wxT("/");
+
+				f.Prepend(pp);
+			}
+
+			if (canFetch(f))
+				fileList_.Add(f);
+
+			if (this->recursive_ && f.EndsWith(wxT("/"))) {
+				/* This is a directory, go down if requested */
+				fetchSfsList(op, f.fn_str(), uid, flags);
+
+				if (getComTaskResult() != RESULT_SUCCESS) {
+					/* Can stop here */
+					for (int j = i; j < listSize; j++)
+						free(list[j]);
+
+					free(list);
+					free(path);
+
+					return;
+				}
+			}
+
+			free(list[i]);
+		}
+
+		free(list);
+	}
+
+	free(path);
+	setComTaskResult(RESULT_SUCCESS);
+}
+
+bool
+ComSfsListTask::canFetch(const wxString &file) const
+{
+	wxString path = wxT("/") + file;
+
+	if (directory_ != wxT("/"))
+		path.Prepend(directory_);
+
+	if (!orphaned_) {
+		/* Orphaned fetch disabled, thus only fetch exising files */
+		struct stat fstat;
+		return (stat(path.fn_str(), &fstat) == 0);
+	} else
+		return (true);
 }

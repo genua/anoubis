@@ -146,7 +146,18 @@ void
 ModSfsMainPanelImpl::OnSfsMainDirCtrlSelChanged(wxTreeEvent &)
 {
 	/* Update controller */
+	currentOperation_ = OP_SHOW_ALL;
 	sfsCtrl_->setPath(SfsMainDirCtrl->GetPath());
+}
+
+void
+ModSfsMainPanelImpl::OnSfsOperationFinished(wxCommandEvent&)
+{
+	if ((currentOperation_ == OP_SHOW_CHANGED) ||
+	    (currentOperation_ == OP_SHOW_CHECKSUMS) ||
+	    (currentOperation_ == OP_SHOW_ORPHANED)) {
+		updateSfsList();
+	}
 }
 
 void
@@ -162,8 +173,11 @@ ModSfsMainPanelImpl::OnSfsDirChanged(wxCommandEvent&)
 void
 ModSfsMainPanelImpl::OnSfsMainListItemActivated(wxListEvent &event)
 {
+	/* Receive index in model */
+	int modelIndex = SfsMainListCtrl->GetItemData(event.GetIndex());
+
 	SfsDirectory &dir = sfsCtrl_->getSfsDirectory();
-	SfsEntry &entry = dir.getEntry(event.GetIndex());
+	SfsEntry &entry = dir.getEntry(modelIndex);
 
 	ModSfsDetailsDlg dlg(entry, this);
 	dlg.ShowModal();
@@ -172,17 +186,21 @@ ModSfsMainPanelImpl::OnSfsMainListItemActivated(wxListEvent &event)
 void
 ModSfsMainPanelImpl::OnSfsMainDirTraversalChecked(wxCommandEvent&)
 {
-	SfsDirectory &dir = sfsCtrl_->getSfsDirectory();
-	dir.setDirTraversal(SfsMainDirTraversalCheckbox->GetValue());
-
-	/* Display changes */
-	updateSfsList();
+	sfsCtrl_->setRecursive(SfsMainDirTraversalCheckbox->GetValue());
 }
 
 void
 ModSfsMainPanelImpl::OnSfsEntryChanged(wxCommandEvent &event)
 {
-	updateSfsEntry(event.GetInt()); /* Update the entry */
+	int modelIndex = event.GetInt();
+
+	/* Find position in view, where entry is stored */
+	for (int idx = 0; idx < SfsMainListCtrl->GetItemCount(); idx++) {
+		long itemData = SfsMainListCtrl->GetItemData(idx);
+		if (itemData == modelIndex) {
+			updateSfsEntry(idx); /* Update the entry */
+		}
+	}
 }
 
 void
@@ -219,29 +237,16 @@ ModSfsMainPanelImpl::OnSfsMainInverseCheckboxClicked(wxCommandEvent&)
 void
 ModSfsMainPanelImpl::OnSfsMainValidateButtonClicked(wxCommandEvent&)
 {
-	SfsCtrl::CommandResult result = sfsCtrl_->validateAll();
+	currentOperation_ = OP_SHOW_ALL;
 
-	switch (result) {
-	case SfsCtrl::RESULT_NOTCONNECTED:
-		wxGetApp().status(
-		    _("Error: xanoubis is not connected to the daemon"));
-		break;
-	case SfsCtrl::RESULT_NEEDPASS:
-		wxGetApp().status(
-		    _("Error: A passphrase is required."));
-		break;
-	case SfsCtrl::RESULT_INVALIDARG:
-		wxGetApp().status(
-		    _("Error: An invalid argument was supplied"));
-		break;
-	case SfsCtrl::RESULT_BUSY:
-		wxGetApp().status(
-		    _("Error: Sfs is still busy with another operation."));
-		break;
-	case SfsCtrl::RESULT_EXECUTE:
-		/* Success */
-		break;
+	SfsDirectory &dir = sfsCtrl_->getSfsDirectory();
+	unsigned int listSize = SfsMainListCtrl->GetItemCount();
+
+	if (listSize < dir.getNumEntries()) {
+		updateSfsList();
 	}
+
+	applySfsValidateAll(false);
 }
 
 void
@@ -335,6 +340,54 @@ ModSfsMainPanelImpl::applySfsAction(const IndexArray &selection)
 }
 
 void
+ModSfsMainPanelImpl::applySfsValidateAll(bool orphaned)
+{
+	SfsCtrl::CommandResult result = sfsCtrl_->validateAll(orphaned);
+
+	switch (result) {
+	case SfsCtrl::RESULT_NOTCONNECTED:
+		wxGetApp().status(
+		    _("Error: xanoubis is not connected to the daemon"));
+		break;
+	case SfsCtrl::RESULT_NEEDPASS:
+		wxGetApp().status(
+		    _("Error: A passphrase is required."));
+		break;
+	case SfsCtrl::RESULT_INVALIDARG:
+		wxGetApp().status(
+		    _("Error: An invalid argument was supplied"));
+		break;
+	case SfsCtrl::RESULT_BUSY:
+		wxGetApp().status(
+		    _("Error: Sfs is still busy with another operation."));
+		break;
+	case SfsCtrl::RESULT_EXECUTE:
+		/* Success */
+		break;
+	}
+}
+
+bool
+ModSfsMainPanelImpl::canDisplay(const SfsEntry &entry) const
+{
+	switch (currentOperation_) {
+	case OP_SHOW_CHECKSUMS:
+		return (entry.haveChecksum());
+	case OP_SHOW_CHANGED:
+		return (entry.isChecksumChanged());
+	case OP_SHOW_ORPHANED:
+		return (!entry.fileExists());
+	case OP_NOP:
+	case OP_APPLY:
+	case OP_SHOW_ALL:
+		return true;
+	}
+
+	/* Never reached */
+	return (false);
+}
+
+void
 ModSfsMainPanelImpl::OnSfsMainSigEnabledClicked(wxCommandEvent&)
 {
 	bool enable = SfsMainSignFilesCheckBox->IsChecked();
@@ -352,6 +405,27 @@ ModSfsMainPanelImpl::OnSfsMainSigEnabledClicked(wxCommandEvent&)
 		wxMessageBox(msg, _("SFS error"), wxOK|wxICON_ERROR, this);
 		SfsMainSignFilesCheckBox->SetValue(!enable); /* Toggle back */
 	}
+}
+
+void
+ModSfsMainPanelImpl::OnSfsMainSearchOrphanedClicked(wxCommandEvent&)
+{
+	currentOperation_ = OP_SHOW_ORPHANED;
+	applySfsValidateAll(true);
+}
+
+void
+ModSfsMainPanelImpl::OnSfsMainShowAllChecksumsClicked(wxCommandEvent&)
+{
+	currentOperation_ = OP_SHOW_CHECKSUMS;
+	applySfsValidateAll(false);
+}
+
+void
+ModSfsMainPanelImpl::OnSfsMainShowChangedClicked(wxCommandEvent&)
+{
+	currentOperation_ = OP_SHOW_CHANGED;
+	applySfsValidateAll(false);
 }
 
 void
@@ -434,6 +508,8 @@ ModSfsMainPanelImpl::initSfsMain()
 {
 	sfsCtrl_ = new SfsCtrl;
 
+	currentOperation_ = OP_NOP;
+
 	sfsListOkIcon_ = wxGetApp().loadIcon(wxT("General_ok_16.png"));
 	sfsListWarnIcon_ = wxGetApp().loadIcon(wxT("General_problem_16.png"));
 	sfsListErrorIcon_ = wxGetApp().loadIcon(wxT("General_error_16.png"));
@@ -443,6 +519,9 @@ ModSfsMainPanelImpl::initSfsMain()
 	sfsListImageList_.Add(*sfsListWarnIcon_);
 	sfsListImageList_.Add(*sfsListErrorIcon_);
 
+	sfsCtrl_->Connect(anEVT_SFSOPERATION_FINISHED,
+	    wxCommandEventHandler(ModSfsMainPanelImpl::OnSfsOperationFinished),
+	    NULL, this);
 	sfsCtrl_->Connect(anEVT_SFSDIR_CHANGED,
 	    wxCommandEventHandler(ModSfsMainPanelImpl::OnSfsDirChanged),
 	    NULL, this);
@@ -480,8 +559,7 @@ ModSfsMainPanelImpl::initSfsMain()
 	SfsMainCurrPathLabel->SetLabel(SfsMainDirCtrl->GetPath());
 	sfsCtrl_->setPath(SfsMainDirCtrl->GetPath());
 
-	SfsDirectory &dir = sfsCtrl_->getSfsDirectory();
-	SfsMainDirTraversalCheckbox->SetValue(dir.isDirTraversalEnabled());
+	SfsMainDirTraversalCheckbox->SetValue(sfsCtrl_->isRecursive());
 }
 
 void
@@ -501,8 +579,21 @@ ModSfsMainPanelImpl::updateSfsList()
 	SfsMainListCtrl->DeleteAllItems();
 
 	for (unsigned int i = 0; i < dir.getNumEntries(); i++) {
-		SfsMainListCtrl->InsertItem(i, wxEmptyString);
-		updateSfsEntry(i);
+		SfsEntry &entry = dir.getEntry(i);
+
+		if (canDisplay(entry)) {
+			int listIdx = SfsMainListCtrl->GetItemCount();
+
+			SfsMainListCtrl->InsertItem(listIdx, wxEmptyString);
+
+			/*
+			 * Remember the position, where the entry is displayed
+			 * in the list. Index of list is not necessarily index
+			 * of model!
+			 */
+			SfsMainListCtrl->SetItemData(listIdx, i);
+			updateSfsEntry(listIdx);
+		}
 	}
 }
 
@@ -510,10 +601,15 @@ void
 ModSfsMainPanelImpl::updateSfsEntry(int idx)
 {
 	SfsDirectory	&dir = sfsCtrl_->getSfsDirectory();
-	SfsEntry	&entry = dir.getEntry(idx);
-	wxString	baseDir = dir.getPath();
 	wxString	checksumInfo, signatureInfo;
 	int		checksumIconIndex = 0, signatureIconIndex = 0;
+
+	/* Receive index of model, which is displayed at the list-index */
+	int		modelIndex = SfsMainListCtrl->GetItemData(idx);
+
+	/* Receive entry */
+	SfsEntry	&entry = dir.getEntry(modelIndex);
+	wxString	baseDir = dir.getPath();
 
 	switch (entry.getChecksumState(SfsEntry::SFSENTRY_CHECKSUM)) {
 	case SfsEntry::SFSENTRY_NOT_VALIDATED:

@@ -46,8 +46,15 @@
  * the key-id if the certificate (setKeyId()). Unless the key-id is configured,
  * the uid-bindung is used.
  *
+ * You can enable a recursive fetch-operation. If enabled, the task fetches
+ * files and directories by asking for a sfs-list for each detected directory.
+ * By default, the feature is disabled.
+ *
  * When the operation was successful, you can receive the filelist with
- * getFileList().
+ * getFileList(). The task checks the each file for existence. Only if a file
+ * exists, it is reported back. You can disable the check, by activating the
+ * orphaned-fetch-mode (setFetchOrphaned()). If enabled, all files (independent
+ * from existence) are reported back.
  *
  * Supported error-codes:
  * - <code>RESULT_INIT</code> The task remains in RESULT_INIT state, if a
@@ -125,6 +132,47 @@ class ComSfsListTask : public ComTask
 		void setRequestParameter(uid_t, const wxString &);
 
 		/**
+		 * Tests whether the recursive fetch is enabled.
+		 *
+		 * If enabled, the task fetches all files and directory
+		 * recursive below the specified directory.
+		 *
+		 * @return true if recursive fetch is enabled, false otherwise.
+		 * @see setRecursive()
+		 */
+		bool isRecursive(void) const;
+
+		/**
+		 * Enables or disables the recursive fetch.
+		 *
+		 * @param recursive Set to true, if you want to enable the
+		 *                  recursive fetch-operation.
+		 * @see isRecursive()
+		 */
+		void setRecursive(bool);
+
+		/**
+		 * Tests whether the orphaned fetch is activated.
+		 *
+		 * If disabled (by default) each file is tested for existence
+		 * before it is returned. If disabled, you will get every file
+		 * (independent from existence).
+		 *
+		 * @return true if the orphaned fetch is activated, false
+		 *         otherwise.
+		 */
+		bool fetchOrphaned(void) const;
+
+		/**
+		 * Enables or disables the orphaned fetch.
+		 *
+		 * @param enabled Set to true, if you want to activate the
+		 *                feature.
+		 * @see fetchOrphaned()
+		 */
+		void setFetchOrphaned(bool);
+
+		/**
 		 * Tests whether a key-id is assigned to the task.
 		 * @return true is returned, if a key-id is assigned, false
 		 *         otherwise.
@@ -176,9 +224,36 @@ class ComSfsListTask : public ComTask
 	private:
 		uid_t		uid_;
 		wxString	directory_;
+		bool		recursive_;
+		bool		orphaned_;
 		wxArrayString	fileList_;
 		u_int8_t	*keyId_;
 		int		keyIdLen_;
+
+		/**
+		 * Performs a single fetch-operation.
+		 *
+		 * The recursive fetch is resolved, if necessary.
+		 *
+		 * @param op Operation to be send to anoubisd
+		 * @param basepath Path relative to directory_ send to anoubisd
+		 * @param uid Uid to be send to anoubisd
+		 * @param flags Flags to be send to anoubisd
+		 */
+		void fetchSfsList(int, const char *, uid_t, int);
+
+		/**
+		 * Tests whether the given file can be fetched.
+		 *
+		 * If the fetch-orphaned-feature is disabled, the file must
+		 * exist.
+		 *
+		 * @param file Relative path of file to check. Relative path
+		 *             to the basedirectory specified with directory_.
+		 * @return true, if you are allowed to fetch the file, false
+		 *         otherwise.
+		 */
+		bool canFetch(const wxString &) const;
 };
 
 #endif	/* _COMSFSLISTTASK_H_ */

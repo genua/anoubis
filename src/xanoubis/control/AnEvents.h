@@ -481,6 +481,14 @@ BEGIN_DECLARE_EVENT_TYPES()
 	DECLARE_LOCAL_EVENT_TYPE(anEVT_LOAD_KEY, wxNewEventType())
 
 	/**
+	 * Operation of SfsCtrl has finished.
+	 *
+	 * Whenever an SfsCtrl-operation has finished, an wxCommandEvent of
+	 * type anEVT_SFSOPERATION_FINISHED is generated.
+	 */
+	DECLARE_LOCAL_EVENT_TYPE(anEVT_SFSOPERATION_FINISHED, wxNewEventType())
+
+	/**
 	 * Sfs directory changed event.
 	 * The content of SfsDirectory has changed. The view needs to be
 	 * updated.

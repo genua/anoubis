@@ -354,6 +354,9 @@ ModSfsMainPanelBase::ModSfsMainPanelBase( wxWindow* parent, wxWindowID id, const
 	SfsMainFilterValidateButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModSfsMainPanelBase::OnSfsMainValidateButtonClicked ), NULL, this );
 	SfsMainListCtrl->Connect( wxEVT_COMMAND_LIST_ITEM_ACTIVATED, wxListEventHandler( ModSfsMainPanelBase::OnSfsMainListItemActivated ), NULL, this );
 	SfsMainSignFilesCheckBox->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( ModSfsMainPanelBase::OnSfsMainSigEnabledClicked ), NULL, this );
+	SfsMainSearchOrphanedButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModSfsMainPanelBase::OnSfsMainSearchOrphanedClicked ), NULL, this );
+	SfsMainShowChecksumButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModSfsMainPanelBase::OnSfsMainShowAllChecksumsClicked ), NULL, this );
+	SfsMainShowChangedButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModSfsMainPanelBase::OnSfsMainShowChangedClicked ), NULL, this );
 	SfsMainActionButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModSfsMainPanelBase::OnSfsMainApplyButtonClicked ), NULL, this );
 	PrivKeyChooseButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModSfsMainPanelBase::OnPrivKeyChooseClicked ), NULL, this );
 	PrivKeyValidityChoice->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( ModSfsMainPanelBase::OnPrivKeyValidityChanged ), NULL, this );

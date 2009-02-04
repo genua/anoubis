@@ -48,10 +48,33 @@ enum modSfsMainFileListColumns {
 
 class IndexArray;
 class SfsCtrl;
+class SfsEntry;
 
 class ModSfsMainPanelImpl : public ModSfsMainPanelBase
 {
 	private:
+		/**
+		 * An Sfs-operation.
+		 *
+		 * Post-processing on the view might differ from operation to
+		 * operation. That's why you have to keep in mind the
+		 * operation, which was initiated.
+		 */
+		enum SfSOperation {
+			OP_NOP,	/*!< No operation. The view is in initial
+				     state. */
+			OP_SHOW_ALL,	/*!< A new directory, filter ect. was
+					     selected, which forces an update
+					     of the complete entry-list. */
+			OP_SHOW_CHANGED,	/*!< Show changed checksums. */
+			OP_SHOW_CHECKSUMS,	/*!< Show checksums only */
+			OP_SHOW_ORPHANED,	/*!< Show orphaned files
+						     only */
+			OP_APPLY	/*!< Apply was clicked to perform an
+					     operation on the current
+					     selection */
+		};
+
 		wxString	 columnNames_[MODSFS_LIST_COLUMN_EOL];
 		long		 userRuleSetId_;
 		long		 adminRuleSetId_;
@@ -59,6 +82,7 @@ class ModSfsMainPanelImpl : public ModSfsMainPanelBase
 
 		void OnLoadRuleSet(wxCommandEvent&);
 
+		SfSOperation	currentOperation_;
 		wxIcon		*sfsListOkIcon_;
 		wxIcon		*sfsListWarnIcon_;
 		wxIcon		*sfsListErrorIcon_;
@@ -69,11 +93,14 @@ class ModSfsMainPanelImpl : public ModSfsMainPanelBase
 		void updateSfsList();
 		void updateSfsEntry(int);
 		void applySfsAction(const IndexArray &);
+		void applySfsValidateAll(bool);
+		bool canDisplay(const SfsEntry &) const;
 
 		void initSfsOptions(void);
 		void certificateParamsUpdate(void);
 
 		void OnSfsMainDirCtrlSelChanged(wxTreeEvent&);
+		void OnSfsOperationFinished(wxCommandEvent&);
 		void OnSfsDirChanged(wxCommandEvent&);
 		void OnSfsMainListItemActivated(wxListEvent&);
 		void OnSfsMainDirTraversalChecked(wxCommandEvent&);
@@ -84,6 +111,9 @@ class ModSfsMainPanelImpl : public ModSfsMainPanelBase
 		void OnSfsMainValidateButtonClicked(wxCommandEvent&);
 		void OnSfsMainApplyButtonClicked(wxCommandEvent&);
 		void OnSfsMainSigEnabledClicked(wxCommandEvent&);
+		void OnSfsMainSearchOrphanedClicked(wxCommandEvent&);
+		void OnSfsMainShowAllChecksumsClicked(wxCommandEvent&);
+		void OnSfsMainShowChangedClicked(wxCommandEvent&);
 		void OnSfsMainKeyLoaded(wxCommandEvent&);
 
 		void OnPrivKeyValidityChanged(wxCommandEvent&);

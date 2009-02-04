@@ -133,6 +133,67 @@ SfsDirectory::getEntry(unsigned int idx)
 	return (entryList_[idx]);
 }
 
+SfsEntry &
+SfsDirectory::insertEntry(const wxString &path)
+{
+	int idx = getIndexOf(path);
+	if (idx != -1)
+		return (getEntry(idx));
+
+	std::vector<SfsEntry>::iterator it = entryList_.begin();
+	SfsEntry newEntry(path);
+
+	/* Find correct position */
+	idx = 0;
+	for (; it != entryList_.end(); ++it, idx++) {
+		SfsEntry &curEntry = (*it);
+
+		if (curEntry.getPath().Cmp(path) > 0) {
+			entryList_.insert(it, newEntry);
+			return (entryList_[idx]);
+		}
+	}
+
+	/*
+	 * newEntry is the "greatest" item, append it at the end of
+	 * the directory
+	 */
+	entryList_.push_back(newEntry);
+
+	return (entryList_.back());
+}
+
+bool
+SfsDirectory::cleanup(void)
+{
+	std::vector<SfsEntry>::iterator it = entryList_.begin();
+	int numRemoved = 0;
+
+	while (it != entryList_.end()) {
+		SfsEntry &e = (*it);
+
+		if (!e.fileExists()) {
+			/* File does not exist */
+			entryList_.erase(it);
+			numRemoved++;
+		} else if (!isDirTraversalEnabled() &&
+		    e.getRelativePath(path_).Find(wxT("/")) != wxNOT_FOUND) {
+			/*
+			 * Directory traversal is disabled but this entry comes
+			 * from a sub-directory.
+			 */
+			entryList_.erase(it);
+			numRemoved++;
+		} else {
+			/* All tests passed, skip to next entry */
+			it++;
+		}
+	}
+
+	/* Model has changed, if at least one entry was removed */
+	return (numRemoved > 0);
+}
+
 void
 SfsDirectory::updateEntryList()
 {
@@ -157,24 +218,7 @@ SfsDirectory::OnFile(const wxString &filename)
 		 * Insert into directory
 		 * Entries are sorted in alphabetic order
 		 */
-		std::vector<SfsEntry>::iterator it = entryList_.begin();
-		SfsEntry newEntry(filename);
-
-		/* Find correct position */
-		for (; it != entryList_.end(); ++it) {
-			SfsEntry &curEntry = (*it);
-
-			if (curEntry.getPath().Cmp(filename) > 0) {
-				entryList_.insert(it, newEntry);
-				return (wxDIR_CONTINUE);
-			}
-		}
-
-		/*
-		 * newEntry is the "greatest" item, append it at the end of
-		 * the directory
-		 */
-		entryList_.push_back(newEntry);
+		insertEntry(filename);
 	}
 
 	return (wxDIR_CONTINUE);

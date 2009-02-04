@@ -138,6 +138,13 @@ class SfsEntry
 		void setPath(const wxString &);
 
 		/**
+		 * Tests whether the file exists in the local filesystem.
+		 *
+		 * @return true if such a file exists, false otherwise.
+		 */
+		bool fileExists(void) const;
+
+		/**
 		 * Returns the modification timestamp of the file.
 		 *
 		 * If the file does not exist, ther returned datetime-value
@@ -157,6 +164,51 @@ class SfsEntry
 		 * @return State of requested checksum-type
 		 */
 		ChecksumState getChecksumState(ChecksumType) const;
+
+		/**
+		 * Tests whether the checksum of the specified type is
+		 * assigned.
+		 *
+		 * @param type Type of requested checksum
+		 * @return true is returned, if a checksum of the requested
+		 *         type is assigned, false otherwise.
+		 */
+		bool haveChecksum(ChecksumType) const;
+
+		/**
+		 * Tests if at least one checksum (of any type) is assigned.
+		 *
+		 * @return true is returned, if at least one checksum is
+		 *         assigned, false otherwise.
+		 * @see haveChecksum(ChecksumType)
+		 */
+		bool haveChecksum(void) const;
+
+		/**
+		 * Tests whether the checksum of the specified type differs
+		 * from the local calculated checksum.
+		 *
+		 * For comparison you need:
+		 * - a local checksum
+		 * - the checksum of the specified type
+		 *
+		 * If one of the conditions fails, comparison is not performed
+		 * and false is retured.
+		 *
+		 * @param type Type of requested checksum
+		 * @return true is returned, if the requested checksum differs
+		 *         from the local checksum, false otherwise.
+		 */
+		bool isChecksumChanged(ChecksumType) const;
+
+		/**
+		 * Tests if at least one checksum (of any type) has changed.
+		 *
+		 * @return true is returned, if at least one checksum has
+		 *         changed, false otherwise.
+		 * @see isChecksumChanged(ChecksumType)
+		 */
+		bool isChecksumChanged() const;
 
 		/**
 		 * Returns the hex-string of a checksum.

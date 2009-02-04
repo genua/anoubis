@@ -97,15 +97,25 @@ SfsEntry::getFileName(void) const
 	return (this->filename_);
 }
 
+bool
+SfsEntry::fileExists(void) const
+{
+	struct stat fstat;
+
+	if (stat(this->path_.fn_str(), &fstat) == 0)
+		return (!S_ISDIR(fstat.st_mode));
+	else
+		return (false);
+}
+
 wxDateTime
 SfsEntry::getLastModified(void) const
 {
 	wxDateTime dt;
+	struct stat fstat;
 
-	if (wxFileExists(this->path_)) {
-		wxFileName fn(this->path_);
-		fn.GetTimes(0, &dt, 0);
-	}
+	if (stat(this->path_.fn_str(), &fstat) == 0)
+		dt.Set(fstat.st_mtime);
 
 	return (dt);
 }
@@ -114,6 +124,32 @@ SfsEntry::ChecksumState
 SfsEntry::getChecksumState(ChecksumType type) const
 {
 	return (state_[type]);
+}
+
+bool
+SfsEntry::haveChecksum(ChecksumType type) const
+{
+	return (assigned_[type]);
+}
+
+bool
+SfsEntry::haveChecksum(void) const
+{
+	return haveChecksum(SFSENTRY_CHECKSUM) ||
+	    haveChecksum(SFSENTRY_SIGNATURE);
+}
+
+bool
+SfsEntry::isChecksumChanged(ChecksumType type) const
+{
+	return (state_[type] == SFSENTRY_NOMATCH);
+}
+
+bool
+SfsEntry::isChecksumChanged() const
+{
+	return isChecksumChanged(SFSENTRY_CHECKSUM) ||
+	    isChecksumChanged(SFSENTRY_SIGNATURE);
 }
 
 wxString

@@ -90,6 +90,19 @@ SfsCtrl::setFilterInversed(bool inversed)
 }
 
 bool
+SfsCtrl::isRecursive(void) const
+{
+	return (sfsDir_.isDirTraversalEnabled());
+}
+
+void
+SfsCtrl::setRecursive(bool recursive)
+{
+	if (sfsDir_.setDirTraversal(recursive))
+		sendDirChangedEvent();
+}
+
+bool
 SfsCtrl::isSignatureEnabled(void) const
 {
 	KeyCtrl *keyCtrl = KeyCtrl::getInstance();
@@ -157,12 +170,22 @@ SfsCtrl::validate(unsigned int idx)
 }
 
 SfsCtrl::CommandResult
-SfsCtrl::validateAll(void)
+SfsCtrl::validateAll(bool orphaned)
 {
 	if (!taskList_.empty())
 		return (RESULT_BUSY);
 
 	if (comEnabled_) {
+		if (!orphaned) {
+			/*
+			 * Switch back from orphaned to "normal" list.
+			 * There might be entries in the model (non-existing
+			 * files), which needs to be removed now.
+			 */
+			if (sfsDir_.cleanup())
+				sendDirChangedEvent();
+		}
+
 		if (!isSignatureEnabled()) {
 			/* Reset signed checksums in model */
 			for (unsigned int idx = 0;
@@ -176,7 +199,7 @@ SfsCtrl::validateAll(void)
 		}
 
 		/* Ask for sfs-list */
-		createSfsListTasks(getuid(), sfsDir_.getPath());
+		createSfsListTasks(getuid(), sfsDir_.getPath(), orphaned);
 
 		return (RESULT_EXECUTE);
 	}
@@ -373,7 +396,8 @@ list of checksumed files of %s."),
 		SfsEntry &entry = sfsDir_.getEntry(idx);
 
 		/* Has file a checksum? */
-		int csumIdx = result.Index(entry.getFileName());
+		int csumIdx = result.Index(
+		    entry.getRelativePath(sfsDir_.getPath()));
 
 		if (csumIdx != wxNOT_FOUND) {
 			/* Ask anoubisd for the checksum */
@@ -381,7 +405,11 @@ list of checksumed files of %s."),
 			    !task->haveKeyId(), task->haveKeyId());
 
 			/* Calculate the checksum */
-			createCsumCalcTask(entry.getPath());
+			if (entry.fileExists())
+				createCsumCalcTask(entry.getPath());
+
+			/* Processed, rempove from result-list */
+			result.RemoveAt(csumIdx);
 		} else {
 			/* Update checksum attribute to no-checksum */
 			SfsEntry::ChecksumType type = task->haveKeyId() ?
@@ -390,6 +418,23 @@ list of checksumed files of %s."),
 
 			if (entry.setChecksumMissing(type))
 				sendEntryChangedEvent(idx);
+		}
+	}
+
+	if (task->fetchOrphaned()) {
+		/*
+		 * If fetching of orphaned files was enabled, the remaining
+		 * entries of the result-list are orphaned files, which needs
+		 * to be inserted into the model.
+		 */
+		wxString basePath = task->getDirectory();
+
+		if (!basePath.EndsWith(wxT("/")))
+			basePath += wxT("/");
+
+		for (unsigned int idx = 0; idx < result.Count(); idx++) {
+			if (!result[idx].EndsWith(wxT("/")))
+				sfsDir_.insertEntry(basePath + result[idx]);
 		}
 	}
 }
@@ -697,6 +742,15 @@ SfsCtrl::disableCommunication(void)
 }
 
 void
+SfsCtrl::sendOperationFinishedEvent(void)
+{
+	wxCommandEvent event(anEVT_SFSOPERATION_FINISHED);
+	event.SetEventObject(this);
+
+	ProcessEvent(event);
+}
+
+void
 SfsCtrl::sendDirChangedEvent(void)
 {
 	wxCommandEvent event(anEVT_SFSDIR_CHANGED);
@@ -800,10 +854,12 @@ SfsCtrl::createComCsumDelTasks(const wxString &path)
 }
 
 void
-SfsCtrl::createSfsListTasks(uid_t uid, const wxString &path)
+SfsCtrl::createSfsListTasks(uid_t uid, const wxString &path, bool orphaned)
 {
 	ComSfsListTask *csTask = new ComSfsListTask;
 	csTask->setRequestParameter(uid, path);
+	csTask->setRecursive(isRecursive());
+	csTask->setFetchOrphaned(orphaned);
 
 	pushTask(csTask);
 	JobCtrl::getInstance()->addTask(csTask);
@@ -815,6 +871,8 @@ SfsCtrl::createSfsListTasks(uid_t uid, const wxString &path)
 
 		ComSfsListTask *sigTask = new ComSfsListTask;
 		sigTask->setRequestParameter(uid, path);
+		sigTask->setRecursive(isRecursive());
+		sigTask->setFetchOrphaned(orphaned);
 		sigTask->setKeyId(raw_cert->keyid, raw_cert->idlen);
 
 		pushTask(sigTask);
@@ -854,8 +912,10 @@ SfsCtrl::popTask(Task *task)
 	if (taskList_.size() == 0) {
 		/*
 		 * This was the last task in the list -> the operation finished
-		 * Check for errors.
 		 */
+		sendOperationFinishedEvent();
+
+		/* Check for errors */
 		if (!errorList_.empty())
 			sendErrorEvent();
 	}

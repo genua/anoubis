@@ -138,21 +138,24 @@ TcComTask::nextTest()
 		setupTestSfsListEmpty();
 		break;
 	case 11:
-		setupTestSigAdd();
+		setupTestSfsListRecursive();
 		break;
 	case 12:
-		setupTestSigGet();
+		setupTestSigAdd();
 		break;
 	case 13:
-		setupTestSigListNotEmpty();
+		setupTestSigGet();
 		break;
 	case 14:
-		setupTestSigDel();
+		setupTestSigListNotEmpty();
 		break;
 	case 15:
-		setupTestSigListEmpty();
+		setupTestSigDel();
 		break;
 	case 16:
+		setupTestSigListEmpty();
+		break;
+	case 17:
 		setupTestUnregister();
 		break;
 	default:
@@ -609,12 +612,13 @@ void
 TcComTask::setupTestSfsListEmpty(void)
 {
 	trace("Enter TcComTask::setupTestSfsListEmpty\n");
+	wxString path = wxFileName::GetHomeDir() + wxT("/csums/empty");
 
 	JobCtrl::getInstance()->Connect(anTASKEVT_SFS_LIST,
 	    wxTaskEventHandler(TcComTask::onTestSfsListEmpty), NULL, this);
 
 	ComSfsListTask *next = new ComSfsListTask;
-	next->setRequestParameter(getuid(), wxFileName::GetHomeDir());
+	next->setRequestParameter(getuid(), path);
 
 	trace("Scheduling ComSfsListTask: %p\n", next);
 	JobCtrl::getInstance()->addTask(next);
@@ -658,6 +662,104 @@ TcComTask::onTestSfsListEmpty(TaskEvent &event)
 	    "Is: %i\n", result.Count());
 
 	trace("Leaving TcComTask::onTestSfsListEmpty\n");
+	nextTest();
+}
+
+void
+TcComTask::setupTestSfsListRecursive(void)
+{
+	trace("Enter TcComTask::setupTestSfsListRecursive\n");
+	wxString path = wxFileName::GetHomeDir() + wxT("/csums");
+
+	JobCtrl::getInstance()->Connect(anTASKEVT_SFS_LIST,
+	    wxTaskEventHandler(TcComTask::onTestSfsListRecursive), NULL, this);
+
+	ComSfsListTask *next = new ComSfsListTask;
+	next->setRequestParameter(getuid(), path);
+	next->setRecursive(true);
+
+	trace("Scheduling ComSfsListTask: %p\n", next);
+	JobCtrl::getInstance()->addTask(next);
+
+	trace("Leaving TcComTask::setupTestSfsListRecursive\n");
+}
+
+void
+TcComTask::onTestSfsListRecursive(TaskEvent &event)
+{
+	trace("TcComTask::onTestSfsListRecursive\n");
+
+	ComSfsListTask *t = dynamic_cast<ComSfsListTask*>(event.getTask());
+	trace("ComSfsListTask = %p\n", t);
+
+	assertUnless(t->haveKeyId() == false, "A key-id is assigned");
+
+	wxArrayString result = t->getFileList();
+	trace("sfs-list-size: %i\n", result.Count());
+
+	delete t;
+
+	int idx;
+
+	idx = result.Index(wxT("1"));
+	assertUnless((idx != wxNOT_FOUND),
+	    "Entry \"1\" not found in sfs-list\n");
+	result.RemoveAt(idx);
+
+	idx = result.Index(wxT("2"));
+	assertUnless((idx != wxNOT_FOUND),
+	    "Entry \"2\" not found in sfs-list\n");
+	result.RemoveAt(idx);
+
+	idx = result.Index(wxT("3"));
+	assertUnless((idx != wxNOT_FOUND),
+	    "Entry \"3\" not found in sfs-list\n");
+	result.RemoveAt(idx);
+
+	idx = result.Index(wxT("sub1/"));
+	assertUnless((idx != wxNOT_FOUND),
+	    "Entry \"sub1/\" not found in sfs-list\n");
+	result.RemoveAt(idx);
+
+	idx = result.Index(wxT("sub1/1"));
+	assertUnless((idx != wxNOT_FOUND),
+	    "Entry \"sub1/1\" not found in sfs-list\n");
+	result.RemoveAt(idx);
+
+	idx = result.Index(wxT("sub1/2"));
+	assertUnless((idx != wxNOT_FOUND),
+	    "Entry \"sub1/2\" not found in sfs-list\n");
+	result.RemoveAt(idx);
+
+	idx = result.Index(wxT("sub2/"));
+	assertUnless((idx != wxNOT_FOUND),
+	    "Entry \"sub2/\" not found in sfs-list\n");
+	result.RemoveAt(idx);
+
+	idx = result.Index(wxT("sub2/1"));
+	assertUnless((idx != wxNOT_FOUND),
+	    "Entry \"sub2/1\" not found in sfs-list\n");
+	result.RemoveAt(idx);
+
+	idx = result.Index(wxT("sub2/2"));
+	assertUnless((idx != wxNOT_FOUND),
+	    "Entry \"sub2/2\" not found in sfs-list\n");
+	result.RemoveAt(idx);
+
+	idx = result.Index(wxT("sub2/3"));
+	assertUnless((idx != wxNOT_FOUND),
+	    "Entry \"sub2/3\" not found in sfs-list\n");
+	result.RemoveAt(idx);
+
+	for (unsigned int i = 0; i < result.Count(); i++) {
+		trace("* (%i): %s\n", i, (const char *)result[i].fn_str());
+	}
+
+	assertUnless((result.Count() == 0),
+	    "After removing all expected entries, an empty list is expected\n"
+	    "Is: %i\n", result.Count());
+
+	trace("Leaving TcComTask::onTestSfsListRecursive\n");
 	nextTest();
 }
 
@@ -957,6 +1059,7 @@ void
 TcComTask::setupTestSigListEmpty(void)
 {
 	trace("Enter TcComTask::setupTestSigListEmpty\n");
+	wxString path = wxFileName::GetHomeDir() + wxT("/csums/empty");
 	wxString certFile = wxFileName::GetHomeDir() + wxT("/pubkey");
 
 	JobCtrl::getInstance()->Connect(anTASKEVT_SFS_LIST,
@@ -980,7 +1083,7 @@ TcComTask::setupTestSigListEmpty(void)
 	struct anoubis_sig *raw_cert = cert.getCertificate();
 
 	ComSfsListTask *next = new ComSfsListTask;
-	next->setRequestParameter(getuid(), wxFileName::GetHomeDir());
+	next->setRequestParameter(getuid(), path);
 	assertUnless(next->setKeyId(raw_cert->keyid, raw_cert->idlen),
 	    "Failed to setup task with key-id.");
 

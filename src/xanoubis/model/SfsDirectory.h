@@ -141,6 +141,38 @@ class SfsDirectory : private wxDirTraverser
 		 */
 		SfsEntry &getEntry(unsigned int);
 
+		/**
+		 * Inserts a new SfsEntry into the SfsDirectory.
+		 *
+		 * The method does not check the path! It simply adds the new
+		 * entry in correct alphabetical order.
+		 *
+		 * @param path The path of the file to be inserted
+		 * @return The SfsEntry, which was created. If you try to
+		 *         insert a path, which was already inserted into the
+		 *         model, the corresponding SfsEntry is returned.
+		 */
+		SfsEntry &insertEntry(const wxString &);
+
+		/**
+		 * Cleans the model.
+		 *
+		 * Entries, which match one of the following conditions, are
+		 * removed from the model:
+		 *
+		 * - The corresponding file does not exist in the local
+		 *   filesystem
+		 * - Recursive traversal is disabled, but the entry belongs to
+		 *   a sub-directory.
+		 *
+		 * Cleaning up the model might be necessary, if you inserted
+		 * by yourself using insertEntry().
+		 *
+		 * @return true is returned, if the model has changed (at least
+		 *         one SfsEntry was removed from the model).
+		 */
+		bool cleanup(void);
+
 	private:
 		wxString path_;
 		bool recursive_;
