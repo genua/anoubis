@@ -504,14 +504,11 @@ load(char *rulesopt)
 		return error;
 	}
 
-	if (!make_version(ruleset)) {
-		apn_free_ruleset(ruleset);
-		/*
-		 * Do NOT abort here. make_version will print an error
-		 * message but we should load the rule set anyway.
-		 */
-	}
-
+	/*
+	 * Do NOT abort on failure. make_version will print an error
+	 * message but we should load the rule set anyway.
+	 */
+	make_version(ruleset);
 	apn_free_ruleset(ruleset);
 
 	fd = open(rulesopt, O_RDONLY);
