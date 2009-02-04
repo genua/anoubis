@@ -1,4 +1,4 @@
-.\"	$Id: 56550e,v 1.13 2009/01/29 17:44:16 ehrhardt Exp $
+.\"	$Id: 56550e,v 1.14 2009/02/04 09:44:45 fritsch Exp $
 .\"	$OpenBSD: mdoc.template,v 1.10 2007/05/31 22:10:19 jmc Exp $
 .\"
 .\" Copyright (c) 2008 GeNUA mbH <info@genua.de>
@@ -50,7 +50,9 @@ and sandboxing.
 .Nm
 starts early during boot. The
 .Em master
-process reads the configuration files (policy rules). It then creates two additional child processes. The main process becomes the
+process reads the configuration files (policy rules).
+It then creates two additional child processes.
+The main process becomes the
 .Em master
 process. The children are the
 .Em policy
@@ -108,7 +110,7 @@ instead of
 .
 .It Fl n
 Config test mode.
-Only check the configuration file for validity.
+Only check compatibility with the running kernel.
 .Nm
 will do nothing except parse the configuration file and terminate.
 .It Fl v
@@ -177,7 +179,7 @@ The kernel interface for Anoubis policy messages.
 .It Pa /dev/anoubis
 The
 .Ar ioctl
-kernel interface for initializing the Anoubis kernel subsystem 
+kernel interface for initializing the Anoubis kernel subsystem
 and triggering updates.
 .\" .Sh EXAMPLES
 .\" This next request is for sections 1, 4, 6, and 8 only.

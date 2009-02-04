@@ -355,6 +355,30 @@ main(int argc, char *argv[])
 		fatal("can't copy progname");
 	}
 
+	/*
+	 * XXX HSH: Configfile will be parsed here.
+	 */
+
+	if (conf.opts & ANOUBISD_OPT_NOACTION) {
+		int fd = open("/dev/anoubis", O_RDWR);
+		if (fd < 0)
+			early_err(2, "Could not open /dev/anoubis");
+
+		if (ioctl(fd, ANOUBIS_GETVERSION, &version) < 0)
+			early_err(3, "ANOUBIS_GETVERSION: Cannot retrieve "
+			    "version number");
+
+		if (version != ANOUBISCORE_VERSION) {
+			char *msg;
+			if (asprintf(&msg, "Anoubis Version mismatch: real=%lx "
+			    "expected=%lx", version, ANOUBISCORE_VERSION) < 0 )
+				msg = NULL;
+			early_errx(4, msg);
+		}
+
+		exit(0);
+	}
+
 	/* Defaults. */
 	if (conf.unixsocket == NULL)
 		conf.unixsocket = ANOUBISD_SOCKETNAME;
@@ -364,12 +388,6 @@ main(int argc, char *argv[])
 	if (pw->pw_gid == 0)
 		fatal("Group ID of " ANOUBISD_USER " must not be 0");
 	anoubisd_gid = pw->pw_gid;
-	/*
-	 * XXX HSH: Configfile will be parsed here.
-	 */
-
-	if (conf.opts & ANOUBISD_OPT_NOACTION)
-		exit(0);
 
 	if (geteuid() != 0)
 		early_errx(1, "need root privileges");

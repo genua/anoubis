@@ -247,13 +247,13 @@ void
 early_err(int eval, const char *emsg)
 {
 	if (emsg == NULL) {
-		fprintf(stderr, "%s: %s", logname, strerror(errno));
+		fprintf(stderr, "%s: %s\n", logname, strerror(errno));
 	 } else {
 		if (errno) {
-			fprintf(stderr, "%s: %s: %s", logname, emsg,
+			fprintf(stderr, "%s: %s: %s\n", logname, emsg,
 			    strerror(errno));
 		} else {
-			fprintf(stderr, "%s: %s", logname, emsg);
+			fprintf(stderr, "%s: %s\n", logname, emsg);
 		}
 	}
 
