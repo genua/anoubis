@@ -42,6 +42,7 @@ Summary:	daemon of the Anoubis Security Suite
 Group:		System Environment/Daemons
 Requires:	libevent
 Requires:	openssl
+Requires:	cvs
 
 %description -n anoubisd
 Central daemon of the Anoubis Security Suite.

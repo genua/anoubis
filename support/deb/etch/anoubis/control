@@ -4,7 +4,7 @@ Priority: extra
 Maintainer: Stefan Fritsch <fritsch@genua.de>
 Build-Depends: debhelper (>= 5), libx11-dev, libwxgtk2.8-dev, check,
   pkg-config (>= 0.18), libevent-dev, libssl-dev, libattr1-dev, libnotify-dev,
-  flex, bison
+  flex, bison, cvs
 Standards-Version: 3.7.3
 
 Package: anoubisd
@@ -15,7 +15,7 @@ Description: Central daemon of the Anoubis Security Suite
 
 Package: xanoubis
 Architecture: any
-Depends: ${shlibs:Depends}, notification-daemon
+Depends: ${shlibs:Depends}, notification-daemon, anoubisd
 Description: Graphical user interface of the Anoubis Security Suite
  XXX:  long description
 
