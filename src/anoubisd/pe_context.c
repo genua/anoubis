@@ -244,7 +244,8 @@ pe_context_dump(struct eventdev_hdr *hdr, struct pe_proc *proc, int prio)
 	struct pe_context	*ctx;
 	unsigned long		 csumctx;
 	char			*dump, *progctx;
-	struct pe_proc_ident	*pident;
+	struct pe_proc_ident	*pident = NULL;
+	long			 uidctx = -1;
 
 	/* hdr must be non-NULL, proc might be NULL */
 	if (hdr == NULL)
@@ -256,24 +257,24 @@ pe_context_dump(struct eventdev_hdr *hdr, struct pe_proc *proc, int prio)
 	if (proc && 0 <= prio && prio <= PE_PRIO_MAX) {
 		ctx = pe_proc_get_context(proc, prio);
 
-		if (ctx && ctx->alfrule) {
-			if (ctx->alfrule->app) {
-				csumctx = htonl(*(unsigned long *)
-				    ctx->alfrule->app->hashvalue);
-				progctx = ctx->alfrule->app->name;
-			} else
-				progctx = "any";
+		if (ctx) {
+			if (ctx->ident.csum)
+				csumctx = htonl(
+				    *(unsigned long *)ctx->ident.csum);
+			if (ctx->ident.pathhint)
+				progctx = ctx->ident.pathhint;
 		}
+		pident = pe_proc_ident(proc);
+		uidctx = pe_proc_get_uid(proc);
 	}
 
-	pident = pe_proc_ident(proc);
 	if (asprintf(&dump, "uid %hu pid %hu program %s checksum 0x%08x... "
-	    "context program %s checksum 0x%08lx...",
+	    "context uid %ld program %s checksum 0x%08lx...",
 	    hdr->msg_uid, hdr->msg_pid,
 	    (pident && pident->pathhint) ? pident->pathhint : "<none>",
 	    (pident && pident->csum) ?
 	    htonl(*(unsigned long *)pident->csum) : 0,
-	    progctx, csumctx) == -1) {
+	    uidctx, progctx, csumctx) == -1) {
 		dump = NULL;
 	}
 
