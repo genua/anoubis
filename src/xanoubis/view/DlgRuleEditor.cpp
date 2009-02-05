@@ -31,6 +31,7 @@
 #include <wx/msgdlg.h>
 
 #include <wx/arrimpl.cpp>
+#include <wx/filedlg.h>
 
 #include "DlgRuleEditor.h"
 
@@ -43,6 +44,7 @@
 #include "ProfileCtrl.h"
 #include "RuleEditorAddPolicyVisitor.h"
 #include "DlgRuleEditorFilterPage.h"
+#include "JobCtrl.h"
 
 DlgRuleEditor::DlgRuleEditor(wxWindow* parent)
     : Observer(NULL), DlgRuleEditorBase(parent)
@@ -55,6 +57,11 @@ DlgRuleEditor::DlgRuleEditor(wxWindow* parent)
 	    wxCommandEventHandler(DlgRuleEditor::onShow), NULL, this);
 	anEvents->Connect(anEVT_LOAD_RULESET,
 	    wxCommandEventHandler(DlgRuleEditor::onLoadNewRuleSet), NULL, this);
+
+	/* We want to know connect-status for save/reload button */
+	JobCtrl::getInstance()->Connect(anEVT_COM_CONNECTION,
+	    wxCommandEventHandler(DlgRuleEditor::onConnectionStateChange),
+	    NULL, this);
 
 	appColumns_[APP_ID]	= new ListCtrlColumn(_("ID"));
 	appColumns_[APP_TYPE]	= new ListCtrlColumn(_("Type"));
@@ -121,6 +128,8 @@ DlgRuleEditor::DlgRuleEditor(wxWindow* parent)
 		sbColumns_[i]->setIndex(i);
 	}
 
+	isConnected_ = false;
+
 	appPolicyLoadProgIdx_ = 0;
 	appPolicyLoadProgDlg_ = NULL;
 	filterPolicyLoadProgIdx_ = 0;
@@ -140,6 +149,10 @@ DlgRuleEditor::~DlgRuleEditor(void)
 	    wxCommandEventHandler(DlgRuleEditor::onShow), NULL, this);
 	anEvents->Disconnect(anEVT_LOAD_RULESET,
 	    wxCommandEventHandler(DlgRuleEditor::onLoadNewRuleSet), NULL, this);
+
+	JobCtrl::getInstance()->Disconnect(anEVT_COM_CONNECTION,
+	    wxCommandEventHandler(DlgRuleEditor::onConnectionStateChange),
+	    NULL, this);
 
 	for (size_t i=0; i<APP_EOL; i++) {
 		delete appColumns_[i];
@@ -209,6 +222,8 @@ DlgRuleEditor::update(Subject *subject)
 		if (idx != -1) {
 			updateListSfsFilterPolicy(idx);
 		}
+	} else if (subject->IsKindOf(CLASSINFO(PolicyRuleSet))) {
+		updateFooter();
 	} else {
 		/* Unknown subject type - do nothing */
 	}
@@ -343,6 +358,18 @@ DlgRuleEditor::onClose(wxCloseEvent & WXUNUSED(event))
 }
 
 void
+DlgRuleEditor::onConnectionStateChange(wxCommandEvent& event)
+{
+	JobCtrl::ConnectionState newState;
+
+	newState = (JobCtrl::ConnectionState)event.GetInt();
+	isConnected_ = (newState == JobCtrl::CONNECTION_CONNECTED);
+
+	updateFooter();
+	event.Skip();
+}
+
+void
 DlgRuleEditor::onLoadNewRuleSet(wxCommandEvent &event)
 {
 	ProfileCtrl	*profileCtrl;
@@ -354,10 +381,12 @@ DlgRuleEditor::onLoadNewRuleSet(wxCommandEvent &event)
 	ruleSet = profileCtrl->getRuleSet(userRuleSetId_);
 	if (ruleSet != NULL) {
 		ruleSet->unlock();
+		removeSubject(ruleSet);
 	}
 	ruleSet = profileCtrl->getRuleSet(adminRuleSetId_);
 	if (ruleSet != NULL) {
 		ruleSet->unlock();
+		removeSubject(ruleSet);
 	}
 
 	/* Get new rulesets */
@@ -368,10 +397,13 @@ DlgRuleEditor::onLoadNewRuleSet(wxCommandEvent &event)
 	ruleSet = profileCtrl->getRuleSet(userRuleSetId_);
 	if (ruleSet != NULL) {
 		ruleSet->lock();
+		addSubject(ruleSet);
+		updateFooter();
 	}
 	ruleSet = profileCtrl->getRuleSet(adminRuleSetId_);
 	if (ruleSet != NULL) {
 		ruleSet->lock();
+		addSubject(ruleSet);
 	}
 
 	loadRuleSet();
@@ -834,6 +866,99 @@ DlgRuleEditor::onAppListCreateButton(wxCommandEvent &)
  and been created policy mismatch!"),
 		    _("Rule Editor"), wxOK | wxICON_ERROR, this);
 	}
+}
+
+void
+DlgRuleEditor::onFooterImportButton(wxCommandEvent &)
+{
+	wxFileDialog	 fileDlg(this);
+	ProfileCtrl	*profileCtrl;
+
+	wxBeginBusyCursor();
+
+	profileCtrl = ProfileCtrl::getInstance();
+
+	fileDlg.SetMessage(_("Import policy file"));
+	fileDlg.SetWildcard(wxT("*"));
+
+	wxEndBusyCursor();
+
+	if (fileDlg.ShowModal() == wxID_OK) {
+		if (!profileCtrl->importFromFile(fileDlg.GetPath())) {
+			wxMessageBox(
+			    _("Couldn't import policy file: it has errors."),
+			    _("Error"), wxICON_ERROR);
+		}
+	}
+}
+
+void
+DlgRuleEditor::onFooterReloadButton(wxCommandEvent &)
+{
+	ProfileCtrl::getInstance()->receiveFromDaemon();
+	footerStatusText->SetLabel(wxT("reload started..."));
+}
+
+void
+DlgRuleEditor::onFooterExportButton(wxCommandEvent &)
+{
+	wxFileDialog	 fileDlg(this, wxEmptyString, wxEmptyString,
+			     wxEmptyString, wxEmptyString,
+			     wxFD_SAVE | wxFD_OVERWRITE_PROMPT);
+	ProfileCtrl	*profileCtrl;
+	PolicyRuleSet	*ruleSet;
+
+	profileCtrl = ProfileCtrl::getInstance();
+	ruleSet	    = profileCtrl->getRuleSet(userRuleSetId_);
+	if (ruleSet == NULL) {
+		/* XXX ch: error dialog to user? */
+		return;
+	}
+
+	footerStatusText->SetLabel(wxT("exporting to file"));
+	Layout();
+	Refresh();
+
+	wxBeginBusyCursor();
+
+	fileDlg.SetMessage(_("Export ruleset..."));
+	fileDlg.SetWildcard(wxT("*"));
+
+	if (fileDlg.ShowModal() == wxID_OK) {
+		ruleSet->setOrigin(fileDlg.GetPath());
+		profileCtrl->exportToFile(ruleSet->getOrigin());
+		ruleSet->clearModified();
+	}
+
+	wxEndBusyCursor();
+
+	updateFooter();
+}
+
+void
+DlgRuleEditor::onFooterSaveButton(wxCommandEvent &)
+{
+	ProfileCtrl	*profileCtrl;
+	PolicyRuleSet	*ruleSet;
+
+	profileCtrl = ProfileCtrl::getInstance();
+
+	ruleSet = profileCtrl->getRuleSet(userRuleSetId_);
+	if (ruleSet == NULL) {
+		/* XXX ch: error dialog to user? */
+		return;
+	}
+
+	footerStatusText->SetLabel(wxT("sending to daemon"));
+	profileCtrl->sendToDaemon(userRuleSetId_);
+
+	/*
+	 * XXX ch: This will update the status imediately. If we want
+	 * XXX ch: to wait until transmission finished successfully,
+	 * XXX ch: we need to register to anTASKEVT_POLICY_SEND ...
+	 */
+	ruleSet->clearModified();
+	updateFooter();
 }
 
 long
@@ -1465,7 +1590,36 @@ DlgRuleEditor::updateListSbAccessFilterPolicy(long rowIdx)
 	}
 }
 
+void
+DlgRuleEditor::updateFooter(void)
+{
+	PolicyRuleSet	*ruleSet;
 
+	ruleSet = ProfileCtrl::getInstance()->getRuleSet(userRuleSetId_);
+	if (ruleSet == NULL) {
+		return;
+	}
+
+	/* If it's modfied, enable export and save button */
+	footerExportButton->Enable(ruleSet->isModified());
+	footerReloadButton->Enable(isConnected_);
+	footerSaveButton->Enable(isConnected_ && ruleSet->isModified());
+
+	/* Update text */
+	if (ruleSet->isDaemonRuleSet()) {
+		footerRuleSetText->SetLabel(wxT("daemon"));
+	} else {
+		footerRuleSetText->SetLabel(ruleSet->getOrigin());
+	}
+	if (ruleSet->isModified()) {
+		footerStatusText->SetLabel(_("modified"));
+	} else {
+		footerStatusText->SetLabel(wxT("not modified"));
+	}
+
+	Layout();
+	Refresh();
+}
 
 
 

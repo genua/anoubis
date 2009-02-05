@@ -56,6 +56,8 @@
  */
 class PolicyRuleSet : public Subject
 {
+	DECLARE_CLASS(PolicyRuleSet)
+
 	public:
 		/**
 		 * Constructor of PolicyRuleSet.
@@ -192,6 +194,20 @@ class PolicyRuleSet : public Subject
 		wxString getOrigin(void) const;
 
 		/**
+		 * Mark this ruleset as comming from the daemon.
+		 * @param None.
+		 * @return Nothing.
+		 */
+		void setDaemonRuleSet(void);
+
+		/**
+		 * Was this rulset fetched from
+		 * @param None.
+		 * @return True if rulset comes from daemon.
+		 */
+		bool isDaemonRuleSet(void) const;
+
+		/**
 		 * Accept a visitor.
 		 * This is the starting point of visiton the whole
 		 * policy structure.
@@ -291,6 +307,7 @@ class PolicyRuleSet : public Subject
 		uid_t			 uid_;
 		bool			 hasErrors_;
 		bool			 isModified_;
+		bool			 isDaemonRuleSet_;
 		struct apn_ruleset	*ruleSet_;
 		PolicyList		 alfList_;
 		PolicyList		 sfsList_;

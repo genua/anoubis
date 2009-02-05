@@ -437,6 +437,8 @@ class DlgRuleEditor : public Observer, public DlgRuleEditorBase
 		long userRuleSetId_;  /**< Id of our ruleSet. */
 		long adminRuleSetId_; /**< Id of our admin ruleSet. */
 
+		bool isConnected_; /**< connectiion state of gui */
+
 		int appPolicyLoadProgIdx_; /**< current progress position */
 		wxProgressDialog *appPolicyLoadProgDlg_; /**< progress bar */
 		int filterPolicyLoadProgIdx_; /**< current progress position */
@@ -459,6 +461,15 @@ class DlgRuleEditor : public Observer, public DlgRuleEditorBase
 		 * @return Nothing.
 		 */
 		void onClose(wxCloseEvent &);
+
+		/**
+		 * Handle connection events.
+		 * This will just extract the status from the event and
+		 * stores it. The footer is updated.
+		 * @param[in] 1st The event.
+		 * @return Nothing.
+		 */
+		void onConnectionStateChange(wxCommandEvent &);
 
 		/**
 		 * Handle new RuleSet events.
@@ -560,6 +571,38 @@ class DlgRuleEditor : public Observer, public DlgRuleEditorBase
 		 *
 		 */
 		virtual void onAppListCreateButton(wxCommandEvent &);
+
+		/**
+		 * Handle event from importButton.
+		 * This will load a ruleset form a file.
+		 * @param None.
+		 * @return Nothing.
+		 */
+		virtual void onFooterImportButton(wxCommandEvent &);
+
+		/**
+		 * Handle event from reloadButton.
+		 * This will load the ruleset from daemon.
+		 * @param None.
+		 * @return Nothing.
+		 */
+		virtual void onFooterReloadButton(wxCommandEvent &);
+
+		/**
+		 * Handle event from exportButton.
+		 * This will export the ruleset to a file.
+		 * @param None.
+		 * @return Nothing.
+		 */
+		virtual void onFooterExportButton(wxCommandEvent &);
+
+		/**
+		 * Handle event from saveButton.
+		 * This will send the ruelset to the daemon.
+		 * @param None.
+		 * @return Nothing.
+		 */
+		virtual void onFooterSaveButton(wxCommandEvent &);
 
 		/**
 		 * Add a row to a given list and assign the given policy.
@@ -742,6 +785,15 @@ class DlgRuleEditor : public Observer, public DlgRuleEditorBase
 		 * @return Nothing.
 		 */
 		void updateListSbAccessFilterPolicy(long);
+
+		/**
+		 * Update footer status line and buttons.
+		 * Updates the widgets and status information related
+		 * to the ruleSet.
+		 * @param None.
+		 * @return Nothing.
+		 */
+		void updateFooter(void);
 };
 
 #endif /* __DlgRuleEditor__ */

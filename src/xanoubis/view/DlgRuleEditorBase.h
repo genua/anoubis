@@ -126,13 +126,16 @@ class DlgRuleEditorBase : public wxFrame
 		DlgRuleEditorFilterSfsPage* filterSfsPage;
 		DlgRuleEditorFilterContextPage* filterContextPage;
 		DlgRuleEditorFilterPermissionPage* filterPermissionPage;
-		wxStaticText* mainFooterRuleSetLabel;
-		wxStaticText* mainFooterRuleSetText;
-		wxButton* mainFooterReloadButton;
+		wxStaticText* footerRuleSetLabel;
+		wxStaticText* footerRuleSetText;
 		
-		wxStaticText* mainFooterStatusLabel;
-		wxStaticText* mainFooterStatusText;
-		wxButton* mainFooterSaveButton;
+		wxStaticText* footerStatusLabel;
+		wxStaticText* footerStatusText;
+		wxButton* footerImportButton;
+		wxButton* footerReloadButton;
+		
+		wxButton* footerExportButton;
+		wxButton* footerSaveButton;
 		
 		// Virtual event handlers, overide them in your derived class
 		virtual void onClose( wxCloseEvent& event ){ event.Skip(); }
@@ -154,6 +157,10 @@ class DlgRuleEditorBase : public wxFrame
 		virtual void onFilterListUpClick( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onFilterListDownClick( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onFilterListDeleteClick( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onFooterImportButton( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onFooterReloadButton( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onFooterExportButton( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onFooterSaveButton( wxCommandEvent& event ){ event.Skip(); }
 		
 	
 	public:

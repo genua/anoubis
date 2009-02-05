@@ -167,8 +167,18 @@ ComPolicyRequestTask::getPolicyApn(void) const
 PolicyRuleSet *
 ComPolicyRequestTask::getPolicy(void)
 {
-	struct apn_ruleset *ruleset = getPolicyApn();
-	return (ruleset != 0) ? new PolicyRuleSet(prio_, uid_, ruleset) : 0;
+	PolicyRuleSet	   *ruleSet = NULL;
+	struct apn_ruleset *rs = getPolicyApn();
+
+	if (rs != 0) {
+		ruleSet = new PolicyRuleSet(prio_, uid_, rs);
+	}
+
+	if (ruleSet != NULL) {
+		ruleSet->setDaemonRuleSet();
+	}
+
+	return (ruleSet);
 }
 
 void

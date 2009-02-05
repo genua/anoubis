@@ -312,39 +312,60 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	splitterWindow->SplitVertically( appPanel, filterPanel, 482 );
 	mainSizer->Add( splitterWindow, 1, wxEXPAND, 5 );
 	
-	wxBoxSizer* mainFootSizer;
-	mainFootSizer = new wxBoxSizer( wxHORIZONTAL );
+	wxBoxSizer* textFootSizer;
+	textFootSizer = new wxBoxSizer( wxHORIZONTAL );
 	
-	mainFooterRuleSetLabel = new wxStaticText( this, wxID_ANY, _("RuleSet:"), wxDefaultPosition, wxDefaultSize, 0 );
-	mainFooterRuleSetLabel->Wrap( -1 );
-	mainFootSizer->Add( mainFooterRuleSetLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	footerRuleSetLabel = new wxStaticText( this, wxID_ANY, _("RuleSet origin:"), wxDefaultPosition, wxDefaultSize, 0 );
+	footerRuleSetLabel->Wrap( -1 );
+	textFootSizer->Add( footerRuleSetLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	mainFooterRuleSetText = new wxStaticText( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
-	mainFooterRuleSetText->Wrap( -1 );
-	mainFootSizer->Add( mainFooterRuleSetText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
-	
-	mainFooterReloadButton = new wxButton( this, wxID_ANY, _("relaod"), wxDefaultPosition, wxDefaultSize, 0 );
-	mainFooterReloadButton->Enable( false );
-	
-	mainFootSizer->Add( mainFooterReloadButton, 0, wxALL, 5 );
+	footerRuleSetText = new wxStaticText( this, wxID_ANY, _("none"), wxDefaultPosition, wxDefaultSize, 0 );
+	footerRuleSetText->Wrap( -1 );
+	textFootSizer->Add( footerRuleSetText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	
-	mainFootSizer->Add( 0, 0, 1, wxEXPAND, 5 );
+	textFootSizer->Add( 0, 0, 1, wxEXPAND, 5 );
 	
-	mainFooterStatusLabel = new wxStaticText( this, wxID_ANY, _("Status:"), wxDefaultPosition, wxDefaultSize, 0 );
-	mainFooterStatusLabel->Wrap( -1 );
-	mainFootSizer->Add( mainFooterStatusLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	footerStatusLabel = new wxStaticText( this, wxID_ANY, _("Status:"), wxDefaultPosition, wxDefaultSize, 0 );
+	footerStatusLabel->Wrap( -1 );
+	textFootSizer->Add( footerStatusLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	mainFooterStatusText = new wxStaticText( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
-	mainFooterStatusText->Wrap( -1 );
-	mainFootSizer->Add( mainFooterStatusText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	footerStatusText = new wxStaticText( this, wxID_ANY, _("not modified"), wxDefaultPosition, wxDefaultSize, 0 );
+	footerStatusText->Wrap( -1 );
+	textFootSizer->Add( footerStatusText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	mainFooterSaveButton = new wxButton( this, wxID_ANY, _("save"), wxDefaultPosition, wxDefaultSize, 0 );
-	mainFooterSaveButton->Enable( false );
+	mainSizer->Add( textFootSizer, 0, wxEXPAND, 5 );
 	
-	mainFootSizer->Add( mainFooterSaveButton, 0, wxALL, 5 );
+	wxBoxSizer* buttonFootSizer;
+	buttonFootSizer = new wxBoxSizer( wxHORIZONTAL );
 	
-	mainSizer->Add( mainFootSizer, 0, wxEXPAND, 5 );
+	footerImportButton = new wxButton( this, wxID_ANY, _("import..."), wxDefaultPosition, wxDefaultSize, 0 );
+	footerImportButton->SetToolTip( _("import ruleset from file") );
+	
+	buttonFootSizer->Add( footerImportButton, 0, wxALL, 5 );
+	
+	footerReloadButton = new wxButton( this, wxID_ANY, _("relaod from daemon"), wxDefaultPosition, wxDefaultSize, 0 );
+	footerReloadButton->Enable( false );
+	footerReloadButton->SetToolTip( _("reload ruleset from daemon") );
+	
+	buttonFootSizer->Add( footerReloadButton, 0, wxALL, 5 );
+	
+	
+	buttonFootSizer->Add( 0, 0, 1, wxEXPAND, 5 );
+	
+	footerExportButton = new wxButton( this, wxID_ANY, _("export..."), wxDefaultPosition, wxDefaultSize, 0 );
+	footerExportButton->Enable( false );
+	footerExportButton->SetToolTip( _("export ruleset to file (which has to be choosen)") );
+	
+	buttonFootSizer->Add( footerExportButton, 0, wxALL, 5 );
+	
+	footerSaveButton = new wxButton( this, wxID_ANY, _("save"), wxDefaultPosition, wxDefaultSize, 0 );
+	footerSaveButton->Enable( false );
+	footerSaveButton->SetToolTip( _("send ruleset to daemon") );
+	
+	buttonFootSizer->Add( footerSaveButton, 0, wxALL, 5 );
+	
+	mainSizer->Add( buttonFootSizer, 0, wxEXPAND, 5 );
 	
 	this->SetSizer( mainSizer );
 	this->Layout();
@@ -369,6 +390,10 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	filterListUpButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::onFilterListUpClick ), NULL, this );
 	filterListDownButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::onFilterListDownClick ), NULL, this );
 	filterListDeleteButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::onFilterListDeleteClick ), NULL, this );
+	footerImportButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::onFooterImportButton ), NULL, this );
+	footerReloadButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::onFooterReloadButton ), NULL, this );
+	footerExportButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::onFooterExportButton ), NULL, this );
+	footerSaveButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::onFooterSaveButton ), NULL, this );
 }
 
 DlgRuleEditorFilterActionPageBase::DlgRuleEditorFilterActionPageBase( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size, long style ) : wxPanel( parent, id, pos, size, style )

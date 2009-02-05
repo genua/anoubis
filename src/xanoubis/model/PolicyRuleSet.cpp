@@ -39,6 +39,8 @@
 #include "RuleSetClearModifiedVisitor.h"
 #include "RuleEditorChecksumVisitor.h"
 
+IMPLEMENT_CLASS(PolicyRuleSet, Subject);
+
 PolicyRuleSet::PolicyRuleSet(int priority, uid_t uid,
     struct apn_ruleset *ruleSet)
 {
@@ -50,6 +52,7 @@ PolicyRuleSet::PolicyRuleSet(int priority, uid_t uid,
 	origin_     = wxT("native apn ruleset");
 	hasErrors_  = false;
 	isModified_ = false;
+	isDaemonRuleSet_ = false;
 
 	create(ruleSet);
 }
@@ -62,10 +65,11 @@ PolicyRuleSet::PolicyRuleSet(int priority, uid_t uid, const wxString &fileName,
 	uid_	    = uid;
 	priority_   = priority;
 	ruleSet_    = NULL; /* Set by crate() */
+	origin_	    = fileName;
 	hasErrors_  = false;
 	isModified_ = false;
+	isDaemonRuleSet_ = false;
 
-	origin_.Printf(wxT("loaded from file: %s"), fileName.c_str());
 	create(fileName, checkPerm);
 }
 
@@ -167,6 +171,18 @@ wxString
 PolicyRuleSet::getOrigin(void) const
 {
 	return (origin_);
+}
+
+void
+PolicyRuleSet::setDaemonRuleSet(void)
+{
+	isDaemonRuleSet_ = true;
+}
+
+bool
+PolicyRuleSet::isDaemonRuleSet(void) const
+{
+	return (isDaemonRuleSet_);
 }
 
 void
