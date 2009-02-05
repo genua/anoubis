@@ -221,7 +221,7 @@ Notification::isAdmin(void)
 	bool result = false;
 
 	if (notify_ != NULL) {
-		result = get_value((notify_->u.notify)->prio) ? true : false;
+		result = get_value((notify_->u.notify)->prio) ? false : true;
 	}
 
 	return (result);
