@@ -59,6 +59,15 @@
 const wxString policyCsum =
     wxT("09c2012a32bb5b776c8e0adc186df5b45279dd87dda249e877ec876b33d190f9");
 
+const wxString symlink_get_1_csum =
+    wxT("750f16659ec9fd87a2951f7538233b6d6bb2f4b285c9666c918de1af87a07465");
+
+const wxString l1_csum =
+    wxT("b66a213422e0bd251d5d900018086fcaa23581c2e46ca3ccf586ac8db32d0854");
+
+const wxString l2_csum =
+    wxT("5a0d272136895946c76efb7c98aa0a80cff7e5811a995ac52a6899ec5b45aa26");
+
 TcComTask::TcComTask()
 {
 	this->testCounter_ = 0;
@@ -123,39 +132,57 @@ TcComTask::nextTest()
 		setupTestCsumAdd();
 		break;
 	case 6:
-		setupTestCsumGet();
+		setupTestCsumAddSymlink();
 		break;
 	case 7:
-		setupTestCsumGetNoSuchFile();
+		setupTestCsumAddSymlinkLink();
 		break;
 	case 8:
-		setupTestSfsListNotEmpty();
+		setupTestCsumGet();
 		break;
 	case 9:
-		setupTestCsumDel();
+		setupTestCsumGetNoSuchFile();
 		break;
 	case 10:
-		setupTestSfsListEmpty();
+		setupTestCsumGetSymlink();
 		break;
 	case 11:
-		setupTestSfsListRecursive();
+		setupTestCsumGetSymlinkLink();
 		break;
 	case 12:
-		setupTestSigAdd();
+		setupTestSfsListNotEmpty();
 		break;
 	case 13:
-		setupTestSigGet();
+		setupTestCsumDel();
 		break;
 	case 14:
-		setupTestSigListNotEmpty();
+		setupTestCsumDelSymlink();
 		break;
 	case 15:
-		setupTestSigDel();
+		setupTestCsumDelSymlinkLink();
 		break;
 	case 16:
-		setupTestSigListEmpty();
+		setupTestSfsListEmpty();
 		break;
 	case 17:
+		setupTestSfsListRecursive();
+		break;
+	case 18:
+		setupTestSigAdd();
+		break;
+	case 19:
+		setupTestSigGet();
+		break;
+	case 20:
+		setupTestSigListNotEmpty();
+		break;
+	case 21:
+		setupTestSigDel();
+		break;
+	case 22:
+		setupTestSigListEmpty();
+		break;
+	case 23:
 		setupTestUnregister();
 		break;
 	default:
@@ -359,7 +386,7 @@ TcComTask::setupTestCsumAdd(void)
 	wxString file = wxFileName::GetHomeDir() + wxT("/policy");
 
 	ComCsumAddTask *next = new ComCsumAddTask;
-	next->setFile(file);
+	next->setPath(file);
 
 	trace("Scheduling ComCsumAddTask: %p\n", next);
 	JobCtrl::getInstance()->addTask(next);
@@ -393,6 +420,119 @@ TcComTask::onTestCsumAdd(TaskEvent &event)
 }
 
 void
+TcComTask::setupTestCsumAddSymlink(void)
+{
+	trace("Enter TcComTask::setupTestCsumAddSymlink\n");
+
+	JobCtrl::getInstance()->Connect(anTASKEVT_CSUM_ADD,
+	    wxTaskEventHandler(TcComTask::onTestCsumAddSymlink), NULL, this);
+
+	wxString file = wxFileName::GetHomeDir() + wxT("/l_add_1");
+
+	ComCsumAddTask *next = new ComCsumAddTask;
+	next->setPath(file);
+
+	trace("Scheduling ComCsumAddTask: %p\n", next);
+	JobCtrl::getInstance()->addTask(next);
+
+	trace("Leaving TcComTask::setupTestCsumAddSymlink\n");
+}
+
+void
+TcComTask::onTestCsumAddSymlink(TaskEvent &event)
+{
+	trace("Enter TcComTask::onTestCsumAddSymlink\n");
+
+	ComCsumAddTask *t = dynamic_cast<ComCsumAddTask*>(event.getTask());
+	trace("ComCsumAddTask = %p\n", t);
+
+	assertUnless(t->getComTaskResult() == ComTask::RESULT_SUCCESS,
+	    "Failed to add a checksum: %i\n", t->getComTaskResult());
+
+	assertUnless(t->getResultDetails() == 0,
+	    "ResultDetails: %s (%i)\n",
+	    strerror(t->getResultDetails()), t->getResultDetails());
+
+	assertUnless(t->haveKeyId() == false, "A key-id is assigned");
+	assertUnless(t->havePrivateKey() == false,
+	    "A private key is assigned");
+
+	delete t;
+
+	wxString path;
+	long result;
+
+	path = wxFileName::GetHomeDir() + wxT("/symlink_add_1");
+	result = wxExecute(wxT("/t/sfssig get ") + path, wxEXEC_SYNC);
+	assertUnless((result == 0),
+	    "No checksum for the reference is registered!\n");
+
+	path = wxFileName::GetHomeDir() + wxT("/l_add_1");
+	result = wxExecute(wxT("/t/sfssig -l get ") + path, wxEXEC_SYNC);
+	assertUnless((result != 0), "A checksum for the link is registered!\n");
+
+	trace("Leaving TcComTask::onTestCsumAddSymlink\n");
+	nextTest();
+}
+
+void
+TcComTask::setupTestCsumAddSymlinkLink(void)
+{
+	trace("Enter TcComTask::setupTestCsumAddSymlinkLink\n");
+
+	JobCtrl::getInstance()->Connect(anTASKEVT_CSUM_ADD,
+	  wxTaskEventHandler(TcComTask::onTestCsumAddSymlinkLink), NULL, this);
+
+	wxString file = wxFileName::GetHomeDir() + wxT("/l_add_2");
+
+	ComCsumAddTask *next = new ComCsumAddTask;
+	next->setPath(file);
+	next->setCalcLink(true);
+
+	trace("Scheduling ComCsumAddTask: %p\n", next);
+	JobCtrl::getInstance()->addTask(next);
+
+	trace("Leaving TcComTask::setupTestCsumAddSymlinkLink\n");
+}
+
+void
+TcComTask::onTestCsumAddSymlinkLink(TaskEvent &event)
+{
+	trace("Enter TcComTask::onTestCsumAddSymlinkLink\n");
+
+	ComCsumAddTask *t = dynamic_cast<ComCsumAddTask*>(event.getTask());
+	trace("ComCsumAddTask = %p\n", t);
+
+	assertUnless(t->getComTaskResult() == ComTask::RESULT_SUCCESS,
+	    "Failed to add a checksum: %i\n", t->getComTaskResult());
+
+	assertUnless(t->getResultDetails() == 0,
+	    "ResultDetails: %s (%i)\n",
+	    strerror(t->getResultDetails()), t->getResultDetails());
+
+	assertUnless(t->haveKeyId() == false, "A key-id is assigned");
+	assertUnless(t->havePrivateKey() == false,
+	    "A private key is assigned");
+
+	delete t;
+
+	wxString path;
+	long result;
+
+	path = wxFileName::GetHomeDir() + wxT("/symlink_add_2");
+	result = wxExecute(wxT("/t/sfssig get ") + path, wxEXEC_SYNC);
+	assertUnless((result != 0),
+	    "No checksum for the reference is registered!\n");
+
+	path = wxFileName::GetHomeDir() + wxT("/l_add_2");
+	result = wxExecute(wxT("/t/sfssig -l get ") + path, wxEXEC_SYNC);
+	assertUnless((result == 0), "A checksum for the link is registered!\n");
+
+	trace("Leaving TcComTask::onTestCsumAddSymlinkLink\n");
+	nextTest();
+}
+
+void
 TcComTask::setupTestCsumGet(void)
 {
 	trace("Enter TcComTask::setupTestCsumGet\n");
@@ -403,7 +543,7 @@ TcComTask::setupTestCsumGet(void)
 	wxString file = wxFileName::GetHomeDir() + wxT("/policy");
 
 	ComCsumGetTask *next = new ComCsumGetTask;
-	next->setFile(file);
+	next->setPath(file);
 
 	trace("Scheduling ComCsumGetTask: %p\n", next);
 	JobCtrl::getInstance()->addTask(next);
@@ -422,8 +562,9 @@ TcComTask::onTestCsumGet(TaskEvent &event)
 	assertUnless(t->getComTaskResult() == ComTask::RESULT_SUCCESS,
 	    "Failed to get a checksum!\n"
 	    "ComTaskResult = %i\n"
-	    "ResultDetails = %i\n",
-	    t->getComTaskResult(), t->getResultDetails());
+	    "ResultDetails = %i (%s)\n",
+	    t->getComTaskResult(), t->getResultDetails(),
+	    strerror(t->getResultDetails()));
 
 	assertUnless(t->getResultDetails() == 0,
 	    "ResultDetails: %s (%i)\n",
@@ -461,7 +602,7 @@ TcComTask::setupTestCsumGetNoSuchFile(void)
 	wxString file = wxFileName::GetHomeDir() + wxT("/PpolicyY");
 
 	ComCsumGetTask *next = new ComCsumGetTask;
-	next->setFile(file);
+	next->setPath(file);
 
 	trace("Scheduling ComCsumGetTask: %p\n", next);
 	JobCtrl::getInstance()->addTask(next);
@@ -498,6 +639,115 @@ TcComTask::onTestCsumGetNoSuchFile(TaskEvent &event)
 
 	delete t;
 	trace("Leaving TcComTask::onTestCsumGetNoSuchFile\n");
+	nextTest();
+}
+
+void
+TcComTask::setupTestCsumGetSymlink(void)
+{
+	trace("Enter TcComTask::setupTestCsumGetSymlink\n");
+
+	JobCtrl::getInstance()->Connect(anTASKEVT_CSUM_GET,
+	    wxTaskEventHandler(TcComTask::onTestCsumGetSymlink),
+	    NULL, this);
+
+	wxString file = wxFileName::GetHomeDir() + wxT("/l_get_1");
+
+	ComCsumGetTask *next = new ComCsumGetTask;
+	next->setPath(file);
+
+	trace("Scheduling ComCsumGetTask: %p\n", next);
+	JobCtrl::getInstance()->addTask(next);
+
+	trace("Leaving TcComTask::setupTestCsumGetSymlink\n");
+}
+
+void
+TcComTask::onTestCsumGetSymlink(TaskEvent &event)
+{
+	trace("TcComTask::onTestCsumGetSymlink\n");
+
+	ComCsumGetTask *t = dynamic_cast<ComCsumGetTask*>(event.getTask());
+	trace("ComCsumGetTask = %p\n", t);
+
+	assertUnless(t->getComTaskResult() == ComTask::RESULT_SUCCESS,
+	    "Failed to get a checksum!\n"
+	    "ComTaskResult = %i\n"
+	    "ResultDetails = %i\n",
+	    t->getComTaskResult(), t->getResultDetails());
+
+	assertUnless(t->getResultDetails() == 0,
+	    "ResultDetails: %s (%i)\n",
+	    strerror(t->getResultDetails()), t->getResultDetails());
+
+	assertUnless(t->haveKeyId() == false, "A key-id is assigned");
+
+	//u_int8_t cs[ANOUBIS_CS_LEN];
+	//assertUnless(t->getCsum(cs, ANOUBIS_CS_LEN) == 0,
+	//   "Task contains a checksum!\n");
+
+	assertUnless((t->getCsumStr() == symlink_get_1_csum),
+	   "Checksum does not match\n"
+	   "Expected: %ls\n"
+	   "Is: %ls\n", symlink_get_1_csum.c_str(), t->getCsumStr().c_str());
+
+	delete t;
+	trace("Leaving TcComTask::onTestCsumGetSymlink\n");
+	nextTest();
+}
+
+void
+TcComTask::setupTestCsumGetSymlinkLink(void)
+{
+	trace("Enter TcComTask::setupTestCsumGetSymlinkLink\n");
+
+	JobCtrl::getInstance()->Connect(anTASKEVT_CSUM_GET,
+	    wxTaskEventHandler(TcComTask::onTestCsumGetSymlinkLink),
+	    NULL, this);
+
+	wxString file = wxFileName::GetHomeDir() + wxT("/l_get_2");
+
+	ComCsumGetTask *next = new ComCsumGetTask;
+	next->setPath(file);
+	next->setCalcLink(true);
+
+	trace("Scheduling ComCsumGetTask: %p\n", next);
+	JobCtrl::getInstance()->addTask(next);
+
+	trace("Leaving TcComTask::setupTestCsumGetSymlinkLink\n");
+}
+
+void
+TcComTask::onTestCsumGetSymlinkLink(TaskEvent &event)
+{
+	trace("TcComTask::onTestCsumGetSymlinkLink\n");
+
+	ComCsumGetTask *t = dynamic_cast<ComCsumGetTask*>(event.getTask());
+	trace("ComCsumGetTask = %p\n", t);
+
+	assertUnless(t->getComTaskResult() == ComTask::RESULT_SUCCESS,
+	    "Failed to get a checksum!\n"
+	    "ComTaskResult = %i\n"
+	    "ResultDetails = %i\n",
+	    t->getComTaskResult(), t->getResultDetails());
+
+	assertUnless(t->getResultDetails() == 0,
+	    "ResultDetails: %s (%i)\n",
+	    strerror(t->getResultDetails()), t->getResultDetails());
+
+	assertUnless(t->haveKeyId() == false, "A key-id is assigned");
+
+	//u_int8_t cs[ANOUBIS_CS_LEN];
+	//assertUnless(t->getCsum(cs, ANOUBIS_CS_LEN) == 0,
+	//   "Task contains a checksum!\n");
+
+	assertUnless((t->getCsumStr() == l2_csum),
+	   "Checksum does not match\n"
+	   "Expected: %ls\n"
+	   "Is: %ls\n", l2_csum.c_str(), t->getCsumStr().c_str());
+
+	delete t;
+	trace("Leaving TcComTask::onTestCsumGetSymlinkLink\n");
 	nextTest();
 }
 
@@ -574,7 +824,7 @@ TcComTask::setupTestCsumDel(void)
 	wxString file = wxFileName::GetHomeDir() + wxT("/policy");
 
 	ComCsumDelTask *next = new ComCsumDelTask;
-	next->setFile(file);
+	next->setPath(file);
 
 	trace("Scheduling ComCsumDelTask: %p\n", next);
 	JobCtrl::getInstance()->addTask(next);
@@ -605,6 +855,121 @@ TcComTask::onTestCsumDel(TaskEvent &event)
 	delete t;
 
 	trace("Leaving TcComTask::onTestCsumDel\n");
+	nextTest();
+}
+
+void
+TcComTask::setupTestCsumDelSymlink(void)
+{
+	trace("Enter TcComTask::setupTestCsumDelSymlink\n");
+
+	JobCtrl::getInstance()->Connect(anTASKEVT_CSUM_DEL,
+	    wxTaskEventHandler(TcComTask::onTestCsumDelSymlink), NULL, this);
+
+	wxString file = wxFileName::GetHomeDir() + wxT("/l_del_1");
+
+	ComCsumDelTask *next = new ComCsumDelTask;
+	next->setPath(file);
+
+	trace("Scheduling ComCsumDelTask: %p\n", next);
+	JobCtrl::getInstance()->addTask(next);
+
+	trace("Leaving TcComTask::setupTestCsumDelSymlink\n");
+}
+
+void
+TcComTask::onTestCsumDelSymlink(TaskEvent &event)
+{
+	trace("Enter TcComTask::onTestCsumDel\n");
+
+	ComCsumDelTask *t = dynamic_cast<ComCsumDelTask*>(event.getTask());
+	trace("ComCsumDelTask = %p\n", t);
+
+	assertUnless(t->getComTaskResult() == ComTask::RESULT_SUCCESS,
+	    "Failed to remove a checksum!\n"
+	    "ComTaskResult = %i\n"
+	    "ResultDetails = %i\n",
+	    t->getComTaskResult(), t->getResultDetails());
+
+	assertUnless(t->haveKeyId() == false, "A key-id is assigned");
+
+	assertUnless(t->getResultDetails() == 0,
+	    "ResultDetails: %s (%i)\n",
+	    strerror(t->getResultDetails()), t->getResultDetails());
+
+	delete t;
+
+	wxString path;
+	long result;
+
+	path = wxFileName::GetHomeDir() + wxT("/symlink_del_1");
+	result = wxExecute(wxT("/t/sfssig get ") + path, wxEXEC_SYNC);
+	assertUnless((result != 0),
+	    "A checksum for the reference is registered!\n");
+
+	path = wxFileName::GetHomeDir() + wxT("/l_del_1");
+	result = wxExecute(wxT("/t/sfssig -l get ") + path, wxEXEC_SYNC);
+	assertUnless((result != 0), "A checksum for the link is registered!\n");
+
+	trace("Leaving TcComTask::onTestCsumDel\n");
+	nextTest();
+}
+
+void
+TcComTask::setupTestCsumDelSymlinkLink(void)
+{
+	trace("Enter TcComTask::setupTestCsumDelSymlinkLink\n");
+
+	JobCtrl::getInstance()->Connect(anTASKEVT_CSUM_DEL,
+	  wxTaskEventHandler(TcComTask::onTestCsumDelSymlinkLink), NULL, this);
+
+	wxString file = wxFileName::GetHomeDir() + wxT("/l_del_2");
+
+	ComCsumDelTask *next = new ComCsumDelTask;
+	next->setPath(file);
+	next->setCalcLink(true);
+
+	trace("Scheduling ComCsumDelTask: %p\n", next);
+	JobCtrl::getInstance()->addTask(next);
+
+	trace("Leaving TcComTask::setupTestCsumDelSymlinkLink\n");
+}
+
+void
+TcComTask::onTestCsumDelSymlinkLink(TaskEvent &event)
+{
+	trace("Enter TcComTask::onTestCsumDelSymlinkLink\n");
+
+	ComCsumDelTask *t = dynamic_cast<ComCsumDelTask*>(event.getTask());
+	trace("ComCsumDelTask = %p\n", t);
+
+	assertUnless(t->getComTaskResult() == ComTask::RESULT_SUCCESS,
+	    "Failed to remove a checksum!\n"
+	    "ComTaskResult = %i\n"
+	    "ResultDetails = %i\n",
+	    t->getComTaskResult(), t->getResultDetails());
+
+	assertUnless(t->haveKeyId() == false, "A key-id is assigned");
+
+	assertUnless(t->getResultDetails() == 0,
+	    "ResultDetails: %s (%i)\n",
+	    strerror(t->getResultDetails()), t->getResultDetails());
+
+	delete t;
+
+	wxString path;
+	long result;
+
+	path = wxFileName::GetHomeDir() + wxT("/symlink_del_2");
+	result = wxExecute(wxT("/t/sfssig get ") + path, wxEXEC_SYNC);
+	assertUnless((result != 0),
+	    "A checksum for the reference is registered!\n");
+
+	path = wxFileName::GetHomeDir() + wxT("/l_del_2");
+	result = wxExecute(wxT("/t/sfssig -l get ") + path, wxEXEC_SYNC);
+	assertUnless((result != 0), "A checksum for the link is registered!\n");
+
+	trace("Leaving TcComTask::onTestCsumDelSymlinkLink\n");
 	nextTest();
 }
 
@@ -799,7 +1164,7 @@ TcComTask::setupTestSigAdd(void)
 	struct anoubis_sig *raw_cert = cert.getCertificate();
 
 	ComCsumAddTask *next = new ComCsumAddTask;
-	next->setFile(file);
+	next->setPath(file);
 	assertUnless(next->setKeyId(raw_cert->keyid, raw_cert->idlen),
 	    "Failed to setup task with key-id.");
 	next->setPrivateKey(privKey.getKey());
@@ -861,7 +1226,7 @@ TcComTask::setupTestSigGet(void)
 	struct anoubis_sig *raw_cert = cert.getCertificate();
 
 	ComCsumGetTask *next = new ComCsumGetTask;
-	next->setFile(file);
+	next->setPath(file);
 	assertUnless(next->setKeyId(raw_cert->keyid, raw_cert->idlen),
 	    "Failed to setup task with key-id.");
 
@@ -1019,7 +1384,7 @@ TcComTask::setupTestSigDel(void)
 	struct anoubis_sig *raw_cert = cert.getCertificate();
 
 	ComCsumDelTask *next = new ComCsumDelTask;
-	next->setFile(file);
+	next->setPath(file);
 	assertUnless(next->setKeyId(raw_cert->keyid, raw_cert->idlen),
 	    "Failed to setup task with key-id.");
 

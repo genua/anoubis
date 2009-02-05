@@ -510,10 +510,10 @@ SfsCtrl::OnCsumGet(TaskEvent &event)
 	event.Skip(false); /* "My" task -> stop propagating */
 
 	/* Search for SfsEntry */
-	int idx = sfsDir_.getIndexOf(task->getFile());
+	int idx = sfsDir_.getIndexOf(task->getPath());
 	if (idx == -1) {
 		wxString message = wxString::Format(
-		    _("%s not found in file-list!"), task->getFile().c_str());
+		    _("%s not found in file-list!"), task->getPath().c_str());
 		errorList_.Add(message);
 
 		return;
@@ -540,7 +540,7 @@ SfsCtrl::OnCsumGet(TaskEvent &event)
 			    _("Got error from daemon (%s) while fetching the "
 			    "checksum for %s."),
 			    wxStrError(task->getResultDetails()).c_str(),
-			    task->getFile().c_str());
+			    task->getPath().c_str());
 			errorList_.Add(message);
 		}
 
@@ -548,7 +548,7 @@ SfsCtrl::OnCsumGet(TaskEvent &event)
 	} else if (taskResult == ComTask::RESULT_COM_ERROR) {
 		wxString message = wxString::Format(_(
 		    "Communication error while fetching the checksum for %s."),
-		    task->getFile().c_str());
+		    task->getPath().c_str());
 		errorList_.Add(message);
 
 		return;
@@ -556,7 +556,7 @@ SfsCtrl::OnCsumGet(TaskEvent &event)
 		wxString message = wxString::Format(
 		    _("An unexpected error occured (%i) while fetching the "
 		    "checksum for %s."), task->getComTaskResult(),
-		    task->getFile().c_str());
+		    task->getPath().c_str());
 		errorList_.Add(message);
 
 		return;
@@ -593,10 +593,10 @@ SfsCtrl::OnCsumAdd(TaskEvent &event)
 	event.Skip(false); /* "My" task -> stop propagating */
 
 	/* Search for SfsEntry */
-	int idx = sfsDir_.getIndexOf(task->getFile());
+	int idx = sfsDir_.getIndexOf(task->getPath());
 	if (idx == -1) {
 		wxString message = wxString::Format(
-		    _("%s not found in file-list!"), task->getFile().c_str());
+		    _("%s not found in file-list!"), task->getPath().c_str());
 		errorList_.Add(message);
 
 		return;
@@ -606,7 +606,7 @@ SfsCtrl::OnCsumAdd(TaskEvent &event)
 		wxString message;
 		message.Printf(
 		    _("Failed to calculate the checksum for %s: %s"),
-		    task->getFile().c_str(),
+		    task->getPath().c_str(),
 		    wxStrError(task->getResultDetails()).c_str());
 		errorList_.Add(message);
 
@@ -614,22 +614,22 @@ SfsCtrl::OnCsumAdd(TaskEvent &event)
 	} else if (task->getComTaskResult() == ComTask::RESULT_COM_ERROR) {
 		wxString message = wxString::Format(_(
 		    "Communication error while register the checksum for %s."),
-		    task->getFile().c_str());
+		    task->getPath().c_str());
 		errorList_.Add(message);
 
 		return;
 	} else if (task->getComTaskResult() == ComTask::RESULT_REMOTE_ERROR) {
 		wxString message = wxString::Format(
-		    _("Got error from daemoon (%s) while register the \
+		    _("Got error from daemon (%s) while register the \
 checksum for %s."), wxStrError(task->getResultDetails()).c_str(),
-		    task->getFile().c_str());
+		    task->getPath().c_str());
 		errorList_.Add(message);
 
 		return;
 	} else if (task->getComTaskResult() != ComTask::RESULT_SUCCESS) {
 		wxString message = wxString::Format(
 		    _("An unexpected error occured (%i) while register the \
-checksum for %s."), task->getComTaskResult(), task->getFile().c_str());
+checksum for %s."), task->getComTaskResult(), task->getPath().c_str());
 		errorList_.Add(message);
 
 		return;
@@ -671,10 +671,10 @@ SfsCtrl::OnCsumDel(TaskEvent &event)
 	event.Skip(false); /* "My" task -> stop propagating */
 
 	/* Search for SfsEntry */
-	int idx = sfsDir_.getIndexOf(task->getFile());
+	int idx = sfsDir_.getIndexOf(task->getPath());
 	if (idx == -1) {
 		wxString message = wxString::Format(
-		    _("%s not found in file-list!"), task->getFile().c_str());
+		    _("%s not found in file-list!"), task->getPath().c_str());
 		errorList_.Add(message);
 
 		return;
@@ -683,18 +683,18 @@ SfsCtrl::OnCsumDel(TaskEvent &event)
 	if (task->getComTaskResult() == ComTask::RESULT_COM_ERROR) {
 		wxString message = wxString::Format(_(
 		    "Communication error while removing the checksum for %s."),
-		    task->getFile().c_str());
+		    task->getPath().c_str());
 		errorList_.Add(message);
 	} else if (task->getComTaskResult() == ComTask::RESULT_REMOTE_ERROR) {
 		wxString message = wxString::Format(
-		    _("Got error from daemoon (%s) while removing the \
+		    _("Got error from daemon (%s) while removing the \
 checksum for %s."), wxStrError(task->getResultDetails()).c_str(),
-		    task->getFile().c_str());
+		    task->getPath().c_str());
 		errorList_.Add(message);
 	} else if (task->getComTaskResult() != ComTask::RESULT_SUCCESS) {
 		wxString message = wxString::Format(
 		    _("An unexpected error occured (%i) while removing the \
-checksum for %s."), task->getComTaskResult(), task->getFile().c_str());
+checksum for %s."), task->getComTaskResult(), task->getPath().c_str());
 		errorList_.Add(message);
 	}
 
@@ -785,7 +785,8 @@ SfsCtrl::createComCsumGetTasks(const wxString &path, bool createCsum,
 	if (createCsum) {
 		/* Ask anoubisd for the checksum */
 		ComCsumGetTask *csTask = new ComCsumGetTask;
-		csTask->setFile(path);
+		csTask->setPath(path);
+		csTask->setCalcLink(true);
 
 		pushTask(csTask);
 		JobCtrl::getInstance()->addTask(csTask);
@@ -797,7 +798,8 @@ SfsCtrl::createComCsumGetTasks(const wxString &path, bool createCsum,
 		struct anoubis_sig *raw_cert = cert.getCertificate();
 
 		ComCsumGetTask *sigTask = new ComCsumGetTask;
-		sigTask->setFile(path);
+		sigTask->setPath(path);
+		sigTask->setCalcLink(true);
 		sigTask->setKeyId(raw_cert->keyid, raw_cert->idlen);
 
 		pushTask(sigTask);
@@ -809,7 +811,8 @@ void
 SfsCtrl::createComCsumAddTasks(const wxString &path)
 {
 	ComCsumAddTask *csTask = new ComCsumAddTask;
-	csTask->setFile(path);
+	csTask->setPath(path);
+	csTask->setCalcLink(true);
 
 	pushTask(csTask);
 	JobCtrl::getInstance()->addTask(csTask);
@@ -821,7 +824,8 @@ SfsCtrl::createComCsumAddTasks(const wxString &path)
 		struct anoubis_sig *raw_cert = cert.getCertificate();
 
 		ComCsumAddTask *sigTask = new ComCsumAddTask;
-		sigTask->setFile(path);
+		sigTask->setPath(path);
+		sigTask->setCalcLink(true);
 		sigTask->setKeyId(raw_cert->keyid, raw_cert->idlen);
 		sigTask->setPrivateKey(privKey.getKey());
 
@@ -834,7 +838,8 @@ void
 SfsCtrl::createComCsumDelTasks(const wxString &path)
 {
 	ComCsumDelTask *csTask = new ComCsumDelTask;
-	csTask->setFile(path);
+	csTask->setPath(path);
+	csTask->setCalcLink(true);
 
 	pushTask(csTask);
 	JobCtrl::getInstance()->addTask(csTask);
@@ -845,7 +850,8 @@ SfsCtrl::createComCsumDelTasks(const wxString &path)
 		struct anoubis_sig *raw_cert = cert.getCertificate();
 
 		ComCsumDelTask *sigTask = new ComCsumDelTask;
-		sigTask->setFile(path);
+		sigTask->setPath(path);
+		sigTask->setCalcLink(true);
 		sigTask->setKeyId(raw_cert->keyid, raw_cert->idlen);
 
 		pushTask(sigTask);
@@ -885,6 +891,7 @@ SfsCtrl::createCsumCalcTask(const wxString &path)
 {
 	CsumCalcTask *task = new CsumCalcTask;
 	task->setPath(path);
+	task->setCalcLink(true);
 
 	pushTask(task);
 	JobCtrl::getInstance()->addTask(task);

@@ -70,6 +70,46 @@ class CsumCalcTask : public Task
 		void setPath(const wxString &);
 
 		/**
+		 * Tests whether the checksum is calculated over the resolved
+		 * path.
+		 *
+		 * On plain files the checksum is always calculated over the
+		 * content of the file. But if you want to calculate the
+		 * checksum over a symlink, you have two possibilities:
+		 *
+		 * -# Calculate the checksum over the content of the referenced
+		 *    file.
+		 * -# Calculate the checksum over the resolved path.
+		 *
+		 * The first case makes sure, that the content you reference
+		 * with a symlink is not changed. The second case tells you,
+		 * whether the link-destination has changed.
+		 *
+		 * By default the first case is activated and the checksum is
+		 * calculated over the content of the referenced file.
+		 *
+		 * @return true is returned, if the checksum should be
+		 *         calculated over the link-path (if you specify a
+		 *         symlink). false is returned, if the checksum is
+		 *         calculated over the content of the referenced file.
+		 * @note This option only affects symlinks. If you specify a
+		 *       plain file, the checksum is always calculated over the
+		 *       content of the file.
+		 */
+		bool calcLink(void) const;
+
+		/**
+		 * Specifies the symlink calculation mode.
+		 *
+		 * For a detailed explanation visit the calcLink() method.
+		 *
+		 * @param enable Set to true, if yoou want to calculate the
+		 *               checksum over the resolved path.
+		 * @see calcLink()
+		 */
+		void setCalcLink(bool);
+
+		/**
 		 * Implementation of Task::getEventType().
 		 */
 		wxEventType getEventType(void) const;
@@ -106,6 +146,7 @@ class CsumCalcTask : public Task
 
 	private:
 		wxString	path_;
+		bool		calcLink_;
 		int		result_;
 		u_int8_t	cs_[ANOUBIS_CS_LEN];
 

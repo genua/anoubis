@@ -108,6 +108,17 @@ SfsEntry::fileExists(void) const
 		return (false);
 }
 
+bool
+SfsEntry::isSymlink(void) const
+{
+	struct stat fstat;
+
+	if (lstat(this->path_.fn_str(), &fstat) == 0)
+		return (S_ISLNK(fstat.st_mode));
+	else
+		return (false);
+}
+
 wxDateTime
 SfsEntry::getLastModified(void) const
 {

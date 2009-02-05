@@ -39,6 +39,7 @@
 #include <dev/anoubis.h>
 #endif
 
+#include "ComCsumHandler.h"
 #include "ComTask.h"
 
 /**
@@ -64,11 +65,13 @@
  * Supported error-codes:
  * - <code>RESULT_COM_ERROR</code> Communication error. Failed to create a
  *   transaction or to fetch the answer-message.
+ * - <code>RESULT_LOCAL_ERROR</code> Failed to resolve path in case of a
+ *   symlink is specified.
  * - <code>RESULT_REMOTE_ERROR</code> Operation(s) performed by anoubisd
  *   failed. getResultDetails() will return the remote error-code and can be
  *   evaluated by strerror(3) or similar.
  */
-class ComCsumGetTask : public ComTask
+class ComCsumGetTask : public ComTask, public ComCsumHandler
 {
 	public:
 		/**
@@ -90,45 +93,6 @@ class ComCsumGetTask : public ComTask
 		 * D'tor.
 		 */
 		~ComCsumGetTask(void);
-
-		/**
-		 * Returns the requested file.
-		 * @return The file you are requesting
-		 */
-		wxString getFile(void);
-
-		/**
-		 * Updates the requested file.
-		 *
-		 * Specifies the filename, which is sent to anoubisd.
-		 * This method needs to be called <i>before</i> the task is
-		 * executed!
-		 *
-		 * @param file The requested filename
-		 */
-		void setFile(const wxString &);
-
-		/**
-		 * Tests whether a key-id is assigned to the task.
-		 * @return true is returned, if a key-id is assigned, false
-		 *         otherwise.
-		 */
-		bool haveKeyId(void) const;
-
-		/**
-		 * Provides a key-id used by the operation.
-		 *
-		 * Once configured, the checksum of the file, which is signed
-		 * with the certificate behind the key-id is returned.
-		 *
-		 * @param keyId The key-id of the certificate
-		 * @param keyIdLen Length of keyId
-		 * @return true if you specified a correct key-id, false
-		 *         otherwise.
-		 *
-		 * @see LocalCertificate
-		 */
-		bool setKeyId(const u_int8_t *, int);
 
 		/**
 		 * Implementation of Task::getEventType().
@@ -176,9 +140,6 @@ class ComCsumGetTask : public ComTask
 		void resetComTaskResult(void);
 
 	private:
-		wxString	file_;
-		u_int8_t	*keyId_;
-		int		keyIdLen_;
 		u_int8_t	cs_[ANOUBIS_CS_LEN];
 };
 

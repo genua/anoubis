@@ -145,6 +145,13 @@ class SfsEntry
 		bool fileExists(void) const;
 
 		/**
+		 * Tests whether the file exists and is a symbolic link.
+		 *
+		 * @return true if the file is a symblic link.
+		 */
+		bool isSymlink(void) const;
+
+		/**
 		 * Returns the modification timestamp of the file.
 		 *
 		 * If the file does not exist, ther returned datetime-value

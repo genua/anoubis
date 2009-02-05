@@ -28,6 +28,7 @@
 #ifndef _COMCSUMDELTASK_H_
 #define _COMCSUMDELTASK_H_
 
+#include "ComCsumHandler.h"
 #include "ComTask.h"
 
 /**
@@ -41,11 +42,13 @@
  * Supported error-codes:
  * - <code>RESULT_COM_ERROR</code> Communication error. Failed to create a
  *   transaction or to fetch the answer-message.
+ * - <code>RESULT_LOCAL_ERROR</code> Failed to resolve path in case of a
+ *   symlink is specified.
  * - <code>RESULT_REMOTE_ERROR</code> Operation(s) performed by anoubisd
  *   failed. getResultDetails() will return the remote error-code and can be
  *   evaluated by strerror(3) or similar.
  */
-class ComCsumDelTask : public ComTask
+class ComCsumDelTask : public ComTask, public ComCsumHandler
 {
 	public:
 		/**
@@ -69,47 +72,6 @@ class ComCsumDelTask : public ComTask
 		~ComCsumDelTask(void);
 
 		/**
-		 * Returns the source-file.
-		 *
-		 * The checksum of the file is removed.
-		 *
-		 * @return The source-file
-		 */
-		wxString getFile(void) const;
-
-		/**
-		 * Updates the source-file.
-		 *
-		 * This method needs to be called <i>before</i> the tesk is
-		 * executed!
-		 *
-		 * @param file The new source-file
-		 */
-		void setFile(const wxString &);
-
-		/**
-		 * Tests whether a key-id is assigned to the task.
-		 * @return true is returned, if a key-id is assigned, false
-		 *         otherwise.
-		 */
-		bool haveKeyId(void) const;
-
-		/**
-		 * Provides a key-id used by the operation.
-		 *
-		 * Once configured, the checksum of the file, which is signed
-		 * with the certificate behind the key-id is removed.
-		 *
-		 * @param keyId The key-id of the certificate
-		 * @param keyIdLen Length of keyId
-		 * @return true if you specified a correct key-id, false
-		 *         otherwise.
-		 *
-		 * @see LocalCertificate
-		 */
-		bool setKeyId(const u_int8_t *, int);
-
-		/**
 		 * Implementation of Task::getEventType().
 		 */
 		wxEventType getEventType(void) const;
@@ -118,11 +80,6 @@ class ComCsumDelTask : public ComTask
 		 * Implementation of Task::exec().
 		 */
 		void exec(void);
-
-	private:
-		wxString	file_;
-		u_int8_t	*keyId_;
-		int		keyIdLen_;
 };
 
 #endif	/* _COMCSUMDELTASK_H_ */

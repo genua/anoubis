@@ -602,7 +602,8 @@ ModSfsMainPanelImpl::updateSfsEntry(int idx)
 {
 	SfsDirectory	&dir = sfsCtrl_->getSfsDirectory();
 	wxString	checksumInfo, signatureInfo;
-	int		checksumIconIndex = 0, signatureIconIndex = 0;
+	int		fileIconIndex = 0, checksumIconIndex = 0,
+			signatureIconIndex = 0;
 
 	/* Receive index of model, which is displayed at the list-index */
 	int		modelIndex = SfsMainListCtrl->GetItemData(idx);
@@ -611,9 +612,14 @@ ModSfsMainPanelImpl::updateSfsEntry(int idx)
 	SfsEntry	&entry = dir.getEntry(modelIndex);
 	wxString	baseDir = dir.getPath();
 
+	/* XXX RD: Insert an icon
+	if (entry.isSymlink())
+		fileIconIndex = <...>;
+	*/
+
 	switch (entry.getChecksumState(SfsEntry::SFSENTRY_CHECKSUM)) {
 	case SfsEntry::SFSENTRY_NOT_VALIDATED:
-		checksumInfo = _("not validated");
+		checksumInfo = _("???");
 		checksumIconIndex = 0;
 		break;
 	case SfsEntry::SFSENTRY_MISSING:
@@ -636,7 +642,7 @@ ModSfsMainPanelImpl::updateSfsEntry(int idx)
 
 	switch (entry.getChecksumState(SfsEntry::SFSENTRY_SIGNATURE)) {
 	case SfsEntry::SFSENTRY_NOT_VALIDATED:
-		signatureInfo = _("not validated");
+		signatureInfo = _("???");
 		signatureIconIndex = 0;
 		break;
 	case SfsEntry::SFSENTRY_MISSING:
@@ -656,7 +662,8 @@ ModSfsMainPanelImpl::updateSfsEntry(int idx)
 	}
 
 	SfsMainListCtrl->SetItem(idx,
-	    MODSFSMAIN_FILELIST_COLUMN_FILE, entry.getRelativePath(baseDir));
+	    MODSFSMAIN_FILELIST_COLUMN_FILE, entry.getRelativePath(baseDir),
+	    fileIconIndex);
 	SfsMainListCtrl->SetItem(idx,
 	    MODSFSMAIN_FILELIST_COLUMN_CHECKSUM, checksumInfo,
 	    checksumIconIndex);

@@ -52,66 +52,18 @@
 
 ComCsumAddTask::ComCsumAddTask(void)
 {
-	this->keyId_ = 0;
-	this->keyIdLen_ = 0;
 	this->privKey_ = 0;
-
-	setFile(wxT(""));
 }
 
 ComCsumAddTask::ComCsumAddTask(const wxString &file)
 {
-	this->keyId_ = 0;
-	this->keyIdLen_ = 0;
 	this->privKey_ = 0;
 
-	setFile(file);
+	setPath(file);
 }
 
 ComCsumAddTask::~ComCsumAddTask(void)
 {
-	if (keyId_ != 0)
-		free(keyId_);
-}
-
-wxString
-ComCsumAddTask::getFile(void) const
-{
-	return (this->file_);
-}
-
-void
-ComCsumAddTask::setFile(const wxString &file)
-{
-	this->file_ = file;
-}
-
-bool
-ComCsumAddTask::haveKeyId(void) const
-{
-	return ((keyId_ != 0) && (keyIdLen_ > 0));
-}
-
-bool
-ComCsumAddTask::setKeyId(const u_int8_t *keyId, int len)
-{
-	if ((keyId != 0) && (len > 0)) {
-		u_int8_t *newKeyId = (u_int8_t *)malloc(len);
-
-		if (newKeyId != 0)
-			memcpy(newKeyId, keyId, len);
-		else
-			return (false);
-
-		if (this->keyId_ != 0)
-			free(this->keyId_);
-
-		this->keyId_ = newKeyId;
-		this->keyIdLen_ = len;
-
-		return (true);
-	} else
-		return (false);
 }
 
 bool
@@ -140,14 +92,18 @@ ComCsumAddTask::exec(void)
 	int				req_op;
 	u_int8_t			*payload;
 	int				payloadLen;
-	char				path[file_.Len() + 1];
+	char				path[PATH_MAX];
 
 	resetComTaskResult();
 
-	strlcpy(path, file_.fn_str(), sizeof(path));
+	/* receive path to be send to anoubisd */
+	if (!resolvePath(path)) {
+		setComTaskResult(RESULT_LOCAL_ERROR);
+		setResultDetails(errno);
+	}
 
-	if ((keyId_ != 0) && (keyIdLen_ > 0) && (privKey_ != 0)) {
-		payload = createSigMsg(path, &payloadLen);
+	if (haveKeyId() && (privKey_ != 0)) {
+		payload = createSigMsg(&payloadLen);
 
 		/* Reset private key, don't need it anymore */
 		privKey_ = 0;
@@ -161,7 +117,7 @@ ComCsumAddTask::exec(void)
 
 		req_op = ANOUBIS_CHECKSUM_OP_ADDSIG;
 	} else {
-		payload = createCsMsg(path, &payloadLen);
+		payload = createCsMsg(&payloadLen);
 		if (payload == 0) {
 			setComTaskResult(RESULT_LOCAL_ERROR);
 			setResultDetails(errno);
@@ -174,7 +130,7 @@ ComCsumAddTask::exec(void)
 
 	/* Send request to daemon */
 	ta =  anoubis_client_csumrequest_start(getComHandler()->getClient(),
-	    req_op, path, payload, payloadLen - keyIdLen_, keyIdLen_, 0,
+	    req_op, path, payload, payloadLen - getKeyIdLen(), getKeyIdLen(), 0,
 	    ANOUBIS_CSUM_NONE);
 
 	free(payload);
@@ -229,12 +185,12 @@ ComCsumAddTask::resetComTaskResult(void)
 }
 
 u_int8_t *
-ComCsumAddTask::createCsMsg(const char *path, int *payload_len)
+ComCsumAddTask::createCsMsg(int *payload_len)
 {
 	u_int8_t	*payload;
 	int		result;
 
-	if ((path == 0) || (payload_len == 0)) {
+	if (payload_len == 0) {
 		errno = EINVAL;
 		return (0);
 	}
@@ -246,7 +202,7 @@ ComCsumAddTask::createCsMsg(const char *path, int *payload_len)
 		return (0);
 
 	/* Calculate checksum */
-	result = anoubis_csum_calc(path, cs_, payload_len);
+	result = csumCalc(cs_, payload_len);
 	if (result < 0) {
 		errno = -result;
 		free(payload);
@@ -261,22 +217,21 @@ ComCsumAddTask::createCsMsg(const char *path, int *payload_len)
 }
 
 u_int8_t *
-ComCsumAddTask::createSigMsg(const char *path, int *payload_len)
+ComCsumAddTask::createSigMsg(int *payload_len)
 {
 	u_int8_t	*sig, *payload;
 	int		cs_len;
 	unsigned int	sig_len;
 	int		result;
 
-	if ((path == 0) || (privKey_ == 0) || (keyId_ == 0) ||
-	    (keyIdLen_ < 0) || (payload_len == 0)) {
+	if ((privKey_ == 0) || !haveKeyId() || (payload_len == 0)) {
 		errno = EINVAL;
 		return (0);
 	}
 
 	/* Calculate the checksum of the file */
 	cs_len = ANOUBIS_CS_LEN;
-	result = anoubis_csum_calc(path, cs_, &cs_len);
+	result = csumCalc(cs_, &cs_len);
 	if (result < 0) {
 		errno = -result;
 		return (0);
@@ -288,7 +243,7 @@ ComCsumAddTask::createSigMsg(const char *path, int *payload_len)
 		return (0);
 
 	/* Need a message, which can hold key-id and signature */
-	*payload_len = keyIdLen_ + sig_len;
+	*payload_len = getKeyIdLen() + sig_len;
 	payload = (u_int8_t *)malloc(*payload_len);
 	if (payload == 0) {
 		free(sig);
@@ -296,8 +251,8 @@ ComCsumAddTask::createSigMsg(const char *path, int *payload_len)
 	}
 
 	/* Build the message: keyid followed by signature */
-	memcpy(payload, keyId_, keyIdLen_);
-	memcpy(payload + keyIdLen_, sig, sig_len);
+	memcpy(payload, getKeyId(), getKeyIdLen());
+	memcpy(payload + getKeyIdLen(), sig, sig_len);
 	free(sig);
 
 	/* Success */

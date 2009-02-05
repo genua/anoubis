@@ -59,17 +59,35 @@ class TcComTask : public TestHandler
 		void setupTestCsumAdd(void);
 		void onTestCsumAdd(TaskEvent &);
 
+		void setupTestCsumAddSymlink(void);
+		void onTestCsumAddSymlink(TaskEvent &);
+
+		void setupTestCsumAddSymlinkLink(void);
+		void onTestCsumAddSymlinkLink(TaskEvent &);
+
 		void setupTestCsumGet(void);
 		void onTestCsumGet(TaskEvent &);
 
 		void setupTestCsumGetNoSuchFile(void);
 		void onTestCsumGetNoSuchFile(TaskEvent &);
 
+		void setupTestCsumGetSymlink(void);
+		void onTestCsumGetSymlink(TaskEvent &);
+
+		void setupTestCsumGetSymlinkLink(void);
+		void onTestCsumGetSymlinkLink(TaskEvent &);
+
 		void setupTestSfsListNotEmpty(void);
 		void onTestSfsListNotEmpty(TaskEvent &);
 
 		void setupTestCsumDel(void);
 		void onTestCsumDel(TaskEvent &);
+
+		void setupTestCsumDelSymlink(void);
+		void onTestCsumDelSymlink(TaskEvent &);
+
+		void setupTestCsumDelSymlinkLink(void);
+		void onTestCsumDelSymlinkLink(TaskEvent &);
 
 		void setupTestSfsListEmpty(void);
 		void onTestSfsListEmpty(TaskEvent &);

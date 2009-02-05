@@ -35,6 +35,7 @@
 #include <dev/anoubis.h>
 #endif
 
+#include "ComCsumHandler.h"
 #include "ComTask.h"
 
 /**
@@ -58,7 +59,7 @@
  *   failed. getResultDetails() will return the remote error-code and can be
  *   evaluated by strerror(3) or similar.
  */
-class ComCsumAddTask : public ComTask
+class ComCsumAddTask : public ComTask, public ComCsumHandler
 {
 	public:
 		/**
@@ -80,51 +81,6 @@ class ComCsumAddTask : public ComTask
 		 * D'tor.
 		 */
 		~ComCsumAddTask(void);
-
-		/**
-		 * Returns the source-file.
-		 *
-		 * The this file the checksum is calculated and send to
-		 * anoubisd.
-		 *
-		 * @return The source-file
-		 */
-		wxString getFile(void) const;
-
-		/**
-		 * Updates the source-file.
-		 *
-		 * This method needs to be called <i>before</i> the tesk is
-		 * executed!
-		 *
-		 * @param file The new source-file
-		 */
-		void setFile(const wxString &);
-
-		/**
-		 * Tests whether a key-id is assigned to the task.
-		 * @return true is returned, if a key-id is assigned, false
-		 *         otherwise.
-		 */
-		bool haveKeyId(void) const;
-
-		/**
-		 * Provides a key-id used by the operation.
-		 *
-		 * Once configured, the signed checksum of the file is assigned
-		 * to the certificate behind the configured key-id.
-		 *
-		 * @param keyId The key-id of the certificate
-		 * @param keyIdLen Length of keyId
-		 * @return true if you specified a correct key-id, false
-		 *         otherwise.
-		 *
-		 * @note Furthermore you need to configure a private-key to use
-		 *       signed checksums.
-		 * @see LocalCertificate
-		 * @see setPrivateKey()
-		 */
-		bool setKeyId(const u_int8_t *, int);
 
 		/**
 		 * Tests whether a private key is assigned to the task.
@@ -185,9 +141,6 @@ class ComCsumAddTask : public ComTask
 		void resetComTaskResult(void);
 
 	private:
-		wxString		file_;
-		u_int8_t		*keyId_;
-		int			keyIdLen_;
 		struct anoubis_sig	*privKey_;
 		u_int8_t		cs_[ANOUBIS_CS_LEN];
 
@@ -197,11 +150,10 @@ class ComCsumAddTask : public ComTask
 		 *
 		 * The checksum is calculated and assigned to the payload.
 		 *
-		 * @param path Path to file to be checksumed
 		 * @param payload_len Length of returned payload-buffer is
 		 *                    written into this argument.
 		 */
-		u_int8_t *createCsMsg(const char *, int *);
+		u_int8_t *createCsMsg(int *);
 
 		/**
 		 * Creates the payload sent to anoubisd in case of signed
@@ -210,11 +162,10 @@ class ComCsumAddTask : public ComTask
 		 * The checksum is calculated and signed. Together with the
 		 * key-id, there are appended to the payload.
 		 *
-		 * @param path Path to file to be checksumed
 		 * @param payload_len Length of returned payload-buffer is
 		 *                    written into this argument.
 		 */
-		u_int8_t *createSigMsg(const char *, int *);
+		u_int8_t *createSigMsg(int *);
 };
 
 #endif	/* _COMCSUMADDTASK_H_ */

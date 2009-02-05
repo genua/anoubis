@@ -388,14 +388,14 @@ AnoubisGuiApp::autoStart(bool autostart)
 void
 AnoubisGuiApp::sendChecksum(const wxString &File)
 {
-	csumAddTask_.setFile(File);
+	csumAddTask_.setPath(File);
 	JobCtrl::getInstance()->addTask(&csumAddTask_);
 }
 
 void
 AnoubisGuiApp::getChecksum(const wxString &File)
 {
-	csumGetTask_.setFile(File);
+	csumGetTask_.setPath(File);
 	JobCtrl::getInstance()->addTask(&csumGetTask_);
 }
 

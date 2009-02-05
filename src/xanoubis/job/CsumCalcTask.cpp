@@ -36,6 +36,8 @@
 #include <dev/anoubis.h>
 #endif
 
+#include <errno.h>
+
 #include <csum/csum.h>
 
 #include "CsumCalcTask.h"
@@ -58,6 +60,18 @@ CsumCalcTask::setPath(const wxString &path)
 	this->path_ = path;
 }
 
+bool
+CsumCalcTask::calcLink(void) const
+{
+	return (this->calcLink_);
+}
+
+void
+CsumCalcTask::setCalcLink(bool enable)
+{
+	this->calcLink_ = enable;
+}
+
 wxEventType
 CsumCalcTask::getEventType(void) const
 {
@@ -67,10 +81,22 @@ CsumCalcTask::getEventType(void) const
 void
 CsumCalcTask::exec(void)
 {
-	int cslen = ANOUBIS_CS_LEN;
+	int		cslen = ANOUBIS_CS_LEN;
+	struct stat	fstat;
 
 	reset();
-	this->result_ = anoubis_csum_calc(path_.fn_str(), this->cs_, &cslen);
+
+	if (lstat(path_.fn_str(), &fstat) == 0) {
+		if (S_ISLNK(fstat.st_mode) && calcLink_)
+			this->result_ = anoubis_csum_link_calc(
+			    path_.fn_str(), this->cs_, &cslen);
+		else
+			this->result_ = anoubis_csum_calc(
+			    path_.fn_str(), this->cs_, &cslen);
+
+		this->result_ *= -1;
+	} else
+		this->result_ = errno;
 }
 
 int

@@ -40,64 +40,15 @@
 
 ComCsumDelTask::ComCsumDelTask(void)
 {
-	this->keyId_ = 0;
-	this->keyIdLen_ = 0;
-
-	setFile(wxEmptyString);
 }
 
 ComCsumDelTask::ComCsumDelTask(const wxString &file)
 {
-	this->keyId_ = 0;
-	this->keyIdLen_ = 0;
-
-	setFile(file);
+	setPath(file);
 }
 
 ComCsumDelTask::~ComCsumDelTask(void)
 {
-	if (keyId_ != 0)
-		free(keyId_);
-}
-
-wxString
-ComCsumDelTask::getFile(void) const
-{
-	return (this->file_);
-}
-
-void
-ComCsumDelTask::setFile(const wxString &file)
-{
-	this->file_ = file;
-}
-
-bool
-ComCsumDelTask::haveKeyId(void) const
-{
-	return ((keyId_ != 0) && (keyIdLen_ > 0));
-}
-
-bool
-ComCsumDelTask::setKeyId(const u_int8_t *keyId, int len)
-{
-	if ((keyId != 0) && (len > 0)) {
-		u_int8_t *newKeyId = (u_int8_t *)malloc(len);
-
-		if (newKeyId != 0)
-			memcpy(newKeyId, keyId, len);
-		else
-			return (false);
-
-		if (this->keyId_ != 0)
-			free(this->keyId_);
-
-		this->keyId_ = newKeyId;
-		this->keyIdLen_ = len;
-
-		return (true);
-	} else
-		return (false);
 }
 
 wxEventType
@@ -111,20 +62,24 @@ ComCsumDelTask::exec(void)
 {
 	struct anoubis_transaction	*ta;
 	int				req_op;
-	char				path[file_.Len() + 1];
+	char				path[PATH_MAX];
 
 	resetComTaskResult();
 
-	if ((this->keyId_ != 0) && (this->keyIdLen_ > 0))
+	if (haveKeyId())
 		req_op = ANOUBIS_CHECKSUM_OP_DELSIG;
 	else
 		req_op = ANOUBIS_CHECKSUM_OP_DEL;
 
-	strlcpy(path, this->file_.fn_str(), sizeof(path));
+	/* receive path to be send to anoubisd */
+	if (!resolvePath(path)) {
+		setComTaskResult(RESULT_LOCAL_ERROR);
+		setResultDetails(errno);
+	}
 
 	/* Create request */
 	ta = anoubis_client_csumrequest_start(getComHandler()->getClient(),
-	    req_op, (char*)path, this->keyId_, 0, this->keyIdLen_, 0,
+	    req_op, (char*)path, getKeyId(), 0, getKeyIdLen(), 0,
 	    ANOUBIS_CSUM_NONE);
 	if(!ta) {
 		setComTaskResult(RESULT_COM_ERROR);
