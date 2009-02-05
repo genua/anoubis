@@ -44,7 +44,7 @@ Subject::~Subject(void)
 
 	it = observers_.begin();
 	while (it != observers_.end()) {
-		(*it)->removeSubject(this);
+		(*it)->deleteHandler(this);
 		it++;
 	}
 	observers_.Clear();
@@ -87,12 +87,12 @@ Subject::finishChange(void)
 		changeCount_--;
 	}
 	if (changeCount_ == 0) {
-		notifyObservers();
+		notifyChange();
 	}
 }
 
 void
-Subject::notifyObservers(void)
+Subject::notifyChange(void)
 {
 	ObserverList::iterator	it;
 

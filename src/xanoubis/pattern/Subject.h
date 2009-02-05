@@ -119,11 +119,19 @@ class Subject : public wxObject
 		ObserverList	observers_;	/**< List of observers */
 
 		/**
-		 * Notify the observers.
+		 * Notify the observers about a change of the subject.
 		 * @param None
 		 * @return Nothing
 		 */
-		void notifyObservers(void);
+		void notifyChange(void);
+
+		/**
+		 * Notify the observers about an impending destruction
+		 * of the subject.
+		 * @param None
+		 * @return Nothing
+		 */
+		void notifyDelete(void);
 };
 
 WX_DECLARE_LIST(Subject, SubjectList);

@@ -54,6 +54,19 @@ Observer::~Observer(void)
 	delete subjects_;
 }
 
+void
+Observer::updateDelete(Subject *)
+{
+	/* Empty */
+}
+
+void
+Observer::deleteHandler(Subject *subject)
+{
+	removeSubject(subject);
+	updateDelete(subject);
+}
+
 bool
 Observer::addSubject(Subject *subject)
 {

@@ -133,11 +133,14 @@ class ConcreteObserver : public Observer
 	public:
 		ConcreteObserver(Subject *);
 		int getNotifyCount(void);
+		int getDelNotifyCount(void);
 		void resetNotifyCount(void);
 		void update(Subject *);
+		virtual void updateDelete(Subject *);
 
 	private:
 		int notifyCount_;
+		int delNotifyCount_;
 };
 
 ConcreteObserver::ConcreteObserver(Subject *subject) : Observer(subject)
@@ -151,16 +154,29 @@ ConcreteObserver::getNotifyCount(void)
 	return (notifyCount_);
 }
 
+int
+ConcreteObserver::getDelNotifyCount(void)
+{
+	return (delNotifyCount_);
+}
+
 void
 ConcreteObserver::resetNotifyCount(void)
 {
 	notifyCount_ = 0;
+	delNotifyCount_ = 0;
 }
 
 void
 ConcreteObserver::update(Subject * WXUNUSED(subject))
 {
 	notifyCount_++;
+}
+
+void
+ConcreteObserver::updateDelete(Subject * WXUNUSED(subject))
+{
+	delNotifyCount_++;
 }
 
 #define CHECK_OBSERVER_NOTIFY(observer, count) \
@@ -457,6 +473,47 @@ START_TEST(observer_s3_o2)
 }
 END_TEST
 
+START_TEST(observer_delete)
+{
+	ConcreteSubject		*cs1;
+	ConcreteSubject		*cs2;
+	ConcreteSubject		*cs3;
+	ConcreteObserver	*co1;
+	ConcreteObserver	*co2;
+
+	cs1 = new ConcreteSubject();
+	cs2 = new ConcreteSubject();
+	cs3 = new ConcreteSubject();
+	co1 = new ConcreteObserver(cs1);
+	co2 = new ConcreteObserver(NULL);
+
+	co1->addSubject(cs2);
+	co1->addSubject(cs3);
+	co2->addSubject(cs1);
+	co2->addSubject(cs2);
+	co2->addSubject(cs3);
+	co1->removeSubject(cs1);
+	delete cs1;
+	delete cs2;
+
+	fail_if(co1->getDelNotifyCount() != 1,
+	    "Notify count is %d (should be 1)", co1->getDelNotifyCount());
+	fail_if(co2->getDelNotifyCount() != 2,
+	    "Notify count is %d (should be 2)", co2->getDelNotifyCount());
+
+	co2->removeSubject(cs3);
+	delete cs3;
+
+	fail_if(co1->getDelNotifyCount() != 2,
+	    "Notify count is %d (should be 2)", co1->getDelNotifyCount());
+	fail_if(co2->getDelNotifyCount() != 2,
+	    "Notify count is %d (should be 2)", co2->getDelNotifyCount());
+
+	delete co1;
+	delete co2;
+}
+END_TEST
+
 TCase *
 getTc_Observer(void)
 {
@@ -469,6 +526,7 @@ getTc_Observer(void)
 	tcase_add_test(testCase, observer_s1_o3);
 	tcase_add_test(testCase, observer_s2_o3);
 	tcase_add_test(testCase, observer_s3_o2);
+	tcase_add_test(testCase, observer_delete);
 
 	return (testCase);
 }

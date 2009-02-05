@@ -76,6 +76,16 @@ class Observer
 		virtual void update(Subject *) = 0;
 
 		/**
+		 * Notification from the given subject about it's
+		 * impending destruction.
+		 * @param 1st The changed subject.
+		 * @return Nothing.
+		 * NOTE: Even if you overwrite this method there is no
+		 * NOTE: need to call removeSubject manually.
+		 */
+		virtual void updateDelete(Subject *);
+
+		/**
 		 * Add a subject.
 		 * This will also register for update notifications at the
 		 * given subject.
@@ -94,7 +104,9 @@ class Observer
 
 	private:
 		SubjectList *subjects_; /**< The observed subjects */
+		void deleteHandler(Subject *);
 
+	friend class Subject;
 };
 
 WX_DECLARE_LIST(Observer, ObserverList);
