@@ -25,15 +25,15 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "DlgRuleEditorFilterPage.h"
+#include "DlgRuleEditorPage.h"
 
-DlgRuleEditorFilterPage::DlgRuleEditorFilterPage(void) : Observer(NULL)
+DlgRuleEditorPage::DlgRuleEditorPage(void) : Observer(NULL)
 {
 	filterPolicy_ = NULL;
 }
 
 void
-DlgRuleEditorFilterPage::select(FilterPolicy *policy)
+DlgRuleEditorPage::select(FilterPolicy *policy)
 {
 	filterPolicy_ = policy;
 	addSubject(policy);
@@ -41,7 +41,7 @@ DlgRuleEditorFilterPage::select(FilterPolicy *policy)
 }
 
 void
-DlgRuleEditorFilterPage::deselect(void)
+DlgRuleEditorPage::deselect(void)
 {
 	removeSubject(filterPolicy_);
 	filterPolicy_ = NULL;

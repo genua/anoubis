@@ -29,7 +29,7 @@
 #define _DLGRULEEDITORFILTERACTIONPAGE_H_
 
 #include "DlgRuleEditorBase.h"
-#include "DlgRuleEditorFilterPage.h"
+#include "DlgRuleEditorPage.h"
 
 /**
  * This is the filter action page.
@@ -37,12 +37,12 @@
  * This page is responsible for AlfFilterPolicies, AlfCapabilityFilterPolicies,
  * SbAccessFilterPolicies, DefaultFilterPolicies and SfsDefaultFilterPolicies.
  *
- * This is a derrived class from DlgRuleEditorFilterPage to inherrit the
+ * This is a derrived class from DlgRuleEditorPage to inherrit the
  * mechanims of selection and deselection and observing the policy. In
  * addition we derrived from DlgRuleEditorFilterActionPageBase to gain
  * access to the widgets and implement the event methods of them.
  */
-class DlgRuleEditorFilterActionPage : public DlgRuleEditorFilterPage,
+class DlgRuleEditorFilterActionPage : public DlgRuleEditorPage,
     public DlgRuleEditorFilterActionPageBase
 {
 	public:

@@ -29,7 +29,7 @@
 
 DlgRuleEditorFilterAddressPage::DlgRuleEditorFilterAddressPage(wxWindow *parent,
     wxWindowID id, const wxPoint & pos, const wxSize & size, long style)
-    : DlgRuleEditorFilterPage(),
+    : DlgRuleEditorPage(),
     DlgRuleEditorFilterAddressPageBase(parent, id, pos, size, style)
 {
 }
@@ -49,7 +49,7 @@ DlgRuleEditorFilterAddressPage::select(FilterPolicy *policy)
 {
 	if (policy->IsKindOf(CLASSINFO(AlfFilterPolicy))) {
 		policy_ = wxDynamicCast(policy, AlfFilterPolicy);
-		DlgRuleEditorFilterPage::select(policy);
+		DlgRuleEditorPage::select(policy);
 		Show();
 	}
 }
@@ -58,7 +58,7 @@ void
 DlgRuleEditorFilterAddressPage::deselect(void)
 {
 	policy_ = NULL;
-	DlgRuleEditorFilterPage::deselect();
+	DlgRuleEditorPage::deselect();
 	Hide();
 }
 

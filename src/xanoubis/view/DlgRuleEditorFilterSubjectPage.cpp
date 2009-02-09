@@ -33,7 +33,7 @@
 
 DlgRuleEditorFilterSubjectPage::DlgRuleEditorFilterSubjectPage(wxWindow *parent,
     wxWindowID id, const wxPoint & pos, const wxSize & size, long style)
-    : DlgRuleEditorFilterPage(),
+    : DlgRuleEditorPage(),
     DlgRuleEditorFilterSubjectPageBase(parent, id, pos, size, style)
 {
 }
@@ -58,12 +58,12 @@ DlgRuleEditorFilterSubjectPage::select(FilterPolicy *policy)
 {
 	if (policy->IsKindOf(CLASSINFO(SfsFilterPolicy))) {
 		sfsPolicy_ = wxDynamicCast(policy, SfsFilterPolicy);
-		DlgRuleEditorFilterPage::select(policy);
+		DlgRuleEditorPage::select(policy);
 		Show();
 	}
 	if (policy->IsKindOf(CLASSINFO(SbAccessFilterPolicy))) {
 		sbPolicy_ = wxDynamicCast(policy, SbAccessFilterPolicy);
-		DlgRuleEditorFilterPage::select(policy);
+		DlgRuleEditorPage::select(policy);
 		Show();
 	}
 }
@@ -73,7 +73,7 @@ DlgRuleEditorFilterSubjectPage::deselect(void)
 {
 	sfsPolicy_ = NULL;
 	sbPolicy_  = NULL;
-	DlgRuleEditorFilterPage::deselect();
+	DlgRuleEditorPage::deselect();
 	Hide();
 }
 

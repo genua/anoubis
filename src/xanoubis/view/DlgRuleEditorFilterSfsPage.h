@@ -29,7 +29,7 @@
 #define _DLGRULEEDITORFILTERSFSPAGE_H_
 
 #include "DlgRuleEditorBase.h"
-#include "DlgRuleEditorFilterPage.h"
+#include "DlgRuleEditorPage.h"
 #include "FilterPolicy.h"
 #include "SfsFilterPolicy.h"
 
@@ -38,12 +38,12 @@
  *
  * This page is responsible only for SfsFilterPolicies.
  *
- * This is a derrived class from DlgRuleEditorFilterPage to inherrit the
+ * This is a derrived class from DlgRuleEditorPage to inherrit the
  * mechanims of selection and deselection and observing the policy. In
  * addition we derrived from DlgRuleEditorFilterSfsPageBase to gain
  * access to the widgets and implement the event methods of them.
  */
-class DlgRuleEditorFilterSfsPage : public DlgRuleEditorFilterPage,
+class DlgRuleEditorFilterSfsPage : public DlgRuleEditorPage,
     public DlgRuleEditorFilterSfsPageBase
 {
 	public:

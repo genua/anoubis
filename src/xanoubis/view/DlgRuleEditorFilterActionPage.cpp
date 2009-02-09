@@ -35,7 +35,7 @@
 
 DlgRuleEditorFilterActionPage::DlgRuleEditorFilterActionPage(wxWindow *parent,
     wxWindowID id, const wxPoint & pos, const wxSize & size, long style)
-    : DlgRuleEditorFilterPage(),
+    : DlgRuleEditorPage(),
     DlgRuleEditorFilterActionPageBase(parent, id, pos, size, style)
 {
 }
@@ -59,7 +59,7 @@ DlgRuleEditorFilterActionPage::select(FilterPolicy *policy)
 	    policy->IsKindOf(CLASSINFO(DefaultFilterPolicy)) ||
 	    policy->IsKindOf(CLASSINFO(SfsDefaultFilterPolicy)) ) {
 		policy_ = policy;
-		DlgRuleEditorFilterPage::select(policy);
+		DlgRuleEditorPage::select(policy);
 		Show();
 	}
 }
@@ -68,7 +68,7 @@ void
 DlgRuleEditorFilterActionPage::deselect(void)
 {
 	policy_ = NULL;
-	DlgRuleEditorFilterPage::deselect();
+	DlgRuleEditorPage::deselect();
 	Hide();
 }
 

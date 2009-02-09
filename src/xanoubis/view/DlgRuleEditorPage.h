@@ -49,14 +49,14 @@
  * implementation of this base class for adding and removind the policy
  * to the list of observed subjects.
  */
-class DlgRuleEditorFilterPage : public Observer
+class DlgRuleEditorPage : public Observer
 {
 	public:
 		/**
-		 * Constructor for DlgRuleEditorFilterPage.
+		 * Constructor for DlgRuleEditorPage.
 		 * @param None.
 		 */
-		DlgRuleEditorFilterPage(void);
+		DlgRuleEditorPage(void);
 
 		/**
 		 * Select this page.

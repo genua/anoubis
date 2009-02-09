@@ -44,7 +44,7 @@
 #include "PolicyRuleSet.h"
 #include "ProfileCtrl.h"
 #include "RuleEditorAddPolicyVisitor.h"
-#include "DlgRuleEditorFilterPage.h"
+#include "DlgRuleEditorPage.h"
 #include "JobCtrl.h"
 
 DlgRuleEditor::DlgRuleEditor(wxWindow* parent)
@@ -584,7 +584,7 @@ DlgRuleEditor::onFilterPolicySelect(wxListEvent & event)
 {
 	FilterPolicy		*policy;
 	PolicyRuleSet		*ruleset;
-	DlgRuleEditorFilterPage *filterPage;
+	DlgRuleEditorPage	*filterPage;
 
 	policy = wxDynamicCast((void*)event.GetData(), FilterPolicy);
 	if (policy == NULL) {
@@ -604,7 +604,7 @@ DlgRuleEditor::onFilterPolicySelect(wxListEvent & event)
 
 	/* Tell the notebook tabs to show themself. */
 	for (int i=filterPolicyPanels->GetPageCount() - 1; i>=0; i--) {
-		filterPage = dynamic_cast<DlgRuleEditorFilterPage *>(
+		filterPage = dynamic_cast<DlgRuleEditorPage *>(
 		    filterPolicyPanels->GetPage(i));
 		if (filterPage != NULL) {
 			filterPage->select(policy);
@@ -618,7 +618,7 @@ DlgRuleEditor::onFilterPolicySelect(wxListEvent & event)
 void
 DlgRuleEditor::onFilterPolicyDeSelect(wxListEvent & WXUNUSED(event))
 {
-	DlgRuleEditorFilterPage *filterPage;
+	DlgRuleEditorPage *filterPage;
 
 	filterListUpButton->Disable();
 	filterListDownButton->Disable();
@@ -626,7 +626,7 @@ DlgRuleEditor::onFilterPolicyDeSelect(wxListEvent & WXUNUSED(event))
 
 	/* Tell the notebook tabs to hide themself. */
 	for (int i=filterPolicyPanels->GetPageCount() -1; i>=0; i--) {
-		filterPage = dynamic_cast<DlgRuleEditorFilterPage *>(
+		filterPage = dynamic_cast<DlgRuleEditorPage *>(
 		    filterPolicyPanels->GetPage(i));
 		if (filterPage != NULL) {
 			filterPage->deselect();
