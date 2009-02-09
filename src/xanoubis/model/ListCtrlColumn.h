@@ -56,6 +56,14 @@ class ListCtrlColumn
 		ListCtrlColumn(const wxString &);
 
 		/**
+		 * Title constructor of ListCtrlColumn.
+		 * This will set the width to wxLIST_AUTOSIZE_USEHEADER.
+		 * @param[in] 1st The column title.
+		 * @param[in] 2nd The key name of the column used in config file
+		 */
+		ListCtrlColumn(const wxString &, const wxString &);
+
+		/**
 		 * Set the index of listCtrl this column is part of.
 		 * Use the result of InsertColumn() for this.
 		 * @param[in] 1st The new index.
@@ -112,11 +120,19 @@ class ListCtrlColumn
 		 */
 		bool isVisible(void) const;
 
+		/**
+		 * Get the key for the column header visibility
+		 * @param None.
+		 * @return The key
+		 */
+		wxString getConfKey(void) const;
+
 	private:
-		long index_;	  /**< Index at listCtrl. */
-		wxString title_;  /**< Column title. */
-		int width_;	  /**< Column width. */
-		bool visability_; /**< Visability flag. */
+		long index_;		/**< Index at listCtrl. */
+		wxString title_;	/**< Column title. */
+		wxString confkey_;	/**< Key name in config file. */
+		int width_;		/**< Column width. */
+		bool visability_;	/**< Visability flag. */
 };
 
 #endif	/* _LISTCTRLCOLUMN_H_ */

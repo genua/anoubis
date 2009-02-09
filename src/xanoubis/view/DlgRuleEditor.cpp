@@ -32,10 +32,11 @@
 
 #include <wx/arrimpl.cpp>
 #include <wx/filedlg.h>
-
-#include "DlgRuleEditor.h"
+#include <wx/config.h>
 
 #include "main.h"
+#include "DlgRuleEditor.h"
+
 #include "AlfAppPolicy.h"
 #include "ContextAppPolicy.h"
 #include "SfsAppPolicy.h"
@@ -63,66 +64,83 @@ DlgRuleEditor::DlgRuleEditor(wxWindow* parent)
 	    wxCommandEventHandler(DlgRuleEditor::onConnectionStateChange),
 	    NULL, this);
 
-	appColumns_[APP_ID]	= new ListCtrlColumn(_("ID"));
-	appColumns_[APP_TYPE]	= new ListCtrlColumn(_("Type"));
-	appColumns_[APP_USER]	= new ListCtrlColumn(_("User"));
-	appColumns_[APP_BINARY]	= new ListCtrlColumn(_("Binary"));
+	appColumns_[APP_ID]	= new ListCtrlColumn(_("ID"), wxT("ID"));
+	appColumns_[APP_TYPE]	= new ListCtrlColumn(_("Type"), wxT("TYPE"));
+	appColumns_[APP_USER]	= new ListCtrlColumn(_("User"), wxT("USER"));
+	appColumns_[APP_BINARY]	= new ListCtrlColumn(_("Binary"),
+	    wxT("BINARY"));
 
 	for (size_t i=0; i<APP_EOL; i++) {
 		appColumns_[i]->setIndex(i);
 	}
 
-	alfColumns_[ALF_ID]	= new ListCtrlColumn(_("ID"));
-	alfColumns_[ALF_TYPE]	= new ListCtrlColumn(_("Type"));
-	alfColumns_[ALF_ACTION]	= new ListCtrlColumn(_("Action"));
-	alfColumns_[ALF_LOG]	= new ListCtrlColumn(_("Log"));
-	alfColumns_[ALF_SCOPE]	= new ListCtrlColumn(_("Scope"));
-	alfColumns_[ALF_CAP]	= new ListCtrlColumn(_("Capability"));
-	alfColumns_[ALF_DIR]	= new ListCtrlColumn(_("Direction"));
-	alfColumns_[ALF_PROT]	= new ListCtrlColumn(_("Protocol"));
-	alfColumns_[ALF_AF]	= new ListCtrlColumn(_("AF"));
-	alfColumns_[ALF_FHOST]	= new ListCtrlColumn(_("from host"));
-	alfColumns_[ALF_FPORT]	= new ListCtrlColumn(_("from port"));
-	alfColumns_[ALF_THOST]	= new ListCtrlColumn(_("to host"));
-	alfColumns_[ALF_TPORT]	= new ListCtrlColumn(_("to port"));
-	alfColumns_[ALF_TIME]	= new ListCtrlColumn(_("state timeout"));
+	alfColumns_[ALF_ID]	= new ListCtrlColumn(_("ID"), wxT("ID"));
+	alfColumns_[ALF_TYPE]	= new ListCtrlColumn(_("Type"), wxT("TYPE"));
+	alfColumns_[ALF_ACTION]	= new ListCtrlColumn(_("Action"),
+	    wxT("ACTION"));
+	alfColumns_[ALF_LOG]	= new ListCtrlColumn(_("Log"), wxT("LOG"));
+	alfColumns_[ALF_SCOPE]	= new ListCtrlColumn(_("Scope"), wxT("SCOPE"));
+	alfColumns_[ALF_CAP]	= new ListCtrlColumn(_("Capability"),
+	    wxT("CAP"));
+	alfColumns_[ALF_DIR]	= new ListCtrlColumn(_("Direction"),
+	    wxT("DIR"));
+	alfColumns_[ALF_PROT]	= new ListCtrlColumn(_("Protocol"),
+	    wxT("PROT"));
+	alfColumns_[ALF_AF]	= new ListCtrlColumn(_("AF"), wxT("AF"));
+	alfColumns_[ALF_FHOST]	= new ListCtrlColumn(_("from host"),
+	    wxT("FHOST"));
+	alfColumns_[ALF_FPORT]	= new ListCtrlColumn(_("from port"),
+	    wxT("FPORT"));
+	alfColumns_[ALF_THOST]	= new ListCtrlColumn(_("to host"),
+	    wxT("THOST"));
+	alfColumns_[ALF_TPORT]	= new ListCtrlColumn(_("to port"),
+	    wxT("TPORT"));
+	alfColumns_[ALF_TIME]	= new ListCtrlColumn(_("state timeout"),
+	    wxT("TIME"));
 
 	for (size_t i=0; i<ALF_EOL; i++) {
 		alfColumns_[i]->setIndex(i);
 	}
 
-	sfsColumns_[SFS_ID]	= new ListCtrlColumn(_("ID"));
-	sfsColumns_[SFS_TYPE]	= new ListCtrlColumn(_("Type"));
-	sfsColumns_[SFS_PATH]	= new ListCtrlColumn(_("Path"));
-	sfsColumns_[SFS_SUB]	= new ListCtrlColumn(_("Subject"));
-	sfsColumns_[SFS_SCOPE]	= new ListCtrlColumn(_("Scope"));
-	sfsColumns_[SFS_VA]	= new ListCtrlColumn(_("Valid action"));
-	sfsColumns_[SFS_VL]	= new ListCtrlColumn(_("Valid log"));
-	sfsColumns_[SFS_IA]	= new ListCtrlColumn(_("Invalid action"));
-	sfsColumns_[SFS_IL]	= new ListCtrlColumn(_("Invalid log"));
-	sfsColumns_[SFS_UA]	= new ListCtrlColumn(_("Unknown action"));
-	sfsColumns_[SFS_UL]	= new ListCtrlColumn(_("Unknown log"));
+	sfsColumns_[SFS_ID]	= new ListCtrlColumn(_("ID"), wxT("ID"));
+	sfsColumns_[SFS_TYPE]	= new ListCtrlColumn(_("Type"), wxT("TYPE"));
+	sfsColumns_[SFS_PATH]	= new ListCtrlColumn(_("Path"), wxT("PATH"));
+	sfsColumns_[SFS_SUB]	= new ListCtrlColumn(_("Subject"), wxT("SUB"));
+	sfsColumns_[SFS_SCOPE]	= new ListCtrlColumn(_("Scope"), wxT("SCOPE"));
+	sfsColumns_[SFS_VA]	= new ListCtrlColumn(_("Valid action"),
+	    wxT("VA"));
+	sfsColumns_[SFS_VL]	= new ListCtrlColumn(_("Valid log"), wxT("VL"));
+	sfsColumns_[SFS_IA]	= new ListCtrlColumn(_("Invalid action"),
+	    wxT("IA"));
+	sfsColumns_[SFS_IL]	= new ListCtrlColumn(_("Invalid log"),
+	    wxT("IL"));
+	sfsColumns_[SFS_UA]	= new ListCtrlColumn(_("Unknown action"),
+	    wxT("UA"));
+	sfsColumns_[SFS_UL]	= new ListCtrlColumn(_("Unknown log"),
+	    wxT("UL"));
 
 	for (size_t i=0; i<SFS_EOL; i++) {
 		sfsColumns_[i]->setIndex(i);
 	}
 
-	ctxColumns_[CTX_ID]	= new ListCtrlColumn(_("ID"));
-	ctxColumns_[CTX_TYPE]	= new ListCtrlColumn(_("Type"));
-	ctxColumns_[CTX_BINARY]	= new ListCtrlColumn(_("Binary"));
+	ctxColumns_[CTX_ID]	= new ListCtrlColumn(_("ID"), wxT("ID"));
+	ctxColumns_[CTX_TYPE]	= new ListCtrlColumn(_("Type"), wxT("TYPE"));
+	ctxColumns_[CTX_BINARY]	= new ListCtrlColumn(_("Binary"),
+	    wxT("BINARY"));
 
 	for (size_t i=0; i<CTX_EOL; i++) {
 		ctxColumns_[i]->setIndex(i);
 	}
 
-	sbColumns_[SB_ID]	= new ListCtrlColumn(_("ID"));
-	sbColumns_[SB_TYPE]	= new ListCtrlColumn(_("Type"));
-	sbColumns_[SB_ACTION]	= new ListCtrlColumn(_("Action"));
-	sbColumns_[SB_LOG]	= new ListCtrlColumn(_("Log"));
-	sbColumns_[SB_SCOPE]	= new ListCtrlColumn(_("Scope"));
-	sbColumns_[SB_PATH]	= new ListCtrlColumn(_("Path"));
-	sbColumns_[SB_SUB]	= new ListCtrlColumn(_("Subject"));
-	sbColumns_[SB_MASK]	= new ListCtrlColumn(_("Mask"));
+	sbColumns_[SB_ID]	= new ListCtrlColumn(_("ID"), wxT("ID"));
+	sbColumns_[SB_TYPE]	= new ListCtrlColumn(_("Type"), wxT("TYPE"));
+	sbColumns_[SB_ACTION]	= new ListCtrlColumn(_("Action"),
+	    wxT("ACTION"));
+	sbColumns_[SB_LOG]	= new ListCtrlColumn(_("Log"), wxT("LOG"));
+	sbColumns_[SB_SCOPE]	= new ListCtrlColumn(_("Scope"), wxT("SCOPE"));
+	sbColumns_[SB_PATH]	= new ListCtrlColumn(_("Path"), wxT("PATH"));
+	sbColumns_[SB_SUB]	= new ListCtrlColumn(_("Subject"), wxT("SUB"));
+	sbColumns_[SB_MASK]	= new ListCtrlColumn(_("Mask"), wxT("MASK"));
 
 	for (size_t i=0; i<SB_EOL; i++) {
 		sbColumns_[i]->setIndex(i);
@@ -134,6 +152,9 @@ DlgRuleEditor::DlgRuleEditor(wxWindow* parent)
 	appPolicyLoadProgDlg_ = NULL;
 	filterPolicyLoadProgIdx_ = 0;
 	filterPolicyLoadProgDlg_ = NULL;
+
+	/* read and restore header selections for rule editor view */
+	readOptions();
 }
 
 DlgRuleEditor::~DlgRuleEditor(void)
@@ -154,6 +175,9 @@ DlgRuleEditor::~DlgRuleEditor(void)
 	    wxCommandEventHandler(DlgRuleEditor::onConnectionStateChange),
 	    NULL, this);
 
+	/* write header selections for rule editor view to config file */
+	writeOptions();
+
 	for (size_t i=0; i<APP_EOL; i++) {
 		delete appColumns_[i];
 	}
@@ -168,6 +192,97 @@ DlgRuleEditor::~DlgRuleEditor(void)
 	}
 	for (size_t i=0; i<SB_EOL; i++) {
 		delete sbColumns_[i];
+	}
+}
+
+void
+DlgRuleEditor::readOptions(void)
+{
+	/* read and set the stored column header settings from config file */
+	bool		isVisible = true;
+	wxString	name;
+
+	for (size_t i=1; i<APP_EOL; i++) {
+		name = wxT("/Options/Columns/App/") +
+		    appColumns_[i]->getConfKey();
+		wxGetApp().getUserOptions()->Read(name, &isVisible, true);
+		appColumns_[i]->setVisability(isVisible);
+	}
+
+	for (size_t i=1; i<ALF_EOL; i++) {
+		name = wxT("/Options/Columns/Alf/") +
+		    alfColumns_[i]->getConfKey();
+		wxGetApp().getUserOptions()->Read(name, &isVisible, true);
+		alfColumns_[i]->setVisability(isVisible);
+	}
+
+	for (size_t i=1; i<SFS_EOL; i++) {
+		name = wxT("/Options/Columns/Sfs/") +
+		    sfsColumns_[i]->getConfKey();
+		wxGetApp().getUserOptions()->Read(name, &isVisible, true);
+		sfsColumns_[i]->setVisability(isVisible);
+	}
+
+	for (size_t i=1; i<CTX_EOL; i++) {
+		name = wxT("/Options/Columns/Ctx/") +
+		    ctxColumns_[i]->getConfKey();
+		wxGetApp().getUserOptions()->Read(name, &isVisible, true);
+		ctxColumns_[i]->setVisability(isVisible);
+	}
+
+	for (size_t i=1; i<SB_EOL; i++) {
+		name = wxT("/Options/Columns/Sb/")
+		    + sbColumns_[i]->getConfKey();
+		wxGetApp().getUserOptions()->Read(name, &isVisible, true);
+		sbColumns_[i]->setVisability(isVisible);
+	}
+
+	updateListColumns(appPolicyListCtrl,    appColumns_, APP_EOL);
+	updateListColumns(filterPolicyListCtrl, alfColumns_, ALF_EOL);
+	updateListColumns(filterPolicyListCtrl, sfsColumns_, SFS_EOL);
+	updateListColumns(filterPolicyListCtrl, ctxColumns_, CTX_EOL);
+	updateListColumns(filterPolicyListCtrl, sbColumns_,  SB_EOL);
+}
+
+void
+DlgRuleEditor::writeOptions(void)
+{
+	wxString	name;
+
+	/* save the column header settings to config */
+	for (size_t i=1; i<APP_EOL; i++) {
+		name = wxT("/Options/Columns/App/") +
+		    appColumns_[i]->getConfKey();
+		wxGetApp().getUserOptions()->Write(name,
+		    appColumns_[i]->isVisible());
+	}
+
+	for (size_t i=1; i<ALF_EOL; i++) {
+		name = wxT("/Options/Columns/Alf/") +
+		    alfColumns_[i]->getConfKey();
+		wxGetApp().getUserOptions()->Write(name,
+		    alfColumns_[i]->isVisible());
+	}
+
+	for (size_t i=1; i<SFS_EOL; i++) {
+		name = wxT("/Options/Columns/Sfs/") +
+		    sfsColumns_[i]->getConfKey();
+		wxGetApp().getUserOptions()->Write(name,
+		    sfsColumns_[i]->isVisible());
+	}
+
+	for (size_t i=1; i<CTX_EOL; i++) {
+		name = wxT("/Options/Columns/Ctx/") +
+		    ctxColumns_[i]->getConfKey();
+		wxGetApp().getUserOptions()->Write(name,
+		    ctxColumns_[i]->isVisible());
+	}
+
+	for (size_t i=1; i<SB_EOL; i++) {
+		name = wxT("/Options/Columns/Sb/") +
+		    sbColumns_[i]->getConfKey();
+		wxGetApp().getUserOptions()->Write(name,
+		    sbColumns_[i]->isVisible());
 	}
 }
 
@@ -706,7 +821,7 @@ DlgRuleEditor::onAppListColumnsButtonClick(wxCommandEvent &)
 	multiChoiceDlg->SetSelections(selections);
 
 	if (multiChoiceDlg->ShowModal() == wxID_OK) {
-		for (size_t i=1; i < APP_EOL; i++) {
+		for (size_t i=1; i<APP_EOL; i++) {
 			appColumns_[i]->setVisability(false);
 		}
 		selections.Clear();
@@ -1475,7 +1590,7 @@ DlgRuleEditor::updateListSfsFilterPolicy(long rowIdx)
 	if (policy->IsKindOf(CLASSINFO(SfsFilterPolicy))) {
 		/* Fill scope column */
 		updateColumnText(filterPolicyListCtrl, rowIdx,
-		    alfColumns_[ALF_SCOPE], sfsPolicy->getScopeName());
+		    sfsColumns_[SFS_SCOPE], sfsPolicy->getScopeName());
 
 		/* Fill path column */
 		updateColumnText(filterPolicyListCtrl, rowIdx,
@@ -1574,7 +1689,7 @@ DlgRuleEditor::updateListSbAccessFilterPolicy(long rowIdx)
 	if (policy->IsKindOf(CLASSINFO(SbAccessFilterPolicy))) {
 		/* Fill scope column */
 		updateColumnText(filterPolicyListCtrl, rowIdx,
-		    alfColumns_[ALF_SCOPE], sbPolicy->getScopeName());
+		    sbColumns_[SB_SCOPE], sbPolicy->getScopeName());
 
 		/* Fill path column */
 		updateColumnText(filterPolicyListCtrl, rowIdx,

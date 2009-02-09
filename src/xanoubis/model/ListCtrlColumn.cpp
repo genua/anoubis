@@ -45,6 +45,15 @@ ListCtrlColumn::ListCtrlColumn(const wxString &title)
 	visability_ = true;
 }
 
+ListCtrlColumn::ListCtrlColumn(const wxString &title, const wxString &confkey)
+{
+	index_ = -1;
+	title_ = title;
+	confkey_ = confkey;
+	width_ = wxLIST_AUTOSIZE_USEHEADER;
+	visability_ = true;
+}
+
 void
 ListCtrlColumn::setIndex(long index)
 {
@@ -95,4 +104,10 @@ bool
 ListCtrlColumn::isVisible(void) const
 {
 	return (visability_);
+}
+
+wxString
+ListCtrlColumn::getConfKey(void) const
+{
+	return (confkey_);
 }

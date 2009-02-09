@@ -226,6 +226,7 @@ class DlgRuleEditor : public DlgRuleEditorBase
 #endif
 
 #include <wx/progdlg.h>
+#include <wx/config.h>
 
 #include "AnEvents.h"
 #include "DlgRuleEditorBase.h"
@@ -794,6 +795,20 @@ class DlgRuleEditor : public Observer, public DlgRuleEditorBase
 		 * @return Nothing.
 		 */
 		void updateFooter(void);
+
+		/**
+		 * Read settings for the visible column headers
+		 * @param None.
+		 * @return Nothing.
+		 */
+		void readOptions(void);
+
+		/**
+		 * Write settings for the visible column headers
+		 * @param None.
+		 * @return Nothing.
+		 */
+		void writeOptions(void);
 };
 
 #endif /* __DlgRuleEditor__ */
