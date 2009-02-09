@@ -45,15 +45,14 @@
 #include <wx/button.h>
 #include <wx/radiobut.h>
 #include <wx/spinctrl.h>
-#include <wx/gbsizer.h>
+#include <wx/statline.h>
 #include <wx/panel.h>
+#include <wx/checkbox.h>
 #include <wx/bitmap.h>
 #include <wx/image.h>
 #include <wx/listctrl.h>
-#include <wx/statline.h>
 #include <wx/textctrl.h>
 #include <wx/statbox.h>
-#include <wx/checkbox.h>
 #include <wx/notebook.h>
 #include <wx/statbmp.h>
 #include <wx/combobox.h>
@@ -98,21 +97,67 @@ class ModAnoubisMainPanelBase : public wxPanel
 		wxStaticText* slotLabelText6;
 		wxStaticText* slotValueText6;
 		wxStaticText* tx_answerValue;
-		wxPanel* pn_question;
-		wxStaticText* tx_question;
-		wxRadioButton* rb_number;
+		wxPanel* pn_Escalation;
+		
+		wxRadioButton* rb_EscalationOnce;
+		wxRadioButton* rb_EscalationProcess;
+		wxRadioButton* rb_EscalationTime;
+		wxSpinCtrl* spin_EscalationTime;
+		wxChoice* ch_EscalationTimeUnit;
+		wxRadioButton* rb_EscalationAlways;
+		
+		wxStaticLine* m_staticline2;
+		wxPanel* pn_EscalationAlf;
+		
+		wxRadioButton* rb_EscalationAlf1;
+		wxRadioButton* rb_EscalationAlf2;
+		wxRadioButton* rb_EscalationAlf3;
+		wxRadioButton* rb_EscalatinAlf4;
+		
+		wxPanel* pn_EscalationSb;
+		
+		wxStaticText* lb_EscalationSbDesc;
+		wxButton* bt_EscalationSbPathLeft;
+		
+		wxStaticText* lb_EscalationSbPath;
+		
+		wxButton* bt_EscalationSbPathRight;
+		
+		wxCheckBox* ck_EscalationSbRead;
+		
+		wxCheckBox* ck_EscalationSbWrite;
+		
+		wxCheckBox* ck_EscalationSbExec;
 		
 		
-		wxRadioButton* rb_procend;
+		wxPanel* pn_EscalationSfs;
+		
+		wxStaticText* tx_EscalationSfs1;
+		wxButton* bt_EscalationSfsLeft;
+		
+		wxStaticText* tx_EscalationSfsPath;
+		
+		wxButton* bt_EscalationSfsRight;
+		wxStaticText* tx_EscalatonSfsCsum;
+		
+		wxRadioButton* rb_EscalationSfsCsum1;
+		
+		wxRadioButton* rb_EscalationSfsCsum2;
+		
+		wxRadioButton* rb_EscalationSfsCsum3;
 		
 		
-		wxRadioButton* rb_time;
-		wxSpinCtrl* sc_time;
-		wxChoice* ch_time;
-		wxButton* bt_allow;
+		wxStaticLine* m_staticline3;
 		
-		wxRadioButton* rb_always;
-		wxButton* bt_deny;
+		wxCheckBox* ck_EscaltionSfsSign;
+		
+		
+		wxCheckBox* ck_EscalationEditor;
+		
+		wxButton* bt_EscalationAllow;
+		
+		wxButton* bt_EscalationDeny;
+		
 		wxPanel* tb_Profiles;
 		wxListCtrl* profileList;
 		wxStaticText* m_staticText35;
@@ -167,6 +212,10 @@ class ModAnoubisMainPanelBase : public wxPanel
 		virtual void OnPreviousBtnClick( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnNextBtnClick( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnLastBtnClick( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnEscalationOnceButton( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnEscalationProcessButton( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnEscalationTimeoutButton( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnEscalationAlwaysButton( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnAllowBtnClick( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnDenyBtnClick( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnProfileSelectionChanged( wxListEvent& event ){ event.Skip(); }

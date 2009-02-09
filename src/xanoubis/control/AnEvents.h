@@ -443,6 +443,15 @@ BEGIN_DECLARE_EVENT_TYPES()
 	DECLARE_LOCAL_EVENT_TYPE(anEVT_OPEN_SFS_ESCALATIONS, wxNewEventType())
 
 	/**
+	 * Open sandbox escalations event.
+	 * Broadcast event about the number of new/not answered escalations
+	 * caused by sfs policies.
+	 *
+	 * @param GetInt() The count of open ESCALATIONS.
+	 */
+	DECLARE_LOCAL_EVENT_TYPE(anEVT_OPEN_SB_ESCALATIONS, wxNewEventType())
+
+	/**
 	 * Add notification event.
 	 * Transports a recently received notification as client object.
 	 * A notification will been stored and deleted by ModAnoubis.

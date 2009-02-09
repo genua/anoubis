@@ -101,6 +101,9 @@ ModAnoubisMainPanelImpl::ModAnoubisMainPanelImpl(wxWindow* parent,
 	versionListInit();
 	versionListUpdate();
 
+	spin_EscalationTime->Disable();
+	ch_EscalationTimeUnit->Disable();
+
 	anEvents->Connect(anEVT_ESCALATIONS_SHOW,
 	    wxCommandEventHandler(ModAnoubisMainPanelImpl::OnEscalationsShow),
 	    NULL, this);
@@ -743,16 +746,28 @@ ModAnoubisMainPanelImpl::update(void)
 		EscalationNotify *eNotify = (EscalationNotify *)currentNotify_;
 
 		if (!eNotify->isAnswered()) {
-			pn_question->Show();
+			wxString	module = eNotify->getModule();
+			pn_Escalation->Show();
+			pn_EscalationAlf->Hide();
+			pn_EscalationSb->Hide();
+			pn_EscalationSfs->Hide();
+			if (module == wxT("ALF")) {
+				pn_EscalationAlf->Show();
+			} else if (module == wxT("SANDBOX")) {
+				pn_EscalationSb->Show();
+			} else if (module == wxT("SFS")) {
+				pn_EscalationSfs->Show();
+			}
+			pn_Escalation->Layout();
 			tx_answerValue->Hide();
 		} else {
-			pn_question->Hide();
+			pn_Escalation->Hide();
 			tx_answerValue->SetLabel(
 			    eNotify->getAnswer()->getAnswer());
 			tx_answerValue->Show();
 		}
 	} else {
-		pn_question->Hide();
+		pn_Escalation->Hide();
 		tx_answerValue->Hide();
 	}
 	Layout();
@@ -837,17 +852,19 @@ ModAnoubisMainPanelImpl::answer(bool permission)
 	if (IS_ESCALATIONOBJ(currentNotify_)) {
 		module = (ModAnoubis *)(wxGetApp().getModule(ANOUBIS));
 
-		if (rb_number->GetValue()) {
+		if (rb_EscalationOnce->GetValue()) {
 			answer = new NotifyAnswer(NOTIFY_ANSWER_ONCE,
 			    permission);
-		} else if (rb_procend->GetValue()) {
+		} else if (rb_EscalationProcess->GetValue()) {
 			answer = new NotifyAnswer(NOTIFY_ANSWER_PROCEND,
 			    permission);
-		} else if (rb_time->GetValue()) {
+		} else if (rb_EscalationTime->GetValue()) {
+			enum timeUnit	unit;
+			unit = (enum timeUnit)
+			    ch_EscalationTimeUnit->GetCurrentSelection();
 			answer = new NotifyAnswer(NOTIFY_ANSWER_TIME,
-			    permission, sc_time->GetValue(),
-			    (enum timeUnit)ch_time->GetCurrentSelection());
-		} else if (rb_always->GetValue()) {
+			    permission, spin_EscalationTime->GetValue(), unit);
+		} else if (rb_EscalationAlways->GetValue()) {
 			answer = new NotifyAnswer(NOTIFY_ANSWER_FOREVER,
 			    permission);
 		} else {
@@ -872,6 +889,34 @@ void
 ModAnoubisMainPanelImpl::OnDenyBtnClick(wxCommandEvent&)
 {
 	answer(false);
+}
+
+void
+ModAnoubisMainPanelImpl::OnEscalationOnceButton(wxCommandEvent&)
+{
+	spin_EscalationTime->Disable();
+	ch_EscalationTimeUnit->Disable();
+}
+
+void
+ModAnoubisMainPanelImpl::OnEscalationProcessButton(wxCommandEvent&)
+{
+	spin_EscalationTime->Disable();
+	ch_EscalationTimeUnit->Disable();
+}
+
+void
+ModAnoubisMainPanelImpl::OnEscalationTimeoutButton(wxCommandEvent&)
+{
+	spin_EscalationTime->Enable();
+	ch_EscalationTimeUnit->Enable();
+}
+
+void
+ModAnoubisMainPanelImpl::OnEscalationAlwaysButton(wxCommandEvent&)
+{
+	spin_EscalationTime->Disable();
+	ch_EscalationTimeUnit->Disable();
 }
 
 void

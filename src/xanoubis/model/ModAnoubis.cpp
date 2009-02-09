@@ -82,6 +82,7 @@ ModAnoubis::ModAnoubis(wxWindow *parent) : Module()
 	notAnsweredListIdx_ = 0;
 	notAnsweredAlf_ = 0;
 	notAnsweredSfs_ = 0;
+	notAnsweredSb_ = 0;
 	alertListIdx_ = 0;
 	logListIdx_ = 0;
 	answeredListIdx_ = 0;
@@ -156,6 +157,11 @@ ModAnoubis::insertNotification(Notification *newNotify)
 			wxCommandEvent showEvent(anEVT_OPEN_SFS_ESCALATIONS);
 			showEvent.SetInt(notAnsweredSfs_);
 			wxPostEvent(anEvents, showEvent);
+		} else if (module.IsSameAs(wxT("SANDBOX"))) {
+			notAnsweredSb_++;
+			wxCommandEvent showEvent(anEVT_OPEN_SB_ESCALATIONS);
+			showEvent.SetInt(notAnsweredSb_);
+			wxPostEvent(anEvents, showEvent);
 		} else {
 			/* Default do nothing */
 		}
@@ -201,6 +207,11 @@ ModAnoubis::answerEscalationNotify(EscalationNotify *notify,
 			notAnsweredSfs_--;
 			wxCommandEvent showEvent(anEVT_OPEN_SFS_ESCALATIONS);
 			showEvent.SetInt(notAnsweredSfs_);
+			wxPostEvent(anEvents, showEvent);
+		} else if (module.IsSameAs(wxT("SANDBOX"))) {
+			notAnsweredSb_--;
+			wxCommandEvent showEvent(anEVT_OPEN_SB_ESCALATIONS);
+			showEvent.SetInt(notAnsweredSb_);
 			wxPostEvent(anEvents, showEvent);
 		} else {
 			/* Default do nothing */

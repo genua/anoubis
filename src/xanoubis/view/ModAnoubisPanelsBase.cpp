@@ -173,92 +173,284 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	tx_answerValue->Wrap( -1 );
 	sz_MainAnoubisNotify->Add( tx_answerValue, 0, wxALL, 5 );
 	
-	wxBoxSizer* sz_question_top;
-	sz_question_top = new wxBoxSizer( wxVERTICAL );
+	pn_Escalation = new wxPanel( tb_MainAnoubisNotification, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	wxBoxSizer* bSizer43;
+	bSizer43 = new wxBoxSizer( wxVERTICAL );
 	
-	pn_question = new wxPanel( tb_MainAnoubisNotification, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
-	wxBoxSizer* sz_message;
-	sz_message = new wxBoxSizer( wxVERTICAL );
+	wxBoxSizer* sz_Escalation1;
+	sz_Escalation1 = new wxBoxSizer( wxHORIZONTAL );
 	
-	wxGridBagSizer* sz_question;
-	sz_question = new wxGridBagSizer( 0, 0 );
-	sz_question->SetFlexibleDirection( wxBOTH );
-	sz_question->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
-	
-	tx_question = new wxStaticText( pn_question, wxID_ANY, _("This message"), wxDefaultPosition, wxDefaultSize, 0 );
-	tx_question->Wrap( -1 );
-	tx_question->SetMinSize( wxSize( 140,-1 ) );
-	
-	sz_question->Add( tx_question, wxGBPosition( 0, 0 ), wxGBSpan( 1, 1 ), wxALL, 5 );
-	
-	wxGridSizer* sz_question_sub;
-	sz_question_sub = new wxGridSizer( 4, 3, 0, 0 );
-	
-	rb_number = new wxRadioButton( pn_question, wxID_ANY, _("once"), wxDefaultPosition, wxDefaultSize, wxRB_GROUP );
-	sz_question_sub->Add( rb_number, 0, wxALL, 1 );
+	wxBoxSizer* sz_EscalationLeft;
+	sz_EscalationLeft = new wxBoxSizer( wxVERTICAL );
 	
 	
-	sz_question_sub->Add( 0, 0, 1, wxEXPAND, 5 );
+	sz_EscalationLeft->Add( 0, 0, 1, wxEXPAND, 5 );
+	
+	rb_EscalationOnce = new wxRadioButton( pn_Escalation, wxID_ANY, _("Once"), wxDefaultPosition, wxDefaultSize, wxRB_GROUP );
+	sz_EscalationLeft->Add( rb_EscalationOnce, 0, wxALL, 5 );
+	
+	rb_EscalationProcess = new wxRadioButton( pn_Escalation, wxID_ANY, _("Until Process Ends"), wxDefaultPosition, wxDefaultSize, 0 );
+	sz_EscalationLeft->Add( rb_EscalationProcess, 0, wxALL, 5 );
+	
+	wxBoxSizer* sz_EscalationTime;
+	sz_EscalationTime = new wxBoxSizer( wxHORIZONTAL );
+	
+	rb_EscalationTime = new wxRadioButton( pn_Escalation, wxID_ANY, _("for"), wxDefaultPosition, wxDefaultSize, 0 );
+	sz_EscalationTime->Add( rb_EscalationTime, 0, wxALIGN_CENTER|wxALL, 5 );
+	
+	spin_EscalationTime = new wxSpinCtrl( pn_Escalation, wxID_ANY, wxT("10"), wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 1, 10000, 0 );
+	sz_EscalationTime->Add( spin_EscalationTime, 0, wxALIGN_CENTER|wxALL, 5 );
+	
+	wxString ch_EscalationTimeUnitChoices[] = { _("Seconds"), _("Minutes"), _("Hours"), _("Days") };
+	int ch_EscalationTimeUnitNChoices = sizeof( ch_EscalationTimeUnitChoices ) / sizeof( wxString );
+	ch_EscalationTimeUnit = new wxChoice( pn_Escalation, wxID_ANY, wxDefaultPosition, wxDefaultSize, ch_EscalationTimeUnitNChoices, ch_EscalationTimeUnitChoices, 0 );
+	sz_EscalationTime->Add( ch_EscalationTimeUnit, 0, wxALL, 5 );
+	
+	sz_EscalationLeft->Add( sz_EscalationTime, 0, 0, 5 );
+	
+	rb_EscalationAlways = new wxRadioButton( pn_Escalation, wxID_ANY, _("Always"), wxDefaultPosition, wxDefaultSize, 0 );
+	sz_EscalationLeft->Add( rb_EscalationAlways, 0, wxALL, 5 );
 	
 	
-	sz_question_sub->Add( 0, 0, 1, wxEXPAND, 5 );
+	sz_EscalationLeft->Add( 0, 0, 1, wxEXPAND, 5 );
 	
-	rb_procend = new wxRadioButton( pn_question, wxID_ANY, _("till process ends"), wxDefaultPosition, wxDefaultSize, 0 );
-	sz_question_sub->Add( rb_procend, 0, wxALL, 1 );
+	sz_Escalation1->Add( sz_EscalationLeft, 0, wxEXPAND, 5 );
 	
+	m_staticline2 = new wxStaticLine( pn_Escalation, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLI_VERTICAL );
+	sz_Escalation1->Add( m_staticline2, 0, wxEXPAND | wxALL, 5 );
 	
-	sz_question_sub->Add( 0, 0, 1, wxEXPAND, 5 );
+	wxBoxSizer* sz_EscalationRight;
+	sz_EscalationRight = new wxBoxSizer( wxVERTICAL );
 	
+	pn_EscalationAlf = new wxPanel( pn_Escalation, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	pn_EscalationAlf->Hide();
 	
-	sz_question_sub->Add( 0, 0, 1, wxEXPAND, 5 );
-	
-	wxBoxSizer* sz_time;
-	sz_time = new wxBoxSizer( wxHORIZONTAL );
-	
-	rb_time = new wxRadioButton( pn_question, wxID_ANY, _("for "), wxDefaultPosition, wxDefaultSize, 0 );
-	rb_time->SetMinSize( wxSize( 100,-1 ) );
-	
-	sz_time->Add( rb_time, 0, wxALIGN_CENTER_VERTICAL|wxALL, 1 );
-	
-	sc_time = new wxSpinCtrl( pn_question, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS|wxSP_WRAP, 1, 999, 1 );
-	sc_time->SetMinSize( wxSize( 50,-1 ) );
-	
-	sz_time->Add( sc_time, 0, wxALL|wxALIGN_CENTER_VERTICAL, 1 );
-	
-	wxString ch_timeChoices[] = { _("seconds"), _("minutes"), _("hours"), _("days") };
-	int ch_timeNChoices = sizeof( ch_timeChoices ) / sizeof( wxString );
-	ch_time = new wxChoice( pn_question, wxID_ANY, wxDefaultPosition, wxDefaultSize, ch_timeNChoices, ch_timeChoices, 0 );
-	sz_time->Add( ch_time, 0, wxALIGN_CENTER|wxALL, 1 );
-	
-	sz_question_sub->Add( sz_time, 0, 0, 1 );
-	
-	bt_allow = new wxButton( pn_question, wxID_ANY, _("allow"), wxDefaultPosition, wxDefaultSize, 0 );
-	sz_question_sub->Add( bt_allow, 0, wxALL|wxALIGN_RIGHT, 1 );
+	wxBoxSizer* sz_EscalationAlf;
+	sz_EscalationAlf = new wxBoxSizer( wxVERTICAL );
 	
 	
-	sz_question_sub->Add( 0, 0, 1, wxEXPAND, 5 );
+	sz_EscalationAlf->Add( 0, 0, 1, wxEXPAND, 5 );
 	
-	rb_always = new wxRadioButton( pn_question, wxID_ANY, _("always"), wxDefaultPosition, wxDefaultSize, 0 );
-	sz_question_sub->Add( rb_always, 0, wxALL, 1 );
+	rb_EscalationAlf1 = new wxRadioButton( pn_EscalationAlf, wxID_ANY, _("this port on this host"), wxDefaultPosition, wxDefaultSize, wxRB_GROUP );
+	sz_EscalationAlf->Add( rb_EscalationAlf1, 0, wxALL, 5 );
 	
-	bt_deny = new wxButton( pn_question, wxID_ANY, _("deny"), wxDefaultPosition, wxDefaultSize, 0 );
-	sz_question_sub->Add( bt_deny, 0, wxALL|wxALIGN_RIGHT, 1 );
+	rb_EscalationAlf2 = new wxRadioButton( pn_EscalationAlf, wxID_ANY, _("this port on every host"), wxDefaultPosition, wxDefaultSize, 0 );
+	sz_EscalationAlf->Add( rb_EscalationAlf2, 0, wxALL, 5 );
 	
-	sz_question->Add( sz_question_sub, wxGBPosition( 0, 1 ), wxGBSpan( 1, 1 ), wxEXPAND, 5 );
+	rb_EscalationAlf3 = new wxRadioButton( pn_EscalationAlf, wxID_ANY, _("all ports on this host"), wxDefaultPosition, wxDefaultSize, 0 );
+	sz_EscalationAlf->Add( rb_EscalationAlf3, 0, wxALL, 5 );
 	
-	sz_message->Add( sz_question, 1, wxALL, 5 );
+	rb_EscalatinAlf4 = new wxRadioButton( pn_EscalationAlf, wxID_ANY, _("all ports on all hosts"), wxDefaultPosition, wxDefaultSize, 0 );
+	sz_EscalationAlf->Add( rb_EscalatinAlf4, 0, wxALL, 5 );
 	
-	pn_question->SetSizer( sz_message );
-	pn_question->Layout();
-	sz_message->Fit( pn_question );
-	sz_question_top->Add( pn_question, 0, wxALIGN_TOP|wxALL, 5 );
 	
-	sz_MainAnoubisNotify->Add( sz_question_top, 0, wxEXPAND, 5 );
+	sz_EscalationAlf->Add( 0, 0, 1, wxEXPAND, 5 );
+	
+	pn_EscalationAlf->SetSizer( sz_EscalationAlf );
+	pn_EscalationAlf->Layout();
+	sz_EscalationAlf->Fit( pn_EscalationAlf );
+	sz_EscalationRight->Add( pn_EscalationAlf, 1, wxALL|wxEXPAND, 5 );
+	
+	pn_EscalationSb = new wxPanel( pn_Escalation, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	wxBoxSizer* sz_EscalationSb;
+	sz_EscalationSb = new wxBoxSizer( wxVERTICAL );
+	
+	
+	sz_EscalationSb->Add( 0, 0, 1, wxEXPAND, 5 );
+	
+	lb_EscalationSbDesc = new wxStaticText( pn_EscalationSb, wxID_ANY, _("Path prefix and permissions for new rule"), wxDefaultPosition, wxDefaultSize, 0 );
+	lb_EscalationSbDesc->Wrap( -1 );
+	sz_EscalationSb->Add( lb_EscalationSbDesc, 0, wxALL, 5 );
+	
+	wxBoxSizer* sz_EscalationSbPath;
+	sz_EscalationSbPath = new wxBoxSizer( wxHORIZONTAL );
+	
+	bt_EscalationSbPathLeft = new wxButton( pn_EscalationSb, wxID_ANY, _("<"), wxDefaultPosition, wxSize( -1,-1 ), wxBU_EXACTFIT );
+	sz_EscalationSbPath->Add( bt_EscalationSbPathLeft, 0, wxALIGN_CENTER|wxALL, 5 );
+	
+	
+	sz_EscalationSbPath->Add( 0, 0, 1, wxEXPAND, 5 );
+	
+	lb_EscalationSbPath = new wxStaticText( pn_EscalationSb, wxID_ANY, _("/"), wxDefaultPosition, wxDefaultSize, 0 );
+	lb_EscalationSbPath->Wrap( -1 );
+	sz_EscalationSbPath->Add( lb_EscalationSbPath, 0, wxALIGN_CENTER|wxALL, 5 );
+	
+	
+	sz_EscalationSbPath->Add( 0, 0, 1, wxEXPAND, 5 );
+	
+	bt_EscalationSbPathRight = new wxButton( pn_EscalationSb, wxID_ANY, _(">"), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
+	sz_EscalationSbPath->Add( bt_EscalationSbPathRight, 0, wxALIGN_CENTER|wxALL, 5 );
+	
+	sz_EscalationSb->Add( sz_EscalationSbPath, 0, wxEXPAND, 5 );
+	
+	wxBoxSizer* sz_EscalationSbPerms;
+	sz_EscalationSbPerms = new wxBoxSizer( wxHORIZONTAL );
+	
+	
+	sz_EscalationSbPerms->Add( 0, 0, 10, wxEXPAND, 5 );
+	
+	ck_EscalationSbRead = new wxCheckBox( pn_EscalationSb, wxID_ANY, _("read"), wxDefaultPosition, wxDefaultSize, 0 );
+	
+	sz_EscalationSbPerms->Add( ck_EscalationSbRead, 0, wxALL, 5 );
+	
+	
+	sz_EscalationSbPerms->Add( 0, 0, 1, wxEXPAND, 5 );
+	
+	ck_EscalationSbWrite = new wxCheckBox( pn_EscalationSb, wxID_ANY, _("write"), wxDefaultPosition, wxDefaultSize, 0 );
+	
+	sz_EscalationSbPerms->Add( ck_EscalationSbWrite, 0, wxALL, 5 );
+	
+	
+	sz_EscalationSbPerms->Add( 0, 0, 1, wxEXPAND, 5 );
+	
+	ck_EscalationSbExec = new wxCheckBox( pn_EscalationSb, wxID_ANY, _("execute"), wxDefaultPosition, wxDefaultSize, 0 );
+	
+	sz_EscalationSbPerms->Add( ck_EscalationSbExec, 0, wxALL, 5 );
+	
+	
+	sz_EscalationSbPerms->Add( 0, 0, 10, wxEXPAND, 5 );
+	
+	sz_EscalationSb->Add( sz_EscalationSbPerms, 0, wxEXPAND, 5 );
+	
+	
+	sz_EscalationSb->Add( 0, 0, 1, wxEXPAND, 5 );
+	
+	pn_EscalationSb->SetSizer( sz_EscalationSb );
+	pn_EscalationSb->Layout();
+	sz_EscalationSb->Fit( pn_EscalationSb );
+	sz_EscalationRight->Add( pn_EscalationSb, 1, wxEXPAND | wxALL, 5 );
+	
+	pn_EscalationSfs = new wxPanel( pn_Escalation, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	pn_EscalationSfs->Hide();
+	
+	wxBoxSizer* sz_EscalationSfs;
+	sz_EscalationSfs = new wxBoxSizer( wxVERTICAL );
+	
+	
+	sz_EscalationSfs->Add( 0, 0, 1, wxEXPAND, 5 );
+	
+	tx_EscalationSfs1 = new wxStaticText( pn_EscalationSfs, wxID_ANY, _("Path prefix and Checksum Options for new rule"), wxDefaultPosition, wxDefaultSize, 0 );
+	tx_EscalationSfs1->Wrap( -1 );
+	sz_EscalationSfs->Add( tx_EscalationSfs1, 0, wxALL, 5 );
+	
+	wxBoxSizer* sz_EscalationSfsPath;
+	sz_EscalationSfsPath = new wxBoxSizer( wxHORIZONTAL );
+	
+	bt_EscalationSfsLeft = new wxButton( pn_EscalationSfs, wxID_ANY, _("<"), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
+	sz_EscalationSfsPath->Add( bt_EscalationSfsLeft, 0, wxALIGN_CENTER|wxALL, 5 );
+	
+	
+	sz_EscalationSfsPath->Add( 0, 0, 1, wxEXPAND, 5 );
+	
+	tx_EscalationSfsPath = new wxStaticText( pn_EscalationSfs, wxID_ANY, _("/"), wxDefaultPosition, wxDefaultSize, 0 );
+	tx_EscalationSfsPath->Wrap( -1 );
+	sz_EscalationSfsPath->Add( tx_EscalationSfsPath, 0, wxALIGN_CENTER|wxALL, 5 );
+	
+	
+	sz_EscalationSfsPath->Add( 0, 0, 1, wxEXPAND, 5 );
+	
+	bt_EscalationSfsRight = new wxButton( pn_EscalationSfs, wxID_ANY, _(">"), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
+	sz_EscalationSfsPath->Add( bt_EscalationSfsRight, 0, wxALIGN_CENTER|wxALL, 5 );
+	
+	sz_EscalationSfs->Add( sz_EscalationSfsPath, 0, wxEXPAND, 5 );
+	
+	wxBoxSizer* sz_EscalationSfsChecksum;
+	sz_EscalationSfsChecksum = new wxBoxSizer( wxHORIZONTAL );
+	
+	tx_EscalatonSfsCsum = new wxStaticText( pn_EscalationSfs, wxID_ANY, _("Checksum:"), wxDefaultPosition, wxDefaultSize, 0 );
+	tx_EscalatonSfsCsum->Wrap( -1 );
+	sz_EscalationSfsChecksum->Add( tx_EscalatonSfsCsum, 0, wxALIGN_CENTER|wxALL, 5 );
+	
+	
+	sz_EscalationSfsChecksum->Add( 0, 0, 5, wxEXPAND, 5 );
+	
+	rb_EscalationSfsCsum1 = new wxRadioButton( pn_EscalationSfs, wxID_ANY, _("none"), wxDefaultPosition, wxDefaultSize, wxRB_GROUP );
+	sz_EscalationSfsChecksum->Add( rb_EscalationSfsCsum1, 0, wxALIGN_CENTER|wxALL, 5 );
+	
+	
+	sz_EscalationSfsChecksum->Add( 0, 0, 1, wxEXPAND, 5 );
+	
+	rb_EscalationSfsCsum2 = new wxRadioButton( pn_EscalationSfs, wxID_ANY, _("plain"), wxDefaultPosition, wxDefaultSize, 0 );
+	sz_EscalationSfsChecksum->Add( rb_EscalationSfsCsum2, 0, wxALIGN_CENTER|wxALL, 5 );
+	
+	
+	sz_EscalationSfsChecksum->Add( 0, 0, 1, wxEXPAND, 5 );
+	
+	rb_EscalationSfsCsum3 = new wxRadioButton( pn_EscalationSfs, wxID_ANY, _("signed"), wxDefaultPosition, wxDefaultSize, 0 );
+	sz_EscalationSfsChecksum->Add( rb_EscalationSfsCsum3, 0, wxALIGN_CENTER|wxALL, 5 );
+	
+	
+	sz_EscalationSfsChecksum->Add( 0, 0, 1, wxEXPAND, 5 );
+	
+	sz_EscalationSfs->Add( sz_EscalationSfsChecksum, 0, wxEXPAND, 5 );
+	
+	
+	sz_EscalationSfs->Add( 0, 0, 1, wxEXPAND, 5 );
+	
+	m_staticline3 = new wxStaticLine( pn_EscalationSfs, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLI_HORIZONTAL );
+	sz_EscalationSfs->Add( m_staticline3, 0, wxEXPAND | wxALL, 5 );
+	
+	
+	sz_EscalationSfs->Add( 0, 0, 1, wxEXPAND, 5 );
+	
+	wxBoxSizer* sz_EscalationSfsSign;
+	sz_EscalationSfsSign = new wxBoxSizer( wxHORIZONTAL );
+	
+	ck_EscaltionSfsSign = new wxCheckBox( pn_EscalationSfs, wxID_ANY, _("Add/Update file's checksum and signature"), wxDefaultPosition, wxDefaultSize, 0 );
+	ck_EscaltionSfsSign->SetValue(true);
+	
+	sz_EscalationSfsSign->Add( ck_EscaltionSfsSign, 0, wxALL|wxEXPAND, 5 );
+	
+	sz_EscalationSfs->Add( sz_EscalationSfsSign, 0, wxEXPAND, 5 );
+	
+	
+	sz_EscalationSfs->Add( 0, 0, 1, wxEXPAND, 5 );
+	
+	pn_EscalationSfs->SetSizer( sz_EscalationSfs );
+	pn_EscalationSfs->Layout();
+	sz_EscalationSfs->Fit( pn_EscalationSfs );
+	sz_EscalationRight->Add( pn_EscalationSfs, 1, wxEXPAND | wxALL, 5 );
+	
+	sz_Escalation1->Add( sz_EscalationRight, 1, wxEXPAND, 5 );
+	
+	bSizer43->Add( sz_Escalation1, 1, wxEXPAND, 5 );
+	
+	wxBoxSizer* sz_Escalation2;
+	sz_Escalation2 = new wxBoxSizer( wxHORIZONTAL );
+	
+	
+	sz_Escalation2->Add( 0, 0, 2, wxEXPAND, 5 );
+	
+	ck_EscalationEditor = new wxCheckBox( pn_Escalation, wxID_ANY, _("open rule editor"), wxDefaultPosition, wxDefaultSize, 0 );
+	
+	sz_Escalation2->Add( ck_EscalationEditor, 0, wxALIGN_CENTER|wxALL, 5 );
+	
+	
+	sz_Escalation2->Add( 0, 0, 20, wxEXPAND, 5 );
+	
+	bt_EscalationAllow = new wxButton( pn_Escalation, wxID_ANY, _("Allow"), wxDefaultPosition, wxDefaultSize, 0 );
+	sz_Escalation2->Add( bt_EscalationAllow, 0, wxALIGN_CENTER|wxALL, 5 );
+	
+	
+	sz_Escalation2->Add( 0, 0, 1, wxEXPAND, 5 );
+	
+	bt_EscalationDeny = new wxButton( pn_Escalation, wxID_ANY, _("Deny"), wxDefaultPosition, wxDefaultSize, 0 );
+	sz_Escalation2->Add( bt_EscalationDeny, 0, wxALIGN_CENTER|wxALL, 5 );
+	
+	
+	sz_Escalation2->Add( 0, 0, 2, wxEXPAND, 5 );
+	
+	bSizer43->Add( sz_Escalation2, 0, wxEXPAND, 5 );
+	
+	pn_Escalation->SetSizer( bSizer43 );
+	pn_Escalation->Layout();
+	bSizer43->Fit( pn_Escalation );
+	sz_MainAnoubisNotify->Add( pn_Escalation, 0, wxEXPAND | wxALL, 5 );
 	
 	tb_MainAnoubisNotification->SetSizer( sz_MainAnoubisNotify );
 	tb_MainAnoubisNotification->Layout();
 	sz_MainAnoubisNotify->Fit( tb_MainAnoubisNotification );
-	tb_MainAnoubisNotify->AddPage( tb_MainAnoubisNotification, _("Notifications"), true );
+	tb_MainAnoubisNotify->AddPage( tb_MainAnoubisNotification, _("Notifications"), false );
 	tb_Profiles = new wxPanel( tb_MainAnoubisNotify, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
 	wxBoxSizer* bSizer25;
 	bSizer25 = new wxBoxSizer( wxHORIZONTAL );
@@ -340,7 +532,7 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	tb_Profiles->SetSizer( bSizer25 );
 	tb_Profiles->Layout();
 	bSizer25->Fit( tb_Profiles );
-	tb_MainAnoubisNotify->AddPage( tb_Profiles, _("Profiles"), false );
+	tb_MainAnoubisNotify->AddPage( tb_Profiles, _("Profiles"), true );
 	tb_MainAnoubisVersions = new wxPanel( tb_MainAnoubisNotify, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
 	wxBoxSizer* MainAnoubisVersionsSizer;
 	MainAnoubisVersionsSizer = new wxBoxSizer( wxHORIZONTAL );
@@ -611,8 +803,12 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	bt_previous->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModAnoubisMainPanelBase::OnPreviousBtnClick ), NULL, this );
 	bt_next->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModAnoubisMainPanelBase::OnNextBtnClick ), NULL, this );
 	bt_last->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModAnoubisMainPanelBase::OnLastBtnClick ), NULL, this );
-	bt_allow->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModAnoubisMainPanelBase::OnAllowBtnClick ), NULL, this );
-	bt_deny->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModAnoubisMainPanelBase::OnDenyBtnClick ), NULL, this );
+	rb_EscalationOnce->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( ModAnoubisMainPanelBase::OnEscalationOnceButton ), NULL, this );
+	rb_EscalationProcess->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( ModAnoubisMainPanelBase::OnEscalationProcessButton ), NULL, this );
+	rb_EscalationTime->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( ModAnoubisMainPanelBase::OnEscalationTimeoutButton ), NULL, this );
+	rb_EscalationAlways->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( ModAnoubisMainPanelBase::OnEscalationAlwaysButton ), NULL, this );
+	bt_EscalationAllow->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModAnoubisMainPanelBase::OnAllowBtnClick ), NULL, this );
+	bt_EscalationDeny->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModAnoubisMainPanelBase::OnDenyBtnClick ), NULL, this );
 	profileList->Connect( wxEVT_COMMAND_LIST_ITEM_SELECTED, wxListEventHandler( ModAnoubisMainPanelBase::OnProfileSelectionChanged ), NULL, this );
 	profileDeleteButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModAnoubisMainPanelBase::OnProfileDeleteClicked ), NULL, this );
 	profileLoadButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModAnoubisMainPanelBase::OnProfileLoadClicked ), NULL, this );

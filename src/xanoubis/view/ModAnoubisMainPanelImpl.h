@@ -80,6 +80,10 @@ class ModAnoubisMainPanelImpl : public ModAnoubisMainPanelBase
 		void OnLastBtnClick(wxCommandEvent&);
 		void OnAllowBtnClick(wxCommandEvent&);
 		void OnDenyBtnClick(wxCommandEvent&);
+		void OnEscalationOnceButton(wxCommandEvent&);
+		void OnEscalationProcessButton(wxCommandEvent&);
+		void OnEscalationTimeoutButton(wxCommandEvent&);
+		void OnEscalationAlwaysButton(wxCommandEvent&);
 
 		void OnEscalationDisable(wxCommandEvent&);
 		void OnAlertDisable(wxCommandEvent&);
