@@ -521,11 +521,13 @@ apn_insert_rule_common(struct apn_ruleset *rs,
 		if (!anchor)
 			return 1;
 		TAILQ_INSERT_BEFORE(anchor, rule, entry);
+		rule->pchain = anchor->pchain;
 	} else {
 		anchor = apn_search_rule(rs, queue, id);
 		if (!anchor)
 			return 1;
 		TAILQ_INSERT_HEAD(&anchor->rule.chain, rule, entry);
+		rule->pchain = &anchor->rule.chain;
 	}
 	if (rule->apn_id == 0) {
 		apn_assign_id(rs, &rule->_rbentry, rule);
@@ -2341,4 +2343,58 @@ apn_move_down(struct apn_rule *rule)
 	TAILQ_REMOVE(chain, rule, entry);
 	TAILQ_INSERT_AFTER(chain, tmp, rule, entry);
 	return 0;
+}
+
+int
+apn_add_app(struct apn_rule *rule, const char *name, const u_int8_t *csum)
+{
+	struct apn_app		*napp;
+
+	napp = malloc(sizeof (struct apn_app));
+	if (!napp)
+		return -1;
+	napp->name = strdup(name);
+	if (!napp->name)
+		goto err;
+	napp->hashtype = APN_HASH_SHA256;
+	memcpy(napp->hashvalue, csum, APN_HASH_SHA256_LEN);
+	napp->next = rule->app;
+	rule->app = napp;
+	return 0;
+err:
+	if (napp->name)
+		free(napp->name);
+	free(napp);
+	return -1;
+}
+
+struct apn_rule *
+apn_match_app(struct apn_chain *chain, const char *name, const u_int8_t *csum)
+{
+	struct apn_rule		*tmp;
+	TAILQ_FOREACH(tmp, chain, entry) {
+		struct apn_app	*app, *napp;
+		if (tmp->app == NULL)
+			return tmp;
+		napp = tmp->app;
+		while (napp) {
+			app = napp;
+			napp = app->next;
+			if (app->name)
+				if (strcmp(app->name, name) != 0)
+					continue;
+			switch (app->hashtype) {
+			case APN_HASH_NONE:
+				return tmp;		/* Match */
+			case APN_HASH_SHA256:
+				if (memcmp(csum, app->hashvalue,
+				    APN_HASH_SHA256_LEN) == 0)
+					return tmp;	/* Match */
+				break;
+			default:
+				break;
+			}
+		}
+	}
+	return NULL;
 }

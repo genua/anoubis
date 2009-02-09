@@ -31,6 +31,13 @@
 #include <string.h>
 #include <ctype.h>
 #include <sys/types.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <apn.h>
 
 void usage(const char *progname)
@@ -40,6 +47,167 @@ void usage(const char *progname)
 }
 
 static int		 line = 0;
+
+#define SKIP(P) while(isspace(*(P))) { (P)++; }
+
+static char *
+token(char **p)
+{
+	char	*ret = *p, *last;
+	SKIP(ret);
+	if (*ret == 0)
+		return NULL;
+	last = ret;
+	while(*last && !isspace(*last))
+		last++;
+	if (*last) {
+		*last = 0;
+		last++;
+	} else {
+		*last = 0;
+	}
+	SKIP(last);
+	(*p) = last;
+	return ret;
+}
+
+struct strtab_entry {
+	const char *key;
+	int value;
+};
+
+static int
+strtab_lookup(struct strtab_entry tab[], const char *key)
+{
+	int	i;
+	for (i=0; tab[i].key; ++i) {
+		if (strcasecmp(tab[i].key, key) == 0)
+			return tab[i].value;
+	}
+	return -1;
+}
+
+static struct strtab_entry protos[] = {
+	{ "tcp", IPPROTO_TCP },
+	{ "udp", IPPROTO_UDP },
+	{ "icmp", IPPROTO_ICMP },
+	{ NULL, 0 }
+};
+
+static struct strtab_entry families[] = {
+	{ "v4", AF_INET },
+	{ "v6", AF_INET6 },
+	{ NULL, 0 }
+};
+
+static struct strtab_entry ops[] = {
+	{ "connect", ALF_CONNECT },
+	{ "accept", ALF_ACCEPT },
+	{ "send", ALF_SENDMSG },
+	{ "receive", ALF_RECVMSG },
+	{ NULL, 0 }
+};
+
+static struct strtab_entry alfflags[] = {
+	{ "port", ALF_EV_ALLPORT },
+	{ "peer", ALF_EV_ALLPEER },
+	{ "dir", ALF_EV_ALLDIR },
+	{ "proto", ALF_EV_ALLPROTO },
+	{ NULL, 0 }
+};
+
+int
+fill_alf_event(struct alf_event *ret, char *evstr)
+{
+	char			*p = evstr, *tok;
+	int			 tmp;
+	int			 gotlocal = 0, gotremote = 0;
+
+	SKIP(p);
+	if (strncasecmp(p, "alf[", 4) != 0)
+		return 0;
+	p += 4;
+	/* Protocol */
+	tok = token(&p);
+	if (!tok)
+		return 0;
+	tmp = strtab_lookup(protos, tok);
+	if (tmp < 0)
+		return 0;
+	ret->protocol = tmp;
+
+	/* Family */
+	tok = token(&p);
+	if (!tok)
+		return 0;
+	tmp = strtab_lookup(families, tok);
+	if (tmp < 0)
+		return 0;
+	ret->family = tmp;
+
+	/* Operation */
+	tok = token(&p);
+	if (!tok)
+		return 0;
+	tmp = strtab_lookup(ops, tok);
+	if (tmp < 0)
+		return 0;
+	ret->op = tmp;
+
+	while (!gotlocal || !gotremote) {
+		struct sockaddr		*addr;
+		char			*portp;
+		int			 port;
+		char			 ch;
+
+		tok = token(&p);
+		if (!tok)
+			return 0;
+		addr = NULL;
+		if (strcasecmp(tok, "local") == 0) {
+			if (gotlocal)
+				return 0;
+			gotlocal = 1;
+			addr = (struct sockaddr *)&ret->local;
+		} else if (strcasecmp(tok, "remote") == 0) {
+			if (gotremote)
+				return 0;
+			gotremote = 1;
+			addr = (struct sockaddr *)&ret->peer;
+		} else {
+			return 0;
+		}
+		tok = token(&p);
+		if (!tok)
+			return 0;
+		portp = token(&p);
+		if (!portp)
+			return 0;
+		if (sscanf(portp, "%d%c", &port, &ch) != 1 || port < 0)
+			return 0;
+		if (ret->family == AF_INET) {
+			struct sockaddr_in	*maddr;
+			maddr = (struct sockaddr_in *)addr;
+			maddr->sin_family = AF_INET;
+			if (inet_pton(AF_INET, tok, &maddr->sin_addr) <= 0)
+				return 0;
+			maddr->sin_port = htons(port);
+		} else if (ret->family == AF_INET6) {
+			struct sockaddr_in6	*maddr;
+			maddr = (struct sockaddr_in6 *)addr;
+			maddr->sin6_family = AF_INET6;
+			if (inet_pton(AF_INET6, tok, &maddr->sin6_addr) <= 0)
+				return 0;
+			maddr->sin6_port = htons(port);
+		} else {
+			return 0;
+		}
+	}
+	SKIP(p);
+	if (*p)
+		return 0;
+	return 1;
+}
 
 static int
 cmd_updown_common(struct apn_ruleset *rs, char *args,
@@ -193,6 +361,94 @@ cmd_copyinsert(struct apn_ruleset *rs, char *args)
 }
 
 static int
+cmd_alf_escalation(struct apn_ruleset *rs, char *args)
+{
+	struct alf_event	 event;
+	int			 len, ruleid, ret;
+	unsigned int		 flags;
+	struct apn_chain	 nchain;
+	struct apn_default	 action;
+	struct apn_rule		*rule;
+
+	SKIP(args);
+	len = 0;
+	while(args[len]) {
+		if (args[len] == ']')
+			break;
+		len++;
+	}
+	if (args[len] == 0)
+		goto parse_error;
+	args[len] = 0;
+	if (!fill_alf_event(&event, args))
+		goto parse_error;
+	args += len+1;
+	if (sscanf(args, "%d%n", &ruleid, &len) < 1)
+		goto parse_error;
+	args += len;
+	SKIP(args);
+	flags = 0;
+	action.action = APN_ACTION_ASK;
+	action.log = APN_LOG_NONE;
+	while(*args) {
+		char	*tok;
+		int	 opt;
+
+		tok = token(&args);
+		if (action.action == APN_ACTION_ASK) {
+			if (strcasecmp(tok, "deny") == 0) {
+				action.action = APN_ACTION_DENY;
+				continue;
+			}
+			if (strcasecmp(tok, "allow") == 0) {
+				action.action = APN_ACTION_ALLOW;
+				continue;
+			}
+		}
+		if (action.log == APN_LOG_NONE) {
+			if (strcasecmp(tok, "log") == 0) {
+				action.log = APN_LOG_NORMAL;
+				continue;
+			}
+			if (strcasecmp(tok, "alert") == 0) {
+				action.log = APN_LOG_ALERT;
+				continue;
+			}
+		}
+		opt = strtab_lookup(alfflags, tok);
+		if (opt < 0)
+			goto parse_error;
+		flags |= opt;
+		SKIP(args);
+	}
+	if (action.action == APN_ACTION_ASK)
+		return 0;
+	TAILQ_INIT(&nchain);
+	rule = apn_find_rule(rs, ruleid);
+	if (!rule) {
+		fprintf(stderr, "cmd_alf_escalation(%d): "
+		    "Cannot find rule %d\n", line, ruleid);
+		return 0;
+	}
+	ret = apn_escalation_rule_alf(&nchain, &event, &action, flags);
+	if (ret < 0) {
+		fprintf(stderr, "cmd_alf_escalation(%d): "
+		    "Cannot create escalation rules (%d)\n", line, -ret);
+		return 0;
+	}
+	if (apn_escalation_splice(rs, rule, &nchain) < 0) {
+		fprintf(stderr, "cmd_alf_escalation(%d): "
+		    "Cannot splice rules\n", line);
+		return 0;
+	}
+	return 1;
+parse_error:
+	fprintf(stderr, "cmd_alf_escalation(%d): "
+	    "Parse Error in command line\n", line);
+	return 0;
+}
+
+static int
 cmd_insert(struct apn_ruleset *rs, char *args)
 {
 	char			 ch;
@@ -334,6 +590,8 @@ int main(int argc, char **argv)
 			    &apn_can_move_down, 1);
 		} else if (strcasecmp(p, "remove") == 0) {
 			ret = cmd_remove(rs, args);
+		} else if (strcasecmp(p, "alf_escalation") == 0) {
+			ret = cmd_alf_escalation(rs, args);
 		} else {
 			fprintf(stderr, "line %d: Unknown command %s\n",
 			    line, p);

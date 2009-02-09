@@ -43,6 +43,7 @@ endif
 
 libapn_a_SOURCES = \
 	apnparser.c  \
+	apnescalations.c  \
 	rbtree.c  \
 	parse.y \
 	$(noinst_HEADERS)
@@ -62,10 +63,12 @@ endif
 
 libapn_a_SOURCES_lint = \
 	apnparser.c_lint \
+	apnescalations.c_lint  \
 	rbtree.c_lint
 
 libapn_a_SOURCES_splint = \
 	apnparser.c_splint  \
+	apnescalations.c_splint  \
 	rbtree.c_splint  \
 	apn.h_splint \
 	apninternals.h_splint \
@@ -73,6 +76,7 @@ libapn_a_SOURCES_splint = \
 
 libapn_a_SOURCES_flawfinder = \
 	apnparser.c_flawfinder  \
+	apnescalations.c_flawfinder  \
 	rbtree.c_flawfinder  \
 	rbtree.h_flawfinder  \
 	apn.h_flawfinder \

@@ -287,6 +287,33 @@ struct apn_ruleset {
 	void (*destructor)(void *);
 };
 
+/*
+ * Escalation handling
+ */
+
+/*
+ * Flags for apn_escalation_rule_alf
+ * Suggested options for TCP:
+ *	0
+ *	ALF_EV_ALLPEER
+ *	ALF_EV_ALLPORT
+ *	(ALF_EV_ALLPEER|ALF_EV_ALLPORT)
+ *
+ * Suggested options for UDP:
+ *	(ALF_EV_ALLDIR)
+ *	(ALF_EV_ALLPEER|ALF_EV_ALLDIR)
+ *	(ALF_EV_ALLPORT|ALF_EV_ALLDIR)
+ *	(ALF_EV_ALLPROTO|ALF_EV_ALLDIR)
+ *
+ * Suggested options for ICMP:
+ *	0
+ */
+
+#define ALF_EV_ALLPORT		0x001UL
+#define ALF_EV_ALLPEER		0x002UL
+#define ALF_EV_ALLDIR		0x004UL
+#define ALF_EV_ALLPROTO		0x008UL
+
 __BEGIN_DECLS
 
 /*
@@ -316,6 +343,13 @@ int	apn_insert_sbrule(struct apn_ruleset *, struct apn_rule *,
 	    unsigned int id);
 int	apn_insert_ctxrule(struct apn_ruleset *, struct apn_rule *,
 	    unsigned int id);
+
+/*
+ * Analyse and modifiy application lists of application blocks.
+ */
+int		 apn_add_app(struct apn_rule *, const char *, const u_int8_t *);
+struct apn_rule	*apn_match_app(struct apn_chain *, const char *,
+		     const u_int8_t *);
 
 /*
  * Use these functions to copy an application block and simultaneously
@@ -358,6 +392,16 @@ int	apn_can_move_up(struct apn_rule *);
 int	apn_can_move_down(struct apn_rule *);
 int	apn_move_up(struct apn_rule *);
 int	apn_move_down(struct apn_rule *);
+
+/*
+ * Handling of escalations
+ */
+int	apn_escalation_addscope(struct apn_chain *, struct apn_scope *,
+	    time_t, anoubis_cookie_t);
+int	apn_escalation_splice(struct apn_ruleset *, struct apn_rule *,
+	    struct apn_chain *);
+int	apn_escalation_rule_alf(struct apn_chain *, const struct alf_event *,
+	    struct apn_default *, unsigned long flags);
 
 __END_DECLS
 
