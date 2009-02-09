@@ -199,23 +199,17 @@ VersionCtrl::createVersion(PolicyRuleSet *policy, const wxString &profile,
 {
 	struct apn_ruleset	*rs;
 	struct apnvm_md		md;
-	wxString		tmpFile;
 	apnvm_result		vmrc;
 
 	if (!isPrepared())
 		return (false);
 
-	/* Dump policy to a temporary file */
-	tmpFile = wxFileName::CreateTempFileName(wxT(""));
-	policy->exportToFile(tmpFile); /* XXX Error path? */
-
-	/* Parse content */
-	if ((apn_parse(tmpFile.fn_str(), &rs, 0) != 0) || (rs == 0)) {
-		wxRemoveFile(tmpFile);
+	if (policy == 0)
 		return (false);
-	}
 
-	wxRemoveFile(tmpFile);
+	rs = policy->getApnRuleSet();
+	if (rs == 0)
+		return (false);
 
 	md.comment = strdup(comment.fn_str());
 	md.auto_store = autoStore;
