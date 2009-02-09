@@ -31,6 +31,7 @@
 #include "splint-includes.h"
 #endif
 
+#include <sys/file.h>
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/un.h>
@@ -108,8 +109,6 @@ struct cmd {
 	{ "load",    (func_int_t)load, 1 },
 	{ "dump",    (func_int_t)dump, 2 },
 };
-
-static char    *anoubis_socket = "/var/run/anoubisd.sock";
 
 static int	opts = 0;
 
@@ -256,10 +255,12 @@ daemon_start(void)
 static int
 daemon_stop(void)
 {
-	FILE * fp = fopen("/var/run/anoubisd.pid", "r");
+	FILE * fp = fopen(ANOUBISD_PIDFILENAME, "r");
 	int i, pid;
 
 	if (!fp)
+		return 2;
+	if (flock(fileno(fp), LOCK_EX|LOCK_NB) != -1)
 		return 2;
 	if (fscanf(fp, "%d", &pid) != 1)
 		return 2;
@@ -293,11 +294,18 @@ daemon_status(void)
 static int
 daemon_reload(void)
 {
-	int	error = 0;
+	FILE * fp = fopen(ANOUBISD_PIDFILENAME, "r");
+	int pid;
 
-	error = create_channel();
-	destroy_channel();
-	return error;
+	if (!fp)
+		return 2;
+	if (flock(fileno(fp), LOCK_EX|LOCK_NB) != -1)
+		return 2;
+	if (fscanf(fp, "%d", &pid) != 1)
+		return 2;
+	if (kill(pid, SIGHUP) != 0)
+		return 2;
+	return 0;
 }
 
 
@@ -725,7 +733,7 @@ create_channel(void)
 	bzero(&ss, sizeof(ss));
 	ss_sun->sun_family = AF_UNIX;
 
-	strlcpy(ss_sun->sun_path, anoubis_socket,
+	strlcpy(ss_sun->sun_path, ANOUBISD_SOCKETNAME,
 	    sizeof(ss_sun->sun_path));
 
 	if (opts & ANOUBISCTL_OPT_VERBOSE2)

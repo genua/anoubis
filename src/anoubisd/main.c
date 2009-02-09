@@ -211,45 +211,38 @@ sighandler(int sig, short event __used, void *arg __used)
 	DEBUG(DBG_TRACE, "<sighandler: %d", sig);
 }
 
-static int
+FILE *
 check_pid(void)
 {
 	FILE *fp;
-	pid_t pid;
-	int scans;
 
-	fp = fopen(pid_file_name, "r");
+	fp = fopen(pid_file_name, "a+");
 	if (fp == NULL)
-		return 0;
-	scans = fscanf(fp, "%d", &pid);
-	fclose(fp);
-	if (scans != 1)
-		return 0;
+		return NULL;
 
-	if (pid <= 1)
-		return 0;
-
-	if (kill(pid, 0) == 0)
-		return 1;
-
-	return 0;
+	if (flock(fileno(fp), LOCK_EX|LOCK_NB) != 0) {
+		fclose(fp);
+		return NULL;
+	}
+	return fp;
 }
 
 static void
-save_pid(pid_t pid)
+save_pid(FILE *fp, pid_t pid)
 {
-	FILE *fp;
-
-	fp = fopen(pid_file_name, "w");
 	if (fp == NULL) {
 		log_warn("%s", pid_file_name);
 		fatal("cannot write pid file");
 	}
-	fprintf(fp, "%d\n", pid);
-	if (fclose(fp)) {
+
+	rewind(fp);
+	if (ftruncate(fileno(fp), 0) != 0) {
 		log_warn("%s", pid_file_name);
-		fatal("cannot write pid file");
+		fatal("cannot clear pid file");
 	}
+
+	fprintf(fp, "%d\n", pid);
+	fflush(fp);
 }
 
 static void
@@ -301,6 +294,7 @@ main(int argc, char *argv[])
 	char		       *endptr;
 	unsigned long		version;
 	struct passwd		*pw;
+	FILE			*pidfp;
 
 	/* Ensure that fds 0, 1 and 2 are open or directed to /dev/null */
 	sanitise_stdfd();
@@ -395,7 +389,7 @@ main(int argc, char *argv[])
 	if (getpwnam(ANOUBISD_USER) == NULL)
 		early_errx(1, "unkown user " ANOUBISD_USER);
 
-	if (check_pid())
+	if ((pidfp = check_pid()) == NULL)
 		early_errx(1, "anoubisd is already running");
 	if (debug_stderr == 0)
 		if (daemon(1, 0) !=0)
@@ -424,7 +418,7 @@ main(int argc, char *argv[])
 	DEBUG(DBG_TRACE, "debug=%x", debug_flags);
 	master_pid = getpid();
 	DEBUG(DBG_TRACE, "master_pid=%d", master_pid);
-	save_pid(master_pid);
+	save_pid(pidfp, master_pid);
 
 	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, pipe_m2s) == -1)
 		fatal("socketpair");

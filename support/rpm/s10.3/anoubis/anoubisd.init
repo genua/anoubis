@@ -26,6 +26,8 @@
 
 ANOUBISD_PIDFILE=/var/run/anoubisd.pid
 ANOUBISD_BIN=/sbin/anoubisd
+ANOUBISD_CTRL=/sbin/anoubisctl
+
 # Check if anoubisd is executable
 test -x $ANOUBISD_BIN || exit 1
 rc_reset
@@ -58,7 +60,13 @@ start() {
 
 stop() {
 	echo -n $"Stopping anoubis daemon: "
-	killproc -p $ANOUBISD_PIDFILE -TERM $ANOUBISD_BIN
+	$ANOUBISD_CTRL stop
+	rc_status -v
+}
+
+reload() {
+	echo -n $"Reloading anoubis daemon: "
+	$ANOUBISD_CTRL reload
 	rc_status -v
 }
 
@@ -101,16 +109,8 @@ restart)
         rc_status
         ;;
 force-reload|reload)
-        ## Signal the daemon to reload its config. Most daemons
-        ## do this on signal 1 (SIGHUP).
-
-        echo -n "Reload service anoubisd"
-
-        killproc -p $ANOUBISD_PIDFILE -HUP $ANOUBISD_BIN
-
-        rc_status -v
-
-        ;;
+	reload
+	;;
 status)
         echo -n "Checking for service anoubisd "
         ## Check status with checkproc(8), if process is running

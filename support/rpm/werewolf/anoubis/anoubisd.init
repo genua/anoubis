@@ -28,6 +28,7 @@
 test -x /sbin/anoubisd || exit 1
 
 RETVAL=0
+CTRL=/sbin/anoubisctl
 
 do_test() {
 	if /sbin/anoubisd -n >/dev/null 2>&1 ; then
@@ -62,11 +63,11 @@ start() {
 
 stop() {
 	echo -n $"Stopping anoubis daemon: "
-	killproc /sbin/anoubisd
+	$CTRL stop
 	RETVAL=$?
 	[ $RETVAL -eq 0 ] && rm -f /var/lock/subsys/anoubisd
 	echo
-    return $RETVAL
+	return $RETVAL
 }
 
 
@@ -76,9 +77,10 @@ restart() {
 }	
 
 reload() {
-	trap "" SIGHUP
-	action $"Reloading anoubis daemon:" killall -HUP anoubisd
+	echo -n $"Reloading anoubis daemon: "
+	$CTRL reload
 	RETVAL=$?
+	echo
 	return $RETVAL
 }	
 
@@ -102,12 +104,8 @@ configtest)
 	fi
 	exit 0
 	;;
-reload)
+reload|force-reload)
 	reload
-	;;
-force-reload)
-	echo "$0: Unimplemented feature."
-	RETVAL=3
 	;;
 restart)
 	restart $2

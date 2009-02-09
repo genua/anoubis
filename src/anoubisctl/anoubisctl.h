@@ -33,6 +33,9 @@
 #define ANOUBISCTL_OPT_VERBOSE2		0x0004
 #define ANOUBISCTL_OPT_FORCE		0x0008
 
+#define ANOUBISD_SOCKETNAME		"/var/run/anoubisd.sock"
+#define ANOUBISD_PIDFILENAME		"/var/run/anoubisd.pid"
+
 #ifdef LINUX
 #define __dead	__attribute__((__noreturn__))
 #endif

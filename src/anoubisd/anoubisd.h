@@ -28,6 +28,7 @@
 #ifndef _ANOUBISD_H
 #define _ANOUBISD_H
 
+#include <sys/file.h>
 #include <sys/types.h>
 #include <sys/param.h>
 #include <grp.h>
