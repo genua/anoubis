@@ -31,7 +31,7 @@
 .Os Anoubis
 .Sh NAME
 .Nm sfssig
-.Nd manage checksums for Anoubis Daemon
+.Nd manage checksums for the Anoubis Daemon
 .Sh SYNOPSIS
 .Nm sfssig
 .Op dvlr
@@ -46,9 +46,13 @@
 .Sh DESCRIPTION
 The
 .Nm
-program manages the checksums form the
+program manages the checksums for the
 .Xr anoubisd 8
-daemon.
+daemon. These checksums are stored in the
+.Ar /var/lib/anoubis/sfs
+directory. To enable per-user checksums for every file a special
+.Ar shadowtree
+directory structure is used.
 .Pp
 Options:
 .Pp
@@ -66,9 +70,9 @@ Path specification:
 .It Fl r
 Apply command to all files under each directory, recursively.
 .It Fl l
-Apply command to a link itself and not to the referenced file.
+Apply command to a symlink, not to the referenced file.
 .It Fl f Ar listfile
-Accept input form file
+Accept input from file
 .Ar listfile .
 Use "-" for stdin.
 .El
@@ -77,15 +81,15 @@ Type specification:
 .Pp
 .Bl -tag -width Ds
 .It Fl u
-Apply command for checksums with
+Apply command to checksums with owner 
 .Ar uid .
-If argument is
+If the argument is
 .Ar all ,
 all registered uids will be used.
-You need root privileges to do this.
+This requires root privileges.
 .El
 .Pp
-Key files (needed by some operations):
+Key files (needed for some operations):
 .Pp
 .Bl -tag -width Ds
 .It Fl k Ar keyfile
@@ -95,7 +99,7 @@ If not specified,
 .Pa ~/.xanoubis/private.pem
 is used.
 .It Fl -cert Ar certfile
-Load certificate file from
+Load certificate from
 .Ar certfile .
 If not specified,
 .Pa ~/.xanoubis/default.crt
@@ -111,10 +115,11 @@ Apply command for a checksum.
 Apply command for a signature.
 .El
 .Pp
-.Ar command
+.Ar commands
 .Pp
-add - add checksum to the shadow tree matching the current content of
-.Ar file .
+add - add checksum of
+.Ar file 
+to the shadow tree.
 .Pp
 del - delete checksum of
 .Ar file
@@ -122,11 +127,10 @@ from the shadow tree.
 .Pp
 get - returns the checksum of
 .Ar file
-found in the shadow tree.
+as found in the shadow tree.
 .Pp
-list - list all entries found in the shadow tree.
-.Ar file
-given as argument.
+list - list all entries in the shadow tree for 
+.Ar file.
 .El
 .Pp
 .Nm
@@ -141,32 +145,31 @@ as a message to the daemon.
 .\" This next request is for sections 1, 6, 7 & 8 only.
 .\" .Sh ENVIRONMENT
 .Sh FILES
-The program binary is
-.Ar /sbin/sfssig .
-.Pp
-.Ar /var/run/anoubisd.sock
-is the default value for the
-named
-.Ar socket
-connection from the GUI or clients
-connecting over the
+.Bl -tag -width Ds
+.It /sbin/sfssig
+The main program binary
+.It Pa /var/lib/anoubis/sfs
+The shadowtree containing on-disk SFS checksums.
+.It /var/run/anoubisd.sock
+The socket 
+for connections to
+.Xr anoubisd 8
+using the
 .Ar libanoubischat
 and
 .Ar libanoubisprotocol
 libraries.
 .Sh EXAMPLES
-Add a entry for a file to the shadowtree:
+To add a checksum for a file to the shadowtree:
 .Pp
 .Dl # sfssig add /tmp/test.txt
 .Pp
-Delete a entry for all files given by stdin from the shadowtree:
+To delete checkums for all files passed on stdin:
 .Pp
 .Dl # sfssig -f - del
 .Pp
-Get all checksum entries with signatures of the shadowtree recursively from
-directory
-.Pa /tmp
-of the user with uid 1001
+To list all available checksums for uid 1001   
+recursively starting at /tmp:
 .Pp
 .Dl # sfssig -r -u 1001 get /tmp
 .Pp

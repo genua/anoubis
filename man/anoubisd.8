@@ -1,4 +1,4 @@
-.\"	$Id: 56550e,v 1.14 2009/02/04 09:44:45 fritsch Exp $
+.\"	$Id: 56550e,v 1.15 2009/02/10 12:41:31 ehrhardt Exp $
 .\"	$OpenBSD: mdoc.template,v 1.10 2007/05/31 22:10:19 jmc Exp $
 .\"
 .\" Copyright (c) 2008 GeNUA mbH <info@genua.de>
@@ -51,12 +51,13 @@ and sandboxing.
 starts early during boot. The
 .Em master
 process reads the configuration files (policy rules).
-It then creates two additional child processes.
+It then creates three additional child processes.
 The main process becomes the
 .Em master
 process. The children are the
+.Em logger ,
 .Em policy
-process and the
+and
 .Em session
 process.
 .Pp
@@ -122,17 +123,16 @@ for communication.
 .El
 .Pp
 The daemon processes implements a reliable queuing and messaging
-protocol and effectively functions as a reliable message bus for
-the Anoubis architecture.
+protocol and functions as a message bus for the Anoubis architecture.
 .Pp
 The
 .Em master
 process handles all communication to and from the kernel. It passes
-notification messages directly to the
+notifications directly to the
 .Em session
 process, which then makes them available to the GUI. The
 .Em master
-process passes Reply Request messages directly to the
+process passes policy events directly to the
 .Em policy
 process, where they are passed to the
 .Em policy engine .
@@ -162,25 +162,37 @@ results in a negative reply to the request.
 .\" .Sh ENVIRONMENT
 .Sh FILES
 .Bl -tag -width Ds
+.It Pa /dev/anoubis
+The
+.Ar ioctl
+kernel interface for initializing the Anoubis kernel subsystem
+and triggering updates.
+.It Pa /dev/eventdev
+The kernel interface for Anoubis policy messages.
+.It Pa /var/run/anoubisd.pid
+Contains the process ID of the
+.Ar master
+process.
+.It Pa /var/lib/anoubis/policy
+Contains all the anoubis policies.
+.It Pa /var/lib/anoubis/policy/admin
+Contains administrative policies, which are evaluated before user policies.
+.It Pa /var/lib/anoubis/policy/user
+Contains per-user policies.
+.It Pa /var/lib/anoubis/policy/pubkeys
+Contains public keys used to authenticate with anoubisd.
+.It Pa /var/lib/anoubis/sfs
+Contains on-disk SFS checksums. See
+.Xr sfssig 8
+for more information.
 .It Pa /var/run/anoubisd.sock
-The named
+The
 .Ar socket
 for the GUI and other clients connecting using the
 .Ar libanoubischat
 and
 .Ar libanoubisprotocol
 libaries.
-.It Pa /var/run/anoubisd.pid
-Contains the process ID of the
-.Ar master
-process.
-.It Pa /dev/eventdev
-The kernel interface for Anoubis policy messages.
-.It Pa /dev/anoubis
-The
-.Ar ioctl
-kernel interface for initializing the Anoubis kernel subsystem
-and triggering updates.
 .\" .Sh EXAMPLES
 .\" This next request is for sections 1, 4, 6, and 8 only.
 .\" .Sh DIAGNOSTICS
@@ -188,6 +200,7 @@ and triggering updates.
 .\" .Sh ERRORS
 .Sh SEE ALSO
 .Xr anoubisctl 8
+.Xr sfssig 8
 .\" .Xr foobar 1
 .\" .Sh STANDARDS
 .\" .Sh HISTORY
