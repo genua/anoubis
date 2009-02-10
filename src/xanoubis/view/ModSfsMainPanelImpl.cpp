@@ -513,11 +513,13 @@ ModSfsMainPanelImpl::initSfsMain()
 	sfsListOkIcon_ = wxGetApp().loadIcon(wxT("General_ok_16.png"));
 	sfsListWarnIcon_ = wxGetApp().loadIcon(wxT("General_problem_16.png"));
 	sfsListErrorIcon_ = wxGetApp().loadIcon(wxT("General_error_16.png"));
+	sfsSymlinkIcon_ = wxGetApp().loadIcon(wxT("General_symlink_16.png"));
 
 	sfsListImageList_.Add(wxNullIcon);
 	sfsListImageList_.Add(*sfsListOkIcon_);
 	sfsListImageList_.Add(*sfsListWarnIcon_);
 	sfsListImageList_.Add(*sfsListErrorIcon_);
+	sfsListImageList_.Add(*sfsSymlinkIcon_);
 
 	sfsCtrl_->Connect(anEVT_SFSOPERATION_FINISHED,
 	    wxCommandEventHandler(ModSfsMainPanelImpl::OnSfsOperationFinished),
@@ -569,6 +571,7 @@ ModSfsMainPanelImpl::destroySfsMain()
 	delete sfsListOkIcon_;
 	delete sfsListWarnIcon_;
 	delete sfsListErrorIcon_;
+	delete sfsSymlinkIcon_;
 }
 
 void
@@ -612,10 +615,8 @@ ModSfsMainPanelImpl::updateSfsEntry(int idx)
 	SfsEntry	&entry = dir.getEntry(modelIndex);
 	wxString	baseDir = dir.getPath();
 
-	/* XXX RD: Insert an icon
 	if (entry.isSymlink())
-		fileIconIndex = <...>;
-	*/
+		fileIconIndex = 4;
 
 	switch (entry.getChecksumState(SfsEntry::SFSENTRY_CHECKSUM)) {
 	case SfsEntry::SFSENTRY_NOT_VALIDATED:

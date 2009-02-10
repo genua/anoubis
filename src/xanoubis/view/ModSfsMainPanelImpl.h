@@ -86,6 +86,7 @@ class ModSfsMainPanelImpl : public ModSfsMainPanelBase
 		wxIcon		*sfsListOkIcon_;
 		wxIcon		*sfsListWarnIcon_;
 		wxIcon		*sfsListErrorIcon_;
+		wxIcon		*sfsSymlinkIcon_;
 		wxImageList	sfsListImageList_;
 
 		void initSfsMain();

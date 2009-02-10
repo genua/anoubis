@@ -117,6 +117,8 @@ dist_icon_DATA = \
 	icons/General_problem_48.png \
 	icons/General_question_16.png \
 	icons/General_question_48.png \
+	icons/General_symlink_16.png \
+	icons/General_symlink_48.png \
 	icons/General_uparrow_16.png \
 	icons/General_downarrow_16.png \
 	icons/ModAlf_alert_16.png \
