@@ -863,6 +863,7 @@ reply:
 	reply->flags = POLICY_FLAG_START|POLICY_FLAG_END;
 	reply->timeout = 0;
 	reply->reply = error;
+	reply->sfsmatch = ANOUBIS_SFS_NONE;
 	DEBUG(DBG_TRACE, "<pe_dispatch_policy: %d", error);
 	return reply;
 }

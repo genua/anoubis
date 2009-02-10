@@ -738,7 +738,7 @@ dispatch_m2s(int fd, short sig __used, void *arg)
 		set_value(m->u.notify->prio, 0);
 		set_value(m->u.notify->uid, hdr->msg_uid);
 		set_value(m->u.notify->subsystem, hdr->msg_source);
-		set_value(m->u.notify->operation, 0 /* XXX ?? */);
+		set_value(m->u.notify->sfsmatch, ANOUBIS_SFS_NONE);
 		set_value(m->u.notify->csumoff, 0);
 		set_value(m->u.notify->csumlen, 0);
 		set_value(m->u.notify->pathoff, 0);
@@ -923,13 +923,17 @@ dispatch_p2s_log_request(anoubisd_msg_t *msg,
 	set_value(m->u.notify->prio, req->prio);
 	set_value(m->u.notify->uid, req->hdr.msg_uid);
 	set_value(m->u.notify->subsystem, req->hdr.msg_source);
-	set_value(m->u.notify->operation, 0 /* XXX ?? */);
+	set_value(m->u.notify->sfsmatch, req->sfsmatch);
 	set_value(m->u.notify->loglevel, req->loglevel);
 	set_value(m->u.notify->error, req->error);
 	set_value(m->u.notify->csumoff, 0);
 	set_value(m->u.notify->csumlen, 0);
 	set_value(m->u.notify->pathoff, 0);
 	set_value(m->u.notify->pathlen, 0);
+	set_value(m->u.notify->ctxcsumoff, 0);
+	set_value(m->u.notify->ctxcsumlen, 0);
+	set_value(m->u.notify->ctxpathoff, 0);
+	set_value(m->u.notify->ctxpathlen, 0);
 	set_value(m->u.notify->evoff, 0);
 	set_value(m->u.notify->evlen, extra);
 	memcpy(m->u.notify->payload, (&req->hdr)+1, extra);
@@ -972,7 +976,7 @@ dispatch_p2s_evt_request(anoubisd_msg_t	*msg,
 	unsigned int extra;
 	int sent, off;
 	u_int64_t task = 0;
-	u_int32_t rule_id = 0, prio = 0;
+	u_int32_t rule_id = 0, prio = 0, sfsmatch = ANOUBIS_SFS_NONE;
 	int plen = 0, cslen = 0, ctxplen = 0, ctxcslen = 0;
 
 	DEBUG(DBG_TRACE, ">dispatch_p2s_evt_request");
@@ -991,6 +995,7 @@ dispatch_p2s_evt_request(anoubisd_msg_t	*msg,
 		cslen = eventask->csumlen;
 		ctxplen = eventask->ctxpathlen;
 		ctxcslen = eventask->ctxcsumlen;
+		sfsmatch = eventask->sfsmatch;
 		break;
 	default:
 		log_warn("dispatch_p2s_evt_request: bad mtype %d", msg->mtype);
@@ -1029,7 +1034,7 @@ dispatch_p2s_evt_request(anoubisd_msg_t	*msg,
 	set_value(m->u.notify->prio, prio);
 	set_value(m->u.notify->uid, hdr->msg_uid);
 	set_value(m->u.notify->subsystem, hdr->msg_source);
-	set_value(m->u.notify->operation, 0 /* XXX ?? */);
+	set_value(m->u.notify->sfsmatch, sfsmatch);
 	off = 0;
 	do_copy(m->u.notify->payload, &off, (void*)&hdr[1], 0, extra,
 	    &m->u.notify->evoff, &m->u.notify->evlen);

@@ -65,7 +65,7 @@ static char		*pe_dump_sfsmsg(struct pe_file_event *);
 
 static struct apn_default *
 pe_sfs_match_one(struct apn_rule *rule, struct pe_file_event *fevent,
-    time_t now)
+    time_t now, int *matchp)
 {
 	/* XXX CEH: This static variable is a hack! */
 	static struct apn_default	 tmpresult;
@@ -104,10 +104,14 @@ pe_sfs_match_one(struct apn_rule *rule, struct pe_file_event *fevent,
 		if (fevent->path[len] && fevent->path[len] != '/')
 			return NULL;
 	}
-	if (rule->apn_type == APN_SFS_DEFAULT)
+	if (rule->apn_type == APN_SFS_DEFAULT) {
+		(*matchp) = ANOUBIS_SFS_DEFAULT;
 		return &tmpresult;
-	if (fevent->cslen != ANOUBIS_CS_LEN)
+	}
+	if (fevent->cslen != ANOUBIS_CS_LEN) {
+		(*matchp) = ANOUBIS_SFS_UNKNOWN;
 		return &rule->rule.sfsaccess.unknown;
+	}
 
 	cs = NULL;
 	switch (subject->type) {
@@ -140,10 +144,15 @@ pe_sfs_match_one(struct apn_rule *rule, struct pe_file_event *fevent,
 	default:
 		break;
 	}
-	if (cs == NULL)
+	if (cs == NULL) {
+		(*matchp) = ANOUBIS_SFS_UNKNOWN;
 		return &rule->rule.sfsaccess.unknown;
-	if (memcmp(cs, fevent->cs, ANOUBIS_CS_LEN) != 0)
+	}
+	if (memcmp(cs, fevent->cs, ANOUBIS_CS_LEN) != 0) {
+		(*matchp) = ANOUBIS_SFS_INVALID;
 		return &rule->rule.sfsaccess.invalid;
+	}
+	(*matchp) = ANOUBIS_SFS_VALID;
 	return &rule->rule.sfsaccess.valid;
 }
 
@@ -177,7 +186,7 @@ pe_sfs_getrules(uid_t uid, int prio, const char *path,
 		rulelist, &rulecnt) < 0) {
 		return (-1);
 	}
-	
+
 	if (rulecnt == 0)
 		free(*rulelist);
 
@@ -192,6 +201,7 @@ pe_decide_sfs(struct pe_proc *proc, struct pe_file_event *fevent,
 	anoubisd_reply_t	*reply = NULL;
 	int			 do_disable = 0;
 	int			 decision = -1;
+	int			 sfsmatch = ANOUBIS_SFS_NONE;
 	int			 rule_id = 0;
 	int			 i, prio = 0;
 	int			 log = APN_LOG_NONE;
@@ -235,9 +245,10 @@ pe_decide_sfs(struct pe_proc *proc, struct pe_file_event *fevent,
 		DEBUG(DBG_PE_SFS," pe_decide_sfs: %d rules from hash", rulecnt);
 		for (r=0; r<rulecnt; ++r) {
 			struct	apn_default	*res;
-			struct apn_rule *rule = rulelist[r];
+			struct apn_rule		*rule = rulelist[r];
+			int			 match = ANOUBIS_SFS_NONE;
 
-			res = pe_sfs_match_one(rule, fevent, now);
+			res = pe_sfs_match_one(rule, fevent, now, &match);
 			if (res == NULL)
 				continue;
 			/*
@@ -252,17 +263,21 @@ pe_decide_sfs(struct pe_proc *proc, struct pe_file_event *fevent,
 			switch (res->action) {
 			case APN_ACTION_ALLOW:
 				decision = POLICY_ALLOW;
+				sfsmatch = match;
 				break;
 			case APN_ACTION_DENY:
 				decision = POLICY_DENY;
+				sfsmatch = match;
 				break;
 			case APN_ACTION_ASK:
 				decision = POLICY_ASK;
+				sfsmatch = match;
 				break;
 			default:
 				log_warnx("Invalid action %d in rule %lu",
 				    res->action, rule->apn_id);
 				decision = POLICY_DENY;
+				sfsmatch = match;
 				break;
 			}
 			break;
@@ -293,12 +308,14 @@ pe_decide_sfs(struct pe_proc *proc, struct pe_file_event *fevent,
 	case APN_LOG_NORMAL:
 		log_info("SFS prio %d rule %d %s %s csum=%s (%s)", prio,
 		    rule_id, verdict[decision], dump, cstext, context);
-		send_lognotify(hdr, decision, log, rule_id, prio);
+		send_lognotify(hdr, decision, log, rule_id, prio,
+		    sfsmatch);
 		break;
 	case APN_LOG_ALERT:
 		log_warnx("SFS prio %d rule %d %s %s csum=%s (%s)", prio,
 		    rule_id, verdict[decision], dump, cstext, context);
-		send_lognotify(hdr, decision, log, rule_id, prio);
+		send_lognotify(hdr, decision, log, rule_id, prio,
+		    sfsmatch);
 		break;
 	default:
 		log_warnx("pe_decide_sfs: unknown log type %d", log);
@@ -312,6 +329,7 @@ pe_decide_sfs(struct pe_proc *proc, struct pe_file_event *fevent,
 	reply->ask = 0;
 	reply->rule_id = rule_id;
 	reply->prio = prio;
+	reply->sfsmatch = sfsmatch;
 	reply->timeout = (time_t)0;
 	if (decision == POLICY_DENY)
 		reply->reply = EPERM;

@@ -49,6 +49,8 @@
 #endif
 #include <assert.h>
 
+#include <anoubis_protocol.h>
+
 #define ANOUBISD_OPT_VERBOSE		0x0001
 #define ANOUBISD_OPT_VERBOSE2		0x0002
 #define ANOUBISD_OPT_NOACTION		0x0004
@@ -114,6 +116,7 @@ struct anoubisd_msg_eventask
 {
 	u_int32_t	rule_id;
 	u_int32_t	prio;
+	u_int32_t	sfsmatch;
 	u_int16_t	csumoff, csumlen;
 	u_int16_t	pathoff, pathlen;
 	u_int16_t	ctxcsumoff, ctxcsumlen;
@@ -156,8 +159,9 @@ struct anoubisd_reply {
 	u_int32_t	flags;		/* Only for POLREPLY */
 	u_int32_t	rule_id;	/* Rule ID if ask is true */
 	u_int32_t	prio;		/* Priority of the rule. */
+	u_int32_t	sfsmatch;	/* The type of match in SFS rules. */
 	struct pe_proc_ident *pident;	/* Ident of active program */
-	struct pe_proc_ident *ctxident;	/* Idnet of active context */
+	struct pe_proc_ident *ctxident;	/* Ident of active context */
 	short		len;		/* of following msg */
 	char		msg[0];
 };
@@ -178,6 +182,7 @@ struct anoubisd_msg_logrequest
 	u_int32_t		loglevel;
 	u_int32_t		rule_id;
 	u_int32_t		prio;
+	u_int32_t		sfsmatch;
 	struct eventdev_hdr	hdr;
 	/* Eventdev data follows. */
 };
@@ -247,7 +252,7 @@ void	pe_dump(void);
 int	send_policy_data(u_int64_t token, int fd);
 
 void	send_lognotify(struct eventdev_hdr *, u_int32_t, u_int32_t, u_int32_t,
-	    u_int32_t);
+	    u_int32_t, u_int32_t);
 void	send_policychange(u_int32_t uid, u_int32_t prio);
 void	flush_log_queue(void);
 

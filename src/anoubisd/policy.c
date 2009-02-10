@@ -478,6 +478,7 @@ dispatch_m2p(int fd, short sig __used, void *arg)
 			eventask = (anoubisd_msg_eventask_t *)nmsg->msg;
 			eventask->rule_id = reply->rule_id;
 			eventask->prio = reply->prio;
+			eventask->sfsmatch = reply->sfsmatch;
 			off = 0;
 			do_copy(eventask->payload, &off, hdr, hdr->msg_size,
 			    &eventask->evoff, &eventask->evlen);
@@ -593,7 +594,7 @@ token_cmp(void *msg1, void *msg2)
 
 void
 send_lognotify(struct eventdev_hdr *hdr, u_int32_t error, u_int32_t loglevel,
-    u_int32_t rule_id, u_int32_t prio)
+    u_int32_t rule_id, u_int32_t prio, u_int32_t sfsmatch)
 {
 	int size;
 	anoubisd_msg_t * msg;
@@ -615,6 +616,7 @@ send_lognotify(struct eventdev_hdr *hdr, u_int32_t error, u_int32_t loglevel,
 	req->loglevel = loglevel;
 	req->rule_id = rule_id;
 	req->prio = prio;
+	req->sfsmatch = sfsmatch;
 	bcopy(hdr, &req->hdr, hdr->msg_size);
 	enqueue(&eventq_p2s, msg);
 }

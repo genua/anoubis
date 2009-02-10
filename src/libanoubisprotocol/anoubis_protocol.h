@@ -42,6 +42,12 @@
 #define ANOUBIS_PROTO_NOTIFY		2
 #define ANOUBIS_PROTO_BOTH		3
 
+#define ANOUBIS_SFS_NONE		0
+#define ANOUBIS_SFS_DEFAULT		1
+#define ANOUBIS_SFS_VALID		2
+#define ANOUBIS_SFS_INVALID		3
+#define ANOUBIS_SFS_UNKNOWN		4
+
 #define DEFINE_UNSIGNED_TYPE(BITS)		\
 	typedef union __attribute__((packed)) {	\
 		unsigned char bytes[BITS/8];	\
@@ -255,7 +261,7 @@ typedef struct {
 	u32n	prio;
 	u32n	uid;
 	u32n	subsystem;
-	u32n	operation;
+	u32n	sfsmatch;
 	/*
 	 * The following two fields are only valid if the message type
 	 * is ANOUBIS_N_LOGNOTIFY.

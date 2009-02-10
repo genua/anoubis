@@ -133,6 +133,7 @@ policy_engine(anoubisd_msg_t *request)
 		reply->len = 0;
 		reply->flags = POLICY_FLAG_START|POLICY_FLAG_END;
 		reply->timeout = 0;
+		reply->sfsmatch = ANOUBIS_SFS_NONE;
 		reply->reply = EPERM;
 		if (pe_proc_set_sfsdisable(sfsdisable->pid, sfsdisable->uid))
 			reply->reply = 0;
@@ -321,26 +322,30 @@ pe_handle_ipc(struct eventdev_hdr *hdr)
 }
 
 static anoubisd_reply_t *
-reply_merge(anoubisd_reply_t *r1, anoubisd_reply_t *r2)
+reply_merge(struct eventdev_hdr *hdr, anoubisd_reply_t *sfs,
+    anoubisd_reply_t *sb)
 {
-	if (!r1)
-		return r2;
-	if (!r2)
-		return r1;
-	if (r1->ask == 0 && r1->reply)
-		goto use1;
-	if (r2->ask == 0 && r2->reply)
-		goto use2;
-	if (r1->ask)
-		goto use1;
-	if (r2->ask)
-		goto use2;
-use1:
-	free(r2);
-	return r1;
-use2:
-	free(r1);
-	return r2;
+	if (!sfs)
+		goto use_sb;
+	if (!sb)
+		goto use_sfs;
+	if (sfs->ask == 0 && sfs->reply)
+		goto use_sfs;
+	if (sb->ask == 0 && sb->reply)
+		goto use_sb;
+	if (sfs->ask)
+		goto use_sfs;
+	if (sb->ask)
+		goto use_sb;
+use_sfs:
+	if (sb)
+		free(sb);
+	return sfs;
+use_sb:
+	if (sfs)
+		free(sfs);
+	hdr->msg_source = ANOUBIS_SOURCE_SANDBOX;
+	return sb;
 }
 
 static anoubisd_reply_t *
@@ -378,7 +383,7 @@ pe_handle_sfs(struct eventdev_hdr *hdr)
 	free(fevent);
 
 	/* XXX CEH: This might need more thought. */
-	return reply_merge(reply, reply2);
+	return reply_merge(hdr, reply, reply2);
 }
 
 #ifdef ANOUBIS_SOURCE_SFSPATH
@@ -419,6 +424,7 @@ pe_handle_sfspath(struct eventdev_hdr *hdr)
 	reply->rule_id = 0;
 	reply->prio = 0;
 	reply->timeout = (time_t)0;
+	reply->sfsmatch = ANOUBIS_SFS_NONE;
 
 	proc = pe_proc_get(pevent->cookie);
 	if (proc && pe_proc_get_pid(proc) == -1)
@@ -550,7 +556,7 @@ pe_parse_path_event(struct eventdev_hdr *hdr)
 
 		if (kernmsg->pathlen[i] != strlen(pathptr) + 1)
 			goto err;
-	} 
+	}
 
 	/* only support hardlink and rename operations for now */
 	switch (kernmsg->op) {
@@ -677,7 +683,7 @@ pe_compare(struct pe_proc *proc, struct pe_path_event *event, int type,
 
 			DEBUG(DBG_PE, " pe_compare: prio %d rules %d for %s",
 					i, rulecnt, event->path[p]);
-			
+
 			if (rulecnt == 0)
 				continue;
 			else if (rulecnt < 0) {
@@ -685,7 +691,7 @@ pe_compare(struct pe_proc *proc, struct pe_path_event *event, int type,
 				break;
 			}
 
-		    	if (pe_compare_path(rulelist, rulecnt, event, now) < 0)
+			if (pe_compare_path(rulelist, rulecnt, event, now) < 0)
 				decision = POLICY_DENY;
 
 			free(rulelist);
@@ -766,4 +772,3 @@ pe_compare_path(struct apn_rule **rulelist, int rulecnt,
 	DEBUG(DBG_PE, "<pe_compare_path");
 	return (0);
 }
-

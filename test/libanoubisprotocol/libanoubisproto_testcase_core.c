@@ -249,7 +249,7 @@ static void do_notify(struct anoubis_notify_group * grp)
 	set_value(m->u.notify->rule_id, 0);
 	set_value(m->u.notify->uid, geteuid());
 	set_value(m->u.notify->subsystem, 0);
-	set_value(m->u.notify->operation, 0);
+	set_value(m->u.notify->sfsmatch, ANOUBIS_SFS_NONE);
 	head = anoubis_notify_create_head(m, &notify_callback, NULL);
 	if (!head < 0) {
 		anoubis_msg_free(m);

@@ -180,7 +180,7 @@ static void dump_notify(Anoubis_NotifyMessage * m, size_t len, int arg)
 	DUMP_NETULL(m, task_cookie);
 	DUMP_NETU(m, uid);
 	DUMP_NETU(m, subsystem);
-	DUMP_NETU(m, operation);
+	DUMP_NETU(m, sfsmatch);
 	DUMP_NETU(m, evoff);
 	DUMP_NETU(m, evlen);
 	DUMP_NETU(m, pathoff);

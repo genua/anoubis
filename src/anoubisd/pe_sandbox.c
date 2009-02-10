@@ -88,7 +88,7 @@ pe_sb_evaluate(struct apn_rule **rulelist, int rulecnt,
 	for (i=0; i<rulecnt; ++i) {
 		struct apn_rule	*sbrule = rulelist[i];
 		char		*prefix;
-		int	 	 cstype;
+		int		 cstype;
 		u_int8_t	*cs;
 		u_int8_t	 csum[ANOUBIS_CS_LEN];
 		int		 ret;
@@ -404,13 +404,13 @@ pe_decide_sandbox(struct pe_proc *proc, struct pe_file_event *sbevent,
 		log_info("SANDBOX prio %d rule %d %s %s (%s)", final.prio,
 		    final.rule_id, verdict[final.decision], dump, context);
 		send_lognotify(hdr, final.decision, final.log, final.rule_id,
-		    final.prio);
+		    final.prio, ANOUBIS_SFS_NONE);
 		break;
 	case APN_LOG_ALERT:
 		log_warnx("SANDBOX prio %d rule %d %s %s (%s)", final.prio,
 		    final.rule_id, verdict[final.decision], dump, context);
 		send_lognotify(hdr, final.decision, final.log, final.rule_id,
-		    final.prio);
+		    final.prio, ANOUBIS_SFS_NONE);
 		break;
 	default:
 		log_warnx(" pe_decide_sandbox: unknown log type %d", final.log);
@@ -425,6 +425,7 @@ pe_decide_sandbox(struct pe_proc *proc, struct pe_file_event *sbevent,
 	reply->rule_id = final.rule_id;
 	reply->prio = final.prio;
 	reply->timeout = (time_t)0;
+	reply->sfsmatch = ANOUBIS_SFS_NONE;
 	if (final.decision == POLICY_DENY)
 		reply->reply = EPERM;
 	else
