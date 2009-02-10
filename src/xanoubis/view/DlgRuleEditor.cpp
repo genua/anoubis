@@ -592,7 +592,7 @@ DlgRuleEditor::onFilterPolicySelect(wxListEvent & event)
 	}
 
 	ruleset = policy->getParentRuleSet();
-	if (ruleset && geteuid() == 0 || !ruleset->isAdmin()) {
+	if (ruleset && (geteuid() == 0 || !ruleset->isAdmin())) {
 		filterListUpButton->Enable(policy->canMoveUp());
 		filterListDownButton->Enable(policy->canMoveDown());
 		filterListDeleteButton->Enable();
