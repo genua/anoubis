@@ -98,7 +98,9 @@ class ModSfsMainPanelImpl : public ModSfsMainPanelBase
 		bool canDisplay(const SfsEntry &) const;
 
 		void initSfsOptions(void);
-		void certificateParamsUpdate(void);
+		void saveSfsOptions(void);
+		void privKeyParamsUpdate(const wxString &, bool, int);
+		void certificateParamsUpdate(const wxString &);
 
 		void OnSfsMainDirCtrlSelChanged(wxTreeEvent&);
 		void OnSfsOperationFinished(wxCommandEvent&);

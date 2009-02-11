@@ -89,6 +89,7 @@ ModSfsMainPanelImpl::~ModSfsMainPanelImpl()
 	    wxCommandEventHandler(ModSfsMainPanelImpl::OnLoadRuleSet),
 	    NULL, this);
 
+	saveSfsOptions();
 	destroySfsMain();
 }
 
@@ -442,19 +443,10 @@ void
 ModSfsMainPanelImpl::OnPrivKeyValidityChanged(wxCommandEvent&)
 {
 	/* Test whether "Until session end" is selected */
-	bool sessionEndSelected =
-	    (PrivKeyValidityChoice->GetCurrentSelection() == 0);
+	bool sessionEnd = (PrivKeyValidityChoice->GetCurrentSelection() == 0);
+	int validity = !sessionEnd ? PrivKeyValiditySpinCtrl->GetValue() : 0;
 
-	/* Enable/disable related controls accordingly */
-	PrivKeyValiditySpinCtrl->Enable(!sessionEndSelected);
-	PrivKeyValidityText->Enable(!sessionEndSelected);
-
-	/* Change validity settings of private key */
-	PrivKey &privKey = KeyCtrl::getInstance()->getPrivateKey();
-	if (sessionEndSelected)
-		privKey.setValidity(0); /* Disabled */
-	else
-		privKey.setValidity(PrivKeyValiditySpinCtrl->GetValue());
+	privKeyParamsUpdate(PrivKeyPathText->GetValue(), sessionEnd, validity);
 }
 
 void
@@ -464,18 +456,10 @@ ModSfsMainPanelImpl::OnPrivKeyChooseClicked(wxCommandEvent&)
 	    _("Choose the file, where your private key is stored."));
 
 	if (dlg.ShowModal() == wxID_OK) {
-		wxString path = dlg.GetPath();
-		PrivKey &privKey = KeyCtrl::getInstance()->getPrivateKey();
-
-		PrivKeyPathText->SetValue(path);
-		privKey.setFile(path);
-
-		if (privKey.canLoad()) {
-			wxCommandEvent event(anEVT_LOAD_KEY);
-			event.SetInt(0); /* 0 := private key */
-
-			wxPostEvent(AnEvents::getInstance(), event);
-		}
+		privKeyParamsUpdate(
+		    dlg.GetPath(),
+		    PrivKeyValidityChoice->GetCurrentSelection() == 0,
+		    PrivKeyValiditySpinCtrl->GetValue());
 	}
 }
 
@@ -483,8 +467,10 @@ void
 ModSfsMainPanelImpl::OnPrivKeyValidityPeriodChanged(wxSpinEvent&)
 {
 	/* Change validity settings of private key */
-	PrivKey &privKey = KeyCtrl::getInstance()->getPrivateKey();
-	privKey.setValidity(PrivKeyValiditySpinCtrl->GetValue());
+	privKeyParamsUpdate(
+	    PrivKeyPathText->GetValue(),
+	    PrivKeyValidityChoice->GetCurrentSelection() == 0,
+	    PrivKeyValiditySpinCtrl->GetValue());
 }
 
 void
@@ -493,14 +479,8 @@ ModSfsMainPanelImpl::OnCertChooseClicked(wxCommandEvent&)
 	wxFileDialog dlg(this,
 	    _("Choose the file, where your certificate is stored."));
 
-	if (dlg.ShowModal() == wxID_OK) {
-		wxString path = dlg.GetPath();
-		LocalCertificate &cert =
-		    KeyCtrl::getInstance()->getLocalCertificate();
-
-		cert.setFile(path);
-		certificateParamsUpdate();
-	}
+	if (dlg.ShowModal() == wxID_OK)
+		certificateParamsUpdate(dlg.GetPath());
 }
 
 void
@@ -676,23 +656,98 @@ ModSfsMainPanelImpl::updateSfsEntry(int idx)
 void
 ModSfsMainPanelImpl::initSfsOptions(void)
 {
+	wxConfig *options = wxGetApp().getUserOptions();
 	KeyCtrl *keyCtrl = KeyCtrl::getInstance();
+	wxString oldPath = options->GetPath();  /* Original path */
 
-	PrivKeyPathText->SetValue(keyCtrl->getPrivateKey().getFile());
-	certificateParamsUpdate();
+	/* Private key */
+	PrivKey &privKey = keyCtrl->getPrivateKey();
+	wxString keyPath = privKey.getFile();
+	int validity = privKey.getValidity();
+
+	options->SetPath(wxT("/Options/PrivateKey"));
+	options->Read(wxT("path"), &keyPath);
+	options->Read(wxT("validity"), &validity);
+
+	privKeyParamsUpdate(keyPath, (validity == 0), validity);
+
+	/* Certificate */
+	LocalCertificate &cert = keyCtrl->getLocalCertificate();
+	wxString certPath = cert.getFile();
+
+	options->SetPath(wxT("/Options/LocalCertificate"));
+	options->Read(wxT("path"), &certPath);
+
+	certificateParamsUpdate(certPath);
+
+	/* Reset to original path */
+	options->SetPath(oldPath);
 }
 
 void
-ModSfsMainPanelImpl::certificateParamsUpdate(void)
+ModSfsMainPanelImpl::saveSfsOptions(void)
+{
+	wxConfig *options = wxGetApp().getUserOptions();
+	wxString oldPath = options->GetPath(); /* Original path */
+
+	/* Private key */
+	PrivKey &privKey = KeyCtrl::getInstance()->getPrivateKey();
+
+	options->SetPath(wxT("/Options/PrivateKey"));
+	options->Write(wxT("path"), privKey.getFile());
+	options->Write(wxT("validity"), privKey.getValidity());
+
+	/* Certificate */
+	LocalCertificate &cert = KeyCtrl::getInstance()->getLocalCertificate();
+
+	options->SetPath(wxT("/Options/LocalCertificate"));
+	options->Write(wxT("path"), cert.getFile());
+
+	/* Reset to original path */
+	options->SetPath(oldPath);
+}
+
+void
+ModSfsMainPanelImpl::privKeyParamsUpdate(const wxString &path, bool sessionEnd,
+    int validity)
+{
+	PrivKey &privKey = KeyCtrl::getInstance()->getPrivateKey();
+
+	privKey.setFile(path);
+	privKey.setValidity(validity);
+
+	if (privKey.canLoad()) {
+		wxCommandEvent event(anEVT_LOAD_KEY);
+		event.SetInt(0); /* 0 := private key */
+
+		wxPostEvent(AnEvents::getInstance(), event);
+	} else {
+		wxMessageBox(
+		    _("Cannot load the private key!\n"
+		      "The file you specified does not exist."),
+		    _("Load private key"), wxOK | wxICON_ERROR, this);
+	}
+
+	PrivKeyPathText->SetValue(path);
+
+	PrivKeyValiditySpinCtrl->Enable(!sessionEnd);
+	PrivKeyValidityText->Enable(!sessionEnd);
+
+	PrivKeyValidityChoice->SetSelection(sessionEnd ? 0 : 1);
+	PrivKeyValiditySpinCtrl->SetValue(validity);
+}
+
+void
+ModSfsMainPanelImpl::certificateParamsUpdate(const wxString &path)
 {
 	LocalCertificate &cert = KeyCtrl::getInstance()->getLocalCertificate();
+	cert.setFile(path);
 
 	if (cert.canLoad() && !cert.load()) {
 		wxMessageBox(wxString::Format(
 		    _("Failed to load certificate from\n%s."),
 		    cert.getFile().c_str()),
 		    _("Load certificate"), wxOK | wxICON_ERROR, this);
-
 	}
 
 	CertPathText->SetValue(cert.getFile());
