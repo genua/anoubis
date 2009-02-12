@@ -57,6 +57,8 @@
 EscalationNotify::EscalationNotify(struct anoubis_msg *msg) : Notification(msg)
 {
 	answer_ = NULL;
+	allowEdit_ = false;
+	rulePath_ = wxEmptyString;
 }
 
 EscalationNotify::~EscalationNotify(void)
@@ -150,6 +152,24 @@ EscalationNotify::getChecksum(unsigned char csum[MAX_APN_HASH_LEN])
 		return true;
 }
 
+bool
+EscalationNotify::getCtxChecksum(unsigned char csum[MAX_APN_HASH_LEN])
+{
+	int	offset;
+	int	length;
+
+	offset = get_value(notify_->u.notify->ctxcsumoff);
+	length = get_value(notify_->u.notify->ctxcsumlen);
+
+	bzero(csum, MAX_APN_HASH_LEN);
+	bcopy(notify_->u.notify->payload+offset, csum, length);
+
+	if (length == 0)
+		return false;
+	else
+		return true;
+}
+
 int
 EscalationNotify::getProtocolNo(void)
 {
@@ -182,5 +202,50 @@ EscalationNotify::getDirectionNo(void)
 		return APN_RECEIVE;
 	default:
 		return APN_BOTH;
+	}
+}
+
+bool
+EscalationNotify::allowEdit(void)
+{
+	return allowEdit_;
+}
+
+void
+EscalationNotify::setAllowEdit(bool value)
+{
+	allowEdit_ = value;
+}
+
+wxString
+EscalationNotify::rulePath(void)
+{
+	return rulePath_;
+}
+
+void
+EscalationNotify::setRulePath(wxString path)
+{
+	rulePath_ = path;
+}
+
+bool
+EscalationNotify::allowOptions(void)
+{
+	if (module_.IsEmpty()) {
+		module_ = getModule();
+	}
+	if (module_ == wxT("SFS") || module_ == wxT("SANDBOX")) {
+		return true;
+	} else if (module_ == wxT("ALF")) {
+		switch(getProtocolNo()) {
+		case IPPROTO_TCP:
+		case IPPROTO_UDP:
+			return true;
+		default:
+			return false;
+		}
+	} else {
+		return false;
 	}
 }

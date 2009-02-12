@@ -612,15 +612,18 @@ void
 ProfileCtrl::OnAnswerEscalation(wxCommandEvent &event)
 {
 	EscalationNotify	*escalation;
-	PolicyRuleSet		*ruleset;
+	PolicyRuleSet		*ruleset = NULL;
 
-	event.Skip(); /* Ensures others can react to this event, too. */
-
-	ruleset = getRuleSet(getUserId());
 	escalation = (EscalationNotify *)event.GetClientObject();
+	if (escalation->isAdmin()) {
+		ruleset = getRuleSet(getAdminId(geteuid()));
+	} else {
+		ruleset = getRuleSet(getUserId());
+	}
 
 	if ((ruleset == NULL) || (escalation == NULL)) {
 		/* This is strange and should never happen. Unable to act. */
+		event.Skip();
 		return;
 	}
 
@@ -629,6 +632,7 @@ ProfileCtrl::OnAnswerEscalation(wxCommandEvent &event)
 	    escalation->getAnswer()->causePermRule()) {
 		ruleset->createAnswerPolicy(escalation);
 	}
+	event.Skip(); /* Ensures others can react to this event, too. */
 }
 
 ProfileCtrl::ProfileCtrl(void) : Singleton<ProfileCtrl>()

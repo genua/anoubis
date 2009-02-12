@@ -304,7 +304,7 @@ Notification::getOperation(void)
 		default:
 			operation += wxT(" (unknown protocol)");
 		}
-	} else if (module_.Cmp(wxT("SFS")) == 0) {
+	} else if (module_ == wxT("SFS") || module_ == wxT("SANDBOX")) {
 		/* XXX CEH: Should verify that evlen >= sizeof(*sfs) */
 		sfs = (struct sfs_open_message *)
 		    ((notify_->u.notify)->payload + evoff);
@@ -312,7 +312,10 @@ Notification::getOperation(void)
 			operation += wxT("read ");
 		}
 		if (sfs->flags & ANOUBIS_OPEN_FLAG_WRITE) {
-			operation += wxT("write");
+			operation += wxT("write ");
+		}
+		if (sfs->flags & ANOUBIS_OPEN_FLAG_EXEC) {
+			operation += wxT("exec");
 		}
 	} else {
 		operation = _("unknown module");
@@ -321,11 +324,46 @@ Notification::getOperation(void)
 	return (operation);
 }
 
+bool
+Notification::isRwx(unsigned long mask)
+{
+	int				 evoff;
+	struct sfs_open_message		*sfs;
+
+	if (module_.IsEmpty()) {
+		module_ = getModule();
+	}
+	if (module_ != wxT("SFS") && module_ != wxT("SANDBOX"))
+		return false;
+	evoff = get_value(notify_->u.notify->evoff);
+	sfs = (struct sfs_open_message *)((notify_->u.notify)->payload + evoff);
+	if ((sfs->flags & mask) == mask)
+		return true;
+	return false;
+}
+
+bool
+Notification::isRead(void)
+{
+	return isRwx(ANOUBIS_OPEN_FLAG_READ);
+}
+
+bool
+Notification::isWrite(void)
+{
+	return isRwx(ANOUBIS_OPEN_FLAG_WRITE);
+}
+
+bool
+Notification::isExec(void)
+{
+	return isRwx(ANOUBIS_OPEN_FLAG_EXEC);
+}
+
 wxString
 Notification::getPath(void)
 {
 	wxString		 path;
-	struct sfs_open_message	*sfs;
 	struct alf_event	*alf;
 	int			 evoff;
 
@@ -338,7 +376,7 @@ Notification::getPath(void)
 		module_ = getModule();
 	}
 
-	if (module_.Cmp(wxT("ALF")) == 0) {
+	if (module_ == wxT("ALF")) {
 		/* XXX CEH: Should verify that evlen >= sizeof(*alf) */
 		alf = (struct alf_event *)
 		    ((notify_->u.notify)->payload + evoff);
@@ -350,13 +388,9 @@ Notification::getPath(void)
 			path += localAlfAddress() + wxT("  to  ");
 			path += remoteAlfAddress();
 		}
-	} else if (module_.Cmp(wxT("SFS")) == 0) {
-		/* XXX CEH: Should verify that evlen >= sizeof(*sfs) */
-		sfs = (struct sfs_open_message *)
-		    ((notify_->u.notify)->payload + evoff);
-		if (sfs->flags & ANOUBIS_OPEN_FLAG_PATHHINT) {
-			path = wxString::From8BitData(sfs->pathhint);
-		} else {
+	} else if (module_ == wxT("SFS") || module_ == wxT("SANDBOX")) {
+		path = filePath();
+		if (path.IsEmpty()) {
 			path = _("no path information available");
 		}
 	} else {
@@ -364,6 +398,29 @@ Notification::getPath(void)
 	}
 
 	return (path);
+}
+
+wxString
+Notification::filePath(void)
+{
+	wxString	path = wxEmptyString;
+
+	if (module_.IsEmpty()) {
+		module_ = getModule();
+	}
+	if (module_ == wxT("SFS") || module_ == wxT("SANDBOX")) {
+		struct sfs_open_message		*sfs;
+		int				 evoff;
+
+		/* XXX CEH: Should verify that evlen >= sizeof(*sfs) */
+		evoff = get_value(notify_->u.notify->evoff);
+		sfs = (struct sfs_open_message *)
+		    ((notify_->u.notify)->payload + evoff);
+		if (sfs->flags & ANOUBIS_OPEN_FLAG_PATHHINT) {
+			path = wxString::From8BitData(sfs->pathhint);
+		}
+	}
+	return path;
 }
 
 wxString
@@ -426,7 +483,7 @@ Notification::getCheckSum(void)
 		} else {
 			checksum = _("no checksum information available");
 		}
-	} else if (module_.Cmp(wxT("SFS")) == 0) {
+	} else if (module_ == wxT("SFS") || module_ == wxT("SANDBOX")) {
 		/* XXX CEH: Should verify that evlen >= sizeof(*sfs) */
 		sfs = (struct sfs_open_message *)
 		    ((notify_->u.notify)->payload + evoff);
@@ -444,4 +501,10 @@ Notification::getCheckSum(void)
 	}
 
 	return (checksum);
+}
+
+uid_t
+Notification::getUid(void)
+{
+	return get_value(notify_->u.notify->uid);
 }

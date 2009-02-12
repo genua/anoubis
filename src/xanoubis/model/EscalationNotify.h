@@ -62,6 +62,8 @@
 class EscalationNotify : public Notification {
 	private:
 		NotifyAnswer	*answer_;
+		bool		 allowEdit_;
+		wxString	 rulePath_;
 
 		void assembleLogMessage(void);
 
@@ -77,8 +79,14 @@ class EscalationNotify : public Notification {
 		anoubis_cookie_t getTaskCookie(void);
 		wxString	 getBinaryName(void);
 		bool		 getChecksum(unsigned char *);
+		bool		 getCtxChecksum(unsigned char *);
 		int		 getProtocolNo(void);
 		int		 getDirectionNo(void);
+		bool		 allowEdit(void);
+		void		 setAllowEdit(bool value = true);
+		bool		 allowOptions(void);
+		wxString	 rulePath(void);
+		void		 setRulePath(wxString);
 };
 
 #endif	/* _ESCALATIONNOTIFY_H_ */

@@ -28,6 +28,8 @@
 #ifndef __ModAnoubisMainPanelImpl__
 #define __ModAnoubisMainPanelImpl__
 
+#include <vector>
+
 #include "main.h"
 #include "ModAnoubisPanelsBase.h"
 #include "Notification.h"
@@ -47,10 +49,15 @@ class ModAnoubisMainPanelImpl : public ModAnoubisMainPanelBase
 		enum notifyListTypes	 list_;
 
 		Notification	*currentNotify_;
+		Notification	*savedNotify_;
 		wxConfig	*userOptions_;
 		wxString	 columnNames_[MODANOUBIS_VMLIST_COLUMN_EOL];
 		wxString	 selectedProfile;
 		wxString	 loadedProfile;
+
+		/* Path string related variables */
+		std::vector<wxString>	pathcomp_;
+		unsigned int		pathKeep_, minPathKeep_;
 
 		void answer(bool);
 		void displayAlert(void);
@@ -69,6 +76,9 @@ class ModAnoubisMainPanelImpl : public ModAnoubisMainPanelBase
 		void profileTabUpdate(void);
 		void fillProfileList(void);
 		void toolTipParamsUpdate(void);
+		void editOptionsEnable(void);
+		void initPathLabel(void);
+		void setPathLabel(void);
 
 	protected:
 		void OnLoadRuleSet(wxCommandEvent&);
@@ -115,6 +125,11 @@ class ModAnoubisMainPanelImpl : public ModAnoubisMainPanelBase
 
 		void OnToolTipCheckBox(wxCommandEvent &);
 		void OnToolTipSpinCtrl(wxSpinEvent &);
+
+		void OnEscalationSfsPathLeft(wxCommandEvent &);
+		void OnEscalationSfsPathRight(wxCommandEvent &);
+		void OnEscalationSbPathLeft(wxCommandEvent &);
+		void OnEscalationSbPathRight(wxCommandEvent &);
 
 	public:
 		ModAnoubisMainPanelImpl(wxWindow*, wxWindowID);

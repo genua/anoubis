@@ -60,6 +60,7 @@ class Notification {
 		wxString	assembleAddress(bool);
 		wxString	localAlfAddress(void);
 		wxString	remoteAlfAddress(void);
+		virtual bool	isRwx(unsigned long);
 
 	public:
 		Notification(struct anoubis_msg *);
@@ -72,10 +73,15 @@ class Notification {
 		virtual wxString getAction(void);
 		virtual wxString getOperation(void);
 		virtual wxString getPath(void);
+		virtual wxString filePath(void);
 		virtual wxString getOrigin(void);
 		virtual wxString getCheckSum(void);
 		virtual unsigned int getRuleId(void);
 		virtual bool isAdmin(void);
+		virtual uid_t getUid(void);
+		virtual bool isRead(void);
+		virtual bool isWrite(void);
+		virtual bool isExec(void);
 };
 
 WX_DECLARE_LIST(Notification, NotifyList);

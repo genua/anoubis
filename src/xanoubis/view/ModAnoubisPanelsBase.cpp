@@ -174,9 +174,10 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	sz_MainAnoubisNotify->Add( tx_answerValue, 0, wxALL, 5 );
 	
 	pn_Escalation = new wxPanel( tb_MainAnoubisNotification, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
-	wxBoxSizer* bSizer43;
-	bSizer43 = new wxBoxSizer( wxVERTICAL );
+	wxBoxSizer* sz_EscalationOptions;
+	sz_EscalationOptions = new wxBoxSizer( wxVERTICAL );
 	
+	pn_EscalationOptions = new wxPanel( pn_Escalation, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxSIMPLE_BORDER|wxTAB_TRAVERSAL );
 	wxBoxSizer* sz_Escalation1;
 	sz_Escalation1 = new wxBoxSizer( wxHORIZONTAL );
 	
@@ -186,29 +187,29 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	
 	sz_EscalationLeft->Add( 0, 0, 1, wxEXPAND, 5 );
 	
-	rb_EscalationOnce = new wxRadioButton( pn_Escalation, wxID_ANY, _("Once"), wxDefaultPosition, wxDefaultSize, wxRB_GROUP );
+	rb_EscalationOnce = new wxRadioButton( pn_EscalationOptions, wxID_ANY, _("Once"), wxDefaultPosition, wxDefaultSize, wxRB_GROUP );
 	sz_EscalationLeft->Add( rb_EscalationOnce, 0, wxALL, 5 );
 	
-	rb_EscalationProcess = new wxRadioButton( pn_Escalation, wxID_ANY, _("Until Process Ends"), wxDefaultPosition, wxDefaultSize, 0 );
+	rb_EscalationProcess = new wxRadioButton( pn_EscalationOptions, wxID_ANY, _("Until Process Ends"), wxDefaultPosition, wxDefaultSize, 0 );
 	sz_EscalationLeft->Add( rb_EscalationProcess, 0, wxALL, 5 );
 	
 	wxBoxSizer* sz_EscalationTime;
 	sz_EscalationTime = new wxBoxSizer( wxHORIZONTAL );
 	
-	rb_EscalationTime = new wxRadioButton( pn_Escalation, wxID_ANY, _("for"), wxDefaultPosition, wxDefaultSize, 0 );
+	rb_EscalationTime = new wxRadioButton( pn_EscalationOptions, wxID_ANY, _("for"), wxDefaultPosition, wxDefaultSize, 0 );
 	sz_EscalationTime->Add( rb_EscalationTime, 0, wxALIGN_CENTER|wxALL, 5 );
 	
-	spin_EscalationTime = new wxSpinCtrl( pn_Escalation, wxID_ANY, wxT("10"), wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 1, 10000, 0 );
+	spin_EscalationTime = new wxSpinCtrl( pn_EscalationOptions, wxID_ANY, wxT("10"), wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 1, 10000, 0 );
 	sz_EscalationTime->Add( spin_EscalationTime, 0, wxALIGN_CENTER|wxALL, 5 );
 	
 	wxString ch_EscalationTimeUnitChoices[] = { _("Seconds"), _("Minutes"), _("Hours"), _("Days") };
 	int ch_EscalationTimeUnitNChoices = sizeof( ch_EscalationTimeUnitChoices ) / sizeof( wxString );
-	ch_EscalationTimeUnit = new wxChoice( pn_Escalation, wxID_ANY, wxDefaultPosition, wxDefaultSize, ch_EscalationTimeUnitNChoices, ch_EscalationTimeUnitChoices, 0 );
+	ch_EscalationTimeUnit = new wxChoice( pn_EscalationOptions, wxID_ANY, wxDefaultPosition, wxDefaultSize, ch_EscalationTimeUnitNChoices, ch_EscalationTimeUnitChoices, 0 );
 	sz_EscalationTime->Add( ch_EscalationTimeUnit, 0, wxALL, 5 );
 	
 	sz_EscalationLeft->Add( sz_EscalationTime, 0, 0, 5 );
 	
-	rb_EscalationAlways = new wxRadioButton( pn_Escalation, wxID_ANY, _("Always"), wxDefaultPosition, wxDefaultSize, 0 );
+	rb_EscalationAlways = new wxRadioButton( pn_EscalationOptions, wxID_ANY, _("Always"), wxDefaultPosition, wxDefaultSize, 0 );
 	sz_EscalationLeft->Add( rb_EscalationAlways, 0, wxALL, 5 );
 	
 	
@@ -216,13 +217,13 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	
 	sz_Escalation1->Add( sz_EscalationLeft, 0, wxEXPAND, 5 );
 	
-	m_staticline2 = new wxStaticLine( pn_Escalation, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLI_VERTICAL );
+	m_staticline2 = new wxStaticLine( pn_EscalationOptions, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLI_VERTICAL );
 	sz_Escalation1->Add( m_staticline2, 0, wxEXPAND | wxALL, 5 );
 	
 	wxBoxSizer* sz_EscalationRight;
 	sz_EscalationRight = new wxBoxSizer( wxVERTICAL );
 	
-	pn_EscalationAlf = new wxPanel( pn_Escalation, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	pn_EscalationAlf = new wxPanel( pn_EscalationOptions, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
 	pn_EscalationAlf->Hide();
 	
 	wxBoxSizer* sz_EscalationAlf;
@@ -251,16 +252,18 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	sz_EscalationAlf->Fit( pn_EscalationAlf );
 	sz_EscalationRight->Add( pn_EscalationAlf, 1, wxALL|wxEXPAND, 5 );
 	
-	pn_EscalationSb = new wxPanel( pn_Escalation, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	pn_EscalationSb = new wxPanel( pn_EscalationOptions, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	pn_EscalationSb->Hide();
+	
 	wxBoxSizer* sz_EscalationSb;
 	sz_EscalationSb = new wxBoxSizer( wxVERTICAL );
 	
 	
 	sz_EscalationSb->Add( 0, 0, 1, wxEXPAND, 5 );
 	
-	lb_EscalationSbDesc = new wxStaticText( pn_EscalationSb, wxID_ANY, _("Path prefix and permissions for new rule"), wxDefaultPosition, wxDefaultSize, 0 );
-	lb_EscalationSbDesc->Wrap( -1 );
-	sz_EscalationSb->Add( lb_EscalationSbDesc, 0, wxALL, 5 );
+	tx_EscalationSbDesc = new wxStaticText( pn_EscalationSb, wxID_ANY, _("Path prefix and permissions for new rule"), wxDefaultPosition, wxDefaultSize, 0 );
+	tx_EscalationSbDesc->Wrap( -1 );
+	sz_EscalationSb->Add( tx_EscalationSbDesc, 0, wxALL, 5 );
 	
 	wxBoxSizer* sz_EscalationSbPath;
 	sz_EscalationSbPath = new wxBoxSizer( wxHORIZONTAL );
@@ -271,9 +274,9 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	
 	sz_EscalationSbPath->Add( 0, 0, 1, wxEXPAND, 5 );
 	
-	lb_EscalationSbPath = new wxStaticText( pn_EscalationSb, wxID_ANY, _("/"), wxDefaultPosition, wxDefaultSize, 0 );
-	lb_EscalationSbPath->Wrap( -1 );
-	sz_EscalationSbPath->Add( lb_EscalationSbPath, 0, wxALIGN_CENTER|wxALL, 5 );
+	tx_EscalationSbPath = new wxStaticText( pn_EscalationSb, wxID_ANY, _("/"), wxDefaultPosition, wxDefaultSize, 0 );
+	tx_EscalationSbPath->Wrap( -1 );
+	sz_EscalationSbPath->Add( tx_EscalationSbPath, 0, wxALIGN_CENTER|wxALL, 5 );
 	
 	
 	sz_EscalationSbPath->Add( 0, 0, 1, wxEXPAND, 5 );
@@ -320,24 +323,22 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	sz_EscalationSb->Fit( pn_EscalationSb );
 	sz_EscalationRight->Add( pn_EscalationSb, 1, wxEXPAND | wxALL, 5 );
 	
-	pn_EscalationSfs = new wxPanel( pn_Escalation, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
-	pn_EscalationSfs->Hide();
-	
+	pn_EscalationSfs = new wxPanel( pn_EscalationOptions, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
 	wxBoxSizer* sz_EscalationSfs;
 	sz_EscalationSfs = new wxBoxSizer( wxVERTICAL );
 	
 	
 	sz_EscalationSfs->Add( 0, 0, 1, wxEXPAND, 5 );
 	
-	tx_EscalationSfs1 = new wxStaticText( pn_EscalationSfs, wxID_ANY, _("Path prefix and Checksum Options for new rule"), wxDefaultPosition, wxDefaultSize, 0 );
-	tx_EscalationSfs1->Wrap( -1 );
-	sz_EscalationSfs->Add( tx_EscalationSfs1, 0, wxALL, 5 );
+	tx_EscalationSfsDesc = new wxStaticText( pn_EscalationSfs, wxID_ANY, _("Path prefix and Checksum Options for new rule"), wxDefaultPosition, wxDefaultSize, 0 );
+	tx_EscalationSfsDesc->Wrap( -1 );
+	sz_EscalationSfs->Add( tx_EscalationSfsDesc, 0, wxALL, 5 );
 	
 	wxBoxSizer* sz_EscalationSfsPath;
 	sz_EscalationSfsPath = new wxBoxSizer( wxHORIZONTAL );
 	
-	bt_EscalationSfsLeft = new wxButton( pn_EscalationSfs, wxID_ANY, _("<"), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
-	sz_EscalationSfsPath->Add( bt_EscalationSfsLeft, 0, wxALIGN_CENTER|wxALL, 5 );
+	bt_EscalationSfsPathLeft = new wxButton( pn_EscalationSfs, wxID_ANY, _("<"), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
+	sz_EscalationSfsPath->Add( bt_EscalationSfsPathLeft, 0, wxALIGN_CENTER|wxALL, 5 );
 	
 	
 	sz_EscalationSfsPath->Add( 0, 0, 1, wxEXPAND, 5 );
@@ -349,8 +350,8 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	
 	sz_EscalationSfsPath->Add( 0, 0, 1, wxEXPAND, 5 );
 	
-	bt_EscalationSfsRight = new wxButton( pn_EscalationSfs, wxID_ANY, _(">"), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
-	sz_EscalationSfsPath->Add( bt_EscalationSfsRight, 0, wxALIGN_CENTER|wxALL, 5 );
+	bt_EscalationSfsPathRight = new wxButton( pn_EscalationSfs, wxID_ANY, _(">"), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
+	sz_EscalationSfsPath->Add( bt_EscalationSfsPathRight, 0, wxALIGN_CENTER|wxALL, 5 );
 	
 	sz_EscalationSfs->Add( sz_EscalationSfsPath, 0, wxEXPAND, 5 );
 	
@@ -370,7 +371,7 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	
 	sz_EscalationSfsChecksum->Add( 0, 0, 1, wxEXPAND, 5 );
 	
-	rb_EscalationSfsCsum2 = new wxRadioButton( pn_EscalationSfs, wxID_ANY, _("plain"), wxDefaultPosition, wxDefaultSize, 0 );
+	rb_EscalationSfsCsum2 = new wxRadioButton( pn_EscalationSfs, wxID_ANY, _("normal"), wxDefaultPosition, wxDefaultSize, 0 );
 	sz_EscalationSfsChecksum->Add( rb_EscalationSfsCsum2, 0, wxALIGN_CENTER|wxALL, 5 );
 	
 	
@@ -397,7 +398,6 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	sz_EscalationSfsSign = new wxBoxSizer( wxHORIZONTAL );
 	
 	ck_EscaltionSfsSign = new wxCheckBox( pn_EscalationSfs, wxID_ANY, _("Add/Update file's checksum and signature"), wxDefaultPosition, wxDefaultSize, 0 );
-	ck_EscaltionSfsSign->SetValue(true);
 	
 	sz_EscalationSfsSign->Add( ck_EscaltionSfsSign, 0, wxALL|wxEXPAND, 5 );
 	
@@ -413,7 +413,10 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	
 	sz_Escalation1->Add( sz_EscalationRight, 1, wxEXPAND, 5 );
 	
-	bSizer43->Add( sz_Escalation1, 1, wxEXPAND, 5 );
+	pn_EscalationOptions->SetSizer( sz_Escalation1 );
+	pn_EscalationOptions->Layout();
+	sz_Escalation1->Fit( pn_EscalationOptions );
+	sz_EscalationOptions->Add( pn_EscalationOptions, 0, wxEXPAND | wxALL, 5 );
 	
 	wxBoxSizer* sz_Escalation2;
 	sz_Escalation2 = new wxBoxSizer( wxHORIZONTAL );
@@ -440,17 +443,17 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	
 	sz_Escalation2->Add( 0, 0, 2, wxEXPAND, 5 );
 	
-	bSizer43->Add( sz_Escalation2, 0, wxEXPAND, 5 );
+	sz_EscalationOptions->Add( sz_Escalation2, 1, wxEXPAND, 5 );
 	
-	pn_Escalation->SetSizer( bSizer43 );
+	pn_Escalation->SetSizer( sz_EscalationOptions );
 	pn_Escalation->Layout();
-	bSizer43->Fit( pn_Escalation );
+	sz_EscalationOptions->Fit( pn_Escalation );
 	sz_MainAnoubisNotify->Add( pn_Escalation, 0, wxEXPAND | wxALL, 5 );
 	
 	tb_MainAnoubisNotification->SetSizer( sz_MainAnoubisNotify );
 	tb_MainAnoubisNotification->Layout();
 	sz_MainAnoubisNotify->Fit( tb_MainAnoubisNotification );
-	tb_MainAnoubisNotify->AddPage( tb_MainAnoubisNotification, _("Notifications"), false );
+	tb_MainAnoubisNotify->AddPage( tb_MainAnoubisNotification, _("Notifications"), true );
 	tb_Profiles = new wxPanel( tb_MainAnoubisNotify, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
 	wxBoxSizer* bSizer25;
 	bSizer25 = new wxBoxSizer( wxHORIZONTAL );
@@ -532,7 +535,7 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	tb_Profiles->SetSizer( bSizer25 );
 	tb_Profiles->Layout();
 	bSizer25->Fit( tb_Profiles );
-	tb_MainAnoubisNotify->AddPage( tb_Profiles, _("Profiles"), true );
+	tb_MainAnoubisNotify->AddPage( tb_Profiles, _("Profiles"), false );
 	tb_MainAnoubisVersions = new wxPanel( tb_MainAnoubisNotify, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
 	wxBoxSizer* MainAnoubisVersionsSizer;
 	MainAnoubisVersionsSizer = new wxBoxSizer( wxHORIZONTAL );
@@ -807,6 +810,10 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	rb_EscalationProcess->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( ModAnoubisMainPanelBase::OnEscalationProcessButton ), NULL, this );
 	rb_EscalationTime->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( ModAnoubisMainPanelBase::OnEscalationTimeoutButton ), NULL, this );
 	rb_EscalationAlways->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( ModAnoubisMainPanelBase::OnEscalationAlwaysButton ), NULL, this );
+	bt_EscalationSbPathLeft->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModAnoubisMainPanelBase::OnEscalationSbPathLeft ), NULL, this );
+	bt_EscalationSbPathRight->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModAnoubisMainPanelBase::OnEscalationSbPathRight ), NULL, this );
+	bt_EscalationSfsPathLeft->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModAnoubisMainPanelBase::OnEscalationSfsPathLeft ), NULL, this );
+	bt_EscalationSfsPathRight->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModAnoubisMainPanelBase::OnEscalationSfsPathRight ), NULL, this );
 	bt_EscalationAllow->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModAnoubisMainPanelBase::OnAllowBtnClick ), NULL, this );
 	bt_EscalationDeny->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModAnoubisMainPanelBase::OnDenyBtnClick ), NULL, this );
 	profileList->Connect( wxEVT_COMMAND_LIST_ITEM_SELECTED, wxListEventHandler( ModAnoubisMainPanelBase::OnProfileSelectionChanged ), NULL, this );

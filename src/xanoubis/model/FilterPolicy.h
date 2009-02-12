@@ -116,6 +116,14 @@ class FilterPolicy : public Policy
 		 */
 		wxString getActionName(void) const;
 
+		/**
+		 * Return the path prefix of the rule if it has one.
+		 * @param None.
+		 * @return The path prefix as a wxString or an empty string.
+		 * Derived classes must override this method.
+		 */
+		virtual wxString getRulePrefix(void) const;
+
 	protected:
 		/**
 		 * Translate the apn log numbers APN_LOG_*

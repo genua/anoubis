@@ -125,6 +125,15 @@ class SfsDefaultFilterPolicy : public FilterPolicy
 		 * @return The policy path.
 		 */
 		wxString getPath(void) const;
+
+		/*
+		 * Get the rule prefix of an SFS default rule as a wxString.
+		 * @param None.
+		 * @return The rule prefix.
+		 * This function differs from getPath in that it does not
+		 * return "any" in case of an empty path.
+		 */
+		wxString getRulePrefix(void) const;
 };
 
 #endif	/* _SFSDEFAULTFILTERPOLICY_H_ */

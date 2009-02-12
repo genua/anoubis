@@ -101,9 +101,6 @@ ModAnoubisMainPanelImpl::ModAnoubisMainPanelImpl(wxWindow* parent,
 	versionListInit();
 	versionListUpdate();
 
-	spin_EscalationTime->Disable();
-	ch_EscalationTimeUnit->Disable();
-
 	anEvents->Connect(anEVT_ESCALATIONS_SHOW,
 	    wxCommandEventHandler(ModAnoubisMainPanelImpl::OnEscalationsShow),
 	    NULL, this);
@@ -117,6 +114,8 @@ ModAnoubisMainPanelImpl::ModAnoubisMainPanelImpl(wxWindow* parent,
 	    wxNotebookEventHandler(
 	       ModAnoubisMainPanelImpl::OnNotebookTabChanged),
 	    NULL, this);
+	pathcomp_.clear();
+	pathKeep_ = minPathKeep_ = 0;
 }
 
 ModAnoubisMainPanelImpl::~ModAnoubisMainPanelImpl(void)
@@ -588,7 +587,9 @@ ModAnoubisMainPanelImpl::displayAlert(void)
 {
 	AlertNotify	*aNotify;
 
-	aNotify = (AlertNotify *)currentNotify_;
+	aNotify = dynamic_cast<AlertNotify *>(currentNotify_);
+	if (!aNotify)
+		return;
 
 	SHOWSLOT(1, _("Time:"), aNotify->getTime());
 	SHOWSLOT(2, _("Module:"), aNotify->getModule());
@@ -607,7 +608,9 @@ ModAnoubisMainPanelImpl::displayEscalation(void)
 {
 	EscalationNotify	*eNotify;
 
-	eNotify = (EscalationNotify *)currentNotify_;
+	eNotify = dynamic_cast<EscalationNotify *>(currentNotify_);
+	if (!eNotify)
+		return;
 
 	SHOWSLOT(1, _("Time:"), eNotify->getTime());
 	SHOWSLOT(2, _("Module:"), eNotify->getModule());
@@ -626,7 +629,9 @@ ModAnoubisMainPanelImpl::displayLog(void)
 {
 	LogNotify	*lNotify;
 
-	lNotify = (LogNotify *)currentNotify_;
+	lNotify = dynamic_cast<LogNotify *>(currentNotify_);
+	if (!lNotify)
+		return;
 
 	SHOWSLOT(1, _("Time:"), lNotify->getTime());
 	SHOWSLOT(2, _("Module:"), lNotify->getModule());
@@ -726,6 +731,13 @@ ModAnoubisMainPanelImpl::update(void)
 		bt_last->Enable();
 	}
 
+	/*
+	 * Only update the escalation window if the escalation actually
+	 * changed.
+	 */
+	if (currentNotify_ == savedNotify_)
+		return;
+	savedNotify_ = currentNotify_;
 	if (currentNotify_ != NULL) {
 		if IS_ALERTOBJ(currentNotify_)
 			displayAlert();
@@ -751,6 +763,7 @@ ModAnoubisMainPanelImpl::update(void)
 			pn_EscalationAlf->Hide();
 			pn_EscalationSb->Hide();
 			pn_EscalationSfs->Hide();
+			initPathLabel();
 			if (module == wxT("ALF")) {
 				pn_EscalationAlf->Show();
 			} else if (module == wxT("SANDBOX")) {
@@ -758,7 +771,11 @@ ModAnoubisMainPanelImpl::update(void)
 			} else if (module == wxT("SFS")) {
 				pn_EscalationSfs->Show();
 			}
+			editOptionsEnable();
+			pn_EscalationOptions->Layout();
 			pn_Escalation->Layout();
+			tb_MainAnoubisNotify->Layout();
+			tb_MainAnoubisNotification->Layout();
 			tx_answerValue->Hide();
 		} else {
 			pn_Escalation->Hide();
@@ -771,6 +788,7 @@ ModAnoubisMainPanelImpl::update(void)
 		tx_answerValue->Hide();
 	}
 	Layout();
+	Refresh();
 }
 
 void
@@ -894,29 +912,29 @@ ModAnoubisMainPanelImpl::OnDenyBtnClick(wxCommandEvent&)
 void
 ModAnoubisMainPanelImpl::OnEscalationOnceButton(wxCommandEvent&)
 {
-	spin_EscalationTime->Disable();
-	ch_EscalationTimeUnit->Disable();
+	setPathLabel();
+	editOptionsEnable();
 }
 
 void
 ModAnoubisMainPanelImpl::OnEscalationProcessButton(wxCommandEvent&)
 {
-	spin_EscalationTime->Disable();
-	ch_EscalationTimeUnit->Disable();
+	setPathLabel();
+	editOptionsEnable();
 }
 
 void
 ModAnoubisMainPanelImpl::OnEscalationTimeoutButton(wxCommandEvent&)
 {
-	spin_EscalationTime->Enable();
-	ch_EscalationTimeUnit->Enable();
+	setPathLabel();
+	editOptionsEnable();
 }
 
 void
 ModAnoubisMainPanelImpl::OnEscalationAlwaysButton(wxCommandEvent&)
 {
-	spin_EscalationTime->Disable();
-	ch_EscalationTimeUnit->Disable();
+	setPathLabel();
+	editOptionsEnable();
 }
 
 void
@@ -1233,5 +1251,198 @@ ModAnoubisMainPanelImpl::toolTipParamsUpdate(void)
 	if (enable) {
 		int delay = toolTipSpinCtrl->GetValue();
 		wxToolTip::SetDelay(1000*delay);
+	}
+}
+
+/*
+ * Different visibility groups:
+ * enableright: Enable the options panel on the right side.
+ *     - The current duration radio button selection must not be once.
+ *     - The ruleset must allow edits.
+ *     - The type of escalation must support edit options.
+ * enabledurationbuttons: Enable the duration radio buttons on the left
+ *     - The ruleset must allow edits.
+ * enableeditor: Enable the editor checkbox.
+ *     - The current duration radio button selection must not be once.
+ *     - The ruleset must allow edits.
+ */
+void
+ModAnoubisMainPanelImpl::editOptionsEnable(void)
+{
+	EscalationNotify	*current = NULL;
+	bool			 enableright = true;
+	bool			 enableeditor = true;
+	bool			 enabledurationbuttons = true;
+	wxString		 module = currentNotify_->getModule();
+
+	enableright = !rb_EscalationOnce->GetValue();
+	enableeditor = !rb_EscalationOnce->GetValue();
+	if (currentNotify_) {
+		current = dynamic_cast<EscalationNotify *>(currentNotify_);
+	}
+	if (!current || !current->allowEdit()) {
+		enabledurationbuttons = false;
+		enableeditor = false;
+		enableright = false;
+	} else if (!current->allowOptions()) {
+		enableright = false;
+	}
+	if (module == wxT("ALF")) {
+		pn_EscalationAlf->Enable(enableright);
+	} else if (module == wxT("SFS")) {
+		pn_EscalationSfs->Enable(enableright);
+	} else if (module == wxT("SANDBOX")) {
+		pn_EscalationSb->Enable(enableright);
+	}
+	ck_EscalationEditor->Enable(enableeditor);
+	if (!enabledurationbuttons && !rb_EscalationOnce->GetValue()) {
+		rb_EscalationOnce->SetValue(true);
+	}
+	rb_EscalationAlways->Enable(enabledurationbuttons);
+	rb_EscalationTime->Enable(enabledurationbuttons);
+	rb_EscalationProcess->Enable(enabledurationbuttons);
+	if (enabledurationbuttons && rb_EscalationTime->GetValue()) {
+		spin_EscalationTime->Enable();
+		ch_EscalationTimeUnit->Enable();
+	} else {
+		spin_EscalationTime->Disable();
+		ch_EscalationTimeUnit->Disable();
+	}
+	pn_EscalationOptions->Layout();
+	pn_Escalation->Layout();
+	tb_MainAnoubisNotify->Layout();
+	tb_MainAnoubisNotification->Layout();
+	Layout();
+}
+
+void
+ModAnoubisMainPanelImpl::initPathLabel(void)
+{
+	wxString		 path, module;
+	EscalationNotify	*current;
+	unsigned int		 i, slash, start;
+
+	minPathKeep_ = 0;
+	pathKeep_ = 0;
+	pathcomp_.clear();
+
+	module = currentNotify_->getModule();
+	if (module != wxT("SFS") && module != wxT("SANDBOX"))
+		return;
+	current = dynamic_cast<EscalationNotify *>(currentNotify_);
+	if (!current)
+		return;
+	path = current->rulePath();
+	if (!path.IsEmpty()) {
+		slash = 1;
+		for (i=0; i<path.Len(); ++i) {
+			if (path[i] == '/') {
+				slash = 1;
+			} else {
+				if (slash) {
+					slash = 0;
+					minPathKeep_++;
+				}
+			}
+		}
+	}
+	path = current->filePath();
+	if (!path.IsEmpty()) {
+		start = 0;
+		slash = 1;
+		for (i=0; i<path.Len(); ++i) {
+			if (path[i] == '/') {
+				if (!slash) {
+					pathcomp_.push_back(
+					    path(start, i-start));
+				}
+				slash = 1;
+			} else {
+				if (slash) {
+					slash = 0;
+					start = i;
+				}
+			}
+		}
+		if (!slash) {
+			pathcomp_.push_back(path(start, i-start));
+		}
+	}
+	if (pathcomp_.size()) {
+		pathKeep_ = pathcomp_.size() - 1;
+	} else {
+		pathKeep_ = 0;
+	}
+	setPathLabel();
+	if (currentNotify_->getModule() == wxT("SANDBOX")) {
+		ck_EscalationSbRead->SetValue(current->isRead());
+		ck_EscalationSbWrite->SetValue(current->isWrite());
+		ck_EscalationSbExec->SetValue(current->isExec());
+	}
+}
+
+void
+ModAnoubisMainPanelImpl::OnEscalationSfsPathLeft(wxCommandEvent &)
+{
+	pathKeep_--;
+	setPathLabel();
+}
+
+void
+ModAnoubisMainPanelImpl::OnEscalationSfsPathRight(wxCommandEvent &)
+{
+	pathKeep_++;
+	setPathLabel();
+}
+
+void
+ModAnoubisMainPanelImpl::OnEscalationSbPathLeft(wxCommandEvent &)
+{
+	pathKeep_--;
+	setPathLabel();
+}
+
+void
+ModAnoubisMainPanelImpl::OnEscalationSbPathRight(wxCommandEvent &)
+{
+	pathKeep_++;
+	setPathLabel();
+}
+
+void
+ModAnoubisMainPanelImpl::setPathLabel(void)
+{
+	unsigned int		i;
+	wxString		path, module;
+	bool			canleft = true, canright = true;
+
+	module = currentNotify_->getModule();
+	if (module != wxT("SFS") && module != wxT("SANDBOX"))
+		return;
+	if (pathKeep_ < minPathKeep_)
+		pathKeep_ = minPathKeep_;
+	if (pathKeep_ > pathcomp_.size())
+		pathKeep_ = pathcomp_.size();
+	if (pathKeep_ == 0) {
+		path = wxT("/");
+	} else {
+		path = wxT("");
+		for (i=0; i<pathKeep_; ++i) {
+			path += wxT("/");
+			path += pathcomp_[i];
+		}
+	}
+	if (pathKeep_ <= minPathKeep_)
+		canleft = false;
+	if (pathKeep_ >= pathcomp_.size())
+		canright = false;
+	if (module == wxT("SFS")) {
+		tx_EscalationSfsPath->SetLabel(path);
+		bt_EscalationSfsPathLeft->Enable(canleft);
+		bt_EscalationSfsPathRight->Enable(canright);
+	} else {
+		tx_EscalationSbPath->SetLabel(path);
+		bt_EscalationSbPathLeft->Enable(canleft);
+		bt_EscalationSbPathRight->Enable(canright);
 	}
 }

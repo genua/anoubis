@@ -121,3 +121,9 @@ FilterPolicy::actionToString(int actionNo) const
 
 	return (action);
 }
+
+wxString
+FilterPolicy::getRulePrefix(void) const
+{
+	return wxEmptyString;
+}

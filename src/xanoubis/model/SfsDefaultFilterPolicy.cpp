@@ -194,19 +194,21 @@ SfsDefaultFilterPolicy::setPath(wxString path)
 wxString
 SfsDefaultFilterPolicy::getPath(void) const
 {
-	wxString	 path;
-	struct apn_rule *rule;
+	wxString	 path = getRulePrefix();
 
-	path = wxEmptyString;
-	rule = getApnRule();
-	if (rule != NULL) {
-		if (rule->rule.sfsdefault.path == NULL) {
-			path = wxT("any");
-		} else {
-			path = wxString::From8BitData(
-			    rule->rule.sfsdefault.path);
-		}
+	if (path.IsEmpty()) {
+		path = wxT("any");
 	}
+	return path;
+}
 
-	return (path);
+wxString
+SfsDefaultFilterPolicy::getRulePrefix(void) const
+{
+	struct apn_rule		*rule = getApnRule();
+	if (rule && rule->rule.sfsdefault.path) {
+		return wxString::From8BitData(rule->rule.sfsdefault.path);
+	} else {
+		return wxEmptyString;
+	}
 }

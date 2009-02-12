@@ -98,6 +98,7 @@ class ModAnoubisMainPanelBase : public wxPanel
 		wxStaticText* slotValueText6;
 		wxStaticText* tx_answerValue;
 		wxPanel* pn_Escalation;
+		wxPanel* pn_EscalationOptions;
 		
 		wxRadioButton* rb_EscalationOnce;
 		wxRadioButton* rb_EscalationProcess;
@@ -116,10 +117,10 @@ class ModAnoubisMainPanelBase : public wxPanel
 		
 		wxPanel* pn_EscalationSb;
 		
-		wxStaticText* lb_EscalationSbDesc;
+		wxStaticText* tx_EscalationSbDesc;
 		wxButton* bt_EscalationSbPathLeft;
 		
-		wxStaticText* lb_EscalationSbPath;
+		wxStaticText* tx_EscalationSbPath;
 		
 		wxButton* bt_EscalationSbPathRight;
 		
@@ -132,12 +133,12 @@ class ModAnoubisMainPanelBase : public wxPanel
 		
 		wxPanel* pn_EscalationSfs;
 		
-		wxStaticText* tx_EscalationSfs1;
-		wxButton* bt_EscalationSfsLeft;
+		wxStaticText* tx_EscalationSfsDesc;
+		wxButton* bt_EscalationSfsPathLeft;
 		
 		wxStaticText* tx_EscalationSfsPath;
 		
-		wxButton* bt_EscalationSfsRight;
+		wxButton* bt_EscalationSfsPathRight;
 		wxStaticText* tx_EscalatonSfsCsum;
 		
 		wxRadioButton* rb_EscalationSfsCsum1;
@@ -216,6 +217,10 @@ class ModAnoubisMainPanelBase : public wxPanel
 		virtual void OnEscalationProcessButton( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnEscalationTimeoutButton( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnEscalationAlwaysButton( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnEscalationSbPathLeft( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnEscalationSbPathRight( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnEscalationSfsPathLeft( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnEscalationSfsPathRight( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnAllowBtnClick( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnDenyBtnClick( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnProfileSelectionChanged( wxListEvent& event ){ event.Skip(); }

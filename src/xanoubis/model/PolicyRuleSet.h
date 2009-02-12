@@ -142,6 +142,14 @@ class PolicyRuleSet : public Subject
 		bool hasErrors(void) const;
 
 		/**
+		 * Return true if rule editing of this escalation
+		 * is supported by the ruleset
+		 * @param The escalation
+		 * @return true if editing is supported.
+		 */
+		void addRuleInformation(EscalationNotify *);
+
+		/**
 		 * Get PolicyRuleSet id.
 		 * Use this to fetch the id of this ruleset. This id is used
 		 * to identify this ruleset and unique during runtime.\n

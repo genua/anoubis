@@ -194,21 +194,12 @@ SbAccessFilterPolicy::setPath(wxString path)
 wxString
 SbAccessFilterPolicy::getPath(void) const
 {
-	wxString	 path;
-	struct apn_rule *rule;
+	wxString	 path = getRulePrefix();
 
-	path = wxEmptyString;
-	rule = getApnRule();
-	if (rule != NULL) {
-		if (rule->rule.sbaccess.path == NULL) {
-			path = wxT("any");
-		} else {
-			path = wxString::From8BitData(
-			    rule->rule.sbaccess.path);
-		}
+	if (path.IsEmpty()) {
+		path = wxT("any");
 	}
-
-	return (path);
+	return path;
 }
 
 bool
@@ -440,5 +431,16 @@ SbAccessFilterPolicy::cleanSubject(struct apn_rule *rule)
 		break;
 	default:
 		break;
+	}
+}
+
+wxString
+SbAccessFilterPolicy::getRulePrefix(void) const
+{
+	struct apn_rule		*rule = getApnRule();
+	if (rule && rule->rule.sbaccess.path) {
+		return wxString::From8BitData(rule->rule.sbaccess.path);
+	} else {
+		return wxEmptyString;
 	}
 }

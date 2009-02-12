@@ -154,21 +154,24 @@ SfsFilterPolicy::setPath(wxString path)
 wxString
 SfsFilterPolicy::getPath(void) const
 {
-	wxString	 path;
-	struct apn_rule *rule;
+	wxString	 path = getRulePrefix();
 
-	path = wxEmptyString;
-	rule = getApnRule();
-	if (rule != NULL) {
-		if (rule->rule.sfsaccess.path == NULL) {
-			path = wxT("any");
-		} else {
-			path = wxString::From8BitData(
-			    rule->rule.sfsaccess.path);
-		}
+	if (path.IsEmpty()) {
+		path = wxT("any");
 	}
+	return path;
+}
 
-	return (path);
+wxString
+SfsFilterPolicy::getRulePrefix(void) const
+{
+	struct apn_rule		*rule = getApnRule();
+
+	if (rule && rule->rule.sfsaccess.path) {
+		return wxString::From8BitData(rule->rule.sfsaccess.path);
+	} else {
+		return wxEmptyString;
+	}
 }
 
 bool

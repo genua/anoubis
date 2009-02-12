@@ -140,10 +140,28 @@ ModAnoubis::insertNotification(Notification *newNotify)
 {
 	wxString	 module;
 	AnEvents	*anEvents;
+	ProfileCtrl	*profileCtrl;
+	PolicyRuleSet	*rs = NULL;
 
 	anEvents = AnEvents::getInstance();
 
 	if (IS_ESCALATIONOBJ(newNotify)) {
+		EscalationNotify	*eNotify;
+
+		profileCtrl = ProfileCtrl::getInstance();
+		if (geteuid() == newNotify->getUid()) {
+			if (newNotify->isAdmin()) {
+				rs = profileCtrl->getRuleSet(
+				    profileCtrl->getAdminId(geteuid()));
+			} else {
+				rs = profileCtrl->getRuleSet(
+				    profileCtrl->getUserId());
+			}
+		}
+		eNotify = dynamic_cast<EscalationNotify *>(newNotify);
+		if (eNotify && rs) {
+			rs->addRuleInformation(eNotify);
+		}
 		notAnsweredList_.Append(newNotify);
 		allList_.Append(newNotify);
 		module = newNotify->getModule();

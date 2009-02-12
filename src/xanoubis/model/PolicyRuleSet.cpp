@@ -129,6 +129,56 @@ PolicyRuleSet::isAdmin(void) const
 	return (isAdmin);
 }
 
+void
+PolicyRuleSet::addRuleInformation(EscalationNotify *escalation)
+{
+	RuleSetSearchPolicyVisitor	*seeker;
+	FilterPolicy			*filter = NULL;
+	AppPolicy			*parent = NULL, *other = NULL;
+	unsigned char			 csum[APN_HASH_SHA256_LEN];
+	wxString			 hashValue;
+	bool				 canEdit = true;
+	const char *			 path;
+
+	if (isAdmin() && geteuid() != 0)
+		canEdit = false;
+	seeker = new RuleSetSearchPolicyVisitor(escalation->getRuleId());
+	this->accept(*seeker);
+	if (seeker->hasMatchingPolicy()) {
+		filter = wxDynamicCast(seeker->getMatchingPolicy(),
+		    FilterPolicy);
+		if (filter) {
+			parent = wxDynamicCast(filter->getParentPolicy(),
+			    AppPolicy);
+		}
+	}
+	delete seeker;
+	if (!parent) {
+		canEdit = false;
+	} else if (parent->isAnyBlock() && parent->getTypeID() != APN_SFS) {
+		if (escalation->getCtxChecksum(csum)) {
+			PolicyUtils::csumToString(csum,
+			    MAX_APN_HASH_LEN, hashValue);
+			seeker = new RuleSetSearchPolicyVisitor(hashValue);
+			this->accept(*seeker);
+			if (seeker->hasMatchingPolicy()) {
+				other = wxDynamicCast(
+				    seeker->getMatchingPolicy(), AppPolicy);
+			}
+			delete seeker;
+		} else {
+			canEdit = false;
+		}
+		if (other != NULL && other->getTypeID() == parent->getTypeID())
+			canEdit = false;
+	}
+	escalation->setAllowEdit(canEdit);
+	path = NULL;
+	if (filter) {
+		escalation->setRulePath(filter->getRulePrefix());
+	}
+}
+
 bool
 PolicyRuleSet::hasErrors(void) const
 {

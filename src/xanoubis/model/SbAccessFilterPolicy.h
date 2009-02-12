@@ -193,6 +193,13 @@ class SbAccessFilterPolicy : public FilterPolicy
 		 */
 		wxString getAccessMaskName(void) const;
 
+		/**
+		 * Return the rule prefix of a sandbox rule as a wxString
+		 * @param None.
+		 * @return The prefix.
+		 */
+		wxString getRulePrefix(void) const;
+
 	private:
 		/**
 		 * Clean the subject structure.
