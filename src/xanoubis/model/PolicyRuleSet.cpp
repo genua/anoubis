@@ -307,38 +307,72 @@ PolicyRuleSet::getAppPolicyCount(void) const
 	return (count);
 }
 
-bool
-PolicyRuleSet::createAppPolicy(unsigned int type, unsigned int id)
+long
+PolicyRuleSet::createPolicy(unsigned int type, unsigned int id,
+    AppPolicy *parent)
 {
-	AppPolicy *policy;
+	bool success;
+	long index;
+
+	success = false;
+	index   = -1;
 
 	switch (type) {
 	case APN_ALF:
-		policy = new AlfAppPolicy(this);
+		success = AlfAppPolicy::createApnInserted(this, id);
+		index = 0;
 		break;
 	case APN_CTX:
-		policy = new ContextAppPolicy(this);
+		success = ContextAppPolicy::createApnInserted(this, id);
+		index  = alfList_.GetCount();
+		index += sfsList_.GetCount();
 		break;
 	case APN_SB:
-		policy = new SbAppPolicy(this);
+		success = SbAppPolicy::createApnInserted(this, id);
+		index  = alfList_.GetCount();
+		index += sfsList_.GetCount();
+		index += ctxList_.GetCount();
+		break;
+	case APN_ALF_FILTER:
+		success = AlfFilterPolicy::createApnInserted(parent, id);
+		index = 0;
+		break;
+	case APN_ALF_CAPABILITY:
+		success = AlfCapabilityFilterPolicy::createApnInserted(parent, id);
+		index = 0;
+		break;
+	case APN_SFS_ACCESS:
+		success = SfsFilterPolicy::createApnInserted(parent, id);
+		index = 0;
+		break;
+	case APN_CTX_RULE:
+		success = ContextFilterPolicy::createApnInserted(parent, id);
+		index = 0;
+		break;
+	case APN_SB_ACCESS:
+		success = SbAccessFilterPolicy::createApnInserted(parent, id);
+		index = 0;
+		break;
+	case APN_SFS_DEFAULT:
+		success = SfsDefaultFilterPolicy::createApnInserted(parent, id);
+		index = 0;
+		break;
+	case APN_DEFAULT:
+		success = DefaultFilterPolicy::createApnInserted(parent, id);
+		index = 0;
 		break;
 	default:
-		policy = NULL;
+		success = false;
+		index = -1;
 		break;
 	}
 
-	if (policy == NULL) {
-		return (false);
-	}
-
-	if (policy->addToRuleSet(id)) {
+	if (success) {
 		setModified();
 		refresh();
-		return (true);
-	} else {
-		delete policy;
-		return (false);
 	}
+
+	return (index);
 }
 
 void

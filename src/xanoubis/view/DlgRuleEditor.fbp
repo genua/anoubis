@@ -1628,9 +1628,9 @@
                                                 <property name="proportion">0</property>
                                                 <object class="wxChoice" expanded="1">
                                                     <property name="bg"></property>
-                                                    <property name="choices">&apos;ALF Filter&apos; &apos;ALF Capability&apos; &apos;SFS Filter&apos; &apos;SB AccessFilter&apos; &apos;CTX Filter&apos; &apos;Default&apos;</property>
+                                                    <property name="choices"></property>
                                                     <property name="context_help"></property>
-                                                    <property name="enabled">1</property>
+                                                    <property name="enabled">0</property>
                                                     <property name="fg"></property>
                                                     <property name="font"></property>
                                                     <property name="hidden">0</property>

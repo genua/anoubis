@@ -27,6 +27,7 @@
 
 #include "SbAppPolicy.h"
 #include "PolicyVisitor.h"
+#include "PolicyRuleSet.h"
 
 IMPLEMENT_CLASS(SbAppPolicy, AppPolicy);
 
@@ -56,11 +57,6 @@ SbAppPolicy::SbAppPolicy(PolicyRuleSet *ruleSet, struct apn_rule *rule)
 	}
 }
 
-SbAppPolicy::SbAppPolicy(PolicyRuleSet *ruleSet)
-    : AppPolicy(ruleSet, SbAppPolicy::createApnRule())
-{
-}
-
 wxString
 SbAppPolicy::getTypeIdentifier(void) const
 {
@@ -78,6 +74,35 @@ SbAppPolicy::createApnRule(void)
 	}
 
 	return (rule);
+}
+
+bool
+SbAppPolicy::createApnInserted(PolicyRuleSet *ruleSet, unsigned int id)
+{
+	int		 rc;
+	struct apn_rule *rule;
+
+	if (ruleSet == NULL) {
+		return (false);
+	}
+
+	rule = SbAppPolicy::createApnRule();
+	if (rule == NULL) {
+		return (false);
+	}
+
+	if (id == 0) {
+		rc = apn_add(ruleSet->getApnRuleSet(), rule);
+	} else {
+		rc = apn_insert(ruleSet->getApnRuleSet(), rule, id);
+	}
+
+	if (rc != 0) {
+		apn_free_one_rule(rule, NULL);
+		return (false);
+	}
+
+	return (true);
 }
 
 void

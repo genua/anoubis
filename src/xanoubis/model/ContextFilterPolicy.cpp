@@ -27,6 +27,7 @@
 
 #include "ContextFilterPolicy.h"
 #include "PolicyVisitor.h"
+#include "PolicyRuleSet.h"
 
 IMPLEMENT_CLASS(ContextFilterPolicy, FilterPolicy);
 
@@ -58,6 +59,42 @@ ContextFilterPolicy::createApnRule(void)
 	}
 
 	return (rule);
+}
+
+bool
+ContextFilterPolicy::createApnInserted(AppPolicy *parent, unsigned int id)
+{
+	int		 rc;
+	struct apn_rule *rule;
+	PolicyRuleSet	*ruleSet;
+
+	if (parent == NULL) {
+		return (false);
+	}
+
+	ruleSet = parent->getParentRuleSet();
+	if (ruleSet == NULL) {
+		return (false);
+	}
+
+	rule = ContextFilterPolicy::createApnRule();
+	if (rule == NULL) {
+		return (false);
+	}
+
+	/* No 'insert-before'-id given: insert on top by using block-id . */
+	if (id == 0) {
+		id = parent->getApnRuleId();
+	}
+
+	rc = apn_insert_ctxrule(ruleSet->getApnRuleSet(), rule, id);
+
+	if (rc != 0) {
+		apn_free_one_rule(rule, NULL);
+		return (false);
+	}
+
+	return (true);
 }
 
 bool

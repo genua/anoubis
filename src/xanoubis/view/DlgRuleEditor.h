@@ -569,9 +569,21 @@ class DlgRuleEditor : public Observer, public DlgRuleEditorBase
 		virtual void onFilterListColumnsButtonClick(wxCommandEvent &);
 
 		/**
-		 *
+		 * Create application policy.
+		 * The type of the new policy is taken from appListTypeChoice.
+		 * @param None.
+		 * @return Nothing.
 		 */
 		virtual void onAppListCreateButton(wxCommandEvent &);
+
+		/**
+		 * Create filter policy.
+		 * The type of the new policy is taken from
+		 * filterListTypeChoice.
+		 * @param None.
+		 * @return Nothing.
+		 */
+		virtual void onFilterListCreateButton(wxCommandEvent &);
 
 		/**
 		 * Handle event from importButton.

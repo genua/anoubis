@@ -215,9 +215,10 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	filterListTypeLabel->Wrap( -1 );
 	filterListHeadSizer->Add( filterListTypeLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	wxString filterListTypeChoiceChoices[] = { _("ALF Filter"), _("ALF Capability"), _("SFS Filter"), _("SB AccessFilter"), _("CTX Filter"), _("Default") };
-	int filterListTypeChoiceNChoices = sizeof( filterListTypeChoiceChoices ) / sizeof( wxString );
-	filterListTypeChoice = new wxChoice( filterPanel, wxID_ANY, wxDefaultPosition, wxDefaultSize, filterListTypeChoiceNChoices, filterListTypeChoiceChoices, 0 );
+	wxArrayString filterListTypeChoiceChoices;
+	filterListTypeChoice = new wxChoice( filterPanel, wxID_ANY, wxDefaultPosition, wxDefaultSize, filterListTypeChoiceChoices, 0 );
+	filterListTypeChoice->Enable( false );
+	
 	filterListHeadSizer->Add( filterListTypeChoice, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	filterListCreateButton = new wxButton( filterPanel, wxID_ANY, _("create"), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );

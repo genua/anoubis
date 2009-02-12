@@ -27,6 +27,7 @@
 
 #include "ContextAppPolicy.h"
 #include "PolicyVisitor.h"
+#include "PolicyRuleSet.h"
 
 IMPLEMENT_CLASS(ContextAppPolicy, AppPolicy);
 
@@ -52,11 +53,6 @@ ContextAppPolicy::ContextAppPolicy(PolicyRuleSet *ruleSet,
 	}
 }
 
-ContextAppPolicy::ContextAppPolicy(PolicyRuleSet *ruleSet)
-    : AppPolicy(ruleSet, ContextAppPolicy::createApnRule())
-{
-}
-
 wxString
 ContextAppPolicy::getTypeIdentifier(void) const
 {
@@ -74,6 +70,35 @@ ContextAppPolicy::createApnRule(void)
 	}
 
 	return (rule);
+}
+
+bool
+ContextAppPolicy::createApnInserted(PolicyRuleSet *ruleSet, unsigned int id)
+{
+	int		 rc;
+	struct apn_rule *rule;
+
+	if (ruleSet == NULL) {
+		return (false);
+	}
+
+	rule = ContextAppPolicy::createApnRule();
+	if (rule == NULL) {
+		return (false);
+	}
+
+	if (id == 0) {
+		rc = apn_add(ruleSet->getApnRuleSet(), rule);
+	} else {
+		rc = apn_insert(ruleSet->getApnRuleSet(), rule, id);
+	}
+
+	if (rc != 0) {
+		apn_free_one_rule(rule, NULL);
+		return (false);
+	}
+
+	return (true);
 }
 
 void

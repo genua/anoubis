@@ -27,6 +27,7 @@
 
 #include "SfsFilterPolicy.h"
 #include "PolicyVisitor.h"
+#include "PolicyRuleSet.h"
 
 IMPLEMENT_CLASS(SfsFilterPolicy, FilterPolicy);
 
@@ -39,6 +40,55 @@ wxString
 SfsFilterPolicy::getTypeIdentifier(void) const
 {
 	return (wxT("SFS"));
+}
+
+struct apn_rule *
+SfsFilterPolicy::createApnRule(void)
+{
+	struct apn_rule *rule;
+
+	rule = FilterPolicy::createApnRule();
+	if (rule != NULL) {
+		rule->apn_type = APN_SFS_ACCESS;
+	}
+
+	return (rule);
+}
+
+bool
+SfsFilterPolicy::createApnInserted(AppPolicy *parent, unsigned int id)
+{
+	int		 rc;
+	struct apn_rule *rule;
+	PolicyRuleSet	*ruleSet;
+
+	if (parent == NULL) {
+		return (false);
+	}
+
+	ruleSet = parent->getParentRuleSet();
+	if (ruleSet == NULL) {
+		return (false);
+	}
+
+	rule = SfsFilterPolicy::createApnRule();
+	if (rule == NULL) {
+		return (false);
+	}
+
+	/* No 'insert-before'-id given: insert on top by using block-id . */
+	if (id == 0) {
+		id = parent->getApnRuleId();
+	}
+
+	rc = apn_insert_sfsrule(ruleSet->getApnRuleSet(), rule, id);
+
+	if (rc != 0) {
+		apn_free_one_rule(rule, NULL);
+		return (false);
+	}
+
+	return (true);
 }
 
 void

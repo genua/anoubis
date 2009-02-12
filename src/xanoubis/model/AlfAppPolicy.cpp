@@ -27,6 +27,7 @@
 
 #include "AlfAppPolicy.h"
 #include "PolicyVisitor.h"
+#include "PolicyRuleSet.h"
 
 IMPLEMENT_CLASS(AlfAppPolicy, AppPolicy);
 
@@ -59,11 +60,6 @@ AlfAppPolicy::AlfAppPolicy(PolicyRuleSet *ruleSet, struct apn_rule *rule)
 	}
 }
 
-AlfAppPolicy::AlfAppPolicy(PolicyRuleSet *ruleSet)
-    : AppPolicy(ruleSet, AlfAppPolicy::createApnRule())
-{
-}
-
 wxString
 AlfAppPolicy::getTypeIdentifier(void) const
 {
@@ -81,6 +77,35 @@ AlfAppPolicy::createApnRule(void)
 	}
 
 	return (rule);
+}
+
+bool
+AlfAppPolicy::createApnInserted(PolicyRuleSet *ruleSet, unsigned int id)
+{
+	int		 rc;
+	struct apn_rule *rule;
+
+	if (ruleSet == NULL) {
+		return (false);
+	}
+
+	rule = AlfAppPolicy::createApnRule();
+	if (rule == NULL) {
+		return (false);
+	}
+
+	if (id == 0) {
+		rc = apn_add(ruleSet->getApnRuleSet(), rule);
+	} else {
+		rc = apn_insert(ruleSet->getApnRuleSet(), rule, id);
+	}
+
+	if (rc != 0) {
+		apn_free_one_rule(rule, NULL);
+		return (false);
+	}
+
+	return (true);
 }
 
 void

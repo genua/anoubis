@@ -57,6 +57,27 @@ class SfsFilterPolicy : public FilterPolicy
 		virtual wxString getTypeIdentifier(void) const;
 
 		/**
+		 * Create native / apn rule.
+		 * @param None.
+		 * @return A single apn rule.
+		 */
+		static struct apn_rule *createApnRule(void);
+
+		/**
+		 * Create apn rule and insert to apn ruleset.
+		 * This will create a new apn_rule (by createApnRule()).
+		 * This new rule is inserted to the apn_ruleset been
+		 * determined by the given parent. On success the apn_ruleset
+		 * is modified and out of sync with the policy object tree.
+		 * It's the responsibility of the caller to re-create the
+		 * object tree.
+		 * @param[in] 1st The parent policy.
+		 * @param[in] 2nd Insert before this id (on top if id=0)
+		 * @return True on success.
+		 */
+		static bool createApnInserted(AppPolicy *, unsigned int);
+
+		/**
 		 * Accept a visitor.
 		 * @param[in] 1st The visitor.
 		 * @return Nothing.

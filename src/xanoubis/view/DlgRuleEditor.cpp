@@ -556,7 +556,27 @@ DlgRuleEditor::onAppPolicySelect(wxListEvent & event)
 
 		/* enable customisation of header columns */
 		filterListColumnsButton->Enable(true);
+		filterListTypeChoice->Enable(true);
 		filterListCreateButton->Enable(true);
+
+		/* Adjust type choice of filter policy creation. */
+		appListTypeChoice->SetStringSelection(
+		    policy->getTypeIdentifier());
+		filterListTypeChoice->Clear();
+		if (policy->IsKindOf(CLASSINFO(AlfAppPolicy))) {
+			filterListTypeChoice->Append(wxT("ALF"));
+			filterListTypeChoice->Append(wxT("Capability"));
+			filterListTypeChoice->Append(wxT("Default"));
+		} else if (policy->IsKindOf(CLASSINFO(SfsAppPolicy))) {
+			filterListTypeChoice->Append(wxT("SFS"));
+			filterListTypeChoice->Append(wxT("Default"));
+		} else if (policy->IsKindOf(CLASSINFO(ContextAppPolicy))) {
+			filterListTypeChoice->Append(wxT("CTX"));
+		} else if (policy->IsKindOf(CLASSINFO(SbAppPolicy))) {
+			filterListTypeChoice->Append(wxT("SB"));
+			filterListTypeChoice->Append(wxT("Default"));
+		}
+		filterListTypeChoice->Select(0);
 
 		/* Ensure the changes will apear on the screen */
 		Layout();
@@ -571,6 +591,8 @@ DlgRuleEditor::onAppPolicyDeSelect(wxListEvent & WXUNUSED(event))
 	appListUpButton->Disable();
 	appListDownButton->Disable();
 	appListDeleteButton->Disable();
+	filterListTypeChoice->Clear();
+	filterListTypeChoice->Disable();
 	filterListCreateButton->Disable();
 
 	wipeFilterList();
@@ -917,32 +939,55 @@ DlgRuleEditor::onFilterListColumnsButtonClick(wxCommandEvent &)
 void
 DlgRuleEditor::onAppListCreateButton(wxCommandEvent &)
 {
-	bool		 rc;
 	unsigned int	 id;
 	unsigned int	 type;
-	long		 index;
 	long		 top;
+	long		 index;
+	long		 indexSuggestion;
 	wxString	 typeSelection;
+	wxString	 message;
 	Policy		*policy;
 	ProfileCtrl	*profileCtrl;
 	PolicyRuleSet	*ruleSet;
 
-	rc = false;
-	index  = getSelectedIndex(appPolicyListCtrl);
-	top = appPolicyListCtrl->GetTopItem();
-	profileCtrl = ProfileCtrl::getInstance();
-	ruleSet = profileCtrl->getRuleSet(userRuleSetId_);
+	index = getSelectedIndex(appPolicyListCtrl);
+	top   = appPolicyListCtrl->GetTopItem();
+
+	typeSelection = appListTypeChoice->GetStringSelection();
+	profileCtrl   = ProfileCtrl::getInstance();
+	ruleSet       = profileCtrl->getRuleSet(userRuleSetId_);
+
+	if (ruleSet == NULL) {
+		ruleSet = createEmptyPolicyRuleSet();
+		if (ruleSet == NULL) {
+			message = _("Couldn't create new ruleset!");
+			wxMessageBox(message, _("Rule Editor"),
+			    wxOK | wxICON_ERROR, this);
+			return;
+		} else {
+			message = _("Created new ruleset.");
+			wxMessageBox(message, _("Rule Editor"),
+			    wxOK | wxICON_INFORMATION, this);
+		}
+	}
 
 	/* Where should the new policy been inserted? */
 	policy = getSelectedPolicy(appPolicyListCtrl);
 	if (policy != NULL) {
 		id = policy->getApnRuleId();
+		if (typeSelection.Cmp(policy->getTypeIdentifier()) != 0) {
+			id = 0;
+			index = -1;
+		}
 	} else {
 		id = 0;
+		index = -1;
 	}
 
-	/* What kind of policy shall been created? */
-	typeSelection = appListTypeChoice->GetStringSelection();
+	/*
+	 * What kind of policy shall been created?
+	 * In addition if nothing was selected, calc index of new row.
+	 */
 	if (typeSelection.Cmp(wxT("ALF")) == 0) {
 		type = APN_ALF;
 	} else if (typeSelection.Cmp(wxT("CTX")) == 0) {
@@ -954,33 +999,103 @@ DlgRuleEditor::onAppListCreateButton(wxCommandEvent &)
 		return;
 	}
 
-	/* If there's not ruleset, create one ... */
+	wipeAppList();
+	indexSuggestion = ruleSet->createPolicy(type, id, NULL);
+
+	if (indexSuggestion < 0) {
+		message = _("Error: Couldn't create new application rule.");
+		wxMessageBox(message, _("Rule Editor"), wxOK | wxICON_ERROR,
+		    this);
+	}
+	if (index < 0) {
+		index = indexSuggestion;
+	}
+
+	loadRuleSet();
+	selectFrame(appPolicyListCtrl, top, index);
+	appListCreateButton->Hide();
+	appListCreateButton->Show();
+}
+
+
+void
+DlgRuleEditor::onFilterListCreateButton(wxCommandEvent &)
+{
+	unsigned int	 id;
+	unsigned int	 type;
+	long		 appIndex;
+	long		 appTop;
+	long		 filterIndex;
+	long		 filterTop;
+	wxString	 typeSelection;
+	Policy		*policy;
+	AppPolicy	*parent;
+	ProfileCtrl	*profileCtrl;
+	PolicyRuleSet	*ruleSet;
+
+	appIndex    = getSelectedIndex(appPolicyListCtrl);
+	appTop      = appPolicyListCtrl->GetTopItem();
+	filterIndex = getSelectedIndex(filterPolicyListCtrl);
+	filterTop   = filterPolicyListCtrl->GetTopItem();
+	profileCtrl = ProfileCtrl::getInstance();
+	ruleSet	    = profileCtrl->getRuleSet(userRuleSetId_);
+
 	if (ruleSet == NULL) {
-		ruleSet = createEmptyPolicyRuleSet();
-		wxMessageBox(
-		    _("Because of missing ruleset, a new one was created."),
-		    _("Rule Editor"), wxOK | wxICON_INFORMATION, this);
+		/* This is extremely odd and wrong - abort. */
+		return;
 	}
 
-	if (ruleSet != NULL) {
-		wipeAppList();
-		rc = ruleSet->createAppPolicy(type, id);
-		loadRuleSet();
+	policy = getSelectedPolicy(appPolicyListCtrl);
+	parent = wxDynamicCast(policy, AppPolicy);
+	if (parent == NULL) {
+		/* Can't create filter without app parent */
+		return;
 	}
 
-	if (rc) {
-		if (index < 0) {
-			/* No rule was selected */
-			index = 0;
-		}
-		selectFrame(appPolicyListCtrl, top, index);
+	/* Where should the new policy been inserted? */
+	policy = getSelectedPolicy(filterPolicyListCtrl);
+	if (policy != NULL) {
+		id = policy->getApnRuleId();
 	} else {
-		/* XXX ch: this breaks coding style guide lines */
+		id = 0;
+		filterIndex = 0;
+	}
+
+	/* What kind of policy shall been created? */
+	typeSelection = filterListTypeChoice->GetStringSelection();
+	if (typeSelection.Cmp(wxT("ALF")) == 0) {
+		type = APN_ALF_FILTER;
+	} else if (typeSelection.Cmp(wxT("Capability")) == 0) {
+		type = APN_ALF_CAPABILITY;
+	} else if (typeSelection.Cmp(wxT("SFS")) == 0) {
+		type = APN_SFS_ACCESS;
+	} else if (typeSelection.Cmp(wxT("CTX")) == 0) {
+		type = APN_CTX_RULE;
+	} else if (typeSelection.Cmp(wxT("SB")) == 0) {
+		type = APN_SB_ACCESS;
+	} else if (typeSelection.Cmp(wxT("Default")) == 0) {
+		if (parent->IsKindOf(CLASSINFO(SfsAppPolicy))) {
+			type = APN_SFS_DEFAULT;
+		} else {
+			type = APN_DEFAULT;
+		}
+	} else {
+		/* No valid policy type. */
+		return;
+	}
+
+	wipeAppList();
+	if (ruleSet->createPolicy(type, id, parent) < 0) {
 		wxMessageBox(
-		    _("Couldn't create new rule.\nMaybe the types of selected \
- and been created policy mismatch!"),
+		    _("Error: Couldn't create new filter rule."),
 		    _("Rule Editor"), wxOK | wxICON_ERROR, this);
 	}
+
+	loadRuleSet();
+	selectFrame(appPolicyListCtrl, appTop, appIndex);
+	selectFrame(filterPolicyListCtrl, filterTop, filterIndex);
+	filterListCreateButton->Hide();
+	filterListCreateButton->Show();
 }
 
 void

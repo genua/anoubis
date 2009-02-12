@@ -80,30 +80,6 @@ AppPolicy::acceptOnFilter(PolicyVisitor &visitor)
 	}
 }
 
-bool
-AppPolicy::addToRuleSet(unsigned int id)
-{
-	int		 rc;
-	PolicyRuleSet	*ruleSet;
-
-	ruleSet = getParentRuleSet();
-	if (ruleSet == NULL) {
-		return (false);
-	}
-
-	if (id == 0) {
-		rc = apn_add(ruleSet->getApnRuleSet(), getApnRule());
-	} else {
-		rc = apn_insert(ruleSet->getApnRuleSet(), getApnRule(), id);
-	}
-
-	if (rc == 0) {
-		return (true);
-	} else {
-		return (false);
-	}
-}
-
 size_t
 AppPolicy::getFilterPolicyCount(void) const
 {

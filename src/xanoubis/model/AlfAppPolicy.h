@@ -55,14 +55,6 @@ class AlfAppPolicy : public AppPolicy
 		AlfAppPolicy(PolicyRuleSet *, struct apn_rule *);
 
 		/**
-		 * Constructor of a AlfAppPolicy.
-		 * This should be used a new apn_rule should been created
-		 * (and later been inserted/added to a PolicyRuleSet).
-		 * @param[in] 1st The ruleset this policy belongs to.
-		 */
-		AlfAppPolicy(PolicyRuleSet *);
-
-		/**
 		 * Get the policy type as string.
 		 * @param None.
 		 * @return String with the policy type.
@@ -75,6 +67,19 @@ class AlfAppPolicy : public AppPolicy
 		 * @return A single apn rule.
 		 */
 		static struct apn_rule *createApnRule(void);
+
+		/**
+		 * Create apn rule and insert to apn ruleset.
+		 * This will create a new apn_rule (by createApnRule()).
+		 * This new rule is inserted to the apn_ruleset.
+		 * On success the apn_ruleset is modified and out of sync
+		 * with the policy object tree. It's the responsibility of
+		 * the caller to re-create the object tree.
+		 * @param[in] 1st The policy rule set.
+		 * @param[in] 2nd Insert before this id (on top if id=0)
+		 * @return True on success.
+		 */
+		static bool createApnInserted(PolicyRuleSet *, unsigned int);
 
 		/**
 		 * Accept a visitor.

@@ -28,6 +28,7 @@
 #include "DefaultFilterPolicy.h"
 
 #include "PolicyVisitor.h"
+#include "PolicyRuleSet.h"
 
 IMPLEMENT_CLASS(DefaultFilterPolicy, FilterPolicy);
 
@@ -53,6 +54,54 @@ DefaultFilterPolicy::createApnRule(void)
 	}
 
 	return (rule);
+}
+
+bool
+DefaultFilterPolicy::createApnInserted(AppPolicy *parent, unsigned int id)
+{
+	int		 rc;
+	struct apn_rule *rule;
+	PolicyRuleSet	*ruleSet;
+
+	if (parent == NULL) {
+		return (false);
+	}
+
+	ruleSet = parent->getParentRuleSet();
+	if (ruleSet == NULL) {
+		return (false);
+	}
+
+	rule = DefaultFilterPolicy::createApnRule();
+	if (rule == NULL) {
+		return (false);
+	}
+
+	/* No 'insert-before'-id given: insert on top by using block-id . */
+	if (id == 0) {
+		id = parent->getApnRuleId();
+	}
+
+	if (parent->IsKindOf(CLASSINFO(AlfAppPolicy))) {
+		rc = apn_insert_alfrule(ruleSet->getApnRuleSet(), rule, id);
+	} else if (parent->IsKindOf(CLASSINFO(SfsAppPolicy))) {
+		/* Sfs has it's own default policies */
+		rc = -1;
+	} else if (parent->IsKindOf(CLASSINFO(ContextAppPolicy))) {
+		rc = apn_insert_ctxrule(ruleSet->getApnRuleSet(), rule, id);
+	} else if (parent->IsKindOf(CLASSINFO(SbAppPolicy))) {
+		rc = apn_insert_sbrule(ruleSet->getApnRuleSet(), rule, id);
+	} else {
+		/* Unknown parent type - nothing to do */
+		rc = -1;
+	}
+
+	if (rc != 0) {
+		apn_free_one_rule(rule, NULL);
+		return (false);
+	}
+
+	return (true);
 }
 
 void

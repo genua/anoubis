@@ -27,6 +27,7 @@
 
 #include "SfsDefaultFilterPolicy.h"
 #include "PolicyVisitor.h"
+#include "PolicyRuleSet.h"
 
 IMPLEMENT_CLASS(SfsDefaultFilterPolicy, FilterPolicy);
 
@@ -52,6 +53,42 @@ SfsDefaultFilterPolicy::createApnRule(void)
 	}
 
 	return (rule);
+}
+
+bool
+SfsDefaultFilterPolicy::createApnInserted(AppPolicy *parent, unsigned int id)
+{
+	int		 rc;
+	struct apn_rule *rule;
+	PolicyRuleSet	*ruleSet;
+
+	if (parent == NULL) {
+		return (false);
+	}
+
+	ruleSet = parent->getParentRuleSet();
+	if (ruleSet == NULL) {
+		return (false);
+	}
+
+	rule = SfsDefaultFilterPolicy::createApnRule();
+	if (rule == NULL) {
+		return (false);
+	}
+
+	/* No 'insert-before'-id given: insert on top by using block-id . */
+	if (id == 0) {
+		id = parent->getApnRuleId();
+	}
+
+	rc = apn_insert_sfsrule(ruleSet->getApnRuleSet(), rule, id);
+
+	if (rc != 0) {
+		apn_free_one_rule(rule, NULL);
+		return (false);
+	}
+
+	return (true);
 }
 
 void

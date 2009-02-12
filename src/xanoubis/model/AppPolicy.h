@@ -88,10 +88,6 @@ class AppPolicy : public Policy
 		void acceptOnFilter(PolicyVisitor &);
 
 		/**
-		 */
-		bool addToRuleSet(unsigned int);
-
-		/**
 		 * Count the filters of this application policy.
 		 * @param None.
 		 * @return Number of filters.

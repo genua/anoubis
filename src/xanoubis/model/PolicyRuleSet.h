@@ -267,14 +267,20 @@ class PolicyRuleSet : public Subject
 
 		/**
 		 * Get the number of application policies.
-		 * @param[in] None.
+		 * @param None.
 		 * @return The number of application policies.
 		 */
 		size_t getAppPolicyCount(void) const;
 
 		/**
+		 * Create new policy and insert it.
+		 * This leads to a re-creation of the policy structure.
+		 * @param[in] 1st Apn type of policy to create.
+		 * @param[in] 2nd Insert before this id (may be zero).
+		 * @param[in] 3rd Parent for new filter policy (may be NULL).
+		 * @return Suggestion for new index (-1 on error).
 		 */
-		bool createAppPolicy(unsigned int, unsigned int);
+		long createPolicy(unsigned int, unsigned int, AppPolicy *);
 
 		void createAnswerPolicy(EscalationNotify *);
 
