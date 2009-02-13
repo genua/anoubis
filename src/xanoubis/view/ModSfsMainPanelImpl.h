@@ -120,8 +120,10 @@ class ModSfsMainPanelImpl : public ModSfsMainPanelBase
 		void OnSfsMainKeyLoaded(wxCommandEvent&);
 
 		void OnPrivKeyValidityChanged(wxCommandEvent&);
+		void OnPrivKeyEntered(wxCommandEvent&);
 		void OnPrivKeyChooseClicked(wxCommandEvent&);
 		void OnPrivKeyValidityPeriodChanged(wxSpinEvent&);
+		void OnCertEntered(wxCommandEvent&);
 		void OnCertChooseClicked(wxCommandEvent&);
 
 	public:

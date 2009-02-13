@@ -249,7 +249,7 @@ ModSfsMainPanelBase::ModSfsMainPanelBase( wxWindow* parent, wxWindowID id, const
 	wxBoxSizer* bSizer17;
 	bSizer17 = new wxBoxSizer( wxHORIZONTAL );
 	
-	PrivKeyPathText = new wxTextCtrl( pan_Options, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_READONLY );
+	PrivKeyPathText = new wxTextCtrl( pan_Options, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER );
 	bSizer17->Add( PrivKeyPathText, 1, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
 	
 	PrivKeyChooseButton = new wxButton( pan_Options, wxID_ANY, _("Choose Key"), wxDefaultPosition, wxDefaultSize, 0 );
@@ -304,7 +304,7 @@ ModSfsMainPanelBase::ModSfsMainPanelBase( wxWindow* parent, wxWindowID id, const
 	wxBoxSizer* bSizer19;
 	bSizer19 = new wxBoxSizer( wxHORIZONTAL );
 	
-	CertPathText = new wxTextCtrl( pan_Options, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_READONLY );
+	CertPathText = new wxTextCtrl( pan_Options, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER );
 	bSizer19->Add( CertPathText, 1, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
 	
 	CertChooseButton = new wxButton( pan_Options, wxID_ANY, _("Choose certificate"), wxDefaultPosition, wxDefaultSize, 0 );
@@ -358,9 +358,11 @@ ModSfsMainPanelBase::ModSfsMainPanelBase( wxWindow* parent, wxWindowID id, const
 	SfsMainShowChecksumButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModSfsMainPanelBase::OnSfsMainShowAllChecksumsClicked ), NULL, this );
 	SfsMainShowChangedButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModSfsMainPanelBase::OnSfsMainShowChangedClicked ), NULL, this );
 	SfsMainActionButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModSfsMainPanelBase::OnSfsMainApplyButtonClicked ), NULL, this );
+	PrivKeyPathText->Connect( wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler( ModSfsMainPanelBase::OnPrivKeyEntered ), NULL, this );
 	PrivKeyChooseButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModSfsMainPanelBase::OnPrivKeyChooseClicked ), NULL, this );
 	PrivKeyValidityChoice->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( ModSfsMainPanelBase::OnPrivKeyValidityChanged ), NULL, this );
 	PrivKeyValiditySpinCtrl->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( ModSfsMainPanelBase::OnPrivKeyValidityPeriodChanged ), NULL, this );
+	CertPathText->Connect( wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler( ModSfsMainPanelBase::OnCertEntered ), NULL, this );
 	CertChooseButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModSfsMainPanelBase::OnCertChooseClicked ), NULL, this );
 }
 

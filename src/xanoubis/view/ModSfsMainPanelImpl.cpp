@@ -450,6 +450,15 @@ ModSfsMainPanelImpl::OnPrivKeyValidityChanged(wxCommandEvent&)
 }
 
 void
+ModSfsMainPanelImpl::OnPrivKeyEntered(wxCommandEvent&)
+{
+	privKeyParamsUpdate(
+	    PrivKeyPathText->GetValue(),
+	    PrivKeyValidityChoice->GetCurrentSelection() == 0,
+	    PrivKeyValiditySpinCtrl->GetValue());
+}
+
+void
 ModSfsMainPanelImpl::OnPrivKeyChooseClicked(wxCommandEvent&)
 {
 	wxFileDialog dlg(this,
@@ -471,6 +480,12 @@ ModSfsMainPanelImpl::OnPrivKeyValidityPeriodChanged(wxSpinEvent&)
 	    PrivKeyPathText->GetValue(),
 	    PrivKeyValidityChoice->GetCurrentSelection() == 0,
 	    PrivKeyValiditySpinCtrl->GetValue());
+}
+
+void
+ModSfsMainPanelImpl::OnCertEntered(wxCommandEvent&)
+{
+	certificateParamsUpdate(CertPathText->GetValue());
 }
 
 void
@@ -716,18 +731,14 @@ ModSfsMainPanelImpl::privKeyParamsUpdate(const wxString &path, bool sessionEnd,
 	privKey.setFile(path);
 	privKey.setValidity(validity);
 
-	if (privKey.canLoad()) {
-		wxCommandEvent event(anEVT_LOAD_KEY);
-		event.SetInt(0); /* 0 := private key */
-
-		wxPostEvent(AnEvents::getInstance(), event);
-	} else {
+	if (!path.IsEmpty() && !privKey.canLoad()) {
 		wxMessageBox(
 		    _("Cannot load the private key!\n"
 		      "The file you specified does not exist."),
 		    _("Load private key"), wxOK | wxICON_ERROR, this);
 	}
 
+	/* Update view */
 	PrivKeyPathText->SetValue(path);
 
 	PrivKeyValiditySpinCtrl->Enable(!sessionEnd);
@@ -735,29 +746,40 @@ ModSfsMainPanelImpl::privKeyParamsUpdate(const wxString &path, bool sessionEnd,
 
 	PrivKeyValidityChoice->SetSelection(sessionEnd ? 0 : 1);
 	PrivKeyValiditySpinCtrl->SetValue(validity);
+
+	/* Inform any listener about change of key-configuration */
+	wxCommandEvent event(anEVT_LOAD_KEY);
+	event.SetInt(0); /* 0 := private key */
+	wxPostEvent(AnEvents::getInstance(), event);
 }
 
 void
 ModSfsMainPanelImpl::certificateParamsUpdate(const wxString &path)
 {
 	LocalCertificate &cert = KeyCtrl::getInstance()->getLocalCertificate();
+
 	cert.setFile(path);
 
-	if (cert.canLoad() && !cert.load()) {
-		wxMessageBox(wxString::Format(
-		    _("Failed to load certificate from\n%s."),
-		    cert.getFile().c_str()),
-		    _("Load certificate"), wxOK | wxICON_ERROR, this);
+	if (!path.IsEmpty()) {
+		if (!cert.load()) {
+			wxMessageBox(wxString::Format(
+			    _("Failed to load certificate from\n%s."),
+			    cert.getFile().c_str()),
+			    _("Load certificate"), wxOK | wxICON_ERROR, this);
+		}
+	} else {
+		/* Reset certificate */
+		cert.unload();
 	}
 
+	/* Update view */
 	CertPathText->SetValue(cert.getFile());
 	CertFingerprintText->SetLabel(cert.getFingerprint());
 	CertDnText->SetLabel(cert.getDistinguishedName());
 
-	if (cert.isLoaded()) {
-		wxCommandEvent event(anEVT_LOAD_KEY);
-		event.SetInt(1); /* 1 := certificate */
+	/* Inform any listener about change of configuration */
+	wxCommandEvent event(anEVT_LOAD_KEY);
+	event.SetInt(1); /* 1 := certificate */
 
-		wxPostEvent(AnEvents::getInstance(), event);
-	}
+	wxPostEvent(AnEvents::getInstance(), event);
 }
