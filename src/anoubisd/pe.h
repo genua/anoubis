@@ -129,7 +129,8 @@ void			 pe_proc_kcache_add(struct pe_proc *proc,
 void			 pe_proc_kcache_clear(struct pe_proc *proc);
 
 /* User and Policy Management */
-struct apn_ruleset	*pe_user_get_ruleset(uid_t, int, struct pe_policy_db *);
+struct apn_ruleset	*pe_user_get_ruleset(uid_t, unsigned int,
+			     struct pe_policy_db *);
 anoubisd_reply_t	*pe_dispatch_policy(struct anoubisd_msg_comm *);
 void			 pe_user_init(void);
 void			 pe_user_flush_db(struct pe_policy_db *);

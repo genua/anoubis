@@ -89,14 +89,15 @@ LIST_HEAD(, pe_policy_request) preqs;
 
 void				 pe_user_init(void);
 static int			 pe_user_load_db(struct pe_policy_db *);
-static int			 pe_user_load_dir(const char *, int,
+static int			 pe_user_load_dir(const char *, unsigned int,
 				     struct pe_policy_db *);
 static int			 pe_user_clean_policy(const char *,
 				     const char *, int);
 static struct apn_ruleset	*pe_user_load_policy(const char *name,
 				     int flags);
 static int			 pe_user_insert_rs(struct apn_ruleset *,
-				     uid_t, int, struct pe_policy_db *);
+				     uid_t, unsigned int,
+				     struct pe_policy_db *);
 static struct pe_user		*pe_user_get(uid_t, struct pe_policy_db *);
 
 void
@@ -190,7 +191,7 @@ pe_user_load_db(struct pe_policy_db *p)
 }
 
 static int
-pe_user_load_dir(const char *dirname, int prio, struct pe_policy_db *p)
+pe_user_load_dir(const char *dirname, unsigned int prio, struct pe_policy_db *p)
 {
 	DIR			*dir;
 	struct dirent		*dp;
@@ -203,7 +204,7 @@ pe_user_load_dir(const char *dirname, int prio, struct pe_policy_db *p)
 
 	DEBUG(DBG_PE_POLICY, "pe_user_load_dir: %s %p", dirname, p);
 
-	if (prio < 0 || prio >= PE_PRIO_MAX) {
+	if (prio >= PE_PRIO_MAX) {
 		log_warnx("pe_user_load_dir: illegal priority %d", prio);
 		return (0);
 	}
@@ -404,7 +405,7 @@ pe_user_load_policy(const char *name, int flags)
 }
 
 static int
-pe_user_insert_rs(struct apn_ruleset *rs, uid_t uid, int prio,
+pe_user_insert_rs(struct apn_ruleset *rs, uid_t uid, unsigned int prio,
     struct pe_policy_db *p)
 {
 	struct pe_user		*user;
@@ -417,7 +418,7 @@ pe_user_insert_rs(struct apn_ruleset *rs, uid_t uid, int prio,
 		log_warnx("pe_user_insert_rs: empty database pointer");
 		return (1);
 	}
-	if (prio < 0 || prio >= PE_PRIO_MAX) {
+	if (prio >= PE_PRIO_MAX) {
 		log_warnx("pe_user_insert_rs: illegal priority %d", prio);
 		return (1);
 	}
@@ -446,7 +447,7 @@ pe_user_insert_rs(struct apn_ruleset *rs, uid_t uid, int prio,
 }
 
 static int
-pe_user_replace_rs(struct apn_ruleset *rs, uid_t uid, int prio)
+pe_user_replace_rs(struct apn_ruleset *rs, uid_t uid, unsigned int prio)
 {
 	struct apn_ruleset	*oldrs;
 	struct pe_user		*user;
@@ -455,7 +456,7 @@ pe_user_replace_rs(struct apn_ruleset *rs, uid_t uid, int prio)
 		log_warnx("pe_replac_rs: empty ruleset");
 		return (1);
 	}
-	if (prio < 0  || prio >= PE_PRIO_MAX) {
+	if (prio >= PE_PRIO_MAX) {
 		log_warnx("pe_user_replace_rs: illegal priority %d", prio);
 		return (1);
 	}
@@ -500,9 +501,14 @@ pe_user_get(uid_t uid, struct pe_policy_db *p)
 }
 
 struct apn_ruleset *
-pe_user_get_ruleset(uid_t uid, int prio, struct pe_policy_db *p)
+pe_user_get_ruleset(uid_t uid, unsigned int prio, struct pe_policy_db *p)
 {
 	struct pe_user *user;
+
+	if (prio >= PE_PRIO_MAX) {
+		log_warnx("pe_user_get_ruleset: illegal priority %d", prio);
+		return NULL;
+	}
 
 	DEBUG(DBG_TRACE, " pe_user_get_ruleset");
 	if (p == NULL)
@@ -517,27 +523,33 @@ pe_user_get_ruleset(uid_t uid, int prio, struct pe_policy_db *p)
 }
 
 static char *
-__pe_policy_filename(uid_t uid, int prio, char *pre)
+pe_policy_filename(uid_t uid, unsigned int prio, char *pre)
 {
-	char *name;
+	char *name = NULL;
+
+	if (prio >= PE_PRIO_MAX) {
+		log_warnx("pe_policy_filename: illegal priority %d", prio);
+		return NULL;
+	}
 
 	if (asprintf(&name, "/%s/%s%d", prio_to_string[prio], pre, uid) == -1)
 		return NULL;
+
 	return name;
 }
 
-static char *
-pe_policy_filename(uid_t uid, int prio)
-{
-	return __pe_policy_filename(uid, prio, "");
-}
-
 static int
-pe_policy_open(uid_t uid, int prio)
+pe_policy_open(uid_t uid, unsigned int prio)
 {
 	int err, fd;
-	char	*name = pe_policy_filename(uid, prio);
+	char	*name = NULL;
+	
+	if (prio >= PE_PRIO_MAX) {
+		log_warnx("pe_policy_open: illegal priority %d", prio);
+		return -EINVAL;
+	}
 
+	name = pe_policy_filename(uid, prio, "");
 	if (!name)
 		return -ENOMEM;
 	fd = open(name, O_RDONLY);
@@ -679,9 +691,13 @@ pe_dispatch_policy(struct anoubisd_msg_comm *comm)
 		 * XXX CEH: Authorized user ID is in comm->uid.
 		 * XXX CEH: Currently this assumes Admin == root == uid 0
 		 */
-		error = EPERM;
 		if (comm->uid != uid && comm->uid != 0)
+			error = EPERM;
+		if (prio >= PE_PRIO_MAX)
+			error = EINVAL;
+		if (error != 0)
 			goto reply;
+
 		fd = pe_policy_open(uid, prio);
 		req->uid = uid;
 		req->prio = prio;
@@ -724,12 +740,12 @@ pe_dispatch_policy(struct anoubisd_msg_comm *comm)
 				error = EPERM;
 				goto reply;
 			}
-			req->realname = pe_policy_filename(uid, prio);
+			req->realname = pe_policy_filename(uid, prio, "");
 			req->uid = uid;
 			req->prio = prio;
 			if (!req->realname)
 				goto reply;
-			tmp = __pe_policy_filename(uid, prio, ".tmp.");
+			tmp = pe_policy_filename(uid, prio, ".tmp.");
 			if (!tmp)
 				goto reply;
 			/* splint doesn't understand the %llu modifier */
@@ -788,7 +804,7 @@ pe_dispatch_policy(struct anoubisd_msg_comm *comm)
 				apn_free_ruleset(ruleset);
 				goto reply;
 			}
-			tmp = __pe_policy_filename(req->uid, req->prio,
+			tmp = pe_policy_filename(req->uid, req->prio,
 			    ".save.");
 			if (tmp == NULL) {
 				error = ENOMEM;
