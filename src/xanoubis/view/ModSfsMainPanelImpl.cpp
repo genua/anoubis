@@ -78,6 +78,7 @@ ModSfsMainPanelImpl::ModSfsMainPanelImpl(wxWindow* parent,
 	AnEvents::getInstance()->Connect(anEVT_LOAD_RULESET,
 	    wxCommandEventHandler(ModSfsMainPanelImpl::OnLoadRuleSet),
 	    NULL, this);
+	Hide();
 
 	initSfsOptions();
 	initSfsMain();
