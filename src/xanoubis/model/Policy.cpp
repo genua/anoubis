@@ -108,8 +108,8 @@ wxString
 Policy::getScopeName(void) const
 {
 	wxString	scope;
-	wxString	task;
-	wxString	timeout;
+	wxString	task = wxEmptyString;
+	wxString	timeout = wxEmptyString;
 
 	scope = wxEmptyString;
 	if ((rule_ != NULL) && hasScope()) {
@@ -122,11 +122,11 @@ Policy::getScopeName(void) const
 			   (unsigned long long)rule_->scope->task);
 		}
 		if (!timeout.IsEmpty() && task.IsEmpty()) {
-			scope.Printf(wxT("task %s"), task.c_str());
+			scope.Printf(_("until %s"), timeout.c_str());
 		} else if (timeout.IsEmpty() && !task.IsEmpty()) {
-			scope.Printf(wxT("until %s"), timeout.c_str());
+			scope.Printf(_("task %s"), task.c_str());
 		} else {
-			scope.Printf(wxT("until %s and task %s"),
+			scope.Printf(_("until %s for task %s"),
 			    timeout.c_str(), task.c_str());
 		}
 	}
