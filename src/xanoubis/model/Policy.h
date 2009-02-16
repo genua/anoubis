@@ -151,6 +151,13 @@ class Policy : public Subject
 		bool canMoveDown(void) const;
 
 		/**
+		 * Return true if this policy can be deleted.
+		 * @param None.
+		 * @return True if deletion is possible.
+		 */
+		virtual bool canDelete(void) const;
+
+		/**
 		 * Move the rule up in its surrounding rule list.
 		 * @param None.
 		 * @return True is successful.

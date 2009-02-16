@@ -563,7 +563,7 @@ DlgRuleEditor::onAppPolicySelect(wxListEvent & event)
 		if (ruleset && (geteuid() == 0 || !ruleset->isAdmin())) {
 			appListUpButton->Enable(policy->canMoveUp());
 			appListDownButton->Enable(policy->canMoveDown());
-			appListDeleteButton->Enable();
+			appListDeleteButton->Enable(policy->canDelete());
 		} else {
 			appListUpButton->Disable();
 			appListDownButton->Disable();

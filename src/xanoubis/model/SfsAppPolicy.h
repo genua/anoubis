@@ -71,6 +71,13 @@ class SfsAppPolicy : public AppPolicy
 		 * @return Nothing.
 		 */
 		virtual void accept(PolicyVisitor &);
+
+		/**
+		 * Do not allow deletion of SFS Application policies.
+		 * @param None
+		 * @return false
+		 */
+		bool canDelete(void) const;
 };
 
 #endif	/* _SFSAPPPOLICY_H_ */

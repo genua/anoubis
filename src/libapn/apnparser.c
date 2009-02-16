@@ -2303,14 +2303,36 @@ int
 apn_can_move_up(struct apn_rule *rule)
 {
 	struct apn_rule		*prev = TAILQ_PREV(rule, apn_chain, entry);
-	return (prev && prev != rule);
+
+	if (!rule || !prev)
+		return 0;
+	switch(rule->apn_type) {
+	case APN_ALF:
+	case APN_SFS:
+	case APN_SB:
+	case APN_CTX:
+		if (rule->app == NULL)
+			return 0;
+	}
+	return (prev != rule);
 }
 
 int
 apn_can_move_down(struct apn_rule *rule)
 {
 	struct apn_rule		*next = TAILQ_NEXT(rule, entry);
-	return (next && next != rule);
+
+	if (!rule || !next)
+		return 0;
+	switch(next->apn_type) {
+	case APN_ALF:
+	case APN_SFS:
+	case APN_SB:
+	case APN_CTX:
+		if (next->app == NULL)
+			return 0;
+	}
+	return (next != rule);
 }
 
 int
@@ -2320,6 +2342,8 @@ apn_move_up(struct apn_rule *rule)
 	struct apn_chain	*chain = rule->pchain;
 
 	if (!chain)
+		return -1;
+	if (!apn_can_move_up(rule))
 		return -1;
 	tmp = TAILQ_PREV(rule, apn_chain, entry);
 	if (!tmp || tmp == rule)
@@ -2336,6 +2360,8 @@ apn_move_down(struct apn_rule *rule)
 	struct apn_chain	*chain = rule->pchain;
 
 	if (!chain)
+		return -1;
+	if (!apn_can_move_down(rule))
 		return -1;
 	tmp = TAILQ_NEXT(rule, entry);
 	if (!tmp || tmp == rule)

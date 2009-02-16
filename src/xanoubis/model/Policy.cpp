@@ -151,6 +151,12 @@ Policy::canMoveDown(void) const
 }
 
 bool
+Policy::canDelete(void) const
+{
+	return (true);
+}
+
+bool
 Policy::moveUp(void)
 {
 	PolicyRuleSet	*prs = getParentRuleSet();

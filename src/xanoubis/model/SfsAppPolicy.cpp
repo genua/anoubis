@@ -80,3 +80,9 @@ SfsAppPolicy::accept(PolicyVisitor &visitor)
 	visitor.visitSfsAppPolicy(this);
 	acceptOnFilter(visitor);
 }
+
+bool
+SfsAppPolicy::canDelete(void) const
+{
+	return (false);
+}
