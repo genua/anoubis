@@ -79,6 +79,9 @@ class ModAnoubisMainPanelImpl : public ModAnoubisMainPanelBase
 		void editOptionsEnable(void);
 		void initPathLabel(void);
 		void setPathLabel(void);
+		void setAlfOptions(EscalationNotify *, NotifyAnswer *);
+		void setSfsOptions(EscalationNotify *, NotifyAnswer *);
+		void setSbOptions(EscalationNotify *, NotifyAnswer *);
 
 	protected:
 		void OnLoadRuleSet(wxCommandEvent&);

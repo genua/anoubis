@@ -269,6 +269,14 @@ class DlgRuleEditor : public Observer, public DlgRuleEditorBase
 		virtual void update(Subject *);
 
 		/**
+		 * This is called when an observed policy is about to
+		 * be destroyed.
+		 * @param[in] 1st The changed policy (aka subject)
+		 * @return Nothing.
+		 */
+		virtual void updateDelete(Subject *);
+
+		/**
 		 * Add application policy.
 		 * A new row is created (by addListRow()) and filled by
 		 * updateListAppPolicy(). This should be used by

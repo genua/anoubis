@@ -1,29 +1,3 @@
-/*
- * Copyright (c) 2009 GeNUA mbH <info@genua.de>
- *
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
- * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
- * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
- * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
- * TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
- * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
- * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
 ///////////////////////////////////////////////////////////////////////////
 // C++ code generated with wxFormBuilder (version Sep 28 2007)
 // http://www.wxformbuilder.org/
@@ -224,8 +198,6 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	sz_EscalationRight = new wxBoxSizer( wxVERTICAL );
 	
 	pn_EscalationAlf = new wxPanel( pn_EscalationOptions, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
-	pn_EscalationAlf->Hide();
-	
 	wxBoxSizer* sz_EscalationAlf;
 	sz_EscalationAlf = new wxBoxSizer( wxVERTICAL );
 	
@@ -241,8 +213,8 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	rb_EscalationAlf3 = new wxRadioButton( pn_EscalationAlf, wxID_ANY, _("all ports on this host"), wxDefaultPosition, wxDefaultSize, 0 );
 	sz_EscalationAlf->Add( rb_EscalationAlf3, 0, wxALL, 5 );
 	
-	rb_EscalatinAlf4 = new wxRadioButton( pn_EscalationAlf, wxID_ANY, _("all ports on all hosts"), wxDefaultPosition, wxDefaultSize, 0 );
-	sz_EscalationAlf->Add( rb_EscalatinAlf4, 0, wxALL, 5 );
+	rb_EscalationAlf4 = new wxRadioButton( pn_EscalationAlf, wxID_ANY, _("all ports on all hosts"), wxDefaultPosition, wxDefaultSize, 0 );
+	sz_EscalationAlf->Add( rb_EscalationAlf4, 0, wxALL, 5 );
 	
 	
 	sz_EscalationAlf->Add( 0, 0, 1, wxEXPAND, 5 );
@@ -324,6 +296,8 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	sz_EscalationRight->Add( pn_EscalationSb, 1, wxEXPAND | wxALL, 5 );
 	
 	pn_EscalationSfs = new wxPanel( pn_EscalationOptions, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	pn_EscalationSfs->Hide();
+	
 	wxBoxSizer* sz_EscalationSfs;
 	sz_EscalationSfs = new wxBoxSizer( wxVERTICAL );
 	

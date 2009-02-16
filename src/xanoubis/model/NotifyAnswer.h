@@ -51,6 +51,9 @@ class NotifyAnswer {
 		bool			wasAllowed_;
 		int			timeValue_;
 		enum timeUnit		timeUnit_;
+		unsigned long		flags_;
+		wxString		prefix_;
+		bool			openEditor_;
 
 	public:
 		NotifyAnswer(enum notifyAnswerType, bool);
@@ -62,6 +65,12 @@ class NotifyAnswer {
 		bool			causePermRule(void);
 		time_t			getTime(void);
 		enum notifyAnswerType	getType(void);
+		wxString		getPrefix(void);
+		void			setPrefix(wxString);
+		unsigned long		getFlags(void);
+		void			setFlags(unsigned long);
+		void			setEditor(bool);
+		bool			getEditor(void);
 };
 
 #endif	/* _NOTIFYANSWER_H_ */

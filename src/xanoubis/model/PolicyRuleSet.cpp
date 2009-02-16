@@ -528,522 +528,134 @@ PolicyRuleSet::refresh(void)
 	create(ruleset);
 }
 
-/*
- * XXX ch: re-enable this while adding functionality to the RuleEditor
- */
-#if 0
-bool
-PolicyRuleSet::hasLocalHost(wxArrayString list)
-{
-	bool result = false;
-
-	if (list.IsEmpty()) {
-		return (false);
-	}
-
-	for (size_t i=0; i<list.GetCount(); i++) {
-		if ((list.Item(i).Cmp(wxT("127.0.0.1")) == 0) ||
-		   (list.Item(i).Cmp(wxT("::1")) == 0)) {
-			result = true;
-		}
-	}
-
-	return (result);
-}
-
-#endif
-
-struct apn_rule *
-PolicyRuleSet::assembleAlfPolicy(AlfFilterPolicy *old,
-    EscalationNotify *escalation)
-{
-	struct apn_rule		*newAlfRule;
-	struct apn_afiltrule	*afilt;
-	struct apn_acaprule	*acap;
-	NotifyAnswer		*answer;
-
-	newAlfRule = old->cloneRule();
-	if (newAlfRule == NULL) {
-		return (NULL);
-	}
-
-	if (escalation->getAnswer()->causeTmpRule()) {
-		if (newAlfRule->scope == NULL) {
-			struct apn_scope	*scope = new apn_scope;
-			if (!scope) {
-				apn_free_one_rule(newAlfRule, NULL);
-				return NULL;
-			}
-			scope->timeout = 0;
-			scope->task = 0;
-			newAlfRule->scope = scope;
-		}
-	} else {
-		if (newAlfRule->scope != NULL) {
-			free(newAlfRule->scope);
-			newAlfRule->scope = NULL;
-		}
-	}
-
-	answer = escalation->getAnswer();
-	switch (newAlfRule->apn_type) {
-	case APN_ALF_FILTER:
-		afilt = &(newAlfRule->rule.afilt);
-		if (answer->wasAllowed()) {
-			afilt->action = APN_ACTION_ALLOW;
-		} else {
-			afilt->action = APN_ACTION_DENY;
-		}
-		afilt->filtspec.netaccess = escalation->getDirectionNo();
-
-		if (old->getDirectionNo() == APN_ACCEPT) {
-			apn_free_port(afilt->filtspec.fromport);
-			afilt->filtspec.fromport = NULL;
-			apn_free_host(afilt->filtspec.fromhost);
-			afilt->filtspec.fromhost = NULL;
-		} else {
-			apn_free_port(afilt->filtspec.toport);
-			afilt->filtspec.toport = NULL;
-			apn_free_host(afilt->filtspec.tohost);
-			afilt->filtspec.tohost = NULL;
-		}
-		break;
-	case APN_ALF_CAPABILITY:
-		if (answer->wasAllowed()) {
-			newAlfRule->rule.acap.action = APN_ACTION_ALLOW;
-		} else {
-			newAlfRule->rule.acap.action = APN_ACTION_DENY;
-		}
-		break;
-	case APN_DEFAULT:
-		short proto = escalation->getProtocolNo();
-		int log = old->getLogNo();
-		if (proto == IPPROTO_TCP || proto == IPPROTO_UDP) {
-			newAlfRule->apn_type = APN_ALF_FILTER;
-			afilt = &(newAlfRule->rule.afilt);
-			afilt->filtspec.log = log;
-			afilt->filtspec.netaccess =
-			    escalation->getDirectionNo();
-			if (answer->wasAllowed()) {
-				afilt->action = APN_ACTION_ALLOW;
-			} else {
-				afilt->action = APN_ACTION_DENY;
-			}
-			afilt->filtspec.af = 0; /* any */
-			afilt->filtspec.proto = escalation->getProtocolNo();
-			apn_free_port(afilt->filtspec.fromport);
-			afilt->filtspec.fromport = NULL;
-			apn_free_port(afilt->filtspec.toport);
-			afilt->filtspec.toport = NULL;
-			if (old->getDirectionNo() == APN_ACCEPT) {
-				apn_free_host(afilt->filtspec.tohost);
-				afilt->filtspec.tohost = NULL;
-			} else {
-				apn_free_host(afilt->filtspec.fromhost);
-				afilt->filtspec.fromhost = NULL;
-				}
-		} else if (proto == IPPROTO_ICMP) {
-			newAlfRule->apn_type = APN_ALF_CAPABILITY;
-			acap = &(newAlfRule->rule.acap);
-			acap->log = log;
-			if (answer->wasAllowed()) {
-				acap->action = APN_ACTION_ALLOW;
-			} else {
-				acap->action = APN_ACTION_DENY;
-			}
-			acap->capability = APN_ALF_CAPRAW;;
-		} else {
-			apn_free_one_rule(newAlfRule, NULL);
-			newAlfRule = NULL;
-		}
-		break;
-	}
-
-	return (newAlfRule);
-}
-
 void
 PolicyRuleSet::createAnswerPolicy(EscalationNotify *escalation)
 {
-	unsigned char			 csum[APN_HASH_SHA256_LEN];
-	wxString			 hashValue;
-	wxString			 filename;
+	struct apn_ruleset		*rs;
+	unsigned int			 triggerid;
+	unsigned long			 flags;
+	struct apn_rule			*triggerrule, *newblock = NULL;
+	struct apn_chain		 tmpchain;
+	const struct anoubis_msg	*msg;
+	const struct alf_event		*kernevent;
+	struct apn_default		 action;
+	time_t				 timeout = 0;
+	anoubis_cookie_t		 task = 0;
+	NotifyAnswer			*answer;
+	wxCommandEvent			 event(anEVT_LOAD_RULESET);
 	FilterPolicy			*triggerPolicy;
 	AppPolicy			*parentPolicy;
-	NotifyAnswer			*answer;
-	RuleSetSearchPolicyVisitor	*seeker;
-	struct apn_rule			*newAlfRule;
-	struct apn_rule			*newTmpAlfRule;
-	bool				 hasChecksum;
-	wxCommandEvent			 event(anEVT_LOAD_RULESET);
+	wxString			 module = escalation->getModule();
 
-	/* get the policy caused this escalation */
-	seeker = new RuleSetSearchPolicyVisitor(escalation->getRuleId());
-	this->accept(*seeker);
-	if (! seeker->hasMatchingPolicy()) {
+	TAILQ_INIT(&tmpchain);
+	rs = getApnRuleSet();
+	if (!rs)
 		return;
-	}
-	/* XXX CEH: Must first check that this cast is in fact OK. */
-	triggerPolicy = wxDynamicCast(seeker->getMatchingPolicy(),
-	    FilterPolicy);
-	delete seeker;
-	switch (triggerPolicy->getTypeID()) {
-	case APN_ALF_FILTER:
-	case APN_ALF_CAPABILITY:
-		break;
-	case APN_DEFAULT:
-		if (triggerPolicy->getParentPolicy()->getTypeID() == APN_ALF)
-			break;
-		/* FALLTHROUGH */
-	default:
-		/* XXX CEH: Cannot deal with other types yet. */
-		return;
-	}
-
-	/* get the enclosing app policy */
-	parentPolicy = triggerPolicy->getParentPolicy();
-	if (!parentPolicy) {
-		status(_("Could not modify Policy (no such rule)"));
-		return;
-	}
-
-	filename = escalation->getBinaryName();
-	hasChecksum = escalation->getChecksum(csum);
-
-	newAlfRule = assembleAlfPolicy((AlfFilterPolicy*)triggerPolicy,
-	    escalation);
-	if (newAlfRule == NULL) {
-		status(_("Couldn't clone and insert policy."));
-		return;
-	}
-
-	if (!parentPolicy->isAnyBlock()) {
-		/*
-		 * This escalation was caused by a rule that is not an
-		 * element of an any-rule. Thus we can just insert the new
-		 * policy before the triggering rule.
-		 */
-		newAlfRule->apn_id = 0;
-		apn_insert_alfrule(ruleSet_, newAlfRule,
-		    escalation->getRuleId());
-	} else {
-		int				 hashType;
-		RuleSetSearchPolicyVisitor	*seekDouble;
-		/*
-		 * This escalation was caused by a rule been placed within an
-		 * any-rule. Thus we have to copy the any block and insert
-		 * the new rule to the new block.
-		 */
-		if (hasChecksum) {
-			hashType = APN_HASH_SHA256;
-			PolicyUtils::csumToString(csum,
-			    MAX_APN_HASH_LEN, hashValue);
-		} else {
-			hashType = APN_HASH_NONE;
-			hashValue = wxEmptyString;
-		}
-		seekDouble = new RuleSetSearchPolicyVisitor(hashValue);
-		this->accept(*seekDouble);
-		if (!seekDouble->hasMatchingPolicy()) {
-			/* XXX CEH: Handle errors returned by copyinsert_alf */
-			apn_copyinsert_alf(ruleSet_, newAlfRule,
-			    escalation->getRuleId(), filename.To8BitData(),
-			    csum, hashType);
-		}
-		delete seekDouble;
-		/*
-		 * XXX ch: we also add an allow rule to the any-block,
-		 * because the current running application may not leave it.
-		 * Refere to bug #630 for this topic.
-		 */
-		newTmpAlfRule = assembleAlfPolicy(
-		    (AlfFilterPolicy *)triggerPolicy, escalation);
-		if (newAlfRule == NULL) {
-			status(_("Couldn't clone and insert policy."));
-			return;
-		}
-		if (newTmpAlfRule->scope == NULL) {
-			struct apn_scope	*scope;
-			scope = new apn_scope;
-			scope->timeout = 0;
-			scope->task = 0;
-			newTmpAlfRule->scope = scope;
-		}
-		newTmpAlfRule->scope->task = escalation->getTaskCookie();
-		answer = escalation->getAnswer();
-		if (answer->getType() == NOTIFY_ANSWER_TIME) {
-			newAlfRule->scope->timeout = answer->getTime();
-		}
-		apn_insert_alfrule(ruleSet_, newTmpAlfRule,
-		    escalation->getRuleId());
-	}
 
 	answer = escalation->getAnswer();
+	triggerid = escalation->getRuleId();
+	flags = answer->getFlags();
+	triggerrule = apn_find_rule(rs, triggerid);
+	if (!triggerrule)
+		return;
+	triggerPolicy = wxDynamicCast(triggerrule->userdata, FilterPolicy);
+	if (!triggerPolicy)
+		return;
+	parentPolicy = triggerPolicy->getParentPolicy();
+	if (!parentPolicy)
+		return;
+	if (parentPolicy->isAnyBlock() && module != wxT("SFS")) {
+		wxString		 filename;
+		unsigned char		 csum[APN_HASH_SHA256_LEN];
+		struct apn_rule		*tmp;
+
+		filename = escalation->getCtxBinaryName();
+		if (filename.IsEmpty())
+			goto err;
+		if (!escalation->getCtxChecksum(csum))
+			goto err;
+		newblock = apn_find_rule(rs, parentPolicy->getApnRuleId());
+		if (!newblock)
+			goto err;
+		tmp = apn_match_app(newblock->pchain, filename.To8BitData(),
+		    csum);
+		if (tmp != newblock) {
+			newblock = NULL;
+			goto err;
+		}
+		newblock = apn_copy_one_rule(newblock);
+		if (!newblock)
+			goto err;
+		TAILQ_FOREACH(triggerrule, &newblock->rule.chain, entry)
+			if (triggerrule->apn_id == triggerid)
+				break;
+		if (!triggerrule)
+			goto err;
+		if (apn_add_app(newblock, filename.To8BitData(), csum) != 0)
+			goto err;
+	}
+	msg = escalation->rawMsg();
+	if (answer->wasAllowed()) {
+		action.action = APN_ACTION_ALLOW;
+		action.log = APN_LOG_NONE;
+	} else {
+		action.action = APN_ACTION_DENY;
+		action.log = APN_LOG_NORMAL;
+	}
 	if (answer->causeTmpRule()) {
 		if (answer->getType() == NOTIFY_ANSWER_TIME) {
-			newAlfRule->scope->timeout = answer->getTime();
+			timeout = answer->getTime();
 		} else {
-			newAlfRule->scope->task = escalation->getTaskCookie();
+			task = escalation->getTaskCookie();
 		}
 	}
-
+	/* XXX CEH: Only handle ALF events for now. */
+	if (module == wxT("ALF")) {
+		kernevent = (struct alf_event *)&msg->u.notify->payload;
+		if (apn_escalation_rule_alf(&tmpchain, kernevent,
+		    &action, flags) != 0) {
+			goto err;
+		}
+	} else {
+		goto err;
+	}
+	if (apn_escalation_addscope(&tmpchain, triggerrule->scope,
+	    timeout, task) != 0)
+		goto err;
+	if (newblock) {
+		if (apn_escalation_splice(NULL, triggerrule, &tmpchain) != 0)
+			goto err;
+		if (apn_insert(rs, newblock, parentPolicy->getApnRuleId()) != 0)
+			goto err;
+	} else {
+		if (apn_escalation_splice(rs, triggerrule, &tmpchain) != 0)
+			goto err;
+	}
 	/* this PolicyRuleSet has changed, update myself */
-	clean();
-	create(this->ruleSet_);
+	refresh();
 
 	ProfileCtrl::getInstance()->sendToDaemon(getRuleSetId());
 	event.SetClientData(this);
 	wxPostEvent(AnEvents::getInstance(), event);
-
+	return;
+err:
+	/* XXX CEH: Serious error! Show a popup here? */
+	while(!TAILQ_EMPTY(&tmpchain)) {
+		struct apn_rule		*tmp = TAILQ_FIRST(&tmpchain);
+		TAILQ_REMOVE(&tmpchain, tmp, entry);
+		apn_free_one_rule(tmp, NULL);
+	}
+	if (newblock)
+		apn_free_one_rule(newblock, NULL);
+	return;
 }
-
-#if 0
-int
-PolicyRuleSet::createAppPolicy(int type, int insertBeforeId)
-{
-	int		 newId;
-	int		 rc;
-	wxCommandEvent	 event(anEVT_LOAD_RULESET);
-	struct apn_rule	*newAppRule;
-
-	newId	   = -1;
-	newAppRule = CALLOC_STRUCT(apn_rule);
-
-	if (newAppRule == NULL) {
-		return (-1);
-	}
-
-	newAppRule->apn_type = type;
-	newAppRule->app = CALLOC_STRUCT(apn_app);
-	if (newAppRule->app == NULL) {
-		free(newAppRule);
-		return (-1);
-	}
-
-	newAppRule->app->hashtype = APN_HASH_NONE;
-	switch(type) {
-	case APN_ALF:
-		if (TAILQ_EMPTY(&ruleSet_->alf_queue))
-			insertBeforeId = 0;
-		break;
-	case APN_SB:
-		if (TAILQ_EMPTY(&ruleSet_->sb_queue))
-			insertBeforeId = 0;
-		break;
-	case APN_CTX:
-		if (TAILQ_EMPTY(&ruleSet_->ctx_queue))
-			insertBeforeId = 0;
-		break;
-	}
-	rc = apn_insert(ruleSet_, newAppRule, insertBeforeId);
-	if (rc == 0) {
-		newId = newAppRule->apn_id;
-		clean();
-		create(ruleSet_);
-		event.SetClientData((void*)this);
-		wxPostEvent(AnEvents::getInstance(), event);
-	} else {
-		free(newAppRule->app);
-		free(newAppRule);
-	}
-
-	return (newId);
-}
-
-int
-PolicyRuleSet::createAlfPolicy(int insertBeforeId)
-{
-	int				 newId;
-	int				 rc;
-	wxCommandEvent			 event(anEVT_LOAD_RULESET);
-	RuleSetSearchPolicyVisitor	 seeker(insertBeforeId);
-	Policy				*parentPolicy;
-	struct apn_rule			*newAlfRule;
-
-	this->accept(seeker);
-	if (! seeker.hasMatchingPolicy()) {
-		return (-1);
-	}
-
-	newId = -1;
-	rc = -1;
-	newAlfRule = CALLOC_STRUCT(apn_rule);
-	parentPolicy = seeker.getMatchingPolicy();
-
-	if (newAlfRule == NULL) {
-		return (-1);
-	}
-
-	newAlfRule->apn_type = APN_ALF_FILTER;
-	newAlfRule->rule.afilt.filtspec.proto = IPPROTO_TCP;
-	newAlfRule->rule.afilt.filtspec.af = AF_INET;
-	newAlfRule->rule.afilt.filtspec.netaccess = APN_CONNECT;
-
-	if (parentPolicy->IsKindOf(CLASSINFO(AppPolicy))) {
-		rc = apn_add2app_alfrule(ruleSet_, newAlfRule, insertBeforeId);
-	} else if (parentPolicy->IsKindOf(CLASSINFO(AlfPolicy))) {
-		rc = apn_insert_alfrule(ruleSet_, newAlfRule, insertBeforeId);
-	}
-
-	if (rc == 0) {
-		newId = newAlfRule->apn_id;
-		clean();
-		create(ruleSet_);
-		event.SetClientData((void*)this);
-		wxPostEvent(AnEvents::getInstance(), event);
-	} else {
-		free(newAlfRule);
-	}
-
-	return (newId);
-}
-
-int
-PolicyRuleSet::createCtxNewPolicy(int insertBeforeId)
-{
-	int				 newId;
-	int				 rc;
-	wxCommandEvent			 event(anEVT_LOAD_RULESET);
-	RuleSetSearchPolicyVisitor	 seeker(insertBeforeId);
-	Policy				*parentPolicy;
-	struct apn_rule			*newrule;
-
-	this->accept(seeker);
-	if (! seeker.hasMatchingPolicy()) {
-		return (-1);
-	}
-
-	newId = -1;
-	rc = -1;
-	newrule = CALLOC_STRUCT(apn_rule);
-	parentPolicy = seeker.getMatchingPolicy();
-
-	if (newrule == NULL) {
-		return (-1);
-	}
-	newrule->apn_type = APN_CTX_RULE;
-	newrule->rule.apncontext.application = CALLOC_STRUCT(apn_app);
-	if (newrule->rule.apncontext.application == NULL) {
-		free(newrule);
-		return (-1);
-	}
-
-	newrule->rule.apncontext.application->hashtype = APN_HASH_NONE;
-	if (parentPolicy->IsKindOf(CLASSINFO(AppPolicy))) {
-		rc = apn_add2app_ctxrule(ruleSet_, newrule, insertBeforeId);
-	} else if (parentPolicy->IsKindOf(CLASSINFO(CtxPolicy))) {
-		rc = apn_insert_ctxrule(ruleSet_, newrule, insertBeforeId);
-	}
-
-	if (rc == 0) {
-		newId = newrule->apn_id;
-		clean();
-		create(ruleSet_);
-		event.SetClientData((void*)this);
-		wxPostEvent(AnEvents::getInstance(), event);
-	} else {
-		free(newrule->rule.apncontext.application);
-		free(newrule);
-	}
-
-	return (newId);
-}
-
-int
-PolicyRuleSet::createSfsPolicy(int insertBeforeId)
-{
-	int				 newId;
-	int				 rc;
-	wxCommandEvent			 event(anEVT_LOAD_RULESET);
-	RuleSetSearchPolicyVisitor	 seeker(insertBeforeId);
-	Policy				*parentPolicy;
-	struct apn_rule			*sfsRootRule;
-	struct apn_rule			*newSfsRule;
-
-	this->accept(seeker);
-
-	newId = -1;
-	rc = -1;
-	newSfsRule = CALLOC_STRUCT(apn_rule);
-	if (! seeker.hasMatchingPolicy()) {
-		parentPolicy = NULL;
-	} else {
-		parentPolicy = seeker.getMatchingPolicy();
-	}
-
-	if (newSfsRule == NULL) {
-		return (-1);
-	}
-
-	newSfsRule->apn_type = APN_SFS_CHECK;
-	newSfsRule->rule.sfscheck.app = CALLOC_STRUCT(apn_app);
-	if (newSfsRule->rule.sfscheck.app == NULL) {
-		free(newSfsRule);
-		return (-1);
-	}
-
-	newSfsRule->apn_id = 0;
-	newSfsRule->rule.sfscheck.app->hashtype = APN_HASH_NONE;
-
-	if (TAILQ_EMPTY(&(ruleSet_->sfs_queue))) {
-		sfsRootRule = 0; // XXX CALLOC_STRUCT(apn_rule);
-		sfsRootRule->apn_type = APN_SFS;
-		apn_add(ruleSet_, sfsRootRule);
-	}
-	/* we assume sfs_queue will contain only one element */
-	sfsRootRule = TAILQ_FIRST(&(ruleSet_->sfs_queue));
-
-	if (parentPolicy && parentPolicy->IsKindOf(CLASSINFO(SfsPolicy))) {
-		rc = apn_insert_sfsrule(ruleSet_, newSfsRule, insertBeforeId);
-	} else {
-		rc = apn_add2app_sfsrule(ruleSet_, newSfsRule,
-		    sfsRootRule->apn_id);
-	}
-
-	if (rc == 0) {
-		newId = newSfsRule->apn_id;
-		clean();
-		create(ruleSet_);
-		event.SetClientData((void*)this);
-		wxPostEvent(AnEvents::getInstance(), event);
-	} else {
-		free(newSfsRule);
-	}
-
-	return (newId);
-}
-
-bool
-PolicyRuleSet::findMismatchHash(void)
-{
-	RuleEditorChecksumVisitor	seeker;
-
-	this->accept(seeker);
-
-	return (seeker.hasMismatch());
-}
-
-bool
-PolicyRuleSet::deletePolicy(int id)
-{
-	wxCommandEvent			 event(anEVT_LOAD_RULESET);
-
-	apn_remove(ruleSet_, id);
-	clean();
-	create(ruleSet_);
-	event.SetClientData((void*)this);
-	wxPostEvent(AnEvents::getInstance(), event);
-
-	return (true);
-}
-#endif
 
 void
 PolicyRuleSet::log(const wxString &msg)
 {
 	/*
 	 * Enable logging if AnoubisGuiApp is available.
-	 * You don't have a AnoubisGuiApp in can of a unit-test.
+	 * You don't have a AnoubisGuiApp in case of a unit-test.
 	 */
 	if (dynamic_cast<AnoubisGuiApp*>(wxTheApp))
 		wxGetApp().log(msg);

@@ -78,6 +78,7 @@ class EscalationNotify : public Notification {
 		anoubis_token_t	 getToken(void);
 		anoubis_cookie_t getTaskCookie(void);
 		wxString	 getBinaryName(void);
+		wxString	 getCtxBinaryName(void);
 		bool		 getChecksum(unsigned char *);
 		bool		 getCtxChecksum(unsigned char *);
 		int		 getProtocolNo(void);
@@ -87,6 +88,9 @@ class EscalationNotify : public Notification {
 		bool		 allowOptions(void);
 		wxString	 rulePath(void);
 		void		 setRulePath(wxString);
+		const struct anoubis_msg *rawMsg(void) {
+			return notify_;
+		}
 };
 
 #endif	/* _ESCALATIONNOTIFY_H_ */

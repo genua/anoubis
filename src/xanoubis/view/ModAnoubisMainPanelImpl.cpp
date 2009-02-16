@@ -62,6 +62,9 @@
 #include "NotifyAnswer.h"
 #include "VersionCtrl.h"
 
+#include "apn.h"
+
+
 #define ZERO_SECONDS	0
 #define TEN_SECONDS	10
 
@@ -862,12 +865,70 @@ ModAnoubisMainPanelImpl::OnLastBtnClick(wxCommandEvent&)
 }
 
 void
+ModAnoubisMainPanelImpl::setAlfOptions(EscalationNotify *current,
+    NotifyAnswer *answer)
+{
+	unsigned long	flags = 0;
+	int		proto;
+
+	proto = current->getProtocolNo();
+	if (proto == IPPROTO_TCP) {
+		flags = 0;
+	} else  if (proto == IPPROTO_UDP) {
+		flags = ALF_EV_ALLDIR;
+	} else {
+		return;
+	}
+	if (rb_EscalationAlf1->GetValue()) {
+		/* Nothing */
+	} else if (rb_EscalationAlf2->GetValue()) {
+		flags |= ALF_EV_ALLPEER;
+	} else if (rb_EscalationAlf3->GetValue()) {
+		flags |= ALF_EV_ALLPORT;
+	} else if (rb_EscalationAlf4->GetValue()) {
+		flags |= (ALF_EV_ALLPORT|ALF_EV_ALLPEER);
+	} else {
+		flags = 0;
+	}
+	answer->setFlags(flags);
+}
+
+void
+ModAnoubisMainPanelImpl::setSfsOptions(EscalationNotify *current,
+    NotifyAnswer *answer)
+{
+	answer->setPrefix(tx_EscalationSfsPath->GetLabel());
+	answer->setFlags(current->getSfsmatch());
+}
+
+void
+ModAnoubisMainPanelImpl::setSbOptions(EscalationNotify *, NotifyAnswer *answer)
+{
+	unsigned long flags = 0;
+
+	answer->setPrefix(tx_EscalationSbPath->GetLabel());
+	if (ck_EscalationSbRead->GetValue()) {
+		flags |= APN_SBA_READ;
+	}
+	if (ck_EscalationSbWrite->GetValue()) {
+		flags |= APN_SBA_WRITE;
+	}
+	if (ck_EscalationSbExec->GetValue()) {
+		flags |= APN_SBA_EXEC;
+	}
+	answer->setFlags(flags);
+}
+
+void
 ModAnoubisMainPanelImpl::answer(bool permission)
 {
-	ModAnoubis	*module;
-	NotifyAnswer	*answer;
+	ModAnoubis		*module;
+	NotifyAnswer		*answer;
+	EscalationNotify	*current;
+	wxString		 escalationType;
 
-	if (IS_ESCALATIONOBJ(currentNotify_)) {
+	current = dynamic_cast<EscalationNotify *>(currentNotify_);
+	if (current) {
 		module = (ModAnoubis *)(wxGetApp().getModule(ANOUBIS));
 
 		if (rb_EscalationOnce->GetValue()) {
@@ -889,9 +950,18 @@ ModAnoubisMainPanelImpl::answer(bool permission)
 			answer = new NotifyAnswer(NOTIFY_ANSWER_NONE,
 			    permission);
 		}
-
-		module->answerEscalationNotify(
-		    (EscalationNotify *)currentNotify_, answer);
+		answer->setEditor(ck_EscalationEditor->GetValue());
+		if (current->allowOptions()) {
+			escalationType = current->getModule();
+			if (escalationType == wxT("ALF")) {
+				setAlfOptions(current, answer);
+			} else if (escalationType == wxT("SFS")) {
+				setSfsOptions(current, answer);
+			} else if (escalationType == wxT("SB")) {
+				setSbOptions(current, answer);
+			}
+		}
+		module->answerEscalationNotify(current, answer);
 	}
 	currentNotify_ = NULL;
 	update();
@@ -1440,9 +1510,11 @@ ModAnoubisMainPanelImpl::setPathLabel(void)
 		tx_EscalationSfsPath->SetLabel(path);
 		bt_EscalationSfsPathLeft->Enable(canleft);
 		bt_EscalationSfsPathRight->Enable(canright);
+		pn_EscalationSfs->Layout();
 	} else {
 		tx_EscalationSbPath->SetLabel(path);
 		bt_EscalationSbPathLeft->Enable(canleft);
 		bt_EscalationSbPathRight->Enable(canright);
+		pn_EscalationSb->Layout();
 	}
 }

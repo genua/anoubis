@@ -40,10 +40,12 @@ Policy::Policy(PolicyRuleSet *ruleSet, struct apn_rule *rule)
 	modified_	= false;
 	parentRuleSet_	= ruleSet;
 	rule_		= rule;
+	rule_->userdata	= this;
 }
 
 Policy::~Policy(void)
 {
+	rule_->userdata = NULL;
 	/* No need to clean apn_rule; This is done by the ruleset. */
 }
 

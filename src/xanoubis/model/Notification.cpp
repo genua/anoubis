@@ -508,3 +508,9 @@ Notification::getUid(void)
 {
 	return get_value(notify_->u.notify->uid);
 }
+
+int
+Notification::getSfsmatch(void)
+{
+	return get_value(notify_->u.notify->sfsmatch);
+}

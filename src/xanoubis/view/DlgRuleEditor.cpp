@@ -345,6 +345,22 @@ DlgRuleEditor::update(Subject *subject)
 }
 
 void
+DlgRuleEditor::updateDelete(Subject *subject)
+{
+	long		 idx = -1;
+
+	idx = findListRow(appPolicyListCtrl, (Policy *)subject);
+	if (idx != -1) {
+		appPolicyListCtrl->SetItemPtrData(idx, (wxUIntPtr)0);
+	} else {
+		idx = findListRow(filterPolicyListCtrl, (Policy *)subject);
+		if (idx != -1) {
+			filterPolicyListCtrl->SetItemPtrData(idx, (wxUIntPtr)0);
+		}
+	}
+}
+
+void
 DlgRuleEditor::addAppPolicy(AppPolicy *policy)
 {
 	long index;
@@ -852,7 +868,10 @@ DlgRuleEditor::onAppListColumnsButtonClick(wxCommandEvent &)
 			appColumns_[selections.Item(i)+1]->setVisability(true);
 		}
 
-		/* call to enforce redrawing of the current view */
+		/*
+		 * Redraw the current view. No need to call wipeAppList here
+		 * because the rule sets did not change.
+		 */
 		loadRuleSet();
 	}
 

@@ -134,6 +134,27 @@ EscalationNotify::getBinaryName(void)
 	return (result);
 }
 
+wxString
+EscalationNotify::getCtxBinaryName(void)
+{
+	wxString result;
+	int	 offset;
+	int	 length;
+	char	*buffer;
+
+	offset = get_value(notify_->u.notify->ctxpathoff);
+	length = get_value(notify_->u.notify->ctxpathlen);
+
+	if (length <= 0) {
+		result = wxEmptyString;
+	} else {
+		buffer = notify_->u.notify->payload + offset;
+		result = wxString::From8BitData(buffer, length);
+	}
+
+	return (result);
+}
+
 bool
 EscalationNotify::getChecksum(unsigned char csum[MAX_APN_HASH_LEN])
 {

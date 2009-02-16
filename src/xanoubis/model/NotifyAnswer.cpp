@@ -35,6 +35,9 @@ NotifyAnswer::NotifyAnswer(enum notifyAnswerType type, bool allow)
 {
 	type_ = type;
 	wasAllowed_ = allow;
+	openEditor_ = false;
+	flags_ = 0;
+	prefix_ = wxEmptyString;
 }
 
 NotifyAnswer::NotifyAnswer(enum notifyAnswerType type, bool allow, int value,
@@ -160,4 +163,40 @@ enum notifyAnswerType
 NotifyAnswer::getType(void)
 {
 	return (type_);
+}
+
+void
+NotifyAnswer::setEditor(bool value)
+{
+	openEditor_ = value;
+}
+
+bool
+NotifyAnswer::getEditor(void)
+{
+	return openEditor_;
+}
+
+void
+NotifyAnswer::setFlags(unsigned long value)
+{
+	flags_ = value;
+}
+
+unsigned long
+NotifyAnswer::getFlags(void)
+{
+	return flags_;
+}
+
+void
+NotifyAnswer::setPrefix(wxString value)
+{
+	prefix_ = value;
+}
+
+wxString
+NotifyAnswer::getPrefix(void)
+{
+	return prefix_;
 }
