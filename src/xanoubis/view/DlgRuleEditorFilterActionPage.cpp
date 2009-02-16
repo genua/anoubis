@@ -27,6 +27,7 @@
 
 #include "DlgRuleEditorFilterActionPage.h"
 
+#include "PolicyRuleSet.h"
 #include "AlfFilterPolicy.h"
 #include "AlfCapabilityFilterPolicy.h"
 #include "SbAccessFilterPolicy.h"
@@ -58,8 +59,14 @@ DlgRuleEditorFilterActionPage::select(FilterPolicy *policy)
 	    policy->IsKindOf(CLASSINFO(SbAccessFilterPolicy)) ||
 	    policy->IsKindOf(CLASSINFO(DefaultFilterPolicy)) ||
 	    policy->IsKindOf(CLASSINFO(SfsDefaultFilterPolicy)) ) {
+	    	PolicyRuleSet	*ruleset = policy->getParentRuleSet();
 		policy_ = policy;
 		DlgRuleEditorPage::select(policy);
+		if (ruleset && ruleset->isAdmin() && geteuid() != 0) {
+			askRadioButton->Disable();
+		} else {
+			askRadioButton->Enable();
+		}
 		Show();
 	}
 }
