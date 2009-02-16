@@ -29,8 +29,9 @@
 #include "main.h"
 
 RuleEditorAddPolicyVisitor::RuleEditorAddPolicyVisitor(
-    DlgRuleEditor *ruleEditor) : RuleEditorFillTableVisitor(ruleEditor, 0)
+    DlgRuleEditor *ruleEditor) : PolicyVisitor()
 {
+	ruleEditor_ = ruleEditor;
 	setPropagation(true);
 }
 

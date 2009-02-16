@@ -33,7 +33,7 @@
 #endif
 
 #include "DlgRuleEditor.h"
-#include "RuleEditorFillTableVisitor.h"
+#include "PolicyVisitor.h"
 
 #include "Policy.h"
 #include "AlfAppPolicy.h"
@@ -51,10 +51,8 @@
 /**
  * PolicyVisitor for RuleEditor.
  * This visitor adds the visited policies to the list of RuleEditor.
- * It uses the methods inherited from RuleEditorFillTableVisitor to fill
- * the added line with content.
  */
-class RuleEditorAddPolicyVisitor : public RuleEditorFillTableVisitor
+class RuleEditorAddPolicyVisitor : public PolicyVisitor
 {
 	public:
 		/**
@@ -131,6 +129,12 @@ class RuleEditorAddPolicyVisitor : public RuleEditorFillTableVisitor
 		 */
 		virtual void visitSfsDefaultFilterPolicy(
 		    SfsDefaultFilterPolicy *);
+
+	private:
+		/**
+		 * Store the RuleEditor here.
+		 */
+		DlgRuleEditor *ruleEditor_;
 };
 
 #endif	/* _RULEEDITORADDPOLICYVISITOR_H_ */

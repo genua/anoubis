@@ -325,10 +325,6 @@ xanoubis_SOURCES= \
 	control/KeyCtrl.h \
 	control/RuleEditorAddPolicyVisitor.cpp \
 	control/RuleEditorAddPolicyVisitor.h \
-	control/RuleEditorFillWidgetsVisitor.cpp \
-	control/RuleEditorFillWidgetsVisitor.h \
-	control/RuleEditorFillTableVisitor.cpp \
-	control/RuleEditorFillTableVisitor.h \
 	control/ModAlfAddPolicyVisitor.cpp \
 	control/ModAlfAddPolicyVisitor.h \
 	control/ModSfsAddPolicyVisitor.cpp \
