@@ -97,6 +97,13 @@ void			 pe_proc_set_pid(struct pe_proc *, pid_t);
 struct pe_proc_ident	*pe_proc_ident(struct pe_proc *);
 int			 pe_proc_set_sfsdisable(pid_t, uid_t);
 int			 pe_proc_is_sfsdisable(struct pe_proc *, uid_t);
+void			 pe_proc_save_ctx(struct pe_proc *, int,
+			     anoubis_cookie_t);
+void			 pe_proc_restore_ctx(struct pe_proc *, int,
+			     anoubis_cookie_t);
+struct pe_context	*pe_proc_get_savedctx(struct pe_proc *, int);
+void			 pe_proc_set_savedctx( struct pe_proc *, int,
+			     struct pe_context *);
 
 /* pe_context access functions */
 struct pe_proc_ident	*pe_context_get_ident(struct pe_context *);
@@ -115,6 +122,9 @@ void			 pe_context_exec(struct pe_proc *, uid_t,
 void			 pe_context_fork(struct pe_proc *, struct pe_proc *);
 void			 pe_context_open(struct pe_proc *,
 			     struct eventdev_hdr *);
+void			 pe_context_borrow(struct pe_proc *, struct pe_proc *,
+			     anoubis_cookie_t);
+void			 pe_context_restore(struct pe_proc *, anoubis_cookie_t);
 char			*pe_context_dump(struct eventdev_hdr *,
 			     struct pe_proc *, int);
 
@@ -162,7 +172,7 @@ anoubisd_reply_t	*pe_decide_sandbox(struct pe_proc *proc,
 			     struct pe_file_event *, struct eventdev_hdr *);
 int			 pe_sfs_getrules(uid_t, int, const char *,
 			     struct apn_rule ***);
-int			 pe_sb_getrules(struct pe_proc *, uid_t, int, 
+int			 pe_sb_getrules(struct pe_proc *, uid_t, int,
 			     const char *, struct apn_rule ***);
 
 

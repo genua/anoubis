@@ -1069,6 +1069,9 @@ apn_print_contextrule(struct apn_context *rule, FILE *file)
 	case APN_CTX_OPEN:
 		fprintf(file, "open ");
 		break;
+	case APN_CTX_BORROW:
+		fprintf(file, "borrow ");
+		break;
 	default:
 		return (1);
 	}

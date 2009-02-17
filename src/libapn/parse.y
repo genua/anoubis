@@ -181,7 +181,7 @@ typedef struct {
 %token	INET INET6 FROM TO PORT ANY SHA256 TCP UDP DEFAULT NEW ASK ALERT OPEN
 %token	READ WRITE EXEC CHMOD ERROR APPLICATION RULE HOST TFILE BOTH SEND
 %token	RECEIVE TIMEOUT STATEFUL TASK UNTIL COLON PATH KEY UID CSUM
-%token	SELF SIGNEDSELF VALID INVALID UNKNOWN CONTINUE
+%token	SELF SIGNEDSELF VALID INVALID UNKNOWN CONTINUE BORROW
 %token	<v.string>		STRING
 %destructor { free($$); }	STRING
 %token	<v.number>		NUMBER
@@ -1274,6 +1274,10 @@ ctxruleapps	: CONTEXT NEW apps		{
 			$$.application = $3;
 			$$.type = APN_CTX_OPEN;
 		}
+		| CONTEXT BORROW apps		{
+			$$.application = $3;
+			$$.type = APN_CTX_BORROW;
+		}
 		;
 
 
@@ -1460,6 +1464,7 @@ lookup(char *s)
 		{ "any",	ANY },
 		{ "application", APPLICATION },
 		{ "ask",	ASK },
+		{ "borrow",	BORROW },
 		{ "both",	BOTH },
 		{ "cap",	CAP },
 		{ "chmod",	CHMOD },

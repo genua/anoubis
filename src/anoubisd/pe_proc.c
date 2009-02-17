@@ -69,9 +69,11 @@ struct pe_proc {
 
 	struct pe_proc_ident	 ident;
 	anoubis_cookie_t	 task_cookie;
+	anoubis_cookie_t	 borrow_cookie;
 
 	/* Per priority contexts */
 	struct pe_context	*context[PE_PRIO_MAX];
+	struct pe_context	*saved_ctx[PE_PRIO_MAX];
 
 	/* Pointer to kernel cache */
 	struct anoubis_kernel_policy_header	*kcache;
@@ -167,8 +169,10 @@ pe_proc_put(struct pe_proc *proc)
 		return;
 	pe_proc_ident_put(&proc->ident);
 
-	for (i = 0; i < PE_PRIO_MAX; i++)
+	for (i = 0; i < PE_PRIO_MAX; i++) {
 		pe_context_put(proc->context[i]);
+		pe_context_put(proc->saved_ctx[i]);
+	}
 
 	kernelcache_clear(proc->kcache);
 
@@ -183,6 +187,7 @@ pe_proc_alloc(uid_t uid, anoubis_cookie_t cookie, struct pe_proc_ident *pident)
 	if ((proc = calloc(1, sizeof(struct pe_proc))) == NULL)
 		goto oom;
 	proc->task_cookie = cookie;
+	proc->borrow_cookie = 0;
 	proc->pid = -1;
 	proc->uid = uid;
 	proc->sfsdisable_pid = (pid_t)-1;
@@ -301,9 +306,11 @@ pe_proc_dump(void)
 	TAILQ_FOREACH(proc, &tracker, entry) {
 		ctx0 = proc->context[0];
 		ctx1 = proc->context[1];
-		log_info("proc %p token 0x%08llx pid %d csum 0x%08x "
-		    "pathhint \"%s\" ctx %p %p alfrules %p %p sbrules %p %p",
-		    proc, (unsigned long long)proc->task_cookie, (int)proc->pid,
+		log_info("proc %p token 0x%08llx borrow token 0x%08llx "
+		    "pid %d csum 0x%08x pathhint \"%s\" ctx %p %p alfrules "
+		    "%p %p sbrules %p %p",
+		    proc, (unsigned long long)proc->task_cookie,
+		    (unsigned long long)proc->borrow_cookie, (int)proc->pid,
 		    proc->ident.csum ?
 		    htonl(*(unsigned long *)proc->ident.csum) : 0,
 		    proc->ident.pathhint ? proc->ident.pathhint : "",
@@ -491,4 +498,65 @@ pe_proc_is_sfsdisable(struct pe_proc *proc, uid_t uid)
 	return (uid != (uid_t)-1) && (proc->pid != (pid_t)-1)
 	    && (proc->sfsdisable_pid == proc->pid)
 	    && (proc->sfsdisable_uid == uid);
+}
+
+void
+pe_proc_save_ctx(struct pe_proc *proc, int prio, anoubis_cookie_t cookie)
+{
+	if (proc == NULL)
+		return;
+	if (prio < 0 || prio >= PE_PRIO_MAX)
+		return;
+	if (proc->saved_ctx[prio] != NULL)
+		return;
+
+	proc->saved_ctx[prio] = proc->context[prio];
+	proc->context[prio] = NULL;
+	proc->borrow_cookie = cookie;
+}
+
+void
+pe_proc_restore_ctx(struct pe_proc *proc, int prio, anoubis_cookie_t cookie)
+{
+	struct pe_context *ctx;
+
+	if (proc == NULL)
+		return;
+	if (prio < 0 || prio >= PE_PRIO_MAX)
+		return;
+	if (proc->saved_ctx[prio] == NULL)
+		return;
+	if (proc->borrow_cookie != cookie)
+		return;
+
+	ctx = proc->saved_ctx[prio];
+	if (ctx) {
+		pe_proc_set_context(proc, prio, ctx);
+		/* pe_proc_set_context got a reference to this context. */
+		pe_context_put(ctx);
+		proc->saved_ctx[prio] = NULL;
+	}
+}
+
+struct pe_context *
+pe_proc_get_savedctx(struct pe_proc *proc, int prio)
+{
+	if (!proc)
+		return NULL;
+	if (prio < 0 || prio >= PE_PRIO_MAX)
+		return NULL;
+	return proc->saved_ctx[prio];
+}
+
+void
+pe_proc_set_savedctx(struct pe_proc *proc, int prio, struct pe_context *ctx)
+{
+	if (prio < 0 || prio >= PE_PRIO_MAX)
+		return;
+
+	if (ctx)
+		 pe_context_reference(ctx);
+	if (proc->saved_ctx[prio])
+		pe_context_put(proc->saved_ctx[prio]);
+	proc->saved_ctx[prio] = ctx;
 }

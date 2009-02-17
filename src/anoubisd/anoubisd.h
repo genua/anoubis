@@ -283,5 +283,6 @@ extern gid_t		anoubisd_gid;
 #define DBG_SESSION	0x2000
 #define DBG_SANDBOX	0x4000
 #define DBG_SFSCACHE	0x8000
+#define DBG_PE_BORROW	0x10000
 
 #endif /* !_ANOUBISD_H */

@@ -45,7 +45,7 @@
  * (i.e. the Anoubis daemon know about them) and have ALF and context
  * switching rules assigned.
  *
- * There are three interesting operations. Each of these is applied to
+ * There are four interesting operations. Each of these is applied to
  * the admin and the user context separately:
  * - FORK: In case of a fork the child process simply inherits the
  *         context of its parents. Additionally the process itself
@@ -76,6 +76,10 @@
  *         - The process has no context. (A)
  *         - The process has a context but no new context is found in the
  *           new rules. (C)
+ * - OPEN: In case of an open system call the process might switch
+ *         its context depending on context rules in its current policy.
+ *	   SPECIAL CASES:
+ *         - The process has no context. (A) (B)
  *
  * Dealing with special cases:
  * (A) Untracked processes: An untracked process must remain untracked until
@@ -86,8 +90,8 @@
  *     NOTE: Untracked processes originate from processes that were already
  *     running at the time the Anoubis Daemon was started.
  * (B) Processes without a context: If a process has no context, it never
- *     had one before. In case of a fork or a rule reload, this is not changed.
- *     In case of an exec there are two possibilities:
+ *     had one before. In case of a fork, rule reload or open, this is
+ *     not changed. In case of an exec there are two possibilities:
  *     - If there is no ruleset for that is applicable to the process and the
  *       given priority. Nothing is changed.
  *     - If there is a ruleset a new context for the process is created based
@@ -146,6 +150,7 @@ struct pe_context {
 	struct apn_rule		*ctxrule;
 	struct apn_ruleset	*ruleset;
 	struct pe_proc_ident	 ident;
+	anoubis_cookie_t	 conn_cookie;
 };
 
 static void			 pe_dump_dbgctx(const char *, struct pe_proc *);
@@ -158,6 +163,7 @@ static struct pe_context	*pe_context_alloc(struct apn_ruleset *,
 static void			 pe_context_switch(struct pe_proc *, int,
 				     struct pe_proc_ident *, uid_t);
 static void			 pe_context_norules(struct pe_proc *, int);
+static void			 pe_savedctx_norules(struct pe_proc *, int);
 
 
 /*
@@ -184,6 +190,36 @@ pe_context_norules(struct pe_proc *proc, int prio)
 		return;
 	}
 	pe_proc_set_context(proc, prio, ctx);
+	pe_context_put(ctx);
+}
+
+/*
+ * Set the saved process context if no ruleset is present to search for a
+ * replacment saved context.
+ * - If the process never saved a context for the priority, leave it alone.
+ * - Otherwise create  norules context with the pident from the old context
+ *   but without actual rules.
+ */
+void
+pe_savedctx_norules(struct pe_proc *proc, int prio)
+{
+	struct pe_context *ctx = pe_proc_get_savedctx(proc, prio);
+
+	/* No saved context => done */
+	if (!ctx)
+		return;
+	/* Saved context has no rules => done */
+	if (ctx->ruleset == NULL && ctx->alfrule == NULL
+	    && ctx->sbrule == NULL && ctx->ctxrule == NULL)
+		return;
+	/* Create norules context. */
+	ctx = pe_context_alloc(NULL, &ctx->ident);
+	if (!ctx) {
+		master_terminate(ENOMEM);
+		return;
+	}
+	pe_proc_set_savedctx(proc, prio, ctx);
+	pe_context_put(ctx);
 }
 
 /*
@@ -217,6 +253,7 @@ pe_context_refresh(struct pe_proc *proc, int prio, struct pe_policy_db *pdb)
 	DEBUG(DBG_TRACE, " pe_context_refresh: newrules = %p", newrules);
 	if (!newrules) {
 		pe_context_norules(proc, prio);
+		pe_savedctx_norules(proc, prio);
 		return;
 	}
 	oldctx = pe_proc_get_context(proc, prio);
@@ -231,6 +268,13 @@ pe_context_refresh(struct pe_proc *proc, int prio, struct pe_policy_db *pdb)
 	    context ? context->ctxrule : NULL);
 	pe_proc_set_context(proc, prio, context);
 	pe_context_put(context);
+
+	oldctx = pe_proc_get_savedctx(proc, prio);
+	if (oldctx) {
+		context = pe_context_search(newrules, &oldctx->ident);
+		pe_proc_set_savedctx(proc, prio, context);
+		pe_context_put(context);
+	}
 	return;
 }
 
@@ -339,7 +383,7 @@ pe_context_switch(struct pe_proc *proc, int prio,
 	DEBUG(DBG_PE_CTX, "pe_context_switch: proc %p 0x%08llx prio %d "
 	    "got context %p alfrule %p sbrule %p ctxrule %p", proc,
 	    (unsigned long long)pe_proc_task_cookie(proc), prio, tmpctx,
-	    tmpctx ? tmpctx->alfrule : NULL,tmpctx ? tmpctx->sbrule : NULL,
+	    tmpctx ? tmpctx->alfrule : NULL, tmpctx ? tmpctx->sbrule : NULL,
 	    tmpctx ? tmpctx->ctxrule : NULL);
 	/*
 	 * pe_context_search got a reference to the new context and
@@ -435,6 +479,49 @@ pe_context_open(struct pe_proc *proc, struct eventdev_hdr *hdr)
 
 		pe_context_switch(proc, i, &pident, hdr->msg_uid);
 	}
+}
+
+void
+pe_context_borrow(struct pe_proc *proc, struct pe_proc *procp,
+    anoubis_cookie_t cookie)
+{
+	struct pe_context	*ctx, *ctxp;
+	int			 i;
+
+	if (proc == NULL || procp == NULL)
+		return;
+
+	for (i = 0; i < PE_PRIO_MAX; i++) {
+		ctx = pe_proc_get_context(proc, i);
+		if (ctx == NULL)
+			continue;
+		if (pe_context_decide(procp, APN_CTX_BORROW, i, &ctx->ident)
+		    == 0)
+			continue;
+		ctxp = pe_proc_get_context(procp, i);
+		if (ctx->ruleset != ctxp->ruleset)
+			continue;
+
+		DEBUG(DBG_PE_BORROW,
+		    "pe_context_borrow: proc %p prio %d switching context to "
+			"%p of proc %p", procp, i, ctx, proc);
+
+		pe_proc_save_ctx(procp, i, cookie);
+		pe_context_switch(procp, i, &ctx->ident,
+		    pe_proc_get_uid(procp));
+	}
+}
+
+void
+pe_context_restore(struct pe_proc *proc, anoubis_cookie_t cookie)
+{
+	int	 i;
+
+	if (proc == NULL)
+		return;
+
+	for (i = 0; i < PE_PRIO_MAX; i++)
+		pe_proc_restore_ctx(proc, i, cookie);
 }
 
 static struct apn_rule *

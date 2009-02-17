@@ -165,7 +165,7 @@ struct apn_default {
 };
 
 enum {
-	APN_CTX_NEW, APN_CTX_OPEN
+	APN_CTX_NEW, APN_CTX_OPEN, APN_CTX_BORROW
 };
 
 struct apn_context {

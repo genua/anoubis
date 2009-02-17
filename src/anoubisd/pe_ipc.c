@@ -64,16 +64,36 @@
 void	pe_ipc_connect(struct ac_ipc_message *);
 void	pe_ipc_destroy(struct ac_ipc_message *);
 
+/*
+ * Change context on connect(2) for AF_UNIX:
+ * - If pe_context_decide forbids changing the context, we don't.
+ */
 void
 pe_ipc_connect(struct ac_ipc_message *msg)
 {
+	struct pe_proc		*proc, *procp;
+
 	if (msg == NULL)
 		return;
+
+	if ((proc = pe_proc_get(msg->source)) == NULL)
+		return;
+	if ((procp = pe_proc_get(msg->dest)) == NULL)
+		return;
+
+	pe_context_borrow(proc, procp, msg->conn_cookie);
 }
 
 void
 pe_ipc_destroy(struct ac_ipc_message *msg)
 {
+	struct pe_proc		*proc;
+
 	if (msg == NULL)
 		return;
+
+	if ((proc = pe_proc_get(msg->source)) == NULL)
+		return;
+
+	pe_context_restore(proc, msg->conn_cookie);
 }
