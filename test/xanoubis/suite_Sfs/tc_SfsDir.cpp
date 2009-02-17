@@ -64,6 +64,7 @@ setup()
 	tc_exec("touch \"%s/file2\"", sfsdir);
 	tc_exec("touch \"%s/file3\"", sfsdir);
 	tc_exec("touch \"%s/fiel4\"", sfsdir);
+	tc_exec("ln -s \"%s/file1\" \"%s/link_file1\"", sfsdir, sfsdir);
 	tc_exec("mkdir \"%s/sub\"", sfsdir);
 	tc_exec("touch \"%s/sub/file1\"", sfsdir);
 	tc_exec("touch \"%s/sub/file2\"", sfsdir);
@@ -89,7 +90,7 @@ START_TEST(SfsDir_existing)
 	fail_if(result == false, "Path has not changed");
 
 	num = dir.getNumEntries();
-	fail_if(num != 4, "Three entries expected, but have %i", num);
+	fail_if(num != 5, "Five entries expected, but have %i", num);
 }
 END_TEST
 
@@ -120,7 +121,7 @@ START_TEST(SfsDir_filter_match)
 	fail_if(result == false, "Filter has not changed");
 
 	num = dir.getNumEntries();
-	fail_if(num != 3, "Three entries expected, but have %i", num);
+	fail_if(num != 4, "Four entries expected, but have %i", num);
 }
 END_TEST
 
@@ -206,7 +207,7 @@ START_TEST(SfsDir_recursive)
 {
 	SfsDirectory	dir;
 	bool		result;
-	bool		fileFound[8];
+	bool		fileFound[9];
 
 	result = dir.setPath(wxSfsDir);
 	fail_unless(result, "Path has not changed");
@@ -214,10 +215,10 @@ START_TEST(SfsDir_recursive)
 	result = dir.setDirTraversal(true);
 	fail_unless(result, "Failed to enabled dir-traversal");
 
-	fail_unless(dir.getNumEntries() == 8,
+	fail_unless(dir.getNumEntries() == 9,
 	    "Unexpected number of entries\n"
 	    "Is: %i\n"
-	    "Expected: 8", dir.getNumEntries());
+	    "Expected: 9", dir.getNumEntries());
 
 	for (unsigned int i = 0; i < sizeof(fileFound); i++)
 		fileFound[i] = false;
@@ -233,14 +234,16 @@ START_TEST(SfsDir_recursive)
 			fileFound[2] = true;
 		else if (entry.getRelativePath(wxSfsDir) == wxT("fiel4"))
 			fileFound[3] = true;
-		else if (entry.getRelativePath(wxSfsDir) == wxT("sub/file1"))
+		else if (entry.getRelativePath(wxSfsDir) == wxT("link_file1"))
 			fileFound[4] = true;
-		else if (entry.getRelativePath(wxSfsDir) == wxT("sub/file2"))
+		else if (entry.getRelativePath(wxSfsDir) == wxT("sub/file1"))
 			fileFound[5] = true;
-		else if (entry.getRelativePath(wxSfsDir) == wxT("sub/file3"))
+		else if (entry.getRelativePath(wxSfsDir) == wxT("sub/file2"))
 			fileFound[6] = true;
-		else if (entry.getRelativePath(wxSfsDir) == wxT("sub/file4"))
+		else if (entry.getRelativePath(wxSfsDir) == wxT("sub/file3"))
 			fileFound[7] = true;
+		else if (entry.getRelativePath(wxSfsDir) == wxT("sub/file4"))
+			fileFound[8] = true;
 		else
 			fail("Unexpected entry fetched: %s",
 			    (const char*)entry.getPath().fn_str());
@@ -255,7 +258,7 @@ START_TEST(SfsDir_recursive_filtered)
 {
 	SfsDirectory	dir;
 	bool		result;
-	bool		fileFound[2];
+	bool		fileFound[3];
 
 	result = dir.setPath(wxSfsDir);
 	fail_unless(result, "Path has not changed");
@@ -266,10 +269,10 @@ START_TEST(SfsDir_recursive_filtered)
 	result = dir.setFilter(wxT("1"));
 	fail_unless(result, "Failed to update the filter");
 
-	fail_unless(dir.getNumEntries() == 2,
+	fail_unless(dir.getNumEntries() == 3,
 	    "Unexpected number of entries\n"
 	    "Is: %i\n"
-	    "Expected: 2", dir.getNumEntries());
+	    "Expected: 3", dir.getNumEntries());
 
 	for (unsigned int i = 0; i < sizeof(fileFound); i++)
 		fileFound[i] = false;
@@ -279,8 +282,10 @@ START_TEST(SfsDir_recursive_filtered)
 
 		if (entry.getRelativePath(wxSfsDir) == wxT("file1"))
 			fileFound[0] = true;
-		else if (entry.getRelativePath(wxSfsDir) == wxT("sub/file1"))
+		else if (entry.getRelativePath(wxSfsDir) == wxT("link_file1"))
 			fileFound[1] = true;
+		else if (entry.getRelativePath(wxSfsDir) == wxT("sub/file1"))
+			fileFound[2] = true;
 		else
 			fail("Unexpected entry fetched: %s",
 			    (const char*)entry.getPath().fn_str());
@@ -288,6 +293,51 @@ START_TEST(SfsDir_recursive_filtered)
 
 	for (unsigned int i = 0; i < sizeof(fileFound); i++)
 		fail_unless(fileFound[i], "File at index %i not found", i);
+}
+END_TEST
+
+START_TEST(SfsDir_resolve_link_ok)
+{
+	SfsDirectory	dir;
+	bool		result;
+
+	result = dir.setPath(wxSfsDir);
+	fail_unless(result, "Path has not changed");
+
+	int idx = dir.getIndexOf(wxSfsDir + wxT("/link_file1"));
+	fail_unless(idx >= 0, "File not found in model");
+
+	SfsEntry &entry = dir.getEntry(idx);
+	wxString resolved = entry.resolve();
+	wxString expected = wxSfsDir + wxT("/file1");
+
+	fail_unless(resolved == expected,
+	    "Unexpected resolve-result\n"
+	    "Is: %s\n"
+	    "Expected: %s",
+	    (const char *)resolved.fn_str(), (const char *)expected.fn_str());
+}
+END_TEST
+
+START_TEST(SfsDir_resolve_link_plain_file)
+{
+	SfsDirectory	dir;
+	bool		result;
+
+	result = dir.setPath(wxSfsDir);
+	fail_unless(result, "Path has not changed");
+
+	int idx = dir.getIndexOf(wxSfsDir + wxT("/file1"));
+	fail_unless(idx >= 0, "File not found in model");
+
+	SfsEntry &entry = dir.getEntry(idx);
+	wxString resolved = entry.resolve();
+
+	fail_unless(resolved.IsEmpty(),
+	    "Unexpected resolve-result\n"
+	    "Empty string expected\n"
+	    "Is: %s",
+	    (const char *)resolved.fn_str());
 }
 END_TEST
 
@@ -308,6 +358,8 @@ getTc_SfsDir(void)
 	tcase_add_test(testCase, SfsDir_entry_order);
 	tcase_add_test(testCase, SfsDir_recursive);
 	tcase_add_test(testCase, SfsDir_recursive_filtered);
+	tcase_add_test(testCase, SfsDir_resolve_link_ok);
+	tcase_add_test(testCase, SfsDir_resolve_link_plain_file);
 
 	return (testCase);
 }

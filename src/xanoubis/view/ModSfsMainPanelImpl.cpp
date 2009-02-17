@@ -47,17 +47,12 @@
 #include <wx/msgdlg.h>
 #include <wx/textdlg.h>
 
-#include "AnEvents.h"
 #include "main.h"
 #include "KeyCtrl.h"
 #include "ModSfsAddPolicyVisitor.h"
-#include "ModSfsDetailsDlg.h"
-#include "Policy.h"
-#include "PolicyRuleSet.h"
-#include "ProfileCtrl.h"
-#include "SfsCtrl.h"
-
+#include "ModSfsListCtrl.h"
 #include "ModSfsMainPanelImpl.h"
+#include "SfsCtrl.h"
 
 ModSfsMainPanelImpl::ModSfsMainPanelImpl(wxWindow* parent,
     wxWindowID id) : ModSfsMainPanelBase(parent, id)
@@ -155,34 +150,29 @@ ModSfsMainPanelImpl::OnSfsMainDirCtrlSelChanged(wxTreeEvent &)
 void
 ModSfsMainPanelImpl::OnSfsOperationFinished(wxCommandEvent&)
 {
-	if ((currentOperation_ == OP_SHOW_CHANGED) ||
-	    (currentOperation_ == OP_SHOW_CHECKSUMS) ||
-	    (currentOperation_ == OP_SHOW_ORPHANED)) {
-		updateSfsList();
-	}
+	if (currentOperation_ == OP_SHOW_CHANGED)
+		SfsMainListCtrl->refreshList(ModSfsListCtrl::SHOW_CHANGED);
+	else if (currentOperation_ == OP_SHOW_CHECKSUMS)
+		SfsMainListCtrl->refreshList(ModSfsListCtrl::SHOW_CHECKSUM);
+	else if (currentOperation_ == OP_SHOW_ORPHANED)
+		SfsMainListCtrl->refreshList(ModSfsListCtrl::SHOW_ALL);
 }
 
 void
 ModSfsMainPanelImpl::OnSfsDirChanged(wxCommandEvent&)
 {
+	/*
+	 * Directory was changed somewhere else, not by selecting the directory
+	 * in the dir-ctrl.
+	 */
+	if (SfsMainDirCtrl->GetPath() != sfsCtrl_->getPath())
+		SfsMainDirCtrl->SetPath(sfsCtrl_->getPath());
+
 	/* Display changes */
-	updateSfsList();
+	SfsMainListCtrl->refreshList(ModSfsListCtrl::SHOW_EXISTING);
 
 	/* Update CurrPathLabel accordingly */
 	SfsMainCurrPathLabel->SetLabel(SfsMainDirCtrl->GetPath());
-}
-
-void
-ModSfsMainPanelImpl::OnSfsMainListItemActivated(wxListEvent &event)
-{
-	/* Receive index in model */
-	int modelIndex = SfsMainListCtrl->GetItemData(event.GetIndex());
-
-	SfsDirectory &dir = sfsCtrl_->getSfsDirectory();
-	SfsEntry &entry = dir.getEntry(modelIndex);
-
-	ModSfsDetailsDlg dlg(entry, this);
-	dlg.ShowModal();
 }
 
 void
@@ -194,15 +184,9 @@ ModSfsMainPanelImpl::OnSfsMainDirTraversalChecked(wxCommandEvent&)
 void
 ModSfsMainPanelImpl::OnSfsEntryChanged(wxCommandEvent &event)
 {
-	int modelIndex = event.GetInt();
-
-	/* Find position in view, where entry is stored */
-	for (int idx = 0; idx < SfsMainListCtrl->GetItemCount(); idx++) {
-		long itemData = SfsMainListCtrl->GetItemData(idx);
-		if (itemData == modelIndex) {
-			updateSfsEntry(idx); /* Update the entry */
-		}
-	}
+	int sfsIndex = event.GetInt();
+	int listIndex = SfsMainListCtrl->getListIndexOf(sfsIndex);
+	SfsMainListCtrl->refreshEntry(listIndex);
 }
 
 void
@@ -244,9 +228,8 @@ ModSfsMainPanelImpl::OnSfsMainValidateButtonClicked(wxCommandEvent&)
 	SfsDirectory &dir = sfsCtrl_->getSfsDirectory();
 	unsigned int listSize = SfsMainListCtrl->GetItemCount();
 
-	if (listSize < dir.getNumEntries()) {
-		updateSfsList();
-	}
+	if (listSize < dir.getNumEntries())
+		SfsMainListCtrl->refreshList(ModSfsListCtrl::SHOW_EXISTING);
 
 	applySfsValidateAll(false);
 }
@@ -254,22 +237,7 @@ ModSfsMainPanelImpl::OnSfsMainValidateButtonClicked(wxCommandEvent&)
 void
 ModSfsMainPanelImpl::OnSfsMainApplyButtonClicked(wxCommandEvent&)
 {
-	int		selection = -1;
-	IndexArray	selectionArray;
-
-	while (true) {
-		selection = SfsMainListCtrl->GetNextItem(selection,
-		    wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED);
-
-		if (selection == -1) {
-			/* No selection */
-			break;
-		}
-
-		selectionArray.Add(selection);
-	}
-
-	applySfsAction(selectionArray);
+	applySfsAction(SfsMainListCtrl->getSelectedIndexes());
 }
 
 void
@@ -367,26 +335,6 @@ ModSfsMainPanelImpl::applySfsValidateAll(bool orphaned)
 		/* Success */
 		break;
 	}
-}
-
-bool
-ModSfsMainPanelImpl::canDisplay(const SfsEntry &entry) const
-{
-	switch (currentOperation_) {
-	case OP_SHOW_CHECKSUMS:
-		return (entry.haveChecksum());
-	case OP_SHOW_CHANGED:
-		return (entry.isChecksumChanged());
-	case OP_SHOW_ORPHANED:
-		return (!entry.fileExists());
-	case OP_NOP:
-	case OP_APPLY:
-	case OP_SHOW_ALL:
-		return true;
-	}
-
-	/* Never reached */
-	return (false);
 }
 
 void
@@ -503,19 +451,9 @@ void
 ModSfsMainPanelImpl::initSfsMain()
 {
 	sfsCtrl_ = new SfsCtrl;
+	SfsMainListCtrl->setSfsCtrl(sfsCtrl_);
 
 	currentOperation_ = OP_NOP;
-
-	sfsListOkIcon_ = wxGetApp().loadIcon(wxT("General_ok_16.png"));
-	sfsListWarnIcon_ = wxGetApp().loadIcon(wxT("General_problem_16.png"));
-	sfsListErrorIcon_ = wxGetApp().loadIcon(wxT("General_error_16.png"));
-	sfsSymlinkIcon_ = wxGetApp().loadIcon(wxT("General_symlink_16.png"));
-
-	sfsListImageList_.Add(wxNullIcon);
-	sfsListImageList_.Add(*sfsListOkIcon_);
-	sfsListImageList_.Add(*sfsListWarnIcon_);
-	sfsListImageList_.Add(*sfsListErrorIcon_);
-	sfsListImageList_.Add(*sfsSymlinkIcon_);
 
 	sfsCtrl_->Connect(anEVT_SFSOPERATION_FINISHED,
 	    wxCommandEventHandler(ModSfsMainPanelImpl::OnSfsOperationFinished),
@@ -533,26 +471,6 @@ ModSfsMainPanelImpl::initSfsMain()
 	    wxCommandEventHandler(ModSfsMainPanelImpl::OnSfsMainKeyLoaded),
 	    NULL, this);
 
-	/* Insert columns into list-ctrl */
-	SfsMainListCtrl->InsertColumn(MODSFSMAIN_FILELIST_COLUMN_FILE,
-	    _("File"), wxLIST_FORMAT_LEFT, wxLIST_AUTOSIZE);
-	SfsMainListCtrl->InsertColumn(MODSFSMAIN_FILELIST_COLUMN_CHECKSUM,
-	    _("Checksum"), wxLIST_FORMAT_CENTRE, wxLIST_AUTOSIZE_USEHEADER);
-	SfsMainListCtrl->InsertColumn(MODSFSMAIN_FILELIST_COLUMN_SIGNATURE,
-	    _("Signature"), wxLIST_FORMAT_CENTRE, wxLIST_AUTOSIZE_USEHEADER);
-
-	/* Adjust initial width of MODSFSMAIN_FILELIST_COLUMN_FILE */
-	int fileColumnWidth = SfsMainListCtrl->GetClientSize().GetWidth();
-	fileColumnWidth -= SfsMainListCtrl->
-	    GetColumnWidth(MODSFSMAIN_FILELIST_COLUMN_CHECKSUM);
-	fileColumnWidth -= SfsMainListCtrl->
-	    GetColumnWidth(MODSFSMAIN_FILELIST_COLUMN_SIGNATURE);
-	SfsMainListCtrl->SetColumnWidth(MODSFSMAIN_FILELIST_COLUMN_FILE,
-	    fileColumnWidth);
-
-	/* Assign icons to list */
-	SfsMainListCtrl->SetImageList(&sfsListImageList_, wxIMAGE_LIST_SMALL);
-
 	/* Setting up CurrPathLabel with initial path */
 	SfsMainCurrPathLabel->SetLabel(SfsMainDirCtrl->GetPath());
 	sfsCtrl_->setPath(SfsMainDirCtrl->GetPath());
@@ -564,109 +482,6 @@ void
 ModSfsMainPanelImpl::destroySfsMain()
 {
 	delete sfsCtrl_;
-	delete sfsListOkIcon_;
-	delete sfsListWarnIcon_;
-	delete sfsListErrorIcon_;
-	delete sfsSymlinkIcon_;
-}
-
-void
-ModSfsMainPanelImpl::updateSfsList()
-{
-	SfsDirectory &dir = sfsCtrl_->getSfsDirectory();
-
-	SfsMainListCtrl->DeleteAllItems();
-
-	for (unsigned int i = 0; i < dir.getNumEntries(); i++) {
-		SfsEntry &entry = dir.getEntry(i);
-
-		if (canDisplay(entry)) {
-			int listIdx = SfsMainListCtrl->GetItemCount();
-
-			SfsMainListCtrl->InsertItem(listIdx, wxEmptyString);
-
-			/*
-			 * Remember the position, where the entry is displayed
-			 * in the list. Index of list is not necessarily index
-			 * of model!
-			 */
-			SfsMainListCtrl->SetItemData(listIdx, i);
-			updateSfsEntry(listIdx);
-		}
-	}
-}
-
-void
-ModSfsMainPanelImpl::updateSfsEntry(int idx)
-{
-	SfsDirectory	&dir = sfsCtrl_->getSfsDirectory();
-	wxString	checksumInfo, signatureInfo;
-	int		fileIconIndex = 0, checksumIconIndex = 0,
-			signatureIconIndex = 0;
-
-	/* Receive index of model, which is displayed at the list-index */
-	int		modelIndex = SfsMainListCtrl->GetItemData(idx);
-
-	/* Receive entry */
-	SfsEntry	&entry = dir.getEntry(modelIndex);
-	wxString	baseDir = dir.getPath();
-
-	if (entry.isSymlink())
-		fileIconIndex = 4;
-
-	switch (entry.getChecksumState(SfsEntry::SFSENTRY_CHECKSUM)) {
-	case SfsEntry::SFSENTRY_NOT_VALIDATED:
-		checksumInfo = _("???");
-		checksumIconIndex = 0;
-		break;
-	case SfsEntry::SFSENTRY_MISSING:
-		checksumInfo = _("not registered");
-		checksumIconIndex = 0;
-		break;
-	case SfsEntry::SFSENTRY_INVALID:
-		checksumInfo = _("invalid");
-		checksumIconIndex = 2;
-		break;
-	case SfsEntry::SFSENTRY_NOMATCH:
-		checksumInfo = wxEmptyString;
-		checksumIconIndex = 3;
-		break;
-	case SfsEntry::SFSENTRY_MATCH:
-		checksumInfo = wxEmptyString;
-		checksumIconIndex = 1;
-		break;
-	}
-
-	switch (entry.getChecksumState(SfsEntry::SFSENTRY_SIGNATURE)) {
-	case SfsEntry::SFSENTRY_NOT_VALIDATED:
-		signatureInfo = _("???");
-		signatureIconIndex = 0;
-		break;
-	case SfsEntry::SFSENTRY_MISSING:
-		signatureInfo = _("not registered");
-		signatureIconIndex = 0;
-		break;
-	case SfsEntry::SFSENTRY_INVALID:
-		signatureInfo = _("invalid");
-		signatureIconIndex = 2;
-		break;
-	case SfsEntry::SFSENTRY_NOMATCH:
-		signatureIconIndex = 3;
-		break;
-	case SfsEntry::SFSENTRY_MATCH:
-		signatureIconIndex = 1;
-		break;
-	}
-
-	SfsMainListCtrl->SetItem(idx,
-	    MODSFSMAIN_FILELIST_COLUMN_FILE, entry.getRelativePath(baseDir),
-	    fileIconIndex);
-	SfsMainListCtrl->SetItem(idx,
-	    MODSFSMAIN_FILELIST_COLUMN_CHECKSUM, checksumInfo,
-	    checksumIconIndex);
-	SfsMainListCtrl->SetItem(idx,
-	    MODSFSMAIN_FILELIST_COLUMN_SIGNATURE, signatureInfo,
-	    signatureIconIndex);
 }
 
 void

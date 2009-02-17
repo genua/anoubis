@@ -39,16 +39,8 @@ enum modSfsListColumns {
 	MODSFS_LIST_COLUMN_EOL
 };
 
-enum modSfsMainFileListColumns {
-	MODSFSMAIN_FILELIST_COLUMN_FILE = 0,
-	MODSFSMAIN_FILELIST_COLUMN_CHECKSUM,
-	MODSFSMAIN_FILELIST_COLUMN_SIGNATURE,
-	MODSFSMAIN_FILELIST_COLUMN_EOL
-};
-
 class IndexArray;
 class SfsCtrl;
-class SfsEntry;
 
 class ModSfsMainPanelImpl : public ModSfsMainPanelBase
 {
@@ -83,19 +75,11 @@ class ModSfsMainPanelImpl : public ModSfsMainPanelBase
 		void OnLoadRuleSet(wxCommandEvent&);
 
 		SfSOperation	currentOperation_;
-		wxIcon		*sfsListOkIcon_;
-		wxIcon		*sfsListWarnIcon_;
-		wxIcon		*sfsListErrorIcon_;
-		wxIcon		*sfsSymlinkIcon_;
-		wxImageList	sfsListImageList_;
 
 		void initSfsMain();
 		void destroySfsMain();
-		void updateSfsList();
-		void updateSfsEntry(int);
 		void applySfsAction(const IndexArray &);
 		void applySfsValidateAll(bool);
-		bool canDisplay(const SfsEntry &) const;
 
 		void initSfsOptions(void);
 		void saveSfsOptions(void);
@@ -105,7 +89,6 @@ class ModSfsMainPanelImpl : public ModSfsMainPanelBase
 		void OnSfsMainDirCtrlSelChanged(wxTreeEvent&);
 		void OnSfsOperationFinished(wxCommandEvent&);
 		void OnSfsDirChanged(wxCommandEvent&);
-		void OnSfsMainListItemActivated(wxListEvent&);
 		void OnSfsMainDirTraversalChecked(wxCommandEvent&);
 		void OnSfsEntryChanged(wxCommandEvent&);
 		void OnSfsError(wxCommandEvent&);

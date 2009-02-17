@@ -35,6 +35,7 @@
 #define __ModSfsPanelsBase__
 
 class AnDetails;
+class ModSfsListCtrl;
 
 #include <wx/string.h>
 #include <wx/stattext.h>
@@ -90,7 +91,7 @@ class ModSfsMainPanelBase : public wxPanel
 		wxCheckBox* SfsMainFilterInvertCheckBox;
 		
 		wxButton* SfsMainFilterValidateButton;
-		wxListCtrl* SfsMainListCtrl;
+		ModSfsListCtrl* SfsMainListCtrl;
 		AnDetails* SfsMainDetailsPanel;
 		wxCheckBox* SfsMainSignFilesCheckBox;
 		wxButton* SfsMainSearchOrphanedButton;
@@ -126,7 +127,6 @@ class ModSfsMainPanelBase : public wxPanel
 		virtual void OnSfsMainFilterButtonClicked( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnSfsMainInverseCheckboxClicked( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnSfsMainValidateButtonClicked( wxCommandEvent& event ){ event.Skip(); }
-		virtual void OnSfsMainListItemActivated( wxListEvent& event ){ event.Skip(); }
 		virtual void OnSfsMainSigEnabledClicked( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnSfsMainSearchOrphanedClicked( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnSfsMainShowAllChecksumsClicked( wxCommandEvent& event ){ event.Skip(); }

@@ -1120,7 +1120,7 @@
                                                     <property name="pos"></property>
                                                     <property name="size">-1,-1</property>
                                                     <property name="style">wxLC_HRULES|wxLC_REPORT</property>
-                                                    <property name="subclass"></property>
+                                                    <property name="subclass">ModSfsListCtrl; ModSfsListCtrl.h</property>
                                                     <property name="tooltip"></property>
                                                     <property name="window_extra_style"></property>
                                                     <property name="window_name"></property>
@@ -1148,7 +1148,7 @@
                                                     <event name="OnListDeleteItem"></event>
                                                     <event name="OnListEndLabelEdit"></event>
                                                     <event name="OnListInsertItem"></event>
-                                                    <event name="OnListItemActivated">OnSfsMainListItemActivated</event>
+                                                    <event name="OnListItemActivated"></event>
                                                     <event name="OnListItemDeselected"></event>
                                                     <event name="OnListItemFocused"></event>
                                                     <event name="OnListItemMiddleClick"></event>

@@ -119,6 +119,19 @@ SfsEntry::isSymlink(void) const
 		return (false);
 }
 
+wxString
+SfsEntry::resolve(void) const
+{
+	if (isSymlink()) {
+		char resolved_path[PATH_MAX];
+
+		if (realpath(path_.fn_str(), resolved_path) != 0)
+			return wxString::FromAscii(resolved_path);
+	}
+
+	return (wxEmptyString);
+}
+
 wxDateTime
 SfsEntry::getLastModified(void) const
 {

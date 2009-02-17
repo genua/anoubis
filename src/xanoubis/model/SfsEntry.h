@@ -152,6 +152,16 @@ class SfsEntry
 		bool isSymlink(void) const;
 
 		/**
+		 * Resolves the symlink.
+		 *
+		 * @return The resolved path of the link-destination is
+		 *         returned, if the SfsEntry represents a symlink. An
+		 *         empty string is returned, if the entry is a plain
+		 *         file or resolving failed.
+		 */
+		wxString resolve(void) const;
+
+		/**
 		 * Returns the modification timestamp of the file.
 		 *
 		 * If the file does not exist, ther returned datetime-value
