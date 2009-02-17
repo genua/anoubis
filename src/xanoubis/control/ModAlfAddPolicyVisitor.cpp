@@ -38,43 +38,20 @@ ModAlfAddPolicyVisitor::ModAlfAddPolicyVisitor(ModAlfMainPanelImpl *alfPanel)
 void
 ModAlfAddPolicyVisitor::visitAlfAppPolicy(AlfAppPolicy *policy)
 {
-	long		 idx;
-	wxListCtrl	*list;
-
-	idx = ruleListAppend(policy);
-	list = alfPanel_->lst_Rules;
-
-	list->SetItem(idx, MODALF_LIST_COLUMN_PROG, policy->getBinaryName());
+	alfPanel_->addAlfAppPolicy(policy);
 }
 
 void
 ModAlfAddPolicyVisitor::visitAlfCapabilityFilterPolicy(
     AlfCapabilityFilterPolicy *policy)
 {
-	long		 idx;
-	wxListCtrl	*list;
-
-	idx = ruleListAppend(policy);
-	list = alfPanel_->lst_Rules;
-
-	list->SetItem(idx, MODALF_LIST_COLUMN_ACTION, policy->getActionName());
-	list->SetItem(idx, MODALF_LIST_COLUMN_SERVICE,
-	    wxT("capability ") + policy->getCapabilityTypeName());
+	alfPanel_->addAlfCapabilityFilterPolicy(policy);
 }
 
 void
 ModAlfAddPolicyVisitor::visitAlfFilterPolicy(AlfFilterPolicy *policy)
 {
-	long		 idx;
-	wxListCtrl	*list;
-
-	idx = ruleListAppend(policy);
-	list = alfPanel_->lst_Rules;
-
-	list->SetItem(idx, MODALF_LIST_COLUMN_ACTION, policy->getActionName());
-	list->SetItem(idx, MODALF_LIST_COLUMN_ROLE,policy->getRoleName());
-	list->SetItem(idx, MODALF_LIST_COLUMN_SERVICE,
-	    policy->getServiceName());
+	alfPanel_->addAlfFilterPolicy(policy);
 }
 
 void
@@ -94,14 +71,7 @@ ModAlfAddPolicyVisitor::visitContextFilterPolicy(
 void
 ModAlfAddPolicyVisitor::visitDefaultFilterPolicy(DefaultFilterPolicy *policy)
 {
-	long		 idx;
-	wxListCtrl	*list;
-
-	idx = ruleListAppend(policy);
-	list = alfPanel_->lst_Rules;
-
-	list->SetItem(idx, MODALF_LIST_COLUMN_ACTION, policy->getActionName());
-	list->SetItem(idx, MODALF_LIST_COLUMN_SERVICE, wxT("default"));
+	alfPanel_->addDefaultFilterPolicy(policy);
 }
 
 void
@@ -132,37 +102,4 @@ void
 ModAlfAddPolicyVisitor::visitSfsDefaultFilterPolicy(SfsDefaultFilterPolicy *)
 {
 	/* ModAlf does not deal with SfsFilterPolicies. */
-}
-
-long
-ModAlfAddPolicyVisitor::ruleListAppend(Policy *policy)
-{
-	long		 idx;
-	wxString	 ruleType;
-	wxString	 userName;
-	PolicyRuleSet	*ruleset;
-
-	idx = alfPanel_->lst_Rules->GetItemCount();
-	alfPanel_->lst_Rules->InsertItem(idx, wxString::Format(wxT("%d"),
-	    idx));
-
-	alfPanel_->lst_Rules->SetItemPtrData(idx, (wxUIntPtr)policy);
-
-	ruleset = policy->getParentRuleSet();
-	if (ruleset->isAdmin()) {
-		userName = wxGetApp().getUserNameById(ruleset->getUid());
-		ruleType.Printf(_("admin ruleset of %s"), userName.c_str());
-		alfPanel_->lst_Rules->SetItemBackgroundColour(idx,
-		    wxTheColourDatabase->Find(wxT("LIGHT GREY")));
-	} else {
-		ruleType = wxGetUserId();
-	}
-	alfPanel_->lst_Rules->SetItem(idx, MODALF_LIST_COLUMN_ADMIN, ruleType);
-
-	if (policy->hasScope()) {
-		alfPanel_->lst_Rules->SetItem(idx, MODALF_LIST_COLUMN_SCOPE,
-		    wxT("T"));
-	}
-
-	return (idx);
 }

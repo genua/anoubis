@@ -141,15 +141,6 @@ class ModAlfAddPolicyVisitor : public PolicyVisitor
 
 	private:
 		ModAlfMainPanelImpl	*alfPanel_;	/**< The main panel. */
-
-		/**
-		 * RuleList append.
-		 * This method does the work of adding the given policy to
-		 * the wxListCtrl of the main panel of ModAlf.
-		 * @param[in] 1st The policy to add.
-		 * @return The index within the list of the added policy.
-		 */
-		long ruleListAppend(Policy *);
 };
 
 #endif	/* _MODALFADDPOLICYVISITOR_H_ */

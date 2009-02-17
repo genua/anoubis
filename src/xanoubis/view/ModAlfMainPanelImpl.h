@@ -29,34 +29,153 @@
 #define __ModAlfMainPanelImpl__
 
 #include "AnEvents.h"
+#include "Observer.h"
+
+#include "AppPolicy.h"
+#include "AlfAppPolicy.h"
+#include "AlfFilterPolicy.h"
+#include "AlfCapabilityFilterPolicy.h"
+#include "DefaultFilterPolicy.h"
 #include "ModAlfPanelsBase.h"
 
-enum modAlfListColumns {
-	MODALF_LIST_COLUMN_PRIO = 0,
-	MODALF_LIST_COLUMN_PROG,
-	MODALF_LIST_COLUMN_SERVICE,
-	MODALF_LIST_COLUMN_ROLE,
-	MODALF_LIST_COLUMN_ACTION,
-	MODALF_LIST_COLUMN_SCOPE,
-	MODALF_LIST_COLUMN_ADMIN,
-	MODALF_LIST_COLUMN_OS,
-	MODALF_LIST_COLUMN_EOL
-};
-
-class ModAlfMainPanelImpl : public ModAlfMainPanelBase
+class ModAlfMainPanelImpl : public Observer, public ModAlfMainPanelBase
 {
-	private:
-		wxString	columnNames_[MODALF_LIST_COLUMN_EOL];
-		long		userRuleSetId_;
-		long		adminRuleSetId_;
-
-		void OnLoadRuleSet(wxCommandEvent&);
-
 	public:
+		/**
+		 * Add alf capabiliyt filter policy.
+		 * This should be used by ModAlfAddPolicyVisitor only.
+		 * @param[in] 1st Concerning app policy
+		 * @return Nothing.
+		 */
+		void addAlfCapabilityFilterPolicy(AlfCapabilityFilterPolicy *);
+
+		/**
+		 * Add alf filter policy.
+		 * This should be used by ModAlfAddPolicyVisitor only.
+		 * @param[in] 1st Concerning app policy
+		 * @return Nothing.
+		 */
+		void addAlfFilterPolicy(AlfFilterPolicy *);
+
+		/**
+		 * Add alf application policy.
+		 * This should be used by ModAlfAddPolicyVisitor only.
+		 * @param[in] 1st Concerning an alf app policy
+		 * @return Nothing.
+		 */
+		void addAlfAppPolicy(AlfAppPolicy *);
+
+		/**
+		 * Add default filter policy.
+		 * This should be used by ModAlfAddPolicyVisitor only.
+		 * @param[in] 1st Concerning app policy
+		 * @return Nothing.
+		 */
+		void addDefaultFilterPolicy(DefaultFilterPolicy *);
+
+		/**
+		 * This is called when an observed policy was modified.
+		 * @param[in] 1st The changed policy (aka subject)
+		 * @return Nothing.
+		 */
+		virtual void update(Subject *);
+
+		/**
+		 * This is called when an observed policy is about to
+		 * be destroyed.
+		 * @param[in] 1st The changed policy (aka subject)
+		 * @return Nothing.
+		 */
+		virtual void updateDelete(Subject *);
+
+		/**
+		 * Constructor of ModAlfMainPanelImpl.
+		 * @param[in] 1st The parent window and ID.
+		 */
 		ModAlfMainPanelImpl(wxWindow*, wxWindowID);
+
+		/**
+		 * Destructor of ModAlfMainPanelImpl.
+		 * @param None.
+		 */
 		~ModAlfMainPanelImpl(void);
 
-		friend class ModAlfAddPolicyVisitor;
+	private:
+		/**
+		 * The columns used within ModAlf
+		 */
+		enum modAlfListColumns {
+			COLUMN_PROG,		/**< name of application. */
+			COLUMN_SERVICE,		/**< type of service. */
+			COLUMN_ROLE,		/**< role type. */
+			COLUMN_ACTION,		/**< type of filter action. */
+			COLUMN_SCOPE,		/**< scope of the filter. */
+			COLUMN_USER,		/**< user of ruleset. */
+			COLUMN_EOL		/**< End Of List */
+		};
+
+		long	userRuleSetId_;	 /**< Id of our RuleSet . */
+		long	adminRuleSetId_; /**< Id of our admin RuleSet. */
+
+		/**
+		 * The heading line of the columns
+		 */
+		wxString	columnNames_[COLUMN_EOL];
+
+		/**
+		 * Appends a new policy to the RuleSet
+		 * Updates Columns regarding User/Admin policy and additionally
+		 * registers the policy for observation
+		 */
+		long ruleListAppend(Policy *);
+
+		/**
+		 * Handle the event on loading RuleSet
+		 * This just receives the event and updates the id's of
+		 * user and admin ruleset.
+		 * @param[in] 1st The event.
+		 * @return Nothing.
+		 */
+		void onLoadRuleSet(wxCommandEvent&);
+
+		/**
+		 * Remove a given row from the list.
+		 * @param[in] 1st The index of the row in question.
+		 * @return Nothing.
+		 */
+		void removeListRow(long);
+
+		/**
+		 * Find the row of a given policy.
+		 * @param[in] 1st The policy to search for.
+		 * @return The index of found row or -1.
+		 */
+		long findListRow(Policy *);
+
+		/**
+		 * Update row.
+		 * Updates the values of a row showing an alf capability
+		 * filter policy.
+		 * @param[in] 1st The index of row in question.
+		 * @return Nothing.
+		 */
+		void updateAlfCapabilityFilterPolicy(long);
+
+		/**
+		 * Update row.
+		 * Updates the values of a row showing an alf filter policy.
+		 * @param[in] 1st The index of row in question.
+		 * @return Nothing.
+		 */
+		void updateAlfFilterPolicy(long);
+
+		/**
+		 * Update row.
+		 * Updates the values of a row showing an application policy.
+		 * @param[in] 1st The index of row in question.
+		 * @return Nothing.
+		 */
+		void updateAlfAppPolicy(long);
 };
 
 #endif /* __ModAlfMainPanelImpl__ */
