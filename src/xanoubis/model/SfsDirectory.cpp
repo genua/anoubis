@@ -213,7 +213,15 @@ SfsDirectory::OnDir(const wxString &)
 wxDirTraverseResult
 SfsDirectory::OnFile(const wxString &filename)
 {
-	if (this->inverseFilter_ ^ filename.Contains(this->filter_)) {
+	/* Search for recursive part only  */
+	wxString path;
+
+	/* ::StartsWith puts the remaining part (after path_) into path */
+	filename.StartsWith(this->path_, &path);
+	if (path.StartsWith(wxT("/")))
+		path = path.Mid(1);
+
+	if (this->inverseFilter_ ^ (path.Find(this->filter_) != wxNOT_FOUND)) {
 		/*
 		 * Insert into directory
 		 * Entries are sorted in alphabetic order

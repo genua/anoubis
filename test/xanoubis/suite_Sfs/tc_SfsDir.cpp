@@ -341,6 +341,51 @@ START_TEST(SfsDir_resolve_link_plain_file)
 }
 END_TEST
 
+START_TEST(SfsDir_filter_rel_path_only)
+{
+	/* @see Bugzilla #1078 */
+	SfsDirectory	dir;
+	bool		result;
+	bool		fileFound[4];
+
+	result = dir.setPath(wxSfsDir);
+	fail_unless(result, "Path has not changed");
+
+	result = dir.setDirTraversal(true);
+	fail_unless(result, "Failed to enabled dir-traversal");
+
+	result = dir.setFilter(wxT("s"));
+	fail_unless(result, "Failed to update the filter");
+
+	fail_unless(dir.getNumEntries() == 4,
+	    "Unexpected number of entries\n"
+	    "Is: %i\n"
+	    "Expected: 4", dir.getNumEntries());
+
+	for (unsigned int i = 0; i < sizeof(fileFound); i++)
+		fileFound[i] = false;
+
+	for (unsigned int i = 0; i < dir.getNumEntries(); i++) {
+		SfsEntry &entry = dir.getEntry(i);
+
+		if (entry.getRelativePath(wxSfsDir) == wxT("sub/file1"))
+			fileFound[0] = true;
+		else if (entry.getRelativePath(wxSfsDir) == wxT("sub/file2"))
+			fileFound[1] = true;
+		else if (entry.getRelativePath(wxSfsDir) == wxT("sub/file3"))
+			fileFound[2] = true;
+		else if (entry.getRelativePath(wxSfsDir) == wxT("sub/file4"))
+			fileFound[3] = true;
+		else
+			fail("Unexpected entry fetched: %s",
+			    (const char*)entry.getPath().fn_str());
+	}
+
+	for (unsigned int i = 0; i < sizeof(fileFound); i++)
+		fail_unless(fileFound[i], "File at index %i not found", i);
+}
+END_TEST
+
 TCase *
 getTc_SfsDir(void)
 {
@@ -360,6 +405,7 @@ getTc_SfsDir(void)
 	tcase_add_test(testCase, SfsDir_recursive_filtered);
 	tcase_add_test(testCase, SfsDir_resolve_link_ok);
 	tcase_add_test(testCase, SfsDir_resolve_link_plain_file);
+	tcase_add_test(testCase, SfsDir_filter_rel_path_only);
 
 	return (testCase);
 }
