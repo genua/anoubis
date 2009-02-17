@@ -52,6 +52,8 @@
 #include "dev/anoubis_alf.h"
 #endif
 
+#include <anoubis_protocol.h>
+
 /*
  * Apply the scope @old to all rules in @chain. Additionally
  * retrict the applicability of all rules until @timeout in seconds since
@@ -470,4 +472,107 @@ err:
 	if (peer)
 		apn_free_host(peer);
 	return -ENOMEM;
+}
+
+int
+apn_escalation_rule_sb(struct apn_chain *dst, struct apn_rule *trigger,
+    struct apn_default *action, const char *prefix, unsigned long mask)
+{
+	struct apn_rule		*rule;
+
+	if (!prefix || prefix[0] != '/')
+		return -EINVAL;
+	if ((mask & APN_SBA_ALL) != mask)
+		return -EINVAL;
+	if (trigger->apn_type == APN_DEFAULT) {
+		rule = empty_rule(APN_SB_ACCESS);
+		rule->rule.sbaccess.cs.type = APN_CS_NONE;
+	} else if (trigger->apn_type == APN_SB_ACCESS) {
+		rule = apn_copy_one_rule(trigger);
+		if (rule->rule.sbaccess.path) {
+			free(rule->rule.sbaccess.path);
+			rule->rule.sbaccess.path = NULL;
+		}
+	} else {
+		return -EINVAL;
+	}
+	if (!rule)
+		return -ENOMEM;
+	rule->rule.sbaccess.amask = mask;
+	rule->rule.sbaccess.action = action->action;
+	rule->rule.sbaccess.log = action->log;
+	rule->rule.sbaccess.path = strdup(prefix);
+	if (!rule->rule.sbaccess.path) {
+		apn_free_one_rule(rule, NULL);
+		return -ENOMEM;
+	}
+	rule->apn_id = 0;
+	TAILQ_INSERT_TAIL(dst, rule, entry);
+	return 0;
+}
+
+int
+apn_escalation_rule_sfs(struct apn_chain *dst, struct apn_rule *trigger,
+    struct apn_default *action, const char *prefix, int sfsmatch)
+{
+	struct apn_rule		*rule;
+
+	if (!prefix || prefix[0] != '/')
+		return -EINVAL;
+	switch(sfsmatch) {
+	case ANOUBIS_SFS_DEFAULT:
+		if (trigger->apn_type != APN_SFS_DEFAULT)
+			return -1;
+		break;
+	case ANOUBIS_SFS_VALID:
+	case ANOUBIS_SFS_INVALID:
+	case ANOUBIS_SFS_UNKNOWN:
+		if (trigger->apn_type != APN_SFS_ACCESS)
+			return -EINVAL;
+		break;
+	default:
+		return -EINVAL;
+	}
+	rule = apn_copy_one_rule(trigger);
+	if (!rule)
+		return -ENOMEM;
+	rule->apn_id = 0;
+	if (trigger->apn_type == APN_SFS_ACCESS) {
+		int			 i;
+		struct apn_default	*actions[3];
+		static const int	 sfsmatches[3] = {
+			ANOUBIS_SFS_VALID,
+			ANOUBIS_SFS_INVALID,
+			ANOUBIS_SFS_UNKNOWN
+		};
+
+		actions[0] = &rule->rule.sfsaccess.valid;
+		actions[1] = &rule->rule.sfsaccess.invalid;
+		actions[2] = &rule->rule.sfsaccess.unknown;
+
+		rule->rule.sfsaccess.path = strdup(prefix);
+		if (rule->rule.sfsaccess.path == NULL) {
+			apn_free_one_rule(rule, NULL);
+			return -ENOMEM;
+		}
+		for (i=0; i<3; ++i) {
+			if (sfsmatch == sfsmatches[i]) {
+				actions[i]->action = action->action;
+				actions[i]->log = action->log;
+			} else {
+				actions[i]->action = APN_ACTION_CONTINUE;
+				actions[i]->log = APN_LOG_NONE;
+			}
+		}
+	} else if (trigger->apn_type == APN_SFS_DEFAULT) {
+		rule->rule.sfsdefault.path = strdup(prefix);
+		if(rule->rule.sfsdefault.path == NULL) {
+			apn_free_one_rule(rule, NULL);
+			return -ENOMEM;
+		}
+		rule->rule.sfsdefault.action = action->action;
+		rule->rule.sfsdefault.log = action->log;
+	}
+	TAILQ_INSERT_TAIL(dst, rule, entry);
+	return 0;
 }

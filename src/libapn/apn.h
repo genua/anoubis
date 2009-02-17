@@ -402,6 +402,10 @@ int	apn_escalation_splice(struct apn_ruleset *, struct apn_rule *,
 	    struct apn_chain *);
 int	apn_escalation_rule_alf(struct apn_chain *, const struct alf_event *,
 	    struct apn_default *, unsigned long flags);
+int	apn_escalation_rule_sb(struct apn_chain *, struct apn_rule *,
+	    struct apn_default *, const char *, unsigned long);
+int	apn_escalation_rule_sfs(struct apn_chain *, struct apn_rule *,
+	    struct apn_default *, const char *, int);
 
 __END_DECLS
 

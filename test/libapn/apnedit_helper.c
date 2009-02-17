@@ -39,10 +39,13 @@
 #endif
 
 #include <apn.h>
+#include <anoubis_protocol.h>
+
+FILE	*output = NULL;
 
 void usage(const char *progname)
 {
-	fprintf(stderr, "usage: %s cmdfile input\n", progname);
+	fprintf(output, "usage: %s cmdfile input\n", progname);
 	exit(1);
 }
 
@@ -113,6 +116,21 @@ static struct strtab_entry alfflags[] = {
 	{ "peer", ALF_EV_ALLPEER },
 	{ "dir", ALF_EV_ALLDIR },
 	{ "proto", ALF_EV_ALLPROTO },
+	{ NULL, 0 }
+};
+
+static struct strtab_entry sbflags[] = {
+	{ "read", APN_SBA_READ },
+	{ "write", APN_SBA_WRITE },
+	{ "exec", APN_SBA_EXEC },
+	{ NULL, 0 }
+};
+
+static struct strtab_entry sfsflags[] = {
+	{ "sfsvalid", (ANOUBIS_SFS_VALID) },
+	{ "sfsinvalid", (ANOUBIS_SFS_INVALID) },
+	{ "sfsunknown", (ANOUBIS_SFS_UNKNOWN) },
+	{ "sfsdefault", (ANOUBIS_SFS_DEFAULT) },
 	{ NULL, 0 }
 };
 
@@ -218,19 +236,19 @@ cmd_updown_common(struct apn_ruleset *rs, char *args,
 	struct apn_rule		*rule;
 
 	if (sscanf(args, "%d%c", &id, &ch) != 1) {
-		fprintf(stderr, "cmd_updown_common(%d): Invalid syntax\n",
+		fprintf(output, "cmd_updown_common(%d): Invalid syntax\n",
 		    line);
 		return 0;
 	}
 	rule = apn_find_rule(rs, id);
 	if (!rule) {
-		fprintf(stderr, "cmd_updown_common(%d): Cannot find rule %d\n",
+		fprintf(output, "cmd_updown_common(%d): Cannot find rule %d\n",
 		    line, id);
 		return 0;
 	}
 	ret = func(rule);
 	if ((boolret && ret == 0) || (!boolret && ret != 0)) {
-		fprintf(stderr, "cmd_updown_common(%d): apn function "
+		fprintf(output, "cmd_updown_common(%d): apn function "
 		    "failed with %d\n", line, ret);
 		return 0;
 	}
@@ -241,7 +259,7 @@ static int
 cmd_print(struct apn_ruleset *rs, char *args)
 {
 	if (*args) {
-		fprintf(stderr, "cmd_print(%d): "
+		fprintf(output, "cmd_print(%d): "
 		    "Unexpected arguments on print\n", line);
 		return 0;
 	}
@@ -249,7 +267,7 @@ cmd_print(struct apn_ruleset *rs, char *args)
 		printf("-------------------------------------------------\n");
 		return 1;
 	}
-	fprintf(stderr, "cmd_print(%d): apn_print_ruleset failed\n", line);
+	fprintf(output, "cmd_print(%d): apn_print_ruleset failed\n", line);
 	return 0;
 }
 
@@ -268,7 +286,7 @@ get_type(const char *type)
 		return APN_CTX;
 	if (strcasecmp(type, "ctx") == 0)
 		return APN_CTX;
-	fprintf(stderr, "get_type(%d): %s not a valid type\n", line, type);
+	fprintf(output, "get_type(%d): %s not a valid type\n", line, type);
 	return -1;
 }
 
@@ -312,11 +330,11 @@ cmd_copyinsert(struct apn_ruleset *rs, char *args)
 
 	if (sscanf(args, "%s %d %d %s %s%c",
 	    typestr, &triggerid, &srcid, path, cstxt, &ch) != 5) {
-		fprintf(stderr, "cmd_copyinsert(%d): Invald syntax\n", line);
+		fprintf(output, "cmd_copyinsert(%d): Invald syntax\n", line);
 		return 0;
 	}
 	if (!parse_csum(cstxt, cs)) {
-		fprintf(stderr, "cmd_copyinsert(%d): Invalid csum\n", line);
+		fprintf(output, "cmd_copyinsert(%d): Invalid csum\n", line);
 		return 0;
 	}
 	type = get_type(typestr);
@@ -324,13 +342,13 @@ cmd_copyinsert(struct apn_ruleset *rs, char *args)
 		return 0;
 	src = apn_find_rule(rs, srcid);
 	if (src == NULL) {
-		fprintf(stderr, "cmd_copyinsert(%d): Cannot find rule %d\n",
+		fprintf(output, "cmd_copyinsert(%d): Cannot find rule %d\n",
 		    line, srcid);
 		return 0;
 	}
 	src = apn_copy_one_rule(src);
 	if (src == NULL) {
-		fprintf(stderr, "cmd_copyinsert(%d): Cannot copy src rule\n",
+		fprintf(output, "cmd_copyinsert(%d): Cannot copy src rule\n",
 		    line);
 		return 0;
 	}
@@ -348,16 +366,167 @@ cmd_copyinsert(struct apn_ruleset *rs, char *args)
 		    APN_HASH_SHA256);
 		break;
 	default:
-		fprintf(stderr, "cmd_copyinsert(%d): Bad type %s/%d\n",
+		fprintf(output, "cmd_copyinsert(%d): Bad type %s/%d\n",
 		    line, typestr, type);
 		return 0;
 	}
 	if (ret != 0) {
-		fprintf(stderr, "cmd_copyinsert(%d): copyinsert failed "
+		fprintf(output, "cmd_copyinsert(%d): copyinsert failed "
 		    "with %d\n", line, ret);
 		return 0;
 	}
 	return 1;
+}
+
+static int
+parse_escalation_options(char *args, struct apn_default *action,
+    unsigned int *flagsp, struct strtab_entry tab[], int oneflag)
+{
+	char		*tok;
+	unsigned int	 flags = 0;
+
+	SKIP(args);
+	action->action = APN_ACTION_ASK;
+	action->log = APN_LOG_NONE;
+	while(*args) {
+		int opt;
+		tok = token(&args);
+		if (!tok)
+			break;
+		if (action->action == APN_ACTION_ASK) {
+			if (strcasecmp(tok, "deny") == 0) {
+				action->action = APN_ACTION_DENY;
+				continue;
+			}
+			if (strcasecmp(tok, "allow") == 0) {
+				action->action = APN_ACTION_ALLOW;
+				continue;
+			}
+		}
+		if (action->log == APN_LOG_NONE) {
+			if (strcasecmp(tok, "log") == 0) {
+				action->log = APN_LOG_NORMAL;
+				continue;
+			}
+			if (strcasecmp(tok, "alert") == 0) {
+				action->log = APN_LOG_ALERT;
+				continue;
+			}
+		}
+		opt = strtab_lookup(tab, tok);
+		if (opt < 0)
+			return 0;
+		if (oneflag) {
+			if (flags)
+				return 0;
+			flags = opt;
+		} else {
+			if (flags & opt)
+				return 0;
+			flags |= opt;
+		}
+		SKIP(args);
+	}
+	if (action->action == APN_ACTION_ASK)
+		return 0;
+	if (oneflag && !flags)
+		return 0;
+	(*flagsp) = flags;
+	return 1;
+}
+
+static int
+cmd_sfs_escalation(struct apn_ruleset *rs, char *args)
+{
+	const char		*tok, *prefix;
+	int			 triggerid, ret;
+	char			 ch;
+	struct apn_default	 action;
+	struct apn_chain	 nchain;
+	struct apn_rule		*triggerrule;
+	unsigned int		 sfsmatch;
+
+	tok = token(&args);
+	if (!tok || sscanf(tok, "%d%c", &triggerid, &ch) != 1)
+		goto parse_error;
+	prefix = token(&args);
+	if (!prefix)
+		goto parse_error;
+	action.action = APN_ACTION_ASK;
+	action.log = APN_LOG_NONE;
+	SKIP(args);
+	if (!parse_escalation_options(args, &action, &sfsmatch, sfsflags, 1))
+		goto parse_error;
+	TAILQ_INIT(&nchain);
+	triggerrule = apn_find_rule(rs, triggerid);
+	if (!triggerrule) {
+		fprintf(output, "cmd_sfs_escalation(%d): "
+		    "Cannot find rule %d\n", line, triggerid);
+		return 0;
+	}
+	ret = apn_escalation_rule_sfs(&nchain, triggerrule, &action,
+	    prefix, sfsmatch);
+	if (ret < 0) {
+		fprintf(output, "cmd_sfs_escalation(%d): "
+		    "Cannot create escalation rules (%d)\n", line, -ret);
+		return 0;
+	}
+	if (apn_escalation_splice(rs, triggerrule, &nchain) < 0) {
+		fprintf(output, "cmd_sfs_escalation(%d): "
+		    "Cannot splice rules\n", line);
+		return 0;
+	}
+	return 1;
+parse_error:
+	fprintf(output, "cmd_sfs_esclation(%d): Syntax error\n", line);
+	return 0;
+}
+
+static int
+cmd_sb_escalation(struct apn_ruleset *rs, char *args)
+{
+	const char		*tok, *prefix;
+	int			 triggerid, ret;
+	char			 ch;
+	struct apn_default	 action;
+	unsigned int		 flags;
+	struct apn_chain	 nchain;
+	struct apn_rule		*triggerrule;
+
+	tok = token(&args);
+	if (!tok || sscanf(tok, "%d%c", &triggerid, &ch) != 1)
+		goto parse_error;
+	prefix = token(&args);
+	if (!prefix)
+		goto parse_error;
+	action.action = APN_ACTION_ASK;
+	action.log = APN_LOG_NONE;
+	SKIP(args);
+	if (!parse_escalation_options(args, &action, &flags, sbflags, 0))
+		goto parse_error;
+	TAILQ_INIT(&nchain);
+	triggerrule = apn_find_rule(rs, triggerid);
+	if (!triggerrule) {
+		fprintf(output, "cmd_sb_escalation(%d): "
+		    "Cannot find rule %d\n", line, triggerid);
+		return 0;
+	}
+	ret = apn_escalation_rule_sb(&nchain, triggerrule, &action,
+	    prefix, flags);
+	if (ret < 0) {
+		fprintf(output, "cmd_sb_escalation(%d): "
+		    "Cannot create escalation rules (%d)\n", line, -ret);
+		return 0;
+	}
+	if (apn_escalation_splice(rs, triggerrule, &nchain) < 0) {
+		fprintf(output, "cmd_sb_escalation(%d): "
+		    "Cannot splice rules\n", line);
+		return 0;
+	}
+	return 1;
+parse_error:
+	fprintf(output, "cmd_sb_esclation(%d): Syntax error\n", line);
+	return 0;
 }
 
 static int
@@ -387,63 +556,29 @@ cmd_alf_escalation(struct apn_ruleset *rs, char *args)
 		goto parse_error;
 	args += len;
 	SKIP(args);
-	flags = 0;
-	action.action = APN_ACTION_ASK;
-	action.log = APN_LOG_NONE;
-	while(*args) {
-		char	*tok;
-		int	 opt;
-
-		tok = token(&args);
-		if (action.action == APN_ACTION_ASK) {
-			if (strcasecmp(tok, "deny") == 0) {
-				action.action = APN_ACTION_DENY;
-				continue;
-			}
-			if (strcasecmp(tok, "allow") == 0) {
-				action.action = APN_ACTION_ALLOW;
-				continue;
-			}
-		}
-		if (action.log == APN_LOG_NONE) {
-			if (strcasecmp(tok, "log") == 0) {
-				action.log = APN_LOG_NORMAL;
-				continue;
-			}
-			if (strcasecmp(tok, "alert") == 0) {
-				action.log = APN_LOG_ALERT;
-				continue;
-			}
-		}
-		opt = strtab_lookup(alfflags, tok);
-		if (opt < 0)
-			goto parse_error;
-		flags |= opt;
-		SKIP(args);
-	}
-	if (action.action == APN_ACTION_ASK)
-		return 0;
+	if (!parse_escalation_options(args, &action, &flags, alfflags, 0))
+		goto parse_error;
 	TAILQ_INIT(&nchain);
 	rule = apn_find_rule(rs, ruleid);
 	if (!rule) {
-		fprintf(stderr, "cmd_alf_escalation(%d): "
+		fprintf(output, "cmd_alf_escalation(%d): "
 		    "Cannot find rule %d\n", line, ruleid);
 		return 0;
 	}
 	ret = apn_escalation_rule_alf(&nchain, &event, &action, flags);
 	if (ret < 0) {
-		fprintf(stderr, "cmd_alf_escalation(%d): "
+		fprintf(output, "cmd_alf_escalation(%d): "
 		    "Cannot create escalation rules (%d)\n", line, -ret);
 		return 0;
 	}
 	if (apn_escalation_splice(rs, rule, &nchain) < 0) {
-		fprintf(stderr, "cmd_alf_escalation(%d): "
+		fprintf(output, "cmd_alf_escalation(%d): "
 		    "Cannot splice rules\n", line);
 		return 0;
 	}
 	return 1;
 parse_error:
-	fprintf(stderr, "cmd_alf_escalation(%d): "
+	fprintf(output, "cmd_alf_escalation(%d): "
 	    "Parse Error in command line\n", line);
 	return 0;
 }
@@ -457,7 +592,7 @@ cmd_insert(struct apn_ruleset *rs, char *args)
 	struct apn_rule		*src;
 
 	if (sscanf(args, "%s %d %d%c", typestr, &anchor, &srcid, &ch) != 3) {
-		fprintf(stderr, "cmd_insert(%d): Invald syntax\n", line);
+		fprintf(output, "cmd_insert(%d): Invald syntax\n", line);
 		return 0;
 	}
 	type = get_type(typestr);
@@ -465,13 +600,13 @@ cmd_insert(struct apn_ruleset *rs, char *args)
 		return 0;
 	src = apn_find_rule(rs, srcid);
 	if (src == NULL) {
-		fprintf(stderr, "cmd_insert(%d): Cannot find rule %d\n",
+		fprintf(output, "cmd_insert(%d): Cannot find rule %d\n",
 		    line, srcid);
 		return 0;
 	}
 	src = apn_copy_one_rule(src);
 	if (src == NULL) {
-		fprintf(stderr, "cmd_insert(%d): Cannot copy src rule\n",
+		fprintf(output, "cmd_insert(%d): Cannot copy src rule\n",
 		    line);
 		return 0;
 	}
@@ -490,12 +625,12 @@ cmd_insert(struct apn_ruleset *rs, char *args)
 		ret = apn_insert_ctxrule(rs, src, anchor);
 		break;
 	default:
-		fprintf(stderr, "cmd_insert(%d): Bad type %s/%d\n",
+		fprintf(output, "cmd_insert(%d): Bad type %s/%d\n",
 		    line, typestr, type);
 		return 0;
 	}
 	if (ret != 0) {
-		fprintf(stderr, "cmd_insert(%d): insert failed with %d\n",
+		fprintf(output, "cmd_insert(%d): insert failed with %d\n",
 		    line, ret);
 		return 0;
 	}
@@ -509,7 +644,7 @@ cmd_remove(struct apn_ruleset *rs, char *args)
 	char		ch;
 
 	if (sscanf(args, "%d%c", &id, &ch) != 1) {
-		fprintf(stderr, "cmd_remove(%d): Invalid syntax\n", line);
+		fprintf(output, "cmd_remove(%d): Invalid syntax\n", line);
 		return 0;
 	}
 	ret = apn_remove(rs, id);
@@ -520,11 +655,16 @@ int main(int argc, char **argv)
 {
 	struct apn_ruleset	*rs;
 	char			 l[1024];
-	FILE			*cmd;
+	FILE			*cmd, *null;
 	int			 ret;
 
 	if (argc != 3)
 		usage(argv[0]);
+	null = fopen("/dev/null", "w");
+	if (!null) {
+		fprintf(stderr, "Cannot open /dev/null");
+		return 1;
+	}
 
 	ret = apn_parse(argv[2], &rs, APN_FLAG_NOPERMCHECK);
 	if (ret != 0) {
@@ -573,6 +713,12 @@ int main(int argc, char **argv)
 		}
 		while(isspace(*args))
 			args++;
+		if (fail) {
+			/* Suppress error output for expected fails. */
+			output = null;
+		} else {
+			output = stderr;
+		}
 		if (strcasecmp(p, "print") == 0) {
 			ret = cmd_print(rs, args);
 		} else if (strcasecmp(p, "copyinsert") == 0) {
@@ -592,6 +738,10 @@ int main(int argc, char **argv)
 			ret = cmd_remove(rs, args);
 		} else if (strcasecmp(p, "alf_escalation") == 0) {
 			ret = cmd_alf_escalation(rs, args);
+		} else if (strcasecmp(p, "sb_escalation") == 0) {
+			ret = cmd_sb_escalation(rs, args);
+		} else if (strcasecmp(p, "sfs_escalation") == 0) {
+			ret = cmd_sfs_escalation(rs, args);
 		} else {
 			fprintf(stderr, "line %d: Unknown command %s\n",
 			    line, p);

@@ -35,7 +35,8 @@ noinst_HEADERS = apn.h apninternals.h rbtree.h
 bsdcompatdir = src/bsdcompat
 libbsdcompat = $(top_builddir)/$(bsdcompatdir)/libbsdcompat.a
 
-INCLUDES = -I $(top_builddir)/src -I $(top_srcdir)/include
+INCLUDES = -I $(top_builddir)/src -I $(top_srcdir)/include \
+    -I $(top_srcdir)/src/libanoubisprotocol
 
 if NEEDBSDCOMPAT
 INCLUDES += -I$(top_srcdir)/$(bsdcompatdir)

@@ -32,6 +32,7 @@ noinst_PROGRAMS = test_libapn test_printing test_insertcopy test_rbtree \
 libapndir       = src/libapn
 bsdcompatdir    = src/bsdcompat
 anoubischeckdir = test/libanoubischeck
+anoubisprotodir	= src/libanoubisprotocol
 libapn		= $(top_builddir)/$(libapndir)/libapn.so
 libbsdcompat    = $(top_builddir)/$(bsdcompatdir)/libbsdcompat.a
 libanoubischeck = $(top_builddir)/$(anoubischeckdir)/libanoubischeck.a
@@ -45,6 +46,7 @@ test_libapn_CPPFLAGS = \
 	-I$(top_srcdir)/$(bsdcompatdir) \
 	-I$(top_srcdir)/include \
 	-I$(top_srcdir)/$(anoubischeckdir) \
+	-I$(top_srcdir)/$(anoubisprotodir) \
 	@CHECK_CFLAGS@
 
 apnedit_helper_CPPFLAGS = $(test_libapn_CPPFLAGS)
