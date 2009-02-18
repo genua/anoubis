@@ -559,14 +559,10 @@ dispatch_p2m(int fd, short sig __used, void *arg)
 
 	/* msg was checked for non-nullness just above */
 	/*@-nullderef@*/ /*@-nullpass@*/
-	if ((ret = send_msg(fd, msg)) == 1) {
+	ret = send_msg(fd, msg);
+	if (ret != 0) {
 		msg = dequeue(&eventq_p2m);
-		DEBUG(DBG_QUEUE, " <eventq_p2m: %x",
-		    ((struct eventdev_reply *)msg->msg)->msg_token);
-		free(msg);
-	} else if (ret == -1) {
-		msg = dequeue(&eventq_p2m);
-		DEBUG(DBG_QUEUE, " <eventq_p2m: dropping %x",
+		DEBUG(DBG_QUEUE, " <eventq_p2m: %s%x", (ret > 0) ? "" : "dropping ",
 		    ((struct eventdev_reply *)msg->msg)->msg_token);
 		free(msg);
 	}
@@ -787,14 +783,10 @@ dispatch_p2s(int fd, short sig __used, void *arg)
 
 	/* msg was checked for non-nullness just above */
 	/*@-nullderef@*/ /*@-nullpass@*/
-	if ((ret = send_msg(fd, msg)) == 1) {
+	ret = send_msg(fd, msg);
+	if (ret != 0) {
 		msg = dequeue(&eventq_p2s);
-		DEBUG(DBG_QUEUE, " <eventq_p2s: %x",
-		    ((struct eventdev_hdr *)msg->msg)->msg_token);
-		free(msg);
-	} else if (ret == -1) {
-		msg = dequeue(&eventq_p2s);
-		DEBUG(DBG_QUEUE, " <eventq_p2s: dropping %x",
+		DEBUG(DBG_QUEUE, " <eventq_p2s: %s%x", (ret > 0) ? "" : "dropping ",
 		    ((struct eventdev_hdr *)msg->msg)->msg_token);
 		free(msg);
 	}

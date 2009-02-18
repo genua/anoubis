@@ -72,18 +72,18 @@ dispatch_log_write(int fd __used, short event __used, void *arg __used)
 		__logging = 0;
 		return;
 	}
-	if ((ret = send_msg(__log_fd, msg)) == 1) {
+	ret = send_msg(__log_fd, msg);
+	if (ret != 0) {
 		msg = dequeue(&__eventq_log);
 		free(msg);
-	} else if (ret == -1) {
-		/*
-		 * Tricky:  First dequeue pending message, then log and
-		 * thus queue a new message.
-		 */
-		msg = dequeue(&__eventq_log);
-		free(msg);
-		log_warnx("dispatch_log_write: dropping message %p", msg);
 	}
+	/*
+	 * Tricky:  First dequeue pending message, then log and
+	 * thus queue a new message.
+	 */
+	if (ret == -1)
+		log_warnx("dispatch_log_write: dropping message %p", msg);
+
 	if (queue_peek(&__eventq_log) || msg_pending(__log_fd))
 		event_add(&__log_event, NULL);
 	__logging = 0;

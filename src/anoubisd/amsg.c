@@ -381,27 +381,6 @@ send_msg(int fd, anoubisd_msg_t *msg)
 }
 
 int
-send_reply(int fd, anoubisd_msg_t *msg)
-{
-	struct msg_buf *mbp;
-
-	if ((mbp = _get_mbp(fd)) == NULL) {
-		log_warn("msg_buf not initialized");
-		return 0;
-	}
-	if (mbp->wtailp != mbp->wheadp) {
-		_flush_buf(mbp);
-		return 0;
-	}
-
-	bcopy(msg->msg, mbp->wtailp, sizeof(struct eventdev_reply));
-	mbp->wtailp += sizeof(struct eventdev_reply);
-	DEBUG(DBG_MSG_RECV, "send_reply: fd:%d size:%d", mbp->fd, msg->size);
-	_flush_buf(mbp);
-	return 1;
-}
-
-int
 msg_pending(int fd)
 {
 	struct msg_buf * mbp;

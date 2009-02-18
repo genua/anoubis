@@ -750,17 +750,14 @@ dispatch_m2s(int fd, short event __used, /*@dependent@*/ void *arg)
 
 	/* msg was checked for non-nullness just above */
 	/*@-nullderef@*/ /*@-nullpass@*/
-	if ((ret = send_msg(fd, msg)) == 1) {
+	ret = send_msg(fd, msg);
+	if (ret != 0) {
 		msg = dequeue(&eventq_m2s);
-		DEBUG(DBG_QUEUE, " <eventq_m2s: %x",
-		    ((struct eventdev_hdr *)msg->msg)->msg_token);
-		free(msg);
-	} else if (ret == -1) {
-		msg = dequeue(&eventq_m2s);
-		DEBUG(DBG_QUEUE, " <eventq_m2s: dropping %x",
+		DEBUG(DBG_QUEUE, " <eventq_m2s: %s%x", (ret > 0) ? "" : "dropping ",
 		    ((struct eventdev_hdr *)msg->msg)->msg_token);
 		free(msg);
 	}
+
 	/* Write was not successful: Check if we lost one of our childs. */
 	if (ret <= 0)
 		sighandler(SIGCHLD, 0, NULL);
@@ -1317,17 +1314,14 @@ dispatch_m2p(int fd, short event __used, /*@dependent@*/ void *arg)
 
 	/* msg was checked for non-nullness just above */
 	/*@-nullderef@*/ /*@-nullpass@*/
-	if ((ret = send_msg(fd, msg)) == 1) {
+	ret = send_msg(fd, msg);
+	if (ret != 0) {
 		msg = dequeue(&eventq_m2p);
-		DEBUG(DBG_QUEUE, " <eventq_m2p: %x",
-		    ((struct eventdev_hdr *)msg->msg)->msg_token);
-		free(msg);
-	} else if (ret == -1) {
-		msg = dequeue(&eventq_m2p);
-		DEBUG(DBG_QUEUE, " <eventq_m2p: dropping %x",
+		DEBUG(DBG_QUEUE, " <eventq_m2p: %s%x", (ret > 0) ? "" : "dropping ",
 		    ((struct eventdev_hdr *)msg->msg)->msg_token);
 		free(msg);
 	}
+
 	/* Write was not successful. See if we lost one of our childs. */
 	if (ret <= 0)
 		sighandler(SIGCHLD, 0, NULL);
@@ -1382,6 +1376,7 @@ dispatch_m2dev(int fd, short event __used, /*@dependent@*/ void *arg)
 	/*@dependent@*/
 	anoubisd_msg_t *msg;
 	struct event_info_main *ev_info = (struct event_info_main*)arg;
+	ssize_t			ret;
 
 	DEBUG(DBG_TRACE, ">dispatch_m2dev");
 
@@ -1395,11 +1390,21 @@ dispatch_m2dev(int fd, short event __used, /*@dependent@*/ void *arg)
 
 	switch(msg->mtype) {
 		case ANOUBISD_MSG_EVENTREPLY:
-			if (send_reply(fd, msg)) {
+			ret = write(fd, msg->msg, 
+			    sizeof(struct eventdev_reply));
+
+			/* 
+			 * ESRCH/EINVAL returns are events which
+			 * have been cancelled before anoubisd replied.
+			 * These should be dequeued.
+			 */
+			if (ret > 0 ||
+			    (ret < 0 && (errno == EINVAL || errno == ESRCH))) {
 				msg = dequeue(&eventq_m2dev);
-				DEBUG(DBG_QUEUE, " <eventq_m2dev: %x",
+				DEBUG(DBG_QUEUE, " <eventq_m2dev: %x%s",
 				    ((struct eventdev_reply *)
-				    msg->msg)->msg_token);
+				    msg->msg)->msg_token,
+				    (ret < 0)? "" : " (bad reply)");
 				free(msg);
 			}
 			break;
