@@ -96,8 +96,6 @@ int		 lgetc(int);
 int		 llgetc(struct file *);
 int		 lungetc(int);
 int		 findeol(void);
-int		 varset(const char *, void *, size_t, int);
-struct var	*varget(const char *);
 int		 str2hash(const char *, u_int8_t *, size_t);
 int		 validate_hash(int, const char *);
 int		 host(const char *, struct apn_addr *);
@@ -247,79 +245,7 @@ typedef struct {
 grammar		: /* empty */
 		| grammar '\n'
 		| grammar module_l '\n'
-		| grammar varset '\n'
 		| grammar error '\n'		{ file->errors++; }
-		;
-
-varset		: varapp
-		| varrules
-		| vardefault
-		| varhost
-		| varport
-		| varfilename
-		;
-
-varapp		: APPLICATION STRING '=' apps		{
-			if (varset($2, NULL, 0, 0) == -1) {
-				free($2);
-				YYERROR;
-			}
-			free($2);
-		}
-		;
-
-vardefault	: DEFAULT STRING '=' action		{
-			if (varset($2, NULL, 0, 0) == -1) {
-				free($2);
-				YYERROR;
-			}
-			free($2);
-		}
-		;
-
-varrules	: varalfrule
-		;
-
-varalfrule	: RULE STRING '=' alfspecs		{
-			if (varset($2, NULL, 0, 0) == -1) {
-				free($2);
-				YYERROR;
-			}
-			free($2);
-		}
-		;
-
-varhost		: HOST STRING '=' hostspec		{
-			if (validate_hostlist($4) == -1) {
-				free($2);
-				YYERROR;
-			}
-			if (varset($2, NULL, 0, 0) == -1) {
-				free($2);
-				YYERROR;
-			}
-			free($2);
-		}
-		;
-
-varport		: PORT STRING '=' ports			{
-			if (varset($2, NULL, 0, 0) == -1) {
-				free($2);
-				YYERROR;
-			}
-			free($2);
-		}
-		;
-
-varfilename	: TFILE STRING '=' STRING		{
-			if (varset($2, NULL, 0, 0) == -1) {
-				free($2);
-				free($4);
-				YYERROR;
-			}
-			free($2);
-			free($4);
-		}
 		;
 
 comma		: ','
@@ -573,15 +499,6 @@ alffilterspec	: netaccess log af proto hosts statetimeout	{
 				YYERROR;
 			}
 		}
-		| '$' STRING			{
-			struct var	*var;
-
-			if ((var = varget($2)) == NULL) {
-				free($2);
-				YYERROR;
-			}
-			free($2);
-		}
 		;
 
 statetimeout	: STATEFUL			{
@@ -631,15 +548,6 @@ hosts		: FROM hostspec portspec TO hostspec portspec	{
 hostspec	: '{' host_l '}'		{ $$ = $2.head; }
 		| host				{ $$ = $1; }
 		| ANY				{ $$ = NULL; }
-		| '$' STRING			{
-			struct var	*var;
-
-			if ((var = varget($2)) == NULL) {
-				free($2);
-				YYERROR;
-			}
-			free($2);
-		}
 		;
 
 host_l		: host_l comma host		{
@@ -689,15 +597,6 @@ portspec	: PORT ports			{ $$ = $2; }
 
 ports		: '{' port_l '}'		{ $$ = $2.head; }
 		| port				{ $$ = $1; }
-		| '$' STRING			{
-			struct var	*var;
-
-			if ((var = varget($2)) == NULL) {
-				free($2);
-				YYERROR;
-			}
-			free($2);
-		}
 		;
 
 port_l		: port_l comma port		{
@@ -1319,14 +1218,6 @@ defaultrule	: DEFAULT log defaultspec	{
 
 
 defaultspec	: action			{ $$ = $1; }
-		| '$' STRING			{
-			struct var	*var;
-			if ((var = varget($2)) == NULL) {
-				free($2);
-				YYERROR;
-			}
-			free($2);
-		}
 		;
 
 		/*
@@ -1335,15 +1226,6 @@ defaultspec	: action			{ $$ = $1; }
 apps		: '{' app_l '}'			{ $$ = $2.head; }
 		| app				{ $$ = $1; }
 		| ANY				{ $$ = NULL; }
-		| '$' STRING			{
-			struct var	*var;
-
-			if ((var = varget($2)) == NULL) {
-				free($2);
-				YYERROR;
-			}
-			free($2);
-		}
 		;
 
 app_l		: app_l comma optnl app		{
@@ -1894,59 +1776,6 @@ __parse_rules_common(struct apn_ruleset *apnrspx)
 	apn_assign_ids(apnrspx);
 
 	return (errors ? 1 : 0);
-}
-
-/*
- * Add an opaque object of a designated size and a specified type to the
- * variable structure.  The variable is identified by the specified name.
- *
- * XXX HJH If the variable already exists it will be replaced.
- * XXX HJH Good idea?
- */
-int
-varset(const char *name, void *value, size_t valsize, int type)
-{
-	struct var	*var;
-
-	for (var = TAILQ_FIRST(&apnrsp->var_queue);
-	    var && strcmp(name, var->name); var = TAILQ_NEXT(var, entry))
-		;	/* nothing */
-
-	if (var != NULL) {
-		free(var->name);
-		free(var->value); /* XXX HJH more needed for complex structs! */
-		TAILQ_REMOVE(&apnrsp->var_queue, var, entry);
-		free(var);
-	}
-	if ((var = calloc(1, sizeof(*var))) == NULL)
-		return (-1);
-
-	var->name = strdup(name);
-	if (var->name == NULL) {
-		free(var);
-		return (-1);
-	}
-	var->value = value;
-	var->valsize = valsize;
-	var->used = 0;
-	var->type = type;
-
-	TAILQ_INSERT_TAIL(&apnrsp->var_queue, var, entry);
-
-	return (0);
-}
-
-struct var *
-varget(const char *name)
-{
-	struct var	*var;
-
-	TAILQ_FOREACH(var, &apnrsp->var_queue, entry)
-		if (strcmp(name, var->name) == 0) {
-			var->used = 1;
-			return (var);
-		}
-	return (NULL);
 }
 
 int

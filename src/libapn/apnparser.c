@@ -72,8 +72,6 @@ static int	apn_print_log(int, FILE *);
 static int	apn_print_af(int, FILE *);
 static int	apn_print_proto(int, FILE *);
 static void	apn_free_errq(struct apnerr_queue *);
-static void	apn_free_varq(struct apnvar_queue *);
-static void	apn_free_var(struct var *);
 static struct apn_rule	*apn_search_rule(struct apn_ruleset *rs,
 		     struct apn_chain *, unsigned int);
 static int	apn_update_ids(struct apn_rule *, struct apn_ruleset *);
@@ -161,7 +159,6 @@ __apn_parse_common(const char *filename, struct apn_ruleset **rsp, int flags)
 	TAILQ_INIT(&rs->sfs_queue);
 	TAILQ_INIT(&rs->sb_queue);
 	TAILQ_INIT(&rs->ctx_queue);
-	TAILQ_INIT(&rs->var_queue);
 	TAILQ_INIT(&rs->err_queue);
 	rs->flags = flags;
 	rs->compatids = 1;
@@ -192,7 +189,6 @@ apn_parse(const char *filename, struct apn_ruleset **rsp, int flags)
 		apn_free_chain(&rs->sfs_queue, NULL);
 		apn_free_chain(&rs->sb_queue, NULL);
 		apn_free_chain(&rs->ctx_queue, NULL);
-		apn_free_varq(&rs->var_queue);
 	}
 	return (ret);
 }
@@ -217,7 +213,6 @@ apn_parse_iovec(const char *filename, struct iovec *vec, int count,
 		apn_free_chain(&rs->sfs_queue, NULL);
 		apn_free_chain(&rs->sb_queue, NULL);
 		apn_free_chain(&rs->ctx_queue, NULL);
-		apn_free_varq(&rs->var_queue);
 	}
 	return ret;
 }
@@ -886,7 +881,6 @@ apn_free_ruleset(struct apn_ruleset *rs)
 {
 	struct apnerr_queue	*errq;
 	struct apn_chain	*alfq, *sfsq, *sbq, *ctxq;
-	struct apnvar_queue	*varq;
 
 	if (rs == NULL)
 		return;
@@ -896,7 +890,6 @@ apn_free_ruleset(struct apn_ruleset *rs)
 	sfsq = &rs->sfs_queue;
 	sbq = &rs->sb_queue;
 	ctxq = &rs->ctx_queue;
-	varq = &rs->var_queue;
 
 	apn_free_errq(errq);
 	rs->idtree = NULL;
@@ -904,7 +897,6 @@ apn_free_ruleset(struct apn_ruleset *rs)
 	apn_free_chain(sfsq, NULL);
 	apn_free_chain(sbq, NULL);
 	apn_free_chain(ctxq, NULL);
-	apn_free_varq(varq);
 
 	free(rs);
 }
@@ -1424,60 +1416,12 @@ apn_free_errq(struct apnerr_queue *errq)
 
 	if (errq == NULL || TAILQ_EMPTY(errq))
 		return;
-	for (msg = TAILQ_FIRST(errq); msg != TAILQ_END(varq); msg = next) {
+	for (msg = TAILQ_FIRST(errq); msg != TAILQ_END(errq); msg = next) {
 		next = TAILQ_NEXT(msg, entry);
 		TAILQ_REMOVE(errq, msg, entry);
 		free(msg->msg);
 		free(msg);
 	}
-}
-
-static void
-apn_free_varq(struct apnvar_queue *varq)
-{
-	struct var	*var, *next;
-
-	if (varq == NULL || TAILQ_EMPTY(varq))
-		return;
-	for (var = TAILQ_FIRST(varq); var != TAILQ_END(varq); var = next) {
-		next = TAILQ_NEXT(var, entry);
-		TAILQ_REMOVE(varq, var, entry);
-		apn_free_var(var);
-	}
-}
-
-static void
-apn_free_var(struct var *var)
-{
-	if (var == NULL)
-		return;
-
-	switch (var->type) {
-	case VAR_APPLICATION:
-		apn_free_app((struct apn_app *)var->value);
-		break;
-
-	case VAR_RULE:
-		apn_free_one_rule((struct apn_rule *)var->value, NULL);
-		break;
-
-	case VAR_DEFAULT:
-		/* nothing to free */
-		break;
-
-	case VAR_HOST:
-		apn_free_host((struct apn_host *)var->value);
-		break;
-
-	case VAR_PORT:
-		apn_free_port((struct apn_port *)var->value);
-		break;
-
-	default:
-		break;
-	}
-	free(var->name);
-	free(var);
 }
 
 void

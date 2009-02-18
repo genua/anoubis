@@ -82,23 +82,6 @@ enum apn_log_level {
 	APN_LOG_NONE, APN_LOG_NORMAL, APN_LOG_ALERT
 };
 
-enum {
-	VAR_APPLICATION, VAR_RULE, VAR_DEFAULT, VAR_HOST, VAR_PORT,
-	VAR_FILENAME
-};
-
-/* APN variables. */
-struct var {
-	TAILQ_ENTRY(var)	 entry;
-	u_int8_t		 type;
-	u_int8_t		 used;
-	char			*name;
-	size_t			 valsize;
-	void			*value;
-};
-
-TAILQ_HEAD(apnvar_queue, var);
-
 struct apn_app {
 	char		*name;
 	int		 hashtype;
@@ -274,12 +257,11 @@ struct apn_ruleset {
 	unsigned int		 maxid;
 	struct rb_entry		*idtree;
 
-	/* Rulesets and variables */
+	/* Rulesets */
 	struct apn_chain	 alf_queue;
 	struct apn_chain	 sfs_queue;
 	struct apn_chain	 sb_queue;
 	struct apn_chain	 ctx_queue;
-	struct apnvar_queue	 var_queue;
 
 	/* Error messages from the parser */
 	struct apnerr_queue	 err_queue;
