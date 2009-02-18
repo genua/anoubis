@@ -136,31 +136,22 @@ SfsDirectory::getEntry(unsigned int idx)
 SfsEntry &
 SfsDirectory::insertEntry(const wxString &path)
 {
-	int idx = getIndexOf(path);
-	if (idx != -1)
-		return (getEntry(idx));
+	int idx;
 
-	std::vector<SfsEntry>::iterator it = entryList_.begin();
-	SfsEntry newEntry(path);
-
-	/* Find correct position */
-	idx = 0;
-	for (; it != entryList_.end(); ++it, idx++) {
-		SfsEntry &curEntry = (*it);
-
-		if (curEntry.getPath().Cmp(path) > 0) {
-			entryList_.insert(it, newEntry);
-			return (entryList_[idx]);
-		}
+	if (entryList_.empty()) {
+		/*
+		 * An empty list. This is easy. Append the new SfsEntry to the
+		 * empty list. A list with one item is always in correct order.
+		 */
+		SfsEntry newEntry(path);
+		entryList_.push_back(newEntry);
+		idx = 0;
+	} else {
+		/* Find the correct position and insert the item. */
+		idx = insertEntry(path, 0, entryList_.size() - 1);
 	}
 
-	/*
-	 * newEntry is the "greatest" item, append it at the end of
-	 * the directory
-	 */
-	entryList_.push_back(newEntry);
-
-	return (entryList_.back());
+	return (entryList_[idx]);
 }
 
 bool
@@ -202,6 +193,60 @@ SfsDirectory::updateEntryList()
 	/* Clear list before traversion starts */
 	entryList_.clear();
 	dir.Traverse(*this);
+}
+
+int
+SfsDirectory::insertEntry(const wxString &path, unsigned int start,
+    unsigned int end)
+{
+	unsigned int mid = start + (unsigned int)((end - start) / 2);
+	int result = entryList_[mid].getPath().Cmp(path);
+
+	if (start == end) {
+		/*
+		 * This is the position, where the SfSEntry should be inserted.
+		 */
+		SfsEntry newEntry(path);
+
+		if (result > 0) {
+			/*
+			 * The entry at start is "greater" that the new entry.
+			 * Insert it before the item at start.
+			 */
+			std::vector<SfsEntry>::iterator it = entryList_.begin();
+			it += start; /* Advance to the correct position */
+
+			entryList_.insert(it, newEntry);
+		} else {
+			/*
+			 * This special case can happen, if the end of the list
+			 * is reached. The new item is "greater" that the last
+			 * item in the list. In the case simply append the new
+			 * SfsEntry at the list.
+			 */
+			entryList_.push_back(newEntry);
+		}
+
+		/* This is the position, where the item was inserted */
+		return (start);
+	}
+
+	if (result < 0) {
+		/*
+		 * The new item is "greater" than the middle item.
+		 * Continue the search right to mid.
+		 */
+		return insertEntry(path, mid + 1, end);
+	} else if (result > 0) {
+		/*
+		 * The middle item is "greater" than the middle item.
+		 * Continue the search left to mid.
+		 */
+		return insertEntry(path, start, mid);
+	} else {
+		/* Try to insert an already existing path, abort */
+		return (mid);
+	}
 }
 
 wxDirTraverseResult
