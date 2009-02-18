@@ -402,13 +402,6 @@ dump(char *file, uid_t uid, unsigned int prio)
 		return 3;
 	}
 
-	if (get_value(m->u.policyreply->flags) & POLICY_FLAG_END) {
-		free_msg_list(m);
-		destroy_channel();
-		fprintf(stderr, "No policy found for uid/prio\n");
-		return 1;
-	}
-
 	if (!fp) {
 		if (!file || strcmp(file, "-") == 0) {
 			fp = stdout;
