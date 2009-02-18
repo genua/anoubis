@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 GeNUA mbH <info@genua.de>
+ * Copyright (c) 2009 GeNUA mbH <info@genua.de>
  *
  * All rights reserved.
  *
@@ -143,15 +143,6 @@ class ModSfsAddPolicyVisitor : public PolicyVisitor
 
 	private:
 		ModSfsMainPanelImpl	*sfsPanel_;	/**< The main panel. */
-
-		/**
-		 * RuleList append.
-		 * This method does the work of adding the given policy to
-		 * the wxListCtrl of the main panel of ModSfs.
-		 * @param[in] 1st The policy to add.
-		 * @return The index within the list of the added policy.
-		 */
-		long ruleListAppend(Policy *);
 };
 
 #endif	/* _MODSFSADDPOLICYVISITOR_H_ */

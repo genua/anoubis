@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 GeNUA mbH <info@genua.de>
+ * Copyright (c) 2009 GeNUA mbH <info@genua.de>
  *
  * All rights reserved.
  *
@@ -65,23 +65,9 @@ ModSfsAddPolicyVisitor::visitContextFilterPolicy(
 }
 
 void
-ModSfsAddPolicyVisitor::visitDefaultFilterPolicy(DefaultFilterPolicy *policy)
+ModSfsAddPolicyVisitor::visitDefaultFilterPolicy(DefaultFilterPolicy*)
 {
-	long		 idx;
-	wxListCtrl	*list;
-
-	idx = ruleListAppend(policy);
-	list = sfsPanel_->lst_Rules;
-
-	/*
-	 * XXX ch: fix this with next change
-	list->SetItem(idx, MODSFS_LIST_COLUMN_PROG,
-	    sfsPolicy->getBinaryName());
-	list->SetItem(idx, MODSFS_LIST_COLUMN_HASHT,
-	    sfsPolicy->getHashTypeName());
-	list->SetItem(idx, MODSFS_LIST_COLUMN_HASH,
-	   sfsPolicy->getHashValue());
-	*/
+	/* ModSfs does not deal with DefaultFilterPolicy. */
 }
 
 void
@@ -98,76 +84,20 @@ ModSfsAddPolicyVisitor::visitSbAppPolicy(SbAppPolicy *)
 }
 
 void
-ModSfsAddPolicyVisitor::visitSfsAppPolicy(SfsAppPolicy *policy)
+ModSfsAddPolicyVisitor::visitSfsAppPolicy(SfsAppPolicy*)
 {
-	long		 idx;
-	wxListCtrl	*list;
-
-	idx = ruleListAppend(policy);
-	list = sfsPanel_->lst_Rules;
-
-	/*
-	 * XXX ch: fix this with next change
-	list->SetItem(idx, MODSFS_LIST_COLUMN_PROG,
-	    sfsPolicy->getBinaryName());
-	list->SetItem(idx, MODSFS_LIST_COLUMN_HASHT,
-	    sfsPolicy->getHashTypeName());
-	list->SetItem(idx, MODSFS_LIST_COLUMN_HASH,
-	   sfsPolicy->getHashValue());
-	*/
+	/* ModSfs does not deal with SfsAppPolicy. */
 }
 
 void
 ModSfsAddPolicyVisitor::visitSfsFilterPolicy(SfsFilterPolicy *policy)
 {
-	long		 idx;
-	wxListCtrl	*list;
-
-	idx = ruleListAppend(policy);
-	list = sfsPanel_->lst_Rules;
-
-	/*
-	 * XXX ch: fix this with next change
-	list->SetItem(idx, MODSFS_LIST_COLUMN_PROG,
-	    sfsPolicy->getBinaryName());
-	list->SetItem(idx, MODSFS_LIST_COLUMN_HASHT,
-	    sfsPolicy->getHashTypeName());
-	list->SetItem(idx, MODSFS_LIST_COLUMN_HASH,
-	   sfsPolicy->getHashValue());
-	*/
+	sfsPanel_->addSfsFilterPolicy(policy);
 }
 
 void
 ModSfsAddPolicyVisitor::visitSfsDefaultFilterPolicy(
     SfsDefaultFilterPolicy *policy)
 {
-	long		 idx;
-	wxListCtrl	*list;
-
-	idx = ruleListAppend(policy);
-	list = sfsPanel_->lst_Rules;
-
-	/*
-	 * XXX ch: fix this with next change
-	list->SetItem(idx, MODSFS_LIST_COLUMN_PROG,
-	    sfsPolicy->getBinaryName());
-	list->SetItem(idx, MODSFS_LIST_COLUMN_HASHT,
-	    sfsPolicy->getHashTypeName());
-	list->SetItem(idx, MODSFS_LIST_COLUMN_HASH,
-	   sfsPolicy->getHashValue());
-	*/
-}
-
-long
-ModSfsAddPolicyVisitor::ruleListAppend(Policy *policy)
-{
-	long idx;
-
-	idx = sfsPanel_->lst_Rules->GetItemCount();
-	sfsPanel_->lst_Rules->InsertItem(idx, wxString::Format(wxT("%d"),
-	    idx));
-
-	sfsPanel_->lst_Rules->SetItemPtrData(idx, (wxUIntPtr)policy);
-
-	return (idx);
+	sfsPanel_->addSfsDefaultFilterPolicy(policy);
 }

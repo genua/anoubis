@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 GeNUA mbH <info@genua.de>
+ * Copyright (c) 2009 GeNUA mbH <info@genua.de>
  *
  * All rights reserved.
  *
@@ -55,23 +55,26 @@
 #include "SfsCtrl.h"
 
 ModSfsMainPanelImpl::ModSfsMainPanelImpl(wxWindow* parent,
-    wxWindowID id) : ModSfsMainPanelBase(parent, id)
+    wxWindowID id) : Observer(NULL), ModSfsMainPanelBase(parent, id)
 {
-	columnNames_[MODSFS_LIST_COLUMN_PRIO] = _("Prio");
-	columnNames_[MODSFS_LIST_COLUMN_PROG] = _("Program");
-	columnNames_[MODSFS_LIST_COLUMN_HASHT] = _("Hash-Type");
-	columnNames_[MODSFS_LIST_COLUMN_HASH] = _("Hash");
+	columnNames_[COLUMN_PATH] = _("Path");
+	columnNames_[COLUMN_SUB] = _("Subject");
+	columnNames_[COLUMN_VA] = _("Valid action");
+	columnNames_[COLUMN_IA] = _("Invalid action");
+	columnNames_[COLUMN_UA] = _("Unknown action");
+	columnNames_[COLUMN_SCOPE] = _("Temporary");
+	columnNames_[COLUMN_USER] = _("User");
 
 	userRuleSetId_  = -1;
 	adminRuleSetId_ = -1;
 
-	for (int i=0; i<MODSFS_LIST_COLUMN_EOL; i++) {
+	for (int i=0; i<COLUMN_EOL; i++) {
 		lst_Rules->InsertColumn(i, columnNames_[i], wxLIST_FORMAT_LEFT,
-		    wxLIST_AUTOSIZE);
+		    wxLIST_AUTOSIZE_USEHEADER);
 	}
 
 	AnEvents::getInstance()->Connect(anEVT_LOAD_RULESET,
-	    wxCommandEventHandler(ModSfsMainPanelImpl::OnLoadRuleSet),
+	    wxCommandEventHandler(ModSfsMainPanelImpl::onLoadRuleSet),
 	    NULL, this);
 	Hide();
 
@@ -79,10 +82,10 @@ ModSfsMainPanelImpl::ModSfsMainPanelImpl(wxWindow* parent,
 	initSfsMain();
 }
 
-ModSfsMainPanelImpl::~ModSfsMainPanelImpl()
+ModSfsMainPanelImpl::~ModSfsMainPanelImpl(void)
 {
 	AnEvents::getInstance()->Disconnect(anEVT_LOAD_RULESET,
-	    wxCommandEventHandler(ModSfsMainPanelImpl::OnLoadRuleSet),
+	    wxCommandEventHandler(ModSfsMainPanelImpl::onLoadRuleSet),
 	    NULL, this);
 
 	saveSfsOptions();
@@ -90,53 +93,52 @@ ModSfsMainPanelImpl::~ModSfsMainPanelImpl()
 }
 
 void
-ModSfsMainPanelImpl::OnLoadRuleSet(wxCommandEvent& event)
+ModSfsMainPanelImpl::addSfsDefaultFilterPolicy(SfsDefaultFilterPolicy *policy)
 {
-	ModSfsAddPolicyVisitor	 addVisitor(this);
-	PolicyRuleSet		*ruleSet;
-	ProfileCtrl		*profileCtrl;
+	long    idx;
 
-	profileCtrl = ProfileCtrl::getInstance();
+	idx = ruleListAppend(policy);
+	updateSfsDefaultFilterPolicy(idx);
+}
 
-	lst_Rules->DeleteAllItems();
+void
+ModSfsMainPanelImpl::addSfsFilterPolicy(SfsFilterPolicy *policy)
+{
+	long    idx;
 
-	userRuleSetId_ = profileCtrl->getUserId();
-	ruleSet = profileCtrl->getRuleSet(userRuleSetId_);
-	if (ruleSet != NULL) {
-		ruleSet->accept(addVisitor);
-	}
+	idx = ruleListAppend(policy);
+	updateSfsFilterPolicy(idx);
+}
 
-	adminRuleSetId_ = profileCtrl->getAdminId(geteuid());
-	ruleSet = profileCtrl->getRuleSet(adminRuleSetId_);
-	if (ruleSet != NULL) {
-		ruleSet->accept(addVisitor);
-	}
+void
+ModSfsMainPanelImpl::update(Subject *subject)
+{
+	long	idx;
 
-	if (geteuid() == 0) {
-		unsigned long	uid;
-		long		rsid;
-		wxArrayString	userList = wxGetApp().getListOfUsersId();
-
-		for (size_t i=0; i<userList.GetCount(); i++) {
-			userList.Item(i).ToULong(&uid);
-			rsid = profileCtrl->getAdminId((uid_t)uid);
-			if (rsid == -1) {
-				continue;
-			}
-
-			ruleSet = profileCtrl->getRuleSet(rsid);
-			if (ruleSet != NULL) {
-				ruleSet->accept(addVisitor);
-			}
+	if (subject->IsKindOf(CLASSINFO(SfsFilterPolicy))) {
+		idx = findListRow((Policy *)subject);
+		if (idx != -1) {
+			updateSfsFilterPolicy(idx);
 		}
+	} else if (subject->IsKindOf(CLASSINFO(SfsDefaultFilterPolicy))) {
+		idx = findListRow((Policy *)subject);
+		if (idx != -1) {
+			updateSfsDefaultFilterPolicy(idx);
+		}
+	} else {
+		/* Unknown subject type - do nothing */
 	}
+}
 
-	/* trigger new * calculation of column width */
-	for (int i=0; i<MODSFS_LIST_COLUMN_EOL; i++) {
-		lst_Rules->SetColumnWidth(i, wxLIST_AUTOSIZE_USEHEADER);
+void
+ModSfsMainPanelImpl::updateDelete(Subject *subject)
+{
+	long    idx = -1;
+
+	idx = findListRow((Policy *)subject);
+	if (idx != -1) {
+		lst_Rules->SetItemPtrData(idx, (wxUIntPtr)0);
 	}
-
-	event.Skip();
 }
 
 void
@@ -448,7 +450,7 @@ ModSfsMainPanelImpl::OnCertChooseClicked(wxCommandEvent&)
 }
 
 void
-ModSfsMainPanelImpl::initSfsMain()
+ModSfsMainPanelImpl::initSfsMain(void)
 {
 	sfsCtrl_ = new SfsCtrl;
 	SfsMainListCtrl->setSfsCtrl(sfsCtrl_);
@@ -479,7 +481,7 @@ ModSfsMainPanelImpl::initSfsMain()
 }
 
 void
-ModSfsMainPanelImpl::destroySfsMain()
+ModSfsMainPanelImpl::destroySfsMain(void)
 {
 	delete sfsCtrl_;
 }
@@ -598,4 +600,158 @@ ModSfsMainPanelImpl::certificateParamsUpdate(const wxString &path)
 	event.SetInt(1); /* 1 := certificate */
 
 	wxPostEvent(AnEvents::getInstance(), event);
+}
+
+long
+ModSfsMainPanelImpl::findListRow(Policy *policy)
+{
+	for (int i = lst_Rules->GetItemCount(); i >= 0; i--) {
+		if (policy == (Policy *)lst_Rules->GetItemData(i)) {
+			return (i);
+		}
+	}
+
+	return (-1);
+}
+
+void
+ModSfsMainPanelImpl::removeListRow(long idx)
+{
+	Policy	*policy;
+
+	policy = wxDynamicCast((void*)lst_Rules->GetItemData(idx), Policy);
+	if (policy != NULL) {
+		/* deregister for observing policy */
+		removeSubject(policy);
+	}
+
+	lst_Rules->DeleteItem(idx);
+}
+
+void
+ModSfsMainPanelImpl::onLoadRuleSet(wxCommandEvent& event)
+{
+	ModSfsAddPolicyVisitor	 addVisitor(this);
+	PolicyRuleSet		*ruleSet;
+	ProfileCtrl		*profileCtrl;
+
+	profileCtrl = ProfileCtrl::getInstance();
+
+	/* clear the whole list */
+	for (int i = lst_Rules->GetItemCount() - 1; i >= 0; i--) {
+		removeListRow(i);
+	}
+
+	/* release old ones */
+	ruleSet = profileCtrl->getRuleSet(userRuleSetId_);
+	if (ruleSet != NULL) {
+		ruleSet->unlock();
+		removeSubject(ruleSet);
+	}
+
+	ruleSet = profileCtrl->getRuleSet(adminRuleSetId_);
+	if (ruleSet != NULL) {
+		ruleSet->unlock();
+		removeSubject(ruleSet);
+	}
+
+	userRuleSetId_ = profileCtrl->getUserId();
+	adminRuleSetId_ = profileCtrl->getAdminId(geteuid());
+
+	/* get the new ones */
+	ruleSet = profileCtrl->getRuleSet(userRuleSetId_);
+	if (ruleSet != NULL) {
+		ruleSet->lock();
+		ruleSet->accept(addVisitor);
+	}
+
+	ruleSet = profileCtrl->getRuleSet(adminRuleSetId_);
+	if (ruleSet != NULL) {
+		ruleSet->lock();
+		ruleSet->accept(addVisitor);
+	}
+
+	/* trigger new calculation of column width */
+	for (int i=0; i<COLUMN_EOL; i++) {
+		lst_Rules->SetColumnWidth(i, wxLIST_AUTOSIZE_USEHEADER);
+	}
+
+	event.Skip();
+}
+
+long
+ModSfsMainPanelImpl::ruleListAppend(Policy *policy)
+{
+	long		idx;
+	wxString	ruleType;
+	wxString	userName;
+	PolicyRuleSet	*ruleset;
+
+	idx = lst_Rules->GetItemCount();
+	lst_Rules->InsertItem(idx, wxEmptyString, idx);
+	lst_Rules->SetItemPtrData(idx, (wxUIntPtr)policy);
+
+	/* register for observing policy */
+	addSubject(policy);
+
+	ruleset = policy->getParentRuleSet();
+	if (ruleset->isAdmin()) {
+		userName = wxGetApp().getUserNameById(ruleset->getUid());
+		ruleType.Printf(_("admin ruleset of %s"), userName.c_str());
+		lst_Rules->SetItemBackgroundColour(idx,
+		    wxTheColourDatabase->Find(wxT("LIGHT GREY")));
+	} else {
+		ruleType = wxGetUserId();
+	}
+	lst_Rules->SetItem(idx, COLUMN_USER, ruleType);
+
+	if (policy->hasScope()) {
+		lst_Rules->SetItem(idx, COLUMN_SCOPE, wxT("T"));
+	}
+
+	return (idx);
+}
+
+void
+ModSfsMainPanelImpl::updateSfsDefaultFilterPolicy(long idx)
+{
+	void			*data;
+	SfsDefaultFilterPolicy	*dftPolicy;
+
+	data = (void*)lst_Rules->GetItemData(idx);
+	dftPolicy = wxDynamicCast(data, SfsDefaultFilterPolicy);
+
+	if (dftPolicy == NULL) {
+		return;
+	}
+
+	lst_Rules->SetItem(idx, COLUMN_PATH, dftPolicy->getPath());
+	lst_Rules->SetItem(idx, COLUMN_VA, dftPolicy->getActionName());
+	/* COLUMN_USER is handled by ruleListAppend */
+}
+
+void
+ModSfsMainPanelImpl::updateSfsFilterPolicy(long idx)
+{
+	void			*data;
+	SfsFilterPolicy		*sfsPolicy;
+
+	data = (void*)lst_Rules->GetItemData(idx);
+	sfsPolicy = wxDynamicCast(data, SfsFilterPolicy);
+
+	if (sfsPolicy == NULL) {
+		return;
+	}
+
+	lst_Rules->SetItem(idx, COLUMN_PATH,
+	    sfsPolicy->getPath());
+	lst_Rules->SetItem(idx, COLUMN_SUB,
+	    sfsPolicy->getSubjectName());
+	lst_Rules->SetItem(idx, COLUMN_VA,
+	    sfsPolicy->getValidActionName());
+	lst_Rules->SetItem(idx, COLUMN_IA,
+	    sfsPolicy->getInvalidActionName());
+	lst_Rules->SetItem(idx, COLUMN_UA,
+	    sfsPolicy->getUnknownActionName());
+	/* COLUMN_USER and COLUMN_SCOPE is handled by ruleListAppend */
 }

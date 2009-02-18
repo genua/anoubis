@@ -45,7 +45,6 @@ class ModSfsListCtrl;
 #include <wx/settings.h>
 #include <wx/listctrl.h>
 #include <wx/sizer.h>
-#include <wx/statline.h>
 #include <wx/panel.h>
 #include <wx/bitmap.h>
 #include <wx/image.h>
@@ -62,7 +61,6 @@ class ModSfsListCtrl;
 
 ///////////////////////////////////////////////////////////////////////////
 
-#define wxID_RulesOperationSep 7500
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Class ModSfsMainPanelBase
@@ -77,9 +75,6 @@ class ModSfsMainPanelBase : public wxPanel
 		wxNotebook* note_MainSfs;
 		wxPanel* pan_Rules;
 		wxListCtrl* lst_Rules;
-		wxStaticText* tx_RulesOperation1stHeader;
-		wxStaticLine* ln_RulesOperationSep;
-		wxStaticText* tx_RulesOperation2ndHeader;
 		wxPanel* pan_SfsMain;
 		wxStaticText* m_staticText12;
 		wxStaticText* SfsMainCurrPathLabel;

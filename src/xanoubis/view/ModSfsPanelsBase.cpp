@@ -67,22 +67,6 @@ ModSfsMainPanelBase::ModSfsMainPanelBase( wxWindow* parent, wxWindowID id, const
 	
 	sz_RulesWE->Add( sz_Rules, 66, wxEXPAND, 5 );
 	
-	wxBoxSizer* sz_RulesOperations;
-	sz_RulesOperations = new wxBoxSizer( wxVERTICAL );
-	
-	tx_RulesOperation1stHeader = new wxStaticText( pan_Rules, wxID_ANY, _("Rule:"), wxDefaultPosition, wxDefaultSize, 0 );
-	tx_RulesOperation1stHeader->Wrap( -1 );
-	sz_RulesOperations->Add( tx_RulesOperation1stHeader, 0, wxALL, 5 );
-	
-	ln_RulesOperationSep = new wxStaticLine( pan_Rules, wxID_RulesOperationSep, wxDefaultPosition, wxDefaultSize, wxLI_HORIZONTAL );
-	sz_RulesOperations->Add( ln_RulesOperationSep, 0, wxEXPAND | wxALL, 5 );
-	
-	tx_RulesOperation2ndHeader = new wxStaticText( pan_Rules, wxID_ANY, _("Information:\n\nHere you can see the\nrules of the SFS. They are displayed\ndepending on their priority."), wxDefaultPosition, wxDefaultSize, 0 );
-	tx_RulesOperation2ndHeader->Wrap( -1 );
-	sz_RulesOperations->Add( tx_RulesOperation2ndHeader, 0, wxALL, 5 );
-	
-	sz_RulesWE->Add( sz_RulesOperations, 34, wxEXPAND, 5 );
-	
 	sz_RulesNS->Add( sz_RulesWE, 1, wxEXPAND, 5 );
 	
 	sz_SfsRules->Add( sz_RulesNS, 1, wxEXPAND, 5 );
