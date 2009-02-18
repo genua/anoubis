@@ -486,9 +486,13 @@ apn_escalation_rule_sb(struct apn_chain *dst, struct apn_rule *trigger,
 		return -EINVAL;
 	if (trigger->apn_type == APN_DEFAULT) {
 		rule = empty_rule(APN_SB_ACCESS);
+		if (!rule)
+			return -ENOMEM;
 		rule->rule.sbaccess.cs.type = APN_CS_NONE;
 	} else if (trigger->apn_type == APN_SB_ACCESS) {
 		rule = apn_copy_one_rule(trigger);
+		if (!rule)
+			return -ENOMEM;
 		if (rule->rule.sbaccess.path) {
 			free(rule->rule.sbaccess.path);
 			rule->rule.sbaccess.path = NULL;
@@ -496,8 +500,6 @@ apn_escalation_rule_sb(struct apn_chain *dst, struct apn_rule *trigger,
 	} else {
 		return -EINVAL;
 	}
-	if (!rule)
-		return -ENOMEM;
 	rule->rule.sbaccess.amask = mask;
 	rule->rule.sbaccess.action = action->action;
 	rule->rule.sbaccess.log = action->log;

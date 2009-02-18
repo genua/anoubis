@@ -1,3 +1,29 @@
+/*
+ * Copyright (c) 2009 GeNUA mbH <info@genua.de>
+ *
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
+ * TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 ///////////////////////////////////////////////////////////////////////////
 // C++ code generated with wxFormBuilder (version Sep 28 2007)
 // http://www.wxformbuilder.org/
@@ -304,7 +330,7 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	
 	sz_EscalationSfs->Add( 0, 0, 1, wxEXPAND, 5 );
 	
-	tx_EscalationSfsDesc = new wxStaticText( pn_EscalationSfs, wxID_ANY, _("Path prefix and Checksum Options for new rule"), wxDefaultPosition, wxDefaultSize, 0 );
+	tx_EscalationSfsDesc = new wxStaticText( pn_EscalationSfs, wxID_ANY, _("Path prefix and Checksum Options for"), wxDefaultPosition, wxDefaultSize, 0 );
 	tx_EscalationSfsDesc->Wrap( -1 );
 	sz_EscalationSfs->Add( tx_EscalationSfsDesc, 0, wxALL, 5 );
 	
@@ -328,54 +354,6 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	sz_EscalationSfsPath->Add( bt_EscalationSfsPathRight, 0, wxALIGN_CENTER|wxALL, 5 );
 	
 	sz_EscalationSfs->Add( sz_EscalationSfsPath, 0, wxEXPAND, 5 );
-	
-	wxBoxSizer* sz_EscalationSfsChecksum;
-	sz_EscalationSfsChecksum = new wxBoxSizer( wxHORIZONTAL );
-	
-	tx_EscalatonSfsCsum = new wxStaticText( pn_EscalationSfs, wxID_ANY, _("Checksum:"), wxDefaultPosition, wxDefaultSize, 0 );
-	tx_EscalatonSfsCsum->Wrap( -1 );
-	sz_EscalationSfsChecksum->Add( tx_EscalatonSfsCsum, 0, wxALIGN_CENTER|wxALL, 5 );
-	
-	
-	sz_EscalationSfsChecksum->Add( 0, 0, 5, wxEXPAND, 5 );
-	
-	rb_EscalationSfsCsum1 = new wxRadioButton( pn_EscalationSfs, wxID_ANY, _("none"), wxDefaultPosition, wxDefaultSize, wxRB_GROUP );
-	sz_EscalationSfsChecksum->Add( rb_EscalationSfsCsum1, 0, wxALIGN_CENTER|wxALL, 5 );
-	
-	
-	sz_EscalationSfsChecksum->Add( 0, 0, 1, wxEXPAND, 5 );
-	
-	rb_EscalationSfsCsum2 = new wxRadioButton( pn_EscalationSfs, wxID_ANY, _("normal"), wxDefaultPosition, wxDefaultSize, 0 );
-	sz_EscalationSfsChecksum->Add( rb_EscalationSfsCsum2, 0, wxALIGN_CENTER|wxALL, 5 );
-	
-	
-	sz_EscalationSfsChecksum->Add( 0, 0, 1, wxEXPAND, 5 );
-	
-	rb_EscalationSfsCsum3 = new wxRadioButton( pn_EscalationSfs, wxID_ANY, _("signed"), wxDefaultPosition, wxDefaultSize, 0 );
-	sz_EscalationSfsChecksum->Add( rb_EscalationSfsCsum3, 0, wxALIGN_CENTER|wxALL, 5 );
-	
-	
-	sz_EscalationSfsChecksum->Add( 0, 0, 1, wxEXPAND, 5 );
-	
-	sz_EscalationSfs->Add( sz_EscalationSfsChecksum, 0, wxEXPAND, 5 );
-	
-	
-	sz_EscalationSfs->Add( 0, 0, 1, wxEXPAND, 5 );
-	
-	m_staticline3 = new wxStaticLine( pn_EscalationSfs, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLI_HORIZONTAL );
-	sz_EscalationSfs->Add( m_staticline3, 0, wxEXPAND | wxALL, 5 );
-	
-	
-	sz_EscalationSfs->Add( 0, 0, 1, wxEXPAND, 5 );
-	
-	wxBoxSizer* sz_EscalationSfsSign;
-	sz_EscalationSfsSign = new wxBoxSizer( wxHORIZONTAL );
-	
-	ck_EscaltionSfsSign = new wxCheckBox( pn_EscalationSfs, wxID_ANY, _("Add/Update file's checksum and signature"), wxDefaultPosition, wxDefaultSize, 0 );
-	
-	sz_EscalationSfsSign->Add( ck_EscaltionSfsSign, 0, wxALL|wxEXPAND, 5 );
-	
-	sz_EscalationSfs->Add( sz_EscalationSfsSign, 0, wxEXPAND, 5 );
 	
 	
 	sz_EscalationSfs->Add( 0, 0, 1, wxEXPAND, 5 );

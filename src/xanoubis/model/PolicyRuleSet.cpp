@@ -388,7 +388,8 @@ PolicyRuleSet::createPolicy(unsigned int type, unsigned int id,
 		index = 0;
 		break;
 	case APN_ALF_CAPABILITY:
-		success = AlfCapabilityFilterPolicy::createApnInserted(parent, id);
+		success = AlfCapabilityFilterPolicy::createApnInserted(
+		    parent, id);
 		index = 0;
 		break;
 	case APN_SFS_ACCESS:
@@ -609,13 +610,33 @@ PolicyRuleSet::createAnswerPolicy(EscalationNotify *escalation)
 			task = escalation->getTaskCookie();
 		}
 	}
-	/* XXX CEH: Only handle ALF events for now. */
 	if (module == wxT("ALF")) {
 		kernevent = (struct alf_event *)&msg->u.notify->payload;
 		if (apn_escalation_rule_alf(&tmpchain, kernevent,
 		    &action, flags) != 0) {
 			goto err;
 		}
+	} else if (module == wxT("SANDBOX")) {
+		wxString	prefix = answer->getPrefix();
+		unsigned long	flags = answer->getFlags();
+
+		if (flags == 0)
+			goto err;
+		if (prefix.IsEmpty())
+			goto err;
+		if (apn_escalation_rule_sb(&tmpchain, triggerrule,
+		    &action, prefix.To8BitData(), flags) != 0)
+			goto err;
+	} else if (module == wxT("SFS")) {
+		wxString	prefix = answer->getPrefix();
+		int		sfsmatch;
+
+		if (prefix.IsEmpty())
+			goto err;
+		sfsmatch = get_value(msg->u.notify->sfsmatch);
+		if (apn_escalation_rule_sfs(&tmpchain, triggerrule,
+		    &action, prefix.To8BitData(), sfsmatch) != 0)
+			goto err;
 	} else {
 		goto err;
 	}
