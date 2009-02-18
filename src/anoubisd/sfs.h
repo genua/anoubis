@@ -44,7 +44,7 @@ int	 sfs_checksumop_chroot(const char *path, unsigned int operation,
 int	 sfs_getchecksum(const char *path, uid_t uid, unsigned char *md);
 int	 sfs_getchecksum_chroot(const char *path, uid_t uid, unsigned char *md);
 int	 convert_user_path(const char *path, char **dir, int is_dir);
-int	 check_for_uid(const char *path);
+int	 check_if_exist(const char *path);
 char	*remove_escape_seq(const char *name);
 void	 sfs_cert_init(int);
 void	 sfs_cert_reconfigure(int);

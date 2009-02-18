@@ -971,21 +971,12 @@ anoubis_client_csumrequest_start(struct anoubis_client *client,
 	if (client->flags & FLAG_POLICY_PENDING)
 		return NULL;
 
-	switch (flags) {
-	case ANOUBIS_CSUM_NONE: /* FALL THROUGH */
-	case ANOUBIS_CSUM_UID_ALL:
-		if (uid != 0)
-			return NULL;
-		break;
-	default:
-		break;
-	}
 	/* At first we check if the minimal conditions are done */
 	switch (op) {
 	case ANOUBIS_CHECKSUM_OP_ADDSIG:
 	case ANOUBIS_CHECKSUM_OP_DELSIG:
 	case ANOUBIS_CHECKSUM_OP_GETSIG:
-	case ANOUBIS_CHECKSUM_OP_SIG_LIST: /* FALL TROUGH */
+	case ANOUBIS_CHECKSUM_OP_SIG_LIST:
 		if (idlen == 0)
 			return NULL;
 		/* FALL TROUGH */
@@ -996,9 +987,13 @@ anoubis_client_csumrequest_start(struct anoubis_client *client,
 	case ANOUBIS_CHECKSUM_OP_DEL:
 	case ANOUBIS_CHECKSUM_OP_GET:
 	case ANOUBIS_CHECKSUM_OP_UID_LIST:
+	case ANOUBIS_CHECKSUM_OP_KEYID_LIST:
 	case ANOUBIS_CHECKSUM_OP_LIST:
 		if (idlen != 0)
 			return NULL;
+		break;
+	/* In this case you may OR may not have a keyid or payload */
+	case ANOUBIS_CHECKSUM_OP_LIST_ALL:
 		break;
 	default:
 		/* UNKNOWN PROTOCOL */
@@ -1032,6 +1027,8 @@ anoubis_client_csumrequest_start(struct anoubis_client *client,
 	}
 	if (op == ANOUBIS_CHECKSUM_OP_LIST ||
 	    op == ANOUBIS_CHECKSUM_OP_SIG_LIST ||
+	    op == ANOUBIS_CHECKSUM_OP_LIST_ALL ||
+	    op == ANOUBIS_CHECKSUM_OP_KEYID_LIST ||
 	    op == ANOUBIS_CHECKSUM_OP_UID_LIST) {
 		t = anoubis_transaction_create(0,
 		ANOUBIS_T_INITSELF|ANOUBIS_T_WANT_ALL,
@@ -1052,6 +1049,7 @@ anoubis_client_csumrequest_start(struct anoubis_client *client,
 	set_value(m->u.checksumrequest->operation, op);
 
 	if (op == ANOUBIS_CHECKSUM_OP_GETSIG ||
+	    op == ANOUBIS_CHECKSUM_OP_LIST_ALL ||
 	    op == ANOUBIS_CHECKSUM_OP_SIG_LIST ||
 	    op == ANOUBIS_CHECKSUM_OP_DELSIG) {
 		memcpy(dstpath, payload, idlen);
@@ -1067,6 +1065,8 @@ anoubis_client_csumrequest_start(struct anoubis_client *client,
 
 	if (op == ANOUBIS_CHECKSUM_OP_LIST ||
 	    op == ANOUBIS_CHECKSUM_OP_SIG_LIST ||
+	    op == ANOUBIS_CHECKSUM_OP_LIST_ALL ||
+	    op == ANOUBIS_CHECKSUM_OP_KEYID_LIST ||
 	    op == ANOUBIS_CHECKSUM_OP_UID_LIST)
 		anoubis_transaction_setopcodes(t, listops);
 	else

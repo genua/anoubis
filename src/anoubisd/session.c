@@ -505,6 +505,7 @@ dispatch_checksum(struct anoubis_server *server, struct anoubis_msg *m,
 	opp = get_value(m->u.checksumrequest->operation);
 	flags = get_value(m->u.checksumrequest->flags);
 	if (((flags != ANOUBIS_CSUM_NONE) && (uid != 0)) ||
+	    ((opp == ANOUBIS_CHECKSUM_OP_KEYID_LIST) && (uid != 0)) ||
 	    ((opp == ANOUBIS_CHECKSUM_OP_UID_LIST) && (uid != 0))) {
 		log_warn("Dropping checksum request missing privilegs uid: %d",
 		    uid);
@@ -513,6 +514,8 @@ dispatch_checksum(struct anoubis_server *server, struct anoubis_msg *m,
 	}
 	if (opp == ANOUBIS_CHECKSUM_OP_LIST ||
 	    opp == ANOUBIS_CHECKSUM_OP_SIG_LIST ||
+	    opp == ANOUBIS_CHECKSUM_OP_KEYID_LIST ||
+	    opp == ANOUBIS_CHECKSUM_OP_LIST_ALL ||
 	    opp == ANOUBIS_CHECKSUM_OP_UID_LIST) {
 		err = anoubis_policy_comm_addrequest(ev_info->policy, chan,
 		POLICY_FLAG_START | POLICY_FLAG_END,

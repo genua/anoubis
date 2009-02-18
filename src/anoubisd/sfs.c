@@ -91,12 +91,9 @@ static void	 sfs_cert_flush_db(struct sfs_cert_db *sc);
 static int	 sfs_cert_load_db(const char *, struct sfs_cert_db *);
 
 int
-check_for_uid(const char *path)
+check_if_exist(const char *path)
 {
 	struct stat sb;
-
-	if(!path)
-		return -1;
 
 	if (stat(path, &sb) == 0)
 		return 1;

@@ -120,8 +120,14 @@ struct event_info_main {
 	int anoubisfd;
 };
 
-void send_checksum_list(u_int64_t token, const char *path, u_int8_t *keyid,
-    int idlen, uid_t uid, struct event_info_main *ev_info, int is_uid);
+static void	_send_sfs_list(u_int64_t token, const char *path,
+    u_int8_t *keyid, int idlen, uid_t uid, struct event_info_main *ev_info,
+    int search_for_uid, int op, int search_all_ids);
+static void	send_id_list(u_int64_t token, const char *entry,
+    struct event_info_main *ev_info, int op);
+static void	send_entry_list(u_int64_t token, const char *path,
+    u_int8_t *keyid, int idlen, uid_t uid, struct event_info_main *ev_info,
+    int op, int for_all_ids);
 
 static char *pid_file_name = ANOUBISD_PIDFILENAME;
 
@@ -771,31 +777,89 @@ out:
 	DEBUG(DBG_TRACE, "<dispatch_m2s");
 }
 
-void
-send_checksum_list(u_int64_t token, const char *path, u_int8_t *keyid,
-    int idlen, uid_t uid, struct event_info_main *ev_info, int is_uid)
+/* 
+ * Search in entries of the shadowtree for uids/keyid that registered a
+ * checksum/signautre of the entry.
+ */
+static void
+send_id_list(u_int64_t token, const char *entry, struct event_info_main *ev_info,
+    int op)
+{
+	_send_sfs_list(token, entry, NULL, 0, 0, ev_info, 1, op, 0);
+}
+
+/*
+ * Send registered entries of a directory. Also send directorys which
+ * contain further entries.
+ */
+static void
+send_entry_list(u_int64_t token, const char *path, u_int8_t *keyid,
+    int idlen, uid_t uid, struct event_info_main *ev_info, int op, int for_all_ids)
+{
+	if (keyid)
+		if (idlen <= 0)
+			return;
+
+	_send_sfs_list(token, path, keyid, idlen, uid, ev_info, 0, op, for_all_ids);
+}
+
+static int
+check_for_entry(const char *path, const char *entry, unsigned char *keyid,
+    int idlen, uid_t uid)
+{
+	char *sigfile = NULL,
+	     *tmp = NULL;
+	int i, ret = -1;
+
+	if (!entry)
+		return -1;
+
+	if (keyid != NULL) {
+		sigfile = calloc((2*idlen)+1, sizeof(char));
+		if (sigfile == NULL) {
+			log_warn("check_for_entry: can't allocate memory");
+			master_terminate(ENOMEM);
+			return -1;
+		}
+		for (i = 0; i < idlen; i++)
+			sprintf(&sigfile[2*i], "%2.2x", keyid[i]);
+		sigfile[2*i] = '\0';
+		ret = asprintf(&tmp, "%s/%s/k%s", path, entry, sigfile);
+		if (ret < 0)
+			return -1;
+		ret = check_if_exist(tmp);
+		free(tmp);
+		free(sigfile);
+	} else {
+		ret = asprintf(&tmp, "%s/%s/%d", path, entry, uid);
+		if (ret < 0) {
+			log_warn("check_for_entry: can't allocate memory");
+			master_terminate(ENOMEM);
+			return -1;
+		}
+		ret = check_if_exist(tmp);
+		free(tmp);
+	}
+	return ret;
+}
+
+static void
+_send_sfs_list(u_int64_t token, const char *path, u_int8_t *keyid,
+    int idlen, uid_t uid, struct event_info_main *ev_info, int search_for_id,
+    int op, int for_all_ids)
 {
 	/* Since only pathname components are transferred, it is sufficient
 	 * that the payload size (3000) is larger than NAME_MAX (255),
 	 * it does not need to be larger than PATH_MAX (4096)
 	 */
+	DIR			*sfs_dir;
+	struct dirent		*sfs_ent = NULL;
 	anoubisd_reply_t	*reply;
 	anoubisd_msg_t		*msg;
 	char			*tmp = NULL;
-	char			*sigfile = NULL;
 	int			 flags = POLICY_FLAG_START;
 	int			 size = sizeof(struct anoubisd_reply) + 3000;
-	int			 cnt = 0;
-	int			 error = 0;
-	int			 len = 0;
-	int			 stars, i, ret;
-	DIR			*sfs_dir;
-	struct dirent		*sfs_ent;
-
-	if (keyid) {
-		if (idlen <= 0)
-			return;
-	}
+	int			 cnt = 0, error = 0, len = 0, stars, i, ret = 0;
 
 	sfs_dir = opendir(path);
 	if (!sfs_dir) {
@@ -832,79 +896,56 @@ send_checksum_list(u_int64_t token, const char *path, u_int8_t *keyid,
 					stars++;
 			}
 			/* If the ammount of stars is odd its an sfsentry
-			 * if its even its an directory
+			 * if its even its an directory. If the ammount of
+			 * stars is 0 we and we are checking for
+			 * uids/keyids we are going to the next if.
 			 */
-			if (stars%2) {
-				if (keyid == NULL) {
-					ret = asprintf(&tmp,
-					    "%s/%s/%d", path, sfs_ent->d_name,
-					    uid);
-					if (ret < 0) {
-						log_warn("send_checksum_list: "
-						    "can't allocate memory");
-						master_terminate(ENOMEM);
-						return;
+			if (stars%2 && !search_for_id) {
+				if (op == ANOUBIS_CHECKSUM_OP_LIST_ALL) {
+					/* The user root try to export for
+					 * all users so we don't check for 
+					 * correctness
+					 */
+					if (for_all_ids)
+						goto out;
+					/* Check the keyid */
+					if (keyid) {
+						ret = check_for_entry(path,
+						    sfs_ent->d_name, 
+						    keyid, idlen, 0);
 					}
-					ret = check_for_uid(tmp);
-					/* It is not the searched entry */
 					if (ret == 0) {
-						sfs_ent = readdir(sfs_dir);
-						free(tmp);
-						continue;
-					/* An error occured */
-					} else if (ret == -1) {
-						sfs_ent = readdir(sfs_dir);
-						free(tmp);
-						continue;
-					/* We found our entry */
-					} else {
-						free(tmp);
+						ret = check_for_entry(path,
+						    sfs_ent->d_name,
+						    NULL, 0, uid);
 					}
 				} else {
-					if ((sigfile = calloc((2*idlen)+1,
-					    sizeof(char))) == NULL) {
-						ret = -ENOMEM;
-						return;
-					}
-					for (i = 0; i < idlen; i++)
-						sprintf(&sigfile[2*i], "%2.2x",
-						    keyid[i]);
-					sigfile[2*i] = '\0';
-					if (asprintf(&tmp, "%s/%s/k%s",
-					    path, sfs_ent->d_name, sigfile)
-					    == -1) {
-						ret = -ENOMEM;
-						return;
-					}
-					ret = check_for_uid(tmp);
-					/* It is not our searched entry */
-					if (ret == 0) {
-						sfs_ent = readdir(sfs_dir);
-						free(tmp);
-						free(sigfile);
-						continue;
-					/* An error occured */
-					} else if (ret == -1) {
-						sfs_ent = readdir(sfs_dir);
-						free(tmp);
-						free(sigfile);
-						continue;
-					/* We found our entry */
-					} else {
-						free(sigfile);
-						free(tmp);
-					}
+					ret = check_for_entry(path,
+					    sfs_ent->d_name, keyid, idlen, uid);
 				}
-
-			}
-			if (is_uid) {
-				/* If we search for uid we should check for
-				 * signature entrys
-				 */
-				if (sfs_ent->d_name[0] == 'k') {
+				/* It is not our searched entry */
+				if (ret == 0) {
 					sfs_ent = readdir(sfs_dir);
 					continue;
+				/* An error occured */
+				} else if (ret < 0) {
+					goto err;
+				}
+				/* We found our entry */
+			}
+out:
+			if (search_for_id) {
+				if (op == ANOUBIS_CHECKSUM_OP_KEYID_LIST) {
+					if (sfs_ent->d_name[0] != 'k') {
+						sfs_ent = readdir(sfs_dir);
+						continue;
+					}
+					tmp = strdup(&sfs_ent->d_name[1]);
 				} else {
+					if (sfs_ent->d_name[0] == 'k') {
+						sfs_ent = readdir(sfs_dir);
+						continue;
+					}
 					tmp = strdup(sfs_ent->d_name);
 				}
 			} else {
@@ -916,6 +957,8 @@ send_checksum_list(u_int64_t token, const char *path, u_int8_t *keyid,
 				master_terminate(ENOMEM);
 				return;
 			}
+			
+			/* Now we pack and ship */
 			len = strlen(tmp) + 1;
 			cnt += len;
 			if (cnt > 3000) {
@@ -1036,6 +1079,7 @@ dispatch_checksumop(anoubisd_msg_t *msg, struct event_info_main *ev_info)
 	char *result = NULL;
 	int	flags;
 	int	cslen = 0,
+		l_all = 0,
 		idlen = 0,		/* Length of KeyID		*/
 		siglen = 0;		/* Length of Signature and csum */
 	uid_t	req_uid;
@@ -1057,42 +1101,45 @@ dispatch_checksumop(anoubisd_msg_t *msg, struct event_info_main *ev_info)
 
 	if (!(flags & ANOUBIS_CSUM_UID))
 		req_uid = msg_comm->uid;
+	l_all = (flags & ANOUBIS_CSUM_ALL);
 
 	switch (op) {
 	case ANOUBIS_CHECKSUM_OP_SIG_LIST:
 	case ANOUBIS_CHECKSUM_OP_LIST:
+	case ANOUBIS_CHECKSUM_OP_LIST_ALL:
 	case ANOUBIS_CHECKSUM_OP_UID_LIST:
+	case ANOUBIS_CHECKSUM_OP_KEYID_LIST:
 		plen = rawmsg.length - CSUM_LEN
 		    - sizeof(Anoubis_ChecksumRequestMessage);
 		path = rawmsg.u.checksumrequest->payload + idlen;
-		if (idlen > 0 && op == ANOUBIS_CHECKSUM_OP_SIG_LIST) {
+		if (idlen > 0 && ((op == ANOUBIS_CHECKSUM_OP_SIG_LIST) ||
+		    (op == ANOUBIS_CHECKSUM_OP_LIST_ALL))) {
 			if ((key = calloc(idlen, sizeof(u_int8_t))) == NULL)
 				goto out;
 			memcpy(key, rawmsg.u.checksumrequest->payload, idlen);
 		}
 		for (i=0; i<plen; ++i) {
-		if (path[i] == 0)
-			break;
+			if (path[i] == 0)
+				break;
 		}
-		if (i >= plen) {
+		if (i >= plen)
 			goto out;
-		}
 
 		if ((op == ANOUBIS_CHECKSUM_OP_LIST) ||
+		    (op == ANOUBIS_CHECKSUM_OP_LIST_ALL) ||
 		    (op == ANOUBIS_CHECKSUM_OP_SIG_LIST)) {
 			err = convert_user_path(path, &result, 1);
-			if (err < 0) {
+			if (err < 0)
 				goto out;
-			}
-			send_checksum_list(msg_comm->token, result, key,
-			    idlen, req_uid, ev_info, 0);
+			send_entry_list(msg_comm->token, result, key,
+			    idlen, req_uid, ev_info, op, l_all);
 		} else {
 			err = convert_user_path(path, &result, 0);
 			if (err < 0) {
+				log_warn("Error while converting user path");
 				goto out;
 			}
-			send_checksum_list(msg_comm->token, result, NULL,
-			    0, req_uid, ev_info, 1);
+			send_id_list(msg_comm->token, result, ev_info, op);
 		}
 		if (result)
 			free(result);
