@@ -48,6 +48,7 @@
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -82,25 +83,26 @@ static int	daemon_stop(void);
 static int	daemon_status(void);
 static int	daemon_reload(void);
 static int	monitor(int argc, char **argv);
-static int	load(char *);
-static int	dump(char *);
+static int	load(char *, uid_t, unsigned int);
+static int	dump(char *, uid_t, unsigned int);
 static int	create_channel(void);
 static void	destroy_channel(void);
 
 typedef int (*func_int_t)(void);
-typedef int (*func_char_t)(char *);
+typedef int (*func_arg_t)(char *, uid_t, unsigned int);
 
 struct cmd {
 	char	       *command;
 	func_int_t	func;
 	/*
 	 * file:
-	 * 0:	don't need file argument
-	 * 1:	need file argument, resolve relative path names
-	 *	(file must exist)
-	 * 2:	need file argument, don't resolve relative path names
+	 * 0:	doesn't require parameters
+	 * 1:	needs file, uid and prio arguments,
+	 * 	resolve relative path names (file must exist)
+	 * 2:	needs file, uid and prio arguments,
+	 * 	don't resolve relative path names
 	 */
-	int		file;
+	int		args;
 } commands[] = {
 	{ "start",   daemon_start,   0 },
 	{ "stop",    daemon_stop,    0 },
@@ -122,11 +124,11 @@ usage(void)
 	unsigned int	i;
 	extern char	*__progname;
 
-	fprintf(stderr, "usage: %s [-fnv] <command> [<file>]\n",
-	    __progname);
+	fprintf(stderr, "usage: %s [-fnv] [-p <prio>] [-u uid] "
+	    "<command> [<file>]\n", __progname);
 	fprintf(stderr, "    <command>:\n");
 	for (i=0; i < sizeof(commands)/sizeof(struct cmd); i++) {
-		if (commands[i].file)
+		if (commands[i].args)
 			fprintf(stderr, "	%s <file>\n",
 				commands[i].command);
 		else
@@ -154,29 +156,58 @@ int
 main(int argc, char *argv[])
 {
 	int		ch, done;
-	unsigned int	i;
+	unsigned int	i, prio = 1;
 	int		error = 0;
 	char		*command = NULL;
 	char		*rulesopt = NULL;
 	char		buf[PATH_MAX];
+	struct passwd  *pwd = NULL;
+	uid_t		uid = geteuid();
+	char 		*prios[] = { "admin", "user", NULL };
 
 	if (argc < 2)
 		usage();
 
-	while ((ch = getopt(argc, argv, "fnv")) != -1) {
+	/* default to admin policies for root */
+	if (uid == 0)
+		prio = 0;
+
+	while ((ch = getopt(argc, argv, "fnp:u:v")) != -1) {
 		switch (ch) {
 
+		case 'f':
+			opts |= ANOUBISCTL_OPT_FORCE;
+			break;
 		case 'n':
 			opts |= ANOUBISCTL_OPT_NOACTION;
 			break;
-
+		case 'p':
+			for (i=0; prios[i] != NULL; i++) {
+				if (strncmp(optarg, prios[i], 
+					strlen(prios[i])) == 0) {
+					prio = i;
+					break;
+				}
+			}
+			if (prios[i] == NULL) {
+				fprintf(stderr, "invalid policy type\n");
+				usage();
+			}
+			break;
+		case 'u':
+			if ((pwd = getpwnam(optarg)) != NULL)
+				uid = pwd->pw_uid;
+			else if (strspn(optarg, "0123456789") == strlen(optarg))
+				uid = strtoul(optarg, NULL, 10);
+			else {
+				fprintf(stderr, "invalid username\n");
+				usage();
+			}
+			break;
 		case 'v':
 			if (opts & ANOUBISCTL_OPT_VERBOSE)
 				opts |= ANOUBISCTL_OPT_VERBOSE2;
 			opts |= ANOUBISCTL_OPT_VERBOSE;
-			break;
-		case 'f':
-			opts |= ANOUBISCTL_OPT_FORCE;
 			break;
 		default:
 			usage();
@@ -200,22 +231,22 @@ main(int argc, char *argv[])
 	for (i=0; i < sizeof(commands)/sizeof(struct cmd); i++) {
 		if (strcmp(command, commands[i].command) != 0)
 			continue;
-		if (commands[i].file)  {
+		if (commands[i].args)  {
 			if (rulesopt == NULL || argc != 1) {
 				fprintf(stderr, "no rules file\n");
 				error = 4;
 				break;
 			}
 			if (strcmp(rulesopt, "-") != 0 &&
-			    commands[i].file !=2)
+			    commands[i].args !=2)
 				rulesopt = realpath(rulesopt, buf);
 			if (rulesopt == NULL) {
 				perror(rulesopt);
 				error = 4;
 				break;
 			}
-			error = ((func_char_t)commands[i].func)(
-			    rulesopt);
+			error = ((func_arg_t)commands[i].func)(
+			    rulesopt, uid, prio);
 			done = 1;
 		} else {
 			if (rulesopt != NULL) {
@@ -321,14 +352,13 @@ free_msg_list(struct anoubis_msg * m)
 }
 
 static int
-dump(char *file)
+dump(char *file, uid_t uid, unsigned int prio)
 {
 	int	error = 0;
 	FILE * fp = NULL;
 	struct anoubis_transaction * t;
 	struct anoubis_msg * m;
 	Policy_GetByUid req;
-	int	prio;
 	size_t	len;
 
 	error = create_channel();
@@ -337,73 +367,79 @@ dump(char *file)
 		return error;
 	}
 	set_value(req.ptype, ANOUBIS_PTYPE_GETBYUID);
-	set_value(req.uid, geteuid());
+	set_value(req.uid, uid);
 
-	for (prio = 0; prio < 2 /*XXX CEH: Should be PE_PRIO_MAX */; ++prio) {
-		set_value(req.prio, prio);
-		t = anoubis_client_policyrequest_start(client, &req,
-		    sizeof(req));
-		if (!t) {
-			destroy_channel();
-			return 3;
-		}
-		while(1) {
-			int ret = anoubis_client_wait(client);
-			if (ret <= 0) {
-				anoubis_transaction_destroy(t);
-				destroy_channel();
-				return 3;
-			}
-			if (t->flags & ANOUBIS_T_DONE)
-				break;
-		}
-		if (t->result) {
-			fprintf(stderr, "Policy Request failed: %d (%s)\n",
-			    t->result, strerror(t->result));
+	set_value(req.prio, prio);
+	t = anoubis_client_policyrequest_start(client, &req,
+	    sizeof(req));
+	if (!t) {
+		destroy_channel();
+		return 3;
+	}
+	while(1) {
+		int ret = anoubis_client_wait(client);
+		if (ret <= 0) {
 			anoubis_transaction_destroy(t);
-			return 3;
-		}
-		m = t->msg;
-		t->msg = NULL;
-		anoubis_transaction_destroy(t);
-		if (!m || !VERIFY_LENGTH(m, sizeof(Anoubis_PolicyReplyMessage))
-		    || get_value(m->u.policyreply->error) != 0) {
-			fprintf(stderr, "Error retrieving policy\n");
-			free_msg_list(m);
-			return 3;
-		}
-		if (!fp) {
-			if (!file || strcmp(file, "-") == 0) {
-				fp = stdout;
-			} else {
-				fp = fopen(file, "w");
-			}
-		}
-		if (!fp) {
-			free_msg_list(m);
 			destroy_channel();
-			fprintf(stderr, "Cannot open %s for writing\n", file);
 			return 3;
 		}
-		fprintf(fp, "\nPolicies for UID %d PRIO %d\n",
-		    geteuid(), prio);
-		while (m) {
-			struct anoubis_msg * tmp;
-			len = m->length - CSUM_LEN
-			    - sizeof(Anoubis_PolicyReplyMessage);
-			if (fwrite(m->u.policyreply->payload, 1, len, fp)
-			    != len) {
-				fprintf(stderr, "Error writing to %s\n", file);
-				free_msg_list(m);
-				fclose(fp);
-				destroy_channel();
-				return 3;
-			}
-			tmp = m;
-			m = m->next;
-			anoubis_msg_free(tmp);
+		if (t->flags & ANOUBIS_T_DONE)
+			break;
+	}
+	if (t->result) {
+		fprintf(stderr, "Policy Request failed: %d (%s)\n",
+		    t->result, strerror(t->result));
+		anoubis_transaction_destroy(t);
+		return 3;
+	}
+	m = t->msg;
+	t->msg = NULL;
+	anoubis_transaction_destroy(t);
+	if (!m || !VERIFY_LENGTH(m, sizeof(Anoubis_PolicyReplyMessage))
+	    || get_value(m->u.policyreply->error) != 0) {
+		fprintf(stderr, "Error retrieving policy\n");
+		free_msg_list(m);
+		return 3;
+	}
+
+	if (get_value(m->u.policyreply->flags) & POLICY_FLAG_END) {
+		free_msg_list(m);
+		destroy_channel();
+		fprintf(stderr, "No policy found for uid/prio\n");
+		return 1;
+	}
+
+	if (!fp) {
+		if (!file || strcmp(file, "-") == 0) {
+			fp = stdout;
+		} else {
+			fp = fopen(file, "w");
 		}
 	}
+	if (!fp) {
+		free_msg_list(m);
+		destroy_channel();
+		fprintf(stderr, "Cannot open %s for writing\n", file);
+		return 3;
+	}
+	fprintf(fp, "# Policies for uid %d prio %d\n",
+	    uid, prio);
+	while (m) {
+		struct anoubis_msg * tmp;
+		len = m->length - CSUM_LEN - sizeof(Anoubis_PolicyReplyMessage);
+		if (fwrite(m->u.policyreply->payload, 1, len, fp)
+		    != len) {
+			fprintf(stderr, "Error writing to %s\n", file);
+			free_msg_list(m);
+			fclose(fp);
+			destroy_channel();
+			return 3;
+		}
+		tmp = m;
+		m = m->next;
+		anoubis_msg_free(tmp);
+	}
+
 	if (fp)
 		fclose(fp);
 	destroy_channel();
@@ -465,7 +501,7 @@ make_version(struct apn_ruleset *ruleset)
 }
 
 static int
-load(char *rulesopt)
+load(char *rulesopt, uid_t uid, unsigned int prio)
 {
 	int fd;
 	struct stat statbuf;
@@ -552,8 +588,8 @@ load(char *rulesopt)
 	 * XXX CEH: Add posibility to set admin rules for a user and
 	 * XXX CEH: default rules
 	 */
-	set_value(req->uid, geteuid());
-	set_value(req->prio, 1);
+	set_value(req->uid, uid);
+	set_value(req->prio, prio);
 	if (length) {
 		memcpy(req->payload, buf, length);
 		munmap(buf, length);

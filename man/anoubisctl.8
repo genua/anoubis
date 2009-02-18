@@ -46,15 +46,20 @@ daemon.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl f
+Force policy load even if the policy has syntax errors.
+This option is intended for debugging purposes.
+Its use is not recommended.
 .It Fl n
 Config test mode.
 Only check the configuration file for validity.
 .Nm
 will do nothing except parse the configuration file and terminate.
-.It Fl f
-Force policy load even if the policy has syntax errors.
-This option is intended for debugging purposes.
-Its use is not recommended.
+.It Fl p Ar admin|user
+Dump/Load admin or user policies. Loading admin policies requires
+root privileges.
+.It Fl u Ar uid
+Dump/Load this user's policy, requires root privileges.
 .It Fl v
 Produce more verbose output.
 .It Ar command
