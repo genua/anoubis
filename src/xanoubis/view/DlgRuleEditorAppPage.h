@@ -25,38 +25,53 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _DLGRULEEDITORFILTERNETWORKPAGE_H_
-#define _DLGRULEEDITORFILTERNETWORKPAGE_H_
+#ifndef _DLGRULEEDITORAPPPAGE_H_
+#define _DLGRULEEDITORAPPPAGE_H_
+
+#include <wx/string.h>
 
 #include "DlgRuleEditorBase.h"
 #include "DlgRuleEditorPage.h"
-#include "FilterPolicy.h"
-#include "AlfFilterPolicy.h"
+#include "AppPolicy.h"
+#include "ContextFilterPolicy.h"
+#include "CsumCalcTask.h"
+#include "JobCtrl.h"
 
 /**
- * This is the filter network page.
+ * This is the application page.
  *
- * This page is responsible only for AlfFilterPolicies.
+ * This page is responsible for all AppPolicies.
  *
- * This is a derrived class from DlgRuleEditorPage to inherrit the
+ * This is a derrived class from DlgRuleEditorFilterPage to inherrit the
  * mechanims of selection and deselection and observing the policy. In
- * addition we derrived from DlgRuleEditorFilterNetworkPageBase to gain
+ * addition we derrived from DlgRuleEditorAppPageBase to gain
  * access to the widgets and implement the event methods of them.
+ *
+ * The event handling method for add button on this page are
+ * implemented in the AnPolicyNotebook. This is needed to trigger
+ * save creation of new pages.\n
+ * To savely remove this page the main work is also done at AnPolicyNotebook.
+ * To get this done propperly the binary index is send with the same event.
  */
-class DlgRuleEditorFilterNetworkPage : public DlgRuleEditorPage,
-    public DlgRuleEditorFilterNetworkPageBase
+class DlgRuleEditorAppPage : public DlgRuleEditorPage,
+    public DlgRuleEditorAppPageBase
 {
 	public:
 		/**
-		 * Constructor of the filter Network page.
+		 * Constructor of the application page.
 		 * It has to have the same signature as a ordinary wxPanel,
 		 * so wxformbuilder can just exchange wxPanel with this class.
 		 */
-		DlgRuleEditorFilterNetworkPage(wxWindow *parent,
+		DlgRuleEditorAppPage(wxWindow *parent,
 		    wxWindowID id = wxID_ANY,
 		    const wxPoint& pos = wxDefaultPosition,
 		    const wxSize& size = wxDefaultSize,
 		    long style = wxTAB_TRAVERSAL);
+
+		/**
+		 * Destructor of the application page.
+		 */
+		~DlgRuleEditorAppPage(void);
 
 		/**
 		 * Update the widgets.
@@ -73,7 +88,7 @@ class DlgRuleEditorFilterNetworkPage : public DlgRuleEditorPage,
 		 * This will check for the type of policy. If the policy is
 		 * one of the types this page is interrested in the
 		 * base class method will been called and this page is shown.
-		 * @param[in] 1st The selected policy.
+		 * @param[in] 1st The selected filter policy.
 		 * @return Nothing.
 		 */
 		virtual void select(Policy *);
@@ -86,113 +101,130 @@ class DlgRuleEditorFilterNetworkPage : public DlgRuleEditorPage,
 		 */
 		virtual void deselect(void);
 
+		/**
+		 * Set binary index.
+		 * This page is responsible for handling the binary
+		 * with the given index.
+		 * @param[in] 1st Bianry index.
+		 * @return Nothing.
+		 */
+		void setBinaryIndex(unsigned int);
+
 	private:
 		/**
-		 * This holds the policy been edited by this page.
+		 * This page is responsible for the binary with this index.
 		 */
-		AlfFilterPolicy *filterPolicy_;
+		unsigned int binaryIndex_;
 
 		/**
-		 * Update direction widgets.
+		 * Cache the checksum of this binary.
+		 */
+		wxString csumCache_;
+
+		/**
+		 * The task to calculate the checksum.
+		 */
+		CsumCalcTask calcTask_;
+
+		/**
+		 * Store the application policy of this page.
+		 */
+		AppPolicy *appPolicy_;
+
+		/**
+		 * Store the context filter policy of this page.
+		 */
+		ContextFilterPolicy *ctxPolicy_;
+
+		/**
+		 * Fill the widgets showing the binary.
 		 * @param None.
 		 * @return Nothing.
 		 */
-		void showDirection(void);
+		void showBinary(void);
 
 		/**
-		 * Update address family widgets.
+		 * Fill the widgets showing the checksum.
 		 * @param None.
 		 * @return Nothing.
 		 */
-		void showAddressFamily(void);
+		void showCsum(void);
 
 		/**
-		 * Update protocol widgets.
+		 * Update the widgets of the status.
 		 * @param None.
 		 * @return Nothing.
 		 */
-		void showProtocol(void);
+		void showStatus(void);
 
 		/**
-		 * Update state timeout widgets.
-		 * @param None.
-		 * @return Nothing.
+		 * Write the binary to the policy.
+		 * @param[in] 1st The new binary.
+		 * @return Nothind.
 		 */
-		void showStateTimeout(void);
+		void setBinary(wxString);
 
 		/**
-		 * Handle events from inRadioButton.
-		 * This will set APN_ACCEPT or APN_RECEIVE (depending
-		 * on the protocol) to the policy.
+		 * Handle focus events from binaryTextCtrl (e.g on hit <tab>).
+		 * This will write the binary to the policy.
 		 * @param[in] 1st The event.
 		 * @return Nothing.
 		 */
-		virtual void onInRadioButton(wxCommandEvent &);
+		virtual void onBinaryTextKillFocus(wxFocusEvent &);
 
 		/**
-		 * Handle events from outRadioButton.
-		 * This will set APN_CONNECT or APN_SEND (depending
-		 * on the protocol) to the policy.
+		 * Handle events from binaryTextCtrl.
+		 * This will write the binary to the policy.
 		 * @param[in] 1st The event.
 		 * @return Nothing.
 		 */
-		virtual void onOutRadioButton(wxCommandEvent &);
+		virtual void onBinaryTextEnter(wxCommandEvent &);
 
 		/**
-		 * Handle events from bothRadioButton.
-		 * This will set APN_BOTH to the policy.
+		 * Handle events from pickButton.
+		 * This will open a file chooser and on 'ok' the choosen
+		 * file is written to the policy.
 		 * @param[in] 1st The event.
 		 * @return Nothing.
 		 */
-		virtual void onBothRadioButton(wxCommandEvent &);
+		virtual void onPickButton(wxCommandEvent &);
 
 		/**
-		 * Handle events from inetRadioButton.
-		 * This will set AF_INET to the policy.
+		 * Handle events from validateButton.
+		 * This will start the calculation of the current checksum.
+		 * The result is cached in csumCache_.
 		 * @param[in] 1st The event.
 		 * @return Nothing.
 		 */
-		virtual void onInetRadioButton(wxCommandEvent &);
+		virtual void onValidateButton(wxCommandEvent &);
 
 		/**
-		 * Handle events from inet6RadioButton.
-		 * This will set AF_INET6 to the policy.
+		 * Handle events from updateButton.
+		 * This will write the cached current checksum from csumCache_
+		 * to the policy.
 		 * @param[in] 1st The event.
 		 * @return Nothing.
 		 */
-		virtual void onInet6RadioButton(wxCommandEvent &);
+		virtual void onUpdateButton(wxCommandEvent &);
 
 		/**
-		 * Handle events from anyRadioButton.
-		 * This will set 0 (aka any) to the policy.
+		 * Handle events from deleteButton.
+		 * This will catch the click-event and add the binary index.
+		 * Slipping the event is mandatory, thus the notebook also
+		 * has to receive it.
 		 * @param[in] 1st The event.
 		 * @return Nothing.
 		 */
-		virtual void onAnyRadioButton(wxCommandEvent &);
+		virtual void onDeleteButton(wxCommandEvent &);
 
 		/**
-		 * Handle events from tcpRadioButton.
-		 * This will set IPPROTO_TCP to the policy.
+		 * Handle events from checksum calculation task.
+		 * This will extract the result of the calculation from
+		 * the task and store it in csumCache_.
 		 * @param[in] 1st The event.
 		 * @return Nothing.
 		 */
-		virtual void onTcpRadioButton(wxCommandEvent &);
-
-		/**
-		 * Handle events from udpRadioButton.
-		 * This will set IPPROTO_UDP to the policy.
-		 * @param[in] 1st The event.
-		 * @return Nothing.
-		 */
-		virtual void onUdpRadioButton(wxCommandEvent &);
-
-		/**
-		 * Handle events from stateTimeoutSpinCtrl.
-		 * This will set stete timeout to the policy.
-		 * @param[in] 1st The event.
-		 * @return Nothing.
-		 */
-		virtual void onStateTimeoutSpinCtrl(wxSpinEvent &);
+		void onCsumCalcTask(TaskEvent &);
 };
 
-#endif	/* _DLGRULEEDITORFILTERNETWORKPAGE_H_ */
+#endif	/* _DLGRULEEDITORAPPPAGE_H_ */

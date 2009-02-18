@@ -78,7 +78,7 @@ PolicyUtils::csumToString(unsigned char csum[MAX_APN_HASH_LEN],
 {
 	if (len == 0 || len > MAX_APN_HASH_LEN)
 		return (false);
-	str = wxT("0x");
+	str.Clear();
 	for (size_t i = 0; i < len; i++) {
 		str += wxString::Format(wxT("%2.2x"),
 		    (unsigned char)csum[i]);
@@ -257,4 +257,24 @@ PolicyUtils::stringToList(wxString str)
 	}
 
 	return (list);
+}
+
+wxString
+PolicyUtils::hashTypeToString(int hashType)
+{
+	wxString hashTypeString;
+
+	switch (hashType) {
+	case APN_HASH_SHA256:
+		hashTypeString = wxT("SHA256");
+		break;
+	case APN_HASH_NONE:
+		hashTypeString = wxT("NONE");
+		break;
+	default:
+		hashTypeString = _("(unknown)");
+		break;
+	}
+
+	return (hashTypeString);
 }

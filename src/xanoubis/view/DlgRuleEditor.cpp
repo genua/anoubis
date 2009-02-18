@@ -45,7 +45,9 @@
 #include "ProfileCtrl.h"
 #include "RuleEditorAddPolicyVisitor.h"
 #include "DlgRuleEditorPage.h"
+#include "DlgRuleEditorAppPage.h"
 #include "JobCtrl.h"
+#include "AnPolicyNotebook.h"
 
 DlgRuleEditor::DlgRuleEditor(wxWindow* parent)
     : Observer(NULL), DlgRuleEditorBase(parent)
@@ -594,6 +596,9 @@ DlgRuleEditor::onAppPolicySelect(wxListEvent & event)
 		}
 		filterListTypeChoice->Select(0);
 
+		/* create tabs for each binary */
+		appPolicyPanels->select(policy);
+
 		/* Ensure the changes will apear on the screen */
 		Layout();
 		Refresh();
@@ -612,6 +617,9 @@ DlgRuleEditor::onAppPolicyDeSelect(wxListEvent & WXUNUSED(event))
 	filterListCreateButton->Disable();
 
 	wipeFilterList();
+
+	/* remove binary tabs */
+	appPolicyPanels->deselect();
 
 	Layout();
 	Refresh();

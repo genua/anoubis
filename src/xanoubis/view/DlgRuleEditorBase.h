@@ -34,6 +34,7 @@
 #ifndef __DlgRuleEditorBase__
 #define __DlgRuleEditorBase__
 
+class AnPolicyNotebook;
 class DlgRuleEditorFilterActionPage;
 class DlgRuleEditorFilterAddressPage;
 class DlgRuleEditorFilterCapabilityPage;
@@ -53,14 +54,14 @@ class DlgRuleEditorFilterSubjectPage;
 #include <wx/button.h>
 #include <wx/sizer.h>
 #include <wx/listctrl.h>
-#include <wx/textctrl.h>
-#include <wx/scrolwin.h>
-#include <wx/bitmap.h>
-#include <wx/image.h>
 #include <wx/notebook.h>
 #include <wx/panel.h>
+#include <wx/bitmap.h>
+#include <wx/image.h>
 #include <wx/splitter.h>
 #include <wx/frame.h>
+#include <wx/textctrl.h>
+#include <wx/scrolwin.h>
 #include <wx/radiobut.h>
 #include <wx/spinctrl.h>
 #include <wx/radiobox.h>
@@ -68,6 +69,8 @@ class DlgRuleEditorFilterSubjectPage;
 
 ///////////////////////////////////////////////////////////////////////////
 
+#define ID_APP_PAGE_ADD 1000
+#define ID_APP_PAGE_DELETE 1001
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Class DlgRuleEditorBase
@@ -91,19 +94,7 @@ class DlgRuleEditorBase : public wxFrame
 		wxButton* appListUpButton;
 		wxButton* appListDownButton;
 		wxButton* appListDeleteButton;
-		wxNotebook* appPolicyPanels;
-		wxScrolledWindow* appBinaryPage;
-		wxStaticText* appBinaryLabel;
-		wxTextCtrl* appBinaryTextCtrl;
-		wxButton* appBinaryModifyButton;
-		wxStaticText* appBinaryCsumRegLabel;
-		wxStaticText* appBinaryCsumRegText;
-		wxStaticText* appBinaryCsumCurLabel;
-		wxStaticText* appBinaryCsumCurText;
-		wxStaticText* appBinaryStatusLabel;
-		wxStaticText* appBinaryStatusText;
-		wxButton* appBinaryValidateButton;
-		wxButton* appBinaryUpdateButton;
+		AnPolicyNotebook* appPolicyPanels;
 		wxPanel* filterPanel;
 		wxStaticText* filterListTypeLabel;
 		wxChoice* filterListTypeChoice;
@@ -146,10 +137,6 @@ class DlgRuleEditorBase : public wxFrame
 		virtual void onAppListUpClick( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onAppListDownClick( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onAppListDeleteClick( wxCommandEvent& event ){ event.Skip(); }
-		virtual void OnAppBinaryTextCtrl( wxCommandEvent& event ){ event.Skip(); }
-		virtual void OnAppBinaryModifyButton( wxCommandEvent& event ){ event.Skip(); }
-		virtual void OnAppValidateChkSumButton( wxCommandEvent& event ){ event.Skip(); }
-		virtual void OnAppUpdateChkSumButton( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onFilterListCreateButton( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onFilterListColumnsButtonClick( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onFilterPolicyDeSelect( wxListEvent& event ){ event.Skip(); }
@@ -171,6 +158,46 @@ class DlgRuleEditorBase : public wxFrame
 		splitterWindow->Disconnect( wxEVT_IDLE, wxIdleEventHandler( DlgRuleEditorBase::splitterWindowOnIdle ), NULL, this );
 		}
 		
+	
+};
+
+///////////////////////////////////////////////////////////////////////////////
+/// Class DlgRuleEditorAppPageBase
+///////////////////////////////////////////////////////////////////////////////
+class DlgRuleEditorAppPageBase : public wxPanel 
+{
+	private:
+	
+	protected:
+		wxScrolledWindow* mainPage;
+		wxStaticText* binaryLabel;
+		wxTextCtrl* binaryTextCtrl;
+		wxButton* pickButton;
+		wxStaticText* csumRegisteredLabel;
+		wxStaticText* csumRegisteredText;
+		wxStaticText* csumCurrentLabel;
+		wxStaticText* csumCurrentText;
+		wxStaticText* statusLabel;
+		wxStaticText* statusText;
+		wxButton* validateButton;
+		wxButton* updateButton;
+		
+		
+		wxButton* addButton;
+		wxButton* deleteButton;
+		
+		// Virtual event handlers, overide them in your derived class
+		virtual void onBinaryTextKillFocus( wxFocusEvent& event ){ event.Skip(); }
+		virtual void onBinaryTextEnter( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onPickButton( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onValidateButton( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onUpdateButton( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onAddButton( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onDeleteButton( wxCommandEvent& event ){ event.Skip(); }
+		
+	
+	public:
+		DlgRuleEditorAppPageBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 500,300 ), long style = wxTAB_TRAVERSAL );
 	
 };
 
@@ -418,27 +445,9 @@ class DlgRuleEditorFilterContextPageBase : public wxPanel
 		wxRadioButton* newRadioButton;
 		wxRadioButton* openRadioButton;
 		
-		
-		wxStaticText* binaryLabel;
-		wxTextCtrl* binaryTextCtrl;
-		wxButton* modifyButton;
-		wxStaticText* registeredCsumLabel;
-		wxStaticText* registeredCsumText;
-		wxStaticText* currentCsumLabel;
-		wxStaticText* currentCsumText;
-		wxStaticText* statusLabel;
-		wxStaticText* statusText;
-		wxButton* validateButton;
-		wxButton* updateButton;
-		
 		// Virtual event handlers, overide them in your derived class
 		virtual void onNewRadioButton( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onOpenRadioButton( wxCommandEvent& event ){ event.Skip(); }
-		virtual void onBinaryTestKillFocus( wxFocusEvent& event ){ event.Skip(); }
-		virtual void onBinaryTextEnter( wxCommandEvent& event ){ event.Skip(); }
-		virtual void onModifyButton( wxCommandEvent& event ){ event.Skip(); }
-		virtual void onValidateButton( wxCommandEvent& event ){ event.Skip(); }
-		virtual void onUpdateButton( wxCommandEvent& event ){ event.Skip(); }
 		
 	
 	public:

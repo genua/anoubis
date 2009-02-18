@@ -26,12 +26,14 @@
  */
 
 #include "DlgRuleEditorFilterContextPage.h"
+#include "DlgRuleEditorAppPage.h"
 
 DlgRuleEditorFilterContextPage::DlgRuleEditorFilterContextPage(wxWindow *parent,
     wxWindowID id, const wxPoint & pos, const wxSize & size, long style)
     : DlgRuleEditorPage(),
     DlgRuleEditorFilterContextPageBase(parent, id, pos, size, style)
 {
+	filterPolicy_ = NULL;
 }
 
 void
@@ -40,10 +42,10 @@ DlgRuleEditorFilterContextPage::update(Subject *)
 }
 
 void
-DlgRuleEditorFilterContextPage::select(FilterPolicy *policy)
+DlgRuleEditorFilterContextPage::select(Policy *policy)
 {
 	if (policy->IsKindOf(CLASSINFO(ContextFilterPolicy))) {
-		policy_ = wxDynamicCast(policy, ContextFilterPolicy);
+		filterPolicy_ = wxDynamicCast(policy, ContextFilterPolicy);
 		DlgRuleEditorPage::select(policy);
 		Show();
 	}
@@ -52,7 +54,7 @@ DlgRuleEditorFilterContextPage::select(FilterPolicy *policy)
 void
 DlgRuleEditorFilterContextPage::deselect(void)
 {
-	policy_ = NULL;
+	filterPolicy_ = NULL;
 	DlgRuleEditorPage::deselect();
 	Hide();
 }

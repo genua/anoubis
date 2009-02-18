@@ -187,6 +187,88 @@ class ContextFilterPolicy : public FilterPolicy
 		 */
 		bool isAny(void) const;
 
+		/**
+		 * Change the hash type to binary with given index.
+		 * @param[in] 1st The new hash type.
+		 * @param[in] 2nd The index of binary to change.
+		 * @return True on success.
+		 */
+		bool setHashTypeNo(int, unsigned int);
+
+		/**
+		 * Changet the hash type of all binaries.
+		 * @param[in] 1st The new hash type.
+		 * @return True on success.
+		 */
+		bool setAllToHashTypeNo(int);
+
+		/**
+		 * Get the apn hash type of  binary of given index.
+		 * @param[in] 1st The index of the binary.
+		 * @return The apn hash type of that binary.
+		 * @see getHashTypeName()
+		 */
+		int getHashTypeNo(unsigned int) const;
+
+		/**
+		 * Get the string represnetation of hash type.
+		 * @param[in] 1st The index of the binary.
+		 * @return The string with the hash type.
+		 * @see getHashTypeNo()
+		 * @see getHashTypeList()
+		 */
+		wxString getHashTypeName(unsigned int) const;
+
+		/**
+		 * Get the string represnetation of hash types of all binaries.
+		 * @param None.
+		 * @return A list of all hash types.
+		 * @see getHashTypeName()
+		 */
+		wxArrayString getHashTypeList(void) const;
+
+		/**
+		 * Set the hash value to binary of given index.
+		 * @param[in] 1st The new hash value.
+		 * @param[in] 2nd The index of the binary.
+		 * @return True on success.
+		 */
+		bool setHashValueNo(unsigned char *, unsigned int);
+
+		/**
+		 * Set the hash value to binary of given index.
+		 * @param[in] 1st The new hash value.
+		 * @param[in] 2nd The index of the binary.
+		 * @return True on success.
+		 */
+		bool setHashValueString(const wxString &, unsigned int);
+
+		/**
+		 * Get the apn hash value of binary of given index.
+		 * @param[in] 1st The index of binary in question.
+		 * @param[out] 2nd The place where to put the apn hash value.
+		 * @param[in] 3rd The size of the given place.
+		 * @return True on success.
+		 * @see getHashValueName()
+		 */
+		bool getHashValueNo(unsigned int, unsigned char *, int) const;
+
+		/**
+		 * Get the string representation of hash value.
+		 * @param[in] 1st The index of binary in quesiton.
+		 * @return The value as string on success or an empyt string.
+		 * @see getHashValueNo()
+		 * @see getHashValueList()
+		 */
+		wxString getHashValueName(unsigned int) const;
+
+		/**
+		 * Get the entire list of hash values.
+		 * @param None.
+		 * @return The list of hash values (maybe empty).
+		 */
+		wxArrayString getHashValueList(void) const;
+
 	private:
 		/**
 		 * Seek apn application structure by index.

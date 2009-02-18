@@ -112,6 +112,13 @@ class PolicyUtils
 		 * @return The list with the elements of the string.
 		 */
 		static wxArrayString stringToList(wxString);
+
+		/**
+		 * Translate apn hash type number to name string.
+		 * @param[in] 1st The apn hash type number.
+		 * @return The string with the name.
+		 */
+		static wxString hashTypeToString(int);
 };
 
 #endif	/* _POLICYUTILS_H_ */

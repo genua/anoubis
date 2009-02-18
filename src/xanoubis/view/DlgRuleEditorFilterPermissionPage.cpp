@@ -32,22 +32,23 @@ DlgRuleEditorFilterPermissionPage::DlgRuleEditorFilterPermissionPage(
     long style) : DlgRuleEditorPage(),
     DlgRuleEditorFilterPermissionPageBase(parent, id, pos, size, style)
 {
+	filterPolicy_ = NULL;
 }
 
 void
 DlgRuleEditorFilterPermissionPage::update(Subject *subject)
 {
-	if (subject == policy_) {
+	if (subject == filterPolicy_) {
 		/* This is not our policy! */
 		showPermission();
 	}
 }
 
 void
-DlgRuleEditorFilterPermissionPage::select(FilterPolicy *policy)
+DlgRuleEditorFilterPermissionPage::select(Policy *policy)
 {
 	if (policy->IsKindOf(CLASSINFO(SbAccessFilterPolicy))) {
-		policy_ = wxDynamicCast(policy, SbAccessFilterPolicy);
+		filterPolicy_ = wxDynamicCast(policy, SbAccessFilterPolicy);
 		DlgRuleEditorPage::select(policy);
 		Show();
 	}
@@ -56,7 +57,7 @@ DlgRuleEditorFilterPermissionPage::select(FilterPolicy *policy)
 void
 DlgRuleEditorFilterPermissionPage::deselect(void)
 {
-	policy_ = NULL;
+	filterPolicy_ = NULL;
 	DlgRuleEditorPage::deselect();
 	Hide();
 }
@@ -66,7 +67,7 @@ DlgRuleEditorFilterPermissionPage::showPermission(void)
 {
 	unsigned int mask;
 
-	mask = policy_->getAccessMaskNo();
+	mask = filterPolicy_->getAccessMaskNo();
 	if ((mask & APN_SBA_READ) != 0) {
 		readCheckBox->SetValue(true);
 	}
@@ -83,14 +84,14 @@ DlgRuleEditorFilterPermissionPage::onReadCheckBox(wxCommandEvent & event)
 {
 	unsigned int mask;
 
-	if (policy_ != NULL) {
-		mask  = policy_->getAccessMaskNo();
+	if (filterPolicy_ != NULL) {
+		mask  = filterPolicy_->getAccessMaskNo();
 		if  (event.IsChecked()) {
 			mask |= APN_SBA_READ;
 		} else {
 			mask &= ~APN_SBA_READ;
 		}
-		policy_->setAccessMask(mask);
+		filterPolicy_->setAccessMask(mask);
 	}
 }
 
@@ -99,14 +100,14 @@ DlgRuleEditorFilterPermissionPage::onWriteCheckBox(wxCommandEvent & event)
 {
 	unsigned int mask;
 
-	if (policy_ != NULL) {
-		mask  = policy_->getAccessMaskNo();
+	if (filterPolicy_ != NULL) {
+		mask  = filterPolicy_->getAccessMaskNo();
 		if  (event.IsChecked()) {
 			mask |= APN_SBA_WRITE;
 		} else {
 			mask &= ~APN_SBA_WRITE;
 		}
-		policy_->setAccessMask(mask);
+		filterPolicy_->setAccessMask(mask);
 	}
 }
 
@@ -115,13 +116,13 @@ DlgRuleEditorFilterPermissionPage::onExecuteCheckBox(wxCommandEvent & event)
 {
 	unsigned int mask;
 
-	if (policy_ != NULL) {
-		mask  = policy_->getAccessMaskNo();
+	if (filterPolicy_ != NULL) {
+		mask  = filterPolicy_->getAccessMaskNo();
 		if (event.IsChecked()) {
 			mask |= APN_SBA_EXEC;
 		} else {
 			mask &= ~APN_SBA_EXEC;
 		}
-		policy_->setAccessMask(mask);
+		filterPolicy_->setAccessMask(mask);
 	}
 }

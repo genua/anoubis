@@ -73,10 +73,10 @@ class DlgRuleEditorFilterContextPage : public DlgRuleEditorPage,
 		 * This will check for the type of policy. If the policy is
 		 * one of the types this page is interrested in the
 		 * base class method will been called and this page is shown.
-		 * @param[in] 1st The selected filter policy.
+		 * @param[in] 1st The selected policy.
 		 * @return Nothing.
 		 */
-		virtual void select(FilterPolicy *);
+		virtual void select(Policy *);
 
 		/**
 		 * Deselect this page.
@@ -90,7 +90,7 @@ class DlgRuleEditorFilterContextPage : public DlgRuleEditorPage,
 		/**
 		 * This holds the policy been edited by this page.
 		 */
-		ContextFilterPolicy *policy_;
+		ContextFilterPolicy *filterPolicy_;
 };
 
 #endif	/* _DLGRULEEDITORFILTERCONTEXTPAGE_H_ */

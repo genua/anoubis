@@ -36,6 +36,8 @@ DlgRuleEditorFilterSubjectPage::DlgRuleEditorFilterSubjectPage(wxWindow *parent,
     : DlgRuleEditorPage(),
     DlgRuleEditorFilterSubjectPageBase(parent, id, pos, size, style)
 {
+	sfsPolicy_ = NULL;
+	sbPolicy_  = NULL;
 }
 
 void
@@ -54,7 +56,7 @@ DlgRuleEditorFilterSubjectPage::update(Subject *subject)
 }
 
 void
-DlgRuleEditorFilterSubjectPage::select(FilterPolicy *policy)
+DlgRuleEditorFilterSubjectPage::select(Policy *policy)
 {
 	if (policy->IsKindOf(CLASSINFO(SfsFilterPolicy))) {
 		sfsPolicy_ = wxDynamicCast(policy, SfsFilterPolicy);

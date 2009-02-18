@@ -39,12 +39,13 @@ DlgRuleEditorFilterActionPage::DlgRuleEditorFilterActionPage(wxWindow *parent,
     : DlgRuleEditorPage(),
     DlgRuleEditorFilterActionPageBase(parent, id, pos, size, style)
 {
+	filterPolicy_ = NULL;
 }
 
 void
 DlgRuleEditorFilterActionPage::update(Subject *subject)
 {
-	if (subject == policy_) {
+	if (subject == filterPolicy_) {
 		/* This is our policy. */
 		showAction();
 		showLog();
@@ -52,21 +53,27 @@ DlgRuleEditorFilterActionPage::update(Subject *subject)
 }
 
 void
-DlgRuleEditorFilterActionPage::select(FilterPolicy *policy)
+DlgRuleEditorFilterActionPage::select(Policy *policy)
 {
+	PolicyRuleSet *ruleSet;
+
 	if (policy->IsKindOf(CLASSINFO(AlfFilterPolicy)) ||
 	    policy->IsKindOf(CLASSINFO(AlfCapabilityFilterPolicy)) ||
 	    policy->IsKindOf(CLASSINFO(SbAccessFilterPolicy)) ||
 	    policy->IsKindOf(CLASSINFO(DefaultFilterPolicy)) ||
 	    policy->IsKindOf(CLASSINFO(SfsDefaultFilterPolicy)) ) {
-	    	PolicyRuleSet	*ruleset = policy->getParentRuleSet();
-		policy_ = policy;
+		ruleSet = policy->getParentRuleSet();
+		filterPolicy_ = wxDynamicCast(policy, FilterPolicy);
 		DlgRuleEditorPage::select(policy);
-		if (ruleset && ruleset->isAdmin() && geteuid() != 0) {
+
+		/* admin-policies may not ask. */
+		if ((ruleSet != NULL) && ruleSet->isAdmin() &&
+		    (geteuid() != 0)) {
 			askRadioButton->Disable();
 		} else {
 			askRadioButton->Enable();
 		}
+
 		Show();
 	}
 }
@@ -74,7 +81,7 @@ DlgRuleEditorFilterActionPage::select(FilterPolicy *policy)
 void
 DlgRuleEditorFilterActionPage::deselect(void)
 {
-	policy_ = NULL;
+	filterPolicy_ = NULL;
 	DlgRuleEditorPage::deselect();
 	Hide();
 }
@@ -82,11 +89,11 @@ DlgRuleEditorFilterActionPage::deselect(void)
 void
 DlgRuleEditorFilterActionPage::showAction(void)
 {
-	if (policy_ == NULL) {
+	if (filterPolicy_ == NULL) {
 		return;
 	}
 
-	switch (policy_->getActionNo()) {
+	switch (filterPolicy_->getActionNo()) {
 	case APN_ACTION_ALLOW:
 		allowRadioButton->SetValue(true);
 		break;
@@ -106,11 +113,11 @@ DlgRuleEditorFilterActionPage::showAction(void)
 void
 DlgRuleEditorFilterActionPage::showLog(void)
 {
-	if (policy_ == NULL) {
+	if (filterPolicy_ == NULL) {
 		return;
 	}
 
-	switch (policy_->getLogNo()) {
+	switch (filterPolicy_->getLogNo()) {
 	case APN_LOG_NONE:
 		noneRadioButton->SetValue(true);
 		break;
@@ -130,47 +137,47 @@ DlgRuleEditorFilterActionPage::showLog(void)
 void
 DlgRuleEditorFilterActionPage::onAllowRadioButton(wxCommandEvent &)
 {
-	if (policy_ != NULL) {
-		policy_->setActionNo(APN_ACTION_ALLOW);
+	if (filterPolicy_ != NULL) {
+		filterPolicy_->setActionNo(APN_ACTION_ALLOW);
 	}
 }
 
 void
 DlgRuleEditorFilterActionPage::onDenyRadioButton(wxCommandEvent &)
 {
-	if (policy_ != NULL) {
-		policy_->setActionNo(APN_ACTION_DENY);
+	if (filterPolicy_ != NULL) {
+		filterPolicy_->setActionNo(APN_ACTION_DENY);
 	}
 }
 
 void
 DlgRuleEditorFilterActionPage::onAskRadioButton(wxCommandEvent &)
 {
-	if (policy_ != NULL) {
-		policy_->setActionNo(APN_ACTION_ASK);
+	if (filterPolicy_ != NULL) {
+		filterPolicy_->setActionNo(APN_ACTION_ASK);
 	}
 }
 
 void
 DlgRuleEditorFilterActionPage::onNoneRadioButton(wxCommandEvent &)
 {
-	if (policy_ != NULL) {
-		policy_->setLogNo(APN_LOG_NONE);
+	if (filterPolicy_ != NULL) {
+		filterPolicy_->setLogNo(APN_LOG_NONE);
 	}
 }
 
 void
 DlgRuleEditorFilterActionPage::onNormalRadioButton(wxCommandEvent &)
 {
-	if (policy_ != NULL) {
-		policy_->setLogNo(APN_LOG_NORMAL);
+	if (filterPolicy_ != NULL) {
+		filterPolicy_->setLogNo(APN_LOG_NORMAL);
 	}
 }
 
 void
 DlgRuleEditorFilterActionPage::onAlertRadioButton(wxCommandEvent &)
 {
-	if (policy_ != NULL) {
-		policy_->setLogNo(APN_LOG_ALERT);
+	if (filterPolicy_ != NULL) {
+		filterPolicy_->setLogNo(APN_LOG_ALERT);
 	}
 }

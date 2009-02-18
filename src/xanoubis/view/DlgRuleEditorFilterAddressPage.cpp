@@ -32,12 +32,13 @@ DlgRuleEditorFilterAddressPage::DlgRuleEditorFilterAddressPage(wxWindow *parent,
     : DlgRuleEditorPage(),
     DlgRuleEditorFilterAddressPageBase(parent, id, pos, size, style)
 {
+	filterPolicy_ = NULL;
 }
 
 void
 DlgRuleEditorFilterAddressPage::update(Subject *subject)
 {
-	if (subject == policy_) {
+	if (subject == filterPolicy_) {
 		/* This is our policy. */
 		showSource();
 		showDestination();
@@ -45,10 +46,10 @@ DlgRuleEditorFilterAddressPage::update(Subject *subject)
 }
 
 void
-DlgRuleEditorFilterAddressPage::select(FilterPolicy *policy)
+DlgRuleEditorFilterAddressPage::select(Policy *policy)
 {
 	if (policy->IsKindOf(CLASSINFO(AlfFilterPolicy))) {
-		policy_ = wxDynamicCast(policy, AlfFilterPolicy);
+		filterPolicy_ = wxDynamicCast(policy, AlfFilterPolicy);
 		DlgRuleEditorPage::select(policy);
 		Show();
 	}
@@ -57,7 +58,7 @@ DlgRuleEditorFilterAddressPage::select(FilterPolicy *policy)
 void
 DlgRuleEditorFilterAddressPage::deselect(void)
 {
-	policy_ = NULL;
+	filterPolicy_ = NULL;
 	DlgRuleEditorPage::deselect();
 	Hide();
 }
@@ -65,51 +66,55 @@ DlgRuleEditorFilterAddressPage::deselect(void)
 void
 DlgRuleEditorFilterAddressPage::showSource(void)
 {
-	if (policy_ != NULL) {
-		sourceAddressTextCtrl->ChangeValue(policy_->getFromHostName());
-		sourcePortTextCtrl->ChangeValue(policy_->getFromPortName());
+	if (filterPolicy_ != NULL) {
+		sourceAddressTextCtrl->ChangeValue(
+		    filterPolicy_->getFromHostName());
+		sourcePortTextCtrl->ChangeValue(
+		    filterPolicy_->getFromPortName());
 	}
 }
 
 void
 DlgRuleEditorFilterAddressPage::showDestination(void)
 {
-	if (policy_ != NULL) {
+	if (filterPolicy_ != NULL) {
 		destinationAddressTextCtrl->ChangeValue(
-		    policy_->getToHostName());
-		destinationPortTextCtrl->ChangeValue(policy_->getToPortName());
+		    filterPolicy_->getToHostName());
+		destinationPortTextCtrl->ChangeValue(
+		    filterPolicy_->getToPortName());
 	}
 }
 
 void
 DlgRuleEditorFilterAddressPage::onSourceAddressTextEnter(wxCommandEvent & event)
 {
-	if (policy_ != NULL) {
-		policy_->setFromHostName(event.GetString());
+	if (filterPolicy_ != NULL) {
+		filterPolicy_->setFromHostName(event.GetString());
 	}
 }
 
 void
 DlgRuleEditorFilterAddressPage::onSourceAddressTextKillFocus(wxFocusEvent &)
 {
-	if (policy_ != NULL) {
-		policy_->setFromHostName(sourceAddressTextCtrl->GetValue());
+	if (filterPolicy_ != NULL) {
+		filterPolicy_->setFromHostName(
+		    sourceAddressTextCtrl->GetValue());
 	}
 }
 
 void
 DlgRuleEditorFilterAddressPage::onSourcePortTextEnter(wxCommandEvent & event)
 {
-	if (policy_ != NULL) {
-		policy_->setFromPortName(event.GetString());
+	if (filterPolicy_ != NULL) {
+		filterPolicy_->setFromPortName(event.GetString());
 	}
 }
 
 void
 DlgRuleEditorFilterAddressPage::onSourcePortTextKillFocus(wxFocusEvent &)
 {
-	if (policy_ != NULL) {
-		policy_->setFromPortName(sourcePortTextCtrl->GetValue());
+	if (filterPolicy_ != NULL) {
+		filterPolicy_->setFromPortName(sourcePortTextCtrl->GetValue());
 	}
 }
 
@@ -117,8 +122,8 @@ void
 DlgRuleEditorFilterAddressPage::onDestinationAddressTextEnter(
     wxCommandEvent & event)
 {
-	if (policy_ != NULL) {
-		policy_->setToHostName(event.GetString());
+	if (filterPolicy_ != NULL) {
+		filterPolicy_->setToHostName(event.GetString());
 	}
 }
 
@@ -126,8 +131,9 @@ void
 DlgRuleEditorFilterAddressPage::onDestinationAddressTextKillFocus(
     wxFocusEvent &)
 {
-	if (policy_ != NULL) {
-		policy_->setToHostName(destinationAddressTextCtrl->GetValue());
+	if (filterPolicy_ != NULL) {
+		filterPolicy_->setToHostName(
+		    destinationAddressTextCtrl->GetValue());
 	}
 }
 
@@ -135,8 +141,8 @@ void
 DlgRuleEditorFilterAddressPage::onDestinationPortTextEnter(
     wxCommandEvent & event)
 {
-	if (policy_ != NULL) {
-		policy_->setToPortName(event.GetString());
+	if (filterPolicy_ != NULL) {
+		filterPolicy_->setToPortName(event.GetString());
 	}
 }
 
@@ -144,7 +150,8 @@ void
 DlgRuleEditorFilterAddressPage::onDestinationPortTextKillFocus(
     wxFocusEvent &)
 {
-	if (policy_ != NULL) {
-		policy_->setToPortName(destinationPortTextCtrl->GetValue());
+	if (filterPolicy_ != NULL) {
+		filterPolicy_->setToPortName(
+		    destinationPortTextCtrl->GetValue());
 	}
 }

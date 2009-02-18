@@ -32,22 +32,24 @@ DlgRuleEditorFilterCapabilityPage::DlgRuleEditorFilterCapabilityPage(
     long style) : DlgRuleEditorPage(),
     DlgRuleEditorFilterCapabilityPageBase(parent, id, pos, size, style)
 {
+	filterPolicy_ = NULL;
 }
 
 void
 DlgRuleEditorFilterCapabilityPage::update(Subject *subject)
 {
-	if (subject != policy_) {
+	if (subject != filterPolicy_) {
 		/* This is not our policy! */
 		showCapability();
 	}
 }
 
 void
-DlgRuleEditorFilterCapabilityPage::select(FilterPolicy *policy)
+DlgRuleEditorFilterCapabilityPage::select(Policy *policy)
 {
 	if (policy->IsKindOf(CLASSINFO(AlfCapabilityFilterPolicy))) {
-		policy_ = wxDynamicCast(policy, AlfCapabilityFilterPolicy);
+		filterPolicy_ = wxDynamicCast(policy,
+		    AlfCapabilityFilterPolicy);
 		DlgRuleEditorPage::select(policy);
 		Show();
 	}
@@ -56,7 +58,7 @@ DlgRuleEditorFilterCapabilityPage::select(FilterPolicy *policy)
 void
 DlgRuleEditorFilterCapabilityPage::deselect(void)
 {
-	policy_ = NULL;
+	filterPolicy_ = NULL;
 	DlgRuleEditorPage::deselect();
 	Hide();
 }
@@ -64,11 +66,11 @@ DlgRuleEditorFilterCapabilityPage::deselect(void)
 void
 DlgRuleEditorFilterCapabilityPage::showCapability(void)
 {
-	if (policy_ == NULL) {
+	if (filterPolicy_ == NULL) {
 		return;
 	}
 
-	switch (policy_->getCapabilityTypeNo()) {
+	switch (filterPolicy_->getCapabilityTypeNo()) {
 	case APN_ALF_CAPRAW:
 		rawRadioButton->SetValue(true);
 		break;
@@ -89,23 +91,23 @@ DlgRuleEditorFilterCapabilityPage::showCapability(void)
 void
 DlgRuleEditorFilterCapabilityPage::onRawRadioButton(wxCommandEvent &)
 {
-	if (policy_ != NULL) {
-		policy_->setCapabilityTypeNo(APN_ALF_CAPRAW);
+	if (filterPolicy_ != NULL) {
+		filterPolicy_->setCapabilityTypeNo(APN_ALF_CAPRAW);
 	}
 }
 
 void
 DlgRuleEditorFilterCapabilityPage::onOtherRadioButton(wxCommandEvent &)
 {
-	if (policy_ != NULL) {
-		policy_->setCapabilityTypeNo(APN_ALF_CAPOTHER);
+	if (filterPolicy_ != NULL) {
+		filterPolicy_->setCapabilityTypeNo(APN_ALF_CAPOTHER);
 	}
 }
 
 void
 DlgRuleEditorFilterCapabilityPage::onAllRadioButton(wxCommandEvent &)
 {
-	if (policy_ != NULL) {
-		policy_->setCapabilityTypeNo(APN_ALF_CAPALL);
+	if (filterPolicy_ != NULL) {
+		filterPolicy_->setCapabilityTypeNo(APN_ALF_CAPALL);
 	}
 }

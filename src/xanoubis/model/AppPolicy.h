@@ -141,6 +141,24 @@ class AppPolicy : public Policy
 		wxArrayString getBinaryList(void) const;
 
 		/**
+		 * Add a binary.
+		 * This will add the given binary at the end of the list
+		 * of binaries. In case of 'any' nothing special is done.
+		 * @param[in] 1st The binary name.
+		 * @return True on success.
+		 */
+		bool addBinary(const wxString &);
+
+		/**
+		 * Remove a binary.
+		 * This will remove the binary with the given index.
+		 * In case we remove the last binary, 'any' is set.
+		 * @param[in] 1st The index of the binary to remove.
+		 * @return True on success.
+		 */
+		bool removeBinary(unsigned int);
+
+		/**
 		 * Does this policy represent an any-block?
 		 * @param None.
 		 * @return True if it's an any-block.
@@ -201,7 +219,7 @@ class AppPolicy : public Policy
 		 * @param[in] 2nd The index of the binary.
 		 * @return True on success.
 		 */
-		bool setHashValueString(wxString, unsigned int);
+		bool setHashValueString(const wxString &, unsigned int);
 
 		/**
 		 * Get the apn hash value of binary of given index.
@@ -239,13 +257,6 @@ class AppPolicy : public Policy
 		 * @return The found structure or NULL.
 		 */
 		struct apn_app *seekAppByIndex(unsigned int) const;
-
-		/**
-		 * Translate apn hash type number to name string.
-		 * @param[in] 1st The apn hash type number.
-		 * @return The string with the name.
-		 */
-		wxString hashTypeToString(int) const;
 };
 
 #endif	/* _APPPOLICY_H_ */

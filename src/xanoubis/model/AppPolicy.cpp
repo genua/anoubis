@@ -214,6 +214,41 @@ AppPolicy::getBinaryList(void) const
 }
 
 bool
+AppPolicy::addBinary(const wxString & binary)
+{
+	wxArrayString binaryList;
+
+	binaryList = getBinaryList();
+	if (getBinaryCount() == 0) {
+		/* remove 'any' first */
+		binaryList.RemoveAt(0);
+	}
+	binaryList.Add(binary);
+
+	return (setBinaryList(binaryList));
+}
+
+bool
+AppPolicy::removeBinary(unsigned int index)
+{
+	wxArrayString binaryList;
+
+	binaryList = getBinaryList();
+	if (index >= binaryList.Count()) {
+		return (false);
+	}
+
+	binaryList.RemoveAt(index);
+
+	/* An empty list has to bear the keyword 'any'. */
+	if (binaryList.GetCount() == 0) {
+		binaryList.Add(wxT("any"));
+	}
+
+	return (setBinaryList(binaryList));
+}
+
+bool
 AppPolicy::isAnyBlock(void) const
 {
 	struct apn_rule *rule;
@@ -306,7 +341,7 @@ AppPolicy::getHashTypeNo(unsigned int idx) const
 wxString
 AppPolicy::getHashTypeName(unsigned int idx) const
 {
-	return (hashTypeToString(getHashTypeNo(idx)));
+	return (PolicyUtils::hashTypeToString(getHashTypeNo(idx)));
 }
 
 wxArrayString
@@ -324,11 +359,13 @@ AppPolicy::getHashTypeList(void) const
 	}
 
 	if (rule->app == NULL) {
-		hashTypeList.Add(hashTypeToString(APN_HASH_NONE));
+		/* Case 'any', we return same amount of entries. */
+		hashTypeList.Add(PolicyUtils::hashTypeToString(APN_HASH_NONE));
 	} else {
 		app = rule->app;
 		while (app != NULL) {
-			hashTypeList.Add(hashTypeToString(app->hashtype));
+			hashTypeList.Add(
+			    PolicyUtils::hashTypeToString(app->hashtype));
 			app = app->next;
 		}
 	}
@@ -340,6 +377,7 @@ bool
 AppPolicy::setHashValueNo(unsigned char csum[MAX_APN_HASH_LEN],
     unsigned int idx)
 {
+	bool		 rc;
 	int		 len;
 	struct apn_app	*app;
 	struct apn_rule *rule;
@@ -355,7 +393,6 @@ AppPolicy::setHashValueNo(unsigned char csum[MAX_APN_HASH_LEN],
 		return (false);
 	}
 
-	startChange();
 	switch (app->hashtype) {
 	case APN_HASH_SHA256:
 		len = APN_HASH_SHA256_LEN;
@@ -364,18 +401,23 @@ AppPolicy::setHashValueNo(unsigned char csum[MAX_APN_HASH_LEN],
 		/* FALLTHROUGH */
 	default:
 		len = 0;
+		rc  = false;
 		break;
 	}
 
-	memcpy(app->hashvalue, csum, len);
-	setModified();
-	finishChange();
+	if (len > 0) {
+		startChange();
+		memcpy(app->hashvalue, csum, len);
+		setModified();
+		finishChange();
+		rc = true;
+	}
 
-	return (true);
+	return (rc);
 }
 
 bool
-AppPolicy::setHashValueString(wxString csumString, unsigned int idx)
+AppPolicy::setHashValueString(const wxString & csumString, unsigned int idx)
 {
 	unsigned char csum[MAX_APN_HASH_LEN];
 
@@ -411,6 +453,7 @@ AppPolicy::getHashValueNo(unsigned int idx, unsigned char *csum, int len) const
 		/* FALLTHROUGH */
 	default:
 		needLength = 0;
+		return (false);
 		break;
 	}
 
@@ -446,7 +489,7 @@ AppPolicy::getHashValueList(void) const
 	wxArrayString	hashValueList;
 
 	/* This is not the best implementation, but it works. */
-	for (idx = 0; idx > getBinaryCount(); idx++) {
+	for (idx = 0; idx < getBinaryCount(); idx++) {
 		hashValueList.Add(getHashValueName(idx));
 	}
 
@@ -476,24 +519,4 @@ AppPolicy::seekAppByIndex(unsigned int idx) const
 	}
 
 	return (app);
-}
-
-wxString
-AppPolicy::hashTypeToString(int hashType) const
-{
-	wxString hashTypeString;
-
-	switch (hashType) {
-	case APN_HASH_SHA256:
-		hashTypeString = wxT("SHA256");
-		break;
-	case APN_HASH_NONE:
-		hashTypeString = wxT("NONE");
-		break;
-	default:
-		hashTypeString = _("(unknown)");
-		break;
-	}
-
-	return (hashTypeString);
 }

@@ -267,6 +267,8 @@ xanoubis_SOURCES= \
 	view/DlgRuleEditorBase.h \
 	view/DlgRuleEditor.cpp \
 	view/DlgRuleEditor.h \
+	view/DlgRuleEditorAppPage.cpp \
+	view/DlgRuleEditorAppPage.h \
 	view/DlgRuleEditorFilterActionPage.cpp \
 	view/DlgRuleEditorFilterActionPage.h \
 	view/DlgRuleEditorFilterAddressPage.cpp \
@@ -354,6 +356,8 @@ xanoubis_SOURCES= \
 	pattern/Observer.h \
 	widgets/AnDetails.cpp \
 	widgets/AnDetails.h \
+	widgets/AnPolicyNotebook.cpp \
+	widgets/AnPolicyNotebook.h \
 	widgets/AnStatusBar.cpp \
 	widgets/AnStatusBar.h \
 	job/ComCsumAddTask.cpp \

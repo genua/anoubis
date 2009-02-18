@@ -31,6 +31,7 @@
 // PLEASE DO "NOT" EDIT THIS FILE!
 ///////////////////////////////////////////////////////////////////////////
 
+#include "AnPolicyNotebook.h"
 #include "DlgRuleEditorFilterActionPage.h"
 #include "DlgRuleEditorFilterAddressPage.h"
 #include "DlgRuleEditorFilterCapabilityPage.h"
@@ -119,85 +120,7 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	
 	appMainSizer->Add( appListFoodSizer, 0, wxEXPAND|wxALIGN_RIGHT, 5 );
 	
-	appPolicyPanels = new wxNotebook( appPanel, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0 );
-	appBinaryPage = new wxScrolledWindow( appPolicyPanels, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxVSCROLL );
-	appBinaryPage->SetScrollRate( 5, 5 );
-	appBinaryPage->Enable( false );
-	
-	wxBoxSizer* appBinaryMainSizer;
-	appBinaryMainSizer = new wxBoxSizer( wxVERTICAL );
-	
-	wxFlexGridSizer* appBinaryHaedSizer;
-	appBinaryHaedSizer = new wxFlexGridSizer( 2, 4, 0, 0 );
-	appBinaryHaedSizer->SetFlexibleDirection( wxBOTH );
-	appBinaryHaedSizer->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_ALL );
-	
-	appBinaryLabel = new wxStaticText( appBinaryPage, wxID_ANY, _("Binary:"), wxDefaultPosition, wxDefaultSize, 0 );
-	appBinaryLabel->Wrap( -1 );
-	appBinaryHaedSizer->Add( appBinaryLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
-	
-	appBinaryTextCtrl = new wxTextCtrl( appBinaryPage, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER );
-	appBinaryTextCtrl->SetMinSize( wxSize( 300,-1 ) );
-	
-	appBinaryHaedSizer->Add( appBinaryTextCtrl, 0, wxALL|wxEXPAND|wxALIGN_CENTER_VERTICAL, 5 );
-	
-	appBinaryModifyButton = new wxButton( appBinaryPage, wxID_ANY, _("modify"), wxDefaultPosition, wxDefaultSize, 0 );
-	appBinaryHaedSizer->Add( appBinaryModifyButton, 0, wxALL|wxALIGN_RIGHT|wxALIGN_CENTER_VERTICAL, 5 );
-	
-	appBinaryMainSizer->Add( appBinaryHaedSizer, 0, wxEXPAND, 5 );
-	
-	wxFlexGridSizer* appBinaryChecksumSizer;
-	appBinaryChecksumSizer = new wxFlexGridSizer( 2, 2, 0, 0 );
-	appBinaryChecksumSizer->SetFlexibleDirection( wxBOTH );
-	appBinaryChecksumSizer->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_ALL );
-	
-	appBinaryCsumRegLabel = new wxStaticText( appBinaryPage, wxID_ANY, _("Checksum (registered):"), wxDefaultPosition, wxDefaultSize, 0 );
-	appBinaryCsumRegLabel->Wrap( -1 );
-	appBinaryCsumRegLabel->SetMinSize( wxSize( 165,-1 ) );
-	
-	appBinaryChecksumSizer->Add( appBinaryCsumRegLabel, 0, wxALL, 5 );
-	
-	appBinaryCsumRegText = new wxStaticText( appBinaryPage, wxID_ANY, _("0"), wxDefaultPosition, wxDefaultSize, 0 );
-	appBinaryCsumRegText->Wrap( -1 );
-	appBinaryChecksumSizer->Add( appBinaryCsumRegText, 0, wxALL, 5 );
-	
-	appBinaryCsumCurLabel = new wxStaticText( appBinaryPage, wxID_ANY, _("Checksum (current):"), wxDefaultPosition, wxDefaultSize, 0 );
-	appBinaryCsumCurLabel->Wrap( -1 );
-	appBinaryChecksumSizer->Add( appBinaryCsumCurLabel, 0, wxALIGN_TOP|wxALL, 5 );
-	
-	appBinaryCsumCurText = new wxStaticText( appBinaryPage, wxID_ANY, _("0"), wxDefaultPosition, wxDefaultSize, 0 );
-	appBinaryCsumCurText->Wrap( -1 );
-	appBinaryChecksumSizer->Add( appBinaryCsumCurText, 0, wxALL, 5 );
-	
-	appBinaryMainSizer->Add( appBinaryChecksumSizer, 0, wxEXPAND, 5 );
-	
-	wxFlexGridSizer* appBinaryStatusSizer;
-	appBinaryStatusSizer = new wxFlexGridSizer( 2, 5, 0, 0 );
-	appBinaryStatusSizer->SetFlexibleDirection( wxBOTH );
-	appBinaryStatusSizer->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_ALL );
-	
-	appBinaryStatusLabel = new wxStaticText( appBinaryPage, wxID_ANY, _("Status:"), wxDefaultPosition, wxDefaultSize, 0 );
-	appBinaryStatusLabel->Wrap( -1 );
-	appBinaryStatusLabel->SetMinSize( wxSize( 165,-1 ) );
-	
-	appBinaryStatusSizer->Add( appBinaryStatusLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
-	
-	appBinaryStatusText = new wxStaticText( appBinaryPage, wxID_ANY, _("mismatch"), wxDefaultPosition, wxDefaultSize, 0 );
-	appBinaryStatusText->Wrap( -1 );
-	appBinaryStatusSizer->Add( appBinaryStatusText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
-	
-	appBinaryValidateButton = new wxButton( appBinaryPage, wxID_ANY, _("validate"), wxDefaultPosition, wxDefaultSize, 0 );
-	appBinaryStatusSizer->Add( appBinaryValidateButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
-	
-	appBinaryUpdateButton = new wxButton( appBinaryPage, wxID_ANY, _("update"), wxDefaultPosition, wxDefaultSize, 0 );
-	appBinaryStatusSizer->Add( appBinaryUpdateButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
-	
-	appBinaryMainSizer->Add( appBinaryStatusSizer, 1, wxEXPAND, 5 );
-	
-	appBinaryPage->SetSizer( appBinaryMainSizer );
-	appBinaryPage->Layout();
-	appBinaryMainSizer->Fit( appBinaryPage );
-	appPolicyPanels->AddPage( appBinaryPage, _("Binaries"), false );
+	appPolicyPanels = new AnPolicyNotebook( appPanel, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0 );
 	
 	appMainSizer->Add( appPolicyPanels, 1, wxEXPAND | wxALL, 5 );
 	
@@ -380,10 +303,6 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	appListUpButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::onAppListUpClick ), NULL, this );
 	appListDownButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::onAppListDownClick ), NULL, this );
 	appListDeleteButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::onAppListDeleteClick ), NULL, this );
-	appBinaryTextCtrl->Connect( wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler( DlgRuleEditorBase::OnAppBinaryTextCtrl ), NULL, this );
-	appBinaryModifyButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::OnAppBinaryModifyButton ), NULL, this );
-	appBinaryValidateButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::OnAppValidateChkSumButton ), NULL, this );
-	appBinaryUpdateButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::OnAppUpdateChkSumButton ), NULL, this );
 	filterListCreateButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::onFilterListCreateButton ), NULL, this );
 	filterListColumnsButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::onFilterListColumnsButtonClick ), NULL, this );
 	filterPolicyListCtrl->Connect( wxEVT_COMMAND_LIST_ITEM_DESELECTED, wxListEventHandler( DlgRuleEditorBase::onFilterPolicyDeSelect ), NULL, this );
@@ -395,6 +314,112 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	footerReloadButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::onFooterReloadButton ), NULL, this );
 	footerExportButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::onFooterExportButton ), NULL, this );
 	footerSaveButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::onFooterSaveButton ), NULL, this );
+}
+
+DlgRuleEditorAppPageBase::DlgRuleEditorAppPageBase( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size, long style ) : wxPanel( parent, id, pos, size, style )
+{
+	wxBoxSizer* pageSizer;
+	pageSizer = new wxBoxSizer( wxVERTICAL );
+	
+	mainPage = new wxScrolledWindow( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxTAB_TRAVERSAL|wxVSCROLL );
+	mainPage->SetScrollRate( 5, 5 );
+	wxBoxSizer* mainSizer;
+	mainSizer = new wxBoxSizer( wxVERTICAL );
+	
+	wxBoxSizer* binarySizer;
+	binarySizer = new wxBoxSizer( wxHORIZONTAL );
+	
+	binaryLabel = new wxStaticText( mainPage, wxID_ANY, _("Binary:"), wxDefaultPosition, wxDefaultSize, 0 );
+	binaryLabel->Wrap( -1 );
+	binarySizer->Add( binaryLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	
+	binaryTextCtrl = new wxTextCtrl( mainPage, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER );
+	binarySizer->Add( binaryTextCtrl, 1, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	
+	pickButton = new wxButton( mainPage, wxID_ANY, _("Pick..."), wxDefaultPosition, wxDefaultSize, 0 );
+	binarySizer->Add( pickButton, 0, wxALL|wxALIGN_RIGHT|wxALIGN_CENTER_VERTICAL, 5 );
+	
+	mainSizer->Add( binarySizer, 0, wxEXPAND, 5 );
+	
+	wxFlexGridSizer* csumSizer;
+	csumSizer = new wxFlexGridSizer( 2, 2, 0, 0 );
+	csumSizer->SetFlexibleDirection( wxBOTH );
+	csumSizer->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_ALL );
+	
+	csumRegisteredLabel = new wxStaticText( mainPage, wxID_ANY, _("Checksum (registered):"), wxDefaultPosition, wxDefaultSize, 0 );
+	csumRegisteredLabel->Wrap( -1 );
+	csumRegisteredLabel->SetMinSize( wxSize( 165,-1 ) );
+	
+	csumSizer->Add( csumRegisteredLabel, 0, wxALL, 5 );
+	
+	csumRegisteredText = new wxStaticText( mainPage, wxID_ANY, _("0"), wxDefaultPosition, wxDefaultSize, 0 );
+	csumRegisteredText->Wrap( -1 );
+	csumSizer->Add( csumRegisteredText, 0, wxALL, 5 );
+	
+	csumCurrentLabel = new wxStaticText( mainPage, wxID_ANY, _("Checksum (current):"), wxDefaultPosition, wxDefaultSize, 0 );
+	csumCurrentLabel->Wrap( -1 );
+	csumSizer->Add( csumCurrentLabel, 0, wxALIGN_TOP|wxALL, 5 );
+	
+	csumCurrentText = new wxStaticText( mainPage, wxID_ANY, _("0"), wxDefaultPosition, wxDefaultSize, 0 );
+	csumCurrentText->Wrap( -1 );
+	csumSizer->Add( csumCurrentText, 0, wxALL, 5 );
+	
+	mainSizer->Add( csumSizer, 0, wxEXPAND, 5 );
+	
+	wxBoxSizer* statusSizer;
+	statusSizer = new wxBoxSizer( wxHORIZONTAL );
+	
+	statusLabel = new wxStaticText( mainPage, wxID_ANY, _("Status:"), wxDefaultPosition, wxDefaultSize, 0 );
+	statusLabel->Wrap( -1 );
+	statusLabel->SetMinSize( wxSize( 165,-1 ) );
+	
+	statusSizer->Add( statusLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	
+	statusText = new wxStaticText( mainPage, wxID_ANY, _("(unknown)"), wxDefaultPosition, wxDefaultSize, 0 );
+	statusText->Wrap( -1 );
+	statusSizer->Add( statusText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	
+	validateButton = new wxButton( mainPage, wxID_ANY, _("validate"), wxDefaultPosition, wxDefaultSize, 0 );
+	statusSizer->Add( validateButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	
+	updateButton = new wxButton( mainPage, wxID_ANY, _("update"), wxDefaultPosition, wxDefaultSize, 0 );
+	statusSizer->Add( updateButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	
+	mainSizer->Add( statusSizer, 0, wxEXPAND, 5 );
+	
+	
+	mainSizer->Add( 0, 0, 1, wxEXPAND, 5 );
+	
+	wxBoxSizer* footerSizer;
+	footerSizer = new wxBoxSizer( wxHORIZONTAL );
+	
+	
+	footerSizer->Add( 0, 0, 1, wxEXPAND, 5 );
+	
+	addButton = new wxButton( mainPage, ID_APP_PAGE_ADD, _("add"), wxDefaultPosition, wxDefaultSize, 0 );
+	footerSizer->Add( addButton, 0, wxALL, 5 );
+	
+	deleteButton = new wxButton( mainPage, ID_APP_PAGE_DELETE, _("delete"), wxDefaultPosition, wxDefaultSize, 0 );
+	footerSizer->Add( deleteButton, 0, wxALL, 5 );
+	
+	mainSizer->Add( footerSizer, 0, wxEXPAND, 5 );
+	
+	mainPage->SetSizer( mainSizer );
+	mainPage->Layout();
+	mainSizer->Fit( mainPage );
+	pageSizer->Add( mainPage, 1, wxEXPAND | wxALL, 5 );
+	
+	this->SetSizer( pageSizer );
+	this->Layout();
+	
+	// Connect Events
+	binaryTextCtrl->Connect( wxEVT_KILL_FOCUS, wxFocusEventHandler( DlgRuleEditorAppPageBase::onBinaryTextKillFocus ), NULL, this );
+	binaryTextCtrl->Connect( wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler( DlgRuleEditorAppPageBase::onBinaryTextEnter ), NULL, this );
+	pickButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorAppPageBase::onPickButton ), NULL, this );
+	validateButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorAppPageBase::onValidateButton ), NULL, this );
+	updateButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorAppPageBase::onUpdateButton ), NULL, this );
+	addButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorAppPageBase::onAddButton ), NULL, this );
+	deleteButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorAppPageBase::onDeleteButton ), NULL, this );
 }
 
 DlgRuleEditorFilterActionPageBase::DlgRuleEditorFilterActionPageBase( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size, long style ) : wxPanel( parent, id, pos, size, style )
@@ -875,17 +900,12 @@ DlgRuleEditorFilterContextPageBase::DlgRuleEditorFilterContextPageBase( wxWindow
 	wxBoxSizer* mainSizer;
 	mainSizer = new wxBoxSizer( wxVERTICAL );
 	
-	wxFlexGridSizer* headSizer;
-	headSizer = new wxFlexGridSizer( 2, 4, 0, 0 );
-	headSizer->SetFlexibleDirection( wxBOTH );
-	headSizer->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_ALL );
+	wxBoxSizer* typeSizer;
+	typeSizer = new wxBoxSizer( wxHORIZONTAL );
 	
 	typeLabel = new wxStaticText( mainPage, wxID_ANY, _("Type:"), wxDefaultPosition, wxDefaultSize, 0 );
 	typeLabel->Wrap( -1 );
-	headSizer->Add( typeLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
-	
-	wxBoxSizer* typeSizer;
-	typeSizer = new wxBoxSizer( wxHORIZONTAL );
+	typeSizer->Add( typeLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	newRadioButton = new wxRadioButton( mainPage, wxID_ANY, _("new"), wxDefaultPosition, wxDefaultSize, wxRB_GROUP );
 	typeSizer->Add( newRadioButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
@@ -893,73 +913,7 @@ DlgRuleEditorFilterContextPageBase::DlgRuleEditorFilterContextPageBase( wxWindow
 	openRadioButton = new wxRadioButton( mainPage, wxID_ANY, _("open"), wxDefaultPosition, wxDefaultSize, 0 );
 	typeSizer->Add( openRadioButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	headSizer->Add( typeSizer, 1, wxEXPAND|wxALIGN_CENTER_VERTICAL, 5 );
-	
-	
-	headSizer->Add( 0, 0, 1, wxEXPAND, 5 );
-	
-	
-	headSizer->Add( 0, 0, 1, wxEXPAND, 5 );
-	
-	binaryLabel = new wxStaticText( mainPage, wxID_ANY, _("Binary:"), wxDefaultPosition, wxDefaultSize, 0 );
-	binaryLabel->Wrap( -1 );
-	headSizer->Add( binaryLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
-	
-	binaryTextCtrl = new wxTextCtrl( mainPage, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER );
-	binaryTextCtrl->SetMinSize( wxSize( 300,-1 ) );
-	
-	headSizer->Add( binaryTextCtrl, 0, wxALL|wxEXPAND|wxALIGN_CENTER_VERTICAL, 5 );
-	
-	modifyButton = new wxButton( mainPage, wxID_ANY, _("modify"), wxDefaultPosition, wxDefaultSize, 0 );
-	headSizer->Add( modifyButton, 0, wxALL|wxALIGN_RIGHT|wxALIGN_CENTER_VERTICAL, 5 );
-	
-	mainSizer->Add( headSizer, 0, wxEXPAND, 5 );
-	
-	wxFlexGridSizer* csumSizer;
-	csumSizer = new wxFlexGridSizer( 2, 2, 0, 0 );
-	csumSizer->SetFlexibleDirection( wxBOTH );
-	csumSizer->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_ALL );
-	
-	registeredCsumLabel = new wxStaticText( mainPage, wxID_ANY, _("Checksum (registered):"), wxDefaultPosition, wxDefaultSize, 0 );
-	registeredCsumLabel->Wrap( -1 );
-	csumSizer->Add( registeredCsumLabel, 0, wxALL, 5 );
-	
-	registeredCsumText = new wxStaticText( mainPage, wxID_ANY, _("0"), wxDefaultPosition, wxDefaultSize, 0 );
-	registeredCsumText->Wrap( -1 );
-	csumSizer->Add( registeredCsumText, 0, wxALL, 5 );
-	
-	currentCsumLabel = new wxStaticText( mainPage, wxID_ANY, _("Checksum (current):"), wxDefaultPosition, wxDefaultSize, 0 );
-	currentCsumLabel->Wrap( -1 );
-	csumSizer->Add( currentCsumLabel, 0, wxALL, 5 );
-	
-	currentCsumText = new wxStaticText( mainPage, wxID_ANY, _("0"), wxDefaultPosition, wxDefaultSize, 0 );
-	currentCsumText->Wrap( -1 );
-	csumSizer->Add( currentCsumText, 0, wxALL, 5 );
-	
-	mainSizer->Add( csumSizer, 0, wxEXPAND, 5 );
-	
-	wxFlexGridSizer* statusSizer;
-	statusSizer = new wxFlexGridSizer( 2, 5, 0, 0 );
-	statusSizer->SetFlexibleDirection( wxBOTH );
-	statusSizer->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_ALL );
-	
-	statusLabel = new wxStaticText( mainPage, wxID_ANY, _("Status:"), wxDefaultPosition, wxDefaultSize, 0 );
-	statusLabel->Wrap( -1 );
-	statusLabel->SetMinSize( wxSize( 165,-1 ) );
-	
-	statusSizer->Add( statusLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
-	
-	statusText = new wxStaticText( mainPage, wxID_ANY, _("mismatch"), wxDefaultPosition, wxDefaultSize, 0 );
-	statusText->Wrap( -1 );
-	statusSizer->Add( statusText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
-	
-	validateButton = new wxButton( mainPage, wxID_ANY, _("validate"), wxDefaultPosition, wxDefaultSize, 0 );
-	statusSizer->Add( validateButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
-	
-	updateButton = new wxButton( mainPage, wxID_ANY, _("update"), wxDefaultPosition, wxDefaultSize, 0 );
-	statusSizer->Add( updateButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
-	
-	mainSizer->Add( statusSizer, 1, wxEXPAND, 5 );
+	mainSizer->Add( typeSizer, 0, wxEXPAND, 5 );
 	
 	mainPage->SetSizer( mainSizer );
 	mainPage->Layout();
@@ -972,11 +926,6 @@ DlgRuleEditorFilterContextPageBase::DlgRuleEditorFilterContextPageBase( wxWindow
 	// Connect Events
 	newRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorFilterContextPageBase::onNewRadioButton ), NULL, this );
 	openRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorFilterContextPageBase::onOpenRadioButton ), NULL, this );
-	binaryTextCtrl->Connect( wxEVT_KILL_FOCUS, wxFocusEventHandler( DlgRuleEditorFilterContextPageBase::onBinaryTestKillFocus ), NULL, this );
-	binaryTextCtrl->Connect( wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler( DlgRuleEditorFilterContextPageBase::onBinaryTextEnter ), NULL, this );
-	modifyButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorFilterContextPageBase::onModifyButton ), NULL, this );
-	validateButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorFilterContextPageBase::onValidateButton ), NULL, this );
-	updateButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorFilterContextPageBase::onUpdateButton ), NULL, this );
 }
 
 DlgRuleEditorFilterPermissionPageBase::DlgRuleEditorFilterPermissionPageBase( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size, long style ) : wxPanel( parent, id, pos, size, style )

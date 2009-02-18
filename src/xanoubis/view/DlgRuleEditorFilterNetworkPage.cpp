@@ -32,12 +32,13 @@ DlgRuleEditorFilterNetworkPage::DlgRuleEditorFilterNetworkPage(wxWindow *parent,
     : DlgRuleEditorPage(),
     DlgRuleEditorFilterNetworkPageBase(parent, id, pos, size, style)
 {
+	filterPolicy_ = NULL;
 }
 
 void
 DlgRuleEditorFilterNetworkPage::update(Subject *subject)
 {
-	if (subject == policy_) {
+	if (subject == filterPolicy_) {
 		/* This is our policy. */
 		showDirection();
 		showAddressFamily();
@@ -47,10 +48,10 @@ DlgRuleEditorFilterNetworkPage::update(Subject *subject)
 }
 
 void
-DlgRuleEditorFilterNetworkPage::select(FilterPolicy *policy)
+DlgRuleEditorFilterNetworkPage::select(Policy *policy)
 {
 	if (policy->IsKindOf(CLASSINFO(AlfFilterPolicy))) {
-		policy_ = wxDynamicCast(policy, AlfFilterPolicy);
+		filterPolicy_ = wxDynamicCast(policy, AlfFilterPolicy);
 		DlgRuleEditorPage::select(policy);
 		Show();
 	}
@@ -59,7 +60,7 @@ DlgRuleEditorFilterNetworkPage::select(FilterPolicy *policy)
 void
 DlgRuleEditorFilterNetworkPage::deselect(void)
 {
-	policy_ = NULL;
+	filterPolicy_ = NULL;
 	DlgRuleEditorPage::deselect();
 	Hide();
 }
@@ -67,11 +68,11 @@ DlgRuleEditorFilterNetworkPage::deselect(void)
 void
 DlgRuleEditorFilterNetworkPage::showDirection(void)
 {
-	if (policy_ == NULL) {
+	if (filterPolicy_ == NULL) {
 		return;
 	}
 
-	switch (policy_->getDirectionNo()) {
+	switch (filterPolicy_->getDirectionNo()) {
 	case APN_SEND:
 		inRadioButton->SetLabel(wxT("receive"));
 		outRadioButton->SetLabel(wxT("send"));
@@ -108,11 +109,11 @@ DlgRuleEditorFilterNetworkPage::showDirection(void)
 void
 DlgRuleEditorFilterNetworkPage::showAddressFamily(void)
 {
-	if (policy_ == NULL) {
+	if (filterPolicy_ == NULL) {
 		return;
 	}
 
-	switch (policy_->getAddrFamilyNo()) {
+	switch (filterPolicy_->getAddrFamilyNo()) {
 	case AF_INET:
 		inetRadioButton->SetValue(true);
 		break;
@@ -132,11 +133,11 @@ DlgRuleEditorFilterNetworkPage::showAddressFamily(void)
 void
 DlgRuleEditorFilterNetworkPage::showProtocol(void)
 {
-	if (policy_ == NULL) {
+	if (filterPolicy_ == NULL) {
 		return;
 	}
 
-	switch (policy_->getProtocolNo()) {
+	switch (filterPolicy_->getProtocolNo()) {
 	case IPPROTO_TCP:
 		tcpRadioButton->SetValue(true);
 		break;
@@ -152,81 +153,82 @@ DlgRuleEditorFilterNetworkPage::showProtocol(void)
 void
 DlgRuleEditorFilterNetworkPage::showStateTimeout(void)
 {
-	if (policy_ != NULL) {
-		stateTimeoutSpinCtrl->SetValue(policy_->getStateTimeoutNo());
+	if (filterPolicy_ != NULL) {
+		stateTimeoutSpinCtrl->SetValue(
+		    filterPolicy_->getStateTimeoutNo());
 	}
 }
 
 void
 DlgRuleEditorFilterNetworkPage::onInRadioButton(wxCommandEvent &)
 {
-	if (policy_ != NULL) {
+	if (filterPolicy_ != NULL) {
 		/* In case of udp, policy will change this to APN_RECEIVE. */
-		policy_->setDirectionNo(APN_ACCEPT);
+		filterPolicy_->setDirectionNo(APN_ACCEPT);
 	}
 }
 
 void
 DlgRuleEditorFilterNetworkPage::onOutRadioButton(wxCommandEvent &)
 {
-	if (policy_ != NULL) {
+	if (filterPolicy_ != NULL) {
 		/* In case of udp, policy will change this to APN_SEND. */
-		policy_->setDirectionNo(APN_CONNECT);
+		filterPolicy_->setDirectionNo(APN_CONNECT);
 	}
 }
 
 void
 DlgRuleEditorFilterNetworkPage::onBothRadioButton(wxCommandEvent &)
 {
-	if (policy_ != NULL) {
-		policy_->setDirectionNo(APN_BOTH);
+	if (filterPolicy_ != NULL) {
+		filterPolicy_->setDirectionNo(APN_BOTH);
 	}
 }
 
 void
 DlgRuleEditorFilterNetworkPage::onInetRadioButton(wxCommandEvent &)
 {
-	if (policy_ != NULL) {
-		policy_->setAddrFamilyNo(AF_INET);
+	if (filterPolicy_ != NULL) {
+		filterPolicy_->setAddrFamilyNo(AF_INET);
 	}
 }
 
 void
 DlgRuleEditorFilterNetworkPage::onInet6RadioButton(wxCommandEvent &)
 {
-	if (policy_ != NULL) {
-		policy_->setAddrFamilyNo(AF_INET6);
+	if (filterPolicy_ != NULL) {
+		filterPolicy_->setAddrFamilyNo(AF_INET6);
 	}
 }
 
 void
 DlgRuleEditorFilterNetworkPage::onAnyRadioButton(wxCommandEvent &)
 {
-	if (policy_ != NULL) {
-		policy_->setAddrFamilyNo(0);
+	if (filterPolicy_ != NULL) {
+		filterPolicy_->setAddrFamilyNo(0);
 	}
 }
 
 void
 DlgRuleEditorFilterNetworkPage::onTcpRadioButton(wxCommandEvent &)
 {
-	if (policy_ != NULL) {
-		policy_->setProtocol(IPPROTO_TCP);
+	if (filterPolicy_ != NULL) {
+		filterPolicy_->setProtocol(IPPROTO_TCP);
 	}
 }
 
 void
 DlgRuleEditorFilterNetworkPage::onUdpRadioButton(wxCommandEvent &)
 {
-	if (policy_ != NULL) {
-		policy_->setProtocol(IPPROTO_UDP);
+	if (filterPolicy_ != NULL) {
+		filterPolicy_->setProtocol(IPPROTO_UDP);
 	}
 }
 
 void
 DlgRuleEditorFilterNetworkPage::onStateTimeoutSpinCtrl(wxSpinEvent & event)
 {
-	if (policy_ != NULL) {
-		policy_->setStateTimeout((int)event.GetPosition());
+	if (filterPolicy_ != NULL) {
+		filterPolicy_->setStateTimeout((int)event.GetPosition());
 	}
 }

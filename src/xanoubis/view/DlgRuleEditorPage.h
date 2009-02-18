@@ -33,14 +33,14 @@
 #include "FilterPolicy.h"
 
 /**
- * This is the base class to the pages of the filter notebook from
+ * This is the base class to the pages of the notebook from
  * the RuleEditor.
  *
- * In general the filter pages hold the widgets to modify the values
+ * In general the pages hold the widgets to modify the values
  * of a policy. The concerning policy has to be selected in the list
- * of filter policies.\n
- * On filter policy select, the RuleEditor iterates through the list
- * of pages and calls select() on each page. On filter policy deselect,
+ * of policies.\n
+ * On policy select, the RuleEditor iterates through the list
+ * of pages and calls select() on each page. On policy deselect,
  * the RuleEditor will call deselect() in each page.\n
  *
  * The inherited pages have to implement theire own select()/deselect()
@@ -63,10 +63,10 @@ class DlgRuleEditorPage : public Observer
 		 * This will add the given policy to the list of observed
 		 * subjects and run update(). Use it from derrived classes.
 		 * This does not change the appearance/visability.
-		 * @param[in] 1st The selected filter policy.
+		 * @param[in] 1st The selected policy.
 		 * @return Nothing.
 		 */
-		virtual void select(FilterPolicy *);
+		virtual void select(Policy *);
 
 		/**
 		 * Deselect this page.
@@ -80,7 +80,7 @@ class DlgRuleEditorPage : public Observer
 		/**
 		 * This holds the policy been edited by this page.
 		 */
-		FilterPolicy *filterPolicy_;
+		Policy *policy_;
 };
 
 #endif	/* _DLGRULEEDITORFILTERPAGE_H_ */

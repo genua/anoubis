@@ -32,12 +32,13 @@ DlgRuleEditorFilterSfsPage::DlgRuleEditorFilterSfsPage(wxWindow *parent,
     : DlgRuleEditorPage(),
     DlgRuleEditorFilterSfsPageBase(parent, id, pos, size, style)
 {
+	filterPolicy_ = NULL;
 }
 
 void
 DlgRuleEditorFilterSfsPage::update(Subject *subject)
 {
-	if (subject == policy_) {
+	if (subject == filterPolicy_) {
 		/* This is our policy. */
 		showValid();
 		showInvalid();
@@ -46,10 +47,10 @@ DlgRuleEditorFilterSfsPage::update(Subject *subject)
 }
 
 void
-DlgRuleEditorFilterSfsPage::select(FilterPolicy *policy)
+DlgRuleEditorFilterSfsPage::select(Policy *policy)
 {
 	if (policy->IsKindOf(CLASSINFO(SfsFilterPolicy))) {
-		policy_ = wxDynamicCast(policy, SfsFilterPolicy);
+		filterPolicy_ = wxDynamicCast(policy, SfsFilterPolicy);
 		DlgRuleEditorPage::select(policy);
 		Show();
 	}
@@ -58,7 +59,7 @@ DlgRuleEditorFilterSfsPage::select(FilterPolicy *policy)
 void
 DlgRuleEditorFilterSfsPage::deselect(void)
 {
-	policy_ = NULL;
+	filterPolicy_ = NULL;
 	DlgRuleEditorPage::deselect();
 	Hide();
 }
@@ -66,76 +67,80 @@ DlgRuleEditorFilterSfsPage::deselect(void)
 void
 DlgRuleEditorFilterSfsPage::showValid(void)
 {
-	if (policy_ != NULL) {
-		validActionRadioBox->SetSelection(policy_->getValidActionNo());
-		validLogRadioBox->SetSelection(policy_->getValidLogNo());
+	if (filterPolicy_ != NULL) {
+		validActionRadioBox->SetSelection(
+		    filterPolicy_->getValidActionNo());
+		validLogRadioBox->SetSelection(
+		    filterPolicy_->getValidLogNo());
 	}
 }
 
 void
 DlgRuleEditorFilterSfsPage::showInvalid(void)
 {
-	if (policy_ != NULL) {
+	if (filterPolicy_ != NULL) {
 		invalidActionRadioBox->SetSelection(
-		    policy_->getInvalidActionNo());
-		invalidLogRadioBox->SetSelection(policy_->getInvalidLogNo());
+		    filterPolicy_->getInvalidActionNo());
+		invalidLogRadioBox->SetSelection(
+		    filterPolicy_->getInvalidLogNo());
 	}
 }
 
 void
 DlgRuleEditorFilterSfsPage::showUnknown(void)
 {
-	if (policy_ != NULL) {
+	if (filterPolicy_ != NULL) {
 		unknownActionRadioBox->SetSelection(
-		    policy_->getUnknownActionNo());
-		unknownLogRadioBox->SetSelection(policy_->getUnknownLogNo());
+		    filterPolicy_->getUnknownActionNo());
+		unknownLogRadioBox->SetSelection(
+		    filterPolicy_->getUnknownLogNo());
 	}
 }
 
 void
 DlgRuleEditorFilterSfsPage::onValidActionRadioBox(wxCommandEvent & event)
 {
-	if (policy_ != NULL) {
-		policy_->setValidAction((int)event.GetSelection());
+	if (filterPolicy_ != NULL) {
+		filterPolicy_->setValidAction((int)event.GetSelection());
 	}
 }
 
 void
 DlgRuleEditorFilterSfsPage::onValidLogRadioBox(wxCommandEvent & event)
 {
-	if (policy_ != NULL) {
-		policy_->setValidLog((int)event.GetSelection());
+	if (filterPolicy_ != NULL) {
+		filterPolicy_->setValidLog((int)event.GetSelection());
 	}
 }
 
 void
 DlgRuleEditorFilterSfsPage::onInvalidActionRadioBox(wxCommandEvent & event)
 {
-	if (policy_ != NULL) {
-		policy_->setInvalidAction((int)event.GetSelection());
+	if (filterPolicy_ != NULL) {
+		filterPolicy_->setInvalidAction((int)event.GetSelection());
 	}
 }
 
 void
 DlgRuleEditorFilterSfsPage::onInvalidLogRadioBox(wxCommandEvent & event)
 {
-	if (policy_ != NULL) {
-		policy_->setInvalidLog((int)event.GetSelection());
+	if (filterPolicy_ != NULL) {
+		filterPolicy_->setInvalidLog((int)event.GetSelection());
 	}
 }
 
 void
 DlgRuleEditorFilterSfsPage::onUnknownActionRadioBox(wxCommandEvent & event)
 {
-	if (policy_ != NULL) {
-		policy_->setUnknownAction((int)event.GetSelection());
+	if (filterPolicy_ != NULL) {
+		filterPolicy_->setUnknownAction((int)event.GetSelection());
 	}
 }
 
 void
 DlgRuleEditorFilterSfsPage::onUnknownLogRadioBox(wxCommandEvent & event)
 {
-	if (policy_ != NULL) {
-		policy_->setUnknownLog((int)event.GetSelection());
+	if (filterPolicy_ != NULL) {
+		filterPolicy_->setUnknownLog((int)event.GetSelection());
 	}
 }

@@ -322,6 +322,236 @@ ContextFilterPolicy::isAny(void) const
 	return (false);
 }
 
+bool
+ContextFilterPolicy::setHashTypeNo(int hashType, unsigned int idx)
+{
+	struct apn_app	*app;
+	struct apn_rule *rule;
+
+	rule = getApnRule();
+
+	if (rule == NULL) {
+		return (false);
+	}
+
+	app = seekAppByIndex(idx);
+	if (app == NULL) {
+		return (false);
+	}
+
+	startChange();
+	app->hashtype = hashType;
+	setModified();
+	finishChange();
+
+	return (true);
+}
+
+bool
+ContextFilterPolicy::setAllToHashTypeNo(int hashType)
+{
+	struct apn_app	*app;
+	struct apn_rule *rule;
+
+	rule = getApnRule();
+
+	if ((rule == NULL) || (rule->app == NULL)) {
+		return (false);
+	}
+
+	startChange();
+	app = rule->rule.apncontext.application;
+	while (app != NULL) {
+		app->hashtype = hashType;
+		app = app->next;
+	}
+
+	setModified();
+	finishChange();
+
+	return (true);
+}
+
+int
+ContextFilterPolicy::getHashTypeNo(unsigned int idx) const
+{
+	struct apn_app	*app;
+	struct apn_rule *rule;
+
+	rule = getApnRule();
+
+	if (rule == NULL) {
+		return (-1);
+	}
+
+	app = seekAppByIndex(idx);
+	if (app == NULL) {
+		return (-1);
+	}
+
+	return (app->hashtype);
+}
+
+wxString
+ContextFilterPolicy::getHashTypeName(unsigned int idx) const
+{
+	return (PolicyUtils::hashTypeToString(getHashTypeNo(idx)));
+}
+
+wxArrayString
+ContextFilterPolicy::getHashTypeList(void) const
+{
+	wxArrayString	 hashTypeList;
+	struct apn_app	*app;
+	struct apn_rule *rule;
+
+	hashTypeList.Clear();
+	rule = getApnRule();
+
+	if (rule == NULL) {
+		return (hashTypeList);
+	}
+
+	if (rule->rule.apncontext.application == NULL) {
+		/* Case 'any', we return same amount of entries. */
+		hashTypeList.Add(PolicyUtils::hashTypeToString(APN_HASH_NONE));
+	} else {
+		app = rule->rule.apncontext.application;
+		while (app != NULL) {
+			hashTypeList.Add(
+			    PolicyUtils::hashTypeToString(app->hashtype));
+			app = app->next;
+		}
+	}
+
+	return (hashTypeList);
+}
+
+bool
+ContextFilterPolicy::setHashValueNo(unsigned char csum[MAX_APN_HASH_LEN],
+    unsigned int idx)
+{
+	bool		 rc;
+	int		 len;
+	struct apn_app	*app;
+	struct apn_rule *rule;
+
+	rule = getApnRule();
+
+	if (rule == NULL) {
+		return (false);
+	}
+
+	app = seekAppByIndex(idx);
+	if (app == NULL) {
+		return (false);
+	}
+
+	switch (app->hashtype) {
+	case APN_HASH_SHA256:
+		len = APN_HASH_SHA256_LEN;
+		break;
+	case APN_HASH_NONE:
+		/* FALLTHROUGH */
+	default:
+		len = 0;
+		rc  = false;
+		break;
+	}
+
+	if (len > 0) {
+		startChange();
+		memcpy(app->hashvalue, csum, len);
+		setModified();
+		finishChange();
+		rc = true;
+	}
+
+	return (rc);
+}
+
+bool
+ContextFilterPolicy::setHashValueString(const wxString & csumString,
+    unsigned int idx)
+{
+	unsigned char csum[MAX_APN_HASH_LEN];
+
+	memset(csum, 0, MAX_APN_HASH_LEN);
+	PolicyUtils::stringToCsum(csumString, csum, MAX_APN_HASH_LEN);
+
+	return (setHashValueNo(csum, idx));
+}
+
+bool
+ContextFilterPolicy::getHashValueNo(unsigned int idx, unsigned char *csum,
+    int len) const
+{
+	int		 needLength;
+	struct apn_app	*app;
+	struct apn_rule *rule;
+
+	rule = getApnRule();
+
+	if (rule == NULL) {
+		return (false);
+	}
+
+	app = seekAppByIndex(idx);
+	if (app == NULL) {
+		return (false);
+	}
+
+	switch (app->hashtype) {
+	case APN_HASH_SHA256:
+		needLength = APN_HASH_SHA256_LEN;
+		break;
+	case APN_HASH_NONE:
+		/* FALLTHROUGH */
+	default:
+		needLength = 0;
+		return (false);
+		break;
+	}
+
+	if (len >= needLength) {
+		memcpy(csum, app->hashvalue, needLength);
+		return (true);
+	} else {
+		return (false);
+	}
+}
+
+wxString
+ContextFilterPolicy::getHashValueName(unsigned int idx) const
+{
+	unsigned char	csum[MAX_APN_HASH_LEN];
+	wxString	csumString;
+
+	memset(csum, 0, MAX_APN_HASH_LEN);
+	csumString = wxEmptyString;
+
+	if (getHashValueNo(idx, csum, MAX_APN_HASH_LEN)) {
+		PolicyUtils::csumToString(csum, MAX_APN_HASH_LEN,
+		    csumString);
+	}
+
+	return (csumString);
+}
+
+wxArrayString
+ContextFilterPolicy::getHashValueList(void) const
+{
+	unsigned int	idx;
+	wxArrayString	hashValueList;
+
+	/* This is not the best implementation, but it works. */
+	for (idx = 0; idx < getBinaryCount(); idx++) {
+		hashValueList.Add(getHashValueName(idx));
+	}
+
+	return (hashValueList);
+}
+
 struct apn_app *
 ContextFilterPolicy::seekAppByIndex(unsigned int idx) const
 {
