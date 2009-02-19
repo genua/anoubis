@@ -586,66 +586,21 @@ int ModAnoubisMainPanelImpl::versionListCanAccess(bool needSelection) const
 }
 
 void
-ModAnoubisMainPanelImpl::displayAlert(void)
+ModAnoubisMainPanelImpl::displayMessage(void)
 {
-	AlertNotify	*aNotify;
-
-	aNotify = dynamic_cast<AlertNotify *>(currentNotify_);
-	if (!aNotify)
+	if (!currentNotify_)
 		return;
 
-	SHOWSLOT(1, _("Time:"), aNotify->getTime());
-	SHOWSLOT(2, _("Module:"), aNotify->getModule());
-	if (aNotify->getModule().Cmp(wxT("ALF")) == 0) {
-		SHOWSLOT(3, _("Traffic:"), aNotify->getPath());
+	SHOWSLOT(1, _("Time:"), currentNotify_->getTime());
+	SHOWSLOT(2, _("Module:"), currentNotify_->getModule());
+	SHOWSLOT(3, _("Program:"), currentNotify_->getOrigin());
+	SHOWSLOT(4, _("On behalf of:"), currentNotify_->getCtxOrigin());
+	if (currentNotify_->getModule() == wxT("ALF")) {
+		SHOWSLOT(5, _("Traffic:"), currentNotify_->getPath());
 	} else {
-		SHOWSLOT(3, _("Path:"), aNotify->getPath());
+		SHOWSLOT(5, _("Path:"), currentNotify_->getPath());
 	}
-	SHOWSLOT(4, _("Operation:"), aNotify->getOperation());
-	SHOWSLOT(5, _("Origin:"), aNotify->getOrigin());
-	SHOWSLOT(6, _("Checksum:"), aNotify->getCheckSum());
-}
-
-void
-ModAnoubisMainPanelImpl::displayEscalation(void)
-{
-	EscalationNotify	*eNotify;
-
-	eNotify = dynamic_cast<EscalationNotify *>(currentNotify_);
-	if (!eNotify)
-		return;
-
-	SHOWSLOT(1, _("Time:"), eNotify->getTime());
-	SHOWSLOT(2, _("Module:"), eNotify->getModule());
-	if (eNotify->getModule().Cmp(wxT("ALF")) == 0) {
-		SHOWSLOT(3, _("Traffic:"), eNotify->getPath());
-	} else {
-		SHOWSLOT(3, _("Path:"), eNotify->getPath());
-	}
-	SHOWSLOT(4, _("Operation:"), eNotify->getOperation());
-	SHOWSLOT(5, _("Origin:"), eNotify->getOrigin());
-	SHOWSLOT(6, _("Checksum:"), eNotify->getCheckSum());
-}
-
-void
-ModAnoubisMainPanelImpl::displayLog(void)
-{
-	LogNotify	*lNotify;
-
-	lNotify = dynamic_cast<LogNotify *>(currentNotify_);
-	if (!lNotify)
-		return;
-
-	SHOWSLOT(1, _("Time:"), lNotify->getTime());
-	SHOWSLOT(2, _("Module:"), lNotify->getModule());
-	if (lNotify->getModule().Cmp(wxT("ALF")) == 0) {
-		SHOWSLOT(3, _("Traffic:"), lNotify->getPath());
-	} else {
-		SHOWSLOT(3, _("Path:"), lNotify->getPath());
-	}
-	SHOWSLOT(4, _("Operation:"), lNotify->getOperation());
-	SHOWSLOT(5, _("Origin:"), lNotify->getOrigin());
-	SHOWSLOT(6, _("Checksum:"), lNotify->getCheckSum());
+	SHOWSLOT(6, _("Operation:"), currentNotify_->getOperation());
 }
 
 void
@@ -742,12 +697,7 @@ ModAnoubisMainPanelImpl::update(void)
 		return;
 	savedNotify_ = currentNotify_;
 	if (currentNotify_ != NULL) {
-		if IS_ALERTOBJ(currentNotify_)
-			displayAlert();
-		if IS_ESCALATIONOBJ(currentNotify_)
-			displayEscalation();
-		if IS_LOGOBJ(currentNotify_)
-			displayLog();
+		displayMessage();
 	} else {
 		HIDESLOT(1);
 		HIDESLOT(2);

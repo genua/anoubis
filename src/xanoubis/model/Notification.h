@@ -75,7 +75,8 @@ class Notification {
 		virtual wxString getPath(void);
 		virtual wxString filePath(void);
 		virtual wxString getOrigin(void);
-		virtual wxString getCheckSum(void);
+		virtual wxString getCtxOrigin(void);
+		virtual wxString getFileChecksum(void);
 		virtual unsigned int getRuleId(void);
 		virtual bool isAdmin(void);
 		virtual uid_t getUid(void);

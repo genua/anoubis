@@ -60,9 +60,7 @@ class ModAnoubisMainPanelImpl : public ModAnoubisMainPanelBase
 		unsigned int		pathKeep_, minPathKeep_;
 
 		void answer(bool);
-		void displayAlert(void);
-		void displayEscalation(void);
-		void displayLog(void);
+		void displayMessage(void);
 		void sendNotifierOptionsEvents(WXTYPE, bool, long);
 		void sendNotifierOptions(void);
 		void readOptions(void);

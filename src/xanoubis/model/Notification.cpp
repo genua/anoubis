@@ -50,6 +50,7 @@
 #include <wx/intl.h>
 #include <wx/utils.h>
 
+#include "PolicyUtils.h"
 #include "Notification.h"
 
 #include <wx/listimpl.cpp>
@@ -363,7 +364,7 @@ Notification::isExec(void)
 wxString
 Notification::getPath(void)
 {
-	wxString		 path;
+	wxString		 path, csum;
 	struct alf_event	*alf;
 	int			 evoff;
 
@@ -392,6 +393,11 @@ Notification::getPath(void)
 		path = filePath();
 		if (path.IsEmpty()) {
 			path = _("no path information available");
+		} else {
+			csum = getFileChecksum();
+			if (!csum.IsEmpty()) {
+				path += wxT(" (0x") + csum + wxT(")");
+			}
 		}
 	} else {
 		path = _("unable to extract path information");
@@ -426,38 +432,70 @@ Notification::filePath(void)
 wxString
 Notification::getOrigin(void)
 {
-	wxString origin;
-	int	 offset;
-	int	 length;
-	char	*buffer;
+	wxString	 origin;
+	int		 off, len;
+	char		*buffer;
 
 	if (notify_ == NULL) {
 		return (_("no notify data available"));
 	}
 
-	origin = wxString::Format(wxT("Pid: %u / Uid: %u"),
-	    get_value((notify_->u.notify)->pid),
-	    get_value((notify_->u.notify)->uid));
-
-	offset = get_value((notify_->u.notify)->pathoff);
-	length = get_value((notify_->u.notify)->pathlen);
-	if (length > 0) {
-		buffer = notify_->u.notify->payload + offset;
-		origin += _(" / Program: ");
-		origin += wxString::From8BitData(buffer, length);
+	off = get_value((notify_->u.notify)->pathoff);
+	len = get_value((notify_->u.notify)->pathlen);
+	buffer = notify_->u.notify->payload;
+	if (len > 0) {
+		wxString path = wxString::From8BitData(buffer+off, len);
+		origin = wxString::Format(_("%s (Pid: %d, Uid: %d)"),
+		    path.c_str(), get_value(notify_->u.notify->pid),
+		    get_value(notify_->u.notify->uid));
+	} else {
+		origin = wxString::Format(_("Pid: %d, Uid: %d"),
+		    get_value(notify_->u.notify->pid),
+		    get_value(notify_->u.notify->uid));
 	}
-
 	return (origin);
 }
 
 wxString
-Notification::getCheckSum(void)
+Notification::getCtxOrigin(void)
 {
-	wxString		 checksum;
+	wxString	 origin, path, csum;
+	int		 off, len, csoff, cslen;
+	char		*buffer;
+
+	if (notify_ == NULL) {
+		return (_("no notify data available"));
+	}
+
+	off = get_value((notify_->u.notify)->ctxpathoff);
+	len = get_value((notify_->u.notify)->ctxpathlen);
+	csoff = get_value((notify_->u.notify)->ctxcsumoff);
+	cslen = get_value((notify_->u.notify)->ctxcsumlen);
+	buffer = notify_->u.notify->payload;
+	path = wxString::From8BitData(buffer+off, len);
+	if (!PolicyUtils::csumToString(
+	    (unsigned char*)buffer+csoff, cslen, csum)) {
+		cslen = 0;
+	}
+	if (len > 0 && cslen > 0) {
+		origin = wxString::Format(_("%s (%s)"), path.c_str(),
+		    csum.c_str());
+	} else if (len > 0) {
+		origin = path;
+	} else if (cslen > 0) {
+		origin = csum;
+	} else {
+		origin = _("unknown");
+	}
+	return (origin);
+}
+
+wxString
+Notification::getFileChecksum(void)
+{
+	wxString		 checksum = wxEmptyString;
 	struct sfs_open_message	*sfs;
 	int			 evoff;
-	int			 csumoff;
-	int			 csumlen;
 
 	if (notify_ == NULL) {
 		return (_("no notify data available"));
@@ -468,38 +506,15 @@ Notification::getCheckSum(void)
 		module_ = getModule();
 	}
 
-	if (module_.Cmp(wxT("ALF")) == 0) {
-		csumoff = get_value((notify_->u.notify)->csumoff);
-		csumlen = get_value((notify_->u.notify)->csumlen);
-		if (csumlen > 0) {
-			unsigned char *csum;
-			csum = (unsigned char *)notify_->u.notify->payload +
-			    csumoff;
-			checksum = wxT("0x");
-			for (int i=0; i<csumlen; i++) {
-				checksum += wxString::Format(wxT("%02x"),
-				    csum[i]);
-			}
-		} else {
-			checksum = _("no checksum information available");
-		}
-	} else if (module_ == wxT("SFS") || module_ == wxT("SANDBOX")) {
-		/* XXX CEH: Should verify that evlen >= sizeof(*sfs) */
+	if (module_ == wxT("SFS") || module_ == wxT("SANDBOX")) {
 		sfs = (struct sfs_open_message *)
 		    ((notify_->u.notify)->payload + evoff);
 		if (sfs->flags & ANOUBIS_OPEN_FLAG_CSUM) {
-			checksum = wxT("0x");
-			for (int i=0; i<ANOUBIS_SFS_CS_LEN; i++) {
-				checksum += wxString::Format(wxT("%02x"),
-				    sfs->csum[i]);
-			}
-		} else {
-			checksum = _("no checksum information available");
+			if (!PolicyUtils::csumToString(sfs->csum,
+			    ANOUBIS_SFS_CS_LEN, checksum))
+				checksum = wxEmptyString;
 		}
-	} else {
-		checksum = _("unable to extract checksum information");
 	}
-
 	return (checksum);
 }
 
