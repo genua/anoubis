@@ -114,6 +114,9 @@ FilterPolicy::actionToString(int actionNo) const
 	case APN_ACTION_ASK:
 		action = wxT("ask");
 		break;
+	case APN_ACTION_CONTINUE:
+		action = wxT("continue");
+		break;
 	default:
 		action = _("(unknown)");
 		break;

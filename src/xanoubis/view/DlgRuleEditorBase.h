@@ -401,22 +401,22 @@ class DlgRuleEditorFilterSfsPageBase : public wxPanel
 		wxScrolledWindow* mainPage;
 		wxStaticText* validLabel;
 		
-		
-		
 		wxRadioBox* validActionRadioBox;
 		wxRadioBox* validLogRadioBox;
+		
+		
 		wxStaticText* invalidLabel;
-		
-		
 		
 		wxRadioBox* invalidActionRadioBox;
 		wxRadioBox* invalidLogRadioBox;
+		
+		
 		wxStaticText* unknownLabel;
-		
-		
 		
 		wxRadioBox* unknownActionRadioBox;
 		wxRadioBox* unknownLogRadioBox;
+		
+		
 		
 		// Virtual event handlers, overide them in your derived class
 		virtual void onValidActionRadioBox( wxCommandEvent& event ){ event.Skip(); }

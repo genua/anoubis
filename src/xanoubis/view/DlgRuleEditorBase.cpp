@@ -794,7 +794,10 @@ DlgRuleEditorFilterSfsPageBase::DlgRuleEditorFilterSfsPageBase( wxWindow* parent
 	mainPage = new wxScrolledWindow( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxTAB_TRAVERSAL|wxVSCROLL );
 	mainPage->SetScrollRate( 5, 5 );
 	wxFlexGridSizer* mainSizer;
-	mainSizer = new wxFlexGridSizer( 2, 3, 0, 0 );
+	mainSizer = new wxFlexGridSizer( 2, 2, 0, 0 );
+	mainSizer->AddGrowableRow( 2 );
+	mainSizer->AddGrowableRow( 5 );
+	mainSizer->AddGrowableRow( 8 );
 	mainSizer->SetFlexibleDirection( wxBOTH );
 	mainSizer->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
 	
@@ -805,16 +808,10 @@ DlgRuleEditorFilterSfsPageBase::DlgRuleEditorFilterSfsPageBase( wxWindow* parent
 	
 	mainSizer->Add( 0, 0, 1, wxEXPAND, 5 );
 	
-	
-	mainSizer->Add( 0, 0, 1, wxEXPAND, 5 );
-	
-	
-	mainSizer->Add( 0, 0, 1, wxEXPAND, 5 );
-	
-	wxString validActionRadioBoxChoices[] = { _("allow"), _("deny"), _("ask") };
+	wxString validActionRadioBoxChoices[] = { _("allow"), _("deny"), _("ask"), _("continue") };
 	int validActionRadioBoxNChoices = sizeof( validActionRadioBoxChoices ) / sizeof( wxString );
 	validActionRadioBox = new wxRadioBox( mainPage, wxID_ANY, _("Action"), wxDefaultPosition, wxDefaultSize, validActionRadioBoxNChoices, validActionRadioBoxChoices, 1, wxRA_SPECIFY_ROWS|wxTAB_TRAVERSAL );
-	validActionRadioBox->SetSelection( 0 );
+	validActionRadioBox->SetSelection( 1 );
 	mainSizer->Add( validActionRadioBox, 0, wxALL, 5 );
 	
 	wxString validLogRadioBoxChoices[] = { _("none"), _("normal"), _("alert") };
@@ -823,6 +820,12 @@ DlgRuleEditorFilterSfsPageBase::DlgRuleEditorFilterSfsPageBase( wxWindow* parent
 	validLogRadioBox->SetSelection( 2 );
 	mainSizer->Add( validLogRadioBox, 0, wxALL, 5 );
 	
+	
+	mainSizer->Add( 0, 0, 1, wxEXPAND, 5 );
+	
+	
+	mainSizer->Add( 0, 0, 1, wxEXPAND, 5 );
+	
 	invalidLabel = new wxStaticText( mainPage, wxID_ANY, _("Invalid:"), wxDefaultPosition, wxDefaultSize, 0 );
 	invalidLabel->Wrap( -1 );
 	mainSizer->Add( invalidLabel, 0, wxALL, 5 );
@@ -830,13 +833,7 @@ DlgRuleEditorFilterSfsPageBase::DlgRuleEditorFilterSfsPageBase( wxWindow* parent
 	
 	mainSizer->Add( 0, 0, 1, wxEXPAND, 5 );
 	
-	
-	mainSizer->Add( 0, 0, 1, wxEXPAND, 5 );
-	
-	
-	mainSizer->Add( 0, 0, 1, wxEXPAND, 5 );
-	
-	wxString invalidActionRadioBoxChoices[] = { _("allow"), _("deny"), _("ask") };
+	wxString invalidActionRadioBoxChoices[] = { _("allow"), _("deny"), _("ask"), _("continue") };
 	int invalidActionRadioBoxNChoices = sizeof( invalidActionRadioBoxChoices ) / sizeof( wxString );
 	invalidActionRadioBox = new wxRadioBox( mainPage, wxID_ANY, _("Action"), wxDefaultPosition, wxDefaultSize, invalidActionRadioBoxNChoices, invalidActionRadioBoxChoices, 1, wxRA_SPECIFY_ROWS|wxTAB_TRAVERSAL );
 	invalidActionRadioBox->SetSelection( 1 );
@@ -848,6 +845,12 @@ DlgRuleEditorFilterSfsPageBase::DlgRuleEditorFilterSfsPageBase( wxWindow* parent
 	invalidLogRadioBox->SetSelection( 2 );
 	mainSizer->Add( invalidLogRadioBox, 0, wxALL, 5 );
 	
+	
+	mainSizer->Add( 0, 0, 1, wxEXPAND, 5 );
+	
+	
+	mainSizer->Add( 0, 0, 1, wxEXPAND, 5 );
+	
 	unknownLabel = new wxStaticText( mainPage, wxID_ANY, _("Unknown:"), wxDefaultPosition, wxDefaultSize, 0 );
 	unknownLabel->Wrap( -1 );
 	mainSizer->Add( unknownLabel, 0, wxALL, 5 );
@@ -855,16 +858,10 @@ DlgRuleEditorFilterSfsPageBase::DlgRuleEditorFilterSfsPageBase( wxWindow* parent
 	
 	mainSizer->Add( 0, 0, 1, wxEXPAND, 5 );
 	
-	
-	mainSizer->Add( 0, 0, 1, wxEXPAND, 5 );
-	
-	
-	mainSizer->Add( 0, 0, 1, wxEXPAND, 5 );
-	
-	wxString unknownActionRadioBoxChoices[] = { _("allow"), _("deny"), _("ask") };
+	wxString unknownActionRadioBoxChoices[] = { _("allow"), _("deny"), _("ask"), _("continue") };
 	int unknownActionRadioBoxNChoices = sizeof( unknownActionRadioBoxChoices ) / sizeof( wxString );
 	unknownActionRadioBox = new wxRadioBox( mainPage, wxID_ANY, _("Action"), wxDefaultPosition, wxDefaultSize, unknownActionRadioBoxNChoices, unknownActionRadioBoxChoices, 1, wxRA_SPECIFY_ROWS|wxTAB_TRAVERSAL );
-	unknownActionRadioBox->SetSelection( 1 );
+	unknownActionRadioBox->SetSelection( 0 );
 	mainSizer->Add( unknownActionRadioBox, 0, wxALL, 5 );
 	
 	wxString unknownLogRadioBoxChoices[] = { _("none"), _("normal"), _("alert") };
@@ -872,6 +869,12 @@ DlgRuleEditorFilterSfsPageBase::DlgRuleEditorFilterSfsPageBase( wxWindow* parent
 	unknownLogRadioBox = new wxRadioBox( mainPage, wxID_ANY, _("Log"), wxDefaultPosition, wxDefaultSize, unknownLogRadioBoxNChoices, unknownLogRadioBoxChoices, 1, wxRA_SPECIFY_ROWS|wxTAB_TRAVERSAL );
 	unknownLogRadioBox->SetSelection( 2 );
 	mainSizer->Add( unknownLogRadioBox, 0, wxALL, 5 );
+	
+	
+	mainSizer->Add( 0, 0, 1, wxEXPAND, 5 );
+	
+	
+	mainSizer->Add( 0, 0, 1, wxEXPAND, 5 );
 	
 	mainPage->SetSizer( mainSizer );
 	mainPage->Layout();
