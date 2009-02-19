@@ -93,7 +93,7 @@ void
 flush_log_queue(void)
 {
 	anoubisd_msg_t		*msg;
-	openlog(logname, LOG_PID, LOG_DAEMON);
+	openlog(logname, LOG_PID | LOG_NDELAY, LOG_DAEMON);
 	while ((msg = dequeue(&__eventq_log))) {
 		syslog(msg->mtype, "%s", msg->msg);
 		free(msg);
