@@ -196,7 +196,7 @@ ModSfsMainPanelBase::ModSfsMainPanelBase( wxWindow* parent, wxWindowID id, const
 	m_staticText101->Wrap( -1 );
 	bSizer151->Add( m_staticText101, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
 	
-	wxString SfsMainActionChoiceChoices[] = { _("Register"), _("Unregister"), _("Validate"), _("Update") };
+	wxString SfsMainActionChoiceChoices[] = { _("Register"), _("Unregister"), _("Validate") };
 	int SfsMainActionChoiceNChoices = sizeof( SfsMainActionChoiceChoices ) / sizeof( wxString );
 	SfsMainActionChoice = new wxChoice( pan_SfsMain, wxID_ANY, wxDefaultPosition, wxDefaultSize, SfsMainActionChoiceNChoices, SfsMainActionChoiceChoices, 0 );
 	bSizer151->Add( SfsMainActionChoice, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );

@@ -258,9 +258,6 @@ ModSfsMainPanelImpl::applySfsAction(const IndexArray &selection)
 		case 2:
 			result = sfsCtrl_->validate(selection);
 			break;
-		case 3:
-			result = sfsCtrl_->updateChecksum(selection);
-			break;
 		}
 
 		if (result == SfsCtrl::RESULT_NEEDPASS) {

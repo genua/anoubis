@@ -294,20 +294,6 @@ SfsCtrl::unregisterChecksum(unsigned int idx)
 	return (unregisterChecksum(arr));
 }
 
-SfsCtrl::CommandResult
-SfsCtrl::updateChecksum(const IndexArray &arr)
-{
-	/* Equal to register a checksum */
-	return (registerChecksum(arr));
-}
-
-SfsCtrl::CommandResult
-SfsCtrl::updateChecksum(unsigned int idx)
-{
-	/* Equal to register a checksum */
-	return (registerChecksum(idx));
-}
-
 SfsDirectory &
 SfsCtrl::getSfsDirectory()
 {

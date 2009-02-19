@@ -356,48 +356,6 @@ class SfsCtrl : public wxEvtHandler
 		CommandResult unregisterChecksum(unsigned int);
 
 		/**
-		 * Updates the checksum of the SfsEntries at the given indexes
-		 * at anoubisd.
-		 *
-		 * The SfsEntry-instances might be updated. For each changed
-		 * entry a wxCommandEvent of type anEVT_SFSENTRY_CHANGED is
-		 * fired.
-		 *
-		 * Note: This is a non-blocking procedure. It means that method
-		 * leaves at soon as possible. But you can monitor the
-		 * anEVT_SFSOPERATION_FINISHED-event to know, when the
-		 * background-operation is finished.
-		 *
-		 * @param idx The array contains indexes of SfsEntry-instances
-		 *            to be updated.
-		 * @return The result of the command. If one of the indexes is
-		 *         out of range, SfsCtrl::RESULT_INVALIDARG is returned
-		 *         and the operation stops (remaining entries are not
-		 *         updated).
-		 */
-		CommandResult updateChecksum(const IndexArray &);
-
-		/**
-		 * Updates the checksum of the SfsEntry at the given index at
-		 * anoubisd.
-		 *
-		 * This is a shortcut for the updateChecksum(IndexArray)
-		 * method, if you only want to update an single SfsEntry.
-		 *
-		 * Note: This is a non-blocking procedure. It means that method
-		 * leaves at soon as possible. But you can monitor the
-		 * anEVT_SFSOPERATION_FINISHED-event to know, when the
-		 * background-operation is finished.
-		 *
-		 * @param idx Index of SfsEntry to update. If the index is out
-		 *            of range, SfsCtrl::RESULT_INVALIDARG is
-		 *            returned.
-		 * @return The result of the command.
-		 * @see updateChecksum(IndexArray)
-		 */
-		CommandResult updateChecksum(unsigned int);
-
-		/**
 		 * Returns the instance of the SfsDirectory.
 		 *
 		 * This is the entry-point of the model.

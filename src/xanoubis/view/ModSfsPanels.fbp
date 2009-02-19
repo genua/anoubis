@@ -1477,7 +1477,7 @@
                                                         <property name="proportion">0</property>
                                                         <object class="wxChoice" expanded="1">
                                                             <property name="bg"></property>
-                                                            <property name="choices">&apos;Register&apos; &apos;Unregister&apos; &apos;Validate&apos; &apos;Update&apos;</property>
+                                                            <property name="choices">&apos;Register&apos; &apos;Unregister&apos; &apos;Validate&apos;</property>
                                                             <property name="context_help"></property>
                                                             <property name="enabled">1</property>
                                                             <property name="fg"></property>
