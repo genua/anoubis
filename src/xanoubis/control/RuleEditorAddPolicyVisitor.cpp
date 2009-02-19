@@ -32,7 +32,7 @@ RuleEditorAddPolicyVisitor::RuleEditorAddPolicyVisitor(
     DlgRuleEditor *ruleEditor) : PolicyVisitor()
 {
 	ruleEditor_ = ruleEditor;
-	setPropagation(true);
+	setPropagation(false);
 }
 
 void

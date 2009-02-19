@@ -546,7 +546,6 @@ DlgRuleEditor::onLoadNewRuleSet(wxCommandEvent &event)
 void
 DlgRuleEditor::onAppPolicySelect(wxListEvent & event)
 {
-	RuleEditorAddPolicyVisitor	 addVisitor(this);
 	wxString			 newLabel;
 	AppPolicy			*policy;
 	PolicyRuleSet			*ruleset;
@@ -1412,6 +1411,7 @@ DlgRuleEditor::addFilterPolicy(AppPolicy *policy)
 	}
 
 	/* Bring new row into sight. */
+	addVisitor.setPropagation(true);
 	policy->acceptOnFilter(addVisitor);
 
 	/* Done with loading, remove progress bar. */
