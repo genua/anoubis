@@ -38,7 +38,7 @@ DlgRuleEditorFilterCapabilityPage::DlgRuleEditorFilterCapabilityPage(
 void
 DlgRuleEditorFilterCapabilityPage::update(Subject *subject)
 {
-	if (subject != filterPolicy_) {
+	if (subject == filterPolicy_) {
 		/* This is not our policy! */
 		showCapability();
 	}

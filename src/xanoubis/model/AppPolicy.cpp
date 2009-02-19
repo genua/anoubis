@@ -219,7 +219,7 @@ AppPolicy::addBinary(const wxString & binary)
 	wxArrayString binaryList;
 
 	binaryList = getBinaryList();
-	if (getBinaryCount() == 0) {
+	if (isAnyBlock()) {
 		/* remove 'any' first */
 		binaryList.RemoveAt(0);
 	}

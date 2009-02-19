@@ -129,22 +129,22 @@ DlgRuleEditorAppPage::showCsum(void)
 void
 DlgRuleEditorAppPage::showStatus(void)
 {
-	unsigned int	count;
+	bool		isAny;
 	wxString	registered;
 
-	count = 0;
+	isAny = false;
 	registered = wxEmptyString;
 
 	if (appPolicy_ != NULL) {
-		count = appPolicy_->getBinaryCount();
+		isAny = appPolicy_->isAnyBlock();
 		registered = appPolicy_->getHashValueName(binaryIndex_);
 	}
 	if (ctxPolicy_ != NULL) {
-		count = ctxPolicy_->getBinaryCount();
+		isAny = ctxPolicy_->isAny();
 		registered = ctxPolicy_->getHashValueName(binaryIndex_);
 	}
 
-	if (count < 1) {
+	if (isAny) {
 		deleteButton->Disable();
 	} else {
 		deleteButton->Enable();
@@ -152,14 +152,17 @@ DlgRuleEditorAppPage::showStatus(void)
 
 	if (csumCache_.IsEmpty()) {
 		statusText->SetLabel(_("(unknown)"));
+		updateButton->Disable();
 		Layout();
 		return;
 	}
 
 	if (registered.Cmp(csumCache_) == 0) {
 		statusText->SetLabel(_("match"));
+		updateButton->Disable();
 	} else {
 		statusText->SetLabel(_("mismatch"));
+		updateButton->Enable();
 	}
 	Layout();
 }
@@ -172,17 +175,29 @@ DlgRuleEditorAppPage::setBinary(wxString binary)
 	wxNotebook	*parentNotebook;
 
 	if (appPolicy_ != NULL) {
-		if (appPolicy_->getBinaryCount() == 0) {
+		if (appPolicy_->isAnyBlock()) {
 			appPolicy_->addBinary(binary);
 		} else {
 			appPolicy_->setBinaryName(binary, binaryIndex_);
 		}
 	}
 	if (ctxPolicy_ != NULL) {
-		ctxPolicy_->setBinaryName(binary, binaryIndex_);
+		if (ctxPolicy_->isAny()) {
+			ctxPolicy_->addBinary(binary);
+		} else {
+			ctxPolicy_->setBinaryName(binary, binaryIndex_);
+		}
 	}
 
 	parentNotebook = wxDynamicCast(GetParent(), wxNotebook);
+	if ((parentNotebook == NULL) && (GetGrandParent() != NULL)) {
+		/*
+		 * This might be the case when we're integrated within
+		 * a FilterContextPage.
+		 */
+		parentNotebook = wxDynamicCast(GetGrandParent()->GetParent(),
+		    wxNotebook);
+	}
 	if (parentNotebook != NULL) {
 		selection = parentNotebook->GetSelection();
 		baseName.Assign(binary);

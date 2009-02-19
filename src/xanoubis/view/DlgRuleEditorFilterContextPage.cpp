@@ -37,8 +37,12 @@ DlgRuleEditorFilterContextPage::DlgRuleEditorFilterContextPage(wxWindow *parent,
 }
 
 void
-DlgRuleEditorFilterContextPage::update(Subject *)
+DlgRuleEditorFilterContextPage::update(Subject *subject)
 {
+	if (subject == filterPolicy_) {
+		/* This is not our policy! */
+		showContextType();
+	}
 }
 
 void
@@ -47,6 +51,8 @@ DlgRuleEditorFilterContextPage::select(Policy *policy)
 	if (policy->IsKindOf(CLASSINFO(ContextFilterPolicy))) {
 		filterPolicy_ = wxDynamicCast(policy, ContextFilterPolicy);
 		DlgRuleEditorPage::select(policy);
+		appPage->setBinaryIndex(binaryIndex_);
+		appPage->select(policy);
 		Show();
 	}
 }
@@ -55,6 +61,50 @@ void
 DlgRuleEditorFilterContextPage::deselect(void)
 {
 	filterPolicy_ = NULL;
+	appPage->deselect();
 	DlgRuleEditorPage::deselect();
 	Hide();
+}
+
+void
+DlgRuleEditorFilterContextPage::setBinaryIndex(unsigned int index)
+{
+	binaryIndex_ = index;
+}
+
+void
+DlgRuleEditorFilterContextPage::showContextType(void)
+{
+	if (filterPolicy_ == NULL) {
+		return;
+	}
+
+	switch (filterPolicy_->getContextTypeNo()) {
+	case APN_CTX_NEW:
+		newRadioButton->SetValue(true);
+		break;
+	case APN_CTX_OPEN:
+		openRadioButton->SetValue(true);
+		break;
+	default:
+		newRadioButton->SetValue(false);
+		openRadioButton->SetValue(false);
+		break;
+	}
+}
+
+void
+DlgRuleEditorFilterContextPage::onNewRadioButton(wxCommandEvent &)
+{
+	if (filterPolicy_ != NULL) {
+		filterPolicy_->setContextTypeNo(APN_CTX_NEW);
+	}
+}
+
+void
+DlgRuleEditorFilterContextPage::onOpenRadioButton(wxCommandEvent &)
+{
+	if (filterPolicy_ != NULL) {
+		filterPolicy_->setContextTypeNo(APN_CTX_OPEN);
+	}
 }

@@ -629,7 +629,6 @@ DlgRuleEditor::onFilterPolicySelect(wxListEvent & event)
 {
 	FilterPolicy		*policy;
 	PolicyRuleSet		*ruleset;
-	DlgRuleEditorPage	*filterPage;
 
 	policy = wxDynamicCast((void*)event.GetData(), FilterPolicy);
 	if (policy == NULL) {
@@ -648,13 +647,7 @@ DlgRuleEditor::onFilterPolicySelect(wxListEvent & event)
 	}
 
 	/* Tell the notebook tabs to show themself. */
-	for (int i=filterPolicyPanels->GetPageCount() - 1; i>=0; i--) {
-		filterPage = dynamic_cast<DlgRuleEditorPage *>(
-		    filterPolicyPanels->GetPage(i));
-		if (filterPage != NULL) {
-			filterPage->select(policy);
-		}
-	}
+	filterPolicyPanels->select(policy);
 
 	Layout();
 	Refresh();
@@ -663,20 +656,12 @@ DlgRuleEditor::onFilterPolicySelect(wxListEvent & event)
 void
 DlgRuleEditor::onFilterPolicyDeSelect(wxListEvent & WXUNUSED(event))
 {
-	DlgRuleEditorPage *filterPage;
-
 	filterListUpButton->Disable();
 	filterListDownButton->Disable();
 	filterListDeleteButton->Disable();
 
 	/* Tell the notebook tabs to hide themself. */
-	for (int i=filterPolicyPanels->GetPageCount() -1; i>=0; i--) {
-		filterPage = dynamic_cast<DlgRuleEditorPage *>(
-		    filterPolicyPanels->GetPage(i));
-		if (filterPage != NULL) {
-			filterPage->deselect();
-		}
-	}
+	filterPolicyPanels->deselect();
 
 	Layout();
 	Refresh();

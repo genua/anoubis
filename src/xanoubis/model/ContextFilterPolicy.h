@@ -181,6 +181,24 @@ class ContextFilterPolicy : public FilterPolicy
 		wxArrayString getBinaryList(void) const;
 
 		/**
+		 * Add a binary.
+		 * This will add the given binary at the end of the list
+		 * of binaries. In case of 'any' nothing special is done.
+		 * @param[in] 1st The binary name.
+		 * @return True on success.
+		 */
+		bool addBinary(const wxString &);
+
+		/**
+		 * Remove a binary.
+		 * This will remove the binary with the given index.
+		 * In case we remove the last binary, 'any' is set.
+		 * @param[in] 1st The index of the binary to remove.
+		 * @return True on success.
+		 */
+		bool removeBinary(unsigned int);
+
+		/**
 		 * Does this an any-policy?
 		 * @param None.
 		 * @return True if it's an any-policy.

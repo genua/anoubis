@@ -307,6 +307,41 @@ ContextFilterPolicy::getBinaryList(void) const
 }
 
 bool
+ContextFilterPolicy::addBinary(const wxString & binary)
+{
+	wxArrayString binaryList;
+
+	binaryList = getBinaryList();
+	if (isAny()) {
+		/* remove 'any' first */
+		binaryList.RemoveAt(0);
+	}
+	binaryList.Add(binary);
+
+	return (setBinaryList(binaryList));
+}
+
+bool
+ContextFilterPolicy::removeBinary(unsigned int index)
+{
+	wxArrayString binaryList;
+
+	binaryList = getBinaryList();
+	if (index >= binaryList.Count()) {
+		return (false);
+	}
+
+	binaryList.RemoveAt(index);
+
+	/* An empty list has to bear the keyword 'any'. */
+	if (binaryList.GetCount() == 0) {
+		binaryList.Add(wxT("any"));
+	}
+
+	return (setBinaryList(binaryList));
+}
+
+bool
 ContextFilterPolicy::isAny(void) const
 {
 	struct apn_rule *rule;

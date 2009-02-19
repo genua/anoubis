@@ -32,6 +32,13 @@
 
 #include "Policy.h"
 #include "AppPolicy.h"
+#include "AlfFilterPolicy.h"
+#include "AlfCapabilityFilterPolicy.h"
+#include "DefaultFilterPolicy.h"
+#include "SfsFilterPolicy.h"
+#include "SfsDefaultFilterPolicy.h"
+#include "ContextFilterPolicy.h"
+#include "SbAccessFilterPolicy.h"
 
 /**
  * For the RuleEditor we needed our own notebook to ensure correct creation
@@ -82,6 +89,11 @@ class AnPolicyNotebook : public wxNotebook
 		AppPolicy *appPolicy_;
 
 		/**
+		 * This holds the policy been shown by our pages.
+		 */
+		ContextFilterPolicy *ctxPolicy_;
+
+		/**
 		 * Handle events from add button.
 		 * This will handle the events of the add button at the
 		 * DlgRuleEditorAppPage. This will create a new page
@@ -112,6 +124,62 @@ class AnPolicyNotebook : public wxNotebook
 		 * @return Nothing.
 		 */
 		void selectAppPolicy(AppPolicy *);
+
+		/**
+		 * Select alf filter policy.
+		 * This will create all nessesary pages and show them.
+		 * @param[in] 1st The policy to show.
+		 * @return Nothing.
+		 */
+		void selectAlfFilterPolicy(Policy *);
+
+		/**
+		 * Select alf capabiliyt filter policy.
+		 * This will create all nessesary pages and show them.
+		 * @param[in] 1st The policy to show.
+		 * @return Nothing.
+		 */
+		void selectAlfCapabilityFilterPolicy(Policy *);
+
+		/**
+		 * Select default filter policy.
+		 * This will create all nessesary pages and show them.
+		 * @param[in] 1st The policy to show.
+		 * @return Nothing.
+		 */
+		void selectDefaultFilterPolicy(Policy *);
+
+		/**
+		 * Select sfs filter policy.
+		 * This will create all nessesary pages and show them.
+		 * @param[in] 1st The policy to show.
+		 * @return Nothing.
+		 */
+		void selectSfsFilterPolicy(Policy *);
+
+		/**
+		 * Select sfs default filter policy.
+		 * This will create all nessesary pages and show them.
+		 * @param[in] 1st The policy to show.
+		 * @return Nothing.
+		 */
+		void selectSfsDefaultFilterPolicy(Policy *);
+
+		/**
+		 * Select context filter policy.
+		 * This will create all nessesary pages and show them.
+		 * @param[in] 1st The policy to show.
+		 * @return Nothing.
+		 */
+		void selectContextFilterPolicy(Policy *);
+
+		/**
+		 * Select sb access filter policy.
+		 * This will create all nessesary pages and show them.
+		 * @param[in] 1st The policy to show.
+		 * @return Nothing.
+		 */
+		void selectSbAccessFilterPolicy(Policy *);
 };
 
 #endif	/* _ANPOLICYNOTEBOOK_H_ */

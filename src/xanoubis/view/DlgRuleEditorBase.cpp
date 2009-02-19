@@ -32,14 +32,7 @@
 ///////////////////////////////////////////////////////////////////////////
 
 #include "AnPolicyNotebook.h"
-#include "DlgRuleEditorFilterActionPage.h"
-#include "DlgRuleEditorFilterAddressPage.h"
-#include "DlgRuleEditorFilterCapabilityPage.h"
-#include "DlgRuleEditorFilterContextPage.h"
-#include "DlgRuleEditorFilterNetworkPage.h"
-#include "DlgRuleEditorFilterPermissionPage.h"
-#include "DlgRuleEditorFilterSfsPage.h"
-#include "DlgRuleEditorFilterSubjectPage.h"
+#include "DlgRuleEditorAppPage.h"
 
 #include "DlgRuleEditorBase.h"
 
@@ -194,39 +187,7 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	
 	filterMainSizer->Add( filterListFoodSizer, 0, wxEXPAND|wxALIGN_RIGHT, 5 );
 	
-	filterPolicyPanels = new wxNotebook( filterPanel, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0 );
-	filterActionPage = new DlgRuleEditorFilterActionPage( filterPolicyPanels, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
-	filterActionPage->Hide();
-	
-	filterPolicyPanels->AddPage( filterActionPage, _("Action / Log"), false );
-	filterNetworkPage = new DlgRuleEditorFilterNetworkPage( filterPolicyPanels, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
-	filterNetworkPage->Hide();
-	
-	filterPolicyPanels->AddPage( filterNetworkPage, _("Network"), false );
-	fitlerAddressPage = new DlgRuleEditorFilterAddressPage( filterPolicyPanels, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
-	fitlerAddressPage->Hide();
-	
-	filterPolicyPanels->AddPage( fitlerAddressPage, _("Address"), false );
-	filterCapabilityPage = new DlgRuleEditorFilterCapabilityPage( filterPolicyPanels, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
-	filterCapabilityPage->Hide();
-	
-	filterPolicyPanels->AddPage( filterCapabilityPage, _("Capability"), false );
-	filterSubjectPage = new DlgRuleEditorFilterSubjectPage( filterPolicyPanels, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
-	filterSubjectPage->Hide();
-	
-	filterPolicyPanels->AddPage( filterSubjectPage, _("Subject"), false );
-	filterSfsPage = new DlgRuleEditorFilterSfsPage( filterPolicyPanels, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
-	filterSfsPage->Hide();
-	
-	filterPolicyPanels->AddPage( filterSfsPage, _("Valid / Invalid / Unknown"), false );
-	filterContextPage = new DlgRuleEditorFilterContextPage( filterPolicyPanels, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
-	filterContextPage->Hide();
-	
-	filterPolicyPanels->AddPage( filterContextPage, _("Context"), false );
-	filterPermissionPage = new DlgRuleEditorFilterPermissionPage( filterPolicyPanels, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
-	filterPermissionPage->Hide();
-	
-	filterPolicyPanels->AddPage( filterPermissionPage, _("Permission"), false );
+	filterPolicyPanels = new AnPolicyNotebook( filterPanel, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0 );
 	
 	filterMainSizer->Add( filterPolicyPanels, 1, wxEXPAND | wxALL, 5 );
 	
@@ -917,6 +878,9 @@ DlgRuleEditorFilterContextPageBase::DlgRuleEditorFilterContextPageBase( wxWindow
 	typeSizer->Add( openRadioButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	mainSizer->Add( typeSizer, 0, wxEXPAND, 5 );
+	
+	appPage = new DlgRuleEditorAppPage( mainPage, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	mainSizer->Add( appPage, 1, wxEXPAND | wxALL, 0 );
 	
 	mainPage->SetSizer( mainSizer );
 	mainPage->Layout();

@@ -32,12 +32,21 @@
 #include "AppPolicy.h"
 #include "DlgRuleEditorAppPage.h"
 #include "DlgRuleEditorPage.h"
+#include "DlgRuleEditorFilterActionPage.h"
+#include "DlgRuleEditorFilterNetworkPage.h"
+#include "DlgRuleEditorFilterAddressPage.h"
+#include "DlgRuleEditorFilterCapabilityPage.h"
+#include "DlgRuleEditorFilterSfsPage.h"
+#include "DlgRuleEditorFilterSubjectPage.h"
+#include "DlgRuleEditorFilterPermissionPage.h"
+#include "DlgRuleEditorFilterContextPage.h"
 
 AnPolicyNotebook::AnPolicyNotebook(wxWindow* parent, wxWindowID id,
     const wxPoint& pos, const wxSize& size, long style, const wxString& name)
     : wxNotebook(parent, id, pos, size, style, name)
 {
 	appPolicy_ = NULL;
+	ctxPolicy_ = NULL;
 
 	Connect(ID_APP_PAGE_ADD, wxEVT_COMMAND_BUTTON_CLICKED,
 	    wxCommandEventHandler(AnPolicyNotebook::onAddButton), NULL, this);
@@ -61,6 +70,23 @@ AnPolicyNotebook::select(Policy *policy)
 	if (policy->IsKindOf(CLASSINFO(AppPolicy))) {
 		appPolicy_ = wxDynamicCast(policy, AppPolicy);
 		selectAppPolicy(appPolicy_);
+	} else if (policy->IsKindOf(CLASSINFO(AlfFilterPolicy))) {
+		selectAlfFilterPolicy(policy);
+	} else if (policy->IsKindOf(CLASSINFO(AlfCapabilityFilterPolicy))) {
+		selectAlfCapabilityFilterPolicy(policy);
+	} else if (policy->IsKindOf(CLASSINFO(DefaultFilterPolicy))) {
+		selectDefaultFilterPolicy(policy);
+	} else if (policy->IsKindOf(CLASSINFO(SfsFilterPolicy))) {
+		selectSfsFilterPolicy(policy);
+	} else if (policy->IsKindOf(CLASSINFO(SfsDefaultFilterPolicy))) {
+		selectSfsDefaultFilterPolicy(policy);
+	} else if (policy->IsKindOf(CLASSINFO(ContextFilterPolicy))) {
+		ctxPolicy_ = wxDynamicCast(policy, ContextFilterPolicy);
+		selectContextFilterPolicy(policy);
+	} else if (policy->IsKindOf(CLASSINFO(SbAccessFilterPolicy))) {
+		selectSbAccessFilterPolicy(policy);
+	} else {
+		/* Unknown policy type - nothing to do */
 	}
 }
 
@@ -68,22 +94,44 @@ void
 AnPolicyNotebook::deselect(void)
 {
 	appPolicy_ = NULL;
+	ctxPolicy_ = NULL;
 	DeleteAllPages();
 }
 
 void
 AnPolicyNotebook::onAddButton(wxCommandEvent &)
 {
-	DlgRuleEditorAppPage *page;
+	bool wasAny;
+	int  newIndex;
+
+	DlgRuleEditorAppPage		*appPage;
+	DlgRuleEditorFilterContextPage	*ctxPage;
 
 	if (appPolicy_ != NULL) {
+		wasAny = appPolicy_->isAnyBlock();
 		appPolicy_->addBinary(_("(new)"));
+		newIndex = appPolicy_->getBinaryCount() - 1;
 
 		/* Create page. */
-		page = new DlgRuleEditorAppPage(this);
-		page->setBinaryIndex(appPolicy_->getBinaryCount() - 1);
-		page->select(appPolicy_);
-		AddPage(page, _("(new)"), true);
+		if (!wasAny) {
+			appPage = new DlgRuleEditorAppPage(this);
+			appPage->setBinaryIndex(newIndex);
+			appPage->select(appPolicy_);
+			AddPage(appPage, _("(new)"), true);
+		}
+	}
+	if (ctxPolicy_ != NULL) {
+		wasAny = ctxPolicy_->isAny();
+		ctxPolicy_->addBinary(_("(new)"));
+		newIndex = ctxPolicy_->getBinaryCount() - 1;
+
+		/* Create page. */
+		if (!wasAny) {
+			ctxPage = new DlgRuleEditorFilterContextPage(this);
+			ctxPage->setBinaryIndex(newIndex);
+			ctxPage->select(ctxPolicy_);
+			AddPage(ctxPage, _("(new)"), true);
+		}
 	}
 }
 
@@ -99,6 +147,16 @@ AnPolicyNotebook::onDeleteButton(wxCommandEvent &event)
 		 */
 		DeleteAllPages();
 		select(appPolicy_);
+	}
+	if (ctxPolicy_ != NULL) {
+		ctxPolicy_->removeBinary(event.GetInt());
+		/*
+		 * Deleteing just the single page would lead to inconsistency
+		 * of page number and binary index. Thus we have to re-create
+		 * all pages.
+		 */
+		DeleteAllPages();
+		select(ctxPolicy_);
 	}
 }
 
@@ -136,4 +194,137 @@ AnPolicyNotebook::selectAppPolicy(AppPolicy *policy)
 
 		index--;
 	} while (index >= 0);
+}
+
+void
+AnPolicyNotebook::selectAlfFilterPolicy(Policy *policy)
+{
+	DlgRuleEditorFilterActionPage	*actionPage;
+	DlgRuleEditorFilterNetworkPage	*networkPage;
+	DlgRuleEditorFilterAddressPage	*addressPage;
+
+	actionPage = new DlgRuleEditorFilterActionPage(this);
+	actionPage->select(policy);
+	AddPage(actionPage, _("Action / Log"));
+
+	networkPage = new DlgRuleEditorFilterNetworkPage(this);
+	networkPage->select(policy);
+	AddPage(networkPage, _("Network"));
+
+	addressPage = new DlgRuleEditorFilterAddressPage(this);
+	addressPage->select(policy);
+	AddPage(addressPage, _("Address"));
+}
+
+void
+AnPolicyNotebook::selectAlfCapabilityFilterPolicy(Policy *policy)
+{
+	DlgRuleEditorFilterActionPage		*actionPage;
+	DlgRuleEditorFilterCapabilityPage	*capPage;
+
+	actionPage = new DlgRuleEditorFilterActionPage(this);
+	actionPage->select(policy);
+	AddPage(actionPage, _("Action / Log"));
+
+	capPage = new DlgRuleEditorFilterCapabilityPage(this);
+	capPage->select(policy);
+	AddPage(capPage, _("Capability"));
+}
+
+void
+AnPolicyNotebook::selectDefaultFilterPolicy(Policy *policy)
+{
+	DlgRuleEditorFilterActionPage *page;
+
+	page = new DlgRuleEditorFilterActionPage(this);
+	page->select(policy);
+	AddPage(page, _("Action / Log"));
+}
+
+void
+AnPolicyNotebook::selectSfsFilterPolicy(Policy *policy)
+{
+	DlgRuleEditorFilterSfsPage	*sfsPage;
+	DlgRuleEditorFilterSubjectPage	*subjectPage;
+
+	sfsPage = new DlgRuleEditorFilterSfsPage(this);
+	sfsPage->select(policy);
+	AddPage(sfsPage, _("Valid / Invalid / Unknown"));
+
+	subjectPage = new DlgRuleEditorFilterSubjectPage(this);
+	subjectPage->select(policy);
+	AddPage(subjectPage, _("Subject"));
+}
+
+void
+AnPolicyNotebook::selectSfsDefaultFilterPolicy(Policy *policy)
+{
+	DlgRuleEditorFilterActionPage *page;
+
+	page = new DlgRuleEditorFilterActionPage(this);
+	page->select(policy);
+	AddPage(page, _("Action / Log"));
+}
+
+void
+AnPolicyNotebook::selectContextFilterPolicy(Policy *policy)
+{
+	int		 index;
+	wxString	 pageName;
+	wxFileName	 baseName;
+
+	ContextFilterPolicy		*filterPolicy;
+	DlgRuleEditorFilterContextPage	*page;
+
+	if (policy == NULL) {
+		return;
+	}
+
+	filterPolicy = wxDynamicCast(policy, ContextFilterPolicy);
+	if (filterPolicy == NULL) {
+		return;
+	}
+
+	index = filterPolicy->getBinaryCount() - 1;
+	do {
+		/* Adjust index for case 'any'. */
+		if (index < 0) {
+			index = 0;
+		}
+
+		/* Assemble page name (aka text on tab). */
+		baseName.Assign(filterPolicy->getBinaryName(index));
+		pageName = baseName.GetFullName();
+		if (pageName.IsEmpty()) {
+			pageName = _("(new)");
+		}
+
+		/* Create page. */
+		page = new DlgRuleEditorFilterContextPage(this);
+		page->setBinaryIndex(index);
+		page->select(filterPolicy);
+		InsertPage(0, page, pageName);
+
+		index--;
+	} while (index >= 0);
+}
+
+void
+AnPolicyNotebook::selectSbAccessFilterPolicy(Policy *policy)
+{
+	DlgRuleEditorFilterActionPage	  *actionPage;
+	DlgRuleEditorFilterSubjectPage	  *subjectPage;
+	DlgRuleEditorFilterPermissionPage *permissionPage;
+
+	actionPage = new DlgRuleEditorFilterActionPage(this);
+	actionPage->select(policy);
+	AddPage(actionPage, _("Action / Log"));
+
+	subjectPage = new DlgRuleEditorFilterSubjectPage(this);
+	subjectPage->select(policy);
+	AddPage(subjectPage, _("Subject"));
+
+	permissionPage = new DlgRuleEditorFilterPermissionPage(this);
+	permissionPage->select(policy);
+	AddPage(permissionPage, _("Permissions"));
 }

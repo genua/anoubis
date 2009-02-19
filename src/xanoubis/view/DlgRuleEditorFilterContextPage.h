@@ -86,11 +86,48 @@ class DlgRuleEditorFilterContextPage : public DlgRuleEditorPage,
 		 */
 		virtual void deselect(void);
 
+		/**
+		 * Set binary index.
+		 * This page is responsible for handling the binary
+		 * with the given index.
+		 * @param[in] 1st Bianry index.
+		 * @return Nothing.
+		 */
+		void setBinaryIndex(unsigned int);
+
 	private:
+		/**
+		 * This page is responsible for the binary with this index.
+		 */
+		unsigned int binaryIndex_;
+
 		/**
 		 * This holds the policy been edited by this page.
 		 */
 		ContextFilterPolicy *filterPolicy_;
+
+		/**
+		 * Update direction widgets.
+		 * @param None.
+		 * @return Nothing.
+		 */
+		void showContextType(void);
+
+		/**
+		 * Handle events from newRadioButton.
+		 * This will set the APN_CTX_NEW to the policy.
+		 * @param[in] 1st The event.
+		 * @return Nothing.
+		 */
+		virtual void onNewRadioButton(wxCommandEvent &);
+
+		/**
+		 * Handle events from openRadioButton.
+		 * This will set the APN_CTX_OPEN to the policy.
+		 * @param[in] 1st The event.
+		 * @return Nothing.
+		 */
+		virtual void onOpenRadioButton(wxCommandEvent &);
 };
 
 #endif	/* _DLGRULEEDITORFILTERCONTEXTPAGE_H_ */

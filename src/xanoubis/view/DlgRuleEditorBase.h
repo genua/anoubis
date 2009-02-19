@@ -35,14 +35,7 @@
 #define __DlgRuleEditorBase__
 
 class AnPolicyNotebook;
-class DlgRuleEditorFilterActionPage;
-class DlgRuleEditorFilterAddressPage;
-class DlgRuleEditorFilterCapabilityPage;
-class DlgRuleEditorFilterContextPage;
-class DlgRuleEditorFilterNetworkPage;
-class DlgRuleEditorFilterPermissionPage;
-class DlgRuleEditorFilterSfsPage;
-class DlgRuleEditorFilterSubjectPage;
+class DlgRuleEditorAppPage;
 
 #include <wx/string.h>
 #include <wx/stattext.h>
@@ -56,8 +49,6 @@ class DlgRuleEditorFilterSubjectPage;
 #include <wx/listctrl.h>
 #include <wx/notebook.h>
 #include <wx/panel.h>
-#include <wx/bitmap.h>
-#include <wx/image.h>
 #include <wx/splitter.h>
 #include <wx/frame.h>
 #include <wx/textctrl.h>
@@ -108,15 +99,7 @@ class DlgRuleEditorBase : public wxFrame
 		wxButton* filterListUpButton;
 		wxButton* filterListDownButton;
 		wxButton* filterListDeleteButton;
-		wxNotebook* filterPolicyPanels;
-		DlgRuleEditorFilterActionPage* filterActionPage;
-		DlgRuleEditorFilterNetworkPage* filterNetworkPage;
-		DlgRuleEditorFilterAddressPage* fitlerAddressPage;
-		DlgRuleEditorFilterCapabilityPage* filterCapabilityPage;
-		DlgRuleEditorFilterSubjectPage* filterSubjectPage;
-		DlgRuleEditorFilterSfsPage* filterSfsPage;
-		DlgRuleEditorFilterContextPage* filterContextPage;
-		DlgRuleEditorFilterPermissionPage* filterPermissionPage;
+		AnPolicyNotebook* filterPolicyPanels;
 		wxStaticText* footerRuleSetLabel;
 		wxStaticText* footerRuleSetText;
 		
@@ -444,6 +427,7 @@ class DlgRuleEditorFilterContextPageBase : public wxPanel
 		wxStaticText* typeLabel;
 		wxRadioButton* newRadioButton;
 		wxRadioButton* openRadioButton;
+		DlgRuleEditorAppPage* appPage;
 		
 		// Virtual event handlers, overide them in your derived class
 		virtual void onNewRadioButton( wxCommandEvent& event ){ event.Skip(); }
