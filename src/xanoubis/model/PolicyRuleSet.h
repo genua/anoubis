@@ -292,27 +292,6 @@ class PolicyRuleSet : public Subject
 
 		void createAnswerPolicy(EscalationNotify *);
 
-		/*
-		 * XXX ch: re-enable this while adding functionality
-		 * XXX ch: to the RuleEditor
-		 *
-		int createAlfAppPolicy(int id) {
-			return createAppPolicy(APN_ALF, id);
-		};
-		int createSBAppPolicy(int id) {
-			return createAppPolicy(APN_SB, id);
-		};
-		int createCtxAppPolicy(int id) {
-			return createAppPolicy(APN_CTX, id);
-		};
-		int createAlfPolicy(int);
-		int createCtxNewPolicy(int);
-		int createSfsPolicy(int);
-
-		bool findMismatchHash(void);
-		bool deletePolicy(int);
-		*/
-
 	private:
 		int			 refCnt_;
 		int			 priority_;
@@ -344,14 +323,6 @@ class PolicyRuleSet : public Subject
 		 * Create policies from parsed ruleset.
 		 */
 		void create(struct apn_ruleset *);
-
-		/*
-		 * XXX ch: re-enable this while adding functionality
-		 * XXX ch: to the RuleEditor
-		 *
-		bool hasLocalHost(wxArrayString);
-		int createAppPolicy(int type, int id);
-		*/
 
 		struct apn_rule *assembleAlfPolicy(AlfFilterPolicy *,
 		   EscalationNotify *);
