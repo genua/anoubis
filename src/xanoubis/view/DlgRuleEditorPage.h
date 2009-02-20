@@ -76,6 +76,12 @@ class DlgRuleEditorPage : public Observer
 		 */
 		virtual void deselect(void);
 
+		/**
+		 * Remove the Subject once the policy is deleted.
+		 * @param[in] 1st The policy.
+		 * @return Nothing.
+		 */
+		virtual void updateDelete(Subject *);
 	private:
 		/**
 		 * This holds the policy been edited by this page.

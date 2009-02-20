@@ -60,12 +60,6 @@ Observer::~Observer(void)
 }
 
 void
-Observer::updateDelete(Subject *)
-{
-	/* Empty */
-}
-
-void
 Observer::deleteHandler(Subject *subject)
 {
 	removeSubject(subject);

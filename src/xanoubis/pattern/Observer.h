@@ -83,7 +83,7 @@ class Observer
 		 * NOTE: Even if you overwrite this method there is no
 		 * NOTE: need to call removeSubject manually.
 		 */
-		virtual void updateDelete(Subject *);
+		virtual void updateDelete(Subject *) = 0;
 
 		/**
 		 * Add a subject.

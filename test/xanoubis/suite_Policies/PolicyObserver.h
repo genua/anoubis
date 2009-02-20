@@ -39,6 +39,7 @@ class PolicyObserver : public Observer
 		PolicyObserver(Subject *);
 		bool isNotified(void);
 		void update(Subject *);
+		void updateDelete(Subject *);
 
 	private:
 		bool isNotified_;

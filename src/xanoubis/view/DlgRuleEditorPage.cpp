@@ -46,3 +46,10 @@ DlgRuleEditorPage::deselect(void)
 	removeSubject(policy_);
 	policy_ = NULL;
 }
+
+void
+DlgRuleEditorPage::updateDelete(Subject *subject)
+{
+	if (subject == policy_)
+		policy_ = NULL;
+}

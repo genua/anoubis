@@ -48,3 +48,9 @@ PolicyObserver::update(Subject * WXUNUSED(subject))
 {
 	isNotified_ = true;
 }
+
+void
+PolicyObserver::updateDelete(Subject * WXUNUSED(subject))
+{
+	/* Nothing to do here. */
+}
