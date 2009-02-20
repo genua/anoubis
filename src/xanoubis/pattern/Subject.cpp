@@ -42,12 +42,16 @@ Subject::~Subject(void)
 {
 	ObserverList::iterator	it;
 
-	it = observers_.begin();
-	while (it != observers_.end()) {
+	/*
+	 * The wxWidgets List Iterator is not stable accross removes
+	 * of the current object. Thus we always use the first element
+	 * from the list until the list is empty and rely on the fact
+	 * that the delete Handler removes the observer from the subject
+	 * list.
+	 */
+	while ((it = observers_.begin()) != observers_.end()) {
 		(*it)->deleteHandler(this);
-		it++;
 	}
-	observers_.Clear();
 }
 
 bool

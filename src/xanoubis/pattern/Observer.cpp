@@ -45,10 +45,15 @@ Observer::~Observer(void)
 		return;
 	}
 
-	it = subjects_->begin();
-	while (it != subjects_->end()) {
+	/*
+	 * The wxList Iterator is not stable accross removes of the
+	 * current object from the list. Thus we always use the
+	 * first element from the list and rely on the fact that
+	 * removeSubject will remove the current object from the
+	 * list.
+	 */
+	while ((it = subjects_->begin()) != subjects_->end()) {
 		removeSubject(*it);
-		it++;
 	}
 
 	delete subjects_;
