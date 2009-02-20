@@ -45,6 +45,33 @@
 
 /**
  * Task to calculate the checksum of a file.
+ *
+ * You need to setup the file (setPath()) before the tasks gets scheduled!
+ *
+ * If the file is a symlink, then the calcLink() flag becomes relevant. The
+ * flag specifies the source of the checksum-calculation. If the flag is set,
+ * the checksum is calculated over the resolved path of the link, otherwise
+ * the source is the content of the resolved path.
+ *
+ * Example: A symlink <code>foo</code> points to a plain file <code>bar</code>.
+ * The content of <code>bar</code> is <i>Hello World!</i>. Some pseudo code:
+ *
+ * <pre>
+ * > ls -l foo
+ * foo -> bar
+ *
+ * > cat foo
+ * Hello World!
+ *
+ * > cat bar
+ * Hello World!
+ * </pre>
+ *
+ * If calcLink() is set, the checksum is calculated over the string
+ * <code>bar</code>.
+ *
+ * If calcLink() is unset, the checksum is calculated over the string
+ * <code>Hello World!</code>.
  */
 class CsumCalcTask : public Task
 {
@@ -145,12 +172,54 @@ class CsumCalcTask : public Task
 		wxString getCsumStr(void) const;
 
 	private:
+		/**
+		 * Path of file to be checksumed
+		 */
 		wxString	path_;
+
+		/**
+		 * Link-calculation-flag.
+		 * Specifies, if the link-destination should be checksumed
+		 */
 		bool		calcLink_;
+
+		/**
+		 * Result of calculation.
+		 */
 		int		result_;
+
+		/**
+		 * Calculated checksum
+		 */
 		u_int8_t	cs_[ANOUBIS_CS_LEN];
 
+		/**
+		 * Resets the task.
+		 * Removes the calculation-result from the task, so it can be
+		 * reused.
+		 */
 		void reset();
+
+		/**
+		 * Calculates the checksum over the content of the file.
+		 *
+		 * The calculation-method depends on the existance of
+		 * /dev/anoubis. If the device exists, the method asks the
+		 * kernel of the checksum, otherwise the calculation is
+		 * performed in userspace.
+		 *
+		 * @param path Path of file to be checksumed
+		 * @param csum Buffer, where the calculated checksum is written
+		 *             to. Needs to be large enough, at least
+		 *             ANOUBIS_CS_LEN.
+		 * @param csum_len Holds the initial length of csum. If the
+		 *                 calculation was performed, the number of
+		 *                 bytes written to csum is written into the
+		 *                 variable.
+		 * @return 0 on success, otherwise a negative unix error code
+		 *         is returned.
+		 */
+		static int calculateCsum(const char *, u_int8_t *, int *);
 };
 
 #endif	/* _CSUMCALCTASK_H_ */

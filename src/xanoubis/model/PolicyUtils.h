@@ -71,20 +71,6 @@ class PolicyUtils
 		static bool csumToString(unsigned char *, size_t, wxString &);
 
 		/**
-		 * Calculate checksum of binary.
-		 * Is this method still needed?
-		 * anoubis_csum_calc() requests csum from kernel
-		 * @param[in] 1st The name of the binary.
-		 * @param[out] 2nd Place to put apn checkum.
-		 * @param[in] 3rd Size of place to put checksum.
-		 * @return 1 on success\n
-		 *  0 on not readable\n
-		 * -1 on does not exist (denied by sfs)
-		 * -2 on no permission (UNIX filesystem)
-		 */
-		static int calculateHash(wxString, unsigned char *, size_t);
-
-		/**
 		 * Create a linked list of apn_app's
 		 * @param[out] 1st Put the list of app's here.
 		 * @param[in] 2nd Create list from these binaries.

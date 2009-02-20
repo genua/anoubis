@@ -91,7 +91,7 @@ CsumCalcTask::exec(void)
 			this->result_ = anoubis_csum_link_calc(
 			    path_.fn_str(), this->cs_, &cslen);
 		else
-			this->result_ = anoubis_csum_calc(
+			this->result_ = calculateCsum(
 			    path_.fn_str(), this->cs_, &cslen);
 
 		this->result_ *= -1;
@@ -129,4 +129,15 @@ CsumCalcTask::reset(void)
 
 	for (int i = 0; i < ANOUBIS_CS_LEN; i++)
 		this->cs_[i] = 0;
+}
+
+int
+CsumCalcTask::calculateCsum(const char *path, u_int8_t *csum, int *csum_len)
+{
+	struct stat fstat;
+
+	if (lstat("/dev/anoubis", &fstat) == 0)
+		return anoubis_csum_calc(path, csum, csum_len);
+	else
+		return anoubis_csum_calc_userspace(path, csum, csum_len);
 }

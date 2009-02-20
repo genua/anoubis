@@ -63,6 +63,15 @@ libcsum_a_SOURCES_flawfinder =	\
 	csum.c_flawfinder	\
 	csum.h_flawfinder
 
+noinst_PROGRAMS = libcsum.so
+libcsum_so_CFLAGS = -fPIC -shared -std=gnu99 $(shared_AM_CFLAGS) -Wno-error
+libcsum_so_CPPFLAGS = $(libcsum_a_CPPFLAGS)
+libcsum_so_SOURCES = $(libcsum_a_SOURCES)
+libcsum_so_LDFLAGS = -nostartfiles -shared $(shared_AM_LDFLAGS)
+if NEEDBSDCOMPAT
+libcsum_so_LDADD = -lbsdcompat -L$(top_builddir)/$(bsdcompatdir)
+endif
+
 flawfinder_FLAGS=
 splint_FLAGS=$(libcsum_a_CPPFLAGS)
 lint_FLAGS=$(libcsum_a_CPPFLAGS)

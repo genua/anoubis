@@ -89,6 +89,40 @@ anoubis_csum_calc(const char *file, u_int8_t * csbuf, int *cslen)
 	return 0;
 }
 
+int anoubis_csum_calc_userspace(const char *file, u_int8_t *cs, int *cslen)
+{
+	SHA256_CTX	shaCtx;
+	int		fd, nread;
+	unsigned char	buf[1024];
+
+	if ((file == NULL) || (cs == NULL) || (cslen == NULL) ||
+	    (*cslen < ANOUBIS_CS_LEN)) {
+		return -EINVAL;
+	}
+
+	fd = open(file, O_RDONLY);
+	if (fd == -1)
+		return (-errno);
+
+	SHA256_Init(&shaCtx);
+
+	/* Read file chunk by chunk and put it into SHA256_CTX */
+	while ((nread = read(fd, buf, sizeof(buf))) > 0) {
+		SHA256_Update(&shaCtx, buf, nread);
+	}
+
+	SHA256_Final(cs, &shaCtx);
+
+	close(fd);
+
+	if (nread == -1) {
+		/* read operation failed */
+		return (-errno);
+	}
+
+	return (0);
+}
+
 int
 anoubis_csum_link_calc(const char *link, u_int8_t * csbuf, int *cslen)
 {

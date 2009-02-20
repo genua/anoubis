@@ -25,4 +25,54 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ##########################################################################
 
-SUBDIRS = apnvm csum
+TESTS = test_csum
+
+bsdcompatdir	= src/bsdcompat
+libbsdcompat	= $(top_builddir)/$(bsdcompatdir)/libbsdcompat.a
+chatdir		= src/libanoubischat
+protocoldir	= src/libanoubisprotocol
+csumdir		= src/libanoubisui/csum
+csum		= $(top_builddir)/$(csumdir)/libcsum.a
+anoubischeckdir = test/libanoubischeck
+libanoubischeck = $(top_builddir)/$(anoubischeckdir)/libanoubischeck.a
+
+# set TESTS_ENVIRONMENT for checks
+RPATH = $(top_builddir)/$(bsdcompatdir)
+TESTS_ENVIRONMENT = LD_LIBRARY_PATH=$(RPATH)
+
+noinst_PROGRAMS = test_csum
+
+test_csum_CFLAGS = \
+	-I$(top_builddir)/src \
+	-I$(top_srcdir)/include \
+	$(AM_CFLAGS) \
+	@CHECK_CFLAGS@
+
+test_csum_CPPFLAGS = \
+	-I$(top_srcdir)/$(csumdir) \
+	-I$(top_srcdir)/$(chatdir) \
+	-I$(top_srcdir)/$(protocoldir) \
+	-I$(top_srcdir)/$(anoubischeckdir)
+
+test_csum_DEPENDENCIES =
+
+# conditionally static link of libraries to accomplish correct Code Coverage
+if GCOV_ENABLED
+test_csum_LDADD = @CHECK_LIBS@ $(csum) $(libanoubischeck) -lfl -lssl
+test_csum_LDFLAGS = \
+	$(AM_LDFLAGS) \
+	-L$(top_builddir)/$(csumdir)
+else
+test_csum_LDADD = @CHECK_LIBS@ $(libanoubischeck) -lfl -lssl \
+    -L$(top_builddir)/$(csumdir) -lcsum
+test_csum_LDFLAGS = $(AM_LDFLAGS) -dynamic
+endif
+
+if NEEDBSDCOMPAT
+test_csum_DEPENDENCIES += $(libbsdcompat)
+test_csum_CPPFLAGS += -I$(top_srcdir)/$(bsdcompatdir)
+test_csum_LDADD += $(libbsdcompat)
+endif
+
+test_csum_SOURCES = \
+	csum_testrunner.c

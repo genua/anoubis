@@ -87,62 +87,6 @@ PolicyUtils::csumToString(unsigned char csum[MAX_APN_HASH_LEN],
 	return (true);
 }
 
-/*
- * XXX ch: Is this method still needed?
- * XXX ch: anoubis_csum_calc() requests csum from kernel
- */
-int
-PolicyUtils::calculateHash(wxString binary,
-    unsigned char csum[MAX_APN_HASH_LEN], size_t length)
-{
-	size_t		 ret;
-	struct stat	 fileStat;
-	SHA256_CTX	 shaCtx;
-	u_int8_t	 buf[4096];
-	wxFile		*file;
-
-	/* At first we looking for any UNIX file permissions */
-	/* XXX ch: this was before: (const char *)binary.mb_str(wxConvLocal) */
-	if (stat(binary.To8BitData(), &fileStat) < 0) {
-		return (-1);
-	}
-
-	if (! (fileStat.st_mode & S_IRUSR)) {
-		return (-2);
-	}
-
-	/* Now we looking if Sfs let us access the file	*/
-	if (wxFileExists(binary)) {
-		/*if (!wxFile::Access(getBinaryName().c_str(), wxFile::read))*/
-		if (!wxFileName::IsFileReadable(binary)) {
-			return (0);
-		}
-	} else {
-		return (-1);
-	}
-
-	file = new wxFile(binary.c_str());
-	memset(csum, 0, length);
-
-	if (file->IsOpened()) {
-		SHA256_Init(&shaCtx);
-		while (1) {
-			ret = file->Read(buf, sizeof(buf));
-			if (ret == 0) {
-				break;
-			}
-			if (ret == (size_t)wxInvalidOffset) {
-				return (-1);
-			}
-			SHA256_Update(&shaCtx, buf, ret);
-		}
-		SHA256_Final(csum, &shaCtx);
-		file->Close();
-	}
-
-	return (1);
-}
-
 bool
 PolicyUtils::setAppList(struct apn_app **appList, wxArrayString list)
 {

@@ -139,6 +139,7 @@ AC_CONFIG_FILES([
 	test/libapn/Makefile
 	test/libanoubisui/Makefile
 	test/libanoubisui/apnvm/Makefile
+	test/libanoubisui/csum/Makefile
 	include/Makefile
 	include/linux/Makefile
 	include/dev/Makefile
