@@ -108,10 +108,6 @@ pe_sfs_match_one(struct apn_rule *rule, struct pe_file_event *fevent,
 		(*matchp) = ANOUBIS_SFS_DEFAULT;
 		return &tmpresult;
 	}
-	if (fevent->cslen != ANOUBIS_CS_LEN) {
-		(*matchp) = ANOUBIS_SFS_UNKNOWN;
-		return &rule->rule.sfsaccess.unknown;
-	}
 
 	cs = NULL;
 	switch (subject->type) {
@@ -148,7 +144,8 @@ pe_sfs_match_one(struct apn_rule *rule, struct pe_file_event *fevent,
 		(*matchp) = ANOUBIS_SFS_UNKNOWN;
 		return &rule->rule.sfsaccess.unknown;
 	}
-	if (memcmp(cs, fevent->cs, ANOUBIS_CS_LEN) != 0) {
+	if ((fevent->cslen != ANOUBIS_CS_LEN) ||
+	    (memcmp(cs, fevent->cs, ANOUBIS_CS_LEN) != 0)) {
 		(*matchp) = ANOUBIS_SFS_INVALID;
 		return &rule->rule.sfsaccess.invalid;
 	}
