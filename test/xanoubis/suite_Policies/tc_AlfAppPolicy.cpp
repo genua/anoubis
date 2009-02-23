@@ -65,10 +65,16 @@ createApnRule(const char *name)
 	rule->app->name = strdup(name);
 	rule->app->hashtype = APN_HASH_SHA256;
 
+	/* Create fake csum */
+	for (size_t i=0; i<APN_HASH_SHA256_LEN; i++) {
+		rule->app->hashvalue[i] = 1;
+	}
+
 	return (rule);
 }
 
 static wxString		 initName;
+static wxString		 initCsum;
 static apn_rule		*rule     = NULL;
 static PolicyObserver	*observer = NULL;
 static AlfAppPolicy	*policy   = NULL;
@@ -76,6 +82,8 @@ static AlfAppPolicy	*policy   = NULL;
 static void
 setup(void)
 {
+	bool rc;
+
 	fail_if(rule     != NULL, "apn rule already exists @ setup().");
 	fail_if(observer != NULL, "observer already exists @ setup().");
 	fail_if(policy   != NULL, "Policy already exists @ setup().");
@@ -83,6 +91,10 @@ setup(void)
 	initName = wxT("/usr/bin/test");
 	rule = createApnRule(initName.fn_str());
 	FAIL_IFZERO(rule, "Couldn't create apn filter rule.");
+
+	rc = PolicyUtils::csumToString(rule->app->hashvalue,
+	    APN_HASH_SHA256_LEN, initCsum);
+	fail_if(rc != true, "Couldn't convert native csum.");
 
 	policy = new AlfAppPolicy(NULL, rule);
 	FAIL_IFZERO(policy, "Couldn't create AlfFilterPolicy.");
@@ -557,6 +569,121 @@ START_TEST(AlfAppPolicy_setHashTypeNo)
 }
 END_TEST
 
+START_TEST(AlfAppPolicy_setHashValue_zero)
+{
+	wxString	 setCsum;
+
+	delete policy;
+	policy = NULL;
+	mark_point();
+
+	policy = new AlfAppPolicy(NULL, NULL);
+	FAIL_IFZERO(policy, "Couldn't create AlfAppPolicy(NULL, NULL)");
+
+	if (!observer->addSubject(policy)) {
+		fail("Couldn't add new policy.");
+	}
+
+	setCsum = wxT(
+	    "00000026aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+
+	/* test index 0 */
+	if (policy->setHashValueString(setCsum, 0)) {
+		fail("setHashValueString() to non-existing rule, idx 0.");
+	}
+	CHECK_POLICY_MODIFIED(policy, false);
+	CHECK_OBSERVER_NOTIFIED(observer, false);
+	CHECK_POLICY_GETBINARYCOUNT(policy, 0);
+
+	/* test index 1 */
+	if (policy->setHashValueString(setCsum, 1)) {
+		fail("setHashValueString() to non-existing rule, idx 1.");
+	}
+	CHECK_POLICY_MODIFIED(policy, false);
+	CHECK_OBSERVER_NOTIFIED(observer, false);
+	CHECK_POLICY_GETBINARYCOUNT(policy, 0);
+}
+END_TEST
+
+START_TEST(AlfAppPolicy_setHashValue_one)
+{
+	wxString	 setCsum;
+	wxString	 getCsum;
+
+	/* test: index 1 - expect to fail */
+	setCsum = wxT(
+	    "00000026aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+	if (policy->setHashValueString(setCsum, 1)) {
+		fail("setHashValueString(): invalid index succeeded.");
+	}
+	CHECK_POLICY_MODIFIED(policy, false);
+	CHECK_OBSERVER_NOTIFIED(observer, false);
+	CHECK_POLICY_GETBINARYCOUNT(policy, 1);
+	getCsum = policy->getHashValueName(0);
+	if (!getCsum.IsSameAs(initCsum)) {
+		fail("setHashValueString(): unexpected csum changed:\n"
+		    "%ls\n not equal\n%ls", initCsum.c_str(), getCsum.c_str());
+	}
+
+	/* test: index 1 - expect to fail */
+	setCsum = wxT("00000026");
+	if (policy->setHashValueString(setCsum, 1)) {
+		fail("setHashValueString(): invalid index succeeded.");
+	}
+	CHECK_POLICY_MODIFIED(policy, false);
+	CHECK_OBSERVER_NOTIFIED(observer, false);
+	CHECK_POLICY_GETBINARYCOUNT(policy, 1);
+	getCsum = policy->getHashValueName(0);
+	if (!getCsum.IsSameAs(initCsum)) {
+		fail("setHashValueString(): unexpected csum changed:\n"
+		    "%ls\n not equal\n%ls", initCsum.c_str(), getCsum.c_str());
+	}
+
+	/* test: index 1 - expect to fail */
+	setCsum = wxEmptyString;
+	if (policy->setHashValueString(setCsum, 1)) {
+		fail("setHashValueString(): invalid index succeeded.");
+	}
+	CHECK_POLICY_MODIFIED(policy, false);
+	CHECK_OBSERVER_NOTIFIED(observer, false);
+	CHECK_POLICY_GETBINARYCOUNT(policy, 1);
+	getCsum = policy->getHashValueName(0);
+	if (!getCsum.IsSameAs(initCsum)) {
+		fail("setHashValueString(): unexpected csum changed:\n"
+		    "%ls\n not equal\n%ls", initCsum.c_str(), getCsum.c_str());
+	}
+
+	/* test: index 0 - expect to fail */
+	setCsum = wxEmptyString;
+	if (policy->setHashValueString(setCsum, 0)) {
+		fail("setHashValueString(): invalid index succeeded.");
+	}
+	CHECK_POLICY_MODIFIED(policy, false);
+	CHECK_OBSERVER_NOTIFIED(observer, false);
+	CHECK_POLICY_GETBINARYCOUNT(policy, 1);
+	getCsum = policy->getHashValueName(0);
+	if (!getCsum.IsSameAs(initCsum)) {
+		fail("setHashValueString(): unexpected csum changed:\n"
+		    "%ls\n not equal\n%ls", initCsum.c_str(), getCsum.c_str());
+	}
+
+	/* test: index 0 - expect to fail */
+	setCsum = wxT(
+	    "00000026aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+	if (!policy->setHashValueString(setCsum, 0)) {
+		fail("setHashValueString(): not successfull.");
+	}
+	CHECK_POLICY_MODIFIED(policy, true);
+	CHECK_OBSERVER_NOTIFIED(observer, true);
+	CHECK_POLICY_GETBINARYCOUNT(policy, 1);
+	getCsum = policy->getHashValueName(0);
+	if (!getCsum.IsSameAs(setCsum)) {
+		fail("setHashValueString(): unexpected csum:\n"
+		    "%ls\n not equal\n%ls", setCsum.c_str(), getCsum.c_str());
+	}
+}
+END_TEST
+
 /*
  * Test case
  */
@@ -575,6 +702,8 @@ getTc_AlfAppPolicy(void)
 	tcase_add_test(testCase, AlfAppPolicy_setBinaryName_two);
 	tcase_add_test(testCase, AlfAppPolicy_setBinaryList);
 	tcase_add_test(testCase, AlfAppPolicy_setHashTypeNo);
+	tcase_add_test(testCase, AlfAppPolicy_setHashValue_zero);
+	tcase_add_test(testCase, AlfAppPolicy_setHashValue_one);
 
 	return (testCase);
 }

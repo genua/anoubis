@@ -165,9 +165,9 @@ class DlgRuleEditorAppPageBase : public wxPanel
 		wxButton* validateButton;
 		wxButton* updateButton;
 		
-		
 		wxButton* addButton;
 		wxButton* deleteButton;
+		
 		
 		// Virtual event handlers, overide them in your derived class
 		virtual void onBinaryTextKillFocus( wxFocusEvent& event ){ event.Skip(); }

@@ -354,14 +354,14 @@ DlgRuleEditorAppPageBase::DlgRuleEditorAppPageBase( wxWindow* parent, wxWindowID
 	wxBoxSizer* footerSizer;
 	footerSizer = new wxBoxSizer( wxHORIZONTAL );
 	
-	
-	footerSizer->Add( 0, 0, 1, wxEXPAND, 5 );
-	
 	addButton = new wxButton( mainPage, ID_APP_PAGE_ADD, _("add"), wxDefaultPosition, wxDefaultSize, 0 );
 	footerSizer->Add( addButton, 0, wxALL, 5 );
 	
 	deleteButton = new wxButton( mainPage, ID_APP_PAGE_DELETE, _("delete"), wxDefaultPosition, wxDefaultSize, 0 );
 	footerSizer->Add( deleteButton, 0, wxALL, 5 );
+	
+	
+	footerSizer->Add( 0, 0, 1, wxEXPAND, 5 );
 	
 	mainSizer->Add( footerSizer, 0, wxEXPAND, 5 );
 	

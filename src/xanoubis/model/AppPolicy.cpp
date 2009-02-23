@@ -137,6 +137,7 @@ AppPolicy::setBinaryName(wxString binary, unsigned int idx)
 	startChange();
 	free(app->name);
 	app->name = strdup(binary.To8BitData());
+	app->hashtype = APN_HASH_SHA256;
 	setModified();
 	finishChange();
 
@@ -157,6 +158,9 @@ AppPolicy::setBinaryList(wxArrayString binaryList)
 
 	startChange();
 	result = PolicyUtils::setAppList(&(rule->app), binaryList);
+	if (result == true) {
+		setAllToHashTypeNo(APN_HASH_SHA256);
+	}
 	setModified();
 	finishChange();
 
@@ -420,6 +424,10 @@ bool
 AppPolicy::setHashValueString(const wxString & csumString, unsigned int idx)
 {
 	unsigned char csum[MAX_APN_HASH_LEN];
+
+	if (csumString.IsEmpty()) {
+		return (false);
+	}
 
 	memset(csum, 0, MAX_APN_HASH_LEN);
 	PolicyUtils::stringToCsum(csumString, csum, MAX_APN_HASH_LEN);

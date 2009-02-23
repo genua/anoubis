@@ -117,6 +117,11 @@ class DlgRuleEditorAppPage : public DlgRuleEditorPage,
 		unsigned int binaryIndex_;
 
 		/**
+		 * In case of new binary to automatic validate/update.
+		 */
+		bool automaticOnNew_;
+
+		/**
 		 * Cache the checksum of this binary.
 		 */
 		wxString csumCache_;
@@ -165,6 +170,24 @@ class DlgRuleEditorAppPage : public DlgRuleEditorPage,
 		void setBinary(wxString);
 
 		/**
+		 * Start calculation of current csum.
+		 * This will start the calculation of the current checksum.
+		 * The result is cached in csumCache_.
+		 * @param None.
+		 * @return Nothing.
+		 */
+		void startCalculation(void);
+
+		/**
+		 * Update the csum of the policy.
+		 * This will write the cached current checksum from csumCache_
+		 * to the policy.
+		 * @param None.
+		 * @return Nothing.
+		 */
+		void doCsumUpdate();
+
+		/**
 		 * Handle focus events from binaryTextCtrl (e.g on hit <tab>).
 		 * This will write the binary to the policy.
 		 * @param[in] 1st The event.
@@ -192,7 +215,6 @@ class DlgRuleEditorAppPage : public DlgRuleEditorPage,
 		/**
 		 * Handle events from validateButton.
 		 * This will start the calculation of the current checksum.
-		 * The result is cached in csumCache_.
 		 * @param[in] 1st The event.
 		 * @return Nothing.
 		 */

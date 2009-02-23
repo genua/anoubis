@@ -37,15 +37,13 @@
 START_TEST(PolicyUtils_csumToString)
 {
 	unsigned char csum[MAX_APN_HASH_LEN];
-	char cstxt[3+2*MAX_APN_HASH_LEN];
+	char cstxt[1+2*MAX_APN_HASH_LEN];
 	wxString	s = wxT("some other text");
 	int i;
 
-	cstxt[0] = '0';
-	cstxt[1] = 'x';
 	for (i=0; i<MAX_APN_HASH_LEN; ++i) {
 		int val = (15*(i+1)) % 256;
-		int j = 2*i+3;
+		int j = 2*i+1;
 		int x;
 		csum[i] = val;
 		for (x=0; x<2; ++x) {
@@ -57,20 +55,20 @@ START_TEST(PolicyUtils_csumToString)
 			j--;
 		}
 	}
-	cstxt[2*MAX_APN_HASH_LEN+2] = 0;
+	cstxt[2*MAX_APN_HASH_LEN] = 0;
 	fail_if(strcmp(s.fn_str(), "some other text") != 0,
 	    "Initialization of wxString failed, got '%s' instead of '%s'",
 	    (const char *)s.fn_str(), "some other text");
 	for (i = 1; i <= MAX_APN_HASH_LEN; ++i) {
 		int ret = PolicyUtils::csumToString(csum, i, s);
 		fail_unless(ret, "csumToString failed for len=%d", i);
-		fail_unless(strlen(s.fn_str()) == 2U*i+2,
-		    "Wrong length for csum, should be %d but is",
-		    2*i+2, strlen(s.fn_str()));
+		fail_unless(strlen(s.fn_str()) == 2U*i,
+		    "Wrong length for csum, should be %d but is %d",
+		    2*i, strlen(s.fn_str()));
 		ret = strncmp(s.fn_str(), cstxt, strlen(s.fn_str()));
 		fail_unless(ret == 0, "Wrong checksum '%s' returned instead "
 		    "of '%*.*s' (csum[%d]=%d)", (const char *)s.fn_str(),
-		    2*i+2, 2*i+2, cstxt, i-1, csum[i-1]);
+		    2*i, 2*i, cstxt, i-1, csum[i-1]);
 	}
 	fail_if(PolicyUtils::csumToString(csum, 0, s),
 	    "csumToString with length 0 should fail");

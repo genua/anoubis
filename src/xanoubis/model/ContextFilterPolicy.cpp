@@ -230,6 +230,7 @@ ContextFilterPolicy::setBinaryName(wxString binary, unsigned int idx)
 	startChange();
 	free(app->name);
 	app->name = strdup(binary.To8BitData());
+	app->hashtype = APN_HASH_SHA256;
 	setModified();
 	finishChange();
 
@@ -251,6 +252,9 @@ ContextFilterPolicy::setBinaryList(wxArrayString list)
 	startChange();
 	result = PolicyUtils::setAppList(
 	    &(rule->rule.apncontext.application), list);
+	if (result == true) {
+		setAllToHashTypeNo(APN_HASH_SHA256);
+	}
 	setModified();
 	finishChange();
 
@@ -390,7 +394,7 @@ ContextFilterPolicy::setAllToHashTypeNo(int hashType)
 
 	rule = getApnRule();
 
-	if ((rule == NULL) || (rule->app == NULL)) {
+	if ((rule == NULL) || (rule->rule.apncontext.application == NULL)) {
 		return (false);
 	}
 
@@ -510,6 +514,10 @@ ContextFilterPolicy::setHashValueString(const wxString & csumString,
     unsigned int idx)
 {
 	unsigned char csum[MAX_APN_HASH_LEN];
+
+	if (csumString.IsEmpty()) {
+		return (false);
+	}
 
 	memset(csum, 0, MAX_APN_HASH_LEN);
 	PolicyUtils::stringToCsum(csumString, csum, MAX_APN_HASH_LEN);

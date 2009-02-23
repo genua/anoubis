@@ -257,7 +257,7 @@ START_TEST(SbAccessFilterPolicy_Subject)
 	if (!policy->setSubjectCsum(subject)) {
 		fail("setSubjectCsum(): not successful.");
 	}
-	subject.Prepend(wxT("csum 0x"));
+	subject.Prepend(wxT("csum "));
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
 	CHECK_POLICY_GETSUBJECTTYPENO(policy, APN_CS_CSUM);
@@ -270,8 +270,8 @@ START_TEST(SbAccessFilterPolicy_AccessMask)
 	wxString maskName;
 
 	/* Check initialization. */
-	maskName = wxEmptyString;
-	CHECK_POLICY_GETMASKNO(policy, 0);
+	maskName = wxT("rwx");
+	CHECK_POLICY_GETMASKNO(policy, APN_SBA_ALL);
 	CHECK_POLICY_GETMASKNAME(policy, maskName);
 
 	maskName = wxT("r");

@@ -39,6 +39,7 @@ DlgRuleEditorAppPage::DlgRuleEditorAppPage(wxWindow *parent,
     DlgRuleEditorAppPageBase(parent, id, pos, size, style)
 {
 	binaryIndex_ = 0;
+	automaticOnNew_ = false;
 	csumCache_ = wxEmptyString;
 	appPolicy_ = NULL;
 	ctxPolicy_ = NULL;
@@ -151,8 +152,10 @@ DlgRuleEditorAppPage::showStatus(void)
 
 	if (isAny) {
 		deleteButton->Disable();
+		validateButton->Disable();
 	} else {
 		deleteButton->Enable();
+		validateButton->Enable();
 	}
 
 	if (csumCache_.IsEmpty()) {
@@ -176,21 +179,32 @@ void
 DlgRuleEditorAppPage::setBinary(wxString binary)
 {
 	int		 selection;
+	wxString	 current;
 	wxFileName	 baseName;
 	wxNotebook	*parentNotebook;
 
 	if (appPolicy_ != NULL) {
 		if (appPolicy_->isAnyBlock()) {
 			appPolicy_->addBinary(binary);
+			automaticOnNew_ = true;
 		} else {
-			appPolicy_->setBinaryName(binary, binaryIndex_);
+			current = appPolicy_->getBinaryName(binaryIndex_);
+			if (binary.Cmp(current) != 0) {
+				appPolicy_->setBinaryName(binary, binaryIndex_);
+				automaticOnNew_ = true;
+			}
 		}
 	}
 	if (ctxPolicy_ != NULL) {
 		if (ctxPolicy_->isAny()) {
 			ctxPolicy_->addBinary(binary);
+			automaticOnNew_ = true;
 		} else {
-			ctxPolicy_->setBinaryName(binary, binaryIndex_);
+			current = ctxPolicy_->getBinaryName(binaryIndex_);
+			if (binary.Cmp(current) != 0) {
+				ctxPolicy_->setBinaryName(binary, binaryIndex_);
+				automaticOnNew_ = true;
+			}
 		}
 	}
 
@@ -207,6 +221,44 @@ DlgRuleEditorAppPage::setBinary(wxString binary)
 		selection = parentNotebook->GetSelection();
 		baseName.Assign(binary);
 		parentNotebook->SetPageText(selection, baseName.GetFullName());
+	}
+
+	if (automaticOnNew_ == true) {
+		startCalculation();
+	}
+}
+
+void
+DlgRuleEditorAppPage::startCalculation(void)
+{
+	wxString binary;
+
+	binary = wxEmptyString;
+
+	if (appPolicy_ != NULL) {
+		binary = appPolicy_->getBinaryName(binaryIndex_);
+	}
+	if (ctxPolicy_ != NULL) {
+		binary = ctxPolicy_->getBinaryName(binaryIndex_);
+	}
+
+	if (!binary.IsEmpty()) {
+		calcTask_.setPath(binary);
+		calcTask_.setCalcLink(true);
+		JobCtrl::getInstance()->addTask(&calcTask_);
+		statusText->SetLabel(_("calculating..."));
+		Layout();
+	}
+}
+
+void
+DlgRuleEditorAppPage::doCsumUpdate(void)
+{
+	if (appPolicy_ != NULL) {
+		appPolicy_->setHashValueString(csumCache_, binaryIndex_);
+	}
+	if (ctxPolicy_ != NULL) {
+		ctxPolicy_->setHashValueString(csumCache_, binaryIndex_);
 	}
 }
 
@@ -249,35 +301,13 @@ DlgRuleEditorAppPage::onPickButton(wxCommandEvent &)
 void
 DlgRuleEditorAppPage::onValidateButton(wxCommandEvent &)
 {
-	wxString binary;
-
-	binary = wxEmptyString;
-
-	if (appPolicy_ != NULL) {
-		binary = appPolicy_->getBinaryName(binaryIndex_);
-	}
-	if (ctxPolicy_ != NULL) {
-		binary = ctxPolicy_->getBinaryName(binaryIndex_);
-	}
-
-	if (!binary.IsEmpty()) {
-		calcTask_.setPath(binary);
-		calcTask_.setCalcLink(true);
-		JobCtrl::getInstance()->addTask(&calcTask_);
-		statusText->SetLabel(_("calculating..."));
-		Layout();
-	}
+	startCalculation();
 }
 
 void
 DlgRuleEditorAppPage::onUpdateButton(wxCommandEvent &)
 {
-	if (appPolicy_ != NULL) {
-		appPolicy_->setHashValueString(csumCache_, binaryIndex_);
-	}
-	if (ctxPolicy_ != NULL) {
-		ctxPolicy_->setHashValueString(csumCache_, binaryIndex_);
-	}
+	doCsumUpdate();
 }
 
 void
@@ -322,6 +352,11 @@ DlgRuleEditorAppPage::onCsumCalcTask(TaskEvent &event)
 	}
 
 	csumCache_ = task->getCsumStr();
+	if (automaticOnNew_ == true) {
+		automaticOnNew_ = false;
+		doCsumUpdate();
+	}
+
 	showCsum();
 	showStatus();
 }

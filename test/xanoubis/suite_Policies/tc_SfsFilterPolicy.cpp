@@ -169,17 +169,7 @@ START_TEST(SfsFilterPolicy_Subject)
 	wxString subject;
 
 	/* Check initialization. */
-	subject = wxT("none");
-	CHECK_POLICY_GETSUBJECTTYPENO(policy, APN_CS_NONE);
-	CHECK_POLICY_GETSUBJECTNAME(policy, subject);
-
-	/* SELF */
 	subject = wxT("self");
-	if (!policy->setSubjectSelf(false)) {
-		fail("setSubjectSelf(false): not successful.");
-	}
-	CHECK_POLICY_MODIFIED(policy, true);
-	CHECK_OBSERVER_NOTIFIED(observer, true);
 	CHECK_POLICY_GETSUBJECTTYPENO(policy, APN_CS_UID_SELF);
 	CHECK_POLICY_GETSUBJECTNAME(policy, subject);
 
@@ -191,6 +181,16 @@ START_TEST(SfsFilterPolicy_Subject)
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
 	CHECK_POLICY_GETSUBJECTTYPENO(policy, APN_CS_KEY_SELF);
+	CHECK_POLICY_GETSUBJECTNAME(policy, subject);
+
+	/* SELF */
+	subject = wxT("self");
+	if (!policy->setSubjectSelf(false)) {
+		fail("setSubjectSelf(false): not successful.");
+	}
+	CHECK_POLICY_MODIFIED(policy, true);
+	CHECK_OBSERVER_NOTIFIED(observer, true);
+	CHECK_POLICY_GETSUBJECTTYPENO(policy, APN_CS_UID_SELF);
 	CHECK_POLICY_GETSUBJECTNAME(policy, subject);
 
 	/* KEY asdfasdf */

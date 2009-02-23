@@ -170,16 +170,7 @@ START_TEST(AlfFilterPolicy_Protocol)
 	wxString protocolName;
 
 	/* Check initialization. */
-	protocolName = wxT("any");
-	CHECK_POLICY_GETPROTOCOLNO(policy, 0);
-	CHECK_POLICY_GETPROTOCOLNAME(policy, protocolName);
-
 	protocolName = wxT("tcp");
-	if (!policy->setProtocol(IPPROTO_TCP)) {
-		fail("setProtocol(IPPROTO_TCP): not successful.");
-	}
-	CHECK_POLICY_MODIFIED(policy, true);
-	CHECK_OBSERVER_NOTIFIED(observer, true);
 	CHECK_POLICY_GETPROTOCOLNO(policy, IPPROTO_TCP);
 	CHECK_POLICY_GETPROTOCOLNAME(policy, protocolName);
 
@@ -190,6 +181,15 @@ START_TEST(AlfFilterPolicy_Protocol)
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
 	CHECK_POLICY_GETPROTOCOLNO(policy, IPPROTO_UDP);
+	CHECK_POLICY_GETPROTOCOLNAME(policy, protocolName);
+
+	protocolName = wxT("tcp");
+	if (!policy->setProtocol(IPPROTO_TCP)) {
+		fail("setProtocol(IPPROTO_TCP): not successful.");
+	}
+	CHECK_POLICY_MODIFIED(policy, true);
+	CHECK_OBSERVER_NOTIFIED(observer, true);
+	CHECK_POLICY_GETPROTOCOLNO(policy, IPPROTO_TCP);
 	CHECK_POLICY_GETPROTOCOLNAME(policy, protocolName);
 
 	protocolName = wxT("any");
@@ -211,7 +211,7 @@ START_TEST(AlfFilterPolicy_DirectionNo)
 	directionName = wxT("connect");
 	CHECK_POLICY_GETDIRECTIONNO(policy, APN_CONNECT);
 	CHECK_POLICY_GETDIRECTIONNAME(policy, directionName);
-	CHECK_POLICY_GETPROTOCOLNO(policy, 0);
+	CHECK_POLICY_GETPROTOCOLNO(policy, IPPROTO_TCP);
 
 	/*
 	 * TCP
