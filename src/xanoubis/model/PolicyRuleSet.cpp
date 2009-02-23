@@ -535,7 +535,7 @@ PolicyRuleSet::createAnswerPolicy(EscalationNotify *escalation)
 	struct apn_ruleset		*rs;
 	unsigned int			 triggerid;
 	unsigned long			 flags;
-	struct apn_rule			*triggerrule, *newblock = NULL;
+	struct apn_rule			*triggerrule, *newblock = NULL, *tmp;
 	struct apn_chain		 tmpchain;
 	const struct anoubis_msg	*msg;
 	const struct alf_event		*kernevent;
@@ -544,6 +544,7 @@ PolicyRuleSet::createAnswerPolicy(EscalationNotify *escalation)
 	anoubis_cookie_t		 task = 0;
 	NotifyAnswer			*answer;
 	wxCommandEvent			 event(anEVT_LOAD_RULESET);
+	wxCommandEvent			 editevent(anEVT_SHOW_RULE);
 	FilterPolicy			*triggerPolicy;
 	AppPolicy			*parentPolicy;
 	wxString			 module = escalation->getModule();
@@ -643,6 +644,7 @@ PolicyRuleSet::createAnswerPolicy(EscalationNotify *escalation)
 	if (apn_escalation_addscope(&tmpchain, triggerrule->scope,
 	    timeout, task) != 0)
 		goto err;
+	tmp = TAILQ_FIRST(&tmpchain);
 	if (newblock) {
 		if (apn_escalation_splice(NULL, triggerrule, &tmpchain) != 0)
 			goto err;
@@ -658,6 +660,11 @@ PolicyRuleSet::createAnswerPolicy(EscalationNotify *escalation)
 	ProfileCtrl::getInstance()->sendToDaemon(getRuleSetId());
 	event.SetClientData(this);
 	wxPostEvent(AnEvents::getInstance(), event);
+	if (tmp && answer->getEditor()) {
+		editevent.SetInt(false);
+		editevent.SetExtraLong(tmp->apn_id);
+		wxPostEvent(AnEvents::getInstance(), editevent);
+	}
 	return;
 err:
 	/* XXX CEH: Serious error! Show a popup here? */

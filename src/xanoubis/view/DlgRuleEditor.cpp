@@ -60,6 +60,8 @@ DlgRuleEditor::DlgRuleEditor(wxWindow* parent)
 	    wxCommandEventHandler(DlgRuleEditor::onShow), NULL, this);
 	anEvents->Connect(anEVT_LOAD_RULESET,
 	    wxCommandEventHandler(DlgRuleEditor::onLoadNewRuleSet), NULL, this);
+	anEvents->Connect(anEVT_SHOW_RULE,
+	    wxCommandEventHandler(DlgRuleEditor::onShowRule), NULL, this);
 
 	/* We want to know connect-status for save/reload button */
 	JobCtrl::getInstance()->Connect(anEVT_COM_CONNECTION,
@@ -172,6 +174,8 @@ DlgRuleEditor::~DlgRuleEditor(void)
 	    wxCommandEventHandler(DlgRuleEditor::onShow), NULL, this);
 	anEvents->Disconnect(anEVT_LOAD_RULESET,
 	    wxCommandEventHandler(DlgRuleEditor::onLoadNewRuleSet), NULL, this);
+	anEvents->Disconnect(anEVT_SHOW_RULE,
+	    wxCommandEventHandler(DlgRuleEditor::onShowRule), NULL, this);
 
 	JobCtrl::getInstance()->Disconnect(anEVT_COM_CONNECTION,
 	    wxCommandEventHandler(DlgRuleEditor::onConnectionStateChange),
@@ -544,10 +548,52 @@ DlgRuleEditor::onLoadNewRuleSet(wxCommandEvent &event)
 }
 
 void
+DlgRuleEditor::onShowRule(wxCommandEvent& event)
+{
+	ProfileCtrl	*profileCtrl;
+	struct apn_rule	*apnrule;
+	FilterPolicy	*filter;
+	AppPolicy	*app;
+	wxListEvent	 ev;
+	PolicyRuleSet	*rs;
+	int		 idx;
+
+	profileCtrl = ProfileCtrl::getInstance();
+	event.Skip();
+
+	if (event.GetInt()) {
+		rs = profileCtrl->getRuleSet(adminRuleSetId_);
+	} else {
+		rs = profileCtrl->getRuleSet(userRuleSetId_);
+	}
+	if (rs == NULL)
+		return;
+	apnrule = apn_find_rule(rs->getApnRuleSet(), event.GetExtraLong());
+	if (apnrule == NULL)
+		return;
+	filter = dynamic_cast<FilterPolicy*>((Policy*)apnrule->userdata);
+	if (!filter)
+		return;
+	app = filter->getParentPolicy();
+	idx = findListRow(appPolicyListCtrl, app);
+	if (idx < 0)
+		return;
+	this->Show();
+	this->Raise();
+	appPolicyListCtrl->SetItemState(idx, wxLIST_STATE_SELECTED,
+	    wxLIST_STATE_SELECTED);
+	idx = findListRow(filterPolicyListCtrl, filter);
+	if (idx >= 0) {
+		filterPolicyListCtrl->SetItemState(idx, wxLIST_STATE_SELECTED,
+		    wxLIST_STATE_SELECTED);
+	}
+}
+
+void
 DlgRuleEditor::onAppPolicySelect(wxListEvent & event)
 {
+	AppPolicy	*policy;
 	wxString			 newLabel;
-	AppPolicy			*policy;
 	PolicyRuleSet			*ruleset;
 
 	policy = wxDynamicCast((void*)event.GetData(), AppPolicy);

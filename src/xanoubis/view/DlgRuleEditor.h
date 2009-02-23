@@ -298,6 +298,17 @@ class DlgRuleEditor : public Observer, public DlgRuleEditorBase
 		void onLoadNewRuleSet(wxCommandEvent &);
 
 		/**
+		 * Handle Show rule events from the log viewer and the
+		 * escalation handling.
+		 * @param[in] 1st The command event.
+		 * @return Nothing.
+		 * The Command member (SetInt) is true if we show a rule from
+		 * the admin rule set, otherwise it is false. The extra long
+		 * member is the rule id.
+		 */
+		void onShowRule(wxCommandEvent& event);
+
+		/**
 		 * Handle selection of app policy.
 		 * @param[in] 1st The event.
 		 * @return Nothing.

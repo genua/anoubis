@@ -186,7 +186,7 @@ DlgLogViewer::OnListItemSelected(wxListEvent& event)
 
 	if (notify->getRuleId() > 0) {
 		wxCommandEvent  showEvent(anEVT_SHOW_RULE);
-		showEvent.SetInt(true);
+		showEvent.SetInt(notify->isAdmin());
 		showEvent.SetExtraLong(notify->getRuleId());
 		wxPostEvent(AnEvents::getInstance(), showEvent);
 	}
