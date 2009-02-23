@@ -97,6 +97,13 @@ ProfileCtrl::getRuleSet(long id) const
 			return (rs);
 	}
 
+	for (it = gcRuleSetList_.begin(); it != gcRuleSetList_.end(); ++it) {
+		PolicyRuleSet *rs = (*it);
+
+		if (rs->getRuleSetId() == id)
+			return (rs);
+	}
+
 	return (0);
 }
 

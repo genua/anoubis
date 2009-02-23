@@ -534,6 +534,37 @@ START_TEST(ProfileCtrl_getRuleSetWrongId)
 }
 END_TEST
 
+START_TEST(ProfileCtrl_getRuleSetGarbage)
+{
+	long oldId = pc->getUserId();
+
+	/*
+	 * Lock the ruleset, let it move to the garbage-list after importing
+	 * another policy.
+	 */
+	PolicyRuleSet *oldRs = pc->getRuleSet(oldId);
+	oldRs->lock();
+
+	bool result = pc->importFromProfile(wxT("user1"));
+	fail_unless(result == true, "Import from \"user1\" failed");
+
+	long newId = pc->getUserId();
+
+	fail_unless(oldId != newId, "Id of user-policy has not changed.\n"
+	    "OldId = %i\n"
+	    "NewId = %i", oldId, newId);
+
+	oldRs = pc->getRuleSet(oldId);
+	PolicyRuleSet *newRs = pc->getRuleSet(newId);
+
+	fail_unless(oldRs != 0, "No policy for OldId = %i fetched!", oldId);
+	fail_unless(newRs != 0, "No policy for NewId = %i fetched!", newId);
+	fail_unless(oldRs != newRs,
+	    "Same policy fetched for OldId = %i, NewId = %i",
+	    oldId, newId);
+}
+END_TEST
+
 START_TEST(ProfileCtrl_importNoProfile)
 {
 	bool result = pc->importFromProfile(wxT("foobar"));
@@ -718,6 +749,7 @@ getTc_ProfileCtrl(void)
 	tcase_add_test(testCase, ProfileCtrl_getAdminPolicy);
 	tcase_add_test(testCase, ProfileCtrl_getAdminPolicyWrongUid);
 	tcase_add_test(testCase, ProfileCtrl_getRuleSetWrongId);
+	tcase_add_test(testCase, ProfileCtrl_getRuleSetGarbage);
 	tcase_add_test(testCase, ProfileCtrl_importNoProfile);
 	tcase_add_test(testCase, ProfileCtrl_importUserProfile);
 	tcase_add_test(testCase, ProfileCtrl_importDefaultProfile);
