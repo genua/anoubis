@@ -55,6 +55,7 @@ Requires:	anoubisd
 Requires:	wxGTK >= 2.8
 Requires:	libevent
 Requires:	libnotify
+Requires:	cvs
 
 %description -n xanoubis
 GUI of the Anoubis Security Suite.
