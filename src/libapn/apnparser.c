@@ -721,6 +721,15 @@ apn_print_rule(struct apn_rule *rule, int flags, FILE *file)
 
 	if (rule == NULL || file == NULL)
 		return (1);
+	/*
+	 * Skip rules with no sandbox permission. This is for the benefit
+	 * of the GUI which cannot easily support checkboxes where at least
+	 * one value ist set.
+	 */
+	if (rule->apn_type == APN_SB_ACCESS) {
+		if ((rule->rule.sbaccess.amask & APN_SBA_ALL) == 0)
+			return 0;
+	}
 
 	if (rule->apn_type != APN_SFS) {
 		fprintf(file, "%ld: ", rule->apn_id);

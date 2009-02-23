@@ -50,6 +50,7 @@ SfsFilterPolicy::createApnRule(void)
 	rule = FilterPolicy::createApnRule();
 	if (rule != NULL) {
 		rule->apn_type = APN_SFS_ACCESS;
+		rule->rule.sfsaccess.subject.type = APN_CS_UID_SELF;
 	}
 
 	return (rule);

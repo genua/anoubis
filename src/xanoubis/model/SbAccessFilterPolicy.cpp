@@ -56,6 +56,7 @@ SbAccessFilterPolicy::createApnRule(void)
 	rule = FilterPolicy::createApnRule();
 	if (rule != NULL) {
 		rule->apn_type = APN_SB_ACCESS;
+		rule->rule.sbaccess.amask = APN_SBA_ALL;
 	}
 
 	return (rule);
