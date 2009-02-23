@@ -62,6 +62,8 @@ AlfFilterPolicy::createApnRule(void)
 	rule = FilterPolicy::createApnRule();
 	if (rule != NULL) {
 		rule->apn_type = APN_ALF_FILTER;
+		rule->rule.afilt.filtspec.proto = IPPROTO_TCP;
+		rule->rule.afilt.filtspec.netaccess = APN_CONNECT;
 	}
 
 	return (rule);
@@ -87,7 +89,7 @@ AlfFilterPolicy::createApnHost(wxString host, int af)
 	ipString = host.BeforeFirst('/');
 	netString = host.AfterLast('/');
 	if (netString.IsSameAs(ipString)) {
-		netmask = 0;
+		netmask = (af == AF_INET) ? 32 : 128;
 	} else {
 		netString.ToLong(&netmask);
 	}
@@ -119,22 +121,37 @@ AlfFilterPolicy::createApnHost(wxString host, int af)
 struct apn_port *
 AlfFilterPolicy::createApnPort(wxString port)
 {
-	int		 idx;
-	long		 longPort;
+	int		 lcnt, rcnt;
+	long		 p1=0, p2=0;
 	struct apn_port *apnPort;
 
 	apnPort = (struct apn_port *)calloc(1, sizeof(struct apn_port));
 	if (apnPort != NULL) {
-		idx = port.Find(wxT("-"));
-		if (idx == wxNOT_FOUND) {
-			port.ToLong(&longPort);
-			apnPort->port = htons((int)longPort);
-			apnPort->port2 = 0;
+		lcnt = port.Find(wxT("-"));
+		if (lcnt == wxNOT_FOUND) {
+			if (port.ToLong(&p1)) {
+				apnPort->port = htons((int)p1);
+				apnPort->port2 = 0;
+			} else {
+				free(apnPort);
+				apnPort = NULL;
+			}
 		} else {
-			port.Left(idx).ToLong(&longPort);
-			apnPort->port = htons((int)longPort);
-			port.Right(idx).ToLong(&longPort);
-			apnPort->port2 = htons((int)longPort);
+			rcnt = port.Len() - lcnt - 1;
+			wxString	left = port.Left(lcnt);
+			wxString	right = port.Right(rcnt);
+
+			left.Trim(true);
+			left.Trim(false);
+			right.Trim(true);
+			right.Trim(false);
+			if (left.ToLong(&p1) && right.ToLong(&p2)) {
+				apnPort->port = htons((int)p1);
+				apnPort->port2 = htons((int)p2);
+			} else {
+				free(apnPort);
+				return NULL;
+			}
 		}
 	}
 
@@ -422,7 +439,8 @@ AlfFilterPolicy::setFromHostName(wxString fromHost)
 bool
 AlfFilterPolicy::setFromHostList(wxArrayString hostList)
 {
-	struct apn_host *fromHost;
+	struct apn_host **fromHostPtr;
+	int		  af = getAddrFamilyNo();
 
 	if (getApnRule() == NULL) {
 		return (false);
@@ -431,6 +449,7 @@ AlfFilterPolicy::setFromHostList(wxArrayString hostList)
 	startChange();
 	apn_free_host(getApnRule()->rule.afilt.filtspec.fromhost);
 	getApnRule()->rule.afilt.filtspec.fromhost = NULL;
+	fromHostPtr = &(getApnRule()->rule.afilt.filtspec.fromhost);
 
 	if ((hostList.GetCount() == 1) &&
 	    (hostList.Item(0).Cmp(wxT("any")) == 0)) {
@@ -441,24 +460,27 @@ AlfFilterPolicy::setFromHostList(wxArrayString hostList)
 	}
 
 	if (!hostList.IsEmpty()) {
-		/* For the first element: */
-		fromHost = createApnHost(hostList.Item(0), getAddrFamilyNo());
-		getApnRule()->rule.afilt.filtspec.fromhost = fromHost;
-		if (fromHost == NULL) {
-			setModified();
-			finishChange();
-			return (false);
-		}
-		/* Foreach other elements of the list: */
-		for (size_t i = 1; i < hostList.GetCount(); i++) {
-			fromHost->next = createApnHost(hostList.Item(i),
-			    getAddrFamilyNo());
-			if (fromHost->next == NULL) {
+		for (size_t i = 0; i < hostList.GetCount(); i++) {
+			struct apn_host		*tmp = NULL;
+
+			switch (af) {
+			case AF_UNSPEC:
+			case AF_INET:
+				tmp = createApnHost(hostList.Item(i), AF_INET);
+				if (tmp || af == AF_INET)
+					break;
+			case AF_INET6:
+				tmp = createApnHost(hostList.Item(i), AF_INET6);
+				break;
+			}
+			if (tmp == NULL) {
 				setModified();
 				finishChange();
 				return (false);
 			}
-			fromHost = fromHost->next;
+			tmp->next = NULL;
+			(*fromHostPtr) = tmp;
+			fromHostPtr = &tmp->next;
 		}
 	}
 
@@ -507,7 +529,7 @@ AlfFilterPolicy::setFromPortName(wxString fromPort)
 bool
 AlfFilterPolicy::setFromPortList(wxArrayString portList)
 {
-	struct apn_port *fromPort;
+	struct apn_port **fromPortPtr;
 
 	if (getApnRule() == NULL) {
 		return (false);
@@ -516,6 +538,7 @@ AlfFilterPolicy::setFromPortList(wxArrayString portList)
 	startChange();
 	apn_free_port(getApnRule()->rule.afilt.filtspec.fromport);
 	getApnRule()->rule.afilt.filtspec.fromport = NULL;
+	fromPortPtr = &(getApnRule()->rule.afilt.filtspec.fromport);
 
 	if ((portList.GetCount() == 1) &&
 	    (portList.Item(0).Cmp(wxT("any")) == 0)) {
@@ -526,23 +549,18 @@ AlfFilterPolicy::setFromPortList(wxArrayString portList)
 	}
 
 	if (!portList.IsEmpty()) {
-		/* For the first element: */
-		fromPort = createApnPort(portList.Item(0));
-		getApnRule()->rule.afilt.filtspec.fromport = fromPort;
-		if (fromPort == NULL) {
-			setModified();
-			finishChange();
-			return (false);
-		}
-		/* Foreach other elements of the list: */
-		for (size_t i = 1; i < portList.GetCount(); i++) {
-			fromPort->next = createApnPort(portList.Item(i));
-			if (fromPort->next == NULL) {
+		for(size_t i=0; i<portList.GetCount(); ++i) {
+			struct apn_port	*tmp;
+			
+			tmp = createApnPort(portList.Item(i));
+			if (tmp == NULL) {
 				setModified();
 				finishChange();
 				return (false);
 			}
-			fromPort = fromPort->next;
+			tmp->next = NULL;
+			(*fromPortPtr) = tmp;
+			fromPortPtr = &tmp->next;
 		}
 	}
 
@@ -591,7 +609,8 @@ AlfFilterPolicy::setToHostName(wxString toHost)
 bool
 AlfFilterPolicy::setToHostList(wxArrayString hostList)
 {
-	struct apn_host *toHost;
+	struct apn_host **toHostPtr;
+	int		  af = getAddrFamilyNo();
 
 	if (getApnRule() == NULL) {
 		return (false);
@@ -600,6 +619,7 @@ AlfFilterPolicy::setToHostList(wxArrayString hostList)
 	startChange();
 	apn_free_host(getApnRule()->rule.afilt.filtspec.tohost);
 	getApnRule()->rule.afilt.filtspec.tohost = NULL;
+	toHostPtr = &(getApnRule()->rule.afilt.filtspec.tohost);
 
 	if ((hostList.GetCount() == 1) &&
 	    (hostList.Item(0).Cmp(wxT("any")) == 0)) {
@@ -610,24 +630,27 @@ AlfFilterPolicy::setToHostList(wxArrayString hostList)
 	}
 
 	if (!hostList.IsEmpty()) {
-		/* For the first element: */
-		toHost = createApnHost(hostList.Item(0), getAddrFamilyNo());
-		getApnRule()->rule.afilt.filtspec.tohost = toHost;
-		if (toHost == NULL) {
-			setModified();
-			finishChange();
-			return (false);
-		}
-		/* Foreach other elements of the list: */
-		for (size_t i = 1; i < hostList.GetCount(); i++) {
-			toHost->next = createApnHost(hostList.Item(i),
-			    getAddrFamilyNo());
-			if (toHost->next == NULL) {
+		for (size_t i = 0; i < hostList.GetCount(); i++) {
+			struct apn_host		*tmp = NULL;
+
+			switch (af) {
+			case AF_UNSPEC:
+			case AF_INET:
+				tmp = createApnHost(hostList.Item(i), AF_INET);
+				if (tmp || af == AF_INET)
+					break;
+			case AF_INET6:
+				tmp = createApnHost(hostList.Item(i), AF_INET6);
+				break;
+			}
+			if (tmp == NULL) {
 				setModified();
 				finishChange();
 				return (false);
 			}
-			toHost = toHost->next;
+			tmp->next = NULL;
+			(*toHostPtr) = tmp;
+			toHostPtr = &tmp->next;
 		}
 	}
 
@@ -676,7 +699,7 @@ AlfFilterPolicy::setToPortName(wxString toPort)
 bool
 AlfFilterPolicy::setToPortList(wxArrayString portList)
 {
-	struct apn_port *toPort;
+	struct apn_port **toPortPtr;
 
 	if (getApnRule() == NULL) {
 		return (false);
@@ -685,6 +708,7 @@ AlfFilterPolicy::setToPortList(wxArrayString portList)
 	startChange();
 	apn_free_port(getApnRule()->rule.afilt.filtspec.toport);
 	getApnRule()->rule.afilt.filtspec.toport = NULL;
+	toPortPtr = &(getApnRule()->rule.afilt.filtspec.toport);
 
 	if ((portList.GetCount() == 1) &&
 	    (portList.Item(0).Cmp(wxT("any")) == 0)) {
@@ -695,23 +719,18 @@ AlfFilterPolicy::setToPortList(wxArrayString portList)
 	}
 
 	if (!portList.IsEmpty()) {
-		/* For the first element: */
-		toPort = createApnPort(portList.Item(0));
-		getApnRule()->rule.afilt.filtspec.toport = toPort;
-		if (toPort == NULL) {
-			setModified();
-			finishChange();
-			return (false);
-		}
-		/* Foreach other elements of the list: */
-		for (size_t i = 1; i < portList.GetCount(); i++) {
-			toPort->next = createApnPort(portList.Item(i));
-			if (toPort->next == NULL) {
+		for(size_t i=0; i<portList.GetCount(); ++i) {
+			struct apn_port	*tmp;
+			
+			tmp = createApnPort(portList.Item(i));
+			if (tmp == NULL) {
 				setModified();
 				finishChange();
 				return (false);
 			}
-			toPort = toPort->next;
+			tmp->next = NULL;
+			(*toPortPtr) = tmp;
+			toPortPtr = &tmp->next;
 		}
 	}
 

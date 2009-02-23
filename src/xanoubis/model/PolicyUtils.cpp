@@ -183,23 +183,22 @@ PolicyUtils::stringToList(wxString str)
 	wxArrayString		list;
 	wxStringTokenizer	tokenizer;
 
-	/* Remove leading and trailing whithe space char's */
+	/* Remove leading and trailing white space char's */
 	workOn.Trim(true);
 	workOn.Trim(false);
 
+	/* Accept list both with and without curly braces. */
 	if (workOn.StartsWith(wxT("{")) && workOn.EndsWith(wxT("}"))) {
-		/* This is a truely list. */
-		tokenizer.SetString(workOn.Mid(1,workOn.Len() - 1), wxT(","));
-		while (tokenizer.HasMoreTokens()) {
-			token = tokenizer.GetNextToken();
-			token.Trim(true);
-			token.Trim(false);
-			list.Add(token);
-		}
+		tokenizer.SetString(workOn.Mid(1,workOn.Len() - 2), wxT(","));
 	} else {
-		list.Add(str);
+		tokenizer.SetString(workOn, wxT(","));
 	}
-
+	while (tokenizer.HasMoreTokens()) {
+		token = tokenizer.GetNextToken();
+		token.Trim(true);
+		token.Trim(false);
+		list.Add(token);
+	}
 	return (list);
 }
 
