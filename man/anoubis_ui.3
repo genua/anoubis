@@ -1,0 +1,246 @@
+.\"	$OpenBSD: mdoc.template,v 1.9 2004/07/02 10:36:57 jmc Exp $
+.\"
+.\" Copyright (c) 2007 GeNUA mbH <info@genua.de>
+.\"
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+.\" "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+.\" LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+.\" A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+.\" OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+.\" SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
+.\" TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+.\" PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+.\" LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+.\" NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+.\" SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd January 29, 2009
+.Dt ANOUBIS_UI 3
+.Os Anoubis
+.Sh NAME
+.Nm struct sfs_entry
+.Nm struct apnvm
+.NM struct apnvm_version
+.Nm struct apnvm_user
+.Nm struct apnvm_md
+.Nm enum apnvm_result
+.Nm anoubis_csum_calc
+.Nm anoubis_csum_link_calc
+.Nm anoubis_csum_list
+.Nm anoubis_print_checksum
+.Nm anoubis_print_keyid
+.Nm anoubis_print_file
+.Nm anoubis_print_entries
+.Nm anoubis_entry_free
+.Nm anoubis_build_entry
+.Nm apnvm_init
+.Nm apnvm_destroy
+.Nm apnvm_prepare
+.Nm apnvm_getuser
+.Nm apnvm_count
+.Nm apnvm_list
+.Nm apnvm_version_head_free
+.Nm apnvm_fetch
+.Nm apnvm_insert
+.Nm apnvm_remove
+
+.Nd Helper Library for Anoubis User Interfaces
+.Sh SYNOPSIS
+.In csum.h
+.In apnvm.h
+.Ft int
+.Fn anoubis_csum_calc "const char *file, u_int_8 *cs, int *cslen"
+.Ft int
+.Fn anoubis_csum_link_calc "const char *link, u_int8_t *csbuf, int *cslen"
+.Ft char **
+.Fn anoubis_csum_list "struct anoubis_msg *m, int listcnt"
+.Ft int
+.Fn anoubis_print_checksum "FILE *fd, unsigned, char *checksum, int len"
+.Ft int
+.Fn anoubis_print_keyid "FILE *fd, unsigned char *key, int len"
+.Ft int
+.Fn anoubis_print_signature "FILE *fd, unsigned char *signature, int len"
+.Ft int
+.Fn anoubis_print_file "FILE *fd, char *name"
+.Ft int
+.Fn anoubis_print_entries "FILE *fd, struct sfs_entry **list, int cnt"
+.Ft void
+.Fn anoubis_entry_free "struct sfs_entry *se"
+.Ft struct sfs_entry *
+.Fn anoubis_build_entry "const char *name, unsigned char *checksum, \
+int csumlen, unsgined char *signatrue, int siglen, uid_t uid, unsigned char \
+*keyid, int keylen"
+.Ft apnvm *
+.Fn apnvm "const char *path, const char *user"
+.Ft void
+.Fn apnvm "apnvm *ap"
+.Ft apnvm_result *
+.Fn apnvm_prepare "apnvm *vm"
+.Ft apnvm_result *
+.Fn apnvm_getuser "apnvm *vm, struct apnvm_user_head *uh"
+.Ft apnvm_result *
+.Fn apnvm_count "apnvm *vm, const char *user, const char *profile, int *cnt"
+.Ft apnvm_result *
+.Fn apnvm_list "apnvm *vm, const char *user, const char *profile, \
+struct apnvm_version_head *vh"
+.Ft void
+.Fn apnvm_version_head_free "struct apnvm_version_head *vm"
+.Ft apnvm_result
+.Fn apnvm_fetch "apnvm *vm, const char *user, int ver_num, const char *profile,\
+struct apn_ruleset *rs"
+.Ft apnvm_result
+.Fn apnvm_insert "apnvm *vm, const char *user, const char *profile, struct \
+apn_ruleset *rs, struct apnvm_md *meta"
+.Ft apnvm_result
+.Fn apnvm_remove "apnvm *vm, const char *user, const char *profile, int version"
+.Sh DESCRIPTION
+This library has essential functions for User Interfaces that are used for
+Anoubis. Its providing helper functions to work with informations from Anoubis.
+.Pp
+The function
+.Nm anoubis_csum_calc
+calculates checksums from regular files. These checksum can be used for
+storing in anoubis or comparing to already stored checksums. The arguments
+are the Name of the file, and a buffer of the size cslen.
+.Pp
+.Nm anoubis_csum_link_calc
+is the same as anoubis_csum_calc but is meant for calculating links instead of
+regular files. If a regular file is given as Parameter anoubis_csum_calc
+is called.
+.Pp
+.Nm anoubis_csum_list
+is a helper function to use reply from the anoubis daemon for LIST requests.
+The return value will be a array of strings. If filenames are requested
+directories will have a '/' at the end of the name.
+.Pp
+.Nm anoubis_print_*
+functions are used to generate export files but can be used for anything else.
+.Pp
+.Nm anoubis_print_checksum
+is printing a checksum in a human readable form to the file descriptor fd.
+.Pp
+.Nm anoubis_print_keyid
+is printing a given keyid in a human readable form to the file descriptor fd.
+.Pp
+.Nm anoubis_print_signature
+is printing the signature in a human readable form to the file descriptor fd.
+.Pp
+.Nm anoubis_print_file
+is printing the name of the file in a escaped form to the file descriptor fd.
+.Pp
+.Nm anoubis_print_entries
+prints the entry of the struct sfs_entry to a file. If the file name is "-"
+then the output will be directed to stdout.
+.Pp
+.Nm anoubis_build_entry
+takes the given arguments and put them to the struct sfs_entry. If no signature
+is given it will be left with NULL and the same for a checksum. To free the
+so occupied memory use
+.Nm anoubis_entry_free
+.Pp
+.Nm apnvm_init
+Initializes the library. The first parameter holds the path to the
+CVS-repository. The second parameter is the user-name of the user, which is
+using the library. This is the user, which administrates a set of policy-sets.
+.Pp
+.Nm apnvm_destroy
+Destroys the library-handle.
+.Pp
+.Nm apnvm_prepare
+Prepares the library. For example, the user-module of the CVS-repository is
+checked out. You need to invoke the function after initialization and before
+any library-operation.
+.Pp
+.Nm apnvm_getuser
+Receive a list of managed users. These are the user, for whom the policy-sets
+apply. The result is written into the list. Do not forget to initialize the list
+with LIST_INIT().
+.Pp
+.Nm apnvm_count
+Determines the number of versions for a specified user. The second parameter
+holds the user-name, the third parameter holds the profile name. This user-name
+can vary from the user specified during initialization! This is the user, for
+whom the policy-set applies. The function writes the number of versions into the
+fourth parameter.
+.Pp
+.Nm apnvm_list
+Determines a list of versions for the specified user. The second parameter holds
+the user-name, the third parameter holds the profile name. This user-name can
+vary from the user specified during initialization! This is the user, for whom
+the policy-set applies. The third parameter is the head of a version-list. The
+function appends detected versions to the list. The list is not initialized. You
+need to call TAILQ_INIT(...) from outside. You can use apnvm_version_head_free()
+to destroy the list again.
+.Pp
+.Nm apnvm_fetch
+Fetches a ruleset from the versioning-system. The second parameter holds the
+user-name. This user-name can vary from the user specified during
+initialization! This is the user, for whom the policy-set applies. The third
+parameter holds the version-number to be fetched. Use apnvm_list() to receive a
+list of versions-numbers! If you apply am unknown number, APNVM_VMS is
+returned. The fourth parameter specifies the profile to be fetched. If the
+profile does not exists in the versioning-system, still APNVM_OK is returned
+but *rs is set to NULL. APNVM_PARSE is returned if a ruleset was fetched but the
+following parsing-operation failed.
+.Pp
+.Nm apnvm_insert
+Inserts a ruleset into the versioning-system. The second parameter holds the
+user-name. This user-name can vary from the user specified during
+initialization! This is the user, for whom the policy-set applies. When no
+rulesets exists for the user, a new version-line is created.
+.Pp
+.Nm apnvm_remove
+Removes a version from the versioning-system. The second parameter holds the
+user-name, the third parameter holds the name of the profile. This user-name can
+vary from the user specified during initialization! This is the user, for whom
+the policy-set applies. The fourth parameter specifies the version to be
+removed. Use apnvm_list() to receive a list of versions-numbers. On success
+APNVM_OK is returned. If the user and/or version does not exist, APNVM_VMS is
+returned.
+.Sh RETURN VALUES
+.Nm anoubis_csum_calc
+returns 0 on success and a negative error code in case of a error.
+.Pp
+.Nm anoubis_csum_link_calc
+returns 0 on success and a negative error code in case of a error.
+.Pp
+.Nm anoubis_csum_list
+returns array of strings in success. The count of strings will be stored in
+listcnt. In a case of an error NULL will be returned.
+.Pp
+.Nm anoubis_print_*
+returns 0 on successes and a error code on failure.
+.Pp
+.Nm anoubis_build_entry
+returns a struct sfs_entry on success and NULL on failure.
+.Pp
+.Nm apnvm_init
+A library-handle is returned.
+.Pp
+.Nm apnvm_prepare,
+.Nm apnvm_getuser,
+.Nm apnvm_count,
+.Nm apnvm_list
+.Nm apnvm_fetch,
+.Nm apnvm_insert
+and
+.Nm apnvm_remove
+are returning the enum apnvm_result.
+.Pp
+.Sh SEE ALSO
+.Xr anoubis_client 3 ,
+.Xr anoubis_server 3 ,
+.Xr anoubis_sig 3 ,
+.Sh AUTHORS
+Konrad Merz <konrad.merz@genua.de>

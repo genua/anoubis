@@ -36,6 +36,7 @@
 .Nm sfssig
 .Op dvlr
 .Op -f listfile
+.Op -o exportfile
 .Op -u uid
 .Op -k keyfile
 .Op --cert certfile
@@ -62,6 +63,8 @@ Debug mode.
 Prints debug information to the console.
 .It Fl v
 Produce more verbose output.
+.It Fl o Ar exportfile
+Specify the output of the command export. Default is stdout.
 .El
 .Pp
 Path specification:
@@ -81,7 +84,7 @@ Type specification:
 .Pp
 .Bl -tag -width Ds
 .It Fl u
-Apply command to checksums with owner 
+Apply command to checksums with owner
 .Ar uid .
 If the argument is
 .Ar all ,
@@ -118,7 +121,7 @@ Apply command for a signature.
 .Ar commands
 .Pp
 add - add checksum of
-.Ar file 
+.Ar file
 to the shadow tree.
 .Pp
 del - delete checksum of
@@ -129,7 +132,7 @@ get - returns the checksum of
 .Ar file
 as found in the shadow tree.
 .Pp
-list - list all entries in the shadow tree for 
+list - list all entries in the shadow tree for
 .Ar file.
 .El
 .Pp
@@ -151,7 +154,7 @@ The main program binary
 .It Pa /var/lib/anoubis/sfs
 The shadowtree containing on-disk SFS checksums.
 .It /var/run/anoubisd.sock
-The socket 
+The socket
 for connections to
 .Xr anoubisd 8
 using the
@@ -168,7 +171,7 @@ To delete checkums for all files passed on stdin:
 .Pp
 .Dl # sfssig -f - del
 .Pp
-To list all available checksums for uid 1001   
+To list all available checksums for uid 1001
 recursively starting at /tmp:
 .Pp
 .Dl # sfssig -r -u 1001 get /tmp

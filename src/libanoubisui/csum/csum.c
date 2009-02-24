@@ -57,6 +57,56 @@
 
 #include "csum.h"
 
+static int
+chartohex(char ch)
+{
+#ifndef S_SPLINT_S
+	switch(ch) {
+	case '0' ... '9':
+		return ch - '0';
+	case 'A' ... 'F':
+		return 10 + ch - 'A';
+	case 'a' ... 'f':
+		return 10 + ch - 'a';
+	default:
+		break;
+	}
+#endif
+	return -1;
+}
+
+static unsigned char *
+string2hex(const char *hex, int *cnt)
+{
+	unsigned char *res;
+	int i, len, k, tmp1, tmp2;
+
+	if (!hex || !cnt)
+		return NULL;
+
+	len = strlen(hex);
+	if (len%2)
+		return NULL;
+
+	res = calloc(len/2, sizeof(unsigned char));
+	if (!res)
+		return NULL;
+
+	for (i = 0, k = 0; i < len-1; i+=2, k++) {
+		tmp1 = chartohex(hex[i]) * 16;
+		if (tmp1 < 0)
+			goto err;
+		tmp2 = chartohex(hex[i+1]);
+		if (tmp2 < 0)
+			goto err;
+		res[k] = tmp1 + tmp2;
+	}
+	*cnt = len / 2;
+	return res;
+err:
+	free(res);
+	return NULL;
+}
 
 int
 anoubis_csum_calc(const char *file, u_int8_t * csbuf, int *cslen)
@@ -149,6 +199,61 @@ anoubis_csum_link_calc(const char *link, u_int8_t * csbuf, int *cslen)
 	return 0;
 }
 
+unsigned char **
+anoubis_keyid_list(struct anoubis_msg *m, int **idlen_list, int *list_cnt)
+{
+	unsigned char	**result = NULL;
+	char		**tmp_res = NULL;
+	int		 *id_res = NULL;
+	int		  cnt = 0, i;
+
+	if (m == NULL || list_cnt == NULL)
+		return NULL;
+
+	if ((tmp_res = anoubis_csum_list(m, &cnt)) == NULL) {
+		*list_cnt = 0;
+		return NULL;
+	}
+	if (cnt <= 0) {
+		*list_cnt = 0;
+		return NULL;
+	}
+	*list_cnt = cnt;
+	result = calloc(cnt, sizeof(unsigned char *));
+	if (!result)
+		goto err;
+	id_res = calloc(cnt, sizeof(int));
+	if (!id_res)
+		goto err;
+	for (i = 0; i < cnt; i++) {
+		if (tmp_res[i][0] == 'k')
+			result[i] = string2hex(&tmp_res[i][1], &id_res[i]);
+		else
+			result[i] = string2hex(tmp_res[i], &id_res[i]);
+		if (!result[i])
+			goto err;
+	}
+	*idlen_list = id_res;
+	goto out;
+err:
+	if (id_res)
+		free(id_res);
+
+	if (result) {
+		for (i = 0; i < cnt; i++)
+			free(result[i]);
+		free(result);
+		result = NULL;
+	}
+out:
+	if (tmp_res) {
+		for (i = 0; i < cnt; i++)
+			free(tmp_res[i]);
+		free(tmp_res);
+	}
+	return result;
+}
+
 char**
 anoubis_csum_list(struct anoubis_msg *m, int *listcnt)
 {
@@ -157,7 +262,7 @@ anoubis_csum_list(struct anoubis_msg *m, int *listcnt)
 	int	  cnt,
 		  end,
 		  msg_end,
-		  name_size;
+		  name_size = 0;
 
 	if (m == NULL || listcnt == NULL)
 		goto err;
@@ -165,9 +270,8 @@ anoubis_csum_list(struct anoubis_msg *m, int *listcnt)
 	/* Return Message from Daemon cannot return partial names */
 	end = cnt = 0;
 	while (m) {
-		if (!VERIFY_LENGTH(m, sizeof(Anoubis_ChecksumPayloadMessage))) {
+		if (!VERIFY_LENGTH(m, sizeof(Anoubis_ChecksumPayloadMessage)))
 			goto err;
-		}
 
 		msg_end = m->length - sizeof(Anoubis_ChecksumPayloadMessage)
 		    - CSUM_LEN - 1;
@@ -211,4 +315,163 @@ err:
 
 	*listcnt = 0;
 	return NULL;
+}
+
+int
+anoubis_print_checksum(FILE *fd, unsigned char *checksum, int len)
+{
+	if (len != ANOUBIS_CS_LEN)
+		return EINVAL;
+	return anoubis_print_signature(fd, checksum, ANOUBIS_CS_LEN);
+}
+
+int
+anoubis_print_keyid(FILE *fd, unsigned char *key, int len)
+{
+	return anoubis_print_signature(fd, key, len);
+}
+
+int
+anoubis_print_signature(FILE *fd, unsigned char *signature, int len)
+{
+	int i;
+
+	if (!fd || !signature || len < 0)
+		return EINVAL;
+
+	for (i = 0; i < len; i++)
+		fprintf(fd, "%2.2x", signature[i]);
+
+	return 0;
+
+}
+
+int
+anoubis_print_file(FILE *fd, char *name)
+{
+	int	len, i;
+
+	if (!fd || !name)
+		return EINVAL;
+
+	len = strlen(name);
+	for (i = 0; i < len; i++) {
+		if (name[i] < 32)
+			fprintf(fd, "\\%03o", name[i]);
+		else if ((name[i] == ' ') || (name[i] == '\\'))
+			fprintf(fd, "\\%c", name[i]);
+		else
+			fprintf(fd, "%c", name[i]);
+	}
+	return 0;
+}
+
+int
+anoubis_print_entries(FILE *fd, struct sfs_entry **list, int cnt)
+{
+	int	i;
+
+	if (!fd || !list || (cnt < 0))
+		return EINVAL;
+
+	for (i = 0; i < cnt; i++) {
+		if (!list[i]) {
+			continue;
+		}
+		if (!list[i]->name) {
+			continue;
+		}
+		anoubis_print_file(fd, list[i]->name);
+		fprintf(fd, " ");
+		if (list[i]->checksum) {
+			fprintf(fd, "%u ", list[i]->uid);
+			anoubis_print_checksum(fd, list[i]->checksum,
+			    ANOUBIS_CS_LEN);
+			fprintf(fd, " ");
+		} else {
+			fprintf(fd, "- ");
+		}
+		if (list[i]->signature) {
+			anoubis_print_keyid(fd, list[i]->keyid,
+			    list[i]->keylen);
+			fprintf(fd, " ");
+			anoubis_print_keyid(fd, list[i]->signature,
+			    list[i]->siglen);
+		} else {
+			fprintf(fd, "-");
+		}
+		fprintf(fd, "\n");
+	}
+
+	return 0;
+}
+
+struct sfs_entry *
+anoubis_build_entry(const char *name, unsigned char *checksum, int csumlen,
+    unsigned char *signature, int siglen, uid_t uid, unsigned char *keyid,
+    int keylen)
+{
+	struct sfs_entry	*se = NULL;
+
+	if (!name)
+		return NULL;
+	if (!checksum && !signature)
+		return NULL;
+	if ((se = calloc(1, sizeof(struct sfs_entry))) == NULL)
+		return NULL;
+
+	if((se->name = strdup(name)) == NULL) {
+		free(se);
+		return NULL;
+	}
+	if (checksum) {
+		if (csumlen != ANOUBIS_CS_LEN) {
+			free(se);
+			return NULL;
+		}
+		if ((se->checksum = calloc(ANOUBIS_CS_LEN,
+		    sizeof(unsigned char))) == NULL) {
+			anoubis_entry_free(se);
+			return NULL;
+		}
+		memcpy(se->checksum, checksum, ANOUBIS_CS_LEN);
+	}
+	if (signature && siglen > 0) {
+		if (!keyid || keylen < 0) {
+			free(se);
+			return NULL;
+		}
+		if ((se->signature = calloc(siglen, sizeof(unsigned char)))
+		    == NULL) {
+			anoubis_entry_free(se);
+			return NULL;
+		}
+		memcpy(se->signature, signature, siglen);
+		if ((se->keyid = calloc(keylen, sizeof(unsigned char)))
+		    == NULL) {
+			anoubis_entry_free(se);
+			return NULL;
+		}
+		memcpy(se->keyid, keyid, keylen);
+
+	}
+	se->uid = uid;
+	se->siglen = siglen;
+	se->keylen = keylen;
+	return (se);
+}
+
+void
+anoubis_entry_free(struct sfs_entry *se)
+{
+	if (!se)
+		return;
+
+	if (se->signature)
+		free(se->signature);
+	if (se->checksum)
+		free(se->checksum);
+	if (se->keyid)
+		free(se->keyid);
+	free(se);
 }

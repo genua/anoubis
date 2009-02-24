@@ -30,17 +30,41 @@
 
 #include <sys/types.h>
 #include <sys/cdefs.h>
+#include <stdio.h>
 
 #ifdef S_SPLINT_S
 #include "splint-includes.h"
 #endif
 
+struct sfs_entry {
+	char		*name;
+	unsigned char	*checksum;
+	unsigned char	*signature;
+	int		 siglen;
+	uid_t		 uid;
+	unsigned char	*keyid;
+	int		 keylen;
+};
+
 __BEGIN_DECLS
 
-int	anoubis_csum_calc(const char *file, u_int8_t *cs, int *cslen);
-int	anoubis_csum_calc_userspace(const char *file, u_int8_t *cs, int *cslen);
-int	anoubis_csum_link_calc(const char *link, u_int8_t * csbuf, int *cslen);
-char**	anoubis_csum_list(struct anoubis_msg *m, int *listcnt);
+int	  anoubis_csum_calc(const char *file, u_int8_t *cs, int *cslen);
+int    anoubis_csum_calc_userspace(const char *file, u_int8_t *cs, int *cslen);
+int	  anoubis_csum_link_calc(const char *link, u_int8_t *csbuf,
+    int *cslen);
+char	**anoubis_csum_list(struct anoubis_msg *m, int *listcnt);
+int	  anoubis_print_checksum(FILE *fd, unsigned char *checksum, int len);
+int	  anoubis_print_keyid(FILE *fd, unsigned char *key, int len);
+int	  anoubis_print_signature(FILE *fd, unsigned char *signature, int len);
+int	  anoubis_print_file(FILE *fd, char *name);
+int	  anoubis_print_entries(FILE *fd, struct sfs_entry **list,
+    int cnt);
+void	  anoubis_entry_free(struct sfs_entry *se);
+struct sfs_entry *anoubis_build_entry(const char *name,
+    unsigned char *checksum, int csumlen, unsigned char *signature, int siglen,
+    uid_t uid, unsigned char *keyid, int keylen);
+unsigned char ** anoubis_keyid_list(struct anoubis_msg *m, int **idlen_list,
+    int *list_cnt);
 __END_DECLS
 
 #endif	/* _CSUM_H_ */
