@@ -723,7 +723,8 @@ ModSfsMainPanelImpl::updateSfsDefaultFilterPolicy(long idx)
 	}
 
 	lst_Rules->SetItem(idx, COLUMN_PATH, dftPolicy->getPath());
-	lst_Rules->SetItem(idx, COLUMN_VA, dftPolicy->getActionName());
+	lst_Rules->SetItem(idx, COLUMN_VA, wxString::Format(_("default %s"),
+	    dftPolicy->getActionName().c_str()));
 	/* COLUMN_USER is handled by ruleListAppend */
 }
 
