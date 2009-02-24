@@ -37,7 +37,7 @@ anoubischeckdir = test/libanoubischeck
 libanoubischeck = $(top_builddir)/$(anoubischeckdir)/libanoubischeck.a
 
 # set TESTS_ENVIRONMENT for checks
-RPATH = $(top_builddir)/$(bsdcompatdir)
+RPATH = $(top_builddir)/$(bsdcompatdir):$(top_builddir)/$(csumdir)
 TESTS_ENVIRONMENT = LD_LIBRARY_PATH=$(RPATH)
 
 noinst_PROGRAMS = test_csum
