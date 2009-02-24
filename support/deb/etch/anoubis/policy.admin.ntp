@@ -7,8 +7,15 @@ alf {
 		default log deny
 	}
 }
+sandbox {
+	any {
+		allow path /var/log/ntpstats rw
+		allow path /var/lib/ntp rw
+		default log deny
+	}
+
+}
 context {
 	any {
-		context new any
 	}
 }
