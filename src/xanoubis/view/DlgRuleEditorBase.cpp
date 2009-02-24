@@ -239,16 +239,15 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	buttonFootSizer->Add( 0, 0, 1, wxEXPAND, 5 );
 	
 	footerExportButton = new wxButton( this, wxID_ANY, _("export..."), wxDefaultPosition, wxDefaultSize, 0 );
-	footerExportButton->Enable( false );
 	footerExportButton->SetToolTip( _("export ruleset to file (which has to be choosen)") );
 	
 	buttonFootSizer->Add( footerExportButton, 0, wxALL, 5 );
 	
-	footerSaveButton = new wxButton( this, wxID_ANY, _("save"), wxDefaultPosition, wxDefaultSize, 0 );
-	footerSaveButton->Enable( false );
-	footerSaveButton->SetToolTip( _("send ruleset to daemon") );
+	footerActivateButton = new wxButton( this, wxID_ANY, _("activate"), wxDefaultPosition, wxDefaultSize, 0 );
+	footerActivateButton->Enable( false );
+	footerActivateButton->SetToolTip( _("send ruleset to daemon") );
 	
-	buttonFootSizer->Add( footerSaveButton, 0, wxALL, 5 );
+	buttonFootSizer->Add( footerActivateButton, 0, wxALL, 5 );
 	
 	mainSizer->Add( buttonFootSizer, 0, wxEXPAND, 5 );
 	
@@ -274,7 +273,7 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	footerImportButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::onFooterImportButton ), NULL, this );
 	footerReloadButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::onFooterReloadButton ), NULL, this );
 	footerExportButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::onFooterExportButton ), NULL, this );
-	footerSaveButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::onFooterSaveButton ), NULL, this );
+	footerActivateButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::onFooterActivateButton ), NULL, this );
 }
 
 DlgRuleEditorAppPageBase::DlgRuleEditorAppPageBase( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size, long style ) : wxPanel( parent, id, pos, size, style )

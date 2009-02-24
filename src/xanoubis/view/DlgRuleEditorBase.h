@@ -109,7 +109,7 @@ class DlgRuleEditorBase : public wxFrame
 		wxButton* footerReloadButton;
 		
 		wxButton* footerExportButton;
-		wxButton* footerSaveButton;
+		wxButton* footerActivateButton;
 		
 		// Virtual event handlers, overide them in your derived class
 		virtual void onClose( wxCloseEvent& event ){ event.Skip(); }
@@ -130,7 +130,7 @@ class DlgRuleEditorBase : public wxFrame
 		virtual void onFooterImportButton( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onFooterReloadButton( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onFooterExportButton( wxCommandEvent& event ){ event.Skip(); }
-		virtual void onFooterSaveButton( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onFooterActivateButton( wxCommandEvent& event ){ event.Skip(); }
 		
 	
 	public:

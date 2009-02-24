@@ -436,12 +436,12 @@ class DlgRuleEditor : public Observer, public DlgRuleEditorBase
 		virtual void onFooterExportButton(wxCommandEvent &);
 
 		/**
-		 * Handle event from saveButton.
+		 * Handle event from activateButton.
 		 * This will send the ruelset to the daemon.
 		 * @param None.
 		 * @return Nothing.
 		 */
-		virtual void onFooterSaveButton(wxCommandEvent &);
+		virtual void onFooterActivateButton(wxCommandEvent &);
 
 		/**
 		 * Add a row to a given list and assign the given policy.

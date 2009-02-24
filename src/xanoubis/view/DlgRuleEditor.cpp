@@ -1223,7 +1223,7 @@ DlgRuleEditor::onFooterExportButton(wxCommandEvent &)
 }
 
 void
-DlgRuleEditor::onFooterSaveButton(wxCommandEvent &)
+DlgRuleEditor::onFooterActivateButton(wxCommandEvent &)
 {
 	ProfileCtrl	*profileCtrl;
 	PolicyRuleSet	*ruleSet;
@@ -1888,10 +1888,9 @@ DlgRuleEditor::updateFooter(void)
 		return;
 	}
 
-	/* If it's modfied, enable export and save button */
-	footerExportButton->Enable(ruleSet->isModified());
+	/* Is communication with daemon possible (aka connected)? */
 	footerReloadButton->Enable(isConnected_);
-	footerSaveButton->Enable(isConnected_ && ruleSet->isModified());
+	footerActivateButton->Enable(isConnected_);
 
 	/* Update text */
 	if (ruleSet->isDaemonRuleSet()) {
@@ -1902,7 +1901,7 @@ DlgRuleEditor::updateFooter(void)
 	if (ruleSet->isModified()) {
 		footerStatusText->SetLabel(_("modified"));
 	} else {
-		footerStatusText->SetLabel(wxT("not modified"));
+		footerStatusText->SetLabel(_("not modified"));
 	}
 
 	Layout();
