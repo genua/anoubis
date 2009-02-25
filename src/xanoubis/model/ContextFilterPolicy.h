@@ -34,6 +34,7 @@
 
 #include "FilterPolicy.h"
 #include "PolicyUtils.h"
+class ContextAppPolicy;
 
 /**
  * This is an Context filter policy.
@@ -49,6 +50,14 @@ class ContextFilterPolicy : public FilterPolicy
 		 * @param[in] 2nd The apn_rule this policy should represent.
 		 */
 		ContextFilterPolicy(AppPolicy *, struct apn_rule *);
+
+		/**
+		 * Constructor of an empty ContextFilterPolicy.
+		 * It's the duty of the caller to add this policy to the
+		 * parent ContextAppPolicy by prependFilterPolicy().
+		 * @param[in] 1st The parent context application policy.
+		 */
+		ContextFilterPolicy(ContextAppPolicy *);
 
 		/**
 		 * Get the policy type as string.

@@ -206,6 +206,11 @@ class Policy : public Subject
 		struct apn_rule	*rule_;		 /**< Native/apn rule. */
 		/** XXX ch: I don't like this, better solution needed here */
 		unsigned long	 ruleEditorIndex_;
+
+		friend class AlfAppPolicy;
+		friend class SfsAppPolicy;
+		friend class ContextAppPolicy;
+		friend class SbAppPolicy;
 };
 
 WX_DECLARE_LIST(Policy, PolicyList);

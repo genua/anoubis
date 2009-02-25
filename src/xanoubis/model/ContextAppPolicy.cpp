@@ -53,6 +53,11 @@ ContextAppPolicy::ContextAppPolicy(PolicyRuleSet *ruleSet,
 	}
 }
 
+ContextAppPolicy::ContextAppPolicy(PolicyRuleSet *ruleSet)
+    : AppPolicy(ruleSet, ContextAppPolicy::createApnRule())
+{
+}
+
 wxString
 ContextAppPolicy::getTypeIdentifier(void) const
 {
@@ -106,4 +111,39 @@ ContextAppPolicy::accept(PolicyVisitor &visitor)
 {
 	visitor.visitContextAppPolicy(this);
 	acceptOnFilter(visitor);
+}
+
+bool
+ContextAppPolicy::prependFilterPolicy(FilterPolicy *filter)
+{
+	int		 rc;
+	PolicyRuleSet	*ruleSet;
+
+	if (filter == NULL) {
+		return (false);
+	}
+
+	/* Reject invalid filter types. */
+	if (!filter->IsKindOf(CLASSINFO(ContextFilterPolicy))) {
+		return (false);
+	}
+
+	ruleSet = getParentRuleSet();
+	if (ruleSet == NULL) {
+		return (false);
+	}
+
+	rc = apn_insert_ctxrule(ruleSet->getApnRuleSet(), filter->getApnRule(),
+	    getApnRuleId());
+
+	if (rc != 0) {
+		return (false);
+	}
+
+	startChange();
+	filterList_.Insert((size_t)0, filter);
+	setModified();
+	finishChange();
+
+	return (true);
 }

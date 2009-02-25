@@ -37,6 +37,9 @@
 
 #include "Policy.h"
 
+/* Foreward declaration for prepending filter policies. */
+class FilterPolicy;
+
 /**
  * This is the base class of all application policies.
  */
@@ -100,6 +103,16 @@ class AppPolicy : public Policy
 		 * @return The number of binaries.
 		 */
 		unsigned int getBinaryCount(void) const;
+
+		/**
+		 * Add a given filter on top.
+		 * Insert the apn_rule of the given policy to the apn ruleset
+		 * and insert the policy to the list of filters.
+		 * In both cases do an 'insert-head'.
+		 * @param[in] 1st The filter policy to insert.
+		 * @return True on success.
+		 */
+		virtual bool prependFilterPolicy(FilterPolicy *) = 0;
 
 		/**
 		 * Change the name of one binary.
@@ -257,6 +270,8 @@ class AppPolicy : public Policy
 		 * @return The found structure or NULL.
 		 */
 		struct apn_app *seekAppByIndex(unsigned int) const;
+
+		friend class PolicyRuleSet;
 };
 
 #endif	/* _APPPOLICY_H_ */

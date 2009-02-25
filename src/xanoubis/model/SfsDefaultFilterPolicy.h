@@ -33,6 +33,7 @@
 #endif
 
 #include "FilterPolicy.h"
+class SfsAppPolicy;
 
 /**
  * This is the sfs default policy.
@@ -48,6 +49,14 @@ class SfsDefaultFilterPolicy : public FilterPolicy
 		 * @param[in] 2nd The apn_rule this policy should represent.
 		 */
 		SfsDefaultFilterPolicy(AppPolicy *, struct apn_rule *);
+
+		/**
+		 * Constructor of an empty SfsDefaultFilterPolicy.
+		 * It's the duty of the caller to add this policy to the
+		 * parent SfsAppPolicy by prependFilterPolicy().
+		 * @param[in] 1st The parent sfs application policy.
+		 */
+		SfsDefaultFilterPolicy(SfsAppPolicy *);
 
 		/**
 		 * Get the policy type as string.

@@ -36,6 +36,11 @@ SfsDefaultFilterPolicy::SfsDefaultFilterPolicy(AppPolicy *parentPolicy,
 {
 }
 
+SfsDefaultFilterPolicy::SfsDefaultFilterPolicy(SfsAppPolicy *parentPolicy)
+    : FilterPolicy(parentPolicy, SfsDefaultFilterPolicy::createApnRule())
+{
+}
+
 wxString
 SfsDefaultFilterPolicy::getTypeIdentifier(void) const
 {

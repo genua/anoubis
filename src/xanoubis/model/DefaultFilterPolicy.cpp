@@ -37,6 +37,11 @@ DefaultFilterPolicy::DefaultFilterPolicy(AppPolicy *parentPolicy,
 {
 }
 
+DefaultFilterPolicy::DefaultFilterPolicy(AppPolicy *parentPolicy)
+    : FilterPolicy(parentPolicy, DefaultFilterPolicy::createApnRule())
+{
+}
+
 wxString
 DefaultFilterPolicy::getTypeIdentifier(void) const
 {

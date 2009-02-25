@@ -52,6 +52,14 @@ class SbAppPolicy : public AppPolicy
 		SbAppPolicy(PolicyRuleSet *, struct apn_rule *);
 
 		/**
+		 * Constructor of an empty SbAppPolicy.
+		 * It's the duty of the caller to add this policy to the
+		 * ruleset by prependAppPolicy().
+		 * @param[in] 1st The ruleset this policy belongs to.
+		 */
+		SbAppPolicy(PolicyRuleSet *);
+
+		/**
 		 * Get the policy type as string.
 		 * @param None.
 		 * @return String with the policy type.
@@ -84,6 +92,16 @@ class SbAppPolicy : public AppPolicy
 		 * @return Nothing.
 		 */
 		virtual void accept(PolicyVisitor &);
+
+		/**
+		 * Add a given filter on top.
+		 * Insert the apn_rule of the given policy to the apn ruleset
+		 * and insert the policy to the list of filters.
+		 * In both cases do an 'insert-head'.
+		 * @param[in] 1st The filter policy to insert.
+		 * @return True on success.
+		 */
+		virtual bool prependFilterPolicy(FilterPolicy *);
 };
 
 #endif	/* _SBAPPPOLICY_H_ */

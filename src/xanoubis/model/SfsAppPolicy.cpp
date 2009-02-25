@@ -27,6 +27,7 @@
 
 #include "SfsAppPolicy.h"
 #include "PolicyVisitor.h"
+#include "PolicyRuleSet.h"
 
 IMPLEMENT_CLASS(SfsAppPolicy, AppPolicy);
 
@@ -85,4 +86,40 @@ bool
 SfsAppPolicy::canDelete(void) const
 {
 	return (false);
+}
+
+bool
+SfsAppPolicy::prependFilterPolicy(FilterPolicy *filter)
+{
+	int		 rc;
+	PolicyRuleSet	*ruleSet;
+
+	if (filter == NULL) {
+		return (false);
+	}
+
+	/* Reject invalid filter types. */
+	if (!filter->IsKindOf(CLASSINFO(SfsFilterPolicy)) &&
+	    !filter->IsKindOf(CLASSINFO(SfsDefaultFilterPolicy))) {
+		return (false);
+	}
+
+	ruleSet = getParentRuleSet();
+	if (ruleSet == NULL) {
+		return (false);
+	}
+
+	rc = apn_insert_sfsrule(ruleSet->getApnRuleSet(), filter->getApnRule(),
+	    getApnRuleId());
+
+	if (rc != 0) {
+		return (false);
+	}
+
+	startChange();
+	filterList_.Insert((size_t)0, filter);
+	setModified();
+	finishChange();
+
+	return (true);
 }

@@ -36,6 +36,11 @@ SbAccessFilterPolicy::SbAccessFilterPolicy(AppPolicy *parentPolicy,
 {
 }
 
+SbAccessFilterPolicy::SbAccessFilterPolicy(SbAppPolicy *parentPolicy)
+    : FilterPolicy(parentPolicy, SbAccessFilterPolicy::createApnRule())
+{
+}
+
 wxString
 SbAccessFilterPolicy::getTypeIdentifier(void) const
 {

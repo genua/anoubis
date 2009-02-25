@@ -290,6 +290,16 @@ class PolicyRuleSet : public Subject
 		 */
 		long createPolicy(unsigned int, unsigned int, AppPolicy *);
 
+		/**
+		 * Add a given app policy on top.
+		 * Insert the apn_rule of the given policy to the apn ruleset
+		 * and insert the policy to the list of app policys.
+		 * In both cases do an 'insert-head'.
+		 * @param[in] 1st The app policy policy to insert.
+		 * @return True on success.
+		 */
+		bool prependAppPolicy(AppPolicy *);
+
 		void createAnswerPolicy(EscalationNotify *);
 
 	private:

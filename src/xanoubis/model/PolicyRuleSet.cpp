@@ -426,6 +426,31 @@ PolicyRuleSet::createPolicy(unsigned int type, unsigned int id,
 	return (index);
 }
 
+bool
+PolicyRuleSet::prependAppPolicy(AppPolicy *app)
+{
+	if (app == NULL) {
+		return (false);
+	}
+
+	if (apn_add(ruleSet_, app->getApnRule()) != 0) {
+		return (false);
+	}
+	setModified();
+
+	if (app->IsKindOf(CLASSINFO(ContextAppPolicy))) {
+		ctxList_.Insert((size_t)0, app);
+	} else if (app->IsKindOf(CLASSINFO(AlfAppPolicy))) {
+		alfList_.Insert((size_t)0, app);
+	} else if (app->IsKindOf(CLASSINFO(SbAppPolicy))) {
+		sbList_.Insert((size_t)0, app);
+	} else {
+		return (false);
+	}
+
+	return (true);
+}
+
 void
 PolicyRuleSet::clean(void)
 {

@@ -42,6 +42,11 @@ AlfFilterPolicy::AlfFilterPolicy(AppPolicy *parentPolicy, struct apn_rule *rule)
 {
 }
 
+AlfFilterPolicy::AlfFilterPolicy(AlfAppPolicy *parentPolicy)
+    : FilterPolicy(parentPolicy, AlfFilterPolicy::createApnRule())
+{
+}
+
 wxString
 AlfFilterPolicy::getTypeIdentifier(void) const
 {
@@ -551,7 +556,7 @@ AlfFilterPolicy::setFromPortList(wxArrayString portList)
 	if (!portList.IsEmpty()) {
 		for(size_t i=0; i<portList.GetCount(); ++i) {
 			struct apn_port	*tmp;
-			
+
 			tmp = createApnPort(portList.Item(i));
 			if (tmp == NULL) {
 				setModified();
@@ -721,7 +726,7 @@ AlfFilterPolicy::setToPortList(wxArrayString portList)
 	if (!portList.IsEmpty()) {
 		for(size_t i=0; i<portList.GetCount(); ++i) {
 			struct apn_port	*tmp;
-			
+
 			tmp = createApnPort(portList.Item(i));
 			if (tmp == NULL) {
 				setModified();

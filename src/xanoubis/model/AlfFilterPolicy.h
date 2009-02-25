@@ -33,6 +33,7 @@
 #endif
 
 #include "FilterPolicy.h"
+class AlfAppPolicy;
 
 /**
  * This is an Alf filter policy.
@@ -48,6 +49,14 @@ class AlfFilterPolicy : public FilterPolicy
 		 * @param[in] 2nd The apn_rule this policy should represent.
 		 */
 		AlfFilterPolicy(AppPolicy *, struct apn_rule *);
+
+		/**
+		 * Constructor of an empty AlfFilterPolicy.
+		 * It's the duty of the caller to add this policy to the
+		 * parent AlfAppPolicy by prependFilterPolicy().
+		 * @param[in] 1st The parent alf application policy.
+		 */
+		AlfFilterPolicy(AlfAppPolicy *);
 
 		/**
 		 * Get the policy type as string.

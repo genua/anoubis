@@ -33,6 +33,7 @@
 #endif
 
 #include "FilterPolicy.h"
+class SbAppPolicy;
 
 /**
  * This is the sandbox access filter policy.
@@ -48,6 +49,14 @@ class SbAccessFilterPolicy : public FilterPolicy
 		 * @param[in] 2nd The apn_rule this policy should represent.
 		 */
 		SbAccessFilterPolicy(AppPolicy *, struct apn_rule *);
+
+		/**
+		 * Constructor of an empty SbAccessFilterPolicy.
+		 * It's the duty of the caller to add this policy to the
+		 * parent SbAppPolicy by prependFilterPolicy().
+		 * @param[in] 1st The parent sandbox application policy.
+		 */
+		SbAccessFilterPolicy(SbAppPolicy *);
 
 		/**
 		 * Get the policy type as string.

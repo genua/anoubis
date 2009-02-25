@@ -36,6 +36,11 @@ ContextFilterPolicy::ContextFilterPolicy(AppPolicy *parentPolicy,
 {
 }
 
+ContextFilterPolicy::ContextFilterPolicy(ContextAppPolicy *parentPolicy)
+    : FilterPolicy(parentPolicy, ContextFilterPolicy::createApnRule())
+{
+}
+
 wxString
 ContextFilterPolicy::getTypeIdentifier(void) const
 {

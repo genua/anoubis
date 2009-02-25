@@ -35,6 +35,7 @@
 #include <wx/string.h>
 
 #include "FilterPolicy.h"
+class AlfAppPolicy;
 
 /**
  * This is an ALF capability policy.
@@ -50,6 +51,14 @@ class AlfCapabilityFilterPolicy : public FilterPolicy
 		 * @param[in] 2nd The apn_rule this policy should represent.
 		 */
 		AlfCapabilityFilterPolicy(AppPolicy *, struct apn_rule *);
+
+		/**
+		 * Constructor of an empty AlfCapabilityFilterPolicy.
+		 * It's the duty of the caller to add this policy to the
+		 * parent AlfAppPolicy by prependFilterPolicy().
+		 * @param[in] 1st The parent alf application policy.
+		 */
+		AlfCapabilityFilterPolicy(AlfAppPolicy *);
 
 		/**
 		 * Get the policy type as string.

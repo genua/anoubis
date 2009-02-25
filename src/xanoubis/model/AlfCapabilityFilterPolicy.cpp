@@ -37,6 +37,11 @@ AlfCapabilityFilterPolicy::AlfCapabilityFilterPolicy(AppPolicy *parent,
 	/* Nothing special to do here. */
 }
 
+AlfCapabilityFilterPolicy::AlfCapabilityFilterPolicy(AlfAppPolicy *parent)
+    : FilterPolicy(parent, AlfCapabilityFilterPolicy::createApnRule())
+{
+}
+
 wxString
 AlfCapabilityFilterPolicy::getTypeIdentifier(void) const
 {

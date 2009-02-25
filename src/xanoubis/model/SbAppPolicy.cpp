@@ -57,6 +57,11 @@ SbAppPolicy::SbAppPolicy(PolicyRuleSet *ruleSet, struct apn_rule *rule)
 	}
 }
 
+SbAppPolicy::SbAppPolicy(PolicyRuleSet *ruleSet)
+    : AppPolicy(ruleSet, SbAppPolicy::createApnRule())
+{
+}
+
 wxString
 SbAppPolicy::getTypeIdentifier(void) const
 {
@@ -110,4 +115,40 @@ SbAppPolicy::accept(PolicyVisitor &visitor)
 {
 	visitor.visitSbAppPolicy(this);
 	acceptOnFilter(visitor);
+}
+
+bool
+SbAppPolicy::prependFilterPolicy(FilterPolicy *filter)
+{
+	int		 rc;
+	PolicyRuleSet	*ruleSet;
+
+	if (filter == NULL) {
+		return (false);
+	}
+
+	/* Reject invalid filter types. */
+	if (!filter->IsKindOf(CLASSINFO(SbAccessFilterPolicy)) &&
+	    !filter->IsKindOf(CLASSINFO(DefaultFilterPolicy))) {
+		return (false);
+	}
+
+	ruleSet = getParentRuleSet();
+	if (ruleSet == NULL) {
+		return (false);
+	}
+
+	rc = apn_insert_sbrule(ruleSet->getApnRuleSet(), filter->getApnRule(),
+	    getApnRuleId());
+
+	if (rc != 0) {
+		return (false);
+	}
+
+	startChange();
+	filterList_.Insert((size_t)0, filter);
+	setModified();
+	finishChange();
+
+	return (true);
 }

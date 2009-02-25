@@ -60,6 +60,11 @@ AlfAppPolicy::AlfAppPolicy(PolicyRuleSet *ruleSet, struct apn_rule *rule)
 	}
 }
 
+AlfAppPolicy::AlfAppPolicy(PolicyRuleSet *ruleSet)
+    : AppPolicy(ruleSet, AlfAppPolicy::createApnRule())
+{
+}
+
 wxString
 AlfAppPolicy::getTypeIdentifier(void) const
 {
@@ -113,4 +118,41 @@ AlfAppPolicy::accept(PolicyVisitor &visitor)
 {
 	visitor.visitAlfAppPolicy(this);
 	acceptOnFilter(visitor);
+}
+
+bool
+AlfAppPolicy::prependFilterPolicy(FilterPolicy *filter)
+{
+	int		 rc;
+	PolicyRuleSet	*ruleSet;
+
+	if (filter == NULL) {
+		return (false);
+	}
+
+	/* Reject invalid filter types. */
+	if (!filter->IsKindOf(CLASSINFO(AlfFilterPolicy)) &&
+	    !filter->IsKindOf(CLASSINFO(AlfCapabilityFilterPolicy)) &&
+	    !filter->IsKindOf(CLASSINFO(DefaultFilterPolicy))) {
+		return (false);
+	}
+
+	ruleSet = getParentRuleSet();
+	if (ruleSet == NULL) {
+		return (false);
+	}
+
+	rc = apn_insert_alfrule(ruleSet->getApnRuleSet(), filter->getApnRule(),
+	    getApnRuleId());
+
+	if (rc != 0) {
+		return (false);
+	}
+
+	startChange();
+	filterList_.Insert((size_t)0, filter);
+	setModified();
+	finishChange();
+
+	return (true);
 }

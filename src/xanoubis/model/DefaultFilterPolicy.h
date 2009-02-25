@@ -50,6 +50,14 @@ class DefaultFilterPolicy : public FilterPolicy
 		DefaultFilterPolicy(AppPolicy *, struct apn_rule *);
 
 		/**
+		 * Constructor of an empty DefaultFilterPolicy.
+		 * It's the duty of the caller to add this policy to the
+		 * parent AppPolicy by prependFilterPolicy().
+		 * @param[in] 1st The parent application policy.
+		 */
+		DefaultFilterPolicy(AppPolicy *);
+
+		/**
 		 * Get the policy type as string.
 		 * @param None.
 		 * @return String with the policy type.
