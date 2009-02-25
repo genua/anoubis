@@ -34,6 +34,7 @@
 #include <apn.h>
 #include <anoubis_sig.h>
 
+#include <AnEvents.h>
 #include <ComCsumAddTask.h>
 #include <ComCsumDelTask.h>
 #include <ComCsumGetTask.h>
@@ -105,6 +106,7 @@ TcComTask::nextTest()
 {
 	JobCtrl *jobCtrl = JobCtrl::getInstance();
 
+	jobCtrl->Disconnect(anEVT_COM_CONNECTION);
 	jobCtrl->Disconnect(anTASKEVT_REGISTER);
 	jobCtrl->Disconnect(anTASKEVT_POLICY_REQUEST);
 	jobCtrl->Disconnect(anTASKEVT_POLICY_SEND);
@@ -117,78 +119,111 @@ TcComTask::nextTest()
 
 	switch (testCounter_) {
 	case 1:
-		setupTestRegister();
+		setupTestConnect();
 		break;
 	case 2:
-		setupTestPolicyRequest();
+		setupTestRegister();
 		break;
 	case 3:
-		setupTestPolicySend();
-		break;
-	case 4:
 		setupTestPolicyRequest();
 		break;
+	case 4:
+		setupTestPolicySend();
+		break;
 	case 5:
-		setupTestCsumAdd();
+		setupTestPolicyRequest();
 		break;
 	case 6:
-		setupTestCsumAddSymlink();
+		setupTestCsumAdd();
 		break;
 	case 7:
-		setupTestCsumAddSymlinkLink();
+		setupTestCsumAddSymlink();
 		break;
 	case 8:
-		setupTestCsumGet();
+		setupTestCsumAddSymlinkLink();
 		break;
 	case 9:
-		setupTestCsumGetNoSuchFile();
+		setupTestCsumGet();
 		break;
 	case 10:
-		setupTestCsumGetSymlink();
+		setupTestCsumGetNoSuchFile();
 		break;
 	case 11:
-		setupTestCsumGetSymlinkLink();
+		setupTestCsumGetSymlink();
 		break;
 	case 12:
-		setupTestSfsListNotEmpty();
+		setupTestCsumGetSymlinkLink();
 		break;
 	case 13:
-		setupTestCsumDel();
+		setupTestSfsListNotEmpty();
 		break;
 	case 14:
-		setupTestCsumDelSymlink();
+		setupTestCsumDel();
 		break;
 	case 15:
-		setupTestCsumDelSymlinkLink();
+		setupTestCsumDelSymlink();
 		break;
 	case 16:
-		setupTestSfsListEmpty();
+		setupTestCsumDelSymlinkLink();
 		break;
 	case 17:
-		setupTestSfsListRecursive();
+		setupTestSfsListEmpty();
 		break;
 	case 18:
-		setupTestSigAdd();
+		setupTestSfsListRecursive();
 		break;
 	case 19:
-		setupTestSigGet();
+		setupTestSigAdd();
 		break;
 	case 20:
-		setupTestSigListNotEmpty();
+		setupTestSigGet();
 		break;
 	case 21:
-		setupTestSigDel();
+		setupTestSigListNotEmpty();
 		break;
 	case 22:
-		setupTestSigListEmpty();
+		setupTestSigDel();
 		break;
 	case 23:
+		setupTestSigListEmpty();
+		break;
+	case 24:
 		setupTestUnregister();
 		break;
 	default:
 		exit_ = true;
 		break;
 	}
+}
+
+void
+TcComTask::setupTestConnect(void)
+{
+	trace("Enter TcComTask::setupTestConnect\n");
+
+	JobCtrl::getInstance()->Connect(anEVT_COM_CONNECTION,
+	    wxCommandEventHandler(TcComTask::onTestConnect), NULL, this);
+
+	bool result = JobCtrl::getInstance()->connect();
+	assertUnless((result == true),
+	    "Failed to initiate connect-operation\n");
+
+	trace("Leaving TcComTask::setupTestConnect\n");
+}
+
+void
+TcComTask::onTestConnect(wxCommandEvent &event)
+{
+	trace("Enter TcComTask::onTestConnect\n");
+	JobCtrl::ConnectionState newState =
+	    (JobCtrl::ConnectionState)event.GetInt();
+
+	assertUnless((newState == JobCtrl::CONNECTION_CONNECTED),
+	    "Connection failed with state %i\n", newState);
+
+	event.Skip();
+	trace("Leaving TcComTask::onTestConnect\n");
+	nextTest();
 }
 
 void

@@ -75,7 +75,8 @@ class JobCtrl : public wxEvtHandler, public Singleton<JobCtrl>
 		enum ConnectionState {
 			CONNECTION_CONNECTED = 0, /*!< You are connected. */
 			CONNECTION_DISCONNECTED,  /*!< You are disconnected. */
-			CONNECTION_FAILED         /*!< Operation failed */
+			CONNECTION_FAILED,        /*!< Operation failed */
+			CONNECTION_ERROR          /*!< Connection errors */
 		};
 
 		~JobCtrl(void);
@@ -134,16 +135,19 @@ class JobCtrl : public wxEvtHandler, public Singleton<JobCtrl>
 		 * You need to call this method, if you want to execute any
 		 * ComTask-derivated tasks.
 		 *
-		 * @return The state of the connection
+		 * The procedure for establishing the connection is started in
+		 * the background. You need to wait for a wxCommandEvent of
+		 * type anEVT_COM_CONNECTION to test the connection.
+		 *
+		 * @return true is returned, if the background-thread was
+		 *         started.
 		 */
-		ConnectionState connect(void);
+		bool connect(void);
 
 		/**
 		 * Disconnects again from anoubisd.
-		 *
-		 * @return ConnectionState::CONNECTION_DISCONNECTED
 		 */
-		ConnectionState disconnect(void);
+		void disconnect(void);
 
 		/**
 		 * Tests weather a connection to anoubisd is already

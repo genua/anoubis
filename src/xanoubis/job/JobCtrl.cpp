@@ -102,50 +102,33 @@ JobCtrl::stop(void)
 	}
 }
 
-JobCtrl::ConnectionState
+bool
 JobCtrl::connect(void)
 {
 	if (!isConnected()) {
-		ConnectionState	state;
 		ComThread	*t = new ComThread(this, socketPath_);
 
 		if (t->start()) {
 			threadList_.push_back(t);
-			state = CONNECTION_CONNECTED;
+			return (true);
 		} else {
 			delete t;
-			state = CONNECTION_FAILED;
+			return (false);
 		}
-
-		wxCommandEvent event(anEVT_COM_CONNECTION);
-		event.SetInt(state);
-		event.SetString(wxT("localhost"));
-
-		ProcessEvent(event);
-
-		return (state);
 	} else
-		return (CONNECTION_CONNECTED);
+		return (false);
 }
 
-JobCtrl::ConnectionState
+void
 JobCtrl::disconnect(void)
 {
-	if (isConnected()) {
-		ComThread *t = findComThread();
+	ComThread *t;
 
+	while ((t = findComThread()) != 0) {
 		t->stop();
 		threadList_.DeleteObject(t);
 		delete t;
-
-		wxCommandEvent event(anEVT_COM_CONNECTION);
-		event.SetInt(CONNECTION_DISCONNECTED);
-		event.SetString(wxT("localhost"));
-
-		ProcessEvent(event);
 	}
-
-	return (CONNECTION_DISCONNECTED);
 }
 
 bool

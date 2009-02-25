@@ -32,6 +32,7 @@
 #endif
 
 #include <sys/un.h>
+#include <signal.h>
 
 #include <poll.h>
 
@@ -50,6 +51,7 @@
 #include "main.h"
 #include "NotifyAnswer.h"
 #include "StatusNotify.h"
+#include "JobCtrl.h"
 
 ComThread::ComThread(JobCtrl *jobCtrl, const wxString &socketPath)
     : JobThread(jobCtrl)
@@ -71,6 +73,13 @@ ComThread::connect(void)
 	struct sockaddr_storage	 ss;
 	struct sockaddr_un	*ss_sun = (struct sockaddr_un *)&ss;
 	achat_rc		 rc = ACHAT_RC_ERROR;
+
+	struct sigaction        act;
+
+	sigemptyset(&act.sa_mask);
+	act.sa_flags = 0;
+	act.sa_handler = SIG_IGN;
+	sigaction(SIGPIPE, &act, NULL);
 
 	/*
 	 * *** channel ***
@@ -158,10 +167,17 @@ ComThread::Entry(void)
 {
 	bool fetchOnIdle = false; /* Workaround! See #854 */
 
-	while (!exitThread()) {
-		if (!isConnected()) {
-			/* Wait for a connection */
-			continue;
+	if (!connect()) {
+		sendComEvent(JobCtrl::CONNECTION_FAILED);
+		return (0);
+	} else {
+		sendComEvent(JobCtrl::CONNECTION_CONNECTED);
+	}
+
+	while (isConnected()) {
+		if (exitThread()) {
+			/* End of thread requested */
+			break;
 		}
 
 		Task *task = getNextTask(Task::TYPE_COM);
@@ -188,6 +204,7 @@ ComThread::Entry(void)
 
 	/* Thread is short before exit, disconnect again */
 	disconnect();
+	sendComEvent(JobCtrl::CONNECTION_DISCONNECTED);
 
 	return (0);
 }
@@ -235,6 +252,11 @@ ComThread::waitForMessage(void)
 		    channel_, (char*)(msg->u.buf), &size);
 		if (rc != ACHAT_RC_OK) {
 			anoubis_msg_free(msg);
+			if (rc == ACHAT_RC_EOF) {
+				disconnect();
+				sendComEvent(JobCtrl::CONNECTION_ERROR);
+				return (false);
+			}
 			return (false);
 		}
 
@@ -244,6 +266,8 @@ ComThread::waitForMessage(void)
 		int result = anoubis_client_process(client_, msg);
 		if (result < 0) {
 			/* Error */
+			disconnect();
+			/* XXX CEH */
 			return (false);
 		} else if (result == 0) {
 			/*
@@ -288,12 +312,6 @@ ComThread::waitForMessage(void)
 	}
 
 	return (true);
-}
-
-bool
-ComThread::startHook(void)
-{
-	return (connect());
 }
 
 bool
@@ -395,4 +413,15 @@ ComThread::pushNotification(Notification *notify)
 {
 	if ((notify != NULL) && IS_ESCALATIONOBJ(notify))
 		answerQueue_->push(notify);
+}
+
+void
+ComThread::sendComEvent(JobCtrl::ConnectionState state)
+{
+	wxCommandEvent event(anEVT_COM_CONNECTION);
+
+	event.SetInt(state);
+	event.SetString(wxT("localhost"));
+
+	wxPostEvent(JobCtrl::getInstance(), event);
 }

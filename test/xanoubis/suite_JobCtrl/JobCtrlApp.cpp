@@ -58,20 +58,8 @@ JobCtrlApp::OnInit()
 		return (false);
 	}
 
-	JobCtrl::ConnectionState state = jobCtrl->connect();
-	if (state != JobCtrl::CONNECTION_CONNECTED) {
-		fprintf(stderr, "No connection to anoubisd\n");
-		fprintf(stderr, "State: %i\n", state);
-
-		if (testcase_ != wxT("tc_jobctrl_nodaemon")) {
-			/* Expected behaviour for tc_jobctrl_nodaemon */
-			return false;
-		}
-	}
-	else {
-		handlerList_.push_back(new TcCsumCalcTask);
-		handlerList_.push_back(new TcComTask);
-	}
+	handlerList_.push_back(new TcCsumCalcTask);
+	handlerList_.push_back(new TcComTask);
 
 	return (true);
 }
@@ -89,7 +77,15 @@ JobCtrlApp::OnRun()
 		ProcessPendingEvents();
 	}
 
-	return (getResult());
+	int result = getResult();
+	if (testcase_ == wxT("tc_jobctrl_nodaemon") && result == 222) {
+		/*
+		 * Expected result for nodaemon-testcase because establishing
+		 * of the connection failed.
+		 */
+		return (0);
+	} else
+		return (result);
 }
 
 int

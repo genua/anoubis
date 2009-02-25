@@ -29,6 +29,7 @@
 #define _COMTHREAD_H_
 
 #include "ComHandler.h"
+#include "JobCtrl.h"
 #include "JobThread.h"
 #include "Notification.h"
 #include "SynchronizedQueue.h"
@@ -55,16 +56,6 @@ class ComThread : public JobThread, protected ComHandler
 		 * Implementation of ComHandler::waitForMessage().
 		 */
 		bool waitForMessage(void);
-
-		/**
-		 * Re-implementation of JobThread::startHook().
-		 *
-		 * During the start of the thread, the connection to anoubisd
-		 * should be established.
-		 *
-		 * @see connect()
-		 */
-		bool startHook(void);
 
 		/**
 		 * Connects to anoubisd.
@@ -94,6 +85,7 @@ class ComThread : public JobThread, protected ComHandler
 
 		bool checkNotify(struct anoubis_msg *);
 		void sendNotify(struct anoubis_msg *);
+		void sendComEvent(JobCtrl::ConnectionState);
 };
 
 #endif	/* _COMTHREAD_H_ */

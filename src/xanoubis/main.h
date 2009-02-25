@@ -101,6 +101,7 @@ class AnoubisGuiApp : public wxApp
 		CsumCalcTask		csumCalcTask_;
 
 	protected:
+		void OnConnectionStateChange(wxCommandEvent&);
 		void OnDaemonRegistration(TaskEvent &);
 		void OnAnswerEscalation(wxCommandEvent &);
 

@@ -271,6 +271,7 @@ MainFrame::OnConnectionStateChange(wxCommandEvent& event)
 		wxGetApp().log(logMessage);
 		break;
 	case JobCtrl::CONNECTION_DISCONNECTED:
+	case JobCtrl::CONNECTION_ERROR:
 		logMessage = _("Disconnected from ") + hostname;
 		wxGetApp().log(logMessage);
 		break;

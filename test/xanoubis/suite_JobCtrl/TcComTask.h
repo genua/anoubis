@@ -44,6 +44,9 @@ class TcComTask : public TestHandler
 	protected:
 		void nextTest();
 
+		void setupTestConnect(void);
+		void onTestConnect(wxCommandEvent &);
+
 		void setupTestRegister(void);
 		void onTestRegister(TaskEvent &);
 
