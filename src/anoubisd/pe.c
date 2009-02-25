@@ -62,6 +62,7 @@
 #include "anoubisd.h"
 #include "pe.h"
 #include "sfs.h"
+#include "cert.h"
 
 static anoubisd_reply_t	*pe_dispatch_event(struct eventdev_hdr *);
 static anoubisd_reply_t	*pe_handle_process(struct eventdev_hdr *);
@@ -78,7 +79,7 @@ pe_init(void)
 {
 	sfshash_init();
 	pe_proc_init();
-	pe_pubkey_init();
+	cert_init(1);
 	pe_user_init();
 }
 
@@ -87,14 +88,13 @@ pe_shutdown(void)
 {
 	pe_proc_flush();
 	pe_user_flush_db(NULL);
-	pe_pubkey_flush_db(NULL);
 }
 
 void
 pe_reconfigure(void)
 {
 	sfshash_flush();
-	pe_pubkey_reconfigure();
+	cert_reconfigure(1);
 	pe_user_reconfigure();
 }
 

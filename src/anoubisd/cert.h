@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 GeNUA mbH <info@genua.de>
+ * Copyright (c) 2009 GeNUA mbH <info@genua.de>
  *
  * All rights reserved.
  *
@@ -25,26 +25,37 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _ANOUBISCTL_H_
-#define _ANOUBISCTL_H_
+#ifndef _CERT_H_
+#define _CERT_H_
 
-#define ANOUBISCTL_OPT_NOACTION		0x0001
-#define ANOUBISCTL_OPT_VERBOSE		0x0002
-#define ANOUBISCTL_OPT_VERBOSE2		0x0004
-#define ANOUBISCTL_OPT_FORCE		0x0008
-#define	ANOUBISCTL_OPT_CERT		0x0010
-#define ANOUBISCTL_OPT_KEY		0x0020
-#define ANOUBISCTL_OPT_SIGN		0x0040
-
-#define ANOUBISD_SOCKETNAME		"/var/run/anoubisd.sock"
-#define ANOUBISD_PIDFILENAME		"/var/run/anoubisd.pid"
+#include <sys/types.h>
+#include <anoubisd.h>
 
 #ifdef LINUX
-#define __dead	__attribute__((__noreturn__))
+#include <queue.h>
+#include <linux/anoubis_sfs.h>
+#include <bsdcompat.h>
+#else
+#include <sys/queue.h>
+#include <dev/anoubis_sfs.h>
 #endif
 
-struct anoubisctl {
-	int		opts;
+#include <openssl/evp.h>
+
+struct cert {
+	TAILQ_ENTRY(cert)	 entry;
+	uid_t			 uid;
+	EVP_PKEY		*pkey;
+	unsigned char		*keyid;
+	int			 kidlen;
+	X509			*req;
 };
 
-#endif /* _ANOUBISCTL_H_ */
+void	 cert_init(int);
+void	 cert_reconfigure(int);
+char *	 cert_keyid_for_uid(uid_t uid);
+
+struct cert	*cert_get_by_uid(uid_t u);
+struct cert	*cert_get_by_keyid(unsigned char *keyid, int klen);
+
+#endif	/* _CERT_H_ */

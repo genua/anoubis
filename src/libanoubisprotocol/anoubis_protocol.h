@@ -326,6 +326,7 @@ typedef struct {
 	u32n	ptype;
 	u32n	uid;
 	u32n	prio;
+	u16n	siglen;
 	char	payload[0];
 } __attribute__((packed)) Policy_SetByUid;
 

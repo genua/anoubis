@@ -251,6 +251,7 @@ libanoubissig_testcase_policy(void)
 {
 	TCase *testcase = tcase_create("Policy");
 
+	tcase_set_timeout(testcase, 120);
 	tcase_add_checked_fixture(testcase, libanoubissig_tc_pol_setup,
 	    libanoubissig_tc_pol_teardown);
 	tcase_add_test(testcase, sign_and_verify_policy_match_tc);

@@ -68,6 +68,7 @@
 #include <anoubis_errno.h>
 #include <anoubis_client.h>
 #include <anoubis_msg.h>
+#include <anoubis_sig.h>
 #include <anoubis_transaction.h>
 #include <anoubis_dump.h>
 
@@ -76,6 +77,8 @@
 
 #include "anoubisctl.h"
 #include "apn.h"
+
+#define ANOUBISCTL_PRIO_ADMIN 0
 
 void		usage(void) __dead;
 static int	daemon_start(void);
@@ -98,9 +101,9 @@ struct cmd {
 	 * file:
 	 * 0:	doesn't require parameters
 	 * 1:	needs file, uid and prio arguments,
-	 * 	resolve relative path names (file must exist)
+	 *	resolve relative path names (file must exist)
 	 * 2:	needs file, uid and prio arguments,
-	 * 	don't resolve relative path names
+	 *	don't resolve relative path names
 	 */
 	int		args;
 } commands[] = {
@@ -112,7 +115,10 @@ struct cmd {
 	{ "dump",    (func_int_t)dump, 2 },
 };
 
+static const char	 def_cert[] = ".xanoubis/default.crt";
+static const char	 def_pri[] =  ".xanoubis/default.key";
 static int	opts = 0;
+static struct anoubis_sig *as = NULL;
 
 static struct achat_channel	*channel;
 struct anoubis_client		*client = NULL;
@@ -124,8 +130,8 @@ usage(void)
 	unsigned int	i;
 	extern char	*__progname;
 
-	fprintf(stderr, "usage: %s [-fnv] [-p <prio>] [-u uid] "
-	    "<command> [<file>]\n", __progname);
+	fprintf(stderr, "usage: %s [-fnv] [-k key] [-c cert] [-p <prio>] "
+	    "[-u uid] <command> [<file>]\n", __progname);
 	fprintf(stderr, "    <command>:\n");
 	for (i=0; i < sizeof(commands)/sizeof(struct cmd); i++) {
 		if (commands[i].args)
@@ -155,15 +161,19 @@ usage(void)
 int
 main(int argc, char *argv[])
 {
+	struct stat	sb;
 	int		ch, done;
 	unsigned int	i, prio = 1;
 	int		error = 0;
 	char		*command = NULL;
 	char		*rulesopt = NULL;
+	char		*keyfile = NULL;
+	char		*homepath = NULL;
+	char		*certfile = NULL;
 	char		buf[PATH_MAX];
-	struct passwd  *pwd = NULL;
+	struct passwd	*pwd = NULL;
 	uid_t		uid = geteuid();
-	char 		*prios[] = { "admin", "user", NULL };
+	char		*prios[] = { "admin", "user", NULL };
 
 	if (argc < 2)
 		usage();
@@ -172,18 +182,11 @@ main(int argc, char *argv[])
 	if (uid == 0)
 		prio = 0;
 
-	while ((ch = getopt(argc, argv, "fnp:u:v")) != -1) {
+	while ((ch = getopt(argc, argv, "fnc:k:p:u:v")) != -1) {
 		switch (ch) {
-
-		case 'f':
-			opts |= ANOUBISCTL_OPT_FORCE;
-			break;
-		case 'n':
-			opts |= ANOUBISCTL_OPT_NOACTION;
-			break;
 		case 'p':
 			for (i=0; prios[i] != NULL; i++) {
-				if (strncmp(optarg, prios[i], 
+				if (strncmp(optarg, prios[i],
 					strlen(prios[i])) == 0) {
 					prio = i;
 					break;
@@ -204,10 +207,34 @@ main(int argc, char *argv[])
 				usage();
 			}
 			break;
+		case 'n':
+			opts |= ANOUBISCTL_OPT_NOACTION;
+			break;
 		case 'v':
 			if (opts & ANOUBISCTL_OPT_VERBOSE)
 				opts |= ANOUBISCTL_OPT_VERBOSE2;
 			opts |= ANOUBISCTL_OPT_VERBOSE;
+			break;
+		case 'f':
+			opts |= ANOUBISCTL_OPT_FORCE;
+			break;
+		case 'c':
+			opts |= ANOUBISCTL_OPT_CERT;
+			opts |= ANOUBISCTL_OPT_SIGN;
+			certfile = strdup(optarg);
+			if (!certfile) {
+				perror(optarg);
+				return 1;
+			}
+			break;
+		case 'k':
+			opts |= ANOUBISCTL_OPT_KEY;
+			opts |= ANOUBISCTL_OPT_SIGN;
+			keyfile = strdup(optarg);
+			if (!keyfile) {
+				perror(optarg);
+				return 1;
+			}
 			break;
 		default:
 			usage();
@@ -226,6 +253,65 @@ main(int argc, char *argv[])
 
 	if (argc > 0)
 		rulesopt = *argv;
+
+	if (certfile == NULL) {
+		homepath = getenv("HOME");
+		if (asprintf(&certfile, "%s/%s", homepath, def_cert)
+		    < 0){
+			fprintf(stderr, "Error while allocating"
+			    "memory\n");
+			return 1;
+		}
+		if (stat(certfile, &sb) == 0) {
+			opts |= ANOUBISCTL_OPT_SIGN;
+		} else {
+			free(certfile);
+			certfile = NULL;
+		}
+	}
+	/* You also need a keyfile if you want to sign a policy */
+	if (keyfile == NULL) {
+		homepath = getenv("HOME");
+		if (asprintf(&keyfile, "%s/%s", homepath, def_pri) < 0){
+			fprintf(stderr, "Error while allocating"
+			    "memory\n");
+			return 1;
+		}
+		if (stat(keyfile, &sb) == 0) {
+			opts |= ANOUBISCTL_OPT_SIGN;
+		} else {
+			free(keyfile);
+			keyfile = NULL;
+		}
+	}
+	if ((opts & ANOUBISCTL_OPT_SIGN) && (prio != ANOUBISCTL_PRIO_ADMIN)) {
+		if (keyfile == NULL) {
+			fprintf(stderr, "To load signed policies to the daemon "
+			    "you need to specify a keyfile\n");
+			usage();
+			/* NOTREACHED */
+		}
+		if (certfile == NULL) {
+			fprintf(stderr, "To load signed policies to the daemon "
+			    "you need to specify a certficate\n");
+			usage();
+			/* NOTREACHED */
+		}
+		as = anoubis_sig_priv_init(keyfile, certfile, NULL, &error);
+		if (as == NULL) {
+			fprintf(stderr, "Error while loading keyfile: %s"
+			    " or certfile %s\n", keyfile, certfile);
+			if (keyfile)
+				free(keyfile);
+			if (certfile)
+				free(certfile);
+			return 1;
+		}
+		if (keyfile)
+			free(keyfile);
+		if (certfile)
+			free(certfile);
+	}
 
 	done = 0;
 	for (i=0; i < sizeof(commands)/sizeof(struct cmd); i++) {
@@ -258,6 +344,10 @@ main(int argc, char *argv[])
 			}
 		}
 	}
+
+	if (as)
+		anoubis_sig_free(as);
+
 	if (!done && strcmp(command, "monitor") == 0) {
 		error = monitor(argc, argv);
 		done = 1;
@@ -497,9 +587,11 @@ static int
 load(char *rulesopt, uid_t uid, unsigned int prio)
 {
 	int fd;
+	unsigned siglen = 0;
 	struct stat statbuf;
 	size_t length, total;
 	char * buf = NULL;
+	unsigned char *signature = NULL;
 	Policy_SetByUid * req;
 	struct anoubis_transaction *t;
 	struct apn_ruleset *ruleset = NULL;
@@ -507,6 +599,14 @@ load(char *rulesopt, uid_t uid, unsigned int prio)
 
 	if (rulesopt == NULL) {
 		fprintf(stderr, "Need a rules file");
+		return 3;
+	}
+
+	if (prio == ANOUBISCTL_PRIO_ADMIN)
+		opts &= ~ANOUBISCTL_OPT_SIGN;
+	if ((opts & ANOUBISCTL_OPT_SIGN) && (as == NULL)) {
+		fprintf(stderr, "To load signed policies to the daemon you "
+		    "need to specify a keyfile and a certficate\n");
 		return 3;
 	}
 	if (strcmp(rulesopt, "-") == 0
@@ -518,6 +618,8 @@ load(char *rulesopt, uid_t uid, unsigned int prio)
 		flags |= APN_FLAG_VERBOSE;
 	if (opts & ANOUBISCTL_OPT_VERBOSE2)
 		flags |= APN_FLAG_VERBOSE2;
+	if (prio == ANOUBISCTL_PRIO_ADMIN)
+		flags |= APN_FLAG_NOASK;
 	if (apn_parse(rulesopt, &ruleset, flags)) {
 		if (ruleset)
 			apn_print_errors(ruleset, stderr);
@@ -548,6 +650,14 @@ load(char *rulesopt, uid_t uid, unsigned int prio)
 	make_version(ruleset);
 	apn_free_ruleset(ruleset);
 
+	if (opts & ANOUBISCTL_OPT_SIGN) {
+		signature = anoubis_sign_policy(as, rulesopt, &siglen);
+		if (!signature) {
+			fprintf(stderr, "Error while signing policy\n");
+			return 3;
+		}
+	}
+
 	fd = open(rulesopt, O_RDONLY);
 	if (fd < 0) {
 		perror("open");
@@ -568,7 +678,7 @@ load(char *rulesopt, uid_t uid, unsigned int prio)
 		}
 	}
 	close(fd);
-	total = sizeof(*req) + length;
+	total = sizeof(*req) + length + siglen;
 	req = malloc(total);
 	if (!req) {
 		fprintf(stderr, "Out of memory\n");
@@ -577,14 +687,17 @@ load(char *rulesopt, uid_t uid, unsigned int prio)
 		return 3;
 	}
 	set_value(req->ptype, ANOUBIS_PTYPE_SETBYUID);
+	set_value(req->siglen, siglen);
 	/*
 	 * XXX CEH: Add posibility to set admin rules for a user and
 	 * XXX CEH: default rules
 	 */
 	set_value(req->uid, uid);
 	set_value(req->prio, prio);
+	if (siglen)
+		memcpy(req->payload, signature, siglen);
 	if (length) {
-		memcpy(req->payload, buf, length);
+		memcpy(req->payload + siglen, buf, length);
 		munmap(buf, length);
 	}
 	t = anoubis_client_policyrequest_start(client, req, total);

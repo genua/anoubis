@@ -92,16 +92,12 @@ anoubis_sig_verify_policy_file(const char *filename, EVP_PKEY *sigkey)
 	int		 siglen, fd, ret;
 
 	if (asprintf(&sigfile, "%s.sig", filename) == -1) {
-		return (0);
+		return (-1);
 	}
 
-	/* If no signature file is available, return successfully */
 	if ((fd = open(sigfile, O_RDONLY)) == -1) {
 		free(sigfile);
-		if (errno == ENOENT)
-			return (1);
-		else
-			return (0);
+		return (-2);
 	}
 	free(sigfile);
 
@@ -109,12 +105,12 @@ anoubis_sig_verify_policy_file(const char *filename, EVP_PKEY *sigkey)
 	siglen = EVP_PKEY_size(sigkey);
 	if ((sigbuf = calloc(siglen, sizeof(unsigned char))) == NULL) {
 		close(fd);
-		return (0);
+		return (-3);
 	}
 	while ((ret = read(fd, sigbuf, siglen)) > 0) {
 		if (ret == -1) {
 			close(fd);
-			return (0);
+			return (-4);
 		}
 	}
 	close(fd);
@@ -136,13 +132,13 @@ anoubis_sig_verify_policy(const char *filename, unsigned char *sigbuf,
 	EVP_MD_CTX_init(&ctx);
 	if (EVP_VerifyInit(&ctx, ANOUBIS_SIG_HASH_DEFAULT) == 0) {
 		EVP_MD_CTX_cleanup(&ctx);
-		return (0);
+		return (-5);
 	}
 
 	/* Open policy file */
 	if ((fd = open(filename, O_RDONLY)) == -1) {
 		EVP_MD_CTX_cleanup(&ctx);
-		return (0);
+		return (-6);
 	}
 
 	while ((n = read(fd, buffer, sizeof(buffer))) > 0)
@@ -150,17 +146,63 @@ anoubis_sig_verify_policy(const char *filename, unsigned char *sigbuf,
 	if (n == -1) {
 		close(fd);
 		EVP_MD_CTX_cleanup(&ctx);
-		return (0);
+		return (-7);
 	}
 	close(fd);
 
 	/* Verify */
 	if ((result = EVP_VerifyFinal(&ctx, sigbuf, siglen, sigkey)) == -1)
-		result = 0;
+		result = -8;
 
 	EVP_MD_CTX_cleanup(&ctx);
 
 	return (result);
+}
+
+unsigned char *
+anoubis_sign_policy_buf(struct anoubis_sig *as, char *buf, unsigned int *len)
+{
+	unsigned char	*sigbuf = NULL;
+	unsigned int	 buf_len;
+	unsigned int	 siglen = 0;
+	EVP_MD_CTX	 ctx;
+	EVP_PKEY	*pkey;
+
+	if (as == NULL || len == NULL || buf == NULL) {
+		*len = -EINVAL;
+		return NULL;
+	}
+
+	buf_len = strlen(buf);
+	if (buf_len != *len) {
+		*len = -EINVAL;
+		return NULL;
+	}
+	pkey = as->pkey;
+	siglen = EVP_PKEY_size(pkey);
+
+	if ((sigbuf = calloc(siglen, sizeof(unsigned char))) == NULL)
+		return NULL;
+
+
+	EVP_MD_CTX_init(&ctx);
+	if (EVP_SignInit(&ctx, as->type) == 0) {
+		EVP_MD_CTX_cleanup(&ctx);
+		free(sigbuf);
+		*len = -ERR_get_error();
+		return NULL;
+	}
+	EVP_SignUpdate(&ctx, buf, buf_len);
+	if (EVP_SignFinal(&ctx, sigbuf, &siglen, pkey) == 0) {
+		free(sigbuf);
+		EVP_MD_CTX_cleanup(&ctx);
+		*len = -ERR_get_error();
+		return NULL;
+	}
+	EVP_MD_CTX_cleanup(&ctx);
+
+	*len = siglen;
+	return sigbuf;
 }
 
 unsigned char *
@@ -392,6 +434,7 @@ anoubis_sig_free(struct anoubis_sig *as)
 	if (as->cert)
 		X509_free(as->cert);
 
+	EVP_cleanup();
 	free(as);
 }
 

@@ -59,6 +59,7 @@
 
 #include "anoubisd.h"
 #include "sfs.h"
+#include "cert.h"
 #include "pe.h"
 
 static char		*pe_dump_sfsmsg(struct pe_file_event *);
@@ -128,7 +129,7 @@ pe_sfs_match_one(struct apn_rule *rule, struct pe_file_event *fevent,
 		break;
 	case APN_CS_KEY_SELF: {
 		char		*keyid;
-		keyid = sfs_cert_keyid_for_uid(fevent->uid);
+		keyid = cert_keyid_for_uid(fevent->uid);
 		if (!keyid)
 			break;
 		ret = sfshash_get_key(fevent->path, keyid, csum);

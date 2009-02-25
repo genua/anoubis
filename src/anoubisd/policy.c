@@ -56,6 +56,7 @@
 #include <event.h>
 #include "anoubisd.h"
 #include "sfs.h"
+#include "cert.h"
 #include "aqueue.h"
 #include "amsg.h"
 #include "pe.h"
@@ -106,7 +107,7 @@ policy_sighandler(int sig, short event __used, void *arg)
 		pe_dump();
 		break;
 	case SIGHUP:
-		sfs_cert_reconfigure(1);
+		cert_reconfigure(1);
 		pe_reconfigure();
 		break;
 	case SIGINT:
@@ -257,7 +258,7 @@ policy_main(struct anoubisd_config *conf __used, int pipe_m2s[2],
 	event_add(&ev_timer, &tv);
 
 	/* Start policy engine */
-	sfs_cert_init(1);
+	cert_init(1);
 	pe_init();
 
 	DEBUG(DBG_TRACE, "policy event loop");
@@ -562,7 +563,8 @@ dispatch_p2m(int fd, short sig __used, void *arg)
 	ret = send_msg(fd, msg);
 	if (ret != 0) {
 		msg = dequeue(&eventq_p2m);
-		DEBUG(DBG_QUEUE, " <eventq_p2m: %s%x", (ret > 0) ? "" : "dropping ",
+		DEBUG(DBG_QUEUE, " <eventq_p2m: %s%x", (ret > 0) ? "" : " "
+		    "dropping ",
 		    ((struct eventdev_reply *)msg->msg)->msg_token);
 		free(msg);
 	}
@@ -786,7 +788,8 @@ dispatch_p2s(int fd, short sig __used, void *arg)
 	ret = send_msg(fd, msg);
 	if (ret != 0) {
 		msg = dequeue(&eventq_p2s);
-		DEBUG(DBG_QUEUE, " <eventq_p2s: %s%x", (ret > 0) ? "" : "dropping ",
+		DEBUG(DBG_QUEUE, " <eventq_p2s: %s%x", (ret > 0) ? "" : " "
+		    "dropping ",
 		    ((struct eventdev_hdr *)msg->msg)->msg_token);
 		free(msg);
 	}

@@ -77,7 +77,7 @@ anoubisd_SOURCES= \
 	pe_sfscache.c \
 	pe_prefixhash.c \
 	pe_sandbox.c \
-	pe_pubkey.c \
+	cert.c \
 	session.c \
 	log.c \
 	amsg.c \
@@ -89,6 +89,7 @@ anoubisd_SOURCES= \
 	aqueue.h \
 	sfs.h \
 	pe.h \
+	cert.h \
 	kernelcache.h
 
 anoubisd_SOURCES_flawfinder= \
@@ -103,7 +104,7 @@ anoubisd_SOURCES_flawfinder= \
 	pe_sfscache.c_flawfinder \
 	pe_prefixhash.c_flawfinder \
 	pe_sandbox.c_flawfinder \
-	pe_pubkey.c_flawfinder \
+	cert.c_flawfinder \
 	session.c_flawfinder \
 	log.c_flawfinder \
 	amsg.c_flawfinder \
@@ -114,6 +115,7 @@ anoubisd_SOURCES_flawfinder= \
 	amsg.h_flawfinder \
 	aqueue.h_flawfinder \
 	sfs.h_flawfinder \
+	cert.h_flawfinder \
 	kernelcache.h_flawfinder
 
 anoubisd_SOURCES_lint= \
@@ -128,7 +130,7 @@ anoubisd_SOURCES_lint= \
 	pe_sfscache.c_lint \
 	pe_prefixhash.c_lint \
 	pe_sandbox.c_lint \
-	pe_pubkey.c_lint \
+	cert.c_lint \
 	session.c_lint \
 	log.c_lint \
 	sfs.c_lint \
@@ -146,7 +148,7 @@ anoubisd_SOURCES_splint= \
 	pe_sfscache.c_splint \
 	pe_prefixhash.c_splint \
 	pe_sandbox.c_splint \
-	pe_pubkey.c_splint \
+	cert.c_splint \
 	session.c_splint \
 	log.c_splint \
 	amsg.c_splint \

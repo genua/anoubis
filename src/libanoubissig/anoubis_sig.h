@@ -95,6 +95,8 @@ unsigned char *anoubis_sign_csum(struct anoubis_sig *as,
     unsigned char csum[ANOUBIS_SIG_HASH_SHA256_LEN], unsigned int *len);
 unsigned char *anoubis_sign_policy(struct anoubis_sig *as, char *file,
     unsigned int *len);
+unsigned char *anoubis_sign_policy_buf(struct anoubis_sig *as, char *buf,
+    unsigned int *len);
 int anoubis_sig_verify_policy_file(const char *filename, EVP_PKEY *sigkey);
 int anoubis_sig_verify_policy(const char *filename,
    unsigned char *sigbuf, int siglen, EVP_PKEY *sigkey);

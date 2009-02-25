@@ -57,8 +57,10 @@
 #endif
 
 #include <anoubis_protocol.h>
+#include <anoubis_sig.h>
 #include "anoubisd.h"
 #include "pe.h"
+#include "cert.h"
 
 struct pe_user {
 	TAILQ_ENTRY(pe_user)	 entry;
@@ -80,10 +82,16 @@ struct pe_policy_request {
 	u_int32_t	 ptype;
 	u_int32_t	 authuid;
 	int		 fd;
+	int		 fdsig;
 	int		 prio;
 	uid_t		 uid;
+	int		 written;
+	int		 siglen;
 	char		*tmpname;
+	char		*tmpsig;
 	char		*realname;
+	char		*realsig;
+	unsigned char	*key;
 };
 LIST_HEAD(, pe_policy_request) preqs;
 
@@ -91,10 +99,8 @@ void				 pe_user_init(void);
 static int			 pe_user_load_db(struct pe_policy_db *);
 static int			 pe_user_load_dir(const char *, unsigned int,
 				     struct pe_policy_db *);
-static int			 pe_user_clean_policy(const char *,
-				     const char *, int);
 static struct apn_ruleset	*pe_user_load_policy(const char *name,
-				     int flags);
+				     int flags, int prio);
 static int			 pe_user_insert_rs(struct apn_ruleset *,
 				     uid_t, unsigned int,
 				     struct pe_policy_db *);
@@ -194,6 +200,7 @@ static int
 pe_user_load_dir(const char *dirname, unsigned int prio, struct pe_policy_db *p)
 {
 	DIR			*dir;
+	struct cert		*pub;
 	struct dirent		*dp;
 	struct apn_ruleset	*rs;
 	int			 count;
@@ -256,24 +263,22 @@ pe_user_load_dir(const char *dirname, unsigned int prio, struct pe_policy_db *p)
 			log_warnx("asprintf: Out of memory");
 			continue;
 		}
-		/*
-		 * Only clean user policies.  Temporary rules in admin
-		 * policies are not allowed.
+		/* If root placed a certificate for the user there
+		 * the policy should be signed and verified.
+		 * For now we just support User policies.
 		 */
-		if (prio == PE_PRIO_USER1 &&
-		    pe_user_clean_policy(filename, dirname, 1) != 0) {
-			log_warnx("Cannot clean %s", filename);
-			free(filename);
-			continue;
+		if (prio != PE_PRIO_ADMIN) {
+			if ((pub = cert_get_by_uid(uid)) != NULL) {
+				if (anoubis_sig_verify_policy_file(filename,
+				    pub->pkey) != 1)  {
+					log_warnx("not loading \"%s\", invalid "
+					    "signature", filename);
+					free(filename);
+					continue;
+				}
+			}
 		}
-		/* XXX Right now, only use administrators key, ie. uid == 0 */
-		if (pe_pubkey_verifysig(filename, 0) != 1) {
-			log_warnx("not loading \"%s\", invalid siganture",
-			    filename);
-			free(filename);
-			continue;
-		}
-		rs = pe_user_load_policy(filename, flags);
+		rs = pe_user_load_policy(filename, flags, prio);
 		free(filename);
 
 		/* If parsing fails, we just continue */
@@ -319,74 +324,11 @@ pe_user_scope_check(struct apn_scope * scope, void * data)
 	return 0;
 }
 
-static int
-pe_user_clean_policy(const char *filename, const char *dirname, int all)
-{
-	time_t			 now = 0;
-	int			 err = -1;
-	struct apn_ruleset	*rs = NULL;
-	char			*tmpname = NULL;
-	FILE			*tmp = NULL;
-
-	if (!all) {
-		if (time(&now) == (time_t)-1) {
-			int err = errno;
-			log_warn("Cannot get current time");
-			master_terminate(err);
-			return -1;
-		}
-	}
-	if (apn_parse(filename, &rs, 0)) {
-		log_warnx("apn_parse: Parsing failed");
-		goto out;
-	}
-	rs->destructor = (void*)&pe_prefixhash_destroy;
-	if (apn_clean_ruleset(rs, &pe_user_scope_check, &now)) {
-		/* Something changed. Dump modified rules. */
-		mode_t	oldmask;
-		if (dirname) {
-			if (asprintf(&tmpname, "%s/.cleantmp", dirname) == -1) {
-				log_warnx("asprintf: Out of memory");
-				goto out;
-			}
-			oldmask = umask(0077);
-			tmp = fopen(tmpname, "w");
-		} else {
-			oldmask = umask(0077);
-			tmp = fopen(filename, "w");
-		}
-		umask(oldmask);
-		if (!tmp) {
-			log_warnx("fopen");
-			goto out;
-		}
-		if (apn_print_ruleset(rs, 0, tmp)) {
-			log_warnx("apn_print_ruleset failed");
-			if (tmpname)
-				unlink(tmpname);
-			goto out;
-		}
-		if (tmpname && rename(tmpname, filename) < 0) {
-			log_warn("rename");
-			unlink(tmpname);
-			goto out;
-		}
-	}
-	err = 0;
-out:
-	if (rs)
-		apn_free_ruleset(rs);
-	if (tmp)
-		fclose(tmp);
-	if (tmpname)
-		free(tmpname);
-	return err;
-}
-
 static struct apn_ruleset *
-pe_user_load_policy(const char *name, int flags)
+pe_user_load_policy(const char *name, int flags, int prio)
 {
 	struct apn_ruleset	*rs;
+	time_t			 now = 0;
 	int			 ret;
 
 	DEBUG(DBG_PE_POLICY, "pe_user_load_policy: %s", name);
@@ -399,6 +341,19 @@ pe_user_load_policy(const char *name, int flags)
 	if (ret == 1) {
 		log_warnx("could not parse \"%s\"", name);
 		return (NULL);
+	}
+	/*
+	* Only clean user policies.  Temporary rules in admin
+	* policies are not allowed.
+	*/
+	if (prio == PE_PRIO_USER1) {
+		if (time(&now) == (time_t)-1) {
+			int err = errno;
+			log_warn("Cannot get current time");
+			master_terminate(err);
+			return (NULL);
+		}
+		apn_clean_ruleset(rs, &pe_user_scope_check, &now);
 	}
 	rs->destructor = (void*)&pe_prefixhash_destroy;
 	return (rs);
@@ -539,36 +494,48 @@ pe_policy_filename(uid_t uid, unsigned int prio, char *pre)
 }
 
 static int
-pe_policy_open(uid_t uid, unsigned int prio)
+pe_policy_get(uid_t uid, unsigned int prio)
 {
-	int err, fd;
-	char	*name = NULL;
-	
-	if (prio >= PE_PRIO_MAX) {
-		log_warnx("pe_policy_open: illegal priority %d", prio);
-		return -EINVAL;
+	time_t			 now = 0;
+	struct apn_ruleset	*rs;
+	int			err;
+	char			*tmp;
+	FILE			*fd;
+	int			 file;
+
+	tmp = pe_policy_filename(uid, prio, ".tmp.");
+	rs = pe_user_get_ruleset(uid, prio, pdb);
+	if (!rs) {
+		free(tmp);
+		return -ENOENT;
 	}
-
-	name = pe_policy_filename(uid, prio, "");
-	if (!name)
-		return -ENOMEM;
-	fd = open(name, O_RDONLY);
-	err = errno;
-	free(name);
-	if (fd >= 0)
-		return fd;
-	if (err != ENOENT)
+	if (time(&now) == (time_t)-1) {
+		err = errno;
+		log_warn("Cannot get current time");
+		master_terminate(err);
+		return -1;
+	}
+	apn_clean_ruleset(rs, &pe_user_scope_check, &now);
+	fd = fopen(tmp, "w+");
+	if (!fd) {
+		free(tmp);
+		return -errno;
+	}
+	err = apn_print_ruleset(rs, 0, fd);
+	if (err) {
+		free(tmp);
+		fclose(fd);
 		return -err;
+	}
+	fclose(fd);
+	file = open(tmp, O_RDONLY);
+	unlink(tmp);
+	free (tmp);
+	if (file >= 0)
+		return file;
+	else
+		return -errno;
 
-	err = asprintf(&name, "/%s/%s", prio_to_string[prio],
-	    ANOUBISD_DEFAULTNAME);
-	if (err == -1)
-		return -ENOMEM;
-	fd = open(name, O_RDONLY);
-	free(name);
-	if (fd >= 0)
-		return fd;
-	return -errno;
 }
 
 static struct
@@ -594,6 +561,15 @@ pe_policy_request_put(struct pe_policy_request *req)
 	}
 	if (req->fd >= 0)
 		close(req->fd);
+	if (req->tmpsig) {
+		unlink(req->tmpsig);
+		free(req->tmpsig);
+	}
+	if (req->realsig)
+		free(req->realsig);
+	if (req->fdsig >= 0)
+		close(req->fdsig);
+
 	free(req);
 }
 
@@ -631,9 +607,12 @@ pe_dispatch_policy(struct anoubisd_msg_comm *comm)
 	u_int32_t			prio;
 	int				error = 0;
 	int				fd;
+	int				ret;
+	int				s_len;
 	struct pe_policy_request	*req;
 	char				*buf;
 	int				len;
+	struct cert			*key = NULL;
 
 	if (comm == NULL) {
 		log_warnx("pe_dispatch_policy: empty comm");
@@ -658,6 +637,7 @@ pe_dispatch_policy(struct anoubisd_msg_comm *comm)
 	/* No request yet, start one. */
 	if (req == NULL) {
 		if (comm->len < sizeof(Policy_Generic)) {
+			log_warnx("pe_dispatch_policy: Wrong message size");
 			error = EINVAL;
 			goto reply;
 		}
@@ -670,6 +650,7 @@ pe_dispatch_policy(struct anoubisd_msg_comm *comm)
 		req->token = comm->token;
 		req->ptype = get_value(gen->ptype);
 		req->authuid = comm->uid;
+		req->written = 0;
 		req->fd = -1;
 		LIST_INSERT_HEAD(&preqs, req, next);
 	}
@@ -697,8 +678,7 @@ pe_dispatch_policy(struct anoubisd_msg_comm *comm)
 			error = EINVAL;
 		if (error != 0)
 			goto reply;
-
-		fd = pe_policy_open(uid, prio);
+		fd = pe_policy_get(uid, prio);
 		req->uid = uid;
 		req->prio = prio;
 		/* ENOENT indicates an empty policy and not an error. */
@@ -720,6 +700,8 @@ pe_dispatch_policy(struct anoubisd_msg_comm *comm)
 		if (comm->flags & POLICY_FLAG_START) {
 			char	*tmp;
 			if (comm->len < sizeof(Policy_SetByUid)) {
+				log_warnx("pe_dispatch_policy: Wrong message "
+				    "size from request");
 				error = EINVAL;
 				goto reply;
 			}
@@ -743,6 +725,20 @@ pe_dispatch_policy(struct anoubisd_msg_comm *comm)
 			req->realname = pe_policy_filename(uid, prio, "");
 			req->uid = uid;
 			req->prio = prio;
+			req->siglen = get_value(setbyuid->siglen);
+			if (prio == PE_PRIO_ADMIN) {
+				buf += req->siglen;
+				req->siglen = 0;
+			} else {
+				key = cert_get_by_uid(req->uid);
+				if (key && req->siglen <= 0) {
+					log_warnx("pe_dispatch_policy: Found "
+					    "public-key for uid %u and "
+					    "expecting signature", req->uid);
+					error = EINVAL;
+					goto reply;
+				}
+			}
 			if (!req->realname)
 				goto reply;
 			tmp = pe_policy_filename(uid, prio, ".tmp.");
@@ -754,6 +750,32 @@ pe_dispatch_policy(struct anoubisd_msg_comm *comm)
 				free(tmp);
 				req->tmpname = NULL;
 				goto reply;
+			}
+			if (req->siglen > 0) {
+				if (asprintf(&req->tmpsig, "%s.sig",
+				    req->tmpname) == -1) {
+					free(req->tmpname);
+					req->tmpname = NULL;
+					req->tmpsig = NULL;
+					goto reply;
+				}
+				if (asprintf(&req->realsig, "%s.sig",
+				    req->realname) == -1) {
+					free(req->tmpname);
+					req->tmpname = NULL;
+					req->tmpsig = NULL;
+					free(req->realname);
+					req->realsig = NULL;
+					req->realname = NULL;
+					goto reply;
+				}
+				DEBUG(DBG_TRACE, "  open: %s", req->tmpsig);
+				req->fdsig = open(req->tmpsig,
+					O_WRONLY|O_CREAT|O_EXCL, 0400);
+				if (req->fdsig < 0) {
+					error = errno;
+					goto reply;
+				}
 			}
 			free(tmp);
 			DEBUG(DBG_TRACE, "  open: %s", req->tmpname);
@@ -772,8 +794,27 @@ pe_dispatch_policy(struct anoubisd_msg_comm *comm)
 			error = EPERM;
 			goto reply;
 		}
+		if (req->written < req->siglen) {
+			if (len > (req->siglen - req->written))
+				s_len = req->siglen;
+			else
+				s_len = len;
+			while (s_len) {
+				ret = write(req->fdsig, buf, s_len);
+				if (ret < 0) {
+					DEBUG(DBG_TRACE, "  write error fd=%d",
+					    req->fdsig);
+					error = errno;
+					goto reply;
+				}
+				s_len -= ret;
+				len -= ret;
+				buf += ret;
+				req->written += ret;
+			}
+		}
 		while(len) {
-			int ret = write(req->fd, buf, len);
+			ret = write(req->fd, buf, len);
 			if (ret < 0) {
 				DEBUG(DBG_TRACE, "  write error fd=%d",
 				    req->fd);
@@ -789,11 +830,29 @@ pe_dispatch_policy(struct anoubisd_msg_comm *comm)
 			int	 ret;
 			struct apn_ruleset * ruleset = NULL;
 
+			/* Only accept verified signatures if a key is
+			 * avaible */
+			if (req->siglen > 0)
+				key = cert_get_by_uid(req->uid);
+			if (key) {
+				ret = anoubis_sig_verify_policy_file(
+				    req->tmpname, key->pkey);
+				if (ret != 1) {
+					log_warnx("pe_dispatch_policy: "
+					    "Coudn\'t verify policy for uid: "
+					    "%u", req->uid);
+					error = EINVAL;
+					goto reply;
+				}
+			}
 			/* Only accept syntactically correct rules. */
 			if (apn_parse(req->tmpname, &ruleset,
 			    (req->prio != PE_PRIO_USER1)?APN_FLAG_NOASK:0)) {
 				if (ruleset)
 					free(ruleset);
+				log_warnx("pe_dispatch_policy: "
+				    "Could not parse ruleset for uid: %u",
+				    req->uid);
 				error = EINVAL;
 				goto reply;
 			}
@@ -836,6 +895,13 @@ pe_dispatch_policy(struct anoubisd_msg_comm *comm)
 				apn_free_ruleset(ruleset);
 				goto reply;
 			}
+			if (req->siglen > 0) {
+				if (rename(req->tmpsig, req->realsig) < 0) {
+					error = errno;
+					apn_free_ruleset(ruleset);
+					goto reply;
+				}
+			}
 			DEBUG(DBG_TRACE, "    pe_user_replace_rs uid=%d "
 			    "prio=%d\n", req->uid, req->prio);
 			if (pe_user_replace_rs(ruleset, req->uid, req->prio)) {
@@ -850,6 +916,7 @@ pe_dispatch_policy(struct anoubisd_msg_comm *comm)
 		break;
 	default:
 		/* Unknown opcode. */
+		log_warnx("pe_dispatch_policy: Unknown operation code");
 		error = EINVAL;
 		goto reply;
 	}
@@ -867,7 +934,7 @@ reply:
 	reply = calloc(1, sizeof(struct anoubisd_reply));
 
 	if (!reply) {
-		log_warn("calloc");
+		log_warn("pe_dispatch_policy: calloc");
 		master_terminate(ENOMEM);	/* XXX HSH */
 	}
 

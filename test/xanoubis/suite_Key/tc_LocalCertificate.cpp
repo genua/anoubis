@@ -389,7 +389,7 @@ getTc_LocalCertificate(void)
 
 	testCase = tcase_create("LocalCertificate");
 
-	tcase_set_timeout(testCase, 10);
+	tcase_set_timeout(testCase, 120);
 	tcase_add_checked_fixture(testCase, setup, teardown);
 
 	tcase_add_test(testCase, tc_LocalCertificate_create);

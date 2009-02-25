@@ -70,6 +70,7 @@
 #include "aqueue.h"
 #include "amsg.h"
 #include "sfs.h"
+#include "cert.h"
 #include "kernelcache.h"
 
 /*@noreturn@*/
@@ -441,7 +442,7 @@ main(int argc, char *argv[])
 	close(loggers[2]);
 
 	/* Load Public Keys */
-	sfs_cert_init(0);
+	cert_init(0);
 
 	setproctitle("master");
 
@@ -708,7 +709,7 @@ static void
 reconfigure(void)
 {
 	/* Reload Public Keys */
-	sfs_cert_reconfigure(0);
+	cert_reconfigure(0);
 
 	/* Forward SIGHUP to policy process */
 	if (kill(policy_pid, SIGHUP) != 0)
@@ -753,7 +754,8 @@ dispatch_m2s(int fd, short event __used, /*@dependent@*/ void *arg)
 	ret = send_msg(fd, msg);
 	if (ret != 0) {
 		msg = dequeue(&eventq_m2s);
-		DEBUG(DBG_QUEUE, " <eventq_m2s: %s%x", (ret > 0) ? "" : "dropping ",
+		DEBUG(DBG_QUEUE, " <eventq_m2s: %s%x", (ret > 0) ? "" : ""
+		    " dropping ",
 		    ((struct eventdev_hdr *)msg->msg)->msg_token);
 		free(msg);
 	}
@@ -774,13 +776,13 @@ out:
 	DEBUG(DBG_TRACE, "<dispatch_m2s");
 }
 
-/* 
+/*
  * Search in entries of the shadowtree for uids/keyid that registered a
  * checksum/signautre of the entry.
  */
 static void
-send_id_list(u_int64_t token, const char *entry, struct event_info_main *ev_info,
-    int op)
+send_id_list(u_int64_t token, const char *entry,
+    struct event_info_main *ev_info, int op)
 {
 	_send_sfs_list(token, entry, NULL, 0, 0, ev_info, 1, op, 0);
 }
@@ -791,13 +793,15 @@ send_id_list(u_int64_t token, const char *entry, struct event_info_main *ev_info
  */
 static void
 send_entry_list(u_int64_t token, const char *path, u_int8_t *keyid,
-    int idlen, uid_t uid, struct event_info_main *ev_info, int op, int for_all_ids)
+    int idlen, uid_t uid, struct event_info_main *ev_info, int op,
+    int for_all_ids)
 {
 	if (keyid)
 		if (idlen <= 0)
 			return;
 
-	_send_sfs_list(token, path, keyid, idlen, uid, ev_info, 0, op, for_all_ids);
+	_send_sfs_list(token, path, keyid, idlen, uid, ev_info, 0, op,
+	    for_all_ids);
 }
 
 static int
@@ -900,7 +904,7 @@ _send_sfs_list(u_int64_t token, const char *path, u_int8_t *keyid,
 			if (stars%2 && !search_for_id) {
 				if (op == ANOUBIS_CHECKSUM_OP_LIST_ALL) {
 					/* The user root try to export for
-					 * all users so we don't check for 
+					 * all users so we don't check for
 					 * correctness
 					 */
 					if (for_all_ids)
@@ -908,7 +912,7 @@ _send_sfs_list(u_int64_t token, const char *path, u_int8_t *keyid,
 					/* Check the keyid */
 					if (keyid) {
 						ret = check_for_entry(path,
-						    sfs_ent->d_name, 
+						    sfs_ent->d_name,
 						    keyid, idlen, 0);
 					}
 					if (ret == 0) {
@@ -954,7 +958,7 @@ out:
 				master_terminate(ENOMEM);
 				return;
 			}
-			
+
 			/* Now we pack and ship */
 			len = strlen(tmp) + 1;
 			cnt += len;
@@ -1317,7 +1321,8 @@ dispatch_m2p(int fd, short event __used, /*@dependent@*/ void *arg)
 	ret = send_msg(fd, msg);
 	if (ret != 0) {
 		msg = dequeue(&eventq_m2p);
-		DEBUG(DBG_QUEUE, " <eventq_m2p: %s%x", (ret > 0) ? "" : "dropping ",
+		DEBUG(DBG_QUEUE, " <eventq_m2p: %s%x", (ret > 0) ? "" :
+		    "dropping ",
 		    ((struct eventdev_hdr *)msg->msg)->msg_token);
 		free(msg);
 	}
@@ -1390,10 +1395,10 @@ dispatch_m2dev(int fd, short event __used, /*@dependent@*/ void *arg)
 
 	switch(msg->mtype) {
 		case ANOUBISD_MSG_EVENTREPLY:
-			ret = write(fd, msg->msg, 
+			ret = write(fd, msg->msg,
 			    sizeof(struct eventdev_reply));
 
-			/* 
+			/*
 			 * ESRCH/EINVAL returns are events which
 			 * have been cancelled before anoubisd replied.
 			 * These should be dequeued.

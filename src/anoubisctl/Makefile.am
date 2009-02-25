@@ -36,12 +36,14 @@ bsdcompatdir		= src/bsdcompat
 libapndir		= src/libapn
 libanoubischatdir	= src/libanoubischat
 libanoubisprotocoldir	= src/libanoubisprotocol
+libanoubissigdir	= src/libanoubissig
 libanoubisuidir		= src/libanoubisui
 
 libapn	       = $(top_builddir)/$(libapndir)/libapn.a
 libbsdcompat   = $(top_builddir)/$(bsdcompatdir)/libbsdcompat.a
 libanoubischat = $(top_builddir)/$(libanoubischatdir)/libanoubischat.a
 libanoubispc   = $(top_builddir)/$(libanoubisprotocoldir)/libanoubispc.a
+libanoubissig   = $(top_builddir)/$(libanoubissigdir)/libanoubissig.a
 libanoubisui   = $(top_builddir)/$(libanoubisuidir)/libanoubisui.a
 
 INCLUDES = \
@@ -51,11 +53,12 @@ INCLUDES = \
 	-I$(top_srcdir)/$(libanoubischatdir)            \
 	-I$(top_srcdir)/$(libanoubisprotocoldir)/client \
 	-I$(top_srcdir)/$(libanoubisprotocoldir)        \
+	-I$(top_srcdir)/$(libanoubissigdir)	        \
 	-I$(top_srcdir)/$(libanoubisuidir)
 
 
 anoubisctl_DEPENDENCIES = $(libanoubisui) $(libapn) $(libanoubispc) \
-	$(libanoubischat)
+	$(libanoubischat) $(libanoubissig)
 
 anoubisctl_LDADD = $(anoubisctl_DEPENDENCIES)
 
