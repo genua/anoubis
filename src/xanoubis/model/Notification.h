@@ -84,6 +84,7 @@ class Notification {
 		virtual bool isWrite(void);
 		virtual bool isExec(void);
 		int getSfsmatch(void);
+		int getType(void);
 };
 
 WX_DECLARE_LIST(Notification, NotifyList);

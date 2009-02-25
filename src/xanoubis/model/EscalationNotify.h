@@ -79,6 +79,7 @@ class EscalationNotify : public Notification {
 		anoubis_cookie_t getTaskCookie(void);
 		wxString	 getBinaryName(void);
 		wxString	 getCtxBinaryName(void);
+		virtual wxString getAction(void);
 		bool		 getChecksum(unsigned char *);
 		bool		 getCtxChecksum(unsigned char *);
 		int		 getProtocolNo(void);

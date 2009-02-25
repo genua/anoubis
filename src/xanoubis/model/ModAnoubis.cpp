@@ -34,11 +34,13 @@
 #include "AlertNotify.h"
 #include "LogNotify.h"
 #include "NotifyAnswer.h"
+#include "DaemonAnswerNotify.h"
 #include "main.h"
 #include "Module.h"
 #include "ModAnoubis.h"
 #include "ModAnoubisMainPanelImpl.h"
 #include "ModAnoubisOverviewPanelImpl.h"
+#include "JobCtrl.h"
 
 #define ITERATION_NEXT(list,idx,res) \
 	do { \
@@ -90,6 +92,8 @@ ModAnoubis::ModAnoubis(wxWindow *parent) : Module()
 
 	AnEvents::getInstance()->Connect(anEVT_ADD_NOTIFICATION,
 	    wxCommandEventHandler(ModAnoubis::OnAddNotification), NULL, this);
+	JobCtrl::getInstance()->Connect(anEVT_COM_CONNECTION,
+	    wxCommandEventHandler(ModAnoubis::OnDaemonDisconnect), NULL, this);
 }
 
 ModAnoubis::~ModAnoubis(void)
@@ -128,11 +132,44 @@ ModAnoubis::update(void)
 void
 ModAnoubis::OnAddNotification(wxCommandEvent& event)
 {
-	Notification *notify;
+	Notification	*notify;
 
 	notify = (Notification *)(event.GetClientObject());
 	insertNotification(notify);
+	/*
+	 * A DaemonAnswerNotify is no longer needed. Do not skip it.
+	 */
+	if (IS_DAEMONANSWEROBJ(notify)) {
+		delete notify;
+	} else {
+		event.Skip();
+	}
+}
+
+void
+ModAnoubis::OnDaemonDisconnect(wxCommandEvent& event)
+{
+	NotifyAnswer		*answer;
+	EscalationNotify	*eNotify;
+
 	event.Skip();
+	if (event.GetInt() != JobCtrl::CONNECTION_CONNECTED) {
+		NotifyList::iterator	it;
+		while(1) {
+			it = notAnsweredList_.begin();
+			if (it == notAnsweredList_.end())
+				break;
+			eNotify = dynamic_cast<EscalationNotify *>(*it);
+			if (!eNotify) {
+				/* Should never happen, but let's play safe. */
+				notAnsweredList_.DeleteObject(*it);
+			} else {
+				answer = new NotifyAnswer(NOTIFY_ANSWER_ONCE,
+				    false);
+				answerEscalationNotify(eNotify, answer, false);
+			}
+		}
+	}
 }
 
 void
@@ -186,6 +223,18 @@ ModAnoubis::insertNotification(Notification *newNotify)
 		wxCommandEvent  showEvent(anEVT_OPEN_ESCALATIONS);
 		showEvent.SetInt(notAnsweredList_.GetCount());
 		wxPostEvent(anEvents, showEvent);
+	} else if (IS_DAEMONANSWEROBJ(newNotify)) {
+		DaemonAnswerNotify	*dNotify;
+		EscalationNotify	*origNotify;
+
+		dNotify = dynamic_cast<DaemonAnswerNotify *>(newNotify);
+		origNotify = fixupEscalationAnswer(dNotify->getType(),
+		    dNotify->getToken(), dNotify->getError());
+		if (origNotify) {
+			wxCommandEvent	event(anEVT_ADD_NOTIFYANSWER);
+			event.SetClientObject((wxClientData*)origNotify);
+			wxPostEvent(anEvents, event);
+		}
 	} else if (IS_ALERTOBJ(newNotify)) {
 		alertList_.Append(newNotify);
 		allList_.Append(newNotify);
@@ -202,9 +251,57 @@ ModAnoubis::insertNotification(Notification *newNotify)
 	((ModAnoubisMainPanelImpl *)mainPanel_)->update();
 }
 
+EscalationNotify *
+ModAnoubis::fixupEscalationAnswer(int type, anoubis_token_t token, int error)
+{
+	NotifyList::iterator	 it;
+	NotifyAnswer		*answer;
+	bool			 allow = (error == 0);
+	EscalationNotify	*eNotify;
+
+	if (type == ANOUBIS_N_RESOTHER) {
+		/* Search it in the list of unanswered requests. */
+		for (it = notAnsweredList_.begin();
+		    it != notAnsweredList_.end(); it++) {
+			eNotify = dynamic_cast<EscalationNotify *>(*it);
+			if (eNotify && eNotify->getToken() == token) {
+				answer = new NotifyAnswer(NOTIFY_ANSWER_ONCE,
+				    allow);
+				answerEscalationNotify(eNotify, answer);
+				return eNotify;
+			}
+		}
+	}
+	/*
+	 * RESYOU or not a reply to an unanswered request. Find the request
+	 * in the list of answerd requests. Search backwards because the
+	 * request is likely to be at the end of the list and the list can
+	 * get long over time.
+	 */
+	it = answeredList_.end();
+	while(1) {
+		if (it == answeredList_.begin())
+			break;
+		it--;
+		eNotify = dynamic_cast<EscalationNotify *>(*it);
+		if (eNotify && eNotify->getToken() == token) {
+			answer = eNotify->getAnswer();
+			if (answer->wasAllowed() != allow) {
+				eNotify->setAnswer(NULL);
+				delete answer;
+				answer = new NotifyAnswer(NOTIFY_ANSWER_ONCE,
+				    allow);
+				eNotify->setAnswer(answer);
+			}
+			return eNotify;
+		}
+	}
+	return NULL;
+}
+
 void
 ModAnoubis::answerEscalationNotify(EscalationNotify *notify,
-    NotifyAnswer *answer)
+    NotifyAnswer *answer, bool sendAnswer)
 {
 	wxString	 module;
 	AnEvents	*anEvents;
@@ -214,7 +311,11 @@ ModAnoubis::answerEscalationNotify(EscalationNotify *notify,
 	if ((notify != NULL) && IS_ESCALATIONOBJ(notify)) {
 		notAnsweredList_.DeleteObject(notify);
 		answeredList_.Append(notify);
-		notify->answer(answer);
+		if (sendAnswer) {
+			notify->answer(answer);
+		} else {
+			notify->setAnswer(answer);
+		}
 		module = notify->getModule();
 		if (module.IsSameAs(wxT("ALF"))){
 			notAnsweredAlf_--;

@@ -645,10 +645,22 @@ ModAnoubisMainPanelImpl::sendNotifierOptions(void)
 void
 ModAnoubisMainPanelImpl::update(void)
 {
-	ModAnoubis	*module;
-	wxString	 s;
-	size_t		 maxElementNo;
-	size_t		 elementNo;
+	ModAnoubis		*module;
+	wxString		 s;
+	size_t			 maxElementNo;
+	size_t			 elementNo;
+	EscalationNotify	*eNotify = NULL;
+	
+	if (currentNotify_) {
+		/*
+		 * A DaemonAnswerNotify can remove an Escalation from
+		 * the list. Reset currentNotify_ in this case.
+		 */
+		eNotify = dynamic_cast<EscalationNotify *>(currentNotify_);
+		if (eNotify && eNotify->isAnswered()
+		    && list_ == NOTIFY_LIST_NOTANSWERED)
+			currentNotify_ = NULL;
+	}
 
 	module = (ModAnoubis *)(wxGetApp().getModule(ANOUBIS));
 	maxElementNo = module->getListSize(list_);
@@ -659,6 +671,8 @@ ModAnoubisMainPanelImpl::update(void)
 			currentNotify_ = module->getFirst(list_);
 		}
 		elementNo = module->getElementNo(list_);
+	} else {
+		currentNotify_ = NULL;
 	}
 
 	s.Printf(wxT("%d"), maxElementNo);
@@ -708,8 +722,7 @@ ModAnoubisMainPanelImpl::update(void)
 	}
 
 	if ((currentNotify_ != NULL) && IS_ESCALATIONOBJ(currentNotify_)) {
-		EscalationNotify *eNotify = (EscalationNotify *)currentNotify_;
-
+		eNotify = dynamic_cast<EscalationNotify *>(currentNotify_);
 		if (!eNotify->isAnswered()) {
 			wxString	module = eNotify->getModule();
 			pn_Escalation->Show();

@@ -217,6 +217,8 @@ xanoubis_SOURCES= \
 	model/PrivKey.h \
 	model/StatusNotify.cpp \
 	model/StatusNotify.h \
+	model/DaemonAnswerNotify.cpp \
+	model/DaemonAnswerNotify.h \
 	model/SfsDirectory.cpp \
 	model/SfsDirectory.h \
 	model/SfsEntry.cpp \

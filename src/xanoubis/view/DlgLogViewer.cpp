@@ -42,6 +42,7 @@
 #include "LogNotify.h"
 #include "EscalationNotify.h"
 #include "StatusNotify.h"
+#include "DaemonAnswerNotify.h"
 
 #define LOGVIEWER_COLUMN_ICON		0
 #define LOGVIEWER_COLUMN_TIME		1
@@ -84,6 +85,8 @@ DlgLogViewer::DlgLogViewer(wxWindow* parent) : DlgLogViewerBase(parent)
 
 	anEvents->Connect(anEVT_ADD_NOTIFICATION,
 	    wxCommandEventHandler(DlgLogViewer::OnAddNotification), NULL, this);
+	anEvents->Connect(anEVT_ADD_NOTIFYANSWER,
+	    wxCommandEventHandler(DlgLogViewer::OnAddNotification), NULL, this);
 	anEvents->Connect(anEVT_LOGVIEWER_SHOW,
 	    wxCommandEventHandler(DlgLogViewer::OnShow), NULL, this);
 
@@ -97,6 +100,8 @@ DlgLogViewer::~DlgLogViewer(void)
 	anEvents = AnEvents::getInstance();
 
 	anEvents->Disconnect(anEVT_ADD_NOTIFICATION,
+	    wxCommandEventHandler(DlgLogViewer::OnAddNotification), NULL, this);
+	anEvents->Disconnect(anEVT_ADD_NOTIFYANSWER,
 	    wxCommandEventHandler(DlgLogViewer::OnAddNotification), NULL, this);
 	anEvents->Disconnect(anEVT_LOGVIEWER_SHOW,
 	    wxCommandEventHandler(DlgLogViewer::OnShow), NULL, this);
@@ -112,7 +117,9 @@ DlgLogViewer::OnAddNotification(wxCommandEvent& event)
 	Notification *notify;
 
 	notify = (Notification *)(event.GetClientObject());
-	if (!IS_STATUSOBJ(notify)) {
+	if (IS_DAEMONANSWEROBJ(notify)) {
+		/* Nothing */
+	} else if (!IS_STATUSOBJ(notify)) {
 		/* show all other notifies than a StatusNotify */
 		addNotification(notify);
 	}

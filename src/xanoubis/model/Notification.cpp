@@ -181,7 +181,8 @@ Notification::getTime(void)
 
 wxString
 Notification::getLogMessage(void){
-	int	type;
+	int		type;
+	wxString	action;
 
 	if (logMessage_.IsEmpty()) {
 		if (isAdmin()) {
@@ -195,13 +196,13 @@ Notification::getLogMessage(void){
 
 		logMessage_ += getOperation() + wxT(" ") + getPath();
 		type = get_value((notify_->u.notify)->type);
-
-		if (type == ANOUBIS_N_LOGNOTIFY) {
-			logMessage_ += wxT(" ") + getAction();
-		}
 	}
-
-	return (logMessage_);
+	action = getAction();
+	if (action.IsEmpty()) {
+		return logMessage_;
+	} else {
+		return (logMessage_ + wxT(" ") + this->getAction());
+	}
 }
 
 unsigned int
@@ -231,26 +232,17 @@ Notification::isAdmin(void)
 wxString
 Notification::getAction(void)
 {
-	wxString action;
+	wxString action = wxEmptyString;
 	int	 error;
 
-	action = _("was ");
-	error = get_value((notify_->u.notify)->error);
-	switch (error) {
-	case POLICY_ALLOW:
-		action += _("allowed");
-		break;
-	case POLICY_DENY:
-		action += _("denied");
-		break;
-	case POLICY_ASK:
-		action += _("asked");
-		break;
-	default:
-		action = _("caused unknown action");
-		break;
+	if (notify_) {
+		error = get_value((notify_->u.notify)->error);
+		if (error == 0) {
+			action = _("was allowed");
+		} else {
+			action = _("was denied");
+		}
 	}
-
 	return (action);
 }
 
@@ -528,4 +520,10 @@ int
 Notification::getSfsmatch(void)
 {
 	return get_value(notify_->u.notify->sfsmatch);
+}
+
+int
+Notification::getType(void)
+{
+	return get_value(notify_->u.general->type);
 }

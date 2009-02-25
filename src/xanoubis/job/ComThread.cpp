@@ -52,6 +52,7 @@
 #include "NotifyAnswer.h"
 #include "StatusNotify.h"
 #include "JobCtrl.h"
+#include "DaemonAnswerNotify.h"
 
 ComThread::ComThread(JobCtrl *jobCtrl, const wxString &socketPath)
     : JobThread(jobCtrl)
@@ -363,24 +364,8 @@ ComThread::sendNotify(struct anoubis_msg *notifyMsg)
 			}
 			break;
 		case ANOUBIS_N_RESYOU:
-			/*
-			 * XXX ST: #461
-			 * The handling of ANOUBIS_N_RESYOU has to be
-			 * implemented asap.
-			 * Currently we just fake the handling to prevent
-			 * xanoubis from aborting.
-			 */
-			return;
-			break;
 		case ANOUBIS_N_RESOTHER:
-			/*
-			 * XXX ST: #461
-			 * The handling of ANOUBIS_N_RESOTHER has to be
-			 * implemented asap.
-			 * Currently we just fake the handling to prevent
-			 * xanoubis from aborting.
-			 */
-			return;
+			notify = new DaemonAnswerNotify(notifyMsg);
 			break;
 		case ANOUBIS_N_LOGNOTIFY:
 			switch (get_value((notifyMsg->u.notify)->loglevel)) {

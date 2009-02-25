@@ -461,6 +461,17 @@ BEGIN_DECLARE_EVENT_TYPES()
 	DECLARE_LOCAL_EVENT_TYPE(anEVT_ADD_NOTIFICATION, wxNewEventType())
 
 	/**
+	 * Notification Result from Daemon arrived.
+	 * Transports the escalation object that was answered as client object.
+	 * The actual Daemon Reply message is already destroyed, the
+	 * notification is stored permanently by ModAnoubis.
+	 * This event is basically for the benefit of the LogViewer.
+	 *
+	 * @param GetClientObject() Instance of Notification.
+	 */
+	DECLARE_LOCAL_EVENT_TYPE(anEVT_ADD_NOTIFYANSWER, wxNewEventType())
+
+	/**
 	 * Answer escalation event.
 	 * This event transports an escalation been answered to the
 	 * communicator for sending the answer.

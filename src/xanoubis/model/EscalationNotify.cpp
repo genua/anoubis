@@ -155,6 +155,22 @@ EscalationNotify::getCtxBinaryName(void)
 	return (result);
 }
 
+wxString
+EscalationNotify::getAction(void)
+{
+	wxString	action;
+	if (answer_ == NULL) {
+		action = _("was asked");
+	} else {
+		if (answer_->wasAllowed()) {
+			action = _("was allowed");
+		} else {
+			action = _("was denied");
+		}
+	}
+	return action;
+}
+
 bool
 EscalationNotify::getChecksum(unsigned char csum[MAX_APN_HASH_LEN])
 {

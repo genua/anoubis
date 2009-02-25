@@ -56,6 +56,8 @@ class ModAnoubis : public Module, public wxEvtHandler
 		NotifyList	logList_;
 		NotifyList	answeredList_;
 		NotifyList	allList_;
+		EscalationNotify *
+		    fixupEscalationAnswer(int, anoubis_token_t, int);
 
 	public:
 		ModAnoubis(wxWindow *);
@@ -66,9 +68,10 @@ class ModAnoubis : public Module, public wxEvtHandler
 		void	update(void);
 
 		void	OnAddNotification(wxCommandEvent&);
+		void	OnDaemonDisconnect(wxCommandEvent&);
 		void	insertNotification(Notification *);
 		void	answerEscalationNotify(EscalationNotify *,
-			    NotifyAnswer *);
+			    NotifyAnswer *, bool sendAnswer = true);
 		size_t	getElementNo(enum notifyListTypes);
 		size_t	getListSize(enum notifyListTypes);
 
