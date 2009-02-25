@@ -243,6 +243,51 @@ ModSfsMainPanelImpl::OnSfsMainApplyButtonClicked(wxCommandEvent&)
 }
 
 void
+ModSfsMainPanelImpl::OnSfsMainExportClicked(wxCommandEvent&)
+{
+	IndexArray selection = SfsMainListCtrl->getSfsIndexes();
+
+	if (selection.IsEmpty()) {
+		/* No selection -> no export */
+		return;
+	}
+
+	wxFileDialog dlg(this, _("Choose the export-destination"),
+	    wxEmptyString, wxEmptyString, wxT("*.*"),
+	    wxFD_SAVE|wxFD_OVERWRITE_PROMPT);
+
+	if (dlg.ShowModal() != wxID_OK) {
+		/* Operation canceled -> no export */
+		return;
+	}
+
+	SfsCtrl::CommandResult result =
+	    sfsCtrl_->exportChecksums(selection, dlg.GetPath());
+
+	switch (result) {
+	case SfsCtrl::RESULT_NOTCONNECTED:
+		wxGetApp().status(
+		  _("Error: xanoubis is not connected to the daemon"));
+		break;
+	case SfsCtrl::RESULT_NEEDPASS:
+		wxGetApp().status(
+		  _("Error: A passphrase is still required."));
+		break;
+	case SfsCtrl::RESULT_INVALIDARG:
+		wxGetApp().status(
+		  _("Error: An invalid argument was supplied"));
+		break;
+	case SfsCtrl::RESULT_BUSY:
+		wxGetApp().status(
+		 _("Error: Sfs is still busy with another operation."));
+		break;
+	case SfsCtrl::RESULT_EXECUTE:
+		/* Success */
+		break;
+	}
+}
+
+void
 ModSfsMainPanelImpl::applySfsAction(const IndexArray &selection)
 {
 	SfsCtrl::CommandResult result = SfsCtrl::RESULT_EXECUTE;

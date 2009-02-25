@@ -228,6 +228,20 @@ class SfsEntry
 		bool isChecksumChanged() const;
 
 		/**
+		 * Returns the checksum of the specified type.
+		 *
+		 * @param type Type of requested checksum
+		 * @param csum Destination buffer. Checksum is written into the
+		 *             buffer. You need at least ANOUBIS_CS_LEN bytes.
+		 * @param size Size of csum-argument.
+		 * @return Number of bytes written. If the requested checksum
+		 *         is not assigned or the destination buffer is not
+		 *         large enough to hold the complete checksum, 0 is
+		 *         returned and the destination buffer is not used.
+		 */
+		size_t getChecksum(ChecksumType, u_int8_t *, size_t) const;
+
+		/**
 		 * Returns the hex-string of a checksum.
 		 *
 		 * If the requested checksum is not assigned to the entry, an

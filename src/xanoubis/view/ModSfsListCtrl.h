@@ -159,6 +159,17 @@ class ModSfsListCtrl : public wxListCtrl
 		IndexArray getSelectedIndexes(void) const;
 
 		/**
+		 * Returns sfs-indexes of selected rows.
+		 *
+		 * This is a bridge between getSelectedIndexes() and
+		 * getListIndexOf(). It collects all selected indexes and maps
+		 * the list-index to a SfsEntry.
+		 *
+		 * @return Indexes of selected SfsEntry-instances.
+		 */
+		IndexArray getSfsIndexes(void) const;
+
+		/**
 		 * Refreshes the complete list.
 		 *
 		 * All rows are removed and, according to the specified

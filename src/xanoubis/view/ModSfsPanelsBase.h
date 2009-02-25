@@ -126,6 +126,7 @@ class ModSfsMainPanelBase : public wxPanel
 		virtual void OnSfsMainSearchOrphanedClicked( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnSfsMainShowAllChecksumsClicked( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnSfsMainShowChangedClicked( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnSfsMainExportClicked( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnSfsMainApplyButtonClicked( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnPrivKeyEntered( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnPrivKeyChooseClicked( wxCommandEvent& event ){ event.Skip(); }

@@ -155,6 +155,27 @@ ModSfsListCtrl::getSelectedIndexes(void) const
 	return (selectionArray);
 }
 
+IndexArray
+ModSfsListCtrl::getSfsIndexes(void) const
+{
+	int		selection = -1;
+	IndexArray	selectionArray;
+
+	while (true) {
+		selection = GetNextItem(selection, wxLIST_NEXT_ALL,
+		    wxLIST_STATE_SELECTED);
+
+		if (selection == -1) {
+			/* No selection */
+			break;
+		}
+
+		selectionArray.Add(getSfsIndexAt(selection));
+	}
+
+	return (selectionArray);
+}
+
 void
 ModSfsListCtrl::refreshList(DisplayOption option)
 {

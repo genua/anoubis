@@ -30,6 +30,8 @@
 
 #include <wx/event.h>
 
+#include <list>
+
 #include "SfsDirectory.h"
 #include "Task.h"
 
@@ -83,6 +85,8 @@ class SfsCtrl : public wxEvtHandler
 		};
 
 		SfsCtrl(void);
+
+		~SfsCtrl(void);
 
 		/**
 		 * Returns the root-directory.
@@ -356,6 +360,28 @@ class SfsCtrl : public wxEvtHandler
 		CommandResult unregisterChecksum(unsigned int);
 
 		/**
+		 * Exports checksums into a file.
+		 *
+		 * The checksums of the SfsEntry-instances at the specified
+		 * positions are fetched from the Anoubis-daemon and written
+		 * into the given file.
+		 *
+		 * Note: This is a non-blocking procedure. It means that method
+		 * leaves at soon as possible. But you can monitor the
+		 * anEVT_SFSOPERATION_FINISHED-event to know, when the
+		 * background-operation is finished.
+		 *
+		 * @param arr The array contains indexes of SfsEntry-instances
+		 *            to be exported.
+		 * @param path Path of export-file. The file is overwritten!
+		 * @return The result of the command. If one of the indexes is
+		 *         out of range, SfsCtrl::RESULT_INVALIDARG is returned
+		 *         and the operation stops (export is aborted).
+		 */
+		CommandResult exportChecksums(const IndexArray &,
+		    const wxString &);
+
+		/**
 		 * Returns the instance of the SfsDirectory.
 		 *
 		 * This is the entry-point of the model.
@@ -395,6 +421,30 @@ class SfsCtrl : public wxEvtHandler
 		bool		comEnabled_;
 		bool		sigEnabled_;
 
+		/**
+		 * The export-flag.
+		 *
+		 * If set to true, export of checksums/signatures is enabled
+		 * and exportList_ needs to be filled accordingly with
+		 * checksums/signatures received from daemon. When the
+		 * operation has finished, the data-structure needs to be
+		 * dumped into exportFile_.
+		 *
+		 * @see OnCsumGet()
+		 * @see popTask()
+		 */
+		bool exportEnabled_;
+
+		/**
+		 * Path of export-file.
+		 */
+		wxString exportFile_;
+
+		/**
+		 * List of entries to be exported.
+		 */
+		std::list<struct sfs_entry *> exportList_;
+
 		void enableCommunication(void);
 		void disableCommunication(void);
 
@@ -403,6 +453,28 @@ class SfsCtrl : public wxEvtHandler
 		void createComCsumDelTasks(const wxString &);
 		void createSfsListTasks(uid_t, const wxString &, bool);
 		void createCsumCalcTask(const wxString &);
+
+		/**
+		 * Appends checksum/signature of the SfsEntry at exportList_.
+		 *
+		 * A sfs_entry-structure is created according to the SfsEntry
+		 * and pushed at the end of the list.
+		 *
+		 * @param entry Base entry contains information of the
+		 *              sfs_entry to be created
+		 */
+		void pushExportEntry(const SfsEntry &);
+
+		/**
+		 * Dumps exportList_ into exportFile_.
+		 */
+		void dumpExportEntries(void);
+
+		/**
+		 * Clears exportList_ and releases the memory allocated for the
+		 * sfs_entry-structures.
+		 */
+		void clearExportEntries(void);
 
 		void pushTask(Task *);
 		bool popTask(Task *);

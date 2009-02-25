@@ -211,6 +211,13 @@ class ModSfsMainPanelImpl : public Observer, public ModSfsMainPanelBase
 		void OnSfsMainApplyButtonClicked(wxCommandEvent&);
 
 		/**
+		 * Triggered, if the [Export] button was clicked.
+		 *
+		 * Exports checksums of all selected rows.
+		 */
+		void OnSfsMainExportClicked(wxCommandEvent&);
+
+		/**
 		 * Applies the Sfs actions via SfsCtrl.
 		 * @param[in] 1st IndexArray containing actions selections.
 		 * @return Nothing.

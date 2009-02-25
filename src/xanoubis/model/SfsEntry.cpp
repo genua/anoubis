@@ -176,6 +176,16 @@ SfsEntry::isChecksumChanged() const
 	    isChecksumChanged(SFSENTRY_SIGNATURE);
 }
 
+size_t
+SfsEntry::getChecksum(ChecksumType type, u_int8_t *csum, size_t size) const
+{
+	if (assigned_[type] && (csum != 0) && (size >= ANOUBIS_CS_LEN)) {
+		memcpy(csum, csum_[type], ANOUBIS_CS_LEN);
+		return (ANOUBIS_CS_LEN);
+	} else
+		return (0);
+}
+
 wxString
 SfsEntry::getChecksum(ChecksumType type) const
 {

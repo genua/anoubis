@@ -28,6 +28,7 @@
 #include <wx/intl.h>
 
 #include <anoubis_sig.h>
+#include <csum/csum.h>
 
 #include "AnEvents.h"
 #include "AnUtils.h"
@@ -45,9 +46,15 @@ SfsCtrl::SfsCtrl(void)
 {
 	this->comEnabled_ = false; /* Communication disabled */
 	this->sigEnabled_ = true; /* Signature support enabled */
+	this->exportEnabled_ = false;
 
 	JobCtrl::getInstance()->Connect(anTASKEVT_REGISTER,
 	    wxTaskEventHandler(SfsCtrl::OnRegistration), NULL, this);
+}
+
+SfsCtrl::~SfsCtrl(void)
+{
+	clearExportEntries();
 }
 
 wxString
@@ -278,6 +285,39 @@ SfsCtrl::unregisterChecksum(const IndexArray &arr)
 
 			/* Remove checksum from anoubisd */
 			createComCsumDelTasks(entry.getPath());
+		}
+
+		return (RESULT_EXECUTE);
+	} else
+		return (RESULT_NOTCONNECTED);
+}
+
+SfsCtrl::CommandResult
+SfsCtrl::exportChecksums(const IndexArray &arr, const wxString &path)
+{
+	if (!taskList_.empty())
+		return (RESULT_BUSY);
+
+	if (comEnabled_) {
+		/* Enable export */
+		exportEnabled_ = true;
+		exportFile_ = path;
+
+		for (size_t i = 0; i < arr.Count(); i++) {
+			unsigned int idx = arr.Item(i);
+
+			if (idx >= sfsDir_.getNumEntries()) {
+				/* Out of range */
+				return (RESULT_INVALIDARG);
+			}
+
+			/*
+			 * Ask for checksums, if received the checksums are
+			 * dumped into exportFile_.
+			 */
+			SfsEntry &entry = sfsDir_.getEntry(idx);
+			createCsumCalcTask(entry.getPath());
+			createComCsumGetTasks(entry.getPath(), true, true);
 		}
 
 		return (RESULT_EXECUTE);
@@ -552,6 +592,11 @@ SfsCtrl::OnCsumGet(TaskEvent &event)
 		/* File has a checksum, copy into model */
 		if (entry.setChecksum(type, cs))
 			sendEntryChangedEvent(idx);
+
+		if (exportEnabled_) {
+			/* Export is enabled, push entry into export-list */
+			pushExportEntry(entry);
+		}
 	} else {
 		wxString message = _("An unexpected checksum was fetched.");
 		errorList_.Add(message);
@@ -884,6 +929,83 @@ SfsCtrl::createCsumCalcTask(const wxString &path)
 }
 
 void
+SfsCtrl::pushExportEntry(const SfsEntry &entry)
+{
+	struct sfs_entry *se; /* The export-entry */
+
+	/* Receive plain checksum */
+	u_int8_t csum[ANOUBIS_CS_LEN];
+	entry.getChecksum(SfsEntry::SFSENTRY_CHECKSUM, csum, sizeof(csum));
+
+	if (isSignatureEnabled()) {
+		/* Receive key-id of local-certificate */
+		KeyCtrl *keyCtrl = KeyCtrl::getInstance();
+		LocalCertificate &lc = keyCtrl->getLocalCertificate();
+		/* keyid part of anoubis_sig-structure */
+		struct anoubis_sig *cert = lc.getCertificate();
+
+		/* Receive signed checksum */
+		u_int8_t sigCsum[ANOUBIS_CS_LEN];
+		entry.getChecksum(SfsEntry::SFSENTRY_SIGNATURE, sigCsum,
+		    sizeof(sigCsum));
+
+		/* Create sfs_entry */
+		se = anoubis_build_entry(entry.getPath().fn_str(),
+		    csum, sizeof(csum), sigCsum, sizeof(sigCsum),
+		    geteuid(), cert->keyid, cert->idlen);
+	} else {
+		/* Create a sfs_entry, contains the checksum */
+		se = anoubis_build_entry(entry.getPath().fn_str(),
+		    csum, sizeof(csum), NULL, 0, geteuid(), NULL, 0);
+	}
+
+	exportList_.push_back(se);
+}
+
+void
+SfsCtrl::dumpExportEntries(void)
+{
+	int i = 0;
+	struct sfs_entry *entry_list[exportList_.size()];
+
+	/* Prepare entry_list. Copy from exportList_ into entry_list */
+	std::list<struct sfs_entry *>::const_iterator it;
+	for (it = exportList_.begin(); it != exportList_.end(); ++it) {
+		entry_list[i] = (*it);
+		i++;
+	}
+
+	FILE *fh = fopen(exportFile_.fn_str(), "w");
+	if (fh == 0) {
+		errorList_.Add(wxString::Format(
+		    _("Failed to open %ls for writing: %s"),
+		    exportFile_.c_str(), strerror(errno)));
+		return;
+	}
+
+	anoubis_print_entries(fh, entry_list, exportList_.size());
+
+	if (fflush(fh) != 0) {
+		errorList_.Add(wxString::Format(
+		    _("Failed to flush the content of %s: %s"),
+		    exportFile_.c_str(), strerror(errno)));
+	}
+
+	fclose(fh);
+}
+
+void
+SfsCtrl::clearExportEntries(void)
+{
+	while (!exportList_.empty()) {
+		struct sfs_entry *se = exportList_.front();
+		exportList_.pop_front();
+
+		anoubis_entry_free(se);
+	}
+}
+
+void
 SfsCtrl::pushTask(Task *task)
 {
 	if (taskList_.size() == 0) {
@@ -906,6 +1028,20 @@ SfsCtrl::popTask(Task *task)
 		/*
 		 * This was the last task in the list -> the operation finished
 		 */
+
+		if (exportEnabled_) {
+			/*
+			 * Export is enabled
+			 * All files and checksums are collected. Now dump into
+			 * file.
+			 */
+			dumpExportEntries();
+
+			/* Cleanup */
+			clearExportEntries();
+			exportEnabled_ = false;
+		}
+
 		sendOperationFinishedEvent();
 
 		/* Check for errors */
