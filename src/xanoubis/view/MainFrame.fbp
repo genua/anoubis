@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
 <!--
- Copyright (c) 2008 GeNUA mbH <info@genua.de>
+ Copyright (c) 2009 GeNUA mbH <info@genua.de>
 
  All rights reserved.
 
@@ -267,6 +267,20 @@
                         <property name="shortcut"></property>
                         <property name="unchecked_bitmap"></property>
                         <event name="OnMenuSelection">OnMbToolsLogViewerSelect</event>
+                        <event name="OnUpdateUI"></event>
+                    </object>
+                    <object class="wxMenuItem" expanded="1">
+                        <property name="bitmap"></property>
+                        <property name="checked">0</property>
+                        <property name="enabled">1</property>
+                        <property name="help"></property>
+                        <property name="id">ID_MITOOLSWIZARD</property>
+                        <property name="kind">wxITEM_CHECK</property>
+                        <property name="label">Wizard</property>
+                        <property name="name">mi_mbToolsWizard</property>
+                        <property name="shortcut"></property>
+                        <property name="unchecked_bitmap"></property>
+                        <event name="OnMenuSelection">onMbToolsWizardSelect</event>
                         <event name="OnUpdateUI"></event>
                     </object>
                 </object>

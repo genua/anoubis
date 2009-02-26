@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 GeNUA mbH <info@genua.de>
+ * Copyright (c) 2009 GeNUA mbH <info@genua.de>
  *
  * All rights reserved.
  *
@@ -65,6 +65,8 @@ MainFrameBase::MainFrameBase( wxWindow* parent, wxWindowID id, const wxString& t
 	me_menubarTools->Append( mi_mbToolsRuleEditor );
 	wxMenuItem* mi_mbToolsLogViewer = new wxMenuItem( me_menubarTools, ID_MITOOLSLOGVIEWER, wxString( _("Log Viewer") ) , wxEmptyString, wxITEM_CHECK );
 	me_menubarTools->Append( mi_mbToolsLogViewer );
+	wxMenuItem* mi_mbToolsWizard = new wxMenuItem( me_menubarTools, ID_MITOOLSWIZARD, wxString( _("Wizard") ) , wxEmptyString, wxITEM_CHECK );
+	me_menubarTools->Append( mi_mbToolsWizard );
 	an_menubar->Append( me_menubarTools, _("Tools") );
 	
 	me_menubarHelp = new wxMenu();
@@ -159,5 +161,6 @@ MainFrameBase::MainFrameBase( wxWindow* parent, wxWindowID id, const wxString& t
 	this->Connect( mi_mbEditPreferences->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnMbEditPreferencesSelect ) );
 	this->Connect( mi_mbToolsRuleEditor->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnMbToolsRuleEditorSelect ) );
 	this->Connect( mi_mbToolsLogViewer->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnMbToolsLogViewerSelect ) );
+	this->Connect( mi_mbToolsWizard->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::onMbToolsWizardSelect ) );
 	this->Connect( mi_mbHelpAbout->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnMbHelpAboutSelect ) );
 }

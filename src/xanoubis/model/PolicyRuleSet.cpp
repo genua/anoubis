@@ -357,6 +357,52 @@ PolicyRuleSet::getAppPolicyCount(void) const
 	return (count);
 }
 
+AlfAppPolicy *
+PolicyRuleSet::searchAlfAppPolicy(wxString binary) const
+{
+	wxArrayString	 list;
+	struct apn_rule	*rule;
+	AlfAppPolicy	*result;
+
+	result = NULL;
+
+	rule = apn_match_app(&(ruleSet_->alf_queue), binary.To8BitData(), NULL);
+	if (rule != NULL) {
+		result = wxDynamicCast(rule->userdata, AlfAppPolicy);
+	}
+	if (result != NULL) {
+		list = result->getBinaryList();
+		if (list.Index(binary) == wxNOT_FOUND) {
+			result = NULL;
+		}
+	}
+
+	return (result);
+}
+
+ContextAppPolicy *
+PolicyRuleSet::searchContextAppPolicy(wxString binary) const
+{
+	wxArrayString		 list;
+	struct apn_rule		*rule;
+	ContextAppPolicy	*result;
+
+	result = NULL;
+
+	rule = apn_match_app(&(ruleSet_->ctx_queue), binary.To8BitData(), NULL);
+	if (rule != NULL) {
+		result = wxDynamicCast(rule->userdata, ContextAppPolicy);
+	}
+	if (result != NULL) {
+		list = result->getBinaryList();
+		if (list.Index(binary) == wxNOT_FOUND) {
+			result = NULL;
+		}
+	}
+
+	return (result);
+}
+
 long
 PolicyRuleSet::createPolicy(unsigned int type, unsigned int id,
     AppPolicy *parent)

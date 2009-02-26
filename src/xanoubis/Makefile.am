@@ -319,6 +319,28 @@ xanoubis_SOURCES= \
 	view/ModSfsOverviewPanelImpl.h \
 	view/ModSfsPanelsBase.cpp \
 	view/ModSfsPanelsBase.h \
+	view/RuleWizard.cpp \
+	view/RuleWizard.h \
+	view/RuleWizardPage.cpp \
+	view/RuleWizardPage.h \
+	view/RuleWizardProgramPage.cpp \
+	view/RuleWizardProgramPage.h \
+	view/RuleWizardContextPage.cpp \
+	view/RuleWizardContextPage.h \
+	view/RuleWizardContextExceptionPage.cpp \
+	view/RuleWizardContextExceptionPage.h \
+	view/RuleWizardAlfKeepPolicyPage.cpp \
+	view/RuleWizardAlfKeepPolicyPage.h \
+	view/RuleWizardAlfClientPage.cpp \
+	view/RuleWizardAlfClientPage.h \
+	view/RuleWizardAlfClientPortsPage.cpp \
+	view/RuleWizardAlfClientPortsPage.h \
+	view/RuleWizardFinalPage.cpp \
+	view/RuleWizardFinalPage.h \
+	view/RuleWizardHistory.cpp \
+	view/RuleWizardHistory.h \
+	view/RuleWizardPanelsBase.cpp \
+	view/RuleWizardPanelsBase.h \
 	view/TrayIcon.cpp \
 	view/TrayIcon.h \
 	control/AnShortcuts.cpp \

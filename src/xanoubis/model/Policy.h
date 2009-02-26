@@ -187,10 +187,11 @@ class Policy : public Subject
 		struct apn_rule *cloneRule(void);
 
 		/**
-		 * XXX ch: I don't like this, better solution needed here
+		 * Apn string represantation of a single rule.
+		 * @param None.
+		 * @return apn or empty string in case of error.
 		 */
-		void setRuleEditorIndex(unsigned long);
-		unsigned long getRuleEditorIndex(void) const;
+		wxString toString(void) const;
 
 	protected:
 		/**
@@ -204,8 +205,6 @@ class Policy : public Subject
 		bool		 modified_;	 /**< Modified flag. */
 		PolicyRuleSet	*parentRuleSet_; /**< The belonging ruleset. */
 		struct apn_rule	*rule_;		 /**< Native/apn rule. */
-		/** XXX ch: I don't like this, better solution needed here */
-		unsigned long	 ruleEditorIndex_;
 
 		friend class AlfAppPolicy;
 		friend class SfsAppPolicy;

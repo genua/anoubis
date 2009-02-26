@@ -43,6 +43,7 @@
 #include "Module.h"
 #include "ModAnoubis.h"
 #include "ModAnoubisMainPanelImpl.h"
+#include "RuleWizard.h"
 
 #include "main.h"
 
@@ -70,6 +71,8 @@ MainFrame::MainFrame(wxWindow *parent) : MainFrameBase(parent)
 	    wxCommandEventHandler(MainFrame::OnConnectionStateChange),
 	    NULL, this);
 
+	anEvents->Connect(anEVT_WIZARD_SHOW,
+	    wxCommandEventHandler(MainFrame::onWizardShow), NULL, this);
 	anEvents->Connect(anEVT_LOGVIEWER_SHOW,
 	    wxCommandEventHandler(MainFrame::onLogViewerShow), NULL, this);
 	anEvents->Connect(anEVT_RULEEDITOR_SHOW,
@@ -95,6 +98,8 @@ MainFrame::~MainFrame()
 
 	anEvents = AnEvents::getInstance();
 
+	anEvents->Disconnect(anEVT_WIZARD_SHOW,
+	    wxCommandEventHandler(MainFrame::onWizardShow), NULL, this);
 	anEvents->Disconnect(anEVT_LOGVIEWER_SHOW,
 	    wxCommandEventHandler(MainFrame::onLogViewerShow), NULL, this);
 	anEvents->Disconnect(anEVT_RULEEDITOR_SHOW,
@@ -174,6 +179,23 @@ MainFrame::onLogViewerShow(wxCommandEvent& event)
 
 	an_menubar->Check(ID_MITOOLSLOGVIEWER, event.GetInt());
 	event.Skip();
+}
+
+void
+MainFrame::onWizardShow(wxCommandEvent& event)
+{
+	RuleWizard	wizard;
+	wxCommandEvent	showEvent(anEVT_WIZARD_SHOW);
+
+	an_menubar->Check(ID_MITOOLSWIZARD, event.GetInt());
+	event.Skip();
+
+	if (event.GetInt() != 0) {
+		wizard.RunWizard(wizard.getPage(RuleWizard::PAGE_PROGRAM));
+		/* After finishing wizard, we uncheck menu and statusbar. */
+		showEvent.SetInt(0);
+		wxPostEvent(AnEvents::getInstance(), showEvent);
+	}
 }
 
 void
@@ -411,6 +433,16 @@ void
 MainFrame::OnMbToolsLogViewerSelect(wxCommandEvent& event)
 {
 	wxCommandEvent  showEvent(anEVT_LOGVIEWER_SHOW);
+
+	showEvent.SetInt(event.IsChecked());
+
+	wxPostEvent(AnEvents::getInstance(), showEvent);
+}
+
+void
+MainFrame::onMbToolsWizardSelect(wxCommandEvent& event)
+{
+	wxCommandEvent  showEvent(anEVT_WIZARD_SHOW);
 
 	showEvent.SetInt(event.IsChecked());
 

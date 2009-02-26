@@ -62,6 +62,7 @@ class MainFrame : public MainFrameBase
 
 		void onRuleEditorShow(wxCommandEvent&);
 		void onLogViewerShow(wxCommandEvent&);
+		void onWizardShow(wxCommandEvent&);
 		void onMainFrameShow(wxCommandEvent&);
 
 		ANEVENTS_IDENT_BCAST_METHOD_DECLARATION;
@@ -78,6 +79,7 @@ class MainFrame : public MainFrameBase
 		void OnMbEditPreferencesSelect(wxCommandEvent&);
 		void OnMbToolsRuleEditorSelect(wxCommandEvent&);
 		void OnMbToolsLogViewerSelect(wxCommandEvent&);
+		void onMbToolsWizardSelect(wxCommandEvent&);
 		void OnMbHelpHelpSelect(wxCommandEvent&);
 		void OnTbModuleSelect(wxCommandEvent&);
 		void OnConnectionStateChange(wxCommandEvent&);

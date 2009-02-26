@@ -2362,19 +2362,24 @@ apn_match_app(struct apn_chain *chain, const char *name, const u_int8_t *csum)
 		while (napp) {
 			app = napp;
 			napp = app->next;
-			if (app->name)
+			if (name && app->name) {
 				if (strcmp(app->name, name) != 0)
 					continue;
-			switch (app->hashtype) {
-			case APN_HASH_NONE:
-				return tmp;		/* Match */
-			case APN_HASH_SHA256:
-				if (memcmp(csum, app->hashvalue,
-				    APN_HASH_SHA256_LEN) == 0)
-					return tmp;	/* Match */
-				break;
-			default:
-				break;
+				if (!csum)
+					return tmp;		/* Match */
+			}
+			if (csum) {
+				switch (app->hashtype) {
+				case APN_HASH_NONE:
+					return tmp;		/* Match */
+				case APN_HASH_SHA256:
+					if (memcmp(csum, app->hashvalue,
+					    APN_HASH_SHA256_LEN) == 0)
+						return tmp;	/* Match */
+					break;
+				default:
+					break;
+				}
 			}
 		}
 	}

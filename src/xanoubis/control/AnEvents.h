@@ -301,6 +301,14 @@ BEGIN_DECLARE_EVENT_TYPES()
 #endif /* ANEVENTS_IDENT_BCAST_ENABLE */
 
 	/**
+	 * Show Wizard event.
+	 * @param GetInt() Visability of DlgWizard:
+	 *	- = 0 : hide
+	 *	- > 0 : show
+	 */
+	DECLARE_LOCAL_EVENT_TYPE(anEVT_WIZARD_SHOW, wxNewEventType())
+
+	/**
 	 * Show LogViewer event.
 	 * @param GetInt() Visability of DlgLogViewer:
 	 *	- = 0 : hide

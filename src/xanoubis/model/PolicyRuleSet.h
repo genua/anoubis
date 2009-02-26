@@ -281,6 +281,20 @@ class PolicyRuleSet : public Subject
 		size_t getAppPolicyCount(void) const;
 
 		/**
+		 * Search for alf application policy.
+		 * @param[in] 1st The application name to search for.
+		 * @return Found policy or NULL.
+		 */
+		AlfAppPolicy *searchAlfAppPolicy(wxString) const;
+
+		/**
+		 * Search for context application policy.
+		 * @param[in] 1st The application name to search for.
+		 * @return Found policy or NULL.
+		 */
+		ContextAppPolicy *searchContextAppPolicy(wxString) const;
+
+		/**
 		 * Create new policy and insert it.
 		 * This leads to a re-creation of the policy structure.
 		 * @param[in] 1st Apn type of policy to create.

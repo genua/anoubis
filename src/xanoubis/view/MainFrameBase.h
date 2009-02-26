@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 GeNUA mbH <info@genua.de>
+ * Copyright (c) 2009 GeNUA mbH <info@genua.de>
  *
  * All rights reserved.
  *
@@ -63,8 +63,9 @@
 #define ID_MIEDITPREFERENCES 1507
 #define ID_MITOOLSRULEEDITOR 1508
 #define ID_MITOOLSLOGVIEWER 1509
-#define ID_MIHELPABOUT 1510
-#define ID_TOOLBAR 1511
+#define ID_MITOOLSWIZARD 1510
+#define ID_MIHELPABOUT 1511
+#define ID_TOOLBAR 1512
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Class MainFrameBase
@@ -102,6 +103,7 @@ class MainFrameBase : public wxFrame
 		virtual void OnMbEditPreferencesSelect( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnMbToolsRuleEditorSelect( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnMbToolsLogViewerSelect( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onMbToolsWizardSelect( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnMbHelpAboutSelect( wxCommandEvent& event ){ event.Skip(); }
 		
 	

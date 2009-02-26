@@ -29,6 +29,8 @@
 
 #include "PolicyRuleSet.h"
 #include <wx/datetime.h>
+#include <wx/ffile.h>
+#include <wx/string.h>
 
 #include <wx/listimpl.cpp>
 WX_DEFINE_LIST(PolicyList);
@@ -213,18 +215,45 @@ Policy::cloneRule(void)
 	return apn_copy_one_rule(rule_);
 }
 
-/* XXX ch: I don't like this, better solution needed here */
-void
-Policy::setRuleEditorIndex(unsigned long idx)
+wxString
+Policy::toString(void) const
 {
-	ruleEditorIndex_ = idx;
-}
+	int	 result;
+	wxString content;
+	wxString tmpFileName;
+	wxFFile	 tmpFile;
 
-/* XXX ch: I don't like this, better solution needed here */
-unsigned long
-Policy::getRuleEditorIndex(void) const
-{
-	return (ruleEditorIndex_);
+	result = 1;
+	content = wxEmptyString;
+	tmpFileName = wxFileName::CreateTempFileName(wxEmptyString);
+
+	if (!tmpFile.Open(tmpFileName, wxT("w"))) {
+		/* Couldn't open / fill tmp file. */
+		return (wxEmptyString);
+	}
+
+	/* Write the ruleset to tmp file. */
+	result = apn_print_rule(getApnRule(), 0, tmpFile.fp());
+	tmpFile.Flush();
+	tmpFile.Close();
+
+	if (result != 0) {
+		/* Something went wrong during file filling! */
+		wxRemoveFile(tmpFileName);
+		return (wxEmptyString);
+	}
+
+	if (tmpFile.Open(tmpFileName, wxT("r"))) {
+		if (!tmpFile.ReadAll(&content)) {
+			/* Error during file read - clear read stuff. */
+			content = wxEmptyString;
+		}
+		tmpFile.Close();
+	}
+
+	wxRemoveFile(tmpFileName);
+
+	return (content);
 }
 
 struct apn_rule *
