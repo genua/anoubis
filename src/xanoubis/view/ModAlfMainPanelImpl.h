@@ -176,6 +176,23 @@ class ModAlfMainPanelImpl : public Observer, public ModAlfMainPanelBase
 		 * @return Nothing.
 		 */
 		void updateAlfAppPolicy(long);
+
+		/**
+		 * Update row.
+		 * Updates the values of a row showing a default filter policy.
+		 * @param[in] 1st The index of row in question.
+		 * @return Nothing.
+		 */
+		void updateDefaultFilterPolicy(long);
+
+		/**
+		 * Update RuleSet.
+		 * Updates and shows the new RuleSet after operations like
+		 * 'delete' modified it.
+		 * @param None.
+		 * @return Nothing.
+		 */
+		void updateShowRuleset(void);
 };
 
 #endif /* __ModAlfMainPanelImpl__ */

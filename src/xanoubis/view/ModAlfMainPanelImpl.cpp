@@ -113,15 +113,9 @@ void
 ModAlfMainPanelImpl::addDefaultFilterPolicy(DefaultFilterPolicy *policy)
 {
 	long		idx;
-	AppPolicy	*parent;
 
-	parent = policy->getParentPolicy();
-	if (parent->IsKindOf(CLASSINFO(AppPolicy))) {
-		idx = ruleListAppend(policy);
-		updateAlfFilterPolicy(idx);
-	} else {
-		/* This should never been reached. */
-	}
+	idx = ruleListAppend(policy);
+	updateDefaultFilterPolicy(idx);
 }
 
 void
@@ -158,12 +152,14 @@ ModAlfMainPanelImpl::onLoadRuleSet(wxCommandEvent& event)
 	ruleSet = profileCtrl->getRuleSet(userRuleSetId_);
 	if (ruleSet != NULL) {
 		ruleSet->lock();
+		addSubject(ruleSet);
 		ruleSet->accept(addVisitor);
 	}
 
 	ruleSet = profileCtrl->getRuleSet(adminRuleSetId_);
 	if (ruleSet != NULL) {
 		ruleSet->lock();
+		addSubject(ruleSet);
 		ruleSet->accept(addVisitor);
 	}
 
@@ -274,19 +270,48 @@ ModAlfMainPanelImpl::updateAlfAppPolicy(long idx)
 }
 
 void
+ModAlfMainPanelImpl::updateDefaultFilterPolicy(long idx)
+{
+	DefaultFilterPolicy *policy;
+
+	policy = wxDynamicCast((void*)lst_Rules->GetItemData(idx),
+	    DefaultFilterPolicy);
+	if (policy == NULL) {
+		return;
+	}
+	lst_Rules->SetItem(idx, COLUMN_ACTION, policy->getActionName());
+	lst_Rules->SetItem(idx, COLUMN_SERVICE, wxT("default"));
+}
+
+void
+ModAlfMainPanelImpl::updateShowRuleset(void)
+{
+	ModAlfAddPolicyVisitor	addVisitor(this);
+	ProfileCtrl		*profileCtrl;
+	PolicyRuleSet		*ruleSet;
+
+	profileCtrl = ProfileCtrl::getInstance();
+
+	/* get the new ones */
+	ruleSet = profileCtrl->getRuleSet(userRuleSetId_);
+	if (ruleSet != NULL) {
+		ruleSet->accept(addVisitor);
+	}
+
+	ruleSet = profileCtrl->getRuleSet(adminRuleSetId_);
+	if (ruleSet != NULL) {
+		ruleSet->accept(addVisitor);
+	}
+}
+
+void
 ModAlfMainPanelImpl::updateDelete(Subject *subject)
 {
 	long	idx = -1;
-
 	idx = findListRow((Policy *)subject);
-	if (idx != -1) {
-		lst_Rules->SetItemPtrData(idx, (wxUIntPtr)0);
-	} else {
-		idx = findListRow((Policy *)subject);
-		if (idx != -1) {
-			lst_Rules->SetItemPtrData(idx, (wxUIntPtr)0);
 
-		}
+	if (idx != -1) {
+		removeListRow(idx);
 	}
 }
 
@@ -316,8 +341,13 @@ ModAlfMainPanelImpl::update(Subject *subject)
 		parent = ((FilterPolicy*)subject)->getParentPolicy();
 		if ((idx != -1) && (parent != NULL)) {
 			if (parent->IsKindOf(CLASSINFO(AlfAppPolicy))) {
-				updateAlfFilterPolicy(idx);
+				updateDefaultFilterPolicy(idx);
 			}
+		}
+	} else if (subject->IsKindOf(CLASSINFO(PolicyRuleSet))) {
+		/* get the new ruleset and update the view */
+		if (lst_Rules->GetItemCount() == 0) {
+			updateShowRuleset();
 		}
 	} else {
 		/* Unknown subject type - do nothing */

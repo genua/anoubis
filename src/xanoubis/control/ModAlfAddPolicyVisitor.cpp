@@ -58,6 +58,7 @@ void
 ModAlfAddPolicyVisitor::visitContextAppPolicy(ContextAppPolicy *)
 {
 	/* ModAlf does not deal with ContextAppPolicies. */
+	setPropagation(false);
 }
 
 void
@@ -65,6 +66,7 @@ ModAlfAddPolicyVisitor::visitContextFilterPolicy(
     ContextFilterPolicy *)
 {
 	/* ModAlf does not deal with ContextFilterPolicies. */
+	setPropagation(false);
 }
 
 
@@ -78,28 +80,33 @@ void
 ModAlfAddPolicyVisitor::visitSbAccessFilterPolicy(SbAccessFilterPolicy *)
 {
 	/* ModAlf does not deal with SbAccessFilterPolicies. */
+	setPropagation(false);
 }
 
 void
 ModAlfAddPolicyVisitor::visitSbAppPolicy(SbAppPolicy *)
 {
 	/* ModAlf does not deal with SbAppPolicies. */
+	setPropagation(false);
 }
 
 void
 ModAlfAddPolicyVisitor::visitSfsAppPolicy(SfsAppPolicy *)
 {
 	/* ModAlf does not deal with SfsAppPolicies. */
+	setPropagation(false);
 }
 
 void
 ModAlfAddPolicyVisitor::visitSfsFilterPolicy(SfsFilterPolicy *)
 {
 	/* ModAlf does not deal with SfsFilterPolicies. */
+	setPropagation(false);
 }
 
 void
 ModAlfAddPolicyVisitor::visitSfsDefaultFilterPolicy(SfsDefaultFilterPolicy *)
 {
 	/* ModAlf does not deal with SfsFilterPolicies. */
+	setPropagation(false);
 }
