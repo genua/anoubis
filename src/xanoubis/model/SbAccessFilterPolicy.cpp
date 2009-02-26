@@ -209,6 +209,24 @@ SbAccessFilterPolicy::getPath(void) const
 }
 
 bool
+SbAccessFilterPolicy::setSubjectNone(void)
+{
+	struct apn_rule		*rule;
+
+	rule = getApnRule();
+	if (rule == NULL) {
+		return (false);
+	}
+
+	startChange();
+	cleanSubject(rule);
+	setModified();
+	finishChange();
+
+	return (true);
+}
+
+bool
 SbAccessFilterPolicy::setSubjectSelf(bool selfSigned)
 {
 	struct apn_rule *rule;
@@ -438,6 +456,7 @@ SbAccessFilterPolicy::cleanSubject(struct apn_rule *rule)
 	default:
 		break;
 	}
+	rule->rule.sbaccess.cs.type = APN_CS_NONE;
 }
 
 wxString

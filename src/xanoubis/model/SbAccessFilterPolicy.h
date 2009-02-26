@@ -136,6 +136,13 @@ class SbAccessFilterPolicy : public FilterPolicy
 		wxString getPath(void) const;
 
 		/**
+		 * Set subject to none.
+		 * This also modifies the subject type.
+		 * @param None.
+		 * @return True on success.
+		 */
+		bool setSubjectNone(void);
+		/**
 		 * Set subject self.
 		 * This also modifies the subject type.
 		 * @param[in] 1st True if you want to set SELF-SIGNED (default)

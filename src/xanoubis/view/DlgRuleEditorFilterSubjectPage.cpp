@@ -112,6 +112,7 @@ DlgRuleEditorFilterSubjectPage::showSubject(void)
 		if (!selfSignedRadioButton->IsShown()) {
 			selfSignedRadioButton->Show();
 		}
+		anyRadioButton->Hide();
 		csumRadioButton->Hide();
 		csumTextCtrl->Hide();
 	} else if (sbPolicy_ != NULL) {
@@ -119,6 +120,9 @@ DlgRuleEditorFilterSubjectPage::showSubject(void)
 		value = sbPolicy_->getSubjectName();
 		selfRadioButton->Hide();
 		selfSignedRadioButton->Hide();
+		if (!anyRadioButton->IsShown()) {
+			anyRadioButton->Show();
+		}
 		if (!csumRadioButton->IsShown()) {
 			csumRadioButton->Show();
 		}
@@ -259,7 +263,9 @@ DlgRuleEditorFilterSubjectPage::onModifyButton(wxCommandEvent &)
 void
 DlgRuleEditorFilterSubjectPage::onAnyRadioButton(wxCommandEvent &)
 {
-	/* XXX ch: this must be implemented, too */
+	if (sbPolicy_ != NULL) {
+		sbPolicy_->setSubjectNone();
+	}
 }
 
 void
