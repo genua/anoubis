@@ -340,6 +340,11 @@ reply_merge(struct eventdev_hdr *hdr, anoubisd_reply_t *sfs,
 use_sfs:
 	if (sb)
 		free(sb);
+	/*
+	 * Due to logging rules this might have changed from SFS to SANDBOX,
+	 * "You'd better change it back or we will both be sorry."
+	 */
+	hdr->msg_source = ANOUBIS_SOURCE_SFS;
 	return sfs;
 use_sb:
 	if (sfs)
