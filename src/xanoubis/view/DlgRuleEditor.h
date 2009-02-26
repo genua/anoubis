@@ -279,6 +279,14 @@ class DlgRuleEditor : public Observer, public DlgRuleEditorBase
 		void onClose(wxCloseEvent &);
 
 		/**
+		 * Change the current rule set in the rule editor
+		 * @param[in] 1st The admin rule set to show.
+		 * @param[in] 2nd The user rule set to show.
+		 * @return Nothing.
+		 */
+		void switchRuleSet(long, long);
+
+		/**
 		 * Handle connection events.
 		 * This will just extract the status from the event and
 		 * stores it. The footer is updated.

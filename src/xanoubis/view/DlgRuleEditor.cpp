@@ -63,6 +63,9 @@ DlgRuleEditor::DlgRuleEditor(wxWindow* parent)
 	anEvents->Connect(anEVT_SHOW_RULE,
 	    wxCommandEventHandler(DlgRuleEditor::onShowRule), NULL, this);
 
+	adminRuleSetId_ = -1;
+	userRuleSetId_ = -1;
+
 	/* We want to know connect-status for save/reload button */
 	JobCtrl::getInstance()->Connect(anEVT_COM_CONNECTION,
 	    wxCommandEventHandler(DlgRuleEditor::onConnectionStateChange),
@@ -497,53 +500,54 @@ DlgRuleEditor::onClose(wxCloseEvent & WXUNUSED(event))
 void
 DlgRuleEditor::onConnectionStateChange(wxCommandEvent& event)
 {
-	JobCtrl::ConnectionState newState;
+	JobCtrl::ConnectionState	 newState;
+	ProfileCtrl			*profileCtrl;
 
 	newState = (JobCtrl::ConnectionState)event.GetInt();
 	isConnected_ = (newState == JobCtrl::CONNECTION_CONNECTED);
 
 	updateFooter();
+	if (isConnected_) {
+		profileCtrl = ProfileCtrl::getInstance();
+		switchRuleSet(profileCtrl->getAdminId(geteuid()),
+		    profileCtrl->getUserId());
+	}
 	event.Skip();
 }
 
 void
 DlgRuleEditor::onLoadNewRuleSet(wxCommandEvent &event)
 {
-	ProfileCtrl	*profileCtrl;
-	PolicyRuleSet	*ruleSet;
+	int	admin = adminRuleSetId_;
+	int	user = userRuleSetId_;
+	int	load = 0;
 
-	profileCtrl = ProfileCtrl::getInstance();
-
-	/* Release old one's */
-	ruleSet = profileCtrl->getRuleSet(userRuleSetId_);
-	if (ruleSet != NULL) {
-		ruleSet->unlock();
-		removeSubject(ruleSet);
+	/*
+	 * Switch to the the user rule set if no ruleset was loaded
+	 * at all.
+	 */
+	if (user == -1 && admin == -1) {
+		user = ProfileCtrl::getInstance()->getUserId();
+		load = 1;
 	}
-	ruleSet = profileCtrl->getRuleSet(adminRuleSetId_);
-	if (ruleSet != NULL) {
-		ruleSet->unlock();
-		removeSubject(ruleSet);
+	if (user != -1 && user == event.GetInt()) {
+		user = event.GetExtraLong();
+		load = 1;
 	}
-
-	/* Get new rulesets */
-	userRuleSetId_ = profileCtrl->getUserId();
-	adminRuleSetId_ = profileCtrl->getAdminId(geteuid());
-
-	/* Claim new one's */
-	ruleSet = profileCtrl->getRuleSet(userRuleSetId_);
-	if (ruleSet != NULL) {
-		ruleSet->lock();
-		addSubject(ruleSet);
-		updateFooter();
+	if (admin != -1 && admin == event.GetInt()) {
+		admin = event.GetExtraLong();
+		load = 1;
 	}
-	ruleSet = profileCtrl->getRuleSet(adminRuleSetId_);
-	if (ruleSet != NULL) {
-		ruleSet->lock();
-		addSubject(ruleSet);
+	/*
+	 * If the ruleset IDs actually changed, call switchRuleSet to
+	 * update them. Otherwise if the event indicates that our current
+	 * user- or admin-ruleset was modified, reload.
+	 */
+	if (user != userRuleSetId_ || admin != adminRuleSetId_) {
+		switchRuleSet(admin, user);
+	} else if (load) {
+		loadRuleSet();
 	}
-
-	loadRuleSet();
 	event.Skip();
 }
 
@@ -561,6 +565,8 @@ DlgRuleEditor::onShowRule(wxCommandEvent& event)
 	profileCtrl = ProfileCtrl::getInstance();
 	event.Skip();
 
+	switchRuleSet(profileCtrl->getAdminId(geteuid()),
+	    profileCtrl->getUserId());
 	if (event.GetInt()) {
 		rs = profileCtrl->getRuleSet(adminRuleSetId_);
 	} else {
@@ -1176,6 +1182,7 @@ DlgRuleEditor::onFooterImportButton(wxCommandEvent &)
 			    _("Couldn't import policy file: it has errors."),
 			    _("Error"), wxICON_ERROR);
 		}
+		switchRuleSet(-1, profileCtrl->getUserId());
 	}
 }
 
@@ -1454,6 +1461,61 @@ DlgRuleEditor::addFilterPolicy(AppPolicy *policy)
 }
 
 void
+DlgRuleEditor::switchRuleSet(long admin,  long user)
+{
+	ProfileCtrl	*profileCtrl = ProfileCtrl::getInstance();
+	PolicyRuleSet	*oldrs, *newrs;
+	int		 reload = 0;
+
+	if (admin != adminRuleSetId_) {
+		oldrs = NULL;
+		newrs = NULL;
+		if (adminRuleSetId_ != -1) {
+			oldrs = profileCtrl->getRuleSet(adminRuleSetId_);
+		}
+		if (admin != -1) {
+			newrs = profileCtrl->getRuleSet(admin);
+		}
+		if (oldrs) {
+			oldrs->unlock();
+			removeSubject(oldrs);
+		}
+		if (newrs == NULL) {
+			adminRuleSetId_ = -1;
+		} else {
+			adminRuleSetId_ = admin;
+			newrs->lock();
+			addSubject(newrs);
+		}
+		reload = 1;
+	}
+	if (user != userRuleSetId_) {
+		oldrs = NULL;
+		newrs = NULL;
+		if (userRuleSetId_ != -1) {
+			oldrs = profileCtrl->getRuleSet(userRuleSetId_);
+		}
+		if (user != -1) {
+			newrs = profileCtrl->getRuleSet(user);
+		}
+		if (oldrs) {
+			oldrs->unlock();
+			removeSubject(oldrs);
+		}
+		if (newrs == NULL) {
+			userRuleSetId_ = -1;
+		} else {
+			userRuleSetId_ = user;
+			newrs->lock();
+			addSubject(newrs);
+		}
+		reload = 1;
+	}
+	if (reload)
+		loadRuleSet();
+}
+
+void
 DlgRuleEditor::loadRuleSet(void)
 {
 	ProfileCtrl			*profileCtrl;
@@ -1465,10 +1527,14 @@ DlgRuleEditor::loadRuleSet(void)
 	wipeAppList();
 
 	/* Load ruleset with user-policies. */
-	addPolicyRuleSet(profileCtrl->getRuleSet(userRuleSetId_));
+	if (userRuleSetId_ != -1) {
+		addPolicyRuleSet(profileCtrl->getRuleSet(userRuleSetId_));
+	}
 
 	/* Load ruleset with admin-policies. */
-	addPolicyRuleSet(profileCtrl->getRuleSet(adminRuleSetId_));
+	if (adminRuleSetId_ != -1) {
+		addPolicyRuleSet(profileCtrl->getRuleSet(adminRuleSetId_));
+	}
 
 	/* As no app is selected, we remove the accidental filled filters. */
 	wipeFilterList();
@@ -1496,8 +1562,12 @@ DlgRuleEditor::createEmptyPolicyRuleSet(void)
 
 	if (ruleSet != NULL) {
 		ruleSet->lock();
+		/*
+		 * XXX When editing admin rules we should import this as an
+		 * XXX admin rule set.
+		 */
 		ProfileCtrl::getInstance()->importPolicy(ruleSet);
-		userRuleSetId_ = ruleSet->getRuleSetId();
+		switchRuleSet(adminRuleSetId_, ruleSet->getRuleSetId());
 	}
 
 	return (ruleSet);

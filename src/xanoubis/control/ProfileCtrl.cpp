@@ -315,7 +315,8 @@ ProfileCtrl::importPolicy(PolicyRuleSet *rs)
 
 	if (eventBroadcastEnabled_) {
 		wxCommandEvent event(anEVT_LOAD_RULESET);
-		event.SetClientData((void*)rs);
+		event.SetInt(id);
+		event.SetExtraLong(rs->getRuleSetId());
 		wxPostEvent(AnEvents::getInstance(), event);
 	}
 
@@ -644,8 +645,11 @@ ProfileCtrl::OnAnswerEscalation(wxCommandEvent &event)
 
 ProfileCtrl::ProfileCtrl(void) : Singleton<ProfileCtrl>()
 {
-	eventBroadcastEnabled_ = true;
+	PolicyRuleSet		*user, *admin;
+	struct iovec		 iov;
+	struct apn_ruleset	*rs;
 
+	eventBroadcastEnabled_ = true;
 	JobCtrl *jobCtrl = JobCtrl::getInstance();
 
 	jobCtrl->Connect(anTASKEVT_POLICY_REQUEST,
@@ -656,4 +660,14 @@ ProfileCtrl::ProfileCtrl(void) : Singleton<ProfileCtrl>()
 	AnEvents::getInstance()->Connect(anEVT_ANSWER_ESCALATION,
 	    wxCommandEventHandler(ProfileCtrl::OnAnswerEscalation),
 	    NULL, this);
+	iov.iov_base = (void *)" ";
+	iov.iov_len = 1;
+	if (apn_parse_iovec("<iov>", &iov, 1, &rs, 0) == 0) {
+		admin = new PolicyRuleSet(0, geteuid(), rs);
+		importPolicy(admin);
+	}
+	if (apn_parse_iovec("<iov>", &iov, 1, &rs, 0) == 0) {
+		user = new PolicyRuleSet(1, geteuid(), rs);
+		importPolicy(user);
+	}
 }

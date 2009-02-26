@@ -683,7 +683,8 @@ PolicyRuleSet::createAnswerPolicy(EscalationNotify *escalation)
 	refresh();
 
 	ProfileCtrl::getInstance()->sendToDaemon(getRuleSetId());
-	event.SetClientData(this);
+	event.SetInt(getRuleSetId());
+	event.SetExtraLong(getRuleSetId());
 	wxPostEvent(AnEvents::getInstance(), event);
 	if (tmp && answer->getEditor()) {
 		editevent.SetInt(false);

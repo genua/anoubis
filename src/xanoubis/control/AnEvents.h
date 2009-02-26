@@ -485,6 +485,7 @@ BEGIN_DECLARE_EVENT_TYPES()
 	 * A new rule set was loaded/stored to the profile manager.
 	 * Your current one may be out of date.
 	 *
+	 * @param GetInt() The id of the old ruleset.
 	 * @param GetExtraLong() The id of the new ruleset.
 	 */
 	DECLARE_LOCAL_EVENT_TYPE(anEVT_LOAD_RULESET, wxNewEventType())
