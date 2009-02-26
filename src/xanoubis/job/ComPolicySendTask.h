@@ -39,6 +39,9 @@ class PolicyRuleSet;
  * priority to be send by calling ComPolicySendTask::setPolicy() and
  * ComPolicySendTask::setPriority().
  *
+ * The policy is signed, if you provide a private key (setPrivateKey()). Then,
+ * the signature together with the policy is send to Aenoubis-daemon.
+ *
  * The task provides both policy-formats:
  * - GUI's <code>PolicyRuleSet</code>
  * - raw <code>struct apn_ruleset</code>
@@ -52,6 +55,9 @@ class PolicyRuleSet;
  * - <code>RESULT_REMOTE_ERROR</code> Operation(s) performed by anoubisd
  *   failed. getResultDetails() will return the remote error-code and can be
  *   evaluated by strerror(3) or similar.
+ * - <code>RESULT_LOCAL_ERROR</code> Failed to sign the policy (if requested).
+ *   getResultDetails() will return the remote error-code and can be evaluated
+ *   by strerror(3) or similar.
  */
 class ComPolicySendTask : public ComTask
 {
@@ -153,6 +159,31 @@ class ComPolicySendTask : public ComTask
 		int getPriority(void) const;
 
 		/**
+		 * Tests whether a private key is assigned to the task.
+		 * @return true is returned, if a private key is assigned,
+		 *         false otherwise.
+		 */
+		bool havePrivateKey(void) const;
+
+		/**
+		 * Configures a private-key.
+		 *
+		 * If a private key is assigned, the policy is signed with the
+		 * private key before. Then, the policy together with the
+		 * resulting signature is send to Anoubis-daemon.
+		 *
+		 * As soon as the signature is calculated, the internal
+		 * assignment to the private key is removed. Thus, if you want
+		 * to re-use the same instance again, don't forget to call this
+		 * method again!
+		 *
+		 * @param key The private key
+		 *
+		 * @see PrivKey
+		 */
+		void setPrivateKey(struct anoubis_sig *);
+
+		/**
 		 * Implementation of Task::getEventType().
 		 */
 		wxEventType getEventType(void) const;
@@ -167,6 +198,7 @@ class ComPolicySendTask : public ComTask
 		struct apn_ruleset	*apn_rs_;
 		uid_t			uid_;
 		int			prio_;
+		struct anoubis_sig	*privKey_;
 
 		wxString getPolicyContent(void) const;
 };

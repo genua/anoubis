@@ -374,6 +374,17 @@ TcComTask::setupTestPolicySend(void)
 {
 	trace("Enter TcComTask::setupTestPolicySend\n");
 
+	wxString keyFile = wxFileName::GetHomeDir() + wxT("/privkey");
+	KeyCtrl *keyCtrl = KeyCtrl::getInstance();
+	PrivKey &privKey = keyCtrl->getPrivateKey();
+
+	privKey.setFile(keyFile);
+	if (!privKey.isLoaded()) {
+		assertUnless(privKey.load(wxT("1234")),
+		    "Failed to load private key from %s\n",
+		    (const char *)keyFile.fn_str());
+	}
+
 	JobCtrl::getInstance()->Connect(anTASKEVT_POLICY_SEND,
 	    wxTaskEventHandler(TcComTask::onTestPolicySend), NULL, this);
 
@@ -381,6 +392,7 @@ TcComTask::setupTestPolicySend(void)
 
 	ComPolicySendTask *next = new ComPolicySendTask;
 	next->setPolicy(getPolicyFromFile(file), getuid(), 1);
+	next->setPrivateKey(privKey.getKey());
 
 	trace("Scheduling ComPolicySendTask: %p\n", next);
 	JobCtrl::getInstance()->addTask(next);
@@ -1192,9 +1204,11 @@ TcComTask::setupTestSigAdd(void)
 	PrivKey &privKey = keyCtrl->getPrivateKey();
 	privKey.setFile(keyFile);
 
-	assertUnless(privKey.load(wxT("1234")),
-	    "Failed to load private key from %s\n",
-	    (const char *)keyFile.fn_str());
+	if (!privKey.isLoaded()) {
+		assertUnless(privKey.load(wxT("1234")),
+		    "Failed to load private key from %s\n",
+		    (const char *)keyFile.fn_str());
+	}
 
 	struct anoubis_sig *raw_cert = cert.getCertificate();
 

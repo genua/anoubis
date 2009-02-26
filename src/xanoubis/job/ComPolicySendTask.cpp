@@ -35,6 +35,7 @@
 #include <wx/filename.h>
 
 #include <anoubis_protocol.h>
+#include <anoubis_sig.h>
 #include <client/anoubis_client.h>
 #include <client/anoubis_transaction.h>
 
@@ -104,6 +105,18 @@ ComPolicySendTask::getPriority(void) const
 	return (this->prio_);
 }
 
+bool
+ComPolicySendTask::havePrivateKey(void) const
+{
+	return (this->privKey_ != 0);
+}
+
+void
+ComPolicySendTask::setPrivateKey(struct anoubis_sig *privKey)
+{
+	this->privKey_ = privKey;
+}
+
 wxEventType
 ComPolicySendTask::getEventType(void) const
 {
@@ -120,13 +133,38 @@ ComPolicySendTask::exec(void)
 	struct anoubis_transaction	*ta = 0;
 	Policy_SetByUid			*ureq = 0;
 	wxString			content;
+	unsigned char			*signature;
+	unsigned int			sig_len;
 	size_t				total = 0;
 
 	resetComTaskResult();
 	content = getPolicyContent();
 
+	char c_content[content.Len() + 1];
+	strlcpy(c_content, content.fn_str(), content.Len() + 1);
+
+	if (havePrivateKey()) {
+		/* Signing policy requested */
+		sig_len = content.Len();
+		signature = anoubis_sign_policy_buf(
+		    this->privKey_, c_content, &sig_len);
+
+		this->privKey_ = 0; /* Reset assigned, not used anymore */
+
+		if (signature == 0) {
+			setComTaskResult(RESULT_LOCAL_ERROR);
+			setResultDetails(-sig_len);
+
+			return;
+		}
+	} else {
+		/* No signature */
+		signature = 0;
+		sig_len = 0;
+	}
+
 	/* Prepare request-message */
-	total =	sizeof(*ureq) + content.Len();
+	total = sizeof(*ureq) + content.Len() + sig_len;
 	ureq = (Policy_SetByUid *)malloc(total);
 
 	if (!ureq) {
@@ -135,11 +173,14 @@ ComPolicySendTask::exec(void)
 	}
 
 	set_value(ureq->ptype, ANOUBIS_PTYPE_SETBYUID);
+	set_value(ureq->siglen, sig_len);
 	set_value(ureq->uid, this->uid_);
 	set_value(ureq->prio, (geteuid() == 0) ? this->prio_ : 1);
 
+	if (sig_len > 0)
+		memcpy(ureq->payload, signature, sig_len);
 	if (!content.IsEmpty())
-		memcpy(ureq->payload, content.fn_str(), content.Len());
+		memcpy(ureq->payload + sig_len, c_content, content.Len());
 
 	/* Send message */
 	ta = anoubis_client_policyrequest_start(
