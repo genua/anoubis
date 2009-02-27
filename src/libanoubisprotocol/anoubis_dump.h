@@ -31,9 +31,10 @@
 #include <sys/types.h>
 #include <anoubis_msg.h>
 
-
+__BEGIN_DECLS
 extern void __anoubis_dump(struct anoubis_msg *, const char *);
 extern void __anoubis_dump_buf(void * buf, size_t len, const char *);
+__END_DECLS
 
 #ifdef PROTO_DEBUG
 

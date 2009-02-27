@@ -30,6 +30,7 @@
 #include <anoubis_msg.h>
 #include <anoubis_protocol.h>
 #include <anoubis_dump.h>
+#include <ctype.h>
 #include <crc32.h>
 
 #define __used __attribute__((unused))
@@ -76,6 +77,27 @@ static void DUMP_DATA_LABEL(const void * _buf, size_t len, const char *label)
 	}
 }
 #define DUMP_DATA(BUF,LEN)	DUMP_DATA_LABEL((BUF),(LEN),"data")
+
+static void
+DUMP_CHARDATA_LABEL(const void * _buf, size_t len, const char *label)
+{
+	int i;
+	unsigned const char *cbuf = _buf;
+	if (!len)
+		return;
+	printf(" %s =", label);
+	for (i=0; i<(int)len; ++i) {
+		if (i%4 == 0)
+			printf(" ");
+		if (isprint(cbuf[i])) {
+			printf("%c", cbuf[i]);
+		} else {
+			printf("\\x%02x", cbuf[i]);
+		}
+	}
+}
+#define DUMP_CHARDATA(BUF,LEN)	DUMP_CHARDATA_LABEL((BUF),(LEN),"data")
+
 
 static void dump_checksumpayload(Anoubis_ChecksumPayloadMessage * m, size_t len)
 {
@@ -230,7 +252,7 @@ static void dump_policyrequest(Anoubis_PolicyRequestMessage * m, size_t len)
 
 static void dump_policyreply(Anoubis_PolicyReplyMessage * m, size_t len)
 {
-	DUMP_DATA(m->payload, len-sizeof(*m));
+	DUMP_CHARDATA(m->payload, len-sizeof(*m));
 }
 
 static void dump_checksumrequest(Anoubis_ChecksumRequestMessage * m,
