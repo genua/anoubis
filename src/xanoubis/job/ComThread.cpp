@@ -166,8 +166,6 @@ ComThread::isConnected(void) const
 void *
 ComThread::Entry(void)
 {
-	bool fetchOnIdle = false; /* Workaround! See #854 */
-
 	if (!connect()) {
 		sendComEvent(JobCtrl::CONNECTION_FAILED);
 		return (0);
@@ -187,20 +185,11 @@ ComThread::Entry(void)
 		if (comTask != 0) {
 			comTask->setComHandler(this);
 			comTask->exec();
-
-			ComRegistrationTask *regTask =
-			    dynamic_cast<ComRegistrationTask*>(comTask);
-			if (regTask != 0) {
-				if (regTask->getAction() ==
-				    ComRegistrationTask::ACTION_REGISTER) {
-					fetchOnIdle = true;
-				}
-			}
-
 			TaskEvent event(comTask, wxID_ANY);
 			sendEvent(event);
-		} else if (fetchOnIdle)
+		} else {
 			waitForMessage();
+		}
 	}
 
 	/* Thread is short before exit, disconnect again */

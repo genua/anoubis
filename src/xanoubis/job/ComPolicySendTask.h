@@ -84,6 +84,12 @@ class ComPolicySendTask : public ComTask
 		ComPolicySendTask(PolicyRuleSet *);
 
 		/**
+		 * Destroy a ComPolicySendTask.
+		 * @param None.
+		 */
+		~ComPolicySendTask(void);
+
+		/**
 		 * Creates a ComPolicySendTask with an already assigned policy
 		 * and priority.
 		 *

@@ -26,16 +26,26 @@
  */
 
 #include "DlgRuleEditorPage.h"
+#include "PolicyRuleSet.h"
 
 DlgRuleEditorPage::DlgRuleEditorPage(void) : Observer(NULL)
 {
 	policy_ = NULL;
+	enable_ = true;
 }
 
 void
 DlgRuleEditorPage::select(Policy *policy)
 {
 	policy_ = policy;
+	enable_ = false;
+	if (policy) {
+		if (policy->getParentRuleSet()->isAdmin()) {
+			enable_ = (geteuid() == 0);
+		} else {
+			enable_ = true;
+		}
+	}
 	addSubject(policy);
 	update(policy);
 }

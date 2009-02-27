@@ -53,6 +53,7 @@ DlgRuleEditorFilterContextPage::select(Policy *policy)
 		DlgRuleEditorPage::select(policy);
 		appPage->setBinaryIndex(binaryIndex_);
 		appPage->select(policy);
+		Enable(enable_);
 		Show();
 	}
 }

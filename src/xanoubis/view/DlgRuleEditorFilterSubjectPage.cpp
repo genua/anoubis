@@ -61,11 +61,13 @@ DlgRuleEditorFilterSubjectPage::select(Policy *policy)
 	if (policy->IsKindOf(CLASSINFO(SfsFilterPolicy))) {
 		sfsPolicy_ = wxDynamicCast(policy, SfsFilterPolicy);
 		DlgRuleEditorPage::select(policy);
+		Enable(enable_);
 		Show();
 	}
 	if (policy->IsKindOf(CLASSINFO(SbAccessFilterPolicy))) {
 		sbPolicy_ = wxDynamicCast(policy, SbAccessFilterPolicy);
 		DlgRuleEditorPage::select(policy);
+		Enable(enable_);
 		Show();
 	}
 }

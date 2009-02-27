@@ -51,6 +51,7 @@ DlgRuleEditorFilterCapabilityPage::select(Policy *policy)
 		filterPolicy_ = wxDynamicCast(policy,
 		    AlfCapabilityFilterPolicy);
 		DlgRuleEditorPage::select(policy);
+		Enable(enable_);
 		Show();
 	}
 }

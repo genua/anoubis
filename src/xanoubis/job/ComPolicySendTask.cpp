@@ -55,13 +55,21 @@ ComPolicySendTask::ComPolicySendTask(void)
 
 ComPolicySendTask::ComPolicySendTask(PolicyRuleSet *policy)
 {
+	policy_rs_ = NULL;	/* setPolicy will try an unlock. */
 	setPolicy(policy);
 	this->privKey_ = 0;
+}
+
+ComPolicySendTask::~ComPolicySendTask(void)
+{
+	if (policy_rs_)
+		policy_rs_->unlock();
 }
 
 ComPolicySendTask::ComPolicySendTask(
     struct apn_ruleset *policy, uid_t uid, int prio)
 {
+	policy_rs_ = NULL;
 	setPolicy(policy, uid, prio);
 	this->privKey_ = 0;
 }
@@ -81,6 +89,10 @@ ComPolicySendTask::getPolicyApn(void) const
 void
 ComPolicySendTask::setPolicy(PolicyRuleSet *policy)
 {
+	if (policy_rs_)
+		policy_rs_->unlock();
+	if (policy)
+		policy->lock();
 	policy_rs_ = policy;
 	apn_rs_ = 0;
 	uid_ = policy->getUid();
@@ -90,6 +102,8 @@ ComPolicySendTask::setPolicy(PolicyRuleSet *policy)
 void
 ComPolicySendTask::setPolicy(struct apn_ruleset *policy, uid_t uid, int prio)
 {
+	if (policy_rs_)
+		policy_rs_->unlock();
 	policy_rs_ = 0;
 	apn_rs_ = policy;
 	uid_ = uid;
@@ -172,6 +186,17 @@ ComPolicySendTask::exec(void)
 
 	if (!ureq) {
 		setComTaskResult(RESULT_OOM);
+		return;
+	}
+	/*
+	 * A valid policy has at least an alf and an sfs block. Thus it
+	 * must have a length of at least 10 bytes. We refuse to send smaller
+	 * policies here. However, the caller should not have requested
+	 * a policy send in the first place.
+	 */
+	if (content.Len() < 10) {
+		setComTaskResult(RESULT_LOCAL_ERROR);
+		setResultDetails(EINVAL);
 		return;
 	}
 

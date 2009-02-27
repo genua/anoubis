@@ -73,7 +73,7 @@ DlgRuleEditorFilterActionPage::select(Policy *policy)
 		} else {
 			askRadioButton->Enable();
 		}
-
+		Enable(enable_);
 		Show();
 	}
 }

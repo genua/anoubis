@@ -82,6 +82,12 @@ class DlgRuleEditorPage : public Observer
 		 * @return Nothing.
 		 */
 		virtual void updateDelete(Subject *);
+	protected:
+		/**
+		 * This is true if the ruleset associated with the policy
+		 * is editable by the user.
+		 */
+		bool	enable_;
 	private:
 		/**
 		 * This holds the policy been edited by this page.

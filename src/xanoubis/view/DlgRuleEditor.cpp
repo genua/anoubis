@@ -526,6 +526,7 @@ DlgRuleEditor::onLoadNewRuleSet(wxCommandEvent &event)
 	 * Switch to the the user rule set if no ruleset was loaded
 	 * at all.
 	 */
+
 	if (user == -1 && admin == -1) {
 		user = ProfileCtrl::getInstance()->getUserId();
 		load = 1;
@@ -1017,8 +1018,20 @@ DlgRuleEditor::onAppListCreateButton(wxCommandEvent &)
 	top   = appPolicyListCtrl->GetTopItem();
 
 	typeSelection = appListTypeChoice->GetStringSelection();
-	profileCtrl   = ProfileCtrl::getInstance();
-	ruleSet       = profileCtrl->getRuleSet(userRuleSetId_);
+	profileCtrl = ProfileCtrl::getInstance();
+	policy = getSelectedPolicy(appPolicyListCtrl);
+
+	if (policy) {
+		ruleSet = policy->getParentRuleSet();
+		if (ruleSet && ruleSet->isAdmin() && geteuid() != 0) {
+			message = _("Cannot edit admin ruleset!");
+			wxMessageBox(message, _("RuleEditor"),
+			    wxOK | wxICON_ERROR, this);
+			return;
+		}
+	} else {
+		ruleSet = profileCtrl->getRuleSet(userRuleSetId_);
+	}
 
 	if (ruleSet == NULL) {
 		ruleSet = createEmptyPolicyRuleSet();
@@ -1031,11 +1044,12 @@ DlgRuleEditor::onAppListCreateButton(wxCommandEvent &)
 			message = _("Created new ruleset.");
 			wxMessageBox(message, _("Rule Editor"),
 			    wxOK | wxICON_INFORMATION, this);
+			switchRuleSet(adminRuleSetId_,
+			    profileCtrl->getUserId());
 		}
 	}
 
-	/* Where should the new policy been inserted? */
-	policy = getSelectedPolicy(appPolicyListCtrl);
+	/* Where should the new policy be inserted? */
 	if (policy != NULL) {
 		id = policy->getApnRuleId();
 		if (typeSelection.Cmp(policy->getTypeIdentifier()) != 0) {
@@ -1101,17 +1115,23 @@ DlgRuleEditor::onFilterListCreateButton(wxCommandEvent &)
 	filterIndex = getSelectedIndex(filterPolicyListCtrl);
 	filterTop   = filterPolicyListCtrl->GetTopItem();
 	profileCtrl = ProfileCtrl::getInstance();
-	ruleSet	    = profileCtrl->getRuleSet(userRuleSetId_);
-
-	if (ruleSet == NULL) {
-		/* This is extremely odd and wrong - abort. */
-		return;
-	}
 
 	policy = getSelectedPolicy(appPolicyListCtrl);
 	parent = wxDynamicCast(policy, AppPolicy);
 	if (parent == NULL) {
 		/* Can't create filter without app parent */
+		return;
+	}
+
+	ruleSet = parent->getParentRuleSet();
+	if (ruleSet == NULL) {
+		/* This is extremely odd and wrong - abort. */
+		return;
+	}
+	if (ruleSet->isAdmin() && geteuid() != 0) {
+		wxString message = _("Cannot edit admin ruleset!");
+		wxMessageBox(message, _("RuleEditor"),
+		    wxOK | wxICON_ERROR, this);
 		return;
 	}
 
@@ -1200,10 +1220,14 @@ DlgRuleEditor::onFooterExportButton(wxCommandEvent &)
 			     wxEmptyString, wxEmptyString,
 			     wxFD_SAVE | wxFD_OVERWRITE_PROMPT);
 	ProfileCtrl	*profileCtrl;
-	PolicyRuleSet	*ruleSet;
+	PolicyRuleSet	*ruleSet = NULL;
 
 	profileCtrl = ProfileCtrl::getInstance();
-	ruleSet	    = profileCtrl->getRuleSet(userRuleSetId_);
+	if (userRuleSetId_ != -1) {
+		ruleSet = profileCtrl->getRuleSet(userRuleSetId_);
+	} else if (adminRuleSetId_ != -1) {
+		ruleSet = profileCtrl->getRuleSet(adminRuleSetId_);
+	}
 	if (ruleSet == NULL) {
 		/* XXX ch: error dialog to user? */
 		return;
@@ -1233,25 +1257,33 @@ void
 DlgRuleEditor::onFooterActivateButton(wxCommandEvent &)
 {
 	ProfileCtrl	*profileCtrl;
-	PolicyRuleSet	*ruleSet;
+	PolicyRuleSet	*admin = NULL, *user = NULL;
 
 	profileCtrl = ProfileCtrl::getInstance();
 
-	ruleSet = profileCtrl->getRuleSet(userRuleSetId_);
-	if (ruleSet == NULL) {
-		/* XXX ch: error dialog to user? */
+	if (adminRuleSetId_ != -1) {
+		admin = profileCtrl->getRuleSet(adminRuleSetId_);
+	}
+	if (userRuleSetId_ != -1) {
+		user = profileCtrl->getRuleSet(userRuleSetId_);
+	}
+	if (admin == NULL && user == NULL) {
 		return;
 	}
 
 	footerStatusText->SetLabel(wxT("sending to daemon"));
 	profileCtrl->sendToDaemon(userRuleSetId_);
+	if (admin && admin->isModified() && geteuid() == 0) {
+		profileCtrl->sendToDaemon(adminRuleSetId_);
+	}
 
 	/*
 	 * XXX ch: This will update the status imediately. If we want
 	 * XXX ch: to wait until transmission finished successfully,
 	 * XXX ch: we need to register to anTASKEVT_POLICY_SEND ...
 	 */
-	ruleSet->clearModified();
+	user->clearModified();
+	admin->clearModified();
 	updateFooter();
 }
 
@@ -1951,10 +1983,12 @@ DlgRuleEditor::updateListSbAccessFilterPolicy(long rowIdx)
 void
 DlgRuleEditor::updateFooter(void)
 {
-	PolicyRuleSet	*ruleSet;
+	PolicyRuleSet	*admin = NULL, *user = NULL;
 
-	ruleSet = ProfileCtrl::getInstance()->getRuleSet(userRuleSetId_);
-	if (ruleSet == NULL) {
+	admin = ProfileCtrl::getInstance()->getRuleSet(adminRuleSetId_);
+	user = ProfileCtrl::getInstance()->getRuleSet(userRuleSetId_);
+
+	if (admin == NULL && user == NULL) {
 		return;
 	}
 
@@ -1963,12 +1997,14 @@ DlgRuleEditor::updateFooter(void)
 	footerActivateButton->Enable(isConnected_);
 
 	/* Update text */
-	if (ruleSet->isDaemonRuleSet()) {
+	if (user && user->isDaemonRuleSet()) {
 		footerRuleSetText->SetLabel(wxT("daemon"));
+	} else if (user) {
+		footerRuleSetText->SetLabel(user->getOrigin());
 	} else {
-		footerRuleSetText->SetLabel(ruleSet->getOrigin());
+		footerRuleSetText->SetLabel(admin->getOrigin());
 	}
-	if (ruleSet->isModified()) {
+	if ((user && user->isModified()) || (admin && admin->isModified())) {
 		footerStatusText->SetLabel(_("modified"));
 	} else {
 		footerStatusText->SetLabel(_("not modified"));

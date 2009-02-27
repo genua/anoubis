@@ -74,14 +74,14 @@ DlgRuleEditorAppPage::select(Policy *policy)
 		appPolicy_ = wxDynamicCast(policy, AppPolicy);
 		DlgRuleEditorPage::select(policy);
 		if (appPolicy_->getTypeID() == APN_SFS) {
-			Disable();
-		} else {
-			Enable();
+			enable_ = false;
 		}
+		Enable(enable_);
 	}
 	if (policy->IsKindOf(CLASSINFO(ContextFilterPolicy))) {
 		ctxPolicy_ = wxDynamicCast(policy, ContextFilterPolicy);
 		DlgRuleEditorPage::select(policy);
+		Enable(enable_);
 	}
 }
 

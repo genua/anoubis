@@ -53,6 +53,7 @@ DlgRuleEditorFilterNetworkPage::select(Policy *policy)
 	if (policy->IsKindOf(CLASSINFO(AlfFilterPolicy))) {
 		filterPolicy_ = wxDynamicCast(policy, AlfFilterPolicy);
 		DlgRuleEditorPage::select(policy);
+		Enable(enable_);
 		Show();
 	}
 }
