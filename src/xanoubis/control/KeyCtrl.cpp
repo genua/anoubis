@@ -30,6 +30,7 @@
 
 KeyCtrl::KeyCtrl(void)
 {
+	this->passphraseReader_ = 0;
 }
 
 KeyCtrl::~KeyCtrl(void)
@@ -40,6 +41,18 @@ KeyCtrl *
 KeyCtrl::getInstance(void)
 {
 	return (Singleton<KeyCtrl>::instance());
+}
+
+PassphraseReader *
+KeyCtrl::getPassphraseReader(void) const
+{
+	return (this->passphraseReader_);
+}
+
+void
+KeyCtrl::setPassphraseReader(PassphraseReader *reader)
+{
+	this->passphraseReader_ = reader;
 }
 
 PrivKey &
@@ -58,4 +71,23 @@ bool
 KeyCtrl::canUseLocalKeys(void) const
 {
 	return (privKey_.canLoad() && cert_.isLoaded());
+}
+
+bool
+KeyCtrl::loadPrivateKey(void)
+{
+	if (!privKey_.isLoaded()) {
+		wxString passphrase = wxEmptyString;
+
+		if (passphraseReader_ != 0) {
+			bool ok = true;
+			passphrase = passphraseReader_->readPassphrase(&ok);
+
+			if (!ok)
+				return (false);
+		}
+
+		return privKey_.load(passphrase);
+	} else
+		return (true); /* Already loaded */
 }

@@ -61,6 +61,7 @@
 #include "DlgLogViewer.h"
 #include "DlgRuleEditor.h"
 #include "CsumCalcTask.h"
+#include "KeyCtrl.h"
 #include "MainFrame.h"
 #include "Module.h"
 #include "TrayIcon.h"
@@ -79,7 +80,7 @@ enum moduleIdx {
 compile_time_assert((LAST_MODULE_INDEX == ANOUBIS_MODULESNO), \
     MODULE_INDEX_mismatch_ANOUBIS_MODULESNO);
 
-class AnoubisGuiApp : public wxApp
+class AnoubisGuiApp : public wxApp, private PassphraseReader
 {
 	private:
 		wxStandardPaths		 paths_;
@@ -94,6 +95,8 @@ class AnoubisGuiApp : public wxApp
 		wxConfig		*userOptions_;
 
 		void fillUserList(void);
+
+		wxString readPassphrase(bool *);
 
 		ComRegistrationTask	regTask_;
 		ComCsumAddTask		csumAddTask_;

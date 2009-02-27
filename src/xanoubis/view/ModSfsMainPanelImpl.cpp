@@ -269,9 +269,9 @@ ModSfsMainPanelImpl::OnSfsMainExportClicked(wxCommandEvent&)
 		wxGetApp().status(
 		  _("Error: xanoubis is not connected to the daemon"));
 		break;
-	case SfsCtrl::RESULT_NEEDPASS:
+	case SfsCtrl::RESULT_NEEDKEY:
 		wxGetApp().status(
-		  _("Error: A passphrase is still required."));
+		  _("Error: Failed to load the private key."));
 		break;
 	case SfsCtrl::RESULT_INVALIDARG:
 		wxGetApp().status(
@@ -292,52 +292,26 @@ ModSfsMainPanelImpl::applySfsAction(const IndexArray &selection)
 {
 	SfsCtrl::CommandResult result = SfsCtrl::RESULT_EXECUTE;
 
-	do {
-		switch (SfsMainActionChoice->GetCurrentSelection()) {
-		case 0:
-			result = sfsCtrl_->registerChecksum(selection);
-			break;
-		case 1:
-			result = sfsCtrl_->unregisterChecksum(selection);
-			break;
-		case 2:
-			result = sfsCtrl_->validate(selection);
-			break;
-		}
-
-		if (result == SfsCtrl::RESULT_NEEDPASS) {
-			KeyCtrl *keyCtrl = KeyCtrl::getInstance();
-			PrivKey &privKey = keyCtrl->getPrivateKey();
-
-			wxPasswordEntryDialog dlg(this,
-			    _("Enter the passphrase of your private key:"),
-			    _("Enter passphrase"));
-
-			if (dlg.ShowModal() != wxID_OK) /* Canceled */
-				return;
-
-			/*
-			 * Load the private key into memory using the entered
-			 * passphrase.
-			 */
-			if (!privKey.load(dlg.GetValue())) {
-				/* XXX Bad error handling */
-				wxMessageBox(
-				    _("Could not load the private key."),
-				    _("SFS error"), wxOK|wxICON_ERROR, this);
-				return;
-			}
-		}
-	} while (result == SfsCtrl::RESULT_NEEDPASS);
+	switch (SfsMainActionChoice->GetCurrentSelection()) {
+	case 0:
+		result = sfsCtrl_->registerChecksum(selection);
+		break;
+	case 1:
+		result = sfsCtrl_->unregisterChecksum(selection);
+		break;
+	case 2:
+		result = sfsCtrl_->validate(selection);
+		break;
+	}
 
 	switch (result) {
 	case SfsCtrl::RESULT_NOTCONNECTED:
 		wxGetApp().status(
 		  _("Error: xanoubis is not connected to the daemon"));
 		break;
-	case SfsCtrl::RESULT_NEEDPASS:
+	case SfsCtrl::RESULT_NEEDKEY:
 		wxGetApp().status(
-		  _("Error: A passphrase is still required."));
+		  _("Error: Failed to load the private key."));
 		break;
 	case SfsCtrl::RESULT_INVALIDARG:
 		wxGetApp().status(
@@ -363,9 +337,9 @@ ModSfsMainPanelImpl::applySfsValidateAll(bool orphaned)
 		wxGetApp().status(
 		    _("Error: xanoubis is not connected to the daemon"));
 		break;
-	case SfsCtrl::RESULT_NEEDPASS:
+	case SfsCtrl::RESULT_NEEDKEY:
 		wxGetApp().status(
-		    _("Error: A passphrase is required."));
+		    _("Error: Failed to load the private key."));
 		break;
 	case SfsCtrl::RESULT_INVALIDARG:
 		wxGetApp().status(

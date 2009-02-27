@@ -395,6 +395,16 @@ ProfileCtrl::sendToDaemon(long id)
 	PolicyRuleSet *rs = getRuleSet(id);
 	ComPolicySendTask *task = new ComPolicySendTask(rs);
 
+	KeyCtrl *keyCtrl = KeyCtrl::getInstance();
+	if (keyCtrl->canUseLocalKeys()) {
+		/* You need to sign the policy, the private key is required */
+		if (!keyCtrl->loadPrivateKey())
+			return (false);
+
+		PrivKey &privKey = keyCtrl->getPrivateKey();
+		task->setPrivateKey(privKey.getKey());
+	}
+
 	sendTaskList_.push_back(task);
 	JobCtrl::getInstance()->addTask(task);
 

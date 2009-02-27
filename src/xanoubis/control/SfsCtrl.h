@@ -73,9 +73,8 @@ class SfsCtrl : public wxEvtHandler
 			RESULT_NOTCONNECTED,	/*!< You are not connected with
 						     anoubisd. The command is
 						     not scheduled. */
-			RESULT_NEEDPASS,	/*!< The controller tries to
-						     get the private key, but
-						     it is not loaded. */
+			RESULT_NEEDKEY,	/*!< A key is required, but loading of
+					     the key failed. */
 			RESULT_INVALIDARG,	/*!< You supplied an invalid
 						     argument. The command is
 						     not scheduled. */

@@ -50,17 +50,20 @@ ComPolicySendTask::ComPolicySendTask(void)
 	this->apn_rs_ = 0;
 	this->uid_ = 0;
 	this->prio_ = 0;
+	this->privKey_ = 0;
 }
 
 ComPolicySendTask::ComPolicySendTask(PolicyRuleSet *policy)
 {
 	setPolicy(policy);
+	this->privKey_ = 0;
 }
 
 ComPolicySendTask::ComPolicySendTask(
     struct apn_ruleset *policy, uid_t uid, int prio)
 {
 	setPolicy(policy, uid, prio);
+	this->privKey_ = 0;
 }
 
 PolicyRuleSet *

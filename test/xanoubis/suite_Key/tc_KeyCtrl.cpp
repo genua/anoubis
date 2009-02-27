@@ -71,6 +71,25 @@ class tc_KeyCtrl_App : public wxApp
 		wxString prefix;
 };
 
+class tc_KeyCtrl_PassphraseReader : public PassphraseReader
+{
+	public:
+		tc_KeyCtrl_PassphraseReader(const wxString &passphrase,
+		    bool ok) {
+			this->passphrase_ = passphrase;
+			this->ok_ = ok;
+		}
+
+		wxString readPassphrase(bool *ok) {
+			*ok = this->ok_;
+			return (this->passphrase_);
+		}
+
+	private:
+		wxString passphrase_;
+		bool ok_;
+};
+
 static tc_KeyCtrl_App	*tc_App;
 static KeyCtrl		*tc_keyCtrl = 0;
 static char		*tc_dir = 0;
@@ -224,6 +243,48 @@ START_TEST(tc_KeyCtrl_canUseLocalKeys_NoPrivKey)
 }
 END_TEST
 
+START_TEST(tc_KeyCtrl_loadPrivateKey_ok)
+{
+	tc_KeyCtrl_PassphraseReader reader(wxT("1234"), true);
+	tc_keyCtrl->setPassphraseReader(&reader);
+
+	PrivKey &privKey = tc_keyCtrl->getPrivateKey();
+	privKey.setFile(wxString::FromAscii(path_privkey));
+
+	fail_unless(tc_keyCtrl->loadPrivateKey(),
+	    "Failed to load private key");
+	fail_unless(privKey.isLoaded(), "Private key is not loaded");
+}
+END_TEST
+
+START_TEST(tc_KeyCtrl_loadPrivateKey_wrongpass)
+{
+	tc_KeyCtrl_PassphraseReader reader(wxT("foobar"), true);
+	tc_keyCtrl->setPassphraseReader(&reader);
+
+	PrivKey &privKey = tc_keyCtrl->getPrivateKey();
+	privKey.setFile(wxString::FromAscii(path_privkey));
+
+	fail_unless(!tc_keyCtrl->loadPrivateKey(),
+	    "Load private key was successful");
+	fail_unless(!privKey.isLoaded(), "Private key is loaded");
+}
+END_TEST
+
+START_TEST(tc_KeyCtrl_loadPrivateKey_canceled)
+{
+	tc_KeyCtrl_PassphraseReader reader(wxT("1234"), false);
+	tc_keyCtrl->setPassphraseReader(&reader);
+
+	PrivKey &privKey = tc_keyCtrl->getPrivateKey();
+	privKey.setFile(wxString::FromAscii(path_privkey));
+
+	fail_unless(!tc_keyCtrl->loadPrivateKey(),
+	    "Load private key was successful");
+	fail_unless(!privKey.isLoaded(), "Private key is loaded");
+}
+END_TEST
+
 TCase *
 getTc_KeyCtrl(void)
 {
@@ -237,6 +298,9 @@ getTc_KeyCtrl(void)
 	tcase_add_test(testCase, tc_KeyCtrl_canUseLocalKeys_ok);
 	tcase_add_test(testCase, tc_KeyCtrl_canUseLocalKeys_NoCert);
 	tcase_add_test(testCase, tc_KeyCtrl_canUseLocalKeys_NoPrivKey);
+	tcase_add_test(testCase, tc_KeyCtrl_loadPrivateKey_ok);
+	tcase_add_test(testCase, tc_KeyCtrl_loadPrivateKey_wrongpass);
+	tcase_add_test(testCase, tc_KeyCtrl_loadPrivateKey_canceled);
 
 	return (testCase);
 }

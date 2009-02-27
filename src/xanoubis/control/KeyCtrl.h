@@ -33,6 +33,27 @@
 #include "Singleton.h"
 
 /**
+ * Interface used by KeyCtrl to fetch a passphrase.
+ */
+class PassphraseReader
+{
+	public:
+		virtual ~PassphraseReader(void) {}
+
+		/**
+		 * Reads a passphrase.
+		 *
+		 * @param ok Set to true, if the passphrase was successfully
+		 *           read by the method. Set to false if the
+		 *           read-operation was canceled. In this case the
+		 *           returned passphrase is ignored.
+		 * @return A passphrase (can be an empty string), if ok is set
+		 *         to true. If ok == false, the result is ignored.
+		 */
+		virtual wxString readPassphrase(bool *) = 0;
+};
+
+/**
  * Controller responsible for managing keys and certificates.
  *
  * You can obtain the private key of the user by calling getPrivateKey(). Note,
@@ -62,6 +83,28 @@ class KeyCtrl : public Singleton<KeyCtrl>
 		 * @return It self.
 		 */
 		static KeyCtrl *getInstance(void);
+
+		/**
+		 * Returns the assigned passphrase reader.
+		 *
+		 * This interface is used to ask for a passphrase, whenever
+		 * a passphrase is needed. Currently loadPrivateKey() is
+		 * using the interface to receive the passphrase is the
+		 * private key is not loaded.
+		 *
+		 * @return The assigned passphrase reader
+		 */
+		PassphraseReader *getPassphraseReader(void) const;
+
+		/**
+		 * Assigns a passphrase reader to the controller.
+		 *
+		 * Then, the assigned passphrase reader is used to receive a
+		 * passphrase.
+		 *
+		 * @param reader The passphrase reader to be assigned
+		 */
+		void setPassphraseReader(PassphraseReader *);
 
 		/**
 		 * Returns the private key of the user.
@@ -94,6 +137,22 @@ class KeyCtrl : public Singleton<KeyCtrl>
 		 */
 		bool canUseLocalKeys(void) const;
 
+		/**
+		 * Loads the private key.
+		 *
+		 * When the private key is not loaded, the method tries to
+		 * fetch the passphrase using the assigned PassphraseReader. If
+		 * no passphrase reader is assigned, the method uses an empty
+		 * string (wxEmptyString) as a passphrase.
+		 *
+		 * @return true is returned, if the private key is already
+		 *         loaded, or the key was successfully loaded.
+		 *
+		 * @see getPassphraseReader()
+		 * @see PrivKey
+		 */
+		bool loadPrivateKey(void);
+
 	protected:
 		/**
 		 * Constructor of KeyCtrl.
@@ -101,6 +160,11 @@ class KeyCtrl : public Singleton<KeyCtrl>
 		KeyCtrl(void);
 
 	private:
+		/**
+		 * Passphrase reader assigned to the controller.
+		 */
+		PassphraseReader *passphraseReader_;
+
 		/**
 		 * Instance of the private key.
 		 */

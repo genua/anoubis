@@ -35,6 +35,7 @@
 #include <wx/msgdlg.h> /* XXX Used by bad AnoubisGuiApp::OnPolicySend */
 #include <wx/stdpaths.h>
 #include <wx/string.h>
+#include <wx/textdlg.h>
 #include <wx/textfile.h>
 #include <wx/tokenzr.h>
 #include <wx/filename.h>
@@ -124,6 +125,9 @@ bool AnoubisGuiApp::OnInit()
 
 	/* Initialization of versionmanagement */
 	VersionCtrl::getInstance(); /* Make sure c'tor is invoked */
+
+	/* Assign the passphrase-callback */
+	KeyCtrl::getInstance()->setPassphraseReader(this);
 
 	/* Initialization of central event management */
 	AnEvents *anEvents = AnEvents::getInstance();
@@ -672,4 +676,26 @@ AnoubisGuiApp::OnAnswerEscalation(wxCommandEvent &event)
 	Notification *notify = (Notification*)event.GetClientObject();
 	JobCtrl::getInstance()->answerNotification(notify);
 	event.Skip();
+}
+
+wxString
+AnoubisGuiApp::readPassphrase(bool *ok)
+{
+	wxWindow *w = wxWindow::FindFocus();
+
+	if (w == 0)
+		w = GetTopWindow();
+
+	wxPasswordEntryDialog dlg(w,
+	    _("Enter the passphrase of your private key:"),
+	    _("Enter passphrase"));
+	dlg.CentreOnScreen();
+
+	if (dlg.ShowModal() == wxID_OK) {
+		*ok = true;
+		return (dlg.GetValue());
+	} else {
+		*ok = false;
+		return (wxEmptyString);
+	}
 }

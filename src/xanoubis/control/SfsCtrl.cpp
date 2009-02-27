@@ -232,10 +232,8 @@ SfsCtrl::registerChecksum(const IndexArray &arr)
 			if (isSignatureEnabled()) {
 				/* Need a loaded private key */
 				KeyCtrl *keyCtrl = KeyCtrl::getInstance();
-				PrivKey &privKey = keyCtrl->getPrivateKey();
-
-				if (!privKey.isLoaded())
-					return (RESULT_NEEDPASS);
+				if (!keyCtrl->loadPrivateKey())
+					return (RESULT_NEEDKEY);
 			}
 
 			SfsEntry &entry = sfsDir_.getEntry(idx);
