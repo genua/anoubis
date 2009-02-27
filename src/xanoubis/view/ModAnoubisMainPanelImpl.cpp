@@ -650,7 +650,7 @@ ModAnoubisMainPanelImpl::update(void)
 	size_t			 maxElementNo;
 	size_t			 elementNo;
 	EscalationNotify	*eNotify = NULL;
-	
+
 	if (currentNotify_) {
 		/*
 		 * A DaemonAnswerNotify can remove an Escalation from
@@ -1202,8 +1202,28 @@ ModAnoubisMainPanelImpl::OnVersionDeleteButtonClick(wxCommandEvent&)
 
 		wxMessageBox(msg, title, wxOK | wxICON_ERROR, this);
 	}
-	else
+	else {
+		/* Current selection */
+		int top = VersionListCtrl->GetTopItem();
+		int length = VersionListCtrl->GetCountPerPage();
+		int selection = VersionListCtrl->GetNextItem(
+		    -1, wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED);
+
 		versionListUpdate();
+
+		/* Restore selection */
+		int count = VersionListCtrl->GetItemCount();
+		if (count > 0) {
+			if (selection >= count)
+				selection = (count - 1);
+
+			VersionListCtrl->SetItemState(selection,
+			    wxLIST_STATE_SELECTED, wxLIST_STATE_SELECTED);
+			VersionListCtrl->EnsureVisible(top);
+			VersionListCtrl->EnsureVisible(top + length - 1);
+			VersionListCtrl->EnsureVisible(selection);
+		}
+	}
 }
 
 void
