@@ -94,8 +94,6 @@ class AnoubisGuiApp : public wxApp, private PassphraseReader
 		Module			*modules_[ANOUBIS_MODULESNO];
 		wxConfig		*userOptions_;
 
-		void fillUserList(void);
-
 		wxString readPassphrase(bool *);
 
 		ComRegistrationTask	regTask_;
@@ -140,8 +138,6 @@ class AnoubisGuiApp : public wxApp, private PassphraseReader
 		bool		 showingMainFrame(void);
 		void		 autoStart(bool);
 
-		wxArrayString	 getListOfUsersName(void) const;
-		wxArrayString	 getListOfUsersId(void) const;
 		uid_t		 getUserIdByName(wxString) const;
 		wxString	 getUserNameById(uid_t) const;
 };

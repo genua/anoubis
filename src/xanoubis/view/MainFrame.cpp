@@ -44,6 +44,7 @@
 #include "ModAnoubis.h"
 #include "ModAnoubisMainPanelImpl.h"
 #include "RuleWizard.h"
+#include "DlgBackupPolicyImpl.h"
 
 #include "main.h"
 
@@ -524,25 +525,18 @@ MainFrame::OnAnoubisOptionShow(wxCommandEvent& event)
 void
 MainFrame::onBackupPolicy(wxCommandEvent &event)
 {
-	ProfileCtrl	*profileCtrl;
+	ProfileCtrl	*profileCtrl = ProfileCtrl::getInstance();
 	PolicyRuleSet	*rs;
-	wxString	 filename, msg;
 
-	profileCtrl = ProfileCtrl::getInstance();
 	rs = profileCtrl->getRuleSet(event.GetExtraLong());
-	if (!rs)
-		return;
-	while(1) {
-		filename = wxEmptyString;
-		/* XXX Show a yes/no Dialog and a file chooser here. */
-		if (filename.IsEmpty())
-			break;
-		if (rs->exportToFile(filename))
-			break;
-		msg = _("Policy export failed");
-		wxMessageBox(msg, _("Error"), wxICON_ERROR);
+	if (rs) {
+		DlgBackupPolicy dlg(alertIcon_, rs);
+		this->Show();
+		this->Raise();
+
+		dlg.ShowModal();
+		rs->unlock();
 	}
-	rs->unlock();
 }
 
 bool

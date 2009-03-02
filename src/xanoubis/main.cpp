@@ -29,6 +29,9 @@
 #include "config.h"
 #endif
 
+#include <sys/types.h>
+#include <pwd.h>
+
 #include <wx/cmdline.h>
 #include <wx/fileconf.h>
 #include <wx/icon.h>
@@ -73,7 +76,6 @@ AnoubisGuiApp::AnoubisGuiApp(void)
 	wxInitAllImageHandlers();
 
 	paths_.SetInstallPrefix(wxT(GENERALPREFIX));
-	fillUserList();
 }
 
 AnoubisGuiApp::~AnoubisGuiApp(void)
@@ -90,7 +92,6 @@ AnoubisGuiApp::~AnoubisGuiApp(void)
 	delete VersionCtrl::getInstance();
 
 	delete ProfileCtrl::getInstance();
-	userList_.clear();
 }
 
 void
@@ -530,94 +531,43 @@ AnoubisGuiApp::showingMainFrame(void)
 	return (mainFrame->isShowing());
 }
 
-void
-AnoubisGuiApp::fillUserList(void)
-{
-	wxTextFile		pwdFile(wxT("/etc/passwd"));
-	wxStringTokenizer	tokens;
-	wxString		line;
-	wxString		user;
-	wxString		uid;
-
-	if (geteuid() != 0) {
-		uid = wxString::Format(wxT("%d"), geteuid());
-		userList_[wxGetUserId()] = uid;
-		return;
-	}
-
-	if (!pwdFile.Open()) {
-		/* We couldn't open /etc/passwd !!! */
-		return;
-	}
-
-	for (line=pwdFile.GetFirstLine();
-	    !pwdFile.Eof();
-	    line=pwdFile.GetNextLine()) {
-		tokens.SetString(line, wxT(":"));
-		user = tokens.GetNextToken();
-		tokens.GetNextToken(); /* Just drop the 2nd token. */
-		uid = tokens.GetNextToken();
-		userList_[user] = uid;
-	}
-}
-
-wxArrayString
-AnoubisGuiApp::getListOfUsersName(void) const
-{
-	std::map<wxString,wxString>::const_iterator	it;
-	wxArrayString					result;
-
-	for (it=userList_.begin(); it!=userList_.end(); it++) {
-		result.Add((*it).first);
-	}
-
-	return (result);
-}
-
-wxArrayString
-AnoubisGuiApp::getListOfUsersId(void) const
-{
-	std::map<wxString,wxString>::const_iterator	it;
-	wxArrayString					result;
-
-	for (it=userList_.begin(); it!=userList_.end(); it++) {
-		result.Add((*it).second);
-	}
-
-	return (result);
-}
-
 uid_t
 AnoubisGuiApp::getUserIdByName(wxString name) const
 {
-	unsigned long uid;
+	struct passwd	*pwd;
 
-	if (userList_.count(name) == 0) {
-		uid = 0 - 1;
+	pwd = getpwnam(name.fn_str());
+	if (pwd) {
+		return pwd->pw_uid;
 	} else {
-		userList_.find(name)->second.ToULong(&uid);
+		return (uid_t)-1;
 	}
-
-	return ((uid_t)uid);
 }
 
+/*
+ * This function caches the last lookup to speed things up for cases
+ * like the rule editor where we call this functions for each application
+ * block.
+ */
 wxString
 AnoubisGuiApp::getUserNameById(uid_t uid) const
 {
-	std::map<wxString,wxString>::const_iterator	it;
-	wxString					result;
-	unsigned long					tmpUid;
+	static int	 lastuid = 1;
+	static wxString	 lastname = wxEmptyString;
+	struct passwd	*pwd;
 
-	result = _("unknown");
-
-	for (it=userList_.begin(); it!=userList_.end(); it++) {
-		(*it).second.ToULong(&tmpUid);
-		if (tmpUid == (unsigned long)uid) {
-			result = (*it).first;
+	if (lastuid < 0 || uid != (uid_t)lastuid) {
+		pwd = getpwuid(uid);
+		if (pwd && pwd->pw_name) {
+			lastuid = uid;
+			lastname = wxString::From8BitData(pwd->pw_name,
+			    strlen(pwd->pw_name));
+		} else {
+			lastuid = -1;
+			lastname = wxEmptyString;
 		}
 	}
-
-	return (result);
+	return lastname;
 }
 
 void

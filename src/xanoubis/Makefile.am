@@ -259,6 +259,10 @@ xanoubis_SOURCES= \
 	model/PolicyUtils.h \
 	model/ListCtrlColumn.cpp \
 	model/ListCtrlColumn.h \
+	view/DlgBackupPolicyBase.h \
+	view/DlgBackupPolicyBase.cpp \
+	view/DlgBackupPolicyImpl.h \
+	view/DlgBackupPolicyImpl.cpp \
 	view/DlgLogViewerBase.cpp \
 	view/DlgLogViewerBase.h \
 	view/DlgLogViewer.cpp \

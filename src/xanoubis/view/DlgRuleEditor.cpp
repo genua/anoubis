@@ -1601,6 +1601,8 @@ DlgRuleEditor::loadRuleSet(void)
 
 	/* enable button for customising header columns */
 	appListColumnsButton->Enable(true);
+
+	updateFooter();
 }
 
 PolicyRuleSet *
