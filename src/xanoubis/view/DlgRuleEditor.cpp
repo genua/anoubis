@@ -509,6 +509,8 @@ DlgRuleEditor::onConnectionStateChange(wxCommandEvent& event)
 	updateFooter();
 	if (isConnected_) {
 		profileCtrl = ProfileCtrl::getInstance();
+		profileCtrl->receiveOneFromDaemon(0, geteuid());
+		profileCtrl->receiveOneFromDaemon(1, geteuid());
 		switchRuleSet(profileCtrl->getAdminId(geteuid()),
 		    profileCtrl->getUserId());
 	}
@@ -1206,11 +1208,37 @@ DlgRuleEditor::onFooterImportButton(wxCommandEvent &)
 	}
 }
 
+bool
+DlgRuleEditor::reloadRuleSet(long id)
+{
+	ProfileCtrl	*profileCtrl;
+	PolicyRuleSet	*rs;
+	int		 prio;
+
+	if (id >= 0) {
+		profileCtrl = ProfileCtrl::getInstance();
+		rs = profileCtrl->getRuleSet(id);
+		if (rs && rs->isDaemonRuleSet()) {
+			if (rs->isAdmin()) {
+				prio = 0;
+			} else {
+				prio = 1;
+			}
+			return profileCtrl->receiveOneFromDaemon(prio,
+			    rs->getUid());
+		}
+	}
+	return false;
+}
+
 void
 DlgRuleEditor::onFooterReloadButton(wxCommandEvent &)
 {
-	ProfileCtrl::getInstance()->receiveFromDaemon();
-	footerStatusText->SetLabel(wxT("reload started..."));
+
+	if (reloadRuleSet(adminRuleSetId_)
+	    || reloadRuleSet(userRuleSetId_)) {
+		footerStatusText->SetLabel(wxT("reload started..."));
+	}
 }
 
 void

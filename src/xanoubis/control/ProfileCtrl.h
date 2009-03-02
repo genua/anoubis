@@ -48,8 +48,9 @@ class TaskEvent;
  * the policy you are interested in. Next call getRuleSet() to fetch the policy
  * itself.
  *
- * You can receive a fresh list of policies from anoubisd by calling
- * receiveFromDaemon(). A policy can be sent back by calling sendToDaemon().
+ * You can receive a fresh policy from anoubisd by calling
+ * receiveOneFromDaemon(prio, uid). A policy can be sent back by calling
+ * sendToDaemon().
  *
  * There are several ways to import and export policies. On the one hand you
  * can im/export policies into a profile (importFromProfile(),
@@ -269,27 +270,12 @@ class ProfileCtrl : public wxEvtHandler, public Singleton<ProfileCtrl>
 		bool importPolicy(PolicyRuleSet *, const wxString &);
 
 		/**
-		 * Fetches a list of policies from anoubisd.
-		 *
-		 * Which policies are fetched depends the the user. A
-		 * non-root-user receives its own user-policy and its readonly
-		 * admin-policy. The user root also receive its user-policy and
-		 * additionally the admin-policies of all user.
-		 *
-		 * Previously loaded policies are unloaded before.
-		 *
-		 * The method runs asynchronous and does not block until all
-		 * requested policies has arrived. When the method leaves, the
-		 * procedure is started. For each successfully received and
-		 * loaded policy, an wxCommandEvent of type anEVT_LOAD_RULESET
-		 * is fired.
-		 *
-		 * @return true is returned, if the procdure was started
-		 *         successfully. On error, false is returned. This
-		 *         might happen, if no connection to anoubisd is
-		 *         established.
+		 * Fetches a single policy from the Daemon.
+		 * @param[in] 1st The priority of the policy.
+		 * @param[in] 2nd The user ID.
+		 * @return True on success.
 		 */
-		bool receiveFromDaemon(void);
+		bool receiveOneFromDaemon(long prio, long uid);
 
 		/**
 		 * Sends the policy with the specified id to the daemon.
@@ -472,7 +458,7 @@ class ProfileCtrl : public wxEvtHandler, public Singleton<ProfileCtrl>
 
 		/**
 		 * Answer escalation
-		 * An previous received escalation was answered by the user.
+		 * A previously received escalation was answered by the user.
 		 * An anEVT_ANSWER_ESCALATION event was sent to inform anyone
 		 * within the gui.\n
 		 * This method will cause the current PolicyRuleSet to create
@@ -482,6 +468,14 @@ class ProfileCtrl : public wxEvtHandler, public Singleton<ProfileCtrl>
 		 * @return Nothing.
 		 */
 		void OnAnswerEscalation(wxCommandEvent &);
+
+		/**
+		 * Policy Change
+		 * A Policy in the daemon just changed.
+		 * @param[in] 1st The command event anEVT_POLICY_CHANGE.
+		 * @return Nothring.
+		 */
+		void OnPolicyChange(wxCommandEvent &);
 
 	friend class Singleton<ProfileCtrl>;
 	friend int testProfileCtrl(ProfileCtrl *, int);

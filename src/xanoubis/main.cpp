@@ -655,10 +655,7 @@ AnoubisGuiApp::OnDaemonRegistration(TaskEvent &event)
 		return;
 
 	if (task->getAction() == ComRegistrationTask::ACTION_REGISTER) {
-		if (task->getComTaskResult() == ComTask::RESULT_SUCCESS) {
-			/* No success load policies from daemon */
-			ProfileCtrl::getInstance()->receiveFromDaemon();
-		} else {
+		if (task->getComTaskResult() != ComTask::RESULT_SUCCESS) {
 			/* Registration failed, disconnect again */
 			JobCtrl::getInstance()->disconnect();
 		}

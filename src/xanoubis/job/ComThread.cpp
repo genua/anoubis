@@ -267,22 +267,13 @@ ComThread::waitForMessage(void)
 			fprintf(stderr, "ComThread: Message does not fit ");
 			fprintf(stderr, "into protocol flow, skipping...\n");
 		} else if (anoubis_client_hasnotifies(client_) != 0) {
-			struct anoubis_msg *notifyMsg = NULL;
+			struct anoubis_msg	*notifyMsg = NULL;
+			bool			 handled;
 
 			notifyMsg = anoubis_client_getnotify(client_);
-			switch(get_value(notifyMsg->u.general->type)) {
-			case ANOUBIS_N_POLICYCHANGE:
-				/*
-				 * XXX CEH: Policy change must be handled
-				 * XXX CEH: properly.
-				 */
-				anoubis_msg_free(notifyMsg);
-				break;
-			default:
-				if (checkNotify(notifyMsg))
-					break;
+			handled = checkNotify(notifyMsg);
+			if (!handled) {
 				sendNotify(notifyMsg);
-				break;
 			}
 		}
 	}
@@ -340,7 +331,14 @@ ComThread::sendNotify(struct anoubis_msg *notifyMsg)
 
 	type = get_value((notifyMsg->u.general)->type);
 	subsystem = get_value((notifyMsg->u.notify)->subsystem);
-	if (ANOUBIS_IS_NOTIFY(type)) {
+	if (type == ANOUBIS_N_POLICYCHANGE) {
+		wxCommandEvent	pchange(anEVT_POLICY_CHANGE);
+		pchange.SetInt(get_value(notifyMsg->u.policychange->prio));
+		pchange.SetExtraLong(get_value(notifyMsg->u.policychange->uid));
+		if (dynamic_cast<AnoubisGuiApp*>(wxTheApp)) {
+			wxPostEvent(AnEvents::getInstance(), pchange);
+		}
+	} else if (ANOUBIS_IS_NOTIFY(type)) {
 		switch (type) {
 		case ANOUBIS_N_ASK:
 			notify = new EscalationNotify(notifyMsg);

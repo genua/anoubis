@@ -86,8 +86,10 @@ MainFrame::MainFrame(wxWindow *parent) : MainFrameBase(parent)
 	anEvents->Connect(anEVT_ESCALATIONS_SHOW,
 	    wxCommandEventHandler(MainFrame::OnEscalationsShow), NULL, this);
 	anEvents->Connect(anEVT_ANOUBISOPTIONS_SHOW,
-	    wxCommandEventHandler(MainFrame::OnAnoubisOptionShow),
-	    NULL, this);
+	    wxCommandEventHandler(MainFrame::OnAnoubisOptionShow), NULL, this);
+	anEvents->Connect(anEVT_BACKUP_POLICY,
+	    wxCommandEventHandler(MainFrame::onBackupPolicy), NULL, this);
+
 
 	ANEVENTS_IDENT_BCAST_REGISTRATION(MainFrame);
 }
@@ -113,8 +115,9 @@ MainFrame::~MainFrame()
 	anEvents->Disconnect(anEVT_ESCALATIONS_SHOW,
 	    wxCommandEventHandler(MainFrame::OnEscalationsShow), NULL, this);
 	anEvents->Disconnect(anEVT_ANOUBISOPTIONS_SHOW,
-	    wxCommandEventHandler(MainFrame::OnAnoubisOptionShow),
-	    NULL, this);
+	    wxCommandEventHandler(MainFrame::OnAnoubisOptionShow), NULL, this);
+	anEvents->Disconnect(anEVT_BACKUP_POLICY,
+	    wxCommandEventHandler(MainFrame::onBackupPolicy), NULL, this);
 
 	ANEVENTS_IDENT_BCAST_DEREGISTRATION(MainFrame);
 
@@ -516,6 +519,30 @@ MainFrame::OnAnoubisOptionShow(wxCommandEvent& event)
 	this->AddPendingEvent(selectEvent);
 
 	event.Skip();
+}
+
+void
+MainFrame::onBackupPolicy(wxCommandEvent &event)
+{
+	ProfileCtrl	*profileCtrl;
+	PolicyRuleSet	*rs;
+	wxString	 filename, msg;
+
+	profileCtrl = ProfileCtrl::getInstance();
+	rs = profileCtrl->getRuleSet(event.GetExtraLong());
+	if (!rs)
+		return;
+	while(1) {
+		filename = wxEmptyString;
+		/* XXX Show a yes/no Dialog and a file chooser here. */
+		if (filename.IsEmpty())
+			break;
+		if (rs->exportToFile(filename))
+			break;
+		msg = _("Policy export failed");
+		wxMessageBox(msg, _("Error"), wxICON_ERROR);
+	}
+	rs->unlock();
 }
 
 bool

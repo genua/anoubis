@@ -428,6 +428,15 @@ class DlgRuleEditor : public Observer, public DlgRuleEditorBase
 		virtual void onFooterImportButton(wxCommandEvent &);
 
 		/**
+		 * Retreive a new version of the given policy from the
+		 * Daemon. Retruns true if the ruleset is a daemon ruleset
+		 * and the ruleset could be reloaded.
+		 * @param[in] 1st The ProfileCtrl ruleset id
+		 * @return True if a request was stared.
+		 */
+		bool reloadRuleSet(long);
+
+		/**
 		 * Handle event from reloadButton.
 		 * This will load the ruleset from daemon.
 		 * @param None.

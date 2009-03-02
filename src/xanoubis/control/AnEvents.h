@@ -541,6 +541,24 @@ BEGIN_DECLARE_EVENT_TYPES()
 	 * Use SfsCtrl::getErrors() to get a list of error-messages.
 	 */
 	DECLARE_LOCAL_EVENT_TYPE(anEVT_SFSENTRY_ERROR, wxNewEventType())
+
+	/**
+	 * Policy Change event.
+	 * @param GetInt() The priority of the ruleset that changed.
+	 * @param GetExtraLong() The user-ID of the ruleset that changed.
+	 */
+	DECLARE_LOCAL_EVENT_TYPE(anEVT_POLICY_CHANGE, wxNewEventType())
+
+	/**
+	 * Backup Policy event.
+	 * This event is sent if a modified policy had to be replaced by
+	 * an update version from its source (usually the daemon).
+	 * @param GetExtraLong() The ruleset ID of the old ruleset.
+	 * The ruleset was locked by the sender of the event and the
+	 * consumer must make sure that the event gets unlocked.
+	 */
+	DECLARE_LOCAL_EVENT_TYPE(anEVT_BACKUP_POLICY, wxNewEventType())
+
 END_DECLARE_EVENT_TYPES()
 /**
  * @}

@@ -62,9 +62,14 @@ ProfileCtrl::~ProfileCtrl(void)
 		delete t;
 	}
 
+	JobCtrl::getInstance()->Disconnect(anTASKEVT_POLICY_REQUEST,
+	    wxTaskEventHandler(ProfileCtrl::OnPolicyRequest), NULL, this);
+	JobCtrl::getInstance()->Disconnect(anTASKEVT_POLICY_SEND,
+	    wxTaskEventHandler(ProfileCtrl::OnPolicySend), NULL, this);
 	AnEvents::getInstance()->Disconnect(anEVT_ANSWER_ESCALATION,
-	    wxCommandEventHandler(ProfileCtrl::OnAnswerEscalation),
-	    NULL, this);
+	    wxCommandEventHandler(ProfileCtrl::OnAnswerEscalation), NULL, this);
+	AnEvents::getInstance()->Disconnect(anEVT_POLICY_CHANGE,
+	    wxCommandEventHandler(ProfileCtrl::OnPolicyChange), NULL, this);
 }
 
 ProfileCtrl *
@@ -365,28 +370,22 @@ ProfileCtrl::importPolicy(PolicyRuleSet *rs, const wxString &name)
 }
 
 bool
-ProfileCtrl::receiveFromDaemon(void)
+ProfileCtrl::receiveOneFromDaemon(long prio, long uid)
 {
-	int idx;
-	unsigned long uid;
-	TaskList::const_iterator it;
-	wxArrayString userList = wxGetApp().getListOfUsersId();
+	ComPolicyRequestTask	*task = new ComPolicyRequestTask(prio, uid);
+	struct iovec		 iov;
+	struct apn_ruleset	*apnrs;
 
-	if (requestTaskList_.empty()) {
-		requestTaskList_.push_back(new ComPolicyRequestTask(1,
-		    geteuid()));
-		for (idx=userList.GetCount() - 1; idx >= 0; idx--) {
-			userList.Item(idx).ToULong(&uid);
-			requestTaskList_.push_back(
-			    new ComPolicyRequestTask(0, (uid_t)uid));
-		}
+	requestTaskList_.push_back(task);
+	JobCtrl::getInstance()->addTask(task);
+
+	iov.iov_base = (void *)" ";
+	iov.iov_len = 1;
+	if (apn_parse_iovec("<iov>", &iov, 1, &apnrs, 0) == 0) {
+		return importPolicy(new PolicyRuleSet(prio, uid, apnrs));
+	} else {
+		return false;
 	}
-
-	for (it=requestTaskList_.begin(); it != requestTaskList_.end(); it++) {
-		JobCtrl::getInstance()->addTask(*it);
-	}
-
-	return (true);
 }
 
 bool
@@ -433,10 +432,9 @@ ProfileCtrl::OnPolicyRequest(TaskEvent &event)
 	if (task == 0)
 		return;
 
-	event.Skip();
-
 	if (requestTaskList_.IndexOf(task) == wxNOT_FOUND) {
 		/* This is not "my" task. Ignore it. */
+		event.Skip();
 		return;
 	}
 	/* XXX Error-path? */
@@ -449,6 +447,8 @@ ProfileCtrl::OnPolicyRequest(TaskEvent &event)
 	if (!rs->isAdmin() && rs->getUid() == geteuid()) {
 		makeBackup(wxT("active"));
 	}
+	requestTaskList_.remove(task);
+	delete task;
 }
 
 void
@@ -464,10 +464,9 @@ ProfileCtrl::OnPolicySend(TaskEvent &event)
 	if (task == 0)
 		return;
 
-	event.Skip();
-
 	if (sendTaskList_.IndexOf(task) == wxNOT_FOUND) {
 		/* This is not "my" task. Ignore it. */
+		event.Skip();
 		return;
 	}
 
@@ -522,6 +521,7 @@ Error code: %i"), taskResult);
 	}
 
 	sendTaskList_.remove(task);
+	delete(task);
 }
 
 wxString
@@ -653,12 +653,30 @@ ProfileCtrl::OnAnswerEscalation(wxCommandEvent &event)
 	event.Skip(); /* Ensures others can react to this event, too. */
 }
 
+void
+ProfileCtrl::OnPolicyChange(wxCommandEvent &event)
+{
+	long		 prio = event.GetInt();
+	long		 uid = event.GetExtraLong();
+	PolicyRuleSet	*oldrs = NULL;
+	int id;
+
+	id = seekId(prio == 0, uid);
+	if (id >= 0) {
+		oldrs = getRuleSet(id);
+	}
+	if (oldrs && oldrs->isModified()) {
+		wxCommandEvent	backupEvent(anEVT_BACKUP_POLICY);
+
+		oldrs->lock();
+		backupEvent.SetExtraLong(id);
+		wxPostEvent(AnEvents::getInstance(), backupEvent);
+	}
+	receiveOneFromDaemon(prio, uid);
+}
+
 ProfileCtrl::ProfileCtrl(void) : Singleton<ProfileCtrl>()
 {
-	PolicyRuleSet		*user, *admin;
-	struct iovec		 iov;
-	struct apn_ruleset	*rs;
-
 	eventBroadcastEnabled_ = true;
 	JobCtrl *jobCtrl = JobCtrl::getInstance();
 
@@ -666,18 +684,8 @@ ProfileCtrl::ProfileCtrl(void) : Singleton<ProfileCtrl>()
 	    wxTaskEventHandler(ProfileCtrl::OnPolicyRequest), NULL, this);
 	jobCtrl->Connect(anTASKEVT_POLICY_SEND,
 	    wxTaskEventHandler(ProfileCtrl::OnPolicySend), NULL, this);
-
 	AnEvents::getInstance()->Connect(anEVT_ANSWER_ESCALATION,
-	    wxCommandEventHandler(ProfileCtrl::OnAnswerEscalation),
-	    NULL, this);
-	iov.iov_base = (void *)" ";
-	iov.iov_len = 1;
-	if (apn_parse_iovec("<iov>", &iov, 1, &rs, 0) == 0) {
-		admin = new PolicyRuleSet(0, geteuid(), rs);
-		importPolicy(admin);
-	}
-	if (apn_parse_iovec("<iov>", &iov, 1, &rs, 0) == 0) {
-		user = new PolicyRuleSet(1, geteuid(), rs);
-		importPolicy(user);
-	}
+	    wxCommandEventHandler(ProfileCtrl::OnAnswerEscalation), NULL, this);
+	AnEvents::getInstance()->Connect(anEVT_POLICY_CHANGE,
+	    wxCommandEventHandler(ProfileCtrl::OnPolicyChange), NULL, this);
 }
