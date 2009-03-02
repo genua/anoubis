@@ -61,8 +61,11 @@ ModSfs::~ModSfs(void)
 	    wxCommandEventHandler(ModSfs::OnAddNotification), NULL, this);
 
 	delete mainPanel_;
+	mainPanel_ = NULL;
 	delete overviewPanel_;
+	overviewPanel_ = NULL;
 	delete icon_;
+	icon_ = NULL;
 }
 
 int
