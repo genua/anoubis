@@ -20,7 +20,7 @@ PERMIT_PACKAGE_FTP =	Yes
 PERMIT_DISTFILES_CDROM =Yes
 PERMIT_DISTFILES_FTP =	Yes
 
-WANTLIB-daemon =	c
+WANTLIB-daemon +=	c crypto event ssl
 WANTLIB-main =		c m pthread stdc++ event glib-2.0 pixman-1 \
 			X11 Xau Xcursor Xdmcp Xext Xfixes Xi Xinerama \
 			Xrandr Xcomposite Xdamage Xrender atk-1.0 cairo \
