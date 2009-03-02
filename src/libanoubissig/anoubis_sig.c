@@ -356,7 +356,7 @@ anoubis_sig_init(const char *keyfile, const char *certfile, char *pass,
 				pkey = PEM_read_PUBKEY(f, NULL, NULL,
 				    pass);
 			else
-				pkey = PEM_read_PUBKEY(f, NULL, NULL,
+				pkey = PEM_read_PUBKEY(f, NULL, pass_cb,
 				    "Public Key");
 			break;
 		case ANOUBIS_SIG_PRIV:
@@ -365,7 +365,7 @@ anoubis_sig_init(const char *keyfile, const char *certfile, char *pass,
 				    NULL, pass);
 			else
 				pkey = PEM_read_PrivateKey(f, NULL,
-				    NULL, "Private Key");
+				    pass_cb, "Private Key");
 			break;
 		default:
 			fclose(f);
@@ -403,6 +403,7 @@ anoubis_sig_init(const char *keyfile, const char *certfile, char *pass,
 			EVP_PKEY_free(pkey);
 		if (cert)
 			X509_free(as->cert);
+
 		*error = ENOMEM;
 		return NULL;
 	}

@@ -130,7 +130,7 @@ static int				 filter_hasnosig(char *arg);
 static int				 filter_orphaned(char *arg);
 static int				 filter_notfile(char *arg);
 static char				**file_input(int *file_cnt, char *file);
-static int				 load_keys(int priv_key);
+static int				 load_keys(int priv_key, int show_err);
 static struct sfs_entry			*get_entry(char *file,
     unsigned char *keyid, int len);
 static unsigned char			**request_keyids(char *file, int **ids,
@@ -193,7 +193,7 @@ usage(void)
 	fprintf(stderr, "       [--hassig | --hasnossig] [--hassum |"
 	    " --hasnosum] \n");
 	fprintf(stderr, "	[--orphaned | --notfile]\n");
-	fprintf(stderr, "       [-k <keyfile>] command [<file>]\n");
+	fprintf(stderr, "       [-k <keyfile>] [-u uid] command [<file>]\n");
 	/* Add System checksum */
 	fprintf(stderr, "       %s -A checksum file\n", __progname);
 	/* Update or add system checksum according to current file contents */
@@ -478,7 +478,7 @@ main(int argc, char *argv[])
 			else if (!strcmp(options[options_index].name, "sum"))
 				opts |= SFSSIG_OPT_SUM;
 			else if (!strcmp(options[options_index].name, "cert")) {
-				if (!strcmp(optarg, "all") && (getuid() == 0)) {
+				if (!strcmp(optarg, "all") && (geteuid() == 0)) {
 					checksum_flag |= ANOUBIS_CSUM_KEY_ALL;
 					checksum_flag |= ANOUBIS_CSUM_KEY;
 					if (checksum_flag &
@@ -486,8 +486,14 @@ main(int argc, char *argv[])
 						checksum_flag |=
 						    ANOUBIS_CSUM_ALL;
 				}
-				else
-					cert = optarg;
+				else {
+					cert = strdup(optarg);
+					if (!cert) {
+						perror(optarg);
+						return 1;
+					}
+				}
+
 			} else if (!strcmp(options[options_index].name,
 			    "orphaned")) {
 				if (opts & SFSSIG_OPT_NOTFILE) {
@@ -577,13 +583,17 @@ main(int argc, char *argv[])
 			exim_file = optarg;
 			break;
 		case 'k':
-			keyfile = optarg;
+			keyfile = strdup(optarg);
+			if (!keyfile) {
+				perror(optarg);
+				return 1;
+			}
 			break;
 		case 'f':
 			file = optarg;
 			break;
 		case 'u':
-			if (getuid() != 0) {
+			if (geteuid() != 0) {
 				fprintf(stderr,
 				    "You need root privilegs to do this.\n");
 				return 1;
@@ -672,9 +682,9 @@ main(int argc, char *argv[])
 	if (opts & SFSSIG_OPT_SIG || opts & SFSSIG_OPT_HASSIG
 	|| opts & SFSSIG_OPT_NOSIG) {
 		if (!strcmp(command, "add"))
-			ret = load_keys(1);
+			ret = load_keys(1, 1);
 		else
-			ret = load_keys(0);
+			ret = load_keys(0, 1);
 		if (ret)
 			return 1;
 	}
@@ -759,6 +769,10 @@ main(int argc, char *argv[])
 		}
 	}
 
+	if (keyfile)
+		free(keyfile);
+	if (cert)
+		free(cert);
 	if (as)
 		anoubis_sig_free(as);
 
@@ -1379,7 +1393,7 @@ get_entry(char *file, unsigned char *keyid_p, int idlen_p)
 	}
 out:
 	if (uid == 0)
-		uid = getuid();
+		uid = geteuid();
 	se = anoubis_build_entry(file, csum, SHA256_DIGEST_LENGTH,
 	    sig, siglen, uid, keyid, idlen);
 
@@ -2442,7 +2456,7 @@ _export(char *arg, int rec)
 		}
 	}
 	if (!as)
-		load_keys(0);
+		load_keys(0, 0);
 	if (!rec) {
 		cnt = 1;
 		if ((export = calloc(1, sizeof(struct sfssig_entry *))) == NULL)
@@ -2600,7 +2614,7 @@ build_path(const char *path, const char *file)
 }
 
 static int
-load_keys(int priv_key)
+load_keys(int priv_key, int show_err)
 {
 	char		*homepath = NULL;
 	int		 error = 0;
@@ -2612,29 +2626,36 @@ load_keys(int priv_key)
 			fprintf(stderr, "Error while allocating"
 			    "memory\n");
 		}
-		if (stat(cert, &sb) != 0) {
-			return 1;
-		}
+	}
+
+	if (stat(cert, &sb) != 0) {
+		if (show_err)
+			fprintf(stderr, "Could not find certficate: %s\n",
+			    cert);
+		return 1;
 	}
 	/* You also need a keyfile if you want to add a signature */
-	if (priv_key == 1 && keyfile == NULL) {
-		homepath = getenv("HOME");
-		if ((keyfile = build_path(homepath, def_pri)) == NULL) {
-			fprintf(stderr, "Error while allocating"
-			    "memory\n");
+	if (priv_key == 1) {
+		if (keyfile == NULL) {
+			homepath = getenv("HOME");
+			if ((keyfile = build_path(homepath, def_pri)) == NULL) {
+				fprintf(stderr, "Error while allocating"
+				    "memory\n");
+			}
 		}
 		if (stat(keyfile, &sb) != 0) {
-			fprintf(stderr, "You have to specify a"
-			    " keyfile\n");
+			if (show_err)
+				fprintf(stderr, "You have to specify a keyfile:"
+				    " %s\n", keyfile);
 			return 1;
 		}
 	}
 
 	as = anoubis_sig_priv_init(keyfile, cert, NULL, &error);
 	if (as == NULL) {
-		if (opts &SFSSIG_OPT_VERBOSE)
-			fprintf(stderr, "Error while loading keyfile/certfile"
-			    "\n");
+		if (show_err)
+			fprintf(stderr, "Error while loading keyfile/certfile "
+			    "%s\n", strerror(error));
 		return 1;
 	}
 	return 0;
