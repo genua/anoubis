@@ -664,6 +664,44 @@ class DlgRuleEditor : public Observer, public DlgRuleEditorBase
 		 * @return Nothing.
 		 */
 		void writeOptions(void);
+
+		/**
+		 * Display rules of the given user.
+		 * @param[in] 1st The user ID.
+		 * @return Nothing.
+		 */
+		void setUser(long);
+
+		/**
+		 * Display rules of the given user.
+		 * @param[in] 1st The user name.
+		 * @return Nothing.
+		 */
+		void setUser(wxString);
+
+		/**
+		 * Event handler for the user selection radio button.
+		 * @param None.
+		 */
+		void onRbUserSelect(wxCommandEvent &);
+
+		/**
+		 * Event handler for the "show my rules" radio button.
+		 * @param None.
+		 */
+		void onRbUserMe(wxCommandEvent &);
+
+		/**
+		 * Event handler for text entered into the user select field
+		 * @param None.
+		 */
+		void onUserSelectTextEnter(wxCommandEvent &);
+
+		/**
+		 * Event handler for text entered into the user select field
+		 * @param None.
+		 */
+		void onUserSelectKillFocus(wxFocusEvent &);
 };
 
 #endif /* __DlgRuleEditor__ */

@@ -38,22 +38,22 @@ class AnPolicyNotebook;
 class DlgRuleEditorAppPage;
 
 #include <wx/string.h>
-#include <wx/stattext.h>
+#include <wx/radiobut.h>
 #include <wx/gdicmn.h>
 #include <wx/font.h>
 #include <wx/colour.h>
 #include <wx/settings.h>
+#include <wx/textctrl.h>
+#include <wx/sizer.h>
+#include <wx/stattext.h>
 #include <wx/choice.h>
 #include <wx/button.h>
-#include <wx/sizer.h>
 #include <wx/listctrl.h>
 #include <wx/notebook.h>
 #include <wx/panel.h>
 #include <wx/splitter.h>
 #include <wx/frame.h>
-#include <wx/textctrl.h>
 #include <wx/scrolwin.h>
-#include <wx/radiobut.h>
 #include <wx/spinctrl.h>
 #include <wx/radiobox.h>
 #include <wx/checkbox.h>
@@ -71,6 +71,9 @@ class DlgRuleEditorBase : public wxFrame
 	private:
 	
 	protected:
+		wxRadioButton* rb_userMe;
+		wxRadioButton* rb_userSelect;
+		wxTextCtrl* tx_userSelect;
 		wxSplitterWindow* splitterWindow;
 		wxPanel* appPanel;
 		wxStaticText* appListTypeLabel;
@@ -113,6 +116,10 @@ class DlgRuleEditorBase : public wxFrame
 		
 		// Virtual event handlers, overide them in your derived class
 		virtual void onClose( wxCloseEvent& event ){ event.Skip(); }
+		virtual void onRbUserMe( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onRbUserSelect( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onUserSelectKillFocus( wxFocusEvent& event ){ event.Skip(); }
+		virtual void onUserSelectTextEnter( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onAppListCreateButton( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onAppListColumnsButtonClick( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onAppPolicyDeSelect( wxListEvent& event ){ event.Skip(); }

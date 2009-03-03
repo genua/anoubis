@@ -162,6 +162,11 @@ DlgRuleEditor::DlgRuleEditor(wxWindow* parent)
 
 	/* read and restore header selections for rule editor view */
 	readOptions();
+
+	if (geteuid() != 0) {
+		rb_userSelect->Disable();
+	}
+	tx_userSelect->Disable();
 }
 
 DlgRuleEditor::~DlgRuleEditor(void)
@@ -506,7 +511,6 @@ DlgRuleEditor::onConnectionStateChange(wxCommandEvent& event)
 	newState = (JobCtrl::ConnectionState)event.GetInt();
 	isConnected_ = (newState == JobCtrl::CONNECTION_CONNECTED);
 
-	updateFooter();
 	if (isConnected_) {
 		profileCtrl = ProfileCtrl::getInstance();
 		profileCtrl->receiveOneFromDaemon(0, geteuid());
@@ -514,6 +518,8 @@ DlgRuleEditor::onConnectionStateChange(wxCommandEvent& event)
 		switchRuleSet(profileCtrl->getAdminId(geteuid()),
 		    profileCtrl->getUserId());
 	}
+	rb_userMe->SetValue(true);
+	updateFooter();
 	event.Skip();
 }
 
@@ -1218,7 +1224,7 @@ DlgRuleEditor::reloadRuleSet(long id)
 	if (id >= 0) {
 		profileCtrl = ProfileCtrl::getInstance();
 		rs = profileCtrl->getRuleSet(id);
-		if (rs && rs->isDaemonRuleSet()) {
+		if (rs) {
 			if (rs->isAdmin()) {
 				prio = 0;
 			} else {
@@ -1235,8 +1241,11 @@ void
 DlgRuleEditor::onFooterReloadButton(wxCommandEvent &)
 {
 
-	if (reloadRuleSet(adminRuleSetId_)
-	    || reloadRuleSet(userRuleSetId_)) {
+	bool	userok;
+	bool	adminok;
+	adminok = reloadRuleSet(adminRuleSetId_);
+	userok = reloadRuleSet(userRuleSetId_);
+	if (userok || adminok) {
 		footerStatusText->SetLabel(wxT("reload started..."));
 	}
 }
@@ -1300,7 +1309,9 @@ DlgRuleEditor::onFooterActivateButton(wxCommandEvent &)
 	}
 
 	footerStatusText->SetLabel(wxT("sending to daemon"));
-	profileCtrl->sendToDaemon(userRuleSetId_);
+	if (user) {
+		profileCtrl->sendToDaemon(userRuleSetId_);
+	}
 	if (admin && admin->isModified() && geteuid() == 0) {
 		profileCtrl->sendToDaemon(adminRuleSetId_);
 	}
@@ -1310,8 +1321,10 @@ DlgRuleEditor::onFooterActivateButton(wxCommandEvent &)
 	 * XXX ch: to wait until transmission finished successfully,
 	 * XXX ch: we need to register to anTASKEVT_POLICY_SEND ...
 	 */
-	user->clearModified();
-	admin->clearModified();
+	if (user)
+		user->clearModified();
+	if (admin)
+		admin->clearModified();
 	updateFooter();
 }
 
@@ -2031,6 +2044,8 @@ DlgRuleEditor::updateFooter(void)
 		footerRuleSetText->SetLabel(wxT("daemon"));
 	} else if (user) {
 		footerRuleSetText->SetLabel(user->getOrigin());
+	} else if (admin->isDaemonRuleSet()) {
+		footerRuleSetText->SetLabel(wxT("daemon"));
 	} else {
 		footerRuleSetText->SetLabel(admin->getOrigin());
 	}
@@ -2042,4 +2057,71 @@ DlgRuleEditor::updateFooter(void)
 
 	Layout();
 	Refresh();
+}
+
+void
+DlgRuleEditor::setUser(long uid)
+{
+	ProfileCtrl	*profileCtrl = ProfileCtrl::getInstance();
+	long		 user = -1, admin = -1;
+
+	if (rb_userMe->GetValue()) {
+		user = profileCtrl->getUserId();
+	}
+	admin = profileCtrl->getAdminId(uid);
+	if (admin < 0) {
+		profileCtrl->receiveOneFromDaemon(0, uid);
+		admin = profileCtrl->getAdminId(uid);
+	}
+	switchRuleSet(admin, user);
+}
+
+void
+DlgRuleEditor::setUser(wxString user)
+{
+	uid_t	uid;
+
+	/* Do nothing to avoid KillFocus Event loops. */
+	if (user == wxT("") || tx_userSelect->IsModified() == false) {
+		return;
+	}
+	uid = wxGetApp().getUserIdByName(user);
+	tx_userSelect->DiscardEdits();
+	if (uid == (uid_t)-1) {
+		wxString	msg;
+
+		msg = _("Invalid user Name");
+		wxMessageBox(msg, _("RuleEditor"), wxOK | wxICON_ERROR, this);
+	} else {
+		setUser(uid);
+	}
+	/* Clear the IsModified flag. */
+}
+
+void
+DlgRuleEditor::onRbUserSelect(wxCommandEvent &)
+{
+	tx_userSelect->Enable();
+	tx_userSelect->SetValue(wxT("root"));
+}
+
+void
+DlgRuleEditor::onRbUserMe(wxCommandEvent &)
+{
+	tx_userSelect->Disable();
+	setUser(geteuid());
+}
+
+void
+DlgRuleEditor::onUserSelectTextEnter(wxCommandEvent &)
+{
+	/* Force input validation on return. */
+	tx_userSelect->MarkDirty();
+	setUser(tx_userSelect->GetValue());
+}
+
+void
+DlgRuleEditor::onUserSelectKillFocus(wxFocusEvent &)
+{
+	setUser(tx_userSelect->GetValue());
 }
