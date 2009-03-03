@@ -97,9 +97,13 @@ DlgRuleEditorFilterAddressPage::onSourceAddressTextEnter(wxCommandEvent & event)
 void
 DlgRuleEditorFilterAddressPage::onSourceAddressTextKillFocus(wxFocusEvent &)
 {
-	if (filterPolicy_ != NULL) {
-		filterPolicy_->setFromHostName(
-		    sourceAddressTextCtrl->GetValue());
+	if (sourceAddressTextCtrl->IsModified()) {
+		/* Mark as clean */
+		sourceAddressTextCtrl->DiscardEdits();
+		if (filterPolicy_ != NULL) {
+			filterPolicy_->setFromHostName(
+			    sourceAddressTextCtrl->GetValue());
+		}
 	}
 }
 
@@ -114,8 +118,13 @@ DlgRuleEditorFilterAddressPage::onSourcePortTextEnter(wxCommandEvent & event)
 void
 DlgRuleEditorFilterAddressPage::onSourcePortTextKillFocus(wxFocusEvent &)
 {
-	if (filterPolicy_ != NULL) {
-		filterPolicy_->setFromPortName(sourcePortTextCtrl->GetValue());
+	if (sourcePortTextCtrl->IsModified()) {
+		/* Mark as clean */
+		sourcePortTextCtrl->DiscardEdits();
+		if (filterPolicy_ != NULL) {
+			filterPolicy_->setFromPortName(
+			    sourcePortTextCtrl->GetValue());
+		}
 	}
 }
 
@@ -132,9 +141,13 @@ void
 DlgRuleEditorFilterAddressPage::onDestinationAddressTextKillFocus(
     wxFocusEvent &)
 {
-	if (filterPolicy_ != NULL) {
-		filterPolicy_->setToHostName(
-		    destinationAddressTextCtrl->GetValue());
+	if (destinationAddressTextCtrl->IsModified()) {
+		/* Mark as clean */
+		destinationAddressTextCtrl->DiscardEdits();
+		if (filterPolicy_ != NULL) {
+			filterPolicy_->setToHostName(
+			    destinationAddressTextCtrl->GetValue());
+		}
 	}
 }
 
@@ -151,8 +164,12 @@ void
 DlgRuleEditorFilterAddressPage::onDestinationPortTextKillFocus(
     wxFocusEvent &)
 {
-	if (filterPolicy_ != NULL) {
-		filterPolicy_->setToPortName(
-		    destinationPortTextCtrl->GetValue());
+	if (destinationPortTextCtrl->IsModified()) {
+		/* Mark as clean */
+		destinationPortTextCtrl->DiscardEdits();
+		if (filterPolicy_ != NULL) {
+			filterPolicy_->setToPortName(
+			    destinationPortTextCtrl->GetValue());
+		}
 	}
 }

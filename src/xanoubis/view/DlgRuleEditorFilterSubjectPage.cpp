@@ -324,13 +324,17 @@ DlgRuleEditorFilterSubjectPage::onUidTextKillFocus(wxFocusEvent &)
 {
 	unsigned long uid;
 
-	uidTextCtrl->GetValue().ToULong(&uid);
+	if (uidTextCtrl->IsModified()) {
+		/* Mark as clean */
+		uidTextCtrl->DiscardEdits();
+		uidTextCtrl->GetValue().ToULong(&uid);
 
-	if (sfsPolicy_ != NULL) {
-		sfsPolicy_->setSubjectUid(uid);
-	}
-	if (sbPolicy_ != NULL) {
-		sbPolicy_->setSubjectUid(uid);
+		if (sfsPolicy_ != NULL) {
+			sfsPolicy_->setSubjectUid(uid);
+		}
+		if (sbPolicy_ != NULL) {
+			sbPolicy_->setSubjectUid(uid);
+		}
 	}
 }
 
@@ -360,11 +364,15 @@ DlgRuleEditorFilterSubjectPage::onKeyTextEnter(wxCommandEvent & event)
 void
 DlgRuleEditorFilterSubjectPage::onKeyTextKillFocus(wxFocusEvent &)
 {
-	if (sfsPolicy_ != NULL) {
-		sfsPolicy_->setSubjectKey(keyTextCtrl->GetValue());
-	}
-	if (sbPolicy_ != NULL) {
-		sbPolicy_->setSubjectKey(keyTextCtrl->GetValue());
+	if (keyTextCtrl->IsModified()) {
+		/* Mark as clean */
+		keyTextCtrl->DiscardEdits();
+		if (sfsPolicy_ != NULL) {
+			sfsPolicy_->setSubjectKey(keyTextCtrl->GetValue());
+		}
+		if (sbPolicy_ != NULL) {
+			sbPolicy_->setSubjectKey(keyTextCtrl->GetValue());
+		}
 	}
 }
 
@@ -388,7 +396,11 @@ DlgRuleEditorFilterSubjectPage::onCsumTextEnter(wxCommandEvent & event)
 void
 DlgRuleEditorFilterSubjectPage::onCsumTextKillFocus(wxFocusEvent &)
 {
-	if (sbPolicy_ != NULL) {
-		sbPolicy_->setSubjectCsum(csumTextCtrl->GetValue());
+	if (csumTextCtrl->IsModified()) {
+		/* Mark as clean */
+		csumTextCtrl->DiscardEdits();
+		if (sbPolicy_ != NULL) {
+			sbPolicy_->setSubjectCsum(csumTextCtrl->GetValue());
+		}
 	}
 }

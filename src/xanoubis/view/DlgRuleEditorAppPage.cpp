@@ -183,6 +183,8 @@ DlgRuleEditorAppPage::setBinary(wxString binary)
 	wxFileName	 baseName;
 	wxNotebook	*parentNotebook;
 
+	/* Mark text in textctrl as clean */
+	binaryTextCtrl->DiscardEdits();
 	if (appPolicy_ != NULL) {
 		if (appPolicy_->isAnyBlock()) {
 			appPolicy_->addBinary(binary);
@@ -242,7 +244,7 @@ DlgRuleEditorAppPage::startCalculation(void)
 		binary = ctxPolicy_->getBinaryName(binaryIndex_);
 	}
 
-	if (!binary.IsEmpty()) {
+	if (!binary.IsEmpty() && binary != wxT("any") && binary != wxT("")) {
 		calcTask_.setPath(binary);
 		calcTask_.setCalcLink(true);
 		JobCtrl::getInstance()->addTask(&calcTask_);
@@ -265,7 +267,13 @@ DlgRuleEditorAppPage::doCsumUpdate(void)
 void
 DlgRuleEditorAppPage::onBinaryTextKillFocus(wxFocusEvent &)
 {
-	setBinary(binaryTextCtrl->GetValue());
+	/*
+	 * Only validate on a set-Focus event if the user has modified
+	 * the text in the text ctrl since we last called setBinary.
+	 */
+	if (binaryTextCtrl->IsModified()) {
+		setBinary(binaryTextCtrl->GetValue());
+	}
 }
 
 void

@@ -61,8 +61,12 @@ RuleWizardProgramPage::onPageChanged(wxWizardEvent &)
 void
 RuleWizardProgramPage::onProgramTextKillFocus(wxFocusEvent &)
 {
-	history_->setProgram(programTextCtrl->GetValue());
-	updateNavi();
+	if (programTextCtrl->IsModified()) {
+		/* Mark as clean */
+		programTextCtrl->DiscardEdits();
+		history_->setProgram(programTextCtrl->GetValue());
+		updateNavi();
+	}
 }
 
 void
