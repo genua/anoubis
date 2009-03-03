@@ -382,7 +382,7 @@ static int skipsum_update(char * file, int op)
 
 	switch (op) {
 		case 0:
-			if ((removexattr(file, SKIPSUMNAME) < 0) && 
+			if ((removexattr(file, SKIPSUMNAME) < 0) &&
 			    (errno != ENODATA && errno != ENOATTR)) {
 				perror(file);
 				ret = 1;
@@ -516,13 +516,11 @@ main(int argc, char *argv[])
 			else if (!strcmp(options[options_index].name, "sum"))
 				opts |= SFSSIG_OPT_SUM;
 			else if (!strcmp(options[options_index].name, "cert")) {
-				if (!strcmp(optarg, "all") && (geteuid() == 0)) {
+				if (!strcmp(optarg, "all") &&
+				    (geteuid() == 0)) {
 					checksum_flag |= ANOUBIS_CSUM_KEY_ALL;
 					checksum_flag |= ANOUBIS_CSUM_KEY;
-					if (checksum_flag &
-					    ANOUBIS_CSUM_UID_ALL)
-						checksum_flag |=
-						    ANOUBIS_CSUM_ALL;
+					checksum_flag |= ANOUBIS_CSUM_ALL;
 				}
 				else {
 					cert = strdup(optarg);
@@ -639,8 +637,7 @@ main(int argc, char *argv[])
 			if (strcmp(optarg, "all") == 0) {
 				checksum_flag |= ANOUBIS_CSUM_UID_ALL;
 				checksum_flag |= ANOUBIS_CSUM_UID;
-				if (checksum_flag & ANOUBIS_CSUM_KEY_ALL)
-					checksum_flag |= ANOUBIS_CSUM_ALL;
+				checksum_flag |= ANOUBIS_CSUM_ALL;
 				uid = 0;
 			} else {
 				checksum_flag |= ANOUBIS_CSUM_UID;
@@ -2585,7 +2582,9 @@ _export(char *arg, int rec)
 				keyid_result = NULL;
 			}
 		}
-		if (checksum_flag == ANOUBIS_CSUM_NONE) {
+		if ((checksum_flag == ANOUBIS_CSUM_NONE) ||
+		    ((checksum_flag & ANOUBIS_CSUM_UID) &&
+		    !(checksum_flag & ANOUBIS_CSUM_UID_ALL))){
 			tmp = get_entry(path, NULL, 0);
 			if (!tmp)
 				continue;
