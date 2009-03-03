@@ -47,7 +47,7 @@
 .Sh DESCRIPTION
 The
 .Nm
-program manages the checksums for the
+program manages checksums for the
 .Xr anoubisd 8
 daemon. These checksums are stored in the
 .Ar /var/lib/anoubis/sfs
@@ -147,6 +147,34 @@ as a message to the daemon.
 .\" The following requests should be uncommented and used where appropriate.
 .\" This next request is for sections 1, 6, 7 & 8 only.
 .\" .Sh ENVIRONMENT
+.Sh ADDITIONAL
+The capitalized options to
+.Nm
+are used to manage checksums stored in extended attributes. All of these options are
+.Ar only
+usable by root and most will
+.Ar not
+work when
+the anoubis kernel modules are loaded. These options are not needed for regular usage.
+.Bl -tag -width Ds
+.It Fl A Ar checksum file
+Add checksum 
+.Ar checksum
+to
+.Ar file
+.It Fl U Ar file
+Update the system checksum using the current file contents.
+.It Fl R Ar file
+Remove the current system checksum.
+.It Fl L Ar file
+Display the system checksum of
+.Ar file .
+.It Fl S Ar file
+Disable checksum verification for
+.Ar file .
+.It Fl C Ar file
+Enable checksum verification for
+.Ar file .
 .Sh FILES
 .Bl -tag -width Ds
 .It /sbin/sfssig

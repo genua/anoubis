@@ -108,6 +108,7 @@
 #define SFSSIG_OPT_LN			0x10000
 
 #define SYSSIGNAME "security.anoubis_syssig"
+#define SKIPSUMNAME "security.anoubis_skipsum"
 
 void					 usage(void) __dead;
 static int				 sfs_add(char *file);
@@ -184,24 +185,29 @@ usage(void)
 	unsigned int	i;
 
 	/*
-	 * NOTE: Capitalized options are supposed to affect system signatures
-	 * NOTE: other options letters will be used for cert signed checksums.
+	 * NOTE: Capitalized options are used for extended attributes
+	 * NOTE: other options will be used for signed checksums.
 	 */
 	fprintf(stderr, "usage: %s [-nlrv] [-f <fileset> ]\n", __progname);
-	fprintf(stderr, "	[-o exporttofile] [-i importfromfile]\n");
+	fprintf(stderr, "       [-o exporttofile] [-i importfromfile]\n");
 	fprintf(stderr, "       [--sig | --sum] [--cert <certificate>] \n");
 	fprintf(stderr, "       [--hassig | --hasnossig] [--hassum |"
 	    " --hasnosum] \n");
-	fprintf(stderr, "	[--orphaned | --notfile]\n");
-	fprintf(stderr, "       [-k <keyfile>] [-u uid] command [<file>]\n");
-	/* Add System checksum */
+	fprintf(stderr, "       [--orphaned | --notfile]\n");
+	fprintf(stderr, "       [-k <keyfile>] command [<file>]\n");
+
+	/* Add checksum xattr*/
 	fprintf(stderr, "       %s -A checksum file\n", __progname);
-	/* Update or add system checksum according to current file contents */
+	/* Update or add checksum xattr matching current file contents */
 	fprintf(stderr, "       %s -U file...\n", __progname);
-	/* Remove system checksum from files */
+	/* Remove checksum xattr from files */
 	fprintf(stderr, "       %s -R file...\n", __progname);
-	/* List system checksum */
+	/* Show checksum xattr */
 	fprintf(stderr, "       %s -L file...\n", __progname);
+	/* Add skipsum xattr */
+	fprintf(stderr, "       %s -S file...\n", __progname);
+	/* Clear skipsum xattr */
+	fprintf(stderr, "       %s -C file...\n", __progname);
 
 	for (i = 0; i < sizeof(commands)/sizeof(struct cmd); i++) {
 		if (commands[i].file) {
@@ -369,6 +375,32 @@ static int syssig_remove(int argc, char * argv[])
 	}
 	return ret;
 }
+
+static int skipsum_update(char * file, int op)
+{
+	int ret = 0;
+
+	switch (op) {
+		case 0:
+			if ((removexattr(file, SKIPSUMNAME) < 0) && 
+			    (errno != ENODATA && errno != ENOATTR)) {
+				perror(file);
+				ret = 1;
+			} else
+				printf("skipsum attribute cleared\n");
+			break;
+		case 1:
+			if (setxattr(file, SKIPSUMNAME, "1", 1, 0) < 0) {
+				perror(file);
+				ret = 1;
+			} else
+				printf("skipsum attribute added\n");
+			break;
+	}
+
+	return ret;
+}
+
 #else
 
 static int
@@ -399,6 +431,12 @@ syssig_add(char * file __used, unsigned char cksum[SHA256_DIGEST_LENGTH] __used)
 	return 1;
 }
 
+static int
+skipsum_update(char * file __used, int op __used)
+{
+	fprintf(stderr, "Not implemented in OpenBSD yet\n");
+	return 1;
+}
 #endif /* ifndef OPENBSD */
 
 int str2hash(const char * s, unsigned char dest[SHA256_DIGEST_LENGTH])
@@ -469,7 +507,7 @@ main(int argc, char *argv[])
 		{ 0, 0, 0, 0 }
 	};
 
-	while ((ch = getopt_long(argc, argv, "A:URLf:k:u:i:o:nldvr",
+	while ((ch = getopt_long(argc, argv, "A:URLCSf:k:u:i:o:nldvr",
 	    options, &options_index)) != -1) {
 		switch (ch) {
 		case 0:
@@ -624,6 +662,8 @@ main(int argc, char *argv[])
 		case 'U':
 		case 'R':
 		case 'L':
+		case 'S':
+		case 'C':
 			if (syssigmode)
 				usage();
 			syssigmode = ch;
@@ -657,6 +697,10 @@ main(int argc, char *argv[])
 			return syssig_list(argc, argv);
 		case 'U':
 			return syssig_update(argc, argv);
+		case 'S':
+			return skipsum_update(argv[0], 1);
+		case 'C':
+			return skipsum_update(argv[0], 0);
 		default:
 			/* Internal error */
 			assert(0);
