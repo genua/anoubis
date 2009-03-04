@@ -165,7 +165,8 @@ DlgRuleEditor::DlgRuleEditor(wxWindow* parent)
 	/* read and restore header selections for rule editor view */
 	readOptions();
 
-	if (geteuid() != 0) {
+	editorUid_ = geteuid();
+	if (editorUid_ != 0) {
 		rb_userSelect->Disable();
 	}
 	tx_userSelect->Disable();
@@ -528,35 +529,28 @@ DlgRuleEditor::onConnectionStateChange(wxCommandEvent& event)
 void
 DlgRuleEditor::onLoadNewRuleSet(wxCommandEvent &event)
 {
-	int	admin = adminRuleSetId_;
-	int	user = userRuleSetId_;
-	int	load = 0;
+	int		 admin, user;
+	ProfileCtrl	*profileCtrl = ProfileCtrl::getInstance();
 
 	/*
 	 * Switch to the the user rule set if no ruleset was loaded
 	 * at all.
 	 */
-
-	if (user == -1 && admin == -1) {
-		user = ProfileCtrl::getInstance()->getUserId();
-		load = 1;
+	admin = profileCtrl->getAdminId(editorUid_);
+	if (editorUid_ == (int)geteuid()) {
+		user = profileCtrl->getUserId();
+	} else {
+		user = -1;
 	}
-	if (user != -1 && user == event.GetInt()) {
-		user = event.GetExtraLong();
-		load = 1;
-	}
-	if (admin != -1 && admin == event.GetInt()) {
-		admin = event.GetExtraLong();
-		load = 1;
-	}
-	/*
-	 * If the ruleset IDs actually changed, call switchRuleSet to
-	 * update them. Otherwise if the event indicates that our current
-	 * user- or admin-ruleset was modified, reload.
-	 */
-	if (user != userRuleSetId_ || admin != adminRuleSetId_) {
+	if (admin != adminRuleSetId_ || user != userRuleSetId_) {
+		/* At least one Id changed. Update them. */
 		switchRuleSet(admin, user);
-	} else if (load) {
+	} else if ((admin >= 0 && event.GetInt() == admin)
+	    || (user >= 0 && event.GetInt() == user)) {
+		/*
+		 * Ids did not change but one of our ruleset was
+		 * modified. Reload it.
+		 */
 		loadRuleSet();
 	}
 	event.Skip();
@@ -2067,6 +2061,7 @@ DlgRuleEditor::setUser(long uid)
 	ProfileCtrl	*profileCtrl = ProfileCtrl::getInstance();
 	long		 user = -1, admin = -1;
 
+	editorUid_ = uid;
 	if (rb_userMe->GetValue()) {
 		user = profileCtrl->getUserId();
 	}

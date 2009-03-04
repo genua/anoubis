@@ -379,6 +379,12 @@ ProfileCtrl::receiveOneFromDaemon(long prio, long uid)
 	requestTaskList_.push_back(task);
 	JobCtrl::getInstance()->addTask(task);
 
+	if (seekId(prio, uid) >= 0)
+		return (true);
+	/*
+	 * The ruleset is not yet there. Make sure that at least a dummy
+	 * ruleset exists.
+	 */
 	iov.iov_base = (void *)" ";
 	iov.iov_len = 1;
 	if (apn_parse_iovec("<iov>", &iov, 1, &apnrs, 0) == 0) {

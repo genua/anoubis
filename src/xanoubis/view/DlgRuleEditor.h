@@ -702,6 +702,12 @@ class DlgRuleEditor : public Observer, public DlgRuleEditorBase
 		 * @param None.
 		 */
 		void onUserSelectKillFocus(wxFocusEvent &);
+
+		/**
+		 * The ruleset user-ID that is currently displayed in
+		 * the rule editor.
+		 */
+		int	editorUid_;
 };
 
 #endif /* __DlgRuleEditor__ */
