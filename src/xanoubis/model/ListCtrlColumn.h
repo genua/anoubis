@@ -64,6 +64,15 @@ class ListCtrlColumn
 		ListCtrlColumn(const wxString &, const wxString &);
 
 		/**
+		 * Title constructor of ListCtrlColumn with size setting.
+		 * This will explicitly set the width.
+		 * @param[in] 1st The column title.
+		 * @param[in] 2nd The key name of column used in config file.
+		 * @param[in] 3rd The column width in pixels.
+		 */
+		ListCtrlColumn(const wxString &, const wxString &, int);
+
+		/**
 		 * Set the index of listCtrl this column is part of.
 		 * Use the result of InsertColumn() for this.
 		 * @param[in] 1st The new index.

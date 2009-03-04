@@ -49,6 +49,8 @@
 #include "JobCtrl.h"
 #include "AnPolicyNotebook.h"
 
+#define	BINARY_COLUMN_WIDTH	200
+
 DlgRuleEditor::DlgRuleEditor(wxWindow* parent)
     : Observer(NULL), DlgRuleEditorBase(parent)
 {
@@ -75,7 +77,7 @@ DlgRuleEditor::DlgRuleEditor(wxWindow* parent)
 	appColumns_[APP_TYPE]	= new ListCtrlColumn(_("Type"), wxT("TYPE"));
 	appColumns_[APP_USER]	= new ListCtrlColumn(_("User"), wxT("USER"));
 	appColumns_[APP_BINARY]	= new ListCtrlColumn(_("Binary"),
-	    wxT("BINARY"));
+	    wxT("BINARY"), BINARY_COLUMN_WIDTH);
 
 	for (size_t i=0; i<APP_EOL; i++) {
 		appColumns_[i]->setIndex(i);
