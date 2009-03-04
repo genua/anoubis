@@ -73,6 +73,7 @@ enum moduleIdx {
 	OVERVIEW = 0,
 	ALF,
 	SFS,
+	SB,
 	ANOUBIS,
 	LAST_MODULE_INDEX
 };

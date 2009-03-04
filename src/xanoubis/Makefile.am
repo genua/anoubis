@@ -163,6 +163,9 @@ dist_icon_DATA = \
 	icons/ModOverview_problem_48.png \
 	icons/ModOverview_question_16.png \
 	icons/ModOverview_question_48.png \
+	icons/ModSb_black_48.png \
+	icons/ModSb_error_48.png \
+	icons/ModSb_ok_48.png \
 	icons/ModSfs_alert_16.png \
 	icons/ModSfs_alert_48.png \
 	icons/ModSfs_black_16.png \
@@ -205,6 +208,8 @@ xanoubis_SOURCES= \
 	model/ModAnoubis.h \
 	model/ModOverview.cpp \
 	model/ModOverview.h \
+	model/ModSb.cpp \
+	model/ModSb.h \
 	model/ModSfs.cpp \
 	model/ModSfs.h \
 	model/Module.cpp \
@@ -323,6 +328,12 @@ xanoubis_SOURCES= \
 	view/ModSfsOverviewPanelImpl.h \
 	view/ModSfsPanelsBase.cpp \
 	view/ModSfsPanelsBase.h \
+	view/ModSbMainPanelImpl.cpp \
+	view/ModSbMainPanelImpl.h \
+	view/ModSbOverviewPanelImpl.cpp \
+	view/ModSbOverviewPanelImpl.h \
+	view/ModSbPanelsBase.cpp \
+	view/ModSbPanelsBase.h \
 	view/RuleWizard.cpp \
 	view/RuleWizard.h \
 	view/RuleWizardPage.cpp \

@@ -55,6 +55,7 @@
 #include "ModAlf.h"
 #include "ModAnoubis.h"
 #include "ModOverview.h"
+#include "ModSb.h"
 #include "ModSfs.h"
 #include "Module.h"
 #include "PolicyRuleSet.h"
@@ -164,6 +165,7 @@ bool AnoubisGuiApp::OnInit()
 	modules_[OVERVIEW] = new ModOverview(mainFrame);
 	modules_[ALF]      = new ModAlf(mainFrame);
 	modules_[SFS]      = new ModSfs(mainFrame);
+	modules_[SB]      = new ModSb(mainFrame);
 	modules_[ANOUBIS]  = new ModAnoubis(mainFrame);
 
 	((ModOverview*)modules_[OVERVIEW])->addModules(modules_);
@@ -176,6 +178,7 @@ bool AnoubisGuiApp::OnInit()
 	 */
 	((ModAlf*)modules_[ALF])->update();
 	((ModSfs*)modules_[SFS])->update();
+	((ModSfs*)modules_[SB])->update();
 	((ModAnoubis*)modules_[ANOUBIS])->update();
 
 	if (hasLocale) {
