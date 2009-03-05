@@ -162,6 +162,7 @@ DlgRuleEditorAppPage::showStatus(void)
 		statusText->SetLabel(_("(unknown)"));
 		updateButton->Disable();
 		Layout();
+		Refresh();
 		return;
 	}
 
@@ -173,6 +174,7 @@ DlgRuleEditorAppPage::showStatus(void)
 		updateButton->Enable();
 	}
 	Layout();
+	Refresh();
 }
 
 void
@@ -191,10 +193,11 @@ DlgRuleEditorAppPage::setBinary(wxString binary)
 			automaticOnNew_ = true;
 		} else {
 			current = appPolicy_->getBinaryName(binaryIndex_);
-			if (binary.Cmp(current) != 0) {
-				appPolicy_->setBinaryName(binary, binaryIndex_);
-				automaticOnNew_ = true;
+			if (binary.Cmp(current) == 0) {
+				return;
 			}
+			appPolicy_->setBinaryName(binary, binaryIndex_);
+			automaticOnNew_ = true;
 		}
 	}
 	if (ctxPolicy_ != NULL) {
@@ -203,10 +206,11 @@ DlgRuleEditorAppPage::setBinary(wxString binary)
 			automaticOnNew_ = true;
 		} else {
 			current = ctxPolicy_->getBinaryName(binaryIndex_);
-			if (binary.Cmp(current) != 0) {
-				ctxPolicy_->setBinaryName(binary, binaryIndex_);
-				automaticOnNew_ = true;
+			if (binary.Cmp(current) == 0) {
+				return;
 			}
+			ctxPolicy_->setBinaryName(binary, binaryIndex_);
+			automaticOnNew_ = true;
 		}
 	}
 
@@ -225,7 +229,13 @@ DlgRuleEditorAppPage::setBinary(wxString binary)
 		parentNotebook->SetPageText(selection, baseName.GetFullName());
 	}
 
+	if (!wxFileName::IsFileExecutable(binary)) {
+		wxMessageBox(_("File is not executeable."), _("Rule Editor"),
+		    wxOK | wxICON_ERROR, this);
+	}
+
 	if (automaticOnNew_ == true) {
+		csumCache_.Empty();
 		startCalculation();
 	}
 }
@@ -244,7 +254,7 @@ DlgRuleEditorAppPage::startCalculation(void)
 		binary = ctxPolicy_->getBinaryName(binaryIndex_);
 	}
 
-	if (!binary.IsEmpty() && binary != wxT("any") && binary != wxT("")) {
+	if (!binary.IsEmpty() && binary != wxT("any")) {
 		calcTask_.setPath(binary);
 		calcTask_.setCalcLink(true);
 		JobCtrl::getInstance()->addTask(&calcTask_);
@@ -355,11 +365,11 @@ DlgRuleEditorAppPage::onCsumCalcTask(TaskEvent &event)
 		    wxStrError(task->getResult()).c_str());
 		wxMessageBox(message, _("Rule Editor"), wxOK | wxICON_ERROR,
 		    this);
-		statusText->SetLabel(_("(unknown)"));
-		return;
+		csumCache_.Empty();
+	} else {
+		csumCache_ = task->getCsumStr();
 	}
 
-	csumCache_ = task->getCsumStr();
 	if (automaticOnNew_ == true) {
 		automaticOnNew_ = false;
 		doCsumUpdate();
