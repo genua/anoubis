@@ -370,6 +370,8 @@ xanoubis_SOURCES= \
 	control/RuleEditorAddPolicyVisitor.h \
 	control/ModAlfAddPolicyVisitor.cpp \
 	control/ModAlfAddPolicyVisitor.h \
+	control/ModSbAddPolicyVisitor.cpp \
+	control/ModSbAddPolicyVisitor.h \
 	control/ModSfsAddPolicyVisitor.cpp \
 	control/ModSfsAddPolicyVisitor.h \
 	control/RuleSetClearModifiedVisitor.cpp \

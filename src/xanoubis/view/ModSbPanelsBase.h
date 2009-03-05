@@ -40,10 +40,12 @@
 #include <wx/font.h>
 #include <wx/colour.h>
 #include <wx/settings.h>
+#include <wx/listctrl.h>
 #include <wx/sizer.h>
 #include <wx/panel.h>
 #include <wx/bitmap.h>
 #include <wx/image.h>
+#include <wx/notebook.h>
 #include <wx/statbmp.h>
 
 ///////////////////////////////////////////////////////////////////////////
@@ -59,6 +61,9 @@ class ModSbMainPanelBase : public wxPanel
 	protected:
 		wxBoxSizer* sz_MainSbMain;
 		wxStaticText* tx_MainHeadline;
+		wxNotebook* note_MainSb;
+		wxPanel* pan_Rules;
+		wxListCtrl* lst_Rules;
 	
 	public:
 		ModSbMainPanelBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 1067,-1 ), long style = wxTAB_TRAVERSAL );

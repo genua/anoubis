@@ -45,6 +45,26 @@ ModSbMainPanelBase::ModSbMainPanelBase( wxWindow* parent, wxWindowID id, const w
 	
 	sz_MainSbMain->Add( tx_MainHeadline, 0, wxALL|wxALIGN_CENTER_HORIZONTAL, 5 );
 	
+	note_MainSb = new wxNotebook( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0 );
+	pan_Rules = new wxPanel( note_MainSb, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	wxBoxSizer* sz_SbRules;
+	sz_SbRules = new wxBoxSizer( wxHORIZONTAL );
+	
+	wxBoxSizer* sz_Rules;
+	sz_Rules = new wxBoxSizer( wxVERTICAL );
+	
+	lst_Rules = new wxListCtrl( pan_Rules, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLC_HRULES|wxLC_REPORT|wxLC_SINGLE_SEL );
+	sz_Rules->Add( lst_Rules, 1, wxALL|wxEXPAND, 5 );
+	
+	sz_SbRules->Add( sz_Rules, 66, wxEXPAND, 5 );
+	
+	pan_Rules->SetSizer( sz_SbRules );
+	pan_Rules->Layout();
+	sz_SbRules->Fit( pan_Rules );
+	note_MainSb->AddPage( pan_Rules, _("Rules"), false );
+	
+	sz_MainSbMain->Add( note_MainSb, 1, wxEXPAND | wxALL, 5 );
+	
 	this->SetSizer( sz_MainSbMain );
 	this->Layout();
 }
@@ -74,7 +94,7 @@ ModSbOverviewPanelBase::ModSbOverviewPanelBase( wxWindow* parent, wxWindowID id,
 	txt_status->Wrap( -1 );
 	sz_lables->Add( txt_status, 0, wxALL, 5 );
 	
-	txt_nachfragen = new wxStaticText( this, wxID_ANY, _("open requests (SB):"), wxDefaultPosition, wxDefaultSize, 0 );
+	txt_nachfragen = new wxStaticText( this, wxID_ANY, _("open requests (SB): "), wxDefaultPosition, wxDefaultSize, 0 );
 	txt_nachfragen->Wrap( -1 );
 	sz_lables->Add( txt_nachfragen, 0, wxALL, 5 );
 	

@@ -25,25 +25,300 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "AnEvents.h"
 #include "main.h"
+#include "ModSbAddPolicyVisitor.h"
 #include "ModSbMainPanelImpl.h"
+#include "Policy.h"
+#include "PolicyRuleSet.h"
+#include "ProfileCtrl.h"
 
 ModSbMainPanelImpl::ModSbMainPanelImpl(wxWindow* parent,
     wxWindowID id) : Observer(NULL), ModSbMainPanelBase(parent, id)
 {
+	columnNames_[COLUMN_PROG] = _("Program");
+	columnNames_[COLUMN_PATH] = _("Path");
+	columnNames_[COLUMN_SUB] = _("Subject");
+	columnNames_[COLUMN_ACTION] = _("Action");
+	columnNames_[COLUMN_MASK] = _("Mask");
+	columnNames_[COLUMN_SCOPE] = _("Temporary");
+	columnNames_[COLUMN_USER] = _("User");
+
+	userRuleSetId_ = -1;
+	adminRuleSetId_ = -1;
+
+	for (int i=0; i<COLUMN_EOL; i++) {
+		lst_Rules->InsertColumn(i, columnNames_[i], wxLIST_FORMAT_LEFT,
+		     wxLIST_AUTOSIZE);
+	}
+
+	AnEvents::getInstance()->Connect(anEVT_LOAD_RULESET,
+	    wxCommandEventHandler(ModSbMainPanelImpl::onLoadRuleSet),
+	    NULL, this);
 }
 
 ModSbMainPanelImpl::~ModSbMainPanelImpl()
 {
+	AnEvents::getInstance()->Disconnect(anEVT_LOAD_RULESET,
+	    wxCommandEventHandler(ModSbMainPanelImpl::onLoadRuleSet),
+	    NULL, this);
 }
 
 void
-ModSbMainPanelImpl::update(Subject*)
+ModSbMainPanelImpl::addDefaultFilterPolicy(DefaultFilterPolicy *policy)
 {
+	long	idx;
+
+	idx = ruleListAppend(policy);
+	updateDefaultFilterPolicy(idx);
 }
 
 void
-ModSbMainPanelImpl::updateDelete(Subject*)
+ModSbMainPanelImpl::addSbAccessFilterPolicy(SbAccessFilterPolicy *policy)
 {
+	long	idx;
+
+	idx = ruleListAppend(policy);
+	updateSbAccessFilterPolicy(idx);
+}
+
+void
+ModSbMainPanelImpl::addSbAppPolicy(SbAppPolicy *policy)
+{
+	long	idx;
+
+	idx = ruleListAppend(policy);
+	updateSbAppPolicy(idx);
+}
+
+void
+ModSbMainPanelImpl::update(Subject *subject)
+{
+	long		idx;
+	AppPolicy	*parent;
+	FilterPolicy	*data;
+
+	if (subject->IsKindOf(CLASSINFO(SbAccessFilterPolicy))) {
+		idx = findListRow((Policy *)subject);
+		if (idx != -1)
+			updateSbAccessFilterPolicy(idx);
+	} else if (subject->IsKindOf(CLASSINFO(SbAppPolicy))) {
+		idx = findListRow((Policy *)subject);
+		if (idx != -1)
+			updateSbAppPolicy(idx);
+	} else if (subject->IsKindOf(CLASSINFO(DefaultFilterPolicy))) {
+		idx = findListRow((Policy *)subject);
+		data = wxDynamicCast(subject, FilterPolicy);
+		parent = data->getParentPolicy();
+		if ((idx != -1) && (parent != NULL)) {
+			if (parent->IsKindOf(CLASSINFO(SbAppPolicy)))
+				updateDefaultFilterPolicy(idx);
+		}
+	} else if (subject->IsKindOf(CLASSINFO(PolicyRuleSet))) {
+		if (lst_Rules->GetItemCount() == 0)
+			updateShowRuleset();
+	} else {
+		/* Unknown subject type - do nothing */
+	}
+}
+
+void
+ModSbMainPanelImpl::updateDelete(Subject *subject)
+{
+	long	idx = -1;
+	idx = findListRow((Policy *)subject);
+
+	if (idx != -1) {
+		removeListRow(idx);
+	}
+}
+
+void
+ModSbMainPanelImpl::onLoadRuleSet(wxCommandEvent& event)
+{
+	ModSbAddPolicyVisitor	addVisitor(this);
+	PolicyRuleSet		*ruleSet;
+	ProfileCtrl		*profileCtrl;
+
+	profileCtrl = ProfileCtrl::getInstance();
+
+	/* clear the whole list */
+	for (int i = lst_Rules->GetItemCount() - 1; i >= 0; i--) {
+		removeListRow(i);
+	}
+
+	/* release old ones */
+	ruleSet = profileCtrl->getRuleSet(userRuleSetId_);
+	if (ruleSet != NULL) {
+		ruleSet->unlock();
+		removeSubject(ruleSet);
+	}
+
+	ruleSet = profileCtrl->getRuleSet(adminRuleSetId_);
+	if (ruleSet != NULL) {
+		ruleSet->unlock();
+		removeSubject(ruleSet);
+	}
+
+	userRuleSetId_ = profileCtrl->getUserId();
+	adminRuleSetId_ = profileCtrl->getAdminId(geteuid());
+
+	/* get the new ones */
+	ruleSet = profileCtrl->getRuleSet(userRuleSetId_);
+	if (ruleSet != NULL) {
+		ruleSet->lock();
+		addSubject(ruleSet);
+		ruleSet->accept(addVisitor);
+	}
+
+	ruleSet = profileCtrl->getRuleSet(adminRuleSetId_);
+	if (ruleSet != NULL) {
+		ruleSet->lock();
+		addSubject(ruleSet);
+		ruleSet->accept(addVisitor);
+	}
+
+	event.Skip();
+}
+
+void
+ModSbMainPanelImpl::removeListRow(long rowIdx)
+{
+	Policy	*policy;
+
+	policy = wxDynamicCast((void*)lst_Rules->GetItemData(rowIdx), Policy);
+	if (policy != NULL) {
+		/* deregister for observing policy */
+		removeSubject(policy);
+	}
+
+	lst_Rules->DeleteItem(rowIdx);
+}
+
+long
+ModSbMainPanelImpl::findListRow(Policy *policy)
+{
+	for (int i = lst_Rules->GetItemCount(); i >= 0; i--) {
+		if (policy == (Policy *)lst_Rules->GetItemData(i)) {
+			return (i);
+		}
+	}
+
+	return (-1);
+}
+
+long
+ModSbMainPanelImpl::ruleListAppend(Policy *policy)
+{
+	long		idx;
+	wxString	ruleType;
+	wxString	userName;
+	PolicyRuleSet	*ruleset;
+
+	idx = lst_Rules->GetItemCount();
+	lst_Rules->InsertItem(idx, wxEmptyString, idx);
+	lst_Rules->SetItemPtrData(idx, (wxUIntPtr)policy);
+
+	/* register for observing policy */
+	addSubject(policy);
+
+	ruleset = policy->getParentRuleSet();
+	if (ruleset->isAdmin()) {
+		userName = wxGetApp().getUserNameById(ruleset->getUid());
+		ruleType.Printf(_("admin ruleset of %s"), userName.c_str());
+		lst_Rules->SetItemBackgroundColour(idx,
+				wxTheColourDatabase->Find(wxT("LIGHT GREY")));
+	} else {
+		ruleType = wxGetUserId();
+	}
+	lst_Rules->SetItem(idx, COLUMN_USER, ruleType);
+
+	if (policy->hasScope()) {
+		lst_Rules->SetItem(idx, COLUMN_SCOPE, wxT("T"));
+	}
+
+	return (idx);
+}
+
+void
+ModSbMainPanelImpl::updateDefaultFilterPolicy(long idx)
+{
+	DefaultFilterPolicy *policy;
+
+	policy = wxDynamicCast((void*)lst_Rules->GetItemData(idx),
+	    DefaultFilterPolicy);
+
+	if (policy == NULL) {
+		return;
+	}
+
+	lst_Rules->SetItem(idx, COLUMN_ACTION, policy->getActionName());
+	lst_Rules->SetItem(idx, COLUMN_PATH, wxT("default"));
+}
+
+void
+ModSbMainPanelImpl::updateSbAccessFilterPolicy(long idx)
+{
+	void			*data;
+	SbAccessFilterPolicy	*sbPolicy;
+	FilterPolicy		*policy;
+
+	data = (void*)lst_Rules->GetItemData(idx);
+	policy = wxDynamicCast(data, FilterPolicy);
+	sbPolicy =  wxDynamicCast(data, SbAccessFilterPolicy);
+
+	if (policy == NULL) {
+		return;
+	}
+
+	if (policy->IsKindOf(CLASSINFO(SbAccessFilterPolicy)) ||
+	     policy->IsKindOf(CLASSINFO(DefaultFilterPolicy))) {
+	     lst_Rules->SetItem(idx, COLUMN_ACTION, policy->getActionName());
+	}
+
+	if (policy->IsKindOf(CLASSINFO(SbAccessFilterPolicy))) {
+		lst_Rules->SetItem(idx, COLUMN_PATH, sbPolicy->getPath());
+		lst_Rules->SetItem(idx, COLUMN_SUB, sbPolicy->getSubjectName());
+		lst_Rules->SetItem(idx, COLUMN_MASK,
+		    sbPolicy->getAccessMaskName());
+	}
+}
+
+void
+ModSbMainPanelImpl::updateSbAppPolicy(long idx)
+{
+	SbAppPolicy *policy;
+
+	policy = wxDynamicCast((void*)lst_Rules->GetItemData(idx), SbAppPolicy);
+
+	if (policy == NULL) {
+		return;
+	}
+
+	lst_Rules->SetItem(idx, COLUMN_PROG, policy->getBinaryName());
+}
+
+void
+ModSbMainPanelImpl::updateShowRuleset(void)
+{
+	ModSbAddPolicyVisitor  addVisitor(this);
+	ProfileCtrl             *profileCtrl;
+	PolicyRuleSet           *ruleSet;
+
+	profileCtrl = ProfileCtrl::getInstance();
+
+	/* get the new ones */
+	ruleSet = profileCtrl->getRuleSet(userRuleSetId_);
+	if (ruleSet != NULL) {
+		ruleSet->accept(addVisitor);
+	}
+
+	ruleSet = profileCtrl->getRuleSet(adminRuleSetId_);
+	if (ruleSet != NULL) {
+		ruleSet->accept(addVisitor);
+	}
 }
