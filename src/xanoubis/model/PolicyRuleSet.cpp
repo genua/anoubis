@@ -403,6 +403,29 @@ PolicyRuleSet::searchContextAppPolicy(wxString binary) const
 	return (result);
 }
 
+SbAppPolicy *
+PolicyRuleSet::searchSandboxAppPolicy(wxString binary) const
+{
+	wxArrayString	 list;
+	struct apn_rule	*rule;
+	SbAppPolicy	*result;
+
+	result = NULL;
+
+	rule = apn_match_app(&(ruleSet_->sb_queue), binary.To8BitData(), NULL);
+	if (rule != NULL) {
+		result = wxDynamicCast(rule->userdata, SbAppPolicy);
+	}
+	if (result != NULL) {
+		list = result->getBinaryList();
+		if (list.Index(binary) == wxNOT_FOUND) {
+			result = NULL;
+		}
+	}
+
+	return (result);
+}
+
 long
 PolicyRuleSet::createPolicy(unsigned int type, unsigned int id,
     AppPolicy *parent)

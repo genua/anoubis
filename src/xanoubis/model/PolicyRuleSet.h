@@ -295,6 +295,13 @@ class PolicyRuleSet : public Subject
 		ContextAppPolicy *searchContextAppPolicy(wxString) const;
 
 		/**
+		 * Search for sandbox application policy.
+		 * @param[in] 1st The application name to search for.
+		 * @return Found policy or NULL.
+		 */
+		SbAppPolicy *searchSandboxAppPolicy(wxString) const;
+
+		/**
 		 * Create new policy and insert it.
 		 * This leads to a re-creation of the policy structure.
 		 * @param[in] 1st Apn type of policy to create.

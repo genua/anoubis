@@ -35,6 +35,115 @@
 
 /**
  * This is the main wizard class.
+ *
+ * \dot
+ * digraph G {
+ *	center=true;
+ *	remincross=true;
+ *
+ *	node [shape=box, fontsize=10];
+ *	PAGE_PROGRAM [label="Choose Program"];
+ *	PAGE_CTX [label="Context with same permissions"];
+ *	PAGE_CTX_EXCEPT [label="Context Exceptions List"];
+ *	PAGE_ALF_OVERWRITE [label="ALF overwrite policy"];
+ *	PAGE_ALF_CLIENT [label="ALF client permissions"];
+ *	PAGE_ALF_CLIENT_PORTS [label="ALF client ports"];
+ *	PAGE_ALF_SERVER [label="ALF server permissions"];
+ *	PAGE_ALF_SERVER_PORTS [label="ALF server ports"];
+ *	PAGE_SB [label="SB general"];
+ *	PAGE_SB_OVERWRITE [label="SB overwrite policy"];
+ *	PAGE_SB_READ [label="SB read permissions"];
+ *	PAGE_SB_READ_FILES [label="SB read files"];
+ *	PAGE_SB_WRITE [label="SB write permissions"];
+ *	PAGE_SB_WRITE_FILES [label="SB write files"];
+ *	PAGE_SB_EXECUTE [label="SB execute permissions"];
+ *	PAGE_SB_EXECUTE_FILES [label="SB execute files"];
+ *	PAGE_FINAL [label="Final"];
+ *
+ *	node [shape=diamond, fontsize=10];
+ *	haveContextPolicy;
+ *	haveContextException;
+ *	haveAlfPolicy;
+ *	overwriteAlf;
+ *	alfClientUserDefines;
+ *	alfServerUserDefines;
+ *	haveSandboxPolicy;
+ *	overwriteSandbox;
+ *	sbDefines;
+ *	sbReadUserDefines;
+ *	sbWriteUserDefines;
+ *	sbExecuteUserDefines;
+ *
+ *	{ rank="same"; haveContextPolicy; PAGE_CTX; }
+ *	{ rank="same"; haveContextException; PAGE_CTX_EXCEPT; }
+ *	{ rank="same"; PAGE_CTX_EXCEPT; haveContextException;  }
+ *	{ rank="same"; haveAlfPolicy; PAGE_ALF_OVERWRITE; }
+ *	{ rank="same"; alfClientUserDefines; PAGE_ALF_CLIENT_PORTS; }
+ *	{ rank="same"; alfServerUserDefines; PAGE_ALF_SERVER_PORTS; }
+ *	{ rank="same"; haveSandboxPolicy; PAGE_SB_OVERWRITE; }
+ *	{ rank="same"; sbReadUserDefines; PAGE_SB_READ_FILES; }
+ *	{ rank="same"; sbWriteUserDefines; PAGE_SB_WRITE_FILES; }
+ *	{ rank="same"; sbExecuteUserDefines; PAGE_SB_EXECUTE_FILES; }
+ *
+ *	edge [fontsize=10];
+ *
+ *	PAGE_PROGRAM -> haveContextPolicy;
+ *	haveContextPolicy -> PAGE_CTX [taillabel="no", minlen=2.00];
+ *	haveContextPolicy:s -> haveAlfPolicy:n [taillabel="yes"];
+ *
+ *	PAGE_CTX -> haveContextException:n;
+ *	haveContextException -> PAGE_CTX_EXCEPT [taillabel="yes"];
+ *	haveContextException -> haveAlfPolicy [taillabel="no"];
+ *	PAGE_CTX_EXCEPT:s -> haveAlfPolicy:n;
+ *
+ *	haveAlfPolicy -> PAGE_ALF_OVERWRITE [taillabel="yes"];
+ *	haveAlfPolicy:s -> PAGE_ALF_CLIENT [taillabel="no"];
+ *
+ *	PAGE_ALF_OVERWRITE -> overwriteAlf;
+ *	overwriteAlf:w -> PAGE_ALF_CLIENT [taillabel="yes"];
+ *	overwriteAlf:s -> haveSandboxPolicy:n [taillabel="no"];
+ *
+ *	PAGE_ALF_CLIENT -> alfClientUserDefines:n;
+ *	alfClientUserDefines:e -> PAGE_ALF_CLIENT_PORTS:w
+ *	    [taillabel="PERM_RESTRICT_USER"];
+ *	alfClientUserDefines:s -> PAGE_ALF_SERVER
+ *	    [taillabel="PERM_ALLOW_ALL\nPERM_RESTRICT_DEFAULT\nPERM_DENY_ALL"];
+ *
+ *	PAGE_ALF_SERVER -> alfServerUserDefines:n;
+ *	alfServerUserDefines:e -> PAGE_ALF_SERVER_PORTS:w [taillabel="yes"];
+ *	alfServerUserDefines:s -> haveSandboxPolicy:n
+ *	    [taillabel="no or defaults"];
+ *
+ *	PAGE_ALF_CLIENT_PORTS:s -> PAGE_ALF_SERVER:n;
+ *	PAGE_ALF_SERVER_PORTS -> haveSandboxPolicy:n;
+ *
+ *	haveSandboxPolicy -> PAGE_SB_OVERWRITE [taillabel="yes"];
+ *	haveSandboxPolicy:s -> PAGE_SB [taillabel="no"];
+ *
+ *	PAGE_SB -> sbDefines:n;
+ *	sbDefines:s -> PAGE_SB_READ:n [taillabel="user"];
+ *	sbDefines:w -> PAGE_FINAL [taillabel="no or defaults"];
+ *
+ *	PAGE_SB_OVERWRITE -> overwriteSandbox:n;
+ *	overwriteSandbox:w -> PAGE_SB_READ [taillabel="yes"];
+ *	overwriteSandbox:s -> PAGE_FINAL;
+ *
+ *	PAGE_SB_READ -> sbReadUserDefines:n;
+ *	sbReadUserDefines:e -> PAGE_SB_READ_FILES:w;
+ *	sbReadUserDefines:s -> PAGE_SB_WRITE;
+ *	PAGE_SB_READ_FILES:s -> PAGE_SB_WRITE:n;
+ *
+ *	PAGE_SB_WRITE -> sbWriteUserDefines:n;
+ *	sbWriteUserDefines:e -> PAGE_SB_WRITE_FILES:w;
+ *	sbWriteUserDefines:s -> PAGE_SB_EXECUTE;
+ *	PAGE_SB_WRITE_FILES:s -> PAGE_SB_EXECUTE:n;
+ *
+ *	PAGE_SB_EXECUTE -> sbExecuteUserDefines:n;
+ *	sbExecuteUserDefines:e -> PAGE_SB_EXECUTE_FILES:w;
+ *	sbExecuteUserDefines:s -> PAGE_FINAL;
+ *	PAGE_SB_EXECUTE_FILES -> PAGE_FINAL;
+ * }
+ * \enddot
  */
 class RuleWizard : public wxWizard
 {
@@ -47,9 +156,19 @@ class RuleWizard : public wxWizard
 			PAGE_PROGRAM = 0,
 			PAGE_CTX,
 			PAGE_CTX_EXCEPT,
-			PAGE_ALF_KEEP_POLICY,
+			PAGE_ALF_OVERWRITE,
 			PAGE_ALF_CLIENT,
 			PAGE_ALF_CLIENT_PORTS,
+			PAGE_ALF_SERVER,
+			PAGE_ALF_SERVER_PORTS,
+			PAGE_SB,
+			PAGE_SB_OVERWRITE,
+			PAGE_SB_READ,
+			PAGE_SB_READ_FILES,
+			PAGE_SB_WRITE,
+			PAGE_SB_WRITE_FILES,
+			PAGE_SB_EXECUTE,
+			PAGE_SB_EXECUTE_FILES,
 			PAGE_FINAL,
 			PAGE_EOL
 		};

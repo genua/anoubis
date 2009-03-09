@@ -41,15 +41,26 @@ RuleWizardHistory::RuleWizardHistory(void)
 	    wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD, false, wxEmptyString);
 
 	program_ = wxEmptyString;
+	csum_	 = wxEmptyString;
 
-	ctxHavePolicy_ = false;
-	ctxSame_ = true;
-	ctxException_ = false;
-	ctxExceptionList_.Clear();
+	haveContextPolicy_ = false;
+	isSameContext_	   = true;
+	haveContextException_ = false;
+	contextExceptionList_.Clear();
 
-	alfHavePolicy_ = false;
-	alfKeepPolicy_ = true;
-	alfClientPermission_ = ALF_CLIENT_DENY_ALL;
+	haveAlfPolicy_	     = false;
+	overwriteAlfPolicy_  = OVERWRITE_YES;
+	alfClientPermission_ = PERM_DENY_ALL;
+	alfClientAsk_	     = true;
+	alfClientRaw_	     = false;
+	alfServerPermission_ = PERM_DENY_ALL;
+
+	haveSandbox_		  = PERM_RESTRICT_USER;
+	haveSandboxPolicy_	  = false;
+	overwriteSandboxPolicy_   = OVERWRITE_NO;
+	sandboxReadPermission_    = PERM_DENY_ALL;
+	sandboxWritePermission_   = PERM_DENY_ALL;
+	sandboxExecutePermission_ = PERM_DENY_ALL;
 }
 
 void
@@ -65,8 +76,9 @@ RuleWizardHistory::setProgram(const wxString &program)
 	profileCtrl = ProfileCtrl::getInstance();
 	ruleSet = profileCtrl->getRuleSet(profileCtrl->getUserId());
 	if (ruleSet == NULL) {
-		ctxHavePolicy_ = false;
-		alfHavePolicy_ = false;
+		haveContextPolicy_ = false;
+		haveAlfPolicy_	   = false;
+		haveSandboxPolicy_ = false;
 		return;
 	}
 
@@ -74,16 +86,23 @@ RuleWizardHistory::setProgram(const wxString &program)
 
 	app = ruleSet->searchContextAppPolicy(program);
 	if (app != NULL) {
-		ctxHavePolicy_ = true;
+		haveContextPolicy_ = true;
 	} else {
-		ctxHavePolicy_ = false;
+		haveContextPolicy_ = false;
 	}
 
 	app = ruleSet->searchAlfAppPolicy(program);
 	if (app != NULL) {
-		alfHavePolicy_ = true;
+		haveAlfPolicy_ = true;
 	} else {
-		alfHavePolicy_ = false;
+		haveAlfPolicy_ = false;
+	}
+
+	app = ruleSet->searchSandboxAppPolicy(program);
+	if (app != NULL) {
+		haveSandboxPolicy_ = true;
+	} else {
+		haveSandboxPolicy_ = false;
 	}
 
 	ruleSet->unlock();
@@ -95,81 +114,219 @@ RuleWizardHistory::getProgram(void) const
 	return (program_);
 }
 
-bool
-RuleWizardHistory::getCtxHavePolicy(void) const
+void
+RuleWizardHistory::setChecksum(const wxString & csum)
 {
-	return (ctxHavePolicy_);
+	csum_ = csum;
+}
+
+wxString
+RuleWizardHistory::getChecksum(void) const
+{
+	return (csum_);
+}
+
+/*
+ * Context methods
+ */
+bool
+RuleWizardHistory::haveContextPolicy(void) const
+{
+	return (haveContextPolicy_);
 }
 
 void
-RuleWizardHistory::setCtxSame(bool flag)
+RuleWizardHistory::setSameContext(bool same)
 {
-	ctxSame_ = flag;
+	isSameContext_ = same;
 }
 
 bool
-RuleWizardHistory::getCtxSame(void) const
+RuleWizardHistory::isSameContext(void) const
 {
-	return (ctxSame_);
+	return (isSameContext_);
 }
 
 void
-RuleWizardHistory::setCtxException(bool flag)
+RuleWizardHistory::setContextException(bool exception)
 {
-	ctxException_ = flag;
-	if (!ctxException_) {
-		ctxExceptionList_.Clear();
+	haveContextException_ = exception;
+	if (!haveContextException_) {
+		contextExceptionList_.Clear();
 	}
 }
 
 bool
-RuleWizardHistory::getCtxException(void) const
+RuleWizardHistory::haveContextException(void) const
 {
-	return (ctxException_);
+	return (haveContextException_);
 }
 
 void
-RuleWizardHistory::setCtxExceptionList(const wxArrayString & list)
+RuleWizardHistory::setContextExceptionList(const wxArrayString & list)
 {
-	ctxExceptionList_ = list;
+	contextExceptionList_ = list;
 }
 
 wxArrayString
-RuleWizardHistory::getCtxExceptionList(void) const
+RuleWizardHistory::getContextExceptionList(void) const
 {
-	return (ctxExceptionList_);
+	return (contextExceptionList_);
 }
 
+/*
+ * Alf methods
+ */
 bool
-RuleWizardHistory::getAlfHavePolicy(void) const
+RuleWizardHistory::haveAlfPolicy(void) const
 {
-	return (alfHavePolicy_);
+	return (haveAlfPolicy_);
 }
 
 void
-RuleWizardHistory::setAlfKeepPolicy(bool flag)
+RuleWizardHistory::setOverwriteAlfPolicy(enum overwriteAnswer answer)
 {
-	alfKeepPolicy_ = flag;
+	overwriteAlfPolicy_ = answer;
 }
 
-bool
-RuleWizardHistory::getAlfKeepPolicy(void) const
+RuleWizardHistory::overwriteAnswer
+RuleWizardHistory::shallOverwriteAlfPolicy(void) const
 {
-	return (alfKeepPolicy_);
+	return (overwriteAlfPolicy_);
 }
 
 void
-RuleWizardHistory::setAlfClientPermission(enum alfPermissions permission)
+RuleWizardHistory::setAlfClientPermission(enum permissionAnswer answer)
 {
-	alfClientPermission_ = permission;
+	alfClientPermission_ = answer;
 }
 
-RuleWizardHistory::alfPermissions
+RuleWizardHistory::permissionAnswer
 RuleWizardHistory::getAlfClientPermission(void) const
 {
 	return (alfClientPermission_);
 }
 
+void
+RuleWizardHistory::setAlfClientPortList(const wxArrayString & list)
+{
+	alfClientPortList_ = list;
+}
+
+wxArrayString
+RuleWizardHistory::getAlfClientPortList(void) const
+{
+	return (alfClientPortList_);
+}
+
+void
+RuleWizardHistory::setAlfClientAsk(bool ask)
+{
+	alfClientAsk_ = ask;
+}
+
+bool
+RuleWizardHistory::getAlfClientAsk(void) const
+{
+	return (alfClientAsk_);
+}
+
+void
+RuleWizardHistory::setAlfClientRaw(bool raw)
+{
+	alfClientRaw_ = raw;
+}
+
+bool
+RuleWizardHistory::getAlfClientRaw(void) const
+{
+	return (alfClientRaw_);
+}
+
+void
+RuleWizardHistory::setAlfServerPermission(enum permissionAnswer answer)
+{
+	alfServerPermission_ = answer;
+}
+
+RuleWizardHistory::permissionAnswer
+RuleWizardHistory::getAlfServerPermission(void) const
+{
+	return (alfServerPermission_);
+}
+
+/*
+ * Sandbox methods
+ */
+void
+RuleWizardHistory::setSandbox(enum permissionAnswer answer)
+{
+	haveSandbox_ = answer;
+}
+
+RuleWizardHistory::permissionAnswer
+RuleWizardHistory::haveSandbox(void) const
+{
+	return (haveSandbox_);
+}
+
+bool
+RuleWizardHistory::haveSandboxPolicy(void) const
+{
+	return (haveSandboxPolicy_);
+}
+
+void
+RuleWizardHistory::setOverwriteSandboxPolicy(enum overwriteAnswer answer)
+{
+	overwriteSandboxPolicy_ = answer;
+}
+
+RuleWizardHistory::overwriteAnswer
+RuleWizardHistory::shallOverwriteSandboxPolicy(void) const
+{
+	return (overwriteSandboxPolicy_);
+}
+
+void
+RuleWizardHistory::setSandboxReadPermission(enum permissionAnswer answer)
+{
+	sandboxReadPermission_ = answer;
+}
+
+RuleWizardHistory::permissionAnswer
+RuleWizardHistory::getSandboxReadPermission(void) const
+{
+	return (sandboxReadPermission_);
+}
+
+void
+RuleWizardHistory::setSandboxWritePermission(enum permissionAnswer answer)
+{
+	sandboxWritePermission_ = answer;
+}
+
+RuleWizardHistory::permissionAnswer
+RuleWizardHistory::getSandboxWritePermission(void) const
+{
+	return (sandboxWritePermission_);
+}
+
+void
+RuleWizardHistory::setSandboxExecutePermission(enum permissionAnswer answer)
+{
+	sandboxExecutePermission_ = answer;
+}
+
+RuleWizardHistory::permissionAnswer
+RuleWizardHistory::getSandboxExecutePermission(void) const
+{
+	return (sandboxExecutePermission_);
+}
+
+/*
+ * Navigation methods
+ */
 void
 RuleWizardHistory::fillProgramNavi(wxWindow *parent, wxSizer *naviSizer,
     bool active) const
@@ -186,33 +343,29 @@ void
 RuleWizardHistory::fillContextNavi(wxWindow *parent, wxSizer *naviSizer,
     bool active) const
 {
-	size_t	 count;
 	wxString text;
 
 	addTitle(parent, naviSizer, active, _("Context:"));
 
-	if (ctxSame_) {
-		text = _("restrictions: yes");
+	if (haveContextPolicy_) {
+		addValue(parent, naviSizer, _("keep policies"));
+		return;
+	}
+
+	if (isSameContext_) {
+		text = _("same: yes");
 	} else {
-		text = _("restrictions: no");
+		text = _("same: no");
 	}
 	addValue(parent, naviSizer, text);
 
-	if (ctxException_) {
-		text = _("exceptions: yes");
+	if (haveContextException_) {
+		text.Printf(_("exceptions (%d): yes"),
+		    contextExceptionList_.GetCount());
 	} else {
 		text = _("exceptions: no");
 	}
 	addValue(parent, naviSizer, text);
-
-	count = ctxExceptionList_.GetCount();
-	if (count == 1) {
-		text = _("1 exception");
-		addValue(parent, naviSizer, text);
-	} else if (count > 0) {
-		text.Printf(_("%d exceptions"), count);
-		addValue(parent, naviSizer, text);
-	}
 }
 
 void
@@ -221,30 +374,89 @@ RuleWizardHistory::fillAlfNavi(wxWindow *parent, wxSizer *naviSizer,
 {
 	addTitle(parent, naviSizer, active, _("ALF:"));
 
-	if (alfKeepPolicy_ && alfHavePolicy_) {
-		addValue(parent, naviSizer, _("keep policies"));
-	} else if (!alfKeepPolicy_ && alfHavePolicy_){
-		addValue(parent, naviSizer, _("discard policies"));
+	if (haveAlfPolicy_) {
+		if (overwriteAlfPolicy_ == OVERWRITE_NO) {
+			addValue(parent, naviSizer, _("keep policies"));
+			return;
+		} else {
+			addValue(parent, naviSizer, _("discard policies"));
+		}
 	}
 
 	switch (alfClientPermission_) {
-	case ALF_CLIENT_ALLOW_ALL:
-		addValue(parent, naviSizer, _("allow all"));
+	case PERM_ALLOW_ALL:
+		addValue(parent, naviSizer, _("client allow all"));
 		break;
-	case ALF_CLEINT_RESTRICT_DEFAULT:
-		addValue(parent, naviSizer, _("allow defaults"));
+	case PERM_RESTRICT_DEFAULT:
+		addValue(parent, naviSizer, _("client defaults"));
 		break;
-	case ALF_CLEINT_RESTRICT_USER:
-		addValue(parent, naviSizer, _("allow user defined"));
+	case PERM_RESTRICT_USER:
+		addValue(parent, naviSizer, _("client user defined"));
 		break;
-	case ALF_CLIENT_DENY_ALL:
-		addValue(parent, naviSizer, _("deny all"));
+	case PERM_DENY_ALL:
+		addValue(parent, naviSizer, _("client deny all"));
 		break;
-	case ALF_NONE:
+	case PERM_NONE:
 		/* FALLTHROUGH */
 	default:
 		/* do nothing */
 		break;
+	}
+
+	if (alfClientAsk_) {
+		addValue(parent, naviSizer, _("client ask"));
+	} else {
+		addValue(parent, naviSizer, _("client don't ask"));
+	}
+
+	if (alfClientRaw_) {
+		addValue(parent, naviSizer, _("client allow raw"));
+	} else {
+		addValue(parent, naviSizer, _("client deny raw"));
+	}
+
+	switch (alfServerPermission_) {
+	case PERM_ALLOW_ALL:
+		addValue(parent, naviSizer, _("server allow all"));
+		break;
+	case PERM_RESTRICT_DEFAULT:
+		addValue(parent, naviSizer, _("server defaults"));
+		break;
+	case PERM_RESTRICT_USER:
+		addValue(parent, naviSizer, _("server user defined"));
+		break;
+	case PERM_DENY_ALL:
+		addValue(parent, naviSizer, _("server deny all"));
+		break;
+	case PERM_NONE:
+		/* FALLTHROUGH */
+	default:
+		/* do nothing */
+		break;
+	}
+}
+
+void
+RuleWizardHistory::fillSandboxNavi(wxWindow *parent, wxSizer *naviSizer,
+    bool active) const
+{
+	addTitle(parent, naviSizer, active, _("Sandbox:"));
+
+	if (haveSandboxPolicy_) {
+		if (overwriteSandboxPolicy_ == OVERWRITE_NO) {
+			addValue(parent, naviSizer, _("keep policies"));
+			return;
+		} else {
+			addValue(parent, naviSizer, _("discard policies"));
+		}
+	} else if (haveSandbox_ == PERM_RESTRICT_USER) {
+		addValue(parent, naviSizer, _("user defined"));
+	} else if (haveSandbox_ == PERM_RESTRICT_DEFAULT) {
+		addValue(parent, naviSizer, _("defaults"));
+		return;
+	} else {
+		addValue(parent, naviSizer, _("no sandbox"));
+		return;
 	}
 }
 
@@ -272,11 +484,11 @@ RuleWizardHistory::addValue(wxWindow *parent, wxSizer *naviSizer,
 	wxStaticText	*label;
 
 	lineSizer = new wxBoxSizer(wxHORIZONTAL);
-	lineSizer->Add(15, 0, 0, wxEXPAND, 5);
+	lineSizer->Add(15, 0, 0, wxEXPAND, 1);
 
 	label = new wxStaticText(parent, wxID_ANY, text);
 	label->Wrap(-1);
 
-	lineSizer->Add(label, 0, wxALL, 5);
-	naviSizer->Add(lineSizer, 0, wxALL, 5);
+	lineSizer->Add(label, 0, wxALL, 1);
+	naviSizer->Add(lineSizer, 0, wxALL, 1);
 }

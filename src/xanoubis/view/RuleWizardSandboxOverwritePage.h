@@ -25,8 +25,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _RULEWIZARDALFCLIENTPAGE_H_
-#define _RULEWIZARDALFCLIENTPAGE_H_
+#ifndef _RULEWIZARDSANDBOXOVERWRITEPAGE_H_
+#define _RULEWIZARDSANDBOXOVERWRITEPAGE_H_
 
 #include <wx/wizard.h>
 
@@ -36,13 +36,12 @@
 /**
  *
  */
-class RuleWizardAlfClientPage : public RuleWizardAlfPermissionPageBase
+class RuleWizardSandboxOverwritePage : public RuleWizardOverwritePolicyPageBase
 {
 	public:
 		/**
-		 * Constructor of this page.
 		 */
-		RuleWizardAlfClientPage(wxWindow *, RuleWizardHistory *);
+		RuleWizardSandboxOverwritePage(wxWindow *, RuleWizardHistory *);
 
 	private:
 		/**
@@ -64,14 +63,6 @@ class RuleWizardAlfClientPage : public RuleWizardAlfPermissionPageBase
 
 		/**
 		 */
-		virtual void onDefaultRadioButton(wxCommandEvent &);
-
-		/**
-		 */
-		virtual void onRestrictedRadioButton(wxCommandEvent &);
-
-		/**
-		 */
 		virtual void onNoRadioButton(wxCommandEvent &);
 
 		/**
@@ -80,6 +71,10 @@ class RuleWizardAlfClientPage : public RuleWizardAlfPermissionPageBase
 		 * @return Nothing.
 		 */
 		void updateNavi(void);
+
+		/**
+		 */
+		void fillPolicy(void);
 };
 
-#endif	/* _RULEWIZARDALFCLIENTPAGE_H_ */
+#endif	/* _RULEWIZARDSANDBOXOVERWRITEPAGE_H_ */

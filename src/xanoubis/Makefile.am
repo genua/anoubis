@@ -344,12 +344,18 @@ xanoubis_SOURCES= \
 	view/RuleWizardContextPage.h \
 	view/RuleWizardContextExceptionPage.cpp \
 	view/RuleWizardContextExceptionPage.h \
-	view/RuleWizardAlfKeepPolicyPage.cpp \
-	view/RuleWizardAlfKeepPolicyPage.h \
+	view/RuleWizardAlfOverwritePage.cpp \
+	view/RuleWizardAlfOverwritePage.h \
 	view/RuleWizardAlfClientPage.cpp \
 	view/RuleWizardAlfClientPage.h \
 	view/RuleWizardAlfClientPortsPage.cpp \
 	view/RuleWizardAlfClientPortsPage.h \
+	view/RuleWizardAlfDlgAddService.cpp \
+	view/RuleWizardAlfDlgAddService.h \
+	view/RuleWizardSandboxPage.cpp \
+	view/RuleWizardSandboxPage.h \
+	view/RuleWizardSandboxOverwritePage.cpp \
+	view/RuleWizardSandboxOverwritePage.h \
 	view/RuleWizardFinalPage.cpp \
 	view/RuleWizardFinalPage.h \
 	view/RuleWizardHistory.cpp \

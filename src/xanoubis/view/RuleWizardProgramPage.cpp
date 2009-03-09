@@ -27,13 +27,17 @@
 
 #include <wx/filedlg.h>
 #include <wx/filename.h>
+#include <wx/msgdlg.h>
 
 #include "RuleWizardProgramPage.h"
+#include "AnUtils.h"
 
 RuleWizardProgramPage::RuleWizardProgramPage(wxWindow *parent,
     RuleWizardHistory *history) : RuleWizardProgramPageBase(parent)
 {
 	history_ = history;
+
+	csumValue->SetLabel(wxEmptyString);
 
 	parent->Connect(wxEVT_WIZARD_PAGE_CHANGING,
 	    wxWizardEventHandler(RuleWizardProgramPage::onPageChanging),
@@ -41,13 +45,38 @@ RuleWizardProgramPage::RuleWizardProgramPage(wxWindow *parent,
 	parent->Connect(wxEVT_WIZARD_PAGE_CHANGED,
 	    wxWizardEventHandler(RuleWizardProgramPage::onPageChanged),
 	    NULL, this);
+	JobCtrl::getInstance()->Connect(anTASKEVT_CSUMCALC,
+	    wxTaskEventHandler(RuleWizardProgramPage::onCsumCalcTask),
+	    NULL, this);
+}
+
+RuleWizardProgramPage::~RuleWizardProgramPage(void)
+{
+	JobCtrl::getInstance()->Disconnect(anTASKEVT_CSUMCALC,
+	    wxTaskEventHandler(RuleWizardProgramPage::onCsumCalcTask),
+	    NULL, this);
 }
 
 void
 RuleWizardProgramPage::onPageChanging(wxWizardEvent &event)
 {
-	/* If no program was set, we'll not proceed to the next page. */
+	wxString message;
+
+	message = wxEmptyString;
+
+	/*
+	 * If no program was set or the checkum is not calculated yet,
+	 * we'll not proceed to the next page.
+	 */
 	if (history_->getProgram().IsEmpty()) {
+		message = _("Please choose a program first.");
+	} else if (history_->getChecksum().IsEmpty()) {
+		message = _("No checkum is calculated yet.");
+	}
+
+	if (!message.IsEmpty()) {
+		wxMessageBox(message, _("Rule Wizard"), wxOK | wxICON_ERROR,
+		    this);
 		event.Veto();
 	}
 }
@@ -64,7 +93,7 @@ RuleWizardProgramPage::onProgramTextKillFocus(wxFocusEvent &)
 	if (programTextCtrl->IsModified()) {
 		/* Mark as clean */
 		programTextCtrl->DiscardEdits();
-		history_->setProgram(programTextCtrl->GetValue());
+		setProgram(programTextCtrl->GetValue());
 		updateNavi();
 	}
 }
@@ -72,7 +101,7 @@ RuleWizardProgramPage::onProgramTextKillFocus(wxFocusEvent &)
 void
 RuleWizardProgramPage::onProgramTextEnter(wxCommandEvent &event)
 {
-	history_->setProgram(event.GetString());
+	setProgram(event.GetString());
 	updateNavi();
 }
 
@@ -91,9 +120,70 @@ RuleWizardProgramPage::onPickButton(wxCommandEvent &)
 	wxEndBusyCursor();
 
 	if (fileDlg.ShowModal() == wxID_OK) {
-		history_->setProgram(fileDlg.GetPath());
+		setProgram(fileDlg.GetPath());
 		programTextCtrl->ChangeValue(fileDlg.GetPath());
 		updateNavi();
+	}
+}
+
+void
+RuleWizardProgramPage::onCsumCalcTask(TaskEvent &event)
+{
+	wxString	 message;
+	CsumCalcTask	*task;
+
+	task = dynamic_cast<CsumCalcTask*>(event.getTask());
+	if (task == 0) {
+		/* No ComCsumGetTask -> stop propagating */
+		event.Skip(false);
+		return;
+	}
+
+	if (task != &calcTask_) {
+		/* Belongs to someone other, ignore it */
+		event.Skip();
+		return;
+	}
+
+	event.Skip(false); /* "My" task -> stop propagating */
+
+	if (task->getResult() != 0) {
+		/* Calculation failed */
+		message = wxString::Format(
+		    _("Failed to calculate the checksum for %s: %s"),
+		    task->getPath().c_str(),
+		    wxStrError(task->getResult()).c_str());
+		wxMessageBox(message, _("Rule Wizard"), wxOK | wxICON_ERROR,
+		    this);
+		csumValue->SetLabel(_("(unknown)"));
+		return;
+	}
+
+	history_->setChecksum(task->getCsumStr());
+	csumValue->SetLabel(history_->getChecksum());
+	Layout();
+	Refresh();
+}
+
+void
+RuleWizardProgramPage::setProgram(const wxString &binary)
+{
+	/* Store binary */
+	if (binary == history_->getProgram()) {
+		return;
+	}
+	history_->setProgram(binary);
+	history_->setChecksum(wxEmptyString);
+
+	/* Start csum calculation */
+	if (!binary.IsEmpty() && binary != wxT("any")) {
+		calcTask_.setPath(binary);
+		calcTask_.setCalcLink(true);
+		JobCtrl::getInstance()->addTask(&calcTask_);
+
+		csumValue->SetLabel(_("calculating..."));
+		Layout();
+		Refresh();
 	}
 }
 
@@ -104,6 +194,7 @@ RuleWizardProgramPage::updateNavi(void)
 	history_->fillProgramNavi(this, naviSizer, true);
 	history_->fillContextNavi(this, naviSizer, false);
 	history_->fillAlfNavi(this, naviSizer, false);
+	history_->fillSandboxNavi(this, naviSizer, false);
 	Layout();
 	Refresh();
 }

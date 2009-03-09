@@ -25,65 +25,58 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "RuleWizardAlfClientPage.h"
+#include "RuleWizardAlfOverwritePage.h"
 
-RuleWizardAlfClientPage::RuleWizardAlfClientPage(wxWindow *parent,
-    RuleWizardHistory *history) : RuleWizardAlfPermissionPageBase(parent)
+#include "main.h"
+#include "AppPolicy.h"
+#include "ProfileCtrl.h"
+#include "PolicyRuleSet.h"
+
+RuleWizardAlfOverwritePage::RuleWizardAlfOverwritePage(wxWindow *parent,
+    RuleWizardHistory *history) : RuleWizardOverwritePolicyPageBase(parent)
 {
+	wxString	 text;
+	wxIcon		*icon;
+
 	history_ = history;
 
-	noRadioButton->SetValue(true);
+	text = wxT("Application Level Firewall settings:");
+	headLineLabel->SetLabel(text);
+
+	icon = wxGetApp().loadIcon(wxT("General_problem_48.png"));
+	alertIcon->SetIcon(*icon);
+
+	text = _("For this application\nalf policies\nalready exists.");
+	alertLabel->SetLabel(text);
 
 	parent->Connect(wxEVT_WIZARD_PAGE_CHANGED,
-	    wxWizardEventHandler(RuleWizardAlfClientPage::onPageChanged),
+	    wxWizardEventHandler(RuleWizardAlfOverwritePage::onPageChanged),
 	    NULL, this);
 }
 
 void
-RuleWizardAlfClientPage::onPageChanged(wxWizardEvent &)
+RuleWizardAlfOverwritePage::onPageChanged(wxWizardEvent &)
 {
-	wxString text;
-
-	text.Printf(_("Allow the application \"%ls\" access to\n"
-	    "network services (client functionality)?"),
-	    history_->getProgram().c_str());
-	questionLabel->SetLabel(text);
-
+	fillPolicy();
 	updateNavi();
 }
 
 void
-RuleWizardAlfClientPage::onYesRadioButton(wxCommandEvent &)
+RuleWizardAlfOverwritePage::onYesRadioButton(wxCommandEvent &)
 {
-	history_->setAlfClientPermission(RuleWizardHistory::PERM_ALLOW_ALL);
+	history_->setOverwriteAlfPolicy(RuleWizardHistory::OVERWRITE_YES);
 	updateNavi();
 }
 
 void
-RuleWizardAlfClientPage::onDefaultRadioButton(wxCommandEvent &)
+RuleWizardAlfOverwritePage::onNoRadioButton(wxCommandEvent &)
 {
-	history_->setAlfClientPermission(
-	    RuleWizardHistory::PERM_RESTRICT_DEFAULT);
+	history_->setOverwriteAlfPolicy(RuleWizardHistory::OVERWRITE_NO);
 	updateNavi();
 }
 
 void
-RuleWizardAlfClientPage::onRestrictedRadioButton(wxCommandEvent &)
-{
-	history_->setAlfClientPermission(
-	    RuleWizardHistory::PERM_RESTRICT_USER);
-	updateNavi();
-}
-
-void
-RuleWizardAlfClientPage::onNoRadioButton(wxCommandEvent &)
-{
-	history_->setAlfClientPermission(RuleWizardHistory::PERM_DENY_ALL);
-	updateNavi();
-}
-
-void
-RuleWizardAlfClientPage::updateNavi(void)
+RuleWizardAlfOverwritePage::updateNavi(void)
 {
 	naviSizer->Clear(true);
 	history_->fillProgramNavi(this, naviSizer, false);
@@ -92,4 +85,29 @@ RuleWizardAlfClientPage::updateNavi(void)
 	history_->fillSandboxNavi(this, naviSizer, false);
 	Layout();
 	Refresh();
+}
+
+void
+RuleWizardAlfOverwritePage::fillPolicy(void)
+{
+	wxString	 text;
+	AppPolicy	*app;
+	ProfileCtrl	*profileCtrl;
+	PolicyRuleSet	*ruleSet;
+
+	text.Printf(_("Policy of \"%ls\":"), history_->getProgram().c_str());
+	policyLabel->SetLabel(text);
+	text = wxEmptyString;
+
+	profileCtrl = ProfileCtrl::getInstance();
+	ruleSet = profileCtrl->getRuleSet(profileCtrl->getUserId());
+	if (ruleSet != NULL) {
+		app = ruleSet->searchAlfAppPolicy(history_->getProgram());
+		if (app != NULL) {
+			text = app->toString();
+		}
+	}
+
+	policyTextCtrl->Clear();
+	policyTextCtrl->AppendText(text);
 }

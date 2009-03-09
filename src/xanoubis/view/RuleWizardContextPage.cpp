@@ -46,34 +46,33 @@ RuleWizardContextPage::onPageChanged(wxWizardEvent &)
 void
 RuleWizardContextPage::onYesRadioButton(wxCommandEvent &)
 {
-	history_->setCtxSame(true);
+	history_->setSameContext(true);
+	history_->setContextException(false);
+	noExceptionsCheckBox->SetValue(false);
 	noExceptionsCheckBox->Disable();
-	yesExceptionsCheckBox->Enable();
-	yesExceptionsCheckBox->SetValue(history_->getCtxException());
 	updateNavi();
 }
 
 void
 RuleWizardContextPage::onYesExceptionsCheckBox(wxCommandEvent & event)
 {
-	history_->setCtxException(event.GetInt());
+	history_->setContextException(event.GetInt());
 	updateNavi();
 }
 
 void
 RuleWizardContextPage::onNoRadioButton(wxCommandEvent &)
 {
-	history_->setCtxSame(false);
-	yesExceptionsCheckBox->Disable();
+	history_->setSameContext(false);
 	noExceptionsCheckBox->Enable();
-	noExceptionsCheckBox->SetValue(history_->getCtxException());
+	noExceptionsCheckBox->SetValue(history_->haveContextException());
 	updateNavi();
 }
 
 void
 RuleWizardContextPage::onNoExceptionsCheckBox(wxCommandEvent & event)
 {
-	history_->setCtxException(event.GetInt());
+	history_->setContextException(event.GetInt());
 	updateNavi();
 }
 
@@ -84,6 +83,7 @@ RuleWizardContextPage::updateNavi(void)
 	history_->fillProgramNavi(this, naviSizer, false);
 	history_->fillContextNavi(this, naviSizer, true);
 	history_->fillAlfNavi(this, naviSizer, false);
+	history_->fillSandboxNavi(this, naviSizer, false);
 	Layout();
 	Refresh();
 }

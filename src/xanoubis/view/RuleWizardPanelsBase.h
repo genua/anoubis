@@ -44,20 +44,98 @@ class AnDetails;
 #include <wx/settings.h>
 #include <wx/string.h>
 #include <wx/stattext.h>
-#include <wx/textctrl.h>
-#include <wx/button.h>
 #include <wx/panel.h>
 #include <wx/radiobut.h>
-#include <wx/checkbox.h>
-#include <wx/listbox.h>
 #include <wx/bitmap.h>
 #include <wx/image.h>
 #include <wx/statbmp.h>
+#include <wx/textctrl.h>
 #include <wx/listctrl.h>
+#include <wx/button.h>
 #include <wx/dialog.h>
+#include <wx/checkbox.h>
+#include <wx/listbox.h>
 
 ///////////////////////////////////////////////////////////////////////////
 
+
+///////////////////////////////////////////////////////////////////////////////
+/// Class RuleWizardOverwritePolicyPageBase
+///////////////////////////////////////////////////////////////////////////////
+class RuleWizardOverwritePolicyPageBase : public wxPanel 
+{
+	private:
+	
+	protected:
+		wxBoxSizer* naviSizer;
+		wxStaticLine* naviMainDelimiter;
+		
+		wxStaticText* headLineLabel;
+		
+		wxPanel* helpPage;
+		wxStaticText* helpLabel;
+		wxStaticText* questionLabel;
+		wxRadioButton* yesRadioButton;
+		wxRadioButton* noRadioButton;
+		wxStaticBitmap* alertIcon;
+		wxStaticText* alertLabel;
+		
+		wxStaticText* policyLabel;
+		wxTextCtrl* policyTextCtrl;
+		
+		// Virtual event handlers, overide them in your derived class
+		virtual void onYesRadioButton( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onNoRadioButton( wxCommandEvent& event ){ event.Skip(); }
+		
+	
+	public:
+		RuleWizardOverwritePolicyPageBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 800,600 ), long style = wxTAB_TRAVERSAL );
+	
+};
+
+///////////////////////////////////////////////////////////////////////////////
+/// Class RuleWizardAlfDlgAddServiceBase
+///////////////////////////////////////////////////////////////////////////////
+class RuleWizardAlfDlgAddServiceBase : public wxDialog 
+{
+	private:
+	
+	protected:
+		wxStaticText* headLineLabel;
+		
+		wxTextCtrl* searchTextCtrl;
+		wxStaticBitmap* searchIcon;
+		wxListCtrl* serviceListCtrl;
+		
+		wxButton* addButton;
+		wxStaticText* borderLabel;
+		wxStaticLine* borderLine;
+		wxStaticText* protocolLabel;
+		wxRadioButton* tcpRadioButton;
+		wxRadioButton* udpRadioButton;
+		
+		wxStaticText* portLabel;
+		wxTextCtrl* portTextCtrl;
+		wxButton* customAddButton;
+		
+		wxStaticText* portHelpLabel;
+		wxStaticLine* tailLine;
+		
+		wxButton* cancelButton;
+		
+		// Virtual event handlers, overide them in your derived class
+		virtual void onSearchTextEnter( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onServiceListDeselect( wxListEvent& event ){ event.Skip(); }
+		virtual void onServiceListSelect( wxListEvent& event ){ event.Skip(); }
+		virtual void onAddButton( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onCustomAddButton( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onCancelButton( wxCommandEvent& event ){ event.Skip(); }
+		
+	
+	public:
+		RuleWizardAlfDlgAddServiceBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Rule wizard add service"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 640,480 ), long style = wxDEFAULT_DIALOG_STYLE|wxRESIZE_BORDER|wxSTAY_ON_TOP );
+	
+};
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Class RuleWizardProgramPageBase
@@ -71,9 +149,13 @@ class RuleWizardProgramPageBase : public wxPanel
 		wxStaticLine* naviMainDelimiter;
 		
 		wxStaticText* headLineLabel;
+		
 		wxStaticText* programLabel;
 		wxTextCtrl* programTextCtrl;
 		wxButton* pickButton;
+		wxStaticText* csumLabel;
+		wxStaticText* csumValue;
+		
 		
 		// Virtual event handlers, overide them in your derived class
 		virtual void onProgramTextKillFocus( wxFocusEvent& event ){ event.Skip(); }
@@ -99,20 +181,18 @@ class RuleWizardContextPageBase : public wxPanel
 		
 		wxStaticText* headLineLabel;
 		
+		wxPanel* helpPage;
+		wxStaticText* helpLabel;
 		wxStaticText* questionLabel;
 		
 		wxRadioButton* yesRadioButton;
-		
-		wxCheckBox* yesExceptionsCheckBox;
 		wxRadioButton* noRadioButton;
 		
 		wxCheckBox* noExceptionsCheckBox;
-		wxPanel* contextHelpPage;
-		wxStaticText* contextHelpLabel;
+		
 		
 		// Virtual event handlers, overide them in your derived class
 		virtual void onYesRadioButton( wxCommandEvent& event ){ event.Skip(); }
-		virtual void onYesExceptionsCheckBox( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onNoRadioButton( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onNoExceptionsCheckBox( wxCommandEvent& event ){ event.Skip(); }
 		
@@ -154,41 +234,9 @@ class RuleWizardContextExceptionPageBase : public wxPanel
 };
 
 ///////////////////////////////////////////////////////////////////////////////
-/// Class RuleWizardAlfKeepPolicyPageBase
+/// Class RuleWizardAlfPermissionPageBase
 ///////////////////////////////////////////////////////////////////////////////
-class RuleWizardAlfKeepPolicyPageBase : public wxPanel 
-{
-	private:
-	
-	protected:
-		wxBoxSizer* naviSizer;
-		wxStaticLine* naviMainDelimiter;
-		
-		wxStaticText* headLineLabel;
-		
-		wxStaticText* questionLabel;
-		wxRadioButton* yesRadioButton;
-		wxRadioButton* noRadioButton;
-		wxStaticBitmap* alertIcon;
-		wxStaticText* alertLabel;
-		
-		wxStaticText* policyLabel;
-		wxTextCtrl* policyTextCtrl;
-		
-		// Virtual event handlers, overide them in your derived class
-		virtual void onYesRadioButton( wxCommandEvent& event ){ event.Skip(); }
-		virtual void onNoRadioButton( wxCommandEvent& event ){ event.Skip(); }
-		
-	
-	public:
-		RuleWizardAlfKeepPolicyPageBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 800,600 ), long style = wxTAB_TRAVERSAL );
-	
-};
-
-///////////////////////////////////////////////////////////////////////////////
-/// Class RuleWizardAlfClientPageBase
-///////////////////////////////////////////////////////////////////////////////
-class RuleWizardAlfClientPageBase : public wxPanel 
+class RuleWizardAlfPermissionPageBase : public wxPanel 
 {
 	private:
 	
@@ -217,14 +265,14 @@ class RuleWizardAlfClientPageBase : public wxPanel
 		
 	
 	public:
-		RuleWizardAlfClientPageBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 800,600 ), long style = wxTAB_TRAVERSAL );
+		RuleWizardAlfPermissionPageBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 800,600 ), long style = wxTAB_TRAVERSAL );
 	
 };
 
 ///////////////////////////////////////////////////////////////////////////////
-/// Class RuleWizardAlfClientPortsPageBase
+/// Class RuleWizardAlfServicePageBase
 ///////////////////////////////////////////////////////////////////////////////
-class RuleWizardAlfClientPortsPageBase : public wxPanel 
+class RuleWizardAlfServicePageBase : public wxPanel 
 {
 	private:
 	
@@ -247,6 +295,8 @@ class RuleWizardAlfClientPortsPageBase : public wxPanel
 		wxCheckBox* rawCheckBox;
 		
 		// Virtual event handlers, overide them in your derived class
+		virtual void onPortListDeselect( wxListEvent& event ){ event.Skip(); }
+		virtual void onPortListSelect( wxListEvent& event ){ event.Skip(); }
 		virtual void onAddButton( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onDefaultsButton( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onDeleteButton( wxCommandEvent& event ){ event.Skip(); }
@@ -255,41 +305,114 @@ class RuleWizardAlfClientPortsPageBase : public wxPanel
 		
 	
 	public:
-		RuleWizardAlfClientPortsPageBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 800,600 ), long style = wxTAB_TRAVERSAL );
+		RuleWizardAlfServicePageBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 800,600 ), long style = wxTAB_TRAVERSAL );
 	
 };
 
 ///////////////////////////////////////////////////////////////////////////////
-/// Class RuleWizardAlfDlgAddServiceBase
+/// Class RuleWizardSandboxPageBase
 ///////////////////////////////////////////////////////////////////////////////
-class RuleWizardAlfDlgAddServiceBase : public wxDialog 
+class RuleWizardSandboxPageBase : public wxPanel 
 {
 	private:
 	
 	protected:
+		wxBoxSizer* naviSizer;
+		wxStaticLine* naviMainDelimiter;
+		
 		wxStaticText* headLineLabel;
 		
-		wxTextCtrl* searchTextCtrl;
-		wxListCtrl* serviceListCtrl;
+		wxPanel* helpPage;
+		wxStaticText* helpLabel;
+		wxStaticText* questionLabel;
 		
-		wxButton* addButton;
-		wxStaticText* borderLabel;
-		wxStaticLine* borderLine;
-		wxStaticText* protocolLabel;
-		wxRadioButton* tcpRadioButton;
-		wxStaticText* portLabel;
+		wxRadioButton* yesWizardRadioButton;
+		wxRadioButton* yesDefaultsRadioButton;
+		wxRadioButton* noRadioButton;
 		
-		
-		wxRadioButton* udpRadioButton;
-		wxTextCtrl* portTextCtrl;
-		wxButton* customAddButton;
 		
 		// Virtual event handlers, overide them in your derived class
-		virtual void onAddButton( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onYesWizardRadioButton( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onYesDefaultsRadioButton( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onNoRadioButton( wxCommandEvent& event ){ event.Skip(); }
 		
 	
 	public:
-		RuleWizardAlfDlgAddServiceBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Rule wizard add service"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 600,400 ), long style = wxDEFAULT_DIALOG_STYLE|wxSTAY_ON_TOP );
+		RuleWizardSandboxPageBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 800,600 ), long style = wxTAB_TRAVERSAL );
+	
+};
+
+///////////////////////////////////////////////////////////////////////////////
+/// Class RuleWizardSandboxPermissionPageBase
+///////////////////////////////////////////////////////////////////////////////
+class RuleWizardSandboxPermissionPageBase : public wxPanel 
+{
+	private:
+	
+	protected:
+		wxBoxSizer* naviSizer;
+		wxStaticLine* naviMainDelimiter;
+		
+		wxStaticText* headLineLabel;
+		
+		wxStaticText* questionLabel;
+		
+		wxRadioButton* allowAllRadioButton;
+		wxRadioButton* defaultRadioButton;
+		
+		wxStaticText* defaultLabel;
+		wxRadioButton* restrictedRadioButton;
+		
+		wxStaticText* restrictedLabel;
+		
+		// Virtual event handlers, overide them in your derived class
+		virtual void onAllowAllRadioButton( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onDefaultRadioButton( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onRestrictedRadioButton( wxCommandEvent& event ){ event.Skip(); }
+		
+	
+	public:
+		RuleWizardSandboxPermissionPageBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 800,600 ), long style = wxTAB_TRAVERSAL );
+	
+};
+
+///////////////////////////////////////////////////////////////////////////////
+/// Class RuleWizardSandboxFilesPageBase
+///////////////////////////////////////////////////////////////////////////////
+class RuleWizardSandboxFilesPageBase : public wxPanel 
+{
+	private:
+	
+	protected:
+		wxBoxSizer* naviSizer;
+		wxStaticLine* naviMainDelimiter;
+		
+		wxStaticText* headLineLabel;
+		
+		wxStaticText* questionLabel;
+		wxStaticText* fileListLabel;
+		wxListCtrl* fileListCtrl;
+		wxButton* addFileButton;
+		wxButton* addDirectoryButton;
+		
+		wxButton* defaultsButton;
+		
+		wxButton* deleteButton;
+		AnDetails* detailsPanel;
+		wxCheckBox* askCheckBox;
+		wxCheckBox* validCheckBox;
+		
+		// Virtual event handlers, overide them in your derived class
+		virtual void onAddFileButton( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onAddDirectoryButton( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onDefaultsButton( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onDeleteButton( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onAskCheckBox( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onRawCheckBox( wxCommandEvent& event ){ event.Skip(); }
+		
+	
+	public:
+		RuleWizardSandboxFilesPageBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 800,600 ), long style = wxTAB_TRAVERSAL );
 	
 };
 

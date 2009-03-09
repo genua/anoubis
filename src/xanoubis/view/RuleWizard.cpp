@@ -31,9 +31,11 @@
 #include "RuleWizardProgramPage.h"
 #include "RuleWizardContextPage.h"
 #include "RuleWizardContextExceptionPage.h"
-#include "RuleWizardAlfKeepPolicyPage.h"
+#include "RuleWizardAlfOverwritePage.h"
 #include "RuleWizardAlfClientPage.h"
 #include "RuleWizardAlfClientPortsPage.h"
+#include "RuleWizardSandboxPage.h"
+#include "RuleWizardSandboxOverwritePage.h"
 #include "RuleWizardFinalPage.h"
 
 #include "AppPolicy.h"
@@ -50,15 +52,27 @@ RuleWizard::RuleWizard(void)
 {
 	Create(NULL, wxID_ANY, wxT("Rule Wizard"));
 
+	/* Program */
 	CREATE_PAGE(pages_, PAGE_PROGRAM, RuleWizardProgramPage, history_);
+
+	/* Context */
 	CREATE_PAGE(pages_, PAGE_CTX, RuleWizardContextPage, history_);
 	CREATE_PAGE(pages_, PAGE_CTX_EXCEPT, RuleWizardContextExceptionPage,
 	    history_);
-	CREATE_PAGE(pages_, PAGE_ALF_KEEP_POLICY, RuleWizardAlfKeepPolicyPage,
+
+	/* ALF */
+	CREATE_PAGE(pages_, PAGE_ALF_OVERWRITE, RuleWizardAlfOverwritePage,
 	    history_);
 	CREATE_PAGE(pages_, PAGE_ALF_CLIENT, RuleWizardAlfClientPage, history_);
 	CREATE_PAGE(pages_, PAGE_ALF_CLIENT_PORTS, RuleWizardAlfClientPortsPage,
 	    history_);
+
+	/* Sandbox */
+	CREATE_PAGE(pages_, PAGE_SB, RuleWizardSandboxPage, history_);
+	CREATE_PAGE(pages_, PAGE_SB_OVERWRITE, RuleWizardSandboxOverwritePage,
+	    history_);
+
+	/* Final */
 	CREATE_PAGE(pages_, PAGE_FINAL, RuleWizardFinalPage, history_);
 
 	GetPageAreaSizer()->Add(pages_[PAGE_PROGRAM]);
@@ -89,33 +103,81 @@ RuleWizard::forwardTransition(enum wizardPages pageNo) const
 
 	switch (pageNo) {
 	case PAGE_PROGRAM:
-		nextPage = PAGE_CTX;
-		break;
-	case PAGE_CTX:
-		if (history_.getCtxException()) {
-			nextPage = PAGE_CTX_EXCEPT;
-		} else {
-			if (history_.getAlfHavePolicy()) {
-				nextPage = PAGE_ALF_KEEP_POLICY;
-			} else {
-				nextPage = PAGE_ALF_CLIENT;
-			}
+		if (!history_.haveContextPolicy()) {
+			nextPage = PAGE_CTX;
+			break;
 		}
-		break;
-	case PAGE_CTX_EXCEPT:
-		if (history_.getAlfHavePolicy()) {
-			nextPage = PAGE_ALF_KEEP_POLICY;
+		if (history_.haveAlfPolicy()) {
+			nextPage = PAGE_ALF_OVERWRITE;
 		} else {
 			nextPage = PAGE_ALF_CLIENT;
 		}
 		break;
-	case PAGE_ALF_KEEP_POLICY:
-		nextPage = PAGE_ALF_CLIENT;
+	case PAGE_CTX:
+		if (history_.haveContextException()) {
+			nextPage = PAGE_CTX_EXCEPT;
+			break;
+		}
+		if (history_.haveAlfPolicy()) {
+			nextPage = PAGE_ALF_OVERWRITE;
+		} else {
+			nextPage = PAGE_ALF_CLIENT;
+		}
+		break;
+	case PAGE_CTX_EXCEPT:
+		if (history_.haveAlfPolicy()) {
+			nextPage = PAGE_ALF_OVERWRITE;
+		} else {
+			nextPage = PAGE_ALF_CLIENT;
+		}
+		break;
+	case PAGE_ALF_OVERWRITE:
+		if (history_.shallOverwriteAlfPolicy() !=
+		    RuleWizardHistory::OVERWRITE_NO) {
+			nextPage = PAGE_ALF_CLIENT;
+			break;
+		}
+		if (history_.haveSandboxPolicy()) {
+			nextPage = PAGE_SB_OVERWRITE;
+		} else {
+			nextPage = PAGE_SB;
+		}
 		break;
 	case PAGE_ALF_CLIENT:
-		nextPage = PAGE_ALF_CLIENT_PORTS;
+		if (history_.getAlfClientPermission() ==
+		    RuleWizardHistory::PERM_RESTRICT_USER) {
+			nextPage = PAGE_ALF_CLIENT_PORTS;
+			break;
+		}
+		/* XXX ch: ALF server pages still pending */
+		if (history_.haveSandboxPolicy()) {
+			nextPage = PAGE_SB_OVERWRITE;
+		} else {
+			nextPage = PAGE_SB;
+		}
 		break;
 	case PAGE_ALF_CLIENT_PORTS:
+		/* XXX ch: ALF server pages still pending */
+		if (history_.haveSandboxPolicy()) {
+			nextPage = PAGE_SB_OVERWRITE;
+		} else {
+			nextPage = PAGE_SB;
+		}
+		break;
+	case PAGE_SB:
+		if (history_.haveSandbox() ==
+		    RuleWizardHistory::PERM_RESTRICT_USER) {
+			//nextPage = PAGE_SB_READ;
+			//break;
+		}
+		nextPage = PAGE_FINAL;
+		break;
+	case PAGE_SB_OVERWRITE:
+		if (history_.shallOverwriteSandboxPolicy() !=
+		    RuleWizardHistory::OVERWRITE_NO) {
+			//nextPage = PAGE_SB_READ;
+			//break;
+		}
 		nextPage = PAGE_FINAL;
 		break;
 	case PAGE_FINAL:
@@ -143,29 +205,59 @@ RuleWizard::backwardTransition(enum wizardPages pageNo) const
 	case PAGE_CTX_EXCEPT:
 		previousPage = PAGE_CTX;
 		break;
-	case PAGE_ALF_KEEP_POLICY:
-		if (history_.getCtxException()) {
+	case PAGE_ALF_OVERWRITE:
+		if (!history_.haveContextPolicy()) {
+			previousPage = PAGE_PROGRAM;
+			break;
+		}
+		if (history_.haveContextException()) {
 			previousPage = PAGE_CTX_EXCEPT;
 		} else {
 			previousPage = PAGE_CTX;
 		}
 		break;
 	case PAGE_ALF_CLIENT:
-		if (history_.getAlfHavePolicy()) {
-			previousPage = PAGE_ALF_KEEP_POLICY;
+		if (history_.haveAlfPolicy()) {
+			previousPage = PAGE_ALF_OVERWRITE;
+			break;
+		}
+		if (!history_.haveContextPolicy()) {
+			previousPage = PAGE_PROGRAM;
+			break;
+		}
+		if (history_.haveContextException()) {
+			previousPage = PAGE_CTX_EXCEPT;
 		} else {
-			if (history_.getCtxException()) {
-				previousPage = PAGE_CTX_EXCEPT;
-			} else {
-				previousPage = PAGE_CTX;
-			}
+			previousPage = PAGE_CTX;
 		}
 		break;
 	case PAGE_ALF_CLIENT_PORTS:
 		previousPage = PAGE_ALF_CLIENT;
 		break;
+	case PAGE_SB:
+		/* XXX ch: ALF server pages still pending */
+		if (history_.getAlfClientPermission() ==
+		    RuleWizardHistory::PERM_RESTRICT_USER) {
+			previousPage = PAGE_ALF_CLIENT_PORTS;
+		} else {
+			previousPage = PAGE_ALF_CLIENT;
+		}
+		break;
+	case PAGE_SB_OVERWRITE:
+		/* XXX ch: ALF server pages still pending */
+		if (history_.getAlfClientPermission() ==
+		    RuleWizardHistory::PERM_RESTRICT_USER) {
+			previousPage = PAGE_ALF_CLIENT_PORTS;
+		} else {
+			previousPage = PAGE_ALF_CLIENT;
+		}
+		break;
 	case PAGE_FINAL:
-		previousPage = PAGE_ALF_CLIENT_PORTS;
+		if (history_.haveSandboxPolicy()) {
+			previousPage = PAGE_SB_OVERWRITE;
+		} else {
+			previousPage = PAGE_SB;
+		}
 		break;
 	default:
 		/* XXX ch: does this make any sense? */
@@ -207,7 +299,7 @@ RuleWizard::onWizardFinished(wxWizardEvent &)
 		ruleSet->lock();
 	}
 
-	if (!history_.getCtxHavePolicy()) {
+	if (!history_.haveContextPolicy()) {
 		createContextPolicy(ruleSet);
 	}
 
@@ -235,15 +327,18 @@ RuleWizard::createContextPolicy(PolicyRuleSet *ruleSet) const
 
 	ruleSet->prependAppPolicy(ctxApp);
 	ctxApp->addBinary(history_.getProgram());
-	//XXX ch: set csum
+	ctxApp->setHashValueString(history_.getChecksum(), 0);
 
-	//XXX ch: contextExceptions?
-	if (!history_.getCtxSame()) {
+	if (!history_.isSameContext()) {
 		/* Create 'context new any' */
 		ctxFilter = new ContextFilterPolicy(ctxApp);
 		if (ctxFilter != NULL) {
 			ctxFilter->setContextTypeNo(APN_CTX_NEW);
 			ctxApp->prependFilterPolicy(ctxFilter);
+			if (history_.haveContextException()) {
+				ctxFilter->setBinaryList(
+				    history_.getContextExceptionList());
+			}
 		}
 	}
 	/* else: empty context block */
@@ -254,18 +349,29 @@ RuleWizard::createContextPolicy(PolicyRuleSet *ruleSet) const
 void
 RuleWizard::createAlfPolicy(PolicyRuleSet *ruleSet) const
 {
-	AlfAppPolicy	*alfApp;
-	AlfFilterPolicy	*alfFilter;
+	wxArrayString			 list;
+	AlfAppPolicy			*alfApp;
+	AlfCapabilityFilterPolicy	*alfCap;
+	AlfFilterPolicy			*alfFilter;
+
+	alfApp	  = NULL;
+	alfCap	  = NULL;
+	alfFilter = NULL;
 
 	if (ruleSet == NULL) {
 		return;
 	}
 
-	alfApp = NULL;
-	if (history_.getAlfHavePolicy()) {
+	if (history_.haveAlfPolicy()) {
 		alfApp = ruleSet->searchAlfAppPolicy(history_.getProgram());
-	}
-	if (!history_.getAlfKeepPolicy() && (alfApp != NULL)) {
+		if (history_.shallOverwriteAlfPolicy() ==
+		    RuleWizardHistory::OVERWRITE_NO) {
+			return;
+		}
+		/*
+		 * We just need to remove the filter, but it's easier to
+		 * remove all and re-create the app policy.
+		 */
 		alfApp->remove();
 		alfApp = NULL;
 	}
@@ -280,23 +386,52 @@ RuleWizard::createAlfPolicy(PolicyRuleSet *ruleSet) const
 
 	if (alfApp->isAnyBlock()) {
 		alfApp->addBinary(history_.getProgram());
+		alfApp->setHashValueString(history_.getChecksum(), 0);
 	}
-
-	alfFilter = new AlfFilterPolicy(alfApp);
-	if (alfFilter == NULL){
-		/* Serious problem */
-		return;
-	}
-	alfApp->prependFilterPolicy(alfFilter);
 
 	switch (history_.getAlfClientPermission()) {
-	case RuleWizardHistory::ALF_CLIENT_ALLOW_ALL:
+	case RuleWizardHistory::PERM_ALLOW_ALL:
+		alfFilter = new AlfFilterPolicy(alfApp);
+		alfApp->prependFilterPolicy(alfFilter);
 		alfFilter->setActionNo(APN_ACTION_ALLOW);
+		return;
 		break;
-	case RuleWizardHistory::ALF_CLIENT_DENY_ALL:
+	case RuleWizardHistory::PERM_DENY_ALL:
+		alfFilter = new AlfFilterPolicy(alfApp);
+		alfApp->prependFilterPolicy(alfFilter);
 		alfFilter->setActionNo(APN_ACTION_DENY);
+		return;
+		break;
+	case RuleWizardHistory::PERM_RESTRICT_DEFAULT:
+		//XXX ch: load defaults
 		break;
 	default:
 		break;
+	}
+
+	if (history_.getAlfClientAsk()) {
+		alfFilter = new AlfFilterPolicy(alfApp);
+		alfApp->prependFilterPolicy(alfFilter);
+		alfFilter->setActionNo(APN_ACTION_ASK);
+	}
+
+	if (history_.getAlfClientRaw()) {
+		alfCap = new AlfCapabilityFilterPolicy(alfApp);
+		alfApp->prependFilterPolicy(alfCap);
+		alfCap->setCapabilityTypeNo(APN_ALF_CAPRAW);
+	}
+
+	list = history_.getAlfClientPortList();
+	for (size_t i=0; i<list.GetCount(); i=i+3) {
+		alfFilter = new AlfFilterPolicy(alfApp);
+		alfApp->prependFilterPolicy(alfFilter);
+		alfFilter->setActionNo(APN_ACTION_ALLOW);
+		alfFilter->setDirectionNo(APN_CONNECT);
+		if (list.Item(i+2) == wxT("tcp")) {
+			alfFilter->setProtocol(IPPROTO_TCP);
+		} else {
+			alfFilter->setProtocol(IPPROTO_UDP);
+		}
+		alfFilter->setToPortName(list.Item(i+1));
 	}
 }

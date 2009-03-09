@@ -32,9 +32,17 @@
 
 #include "RuleWizardPanelsBase.h"
 #include "RuleWizardHistory.h"
+#include "CsumCalcTask.h"
+#include "JobCtrl.h"
 
 /**
+ * This is the first page of the wizard.
+ * The user is asked for the name of the program this wizard should work for.
+ * After the user made his choice, the checksum of the given program is
+ * calculated.\n
  *
+ * The next page is only reached if the program exists and calculating the
+ * checksum was successfull.
  */
 class RuleWizardProgramPage : public RuleWizardProgramPageBase
 {
@@ -44,11 +52,21 @@ class RuleWizardProgramPage : public RuleWizardProgramPageBase
 		 */
 		RuleWizardProgramPage(wxWindow *, RuleWizardHistory *);
 
+		/**
+		 * Destructor of this page.
+		 */
+		~RuleWizardProgramPage(void);
+
 	private:
 		/**
 		 * Store the input here.
 		 */
 		RuleWizardHistory *history_;
+
+		/**
+		 * The task to calculate the checksum.
+		 */
+		CsumCalcTask calcTask_;
 
 		/**
 		 * Handle events from wizard.
@@ -91,6 +109,24 @@ class RuleWizardProgramPage : public RuleWizardProgramPageBase
 		 * @return Nothing.
 		 */
 		virtual void onPickButton(wxCommandEvent &);
+
+		/**
+		 * Handle events from checksum calculation task.
+		 * This will extract the result of the calculation from
+		 * the task and store it in csumCache_.
+		 * @param[in] 1st The event.
+		 * @return Nothing.
+		 */
+		void onCsumCalcTask(TaskEvent &);
+
+		/**
+		 * Store the chosen program.
+		 * This will store the given program to the history and
+		 * start the calculation of the checksum.
+		 * @param[in] 1st The program.
+		 * @return Nothing.
+		 */
+		void setProgram(const wxString &);
 
 		/**
 		 * Update navigation.

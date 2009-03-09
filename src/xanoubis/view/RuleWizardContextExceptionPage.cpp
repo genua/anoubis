@@ -53,7 +53,7 @@ void
 RuleWizardContextExceptionPage::onPageChanged(wxWizardEvent &)
 {
 	updateNavi();
-	if (!history_->getCtxException()) {
+	if (!history_->haveContextException()) {
 		exceptionListBox->Clear();
 	}
 }
@@ -65,7 +65,7 @@ RuleWizardContextExceptionPage::onAddButton(wxCommandEvent &)
 	wxArrayString	list;
 	wxFileDialog	fileDlg(this);
 
-	list = history_->getCtxExceptionList();
+	list = history_->getContextExceptionList();
 
 	wxBeginBusyCursor();
 	fileDlg.SetDirectory(wxT("/usr/bin"));
@@ -75,7 +75,7 @@ RuleWizardContextExceptionPage::onAddButton(wxCommandEvent &)
 
 	if (fileDlg.ShowModal() == wxID_OK) {
 		list.Add(fileDlg.GetPath());
-		history_->setCtxExceptionList(list);
+		history_->setContextExceptionList(list);
 		selection = exceptionListBox->Append(fileDlg.GetPath());
 		exceptionListBox->Select(selection);
 		updateNavi();
@@ -91,7 +91,8 @@ RuleWizardContextExceptionPage::onDeleteButton(wxCommandEvent &)
 	selection = exceptionListBox->GetSelection();
 	if (selection != wxNOT_FOUND) {
 		exceptionListBox->Delete(selection);
-		history_->setCtxExceptionList(exceptionListBox->GetStrings());
+		history_->setContextExceptionList(
+		    exceptionListBox->GetStrings());
 		if (!exceptionListBox->IsEmpty() &&
 		    (selection >= (int)exceptionListBox->GetCount())) {
 			/* In case we deleted the last element, adjust index. */
@@ -109,6 +110,7 @@ RuleWizardContextExceptionPage::updateNavi(void)
 	history_->fillProgramNavi(this, naviSizer, false);
 	history_->fillContextNavi(this, naviSizer, true);
 	history_->fillAlfNavi(this, naviSizer, false);
+	history_->fillSandboxNavi(this, naviSizer, false);
 	Layout();
 	Refresh();
 }

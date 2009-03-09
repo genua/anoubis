@@ -25,58 +25,53 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _RULEWIZARDALFKEEPPOLICYPAGE_H_
-#define _RULEWIZARDALFKEEPPOLICYPAGE_H_
+#include "RuleWizardSandboxPage.h"
 
-#include <wx/wizard.h>
-
-#include "RuleWizardPanelsBase.h"
-#include "RuleWizardHistory.h"
-
-/**
- *
- */
-class RuleWizardAlfKeepPolicyPage
-    : public RuleWizardAlfKeepPolicyPageBase
+RuleWizardSandboxPage::RuleWizardSandboxPage(wxWindow *parent,
+    RuleWizardHistory *history) : RuleWizardSandboxPageBase(parent)
 {
-	public:
-		/**
-		 * Constructor of this page.
-		 */
-		RuleWizardAlfKeepPolicyPage(wxWindow *, RuleWizardHistory *);
+	history_ = history;
 
-	private:
-		/**
-		 * Store the input here.
-		 */
-		RuleWizardHistory *history_;
+	parent->Connect(wxEVT_WIZARD_PAGE_CHANGED,
+	    wxWizardEventHandler(RuleWizardSandboxPage::onPageChanged),
+	    NULL, this);
+}
 
-		/**
-		 * Handle events from wizard.
-		 * We became the current page. Update view.
-		 * @param[in] 1st The event.
-		 * @return Nothing.
-		 */
-		void onPageChanged(wxWizardEvent &);
+void
+RuleWizardSandboxPage::onPageChanged(wxWizardEvent &)
+{
+	updateNavi();
+}
 
-		/**
-		 */
-		virtual void onYesRadioButton(wxCommandEvent &);
+void
+RuleWizardSandboxPage::onYesWizardRadioButton(wxCommandEvent &)
+{
+	history_->setSandbox(RuleWizardHistory::PERM_RESTRICT_USER);
+	updateNavi();
+}
 
-		/**
-		 */
-		virtual void onNoRadioButton(wxCommandEvent &);
+void
+RuleWizardSandboxPage::onYesDefaultsRadioButton(wxCommandEvent &)
+{
+	history_->setSandbox(RuleWizardHistory::PERM_RESTRICT_DEFAULT);
+	updateNavi();
+}
 
-		/**
-		 * Update navigation.
-		 * @param None.
-		 * @return Nothing.
-		 */
-		void updateNavi(void);
+void
+RuleWizardSandboxPage::onNoRadioButton(wxCommandEvent &)
+{
+	history_->setSandbox(RuleWizardHistory::PERM_ALLOW_ALL);
+	updateNavi();
+}
 
-		/**
-		 */
-		void fillPolicy(void);
-};
-
-#endif	/* _RULEWIZARDALFKEEPPOLICYPAGE_H_ */
+void
+RuleWizardSandboxPage::updateNavi(void)
+{
+	naviSizer->Clear(true);
+	history_->fillProgramNavi(this, naviSizer, false);
+	history_->fillContextNavi(this, naviSizer, false);
+	history_->fillAlfNavi(this, naviSizer, false);
+	history_->fillSandboxNavi(this, naviSizer, true);
+	Layout();
+	Refresh();
+}

@@ -25,8 +25,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _RULEWIZARDALFCLIENTPORTSPAGE_H_
-#define _RULEWIZARDALFCLIENTPORTSPAGE_H_
+#ifndef _RULEWIZARDSANDBOXPAGE_H_
+#define _RULEWIZARDSANDBOXPAGE_H_
 
 #include <wx/wizard.h>
 
@@ -36,25 +36,15 @@
 /**
  *
  */
-class RuleWizardAlfClientPortsPage : public RuleWizardAlfServicePageBase
+class RuleWizardSandboxPage : public RuleWizardSandboxPageBase
 {
 	public:
 		/**
 		 * Constructor of this page.
 		 */
-		RuleWizardAlfClientPortsPage(wxWindow *, RuleWizardHistory *);
+		RuleWizardSandboxPage(wxWindow *, RuleWizardHistory *);
 
 	private:
-		/**
-		 *
-		 */
-		enum portColumns {
-			COLUMN_NAME = 0,	/**< Column for Servicename */
-			COLUMN_PORT,		/**< Column for Portnumber */
-			COLUMN_PROT,		/**< Column for Protocol */
-			COLUMN_STD		/**< Column for std-flag */
-		};
-
 		/**
 		 * Store the input here.
 		 */
@@ -69,63 +59,16 @@ class RuleWizardAlfClientPortsPage : public RuleWizardAlfServicePageBase
 		void onPageChanged(wxWizardEvent &);
 
 		/**
-		 * Handle events from addButton.
-		 * This will show the port choose dialog and add the
-		 * return value to the list of ports.
-		 * @param[in] 1st The event.
-		 * @return Nothing.
 		 */
-		void onAddButton(wxCommandEvent &);
+		virtual void onYesWizardRadioButton(wxCommandEvent &);
 
 		/**
-		 * Handle events from deleteButton.
-		 * This will delete the selected entries from the list.
-		 * @param[in] 1st The event.
-		 * @return Nothing.
 		 */
-		void onDeleteButton(wxCommandEvent &);
+		virtual void onYesDefaultsRadioButton(wxCommandEvent &);
 
 		/**
-		 * Handle select events from portListCtrl.
-		 * This will enable the deleteButton if something is selected.
-		 * @param[in] 1st The event.
-		 * @return Nothing.
 		 */
-		void onPortListSelect(wxListEvent &);
-
-		/**
-		 * Handle deselect events from portListCtrl.
-		 * This will disable the deleteButton if the last seleciton
-		 * is removed.
-		 * @param[in] 1st The event.
-		 * @return Nothing.
-		 */
-		void onPortListDeselect(wxListEvent &);
-
-		/**
-		 * Handle events from askCheckBox.
-		 * This will store the value of the checkbox to the history.
-		 * @param[in] 1st The event.
-		 * @return Nothing.
-		 */
-		void onAskCheckBox(wxCommandEvent &);
-
-		/**
-		 * Handle events from rawCheckBox.
-		 * This will store the value of the checkbox to the history.
-		 * @param[in] 1st The event.
-		 * @return Nothing.
-		 */
-		void onRawCheckBox(wxCommandEvent &);
-
-		/**
-		 * Store port list.
-		 * This will take the input of the port list and stores
-		 * it to the history.
-		 * @param None.
-		 * @return Nothing.
-		 */
-		void storePortList(void) const;
+		virtual void onNoRadioButton(wxCommandEvent &);
 
 		/**
 		 * Update navigation.
@@ -135,4 +78,4 @@ class RuleWizardAlfClientPortsPage : public RuleWizardAlfServicePageBase
 		void updateNavi(void);
 };
 
-#endif	/* _RULEWIZARDALFCLIENTPORTSPAGE_H_ */
+#endif	/* _RULEWIZARDSANDBOXPAGE_H_ */

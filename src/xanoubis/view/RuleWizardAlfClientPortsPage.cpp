@@ -27,10 +27,27 @@
 
 #include "RuleWizardAlfClientPortsPage.h"
 
+#include "RuleWizardAlfDlgAddService.h"
+
 RuleWizardAlfClientPortsPage::RuleWizardAlfClientPortsPage(wxWindow *parent,
-    RuleWizardHistory *history) : RuleWizardAlfClientPortsPageBase(parent)
+    RuleWizardHistory *history) : RuleWizardAlfServicePageBase(parent)
 {
+	int	width;
+
 	history_ = history;
+
+	/* Create columns */
+	portListCtrl->InsertColumn(COLUMN_NAME, _("Servicename"));
+	portListCtrl->InsertColumn(COLUMN_PORT, _("Portnumber"));
+	portListCtrl->InsertColumn(COLUMN_PROT, _("Protocol"));
+	portListCtrl->InsertColumn(COLUMN_STD, _("Standard"));
+
+	/* Set initial column width */
+	width = portListCtrl->GetClientSize().GetWidth() / 4;
+	portListCtrl->SetColumnWidth(COLUMN_NAME, width);
+	portListCtrl->SetColumnWidth(COLUMN_PORT, width);
+	portListCtrl->SetColumnWidth(COLUMN_PROT, width);
+	portListCtrl->SetColumnWidth(COLUMN_STD, width);
 
 	parent->Connect(wxEVT_WIZARD_PAGE_CHANGED,
 	    wxWizardEventHandler(RuleWizardAlfClientPortsPage::onPageChanged),
@@ -51,12 +68,111 @@ RuleWizardAlfClientPortsPage::onPageChanged(wxWizardEvent &)
 }
 
 void
+RuleWizardAlfClientPortsPage::onAddButton(wxCommandEvent &)
+{
+	long				index;
+	wxArrayString			list;
+	RuleWizardAlfDlgAddService	dlg(this);
+
+	if (dlg.ShowModal() == wxID_OK) {
+		list = dlg.getSelection();
+		for (size_t i=0; i<list.GetCount(); i=i+3) {
+			index = portListCtrl->GetItemCount();
+			portListCtrl->InsertItem(index, wxEmptyString);
+			portListCtrl->SetItem(index, COLUMN_NAME,
+			    list.Item(i));
+			portListCtrl->SetItem(index, COLUMN_PORT,
+			    list.Item(i+1));
+			portListCtrl->SetItem(index, COLUMN_PROT,
+			    list.Item(i+2));
+		}
+		storePortList();
+	}
+}
+
+void
+RuleWizardAlfClientPortsPage::onDeleteButton(wxCommandEvent &)
+{
+	long index;
+
+	index = portListCtrl->GetNextItem(-1, wxLIST_NEXT_ALL,
+	    wxLIST_STATE_SELECTED);
+	while (index != wxNOT_FOUND) {
+		portListCtrl->SetItemState(index, 0, wxLIST_STATE_SELECTED);
+		portListCtrl->DeleteItem(index);
+		index = portListCtrl->GetNextItem(index - 1, wxLIST_NEXT_ALL,
+		    wxLIST_STATE_SELECTED);
+	}
+	storePortList();
+}
+
+void
+RuleWizardAlfClientPortsPage::onPortListSelect(wxListEvent &)
+{
+	deleteButton->Enable();
+}
+
+void
+RuleWizardAlfClientPortsPage::onPortListDeselect(wxListEvent &)
+{
+	/* Was the last one deselected? */
+	if (portListCtrl->GetSelectedItemCount() == 0) {
+		deleteButton->Disable();
+	}
+}
+
+void
+RuleWizardAlfClientPortsPage::onAskCheckBox(wxCommandEvent & event)
+{
+	history_->setAlfClientAsk(event.GetInt());
+	updateNavi();
+}
+
+void
+RuleWizardAlfClientPortsPage::onRawCheckBox(wxCommandEvent & event)
+{
+	history_->setAlfClientRaw(event.GetInt());
+	updateNavi();
+}
+
+void
+RuleWizardAlfClientPortsPage::storePortList(void) const
+{
+	long		index;
+	wxListItem	line;
+	wxArrayString	list;
+
+	for (index=0; index<portListCtrl->GetItemCount(); index++) {
+		/* Get servicename */
+		line.SetId(index);
+		line.SetColumn(COLUMN_NAME);
+		portListCtrl->GetItem(line);
+		list.Add(line.GetText());
+
+		/* Get portnumber */
+		line.SetId(index);
+		line.SetColumn(COLUMN_PORT);
+		portListCtrl->GetItem(line);
+		list.Add(line.GetText());
+
+		/* Get protocol */
+		line.SetId(index);
+		line.SetColumn(COLUMN_PROT);
+		portListCtrl->GetItem(line);
+		list.Add(line.GetText());
+	}
+
+	history_->setAlfClientPortList(list);
+}
+
+void
 RuleWizardAlfClientPortsPage::updateNavi(void)
 {
 	naviSizer->Clear(true);
 	history_->fillProgramNavi(this, naviSizer, false);
 	history_->fillContextNavi(this, naviSizer, false);
 	history_->fillAlfNavi(this, naviSizer, true);
+	history_->fillSandboxNavi(this, naviSizer, false);
 	Layout();
 	Refresh();
 }
