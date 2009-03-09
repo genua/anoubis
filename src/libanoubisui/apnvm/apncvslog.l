@@ -198,6 +198,8 @@ apncvs_log_parse(FILE *f, struct apncvs_log *log)
 	int parse_result;
 
 	yyin = f;
+	yyrestart(yyin);
+	BEGIN(INITIAL);
 
 	/* Reset variable used by the parser */
 	memset(log, 0, sizeof(struct apncvs_log));

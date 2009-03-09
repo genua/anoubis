@@ -168,6 +168,7 @@ apnmd_parse(const char *content)
 	if ((content != NULL) && (strlen(content) > 0)) {
 		apnmd_md = md;
 		apnmd__scan_string(content);
+		BEGIN(INITIAL);
 		apnmd_lex();
 		apnmd_md = NULL;
 	}
