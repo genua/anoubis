@@ -306,8 +306,9 @@ DlgRuleEditor::writeOptions(void)
 void
 DlgRuleEditor::update(Subject *subject)
 {
-	long		 idx;
+	long		idx;
 	AppPolicy	*parent;
+	FilterPolicy	*filter;
 
 	if (subject->IsKindOf(CLASSINFO(AppPolicy))) {
 		idx = findListRow(appPolicyListCtrl, (Policy *)subject);
@@ -341,7 +342,8 @@ DlgRuleEditor::update(Subject *subject)
 		}
 	} else if (subject->IsKindOf(CLASSINFO(DefaultFilterPolicy))) {
 		idx = findListRow(filterPolicyListCtrl, (Policy *)subject);
-		parent = ((FilterPolicy*)subject)->getParentPolicy();
+		filter = wxDynamicCast(subject, FilterPolicy);
+		parent = filter->getParentPolicy();
 		if ((idx != -1) && (parent != NULL)) {
 			if (parent->IsKindOf(CLASSINFO(AlfAppPolicy))) {
 				updateListAlfFilterPolicy(idx);

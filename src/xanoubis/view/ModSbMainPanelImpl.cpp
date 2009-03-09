@@ -100,7 +100,7 @@ ModSbMainPanelImpl::update(Subject *subject)
 {
 	long		idx;
 	AppPolicy	*parent;
-	FilterPolicy	*data;
+	FilterPolicy	*filter;
 
 	if (subject->IsKindOf(CLASSINFO(SbAccessFilterPolicy))) {
 		idx = findListRow((Policy *)subject);
@@ -112,8 +112,8 @@ ModSbMainPanelImpl::update(Subject *subject)
 			updateSbAppPolicy(idx);
 	} else if (subject->IsKindOf(CLASSINFO(DefaultFilterPolicy))) {
 		idx = findListRow((Policy *)subject);
-		data = wxDynamicCast(subject, FilterPolicy);
-		parent = data->getParentPolicy();
+		filter = wxDynamicCast(subject, FilterPolicy);
+		parent = filter->getParentPolicy();
 		if ((idx != -1) && (parent != NULL)) {
 			if (parent->IsKindOf(CLASSINFO(SbAppPolicy)))
 				updateDefaultFilterPolicy(idx);

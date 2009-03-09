@@ -318,8 +318,9 @@ ModAlfMainPanelImpl::updateDelete(Subject *subject)
 void
 ModAlfMainPanelImpl::update(Subject *subject)
 {
-	long             idx;
-	AppPolicy       *parent;
+	long		idx;
+	AppPolicy	*parent;
+	FilterPolicy	*filter;
 
 	if (subject->IsKindOf(CLASSINFO(AlfAppPolicy))) {
 		idx = findListRow((Policy *)subject);
@@ -338,7 +339,8 @@ ModAlfMainPanelImpl::update(Subject *subject)
 		}
 	} else if (subject->IsKindOf(CLASSINFO(DefaultFilterPolicy))) {
 		idx = findListRow((Policy *)subject);
-		parent = ((FilterPolicy*)subject)->getParentPolicy();
+		filter = wxDynamicCast(subject, FilterPolicy);
+		parent = filter->getParentPolicy();
 		if ((idx != -1) && (parent != NULL)) {
 			if (parent->IsKindOf(CLASSINFO(AlfAppPolicy))) {
 				updateDefaultFilterPolicy(idx);
