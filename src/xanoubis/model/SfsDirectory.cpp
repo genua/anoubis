@@ -25,6 +25,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "wx/utils.h"
 #include "SfsDirectory.h"
 
 SfsDirectory::SfsDirectory()
@@ -192,7 +193,9 @@ SfsDirectory::updateEntryList()
 
 	/* Clear list before traversion starts */
 	entryList_.clear();
+	wxBeginBusyCursor();
 	dir.Traverse(*this);
+	wxEndBusyCursor();
 }
 
 int
