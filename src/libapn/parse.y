@@ -216,10 +216,10 @@ typedef struct {
 %type	<v.afspec>		alffilterspec
 %type	<v.action>		action
 %type	<v.log>			log
-%type	<v.rule>		alfruleset sbruleset alfrule sfsrule sbrule
+%type	<v.rule>		alfrule sfsrule sbrule
 %destructor {
 	apn_free_one_rule($$, NULL);
-}				alfruleset sbruleset alfrule sfsrule sbrule
+}				alfrule sfsrule sbrule
 %type	<v.rule>		ctxrule
 %destructor { free($$); }	ctxrule
 %type	<v.rulehead>		alfrule_l sfsrule_l sbrule_l ctxrule_l
@@ -471,10 +471,6 @@ alfrule		: ruleid alffilterrule	scope		{
 
 			$$ = rule;
 		}
-		;
-
-alfspecs	: alffilterspec
-		| capability
 		;
 
 alffilterrule	: action alffilterspec		{
