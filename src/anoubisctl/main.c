@@ -363,10 +363,10 @@ daemon_start(void)
 {
 	int			 err;
 	int			 error = 0;
-	static const char	*anoubisd = GENERALPREFIX "/sbin/anoubisd";
+	static const char	*command = PACKAGE_SBINDIR "/" PACKAGE_DAEMON;
 
-	if ((err = system(anoubisd))) {
-		perror(anoubisd);
+	if ((err = system(command))) {
+		perror(command);
 		error = 2;
 	}
 
@@ -376,7 +376,7 @@ daemon_start(void)
 static int
 daemon_stop(void)
 {
-	FILE * fp = fopen(ANOUBISD_PIDFILENAME, "r");
+	FILE * fp = fopen(PACKAGE_PIDFILE, "r");
 	int i, pid;
 
 	if (!fp)
@@ -405,9 +405,9 @@ daemon_status(void)
 
 	error = create_channel();
 	if (error == 0)
-		printf("anoubisd is running\n");
+		printf(PACKAGE_DAEMON " is running\n");
 	else
-		printf("anoubisd is not running\n");
+		printf(PACKAGE_DAEMON " is not running\n");
 	destroy_channel();
 	return error;
 }
@@ -415,7 +415,7 @@ daemon_status(void)
 static int
 daemon_reload(void)
 {
-	FILE * fp = fopen(ANOUBISD_PIDFILENAME, "r");
+	FILE * fp = fopen(PACKAGE_PIDFILE, "r");
 	int pid;
 
 	if (!fp)
@@ -453,7 +453,7 @@ dump(char *file, uid_t uid, unsigned int prio)
 
 	error = create_channel();
 	if (error) {
-		fprintf(stderr, "Cannot connect to anoubisd\n");
+		fprintf(stderr, "Cannot connect to " PACKAGE_DAEMON "\n");
 		return error;
 	}
 	set_value(req.ptype, ANOUBIS_PTYPE_GETBYUID);
@@ -638,7 +638,7 @@ load(char *rulesopt, uid_t uid, unsigned int prio)
 
 	error = create_channel();
 	if (error) {
-		fprintf(stderr, "Cannot connect to anoubisd\n");
+		fprintf(stderr, "Cannot connect to " PACKAGE_DAEMON "\n");
 		apn_free_ruleset(ruleset);
 		return error;
 	}
@@ -875,7 +875,7 @@ create_channel(void)
 	bzero(&ss, sizeof(ss));
 	ss_sun->sun_family = AF_UNIX;
 
-	strlcpy(ss_sun->sun_path, ANOUBISD_SOCKETNAME,
+	strlcpy(ss_sun->sun_path, PACKAGE_SOCKET,
 	    sizeof(ss_sun->sun_path));
 
 	if (opts & ANOUBISCTL_OPT_VERBOSE2)

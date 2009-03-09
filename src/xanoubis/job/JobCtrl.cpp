@@ -43,7 +43,7 @@ WX_DEFINE_LIST(JobThreadList);
 JobCtrl::JobCtrl(void)
 {
 	/* Default configuration */
-	this->socketPath_ = wxT("/var/run/anoubisd.sock");
+	this->socketPath_ = wxT(PACKAGE_SOCKET);
 
 	csumCalcTaskQueue_ = new SynchronizedQueue<Task>(true);
 	comTaskQueue_ = new SynchronizedQueue<Task>(false);

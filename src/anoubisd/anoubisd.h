@@ -57,18 +57,17 @@
 
 #define ANOUBISD_USER			"_anoubisd"
 
-#define ANOUBISD_SOCKETNAME		"/var/run/anoubisd.sock"
-#define ANOUBISD_PIDFILENAME		"/var/run/anoubisd.pid"
-
-#define ANOUBISD_POLICYDIR		"/var/lib/anoubis"
 #define ANOUBISD_POLICYCHROOT		"/policy"
 #define ANOUBISD_USERDIR		"user"
 #define ANOUBISD_ADMINDIR		"admin"
 #define ANOUBISD_DEFAULTNAME		"default"
 #define ANOUBISD_PUBKEYDIR		"pubkeys"
 
-#define SFS_CHECKSUMROOT		"/var/lib/anoubis/sfs"
+#define SFS_CHECKSUMROOT		PACKAGE_POLICYDIR "/sfs"
 #define SFS_CHECKSUMCHROOT		"/sfs"
+
+#define CERT_DIR_CHROOT			ANOUBISD_POLICYCHROOT "/pubkeys"
+#define CERT_DIR			PACKAGE_POLICYDIR CERT_DIR_CHROOT
 
 #define __used __attribute__((unused))
 

@@ -76,7 +76,7 @@ AnoubisGuiApp::AnoubisGuiApp(void)
 	SetAppName(wxT("xanoubis"));
 	wxInitAllImageHandlers();
 
-	paths_.SetInstallPrefix(wxT(GENERALPREFIX));
+	paths_.SetInstallPrefix(wxT(PACKAGE_PREFIX));
 }
 
 AnoubisGuiApp::~AnoubisGuiApp(void)

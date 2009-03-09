@@ -170,7 +170,7 @@ static struct achat_channel	*channel;
 struct anoubis_client		*client;
 static const char		*def_cert = ".xanoubis/default.crt";
 static const char		*def_pri =  ".xanoubis/default.key";
-static const char		*anoubis_socket = "/var/run/anoubisd.sock";
+static const char		*anoubis_socket = PACKAGE_SOCKET;
 static char			*exim_file = NULL;
 static char			*cert = NULL;
 static char			*keyfile = NULL;

@@ -53,9 +53,6 @@
 
 #include <anoubis_sig.h>
 
-#define ANOUBISD_CERT_DIR ANOUBISD_POLICYDIR ANOUBISD_POLICYCHROOT "/pubkeys"
-#define ANOUBISD_CERT_DIR_CHROOT ANOUBISD_POLICYCHROOT "/pubkeys"
-
 
 TAILQ_HEAD(cert_db, cert) *certs;
 
@@ -68,10 +65,10 @@ cert_init(int chroot)
 {
 	struct cert_db	*cdb;
 	int			 count;
-	const char		*certdir = ANOUBISD_CERT_DIR;
+	const char		*certdir = CERT_DIR;
 
 	if (chroot)
-		certdir = ANOUBISD_CERT_DIR_CHROOT;
+		certdir = CERT_DIR_CHROOT;
 	if ((cdb = calloc(1, sizeof(struct cert_db))) == NULL) {
 		log_warn("%s: calloc", certdir);
 		master_terminate(ENOMEM);
@@ -90,10 +87,10 @@ cert_reconfigure(int chroot)
 {
 	struct cert_db	*new, *old;
 	int			 count;
-	const char		*certdir = ANOUBISD_CERT_DIR;
+	const char		*certdir = CERT_DIR;
 
 	if (chroot)
-		certdir = ANOUBISD_CERT_DIR_CHROOT;
+		certdir = CERT_DIR_CHROOT;
 	if ((new = calloc(1, sizeof(struct cert_db))) == NULL) {
 		log_warn("calloc");
 		master_terminate(ENOMEM);

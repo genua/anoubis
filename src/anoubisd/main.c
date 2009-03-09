@@ -130,7 +130,7 @@ static void	send_entry_list(u_int64_t token, const char *path,
     u_int8_t *keyid, int idlen, uid_t uid, struct event_info_main *ev_info,
     int op, int for_all_ids);
 
-static char *pid_file_name = ANOUBISD_PIDFILENAME;
+static char *pid_file_name = PACKAGE_PIDFILE;
 
 __dead static void
 usage(void)
@@ -382,7 +382,7 @@ main(int argc, char *argv[])
 
 	/* Defaults. */
 	if (conf.unixsocket == NULL)
-		conf.unixsocket = ANOUBISD_SOCKETNAME;
+		conf.unixsocket = PACKAGE_SOCKET;
 
 	if ((pw = getpwnam(ANOUBISD_USER)) == NULL)
 		fatal("getpwnam");

@@ -36,9 +36,6 @@
 #define ANOUBISCTL_OPT_KEY		0x0020
 #define ANOUBISCTL_OPT_SIGN		0x0040
 
-#define ANOUBISD_SOCKETNAME		"/var/run/anoubisd.sock"
-#define ANOUBISD_PIDFILENAME		"/var/run/anoubisd.pid"
-
 #ifdef LINUX
 #define __dead	__attribute__((__noreturn__))
 #endif

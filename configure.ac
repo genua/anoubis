@@ -39,7 +39,8 @@ dnl os specific library replacements
 AC_SEARCH_LIBS([inet_net_pton], [resolv], \
 	AC_DEFINE([__USE_MISC], [1], [for inet_net_pton]))
 AC_CONFIG_LIBOBJ_DIR([src/bsdcompat])
-AC_REPLACE_FUNCS([strlcat strlcpy strtonum getpeereid inet_net_pton setproctitle])
+AC_REPLACE_FUNCS([strlcat strlcpy strtonum getpeereid \
+	inet_net_pton setproctitle])
 AM_CONDITIONAL([NEEDBSDCOMPAT], [test -n "$LIBOBJS"])
 
 if test -n "$LIBOBJS"; then
@@ -240,10 +241,29 @@ AC_SUBST(WX_CPPFLAGS)
 AC_SUBST(WX_CXXFLAGS)
 
 dnl Configured prefix has to be propagated to wxStandardPaths::SetInstallPrefix
-AS_IF([test "$prefix" = "NONE"],
-	[generalprefix=$ac_default_prefix],
-	[generalprefix=$prefix])
-AC_DEFINE_UNQUOTED(GENERALPREFIX, ["$generalprefix"], "configured prefix")
+AC_DEFINE_DIR(PACKAGE_PREFIX, ["$prefix"], "configured prefix")
+
+dnl Configured sbindir has to be propagated to anoubisctl
+AC_DEFINE_DIR(PACKAGE_SBINDIR, ["$sbindir"], "configured sbindir")
+
+AC_DEFINE(PACKAGE_DAEMON, PACKAGE_NAME "d", "name of the daemon")
+AS_IF([test -n "$policy_dir"],
+	[AC_DEFINE_UNQUOTED(PACKAGE_POLICYDIR, "$policy_dir",
+		"location of daemon policies")],
+	[AC_DEFINE(PACKAGE_POLICYDIR, "/var/lib/" PACKAGE_NAME,
+		"location of daemon policies")]
+)
+AS_IF([test -n "$pid_dir"],
+	[AC_DEFINE_UNQUOTED(PACKAGE_PIDDIR, "$pid_dir",
+		"location of pid file")],
+	[AC_DEFINE(PACKAGE_PIDDIR, "/var/run",
+		"location of pid file")]
+)
+AC_DEFINE(PACKAGE_PIDFILE, PACKAGE_PIDDIR "/" PACKAGE_DAEMON ".pid",
+	[daemon pidfile])
+AC_DEFINE(PACKAGE_SOCKET, PACKAGE_PIDDIR "/" PACKAGE_DAEMON ".sock",
+	[daemon socket])
+
 
 AC_MSG_CHECKING([for number of anoubis modules])
 WXFB_PROJECT_FILES=`ls -1 ${srcdir}/src/xanoubis/view/*.fbp`

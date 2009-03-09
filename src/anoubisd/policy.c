@@ -173,7 +173,7 @@ policy_main(struct anoubisd_config *conf __used, int pipe_m2s[2],
 	if ((pw = getpwnam(ANOUBISD_USER)) == NULL)
 		fatal("getpwnam");
 
-	if (chroot(ANOUBISD_POLICYDIR) == -1)
+	if (chroot(PACKAGE_POLICYDIR) == -1)
 		fatal("chroot");
 	if (chdir(ANOUBISD_POLICYCHROOT) == -1)
 		fatal("chdir");
