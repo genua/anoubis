@@ -25,8 +25,8 @@ share/xanoubis/icons/General_problem_16.png
 share/xanoubis/icons/General_problem_48.png
 share/xanoubis/icons/General_question_16.png
 share/xanoubis/icons/General_question_48.png
-share/xanoubis/icons/General_uparrow_16.png
 share/xanoubis/icons/General_downarrow_16.png
+share/xanoubis/icons/General_rightarrow_16.png
 share/xanoubis/icons/ModAlf_alert_16.png
 share/xanoubis/icons/ModAlf_alert_48.png
 share/xanoubis/icons/ModAlf_black_16.png
@@ -69,6 +69,9 @@ share/xanoubis/icons/ModOverview_problem_16.png
 share/xanoubis/icons/ModOverview_problem_48.png
 share/xanoubis/icons/ModOverview_question_16.png
 share/xanoubis/icons/ModOverview_question_48.png
+share/xanoubis/icons/ModSb_black_48.png
+share/xanoubis/icons/ModSb_error_48.png
+share/xanoubis/icons/ModSb_ok_48.png
 share/xanoubis/icons/ModSfs_alert_16.png
 share/xanoubis/icons/ModSfs_alert_48.png
 share/xanoubis/icons/ModSfs_black_16.png

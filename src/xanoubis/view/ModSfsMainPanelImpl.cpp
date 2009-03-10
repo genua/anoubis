@@ -43,6 +43,7 @@
 
 #include <apn.h>
 
+#include "wx/utils.h"
 #include <wx/filedlg.h>
 #include <wx/msgdlg.h>
 #include <wx/textdlg.h>
@@ -146,7 +147,9 @@ ModSfsMainPanelImpl::OnSfsMainDirCtrlSelChanged(wxTreeEvent &)
 {
 	/* Update controller */
 	currentOperation_ = OP_SHOW_ALL;
+	wxBeginBusyCursor();
 	sfsCtrl_->setPath(SfsMainDirCtrl->GetPath());
+	wxEndBusyCursor();
 }
 
 void
@@ -180,7 +183,9 @@ ModSfsMainPanelImpl::OnSfsDirChanged(wxCommandEvent&)
 void
 ModSfsMainPanelImpl::OnSfsMainDirTraversalChecked(wxCommandEvent&)
 {
+	wxBeginBusyCursor();
 	sfsCtrl_->setRecursive(SfsMainDirTraversalCheckbox->GetValue());
+	wxEndBusyCursor();
 }
 
 void
@@ -213,13 +218,17 @@ ModSfsMainPanelImpl::OnSfsError(wxCommandEvent&)
 void
 ModSfsMainPanelImpl::OnSfsMainFilterButtonClicked(wxCommandEvent&)
 {
+	wxBeginBusyCursor();
 	sfsCtrl_->setFilter(SfsMainFilterTextCtrl->GetValue());
+	wxEndBusyCursor();
 }
 
 void
 ModSfsMainPanelImpl::OnSfsMainInverseCheckboxClicked(wxCommandEvent&)
 {
+	wxBeginBusyCursor();
 	sfsCtrl_->setFilterInversed(SfsMainFilterInvertCheckBox->IsChecked());
+	wxEndBusyCursor();
 }
 
 void
@@ -491,7 +500,9 @@ ModSfsMainPanelImpl::initSfsMain(void)
 
 	/* Setting up CurrPathLabel with initial path */
 	SfsMainCurrPathLabel->SetLabel(SfsMainDirCtrl->GetPath());
+	wxBeginBusyCursor();
 	sfsCtrl_->setPath(SfsMainDirCtrl->GetPath());
+	wxEndBusyCursor();
 
 	SfsMainDirTraversalCheckbox->SetValue(sfsCtrl_->isRecursive());
 }
