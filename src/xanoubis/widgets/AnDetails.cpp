@@ -37,8 +37,8 @@ AnDetails::AnDetails(wxWindow *parent, wxWindowID id, const wxPoint & pos,
 
 	isVisible_    = false;
 	contentSizer_ = NULL;
-	upArrow_      = wxGetApp().loadIcon(wxT("General_uparrow_16.png"));
 	downArrow_    = wxGetApp().loadIcon(wxT("General_downarrow_16.png"));
+	rightArrow_   = wxGetApp().loadIcon(wxT("General_rightarrow_16.png"));
 
 	mainSizer = new wxBoxSizer(wxVERTICAL);
 	headSizer = new wxBoxSizer(wxHORIZONTAL);
@@ -111,11 +111,11 @@ AnDetails::update(void)
 	}
 
 	if (isVisible_) {
-		detailsIcon_->SetIcon(*upArrow_);
+		detailsIcon_->SetIcon(*downArrow_);
 		detailsIcon_->SetToolTip(_("hide"));
 		detailsLabel_->SetToolTip(_("hide"));
 	} else {
-		detailsIcon_->SetIcon(*downArrow_);
+		detailsIcon_->SetIcon(*rightArrow_);
 		detailsIcon_->SetToolTip(_("show"));
 		detailsLabel_->SetToolTip(_("show"));
 	}

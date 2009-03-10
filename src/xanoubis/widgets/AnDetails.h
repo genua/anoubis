@@ -103,14 +103,14 @@ class AnDetails : public wxPanel
 		wxStaticLine* detailsLine_;
 
 		/**
-		 * This holds the arrow image (arrow up).
-		 */
-		wxIcon *upArrow_;
-
-		/**
 		 * This holds the arrow image (arrow down).
 		 */
 		wxIcon *downArrow_;
+
+		/**
+		 * This holds the arrow image (arrow right).
+		 */
+		wxIcon *rightArrow_;
 
 		/**
 		 * Event handler for left mouse button releases.
