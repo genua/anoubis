@@ -424,6 +424,8 @@ xanoubis_SOURCES= \
 	job/ComRegistrationTask.h \
 	job/ComSfsListTask.cpp \
 	job/ComSfsListTask.h \
+	job/DummyTask.h \
+	job/DummyTask.cpp \
 	job/ComTask.cpp \
 	job/ComTask.h \
 	job/ComThread.cpp \

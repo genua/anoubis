@@ -37,7 +37,7 @@
 WX_DEFINE_LIST(JobThreadList);
 
 #ifndef CALCTASKQUEUE_POP_TIMEOUT
-	#define CALCTASKQUEUE_POP_TIMEOUT 500
+	#define CALCTASKQUEUE_POP_TIMEOUT 60000	/* One Minute */
 #endif
 
 JobCtrl::JobCtrl(void)
@@ -96,7 +96,6 @@ JobCtrl::stop(void)
 	while (!threadList_.empty()) {
 		JobThread *thread = threadList_.front();
 		threadList_.pop_front();
-
 		thread->stop();
 		delete thread;
 	}
@@ -106,11 +105,18 @@ bool
 JobCtrl::connect(void)
 {
 	if (!isConnected()) {
-		ComThread	*t = new ComThread(this, socketPath_);
+		ComThread	*t;
 
+		t = new ComThread(this, socketPath_);
 		if (t->start()) {
-			threadList_.push_back(t);
-			return (true);
+			if (t->exitThread()) {
+				t->stop();
+				delete t;
+				return (false);
+			} else {
+				threadList_.push_back(t);
+				return (true);
+			}
 		} else {
 			delete t;
 			return (false);
@@ -125,8 +131,8 @@ JobCtrl::disconnect(void)
 	ComThread *t;
 
 	while ((t = findComThread()) != 0) {
-		t->stop();
 		threadList_.DeleteObject(t);
+		t->stop();
 		delete t;
 	}
 }
@@ -143,21 +149,30 @@ JobCtrl::answerNotification(Notification *notify)
 {
 	ComThread *t = findComThread();
 
-	if (t != 0)
+	if (t != 0) {
 		t->pushNotification(notify);
+		if ((notify != NULL) && IS_ESCALATIONOBJ(notify)) {
+			t->wakeup(false);
+		}
+	}
 }
 
 void
 JobCtrl::addTask(Task *task)
 {
+	JobThread	*t = NULL;
 	switch (task->getType()) {
 	case Task::TYPE_CSUMCALC:
 		csumCalcTaskQueue_->push(task);
+		t = findCsumCalcThread();
 		break;
 	case Task::TYPE_COM:
 		comTaskQueue_->push(task);
+		t = findComThread();
 		break;
 	}
+	if (t)
+		t->wakeup(false);
 }
 
 Task *
@@ -182,6 +197,23 @@ JobCtrl::findComThread(void) const
 	    it != end; ++it) {
 
 		ComThread *t = dynamic_cast<ComThread*>(*it);
+
+		if (t != 0)
+			return (t);
+	}
+
+	return (0); /* No such thread */
+}
+
+CsumCalcThread *
+JobCtrl::findCsumCalcThread(void) const
+{
+	const JobThreadList::const_iterator end = threadList_.end();
+
+	for (JobThreadList::const_iterator it = threadList_.begin();
+	    it != end; ++it) {
+
+		CsumCalcThread *t = dynamic_cast<CsumCalcThread*>(*it);
 
 		if (t != 0)
 			return (t);

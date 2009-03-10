@@ -114,6 +114,26 @@ class ComTask : public Task
 		 */
 		void setComHandler(ComHandler *);
 
+		/**
+		 * Check if a task is completed. This will set the
+		 * result and destroy anoubis_transaction structures
+		 * associated with the com task. If the task is not
+		 * completed this function must do enough steps to make
+		 * sure that the task is once again waiting for a message
+		 * from the communication channel. Usually this means
+		 * that a transaction with the specified client is created.
+		 *
+		 * @param comHandler The ComHandler-instance
+		 * @param None.
+		 * @return True if the task is done.
+		 */
+		virtual bool done(void);
+
+		/**
+		 * Set Client data structure in the ComTask.
+		 */
+		void setClient(struct anoubis_client *client);
+
 	protected:
 		/**
 		 * Std-c'tor.
@@ -126,7 +146,7 @@ class ComTask : public Task
 		/**
 		 * Updates the execution-result of the task.
 		 *
-		 * The exec()-method should call this method to update the
+		 * The done()-method should call this method to update the
 		 * result according to the task-logic.
 		 *
 		 * @param result The new result-code
@@ -156,10 +176,16 @@ class ComTask : public Task
 		 */
 		virtual void resetComTaskResult(void);
 
+		/**
+		 * Get the Client data structure of the ComTask.
+		 */
+		struct anoubis_client	*getClient(void) const;
+
 	private:
-		ComTaskResult	result_;
-		int		resultDetails_;
-		ComHandler	*comHandler_;
+		ComTaskResult		 result_;
+		int			 resultDetails_;
+		ComHandler		*comHandler_;
+		struct anoubis_client	*client_;
 };
 
 #endif	/* _COMTASK_H_ */

@@ -57,14 +57,26 @@
 ComThread::ComThread(JobCtrl *jobCtrl, const wxString &socketPath)
     : JobThread(jobCtrl)
 {
+	int	flags;
 	this->socketPath_ = socketPath;
 	this->channel_ = 0;
 	this->client_ = 0;
 	answerQueue_ = new SynchronizedQueue<Notification>(false);
+	if (pipe(comPipe_) < 0) {
+		stop();
+		return;
+	}
+	for(int i=0; i<2; ++i) {
+		flags = fcntl(comPipe_[0], F_GETFL, 0);
+		flags |= O_NONBLOCK;
+		fcntl(comPipe_[0], F_SETFL, flags);
+	}
 }
 
 ComThread::~ComThread()
 {
+	close(comPipe_[0]);
+	close(comPipe_[1]);
 	delete answerQueue_;
 }
 
@@ -166,6 +178,10 @@ ComThread::isConnected(void) const
 void *
 ComThread::Entry(void)
 {
+	struct pollfd	 fds[2];
+	ComTask		*current = NULL;
+	Notification	*notify;
+
 	if (!connect()) {
 		sendComEvent(JobCtrl::CONNECTION_FAILED);
 		return (0);
@@ -173,22 +189,84 @@ ComThread::Entry(void)
 		sendComEvent(JobCtrl::CONNECTION_CONNECTED);
 	}
 
-	while (isConnected()) {
-		if (exitThread()) {
-			/* End of thread requested */
-			break;
+	fds[0].fd = comPipe_[0];
+	fds[0].events = POLLIN;
+	fds[1].fd = channel_->fd;
+	fds[1].events = POLLIN;
+
+	while (1) {
+		/*
+		 * Step 1: Clear the notification pipe. We do this first
+		 *         to ensure that other events that come in along
+		 *         the way will cause the poll below to return
+		 *         immediately.
+		 */
+		while(1) {
+			int ret;
+			char buf[100];
+
+			ret = read(comPipe_[0], buf, sizeof(buf));
+			if (ret <= 0)
+				break;
 		}
+		/* Step 2: Send any pending escalation answers. */
+		while((notify = answerQueue_->pop()) != 0) {
+			anoubis_token_t		 token;
+			bool			 allowed;
+			EscalationNotify	*escalation;
 
-		Task *task = getNextTask(Task::TYPE_COM);
-		ComTask *comTask = dynamic_cast<ComTask*>(task);
+			escalation = dynamic_cast<EscalationNotify *>(notify);
+			if (escalation) {
+				allowed = escalation->getAnswer()->wasAllowed();
+				token = escalation->getToken();
+				anoubis_client_notifyreply(client_, token,
+				    allowed ? 0 : EPERM, 0);
+			}
+		}
+		/* Step 3: If no task is running, try to start a new one. */
+		if (current == NULL) {
+			Task	*task = getNextTask(Task::TYPE_COM);
 
-		if (comTask != 0) {
-			comTask->setComHandler(this);
-			comTask->exec();
-			TaskEvent event(comTask, wxID_ANY);
+			current = dynamic_cast<ComTask *>(task);
+			if (current) {
+				current->setClient(client_);
+				current->setComHandler(this);
+				current->exec();
+			}
+		}
+		/*
+		 * Step 4: If the current task is done, handle this.
+		 *         This als handles errors in current->exec()
+		 *         and performs the next stpes of the task if the
+		 *         task is not yet done.
+		 */
+		if (current && current->done()) {
+			TaskEvent	event(current, wxID_ANY);
 			sendEvent(event);
-		} else {
-			waitForMessage();
+			/* Restart in case there are more tasks on the list. */
+			current = NULL;
+			continue;
+		}
+		/*
+		 * Step 5: At this point we have an active task that is
+		 *         waiting for data from the network and all
+		 *         pending answer requests have been handled.
+		 *         We poll until either new Jobs or answers
+		 *         become ready or a message from the daemon arrives.
+		 */
+		if (!isConnected() || exitThread())
+			break;
+		fds[0].revents = 0;
+		fds[1].revents = 0;
+		if (poll(fds, 2, 60000) <= 0) {
+			continue;
+		}
+		/*
+		 * Step 6: Process a message from the Daemon if there is
+		 *         one. Then start over.
+		 */
+		if (fds[1].revents) {
+			readMessage();
 		}
 	}
 
@@ -197,6 +275,57 @@ ComThread::Entry(void)
 	sendComEvent(JobCtrl::CONNECTION_DISCONNECTED);
 
 	return (0);
+}
+
+void
+ComThread::readMessage(void)
+{
+	size_t			 size = 4096;
+	struct anoubis_msg	*msg;
+
+	if ((channel_ == 0) || (client_ == 0)) {
+		return;
+	}
+
+	if ((msg = anoubis_msg_new(size)) == 0)
+		return;
+
+	achat_rc rc = acc_receivemsg(channel_, (char*)(msg->u.buf), &size);
+	if (rc != ACHAT_RC_OK) {
+		anoubis_msg_free(msg);
+		if (rc == ACHAT_RC_EOF) {
+			disconnect();
+			sendComEvent(JobCtrl::CONNECTION_ERROR);
+		}
+		return;
+	}
+
+	anoubis_msg_resize(msg, size);
+
+	/* This will free the message. */
+	int result = anoubis_client_process(client_, msg);
+	if (result < 0) {
+		/* Error */
+		disconnect();
+		/* XXX CEH */
+		return;
+	} else if (result == 0) {
+		/*
+		 * Message does not fit into current protocol flow.
+		 * Skip it.
+		 */
+		fprintf(stderr, "ComThread: Message does not fit ");
+		fprintf(stderr, "into protocol flow, skipping...\n");
+	} else if (anoubis_client_hasnotifies(client_) != 0) {
+		struct anoubis_msg	*notifyMsg = NULL;
+		bool			 handled;
+
+		notifyMsg = anoubis_client_getnotify(client_);
+		handled = checkNotify(notifyMsg);
+		if (!handled) {
+			sendNotify(notifyMsg);
+		}
+	}
 }
 
 struct anoubis_client *
@@ -383,8 +512,9 @@ ComThread::sendNotify(struct anoubis_msg *notifyMsg)
 void
 ComThread::pushNotification(Notification *notify)
 {
-	if ((notify != NULL) && IS_ESCALATIONOBJ(notify))
+	if ((notify != NULL) && IS_ESCALATIONOBJ(notify)) {
 		answerQueue_->push(notify);
+	}
 }
 
 void
@@ -396,4 +526,16 @@ ComThread::sendComEvent(JobCtrl::ConnectionState state)
 	event.SetString(wxT("localhost"));
 
 	wxPostEvent(JobCtrl::getInstance(), event);
+}
+
+void
+ComThread::wakeup(bool)
+{
+	/*
+	 * We don't care about the return value (might be EAGAIN).
+	 * The cast to void silences a warning about the unused result
+	 * on ubuntu.
+	 */
+	int ret = write(comPipe_[1], "A", 1);
+	(void)ret;
 }

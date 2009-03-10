@@ -82,6 +82,22 @@ class JobThread : public wxThread
 		 */
 		bool isRunning(void) const;
 
+		/**
+		 * Tests weather the thread should leave the main-loop.
+		 * @return true if the thread should be exited, false
+		 *         otherwise.
+		 */
+		bool exitThread(void) const;
+
+		/**
+		 * Implementations must implement this functions and
+		 * provide the JobCtrl with a way to wakeup the thread
+		 * if new jobs have been queued or if the thread has been
+		 * ordered to exit.
+		 * @param[in] 1st True if the wakeup is due to an exitThread
+		 */
+		virtual void wakeup(bool) = 0;
+
 	protected:
 		JobThread(JobCtrl *);
 
@@ -105,13 +121,6 @@ class JobThread : public wxThread
 		 * @see stop()
 		 */
 		virtual void stopHook(void);
-
-		/**
-		 * Tests weather the thread should leave the main-loop.
-		 * @return true if the thread should be exited, false
-		 *         otherwise.
-		 */
-		bool exitThread(void) const;
 
 		/**
 		 * Receives a task from the execution-queue.

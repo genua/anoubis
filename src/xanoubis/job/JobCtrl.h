@@ -38,6 +38,7 @@
 WX_DECLARE_LIST(JobThread, JobThreadList);
 
 class ComThread;
+class CsumCalcThread;
 class Notification;
 
 /**
@@ -198,7 +199,9 @@ class JobCtrl : public wxEvtHandler, public Singleton<JobCtrl>
 		SynchronizedQueue<Task> *comTaskQueue_;
 		JobThreadList threadList_;
 
-		ComThread *findComThread(void) const;
+		ComThread	*findComThread(void) const;
+		CsumCalcThread	*findCsumCalcThread(void) const;
+		void		 stopThread(JobThread *);
 
 	friend class JobThread;
 	friend class Singleton<JobCtrl>;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 GeNUA mbH <info@genua.de>
+ * Copyright (c) 2009 GeNUA mbH <info@genua.de>
  *
  * All rights reserved.
  *
@@ -25,39 +25,23 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "AnEvents.h"
-#include "CsumCalcThread.h"
+#ifndef _DUMMYTASK_H_
+#define _DUMMYTASK_H_
+
+#include <config.h>
+
 #include "Task.h"
-#include "DummyTask.h"
-#include "JobCtrl.h"
 
-CsumCalcThread::CsumCalcThread(JobCtrl *jobCtrl) : JobThread(jobCtrl)
+/*
+ * A dummy task of an arbitrary type. This task does nothing.
+ */
+
+class DummyTask : public Task
 {
-}
+	public:
+		DummyTask(Task::Type type) : Task(type) { };
+		void exec(void) { };
+		wxEventType getEventType(void) const;
+};
 
-void *
-CsumCalcThread::Entry(void)
-{
-	while (!exitThread()) {
-		Task		*task = getNextTask(Task::TYPE_CSUMCALC);
-
-		if (task == 0)
-			continue;
-
-		task->exec();
-
-		TaskEvent event(task, wxID_ANY);
-		sendEvent(event);
-	}
-
-	return (0);
-}
-
-void
-CsumCalcThread::wakeup(bool isexit)
-{
-	if (isexit) {
-		DummyTask	*task = new DummyTask(Task::TYPE_CSUMCALC);
-		JobCtrl::getInstance()->addTask(task);
-	}
-}
+#endif	/* _DUMMYTASK_H_ */

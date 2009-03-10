@@ -28,11 +28,11 @@
 #ifndef _COMTHREAD_H_
 #define _COMTHREAD_H_
 
-#include "ComHandler.h"
 #include "JobCtrl.h"
 #include "JobThread.h"
 #include "Notification.h"
 #include "SynchronizedQueue.h"
+#include "ComHandler.h"
 
 /**
  * The thread, which is responsible for tasks of the Task::TYPE_COM.
@@ -45,17 +45,16 @@ class ComThread : public JobThread, protected ComHandler
 
 		void *Entry(void);
 		void pushNotification(Notification *);
+		void wakeup(bool);
 
 	protected:
 		/**
-		 * Implementation of ComHandler::getClient().
+		 * Synchronously wait for a new message from the
+		 * communication channel.
 		 */
+		void readMessage(void);
 		struct anoubis_client *getClient(void) const;
-
-		/**
-		 * Implementation of ComHandler::waitForMessage().
-		 */
-		bool waitForMessage(void);
+		bool waitForMessage(void); /* Old style implementation. */
 
 		/**
 		 * Connects to anoubisd.
@@ -86,6 +85,7 @@ class ComThread : public JobThread, protected ComHandler
 		bool checkNotify(struct anoubis_msg *);
 		void sendNotify(struct anoubis_msg *);
 		void sendComEvent(JobCtrl::ConnectionState);
+		int	comPipe_[2];
 };
 
 #endif	/* _COMTHREAD_H_ */

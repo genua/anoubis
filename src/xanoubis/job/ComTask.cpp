@@ -30,6 +30,7 @@
 ComTask::ComTask(void) : Task(Task::TYPE_COM)
 {
 	this->comHandler_ = 0;
+	client_ = NULL;
 	resetComTaskResult();
 }
 
@@ -74,4 +75,22 @@ void
 ComTask::setComHandler(ComHandler *comHandler)
 {
 	this->comHandler_ = comHandler;
+}
+
+bool
+ComTask::done(void)
+{
+	return (true);
+}
+
+void
+ComTask::setClient(struct anoubis_client *client)
+{
+	client_ = client;
+}
+
+struct anoubis_client *
+ComTask::getClient(void) const
+{
+	return client_;
 }

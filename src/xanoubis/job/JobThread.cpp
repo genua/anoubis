@@ -60,12 +60,9 @@ JobThread::start(void)
 		 * Thread is running, invoke startHook() to complete the
 		 * procedure.
 		 */
-		success = startHook();
-
-		if (!success) {
+		if (!startHook()) {
 			/* Stop thread again */
 			exitThread_ = true;
-			Wait();
 		}
 	}
 
@@ -79,6 +76,7 @@ JobThread::stop(void)
 
 	/* Ask for quit and wait... */
 	exitThread_ = true;
+	wakeup(true);
 	Wait();
 }
 

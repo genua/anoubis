@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 GeNUA mbH <info@genua.de>
+ * Copyright (c) 2009 GeNUA mbH <info@genua.de>
  *
  * All rights reserved.
  *
@@ -25,39 +25,11 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "AnEvents.h"
-#include "CsumCalcThread.h"
-#include "Task.h"
 #include "DummyTask.h"
-#include "JobCtrl.h"
+#include "TaskEvent.h"
 
-CsumCalcThread::CsumCalcThread(JobCtrl *jobCtrl) : JobThread(jobCtrl)
+wxEventType
+DummyTask::getEventType(void) const
 {
-}
-
-void *
-CsumCalcThread::Entry(void)
-{
-	while (!exitThread()) {
-		Task		*task = getNextTask(Task::TYPE_CSUMCALC);
-
-		if (task == 0)
-			continue;
-
-		task->exec();
-
-		TaskEvent event(task, wxID_ANY);
-		sendEvent(event);
-	}
-
-	return (0);
-}
-
-void
-CsumCalcThread::wakeup(bool isexit)
-{
-	if (isexit) {
-		DummyTask	*task = new DummyTask(Task::TYPE_CSUMCALC);
-		JobCtrl::getInstance()->addTask(task);
-	}
+	return (anTASKEVT_DUMMY);
 }

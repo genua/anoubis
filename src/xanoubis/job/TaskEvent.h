@@ -36,6 +36,11 @@
 //@{
 BEGIN_DECLARE_EVENT_TYPES()
 	/**
+	 * Sent by a dummy Task after execution.
+	 */
+	DECLARE_LOCAL_EVENT_TYPE(anTASKEVT_DUMMY, wxNewEventType())
+
+	/**
 	 * Event-type of TaskEvent when a checksum-calculation has finished.
 	 * @see CsumCalcTask
 	 */

@@ -42,6 +42,7 @@ class CsumCalcThread : public JobThread
 	public:
 		CsumCalcThread(JobCtrl *);
 		void *Entry(void);
+		void wakeup(bool);
 };
 
 #endif	/* _CSUMCALCTHREAD_H_ */
