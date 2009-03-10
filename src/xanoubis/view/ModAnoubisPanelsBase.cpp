@@ -472,13 +472,13 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	m_staticline1 = new wxStaticLine( tb_Profiles, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLI_HORIZONTAL );
 	bSizer27->Add( m_staticline1, 0, wxEXPAND | wxALL, 5 );
 	
-	m_staticText40 = new wxStaticText( tb_Profiles, wxID_ANY, _("Saving a profile does not activate it! You need to store (activate) the profile, if you want to use it."), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText40 = new wxStaticText( tb_Profiles, wxID_ANY, _("Saving a profile only creates a new Version. The ruleset is not sent to the daemon. Use \"Activate\" to achieve this."), wxDefaultPosition, wxDefaultSize, 0 );
 	m_staticText40->Wrap( 250 );
 	bSizer27->Add( m_staticText40, 0, wxALL, 5 );
 	
-	profileActivateButton = new wxButton( tb_Profiles, wxID_ANY, _("Store (Activate)"), wxDefaultPosition, wxDefaultSize, 0 );
+	profileActivateButton = new wxButton( tb_Profiles, wxID_ANY, _("Activate"), wxDefaultPosition, wxDefaultSize, 0 );
 	profileActivateButton->Enable( false );
-	profileActivateButton->SetToolTip( _("Activate the selected profile.") );
+	profileActivateButton->SetToolTip( _("Send the selected Profile to the Daemon") );
 	
 	bSizer27->Add( profileActivateButton, 0, wxALL, 5 );
 	
