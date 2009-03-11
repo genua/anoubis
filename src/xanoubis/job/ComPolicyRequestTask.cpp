@@ -31,7 +31,6 @@
 #include <apn.h>
 
 
-#include "ComHandler.h"
 #include "ComPolicyRequestTask.h"
 #include "PolicyRuleSet.h"
 #include "TaskEvent.h"
@@ -83,47 +82,45 @@ ComPolicyRequestTask::getEventType(void) const
 void
 ComPolicyRequestTask::exec(void)
 {
-	struct anoubis_transaction	*ta;
 	Policy_GetByUid			req;
 
 	resetComTaskResult();
+	ta_ = NULL;
 
 	/* Prepare and set request message */
 	set_value(req.ptype, ANOUBIS_PTYPE_GETBYUID);
 	set_value(req.uid, this->uid_);
 	set_value(req.prio, this->prio_);
 
-	ta = anoubis_client_policyrequest_start(
-	    getComHandler()->getClient(), &req, sizeof(req));
+	ta_ = anoubis_client_policyrequest_start(getClient(),
+	    &req, sizeof(req));
 
-	if(ta == 0) {
+	if(ta_ == NULL) {
 		setComTaskResult(RESULT_COM_ERROR);
-		return;
 	}
+}
 
-	/* Wait for completition */
-	while (!(ta->flags & ANOUBIS_T_DONE)) {
-		if (!getComHandler()->waitForMessage()) {
-			anoubis_transaction_destroy(ta);
-			setComTaskResult(RESULT_COM_ERROR);
-			return;
-		}
-	}
+bool
+ComPolicyRequestTask::done(void)
+{
+	if (ta_ == NULL)
+		return (true);
+	if ((ta_->flags & ANOUBIS_T_DONE) == 0)
+		return (false);
 
-	if(ta->result) {
+	if(ta_->result) {
 		setComTaskResult(RESULT_REMOTE_ERROR);
-		setResultDetails(ta->result);
-		anoubis_transaction_destroy(ta);
-		return;
+		setResultDetails(ta_->result);
+	} else {
+		setComTaskResult(RESULT_SUCCESS);
 	}
 
 	/* Take reply out of transaction and finally destroy transaction */
-	this->msg_ = ta->msg;
-	ta->msg = 0;
-	anoubis_transaction_destroy(ta);
-
-	/* Done */
-	setComTaskResult(RESULT_SUCCESS);
+	this->msg_ = ta_->msg;
+	ta_->msg = 0;
+	anoubis_transaction_destroy(ta_);
+	ta_ = NULL;
+	return (true);
 }
 
 struct apn_ruleset *

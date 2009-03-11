@@ -199,12 +199,18 @@ class ComPolicySendTask : public ComTask
 		 */
 		void exec(void);
 
+		/**
+		 * Implementation of Task::done().
+		 */
+		bool done(void);
+
 	private:
-		PolicyRuleSet		*policy_rs_;
-		struct apn_ruleset	*apn_rs_;
-		uid_t			uid_;
-		int			prio_;
-		struct anoubis_sig	*privKey_;
+		PolicyRuleSet			*policy_rs_;
+		struct apn_ruleset		*apn_rs_;
+		uid_t				 uid_;
+		int				 prio_;
+		struct anoubis_sig		*privKey_;
+		struct anoubis_transaction	*ta_;
 
 		wxString getPolicyContent(void) const;
 };

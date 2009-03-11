@@ -39,7 +39,6 @@
 #include <client/anoubis_client.h>
 #include <client/anoubis_transaction.h>
 
-#include "ComHandler.h"
 #include "ComPolicySendTask.h"
 #include "PolicyRuleSet.h"
 #include "TaskEvent.h"
@@ -147,14 +146,14 @@ ComPolicySendTask::exec(void)
 	 * Load policy of xanoubis in anoubisd and activate the loaded
 	 * policy
 	 */
-	struct anoubis_transaction	*ta = 0;
 	Policy_SetByUid			*ureq = 0;
-	wxString			content;
+	wxString			 content;
 	unsigned char			*signature;
-	unsigned int			sig_len;
-	size_t				total = 0;
+	unsigned int			 sig_len;
+	size_t				 total = 0;
 
 	resetComTaskResult();
+	ta_ = NULL;
 	content = getPolicyContent();
 
 	char c_content[content.Len() + 1];
@@ -211,29 +210,30 @@ ComPolicySendTask::exec(void)
 		memcpy(ureq->payload + sig_len, c_content, content.Len());
 
 	/* Send message */
-	ta = anoubis_client_policyrequest_start(
-	    getComHandler()->getClient(), ureq, total);
-	if (!ta) {
+	ta_ = anoubis_client_policyrequest_start(getClient(), ureq, total);
+	if (!ta_) {
 		setComTaskResult(RESULT_COM_ERROR);
-		return;
 	}
+}
 
-	/* Wait for completition */
-	while (!(ta->flags & ANOUBIS_T_DONE)) {
-		if (!getComHandler()->waitForMessage()) {
-			setComTaskResult(RESULT_COM_ERROR);
-			return;
-		}
-	}
+bool
+ComPolicySendTask::done(void)
+{
+	if (ta_ == NULL)
+		return (true);
+	if ((ta_->flags & ANOUBIS_T_DONE) == 0)
+		return (false);
 
 	/* Result */
-	if (ta->result) {
+	if (ta_->result) {
 		setComTaskResult(RESULT_REMOTE_ERROR);
-		setResultDetails(ta->result);
-	} else
+		setResultDetails(ta_->result);
+	} else {
 		setComTaskResult(RESULT_SUCCESS);
-
-	anoubis_transaction_destroy(ta);
+	}
+	anoubis_transaction_destroy(ta_);
+	ta_ = NULL;
+	return (true);
 }
 
 wxString

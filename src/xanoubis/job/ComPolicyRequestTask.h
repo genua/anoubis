@@ -113,6 +113,11 @@ class ComPolicyRequestTask : public ComTask
 		void exec(void);
 
 		/**
+		 * Implementation of Task::exec().
+		 */
+		bool done(void);
+
+		/**
 		 * Returns the requested policy after the task was executed.
 		 * On error (e.g. communication error, unknown user, ...) 0 is
 		 * returned.
@@ -138,9 +143,10 @@ class ComPolicyRequestTask : public ComTask
 		PolicyRuleSet *getPolicy(void);
 
 	private:
-		int			prio_;
-		uid_t			uid_;
-		struct anoubis_msg	*msg_;
+		int				 prio_;
+		uid_t				 uid_;
+		struct anoubis_msg		*msg_;
+		struct anoubis_transaction	*ta_;
 
 		/**
 		 * @see ComTask::resetComTaskResult()
