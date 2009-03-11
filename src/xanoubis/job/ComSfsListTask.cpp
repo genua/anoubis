@@ -36,24 +36,25 @@
 
 #include <csum/csum.h>
 
-#include "ComHandler.h"
 #include "ComSfsListTask.h"
 #include "TaskEvent.h"
 
-ComSfsListTask::ComSfsListTask(void)
+ComSfsListTask::ComSfsListTask(void) : dirqueue_()
 {
 	this->recursive_ = false;
 	this->orphaned_ = false;
 	this->keyId_ = 0;
 	this->keyIdLen_ = 0;
+	basepath_ = NULL;
 }
 
-ComSfsListTask::ComSfsListTask(uid_t uid, const wxString &dir)
+ComSfsListTask::ComSfsListTask(uid_t uid, const wxString &dir) : dirqueue_()
 {
 	this->recursive_ = false;
 	this->orphaned_ = false;
 	this->keyId_ = 0;
 	this->keyIdLen_ = 0;
+	basepath_ = NULL;
 
 	setRequestParameter(uid, dir);
 }
@@ -62,6 +63,12 @@ ComSfsListTask::~ComSfsListTask(void)
 {
 	if (keyId_ != 0)
 		free(keyId_);
+	while(!dirqueue_.empty()) {
+		char	*path;
+		path = dirqueue_.front();
+		dirqueue_.pop();
+		free(path);
+	}
 }
 
 uid_t
@@ -153,32 +160,30 @@ void
 ComSfsListTask::exec(void)
 {
 	const uid_t	cur_uid = getuid();
-	int		req_op;
-	uid_t		req_uid;
-	int		req_flags;
 
 	resetComTaskResult();
+	ta_ = NULL;
 
 	/* Operation depends on key-id. If set assume signature-operation */
 	if ((this->keyId_ != 0) && (this->keyIdLen_ > 0))
-		req_op = ANOUBIS_CHECKSUM_OP_SIG_LIST;
+		req_op_ = ANOUBIS_CHECKSUM_OP_SIG_LIST;
 	else
-		req_op = ANOUBIS_CHECKSUM_OP_LIST;
+		req_op_ = ANOUBIS_CHECKSUM_OP_LIST;
 
 	if (uid_ == cur_uid) {
 		/* Ask for your own list */
-		req_uid = 0;
-		req_flags = ANOUBIS_CSUM_NONE;
+		req_uid_ = 0;
+		req_flags_ = ANOUBIS_CSUM_NONE;
 	} else if (cur_uid == 0) {
 		/* root is allowed to request list for another user, too */
-		req_uid = uid_;
-		req_flags = ANOUBIS_CSUM_UID;
+		req_uid_ = uid_;
+		req_flags_ = ANOUBIS_CSUM_UID;
 	} else {
 		/* Non-root user is requesting the list for another user */
 		return;
 	}
-
-	fetchSfsList(req_op, "", req_uid, req_flags);
+	dirqueue_.push(strdup(""));
+	done();
 }
 
 wxArrayString
@@ -195,105 +200,119 @@ ComSfsListTask::resetComTaskResult(void)
 	fileList_.Clear();
 }
 
-void
-ComSfsListTask::fetchSfsList(int op, const char *basepath, uid_t uid, int flags)
+bool
+ComSfsListTask::fetchSfsList(const char *path)
 {
-	struct anoubis_transaction	*ta;
-	char				*path;
-	char				**list;
-	int				listSize;
+	char				*fullpath;
 
 	int result;
 	if (directory_ != wxT("/"))
-		result = asprintf(&path, "%s/%s",
-		    (const char *)directory_.fn_str(), basepath);
+		result = asprintf(&fullpath, "%s/%s",
+		    (const char *)directory_.fn_str(), path);
 	else
-		result = asprintf(&path, "/%s", basepath);
+		result = asprintf(&fullpath, "/%s", path);
 
 	if (result == -1) {
 		setComTaskResult(RESULT_OOM);
-		free(path);
-		return;
+		free(fullpath);
+		return false;
 	} else {
 		/* Remove trailing slash, if any */
-		if (strlen(path) > 1 && *(path + strlen(path) - 1) == '/')
-			*(path + strlen(path) -1) = '\0';
+		if (strlen(fullpath) > 1 &&
+		    *(fullpath + strlen(fullpath) - 1) == '/')
+			*(fullpath + strlen(fullpath) -1) = '\0';
 	}
 
 	/* Create request */
-	ta = anoubis_client_csumrequest_start(getComHandler()->getClient(),
-	    op, path, this->keyId_, 0, this->keyIdLen_, uid, flags);
+	ta_ = anoubis_client_csumrequest_start(getClient(), req_op_, fullpath,
+	    this->keyId_, 0, this->keyIdLen_, req_uid_, req_flags_);
+	free(fullpath);
 
-	if(!ta) {
+	if(!ta_) {
 		setComTaskResult(RESULT_COM_ERROR);
-		free(path);
-		return;
+		return (false);
 	}
+	return (true);
+}
 
-	/* Wait for completition */
-	while (!(ta->flags & ANOUBIS_T_DONE)) {
-		if (!getComHandler()->waitForMessage()) {
-			anoubis_transaction_destroy(ta);
-			setComTaskResult(RESULT_COM_ERROR);
-			free(path);
-			return;
+bool
+ComSfsListTask::done(void)
+{
+	char		**list;
+	int		  listSize;
+
+	while(1) {
+		if (ta_ == NULL && !dirqueue_.empty()) {
+			basepath_ = dirqueue_.front();
+			dirqueue_.pop();
+			if (!fetchSfsList(basepath_)) {
+				free(basepath_);
+				break;
+			}
 		}
-	}
+		/* At this point ta_ == NULL implies an empty dirqueue_. */
+		if (ta_ == NULL)
+			return (true);
+		if ((ta_->flags & ANOUBIS_T_DONE) == 0)
+			return (false);
 
-	if (ta->result) {
-		setComTaskResult(RESULT_REMOTE_ERROR);
-		setResultDetails(ta->result);
-		anoubis_transaction_destroy(ta);
-		free(path);
-		return;
-	}
+		if (ta_->result) {
+			setComTaskResult(RESULT_REMOTE_ERROR);
+			setResultDetails(ta_->result);
+			anoubis_transaction_destroy(ta_);
+			ta_ = NULL;
+			free(basepath_);
+			break;
+		} else {
+			setComTaskResult(RESULT_SUCCESS);
+		}
 
-	/* Extract filelist from response */
-	list = anoubis_csum_list(ta->msg, &listSize);
-	anoubis_transaction_destroy(ta);
+		/* Extract filelist from response */
+		list = anoubis_csum_list(ta_->msg, &listSize);
+		anoubis_transaction_destroy(ta_);
+		ta_ = NULL;
 
-	/* Put filelist from transaction into result of the task */
-	if (list != 0) {
-		for (int i = 0; i < listSize; i++) {
-			wxString f = wxString::FromAscii(list[i]);
+		/* Put filelist from transaction into result of the task */
+		if (list != 0) {
+			for (int i = 0; i < listSize; i++) {
+				wxString f = wxString::FromAscii(list[i]);
 
-			if (strlen(basepath) > 0) {
 				/* Prepend the basepath, if exists */
-				wxString pp = wxString::FromAscii(basepath);
+				if (strlen(basepath_) > 0) {
+					wxString pp;
+					pp = wxString::FromAscii(basepath_);
 
-				if (!pp.EndsWith(wxT("/")))
-					pp += wxT("/");
-
-				f.Prepend(pp);
-			}
-
-			if (canFetch(f))
-				fileList_.Add(f);
-
-			if (this->recursive_ && f.EndsWith(wxT("/"))) {
-				/* This is a directory, go down if requested */
-				fetchSfsList(op, f.fn_str(), uid, flags);
-
-				if (getComTaskResult() != RESULT_SUCCESS) {
-					/* Can stop here */
-					for (int j = i; j < listSize; j++)
-						free(list[j]);
-
-					free(list);
-					free(path);
-
-					return;
+					if (!pp.EndsWith(wxT("/")))
+						pp += wxT("/");
+					f.Prepend(pp);
 				}
+				if (canFetch(f))
+					fileList_.Add(f);
+				/*
+				 * If this is a directory and we are recursive
+				 * queue the directory.
+				 */
+				if (this->recursive_ && f.EndsWith(wxT("/"))) {
+					dirqueue_.push(strdup(f.fn_str()));
+				}
+				free(list[i]);
 			}
-
-			free(list[i]);
+			free(list);
 		}
-
-		free(list);
 	}
-
-	free(path);
-	setComTaskResult(RESULT_SUCCESS);
+	/*
+	 * We only reach this point in case of an error and the error
+	 * code of the task is already set. Free the list of pending
+	 * directories to make sure that subsequent calls to done do
+	 * not restart the task.
+	 */
+	while(!dirqueue_.empty()) {
+		char	*path;
+		path = dirqueue_.front();
+		dirqueue_.pop();
+		free(path);
+	}
+	return (true);
 }
 
 bool

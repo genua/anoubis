@@ -28,6 +28,7 @@
 #ifndef _COMSFSLISTTASK_H_
 #define _COMSFSLISTTASK_H_
 
+#include <queue>
 #include "ComTask.h"
 
 /**
@@ -205,6 +206,11 @@ class ComSfsListTask : public ComTask
 		void exec(void);
 
 		/**
+		 * Implementation of Task::done().
+		 */
+		bool done(void);
+
+		/**
 		 * Returns a list of filenames, which has a registered
 		 * checksum.
 		 *
@@ -222,13 +228,19 @@ class ComSfsListTask : public ComTask
 		void resetComTaskResult(void);
 
 	private:
-		uid_t		uid_;
-		wxString	directory_;
-		bool		recursive_;
-		bool		orphaned_;
-		wxArrayString	fileList_;
-		u_int8_t	*keyId_;
-		int		keyIdLen_;
+		uid_t				 uid_;
+		wxString			 directory_;
+		bool				 recursive_;
+		bool				 orphaned_;
+		wxArrayString			 fileList_;
+		u_int8_t			*keyId_;
+		int				 keyIdLen_;
+		struct anoubis_transaction	*ta_;
+		int				 req_op_;
+		uid_t				 req_uid_;
+		int				 req_flags_;
+		char				*basepath_;
+		std::queue<char *>		 dirqueue_;
 
 		/**
 		 * Performs a single fetch-operation.
@@ -239,8 +251,10 @@ class ComSfsListTask : public ComTask
 		 * @param basepath Path relative to directory_ send to anoubisd
 		 * @param uid Uid to be send to anoubisd
 		 * @param flags Flags to be send to anoubisd
+		 * @return True if a new transaction was created, falls
+		 *     on error.
 		 */
-		void fetchSfsList(int, const char *, uid_t, int);
+		bool fetchSfsList(const char *);
 
 		/**
 		 * Tests whether the given file can be fetched.
