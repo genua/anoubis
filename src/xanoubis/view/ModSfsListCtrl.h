@@ -150,20 +150,10 @@ class ModSfsListCtrl : public wxListCtrl
 		int getListIndexOf(unsigned int) const;
 
 		/**
-		 * Returns a list with selected row-indexes.
-		 *
-		 * If nothing is selected, an empty list is returned.
-		 *
-		 * @return Array with selected row-indexes
-		 */
-		IndexArray getSelectedIndexes(void) const;
-
-		/**
 		 * Returns sfs-indexes of selected rows.
 		 *
-		 * This is a bridge between getSelectedIndexes() and
-		 * getListIndexOf(). It collects all selected indexes and maps
-		 * the list-index to a SfsEntry.
+		 * This function returns SfsEntry indicies. Most of the
+		 * time these are not identical to list indices.
 		 *
 		 * @return Indexes of selected SfsEntry-instances.
 		 */

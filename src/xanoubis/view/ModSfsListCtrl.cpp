@@ -128,31 +128,10 @@ ModSfsListCtrl::getListIndexOf(unsigned int sfsIdx) const
 {
 	for (int listIdx = 0; listIdx < GetItemCount(); listIdx++) {
 		if (GetItemData(listIdx) == sfsIdx)
-			return (GetItemData(listIdx));
+			return listIdx;
 	}
 
 	return (-1);
-}
-
-IndexArray
-ModSfsListCtrl::getSelectedIndexes(void) const
-{
-	int		selection = -1;
-	IndexArray	selectionArray;
-
-	while (true) {
-		selection = GetNextItem(selection, wxLIST_NEXT_ALL,
-		    wxLIST_STATE_SELECTED);
-
-		if (selection == -1) {
-			/* No selection */
-			break;
-		}
-
-		selectionArray.Add(selection);
-	}
-
-	return (selectionArray);
 }
 
 IndexArray

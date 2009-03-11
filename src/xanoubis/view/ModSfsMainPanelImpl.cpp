@@ -248,7 +248,7 @@ ModSfsMainPanelImpl::OnSfsMainValidateButtonClicked(wxCommandEvent&)
 void
 ModSfsMainPanelImpl::OnSfsMainApplyButtonClicked(wxCommandEvent&)
 {
-	applySfsAction(SfsMainListCtrl->getSelectedIndexes());
+	applySfsAction(SfsMainListCtrl->getSfsIndexes());
 }
 
 void
