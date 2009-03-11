@@ -240,7 +240,8 @@ RuleWizard::forwardTransition(enum wizardPages pageNo) const
 RuleWizard::wizardPages
 RuleWizard::backwardTransition(enum wizardPages pageNo) const
 {
-	enum wizardPages previousPage;
+	enum wizardPages				previousPage;
+	enum RuleWizardHistory::overwriteAnswer		overwrite;
 
 	switch (pageNo) {
 	case PAGE_PROGRAM:
@@ -252,19 +253,14 @@ RuleWizard::backwardTransition(enum wizardPages pageNo) const
 	case PAGE_CTX_EXCEPT:
 		previousPage = PAGE_CTX;
 		break;
-	case PAGE_ALF_OVERWRITE:
-		if (!history_.haveContextPolicy()) {
-			previousPage = PAGE_PROGRAM;
-		} else if (history_.haveContextException()) {
-			previousPage = PAGE_CTX_EXCEPT;
-		} else {
-			previousPage = PAGE_CTX;
-		}
-		break;
 	case PAGE_ALF_CLIENT:
 		if (history_.haveAlfPolicy()) {
 			previousPage = PAGE_ALF_OVERWRITE;
-		} else if (history_.haveContextPolicy()) {
+			break;
+		}
+		/* FALLTHROUGH */
+	case PAGE_ALF_OVERWRITE:
+		if (!history_.haveContextPolicy()) {
 			previousPage = PAGE_PROGRAM;
 		} else if (history_.haveContextException()) {
 			previousPage = PAGE_CTX_EXCEPT;
@@ -276,17 +272,15 @@ RuleWizard::backwardTransition(enum wizardPages pageNo) const
 		previousPage = PAGE_ALF_CLIENT;
 		break;
 	case PAGE_SB:
-		/* XXX ch: ALF server pages still pending */
-		if (history_.getAlfClientPermission() ==
-		    RuleWizardHistory::PERM_RESTRICT_USER) {
-			previousPage = PAGE_ALF_CLIENT_PORTS;
-		} else {
-			previousPage = PAGE_ALF_CLIENT;
-		}
-		break;
 	case PAGE_SB_OVERWRITE:
 		/* XXX ch: ALF server pages still pending */
-		if (history_.getAlfClientPermission() ==
+		overwrite = RuleWizardHistory::OVERWRITE_YES;
+		if (history_.haveAlfPolicy()) {
+			overwrite = history_.shallOverwriteAlfPolicy();
+		}
+		if (overwrite == RuleWizardHistory::OVERWRITE_NO) {
+			previousPage = PAGE_ALF_OVERWRITE;
+		} else if (history_.getAlfClientPermission() ==
 		    RuleWizardHistory::PERM_RESTRICT_USER) {
 			previousPage = PAGE_ALF_CLIENT_PORTS;
 		} else {
@@ -294,7 +288,11 @@ RuleWizard::backwardTransition(enum wizardPages pageNo) const
 		}
 		break;
 	case PAGE_SB_READ:
-		previousPage = PAGE_SB;
+		if (history_.haveSandboxPolicy()) {
+			previousPage = PAGE_SB_OVERWRITE;
+		} else {
+			previousPage = PAGE_SB;
+		}
 		break;
 	case PAGE_SB_READ_FILES:
 		previousPage = PAGE_SB_READ;
@@ -322,7 +320,11 @@ RuleWizard::backwardTransition(enum wizardPages pageNo) const
 		previousPage = PAGE_SB_EXECUTE;
 		break;
 	case PAGE_FINAL:
+		overwrite = RuleWizardHistory::OVERWRITE_YES;
 		if (history_.haveSandboxPolicy()) {
+			overwrite = history_.shallOverwriteSandboxPolicy();
+		}
+		if (overwrite == RuleWizardHistory::OVERWRITE_NO) {
 			previousPage = PAGE_SB_OVERWRITE;
 		} else if (history_.haveSandbox() !=
 		    RuleWizardHistory::PERM_RESTRICT_USER) {
@@ -346,7 +348,7 @@ RuleWizard::backwardTransition(enum wizardPages pageNo) const
 void
 RuleWizard::onWizardFinished(wxWizardEvent &)
 {
-	//wxCommandEvent	 newRuleSetEvent(anEVT_LOAD_RULESET);
+	wxCommandEvent		 newRuleSetEvent(anEVT_LOAD_RULESET);
 	struct iovec		 iv;
 	struct apn_ruleset	*rs;
 
@@ -354,6 +356,7 @@ RuleWizard::onWizardFinished(wxWizardEvent &)
 	PolicyRuleSet	*ruleSet;
 
 	profileCtrl = ProfileCtrl::getInstance();
+	/* XXX CEH: Might want to create Admin Policies as well. */
 	ruleSet = profileCtrl->getRuleSet(profileCtrl->getUserId());
 	if (ruleSet == NULL) {
 		/* As we have no ruleset, create empty ruleset. */
@@ -380,8 +383,11 @@ RuleWizard::onWizardFinished(wxWizardEvent &)
 
 	createAlfPolicy(ruleSet);
 	createSandboxPolicy(ruleSet);
-
+	newRuleSetEvent.SetInt(ruleSet->getRuleSetId());
+	newRuleSetEvent.SetExtraLong(ruleSet->getRuleSetId());
 	ruleSet->unlock();
+
+	wxPostEvent(AnEvents::getInstance(), newRuleSetEvent);
 
 	return;
 }
@@ -448,6 +454,11 @@ RuleWizard::createAlfPolicy(PolicyRuleSet *ruleSet) const
 		/*
 		 * We just need to remove the filter, but it's easier to
 		 * remove all and re-create the app policy.
+		 */
+		/*
+		 * XXX CEH: In case of multiple applications we should
+		 * XXX CEH: only through away the application we are
+		 * XXX CEH: creating policies for.
 		 */
 		alfApp->remove();
 		alfApp = NULL;
@@ -521,6 +532,11 @@ RuleWizard::createSandboxPolicy(PolicyRuleSet *ruleSet) const
 		/*
 		 * We just need to remove the filter, but it's easier to
 		 * remove all and re-create the app policy.
+		 */
+		/*
+		 * XXX CEH: In case of multiple applications we should
+		 * XXX CEH: only through away the application we are
+		 * XXX CEH: creating policies for.
 		 */
 		sbApp->remove();
 		sbApp = NULL;

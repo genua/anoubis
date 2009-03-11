@@ -57,7 +57,7 @@ RuleWizardHistory::RuleWizardHistory(void)
 
 	haveSandbox_		   = PERM_RESTRICT_USER;
 	haveSandboxPolicy_	   = false;
-	overwriteSandboxPolicy_    = OVERWRITE_NO;
+	overwriteSandboxPolicy_    = OVERWRITE_YES;
 	sandboxReadPermission_     = PERM_ALLOW_ALL;
 	sandboxReadAsk_		   = true;
 	sandboxReadValidSignature_ = false;
