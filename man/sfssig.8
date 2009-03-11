@@ -34,7 +34,7 @@
 .Nd manage checksums for the Anoubis Daemon
 .Sh SYNOPSIS
 .Nm sfssig
-.Op dvlr
+.Op dvlir
 .Op -f listfile
 .Op -o exportfile
 .Op -u uid
@@ -63,6 +63,8 @@ Debug mode.
 Prints debug information to the console.
 .It Fl v
 Produce more verbose output.
+.It Fl i
+Accept checksums created by other users during import.
 .It Fl o Ar exportfile
 Specify the output of the command export. Default is stdout.
 .El
@@ -150,15 +152,17 @@ as a message to the daemon.
 .Sh ADDITIONAL
 The capitalized options to
 .Nm
-are used to manage checksums stored in extended attributes. All of these options are
+are used to manage checksums stored in extended attributes. All of these options
+are
 .Ar only
 usable by root and most will
 .Ar not
 work when
-the anoubis kernel modules are loaded. These options are not needed for regular usage.
+the anoubis kernel modules are loaded. These options are not needed for regular
+usage.
 .Bl -tag -width Ds
 .It Fl A Ar checksum file
-Add checksum 
+Add checksum
 .Ar checksum
 to
 .Ar file

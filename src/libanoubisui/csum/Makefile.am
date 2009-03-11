@@ -25,9 +25,18 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ##########################################################################
 
+BUILT_SOURCES = csum_import.h csum_import.c fname.c
+
+AM_YFLAGS = -d
+AM_LFLAGS = -olex.yy.c
+
 noinst_LIBRARIES = libcsum.a
+
 libcsum_a_SOURCES =	\
+	csumtoken.h \
+	csum_import.y	\
 	csum.c	\
+	fname.l \
 	csum.h
 
 LIBS += $(SSL_LIBS)
@@ -39,6 +48,7 @@ libbsdcompat   = $(top_builddir)/$(bsdcompatdir)/libbsdcompat.a
 csum_includes = -I$(top_srcdir)/src \
 		-I$(top_builddir)/src \
 		-I$(top_srcdir)/include \
+		-I$(top_builddir)/include \
 		-I$(top_srcdir)/src/libanoubisprotocol \
 		-I$(top_srcdir)/src/libanoubischat
 csum_dependencies =
@@ -68,8 +78,9 @@ libcsum_so_CFLAGS = -fPIC -shared -std=gnu99 $(shared_AM_CFLAGS) -Wno-error
 libcsum_so_CPPFLAGS = $(libcsum_a_CPPFLAGS)
 libcsum_so_SOURCES = $(libcsum_a_SOURCES)
 libcsum_so_LDFLAGS = -nostartfiles -shared $(shared_AM_LDFLAGS)
+libcsum_so_LDADD = -lfl
 if NEEDBSDCOMPAT
-libcsum_so_LDADD = -lbsdcompat -L$(top_builddir)/$(bsdcompatdir)
+libcsum_so_LDADD += -lbsdcompat -L$(top_builddir)/$(bsdcompatdir)
 endif
 
 flawfinder_FLAGS=

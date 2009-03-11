@@ -75,7 +75,7 @@ chartohex(char ch)
 	return -1;
 }
 
-static unsigned char *
+unsigned char *
 string2hex(const char *hex, int *cnt)
 {
 	unsigned char *res;
@@ -96,6 +96,7 @@ string2hex(const char *hex, int *cnt)
 		tmp1 = chartohex(hex[i]) * 16;
 		if (tmp1 < 0)
 			goto err;
+
 		tmp2 = chartohex(hex[i+1]);
 		if (tmp2 < 0)
 			goto err;

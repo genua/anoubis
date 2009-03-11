@@ -32,18 +32,21 @@
 #include <sys/cdefs.h>
 #include <stdio.h>
 
+#include <anoubis_msg.h>
+
 #ifdef S_SPLINT_S
 #include "splint-includes.h"
 #endif
 
 struct sfs_entry {
-	char		*name;
-	unsigned char	*checksum;
-	unsigned char	*signature;
-	int		 siglen;
-	uid_t		 uid;
-	unsigned char	*keyid;
-	int		 keylen;
+	char			*name;
+	unsigned char		*checksum;
+	unsigned char		*signature;
+	int			 siglen;
+	uid_t			 uid;
+	unsigned char		*keyid;
+	int			 keylen;
+	struct sfs_entry	*next;
 };
 
 __BEGIN_DECLS
@@ -65,6 +68,9 @@ struct sfs_entry *anoubis_build_entry(const char *name,
     uid_t uid, unsigned char *keyid, int keylen);
 unsigned char ** anoubis_keyid_list(struct anoubis_msg *m, int **idlen_list,
     int *list_cnt);
+unsigned char *string2hex(const char *hex, int *cnt);
+struct sfs_entry *import_csum(FILE *file);
+
 __END_DECLS
 
 #endif	/* _CSUM_H_ */

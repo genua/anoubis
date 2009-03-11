@@ -106,6 +106,7 @@
 #define SFSSIG_OPT_NOTFILE		0x04000
 #define SFSSIG_OPT_FILTER		0x08000
 #define SFSSIG_OPT_LN			0x10000
+#define SFSSIG_OPT_FORCE		0x20000
 
 #define SYSSIGNAME "security.anoubis_syssig"
 #define SKIPSUMNAME "security.anoubis_skipsum"
@@ -117,6 +118,7 @@ static int				 sfs_get(char *file);
 static int				 sfs_list(char *file);
 static int				 sfs_validate(char *file);
 static int				 sfs_export(char *directory);
+static int				 sfs_import(char *directory);
 static int				 _export(char *directory, int rec);
 static int				 create_channel(void);
 static void				 destroy_channel(void);
@@ -161,6 +163,7 @@ struct cmd {
 	{ "list",  (func_int_t)sfs_list, 1, ANOUBIS_CHECKSUM_OP_LIST},
 	{ "get",  (func_int_t)sfs_get, 1, ANOUBIS_CHECKSUM_OP_GET},
 	{ "export",  (func_int_t)sfs_export, 1, 0},
+	{ "import",  (func_int_t)sfs_import, 1, 0},
 	{ "validate",  (func_int_t)sfs_validate, 1, ANOUBIS_CHECKSUM_OP_GET},
 };
 
@@ -188,8 +191,8 @@ usage(void)
 	 * NOTE: Capitalized options are used for extended attributes
 	 * NOTE: other options will be used for signed checksums.
 	 */
-	fprintf(stderr, "usage: %s [-nlrv] [-f <fileset> ]\n", __progname);
-	fprintf(stderr, "       [-o exporttofile] [-i importfromfile]\n");
+	fprintf(stderr, "usage: %s [-inlrv] [-f <fileset> ]\n", __progname);
+	fprintf(stderr, "       [-o exporttofile]\n");
 	fprintf(stderr, "       [--sig | --sum] [--cert <certificate>] \n");
 	fprintf(stderr, "       [--hassig | --hasnossig] [--hassum |"
 	    " --hasnosum] \n");
@@ -507,7 +510,7 @@ main(int argc, char *argv[])
 		{ 0, 0, 0, 0 }
 	};
 
-	while ((ch = getopt_long(argc, argv, "A:URLCSf:k:u:i:o:nldvr",
+	while ((ch = getopt_long(argc, argv, "A:URLCSFf:k:u:o:nldvr",
 	    options, &options_index)) != -1) {
 		switch (ch) {
 		case 0:
@@ -601,6 +604,9 @@ main(int argc, char *argv[])
 		case 'r':
 			opts |= SFSSIG_OPT_TREE;
 			break;
+		case 'i':
+			opts |= SFSSIG_OPT_FORCE;
+			break;
 		case 'l':
 			opts |= SFSSIG_OPT_LN;
 			break;
@@ -615,7 +621,6 @@ main(int argc, char *argv[])
 			opts |= SFSSIG_OPT_DEBUG;
 			break;
 		case 'o':
-		case 'i':
 			exim_file = optarg;
 			break;
 		case 'k':
@@ -1346,6 +1351,84 @@ __sfs_get(char *file, int vflag)
 	return 0;
 }
 
+static int
+add_entry(struct sfs_entry *entry)
+{
+	unsigned char *payload;
+	struct anoubis_transaction *t = NULL;
+	uid_t self;
+
+	if (opts & SFSSIG_OPT_DEBUG)
+		fprintf(stderr, ">add_entry\n");
+	if (!entry)
+		return EINVAL;
+	if (entry->checksum) {
+		self = geteuid();
+		if (self == 0) {
+			checksum_flag |= ANOUBIS_CSUM_UID;
+			uid = entry->uid;
+		} else {
+			if (entry->uid != self && (opts & SFSSIG_OPT_FORCE))
+				uid = self;
+			else if (entry->uid == self)
+				uid = 0;
+			else {
+				fprintf(stderr, "%s: Incorrect uid\n",
+				    entry->name);
+				return EINVAL;
+			}
+		}
+		t = sfs_sumop(entry->name, ANOUBIS_CHECKSUM_OP_ADDSUM,
+		    entry->checksum, ANOUBIS_CS_LEN, 0);
+		if (!t)
+			return EINVAL;
+		if (t->result) {
+			if (opts & SFSSIG_OPT_DEBUG)
+				fprintf(stderr, "%s: Checksum Request failed: "
+				    "%d (%s)\n", entry->name, t->result,
+				     strerror(t->result));
+			anoubis_transaction_destroy(t);
+			return t->result;
+		}
+		anoubis_transaction_destroy(t);
+		t = NULL;
+
+	}
+	if (entry->signature) {
+		if (!entry->keyid) {
+			fprintf(stderr, "Parse Error\n");
+			return EINVAL;
+		}
+		payload = calloc(entry->siglen + entry->keylen,
+		    sizeof(unsigned char));
+		if (!payload)
+			return ENOMEM;
+		memcpy(payload, entry->keyid, entry->keylen);
+		memcpy(payload + entry->keylen, entry->signature,
+		    entry->siglen);
+		t = sfs_sumop(entry->name, ANOUBIS_CHECKSUM_OP_ADDSIG, payload,
+		    entry->siglen, entry->keylen);
+		if (!t)
+			return EINVAL;
+		if (t->result) {
+			if (opts & SFSSIG_OPT_DEBUG)
+				fprintf(stderr, "Signature Request failed: "
+				    "%d (%s)\n", t->result,
+				    strerror(t->result));
+			anoubis_transaction_destroy(t);
+			free(payload);
+			return t->result;
+		}
+		anoubis_transaction_destroy(t);
+		free(payload);
+		t = NULL;
+	}
+
+	if (opts & SFSSIG_OPT_DEBUG)
+		fprintf(stderr, "<add_entry\n");
+	return 0;
+}
+
 static struct sfs_entry *
 get_entry(char *file, unsigned char *keyid_p, int idlen_p)
 {
@@ -1396,10 +1479,8 @@ get_entry(char *file, unsigned char *keyid_p, int idlen_p)
 			    t_sig->msg->length);
 		} else {
 			siglen = t_sig->msg->length - CSUM_LEN
-			    - SHA256_DIGEST_LENGTH
 			    - sizeof(Anoubis_AckPayloadMessage);
-			sig = t_sig->msg->u.ackpayload->payload +
-			    SHA256_DIGEST_LENGTH;
+			sig = t_sig->msg->u.ackpayload->payload;
 		}
 	}
 	t_sum = sfs_sumop(file, ANOUBIS_CHECKSUM_OP_GET, NULL, 0, 0);
@@ -2702,4 +2783,38 @@ load_keys(int priv_key, int show_err)
 		return 1;
 	}
 	return 0;
+}
+
+int
+sfs_import(char *filename)
+{
+	struct sfs_entry *head = NULL;
+	struct sfs_entry *next = NULL;
+	int rc, res = 0;
+	FILE *file;
+
+	if (opts & SFSSIG_OPT_DEBUG)
+		fprintf(stderr, ">sfs_import\n");
+	if (!filename)
+		return 1;
+
+	file = fopen(filename, "r");
+	if (!file) {
+		perror("filename");
+		return 1;
+	}
+	load_keys(0, 0);
+	head = import_csum(file);
+	fclose(file);
+	if (!head) {
+		return 1;
+	}
+	for (next = head; next; next = next->next) {
+		rc = add_entry(next);
+		if (rc)
+			res = rc;
+	}
+	if (opts & SFSSIG_OPT_DEBUG)
+		fprintf(stderr, "<sfs_import\n");
+	return res;
 }
