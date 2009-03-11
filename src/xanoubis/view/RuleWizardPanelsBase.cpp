@@ -44,7 +44,7 @@ RuleWizardOverwritePolicyPageBase::RuleWizardOverwritePolicyPageBase( wxWindow* 
 	
 	naviSizer = new wxBoxSizer( wxVERTICAL );
 	
-	pageSizer->Add( naviSizer, 2, wxEXPAND, 5 );
+	pageSizer->Add( naviSizer, 3, wxEXPAND, 5 );
 	
 	naviMainDelimiter = new wxStaticLine( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLI_VERTICAL );
 	pageSizer->Add( naviMainDelimiter, 0, wxEXPAND | wxALL, 5 );
@@ -116,7 +116,7 @@ RuleWizardOverwritePolicyPageBase::RuleWizardOverwritePolicyPageBase( wxWindow* 
 	policyTextCtrl = new wxTextCtrl( this, wxID_ANY, _("/* apn policy */"), wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE|wxTE_READONLY );
 	mainSizer->Add( policyTextCtrl, 6, wxALL|wxEXPAND, 5 );
 	
-	pageSizer->Add( mainSizer, 8, wxEXPAND, 5 );
+	pageSizer->Add( mainSizer, 7, wxEXPAND, 5 );
 	
 	this->SetSizer( pageSizer );
 	this->Layout();
@@ -264,7 +264,7 @@ RuleWizardProgramPageBase::RuleWizardProgramPageBase( wxWindow* parent, wxWindow
 	
 	naviSizer = new wxBoxSizer( wxVERTICAL );
 	
-	pageSizer->Add( naviSizer, 2, wxEXPAND, 5 );
+	pageSizer->Add( naviSizer, 3, wxEXPAND, 5 );
 	
 	naviMainDelimiter = new wxStaticLine( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLI_VERTICAL );
 	pageSizer->Add( naviMainDelimiter, 0, wxEXPAND | wxALL, 5 );
@@ -321,7 +321,7 @@ RuleWizardProgramPageBase::RuleWizardProgramPageBase( wxWindow* parent, wxWindow
 	
 	mainSizer->Add( 0, 0, 1, wxEXPAND, 5 );
 	
-	pageSizer->Add( mainSizer, 8, wxEXPAND, 5 );
+	pageSizer->Add( mainSizer, 7, wxEXPAND, 5 );
 	
 	this->SetSizer( pageSizer );
 	this->Layout();
@@ -339,7 +339,7 @@ RuleWizardContextPageBase::RuleWizardContextPageBase( wxWindow* parent, wxWindow
 	
 	naviSizer = new wxBoxSizer( wxVERTICAL );
 	
-	pageSizer->Add( naviSizer, 2, wxEXPAND, 5 );
+	pageSizer->Add( naviSizer, 3, wxEXPAND, 5 );
 	
 	naviMainDelimiter = new wxStaticLine( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLI_VERTICAL );
 	pageSizer->Add( naviMainDelimiter, 0, wxEXPAND | wxALL, 5 );
@@ -387,37 +387,37 @@ RuleWizardContextPageBase::RuleWizardContextPageBase( wxWindow* parent, wxWindow
 	yesRadioButton = new wxRadioButton( this, wxID_ANY, _("Yes (same permissions / restrictions)"), wxDefaultPosition, wxDefaultSize, wxRB_GROUP );
 	inputSizer->Add( yesRadioButton, 0, wxALL, 5 );
 	
+	wxBoxSizer* exceptionSizer;
+	exceptionSizer = new wxBoxSizer( wxHORIZONTAL );
+	
+	
+	exceptionSizer->Add( 30, 0, 0, wxEXPAND, 5 );
+	
+	exceptionsCheckBox = new wxCheckBox( this, wxID_ANY, _("allow exceptions (-> next page)"), wxDefaultPosition, wxDefaultSize, 0 );
+	
+	exceptionsCheckBox->Enable( false );
+	
+	exceptionSizer->Add( exceptionsCheckBox, 0, wxALL, 5 );
+	
+	inputSizer->Add( exceptionSizer, 0, wxEXPAND, 5 );
+	
 	noRadioButton = new wxRadioButton( this, wxID_ANY, _("No (each executed program has its own policies)"), wxDefaultPosition, wxDefaultSize, 0 );
 	inputSizer->Add( noRadioButton, 0, wxALL, 5 );
-	
-	wxBoxSizer* noExceptionSizer;
-	noExceptionSizer = new wxBoxSizer( wxHORIZONTAL );
-	
-	
-	noExceptionSizer->Add( 30, 0, 0, wxEXPAND, 5 );
-	
-	noExceptionsCheckBox = new wxCheckBox( this, wxID_ANY, _("allow exceptions (-> next page)"), wxDefaultPosition, wxDefaultSize, 0 );
-	
-	noExceptionsCheckBox->Enable( false );
-	
-	noExceptionSizer->Add( noExceptionsCheckBox, 0, wxALL, 5 );
-	
-	inputSizer->Add( noExceptionSizer, 0, wxEXPAND, 5 );
 	
 	mainSizer->Add( inputSizer, 0, wxEXPAND, 5 );
 	
 	
 	mainSizer->Add( 0, 0, 2, wxEXPAND, 5 );
 	
-	pageSizer->Add( mainSizer, 8, wxEXPAND, 5 );
+	pageSizer->Add( mainSizer, 7, wxEXPAND, 5 );
 	
 	this->SetSizer( pageSizer );
 	this->Layout();
 	
 	// Connect Events
 	yesRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( RuleWizardContextPageBase::onYesRadioButton ), NULL, this );
+	exceptionsCheckBox->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( RuleWizardContextPageBase::onExceptionsCheckBox ), NULL, this );
 	noRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( RuleWizardContextPageBase::onNoRadioButton ), NULL, this );
-	noExceptionsCheckBox->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( RuleWizardContextPageBase::onNoExceptionsCheckBox ), NULL, this );
 }
 
 RuleWizardContextExceptionPageBase::RuleWizardContextExceptionPageBase( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size, long style ) : wxPanel( parent, id, pos, size, style )
@@ -427,7 +427,7 @@ RuleWizardContextExceptionPageBase::RuleWizardContextExceptionPageBase( wxWindow
 	
 	naviSizer = new wxBoxSizer( wxVERTICAL );
 	
-	pageSizer->Add( naviSizer, 2, wxEXPAND, 5 );
+	pageSizer->Add( naviSizer, 3, wxEXPAND, 5 );
 	
 	naviMainDelimiter = new wxStaticLine( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLI_VERTICAL );
 	pageSizer->Add( naviMainDelimiter, 0, wxEXPAND | wxALL, 5 );
@@ -479,7 +479,7 @@ RuleWizardContextExceptionPageBase::RuleWizardContextExceptionPageBase( wxWindow
 	
 	mainSizer->Add( buttonSizer, 0, wxEXPAND, 5 );
 	
-	pageSizer->Add( mainSizer, 8, wxEXPAND, 5 );
+	pageSizer->Add( mainSizer, 7, wxEXPAND, 5 );
 	
 	this->SetSizer( pageSizer );
 	this->Layout();
@@ -496,7 +496,7 @@ RuleWizardAlfPermissionPageBase::RuleWizardAlfPermissionPageBase( wxWindow* pare
 	
 	naviSizer = new wxBoxSizer( wxVERTICAL );
 	
-	pageSizer->Add( naviSizer, 2, wxEXPAND, 5 );
+	pageSizer->Add( naviSizer, 3, wxEXPAND, 5 );
 	
 	naviMainDelimiter = new wxStaticLine( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLI_VERTICAL );
 	pageSizer->Add( naviMainDelimiter, 0, wxEXPAND | wxALL, 5 );
@@ -564,7 +564,7 @@ RuleWizardAlfPermissionPageBase::RuleWizardAlfPermissionPageBase( wxWindow* pare
 	
 	mainSizer->Add( inputSizer, 0, wxEXPAND, 5 );
 	
-	pageSizer->Add( mainSizer, 8, wxEXPAND, 5 );
+	pageSizer->Add( mainSizer, 7, wxEXPAND, 5 );
 	
 	this->SetSizer( pageSizer );
 	this->Layout();
@@ -583,7 +583,7 @@ RuleWizardAlfServicePageBase::RuleWizardAlfServicePageBase( wxWindow* parent, wx
 	
 	naviSizer = new wxBoxSizer( wxVERTICAL );
 	
-	pageSizer->Add( naviSizer, 2, wxEXPAND, 5 );
+	pageSizer->Add( naviSizer, 3, wxEXPAND, 5 );
 	
 	naviMainDelimiter = new wxStaticLine( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLI_VERTICAL );
 	pageSizer->Add( naviMainDelimiter, 0, wxEXPAND | wxALL, 5 );
@@ -626,6 +626,7 @@ RuleWizardAlfServicePageBase::RuleWizardAlfServicePageBase( wxWindow* parent, wx
 	buttonSizer->Add( 0, 0, 1, wxEXPAND, 5 );
 	
 	defaultsButton = new wxButton( this, wxID_ANY, _("add default services"), wxDefaultPosition, wxDefaultSize, 0 );
+	defaultsButton->Enable( false );
 	defaultsButton->SetToolTip( _("add the default services to the list") );
 	
 	buttonSizer->Add( defaultsButton, 0, wxALL, 5 );
@@ -659,7 +660,7 @@ RuleWizardAlfServicePageBase::RuleWizardAlfServicePageBase( wxWindow* parent, wx
 	detailsSizer->Fit( detailsPanel );
 	mainSizer->Add( detailsPanel, 0, wxEXPAND | wxALL, 5 );
 	
-	pageSizer->Add( mainSizer, 8, wxEXPAND, 5 );
+	pageSizer->Add( mainSizer, 7, wxEXPAND, 5 );
 	
 	this->SetSizer( pageSizer );
 	this->Layout();
@@ -681,7 +682,7 @@ RuleWizardSandboxPageBase::RuleWizardSandboxPageBase( wxWindow* parent, wxWindow
 	
 	naviSizer = new wxBoxSizer( wxVERTICAL );
 	
-	pageSizer->Add( naviSizer, 2, wxEXPAND, 5 );
+	pageSizer->Add( naviSizer, 3, wxEXPAND, 5 );
 	
 	naviMainDelimiter = new wxStaticLine( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLI_VERTICAL );
 	pageSizer->Add( naviMainDelimiter, 0, wxEXPAND | wxALL, 5 );
@@ -740,7 +741,7 @@ RuleWizardSandboxPageBase::RuleWizardSandboxPageBase( wxWindow* parent, wxWindow
 	
 	mainSizer->Add( 0, 0, 2, wxEXPAND, 5 );
 	
-	pageSizer->Add( mainSizer, 8, wxEXPAND, 5 );
+	pageSizer->Add( mainSizer, 7, wxEXPAND, 5 );
 	
 	this->SetSizer( pageSizer );
 	this->Layout();
@@ -758,7 +759,7 @@ RuleWizardSandboxPermissionPageBase::RuleWizardSandboxPermissionPageBase( wxWind
 	
 	naviSizer = new wxBoxSizer( wxVERTICAL );
 	
-	pageSizer->Add( naviSizer, 2, wxEXPAND, 5 );
+	pageSizer->Add( naviSizer, 3, wxEXPAND, 5 );
 	
 	naviMainDelimiter = new wxStaticLine( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLI_VERTICAL );
 	pageSizer->Add( naviMainDelimiter, 0, wxEXPAND | wxALL, 5 );
@@ -823,7 +824,7 @@ RuleWizardSandboxPermissionPageBase::RuleWizardSandboxPermissionPageBase( wxWind
 	
 	mainSizer->Add( inputSizer, 0, wxEXPAND, 5 );
 	
-	pageSizer->Add( mainSizer, 8, wxEXPAND, 5 );
+	pageSizer->Add( mainSizer, 7, wxEXPAND, 5 );
 	
 	this->SetSizer( pageSizer );
 	this->Layout();
@@ -841,7 +842,7 @@ RuleWizardSandboxFilesPageBase::RuleWizardSandboxFilesPageBase( wxWindow* parent
 	
 	naviSizer = new wxBoxSizer( wxVERTICAL );
 	
-	pageSizer->Add( naviSizer, 2, wxEXPAND, 5 );
+	pageSizer->Add( naviSizer, 3, wxEXPAND, 5 );
 	
 	naviMainDelimiter = new wxStaticLine( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLI_VERTICAL );
 	pageSizer->Add( naviMainDelimiter, 0, wxEXPAND | wxALL, 5 );
@@ -869,7 +870,7 @@ RuleWizardSandboxFilesPageBase::RuleWizardSandboxFilesPageBase( wxWindow* parent
 	fileListLabel->Wrap( -1 );
 	mainSizer->Add( fileListLabel, 0, wxALL, 5 );
 	
-	fileListCtrl = new wxListCtrl( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLC_HRULES|wxLC_REPORT|wxLC_SINGLE_SEL );
+	fileListCtrl = new wxListCtrl( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLC_HRULES|wxLC_REPORT );
 	mainSizer->Add( fileListCtrl, 1, wxALL|wxEXPAND, 5 );
 	
 	wxBoxSizer* buttonSizer;
@@ -889,6 +890,7 @@ RuleWizardSandboxFilesPageBase::RuleWizardSandboxFilesPageBase( wxWindow* parent
 	buttonSizer->Add( 0, 0, 1, wxEXPAND, 5 );
 	
 	defaultsButton = new wxButton( this, wxID_ANY, _("add default permissions"), wxDefaultPosition, wxDefaultSize, 0 );
+	defaultsButton->Enable( false );
 	defaultsButton->SetToolTip( _("add the default services to the list") );
 	
 	buttonSizer->Add( defaultsButton, 0, wxALL, 5 );
@@ -922,18 +924,20 @@ RuleWizardSandboxFilesPageBase::RuleWizardSandboxFilesPageBase( wxWindow* parent
 	detailsSizer->Fit( detailsPanel );
 	mainSizer->Add( detailsPanel, 0, wxEXPAND | wxALL, 5 );
 	
-	pageSizer->Add( mainSizer, 8, wxEXPAND, 5 );
+	pageSizer->Add( mainSizer, 7, wxEXPAND, 5 );
 	
 	this->SetSizer( pageSizer );
 	this->Layout();
 	
 	// Connect Events
+	fileListCtrl->Connect( wxEVT_COMMAND_LIST_ITEM_DESELECTED, wxListEventHandler( RuleWizardSandboxFilesPageBase::onFileListDeselect ), NULL, this );
+	fileListCtrl->Connect( wxEVT_COMMAND_LIST_ITEM_SELECTED, wxListEventHandler( RuleWizardSandboxFilesPageBase::onFileListSelect ), NULL, this );
 	addFileButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( RuleWizardSandboxFilesPageBase::onAddFileButton ), NULL, this );
 	addDirectoryButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( RuleWizardSandboxFilesPageBase::onAddDirectoryButton ), NULL, this );
 	defaultsButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( RuleWizardSandboxFilesPageBase::onDefaultsButton ), NULL, this );
 	deleteButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( RuleWizardSandboxFilesPageBase::onDeleteButton ), NULL, this );
 	askCheckBox->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( RuleWizardSandboxFilesPageBase::onAskCheckBox ), NULL, this );
-	validCheckBox->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( RuleWizardSandboxFilesPageBase::onRawCheckBox ), NULL, this );
+	validCheckBox->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( RuleWizardSandboxFilesPageBase::onValidCheckBox ), NULL, this );
 }
 
 RuleWizardFinalPageBase::RuleWizardFinalPageBase( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size, long style ) : wxPanel( parent, id, pos, size, style )
@@ -943,7 +947,7 @@ RuleWizardFinalPageBase::RuleWizardFinalPageBase( wxWindow* parent, wxWindowID i
 	
 	naviSizer = new wxBoxSizer( wxVERTICAL );
 	
-	pageSizer->Add( naviSizer, 2, wxEXPAND, 5 );
+	pageSizer->Add( naviSizer, 3, wxEXPAND, 5 );
 	
 	naviMainDelimiter = new wxStaticLine( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLI_VERTICAL );
 	pageSizer->Add( naviMainDelimiter, 0, wxEXPAND | wxALL, 5 );
@@ -970,7 +974,7 @@ RuleWizardFinalPageBase::RuleWizardFinalPageBase( wxWindow* parent, wxWindowID i
 	
 	mainSizer->Add( 0, 0, 1, wxEXPAND, 5 );
 	
-	pageSizer->Add( mainSizer, 8, wxEXPAND, 5 );
+	pageSizer->Add( mainSizer, 7, wxEXPAND, 5 );
 	
 	this->SetSizer( pageSizer );
 	this->Layout();

@@ -37,8 +37,19 @@
 #include "RuleWizardSandboxPage.h"
 #include "RuleWizardSandboxOverwritePage.h"
 #include "RuleWizardFinalPage.h"
-
+#include "RuleWizardSandboxReadPage.h"
+#include "RuleWizardSandboxReadFilesPage.h"
+#include "RuleWizardSandboxWritePage.h"
+#include "RuleWizardSandboxWriteFilesPage.h"
+#include "RuleWizardSandboxExecutePage.h"
+#include "RuleWizardSandboxExecuteFilesPage.h"
 #include "AppPolicy.h"
+#include "AlfAppPolicy.h"
+#include "AlfFilterPolicy.h"
+#include "AlfCapabilityFilterPolicy.h"
+#include "SbAppPolicy.h"
+#include "SbAccessFilterPolicy.h"
+#include "DefaultFilterPolicy.h"
 #include "ProfileCtrl.h"
 #include "PolicyRuleSet.h"
 
@@ -71,6 +82,17 @@ RuleWizard::RuleWizard(void)
 	CREATE_PAGE(pages_, PAGE_SB, RuleWizardSandboxPage, history_);
 	CREATE_PAGE(pages_, PAGE_SB_OVERWRITE, RuleWizardSandboxOverwritePage,
 	    history_);
+ 	CREATE_PAGE(pages_, PAGE_SB_READ, RuleWizardSandboxReadPage, history_);
+ 	CREATE_PAGE(pages_, PAGE_SB_READ_FILES, RuleWizardSandboxReadFilesPage,
+	    history_);
+	CREATE_PAGE(pages_, PAGE_SB_WRITE, RuleWizardSandboxWritePage,
+	    history_);
+	CREATE_PAGE(pages_, PAGE_SB_WRITE_FILES, RuleWizardSandboxWriteFilesPage,
+	    history_);
+	CREATE_PAGE(pages_, PAGE_SB_EXECUTE, RuleWizardSandboxExecutePage,
+	    history_);
+	CREATE_PAGE(pages_, PAGE_SB_EXECUTE_FILES,
+	    RuleWizardSandboxExecuteFilesPage, history_);
 
 	/* Final */
 	CREATE_PAGE(pages_, PAGE_FINAL, RuleWizardFinalPage, history_);
@@ -105,9 +127,7 @@ RuleWizard::forwardTransition(enum wizardPages pageNo) const
 	case PAGE_PROGRAM:
 		if (!history_.haveContextPolicy()) {
 			nextPage = PAGE_CTX;
-			break;
-		}
-		if (history_.haveAlfPolicy()) {
+		} else if (history_.haveAlfPolicy()) {
 			nextPage = PAGE_ALF_OVERWRITE;
 		} else {
 			nextPage = PAGE_ALF_CLIENT;
@@ -116,9 +136,7 @@ RuleWizard::forwardTransition(enum wizardPages pageNo) const
 	case PAGE_CTX:
 		if (history_.haveContextException()) {
 			nextPage = PAGE_CTX_EXCEPT;
-			break;
-		}
-		if (history_.haveAlfPolicy()) {
+		} else if (history_.haveAlfPolicy()) {
 			nextPage = PAGE_ALF_OVERWRITE;
 		} else {
 			nextPage = PAGE_ALF_CLIENT;
@@ -135,22 +153,18 @@ RuleWizard::forwardTransition(enum wizardPages pageNo) const
 		if (history_.shallOverwriteAlfPolicy() !=
 		    RuleWizardHistory::OVERWRITE_NO) {
 			nextPage = PAGE_ALF_CLIENT;
-			break;
-		}
-		if (history_.haveSandboxPolicy()) {
+		} else if (history_.haveSandboxPolicy()) {
 			nextPage = PAGE_SB_OVERWRITE;
 		} else {
 			nextPage = PAGE_SB;
 		}
 		break;
 	case PAGE_ALF_CLIENT:
+		/* XXX ch: ALF server pages still pending */
 		if (history_.getAlfClientPermission() ==
 		    RuleWizardHistory::PERM_RESTRICT_USER) {
 			nextPage = PAGE_ALF_CLIENT_PORTS;
-			break;
-		}
-		/* XXX ch: ALF server pages still pending */
-		if (history_.haveSandboxPolicy()) {
+		} else if (history_.haveSandboxPolicy()) {
 			nextPage = PAGE_SB_OVERWRITE;
 		} else {
 			nextPage = PAGE_SB;
@@ -167,17 +181,50 @@ RuleWizard::forwardTransition(enum wizardPages pageNo) const
 	case PAGE_SB:
 		if (history_.haveSandbox() ==
 		    RuleWizardHistory::PERM_RESTRICT_USER) {
-			//nextPage = PAGE_SB_READ;
-			//break;
+			nextPage = PAGE_SB_READ;
+		} else {
+			nextPage = PAGE_FINAL;
 		}
-		nextPage = PAGE_FINAL;
 		break;
 	case PAGE_SB_OVERWRITE:
 		if (history_.shallOverwriteSandboxPolicy() !=
 		    RuleWizardHistory::OVERWRITE_NO) {
-			//nextPage = PAGE_SB_READ;
-			//break;
+			nextPage = PAGE_SB_READ;
+		} else {
+			nextPage = PAGE_FINAL;
 		}
+		break;
+	case PAGE_SB_READ:
+		if (history_.getSandboxReadPermission() ==
+		    RuleWizardHistory::PERM_RESTRICT_USER) {
+			nextPage = PAGE_SB_READ_FILES;
+		} else {
+			nextPage = PAGE_SB_WRITE;
+		}
+		break;
+	case PAGE_SB_READ_FILES:
+		nextPage = PAGE_SB_WRITE;
+		break;
+	case PAGE_SB_WRITE:
+		if (history_.getSandboxWritePermission() ==
+		    RuleWizardHistory::PERM_RESTRICT_USER) {
+			nextPage = PAGE_SB_WRITE_FILES;
+		} else {
+			nextPage = PAGE_SB_EXECUTE;
+		}
+		break;		
+	case PAGE_SB_WRITE_FILES:
+		nextPage = PAGE_SB_EXECUTE;
+		break;
+	case PAGE_SB_EXECUTE:
+		if (history_.getSandboxExecutePermission() ==
+		    RuleWizardHistory::PERM_RESTRICT_USER) {
+			nextPage = PAGE_SB_EXECUTE_FILES;
+		} else {
+			nextPage = PAGE_FINAL;
+		}
+		break;
+	case PAGE_SB_EXECUTE_FILES:
 		nextPage = PAGE_FINAL;
 		break;
 	case PAGE_FINAL:
@@ -208,9 +255,7 @@ RuleWizard::backwardTransition(enum wizardPages pageNo) const
 	case PAGE_ALF_OVERWRITE:
 		if (!history_.haveContextPolicy()) {
 			previousPage = PAGE_PROGRAM;
-			break;
-		}
-		if (history_.haveContextException()) {
+		} else if (history_.haveContextException()) {
 			previousPage = PAGE_CTX_EXCEPT;
 		} else {
 			previousPage = PAGE_CTX;
@@ -219,13 +264,9 @@ RuleWizard::backwardTransition(enum wizardPages pageNo) const
 	case PAGE_ALF_CLIENT:
 		if (history_.haveAlfPolicy()) {
 			previousPage = PAGE_ALF_OVERWRITE;
-			break;
-		}
-		if (!history_.haveContextPolicy()) {
+		} else if (history_.haveContextPolicy()) {
 			previousPage = PAGE_PROGRAM;
-			break;
-		}
-		if (history_.haveContextException()) {
+		} else if (history_.haveContextException()) {
 			previousPage = PAGE_CTX_EXCEPT;
 		} else {
 			previousPage = PAGE_CTX;
@@ -252,11 +293,45 @@ RuleWizard::backwardTransition(enum wizardPages pageNo) const
 			previousPage = PAGE_ALF_CLIENT;
 		}
 		break;
+	case PAGE_SB_READ:
+		previousPage = PAGE_SB;
+		break;
+	case PAGE_SB_READ_FILES:
+		previousPage = PAGE_SB_READ;
+		break;
+	case PAGE_SB_WRITE:
+		if (history_.getSandboxReadPermission() ==
+		    RuleWizardHistory::PERM_RESTRICT_USER) {
+			previousPage = PAGE_SB_READ_FILES;
+		} else {
+			previousPage = PAGE_SB_READ;
+		}
+		break;
+	case PAGE_SB_WRITE_FILES:
+		previousPage = PAGE_SB_WRITE;
+		break;
+	case PAGE_SB_EXECUTE:
+		if (history_.getSandboxWritePermission() ==
+		    RuleWizardHistory::PERM_RESTRICT_USER) {
+			previousPage = PAGE_SB_WRITE_FILES;
+		} else {
+			previousPage = PAGE_SB_WRITE;
+		}
+		break;
+	case PAGE_SB_EXECUTE_FILES:
+		previousPage = PAGE_SB_EXECUTE;
+		break;
 	case PAGE_FINAL:
 		if (history_.haveSandboxPolicy()) {
 			previousPage = PAGE_SB_OVERWRITE;
-		} else {
+		} else if (history_.haveSandbox() !=
+		    RuleWizardHistory::PERM_RESTRICT_USER) {
 			previousPage = PAGE_SB;
+		} else if (history_.getSandboxExecutePermission() ==
+		    RuleWizardHistory::PERM_RESTRICT_USER) {
+			previousPage = PAGE_SB_EXECUTE_FILES;
+		} else {
+			previousPage = PAGE_SB_EXECUTE;
 		}
 		break;
 	default:
@@ -304,6 +379,7 @@ RuleWizard::onWizardFinished(wxWizardEvent &)
 	}
 
 	createAlfPolicy(ruleSet);
+	createSandboxPolicy(ruleSet);
 
 	ruleSet->unlock();
 
@@ -332,16 +408,17 @@ RuleWizard::createContextPolicy(PolicyRuleSet *ruleSet) const
 	if (!history_.isSameContext()) {
 		/* Create 'context new any' */
 		ctxFilter = new ContextFilterPolicy(ctxApp);
-		if (ctxFilter != NULL) {
-			ctxFilter->setContextTypeNo(APN_CTX_NEW);
+		ctxApp->prependFilterPolicy(ctxFilter);
+		ctxFilter->setContextTypeNo(APN_CTX_NEW);
+	} else {
+		if (history_.haveContextException()) {
+			ctxFilter = new ContextFilterPolicy(ctxApp);
 			ctxApp->prependFilterPolicy(ctxFilter);
-			if (history_.haveContextException()) {
-				ctxFilter->setBinaryList(
-				    history_.getContextExceptionList());
-			}
+			ctxFilter->setContextTypeNo(APN_CTX_NEW);
+			ctxFilter->setBinaryList(
+			    history_.getContextExceptionList());
 		}
 	}
-	/* else: empty context block */
 
 	return;
 }
@@ -376,18 +453,10 @@ RuleWizard::createAlfPolicy(PolicyRuleSet *ruleSet) const
 		alfApp = NULL;
 	}
 
-	if (alfApp == NULL) {
-		alfApp = new AlfAppPolicy(ruleSet);
-		if (alfApp == NULL) {
-			return;
-		}
-		ruleSet->prependAppPolicy(alfApp);
-	}
-
-	if (alfApp->isAnyBlock()) {
-		alfApp->addBinary(history_.getProgram());
-		alfApp->setHashValueString(history_.getChecksum(), 0);
-	}
+	alfApp = new AlfAppPolicy(ruleSet);
+	ruleSet->prependAppPolicy(alfApp);
+	alfApp->addBinary(history_.getProgram());
+	alfApp->setHashValueString(history_.getChecksum(), 0);
 
 	switch (history_.getAlfClientPermission()) {
 	case RuleWizardHistory::PERM_ALLOW_ALL:
@@ -413,6 +482,12 @@ RuleWizard::createAlfPolicy(PolicyRuleSet *ruleSet) const
 		alfFilter = new AlfFilterPolicy(alfApp);
 		alfApp->prependFilterPolicy(alfFilter);
 		alfFilter->setActionNo(APN_ACTION_ASK);
+		alfFilter->setProtocol(IPPROTO_TCP);
+
+		alfFilter = new AlfFilterPolicy(alfApp);
+		alfApp->prependFilterPolicy(alfFilter);
+		alfFilter->setActionNo(APN_ACTION_ASK);
+		alfFilter->setProtocol(IPPROTO_UDP);
 	}
 
 	if (history_.getAlfClientRaw()) {
@@ -422,16 +497,155 @@ RuleWizard::createAlfPolicy(PolicyRuleSet *ruleSet) const
 	}
 
 	list = history_.getAlfClientPortList();
-	for (size_t i=0; i<list.GetCount(); i=i+3) {
-		alfFilter = new AlfFilterPolicy(alfApp);
-		alfApp->prependFilterPolicy(alfFilter);
-		alfFilter->setActionNo(APN_ACTION_ALLOW);
-		alfFilter->setDirectionNo(APN_CONNECT);
-		if (list.Item(i+2) == wxT("tcp")) {
-			alfFilter->setProtocol(IPPROTO_TCP);
-		} else {
-			alfFilter->setProtocol(IPPROTO_UDP);
+	createAlfPortList(alfApp, list, APN_CONNECT);
+}
+
+void
+RuleWizard::createSandboxPolicy(PolicyRuleSet *ruleSet) const
+{
+	wxArrayString		 list;
+	SbAppPolicy		*sbApp;
+	SbAccessFilterPolicy	*sbFilter;
+	DefaultFilterPolicy	*dflFilter;
+
+	sbApp	 = NULL;
+	sbFilter = NULL;
+	dflFilter  = NULL;
+
+	if (history_.haveSandboxPolicy()) {
+		sbApp = ruleSet->searchSandboxAppPolicy(history_.getProgram());
+		if (history_.shallOverwriteSandboxPolicy() ==
+		    RuleWizardHistory::OVERWRITE_NO) {
+			return;
 		}
-		alfFilter->setToPortName(list.Item(i+1));
+		/*
+		 * We just need to remove the filter, but it's easier to
+		 * remove all and re-create the app policy.
+		 */
+		sbApp->remove();
+		sbApp = NULL;
+	}
+
+	/* Create new app block. */
+	sbApp = new SbAppPolicy(ruleSet);
+	ruleSet->prependAppPolicy(sbApp);
+	sbApp->addBinary(history_.getProgram());
+	sbApp->setHashValueString(history_.getChecksum(), 0);
+
+	createSbPermission(sbApp, APN_SBA_READ);
+	createSbPermission(sbApp, APN_SBA_WRITE);
+	createSbPermission(sbApp, APN_SBA_EXEC);
+}
+
+void
+RuleWizard::createAlfPortList(AlfAppPolicy *app, const wxArrayString & list,
+    int direction) const
+{
+	AlfFilterPolicy	*filter;
+
+	for (size_t i=0; i<list.GetCount(); i=i+3) {
+		filter = new AlfFilterPolicy(app);
+		app->prependFilterPolicy(filter);
+
+		filter->setActionNo(APN_ACTION_ALLOW);
+		filter->setDirectionNo(direction);
+
+		if (list.Item(i+2) == wxT("tcp")) {
+			filter->setProtocol(IPPROTO_TCP);
+		} else {
+			filter->setProtocol(IPPROTO_UDP);
+		}
+		filter->setToPortName(list.Item(i+1));
+	}
+}
+
+void
+RuleWizard::createSbFileList(SbAppPolicy *app, const wxArrayString & list,
+    int permission) const
+{
+	SbAccessFilterPolicy	*filter;
+
+	for (size_t i=0; i<list.GetCount(); i++) {
+		filter = new SbAccessFilterPolicy(app);
+		app->prependFilterPolicy(filter);
+
+		filter->setActionNo(APN_ACTION_ALLOW);
+		filter->setPath(list.Item(i));
+		filter->setAccessMask(permission);
+	}
+}
+
+void
+RuleWizard::createSbPermission(SbAppPolicy *app, int section) const
+{
+	bool					 ask;
+	bool					 signature;
+	RuleWizardHistory::permissionAnswer	 permission;
+	wxArrayString				 list;
+	SbAccessFilterPolicy			*filter;
+
+	switch (section) {
+	case APN_SBA_READ:
+		ask = history_.getSandboxReadAsk();
+		signature = history_.getSandboxReadValidSignature();
+		permission = history_.getSandboxReadPermission();
+		list = history_.getSandboxReadFileList();
+		break;
+	case APN_SBA_WRITE:
+		ask = history_.getSandboxWriteAsk();
+		signature = history_.getSandboxWriteValidSignature();
+		permission = history_.getSandboxWritePermission();
+		list = history_.getSandboxWriteFileList();
+		break;
+	case APN_SBA_EXEC:
+		ask = history_.getSandboxExecuteAsk();
+		signature = history_.getSandboxExecuteValidSignature();
+		permission = history_.getSandboxExecutePermission();
+		list = history_.getSandboxExecuteFileList();
+		break;
+	default:
+		return;
+	}
+
+	filter = new SbAccessFilterPolicy(app);
+	app->prependFilterPolicy(filter);
+
+	filter->setPath(wxT("/"));
+	filter->setAccessMask(section);
+	if (ask) {
+		filter->setActionNo(APN_ACTION_ASK);
+	} else if (permission == RuleWizardHistory::PERM_ALLOW_ALL) {
+		filter->setActionNo(APN_ACTION_ALLOW);
+	} else {
+		filter->setActionNo(APN_ACTION_DENY);
+	}
+
+	if (signature) {
+		filter = new SbAccessFilterPolicy(app);
+		app->prependFilterPolicy(filter);
+
+		filter->setSubjectSelf(true);
+		filter->setPath(wxT("/"));
+		filter->setAccessMask(section);
+		filter->setActionNo(APN_ACTION_ALLOW);
+
+		filter = new SbAccessFilterPolicy(app);
+		app->prependFilterPolicy(filter);
+
+		filter->setSubjectSelf(false);
+		filter->setPath(wxT("/"));
+		filter->setAccessMask(section);
+		filter->setActionNo(APN_ACTION_ALLOW);
+	}
+
+	switch (permission) {
+	case RuleWizardHistory::PERM_RESTRICT_DEFAULT:
+		// XXX ch: load defautls
+		break;
+	case RuleWizardHistory::PERM_RESTRICT_USER:
+		createSbFileList(app, list, section);
+		break;
+	default:
+		break;
 	}
 }

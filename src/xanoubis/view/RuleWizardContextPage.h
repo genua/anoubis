@@ -64,15 +64,11 @@ class RuleWizardContextPage : public RuleWizardContextPageBase
 
 		/**
 		 */
-		virtual void onYesExceptionsCheckBox(wxCommandEvent &);
+		virtual void onExceptionsCheckBox(wxCommandEvent &);
 
 		/**
 		 */
 		virtual void onNoRadioButton(wxCommandEvent &);
-
-		/**
-		 */
-		virtual void onNoExceptionsCheckBox(wxCommandEvent &);
 
 		/**
 		 * Update navigation.

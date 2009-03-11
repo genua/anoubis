@@ -25,32 +25,57 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "RuleWizardFinalPage.h"
+#ifndef _RULEWIZARDSANDBOXREADPAGE_H_
+#define _RULEWIZARDSANDBOXREADPAGE_H_
 
-RuleWizardFinalPage::RuleWizardFinalPage(wxWindow *parent,
-    RuleWizardHistory *history) : RuleWizardFinalPageBase(parent)
+#include <wx/wizard.h>
+
+#include "RuleWizardPanelsBase.h"
+#include "RuleWizardHistory.h"
+
+/**
+ *
+ */
+class RuleWizardSandboxReadPage : public RuleWizardSandboxPermissionPageBase
 {
-	history_ = history;
+	public:
+		/**
+		 * Constructor of this page.
+		 */
+		RuleWizardSandboxReadPage(wxWindow *, RuleWizardHistory *);
 
-	parent->Connect(wxEVT_WIZARD_PAGE_CHANGED,
-	    wxWizardEventHandler(RuleWizardFinalPage::onPageChanged),
-	    NULL, this);
-}
+	private:
+		/**
+		 * Store the input here.
+		 */
+		RuleWizardHistory *history_;
 
-void
-RuleWizardFinalPage::onPageChanged(wxWizardEvent &)
-{
-	updateNavi();
-}
+		/**
+		 * Handle events from wizard.
+		 * We became the current page. Update view.
+		 * @param[in] 1st The event.
+		 * @return Nothing.
+		 */
+		void onPageChanged(wxWizardEvent &);
 
-void
-RuleWizardFinalPage::updateNavi(void)
-{
-	naviSizer->Clear(true);
-	history_->fillProgramNavi(this, naviSizer, false);
-	history_->fillContextNavi(this, naviSizer, false);
-	history_->fillAlfNavi(this, naviSizer, false);
-	history_->fillSandboxNavi(this, naviSizer, false);
-	Layout();
-	Refresh();
-}
+		/**
+		 */
+		void onAllowAllRadioButton(wxCommandEvent &);
+
+		/**
+		 */
+		void onDefaultRadioButton(wxCommandEvent &);
+
+		/**
+		 */
+		void onRestrictedRadioButton(wxCommandEvent &);
+		
+		/**
+		 * Update navigation.
+		 * @param None.
+		 * @return Nothing.
+		 */
+		void updateNavi(void);
+};
+
+#endif	/* _RULEWIZARDSANDBOXREADPAGE_H_ */

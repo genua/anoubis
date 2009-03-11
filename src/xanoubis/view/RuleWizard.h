@@ -242,6 +242,41 @@ class RuleWizard : public wxWizard
 		 * @return Nothind.
 		 */
 		void createAlfPolicy(PolicyRuleSet *) const;
+
+		/**
+		 * Helper method to create sandbox policies.
+		 * @param[in] 1st The ruleset of policies.
+		 * @return Nothind.
+		 */
+		void createSandboxPolicy(PolicyRuleSet *) const;
+
+		/**
+		 * Create the filter policies by list of services.
+		 * @param[in] 1st The alf application policy (aka parent).
+		 * @param[in] 2nd The list of services.
+		 * @param[in] 3rd The direction.
+		 * @return Nothing.
+		 */
+		void createAlfPortList(AlfAppPolicy *, const wxArrayString &,
+		    int) const;
+
+		/**
+		 * Create the filter policies by list of files.
+		 * @param[in] 1st The sandbox application policy (aka parent).
+		 * @param[in] 2nd The list of files.
+		 * @return Nothing.
+		 * @param[in] 3rd The permission.
+		 */
+		void createSbFileList(SbAppPolicy *, const wxArrayString &,
+		    int) const;
+
+		/**
+		 * Create sandbox policies.
+		 * @param[in] 1st The sandbox application policy (aka parent).
+		 * @param[in] 2nd The type of sb policies.
+		 * @return Nothing.
+		 */
+		void createSbPermission(SbAppPolicy *, int) const;
 };
 
 #endif	/* _RULEWIZARD_H_ */

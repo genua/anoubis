@@ -55,12 +55,14 @@ RuleWizardHistory::RuleWizardHistory(void)
 	alfClientRaw_	     = false;
 	alfServerPermission_ = PERM_DENY_ALL;
 
-	haveSandbox_		  = PERM_RESTRICT_USER;
-	haveSandboxPolicy_	  = false;
-	overwriteSandboxPolicy_   = OVERWRITE_NO;
-	sandboxReadPermission_    = PERM_DENY_ALL;
-	sandboxWritePermission_   = PERM_DENY_ALL;
-	sandboxExecutePermission_ = PERM_DENY_ALL;
+	haveSandbox_		   = PERM_RESTRICT_USER;
+	haveSandboxPolicy_	   = false;
+	overwriteSandboxPolicy_    = OVERWRITE_NO;
+	sandboxReadPermission_     = PERM_ALLOW_ALL;
+	sandboxReadAsk_		   = true;
+	sandboxReadValidSignature_ = false;
+	sandboxWritePermission_    = PERM_ALLOW_ALL;
+	sandboxExecutePermission_  = PERM_ALLOW_ALL;
 }
 
 void
@@ -301,6 +303,42 @@ RuleWizardHistory::getSandboxReadPermission(void) const
 }
 
 void
+RuleWizardHistory::setSandboxReadFileList(const wxArrayString & list)
+{
+	sandboxReadFileList_ = list;
+}
+
+wxArrayString
+RuleWizardHistory::getSandboxReadFileList(void) const
+{
+	return (sandboxReadFileList_);
+}
+
+void
+RuleWizardHistory::setSandboxReadAsk(bool ask)
+{
+	sandboxReadAsk_ = ask;
+}
+
+bool
+RuleWizardHistory::getSandboxReadAsk(void) const
+{
+	return (sandboxReadAsk_);
+}
+
+void
+RuleWizardHistory::setSandboxReadValidSignature(bool valid)
+{
+	sandboxReadValidSignature_ = valid;
+}
+
+bool
+RuleWizardHistory::getSandboxReadValidSignature(void) const
+{
+	return (sandboxReadValidSignature_);
+}
+
+void
 RuleWizardHistory::setSandboxWritePermission(enum permissionAnswer answer)
 {
 	sandboxWritePermission_ = answer;
@@ -313,6 +351,42 @@ RuleWizardHistory::getSandboxWritePermission(void) const
 }
 
 void
+RuleWizardHistory::setSandboxWriteFileList(const wxArrayString & list)
+{
+	sandboxWriteFileList_ = list;
+}
+
+wxArrayString
+RuleWizardHistory::getSandboxWriteFileList(void) const
+{
+	return (sandboxWriteFileList_);
+}
+
+void
+RuleWizardHistory::setSandboxWriteAsk(bool ask)
+{
+	sandboxWriteAsk_ = ask;
+}
+
+bool
+RuleWizardHistory::getSandboxWriteAsk(void) const
+{
+	return (sandboxWriteAsk_);
+}
+
+void
+RuleWizardHistory::setSandboxWriteValidSignature(bool valid)
+{
+	sandboxWriteValidSignature_ = valid;
+}
+
+bool
+RuleWizardHistory::getSandboxWriteValidSignature(void) const
+{
+	return (sandboxWriteValidSignature_);
+}
+
+void
 RuleWizardHistory::setSandboxExecutePermission(enum permissionAnswer answer)
 {
 	sandboxExecutePermission_ = answer;
@@ -322,6 +396,42 @@ RuleWizardHistory::permissionAnswer
 RuleWizardHistory::getSandboxExecutePermission(void) const
 {
 	return (sandboxExecutePermission_);
+}
+
+void
+RuleWizardHistory::setSandboxExecuteFileList(const wxArrayString & list)
+{
+	sandboxExecuteFileList_ = list;
+}
+
+wxArrayString
+RuleWizardHistory::getSandboxExecuteFileList(void) const
+{
+	return (sandboxExecuteFileList_);
+}
+
+void
+RuleWizardHistory::setSandboxExecuteAsk(bool ask)
+{
+	sandboxExecuteAsk_ = ask;
+}
+
+bool
+RuleWizardHistory::getSandboxExecuteAsk(void) const
+{
+	return (sandboxExecuteAsk_);
+}
+
+void
+RuleWizardHistory::setSandboxExecuteValidSignature(bool valid)
+{
+	sandboxExecuteValidSignature_ = valid;
+}
+
+bool
+RuleWizardHistory::getSandboxExecuteValidSignature(void) const
+{
+	return (sandboxExecuteValidSignature_);
 }
 
 /*
@@ -414,32 +524,16 @@ RuleWizardHistory::fillAlfNavi(wxWindow *parent, wxSizer *naviSizer,
 	} else {
 		addValue(parent, naviSizer, _("client deny raw"));
 	}
-
-	switch (alfServerPermission_) {
-	case PERM_ALLOW_ALL:
-		addValue(parent, naviSizer, _("server allow all"));
-		break;
-	case PERM_RESTRICT_DEFAULT:
-		addValue(parent, naviSizer, _("server defaults"));
-		break;
-	case PERM_RESTRICT_USER:
-		addValue(parent, naviSizer, _("server user defined"));
-		break;
-	case PERM_DENY_ALL:
-		addValue(parent, naviSizer, _("server deny all"));
-		break;
-	case PERM_NONE:
-		/* FALLTHROUGH */
-	default:
-		/* do nothing */
-		break;
-	}
 }
 
 void
 RuleWizardHistory::fillSandboxNavi(wxWindow *parent, wxSizer *naviSizer,
     bool active) const
 {
+	wxString text;
+
+	text = wxEmptyString;
+
 	addTitle(parent, naviSizer, active, _("Sandbox:"));
 
 	if (haveSandboxPolicy_) {
@@ -449,14 +543,105 @@ RuleWizardHistory::fillSandboxNavi(wxWindow *parent, wxSizer *naviSizer,
 		} else {
 			addValue(parent, naviSizer, _("discard policies"));
 		}
-	} else if (haveSandbox_ == PERM_RESTRICT_USER) {
-		addValue(parent, naviSizer, _("user defined"));
 	} else if (haveSandbox_ == PERM_RESTRICT_DEFAULT) {
 		addValue(parent, naviSizer, _("defaults"));
 		return;
-	} else {
+	} else if (haveSandbox_ == PERM_ALLOW_ALL) {
 		addValue(parent, naviSizer, _("no sandbox"));
 		return;
+	}
+
+	switch (sandboxReadPermission_) {
+	case PERM_ALLOW_ALL:
+		addValue(parent, naviSizer, _("read unrestricted"));
+		break;
+	case PERM_RESTRICT_DEFAULT:
+		addValue(parent, naviSizer, _("read defaults"));
+		break;
+	case PERM_RESTRICT_USER:
+		text.Printf(_("read user defined (%d)"),
+		    sandboxReadFileList_.GetCount());
+		addValue(parent, naviSizer, text);
+		if (sandboxReadAsk_) {
+			text = _("other read access: ask");
+		} else {
+			text = _("other read access: deny");
+		}
+		addValue(parent, naviSizer, text);
+		if (sandboxReadValidSignature_) {
+			text = _("read signature: allow");
+		} else {
+			text = _("read signature: don't care");
+		}
+		addValue(parent, naviSizer, text);
+		break;
+	case PERM_NONE:
+		/* FALLTHROUGH */
+	default:
+		/* do nothing */
+		break;
+	}
+
+	switch (sandboxWritePermission_) {
+	case PERM_ALLOW_ALL:
+		addValue(parent, naviSizer, _("write unrestricted"));
+		break;
+	case PERM_RESTRICT_DEFAULT:
+		addValue(parent, naviSizer, _("write defaults"));
+		break;
+	case PERM_RESTRICT_USER:
+		text.Printf(_("write user defined (%d)"),
+		    sandboxWriteFileList_.GetCount());
+		addValue(parent, naviSizer, text);
+		if (sandboxWriteAsk_) {
+			text = _("other write access: ask");
+		} else {
+			text = _("other write access: deny");
+		}
+		addValue(parent, naviSizer, text);
+		if (sandboxWriteValidSignature_) {
+			text = _("write signature: allow");
+		} else {
+			text = _("write signature: don't care");
+		}
+		addValue(parent, naviSizer, text);
+		break;
+	case PERM_NONE:
+		/* FALLTHROUGH */
+	default:
+		/* do nothing */
+		break;
+	}
+
+	switch (sandboxExecutePermission_) {
+	case PERM_ALLOW_ALL:
+		addValue(parent, naviSizer, _("execute unrestricted"));
+		break;
+	case PERM_RESTRICT_DEFAULT:
+		addValue(parent, naviSizer, _("execute defaults"));
+		break;
+	case PERM_RESTRICT_USER:
+		text.Printf(_("execute user defined (%d)"),
+		    sandboxExecuteFileList_.GetCount());
+		addValue(parent, naviSizer, text);
+		if (sandboxExecuteAsk_) {
+			text = _("other execute access: ask");
+		} else {
+			text = _("other execute access: deny");
+		}
+		addValue(parent, naviSizer, text);
+		if (sandboxExecuteValidSignature_) {
+			text = _("execute signature: allow");
+		} else {
+			text = _("execute signature: don't care");
+		}
+		addValue(parent, naviSizer, text);
+		break;
+	case PERM_NONE:
+		/* FALLTHROUGH */
+	default:
+		/* do nothing */
+		break;
 	}
 }
 

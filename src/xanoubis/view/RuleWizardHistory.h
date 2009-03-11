@@ -304,6 +304,50 @@ class RuleWizardHistory
 		enum permissionAnswer getSandboxReadPermission(void) const;
 
 		/**
+		 * Store the list of sandbox read file.
+		 * @param[in] 1st The list of read file.
+		 * @return Nothing.
+		 */
+		void setSandboxReadFileList(const wxArrayString &);
+
+		/**
+		 * Get the list of sandbox read file.
+		 * @param None.
+		 * @return The list of read file.
+		 */
+		wxArrayString getSandboxReadFileList(void) const;
+
+		/**
+		 * Store the answer to the question: ask on any other
+		 * read access?
+		 * @param[in] 1st The answer.
+		 * @return Nothing.
+		 */
+		void setSandboxReadAsk(bool);
+
+		/**
+		 * Shall we ask on any other read access?
+		 * @param None.
+		 * @return True or false.
+		 */
+		bool getSandboxReadAsk(void) const;
+
+		/**
+		 * Store the answer to the question: allow all access
+		 * on valid signature?
+		 * @param[in] 1st The answer.
+		 * @return Nothing.
+		 */
+		void setSandboxReadValidSignature(bool);
+
+		/**
+		 * Shall we allow all read access on valid signature?
+		 * @param None.
+		 * * @return True or false.
+		 */
+		bool getSandboxReadValidSignature(void) const;
+
+		/**
 		 * Store the answer to the question about the sandbox write
 		 * permissions.
 		 * @param[in] 1st The answer.
@@ -320,6 +364,50 @@ class RuleWizardHistory
 		enum permissionAnswer getSandboxWritePermission(void) const;
 
 		/**
+		 * Store the list of sandbox write file.
+		 * @param[in] 1st The list of write file.
+		 * @return Nothing.
+		 */
+		void setSandboxWriteFileList(const wxArrayString &);
+
+		/**
+		 * Get the list of sandbox write file.
+		 * @param None.
+		 * @return The list of write file.
+		 */
+		wxArrayString getSandboxWriteFileList(void) const;
+
+		/**
+		 * Store the answer to the question: ask on any other
+		 * write access?
+		 * @param[in] 1st The answer.
+		 * @return Nothing.
+		 */
+		void setSandboxWriteAsk(bool);
+
+		/**
+		 * Shall we ask on any other write access?
+		 * @param None.
+		 * @return True or false.
+		 */
+		bool getSandboxWriteAsk(void) const;
+
+		/**
+		 * Store the answer to the question: allow all access
+		 * on valid signature?
+		 * @param[in] 1st The answer.
+		 * @return Nothing.
+		 */
+		void setSandboxWriteValidSignature(bool);
+
+		/**
+		 * Shall we allow all write access on valid signature?
+		 * @param None.
+		 * * @return True or false.
+		 */
+		bool getSandboxWriteValidSignature(void) const;
+
+		/**
 		 * Store the answer to the question about the sandbox execute
 		 * permissions.
 		 * @param[in] 1st The answer.
@@ -334,6 +422,50 @@ class RuleWizardHistory
 		 * @return The answer.
 		 */
 		enum permissionAnswer getSandboxExecutePermission(void) const;
+
+		/**
+		 * Store the list of sandbox execute file.
+		 * @param[in] 1st The list of execute file.
+		 * @return Nothing.
+		 */
+		void setSandboxExecuteFileList(const wxArrayString &);
+
+		/**
+		 * Get the list of sandbox execute file.
+		 * @param None.
+		 * @return The list of execute file.
+		 */
+		wxArrayString getSandboxExecuteFileList(void) const;
+
+		/**
+		 * Store the answer to the question: ask on any other
+		 * execute access?
+		 * @param[in] 1st The answer.
+		 * @return Nothing.
+		 */
+		void setSandboxExecuteAsk(bool);
+
+		/**
+		 * Shall we ask on any other execute access?
+		 * @param None.
+		 * @return True or false.
+		 */
+		bool getSandboxExecuteAsk(void) const;
+
+		/**
+		 * Store the answer to the question: allow all access
+		 * on valid signature?
+		 * @param[in] 1st The answer.
+		 * @return Nothing.
+		 */
+		void setSandboxExecuteValidSignature(bool);
+
+		/**
+		 * Shall we allow all execute access on valid signature?
+		 * @param None.
+		 * * @return True or false.
+		 */
+		bool getSandboxExecuteValidSignature(void) const;
 
 		/**
 		 * Fill navigation sizer with all items for a program page.
@@ -472,14 +604,59 @@ class RuleWizardHistory
 		enum permissionAnswer sandboxReadPermission_;
 
 		/**
+		 * The list of sandbox read access.
+		 */
+		wxArrayString sandboxReadFileList_;
+
+		/**
+		 * Shall we ask on any other read access?
+		 */
+		bool sandboxReadAsk_;
+
+		/**
+		 * Shall we allow all read access on valid signature?
+		 */
+		bool sandboxReadValidSignature_;
+
+		/**
 		 * Sandbox write permissions.
 		 */
 		enum permissionAnswer sandboxWritePermission_;
 
 		/**
+		 * The list of sandbox write access.
+		 */
+		wxArrayString sandboxWriteFileList_;
+
+		/**
+		 * Shall we ask on any other write access?
+		 */
+		bool sandboxWriteAsk_;
+
+		/**
+		 * Shall we allow all write access on valid signature?
+		 */
+		bool sandboxWriteValidSignature_;
+
+		/**
 		 * Sandbox execute permissions.
 		 */
 		enum permissionAnswer sandboxExecutePermission_;
+
+		/**
+		 * The list of sandbox execute access.
+		 */
+		wxArrayString sandboxExecuteFileList_;
+
+		/**
+		 * Shall we ask on any other execute access?
+		 */
+		bool sandboxExecuteAsk_;
+
+		/**
+		 * Shall we allow all execute access on valid signature?
+		 */
+		bool sandboxExecuteValidSignature_;
 
 		/**
 		 * Push a section title to the navigation sizer.

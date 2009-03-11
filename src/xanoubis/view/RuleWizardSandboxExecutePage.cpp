@@ -25,32 +25,59 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "RuleWizardFinalPage.h"
+#include "RuleWizardSandboxExecutePage.h"
 
-RuleWizardFinalPage::RuleWizardFinalPage(wxWindow *parent,
-    RuleWizardHistory *history) : RuleWizardFinalPageBase(parent)
+RuleWizardSandboxExecutePage::RuleWizardSandboxExecutePage(wxWindow *parent,
+    RuleWizardHistory *history) : RuleWizardSandboxPermissionPageBase(parent)
 {
 	history_ = history;
 
 	parent->Connect(wxEVT_WIZARD_PAGE_CHANGED,
-	    wxWizardEventHandler(RuleWizardFinalPage::onPageChanged),
+	    wxWizardEventHandler(RuleWizardSandboxExecutePage::onPageChanged),
 	    NULL, this);
 }
 
 void
-RuleWizardFinalPage::onPageChanged(wxWizardEvent &)
+RuleWizardSandboxExecutePage::onPageChanged(wxWizardEvent &)
 {
+	wxString text;
+
+	text.Printf(_("Choose permissions of application \"%ls\"\n"
+	    "of EXECUTING file access:"), history_->getProgram().c_str());
+	questionLabel->SetLabel(text);
+
 	updateNavi();
 }
 
 void
-RuleWizardFinalPage::updateNavi(void)
+RuleWizardSandboxExecutePage::onAllowAllRadioButton(wxCommandEvent &)
+{
+	history_->setSandboxExecutePermission(RuleWizardHistory::PERM_ALLOW_ALL);
+	updateNavi();
+}
+
+void
+RuleWizardSandboxExecutePage::onDefaultRadioButton(wxCommandEvent &)
+{
+	history_->setSandboxExecutePermission(RuleWizardHistory::PERM_RESTRICT_DEFAULT);
+	updateNavi();
+}
+
+void
+RuleWizardSandboxExecutePage::onRestrictedRadioButton(wxCommandEvent &)
+{
+	history_->setSandboxExecutePermission(RuleWizardHistory::PERM_RESTRICT_USER);
+	updateNavi();
+}
+
+void
+RuleWizardSandboxExecutePage::updateNavi(void)
 {
 	naviSizer->Clear(true);
 	history_->fillProgramNavi(this, naviSizer, false);
 	history_->fillContextNavi(this, naviSizer, false);
 	history_->fillAlfNavi(this, naviSizer, false);
-	history_->fillSandboxNavi(this, naviSizer, false);
+	history_->fillSandboxNavi(this, naviSizer, true);
 	Layout();
 	Refresh();
 }

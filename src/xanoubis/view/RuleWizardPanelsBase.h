@@ -186,15 +186,15 @@ class RuleWizardContextPageBase : public wxPanel
 		wxStaticText* questionLabel;
 		
 		wxRadioButton* yesRadioButton;
-		wxRadioButton* noRadioButton;
 		
-		wxCheckBox* noExceptionsCheckBox;
+		wxCheckBox* exceptionsCheckBox;
+		wxRadioButton* noRadioButton;
 		
 		
 		// Virtual event handlers, overide them in your derived class
 		virtual void onYesRadioButton( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onExceptionsCheckBox( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onNoRadioButton( wxCommandEvent& event ){ event.Skip(); }
-		virtual void onNoExceptionsCheckBox( wxCommandEvent& event ){ event.Skip(); }
 		
 	
 	public:
@@ -403,12 +403,14 @@ class RuleWizardSandboxFilesPageBase : public wxPanel
 		wxCheckBox* validCheckBox;
 		
 		// Virtual event handlers, overide them in your derived class
+		virtual void onFileListDeselect( wxListEvent& event ){ event.Skip(); }
+		virtual void onFileListSelect( wxListEvent& event ){ event.Skip(); }
 		virtual void onAddFileButton( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onAddDirectoryButton( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onDefaultsButton( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onDeleteButton( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onAskCheckBox( wxCommandEvent& event ){ event.Skip(); }
-		virtual void onRawCheckBox( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onValidCheckBox( wxCommandEvent& event ){ event.Skip(); }
 		
 	
 	public:

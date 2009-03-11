@@ -47,14 +47,13 @@ void
 RuleWizardContextPage::onYesRadioButton(wxCommandEvent &)
 {
 	history_->setSameContext(true);
-	history_->setContextException(false);
-	noExceptionsCheckBox->SetValue(false);
-	noExceptionsCheckBox->Disable();
+	exceptionsCheckBox->Enable();
+	exceptionsCheckBox->SetValue(history_->haveContextException());
 	updateNavi();
 }
 
 void
-RuleWizardContextPage::onYesExceptionsCheckBox(wxCommandEvent & event)
+RuleWizardContextPage::onExceptionsCheckBox(wxCommandEvent & event)
 {
 	history_->setContextException(event.GetInt());
 	updateNavi();
@@ -64,15 +63,9 @@ void
 RuleWizardContextPage::onNoRadioButton(wxCommandEvent &)
 {
 	history_->setSameContext(false);
-	noExceptionsCheckBox->Enable();
-	noExceptionsCheckBox->SetValue(history_->haveContextException());
-	updateNavi();
-}
-
-void
-RuleWizardContextPage::onNoExceptionsCheckBox(wxCommandEvent & event)
-{
-	history_->setContextException(event.GetInt());
+	history_->setContextException(false);
+	exceptionsCheckBox->SetValue(false);
+	exceptionsCheckBox->Disable();
 	updateNavi();
 }
 
