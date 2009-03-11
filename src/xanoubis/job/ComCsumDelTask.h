@@ -30,6 +30,7 @@
 
 #include "ComCsumHandler.h"
 #include "ComTask.h"
+#include <anoubis_transaction.h>
 
 /**
  * Task to delete the checksum of a file from anoubisd.
@@ -67,11 +68,6 @@ class ComCsumDelTask : public ComTask, public ComCsumHandler
 		ComCsumDelTask(const wxString &);
 
 		/**
-		 * D'tor.
-		 */
-		~ComCsumDelTask(void);
-
-		/**
 		 * Implementation of Task::getEventType().
 		 */
 		wxEventType getEventType(void) const;
@@ -80,6 +76,13 @@ class ComCsumDelTask : public ComTask, public ComCsumHandler
 		 * Implementation of Task::exec().
 		 */
 		void exec(void);
+
+		/**
+		 * Implementation of ComTask::done().
+		 */
+		bool done(void);
+	private:
+		struct anoubis_transaction	*ta_;
 };
 
 #endif	/* _COMCSUMDELTASK_H_ */

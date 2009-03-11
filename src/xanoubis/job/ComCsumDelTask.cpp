@@ -35,7 +35,6 @@
 #include <client/anoubis_transaction.h>
 
 #include "ComCsumDelTask.h"
-#include "ComHandler.h"
 #include "TaskEvent.h"
 
 ComCsumDelTask::ComCsumDelTask(void)
@@ -47,10 +46,6 @@ ComCsumDelTask::ComCsumDelTask(const wxString &file)
 	setPath(file);
 }
 
-ComCsumDelTask::~ComCsumDelTask(void)
-{
-}
-
 wxEventType
 ComCsumDelTask::getEventType(void) const
 {
@@ -60,11 +55,11 @@ ComCsumDelTask::getEventType(void) const
 void
 ComCsumDelTask::exec(void)
 {
-	struct anoubis_transaction	*ta;
 	int				req_op;
 	char				path[PATH_MAX];
 
 	resetComTaskResult();
+	ta_ = NULL;
 
 	if (haveKeyId())
 		req_op = ANOUBIS_CHECKSUM_OP_DELSIG;
@@ -78,30 +73,27 @@ ComCsumDelTask::exec(void)
 	}
 
 	/* Create request */
-	ta = anoubis_client_csumrequest_start(getComHandler()->getClient(),
-	    req_op, (char*)path, getKeyId(), 0, getKeyIdLen(), 0,
-	    ANOUBIS_CSUM_NONE);
-	if(!ta) {
+	ta_ = anoubis_client_csumrequest_start(getClient(), req_op, (char*)path,
+	    getKeyId(), 0, getKeyIdLen(), 0, ANOUBIS_CSUM_NONE);
+	if(!ta_) {
 		setComTaskResult(RESULT_COM_ERROR);
-		return;
 	}
+}
 
-	/* Wait for completition */
-	while (!(ta->flags & ANOUBIS_T_DONE)) {
-		if (!getComHandler()->waitForMessage()) {
-			setComTaskResult(RESULT_COM_ERROR);
-			anoubis_transaction_destroy(ta);
-			return;
-		}
-	}
-
-	if (ta->result) {
+bool
+ComCsumDelTask::done(void)
+{
+	if (ta_ == NULL)
+		return (true);
+	if ((ta_->flags & ANOUBIS_T_DONE) == 0)
+		return (false);
+	if (ta_->result) {
 		setComTaskResult(RESULT_REMOTE_ERROR);
-		setResultDetails(ta->result);
-		anoubis_transaction_destroy(ta);
-		return;
+		setResultDetails(ta_->result);
+	} else {
+		setComTaskResult(RESULT_SUCCESS);
 	}
-
-	anoubis_transaction_destroy(ta);
-	setComTaskResult(RESULT_SUCCESS);
+	anoubis_transaction_destroy(ta_);
+	ta_ = NULL;
+	return (true);
 }

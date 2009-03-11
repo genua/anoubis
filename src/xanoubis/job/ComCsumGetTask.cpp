@@ -36,7 +36,6 @@
 #include <anoubis_protocol.h>
 
 #include "ComCsumGetTask.h"
-#include "ComHandler.h"
 #include "TaskEvent.h"
 
 ComCsumGetTask::ComCsumGetTask(void)
@@ -61,12 +60,11 @@ ComCsumGetTask::getEventType(void) const
 void
 ComCsumGetTask::exec(void)
 {
-	struct anoubis_transaction	*ta;
-	struct anoubis_msg		*reqmsg;
 	int				req_op;
 	char				path[PATH_MAX];
 
 	resetComTaskResult();
+	ta_ = NULL;
 
 	if (haveKeyId())
 		req_op = ANOUBIS_CHECKSUM_OP_GETSIG;
@@ -80,45 +78,48 @@ ComCsumGetTask::exec(void)
 	}
 
 	/* Create request */
-	ta = anoubis_client_csumrequest_start(getComHandler()->getClient(),
-	    req_op, (char*)path, getKeyId(), 0, getKeyIdLen(), 0,
-	    ANOUBIS_CSUM_NONE);
-	if(!ta) {
+	ta_ = anoubis_client_csumrequest_start(getClient(), req_op,
+	    (char*)path, getKeyId(), 0, getKeyIdLen(), 0, ANOUBIS_CSUM_NONE);
+	if(!ta_) {
 		setComTaskResult(RESULT_COM_ERROR);
-		return;
 	}
+}
 
-	/* Wait for completition */
-	while (!(ta->flags & ANOUBIS_T_DONE)) {
-		if (!getComHandler()->waitForMessage()) {
-			setComTaskResult(RESULT_COM_ERROR);
-			return;
-		}
-	}
+bool
+ComCsumGetTask::done(void)
+{
+	struct anoubis_msg		*reqmsg;
 
-	if (ta->result) {
+	if (ta_ == NULL)
+		return (true);
+	if ((ta_->flags & ANOUBIS_T_DONE) == 0)
+		return (false);
+
+	if (ta_->result) {
 		/* Any other error-code is interpreted as an real error */
 		setComTaskResult(RESULT_REMOTE_ERROR);
-		setResultDetails(ta->result);
-		anoubis_transaction_destroy(ta);
-		return;
+		setResultDetails(ta_->result);
+		anoubis_transaction_destroy(ta_);
+		ta_ = NULL;
+		return (true);
 	}
 
-	reqmsg = ta->msg;
-	ta->msg = NULL;
-	anoubis_transaction_destroy(ta);
+	reqmsg = ta_->msg;
+	ta_->msg = NULL;
+	anoubis_transaction_destroy(ta_);
+	ta_ = NULL;
 
 	if(!reqmsg || !VERIFY_LENGTH(reqmsg,
 	    sizeof(Anoubis_PolicyReplyMessage) + ANOUBIS_CS_LEN) ||
 	    get_value(reqmsg->u.policyreply->error) != 0) {
 		setComTaskResult(RESULT_REMOTE_ERROR);
-		return;
+	} else {
+		for (unsigned int i = 0; i < ANOUBIS_CS_LEN; ++i)
+			this->cs_[i] = reqmsg->u.ackpayload->payload[i];
+		anoubis_msg_free(reqmsg);
 	}
-
-	for (unsigned int i = 0; i < ANOUBIS_CS_LEN; ++i)
-		this->cs_[i] = reqmsg->u.ackpayload->payload[i];
-
 	setComTaskResult(RESULT_SUCCESS);
+	return (true);
 }
 
 size_t

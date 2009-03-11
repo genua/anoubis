@@ -41,6 +41,7 @@
 
 #include "ComCsumHandler.h"
 #include "ComTask.h"
+#include <anoubis_transaction.h>
 
 /**
  * Task to receive a registered checksum from anoubisd.
@@ -105,6 +106,11 @@ class ComCsumGetTask : public ComTask, public ComCsumHandler
 		void exec(void);
 
 		/**
+		 * Implementation of ComTask::done().
+		 */
+		bool done(void);
+
+		/**
 		 * Returns the requested checksum.
 		 *
 		 * If the request-operation was successful, you can use this
@@ -141,6 +147,7 @@ class ComCsumGetTask : public ComTask, public ComCsumHandler
 
 	private:
 		u_int8_t	cs_[ANOUBIS_CS_LEN];
+		struct anoubis_transaction	*ta_;
 };
 
 #endif	/* _COMCSUMGETTASK_H_ */

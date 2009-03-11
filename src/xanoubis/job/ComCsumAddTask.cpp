@@ -47,7 +47,6 @@
 #include <anoubis_sig.h>
 
 #include "ComCsumAddTask.h"
-#include "ComHandler.h"
 #include "TaskEvent.h"
 
 ComCsumAddTask::ComCsumAddTask(void)
@@ -88,13 +87,13 @@ void
 ComCsumAddTask::exec(void)
 {
 	/* Request to add a checksum for a file */
-	struct anoubis_transaction	*ta;
 	int				req_op;
 	u_int8_t			*payload;
 	int				payloadLen;
 	char				path[PATH_MAX];
 
 	resetComTaskResult();
+	ta_ = NULL;
 
 	/* receive path to be send to anoubisd */
 	if (!resolvePath(path)) {
@@ -129,33 +128,35 @@ ComCsumAddTask::exec(void)
 	}
 
 	/* Send request to daemon */
-	ta =  anoubis_client_csumrequest_start(getComHandler()->getClient(),
-	    req_op, path, payload, payloadLen - getKeyIdLen(), getKeyIdLen(), 0,
+	ta_ =  anoubis_client_csumrequest_start(getClient(), req_op, path,
+	    payload, payloadLen - getKeyIdLen(), getKeyIdLen(), 0,
 	    ANOUBIS_CSUM_NONE);
 
 	free(payload);
 
-	if(!ta) {
+	if(!ta_) {
 		setComTaskResult(RESULT_COM_ERROR);
-		return;
 	}
+}
 
-	/* Wait for completition */
-	while (!(ta->flags & ANOUBIS_T_DONE)) {
-		if (!getComHandler()->waitForMessage()) {
-			setComTaskResult(RESULT_COM_ERROR);
-			return;
-		}
+bool
+ComCsumAddTask::done(void) {
+	if (ta_ == NULL)
+		return (true);
+	if (ta_->flags & ANOUBIS_T_DONE) {
+		/* Result */
+		if (ta_->result) {
+			setComTaskResult(RESULT_REMOTE_ERROR);
+			setResultDetails(ta_->result);
+		} else
+			setComTaskResult(RESULT_SUCCESS);
+
+		anoubis_transaction_destroy(ta_);
+		ta_ = NULL;
+		return true;
+	} else {
+		return false;
 	}
-
-	/* Result */
-	if (ta->result) {
-		setComTaskResult(RESULT_REMOTE_ERROR);
-		setResultDetails(ta->result);
-	} else
-		setComTaskResult(RESULT_SUCCESS);
-
-	anoubis_transaction_destroy(ta);
 }
 
 size_t

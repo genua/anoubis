@@ -37,6 +37,7 @@
 
 #include "ComCsumHandler.h"
 #include "ComTask.h"
+#include <anoubis_transaction.h>
 
 /**
  * Task to register the checksum of a file at anoubisd.
@@ -140,6 +141,11 @@ class ComCsumAddTask : public ComTask, public ComCsumHandler
 		 */
 		void resetComTaskResult(void);
 
+		/**
+		 * Implementation of ComTask::done()
+		 */
+		bool done(void);
+
 	private:
 		struct anoubis_sig	*privKey_;
 		u_int8_t		cs_[ANOUBIS_CS_LEN];
@@ -166,6 +172,8 @@ class ComCsumAddTask : public ComTask, public ComCsumHandler
 		 *                    written into this argument.
 		 */
 		u_int8_t *createSigMsg(int *);
+
+		struct anoubis_transaction	*ta_;
 };
 
 #endif	/* _COMCSUMADDTASK_H_ */
