@@ -34,6 +34,8 @@
 #ifndef __ModAnoubisPanelsBase__
 #define __ModAnoubisPanelsBase__
 
+class VersionListCtrl;
+
 #include <wx/string.h>
 #include <wx/stattext.h>
 #include <wx/gdicmn.h>
@@ -166,7 +168,7 @@ class ModAnoubisMainPanelBase : public wxPanel
 		wxRadioButton* VersionActivePolicyRadioButton;
 		wxRadioButton* VersionProfilePolicyRadioButton;
 		wxChoice* VersionProfileChoice;
-		wxListCtrl* VersionListCtrl;
+		VersionListCtrl* versionListCtrl;
 		wxTextCtrl* VersionShowCommentTextCtrl;
 		
 		wxButton* VersionRestoreButton;

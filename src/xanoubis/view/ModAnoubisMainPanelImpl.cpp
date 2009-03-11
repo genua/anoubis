@@ -61,6 +61,7 @@
 #include "EscalationNotify.h"
 #include "NotifyAnswer.h"
 #include "VersionCtrl.h"
+#include "VersionListCtrl.h"
 
 #include "apn.h"
 
@@ -456,7 +457,7 @@ ModAnoubisMainPanelImpl::versionListInit(void)
 	columnNames_[MODANOUBIS_VMLIST_COLUMN_VERSION] = _("Version");
 
 	for (int i=0; i<MODANOUBIS_VMLIST_COLUMN_EOL; i++) {
-		VersionListCtrl->InsertColumn(i, columnNames_[i],
+		versionListCtrl->InsertColumn(i, columnNames_[i],
 		    wxLIST_FORMAT_LEFT, wxLIST_AUTOSIZE);
 	}
 
@@ -501,8 +502,6 @@ ModAnoubisMainPanelImpl::versionListUpdateFromSelection(void)
 	versionCtrl = VersionCtrl::getInstance();
 	profileCtrl = ProfileCtrl::getInstance();
 
-	VersionListCtrl->DeleteAllItems();
-
 	if (!versionCtrl->isInitialized()) {
 		versionListSetMsg(_("(Repository not initialized.)"));
 		return;
@@ -528,42 +527,15 @@ ModAnoubisMainPanelImpl::versionListUpdateFromSelection(void)
 		return;
 	}
 
-	for (unsigned int i = 0; i < count; i++) {
-		const ApnVersion &version = versionCtrl->getVersion(i);
-
-		VersionListCtrl->InsertItem(i, wxEmptyString);
-
-		VersionListCtrl->SetItem(i, MODANOUBIS_VMLIST_COLUMN_TYPE,
-		    (version.isAutoStore() ? _("Auto") : _("Manual")));
-		VersionListCtrl->SetItem(i, MODANOUBIS_VMLIST_COLUMN_DATE,
-		    version.getTimestamp().FormatDate());
-		VersionListCtrl->SetItem(i, MODANOUBIS_VMLIST_COLUMN_TIME,
-		    version.getTimestamp().FormatTime());
-		VersionListCtrl->SetItem(i, MODANOUBIS_VMLIST_COLUMN_USER,
-		    version.getUsername());
-		VersionListCtrl->SetItem(i, MODANOUBIS_VMLIST_COLUMN_VERSION,
-		    wxString::Format(wxT("%d"), version.getVersionNo()));
-	}
-
-	VersionListCtrl->SetColumnWidth(MODANOUBIS_VMLIST_COLUMN_TYPE,
-	    wxLIST_AUTOSIZE);
-	VersionListCtrl->SetColumnWidth(MODANOUBIS_VMLIST_COLUMN_DATE,
-	    wxLIST_AUTOSIZE);
-	VersionListCtrl->SetColumnWidth(MODANOUBIS_VMLIST_COLUMN_TIME,
-	    wxLIST_AUTOSIZE);
-	VersionListCtrl->SetColumnWidth(MODANOUBIS_VMLIST_COLUMN_USER,
-	    wxLIST_AUTOSIZE);
-	VersionListCtrl->SetColumnWidth(MODANOUBIS_VMLIST_COLUMN_VERSION,
-	    wxLIST_AUTOSIZE_USEHEADER);
+	versionListCtrl->setError(wxEmptyString);
+	versionListCtrl->SetItemCount(count);
+	versionListCtrl->RefreshItems(0, count-1);
 }
 
 void
 ModAnoubisMainPanelImpl::versionListSetMsg(const wxString &msg)
 {
-	VersionListCtrl->InsertItem(0, wxEmptyString);
-	VersionListCtrl->SetItem(0, MODANOUBIS_VMLIST_COLUMN_DATE, msg);
-	VersionListCtrl->SetColumnWidth(MODANOUBIS_VMLIST_COLUMN_DATE,
-	    wxLIST_AUTOSIZE);
+	versionListCtrl->setError(msg);
 }
 
 int ModAnoubisMainPanelImpl::versionListCanAccess(bool needSelection) const
@@ -578,7 +550,7 @@ int ModAnoubisMainPanelImpl::versionListCanAccess(bool needSelection) const
 			return (needSelection ? -1 : false);
 
 		/* Search for the selected index */
-		return VersionListCtrl->GetNextItem(
+		return versionListCtrl->GetNextItem(
 		    -1, wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED);
 	}
 	else
@@ -1201,28 +1173,8 @@ ModAnoubisMainPanelImpl::OnVersionDeleteButtonClick(wxCommandEvent&)
 		wxString title = _("Remove version");
 
 		wxMessageBox(msg, title, wxOK | wxICON_ERROR, this);
-	}
-	else {
-		/* Current selection */
-		int top = VersionListCtrl->GetTopItem();
-		int length = VersionListCtrl->GetCountPerPage();
-		int selection = VersionListCtrl->GetNextItem(
-		    -1, wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED);
-
+	} else {
 		versionListUpdate();
-
-		/* Restore selection */
-		int count = VersionListCtrl->GetItemCount();
-		if (count > 0) {
-			if (selection >= count)
-				selection = (count - 1);
-
-			VersionListCtrl->SetItemState(selection,
-			    wxLIST_STATE_SELECTED, wxLIST_STATE_SELECTED);
-			VersionListCtrl->EnsureVisible(top);
-			VersionListCtrl->EnsureVisible(top + length - 1);
-			VersionListCtrl->EnsureVisible(selection);
-		}
 	}
 }
 

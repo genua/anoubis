@@ -31,6 +31,8 @@
 // PLEASE DO "NOT" EDIT THIS FILE!
 ///////////////////////////////////////////////////////////////////////////
 
+#include "VersionListCtrl.h"
+
 #include "ModAnoubisPanelsBase.h"
 
 ///////////////////////////////////////////////////////////////////////////
@@ -516,8 +518,8 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	
 	VersionListSizer->Add( bSizer31, 0, wxALL|wxEXPAND, 5 );
 	
-	VersionListCtrl = new wxListCtrl( tb_MainAnoubisVersions, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLC_HRULES|wxLC_REPORT );
-	VersionListSizer->Add( VersionListCtrl, 80, wxALL|wxEXPAND, 5 );
+	versionListCtrl = new VersionListCtrl( tb_MainAnoubisVersions, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLC_HRULES|wxLC_REPORT|wxLC_VIRTUAL );
+	VersionListSizer->Add( versionListCtrl, 80, wxALL|wxEXPAND, 5 );
 	
 	wxStaticBoxSizer* VersionCommentSizer;
 	VersionCommentSizer = new wxStaticBoxSizer( new wxStaticBox( tb_MainAnoubisVersions, -1, _("Comment of selected version:") ), wxVERTICAL );
@@ -543,7 +545,7 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	VersionButtonSizer->Add( VersionRestoreButton, 0, wxALL, 5 );
 	
 	VersionExportButton1 = new wxButton( tb_MainAnoubisVersions, wxID_ANY, _("export ..."), wxDefaultPosition, wxDefaultSize, 0 );
-	VersionExportButton1->SetToolTip( _("Export the selected Version of the profile to a file.#") );
+	VersionExportButton1->SetToolTip( _("Export the selected Version of the profile to a file.") );
 	
 	VersionButtonSizer->Add( VersionExportButton1, 0, wxALL, 5 );
 	
@@ -776,7 +778,7 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	VersionActivePolicyRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( ModAnoubisMainPanelBase::OnVersionActivePolicyClicked ), NULL, this );
 	VersionProfilePolicyRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( ModAnoubisMainPanelBase::OnVersionProfilePolicyClicked ), NULL, this );
 	VersionProfileChoice->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( ModAnoubisMainPanelBase::OnVersionProfileChoice ), NULL, this );
-	VersionListCtrl->Connect( wxEVT_COMMAND_LIST_ITEM_SELECTED, wxListEventHandler( ModAnoubisMainPanelBase::OnVersionListCtrlSelected ), NULL, this );
+	versionListCtrl->Connect( wxEVT_COMMAND_LIST_ITEM_SELECTED, wxListEventHandler( ModAnoubisMainPanelBase::OnVersionListCtrlSelected ), NULL, this );
 	VersionRestoreButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModAnoubisMainPanelBase::OnVersionRestoreButtonClick ), NULL, this );
 	VersionExportButton1->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModAnoubisMainPanelBase::OnVersionExportButtonClick ), NULL, this );
 	VersionDeleteButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModAnoubisMainPanelBase::OnVersionDeleteButtonClick ), NULL, this );

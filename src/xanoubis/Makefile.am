@@ -376,6 +376,8 @@ xanoubis_SOURCES= \
 	view/RuleWizardPanelsBase.h \
 	view/TrayIcon.cpp \
 	view/TrayIcon.h \
+	view/VersionListCtrl.h \
+	view/VersionListCtrl.cpp \
 	control/AnShortcuts.cpp \
 	control/AnShortcuts.h \
 	control/AnEvents.cpp \
