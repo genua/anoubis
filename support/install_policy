@@ -112,16 +112,21 @@ sub get_sha256 {
 sub get_pathname {
 	my $file = shift;
 
-	my $output = `which $file`;
-	chomp $output;
+	my $output;
+	if ($file =~ /^\$([A-Za-z0-9_]+)(.*)$/ && exists $ENV{$1} ) {
+		$output = "$ENV{$1}$2";
+	}
+	else {
+		$output = `which $file 2>/dev/null`;
+		chomp $output;
+	}
 	if ($output =~ m{^/}) {
 		return $output;
 	}
 	else {
-		warn "could not find '$file'\n";
-		return $file;
+		info("could not find '$file'\n");
+		return "/usr/bin/$file";
 	}
-
 }
 
 sub process_file {
@@ -147,7 +152,7 @@ sub process_file {
 		}
 
 		# replace "@prog@" by filename
-		$line =~ s{\@(\w+)\@}{get_pathname($1)}ge;
+		$line =~ s{\@(\S+)\@}{get_pathname($1)}ge;
 
 		# replace "/file/name @@" by "/file/name 01234..."
 		$line =~ s{(/\S+)\s*\@\@}{get_sha256($1)}ge;
@@ -167,7 +172,7 @@ sub process_file {
 
 sub usage {
 	print STDERR << "EOF";
-usage: $0 [-hqn] <source_dir> <target_dir>
+usage: $0 [-hqno] <source_dir> <target_dir>
 EOF
 	print STDERR << 'EOF';
 Copies policy directory tree and:
@@ -175,6 +180,12 @@ Copies policy directory tree and:
 - replaces "@prog@" placeholders by full path to program
 - replaces "@@" placeholders in files by sha256 sums
 - chowns the resulting files to $user (unless -o is given)
+
+Options:
+  -o : do not chown
+  -n : do not rename
+  -q : be quiet
+  -h : print this usage message
 EOF
 	exit(1);
 }

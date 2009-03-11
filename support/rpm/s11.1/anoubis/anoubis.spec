@@ -10,10 +10,12 @@ Group:		System Environment/Base
 URL:		http://www.genua.de
 Source0:	%{name}-%{version}.tar.gz
 Source1:	anoubisd.init
-Source2:	anoubisd.udev
 Source10:	policy.admin.0
 Source11:	policy.user.0
 Source12:	policy.admin.default
+Source20:	policy.profiles.admin
+Source21:	policy.profiles.medium
+Source22:	policy.profiles.high
 Vendor:		GeNUA mbH
 BuildRoot:	%(mktemp -d %{_tmppath}/%{name}-%{version}-build.XXXX)
 
@@ -22,6 +24,7 @@ BuildRequires:	autoconf
 BuildRequires:	automake
 BuildRequires:	gcc
 BuildRequires:	gcc-c++
+BuildRequires:	make
 BuildRequires:	check-devel >= 0.9.4
 BuildRequires:	libopenssl-devel
 BuildRequires:	libnotify-devel
@@ -85,12 +88,24 @@ make install DESTDIR=$RPM_BUILD_ROOT
 mkdir -p $RPM_BUILD_ROOT%{rcdir}
 cp $RPM_SOURCE_DIR/anoubisd.init $RPM_BUILD_ROOT%{rcdir}/anoubisd
 chmod 755 $RPM_BUILD_ROOT%{rcdir}/anoubisd
-DEF_POLICY_DIR=$RPM_BUILD_ROOT/usr/share/anoubis/policy_templates
-mkdir -p $DEF_POLICY_DIR/admin $DEF_POLICY_DIR/user
-for a in admin user ; do
+
+# install policy profiles
+DEF_POLICY_DIR=$RPM_BUILD_ROOT/usr/share/anoubisd/policy_templates
+mkdir -p $DEF_POLICY_DIR/admin $DEF_POLICY_DIR/user $DEF_POLICY_DIR/profiles
+for a in admin user profiles ; do
     for f in $RPM_SOURCE_DIR//policy.$a.* ; do
-	cp $f $DEF_POLICY_DIR/$a/${f##*/policy.$a.}
+	tgt=$DEF_POLICY_DIR/$a/${f##*/policy.$a.}
+	cp $f $tgt
+	perl -p -i -e s,/usr/lib/kde3,/opt/kde3/lib/kde3,g $tgt
     done ;
+done
+rm -rf $RPM_BUILD_ROOT/usr/share/xanoubis/profiles
+mkdir -p $RPM_BUILD_ROOT/etc/anoubis/profiles
+# Must put xanoubis's checksum into the anoubisd package because
+# xanoubis is not yet installed when anoubisd's postinst runs.
+SUM_XANOUBIS=`sha256sum $RPM_BUILD_ROOT/usr/bin/xanoubis|cut -d' '  -f 1`
+for f in `grep -rl xanoubis $DEF_POLICY_DIR` ; do
+    perl -p -i -e 's{/usr/bin/xanoubis \@\@}{/usr/bin/xanoubis '$SUM_XANOUBIS'}g' $f
 done
 
 # install symlink in /etc/anoubis
@@ -100,7 +115,7 @@ ln -s /var/lib/anoubis/policy $RPM_BUILD_ROOT/etc/anoubis/policy
 
 # install udev rules of anoubis devices
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/udev/rules.d
-install -m 0644 $RPM_SOURCE_DIR/anoubisd.udev \
+install -m 0644 support/udev.rules \
 	$RPM_BUILD_ROOT%{_sysconfdir}/udev/rules.d/06-anoubis.rules
 
 # remove files that should not be part of the rpm
@@ -130,7 +145,18 @@ if ! getent passwd _anoubisd >/dev/null; then
 	useradd -M -r -s /sbin/nologin -d /var/run/anoubisd \
 	    -g _anoubisd _anoubisd
 fi
-POLDIR=/etc/anoubis/policy
+exit 0
+
+%posttrans -n xanoubis
+# remove profile directory from old rpms, and add symlink manually.
+# rpm will not replace a directory with a symlink on upgrades
+PROFDIR=/usr/share/xanoubis/profiles
+if [ ! -L $PROFDIR ] ; then
+	if [ -e $PROFDIR ] ; then
+		mv $PROFDIR $PROFDIR.rpm-bak.$$
+	fi
+	ln -s /etc/anoubis/profiles $PROFDIR
+fi
 exit 0
 
 %post -n anoubisd
@@ -142,20 +168,33 @@ mkdir -p /var/lib/anoubis/policy/pubkeys
 chmod 700 /var/lib/anoubis/policy
 chmod 700 /var/lib/anoubis/policy/admin /var/lib/anoubis/policy/user
 chmod 700 /var/lib/anoubis/policy/pubkeys
-for p in admin/0 user/0 admin/default; do
-    if [ ! -e /var/lib/anoubis/policy/$p ] ; then
-	cp /usr/share/anoubis/policy_templates/$p /var/lib/anoubis/policy/$p
-	chmod 600 /var/lib/anoubis/policy/$p
-	chown _anoubisd: /var/lib/anoubis/policy/$p
-    fi
-done
+# copy new default policy
+export PATH=$PATH:/opt/kde3/bin
+/usr/share/anoubisd/install_policy -q\
+	/usr/share/anoubisd/policy_templates/admin \
+	/var/lib/anoubis/policy/admin
+
+/usr/share/anoubisd/install_policy -q\
+	/usr/share/anoubisd/policy_templates/user \
+	/var/lib/anoubis/policy/user
+
+# update xanoubis profiles
+# we just overwrite the old files until we have a better mechanism
+# for updates
+rm -f /etc/anoubis/profiles/admin
+rm -f /etc/anoubis/profiles/medium
+rm -f /etc/anoubis/profiles/high
+/usr/share/anoubisd/install_policy -q -n -o \
+	/usr/share/anoubisd/policy_templates/profiles \
+	/etc/anoubis/profiles
+
 chown _anoubisd: /var/lib/anoubis/policy
 chown _anoubisd: /var/lib/anoubis/policy/admin /var/lib/anoubis/policy/user
 chown _anoubisd: /var/lib/anoubis/policy/pubkeys
 if [ ! -e /dev/eventdev ] ; then
 	mknod /dev/eventdev c 10 62
 fi
-# execute only on new installs (i.e. exactly least 1 version installed)
+# execute only on new installs (i.e. exactly 1 version installed)
 if [ "$1" = 1 ]; then
     %{rcdir}/anoubisd start
 fi
@@ -187,9 +226,9 @@ exit 0
 %defattr(-,root,root)
 %{rcdir}/*
 /sbin/*
-/usr/share/anoubis/*
+/usr/share/anoubisd/*
 %{_sysconfdir}/udev/rules.d/06-anoubis.rules
-%{_sysconfdir}/anoubis/policy
+%{_sysconfdir}/anoubis
 /var/lib/anoubis/*
 %{_mandir}/man8/*
 

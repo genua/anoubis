@@ -83,14 +83,13 @@ install-arch:
 	    cp $$f debian/anoubisd/$(DEFPOLICYDIR)/$$a/$${f##*/policy.$$a.} ;\
 	  done ;\
 	done
-	install -m755 debian/install_policy debian/anoubisd/usr/share/anoubisd
 
 	rm -rf debian/tmp/usr/share/xanoubis/profiles
 	ln -s /etc/anoubis/profiles debian/tmp/usr/share/xanoubis/profiles
 
 	# add udev rules for correct devices permissions
 	mkdir -p debian/tmp/etc/udev/rules.d
-	cp debian/anoubis.rules debian/tmp/etc/udev
+	cp support/udev.rules debian/tmp/etc/udev/anoubis.rules
 	ln -s /etc/udev/anoubis.rules debian/tmp/etc/udev/rules.d/021_anoubis.rules
 
 	dh_install -s --sourcedir=debian/tmp

@@ -31,7 +31,7 @@ LCOV_LCOV    = @LCOV@
 LCOV_GENHTML = @GENHTML@
 LCOV_GCOV_ENABLED = @GCOV_ENABLED@
 
-SUBDIRS = src test include lint
+SUBDIRS = src test include lint support
 
 if XANOUBIS
 xanoubis_mans = man/xanoubis.1 man/xanoubis_guessApp.sh.1
