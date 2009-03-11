@@ -41,7 +41,7 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 {
 	sz_MainAnoubisMain = new wxBoxSizer( wxVERTICAL );
 	
-	tx_MainHeadline = new wxStaticText( this, wxID_ANY, _("Main Panel of Module Anoubis"), wxDefaultPosition, wxDefaultSize, 0 );
+	tx_MainHeadline = new wxStaticText( this, wxID_ANY, _("Main Panel of Module Anoubis"), wxDefaultPosition, wxDefaultSize, wxALIGN_CENTRE );
 	tx_MainHeadline->Wrap( -1 );
 	tx_MainHeadline->SetFont( wxFont( 16, 70, 90, 90, false, wxEmptyString ) );
 	
@@ -502,10 +502,10 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	
 	m_staticText41 = new wxStaticText( tb_MainAnoubisVersions, wxID_ANY, _("Choose policy:"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_staticText41->Wrap( -1 );
-	bSizer31->Add( m_staticText41, 0, wxALIGN_CENTER_VERTICAL|wxALL|wxEXPAND, 5 );
+	bSizer31->Add( m_staticText41, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
 	
 	VersionActivePolicyRadioButton = new wxRadioButton( tb_MainAnoubisVersions, wxID_ANY, _("Active policy"), wxDefaultPosition, wxDefaultSize, 0 );
-	bSizer31->Add( VersionActivePolicyRadioButton, 0, wxALL, 5 );
+	bSizer31->Add( VersionActivePolicyRadioButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	VersionProfilePolicyRadioButton = new wxRadioButton( tb_MainAnoubisVersions, wxID_ANY, _("Policy from profile"), wxDefaultPosition, wxDefaultSize, 0 );
 	bSizer31->Add( VersionProfilePolicyRadioButton, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
