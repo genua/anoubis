@@ -29,6 +29,7 @@
 #define _COMREGISTRATIONTASK_H_
 
 #include "ComTask.h"
+#include <anoubis_transaction.h>
 
 /**
  * A task to perform necessary steps to register GUI-communication with the
@@ -95,7 +96,13 @@ class ComRegistrationTask : public ComTask
 		 */
 		void exec(void);
 
+		/**
+		 * Implementation of Task::done().
+		 */
+		bool done(void);
+
 	private:
+		struct anoubis_transaction	*ta_;
 		Action	action_;
 
 		/**
@@ -110,6 +117,7 @@ class ComRegistrationTask : public ComTask
 			STATE_SFS_DISABLE,
 			STATE_DONE
 		};
+		RegState	state_;
 };
 
 #endif	/* _COMREGISTRATIONTASK_H_ */

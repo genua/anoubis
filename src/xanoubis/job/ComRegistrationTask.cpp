@@ -39,7 +39,6 @@
 #include <client/anoubis_client.h>
 #include <client/anoubis_transaction.h>
 
-#include "ComHandler.h"
 #include "ComRegistrationTask.h"
 #include "TaskEvent.h"
 
@@ -81,19 +80,28 @@ ComRegistrationTask::getEventType(void) const
 void
 ComRegistrationTask::exec(void)
 {
-	struct anoubis_client	*client = getComHandler()->getClient();
-	RegState		state = STATE_DONE;
-
+	state_ = STATE_DONE;
 	resetComTaskResult();
-
-	if (client == 0) {
-		/*
-		 * You don't have a connection
-		 * Leave task-state on RESULT_INIT.
-		 */
+	ta_ = NULL;
+	if (getClient() == 0) {
+		setComTaskResult(RESULT_COM_ERROR);
 		return;
 	}
+	/* Start-state depends on action */
+	switch (action_) {
+	case ACTION_REGISTER:
+		state_ = STATE_REGISTER;
+		break;
+	case ACTION_UNREGISTER:
+		state_ = STATE_UNREGISTER;
+		break;
+	}
+	done();
+}
 
+bool
+ComRegistrationTask::done(void)
+{
 	/*
 	 * State-machines:
 	 *
@@ -109,72 +117,56 @@ ComRegistrationTask::exec(void)
 	 *  -> STATE_DONE
 	 */
 
-	/* Start-state depends on action */
-	switch (action_) {
-	case ACTION_REGISTER:
-		state = STATE_REGISTER;
-		break;
-	case ACTION_UNREGISTER:
-		state = STATE_UNREGISTER;
-		break;
-	}
+	while (1) {
+		if (ta_ && (ta_->flags & ANOUBIS_T_DONE)) {
+			if (ta_->result) {
+				setComTaskResult(RESULT_REMOTE_ERROR);
+				setResultDetails(ta_->result);
+				state_ = STATE_DONE;
+			} else {
+				setComTaskResult(RESULT_SUCCESS);
+			}
+			anoubis_transaction_destroy(ta_);
+			ta_ = NULL;
+		}
+		if (ta_)
+			return (false);
 
-	while (state != STATE_DONE) {
-		struct anoubis_transaction *ta = 0;
-
-		/* Dummy initialization to keep compiler happy */
-		RegState next = STATE_DONE;
-
-		switch (state) {
+		switch (state_) {
 		case STATE_REGISTER:
-			ta = anoubis_client_register_start(client,
+			ta_ = anoubis_client_register_start(getClient(),
 			    getToken(), geteuid(), 0, 0);
-			next = STATE_STAT_REGISTER;
+			state_ = STATE_STAT_REGISTER;
 			break;
 		case STATE_UNREGISTER:
-			ta = anoubis_client_unregister_start(client,
+			ta_ = anoubis_client_unregister_start(getClient(),
 			    getToken(), geteuid(), 0, 0);
-			next = STATE_STAT_UNREGISTER;
+			state_ = STATE_STAT_UNREGISTER;
 			break;
 		case STATE_STAT_REGISTER:
-			ta = anoubis_client_register_start(client,
+			ta_ = anoubis_client_register_start(getClient(),
 			    getToken(), 0, 0, ANOUBIS_SOURCE_STAT);
-			next = STATE_SFS_DISABLE;
+			state_ = STATE_SFS_DISABLE;
 			break;
 		case STATE_STAT_UNREGISTER:
-			ta = anoubis_client_unregister_start(client,
+			ta_ = anoubis_client_unregister_start(getClient(),
 			    getToken(), 0, 0, ANOUBIS_SOURCE_STAT);
-			next = STATE_DONE;
+			state_ = STATE_DONE;
 			break;
 		case STATE_SFS_DISABLE:
-			ta = anoubis_client_sfsdisable_start(client, getpid());
-			next = STATE_DONE;
+			ta_ = anoubis_client_sfsdisable_start(getClient(),
+			    getpid());
+			state_ = STATE_DONE;
 			break;
 		case STATE_DONE:
-			break;
+			return (true);
 		}
 
-		if (state != STATE_DONE) {
-			if (ta == 0) {
-				/* Failed to create transaction */
-				setComTaskResult(RESULT_COM_ERROR);
-				return;
-			}
-
-			/* Wait for completition */
-			while (!(ta->flags & ANOUBIS_T_DONE)) {
-				if (!getComHandler()->waitForMessage()) {
-					anoubis_transaction_destroy(ta);
-					setComTaskResult(RESULT_COM_ERROR);
-					return;
-				}
-			}
-
-			/* Done */
-			anoubis_transaction_destroy(ta);
-			state = next;
+		if (ta_ == 0) {
+			/* Failed to create transaction */
+			setComTaskResult(RESULT_COM_ERROR);
+			state_ = STATE_DONE;
+			return (true);
 		}
 	}
-
-	setComTaskResult(RESULT_SUCCESS);
 }
