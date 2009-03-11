@@ -170,8 +170,11 @@ static int anoubis_register_ok(struct anoubis_notify_group * ng,
 	/*
 	 * Registering for other events is only allowed if the uid and
 	 * the authorized uid match or the user is root.
+	 * uid -1 is a special case, which means that (unfortunately)
+	 * this user can't monitor events.
 	 */
-	if (ng->uid == 0 /* XXX root */ || ng->uid == uid)
+	if (ng->uid == 0 /* XXX root */ ||
+	   ((ng->uid == uid) && (ng->uid != (uid_t) -1)))
 		return 1;
 	return 0;
 }
@@ -196,7 +199,10 @@ int anoubis_notify_register(struct anoubis_notify_group * ng,
 static int reg_match(struct anoubis_notify_reg * reg,
     uid_t uid, u_int32_t ruleid, u_int32_t subsystem)
 {
-	return ((!reg->uid || reg->uid == uid)
+	/*
+	 * XXX root can use uid -1 to request all notifications
+	 */
+	return ((reg->uid == (uid_t) -1 || reg->uid == uid)
 	    && (!reg->ruleid || reg->ruleid == ruleid)
 	    && (!reg->subsystem || reg->subsystem == subsystem));
 }

@@ -141,7 +141,7 @@ usage(void)
 			fprintf(stderr, "	%s\n", commands[i].command);
 
 	}
-	fprintf(stderr, "	monitor [ delegate ] [ error=<num> ] "
+	fprintf(stderr, "	monitor [ all ] [ delegate ] [ error=<num> ] "
 	    "[ count=<num> ]\n");
 	exit(1);
 }
@@ -738,10 +738,17 @@ static int monitor(int argc, char **argv)
 
 	int maxcount = -1;
 	int defaulterror = -1;
+	uid_t uid = 0;
 	int delegate = 0;
 	char ch;
 
 	for(i=0; i<argc; ++i) {
+		if (strcasecmp(argv[i], "all") == 0) {
+			if (uid)
+				usage();
+			uid = -1;
+			continue;
+		}
 		if (strcasecmp(argv[i], "delegate") == 0) {
 			if (delegate)
 				usage();
@@ -778,7 +785,9 @@ static int monitor(int argc, char **argv)
 		fprintf(stderr, "Cannot create channel\n");
 		return error;
 	}
-	t = anoubis_client_register_start(client, ++nexttok, geteuid(), 0, 0);
+	if (uid == 0)
+		uid = geteuid();
+	t = anoubis_client_register_start(client, ++nexttok, uid, 0, 0);
 	if (!t) {
 		fprintf(stderr, "Cannot register for notificiations\n");
 		destroy_channel();
@@ -813,6 +822,7 @@ static int monitor(int argc, char **argv)
 			count++;
 			/* __anoubis_dump will verify the message length */
 			__anoubis_dump(m, "");
+			fflush(stdout);
 			if (get_value(m->u.notify->type) != ANOUBIS_N_ASK) {
 				anoubis_msg_free(m);
 				continue;
