@@ -55,14 +55,18 @@ RuleWizardHistory::RuleWizardHistory(void)
 	alfClientRaw_	     = false;
 	alfServerPermission_ = PERM_DENY_ALL;
 
-	haveSandbox_		   = PERM_RESTRICT_USER;
-	haveSandboxPolicy_	   = false;
-	overwriteSandboxPolicy_    = OVERWRITE_YES;
-	sandboxReadPermission_     = PERM_ALLOW_ALL;
-	sandboxReadAsk_		   = true;
-	sandboxReadValidSignature_ = false;
-	sandboxWritePermission_    = PERM_ALLOW_ALL;
-	sandboxExecutePermission_  = PERM_ALLOW_ALL;
+	haveSandbox_			= PERM_RESTRICT_USER;
+	haveSandboxPolicy_		= false;
+	overwriteSandboxPolicy_		= OVERWRITE_YES;
+	sandboxReadPermission_		= PERM_ALLOW_ALL;
+	sandboxReadAsk_			= true;
+	sandboxReadValidSignature_	= false;
+	sandboxWritePermission_		= PERM_ALLOW_ALL;
+	sandboxWriteAsk_		= true;
+	sandboxWriteValidSignature_	= false;
+	sandboxExecutePermission_	= PERM_ALLOW_ALL;
+	sandboxExecuteAsk_		= true;
+	sandboxExecuteValidSignature_	= false;
 }
 
 void

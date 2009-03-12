@@ -82,13 +82,13 @@ RuleWizard::RuleWizard(void)
 	CREATE_PAGE(pages_, PAGE_SB, RuleWizardSandboxPage, history_);
 	CREATE_PAGE(pages_, PAGE_SB_OVERWRITE, RuleWizardSandboxOverwritePage,
 	    history_);
- 	CREATE_PAGE(pages_, PAGE_SB_READ, RuleWizardSandboxReadPage, history_);
- 	CREATE_PAGE(pages_, PAGE_SB_READ_FILES, RuleWizardSandboxReadFilesPage,
+	CREATE_PAGE(pages_, PAGE_SB_READ, RuleWizardSandboxReadPage, history_);
+	CREATE_PAGE(pages_, PAGE_SB_READ_FILES, RuleWizardSandboxReadFilesPage,
 	    history_);
 	CREATE_PAGE(pages_, PAGE_SB_WRITE, RuleWizardSandboxWritePage,
 	    history_);
-	CREATE_PAGE(pages_, PAGE_SB_WRITE_FILES, RuleWizardSandboxWriteFilesPage,
-	    history_);
+	CREATE_PAGE(pages_, PAGE_SB_WRITE_FILES,
+	    RuleWizardSandboxWriteFilesPage, history_);
 	CREATE_PAGE(pages_, PAGE_SB_EXECUTE, RuleWizardSandboxExecutePage,
 	    history_);
 	CREATE_PAGE(pages_, PAGE_SB_EXECUTE_FILES,
@@ -212,7 +212,7 @@ RuleWizard::forwardTransition(enum wizardPages pageNo) const
 		} else {
 			nextPage = PAGE_SB_EXECUTE;
 		}
-		break;		
+		break;
 	case PAGE_SB_WRITE_FILES:
 		nextPage = PAGE_SB_EXECUTE;
 		break;
@@ -544,7 +544,6 @@ RuleWizard::createSandboxPolicy(PolicyRuleSet *ruleSet) const
 			sbApp->remove();
 		}
 	}
-
 	/* Create new app block. */
 	sbApp = new SbAppPolicy(ruleSet);
 	ruleSet->prependAppPolicy(sbApp);
@@ -556,9 +555,9 @@ RuleWizard::createSandboxPolicy(PolicyRuleSet *ruleSet) const
 	sbApp->prependFilterPolicy(dflFilter);
 	dflFilter->setActionNo(APN_ACTION_ASK);
 
-	createSbPermission(sbApp, APN_SBA_READ);
-	createSbPermission(sbApp, APN_SBA_WRITE);
 	createSbPermission(sbApp, APN_SBA_EXEC);
+	createSbPermission(sbApp, APN_SBA_WRITE);
+	createSbPermission(sbApp, APN_SBA_READ);
 }
 
 void
@@ -619,8 +618,49 @@ RuleWizard::createSbFileList(SbAppPolicy *app, const wxArrayString & list,
 		app->prependFilterPolicy(filter);
 
 		filter->setActionNo(APN_ACTION_ALLOW);
+		filter->setLogNo(APN_LOG_NONE);
 		filter->setPath(list.Item(i));
 		filter->setAccessMask(permission);
+	}
+}
+
+void
+RuleWizard::createSbDefaultFileList(SbAppPolicy *app, int section) const
+{
+	wxArrayString		list;
+
+	switch(section) {
+	case APN_SBA_READ:
+		/* XXX Read default read list from file. */
+		list = list;
+		break;
+	case APN_SBA_WRITE:
+		/* XXX Read default write list into list */
+		list = list;
+		break;
+	case APN_SBA_EXEC:
+		/* XXX Read default exec list into list */
+		list = list;
+		break;
+	}
+	createSbFileList(app, list, section);
+}
+
+void
+RuleWizard::createSbPermissionRoot(SbAppPolicy *app, int section,
+    int action) const
+{
+	SbAccessFilterPolicy		*filter;
+
+	filter = new SbAccessFilterPolicy(app);
+	app->prependFilterPolicy(filter);
+	filter->setPath(wxT("/"));
+	filter->setAccessMask(section);
+	filter->setActionNo(action);
+	if (action == APN_ACTION_DENY) {
+		filter->setLogNo(APN_LOG_NORMAL);
+	} else {
+		filter->setLogNo(APN_LOG_NONE);
 	}
 }
 
@@ -631,60 +671,96 @@ RuleWizard::createSbPermission(SbAppPolicy *app, int section) const
 	bool					 signature;
 	RuleWizardHistory::permissionAnswer	 permission;
 	wxArrayString				 list;
-	SbAccessFilterPolicy			*filter;
 
+	/* First check the global permissions. */
+	permission = history_.haveSandbox();
+	switch (permission) {
+	case RuleWizardHistory::PERM_RESTRICT_DEFAULT:
+		createSbDefaultFileList(app, section);
+		return;
+	case RuleWizardHistory::PERM_RESTRICT_USER:
+		break;
+	case RuleWizardHistory::PERM_ALLOW_ALL:
+		/* Should not happen. */
+		createSbPermissionRoot(app, section, APN_ACTION_ALLOW);
+		return;
+	case RuleWizardHistory::PERM_NONE:
+		/* Handled by the caller. */
+		return;
+	case RuleWizardHistory::PERM_DENY_ALL:
+		/* Not allowed for Sandbox rules. */
+		return;
+	}
+
+	/*
+	 * At this point we know that the global permission choice is
+	 * PERM_RESTRICT_USER. Look at the local permissions.
+	 */
+	switch (section) {
+	case APN_SBA_READ:
+		permission = history_.getSandboxReadPermission();
+		break;
+	case APN_SBA_WRITE:
+		permission = history_.getSandboxWritePermission();
+		break;
+	case APN_SBA_EXEC:
+		permission = history_.getSandboxExecutePermission();
+		break;
+	}
+
+	switch (permission) {
+	case RuleWizardHistory::PERM_ALLOW_ALL:
+		createSbPermissionRoot(app, section, APN_ACTION_ALLOW);
+		return;
+	case RuleWizardHistory::PERM_RESTRICT_DEFAULT:
+		createSbDefaultFileList(app, section);
+		return;
+	case RuleWizardHistory::PERM_RESTRICT_USER:
+		break;
+	case RuleWizardHistory::PERM_NONE:
+	case RuleWizardHistory::PERM_DENY_ALL:
+		/* Should not happen. Nothing to do. */
+		return;
+	}
+
+	/*
+	 * At this point both the global and the local permission are
+	 * PERM_RESTRICT_USER. Generate rules accordingly.
+	 */
 	switch (section) {
 	case APN_SBA_READ:
 		ask = history_.getSandboxReadAsk();
 		signature = history_.getSandboxReadValidSignature();
-		permission = history_.getSandboxReadPermission();
 		list = history_.getSandboxReadFileList();
 		break;
 	case APN_SBA_WRITE:
 		ask = history_.getSandboxWriteAsk();
 		signature = history_.getSandboxWriteValidSignature();
-		permission = history_.getSandboxWritePermission();
 		list = history_.getSandboxWriteFileList();
 		break;
 	case APN_SBA_EXEC:
 		ask = history_.getSandboxExecuteAsk();
 		signature = history_.getSandboxExecuteValidSignature();
-		permission = history_.getSandboxExecutePermission();
 		list = history_.getSandboxExecuteFileList();
 		break;
 	default:
 		return;
 	}
 
-	filter = new SbAccessFilterPolicy(app);
-	app->prependFilterPolicy(filter);
-
-	filter->setPath(wxT("/"));
-	filter->setAccessMask(section);
+	/* Create the rule for the root directory. */
 	if (ask) {
-		filter->setActionNo(APN_ACTION_ASK);
-	} else if (permission == RuleWizardHistory::PERM_ALLOW_ALL) {
-		filter->setActionNo(APN_ACTION_ALLOW);
+		createSbPermissionRoot(app, section, APN_ACTION_ASK);
 	} else {
-		filter->setActionNo(APN_ACTION_DENY);
-		filter->setLogNo(APN_LOG_NORMAL);
+		createSbPermissionRoot(app, section, APN_ACTION_DENY);
 	}
+	/* Create special rules for the files in the file list. */
+	createSbFileList(app, list, section);
 
-	switch (permission) {
-	case RuleWizardHistory::PERM_RESTRICT_DEFAULT:
-		// XXX ch: load defautls
-		break;
-	case RuleWizardHistory::PERM_RESTRICT_USER:
-		createSbFileList(app, list, section);
-		break;
-	default:
-		break;
-	}
-
-	/* Put signature rules first. */
+	/* Finally put signature rules first if those were requested. */
 	if (signature) {
-		int action = APN_ACTION_ALLOW;
-		int log = APN_LOG_NONE;
+		SbAccessFilterPolicy	*filter;
+		int			 action = APN_ACTION_ALLOW;
+		int			 log = APN_LOG_NONE;
 
 		if (section == APN_SBA_WRITE) {
 			action = APN_ACTION_DENY;

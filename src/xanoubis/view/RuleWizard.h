@@ -271,6 +271,23 @@ class RuleWizard : public wxWizard
 		    int) const;
 
 		/**
+		 * Create the filter policies from a file list that is
+		 * read from the default configuration in /etc/
+		 * @param[in] 1st The sandbox application policy (aka parent)
+		 * @param[in] 2nd The permission.
+		 */
+		void createSbDefaultFileList(SbAppPolicy *, int) const;
+
+		/**
+		 * Create a rule with the given permission for the root
+		 * directory. If the permission is DENY the rule will log.
+		 * @param[in] 1st The sandbox application policy (aka parent)
+		 * @param[in] 2nd The access mask (read/write/access)
+		 * @param[in] 3rd The action (allow/deny/ask)
+		 */
+		void createSbPermissionRoot(SbAppPolicy *, int, int) const;
+
+		/**
 		 * Create sandbox policies.
 		 * @param[in] 1st The sandbox application policy (aka parent).
 		 * @param[in] 2nd The type of sb policies.
