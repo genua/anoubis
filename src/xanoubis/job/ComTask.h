@@ -30,13 +30,10 @@
 
 #include "Task.h"
 
-class ComHandler;
-
 /**
  * Base-class for communication-tasks.
  *
- * Any communication-related tasks should implement this class to get access to
- * an ComHandler.
+ * Any communication-related tasks should implement this class.
  */
 class ComTask : public Task
 {
@@ -94,27 +91,6 @@ class ComTask : public Task
 		int getResultDetails(void) const;
 
 		/**
-		 * Returns the ComHandler-instance assigned with the task.
-		 *
-		 * The derivated class have an access to message-handling with
-		 * the Anoubis-daemon without having detail-knowledge about
-		 * message-handling.
-		 *
-		 * @param The ComHandler-instance
-		 */
-		ComHandler *getComHandler(void) const;
-
-		/**
-		 * Updates the ComHandler-instance.
-		 *
-		 * This method is called from the JobCtrl background-thread.
-		 * User of the task can ignore the method.
-		 *
-		 * @param comHandler The ComHandler-instance
-		 */
-		void setComHandler(ComHandler *);
-
-		/**
 		 * Check if a task is completed. This will set the
 		 * result and destroy anoubis_transaction structures
 		 * associated with the com task. If the task is not
@@ -123,11 +99,10 @@ class ComTask : public Task
 		 * from the communication channel. Usually this means
 		 * that a transaction with the specified client is created.
 		 *
-		 * @param comHandler The ComHandler-instance
 		 * @param None.
 		 * @return True if the task is done.
 		 */
-		virtual bool done(void);
+		virtual bool done(void) = 0;
 
 		/**
 		 * Set Client data structure in the ComTask.
@@ -184,7 +159,6 @@ class ComTask : public Task
 	private:
 		ComTaskResult		 result_;
 		int			 resultDetails_;
-		ComHandler		*comHandler_;
 		struct anoubis_client	*client_;
 };
 

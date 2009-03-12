@@ -32,12 +32,11 @@
 #include "JobThread.h"
 #include "Notification.h"
 #include "SynchronizedQueue.h"
-#include "ComHandler.h"
 
 /**
  * The thread, which is responsible for tasks of the Task::TYPE_COM.
  */
-class ComThread : public JobThread, protected ComHandler
+class ComThread : public JobThread
 {
 	public:
 		ComThread(JobCtrl *, const wxString &);
@@ -53,8 +52,6 @@ class ComThread : public JobThread, protected ComHandler
 		 * communication channel.
 		 */
 		void readMessage(void);
-		struct anoubis_client *getClient(void) const;
-		bool waitForMessage(void); /* Old style implementation. */
 
 		/**
 		 * Connects to anoubisd.

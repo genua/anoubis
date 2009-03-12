@@ -29,7 +29,6 @@
 
 ComTask::ComTask(void) : Task(Task::TYPE_COM)
 {
-	this->comHandler_ = 0;
 	client_ = NULL;
 	resetComTaskResult();
 }
@@ -63,24 +62,6 @@ ComTask::resetComTaskResult(void)
 {
 	this->result_ = RESULT_INIT;
 	this->resultDetails_ = 0;
-}
-
-ComHandler *
-ComTask::getComHandler(void) const
-{
-	return (this->comHandler_);
-}
-
-void
-ComTask::setComHandler(ComHandler *comHandler)
-{
-	this->comHandler_ = comHandler;
-}
-
-bool
-ComTask::done(void)
-{
-	return (true);
 }
 
 void

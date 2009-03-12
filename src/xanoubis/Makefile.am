@@ -429,7 +429,6 @@ xanoubis_SOURCES= \
 	job/ComCsumGetTask.h \
 	job/ComCsumHandler.cpp \
 	job/ComCsumHandler.h \
-	job/ComHandler.h \
 	job/ComPolicyRequestTask.cpp \
 	job/ComPolicyRequestTask.h \
 	job/ComPolicySendTask.cpp \

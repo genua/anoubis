@@ -230,13 +230,12 @@ ComThread::Entry(void)
 			current = dynamic_cast<ComTask *>(task);
 			if (current) {
 				current->setClient(client_);
-				current->setComHandler(this);
 				current->exec();
 			}
 		}
 		/*
 		 * Step 4: If the current task is done, handle this.
-		 *         This als handles errors in current->exec()
+		 *         This also handles errors in current->exec()
 		 *         and performs the next stpes of the task if the
 		 *         task is not yet done.
 		 */
@@ -326,102 +325,6 @@ ComThread::readMessage(void)
 			sendNotify(notifyMsg);
 		}
 	}
-}
-
-struct anoubis_client *
-ComThread::getClient(void) const
-{
-	return (this->client_);
-}
-
-bool
-ComThread::waitForMessage(void)
-{
-	struct pollfd		fds[1];
-	int			result;
-
-	if ((channel_ == 0) || (client_ == 0)) {
-		/* Not connected */
-		return (false);
-	}
-
-	fds[0].fd = channel_->fd;
-	fds[0].events = POLLIN;
-
-	/*
-	 * XXX use event.h instead of poll
-	 */
-	result = poll(fds, 1, 200);
-	if (result < 0) {
-		if (errno == EINTR)
-			return (true);
-
-		return (false);
-	}
-
-	if (result > 0 && fds[0].revents) {
-		size_t			size = 4096;
-		struct anoubis_msg	*msg;
-
-		if ((msg = anoubis_msg_new(size)) == 0)
-			return (false);
-
-		fds[0].revents = 0;
-		achat_rc rc = acc_receivemsg(
-		    channel_, (char*)(msg->u.buf), &size);
-		if (rc != ACHAT_RC_OK) {
-			anoubis_msg_free(msg);
-			if (rc == ACHAT_RC_EOF) {
-				disconnect();
-				sendComEvent(JobCtrl::CONNECTION_ERROR);
-				return (false);
-			}
-			return (false);
-		}
-
-		anoubis_msg_resize(msg, size);
-
-		/* This will free the message. */
-		int result = anoubis_client_process(client_, msg);
-		if (result < 0) {
-			/* Error */
-			disconnect();
-			/* XXX CEH */
-			return (false);
-		} else if (result == 0) {
-			/*
-			 * Message does not fit into current protocol flow.
-			 * Skip it.
-			 */
-			fprintf(stderr, "ComThread: Message does not fit ");
-			fprintf(stderr, "into protocol flow, skipping...\n");
-		} else if (anoubis_client_hasnotifies(client_) != 0) {
-			struct anoubis_msg	*notifyMsg = NULL;
-			bool			 handled;
-
-			notifyMsg = anoubis_client_getnotify(client_);
-			handled = checkNotify(notifyMsg);
-			if (!handled) {
-				sendNotify(notifyMsg);
-			}
-		}
-	}
-
-	Notification *notification;
-	while ((notification = answerQueue_->pop()) != 0) {
-		anoubis_token_t		 token;
-		int			 allowed;
-		EscalationNotify	*escalation;
-
-		escalation = (EscalationNotify *)notification;
-
-		token = escalation->getToken();
-		allowed = escalation->getAnswer()->wasAllowed();
-		anoubis_client_notifyreply(client_, token,
-		    allowed ? 0 : EPERM, 0);
-	}
-
-	return (true);
 }
 
 bool
