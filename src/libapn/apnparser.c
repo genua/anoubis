@@ -47,6 +47,7 @@
 #include <string.h>
 
 #include <sys/types.h>
+#include <limits.h>
 #include "apn.h"
 #include "apninternals.h"
 
