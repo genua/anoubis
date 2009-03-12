@@ -172,6 +172,15 @@ class AppPolicy : public Policy
 		bool removeBinary(unsigned int);
 
 		/**
+		 * Remove a binary.
+		 * This will remove the binary with the given name.
+		 * In case we remove the last binary, 'any' ist set.
+		 * @param[in] 1st The name of the binary. to remove.
+		 * @return True on success.
+		 */
+		bool removeBinary(const wxString &);
+
+		/**
 		 * Does this policy represent an any-block?
 		 * @param None.
 		 * @return True if it's an any-block.

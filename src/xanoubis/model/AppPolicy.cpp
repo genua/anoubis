@@ -253,6 +253,19 @@ AppPolicy::removeBinary(unsigned int index)
 }
 
 bool
+AppPolicy::removeBinary(const wxString &binary)
+{
+	wxArrayString	binaryList = getBinaryList();
+	int	index;
+
+	index = binaryList.Index(binary);
+	if (index == wxNOT_FOUND) {
+		return (false);
+	}
+	return removeBinary(index);
+}
+
+bool
 AppPolicy::isAnyBlock(void) const
 {
 	struct apn_rule *rule;

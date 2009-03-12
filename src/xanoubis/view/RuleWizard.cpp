@@ -260,7 +260,7 @@ RuleWizard::backwardTransition(enum wizardPages pageNo) const
 		}
 		/* FALLTHROUGH */
 	case PAGE_ALF_OVERWRITE:
-		if (!history_.haveContextPolicy()) {
+		if (history_.haveContextPolicy()) {
 			previousPage = PAGE_PROGRAM;
 		} else if (history_.haveContextException()) {
 			previousPage = PAGE_CTX_EXCEPT;
@@ -380,9 +380,10 @@ RuleWizard::onWizardFinished(wxWizardEvent &)
 	if (!history_.haveContextPolicy()) {
 		createContextPolicy(ruleSet);
 	}
-
 	createAlfPolicy(ruleSet);
-	createSandboxPolicy(ruleSet);
+	if (history_.haveSandbox() != RuleWizardHistory::PERM_NONE)
+		createSandboxPolicy(ruleSet);
+
 	newRuleSetEvent.SetInt(ruleSet->getRuleSetId());
 	newRuleSetEvent.SetExtraLong(ruleSet->getRuleSetId());
 	ruleSet->unlock();
@@ -435,11 +436,12 @@ RuleWizard::createAlfPolicy(PolicyRuleSet *ruleSet) const
 	wxArrayString			 list;
 	AlfAppPolicy			*alfApp;
 	AlfCapabilityFilterPolicy	*alfCap;
-	AlfFilterPolicy			*alfFilter;
+	DefaultFilterPolicy		*dflFilter;
+	bool				 ask = history_.getAlfClientAsk();
 
 	alfApp	  = NULL;
 	alfCap	  = NULL;
-	alfFilter = NULL;
+	dflFilter = NULL;
 
 	if (ruleSet == NULL) {
 		return;
@@ -455,13 +457,11 @@ RuleWizard::createAlfPolicy(PolicyRuleSet *ruleSet) const
 		 * We just need to remove the filter, but it's easier to
 		 * remove all and re-create the app policy.
 		 */
-		/*
-		 * XXX CEH: In case of multiple applications we should
-		 * XXX CEH: only through away the application we are
-		 * XXX CEH: creating policies for.
-		 */
-		alfApp->remove();
-		alfApp = NULL;
+		if (alfApp->getBinaryCount() > 1) {
+			alfApp->removeBinary(history_.getProgram());
+		} else {
+			alfApp->remove();
+		}
 	}
 
 	alfApp = new AlfAppPolicy(ruleSet);
@@ -471,34 +471,39 @@ RuleWizard::createAlfPolicy(PolicyRuleSet *ruleSet) const
 
 	switch (history_.getAlfClientPermission()) {
 	case RuleWizardHistory::PERM_ALLOW_ALL:
-		alfFilter = new AlfFilterPolicy(alfApp);
-		alfApp->prependFilterPolicy(alfFilter);
-		alfFilter->setActionNo(APN_ACTION_ALLOW);
+		dflFilter = new DefaultFilterPolicy(alfApp);
+		alfApp->prependFilterPolicy(dflFilter);
+		dflFilter->setActionNo(APN_ACTION_ALLOW);
 		return;
 		break;
 	case RuleWizardHistory::PERM_DENY_ALL:
-		alfFilter = new AlfFilterPolicy(alfApp);
-		alfApp->prependFilterPolicy(alfFilter);
-		alfFilter->setActionNo(APN_ACTION_DENY);
+		dflFilter = new DefaultFilterPolicy(alfApp);
+		alfApp->prependFilterPolicy(dflFilter);
+		dflFilter->setActionNo(APN_ACTION_DENY);
+		dflFilter->setLogNo(APN_LOG_NORMAL);
 		return;
 		break;
 	case RuleWizardHistory::PERM_RESTRICT_DEFAULT:
-		//XXX ch: load defaults
+		/*
+		 * XXX CH/CEH: Append the default ports to the client
+		 * XXX CH/CEH: port list and continue as if this were
+		 * XXX CH/CEH: a user supplied list of ports.
+		 */
+		ask = true;
 		break;
 	default:
 		break;
 	}
 
-	if (history_.getAlfClientAsk()) {
-		alfFilter = new AlfFilterPolicy(alfApp);
-		alfApp->prependFilterPolicy(alfFilter);
-		alfFilter->setActionNo(APN_ACTION_ASK);
-		alfFilter->setProtocol(IPPROTO_TCP);
-
-		alfFilter = new AlfFilterPolicy(alfApp);
-		alfApp->prependFilterPolicy(alfFilter);
-		alfFilter->setActionNo(APN_ACTION_ASK);
-		alfFilter->setProtocol(IPPROTO_UDP);
+	if (ask) {
+		dflFilter = new DefaultFilterPolicy(alfApp);
+		alfApp->prependFilterPolicy(dflFilter);
+		dflFilter->setActionNo(APN_ACTION_ASK);
+	} else {
+		dflFilter = new DefaultFilterPolicy(alfApp);
+		alfApp->prependFilterPolicy(dflFilter);
+		dflFilter->setActionNo(APN_ACTION_DENY);
+		dflFilter->setLogNo(APN_LOG_NORMAL);
 	}
 
 	if (history_.getAlfClientRaw()) {
@@ -533,13 +538,11 @@ RuleWizard::createSandboxPolicy(PolicyRuleSet *ruleSet) const
 		 * We just need to remove the filter, but it's easier to
 		 * remove all and re-create the app policy.
 		 */
-		/*
-		 * XXX CEH: In case of multiple applications we should
-		 * XXX CEH: only through away the application we are
-		 * XXX CEH: creating policies for.
-		 */
-		sbApp->remove();
-		sbApp = NULL;
+		if (sbApp->getBinaryCount() > 1) {
+			sbApp->removeBinary(history_.getProgram());
+		} else {
+			sbApp->remove();
+		}
 	}
 
 	/* Create new app block. */
@@ -547,6 +550,11 @@ RuleWizard::createSandboxPolicy(PolicyRuleSet *ruleSet) const
 	ruleSet->prependAppPolicy(sbApp);
 	sbApp->addBinary(history_.getProgram());
 	sbApp->setHashValueString(history_.getChecksum(), 0);
+
+	/* Create a default ASK policy just to be sure. */
+	dflFilter = new DefaultFilterPolicy(sbApp);
+	sbApp->prependFilterPolicy(dflFilter);
+	dflFilter->setActionNo(APN_ACTION_ASK);
 
 	createSbPermission(sbApp, APN_SBA_READ);
 	createSbPermission(sbApp, APN_SBA_WRITE);
@@ -558,20 +566,45 @@ RuleWizard::createAlfPortList(AlfAppPolicy *app, const wxArrayString & list,
     int direction) const
 {
 	AlfFilterPolicy	*filter;
+	static int	 dirs[2] = { APN_CONNECT, APN_ACCEPT };
 
+	switch (direction) {
+	case APN_SEND:
+		direction = APN_CONNECT;
+		break;
+	case APN_RECEIVE:
+		direction = APN_ACCEPT;
+		break;
+	}
 	for (size_t i=0; i<list.GetCount(); i=i+3) {
-		filter = new AlfFilterPolicy(app);
-		app->prependFilterPolicy(filter);
-
-		filter->setActionNo(APN_ACTION_ALLOW);
-		filter->setDirectionNo(direction);
+		int proto = IPPROTO_UDP;
 
 		if (list.Item(i+2) == wxT("tcp")) {
-			filter->setProtocol(IPPROTO_TCP);
-		} else {
-			filter->setProtocol(IPPROTO_UDP);
+			proto = IPPROTO_TCP;
 		}
-		filter->setToPortName(list.Item(i+1));
+		/*
+		 * For UDP generate rules for both directions.
+		 */
+		for (int x=0; x<2; ++x) {
+			if (proto == IPPROTO_TCP && dirs[x] != direction)
+				continue;
+			filter = new AlfFilterPolicy(app);
+			app->prependFilterPolicy(filter);
+
+			filter->setActionNo(APN_ACTION_ALLOW);
+			filter->setDirectionNo(dirs[x]);
+			filter->setProtocol(proto);
+			/*
+			 * For TCP-accept we want to allow connections from
+			 * any remote port to a specific local port, thus
+			 * set to ToPortName in this case, too.
+			 */
+			if (dirs[x] == APN_CONNECT || proto == IPPROTO_TCP) {
+				filter->setToPortName(list.Item(i+1));
+			} else {
+				filter->setFromPortName(list.Item(i+1));
+			}
+		}
 	}
 }
 
@@ -634,24 +667,7 @@ RuleWizard::createSbPermission(SbAppPolicy *app, int section) const
 		filter->setActionNo(APN_ACTION_ALLOW);
 	} else {
 		filter->setActionNo(APN_ACTION_DENY);
-	}
-
-	if (signature) {
-		filter = new SbAccessFilterPolicy(app);
-		app->prependFilterPolicy(filter);
-
-		filter->setSubjectSelf(true);
-		filter->setPath(wxT("/"));
-		filter->setAccessMask(section);
-		filter->setActionNo(APN_ACTION_ALLOW);
-
-		filter = new SbAccessFilterPolicy(app);
-		app->prependFilterPolicy(filter);
-
-		filter->setSubjectSelf(false);
-		filter->setPath(wxT("/"));
-		filter->setAccessMask(section);
-		filter->setActionNo(APN_ACTION_ALLOW);
+		filter->setLogNo(APN_LOG_NORMAL);
 	}
 
 	switch (permission) {
@@ -663,5 +679,33 @@ RuleWizard::createSbPermission(SbAppPolicy *app, int section) const
 		break;
 	default:
 		break;
+	}
+
+	/* Put signature rules first. */
+	if (signature) {
+		int action = APN_ACTION_ALLOW;
+		int log = APN_LOG_NONE;
+
+		if (section == APN_SBA_WRITE) {
+			action = APN_ACTION_DENY;
+			log = APN_LOG_NORMAL;
+		}
+		filter = new SbAccessFilterPolicy(app);
+		app->prependFilterPolicy(filter);
+
+		filter->setSubjectSelf(true);
+		filter->setPath(wxT("/"));
+		filter->setAccessMask(section);
+		filter->setActionNo(action);
+		filter->setLogNo(log);
+
+		filter = new SbAccessFilterPolicy(app);
+		app->prependFilterPolicy(filter);
+
+		filter->setSubjectSelf(false);
+		filter->setPath(wxT("/"));
+		filter->setAccessMask(section);
+		filter->setActionNo(action);
+		filter->setLogNo(log);
 	}
 }

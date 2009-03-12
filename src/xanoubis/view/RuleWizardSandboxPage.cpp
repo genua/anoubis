@@ -60,7 +60,7 @@ RuleWizardSandboxPage::onYesDefaultsRadioButton(wxCommandEvent &)
 void
 RuleWizardSandboxPage::onNoRadioButton(wxCommandEvent &)
 {
-	history_->setSandbox(RuleWizardHistory::PERM_ALLOW_ALL);
+	history_->setSandbox(RuleWizardHistory::PERM_NONE);
 	updateNavi();
 }
 
