@@ -104,8 +104,6 @@ DlgRuleEditor::DlgRuleEditor(wxWindow* parent)
 	    wxT("THOST"));
 	alfColumns_[ALF_TPORT]	= new ListCtrlColumn(_("to port"),
 	    wxT("TPORT"));
-	alfColumns_[ALF_TIME]	= new ListCtrlColumn(_("state timeout"),
-	    wxT("TIME"));
 
 	for (size_t i=0; i<ALF_EOL; i++) {
 		alfColumns_[i]->setIndex(i);
@@ -1824,10 +1822,6 @@ DlgRuleEditor::updateListAlfFilterPolicy(long rowIdx)
 		/* Fill to port column */
 		updateColumnText(list, rowIdx, alfColumns_[ALF_TPORT],
 		    alfPolicy->getToPortName());
-
-		/* Fill state timeout column */
-		updateColumnText(list, rowIdx, alfColumns_[ALF_TIME],
-		    alfPolicy->getStateTimeoutName());
 	}
 }
 

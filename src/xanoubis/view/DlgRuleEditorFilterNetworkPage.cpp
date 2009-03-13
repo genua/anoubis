@@ -43,7 +43,6 @@ DlgRuleEditorFilterNetworkPage::update(Subject *subject)
 		showDirection();
 		showAddressFamily();
 		showProtocol();
-		showStateTimeout();
 	}
 }
 
@@ -152,15 +151,6 @@ DlgRuleEditorFilterNetworkPage::showProtocol(void)
 }
 
 void
-DlgRuleEditorFilterNetworkPage::showStateTimeout(void)
-{
-	if (filterPolicy_ != NULL) {
-		stateTimeoutSpinCtrl->SetValue(
-		    filterPolicy_->getStateTimeoutNo());
-	}
-}
-
-void
 DlgRuleEditorFilterNetworkPage::onInRadioButton(wxCommandEvent &)
 {
 	if (filterPolicy_ != NULL) {
@@ -223,13 +213,5 @@ DlgRuleEditorFilterNetworkPage::onUdpRadioButton(wxCommandEvent &)
 {
 	if (filterPolicy_ != NULL) {
 		filterPolicy_->setProtocol(IPPROTO_UDP);
-	}
-}
-
-void
-DlgRuleEditorFilterNetworkPage::onStateTimeoutSpinCtrl(wxSpinEvent & event)
-{
-	if (filterPolicy_ != NULL) {
-		filterPolicy_->setStateTimeout((int)event.GetPosition());
 	}
 }

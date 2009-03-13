@@ -114,13 +114,6 @@ class DlgRuleEditorFilterNetworkPage : public DlgRuleEditorPage,
 		void showProtocol(void);
 
 		/**
-		 * Update state timeout widgets.
-		 * @param None.
-		 * @return Nothing.
-		 */
-		void showStateTimeout(void);
-
-		/**
 		 * Handle events from inRadioButton.
 		 * This will set APN_ACCEPT or APN_RECEIVE (depending
 		 * on the protocol) to the policy.
@@ -185,14 +178,6 @@ class DlgRuleEditorFilterNetworkPage : public DlgRuleEditorPage,
 		 * @return Nothing.
 		 */
 		virtual void onUdpRadioButton(wxCommandEvent &);
-
-		/**
-		 * Handle events from stateTimeoutSpinCtrl.
-		 * This will set stete timeout to the policy.
-		 * @param[in] 1st The event.
-		 * @return Nothing.
-		 */
-		virtual void onStateTimeoutSpinCtrl(wxSpinEvent &);
 };
 
 #endif	/* _DLGRULEEDITORFILTERNETWORKPAGE_H_ */

@@ -508,15 +508,6 @@ DlgRuleEditorFilterNetworkPageBase::DlgRuleEditorFilterNetworkPageBase( wxWindow
 	
 	mainSizer->Add( 0, 0, 1, wxEXPAND|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	stateTimeoutLabel = new wxStaticText( mainPage, wxID_ANY, _("State timeout:"), wxDefaultPosition, wxDefaultSize, 0 );
-	stateTimeoutLabel->Wrap( -1 );
-	mainSizer->Add( stateTimeoutLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
-	
-	stateTimeoutSpinCtrl = new wxSpinCtrl( mainPage, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 604800, 0 );
-	stateTimeoutSpinCtrl->SetToolTip( _("To enable stateful filtering use the timeout 600.") );
-	
-	mainSizer->Add( stateTimeoutSpinCtrl, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
-	
 	mainPage->SetSizer( mainSizer );
 	mainPage->Layout();
 	mainSizer->Fit( mainPage );
@@ -534,7 +525,6 @@ DlgRuleEditorFilterNetworkPageBase::DlgRuleEditorFilterNetworkPageBase( wxWindow
 	anyRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorFilterNetworkPageBase::onAnyRadioButton ), NULL, this );
 	tcpRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorFilterNetworkPageBase::onTcpRadioButton ), NULL, this );
 	udpRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorFilterNetworkPageBase::onUdpRadioButton ), NULL, this );
-	stateTimeoutSpinCtrl->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( DlgRuleEditorFilterNetworkPageBase::onStateTimeoutSpinCtrl ), NULL, this );
 }
 
 DlgRuleEditorFilterAddressPageBase::DlgRuleEditorFilterAddressPageBase( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size, long style ) : wxPanel( parent, id, pos, size, style )

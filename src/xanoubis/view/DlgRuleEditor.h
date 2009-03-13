@@ -194,7 +194,6 @@ class DlgRuleEditor : public Observer, public DlgRuleEditorBase
 			ALF_FPORT,	/**< from port */
 			ALF_THOST,	/**< to host */
 			ALF_TPORT,	/**< to port */
-			ALF_TIME,	/**< state timeout */
 			ALF_EOL		/**< End - Of - List */
 		};
 

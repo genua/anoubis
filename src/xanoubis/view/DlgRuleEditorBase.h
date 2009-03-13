@@ -54,7 +54,6 @@ class DlgRuleEditorAppPage;
 #include <wx/splitter.h>
 #include <wx/frame.h>
 #include <wx/scrolwin.h>
-#include <wx/spinctrl.h>
 #include <wx/radiobox.h>
 #include <wx/checkbox.h>
 
@@ -244,8 +243,6 @@ class DlgRuleEditorFilterNetworkPageBase : public wxPanel
 		wxRadioButton* tcpRadioButton;
 		wxRadioButton* udpRadioButton;
 		
-		wxStaticText* stateTimeoutLabel;
-		wxSpinCtrl* stateTimeoutSpinCtrl;
 		
 		// Virtual event handlers, overide them in your derived class
 		virtual void onInRadioButton( wxCommandEvent& event ){ event.Skip(); }
@@ -256,7 +253,6 @@ class DlgRuleEditorFilterNetworkPageBase : public wxPanel
 		virtual void onAnyRadioButton( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onTcpRadioButton( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onUdpRadioButton( wxCommandEvent& event ){ event.Skip(); }
-		virtual void onStateTimeoutSpinCtrl( wxSpinEvent& event ){ event.Skip(); }
 		
 	
 	public:
