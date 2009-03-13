@@ -32,7 +32,22 @@ RuleWizardAlfClientPage::RuleWizardAlfClientPage(wxWindow *parent,
 {
 	history_ = history;
 
-	noRadioButton->SetValue(true);
+	switch (history_->getAlfClientPermission()) {
+	case RuleWizardHistory::PERM_ALLOW_ALL:
+		yesRadioButton->SetValue(true);
+		break;
+	case RuleWizardHistory::PERM_RESTRICT_DEFAULT:
+		defaultRadioButton->SetValue(true);
+		break;
+	case RuleWizardHistory::PERM_RESTRICT_USER:
+		restrictedRadioButton->SetValue(true);
+		break;
+	case RuleWizardHistory::PERM_DENY_ALL:
+		/* FALLTHROUGH */
+	default:
+		noRadioButton->SetValue(true);
+		break;
+	}
 
 	parent->Connect(wxEVT_WIZARD_PAGE_CHANGED,
 	    wxWizardEventHandler(RuleWizardAlfClientPage::onPageChanged),

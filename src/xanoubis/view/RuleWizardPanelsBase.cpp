@@ -284,14 +284,14 @@ RuleWizardProgramPageBase::RuleWizardProgramPageBase( wxWindow* parent, wxWindow
 	
 	mainSizer->Add( 0, 0, 1, wxEXPAND, 5 );
 	
-	wxBoxSizer* programSizer;
-	programSizer = new wxBoxSizer( wxHORIZONTAL );
-	
 	programLabel = new wxStaticText( this, wxID_ANY, _("Program:"), wxDefaultPosition, wxDefaultSize, 0 );
 	programLabel->Wrap( -1 );
 	programLabel->SetMinSize( wxSize( 90,-1 ) );
 	
-	programSizer->Add( programLabel, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
+	mainSizer->Add( programLabel, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
+	
+	wxBoxSizer* programSizer;
+	programSizer = new wxBoxSizer( wxHORIZONTAL );
 	
 	programTextCtrl = new wxTextCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER );
 	programSizer->Add( programTextCtrl, 1, wxALL|wxALIGN_CENTER_VERTICAL|wxEXPAND, 5 );
@@ -303,20 +303,15 @@ RuleWizardProgramPageBase::RuleWizardProgramPageBase( wxWindow* parent, wxWindow
 	
 	mainSizer->Add( programSizer, 0, wxEXPAND, 5 );
 	
-	wxBoxSizer* csumSizer;
-	csumSizer = new wxBoxSizer( wxHORIZONTAL );
-	
 	csumLabel = new wxStaticText( this, wxID_ANY, _("Checksum:"), wxDefaultPosition, wxDefaultSize, 0 );
 	csumLabel->Wrap( -1 );
 	csumLabel->SetMinSize( wxSize( 90,-1 ) );
 	
-	csumSizer->Add( csumLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	mainSizer->Add( csumLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	csumValue = new wxStaticText( this, wxID_ANY, _("..."), wxDefaultPosition, wxDefaultSize, 0 );
 	csumValue->Wrap( -1 );
-	csumSizer->Add( csumValue, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
-	
-	mainSizer->Add( csumSizer, 0, wxEXPAND, 5 );
+	mainSizer->Add( csumValue, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	
 	mainSizer->Add( 0, 0, 1, wxEXPAND, 5 );
@@ -365,8 +360,8 @@ RuleWizardContextPageBase::RuleWizardContextPageBase( wxWindow* parent, wxWindow
 	wxBoxSizer* helpSizer;
 	helpSizer = new wxBoxSizer( wxVERTICAL );
 	
-	helpLabel = new wxStaticText( helpPage, wxID_ANY, _("This is the mandatory help text ..."), wxDefaultPosition, wxDefaultSize, 0 );
-	helpLabel->Wrap( 600 );
+	helpLabel = new wxStaticText( helpPage, wxID_ANY, _("The context of an application is the conjunction of it's calling environment. This is the program which runs another one.\n\nIf you are creating policies for a laucher-application or a command shell we suggest the answer: \"no\".\n\nBut in case of the most applications \"yes' seems to be the best fit. "), wxDefaultPosition, wxDefaultSize, 0 );
+	helpLabel->Wrap( 500 );
 	helpSizer->Add( helpLabel, 0, wxALL, 5 );
 	
 	helpPage->SetSizer( helpSizer );
@@ -377,7 +372,7 @@ RuleWizardContextPageBase::RuleWizardContextPageBase( wxWindow* parent, wxWindow
 	wxBoxSizer* inputSizer;
 	inputSizer = new wxBoxSizer( wxVERTICAL );
 	
-	questionLabel = new wxStaticText( this, wxID_ANY, _("Programs been started by this application have the same permissions / restrictions as the main program."), wxDefaultPosition, wxDefaultSize, 0 );
+	questionLabel = new wxStaticText( this, wxID_ANY, _("Programs started by this application have the same permissions / restrictions as the main program."), wxDefaultPosition, wxDefaultSize, 0 );
 	questionLabel->Wrap( 400 );
 	inputSizer->Add( questionLabel, 0, wxALL, 5 );
 	
@@ -708,8 +703,8 @@ RuleWizardSandboxPageBase::RuleWizardSandboxPageBase( wxWindow* parent, wxWindow
 	wxBoxSizer* helpSizer;
 	helpSizer = new wxBoxSizer( wxVERTICAL );
 	
-	helpLabel = new wxStaticText( helpPage, wxID_ANY, _("This is the mandatory help text ..."), wxDefaultPosition, wxDefaultSize, 0 );
-	helpLabel->Wrap( 600 );
+	helpLabel = new wxStaticText( helpPage, wxID_ANY, _("With the sandbox you can confine an application.\nThis is done by specifying which files it may read, write or execute."), wxDefaultPosition, wxDefaultSize, 0 );
+	helpLabel->Wrap( 500 );
 	helpSizer->Add( helpLabel, 0, wxALL, 5 );
 	
 	helpPage->SetSizer( helpSizer );
@@ -967,7 +962,7 @@ RuleWizardFinalPageBase::RuleWizardFinalPageBase( wxWindow* parent, wxWindowID i
 	
 	mainSizer->Add( 0, 0, 1, wxEXPAND, 5 );
 	
-	finalLabel = new wxStaticText( this, wxID_ANY, _("This is the final page. If you click on 'finish'\nthe policies will been created."), wxDefaultPosition, wxDefaultSize, 0 );
+	finalLabel = new wxStaticText( this, wxID_ANY, _("This is the final page. If you click on 'finish'\nthe policies will been created.\n\nTo activate the newly created policies, please open the RuleEditor. Activate the policies with the button 'activate' in the lower right corner.\n(To make this work you need to be connected.)"), wxDefaultPosition, wxDefaultSize, 0 );
 	finalLabel->Wrap( 400 );
 	mainSizer->Add( finalLabel, 0, wxALL, 5 );
 	

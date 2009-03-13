@@ -49,6 +49,13 @@ RuleWizardAlfOverwritePage::RuleWizardAlfOverwritePage(wxWindow *parent,
 	text = _("For this application\nalf policies\nalready exists.");
 	alertLabel->SetLabel(text);
 
+	if (history_->shallOverwriteAlfPolicy() ==
+	    RuleWizardHistory::OVERWRITE_YES) {
+		yesRadioButton->SetValue(true);
+	} else {
+		noRadioButton->SetValue(true);
+	}
+
 	parent->Connect(wxEVT_WIZARD_PAGE_CHANGED,
 	    wxWizardEventHandler(RuleWizardAlfOverwritePage::onPageChanged),
 	    NULL, this);

@@ -32,6 +32,16 @@ RuleWizardContextPage::RuleWizardContextPage(wxWindow *parent,
 {
 	history_ = history;
 
+	if (history_->isSameContext()) {
+		yesRadioButton->SetValue(true);
+		exceptionsCheckBox->Enable();
+		exceptionsCheckBox->SetValue(history_->haveContextException());
+	} else {
+		noRadioButton->SetValue(true);
+		exceptionsCheckBox->SetValue(false);
+		exceptionsCheckBox->Disable();
+	}
+
 	parent->Connect(wxEVT_WIZARD_PAGE_CHANGED,
 	    wxWizardEventHandler(RuleWizardContextPage::onPageChanged),
 	    NULL, this);

@@ -40,6 +40,9 @@ RuleWizardHistory::RuleWizardHistory(void)
 	activeSectionFont_ = wxFont(12, wxFONTFAMILY_DEFAULT,
 	    wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD, false, wxEmptyString);
 
+	/*
+	 * Set page defaults here.
+	 */
 	program_ = wxEmptyString;
 	csum_	 = wxEmptyString;
 
@@ -49,24 +52,28 @@ RuleWizardHistory::RuleWizardHistory(void)
 	contextExceptionList_.Clear();
 
 	haveAlfPolicy_	     = false;
-	overwriteAlfPolicy_  = OVERWRITE_YES;
-	alfClientPermission_ = PERM_DENY_ALL;
+	overwriteAlfPolicy_  = OVERWRITE_NO;
+	alfClientPermission_ = PERM_RESTRICT_DEFAULT;
+	alfClientPortList_.Clear();
 	alfClientAsk_	     = true;
 	alfClientRaw_	     = false;
 	alfServerPermission_ = PERM_DENY_ALL;
 
-	haveSandbox_			= PERM_RESTRICT_USER;
-	haveSandboxPolicy_		= false;
-	overwriteSandboxPolicy_		= OVERWRITE_YES;
-	sandboxReadPermission_		= PERM_ALLOW_ALL;
-	sandboxReadAsk_			= true;
-	sandboxReadValidSignature_	= false;
-	sandboxWritePermission_		= PERM_ALLOW_ALL;
-	sandboxWriteAsk_		= true;
-	sandboxWriteValidSignature_	= false;
-	sandboxExecutePermission_	= PERM_ALLOW_ALL;
-	sandboxExecuteAsk_		= true;
-	sandboxExecuteValidSignature_	= false;
+	haveSandbox_		   = PERM_NONE;
+	haveSandboxPolicy_	   = false;
+	overwriteSandboxPolicy_    = OVERWRITE_NO;
+	sandboxReadPermission_     = PERM_RESTRICT_DEFAULT;
+	sandboxReadFileList_.Clear();
+	sandboxReadAsk_		   = true;
+	sandboxReadValidSignature_ = false;
+	sandboxWritePermission_    = PERM_RESTRICT_DEFAULT;
+	sandboxWriteFileList_.Clear();
+	sandboxWriteAsk_	    = true;
+	sandboxWriteValidSignature_ = false;
+	sandboxExecutePermission_   = PERM_RESTRICT_DEFAULT;
+	sandboxExecuteFileList_.Clear();
+	sandboxExecuteAsk_	      = true;
+	sandboxExecuteValidSignature_ = false;
 }
 
 void
@@ -550,7 +557,7 @@ RuleWizardHistory::fillSandboxNavi(wxWindow *parent, wxSizer *naviSizer,
 	} else if (haveSandbox_ == PERM_RESTRICT_DEFAULT) {
 		addValue(parent, naviSizer, _("defaults"));
 		return;
-	} else if (haveSandbox_ == PERM_ALLOW_ALL) {
+	} else if (haveSandbox_ == PERM_NONE) {
 		addValue(parent, naviSizer, _("no sandbox"));
 		return;
 	}

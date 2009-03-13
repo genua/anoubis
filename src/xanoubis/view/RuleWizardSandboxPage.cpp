@@ -32,6 +32,19 @@ RuleWizardSandboxPage::RuleWizardSandboxPage(wxWindow *parent,
 {
 	history_ = history;
 
+	switch (history_->haveSandbox()) {
+	case RuleWizardHistory::PERM_RESTRICT_USER:
+		yesWizardRadioButton->SetValue(true);
+		break;
+	case RuleWizardHistory::PERM_RESTRICT_DEFAULT:
+		yesDefaultsRadioButton->SetValue(true);
+		break;
+	case RuleWizardHistory::PERM_NONE:
+		/* FALLTHROUGH */
+	default:
+		noRadioButton->SetValue(true);
+	}
+
 	parent->Connect(wxEVT_WIZARD_PAGE_CHANGED,
 	    wxWizardEventHandler(RuleWizardSandboxPage::onPageChanged),
 	    NULL, this);

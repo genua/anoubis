@@ -48,6 +48,13 @@ RuleWizardSandboxOverwritePage::RuleWizardSandboxOverwritePage(wxWindow *parent,
 	text = _("For this application\nsanbox policies\nalready exists.");
 	alertLabel->SetLabel(text);
 
+	if (history_->shallOverwriteSandboxPolicy() ==
+	    RuleWizardHistory::OVERWRITE_YES) {
+		yesRadioButton->SetValue(true);
+	} else {
+		noRadioButton->SetValue(true);
+	}
+
 	parent->Connect(wxEVT_WIZARD_PAGE_CHANGED,
 	    wxWizardEventHandler(RuleWizardSandboxOverwritePage::onPageChanged),
 	    NULL, this);
