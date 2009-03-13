@@ -108,6 +108,31 @@ class ComCsumAddTask : public ComTask, public ComCsumHandler
 		void setPrivateKey(struct anoubis_sig *);
 
 		/**
+		 * Tests whether a sfs_entry is assigned to the task.
+		 *
+		 * If such a structure is assigned, the checksum/signature is
+		 * copied from there, rather than calculating it.
+		 *
+		 * @return true is returned, if a sfs_entry-structure is
+		 *         assigned to the task.
+		 */
+		bool haveSfsEntry(void) const;
+
+		/**
+		 * Assignes a sfs_entry-structure to the task.
+		 *
+		 * If such a structure is assigned, the task does not calculate
+		 * the checksum/signature. The information are taken from the
+		 * structure.
+		 *
+		 * @param entry The sfs_entry to by assigned
+		 * @param sendCsum If set to true, the checksum is taken from
+		 *                 the structure and then send to the daemon.
+		 *                 If set to false, the signature is used.
+		 */
+		void setSfsEntry(struct sfs_entry *, bool);
+
+		/**
 		 * Implementation of Task::getEventType().
 		 */
 		wxEventType getEventType(void) const;
@@ -148,7 +173,22 @@ class ComCsumAddTask : public ComTask, public ComCsumHandler
 
 	private:
 		struct anoubis_sig	*privKey_;
+		struct sfs_entry	*sfsEntry_;
+		bool			forceSendCsum_;
 		u_int8_t		cs_[ANOUBIS_CS_LEN];
+
+		/**
+		 * Creates the payload sent to anoubisd in case a
+		 * sfs_entry-structure is assigned to the task.
+		 *
+		 * The checksum/signature is taken from there.
+		 *
+		 * @param payload_len Length of returned payload-buffer is
+		 *                    written into this argument.
+		 * @param req_op The operation sent to anoubisd is written into
+		 *               this argument.
+		 */
+		u_int8_t *createSfsMsg(int *, int *);
 
 		/**
 		 * Creates the payload sent to anoubisd in case of unsigned

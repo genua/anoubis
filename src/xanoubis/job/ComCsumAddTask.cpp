@@ -52,11 +52,15 @@
 ComCsumAddTask::ComCsumAddTask(void)
 {
 	this->privKey_ = 0;
+	this->sfsEntry_ = 0;
+	this->forceSendCsum_ = false;
 }
 
 ComCsumAddTask::ComCsumAddTask(const wxString &file)
 {
 	this->privKey_ = 0;
+	this->sfsEntry_ = 0;
+	this->forceSendCsum_ = false;
 
 	setPath(file);
 }
@@ -75,6 +79,24 @@ void
 ComCsumAddTask::setPrivateKey(struct anoubis_sig *privKey)
 {
 	this->privKey_ = privKey;
+}
+
+bool
+ComCsumAddTask::haveSfsEntry(void) const
+{
+	return (this->sfsEntry_ != 0);
+}
+
+void
+ComCsumAddTask::setSfsEntry(struct sfs_entry *entry, bool sendCsum)
+{
+	this->sfsEntry_ = entry;
+	this->forceSendCsum_ = sendCsum;
+
+	if (!sendCsum && sfsEntry_->keyid != 0) {
+		/* Setup keyid, used later for communication */
+		setKeyId(sfsEntry_->keyid, sfsEntry_->keylen);
+	}
 }
 
 wxEventType
@@ -101,7 +123,16 @@ ComCsumAddTask::exec(void)
 		setResultDetails(errno);
 	}
 
-	if (haveKeyId() && (privKey_ != 0)) {
+	if (haveSfsEntry()) {
+		payload = createSfsMsg(&payloadLen, &req_op);
+
+		if (payload == 0) {
+			setComTaskResult(RESULT_LOCAL_ERROR);
+			setResultDetails(errno);
+
+			return;
+		}
+	} else if (haveKeyId() && (privKey_ != 0)) {
 		payload = createSigMsg(&payloadLen);
 
 		/* Reset private key, don't need it anymore */
@@ -183,6 +214,42 @@ ComCsumAddTask::resetComTaskResult(void)
 
 	for (int i = 0; i < ANOUBIS_CS_LEN; i++)
 		this->cs_[i] = 0;
+}
+
+u_int8_t *
+ComCsumAddTask::createSfsMsg(int *payload_len, int *req_op)
+{
+	u_int8_t *payload;
+
+	if (forceSendCsum_ && (sfsEntry_->checksum != 0)) {
+		/* Requested to send the checksum */
+		*payload_len = ANOUBIS_CS_LEN;
+		payload = (u_int8_t *)malloc(*payload_len);
+
+		if (payload != 0)
+			memcpy(payload, sfsEntry_->checksum, *payload_len);
+
+		*req_op = ANOUBIS_CHECKSUM_OP_ADDSUM;
+	} else if (!forceSendCsum_ && (sfsEntry_->signature != 0)) {
+		/* Requested to send the signature */
+		*payload_len = sfsEntry_->siglen + sfsEntry_->keylen;
+		payload = (u_int8_t *)malloc(
+		    sfsEntry_->siglen + sfsEntry_->keylen);
+
+		if (payload != 0) {
+			memcpy(payload, sfsEntry_->keyid, sfsEntry_->keylen);
+			memcpy(payload + sfsEntry_->keylen,
+			    sfsEntry_->signature, sfsEntry_->siglen);
+		}
+
+		*req_op = ANOUBIS_CHECKSUM_OP_ADDSIG;
+	} else {
+		/* Invalid combination */
+		errno = EINVAL;
+		payload = 0;
+	}
+
+	return (payload);
 }
 
 u_int8_t *

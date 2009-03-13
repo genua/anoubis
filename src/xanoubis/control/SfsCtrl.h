@@ -359,6 +359,24 @@ class SfsCtrl : public wxEvtHandler
 		CommandResult unregisterChecksum(unsigned int);
 
 		/**
+		 * Imports checksums from a file.
+		 *
+		 * The specified file is parsed and the containing
+		 * checksums/signatures are send to the Anoubis-daemon.
+		 *
+		 * Note: This is a non-blocking procedure. It means that method
+		 * leaves at soon as possible. But you can monitor the
+		 * anEVT_SFSOPERATION_FINISHED-event to know, when the
+		 * background-operation is finished.
+		 *
+		 * @param path Path of import-file
+		 * @return The result of the command. If the specified file
+		 *         could not be opened or parsing of the content
+		 *         failed, SfsCtrl::RESULT_INVALIDARG is returned
+		 */
+		CommandResult importChecksums(const wxString &);
+
+		/**
 		 * Exports checksums into a file.
 		 *
 		 * The checksums of the SfsEntry-instances at the specified
@@ -449,6 +467,7 @@ class SfsCtrl : public wxEvtHandler
 
 		void createComCsumGetTasks(const wxString &, bool, bool);
 		void createComCsumAddTasks(const wxString &);
+		void createComCsumAddTasks(struct sfs_entry *);
 		void createComCsumDelTasks(const wxString &);
 		void createSfsListTasks(uid_t, const wxString &, bool);
 		void createCsumCalcTask(const wxString &);

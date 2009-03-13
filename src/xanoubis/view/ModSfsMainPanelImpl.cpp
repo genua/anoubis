@@ -252,6 +252,41 @@ ModSfsMainPanelImpl::OnSfsMainApplyButtonClicked(wxCommandEvent&)
 }
 
 void
+ModSfsMainPanelImpl::OnSfsMainImportClicked(wxCommandEvent&)
+{
+	wxFileDialog dlg(this, _("Choose the import-file"));
+	if (dlg.ShowModal() != wxID_OK) {
+		/* Operation canceled */
+		return;
+	}
+
+	SfsCtrl::CommandResult result =
+	    sfsCtrl_->importChecksums(dlg.GetPath());
+
+	switch (result) {
+	case SfsCtrl::RESULT_NOTCONNECTED:
+		wxGetApp().status(
+		  _("Error: xanoubis is not connected to the daemon"));
+		break;
+	case SfsCtrl::RESULT_NEEDKEY:
+		wxGetApp().status(
+		  _("Error: Failed to load the private key."));
+		break;
+	case SfsCtrl::RESULT_INVALIDARG:
+		wxGetApp().status(
+		  _("Error: An invalid argument was supplied"));
+		break;
+	case SfsCtrl::RESULT_BUSY:
+		wxGetApp().status(
+		 _("Error: Sfs is still busy with another operation."));
+		break;
+	case SfsCtrl::RESULT_EXECUTE:
+		/* Success */
+		break;
+	}
+}
+
+void
 ModSfsMainPanelImpl::OnSfsMainExportClicked(wxCommandEvent&)
 {
 	IndexArray selection = SfsMainListCtrl->getSfsIndexes();

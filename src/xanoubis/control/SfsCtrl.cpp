@@ -291,6 +291,64 @@ SfsCtrl::unregisterChecksum(const IndexArray &arr)
 }
 
 SfsCtrl::CommandResult
+SfsCtrl::importChecksums(const wxString &path)
+{
+	if (!taskList_.empty())
+		return (RESULT_BUSY);
+
+	if (comEnabled_) {
+		FILE *fh;
+		struct sfs_entry *entries, *entry;
+
+		errorList_.Clear();
+
+		if ((fh = fopen(path.fn_str(), "r")) == 0) {
+			errorList_.Add(wxString::Format(
+			    _("Failed to open %ls for reading: %s"),
+			    path.c_str(), strerror(errno)));
+			sendErrorEvent();
+			return (RESULT_INVALIDARG);
+		}
+
+		if ((entries = import_csum(fh)) == 0) {
+			errorList_.Add(
+			    wxString::Format(_("Failed to parse %ls!"), path.c_str()));
+			sendErrorEvent();
+			fclose(fh);
+			return (RESULT_INVALIDARG);
+		}
+
+		fclose(fh);
+
+		entry = entries;
+
+		while (entry != 0) {
+			struct sfs_entry *tmp_entry = entry;
+
+			createComCsumAddTasks(entry);
+
+			int idx = sfsDir_.getIndexOf(wxString::FromAscii(entry->name));
+			if (idx != -1) {
+				/* Part of the model, perform a validation */
+				SfsEntry &e = sfsDir_.getEntry(idx);
+
+				if (!e.haveLocalCsum())
+					createCsumCalcTask(e.getPath());
+
+				createComCsumGetTasks(e.getPath(), true, true);
+			}
+
+			entry = entry->next;
+
+			anoubis_entry_free(tmp_entry);
+		}
+
+		return (RESULT_EXECUTE);
+	} else
+		return (RESULT_NOTCONNECTED);
+}
+
+SfsCtrl::CommandResult
 SfsCtrl::exportChecksums(const IndexArray &arr, const wxString &path)
 {
 	if (!taskList_.empty())
@@ -857,6 +915,29 @@ SfsCtrl::createComCsumAddTasks(const wxString &path)
 		sigTask->setCalcLink(true);
 		sigTask->setKeyId(raw_cert->keyid, raw_cert->idlen);
 		sigTask->setPrivateKey(privKey.getKey());
+
+		pushTask(sigTask);
+		JobCtrl::getInstance()->addTask(sigTask);
+	}
+}
+
+void
+SfsCtrl::createComCsumAddTasks(struct sfs_entry *entry)
+{
+	ComCsumAddTask *csTask = new ComCsumAddTask;
+	csTask->setPath(wxString::FromAscii(entry->name));
+	csTask->setCalcLink(true);
+	csTask->setSfsEntry(entry, true);
+
+	pushTask(csTask);
+	JobCtrl::getInstance()->addTask(csTask);
+
+	if (entry->signature != 0) {
+		/* Additionally send signature to daemon */
+		ComCsumAddTask *sigTask = new ComCsumAddTask;
+		sigTask->setPath(wxString::FromAscii(entry->name));
+		sigTask->setCalcLink(true);
+		sigTask->setSfsEntry(entry, false);
 
 		pushTask(sigTask);
 		JobCtrl::getInstance()->addTask(sigTask);
