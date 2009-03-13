@@ -662,8 +662,9 @@ DlgRuleEditor::onAppPolicySelect(wxListEvent & event)
 }
 
 void
-DlgRuleEditor::onAppPolicyDeSelect(wxListEvent & WXUNUSED(event))
+DlgRuleEditor::onAppPolicyDeSelect(wxListEvent &event)
 {
+	saveFilterColumnWidth(event.GetIndex());
 	appListPolicyText->SetLabel(wxEmptyString);
 	appListUpButton->Disable();
 	appListDownButton->Disable();
@@ -908,6 +909,11 @@ DlgRuleEditor::onAppListColumnsButtonClick(wxCommandEvent &)
 	multiChoiceDlg->SetSelections(selections);
 
 	if (multiChoiceDlg->ShowModal() == wxID_OK) {
+		/*
+		 * First wipe the app List. This makes sure that column
+		 * widths are saved before we change visibility.
+		 */
+		wipeAppList();
 		for (size_t i=1; i<APP_EOL; i++) {
 			appColumns_[i]->setVisability(false);
 		}
@@ -986,6 +992,11 @@ DlgRuleEditor::onFilterListColumnsButtonClick(wxCommandEvent &)
 	multiChoiceDlg->SetSelections(selections);
 
 	if (multiChoiceDlg->ShowModal() == wxID_OK) {
+		/*
+		 * Wipe the filter list first. This ensures that column widths
+		 * are saved before we change visibility.
+		 */
+		wipeFilterList();
 		for (size_t i=1; i < last; i++) {
 			columns[i]->setVisability(false);
 		}
@@ -996,8 +1007,6 @@ DlgRuleEditor::onFilterListColumnsButtonClick(wxCommandEvent &)
 			columns[selections.Item(i)+1]->setVisability(true);
 		}
 
-		/* call to enforce redrawing of the current view */
-		wipeFilterList();
 		addFilterPolicy(policy);
 	}
 
@@ -1419,6 +1428,7 @@ DlgRuleEditor::deselect(wxListCtrl *list)
 void
 DlgRuleEditor::wipeAppList(void)
 {
+	saveColumnWidth(appPolicyListCtrl, appColumns_, APP_EOL);
 	wipeFilterList();
 	deselect(appPolicyListCtrl);
 
@@ -1442,6 +1452,7 @@ DlgRuleEditor::wipeAppList(void)
 void
 DlgRuleEditor::wipeFilterList(void)
 {
+	saveFilterColumnWidth();
 	deselect(filterPolicyListCtrl);
 
 	/*
@@ -2117,4 +2128,64 @@ void
 DlgRuleEditor::onUserSelectKillFocus(wxFocusEvent &)
 {
 	setUser(tx_userSelect->GetValue());
+}
+
+/*
+ * IMPLEMENTATION NOTE:
+ * This function assumes that the columns in cols correspond to the columns
+ * in list (with invisible columns in cols skipped). Callers must make sure
+ * that this is actually the case.
+ */
+void
+DlgRuleEditor::saveColumnWidth(wxListCtrl *list, ListCtrlColumn *cols[],
+    int len)
+{
+	int	k = 0;
+	for (int i=0; i < len && k < list->GetColumnCount(); ++i) {
+		if (cols[i]->isVisible() == false)
+			continue;
+		cols[i]->setWidth(list->GetColumnWidth(k++));
+	}
+}
+
+/*
+ * IMPLEMENTATION NOTE:
+ * This function tries to autodetect the columns that are currently
+ * visible in the filter list based on the line that is selected in
+ * the application list if idx is set to -1 (default). However, this
+ * fails for the deselect case because the line is no longer selected
+ * when this function is called.
+ */
+void
+DlgRuleEditor::saveFilterColumnWidth(int idx)
+{
+	void			*data;
+	AppPolicy		*policy;
+
+	if (idx < 0) {
+		idx	= getSelectedIndex(appPolicyListCtrl);
+	}
+	data	= (void*)appPolicyListCtrl->GetItemData(idx);
+	policy	= wxDynamicCast(data, AppPolicy);
+	if (policy) {
+		int			  len = 0;
+		ListCtrlColumn		**columns = NULL;
+
+		if (policy->IsKindOf(CLASSINFO(AlfAppPolicy))) {
+			columns = alfColumns_;
+			len = ALF_EOL;
+		} else if (policy->IsKindOf(CLASSINFO(ContextAppPolicy))) {
+			columns = ctxColumns_;
+			len = CTX_EOL;
+		} else if (policy->IsKindOf(CLASSINFO(SfsAppPolicy))) {
+			columns = sfsColumns_;
+			len = SFS_EOL;
+		} else if (policy->IsKindOf(CLASSINFO(SbAppPolicy))) {
+			columns = sbColumns_;
+			len = SB_EOL;
+		}
+		if (len) {
+			saveColumnWidth(filterPolicyListCtrl, columns, len);
+		}
+	}
 }

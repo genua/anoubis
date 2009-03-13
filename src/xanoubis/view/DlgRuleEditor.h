@@ -703,6 +703,26 @@ class DlgRuleEditor : public Observer, public DlgRuleEditorBase
 		void onUserSelectKillFocus(wxFocusEvent &);
 
 		/**
+		 * Save the column width of the columns that are
+		 * currently visible in a ListCtrl in the appropriate
+		 * column structure.
+		 * @param[in] 1st The ListCtrl
+		 * @param[in] 2nd The list of column data structures.
+		 *     Invisible columns are skipped.
+		 * @param[in] 3rd The number of columns in the column list.
+		 */
+		void saveColumnWidth(wxListCtrl *, ListCtrlColumn *c[], int);
+
+		/**
+		 * Save the columns widths of the filter list Ctrl. This
+		 * function automatically detects the columns to use from
+		 * the selection in the appListCtrl.
+		 * @param The line of the current AppPolicy. Minus 1 for
+		 *     auto detect.
+		 */
+		void saveFilterColumnWidth(int selection = -1);
+
+		/**
 		 * The ruleset user-ID that is currently displayed in
 		 * the rule editor.
 		 */
