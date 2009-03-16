@@ -1383,10 +1383,10 @@ apn_print_sbaccess(struct apn_sbaccess *sba, FILE *file)
 		case APN_CS_NONE:
 			break;
 		case APN_CS_UID_SELF:
-			/* XXX Not (yet) supported. */
+			fprintf(file, " self");
 			break;
 		case APN_CS_KEY_SELF:
-			/* XXX Not (yet) supported. */
+			fprintf(file, " signed-self");
 			break;
 		case APN_CS_UID:
 			if (sba->cs.value.uid == (uid_t)-1)

@@ -58,6 +58,7 @@
 
 #include "anoubisd.h"
 #include "sfs.h"
+#include "cert.h"
 #include "pe.h"
 
 struct result {
@@ -151,10 +152,17 @@ pe_sb_evaluate(struct apn_rule **rulelist, int rulecnt,
 			if (ret == 0)
 				cs = csum;
 			break;
-		case APN_CS_KEY_SELF:
-			/* XXX No (yet) supported. */
-			ret = -ENOSYS;
+		case APN_CS_KEY_SELF: {
+			char	*keyid;
+			keyid = cert_keyid_for_uid(sbevent->uid);
+			if (!keyid)
+				break;
+			ret = sfshash_get_key(sbevent->path, keyid, csum);
+			free(keyid);
+			if (ret == 0)
+				cs = csum;
 			break;
+		}
 		case APN_CS_KEY:
 			ret = sfshash_get_key(sbevent->path,
 			    sbrule->rule.sbaccess.cs.value.keyid, csum);

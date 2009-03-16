@@ -1013,6 +1013,11 @@ sbkey		: KEY STRING {
 			$$.cs.type = APN_CS_KEY;
 			$$.cs.value.keyid = $2;
 		}
+		| SIGNEDSELF {
+			$$.path = NULL;
+			$$.cs.type = APN_CS_KEY_SELF;
+			$$.cs.value.keyid = NULL;
+		}
 		;
 
 sbuid		: UID NUMBER {
@@ -1023,7 +1028,14 @@ sbuid		: UID NUMBER {
 			$$.path = NULL;
 			$$.cs.type = APN_CS_UID;
 			$$.cs.value.uid = $2;
-		};
+		}
+		| SELF {
+			$$.path = NULL;
+			$$.cs.type = APN_CS_UID_SELF;
+			$$.cs.value.uid = 0;
+		}
+		;
+
 sbcsum		: CSUM hashspec {
 			$$.path = NULL;
 			assert(sizeof($2.value) == ANOUBIS_CS_LEN);
@@ -1036,7 +1048,8 @@ sbcsum		: CSUM hashspec {
 				bcopy($2.value, $$.cs.value.csum,
 				    sizeof($2.value));
 			}
-		};
+		}
+		;
 
 sbrwx		: STRING {
 			int i;
