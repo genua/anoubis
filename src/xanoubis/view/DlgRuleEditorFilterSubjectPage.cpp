@@ -108,20 +108,12 @@ DlgRuleEditorFilterSubjectPage::showSubject(void)
 	if (sfsPolicy_ != NULL) {
 		type  = sfsPolicy_->getSubjectTypeNo();
 		value = sfsPolicy_->getSubjectName();
-		if (!selfRadioButton->IsShown()) {
-			selfRadioButton->Show();
-		}
-		if (!selfSignedRadioButton->IsShown()) {
-			selfSignedRadioButton->Show();
-		}
 		anyRadioButton->Hide();
 		csumRadioButton->Hide();
 		csumTextCtrl->Hide();
 	} else if (sbPolicy_ != NULL) {
 		type  = sbPolicy_->getSubjectTypeNo();
 		value = sbPolicy_->getSubjectName();
-		selfRadioButton->Hide();
-		selfSignedRadioButton->Hide();
 		if (!anyRadioButton->IsShown()) {
 			anyRadioButton->Show();
 		}
