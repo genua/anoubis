@@ -191,7 +191,7 @@ usage(void)
 	 * NOTE: Capitalized options are used for extended attributes
 	 * NOTE: other options will be used for signed checksums.
 	 */
-	fprintf(stderr, "usage: %s [-inlrv] [-f <fileset> ]\n", __progname);
+	fprintf(stderr, "usage: %s [-dvinlr] [-f <fileset> ]\n", __progname);
 	fprintf(stderr, "       [-o exporttofile]\n");
 	fprintf(stderr, "       [--sig | --sum] [--cert <certificate>] \n");
 	fprintf(stderr, "       [--hassig | --hasnossig] [--hassum |"
@@ -510,7 +510,7 @@ main(int argc, char *argv[])
 		{ 0, 0, 0, 0 }
 	};
 
-	while ((ch = getopt_long(argc, argv, "A:URLCSFf:k:u:o:nldvr",
+	while ((ch = getopt_long(argc, argv, "A:URLCSFf:k:u:o:nlidvr",
 	    options, &options_index)) != -1) {
 		switch (ch) {
 		case 0:
@@ -752,6 +752,7 @@ main(int argc, char *argv[])
 	if ((!strcmp(command, "export")) && (opts & SFSSIG_OPT_TREE))
 		opts &= ~SFSSIG_OPT_TREE;
 
+	ret = 0;
 	for (i = 0; i < sizeof(commands)/sizeof(struct cmd); i++) {
 		if(strcmp(command, commands[i].command) == 0) {
 			for (j = 0; j < file_cnt; j++) {
@@ -811,6 +812,8 @@ main(int argc, char *argv[])
 						done = 1;
 					}
 				}
+				if (error > 0)
+					ret = error;
 			}
 		}
 	}
@@ -828,7 +831,7 @@ main(int argc, char *argv[])
 	if (!done)
 		usage();
 
-	return error;
+	return ret;
 }
 
 /* If a signature is delivered to the daemon the signature, the keyid and the
@@ -1207,6 +1210,7 @@ __sfs_get(char *file, int vflag)
 	int				 len = ANOUBIS_CS_LEN;
 	u_int8_t			 val_check[ANOUBIS_CS_LEN];
 	uid_t				*result = NULL;
+	uid_t				 user;
 
 	if (opts & SFSSIG_OPT_DEBUG)
 		fprintf(stderr, ">sfs_get\n");
@@ -1218,6 +1222,8 @@ __sfs_get(char *file, int vflag)
 			return 1;
 		}
 	}
+
+	user = geteuid();
 
 	if (vflag) {
 		if (!client) {
@@ -1304,7 +1310,10 @@ __sfs_get(char *file, int vflag)
 			siglen = t->msg->length - CSUM_LEN
 			    - SHA256_DIGEST_LENGTH
 			    - sizeof(Anoubis_AckPayloadMessage);
-			printf("%d: %s\t",result[j], file);
+			if (user == 0)
+				printf("%d: %s\t",result[j], file);
+			else
+				printf("%u: %s\t",user, file);
 			for (i=0; i<SHA256_DIGEST_LENGTH; ++i)
 				printf("%02x",
 				    t->msg->u.ackpayload->payload[i]);
@@ -1333,7 +1342,10 @@ __sfs_get(char *file, int vflag)
 					printf("Checksum Match\n");
 				continue;
 			}
-			printf("%d: %s\t",result[j], file);
+			if (user == 0)
+				printf("%d: %s\t",result[j], file);
+			else
+				printf("%u: %s\t",user, file);
 			for (i=0; i<SHA256_DIGEST_LENGTH; ++i)
 				printf("%02x",
 				    t->msg->u.ackpayload->payload[i]);

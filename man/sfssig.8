@@ -114,6 +114,24 @@ is used.
 Filter specification:
 .Pp
 .Bl -tag -width DST
+.It Fl -hassum
+Apply command on files which have checksums.
+.It Fl -hasnosum
+Apply command on files which have no checksums.
+.It Fl -hassig
+Apply command on files which have signatures.
+.It Fl -hasnosig
+Apply command on files which have no signatures.
+.It Fl -orphaned
+Apply command on checksums or signatures which have no representation in the
+filesystem.
+.It Fl -notfile
+Apply command on checksums or signatures which are no regular files.
+.It Fl -notfile
+.El
+.Pp
+Command specification:
+.Bl -tag -width DST
 .It Fl -sum
 Apply command for a checksum.
 .It Fl -sig
@@ -199,7 +217,7 @@ To add a checksum for a file to the shadowtree:
 .Pp
 .Dl # sfssig add /tmp/test.txt
 .Pp
-To delete checkums for all files passed on stdin:
+To delete checksums for all files passed on stdin:
 .Pp
 .Dl # sfssig -f - del
 .Pp
