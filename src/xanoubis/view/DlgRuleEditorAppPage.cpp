@@ -25,6 +25,9 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <climits>
+#include <cstdlib>
+
 #include <wx/filedlg.h>
 #include <wx/filename.h>
 #include <wx/msgdlg.h>
@@ -83,6 +86,7 @@ DlgRuleEditorAppPage::select(Policy *policy)
 		DlgRuleEditorPage::select(policy);
 		Enable(enable_);
 	}
+	showInfo(wxT(""));
 }
 
 void
@@ -178,13 +182,32 @@ DlgRuleEditorAppPage::showStatus(void)
 }
 
 void
-DlgRuleEditorAppPage::setBinary(wxString binary)
+DlgRuleEditorAppPage::setBinary(wxString paramBinary)
 {
 	int		 selection;
 	wxString	 current;
 	wxFileName	 baseName;
 	wxNotebook	*parentNotebook;
+	char		 real[PATH_MAX], *res;
+	wxString	 binary;
 
+	if (paramBinary == wxT("") || paramBinary == wxT("any")) {
+		binary = paramBinary;
+	} else {
+		res = realpath(paramBinary.fn_str(), real);
+		if (res) {
+			binary = wxString::From8BitData(res, strlen(res));
+			if (binary != paramBinary) {
+				binaryTextCtrl->ChangeValue(binary);
+				showInfo(_("Symbolic link was resolved"));
+			} else {
+				showInfo(wxT(""));
+			}
+		} else {
+			binary = paramBinary;
+			showInfo(_("Failure to resolve symbolic link"));
+		}
+	}
 	/* Mark text in textctrl as clean */
 	binaryTextCtrl->DiscardEdits();
 	if (appPolicy_ != NULL) {
@@ -229,9 +252,9 @@ DlgRuleEditorAppPage::setBinary(wxString binary)
 		parentNotebook->SetPageText(selection, baseName.GetFullName());
 	}
 
-	if (!wxFileName::IsFileExecutable(binary)) {
-		wxMessageBox(_("File is not executeable."), _("Rule Editor"),
-		    wxOK | wxICON_ERROR, this);
+	if (binary != wxT("") && binary != wxT("any") &&
+	    !wxFileName::IsFileExecutable(binary)) {
+		showInfo(_("File does not exist or is not executable"));
 	}
 
 	if (automaticOnNew_ == true) {
@@ -377,4 +400,19 @@ DlgRuleEditorAppPage::onCsumCalcTask(TaskEvent &event)
 
 	showCsum();
 	showStatus();
+}
+
+void
+DlgRuleEditorAppPage::showInfo(const wxString &string)
+{
+	if (string == wxT("")) {
+		infoLeft->Hide();
+		infoRight->Hide();
+	} else {
+		infoRight->SetLabel(string);
+		infoLeft->Show();
+		infoRight->Show();
+	}
+	Layout();
+	Refresh();
 }

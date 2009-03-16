@@ -365,6 +365,21 @@ DlgRuleEditorAppPageBase::DlgRuleEditorAppPageBase( wxWindow* parent, wxWindowID
 	
 	mainSizer->Add( statusSizer, 0, wxEXPAND, 5 );
 	
+	wxBoxSizer* infoSizer;
+	infoSizer = new wxBoxSizer( wxHORIZONTAL );
+	
+	infoLeft = new wxStaticText( mainPage, wxID_ANY, _("Info:"), wxDefaultPosition, wxDefaultSize, 0 );
+	infoLeft->Wrap( -1 );
+	infoLeft->SetMinSize( wxSize( 165,-1 ) );
+	
+	infoSizer->Add( infoLeft, 0, wxALL, 5 );
+	
+	infoRight = new wxStaticText( mainPage, wxID_ANY, _("Symbolic link was resolved"), wxDefaultPosition, wxDefaultSize, 0 );
+	infoRight->Wrap( -1 );
+	infoSizer->Add( infoRight, 0, wxALL, 5 );
+	
+	mainSizer->Add( infoSizer, 0, wxEXPAND, 5 );
+	
 	
 	mainSizer->Add( 0, 0, 1, wxEXPAND, 5 );
 	

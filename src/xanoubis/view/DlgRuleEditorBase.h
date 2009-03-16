@@ -170,6 +170,8 @@ class DlgRuleEditorAppPageBase : public wxPanel
 		wxStaticText* statusText;
 		wxButton* validateButton;
 		wxButton* updateButton;
+		wxStaticText* infoLeft;
+		wxStaticText* infoRight;
 		
 		wxButton* addButton;
 		wxButton* deleteButton;

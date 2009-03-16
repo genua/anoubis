@@ -247,6 +247,13 @@ class DlgRuleEditorAppPage : public DlgRuleEditorPage,
 		 * @return Nothing.
 		 */
 		void onCsumCalcTask(TaskEvent &);
+
+		/**
+		 * Set the text of the Info label. An empty text hides
+		 * the label.
+		 * @param[in] 1st The new text.
+		 */
+		void showInfo(const wxString &);
 };
 
 #endif	/* _DLGRULEEDITORAPPPAGE_H_ */
