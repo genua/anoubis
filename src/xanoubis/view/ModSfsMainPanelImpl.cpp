@@ -49,6 +49,7 @@
 #include <wx/textdlg.h>
 
 #include "main.h"
+#include "JobCtrl.h"
 #include "KeyCtrl.h"
 #include "ModSfsAddPolicyVisitor.h"
 #include "ModSfsListCtrl.h"
@@ -68,6 +69,7 @@ ModSfsMainPanelImpl::ModSfsMainPanelImpl(wxWindow* parent,
 
 	userRuleSetId_  = -1;
 	adminRuleSetId_ = -1;
+	comEnabled_ = false;
 
 	for (int i=0; i<COLUMN_EOL; i++) {
 		lst_Rules->InsertColumn(i, columnNames_[i], wxLIST_FORMAT_LEFT,
@@ -77,6 +79,9 @@ ModSfsMainPanelImpl::ModSfsMainPanelImpl(wxWindow* parent,
 	AnEvents::getInstance()->Connect(anEVT_LOAD_RULESET,
 	    wxCommandEventHandler(ModSfsMainPanelImpl::onLoadRuleSet),
 	    NULL, this);
+	JobCtrl::getInstance()->Connect(anTASKEVT_REGISTER,
+	    wxTaskEventHandler(ModSfsMainPanelImpl::OnDaemonRegistration),
+	    NULL, this);
 	Hide();
 
 	initSfsOptions();
@@ -85,6 +90,9 @@ ModSfsMainPanelImpl::ModSfsMainPanelImpl(wxWindow* parent,
 
 ModSfsMainPanelImpl::~ModSfsMainPanelImpl(void)
 {
+	JobCtrl::getInstance()->Disconnect(anTASKEVT_REGISTER,
+	    wxTaskEventHandler(ModSfsMainPanelImpl::OnDaemonRegistration),
+	    NULL, this);
 	AnEvents::getInstance()->Disconnect(anEVT_LOAD_RULESET,
 	    wxCommandEventHandler(ModSfsMainPanelImpl::onLoadRuleSet),
 	    NULL, this);
@@ -153,8 +161,39 @@ ModSfsMainPanelImpl::OnSfsMainDirCtrlSelChanged(wxTreeEvent &)
 }
 
 void
+ModSfsMainPanelImpl::OnSfsListSelected(wxListEvent &)
+{
+	enableSfsControls(false); /* false: No operation running */
+}
+
+void
+ModSfsMainPanelImpl::OnSfsListDeselected(wxListEvent &)
+{
+	enableSfsControls(false); /* false: No operation running */
+}
+
+void
+ModSfsMainPanelImpl::OnDaemonRegistration(TaskEvent &event)
+{
+	ComRegistrationTask *task =
+	    dynamic_cast<ComRegistrationTask*>(event.getTask());
+
+	if (task != 0) {
+		comEnabled_ =
+		   (task->getAction() == ComRegistrationTask::ACTION_REGISTER);
+		event.Skip();
+	} else
+		comEnabled_ = false;
+
+	enableSfsControls(false); /* false: No operation running */
+}
+
+void
 ModSfsMainPanelImpl::OnSfsOperationFinished(wxCommandEvent&)
 {
+	/* Enable the controls again */
+	enableSfsControls(false); /* false: No operation running */
+
 	if (currentOperation_ == OP_SHOW_CHANGED)
 		SfsMainListCtrl->refreshList(ModSfsListCtrl::SHOW_CHANGED);
 	else if (currentOperation_ == OP_SHOW_CHECKSUMS)
@@ -348,6 +387,9 @@ ModSfsMainPanelImpl::applySfsAction(const IndexArray &selection)
 		break;
 	}
 
+	/* Controls are disabled if operation is executed */
+	enableSfsControls(result != SfsCtrl::RESULT_EXECUTE);
+
 	switch (result) {
 	case SfsCtrl::RESULT_NOTCONNECTED:
 		wxGetApp().status(
@@ -375,6 +417,9 @@ void
 ModSfsMainPanelImpl::applySfsValidateAll(bool orphaned)
 {
 	SfsCtrl::CommandResult result = sfsCtrl_->validateAll(orphaned);
+
+	/* Controls are disabled if operation is executed */
+	enableSfsControls(result != SfsCtrl::RESULT_EXECUTE);
 
 	switch (result) {
 	case SfsCtrl::RESULT_NOTCONNECTED:
@@ -546,6 +591,22 @@ void
 ModSfsMainPanelImpl::destroySfsMain(void)
 {
 	delete sfsCtrl_;
+}
+
+void
+ModSfsMainPanelImpl::enableSfsControls(bool sfsOpRunning)
+{
+	bool haveSelection = (SfsMainListCtrl->GetSelectedItemCount() > 0);
+
+	SfsMainFilterValidateButton->Enable(comEnabled_ && !sfsOpRunning);
+	SfsMainSearchOrphanedButton->Enable(comEnabled_ && !sfsOpRunning);
+	SfsMainShowChecksumButton->Enable(comEnabled_ && !sfsOpRunning);
+	SfsMainShowChangedButton->Enable(comEnabled_ && !sfsOpRunning);
+	SfsMainImportButton->Enable(comEnabled_ && !sfsOpRunning);
+	SfsMainExportButton->Enable(
+	    comEnabled_ && !sfsOpRunning && haveSelection);
+	SfsMainActionButton->Enable(
+	    comEnabled_ && !sfsOpRunning && haveSelection);
 }
 
 void

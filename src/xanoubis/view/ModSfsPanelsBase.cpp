@@ -136,6 +136,7 @@ ModSfsMainPanelBase::ModSfsMainPanelBase( wxWindow* parent, wxWindowID id, const
 	bSizer15->Add( 0, 0, 1, 0, 5 );
 	
 	SfsMainFilterValidateButton = new wxButton( pan_SfsMain, wxID_ANY, _("Validate all"), wxDefaultPosition, wxDefaultSize, 0 );
+	SfsMainFilterValidateButton->Enable( false );
 	SfsMainFilterValidateButton->SetToolTip( _("Validates all displayed files") );
 	
 	bSizer15->Add( SfsMainFilterValidateButton, 0, wxALL, 5 );
@@ -161,12 +162,18 @@ ModSfsMainPanelBase::ModSfsMainPanelBase( wxWindow* parent, wxWindowID id, const
 	fgSizer51->Add( SfsMainSignFilesCheckBox, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
 	
 	SfsMainSearchOrphanedButton = new wxButton( SfsMainDetailsPanel, wxID_ANY, _("Search Orphaned"), wxDefaultPosition, wxDefaultSize, 0 );
+	SfsMainSearchOrphanedButton->Enable( false );
+	
 	fgSizer51->Add( SfsMainSearchOrphanedButton, 0, wxALL, 5 );
 	
 	SfsMainShowChecksumButton = new wxButton( SfsMainDetailsPanel, wxID_ANY, _("Show all Checksums"), wxDefaultPosition, wxDefaultSize, 0 );
+	SfsMainShowChecksumButton->Enable( false );
+	
 	fgSizer51->Add( SfsMainShowChecksumButton, 0, wxALL, 5 );
 	
 	SfsMainImportButton = new wxButton( SfsMainDetailsPanel, wxID_ANY, _("Import..."), wxDefaultPosition, wxDefaultSize, 0 );
+	SfsMainImportButton->Enable( false );
+	
 	fgSizer51->Add( SfsMainImportButton, 0, wxALIGN_RIGHT|wxALL, 5 );
 	
 	
@@ -176,9 +183,13 @@ ModSfsMainPanelBase::ModSfsMainPanelBase( wxWindow* parent, wxWindowID id, const
 	fgSizer51->Add( 0, 0, 1, wxEXPAND, 5 );
 	
 	SfsMainShowChangedButton = new wxButton( SfsMainDetailsPanel, wxID_ANY, _("Show Changed"), wxDefaultPosition, wxDefaultSize, 0 );
+	SfsMainShowChangedButton->Enable( false );
+	
 	fgSizer51->Add( SfsMainShowChangedButton, 0, wxALL, 5 );
 	
 	SfsMainExportButton = new wxButton( SfsMainDetailsPanel, wxID_ANY, _("Export..."), wxDefaultPosition, wxDefaultSize, 0 );
+	SfsMainExportButton->Enable( false );
+	
 	fgSizer51->Add( SfsMainExportButton, 0, wxALIGN_RIGHT|wxALL, 5 );
 	
 	SfsMainDetailsPanel->SetSizer( fgSizer51 );
@@ -202,6 +213,7 @@ ModSfsMainPanelBase::ModSfsMainPanelBase( wxWindow* parent, wxWindowID id, const
 	bSizer151->Add( SfsMainActionChoice, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
 	
 	SfsMainActionButton = new wxButton( pan_SfsMain, wxID_ANY, _("Apply"), wxDefaultPosition, wxDefaultSize, 0 );
+	SfsMainActionButton->Enable( false );
 	SfsMainActionButton->SetToolTip( _("Executes the selected action") );
 	
 	bSizer151->Add( SfsMainActionButton, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
@@ -337,6 +349,8 @@ ModSfsMainPanelBase::ModSfsMainPanelBase( wxWindow* parent, wxWindowID id, const
 	SfsMainFilterButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModSfsMainPanelBase::OnSfsMainFilterButtonClicked ), NULL, this );
 	SfsMainFilterInvertCheckBox->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( ModSfsMainPanelBase::OnSfsMainInverseCheckboxClicked ), NULL, this );
 	SfsMainFilterValidateButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModSfsMainPanelBase::OnSfsMainValidateButtonClicked ), NULL, this );
+	SfsMainListCtrl->Connect( wxEVT_COMMAND_LIST_ITEM_DESELECTED, wxListEventHandler( ModSfsMainPanelBase::OnSfsListDeselected ), NULL, this );
+	SfsMainListCtrl->Connect( wxEVT_COMMAND_LIST_ITEM_SELECTED, wxListEventHandler( ModSfsMainPanelBase::OnSfsListSelected ), NULL, this );
 	SfsMainSignFilesCheckBox->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( ModSfsMainPanelBase::OnSfsMainSigEnabledClicked ), NULL, this );
 	SfsMainSearchOrphanedButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModSfsMainPanelBase::OnSfsMainSearchOrphanedClicked ), NULL, this );
 	SfsMainShowChecksumButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModSfsMainPanelBase::OnSfsMainShowAllChecksumsClicked ), NULL, this );

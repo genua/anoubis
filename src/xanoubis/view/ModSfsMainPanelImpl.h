@@ -39,6 +39,7 @@
 
 class IndexArray;
 class SfsCtrl;
+class TaskEvent;
 
 class ModSfsMainPanelImpl : public Observer, public ModSfsMainPanelBase
 {
@@ -134,6 +135,8 @@ class ModSfsMainPanelImpl : public Observer, public ModSfsMainPanelBase
 
 		SfSOperation	currentOperation_; /**< current operation. */
 
+		bool comEnabled_; /**< Current communicator status. */
+
 		/**
 		 * Handle the event when main directory of Sfs tree is changed.
 		 * Sets show all and updates the view.
@@ -141,6 +144,29 @@ class ModSfsMainPanelImpl : public Observer, public ModSfsMainPanelBase
 		 * @return Nothing.
 		 */
 		void OnSfsMainDirCtrlSelChanged(wxTreeEvent&);
+
+		/**
+		 * Handle the event when a row is selected in the SfsList.
+		 * Enable/disables buttons of the view accordingly.
+		 * @param[in] 1st The event.
+		 */
+		void OnSfsListSelected(wxListEvent &);
+
+		/**
+		 * Handle the event when a row is deselected in the SfsList.
+		 * Enable/disable buttons of the view accordingly.
+		 * @param[in] 1st The event.
+		 */
+		void OnSfsListDeselected(wxListEvent &);
+
+		/**
+		 * Handle the event, if the status of the daemon-connection has
+		 * changed.
+		 * Used to know, if you are connected to the daemon. This
+		 * information is used to enable/disable buttons the view.
+		 * @param[in] 1st The event.
+		 */
+		void OnDaemonRegistration(TaskEvent &);
 
 		/**
 		 * Handle the event when Sfs operation finished.
@@ -329,6 +355,26 @@ class ModSfsMainPanelImpl : public Observer, public ModSfsMainPanelBase
 		 * @return Nothing.
 		 */
 		void destroySfsMain(void);
+
+		/**
+		 * Enables/disables buttons the Sfs browser.
+		 *
+		 * The decision, if the buttons needs to be enabled or
+		 * disabled, is based on various dependencies:
+		 *
+		 * - If the daemon-connection is not established, no
+		 *   daemon-related operation should be possible.
+		 * - Operations, which are applied on the current selection
+		 *   of the SfsList, should be disabled, if nothing is
+		 *   selected.
+		 * - The argument specifies, if a Sfs-operation is currently
+		 *   running in the background. If set, no other operation
+		 *   should be possible in parallel.
+		 *
+		 * @param sfsOpRunning Flag specifies, whether a sfs-operation
+		 *                     is currently running.
+		 */
+		void enableSfsControls(bool);
 
 		/**
 		 * Reads the Sfs options from user configuration file.

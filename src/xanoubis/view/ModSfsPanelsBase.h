@@ -122,6 +122,8 @@ class ModSfsMainPanelBase : public wxPanel
 		virtual void OnSfsMainFilterButtonClicked( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnSfsMainInverseCheckboxClicked( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnSfsMainValidateButtonClicked( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnSfsListDeselected( wxListEvent& event ){ event.Skip(); }
+		virtual void OnSfsListSelected( wxListEvent& event ){ event.Skip(); }
 		virtual void OnSfsMainSigEnabledClicked( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnSfsMainSearchOrphanedClicked( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnSfsMainShowAllChecksumsClicked( wxCommandEvent& event ){ event.Skip(); }
