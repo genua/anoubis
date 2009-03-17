@@ -81,7 +81,7 @@ AnoubisGuiApp::AnoubisGuiApp(void)
 
 AnoubisGuiApp::~AnoubisGuiApp(void)
 {
-	/* mainFrame not handled here, coz object already destroyed */
+	/* mainFrame not handled here, because object already destroyed */
 	if (trayIcon != NULL)
 		delete trayIcon;
 
