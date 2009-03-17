@@ -62,12 +62,9 @@ ModSbOverviewPanelImpl::update(void)
 {
 	wxString	stateText;
 	wxIcon		*stateIcon;
-	ModSfs		*module;
+	ModSb		*module;
 
-	/*
-	 * ModSB is considered to be running when ModSFS does.
-	 */
-	module = (ModSfs *)(wxGetApp().getModule(SFS));
+	module = (ModSb *)(wxGetApp().getModule(SB));
 	if (!wxGetApp().getCommConnectionState()) {
 		stateText = _("not connected");
 		stateIcon = stateIconNotConnected_;
