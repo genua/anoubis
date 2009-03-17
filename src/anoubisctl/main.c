@@ -379,14 +379,23 @@ daemon_stop(void)
 	FILE * fp = fopen(PACKAGE_PIDFILE, "r");
 	int i, pid;
 
-	if (!fp)
+	if (!fp) {
+		fprintf(stderr, "Couldn't open " PACKAGE_PIDFILE ": %s\n",
+			strerror(errno));
 		return 2;
-	if (flock(fileno(fp), LOCK_EX|LOCK_NB) != -1)
+	}
+	if (flock(fileno(fp), LOCK_EX|LOCK_NB) != -1) {
+		fprintf(stderr, "Unused " PACKAGE_PIDFILE " found\n");
 		return 2;
-	if (fscanf(fp, "%d", &pid) != 1)
+	}
+	if (fscanf(fp, "%d", &pid) != 1) {
+		fprintf(stderr, "No valid pid found in " PACKAGE_PIDFILE "\n");
 		return 2;
-	if (kill(pid, SIGTERM) != 0)
+	}
+	if (kill(pid, SIGTERM) != 0) {
+		fprintf(stderr, "Couldn't send signal: %s\n", strerror(errno));
 		return 2;
+	}
 	/* Wait at most 10 seconds for termination. */
 	for(i=0; i<10; ++i) {
 		if (kill(pid, 0) < 0 && errno == ESRCH)
@@ -418,14 +427,23 @@ daemon_reload(void)
 	FILE * fp = fopen(PACKAGE_PIDFILE, "r");
 	int pid;
 
-	if (!fp)
+	if (!fp) {
+		fprintf(stderr, "Couldn't open " PACKAGE_PIDFILE ": %s\n",
+			strerror(errno));
 		return 2;
-	if (flock(fileno(fp), LOCK_EX|LOCK_NB) != -1)
+	}
+	if (flock(fileno(fp), LOCK_EX|LOCK_NB) != -1) {
+		fprintf(stderr, "Unused " PACKAGE_PIDFILE " found\n");
 		return 2;
-	if (fscanf(fp, "%d", &pid) != 1)
+	}
+	if (fscanf(fp, "%d", &pid) != 1) {
+		fprintf(stderr, "No valid pid found in " PACKAGE_PIDFILE "\n");
 		return 2;
-	if (kill(pid, SIGHUP) != 0)
+	}
+	if (kill(pid, SIGHUP) != 0) {
+		fprintf(stderr, "Couldn't send signal: %s\n", strerror(errno));
 		return 2;
+	}
 	return 0;
 }
 
