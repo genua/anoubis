@@ -52,6 +52,7 @@
 
 #include "PolicyUtils.h"
 #include "Notification.h"
+#include "main.h"
 
 #include <wx/listimpl.cpp>
 WX_DEFINE_LIST(NotifyList);
@@ -424,7 +425,7 @@ Notification::filePath(void)
 wxString
 Notification::getOrigin(void)
 {
-	wxString	 origin;
+	wxString	 origin, user;
 	int		 off, len;
 	char		*buffer;
 
@@ -435,15 +436,15 @@ Notification::getOrigin(void)
 	off = get_value((notify_->u.notify)->pathoff);
 	len = get_value((notify_->u.notify)->pathlen);
 	buffer = notify_->u.notify->payload;
+	user = wxGetApp().getUserNameById(get_value(notify_->u.notify->uid));
 	if (len > 0) {
 		wxString path = wxString::From8BitData(buffer+off, len);
-		origin = wxString::Format(_("%s (Pid: %d, Uid: %d)"),
+		origin = wxString::Format(_("%s (Pid: %d, Uid: %s)"),
 		    path.c_str(), get_value(notify_->u.notify->pid),
-		    get_value(notify_->u.notify->uid));
+		    user.c_str());
 	} else {
-		origin = wxString::Format(_("Pid: %d, Uid: %d"),
-		    get_value(notify_->u.notify->pid),
-		    get_value(notify_->u.notify->uid));
+		origin = wxString::Format(_("Pid: %d, Uid: %s"),
+		    get_value(notify_->u.notify->pid), user.c_str());
 	}
 	return (origin);
 }
