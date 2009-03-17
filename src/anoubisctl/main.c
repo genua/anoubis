@@ -639,9 +639,10 @@ load(char *rulesopt, uid_t uid, unsigned int prio)
 	if (prio == ANOUBISCTL_PRIO_ADMIN)
 		flags |= APN_FLAG_NOASK;
 	if (apn_parse(rulesopt, &ruleset, flags)) {
-		if (ruleset)
-			apn_print_errors(ruleset, stderr);
-		else
+		if (ruleset) {
+			if (apn_print_errors(ruleset, stderr) == 0)
+				fprintf(stderr, "FATAL: parse error\n");
+		} else
 			fprintf(stderr, "FATAL: Out of memory\n");
 
 		if ((opts & ANOUBISCTL_OPT_FORCE) == 0) {

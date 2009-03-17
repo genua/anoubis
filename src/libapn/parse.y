@@ -86,7 +86,7 @@ int		 __parse_rules_common(struct apn_ruleset *apnrspx);
 struct file	*pushfile(const char *, int);
 struct file	*pushiov(const char *, struct iovec *, int count);
 int		 popfile(void);
-int		 check_file_secrecy(int, const char *);
+int		 check_file_secrecy(int);
 int		 yyparse(void);
 int		 yylex(void);
 int		 yyerror(const char *, ...);
@@ -294,11 +294,12 @@ alfruleset_l	: alfruleset_l alfruleset
 alfruleset	: ruleid apps optnl '{' optnl alfrule_l '}' nl {
 			struct apn_rule	*rule;
 
-			if ((rule = calloc(1, sizeof(struct apn_rule)))
-			    == NULL) {
+			rule = calloc(1, sizeof(struct apn_rule));
+			if (rule == NULL) {
 				apn_free_app($2);
 				apn_free_chain($6, NULL);
 				free($6);
+				yyerror("Out of memory");
 				YYERROR;
 			}
 
@@ -359,8 +360,10 @@ scope		: /* Empty */ {
 				YYERROR;
 			}
 			scope = calloc(1, sizeof(struct apn_scope));
-			if (!scope)
+			if (scope == NULL) {
+				yyerror("Out of memory");
 				YYERROR;
+			}
 			scope->task = $2;
 			scope->timeout = 0;
 
@@ -374,8 +377,10 @@ scope		: /* Empty */ {
 				YYERROR;
 			}
 			scope = calloc(1, sizeof(struct apn_scope));
-			if (!scope)
+			if (scope == NULL) {
+				yyerror("Out of memory");
 				YYERROR;
+			}
 			scope->task = $2;
 			scope->timeout = $4;
 
@@ -389,8 +394,10 @@ scope		: /* Empty */ {
 				YYERROR;
 			}
 			scope = calloc(1, sizeof(struct apn_scope));
-			if (!scope)
+			if (scope == NULL) {
+				yyerror("Out of memory");
 				YYERROR;
+			}
 			scope->task = $4;
 			scope->timeout = $2;
 
@@ -404,8 +411,10 @@ scope		: /* Empty */ {
 				YYERROR;
 			}
 			scope = calloc(1, sizeof(struct apn_scope));
-			if (!scope)
+			if (scope == NULL) {
+				yyerror("Out of memory");
 				YYERROR;
+			}
 			scope->task = 0;
 			scope->timeout = $2;
 
@@ -420,6 +429,7 @@ alfrule		: ruleid alffilterrule	scope		{
 			if (rule == NULL) {
 				apn_free_filter(&$2.filtspec);
 				free($3);
+				yyerror("Out of memory");
 				YYERROR;
 			}
 
@@ -439,6 +449,7 @@ alfrule		: ruleid alffilterrule	scope		{
 			rule = calloc(1, sizeof(struct apn_rule));
 			if (rule == NULL) {
 				free($3);
+				yyerror("Out of memory");
 				YYERROR;
 			}
 
@@ -458,6 +469,7 @@ alfrule		: ruleid alffilterrule	scope		{
 			rule = calloc(1, sizeof(struct apn_rule));
 			if (rule == NULL) {
 				free($3);
+				yyerror("Out of memory");
 				YYERROR;
 			}
 
@@ -569,6 +581,7 @@ host		: not address			{
 
 			host = calloc(1, sizeof(struct apn_host));
 			if (host == NULL)
+				yyerror("Out of memory");
 				YYERROR;
 
 			host->negate = $1;
@@ -588,6 +601,7 @@ address		: STRING			{
 		}
 
 portspec	: PORT ports			{ $$ = $2; }
+		| ports				{ $$ = $1; }
 		| /* empty */			{ $$ = NULL; }
 		;
 
@@ -617,6 +631,7 @@ port		: NUMBER minus NUMBER		{
 			struct apn_port *port;
 			port = calloc(1, sizeof(struct apn_port));
 			if (port == NULL)
+				yyerror("Out of memory");
 				YYERROR;
 
 			if (portbynumber($1, &port->port) == -1) {
@@ -643,6 +658,7 @@ port		: NUMBER minus NUMBER		{
 			port = calloc(1, sizeof(struct apn_port));
 			if (port == NULL) {
 				free($1);
+				yyerror("Out of memory");
 				YYERROR;
 			}
 
@@ -659,8 +675,10 @@ port		: NUMBER minus NUMBER		{
 			struct apn_port	*port;
 
 			port = calloc(1, sizeof(struct apn_port));
-			if (port == NULL)
+			if (port == NULL) {
+				yyerror("Out of memory");
 				YYERROR;
+			}
 
 			if (portbynumber($1, &port->port) == -1) {
 				free(port);
@@ -692,10 +710,11 @@ alfdefault	: defaultrule			{ $$ = $1; }
 sfsmodule	: SFS optnl '{' optnl sfsrule_l '}'	{
 			struct apn_rule	*rule;
 
-			if ((rule = calloc(1, sizeof(struct apn_rule)))
-			    == NULL) {
+			rule = calloc(1, sizeof(struct apn_rule));
+			if (rule == NULL) {
 				apn_free_chain($5, NULL);
 				free($5);
+				yyerror("Out of memory");
 				YYERROR;
 			}
 
@@ -864,11 +883,12 @@ sbruleset_l	: sbruleset_l sbruleset
 sbruleset	: ruleid apps optnl '{' optnl sbrule_l '}' nl {
 			struct apn_rule	*rule;
 
-			if ((rule = calloc(1, sizeof(struct apn_rule)))
-			    == NULL) {
+			rule = calloc(1, sizeof(struct apn_rule));
+			if (rule == NULL) {
 				apn_free_app($2);
 				apn_free_chain($6, NULL);
 				free($6);
+				yyerror("Out of memory");
 				YYERROR;
 			}
 
@@ -925,6 +945,7 @@ sbrule		: ruleid sbaccess scope {
 			if (rule == NULL) {
 				apn_free_sbaccess(&$2);
 				free($3);
+				yyerror("Out of memory");
 				YYERROR;
 			}
 
@@ -944,6 +965,7 @@ sbrule		: ruleid sbaccess scope {
 			rule = calloc(1, sizeof(struct apn_rule));
 			if (rule == NULL) {
 				free($3);
+				yyerror("Out of memory");
 				YYERROR;
 			}
 
@@ -1040,9 +1062,8 @@ sbcsum		: CSUM hashspec {
 			$$.path = NULL;
 			assert(sizeof($2.value) == ANOUBIS_CS_LEN);
 			$$.cs.value.csum = malloc(sizeof($2.value));
-			if ($$.cs.value.csum == NULL) {
+			if (!$$.cs.value.csum) {
 				$$.cs.type = APN_CS_NONE;
-				yyerror("Out of memory");
 			} else {
 				$$.cs.type = APN_CS_CSUM;
 				bcopy($2.value, $$.cs.value.csum,
@@ -1074,7 +1095,7 @@ sbrwx		: STRING {
 				}
 				if ($$ & nm) {
 					free($1);
-					yyerror("Duplicat character % "
+					yyerror("Duplicate character % "
 					    "in permission string", $1[i]);
 					YYERROR;
 				}
@@ -1099,11 +1120,12 @@ ctxruleset_l	: ctxruleset_l ctxruleset
 ctxruleset	: ruleid apps optnl '{' optnl ctxrule_l '}' nl {
 			struct apn_rule	*rule;
 
-			if ((rule = calloc(1, sizeof(struct apn_rule)))
-			    == NULL) {
+			rule = calloc(1, sizeof(struct apn_rule));
+			if (rule == NULL) {
 				apn_free_app($2);
 				apn_free_chain($6, NULL);
 				free($6);
+				yyerror("Out of memory");
 				YYERROR;
 			}
 
@@ -1159,6 +1181,7 @@ ctxrule		: ruleid ctxruleapps scope			{
 			rule = calloc(1, sizeof(struct apn_rule));
 			if (rule == NULL) {
 				free($3);
+				yyerror("Out of memory");
 				YYERROR;
 			}
 
@@ -1258,14 +1281,16 @@ app_l		: app_l comma optnl app		{
 app		: STRING hashspec		{
 			struct apn_app	*app;
 
-			if ((app = calloc(1, sizeof(struct apn_app)))
-			    == NULL) {
+			app = calloc(1, sizeof(struct apn_app));
+			if (app == NULL) {
 				free($1);
+				yyerror("Out of memory");
 				YYERROR;
 			}
 			if ((app->name = strdup($1)) == NULL) {
 				free($1);
 				free(app);
+				yyerror("Out of memory");
 				YYERROR;
 			}
 			app->hashtype = $2.type;
@@ -1582,7 +1607,7 @@ yylex(void)
 		}
 		yylval.v.string = strdup(buf);
 		if (yylval.v.string == NULL)
-			err(1, "yylex: strdup");
+			yyerror("yylex: strdup failed");
 		return (STRING);
 	}
 
@@ -1640,7 +1665,7 @@ nodigits:
 		*p = '\0';
 		if ((token = lookup(buf)) == STRING)
 			if ((yylval.v.string = strdup(buf)) == NULL)
-				err(1, "yylex: strdup");
+				yyerror("yylex: strdup failed");
 		return (token);
 	}
 	if (c == '\n') {
@@ -1653,21 +1678,16 @@ nodigits:
 }
 
 int
-check_file_secrecy(int fd, const char *fname)
+check_file_secrecy(int fd)
 {
 	struct stat	st;
 
-	if (fstat(fd, &st)) {
-		warn("cannot stat %s", fname);
-		return (-1);
-	}
-	if (st.st_uid != 0 && st.st_uid != getuid()) {
-		warnx("%s: owner not root or current user", fname);
-		return (-1);
-	}
+	if (fstat(fd, &st))
+		return (-errno);
+	if (st.st_uid != 0 && st.st_uid != getuid())
+		return (-EPERM);
 	if (st.st_mode & (S_IRWXG | S_IRWXO)) {
-		warnx("%s: group/world readable/writeable", fname);
-		return (-1);
+		return (-EPERM);
 	}
 	return (0);
 }
@@ -1679,7 +1699,6 @@ pushfile(const char *name, int secret)
 
 	if ((nfile = calloc(1, sizeof(struct file))) == NULL ||
 	    (nfile->name = strdup(name)) == NULL) {
-		warn("malloc");
 		return (NULL);
 	}
 	nfile->type = APN_FILE;
@@ -1687,17 +1706,14 @@ pushfile(const char *name, int secret)
 		nfile->u.u_stream = stdin;
 		free(nfile->name);
 		if ((nfile->name = strdup("stdin")) == NULL) {
-			warn("strdup");
 			free(nfile);
 			return (NULL);
 		}
 	} else if ((nfile->u.u_stream = fopen(nfile->name, "r")) == NULL) {
-		warn("%s", nfile->name);
 		free(nfile->name);
 		free(nfile);
 		return (NULL);
-	} else if (secret &&
-	    check_file_secrecy(fileno(nfile->u.u_stream), nfile->name)) {
+	} else if (secret && check_file_secrecy(fileno(nfile->u.u_stream))) {
 		fclose(nfile->u.u_stream);
 		free(nfile->name);
 		free(nfile);
@@ -1715,7 +1731,6 @@ pushiov(const char *name, struct iovec *vec, int count)
 
 	if ((nfile = calloc(1, sizeof(struct file))) == NULL ||
 	    (nfile->name = strdup(name)) == NULL) {
-		warn("malloc");
 		return NULL;
 	}
 	nfile->type = APN_IOVEC;
@@ -1751,8 +1766,11 @@ parse_rules(const char *filename, struct apn_ruleset *apnrspx)
 {
 	int doPermCheck = !(apnrspx->flags & APN_FLAG_NOPERMCHECK);
 	TAILQ_INIT(&files);
-	if ((file = pushfile(filename, doPermCheck)) == NULL)
+	if ((file = pushfile(filename, doPermCheck)) == NULL) {
+		apnrsp = apnrspx;
+		yyerror("couldn't read file");
 		return (1);
+	}
 	return __parse_rules_common(apnrspx);
 }
 
@@ -1761,8 +1779,11 @@ parse_rules_iovec(const char *filename, struct iovec *iovec, int count,
     struct apn_ruleset *apnrspx)
 {
 	TAILQ_INIT(&files);
-	if ((file = pushiov(filename, iovec, count)) == NULL)
+	if ((file = pushiov(filename, iovec, count)) == NULL) {
+		apnrsp = apnrspx;
+		yyerror("Out of memory");
 		return 1;
+	}
 	return __parse_rules_common(apnrspx);
 }
 
@@ -2007,30 +2028,39 @@ validate_alffilterspec(struct apn_afiltspec *afspec)
 	case AF_UNSPEC:
 		break;
 	default:
+		yyerror("invalid address family");
 		return (-1);
 	}
 
 	switch (afspec->proto) {
 	case IPPROTO_UDP:
 		if (afspec->netaccess != APN_SEND && afspec->netaccess !=
-		    APN_RECEIVE && afspec->netaccess != APN_BOTH)
+		    APN_RECEIVE && afspec->netaccess != APN_BOTH) {
+			yyerror("invalid connection state");
 			return (-1);
+		}
 		break;
 
 	case IPPROTO_TCP:
 		if (afspec->netaccess != APN_CONNECT && afspec->netaccess !=
-		    APN_ACCEPT && afspec->netaccess != APN_BOTH)
+		    APN_ACCEPT && afspec->netaccess != APN_BOTH) {
+			yyerror("invalid connection state");
 			return (-1);
+		}
 		break;
 
 	default:
 		return (-1);
 	}
 
-	if ((affrom = validate_hostlist(afspec->fromhost)) == -1)
+	if ((affrom = validate_hostlist(afspec->fromhost)) == -1) {
+		yyerror("invalid host");
 		return (-1);
-	if ((afto = validate_hostlist(afspec->tohost)) == -1)
+	}
+	if ((afto = validate_hostlist(afspec->tohost)) == -1) {
+		yyerror("invalid host");
 		return (-1);
+	}
 
 	switch (afspec->af) {
 	case AF_UNSPEC:
