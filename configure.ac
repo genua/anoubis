@@ -35,6 +35,21 @@ AM_MAINTAINER_MODE
 AC_CONFIG_HEADERS([src/config.h])
 AC_CONFIG_HEADERS([src/version.h])
 
+dnl texttext-tools
+AC_CHECK_PROG(XGETTEXT, [xgettext], [xgettext])
+AC_CHECK_PROG(MSGMERGE, [msgmerge], [msgmerge])
+AC_CHECK_PROG(MSGFMT, [msgfmt], [msgfmt])
+
+if [test "x$XGETTEXT" == "x"]; then
+	AC_MSG_ERROR([xgettext required.])
+fi
+if [test "x$MSGMERGE" == "x"]; then
+	AC_MSG_ERROR([msgmerge required.])
+fi
+if [test "x$MSGFMT" == "x"]; then
+	AC_MSG_ERROR([msgfmt required.])
+fi
+
 dnl os specific library replacements
 AC_SEARCH_LIBS([inet_net_pton], [resolv], \
 	AC_DEFINE([__USE_MISC], [1], [for inet_net_pton]))

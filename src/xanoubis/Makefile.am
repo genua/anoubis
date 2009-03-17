@@ -82,8 +82,7 @@ xanoubis_DEPEND_LIBS += $(libbsdcompat)
 endif
 
 xanoubis_DEPENDENCIES = \
-	$(xanoubis_DEPEND_LIBS) \
-	$(top_srcdir)/$(xanoubisdir)/catalogs/de/xanoubis.mo
+	$(xanoubis_DEPEND_LIBS)
 
 xanoubis_LDFLAGS = $(AM_LDFLAGS) $(SSL_LDFLAGS)
 
@@ -96,15 +95,17 @@ xanoubis_LDADD = \
 	$(SSL_LIBS) \
 	-lfl
 
-catalogdir = $(datadir)/$(bin_PROGRAMS)/catalogs/de
+programdir = $(datadir)/$(bin_PROGRAMS)
 utildir = $(datadir)/$(bin_PROGRAMS)/utils
 icondir = $(datadir)/$(bin_PROGRAMS)/icons
 profiledir = $(datadir)/$(bin_PROGRAMS)/profiles
 desktopdir = $(datadir)/$(bin_PROGRAMS)
 
-dist_catalog_DATA = \
-	catalogs/de/xanoubis.mo \
-	catalogs/de/xanoubis.po
+EXTRA_DIST = \
+	catalogs/xanoubis.pot \
+	catalogs/de/xanoubis.po \
+	catalogs/de/xanoubis.mo
+
 dist_util_SCRIPTS = utils/xanoubis_guessApp.sh
 dist_icon_DATA = \
 	icons/General_alert_16.png \
@@ -190,6 +191,8 @@ dist_desktop_DATA = \
 
 install-data-hook:
 	-chmod 444 $(DESTDIR)/$(profiledir)/*
+
+install-data-local: i18n-install
 
 xanoubis_SOURCES= \
 	model/AlertNotify.cpp \
@@ -478,17 +481,51 @@ libGUIcomponents_so_LINK = \
 	$(CXX) -fstack-protector -shared -Wl,-soname,$@ \
 	    -o $@ $(xanoubis_OBJECTS)
 
-# XXX by ch: the target for po files is experimental and
-# will not been done automatically
-%.po:
-	( \
-	  cd $(top_srcdir)/$(xanoubisdir); \
-	  rm -f $@; \
-	  xgettext -L C++ -k_ -o $@ $(xanoubis_SOURCES); \
-	)
+i18n-extract:
+	cd $(top_srcdir)/$(xanoubisdir) && \
+	mkdir -p catalogs && \
+	$(XGETTEXT) -k_ -o catalogs/xanoubis.pot $(xanoubis_SOURCES)
 
-%.mo: %.po
-	msgfmt -o $@ $<
+i18n-merge:
+	cd $(top_srcdir)/$(xanoubisdir) && \
+	for po in catalogs/*/*.po; do \
+	echo "Merging $$po"; \
+	$(MSGMERGE) -Uv --backup=off $$po catalogs/xanoubis.pot; \
+	done
+
+i18n-format:
+	cd $(top_srcdir)/$(xanoubisdir) && \
+	mkdir -p catalogs && \
+	for po in catalogs/*/*.po; do \
+	mo=`echo $$po | sed -e "s/\.po$\/\.mo/"`; \
+	echo "Compiling $$mo"; \
+	$(MSGFMT) -vc -o $$mo $$po; \
+	done
+
+i18n-install:
+	cd $(top_srcdir)/$(xanoubisdir) && \
+	for mo in `ls -1 catalogs/*/xanoubis.mo 2>/dev/null`; do \
+	bn=`basename $$mo`; \
+	dn=`dirname $$mo`; \
+	dest=$(DESTDIR)$(programdir)/$$dn/$$bn; \
+	$(install_sh_DATA) $$mo $$dest; \
+	done
+
+i18n-info:
+	@echo "*** Targets ***"; \
+	echo "i18n-extract"; \
+	echo "     Scans sources and writes result (untranslated strings)"; \
+	echo "     into template (catalogs/xanoubis.pot)."; \
+	echo "i18n-merge"; \
+	echo "     Merges template with already existing translations."; \
+	echo "i18n-format"; \
+	echo "     Converts translations into binary format."; \
+	echo "*** Usage ***"; \
+	echo "You need to call all three targets to update the translation!"; \
+	echo "*** Creating new language ***"; \
+	echo "cd <xanoubis-src-dir>/catalogs"; \
+	echo "mkdir <lang-code>"; \
+	echo "msginit -o <lang-code>/xanoubis.po -l <lang-code>"
 
 flawfinder_FLAGS=\
 	--dataonly \
