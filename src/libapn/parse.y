@@ -580,9 +580,10 @@ host		: not address			{
 			struct apn_host	*host;
 
 			host = calloc(1, sizeof(struct apn_host));
-			if (host == NULL)
+			if (host == NULL) {
 				yyerror("Out of memory");
 				YYERROR;
+			}
 
 			host->negate = $1;
 			host->addr = $2;
@@ -601,7 +602,6 @@ address		: STRING			{
 		}
 
 portspec	: PORT ports			{ $$ = $2; }
-		| ports				{ $$ = $1; }
 		| /* empty */			{ $$ = NULL; }
 		;
 
@@ -630,9 +630,10 @@ port_l		: port_l comma port		{
 port		: NUMBER minus NUMBER		{
 			struct apn_port *port;
 			port = calloc(1, sizeof(struct apn_port));
-			if (port == NULL)
+			if (port == NULL) {
 				yyerror("Out of memory");
 				YYERROR;
+			}
 
 			if (portbynumber($1, &port->port) == -1) {
 				free(port);
