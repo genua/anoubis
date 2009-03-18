@@ -174,6 +174,8 @@ class ModSfsDetailsDlgBase : public wxDialog
 	protected:
 		wxStaticText* m_staticText20;
 		wxTextCtrl* pathTextCtrl;
+		wxStaticText* linkLabel;
+		wxTextCtrl* linkTextCtrl;
 		wxStaticText* m_staticText21;
 		wxTextCtrl* modifiedTextCtrl;
 		wxStaticText* m_staticText22;

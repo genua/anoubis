@@ -72,7 +72,7 @@ ModSfsListCtrl::ModSfsListCtrl(wxWindow *parent, wxWindowID id,
 	wxMenuItem *showDetailsItem = popupMenu_.Append(
 	    wxNewId(), _("Show details"));
 	wxMenuItem *resolveLinkItem = popupMenu_.Append(
-	    wxNewId(), _("Resolve link"));
+	    wxNewId(), _("Jump to link target"));
 
 	popupMenu_.Connect(showDetailsItem->GetId(),
 	    wxEVT_COMMAND_MENU_SELECTED,
@@ -83,9 +83,6 @@ ModSfsListCtrl::ModSfsListCtrl(wxWindow *parent, wxWindowID id,
 	    wxCommandEventHandler(ModSfsListCtrl::OnPopupResolveLinkSelected),
 	    NULL, this);
 
-	Connect(wxEVT_COMMAND_LIST_ITEM_SELECTED,
-	    wxListEventHandler(ModSfsListCtrl::OnListItemSelected),
-	    NULL, this);
 	Connect(wxEVT_COMMAND_LIST_ITEM_ACTIVATED,
 	    wxListEventHandler(ModSfsListCtrl::OnListItemActivated),
 	    NULL, this);
@@ -277,29 +274,6 @@ ModSfsListCtrl::canDisplay(const SfsEntry &entry, DisplayOption option) const
 }
 
 void
-ModSfsListCtrl::OnListItemSelected(wxListEvent &event)
-{
-	if (sfsCtrl_ == 0)
-		return;
-
-	currentSelection_ = event.GetIndex();
-
-	/* Map to model-index* */
-	int modelIndex = getSfsIndexAt(event.GetIndex());
-	if (modelIndex == -1)
-		return;
-
-	SfsDirectory &dir = sfsCtrl_->getSfsDirectory();
-	SfsEntry &entry = dir.getEntry(modelIndex);
-
-	wxMenuItemList &menuItems = popupMenu_.GetMenuItems();
-
-	/* Update menu-items of the popup-menu */
-	menuItems[0]->Enable(true); /* Show details */
-	menuItems[1]->Enable(entry.isSymlink()); /* Resolve symlink */
-}
-
-void
 ModSfsListCtrl::OnListItemActivated(wxListEvent &event)
 {
 	if (sfsCtrl_ == 0)
@@ -319,9 +293,26 @@ ModSfsListCtrl::OnListItemActivated(wxListEvent &event)
 }
 
 void
-ModSfsListCtrl::OnListItemRightClicked(wxListEvent &)
+ModSfsListCtrl::OnListItemRightClicked(wxListEvent &event)
 {
 	/* Show popup-menu */
+	if (sfsCtrl_ == 0)
+		return;
+
+	currentSelection_ = event.GetIndex();
+	/* Map to model-index* */
+	int modelIndex = getSfsIndexAt(event.GetIndex());
+	if (modelIndex == -1)
+		return;
+
+	SfsDirectory &dir = sfsCtrl_->getSfsDirectory();
+	SfsEntry &entry = dir.getEntry(modelIndex);
+
+	wxMenuItemList &menuItems = popupMenu_.GetMenuItems();
+
+	/* Update menu-items of the popup-menu */
+	menuItems[0]->Enable(true); /* Show details */
+	menuItems[1]->Enable(entry.isSymlink()); /* Resolve symlink */
 	PopupMenu(&popupMenu_, ScreenToClient(wxGetMousePosition()));
 }
 

@@ -437,6 +437,13 @@ ModSfsDetailsDlgBase::ModSfsDetailsDlgBase( wxWindow* parent, wxWindowID id, con
 	pathTextCtrl = new wxTextCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize( 250,-1 ), wxTE_READONLY );
 	fgSizer6->Add( pathTextCtrl, 1, wxALIGN_CENTER_VERTICAL|wxALL|wxEXPAND, 5 );
 	
+	linkLabel = new wxStaticText( this, wxID_ANY, _("Link Target:"), wxDefaultPosition, wxDefaultSize, 0 );
+	linkLabel->Wrap( -1 );
+	fgSizer6->Add( linkLabel, 0, wxALL, 5 );
+	
+	linkTextCtrl = new wxTextCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize( 250,-1 ), wxTE_READONLY );
+	fgSizer6->Add( linkTextCtrl, 0, wxALL, 5 );
+	
 	m_staticText21 = new wxStaticText( this, wxID_ANY, _("Last modified:"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_staticText21->Wrap( -1 );
 	fgSizer6->Add( m_staticText21, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );

@@ -205,14 +205,6 @@ class ModSfsListCtrl : public wxListCtrl
 		bool canDisplay(const SfsEntry &, DisplayOption) const;
 
 		/**
-		 * Invoked if a row is selected (aka single mouse-click).
-		 *
-		 * Updates the popup-menu. Some actions might not be usable
-		 * for the selected SfsEntry. So you need to disable them.
-		 */
-		void OnListItemSelected(wxListEvent&);
-
-		/**
 		 * Invoked if a row is activated (aka double-click).
 		 *
 		 * Displays the ModSfsDetailsDlg for the selected SfsEntry.
@@ -221,8 +213,7 @@ class ModSfsListCtrl : public wxListCtrl
 
 		/**
 		 * Invoked if a row was selected with a right mouse-click.
-		 *
-		 * Displays the popup-menu.
+		 * Updates and displays the popup-menu.
 		 */
 		void OnListItemRightClicked(wxListEvent&);
 

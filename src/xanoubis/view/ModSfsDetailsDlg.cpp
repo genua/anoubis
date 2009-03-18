@@ -36,6 +36,15 @@ ModSfsDetailsDlg::ModSfsDetailsDlg(const SfsEntry &entry, wxWindow *parent)
 	SetTitle(wxString::Format(_("Details for %s"), path.c_str()));
 	pathTextCtrl->SetValue(path);
 
+	if (entry.isSymlink()) {
+		linkLabel->Show();
+		linkTextCtrl->Show();
+		linkTextCtrl->SetValue(entry.resolve());
+	} else {
+		linkLabel->Hide();
+		linkTextCtrl->Hide();
+	}
+
 	/* Last modification timestamp */
 	wxDateTime modified = entry.getLastModified();
 	if (modified.IsValid())
