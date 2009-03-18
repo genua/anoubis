@@ -128,7 +128,7 @@ class AnoubisGuiApp : public wxApp, private PassphraseReader
 		void		 getChecksum(const wxString &);
 		void		 calChecksum(const wxString &);
 		wxString	 getCatalogPath(void);
-		wxString	 getUtilsPath(void);
+		wxString	 getWizardPath(void);
 		wxString	 getIconPath(wxString);
 		wxString	 getRulesetPath(const wxString &, bool);
 		wxIcon		*loadIcon(wxString);

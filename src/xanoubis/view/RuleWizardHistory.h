@@ -152,6 +152,25 @@ class RuleWizardHistory
 		wxArrayString getContextExceptionList(void) const;
 
 		/**
+		 * Are defaults for alf available?
+		 * @param None.
+		 * @return True if there are defaults.
+		 */
+		bool isAlfDefaultAvailable(void) const;
+
+		/**
+		 * Get alf defaults.
+		 * If the alf defaults file exists and contains values, this
+		 * method returns them in a list. Else the list is empty.
+		 * The servicename is determinded also.
+		 * The returned list has the same layout as lists from
+		 * RuleWizardAlfDlgAddService.
+		 * @param None.
+		 * @return The list of alf defaults.
+		 */
+		wxArrayString getAlfDefaults(void) const;
+
+		/**
 		 * Does alf policies exist for the stored program?
 		 * @param None.
 		 * @return True if policies already exist, false otherwise.
@@ -248,6 +267,22 @@ class RuleWizardHistory
 		 * @return The answer.
 		 */
 		enum permissionAnswer getAlfServerPermission(void) const;
+
+		/**
+		 * Are defaults for the sandbox available?
+		 * @param[in] 1st Permission: a combination of (""|"r"|"w"|"x")
+		 * @return True if there are defaults.
+		 */
+		bool isSandboxDefaultAvailable(const wxString &) const;
+
+		/**
+		 * Get sandbox defaults.
+		 * If the sandbox defaults file exists and contains values with
+		 * the given permission those are returned in a list.
+		 * @param[in] 1st Permission: a combination of (""|"r"|"w"|"x")
+		 * @return The list of sandbox defaults.
+		 */
+		wxArrayString getSandboxDefaults(const wxString &) const;
 
 		/**
 		 * Store answer to the question: sandbox wizard, sandbox

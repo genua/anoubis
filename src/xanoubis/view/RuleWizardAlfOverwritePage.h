@@ -40,6 +40,7 @@ class RuleWizardAlfOverwritePage : public RuleWizardOverwritePolicyPageBase
 {
 	public:
 		/**
+		 * Constructor of alf overwrite page.
 		 */
 		RuleWizardAlfOverwritePage(wxWindow *, RuleWizardHistory *);
 
@@ -58,11 +59,18 @@ class RuleWizardAlfOverwritePage : public RuleWizardOverwritePolicyPageBase
 		void onPageChanged(wxWizardEvent &);
 
 		/**
-		 *
+		 * Handle events form yesRadioButton.
+		 * Update history.
+		 * @param[in] 1st The event.
+		 * @return Nothing.
 		 */
 		virtual void onYesRadioButton(wxCommandEvent &);
 
 		/**
+		 * Handle events form noRadioButton.
+		 * Update history.
+		 * @param[in] 1st The event.
+		 * @return Nothing.
 		 */
 		virtual void onNoRadioButton(wxCommandEvent &);
 
@@ -74,6 +82,11 @@ class RuleWizardAlfOverwritePage : public RuleWizardOverwritePolicyPageBase
 		void updateNavi(void);
 
 		/**
+		 * Fill policy into textCtrl.
+		 * This will print the concerning policy as apn into a
+		 * string and adds that string to the text control.
+		 * @param None.
+		 * @return Nothing.
 		 */
 		void fillPolicy(void);
 };

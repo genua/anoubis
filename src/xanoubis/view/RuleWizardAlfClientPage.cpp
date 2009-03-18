@@ -49,6 +49,9 @@ RuleWizardAlfClientPage::RuleWizardAlfClientPage(wxWindow *parent,
 		break;
 	}
 
+	defaultRadioButton->Enable(history_->isAlfDefaultAvailable());
+	defaultLabel->Enable(history_->isAlfDefaultAvailable());
+
 	parent->Connect(wxEVT_WIZARD_PAGE_CHANGED,
 	    wxWizardEventHandler(RuleWizardAlfClientPage::onPageChanged),
 	    NULL, this);

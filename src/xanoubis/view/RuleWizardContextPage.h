@@ -59,14 +59,26 @@ class RuleWizardContextPage : public RuleWizardContextPageBase
 		void onPageChanged(wxWizardEvent &);
 
 		/**
+		 * Handle events form yesRadioButton.
+		 * Update history.
+		 * @param[in] 1st The event.
+		 * @return Nothing.
 		 */
 		virtual void onYesRadioButton(wxCommandEvent &);
 
 		/**
+		 * Handle events form exceptionCheckBox.
+		 * Update histroy.
+		 * @param[in] 1st The event.
+		 * @return Nothing.
 		 */
 		virtual void onExceptionsCheckBox(wxCommandEvent &);
 
 		/**
+		 * Handle events form noRadioButton.
+		 * Update history.
+		 * @param[in] 1st The event.
+		 * @return Nothing.
 		 */
 		virtual void onNoRadioButton(wxCommandEvent &);
 

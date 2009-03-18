@@ -33,8 +33,9 @@
 
 #define ALL_FILES_ENTRY	_("(all files)")
 
-RuleWizardSandboxExecuteFilesPage::RuleWizardSandboxExecuteFilesPage(wxWindow *parent,
-    RuleWizardHistory *history) : RuleWizardSandboxFilesPageBase(parent)
+RuleWizardSandboxExecuteFilesPage::RuleWizardSandboxExecuteFilesPage(
+    wxWindow *parent, RuleWizardHistory *history)
+    : RuleWizardSandboxFilesPageBase(parent)
 {
 	int width;
 
@@ -51,9 +52,10 @@ RuleWizardSandboxExecuteFilesPage::RuleWizardSandboxExecuteFilesPage(wxWindow *p
 	fileListCtrl->SetColumnWidth(COLUMN_FILE, width);
 	fileListCtrl->SetColumnWidth(COLUMN_STD, width);
 
-	parent->Connect(wxEVT_WIZARD_PAGE_CHANGED,
-	    wxWizardEventHandler(RuleWizardSandboxExecuteFilesPage::onPageChanged),
-	    NULL, this);
+	defaultsButton->Enable(history_->isSandboxDefaultAvailable(wxT("x")));
+
+	parent->Connect(wxEVT_WIZARD_PAGE_CHANGED, wxWizardEventHandler(
+	    RuleWizardSandboxExecuteFilesPage::onPageChanged), NULL, this);
 }
 
 void
@@ -117,6 +119,33 @@ RuleWizardSandboxExecuteFilesPage::onAddDirectoryButton(wxCommandEvent &)
 		storeFileList();
 		updateNavi();
 	}
+}
+
+void
+RuleWizardSandboxExecuteFilesPage::onDefaultsButton(wxCommandEvent &)
+{
+	long		index;
+	wxArrayString	list;
+	wxFileName	path;
+
+	list = history_->getSandboxDefaults(wxT("x"));
+	for (size_t i=0; i<list.GetCount(); i++) {
+		index = fileListCtrl->GetItemCount();
+		fileListCtrl->InsertItem(index, wxEmptyString);
+
+		path.Assign(list.Item(i));
+		fileListCtrl->SetItem(index, COLUMN_PATH, path.GetPath());
+		if (path.IsDir()) {
+			fileListCtrl->SetItem(index, COLUMN_FILE,
+			    ALL_FILES_ENTRY);
+		} else {
+			fileListCtrl->SetItem(index, COLUMN_FILE,
+			    path.GetFullName());
+		}
+		fileListCtrl->SetItem(index, COLUMN_STD, wxT("x"));
+	}
+	storeFileList();
+	updateNavi();
 }
 
 void

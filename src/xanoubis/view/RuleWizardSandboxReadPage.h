@@ -59,17 +59,29 @@ class RuleWizardSandboxReadPage : public RuleWizardSandboxPermissionPageBase
 		void onPageChanged(wxWizardEvent &);
 
 		/**
+		 * Handle events form allowAllRadioButton.
+		 * Update history.
+		 * @param[in] 1st The event.
+		 * @return Nothing.
 		 */
-		void onAllowAllRadioButton(wxCommandEvent &);
+		virtual void onAllowAllRadioButton(wxCommandEvent &);
 
 		/**
+		 * Handle events form defaultRadioButton.
+		 * Update history.
+		 * @param[in] 1st The event.
+		 * @return Nothing.
 		 */
-		void onDefaultRadioButton(wxCommandEvent &);
+		virtual void onDefaultRadioButton(wxCommandEvent &);
 
 		/**
+		 * Handle events form restrictedAllRadioButton.
+		 * Update history.
+		 * @param[in] 1st The event.
+		 * @return Nothing.
 		 */
-		void onRestrictedRadioButton(wxCommandEvent &);
-		
+		virtual void onRestrictedRadioButton(wxCommandEvent &);
+
 		/**
 		 * Update navigation.
 		 * @param None.

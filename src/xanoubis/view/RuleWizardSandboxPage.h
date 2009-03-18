@@ -59,14 +59,26 @@ class RuleWizardSandboxPage : public RuleWizardSandboxPageBase
 		void onPageChanged(wxWizardEvent &);
 
 		/**
+		 * Handle events form yesWizardRadioButton.
+		 * This will proceed to the other sandbox pages.
+		 * @param[in] 1st The event.
+		 * @return Nothing.
 		 */
 		virtual void onYesWizardRadioButton(wxCommandEvent &);
 
 		/**
+		 * Handle events form yesDefaultsRadioButton.
+		 * This will load the defaults and finish.
+		 * @param[in] 1st The event.
+		 * @return Nothing.
 		 */
 		virtual void onYesDefaultsRadioButton(wxCommandEvent &);
 
 		/**
+		 * Handle events form noRadioButton.
+		 * This will avoid sandbox policies.
+		 * @param[in] 1st The event.
+		 * @return Nothing.
 		 */
 		virtual void onNoRadioButton(wxCommandEvent &);
 

@@ -1,0 +1,32 @@
+#
+# Defaults for sandbox wizard
+#
+# Format:
+# <object>	<permission>
+#
+# Object may be a file or a directory. Please use
+# absolute paths only. And directories must have
+# trailing '/'.
+#
+# Permisson may be any combination of the characters:
+#	r: read permission
+#	w: write permission
+#	x: execute permission
+#
+
+/bin/		rx
+/dev/		r
+/dev/shm/	rwx
+/dev/tty/	rw
+/dev/pts/	rw
+/etc/		rx
+/home/		rwx
+/lib/		rx
+/opt/		rx
+/proc/		r
+/sbin/		rx
+/tmp/		rwx
+/usr/		rx
+/var/		rx
+/var/tmp/	rwx
+/var/lock/	rwx

@@ -25,13 +25,16 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <netdb.h>
 #include <wx/stattext.h>
 #include <wx/filename.h>
+#include <wx/textfile.h>
 
 #include "RuleWizardHistory.h"
 #include "AppPolicy.h"
 #include "ProfileCtrl.h"
 #include "PolicyRuleSet.h"
+#include "main.h"
 
 RuleWizardHistory::RuleWizardHistory(void)
 {
@@ -191,6 +194,72 @@ RuleWizardHistory::getContextExceptionList(void) const
  * Alf methods
  */
 bool
+RuleWizardHistory::isAlfDefaultAvailable(void) const
+{
+	return (!getAlfDefaults().IsEmpty());
+}
+
+wxArrayString
+RuleWizardHistory::getAlfDefaults(void) const
+{
+	long		portNr;
+	wxString	name;
+	wxString	port;
+	wxString	prot;
+	wxString	line;
+	wxTextFile	file;
+	wxArrayString	list;
+	struct servent *entry;
+
+	file.Open(wxGetApp().getWizardPath() + wxFILE_SEP_PATH + wxT("alf"));
+
+	if (!file.IsOpened()) {
+		/* alf defaults file does not exists - return empty list */
+		return (list);
+	}
+	setservent(1);
+	portNr = 0;
+
+	line = file.GetFirstLine().BeforeFirst('#');
+	line.Trim(true);
+	line.Trim(false);
+	while (!file.Eof()) {
+		if (!line.IsEmpty()) {
+			/* Slice the string */
+			prot = line.BeforeFirst('/'); /* protocol name */
+			prot.Trim(true);
+			prot.Trim(false);
+			port = line.AfterFirst('/');  /* port number */
+			port.Trim(true);
+			port.Trim(false);
+			port.ToLong(&portNr);
+
+			/* Fetch service name */
+			entry = getservbyport(htons((int)portNr),
+			    prot.fn_str());
+			if (entry != NULL) {
+				name = wxString::From8BitData(entry->s_name);
+			} else {
+				name = _("(unknown)");
+			}
+
+			/* Fill list */
+			list.Add(name);
+			list.Add(port);
+			list.Add(prot);
+		}
+		line = file.GetNextLine().BeforeFirst('#');
+		line.Trim(true);
+		line.Trim(false);
+	}
+
+	endservent();
+	file.Close();
+
+	return (list);
+}
+
+bool
 RuleWizardHistory::haveAlfPolicy(void) const
 {
 	return (haveAlfPolicy_);
@@ -271,6 +340,54 @@ RuleWizardHistory::getAlfServerPermission(void) const
 /*
  * Sandbox methods
  */
+bool
+RuleWizardHistory::isSandboxDefaultAvailable(const wxString & filter) const
+{
+	return (!getSandboxDefaults(filter).IsEmpty());
+}
+
+wxArrayString
+RuleWizardHistory::getSandboxDefaults(const wxString & filter) const
+{
+	wxString	path;
+	wxString	perm;
+	wxString	line;
+	wxTextFile	file;
+	wxArrayString	list;
+
+	file.Open(wxGetApp().getWizardPath() + wxFILE_SEP_PATH +
+	    wxT("sandbox"));
+
+	if (!file.IsOpened()) {
+		/* sandbox defaults file does not exists - return empty list */
+		return (list);
+	}
+
+	line = file.GetFirstLine().BeforeFirst('#');
+	line.Trim(true);
+	line.Trim(false);
+	while (!file.Eof()) {
+		if (!line.IsEmpty()) {
+			/* Slice the string */
+			line.Replace(wxT("\t"), wxT(" "));
+			path = line.BeforeFirst(' ');
+			perm = line.AfterLast(' ');
+
+			if (perm.Find(filter) != wxNOT_FOUND) {
+				list.Add(path);
+			}
+		}
+		line = file.GetNextLine().BeforeFirst('#');
+		line.Trim(true);
+		line.Trim(false);
+	}
+
+	file.Close();
+
+	return (list);
+}
+
+
 void
 RuleWizardHistory::setSandbox(enum permissionAnswer answer)
 {
@@ -574,9 +691,9 @@ RuleWizardHistory::fillSandboxNavi(wxWindow *parent, wxSizer *naviSizer,
 		    sandboxReadFileList_.GetCount());
 		addValue(parent, naviSizer, text);
 		if (sandboxReadAsk_) {
-			text = _("other read access: ask");
+			text = _("read access other: ask");
 		} else {
-			text = _("other read access: deny");
+			text = _("read access other: deny");
 		}
 		addValue(parent, naviSizer, text);
 		if (sandboxReadValidSignature_) {
@@ -605,13 +722,13 @@ RuleWizardHistory::fillSandboxNavi(wxWindow *parent, wxSizer *naviSizer,
 		    sandboxWriteFileList_.GetCount());
 		addValue(parent, naviSizer, text);
 		if (sandboxWriteAsk_) {
-			text = _("other write access: ask");
+			text = _("write access other: ask");
 		} else {
-			text = _("other write access: deny");
+			text = _("write access other: deny");
 		}
 		addValue(parent, naviSizer, text);
 		if (sandboxWriteValidSignature_) {
-			text = _("write signature: allow");
+			text = _("write signature: deny");
 		} else {
 			text = _("write signature: don't care");
 		}
@@ -636,9 +753,9 @@ RuleWizardHistory::fillSandboxNavi(wxWindow *parent, wxSizer *naviSizer,
 		    sandboxExecuteFileList_.GetCount());
 		addValue(parent, naviSizer, text);
 		if (sandboxExecuteAsk_) {
-			text = _("other execute access: ask");
+			text = _("execute access other: ask");
 		} else {
-			text = _("other execute access: deny");
+			text = _("execute access other: deny");
 		}
 		addValue(parent, naviSizer, text);
 		if (sandboxExecuteValidSignature_) {

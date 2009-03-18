@@ -69,10 +69,19 @@ class RuleWizardContextExceptionPage
 		void onPageChanged(wxWizardEvent &);
 
 		/**
+		 * Handle events from addButton.
+		 * This will open a file chooser and on 'ok' the choosen
+		 * file is added to the list.
+		 * @param[in] 1st The event.
+		 * @return Nothing.
 		 */
 		virtual void onAddButton(wxCommandEvent &);
 
 		/**
+		 * Handle events from deleteButton.
+		 * This will delete the selected entries from the list.
+		 * @param[in] 1st The event.
+		 * @return Nothing.
 		 */
 		virtual void onDeleteButton(wxCommandEvent &);
 

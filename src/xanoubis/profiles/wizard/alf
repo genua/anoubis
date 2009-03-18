@@ -1,0 +1,8 @@
+# defaults for alf wizard
+#
+# Format:
+# <protocol>/<port>
+#
+
+udp/53
+tcp/53

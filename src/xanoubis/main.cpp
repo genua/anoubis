@@ -427,23 +427,23 @@ AnoubisGuiApp::getCatalogPath(void)
 }
 
 wxString
-AnoubisGuiApp::getUtilsPath(void)
+AnoubisGuiApp::getWizardPath(void)
 {
-	wxString utilsFileName;
+	wxString wizardFileName;
 
-	utilsFileName = paths_.GetDataDir() + wxT("/utils/");
-	if (!::wxFileExists(utilsFileName)) {
+	wizardFileName = paths_.GetDataDir() + wxT("/profiles/wizard/");
+	if (!::wxFileExists(wizardFileName)) {
 		/*
-		 * We didn't find our utils (where --prefix told us)!
+		 * We didn't find our wizard (where --prefix told us)!
 		 * Try to take executable path into account. This should
 		 * fix a missing --prefix as the matter in our build and test
 		 * environment with aegis.
 		 */
-		utilsFileName  = ::wxPathOnly(paths_.GetExecutablePath()) +
-		    wxT("/../../..") + utilsFileName;
+		wizardFileName  = ::wxPathOnly(paths_.GetExecutablePath()) +
+		    wxT("/../../..") + wizardFileName;
 	}
 
-	return utilsFileName;
+	return wizardFileName;
 }
 
 wxString

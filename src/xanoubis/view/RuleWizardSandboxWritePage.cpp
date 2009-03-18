@@ -46,6 +46,9 @@ RuleWizardSandboxWritePage::RuleWizardSandboxWritePage(wxWindow *parent,
 		break;
 	}
 
+	defaultRadioButton->Enable(history_->isSandboxDefaultAvailable(
+	    wxT("w")));
+
 	parent->Connect(wxEVT_WIZARD_PAGE_CHANGED,
 	    wxWizardEventHandler(RuleWizardSandboxWritePage::onPageChanged),
 	    NULL, this);

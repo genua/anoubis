@@ -110,7 +110,7 @@ class RuleWizardAlfDlgAddService : public RuleWizardAlfDlgAddServiceBase
 		 * @param[in] 1st The event.
 		 * @return Nothing.
 		 */
-		void onAddButton(wxCommandEvent &);
+		virtual void onAddButton(wxCommandEvent &);
 
 		/**
 		 * Handle events from addCustomButton.
@@ -120,7 +120,7 @@ class RuleWizardAlfDlgAddService : public RuleWizardAlfDlgAddServiceBase
 		 * @param[in] 1st The event.
 		 * @return Nothing.
 		 */
-		void onCustomAddButton(wxCommandEvent &);
+		virtual void onCustomAddButton(wxCommandEvent &);
 
 		/**
 		 * Handle events from cancelButton.
@@ -129,7 +129,7 @@ class RuleWizardAlfDlgAddService : public RuleWizardAlfDlgAddServiceBase
 		 * @param[in] 1st The event.
 		 * @return Nothing.
 		 */
-		void onCancelButton(wxCommandEvent &);
+		virtual void onCancelButton(wxCommandEvent &);
 
 		/**
 		 * Handle select events from serviceListCtrl.
@@ -137,7 +137,7 @@ class RuleWizardAlfDlgAddService : public RuleWizardAlfDlgAddServiceBase
 		 * @param[in] 1st The event.
 		 * @return Nothing.
 		 */
-		void onServiceListSelect(wxListEvent &);
+		virtual void onServiceListSelect(wxListEvent &);
 
 		/**
 		 * Handle deselect events from serviceListCtrl.
@@ -146,7 +146,7 @@ class RuleWizardAlfDlgAddService : public RuleWizardAlfDlgAddServiceBase
 		 * @param[in] 1st The event.
 		 * @return Nothing.
 		 */
-		void onServiceListDeselect(wxListEvent &);
+		virtual void onServiceListDeselect(wxListEvent &);
 
 		/**
 		 * Handle events from searhTextCtrl.
@@ -158,7 +158,7 @@ class RuleWizardAlfDlgAddService : public RuleWizardAlfDlgAddServiceBase
 		 * @param[in] 1st The event.
 		 * @return Nothing.
 		 */
-		void onSearchTextEnter(wxCommandEvent &);
+		virtual void onSearchTextEnter(wxCommandEvent &);
 };
 
 #endif	/* _RULEWIZARDALFDLGADDSERVICE_H_ */

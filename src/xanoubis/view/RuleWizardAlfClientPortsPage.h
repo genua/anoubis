@@ -46,7 +46,7 @@ class RuleWizardAlfClientPortsPage : public RuleWizardAlfServicePageBase
 
 	private:
 		/**
-		 *
+		 * Use these indices for the columns of the service list.
 		 */
 		enum portColumns {
 			COLUMN_NAME = 0,	/**< Column for Servicename */
@@ -75,7 +75,16 @@ class RuleWizardAlfClientPortsPage : public RuleWizardAlfServicePageBase
 		 * @param[in] 1st The event.
 		 * @return Nothing.
 		 */
-		void onAddButton(wxCommandEvent &);
+		virtual void onAddButton(wxCommandEvent &);
+
+		/**
+		 * Handle events from defaultsButton.
+		 * This will load the default from file and show them in the
+		 * list.
+		 * @param[in] 1st The event.
+		 * @return Nothing.
+		 */
+		virtual void onDefaultsButton(wxCommandEvent &);
 
 		/**
 		 * Handle events from deleteButton.
@@ -83,7 +92,7 @@ class RuleWizardAlfClientPortsPage : public RuleWizardAlfServicePageBase
 		 * @param[in] 1st The event.
 		 * @return Nothing.
 		 */
-		void onDeleteButton(wxCommandEvent &);
+		virtual void onDeleteButton(wxCommandEvent &);
 
 		/**
 		 * Handle select events from portListCtrl.
@@ -91,7 +100,7 @@ class RuleWizardAlfClientPortsPage : public RuleWizardAlfServicePageBase
 		 * @param[in] 1st The event.
 		 * @return Nothing.
 		 */
-		void onPortListSelect(wxListEvent &);
+		virtual void onPortListSelect(wxListEvent &);
 
 		/**
 		 * Handle deselect events from portListCtrl.
@@ -100,7 +109,7 @@ class RuleWizardAlfClientPortsPage : public RuleWizardAlfServicePageBase
 		 * @param[in] 1st The event.
 		 * @return Nothing.
 		 */
-		void onPortListDeselect(wxListEvent &);
+		virtual void onPortListDeselect(wxListEvent &);
 
 		/**
 		 * Handle events from askCheckBox.
@@ -108,7 +117,7 @@ class RuleWizardAlfClientPortsPage : public RuleWizardAlfServicePageBase
 		 * @param[in] 1st The event.
 		 * @return Nothing.
 		 */
-		void onAskCheckBox(wxCommandEvent &);
+		virtual void onAskCheckBox(wxCommandEvent &);
 
 		/**
 		 * Handle events from rawCheckBox.
@@ -116,7 +125,7 @@ class RuleWizardAlfClientPortsPage : public RuleWizardAlfServicePageBase
 		 * @param[in] 1st The event.
 		 * @return Nothing.
 		 */
-		void onRawCheckBox(wxCommandEvent &);
+		virtual void onRawCheckBox(wxCommandEvent &);
 
 		/**
 		 * Store port list.

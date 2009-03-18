@@ -311,6 +311,8 @@ RuleWizardProgramPageBase::RuleWizardProgramPageBase( wxWindow* parent, wxWindow
 	
 	csumValue = new wxStaticText( this, wxID_ANY, _("..."), wxDefaultPosition, wxDefaultSize, 0 );
 	csumValue->Wrap( -1 );
+	csumValue->SetFont( wxFont( 8, 70, 90, 90, false, wxEmptyString ) );
+	
 	mainSizer->Add( csumValue, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	

@@ -51,6 +51,8 @@ RuleWizardSandboxReadFilesPage::RuleWizardSandboxReadFilesPage(wxWindow *parent,
 	fileListCtrl->SetColumnWidth(COLUMN_FILE, width);
 	fileListCtrl->SetColumnWidth(COLUMN_STD, width);
 
+	defaultsButton->Enable(history_->isSandboxDefaultAvailable(wxT("r")));
+
 	parent->Connect(wxEVT_WIZARD_PAGE_CHANGED,
 	    wxWizardEventHandler(RuleWizardSandboxReadFilesPage::onPageChanged),
 	    NULL, this);
@@ -117,6 +119,33 @@ RuleWizardSandboxReadFilesPage::onAddDirectoryButton(wxCommandEvent &)
 		storeFileList();
 		updateNavi();
 	}
+}
+
+void
+RuleWizardSandboxReadFilesPage::onDefaultsButton(wxCommandEvent &)
+{
+	long		index;
+	wxArrayString	list;
+	wxFileName	path;
+
+	list = history_->getSandboxDefaults(wxT("r"));
+	for (size_t i=0; i<list.GetCount(); i++) {
+		index = fileListCtrl->GetItemCount();
+		fileListCtrl->InsertItem(index, wxEmptyString);
+
+		path.Assign(list.Item(i));
+		fileListCtrl->SetItem(index, COLUMN_PATH, path.GetPath());
+		if (path.IsDir()) {
+			fileListCtrl->SetItem(index, COLUMN_FILE,
+			    ALL_FILES_ENTRY);
+		} else {
+			fileListCtrl->SetItem(index, COLUMN_FILE,
+			    path.GetFullName());
+		}
+		fileListCtrl->SetItem(index, COLUMN_STD, wxT("x"));
+	}
+	storeFileList();
+	updateNavi();
 }
 
 void

@@ -437,7 +437,6 @@ RuleWizard::createAlfPolicy(PolicyRuleSet *ruleSet) const
 	AlfAppPolicy			*alfApp;
 	AlfCapabilityFilterPolicy	*alfCap;
 	DefaultFilterPolicy		*dflFilter;
-	bool				 ask = history_.getAlfClientAsk();
 
 	alfApp	  = NULL;
 	alfCap	  = NULL;
@@ -464,56 +463,46 @@ RuleWizard::createAlfPolicy(PolicyRuleSet *ruleSet) const
 		}
 	}
 
+	/* Create new application bock */
 	alfApp = new AlfAppPolicy(ruleSet);
 	ruleSet->prependAppPolicy(alfApp);
 	alfApp->addBinary(history_.getProgram());
 	alfApp->setHashValueString(history_.getChecksum(), 0);
 
+	dflFilter = new DefaultFilterPolicy(alfApp);
+	alfApp->prependFilterPolicy(dflFilter);
+
 	switch (history_.getAlfClientPermission()) {
 	case RuleWizardHistory::PERM_ALLOW_ALL:
-		dflFilter = new DefaultFilterPolicy(alfApp);
-		alfApp->prependFilterPolicy(dflFilter);
 		dflFilter->setActionNo(APN_ACTION_ALLOW);
-		return;
 		break;
 	case RuleWizardHistory::PERM_DENY_ALL:
-		dflFilter = new DefaultFilterPolicy(alfApp);
-		alfApp->prependFilterPolicy(dflFilter);
 		dflFilter->setActionNo(APN_ACTION_DENY);
 		dflFilter->setLogNo(APN_LOG_NORMAL);
-		return;
 		break;
 	case RuleWizardHistory::PERM_RESTRICT_DEFAULT:
-		/*
-		 * XXX CH/CEH: Append the default ports to the client
-		 * XXX CH/CEH: port list and continue as if this were
-		 * XXX CH/CEH: a user supplied list of ports.
-		 */
-		ask = true;
+		dflFilter->setActionNo(APN_ACTION_ASK);
+		list = history_.getAlfDefaults();
+		createAlfPortList(alfApp, list, APN_CONNECT);
 		break;
 	default:
+		if (history_.getAlfClientAsk()) {
+			dflFilter->setActionNo(APN_ACTION_ASK);
+		} else {
+			dflFilter->setActionNo(APN_ACTION_DENY);
+			dflFilter->setLogNo(APN_LOG_NORMAL);
+		}
+
+		if (history_.getAlfClientRaw()) {
+			alfCap = new AlfCapabilityFilterPolicy(alfApp);
+			alfApp->prependFilterPolicy(alfCap);
+			alfCap->setCapabilityTypeNo(APN_ALF_CAPRAW);
+		}
+
+		list = history_.getAlfClientPortList();
+		createAlfPortList(alfApp, list, APN_CONNECT);
 		break;
 	}
-
-	if (ask) {
-		dflFilter = new DefaultFilterPolicy(alfApp);
-		alfApp->prependFilterPolicy(dflFilter);
-		dflFilter->setActionNo(APN_ACTION_ASK);
-	} else {
-		dflFilter = new DefaultFilterPolicy(alfApp);
-		alfApp->prependFilterPolicy(dflFilter);
-		dflFilter->setActionNo(APN_ACTION_DENY);
-		dflFilter->setLogNo(APN_LOG_NORMAL);
-	}
-
-	if (history_.getAlfClientRaw()) {
-		alfCap = new AlfCapabilityFilterPolicy(alfApp);
-		alfApp->prependFilterPolicy(alfCap);
-		alfCap->setCapabilityTypeNo(APN_ALF_CAPRAW);
-	}
-
-	list = history_.getAlfClientPortList();
-	createAlfPortList(alfApp, list, APN_CONNECT);
 }
 
 void
@@ -631,16 +620,13 @@ RuleWizard::createSbDefaultFileList(SbAppPolicy *app, int section) const
 
 	switch(section) {
 	case APN_SBA_READ:
-		/* XXX Read default read list from file. */
-		list = list;
+		list = history_.getSandboxDefaults(wxT("r"));
 		break;
 	case APN_SBA_WRITE:
-		/* XXX Read default write list into list */
-		list = list;
+		list = history_.getSandboxDefaults(wxT("w"));
 		break;
 	case APN_SBA_EXEC:
-		/* XXX Read default exec list into list */
-		list = list;
+		list = history_.getSandboxDefaults(wxT("x"));
 		break;
 	}
 	createSbFileList(app, list, section);

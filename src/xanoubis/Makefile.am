@@ -99,6 +99,7 @@ programdir = $(datadir)/$(bin_PROGRAMS)
 utildir = $(datadir)/$(bin_PROGRAMS)/utils
 icondir = $(datadir)/$(bin_PROGRAMS)/icons
 profiledir = $(datadir)/$(bin_PROGRAMS)/profiles
+wizarddir = $(profiledir)/wizard
 desktopdir = $(datadir)/$(bin_PROGRAMS)
 
 EXTRA_DIST = \
@@ -186,11 +187,16 @@ dist_profile_SCRIPTS = \
 	profiles/high \
 	profiles/medium \
 	profiles/admin
+dist_wizard_SCRIPTS = \
+	profiles/wizard/alf \
+	profiles/wizard/sandbox
 dist_desktop_DATA = \
 	xanoubis.desktop
 
 install-data-hook:
 	-chmod 444 $(DESTDIR)/$(profiledir)/*
+	-chmod 755 $(DESTDIR)/$(profiledir)/wizard
+	-chmod 444 $(DESTDIR)/$(profiledir)/wizard/*
 
 install-data-local: i18n-install
 

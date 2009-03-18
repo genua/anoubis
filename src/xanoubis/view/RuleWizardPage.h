@@ -38,19 +38,31 @@ class RuleWizardPage : public wxWizardPage
 {
 	public:
 		/**
+		 * Constructor of this page.
 		 */
 		RuleWizardPage(wxWizard *, RuleWizard::wizardPages);
 
 		/**
+		 * Get next page.
+		 * This will deliver the next page (after next button was hit).
+		 * @param None.
+		 * @return The next wizard page.
 		 */
 		virtual wxWizardPage* GetNext(void) const;
 
 		/**
+		 * Get previous page.
+		 * This will deliver the previous page (after back button
+		 * was hit).
+		 * @param None.
+		 * @return The previous wizard page.
 		 */
 		virtual wxWizardPage* GetPrev(void) const;
 
 	private:
 		/**
+		 * Keep our page number here. This is used to determine next
+		 * and previous page.
 		 */
 		RuleWizard::wizardPages pageNo_;
 };

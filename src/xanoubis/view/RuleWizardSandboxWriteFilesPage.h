@@ -87,12 +87,20 @@ class RuleWizardSandboxWriteFilesPage : public RuleWizardSandboxFilesPageBase
 		virtual void onAddDirectoryButton(wxCommandEvent &);
 
 		/**
+		 * Handle events form defaultsButton.
+		 * This will load the defaults and add them to the list.
+		 * @param[in] 1st The event.
+		 * @return Nothing.
+		 */
+		virtual void onDefaultsButton(wxCommandEvent &);
+
+		/**
 		 * Handle events from deleteButton.
 		 * This will delete the selected entries from the list.
 		 * @param[in] 1st The event.
 		 * @return Nothing.
 		 */
-		void onDeleteButton(wxCommandEvent &);
+		virtual void onDeleteButton(wxCommandEvent &);
 
 		/**
 		 * Handle select events from fileListCtrl.
@@ -100,7 +108,7 @@ class RuleWizardSandboxWriteFilesPage : public RuleWizardSandboxFilesPageBase
 		 * @param[in] 1st The event.
 		 * @return Nothing.
 		 */
-		void onFileListSelect(wxListEvent &);
+		virtual void onFileListSelect(wxListEvent &);
 
 		/**
 		 * Handle deselect events from fileListCtrl.
@@ -109,7 +117,7 @@ class RuleWizardSandboxWriteFilesPage : public RuleWizardSandboxFilesPageBase
 		 * @param[in] 1st The event.
 		 * @return Nothing.
 		 */
-		void onFileListDeselect(wxListEvent &);
+		virtual void onFileListDeselect(wxListEvent &);
 
 		/**
 		 * Handle events from askCheckBox.
@@ -117,7 +125,7 @@ class RuleWizardSandboxWriteFilesPage : public RuleWizardSandboxFilesPageBase
 		 * @param[in] 1st The event.
 		 * @return Nothing.
 		 */
-		void onAskCheckBox(wxCommandEvent &);
+		virtual void onAskCheckBox(wxCommandEvent &);
 
 		/**
 		 * Handle events from validCheckBox.
@@ -125,7 +133,7 @@ class RuleWizardSandboxWriteFilesPage : public RuleWizardSandboxFilesPageBase
 		 * @param[in] 1st The event.
 		 * @return Nothing.
 		 */
-		void onValidCheckBox(wxCommandEvent &);
+		virtual void onValidCheckBox(wxCommandEvent &);
 
 		/**
 		 * Store file list.

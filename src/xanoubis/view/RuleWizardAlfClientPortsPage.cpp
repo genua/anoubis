@@ -49,6 +49,8 @@ RuleWizardAlfClientPortsPage::RuleWizardAlfClientPortsPage(wxWindow *parent,
 	portListCtrl->SetColumnWidth(COLUMN_PROT, width);
 	portListCtrl->SetColumnWidth(COLUMN_STD, width);
 
+	defaultsButton->Enable(history_->isAlfDefaultAvailable());
+
 	parent->Connect(wxEVT_WIZARD_PAGE_CHANGED,
 	    wxWizardEventHandler(RuleWizardAlfClientPortsPage::onPageChanged),
 	    NULL, this);
@@ -87,7 +89,27 @@ RuleWizardAlfClientPortsPage::onAddButton(wxCommandEvent &)
 			    list.Item(i+2));
 		}
 		storePortList();
+		updateNavi();
 	}
+}
+
+void
+RuleWizardAlfClientPortsPage::onDefaultsButton(wxCommandEvent &)
+{
+	long		index;
+	wxArrayString	list;
+
+	list = history_->getAlfDefaults();
+	for (size_t i=0; i<list.GetCount(); i=i+3) {
+		index = portListCtrl->GetItemCount();
+		portListCtrl->InsertItem(index, wxEmptyString);
+		portListCtrl->SetItem(index, COLUMN_NAME, list.Item(i));
+		portListCtrl->SetItem(index, COLUMN_PORT, list.Item(i+1));
+		portListCtrl->SetItem(index, COLUMN_PROT, list.Item(i+2));
+		portListCtrl->SetItem(index, COLUMN_STD, wxT("x"));
+	}
+	storePortList();
+	updateNavi();
 }
 
 void
@@ -104,6 +126,7 @@ RuleWizardAlfClientPortsPage::onDeleteButton(wxCommandEvent &)
 		    wxLIST_STATE_SELECTED);
 	}
 	storePortList();
+	updateNavi();
 }
 
 void

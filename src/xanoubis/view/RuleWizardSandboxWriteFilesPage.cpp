@@ -33,8 +33,9 @@
 
 #define ALL_FILES_ENTRY	_("(all files)")
 
-RuleWizardSandboxWriteFilesPage::RuleWizardSandboxWriteFilesPage(wxWindow *parent,
-    RuleWizardHistory *history) : RuleWizardSandboxFilesPageBase(parent)
+RuleWizardSandboxWriteFilesPage::RuleWizardSandboxWriteFilesPage(
+    wxWindow *parent, RuleWizardHistory *history)
+    : RuleWizardSandboxFilesPageBase(parent)
 {
 	int width;
 
@@ -51,9 +52,12 @@ RuleWizardSandboxWriteFilesPage::RuleWizardSandboxWriteFilesPage(wxWindow *paren
 	fileListCtrl->SetColumnWidth(COLUMN_FILE, width);
 	fileListCtrl->SetColumnWidth(COLUMN_STD, width);
 
-	parent->Connect(wxEVT_WIZARD_PAGE_CHANGED,
-	    wxWizardEventHandler(RuleWizardSandboxWriteFilesPage::onPageChanged),
-	    NULL, this);
+	defaultsButton->Enable(history_->isSandboxDefaultAvailable(wxT("w")));
+	validCheckBox->SetLabel(
+	    _("always deny access on valid checksum / signature"));
+
+	parent->Connect(wxEVT_WIZARD_PAGE_CHANGED, wxWizardEventHandler(
+	    RuleWizardSandboxWriteFilesPage::onPageChanged), NULL, this);
 }
 
 void
@@ -117,6 +121,33 @@ RuleWizardSandboxWriteFilesPage::onAddDirectoryButton(wxCommandEvent &)
 		storeFileList();
 		updateNavi();
 	}
+}
+
+void
+RuleWizardSandboxWriteFilesPage::onDefaultsButton(wxCommandEvent &)
+{
+	long		index;
+	wxArrayString	list;
+	wxFileName	path;
+
+	list = history_->getSandboxDefaults(wxT("w"));
+	for (size_t i=0; i<list.GetCount(); i++) {
+		index = fileListCtrl->GetItemCount();
+		fileListCtrl->InsertItem(index, wxEmptyString);
+
+		path.Assign(list.Item(i));
+		fileListCtrl->SetItem(index, COLUMN_PATH, path.GetPath());
+		if (path.IsDir()) {
+			fileListCtrl->SetItem(index, COLUMN_FILE,
+			    ALL_FILES_ENTRY);
+		} else {
+			fileListCtrl->SetItem(index, COLUMN_FILE,
+			    path.GetFullName());
+		}
+		fileListCtrl->SetItem(index, COLUMN_STD, wxT("x"));
+	}
+	storeFileList();
+	updateNavi();
 }
 
 void

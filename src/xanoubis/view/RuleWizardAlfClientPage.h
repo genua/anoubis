@@ -59,18 +59,34 @@ class RuleWizardAlfClientPage : public RuleWizardAlfPermissionPageBase
 		void onPageChanged(wxWizardEvent &);
 
 		/**
+		 * Handle events from yesRadioButton.
+		 * Update history.
+		 * @param[in] 1st The event.
+		 * @return Nothing.
 		 */
 		virtual void onYesRadioButton(wxCommandEvent &);
 
 		/**
+		 * Handle events from defaultRadioButton.
+		 * Update history.
+		 * @param[in] 1st The event.
+		 * @return Nothing.
 		 */
 		virtual void onDefaultRadioButton(wxCommandEvent &);
 
 		/**
+		 * Handle events from restrictedRadioButton.
+		 * Update history.
+		 * @param[in] 1st The event.
+		 * @return Nothing.
 		 */
 		virtual void onRestrictedRadioButton(wxCommandEvent &);
 
 		/**
+		 * Handle events from noRadioButton.
+		 * Update history.
+		 * @param[in] 1st The event.
+		 * @return Nothing.
 		 */
 		virtual void onNoRadioButton(wxCommandEvent &);
 
