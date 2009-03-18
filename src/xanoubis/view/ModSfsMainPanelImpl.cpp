@@ -584,6 +584,9 @@ ModSfsMainPanelImpl::initSfsMain(void)
 	sfsCtrl_->setPath(SfsMainDirCtrl->GetPath());
 	wxEndBusyCursor();
 
+	/* Make sure you have a selection for applying an sfs-operation */
+	SfsMainActionChoice->SetSelection(0);
+
 	SfsMainDirTraversalCheckbox->SetValue(sfsCtrl_->isRecursive());
 }
 
