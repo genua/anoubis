@@ -311,8 +311,8 @@ SfsCtrl::importChecksums(const wxString &path)
 		}
 
 		if ((entries = import_csum(fh)) == 0) {
-			errorList_.Add(
-			    wxString::Format(_("Failed to parse %ls!"), path.c_str()));
+			errorList_.Add(wxString::Format(
+			    _("Failed to parse %ls!"), path.c_str()));
 			sendErrorEvent();
 			fclose(fh);
 			return (RESULT_INVALIDARG);
@@ -327,7 +327,8 @@ SfsCtrl::importChecksums(const wxString &path)
 
 			createComCsumAddTasks(entry);
 
-			int idx = sfsDir_.getIndexOf(wxString::FromAscii(entry->name));
+			int idx = sfsDir_.getIndexOf(
+			    wxString::FromAscii(entry->name));
 			if (idx != -1) {
 				/* Part of the model, perform a validation */
 				SfsEntry &e = sfsDir_.getEntry(idx);
@@ -451,24 +452,53 @@ SfsCtrl::OnSfsListArrived(TaskEvent &event)
 
 	event.Skip(false); /* "My" task -> stop propagating */
 
-	if (task->getComTaskResult() == ComTask::RESULT_COM_ERROR) {
-		wxString message = wxString::Format(_(
-		    "Communication error while fetching list of checksumed \
-files of %s."), task->getDirectory().c_str());
-		errorList_.Add(message);
-	} else if (task->getComTaskResult() == ComTask::RESULT_REMOTE_ERROR) {
-		wxString message = wxString::Format(
-		    _("Got error from daemon (%s) while fetching the list of \
-checksumed files of %s"),
-		    wxStrError(task->getResultDetails()).c_str(),
-		    task->getDirectory().c_str());
-		errorList_.Add(message);
-	} else if (task->getComTaskResult() != ComTask::RESULT_SUCCESS) {
-		wxString message = wxString::Format(
-		    _("An unexpected error occured (%i) while fetching the \
-list of checksumed files of %s."),
-		    task->getComTaskResult(),
-		    task->getDirectory().c_str());
+	ComTask::ComTaskResult comResult = task->getComTaskResult();
+	SfsEntry::ChecksumType type = task->haveKeyId() ?
+	    SfsEntry::SFSENTRY_SIGNATURE : SfsEntry::SFSENTRY_CHECKSUM;
+
+	if (comResult != ComTask::RESULT_SUCCESS) {
+		ComTask::ComTaskResult comResult = task->getComTaskResult();
+		wxString message;
+
+		if (comResult == ComTask::RESULT_COM_ERROR) {
+			if (type == SfsEntry::SFSENTRY_CHECKSUM)
+				message = wxString::Format(_("Communication "
+				    "error while fetching list of checksumed "
+				    "files of %ls."),
+				    task->getDirectory().c_str());
+			else
+				message = wxString::Format(_("Communication "
+				    "error while fetching list of signed "
+				    "files of %ls."),
+				    task->getDirectory().c_str());
+		} else if (comResult == ComTask::RESULT_REMOTE_ERROR) {
+			wxString err = wxStrError(task->getResultDetails());
+
+			if (type == SfsEntry::SFSENTRY_CHECKSUM)
+				message = wxString::Format(_("Got error from "
+				    "daemon (%ls) while fetching the list of "
+				    "checksumed files of %ls."),
+				    err.c_str(), task->getDirectory().c_str());
+			else
+				message = wxString::Format(_("Got error from "
+				    "daemon (%ls) while fetching the list of "
+				    "signed files of %ls."),
+				    err.c_str(), task->getDirectory().c_str());
+		} else {
+			if (type == SfsEntry::SFSENTRY_CHECKSUM)
+				message = wxString::Format(_("An unexpected "
+				    "error occured (%i) while fetching the "
+				    "list of checksumed files of %s."),
+				    task->getComTaskResult(),
+				    task->getDirectory().c_str());
+			else
+				message = wxString::Format(_("An unexpected "
+				    "error occured (%i) while fetching the "
+				    "list of signed files of %s."),
+				    task->getComTaskResult(),
+				    task->getDirectory().c_str());
+		}
+
 		errorList_.Add(message);
 	} else
 		result = task->getFileList();
@@ -494,10 +524,6 @@ list of checksumed files of %s."),
 			result.RemoveAt(csumIdx);
 		} else {
 			/* Update checksum attribute to no-checksum */
-			SfsEntry::ChecksumType type = task->haveKeyId() ?
-			    SfsEntry::SFSENTRY_SIGNATURE :
-			    SfsEntry::SFSENTRY_CHECKSUM;
-
 			if (entry.setChecksumMissing(type))
 				sendEntryChangedEvent(idx);
 		}
@@ -618,29 +644,53 @@ SfsCtrl::OnCsumGet(TaskEvent &event)
 			if (entry.setChecksumInvalid(type))
 				sendEntryChangedEvent(idx);
 		} else {
-			wxString message = wxString::Format(
-			    _("Got error from daemon (%s) while fetching the "
-			    "checksum for %s."),
-			    wxStrError(task->getResultDetails()).c_str(),
-			    task->getPath().c_str());
+			wxString err = wxStrError(task->getResultDetails());
+			wxString message;
+
+			if (type == SfsEntry::SFSENTRY_CHECKSUM)
+				message = wxString::Format(_("Got error from "
+				    "daemon (%ls) while fetching the checksum "
+				    "for %ls."), err.c_str(),
+				    task->getPath().c_str());
+			else
+				message = wxString::Format(_("Got error from "
+				    "daemon (%ls) while fetching the "
+				    "signature for %ls."), err.c_str(),
+				    task->getPath().c_str());
+
 			errorList_.Add(message);
 		}
 
 		return;
 	} else if (taskResult == ComTask::RESULT_COM_ERROR) {
-		wxString message = wxString::Format(_(
-		    "Communication error while fetching the checksum for %s."),
-		    task->getPath().c_str());
-		errorList_.Add(message);
+		wxString message;
 
+		if (type == SfsEntry::SFSENTRY_CHECKSUM)
+			message = wxString::Format(_("Communication error "
+			    "while fetching the checksum for %ls."),
+			    task->getPath().c_str());
+		else
+			message = wxString::Format(_("Communication error "
+			    "while fetching the signature for %ls."),
+			    task->getPath().c_str());
+
+		errorList_.Add(message);
 		return;
 	} else if (taskResult != ComTask::RESULT_SUCCESS) {
-		wxString message = wxString::Format(
-		    _("An unexpected error occured (%i) while fetching the "
-		    "checksum for %s."), task->getComTaskResult(),
-		    task->getPath().c_str());
-		errorList_.Add(message);
+		wxString message;
 
+		if (type == SfsEntry::SFSENTRY_CHECKSUM)
+			message = wxString::Format(_("An unexpected error "
+			    "occured (%i) while fetching the checksum for "
+			    "%ls."), task->getComTaskResult(),
+			    task->getPath().c_str());
+		else
+			message = wxString::Format(_("An unexpected error "
+			    "occured (%i) while fetching the signature for "
+			    "%ls."), task->getComTaskResult(),
+			    task->getPath().c_str());
+
+		errorList_.Add(message);
 		return;
 	}
 
@@ -654,7 +704,13 @@ SfsCtrl::OnCsumGet(TaskEvent &event)
 			pushExportEntry(entry);
 		}
 	} else {
-		wxString message = _("An unexpected checksum was fetched.");
+		wxString message;
+
+		if (type == SfsEntry::SFSENTRY_CHECKSUM)
+			message = _("An unexpected checksum was fetched.");
+		else
+			message = _("An unexpected signature was fetched.");
+
 		errorList_.Add(message);
 	}
 }
@@ -689,43 +745,73 @@ SfsCtrl::OnCsumAdd(TaskEvent &event)
 		return;
 	}
 
+	SfsEntry::ChecksumType type = task->haveKeyId() ?
+	    SfsEntry::SFSENTRY_SIGNATURE : SfsEntry::SFSENTRY_CHECKSUM;
+
 	if (task->getComTaskResult() == ComTask::RESULT_LOCAL_ERROR) {
 		wxString message;
-		message.Printf(
-		    _("Failed to calculate the checksum for %s: %s"),
-		    task->getPath().c_str(),
-		    wxStrError(task->getResultDetails()).c_str());
-		errorList_.Add(message);
 
+		if (type == SfsEntry::SFSENTRY_CHECKSUM)
+			message.Printf(_("Failed to calculate the checksum "
+			    "for %ls: %ls"), task->getPath().c_str(),
+			    wxStrError(task->getResultDetails()).c_str());
+		else
+			message.Printf(_("Failed to calculate the signature "
+			    "for %ls: %ls"), task->getPath().c_str(),
+			    wxStrError(task->getResultDetails()).c_str());
+
+		errorList_.Add(message);
 		return;
 	} else if (task->getComTaskResult() == ComTask::RESULT_COM_ERROR) {
-		wxString message = wxString::Format(_(
-		    "Communication error while register the checksum for %s."),
-		    task->getPath().c_str());
-		errorList_.Add(message);
+		wxString message;
 
+		if (type == SfsEntry::SFSENTRY_CHECKSUM)
+			message = wxString::Format(_("Communication error "
+			    "while register the checksum for %ls."),
+			    task->getPath().c_str());
+		else
+			message = wxString::Format(_("Communication error "
+			    "while register the signature for %ls."),
+			    task->getPath().c_str());
+
+		errorList_.Add(message);
 		return;
 	} else if (task->getComTaskResult() == ComTask::RESULT_REMOTE_ERROR) {
-		wxString message = wxString::Format(
-		    _("Got error from daemon (%s) while register the \
-checksum for %s."), wxStrError(task->getResultDetails()).c_str(),
-		    task->getPath().c_str());
-		errorList_.Add(message);
+		wxString message;
 
+		if (type == SfsEntry::SFSENTRY_CHECKSUM)
+			message = wxString::Format(_("Got error from daemon "
+			    "(%ls) while register the checksum for %ls."),
+			    wxStrError(task->getResultDetails()).c_str(),
+			    task->getPath().c_str());
+		else
+			message = wxString::Format(_("Got error from daemon "
+			    "(%ls) while register the signature for %ls."),
+			    wxStrError(task->getResultDetails()).c_str(),
+			    task->getPath().c_str());
+
+		errorList_.Add(message);
 		return;
 	} else if (task->getComTaskResult() != ComTask::RESULT_SUCCESS) {
-		wxString message = wxString::Format(
-		    _("An unexpected error occured (%i) while register the \
-checksum for %s."), task->getComTaskResult(), task->getPath().c_str());
-		errorList_.Add(message);
+		wxString message;
 
+		if (type == SfsEntry::SFSENTRY_CHECKSUM)
+			message = wxString::Format(_("An unexpected error "
+			    "occured (%i) while register the checksum for "
+			    "%ls."), task->getComTaskResult(),
+			    task->getPath().c_str());
+		else
+			message = wxString::Format(_("An unexpected error "
+			    "occured (%i) while register the signature for "
+			    "%ls."), task->getComTaskResult(),
+			    task->getPath().c_str());
+
+		errorList_.Add(message);
 		return;
 	}
 
 	/* Update model */
 	SfsEntry &entry = sfsDir_.getEntry(idx);
-	SfsEntry::ChecksumType type = task->haveKeyId() ?
-	    SfsEntry::SFSENTRY_SIGNATURE : SfsEntry::SFSENTRY_CHECKSUM;
 	u_int8_t cs[ANOUBIS_CS_LEN];
 
 	if (task->getCsum(cs, sizeof(cs)) != ANOUBIS_CS_LEN) {
@@ -767,29 +853,56 @@ SfsCtrl::OnCsumDel(TaskEvent &event)
 		return;
 	}
 
+	SfsEntry::ChecksumType type = task->haveKeyId() ?
+	    SfsEntry::SFSENTRY_SIGNATURE : SfsEntry::SFSENTRY_CHECKSUM;
+
 	if (task->getComTaskResult() == ComTask::RESULT_COM_ERROR) {
-		wxString message = wxString::Format(_(
-		    "Communication error while removing the checksum for %s."),
-		    task->getPath().c_str());
+		wxString message;
+
+		if (type == SfsEntry::SFSENTRY_CHECKSUM)
+			message = wxString::Format(_("Communication error "
+			    "while removing the checksum for %ls."),
+			    task->getPath().c_str());
+		else
+			message = wxString::Format(_("Communication error "
+			    "while removing the signature for %ls."),
+			    task->getPath().c_str());
+
 		errorList_.Add(message);
 	} else if (task->getComTaskResult() == ComTask::RESULT_REMOTE_ERROR) {
-		wxString message = wxString::Format(
-		    _("Got error from daemon (%s) while removing the \
-checksum for %s."), wxStrError(task->getResultDetails()).c_str(),
-		    task->getPath().c_str());
+		wxString message;
+
+		if (type == SfsEntry::SFSENTRY_CHECKSUM)
+			message = wxString::Format(_("Got error from daemon "
+			    "(%ls) while removing the checksum for %ls."),
+			    wxStrError(task->getResultDetails()).c_str(),
+			    task->getPath().c_str());
+		else
+			message = wxString::Format(_("Got error from daemon "
+			    "(%ls) while removing the signature for %ls."),
+			    wxStrError(task->getResultDetails()).c_str(),
+			    task->getPath().c_str());
+
 		errorList_.Add(message);
 	} else if (task->getComTaskResult() != ComTask::RESULT_SUCCESS) {
-		wxString message = wxString::Format(
-		    _("An unexpected error occured (%i) while removing the \
-checksum for %s."), task->getComTaskResult(), task->getPath().c_str());
+		wxString message;
+
+		if (type == SfsEntry::SFSENTRY_CHECKSUM)
+			message = wxString::Format(_("An unexpected error "
+			    "occured (%i) while removing the checksum for "
+			    "%ls."), task->getComTaskResult(),
+			    task->getPath().c_str());
+		else
+			message = wxString::Format(_("An unexpected error "
+			    "occured (%i) while removing the signature for "
+			    "%ls."), task->getComTaskResult(),
+			    task->getPath().c_str());
+
 		errorList_.Add(message);
 	}
 
 	/* Update model */
 	SfsEntry &entry = sfsDir_.getEntry(idx);
-	SfsEntry::ChecksumType type = task->haveKeyId() ?
-	    SfsEntry::SFSENTRY_SIGNATURE : SfsEntry::SFSENTRY_CHECKSUM;
-
 	if (entry.setChecksumMissing(type))
 		sendEntryChangedEvent(idx);
 }
