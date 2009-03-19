@@ -345,7 +345,7 @@ ModAnoubisMainPanelImpl::OnProfileDeleteClicked(wxCommandEvent &)
 		profileTabUpdate();
 	} else {
 		wxMessageBox(
-		    wxString::Format(_("Failed to remove \"%s\"."),
+		    wxString::Format(_("Failed to remove \"%ls\"."),
 		       selectedProfile.c_str()),
 		    _("Remove profile"), wxOK | wxICON_ERROR, this);
 	}
@@ -361,7 +361,7 @@ ModAnoubisMainPanelImpl::OnProfileLoadClicked(wxCommandEvent &)
 		profileTabUpdate();
 	} else {
 		wxMessageBox(
-		    wxString::Format(_("Failed to import from \"%s\"."),
+		    wxString::Format(_("Failed to import from \"%ls\"."),
 		       selectedProfile.c_str()),
 		    _("Load profile"), wxOK | wxICON_ERROR, this);
 	}
@@ -379,7 +379,7 @@ ModAnoubisMainPanelImpl::OnProfileSaveClicked(wxCommandEvent &)
 		if (!profileCtrl->isProfileWritable(profile)) {
 			wxMessageBox(
 			    wxString::Format(
-			       _("The profile \"%s\" is not writable!"),
+			       _("The profile \"%ls\" is not writable!"),
 			       profile.c_str()),
 			    _("Save profile"), wxOK | wxICON_ERROR, this);
 			return;
@@ -390,7 +390,7 @@ ModAnoubisMainPanelImpl::OnProfileSaveClicked(wxCommandEvent &)
 			profileTabUpdate();
 		} else {
 			wxMessageBox(
-			    wxString::Format(_("Failed to export to \"%s\"."),
+			    wxString::Format(_("Failed to export to \"%ls\"."),
 			       profile.c_str()),
 			    _("Save profile"), wxOK | wxICON_ERROR, this);
 		}
@@ -405,7 +405,7 @@ ModAnoubisMainPanelImpl::OnProfileActivateClicked(wxCommandEvent &)
 
 	if (!profileCtrl->importFromProfile(selectedProfile)) {
 		wxMessageBox(
-		    wxString::Format(_("Failed to import from \"%s\"."),
+		    wxString::Format(_("Failed to import from \"%ls\"."),
 		       selectedProfile.c_str()),
 		    _("Activate profile"), wxOK | wxICON_ERROR, this);
 		return;
@@ -1094,7 +1094,7 @@ ModAnoubisMainPanelImpl::OnVersionRestoreButtonClick(wxCommandEvent&)
 		else
 			msg.Printf(_(
 			    "Failed to fetch the policy\n"
-			    "of the \"%s\" profile"), profile.c_str());
+			    "of the \"%ls\" profile"), profile.c_str());
 
 		wxMessageBox(msg, _("Restore version"),
 		    wxOK | wxICON_ERROR, this);
@@ -1111,7 +1111,7 @@ ModAnoubisMainPanelImpl::OnVersionRestoreButtonClick(wxCommandEvent&)
 		if (!profileCtrl->importPolicy(rs, profile)) {
 			wxString msg = wxString::Format(_(
 			    "Failed to import the policy\n"
-			    "of the \"%s\" profile"), profile.c_str());
+			    "of the \"%ls\" profile"), profile.c_str());
 
 			wxMessageBox(msg, _("Restore version"),
 			    wxOK | wxICON_ERROR, this);

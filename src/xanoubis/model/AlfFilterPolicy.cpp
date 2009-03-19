@@ -850,15 +850,15 @@ AlfFilterPolicy::getServiceName(void) const
 	case APN_SEND:
 		/* FALLTHROUGH */
 	case APN_CONNECT:
-		service.Printf(_("to %s"), getToHostName().c_str());
+		service.Printf(_("to %ls"), getToHostName().c_str());
 		break;
 	case APN_RECEIVE:
 		/* FALLTHROUGH */
 	case APN_ACCEPT:
-		service.Printf(_("from %s"), getFromHostName().c_str());
+		service.Printf(_("from %ls"), getFromHostName().c_str());
 		break;
 	case APN_BOTH:
-		service.Printf(_("both from %s to %s"),
+		service.Printf(_("both from %ls to %ls"),
 		    getFromHostName().c_str(), getToHostName().c_str());
 		break;
 	default:

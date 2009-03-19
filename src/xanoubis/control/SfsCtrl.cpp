@@ -31,7 +31,6 @@
 #include <csum/csum.h>
 
 #include "AnEvents.h"
-#include "AnUtils.h"
 #include "ComCsumAddTask.h"
 #include "ComCsumDelTask.h"
 #include "ComCsumGetTask.h"
@@ -304,7 +303,7 @@ SfsCtrl::importChecksums(const wxString &path)
 
 		if ((fh = fopen(path.fn_str(), "r")) == 0) {
 			errorList_.Add(wxString::Format(
-			    _("Failed to open %ls for reading: %s"),
+			    _("Failed to open %ls for reading: %hs"),
 			    path.c_str(), strerror(errno)));
 			sendErrorEvent();
 			return (RESULT_INVALIDARG);
@@ -472,29 +471,29 @@ SfsCtrl::OnSfsListArrived(TaskEvent &event)
 				    "files of %ls."),
 				    task->getDirectory().c_str());
 		} else if (comResult == ComTask::RESULT_REMOTE_ERROR) {
-			wxString err = wxStrError(task->getResultDetails());
+			const char *err = strerror(task->getResultDetails());
 
 			if (type == SfsEntry::SFSENTRY_CHECKSUM)
 				message = wxString::Format(_("Got error from "
-				    "daemon (%ls) while fetching the list of "
+				    "daemon (%hs) while fetching the list of "
 				    "checksumed files of %ls."),
-				    err.c_str(), task->getDirectory().c_str());
+				    err, task->getDirectory().c_str());
 			else
 				message = wxString::Format(_("Got error from "
-				    "daemon (%ls) while fetching the list of "
+				    "daemon (%hs) while fetching the list of "
 				    "signed files of %ls."),
-				    err.c_str(), task->getDirectory().c_str());
+				    err, task->getDirectory().c_str());
 		} else {
 			if (type == SfsEntry::SFSENTRY_CHECKSUM)
 				message = wxString::Format(_("An unexpected "
 				    "error occured (%i) while fetching the "
-				    "list of checksumed files of %s."),
+				    "list of checksumed files of %ls."),
 				    task->getComTaskResult(),
 				    task->getDirectory().c_str());
 			else
 				message = wxString::Format(_("An unexpected "
 				    "error occured (%i) while fetching the "
-				    "list of signed files of %s."),
+				    "list of signed files of %ls."),
 				    task->getComTaskResult(),
 				    task->getDirectory().c_str());
 		}
@@ -571,7 +570,7 @@ SfsCtrl::OnCsumCalc(TaskEvent &event)
 	int idx = sfsDir_.getIndexOf(task->getPath());
 	if (idx == -1) {
 		wxString message = wxString::Format(
-		    _("%s not found in file-list!"), task->getPath().c_str());
+		    _("%ls not found in file-list!"), task->getPath().c_str());
 		errorList_.Add(message);
 
 		return;
@@ -580,9 +579,9 @@ SfsCtrl::OnCsumCalc(TaskEvent &event)
 	if (task->getResult() != 0) {
 		/* Calculation failed */
 		wxString message = wxString::Format(
-		    _("Failed to calculate the checksum for %s: %s"),
+		    _("Failed to calculate the checksum for %ls: %hs"),
 		    task->getPath().c_str(),
-		    wxStrError(task->getResult()).c_str());
+		    strerror(task->getResult()));
 		errorList_.Add(message);
 
 		return;
@@ -621,7 +620,7 @@ SfsCtrl::OnCsumGet(TaskEvent &event)
 	int idx = sfsDir_.getIndexOf(task->getPath());
 	if (idx == -1) {
 		wxString message = wxString::Format(
-		    _("%s not found in file-list!"), task->getPath().c_str());
+		    _("%ls not found in file-list!"), task->getPath().c_str());
 		errorList_.Add(message);
 
 		return;
@@ -644,18 +643,17 @@ SfsCtrl::OnCsumGet(TaskEvent &event)
 			if (entry.setChecksumInvalid(type))
 				sendEntryChangedEvent(idx);
 		} else {
-			wxString err = wxStrError(task->getResultDetails());
+			const char *err = strerror(task->getResultDetails());
 			wxString message;
 
 			if (type == SfsEntry::SFSENTRY_CHECKSUM)
 				message = wxString::Format(_("Got error from "
-				    "daemon (%ls) while fetching the checksum "
-				    "for %ls."), err.c_str(),
-				    task->getPath().c_str());
+				    "daemon (%hs) while fetching the checksum "
+				    "for %ls."), err, task->getPath().c_str());
 			else
 				message = wxString::Format(_("Got error from "
-				    "daemon (%ls) while fetching the "
-				    "signature for %ls."), err.c_str(),
+				    "daemon (%hs) while fetching the "
+				    "signature for %ls."), err,
 				    task->getPath().c_str());
 
 			errorList_.Add(message);
@@ -739,7 +737,7 @@ SfsCtrl::OnCsumAdd(TaskEvent &event)
 	int idx = sfsDir_.getIndexOf(task->getPath());
 	if (idx == -1) {
 		wxString message = wxString::Format(
-		    _("%s not found in file-list!"), task->getPath().c_str());
+		    _("%ls not found in file-list!"), task->getPath().c_str());
 		errorList_.Add(message);
 
 		return;
@@ -753,12 +751,12 @@ SfsCtrl::OnCsumAdd(TaskEvent &event)
 
 		if (type == SfsEntry::SFSENTRY_CHECKSUM)
 			message.Printf(_("Failed to calculate the checksum "
-			    "for %ls: %ls"), task->getPath().c_str(),
-			    wxStrError(task->getResultDetails()).c_str());
+			    "for %ls: %hs"), task->getPath().c_str(),
+			    strerror(task->getResultDetails()));
 		else
 			message.Printf(_("Failed to calculate the signature "
-			    "for %ls: %ls"), task->getPath().c_str(),
-			    wxStrError(task->getResultDetails()).c_str());
+			    "for %ls: %hs"), task->getPath().c_str(),
+			    strerror(task->getResultDetails()));
 
 		errorList_.Add(message);
 		return;
@@ -781,13 +779,13 @@ SfsCtrl::OnCsumAdd(TaskEvent &event)
 
 		if (type == SfsEntry::SFSENTRY_CHECKSUM)
 			message = wxString::Format(_("Got error from daemon "
-			    "(%ls) while register the checksum for %ls."),
-			    wxStrError(task->getResultDetails()).c_str(),
+			    "(%hs) while register the checksum for %ls."),
+			    strerror(task->getResultDetails()),
 			    task->getPath().c_str());
 		else
 			message = wxString::Format(_("Got error from daemon "
-			    "(%ls) while register the signature for %ls."),
-			    wxStrError(task->getResultDetails()).c_str(),
+			    "(%hs) while register the signature for %ls."),
+			    strerror(task->getResultDetails()),
 			    task->getPath().c_str());
 
 		errorList_.Add(message);
@@ -847,7 +845,7 @@ SfsCtrl::OnCsumDel(TaskEvent &event)
 	int idx = sfsDir_.getIndexOf(task->getPath());
 	if (idx == -1) {
 		wxString message = wxString::Format(
-		    _("%s not found in file-list!"), task->getPath().c_str());
+		    _("%ls not found in file-list!"), task->getPath().c_str());
 		errorList_.Add(message);
 
 		return;
@@ -874,13 +872,13 @@ SfsCtrl::OnCsumDel(TaskEvent &event)
 
 		if (type == SfsEntry::SFSENTRY_CHECKSUM)
 			message = wxString::Format(_("Got error from daemon "
-			    "(%ls) while removing the checksum for %ls."),
-			    wxStrError(task->getResultDetails()).c_str(),
+			    "(%hs) while removing the checksum for %ls."),
+			    strerror(task->getResultDetails()),
 			    task->getPath().c_str());
 		else
 			message = wxString::Format(_("Got error from daemon "
-			    "(%ls) while removing the signature for %ls."),
-			    wxStrError(task->getResultDetails()).c_str(),
+			    "(%hs) while removing the signature for %ls."),
+			    strerror(task->getResultDetails()),
 			    task->getPath().c_str());
 
 		errorList_.Add(message);
@@ -1170,7 +1168,7 @@ SfsCtrl::dumpExportEntries(void)
 	FILE *fh = fopen(exportFile_.fn_str(), "w");
 	if (fh == 0) {
 		errorList_.Add(wxString::Format(
-		    _("Failed to open %ls for writing: %s"),
+		    _("Failed to open %ls for writing: %hs"),
 		    exportFile_.c_str(), strerror(errno)));
 		return;
 	}
@@ -1179,7 +1177,7 @@ SfsCtrl::dumpExportEntries(void)
 
 	if (fflush(fh) != 0) {
 		errorList_.Add(wxString::Format(
-		    _("Failed to flush the content of %s: %s"),
+		    _("Failed to flush the content of %ls: %hs"),
 		    exportFile_.c_str(), strerror(errno)));
 	}
 

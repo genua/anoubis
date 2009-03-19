@@ -34,7 +34,6 @@
 #include <wx/string.h>
 
 #include "DlgRuleEditorAppPage.h"
-#include "AnUtils.h"
 
 DlgRuleEditorAppPage::DlgRuleEditorAppPage(wxWindow *parent,
     wxWindowID id, const wxPoint & pos, const wxSize & size, long style)
@@ -383,9 +382,9 @@ DlgRuleEditorAppPage::onCsumCalcTask(TaskEvent &event)
 	if (task->getResult() != 0) {
 		/* Calculation failed */
 		message = wxString::Format(
-		    _("Failed to calculate the checksum for %s: %s"),
+		    _("Failed to calculate the checksum for %ls: %hs"),
 		    task->getPath().c_str(),
-		    wxStrError(task->getResult()).c_str());
+		    strerror(task->getResult()));
 		wxMessageBox(message, _("Rule Editor"), wxOK | wxICON_ERROR,
 		    this);
 		csumCache_.Empty();

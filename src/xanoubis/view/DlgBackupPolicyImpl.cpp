@@ -54,10 +54,10 @@ DlgBackupPolicy::DlgBackupPolicy(wxIcon *icon, PolicyRuleSet *rs)
 	}
 	if (pwd && pwd->pw_name != NULL) {
 		if (ruleset_->isAdmin()) {
-			policytext = wxString::Format(_("Admin Policy of %s"),
+			policytext = wxString::Format(_("Admin Policy of %ls"),
 			    user.c_str());
 		} else {
-			policytext = wxString::Format(_("User Policy of %s"),
+			policytext = wxString::Format(_("User Policy of %ls"),
 			    user.c_str());
 		}
 	}

@@ -34,7 +34,6 @@
 #include <wx/stdpaths.h>
 
 #include "main.h"
-#include "AnUtils.h"
 #include "ComPolicyRequestTask.h"
 #include "ComPolicySendTask.h"
 #include "JobCtrl.h"
@@ -492,30 +491,31 @@ ProfileCtrl::OnPolicySend(TaskEvent &event)
 	} else if (taskResult == ComTask::RESULT_COM_ERROR) {
 		if (isAdmin && (task->getPriority() == 0))
 			message.Printf(
-			    _("Communication error while sending admin-policy\n\
-of %s to daemon."), user.c_str());
+			    _("Communication error while sending admin-policy\n"
+			    "of %ls to daemon."), user.c_str());
 		else if (isAdmin && (task->getPriority() > 0))
-			message.Printf(_("Communication error while sending\
-user-policy\nof %s to daemon."), user.c_str());
+			message.Printf(_("Communication error while sending "
+			    "user-policy\nof %ls to daemon."), user.c_str());
 		else
 			message = _("Error while sending policy to daemon.");
 	} else if (taskResult == ComTask::RESULT_REMOTE_ERROR) {
 		if (isAdmin && (task->getPriority() == 0))
-			message.Printf(_("Got error (%s) from daemon\n\
-after sent admin-policy of %s."),
-			    wxStrError(task->getResultDetails()).c_str(),
+			message.Printf(_("Got error (%hs) from daemon\n"
+			    "after sending admin-policy of %ls."),
+			    strerror(task->getResultDetails()),
 			    user.c_str());
 		else if (isAdmin && (task->getPriority() > 0))
-			message.Printf(_("Got error (%s) from daemon\n\
-after sent user-policy of %s."),
-			    wxStrError(task->getResultDetails()).c_str(),
+			message.Printf(_("Got error (%hs) from daemon\n"
+			    "after sending user-policy of %ls."),
+			    strerror(task->getResultDetails()),
 			    user.c_str());
 		else
-			message.Printf(_("Got error (%s) from daemon\n\
-after sent policy."), wxStrError(task->getResultDetails()).c_str());
+			message.Printf(_("Got error (%hs) from daemon\n"
+			    "after sending policy."),
+			    strerror(task->getResultDetails()));
 	} else if (taskResult != ComTask::RESULT_SUCCESS) {
-		message.Printf(_("An unexpected error occured.\n\
-Error code: %i"), taskResult);
+		message.Printf(_("An unexpected error occured.\n"
+		    "Error code: %i"), taskResult);
 	}
 
 	/* XXX: This is the wrong place to show up a message-box! */
@@ -596,7 +596,7 @@ ProfileCtrl::makeBackup(const wxString &profile)
 		return (false);
 
 	wxString comment = wxString::Format(
-	    _("Automatically created version while saving the %s profile"),
+	    _("Automatically created version while saving the %ls profile"),
 	    profile.c_str());
 
 	VersionCtrl *versionCtrl = VersionCtrl::getInstance();

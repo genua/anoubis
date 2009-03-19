@@ -33,7 +33,7 @@ ModSfsDetailsDlg::ModSfsDetailsDlg(const SfsEntry &entry, wxWindow *parent)
 {
 	/* Path */
 	wxString path = entry.getPath();
-	SetTitle(wxString::Format(_("Details for %s"), path.c_str()));
+	SetTitle(wxString::Format(_("Details for %ls"), path.c_str()));
 	pathTextCtrl->SetValue(path);
 
 	if (entry.isSymlink()) {

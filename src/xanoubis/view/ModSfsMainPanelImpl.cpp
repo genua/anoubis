@@ -707,7 +707,7 @@ ModSfsMainPanelImpl::certificateParamsUpdate(const wxString &path)
 	if (!path.IsEmpty()) {
 		if (!cert.load()) {
 			wxMessageBox(wxString::Format(
-			    _("Failed to load certificate from\n%s."),
+			    _("Failed to load certificate from\n%ls."),
 			    cert.getFile().c_str()),
 			    _("Load certificate"), wxOK | wxICON_ERROR, this);
 		}
@@ -823,7 +823,7 @@ ModSfsMainPanelImpl::ruleListAppend(Policy *policy)
 	ruleset = policy->getParentRuleSet();
 	if (ruleset->isAdmin()) {
 		userName = wxGetApp().getUserNameById(ruleset->getUid());
-		ruleType.Printf(_("admin ruleset of %s"), userName.c_str());
+		ruleType.Printf(_("admin ruleset of %ls"), userName.c_str());
 		lst_Rules->SetItemBackgroundColour(idx,
 		    wxTheColourDatabase->Find(wxT("LIGHT GREY")));
 	} else {
@@ -852,7 +852,7 @@ ModSfsMainPanelImpl::updateSfsDefaultFilterPolicy(long idx)
 	}
 
 	lst_Rules->SetItem(idx, COLUMN_PATH, dftPolicy->getPath());
-	lst_Rules->SetItem(idx, COLUMN_VA, wxString::Format(_("default %s"),
+	lst_Rules->SetItem(idx, COLUMN_VA, wxString::Format(_("default %ls"),
 	    dftPolicy->getActionName().c_str()));
 	/* COLUMN_USER is handled by ruleListAppend */
 }

@@ -30,7 +30,6 @@
 #include <wx/msgdlg.h>
 
 #include "RuleWizardProgramPage.h"
-#include "AnUtils.h"
 
 RuleWizardProgramPage::RuleWizardProgramPage(wxWindow *parent,
     RuleWizardHistory *history) : RuleWizardProgramPageBase(parent)
@@ -150,9 +149,9 @@ RuleWizardProgramPage::onCsumCalcTask(TaskEvent &event)
 	if (task->getResult() != 0) {
 		/* Calculation failed */
 		message = wxString::Format(
-		    _("Failed to calculate the checksum for %s: %s"),
+		    _("Failed to calculate the checksum for %ls: %hs"),
 		    task->getPath().c_str(),
-		    wxStrError(task->getResult()).c_str());
+		    strerror(task->getResult()));
 		wxMessageBox(message, _("Rule Wizard"), wxOK | wxICON_ERROR,
 		    this);
 		csumValue->SetLabel(_("(unknown)"));

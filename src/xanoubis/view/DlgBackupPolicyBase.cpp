@@ -83,7 +83,7 @@ DlgBackupPolicyBase::DlgBackupPolicyBase( wxWindow* parent, wxWindowID id, const
 	tx_policyspace->Wrap( -1 );
 	sz_policy->Add( tx_policyspace, 0, wxALL, 5 );
 	
-	tx_policyright = new wxStaticText( this, wxID_ANY, wxT("User Policy of %s"), wxDefaultPosition, wxDefaultSize, 0 );
+	tx_policyright = new wxStaticText( this, wxID_ANY, wxT("User Policy of %ls"), wxDefaultPosition, wxDefaultSize, 0 );
 	tx_policyright->Wrap( -1 );
 	sz_policy->Add( tx_policyright, 0, wxALL, 5 );
 	

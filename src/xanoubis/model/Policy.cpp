@@ -128,11 +128,11 @@ Policy::getScopeName(void) const
 			   (unsigned long long)rule_->scope->task);
 		}
 		if (!timeout.IsEmpty() && task.IsEmpty()) {
-			scope.Printf(_("until %s"), timeout.c_str());
+			scope.Printf(_("until %ls"), timeout.c_str());
 		} else if (timeout.IsEmpty() && !task.IsEmpty()) {
-			scope.Printf(_("task %s"), task.c_str());
+			scope.Printf(_("task %ls"), task.c_str());
 		} else {
-			scope.Printf(_("until %s for task %s"),
+			scope.Printf(_("until %ls for task %ls"),
 			    timeout.c_str(), task.c_str());
 		}
 	}

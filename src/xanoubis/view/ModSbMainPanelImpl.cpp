@@ -229,7 +229,7 @@ ModSbMainPanelImpl::ruleListAppend(Policy *policy)
 	ruleset = policy->getParentRuleSet();
 	if (ruleset->isAdmin()) {
 		userName = wxGetApp().getUserNameById(ruleset->getUid());
-		ruleType.Printf(_("admin ruleset of %s"), userName.c_str());
+		ruleType.Printf(_("admin ruleset of %ls"), userName.c_str());
 		lst_Rules->SetItemBackgroundColour(idx,
 				wxTheColourDatabase->Find(wxT("LIGHT GREY")));
 	} else {
