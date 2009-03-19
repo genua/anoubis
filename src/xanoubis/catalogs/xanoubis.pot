@@ -34,7 +34,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-03-18 10:41+0100\n"
+"POT-Creation-Date: 2009-03-19 14:47+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -71,12 +71,13 @@ msgid "unknown address type"
 msgstr ""
 
 #: model/Notification.cpp:164 model/AlfCapabilityFilterPolicy.cpp:225
-#: model/AlfFilterPolicy.cpp:328 model/AlfFilterPolicy.cpp:431
-#: model/AlfFilterPolicy.cpp:837 model/AlfFilterPolicy.cpp:865
-#: model/ContextFilterPolicy.cpp:180 model/FilterPolicy.cpp:95
-#: model/FilterPolicy.cpp:121 model/PolicyUtils.cpp:218
-#: view/DlgRuleEditorBase.cpp:356 view/DlgRuleEditor.cpp:1748
-#: view/DlgRuleEditorAppPage.cpp:166 view/RuleWizardProgramPage.cpp:158
+#: model/AlfFilterPolicy.cpp:328 model/AlfFilterPolicy.cpp:380
+#: model/AlfFilterPolicy.cpp:431 model/AlfFilterPolicy.cpp:837
+#: model/AlfFilterPolicy.cpp:865 model/ContextFilterPolicy.cpp:180
+#: model/FilterPolicy.cpp:95 model/FilterPolicy.cpp:121
+#: model/PolicyUtils.cpp:218 view/DlgRuleEditorBase.cpp:356
+#: view/DlgRuleEditor.cpp:1748 view/DlgRuleEditorAppPage.cpp:165
+#: view/RuleWizardProgramPage.cpp:157 view/RuleWizardHistory.cpp:243
 msgid "(unknown)"
 msgstr ""
 
@@ -103,17 +104,17 @@ msgstr ""
 
 #: model/Notification.cpp:442
 #, c-format
-msgid "%s (Pid: %d, Uid: %s)"
+msgid "%ls (Pid: %d, Uid: %ls)"
 msgstr ""
 
 #: model/Notification.cpp:446
 #, c-format
-msgid "Pid: %d, Uid: %s"
+msgid "Pid: %d, Uid: %ls"
 msgstr ""
 
 #: model/Notification.cpp:474
 #, c-format
-msgid "%s (%s)"
+msgid "%ls (%ls)"
 msgstr ""
 
 #: model/NotifyAnswer.cpp:55
@@ -193,38 +194,34 @@ msgstr ""
 msgid "Unknown error during import of policy file "
 msgstr ""
 
-#: model/AlfFilterPolicy.cpp:380
-msgid "(unknown"
-msgstr ""
-
 #: model/AlfFilterPolicy.cpp:853
 #, c-format
-msgid "to %s"
+msgid "to %ls"
 msgstr ""
 
 #: model/AlfFilterPolicy.cpp:858
 #, c-format
-msgid "from %s"
+msgid "from %ls"
 msgstr ""
 
 #: model/AlfFilterPolicy.cpp:861
 #, c-format
-msgid "both from %s to %s"
+msgid "both from %ls to %ls"
 msgstr ""
 
 #: model/Policy.cpp:131
 #, c-format
-msgid "until %s"
+msgid "until %ls"
 msgstr ""
 
 #: model/Policy.cpp:133
 #, c-format
-msgid "task %s"
+msgid "task %ls"
 msgstr ""
 
 #: model/Policy.cpp:135
 #, c-format
-msgid "until %s for task %s"
+msgid "until %ls for task %ls"
 msgstr ""
 
 #: view/DlgBackupPolicyImpl.cpp:53
@@ -234,12 +231,12 @@ msgstr ""
 
 #: view/DlgBackupPolicyImpl.cpp:57
 #, c-format
-msgid "Admin Policy of %s"
+msgid "Admin Policy of %ls"
 msgstr ""
 
 #: view/DlgBackupPolicyImpl.cpp:60
 #, c-format
-msgid "User Policy of %s"
+msgid "User Policy of %ls"
 msgstr ""
 
 #: view/DlgLogViewerBase.h:66 view/MainFrameBase.cpp:66
@@ -311,8 +308,8 @@ msgstr ""
 
 #: view/DlgRuleEditorBase.cpp:123 view/DlgRuleEditorBase.cpp:197
 #: view/DlgRuleEditorBase.cpp:392 view/ModAnoubisPanelsBase.cpp:552
-#: view/RuleWizardPanelsBase.cpp:470 view/RuleWizardPanelsBase.cpp:632
-#: view/RuleWizardPanelsBase.cpp:896
+#: view/RuleWizardPanelsBase.cpp:472 view/RuleWizardPanelsBase.cpp:634
+#: view/RuleWizardPanelsBase.cpp:898
 msgid "delete"
 msgstr ""
 
@@ -417,7 +414,7 @@ msgstr ""
 msgid "Info:"
 msgstr ""
 
-#: view/DlgRuleEditorBase.cpp:377 view/DlgRuleEditorAppPage.cpp:202
+#: view/DlgRuleEditorBase.cpp:377 view/DlgRuleEditorAppPage.cpp:201
 msgid "Symbolic link was resolved"
 msgstr ""
 
@@ -691,9 +688,9 @@ msgstr ""
 
 #: view/DlgRuleEditor.cpp:114 view/DlgRuleEditor.cpp:148
 #: view/ModSfsMainPanelImpl.cpp:62 view/ModSbMainPanelImpl.cpp:44
-#: view/RuleWizardSandboxExecuteFilesPage.cpp:44
+#: view/RuleWizardSandboxExecuteFilesPage.cpp:45
 #: view/RuleWizardSandboxReadFilesPage.cpp:44
-#: view/RuleWizardSandboxWriteFilesPage.cpp:44
+#: view/RuleWizardSandboxWriteFilesPage.cpp:45
 msgid "Path"
 msgstr ""
 
@@ -759,7 +756,7 @@ msgstr ""
 
 #: view/DlgRuleEditor.cpp:1053 view/DlgRuleEditor.cpp:1058
 #: view/DlgRuleEditor.cpp:1097 view/DlgRuleEditor.cpp:1187
-#: view/DlgRuleEditorAppPage.cpp:389 view/MainFrameBase.cpp:64
+#: view/DlgRuleEditorAppPage.cpp:388 view/MainFrameBase.cpp:64
 #: view/ModAnoubisPanelsBase.cpp:692
 msgid "Rule Editor"
 msgstr ""
@@ -784,8 +781,8 @@ msgstr ""
 msgid "Couldn't import policy file: it has errors."
 msgstr ""
 
-#: view/DlgRuleEditor.cpp:1216 view/MainFrame.cpp:387 main.cpp:374
-#: main.cpp:382
+#: view/DlgRuleEditor.cpp:1216 view/MainFrame.cpp:387 main.cpp:373
+#: main.cpp:381
 msgid "Error"
 msgstr ""
 
@@ -826,30 +823,30 @@ msgstr ""
 msgid "Invalid user Name"
 msgstr ""
 
-#: view/DlgRuleEditorAppPage.cpp:174
+#: view/DlgRuleEditorAppPage.cpp:173
 msgid "match"
 msgstr ""
 
-#: view/DlgRuleEditorAppPage.cpp:177
+#: view/DlgRuleEditorAppPage.cpp:176
 msgid "mismatch"
 msgstr ""
 
-#: view/DlgRuleEditorAppPage.cpp:208
+#: view/DlgRuleEditorAppPage.cpp:207
 msgid "Failure to resolve symbolic link"
 msgstr ""
 
-#: view/DlgRuleEditorAppPage.cpp:257
+#: view/DlgRuleEditorAppPage.cpp:256
 msgid "File does not exist or is not executable"
 msgstr ""
 
-#: view/DlgRuleEditorAppPage.cpp:284 view/RuleWizardProgramPage.cpp:184
+#: view/DlgRuleEditorAppPage.cpp:283 view/RuleWizardProgramPage.cpp:183
 msgid "calculating..."
 msgstr ""
 
-#: view/DlgRuleEditorAppPage.cpp:386 view/RuleWizardProgramPage.cpp:153
-#: control/SfsCtrl.cpp:583
+#: view/DlgRuleEditorAppPage.cpp:385 view/RuleWizardProgramPage.cpp:152
+#: control/SfsCtrl.cpp:582 control/SfsCtrl.cpp:753
 #, c-format
-msgid "Failed to calculate the checksum for %s: %s"
+msgid "Failed to calculate the checksum for %ls: %hs"
 msgstr ""
 
 #: view/MainFrameBase.cpp:44 view/ModAnoubisPanelsBase.cpp:833
@@ -873,9 +870,9 @@ msgid "Quit"
 msgstr ""
 
 #: view/MainFrameBase.cpp:56 view/ModSfsListCtrl.cpp:57
-#: view/RuleWizardSandboxExecuteFilesPage.cpp:45
+#: view/RuleWizardSandboxExecuteFilesPage.cpp:46
 #: view/RuleWizardSandboxReadFilesPage.cpp:45
-#: view/RuleWizardSandboxWriteFilesPage.cpp:45
+#: view/RuleWizardSandboxWriteFilesPage.cpp:46
 msgid "File"
 msgstr ""
 
@@ -977,10 +974,10 @@ msgstr ""
 msgid "Temporary"
 msgstr ""
 
-#: view/ModAlfMainPanelImpl.cpp:187 view/ModSfsMainPanelImpl.cpp:823
+#: view/ModAlfMainPanelImpl.cpp:187 view/ModSfsMainPanelImpl.cpp:826
 #: view/ModSbMainPanelImpl.cpp:232
 #, c-format
-msgid "admin ruleset of %s"
+msgid "admin ruleset of %ls"
 msgstr ""
 
 #: view/ModAlfOverviewPanelImpl.cpp:70 view/ModSfsOverviewPanelImpl.cpp:68
@@ -1030,7 +1027,7 @@ msgstr ""
 
 #: view/ModAnoubisMainPanelImpl.cpp:348
 #, c-format
-msgid "Failed to remove \"%s\"."
+msgid "Failed to remove \"%ls\"."
 msgstr ""
 
 #: view/ModAnoubisMainPanelImpl.cpp:350
@@ -1039,7 +1036,7 @@ msgstr ""
 
 #: view/ModAnoubisMainPanelImpl.cpp:364 view/ModAnoubisMainPanelImpl.cpp:408
 #, c-format
-msgid "Failed to import from \"%s\"."
+msgid "Failed to import from \"%ls\"."
 msgstr ""
 
 #: view/ModAnoubisMainPanelImpl.cpp:366
@@ -1048,7 +1045,7 @@ msgstr ""
 
 #: view/ModAnoubisMainPanelImpl.cpp:382
 #, c-format
-msgid "The profile \"%s\" is not writable!"
+msgid "The profile \"%ls\" is not writable!"
 msgstr ""
 
 #: view/ModAnoubisMainPanelImpl.cpp:384 view/ModAnoubisMainPanelImpl.cpp:395
@@ -1057,7 +1054,7 @@ msgstr ""
 
 #: view/ModAnoubisMainPanelImpl.cpp:393
 #, c-format
-msgid "Failed to export to \"%s\"."
+msgid "Failed to export to \"%ls\"."
 msgstr ""
 
 #: view/ModAnoubisMainPanelImpl.cpp:410 view/ModAnoubisMainPanelImpl.cpp:418
@@ -1111,7 +1108,7 @@ msgstr ""
 msgid "Module:"
 msgstr ""
 
-#: view/ModAnoubisMainPanelImpl.cpp:568 view/RuleWizardHistory.cpp:457
+#: view/ModAnoubisMainPanelImpl.cpp:568 view/RuleWizardHistory.cpp:574
 #: view/RuleWizardPanelsBase.cpp:287
 msgid "Program:"
 msgstr ""
@@ -1146,7 +1143,7 @@ msgstr ""
 #, c-format
 msgid ""
 "Failed to fetch the policy\n"
-"of the \"%s\" profile"
+"of the \"%ls\" profile"
 msgstr ""
 
 #: view/ModAnoubisMainPanelImpl.cpp:1108
@@ -1157,7 +1154,7 @@ msgstr ""
 #, c-format
 msgid ""
 "Failed to import the policy\n"
-"of the \"%s\" profile"
+"of the \"%ls\" profile"
 msgstr ""
 
 #: view/ModAnoubisMainPanelImpl.cpp:1120
@@ -1498,7 +1495,7 @@ msgstr ""
 
 #: view/ModSfsDetailsDlg.cpp:36
 #, c-format
-msgid "Details for %s"
+msgid "Details for %ls"
 msgstr ""
 
 #: view/ModSfsDetailsDlg.cpp:53 view/ModSfsDetailsDlg.cpp:60
@@ -1598,30 +1595,30 @@ msgstr ""
 msgid "Choose the file, where your certificate is stored."
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:677
+#: view/ModSfsMainPanelImpl.cpp:680
 msgid ""
 "Cannot load the private key!\n"
 "The file you specified does not exist."
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:679
+#: view/ModSfsMainPanelImpl.cpp:682
 msgid "Load private key"
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:707
+#: view/ModSfsMainPanelImpl.cpp:710
 #, c-format
 msgid ""
 "Failed to load certificate from\n"
-"%s."
+"%ls."
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:709
+#: view/ModSfsMainPanelImpl.cpp:712
 msgid "Load certificate"
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:852
+#: view/ModSfsMainPanelImpl.cpp:855
 #, c-format
-msgid "default %s"
+msgid "default %ls"
 msgstr ""
 
 #: view/ModSfsPanelsBase.cpp:45
@@ -1829,15 +1826,15 @@ msgstr ""
 msgid "open requests (SB): "
 msgstr ""
 
-#: view/RuleWizardProgramPage.cpp:72
+#: view/RuleWizardProgramPage.cpp:71
 msgid "Please choose a program first."
 msgstr ""
 
-#: view/RuleWizardProgramPage.cpp:74
+#: view/RuleWizardProgramPage.cpp:73
 msgid "No checkum is calculated yet."
 msgstr ""
 
-#: view/RuleWizardProgramPage.cpp:78 view/RuleWizardProgramPage.cpp:156
+#: view/RuleWizardProgramPage.cpp:77 view/RuleWizardProgramPage.cpp:155
 msgid "Rule Wizard"
 msgstr ""
 
@@ -1854,7 +1851,7 @@ msgstr ""
 msgid "Policy of \"%ls\":"
 msgstr ""
 
-#: view/RuleWizardAlfClientPage.cpp:62
+#: view/RuleWizardAlfClientPage.cpp:65
 #, c-format
 msgid ""
 "Allow the application \"%ls\" access to\n"
@@ -1872,13 +1869,13 @@ msgid "Portnumber"
 msgstr ""
 
 #: view/RuleWizardAlfClientPortsPage.cpp:43
-#: view/RuleWizardSandboxExecuteFilesPage.cpp:46
+#: view/RuleWizardSandboxExecuteFilesPage.cpp:47
 #: view/RuleWizardSandboxReadFilesPage.cpp:46
-#: view/RuleWizardSandboxWriteFilesPage.cpp:46
+#: view/RuleWizardSandboxWriteFilesPage.cpp:47
 msgid "Standard"
 msgstr ""
 
-#: view/RuleWizardAlfClientPortsPage.cpp:62
+#: view/RuleWizardAlfClientPortsPage.cpp:64
 #, c-format
 msgid ""
 "Options for restricted network access\n"
@@ -1896,7 +1893,7 @@ msgid ""
 "already exists."
 msgstr ""
 
-#: view/RuleWizardSandboxExecutePage.cpp:59
+#: view/RuleWizardSandboxExecutePage.cpp:62
 #, c-format
 msgid ""
 "Choose permissions of application \"%ls\"\n"
@@ -1909,209 +1906,213 @@ msgstr ""
 msgid "(all files)"
 msgstr ""
 
-#: view/RuleWizardSandboxExecuteFilesPage.cpp:64
+#: view/RuleWizardSandboxExecuteFilesPage.cpp:66
 #, c-format
 msgid "Options for EXECUTING access of application \"%ls\":"
 msgstr ""
 
-#: view/RuleWizardSandboxExecuteFilesPage.cpp:68
+#: view/RuleWizardSandboxExecuteFilesPage.cpp:70
 msgid "Grand EXECUTING access:"
 msgstr ""
 
-#: view/RuleWizardSandboxReadPage.cpp:59
+#: view/RuleWizardSandboxReadPage.cpp:62
 #, c-format
 msgid ""
 "Choose permissions of application \"%ls\"\n"
 "of READING file access:"
 msgstr ""
 
-#: view/RuleWizardSandboxReadFilesPage.cpp:64
+#: view/RuleWizardSandboxReadFilesPage.cpp:66
 #, c-format
 msgid "Options for READING access of application \"%ls\":"
 msgstr ""
 
-#: view/RuleWizardSandboxReadFilesPage.cpp:68
+#: view/RuleWizardSandboxReadFilesPage.cpp:70
 msgid "Grand READING access:"
 msgstr ""
 
-#: view/RuleWizardSandboxWritePage.cpp:59
+#: view/RuleWizardSandboxWritePage.cpp:62
 #, c-format
 msgid ""
 "Choose permissions of application \"%ls\"\n"
 "of WRITING file access:"
 msgstr ""
 
-#: view/RuleWizardSandboxWriteFilesPage.cpp:64
+#: view/RuleWizardSandboxWriteFilesPage.cpp:57
+msgid "always deny access on valid checksum / signature"
+msgstr ""
+
+#: view/RuleWizardSandboxWriteFilesPage.cpp:68
 #, c-format
 msgid "Options for WRITING access of application \"%ls\":"
 msgstr ""
 
-#: view/RuleWizardSandboxWriteFilesPage.cpp:68
+#: view/RuleWizardSandboxWriteFilesPage.cpp:72
 msgid "Grand WRITING access:"
 msgstr ""
 
-#: view/RuleWizardHistory.cpp:469
+#: view/RuleWizardHistory.cpp:586
 msgid "Context:"
 msgstr ""
 
-#: view/RuleWizardHistory.cpp:472 view/RuleWizardHistory.cpp:500
-#: view/RuleWizardHistory.cpp:552
+#: view/RuleWizardHistory.cpp:589 view/RuleWizardHistory.cpp:617
+#: view/RuleWizardHistory.cpp:669
 msgid "keep policies"
 msgstr ""
 
-#: view/RuleWizardHistory.cpp:477
+#: view/RuleWizardHistory.cpp:594
 msgid "same: yes"
 msgstr ""
 
-#: view/RuleWizardHistory.cpp:479
+#: view/RuleWizardHistory.cpp:596
 msgid "same: no"
 msgstr ""
 
-#: view/RuleWizardHistory.cpp:484
+#: view/RuleWizardHistory.cpp:601
 #, c-format
 msgid "exceptions (%d): yes"
 msgstr ""
 
-#: view/RuleWizardHistory.cpp:487
+#: view/RuleWizardHistory.cpp:604
 msgid "exceptions: no"
 msgstr ""
 
-#: view/RuleWizardHistory.cpp:496
+#: view/RuleWizardHistory.cpp:613
 msgid "ALF:"
 msgstr ""
 
-#: view/RuleWizardHistory.cpp:503 view/RuleWizardHistory.cpp:555
+#: view/RuleWizardHistory.cpp:620 view/RuleWizardHistory.cpp:672
 msgid "discard policies"
 msgstr ""
 
-#: view/RuleWizardHistory.cpp:509
+#: view/RuleWizardHistory.cpp:626
 msgid "client allow all"
 msgstr ""
 
-#: view/RuleWizardHistory.cpp:512
+#: view/RuleWizardHistory.cpp:629
 msgid "client defaults"
 msgstr ""
 
-#: view/RuleWizardHistory.cpp:515
+#: view/RuleWizardHistory.cpp:632
 msgid "client user defined"
 msgstr ""
 
-#: view/RuleWizardHistory.cpp:518
+#: view/RuleWizardHistory.cpp:635
 msgid "client deny all"
 msgstr ""
 
-#: view/RuleWizardHistory.cpp:528
+#: view/RuleWizardHistory.cpp:645
 msgid "client ask"
 msgstr ""
 
-#: view/RuleWizardHistory.cpp:530
+#: view/RuleWizardHistory.cpp:647
 msgid "client don't ask"
 msgstr ""
 
-#: view/RuleWizardHistory.cpp:534
+#: view/RuleWizardHistory.cpp:651
 msgid "client allow raw"
 msgstr ""
 
-#: view/RuleWizardHistory.cpp:536
+#: view/RuleWizardHistory.cpp:653
 msgid "client deny raw"
 msgstr ""
 
-#: view/RuleWizardHistory.cpp:548
+#: view/RuleWizardHistory.cpp:665
 msgid "Sandbox:"
 msgstr ""
 
-#: view/RuleWizardHistory.cpp:558
+#: view/RuleWizardHistory.cpp:675
 msgid "defaults"
 msgstr ""
 
-#: view/RuleWizardHistory.cpp:561
+#: view/RuleWizardHistory.cpp:678
 msgid "no sandbox"
 msgstr ""
 
-#: view/RuleWizardHistory.cpp:567
+#: view/RuleWizardHistory.cpp:684
 msgid "read unrestricted"
 msgstr ""
 
-#: view/RuleWizardHistory.cpp:570
+#: view/RuleWizardHistory.cpp:687
 msgid "read defaults"
 msgstr ""
 
-#: view/RuleWizardHistory.cpp:573
+#: view/RuleWizardHistory.cpp:690
 #, c-format
 msgid "read user defined (%d)"
 msgstr ""
 
-#: view/RuleWizardHistory.cpp:577
-msgid "other read access: ask"
+#: view/RuleWizardHistory.cpp:694
+msgid "read access other: ask"
 msgstr ""
 
-#: view/RuleWizardHistory.cpp:579
-msgid "other read access: deny"
+#: view/RuleWizardHistory.cpp:696
+msgid "read access other: deny"
 msgstr ""
 
-#: view/RuleWizardHistory.cpp:583
+#: view/RuleWizardHistory.cpp:700
 msgid "read signature: allow"
 msgstr ""
 
-#: view/RuleWizardHistory.cpp:585
+#: view/RuleWizardHistory.cpp:702
 msgid "read signature: don't care"
 msgstr ""
 
-#: view/RuleWizardHistory.cpp:598
+#: view/RuleWizardHistory.cpp:715
 msgid "write unrestricted"
 msgstr ""
 
-#: view/RuleWizardHistory.cpp:601
+#: view/RuleWizardHistory.cpp:718
 msgid "write defaults"
 msgstr ""
 
-#: view/RuleWizardHistory.cpp:604
+#: view/RuleWizardHistory.cpp:721
 #, c-format
 msgid "write user defined (%d)"
 msgstr ""
 
-#: view/RuleWizardHistory.cpp:608
-msgid "other write access: ask"
+#: view/RuleWizardHistory.cpp:725
+msgid "write access other: ask"
 msgstr ""
 
-#: view/RuleWizardHistory.cpp:610
-msgid "other write access: deny"
+#: view/RuleWizardHistory.cpp:727
+msgid "write access other: deny"
 msgstr ""
 
-#: view/RuleWizardHistory.cpp:614
-msgid "write signature: allow"
+#: view/RuleWizardHistory.cpp:731
+msgid "write signature: deny"
 msgstr ""
 
-#: view/RuleWizardHistory.cpp:616
+#: view/RuleWizardHistory.cpp:733
 msgid "write signature: don't care"
 msgstr ""
 
-#: view/RuleWizardHistory.cpp:629
+#: view/RuleWizardHistory.cpp:746
 msgid "execute unrestricted"
 msgstr ""
 
-#: view/RuleWizardHistory.cpp:632
+#: view/RuleWizardHistory.cpp:749
 msgid "execute defaults"
 msgstr ""
 
-#: view/RuleWizardHistory.cpp:635
+#: view/RuleWizardHistory.cpp:752
 #, c-format
 msgid "execute user defined (%d)"
 msgstr ""
 
-#: view/RuleWizardHistory.cpp:639
-msgid "other execute access: ask"
+#: view/RuleWizardHistory.cpp:756
+msgid "execute access other: ask"
 msgstr ""
 
-#: view/RuleWizardHistory.cpp:641
-msgid "other execute access: deny"
+#: view/RuleWizardHistory.cpp:758
+msgid "execute access other: deny"
 msgstr ""
 
-#: view/RuleWizardHistory.cpp:645
+#: view/RuleWizardHistory.cpp:762
 msgid "execute signature: allow"
 msgstr ""
 
-#: view/RuleWizardHistory.cpp:647
+#: view/RuleWizardHistory.cpp:764
 msgid "execute signature: don't care"
 msgstr ""
 
@@ -2212,11 +2213,11 @@ msgid ""
 "and store the result"
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:348 view/RuleWizardPanelsBase.cpp:436
+#: view/RuleWizardPanelsBase.cpp:350 view/RuleWizardPanelsBase.cpp:438
 msgid "Context settings:"
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:363
+#: view/RuleWizardPanelsBase.cpp:365
 msgid ""
 "The context of an application is the conjunction of it's calling "
 "environment. This is the program which runs another one.\n"
@@ -2227,212 +2228,212 @@ msgid ""
 "But in case of the most applications \"yes' seems to be the best fit. "
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:375
+#: view/RuleWizardPanelsBase.cpp:377
 msgid ""
 "Programs started by this application have the same permissions / "
 "restrictions as the main program."
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:382
+#: view/RuleWizardPanelsBase.cpp:384
 msgid "Yes (same permissions / restrictions)"
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:391
+#: view/RuleWizardPanelsBase.cpp:393
 msgid "allow exceptions (-> next page)"
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:399
+#: view/RuleWizardPanelsBase.cpp:401
 msgid "No (each executed program has its own policies)"
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:445
+#: view/RuleWizardPanelsBase.cpp:447
 msgid ""
 "Programs been started by this application have the\n"
 "same permissions / restrictions as the main application."
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:452
+#: view/RuleWizardPanelsBase.cpp:454
 msgid "Exceptions (programs started with own polcies):"
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:462
+#: view/RuleWizardPanelsBase.cpp:464
 msgid "add..."
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:463
+#: view/RuleWizardPanelsBase.cpp:465
 msgid ""
 "opens a file-choose-dialog and\n"
 "adds the result to the list"
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:471
+#: view/RuleWizardPanelsBase.cpp:473
 msgid "removes the selected entry from the list"
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:505 view/RuleWizardPanelsBase.cpp:592
+#: view/RuleWizardPanelsBase.cpp:507 view/RuleWizardPanelsBase.cpp:594
 msgid "Application Level Firewall settings:"
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:517
+#: view/RuleWizardPanelsBase.cpp:519
 msgid ""
 "Allow the application \"...\" the usage\n"
 "of network services (... functionality)?"
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:524
+#: view/RuleWizardPanelsBase.cpp:526
 msgid "Yes (without restrictions)"
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:527 view/RuleWizardPanelsBase.cpp:790
+#: view/RuleWizardPanelsBase.cpp:529 view/RuleWizardPanelsBase.cpp:792
 msgid "restricted (default)"
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:536
+#: view/RuleWizardPanelsBase.cpp:538
 msgid ""
 "Default services are allowed, any other network\n"
 "access is asked on demand."
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:542 view/RuleWizardPanelsBase.cpp:805
+#: view/RuleWizardPanelsBase.cpp:544 view/RuleWizardPanelsBase.cpp:807
 msgid "restricted"
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:551 view/RuleWizardPanelsBase.cpp:814
+#: view/RuleWizardPanelsBase.cpp:553 view/RuleWizardPanelsBase.cpp:816
 msgid "Settings may be configured on the next page."
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:557
+#: view/RuleWizardPanelsBase.cpp:559
 msgid "No (deny access of network resources)"
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:601
+#: view/RuleWizardPanelsBase.cpp:603
 msgid ""
 "Options for restricted network access\n"
 "for application \"...\":"
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:605
+#: view/RuleWizardPanelsBase.cpp:607
 msgid "List of allowed services:"
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:615
+#: view/RuleWizardPanelsBase.cpp:617
 msgid " add..."
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:616
+#: view/RuleWizardPanelsBase.cpp:618
 msgid ""
 "opens a service-choose-dialog\n"
 "and adds the result to the list"
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:623
+#: view/RuleWizardPanelsBase.cpp:625
 msgid "add default services"
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:625 view/RuleWizardPanelsBase.cpp:889
+#: view/RuleWizardPanelsBase.cpp:627 view/RuleWizardPanelsBase.cpp:891
 msgid "add the default services to the list"
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:634 view/RuleWizardPanelsBase.cpp:898
+#: view/RuleWizardPanelsBase.cpp:636 view/RuleWizardPanelsBase.cpp:900
 msgid "remove the selected items from the list"
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:644
+#: view/RuleWizardPanelsBase.cpp:646
 msgid "ask on any other network access"
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:649
+#: view/RuleWizardPanelsBase.cpp:651
 msgid "allow raw network access"
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:691 view/RuleWizardPanelsBase.cpp:768
-#: view/RuleWizardPanelsBase.cpp:851
+#: view/RuleWizardPanelsBase.cpp:693 view/RuleWizardPanelsBase.cpp:770
+#: view/RuleWizardPanelsBase.cpp:853
 msgid "Sandbox settings:"
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:706
+#: view/RuleWizardPanelsBase.cpp:708
 msgid ""
 "With the sandbox you can confine an application.\n"
 "This is done by specifying which files it may read, write or execute."
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:718
+#: view/RuleWizardPanelsBase.cpp:720
 msgid "Create sandbox policies?"
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:725
+#: view/RuleWizardPanelsBase.cpp:727
 msgid "Yes, create policies (wizard guided)"
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:728
+#: view/RuleWizardPanelsBase.cpp:730
 msgid "Yes, load default policies (skip wizard)"
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:731
+#: view/RuleWizardPanelsBase.cpp:733
 msgid "No, do not  create sandbox policies"
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:780
+#: view/RuleWizardPanelsBase.cpp:782
 msgid ""
 "Select permissions of application \"...\"\n"
 "for ... file access:"
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:787
+#: view/RuleWizardPanelsBase.cpp:789
 msgid "unrestricted"
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:799
+#: view/RuleWizardPanelsBase.cpp:801
 msgid ""
 "Default permissions are allowed, any other\n"
 "access is asked on demand."
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:860
+#: view/RuleWizardPanelsBase.cpp:862
 msgid "Options for ... access of \"...\":"
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:864
+#: view/RuleWizardPanelsBase.cpp:866
 msgid "... grand access:"
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:874
+#: view/RuleWizardPanelsBase.cpp:876
 msgid " add file..."
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:875
+#: view/RuleWizardPanelsBase.cpp:877
 msgid ""
 "opens a file-choose-dialog\n"
 "and adds the result to the list"
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:879
+#: view/RuleWizardPanelsBase.cpp:881
 msgid " add directory..."
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:880
+#: view/RuleWizardPanelsBase.cpp:882
 msgid ""
 "opens a directory-choose-dialog\n"
 "and adds the result to the list"
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:887
+#: view/RuleWizardPanelsBase.cpp:889
 msgid "add default permissions"
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:908
+#: view/RuleWizardPanelsBase.cpp:910
 msgid "ask on any other access"
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:913
+#: view/RuleWizardPanelsBase.cpp:915
 msgid "always allow access on valid checksum / signature"
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:956
+#: view/RuleWizardPanelsBase.cpp:958
 msgid "End."
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:965
+#: view/RuleWizardPanelsBase.cpp:967
 msgid ""
 "This is the final page. If you click on 'finish'\n"
 "the policies will been created.\n"
@@ -2482,222 +2483,217 @@ msgstr ""
 msgid "Manual"
 msgstr ""
 
-#: control/SfsCtrl.cpp:307
+#: control/SfsCtrl.cpp:306
 #, c-format
-msgid "Failed to open %ls for reading: %s"
+msgid "Failed to open %ls for reading: %hs"
 msgstr ""
 
-#: control/SfsCtrl.cpp:315
+#: control/SfsCtrl.cpp:314
 #, c-format
 msgid "Failed to parse %ls!"
 msgstr ""
 
-#: control/SfsCtrl.cpp:465
+#: control/SfsCtrl.cpp:464
 #, c-format
 msgid "Communication error while fetching list of checksumed files of %ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:470
+#: control/SfsCtrl.cpp:469
 #, c-format
 msgid "Communication error while fetching list of signed files of %ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:478
+#: control/SfsCtrl.cpp:477
 #, c-format
 msgid ""
-"Got error from daemon (%ls) while fetching the list of checksumed files of %"
+"Got error from daemon (%hs) while fetching the list of checksumed files of %"
 "ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:483
+#: control/SfsCtrl.cpp:482
 #, c-format
 msgid ""
-"Got error from daemon (%ls) while fetching the list of signed files of %ls."
+"Got error from daemon (%hs) while fetching the list of signed files of %ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:489
+#: control/SfsCtrl.cpp:488
 #, c-format
 msgid ""
 "An unexpected error occured (%i) while fetching the list of checksumed files "
-"of %s."
+"of %ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:495
+#: control/SfsCtrl.cpp:494
 #, c-format
 msgid ""
 "An unexpected error occured (%i) while fetching the list of signed files of %"
-"s."
+"ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:574 control/SfsCtrl.cpp:624 control/SfsCtrl.cpp:742
-#: control/SfsCtrl.cpp:850
+#: control/SfsCtrl.cpp:573 control/SfsCtrl.cpp:623 control/SfsCtrl.cpp:740
+#: control/SfsCtrl.cpp:848
 #, c-format
-msgid "%s not found in file-list!"
+msgid "%ls not found in file-list!"
 msgstr ""
 
-#: control/SfsCtrl.cpp:651
+#: control/SfsCtrl.cpp:650
 #, c-format
-msgid "Got error from daemon (%ls) while fetching the checksum for %ls."
+msgid "Got error from daemon (%hs) while fetching the checksum for %ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:656
+#: control/SfsCtrl.cpp:654
 #, c-format
-msgid "Got error from daemon (%ls) while fetching the signature for %ls."
+msgid "Got error from daemon (%hs) while fetching the signature for %ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:669
+#: control/SfsCtrl.cpp:667
 #, c-format
 msgid "Communication error while fetching the checksum for %ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:673
+#: control/SfsCtrl.cpp:671
 #, c-format
 msgid "Communication error while fetching the signature for %ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:683
+#: control/SfsCtrl.cpp:681
 #, c-format
 msgid "An unexpected error occured (%i) while fetching the checksum for %ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:688
+#: control/SfsCtrl.cpp:686
 #, c-format
 msgid "An unexpected error occured (%i) while fetching the signature for %ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:710
+#: control/SfsCtrl.cpp:708
 msgid "An unexpected checksum was fetched."
 msgstr ""
 
-#: control/SfsCtrl.cpp:712
+#: control/SfsCtrl.cpp:710
 msgid "An unexpected signature was fetched."
 msgstr ""
 
-#: control/SfsCtrl.cpp:755
+#: control/SfsCtrl.cpp:757
 #, c-format
-msgid "Failed to calculate the checksum for %ls: %ls"
+msgid "Failed to calculate the signature for %ls: %hs"
 msgstr ""
 
-#: control/SfsCtrl.cpp:759
-#, c-format
-msgid "Failed to calculate the signature for %ls: %ls"
-msgstr ""
-
-#: control/SfsCtrl.cpp:769
+#: control/SfsCtrl.cpp:767
 #, c-format
 msgid "Communication error while register the checksum for %ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:773
+#: control/SfsCtrl.cpp:771
 #, c-format
 msgid "Communication error while register the signature for %ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:783
+#: control/SfsCtrl.cpp:781
 #, c-format
-msgid "Got error from daemon (%ls) while register the checksum for %ls."
+msgid "Got error from daemon (%hs) while register the checksum for %ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:788
+#: control/SfsCtrl.cpp:786
 #, c-format
-msgid "Got error from daemon (%ls) while register the signature for %ls."
+msgid "Got error from daemon (%hs) while register the signature for %ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:799
+#: control/SfsCtrl.cpp:797
 #, c-format
 msgid "An unexpected error occured (%i) while register the checksum for %ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:804
+#: control/SfsCtrl.cpp:802
 #, c-format
 msgid "An unexpected error occured (%i) while register the signature for %ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:863
+#: control/SfsCtrl.cpp:861
 #, c-format
 msgid "Communication error while removing the checksum for %ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:867
+#: control/SfsCtrl.cpp:865
 #, c-format
 msgid "Communication error while removing the signature for %ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:876
+#: control/SfsCtrl.cpp:874
 #, c-format
-msgid "Got error from daemon (%ls) while removing the checksum for %ls."
+msgid "Got error from daemon (%hs) while removing the checksum for %ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:881
+#: control/SfsCtrl.cpp:879
 #, c-format
-msgid "Got error from daemon (%ls) while removing the signature for %ls."
+msgid "Got error from daemon (%hs) while removing the signature for %ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:891
+#: control/SfsCtrl.cpp:889
 #, c-format
 msgid "An unexpected error occured (%i) while removing the checksum for %ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:896
+#: control/SfsCtrl.cpp:894
 #, c-format
 msgid "An unexpected error occured (%i) while removing the signature for %ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:1173
+#: control/SfsCtrl.cpp:1171
 #, c-format
-msgid "Failed to open %ls for writing: %s"
+msgid "Failed to open %ls for writing: %hs"
 msgstr ""
 
-#: control/SfsCtrl.cpp:1182
+#: control/SfsCtrl.cpp:1180
 #, c-format
-msgid "Failed to flush the content of %s: %s"
+msgid "Failed to flush the content of %ls: %hs"
 msgstr ""
 
-#: control/ProfileCtrl.cpp:489
+#: control/ProfileCtrl.cpp:488
 msgid "The task was not executed."
 msgstr ""
 
-#: control/ProfileCtrl.cpp:491
+#: control/ProfileCtrl.cpp:490
 msgid "Out of memory."
 msgstr ""
 
-#: control/ProfileCtrl.cpp:495
+#: control/ProfileCtrl.cpp:494
 #, c-format
 msgid ""
 "Communication error while sending admin-policy\n"
-"of %s to daemon."
+"of %ls to daemon."
 msgstr ""
 
-#: control/ProfileCtrl.cpp:498
+#: control/ProfileCtrl.cpp:497
 #, c-format
 msgid ""
-"Communication error while sendinguser-policy\n"
-"of %s to daemon."
+"Communication error while sending user-policy\n"
+"of %ls to daemon."
 msgstr ""
 
-#: control/ProfileCtrl.cpp:501
+#: control/ProfileCtrl.cpp:500
 msgid "Error while sending policy to daemon."
 msgstr ""
 
-#: control/ProfileCtrl.cpp:504
+#: control/ProfileCtrl.cpp:503
 #, c-format
 msgid ""
-"Got error (%s) from daemon\n"
-"after sent admin-policy of %s."
+"Got error (%hs) from daemon\n"
+"after sending admin-policy of %ls."
 msgstr ""
 
-#: control/ProfileCtrl.cpp:509
+#: control/ProfileCtrl.cpp:508
 #, c-format
 msgid ""
-"Got error (%s) from daemon\n"
-"after sent user-policy of %s."
+"Got error (%hs) from daemon\n"
+"after sending user-policy of %ls."
 msgstr ""
 
-#: control/ProfileCtrl.cpp:514
+#: control/ProfileCtrl.cpp:513
 #, c-format
 msgid ""
-"Got error (%s) from daemon\n"
-"after sent policy."
+"Got error (%hs) from daemon\n"
+"after sending policy."
 msgstr ""
 
 #: control/ProfileCtrl.cpp:517
@@ -2717,7 +2713,7 @@ msgstr ""
 
 #: control/ProfileCtrl.cpp:599
 #, c-format
-msgid "Automatically created version while saving the %s profile"
+msgid "Automatically created version while saving the %ls profile"
 msgstr ""
 
 #: widgets/AnDetails.cpp:115 widgets/AnDetails.cpp:116
@@ -2752,31 +2748,31 @@ msgstr ""
 msgid "Permissions"
 msgstr ""
 
-#: main.cpp:185
+#: main.cpp:184
 msgid "Language setting: "
 msgstr ""
 
-#: main.cpp:257
+#: main.cpp:256
 msgid "this help"
 msgstr ""
 
-#: main.cpp:264
+#: main.cpp:263
 msgid "communication socket of anoubis daemon"
 msgstr ""
 
-#: main.cpp:271
+#: main.cpp:270
 msgid "Debug output with 'num' als level"
 msgstr ""
 
-#: main.cpp:372 main.cpp:380
+#: main.cpp:371 main.cpp:379
 #, c-format
 msgid "Couldn't remove Autostart file: %ls"
 msgstr ""
 
-#: main.cpp:640
+#: main.cpp:639
 msgid "Enter the passphrase of your private key:"
 msgstr ""
 
-#: main.cpp:641
+#: main.cpp:640
 msgid "Enter passphrase"
 msgstr ""

@@ -377,7 +377,7 @@ AlfFilterPolicy::getProtocolName(void) const
 		protocol = wxT("udp");
 		break;
 	default:
-		protocol = _("(unknown");
+		protocol = _("(unknown)");
 		break;
 	}
 
