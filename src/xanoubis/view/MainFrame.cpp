@@ -486,8 +486,10 @@ void
 MainFrame::OnEscalationsShow(wxCommandEvent& event)
 {
 	Show(event.GetInt());
-	if (event.GetInt())
+	if (event.GetInt()) {
 		Raise();
+		RequestUserAttention(wxUSER_ATTENTION_ERROR);
+	}
 	Module *module = wxGetApp().getModule(ANOUBIS);
 	int id = module->getToolbarId();
 

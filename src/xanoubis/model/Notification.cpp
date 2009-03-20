@@ -439,12 +439,13 @@ Notification::getOrigin(void)
 	user = wxGetApp().getUserNameById(get_value(notify_->u.notify->uid));
 	if (len > 0) {
 		wxString path = wxString::From8BitData(buffer+off, len);
-		origin = wxString::Format(_("%ls (Pid: %d, Uid: %ls)"),
+		origin = wxString::Format(_("%ls (Pid: %d, Uid: %ls/%d)"),
 		    path.c_str(), get_value(notify_->u.notify->pid),
-		    user.c_str());
+		    user.c_str(), get_value(notify_->u.notify->uid));
 	} else {
-		origin = wxString::Format(_("Pid: %d, Uid: %ls"),
-		    get_value(notify_->u.notify->pid), user.c_str());
+		origin = wxString::Format(_("Pid: %d, Uid: %ls/%d"),
+		    get_value(notify_->u.notify->pid), user.c_str(),
+		    get_value(notify_->u.notify->uid));
 	}
 	return (origin);
 }

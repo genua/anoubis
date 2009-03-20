@@ -100,6 +100,7 @@ ModAnoubisMainPanelImpl::ModAnoubisMainPanelImpl(wxWindow* parent,
 
 	/* Initialization of profiles */
 	profileTabInit();
+	profileTabUpdate();
 
 	/* Initialize list of versions */
 	versionListInit();
@@ -147,6 +148,10 @@ ModAnoubisMainPanelImpl::~ModAnoubisMainPanelImpl(void)
 	    controlAutoCheck->IsChecked());
 	userOptions_->Write(wxT("/Options/AutoConnect"),
 	    autoConnectBox->IsChecked());
+	if (loadedProfile != wxEmptyString) {
+		userOptions_->Write(wxT("/Options/LoadedProfile"),
+		    loadedProfile);
+	}
 
 	/* write Autostart Settings */
 	userOptions_->Write(wxT("/Options/Autostart"),
@@ -270,6 +275,7 @@ ModAnoubisMainPanelImpl::setOptionsWidgetsVisability(void)
 void
 ModAnoubisMainPanelImpl::profileTabInit(void)
 {
+	wxConfig	*userOptions = wxGetApp().getUserOptions();
 	profileList->InsertColumn(0, wxT(""),
 	    wxLIST_FORMAT_LEFT, wxLIST_AUTOSIZE);
 	profileList->InsertColumn(1, _("Profile"),
@@ -277,6 +283,7 @@ ModAnoubisMainPanelImpl::profileTabInit(void)
 
 	selectedProfile = wxEmptyString;
 	loadedProfile = wxEmptyString;
+	userOptions->Read(wxT("/Options/LoadedProfile"), &loadedProfile);
 	fillProfileList();
 
 	/* Adjust width of profile-column */
