@@ -286,7 +286,7 @@ __sfs_checksumop(const char *path, unsigned int operation, uid_t uid,
     u_int8_t *md, u_int8_t **sign, int *siglen, int len, int idlen,
     int is_chroot)
 {
-	char *csum_path = NULL, *csum_file = NULL;
+	char *csum_path = NULL, *csum_file = NULL, *csum_tmp = NULL;
 	char *sigfile = NULL;
 	struct cert *certs = NULL;
 	int fd;
@@ -328,6 +328,10 @@ __sfs_checksumop(const char *path, unsigned int operation, uid_t uid,
 			goto out;
 		}
 	}
+	if (asprintf(&csum_tmp, "%s%s", csum_file, ".tmp") == -1) {
+		ret = -ENOMEM;
+		goto out;
+	}
 
 	if (operation == ANOUBIS_CHECKSUM_OP_ADDSIG) {
 		if (uid != 0)
@@ -358,7 +362,7 @@ __sfs_checksumop(const char *path, unsigned int operation, uid_t uid,
 		if (ret < 0) {
 			goto out;
 		}
-		fd = open(csum_file, O_WRONLY|O_CREAT|O_TRUNC, 0640);
+		fd = open(csum_tmp, O_WRONLY|O_CREAT|O_TRUNC, 0640);
 		if (fd < 0) {
 			ret = -errno;
 			goto out;
@@ -366,7 +370,7 @@ __sfs_checksumop(const char *path, unsigned int operation, uid_t uid,
 		if (fchown(fd, -1, anoubisd_gid) < 0) {
 			ret = -errno;
 			close(fd);
-			unlink(csum_file);
+			unlink(csum_tmp);
 			goto out;
 		}
 
@@ -374,11 +378,17 @@ __sfs_checksumop(const char *path, unsigned int operation, uid_t uid,
 			ret = write(fd, md + idlen + written, len - written);
 			if (ret < 0) {
 				ret = -errno;
-				unlink(csum_file);
+				unlink(csum_tmp);
 				close(fd);
 				goto out;
 			}
 			written += ret;
+		}
+		if ((fsync(fd) < 0) || (rename(csum_tmp, csum_file) < 0)) {
+			ret = -errno;
+			close(fd);
+			unlink(csum_tmp);
+			goto out;
 		}
 		close(fd);
 		ret = 0;
@@ -430,6 +440,8 @@ out:
 		free(csum_path);
 	if (csum_file)
 		free(csum_file);
+	if (csum_tmp)
+		free(csum_tmp);
 	return ret;
 }
 

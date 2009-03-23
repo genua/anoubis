@@ -888,15 +888,17 @@ pe_dispatch_policy(struct anoubisd_msg_comm *comm)
 				}
 			}
 			free(bkup);
-			DEBUG(DBG_TRACE, "    rename: %s->%s", req->tmpname,
-			    req->realname);
-			if (rename(req->tmpname, req->realname) < 0) {
+			DEBUG(DBG_TRACE, "    fsync & rename: %s->%s",
+				req->tmpname, req->realname);
+			if (fsync(req->fd) < 0 ||
+			    rename(req->tmpname, req->realname) < 0) {
 				error = errno;
 				apn_free_ruleset(ruleset);
 				goto reply;
 			}
 			if (req->siglen > 0) {
-				if (rename(req->tmpsig, req->realsig) < 0) {
+				if (fsync(req->fdsig) < 0 ||
+				    rename(req->tmpsig, req->realsig) < 0) {
 					error = errno;
 					apn_free_ruleset(ruleset);
 					goto reply;
