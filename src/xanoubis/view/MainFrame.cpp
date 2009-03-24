@@ -378,10 +378,10 @@ MainFrame::OnMbFileImportSelect(wxCommandEvent&)
 	wxString	defaultFilename = wxEmptyString;
 	wxFileDialog	fileDlg(NULL, caption, defaultDir, defaultFilename,
 			    wildcard, wxOPEN);
-	ProfileCtrl	*profileCtrl = ProfileCtrl::getInstance();
+	PolicyCtrl	*policyCtrl = PolicyCtrl::getInstance();
 
 	if (fileDlg.ShowModal() == wxID_OK) {
-		if (!profileCtrl->importFromFile(fileDlg.GetPath())) {
+		if (!policyCtrl->importFromFile(fileDlg.GetPath())) {
 			wxMessageBox(
 			    _("Couldn't import policy file: it has errors."),
 			    _("Error"), wxICON_ERROR);
@@ -400,7 +400,7 @@ MainFrame::OnMbFileExportSelect(wxCommandEvent&)
 			    wildcard, wxFD_SAVE);
 
 	if (fileDlg.ShowModal() == wxID_OK) {
-		ProfileCtrl::getInstance()->exportToFile(fileDlg.GetPath());
+		PolicyCtrl::getInstance()->exportToFile(fileDlg.GetPath());
 	}
 }
 
@@ -527,10 +527,10 @@ MainFrame::OnAnoubisOptionShow(wxCommandEvent& event)
 void
 MainFrame::onBackupPolicy(wxCommandEvent &event)
 {
-	ProfileCtrl	*profileCtrl = ProfileCtrl::getInstance();
+	PolicyCtrl	*policyCtrl = PolicyCtrl::getInstance();
 	PolicyRuleSet	*rs;
 
-	rs = profileCtrl->getRuleSet(event.GetExtraLong());
+	rs = policyCtrl->getRuleSet(event.GetExtraLong());
 	if (rs) {
 		DlgBackupPolicy dlg(alertIcon_, rs);
 		this->Show();

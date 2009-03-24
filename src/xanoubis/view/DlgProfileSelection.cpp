@@ -26,21 +26,21 @@
  */
 
 #include "DlgProfileSelection.h"
-#include "ProfileCtrl.h"
+#include "PolicyCtrl.h"
 
 DlgProfileSelection::DlgProfileSelection(const wxString &selection,
     wxWindow *parent) : ModAnoubisProfileSelectionDialogBase(parent)
 {
-	ProfileCtrl *profileCtrl = ProfileCtrl::getInstance();
-	wxArrayString profileList = profileCtrl->getProfileList();
+	PolicyCtrl *policyCtrl = PolicyCtrl::getInstance();
+	wxArrayString profileList = policyCtrl->getProfileList();
 
 	/* Filter writeable profiles */
 	for (unsigned int i = 0; i < profileList.GetCount(); i++) {
-		if (profileCtrl->isProfileWritable(profileList[i]))
+		if (policyCtrl->isProfileWritable(profileList[i]))
 			profilesCombo->Append(profileList[i]);
 	}
 
-	if (profileCtrl->isProfileWritable(selection)) {
+	if (policyCtrl->isProfileWritable(selection)) {
 		profilesCombo->SetValue(selection);
 		buttonSizerOK->Enable(selection != wxEmptyString);
 	} else

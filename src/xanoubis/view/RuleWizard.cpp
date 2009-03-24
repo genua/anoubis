@@ -50,7 +50,7 @@
 #include "SbAppPolicy.h"
 #include "SbAccessFilterPolicy.h"
 #include "DefaultFilterPolicy.h"
-#include "ProfileCtrl.h"
+#include "PolicyCtrl.h"
 #include "PolicyRuleSet.h"
 
 #define CREATE_PAGE(list, idx, name, history)				\
@@ -352,12 +352,12 @@ RuleWizard::onWizardFinished(wxWizardEvent &)
 	struct iovec		 iv;
 	struct apn_ruleset	*rs;
 
-	ProfileCtrl	*profileCtrl;
+	PolicyCtrl	*policyCtrl;
 	PolicyRuleSet	*ruleSet;
 
-	profileCtrl = ProfileCtrl::getInstance();
+	policyCtrl = PolicyCtrl::getInstance();
 	/* XXX CEH: Might want to create Admin Policies as well. */
-	ruleSet = profileCtrl->getRuleSet(profileCtrl->getUserId());
+	ruleSet = policyCtrl->getRuleSet(policyCtrl->getUserId());
 	if (ruleSet == NULL) {
 		/* As we have no ruleset, create empty ruleset. */
 		iv.iov_base = (void *)" ";
@@ -367,7 +367,7 @@ RuleWizard::onWizardFinished(wxWizardEvent &)
 		}
 		if (ruleSet != NULL) {
 			ruleSet->lock();
-			profileCtrl->importPolicy(ruleSet);
+			policyCtrl->importPolicy(ruleSet);
 		} else {
 			/* Ok, we have a serious problem here. */
 			// XXX ch: error dlg missing

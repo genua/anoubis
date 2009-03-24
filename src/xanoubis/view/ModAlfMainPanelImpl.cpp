@@ -49,7 +49,7 @@
 #include "ModAlfMainPanelImpl.h"
 #include "Policy.h"
 #include "PolicyRuleSet.h"
-#include "ProfileCtrl.h"
+#include "PolicyCtrl.h"
 
 ModAlfMainPanelImpl::ModAlfMainPanelImpl(wxWindow* parent,
     wxWindowID id) : Observer(NULL), ModAlfMainPanelBase(parent, id)
@@ -123,9 +123,9 @@ ModAlfMainPanelImpl::onLoadRuleSet(wxCommandEvent& event)
 {
 	ModAlfAddPolicyVisitor	 addVisitor(this);
 	PolicyRuleSet		*ruleSet;
-	ProfileCtrl		*profileCtrl;
+	PolicyCtrl		*policyCtrl;
 
-	profileCtrl = ProfileCtrl::getInstance();
+	policyCtrl = PolicyCtrl::getInstance();
 
 	/* clear the whole list */
 	for (int i = lst_Rules->GetItemCount() - 1; i >= 0; i--) {
@@ -133,30 +133,30 @@ ModAlfMainPanelImpl::onLoadRuleSet(wxCommandEvent& event)
 	}
 
 	/* release old ones */
-	ruleSet = profileCtrl->getRuleSet(userRuleSetId_);
+	ruleSet = policyCtrl->getRuleSet(userRuleSetId_);
 	if (ruleSet != NULL) {
 		ruleSet->unlock();
 		removeSubject(ruleSet);
 	}
 
-	ruleSet = profileCtrl->getRuleSet(adminRuleSetId_);
+	ruleSet = policyCtrl->getRuleSet(adminRuleSetId_);
 	if (ruleSet != NULL) {
 		ruleSet->unlock();
 		removeSubject(ruleSet);
 	}
 
-	userRuleSetId_ = profileCtrl->getUserId();
-	adminRuleSetId_ = profileCtrl->getAdminId(geteuid());
+	userRuleSetId_ = policyCtrl->getUserId();
+	adminRuleSetId_ = policyCtrl->getAdminId(geteuid());
 
 	/* get the new ones */
-	ruleSet = profileCtrl->getRuleSet(userRuleSetId_);
+	ruleSet = policyCtrl->getRuleSet(userRuleSetId_);
 	if (ruleSet != NULL) {
 		ruleSet->lock();
 		addSubject(ruleSet);
 		ruleSet->accept(addVisitor);
 	}
 
-	ruleSet = profileCtrl->getRuleSet(adminRuleSetId_);
+	ruleSet = policyCtrl->getRuleSet(adminRuleSetId_);
 	if (ruleSet != NULL) {
 		ruleSet->lock();
 		addSubject(ruleSet);
@@ -287,18 +287,18 @@ void
 ModAlfMainPanelImpl::updateShowRuleset(void)
 {
 	ModAlfAddPolicyVisitor	addVisitor(this);
-	ProfileCtrl		*profileCtrl;
+	PolicyCtrl		*policyCtrl;
 	PolicyRuleSet		*ruleSet;
 
-	profileCtrl = ProfileCtrl::getInstance();
+	policyCtrl = PolicyCtrl::getInstance();
 
 	/* get the new ones */
-	ruleSet = profileCtrl->getRuleSet(userRuleSetId_);
+	ruleSet = policyCtrl->getRuleSet(userRuleSetId_);
 	if (ruleSet != NULL) {
 		ruleSet->accept(addVisitor);
 	}
 
-	ruleSet = profileCtrl->getRuleSet(adminRuleSetId_);
+	ruleSet = policyCtrl->getRuleSet(adminRuleSetId_);
 	if (ruleSet != NULL) {
 		ruleSet->accept(addVisitor);
 	}

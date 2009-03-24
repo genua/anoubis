@@ -38,10 +38,10 @@
 #include "ComPolicySendTask.h"
 #include "JobCtrl.h"
 #include "PolicyRuleSet.h"
-#include "ProfileCtrl.h"
+#include "PolicyCtrl.h"
 #include "VersionCtrl.h"
 
-ProfileCtrl::~ProfileCtrl(void)
+PolicyCtrl::~PolicyCtrl(void)
 {
 	/* Destroy policies */
 	cleanRuleSetList(ruleSetList_, true);
@@ -62,35 +62,35 @@ ProfileCtrl::~ProfileCtrl(void)
 	}
 
 	JobCtrl::getInstance()->Disconnect(anTASKEVT_POLICY_REQUEST,
-	    wxTaskEventHandler(ProfileCtrl::OnPolicyRequest), NULL, this);
+	    wxTaskEventHandler(PolicyCtrl::OnPolicyRequest), NULL, this);
 	JobCtrl::getInstance()->Disconnect(anTASKEVT_POLICY_SEND,
-	    wxTaskEventHandler(ProfileCtrl::OnPolicySend), NULL, this);
+	    wxTaskEventHandler(PolicyCtrl::OnPolicySend), NULL, this);
 	AnEvents::getInstance()->Disconnect(anEVT_ANSWER_ESCALATION,
-	    wxCommandEventHandler(ProfileCtrl::OnAnswerEscalation), NULL, this);
+	    wxCommandEventHandler(PolicyCtrl::OnAnswerEscalation), NULL, this);
 	AnEvents::getInstance()->Disconnect(anEVT_POLICY_CHANGE,
-	    wxCommandEventHandler(ProfileCtrl::OnPolicyChange), NULL, this);
+	    wxCommandEventHandler(PolicyCtrl::OnPolicyChange), NULL, this);
 }
 
-ProfileCtrl *
-ProfileCtrl::getInstance(void)
+PolicyCtrl *
+PolicyCtrl::getInstance(void)
 {
-	return (Singleton<ProfileCtrl>::instance());
+	return (Singleton<PolicyCtrl>::instance());
 }
 
 long
-ProfileCtrl::getUserId(void) const
+PolicyCtrl::getUserId(void) const
 {
 	return (seekId(false, geteuid()));
 }
 
 long
-ProfileCtrl::getAdminId(uid_t uid) const
+PolicyCtrl::getAdminId(uid_t uid) const
 {
 	return (seekId(true, uid));
 }
 
 PolicyRuleSet *
-ProfileCtrl::getRuleSet(long id) const
+PolicyCtrl::getRuleSet(long id) const
 {
 	RuleSetList::const_iterator it;
 
@@ -112,7 +112,7 @@ ProfileCtrl::getRuleSet(long id) const
 }
 
 PolicyRuleSet *
-ProfileCtrl::getRuleSet(const wxString &name) const
+PolicyCtrl::getRuleSet(const wxString &name) const
 {
 	wxString file;
 
@@ -131,7 +131,7 @@ ProfileCtrl::getRuleSet(const wxString &name) const
 }
 
 wxArrayString
-ProfileCtrl::getProfileList(void) const
+PolicyCtrl::getProfileList(void) const
 {
 	wxArrayString	result;
 
@@ -145,14 +145,14 @@ ProfileCtrl::getProfileList(void) const
 }
 
 bool
-ProfileCtrl::haveProfile(const wxString &name) const
+PolicyCtrl::haveProfile(const wxString &name) const
 {
 	return wxFileExists(getProfileFile(name, USER_PROFILE)) ||
 	    wxFileExists(getProfileFile(name, DEFAULT_PROFILE));
 }
 
 bool
-ProfileCtrl::isProfileWritable(const wxString &name) const
+PolicyCtrl::isProfileWritable(const wxString &name) const
 {
 	/* Do not allow writes to the "active" profile". */
 	if (name == wxString::FromAscii("active"))
@@ -161,7 +161,7 @@ ProfileCtrl::isProfileWritable(const wxString &name) const
 }
 
 bool
-ProfileCtrl::removeProfile(const wxString &name)
+PolicyCtrl::removeProfile(const wxString &name)
 {
 	/*
 	 * Only try to remove the user-profile,
@@ -175,7 +175,7 @@ ProfileCtrl::removeProfile(const wxString &name)
 }
 
 bool
-ProfileCtrl::exportToProfile(const wxString &name)
+PolicyCtrl::exportToProfile(const wxString &name)
 {
 	/* The user policy */
 	PolicyRuleSet *rs = getRuleSet(seekId(false, geteuid()));
@@ -225,7 +225,7 @@ ProfileCtrl::exportToProfile(const wxString &name)
 }
 
 bool
-ProfileCtrl::exportToFile(const wxString &file)
+PolicyCtrl::exportToFile(const wxString &file)
 {
 	/* The user policy */
 	PolicyRuleSet *rs = getRuleSet(seekId(false, geteuid()));
@@ -245,7 +245,7 @@ ProfileCtrl::exportToFile(const wxString &file)
 }
 
 bool
-ProfileCtrl::importFromProfile(const wxString &name)
+PolicyCtrl::importFromProfile(const wxString &name)
 {
 	PolicyRuleSet	*rs = 0;
 	wxString	file;
@@ -276,7 +276,7 @@ ProfileCtrl::importFromProfile(const wxString &name)
 }
 
 bool
-ProfileCtrl::importFromFile(const wxString &file)
+PolicyCtrl::importFromFile(const wxString &file)
 {
 	PolicyRuleSet	*rs;
 	bool		success;
@@ -291,7 +291,7 @@ ProfileCtrl::importFromFile(const wxString &file)
 }
 
 bool
-ProfileCtrl::importPolicy(PolicyRuleSet *rs)
+PolicyCtrl::importPolicy(PolicyRuleSet *rs)
 {
 	/* Try to clean outdated policies */
 	cleanRuleSetList(gcRuleSetList_, false);
@@ -328,7 +328,7 @@ ProfileCtrl::importPolicy(PolicyRuleSet *rs)
 }
 
 bool
-ProfileCtrl::importPolicy(PolicyRuleSet *rs, const wxString &name)
+PolicyCtrl::importPolicy(PolicyRuleSet *rs, const wxString &name)
 {
 	if (rs == 0 || rs->hasErrors())
 		return (false);
@@ -360,8 +360,8 @@ ProfileCtrl::importPolicy(PolicyRuleSet *rs, const wxString &name)
 	}
 
 	/*
-	 * XXX It's hard to determine weather export was successful
-	 * because PolicyRuleSet::exportToFile() returns void.
+	 * XXX It's hard to determine if export was successful because
+	 * PolicyRuleSet::exportToFile() returns void.
 	 */
 	rs->exportToFile(file);
 
@@ -369,7 +369,7 @@ ProfileCtrl::importPolicy(PolicyRuleSet *rs, const wxString &name)
 }
 
 bool
-ProfileCtrl::receiveOneFromDaemon(long prio, long uid)
+PolicyCtrl::receiveOneFromDaemon(long prio, long uid)
 {
 	ComPolicyRequestTask	*task = new ComPolicyRequestTask(prio, uid);
 	struct iovec		 iov;
@@ -394,7 +394,7 @@ ProfileCtrl::receiveOneFromDaemon(long prio, long uid)
 }
 
 bool
-ProfileCtrl::sendToDaemon(long id)
+PolicyCtrl::sendToDaemon(long id)
 {
 	PolicyRuleSet		*rs = getRuleSet(id);
 	ComPolicySendTask	*task;
@@ -421,19 +421,19 @@ ProfileCtrl::sendToDaemon(long id)
 }
 
 bool
-ProfileCtrl::isEventBroadcastEnabled(void) const
+PolicyCtrl::isEventBroadcastEnabled(void) const
 {
 	return (eventBroadcastEnabled_);
 }
 
 void
-ProfileCtrl::setEventBroadcastEnabled(bool enabled)
+PolicyCtrl::setEventBroadcastEnabled(bool enabled)
 {
 	eventBroadcastEnabled_ = enabled;
 }
 
 void
-ProfileCtrl::OnPolicyRequest(TaskEvent &event)
+PolicyCtrl::OnPolicyRequest(TaskEvent &event)
 {
 	PolicyRuleSet		*rs;
 	ComPolicyRequestTask	*task =
@@ -462,7 +462,7 @@ ProfileCtrl::OnPolicyRequest(TaskEvent &event)
 }
 
 void
-ProfileCtrl::OnPolicySend(TaskEvent &event)
+PolicyCtrl::OnPolicySend(TaskEvent &event)
 {
 	ComPolicySendTask	*task;
 	ComTask::ComTaskResult	taskResult;
@@ -536,7 +536,7 @@ ProfileCtrl::OnPolicySend(TaskEvent &event)
 }
 
 wxString
-ProfileCtrl::getProfilePath(ProfileSpec spec)
+PolicyCtrl::getProfilePath(ProfileSpec spec)
 {
 	switch (spec) {
 	case DEFAULT_PROFILE:
@@ -553,7 +553,7 @@ ProfileCtrl::getProfilePath(ProfileSpec spec)
 }
 
 wxString
-ProfileCtrl::getProfileFile(const wxString &name, ProfileSpec spec)
+PolicyCtrl::getProfileFile(const wxString &name, ProfileSpec spec)
 {
 	if (spec != NO_PROFILE)
 		return (getProfilePath(spec) + wxT("/") + name);
@@ -561,8 +561,8 @@ ProfileCtrl::getProfileFile(const wxString &name, ProfileSpec spec)
 		return wxEmptyString;
 }
 
-ProfileCtrl::ProfileSpec
-ProfileCtrl::getProfileSpec(const wxString &name)
+PolicyCtrl::ProfileSpec
+PolicyCtrl::getProfileSpec(const wxString &name)
 {
 	if (wxFileExists(getProfileFile(name, USER_PROFILE)))
 		return (USER_PROFILE);
@@ -573,7 +573,7 @@ ProfileCtrl::getProfileSpec(const wxString &name)
 }
 
 long
-ProfileCtrl::seekId(bool isAdmin, uid_t uid) const
+PolicyCtrl::seekId(bool isAdmin, uid_t uid) const
 {
 	RuleSetList::const_iterator it;
 
@@ -588,7 +588,7 @@ ProfileCtrl::seekId(bool isAdmin, uid_t uid) const
 }
 
 bool
-ProfileCtrl::makeBackup(const wxString &profile)
+PolicyCtrl::makeBackup(const wxString &profile)
 {
 	/* The user policy */
 	PolicyRuleSet *rs = getRuleSet(seekId(false, geteuid()));
@@ -604,7 +604,7 @@ ProfileCtrl::makeBackup(const wxString &profile)
 }
 
 void
-ProfileCtrl::scanDirectory(const wxString &path, wxArrayString &dest)
+PolicyCtrl::scanDirectory(const wxString &path, wxArrayString &dest)
 {
 	if (!wxDir::Exists(path)) {
 		/* No such directory */
@@ -623,7 +623,7 @@ ProfileCtrl::scanDirectory(const wxString &path, wxArrayString &dest)
 }
 
 void
-ProfileCtrl::cleanRuleSetList(RuleSetList &list, bool force)
+PolicyCtrl::cleanRuleSetList(RuleSetList &list, bool force)
 {
 	RuleSetList::iterator it;
 
@@ -638,7 +638,7 @@ ProfileCtrl::cleanRuleSetList(RuleSetList &list, bool force)
 }
 
 void
-ProfileCtrl::OnAnswerEscalation(wxCommandEvent &event)
+PolicyCtrl::OnAnswerEscalation(wxCommandEvent &event)
 {
 	EscalationNotify	*escalation;
 	PolicyRuleSet		*ruleset = NULL;
@@ -665,7 +665,7 @@ ProfileCtrl::OnAnswerEscalation(wxCommandEvent &event)
 }
 
 void
-ProfileCtrl::OnPolicyChange(wxCommandEvent &event)
+PolicyCtrl::OnPolicyChange(wxCommandEvent &event)
 {
 	long		 prio = event.GetInt();
 	long		 uid = event.GetExtraLong();
@@ -686,17 +686,17 @@ ProfileCtrl::OnPolicyChange(wxCommandEvent &event)
 	receiveOneFromDaemon(prio, uid);
 }
 
-ProfileCtrl::ProfileCtrl(void) : Singleton<ProfileCtrl>()
+PolicyCtrl::PolicyCtrl(void) : Singleton<PolicyCtrl>()
 {
 	eventBroadcastEnabled_ = true;
 	JobCtrl *jobCtrl = JobCtrl::getInstance();
 
 	jobCtrl->Connect(anTASKEVT_POLICY_REQUEST,
-	    wxTaskEventHandler(ProfileCtrl::OnPolicyRequest), NULL, this);
+	    wxTaskEventHandler(PolicyCtrl::OnPolicyRequest), NULL, this);
 	jobCtrl->Connect(anTASKEVT_POLICY_SEND,
-	    wxTaskEventHandler(ProfileCtrl::OnPolicySend), NULL, this);
+	    wxTaskEventHandler(PolicyCtrl::OnPolicySend), NULL, this);
 	AnEvents::getInstance()->Connect(anEVT_ANSWER_ESCALATION,
-	    wxCommandEventHandler(ProfileCtrl::OnAnswerEscalation), NULL, this);
+	    wxCommandEventHandler(PolicyCtrl::OnAnswerEscalation), NULL, this);
 	AnEvents::getInstance()->Connect(anEVT_POLICY_CHANGE,
-	    wxCommandEventHandler(ProfileCtrl::OnPolicyChange), NULL, this);
+	    wxCommandEventHandler(PolicyCtrl::OnPolicyChange), NULL, this);
 }

@@ -33,7 +33,7 @@
 #include <wx/string.h>
 
 #include "main.h"
-#include "ProfileCtrl.h"
+#include "PolicyCtrl.h"
 #include "PolicyVisitor.h"
 #include "RuleSetSearchPolicyVisitor.h"
 #include "RuleSetClearModifiedVisitor.h"
@@ -751,7 +751,7 @@ PolicyRuleSet::createAnswerPolicy(EscalationNotify *escalation)
 	/* this PolicyRuleSet has changed, update myself */
 	refresh();
 
-	ProfileCtrl::getInstance()->sendToDaemon(getRuleSetId());
+	PolicyCtrl::getInstance()->sendToDaemon(getRuleSetId());
 	event.SetInt(getRuleSetId());
 	event.SetExtraLong(getRuleSetId());
 	wxPostEvent(AnEvents::getInstance(), event);

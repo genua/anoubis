@@ -32,7 +32,7 @@
 
 #include "RuleWizardHistory.h"
 #include "AppPolicy.h"
-#include "ProfileCtrl.h"
+#include "PolicyCtrl.h"
 #include "PolicyRuleSet.h"
 #include "main.h"
 
@@ -83,14 +83,14 @@ void
 RuleWizardHistory::setProgram(const wxString &program)
 {
 	AppPolicy	*app;
-	ProfileCtrl	*profileCtrl;
+	PolicyCtrl	*policyCtrl;
 	PolicyRuleSet	*ruleSet;
 
 	program_ = program;
 
 	/* Search for this program. Does it have alf policies? */
-	profileCtrl = ProfileCtrl::getInstance();
-	ruleSet = profileCtrl->getRuleSet(profileCtrl->getUserId());
+	policyCtrl = PolicyCtrl::getInstance();
+	ruleSet = policyCtrl->getRuleSet(policyCtrl->getUserId());
 	if (ruleSet == NULL) {
 		haveContextPolicy_ = false;
 		haveAlfPolicy_	   = false;

@@ -42,7 +42,7 @@
 #include "SfsAppPolicy.h"
 #include "FilterPolicy.h"
 #include "PolicyRuleSet.h"
-#include "ProfileCtrl.h"
+#include "PolicyCtrl.h"
 #include "RuleEditorAddPolicyVisitor.h"
 #include "DlgRuleEditorPage.h"
 #include "DlgRuleEditorAppPage.h"
@@ -509,17 +509,17 @@ void
 DlgRuleEditor::onConnectionStateChange(wxCommandEvent& event)
 {
 	JobCtrl::ConnectionState	 newState;
-	ProfileCtrl			*profileCtrl;
+	PolicyCtrl			*policyCtrl;
 
 	newState = (JobCtrl::ConnectionState)event.GetInt();
 	isConnected_ = (newState == JobCtrl::CONNECTION_CONNECTED);
 
 	if (isConnected_) {
-		profileCtrl = ProfileCtrl::getInstance();
-		profileCtrl->receiveOneFromDaemon(0, geteuid());
-		profileCtrl->receiveOneFromDaemon(1, geteuid());
-		switchRuleSet(profileCtrl->getAdminId(geteuid()),
-		    profileCtrl->getUserId());
+		policyCtrl = PolicyCtrl::getInstance();
+		policyCtrl->receiveOneFromDaemon(0, geteuid());
+		policyCtrl->receiveOneFromDaemon(1, geteuid());
+		switchRuleSet(policyCtrl->getAdminId(geteuid()),
+		    policyCtrl->getUserId());
 	}
 	rb_userMe->SetValue(true);
 	updateFooter();
@@ -530,15 +530,15 @@ void
 DlgRuleEditor::onLoadNewRuleSet(wxCommandEvent &event)
 {
 	int		 admin, user;
-	ProfileCtrl	*profileCtrl = ProfileCtrl::getInstance();
+	PolicyCtrl	*policyCtrl = PolicyCtrl::getInstance();
 
 	/*
 	 * Switch to the the user rule set if no ruleset was loaded
 	 * at all.
 	 */
-	admin = profileCtrl->getAdminId(editorUid_);
+	admin = policyCtrl->getAdminId(editorUid_);
 	if (editorUid_ == (int)geteuid()) {
-		user = profileCtrl->getUserId();
+		user = policyCtrl->getUserId();
 	} else {
 		user = -1;
 	}
@@ -559,7 +559,7 @@ DlgRuleEditor::onLoadNewRuleSet(wxCommandEvent &event)
 void
 DlgRuleEditor::onShowRule(wxCommandEvent& event)
 {
-	ProfileCtrl	*profileCtrl;
+	PolicyCtrl	*policyCtrl;
 	struct apn_rule	*apnrule;
 	FilterPolicy	*filter;
 	AppPolicy	*app;
@@ -567,15 +567,15 @@ DlgRuleEditor::onShowRule(wxCommandEvent& event)
 	PolicyRuleSet	*rs;
 	int		 idx;
 
-	profileCtrl = ProfileCtrl::getInstance();
+	policyCtrl = PolicyCtrl::getInstance();
 	event.Skip();
 
-	switchRuleSet(profileCtrl->getAdminId(geteuid()),
-	    profileCtrl->getUserId());
+	switchRuleSet(policyCtrl->getAdminId(geteuid()),
+	    policyCtrl->getUserId());
 	if (event.GetInt()) {
-		rs = profileCtrl->getRuleSet(adminRuleSetId_);
+		rs = policyCtrl->getRuleSet(adminRuleSetId_);
 	} else {
-		rs = profileCtrl->getRuleSet(userRuleSetId_);
+		rs = policyCtrl->getRuleSet(userRuleSetId_);
 	}
 	if (rs == NULL)
 		return;
@@ -1024,14 +1024,14 @@ DlgRuleEditor::onAppListCreateButton(wxCommandEvent &)
 	wxString	 typeSelection;
 	wxString	 message;
 	Policy		*policy;
-	ProfileCtrl	*profileCtrl;
+	PolicyCtrl	*policyCtrl;
 	PolicyRuleSet	*ruleSet;
 
 	index = getSelectedIndex(appPolicyListCtrl);
 	top   = appPolicyListCtrl->GetTopItem();
 
 	typeSelection = appListTypeChoice->GetStringSelection();
-	profileCtrl = ProfileCtrl::getInstance();
+	policyCtrl = PolicyCtrl::getInstance();
 	policy = getSelectedPolicy(appPolicyListCtrl);
 
 	if (policy) {
@@ -1043,7 +1043,7 @@ DlgRuleEditor::onAppListCreateButton(wxCommandEvent &)
 			return;
 		}
 	} else {
-		ruleSet = profileCtrl->getRuleSet(userRuleSetId_);
+		ruleSet = policyCtrl->getRuleSet(userRuleSetId_);
 	}
 
 	if (ruleSet == NULL) {
@@ -1058,7 +1058,7 @@ DlgRuleEditor::onAppListCreateButton(wxCommandEvent &)
 			wxMessageBox(message, _("Rule Editor"),
 			    wxOK | wxICON_INFORMATION, this);
 			switchRuleSet(adminRuleSetId_,
-			    profileCtrl->getUserId());
+			    policyCtrl->getUserId());
 		}
 	}
 
@@ -1120,14 +1120,14 @@ DlgRuleEditor::onFilterListCreateButton(wxCommandEvent &)
 	wxString	 typeSelection;
 	Policy		*policy;
 	AppPolicy	*parent;
-	ProfileCtrl	*profileCtrl;
+	PolicyCtrl	*policyCtrl;
 	PolicyRuleSet	*ruleSet;
 
 	appIndex    = getSelectedIndex(appPolicyListCtrl);
 	appTop      = appPolicyListCtrl->GetTopItem();
 	filterIndex = getSelectedIndex(filterPolicyListCtrl);
 	filterTop   = filterPolicyListCtrl->GetTopItem();
-	profileCtrl = ProfileCtrl::getInstance();
+	policyCtrl  = PolicyCtrl::getInstance();
 
 	policy = getSelectedPolicy(appPolicyListCtrl);
 	parent = wxDynamicCast(policy, AppPolicy);
@@ -1198,11 +1198,11 @@ void
 DlgRuleEditor::onFooterImportButton(wxCommandEvent &)
 {
 	wxFileDialog	 fileDlg(this);
-	ProfileCtrl	*profileCtrl;
+	PolicyCtrl	*policyCtrl;
 
 	wxBeginBusyCursor();
 
-	profileCtrl = ProfileCtrl::getInstance();
+	policyCtrl = PolicyCtrl::getInstance();
 
 	fileDlg.SetMessage(_("Import policy file"));
 	fileDlg.SetWildcard(wxT("*"));
@@ -1210,32 +1210,32 @@ DlgRuleEditor::onFooterImportButton(wxCommandEvent &)
 	wxEndBusyCursor();
 
 	if (fileDlg.ShowModal() == wxID_OK) {
-		if (!profileCtrl->importFromFile(fileDlg.GetPath())) {
+		if (!policyCtrl->importFromFile(fileDlg.GetPath())) {
 			wxMessageBox(
 			    _("Couldn't import policy file: it has errors."),
 			    _("Error"), wxICON_ERROR);
 		}
-		switchRuleSet(-1, profileCtrl->getUserId());
+		switchRuleSet(-1, policyCtrl->getUserId());
 	}
 }
 
 bool
 DlgRuleEditor::reloadRuleSet(long id)
 {
-	ProfileCtrl	*profileCtrl;
+	PolicyCtrl	*policyCtrl;
 	PolicyRuleSet	*rs;
 	int		 prio;
 
 	if (id >= 0) {
-		profileCtrl = ProfileCtrl::getInstance();
-		rs = profileCtrl->getRuleSet(id);
+		policyCtrl = PolicyCtrl::getInstance();
+		rs = policyCtrl->getRuleSet(id);
 		if (rs) {
 			if (rs->isAdmin()) {
 				prio = 0;
 			} else {
 				prio = 1;
 			}
-			return profileCtrl->receiveOneFromDaemon(prio,
+			return policyCtrl->receiveOneFromDaemon(prio,
 			    rs->getUid());
 		}
 	}
@@ -1261,14 +1261,14 @@ DlgRuleEditor::onFooterExportButton(wxCommandEvent &)
 	wxFileDialog	 fileDlg(this, wxEmptyString, wxEmptyString,
 			     wxEmptyString, wxEmptyString,
 			     wxFD_SAVE | wxFD_OVERWRITE_PROMPT);
-	ProfileCtrl	*profileCtrl;
+	PolicyCtrl	*policyCtrl;
 	PolicyRuleSet	*ruleSet = NULL;
 
-	profileCtrl = ProfileCtrl::getInstance();
+	policyCtrl = PolicyCtrl::getInstance();
 	if (userRuleSetId_ != -1) {
-		ruleSet = profileCtrl->getRuleSet(userRuleSetId_);
+		ruleSet = policyCtrl->getRuleSet(userRuleSetId_);
 	} else if (adminRuleSetId_ != -1) {
-		ruleSet = profileCtrl->getRuleSet(adminRuleSetId_);
+		ruleSet = policyCtrl->getRuleSet(adminRuleSetId_);
 	}
 	if (ruleSet == NULL) {
 		/* XXX ch: error dialog to user? */
@@ -1286,7 +1286,7 @@ DlgRuleEditor::onFooterExportButton(wxCommandEvent &)
 
 	if (fileDlg.ShowModal() == wxID_OK) {
 		ruleSet->setOrigin(fileDlg.GetPath());
-		profileCtrl->exportToFile(ruleSet->getOrigin());
+		policyCtrl->exportToFile(ruleSet->getOrigin());
 		ruleSet->clearModified();
 	}
 
@@ -1298,16 +1298,16 @@ DlgRuleEditor::onFooterExportButton(wxCommandEvent &)
 void
 DlgRuleEditor::onFooterActivateButton(wxCommandEvent &)
 {
-	ProfileCtrl	*profileCtrl;
+	PolicyCtrl	*policyCtrl;
 	PolicyRuleSet	*admin = NULL, *user = NULL;
 
-	profileCtrl = ProfileCtrl::getInstance();
+	policyCtrl = PolicyCtrl::getInstance();
 
 	if (adminRuleSetId_ != -1) {
-		admin = profileCtrl->getRuleSet(adminRuleSetId_);
+		admin = policyCtrl->getRuleSet(adminRuleSetId_);
 	}
 	if (userRuleSetId_ != -1) {
-		user = profileCtrl->getRuleSet(userRuleSetId_);
+		user = policyCtrl->getRuleSet(userRuleSetId_);
 	}
 	if (admin == NULL && user == NULL) {
 		return;
@@ -1315,10 +1315,10 @@ DlgRuleEditor::onFooterActivateButton(wxCommandEvent &)
 
 	footerStatusText->SetLabel(wxT("sending to daemon"));
 	if (user) {
-		profileCtrl->sendToDaemon(userRuleSetId_);
+		policyCtrl->sendToDaemon(userRuleSetId_);
 	}
 	if (admin && admin->isModified() && geteuid() == 0) {
-		profileCtrl->sendToDaemon(adminRuleSetId_);
+		policyCtrl->sendToDaemon(adminRuleSetId_);
 	}
 
 	/*
@@ -1543,7 +1543,7 @@ DlgRuleEditor::addFilterPolicy(AppPolicy *policy)
 void
 DlgRuleEditor::switchRuleSet(long admin,  long user)
 {
-	ProfileCtrl	*profileCtrl = ProfileCtrl::getInstance();
+	PolicyCtrl	*policyCtrl = PolicyCtrl::getInstance();
 	PolicyRuleSet	*oldrs, *newrs;
 	int		 reload = 0;
 
@@ -1551,10 +1551,10 @@ DlgRuleEditor::switchRuleSet(long admin,  long user)
 		oldrs = NULL;
 		newrs = NULL;
 		if (adminRuleSetId_ != -1) {
-			oldrs = profileCtrl->getRuleSet(adminRuleSetId_);
+			oldrs = policyCtrl->getRuleSet(adminRuleSetId_);
 		}
 		if (admin != -1) {
-			newrs = profileCtrl->getRuleSet(admin);
+			newrs = policyCtrl->getRuleSet(admin);
 		}
 		if (oldrs) {
 			oldrs->unlock();
@@ -1573,10 +1573,10 @@ DlgRuleEditor::switchRuleSet(long admin,  long user)
 		oldrs = NULL;
 		newrs = NULL;
 		if (userRuleSetId_ != -1) {
-			oldrs = profileCtrl->getRuleSet(userRuleSetId_);
+			oldrs = policyCtrl->getRuleSet(userRuleSetId_);
 		}
 		if (user != -1) {
-			newrs = profileCtrl->getRuleSet(user);
+			newrs = policyCtrl->getRuleSet(user);
 		}
 		if (oldrs) {
 			oldrs->unlock();
@@ -1598,9 +1598,9 @@ DlgRuleEditor::switchRuleSet(long admin,  long user)
 void
 DlgRuleEditor::loadRuleSet(void)
 {
-	ProfileCtrl			*profileCtrl;
+	PolicyCtrl			*policyCtrl;
 
-	profileCtrl = ProfileCtrl::getInstance();
+	policyCtrl = PolicyCtrl::getInstance();
 
 	/* Clear list's. */
 	wipeFilterList();
@@ -1608,12 +1608,12 @@ DlgRuleEditor::loadRuleSet(void)
 
 	/* Load ruleset with user-policies. */
 	if (userRuleSetId_ != -1) {
-		addPolicyRuleSet(profileCtrl->getRuleSet(userRuleSetId_));
+		addPolicyRuleSet(policyCtrl->getRuleSet(userRuleSetId_));
 	}
 
 	/* Load ruleset with admin-policies. */
 	if (adminRuleSetId_ != -1) {
-		addPolicyRuleSet(profileCtrl->getRuleSet(adminRuleSetId_));
+		addPolicyRuleSet(policyCtrl->getRuleSet(adminRuleSetId_));
 	}
 
 	/* As no app is selected, we remove the accidental filled filters. */
@@ -1648,7 +1648,7 @@ DlgRuleEditor::createEmptyPolicyRuleSet(void)
 		 * XXX When editing admin rules we should import this as an
 		 * XXX admin rule set.
 		 */
-		ProfileCtrl::getInstance()->importPolicy(ruleSet);
+		PolicyCtrl::getInstance()->importPolicy(ruleSet);
 		switchRuleSet(adminRuleSetId_, ruleSet->getRuleSetId());
 	}
 
@@ -2031,8 +2031,8 @@ DlgRuleEditor::updateFooter(void)
 {
 	PolicyRuleSet	*admin = NULL, *user = NULL;
 
-	admin = ProfileCtrl::getInstance()->getRuleSet(adminRuleSetId_);
-	user = ProfileCtrl::getInstance()->getRuleSet(userRuleSetId_);
+	admin = PolicyCtrl::getInstance()->getRuleSet(adminRuleSetId_);
+	user = PolicyCtrl::getInstance()->getRuleSet(userRuleSetId_);
 
 	if (admin == NULL && user == NULL) {
 		return;
@@ -2065,17 +2065,17 @@ DlgRuleEditor::updateFooter(void)
 void
 DlgRuleEditor::setUser(long uid)
 {
-	ProfileCtrl	*profileCtrl = ProfileCtrl::getInstance();
+	PolicyCtrl	*policyCtrl = PolicyCtrl::getInstance();
 	long		 user = -1, admin = -1;
 
 	editorUid_ = uid;
 	if (rb_userMe->GetValue()) {
-		user = profileCtrl->getUserId();
+		user = policyCtrl->getUserId();
 	}
-	admin = profileCtrl->getAdminId(uid);
+	admin = policyCtrl->getAdminId(uid);
 	if (admin < 0) {
-		profileCtrl->receiveOneFromDaemon(0, uid);
-		admin = profileCtrl->getAdminId(uid);
+		policyCtrl->receiveOneFromDaemon(0, uid);
+		admin = policyCtrl->getAdminId(uid);
 	}
 	switchRuleSet(admin, user);
 }

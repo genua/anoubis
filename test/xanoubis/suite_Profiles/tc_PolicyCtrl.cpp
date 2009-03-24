@@ -35,12 +35,12 @@
 #include <check.h>
 
 #include <PolicyRuleSet.h>
-#include <ProfileCtrl.h>
+#include <PolicyCtrl.h>
 
-class tc_ProfileCtrl_AppTraits : public wxGUIAppTraits
+class tc_PolicyCtrl_AppTraits : public wxGUIAppTraits
 {
 	public:
-		tc_ProfileCtrl_AppTraits(const wxString &prefix)
+		tc_PolicyCtrl_AppTraits(const wxString &prefix)
 		{
 			paths.SetInstallPrefix(prefix);
 		}
@@ -54,26 +54,26 @@ class tc_ProfileCtrl_AppTraits : public wxGUIAppTraits
 		wxStandardPaths paths;
 };
 
-class tc_ProfileCtrl_App : public wxApp
+class tc_PolicyCtrl_App : public wxApp
 {
 	public:
-		tc_ProfileCtrl_App(const wxString &prefix)
+		tc_PolicyCtrl_App(const wxString &prefix)
 		{
 			this->prefix = prefix;
-			SetAppName(wxT("tc_ProfileCtrl"));
+			SetAppName(wxT("tc_PolicyCtrl"));
 		}
 
 		virtual wxAppTraits *CreateTraits()
 		{
-			return new tc_ProfileCtrl_AppTraits(prefix);
+			return new tc_PolicyCtrl_AppTraits(prefix);
 		}
 
 	private:
 		wxString prefix;
 };
 
-static tc_ProfileCtrl_App	*tc_App;
-static ProfileCtrl		*pc = NULL;
+static tc_PolicyCtrl_App	*tc_App;
+static PolicyCtrl		*pc = NULL;
 static char			tmp_home[64];
 static PolicyRuleSet		*userPolicy;
 static PolicyRuleSet		*adminPolicy;
@@ -188,31 +188,31 @@ setup(void)
 {
 	char *s;
 
-	strcpy(tmp_home, "/tmp/tc_ProfileCtrl_XXXXXX");
+	strcpy(tmp_home, "/tmp/tc_PolicyCtrl_XXXXXX");
 	s = mkdtemp(tmp_home);
 	setenv("HOME", tmp_home, 1);
 
-	tc_App = new tc_ProfileCtrl_App(wxString(tmp_home, wxConvFile));
+	tc_App = new tc_PolicyCtrl_App(wxString(tmp_home, wxConvFile));
 	wxApp::SetInstance(tc_App);
 
-	make_dir("%s/share/tc_ProfileCtrl/profiles", tmp_home);
-	make_dir("%s/.tc_ProfileCtrl/profiles", tmp_home);
+	make_dir("%s/share/tc_PolicyCtrl/profiles", tmp_home);
+	make_dir("%s/.tc_PolicyCtrl/profiles", tmp_home);
 
-	touch_file("%s/share/tc_ProfileCtrl/profiles/default1", tmp_home);
-	touch_file("%s/share/tc_ProfileCtrl/profiles/default2", tmp_home);
-	touch_file("%s/share/tc_ProfileCtrl/profiles/default3", tmp_home);
-	touch_file("%s/share/tc_ProfileCtrl/profiles/default4", tmp_home);
+	touch_file("%s/share/tc_PolicyCtrl/profiles/default1", tmp_home);
+	touch_file("%s/share/tc_PolicyCtrl/profiles/default2", tmp_home);
+	touch_file("%s/share/tc_PolicyCtrl/profiles/default3", tmp_home);
+	touch_file("%s/share/tc_PolicyCtrl/profiles/default4", tmp_home);
 
-	touch_file("%s/.tc_ProfileCtrl/profiles/user1", tmp_home);
-	touch_file("%s/.tc_ProfileCtrl/profiles/user2", tmp_home);
-	touch_file("%s/.tc_ProfileCtrl/profiles/user3", tmp_home);
-	touch_file("%s/.tc_ProfileCtrl/profiles/user4", tmp_home);
-	touch_file("%s/.tc_ProfileCtrl/profiles/user5", tmp_home);
-	touch_file("%s/.tc_ProfileCtrl/profiles/user6", tmp_home);
+	touch_file("%s/.tc_PolicyCtrl/profiles/user1", tmp_home);
+	touch_file("%s/.tc_PolicyCtrl/profiles/user2", tmp_home);
+	touch_file("%s/.tc_PolicyCtrl/profiles/user3", tmp_home);
+	touch_file("%s/.tc_PolicyCtrl/profiles/user4", tmp_home);
+	touch_file("%s/.tc_PolicyCtrl/profiles/user5", tmp_home);
+	touch_file("%s/.tc_PolicyCtrl/profiles/user6", tmp_home);
 
-	fail_if(pc != NULL, "Previous ProfileCtrl was not removed.");
-	pc = ProfileCtrl::getInstance();
-	fail_if(pc == NULL, "Couldn't create new ProfileCtrl.");
+	fail_if(pc != NULL, "Previous PolicyCtrl was not removed.");
+	pc = PolicyCtrl::getInstance();
+	fail_if(pc == NULL, "Couldn't create new PolicyCtrl.");
 	pc->setEventBroadcastEnabled(false);
 
 	userPolicy = createPolicyRuleSet(1, geteuid());
@@ -237,7 +237,7 @@ teardown(void)
 }
 
 int
-testProfileCtrl(ProfileCtrl *ctrl, int flags)
+testPolicyCtrl(PolicyCtrl *ctrl, int flags)
 {
 	if (flags == 0)
 		return (ctrl->gcRuleSetList_.size());
@@ -247,19 +247,19 @@ testProfileCtrl(ProfileCtrl *ctrl, int flags)
 	}
 }
 
-START_TEST(ProfileCtrl_create)
+START_TEST(PolicyCtrl_create)
 {
 	if (pc != pc->getInstance()) {
 		fail("Got different instance.");
 	}
 
-	if (pc != ProfileCtrl::getInstance()) {
+	if (pc != PolicyCtrl::getInstance()) {
 		fail("Got different instance.");
 	}
 }
 END_TEST
 
-START_TEST(ProfileCtrl_getUserId)
+START_TEST(PolicyCtrl_getUserId)
 {
 	long id = pc->getUserId();
 	fail_unless(id == userPolicy->getRuleSetId(),
@@ -273,7 +273,7 @@ START_TEST(ProfileCtrl_getUserId)
 }
 END_TEST
 
-START_TEST(ProfileCtrl_getAdminId)
+START_TEST(PolicyCtrl_getAdminId)
 {
 	long id = pc->getAdminId(geteuid());
 	fail_unless(id == adminPolicy->getRuleSetId(),
@@ -287,7 +287,7 @@ START_TEST(ProfileCtrl_getAdminId)
 }
 END_TEST
 
-START_TEST(ProfileCtrl_getUnknownAdminId)
+START_TEST(PolicyCtrl_getUnknownAdminId)
 {
 	long id = pc->getAdminId(0);
 	fail_unless(id == -1,
@@ -300,7 +300,7 @@ START_TEST(ProfileCtrl_getUnknownAdminId)
 }
 END_TEST
 
-START_TEST(ProfileCtrl_ProfileList)
+START_TEST(PolicyCtrl_ProfileList)
 {
 	wxArrayString result = pc->getProfileList();
 	fail_unless(result.GetCount() == 10,
@@ -331,9 +331,9 @@ START_TEST(ProfileCtrl_ProfileList)
 }
 END_TEST
 
-START_TEST(ProfileCtrl_ProfileListNoDefaultProfiles)
+START_TEST(PolicyCtrl_ProfileListNoDefaultProfiles)
 {
-	remove_dir("%s/share/tc_ProfileCtrl/profiles", tmp_home);
+	remove_dir("%s/share/tc_PolicyCtrl/profiles", tmp_home);
 
 	wxArrayString result = pc->getProfileList();
 	fail_unless(result.GetCount() == 6,
@@ -356,7 +356,7 @@ START_TEST(ProfileCtrl_ProfileListNoDefaultProfiles)
 }
 END_TEST
 
-START_TEST(ProfileCtrl_ProfileListNoProfiles)
+START_TEST(PolicyCtrl_ProfileListNoProfiles)
 {
 	remove_dir(tmp_home);
 
@@ -368,9 +368,9 @@ START_TEST(ProfileCtrl_ProfileListNoProfiles)
 }
 END_TEST
 
-START_TEST(ProfileCtrl_ProfileListNoUserProfiles)
+START_TEST(PolicyCtrl_ProfileListNoUserProfiles)
 {
-	remove_dir("%s/.tc_ProfileCtrl/profiles", tmp_home);
+	remove_dir("%s/.tc_PolicyCtrl/profiles", tmp_home);
 
 	wxArrayString result = pc->getProfileList();
 	fail_unless(result.GetCount() == 4,
@@ -389,49 +389,49 @@ START_TEST(ProfileCtrl_ProfileListNoUserProfiles)
 }
 END_TEST
 
-START_TEST(ProfileCtrl_haveDefaultProfile)
+START_TEST(PolicyCtrl_haveDefaultProfile)
 {
 	bool result = pc->haveProfile(wxT("default2"));
 	fail_unless(result == true, "Profile \"default2\" not found");
 }
 END_TEST
 
-START_TEST(ProfileCtrl_haveUserProfile)
+START_TEST(PolicyCtrl_haveUserProfile)
 {
 	bool result = pc->haveProfile(wxT("user4"));
 	fail_unless(result == true, "Profile \"user4\" not found");
 }
 END_TEST
 
-START_TEST(ProfileCtrl_haveNoProfile)
+START_TEST(PolicyCtrl_haveNoProfile)
 {
 	bool result = pc->haveProfile(wxT("foobar"));
 	fail_unless(result == false, "Profile \"foobar\" exists");
 }
 END_TEST
 
-START_TEST(ProfileCtrl_isWritableUser)
+START_TEST(PolicyCtrl_isWritableUser)
 {
 	bool result = pc->isProfileWritable(wxT("user5"));
 	fail_unless(result == true, "Profile \"user5\" is not writable.");
 }
 END_TEST
 
-START_TEST(ProfileCtrl_isWritableDefault)
+START_TEST(PolicyCtrl_isWritableDefault)
 {
 	bool result = pc->isProfileWritable(wxT("default1"));
 	fail_unless(result == false, "Profile \"default1\" is writable.");
 }
 END_TEST
 
-START_TEST(ProfileCtrl_isWritableNoSuchFile)
+START_TEST(PolicyCtrl_isWritableNoSuchFile)
 {
 	bool result = pc->isProfileWritable(wxT("foobar"));
 	fail_unless(result == true, "Profile \"foobar\" is writable.");
 }
 END_TEST
 
-START_TEST(ProfilrCtrl_removeUserProfile)
+START_TEST(PolicyCtrl_removeUserProfile)
 {
 	bool result;
 
@@ -453,7 +453,7 @@ START_TEST(ProfilrCtrl_removeUserProfile)
 }
 END_TEST
 
-START_TEST(ProfilrCtrl_removeDefaultProfile)
+START_TEST(PolicyCtrl_removeDefaultProfile)
 {
 	bool result;
 
@@ -476,7 +476,7 @@ START_TEST(ProfilrCtrl_removeDefaultProfile)
 }
 END_TEST
 
-START_TEST(ProfilrCtrl_removeUnknownProfile)
+START_TEST(PolicyCtrl_removeUnknownProfile)
 {
 	bool result = pc->removeProfile(wxT("foobar"));
 	fail_unless(result == false,
@@ -490,7 +490,7 @@ START_TEST(ProfilrCtrl_removeUnknownProfile)
 }
 END_TEST
 
-START_TEST(ProfileCtrl_getUserPolicy)
+START_TEST(PolicyCtrl_getUserPolicy)
 {
 	long id = pc->getUserId();
 	fail_unless(id == userPolicy->getRuleSetId(),
@@ -503,7 +503,7 @@ START_TEST(ProfileCtrl_getUserPolicy)
 }
 END_TEST
 
-START_TEST(ProfileCtrl_getAdminPolicy)
+START_TEST(PolicyCtrl_getAdminPolicy)
 {
 	long id = pc->getAdminId(geteuid());
 	fail_unless(id == adminPolicy->getRuleSetId(),
@@ -516,7 +516,7 @@ START_TEST(ProfileCtrl_getAdminPolicy)
 }
 END_TEST
 
-START_TEST(ProfileCtrl_getAdminPolicyWrongUid)
+START_TEST(PolicyCtrl_getAdminPolicyWrongUid)
 {
 	long id = pc->getAdminId(geteuid() + 1);
 	fail_unless(id == -1,
@@ -526,7 +526,7 @@ START_TEST(ProfileCtrl_getAdminPolicyWrongUid)
 }
 END_TEST
 
-START_TEST(ProfileCtrl_getRuleSetWrongId)
+START_TEST(PolicyCtrl_getRuleSetWrongId)
 {
 	long id = userPolicy->getRuleSetId() + adminPolicy->getRuleSetId();
 	PolicyRuleSet *rs = pc->getRuleSet(id);
@@ -534,7 +534,7 @@ START_TEST(ProfileCtrl_getRuleSetWrongId)
 }
 END_TEST
 
-START_TEST(ProfileCtrl_getRuleSetGarbage)
+START_TEST(PolicyCtrl_getRuleSetGarbage)
 {
 	long oldId = pc->getUserId();
 
@@ -565,14 +565,14 @@ START_TEST(ProfileCtrl_getRuleSetGarbage)
 }
 END_TEST
 
-START_TEST(ProfileCtrl_importNoProfile)
+START_TEST(PolicyCtrl_importNoProfile)
 {
 	bool result = pc->importFromProfile(wxT("foobar"));
 	fail_unless(result == false, "Import succeeded from unknown profile");
 }
 END_TEST
 
-START_TEST(ProfileCtrl_importUserProfile)
+START_TEST(PolicyCtrl_importUserProfile)
 {
 	int oldId = userPolicy->getRuleSetId();
 	bool result = pc->importFromProfile(wxT("user5"));
@@ -584,7 +584,7 @@ START_TEST(ProfileCtrl_importUserProfile)
 }
 END_TEST
 
-START_TEST(ProfileCtrl_importDefaultProfile)
+START_TEST(PolicyCtrl_importDefaultProfile)
 {
 	int oldId = userPolicy->getRuleSetId();
 	bool result = pc->importFromProfile(wxT("default2"));
@@ -596,37 +596,37 @@ START_TEST(ProfileCtrl_importDefaultProfile)
 }
 END_TEST
 
-START_TEST(ProfileCtrl_exportNoProfile)
+START_TEST(PolicyCtrl_exportNoProfile)
 {
 	bool result = pc->importFromProfile(wxT("foobar"));
 	fail_unless(result == false, "Import from \"foobar\" was successful");
 }
 END_TEST
 
-START_TEST(ProfileCtrl_exportNewProfile)
+START_TEST(PolicyCtrl_exportNewProfile)
 {
 	bool result = pc->exportToProfile(wxT("foobar"));
 	fail_unless(result == true, "Export to \"foobar\" failed.");
 }
 END_TEST
 
-START_TEST(ProfileCtrl_exportUserProfile)
+START_TEST(PolicyCtrl_exportUserProfile)
 {
 	bool result = pc->exportToProfile(wxT("user1"));
 	fail_unless(result == true, "Export to \"user1\" failed");
 }
 END_TEST
 
-START_TEST(ProfileCtrl_exportDefaultProfile)
+START_TEST(PolicyCtrl_exportDefaultProfile)
 {
 	bool result = pc->exportToProfile(wxT("default1"));
 	fail_unless(result == false, "Export to \"default1\" was successful");
 }
 END_TEST
 
-START_TEST(ProfileCtrl_exportProfileMissingDirectory)
+START_TEST(PolicyCtrl_exportProfileMissingDirectory)
 {
-	int rm_result = remove_dir("%s/.tc_ProfileCtrl/profiles", tmp_home);
+	int rm_result = remove_dir("%s/.tc_PolicyCtrl/profiles", tmp_home);
 	fail_unless(rm_result, "Failed to remove users profile dir");
 
 	bool export_result = pc->exportToProfile(wxT("foobar"));
@@ -651,7 +651,7 @@ START_TEST(ProfileCtrl_exportProfileMissingDirectory)
 }
 END_TEST
 
-START_TEST(ProfileCtrl_getUserRuleSet)
+START_TEST(PolicyCtrl_getUserRuleSet)
 {
 	PolicyRuleSet *rs = pc->getRuleSet(wxT("user2"));
 	fail_unless(rs != 0, "Failed to fetch policy of \"user2\"");
@@ -660,7 +660,7 @@ START_TEST(ProfileCtrl_getUserRuleSet)
 }
 END_TEST
 
-START_TEST(ProfileCtrl_getAdminRuleSet)
+START_TEST(PolicyCtrl_getAdminRuleSet)
 {
 	PolicyRuleSet *rs = pc->getRuleSet(wxT("default2"));
 	fail_unless(rs != 0, "Failed to fetch policy of \"default2\"");
@@ -669,7 +669,7 @@ START_TEST(ProfileCtrl_getAdminRuleSet)
 }
 END_TEST
 
-START_TEST(ProfileCtrl_getUnknownRuleSet)
+START_TEST(PolicyCtrl_getUnknownRuleSet)
 {
 	PolicyRuleSet *rs = pc->getRuleSet(wxT("foobar"));
 	fail_unless(rs == 0, "Failed to fetch policy of \"foobar\"");
@@ -678,7 +678,7 @@ START_TEST(ProfileCtrl_getUnknownRuleSet)
 }
 END_TEST
 
-START_TEST(ProfileCtrl_MoveGcListNotLocked)
+START_TEST(PolicyCtrl_MoveGcListNotLocked)
 {
 	long oldId = pc->getUserId();
 	PolicyRuleSet *oldRs = pc->getRuleSet(oldId);
@@ -694,11 +694,11 @@ START_TEST(ProfileCtrl_MoveGcListNotLocked)
 	fail_unless(newRs != oldRs, "Policy has not changed");
 
 	/* oldRs is not locked and thus destroyed */
-	fail_unless(testProfileCtrl(pc, 0) == 0, "Gargabe list is not empty");
+	fail_unless(testPolicyCtrl(pc, 0) == 0, "Gargabe list is not empty");
 }
 END_TEST
 
-START_TEST(ProfileCtrl_MoveGcListLocked)
+START_TEST(PolicyCtrl_MoveGcListLocked)
 {
 	long oldId = pc->getUserId();
 	PolicyRuleSet *oldRs = pc->getRuleSet(oldId);
@@ -716,53 +716,53 @@ START_TEST(ProfileCtrl_MoveGcListLocked)
 	fail_unless(newRs != oldRs, "Policy has not changed");
 
 	/* oldRs is locked and thus moved to garbage-list */
-	fail_unless(testProfileCtrl(pc, 0) == 1, "Gargabe list is empty");
+	fail_unless(testPolicyCtrl(pc, 0) == 1, "Gargabe list is empty");
 }
 END_TEST
 
 TCase *
-getTc_ProfileCtrl(void)
+getTc_PolicyCtrl(void)
 {
 	TCase *testCase;
 
-	testCase = tcase_create("ProfileCtrl");
+	testCase = tcase_create("PolicyCtrl");
 	tcase_add_checked_fixture(testCase, setup, teardown);
 
-	tcase_add_test(testCase, ProfileCtrl_create);
-	tcase_add_test(testCase, ProfileCtrl_getUserId);
-	tcase_add_test(testCase, ProfileCtrl_getAdminId);
-	tcase_add_test(testCase, ProfileCtrl_getUnknownAdminId);
-	tcase_add_test(testCase, ProfileCtrl_ProfileList);
-	tcase_add_test(testCase, ProfileCtrl_ProfileListNoDefaultProfiles);
-	tcase_add_test(testCase, ProfileCtrl_ProfileListNoUserProfiles);
-	tcase_add_test(testCase, ProfileCtrl_ProfileListNoProfiles);
-	tcase_add_test(testCase, ProfileCtrl_haveDefaultProfile);
-	tcase_add_test(testCase, ProfileCtrl_haveUserProfile);
-	tcase_add_test(testCase, ProfileCtrl_haveNoProfile);
-	tcase_add_test(testCase, ProfileCtrl_isWritableUser);
-	tcase_add_test(testCase, ProfileCtrl_isWritableDefault);
-	tcase_add_test(testCase, ProfileCtrl_isWritableNoSuchFile);
-	tcase_add_test(testCase, ProfilrCtrl_removeUserProfile);
-	tcase_add_test(testCase, ProfilrCtrl_removeDefaultProfile);
-	tcase_add_test(testCase, ProfilrCtrl_removeUnknownProfile);
-	tcase_add_test(testCase, ProfileCtrl_getUserPolicy);
-	tcase_add_test(testCase, ProfileCtrl_getAdminPolicy);
-	tcase_add_test(testCase, ProfileCtrl_getAdminPolicyWrongUid);
-	tcase_add_test(testCase, ProfileCtrl_getRuleSetWrongId);
-	tcase_add_test(testCase, ProfileCtrl_getRuleSetGarbage);
-	tcase_add_test(testCase, ProfileCtrl_importNoProfile);
-	tcase_add_test(testCase, ProfileCtrl_importUserProfile);
-	tcase_add_test(testCase, ProfileCtrl_importDefaultProfile);
-	tcase_add_test(testCase, ProfileCtrl_exportNewProfile);
-	tcase_add_test(testCase, ProfileCtrl_exportNoProfile);
-	tcase_add_test(testCase, ProfileCtrl_exportUserProfile);
-	tcase_add_test(testCase, ProfileCtrl_exportDefaultProfile);
-	tcase_add_test(testCase, ProfileCtrl_exportProfileMissingDirectory);
-	tcase_add_test(testCase, ProfileCtrl_getUserRuleSet);
-	tcase_add_test(testCase, ProfileCtrl_getAdminRuleSet);
-	tcase_add_test(testCase, ProfileCtrl_getUnknownRuleSet);
-	tcase_add_test(testCase, ProfileCtrl_MoveGcListNotLocked);
-	tcase_add_test(testCase, ProfileCtrl_MoveGcListLocked);
+	tcase_add_test(testCase, PolicyCtrl_create);
+	tcase_add_test(testCase, PolicyCtrl_getUserId);
+	tcase_add_test(testCase, PolicyCtrl_getAdminId);
+	tcase_add_test(testCase, PolicyCtrl_getUnknownAdminId);
+	tcase_add_test(testCase, PolicyCtrl_ProfileList);
+	tcase_add_test(testCase, PolicyCtrl_ProfileListNoDefaultProfiles);
+	tcase_add_test(testCase, PolicyCtrl_ProfileListNoUserProfiles);
+	tcase_add_test(testCase, PolicyCtrl_ProfileListNoProfiles);
+	tcase_add_test(testCase, PolicyCtrl_haveDefaultProfile);
+	tcase_add_test(testCase, PolicyCtrl_haveUserProfile);
+	tcase_add_test(testCase, PolicyCtrl_haveNoProfile);
+	tcase_add_test(testCase, PolicyCtrl_isWritableUser);
+	tcase_add_test(testCase, PolicyCtrl_isWritableDefault);
+	tcase_add_test(testCase, PolicyCtrl_isWritableNoSuchFile);
+	tcase_add_test(testCase, PolicyCtrl_removeUserProfile);
+	tcase_add_test(testCase, PolicyCtrl_removeDefaultProfile);
+	tcase_add_test(testCase, PolicyCtrl_removeUnknownProfile);
+	tcase_add_test(testCase, PolicyCtrl_getUserPolicy);
+	tcase_add_test(testCase, PolicyCtrl_getAdminPolicy);
+	tcase_add_test(testCase, PolicyCtrl_getAdminPolicyWrongUid);
+	tcase_add_test(testCase, PolicyCtrl_getRuleSetWrongId);
+	tcase_add_test(testCase, PolicyCtrl_getRuleSetGarbage);
+	tcase_add_test(testCase, PolicyCtrl_importNoProfile);
+	tcase_add_test(testCase, PolicyCtrl_importUserProfile);
+	tcase_add_test(testCase, PolicyCtrl_importDefaultProfile);
+	tcase_add_test(testCase, PolicyCtrl_exportNewProfile);
+	tcase_add_test(testCase, PolicyCtrl_exportNoProfile);
+	tcase_add_test(testCase, PolicyCtrl_exportUserProfile);
+	tcase_add_test(testCase, PolicyCtrl_exportDefaultProfile);
+	tcase_add_test(testCase, PolicyCtrl_exportProfileMissingDirectory);
+	tcase_add_test(testCase, PolicyCtrl_getUserRuleSet);
+	tcase_add_test(testCase, PolicyCtrl_getAdminRuleSet);
+	tcase_add_test(testCase, PolicyCtrl_getUnknownRuleSet);
+	tcase_add_test(testCase, PolicyCtrl_MoveGcListNotLocked);
+	tcase_add_test(testCase, PolicyCtrl_MoveGcListLocked);
 
 	return (testCase);
 }

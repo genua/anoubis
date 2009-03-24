@@ -197,7 +197,7 @@ endif
 testSuite_Profiles_SOURCES = \
 	testrunner.cpp \
 	suite_Profiles/testSuite.cpp \
-	suite_Profiles/tc_ProfileCtrl.cpp
+	suite_Profiles/tc_PolicyCtrl.cpp
 
 #
 # Testsuite: Policy

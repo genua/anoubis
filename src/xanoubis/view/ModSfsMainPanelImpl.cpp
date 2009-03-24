@@ -759,9 +759,9 @@ ModSfsMainPanelImpl::onLoadRuleSet(wxCommandEvent& event)
 {
 	ModSfsAddPolicyVisitor	 addVisitor(this);
 	PolicyRuleSet		*ruleSet;
-	ProfileCtrl		*profileCtrl;
+	PolicyCtrl		*policyCtrl;
 
-	profileCtrl = ProfileCtrl::getInstance();
+	policyCtrl = PolicyCtrl::getInstance();
 
 	/* clear the whole list */
 	for (int i = lst_Rules->GetItemCount() - 1; i >= 0; i--) {
@@ -769,29 +769,29 @@ ModSfsMainPanelImpl::onLoadRuleSet(wxCommandEvent& event)
 	}
 
 	/* release old ones */
-	ruleSet = profileCtrl->getRuleSet(userRuleSetId_);
+	ruleSet = policyCtrl->getRuleSet(userRuleSetId_);
 	if (ruleSet != NULL) {
 		ruleSet->unlock();
 		removeSubject(ruleSet);
 	}
 
-	ruleSet = profileCtrl->getRuleSet(adminRuleSetId_);
+	ruleSet = policyCtrl->getRuleSet(adminRuleSetId_);
 	if (ruleSet != NULL) {
 		ruleSet->unlock();
 		removeSubject(ruleSet);
 	}
 
-	userRuleSetId_ = profileCtrl->getUserId();
-	adminRuleSetId_ = profileCtrl->getAdminId(geteuid());
+	userRuleSetId_ = policyCtrl->getUserId();
+	adminRuleSetId_ = policyCtrl->getAdminId(geteuid());
 
 	/* get the new ones */
-	ruleSet = profileCtrl->getRuleSet(userRuleSetId_);
+	ruleSet = policyCtrl->getRuleSet(userRuleSetId_);
 	if (ruleSet != NULL) {
 		ruleSet->lock();
 		ruleSet->accept(addVisitor);
 	}
 
-	ruleSet = profileCtrl->getRuleSet(adminRuleSetId_);
+	ruleSet = policyCtrl->getRuleSet(adminRuleSetId_);
 	if (ruleSet != NULL) {
 		ruleSet->lock();
 		ruleSet->accept(addVisitor);

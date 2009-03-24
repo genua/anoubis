@@ -296,7 +296,7 @@ ModAnoubisMainPanelImpl::profileTabInit(void)
 void
 ModAnoubisMainPanelImpl::profileTabUpdate(void)
 {
-	ProfileCtrl *profileCtrl = ProfileCtrl::getInstance();
+	PolicyCtrl *policyCtrl = PolicyCtrl::getInstance();
 	bool haveSelected = (selectedProfile != wxEmptyString);
 	bool haveLoaded = (loadedProfile != wxEmptyString);
 
@@ -311,7 +311,7 @@ ModAnoubisMainPanelImpl::profileTabUpdate(void)
 		loadedProfileText->SetLabel(_("none"));
 
 	profileDeleteButton->Enable(
-	    profileCtrl->isProfileWritable(selectedProfile));
+	    policyCtrl->isProfileWritable(selectedProfile));
 	profileLoadButton->Enable(haveSelected);
 	profileActivateButton->Enable(haveSelected);
 }
@@ -319,15 +319,15 @@ ModAnoubisMainPanelImpl::profileTabUpdate(void)
 void
 ModAnoubisMainPanelImpl::fillProfileList(void)
 {
-	ProfileCtrl *profileCtrl = ProfileCtrl::getInstance();
-	wxArrayString profiles = profileCtrl->getProfileList();
+	PolicyCtrl *policyCtrl = PolicyCtrl::getInstance();
+	wxArrayString profiles = policyCtrl->getProfileList();
 
 	profileList->DeleteAllItems();
 
 	for (unsigned int i = 0; i < profiles.GetCount(); i++) {
 		profileList->InsertItem(i, wxEmptyString);
 
-		if (!profileCtrl->isProfileWritable(profiles[i]))
+		if (!policyCtrl->isProfileWritable(profiles[i]))
 			profileList->SetItem(i, 0, _("read-only"));
 
 		profileList->SetItem(i, 1, profiles[i]);
@@ -344,9 +344,9 @@ ModAnoubisMainPanelImpl::OnLoadRuleSet(wxCommandEvent &event)
 void
 ModAnoubisMainPanelImpl::OnProfileDeleteClicked(wxCommandEvent &)
 {
-	ProfileCtrl *profileCtrl = ProfileCtrl::getInstance();
+	PolicyCtrl *policyCtrl = PolicyCtrl::getInstance();
 
-	if (profileCtrl->removeProfile(selectedProfile)) {
+	if (policyCtrl->removeProfile(selectedProfile)) {
 		selectedProfile = wxEmptyString;
 		fillProfileList();
 		profileTabUpdate();
@@ -361,9 +361,9 @@ ModAnoubisMainPanelImpl::OnProfileDeleteClicked(wxCommandEvent &)
 void
 ModAnoubisMainPanelImpl::OnProfileLoadClicked(wxCommandEvent &)
 {
-	ProfileCtrl *profileCtrl = ProfileCtrl::getInstance();
+	PolicyCtrl *policyCtrl = PolicyCtrl::getInstance();
 
-	if (profileCtrl->importFromProfile(selectedProfile)) {
+	if (policyCtrl->importFromProfile(selectedProfile)) {
 		loadedProfile = selectedProfile;
 		profileTabUpdate();
 	} else {
@@ -380,10 +380,10 @@ ModAnoubisMainPanelImpl::OnProfileSaveClicked(wxCommandEvent &)
 	DlgProfileSelection dlg(loadedProfile, this);
 
 	if (dlg.ShowModal() == wxID_OK) {
-		ProfileCtrl *profileCtrl = ProfileCtrl::getInstance();
+		PolicyCtrl *policyCtrl = PolicyCtrl::getInstance();
 		wxString profile = dlg.getSelectedProfile();
 
-		if (!profileCtrl->isProfileWritable(profile)) {
+		if (!policyCtrl->isProfileWritable(profile)) {
 			wxMessageBox(
 			    wxString::Format(
 			       _("The profile \"%ls\" is not writable!"),
@@ -392,7 +392,7 @@ ModAnoubisMainPanelImpl::OnProfileSaveClicked(wxCommandEvent &)
 			return;
 		}
 
-		if (profileCtrl->exportToProfile(profile)) {
+		if (policyCtrl->exportToProfile(profile)) {
 			fillProfileList();
 			profileTabUpdate();
 		} else {
@@ -407,10 +407,10 @@ ModAnoubisMainPanelImpl::OnProfileSaveClicked(wxCommandEvent &)
 void
 ModAnoubisMainPanelImpl::OnProfileActivateClicked(wxCommandEvent &)
 {
-	ProfileCtrl *profileCtrl = ProfileCtrl::getInstance();
+	PolicyCtrl *policyCtrl = PolicyCtrl::getInstance();
 	long userId;
 
-	if (!profileCtrl->importFromProfile(selectedProfile)) {
+	if (!policyCtrl->importFromProfile(selectedProfile)) {
 		wxMessageBox(
 		    wxString::Format(_("Failed to import from \"%ls\"."),
 		       selectedProfile.c_str()),
@@ -418,7 +418,7 @@ ModAnoubisMainPanelImpl::OnProfileActivateClicked(wxCommandEvent &)
 		return;
 	}
 
-	userId = profileCtrl->getUserId();
+	userId = policyCtrl->getUserId();
 	if (userId == -1) {
 		wxMessageBox(
 		    _("Could not obtain user-policy."),
@@ -426,7 +426,7 @@ ModAnoubisMainPanelImpl::OnProfileActivateClicked(wxCommandEvent &)
 		return;
 	}
 
-	if (!profileCtrl->sendToDaemon(userId)) {
+	if (!policyCtrl->sendToDaemon(userId)) {
 		wxMessageBox(
 		    _("Could not activate user-policy.\n"
 		      "No connection to anoubisd."),
@@ -475,15 +475,15 @@ void
 ModAnoubisMainPanelImpl::versionListUpdate(void)
 {
 	VersionCtrl	*versionCtrl;
-	ProfileCtrl	*profileCtrl;
+	PolicyCtrl	*policyCtrl;
 	wxString	 profile;
 
 	versionCtrl = VersionCtrl::getInstance();
-	profileCtrl = ProfileCtrl::getInstance();
+	policyCtrl = PolicyCtrl::getInstance();
 	profile = versionCtrl->getVersionProfile();
 
 	VersionProfileChoice->Clear();
-	VersionProfileChoice->Append(profileCtrl->getProfileList());
+	VersionProfileChoice->Append(policyCtrl->getProfileList());
 	if (profile.IsEmpty()) {
 		VersionProfileChoice->SetSelection(0);
 	} else {
@@ -497,7 +497,7 @@ void
 ModAnoubisMainPanelImpl::versionListUpdateFromSelection(void)
 {
 	VersionCtrl	*versionCtrl;
-	ProfileCtrl	*profileCtrl;
+	PolicyCtrl	*policyCtrl;
 	unsigned int	count = 0;
 	wxString	profile;
 
@@ -507,7 +507,7 @@ ModAnoubisMainPanelImpl::versionListUpdateFromSelection(void)
 		profile = VersionProfileChoice->GetStringSelection();
 
 	versionCtrl = VersionCtrl::getInstance();
-	profileCtrl = ProfileCtrl::getInstance();
+	policyCtrl = PolicyCtrl::getInstance();
 
 	if (!versionCtrl->isInitialized()) {
 		versionListSetMsg(_("(Repository not initialized.)"));
@@ -1070,7 +1070,7 @@ void
 ModAnoubisMainPanelImpl::OnVersionRestoreButtonClick(wxCommandEvent&)
 {
 	VersionCtrl	*versionCtrl = VersionCtrl::getInstance();
-	ProfileCtrl	*profileCtrl = ProfileCtrl::getInstance();
+	PolicyCtrl	*policyCtrl = PolicyCtrl::getInstance();
 	bool		useActiveProfile;
 	wxString	profile;
 	int		idx;
@@ -1111,11 +1111,11 @@ ModAnoubisMainPanelImpl::OnVersionRestoreButtonClick(wxCommandEvent&)
 	/* Import policy into application */
 	PolicyRuleSet *rs = new PolicyRuleSet(1, geteuid(), apn_rs);
 	if (useActiveProfile) {
-		if (!profileCtrl->importPolicy(rs))
+		if (!policyCtrl->importPolicy(rs))
 			wxMessageBox(_("Failed to import the active policy."),
 			    _("Restore version"), wxOK | wxICON_ERROR, this);
 	} else {
-		if (!profileCtrl->importPolicy(rs, profile)) {
+		if (!policyCtrl->importPolicy(rs, profile)) {
 			wxString msg = wxString::Format(_(
 			    "Failed to import the policy\n"
 			    "of the \"%ls\" profile"), profile.c_str());

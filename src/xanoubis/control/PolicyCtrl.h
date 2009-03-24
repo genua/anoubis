@@ -25,8 +25,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _PROFILECTRL_H_
-#define _PROFILECTRL_H_
+#ifndef _POLICYCTRL_H_
+#define _POLICYCTRL_H_
 
 #include <list>
 #include <wx/string.h>
@@ -39,7 +39,7 @@ class PolicyRuleSet;
 class TaskEvent;
 
 /**
- * Profile controller.
+ * Policy controller.
  *
  * This controller is used to manage policies and profiles.
  *
@@ -57,17 +57,17 @@ class TaskEvent;
  * exportToProfile()). On the other hand you can im/export a policy into an
  * arbitrary file (importFromFile(), exportToFile()).
  */
-class ProfileCtrl : public wxEvtHandler, public Singleton<ProfileCtrl>
+class PolicyCtrl : public wxEvtHandler, public Singleton<PolicyCtrl>
 {
 	public:
 		/**
-		 * Destructor of ProfileCtrl.
+		 * Destructor of PolicyCtrl.
 		 * This will clean up the whole mess. It needs to be public,
 		 * but you are not allowed to use it (delete).
 		 * @param None.
 		 * @return Nothing.
 		 */
-		~ProfileCtrl(void);
+		~PolicyCtrl(void);
 
 		/**
 		 * Get object.
@@ -76,7 +76,7 @@ class ProfileCtrl : public wxEvtHandler, public Singleton<ProfileCtrl>
 		 * @param None.
 		 * @return It self.
 		 */
-		static ProfileCtrl *getInstance(void);
+		static PolicyCtrl *getInstance(void);
 
 		/**
 		 * Get user rule set id.
@@ -118,7 +118,7 @@ class ProfileCtrl : public wxEvtHandler, public Singleton<ProfileCtrl>
 		 * @param name Name of profile.
 		 * @return The policy of the profile. If the profile does not
 		 *         exist, 0 is returned.
-		 * @note The ProfileCtrl is not the owner of the returned
+		 * @note The PolicyCtrl is not the owner of the returned
 		 *       policy! Thus make sure to destroy the object by
 		 *       yourself.
 		 */
@@ -235,7 +235,7 @@ class ProfileCtrl : public wxEvtHandler, public Singleton<ProfileCtrl>
 		 * (user- or admin-policy) and the same user (related uid) is
 		 * unloaded before.
 		 *
-		 * The profile-controller takes over the ownership of the
+		 * The policy-controller takes over the ownership of the
 		 * policy. Thus, the policy is destroyed if necessary.
 		 *
 		 * When the policy was successfully imported, an wxCommandEvent
@@ -257,7 +257,7 @@ class ProfileCtrl : public wxEvtHandler, public Singleton<ProfileCtrl>
 		 * The policy of the specified profile is replaced with the new
 		 * one. Note, that the policy is not loaded!
 		 *
-		 * The profile-controller does <b>not</b> take over the
+		 * The policy-controller does <b>not</b> take over the
 		 * ownership of the policy! Thus you need to destroy it by
 		 * yourself.
 		 *
@@ -316,9 +316,9 @@ class ProfileCtrl : public wxEvtHandler, public Singleton<ProfileCtrl>
 
 	protected:
 		/**
-		 * Constructor of ProfileCtrl.
+		 * Constructor of PolicyCtrl.
 		 */
-		ProfileCtrl(void);
+		PolicyCtrl(void);
 
 	private:
 		/**
@@ -380,7 +380,7 @@ class ProfileCtrl : public wxEvtHandler, public Singleton<ProfileCtrl>
 		void OnPolicyRequest(TaskEvent &);
 
 		/**
-		 * Onvoked when a polciy was sent to anoubisd.
+		 * Invoked when a polciy was sent to anoubisd.
 		 * @see anTASKEVT_POLICY_SEND
 		 */
 		void OnPolicySend(TaskEvent &);
@@ -412,7 +412,7 @@ class ProfileCtrl : public wxEvtHandler, public Singleton<ProfileCtrl>
 		 * stored.
 		 * @param spec Type of profile.
 		 * @return Path, where the profiles are stored. If
-		 *         ProfileCtrl::NO_PROFILE is requested, en empty
+		 *         PolicyCtrl::NO_PROFILE is requested, en empty
 		 *         string is returned.
 		 */
 		static wxString getProfilePath(ProfileSpec);
@@ -430,7 +430,7 @@ class ProfileCtrl : public wxEvtHandler, public Singleton<ProfileCtrl>
 		 * Returns the type of the specified profile.
 		 * @param name Name of profile
 		 * @return Type of profile. If no such profile exists,
-		 *         ProfileCtrl::NO_PROFILE is returned.
+		 *         PolicyCtrl::NO_PROFILE is returned.
 		 */
 		static ProfileSpec getProfileSpec(const wxString &);
 
@@ -477,8 +477,8 @@ class ProfileCtrl : public wxEvtHandler, public Singleton<ProfileCtrl>
 		 */
 		void OnPolicyChange(wxCommandEvent &);
 
-	friend class Singleton<ProfileCtrl>;
-	friend int testProfileCtrl(ProfileCtrl *, int);
+	friend class Singleton<PolicyCtrl>;
+	friend int testPolicyCtrl(PolicyCtrl *, int);
 };
 
-#endif	/* _PROFILECTRL_H_ */
+#endif	/* _POLICYCTRL_H_ */

@@ -70,7 +70,7 @@ class KeyCtrl : public Singleton<KeyCtrl>
 {
 	public:
 		/**
-		 * Destructor of ProfileCtrl.
+		 * Destructor of KeyCtrl.
 		 * This will clean up the whole mess. It needs to be public,
 		 * but you are not allowed to use it (delete).
 		 */

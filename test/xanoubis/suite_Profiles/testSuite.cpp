@@ -27,18 +27,18 @@
 
 #include <check.h>
 
-extern TCase *getTc_ProfileCtrl(void);
+extern TCase *getTc_PolicyCtrl(void);
 
 Suite *
 getTestSuite(void)
 {
 	Suite *testSuite;
-	TCase *tc_ProfileCtrl;
+	TCase *tc_PolicyCtrl;
 
 	testSuite = suite_create("Profiles");
-	tc_ProfileCtrl = getTc_ProfileCtrl();
+	tc_PolicyCtrl = getTc_PolicyCtrl();
 
-	suite_add_tcase(testSuite, tc_ProfileCtrl);
+	suite_add_tcase(testSuite, tc_PolicyCtrl);
 
 	return (testSuite);
 }

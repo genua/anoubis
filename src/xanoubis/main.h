@@ -67,7 +67,7 @@
 #include "TrayIcon.h"
 #include "PolicyRuleSet.h"
 #include "Debug.h"
-#include "ProfileCtrl.h"
+#include "PolicyCtrl.h"
 
 enum moduleIdx {
 	OVERVIEW = 0,

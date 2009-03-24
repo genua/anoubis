@@ -29,7 +29,7 @@
 
 #include "main.h"
 #include "AppPolicy.h"
-#include "ProfileCtrl.h"
+#include "PolicyCtrl.h"
 #include "PolicyRuleSet.h"
 
 RuleWizardAlfOverwritePage::RuleWizardAlfOverwritePage(wxWindow *parent,
@@ -99,15 +99,15 @@ RuleWizardAlfOverwritePage::fillPolicy(void)
 {
 	wxString	 text;
 	AppPolicy	*app;
-	ProfileCtrl	*profileCtrl;
+	PolicyCtrl	*policyCtrl;
 	PolicyRuleSet	*ruleSet;
 
 	text.Printf(_("Policy of \"%ls\":"), history_->getProgram().c_str());
 	policyLabel->SetLabel(text);
 	text = wxEmptyString;
 
-	profileCtrl = ProfileCtrl::getInstance();
-	ruleSet = profileCtrl->getRuleSet(profileCtrl->getUserId());
+	policyCtrl = PolicyCtrl::getInstance();
+	ruleSet = policyCtrl->getRuleSet(policyCtrl->getUserId());
 	if (ruleSet != NULL) {
 		app = ruleSet->searchAlfAppPolicy(history_->getProgram());
 		if (app != NULL) {

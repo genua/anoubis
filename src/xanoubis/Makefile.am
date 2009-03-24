@@ -413,8 +413,8 @@ xanoubis_SOURCES= \
 	control/SfsCtrl.h \
 	control/VersionCtrl.cpp \
 	control/VersionCtrl.h \
-	control/ProfileCtrl.cpp \
-	control/ProfileCtrl.h \
+	control/PolicyCtrl.cpp \
+	control/PolicyCtrl.h \
 	pattern/PolicyVisitor.cpp \
 	pattern/PolicyVisitor.h \
 	pattern/Singleton.cpp \
