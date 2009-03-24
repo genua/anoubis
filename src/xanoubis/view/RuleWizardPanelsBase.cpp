@@ -297,7 +297,7 @@ RuleWizardProgramPageBase::RuleWizardProgramPageBase( wxWindow* parent, wxWindow
 	programSizer->Add( programTextCtrl, 1, wxALL|wxALIGN_CENTER_VERTICAL|wxEXPAND, 5 );
 	
 	pickButton = new wxButton( this, wxID_ANY, _("Pick..."), wxDefaultPosition, wxDefaultSize, 0 );
-	pickButton->SetToolTip( _("opens a file-choose-dialog\nand store the result") );
+	pickButton->SetToolTip( _("opens a file-choose-dialog\nand stores the result") );
 	
 	programSizer->Add( pickButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
@@ -624,7 +624,7 @@ RuleWizardAlfServicePageBase::RuleWizardAlfServicePageBase( wxWindow* parent, wx
 	
 	defaultsButton = new wxButton( this, wxID_ANY, _("add default services"), wxDefaultPosition, wxDefaultSize, 0 );
 	defaultsButton->Enable( false );
-	defaultsButton->SetToolTip( _("add the default services to the list") );
+	defaultsButton->SetToolTip( _("adds the default services to the list") );
 	
 	buttonSizer->Add( defaultsButton, 0, wxALL, 5 );
 	
@@ -633,7 +633,7 @@ RuleWizardAlfServicePageBase::RuleWizardAlfServicePageBase( wxWindow* parent, wx
 	
 	deleteButton = new wxButton( this, wxID_ANY, _("delete"), wxDefaultPosition, wxDefaultSize, 0 );
 	deleteButton->Enable( false );
-	deleteButton->SetToolTip( _("remove the selected items from the list") );
+	deleteButton->SetToolTip( _("removes the selected items from the list") );
 	
 	buttonSizer->Add( deleteButton, 0, wxALL, 5 );
 	
@@ -888,7 +888,7 @@ RuleWizardSandboxFilesPageBase::RuleWizardSandboxFilesPageBase( wxWindow* parent
 	
 	defaultsButton = new wxButton( this, wxID_ANY, _("add default permissions"), wxDefaultPosition, wxDefaultSize, 0 );
 	defaultsButton->Enable( false );
-	defaultsButton->SetToolTip( _("add the default services to the list") );
+	defaultsButton->SetToolTip( _("adds the default services to the list") );
 	
 	buttonSizer->Add( defaultsButton, 0, wxALL, 5 );
 	
@@ -897,7 +897,7 @@ RuleWizardSandboxFilesPageBase::RuleWizardSandboxFilesPageBase( wxWindow* parent
 	
 	deleteButton = new wxButton( this, wxID_ANY, _("delete"), wxDefaultPosition, wxDefaultSize, 0 );
 	deleteButton->Enable( false );
-	deleteButton->SetToolTip( _("remove the selected items from the list") );
+	deleteButton->SetToolTip( _("removes the selected items from the list") );
 	
 	buttonSizer->Add( deleteButton, 0, wxALL, 5 );
 	
@@ -964,7 +964,7 @@ RuleWizardFinalPageBase::RuleWizardFinalPageBase( wxWindow* parent, wxWindowID i
 	
 	mainSizer->Add( 0, 0, 1, wxEXPAND, 5 );
 	
-	finalLabel = new wxStaticText( this, wxID_ANY, _("This is the final page. If you click on 'finish'\nthe policies will been created.\n\nTo activate the newly created policies, please open the RuleEditor. Activate the policies with the button 'activate' in the lower right corner.\n(To make this work you need to be connected.)"), wxDefaultPosition, wxDefaultSize, 0 );
+	finalLabel = new wxStaticText( this, wxID_ANY, _("This is the final page. If you click on 'finish'\nthe policies will be created.\n\nTo activate the newly created policies, please open the RuleEditor. Activate the policies with the button 'activate' in the lower right corner.\n(To make this work you need to be connected.)"), wxDefaultPosition, wxDefaultSize, 0 );
 	finalLabel->Wrap( 400 );
 	mainSizer->Add( finalLabel, 0, wxALL, 5 );
 	

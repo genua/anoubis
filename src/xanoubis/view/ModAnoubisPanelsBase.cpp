@@ -55,7 +55,7 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	wxBoxSizer* sz_type;
 	sz_type = new wxBoxSizer( wxHORIZONTAL );
 	
-	tx_type = new wxStaticText( tb_MainAnoubisNotification, wxID_ANY, _("Typ:"), wxDefaultPosition, wxDefaultSize, 0 );
+	tx_type = new wxStaticText( tb_MainAnoubisNotification, wxID_ANY, _("Type:"), wxDefaultPosition, wxDefaultSize, 0 );
 	tx_type->Wrap( -1 );
 	sz_type->Add( tx_type, 0, wxALIGN_CENTER|wxALL|wxFIXED_MINSIZE, 5 );
 	

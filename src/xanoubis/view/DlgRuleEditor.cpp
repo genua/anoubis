@@ -907,6 +907,8 @@ DlgRuleEditor::onAppListColumnsButtonClick(wxCommandEvent &)
 	multiChoiceDlg = new wxMultiChoiceDialog(this, _("Table columns"),
 	    _("Please select the columns to be shown"), choices);
 	multiChoiceDlg->SetSelections(selections);
+	multiChoiceDlg->SetSize(400,350);
+	multiChoiceDlg->Layout();
 
 	if (multiChoiceDlg->ShowModal() == wxID_OK) {
 		/*
@@ -990,6 +992,8 @@ DlgRuleEditor::onFilterListColumnsButtonClick(wxCommandEvent &)
 	multiChoiceDlg = new wxMultiChoiceDialog(this, _("Table columns"),
 	   _("Please select the columns to be shown"), choices);
 	multiChoiceDlg->SetSelections(selections);
+	multiChoiceDlg->SetSize(400,440);
+	multiChoiceDlg->Layout();
 
 	if (multiChoiceDlg->ShowModal() == wxID_OK) {
 		/*
