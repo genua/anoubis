@@ -34,7 +34,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-03-25 09:12+0100\n"
+"POT-Creation-Date: 2009-03-25 16:02+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -77,7 +77,7 @@ msgstr ""
 #: model/AlfFilterPolicy.cpp:865 model/ContextFilterPolicy.cpp:180
 #: model/FilterPolicy.cpp:95 model/FilterPolicy.cpp:121
 #: model/PolicyUtils.cpp:218 view/DlgRuleEditorBase.cpp:356
-#: view/DlgRuleEditor.cpp:1752 view/DlgRuleEditorAppPage.cpp:165
+#: view/DlgRuleEditor.cpp:1758 view/DlgRuleEditorAppPage.cpp:165
 #: view/RuleWizardProgramPage.cpp:157 view/RuleWizardHistory.cpp:243
 msgid "(unknown)"
 msgstr ""
@@ -374,7 +374,7 @@ msgstr ""
 msgid "Status:"
 msgstr ""
 
-#: view/DlgRuleEditorBase.cpp:232 view/DlgRuleEditor.cpp:2062
+#: view/DlgRuleEditorBase.cpp:232 view/DlgRuleEditor.cpp:2068
 msgid "not modified"
 msgstr ""
 
@@ -387,7 +387,7 @@ msgid "import ruleset from file"
 msgstr ""
 
 #: view/DlgRuleEditorBase.cpp:246
-msgid "relaod from daemon"
+msgid "reload from daemon"
 msgstr ""
 
 #: view/DlgRuleEditorBase.cpp:248
@@ -761,98 +761,98 @@ msgstr ""
 msgid "Mask"
 msgstr ""
 
-#: view/DlgRuleEditor.cpp:616
+#: view/DlgRuleEditor.cpp:622
 #, c-format
 msgid "%ls %ls"
 msgstr ""
 
-#: view/DlgRuleEditor.cpp:907 view/DlgRuleEditor.cpp:992
+#: view/DlgRuleEditor.cpp:913 view/DlgRuleEditor.cpp:998
 msgid "Table columns"
 msgstr ""
 
-#: view/DlgRuleEditor.cpp:908 view/DlgRuleEditor.cpp:993
+#: view/DlgRuleEditor.cpp:914 view/DlgRuleEditor.cpp:999
 msgid "Please select the columns to be shown"
 msgstr ""
 
-#: view/DlgRuleEditor.cpp:1044 view/DlgRuleEditor.cpp:1149
+#: view/DlgRuleEditor.cpp:1050 view/DlgRuleEditor.cpp:1155
 msgid "Cannot edit admin ruleset!"
 msgstr ""
 
-#: view/DlgRuleEditor.cpp:1045 view/DlgRuleEditor.cpp:1150
-#: view/DlgRuleEditor.cpp:2102
+#: view/DlgRuleEditor.cpp:1051 view/DlgRuleEditor.cpp:1156
+#: view/DlgRuleEditor.cpp:2108
 msgid "RuleEditor"
 msgstr ""
 
-#: view/DlgRuleEditor.cpp:1056
+#: view/DlgRuleEditor.cpp:1062
 msgid "Couldn't create new ruleset!"
 msgstr ""
 
-#: view/DlgRuleEditor.cpp:1057 view/DlgRuleEditor.cpp:1062
-#: view/DlgRuleEditor.cpp:1101 view/DlgRuleEditor.cpp:1191
+#: view/DlgRuleEditor.cpp:1063 view/DlgRuleEditor.cpp:1068
+#: view/DlgRuleEditor.cpp:1107 view/DlgRuleEditor.cpp:1197
 #: view/DlgRuleEditorAppPage.cpp:388 view/MainFrameBase.cpp:64
 #: view/ModAnoubisPanelsBase.cpp:692
 msgid "Rule Editor"
 msgstr ""
 
-#: view/DlgRuleEditor.cpp:1061
+#: view/DlgRuleEditor.cpp:1067
 msgid "Created new ruleset."
 msgstr ""
 
-#: view/DlgRuleEditor.cpp:1100
+#: view/DlgRuleEditor.cpp:1106
 msgid "Error: Couldn't create new application rule."
 msgstr ""
 
-#: view/DlgRuleEditor.cpp:1190
+#: view/DlgRuleEditor.cpp:1196
 msgid "Error: Couldn't create new filter rule."
 msgstr ""
 
-#: view/DlgRuleEditor.cpp:1211
+#: view/DlgRuleEditor.cpp:1217
 msgid "Import policy file"
 msgstr ""
 
-#: view/DlgRuleEditor.cpp:1219 view/MainFrame.cpp:386
+#: view/DlgRuleEditor.cpp:1225 view/MainFrame.cpp:386
 msgid "Couldn't import policy file: it has errors."
 msgstr ""
 
-#: view/DlgRuleEditor.cpp:1220 view/MainFrame.cpp:387 main.cpp:373
+#: view/DlgRuleEditor.cpp:1226 view/MainFrame.cpp:387 main.cpp:373
 #: main.cpp:381
 msgid "Error"
 msgstr ""
 
-#: view/DlgRuleEditor.cpp:1288
+#: view/DlgRuleEditor.cpp:1294
 msgid "Export ruleset..."
 msgstr ""
 
-#: view/DlgRuleEditor.cpp:1490
+#: view/DlgRuleEditor.cpp:1496
 msgid "Rule Editor filling application table (admin ruleset)"
 msgstr ""
 
-#: view/DlgRuleEditor.cpp:1493
+#: view/DlgRuleEditor.cpp:1499
 msgid "Rule Editor filling application table (user ruleset)"
 msgstr ""
 
-#: view/DlgRuleEditor.cpp:1499
+#: view/DlgRuleEditor.cpp:1505
 msgid "Loading application policy..."
 msgstr ""
 
-#: view/DlgRuleEditor.cpp:1526
+#: view/DlgRuleEditor.cpp:1532
 msgid "Rule Editor filling filter table..."
 msgstr ""
 
-#: view/DlgRuleEditor.cpp:1531
+#: view/DlgRuleEditor.cpp:1537
 msgid "Loading filter policy..."
 msgstr ""
 
-#: view/DlgRuleEditor.cpp:1667
+#: view/DlgRuleEditor.cpp:1673
 #, c-format
 msgid "loading policy with id: %d"
 msgstr ""
 
-#: view/DlgRuleEditor.cpp:2060
+#: view/DlgRuleEditor.cpp:2066
 msgid "modified"
 msgstr ""
 
-#: view/DlgRuleEditor.cpp:2101
+#: view/DlgRuleEditor.cpp:2107
 msgid "Invalid user Name"
 msgstr ""
 

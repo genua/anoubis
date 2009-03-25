@@ -243,7 +243,7 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	
 	buttonFootSizer->Add( footerImportButton, 0, wxALL, 5 );
 	
-	footerReloadButton = new wxButton( this, wxID_ANY, _("relaod from daemon"), wxDefaultPosition, wxDefaultSize, 0 );
+	footerReloadButton = new wxButton( this, wxID_ANY, _("reload from daemon"), wxDefaultPosition, wxDefaultSize, 0 );
 	footerReloadButton->Enable( false );
 	footerReloadButton->SetToolTip( _("reload ruleset from daemon") );
 	
