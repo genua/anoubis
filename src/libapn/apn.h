@@ -307,6 +307,8 @@ int	apn_parse_iovec(const char *filename, struct iovec *vec, int count,
 int	apn_print_rule(struct apn_rule *, int, FILE *);
 int	apn_print_ruleset(struct apn_ruleset *, int, FILE *);
 int	apn_print_errors(struct apn_ruleset *, FILE *);
+int	apn_print_ruleset_cleaned(struct apn_ruleset *rs, int, FILE *,
+	    int (*)(struct apn_scope *, void *), void *);
 
 /*
  * Use these function to add an application block to a ruleset.

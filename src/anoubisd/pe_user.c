@@ -100,7 +100,7 @@ static int			 pe_user_load_db(struct pe_policy_db *);
 static int			 pe_user_load_dir(const char *, unsigned int,
 				     struct pe_policy_db *);
 static struct apn_ruleset	*pe_user_load_policy(const char *name,
-				     int flags, int prio);
+				     int flags);
 static int			 pe_user_insert_rs(struct apn_ruleset *,
 				     uid_t, unsigned int,
 				     struct pe_policy_db *);
@@ -207,7 +207,7 @@ pe_user_load_dir(const char *dirname, unsigned int prio, struct pe_policy_db *p)
 	uid_t			 uid;
 	const char		*errstr;
 	char			*filename, *t;
-	int			 flags = APN_FLAG_NOSCOPE;
+	int			 flags = 0;
 
 	DEBUG(DBG_PE_POLICY, "pe_user_load_dir: %s %p", dirname, p);
 
@@ -278,7 +278,7 @@ pe_user_load_dir(const char *dirname, unsigned int prio, struct pe_policy_db *p)
 				}
 			}
 		}
-		rs = pe_user_load_policy(filename, flags, prio);
+		rs = pe_user_load_policy(filename, flags);
 		free(filename);
 
 		/* If parsing fails, we just continue */
@@ -297,7 +297,7 @@ pe_user_load_dir(const char *dirname, unsigned int prio, struct pe_policy_db *p)
 	if (closedir(dir) == -1)
 		log_warn("closedir");
 
-	DEBUG(DBG_PE_POLICY, "pe_load_dir: %d policies inserted", count);
+	DEBUG(DBG_PE_POLICY, "pe_user_load_dir: %d policies inserted", count);
 
 	return (count);
 }
@@ -324,8 +324,12 @@ pe_user_scope_check(struct apn_scope * scope, void * data)
 	return 0;
 }
 
+/*
+ * This function is only called if the daemon is started or after
+ * a reload. Thus we have to kill all scopes.
+ */
 static struct apn_ruleset *
-pe_user_load_policy(const char *name, int flags, int prio)
+pe_user_load_policy(const char *name, int flags)
 {
 	struct apn_ruleset	*rs;
 	time_t			 now = 0;
@@ -342,19 +346,7 @@ pe_user_load_policy(const char *name, int flags, int prio)
 		log_warnx("could not parse \"%s\"", name);
 		return (NULL);
 	}
-	/*
-	* Only clean user policies.  Temporary rules in admin
-	* policies are not allowed.
-	*/
-	if (prio == PE_PRIO_USER1) {
-		if (time(&now) == (time_t)-1) {
-			int err = errno;
-			log_warn("Cannot get current time");
-			master_terminate(err);
-			return (NULL);
-		}
-		apn_clean_ruleset(rs, &pe_user_scope_check, &now);
-	}
+	apn_clean_ruleset(rs, &pe_user_scope_check, &now);
 	rs->destructor = (void*)&pe_prefixhash_destroy;
 	return (rs);
 }
@@ -515,13 +507,12 @@ pe_policy_get(uid_t uid, unsigned int prio)
 		master_terminate(err);
 		return -1;
 	}
-	apn_clean_ruleset(rs, &pe_user_scope_check, &now);
 	fd = fopen(tmp, "w+");
 	if (!fd) {
 		free(tmp);
 		return -errno;
 	}
-	err = apn_print_ruleset(rs, 0, fd);
+	err = apn_print_ruleset_cleaned(rs, 0, fd, &pe_user_scope_check, &now);
 	if (err) {
 		free(tmp);
 		fclose(fd);

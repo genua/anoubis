@@ -94,6 +94,8 @@ static void	apn_assign_ids_chain(struct apn_ruleset *, struct apn_chain *);
 static void	apn_assign_ids_one(struct apn_ruleset *, struct apn_rule *);
 static void	apn_insert_id(struct apn_ruleset *, struct rb_entry *, void *);
 static int	apn_verify_types(int parent, int child);
+static int	apn_print_rule_cleaned(struct apn_rule *, int, FILE *,
+		    int (*)(struct apn_scope *, void *), void *);
 
 
 /*
@@ -696,11 +698,12 @@ apn_copyinsert_sb(struct apn_ruleset *rs, struct apn_rule *nrule,
 }
 
 static int
-apn_print_chain(struct apn_chain * chain, int flags, FILE * file)
+apn_print_chain_cleaned(struct apn_chain * chain, int flags, FILE * file,
+    int (*check)(struct apn_scope *, void *), void *data)
 {
 	struct apn_rule * r;
 	TAILQ_FOREACH(r, chain, entry) {
-		int ret = apn_print_rule(r, flags, file);
+		int ret = apn_print_rule_cleaned(r, flags, file, check, data);
 		if (ret)
 			return (ret);
 	}
@@ -715,13 +718,22 @@ apn_print_chain(struct apn_chain * chain, int flags, FILE * file)
  *  0: rule could be printed
  *  1: an error occured while printing the rule
  */
-int
-apn_print_rule(struct apn_rule *rule, int flags, FILE *file)
+static int
+apn_print_rule_cleaned(struct apn_rule *rule, int flags, FILE *file,
+    int (*check)(struct apn_scope *, void *), void *data)
 {
 	int	ret = 0;
 
 	if (rule == NULL || file == NULL)
 		return (1);
+
+	/*
+	 * If a cleaned print is requested and the scope is expired
+	 * do not print the rule.
+	 */
+	if (rule->scope && check && check(rule->scope, data)) {
+		return 0;
+	}
 	/*
 	 * Skip rules with no sandbox permission. This is for the benefit
 	 * of the GUI which cannot easily support checkboxes where at least
@@ -742,11 +754,13 @@ apn_print_rule(struct apn_rule *rule, int flags, FILE *file)
 		if ((ret = apn_print_app(rule->app, file)) != 0)
 			return (ret);
 		fprintf(file, " {\n");
-		ret = apn_print_chain(&rule->rule.chain, flags, file);
+		ret = apn_print_chain_cleaned(&rule->rule.chain, flags, file,
+		    check, data);
 		fprintf(file, "}");
 		break;
 	case APN_SFS:
-		ret = apn_print_chain(&rule->rule.chain, flags, file);
+		ret = apn_print_chain_cleaned(&rule->rule.chain, flags, file,
+		    check, data);
 		break;
 	case APN_ALF_FILTER:
 		ret = apn_print_afiltrule(&rule->rule.afilt, file);
@@ -782,6 +796,12 @@ apn_print_rule(struct apn_rule *rule, int flags, FILE *file)
 	return (ret);
 }
 
+int
+apn_print_rule(struct apn_rule *rule, int flags, FILE *file)
+{
+	return apn_print_rule_cleaned(rule, flags, file, NULL, NULL);
+}
+
 /*
  * Print a full rule set.
  *
@@ -792,32 +812,39 @@ apn_print_rule(struct apn_rule *rule, int flags, FILE *file)
  *  1: an error occured printing the rule set
  */
 int
-apn_print_ruleset(struct apn_ruleset *rs, int flags, FILE *file)
+apn_print_ruleset_cleaned(struct apn_ruleset *rs, int flags, FILE *file,
+    int (*check)(struct apn_scope *, void *), void *data)
 {
 	if (rs == NULL || file == NULL)
 		return (1);
 
 	fprintf(file, "alf {\n");
-	if (apn_print_chain(&rs->alf_queue, flags, file))
+	if (apn_print_chain_cleaned(&rs->alf_queue, flags, file, check, data))
 		return 1;
 	fprintf(file, "}\n");
 
 	fprintf(file, "sfs {\n");
-	if (apn_print_chain(&rs->sfs_queue, flags, file))
+	if (apn_print_chain_cleaned(&rs->sfs_queue, flags, file, check, data))
 		return 1;
 	fprintf(file, "}\n");
 
 	fprintf(file, "sandbox {\n");
-	if (apn_print_chain(&rs->sb_queue, flags, file))
+	if (apn_print_chain_cleaned(&rs->sb_queue, flags, file, check, data))
 		return 1;
 	fprintf(file, "}\n");
 
 	fprintf(file, "context {\n");
-	if (apn_print_chain(&rs->ctx_queue, flags, file))
+	if (apn_print_chain_cleaned(&rs->ctx_queue, flags, file, check, data))
 		return 1;
 	fprintf(file, "}\n");
 
 	return 0;
+}
+
+int
+apn_print_ruleset(struct apn_ruleset *rs, int flags, FILE *file)
+{
+	return apn_print_ruleset_cleaned(rs, flags, file, NULL, NULL);
 }
 
 int
