@@ -4739,7 +4739,7 @@
                                                                     <property name="font"></property>
                                                                     <property name="hidden">0</property>
                                                                     <property name="id">wxID_ANY</property>
-                                                                    <property name="label">send Escalations</property>
+                                                                    <property name="label">Send Escalations</property>
                                                                     <property name="maximum_size"></property>
                                                                     <property name="minimum_size"></property>
                                                                     <property name="name">cb_SendEscalations</property>
@@ -5010,7 +5010,7 @@
                                                                     <property name="font"></property>
                                                                     <property name="hidden">0</property>
                                                                     <property name="id">wxID_ANY</property>
-                                                                    <property name="label">send Alerts</property>
+                                                                    <property name="label">Send Alerts</property>
                                                                     <property name="maximum_size"></property>
                                                                     <property name="minimum_size"></property>
                                                                     <property name="name">cb_SendAlerts</property>

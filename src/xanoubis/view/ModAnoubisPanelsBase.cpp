@@ -583,7 +583,7 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	fgSizer2->SetFlexibleDirection( wxBOTH );
 	fgSizer2->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
 	
-	cb_SendEscalations = new wxCheckBox( tb_MainAnoubisOptions, wxID_ANY, _("send Escalations"), wxDefaultPosition, wxDefaultSize, 0 );
+	cb_SendEscalations = new wxCheckBox( tb_MainAnoubisOptions, wxID_ANY, _("Send Escalations"), wxDefaultPosition, wxDefaultSize, 0 );
 	cb_SendEscalations->SetValue(true);
 	
 	cb_SendEscalations->SetToolTip( _("Check to disable the messaging via Notifier") );
@@ -631,7 +631,7 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	fgSizer3->SetFlexibleDirection( wxBOTH );
 	fgSizer3->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
 	
-	cb_SendAlerts = new wxCheckBox( tb_MainAnoubisOptions, wxID_ANY, _("send Alerts"), wxDefaultPosition, wxDefaultSize, 0 );
+	cb_SendAlerts = new wxCheckBox( tb_MainAnoubisOptions, wxID_ANY, _("Send Alerts"), wxDefaultPosition, wxDefaultSize, 0 );
 	cb_SendAlerts->SetValue(true);
 	
 	cb_SendAlerts->SetToolTip( _("Check to disable the messaging via Notifier") );

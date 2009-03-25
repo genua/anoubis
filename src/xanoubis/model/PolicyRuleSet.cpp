@@ -553,38 +553,42 @@ PolicyRuleSet::create(wxString fileName, bool checkPerm)
 
 	switch (rc) {
 	case -1:
-		logEntry = _("System error during import of policy file ");
-		logEntry += fileName + wxT(" : ");
-		logEntry += wxString::From8BitData(strerror(errno));
+		logEntry = wxString::Format(_("System error during import of "
+		    "policy file %ls: %hs"),
+		    fileName.c_str(), strerror(errno));
 		log(logEntry);
 		status(logEntry);
 		hasErrors_ = true;
 		break;
 	case 0:
-		logEntry = _("Successfully imported policy file ");
-		logEntry += fileName;
+		logEntry = wxString::Format(
+		    _("Successfully imported policy file %ls"),
+		    fileName.c_str());
 		log(logEntry);
 		status(logEntry);
 		create(ruleSet);
 		break;
 	case 1:
-		logEntry = _("Failed import of policy file ");
 		if (TAILQ_EMPTY(&(ruleSet->err_queue))) {
-			logEntry += fileName;
+			logEntry = wxString::Format(
+			    _("Failed import of policy file %ls"),
+			    fileName.c_str());
 			log(logEntry);
 			break;
 		}
 		status(logEntry);
 		TAILQ_FOREACH(errMsg, &(ruleSet->err_queue), entry) {
-			logEntry = _("Failed import of policy file ");
-			logEntry += wxString::From8BitData(errMsg->msg);
+			logEntry = wxString::Format(
+			    _("Failed import of policy file %hs"),
+			    errMsg->msg);
 			log(logEntry);
 		}
 		hasErrors_ = true;
 		break;
 	default:
-		logEntry = _("Unknown error during import of policy file ");
-		logEntry += fileName;
+		logEntry = wxString::Format(
+		    _("Unknown error during import of policy file %ls"),
+		    fileName.c_str());
 		log(logEntry);
 		hasErrors_ = true;
 		break;

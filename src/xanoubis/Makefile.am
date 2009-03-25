@@ -488,7 +488,8 @@ libGUIcomponents_so_LINK = \
 i18n-extract:
 	cd $(top_srcdir)/$(xanoubisdir) && \
 	mkdir -p catalogs && \
-	$(XGETTEXT) -k_ -o catalogs/xanoubis.pot $(xanoubis_SOURCES)
+	$(XGETTEXT) -C -k_ -kwxPLURAL:1,2 -kwxTRANSLATE \
+	    -o catalogs/xanoubis.pot $(xanoubis_SOURCES)
 
 i18n-merge:
 	cd $(top_srcdir)/$(xanoubisdir) && \

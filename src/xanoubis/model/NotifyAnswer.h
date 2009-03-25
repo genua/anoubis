@@ -55,6 +55,13 @@ class NotifyAnswer {
 		wxString		prefix_;
 		bool			openEditor_;
 
+		wxString getAnswerOnce(void) const;
+		wxString getAnswerProcEnd(void) const;
+		wxString getAnswerTime(void) const;
+		wxString getAnswerForever(void) const;
+		wxString getAnswerNone(void) const;
+		wxString getAnswerDefault(void) const;
+
 	public:
 		NotifyAnswer(enum notifyAnswerType, bool);
 		NotifyAnswer(enum notifyAnswerType, bool, int, enum timeUnit);

@@ -52,59 +52,22 @@ NotifyAnswer::NotifyAnswer(enum notifyAnswerType type, bool allow, int value,
 wxString
 NotifyAnswer::getAnswer(void)
 {
-	wxString s = _("this message was ");;
-
 	switch (type_) {
 	case NOTIFY_ANSWER_ONCE:
-		break;
+		return getAnswerOnce();
 	case NOTIFY_ANSWER_PROCEND:
-		s += _("till process ends ");
-		break;
+		return getAnswerProcEnd();
 	case NOTIFY_ANSWER_TIME:
-		s += wxString::Format(_("for %d "), timeValue_);
-		switch (timeUnit_) {
-		case TIMEUNIT_SECOND:
-			if (timeValue_ < 2)
-				s += _("second ");
-			else
-				s += _("seconds ");
-			break;
-		case TIMEUNIT_MINUTE:
-			if (timeValue_ < 2)
-				s += _("minute ");
-			else
-				s += _("minutes ");
-			break;
-		case TIMEUNIT_HOUR:
-			if (timeValue_ < 2)
-				s += _("hour ");
-			else
-				s += _("hours ");
-			break;
-		case TIMEUNIT_DAY:
-			if (timeValue_ < 2)
-				s += _("day ");
-			else
-				s += _("days ");
-			break;
-		}
-		break;
+		return getAnswerTime();
 	case NOTIFY_ANSWER_FOREVER:
-		break;
+		return getAnswerForever();
 	case NOTIFY_ANSWER_NONE:
-		/* FALLTHROUGH*/
+		return getAnswerNone();
 	default:
-		s += _("forever ");
-		break;
+		return getAnswerDefault();
 	}
 
-	if (wasAllowed_) {
-		s += _("allowed.");
-	} else {
-		s += _("forbidden.");
-	}
-
-	return (s);
+	return (wxEmptyString); /* Should never be reached */
 }
 
 bool
@@ -199,4 +162,103 @@ wxString
 NotifyAnswer::getPrefix(void)
 {
 	return prefix_;
+}
+
+inline wxString
+NotifyAnswer::getAnswerOnce(void) const
+{
+	if (wasAllowed_)
+		return (_("this message was allowed."));
+	else
+		return (_("this message was forbidden."));
+}
+
+inline wxString
+NotifyAnswer::getAnswerProcEnd(void) const
+{
+	if (wasAllowed_)
+		return _("this message was allowed till process ends.");
+	else
+		return _("this message was forbidden till process ends.");
+}
+
+inline wxString
+NotifyAnswer::getAnswerTime(void) const
+{
+	if (wasAllowed_) {
+		switch (timeUnit_) {
+		case TIMEUNIT_SECOND:
+			return wxString::Format(wxPLURAL(
+			    "this message was allowed for %d second.",
+			    "this message was allowed for %d seconds.",
+			    timeValue_), timeValue_);
+		case TIMEUNIT_MINUTE:
+			return wxString::Format(wxPLURAL(
+			    "this message was allowed for %d minute.",
+			    "this message was allowed for %d minutes.",
+			    timeValue_), timeValue_);
+		case TIMEUNIT_HOUR:
+			return wxString::Format(wxPLURAL(
+			    "this message was allowed for %d hour.",
+			    "this message was allowed for %d hours.",
+			    timeValue_), timeValue_);
+		case TIMEUNIT_DAY:
+			return wxString::Format(wxPLURAL(
+			    "this message was allowed for %d day.",
+			    "this message was allowed for %d days.",
+			    timeValue_), timeValue_);
+		}
+	} else {
+		switch (timeUnit_) {
+		case TIMEUNIT_SECOND:
+			return wxString::Format(wxPLURAL(
+			    "this message was forbidden for %d second.",
+			    "this message was forbidden for %d seconds.",
+			    timeValue_), timeValue_);
+		case TIMEUNIT_MINUTE:
+			return wxString::Format(wxPLURAL(
+			    "this message was forbidden for %d minute.",
+			    "this message was forbidden for %d minutes.",
+			    timeValue_), timeValue_);
+		case TIMEUNIT_HOUR:
+			return wxString::Format(wxPLURAL(
+			    "this message was forbidden for %d hour.",
+			    "this message was forbidden for %d hours.",
+			    timeValue_), timeValue_);
+		case TIMEUNIT_DAY:
+			return wxString::Format(wxPLURAL(
+			    "this message was forbidden for %d day.",
+			    "this message was forbidden for %d days.",
+			    timeValue_), timeValue_);
+		}
+	}
+
+	return (wxEmptyString); /* Should never be reached */
+}
+
+inline wxString
+NotifyAnswer::getAnswerForever(void) const
+{
+	if (wasAllowed_)
+		return _("this message was allowed.");
+	else
+		return _("this message was forbidden.");
+}
+
+inline wxString
+NotifyAnswer::getAnswerNone(void) const
+{
+	if (wasAllowed_)
+		return _("this message was allowed forever.");
+	else
+		return _("this message was forbidden forever.");
+}
+
+inline wxString
+NotifyAnswer::getAnswerDefault(void) const
+{
+	if (wasAllowed_)
+		return _("this message was allowed forever.");
+	else
+		return _("this message was forbidden forever.");
 }
