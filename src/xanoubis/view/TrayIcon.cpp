@@ -322,15 +322,12 @@ TrayIcon::systemNotifyCallback(void)
 {
 	wxCommandEvent  showEvent(anEVT_ESCALATIONS_SHOW);
 
-	/* request notifications view of ESCALATIONS */
+	/* request notifications view of ESCALATIONS or ALERTS */
 	if (messageEscalationCount_ > 0) {
 		showEvent.SetInt(true);
 		showEvent.SetString(wxT("ESCALATIONS"));
 		wxPostEvent(AnEvents::getInstance(), showEvent);
-	}
-
-	/* request notifications view of ALERTS */
-	if (messageAlertCount_ > 0) {
+	} else if (messageAlertCount_ > 0) {
 		showEvent.SetInt(true);
 		showEvent.SetString(wxT("ALERTS"));
 		wxPostEvent(AnEvents::getInstance(), showEvent);
