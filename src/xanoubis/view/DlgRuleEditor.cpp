@@ -491,7 +491,9 @@ DlgRuleEditor::addSbAccessFilterPolicy(SbAccessFilterPolicy *policy)
 void
 DlgRuleEditor::onShow(wxCommandEvent &event)
 {
-	this->Show(event.GetInt());
+	if (IsShown() != event.GetInt()) {
+		this->Show(event.GetInt());
+	}
 	event.Skip();
 }
 
@@ -589,7 +591,11 @@ DlgRuleEditor::onShowRule(wxCommandEvent& event)
 	idx = findListRow(appPolicyListCtrl, app);
 	if (idx < 0)
 		return;
-	this->Show();
+	if (!IsShown()) {
+		wxCommandEvent	ev(anEVT_RULEEDITOR_SHOW);
+		ev.SetInt(true);
+		wxPostEvent(AnEvents::getInstance(), ev);
+	}
 	this->Raise();
 	appPolicyListCtrl->SetItemState(idx, wxLIST_STATE_SELECTED,
 	    wxLIST_STATE_SELECTED);
