@@ -6,13 +6,14 @@ bin/xanoubis
 @comment lib/libanoubischat.a
 @comment lib/libanoubispc.a
 @comment lib/libanoubisps.a
+@comment lib/libanoubissig.a
+@comment lib/libanoubisui.a
 @comment lib/libapn.a
 @man man/man1/xanoubis.1
 @comment @man man/man1/xanoubis_guessApp.1
 @comment share/xanoubis/utils/xanoubis_guessApp.sh
 share/applications/xanoubis.desktop
 share/xanoubis/catalogs/de/xanoubis.mo
-share/xanoubis/catalogs/de/xanoubis.po
 share/xanoubis/icons/General_alert_16.png
 share/xanoubis/icons/General_alert_48.png
 share/xanoubis/icons/General_error_16.png
