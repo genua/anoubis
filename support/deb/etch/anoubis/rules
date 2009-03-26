@@ -84,6 +84,10 @@ install-arch:
 	  done ;\
 	done
 
+	# add the wizard templates of xanoubis
+	mkdir -p debian/tmp/usr/share/xanoubis/policy_templates/wizard
+	cp src/xanoubis/profiles/wizard/* debian/tmp/usr/share/xanoubis/policy_templates/wizard
+
 	rm -rf debian/tmp/usr/share/xanoubis/profiles
 	ln -s /etc/anoubis/profiles debian/tmp/usr/share/xanoubis/profiles
 

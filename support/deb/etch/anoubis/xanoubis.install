@@ -2,3 +2,4 @@ usr/share/xanoubis/*
 usr/bin/xanoubis
 usr/share/applications/*
 usr/share/pixmaps/*
+usr/share/xanoubis/policy_templates/wizard/*
