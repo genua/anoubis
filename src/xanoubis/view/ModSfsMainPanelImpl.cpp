@@ -621,22 +621,28 @@ ModSfsMainPanelImpl::initSfsOptions(void)
 
 	/* Private key */
 	PrivKey &privKey = keyCtrl->getPrivateKey();
-	wxString keyPath = privKey.getFile();
+	wxString keyPath = wxEmptyString;
 	int validity = privKey.getValidity();
 
 	options->SetPath(wxT("/Options/PrivateKey"));
 	options->Read(wxT("path"), &keyPath);
 	options->Read(wxT("validity"), &validity);
 
+	if (keyPath.IsEmpty()) {
+		keyPath = privKey.getFile();
+	}
 	privKeyParamsUpdate(keyPath, (validity == 0), validity);
 
 	/* Certificate */
 	LocalCertificate &cert = keyCtrl->getLocalCertificate();
-	wxString certPath = cert.getFile();
+	wxString certPath = wxEmptyString;
 
 	options->SetPath(wxT("/Options/LocalCertificate"));
 	options->Read(wxT("path"), &certPath);
 
+	if (certPath.IsEmpty()) {
+		certPath = cert.getFile();
+	}
 	certificateParamsUpdate(certPath);
 
 	/* Reset to original path */
