@@ -34,6 +34,7 @@
 
 #include <wx/arrstr.h>
 #include <wx/string.h>
+#include <csum/csum.h>
 
 #include "Policy.h"
 
@@ -268,6 +269,16 @@ class AppPolicy : public Policy
 		 * @return The list of hash values (maybe empty).
 		 */
 		wxArrayString getHashValueList(void) const;
+
+		/**
+		 * Calculate the current checksums of all binaris.
+		 * This method blocks until all checksums are calculated.
+		 * The result is returned as list with as may entries as
+		 * binaries of this policy.
+		 * @param None.
+		 * @return List of current checksums.
+		 */
+		wxArrayString calculateCurrentChecksums(void) const;
 
 	protected:
 		PolicyList filterList_;	/**< List of our filter policies. */

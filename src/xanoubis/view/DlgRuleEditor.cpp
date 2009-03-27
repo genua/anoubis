@@ -43,6 +43,7 @@
 #include "FilterPolicy.h"
 #include "PolicyRuleSet.h"
 #include "PolicyCtrl.h"
+#include "RuleSetChecksumVisitor.h"
 #include "RuleEditorAddPolicyVisitor.h"
 #include "DlgRuleEditorPage.h"
 #include "DlgRuleEditorAppPage.h"
@@ -64,6 +65,8 @@ DlgRuleEditor::DlgRuleEditor(wxWindow* parent)
 	    wxCommandEventHandler(DlgRuleEditor::onLoadNewRuleSet), NULL, this);
 	anEvents->Connect(anEVT_SHOW_RULE,
 	    wxCommandEventHandler(DlgRuleEditor::onShowRule), NULL, this);
+	anEvents->Connect(anEVT_SEND_AUTO_CHECK,
+	    wxCommandEventHandler(DlgRuleEditor::onAutoCheck), NULL, this);
 
 	adminRuleSetId_ = -1;
 	userRuleSetId_ = -1;
@@ -251,6 +254,9 @@ DlgRuleEditor::readOptions(void)
 		wxGetApp().getUserOptions()->Read(name, &isVisible, true);
 		sbColumns_[i]->setVisability(isVisible);
 	}
+
+	name = wxT("/Options/AutoChecksumCheck");
+	wxGetApp().getUserOptions()->Read(name, &isAutoChecksumCheck_, true);
 
 	updateListColumns(appPolicyListCtrl,    appColumns_, APP_EOL);
 	updateListColumns(filterPolicyListCtrl, alfColumns_, ALF_EOL);
@@ -604,6 +610,12 @@ DlgRuleEditor::onShowRule(wxCommandEvent& event)
 		filterPolicyListCtrl->SetItemState(idx, wxLIST_STATE_SELECTED,
 		    wxLIST_STATE_SELECTED);
 	}
+}
+
+void
+DlgRuleEditor::onAutoCheck(wxCommandEvent & event)
+{
+	isAutoChecksumCheck_ = event.GetInt();
 }
 
 void
@@ -1308,8 +1320,12 @@ DlgRuleEditor::onFooterExportButton(wxCommandEvent &)
 void
 DlgRuleEditor::onFooterActivateButton(wxCommandEvent &)
 {
+	int		 answer;
+	wxString	 message;
 	PolicyCtrl	*policyCtrl;
 	PolicyRuleSet	*admin = NULL, *user = NULL;
+
+	RuleSetChecksumVisitor csumChecker;
 
 	policyCtrl = PolicyCtrl::getInstance();
 
@@ -1323,11 +1339,24 @@ DlgRuleEditor::onFooterActivateButton(wxCommandEvent &)
 		return;
 	}
 
-	footerStatusText->SetLabel(wxT("sending to daemon"));
-	if (user) {
+	answer = wxYES;
+	if (user != NULL && isAutoChecksumCheck_) {
+		user->accept(csumChecker);
+		if (csumChecker.havePolicyMismatch()) {
+			message = _("There are policies with\n"
+			    "outdated checksum\n"
+			    "Shall we send the ruleset anyway?");
+			answer = wxMessageBox(message, _("RuleEditor"),
+			    wxYES_NO, this);
+		}
+	}	
+
+	if (user && (answer == wxYES)) {
+		footerStatusText->SetLabel(wxT("sending to daemon"));
 		policyCtrl->sendToDaemon(userRuleSetId_);
 	}
 	if (admin && admin->isModified() && geteuid() == 0) {
+		footerStatusText->SetLabel(wxT("sending to daemon"));
 		policyCtrl->sendToDaemon(adminRuleSetId_);
 	}
 

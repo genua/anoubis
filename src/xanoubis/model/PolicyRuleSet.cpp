@@ -37,7 +37,6 @@
 #include "PolicyVisitor.h"
 #include "RuleSetSearchPolicyVisitor.h"
 #include "RuleSetClearModifiedVisitor.h"
-#include "RuleEditorChecksumVisitor.h"
 
 IMPLEMENT_CLASS(PolicyRuleSet, Subject);
 

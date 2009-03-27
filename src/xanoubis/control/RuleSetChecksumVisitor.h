@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 GeNUA mbH <info@genua.de>
+ * Copyright (c) 2009 GeNUA mbH <info@genua.de>
  *
  * All rights reserved.
  *
@@ -25,17 +25,18 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _RULEEDITORCHECKSUMVISITOR_H_
-#define _RULEEDITORCHECKSUMVISITOR_H_
+#ifndef _RULESETCHECKSUMVISITOR_H_
+#define _RULESETCHECKSUMVISITOR_H_
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
+#include <wx/string.h>
+
 #include "PolicyVisitor.h"
 
 #include "Policy.h"
-#include "AppPolicy.h"
 #include "AlfAppPolicy.h"
 #include "AlfCapabilityFilterPolicy.h"
 #include "AlfFilterPolicy.h"
@@ -45,86 +46,112 @@
 #include "SbAccessFilterPolicy.h"
 #include "SbAppPolicy.h"
 #include "SfsAppPolicy.h"
+#include "SfsDefaultFilterPolicy.h"
 #include "SfsFilterPolicy.h"
 
 /**
- * PolicyVisitor for RuleEditor.
- *
- * XXX ch: this will be fixed with #963
- * We have to re-think this visitor.
- * Thus it's fixed within a seperate change for bug #963.
+ * PolicyVisitor for PolicyRuleSet.
+ * Use this visitor to search for policies with mismatching checksums.
  */
-class RuleEditorChecksumVisitor : public PolicyVisitor
+class RuleSetChecksumVisitor : public PolicyVisitor
 {
 	public:
 		/**
+		 * Constructor of RuleSetChecksumVisitor.
+		 * @param None.
 		 */
-		RuleEditorChecksumVisitor(void);
+		RuleSetChecksumVisitor(void);
+
+		/**
+		 * Destructor of RuleSetChecksumVisitor.
+		 */
+		~RuleSetChecksumVisitor(void);
+
+		/**
+		 *  Compare Checksums
+		 */
+		void compare(AppPolicy *);
+		void compare(ContextFilterPolicy *);
+
+		/**
+		 * Get list of policies
+		 */
+		const PolicyList getPolicyMismatchList(void) const;
 
 		/**
 		 */
-		RuleEditorChecksumVisitor(int);
+		bool havePolicyMismatch(void) const;
 
 		/**
-		 */
-		bool hasMismatch(void);
-		/**
+		 * Visit a AlfAppPolicy.
+		 * @param[in] 1st Policy to visit.
 		 */
 		virtual void visitAlfAppPolicy(AlfAppPolicy *);
 
 		/**
+		 * Visit a AlfCapabilityFilterPolicy.
+		 * @param[in] 1st Policy to visit.
 		 */
 		virtual void visitAlfCapabilityFilterPolicy(
 		    AlfCapabilityFilterPolicy *);
 
 		/**
+		 * Visit a AlfFilterPolicy.
+		 * @param[in] 1st Policy to visit.
 		 */
 		virtual void visitAlfFilterPolicy(AlfFilterPolicy *);
 
 		/**
+		 * Visit a ContextAppPolicy.
+		 * @param[in] 1st Policy to visit.
 		 */
 		virtual void visitContextAppPolicy(ContextAppPolicy *);
 
 		/**
+		 * Visit a ContextFilterPolicy.
+		 * @param[in] 1st Policy to visit.
 		 */
 		virtual void visitContextFilterPolicy(ContextFilterPolicy *);
 
 		/**
+		 * Visit a DefaultFilterPolicy.
+		 * @param[in] 1st Policy to visit.
 		 */
 		virtual void visitDefaultFilterPolicy(DefaultFilterPolicy *);
 
 		/**
+		 * Visit a SbAccessFilterPolicy.
+		 * @param[in] 1st Policy to visit.
 		 */
 		virtual void visitSbAccessFilterPolicy(SbAccessFilterPolicy *);
 
 		/**
+		 * Visit a SbAppPolicy.
+		 * @param[in] 1st Policy to visit.
 		 */
 		virtual void visitSbAppPolicy(SbAppPolicy *);
 
 		/**
+		 * Visit a SfsAppPolicy.
+		 * @param[in] 1st Policy to visit.
 		 */
 		virtual void visitSfsAppPolicy(SfsAppPolicy *);
 
 		/**
+		 * Visit a SfsFilterPolicy.
+		 * @param[in] 1st Policy to visit.
 		 */
 		virtual void visitSfsFilterPolicy(SfsFilterPolicy *);
 
 		/**
+		 * Visit a SfsDefaultFilterPolicy.
+		 * @param[in] 1st Policy to visit.
 		 */
 		virtual void visitSfsDefaultFilterPolicy(
 		    SfsDefaultFilterPolicy *);
 
 	private:
-		bool mismatch_;
-		int state_;
-
-		/**
-		 */
-		void compare(AppPolicy *policy);
-
-		/**
-		 */
-		void setModifiedTo(Policy *policy);
+		PolicyList mismatchPolicy_;	/**< found policies */
 };
 
-#endif	/* _RULEEDITORCHECKSUMVISITOR_H_ */
+#endif	/* _RULESETCHECKSUMVISITOR_H_ */

@@ -407,8 +407,8 @@ xanoubis_SOURCES= \
 	control/RuleSetClearModifiedVisitor.h \
 	control/RuleSetSearchPolicyVisitor.cpp \
 	control/RuleSetSearchPolicyVisitor.h \
-	control/RuleEditorChecksumVisitor.cpp \
-	control/RuleEditorChecksumVisitor.h \
+	control/RuleSetChecksumVisitor.cpp \
+	control/RuleSetChecksumVisitor.h \
 	control/SfsCtrl.cpp \
 	control/SfsCtrl.h \
 	control/VersionCtrl.cpp \

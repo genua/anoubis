@@ -253,6 +253,9 @@ class DlgRuleEditor : public Observer, public DlgRuleEditorBase
 		long adminRuleSetId_; /**< Id of our admin ruleSet. */
 
 		bool isConnected_; /**< connectiion state of gui */
+		bool isAutoChecksumCheck_; /**< state of Checksums before send 
+					    * to Daemon 
+					    */
 
 		int appPolicyLoadProgIdx_; /**< current progress position */
 		wxProgressDialog *appPolicyLoadProgDlg_; /**< progress bar */
@@ -314,6 +317,14 @@ class DlgRuleEditor : public Observer, public DlgRuleEditorBase
 		 * member is the rule id.
 		 */
 		void onShowRule(wxCommandEvent& event);
+
+		/**
+		 * Handle AutoChecksumCheck Option.
+		 * @param[in] 1st The Show event.
+		 * @return Nothing
+		 * The Command member (SetInt) is true if the option is set.
+		 */
+		void onAutoCheck(wxCommandEvent & event);
 
 		/**
 		 * Handle selection of app policy.
