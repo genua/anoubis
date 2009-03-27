@@ -98,8 +98,15 @@ for a in admin user profiles ; do
 	perl -p -i -e s,/usr/lib/kde3,/opt/kde3/lib/kde3,g $tgt
     done ;
 done
+
+# install wizard templates of xanoubis
+DEF_WIZARD_DIR=$RPM_BUILD_ROOT/usr/share/xanoubis/policy_templates/wizard
+mkdir -p $DEF_WIZARD_DIR
+install -p $RPM_BUILD_ROOT/%{_datadir}/xanoubis/profiles/wizard/{alf,sandbox} \
+	$DEF_WIZARD_DIR
+
 rm -rf $RPM_BUILD_ROOT/usr/share/xanoubis/profiles
-mkdir -p $RPM_BUILD_ROOT/etc/anoubis/profiles
+mkdir -p $RPM_BUILD_ROOT/etc/anoubis/profiles/wizard
 # Must put xanoubis's checksum into the anoubisd package because
 # xanoubis is not yet installed when anoubisd's postinst runs.
 SUM_XANOUBIS=`sha256sum $RPM_BUILD_ROOT/usr/bin/xanoubis|cut -d' '  -f 1`
@@ -157,6 +164,16 @@ if [ ! -L $PROFDIR ] ; then
 	ln -s /etc/anoubis/profiles $PROFDIR
 fi
 exit 0
+
+%post -n xanoubis
+# update xanoubis wizard profiles
+# we just overwrite the old files until we have a better mechanism
+# for updates
+rm -f /etc/anoubis/profiles/wizard/alf
+rm -f /etc/anoubis/profiles/wizard/sandbox
+cp /usr/share/xanoubis/policy_templates/wizard/* \
+	/etc/anoubis/profiles/wizard
+chmod 644 /etc/anoubis/profiles/wizard/*
 
 %post -n anoubisd
 chkconfig --add anoubisd
@@ -245,6 +262,9 @@ exit 0
 
 ### changelog ##############################################
 %changelog
+* Thu Mar 26 2009 Sebastian Trahm
+- add install and update of wizard template files
+
 * Tue Nov 25 2008 Stefan Fritsch
 - fix install scripts deleting startlinks on upgrade
 
