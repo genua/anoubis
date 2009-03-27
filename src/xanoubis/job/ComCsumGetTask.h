@@ -111,6 +111,16 @@ class ComCsumGetTask : public ComTask, public ComCsumHandler
 		bool done(void);
 
 		/**
+		 * Returns the size of the requested checksum/signature.
+		 *
+		 * If a checksum was requested, the size is ANOUBIS_CS_LEN but
+		 * if a signature was requested, the size is not constant.
+		 *
+		 * @return Size of requested checksum/signature.
+		 */
+		size_t getCsumLen(void) const;
+
+		/**
 		 * Returns the requested checksum.
 		 *
 		 * If the request-operation was successful, you can use this
@@ -119,12 +129,14 @@ class ComCsumGetTask : public ComTask, public ComCsumHandler
 		 * @param csum Destination buffer, where the resulting checksum
 		 *             is written.
 		 * @param size Size of destination buffer <code>csum</code>.
-		 * @return On success, <code>ANOUBIS_CS_LEN</code> is returned.
-		 *         <code>ANOUBIS_CS_LEN</code>. A return-code of 0
-		 *         means, that nothing was written. It might happen,
-		 *         if the requested file does not have a registered
-		 *         checksum or the destination buffer is not large
-		 *         enough to hold the whole checksum.
+		 * @return On success, the length of the checksum is
+		 *         returned. Use getCsumLen() to get the length of the
+		 *         checksum. A return-code of 0 means, that nothing was
+		 *         written. It might happen, if the requested file does
+		 *         not have a registered checksum or the destination
+		 *         buffer is not large enough to hold the whole
+		 *         checksum.
+		 * @see getCsumLen()
 		 */
 		size_t getCsum(u_int8_t *, size_t) const;
 
@@ -146,8 +158,11 @@ class ComCsumGetTask : public ComTask, public ComCsumHandler
 		void resetComTaskResult(void);
 
 	private:
-		u_int8_t	cs_[ANOUBIS_CS_LEN];
+		u_int8_t			*cs_;
+		size_t				cs_len_;
 		struct anoubis_transaction	*ta_;
+
+		void resetCsum(void);
 };
 
 #endif	/* _COMCSUMGETTASK_H_ */

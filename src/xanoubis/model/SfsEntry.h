@@ -100,6 +100,11 @@ class SfsEntry
 		SfsEntry(const SfsEntry &);
 
 		/**
+		 * D'tor.
+		 */
+		~SfsEntry(void);
+
+		/**
 		 * Returns the path of the file.
 		 *
 		 * This includes the complete path and the filename.
@@ -228,6 +233,18 @@ class SfsEntry
 		bool isChecksumChanged() const;
 
 		/**
+		 * Returns the length of a checksum.
+		 *
+		 * A plain checksum has a length of ANOUBIS_CS_LEN, but the
+		 * length of a signature is not constant.
+		 *
+		 * @param type Type of requested checksum
+		 * @return Length of checksum. 0 is returned, if the requested
+		 *         checksum is not assigned.
+		 */
+		size_t getChecksumLength(ChecksumType) const;
+
+		/**
 		 * Returns the checksum of the specified type.
 		 *
 		 * @param type Type of requested checksum
@@ -265,7 +282,7 @@ class SfsEntry
 		 *         The return-code can be used to track changes of the
 		 *         model.
 		 */
-		bool setChecksum(ChecksumType, const u_int8_t *);
+		bool setChecksum(ChecksumType, const u_int8_t *, size_t);
 
 		/**
 		 * Removes an assigned checksum from the SfsEntry.
@@ -356,12 +373,14 @@ class SfsEntry
 		wxString	filename_;
 		bool		haveLocalCsum_;
 		u_int8_t	localCsum_[ANOUBIS_CS_LEN];
-		u_int8_t	csum_[2][ANOUBIS_CS_LEN];
-		bool		assigned_[2];
+		size_t		csumLen_[2];
+		u_int8_t	*csum_[2];
 		ChecksumState	state_[2];
 
+		void copyChecksum(ChecksumType, const u_int8_t *, size_t);
+		void releaseChecksum(ChecksumType);
 		bool validateChecksum(ChecksumType);
-		static wxString cs2str(const u_int8_t *);
+		static wxString cs2str(const u_int8_t *, size_t);
 };
 
 #endif	/* _SFSENTRY_H_ */

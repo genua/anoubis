@@ -40,15 +40,21 @@
 
 ComCsumGetTask::ComCsumGetTask(void)
 {
+	this->cs_ = 0;
+	this->cs_len_ = 0;
 }
 
 ComCsumGetTask::ComCsumGetTask(const wxString &file)
 {
+	this->cs_ = 0;
+	this->cs_len_ = 0;
+
 	setPath(file);
 }
 
 ComCsumGetTask::~ComCsumGetTask(void)
 {
+	resetCsum();
 }
 
 wxEventType
@@ -114,8 +120,15 @@ ComCsumGetTask::done(void)
 	    get_value(reqmsg->u.policyreply->error) != 0) {
 		setComTaskResult(RESULT_REMOTE_ERROR);
 	} else {
-		for (unsigned int i = 0; i < ANOUBIS_CS_LEN; ++i)
-			this->cs_[i] = reqmsg->u.ackpayload->payload[i];
+		if (haveKeyId())
+			this->cs_len_ = reqmsg->length - CSUM_LEN
+			    - sizeof(Anoubis_AckPayloadMessage);
+		else
+			this->cs_len_ = ANOUBIS_CS_LEN;
+
+		this->cs_ = (u_int8_t *)malloc(this->cs_len_);
+		memcpy(cs_, reqmsg->u.ackpayload->payload, cs_len_);
+
 		anoubis_msg_free(reqmsg);
 	}
 	setComTaskResult(RESULT_SUCCESS);
@@ -123,12 +136,18 @@ ComCsumGetTask::done(void)
 }
 
 size_t
+ComCsumGetTask::getCsumLen(void) const
+{
+	return (this->cs_len_);
+}
+
+size_t
 ComCsumGetTask::getCsum(u_int8_t *csum, size_t size) const
 {
 	if (getComTaskResult() == RESULT_SUCCESS && getResultDetails() == 0) {
-		if (size >= ANOUBIS_CS_LEN) {
-			memcpy(csum, this->cs_, ANOUBIS_CS_LEN);
-			return (ANOUBIS_CS_LEN);
+		if (size >= cs_len_) {
+			memcpy(csum, this->cs_, cs_len_);
+			return (cs_len_);
 		}
 	}
 
@@ -145,7 +164,7 @@ ComCsumGetTask::getCsumStr(void) const
 	if (getComTaskResult() == RESULT_SUCCESS && getResultDetails() == 0) {
 		wxString str;
 
-		for (int i = 0; i < ANOUBIS_CS_LEN; i++)
+		for (unsigned int i = 0; i < cs_len_; i++)
 			str += wxString::Format(wxT("%.2x"), this->cs_[i]);
 
 		return (str);
@@ -158,6 +177,16 @@ ComCsumGetTask::resetComTaskResult(void)
 {
 	ComTask::resetComTaskResult();
 
-	for (int i = 0; i < ANOUBIS_CS_LEN; i++)
-		this->cs_[i] = 0;
+	resetCsum();
+}
+
+void
+ComCsumGetTask::resetCsum(void)
+{
+	if (this->cs_ != 0) {
+		free(this->cs_);
+		this->cs_ = 0;
+		this->cs_len_ = 0;
+
+	}
 }

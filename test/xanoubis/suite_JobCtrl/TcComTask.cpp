@@ -50,7 +50,7 @@
 #define trace(format, args...) fprintf (stderr, format , ##args)
 
 #define assertUnless(expr, msg, args...)	\
-	if (!expr) {				\
+	if (!(expr)) {				\
 		fprintf(stderr, msg, ##args);	\
 		result_ = __LINE__;		\
 		exit_ = true;			\
@@ -362,8 +362,9 @@ TcComTask::onTestPolicyRequest(TaskEvent &event)
 
 	assertUnless(
 	    content.Strip(wxString::both) == cmp.Strip(wxString::both),
-	    "Unexpected policy received!\n%s\n",
-	    (const char*)content.fn_str());
+	    "Unexpected policy received!"
+	    "*** IS ***\n%ls\n*** EXPECTED ***\n%ls\n",
+	    content.c_str(), cmp.c_str());
 
 	trace("Leaving TcComTask::onTestPolicyRequest\n");
 	nextTest();
@@ -619,6 +620,10 @@ TcComTask::onTestCsumGet(TaskEvent &event)
 
 	assertUnless(t->haveKeyId() == false, "A key-id is assigned");
 
+	assertUnless((t->getCsumLen() == ANOUBIS_CS_LEN),
+	    "Unexpected csum-len\n"
+	    "Is: %i\n"
+	    "Expected: %i\n", t->getCsumLen(), ANOUBIS_CS_LEN);
 	u_int8_t cs[ANOUBIS_CS_LEN];
 	assertUnless(t->getCsum(cs, ANOUBIS_CS_LEN) == ANOUBIS_CS_LEN,
 	    "Unexpected checksum received!");
@@ -665,7 +670,7 @@ TcComTask::onTestCsumGetNoSuchFile(TaskEvent &event)
 	ComCsumGetTask *t = dynamic_cast<ComCsumGetTask*>(event.getTask());
 	trace("ComCsumGetTask = %p\n", t);
 
-	assertUnless(t->getComTaskResult() == ComTask::RESULT_REMOTE_ERROR,
+	assertUnless(t->getComTaskResult() == ComTask::RESULT_SUCCESS,
 	    "Failed to get a checksum!\n"
 	    "ComTaskResult = %i\n"
 	    "ResultDetails = %i\n",
@@ -729,10 +734,10 @@ TcComTask::onTestCsumGetSymlink(TaskEvent &event)
 
 	assertUnless(t->haveKeyId() == false, "A key-id is assigned");
 
-	//u_int8_t cs[ANOUBIS_CS_LEN];
-	//assertUnless(t->getCsum(cs, ANOUBIS_CS_LEN) == 0,
-	//   "Task contains a checksum!\n");
-
+	assertUnless((t->getCsumLen() == ANOUBIS_CS_LEN),
+	    "Unexpected csum-len\n"
+	    "Is: %i\n"
+	    "Expected: %i\n", t->getCsumLen(), ANOUBIS_CS_LEN);
 	assertUnless((t->getCsumStr() == symlink_get_1_csum),
 	   "Checksum does not match\n"
 	   "Expected: %ls\n"
@@ -844,17 +849,57 @@ TcComTask::onTestSfsListNotEmpty(TaskEvent &event)
 
 	delete t;
 
-	/* One entry expected */
-	assertUnless(result.Count() == 1,
+	/* Some entries expected */
+	assertUnless(result.Count() == 8,
 	    "Unexpected # of entries in sfs-list\n"
-	    "Expected: 1\n"
+	    "Expected: 8\n"
 	    "Is: %i\n", result.Count());
 
-	wxString first = result[0];
-	wxString second = wxT("policy");
-	assertUnless(first == second,
-	    "Unexpected content of sfs-list: %s\n",
-	    (const char*)result[0].fn_str());
+	int idx;
+
+	idx = result.Index(wxT("policy"));
+	assertUnless((idx != wxNOT_FOUND),
+	    "Entry \"policy\" not found in sfs-list\n");
+	result.RemoveAt(idx);
+
+	idx = result.Index(wxT("l_get_2"));
+	assertUnless((idx != wxNOT_FOUND),
+	    "Entry \"l_get_2\" not found in sfs-list\n");
+	result.RemoveAt(idx);
+
+	idx = result.Index(wxT("l_add_2"));
+	assertUnless((idx != wxNOT_FOUND),
+	    "Entry \"l_add_2\" not found in sfs-list\n");
+	result.RemoveAt(idx);
+
+	idx = result.Index(wxT("l_del_2"));
+	assertUnless((idx != wxNOT_FOUND),
+	    "Entry \"l_del_2\" not found in sfs-list\n");
+	result.RemoveAt(idx);
+
+	idx = result.Index(wxT("symlink_get_1"));
+	assertUnless((idx != wxNOT_FOUND),
+	    "Entry \"symlink_get_1\" not found in sfs-list\n");
+	result.RemoveAt(idx);
+
+	idx = result.Index(wxT("symlink_add_1"));
+	assertUnless((idx != wxNOT_FOUND),
+	    "Entry \"symlink_add_1\" not found in sfs-list\n");
+	result.RemoveAt(idx);
+
+	idx = result.Index(wxT("symlink_del_1"));
+	assertUnless((idx != wxNOT_FOUND),
+	    "Entry \"symlink_del_11\" not found in sfs-list\n");
+	result.RemoveAt(idx);
+
+	idx = result.Index(wxT("csums/"));
+	assertUnless((idx != wxNOT_FOUND),
+	    "Entry \"csums/\" not found in sfs-list\n");
+	result.RemoveAt(idx);
+
+	assertUnless((result.Count() == 0),
+	    "After removing all expected entries, an empty list is expected\n"
+	    "Is: %i\n", result.Count());
 
 	trace("Leaving TcComTask::onTestSfsListNotEmpty\n");
 	nextTest();
@@ -1305,18 +1350,15 @@ TcComTask::onTestSigGet(TaskEvent &event)
 
 	assertUnless(t->haveKeyId(), "No key-id is assigned");
 
-	u_int8_t cs[ANOUBIS_CS_LEN];
-	assertUnless(t->getCsum(cs, ANOUBIS_CS_LEN) == ANOUBIS_CS_LEN,
-	    "Unexpected checksum received!");
+	assertUnless(t->getCsumLen() > ANOUBIS_CS_LEN,
+	    "Unexpected csum-len\nIs: %i", t->getCsumLen());
 
 	wxString csum = t->getCsumStr();
 	trace("Received checksum from task\n");
 
-	assertUnless(csum == policyCsum,
+	assertUnless(csum.Len() == 2 * t->getCsumLen(),
 	    "Unexpected checksum received!\n"
-	    "Is      : %s\n"
-	    "Expected: %s\n",
-	    (const char*)csum.fn_str(), (const char*)policyCsum.fn_str());
+	    "Is: %ls\n", csum.c_str());
 
 	delete t;
 	trace("Leaving TcComTask::onTestSigGet\n");
@@ -1389,17 +1431,21 @@ TcComTask::onTestSigListNotEmpty(TaskEvent &event)
 
 	delete t;
 
-	/* One entry expected */
-	assertUnless(result.Count() == 1,
-	    "Unexpected # of entries in sfs-list\n"
-	    "Expected: 1\n"
-	    "Is: %i\n", result.Count());
+	int idx;
 
-	wxString first = result[0];
-	wxString second = wxT("policy");
-	assertUnless(first == second,
-	    "Unexpected content of sfs-list: %s\n",
-	    (const char*)result[0].fn_str());
+	idx = result.Index(wxT("policy"));
+	assertUnless((idx != wxNOT_FOUND),
+	    "Entry \"policy\" not found in sfs-list\n");
+	result.RemoveAt(idx);
+
+	idx = result.Index(wxT("csums/"));
+	assertUnless((idx != wxNOT_FOUND),
+	    "Entry \"csums/\" not found in sfs-list\n");
+	result.RemoveAt(idx);
+
+	assertUnless((result.Count() == 0),
+	    "After removing all expected entries, an empty list is expected\n"
+	    "Is: %i\n", result.Count());
 
 	trace("Leaving TcComTask::onTestSigListNotEmpty\n");
 	nextTest();

@@ -31,33 +31,43 @@
 
 SfsEntry::SfsEntry()
 {
+	this->csum_[SFSENTRY_CHECKSUM] = 0;
+	this->csum_[SFSENTRY_SIGNATURE] = 0;
+
 	setPath(wxEmptyString);
 	reset();
 }
 
 SfsEntry::SfsEntry(const wxString &path)
 {
+	this->csum_[SFSENTRY_CHECKSUM] = 0;
+	this->csum_[SFSENTRY_SIGNATURE] = 0;
+
 	setPath(path);
 	reset();
 }
 
 SfsEntry::SfsEntry(const SfsEntry &other)
 {
+	this->csum_[SFSENTRY_CHECKSUM] = 0;
+	this->csum_[SFSENTRY_SIGNATURE] = 0;
+
 	this->path_ = other.path_;
 	this->filename_ = other.filename_;
 	this->haveLocalCsum_ = other.haveLocalCsum_;
 	memcpy(this->localCsum_, other.localCsum_, ANOUBIS_CS_LEN);
-	memcpy(this->csum_[SFSENTRY_CHECKSUM],
-	    other.csum_[SFSENTRY_CHECKSUM],
-	    ANOUBIS_CS_LEN);
-	memcpy(this->csum_[SFSENTRY_SIGNATURE],
-	    other.csum_[SFSENTRY_SIGNATURE],
-	    ANOUBIS_CS_LEN);
-	this->assigned_[SFSENTRY_CHECKSUM] = other.assigned_[SFSENTRY_CHECKSUM];
-	this->assigned_[SFSENTRY_SIGNATURE] =
-	    other.assigned_[SFSENTRY_SIGNATURE];
+	copyChecksum(SFSENTRY_CHECKSUM, other.csum_[SFSENTRY_CHECKSUM],
+	    other.csumLen_[SFSENTRY_CHECKSUM]);
+	copyChecksum(SFSENTRY_SIGNATURE, other.csum_[SFSENTRY_SIGNATURE],
+	    other.csumLen_[SFSENTRY_SIGNATURE]);
 	this->state_[SFSENTRY_CHECKSUM] = other.state_[SFSENTRY_CHECKSUM];
 	this->state_[SFSENTRY_SIGNATURE] = other.state_[SFSENTRY_SIGNATURE];
+}
+
+SfsEntry::~SfsEntry(void)
+{
+	releaseChecksum(SFSENTRY_CHECKSUM);
+	releaseChecksum(SFSENTRY_SIGNATURE);
 }
 
 wxString
@@ -153,7 +163,7 @@ SfsEntry::getChecksumState(ChecksumType type) const
 bool
 SfsEntry::haveChecksum(ChecksumType type) const
 {
-	return (assigned_[type]);
+	return (csum_[type] != 0);
 }
 
 bool
@@ -177,11 +187,17 @@ SfsEntry::isChecksumChanged() const
 }
 
 size_t
+SfsEntry::getChecksumLength(ChecksumType type) const
+{
+	return (csumLen_[type]);
+}
+
+size_t
 SfsEntry::getChecksum(ChecksumType type, u_int8_t *csum, size_t size) const
 {
-	if (assigned_[type] && (csum != 0) && (size >= ANOUBIS_CS_LEN)) {
-		memcpy(csum, csum_[type], ANOUBIS_CS_LEN);
-		return (ANOUBIS_CS_LEN);
+	if ((csum != 0) && (csum_[type] != 0) && (size >= csumLen_[type])) {
+		memcpy(csum, csum_[type], csumLen_[type]);
+		return (csumLen_[type]);
 	} else
 		return (0);
 }
@@ -191,17 +207,16 @@ SfsEntry::getChecksum(ChecksumType type) const
 {
 	wxString result;
 
-	if (assigned_[type])
-		result = cs2str(csum_[type]);
+	if (csum_[type] != 0)
+		result = cs2str(csum_[type], csumLen_[type]);
 
 	return (result);
 }
 
 bool
-SfsEntry::setChecksum(ChecksumType type, const u_int8_t *cs)
+SfsEntry::setChecksum(ChecksumType type, const u_int8_t *cs, size_t size)
 {
-	memcpy(csum_[type], cs, ANOUBIS_CS_LEN);
-	assigned_[type] = true;
+	copyChecksum(type, cs, size);
 
 	return (validateChecksum(type));
 }
@@ -209,8 +224,7 @@ SfsEntry::setChecksum(ChecksumType type, const u_int8_t *cs)
 bool
 SfsEntry::setChecksumMissing(ChecksumType type)
 {
-	memset(csum_[type], 0, ANOUBIS_CS_LEN);
-	assigned_[type] = false;
+	releaseChecksum(type);
 
 	if (state_[type] != SFSENTRY_MISSING) {
 		state_[type] = SFSENTRY_MISSING;
@@ -222,8 +236,7 @@ SfsEntry::setChecksumMissing(ChecksumType type)
 bool
 SfsEntry::setChecksumInvalid(ChecksumType type)
 {
-	memset(csum_[type], 0, ANOUBIS_CS_LEN);
-	assigned_[type] = false;
+	releaseChecksum(type);
 
 	if (state_[type] != SFSENTRY_INVALID) {
 		state_[type] = SFSENTRY_INVALID;
@@ -244,7 +257,7 @@ SfsEntry::getLocalCsum(void) const
 	wxString result;
 
 	if (haveLocalCsum_)
-		result = cs2str(localCsum_);
+		result = cs2str(localCsum_, ANOUBIS_CS_LEN);
 
 	return (result);
 }
@@ -284,8 +297,7 @@ SfsEntry::reset(void)
 bool
 SfsEntry::reset(ChecksumType type)
 {
-	memset(csum_[type], 0, ANOUBIS_CS_LEN);
-	assigned_[type] = false;
+	releaseChecksum(type);
 
 	if (state_[type] != SFSENTRY_NOT_VALIDATED) {
 		state_[type] = SFSENTRY_NOT_VALIDATED;
@@ -294,12 +306,34 @@ SfsEntry::reset(ChecksumType type)
 		return (false);
 }
 
+void
+SfsEntry::copyChecksum(ChecksumType type, const u_int8_t *cs, size_t len)
+{
+	releaseChecksum(type);
+
+	if ((cs != 0) && (len > 0)) {
+		csum_[type] = (u_int8_t *)malloc(len);
+		memcpy(csum_[type], cs, len);
+		csumLen_[type] = len;
+	}
+}
+
+void
+SfsEntry::releaseChecksum(ChecksumType type)
+{
+	if (csum_[type] != 0) {
+		free(csum_[type]);
+		csum_[type] = 0;
+		csumLen_[type] = 0;
+	}
+}
+
 bool
 SfsEntry::validateChecksum(ChecksumType type)
 {
 	ChecksumState newState = SFSENTRY_NOT_VALIDATED;
 
-	if (haveLocalCsum_ && assigned_[type]) {
+	if (haveLocalCsum_ && haveChecksum(type)) {
 		int result = memcmp(localCsum_, csum_[type], ANOUBIS_CS_LEN);
 		newState = (result == 0) ? SFSENTRY_MATCH : SFSENTRY_NOMATCH;
 	}
@@ -312,11 +346,11 @@ SfsEntry::validateChecksum(ChecksumType type)
 }
 
 wxString
-SfsEntry::cs2str(const u_int8_t *cs)
+SfsEntry::cs2str(const u_int8_t *cs, size_t len)
 {
 	wxString str;
 
-	for (int i = 0; i < ANOUBIS_CS_LEN; i++) {
+	for (unsigned int i = 0; i < len; i++) {
 		str += wxString::Format(wxT("%2.2x"), cs[i]);
 	}
 

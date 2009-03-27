@@ -462,6 +462,11 @@ class SfsCtrl : public wxEvtHandler
 		 */
 		std::list<struct sfs_entry *> exportList_;
 
+		/**
+		 * Linked list of entries to be imported.
+		 */
+		struct sfs_entry *importList_;
+
 		void enableCommunication(void);
 		void disableCommunication(void);
 
@@ -473,15 +478,20 @@ class SfsCtrl : public wxEvtHandler
 		void createCsumCalcTask(const wxString &);
 
 		/**
-		 * Appends checksum/signature of the SfsEntry at exportList_.
+		 * Appends checksum or the signature of the SfsEntry at
+		 * exportList_.
 		 *
 		 * A sfs_entry-structure is created according to the SfsEntry
 		 * and pushed at the end of the list.
 		 *
 		 * @param entry Base entry contains information of the
 		 *              sfs_entry to be created
+		 * @param type Type of checksum to be appended. If
+		 *             SfsEntry::SFSENTRY_CHECKSUM is specified, the
+		 *             checksum is appended to the export-list,
+		 *             otherwise the signature.
 		 */
-		void pushExportEntry(const SfsEntry &);
+		void pushExportEntry(const SfsEntry &, SfsEntry::ChecksumType);
 
 		/**
 		 * Dumps exportList_ into exportFile_.
@@ -493,6 +503,12 @@ class SfsCtrl : public wxEvtHandler
 		 * sfs_entry-structures.
 		 */
 		void clearExportEntries(void);
+
+		/**
+		 * Clears importList_ and releases the memory allocated for the
+		 * sfs_entry-structures.
+		 */
+		void clearImportEntries(void);
 
 		void pushTask(Task *);
 		bool popTask(Task *);
