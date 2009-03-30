@@ -30,6 +30,9 @@ WANTLIB-main =		c m pthread stdc++ event glib-2.0 pixman-1 \
 			intl pango-1.0 pangocairo-1.0 pangoft2-1.0 png z \
 			crypto ssl
 
+PROFILESDIR =		/etc/anoubis/profiles
+SUBST_VARS =		PROFILESDIR
+
 MULTI_PACKAGES =	-main -daemon
 
 BUILD_DEPENDS =		::devel/check \
