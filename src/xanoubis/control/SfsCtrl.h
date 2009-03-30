@@ -70,6 +70,9 @@ class SfsCtrl : public wxEvtHandler
 		{
 			RESULT_EXECUTE,	/*!< The command is scheduled and will
 					     be executed. */
+			RESULT_NOOP,	/*!< The command was accepted, but
+					     there's no need to schedule an
+					     operation. */
 			RESULT_NOTCONNECTED,	/*!< You are not connected with
 						     anoubisd. The command is
 						     not scheduled. */
@@ -473,7 +476,21 @@ class SfsCtrl : public wxEvtHandler
 		void createComCsumGetTasks(const wxString &, bool, bool);
 		void createComCsumAddTasks(const wxString &);
 		void createComCsumAddTasks(struct sfs_entry *);
-		void createComCsumDelTasks(const wxString &);
+
+		/**
+		 * Schedules ComCsumDelTasks for the specified SfsEntry.
+		 *
+		 * No task is scheduled, if it is absolutely clear, that no
+		 * checksum/signature is registered.
+		 *
+		 * @param entry The SfsEntry, where the checksum/signature
+		 *              should be removed.
+		 * @return Number of scheduled tasks. Might be 0 (nothing was
+		 *         scheduled), 1 or 2 (task for checksum and/or
+		 *         signature).
+		 */
+		int createComCsumDelTasks(const SfsEntry &);
+
 		void createSfsListTasks(uid_t, const wxString &, bool);
 		void createCsumCalcTask(const wxString &);
 

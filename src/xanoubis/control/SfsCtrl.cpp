@@ -272,6 +272,8 @@ SfsCtrl::unregisterChecksum(const IndexArray &arr)
 		return (RESULT_BUSY);
 
 	if (comEnabled_) {
+		int numScheduled = 0;
+
 		for (size_t i = 0; i < arr.Count(); i++) {
 			unsigned int idx = arr.Item(i);
 
@@ -283,10 +285,10 @@ SfsCtrl::unregisterChecksum(const IndexArray &arr)
 			SfsEntry &entry = sfsDir_.getEntry(idx);
 
 			/* Remove checksum from anoubisd */
-			createComCsumDelTasks(entry.getPath());
+			numScheduled += createComCsumDelTasks(entry);
 		}
 
-		return (RESULT_EXECUTE);
+		return (numScheduled == 0) ? RESULT_NOOP : RESULT_EXECUTE;
 	} else
 		return (RESULT_NOTCONNECTED);
 }
@@ -1058,29 +1060,43 @@ SfsCtrl::createComCsumAddTasks(struct sfs_entry *entry)
 	}
 }
 
-void
-SfsCtrl::createComCsumDelTasks(const wxString &path)
+int
+SfsCtrl::createComCsumDelTasks(const SfsEntry &entry)
 {
-	ComCsumDelTask *csTask = new ComCsumDelTask;
-	csTask->setPath(path);
-	csTask->setCalcLink(true);
+	int count = 0;
 
-	pushTask(csTask);
-	JobCtrl::getInstance()->addTask(csTask);
+	SfsEntry::ChecksumState csState =
+	    entry.getChecksumState(SfsEntry::SFSENTRY_CHECKSUM);
+	if (csState != SfsEntry::SFSENTRY_MISSING) {
+		ComCsumDelTask *csTask = new ComCsumDelTask;
+		csTask->setPath(entry.getPath());
+		csTask->setCalcLink(true);
 
-	if (isSignatureEnabled()) {
+		pushTask(csTask);
+		JobCtrl::getInstance()->addTask(csTask);
+
+		count++;
+	}
+
+	SfsEntry::ChecksumState sigState =
+	    entry.getChecksumState(SfsEntry::SFSENTRY_SIGNATURE);
+	if ((sigState != SfsEntry::SFSENTRY_MISSING) && isSignatureEnabled()) {
 		KeyCtrl *keyCtrl = KeyCtrl::getInstance();
 		LocalCertificate &cert = keyCtrl->getLocalCertificate();
 		struct anoubis_sig *raw_cert = cert.getCertificate();
 
 		ComCsumDelTask *sigTask = new ComCsumDelTask;
-		sigTask->setPath(path);
+		sigTask->setPath(entry.getPath());
 		sigTask->setCalcLink(true);
 		sigTask->setKeyId(raw_cert->keyid, raw_cert->idlen);
 
 		pushTask(sigTask);
 		JobCtrl::getInstance()->addTask(sigTask);
+
+		count++;
 	}
+
+	return (count);
 }
 
 void

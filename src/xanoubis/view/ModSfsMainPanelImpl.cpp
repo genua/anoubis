@@ -319,6 +319,7 @@ ModSfsMainPanelImpl::OnSfsMainImportClicked(wxCommandEvent&)
 		wxGetApp().status(
 		 _("Error: Sfs is still busy with another operation."));
 		break;
+	case SfsCtrl::RESULT_NOOP:
 	case SfsCtrl::RESULT_EXECUTE:
 		/* Success */
 		break;
@@ -364,6 +365,7 @@ ModSfsMainPanelImpl::OnSfsMainExportClicked(wxCommandEvent&)
 		wxGetApp().status(
 		 _("Error: Sfs is still busy with another operation."));
 		break;
+	case SfsCtrl::RESULT_NOOP:
 	case SfsCtrl::RESULT_EXECUTE:
 		/* Success */
 		break;
@@ -388,7 +390,7 @@ ModSfsMainPanelImpl::applySfsAction(const IndexArray &selection)
 	}
 
 	/* Controls are disabled if operation is executed */
-	enableSfsControls(result != SfsCtrl::RESULT_EXECUTE);
+	enableSfsControls(result == SfsCtrl::RESULT_EXECUTE);
 
 	switch (result) {
 	case SfsCtrl::RESULT_NOTCONNECTED:
@@ -407,6 +409,7 @@ ModSfsMainPanelImpl::applySfsAction(const IndexArray &selection)
 		wxGetApp().status(
 		 _("Error: Sfs is still busy with another operation."));
 		break;
+	case SfsCtrl::RESULT_NOOP:
 	case SfsCtrl::RESULT_EXECUTE:
 		/* Success */
 		break;
@@ -419,7 +422,7 @@ ModSfsMainPanelImpl::applySfsValidateAll(bool orphaned)
 	SfsCtrl::CommandResult result = sfsCtrl_->validateAll(orphaned);
 
 	/* Controls are disabled if operation is executed */
-	enableSfsControls(result != SfsCtrl::RESULT_EXECUTE);
+	enableSfsControls(result == SfsCtrl::RESULT_EXECUTE);
 
 	switch (result) {
 	case SfsCtrl::RESULT_NOTCONNECTED:
@@ -438,6 +441,7 @@ ModSfsMainPanelImpl::applySfsValidateAll(bool orphaned)
 		wxGetApp().status(
 		    _("Error: Sfs is still busy with another operation."));
 		break;
+	case SfsCtrl::RESULT_NOOP:
 	case SfsCtrl::RESULT_EXECUTE:
 		/* Success */
 		break;
