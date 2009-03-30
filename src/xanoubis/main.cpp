@@ -155,7 +155,6 @@ bool AnoubisGuiApp::OnInit()
 	mainFrame = new MainFrame((wxWindow*)NULL);
 	logViewer_ = new DlgLogViewer(mainFrame);
 	ruleEditor_ = new DlgRuleEditor(mainFrame);
-	trayIcon = new TrayIcon();
 
 	SetTopWindow(mainFrame);
 	mainFrame->OnInit();
@@ -183,6 +182,12 @@ bool AnoubisGuiApp::OnInit()
 	if (hasLocale) {
 		status(_("Language setting: ") + language_.GetCanonicalName());
 	}
+
+	/*
+	 * Do this last. This increases the probability that the system tray
+	 * is already up and running.
+	 */
+	trayIcon = new TrayIcon();
 
 	return (true);
 }

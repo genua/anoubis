@@ -348,6 +348,15 @@ TrayIcon::systemNotify(const gchar *module, const gchar *message,
 	notify_notification_set_timeout(notification, timeShown);
 	notify_notification_add_action(notification, "default", "default cb",
 	    (NotifyActionCallback)callback, this, NULL);
+#ifdef __WXGTK__
+	{
+		wxWindow	*win = (wxWindow*)m_iconWnd;
+		if (win) {
+			notify_notification_attach_to_widget(notification,
+			    win->m_widget);
+		}
+	}
+#endif
 
 	/* XXX ST: we disable the setting of the corresponding urgency level
 	 *	   as it only renders the color area covered by the
