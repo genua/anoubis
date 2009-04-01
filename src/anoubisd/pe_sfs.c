@@ -304,14 +304,16 @@ pe_decide_sfs(struct pe_proc *proc, struct pe_file_event *fevent,
 	case APN_LOG_NONE:
 		break;
 	case APN_LOG_NORMAL:
-		log_info("SFS prio %d rule %d %s %s csum=%s (%s)", prio,
-		    rule_id, verdict[decision], dump, cstext, context);
+		log_info("token %u: SFS prio %d rule %d %s %s csum=%s (%s)",
+		    hdr->msg_token, prio, rule_id, verdict[decision], dump,
+		    cstext, context);
 		send_lognotify(hdr, decision, log, rule_id, prio,
 		    sfsmatch);
 		break;
 	case APN_LOG_ALERT:
-		log_warnx("SFS prio %d rule %d %s %s csum=%s (%s)", prio,
-		    rule_id, verdict[decision], dump, cstext, context);
+		log_warnx("token %u: SFS prio %d rule %d %s %s csum=%s (%s)",
+		    hdr->msg_token, prio, rule_id, verdict[decision], dump,
+		    cstext, context);
 		send_lognotify(hdr, decision, log, rule_id, prio,
 		    sfsmatch);
 		break;
@@ -325,6 +327,7 @@ pe_decide_sfs(struct pe_proc *proc, struct pe_file_event *fevent,
 		free(context);
 
 	reply->ask = 0;
+	reply->log = log;
 	reply->rule_id = rule_id;
 	reply->prio = prio;
 	reply->sfsmatch = sfsmatch;

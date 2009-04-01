@@ -410,15 +410,17 @@ pe_decide_sandbox(struct pe_proc *proc, struct pe_file_event *sbevent,
 		break;
 	case APN_LOG_NORMAL:
 		hdr->msg_source = ANOUBIS_SOURCE_SANDBOX;
-		log_info("SANDBOX prio %d rule %d %s %s (%s)", final.prio,
-		    final.rule_id, verdict[final.decision], dump, context);
+		log_info("token %u: SANDBOX prio %d rule %d %s %s (%s)",
+		    hdr->msg_token, final.prio, final.rule_id,
+		    verdict[final.decision], dump, context);
 		send_lognotify(hdr, final.decision, final.log, final.rule_id,
 		    final.prio, ANOUBIS_SFS_NONE);
 		break;
 	case APN_LOG_ALERT:
 		hdr->msg_source = ANOUBIS_SOURCE_SANDBOX;
-		log_warnx("SANDBOX prio %d rule %d %s %s (%s)", final.prio,
-		    final.rule_id, verdict[final.decision], dump, context);
+		log_warnx("token %u: SANDBOX prio %d rule %d %s %s (%s)",
+		    hdr->msg_token, final.prio, final.rule_id,
+		    verdict[final.decision], dump, context);
 		send_lognotify(hdr, final.decision, final.log, final.rule_id,
 		    final.prio, ANOUBIS_SFS_NONE);
 		break;
@@ -432,6 +434,7 @@ pe_decide_sandbox(struct pe_proc *proc, struct pe_file_event *sbevent,
 		free(context);
 
 	reply->ask = 0;
+	reply->log = final.log;
 	reply->rule_id = final.rule_id;
 	reply->prio = final.prio;
 	reply->timeout = (time_t)0;

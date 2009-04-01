@@ -149,13 +149,15 @@ pe_decide_alf(struct pe_proc *proc, struct eventdev_hdr *hdr)
 	case APN_LOG_NONE:
 		break;
 	case APN_LOG_NORMAL:
-		log_info("%s prio %d rule %d %s %s (%s)", prefix, prio,
+		log_info("token %u: ALF %s prio %d rule %d %s %s (%s)",
+		    hdr->msg_token, prefix, prio,
 		    rule_id, verdict[decision], dump, context);
 		send_lognotify(hdr, decision, log, rule_id, prio,
 		    ANOUBIS_SFS_NONE);
 		break;
 	case APN_LOG_ALERT:
-		log_warnx("%s prio %d rule %d %s %s (%s)", prefix, prio,
+		log_warnx("token %u: ALF %s prio %d rule %d %s %s (%s)",
+		    hdr->msg_token, prefix, prio,
 		    rule_id, verdict[decision], dump, context);
 		send_lognotify(hdr, decision, log, rule_id, prio,
 		    ANOUBIS_SFS_NONE);
@@ -179,6 +181,7 @@ pe_decide_alf(struct pe_proc *proc, struct eventdev_hdr *hdr)
 	reply->rule_id = rule_id;
 	reply->prio = prio;
 	reply->timeout = (time_t)0;
+	reply->log = log;
 	if (decision == POLICY_DENY)
 		reply->reply = EPERM;
 	else

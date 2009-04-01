@@ -154,6 +154,7 @@ struct anoubisd_reply {
 	short		ask;		/* flag - ask GUI */
 	time_t		timeout;	/* from policy engine, if ask GUI */
 	int		reply;		/* result code */
+	int		log;		/* Loglevel for the result of an ASK */
 	u_int64_t	token;		/* only for anoubisd_msg_comm_t msgs */
 	u_int32_t	flags;		/* Only for POLREPLY */
 	u_int32_t	rule_id;	/* Rule ID if ask is true */

@@ -83,6 +83,7 @@ struct reply_wait {
 	eventdev_token	token;
 	time_t	starttime;
 	time_t	timeout;
+	int	log;
 };
 static Queue	replyq;
 
@@ -311,6 +312,16 @@ dispatch_timer(int sig __used, short event __used, void *arg)
 
 			DEBUG(DBG_QUEUE, " <replyq: %x", msg_wait->token);
 			queue_delete(&replyq, msg_wait);
+			switch(msg_wait->log) {
+			case APN_LOG_NORMAL:
+				log_info("token %u: no  user reply (denied)",
+				    msg_wait->token);
+				break;
+			case APN_LOG_ALERT:
+				log_warnx("token %u: no user reply (denied)",
+				    msg_wait->token);
+				break;
+			}
 			free(msg_wait);
 		}
 
@@ -508,6 +519,7 @@ dispatch_m2p(int fd, short sig __used, void *arg)
 				continue;
 			}
 			msg_wait->timeout = reply->timeout;
+			msg_wait->log = reply->log;
 
 			enqueue(&replyq, msg_wait);
 			DEBUG(DBG_QUEUE, " >replyq: %x", msg_wait->token);
@@ -739,6 +751,16 @@ dispatch_s2p(int fd, short sig __used, void *arg)
 				queue_delete(&replyq, rep_wait);
 				DEBUG(DBG_QUEUE, " <replyq: %x",
 				    rep_wait->token);
+				switch(rep_wait->log) {
+				case APN_LOG_NORMAL:
+					log_info("token %u: Reply %d",
+					    evrep->msg_token, evrep->reply);
+					break;
+				case APN_LOG_ALERT:
+					log_warnx("token %u: Reply %d",
+					    evrep->msg_token, evrep->reply);
+					break;
+				}
 				free(rep_wait);
 				enqueue(&eventq_p2m, msg);
 				DEBUG(DBG_QUEUE, " >eventq_p2m: %x",
