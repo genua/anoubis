@@ -743,7 +743,7 @@ main(int argc, char *argv[])
 			fprintf(stderr, "Error while procceeding filter\n");
 			return -ret;
 		} else if (args == NULL && ret == 0) {
-			if (opts & SFSSIG_OPT_DEBUG2)
+			if (opts & SFSSIG_OPT_DEBUG)
 				fprintf(stderr, "No result after filter \n");
 			return 0;
 		}
@@ -1031,8 +1031,10 @@ sfs_add(char *file)
 	}
 	if (ret < 0) {
 		errno = -ret;
-		fprintf(stderr, "%s: ", file);
-		perror("anoubis_csum_calc");
+		if (opts & SFSSIG_OPT_DEBUG) {
+			fprintf(stderr, "%s: ", file);
+			perror("anoubis_csum_calc");
+		}
 		return 1;
 	}
 	if (len != ANOUBIS_CS_LEN) {
@@ -1047,6 +1049,7 @@ sfs_add(char *file)
 		}
 		if ((msg = calloc((siglen + as->idlen), sizeof(u_int8_t)))
 		    == NULL) {
+			perror("sfs_add");
 			free(sig);
 			return 1;
 		}
@@ -1076,8 +1079,11 @@ sfs_add(char *file)
 			t = sfs_sumop(file, ANOUBIS_CHECKSUM_OP_ADDSUM, cs,
 			    len, 0);
 		}
-		if (!t)
+		if (!t) {
+			if (opts & SFSSIG_OPT_DEBUG)
+				fprintf(stderr, "sfs_sumop: returned NULL\n");
 			return 1;
+		}
 		if (t->result) {
 			fprintf(stderr, "Checksum Request failed: %d (%s)\n",
 			t->result, strerror(t->result));
@@ -1157,8 +1163,11 @@ sfs_del(char *file)
 			t = sfs_sumop(file, ANOUBIS_CHECKSUM_OP_DEL, NULL,
 			    0, 0);
 
-		if (!t)
+		if (!t) {
+			if (opts & SFSSIG_OPT_DEBUG)
+				fprintf(stderr, "sfs_sumop returned NULL\n");
 			return 1;
+		}
 		if (t->result) {
 			if (t->result == ENOENT) {
 				if (opts & SFSSIG_OPT_VERBOSE)
@@ -1236,7 +1245,8 @@ __sfs_get(char *file, int vflag)
 		error = anoubis_csum_calc(file, val_check, &len);
 		if (error < 0) {
 			errno = -error;
-			perror("anoubis_csum_calc");
+			if (opts & SFSSIG_OPT_DEBUG)
+				perror("anoubis_csum_calc");
 			return 1;
 		}
 
@@ -1302,9 +1312,10 @@ __sfs_get(char *file, int vflag)
 			if (vflag) {
 				if (memcmp(t->msg->u.ackpayload->payload,
 				    val_check, ANOUBIS_CS_LEN))
-					printf("Signature Missmatch\n");
+					printf("%s :Signature Mismatch\n",
+					    file);
 				else
-					printf("Signature Match\n");
+					printf("%s :Signature Match\n", file);
 				continue;
 			}
 			siglen = t->msg->length - CSUM_LEN
@@ -1337,9 +1348,10 @@ __sfs_get(char *file, int vflag)
 			if (vflag) {
 				if (memcmp(t->msg->u.ackpayload->payload,
 				    val_check, ANOUBIS_CS_LEN))
-					printf("Checksum Missmatch\n");
+					printf("%s: Checksum Mismatch\n",
+					    file);
 				else
-					printf("Checksum Match\n");
+					printf("%s: Checksum Match\n", file);
 				continue;
 			}
 			if (user == 0)
@@ -1420,8 +1432,11 @@ add_entry(struct sfs_entry *entry)
 		    entry->siglen);
 		t = sfs_sumop(entry->name, ANOUBIS_CHECKSUM_OP_ADDSIG, payload,
 		    entry->siglen, entry->keylen);
-		if (!t)
+		if (!t) {
+			if (opts & SFSSIG_OPT_DEBUG)
+				fprintf(stderr, "sfs_sumop returned NULL\n");
 			return EINVAL;
+		}
 		if (t->result) {
 			if (opts & SFSSIG_OPT_DEBUG)
 				fprintf(stderr, "Signature Request failed: "
@@ -1603,9 +1618,11 @@ sfs_list(char *file)
 			t = sfs_sumop(file, ANOUBIS_CHECKSUM_OP_LIST, NULL, 0,
 			    0);
 		}
-		if (!t)
+		if (!t) {
+			if (opts & SFSSIG_OPT_DEBUG)
+				fprintf(stderr, "sfs_sumop returned NULL\n");
 			return 1;
-
+		}
 		if (t->result) {
 			if (t->result == ENOENT && (opts & SFSSIG_OPT_TREE))
 				return 1;
