@@ -765,7 +765,8 @@ PolicyRuleSet::createAnswerPolicy(EscalationNotify *escalation)
 	}
 	return;
 err:
-	/* XXX CEH: Serious error! Show a popup here? */
+	wxCommandEvent	errevent(anEVT_ESCALATION_RULE_ERROR);
+	wxPostEvent(AnEvents::getInstance(), errevent);
 	while(!TAILQ_EMPTY(&tmpchain)) {
 		struct apn_rule		*tmp = TAILQ_FIRST(&tmpchain);
 		TAILQ_REMOVE(&tmpchain, tmp, entry);

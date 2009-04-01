@@ -115,6 +115,8 @@ ModAnoubisMainPanelImpl::ModAnoubisMainPanelImpl(wxWindow* parent,
 	anEvents->Connect(anEVT_LOAD_RULESET,
 	    wxCommandEventHandler(ModAnoubisMainPanelImpl::OnLoadRuleSet),
 	    NULL, this);
+	anEvents->Connect(anEVT_ESCALATION_RULE_ERROR, wxCommandEventHandler(
+	    ModAnoubisMainPanelImpl::OnEscalationRuleError), NULL, this);
 	tb_MainAnoubisNotify->Connect(wxEVT_COMMAND_NOTEBOOK_PAGE_CHANGED,
 	    wxNotebookEventHandler(
 	       ModAnoubisMainPanelImpl::OnNotebookTabChanged),
@@ -169,6 +171,11 @@ ModAnoubisMainPanelImpl::~ModAnoubisMainPanelImpl(void)
 	anEvents->Disconnect(anEVT_ANOUBISOPTIONS_SHOW,
 	    wxCommandEventHandler(ModAnoubisMainPanelImpl::OnAnoubisOptionShow),
 	    NULL, this);
+	anEvents->Disconnect(anEVT_LOAD_RULESET,
+	    wxCommandEventHandler(ModAnoubisMainPanelImpl::OnLoadRuleSet),
+	    NULL, this);
+	anEvents->Disconnect(anEVT_ESCALATION_RULE_ERROR, wxCommandEventHandler(
+	    ModAnoubisMainPanelImpl::OnEscalationRuleError), NULL, this);
 }
 
 void
@@ -899,7 +906,7 @@ ModAnoubisMainPanelImpl::answer(bool permission)
 				setAlfOptions(current, answer);
 			} else if (escalationType == wxT("SFS")) {
 				setSfsOptions(current, answer);
-			} else if (escalationType == wxT("SB")) {
+			} else if (escalationType == wxT("SANDBOX")) {
 				setSbOptions(current, answer);
 			}
 		}
@@ -1425,6 +1432,13 @@ ModAnoubisMainPanelImpl::OnEscalationSbPathRight(wxCommandEvent &)
 {
 	pathKeep_++;
 	setPathLabel();
+}
+
+void
+ModAnoubisMainPanelImpl::OnEscalationRuleError(wxCommandEvent &)
+{
+	wxMessageBox(_("Failed to create a rule from escalation"),
+	    _("Error"), wxICON_ERROR);
 }
 
 void

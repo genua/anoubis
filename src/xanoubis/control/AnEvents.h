@@ -499,6 +499,11 @@ BEGIN_DECLARE_EVENT_TYPES()
 	DECLARE_LOCAL_EVENT_TYPE(anEVT_LOAD_RULESET, wxNewEventType())
 
 	/**
+	 * An error occured while we tried to generate a new escalation rule.
+	 */
+	DECLARE_LOCAL_EVENT_TYPE(anEVT_ESCALATION_RULE_ERROR, wxNewEventType());
+
+	/**
 	 * Load key event.
 	 * A private key or a certificate was loaded to the key manager.
 	 *

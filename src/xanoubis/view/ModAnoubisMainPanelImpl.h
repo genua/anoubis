@@ -102,6 +102,7 @@ class ModAnoubisMainPanelImpl : public ModAnoubisMainPanelBase
 		void OnAlertNoTimeout(wxCommandEvent&);
 		void OnEscalationTimeout(wxSpinEvent&);
 		void OnAlertTimeout(wxSpinEvent&);
+		void OnEscalationRuleError(wxCommandEvent &);
 
 		void OnEscalationsShow(wxCommandEvent&);
 		void OnAnoubisOptionShow(wxCommandEvent&);
