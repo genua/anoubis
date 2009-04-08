@@ -186,7 +186,7 @@ ModAnoubisMainPanelImpl::readOptions(void)
 	int EscalationTimeout = 0;
 	bool SendAlert = false;
 	bool NoAlertTimeout = false;
-	bool DoAutostart = true;
+	bool DoAutostart = false;
 	int AlertTimeout = 10;
 	bool AutoChecksum = false;
 	bool AutoConnect = false;
