@@ -203,6 +203,12 @@ DlgRuleEditorFilterSubjectPage::showSubject(void)
 		}
 		break;
 	case APN_CS_NONE:
+		uidTextCtrl->Clear();
+		uidTextCtrl->Disable();
+		keyTextCtrl->Clear();
+		keyTextCtrl->Disable();
+		csumTextCtrl->Clear();
+		csumTextCtrl->Disable();
 		anyRadioButton->SetValue(true);
 		break;
 	}
