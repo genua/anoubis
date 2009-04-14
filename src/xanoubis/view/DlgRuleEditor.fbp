@@ -509,7 +509,7 @@
                                                     <property name="size"></property>
                                                     <property name="style">wxBU_EXACTFIT</property>
                                                     <property name="subclass"></property>
-                                                    <property name="tooltip"></property>
+                                                    <property name="tooltip">Creates a new rule</property>
                                                     <property name="window_extra_style"></property>
                                                     <property name="window_name"></property>
                                                     <property name="window_style"></property>
@@ -815,7 +815,7 @@
                                                     <property name="size"></property>
                                                     <property name="style">wxBU_EXACTFIT</property>
                                                     <property name="subclass"></property>
-                                                    <property name="tooltip"></property>
+                                                    <property name="tooltip">Move up</property>
                                                     <property name="window_extra_style"></property>
                                                     <property name="window_name"></property>
                                                     <property name="window_style"></property>
@@ -867,7 +867,7 @@
                                                     <property name="size"></property>
                                                     <property name="style">wxBU_EXACTFIT</property>
                                                     <property name="subclass"></property>
-                                                    <property name="tooltip"></property>
+                                                    <property name="tooltip">Move down</property>
                                                     <property name="window_extra_style"></property>
                                                     <property name="window_name"></property>
                                                     <property name="window_style"></property>
@@ -919,7 +919,7 @@
                                                     <property name="size"></property>
                                                     <property name="style">wxBU_EXACTFIT</property>
                                                     <property name="subclass"></property>
-                                                    <property name="tooltip"></property>
+                                                    <property name="tooltip">Removes selected policy</property>
                                                     <property name="window_extra_style"></property>
                                                     <property name="window_name"></property>
                                                     <property name="window_style"></property>
@@ -1186,7 +1186,7 @@
                                                     <property name="size"></property>
                                                     <property name="style">wxBU_EXACTFIT</property>
                                                     <property name="subclass"></property>
-                                                    <property name="tooltip"></property>
+                                                    <property name="tooltip">Creates a new rule</property>
                                                     <property name="window_extra_style"></property>
                                                     <property name="window_name"></property>
                                                     <property name="window_style"></property>
@@ -1492,7 +1492,7 @@
                                                     <property name="size"></property>
                                                     <property name="style">wxBU_EXACTFIT</property>
                                                     <property name="subclass"></property>
-                                                    <property name="tooltip"></property>
+                                                    <property name="tooltip">Move up</property>
                                                     <property name="window_extra_style"></property>
                                                     <property name="window_name"></property>
                                                     <property name="window_style"></property>
@@ -1544,7 +1544,7 @@
                                                     <property name="size"></property>
                                                     <property name="style">wxBU_EXACTFIT</property>
                                                     <property name="subclass"></property>
-                                                    <property name="tooltip"></property>
+                                                    <property name="tooltip">Move down</property>
                                                     <property name="window_extra_style"></property>
                                                     <property name="window_name"></property>
                                                     <property name="window_style"></property>
@@ -1596,7 +1596,7 @@
                                                     <property name="size"></property>
                                                     <property name="style">wxBU_EXACTFIT</property>
                                                     <property name="subclass"></property>
-                                                    <property name="tooltip"></property>
+                                                    <property name="tooltip">Removes selected policy</property>
                                                     <property name="window_extra_style"></property>
                                                     <property name="window_name"></property>
                                                     <property name="window_style"></property>
@@ -2378,7 +2378,7 @@
                                             <property name="size"></property>
                                             <property name="style"></property>
                                             <property name="subclass"></property>
-                                            <property name="tooltip"></property>
+                                            <property name="tooltip">Choose a binary</property>
                                             <property name="window_extra_style"></property>
                                             <property name="window_name"></property>
                                             <property name="window_style"></property>
@@ -2765,7 +2765,7 @@
                                             <property name="size"></property>
                                             <property name="style"></property>
                                             <property name="subclass"></property>
-                                            <property name="tooltip"></property>
+                                            <property name="tooltip">Validates the checksum</property>
                                             <property name="window_extra_style"></property>
                                             <property name="window_name"></property>
                                             <property name="window_style"></property>
@@ -2817,7 +2817,7 @@
                                             <property name="size"></property>
                                             <property name="style"></property>
                                             <property name="subclass"></property>
-                                            <property name="tooltip"></property>
+                                            <property name="tooltip">Updates the checksum</property>
                                             <property name="window_extra_style"></property>
                                             <property name="window_name"></property>
                                             <property name="window_style"></property>
@@ -3003,7 +3003,7 @@
                                             <property name="size"></property>
                                             <property name="style"></property>
                                             <property name="subclass"></property>
-                                            <property name="tooltip"></property>
+                                            <property name="tooltip">Appends the binary to the policy</property>
                                             <property name="window_extra_style"></property>
                                             <property name="window_name"></property>
                                             <property name="window_style"></property>
@@ -3055,7 +3055,7 @@
                                             <property name="size"></property>
                                             <property name="style"></property>
                                             <property name="subclass"></property>
-                                            <property name="tooltip"></property>
+                                            <property name="tooltip">Removes the binary from the policy</property>
                                             <property name="window_extra_style"></property>
                                             <property name="window_name"></property>
                                             <property name="window_style"></property>
@@ -3281,7 +3281,7 @@
                                     <property name="size"></property>
                                     <property name="style">wxRB_GROUP</property>
                                     <property name="subclass"></property>
-                                    <property name="tooltip"></property>
+                                    <property name="tooltip">Allow connection</property>
                                     <property name="value">0</property>
                                     <property name="window_extra_style"></property>
                                     <property name="window_name"></property>
@@ -3333,7 +3333,7 @@
                                     <property name="size"></property>
                                     <property name="style"></property>
                                     <property name="subclass"></property>
-                                    <property name="tooltip"></property>
+                                    <property name="tooltip">Deny connection</property>
                                     <property name="value">1</property>
                                     <property name="window_extra_style"></property>
                                     <property name="window_name"></property>
@@ -3385,7 +3385,7 @@
                                     <property name="size"></property>
                                     <property name="style"></property>
                                     <property name="subclass"></property>
-                                    <property name="tooltip"></property>
+                                    <property name="tooltip">Ask user</property>
                                     <property name="value">0</property>
                                     <property name="window_extra_style"></property>
                                     <property name="window_name"></property>
@@ -3488,7 +3488,7 @@
                                     <property name="size"></property>
                                     <property name="style">wxRB_GROUP</property>
                                     <property name="subclass"></property>
-                                    <property name="tooltip"></property>
+                                    <property name="tooltip">Disable logging</property>
                                     <property name="value">1</property>
                                     <property name="window_extra_style"></property>
                                     <property name="window_name"></property>
@@ -3540,7 +3540,7 @@
                                     <property name="size"></property>
                                     <property name="style"></property>
                                     <property name="subclass"></property>
-                                    <property name="tooltip"></property>
+                                    <property name="tooltip">Enable logging</property>
                                     <property name="value">0</property>
                                     <property name="window_extra_style"></property>
                                     <property name="window_name"></property>
@@ -3592,7 +3592,7 @@
                                     <property name="size"></property>
                                     <property name="style"></property>
                                     <property name="subclass"></property>
-                                    <property name="tooltip"></property>
+                                    <property name="tooltip">Enable higher priority logging</property>
                                     <property name="value">0</property>
                                     <property name="window_extra_style"></property>
                                     <property name="window_name"></property>
@@ -3807,7 +3807,7 @@
                                     <property name="size"></property>
                                     <property name="style">wxRB_GROUP</property>
                                     <property name="subclass"></property>
-                                    <property name="tooltip"></property>
+                                    <property name="tooltip">Filter incoming connection-attempts</property>
                                     <property name="value">0</property>
                                     <property name="window_extra_style"></property>
                                     <property name="window_name"></property>
@@ -3859,7 +3859,7 @@
                                     <property name="size"></property>
                                     <property name="style"></property>
                                     <property name="subclass"></property>
-                                    <property name="tooltip"></property>
+                                    <property name="tooltip">Filter outgoing connection-attempts</property>
                                     <property name="value">0</property>
                                     <property name="window_extra_style"></property>
                                     <property name="window_name"></property>
@@ -3911,7 +3911,7 @@
                                     <property name="size"></property>
                                     <property name="style"></property>
                                     <property name="subclass"></property>
-                                    <property name="tooltip"></property>
+                                    <property name="tooltip">Allow any direction</property>
                                     <property name="value">0</property>
                                     <property name="window_extra_style"></property>
                                     <property name="window_name"></property>
@@ -4014,7 +4014,7 @@
                                     <property name="size">-1,-1</property>
                                     <property name="style">wxRB_GROUP</property>
                                     <property name="subclass"></property>
-                                    <property name="tooltip"></property>
+                                    <property name="tooltip">Filter IPv4 connections</property>
                                     <property name="value">0</property>
                                     <property name="window_extra_style"></property>
                                     <property name="window_name"></property>
@@ -4066,7 +4066,7 @@
                                     <property name="size">-1,-1</property>
                                     <property name="style"></property>
                                     <property name="subclass"></property>
-                                    <property name="tooltip"></property>
+                                    <property name="tooltip">Filter IPv6 connections</property>
                                     <property name="value">0</property>
                                     <property name="window_extra_style"></property>
                                     <property name="window_name"></property>
@@ -4118,7 +4118,7 @@
                                     <property name="size"></property>
                                     <property name="style"></property>
                                     <property name="subclass"></property>
-                                    <property name="tooltip"></property>
+                                    <property name="tooltip">Allow any family</property>
                                     <property name="value">1</property>
                                     <property name="window_extra_style"></property>
                                     <property name="window_name"></property>
@@ -4221,7 +4221,7 @@
                                     <property name="size"></property>
                                     <property name="style">wxRB_GROUP</property>
                                     <property name="subclass"></property>
-                                    <property name="tooltip"></property>
+                                    <property name="tooltip">Filter TCP streams</property>
                                     <property name="value">0</property>
                                     <property name="window_extra_style"></property>
                                     <property name="window_name"></property>
@@ -4273,7 +4273,7 @@
                                     <property name="size"></property>
                                     <property name="style"></property>
                                     <property name="subclass"></property>
-                                    <property name="tooltip"></property>
+                                    <property name="tooltip">Filter UDP datagrams</property>
                                     <property name="value">0</property>
                                     <property name="window_extra_style"></property>
                                     <property name="window_name"></property>
@@ -5034,7 +5034,7 @@
                                     <property name="size"></property>
                                     <property name="style">wxRB_GROUP</property>
                                     <property name="subclass"></property>
-                                    <property name="tooltip"></property>
+                                    <property name="tooltip">Allow access to raw sockets</property>
                                     <property name="value">0</property>
                                     <property name="window_extra_style"></property>
                                     <property name="window_name"></property>
@@ -5086,7 +5086,7 @@
                                     <property name="size"></property>
                                     <property name="style"></property>
                                     <property name="subclass"></property>
-                                    <property name="tooltip"></property>
+                                    <property name="tooltip">Allow access to other sockets</property>
                                     <property name="value">0</property>
                                     <property name="window_extra_style"></property>
                                     <property name="window_name"></property>
@@ -5138,7 +5138,7 @@
                                     <property name="size"></property>
                                     <property name="style"></property>
                                     <property name="subclass"></property>
-                                    <property name="tooltip"></property>
+                                    <property name="tooltip">No capability limits</property>
                                     <property name="value">1</property>
                                     <property name="window_extra_style"></property>
                                     <property name="window_name"></property>
@@ -5409,7 +5409,7 @@
                                     <property name="size"></property>
                                     <property name="style"></property>
                                     <property name="subclass"></property>
-                                    <property name="tooltip"></property>
+                                    <property name="tooltip">Choose a path</property>
                                     <property name="window_extra_style"></property>
                                     <property name="window_name"></property>
                                     <property name="window_style"></property>
@@ -5511,7 +5511,7 @@
                                     <property name="size"></property>
                                     <property name="style">wxRB_GROUP</property>
                                     <property name="subclass"></property>
-                                    <property name="tooltip"></property>
+                                    <property name="tooltip">Not specified</property>
                                     <property name="value">0</property>
                                     <property name="window_extra_style"></property>
                                     <property name="window_name"></property>
@@ -5583,7 +5583,7 @@
                                     <property name="size"></property>
                                     <property name="style"></property>
                                     <property name="subclass"></property>
-                                    <property name="tooltip"></property>
+                                    <property name="tooltip">Trust own checksum</property>
                                     <property name="value">0</property>
                                     <property name="window_extra_style"></property>
                                     <property name="window_name"></property>
@@ -5655,7 +5655,7 @@
                                     <property name="size"></property>
                                     <property name="style"></property>
                                     <property name="subclass"></property>
-                                    <property name="tooltip"></property>
+                                    <property name="tooltip">Trust own signature</property>
                                     <property name="value">0</property>
                                     <property name="window_extra_style"></property>
                                     <property name="window_name"></property>
@@ -5736,7 +5736,7 @@
                                             <property name="size">60,-1</property>
                                             <property name="style"></property>
                                             <property name="subclass"></property>
-                                            <property name="tooltip"></property>
+                                            <property name="tooltip">Trust the specified user</property>
                                             <property name="value">0</property>
                                             <property name="window_extra_style"></property>
                                             <property name="window_name"></property>
@@ -5874,7 +5874,7 @@
                                             <property name="size">60,-1</property>
                                             <property name="style"></property>
                                             <property name="subclass"></property>
-                                            <property name="tooltip"></property>
+                                            <property name="tooltip">Trust certificate with specified keyid</property>
                                             <property name="value">0</property>
                                             <property name="window_extra_style"></property>
                                             <property name="window_name"></property>
@@ -6012,7 +6012,7 @@
                                             <property name="size">60,-1</property>
                                             <property name="style"></property>
                                             <property name="subclass"></property>
-                                            <property name="tooltip"></property>
+                                            <property name="tooltip">Trust specified checksum</property>
                                             <property name="value">0</property>
                                             <property name="window_extra_style"></property>
                                             <property name="window_name"></property>
@@ -6297,7 +6297,7 @@
                                     <property name="size"></property>
                                     <property name="style">wxRA_SPECIFY_ROWS</property>
                                     <property name="subclass"></property>
-                                    <property name="tooltip"></property>
+                                    <property name="tooltip">Action if checksum matches</property>
                                     <property name="window_extra_style"></property>
                                     <property name="window_name"></property>
                                     <property name="window_style">wxTAB_TRAVERSAL</property>
@@ -6351,7 +6351,7 @@
                                     <property name="size"></property>
                                     <property name="style">wxRA_SPECIFY_ROWS</property>
                                     <property name="subclass"></property>
-                                    <property name="tooltip"></property>
+                                    <property name="tooltip">Logging configuration if checksum matches</property>
                                     <property name="window_extra_style"></property>
                                     <property name="window_name"></property>
                                     <property name="window_style">wxTAB_TRAVERSAL</property>
@@ -6486,7 +6486,7 @@
                                     <property name="size"></property>
                                     <property name="style">wxRA_SPECIFY_ROWS</property>
                                     <property name="subclass"></property>
-                                    <property name="tooltip"></property>
+                                    <property name="tooltip">Action if checksum doesn&apos;t match</property>
                                     <property name="window_extra_style"></property>
                                     <property name="window_name"></property>
                                     <property name="window_style">wxTAB_TRAVERSAL</property>
@@ -6540,7 +6540,7 @@
                                     <property name="size"></property>
                                     <property name="style">wxRA_SPECIFY_ROWS</property>
                                     <property name="subclass"></property>
-                                    <property name="tooltip"></property>
+                                    <property name="tooltip">Logging configuration if checksum doesn&apos;t match</property>
                                     <property name="window_extra_style"></property>
                                     <property name="window_name"></property>
                                     <property name="window_style">wxTAB_TRAVERSAL</property>
@@ -6675,7 +6675,7 @@
                                     <property name="size"></property>
                                     <property name="style">wxRA_SPECIFY_ROWS</property>
                                     <property name="subclass"></property>
-                                    <property name="tooltip"></property>
+                                    <property name="tooltip">Action if checksum is missing</property>
                                     <property name="window_extra_style"></property>
                                     <property name="window_name"></property>
                                     <property name="window_style">wxTAB_TRAVERSAL</property>
@@ -6729,7 +6729,7 @@
                                     <property name="size"></property>
                                     <property name="style">wxRA_SPECIFY_ROWS</property>
                                     <property name="subclass"></property>
-                                    <property name="tooltip"></property>
+                                    <property name="tooltip">Logging configuration if checksum is missing</property>
                                     <property name="window_extra_style"></property>
                                     <property name="window_name"></property>
                                     <property name="window_style">wxTAB_TRAVERSAL</property>
@@ -6965,7 +6965,7 @@
                                             <property name="size"></property>
                                             <property name="style">wxRB_GROUP</property>
                                             <property name="subclass"></property>
-                                            <property name="tooltip"></property>
+                                            <property name="tooltip">Switch to context</property>
                                             <property name="value">0</property>
                                             <property name="window_extra_style"></property>
                                             <property name="window_name"></property>
@@ -7017,7 +7017,7 @@
                                             <property name="size"></property>
                                             <property name="style"></property>
                                             <property name="subclass"></property>
-                                            <property name="tooltip"></property>
+                                            <property name="tooltip">Switch to context on open</property>
                                             <property name="value">0</property>
                                             <property name="window_extra_style"></property>
                                             <property name="window_name"></property>
@@ -7283,7 +7283,7 @@
                                     <property name="size"></property>
                                     <property name="style"></property>
                                     <property name="subclass"></property>
-                                    <property name="tooltip"></property>
+                                    <property name="tooltip">Read permission</property>
                                     <property name="window_extra_style"></property>
                                     <property name="window_name"></property>
                                     <property name="window_style"></property>
@@ -7335,7 +7335,7 @@
                                     <property name="size"></property>
                                     <property name="style"></property>
                                     <property name="subclass"></property>
-                                    <property name="tooltip"></property>
+                                    <property name="tooltip">Write permission</property>
                                     <property name="window_extra_style"></property>
                                     <property name="window_name"></property>
                                     <property name="window_style"></property>
@@ -7387,7 +7387,7 @@
                                     <property name="size"></property>
                                     <property name="style"></property>
                                     <property name="subclass"></property>
-                                    <property name="tooltip"></property>
+                                    <property name="tooltip">Execute permission</property>
                                     <property name="window_extra_style"></property>
                                     <property name="window_name"></property>
                                     <property name="window_style"></property>

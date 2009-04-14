@@ -74,11 +74,13 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	
 	bt_first = new wxButton( tb_MainAnoubisNotification, wxID_ANY, _("<<"), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT|wxNO_BORDER );
 	bt_first->Enable( false );
+	bt_first->SetToolTip( _("Jump first") );
 	
 	sz_navigate->Add( bt_first, 0, wxALIGN_CENTER|wxALL, 5 );
 	
 	bt_previous = new wxButton( tb_MainAnoubisNotification, wxID_ANY, _("<"), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT|wxNO_BORDER );
 	bt_previous->Enable( false );
+	bt_previous->SetToolTip( _("Jump previous") );
 	
 	sz_navigate->Add( bt_previous, 0, wxALIGN_CENTER|wxALL, 5 );
 	
@@ -96,11 +98,13 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	
 	bt_next = new wxButton( tb_MainAnoubisNotification, wxID_ANY, _(">"), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT|wxNO_BORDER );
 	bt_next->Enable( false );
+	bt_next->SetToolTip( _("Jump next") );
 	
 	sz_navigate->Add( bt_next, 0, wxALIGN_CENTER|wxALL, 5 );
 	
 	bt_last = new wxButton( tb_MainAnoubisNotification, wxID_ANY, _(">>"), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT|wxNO_BORDER );
 	bt_last->Enable( false );
+	bt_last->SetToolTip( _("Jump last") );
 	
 	sz_navigate->Add( bt_last, 0, wxALIGN_CENTER|wxALL, 5 );
 	
@@ -434,6 +438,7 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	
 	profileDeleteButton = new wxButton( tb_Profiles, wxID_ANY, _("Delete"), wxDefaultPosition, wxDefaultSize, 0 );
 	profileDeleteButton->Enable( false );
+	profileDeleteButton->SetToolTip( _("Removes the selected profile") );
 	
 	bSizer29->Add( profileDeleteButton, 0, wxALL, 5 );
 	
@@ -713,6 +718,8 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	autoConnectBox = new wxCheckBox( tb_MainAnoubisOptions, wxID_ANY, _("Auto Connect to Daemon"), wxDefaultPosition, wxDefaultSize, 0 );
 	autoConnectBox->SetValue(true);
 	
+	autoConnectBox->SetToolTip( _("Check to auto-connect at startup") );
+	
 	bSizer191->Add( autoConnectBox, 0, wxALL, 5 );
 	
 	sbSizer6->Add( bSizer191, 1, wxEXPAND, 5 );
@@ -727,6 +734,8 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	
 	toolTipCheckBox = new wxCheckBox( tb_MainAnoubisOptions, wxID_ANY, _("Enable Tool Tips after"), wxDefaultPosition, wxDefaultSize, 0 );
 	toolTipCheckBox->SetValue(true);
+	
+	toolTipCheckBox->SetToolTip( _("Check to enable tooltips") );
 	
 	bSizer1911->Add( toolTipCheckBox, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
@@ -831,9 +840,13 @@ ModAnoubisOverviewPanelBase::ModAnoubisOverviewPanelBase( wxWindow* parent, wxWi
 	bSizer26->Add( 20, 0, 0, wxEXPAND, 5 );
 	
 	connectButton = new wxButton( this, wxID_ANY, _("Connect"), wxDefaultPosition, wxDefaultSize, 0 );
+	connectButton->SetToolTip( _("Establishes a connection to the Anoubis daemon") );
+	
 	bSizer26->Add( connectButton, 0, wxALL, 5 );
 	
 	disconnectButton = new wxButton( this, wxID_ANY, _("Disconnect"), wxDefaultPosition, wxDefaultSize, 0 );
+	disconnectButton->SetToolTip( _("Disconnects from the Anoubis daemon") );
+	
 	bSizer26->Add( disconnectButton, 0, wxALL, 5 );
 	
 	bSizer24->Add( bSizer26, 0, wxEXPAND, 5 );

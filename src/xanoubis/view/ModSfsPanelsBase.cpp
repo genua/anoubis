@@ -104,6 +104,8 @@ ModSfsMainPanelBase::ModSfsMainPanelBase( wxWindow* parent, wxWindowID id, const
 	
 	SfsMainDirTraversalCheckbox = new wxCheckBox( pan_SfsMain, wxID_ANY, _("Recursive traversal"), wxDefaultPosition, wxDefaultSize, 0 );
 	
+	SfsMainDirTraversalCheckbox->SetToolTip( _("Enables recursive traversal through filesystem") );
+	
 	bSizer12->Add( SfsMainDirTraversalCheckbox, 0, wxALL, 5 );
 	
 	bSizer10->Add( bSizer12, 1, wxEXPAND, 5 );
@@ -163,16 +165,19 @@ ModSfsMainPanelBase::ModSfsMainPanelBase( wxWindow* parent, wxWindowID id, const
 	
 	SfsMainSearchOrphanedButton = new wxButton( SfsMainDetailsPanel, wxID_ANY, _("Search Orphaned"), wxDefaultPosition, wxDefaultSize, 0 );
 	SfsMainSearchOrphanedButton->Enable( false );
+	SfsMainSearchOrphanedButton->SetToolTip( _("Searches for orphaned files") );
 	
 	fgSizer51->Add( SfsMainSearchOrphanedButton, 0, wxALL, 5 );
 	
 	SfsMainShowChecksumButton = new wxButton( SfsMainDetailsPanel, wxID_ANY, _("Show all Checksums"), wxDefaultPosition, wxDefaultSize, 0 );
 	SfsMainShowChecksumButton->Enable( false );
+	SfsMainShowChecksumButton->SetToolTip( _("Show files with checksum") );
 	
 	fgSizer51->Add( SfsMainShowChecksumButton, 0, wxALL, 5 );
 	
 	SfsMainImportButton = new wxButton( SfsMainDetailsPanel, wxID_ANY, _("Import..."), wxDefaultPosition, wxDefaultSize, 0 );
 	SfsMainImportButton->Enable( false );
+	SfsMainImportButton->SetToolTip( _("Import from file") );
 	
 	fgSizer51->Add( SfsMainImportButton, 0, wxALIGN_RIGHT|wxALL, 5 );
 	
@@ -184,11 +189,13 @@ ModSfsMainPanelBase::ModSfsMainPanelBase( wxWindow* parent, wxWindowID id, const
 	
 	SfsMainShowChangedButton = new wxButton( SfsMainDetailsPanel, wxID_ANY, _("Show Changed"), wxDefaultPosition, wxDefaultSize, 0 );
 	SfsMainShowChangedButton->Enable( false );
+	SfsMainShowChangedButton->SetToolTip( _("Show files with modified checksum") );
 	
 	fgSizer51->Add( SfsMainShowChangedButton, 0, wxALL, 5 );
 	
 	SfsMainExportButton = new wxButton( SfsMainDetailsPanel, wxID_ANY, _("Export..."), wxDefaultPosition, wxDefaultSize, 0 );
 	SfsMainExportButton->Enable( false );
+	SfsMainExportButton->SetToolTip( _("Export to file") );
 	
 	fgSizer51->Add( SfsMainExportButton, 0, wxALIGN_RIGHT|wxALL, 5 );
 	

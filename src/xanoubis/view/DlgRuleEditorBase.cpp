@@ -80,6 +80,8 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	appListHeadSizer->Add( appListTypeChoice, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	appListCreateButton = new wxButton( appPanel, wxID_ANY, _("create"), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
+	appListCreateButton->SetToolTip( _("Creates a new rule") );
+	
 	appListHeadSizer->Add( appListCreateButton, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
 	
 	
@@ -112,16 +114,19 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	
 	appListUpButton = new wxButton( appPanel, wxID_ANY, _("up"), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
 	appListUpButton->Enable( false );
+	appListUpButton->SetToolTip( _("Move up") );
 	
 	appListFoodSizer->Add( appListUpButton, 0, wxALL, 5 );
 	
 	appListDownButton = new wxButton( appPanel, wxID_ANY, _("down"), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
 	appListDownButton->Enable( false );
+	appListDownButton->SetToolTip( _("Move down") );
 	
 	appListFoodSizer->Add( appListDownButton, 0, wxALL, 5 );
 	
 	appListDeleteButton = new wxButton( appPanel, wxID_ANY, _("delete"), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
 	appListDeleteButton->Enable( false );
+	appListDeleteButton->SetToolTip( _("Removes selected policy") );
 	
 	appListFoodSizer->Add( appListDeleteButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
@@ -153,6 +158,7 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	
 	filterListCreateButton = new wxButton( filterPanel, wxID_ANY, _("create"), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
 	filterListCreateButton->Enable( false );
+	filterListCreateButton->SetToolTip( _("Creates a new rule") );
 	
 	filterListHeadSizer->Add( filterListCreateButton, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
 	
@@ -186,16 +192,19 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	
 	filterListUpButton = new wxButton( filterPanel, wxID_ANY, _("up"), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
 	filterListUpButton->Enable( false );
+	filterListUpButton->SetToolTip( _("Move up") );
 	
 	filterListFoodSizer->Add( filterListUpButton, 0, wxALL, 5 );
 	
 	filterListDownButton = new wxButton( filterPanel, wxID_ANY, _("down"), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
 	filterListDownButton->Enable( false );
+	filterListDownButton->SetToolTip( _("Move down") );
 	
 	filterListFoodSizer->Add( filterListDownButton, 0, wxALL, 5 );
 	
 	filterListDeleteButton = new wxButton( filterPanel, wxID_ANY, _("delete"), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
 	filterListDeleteButton->Enable( false );
+	filterListDeleteButton->SetToolTip( _("Removes selected policy") );
 	
 	filterListFoodSizer->Add( filterListDeleteButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
@@ -315,6 +324,8 @@ DlgRuleEditorAppPageBase::DlgRuleEditorAppPageBase( wxWindow* parent, wxWindowID
 	binarySizer->Add( binaryTextCtrl, 1, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	pickButton = new wxButton( mainPage, wxID_ANY, _("Pick..."), wxDefaultPosition, wxDefaultSize, 0 );
+	pickButton->SetToolTip( _("Choose a binary") );
+	
 	binarySizer->Add( pickButton, 0, wxALL|wxALIGN_RIGHT|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	mainSizer->Add( binarySizer, 0, wxEXPAND, 5 );
@@ -358,9 +369,13 @@ DlgRuleEditorAppPageBase::DlgRuleEditorAppPageBase( wxWindow* parent, wxWindowID
 	statusSizer->Add( statusText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	validateButton = new wxButton( mainPage, wxID_ANY, _("validate"), wxDefaultPosition, wxDefaultSize, 0 );
+	validateButton->SetToolTip( _("Validates the checksum") );
+	
 	statusSizer->Add( validateButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	updateButton = new wxButton( mainPage, wxID_ANY, _("update"), wxDefaultPosition, wxDefaultSize, 0 );
+	updateButton->SetToolTip( _("Updates the checksum") );
+	
 	statusSizer->Add( updateButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	mainSizer->Add( statusSizer, 0, wxEXPAND, 5 );
@@ -387,9 +402,13 @@ DlgRuleEditorAppPageBase::DlgRuleEditorAppPageBase( wxWindow* parent, wxWindowID
 	footerSizer = new wxBoxSizer( wxHORIZONTAL );
 	
 	addButton = new wxButton( mainPage, ID_APP_PAGE_ADD, _("add"), wxDefaultPosition, wxDefaultSize, 0 );
+	addButton->SetToolTip( _("Appends the binary to the policy") );
+	
 	footerSizer->Add( addButton, 0, wxALL, 5 );
 	
 	deleteButton = new wxButton( mainPage, ID_APP_PAGE_DELETE, _("delete"), wxDefaultPosition, wxDefaultSize, 0 );
+	deleteButton->SetToolTip( _("Removes the binary from the policy") );
+	
 	footerSizer->Add( deleteButton, 0, wxALL, 5 );
 	
 	
@@ -432,12 +451,18 @@ DlgRuleEditorFilterActionPageBase::DlgRuleEditorFilterActionPageBase( wxWindow* 
 	mainSizer->Add( actionLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	allowRadioButton = new wxRadioButton( mainPage, wxID_ANY, _("allow"), wxDefaultPosition, wxDefaultSize, wxRB_GROUP );
+	allowRadioButton->SetToolTip( _("Allow connection") );
+	
 	mainSizer->Add( allowRadioButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	denyRadioButton = new wxRadioButton( mainPage, wxID_ANY, _("deny"), wxDefaultPosition, wxDefaultSize, 0 );
+	denyRadioButton->SetToolTip( _("Deny connection") );
+	
 	mainSizer->Add( denyRadioButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	askRadioButton = new wxRadioButton( mainPage, wxID_ANY, _("ask"), wxDefaultPosition, wxDefaultSize, 0 );
+	askRadioButton->SetToolTip( _("Ask user") );
+	
 	mainSizer->Add( askRadioButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	logLabel = new wxStaticText( mainPage, wxID_ANY, _("Log:"), wxDefaultPosition, wxDefaultSize, 0 );
@@ -445,12 +470,18 @@ DlgRuleEditorFilterActionPageBase::DlgRuleEditorFilterActionPageBase( wxWindow* 
 	mainSizer->Add( logLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	noneRadioButton = new wxRadioButton( mainPage, wxID_ANY, _("none"), wxDefaultPosition, wxDefaultSize, wxRB_GROUP );
+	noneRadioButton->SetToolTip( _("Disable logging") );
+	
 	mainSizer->Add( noneRadioButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	normalRadioButton = new wxRadioButton( mainPage, wxID_ANY, _("normal"), wxDefaultPosition, wxDefaultSize, 0 );
+	normalRadioButton->SetToolTip( _("Enable logging") );
+	
 	mainSizer->Add( normalRadioButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	alertRadioButton = new wxRadioButton( mainPage, wxID_ANY, _("alert"), wxDefaultPosition, wxDefaultSize, 0 );
+	alertRadioButton->SetToolTip( _("Enable higher priority logging") );
+	
 	mainSizer->Add( alertRadioButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	mainPage->SetSizer( mainSizer );
@@ -487,14 +518,19 @@ DlgRuleEditorFilterNetworkPageBase::DlgRuleEditorFilterNetworkPageBase( wxWindow
 	mainSizer->Add( directionLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	inRadioButton = new wxRadioButton( mainPage, wxID_ANY, _("accept"), wxDefaultPosition, wxDefaultSize, wxRB_GROUP );
+	inRadioButton->SetToolTip( _("Filter incoming connection-attempts") );
 	inRadioButton->SetMinSize( wxSize( 80,-1 ) );
 	
 	mainSizer->Add( inRadioButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	outRadioButton = new wxRadioButton( mainPage, wxID_ANY, _("connect"), wxDefaultPosition, wxDefaultSize, 0 );
+	outRadioButton->SetToolTip( _("Filter outgoing connection-attempts") );
+	
 	mainSizer->Add( outRadioButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	bothRadioButton = new wxRadioButton( mainPage, wxID_ANY, _("both"), wxDefaultPosition, wxDefaultSize, 0 );
+	bothRadioButton->SetToolTip( _("Allow any direction") );
+	
 	mainSizer->Add( bothRadioButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	addressFamilyLabel = new wxStaticText( mainPage, wxID_ANY, _("Address family:"), wxDefaultPosition, wxDefaultSize, 0 );
@@ -502,12 +538,18 @@ DlgRuleEditorFilterNetworkPageBase::DlgRuleEditorFilterNetworkPageBase( wxWindow
 	mainSizer->Add( addressFamilyLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	inetRadioButton = new wxRadioButton( mainPage, wxID_ANY, _("inet"), wxDefaultPosition, wxSize( -1,-1 ), wxRB_GROUP );
+	inetRadioButton->SetToolTip( _("Filter IPv4 connections") );
+	
 	mainSizer->Add( inetRadioButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	inet6RadioButton = new wxRadioButton( mainPage, wxID_ANY, _("inet6"), wxDefaultPosition, wxSize( -1,-1 ), 0 );
+	inet6RadioButton->SetToolTip( _("Filter IPv6 connections") );
+	
 	mainSizer->Add( inet6RadioButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	anyRadioButton = new wxRadioButton( mainPage, wxID_ANY, _("any"), wxDefaultPosition, wxDefaultSize, 0 );
+	anyRadioButton->SetToolTip( _("Allow any family") );
+	
 	mainSizer->Add( anyRadioButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	protocolLabel = new wxStaticText( mainPage, wxID_ANY, _("Protocol:"), wxDefaultPosition, wxDefaultSize, 0 );
@@ -515,9 +557,13 @@ DlgRuleEditorFilterNetworkPageBase::DlgRuleEditorFilterNetworkPageBase( wxWindow
 	mainSizer->Add( protocolLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	tcpRadioButton = new wxRadioButton( mainPage, wxID_ANY, _("tcp"), wxDefaultPosition, wxDefaultSize, wxRB_GROUP );
+	tcpRadioButton->SetToolTip( _("Filter TCP streams") );
+	
 	mainSizer->Add( tcpRadioButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	udpRadioButton = new wxRadioButton( mainPage, wxID_ANY, _("udp"), wxDefaultPosition, wxDefaultSize, 0 );
+	udpRadioButton->SetToolTip( _("Filter UDP datagrams") );
+	
 	mainSizer->Add( udpRadioButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	
@@ -620,12 +666,18 @@ DlgRuleEditorFilterCapabilityPageBase::DlgRuleEditorFilterCapabilityPageBase( wx
 	mainSizer->Add( capabilityLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	rawRadioButton = new wxRadioButton( mainPage, wxID_ANY, _("raw"), wxDefaultPosition, wxDefaultSize, wxRB_GROUP );
+	rawRadioButton->SetToolTip( _("Allow access to raw sockets") );
+	
 	mainSizer->Add( rawRadioButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	otherRadioButton = new wxRadioButton( mainPage, wxID_ANY, _("other"), wxDefaultPosition, wxDefaultSize, 0 );
+	otherRadioButton->SetToolTip( _("Allow access to other sockets") );
+	
 	mainSizer->Add( otherRadioButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	allRadioButton = new wxRadioButton( mainPage, wxID_ANY, _("all"), wxDefaultPosition, wxDefaultSize, 0 );
+	allRadioButton->SetToolTip( _("No capability limits") );
+	
 	mainSizer->Add( allRadioButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	mainPage->SetSizer( mainSizer );
@@ -663,6 +715,8 @@ DlgRuleEditorFilterSubjectPageBase::DlgRuleEditorFilterSubjectPageBase( wxWindow
 	mainSizer->Add( pathTextCtrl, 0, wxALL|wxEXPAND, 5 );
 	
 	modifyButton = new wxButton( mainPage, wxID_ANY, _("modify"), wxDefaultPosition, wxDefaultSize, 0 );
+	modifyButton->SetToolTip( _("Choose a path") );
+	
 	mainSizer->Add( modifyButton, 0, wxALL, 5 );
 	
 	subjectLabel = new wxStaticText( mainPage, wxID_ANY, _("Subject:"), wxDefaultPosition, wxDefaultSize, 0 );
@@ -671,6 +725,7 @@ DlgRuleEditorFilterSubjectPageBase::DlgRuleEditorFilterSubjectPageBase( wxWindow
 	
 	anyRadioButton = new wxRadioButton( mainPage, wxID_ANY, _("any"), wxDefaultPosition, wxDefaultSize, wxRB_GROUP );
 	anyRadioButton->Hide();
+	anyRadioButton->SetToolTip( _("Not specified") );
 	
 	mainSizer->Add( anyRadioButton, 0, wxALL, 5 );
 	
@@ -681,6 +736,8 @@ DlgRuleEditorFilterSubjectPageBase::DlgRuleEditorFilterSubjectPageBase( wxWindow
 	mainSizer->Add( 0, 0, 1, wxEXPAND, 5 );
 	
 	selfRadioButton = new wxRadioButton( mainPage, wxID_ANY, _("self"), wxDefaultPosition, wxDefaultSize, 0 );
+	selfRadioButton->SetToolTip( _("Trust own checksum") );
+	
 	mainSizer->Add( selfRadioButton, 0, wxALL, 5 );
 	
 	
@@ -690,6 +747,8 @@ DlgRuleEditorFilterSubjectPageBase::DlgRuleEditorFilterSubjectPageBase( wxWindow
 	mainSizer->Add( 0, 0, 1, wxEXPAND, 5 );
 	
 	selfSignedRadioButton = new wxRadioButton( mainPage, wxID_ANY, _("self-signed"), wxDefaultPosition, wxDefaultSize, 0 );
+	selfSignedRadioButton->SetToolTip( _("Trust own signature") );
+	
 	mainSizer->Add( selfSignedRadioButton, 0, wxALL, 5 );
 	
 	
@@ -702,6 +761,8 @@ DlgRuleEditorFilterSubjectPageBase::DlgRuleEditorFilterSubjectPageBase( wxWindow
 	uidSizer = new wxBoxSizer( wxHORIZONTAL );
 	
 	uidRadioButton = new wxRadioButton( mainPage, wxID_ANY, _("uid"), wxDefaultPosition, wxSize( 60,-1 ), 0 );
+	uidRadioButton->SetToolTip( _("Trust the specified user") );
+	
 	uidSizer->Add( uidRadioButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	uidTextCtrl = new wxTextCtrl( mainPage, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER );
@@ -719,6 +780,8 @@ DlgRuleEditorFilterSubjectPageBase::DlgRuleEditorFilterSubjectPageBase( wxWindow
 	keySizer = new wxBoxSizer( wxHORIZONTAL );
 	
 	keyRadioButton = new wxRadioButton( mainPage, wxID_ANY, _("key"), wxDefaultPosition, wxSize( 60,-1 ), 0 );
+	keyRadioButton->SetToolTip( _("Trust certificate with specified keyid") );
+	
 	keySizer->Add( keyRadioButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	keyTextCtrl = new wxTextCtrl( mainPage, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER );
@@ -736,6 +799,8 @@ DlgRuleEditorFilterSubjectPageBase::DlgRuleEditorFilterSubjectPageBase( wxWindow
 	csumSizer = new wxBoxSizer( wxHORIZONTAL );
 	
 	csumRadioButton = new wxRadioButton( mainPage, wxID_ANY, _("csum"), wxDefaultPosition, wxSize( 60,-1 ), 0 );
+	csumRadioButton->SetToolTip( _("Trust specified checksum") );
+	
 	csumSizer->Add( csumRadioButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	csumTextCtrl = new wxTextCtrl( mainPage, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER );
@@ -795,12 +860,16 @@ DlgRuleEditorFilterSfsPageBase::DlgRuleEditorFilterSfsPageBase( wxWindow* parent
 	int validActionRadioBoxNChoices = sizeof( validActionRadioBoxChoices ) / sizeof( wxString );
 	validActionRadioBox = new wxRadioBox( mainPage, wxID_ANY, _("Action"), wxDefaultPosition, wxDefaultSize, validActionRadioBoxNChoices, validActionRadioBoxChoices, 1, wxRA_SPECIFY_ROWS|wxTAB_TRAVERSAL );
 	validActionRadioBox->SetSelection( 1 );
+	validActionRadioBox->SetToolTip( _("Action if checksum matches") );
+	
 	mainSizer->Add( validActionRadioBox, 0, wxALL, 5 );
 	
 	wxString validLogRadioBoxChoices[] = { _("none"), _("normal"), _("alert") };
 	int validLogRadioBoxNChoices = sizeof( validLogRadioBoxChoices ) / sizeof( wxString );
 	validLogRadioBox = new wxRadioBox( mainPage, wxID_ANY, _("Log"), wxDefaultPosition, wxDefaultSize, validLogRadioBoxNChoices, validLogRadioBoxChoices, 1, wxRA_SPECIFY_ROWS|wxTAB_TRAVERSAL );
 	validLogRadioBox->SetSelection( 2 );
+	validLogRadioBox->SetToolTip( _("Logging configuration if checksum matches") );
+	
 	mainSizer->Add( validLogRadioBox, 0, wxALL, 5 );
 	
 	
@@ -820,12 +889,16 @@ DlgRuleEditorFilterSfsPageBase::DlgRuleEditorFilterSfsPageBase( wxWindow* parent
 	int invalidActionRadioBoxNChoices = sizeof( invalidActionRadioBoxChoices ) / sizeof( wxString );
 	invalidActionRadioBox = new wxRadioBox( mainPage, wxID_ANY, _("Action"), wxDefaultPosition, wxDefaultSize, invalidActionRadioBoxNChoices, invalidActionRadioBoxChoices, 1, wxRA_SPECIFY_ROWS|wxTAB_TRAVERSAL );
 	invalidActionRadioBox->SetSelection( 1 );
+	invalidActionRadioBox->SetToolTip( _("Action if checksum doesn't match") );
+	
 	mainSizer->Add( invalidActionRadioBox, 0, wxALL, 5 );
 	
 	wxString invalidLogRadioBoxChoices[] = { _("none"), _("normal"), _("alert") };
 	int invalidLogRadioBoxNChoices = sizeof( invalidLogRadioBoxChoices ) / sizeof( wxString );
 	invalidLogRadioBox = new wxRadioBox( mainPage, wxID_ANY, _("Log"), wxDefaultPosition, wxDefaultSize, invalidLogRadioBoxNChoices, invalidLogRadioBoxChoices, 1, wxRA_SPECIFY_ROWS|wxTAB_TRAVERSAL );
 	invalidLogRadioBox->SetSelection( 2 );
+	invalidLogRadioBox->SetToolTip( _("Logging configuration if checksum doesn't match") );
+	
 	mainSizer->Add( invalidLogRadioBox, 0, wxALL, 5 );
 	
 	
@@ -845,12 +918,16 @@ DlgRuleEditorFilterSfsPageBase::DlgRuleEditorFilterSfsPageBase( wxWindow* parent
 	int unknownActionRadioBoxNChoices = sizeof( unknownActionRadioBoxChoices ) / sizeof( wxString );
 	unknownActionRadioBox = new wxRadioBox( mainPage, wxID_ANY, _("Action"), wxDefaultPosition, wxDefaultSize, unknownActionRadioBoxNChoices, unknownActionRadioBoxChoices, 1, wxRA_SPECIFY_ROWS|wxTAB_TRAVERSAL );
 	unknownActionRadioBox->SetSelection( 0 );
+	unknownActionRadioBox->SetToolTip( _("Action if checksum is missing") );
+	
 	mainSizer->Add( unknownActionRadioBox, 0, wxALL, 5 );
 	
 	wxString unknownLogRadioBoxChoices[] = { _("none"), _("normal"), _("alert") };
 	int unknownLogRadioBoxNChoices = sizeof( unknownLogRadioBoxChoices ) / sizeof( wxString );
 	unknownLogRadioBox = new wxRadioBox( mainPage, wxID_ANY, _("Log"), wxDefaultPosition, wxDefaultSize, unknownLogRadioBoxNChoices, unknownLogRadioBoxChoices, 1, wxRA_SPECIFY_ROWS|wxTAB_TRAVERSAL );
 	unknownLogRadioBox->SetSelection( 2 );
+	unknownLogRadioBox->SetToolTip( _("Logging configuration if checksum is missing") );
+	
 	mainSizer->Add( unknownLogRadioBox, 0, wxALL, 5 );
 	
 	
@@ -894,9 +971,13 @@ DlgRuleEditorFilterContextPageBase::DlgRuleEditorFilterContextPageBase( wxWindow
 	typeSizer->Add( typeLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	newRadioButton = new wxRadioButton( mainPage, wxID_ANY, _("new"), wxDefaultPosition, wxDefaultSize, wxRB_GROUP );
+	newRadioButton->SetToolTip( _("Switch to context") );
+	
 	typeSizer->Add( newRadioButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	openRadioButton = new wxRadioButton( mainPage, wxID_ANY, _("open"), wxDefaultPosition, wxDefaultSize, 0 );
+	openRadioButton->SetToolTip( _("Switch to context on open") );
+	
 	typeSizer->Add( openRadioButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	mainSizer->Add( typeSizer, 0, wxEXPAND, 5 );
@@ -935,13 +1016,19 @@ DlgRuleEditorFilterPermissionPageBase::DlgRuleEditorFilterPermissionPageBase( wx
 	
 	readCheckBox = new wxCheckBox( mainPage, wxID_ANY, _("read"), wxDefaultPosition, wxDefaultSize, 0 );
 	
+	readCheckBox->SetToolTip( _("Read permission") );
+	
 	mainSizer->Add( readCheckBox, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	writeCheckBox = new wxCheckBox( mainPage, wxID_ANY, _("write"), wxDefaultPosition, wxDefaultSize, 0 );
 	
+	writeCheckBox->SetToolTip( _("Write permission") );
+	
 	mainSizer->Add( writeCheckBox, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	executeCheckBox = new wxCheckBox( mainPage, wxID_ANY, _("execute"), wxDefaultPosition, wxDefaultSize, 0 );
+	
+	executeCheckBox->SetToolTip( _("Execute permission") );
 	
 	mainSizer->Add( executeCheckBox, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	

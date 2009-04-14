@@ -145,17 +145,20 @@ void
 MainFrame::addModules(Module* modules[ANOUBIS_MODULESNO])
 {
 	wxString	 name;
+	wxString	 tooltip;
 	wxIcon		*icon;
 	int		 i;
 	int		 id;
 
 	for (i=0; i<ANOUBIS_MODULESNO; i++) {
 		name = modules[i]->getNick();
+		tooltip = modules[i]->getName();
 		icon = modules[i]->getIcon();
 		id   = modules[i]->getToolbarId();
 
 		/* add module to toolbar and connect selection event */
-		tb_LeftToolbarModule->AddRadioTool(id, name, *(icon));
+		tb_LeftToolbarModule->AddRadioTool(id, name, *(icon),
+		    wxNullIcon, tooltip);
 		tb_LeftToolbarModule->Realize();
 		this->Connect(id, wxEVT_COMMAND_MENU_SELECTED,
 		    wxCommandEventHandler(MainFrame::OnTbModuleSelect));
