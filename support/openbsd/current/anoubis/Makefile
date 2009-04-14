@@ -30,8 +30,11 @@ WANTLIB-main =		c m pthread stdc++ event glib-2.0 pixman-1 \
 			intl pango-1.0 pangocairo-1.0 pangoft2-1.0 png z \
 			crypto ssl
 
+POLICIES =		policy.admin.ntp policy.user.ntp policy.admin.0 \
+			policy.user.0 policy.admin.daemon policy.admin.default
+
 PROFILESDIR =		/etc/anoubis/profiles
-SUBST_VARS =		PROFILESDIR
+SUBST_VARS =		PROFILESDIR POLICIES
 
 MULTI_PACKAGES =	-main -daemon
 
@@ -49,9 +52,6 @@ CONFIGURE_ARGS +=	--enable-static-anoubisd
 
 REGRESS_DEPENDS =	${BUILD_DEPENDS}
 
-EXAMPLEDIR =		${PREFIX}/share/examples/anoubisd
-POLICIES =		policy.admin.ntp policy.user.ntp
-
 # we explicitly have to change into the regression test directory
 # see: http://srv.anoubis.genua.de/cgi-bin/bugzilla/show_bug.cgi?id=906
 do-regress:
@@ -68,9 +68,7 @@ post-install:
 	@ ${INSTALL_DATA} ${WRKSRC}/src/xanoubis/xanoubis.desktop \
 		${PREFIX}/share/applications/
 
-	@ ${INSTALL_DATA_DIR} ${EXAMPLEDIR}
-.for file in ${POLICIES}
-	@ ${INSTALL_DATA} ${FILESDIR}/${file} ${EXAMPLEDIR}
-.endfor
+	@ ${INSTALL_DATA_DIR} ${PREFIX}/share/xanoubis/profiles/
+	@perl ${WRKSRC}/support/install_policy -q -n -o ${FILESDIR} ${PREFIX}/share/xanoubis/profiles
 
 .include <bsd.port.mk>

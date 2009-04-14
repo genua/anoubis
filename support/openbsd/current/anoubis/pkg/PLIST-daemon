@@ -39,6 +39,3 @@ share/xanoubis/profiles/medium
 sbin/anoubisd
 sbin/anoubisctl
 sbin/sfssig
-share/examples/anoubisd/
-share/examples/anoubisd/policy.user.ntp
-share/examples/anoubisd/policy.admin.ntp
