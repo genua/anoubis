@@ -108,6 +108,7 @@ int		 validate_alffilterspec(struct apn_afiltspec *);
 int		 validate_hostlist(struct apn_host *);
 void		 freehost(struct apn_host *);
 void		 freeport(struct apn_port *);
+char		*normalize_path(char *);
 
 static struct apn_ruleset	*apnrsp = NULL;
 
@@ -851,7 +852,7 @@ sfsaction	: CONTINUE			{ $$ = APN_ACTION_CONTINUE; }
 		;
 
 sfspath		: ANY		{ $$ = NULL; }
-		| PATH STRING	{ $$ = $2; }
+		| PATH STRING	{ $$ = normalize_path($2); }
 		;
 
 sfssubject	: SELF		{
@@ -1025,7 +1026,7 @@ sbpred		: ANY {
 		;
 
 sbpath		: PATH STRING {
-			$$.path = $2;
+			$$.path = normalize_path($2);
 			$$.cs.type = APN_CS_NONE;
 			$$.cs.value.keyid = NULL;
 		}
@@ -1288,15 +1289,9 @@ app		: STRING hashspec		{
 				yyerror("Out of memory");
 				YYERROR;
 			}
-			if ((app->name = strdup($1)) == NULL) {
-				free($1);
-				free(app);
-				yyerror("Out of memory");
-				YYERROR;
-			}
+			app->name = normalize_path($1);
 			app->hashtype = $2.type;
 			bcopy($2.value, app->hashvalue, sizeof(app->hashvalue));
-			free($1);
 
 			$$ = app;
 		}
@@ -2165,4 +2160,56 @@ freeport(struct apn_port *port)
 		free(hp);
 		hp = tmp;
 	}
+}
+
+char *
+normalize_path(char *path)
+{
+	int	src = 0, dst = 0;
+	if (path[0] != '/') {
+		yyerror("Invalid path %s", path);
+		free(path);
+		return NULL;
+	}
+	while(path[src]) {
+		if (path[src] != '/') {
+			path[dst++] = path[src++];
+			continue;
+		}
+		/* path[src] is a slash an is not yet copied. */
+
+		/* Skip consecutive/trailing slashes */
+		if (path[src+1] == '/' || path[src+1] == 0) {
+			src++;
+			continue;
+		}
+		/* Skip /./ and /. at end of path */
+		if (path[src+1] == '.'
+		    && (path[src+2] == '/' || path[src+2] == 0)) {
+			src += 2;
+			continue;
+		}
+		/* Handle /../ and /.. at end of path. */
+		if (path[src+1] == '.' && path[src+2] == '.'
+		    && (path[src+3] == '/' || path[src+3] == 0)) {
+			src += 3;
+			while(dst) {
+				dst--;
+				if (path[dst] == '/')
+					break;
+			}
+			continue;
+		}
+		/* No special case matched, copy the slash. */
+		path[dst++] = path[src++];
+	}
+	/* Remove a trailing slash (just to be sure, should never happen) */
+	if (dst && path[dst-1] == '/')
+		dst--;
+	/* A zero length path is not allowed. Change it to "/" */
+	if (dst == 0)
+		path[dst++] = '/';
+	/* NUL termination */
+	path[dst] = 0;
+	return path;
 }
