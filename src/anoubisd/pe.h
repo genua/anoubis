@@ -133,11 +133,6 @@ void			 pe_proc_update_db(struct pe_policy_db *);
 void			 pe_proc_update_db_one(struct apn_ruleset *, int,
 			     uid_t);
 
-/* Kernel Cache related functions */
-void			 pe_proc_kcache_add(struct pe_proc *proc,
-			     struct anoubis_kernel_policy *policy);
-void			 pe_proc_kcache_clear(struct pe_proc *proc);
-
 /* User and Policy Management */
 struct apn_ruleset	*pe_user_get_ruleset(uid_t, unsigned int,
 			     struct pe_policy_db *);

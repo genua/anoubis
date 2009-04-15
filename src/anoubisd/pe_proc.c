@@ -51,7 +51,6 @@
 #endif
 
 #include "anoubisd.h"
-#include "kernelcache.h"
 #include "pe.h"
 
 static void		 pe_proc_track(struct pe_proc *);
@@ -74,9 +73,6 @@ struct pe_proc {
 	/* Per priority contexts */
 	struct pe_context	*context[PE_PRIO_MAX];
 	struct pe_context	*saved_ctx[PE_PRIO_MAX];
-
-	/* Pointer to kernel cache */
-	struct anoubis_kernel_policy_header	*kcache;
 };
 TAILQ_HEAD(tracker, pe_proc) tracker;
 
@@ -173,9 +169,6 @@ pe_proc_put(struct pe_proc *proc)
 		pe_context_put(proc->context[i]);
 		pe_context_put(proc->saved_ctx[i]);
 	}
-
-	kernelcache_clear(proc->kcache);
-
 	free(proc);
 }
 
@@ -193,7 +186,6 @@ pe_proc_alloc(uid_t uid, anoubis_cookie_t cookie, struct pe_proc_ident *pident)
 	proc->sfsdisable_pid = (pid_t)-1;
 	proc->sfsdisable_uid = (uid_t)-1;
 	proc->refcount = 1;
-	proc->kcache = NULL;
 	proc->ident.pathhint = NULL;
 	proc->ident.csum = NULL;
 	if (pident)
@@ -406,7 +398,6 @@ pe_proc_update_db(struct pe_policy_db *newpdb)
 	}
 
 	TAILQ_FOREACH(proc, &tracker, entry) {
-		pe_proc_kcache_clear(proc);
 		for (i = 0; i < PE_PRIO_MAX; i++)
 			pe_context_refresh(proc, i, newpdb);
 	}
@@ -434,28 +425,9 @@ pe_proc_update_db_one(struct apn_ruleset *oldrs, int prio, uid_t uid)
 		if ((pe_context_uses_rs(oldctx, oldrs) != 0)
 		    || (oldrs == NULL && pe_proc_get_uid(proc) == uid)) {
 			pe_context_refresh(proc, prio, NULL);
-			pe_proc_kcache_clear(proc);
 		}
 	}
 	DEBUG(DBG_TRACE, "<pe_proc_update_db_one");
-}
-
-void
-pe_proc_kcache_add(struct pe_proc *proc, struct anoubis_kernel_policy *policy)
-{
-	if (!proc)
-		return;
-	proc->kcache = kernelcache_add(proc->kcache, policy);
-	kernelcache_send2master(proc->kcache, proc->pid);
-}
-
-void
-pe_proc_kcache_clear(struct pe_proc *proc)
-{
-	if (proc && proc->kcache) {
-		proc->kcache = kernelcache_clear(proc->kcache);
-		kernelcache_send2master(proc->kcache, proc->pid);
-	}
 }
 
 /*

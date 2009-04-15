@@ -69,7 +69,6 @@ static void	dispatch_m2p(int, short, void *);
 static void	dispatch_p2m(int, short, void *);
 static void	dispatch_s2p(int, short, void *);
 static void	dispatch_p2s(int, short, void *);
-void		policy_msg2master(anoubisd_msg_t *msg);
 
 static Queue	eventq_p2m;
 static Queue	eventq_p2s;
@@ -825,21 +824,4 @@ out:
 		shutdown(fd, SHUT_WR);
 
 	DEBUG(DBG_TRACE, "<dispatch_p2s");
-}
-
-void
-policy_msg2master(anoubisd_msg_t *msg)
-{
-	/*
-	 * Currently the messages are sent, when the next event_add
-	 * is called on ev_p2m. This is usually the right time (when
-	 * sending updates to the kernelcache as a response to an event,
-	 * as the event-response will call event_add), but there will
-	 * be no automatic event_add when the configuration is reloaded
-	 * and clear messages are sent to the queue. To be able to do
-	 * the event_add in this function, access to ev_p2m must be
-	 * possible
-	 */
-	enqueue(&eventq_p2m, msg);
-	/* event_add(ev_p2m, NULL); */
 }

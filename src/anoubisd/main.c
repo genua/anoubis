@@ -71,7 +71,6 @@
 #include "amsg.h"
 #include "sfs.h"
 #include "cert.h"
-#include "kernelcache.h"
 
 /*@noreturn@*/
 static void	usage(void) __dead;
@@ -1355,8 +1354,7 @@ dispatch_p2m(int fd, short event __used, /*@dependent@*/ void *arg)
 	for (;;) {
 		if ((msg = get_msg(fd)) == NULL)
 			break;
-		if (msg->mtype != ANOUBISD_MSG_EVENTREPLY &&
-		    msg->mtype != ANOUBISD_MSG_KCACHE) {
+		if (msg->mtype != ANOUBISD_MSG_EVENTREPLY) {
 			DEBUG(DBG_TRACE, "<dispatch_p2m (bad msg)");
 			continue;
 		}
@@ -1412,12 +1410,6 @@ dispatch_m2dev(int fd, short event __used, /*@dependent@*/ void *arg)
 				    (ret < 0)? "" : " (bad reply)");
 				free(msg);
 			}
-			break;
-		case ANOUBISD_MSG_KCACHE:
-			if (kernelcache_upload(ev_info->anoubisfd, msg) == 0)
-				log_warn("upload of kernelcache failed");
-			msg = dequeue(&eventq_m2dev);
-			free(msg);
 			break;
 		default:
 			DEBUG(DBG_TRACE, "<dispatch_m2dev (bad msg)");

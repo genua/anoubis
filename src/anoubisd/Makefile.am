@@ -83,14 +83,12 @@ anoubisd_SOURCES= \
 	amsg.c \
 	aqueue.c \
 	sfs.c \
-	kernelcache.c \
 	anoubisd.h \
 	amsg.h \
 	aqueue.h \
 	sfs.h \
 	pe.h \
-	cert.h \
-	kernelcache.h
+	cert.h
 
 anoubisd_SOURCES_flawfinder= \
 	main.c_flawfinder \
@@ -110,13 +108,11 @@ anoubisd_SOURCES_flawfinder= \
 	amsg.c_flawfinder \
 	aqueue.c_flawfinder \
 	sfs.c_flawfinder \
-	kernelcache.c_flawfinder \
 	anoubisd.h_flawfinder \
 	amsg.h_flawfinder \
 	aqueue.h_flawfinder \
 	sfs.h_flawfinder \
-	cert.h_flawfinder \
-	kernelcache.h_flawfinder
+	cert.h_flawfinder
 
 anoubisd_SOURCES_lint= \
 	main.c_lint \
@@ -133,8 +129,7 @@ anoubisd_SOURCES_lint= \
 	cert.c_lint \
 	session.c_lint \
 	log.c_lint \
-	sfs.c_lint \
-	kernelcache.c_lint
+	sfs.c_lint
 
 anoubisd_SOURCES_splint= \
 	main.c_splint \
@@ -153,8 +148,7 @@ anoubisd_SOURCES_splint= \
 	log.c_splint \
 	amsg.c_splint \
 	aqueue.c_splint \
-	sfs.c_splint \
-	kernelcache.c_splint
+	sfs.c_splint
 
 
 flawfinder_FLAGS=

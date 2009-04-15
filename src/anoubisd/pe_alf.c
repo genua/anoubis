@@ -71,14 +71,12 @@
 
 static int		 pe_alf_evaluate(struct pe_proc *, int, uid_t,
 			     struct alf_event *, int *, u_int32_t *);
-static int		 pe_decide_alffilt(struct pe_proc *, struct apn_rule *,
+static int		 pe_decide_alffilt(struct apn_rule *,
 			     struct alf_event *, int *, u_int32_t *, time_t);
 static int		 pe_decide_alfcap(struct apn_rule *, struct
 			     alf_event *, int *, u_int32_t *, time_t);
 static int		 pe_decide_alfdflt(struct apn_rule *, struct
 			     alf_event *, int *, u_int32_t *, time_t);
-static void		 pe_kcache_alf(struct apn_rule *, int,
-			     struct pe_proc *, struct alf_event *);
 static char		*pe_dump_alfmsg(struct alf_event *);
 static int		 pe_addrmatch_out(struct alf_event *, struct
 			     apn_rule *);
@@ -234,7 +232,7 @@ pe_alf_evaluate(struct pe_proc *proc, int prio, uid_t uid,
 		master_terminate(code);
 		return -1;
 	}
-	decision = pe_decide_alffilt(proc, rule, msg, log, rule_id, t);
+	decision = pe_decide_alffilt(rule, msg, log, rule_id, t);
 	if (decision == -1)
 		decision = pe_decide_alfcap(rule, msg, log, rule_id, t);
 	if (decision == -1)
@@ -250,8 +248,8 @@ pe_alf_evaluate(struct pe_proc *proc, int prio, uid_t uid,
  * ALF filter logic.
  */
 static int
-pe_decide_alffilt(struct pe_proc *proc, struct apn_rule *rule,
-    struct alf_event *msg, int *log, u_int32_t *rule_id, time_t now)
+pe_decide_alffilt(struct apn_rule *rule, struct alf_event *msg,
+    int *log, u_int32_t *rule_id, time_t now)
 {
 	struct apn_rule		*hp;
 	int			 decision;
@@ -420,11 +418,9 @@ pe_decide_alffilt(struct pe_proc *proc, struct apn_rule *rule,
 		switch (hp->rule.afilt.action) {
 		case APN_ACTION_ALLOW:
 			decision = POLICY_ALLOW;
-			pe_kcache_alf(hp, decision, proc, msg);
 			break;
 		case APN_ACTION_DENY:
 			decision = POLICY_DENY;
-			pe_kcache_alf(hp, decision, proc, msg);
 			break;
 		case APN_ACTION_ASK:
 			decision = POLICY_ASK;
@@ -446,67 +442,6 @@ pe_decide_alffilt(struct pe_proc *proc, struct apn_rule *rule,
 	}
 
 	return (decision);
-}
-
-static void
-pe_kcache_alf(struct apn_rule *rule, int decision, struct pe_proc *proc,
-    struct alf_event *msg)
-{
-	struct anoubis_kernel_policy *policy;
-	struct alf_rule *alfrule;
-
-	if (msg->op != ALF_SENDMSG && msg->op != ALF_RECVMSG)
-		return;
-
-	policy = malloc(sizeof(struct anoubis_kernel_policy) +
-	    sizeof(struct alf_rule));
-	if (policy == NULL)
-		return;
-
-	policy->anoubis_source = ANOUBIS_SOURCE_ALF;
-	policy->rule_len = sizeof(struct alf_rule);
-	policy->decision = decision;
-	if (rule->rule.afilt.filtspec.statetimeout > 0) {
-		policy->expire = rule->rule.afilt.filtspec.statetimeout +
-		    time(NULL);
-	} else {
-		policy->expire = 0;
-	}
-
-	alfrule = (struct alf_rule*)(policy->rule);
-
-	alfrule->family = msg->family;
-	alfrule->protocol = msg->protocol;
-	alfrule->type = msg->type;
-	alfrule->op = msg->op;
-
-	switch(alfrule->family) {
-	case AF_INET:
-		alfrule->local.port_min = msg->local.in_addr.sin_port;
-		alfrule->local.port_max = msg->local.in_addr.sin_port;
-		alfrule->peer.port_min = msg->peer.in_addr.sin_port;
-		alfrule->peer.port_max = msg->peer.in_addr.sin_port;
-		alfrule->local.addr.in_addr =
-		    msg->local.in_addr.sin_addr;
-		alfrule->peer.addr.in_addr =
-		    msg->peer.in_addr.sin_addr;
-		break;
-
-	case AF_INET6:
-		alfrule->local.port_min = msg->local.in6_addr.sin6_port;
-		alfrule->local.port_max = msg->local.in6_addr.sin6_port;
-		alfrule->peer.port_min = msg->peer.in6_addr.sin6_port;
-		alfrule->peer.port_max = msg->peer.in6_addr.sin6_port;
-		alfrule->local.addr.in6_addr =
-		    msg->local.in6_addr.sin6_addr;
-		alfrule->peer.addr.in6_addr =
-		    msg->peer.in6_addr.sin6_addr;
-		break;
-	}
-
-	pe_proc_kcache_add(proc, policy);
-
-	free(policy);
 }
 
 /*

@@ -103,7 +103,6 @@ enum {
 	ANOUBISD_MSG_SESSION_REG,
 	ANOUBISD_MSG_CHECKSUM_OP,
 	ANOUBISD_MSG_EVENTASK,
-	ANOUBISD_MSG_KCACHE,
 	ANOUBISD_MSG_SFSDISABLE,
 	ANOUBISD_MSG_POLICYCHANGE,
 	ANOUBISD_MSG_SFSCACHE_INVALIDATE,
@@ -214,8 +213,6 @@ void	pe_shutdown(void);
 void	pe_reconfigure(void);
 
 anoubisd_reply_t *policy_engine(anoubisd_msg_t *request);
-
-void	policy_msg2master(anoubisd_msg_t *);
 
 void	log_init(int fd);
 
