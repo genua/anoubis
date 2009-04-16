@@ -125,7 +125,7 @@ pe_decide_alf(struct pe_proc *proc, struct eventdev_hdr *hdr)
 			decision = ret;
 			prio = i;
 		}
-		if (ret == POLICY_DENY) {
+		if (ret == APN_ACTION_DENY) {
 			break;
 		}
 	}
@@ -133,7 +133,7 @@ pe_decide_alf(struct pe_proc *proc, struct eventdev_hdr *hdr)
 
 	/* If no default rule matched, decide on deny */
 	if (decision == -1) {
-		decision = POLICY_DENY;
+		decision = APN_ACTION_DENY;
 		log = APN_LOG_ALERT;
 	}
 
@@ -180,11 +180,11 @@ pe_decide_alf(struct pe_proc *proc, struct eventdev_hdr *hdr)
 	reply->prio = prio;
 	reply->timeout = (time_t)0;
 	reply->log = log;
-	if (decision == POLICY_DENY)
+	if (decision == APN_ACTION_DENY)
 		reply->reply = EPERM;
 	else
 		reply->reply = 0;
-	if (decision == POLICY_ASK) {
+	if (decision == APN_ACTION_ASK) {
 		reply->ask = 1;
 		reply->timeout = 300;
 		reply->pident = pe_proc_ident(proc);
@@ -272,7 +272,7 @@ pe_decide_alffilt(struct apn_rule *rule, struct alf_event *msg,
 	    msg->protocol == IPPROTO_TCP) {
 		if (log)
 			*log = APN_LOG_NONE;
-		return POLICY_ALLOW;
+		return APN_ACTION_ALLOW;
 	}
 	/*
 	 * For UDP, we do always allow CONNECT events as these do not really
@@ -281,7 +281,7 @@ pe_decide_alffilt(struct apn_rule *rule, struct alf_event *msg,
 	if (msg->protocol == IPPROTO_UDP && msg->op == ALF_CONNECT) {
 		if (log)
 			*log = APN_LOG_NONE;
-		return POLICY_ALLOW;
+		return APN_ACTION_ALLOW;
 	}
 
 	decision = -1;
@@ -417,13 +417,9 @@ pe_decide_alffilt(struct apn_rule *rule, struct alf_event *msg,
 		 */
 		switch (hp->rule.afilt.action) {
 		case APN_ACTION_ALLOW:
-			decision = POLICY_ALLOW;
-			break;
 		case APN_ACTION_DENY:
-			decision = POLICY_DENY;
-			break;
 		case APN_ACTION_ASK:
-			decision = POLICY_ASK;
+			decision = hp->rule.afilt.action;
 			break;
 		default:
 			log_warnx("pe_decide_alffilt: invalid action %d",
@@ -456,11 +452,11 @@ pe_decide_alfcap(struct apn_rule *rule, struct alf_event *msg, int *log,
 
 	if (rule == NULL) {
 		log_warnx("pe_decide_alfcap: empty rule");
-		return (POLICY_DENY);
+		return (APN_ACTION_DENY);
 	}
 	if (msg == NULL) {
 		log_warnx("pe_decide_alfcap: empty alf event");
-		return (POLICY_DENY);
+		return (APN_ACTION_DENY);
 	}
 
 	/* We decide on everything except UDP and TCP */
@@ -485,17 +481,7 @@ pe_decide_alfcap(struct apn_rule *rule, struct alf_event *msg, int *log,
 		 *
 		 * APN_ALF_CAPALL: Allow anything.
 		 */
-		switch (hp->rule.acap.action) {
-		case APN_ACTION_ALLOW:
-			thisdec = POLICY_ALLOW;
-			break;
-		case APN_ACTION_DENY:
-			thisdec = POLICY_DENY;
-			break;
-		case APN_ACTION_ASK:
-			thisdec = POLICY_ASK;
-			break;
-		}
+		thisdec = hp->rule.acap.action;
 		switch (hp->rule.acap.capability) {
 		case APN_ALF_CAPRAW:
 			if (msg->type == SOCK_RAW)
@@ -561,16 +547,12 @@ pe_decide_alfdflt(struct apn_rule *rule, struct alf_event *msg, int *log,
 		 */
 		switch (hp->rule.apndefault.action) {
 		case APN_ACTION_ALLOW:
-			decision = POLICY_ALLOW;
-			break;
 		case APN_ACTION_DENY:
-			decision = POLICY_DENY;
-			break;
 		case APN_ACTION_ASK:
-			decision = POLICY_ASK;
+			decision = hp->rule.apndefault.action;
 			break;
 		default:
-		log_warnx("pe_decide_alfdflt: unknown action %d",
+			log_warnx("pe_decide_alfdflt: unknown action %d",
 			    hp->rule.apndefault.action);
 			decision = -1;
 		}

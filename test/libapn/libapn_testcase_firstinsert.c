@@ -95,9 +95,9 @@ create_empty_filter(int type)
 		filter->rule.sfsaccess.subject.type = APN_CS_NONE;
 		filter->rule.sfsaccess.valid.action = APN_ACTION_DENY;
 		filter->rule.sfsaccess.valid.log = APN_LOG_NONE;
-		filter->rule.sfsaccess.invalid.action = POLICY_ALLOW;
+		filter->rule.sfsaccess.invalid.action = APN_ACTION_ALLOW;
 		filter->rule.sfsaccess.invalid.log = APN_LOG_NONE;
-		filter->rule.sfsaccess.unknown.action = POLICY_ALLOW;
+		filter->rule.sfsaccess.unknown.action = APN_ACTION_ALLOW;
 		filter->rule.sfsaccess.unknown.log = APN_LOG_NONE;
 		break;
 	case APN_CTX:

@@ -79,7 +79,7 @@ pe_sb_evaluate(struct apn_rule **rulelist, int rulecnt,
 
 	if ((sbevent->amask & atype) == 0) {
 		/* Do not touch rule_id, prio or log level. */
-		res->decision = POLICY_ALLOW;
+		res->decision = APN_ACTION_ALLOW;
 		return;
 	}
 	if (time(&now) == (time_t)-1) {
@@ -204,7 +204,7 @@ have_match:
 	    res->decision, res->rule_id,  res->prio);
 	return;
 err:
-	res->decision = POLICY_DENY;
+	res->decision = APN_ACTION_DENY;
 	res->rule_id = 0;
 	res->prio = 0;
 	res->log = APN_LOG_NONE;
@@ -324,14 +324,14 @@ pe_decide_sandbox(struct pe_proc *proc, struct pe_file_event *sbevent,
 		if (rulecnt == 0)
 			continue;
 		else if (rulecnt < 0) {
-			final.decision = POLICY_DENY;
+			final.decision = APN_ACTION_DENY;
 			break;
 		}
 
 		/*
 		 * The three results may be pre-initialized from a higher
 		 * priority. However, the only possibilities are
-		 * uniniatilized (-1) or POLICY_ALLOW.
+		 * uniniatilized (-1) or APN_ACTION_ALLOW.
 		 */
 		pe_sb_evaluate(rulelist, rulecnt, sbevent, &res[0],
 		    APN_SBA_READ, i);
@@ -347,17 +347,17 @@ pe_decide_sandbox(struct pe_proc *proc, struct pe_file_event *sbevent,
 		 * priority takes precedence.
 		 */
 		for (j=0; j<3; ++j) {
-			if (res[j].decision == POLICY_DENY) {
-				final.decision = POLICY_DENY;
+			if (res[j].decision == APN_ACTION_DENY) {
+				final.decision = APN_ACTION_DENY;
 				break;
-			} else if (res[j].decision == POLICY_ASK) {
-				final.decision = POLICY_ASK;
+			} else if (res[j].decision == APN_ACTION_ASK) {
+				final.decision = APN_ACTION_ASK;
 			} else if (final.decision == -1) {
-				final.decision = POLICY_ALLOW;
+				final.decision = APN_ACTION_ALLOW;
 			}
 		}
 		/* If we have a verdict and it is not ALLOW we are done. */
-		if (final.decision != -1 && final.decision != POLICY_ALLOW)
+		if (final.decision != -1 && final.decision != APN_ACTION_ALLOW)
 			break;
 	}
 	DEBUG(DBG_SANDBOX, " pe_decide_sandbox: decision = %d, prio = %d",
@@ -375,7 +375,7 @@ pe_decide_sandbox(struct pe_proc *proc, struct pe_file_event *sbevent,
 	if (final.decision == -1) {
 		final.rule_id = 0;
 		final.prio = 0;
-		final.decision = POLICY_ALLOW;
+		final.decision = APN_ACTION_ALLOW;
 		final.log = APN_LOG_NONE;
 	} else {
 		/*
@@ -439,11 +439,11 @@ pe_decide_sandbox(struct pe_proc *proc, struct pe_file_event *sbevent,
 	reply->prio = final.prio;
 	reply->timeout = (time_t)0;
 	reply->sfsmatch = ANOUBIS_SFS_NONE;
-	if (final.decision == POLICY_DENY)
+	if (final.decision == APN_ACTION_DENY)
 		reply->reply = EPERM;
 	else
 		reply->reply = 0;
-	if (final.decision == POLICY_ASK) {
+	if (final.decision == APN_ACTION_ASK) {
 		reply->ask = 1;
 		reply->timeout = 300;
 		reply->pident = pe_proc_ident(proc);

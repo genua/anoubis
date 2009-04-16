@@ -660,13 +660,13 @@ int
 pe_compare(struct pe_proc *proc, struct pe_path_event *event, int type,
     time_t now)
 {
-	int			 decision = POLICY_ALLOW;
+	int			 decision = APN_ACTION_ALLOW;
 	int			 i, p;
 
 	DEBUG(DBG_PE, ">pe_compare");
 
 	if (!event)
-		return (POLICY_DENY);
+		return (APN_ACTION_DENY);
 
 	if ((type != APN_SFS_ACCESS) && (type != APN_SB_ACCESS)) {
 		log_warn("Called with unhandled rule type");
@@ -692,19 +692,19 @@ pe_compare(struct pe_proc *proc, struct pe_path_event *event, int type,
 			if (rulecnt == 0)
 				continue;
 			else if (rulecnt < 0) {
-				decision = POLICY_DENY;
+				decision = APN_ACTION_DENY;
 				break;
 			}
 
 			if (pe_compare_path(rulelist, rulecnt, event, now) < 0)
-				decision = POLICY_DENY;
+				decision = APN_ACTION_DENY;
 
 			free(rulelist);
 
-			if (decision == POLICY_DENY)
+			if (decision == APN_ACTION_DENY)
 				break;
 		}
-		if (decision == POLICY_DENY)
+		if (decision == APN_ACTION_DENY)
 			break;
 	}
 

@@ -225,7 +225,7 @@ pe_decide_sfs(struct pe_proc *proc, struct pe_file_event *fevent,
 		int			  rulecnt, r;
 
 		if (i == PE_PRIO_USER1 && do_disable) {
-			decision = POLICY_ALLOW;
+			decision = APN_ACTION_ALLOW;
 			break;
 		}
 
@@ -236,7 +236,7 @@ pe_decide_sfs(struct pe_proc *proc, struct pe_file_event *fevent,
 			continue;
 		else if (rulecnt < 0) {
 			master_terminate(ENOMEM);
-			decision = POLICY_DENY;
+			decision = APN_ACTION_DENY;
 			break;
 		}
 
@@ -260,33 +260,27 @@ pe_decide_sfs(struct pe_proc *proc, struct pe_file_event *fevent,
 			prio = i;
 			switch (res->action) {
 			case APN_ACTION_ALLOW:
-				decision = POLICY_ALLOW;
-				sfsmatch = match;
-				break;
 			case APN_ACTION_DENY:
-				decision = POLICY_DENY;
-				sfsmatch = match;
-				break;
 			case APN_ACTION_ASK:
-				decision = POLICY_ASK;
+				decision = res->action;
 				sfsmatch = match;
 				break;
 			default:
 				log_warnx("Invalid action %d in rule %lu",
 				    res->action, rule->apn_id);
-				decision = POLICY_DENY;
+				decision = APN_ACTION_DENY;
 				sfsmatch = match;
 				break;
 			}
 			break;
 		}
 		free(rulelist);
-		if (decision != -1 && decision != POLICY_ALLOW)
+		if (decision != -1 && decision != APN_ACTION_ALLOW)
 			break;
 	}
 
 	if (decision == -1)
-		decision = POLICY_ALLOW;
+		decision = APN_ACTION_ALLOW;
 
 	cstext[0] = 0;
 	if (log != APN_LOG_NONE) {
@@ -332,12 +326,12 @@ pe_decide_sfs(struct pe_proc *proc, struct pe_file_event *fevent,
 	reply->prio = prio;
 	reply->sfsmatch = sfsmatch;
 	reply->timeout = (time_t)0;
-	if (decision == POLICY_DENY)
+	if (decision == APN_ACTION_DENY)
 		reply->reply = EPERM;
 	else
 		reply->reply = 0;
 	reply->len = 0;
-	if (decision == POLICY_ASK) {
+	if (decision == APN_ACTION_ASK) {
 		reply->ask = 1;
 		reply->timeout = 300;
 		reply->pident = pe_proc_ident(proc);
