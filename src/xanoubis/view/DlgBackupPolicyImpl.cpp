@@ -30,6 +30,7 @@
 
 #include <wx/app.h>
 #include <wx/filedlg.h>
+#include <wx/msgdlg.h>
 
 #include "DlgBackupPolicyImpl.h"
 #include "PolicyRuleSet.h"
@@ -95,6 +96,10 @@ DlgBackupPolicy::onSaveButton(wxCommandEvent &)
 			wxEndBusyCursor();
 			if (ok)
 				EndModal(wxID_OK);
+			else
+				wxMessageBox(_("Failed to save the ruleset "
+				    "into a file."), _("Save ruleset"),
+				    wxOK|wxICON_ERROR, this);
 		}
 	}
 }

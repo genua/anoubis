@@ -33,8 +33,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: anoubis 0.1.10.D023.970.D004.C117\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-04-14 10:38+0200\n"
-"PO-Revision-Date: 2009-04-14 11:26+0100\n"
+"POT-Creation-Date: 2009-04-17 13:37+0200\n"
+"PO-Revision-Date: 2009-04-17 13:45+0100\n"
 "Last-Translator: Robin <robin_doer@genua.de>\n"
 "Language-Team: German <de@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -89,9 +89,9 @@ msgstr "unbekannter Adresstyp"
 #: model/FilterPolicy.cpp:121
 #: model/PolicyUtils.cpp:218
 #: view/DlgRuleEditorBase.cpp:367
-#: view/DlgRuleEditor.cpp:1787
+#: view/DlgRuleEditor.cpp:1791
 #: view/DlgRuleEditorAppPage.cpp:165
-#: view/RuleWizardProgramPage.cpp:157
+#: view/RuleWizardProgramPage.cpp:159
 #: view/RuleWizardHistory.cpp:243
 msgid "(unknown)"
 msgstr "(unbekannt)"
@@ -220,27 +220,27 @@ msgstr "Diese Nachricht wurde für immer verboten."
 msgid "no value"
 msgstr "kein Wert"
 
-#: model/PolicyRuleSet.cpp:555
+#: model/PolicyRuleSet.cpp:560
 #, c-format
 msgid "System error during import of policy file %ls: %hs"
 msgstr "Systemfehler während des Importierens der Regeldatei %ls: %hs"
 
-#: model/PolicyRuleSet.cpp:564
+#: model/PolicyRuleSet.cpp:569
 #, c-format
 msgid "Successfully imported policy file %ls"
 msgstr "Regeldatei %ls erfolgreich importiert."
 
-#: model/PolicyRuleSet.cpp:573
+#: model/PolicyRuleSet.cpp:578
 #, c-format
 msgid "Failed import of policy file %ls"
 msgstr "Fehlgeschlagener Import der Regeldatei %ls"
 
-#: model/PolicyRuleSet.cpp:581
+#: model/PolicyRuleSet.cpp:586
 #, c-format
 msgid "Failed import of policy file %hs"
 msgstr "Fehlgeschlagener Import der Regeldatei %hs"
 
-#: model/PolicyRuleSet.cpp:589
+#: model/PolicyRuleSet.cpp:594
 #, c-format
 msgid "Unknown error during import of policy file %ls"
 msgstr "Unbekannter Fehler während des Importierens der Regeldatei %ls"
@@ -275,20 +275,28 @@ msgstr "task %ls"
 msgid "until %ls for task %ls"
 msgstr "bis %ls für task %ls"
 
-#: view/DlgBackupPolicyImpl.cpp:53
+#: view/DlgBackupPolicyImpl.cpp:54
 #, c-format
 msgid "uid %d"
 msgstr "uid %d"
 
-#: view/DlgBackupPolicyImpl.cpp:57
+#: view/DlgBackupPolicyImpl.cpp:58
 #, c-format
 msgid "Admin Policy of %ls"
 msgstr "Administrator-Regel von %ls"
 
-#: view/DlgBackupPolicyImpl.cpp:60
+#: view/DlgBackupPolicyImpl.cpp:61
 #, c-format
 msgid "User Policy of %ls"
 msgstr "Benutzer-Regel von %ls"
+
+#: view/DlgBackupPolicyImpl.cpp:100
+msgid "Failed to save the ruleset into a file."
+msgstr "Der Regelsatz konnte nicht gespeichert werden."
+
+#: view/DlgBackupPolicyImpl.cpp:101
+msgid "Save ruleset"
+msgstr "Regelsatz speichern"
 
 #: view/DlgLogViewerBase.h:66
 #: view/MainFrameBase.cpp:66
@@ -384,9 +392,9 @@ msgstr "Verschiebe abwärts"
 #: view/DlgRuleEditorBase.cpp:205
 #: view/DlgRuleEditorBase.cpp:409
 #: view/ModAnoubisPanelsBase.cpp:557
-#: view/RuleWizardPanelsBase.cpp:472
-#: view/RuleWizardPanelsBase.cpp:634
-#: view/RuleWizardPanelsBase.cpp:898
+#: view/RuleWizardPanelsBase.cpp:476
+#: view/RuleWizardPanelsBase.cpp:638
+#: view/RuleWizardPanelsBase.cpp:902
 msgid "delete"
 msgstr "Löschen"
 
@@ -431,7 +439,7 @@ msgid "Status:"
 msgstr "Status:"
 
 #: view/DlgRuleEditorBase.cpp:241
-#: view/DlgRuleEditor.cpp:2097
+#: view/DlgRuleEditor.cpp:2101
 msgid "not modified"
 msgstr "nicht verändert"
 
@@ -525,6 +533,7 @@ msgstr "Info:"
 
 #: view/DlgRuleEditorBase.cpp:392
 #: view/DlgRuleEditorAppPage.cpp:201
+#: view/RuleWizardProgramPage.cpp:190
 msgid "Symbolic link was resolved"
 msgstr "Symbolischer Link wurde aufgelöst"
 
@@ -1057,8 +1066,8 @@ msgstr "Der Administrator Regelsatz kann nicht verändert werden!"
 
 #: view/DlgRuleEditor.cpp:1063
 #: view/DlgRuleEditor.cpp:1168
-#: view/DlgRuleEditor.cpp:1349
-#: view/DlgRuleEditor.cpp:2137
+#: view/DlgRuleEditor.cpp:1353
+#: view/DlgRuleEditor.cpp:2141
 msgid "RuleEditor"
 msgstr "RuleEditor"
 
@@ -1109,7 +1118,17 @@ msgstr "Fehler"
 msgid "Export ruleset..."
 msgstr "Schreibe Regelsatz..."
 
-#: view/DlgRuleEditor.cpp:1346
+#: view/DlgRuleEditor.cpp:1315
+#: view/MainFrame.cpp:409
+msgid "Failed to export the ruleset into a file."
+msgstr "Der Regelsatz konnte nicht exportiert werden."
+
+#: view/DlgRuleEditor.cpp:1316
+#: view/MainFrame.cpp:410
+msgid "Export ruleset"
+msgstr "Regelsatz exportieren"
+
+#: view/DlgRuleEditor.cpp:1350
 msgid ""
 "There are policies with\n"
 "outdated checksum\n"
@@ -1118,36 +1137,36 @@ msgstr ""
 "Es sind Regeln mit\n"
 "veralteten Prüfsummen vorhanden.Soll der Regelsatz trotzdem gesendet werden?"
 
-#: view/DlgRuleEditor.cpp:1525
+#: view/DlgRuleEditor.cpp:1529
 msgid "Rule Editor filling application table (admin ruleset)"
 msgstr "RuleEditor befüllt Anwendungstabelle (Administrator Regelsatz)"
 
-#: view/DlgRuleEditor.cpp:1528
+#: view/DlgRuleEditor.cpp:1532
 msgid "Rule Editor filling application table (user ruleset)"
 msgstr "RuleEditor befüllt Anwendungtabelle (Benutzer Regelsatz)"
 
-#: view/DlgRuleEditor.cpp:1534
+#: view/DlgRuleEditor.cpp:1538
 msgid "Loading application policy..."
 msgstr "Lade Anwendungsregeln..."
 
-#: view/DlgRuleEditor.cpp:1561
+#: view/DlgRuleEditor.cpp:1565
 msgid "Rule Editor filling filter table..."
 msgstr "RuleEditor befüllt Filtertabelle..."
 
-#: view/DlgRuleEditor.cpp:1566
+#: view/DlgRuleEditor.cpp:1570
 msgid "Loading filter policy..."
 msgstr "Lade Filterregeln..."
 
-#: view/DlgRuleEditor.cpp:1702
+#: view/DlgRuleEditor.cpp:1706
 #, c-format
 msgid "loading policy with id: %d"
 msgstr "lade Regel mit id: %d"
 
-#: view/DlgRuleEditor.cpp:2095
+#: view/DlgRuleEditor.cpp:2099
 msgid "modified"
 msgstr "verändert"
 
-#: view/DlgRuleEditor.cpp:2136
+#: view/DlgRuleEditor.cpp:2140
 msgid "Invalid user Name"
 msgstr "Ungültiger Benutzername"
 
@@ -1160,6 +1179,7 @@ msgid "mismatch"
 msgstr "Keine Übereinstimmung"
 
 #: view/DlgRuleEditorAppPage.cpp:207
+#: view/RuleWizardProgramPage.cpp:197
 msgid "Failure to resolve symbolic link"
 msgstr "Fehler beim Auflösen des symbolischen Links"
 
@@ -1168,12 +1188,12 @@ msgid "File does not exist or is not executable"
 msgstr "Datei existiert nicht oder ist nicht ausführbar"
 
 #: view/DlgRuleEditorAppPage.cpp:283
-#: view/RuleWizardProgramPage.cpp:183
+#: view/RuleWizardProgramPage.cpp:209
 msgid "calculating..."
 msgstr "Berechne..."
 
 #: view/DlgRuleEditorAppPage.cpp:385
-#: view/RuleWizardProgramPage.cpp:152
+#: view/RuleWizardProgramPage.cpp:154
 #: control/SfsCtrl.cpp:583
 #: control/SfsCtrl.cpp:756
 #, c-format
@@ -1286,11 +1306,11 @@ msgstr "Wähle eine Regeldatei:"
 msgid "Choose a file to write the policies to:"
 msgstr "Wähle eine Datei um Regeln dort hinein zu schreiben:"
 
-#: view/MainFrame.cpp:419
+#: view/MainFrame.cpp:423
 msgid "xanoubis is going to be closed."
 msgstr "xanoubis wird geschlossen werden."
 
-#: view/MainFrame.cpp:420
+#: view/MainFrame.cpp:424
 msgid "Confirm"
 msgstr "Bestätigen"
 
@@ -2274,16 +2294,16 @@ msgstr "Status (SB):"
 msgid "open requests (SB): "
 msgstr "offene Anfragen (SB):"
 
-#: view/RuleWizardProgramPage.cpp:71
+#: view/RuleWizardProgramPage.cpp:73
 msgid "Please choose a program first."
 msgstr "Bitte zuerst ein Programm wählen."
 
-#: view/RuleWizardProgramPage.cpp:73
+#: view/RuleWizardProgramPage.cpp:75
 msgid "No checkum is calculated yet."
 msgstr "Es wurde noch keine Prüfsumme berechnet."
 
-#: view/RuleWizardProgramPage.cpp:77
-#: view/RuleWizardProgramPage.cpp:155
+#: view/RuleWizardProgramPage.cpp:79
+#: view/RuleWizardProgramPage.cpp:157
 msgid "Rule Wizard"
 msgstr "Regel Wizard"
 
@@ -2685,12 +2705,12 @@ msgstr ""
 "Öffnet einen Dateiauswahldialog\n"
 "und speichert das Resultat"
 
-#: view/RuleWizardPanelsBase.cpp:350
-#: view/RuleWizardPanelsBase.cpp:438
+#: view/RuleWizardPanelsBase.cpp:354
+#: view/RuleWizardPanelsBase.cpp:442
 msgid "Context settings:"
 msgstr "Kontext Einstellungen:"
 
-#: view/RuleWizardPanelsBase.cpp:365
+#: view/RuleWizardPanelsBase.cpp:369
 msgid ""
 "The context of an application is the conjunction of it's calling environment. This is the program which runs another one.\n"
 "\n"
@@ -2704,23 +2724,23 @@ msgstr ""
 "\n"
 "In den meisten Fällen jedoch scheint \"ja\" am besten zu passen."
 
-#: view/RuleWizardPanelsBase.cpp:377
+#: view/RuleWizardPanelsBase.cpp:381
 msgid "Programs started by this application have the same permissions / restrictions as the main program."
 msgstr "Von dieser Anwendung gestartete Programme haben die gleichen Rechte / Einschränkungen wie das Hauptprogramm."
 
-#: view/RuleWizardPanelsBase.cpp:384
+#: view/RuleWizardPanelsBase.cpp:388
 msgid "Yes (same permissions / restrictions)"
 msgstr "Ja, (gleiche Rechte / Einschränkungen)"
 
-#: view/RuleWizardPanelsBase.cpp:393
+#: view/RuleWizardPanelsBase.cpp:397
 msgid "allow exceptions (-> next page)"
 msgstr "Ausnahmen zulassen (-> nächste Seite)"
 
-#: view/RuleWizardPanelsBase.cpp:401
+#: view/RuleWizardPanelsBase.cpp:405
 msgid "No (each executed program has its own policies)"
 msgstr "Nein (jedes Programm hat eigene Regeln)"
 
-#: view/RuleWizardPanelsBase.cpp:447
+#: view/RuleWizardPanelsBase.cpp:451
 msgid ""
 "Programs been started by this application have the\n"
 "same permissions / restrictions as the main application."
@@ -2728,15 +2748,15 @@ msgstr ""
 "Von dieser Anwendung gestartete Programme unterliegen den\n"
 "gleichen Rechten / Einschränkungen wie das Hauptprogramm."
 
-#: view/RuleWizardPanelsBase.cpp:454
+#: view/RuleWizardPanelsBase.cpp:458
 msgid "Exceptions (programs started with own polcies):"
 msgstr "Ausnahmen (Programme die mit eigenen Regeln gestartet werden):"
 
-#: view/RuleWizardPanelsBase.cpp:464
+#: view/RuleWizardPanelsBase.cpp:468
 msgid "add..."
 msgstr "Hinzufügen..."
 
-#: view/RuleWizardPanelsBase.cpp:465
+#: view/RuleWizardPanelsBase.cpp:469
 msgid ""
 "opens a file-choose-dialog and\n"
 "adds the result to the list"
@@ -2744,16 +2764,16 @@ msgstr ""
 "Öffnet einen Dateiauswahldialog\n"
 "und fügt das Resultat zur Liste hinzu"
 
-#: view/RuleWizardPanelsBase.cpp:473
+#: view/RuleWizardPanelsBase.cpp:477
 msgid "removes the selected entry from the list"
 msgstr "Entfernt den ausgewählten Eintrag aus der Liste"
 
-#: view/RuleWizardPanelsBase.cpp:507
-#: view/RuleWizardPanelsBase.cpp:594
+#: view/RuleWizardPanelsBase.cpp:511
+#: view/RuleWizardPanelsBase.cpp:598
 msgid "Application Level Firewall settings:"
 msgstr "Application Level Firewall Einstellungen:"
 
-#: view/RuleWizardPanelsBase.cpp:519
+#: view/RuleWizardPanelsBase.cpp:523
 msgid ""
 "Allow the application \"...\" the usage\n"
 "of network services (... functionality)?"
@@ -2761,16 +2781,16 @@ msgstr ""
 "Der Anwendung \"...\" die Nutzung\n"
 "von Netzwerkdiensten (... Funktionalität) erlauben?"
 
-#: view/RuleWizardPanelsBase.cpp:526
+#: view/RuleWizardPanelsBase.cpp:530
 msgid "Yes (without restrictions)"
 msgstr "Ja (ohne Einschränkungen)"
 
-#: view/RuleWizardPanelsBase.cpp:529
-#: view/RuleWizardPanelsBase.cpp:792
+#: view/RuleWizardPanelsBase.cpp:533
+#: view/RuleWizardPanelsBase.cpp:796
 msgid "restricted (default)"
 msgstr "eingeschränkt (Standardwerte)"
 
-#: view/RuleWizardPanelsBase.cpp:538
+#: view/RuleWizardPanelsBase.cpp:542
 msgid ""
 "Default services are allowed, any other network\n"
 "access is asked on demand."
@@ -2778,21 +2798,21 @@ msgstr ""
 "Standarddienste sind erlaubt, bei sonstigen\n"
 "Netzwerzugriffen wird nachgefragt."
 
-#: view/RuleWizardPanelsBase.cpp:544
-#: view/RuleWizardPanelsBase.cpp:807
+#: view/RuleWizardPanelsBase.cpp:548
+#: view/RuleWizardPanelsBase.cpp:811
 msgid "restricted"
 msgstr "eingeschränkt"
 
-#: view/RuleWizardPanelsBase.cpp:553
-#: view/RuleWizardPanelsBase.cpp:816
+#: view/RuleWizardPanelsBase.cpp:557
+#: view/RuleWizardPanelsBase.cpp:820
 msgid "Settings may be configured on the next page."
 msgstr "Einstellungen können auf der nächten Seite konfiguriert werden."
 
-#: view/RuleWizardPanelsBase.cpp:559
+#: view/RuleWizardPanelsBase.cpp:563
 msgid "No (deny access of network resources)"
 msgstr "Nein (kein Zugriff auf Netzwerkdienste erlauben)"
 
-#: view/RuleWizardPanelsBase.cpp:603
+#: view/RuleWizardPanelsBase.cpp:607
 msgid ""
 "Options for restricted network access\n"
 "for application \"...\":"
@@ -2800,15 +2820,15 @@ msgstr ""
 "Optionen fÜr eingeschränkten Netzwerkzugriff\n"
 "der Anwendung \"...\":"
 
-#: view/RuleWizardPanelsBase.cpp:607
+#: view/RuleWizardPanelsBase.cpp:611
 msgid "List of allowed services:"
 msgstr "Liste der erlaubten Dienste:"
 
-#: view/RuleWizardPanelsBase.cpp:617
+#: view/RuleWizardPanelsBase.cpp:621
 msgid " add..."
 msgstr " Hinzufügen..."
 
-#: view/RuleWizardPanelsBase.cpp:618
+#: view/RuleWizardPanelsBase.cpp:622
 msgid ""
 "opens a service-choose-dialog\n"
 "and adds the result to the list"
@@ -2816,35 +2836,35 @@ msgstr ""
 "Öffnet einen Dienstauswahldialog\n"
 "und fügt das Resultat der Liste hinzu"
 
-#: view/RuleWizardPanelsBase.cpp:625
+#: view/RuleWizardPanelsBase.cpp:629
 msgid "add default services"
 msgstr "Standarddienste hinzufügen"
 
-#: view/RuleWizardPanelsBase.cpp:627
-#: view/RuleWizardPanelsBase.cpp:891
+#: view/RuleWizardPanelsBase.cpp:631
+#: view/RuleWizardPanelsBase.cpp:895
 msgid "adds the default services to the list"
 msgstr "Fügt die Standarddienste zur Liste hinzu"
 
-#: view/RuleWizardPanelsBase.cpp:636
-#: view/RuleWizardPanelsBase.cpp:900
+#: view/RuleWizardPanelsBase.cpp:640
+#: view/RuleWizardPanelsBase.cpp:904
 msgid "removes the selected items from the list"
 msgstr "Löscht das ausgewählte Element aus der Liste"
 
-#: view/RuleWizardPanelsBase.cpp:646
+#: view/RuleWizardPanelsBase.cpp:650
 msgid "ask on any other network access"
 msgstr "bei sonstigen Netzwerkzugriffen nachfragen"
 
-#: view/RuleWizardPanelsBase.cpp:651
+#: view/RuleWizardPanelsBase.cpp:655
 msgid "allow raw network access"
 msgstr "raw Netzwerkzugriff erlauben"
 
-#: view/RuleWizardPanelsBase.cpp:693
-#: view/RuleWizardPanelsBase.cpp:770
-#: view/RuleWizardPanelsBase.cpp:853
+#: view/RuleWizardPanelsBase.cpp:697
+#: view/RuleWizardPanelsBase.cpp:774
+#: view/RuleWizardPanelsBase.cpp:857
 msgid "Sandbox settings:"
 msgstr "Sandbox Einstellungen:"
 
-#: view/RuleWizardPanelsBase.cpp:708
+#: view/RuleWizardPanelsBase.cpp:712
 msgid ""
 "With the sandbox you can confine an application.\n"
 "This is done by specifying which files it may read, write or execute."
@@ -2852,23 +2872,23 @@ msgstr ""
 "Mit der Sandbox lassen sich Anwendungen einsperren.\n"
 "Dies wird dadurch erreicht, dass genau festgelegt wird, welche Dateien gelesen, geschrieben oder ausgeführt werden dürfen."
 
-#: view/RuleWizardPanelsBase.cpp:720
+#: view/RuleWizardPanelsBase.cpp:724
 msgid "Create sandbox policies?"
 msgstr "Sandbox Regeln erstellen?"
 
-#: view/RuleWizardPanelsBase.cpp:727
+#: view/RuleWizardPanelsBase.cpp:731
 msgid "Yes, create policies (wizard guided)"
 msgstr "Ja, Regeln erstellen (Wizard geführt)"
 
-#: view/RuleWizardPanelsBase.cpp:730
+#: view/RuleWizardPanelsBase.cpp:734
 msgid "Yes, load default policies (skip wizard)"
 msgstr "Ja, Regeln aus Standardwerten laden (überspringt Wizard)"
 
-#: view/RuleWizardPanelsBase.cpp:733
+#: view/RuleWizardPanelsBase.cpp:737
 msgid "No, do not  create sandbox policies"
 msgstr "Nein, keine Sandbox Regeln erstellen"
 
-#: view/RuleWizardPanelsBase.cpp:782
+#: view/RuleWizardPanelsBase.cpp:786
 msgid ""
 "Select permissions of application \"...\"\n"
 "for ... file access:"
@@ -2876,29 +2896,29 @@ msgstr ""
 "Berechtigungen der Anwendung \"...\"\n"
 "für ... Dateizugriff:"
 
-#: view/RuleWizardPanelsBase.cpp:789
+#: view/RuleWizardPanelsBase.cpp:793
 msgid "unrestricted"
 msgstr "uneingeschränkt"
 
-#: view/RuleWizardPanelsBase.cpp:801
+#: view/RuleWizardPanelsBase.cpp:805
 msgid ""
 "Default permissions are allowed, any other\n"
 "access is asked on demand."
 msgstr "Standardberechtigungen sind erlaubt, bei sonstigen Zugriffen wird nachgefragt"
 
-#: view/RuleWizardPanelsBase.cpp:862
+#: view/RuleWizardPanelsBase.cpp:866
 msgid "Options for ... access of \"...\":"
 msgstr "Optionen für ... Zugriff von \"...\":"
 
-#: view/RuleWizardPanelsBase.cpp:866
+#: view/RuleWizardPanelsBase.cpp:870
 msgid "... grand access:"
 msgstr "... Zugriff erlauben:"
 
-#: view/RuleWizardPanelsBase.cpp:876
+#: view/RuleWizardPanelsBase.cpp:880
 msgid " add file..."
 msgstr " Datei hinzufügen..."
 
-#: view/RuleWizardPanelsBase.cpp:877
+#: view/RuleWizardPanelsBase.cpp:881
 msgid ""
 "opens a file-choose-dialog\n"
 "and adds the result to the list"
@@ -2906,11 +2926,11 @@ msgstr ""
 "Öffnet einen Dateiauswahldialog\n"
 "und fügt das Resultat zur Liste hinzu"
 
-#: view/RuleWizardPanelsBase.cpp:881
+#: view/RuleWizardPanelsBase.cpp:885
 msgid " add directory..."
 msgstr "Verzeichnis hinzufügen..."
 
-#: view/RuleWizardPanelsBase.cpp:882
+#: view/RuleWizardPanelsBase.cpp:886
 msgid ""
 "opens a directory-choose-dialog\n"
 "and adds the result to the list"
@@ -2918,23 +2938,23 @@ msgstr ""
 "Öffnet einen Verzeichnisauswahldialog\n"
 "und fügt das Resultat zur Liste hinzu"
 
-#: view/RuleWizardPanelsBase.cpp:889
+#: view/RuleWizardPanelsBase.cpp:893
 msgid "add default permissions"
 msgstr "Standardberechtigungen hinzufügen"
 
-#: view/RuleWizardPanelsBase.cpp:910
+#: view/RuleWizardPanelsBase.cpp:914
 msgid "ask on any other access"
 msgstr "Bei sonstigem Zugriff nachfragen"
 
-#: view/RuleWizardPanelsBase.cpp:915
+#: view/RuleWizardPanelsBase.cpp:919
 msgid "always allow access on valid checksum / signature"
 msgstr "Bei gültigen Signaturen/Prüfsummen immer Zugriff erlauben"
 
-#: view/RuleWizardPanelsBase.cpp:958
+#: view/RuleWizardPanelsBase.cpp:962
 msgid "End."
 msgstr "Ende."
 
-#: view/RuleWizardPanelsBase.cpp:967
+#: view/RuleWizardPanelsBase.cpp:971
 msgid ""
 "This is the final page. If you click on 'finish'\n"
 "the policies will be created.\n"
@@ -3149,15 +3169,15 @@ msgstr "Konnte %ls nicht zum Schreiben öffnen: %hs"
 msgid "Failed to flush the content of %ls: %hs"
 msgstr "Konnte Inhalt von %ls nicht zurückschreiben: %hs"
 
-#: control/PolicyCtrl.cpp:488
+#: control/PolicyCtrl.cpp:479
 msgid "The task was not executed."
 msgstr "Die Aufgabe wurde nicht ausgeführt."
 
-#: control/PolicyCtrl.cpp:490
+#: control/PolicyCtrl.cpp:481
 msgid "Out of memory."
 msgstr "Kein Speicher verfügbar."
 
-#: control/PolicyCtrl.cpp:494
+#: control/PolicyCtrl.cpp:485
 #, c-format
 msgid ""
 "Communication error while sending admin-policy\n"
@@ -3166,7 +3186,7 @@ msgstr ""
 "Kommunikationsfehler beim Senden der Administrator-Regeln\n"
 "von %ls zum Daemon."
 
-#: control/PolicyCtrl.cpp:497
+#: control/PolicyCtrl.cpp:488
 #, c-format
 msgid ""
 "Communication error while sending user-policy\n"
@@ -3175,11 +3195,11 @@ msgstr ""
 "Kommunikationsfehler beim Senden der Benutzer-Regeln\n"
 "von %ls zum Daemon."
 
-#: control/PolicyCtrl.cpp:500
+#: control/PolicyCtrl.cpp:491
 msgid "Error while sending policy to daemon."
 msgstr "Fehler beim Senden der Regeln zum Daemon."
 
-#: control/PolicyCtrl.cpp:503
+#: control/PolicyCtrl.cpp:494
 #, c-format
 msgid ""
 "Got error (%hs) from daemon\n"
@@ -3188,7 +3208,7 @@ msgstr ""
 "Fehler vom Daemon  (%hs) nachdem\n"
 "die Administrator-Regeln von %ls gesendet wurde."
 
-#: control/PolicyCtrl.cpp:508
+#: control/PolicyCtrl.cpp:499
 #, c-format
 msgid ""
 "Got error (%hs) from daemon\n"
@@ -3197,14 +3217,14 @@ msgstr ""
 "Fehler vom Daemon (%hs) nachdem\n"
 "die Benutzer-Regeln von %ls gesendet wurde."
 
-#: control/PolicyCtrl.cpp:513
+#: control/PolicyCtrl.cpp:504
 #, c-format
 msgid ""
 "Got error (%hs) from daemon\n"
 "after sending policy."
 msgstr "Fehler vom Daemon (%hs) nachdem die Regel gesendet wurde."
 
-#: control/PolicyCtrl.cpp:517
+#: control/PolicyCtrl.cpp:508
 #, c-format
 msgid ""
 "An unexpected error occured.\n"
@@ -3213,16 +3233,16 @@ msgstr ""
 "Ein unerwarteter Fehler ist aufgetreten.\n"
 "Fehlernummer: %i"
 
-#: control/PolicyCtrl.cpp:523
-#: control/PolicyCtrl.cpp:530
+#: control/PolicyCtrl.cpp:514
+#: control/PolicyCtrl.cpp:521
 msgid "Error while sending policy"
 msgstr "Fehler beim Senden der Regeln"
 
-#: control/PolicyCtrl.cpp:529
+#: control/PolicyCtrl.cpp:520
 msgid "Failed to make a backup of the policy."
 msgstr "Fehler beim Erstellen eines Backups der Regeln."
 
-#: control/PolicyCtrl.cpp:599
+#: control/PolicyCtrl.cpp:590
 #, c-format
 msgid "Automatically created version while saving the %ls profile"
 msgstr "Version wurde automatisch mit dem Speichern des Profils %ls erstellt."

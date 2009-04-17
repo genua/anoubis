@@ -403,7 +403,11 @@ MainFrame::OnMbFileExportSelect(wxCommandEvent&)
 			    wildcard, wxFD_SAVE);
 
 	if (fileDlg.ShowModal() == wxID_OK) {
-		PolicyCtrl::getInstance()->exportToFile(fileDlg.GetPath());
+		PolicyCtrl *policyCtrl = PolicyCtrl::getInstance();
+		if (!policyCtrl->exportToFile(fileDlg.GetPath()))
+			wxMessageBox(
+			    _("Failed to export the ruleset into a file."),
+			    _("Export ruleset"), wxOK|wxICON_ERROR, this);
 	}
 }
 

@@ -1308,8 +1308,12 @@ DlgRuleEditor::onFooterExportButton(wxCommandEvent &)
 
 	if (fileDlg.ShowModal() == wxID_OK) {
 		ruleSet->setOrigin(fileDlg.GetPath());
-		policyCtrl->exportToFile(ruleSet->getOrigin());
-		ruleSet->clearModified();
+		if (policyCtrl->exportToFile(ruleSet->getOrigin()))
+			ruleSet->clearModified();
+		else
+			wxMessageBox(
+			    _("Failed to export the ruleset into a file."),
+			    _("Export ruleset"), wxOK|wxICON_ERROR, this);
 	}
 
 	wxEndBusyCursor();

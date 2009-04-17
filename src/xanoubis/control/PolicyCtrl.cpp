@@ -211,11 +211,8 @@ PolicyCtrl::exportToProfile(const wxString &name)
 		wxRemoveFile(file);
 	}
 
-	/*
-	 * XXX It's hard to determine weather export was successful
-	 * because PolicyRuleSet::exportToFile() returns void.
-	 */
-	rs->exportToFile(file);
+	if (!rs->exportToFile(file))
+		return (false);
 
 	/* Make a backup by putting the policy into version-control */
 	if (!makeBackup(name))
@@ -235,11 +232,8 @@ PolicyCtrl::exportToFile(const wxString &file)
 		return (false);
 	}
 
-	/*
-	 * XXX It's hard to determine whether export was successful
-	 * because PolicyRuleSet::exportToFile() returns void.
-	 */
-	rs->exportToFile(file);
+	if (!rs->exportToFile(file))
+		return (false);
 
 	return (true);
 }
@@ -359,11 +353,8 @@ PolicyCtrl::importPolicy(PolicyRuleSet *rs, const wxString &name)
 		wxRemoveFile(file);
 	}
 
-	/*
-	 * XXX It's hard to determine if export was successful because
-	 * PolicyRuleSet::exportToFile() returns void.
-	 */
-	rs->exportToFile(file);
+	if (!rs->exportToFile(file))
+		return (false);
 
 	return (true);
 }
