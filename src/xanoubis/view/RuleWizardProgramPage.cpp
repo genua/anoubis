@@ -25,6 +25,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <cstdlib>
+
 #include <wx/filedlg.h>
 #include <wx/filename.h>
 #include <wx/msgdlg.h>
@@ -119,8 +121,8 @@ RuleWizardProgramPage::onPickButton(wxCommandEvent &)
 	wxEndBusyCursor();
 
 	if (fileDlg.ShowModal() == wxID_OK) {
-		setProgram(fileDlg.GetPath());
 		programTextCtrl->ChangeValue(fileDlg.GetPath());
+		setProgram(fileDlg.GetPath());
 		updateNavi();
 	}
 }
@@ -165,11 +167,35 @@ RuleWizardProgramPage::onCsumCalcTask(TaskEvent &event)
 }
 
 void
-RuleWizardProgramPage::setProgram(const wxString &binary)
+RuleWizardProgramPage::setProgram(const wxString &paramBinary)
 {
+	char		real[PATH_MAX], *res;
+	wxString	binary;
+
 	/* Store binary */
-	if (binary == history_->getProgram()) {
+	if (paramBinary == history_->getProgram()) {
 		return;
+	}
+
+	if (paramBinary == wxT("") || paramBinary == wxT("any")) {
+		programInfo->SetLabel(wxT(""));
+		binary = paramBinary;
+	} else {
+		res = realpath(paramBinary.fn_str(), real);
+		if (res) {
+			binary = wxString::From8BitData(res, strlen(res));
+			if (binary != paramBinary) {
+				programTextCtrl->ChangeValue(binary);
+				programInfo->SetLabel(
+				    _("Symbolic link was resolved"));
+			} else {
+				programInfo->SetLabel(wxT(""));
+			}
+		} else {
+			binary = paramBinary;
+			programInfo->SetLabel(
+			    _("Failure to resolve symbolic link"));
+		}
 	}
 	history_->setProgram(binary);
 	history_->setChecksum(wxEmptyString);
@@ -177,13 +203,13 @@ RuleWizardProgramPage::setProgram(const wxString &binary)
 	/* Start csum calculation */
 	if (!binary.IsEmpty() && binary != wxT("any")) {
 		calcTask_.setPath(binary);
-		calcTask_.setCalcLink(true);
+		calcTask_.setCalcLink(false);
 		JobCtrl::getInstance()->addTask(&calcTask_);
 
 		csumValue->SetLabel(_("calculating..."));
-		Layout();
-		Refresh();
 	}
+	Layout();
+	Refresh();
 }
 
 void

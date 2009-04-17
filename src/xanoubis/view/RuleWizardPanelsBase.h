@@ -155,6 +155,7 @@ class RuleWizardProgramPageBase : public wxPanel
 		wxButton* pickButton;
 		wxStaticText* csumLabel;
 		wxStaticText* csumValue;
+		wxStaticText* programInfo;
 		
 		
 		// Virtual event handlers, overide them in your derived class

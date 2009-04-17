@@ -315,6 +315,10 @@ RuleWizardProgramPageBase::RuleWizardProgramPageBase( wxWindow* parent, wxWindow
 	
 	mainSizer->Add( csumValue, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
+	programInfo = new wxStaticText( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	programInfo->Wrap( -1 );
+	mainSizer->Add( programInfo, 0, wxALL, 5 );
+	
 	
 	mainSizer->Add( 0, 0, 1, wxEXPAND, 5 );
 	
