@@ -230,10 +230,12 @@ class PolicyRuleSet : public Subject
 		 * implementation is quite ugly, because libapn does not
 		 * provide a suitable method. Thus the long way round
 		 * by using tmp file was coded.
-		 * @param None.
-		 * @return The ruleset as string.
+		 * @param policy Filled with the serialization-result. If the
+		 *               serialization failed, the reference is left
+		 *               untouched.
+		 * @return True on success
 		 */
-		wxString toString(void) const;
+		bool toString(wxString &) const;
 
 		/**
 		 * Write ruleset to file.

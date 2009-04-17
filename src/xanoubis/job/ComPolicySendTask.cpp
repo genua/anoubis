@@ -154,8 +154,8 @@ ComPolicySendTask::exec(void)
 
 	resetComTaskResult();
 	ta_ = NULL;
-	content = getPolicyContent();
 
+	getPolicyContent(content); /* XXX Evaluate result */
 	char c_content[content.Len() + 1];
 	strlcpy(c_content, content.fn_str(), content.Len() + 1);
 
@@ -236,11 +236,11 @@ ComPolicySendTask::done(void)
 	return (true);
 }
 
-wxString
-ComPolicySendTask::getPolicyContent(void) const
+bool
+ComPolicySendTask::getPolicyContent(wxString &policy) const
 {
 	if (policy_rs_ != 0)
-		return policy_rs_->toString();
+		return policy_rs_->toString(policy);
 
 	if (apn_rs_ != 0) {
 		wxString tmpFile = wxFileName::CreateTempFileName(wxT(""));
@@ -250,7 +250,7 @@ ComPolicySendTask::getPolicyContent(void) const
 		/* Write to temp. file */
 		f = fopen(tmpFile.fn_str(), "w");
 		if (f == 0)
-			return (content);
+			return (false);
 
 		int result = apn_print_ruleset(apn_rs_, 0, f);
 
@@ -259,14 +259,14 @@ ComPolicySendTask::getPolicyContent(void) const
 
 		if (result != 0) {
 			wxRemoveFile(tmpFile);
-			return (content);
+			return (false);
 		}
 
 		/* Read from same file again */
 		f = fopen(tmpFile.fn_str(), "r");
 		if (f == 0) {
 			wxRemoveFile(tmpFile);
-			return (content);
+			return (false);
 		}
 
 		while (!feof(f)) {
@@ -279,10 +279,13 @@ ComPolicySendTask::getPolicyContent(void) const
 				break;
 		}
 
+		fclose(f);
+
 		wxRemoveFile(tmpFile);
 
-		return (content);
+		policy = content;
+		return (true);
 	}
 
-	return wxT("");
+	return (false);
 }

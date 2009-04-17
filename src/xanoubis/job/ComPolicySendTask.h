@@ -212,7 +212,7 @@ class ComPolicySendTask : public ComTask
 		struct anoubis_sig		*privKey_;
 		struct anoubis_transaction	*ta_;
 
-		wxString getPolicyContent(void) const;
+		bool getPolicyContent(wxString &) const;
 };
 
 #endif	/* _COMPOLICYSENDTASK_H_ */

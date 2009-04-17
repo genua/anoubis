@@ -253,21 +253,23 @@ PolicyRuleSet::accept(PolicyVisitor& visitor)
 	}
 }
 
-wxString
-PolicyRuleSet::toString(void) const
+bool
+PolicyRuleSet::toString(wxString &policy) const
 {
 	int	 result;
+	bool	 success;
 	wxString content;
 	wxString tmpFileName;
 	wxFFile	 tmpFile;
 
 	result = 1;
 	content = wxEmptyString;
+	success = true;
 	tmpFileName = wxFileName::CreateTempFileName(wxEmptyString);
 
 	if (!tmpFile.Open(tmpFileName, wxT("w"))) {
 		/* Couldn't open / fill tmp file. */
-		return (wxEmptyString);
+		return (false);
 	}
 
 	/* Write the ruleset to tmp file. */
@@ -277,21 +279,25 @@ PolicyRuleSet::toString(void) const
 
 	if (result != 0) {
 		/* Something went wrong during file filling! */
-		wxRemoveFile(tmpFileName);
-		return (wxEmptyString);
+
+		if (wxFileExists(tmpFileName))
+			wxRemoveFile(tmpFileName);
+
+		return (false);
 	}
 
 	if (tmpFile.Open(tmpFileName, wxT("r"))) {
-		if (!tmpFile.ReadAll(&content)) {
-			/* Error during file read - clear read stuff. */
-			content = wxEmptyString;
-		}
+		success = tmpFile.ReadAll(&content);
 		tmpFile.Close();
-	}
+	} else
+		success = false;
 
 	wxRemoveFile(tmpFileName);
 
-	return (content);
+	if (success)
+		policy = content;
+
+	return (success);
 }
 
 bool
@@ -308,16 +314,15 @@ PolicyRuleSet::exportToFile(const wxString &fileName) const
 	result = apn_print_ruleset(ruleSet_, 0, exportFile.fp());
 
 	fchmod(fileno(exportFile.fp()), S_IRUSR);
-	exportFile.Flush();
-	exportFile.Close();
 
-	if (result != 0) {
-		/* Something went wrong - remove broken file. */
-		wxRemoveFile(fileName);
-		return (false);
+	if (result == 0) {
+		/* Successful export, flush content */
+		exportFile.Flush();
 	}
 
-	return (true);
+	exportFile.Close();
+
+	return (result == 0);
 }
 
 void
