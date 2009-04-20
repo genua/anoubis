@@ -128,66 +128,69 @@ TcComTask::nextTest()
 		setupTestPolicyRequest();
 		break;
 	case 4:
-		setupTestPolicySend();
+		setupTestPolicySendEmpty();
 		break;
 	case 5:
-		setupTestPolicyRequest();
+		setupTestPolicySend();
 		break;
 	case 6:
-		setupTestCsumAdd();
+		setupTestPolicyRequest();
 		break;
 	case 7:
-		setupTestCsumAddSymlink();
+		setupTestCsumAdd();
 		break;
 	case 8:
-		setupTestCsumAddSymlinkLink();
+		setupTestCsumAddSymlink();
 		break;
 	case 9:
-		setupTestCsumGet();
+		setupTestCsumAddSymlinkLink();
 		break;
 	case 10:
-		setupTestCsumGetNoSuchFile();
+		setupTestCsumGet();
 		break;
 	case 11:
-		setupTestCsumGetSymlink();
+		setupTestCsumGetNoSuchFile();
 		break;
 	case 12:
-		setupTestCsumGetSymlinkLink();
+		setupTestCsumGetSymlink();
 		break;
 	case 13:
-		setupTestSfsListNotEmpty();
+		setupTestCsumGetSymlinkLink();
 		break;
 	case 14:
-		setupTestCsumDel();
+		setupTestSfsListNotEmpty();
 		break;
 	case 15:
-		setupTestCsumDelSymlink();
+		setupTestCsumDel();
 		break;
 	case 16:
-		setupTestCsumDelSymlinkLink();
+		setupTestCsumDelSymlink();
 		break;
 	case 17:
-		setupTestSfsListEmpty();
+		setupTestCsumDelSymlinkLink();
 		break;
 	case 18:
-		setupTestSfsListRecursive();
+		setupTestSfsListEmpty();
 		break;
 	case 19:
-		setupTestSigAdd();
+		setupTestSfsListRecursive();
 		break;
 	case 20:
-		setupTestSigGet();
+		setupTestSigAdd();
 		break;
 	case 21:
-		setupTestSigListNotEmpty();
+		setupTestSigGet();
 		break;
 	case 22:
-		setupTestSigDel();
+		setupTestSigListNotEmpty();
 		break;
 	case 23:
-		setupTestSigListEmpty();
+		setupTestSigDel();
 		break;
 	case 24:
+		setupTestSigListEmpty();
+		break;
+	case 25:
 		setupTestUnregister();
 		break;
 	default:
@@ -367,6 +370,56 @@ TcComTask::onTestPolicyRequest(TaskEvent &event)
 	    content.c_str(), cmp.c_str());
 
 	trace("Leaving TcComTask::onTestPolicyRequest\n");
+	nextTest();
+}
+
+void
+TcComTask::setupTestPolicySendEmpty(void)
+{
+	trace("Enter TcComTask::setupTestPolicySendEmpty\n");
+
+	wxString keyFile = wxFileName::GetHomeDir() + wxT("/privkey");
+	KeyCtrl *keyCtrl = KeyCtrl::getInstance();
+	PrivKey &privKey = keyCtrl->getPrivateKey();
+
+	privKey.setFile(keyFile);
+	if (!privKey.isLoaded()) {
+		assertUnless(privKey.load(wxT("1234")),
+		    "Failed to load private key from %s\n",
+		    (const char *)keyFile.fn_str());
+	}
+
+	JobCtrl::getInstance()->Connect(anTASKEVT_POLICY_SEND,
+	    wxTaskEventHandler(TcComTask::onTestPolicySendEmpty), NULL, this);
+
+	ComPolicySendTask *next = new ComPolicySendTask;
+	next->setPrivateKey(privKey.getKey());
+
+	trace("Scheduling ComPolicySendTask: %p\n", next);
+	JobCtrl::getInstance()->addTask(next);
+
+	trace("Leaving TcComTask::setupTestPolicySendEmpty\n");
+}
+
+void
+TcComTask::onTestPolicySendEmpty(TaskEvent &event)
+{
+	trace("Enter TcComTask::onTestPolicySendEmpty\n");
+
+	ComPolicySendTask *t =
+	    dynamic_cast<ComPolicySendTask*>(event.getTask());
+	trace("ComPolicySendTask = %p\n", t);
+
+	assertUnless(t->getComTaskResult() == ComTask::RESULT_INIT,
+	    "Task in wrong state: %i\n", t->getComTaskResult());
+
+	assertUnless(t->getResultDetails() == 0,
+	    "ResultDetails: %s (%i)\n",
+	    strerror(t->getResultDetails()), t->getResultDetails());
+
+	delete t;
+
+	trace("Leaving TcComTask::onTestPolicySendEmpty\n");
 	nextTest();
 }
 

@@ -56,6 +56,9 @@ class TcComTask : public TestHandler
 		void setupTestPolicyRequest(void);
 		void onTestPolicyRequest(TaskEvent &);
 
+		void setupTestPolicySendEmpty(void);
+		void onTestPolicySendEmpty(TaskEvent &);
+
 		void setupTestPolicySend(void);
 		void onTestPolicySend(TaskEvent &);
 

@@ -72,80 +72,38 @@ class ComPolicySendTask : public ComTask
 		ComPolicySendTask(void);
 
 		/**
-		 * Creates a ComPolicySendTask with an already assigned policy
-		 * and priority.
-		 *
-		 * @param policy The policy to be send to anoubisd
-		 * @param prio The priority of the policy
-		 *
-		 * @post getPolicy() == policy
-		 * @post getPolicyApn() == 0
-		 */
-		ComPolicySendTask(PolicyRuleSet *);
-
-		/**
 		 * Destroy a ComPolicySendTask.
 		 * @param None.
 		 */
 		~ComPolicySendTask(void);
 
 		/**
-		 * Creates a ComPolicySendTask with an already assigned policy
-		 * and priority.
+		 * Provides the policy to be sent.
+		 *
+		 * Uid and priority are extracted from the given policy. The
+		 * ruleset is serialized and specifies the return-code of the
+		 * method.
 		 *
 		 * @param policy The policy to be send to anoubisd
-		 * @param prio The priority of the policy
-		 *
-		 * @post getPolicy() == 0
-		 * @post getPolicyApn() == policy
+		 * @return On success true is returned. If serialization of the
+		 *         ruleset was not successful, false is returned.
 		 */
-		ComPolicySendTask(struct apn_ruleset *, uid_t, int);
-
-		/**
-		 * Returns the policy, which is sent to anoubisd.
-		 *
-		 * This method only returns a PolicyRuleSet if the object is
-		 * initialized with a PolicyRuleSet!
-		 *
-		 * @return The policy to be sent to anoubisd.
-		 */
-		PolicyRuleSet *getPolicy(void) const;
-
-		/**
-		 * Returns the policy, which is sent to anoubisd.
-		 *
-		 * This method only returns an apn_ruleset if the object is
-		 * initialized with an apn_ruleset!
-		 *
-		 * @return The policy to be sent to anoubisd.
-		 */
-		struct apn_ruleset *getPolicyApn(void) const;
+		bool setPolicy(PolicyRuleSet *);
 
 		/**
 		 * Provides the policy to be sent.
 		 *
-		 * Uid and priority are extracted from the given policy.
-		 *
-		 * @param policy The policy to be send to anoubisd
-		 *
-		 * @post getPolicy() == policy
-		 * @post getPolicyApn() == 0
-		 */
-		void setPolicy(PolicyRuleSet *);
-
-		/**
-		 * Provides the policy to be sent.
-		 *
-		 * You also need to specify uid and priority of the policy!
+		 * You also need to specify uid and priority of the policy! The
+		 * ruleset is serialized and specifies the return-code of the
+		 * method.
 		 *
 		 * @param policy The policy to be send to anoubisd
 		 * @param uid The uid of the policy
 		 * @param prio The priority of the policy
-		 *
-		 * @post getPolicy() == 0
-		 * @post getPolicyApn() == policy
+		 * @return On success true is returned. If serialization of the
+		 *         ruleset was not successful, false is returned.
 		 */
-		void setPolicy(struct apn_ruleset *, uid_t, int);
+		bool setPolicy(struct apn_ruleset *, uid_t, int);
 
 		/**
 		 * Returns the assigned uid of the policy.
@@ -205,14 +163,13 @@ class ComPolicySendTask : public ComTask
 		bool done(void);
 
 	private:
-		PolicyRuleSet			*policy_rs_;
-		struct apn_ruleset		*apn_rs_;
+		char				*policy_content_;
 		uid_t				 uid_;
 		int				 prio_;
 		struct anoubis_sig		*privKey_;
 		struct anoubis_transaction	*ta_;
 
-		bool getPolicyContent(wxString &) const;
+		static bool getPolicyContent(struct apn_ruleset *, wxString &);
 };
 
 #endif	/* _COMPOLICYSENDTASK_H_ */

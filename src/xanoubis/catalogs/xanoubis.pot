@@ -34,7 +34,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-04-17 13:37+0200\n"
+"POT-Creation-Date: 2009-04-20 11:03+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -2941,69 +2941,84 @@ msgstr ""
 msgid "Failed to flush the content of %ls: %hs"
 msgstr ""
 
-#: control/PolicyCtrl.cpp:479
+#: control/PolicyCtrl.cpp:483
 msgid "The task was not executed."
 msgstr ""
 
-#: control/PolicyCtrl.cpp:481
+#: control/PolicyCtrl.cpp:485
 msgid "Out of memory."
 msgstr ""
 
-#: control/PolicyCtrl.cpp:485
+#: control/PolicyCtrl.cpp:489
 #, c-format
 msgid ""
 "Communication error while sending admin-policy\n"
 "of %ls to daemon."
 msgstr ""
 
-#: control/PolicyCtrl.cpp:488
+#: control/PolicyCtrl.cpp:492
 #, c-format
 msgid ""
 "Communication error while sending user-policy\n"
 "of %ls to daemon."
 msgstr ""
 
-#: control/PolicyCtrl.cpp:491
+#: control/PolicyCtrl.cpp:495
 msgid "Error while sending policy to daemon."
 msgstr ""
 
-#: control/PolicyCtrl.cpp:494
+#: control/PolicyCtrl.cpp:498
 #, c-format
 msgid ""
 "Got error (%hs) from daemon\n"
 "after sending admin-policy of %ls."
 msgstr ""
 
-#: control/PolicyCtrl.cpp:499
+#: control/PolicyCtrl.cpp:503
 #, c-format
 msgid ""
 "Got error (%hs) from daemon\n"
 "after sending user-policy of %ls."
 msgstr ""
 
-#: control/PolicyCtrl.cpp:504
+#: control/PolicyCtrl.cpp:508
 #, c-format
 msgid ""
 "Got error (%hs) from daemon\n"
 "after sending policy."
 msgstr ""
 
-#: control/PolicyCtrl.cpp:508
+#: control/PolicyCtrl.cpp:514
+#, c-format
+msgid "Failed to sign the admin-policy of %ls: %hs."
+msgstr ""
+
+#: control/PolicyCtrl.cpp:518
+#, c-format
+msgid "Failed to sign the user-policy of %ls: %hs."
+msgstr ""
+
+#: control/PolicyCtrl.cpp:522
+#, c-format
+msgid "Failed to sign the policy: %hs."
+msgstr ""
+
+#: control/PolicyCtrl.cpp:525
 #, c-format
 msgid ""
 "An unexpected error occured.\n"
 "Error code: %i"
 msgstr ""
 
-#: control/PolicyCtrl.cpp:514 control/PolicyCtrl.cpp:521
+#: control/PolicyCtrl.cpp:531 control/PolicyCtrl.cpp:538
 msgid "Error while sending policy"
 msgstr ""
 
-#: control/PolicyCtrl.cpp:520
+#: control/PolicyCtrl.cpp:537
 msgid "Failed to make a backup of the policy."
 msgstr ""
 
-#: control/PolicyCtrl.cpp:590
+#: control/PolicyCtrl.cpp:607
 #, c-format
 msgid "Automatically created version while saving the %ls profile"
 msgstr ""

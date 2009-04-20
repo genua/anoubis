@@ -45,68 +45,58 @@
 
 ComPolicySendTask::ComPolicySendTask(void)
 {
-	this->policy_rs_ = 0;
-	this->apn_rs_ = 0;
+	this->policy_content_ = 0;
 	this->uid_ = 0;
 	this->prio_ = 0;
 	this->privKey_ = 0;
 }
 
-ComPolicySendTask::ComPolicySendTask(PolicyRuleSet *policy)
-{
-	policy_rs_ = NULL;	/* setPolicy will try an unlock. */
-	setPolicy(policy);
-	this->privKey_ = 0;
-}
-
 ComPolicySendTask::~ComPolicySendTask(void)
 {
-	if (policy_rs_)
-		policy_rs_->unlock();
+	if (policy_content_ != 0)
+		free(policy_content_);
 }
 
-ComPolicySendTask::ComPolicySendTask(
-    struct apn_ruleset *policy, uid_t uid, int prio)
-{
-	policy_rs_ = NULL;
-	setPolicy(policy, uid, prio);
-	this->privKey_ = 0;
-}
-
-PolicyRuleSet *
-ComPolicySendTask::getPolicy(void) const
-{
-	return (this->policy_rs_);
-}
-
-struct apn_ruleset *
-ComPolicySendTask::getPolicyApn(void) const
-{
-	return (this->apn_rs_);
-}
-
-void
+bool
 ComPolicySendTask::setPolicy(PolicyRuleSet *policy)
 {
-	if (policy_rs_)
-		policy_rs_->unlock();
-	if (policy)
-		policy->lock();
-	policy_rs_ = policy;
-	apn_rs_ = 0;
 	uid_ = policy->getUid();
 	prio_ = policy->getPriority();
+
+	if (policy_content_ != 0)
+		free(policy_content_);
+
+	wxString content;
+	if (policy->toString(content)) {
+		policy_content_ = (char *)malloc(content.Len() + 1);
+		strlcpy(policy_content_, content.fn_str(), content.Len() + 1);
+
+		return (true);
+	} else {
+		policy_content_ = 0;
+		return (false);
+	}
 }
 
-void
+bool
 ComPolicySendTask::setPolicy(struct apn_ruleset *policy, uid_t uid, int prio)
 {
-	if (policy_rs_)
-		policy_rs_->unlock();
-	policy_rs_ = 0;
-	apn_rs_ = policy;
 	uid_ = uid;
 	prio_ = prio;
+
+	if (policy_content_ != 0)
+		free(policy_content_);
+
+	wxString content;
+	if (getPolicyContent(policy, content)) {
+		policy_content_ = (char *)malloc(content.Len() + 1);
+		strlcpy(policy_content_, content.fn_str(), content.Len() + 1);
+
+		return (true);
+	} else {
+		policy_content_ = 0;
+		return (false);
+	}
 }
 
 uid_t
@@ -147,7 +137,6 @@ ComPolicySendTask::exec(void)
 	 * policy
 	 */
 	Policy_SetByUid			*ureq = 0;
-	wxString			 content;
 	unsigned char			*signature;
 	unsigned int			 sig_len;
 	size_t				 total = 0;
@@ -155,15 +144,16 @@ ComPolicySendTask::exec(void)
 	resetComTaskResult();
 	ta_ = NULL;
 
-	getPolicyContent(content); /* XXX Evaluate result */
-	char c_content[content.Len() + 1];
-	strlcpy(c_content, content.fn_str(), content.Len() + 1);
+	if (policy_content_ == 0) {
+		/* No policy assigned, leave task in init-state */
+		return;
+	}
 
 	if (havePrivateKey()) {
 		/* Signing policy requested */
-		sig_len = content.Len();
+		sig_len = strlen(policy_content_);
 		signature = anoubis_sign_policy_buf(
-		    this->privKey_, c_content, &sig_len);
+		    this->privKey_, policy_content_, &sig_len);
 
 		this->privKey_ = 0; /* Reset assigned, not used anymore */
 
@@ -180,7 +170,7 @@ ComPolicySendTask::exec(void)
 	}
 
 	/* Prepare request-message */
-	total = sizeof(*ureq) + content.Len() + sig_len;
+	total = sizeof(*ureq) + strlen(policy_content_) + sig_len;
 	ureq = (Policy_SetByUid *)malloc(total);
 
 	if (!ureq) {
@@ -193,7 +183,7 @@ ComPolicySendTask::exec(void)
 	 * policies here. However, the caller should not have requested
 	 * a policy send in the first place.
 	 */
-	if (content.Len() < 10) {
+	if (strlen(policy_content_) < 10) {
 		setComTaskResult(RESULT_LOCAL_ERROR);
 		setResultDetails(EINVAL);
 		return;
@@ -206,8 +196,9 @@ ComPolicySendTask::exec(void)
 
 	if (sig_len > 0)
 		memcpy(ureq->payload, signature, sig_len);
-	if (!content.IsEmpty())
-		memcpy(ureq->payload + sig_len, c_content, content.Len());
+
+	memcpy(ureq->payload + sig_len, policy_content_,
+	    strlen(policy_content_));
 
 	/* Send message */
 	ta_ = anoubis_client_policyrequest_start(getClient(), ureq, total);
@@ -237,55 +228,48 @@ ComPolicySendTask::done(void)
 }
 
 bool
-ComPolicySendTask::getPolicyContent(wxString &policy) const
+ComPolicySendTask::getPolicyContent(struct apn_ruleset *rs, wxString &policy)
 {
-	if (policy_rs_ != 0)
-		return policy_rs_->toString(policy);
+	wxString tmpFile = wxFileName::CreateTempFileName(wxT(""));
+	wxString content = wxT("");
+	FILE *f;
 
-	if (apn_rs_ != 0) {
-		wxString tmpFile = wxFileName::CreateTempFileName(wxT(""));
-		wxString content = wxT("");
-		FILE *f;
+	/* Write to temp. file */
+	f = fopen(tmpFile.fn_str(), "w");
+	if (f == 0)
+		return (false);
 
-		/* Write to temp. file */
-		f = fopen(tmpFile.fn_str(), "w");
-		if (f == 0)
-			return (false);
+	int result = apn_print_ruleset(rs, 0, f);
 
-		int result = apn_print_ruleset(apn_rs_, 0, f);
+	fflush(f);
+	fclose(f);
 
-		fflush(f);
-		fclose(f);
-
-		if (result != 0) {
-			wxRemoveFile(tmpFile);
-			return (false);
-		}
-
-		/* Read from same file again */
-		f = fopen(tmpFile.fn_str(), "r");
-		if (f == 0) {
-			wxRemoveFile(tmpFile);
-			return (false);
-		}
-
-		while (!feof(f)) {
-			char buf[256];
-			int nread = fread(buf, 1, sizeof(buf), f);
-
-			if (nread >= 0)
-				content += wxString(buf, wxConvFile, nread);
-			else
-				break;
-		}
-
-		fclose(f);
-
+	if (result != 0) {
 		wxRemoveFile(tmpFile);
-
-		policy = content;
-		return (true);
+		return (false);
 	}
 
-	return (false);
+	/* Read from same file again */
+	f = fopen(tmpFile.fn_str(), "r");
+	if (f == 0) {
+		wxRemoveFile(tmpFile);
+		return (false);
+	}
+
+	while (!feof(f)) {
+		char buf[256];
+		int nread = fread(buf, 1, sizeof(buf), f);
+
+		if (nread >= 0)
+			content += wxString(buf, wxConvFile, nread);
+		else
+			break;
+	}
+
+	fclose(f);
+
+	wxRemoveFile(tmpFile);
+
+	policy = content;
+	return (true);
 }

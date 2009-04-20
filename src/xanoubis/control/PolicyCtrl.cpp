@@ -392,7 +392,13 @@ PolicyCtrl::sendToDaemon(long id)
 
 	if (!rs)
 		return (false);
-	task = new ComPolicySendTask(rs);
+
+	task = new ComPolicySendTask;
+	if (!task->setPolicy(rs)) {
+		delete task;
+		return (false);
+	}
+
 	KeyCtrl *keyCtrl = KeyCtrl::getInstance();
 	if (keyCtrl->canUseLocalKeys()) {
 		/* You need to sign the policy, the private key is required */
@@ -503,6 +509,19 @@ PolicyCtrl::OnPolicySend(TaskEvent &event)
 		else
 			message.Printf(_("Got error (%hs) from daemon\n"
 			    "after sending policy."),
+			    strerror(task->getResultDetails()));
+	} else if (taskResult == ComTask::RESULT_LOCAL_ERROR) {
+		if (isAdmin && (task->getPriority() == 0))
+			message.Printf(
+			    _("Failed to sign the admin-policy of %ls: %hs."),
+			    user.c_str(), strerror(task->getResultDetails()));
+		else if (isAdmin && (task->getPriority() > 0))
+			message.Printf(
+			    _("Failed to sign the user-policy of %ls: %hs."),
+			    user.c_str(), strerror(task->getResultDetails()));
+		else
+			message.Printf(
+			    _("Failed to sign the policy: %hs."),
 			    strerror(task->getResultDetails()));
 	} else if (taskResult != ComTask::RESULT_SUCCESS) {
 		message.Printf(_("An unexpected error occured.\n"
