@@ -87,6 +87,7 @@ class AnoubisGuiApp : public wxApp, private PassphraseReader
 		wxStandardPaths		 paths_;
 		wxLocale		 language_;
 		bool			 onInitProfile_;
+		bool			 trayVisible_;
 		std::map<wxString,wxString> userList_;
 		MainFrame		*mainFrame;
 		DlgLogViewer		*logViewer_;

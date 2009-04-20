@@ -71,6 +71,7 @@ AnoubisGuiApp::AnoubisGuiApp(void)
 	trayIcon = NULL;
 	userOptions_ = NULL;
 	onInitProfile_ = true;
+	trayVisible_ = true;
 
 	SetAppName(wxT("xanoubis"));
 	wxInitAllImageHandlers();
@@ -100,7 +101,8 @@ AnoubisGuiApp::quit(void)
 	bool result = mainFrame->OnQuit();
 
 	if(result) {
-		trayIcon->RemoveIcon();
+		if (trayIcon != NULL)
+			trayIcon->RemoveIcon();
 		mainFrame->Destroy();
 		delete logViewer_;
 		delete ruleEditor_;
@@ -187,7 +189,8 @@ bool AnoubisGuiApp::OnInit()
 	 * Do this last. This increases the probability that the system tray
 	 * is already up and running.
 	 */
-	trayIcon = new TrayIcon();
+	if (trayVisible_)
+		trayIcon = new TrayIcon();
 
 	return (true);
 }
@@ -275,7 +278,13 @@ AnoubisGuiApp::OnInitCmdLine(wxCmdLineParser& parser)
 			_("Debug output with \'num\' als level"),
 			wxCMD_LINE_VAL_NUMBER,
 			wxCMD_LINE_PARAM_OPTIONAL
-
+		}, {
+			wxCMD_LINE_OPTION,
+			wxT("t"),
+			wxT("tray"),
+			_("Disable TrayIcon"),
+			wxCMD_LINE_VAL_NONE,
+			wxCMD_LINE_PARAM_OPTIONAL
 		}, {
 			wxCMD_LINE_NONE,
 			NULL,
@@ -305,6 +314,9 @@ AnoubisGuiApp::OnCmdLineParsed(wxCmdLineParser& parser)
 		mesg += wxString::Format(_T("%ld"), debug_level);
 		Debug::instance()->log(mesg, DEBUG_ALERT);
 	}
+
+	if (parser.Found(wxT("t")))
+		trayVisible_ = false;
 
 	return (true);
 }
