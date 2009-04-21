@@ -221,10 +221,26 @@ void
 DlgRuleEditorFilterSubjectPage::onPathTextEnter(wxCommandEvent & event)
 {
 	if (sfsPolicy_ != NULL) {
+		pathTextCtrl->DiscardEdits();
 		sfsPolicy_->setPath(event.GetString());
 	}
 	if (sbPolicy_ != NULL) {
+		pathTextCtrl->DiscardEdits();
 		sbPolicy_->setPath(event.GetString());
+	}
+}
+
+void
+DlgRuleEditorFilterSubjectPage::onPathTextKillFocus(wxFocusEvent &)
+{
+	if (pathTextCtrl->IsModified()) {
+		pathTextCtrl->DiscardEdits();
+		if (sfsPolicy_ != NULL) {
+			sfsPolicy_->setPath(pathTextCtrl->GetValue());
+		}
+		if (sbPolicy_ != NULL) {
+			sbPolicy_->setPath(pathTextCtrl->GetValue());
+		}
 	}
 }
 

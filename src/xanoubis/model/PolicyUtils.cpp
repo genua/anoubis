@@ -46,7 +46,7 @@ PolicyUtils::stringToCsum(wxString str,
 	}
 
 	/* XXX ch: this is a quick-hack and should been improved */
-	for (size_t i=0; i<len*2; i++) {
+	for (size_t i=0; i<len*2 && i<workOn.length(); i++) {
 		c = workOn.GetChar(i);
 
 		if ((47 < c) && (c < 58)) {

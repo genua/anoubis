@@ -130,6 +130,14 @@ class DlgRuleEditorFilterSubjectPage : public DlgRuleEditorPage,
 		virtual void onPathTextEnter(wxCommandEvent &);
 
 		/**
+		 * Handle focus events from pathTextCtrl (e.g on hit <tab>).
+		 * This will set the path in the policy.
+		 * @param[in] 1st The event.
+		 * @return Nothing.
+		 */
+		virtual void onPathTextKillFocus(wxFocusEvent &);
+
+		/**
 		 * Handle events from modifyButton.
 		 * This will open a file chooser and
 		 * set the path to the policy.
