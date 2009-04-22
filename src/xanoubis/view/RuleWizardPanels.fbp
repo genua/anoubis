@@ -2471,7 +2471,7 @@
                         <object class="sizeritem" expanded="1">
                             <property name="border">5</property>
                             <property name="flag">wxEXPAND | wxALL</property>
-                            <property name="proportion">1</property>
+                            <property name="proportion">0</property>
                             <object class="wxPanel" expanded="0">
                                 <property name="bg">179,177,174</property>
                                 <property name="context_help"></property>

@@ -373,7 +373,7 @@ RuleWizardContextPageBase::RuleWizardContextPageBase( wxWindow* parent, wxWindow
 	helpPage->SetSizer( helpSizer );
 	helpPage->Layout();
 	helpSizer->Fit( helpPage );
-	mainSizer->Add( helpPage, 1, wxEXPAND | wxALL, 5 );
+	mainSizer->Add( helpPage, 0, wxEXPAND | wxALL, 5 );
 	
 	wxBoxSizer* inputSizer;
 	inputSizer = new wxBoxSizer( wxVERTICAL );
