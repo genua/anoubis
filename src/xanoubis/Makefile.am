@@ -428,6 +428,8 @@ xanoubis_SOURCES= \
 	widgets/AnDetails.h \
 	widgets/AnPolicyNotebook.cpp \
 	widgets/AnPolicyNotebook.h \
+	widgets/AnPickFromFs.cpp \
+	widgets/AnPickFromFs.h \
 	widgets/AnStatusBar.cpp \
 	widgets/AnStatusBar.h \
 	job/ComCsumAddTask.cpp \
