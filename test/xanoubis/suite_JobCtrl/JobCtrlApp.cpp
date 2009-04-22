@@ -78,7 +78,7 @@ JobCtrlApp::OnRun()
 	}
 
 	int result = getResult();
-	if (testcase_ == wxT("tc_jobctrl_nodaemon") && result == 225) {
+	if (testcase_ == wxT("tc_jobctrl_nodaemon") && result == 231) {
 		/*
 		 * Expected result for nodaemon-testcase because establishing
 		 * of the connection failed.

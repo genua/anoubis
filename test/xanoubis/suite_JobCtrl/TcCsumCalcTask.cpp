@@ -25,6 +25,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <errno.h>
+
 #include <wx/filename.h>
 
 #include <CsumCalcTask.h>
@@ -45,9 +47,11 @@ TcCsumCalcTask::TcCsumCalcTask()
 	this->haveResult1_ = false;
 	this->haveResult2_ = false;
 	this->haveResult3_ = false;
+	this->haveResult4_ = false;
 
 	this->task1_ = new CsumCalcTask;
 	this->task2_ = new CsumCalcTask;
+	this->task3_ = new CsumCalcTask;
 
 	JobCtrl::getInstance()->Connect(anTASKEVT_CSUMCALC,
 	    wxTaskEventHandler(TcCsumCalcTask::OnTaskEvent), NULL, this);
@@ -57,6 +61,7 @@ TcCsumCalcTask::~TcCsumCalcTask()
 {
 	delete this->task1_;
 	delete this->task2_;
+	delete this->task3_;
 }
 
 void TcCsumCalcTask::startTest()
@@ -65,14 +70,17 @@ void TcCsumCalcTask::startTest()
 
 	this->task1_->setPath(home + wxT("/csumFile1"));
 	this->task2_->setPath(home + wxT("/csumFile2"));
+	this->task3_->setPath(home + wxT("/a_pipe"));
 
 	JobCtrl::getInstance()->addTask(this->task1_);
 	JobCtrl::getInstance()->addTask(this->task2_);
+	JobCtrl::getInstance()->addTask(this->task3_);
 }
 
 bool TcCsumCalcTask::canExitTest() const
 {
-	return this->haveResult1_ && this->haveResult2_ && this->haveResult3_;
+	return this->haveResult1_ && this->haveResult2_ &&
+	    this->haveResult3_ && this->haveResult4_;
 }
 
 int TcCsumCalcTask::getTestResult() const
@@ -100,6 +108,9 @@ TcCsumCalcTask::OnTaskEvent(TaskEvent &event)
 	else if (event.getTask() == this->task2_) {
 		this->haveResult2_ = true;
 		checkCsumFile2();
+	} else if (event.getTask() == this->task3_) {
+		this->haveResult4_ = true;
+		checkCsumFile4();
 	}
 }
 
@@ -108,8 +119,8 @@ TcCsumCalcTask::checkCsumFile1()
 {
 	CsumCalcTask *t = this->task1_;
 
-	if (t->getResult() < 0) {
-		this->result_ = -t->getResult();
+	if (t->getResult() != 0) {
+		this->result_ = t->getResult();
 		fprintf(stderr, "No csum received for csumFile1: %i (%s)\n",
 		    t->getResult(), strerror(this->result_));
 
@@ -131,8 +142,8 @@ TcCsumCalcTask::checkCsumFile2()
 {
 	CsumCalcTask *t = this->task2_;
 
-	if (t->getResult() < 0) {
-		this->result_ = -t->getResult();
+	if (t->getResult() != 0) {
+		this->result_ = t->getResult();
 		fprintf(stderr, "No csum received for csumFile2: %i (%s)\n",
 		    t->getResult(), strerror(this->result_));
 
@@ -154,8 +165,8 @@ TcCsumCalcTask::checkCsumFile3()
 {
 	/* 3rd file part of task1! */
 	CsumCalcTask *t = this->task1_;
-	if (t->getResult() < 0) {
-		this->result_ = -t->getResult();
+	if (t->getResult() != 0) {
+		this->result_ = t->getResult();
 		fprintf(stderr, "No csum received for csumFile3: %i (%s)\n",
 		    t->getResult(), strerror(this->result_));
 		return;
@@ -168,5 +179,18 @@ TcCsumCalcTask::checkCsumFile3()
 		    (const char*)csumFile1.fn_str());
 
 		return;
+	}
+}
+
+void
+TcCsumCalcTask::checkCsumFile4()
+{
+	CsumCalcTask *t = this->task3_;
+
+	if (t->getResult() != EINVAL) {
+		this->result_ = t->getResult();
+
+		fprintf(stderr, "Unexpected calculation-result %s (%i)",
+		    strerror(this->result_), this->result_);
 	}
 }

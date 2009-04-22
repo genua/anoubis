@@ -145,6 +145,8 @@ SfsCtrl::validate(const IndexArray &arr)
 		return (RESULT_BUSY);
 
 	if (comEnabled_) {
+		int numScheduled = 0;
+
 		for (size_t i = 0; i < arr.Count(); i++) {
 			unsigned int idx = arr.Item(i);
 
@@ -154,16 +156,24 @@ SfsCtrl::validate(const IndexArray &arr)
 			}
 
 			SfsEntry &entry = sfsDir_.getEntry(idx);
-			entry.reset();
 
-			/* Ask anoubisd for the checksums */
-			createComCsumGetTasks(entry.getPath(), true, true);
+			if (entry.canHaveChecksum(false)) {
+				entry.reset();
 
-			/* Calculate the checksum */
-			createCsumCalcTask(entry.getPath());
+				/* Ask anoubisd for the checksums */
+				createComCsumGetTasks(entry.getPath(), true, true);
+
+				/* Calculate the checksum */
+				createCsumCalcTask(entry.getPath());
+
+				numScheduled++;
+			} else {
+				if (setChecksumMissing(entry))
+					sendEntryChangedEvent(idx);
+			}
 		}
 
-		return (RESULT_EXECUTE);
+		return (numScheduled > 0) ? RESULT_EXECUTE : RESULT_NOOP;
 	} else
 		return (RESULT_NOTCONNECTED);
 }
@@ -511,7 +521,7 @@ SfsCtrl::OnSfsListArrived(TaskEvent &event)
 		int csumIdx = result.Index(
 		    entry.getRelativePath(sfsDir_.getPath()));
 
-		if (csumIdx != wxNOT_FOUND) {
+		if (csumIdx != wxNOT_FOUND && entry.canHaveChecksum(false)) {
 			/* Ask anoubisd for the checksum */
 			createComCsumGetTasks(entry.getPath(),
 			    !task->haveKeyId(), task->haveKeyId());
@@ -1224,6 +1234,20 @@ SfsCtrl::clearImportEntries(void)
 	}
 
 	this->importList_ = 0;
+}
+
+bool
+SfsCtrl::setChecksumMissing(SfsEntry &entry)
+{
+	bool ret = false;
+
+	ret |= entry.setChecksumMissing(SfsEntry::SFSENTRY_CHECKSUM);
+
+	if (isSignatureEnabled()) {
+		ret |= entry.setChecksumMissing(SfsEntry::SFSENTRY_SIGNATURE);
+	}
+
+	return (ret);
 }
 
 void

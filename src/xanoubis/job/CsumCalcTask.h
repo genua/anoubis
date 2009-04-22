@@ -149,8 +149,8 @@ class CsumCalcTask : public Task
 		/**
 		 * Returns the state of the latest checksum-calculation.
 		 *
-		 * @return On success, 0 is returned. On error a result < 0
-		 *         is returned.
+		 * @return On success, 0 is returned. On error an errno is
+		 *         returned.
 		 */
 		int getResult(void) const;
 

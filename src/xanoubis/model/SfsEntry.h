@@ -167,6 +167,22 @@ class SfsEntry
 		wxString resolve(void) const;
 
 		/**
+		 * Tests whether the file can have a checksum.
+		 *
+		 * A checksum over a file can only be calculated, if the file
+		 * is a symbolic link or a regular file. If the
+		 * resolve-argument is set to true, the symlink is resolved and
+		 * the reference needs to be a regular file.
+		 *
+		 * @param resolve If the file is a symlink and the argument is
+		 *                set to true, the symlink is resolved. Then,
+		 *                the destination needs to be regular file.
+		 * @return true if a checksum can be calculated for the file,
+		 *         false otherwise.
+		 */
+		bool canHaveChecksum(bool) const;
+
+		/**
 		 * Returns the modification timestamp of the file.
 		 *
 		 * If the file does not exist, ther returned datetime-value

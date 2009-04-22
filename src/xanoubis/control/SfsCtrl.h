@@ -527,6 +527,8 @@ class SfsCtrl : public wxEvtHandler
 		 */
 		void clearImportEntries(void);
 
+		bool setChecksumMissing(SfsEntry &);
+
 		void pushTask(Task *);
 		bool popTask(Task *);
 

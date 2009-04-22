@@ -88,13 +88,37 @@ CsumCalcTask::exec(void)
 
 	if (lstat(path_.fn_str(), &fstat) == 0) {
 		if (S_ISLNK(fstat.st_mode) && calcLink_)
-			this->result_ = anoubis_csum_link_calc(
+			this->result_ = -anoubis_csum_link_calc(
 			    path_.fn_str(), this->cs_, &cslen);
-		else
-			this->result_ = calculateCsum(
-			    path_.fn_str(), this->cs_, &cslen);
+		else if (S_ISREG(fstat.st_mode) || S_ISLNK(fstat.st_mode)) {
+			if (S_ISLNK(fstat.st_mode)) {
+				/*
+				 * If you have a symlink make sure that only
+				 * regular files are referenced
+				 */
+				struct stat link_stat;
 
-		this->result_ *= -1;
+				if (stat(path_.fn_str(), &link_stat) == 0) {
+					if (!S_ISREG(link_stat.st_mode)) {
+						this->result_ = EINVAL;
+						return;
+					}
+				} else {
+					this->result_ = errno;
+					return;
+				}
+			}
+
+			this->result_ = -calculateCsum(
+			    path_.fn_str(), this->cs_, &cslen);
+		} else {
+			/*
+			 * Operation supported only on regular files and
+			 * symbolic links
+			 */
+			this->result_ = EINVAL;
+			return;
+		}
 	} else
 		this->result_ = errno;
 }

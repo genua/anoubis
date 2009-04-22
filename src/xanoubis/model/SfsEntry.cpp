@@ -142,6 +142,29 @@ SfsEntry::resolve(void) const
 	return (wxEmptyString);
 }
 
+bool
+SfsEntry::canHaveChecksum(bool resolve) const
+{
+	struct stat fstat;
+
+	if (lstat(path_.fn_str(), &fstat) == 0) {
+		if (S_ISLNK(fstat.st_mode)) {
+			if (resolve) {
+				/* Resolve link, needs to be a regular file */
+				struct stat link_stat;
+
+				if (stat(path_.fn_str(), &link_stat) == 0)
+					return (S_ISREG(link_stat.st_mode));
+				else
+					return (false);
+			} else
+				return (true);
+		} else
+			return (S_ISREG(fstat.st_mode));
+	} else
+		return (false);
+}
+
 wxDateTime
 SfsEntry::getLastModified(void) const
 {
@@ -331,7 +354,7 @@ SfsEntry::releaseChecksum(ChecksumType type)
 bool
 SfsEntry::validateChecksum(ChecksumType type)
 {
-	ChecksumState newState = SFSENTRY_NOT_VALIDATED;
+	ChecksumState newState = SFSENTRY_MISSING;
 
 	if (haveLocalCsum_ && haveChecksum(type)) {
 		int result = memcmp(localCsum_, csum_[type], ANOUBIS_CS_LEN);

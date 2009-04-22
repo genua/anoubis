@@ -71,6 +71,12 @@ class TcComTask : public TestHandler
 		void setupTestCsumAddSymlinkLink(void);
 		void onTestCsumAddSymlinkLink(TaskEvent &);
 
+		void setupTestCsumAddPipe(void);
+		void onTestCsumAddPipe(TaskEvent &);
+
+		void setupTestCsumAddPipeLink(void);
+		void onTestCsumAddPipeLink(TaskEvent &);
+
 		void setupTestCsumGet(void);
 		void onTestCsumGet(TaskEvent &);
 

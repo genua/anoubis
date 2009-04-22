@@ -133,8 +133,29 @@ ComCsumHandler::csumCalc(u_int8_t *cs, int *cslen) const
 			 */
 			result = anoubis_csum_link_calc(
 			    path_.fn_str(), cs, cslen);
-		} else
+		} else if (S_ISREG(fstat.st_mode) || S_ISLNK(fstat.st_mode)) {
+			if (S_ISLNK(fstat.st_mode)) {
+				/*
+				 * If you have a symlink make sure that only
+				 * regular files are referenced
+				 */
+				struct stat link_stat;
+
+				if (stat(path_.fn_str(), &link_stat) == 0) {
+					if (!S_ISREG(link_stat.st_mode))
+						return (EINVAL);
+				} else
+					return (errno);
+			}
+
 			result = anoubis_csum_calc(path_.fn_str(), cs, cslen);
+		} else {
+			/*
+			 * Operation supported only on regular files and
+			 * symbolic links
+			 */
+			return (EINVAL);
+		}
 
 		/* Toggle sign of result-code, this is the correct errno */
 		return (result * -1);

@@ -271,8 +271,8 @@ ComCsumAddTask::createCsMsg(int *payload_len)
 
 	/* Calculate checksum */
 	result = csumCalc(cs_, payload_len);
-	if (result < 0) {
-		errno = -result;
+	if (result != 0) {
+		errno = result;
 		free(payload);
 		return (0);
 	}
@@ -300,8 +300,8 @@ ComCsumAddTask::createSigMsg(int *payload_len)
 	/* Calculate the checksum of the file */
 	cs_len = ANOUBIS_CS_LEN;
 	result = csumCalc(cs_, &cs_len);
-	if (result < 0) {
-		errno = -result;
+	if (result != 0) {
+		errno = result;
 		return (0);
 	}
 

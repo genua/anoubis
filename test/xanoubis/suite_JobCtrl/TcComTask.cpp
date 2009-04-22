@@ -146,51 +146,57 @@ TcComTask::nextTest()
 		setupTestCsumAddSymlinkLink();
 		break;
 	case 10:
-		setupTestCsumGet();
+		setupTestCsumAddPipe();
 		break;
 	case 11:
-		setupTestCsumGetNoSuchFile();
+		setupTestCsumAddPipeLink();
 		break;
 	case 12:
-		setupTestCsumGetSymlink();
+		setupTestCsumGet();
 		break;
 	case 13:
-		setupTestCsumGetSymlinkLink();
+		setupTestCsumGetNoSuchFile();
 		break;
 	case 14:
-		setupTestSfsListNotEmpty();
+		setupTestCsumGetSymlink();
 		break;
 	case 15:
-		setupTestCsumDel();
+		setupTestCsumGetSymlinkLink();
 		break;
 	case 16:
-		setupTestCsumDelSymlink();
+		setupTestSfsListNotEmpty();
 		break;
 	case 17:
-		setupTestCsumDelSymlinkLink();
+		setupTestCsumDel();
 		break;
 	case 18:
-		setupTestSfsListEmpty();
+		setupTestCsumDelSymlink();
 		break;
 	case 19:
-		setupTestSfsListRecursive();
+		setupTestCsumDelSymlinkLink();
 		break;
 	case 20:
-		setupTestSigAdd();
+		setupTestSfsListEmpty();
 		break;
 	case 21:
-		setupTestSigGet();
+		setupTestSfsListRecursive();
 		break;
 	case 22:
-		setupTestSigListNotEmpty();
+		setupTestSigAdd();
 		break;
 	case 23:
-		setupTestSigDel();
+		setupTestSigGet();
 		break;
 	case 24:
-		setupTestSigListEmpty();
+		setupTestSigListNotEmpty();
 		break;
 	case 25:
+		setupTestSigDel();
+		break;
+	case 26:
+		setupTestSigListEmpty();
+		break;
+	case 27:
 		setupTestUnregister();
 		break;
 	default:
@@ -634,6 +640,96 @@ TcComTask::onTestCsumAddSymlinkLink(TaskEvent &event)
 }
 
 void
+TcComTask::setupTestCsumAddPipe(void)
+{
+	trace("Enter TcComTask::setupTestCsumAddPipe\n");
+
+	JobCtrl::getInstance()->Connect(anTASKEVT_CSUM_ADD,
+	  wxTaskEventHandler(TcComTask::onTestCsumAddPipe), NULL, this);
+
+	wxString file = wxFileName::GetHomeDir() + wxT("/a_pipe");
+
+	ComCsumAddTask *next = new ComCsumAddTask;
+	next->setPath(file);
+	next->setCalcLink(false);
+
+	trace("Scheduling ComCsumAddTask: %p\n", next);
+	JobCtrl::getInstance()->addTask(next);
+
+	trace("Leaving TcComTask::setupTestCsumAddPipe\n");
+}
+
+void
+TcComTask::onTestCsumAddPipe(TaskEvent &event)
+{
+	trace("Enter TcComTask::onTestCsumAddPipe\n");
+
+	ComCsumAddTask *t = dynamic_cast<ComCsumAddTask*>(event.getTask());
+	trace("ComCsumAddTask = %p\n", t);
+
+	assertUnless(t->getComTaskResult() == ComTask::RESULT_LOCAL_ERROR,
+	    "Failed to add a checksum: %i\n", t->getComTaskResult());
+
+	assertUnless(t->getResultDetails() == EINVAL,
+	    "ResultDetails: %s (%i)\n",
+	    strerror(t->getResultDetails()), t->getResultDetails());
+
+	assertUnless(t->haveKeyId() == false, "A key-id is assigned");
+	assertUnless(t->havePrivateKey() == false,
+	    "A private key is assigned");
+
+	delete t;
+
+	trace("Leaving TcComTask::onTestCsumAddPipe\n");
+	nextTest();
+}
+
+void
+TcComTask::setupTestCsumAddPipeLink(void)
+{
+	trace("Enter TcComTask::setupTestCsumAddPipeLink\n");
+
+	JobCtrl::getInstance()->Connect(anTASKEVT_CSUM_ADD,
+	  wxTaskEventHandler(TcComTask::onTestCsumAddPipeLink), NULL, this);
+
+	wxString file = wxFileName::GetHomeDir() + wxT("/link_to_a_pipe");
+
+	ComCsumAddTask *next = new ComCsumAddTask;
+	next->setPath(file);
+	next->setCalcLink(false);
+
+	trace("Scheduling ComCsumAddTask: %p\n", next);
+	JobCtrl::getInstance()->addTask(next);
+
+	trace("Leaving TcComTask::setupTestCsumAddPipeLink\n");
+}
+
+void
+TcComTask::onTestCsumAddPipeLink(TaskEvent &event)
+{
+	trace("Enter TcComTask::onTestCsumAddPipeLink\n");
+
+	ComCsumAddTask *t = dynamic_cast<ComCsumAddTask*>(event.getTask());
+	trace("ComCsumAddTask = %p\n", t);
+
+	assertUnless(t->getComTaskResult() == ComTask::RESULT_LOCAL_ERROR,
+	    "Failed to add a checksum: %i\n", t->getComTaskResult());
+
+	assertUnless(t->getResultDetails() == EINVAL,
+	    "ResultDetails: %s (%i)\n",
+	    strerror(t->getResultDetails()), t->getResultDetails());
+
+	assertUnless(t->haveKeyId() == false, "A key-id is assigned");
+	assertUnless(t->havePrivateKey() == false,
+	    "A private key is assigned");
+
+	delete t;
+
+	trace("Leaving TcComTask::onTestCsumAddPipeLink\n");
+	nextTest();
+}
+
+void
 TcComTask::setupTestCsumGet(void)
 {
 	trace("Enter TcComTask::setupTestCsumGet\n");
@@ -903,10 +999,10 @@ TcComTask::onTestSfsListNotEmpty(TaskEvent &event)
 	delete t;
 
 	/* Some entries expected */
-	assertUnless(result.Count() == 8,
+	/*assertUnless(result.Count() == 8,
 	    "Unexpected # of entries in sfs-list\n"
 	    "Expected: 8\n"
-	    "Is: %i\n", result.Count());
+	    "Is: %i\n", result.Count());*/
 
 	int idx;
 
@@ -949,6 +1045,11 @@ TcComTask::onTestSfsListNotEmpty(TaskEvent &event)
 	assertUnless((idx != wxNOT_FOUND),
 	    "Entry \"csums/\" not found in sfs-list\n");
 	result.RemoveAt(idx);
+
+	if (result.Count() > 0) {
+		for (unsigned int i = 0; i < result.Count(); i++)
+			trace("Unexpected #%i: %ls\n", i, result[i].c_str());
+	}
 
 	assertUnless((result.Count() == 0),
 	    "After removing all expected entries, an empty list is expected\n"

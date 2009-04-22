@@ -48,14 +48,17 @@ class TcCsumCalcTask : public TestHandler
 	private:
 		CsumCalcTask	*task1_;
 		CsumCalcTask	*task2_;
+		CsumCalcTask	*task3_;
 		bool		haveResult1_;
 		bool		haveResult2_;
 		bool		haveResult3_;
+		bool		haveResult4_;
 		int		result_;
 
 		void checkCsumFile1();
 		void checkCsumFile2();
 		void checkCsumFile3();
+		void checkCsumFile4();
 };
 
 #endif	/* _TCCSUMCALCTASK_H_ */
