@@ -302,14 +302,15 @@ Notification::getOperation(void)
 		/* XXX CEH: Should verify that evlen >= sizeof(*sfs) */
 		sfs = (struct sfs_open_message *)
 		    ((notify_->u.notify)->payload + evoff);
-		if (sfs->flags & ANOUBIS_OPEN_FLAG_READ) {
+		if (sfs->flags &
+		    (ANOUBIS_OPEN_FLAG_READ | ANOUBIS_OPEN_FLAG_FOLLOW)) {
 			operation += wxT("read ");
 		}
 		if (sfs->flags & ANOUBIS_OPEN_FLAG_WRITE) {
 			operation += wxT("write ");
 		}
 		if (sfs->flags & ANOUBIS_OPEN_FLAG_EXEC) {
-			operation += wxT("exec");
+			operation += wxT("exec ");
 		}
 	} else {
 		operation = _("unknown module");
@@ -331,7 +332,7 @@ Notification::isRwx(unsigned long mask)
 		return false;
 	evoff = get_value(notify_->u.notify->evoff);
 	sfs = (struct sfs_open_message *)((notify_->u.notify)->payload + evoff);
-	if ((sfs->flags & mask) == mask)
+	if (sfs->flags & mask)
 		return true;
 	return false;
 }
@@ -339,7 +340,7 @@ Notification::isRwx(unsigned long mask)
 bool
 Notification::isRead(void)
 {
-	return isRwx(ANOUBIS_OPEN_FLAG_READ);
+	return isRwx(ANOUBIS_OPEN_FLAG_READ|ANOUBIS_OPEN_FLAG_FOLLOW);
 }
 
 bool

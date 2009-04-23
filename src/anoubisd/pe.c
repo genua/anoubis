@@ -516,6 +516,10 @@ pe_parse_file_event(struct eventdev_hdr *hdr)
 		ret->amask |= APN_SBA_WRITE;
 	if (kernmsg->flags & ANOUBIS_OPEN_FLAG_EXEC)
 		ret->amask |= APN_SBA_EXEC;
+	if (ret->amask == 0) {
+		log_warnx("OOPS: zero amaks for %s, flags is %lx\n",
+		    ret->path, kernmsg->flags);
+	}
 	ret->uid = hdr->msg_uid;
 	return ret;
 err:
