@@ -551,8 +551,13 @@ SfsCtrl::OnSfsListArrived(TaskEvent &event)
 			basePath += wxT("/");
 
 		for (unsigned int idx = 0; idx < result.Count(); idx++) {
-			if (!result[idx].EndsWith(wxT("/")))
-				sfsDir_.insertEntry(basePath + result[idx]);
+			if (!result[idx].EndsWith(wxT("/"))) {
+				SfsEntry &e = sfsDir_.insertEntry(
+				    basePath + result[idx]);
+
+				createComCsumGetTasks(e.getPath(),
+			    		!task->haveKeyId(), task->haveKeyId());
+			}
 		}
 	}
 }
@@ -684,18 +689,24 @@ SfsCtrl::OnCsumGet(TaskEvent &event)
 
 		errorList_.Add(message);
 		return;
+	} else if (taskResult == ComTask::RESULT_LOCAL_ERROR) {
+		wxString message = wxString::Format(
+		    _("Failed to resolve %ls"), task->getPath().c_str());
+
+		errorList_.Add(message);
+		return;
 	} else if (taskResult != ComTask::RESULT_SUCCESS) {
 		wxString message;
 
 		if (type == SfsEntry::SFSENTRY_CHECKSUM)
 			message = wxString::Format(_("An unexpected error "
-			    "occured (%i) while fetching the checksum for "
-			    "%ls."), task->getComTaskResult(),
+			    "occured (%hs) while fetching the checksum for "
+			    "%ls."), strerror(task->getComTaskResult()),
 			    task->getPath().c_str());
 		else
 			message = wxString::Format(_("An unexpected error "
-			    "occured (%i) while fetching the signature for "
-			    "%ls."), task->getComTaskResult(),
+			    "occured (%hs) while fetching the signature for "
+			    "%ls."), strerror(task->getComTaskResult()),
 			    task->getPath().c_str());
 
 		errorList_.Add(message);
@@ -808,13 +819,13 @@ SfsCtrl::OnCsumAdd(TaskEvent &event)
 
 		if (type == SfsEntry::SFSENTRY_CHECKSUM)
 			message = wxString::Format(_("An unexpected error "
-			    "occured (%i) while register the checksum for "
-			    "%ls."), task->getComTaskResult(),
+			    "occured (%hs) while register the checksum for "
+			    "%ls."), strerror(task->getComTaskResult()),
 			    task->getPath().c_str());
 		else
 			message = wxString::Format(_("An unexpected error "
-			    "occured (%i) while register the signature for "
-			    "%ls."), task->getComTaskResult(),
+			    "occured (%hs) while register the signature for "
+			    "%ls."), strerror(task->getComTaskResult()),
 			    task->getPath().c_str());
 
 		errorList_.Add(message);
@@ -900,13 +911,13 @@ SfsCtrl::OnCsumDel(TaskEvent &event)
 
 		if (type == SfsEntry::SFSENTRY_CHECKSUM)
 			message = wxString::Format(_("An unexpected error "
-			    "occured (%i) while removing the checksum for "
-			    "%ls."), task->getComTaskResult(),
+			    "occured (%hs) while removing the checksum for "
+			    "%ls."), strerror(task->getComTaskResult()),
 			    task->getPath().c_str());
 		else
 			message = wxString::Format(_("An unexpected error "
-			    "occured (%i) while removing the signature for "
-			    "%ls."), task->getComTaskResult(),
+			    "occured (%hs) while removing the signature for "
+			    "%ls."), strerror(task->getComTaskResult()),
 			    task->getPath().c_str());
 
 		errorList_.Add(message);

@@ -73,9 +73,11 @@ class ModSfsListCtrl : public wxListCtrl
 			SHOW_CHANGED,	/*!< Only entries with a non-matching
 					     checksum are displayed.
 					  @see SfsEntry::isChecksumChanged() */
-			SHOW_CHECKSUM	/*!< Only entries with a rgistered
+			SHOW_CHECKSUM,	/*!< Only entries with a rgistered
 					     checksum are displayed.
 					     @see SfsEntry::haveChecksum() */
+			SHOW_ORPHANED	/*!< Only orphaned files are displayed.
+					     @see SfsEntry::fileExists() */
 		};
 
 		/**

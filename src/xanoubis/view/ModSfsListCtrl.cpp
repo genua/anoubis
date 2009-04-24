@@ -264,6 +264,8 @@ ModSfsListCtrl::canDisplay(const SfsEntry &entry, DisplayOption option) const
 		return (entry.isChecksumChanged());
 	case SHOW_CHECKSUM:
 		return (entry.haveChecksum());
+	case SHOW_ORPHANED:
+		return (!entry.fileExists());
 	}
 
 	/* Never reached */

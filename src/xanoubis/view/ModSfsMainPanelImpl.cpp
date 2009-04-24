@@ -199,7 +199,7 @@ ModSfsMainPanelImpl::OnSfsOperationFinished(wxCommandEvent&)
 	else if (currentOperation_ == OP_SHOW_CHECKSUMS)
 		SfsMainListCtrl->refreshList(ModSfsListCtrl::SHOW_CHECKSUM);
 	else if (currentOperation_ == OP_SHOW_ORPHANED)
-		SfsMainListCtrl->refreshList(ModSfsListCtrl::SHOW_ALL);
+		SfsMainListCtrl->refreshList(ModSfsListCtrl::SHOW_ORPHANED);
 }
 
 void

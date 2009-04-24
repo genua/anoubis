@@ -188,10 +188,16 @@ class ComCsumHandler
 		 * @param resolved_path Destination, where there the resolved
 		 *                      path is written to. The string needs to
 		 *                      have a size of PATH_MAX.
+		 * @param noent If set to true, the path is still copied into
+		 *              resolved_path, even if the file does not exist.
+		 *              This might be useful, if you try to fetch a
+		 *              checksum for a file, which is already removed.
+		 *              If the argument is set to false, the operation
+		 *              will fail, if the file does not exist.
 		 * @return true on success, false if the resolve-operation
 		 *         failed.
 		 */
-		bool resolvePath(char *) const;
+		bool resolvePath(char *, bool) const;
 
 	private:
 		wxString	path_;

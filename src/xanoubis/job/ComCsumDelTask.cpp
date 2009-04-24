@@ -66,10 +66,15 @@ ComCsumDelTask::exec(void)
 	else
 		req_op = ANOUBIS_CHECKSUM_OP_DEL;
 
-	/* receive path to be send to anoubisd */
-	if (!resolvePath(path)) {
+	/*
+	 * receive path to be send to anoubisd
+	 * true := continue, if the file does not exist, you might want to
+	 *         remove an orphaned checksum
+	 */
+	if (!resolvePath(path, true)) {
 		setComTaskResult(RESULT_LOCAL_ERROR);
 		setResultDetails(errno);
+		return;
 	}
 
 	/* Create request */

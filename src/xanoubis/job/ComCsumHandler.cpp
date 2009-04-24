@@ -164,7 +164,7 @@ ComCsumHandler::csumCalc(u_int8_t *cs, int *cslen) const
 }
 
 bool
-ComCsumHandler::resolvePath(char *resolved_path) const
+ComCsumHandler::resolvePath(char *resolved_path, bool noent) const
 {
 	struct stat fstat;
 
@@ -181,6 +181,9 @@ ComCsumHandler::resolvePath(char *resolved_path) const
 		} else
 			strlcpy(resolved_path, path_.fn_str(), PATH_MAX);
 
+		return (true);
+	} else if (noent) {
+		strlcpy(resolved_path, path_.fn_str(), PATH_MAX);
 		return (true);
 	} else
 		return (false);

@@ -117,10 +117,14 @@ ComCsumAddTask::exec(void)
 	resetComTaskResult();
 	ta_ = NULL;
 
-	/* receive path to be send to anoubisd */
-	if (!resolvePath(path)) {
+	/*
+	 * Receive path to be send to anoubisd
+	 * false := abort if the requested file does not exist
+	 */
+	if (!resolvePath(path, false)) {
 		setComTaskResult(RESULT_LOCAL_ERROR);
 		setResultDetails(errno);
+		return;
 	}
 
 	if (haveSfsEntry()) {

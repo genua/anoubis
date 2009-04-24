@@ -77,10 +77,15 @@ ComCsumGetTask::exec(void)
 	else
 		req_op = ANOUBIS_CHECKSUM_OP_GET;
 
-	/* receive path to be send to anoubisd */
-	if (!resolvePath(path)) {
+	/*
+	 * Receive path to be send to anoubisd
+	 * true := continue if the path does not exist, you might want to
+	 *         fetch an orphaned checksum.
+	 */
+	if (!resolvePath(path, true)) {
 		setComTaskResult(RESULT_LOCAL_ERROR);
 		setResultDetails(errno);
+		return;
 	}
 
 	/* Create request */

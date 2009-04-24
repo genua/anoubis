@@ -359,6 +359,9 @@ SfsEntry::validateChecksum(ChecksumType type)
 	if (haveLocalCsum_ && haveChecksum(type)) {
 		int result = memcmp(localCsum_, csum_[type], ANOUBIS_CS_LEN);
 		newState = (result == 0) ? SFSENTRY_MATCH : SFSENTRY_NOMATCH;
+	} else if (!haveLocalCsum_ && haveChecksum(type)) {
+		/* no local checksum + registered checksum := orphaned? */
+		newState = SFSENTRY_INVALID;
 	}
 
 	if (state_[type] != newState) {

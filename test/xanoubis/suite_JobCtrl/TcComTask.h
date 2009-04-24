@@ -83,6 +83,9 @@ class TcComTask : public TestHandler
 		void setupTestCsumGetNoSuchFile(void);
 		void onTestCsumGetNoSuchFile(TaskEvent &);
 
+		void setupTestCsumGetOrphaned(void);
+		void onTestCsumGetOrphaned(TaskEvent &);
+
 		void setupTestCsumGetSymlink(void);
 		void onTestCsumGetSymlink(TaskEvent &);
 

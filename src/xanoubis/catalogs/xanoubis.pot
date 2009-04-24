@@ -34,7 +34,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-04-23 16:11+0200\n"
+"POT-Creation-Date: 2009-04-24 11:43+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -330,7 +330,7 @@ msgstr ""
 #: view/DlgRuleEditorBase.cpp:90 view/DlgRuleEditorBase.cpp:168
 #: view/ModSfsPanelsBase.cpp:325 view/ModSfsPanelsBase.cpp:335
 #: view/ModSfsPanelsBase.cpp:483 view/ModSfsPanelsBase.cpp:491
-#: view/RuleWizardPanelsBase.cpp:286
+#: view/RuleWizardPanelsBase.cpp:312
 msgid "..."
 msgstr ""
 
@@ -360,8 +360,8 @@ msgstr ""
 
 #: view/DlgRuleEditorBase.cpp:127 view/DlgRuleEditorBase.cpp:205
 #: view/DlgRuleEditorBase.cpp:409 view/ModAnoubisPanelsBase.cpp:557
-#: view/RuleWizardPanelsBase.cpp:450 view/RuleWizardPanelsBase.cpp:612
-#: view/RuleWizardPanelsBase.cpp:876
+#: view/RuleWizardPanelsBase.cpp:476 view/RuleWizardPanelsBase.cpp:638
+#: view/RuleWizardPanelsBase.cpp:902
 msgid "delete"
 msgstr ""
 
@@ -437,7 +437,7 @@ msgstr ""
 msgid "Binary:"
 msgstr ""
 
-#: view/DlgRuleEditorBase.cpp:326 view/RuleWizardPanelsBase.cpp:273
+#: view/DlgRuleEditorBase.cpp:326 view/RuleWizardPanelsBase.cpp:299
 #: widgets/AnPickFromFs.cpp:46
 msgid "Pick..."
 msgstr ""
@@ -617,7 +617,7 @@ msgstr ""
 msgid "Protocol:"
 msgstr ""
 
-#: view/DlgRuleEditorBase.cpp:559 view/RuleWizardPanelsBase.cpp:172
+#: view/DlgRuleEditorBase.cpp:559 view/RuleWizardPanelsBase.cpp:198
 msgid "tcp"
 msgstr ""
 
@@ -625,7 +625,7 @@ msgstr ""
 msgid "Filter TCP streams"
 msgstr ""
 
-#: view/DlgRuleEditorBase.cpp:564 view/RuleWizardPanelsBase.cpp:175
+#: view/DlgRuleEditorBase.cpp:564 view/RuleWizardPanelsBase.cpp:201
 msgid "udp"
 msgstr ""
 
@@ -1077,7 +1077,7 @@ msgid "calculating..."
 msgstr ""
 
 #: view/DlgRuleEditorAppPage.cpp:385 view/RuleWizardProgramPage.cpp:154
-#: control/SfsCtrl.cpp:593 control/SfsCtrl.cpp:766
+#: control/SfsCtrl.cpp:598 control/SfsCtrl.cpp:777
 #, c-format
 msgid "Failed to calculate the checksum for %ls: %hs"
 msgstr ""
@@ -1342,7 +1342,7 @@ msgid "Module:"
 msgstr ""
 
 #: view/ModAnoubisMainPanelImpl.cpp:582 view/RuleWizardHistory.cpp:574
-#: view/RuleWizardPanelsBase.cpp:261
+#: view/RuleWizardPanelsBase.cpp:287
 msgid "Program:"
 msgstr ""
 
@@ -1777,12 +1777,12 @@ msgid "not validated"
 msgstr ""
 
 #: view/ModSfsDetailsDlg.cpp:75 view/ModSfsDetailsDlg.cpp:94
-#: view/ModSfsListCtrl.cpp:212 view/ModSfsListCtrl.cpp:235
+#: view/ModSfsListCtrl.cpp:209 view/ModSfsListCtrl.cpp:232
 msgid "not registered"
 msgstr ""
 
 #: view/ModSfsDetailsDlg.cpp:78 view/ModSfsDetailsDlg.cpp:97
-#: view/ModSfsListCtrl.cpp:216 view/ModSfsListCtrl.cpp:239
+#: view/ModSfsListCtrl.cpp:213 view/ModSfsListCtrl.cpp:236
 msgid "invalid"
 msgstr ""
 
@@ -1802,15 +1802,15 @@ msgstr ""
 msgid "Signature"
 msgstr ""
 
-#: view/ModSfsListCtrl.cpp:73
+#: view/ModSfsListCtrl.cpp:70
 msgid "Show details"
 msgstr ""
 
-#: view/ModSfsListCtrl.cpp:75
+#: view/ModSfsListCtrl.cpp:72
 msgid "Jump to link target"
 msgstr ""
 
-#: view/ModSfsListCtrl.cpp:208 view/ModSfsListCtrl.cpp:231
+#: view/ModSfsListCtrl.cpp:205 view/ModSfsListCtrl.cpp:228
 msgid "???"
 msgstr ""
 
@@ -2087,7 +2087,7 @@ msgstr ""
 msgid "Last modified:"
 msgstr ""
 
-#: view/ModSfsPanelsBase.cpp:465 view/RuleWizardPanelsBase.cpp:280
+#: view/ModSfsPanelsBase.cpp:465 view/RuleWizardPanelsBase.cpp:306
 msgid "Checksum:"
 msgstr ""
 
@@ -2433,108 +2433,108 @@ msgstr ""
 msgid "execute signature: don't care"
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:32
+#: view/RuleWizardPanelsBase.cpp:58
 msgid "... settings:"
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:47
+#: view/RuleWizardPanelsBase.cpp:73
 msgid "This is the mandatory help text ..."
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:62
+#: view/RuleWizardPanelsBase.cpp:88
 msgid "Overwrite existing policies?"
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:66
+#: view/RuleWizardPanelsBase.cpp:92
 msgid "Yes (create new policies)"
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:69
+#: view/RuleWizardPanelsBase.cpp:95
 msgid "No (keep existing policies)"
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:77
+#: view/RuleWizardPanelsBase.cpp:103
 msgid ""
 "For this application\n"
 "... policies\n"
 "already exists."
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:86
+#: view/RuleWizardPanelsBase.cpp:112
 msgid "existing policy for \"...\":"
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:90
+#: view/RuleWizardPanelsBase.cpp:116
 msgid "/* apn policy */"
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:113
+#: view/RuleWizardPanelsBase.cpp:139
 msgid "Available predefined services:"
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:120
+#: view/RuleWizardPanelsBase.cpp:146
 msgid "search"
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:139
+#: view/RuleWizardPanelsBase.cpp:165
 msgid "add selected service"
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:141
+#: view/RuleWizardPanelsBase.cpp:167
 msgid ""
 "close this dialog and return\n"
 "the selected service"
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:150
+#: view/RuleWizardPanelsBase.cpp:176
 msgid "Configure custom service"
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:165
+#: view/RuleWizardPanelsBase.cpp:191
 msgid "Protocoltype:"
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:183
+#: view/RuleWizardPanelsBase.cpp:209
 msgid "Portnumber(s) or -range:"
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:190
+#: view/RuleWizardPanelsBase.cpp:216
 msgid "add custom service"
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:191
+#: view/RuleWizardPanelsBase.cpp:217
 msgid ""
 "close this dialog and return\n"
 "the given custom service"
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:198
+#: view/RuleWizardPanelsBase.cpp:224
 msgid "(e.g. 123 or 123, 234 or 123 - 234)"
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:215
+#: view/RuleWizardPanelsBase.cpp:241
 msgid "Cancel"
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:216
+#: view/RuleWizardPanelsBase.cpp:242
 msgid "leave this dialog without change"
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:252
+#: view/RuleWizardPanelsBase.cpp:278
 msgid "Choose Program:"
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:274
+#: view/RuleWizardPanelsBase.cpp:300
 msgid ""
 "opens a file-choose-dialog\n"
 "and stores the result"
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:328 view/RuleWizardPanelsBase.cpp:416
+#: view/RuleWizardPanelsBase.cpp:354 view/RuleWizardPanelsBase.cpp:442
 msgid "Context settings:"
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:343
+#: view/RuleWizardPanelsBase.cpp:369
 msgid ""
 "The context of an application is the conjunction of it's calling "
 "environment. This is the program which runs another one.\n"
@@ -2545,212 +2545,212 @@ msgid ""
 "But in case of the most applications \"yes' seems to be the best fit. "
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:355
+#: view/RuleWizardPanelsBase.cpp:381
 msgid ""
 "Programs started by this application have the same permissions / "
 "restrictions as the main program."
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:362
+#: view/RuleWizardPanelsBase.cpp:388
 msgid "Yes (same permissions / restrictions)"
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:371
+#: view/RuleWizardPanelsBase.cpp:397
 msgid "allow exceptions (-> next page)"
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:379
+#: view/RuleWizardPanelsBase.cpp:405
 msgid "No (each executed program has its own policies)"
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:425
+#: view/RuleWizardPanelsBase.cpp:451
 msgid ""
 "Programs been started by this application have the\n"
 "same permissions / restrictions as the main application."
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:432
+#: view/RuleWizardPanelsBase.cpp:458
 msgid "Exceptions (programs started with own polcies):"
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:442
+#: view/RuleWizardPanelsBase.cpp:468
 msgid "add..."
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:443
+#: view/RuleWizardPanelsBase.cpp:469
 msgid ""
 "opens a file-choose-dialog and\n"
 "adds the result to the list"
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:451
+#: view/RuleWizardPanelsBase.cpp:477
 msgid "removes the selected entry from the list"
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:485 view/RuleWizardPanelsBase.cpp:572
+#: view/RuleWizardPanelsBase.cpp:511 view/RuleWizardPanelsBase.cpp:598
 msgid "Application Level Firewall settings:"
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:497
+#: view/RuleWizardPanelsBase.cpp:523
 msgid ""
 "Allow the application \"...\" the usage\n"
 "of network services (... functionality)?"
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:504
+#: view/RuleWizardPanelsBase.cpp:530
 msgid "Yes (without restrictions)"
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:507 view/RuleWizardPanelsBase.cpp:770
+#: view/RuleWizardPanelsBase.cpp:533 view/RuleWizardPanelsBase.cpp:796
 msgid "restricted (default)"
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:516
+#: view/RuleWizardPanelsBase.cpp:542
 msgid ""
 "Default services are allowed, any other network\n"
 "access is asked on demand."
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:522 view/RuleWizardPanelsBase.cpp:785
+#: view/RuleWizardPanelsBase.cpp:548 view/RuleWizardPanelsBase.cpp:811
 msgid "restricted"
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:531 view/RuleWizardPanelsBase.cpp:794
+#: view/RuleWizardPanelsBase.cpp:557 view/RuleWizardPanelsBase.cpp:820
 msgid "Settings may be configured on the next page."
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:537
+#: view/RuleWizardPanelsBase.cpp:563
 msgid "No (deny access of network resources)"
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:581
+#: view/RuleWizardPanelsBase.cpp:607
 msgid ""
 "Options for restricted network access\n"
 "for application \"...\":"
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:585
+#: view/RuleWizardPanelsBase.cpp:611
 msgid "List of allowed services:"
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:595
+#: view/RuleWizardPanelsBase.cpp:621
 msgid " add..."
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:596
+#: view/RuleWizardPanelsBase.cpp:622
 msgid ""
 "opens a service-choose-dialog\n"
 "and adds the result to the list"
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:603
+#: view/RuleWizardPanelsBase.cpp:629
 msgid "add default services"
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:605 view/RuleWizardPanelsBase.cpp:869
+#: view/RuleWizardPanelsBase.cpp:631 view/RuleWizardPanelsBase.cpp:895
 msgid "adds the default services to the list"
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:614 view/RuleWizardPanelsBase.cpp:878
+#: view/RuleWizardPanelsBase.cpp:640 view/RuleWizardPanelsBase.cpp:904
 msgid "removes the selected items from the list"
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:624
+#: view/RuleWizardPanelsBase.cpp:650
 msgid "ask on any other network access"
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:629
+#: view/RuleWizardPanelsBase.cpp:655
 msgid "allow raw network access"
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:671 view/RuleWizardPanelsBase.cpp:748
-#: view/RuleWizardPanelsBase.cpp:831
+#: view/RuleWizardPanelsBase.cpp:697 view/RuleWizardPanelsBase.cpp:774
+#: view/RuleWizardPanelsBase.cpp:857
 msgid "Sandbox settings:"
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:686
+#: view/RuleWizardPanelsBase.cpp:712
 msgid ""
 "With the sandbox you can confine an application.\n"
 "This is done by specifying which files it may read, write or execute."
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:698
+#: view/RuleWizardPanelsBase.cpp:724
 msgid "Create sandbox policies?"
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:705
+#: view/RuleWizardPanelsBase.cpp:731
 msgid "Yes, create policies (wizard guided)"
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:708
+#: view/RuleWizardPanelsBase.cpp:734
 msgid "Yes, load default policies (skip wizard)"
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:711
+#: view/RuleWizardPanelsBase.cpp:737
 msgid "No, do not  create sandbox policies"
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:760
+#: view/RuleWizardPanelsBase.cpp:786
 msgid ""
 "Select permissions of application \"...\"\n"
 "for ... file access:"
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:767
+#: view/RuleWizardPanelsBase.cpp:793
 msgid "unrestricted"
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:779
+#: view/RuleWizardPanelsBase.cpp:805
 msgid ""
 "Default permissions are allowed, any other\n"
 "access is asked on demand."
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:840
+#: view/RuleWizardPanelsBase.cpp:866
 msgid "Options for ... access of \"...\":"
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:844
+#: view/RuleWizardPanelsBase.cpp:870
 msgid "... grand access:"
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:854
+#: view/RuleWizardPanelsBase.cpp:880
 msgid " add file..."
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:855
+#: view/RuleWizardPanelsBase.cpp:881
 msgid ""
 "opens a file-choose-dialog\n"
 "and adds the result to the list"
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:859
+#: view/RuleWizardPanelsBase.cpp:885
 msgid " add directory..."
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:860
+#: view/RuleWizardPanelsBase.cpp:886
 msgid ""
 "opens a directory-choose-dialog\n"
 "and adds the result to the list"
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:867
+#: view/RuleWizardPanelsBase.cpp:893
 msgid "add default permissions"
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:888
+#: view/RuleWizardPanelsBase.cpp:914
 msgid "ask on any other access"
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:893
+#: view/RuleWizardPanelsBase.cpp:919
 msgid "always allow access on valid checksum / signature"
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:936
+#: view/RuleWizardPanelsBase.cpp:962
 msgid "End."
 msgstr ""
 
-#: view/RuleWizardPanelsBase.cpp:945
+#: view/RuleWizardPanelsBase.cpp:971
 msgid ""
 "This is the final page. If you click on 'finish'\n"
 "the policies will be created.\n"
@@ -2760,7 +2760,7 @@ msgid ""
 "(To make this work you need to be connected.)"
 msgstr ""
 
-#: view/RuleWizardPanelsBase.h:110
+#: view/RuleWizardPanelsBase.h:136
 msgid "Rule wizard add service"
 msgstr ""
 
@@ -2847,121 +2847,126 @@ msgid ""
 "ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:584 control/SfsCtrl.cpp:633 control/SfsCtrl.cpp:753
-#: control/SfsCtrl.cpp:861
+#: control/SfsCtrl.cpp:589 control/SfsCtrl.cpp:638 control/SfsCtrl.cpp:764
+#: control/SfsCtrl.cpp:872
 #, c-format
 msgid "%ls not found in file-list!"
 msgstr ""
 
-#: control/SfsCtrl.cpp:660
+#: control/SfsCtrl.cpp:665
 #, c-format
 msgid "Got error from daemon (%hs) while fetching the checksum for %ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:664
+#: control/SfsCtrl.cpp:669
 #, c-format
 msgid "Got error from daemon (%hs) while fetching the signature for %ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:677
+#: control/SfsCtrl.cpp:682
 #, c-format
 msgid "Communication error while fetching the checksum for %ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:681
+#: control/SfsCtrl.cpp:686
 #, c-format
 msgid "Communication error while fetching the signature for %ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:691
+#: control/SfsCtrl.cpp:694
 #, c-format
-msgid "An unexpected error occured (%i) while fetching the checksum for %ls."
+msgid "Failed to resolve %ls"
 msgstr ""
 
-#: control/SfsCtrl.cpp:696
+#: control/SfsCtrl.cpp:702
 #, c-format
-msgid "An unexpected error occured (%i) while fetching the signature for %ls."
+msgid "An unexpected error occured (%hs) while fetching the checksum for %ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:721
+#: control/SfsCtrl.cpp:707
+#, c-format
+msgid "An unexpected error occured (%hs) while fetching the signature for %ls."
+msgstr ""
+
+#: control/SfsCtrl.cpp:732
 msgid "An unexpected checksum was fetched."
 msgstr ""
 
-#: control/SfsCtrl.cpp:723
+#: control/SfsCtrl.cpp:734
 msgid "An unexpected signature was fetched."
 msgstr ""
 
-#: control/SfsCtrl.cpp:770
+#: control/SfsCtrl.cpp:781
 #, c-format
 msgid "Failed to calculate the signature for %ls: %hs"
 msgstr ""
 
-#: control/SfsCtrl.cpp:780
+#: control/SfsCtrl.cpp:791
 #, c-format
 msgid "Communication error while register the checksum for %ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:784
+#: control/SfsCtrl.cpp:795
 #, c-format
 msgid "Communication error while register the signature for %ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:794
+#: control/SfsCtrl.cpp:805
 #, c-format
 msgid "Got error from daemon (%hs) while register the checksum for %ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:799
+#: control/SfsCtrl.cpp:810
 #, c-format
 msgid "Got error from daemon (%hs) while register the signature for %ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:810
+#: control/SfsCtrl.cpp:821
 #, c-format
-msgid "An unexpected error occured (%i) while register the checksum for %ls."
+msgid "An unexpected error occured (%hs) while register the checksum for %ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:815
+#: control/SfsCtrl.cpp:826
 #, c-format
-msgid "An unexpected error occured (%i) while register the signature for %ls."
+msgid "An unexpected error occured (%hs) while register the signature for %ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:874
+#: control/SfsCtrl.cpp:885
 #, c-format
 msgid "Communication error while removing the checksum for %ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:878
+#: control/SfsCtrl.cpp:889
 #, c-format
 msgid "Communication error while removing the signature for %ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:887
+#: control/SfsCtrl.cpp:898
 #, c-format
 msgid "Got error from daemon (%hs) while removing the checksum for %ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:892
+#: control/SfsCtrl.cpp:903
 #, c-format
 msgid "Got error from daemon (%hs) while removing the signature for %ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:902
+#: control/SfsCtrl.cpp:913
 #, c-format
-msgid "An unexpected error occured (%i) while removing the checksum for %ls."
+msgid "An unexpected error occured (%hs) while removing the checksum for %ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:907
+#: control/SfsCtrl.cpp:918
 #, c-format
-msgid "An unexpected error occured (%i) while removing the signature for %ls."
+msgid "An unexpected error occured (%hs) while removing the signature for %ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:1197
+#: control/SfsCtrl.cpp:1208
 #, c-format
 msgid "Failed to open %ls for writing: %hs"
 msgstr ""
 
-#: control/SfsCtrl.cpp:1206
+#: control/SfsCtrl.cpp:1217
 #, c-format
 msgid "Failed to flush the content of %ls: %hs"
 msgstr ""

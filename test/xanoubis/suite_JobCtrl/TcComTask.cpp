@@ -158,45 +158,48 @@ TcComTask::nextTest()
 		setupTestCsumGetNoSuchFile();
 		break;
 	case 14:
-		setupTestCsumGetSymlink();
+		setupTestCsumGetOrphaned();
 		break;
 	case 15:
-		setupTestCsumGetSymlinkLink();
+		setupTestCsumGetSymlink();
 		break;
 	case 16:
-		setupTestSfsListNotEmpty();
+		setupTestCsumGetSymlinkLink();
 		break;
 	case 17:
-		setupTestCsumDel();
+		setupTestSfsListNotEmpty();
 		break;
 	case 18:
-		setupTestCsumDelSymlink();
+		setupTestCsumDel();
 		break;
 	case 19:
-		setupTestCsumDelSymlinkLink();
+		setupTestCsumDelSymlink();
 		break;
 	case 20:
-		setupTestSfsListEmpty();
+		setupTestCsumDelSymlinkLink();
 		break;
 	case 21:
-		setupTestSfsListRecursive();
+		setupTestSfsListEmpty();
 		break;
 	case 22:
-		setupTestSigAdd();
+		setupTestSfsListRecursive();
 		break;
 	case 23:
-		setupTestSigGet();
+		setupTestSigAdd();
 		break;
 	case 24:
-		setupTestSigListNotEmpty();
+		setupTestSigGet();
 		break;
 	case 25:
-		setupTestSigDel();
+		setupTestSigListNotEmpty();
 		break;
 	case 26:
-		setupTestSigListEmpty();
+		setupTestSigDel();
 		break;
 	case 27:
+		setupTestSigListEmpty();
+		break;
+	case 28:
 		setupTestUnregister();
 		break;
 	default:
@@ -819,17 +822,19 @@ TcComTask::onTestCsumGetNoSuchFile(TaskEvent &event)
 	ComCsumGetTask *t = dynamic_cast<ComCsumGetTask*>(event.getTask());
 	trace("ComCsumGetTask = %p\n", t);
 
-	assertUnless(t->getComTaskResult() == ComTask::RESULT_SUCCESS,
+	assertUnless(t->getComTaskResult() == ComTask::RESULT_REMOTE_ERROR,
 	    "Failed to get a checksum!\n"
 	    "ComTaskResult = %i\n"
 	    "ResultDetails = %i\n",
 	    t->getComTaskResult(), t->getResultDetails());
 
-	assertUnless(t->getResultDetails() == 2,
+	assertUnless(t->getResultDetails() == ENOENT,
 	    "ResultDetails: %s (%i)\n",
 	    strerror(t->getResultDetails()), t->getResultDetails());
 
 	assertUnless(t->haveKeyId() == false, "A key-id is assigned");
+
+	assertUnless(t->getCsumLen() == 0, "Task contains a checksum");
 
 	u_int8_t cs[ANOUBIS_CS_LEN];
 	assertUnless(t->getCsum(cs, ANOUBIS_CS_LEN) == 0,
@@ -840,6 +845,58 @@ TcComTask::onTestCsumGetNoSuchFile(TaskEvent &event)
 
 	delete t;
 	trace("Leaving TcComTask::onTestCsumGetNoSuchFile\n");
+	nextTest();
+}
+
+void
+TcComTask::setupTestCsumGetOrphaned(void)
+{
+	trace("Enter TcComTask::setupTestCsumGetOrphaned\n");
+
+	JobCtrl::getInstance()->Connect(anTASKEVT_CSUM_GET,
+	    wxTaskEventHandler(TcComTask::onTestCsumGetOrphaned),
+	    NULL, this);
+
+	wxString file = wxFileName::GetHomeDir() + wxT("/orphaned");
+
+	ComCsumGetTask *next = new ComCsumGetTask;
+	next->setPath(file);
+
+	trace("Scheduling ComCsumGetTask: %p\n", next);
+	JobCtrl::getInstance()->addTask(next);
+
+	trace("Leaving TcComTask::setupTestCsumGetOrphaned\n");
+}
+
+void
+TcComTask::onTestCsumGetOrphaned(TaskEvent &event)
+{
+	trace("TcComTask::onTestCsumGetOrphaned\n");
+
+	ComCsumGetTask *t = dynamic_cast<ComCsumGetTask*>(event.getTask());
+	trace("ComCsumGetTask = %p\n", t);
+
+	assertUnless(t->getComTaskResult() == ComTask::RESULT_SUCCESS,
+	    "Failed to get a checksum!\n"
+	    "ComTaskResult = %i\n"
+	    "ResultDetails = %i\n",
+	    t->getComTaskResult(), t->getResultDetails());
+
+	assertUnless(t->getResultDetails() == 0,
+	    "ResultDetails: %s (%i)\n",
+	    strerror(t->getResultDetails()), t->getResultDetails());
+
+	assertUnless(t->haveKeyId() == false, "A key-id is assigned");
+
+	assertUnless(t->getCsumLen() == ANOUBIS_CS_LEN,
+	    "Task does not contain a checksum\n");
+
+	u_int8_t cs[ANOUBIS_CS_LEN];
+	assertUnless(t->getCsum(cs, ANOUBIS_CS_LEN) == ANOUBIS_CS_LEN,
+	   "Task does not contain a checksum\n");
+
+	delete t;
+	trace("Leaving TcComTask::onTestCsumGetOrphaned\n");
 	nextTest();
 }
 
