@@ -62,10 +62,7 @@ ModSfsListCtrl::ModSfsListCtrl(wxWindow *parent, wxWindowID id,
 	    wxLIST_FORMAT_CENTRE, wxLIST_AUTOSIZE_USEHEADER);
 
 	/* Adjust initial width of COLUMN_FILE */
-	int fileColumnWidth = GetClientSize().GetWidth();
-	fileColumnWidth -= GetColumnWidth(COLUMN_CHECKSUM);
-	fileColumnWidth -= GetColumnWidth(COLUMN_SIGNATURE);
-	SetColumnWidth(COLUMN_FILE, fileColumnWidth);
+	SetColumnWidth(COLUMN_FILE, 200);
 
 	/* Initialize popup-menu */
 
