@@ -71,13 +71,13 @@ RuleWizardOverwritePolicyPageBase::RuleWizardOverwritePolicyPageBase( wxWindow* 
 	helpSizer = new wxBoxSizer( wxVERTICAL );
 	
 	helpLabel = new wxStaticText( helpPage, wxID_ANY, _("This is the mandatory help text ..."), wxDefaultPosition, wxDefaultSize, 0 );
-	helpLabel->Wrap( 600 );
-	helpSizer->Add( helpLabel, 0, wxALL, 5 );
+	helpLabel->Wrap( 400 );
+	helpSizer->Add( helpLabel, 1, wxALL|wxEXPAND, 5 );
 	
 	helpPage->SetSizer( helpSizer );
 	helpPage->Layout();
 	helpSizer->Fit( helpPage );
-	mainSizer->Add( helpPage, 3, wxEXPAND | wxALL, 5 );
+	mainSizer->Add( helpPage, 5, wxALL|wxEXPAND, 5 );
 	
 	wxBoxSizer* splitSizer;
 	splitSizer = new wxBoxSizer( wxHORIZONTAL );
