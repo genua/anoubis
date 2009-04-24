@@ -422,8 +422,10 @@ RuleWizard::createContextPolicy(PolicyRuleSet *ruleSet) const
 			ctxFilter = new ContextFilterPolicy(ctxApp);
 			ctxApp->prependFilterPolicy(ctxFilter);
 			ctxFilter->setContextTypeNo(APN_CTX_NEW);
-			ctxFilter->setBinaryList(
-			    history_.getContextExceptionList());
+			const wxArrayString &list = history_.getContextExceptionList();
+			/* XXX CEH: Need to deal with checksums here. */
+			for (unsigned int i=0; i<list.GetCount(); ++i)
+				ctxFilter->addBinary(list[i]);
 		}
 	}
 

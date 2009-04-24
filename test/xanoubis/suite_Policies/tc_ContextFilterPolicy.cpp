@@ -419,6 +419,21 @@ START_TEST(ContextFilterPolicy_setBinaryName_two)
 }
 END_TEST
 
+static int
+setBinaryListCtx(ContextFilterPolicy *policy, const wxArrayString &list)
+{
+	unsigned int	i;
+	while(policy->getBinaryCount()) {
+		policy->removeBinary(0);
+	}
+	if (policy->getBinaryCount())
+		return false;
+	for (i=0; i<list.GetCount(); ++i)
+		if (!policy->addBinary(list[i]))
+			return false;
+	return true;
+}
+
 START_TEST(ContextFilterPolicy_setBinaryList)
 {
 	wxArrayString	 getList;
@@ -428,8 +443,8 @@ START_TEST(ContextFilterPolicy_setBinaryList)
 	initList.Add(wxT("/usr/bin/find"));
 
 	/* test replace one element - expect to succeed */
-	if (!policy->setBinaryList(initList)) {
-		fail("setBinaryList() not successful.");
+	if (!setBinaryListCtx(policy, initList)) {
+		fail("Adding binaries not successful.");
 	}
 
 	CHECK_POLICY_MODIFIED(policy, true);
@@ -448,8 +463,8 @@ START_TEST(ContextFilterPolicy_setBinaryList)
 	initList.Add(wxT("/usr/bin/xxyyzz"));
 	initList.Add(wxT("/usr/bin/ccbbaa"));
 
-	if (!policy->setBinaryList(initList)) {
-		fail("setBinaryList() not successful.");
+	if (!setBinaryListCtx(policy, initList)) {
+		fail("Adding Binaries not successful.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);

@@ -124,14 +124,13 @@ class AppPolicy : public Policy
 		bool setBinaryName(wxString, unsigned int);
 
 		/**
-		 * Set the list of binaries.
-		 * This will erase the current list completely and creates
-		 * a new list of apn_app's filled with the entries of the
-		 * given list.
-		 * @param[in] 1st The list of new binaries.
+		 * Add a binary to the list of binaries before the
+		 * policy with the given position.
+		 * @param[in] 1st The position of the binary (zero based)
+		 * @param[in] 2nd The name of the new binary.
 		 * @return True on success.
 		 */
-		bool setBinaryList(wxArrayString);
+		bool addToBinaryListAt(int, wxString);
 
 		/**
 		 * Get the name of a specified binary.
@@ -195,13 +194,6 @@ class AppPolicy : public Policy
 		 * @return True on success.
 		 */
 		bool setHashTypeNo(int, unsigned int);
-
-		/**
-		 * Changet the hash type of all binaries.
-		 * @param[in] 1st The new hash type.
-		 * @return True on success.
-		 */
-		bool setAllToHashTypeNo(int);
 
 		/**
 		 * Get the apn hash type of  binary of given index.

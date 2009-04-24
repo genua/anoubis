@@ -230,16 +230,6 @@ class DlgRuleEditorAppPage : public DlgRuleEditorPage,
 		virtual void onUpdateButton(wxCommandEvent &);
 
 		/**
-		 * Handle events from deleteButton.
-		 * This will catch the click-event and add the binary index.
-		 * Slipping the event is mandatory, thus the notebook also
-		 * has to receive it.
-		 * @param[in] 1st The event.
-		 * @return Nothing.
-		 */
-		virtual void onDeleteButton(wxCommandEvent &);
-
-		/**
 		 * Handle events from checksum calculation task.
 		 * This will extract the result of the calculation from
 		 * the task and store it in csumCache_.

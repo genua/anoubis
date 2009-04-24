@@ -136,10 +136,15 @@ AnPolicyNotebook::onAddButton(wxCommandEvent &)
 }
 
 void
-AnPolicyNotebook::onDeleteButton(wxCommandEvent &event)
+AnPolicyNotebook::onDeleteButton(wxCommandEvent &)
 {
+	int	idx = GetSelection();
+	if (idx < 0)
+		return;
 	if (appPolicy_ != NULL) {
-		appPolicy_->removeBinary(event.GetInt());
+		appPolicy_->removeBinary(idx);
+		if (idx && idx >= (int)appPolicy_->getBinaryCount())
+			idx--;
 		/*
 		 * Deleteing just the single page would lead to inconsistency
 		 * of page number and binary index. Thus we have to re-create
@@ -147,9 +152,12 @@ AnPolicyNotebook::onDeleteButton(wxCommandEvent &event)
 		 */
 		DeleteAllPages();
 		select(appPolicy_);
+		ChangeSelection(idx);
 	}
 	if (ctxPolicy_ != NULL) {
-		ctxPolicy_->removeBinary(event.GetInt());
+		ctxPolicy_->removeBinary(idx);
+		if (idx && idx >= (int)ctxPolicy_->getBinaryCount())
+			idx--;
 		/*
 		 * Deleteing just the single page would lead to inconsistency
 		 * of page number and binary index. Thus we have to re-create
@@ -157,6 +165,7 @@ AnPolicyNotebook::onDeleteButton(wxCommandEvent &event)
 		 */
 		DeleteAllPages();
 		select(ctxPolicy_);
+		ChangeSelection(idx);
 	}
 }
 

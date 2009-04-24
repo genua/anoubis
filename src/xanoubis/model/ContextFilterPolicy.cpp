@@ -243,7 +243,7 @@ ContextFilterPolicy::setBinaryName(wxString binary, unsigned int idx)
 }
 
 bool
-ContextFilterPolicy::setBinaryList(wxArrayString list)
+ContextFilterPolicy::addToBinaryListAt(int pos, wxString name)
 {
 	bool		 result;
 	struct apn_rule *rule;
@@ -255,11 +255,8 @@ ContextFilterPolicy::setBinaryList(wxArrayString list)
 	}
 
 	startChange();
-	result = PolicyUtils::setAppList(
-	    &(rule->rule.apncontext.application), list);
-	if (result == true) {
-		setAllToHashTypeNo(APN_HASH_SHA256);
-	}
+	result = PolicyUtils::addToAppListAt(
+	    &(rule->rule.apncontext.application), pos, name);
 	setModified();
 	finishChange();
 
@@ -318,36 +315,28 @@ ContextFilterPolicy::getBinaryList(void) const
 bool
 ContextFilterPolicy::addBinary(const wxString & binary)
 {
-	wxArrayString binaryList;
-
-	binaryList = getBinaryList();
-	if (isAny()) {
-		/* remove 'any' first */
-		binaryList.RemoveAt(0);
-	}
-	binaryList.Add(binary);
-
-	return (setBinaryList(binaryList));
+	return addToBinaryListAt(getBinaryCount(), binary);
 }
 
 bool
 ContextFilterPolicy::removeBinary(unsigned int index)
 {
-	wxArrayString binaryList;
+	bool		 result;
+	struct apn_rule *rule;
 
-	binaryList = getBinaryList();
-	if (index >= binaryList.Count()) {
+	rule = getApnRule();
+
+	if (rule == NULL) {
 		return (false);
 	}
 
-	binaryList.RemoveAt(index);
+	startChange();
+	result = PolicyUtils::removeFromAppListAt(
+	    &rule->rule.apncontext.application, index);
+	setModified();
+	finishChange();
 
-	/* An empty list has to bear the keyword 'any'. */
-	if (binaryList.GetCount() == 0) {
-		binaryList.Add(wxT("any"));
-	}
-
-	return (setBinaryList(binaryList));
+	return (result);
 }
 
 bool
@@ -385,31 +374,6 @@ ContextFilterPolicy::setHashTypeNo(int hashType, unsigned int idx)
 
 	startChange();
 	app->hashtype = hashType;
-	setModified();
-	finishChange();
-
-	return (true);
-}
-
-bool
-ContextFilterPolicy::setAllToHashTypeNo(int hashType)
-{
-	struct apn_app	*app;
-	struct apn_rule *rule;
-
-	rule = getApnRule();
-
-	if ((rule == NULL) || (rule->rule.apncontext.application == NULL)) {
-		return (false);
-	}
-
-	startChange();
-	app = rule->rule.apncontext.application;
-	while (app != NULL) {
-		app->hashtype = hashType;
-		app = app->next;
-	}
-
 	setModified();
 	finishChange();
 

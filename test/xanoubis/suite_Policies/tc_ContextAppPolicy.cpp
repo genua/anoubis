@@ -417,6 +417,21 @@ START_TEST(ContextAppPolicy_setBinaryName_two)
 }
 END_TEST
 
+static int
+setBinaryListApp(AppPolicy *policy, const wxArrayString &list)
+{
+	unsigned int	i;
+	while(policy->getBinaryCount()) {
+		policy->removeBinary(0);
+	}
+	if (policy->getBinaryCount())
+		return false;
+	for (i=0; i<list.GetCount(); ++i)
+		if (!policy->addBinary(list[i]))
+			return false;
+	return true;
+}
+
 START_TEST(ContextAppPolicy_setBinaryList)
 {
 	wxArrayString	 getList;
@@ -436,8 +451,8 @@ START_TEST(ContextAppPolicy_setBinaryList)
 		fail("Couldn't add new policy.");
 	}
 
-	if (policy->setBinaryList(initList)) {
-		fail("setBinaryList() add list to non-existing rule.");
+	if (setBinaryListApp(policy, initList)) {
+		fail("Adding binaries to non-existing rule.");
 	}
 	CHECK_POLICY_MODIFIED(policy, false);
 	CHECK_OBSERVER_NOTIFIED(observer, false);
@@ -453,8 +468,8 @@ START_TEST(ContextAppPolicy_setBinaryList)
 		fail("Couldn't add new policy.");
 	}
 
-	if (!policy->setBinaryList(initList)) {
-		fail("setBinaryList() not successfull.");
+	if (!setBinaryListApp(policy, initList)) {
+		fail("Adding binaries not successfull.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
@@ -472,8 +487,8 @@ START_TEST(ContextAppPolicy_setBinaryList)
 	initList.Add(wxT("/usr/bin/xxyyzz"));
 	initList.Add(wxT("/usr/bin/ccbbaa"));
 
-	if (!policy->setBinaryList(initList)) {
-		fail("setBinaryList() not successfull.");
+	if (!setBinaryListApp(policy, initList)) {
+		fail("Adding binaries not successfull.");
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);
@@ -544,8 +559,10 @@ START_TEST(ContextAppPolicy_setHashTypeNo)
 	CHECK_POLICY_GETHASHTYPENO(policy, 1, APN_HASH_NONE);
 
 	/* test to re-set all */
-	if (!policy->setAllToHashTypeNo(APN_HASH_SHA256)) {
-		fail("setAllToHashTypeNo(): not successfull.");
+	for (unsigned int i=0; i<policy->getBinaryCount(); ++i) {
+		if (!policy->setHashTypeNo(APN_HASH_SHA256, i)) {
+			fail("Cannot set hash type");
+		}
 	}
 	CHECK_POLICY_MODIFIED(policy, true);
 	CHECK_OBSERVER_NOTIFIED(observer, true);

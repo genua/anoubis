@@ -26,6 +26,7 @@
  */
 
 #include "PolicyUtils.h"
+#include "AppPolicy.h"
 
 #include <wx/tokenzr.h>
 
@@ -49,17 +50,13 @@ PolicyUtils::stringToCsum(wxString str,
 	for (size_t i=0; i<len*2 && i<workOn.length(); i++) {
 		c = workOn.GetChar(i);
 
-		if ((47 < c) && (c < 58)) {
-			// is digit
-			d = c - 48;
-		} else if ((64 < c) && (c < 71)) {
-			// is A - F
-			d = c - 55;
-		} else if ((96 < c) && (c < 103)) {
-			// is a - f
-			d = c - 87;
+		if (('0' <= c) && (c <= '9')) {
+			d = c - '0';
+		} else if (('A' <= c) && (c <= 'F')) {
+			d = c - 'A' + 10;
+		} else if (('a' <= c) && (c <= 'f')) {
+			d = c - 'a' + 10;
 		} else {
-			// not in range
 			d = 0;
 		}
 		if ((i%2) == 0) {
@@ -88,45 +85,48 @@ PolicyUtils::csumToString(unsigned char csum[MAX_APN_HASH_LEN],
 }
 
 bool
-PolicyUtils::setAppList(struct apn_app **appList, wxArrayString list)
+PolicyUtils::addToAppListAt(struct apn_app **appList, unsigned int pos,
+    wxString name)
 {
 	struct apn_app *app;
-	const size_t	listSize = list.GetCount() - 1;
 
-	/* Check parameters */
-	if (list.IsEmpty() || (appList == NULL)) {
-		return (false);
+	if (appList == NULL)
+		return false;
+	while(pos && (*appList)) {
+		appList = &(*appList)->next;
+		pos--;
 	}
-
-	/* If there's already a list, remove the elements. */
-	if (*appList != NULL) {
-		apn_free_app(*appList);
-		*appList = NULL;
+	app = AppPolicy::createApnApp();
+	if (!app)
+		return false;
+	app->name = strdup(name.To8BitData());
+	if (!app->name) {
+		free(app);
+		return false;
 	}
+	app->next = *appList;
+	*appList = app;
+	return true;
+}
 
-	/* If we shall set 'any', we're done. */
-	if ((list.GetCount() == 1) && (list.Item(0).Cmp(wxT("any")) == 0)) {
-		return (true);
-	}
+bool
+PolicyUtils::removeFromAppListAt(struct apn_app **appList, unsigned int pos)
+{
+	struct apn_app	*app;
 
-	*appList = AppPolicy::createApnApp();
-	if (*appList == NULL) {
-		return (false);
+	if (appList == NULL)
+		return false;
+	while(pos && (*appList)) {
+		appList = &(*appList)->next;
+		pos--;
 	}
 	app = *appList;
-	for (size_t i=0; i <= listSize; i++) {
-		app->name = strdup(list.Item(i).To8BitData());
-		/* We have to create a 'next', except for the last one. */
-		if (i < listSize) {
-			app->next = AppPolicy::createApnApp();
-			if (app->next == NULL) {
-				return (false);
-			}
-			app = app->next;
-		}
-	}
-
-	return (true);
+	if (app == NULL)
+		return false;
+	*appList = app->next;
+	app->next = NULL;
+	apn_free_app(app);
+	return true;
 }
 
 wxArrayString

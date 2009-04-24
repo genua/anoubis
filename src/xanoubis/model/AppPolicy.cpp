@@ -145,7 +145,7 @@ AppPolicy::setBinaryName(wxString binary, unsigned int idx)
 }
 
 bool
-AppPolicy::setBinaryList(wxArrayString binaryList)
+AppPolicy::addToBinaryListAt(int pos, wxString name)
 {
 	bool		 result;
 	struct apn_rule *rule;
@@ -157,10 +157,7 @@ AppPolicy::setBinaryList(wxArrayString binaryList)
 	}
 
 	startChange();
-	result = PolicyUtils::setAppList(&(rule->app), binaryList);
-	if (result == true) {
-		setAllToHashTypeNo(APN_HASH_SHA256);
-	}
+	result = PolicyUtils::addToAppListAt(&(rule->app), pos, name);
 	setModified();
 	finishChange();
 
@@ -220,36 +217,27 @@ AppPolicy::getBinaryList(void) const
 bool
 AppPolicy::addBinary(const wxString & binary)
 {
-	wxArrayString binaryList;
-
-	binaryList = getBinaryList();
-	if (isAnyBlock()) {
-		/* remove 'any' first */
-		binaryList.RemoveAt(0);
-	}
-	binaryList.Add(binary);
-
-	return (setBinaryList(binaryList));
+	return (addToBinaryListAt(getBinaryCount(), binary));
 }
 
 bool
 AppPolicy::removeBinary(unsigned int index)
 {
-	wxArrayString binaryList;
+	bool		 result;
+	struct apn_rule *rule;
 
-	binaryList = getBinaryList();
-	if (index >= binaryList.Count()) {
+	rule = getApnRule();
+
+	if (rule == NULL) {
 		return (false);
 	}
 
-	binaryList.RemoveAt(index);
+	startChange();
+	result = PolicyUtils::removeFromAppListAt(&(rule->app), index);
+	setModified();
+	finishChange();
 
-	/* An empty list has to bear the keyword 'any'. */
-	if (binaryList.GetCount() == 0) {
-		binaryList.Add(wxT("any"));
-	}
-
-	return (setBinaryList(binaryList));
+	return (result);
 }
 
 bool
@@ -304,31 +292,6 @@ AppPolicy::setHashTypeNo(int hashType, unsigned int idx)
 
 	startChange();
 	app->hashtype = hashType;
-	setModified();
-	finishChange();
-
-	return (true);
-}
-
-bool
-AppPolicy::setAllToHashTypeNo(int hashType)
-{
-	struct apn_app	*app;
-	struct apn_rule *rule;
-
-	rule = getApnRule();
-
-	if ((rule == NULL) || (rule->app == NULL)) {
-		return (false);
-	}
-
-	startChange();
-	app = rule->app;
-	while (app != NULL) {
-		app->hashtype = hashType;
-		app = app->next;
-	}
-
 	setModified();
 	finishChange();
 

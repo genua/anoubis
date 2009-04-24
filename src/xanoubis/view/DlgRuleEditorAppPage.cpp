@@ -351,14 +351,6 @@ DlgRuleEditorAppPage::onUpdateButton(wxCommandEvent &)
 }
 
 void
-DlgRuleEditorAppPage::onDeleteButton(wxCommandEvent &event)
-{
-	/* Send the index of the binary to delete to AnPolicyNotebook. */
-	event.SetInt(binaryIndex_);
-	event.Skip();
-}
-
-void
 DlgRuleEditorAppPage::onCsumCalcTask(TaskEvent &event)
 {
 	wxString	 message;

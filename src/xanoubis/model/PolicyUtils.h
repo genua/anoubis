@@ -71,12 +71,28 @@ class PolicyUtils
 		static bool csumToString(unsigned char *, size_t, wxString &);
 
 		/**
-		 * Create a linked list of apn_app's
-		 * @param[out] 1st Put the list of app's here.
-		 * @param[in] 2nd Create list from these binaries.
+		 * Add an application to a list of apn_app structures.
+		 * @param[in] 1st The address of the location where
+		 *     the start pointer of the list is stored.
+		 * @param[in] 2nd A zero based index into the list. The
+		 *     new application is added before the application given
+		 *     by this index.
+		 * @param[in] 3nd The name of the application.
 		 * @return True on success.
 		 */
-		static bool setAppList(struct apn_app **, wxArrayString);
+		static bool addToAppListAt(struct apn_app **, unsigned int,
+		    wxString);
+
+		/**
+		 * Remove an application froma  lit of apn_app structures.
+		 * @param[in] 1st The address of the location where
+		 *     the start point of the is stored.
+		 * @param[in] 2nd A zero basedindex into the list. The
+		 *     application given by this index is removed.
+		 * @return True on success.
+		 */
+		static bool removeFromAppListAt(struct apn_app **,
+		    unsigned int);
 
 		/**
 		 * Get the list of apn_app's.
