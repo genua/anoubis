@@ -118,6 +118,8 @@ AnPolicyNotebook::onAddButton(wxCommandEvent &)
 			appPage->setBinaryIndex(newIndex);
 			appPage->select(appPolicy_);
 			AddPage(appPage, _("(new)"), true);
+		} else {
+			SetPageText(GetSelection(), _("(new)"));
 		}
 	}
 	if (ctxPolicy_ != NULL) {
@@ -131,6 +133,8 @@ AnPolicyNotebook::onAddButton(wxCommandEvent &)
 			ctxPage->setBinaryIndex(newIndex);
 			ctxPage->select(ctxPolicy_);
 			AddPage(ctxPage, _("(new)"), true);
+		} else {
+			SetPageText(GetSelection(), _("(new)"));
 		}
 	}
 }

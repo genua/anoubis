@@ -346,13 +346,7 @@ ContextFilterPolicy::isAny(void) const
 
 	rule = getApnRule();
 
-	if ((rule == NULL) ||
-	    ((rule->app == NULL) &&
-	    TAILQ_EMPTY(&rule->rule.chain))) {
-		return (true);
-	}
-
-	return (false);
+	return !(rule && rule->rule.apncontext.application);
 }
 
 bool

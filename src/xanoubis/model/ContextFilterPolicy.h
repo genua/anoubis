@@ -224,13 +224,6 @@ class ContextFilterPolicy : public FilterPolicy
 		bool setHashTypeNo(int, unsigned int);
 
 		/**
-		 * Changet the hash type of all binaries.
-		 * @param[in] 1st The new hash type.
-		 * @return True on success.
-		 */
-		bool setAllToHashTypeNo(int);
-
-		/**
 		 * Get the apn hash type of  binary of given index.
 		 * @param[in] 1st The index of the binary.
 		 * @return The apn hash type of that binary.
