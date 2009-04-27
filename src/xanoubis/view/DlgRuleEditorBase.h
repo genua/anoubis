@@ -34,6 +34,7 @@
 #ifndef __DlgRuleEditorBase__
 #define __DlgRuleEditorBase__
 
+class AnPickFromFs;
 class AnPolicyNotebook;
 class DlgRuleEditorAppPage;
 
@@ -209,6 +210,7 @@ class DlgRuleEditorFilterActionPageBase : public wxPanel
 		wxRadioButton* noneRadioButton;
 		wxRadioButton* normalRadioButton;
 		wxRadioButton* alertRadioButton;
+		AnPickFromFs* defaultPathPicker;
 		
 		// Virtual event handlers, overide them in your derived class
 		virtual void onAllowRadioButton( wxCommandEvent& event ){ event.Skip(); }

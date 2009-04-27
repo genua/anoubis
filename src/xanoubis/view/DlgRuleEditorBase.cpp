@@ -31,6 +31,7 @@
 // PLEASE DO "NOT" EDIT THIS FILE!
 ///////////////////////////////////////////////////////////////////////////
 
+#include "AnPickFromFs.h"
 #include "AnPolicyNotebook.h"
 #include "DlgRuleEditorAppPage.h"
 
@@ -487,7 +488,15 @@ DlgRuleEditorFilterActionPageBase::DlgRuleEditorFilterActionPageBase( wxWindow* 
 	mainPage->SetSizer( mainSizer );
 	mainPage->Layout();
 	mainSizer->Fit( mainPage );
-	pageSizer->Add( mainPage, 1, wxEXPAND | wxALL, 5 );
+	pageSizer->Add( mainPage, 0, wxEXPAND | wxALL, 5 );
+	
+	wxBoxSizer* pathSizer;
+	pathSizer = new wxBoxSizer( wxHORIZONTAL );
+	
+	defaultPathPicker = new AnPickFromFs( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL, wxT("Default Path:") );
+	pathSizer->Add( defaultPathPicker, 1, wxALL|wxEXPAND, 5 );
+	
+	pageSizer->Add( pathSizer, 0, wxEXPAND, 5 );
 	
 	this->SetSizer( pageSizer );
 	this->Layout();

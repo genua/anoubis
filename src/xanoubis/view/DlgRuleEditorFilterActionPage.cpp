@@ -34,28 +34,41 @@
 #include "DefaultFilterPolicy.h"
 #include "SfsDefaultFilterPolicy.h"
 
+#include "AnPickFromFs.h"
+
 DlgRuleEditorFilterActionPage::DlgRuleEditorFilterActionPage(wxWindow *parent,
     wxWindowID id, const wxPoint & pos, const wxSize & size, long style)
     : DlgRuleEditorPage(),
     DlgRuleEditorFilterActionPageBase(parent, id, pos, size, style)
 {
 	filterPolicy_ = NULL;
+	addSubject(defaultPathPicker);
+	defaultPathPicker->setTitle(_("Default Path:"));
+	defaultPathPicker->setMode(AnPickFromFs::MODE_BOTH);
 }
 
 void
 DlgRuleEditorFilterActionPage::update(Subject *subject)
 {
+	SfsDefaultFilterPolicy	*sfs;
+
 	if (subject == filterPolicy_) {
 		/* This is our policy. */
 		showAction();
 		showLog();
+	}
+	if ((subject == defaultPathPicker) &&
+	    (filterPolicy_->IsKindOf(CLASSINFO(SfsDefaultFilterPolicy)))) {
+		sfs = wxDynamicCast(filterPolicy_, SfsDefaultFilterPolicy);
+		sfs->setPath(defaultPathPicker->getFileName());
 	}
 }
 
 void
 DlgRuleEditorFilterActionPage::select(Policy *policy)
 {
-	PolicyRuleSet *ruleSet;
+	SfsDefaultFilterPolicy	*sfs;
+	PolicyRuleSet		*ruleSet;
 
 	if (policy->IsKindOf(CLASSINFO(AlfFilterPolicy)) ||
 	    policy->IsKindOf(CLASSINFO(AlfCapabilityFilterPolicy)) ||
@@ -65,6 +78,14 @@ DlgRuleEditorFilterActionPage::select(Policy *policy)
 		ruleSet = policy->getParentRuleSet();
 		filterPolicy_ = wxDynamicCast(policy, FilterPolicy);
 		DlgRuleEditorPage::select(policy);
+
+		if (policy->IsKindOf(CLASSINFO(SfsDefaultFilterPolicy))) {
+			sfs = wxDynamicCast(policy, SfsDefaultFilterPolicy);
+			defaultPathPicker->Show();
+			defaultPathPicker->setFileName(sfs->getPath());
+		} else {
+			defaultPathPicker->Hide();
+		}
 
 		/* admin-policies may not ask. */
 		if ((ruleSet != NULL) && ruleSet->isAdmin() &&

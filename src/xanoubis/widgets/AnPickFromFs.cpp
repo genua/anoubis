@@ -25,28 +25,58 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <errno.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include <wx/gdicmn.h>
+#include <wx/font.h>
+#include <wx/colour.h>
+#include <wx/settings.h>
+
 #include "AnPickFromFs.h"
 
 AnPickFromFs::AnPickFromFs(wxWindow *parent, wxWindowID id, const wxPoint & pos,
     const wxSize & size, long style, const wxString & name)
     : wxPanel(parent, id, pos, size, style, name)
 {
-	wxBoxSizer* mainSizer;
+	wxFlexGridSizer *mainSizer;
 
-	mainSizer = new wxBoxSizer(wxHORIZONTAL);
+	mainSizer = new wxFlexGridSizer(2, 3, 0, 0);
+	mainSizer->AddGrowableCol(1);
+	mainSizer->SetFlexibleDirection(wxBOTH);
+	mainSizer->SetNonFlexibleGrowMode(wxFLEX_GROWMODE_SPECIFIED);
 
-	label_ = new wxStaticText(this, wxID_ANY, name,
+	label_ = new wxStaticText(this, wxID_ANY, wxT("<no title>"),
 	    wxDefaultPosition, wxDefaultSize, 0);
+	label_->Wrap(-1);
 	mainSizer->Add(label_, 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
 
 	inputTextCtrl_ = new wxTextCtrl(this, wxID_ANY, wxEmptyString,
 	    wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER);
-	mainSizer->Add(inputTextCtrl_, 1, wxALL | wxALIGN_CENTER_VERTICAL, 5);
+	mainSizer->Add(inputTextCtrl_, 1,
+	    wxALL | wxALIGN_CENTER_VERTICAL | wxEXPAND, 5);
 
 	pickButton_ = new wxButton(this, wxID_ANY, _("Pick..."),
 	    wxDefaultPosition, wxDefaultSize, 0);
-	pickButton_->SetToolTip(_("Choose a binary"));
+	pickButton_->SetToolTip(_("use right mouse button to alter pick mode"));
 	mainSizer->Add(pickButton_, 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
+
+	fileMenuId_ = wxNewId();
+	pickButtonMenu_.AppendRadioItem(fileMenuId_, _("Pick a file"));
+	dirMenuId_ = wxNewId();
+	pickButtonMenu_.AppendRadioItem(dirMenuId_, _("Pick a directory"));
+
+	mainSizer->Add(0, 0, 1, wxEXPAND, 5);
+
+	infoLabel_ = new wxStaticText(this, wxID_ANY, wxEmptyString,
+	    wxDefaultPosition, wxDefaultSize, 0);
+	infoLabel_->Wrap(-1);
+	infoLabel_->Hide();
+	infoLabel_->SetFont(wxFont(8, 70, 90, 90, false, wxEmptyString));
+	infoLabel_->SetForegroundColour(wxSystemSettings::GetColour(
+	    wxSYS_COLOUR_GRAYTEXT));
+	mainSizer->Add(infoLabel_, 1, wxALL|wxALIGN_CENTER_VERTICAL, 0);
 
 	inputTextCtrl_->Connect(wxEVT_KILL_FOCUS,
 	    wxFocusEventHandler(AnPickFromFs::onTextKillFocus), NULL, this);
@@ -54,9 +84,140 @@ AnPickFromFs::AnPickFromFs(wxWindow *parent, wxWindowID id, const wxPoint & pos,
 	    wxCommandEventHandler(AnPickFromFs::onTextEnter), NULL, this);
 	pickButton_->Connect(wxEVT_COMMAND_BUTTON_CLICKED,
 	    wxCommandEventHandler(AnPickFromFs::onPickButton), NULL, this);
+	pickButton_->Connect(wxEVT_RIGHT_DOWN,
+	    wxMouseEventHandler(AnPickFromFs::onPickButtonMenu), NULL, this);
 
 	this->SetSizer(mainSizer);
 	this->Layout();
+
+	fileName_ = wxEmptyString;
+	setMode(MODE_NONE);
+}
+
+void
+AnPickFromFs::setFileName(const wxString & fileName)
+{
+	fileName_ = fileName;
+	inputTextCtrl_->ChangeValue(fileName);
+}
+
+wxString
+AnPickFromFs::getFileName(void) const
+{
+	return (fileName_);
+}
+
+void
+AnPickFromFs::setTitle(const wxString & label)
+{
+	label_->SetLabel(label);
+	Layout();
+	Refresh();
+}
+
+void
+AnPickFromFs::setButtonLabel(const wxString & label)
+{
+	pickButton_->SetLabel(label);
+	Layout();
+	Refresh();
+}
+
+void
+AnPickFromFs::setMode(enum Modes mode)
+{
+	pickerMode_ = mode;
+	switch (mode) {
+	case MODE_FILE:
+		pickButton_->Enable();
+		pickButtonMenu_.Check(fileMenuId_, true);
+		pickButtonMenu_.Check(dirMenuId_, false);
+		pickButtonMenu_.Enable(fileMenuId_, true);
+		pickButtonMenu_.Enable(dirMenuId_, false);
+		break;
+	case MODE_DIR:
+		pickButton_->Enable();
+		pickButtonMenu_.Check(fileMenuId_, false);
+		pickButtonMenu_.Check(dirMenuId_, true);
+		pickButtonMenu_.Enable(fileMenuId_, false);
+		pickButtonMenu_.Enable(dirMenuId_, true);
+		break;
+	case MODE_BOTH:
+		pickButton_->Enable();
+		pickButtonMenu_.Check(fileMenuId_, true);
+		pickButtonMenu_.Check(dirMenuId_, false);
+		pickButtonMenu_.Enable(fileMenuId_, true);
+		pickButtonMenu_.Enable(dirMenuId_, true);
+		break;
+	case MODE_NONE:
+		/* FALLTHROUGH */
+	default:
+		pickButton_->Disable();
+		pickButtonMenu_.Check(fileMenuId_, false);
+		pickButtonMenu_.Check(dirMenuId_, false);
+		pickButtonMenu_.Enable(fileMenuId_, false);
+		pickButtonMenu_.Enable(dirMenuId_, false);
+		break;
+	}
+}
+
+void
+AnPickFromFs::adoptFileName(const wxString &fileName)
+{
+	char		 resolve[PATH_MAX];
+	char		*resolved;
+	wxString	 msg;
+
+	startChange();
+	if (fileName.IsEmpty() || fileName == wxT("any")) {
+		fileName_ = fileName;
+	} else {
+		resolved = realpath(fileName.fn_str(), resolve);
+		if (resolved != NULL) {
+			fileName_ = wxString::From8BitData(resolved);
+			if (fileName_ != fileName) {
+				msg = _("Symbolic link was resolved");
+			} else {
+				msg = wxEmptyString;
+			}
+		} else {
+			msg = wxString::From8BitData(strerror(errno));
+			msg.Prepend(_("Failure to resolve: "));
+			fileName_ = fileName;
+		}
+		/* XXX ch: depending on the mode we could do furter checks */
+		showInfo(msg);
+	}
+	if (inputTextCtrl_->GetValue() != fileName_) {
+		inputTextCtrl_->ChangeValue(fileName_);
+	}
+
+	inputTextCtrl_->DiscardEdits();
+
+	finishChange();
+}
+
+void
+AnPickFromFs::showInfo(const wxString &info)
+{
+	wxWindow	*parent;
+	wxString	 label;
+
+	label = info;
+	label.Prepend(wxT("("));
+	label.Append(wxT(")"));
+
+	infoLabel_->SetLabel(label);
+	infoLabel_->Show(!info.IsEmpty()); /* show if not empty */
+
+	parent = GetParent();
+	if (parent != NULL) {
+		parent->Layout();
+		parent->Refresh();
+	} else {
+		Layout();
+		Refresh();
+	}
 }
 
 void
@@ -64,17 +225,17 @@ AnPickFromFs::onTextKillFocus(wxFocusEvent &)
 {
 	/*
 	 * Only validate on a set-Focus event if the user has modified
-	 * the text in the text ctrl since we last called setBinary.
+	 * the text in the text ctrl since we last called adoptFileName.
 	 */
 	if (inputTextCtrl_->IsModified()) {
-		//setBinary(binaryTextCtrl->GetValue());
+		adoptFileName(inputTextCtrl_->GetValue());
 	}
 }
 
 void
-AnPickFromFs::onTextEnter(wxCommandEvent &)
+AnPickFromFs::onTextEnter(wxCommandEvent & event)
 {
-	//setBinary(event.GetString());
+	adoptFileName(event.GetString());
 }
 
 void
@@ -82,21 +243,29 @@ AnPickFromFs::onPickButton(wxCommandEvent &)
 {
 	wxFileName	defaultPath;
 	wxFileDialog	fileDlg(this);
-	/*
-	if (appPolicy_ != NULL) {
-		defaultPath.Assign(appPolicy_->getBinaryName(binaryIndex_));
-	}
-	if (ctxPolicy_ != NULL) {
-		defaultPath.Assign(ctxPolicy_->getBinaryName(binaryIndex_));
-	}
-	*/
+	wxDirDialog	dirDlg(this);
+
 	wxBeginBusyCursor();
-	//fileDlg.SetDirectory(defaultPath.GetPath());
-	//fileDlg.SetFilename(defaultPath.GetFullName());
+	defaultPath.Assign(fileName_);
+	fileDlg.SetDirectory(defaultPath.GetPath());
+	fileDlg.SetFilename(defaultPath.GetFullName());
 	fileDlg.SetWildcard(wxT("*"));
+	dirDlg.SetPath(defaultPath.GetPath());
 	wxEndBusyCursor();
 
-	if (fileDlg.ShowModal() == wxID_OK) {
-		//setBinary(fileDlg.GetPath());
+	if (pickButtonMenu_.IsChecked(dirMenuId_)) {
+		if (dirDlg.ShowModal() == wxID_OK) {
+			adoptFileName(dirDlg.GetPath());
+		}
+	} else {
+		if (fileDlg.ShowModal() == wxID_OK) {
+			adoptFileName(fileDlg.GetPath());
+		}
 	}
+}
+
+void
+AnPickFromFs::onPickButtonMenu(wxMouseEvent &)
+{
+	PopupMenu(&pickButtonMenu_, ScreenToClient(wxGetMousePosition()));
 }

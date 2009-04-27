@@ -29,12 +29,17 @@
 #define _ANPICKFROMFS_H_
 
 #include <wx/button.h>
+#include <wx/dirdlg.h>
 #include <wx/filedlg.h>
 #include <wx/filename.h>
+#include <wx/menu.h>
 #include <wx/panel.h>
 #include <wx/sizer.h>
 #include <wx/stattext.h>
+#include <wx/string.h>
 #include <wx/textctrl.h>
+
+#include "Policy.h"
 
 /**
  * This realizes the Pick-From-Filesystem-Widgets.
@@ -45,18 +50,30 @@
  * \n
  * \b Usage (with the wxformbuilder):\n
  * - Add a normal wxPanel
- * - Set the property 'window_name' to the value you want to be shown by the
- *   label on the left side of the text input widget. (Think of "Binary" or
- *   "Program".) This is also used for the title of the picker dialog.
  * - Set the property 'subclass.name' to "AnPickFromFs"
  * - Set the property 'subclass.include' to "AnPickFromFs.h"
  * - Disable the stretching of the panel. (It's Alt-s or the icon with the
  *   square and the arrow on it's top and on the right side.)
  * - The panel can't be extedned by additional widgets.
+ * - The panel is a subject and it's parent should be an observer to be
+ *   notified about a picked file.
+ * - The parent has to set the title with setTitle()
+ * - The parent has to set the mode with setMode(). (The pickButton is
+ *   disabled untill set and mode is not NONE).
  */
-class AnPickFromFs : public wxPanel
+class AnPickFromFs : public wxPanel, public Subject
 {
 	public:
+		/**
+		 * Picker Modes.
+		 */
+		enum Modes {
+			MODE_NONE = 0,
+			MODE_FILE,	/**< use FileDialog only */
+			MODE_DIR,	/**< use DirDialog only */
+			MODE_BOTH,	/**< use both (choose by menu) */
+		};
+
 		/**
 		 * Constructor of the details panel.
 		 * It has to have the same signature as a ordinary wxPanel,
@@ -68,6 +85,50 @@ class AnPickFromFs : public wxPanel
 		    long style = wxTAB_TRAVERSAL,
 		    const wxString& name = wxPanelNameStr);
 
+		/**
+		 * Set file name.
+		 * With this method the widgets are initialized with the
+		 * given filename.
+		 * @param 1st The filename this widget should display.
+		 * @return Nothing.
+		 */
+		void setFileName(const wxString &);
+
+		/**
+		 * Get file name.
+		 * After the user has picked a file, the parent can use
+		 * this method to get the picked file name.
+		 * @paran None.
+		 * @return The picked file name.
+		 */
+		wxString getFileName(void) const;
+
+		/**
+		 * Set title.
+		 * Set the text bevore the text control.
+		 * @param 1st The new title.
+		 * @return Nothing.
+		 */
+		void setTitle(const wxString &);
+
+		/**
+		 * Set button label.
+		 * Use this method to set an alternate text on the pick button.
+		 * @param 1st The new label of the pick button.
+		 * @return Nothing.
+		 */
+		void setButtonLabel(const wxString &);
+
+		/**
+		 * Set mode of picker
+		 * Use this to influence which dialog the pickButton will
+		 * open. In case of both, the user can choose by right mouse
+		 * button.
+		 * @param 1st The new mode.
+		 * @return Nothing.
+		 */
+		void setMode(enum Modes);
+
 	protected:
 		/**
 		 * This is the text just left to the textCtrl. It is set to the
@@ -75,6 +136,12 @@ class AnPickFromFs : public wxPanel
 		 * wxformbuilder).\n
 		 */
 		wxStaticText *label_;
+
+		/**
+		 * This is the info text below the textCtrl, informing the
+		 * user about errors.
+		 */
+		wxStaticText *infoLabel_;
 
 		/**
 		 * This is the text control a user can enter the file manually.
@@ -88,6 +155,50 @@ class AnPickFromFs : public wxPanel
 		wxButton *pickButton_;
 
 	private:
+		/**
+		 * Keep the picked filename.
+		 */
+		wxString fileName_;
+
+		/**
+		 * Keep widget mode here.
+		 */
+		enum Modes pickerMode_;
+
+		/**
+		 * This is the Id of the menu entry for file.
+		 */
+		long fileMenuId_;
+
+		/**
+		 * This is the Id of the menu entry for directory.
+		 */
+		long dirMenuId_;
+
+		/**
+		 * The pupup-menu of the pick button
+		 */
+		wxMenu pickButtonMenu_;
+
+		/**
+		 * Adopt file name.
+		 * This method performs the resolving of symlinks, updates
+		 * the infoLabel with information and error messages and
+		 * stores the result in fileName_.
+		 * @param 1st The filename to be stored.
+		 * @return Nothing.
+		 */
+		void adoptFileName(const wxString &);
+
+		/**
+		 * Show information.
+		 * Use this method to update the infoLabel_.
+		 * Use an empty string to disable/hide the info text.
+		 * @param 1st Text to be shown if not
+		 * @return Nothing.
+		 */
+		void showInfo(const wxString &);
+
 		/**
 		 * Handle focus events from inputTextCtrl (e.g on hit <tab>).
 		 * @param[in] 1st The event.
@@ -110,6 +221,15 @@ class AnPickFromFs : public wxPanel
 		 * @return Nothing.
 		 */
 		void onPickButton(wxCommandEvent &);
+
+		/**
+		 * Handle mouse events from pickButton.
+		 * This will open the context menue of the pickButton
+		 * on right mouse click.
+		 * @param[in] 1st The event.
+		 * @return Nothing.
+		 */
+		void onPickButtonMenu(wxMouseEvent &);
 };
 
 #endif	/* _ANPICKFROMFS_H_ */
