@@ -30,11 +30,9 @@ WANTLIB-main =		c m pthread stdc++ event glib-2.0 pixman-1 \
 			intl pango-1.0 pangocairo-1.0 pangoft2-1.0 png z \
 			crypto ssl
 
-POLICIES =		policy.admin.ntp policy.user.ntp policy.admin.0 \
-			policy.user.0 policy.admin.daemon policy.admin.default
-
 PROFILESDIR =		/etc/anoubis/profiles
-SUBST_VARS =		PROFILESDIR POLICIES
+POLICYDIR =		/etc/anoubis/policy
+SUBST_VARS =		PROFILESDIR POLICYDIR
 
 MULTI_PACKAGES =	-main -daemon
 
@@ -62,13 +60,28 @@ do-regress:
 post-extract:
 	@rm ${WRKSRC}/src/libanoubisui/apnvm/date.c
 
-# add desktop file and example policies
+# Get rid of obsolete profiles shipped by the pristine source
+# Add desktop file as well as profile and initial policy files
 post-install:
+	@rm ${WRKINST}/usr/local/share/xanoubis/profiles/admin
+	@rm ${WRKINST}/usr/local/share/xanoubis/profiles/high
+	@rm ${WRKINST}/usr/local/share/xanoubis/profiles/medium
+
 	@ ${INSTALL_DATA_DIR} ${PREFIX}/share/applications/
 	@ ${INSTALL_DATA} ${WRKSRC}/src/xanoubis/xanoubis.desktop \
 		${PREFIX}/share/applications/
 
 	@ ${INSTALL_DATA_DIR} ${PREFIX}/share/xanoubis/profiles/
-	@perl ${WRKSRC}/support/install_policy -q -n -o ${FILESDIR} ${PREFIX}/share/xanoubis/profiles
+	@perl ${WRKSRC}/support/install_policy -q -n -o ${FILESDIR}/profiles \
+		${PREFIX}/share/xanoubis/profiles
+
+	@ ${INSTALL_DATA_DIR} ${PREFIX}/share/xanoubis/policies/admin/
+	@ ${INSTALL_DATA_DIR} ${PREFIX}/share/xanoubis/policies/user/
+	@perl ${WRKSRC}/support/install_policy -q -n -o \
+		${FILESDIR}/policy/admin \
+		${PREFIX}/share/xanoubis/policies/admin
+	@perl ${WRKSRC}/support/install_policy -q -n -o \
+		${FILESDIR}/policy/user \
+		${PREFIX}/share/xanoubis/policies/user
 
 .include <bsd.port.mk>

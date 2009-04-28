@@ -13,26 +13,35 @@
 @comment man/man3/anoubis_sig.3
 @comment man/man3/anoubis_transaction.3
 @comment man/man3/apn.3
-share/xanoubis/profiles/admin
-share/xanoubis/profiles/high
-share/xanoubis/profiles/medium
 @exec mkdir -p /var/lib/anoubis/policy/admin
 @exec mkdir -p /var/lib/anoubis/policy/user
 @exec mkdir -p /var/lib/anoubis/policy/pubkeys
 @exec ln -sf /var/lib/anoubis/policy /etc/anoubis/policy
-@unexec rm -f /etc/anoubis/policy
-@exec cp ${PREFIX}/share/xanoubis/profiles/admin /var/lib/anoubis/policy/admin/default
-@exec cp ${PREFIX}/share/xanoubis/profiles/admin /var/lib/anoubis/policy/admin/0
-@exec cp ${PREFIX}/share/xanoubis/profiles/admin /var/lib/anoubis/policy/user/0
+@sample ${POLICYDIR}/admin/
+@sample ${POLICYDIR}/user/
+share/xanoubis/policies/user/0
+@sample ${POLICYDIR}/user/0
+share/xanoubis/policies/user/83
+@sample ${POLICYDIR}/user/83
+share/xanoubis/policies/admin/0
+@sample ${POLICYDIR}/admin/0
+share/xanoubis/policies/admin/default
+@sample ${POLICYDIR}/admin/default
+share/xanoubis/policies/admin/83
+@sample ${POLICYDIR}/admin/83
 @exec chmod 600 /var/lib/anoubis/policy/admin/0
 @exec chmod 600 /var/lib/anoubis/policy/admin/default
+@exec chmod 600 /var/lib/anoubis/policy/admin/83
 @exec chmod 600 /var/lib/anoubis/policy/user/0
+@exec chmod 600 /var/lib/anoubis/policy/user/83
 @exec chown _anoubisd:_anoubisd /var/lib/anoubis/policy
 @exec chown _anoubisd:_anoubisd /var/lib/anoubis/policy/admin
-@exec chown _anoubisd:_anoubisd /var/lib/anoubis/policy/admin/default
 @exec chown _anoubisd:_anoubisd /var/lib/anoubis/policy/admin/0
+@exec chown _anoubisd:_anoubisd /var/lib/anoubis/policy/admin/default
+@exec chown _anoubisd:_anoubisd /var/lib/anoubis/policy/admin/83
 @exec chown _anoubisd:_anoubisd /var/lib/anoubis/policy/user
 @exec chown _anoubisd:_anoubisd /var/lib/anoubis/policy/user/0
+@exec chown _anoubisd:_anoubisd /var/lib/anoubis/policy/user/83
 @exec chown _anoubisd:_anoubisd /var/lib/anoubis/policy/pubkeys
 @exec chmod 700 /var/lib/anoubis/policy /var/lib/anoubis/policy/admin
 @exec chmod 700 /var/lib/anoubis/policy/user /var/lib/anoubis/policy/pubkeys

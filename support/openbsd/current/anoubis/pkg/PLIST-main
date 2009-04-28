@@ -91,21 +91,15 @@ share/xanoubis/icons/ModSfs_question_48.png
 share/xanoubis/icons/xanoubis.png
 @sample ${PROFILESDIR}/
 @sample ${PROFILESDIR}/wizard/
+share/xanoubis/profiles/admin
+@sample ${PROFILESDIR}/admin
+share/xanoubis/profiles/high
+@sample ${PROFILESDIR}/high
+share/xanoubis/profiles/medium
+@sample ${PROFILESDIR}/medium
 share/xanoubis/profiles/wizard/alf
 @sample ${PROFILESDIR}/wizard/alf
 share/xanoubis/profiles/wizard/sandbox
 @sample ${PROFILESDIR}/wizard/sandbox
-share/xanoubis/profiles/policy.admin.ntp
-@sample ${PROFILESDIR}/policy.admin.ntp
-share/xanoubis/profiles/policy.user.ntp
-@sample ${PROFILESDIR}/policy.user.ntp
-share/xanoubis/profiles/policy.user.0
-@sample ${PROFILESDIR}/policy.user.0
-share/xanoubis/profiles/policy.admin.0
-@sample ${PROFILESDIR}/policy.admin.0
-share/xanoubis/profiles/policy.admin.daemon
-@sample ${PROFILESDIR}/policy.admin.daemon
-share/xanoubis/profiles/policy.admin.default
-@sample ${PROFILESDIR}/policy.admin.default
 @exec %D/bin/update-desktop-database
 @unexec %D/bin/update-desktop-database
