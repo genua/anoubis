@@ -29,6 +29,7 @@
 #include <wx/filename.h>
 #include <wx/string.h>
 
+#include "AnPickFromFs.h"
 #include "DlgRuleEditorFilterSubjectPage.h"
 
 DlgRuleEditorFilterSubjectPage::DlgRuleEditorFilterSubjectPage(wxWindow *parent,
@@ -38,6 +39,10 @@ DlgRuleEditorFilterSubjectPage::DlgRuleEditorFilterSubjectPage(wxWindow *parent,
 {
 	sfsPolicy_ = NULL;
 	sbPolicy_  = NULL;
+
+	addSubject(pathPicker);
+	pathPicker->setMode(AnPickFromFs::MODE_BOTH);
+	pathPicker->setTitle(_("Path:"));
 }
 
 void
@@ -52,6 +57,14 @@ DlgRuleEditorFilterSubjectPage::update(Subject *subject)
 		/* This is our sb policy. */
 		showSbPath();
 		showSubject();
+	}
+	if (subject == pathPicker) {
+		if (sfsPolicy_ != NULL) {
+			sfsPolicy_->setPath(pathPicker->getFileName());
+		}
+		if (sbPolicy_ != NULL) {
+			sbPolicy_->setPath(pathPicker->getFileName());
+		}
 	}
 }
 
@@ -87,7 +100,7 @@ DlgRuleEditorFilterSubjectPage::showSfsPath(void)
 	if (sfsPolicy_ == NULL) {
 		return;
 	}
-	pathTextCtrl->ChangeValue(sfsPolicy_->getPath());
+	pathPicker->setFileName(sfsPolicy_->getPath());
 }
 
 void
@@ -96,7 +109,7 @@ DlgRuleEditorFilterSubjectPage::showSbPath(void)
 	if (sbPolicy_ == NULL) {
 		return;
 	}
-	pathTextCtrl->ChangeValue(sbPolicy_->getPath());
+	pathPicker->setFileName(sbPolicy_->getPath());
 }
 
 void
@@ -215,65 +228,6 @@ DlgRuleEditorFilterSubjectPage::showSubject(void)
 
 	Layout();
 	Refresh();
-}
-
-void
-DlgRuleEditorFilterSubjectPage::onPathTextEnter(wxCommandEvent & event)
-{
-	if (sfsPolicy_ != NULL) {
-		pathTextCtrl->DiscardEdits();
-		sfsPolicy_->setPath(event.GetString());
-	}
-	if (sbPolicy_ != NULL) {
-		pathTextCtrl->DiscardEdits();
-		sbPolicy_->setPath(event.GetString());
-	}
-}
-
-void
-DlgRuleEditorFilterSubjectPage::onPathTextKillFocus(wxFocusEvent &)
-{
-	if (pathTextCtrl->IsModified()) {
-		pathTextCtrl->DiscardEdits();
-		if (sfsPolicy_ != NULL) {
-			sfsPolicy_->setPath(pathTextCtrl->GetValue());
-		}
-		if (sbPolicy_ != NULL) {
-			sbPolicy_->setPath(pathTextCtrl->GetValue());
-		}
-	}
-}
-
-void
-DlgRuleEditorFilterSubjectPage::onModifyButton(wxCommandEvent &)
-{
-	wxFileName	 defaultPath;
-	wxFileDialog	*fileDlg;
-
-	if (sfsPolicy_ != NULL) {
-		defaultPath.Assign(sfsPolicy_->getPath());
-	}
-	if (sbPolicy_ != NULL) {
-		defaultPath.Assign(sbPolicy_->getPath());
-	}
-
-	wxBeginBusyCursor();
-	fileDlg = new wxFileDialog(this);
-	fileDlg->SetDirectory(defaultPath.GetPath());
-	fileDlg->SetFilename(defaultPath.GetFullName());
-	fileDlg->SetWildcard(wxT("*"));
-	wxEndBusyCursor();
-
-	if (fileDlg->ShowModal() == wxID_OK) {
-		if (sfsPolicy_ != NULL) {
-			sfsPolicy_->setPath(fileDlg->GetPath());
-		}
-		if (sbPolicy_ != NULL) {
-			sbPolicy_->setPath(fileDlg->GetPath());
-		}
-	}
-
-	delete fileDlg;
 }
 
 void

@@ -160,9 +160,7 @@ class DlgRuleEditorAppPageBase : public wxPanel
 	
 	protected:
 		wxScrolledWindow* mainPage;
-		wxStaticText* binaryLabel;
-		wxTextCtrl* binaryTextCtrl;
-		wxButton* pickButton;
+		AnPickFromFs* binaryPicker;
 		wxStaticText* csumRegisteredLabel;
 		wxStaticText* csumRegisteredText;
 		wxStaticText* csumCurrentLabel;
@@ -179,9 +177,6 @@ class DlgRuleEditorAppPageBase : public wxPanel
 		
 		
 		// Virtual event handlers, overide them in your derived class
-		virtual void onBinaryTextKillFocus( wxFocusEvent& event ){ event.Skip(); }
-		virtual void onBinaryTextEnter( wxCommandEvent& event ){ event.Skip(); }
-		virtual void onPickButton( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onValidateButton( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onUpdateButton( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onAddButton( wxCommandEvent& event ){ event.Skip(); }
@@ -333,9 +328,7 @@ class DlgRuleEditorFilterSubjectPageBase : public wxPanel
 	
 	protected:
 		wxScrolledWindow* mainPage;
-		wxStaticText* pathLabel;
-		wxTextCtrl* pathTextCtrl;
-		wxButton* modifyButton;
+		AnPickFromFs* pathPicker;
 		wxStaticText* subjectLabel;
 		wxRadioButton* anyRadioButton;
 		
@@ -358,9 +351,6 @@ class DlgRuleEditorFilterSubjectPageBase : public wxPanel
 		wxTextCtrl* csumTextCtrl;
 		
 		// Virtual event handlers, overide them in your derived class
-		virtual void onPathTextKillFocus( wxFocusEvent& event ){ event.Skip(); }
-		virtual void onPathTextEnter( wxCommandEvent& event ){ event.Skip(); }
-		virtual void onModifyButton( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onAnyRadioButton( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onSelfRadioButton( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onSelfSignedRadioButton( wxCommandEvent& event ){ event.Skip(); }

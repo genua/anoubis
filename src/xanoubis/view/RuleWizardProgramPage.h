@@ -44,7 +44,7 @@
  * The next page is only reached if the program exists and calculating the
  * checksum was successfull.
  */
-class RuleWizardProgramPage : public RuleWizardProgramPageBase
+class RuleWizardProgramPage : public Observer, public RuleWizardProgramPageBase
 {
 	public:
 		/**
@@ -56,6 +56,22 @@ class RuleWizardProgramPage : public RuleWizardProgramPageBase
 		 * Destructor of this page.
 		 */
 		~RuleWizardProgramPage(void);
+
+		/**
+		 * This is called by the programPicker (a subject)
+		 * to inform us about a picked file.
+		 * @param[in] 1st The changed subject itself.
+		 * @return Nothing.
+		 */
+		virtual void update(Subject *);
+
+		/**
+		 * This is called when the observed subject is destroyed.
+		 * This should never happen, but we had to implement this.
+		 * @param[in] 1st The subject be destroyed.
+		 * @return Nothing.
+		 */
+		virtual void updateDelete(Subject *);
 
 	private:
 		/**
@@ -84,31 +100,6 @@ class RuleWizardProgramPage : public RuleWizardProgramPageBase
 		 * @return Nothing.
 		 */
 		void onPageChanged(wxWizardEvent &);
-
-		/**
-		 * Handle focus events from programTextCtrl (e.g on hit <tab>).
-		 * This will write the program to the history.
-		 * @param[in] 1st The event.
-		 * @return Nothing.
-		 */
-		virtual void onProgramTextKillFocus(wxFocusEvent &);
-
-		/**
-		 * Handle events from programTextCtrl.
-		 * This will write the program to the history.
-		 * @param[in] 1st The event.
-		 * @return Nothing.
-		 */
-		virtual void onProgramTextEnter(wxCommandEvent &);
-
-		/**
-		 * Handle events from pickButton.
-		 * This will open a file chooser and on 'ok' the choosen
-		 * file is written to the history.
-		 * @param[in] 1st The event.
-		 * @return Nothing.
-		 */
-		virtual void onPickButton(wxCommandEvent &);
 
 		/**
 		 * Handle events from checksum calculation task.

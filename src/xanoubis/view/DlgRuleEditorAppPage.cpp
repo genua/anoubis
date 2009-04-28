@@ -33,6 +33,7 @@
 #include <wx/msgdlg.h>
 #include <wx/string.h>
 
+#include "AnPickFromFs.h"
 #include "DlgRuleEditorAppPage.h"
 
 DlgRuleEditorAppPage::DlgRuleEditorAppPage(wxWindow *parent,
@@ -45,6 +46,10 @@ DlgRuleEditorAppPage::DlgRuleEditorAppPage(wxWindow *parent,
 	csumCache_ = wxEmptyString;
 	appPolicy_ = NULL;
 	ctxPolicy_ = NULL;
+
+	addSubject(binaryPicker);
+	binaryPicker->setMode(AnPickFromFs::MODE_FILE);
+	binaryPicker->setTitle(_("Binary:"));
 
 	JobCtrl::getInstance()->Connect(anTASKEVT_CSUMCALC,
 	    wxTaskEventHandler(DlgRuleEditorAppPage::onCsumCalcTask),
@@ -66,6 +71,9 @@ DlgRuleEditorAppPage::update(Subject *subject)
 		showBinary();
 		showCsum();
 		showStatus();
+	}
+	if (subject == binaryPicker) {
+		setBinary(binaryPicker->getFileName());
 	}
 }
 
@@ -106,11 +114,11 @@ void
 DlgRuleEditorAppPage::showBinary(void)
 {
 	if (appPolicy_ != NULL) {
-		binaryTextCtrl->ChangeValue(
+		binaryPicker->setFileName(
 		    appPolicy_->getBinaryName(binaryIndex_));
 	}
 	if (ctxPolicy_ != NULL) {
-		binaryTextCtrl->ChangeValue(
+		binaryPicker->setFileName(
 		    ctxPolicy_->getBinaryName(binaryIndex_));
 	}
 	Layout();
@@ -181,34 +189,13 @@ DlgRuleEditorAppPage::showStatus(void)
 }
 
 void
-DlgRuleEditorAppPage::setBinary(wxString paramBinary)
+DlgRuleEditorAppPage::setBinary(wxString binary)
 {
 	int		 selection;
 	wxString	 current;
 	wxFileName	 baseName;
 	wxNotebook	*parentNotebook;
-	char		 real[PATH_MAX], *res;
-	wxString	 binary;
 
-	if (paramBinary == wxT("") || paramBinary == wxT("any")) {
-		binary = paramBinary;
-	} else {
-		res = realpath(paramBinary.fn_str(), real);
-		if (res) {
-			binary = wxString::From8BitData(res, strlen(res));
-			if (binary != paramBinary) {
-				binaryTextCtrl->ChangeValue(binary);
-				showInfo(_("Symbolic link was resolved"));
-			} else {
-				showInfo(wxT(""));
-			}
-		} else {
-			binary = paramBinary;
-			showInfo(_("Failure to resolve symbolic link"));
-		}
-	}
-	/* Mark text in textctrl as clean */
-	binaryTextCtrl->DiscardEdits();
 	if (appPolicy_ != NULL) {
 		if (appPolicy_->isAnyBlock()) {
 			appPolicy_->addBinary(binary);
@@ -293,48 +280,6 @@ DlgRuleEditorAppPage::doCsumUpdate(void)
 	}
 	if (ctxPolicy_ != NULL) {
 		ctxPolicy_->setHashValueString(csumCache_, binaryIndex_);
-	}
-}
-
-void
-DlgRuleEditorAppPage::onBinaryTextKillFocus(wxFocusEvent &)
-{
-	/*
-	 * Only validate on a set-Focus event if the user has modified
-	 * the text in the text ctrl since we last called setBinary.
-	 */
-	if (binaryTextCtrl->IsModified()) {
-		setBinary(binaryTextCtrl->GetValue());
-	}
-}
-
-void
-DlgRuleEditorAppPage::onBinaryTextEnter(wxCommandEvent &event)
-{
-	setBinary(event.GetString());
-}
-
-void
-DlgRuleEditorAppPage::onPickButton(wxCommandEvent &)
-{
-	wxFileName	defaultPath;
-	wxFileDialog	fileDlg(this);
-
-	if (appPolicy_ != NULL) {
-		defaultPath.Assign(appPolicy_->getBinaryName(binaryIndex_));
-	}
-	if (ctxPolicy_ != NULL) {
-		defaultPath.Assign(ctxPolicy_->getBinaryName(binaryIndex_));
-	}
-
-	wxBeginBusyCursor();
-	fileDlg.SetDirectory(defaultPath.GetPath());
-	fileDlg.SetFilename(defaultPath.GetFullName());
-	fileDlg.SetWildcard(wxT("*"));
-	wxEndBusyCursor();
-
-	if (fileDlg.ShowModal() == wxID_OK) {
-		setBinary(fileDlg.GetPath());
 	}
 }
 

@@ -32,6 +32,7 @@
 ///////////////////////////////////////////////////////////////////////////
 
 #include "AnDetails.h"
+#include "AnPickFromFs.h"
 
 #include "RuleWizardPanelsBase.h"
 
@@ -290,18 +291,8 @@ RuleWizardProgramPageBase::RuleWizardProgramPageBase( wxWindow* parent, wxWindow
 	
 	mainSizer->Add( programLabel, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
 	
-	wxBoxSizer* programSizer;
-	programSizer = new wxBoxSizer( wxHORIZONTAL );
-	
-	programTextCtrl = new wxTextCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER );
-	programSizer->Add( programTextCtrl, 1, wxALL|wxALIGN_CENTER_VERTICAL|wxEXPAND, 5 );
-	
-	pickButton = new wxButton( this, wxID_ANY, _("Pick..."), wxDefaultPosition, wxDefaultSize, 0 );
-	pickButton->SetToolTip( _("opens a file-choose-dialog\nand stores the result") );
-	
-	programSizer->Add( pickButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
-	
-	mainSizer->Add( programSizer, 0, wxEXPAND, 5 );
+	programPicker = new AnPickFromFs( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	mainSizer->Add( programPicker, 0, wxEXPAND | wxALL, 5 );
 	
 	csumLabel = new wxStaticText( this, wxID_ANY, _("Checksum:"), wxDefaultPosition, wxDefaultSize, 0 );
 	csumLabel->Wrap( -1 );
@@ -326,11 +317,6 @@ RuleWizardProgramPageBase::RuleWizardProgramPageBase( wxWindow* parent, wxWindow
 	
 	this->SetSizer( pageSizer );
 	this->Layout();
-	
-	// Connect Events
-	programTextCtrl->Connect( wxEVT_KILL_FOCUS, wxFocusEventHandler( RuleWizardProgramPageBase::onProgramTextKillFocus ), NULL, this );
-	programTextCtrl->Connect( wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler( RuleWizardProgramPageBase::onProgramTextEnter ), NULL, this );
-	pickButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( RuleWizardProgramPageBase::onPickButton ), NULL, this );
 }
 
 RuleWizardContextPageBase::RuleWizardContextPageBase( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size, long style ) : wxPanel( parent, id, pos, size, style )

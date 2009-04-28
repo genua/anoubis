@@ -307,39 +307,11 @@ class ModSfsMainPanelImpl : public Observer, public ModSfsMainPanelBase
 		void OnPrivKeyValidityChanged(wxCommandEvent&);
 
 		/**
-		 * Handle the event when private key is entered.
-		 * @param[in] 1st The event.
-		 * @return Nothing.
-		 */
-		void OnPrivKeyEntered(wxCommandEvent&);
-
-		/**
-		 * Handle the event when private key is chosen.
-		 * @param[in] 1st The event.
-		 * @return Nothing.
-		 */
-		void OnPrivKeyChooseClicked(wxCommandEvent&);
-
-		/**
 		 * Handle the event when private key validity period changed.
 		 * @param[in] 1st The event.
 		 * @return Nothing.
 		 */
 		void OnPrivKeyValidityPeriodChanged(wxSpinEvent&);
-
-		/**
-		 * Handle the event when a certificate is entered.
-		 * @param[in] 1st The event.
-		 * @return Nothing.
-		 */
-		void OnCertEntered(wxCommandEvent&);
-
-		/**
-		 * Handle the event when a certificate is chosen.
-		 * @param[in] 1st The event.
-		 * @return Nothing.
-		 */
-		void OnCertChooseClicked(wxCommandEvent&);
 
 		/**
 		 * Initial setup of the Sfs module.

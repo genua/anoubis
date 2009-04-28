@@ -188,31 +188,6 @@ class DlgRuleEditorAppPage : public DlgRuleEditorPage,
 		void doCsumUpdate();
 
 		/**
-		 * Handle focus events from binaryTextCtrl (e.g on hit <tab>).
-		 * This will write the binary to the policy.
-		 * @param[in] 1st The event.
-		 * @return Nothing.
-		 */
-		virtual void onBinaryTextKillFocus(wxFocusEvent &);
-
-		/**
-		 * Handle events from binaryTextCtrl.
-		 * This will write the binary to the policy.
-		 * @param[in] 1st The event.
-		 * @return Nothing.
-		 */
-		virtual void onBinaryTextEnter(wxCommandEvent &);
-
-		/**
-		 * Handle events from pickButton.
-		 * This will open a file chooser and on 'ok' the choosen
-		 * file is written to the policy.
-		 * @param[in] 1st The event.
-		 * @return Nothing.
-		 */
-		virtual void onPickButton(wxCommandEvent &);
-
-		/**
 		 * Handle events from validateButton.
 		 * This will start the calculation of the current checksum.
 		 * @param[in] 1st The event.

@@ -48,6 +48,7 @@
 #include <wx/msgdlg.h>
 #include <wx/textdlg.h>
 
+#include "AnPickFromFs.h"
 #include "main.h"
 #include "JobCtrl.h"
 #include "KeyCtrl.h"
@@ -83,6 +84,16 @@ ModSfsMainPanelImpl::ModSfsMainPanelImpl(wxWindow* parent,
 	    wxTaskEventHandler(ModSfsMainPanelImpl::OnDaemonRegistration),
 	    NULL, this);
 	Hide();
+
+	addSubject(keyPicker);
+	keyPicker->setTitle(_("Configure private key:"));
+	keyPicker->setButtonLabel(_("Choose Key"));
+	keyPicker->setMode(AnPickFromFs::MODE_FILE);
+
+	addSubject(certificatePicker);
+	certificatePicker->setTitle(_("Configure certificate:"));
+	certificatePicker->setButtonLabel(_("Choose certificate"));
+	certificatePicker->setMode(AnPickFromFs::MODE_FILE);
 
 	initSfsOptions();
 	initSfsMain();
@@ -134,6 +145,13 @@ ModSfsMainPanelImpl::update(Subject *subject)
 		if (idx != -1) {
 			updateSfsDefaultFilterPolicy(idx);
 		}
+	} else if (subject == keyPicker) {
+		privKeyParamsUpdate(
+		    keyPicker->getFileName(),
+		    PrivKeyValidityChoice->GetCurrentSelection() == 0,
+		    PrivKeyValiditySpinCtrl->GetValue());
+	} else if (subject == certificatePicker) {
+		certificateParamsUpdate(certificatePicker->getFileName());
 	} else {
 		/* Unknown subject type - do nothing */
 	}
@@ -506,30 +524,7 @@ ModSfsMainPanelImpl::OnPrivKeyValidityChanged(wxCommandEvent&)
 	bool sessionEnd = (PrivKeyValidityChoice->GetCurrentSelection() == 0);
 	int validity = !sessionEnd ? PrivKeyValiditySpinCtrl->GetValue() : 0;
 
-	privKeyParamsUpdate(PrivKeyPathText->GetValue(), sessionEnd, validity);
-}
-
-void
-ModSfsMainPanelImpl::OnPrivKeyEntered(wxCommandEvent&)
-{
-	privKeyParamsUpdate(
-	    PrivKeyPathText->GetValue(),
-	    PrivKeyValidityChoice->GetCurrentSelection() == 0,
-	    PrivKeyValiditySpinCtrl->GetValue());
-}
-
-void
-ModSfsMainPanelImpl::OnPrivKeyChooseClicked(wxCommandEvent&)
-{
-	wxFileDialog dlg(this,
-	    _("Choose the file, where your private key is stored."));
-
-	if (dlg.ShowModal() == wxID_OK) {
-		privKeyParamsUpdate(
-		    dlg.GetPath(),
-		    PrivKeyValidityChoice->GetCurrentSelection() == 0,
-		    PrivKeyValiditySpinCtrl->GetValue());
-	}
+	privKeyParamsUpdate(keyPicker->getFileName(), sessionEnd, validity);
 }
 
 void
@@ -537,25 +532,9 @@ ModSfsMainPanelImpl::OnPrivKeyValidityPeriodChanged(wxSpinEvent&)
 {
 	/* Change validity settings of private key */
 	privKeyParamsUpdate(
-	    PrivKeyPathText->GetValue(),
+	    keyPicker->getFileName(),
 	    PrivKeyValidityChoice->GetCurrentSelection() == 0,
 	    PrivKeyValiditySpinCtrl->GetValue());
-}
-
-void
-ModSfsMainPanelImpl::OnCertEntered(wxCommandEvent&)
-{
-	certificateParamsUpdate(CertPathText->GetValue());
-}
-
-void
-ModSfsMainPanelImpl::OnCertChooseClicked(wxCommandEvent&)
-{
-	wxFileDialog dlg(this,
-	    _("Choose the file, where your certificate is stored."));
-
-	if (dlg.ShowModal() == wxID_OK)
-		certificateParamsUpdate(dlg.GetPath());
 }
 
 void
@@ -693,7 +672,7 @@ ModSfsMainPanelImpl::privKeyParamsUpdate(const wxString &path, bool sessionEnd,
 	}
 
 	/* Update view */
-	PrivKeyPathText->SetValue(path);
+	keyPicker->setFileName(path);
 
 	PrivKeyValiditySpinCtrl->Enable(!sessionEnd);
 	PrivKeyValidityText->Enable(!sessionEnd);
@@ -727,7 +706,7 @@ ModSfsMainPanelImpl::certificateParamsUpdate(const wxString &path)
 	}
 
 	/* Update view */
-	CertPathText->SetValue(cert.getFile());
+	certificatePicker->setFileName(cert.getFile());
 	CertFingerprintText->SetLabel(cert.getFingerprint());
 	CertDnText->SetLabel(cert.getDistinguishedName());
 

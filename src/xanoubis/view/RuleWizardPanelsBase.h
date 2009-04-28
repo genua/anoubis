@@ -35,6 +35,7 @@
 #define __RuleWizardPanelsBase__
 
 class AnDetails;
+class AnPickFromFs;
 
 #include <wx/sizer.h>
 #include <wx/gdicmn.h>
@@ -151,17 +152,10 @@ class RuleWizardProgramPageBase : public wxPanel
 		wxStaticText* headLineLabel;
 		
 		wxStaticText* programLabel;
-		wxTextCtrl* programTextCtrl;
-		wxButton* pickButton;
+		AnPickFromFs* programPicker;
 		wxStaticText* csumLabel;
 		wxStaticText* csumValue;
 		wxStaticText* programInfo;
-		
-		
-		// Virtual event handlers, overide them in your derived class
-		virtual void onProgramTextKillFocus( wxFocusEvent& event ){ event.Skip(); }
-		virtual void onProgramTextEnter( wxCommandEvent& event ){ event.Skip(); }
-		virtual void onPickButton( wxCommandEvent& event ){ event.Skip(); }
 		
 	
 	public:

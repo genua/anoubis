@@ -314,22 +314,8 @@ DlgRuleEditorAppPageBase::DlgRuleEditorAppPageBase( wxWindow* parent, wxWindowID
 	wxBoxSizer* mainSizer;
 	mainSizer = new wxBoxSizer( wxVERTICAL );
 	
-	wxBoxSizer* binarySizer;
-	binarySizer = new wxBoxSizer( wxHORIZONTAL );
-	
-	binaryLabel = new wxStaticText( mainPage, wxID_ANY, _("Binary:"), wxDefaultPosition, wxDefaultSize, 0 );
-	binaryLabel->Wrap( -1 );
-	binarySizer->Add( binaryLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
-	
-	binaryTextCtrl = new wxTextCtrl( mainPage, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER );
-	binarySizer->Add( binaryTextCtrl, 1, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
-	
-	pickButton = new wxButton( mainPage, wxID_ANY, _("Pick..."), wxDefaultPosition, wxDefaultSize, 0 );
-	pickButton->SetToolTip( _("Choose a binary") );
-	
-	binarySizer->Add( pickButton, 0, wxALL|wxALIGN_RIGHT|wxALIGN_CENTER_VERTICAL, 5 );
-	
-	mainSizer->Add( binarySizer, 0, wxEXPAND, 5 );
+	binaryPicker = new AnPickFromFs( mainPage, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	mainSizer->Add( binaryPicker, 0, wxEXPAND | wxALL, 5 );
 	
 	wxFlexGridSizer* csumSizer;
 	csumSizer = new wxFlexGridSizer( 2, 2, 0, 0 );
@@ -426,9 +412,6 @@ DlgRuleEditorAppPageBase::DlgRuleEditorAppPageBase( wxWindow* parent, wxWindowID
 	this->Layout();
 	
 	// Connect Events
-	binaryTextCtrl->Connect( wxEVT_KILL_FOCUS, wxFocusEventHandler( DlgRuleEditorAppPageBase::onBinaryTextKillFocus ), NULL, this );
-	binaryTextCtrl->Connect( wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler( DlgRuleEditorAppPageBase::onBinaryTextEnter ), NULL, this );
-	pickButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorAppPageBase::onPickButton ), NULL, this );
 	validateButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorAppPageBase::onValidateButton ), NULL, this );
 	updateButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorAppPageBase::onUpdateButton ), NULL, this );
 	addButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorAppPageBase::onAddButton ), NULL, this );
@@ -710,61 +693,55 @@ DlgRuleEditorFilterSubjectPageBase::DlgRuleEditorFilterSubjectPageBase( wxWindow
 	
 	mainPage = new wxScrolledWindow( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxTAB_TRAVERSAL|wxVSCROLL );
 	mainPage->SetScrollRate( 5, 5 );
-	wxFlexGridSizer* mainSizer;
-	mainSizer = new wxFlexGridSizer( 7, 3, 0, 0 );
-	mainSizer->AddGrowableCol( 1 );
-	mainSizer->SetFlexibleDirection( wxBOTH );
-	mainSizer->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+	wxBoxSizer* mainSizer;
+	mainSizer = new wxBoxSizer( wxVERTICAL );
 	
-	pathLabel = new wxStaticText( mainPage, wxID_ANY, _("Path:"), wxDefaultPosition, wxDefaultSize, 0 );
-	pathLabel->Wrap( -1 );
-	mainSizer->Add( pathLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	pathPicker = new AnPickFromFs( mainPage, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	mainSizer->Add( pathPicker, 0, wxEXPAND | wxALL, 5 );
 	
-	pathTextCtrl = new wxTextCtrl( mainPage, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER );
-	mainSizer->Add( pathTextCtrl, 0, wxALL|wxEXPAND, 5 );
-	
-	modifyButton = new wxButton( mainPage, wxID_ANY, _("modify"), wxDefaultPosition, wxDefaultSize, 0 );
-	modifyButton->SetToolTip( _("Choose a path") );
-	
-	mainSizer->Add( modifyButton, 0, wxALL, 5 );
+	wxFlexGridSizer* subjectSizer;
+	subjectSizer = new wxFlexGridSizer( 7, 3, 0, 0 );
+	subjectSizer->AddGrowableCol( 1 );
+	subjectSizer->SetFlexibleDirection( wxBOTH );
+	subjectSizer->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
 	
 	subjectLabel = new wxStaticText( mainPage, wxID_ANY, _("Subject:"), wxDefaultPosition, wxDefaultSize, 0 );
 	subjectLabel->Wrap( -1 );
-	mainSizer->Add( subjectLabel, 0, wxALL, 5 );
+	subjectSizer->Add( subjectLabel, 0, wxALL, 5 );
 	
 	anyRadioButton = new wxRadioButton( mainPage, wxID_ANY, _("any"), wxDefaultPosition, wxDefaultSize, wxRB_GROUP );
 	anyRadioButton->Hide();
 	anyRadioButton->SetToolTip( _("Not specified") );
 	
-	mainSizer->Add( anyRadioButton, 0, wxALL, 5 );
+	subjectSizer->Add( anyRadioButton, 0, wxALL, 5 );
 	
 	
-	mainSizer->Add( 0, 0, 1, wxEXPAND, 5 );
+	subjectSizer->Add( 0, 0, 1, wxEXPAND, 5 );
 	
 	
-	mainSizer->Add( 0, 0, 1, wxEXPAND, 5 );
+	subjectSizer->Add( 0, 0, 1, wxEXPAND, 5 );
 	
 	selfRadioButton = new wxRadioButton( mainPage, wxID_ANY, _("self"), wxDefaultPosition, wxDefaultSize, 0 );
 	selfRadioButton->SetToolTip( _("Trust own checksum") );
 	
-	mainSizer->Add( selfRadioButton, 0, wxALL, 5 );
+	subjectSizer->Add( selfRadioButton, 0, wxALL, 5 );
 	
 	
-	mainSizer->Add( 0, 0, 1, wxEXPAND, 5 );
+	subjectSizer->Add( 0, 0, 1, wxEXPAND, 5 );
 	
 	
-	mainSizer->Add( 0, 0, 1, wxEXPAND, 5 );
+	subjectSizer->Add( 0, 0, 1, wxEXPAND, 5 );
 	
 	selfSignedRadioButton = new wxRadioButton( mainPage, wxID_ANY, _("self-signed"), wxDefaultPosition, wxDefaultSize, 0 );
 	selfSignedRadioButton->SetToolTip( _("Trust own signature") );
 	
-	mainSizer->Add( selfSignedRadioButton, 0, wxALL, 5 );
+	subjectSizer->Add( selfSignedRadioButton, 0, wxALL, 5 );
 	
 	
-	mainSizer->Add( 0, 0, 1, wxEXPAND, 5 );
+	subjectSizer->Add( 0, 0, 1, wxEXPAND, 5 );
 	
 	
-	mainSizer->Add( 0, 0, 1, wxEXPAND, 5 );
+	subjectSizer->Add( 0, 0, 1, wxEXPAND, 5 );
 	
 	wxBoxSizer* uidSizer;
 	uidSizer = new wxBoxSizer( wxHORIZONTAL );
@@ -777,13 +754,13 @@ DlgRuleEditorFilterSubjectPageBase::DlgRuleEditorFilterSubjectPageBase( wxWindow
 	uidTextCtrl = new wxTextCtrl( mainPage, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER );
 	uidSizer->Add( uidTextCtrl, 1, wxALL|wxEXPAND|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	mainSizer->Add( uidSizer, 1, wxEXPAND, 5 );
+	subjectSizer->Add( uidSizer, 1, wxEXPAND, 5 );
 	
 	
-	mainSizer->Add( 0, 0, 1, wxEXPAND, 5 );
+	subjectSizer->Add( 0, 0, 1, wxEXPAND, 5 );
 	
 	
-	mainSizer->Add( 0, 0, 1, wxEXPAND, 5 );
+	subjectSizer->Add( 0, 0, 1, wxEXPAND, 5 );
 	
 	wxBoxSizer* keySizer;
 	keySizer = new wxBoxSizer( wxHORIZONTAL );
@@ -796,13 +773,13 @@ DlgRuleEditorFilterSubjectPageBase::DlgRuleEditorFilterSubjectPageBase( wxWindow
 	keyTextCtrl = new wxTextCtrl( mainPage, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER );
 	keySizer->Add( keyTextCtrl, 1, wxALL|wxEXPAND|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	mainSizer->Add( keySizer, 1, wxEXPAND, 5 );
+	subjectSizer->Add( keySizer, 1, wxEXPAND, 5 );
 	
 	
-	mainSizer->Add( 0, 0, 1, wxEXPAND, 5 );
+	subjectSizer->Add( 0, 0, 1, wxEXPAND, 5 );
 	
 	
-	mainSizer->Add( 0, 0, 1, wxEXPAND, 5 );
+	subjectSizer->Add( 0, 0, 1, wxEXPAND, 5 );
 	
 	wxBoxSizer* csumSizer;
 	csumSizer = new wxBoxSizer( wxHORIZONTAL );
@@ -815,7 +792,9 @@ DlgRuleEditorFilterSubjectPageBase::DlgRuleEditorFilterSubjectPageBase( wxWindow
 	csumTextCtrl = new wxTextCtrl( mainPage, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER );
 	csumSizer->Add( csumTextCtrl, 1, wxALL|wxALIGN_CENTER_VERTICAL|wxEXPAND, 5 );
 	
-	mainSizer->Add( csumSizer, 1, wxEXPAND, 5 );
+	subjectSizer->Add( csumSizer, 1, wxEXPAND, 5 );
+	
+	mainSizer->Add( subjectSizer, 1, wxEXPAND, 5 );
 	
 	mainPage->SetSizer( mainSizer );
 	mainPage->Layout();
@@ -826,9 +805,6 @@ DlgRuleEditorFilterSubjectPageBase::DlgRuleEditorFilterSubjectPageBase( wxWindow
 	this->Layout();
 	
 	// Connect Events
-	pathTextCtrl->Connect( wxEVT_KILL_FOCUS, wxFocusEventHandler( DlgRuleEditorFilterSubjectPageBase::onPathTextKillFocus ), NULL, this );
-	pathTextCtrl->Connect( wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler( DlgRuleEditorFilterSubjectPageBase::onPathTextEnter ), NULL, this );
-	modifyButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorFilterSubjectPageBase::onModifyButton ), NULL, this );
 	anyRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorFilterSubjectPageBase::onAnyRadioButton ), NULL, this );
 	selfRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorFilterSubjectPageBase::onSelfRadioButton ), NULL, this );
 	selfSignedRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorFilterSubjectPageBase::onSelfSignedRadioButton ), NULL, this );

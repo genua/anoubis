@@ -31,14 +31,19 @@
 #include <wx/filename.h>
 #include <wx/msgdlg.h>
 
+#include "AnPickFromFs.h"
 #include "RuleWizardProgramPage.h"
 
 RuleWizardProgramPage::RuleWizardProgramPage(wxWindow *parent,
-    RuleWizardHistory *history) : RuleWizardProgramPageBase(parent)
+    RuleWizardHistory *history) : Observer(NULL),
+    RuleWizardProgramPageBase(parent)
 {
 	history_ = history;
 
 	csumValue->SetLabel(wxEmptyString);
+	addSubject(programPicker);
+	programPicker->setTitle(wxT("")); /* Title shown as extra label. */
+	programPicker->setMode(AnPickFromFs::MODE_FILE);
 
 	parent->Connect(wxEVT_WIZARD_PAGE_CHANGING,
 	    wxWizardEventHandler(RuleWizardProgramPage::onPageChanging),
@@ -56,6 +61,21 @@ RuleWizardProgramPage::~RuleWizardProgramPage(void)
 	JobCtrl::getInstance()->Disconnect(anTASKEVT_CSUMCALC,
 	    wxTaskEventHandler(RuleWizardProgramPage::onCsumCalcTask),
 	    NULL, this);
+}
+
+void
+RuleWizardProgramPage::update(Subject *subject)
+{
+	if (subject == programPicker) {
+		setProgram(programPicker->getFileName());
+		updateNavi();
+	}
+}
+
+void
+RuleWizardProgramPage::updateDelete(Subject *)
+{
+	removeSubject(programPicker);
 }
 
 void
@@ -86,45 +106,6 @@ void
 RuleWizardProgramPage::onPageChanged(wxWizardEvent &)
 {
 	updateNavi();
-}
-
-void
-RuleWizardProgramPage::onProgramTextKillFocus(wxFocusEvent &)
-{
-	if (programTextCtrl->IsModified()) {
-		/* Mark as clean */
-		programTextCtrl->DiscardEdits();
-		setProgram(programTextCtrl->GetValue());
-		updateNavi();
-	}
-}
-
-void
-RuleWizardProgramPage::onProgramTextEnter(wxCommandEvent &event)
-{
-	setProgram(event.GetString());
-	updateNavi();
-}
-
-void
-RuleWizardProgramPage::onPickButton(wxCommandEvent &)
-{
-	wxFileName	defaultPath;
-	wxFileDialog	fileDlg(this);
-
-	defaultPath.Assign(history_->getProgram());
-
-	wxBeginBusyCursor();
-	fileDlg.SetDirectory(defaultPath.GetPath());
-	fileDlg.SetFilename(defaultPath.GetFullName());
-	fileDlg.SetWildcard(wxT("*"));
-	wxEndBusyCursor();
-
-	if (fileDlg.ShowModal() == wxID_OK) {
-		programTextCtrl->ChangeValue(fileDlg.GetPath());
-		setProgram(fileDlg.GetPath());
-		updateNavi();
-	}
 }
 
 void
@@ -167,36 +148,13 @@ RuleWizardProgramPage::onCsumCalcTask(TaskEvent &event)
 }
 
 void
-RuleWizardProgramPage::setProgram(const wxString &paramBinary)
+RuleWizardProgramPage::setProgram(const wxString &binary)
 {
-	char		real[PATH_MAX], *res;
-	wxString	binary;
-
 	/* Store binary */
-	if (paramBinary == history_->getProgram()) {
+	if (binary == history_->getProgram()) {
 		return;
 	}
 
-	if (paramBinary == wxT("") || paramBinary == wxT("any")) {
-		programInfo->SetLabel(wxT(""));
-		binary = paramBinary;
-	} else {
-		res = realpath(paramBinary.fn_str(), real);
-		if (res) {
-			binary = wxString::From8BitData(res, strlen(res));
-			if (binary != paramBinary) {
-				programTextCtrl->ChangeValue(binary);
-				programInfo->SetLabel(
-				    _("Symbolic link was resolved"));
-			} else {
-				programInfo->SetLabel(wxT(""));
-			}
-		} else {
-			binary = paramBinary;
-			programInfo->SetLabel(
-			    _("Failure to resolve symbolic link"));
-		}
-	}
 	history_->setProgram(binary);
 	history_->setChecksum(wxEmptyString);
 

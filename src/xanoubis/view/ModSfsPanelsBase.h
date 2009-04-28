@@ -35,6 +35,7 @@
 #define __ModSfsPanelsBase__
 
 class AnDetails;
+class AnPickFromFs;
 class ModSfsListCtrl;
 
 #include <wx/string.h>
@@ -101,16 +102,12 @@ class ModSfsMainPanelBase : public wxPanel
 		wxChoice* SfsMainActionChoice;
 		wxButton* SfsMainActionButton;
 		wxPanel* pan_Options;
-		wxStaticText* m_staticText121;
-		wxTextCtrl* PrivKeyPathText;
-		wxButton* PrivKeyChooseButton;
+		AnPickFromFs* keyPicker;
 		wxStaticText* m_staticText13;
 		wxChoice* PrivKeyValidityChoice;
 		wxSpinCtrl* PrivKeyValiditySpinCtrl;
 		wxStaticText* PrivKeyValidityText;
-		wxStaticText* m_staticText15;
-		wxTextCtrl* CertPathText;
-		wxButton* CertChooseButton;
+		AnPickFromFs* certificatePicker;
 		wxStaticText* m_staticText16;
 		wxStaticText* CertFingerprintText;
 		wxStaticText* m_staticText18;
@@ -131,12 +128,8 @@ class ModSfsMainPanelBase : public wxPanel
 		virtual void OnSfsMainShowChangedClicked( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnSfsMainExportClicked( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnSfsMainApplyButtonClicked( wxCommandEvent& event ){ event.Skip(); }
-		virtual void OnPrivKeyEntered( wxCommandEvent& event ){ event.Skip(); }
-		virtual void OnPrivKeyChooseClicked( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnPrivKeyValidityChanged( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnPrivKeyValidityPeriodChanged( wxSpinEvent& event ){ event.Skip(); }
-		virtual void OnCertEntered( wxCommandEvent& event ){ event.Skip(); }
-		virtual void OnCertChooseClicked( wxCommandEvent& event ){ event.Skip(); }
 		
 	
 	public:

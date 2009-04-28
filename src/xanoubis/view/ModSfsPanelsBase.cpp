@@ -32,6 +32,7 @@
 ///////////////////////////////////////////////////////////////////////////
 
 #include "AnDetails.h"
+#include "AnPickFromFs.h"
 #include "ModSfsListCtrl.h"
 
 #include "ModSfsPanelsBase.h"
@@ -240,28 +241,14 @@ ModSfsMainPanelBase::ModSfsMainPanelBase( wxWindow* parent, wxWindowID id, const
 	wxStaticBoxSizer* sbSizer1;
 	sbSizer1 = new wxStaticBoxSizer( new wxStaticBox( pan_Options, -1, _("Private Key") ), wxVERTICAL );
 	
+	keyPicker = new AnPickFromFs( pan_Options, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	sbSizer1->Add( keyPicker, 0, wxEXPAND|wxALL, 5 );
+	
 	wxFlexGridSizer* fgSizer3;
 	fgSizer3 = new wxFlexGridSizer( 2, 2, 0, 0 );
 	fgSizer3->AddGrowableCol( 1 );
 	fgSizer3->SetFlexibleDirection( wxBOTH );
 	fgSizer3->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
-	
-	m_staticText121 = new wxStaticText( pan_Options, wxID_ANY, _("Configure private key:"), wxDefaultPosition, wxDefaultSize, 0 );
-	m_staticText121->Wrap( -1 );
-	fgSizer3->Add( m_staticText121, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
-	
-	wxBoxSizer* bSizer17;
-	bSizer17 = new wxBoxSizer( wxHORIZONTAL );
-	
-	PrivKeyPathText = new wxTextCtrl( pan_Options, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER );
-	bSizer17->Add( PrivKeyPathText, 1, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
-	
-	PrivKeyChooseButton = new wxButton( pan_Options, wxID_ANY, _("Choose Key"), wxDefaultPosition, wxDefaultSize, 0 );
-	PrivKeyChooseButton->SetToolTip( _("Selects a private key") );
-	
-	bSizer17->Add( PrivKeyChooseButton, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
-	
-	fgSizer3->Add( bSizer17, 1, wxEXPAND, 5 );
 	
 	m_staticText13 = new wxStaticText( pan_Options, wxID_ANY, _("Passphrase validity:"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_staticText13->Wrap( -1 );
@@ -295,28 +282,14 @@ ModSfsMainPanelBase::ModSfsMainPanelBase( wxWindow* parent, wxWindowID id, const
 	wxStaticBoxSizer* sbSizer2;
 	sbSizer2 = new wxStaticBoxSizer( new wxStaticBox( pan_Options, -1, _("Certificate") ), wxVERTICAL );
 	
+	certificatePicker = new AnPickFromFs( pan_Options, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	sbSizer2->Add( certificatePicker, 1, wxEXPAND | wxALL, 5 );
+	
 	wxFlexGridSizer* fgSizer4;
 	fgSizer4 = new wxFlexGridSizer( 2, 2, 0, 0 );
 	fgSizer4->AddGrowableCol( 1 );
 	fgSizer4->SetFlexibleDirection( wxBOTH );
 	fgSizer4->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
-	
-	m_staticText15 = new wxStaticText( pan_Options, wxID_ANY, _("Configure certificate:"), wxDefaultPosition, wxDefaultSize, 0 );
-	m_staticText15->Wrap( -1 );
-	fgSizer4->Add( m_staticText15, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
-	
-	wxBoxSizer* bSizer19;
-	bSizer19 = new wxBoxSizer( wxHORIZONTAL );
-	
-	CertPathText = new wxTextCtrl( pan_Options, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER );
-	bSizer19->Add( CertPathText, 1, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
-	
-	CertChooseButton = new wxButton( pan_Options, wxID_ANY, _("Choose certificate"), wxDefaultPosition, wxDefaultSize, 0 );
-	CertChooseButton->SetToolTip( _("Selects a certificate") );
-	
-	bSizer19->Add( CertChooseButton, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
-	
-	fgSizer4->Add( bSizer19, 1, wxEXPAND, 5 );
 	
 	m_staticText16 = new wxStaticText( pan_Options, wxID_ANY, _("Fingerprint:"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_staticText16->Wrap( -1 );
@@ -369,12 +342,8 @@ ModSfsMainPanelBase::ModSfsMainPanelBase( wxWindow* parent, wxWindowID id, const
 	SfsMainShowChangedButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModSfsMainPanelBase::OnSfsMainShowChangedClicked ), NULL, this );
 	SfsMainExportButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModSfsMainPanelBase::OnSfsMainExportClicked ), NULL, this );
 	SfsMainActionButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModSfsMainPanelBase::OnSfsMainApplyButtonClicked ), NULL, this );
-	PrivKeyPathText->Connect( wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler( ModSfsMainPanelBase::OnPrivKeyEntered ), NULL, this );
-	PrivKeyChooseButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModSfsMainPanelBase::OnPrivKeyChooseClicked ), NULL, this );
 	PrivKeyValidityChoice->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( ModSfsMainPanelBase::OnPrivKeyValidityChanged ), NULL, this );
 	PrivKeyValiditySpinCtrl->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( ModSfsMainPanelBase::OnPrivKeyValidityPeriodChanged ), NULL, this );
-	CertPathText->Connect( wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler( ModSfsMainPanelBase::OnCertEntered ), NULL, this );
-	CertChooseButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModSfsMainPanelBase::OnCertChooseClicked ), NULL, this );
 }
 
 ModSfsOverviewPanelBase::ModSfsOverviewPanelBase( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size, long style ) : wxPanel( parent, id, pos, size, style )
