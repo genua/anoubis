@@ -66,7 +66,11 @@ LIBS += $(SSL_LIBS)
 sfssig_LDFLAGS = $(AM_LDFLAGS) $(SSL_LDFLAGS)
 
 sfssig_SOURCES= \
-	main.c
+	main.c \
+	syssig.c \
+	utils.c \
+	filter.c \
+	sfssig.h
 
 sfssig_CPPFLAGS = -I$(top_srcdir)/include -I$(top_builddir)/src
 if NEEDBSDCOMPAT

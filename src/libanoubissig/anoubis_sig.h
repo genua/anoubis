@@ -70,6 +70,9 @@
 #define ANOUBIS_SIG_HASH_MDC2		EVP_mdc2()
 #define ANOUBIS_SIG_HASH_RIPEMD160	EVP_ripemd160()
 
+#define ANOUBIS_DEF_CRT	".xanoubis/default.crt"
+#define ANOUBIS_DEF_KEY ".xanoubis/default.key"
+
 /*
  * XXX KM for now this is the standard HASH until i figured out
  * how to syncronize it with the daemon
