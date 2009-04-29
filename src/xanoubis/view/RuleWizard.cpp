@@ -422,11 +422,14 @@ RuleWizard::createContextPolicy(PolicyRuleSet *ruleSet) const
 			ctxFilter = new ContextFilterPolicy(ctxApp);
 			ctxApp->prependFilterPolicy(ctxFilter);
 			ctxFilter->setContextTypeNo(APN_CTX_NEW);
-			const wxArrayString &list =
-			    history_.getContextExceptionList();
-			/* XXX CEH: Need to deal with checksums here. */
-			for (unsigned int i=0; i<list.GetCount(); ++i)
-				ctxFilter->addBinary(list[i]);
+			for (unsigned int i=0;
+			    i<history_.getContextExceptionCount(); ++i) {
+				ctxFilter->addBinary(
+				    history_.getContextExceptionBinary(i));
+				ctxFilter->setHashTypeNo(APN_HASH_SHA256, i);
+				ctxFilter->setHashValueString(
+				    history_.getContextExceptionCsum(i), i);
+			}
 		}
 	}
 

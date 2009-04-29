@@ -487,34 +487,21 @@ AppPolicy::getHashValueList(void) const
 wxArrayString
 AppPolicy::calculateCurrentChecksums(void) const
 {
-	int		rc;
-	int		csumLength;
-	unsigned char	csum[MAX_APN_HASH_LEN];
-	struct stat	fstat;
 	wxString	binary;
 	wxString	csumString;
 	wxArrayString	binaryList;
 	wxArrayString	csumList;
 
-	csumLength = MAX_APN_HASH_LEN;
 	binaryList = getBinaryList();
 
 	for (size_t i=0; i<binaryList.GetCount(); i++) {
 		binary = binaryList.Item(i);
-		rc = lstat(binary.fn_str(), &fstat);
 
-		if (!binary.IsEmpty() && binary != wxT("any") && rc == 0) {
-			if (lstat("/dev/anoubis", &fstat) == 0) {
-				rc = anoubis_csum_calc(binary.fn_str(),
-				    csum, &csumLength);
-			} else {
-				rc = anoubis_csum_calc_userspace(
-				    binary.fn_str(), csum, &csumLength);
-			}
-			if (rc == 0) {
-				PolicyUtils::csumToString(csum,
-				    MAX_APN_HASH_LEN, csumString);
+		if (!binary.IsEmpty() && binary != wxT("any")) {
+			if (PolicyUtils::fileToCsum(binary, csumString)) {
 				csumList.Add(csumString);
+			} else {
+				csumList.Add(wxT(""));
 			}
 		}
 	}

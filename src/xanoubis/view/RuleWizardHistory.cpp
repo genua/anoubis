@@ -52,7 +52,8 @@ RuleWizardHistory::RuleWizardHistory(void)
 	haveContextPolicy_ = false;
 	isSameContext_	   = true;
 	haveContextException_ = false;
-	contextExceptionList_.Clear();
+	contextExceptionBinaryList_.Clear();
+	contextExceptionCsumList_.Clear();
 
 	haveAlfPolicy_	     = false;
 	overwriteAlfPolicy_  = OVERWRITE_NO;
@@ -168,7 +169,8 @@ RuleWizardHistory::setContextException(bool exception)
 {
 	haveContextException_ = exception;
 	if (!haveContextException_) {
-		contextExceptionList_.Clear();
+		contextExceptionBinaryList_.Clear();
+		contextExceptionCsumList_.Clear();
 	}
 }
 
@@ -178,16 +180,52 @@ RuleWizardHistory::haveContextException(void) const
 	return (haveContextException_);
 }
 
-void
-RuleWizardHistory::setContextExceptionList(const wxArrayString & list)
+bool
+RuleWizardHistory::addContextException(wxString bin, wxString csum)
 {
-	contextExceptionList_ = list;
+	contextExceptionBinaryList_.Add(bin);
+	contextExceptionCsumList_.Add(csum);
+	return true;
 }
 
-wxArrayString
-RuleWizardHistory::getContextExceptionList(void) const
+bool
+RuleWizardHistory::delContextException(unsigned int idx)
 {
-	return (contextExceptionList_);
+	if (idx < contextExceptionBinaryList_.GetCount()) {
+		contextExceptionBinaryList_.RemoveAt(idx);
+		contextExceptionCsumList_.RemoveAt(idx);
+		return true;
+	}
+	return false;
+}
+
+unsigned int
+RuleWizardHistory::getContextExceptionCount(void) const
+{
+	if (haveContextException_) {
+		return contextExceptionBinaryList_.GetCount();
+	}
+	return 0;
+}
+
+const wxString
+RuleWizardHistory::getContextExceptionBinary(unsigned int index) const
+{
+	if (haveContextException_
+	    && index < contextExceptionBinaryList_.GetCount()) {
+		return contextExceptionBinaryList_[index];
+	}
+	return wxT("");
+}
+
+const wxString
+RuleWizardHistory::getContextExceptionCsum(unsigned int index) const
+{
+	if (haveContextException_
+	    && index < contextExceptionCsumList_.GetCount()) {
+		return contextExceptionCsumList_[index];
+	}
+	return wxT("");
 }
 
 /*
@@ -599,7 +637,7 @@ RuleWizardHistory::fillContextNavi(wxWindow *parent, wxSizer *naviSizer,
 
 	if (haveContextException_) {
 		text.Printf(_("exceptions (%d): yes"),
-		    contextExceptionList_.GetCount());
+		    contextExceptionBinaryList_.GetCount());
 	} else {
 		text = _("exceptions: no");
 	}

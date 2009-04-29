@@ -25,10 +25,14 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <config.h>
+
 #include <wx/filedlg.h>
 #include <wx/arrstr.h>
+#include <wx/msgdlg.h>
 
 #include "RuleWizardContextExceptionPage.h"
+#include "PolicyUtils.h"
 
 RuleWizardContextExceptionPage::RuleWizardContextExceptionPage(wxWindow *parent,
     RuleWizardHistory *history) : RuleWizardContextExceptionPageBase(parent)
@@ -65,8 +69,6 @@ RuleWizardContextExceptionPage::onAddButton(wxCommandEvent &)
 	wxArrayString	list;
 	wxFileDialog	fileDlg(this);
 
-	list = history_->getContextExceptionList();
-
 	wxBeginBusyCursor();
 	fileDlg.SetDirectory(wxT("/usr/bin"));
 	fileDlg.SetFilename(wxEmptyString);
@@ -74,13 +76,22 @@ RuleWizardContextExceptionPage::onAddButton(wxCommandEvent &)
 	wxEndBusyCursor();
 
 	if (fileDlg.ShowModal() == wxID_OK) {
-		list.Add(fileDlg.GetPath());
-		history_->setContextExceptionList(list);
-		selection = exceptionListBox->Append(fileDlg.GetPath());
-		exceptionListBox->Select(selection);
-		updateNavi();
-	}
+		wxString	path = fileDlg.GetPath();
+		wxString	csstr;
 
+		wxBeginBusyCursor();
+		if (PolicyUtils::fileToCsum(path, csstr)) {
+			history_->addContextException(path, csstr);
+			selection = exceptionListBox->Append(path);
+			exceptionListBox->Select(selection);
+			updateNavi();
+			wxEndBusyCursor();
+		} else {
+			wxEndBusyCursor();
+			wxMessageBox(_("Failed to calculate checksum"),
+			    _("Error"), wxOK, NULL);
+		}
+	}
 }
 
 void
@@ -91,8 +102,7 @@ RuleWizardContextExceptionPage::onDeleteButton(wxCommandEvent &)
 	selection = exceptionListBox->GetSelection();
 	if (selection != wxNOT_FOUND) {
 		exceptionListBox->Delete(selection);
-		history_->setContextExceptionList(
-		    exceptionListBox->GetStrings());
+		history_->delContextException(selection);
 		if (!exceptionListBox->IsEmpty() &&
 		    (selection >= (int)exceptionListBox->GetCount())) {
 			/* In case we deleted the last element, adjust index. */

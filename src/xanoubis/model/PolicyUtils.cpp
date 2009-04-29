@@ -221,3 +221,19 @@ PolicyUtils::hashTypeToString(int hashType)
 
 	return (hashTypeString);
 }
+
+bool
+PolicyUtils::fileToCsum(const wxString file, wxString &csum)
+{
+	u_int8_t	csraw[MAX_APN_HASH_LEN];
+	int		cslen = MAX_APN_HASH_LEN;
+
+	csum = wxT("");
+	if (anoubis_csum_calc(file.fn_str(), csraw, &cslen) == 0) {
+		return csumToString(csraw, cslen, csum);
+	}
+	if (anoubis_csum_calc_userspace(file.fn_str(), csraw, &cslen) == 0) {
+		return csumToString(csraw, cslen, csum);
+	}
+	return false;
+}

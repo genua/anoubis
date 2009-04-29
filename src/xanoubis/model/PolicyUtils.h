@@ -121,6 +121,17 @@ class PolicyUtils
 		 * @return The string with the name.
 		 */
 		static wxString hashTypeToString(int);
+
+		/**
+		 * Calculate the checksum of a file given by name.
+		 * Try to use the kernel based checksum caculation
+		 * if available but use user space calculation if this
+		 * fails. Follow any symbolic links encountered along the way.
+		 * @param[in] 1st The file name.
+		 * @param[in] 2nd The checksum as a string.
+		 * @return True on success.
+		 */
+		static bool fileToCsum(const wxString, wxString &);
 };
 
 #endif	/* _POLICYUTILS_H_ */
