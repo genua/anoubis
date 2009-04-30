@@ -180,6 +180,11 @@ class LocalCertificate
 		wxString certFile_;
 
 		/**
+		 * Distinguished Name of certificate
+		 */
+		wxString disName_;
+
+		/**
 		 * The certificate itself. Can be 0.
 		 */
 		struct anoubis_sig *cert_;

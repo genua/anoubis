@@ -77,7 +77,9 @@ static char			path_privkey[64];
 static char			path_nokey[64];
 static char			path_cert[64];
 static char			path_cnf[64];
-
+static const char		*dname = "/C=DE/ST=Bayern/L=Kirchheim/O=Genua/"
+				    "OU=CoDev/CN=Worker/"
+				    "emailAddress=info@genua.de";
 static void
 setup()
 {
@@ -283,6 +285,7 @@ START_TEST(tc_LocalCertificate_load_ok)
 	LocalCertificate cert;
 
 	cert.setFile(path);
+	wxString disName = wxString::FromAscii(dname);
 
 	fail_unless(cert.load(), "Failed to load the certificate");
 	fail_unless(cert.getFile() == path,
@@ -291,7 +294,7 @@ START_TEST(tc_LocalCertificate_load_ok)
 	    "No keyid is assiged to the certificate");
 	fail_unless(cert.getFingerprint() != wxEmptyString,
 	    "No fingerprint is assiged to the certificate");
-	fail_unless(cert.getDistinguishedName() == wxT("TODO"),
+	fail_unless(cert.getDistinguishedName() == disName,
 	    "No DN is assiged to the certificate");
 	fail_unless(cert.canLoad(), "The certificate cannot be loaded");
 	fail_unless(cert.isLoaded(), "The certificate is not loaded");

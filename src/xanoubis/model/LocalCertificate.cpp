@@ -36,6 +36,7 @@ LocalCertificate::LocalCertificate(void)
 	const wxString defFile =
 	    wxStandardPaths::Get().GetUserDataDir() + wxT("/default.crt");
 
+	this->disName_ = wxEmptyString;
 	this->keyId_ = wxEmptyString;
 	this->cert_ = 0;
 
@@ -93,8 +94,7 @@ wxString
 LocalCertificate::getDistinguishedName(void) const
 {
 	if (cert_ != 0) {
-		/* XXX TODO */
-		return (wxT("TODO"));
+		return (disName_);
 	} else
 		return (wxEmptyString);
 }
@@ -123,6 +123,8 @@ LocalCertificate::load(void)
 	/* XXX Error handling? */
 	int error = 0;
 
+	char *dname = NULL;
+
 	/* Read certificate */
 	struct anoubis_sig *cert = anoubis_sig_pub_init(
 	    0, certFile_.fn_str(), 0, &error);
@@ -139,16 +141,21 @@ LocalCertificate::load(void)
 
 			free(keyid);
 
-			return (true);
 		} else {
 			/* Failed to obtain keyid from certificate */
 			anoubis_sig_free(cert);
 			return (false);
 		}
+		dname = anoubis_sig_cert_name(cert_->cert);
+		if (!dname)
+			return (false);
+		disName_ = wxString::FromAscii(dname);
+		free(dname);
 	} else {
 		/* Failed to load certificate */
 		return (false);
 	}
+	return (true);
 }
 
 bool

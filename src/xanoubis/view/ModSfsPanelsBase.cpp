@@ -301,14 +301,10 @@ ModSfsMainPanelBase::ModSfsMainPanelBase( wxWindow* parent, wxWindowID id, const
 	
 	m_staticText18 = new wxStaticText( pan_Options, wxID_ANY, _("Distinguished Name:"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_staticText18->Wrap( -1 );
-	m_staticText18->Hide();
-	
 	fgSizer4->Add( m_staticText18, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
 	
 	CertDnText = new wxStaticText( pan_Options, wxID_ANY, _("..."), wxDefaultPosition, wxDefaultSize, 0 );
 	CertDnText->Wrap( -1 );
-	CertDnText->Hide();
-	
 	fgSizer4->Add( CertDnText, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
 	
 	sbSizer2->Add( fgSizer4, 0, wxEXPAND, 5 );
