@@ -451,10 +451,9 @@ ContextFilterPolicy::setHashValueNo(unsigned char csum[MAX_APN_HASH_LEN],
 
 	switch (app->hashtype) {
 	case APN_HASH_SHA256:
+	case APN_HASH_NONE:
 		len = APN_HASH_SHA256_LEN;
 		break;
-	case APN_HASH_NONE:
-		/* FALLTHROUGH */
 	default:
 		len = 0;
 		rc  = false;
@@ -464,6 +463,7 @@ ContextFilterPolicy::setHashValueNo(unsigned char csum[MAX_APN_HASH_LEN],
 	if (len > 0) {
 		startChange();
 		memcpy(app->hashvalue, csum, len);
+		app->hashtype = APN_HASH_SHA256;
 		setModified();
 		finishChange();
 		rc = true;
