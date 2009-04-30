@@ -149,6 +149,7 @@ main(int argc, char *argv[])
 	unsigned char	 argcsum[SHA256_DIGEST_LENGTH];
 	struct passwd	*pw = NULL;
 	unsigned int	 i = 0, k;
+	const char	*name = NULL;
 	char		*argcsumstr = NULL;
 	char		*file = NULL;
 	char		*command = NULL;
@@ -184,88 +185,74 @@ main(int argc, char *argv[])
 	    options, &options_index)) != -1) {
 		switch (ch) {
 		case 0:
-			if (!strcmp(options[options_index].name, "sig"))
+			name = options[options_index].name;
+			if (!name)
+				return 1;
+			if (!strcmp(name, "sig"))
 				opts |= SFSSIG_OPT_SIG;
-			else if (!strcmp(options[options_index].name, "sum"))
+			else if (!strcmp(name, "sum"))
 				opts |= SFSSIG_OPT_SUM;
-			else if (!strcmp(options[options_index].name, "cert")) {
+			else if (!strcmp(name, "cert")) {
 				if (!strcmp(optarg, "all") &&
 				    (geteuid() == 0)) {
-					checksum_flag |= ANOUBIS_CSUM_KEY_ALL;
-					checksum_flag |= ANOUBIS_CSUM_KEY;
-					checksum_flag |= ANOUBIS_CSUM_ALL;
-				}
-				else {
+					checksum_flag |= (ANOUBIS_CSUM_KEY_ALL|
+					    ANOUBIS_CSUM_KEY|ANOUBIS_CSUM_ALL);
+				} else {
 					cert = strdup(optarg);
 					if (!cert) {
 						perror(optarg);
 						return 1;
 					}
 				}
-
-			} else if (!strcmp(options[options_index].name,
-			    "orphaned")) {
+			} else if (!strcmp(name, "orphaned")) {
 				if (opts & SFSSIG_OPT_NOTFILE) {
 					fprintf(stderr, "You can use orphaned "
 					    "or notfile not both\n");
 					usage();
 					/* NOTREACHED */
 				}
-				opts |= SFSSIG_OPT_FILTER;
-				opts |= SFSSIG_OPT_ORPH;
-			} else if (!strcmp(options[options_index].name,
-			    "notfile")) {
+				opts |= (SFSSIG_OPT_FILTER|SFSSIG_OPT_ORPH);
+			} else if (!strcmp(name, "notfile")) {
 				if (opts & SFSSIG_OPT_ORPH) {
 					fprintf(stderr, "You can use orphaned "
 					    "or notfile not both\n");
 					usage();
 					/* NOTREACHED */
 				}
-				opts |= SFSSIG_OPT_FILTER;
-				opts |= SFSSIG_OPT_NOTFILE;
-			} else if (!strcmp(options[options_index].name,
-			    "hassum")) {
+				opts |= (SFSSIG_OPT_FILTER|SFSSIG_OPT_NOTFILE);
+			} else if (!strcmp(name, "hassum")) {
 				if (opts & SFSSIG_OPT_NOSUM) {
 					fprintf(stderr, "You can use hassum "
 					    "or hasnosum not both\n");
 					usage();
 					/* NOTREACHED */
 				}
-				opts |= SFSSIG_OPT_FILTER;
-				opts |= SFSSIG_OPT_HASSUM;
-			} else if (!strcmp(options[options_index].name,
-			    "hasnosum")) {
+				opts |= (SFSSIG_OPT_FILTER|SFSSIG_OPT_HASSUM);
+			} else if (!strcmp(name, "hasnosum")) {
 				if (opts & SFSSIG_OPT_HASSUM) {
 					fprintf(stderr, "You can use hassum "
 					    "or hasnosum not both\n");
 					usage();
 					/* NOTREACHED */
 				}
-				opts |= SFSSIG_OPT_FILTER;
-				opts |= SFSSIG_OPT_NOSUM;
-			} else if (!strcmp(options[options_index].name,
-			    "hassig")) {
+				opts |= (SFSSIG_OPT_FILTER|SFSSIG_OPT_NOSUM);
+			} else if (!strcmp(name, "hassig")) {
 				if (opts & SFSSIG_OPT_NOSIG) {
 					fprintf(stderr, "You can use hassig "
 					    "or hasnosig not both\n");
 					usage();
 					/* NOTREACHED */
 				}
-				opts |= SFSSIG_OPT_FILTER;
-				opts |= SFSSIG_OPT_HASSIG;
-			} else if (!strcmp(options[options_index].name,
-			    "hasnosig")) {
+				opts |= (SFSSIG_OPT_FILTER|SFSSIG_OPT_HASSIG);
+			} else if (!strcmp(name, "hasnosig")) {
 				if (opts & SFSSIG_OPT_HASSIG) {
 					fprintf(stderr, "You can use hassig or "
 					    "hasnosig not both\n");
 					usage();
 					/* NOTREACHED */
 				}
-				opts |= SFSSIG_OPT_FILTER;
-				opts |= SFSSIG_OPT_NOSIG;
+				opts |= (SFSSIG_OPT_FILTER|SFSSIG_OPT_NOSIG);
 
-			} else {
-				break;
 			}
 			break;
 		case 'n':
@@ -310,9 +297,8 @@ main(int argc, char *argv[])
 				return 1;
 			}
 			if (strcmp(optarg, "all") == 0) {
-				checksum_flag |= ANOUBIS_CSUM_UID_ALL;
-				checksum_flag |= ANOUBIS_CSUM_UID;
-				checksum_flag |= ANOUBIS_CSUM_ALL;
+				checksum_flag |= (ANOUBIS_CSUM_UID_ALL|
+				    ANOUBIS_CSUM_UID|ANOUBIS_CSUM_ALL);
 				uid = 0;
 			} else {
 				checksum_flag |= ANOUBIS_CSUM_UID;
