@@ -648,13 +648,18 @@ wxString
 AnoubisGuiApp::readPassphrase(bool *ok)
 {
 	wxWindow *w = wxWindow::FindFocus();
+	wxString dName = wxEmptyString;
 
 	if (w == 0)
 		w = GetTopWindow();
 
+	LocalCertificate &cert = KeyCtrl::getInstance()->getLocalCertificate();
+	dName = cert.getDistinguishedName();
+
 	wxPasswordEntryDialog dlg(w,
-	    _("Enter the passphrase of your private key:"),
-	    _("Enter passphrase"));
+	    wxString::Format(
+	    _("Enter the passphrase of your private key:\n%ls"), dName.c_str()),
+	    _("Enter passphrase for: "));
 	dlg.CentreOnScreen();
 
 	if (dlg.ShowModal() == wxID_OK) {

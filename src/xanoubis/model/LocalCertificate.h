@@ -175,6 +175,11 @@ class LocalCertificate
 
 	private:
 		/**
+		 * To protect the copy consturcter
+		 */
+		LocalCertificate(const LocalCertificate &) {}
+
+		/**
 		 * Path to file, where the certificate is stored.
 		 */
 		wxString certFile_;
