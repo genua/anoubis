@@ -38,9 +38,11 @@ libapnvm_a_SOURCES =	\
 	apnmd.l		\
 	apnvm.c		\
 	apnvmutil.c	\
+	apncmd.h	\
+	apncmd.c	\
 	date.y
 
-noinst_HEADERS = apncvs.h apnmd.h apnvm.h apnvmutil.h
+noinst_HEADERS = apncvs.h apnmd.h apnvm.h apnvmutil.h apncmd.h
 
 bsdcompatdir   = src/bsdcompat
 libapndir      = src/libapn
@@ -66,7 +68,9 @@ libapnvm_a_SOURCES_lint =	\
 	apnvm.c_lint		\
 	apnvm.h_lint		\
 	apnvmutil.c_lint	\
-	apnvmutil.h_lint
+	apnvmutil.h_lint	\
+	apncmd.c_lint		\
+	apncmd.h_lint
 
 libapnvm_a_SOURCES_splint =	\
 	apncvs.c_splint		\
@@ -74,7 +78,9 @@ libapnvm_a_SOURCES_splint =	\
 	apnvm.c_splint		\
 	apnvm.h_splint		\
 	apnvmutil.c_splint	\
-	apnvmutil.h_splint
+	apnvmutil.h_splint	\
+	apncmd.c_splint		\
+	apncmd.h_splint
 
 libapnvm_a_SOURCES_flawfinder =	\
 	apncvs.c_flawfinder	\
@@ -82,7 +88,9 @@ libapnvm_a_SOURCES_flawfinder =	\
 	apnvm.c_flawfinder	\
 	apnvm.h_flawfinder	\
 	apnvmutil.c_flawfinder	\
-	apnvmutil.h_flawfinder
+	apnvmutil.h_flawfinder	\
+	apncmd.c_flawfinder	\
+	apncmd.h_flawfinder
 
 #
 # For unit tests of the components of apnvm, we build a shared library.
