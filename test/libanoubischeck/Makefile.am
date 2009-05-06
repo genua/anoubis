@@ -56,5 +56,6 @@ TESTS = test_libanoubischeck
 TESTS_ENVIRONMENT = LD_LIBRARY_PATH=.
 noinst_PROGRAMS += test_libanoubischeck
 test_libanoubischeck_CFLAGS = @CHECK_CFLAGS@
+test_libanoubischeck_DEPENDENCIES = libanoubischeck.so
 test_libanoubischeck_LDADD = @CHECK_LIBS@ -L. -lanoubischeck
 test_libanoubischeck_SOURCES = test_libanoubischeck.c
