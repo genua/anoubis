@@ -41,6 +41,7 @@
 #include <anoubis_client.h>
 #include <anoubis_msg.h>
 #include <anoubis_transaction.h>
+#include <anoubis_dump.h>
 
 #include "AlertNotify.h"
 #include "AnEvents.h"
@@ -281,6 +282,8 @@ ComThread::readMessage(void)
 {
 	size_t			 size = 4096;
 	struct anoubis_msg	*msg;
+	char 			*str = NULL;
+	wxString		 message;
 
 	if ((channel_ == 0) || (client_ == 0)) {
 		return;
@@ -300,6 +303,12 @@ ComThread::readMessage(void)
 	}
 
 	anoubis_msg_resize(msg, size);
+
+	if (Debug::instance()->checkLevel(DEBUG_CHAT)) {
+		anoubis_dump_str(msg, NULL, &str);
+		Debug::instance()->log(wxString::FromAscii(str), DEBUG_CHAT);
+		free(str);
+	}
 
 	/* This will free the message. */
 	int result = anoubis_client_process(client_, msg);

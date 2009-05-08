@@ -840,7 +840,7 @@ static int monitor(int argc, char **argv)
 		while((m = anoubis_client_getnotify(client))) {
 			count++;
 			/* __anoubis_dump will verify the message length */
-			__anoubis_dump(m, "");
+			__anoubis_dump(m, "", NULL);
 			fflush(stdout);
 			if (get_value(m->u.notify->type) != ANOUBIS_N_ASK) {
 				anoubis_msg_free(m);

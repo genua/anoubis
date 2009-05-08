@@ -36,6 +36,7 @@
 #define DEBUG_ALERT 1
 #define DEBUG_LOG 2
 #define DEBUG_STATUS 3
+#define DEBUG_CHAT 4
 
 /**
  * Debug Messages
@@ -82,6 +83,14 @@ class Debug : public Singleton<Debug>
 		 * @return Nothing.
 		 */
 		void	setLevel(int);
+
+		/**
+		 * Check Debug level
+		 * Check the level of debug output to the console
+		 * @param 1st level of debug output
+		 * @return true if the output would be logged, false otherwise.
+		 */
+		int	checkLevel(int);
 
 	protected:
 		/**

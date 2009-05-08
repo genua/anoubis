@@ -340,7 +340,7 @@ MainFrame::OnMbHelpAboutSelect(wxCommandEvent&)
 
 	info.SetName(wxT("Anoubis GUI"));
 	info.SetVersion(wxT(VERSION));
-	info.SetCopyright(wxT("(C) 2007-2008 GeNUA mbH"));
+	info.SetCopyright(wxT("(C) 2007-2009 GeNUA mbH"));
 	// info.SetWebSite(wxT("www.anoubis.org"));
 	info.SetIcon(*aboutIcon_);
 	// info.SetDescription(wxT(""));
@@ -358,6 +358,7 @@ MainFrame::OnMbHelpAboutSelect(wxCommandEvent&)
 	info.AddDeveloper(wxT("Robin Doer"));
 	info.AddDeveloper(wxT("Sebastian Trahm"));
 	info.AddDeveloper(wxT("Stefan Fritsch"));
+	info.AddDeveloper(wxT("Sten Spans"));
 
 	info.AddTranslator(wxT("Christian Wehrle"));
 	info.AddTranslator(wxT("Mathias Pippel"));

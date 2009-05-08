@@ -32,13 +32,15 @@
 #include <anoubis_msg.h>
 
 __BEGIN_DECLS
-extern void __anoubis_dump(struct anoubis_msg *, const char *);
+extern void __anoubis_dump(struct anoubis_msg *, const char *, char **);
 extern void __anoubis_dump_buf(void * buf, size_t len, const char *);
 __END_DECLS
 
+#define anoubis_dump_str(M,S,P) __anoubis_dump((M), (S), (P));
+
 #ifdef PROTO_DEBUG
 
-#define anoubis_dump(M,S) __anoubis_dump((M), (S));
+#define anoubis_dump(M,S) __anoubis_dump((M), (S), NULL);
 #define anoubis_dump_buf(BUF,LEN,S) __anoubis_dump_buf((BUF), (LEN), (S))
 
 #else

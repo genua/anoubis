@@ -54,6 +54,10 @@ Debug::log(wxString message, int level)
 			fprintf(stderr, "Status\t%s\n",
 			    (const char*)message.mb_str(wxConvUTF8));
 			break;
+		case DEBUG_CHAT:
+			fprintf(stderr, "Chat\t%s\n",
+			    (const char*)message.mb_str(wxConvUTF8));
+			break;
 		default:
 			break;
 		}
@@ -63,6 +67,12 @@ void
 Debug::setLevel(int level)
 {
 	level_ = level;
+}
+
+int
+Debug::checkLevel(int level)
+{
+	return (level_ >= level);
 }
 
 Debug::Debug(void) : Singleton<Debug>()
