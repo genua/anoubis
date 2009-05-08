@@ -284,7 +284,8 @@ main(int argc, char *argv[])
 			keyfile = NULL;
 		}
 	}
-	if ((opts & ANOUBISCTL_OPT_SIGN) && (prio != ANOUBISCTL_PRIO_ADMIN)) {
+	if ((!strcmp(command, "load")) &&
+	    (opts & ANOUBISCTL_OPT_SIGN) && (prio != ANOUBISCTL_PRIO_ADMIN)) {
 		if (keyfile == NULL) {
 			fprintf(stderr, "To load signed policies to the daemon "
 			    "you need to specify a keyfile\n");
