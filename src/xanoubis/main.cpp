@@ -45,6 +45,7 @@
 
 #include "AlertNotify.h"
 #include "AnEvents.h"
+#include "AnIconList.h"
 #include "DlgLogViewer.h"
 #include "DlgRuleEditor.h"
 #include "JobCtrl.h"
@@ -93,6 +94,7 @@ AnoubisGuiApp::~AnoubisGuiApp(void)
 	delete VersionCtrl::getInstance();
 
 	delete PolicyCtrl::getInstance();
+	delete AnIconList::getInstance();
 }
 
 void

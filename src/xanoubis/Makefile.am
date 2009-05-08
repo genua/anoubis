@@ -426,6 +426,14 @@ xanoubis_SOURCES= \
 	pattern/Observer.h \
 	widgets/AnDetails.cpp \
 	widgets/AnDetails.h \
+	widgets/AnIconList.cpp \
+	widgets/AnIconList.h \
+	widgets/AnListClass.h \
+	widgets/AnListColumn.cpp \
+	widgets/AnListColumn.h \
+	widgets/AnListCtrl.cpp \
+	widgets/AnListCtrl.h \
+	widgets/AnListProperty.h \
 	widgets/AnPolicyNotebook.cpp \
 	widgets/AnPolicyNotebook.h \
 	widgets/AnPickFromFs.cpp \
