@@ -15,6 +15,20 @@ alf {
 }
 sfs {
 }
+sandbox {
+	allow  path /etc r
+	allow  path /lib r
+	allow  path /var r
+	allow  path /tmp rw
+	allow  path /home rw
+	allow  path /bin rx
+	allow  path /sbin rx
+	allow  path /usr rx
+	allow  path /var/run/anoubisd.sock rw
+	allow  path /dev rw
+	allow  path /usr/local r
+	default log ask
+}
 context {
 	any {
 		context new any
