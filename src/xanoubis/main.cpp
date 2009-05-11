@@ -94,7 +94,6 @@ AnoubisGuiApp::~AnoubisGuiApp(void)
 	delete VersionCtrl::getInstance();
 
 	delete PolicyCtrl::getInstance();
-	delete AnIconList::getInstance();
 }
 
 void
@@ -201,6 +200,8 @@ int
 AnoubisGuiApp::OnExit(void)
 {
 	int result = wxApp::OnExit();
+
+	delete AnIconList::getInstance();
 
 	/* Destroy job-controller */
 	JobCtrl *jobCtrl = JobCtrl::getInstance();
