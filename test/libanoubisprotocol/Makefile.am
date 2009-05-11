@@ -43,7 +43,7 @@ RPATH = $(top_builddir)/$(anoubisprotocoldir):$(top_builddir)/$(anoubischatdir):
 TESTS_ENVIRONMENT = LD_LIBRARY_PATH=$(RPATH)
 
 noinst_PROGRAMS = test_libanoubisproto test_libanoubisnotify libanoubischat.so
-CPPFLAGS =						\
+CPPFLAGS +=						\
 	-I$(top_srcdir)/$(anoubischeckdir)		\
 	-I$(top_srcdir)/$(anoubischatdir)		\
 	-I$(top_srcdir)/$(anoubisprotocoldir)/client	\

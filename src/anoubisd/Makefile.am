@@ -45,7 +45,7 @@ endif
 #CFLAGS += $(SSL_CFLAGS)
 LIBS += $(SSL_LIBS)
 
-CPPFLAGS = \
+CPPFLAGS += \
 	   -I$(top_builddir)/src \
 	   -I$(top_srcdir)/include \
 	   -I$(top_srcdir)/src/anoubisd \

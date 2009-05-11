@@ -14,6 +14,8 @@ DEB_BUILD_GNU_TYPE  ?= $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
 
 CFLAGS = -Wall -g
 LDFLAGS = "-Wl,-z,defs"
+# optimization for ccache:
+CPPFLAGS = -fno-working-directory
 
 ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
 	CFLAGS += -O0
@@ -30,6 +32,7 @@ CONFIGURE_FLAGS := \
 	--sbindir=/sbin \
 	--disable-tests \
 	CFLAGS="$(CFLAGS)" \
+	CPPFLAGS="$(CPPFLAGS)" \
 	LDFLAGS="$(LDFLAGS)"
 
 config.status: configure
