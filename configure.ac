@@ -226,6 +226,20 @@ AC_ARG_ENABLE(xanoubis,
 	[with_xanoubis=yes])
 AM_CONDITIONAL(XANOUBIS, [test "x$with_xanoubis" = "xyes"])
 
+dnl provide configure option for conditional "tests"
+dnl the implicit default is to enable "tests"
+AC_ARG_ENABLE(tests,
+	AC_HELP_STRING([--enable-tests], [build tests]),
+	[case "${enableval}" in
+		yes) with_tests=yes ;;
+		no)  with_tests=no ;;
+		*)
+			AC_MSG_ERROR(bad value ${enableval} for
+				--enable-tests) ;;
+	esac],
+	[with_tests=yes])
+AM_CONDITIONAL(WITH_TESTS, [test "x$with_tests" = "xyes"])
+
 dnl determine wx-specific settings
 dnl
 dnl since wxwidgets does not provide a proper pkg-config interface, we have to

@@ -488,12 +488,14 @@ xanoubis_SOURCES= \
 # reuse the already compiled objects of xanoubis. Ensure those are
 # built with -fPIC.
 #
+if WITH_TESTS
 noinst_PROGRAMS = libGUIcomponents.so
 libGUIcomponents_so_SOURCES =
 libGUIcomponents_so_DEPENDENCIES = $(xanoubis_OBJECTS)
 libGUIcomponents_so_LINK = \
 	$(CXX) -fstack-protector -shared -Wl,-soname,$@ \
 	    -o $@ $(xanoubis_OBJECTS)
+endif
 
 i18n-extract:
 	cd $(top_srcdir)/$(xanoubisdir) && \

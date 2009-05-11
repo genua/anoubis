@@ -78,7 +78,8 @@ export CFLAGS="$RPM_OPT_FLAGS"
  --enable-static-anoubisd \
  --infodir=%{_infodir} \
  --mandir=%{_mandir} \
- --sbindir=/sbin
+ --sbindir=/sbin \
+ --disable-tests
 
 %install
 [ "$RPM_BUILD_ROOT" != "/" ] && [ -d $RPM_BUILD_ROOT ] \

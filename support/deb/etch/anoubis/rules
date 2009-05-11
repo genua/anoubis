@@ -28,6 +28,7 @@ CONFIGURE_FLAGS := \
 	--mandir=\$${prefix}/share/man \
 	--infodir=\$${prefix}/share/info \
 	--sbindir=/sbin \
+	--disable-tests \
 	CFLAGS="$(CFLAGS)" \
 	LDFLAGS="$(LDFLAGS)"
 
