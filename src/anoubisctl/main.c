@@ -797,8 +797,6 @@ static int monitor(int argc, char **argv)
 	}
 	if (maxcount < 0)
 		maxcount = 0;
-	if (defaulterror < 0)
-		defaulterror = 0;
 
 	error = create_channel();
 	if (error) {
@@ -847,14 +845,18 @@ static int monitor(int argc, char **argv)
 				anoubis_msg_free(m);
 				continue;
 			}
-			error = anoubis_client_notifyreply(client,
-			    m->u.notify->token, defaulterror, delegate);
-			anoubis_msg_free(m);
-			if (error < 0) {
-				fprintf(stderr, "notify reply failed "
-				    "with code %d", -error);
-				destroy_channel();
-				return 5;
+			if (defaulterror >= 0) {
+				error = anoubis_client_notifyreply(client,
+				    m->u.notify->token, defaulterror, delegate);
+				anoubis_msg_free(m);
+				if (error < 0) {
+					fprintf(stderr, "notify reply failed "
+					    "with code %d", -error);
+					destroy_channel();
+					return 5;
+				}
+			} else {
+				anoubis_msg_free(m);
 			}
 		}
 		if (maxcount > 0 && count >= maxcount)
