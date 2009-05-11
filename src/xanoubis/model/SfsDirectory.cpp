@@ -202,6 +202,15 @@ SfsDirectory::insertEntry(const wxString &path, unsigned int start,
 	unsigned int mid = start + (unsigned int)((end - start) / 2);
 	int result = entryList_[mid].getPath().Cmp(path);
 
+	/*
+	 * Try to insert an already existing path, abort. Do this before
+	 * we insert because we might not have compared the new string to
+	 * entryList_[mid] yet (we do know that start == 0 or that the new
+	 * element is strictly greater than start, though.
+	 */
+	if (result == 0)
+		return mid;
+
 	if (start == end) {
 		/*
 		 * This is the position, where the SfSEntry should be inserted.
@@ -217,18 +226,19 @@ SfsDirectory::insertEntry(const wxString &path, unsigned int start,
 			it += start; /* Advance to the correct position */
 
 			entryList_.insert(it, newEntry);
+			/* This is the position, where the item was inserted */
+			return start;
 		} else {
 			/*
 			 * This special case can happen, if the end of the list
-			 * is reached. The new item is "greater" that the last
-			 * item in the list. In the case simply append the new
-			 * SfsEntry at the list.
+			 * is reached. The new item is "greater" than the last
+			 * item in the list. In this case simply append the new
+			 * SfsEntry to the list.
 			 */
 			entryList_.push_back(newEntry);
+			/* This is the position, where the item was inserted */
+			return  entryList_.size() - 1;
 		}
-
-		/* This is the position, where the item was inserted */
-		return (start);
 	}
 
 	if (result < 0) {
@@ -237,15 +247,12 @@ SfsDirectory::insertEntry(const wxString &path, unsigned int start,
 		 * Continue the search right to mid.
 		 */
 		return insertEntry(path, mid + 1, end);
-	} else if (result > 0) {
+	} else {	/* result > 0 */
 		/*
 		 * The middle item is "greater" than the middle item.
 		 * Continue the search left to mid.
 		 */
 		return insertEntry(path, start, mid);
-	} else {
-		/* Try to insert an already existing path, abort */
-		return (mid);
 	}
 }
 
