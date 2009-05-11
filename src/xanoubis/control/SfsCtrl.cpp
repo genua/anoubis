@@ -536,6 +536,8 @@ SfsCtrl::OnSfsListArrived(TaskEvent &event)
 			/* Update checksum attribute to no-checksum */
 			if (entry.setChecksumMissing(type))
 				sendEntryChangedEvent(idx);
+			if (csumIdx != wxNOT_FOUND)
+				result.RemoveAt(csumIdx);
 		}
 	}
 
