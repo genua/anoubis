@@ -1,0 +1,127 @@
+.\"	$OpenBSD: mdoc.template,v 1.9 2004/07/02 10:36:57 jmc Exp $
+.\"
+.\" Copyright (c) 2009 GeNUA mbH <info@genua.de>
+.\"
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+.\" "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+.\" LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+.\" A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+.\" OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+.\" SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
+.\" TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+.\" PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+.\" LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+.\" NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+.\" SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\" The following requests are required for all man pages.
+.Dd May 08, 2009
+.Dt ANOUBIS_KERNEL 9
+.Os Anoubis
+.Sh NAME
+.Nm Anoubis Kernel Modules
+.Nd overview of the kernel implementation
+.Sh SYNOPSIS
+.\" For a program:  program [-abc] file ...
+.Bl -tag -width Ds
+.It Pa Linux:
+.D1
+.Fd CONFIG_EVENTDEV=y
+.Fd CONFIG_SECURITY_ANOUBIS=y
+.Fd CONFIG_SECURITY_ANOUBIS_ALF=m
+.Fd CONFIG_SECURITY_ANOUBIS_IPC=m
+.Fd CONFIG_SECURITY_ANOUBIS_SFS=m
+.It Pa OpenBSD:
+.D1
+.Fd option		ANOUBIS		# Anoubis MAC
+.Fd option		MAC			# TrustedBSD MAC-Framework
+.El
+.Sh DESCRIPTION
+The kernel security modules implement an Application Level Firewall (ALF), File system Signatures (SFS) and Sandbox (SB) by forwarding events to the Anoubis daemon. The modules use the security hooks provided by LSM (Linux) and MAC (OpenBSD) to make file system and network events available to anoubisd. Communication is done via the event device, management via the anoubis device.
+.Pp
+In general the flow of events looks like this:
+.Bl -tag -width Ds
+.It Cm Application
+An application invokes a system call to write to a file or perform network communications.
+.It Cm Kernel
+The kernel receives the request and validates it using the available security framework (LSM or MAC).
+.It Cm Anoubis
+An Anoubis module will receive the request and generate an event.
+.It Cm eventdev
+The event is written to the event device.
+.It Cm anoubisd
+Anoubisd will notice that there is an new event available and evaluate it using he currently loaded policies, checksums and signatures.
+.It Cm eventdev
+The answer is written back to the event device.
+.It Cm Anoubis
+The Anoubis module receives the answer to its request, and returns 
+the result to the security framework.
+.It Cm Kernel
+The kernel decides based on the response received if the system call succeeds.
+.It Cm Application
+The application is informed whether or not the request has succeeded.
+.El
+.Pp
+Events are exchanged using 3 message types:
+.Bl -dash
+.It 
+Network communication (TCP connect, UDP send/receive)
+.It 
+File operations (open, unlink, truncate)
+.It 
+Pathname operations (link, rename)
+.El
+.Pp
+The first type is handled by the ALF module, the other two are covered by the SFS module. 
+.Pp
+.Sh LINUX
+The built-in anoubis_core module has three main roles. It provides modular access to the LSM security hooks, which enables multiple Anoubis security modules to utilize the same hook. Secondly it provides userland interaction via the anoubis device which is used by anoubisd. And thirdly it provides generic evendev communication routines which are used by the other modules. The ALF module uses anoubis_core to hook into the Linux socket subsystem and generates events for UDP and TCP connections. The SFS module uses anoubis_core inode and pathname hooks to generate events.
+.Pp
+The Linux version of Anoubis uses extended attributes ( see
+.Xr attr 5 
+) to store additional flags set by the capitalized options to
+.Xr sfssig 8 .
+.Pp
+.Sh OPENBSD
+The Anoubis kernel modules use the MAC framework which was originally created for FreeBSD by the TrustedBSD project. Some of the hooks have been extended to provide additional information required to implement Anoubis. This does mean that the Anoubis kernel is not compatible with some normal MAC modules. The event and anoubis devices are handled via separate device drivers. On OpenBSD the core mac_anoubis module only provides generic routines for eventdev communication. The ALF and SFS modules are normal MAC modules which use the generic eventdev routines to communicate events.
+.\" The following requests should be uncommented and used where appropriate.
+.\" This next request is for sections 2, 3, and 9 function return values only.
+.\" .Sh RETURN VALUES
+.\" This next request is for sections 1, 6, 7 & 8 only.
+.\" .Sh ENVIRONMENT
+.Sh FILES
+.Bl -tag -width Ds
+.It Pa /dev/anoubis
+The
+.Ar ioctl
+kernel interface for initializing and managing the Anoubis kernel subsystem.
+.It Pa /dev/eventdev
+The kernel interface for Anoubis policy messages.
+.El
+.\" .Sh EXAMPLES
+.\" This next request is for sections 1, 4, 6, and 8 only.
+.\" .Sh DIAGNOSTICS
+.\" The next request is for sections 2, 3, and 9 error and signal handling only.
+.\" .Sh ERRORS
+.Sh SEE ALSO
+.Xr anoubisd 8
+.Xr dev-anoubis 4
+.Xr evendev 4
+.Xr evendev 9
+.\" .Sh STANDARDS
+.\" .Sh HISTORY
+.Sh AUTHORS
+Sten Spans
+.\" .Sh CAVEATS
+.\" .Sh BUGS

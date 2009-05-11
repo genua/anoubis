@@ -231,7 +231,9 @@ exit 0
 %{_sysconfdir}/udev/rules.d/06-anoubis.rules
 %{_sysconfdir}/anoubis
 /var/lib/anoubis/*
+%{_mandir}/man4/*
 %{_mandir}/man8/*
+%{_mandir}/man9/*
 
 ### files of subpackage xanoubis ###########################
 %files -n xanoubis

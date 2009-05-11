@@ -1,0 +1,191 @@
+.\"	$OpenBSD: mdoc.template,v 1.9 2004/07/02 10:36:57 jmc Exp $
+.\"
+.\" Copyright (c) 2007 GeNUA mbH <info@genua.de>
+.\"
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+.\" "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+.\" LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+.\" A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+.\" OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+.\" SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
+.\" TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+.\" PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+.\" LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+.\" NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+.\" SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\" The following requests are required for all man pages.
+.Dd October 22, 2007
+.Dt EVENTDEV 9
+.Os Anoubis
+.Sh NAME
+.Nm eventdev ,
+.Nm eventdev_enqueue_wait ,
+.Nm eventdev_enqueue_nowait ,
+.Nm eventdev_get_queue ,
+.Nm eventdev_put_queue
+.Nd Kernel side interface to event devices
+.Sh SYNOPSIS
+.Fd #include <linux/eventdev.h>		/* Linux */
+.Fd #include <dev/eventdev.h>		/* OpenBSD */
+.Ft int
+.Fn eventdev_enqueue_wait "struct eventdev_queue *q" \
+"unsigned char src" "char * data" "int len" "int * retvalp" "int flags"
+.Ft int
+.Fn eventdev_enqueue_nowait "struct eventdev_queue *q" \
+"unsigned char src" "char * data" "int len" "int flags"
+.Ft struct eventdev_queue *
+.Fn eventdev_get_queue "struct file * file"
+.Ft void
+.Fn __eventdev_get_queue "struct eventdev_queue *q"
+.Ft void
+.Fn eventdev_put_queue "struct eventdev_queue *q"
+.Ed
+.Sh DESCRIPTION
+The
+.Nm
+device can be used to queue arbitrary events that occur inside the kernel
+to a user space program.
+Optionally the user space program can be asked to provide a reply in the
+form of an error code.
+If provided this error code should determine if the event in question is
+allowed to proceed.
+.Pp
+An
+.Nm
+queue is created each time the corresponding device is opened by a
+user space program.
+If a kernel component wants to queue events for user space it must somehow
+provide that user space program with a mechanism to register a specific
+queue for the events produced by the kernel component.
+.Pp
+The life time of a queue is determined by its reference counter.
+One reference is held by the kernel as long as the file descriptor of
+the queue is still open.
+The function
+.Vt eventdev_get_queue
+returns the queue that is associated with the file descriptor and also
+gets an additional reference to the queue.
+The function __eventdev_get_queue
+can be used to acquire an additional reference to a queue if it is clear
+that at least one reference is already held.
+.Vt eventdev_put_queue
+drops a single reference to the queue. Once all references have been dropped
+the queue is freed and any pending events are implicitly denied.
+.Pp
+Anyone that is using queues must hold a reference to that queue as long as
+the queue is in use.
+.Ss Enqueuing messages
+The function
+.Vt eventdev_enqueue_wait
+adds a single message to the queue. The user space program consuming
+the message is expected to reply to the message and the calling program
+is blocked until that reply is received.
+The payload of the message is given by
+.Fa data
+and
+.Fa len.
+The other arguments are used as follows:
+.Bl -tag -width flags
+.It Fa src
+is an integer that identifies the kernel component that is the source
+of the message.
+This parameter should be provided upon registration of the queue for a certain
+class of events.
+.It Fa retvalp
+The error code provided in the reply of the user space program is stored
+in the integer pointed to by
+.Fa retvalp.
+.It Fa flags
+This value is passed as the flags argument to memory allocation functions
+that have to be called in order to enqueue the message.
+.El
+.Pp
+In any case the memory area pointed to by
+.Va data
+is freed. Thus it is not possible to enqueue a static buffer.
+.Pp
+The function
+.Vt eventdev_enqueue_nowait
+works in exactly the same way as
+.Vt eventdev_enqueue_wait
+except that no reply from user space is allowed or expected.
+.Sh RETURN VALUES
+.Vt eventdev_get_queue
+returns a pointer to the queue.
+.Pp
+The return value of
+.Vt eventdev_enqueue_wait
+and
+.Vt eventdev_enqueue_nowait
+is zero if the message was enqueued successfully.
+For the
+.Vt eventdev_enqueue_wait
+function the return value provided by the user space program is stored in
+the integer pointed to by
+.Va retvalp.
+Additionally these functions can return the following error codes (with the
+sign approriate to the conventions used in the respective operating system):
+.Bl -tag -width ENOMEM
+.It ENOMEM
+Not enough memory to allocate message data structures.
+.It EPIPE
+The return value EPIPE indicates that the queue still exists but there is
+no longer any file descriptor associated with that queue.
+In this case it does not make sense to enqueue additional message and
+the kernel component should drop all references to the queue.
+Dropping the last message will also flush any pending messages that are
+waiting for a reply.
+.El
+.Sh EXAMPLE
+The following code fragment can be used to enqueue the event described
+by the text "hello" into the queue in a safe way
+.Em provided that at least one reference to the queue is held
+which cannot be dropped during the enqueue process.
+.Bd -literal
+buf = kmalloc(5, GFP_KERNEL);
+if (!buf)
+	return -ENOMEM;
+memcpy(buf, "hello", 5);
+/* This will free @buf. */
+err = eventdev_enqueue_wait(q, src, buf, 5, &retval, GFP_KERNEL);
+if (err == -EPIPE) {
+	/*
+	 * Reading end of the queue is dead, release all references
+	 * to the queue here.
+	 */
+}
+/* Use retval as the error code if enqueue was successful. */
+if (!err)
+	err = retval;
+/*
+ * Proceed with the error code given by err.
+ */
+.Ed
+.Sh SEE ALSO
+.Xr eventdev 4
+.Sh AUTHORS
+Christian Ehrhardt <ehrhardt@genua.de>
+.Sh CAVEATS
+On linux the function
+.Vt eventdev_put_queue
+is an inlined function wrapper around the function
+__eventdev_put_queue.
+The latter must be exported to other modules for technical reasons but
+it should never be used directly.
+.Pp
+The established conventions for returning error codes from in kernel
+functions differ between Linux and OpenBSD.
+In particular all error codes in the Linux kernel are negative while they
+are positive in OpenBSD.

@@ -1,0 +1,186 @@
+.\"	$OpenBSD: mdoc.template,v 1.9 2004/07/02 10:36:57 jmc Exp $
+.\"
+.\" Copyright (c) 2007 GeNUA mbH <info@genua.de>
+.\"
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+.\" "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+.\" LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+.\" A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+.\" OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+.\" SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
+.\" TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+.\" PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+.\" LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+.\" NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+.\" SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\" The following requests are required for all man pages.
+.Dd October 16, 2007
+.Dt EVENTDEV 4
+.Os Anoubis
+.Sh NAME
+.Nm eventdev
+.Nd Communication device for kernel/user space interaction
+.Sh SYNOPSIS
+.Cd "pseudo-device eventdev"
+.Sh DESCRIPTION
+The
+.Nm
+device allows the kernel to queue arbitrary events for consumption in user
+space.
+Additionally, the kernel can ask a user space program for permission
+before the event in question can proceed.
+
+Opening the
+.Nm
+pseudo-device associates an event queue with the new file descriptor
+that is
+.Em not
+shared between different file descriptors that open the device independently.
+However, simply opening the
+.Nm
+pseudo-device does not cause any events to be queued instead the queue
+associated with the file descriptor must be registered to receive certain
+events.
+The mechanism to perform this registration is completely independent of
+the notification mechanism described in this document.
+
+Reading from the
+.Nm
+pseudo-device will return a single event described in the following
+structure defined in the
+.Pa eventdev.h
+header file:
+.Pp
+.Bd -literal
+struct eventdev_msg {
+	unsigned short msg_size;
+	unsigned char msg_source;
+	unsigned char msg_flags;
+	eventdev_token msg_token;
+	u_int32_t msg_pid;
+	u_int32_t msg_uid;
+	char data[];
+};
+.Ed
+.Pp
+Each successful read operation will return a single complete message.
+This means that
+.Va msg_size
+should match the return value from read.
+If the size of the user space buffer provided to the
+.Xr read(2)
+system call is too small for the next message on the queue EINVAL is returned.
+.Pp
+User space applications can rely on the fact that a message is either
+read completely or not at all.
+However, for compatibility with future versions applications should
+not rely on the fact that each read returns exactly one message.
+.Pp
+The following list describes the meaning of the fields in the
+.Vt eventdev_msg
+structure:
+.Bl -tag -width msg_source
+.It Va msg_size
+is the over all size of the message including the message header and the
+message data.
+.It Va msg_source
+This is an identifier that identifies the source of the message.
+The intention is that the resource identifier is specified upon registration
+of the queue for a certain class of kernel events.
+This allows an application to distinguish between messages from different
+sources that are queued on the same event queue.
+.It Va msg_flags
+Message flags. Currently the only flag that is defined is
+EVENTDEV_NEED_REPLY which is set by the kernel if the kernel expects
+an answer to the event from the user space program that reads the message.
+This answer will determine if the event in question should be allowed.
+.It Va msg_token
+This field contains a token value provided by the kernel if the
+EVENTDEV_NEED_REPLY flag is set.
+This token must be provided by the user space application in the reply
+that decides if the operation that triggered the event is allowed
+to proceed.
+.Pp
+If EVENTDEV_NEED_REPLY is not set the contents of this field are undefined
+and should not be relied on.
+.It Va msg_pid
+is the process-ID of the process that is responsible for the message.
+.It Va msg_uid
+is the
+.Em real
+user-ID of the process that generated the event.
+.It Va msg_data
+is a variable length array of bytes that contains additional information
+about the operation that triggered the event.
+.El
+.Ss Answering events
+A user space application that has read one or more events with the
+EVENTDEV_NEED_REPLY flag set can reply to such an event by writing the
+following structure into the same file descriptor:
+.Pp
+.Bd -literal
+struct eventdev_reply {
+	eventdev_token msg_token;
+	int reply;
+};
+.Ed
+.Pp
+The field
+.Vt eventdev_token
+must contain the token of a message with the EVENTDEV_NEED_REPLY flag set
+that was previously read from the same file descriptor.
+The field
+.Vt reply
+contains the verdict in the form of a usual error code as described in
+errno(3) if the operation should be denied or zero if the operation is
+to be allowed.
+If the operation is not allowed the kernel will usually try to report
+the error code given in
+.Vt reply
+to the application
+However, this is not always possible.
+It is only guaranteed that the operation will be allowed to proceed
+if
+.Vt reply
+is zero and denied if
+.Vt reply
+is not zero.
+.Pp
+Only a single reply for each message is allowed and replies that are
+written to the device are processed atomically, i.e. a reply is either
+read successfully or not at all.
+Multiple replies in a single write are allowed.
+However, the OpenBSD implementation can currently only process a single
+reply per write.
+.Sh SECURITY
+Security issues can only arise if actual events are queued on an
+.Nm
+queue.
+This requires that the queue is registered with some in kernel service
+the generates events.
+Any security issues should be handled upon registration.
+The
+.Nm
+pseudo-device itself does not perform any permission checks beyond those
+enforced by normal Unix access permissions.
+.Pp
+Applications opening the
+.Nm
+device should make sure that the file descriptor is not inherited by
+child processes that are not allowed to answer events.
+.Sh SEE ALSO
+eventdev(9)
+.Sh AUTHORS
+Christian Ehrhardt
