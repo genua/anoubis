@@ -27,6 +27,7 @@
 
 #include <JobCtrl.h>
 #include <SfsCtrl.h>
+#include <SfsEntry.h>
 
 #include "main.h"
 #include "ModSfsDetailsDlg.h"
@@ -160,7 +161,7 @@ ModSfsListCtrl::refreshList(DisplayOption option)
 	DeleteAllItems();
 
 	for (unsigned int i = 0; i < dir.getNumEntries(); i++) {
-		SfsEntry &entry = dir.getEntry(i);
+		SfsEntry *entry = dir.getEntry(i);
 
 		if (canDisplay(entry, option)) {
 			int listIdx = GetItemCount();
@@ -194,13 +195,13 @@ ModSfsListCtrl::refreshEntry(unsigned int idx)
 	int		modelIndex = getSfsIndexAt(idx);
 
 	/* Receive entry */
-	SfsEntry	&entry = dir.getEntry(modelIndex);
+	SfsEntry	*entry = dir.getEntry(modelIndex);
 	wxString	baseDir = dir.getPath();
 
-	if (entry.isSymlink())
+	if (entry->isSymlink())
 		fileIconIndex = 4;
 
-	switch (entry.getChecksumState(SfsEntry::SFSENTRY_CHECKSUM)) {
+	switch (entry->getChecksumState(SfsEntry::SFSENTRY_CHECKSUM)) {
 	case SfsEntry::SFSENTRY_NOT_VALIDATED:
 		checksumInfo = _("???");
 		checksumIconIndex = 0;
@@ -223,7 +224,7 @@ ModSfsListCtrl::refreshEntry(unsigned int idx)
 		break;
 	}
 
-	switch (entry.getChecksumState(SfsEntry::SFSENTRY_SIGNATURE)) {
+	switch (entry->getChecksumState(SfsEntry::SFSENTRY_SIGNATURE)) {
 	case SfsEntry::SFSENTRY_NOT_VALIDATED:
 		signatureInfo = _("???");
 		signatureIconIndex = 0;
@@ -245,7 +246,7 @@ ModSfsListCtrl::refreshEntry(unsigned int idx)
 	}
 
 	SetItem(idx, COLUMN_FILE,
-	    entry.getRelativePath(baseDir), fileIconIndex);
+	    entry->getRelativePath(baseDir), fileIconIndex);
 	SetItem(idx, COLUMN_CHECKSUM,
 	    checksumInfo, checksumIconIndex);
 	SetItem(idx, COLUMN_SIGNATURE,
@@ -253,19 +254,19 @@ ModSfsListCtrl::refreshEntry(unsigned int idx)
 }
 
 bool
-ModSfsListCtrl::canDisplay(const SfsEntry &entry, DisplayOption option) const
+ModSfsListCtrl::canDisplay(SfsEntry *entry, DisplayOption option) const
 {
 	switch (option) {
 	case SHOW_ALL:
 		return (true);
 	case SHOW_EXISTING:
-		return (entry.fileExists());
+		return (entry->fileExists());
 	case SHOW_CHANGED:
-		return (entry.isChecksumChanged());
+		return (entry->isChecksumChanged());
 	case SHOW_CHECKSUM:
-		return (entry.haveChecksum());
+		return (entry->haveChecksum());
 	case SHOW_ORPHANED:
-		return (!entry.fileExists());
+		return (!entry->fileExists());
 	}
 
 	/* Never reached */
@@ -284,7 +285,7 @@ ModSfsListCtrl::OnListItemActivated(wxListEvent &event)
 		return;
 
 	SfsDirectory &dir = sfsCtrl_->getSfsDirectory();
-	SfsEntry &entry = dir.getEntry(modelIndex);
+	SfsEntry *entry = dir.getEntry(modelIndex);
 
 	/* Display details-dialog */
 	ModSfsDetailsDlg dlg(entry, this);
@@ -305,13 +306,13 @@ ModSfsListCtrl::OnListItemRightClicked(wxListEvent &event)
 		return;
 
 	SfsDirectory &dir = sfsCtrl_->getSfsDirectory();
-	SfsEntry &entry = dir.getEntry(modelIndex);
+	SfsEntry *entry = dir.getEntry(modelIndex);
 
 	wxMenuItemList &menuItems = popupMenu_.GetMenuItems();
 
 	/* Update menu-items of the popup-menu */
 	menuItems[0]->Enable(true); /* Show details */
-	menuItems[1]->Enable(entry.isSymlink()); /* Resolve symlink */
+	menuItems[1]->Enable(entry->isSymlink()); /* Resolve symlink */
 	PopupMenu(&popupMenu_, ScreenToClient(wxGetMousePosition()));
 }
 
@@ -327,7 +328,7 @@ ModSfsListCtrl::OnPopupShowDetailsSelected(wxCommandEvent &)
 		return;
 
 	SfsDirectory &dir = sfsCtrl_->getSfsDirectory();
-	SfsEntry &entry = dir.getEntry(modelIndex);
+	SfsEntry *entry = dir.getEntry(modelIndex);
 
 	/* Display details-dialog */
 	ModSfsDetailsDlg dlg(entry, this);
@@ -346,9 +347,9 @@ ModSfsListCtrl::OnPopupResolveLinkSelected(wxCommandEvent &)
 		return;
 
 	SfsDirectory &dir = sfsCtrl_->getSfsDirectory();
-	SfsEntry &entry = dir.getEntry(modelIndex);
+	SfsEntry *entry = dir.getEntry(modelIndex);
 
-	wxString path = entry.resolve();
+	wxString path = entry->resolve();
 	if (path.IsEmpty())
 		return;
 

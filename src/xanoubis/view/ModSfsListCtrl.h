@@ -204,7 +204,7 @@ class ModSfsListCtrl : public wxListCtrl
 		 * @return true is returned, if the SfsEntry can be displayed,
 		 *         false otherwise.
 		 */
-		bool canDisplay(const SfsEntry &, DisplayOption) const;
+		bool canDisplay(SfsEntry *, DisplayOption) const;
 
 		/**
 		 * Invoked if a row is activated (aka double-click).

@@ -32,7 +32,7 @@
 
 #include <wx/dir.h>
 
-#include "SfsEntry.h"
+class SfsEntry;
 
 /**
  * A SfsDirectory is the root-folter for a list of SfsEntries.
@@ -44,6 +44,7 @@ class SfsDirectory : private wxDirTraverser
 {
 	public:
 		SfsDirectory();
+		~SfsDirectory();
 
 		/**
 		 * Returns the root-path.
@@ -139,7 +140,7 @@ class SfsDirectory : private wxDirTraverser
 		 * @param idx The requested index (count starts at 0)
 		 * @return The SfsEntry-instance at the specified index
 		 */
-		SfsEntry &getEntry(unsigned int);
+		SfsEntry *getEntry(unsigned int);
 
 		/**
 		 * Inserts a new SfsEntry into the SfsDirectory.
@@ -152,7 +153,7 @@ class SfsDirectory : private wxDirTraverser
 		 *         insert a path, which was already inserted into the
 		 *         model, the corresponding SfsEntry is returned.
 		 */
-		SfsEntry &insertEntry(const wxString &);
+		SfsEntry *insertEntry(const wxString &);
 
 		/**
 		 * Cleans the model.
@@ -178,7 +179,12 @@ class SfsDirectory : private wxDirTraverser
 		bool recursive_;
 		wxString filter_;
 		bool inverseFilter_;
-		std::vector<SfsEntry> entryList_;
+		std::vector<SfsEntry *> entryList_;
+
+		/**
+		 * Removes all elements from entryList_.
+		 */
+		void clearEntryList();
 
 		/**
 		 * Re-fills entryList_

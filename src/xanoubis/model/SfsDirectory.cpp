@@ -25,6 +25,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "SfsEntry.h"
 #include "SfsDirectory.h"
 
 SfsDirectory::SfsDirectory()
@@ -33,6 +34,11 @@ SfsDirectory::SfsDirectory()
 	this->recursive_ = false;
 	this->filter_ = wxEmptyString;
 	this->inverseFilter_ = false;
+}
+
+SfsDirectory::~SfsDirectory()
+{
+	clearEntryList();
 }
 
 wxString
@@ -120,20 +126,20 @@ int
 SfsDirectory::getIndexOf(const wxString &filename) const
 {
 	for (unsigned int i = 0; i < entryList_.size(); i++) {
-		if (entryList_[i].getPath() == filename)
+		if (entryList_[i]->getPath() == filename)
 			return (i);
 	}
 
 	return (-1);
 }
 
-SfsEntry &
+SfsEntry *
 SfsDirectory::getEntry(unsigned int idx)
 {
 	return (entryList_[idx]);
 }
 
-SfsEntry &
+SfsEntry *
 SfsDirectory::insertEntry(const wxString &path)
 {
 	int idx;
@@ -143,7 +149,7 @@ SfsDirectory::insertEntry(const wxString &path)
 		 * An empty list. This is easy. Append the new SfsEntry to the
 		 * empty list. A list with one item is always in correct order.
 		 */
-		SfsEntry newEntry(path);
+		SfsEntry *newEntry = new SfsEntry(path);
 		entryList_.push_back(newEntry);
 		idx = 0;
 	} else {
@@ -157,24 +163,26 @@ SfsDirectory::insertEntry(const wxString &path)
 bool
 SfsDirectory::cleanup(void)
 {
-	std::vector<SfsEntry>::iterator it = entryList_.begin();
+	std::vector<SfsEntry *>::iterator it = entryList_.begin();
 	int numRemoved = 0;
 
 	while (it != entryList_.end()) {
-		SfsEntry &e = (*it);
+		SfsEntry *e = (*it);
 
-		if (!e.fileExists()) {
+		if (!e->fileExists()) {
 			/* File does not exist */
 			entryList_.erase(it);
 			numRemoved++;
+			delete e;
 		} else if (!isDirTraversalEnabled() &&
-		    e.getRelativePath(path_).Find(wxT("/")) != wxNOT_FOUND) {
+		    e->getRelativePath(path_).Find(wxT("/")) != wxNOT_FOUND) {
 			/*
 			 * Directory traversal is disabled but this entry comes
 			 * from a sub-directory.
 			 */
 			entryList_.erase(it);
 			numRemoved++;
+			delete e;
 		} else {
 			/* All tests passed, skip to next entry */
 			it++;
@@ -186,12 +194,23 @@ SfsDirectory::cleanup(void)
 }
 
 void
+SfsDirectory::clearEntryList()
+{
+	while (!entryList_.empty()) {
+		SfsEntry *e = entryList_.back();
+		entryList_.pop_back();
+
+		delete e;
+	}
+}
+
+void
 SfsDirectory::updateEntryList()
 {
 	wxDir dir(this->path_);
 
 	/* Clear list before traversion starts */
-	entryList_.clear();
+	clearEntryList();
 	dir.Traverse(*this);
 }
 
@@ -200,7 +219,7 @@ SfsDirectory::insertEntry(const wxString &path, unsigned int start,
     unsigned int end)
 {
 	unsigned int mid = start + (unsigned int)((end - start) / 2);
-	int result = entryList_[mid].getPath().Cmp(path);
+	int result = entryList_[mid]->getPath().Cmp(path);
 
 	/*
 	 * Try to insert an already existing path, abort. Do this before
@@ -215,14 +234,15 @@ SfsDirectory::insertEntry(const wxString &path, unsigned int start,
 		/*
 		 * This is the position, where the SfSEntry should be inserted.
 		 */
-		SfsEntry newEntry(path);
+		SfsEntry *newEntry = new SfsEntry(path);
 
 		if (result > 0) {
 			/*
 			 * The entry at start is "greater" that the new entry.
 			 * Insert it before the item at start.
 			 */
-			std::vector<SfsEntry>::iterator it = entryList_.begin();
+			std::vector<SfsEntry *>::iterator it =
+			    entryList_.begin();
 			it += start; /* Advance to the correct position */
 
 			entryList_.insert(it, newEntry);

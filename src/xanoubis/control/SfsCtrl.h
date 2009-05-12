@@ -32,6 +32,7 @@
 
 #include <list>
 
+#include "SfsEntry.h"
 #include "SfsDirectory.h"
 #include "Task.h"
 
@@ -489,7 +490,7 @@ class SfsCtrl : public wxEvtHandler
 		 *         scheduled), 1 or 2 (task for checksum and/or
 		 *         signature).
 		 */
-		int createComCsumDelTasks(const SfsEntry &);
+		int createComCsumDelTasks(SfsEntry *);
 
 		void createSfsListTasks(uid_t, const wxString &, bool);
 		void createCsumCalcTask(const wxString &);
@@ -508,7 +509,7 @@ class SfsCtrl : public wxEvtHandler
 		 *             checksum is appended to the export-list,
 		 *             otherwise the signature.
 		 */
-		void pushExportEntry(const SfsEntry &, SfsEntry::ChecksumType);
+		void pushExportEntry(SfsEntry *, SfsEntry::ChecksumType);
 
 		/**
 		 * Dumps exportList_ into exportFile_.
@@ -527,7 +528,7 @@ class SfsCtrl : public wxEvtHandler
 		 */
 		void clearImportEntries(void);
 
-		bool setChecksumMissing(SfsEntry &);
+		bool setChecksumMissing(SfsEntry *);
 
 		void pushTask(Task *);
 		bool popTask(Task *);

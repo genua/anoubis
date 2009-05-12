@@ -59,7 +59,7 @@ class ModSfsDetailsDlg : public ModSfsDetailsDlgBase
 		 * @param entry The SfsEntry to be displayed
 		 * @param parent Parent window
 		 */
-		ModSfsDetailsDlg(const SfsEntry &, wxWindow *);
+		ModSfsDetailsDlg(SfsEntry *, wxWindow *);
 };
 
 #endif	/* _MODSFSDETAILSDLG_H_ */

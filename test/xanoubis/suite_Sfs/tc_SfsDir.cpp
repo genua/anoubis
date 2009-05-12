@@ -31,6 +31,7 @@
 #include <stdlib.h>
 
 #include <model/SfsDirectory.h>
+#include <model/SfsEntry.h>
 
 char		sfsdir[64];
 wxString	wxSfsDir;
@@ -193,12 +194,12 @@ START_TEST(SfsDir_entry_order)
 	fail_if(result == false, "Path has not changed");
 
 	for (i = 0; i < dir.getNumEntries(); i++) {
-		SfsEntry &entry = dir.getEntry(i);
+		SfsEntry *entry = dir.getEntry(i);
 
-		if (entry.getFileName() <= prevName)
+		if (entry->getFileName() <= prevName)
 			fail("Entries on directory are not correct order");
 
-		prevName = entry.getFileName();
+		prevName = entry->getFileName();
 	}
 }
 END_TEST
@@ -224,29 +225,29 @@ START_TEST(SfsDir_recursive)
 		fileFound[i] = false;
 
 	for (unsigned int i = 0; i < dir.getNumEntries(); i++) {
-		SfsEntry &entry = dir.getEntry(i);
+		SfsEntry *entry = dir.getEntry(i);
 
-		if (entry.getRelativePath(wxSfsDir) == wxT("file1"))
+		if (entry->getRelativePath(wxSfsDir) == wxT("file1"))
 			fileFound[0] = true;
-		else if (entry.getRelativePath(wxSfsDir) == wxT("file2"))
+		else if (entry->getRelativePath(wxSfsDir) == wxT("file2"))
 			fileFound[1] = true;
-		else if (entry.getRelativePath(wxSfsDir) == wxT("file3"))
+		else if (entry->getRelativePath(wxSfsDir) == wxT("file3"))
 			fileFound[2] = true;
-		else if (entry.getRelativePath(wxSfsDir) == wxT("fiel4"))
+		else if (entry->getRelativePath(wxSfsDir) == wxT("fiel4"))
 			fileFound[3] = true;
-		else if (entry.getRelativePath(wxSfsDir) == wxT("link_file1"))
+		else if (entry->getRelativePath(wxSfsDir) == wxT("link_file1"))
 			fileFound[4] = true;
-		else if (entry.getRelativePath(wxSfsDir) == wxT("sub/file1"))
+		else if (entry->getRelativePath(wxSfsDir) == wxT("sub/file1"))
 			fileFound[5] = true;
-		else if (entry.getRelativePath(wxSfsDir) == wxT("sub/file2"))
+		else if (entry->getRelativePath(wxSfsDir) == wxT("sub/file2"))
 			fileFound[6] = true;
-		else if (entry.getRelativePath(wxSfsDir) == wxT("sub/file3"))
+		else if (entry->getRelativePath(wxSfsDir) == wxT("sub/file3"))
 			fileFound[7] = true;
-		else if (entry.getRelativePath(wxSfsDir) == wxT("sub/file4"))
+		else if (entry->getRelativePath(wxSfsDir) == wxT("sub/file4"))
 			fileFound[8] = true;
 		else
-			fail("Unexpected entry fetched: %s",
-			    (const char*)entry.getPath().fn_str());
+			fail("Unexpected entry fetched: %ls",
+			    entry->getPath().c_str());
 	}
 
 	for (unsigned int i = 0; i < sizeof(fileFound); i++)
@@ -278,17 +279,17 @@ START_TEST(SfsDir_recursive_filtered)
 		fileFound[i] = false;
 
 	for (unsigned int i = 0; i < dir.getNumEntries(); i++) {
-		SfsEntry &entry = dir.getEntry(i);
+		SfsEntry *entry = dir.getEntry(i);
 
-		if (entry.getRelativePath(wxSfsDir) == wxT("file1"))
+		if (entry->getRelativePath(wxSfsDir) == wxT("file1"))
 			fileFound[0] = true;
-		else if (entry.getRelativePath(wxSfsDir) == wxT("link_file1"))
+		else if (entry->getRelativePath(wxSfsDir) == wxT("link_file1"))
 			fileFound[1] = true;
-		else if (entry.getRelativePath(wxSfsDir) == wxT("sub/file1"))
+		else if (entry->getRelativePath(wxSfsDir) == wxT("sub/file1"))
 			fileFound[2] = true;
 		else
-			fail("Unexpected entry fetched: %s",
-			    (const char*)entry.getPath().fn_str());
+			fail("Unexpected entry fetched: %ls",
+			    entry->getPath().c_str());
 	}
 
 	for (unsigned int i = 0; i < sizeof(fileFound); i++)
@@ -307,15 +308,15 @@ START_TEST(SfsDir_resolve_link_ok)
 	int idx = dir.getIndexOf(wxSfsDir + wxT("/link_file1"));
 	fail_unless(idx >= 0, "File not found in model");
 
-	SfsEntry &entry = dir.getEntry(idx);
-	wxString resolved = entry.resolve();
+	SfsEntry *entry = dir.getEntry(idx);
+	wxString resolved = entry->resolve();
 	wxString expected = wxSfsDir + wxT("/file1");
 
 	fail_unless(resolved == expected,
 	    "Unexpected resolve-result\n"
-	    "Is: %s\n"
-	    "Expected: %s",
-	    (const char *)resolved.fn_str(), (const char *)expected.fn_str());
+	    "Is: %ls\n"
+	    "Expected: %ls",
+	    resolved.c_str(), expected.c_str());
 }
 END_TEST
 
@@ -330,14 +331,13 @@ START_TEST(SfsDir_resolve_link_plain_file)
 	int idx = dir.getIndexOf(wxSfsDir + wxT("/file1"));
 	fail_unless(idx >= 0, "File not found in model");
 
-	SfsEntry &entry = dir.getEntry(idx);
-	wxString resolved = entry.resolve();
+	SfsEntry *entry = dir.getEntry(idx);
+	wxString resolved = entry->resolve();
 
 	fail_unless(resolved.IsEmpty(),
 	    "Unexpected resolve-result\n"
 	    "Empty string expected\n"
-	    "Is: %s",
-	    (const char *)resolved.fn_str());
+	    "Is: %ls", resolved.c_str());
 }
 END_TEST
 
@@ -366,19 +366,19 @@ START_TEST(SfsDir_filter_rel_path_only)
 		fileFound[i] = false;
 
 	for (unsigned int i = 0; i < dir.getNumEntries(); i++) {
-		SfsEntry &entry = dir.getEntry(i);
+		SfsEntry *entry = dir.getEntry(i);
 
-		if (entry.getRelativePath(wxSfsDir) == wxT("sub/file1"))
+		if (entry->getRelativePath(wxSfsDir) == wxT("sub/file1"))
 			fileFound[0] = true;
-		else if (entry.getRelativePath(wxSfsDir) == wxT("sub/file2"))
+		else if (entry->getRelativePath(wxSfsDir) == wxT("sub/file2"))
 			fileFound[1] = true;
-		else if (entry.getRelativePath(wxSfsDir) == wxT("sub/file3"))
+		else if (entry->getRelativePath(wxSfsDir) == wxT("sub/file3"))
 			fileFound[2] = true;
-		else if (entry.getRelativePath(wxSfsDir) == wxT("sub/file4"))
+		else if (entry->getRelativePath(wxSfsDir) == wxT("sub/file4"))
 			fileFound[3] = true;
 		else
-			fail("Unexpected entry fetched: %s",
-			    (const char*)entry.getPath().fn_str());
+			fail("Unexpected entry fetched: %ls",
+			    entry->getPath().c_str());
 	}
 
 	for (unsigned int i = 0; i < sizeof(fileFound); i++)

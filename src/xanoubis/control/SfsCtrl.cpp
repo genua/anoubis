@@ -155,16 +155,17 @@ SfsCtrl::validate(const IndexArray &arr)
 				return (RESULT_INVALIDARG);
 			}
 
-			SfsEntry &entry = sfsDir_.getEntry(idx);
+			SfsEntry *entry = sfsDir_.getEntry(idx);
 
-			if (entry.canHaveChecksum(false)) {
-				entry.reset();
+			if (entry->canHaveChecksum(false)) {
+				entry->reset();
 
 				/* Ask anoubisd for the checksums */
-				createComCsumGetTasks(entry.getPath(), true, true);
+				createComCsumGetTasks(
+				    entry->getPath(), true, true);
 
 				/* Calculate the checksum */
-				createCsumCalcTask(entry.getPath());
+				createCsumCalcTask(entry->getPath());
 
 				numScheduled++;
 			} else {
@@ -208,9 +209,9 @@ SfsCtrl::validateAll(bool orphaned)
 			/* Reset signed checksums in model */
 			for (unsigned int idx = 0;
 			    idx < sfsDir_.getNumEntries(); idx++) {
-				SfsEntry &entry = sfsDir_.getEntry(idx);
+				SfsEntry *entry = sfsDir_.getEntry(idx);
 
-				if (entry.reset(SfsEntry::SFSENTRY_SIGNATURE))
+				if (entry->reset(SfsEntry::SFSENTRY_SIGNATURE))
 					sendEntryChangedEvent(idx);
 			}
 
@@ -247,17 +248,17 @@ SfsCtrl::registerChecksum(const IndexArray &arr)
 					return (RESULT_NEEDKEY);
 			}
 
-			SfsEntry &entry = sfsDir_.getEntry(idx);
+			SfsEntry *entry = sfsDir_.getEntry(idx);
 
 			/* Send checksum to anoubisd */
-			createComCsumAddTasks(entry.getPath());
+			createComCsumAddTasks(entry->getPath());
 
-			if (!entry.haveLocalCsum()) {
+			if (!entry->haveLocalCsum()) {
 				/*
 				 * You also need a local checksum to be able to
 				 * compare it with the remote one
 				 */
-				createCsumCalcTask(entry.getPath());
+				createCsumCalcTask(entry->getPath());
 			}
 		}
 
@@ -292,7 +293,7 @@ SfsCtrl::unregisterChecksum(const IndexArray &arr)
 				return (RESULT_INVALIDARG);
 			}
 
-			SfsEntry &entry = sfsDir_.getEntry(idx);
+			SfsEntry *entry = sfsDir_.getEntry(idx);
 
 			/* Remove checksum from anoubisd */
 			numScheduled += createComCsumDelTasks(entry);
@@ -343,12 +344,13 @@ SfsCtrl::importChecksums(const wxString &path)
 			    wxString::FromAscii(entry->name));
 			if (idx != -1) {
 				/* Part of the model, perform a validation */
-				SfsEntry &e = sfsDir_.getEntry(idx);
+				SfsEntry *e = sfsDir_.getEntry(idx);
 
-				if (!e.haveLocalCsum())
-					createCsumCalcTask(e.getPath());
+				if (!e->haveLocalCsum())
+					createCsumCalcTask(e->getPath());
 
-				createComCsumGetTasks(e.getPath(), true, true);
+				createComCsumGetTasks(
+				    e->getPath(), true, true);
 			}
 
 			entry = entry->next;
@@ -382,9 +384,9 @@ SfsCtrl::exportChecksums(const IndexArray &arr, const wxString &path)
 			 * Ask for checksums, if received the checksums are
 			 * dumped into exportFile_.
 			 */
-			SfsEntry &entry = sfsDir_.getEntry(idx);
-			createCsumCalcTask(entry.getPath());
-			createComCsumGetTasks(entry.getPath(), true, true);
+			SfsEntry *entry = sfsDir_.getEntry(idx);
+			createCsumCalcTask(entry->getPath());
+			createComCsumGetTasks(entry->getPath(), true, true);
 		}
 
 		return (RESULT_EXECUTE);
@@ -515,26 +517,26 @@ SfsCtrl::OnSfsListArrived(TaskEvent &event)
 
 	/* Go though each file in the model, each file needs to be updated */
 	for (unsigned int idx = 0; idx < sfsDir_.getNumEntries(); idx++) {
-		SfsEntry &entry = sfsDir_.getEntry(idx);
+		SfsEntry *entry = sfsDir_.getEntry(idx);
 
 		/* Has file a checksum? */
 		int csumIdx = result.Index(
-		    entry.getRelativePath(sfsDir_.getPath()));
+		    entry->getRelativePath(sfsDir_.getPath()));
 
-		if (csumIdx != wxNOT_FOUND && entry.canHaveChecksum(false)) {
+		if (csumIdx != wxNOT_FOUND && entry->canHaveChecksum(false)) {
 			/* Ask anoubisd for the checksum */
-			createComCsumGetTasks(entry.getPath(),
+			createComCsumGetTasks(entry->getPath(),
 			    !task->haveKeyId(), task->haveKeyId());
 
 			/* Calculate the checksum */
-			if (entry.fileExists())
-				createCsumCalcTask(entry.getPath());
+			if (entry->fileExists())
+				createCsumCalcTask(entry->getPath());
 
 			/* Processed, rempove from result-list */
 			result.RemoveAt(csumIdx);
 		} else {
 			/* Update checksum attribute to no-checksum */
-			if (entry.setChecksumMissing(type))
+			if (entry->setChecksumMissing(type))
 				sendEntryChangedEvent(idx);
 			if (csumIdx != wxNOT_FOUND)
 				result.RemoveAt(csumIdx);
@@ -554,11 +556,11 @@ SfsCtrl::OnSfsListArrived(TaskEvent &event)
 
 		for (unsigned int idx = 0; idx < result.Count(); idx++) {
 			if (!result[idx].EndsWith(wxT("/"))) {
-				SfsEntry &e = sfsDir_.insertEntry(
+				SfsEntry *e = sfsDir_.insertEntry(
 				    basePath + result[idx]);
 
-				createComCsumGetTasks(e.getPath(),
-			    		!task->haveKeyId(), task->haveKeyId());
+				createComCsumGetTasks(e->getPath(),
+				    !task->haveKeyId(), task->haveKeyId());
 			}
 		}
 	}
@@ -606,8 +608,8 @@ SfsCtrl::OnCsumCalc(TaskEvent &event)
 	}
 
 	/* Copy checksum into SfsEntry */
-	SfsEntry &entry = sfsDir_.getEntry(idx);
-	if (entry.setLocalCsum(task->getCsum())) {
+	SfsEntry *entry = sfsDir_.getEntry(idx);
+	if (entry->setLocalCsum(task->getCsum())) {
 		/* Checksum attribute has changed, inform any listener */
 		sendEntryChangedEvent(idx);
 	}
@@ -644,7 +646,7 @@ SfsCtrl::OnCsumGet(TaskEvent &event)
 	}
 
 	/* Recieve checksum from task */
-	SfsEntry &entry = sfsDir_.getEntry(idx);
+	SfsEntry *entry = sfsDir_.getEntry(idx);
 	ComTask::ComTaskResult taskResult = task->getComTaskResult();
 	SfsEntry::ChecksumType type = task->haveKeyId() ?
 	    SfsEntry::SFSENTRY_SIGNATURE : SfsEntry::SFSENTRY_CHECKSUM;
@@ -654,10 +656,10 @@ SfsCtrl::OnCsumGet(TaskEvent &event)
 
 		if (err == ENOENT) {
 			/* No checksum registered */
-			if (entry.setChecksumMissing(type))
+			if (entry->setChecksumMissing(type))
 				sendEntryChangedEvent(idx);
 		} else if (err == EINVAL) {
-			if (entry.setChecksumInvalid(type))
+			if (entry->setChecksumInvalid(type))
 				sendEntryChangedEvent(idx);
 		} else {
 			const char *err = strerror(task->getResultDetails());
@@ -720,7 +722,7 @@ SfsCtrl::OnCsumGet(TaskEvent &event)
 
 	if (task->getCsum(cs, csumLen) == csumLen) {
 		/* File has a checksum, copy into model */
-		if (entry.setChecksum(type, cs, csumLen))
+		if (entry->setChecksum(type, cs, csumLen))
 			sendEntryChangedEvent(idx);
 
 		if (exportEnabled_) {
@@ -835,7 +837,7 @@ SfsCtrl::OnCsumAdd(TaskEvent &event)
 	}
 
 	/* Update model */
-	SfsEntry &entry = sfsDir_.getEntry(idx);
+	SfsEntry *entry = sfsDir_.getEntry(idx);
 	u_int8_t cs[ANOUBIS_CS_LEN];
 
 	if (task->getCsum(cs, sizeof(cs)) != ANOUBIS_CS_LEN) {
@@ -843,7 +845,7 @@ SfsCtrl::OnCsumAdd(TaskEvent &event)
 		return;
 	}
 
-	if (entry.setChecksum(type, cs, ANOUBIS_CS_LEN))
+	if (entry->setChecksum(type, cs, ANOUBIS_CS_LEN))
 		sendEntryChangedEvent(idx);
 }
 
@@ -926,8 +928,8 @@ SfsCtrl::OnCsumDel(TaskEvent &event)
 	}
 
 	/* Update model */
-	SfsEntry &entry = sfsDir_.getEntry(idx);
-	if (entry.setChecksumMissing(type))
+	SfsEntry *entry = sfsDir_.getEntry(idx);
+	if (entry->setChecksumMissing(type))
 		sendEntryChangedEvent(idx);
 }
 
@@ -1084,15 +1086,15 @@ SfsCtrl::createComCsumAddTasks(struct sfs_entry *entry)
 }
 
 int
-SfsCtrl::createComCsumDelTasks(const SfsEntry &entry)
+SfsCtrl::createComCsumDelTasks(SfsEntry *entry)
 {
 	int count = 0;
 
 	SfsEntry::ChecksumState csState =
-	    entry.getChecksumState(SfsEntry::SFSENTRY_CHECKSUM);
+	    entry->getChecksumState(SfsEntry::SFSENTRY_CHECKSUM);
 	if (csState != SfsEntry::SFSENTRY_MISSING) {
 		ComCsumDelTask *csTask = new ComCsumDelTask;
-		csTask->setPath(entry.getPath());
+		csTask->setPath(entry->getPath());
 		csTask->setCalcLink(true);
 
 		pushTask(csTask);
@@ -1102,14 +1104,14 @@ SfsCtrl::createComCsumDelTasks(const SfsEntry &entry)
 	}
 
 	SfsEntry::ChecksumState sigState =
-	    entry.getChecksumState(SfsEntry::SFSENTRY_SIGNATURE);
+	    entry->getChecksumState(SfsEntry::SFSENTRY_SIGNATURE);
 	if ((sigState != SfsEntry::SFSENTRY_MISSING) && isSignatureEnabled()) {
 		KeyCtrl *keyCtrl = KeyCtrl::getInstance();
 		LocalCertificate &cert = keyCtrl->getLocalCertificate();
 		struct anoubis_sig *raw_cert = cert.getCertificate();
 
 		ComCsumDelTask *sigTask = new ComCsumDelTask;
-		sigTask->setPath(entry.getPath());
+		sigTask->setPath(entry->getPath());
 		sigTask->setCalcLink(true);
 		sigTask->setKeyId(raw_cert->keyid, raw_cert->idlen);
 
@@ -1161,18 +1163,18 @@ SfsCtrl::createCsumCalcTask(const wxString &path)
 }
 
 void
-SfsCtrl::pushExportEntry(const SfsEntry &entry, SfsEntry::ChecksumType type)
+SfsCtrl::pushExportEntry(SfsEntry *entry, SfsEntry::ChecksumType type)
 {
 	struct sfs_entry *se = 0; /* The export-entry */
 
-	size_t csumLen = entry.getChecksumLength(type);
+	size_t csumLen = entry->getChecksumLength(type);
 	u_int8_t csum[csumLen];
 
-	entry.getChecksum(type, csum, csumLen);
+	entry->getChecksum(type, csum, csumLen);
 
 	if (type == SfsEntry::SFSENTRY_CHECKSUM) {
 		/* Create a sfs_entry, onl ycontains the checksum */
-		se = anoubis_build_entry(entry.getPath().fn_str(),
+		se = anoubis_build_entry(entry->getPath().fn_str(),
 		    csum, csumLen, NULL, 0, geteuid(), NULL, 0);
 	} else if (isSignatureEnabled()) {
 		/* Receive key-id of local-certificate */
@@ -1182,7 +1184,7 @@ SfsCtrl::pushExportEntry(const SfsEntry &entry, SfsEntry::ChecksumType type)
 		struct anoubis_sig *cert = lc.getCertificate();
 
 		/* Create sfs_entry */
-		se = anoubis_build_entry(entry.getPath().fn_str(),
+		se = anoubis_build_entry(entry->getPath().fn_str(),
 		    0, 0, csum, csumLen,
 		    geteuid(), cert->keyid, cert->idlen);
 	}
@@ -1250,14 +1252,14 @@ SfsCtrl::clearImportEntries(void)
 }
 
 bool
-SfsCtrl::setChecksumMissing(SfsEntry &entry)
+SfsCtrl::setChecksumMissing(SfsEntry *entry)
 {
 	bool ret = false;
 
-	ret |= entry.setChecksumMissing(SfsEntry::SFSENTRY_CHECKSUM);
+	ret |= entry->setChecksumMissing(SfsEntry::SFSENTRY_CHECKSUM);
 
 	if (isSignatureEnabled()) {
-		ret |= entry.setChecksumMissing(SfsEntry::SFSENTRY_SIGNATURE);
+		ret |= entry->setChecksumMissing(SfsEntry::SFSENTRY_SIGNATURE);
 	}
 
 	return (ret);

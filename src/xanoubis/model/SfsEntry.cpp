@@ -47,23 +47,6 @@ SfsEntry::SfsEntry(const wxString &path)
 	reset();
 }
 
-SfsEntry::SfsEntry(const SfsEntry &other)
-{
-	this->csum_[SFSENTRY_CHECKSUM] = 0;
-	this->csum_[SFSENTRY_SIGNATURE] = 0;
-
-	this->path_ = other.path_;
-	this->filename_ = other.filename_;
-	this->haveLocalCsum_ = other.haveLocalCsum_;
-	memcpy(this->localCsum_, other.localCsum_, ANOUBIS_CS_LEN);
-	copyChecksum(SFSENTRY_CHECKSUM, other.csum_[SFSENTRY_CHECKSUM],
-	    other.csumLen_[SFSENTRY_CHECKSUM]);
-	copyChecksum(SFSENTRY_SIGNATURE, other.csum_[SFSENTRY_SIGNATURE],
-	    other.csumLen_[SFSENTRY_SIGNATURE]);
-	this->state_[SFSENTRY_CHECKSUM] = other.state_[SFSENTRY_CHECKSUM];
-	this->state_[SFSENTRY_SIGNATURE] = other.state_[SFSENTRY_SIGNATURE];
-}
-
 SfsEntry::~SfsEntry(void)
 {
 	releaseChecksum(SFSENTRY_CHECKSUM);

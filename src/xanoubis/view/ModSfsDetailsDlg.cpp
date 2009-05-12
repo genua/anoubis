@@ -28,46 +28,46 @@
 #include "ModSfsDetailsDlg.h"
 #include "SfsEntry.h"
 
-ModSfsDetailsDlg::ModSfsDetailsDlg(const SfsEntry &entry, wxWindow *parent)
+ModSfsDetailsDlg::ModSfsDetailsDlg(SfsEntry *entry, wxWindow *parent)
     : ModSfsDetailsDlgBase(parent)
 {
 	/* Path */
-	wxString path = entry.getPath();
+	wxString path = entry->getPath();
 	SetTitle(wxString::Format(_("Details for %ls"), path.c_str()));
 	pathTextCtrl->SetValue(path);
 
-	if (entry.isSymlink()) {
+	if (entry->isSymlink()) {
 		linkLabel->Show();
 		linkTextCtrl->Show();
-		linkTextCtrl->SetValue(entry.resolve());
+		linkTextCtrl->SetValue(entry->resolve());
 	} else {
 		linkLabel->Hide();
 		linkTextCtrl->Hide();
 	}
 
 	/* Last modification timestamp */
-	wxDateTime modified = entry.getLastModified();
+	wxDateTime modified = entry->getLastModified();
 	if (modified.IsValid())
 		modifiedTextCtrl->SetValue(modified.Format(wxT("%c")));
 	else
 		modifiedTextCtrl->SetValue(_("n/a"));
 
 	/* Local checksum */
-	wxString localCsum = entry.getLocalCsum();
+	wxString localCsum = entry->getLocalCsum();
 	if (!localCsum.IsEmpty())
 		checksumTextCtrl->SetValue(localCsum);
 	else
 		checksumTextCtrl->SetValue(_("n/a"));
 
 	/* Remote checksum */
-	wxString remoteCsum = entry.getChecksum(SfsEntry::SFSENTRY_CHECKSUM);
+	wxString remoteCsum = entry->getChecksum(SfsEntry::SFSENTRY_CHECKSUM);
 	if (!remoteCsum.IsEmpty())
 		regChecksumTextCtrl->SetValue(remoteCsum);
 	else
 		regChecksumTextCtrl->SetValue(_("n/a"));
 
 	/* Checksum state */
-	switch (entry.getChecksumState(SfsEntry::SFSENTRY_CHECKSUM)) {
+	switch (entry->getChecksumState(SfsEntry::SFSENTRY_CHECKSUM)) {
 	case SfsEntry::SFSENTRY_NOT_VALIDATED:
 		checksumStateLabel->SetLabel(_("not validated"));
 		break;
@@ -86,7 +86,7 @@ ModSfsDetailsDlg::ModSfsDetailsDlg(const SfsEntry &entry, wxWindow *parent)
 	}
 
 	/* Signature state */
-	switch (entry.getChecksumState(SfsEntry::SFSENTRY_SIGNATURE)) {
+	switch (entry->getChecksumState(SfsEntry::SFSENTRY_SIGNATURE)) {
 	case SfsEntry::SFSENTRY_NOT_VALIDATED:
 		signatureStateLabel->SetLabel(_("not validated"));
 		break;

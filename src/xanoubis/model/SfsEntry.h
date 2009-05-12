@@ -80,31 +80,6 @@ class SfsEntry
 		};
 
 		/**
-		 * Default-c'tor.
-		 *
-		 * Creates an empty, resetted SfsEntry.
-		 */
-		SfsEntry(void);
-
-		/**
-		 * Creates an SfsEntry with the specified path.
-		 *
-		 * @param path Path of SfsEntry
-		 * @see setPath()
-		 */
-		SfsEntry(const wxString &);
-
-		/**
-		 * Copy-c'tor.
-		 */
-		SfsEntry(const SfsEntry &);
-
-		/**
-		 * D'tor.
-		 */
-		~SfsEntry(void);
-
-		/**
 		 * Returns the path of the file.
 		 *
 		 * This includes the complete path and the filename.
@@ -393,10 +368,37 @@ class SfsEntry
 		u_int8_t	*csum_[2];
 		ChecksumState	state_[2];
 
+		/**
+		 * Default-c'tor.
+		 *
+		 * Creates an empty, resetted SfsEntry.
+		 */
+		SfsEntry(void);
+
+		/**
+		 * Creates an SfsEntry with the specified path.
+		 *
+		 * @param path Path of SfsEntry
+		 * @see setPath()
+		 */
+		SfsEntry(const wxString &);
+
+		/**
+		 * Copy-c'tor.
+		 */
+		SfsEntry(const SfsEntry &) {}
+
+		/**
+		 * D'tor.
+		 */
+		~SfsEntry(void);
+
 		void copyChecksum(ChecksumType, const u_int8_t *, size_t);
 		void releaseChecksum(ChecksumType);
 		bool validateChecksum(ChecksumType);
 		static wxString cs2str(const u_int8_t *, size_t);
+
+	friend class SfsDirectory;
 };
 
 #endif	/* _SFSENTRY_H_ */
