@@ -275,11 +275,18 @@ anoubis_csum_list(struct anoubis_msg *m, int *listcnt)
 			goto err;
 
 		msg_end = m->length - sizeof(Anoubis_ChecksumPayloadMessage)
-		    - CSUM_LEN - 1;
+		    - CSUM_LEN;
+
+		/* Check if messeag is empty. Yes? We are done */
+		if (msg_end == 0)
+			break;
+
+		/* This should let reach the end of the message */
+		msg_end -= 1;
 		if (msg_end < 1 ||
-		    m->u.checksumpayload->payload[msg_end] != '\0') {
+		    m->u.checksumpayload->payload[msg_end] != '\0')
 			goto err;
-		}
+
 		end = 0;
 		while (end <= msg_end) {
 			name_size = strlen(
@@ -314,7 +321,7 @@ err:
 		free(result);
 	}
 
-	*listcnt = 0;
+	*listcnt = -1;
 	return NULL;
 }
 

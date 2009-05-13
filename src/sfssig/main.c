@@ -69,7 +69,8 @@ struct cmd {
 	{ "get",  (func_int_t)sfs_get, 1, ANOUBIS_CHECKSUM_OP_GET},
 	{ "export",  (func_int_t)sfs_export, 1, 0},
 	{ "import",  (func_int_t)sfs_import, 1, 0},
-	{ "validate",  (func_int_t)sfs_validate, 1, ANOUBIS_CHECKSUM_OP_GET},
+	{ "validate",  (func_int_t)sfs_validate, 1,
+	    ANOUBIS_CHECKSUM_OP_VALIDATE},
 };
 
 static FILE			*exim_fd = NULL;
@@ -835,8 +836,10 @@ __sfs_get(char *file, int vflag)
 	uid_t				*result = NULL;
 	uid_t				 user;
 
-	if (opts & SFSSIG_OPT_DEBUG)
+	if (opts & SFSSIG_OPT_DEBUG) {
 		fprintf(stderr, ">sfs_get\n");
+		fprintf(stderr, " >path %s\n", file);
+	}
 
 	if (opts & SFSSIG_OPT_SIG) {
 		if ((as == NULL) || (as->keyid == NULL)) {
@@ -1335,8 +1338,12 @@ sfs_tree(char *path, int op)
 			t = sfs_sumop(tmp, ANOUBIS_CHECKSUM_OP_LIST, NULL,
 			    0, 0);
 		}
-		if (!t)
+		if (!t) {
+			if (SFSSIG_OPT_DEBUG)
+				fprintf(stderr, "sfs_sumop returned NULL: %s",
+				    tmp);
 			return 1;
+		}
 
 		if (t->result) {
 			if (t->result == ENOENT && (opts & SFSSIG_OPT_TREE))
@@ -1349,11 +1356,13 @@ sfs_tree(char *path, int op)
 		}
 
 		result = anoubis_csum_list(t->msg, &k);
-		if (!result || k <= 0) {
+		if (!result && k < 0) {
 			ret = 1;
 			goto out;
+		} else if (!result) {
+			ret = 0;
+			goto out;
 		}
-
 		anoubis_transaction_destroy(t);
 	} else {
 		dirp = opendir(path);
@@ -1414,6 +1423,7 @@ sfs_tree(char *path, int op)
 		cnt = strlen(result[j]) - 1;
 		if (ret || (result[j][cnt] == '/')) {
 			sfs_tree(tmp, op);
+			ret = 0;
 			free(tmp);
 			tmp = NULL;
 			continue;
@@ -1442,10 +1452,17 @@ sfs_tree(char *path, int op)
 			if (ret)
 				goto out;
 			break;
+		case ANOUBIS_CHECKSUM_OP_VALIDATE:
+			ret = sfs_validate(tmp);
+			if (ret)
+				goto out;
+			break;
 		case ANOUBIS_CHECKSUM_OP_LIST:
 			printf("%s/%s\n", path, result[j]);
 			break;
 		default:
+			if (opts & SFSSIG_OPT_DEBUG)
+				fprintf(stderr, "Unknown Operation!\n");
 			return 1;
 		}
 		free(tmp);
