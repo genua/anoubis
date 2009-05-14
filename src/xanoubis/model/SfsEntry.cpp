@@ -145,8 +145,7 @@ SfsEntry::canHaveChecksum(bool resolve) const
 		} else
 			return (S_ISREG(fstat.st_mode));
 	} else {
-		/* Non-existent files can always have checksums (orphaned) */
-		return (true);
+		return (false);
 	}
 }
 

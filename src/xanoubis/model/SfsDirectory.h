@@ -156,6 +156,15 @@ class SfsDirectory : private wxDirTraverser
 		SfsEntry *insertEntry(const wxString &);
 
 		/**
+		 * Removes the SfsEntry at the specified index.
+		 *
+		 * The model is not touched, if the index is out of range.
+		 *
+		 * @param idx Index of SfsEntry to be removed from model.
+		 */
+		void removeEntry(unsigned int);
+
+		/**
 		 * Cleans the model.
 		 *
 		 * Entries, which match one of the following conditions, are

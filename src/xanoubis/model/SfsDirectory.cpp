@@ -160,6 +160,20 @@ SfsDirectory::insertEntry(const wxString &path)
 	return (entryList_[idx]);
 }
 
+void
+SfsDirectory::removeEntry(unsigned int idx)
+{
+	if (idx < entryList_.size()) {
+		std::vector<SfsEntry *>::iterator it = entryList_.begin();
+		it += idx;
+
+		SfsEntry *entry = (*it);
+
+		entryList_.erase(it);
+		delete entry;
+	}
+}
+
 bool
 SfsDirectory::cleanup(void)
 {

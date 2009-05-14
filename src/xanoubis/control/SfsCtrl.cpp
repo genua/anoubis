@@ -157,29 +157,21 @@ SfsCtrl::validate(const IndexArray &arr)
 
 			SfsEntry *entry = sfsDir_.getEntry(idx);
 
+			/*
+			 * Remove any information from the entry, they are
+			 * recreated now
+			 */
+			entry->reset();
+
+			/* In any case fetch the remote checksums */
+			createComCsumGetTasks(entry->getPath(), true, true);
+
 			if (entry->canHaveChecksum(false)) {
-				entry->reset();
-
-				/* Ask anoubisd for the checksums */
-				createComCsumGetTasks(
-				    entry->getPath(), true, true);
-
-				/* Calculate the checksum */
-				if (entry->fileExists()) {
-					/* Ask for the local checksum */
-					createCsumCalcTask(entry->getPath());
-				} else {
-					/* No such file, remove any previously
-					 * assigned local checksum.
-					 */
-					entry->setLocalCsum(0);
-				}
-
-				numScheduled++;
-			} else {
-				if (setChecksumMissing(entry))
-					sendEntryChangedEvent(idx);
+				/* Ask for the local checksum */
+				createCsumCalcTask(entry->getPath());
 			}
+
+			numScheduled++;
 		}
 
 		return (numScheduled > 0) ? RESULT_EXECUTE : RESULT_NOOP;
@@ -539,23 +531,34 @@ SfsCtrl::OnSfsListArrived(TaskEvent &event)
 		int csumIdx = result.Index(
 		    entry->getRelativePath(sfsDir_.getPath()));
 
-		if (csumIdx != wxNOT_FOUND && entry->canHaveChecksum(false)) {
-			/* Ask anoubisd for the checksum */
+		if (csumIdx != wxNOT_FOUND) {
+			/*
+			 * Model-entry has a registered checksum, fetch it now
+			 */
 			createComCsumGetTasks(entry->getPath(),
 			    !task->haveKeyId(), task->haveKeyId());
 
-			/* Calculate the checksum */
-			if (entry->fileExists())
-				createCsumCalcTask(entry->getPath());
-
-			/* Processed, rempove from result-list */
+			/* Processed, remove from result-list */
 			result.RemoveAt(csumIdx);
 		} else {
-			/* Update checksum attribute to no-checksum */
+			/* Model-entry has no checksum */
 			if (entry->setChecksumMissing(type))
 				sendEntryChangedEvent(idx);
-			if (csumIdx != wxNOT_FOUND)
-				result.RemoveAt(csumIdx);
+		}
+
+		if (entry->canHaveChecksum(false)) {
+			/*
+			 * Model-entry is able to hold a local checksum,
+			 * calculate it now
+			 */
+			createCsumCalcTask(entry->getPath());
+		} else {
+			/*
+			 * Remove a previous calculated local checksum, the
+			 * file might be removed in the meanwhile.
+			 */
+			if (entry->setLocalCsum(0))
+				sendEntryChangedEvent(idx);
 		}
 	}
 
@@ -947,6 +950,13 @@ SfsCtrl::OnCsumDel(TaskEvent &event)
 	SfsEntry *entry = sfsDir_.getEntry(idx);
 	if (entry->setChecksumMissing(type))
 		sendEntryChangedEvent(idx);
+
+	if (!entry->fileExists()) {
+		if (!entry->haveChecksum()) {
+			sfsDir_.removeEntry(idx);
+			sendDirChangedEvent();
+		}
+	}
 }
 
 void
