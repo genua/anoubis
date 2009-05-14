@@ -83,6 +83,9 @@ ModSfsDetailsDlg::ModSfsDetailsDlg(SfsEntry *entry, wxWindow *parent)
 	case SfsEntry::SFSENTRY_MATCH:
 		checksumStateLabel->SetLabel(_("matching"));
 		break;
+	case SfsEntry::SFSENTRY_ORPHANED:
+		checksumStateLabel->SetLabel(_("orphaned"));
+		break;
 	}
 
 	/* Signature state */
@@ -101,6 +104,9 @@ ModSfsDetailsDlg::ModSfsDetailsDlg(SfsEntry *entry, wxWindow *parent)
 		break;
 	case SfsEntry::SFSENTRY_MATCH:
 		signatureStateLabel->SetLabel(_("matching"));
+		break;
+	case SfsEntry::SFSENTRY_ORPHANED:
+		signatureStateLabel->SetLabel(_("orphaned"));
 		break;
 	}
 }

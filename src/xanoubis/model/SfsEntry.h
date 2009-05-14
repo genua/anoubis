@@ -76,7 +76,9 @@ class SfsEntry
 						     compared).*/
 			SFSENTRY_NOMATCH,	/*!< The checksum does not
 						     match */
-			SFSENTRY_MATCH		/*!< The checksum matches */
+			SFSENTRY_MATCH,		/*!< The checksum matches */
+			SFSENTRY_ORPHANED,	/*!< There is a checksum but
+						     not corresponding file */
 		};
 
 		/**
@@ -319,13 +321,16 @@ class SfsEntry
 		wxString getLocalCsum(void) const;
 
 		/**
-		 * Copies the locally calculated checksum into the SfsEntry.
+		 * Copies/resets the locally calculated checksum into/from the
+		 * SfsEntry.
 		 *
 		 * The assigned checksum is compared with the other checkums
 		 * (if any). Depending on the compare-result, the
 		 * (checksum-states can change.
 		 *
-		 * @param cs The local calculated checksum.
+		 * @param cs The local calculated checksum. If set to NULL, the
+		 *           assigned local checksum is reseted, thus
+		 *           haveLocalCsum() will return false.
 		 * @return true is returned, if at least a checksum-state has
 		 *         changed. The return-code can be used to track
 		 *         changes of the model.

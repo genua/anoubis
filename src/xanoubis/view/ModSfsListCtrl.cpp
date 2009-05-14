@@ -222,6 +222,9 @@ ModSfsListCtrl::refreshEntry(unsigned int idx)
 		checksumInfo = wxEmptyString;
 		checksumIconIndex = 1;
 		break;
+	case SfsEntry::SFSENTRY_ORPHANED:
+		checksumInfo = _("orphaned");
+		checksumIconIndex = 2;
 	}
 
 	switch (entry->getChecksumState(SfsEntry::SFSENTRY_SIGNATURE)) {
@@ -243,6 +246,9 @@ ModSfsListCtrl::refreshEntry(unsigned int idx)
 	case SfsEntry::SFSENTRY_MATCH:
 		signatureIconIndex = 1;
 		break;
+	case SfsEntry::SFSENTRY_ORPHANED:
+		signatureInfo = _("orphaned");
+		signatureIconIndex = 2;
 	}
 
 	SetItem(idx, COLUMN_FILE,

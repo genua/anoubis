@@ -144,8 +144,10 @@ SfsEntry::canHaveChecksum(bool resolve) const
 				return (true);
 		} else
 			return (S_ISREG(fstat.st_mode));
-	} else
-		return (false);
+	} else {
+		/* Non-existent files can always have checksums (orphaned) */
+		return (true);
+	}
 }
 
 wxDateTime
@@ -273,11 +275,19 @@ SfsEntry::setLocalCsum(const u_int8_t *cs)
 {
 	bool c1, c2, c3;
 
-	int result = memcmp(localCsum_, cs, ANOUBIS_CS_LEN);
-	c1 = (result != 0);
+	if (cs != 0) {
+		int result = memcmp(localCsum_, cs, ANOUBIS_CS_LEN);
+		c1 = (result != 0);
 
-	memcpy(localCsum_, cs, ANOUBIS_CS_LEN);
-	haveLocalCsum_ = true;
+		memcpy(localCsum_, cs, ANOUBIS_CS_LEN);
+		haveLocalCsum_ = true;
+	} else {
+		/* Reset local checksum
+		 * Local checksum state has changed, if a checksum was assigned
+		 */
+		c1 = haveLocalCsum_;
+		haveLocalCsum_ = false;
+	}
 
 	c2 = validateChecksum(SFSENTRY_CHECKSUM);
 	c3 = validateChecksum(SFSENTRY_SIGNATURE);
@@ -344,7 +354,11 @@ SfsEntry::validateChecksum(ChecksumType type)
 		newState = (result == 0) ? SFSENTRY_MATCH : SFSENTRY_NOMATCH;
 	} else if (!haveLocalCsum_ && haveChecksum(type)) {
 		/* no local checksum + registered checksum := orphaned? */
-		newState = SFSENTRY_INVALID;
+		if (fileExists()) {
+			newState = SFSENTRY_INVALID;
+		} else {
+			newState = SFSENTRY_ORPHANED;
+		}
 	}
 
 	if (state_[type] != newState) {

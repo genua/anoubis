@@ -165,7 +165,15 @@ SfsCtrl::validate(const IndexArray &arr)
 				    entry->getPath(), true, true);
 
 				/* Calculate the checksum */
-				createCsumCalcTask(entry->getPath());
+				if (entry->fileExists()) {
+					/* Ask for the local checksum */
+					createCsumCalcTask(entry->getPath());
+				} else {
+					/* No such file, remove any previously
+					 * assigned local checksum.
+					 */
+					entry->setLocalCsum(0);
+				}
 
 				numScheduled++;
 			} else {
