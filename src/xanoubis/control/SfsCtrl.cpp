@@ -219,7 +219,8 @@ SfsCtrl::validateAll(bool orphaned)
 			    idx < sfsDir_.getNumEntries(); idx++) {
 				SfsEntry *entry = sfsDir_.getEntry(idx);
 
-				if (entry->reset(SfsEntry::SFSENTRY_SIGNATURE))
+				if (entry->setChecksumMissing(
+				    SfsEntry::SFSENTRY_SIGNATURE))
 					sendEntryChangedEvent(idx);
 			}
 
@@ -305,6 +306,13 @@ SfsCtrl::unregisterChecksum(const IndexArray &arr)
 
 			/* Remove checksum from anoubisd */
 			numScheduled += createComCsumDelTasks(entry);
+
+			if (!isSignatureEnabled()) {
+				/* Reset signed checksums in model */
+				if (entry->setChecksumMissing(
+				    SfsEntry::SFSENTRY_SIGNATURE))
+					sendEntryChangedEvent(idx);
+			}
 		}
 
 		return (numScheduled == 0) ? RESULT_NOOP : RESULT_EXECUTE;
