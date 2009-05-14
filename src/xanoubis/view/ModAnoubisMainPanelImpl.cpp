@@ -1181,21 +1181,27 @@ ModAnoubisMainPanelImpl::OnVersionExportButtonClick(wxCommandEvent&)
 void
 ModAnoubisMainPanelImpl::OnVersionDeleteButtonClick(wxCommandEvent&)
 {
-	int idx;
+	VersionCtrl	*versionCtrl = VersionCtrl::getInstance();
+	int		selection = -1;
 
-	if ((idx = versionListCanAccess(true)) == -1)
-		return;
+	while (true) {
+		selection = versionListCtrl->GetNextItem(selection,
+		    wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED);
 
-	/* On success update list of displayed version, has changed */
-	VersionCtrl *versionCtrl = VersionCtrl::getInstance();
-	if (!versionCtrl->deleteVersion(idx)) {
-		wxString msg = _("Failed to remove the selected version!");
-		wxString title = _("Remove version");
+		if (selection == -1) {
+			/* No selection */
+			break;
+		}
+		if (!versionCtrl->deleteVersion(selection)) {
+			wxString msg = _("Failed to remove the selected"
+			    " version!");
+			wxString title = _("Remove version");
 
-		wxMessageBox(msg, title, wxOK | wxICON_ERROR, this);
-	} else {
-		versionListUpdate();
+			wxMessageBox(msg, title, wxOK | wxICON_ERROR, this);
+		}
+
 	}
+	versionListUpdate();
 }
 
 void
