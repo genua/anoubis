@@ -25,15 +25,273 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
 
+#include <fcntl.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "apnvm_tc_fixtures.h"
+
+#define XXX_V "head	1.2;\n\
+access;\n\
+symbols;\n\
+locks; strict;\n\
+comment	@# @;\n\
+\n\
+\n\
+1.2\n\
+date	2009.05.13.13.43.12;	author rdoer;	state Exp;\n\
+branches;\n\
+next	1.1;\n\
+commitid	kkdCB9J6T2BuqINt;\n\
+\n\
+1.1\n\
+date	2009.05.13.13.42.57;	author rdoer;	state Exp;\n\
+branches;\n\
+next	;\n\
+commitid	LGmcZgfgfUfpqINt;\n\
+\n\
+\n\
+desc\n\
+@@\n\
+\n\
+\n\
+1.2\n\
+log\n\
+@<apnvm-metadata>\n\
+comment := 2nd revision\n\
+autostore := 1\n\
+</apnvm-metadata>\n\
+@\n\
+text\n\
+@alf {\n\
+2: any {\n\
+1: default allow\n\
+}\n\
+}\n\
+sfs {\n\
+3: any self valid allow invalid deny unknown continue\n\
+}\n\
+sandbox {\n\
+}\n\
+context {\n\
+}\n\
+@\n\
+\n\
+\n\
+1.1\n\
+log\n\
+@<apnvm-metadata>\n\
+comment := 1st revision\n\
+autostore := 0\n\
+</apnvm-metadata>\n\
+@\n\
+text\n\
+@d2 10\n\
+a11 3\n\
+	any {\n\
+		default allow\n\
+	}\n\
+@\n\
+\n\
+\n"
+
+#define YYY_V "head	1.3;\n\
+access;\n\
+symbols;\n\
+locks; strict;\n\
+comment	@# @;\n\
+\n\
+\n\
+1.3\n\
+date	2009.05.13.13.43.04;	author rdoer;	state Exp;\n\
+branches;\n\
+next	1.2;\n\
+commitid	HfN2UpjL7EurqINt;\n\
+\n\
+1.2\n\
+date	2009.05.13.13.43.00;	author rdoer;	state Exp;\n\
+branches;\n\
+next	1.1;\n\
+commitid	JUo6fEnEda0qqINt;\n\
+\n\
+1.1\n\
+date	2009.05.13.13.42.57;	author rdoer;	state Exp;\n\
+branches;\n\
+next	;\n\
+commitid	LGmcZgfgfUfpqINt;\n\
+\n\
+\n\
+desc\n\
+@@\n\
+\n\
+\n\
+1.3\n\
+log\n\
+@<apnvm-metadata>\n\
+comment := 3rd revision\n\
+autostore := 2\n\
+</apnvm-metadata>\n\
+@\n\
+text\n\
+@alf {\n\
+	any {\n\
+		default allow\n\
+	}\n\
+}\n\
+@\n\
+\n\
+\n\
+1.2\n\
+log\n\
+@<apnvm-metadata>\n\
+comment := 2nd revision\n\
+autostore := 1\n\
+</apnvm-metadata>\n\
+@\n\
+text\n\
+@a5 3\n\
+sfs {\n\
+	/bin/ping a193a2edb06ff39630fed8195c0b043651867b91fccc8db67e4222367736ba73\n\
+}\n\
+@\n\
+\n\
+\n\
+1.1\n\
+log\n\
+@<apnvm-metadata>\n\
+comment := 1st revision\n\
+autostore := 0\n\
+</apnvm-metadata>\n\
+@\n\
+text\n\
+@d1 5\n\
+d7 1\n\
+a7 1\n\
+	any self valid allow invalid deny\n\
+@\n\
+\n\
+\n"
+
+#define ZZZ_V "head	1.1;\n\
+access;\n\
+symbols;\n\
+locks; strict;\n\
+comment	@# @;\n\
+\n\
+\n\
+1.1\n\
+date	2009.05.13.13.43.04;	author rdoer;	state Exp;\n\
+branches;\n\
+next	;\n\
+commitid	HfN2UpjL7EurqINt;\n\
+\n\
+\n\
+desc\n\
+@@\n\
+\n\
+\n\
+1.1\n\
+log\n\
+@<apnvm-metadata>\n\
+comment := 3rd revision\n\
+autostore := 2\n\
+</apnvm-metadata>\n\
+@\n\
+text\n\
+@sfs {\n\
+	any self valid allow invalid deny\n\
+}\n\
+@\n\
+\n"
+
+#define ACTIVE_V "head	1.3;\n\
+access;\n\
+symbols;\n\
+locks; strict;\n\
+comment	@# @;\n\
+\n\
+\n\
+1.3\n\
+date	2009.05.13.13.43.10;	author rdoer;	state Exp;\n\
+branches;\n\
+next	1.2;\n\
+commitid	mTIMafjIX2PtqINt;\n\
+\n\
+1.2\n\
+date	2009.05.13.13.43.08;	author rdoer;	state Exp;\n\
+branches;\n\
+next	1.1;\n\
+commitid	f23txTMUXpbtqINt;\n\
+\n\
+1.1\n\
+date	2009.05.13.13.43.06;	author rdoer;	state Exp;\n\
+branches;\n\
+next	;\n\
+commitid	ijHXc6SwKxqsqINt;\n\
+\n\
+\n\
+desc\n\
+@@\n\
+\n\
+\n\
+1.3\n\
+log\n\
+@<apnvm-metadata>\n\
+comment := 3rd revision\n\
+autostore := 2\n\
+</apnvm-metadata>\n\
+@\n\
+text\n\
+@alf {\n\
+	any {\n\
+		default allow\n\
+	}\n\
+}\n\
+sfs {\n\
+	/bin/ping a193a2edb06ff39630fed8195c0b043651867b91fccc8db67e4222367736ba73\n\
+}\n\
+@\n\
+\n\
+\n\
+1.2\n\
+log\n\
+@<apnvm-metadata>\n\
+comment := 2nd revision\n\
+autostore := 1\n\
+</apnvm-metadata>\n\
+@\n\
+text\n\
+@d1 5\n\
+d7 1\n\
+a7 1\n\
+	any self valid allow invalid deny\n\
+@\n\
+\n\
+\n\
+1.1\n\
+log\n\
+@<apnvm-metadata>\n\
+comment := 1st revision\n\
+autostore := 0\n\
+</apnvm-metadata>\n\
+@\n\
+text\n\
+@d1 2\n\
+a2 4\n\
+alf {\n\
+	any {\n\
+		default allow\n\
+	}\n\
+@\n\
+\n\
+\n"
 
 static int
 vm_tc_exec(const char* cmd, ...)
@@ -52,171 +310,54 @@ vm_tc_exec(const char* cmd, ...)
 	return WIFEXITED(rc) ? WEXITSTATUS(rc) : -1;
 }
 
-static void
-vm_tc_write_alf(FILE *f)
-{
-	fprintf(f, "alf {\n");
-	fprintf(f, "	any {\n");
-	fprintf(f, "		default allow\n");
-	fprintf(f, "	}\n");
-	fprintf(f, "}\n");
-
-	fflush(f);
-}
-
-static void
-vm_tc_write_sfs(FILE *f)
-{
-	fprintf(f, "sfs {\n");
-	fprintf(f, "	any self valid allow invalid deny\n");
-	fprintf(f, "}\n");
-
-	fflush(f);
-}
-
-static void
-vm_tc_write_alfsfs(FILE *f)
-{
-	fprintf(f, "alf {\n");
-	fprintf(f, "	any {\n");
-	fprintf(f, "		default allow\n");
-	fprintf(f, "	}\n");
-	fprintf(f, "}\n");
-	fprintf(f, "sfs {\n");
-	fprintf(f, "	/bin/ping \
-a193a2edb06ff39630fed8195c0b043651867b91fccc8db67e4222367736ba73\n");
-	fprintf(f, "}\n");
-
-	fflush(f);
-}
-
-static void
-vm_tc_makecomment(char *out, size_t sout, const char *comment, int auto_store)
-{
-	snprintf(out, sout, "<apnvm-metadata>\n\
-comment := %s\n\
-autostore := %i\n\
-</apnvm-metadata>\n", comment, auto_store);
-}
-
-static FILE *
-apnvm_openprofile(const char *dir, const char *profile, const char *mode)
-{
-	char path[128];
-	snprintf(path, sizeof(path), "%s/%s", dir, profile);
-	return fopen(path, mode);
-}
-
 void
 apnvm_setup(void)
 {
-	char workdir[32];
-	char moduledir[64];
-	char user2_dir[128];
-	char user3_dir[128];
-	char comment[256];
+	char path[PATH_MAX];
 	char *s;
-	FILE *f;
+	int fd, rc;
 
 	strcpy(apnvm_cvsroot, "/tmp/tc_vm_XXXXXX");
-	strcpy(workdir, "/tmp/tc_vm_XXXXXX");
 	strcpy(apnvm_user, "user1");
 	s = mkdtemp(apnvm_cvsroot);
-	s = mkdtemp(workdir);
 
-	snprintf(moduledir, sizeof(moduledir), "%s/user1", apnvm_cvsroot);
-	snprintf(user2_dir, sizeof(user2_dir), "%s/user1/user2", workdir);
-	snprintf(user3_dir, sizeof(user3_dir), "%s/user1/user3", workdir);
-
-	/* Initialize repository and create module inside repository */
 	vm_tc_exec("cvs -d \"%s\" init", apnvm_cvsroot);
-	mkdir(moduledir, S_IRWXU);
 
-	/* Checkout module to create some files */
-	vm_tc_exec("cd \"%s\" && cvs -d \"%s\" checkout user1",
-	    workdir, apnvm_cvsroot);
-	mkdir(user2_dir, 0755);
-	vm_tc_exec("cd \"%s\" && cvs -d \"%s\" add user1/user2",
-		workdir, apnvm_cvsroot);
-	mkdir(user3_dir, 0755);
-	vm_tc_exec("cd \"%s\" && cvs -d \"%s\" add user1/user3",
-		workdir, apnvm_cvsroot);
+	/* user1 */
+	snprintf(path, sizeof(path), "%s/user1", apnvm_cvsroot);
+	mkdir(path, S_IRWXU);
 
-	/* Create some revision for user2 */
+	/* user1/user2 */
+	snprintf(path, sizeof(path), "%s/user1/user2", apnvm_cvsroot);
+	mkdir(path, S_IRWXU);
 
-	f = apnvm_openprofile(user2_dir, "xxx", "w");
-	vm_tc_write_alf(f);
-	fclose(f);
-	vm_tc_exec("cd \"%s\" && cvs -d \"%s\" add user1/user2/xxx",
-		workdir, apnvm_cvsroot);
-	f = apnvm_openprofile(user2_dir, "yyy", "w");
-	vm_tc_write_sfs(f);
-	fclose(f);
-	vm_tc_exec("cd \"%s\" && cvs -d \"%s\" add user1/user2/yyy",
-		workdir, apnvm_cvsroot);
+	/* user1/user3 */
+	snprintf(path, sizeof(path), "%s/user1/user3", apnvm_cvsroot);
+	mkdir(path, S_IRWXU);
 
-	vm_tc_makecomment(comment, sizeof(comment), "1st revision", 0);
-	vm_tc_exec(
-	    "cd \"%s\" && cvs -d \"%s\" commit -m \"%s\" user1/user2",
-	    workdir, apnvm_cvsroot, comment);
+	/* user1/user2/xxx,v */
+	snprintf(path, sizeof(path), "%s/user1/user2/xxx,v", apnvm_cvsroot);
+	fd = open(path, O_WRONLY|O_CREAT, S_IRUSR|S_IWUSR);
+	rc = write(fd, XXX_V, strlen(XXX_V));
+	close(fd);
 
-	f = apnvm_openprofile(user2_dir, "xxx", "w");
-	vm_tc_write_alf(f);
-	fclose(f);
-	f = apnvm_openprofile(user2_dir, "yyy", "w");
-	vm_tc_write_alfsfs(f);
-	fclose(f);
-	vm_tc_makecomment(comment, sizeof(comment), "2nd revision", 1);
-	vm_tc_exec(
-	    "cd \"%s\" && cvs -d \"%s\" commit -m \"%s\" user1/user2",
-	    workdir, apnvm_cvsroot, comment);
+	/* user1/user2/yyy,v */
+	snprintf(path, sizeof(path), "%s/user1/user2/yyy,v", apnvm_cvsroot);
+	fd = open(path, O_WRONLY|O_CREAT, S_IRUSR|S_IWUSR);
+	rc = write(fd, YYY_V, strlen(YYY_V));
+	close(fd);
 
-	f = apnvm_openprofile(user2_dir, "xxx", "w");
-	vm_tc_write_alf(f);
-	fclose(f);
-	f = apnvm_openprofile(user2_dir, "yyy", "w");
-	vm_tc_write_alf(f);
-	fclose(f);
-	f = apnvm_openprofile(user2_dir, "zzz", "w");
-	vm_tc_write_sfs(f);
-	fclose(f);
-	vm_tc_exec("cd \"%s\" && cvs -d \"%s\" add user1/user2/zzz",
-		workdir, apnvm_cvsroot);
-	vm_tc_makecomment(comment, sizeof(comment), "3rd revision", 2);
-	vm_tc_exec(
-	    "cd \"%s\" && cvs -d \"%s\" commit -m \"%s\" user1/user2",
-	    workdir, apnvm_cvsroot, comment);
+	/* user1/user2/zzz,v */
+	snprintf(path, sizeof(path), "%s/user1/user2/zzz,v", apnvm_cvsroot);
+	fd = open(path, O_WRONLY|O_CREAT, S_IRUSR|S_IWUSR);
+	rc = write(fd, ZZZ_V, strlen(ZZZ_V));
+	close(fd);
 
-	/* Create some revisions for user3 */
-
-	f = apnvm_openprofile(user3_dir, "active", "w");
-	vm_tc_write_alf(f);
-	fclose(f);
-
-	vm_tc_exec("cd \"%s\" && cvs -d \"%s\" add user1/user3/active",
-		workdir, apnvm_cvsroot);
-	vm_tc_makecomment(comment, sizeof(comment), "1st revision", 0);
-	vm_tc_exec(
-	    "cd \"%s\" && cvs -d \"%s\" commit -m \"%s\" user1/user3",
-	    workdir, apnvm_cvsroot, comment);
-
-	f = apnvm_openprofile(user3_dir, "active", "w");
-	vm_tc_write_sfs(f);
-	fclose(f);
-	vm_tc_makecomment(comment, sizeof(comment), "2nd revision", 1);
-	vm_tc_exec(
-	    "cd \"%s\" && cvs -d \"%s\" commit -m \"%s\" user1/user3",
-	    workdir, apnvm_cvsroot, comment);
-
-	f = apnvm_openprofile(user3_dir, "active", "w");
-	vm_tc_write_alfsfs(f);
-	fclose(f);
-	vm_tc_makecomment(comment, sizeof(comment), "3rd revision", 2);
-	vm_tc_exec(
-	    "cd \"%s\" && cvs -d \"%s\" commit -m \"%s\" user1/user3",
-	    workdir, apnvm_cvsroot, comment);
-
-	vm_tc_exec("rm -rf \"%s\"", workdir);
+	/* user1/user3/active,v */
+	snprintf(path, sizeof(path), "%s/user1/user3/active,v", apnvm_cvsroot);
+	fd = open(path, O_WRONLY|O_CREAT, S_IRUSR|S_IWUSR);
+	rc = write(fd, ACTIVE_V, strlen(ACTIVE_V));
+	close(fd);
 }
 
 void

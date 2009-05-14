@@ -25,18 +25,82 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/param.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <sys/wait.h>
 
 #include <ctype.h>
 #include <check.h>
+#include <fcntl.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include <apncvs.h>
 
 #define TEST_TIMEOUT	20
+
+#define FILE_V "head    1.3;\n\
+access;\n\
+symbols;\n\
+locks; strict;\n\
+comment @# @;\n\
+\n\
+\n\
+1.3\n\
+date    2009.05.13.09.52.44;    author rdoer;   state Exp;\n\
+branches;\n\
+next    1.2;\n\
+commitid        PSpmLj0a4Xwq9HNt;\n\
+\n\
+1.2\n\
+date    2009.05.13.09.52.29;    author rdoer;   state Exp;\n\
+branches;\n\
+next    1.1;\n\
+commitid        hewVIOAiex1l9HNt;\n\
+\n\
+1.1\n\
+date    2009.05.13.09.52.07;    author rdoer;   state Exp;\n\
+branches;\n\
+next    ;\n\
+commitid        y51QtnKu8Ctd9HNt;\n\
+\n\
+\n\
+desc\n\
+@@\n\
+\n\
+\n\
+1.3\n\
+log\n\
+@3rd revision\n\
+@\n\
+text\n\
+@Zeile 1\n\
+Zeile 2\n\
+Zeile 3\n\
+@\n\
+\n\
+\n\
+1.2\n\
+log\n\
+@2nd revision\n\
+@\n\
+text\n\
+@d3 1\n\
+@\n\
+\n\
+\n\
+1.1\n\
+log\n\
+@1st revision\n\
+@\n\
+text\n\
+@d2 1\n\
+@\n\
+\n"
 
 char cvsroot[32];
 char workdir[32];
@@ -111,6 +175,8 @@ cvs_tc_exec(const char* cmd, ...)
 void cvs_setup(void)
 {
 	char *s;
+	char path[PATH_MAX];
+	int fd, rc;
 
 	strcpy(cvsroot, "/tmp/tc_cvs_XXXXXX");
 	strcpy(workdir, "/tmp/tc_cvs_XXXXXX");
@@ -118,24 +184,17 @@ void cvs_setup(void)
 	s = mkdtemp(workdir);
 
 	cvs_tc_exec("cvs -d \"%s\" init", cvsroot);
-	cvs_tc_exec("mkdir \"%s/foo\"", cvsroot);
-	cvs_tc_exec("chmod 700 \"%s/foo\"", cvsroot);
+
+	snprintf(path, sizeof(path), "%s/foo", cvsroot);
+	mkdir(path, S_IRWXU);
+
+	snprintf(path, sizeof(path), "%s/foo/file,v", cvsroot);
+	fd = open(path, O_WRONLY|O_CREAT, S_IRUSR|S_IWUSR);
+	rc = write(fd, FILE_V, strlen(FILE_V));
+	close(fd);
+
 	cvs_tc_exec("cd \"%s\" && cvs -d \"%s\" checkout foo",
 	    workdir, cvsroot);
-	cvs_tc_exec("echo \"Zeile 1\" > \"%s/foo/file\"", workdir);
-	cvs_tc_exec("cd \"%s\" && cvs -d \"%s\" add foo/file",
-	    workdir, cvsroot);
-	cvs_tc_exec(
-	"cd \"%s\" && cvs -d \"%s\" commit -m \"1st revision\" foo/file",
-	workdir, cvsroot);
-	cvs_tc_exec("echo \"Zeile 2\" >> \"%s/foo/file\"", workdir);
-	cvs_tc_exec(
-	"cd \"%s\" && cvs -d \"%s\" commit -m \"2nd revision\" foo/file",
-	workdir, cvsroot);
-	cvs_tc_exec("echo \"Zeile 3\" >> \"%s/foo/file\"", workdir);
-	cvs_tc_exec(
-	"cd \"%s\" && cvs -d \"%s\" commit -m \"3rd revision\" foo/file",
-	workdir, cvsroot);
 
 	cvs.cvsroot = cvsroot;
 	cvs.workdir = workdir;

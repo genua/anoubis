@@ -140,7 +140,7 @@ START_TEST(vm_tc_count)
 
 	vmrc = apnvm_count(vm, "user2", "xxx", &count);
 	fail_if(vmrc != APNVM_OK, "Count operation failed");
-	fail_if(count != 1, "Unexpected number of versions: %i", count);
+	fail_if(count != 2, "Unexpected number of versions: %i", count);
 
 	vmrc = apnvm_count(vm, "user2", "yyy", &count);
 	fail_if(vmrc != APNVM_OK, "Count operation failed");
@@ -198,7 +198,7 @@ struct profile_version	{
 };
 
 static struct profile_version	vm_tc_list_versions[] = {
-	{ "xxx", { 1, -1, } },
+	{ "xxx", { 2, 1, -1, } },
 	{ "yyy", { 3, 2, 1, -1, } },
 	{ "zzz", { 3, -1, } },
 	{ "active", { -1, } },
