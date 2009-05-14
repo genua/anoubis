@@ -50,38 +50,29 @@ CONFIGURE_ARGS +=	--enable-static-anoubisd
 
 REGRESS_DEPENDS =	${BUILD_DEPENDS}
 
-# we explicitly have to change into the regression test directory
-# see: http://srv.anoubis.genua.de/cgi-bin/bugzilla/show_bug.cgi?id=906
 do-regress:
 	cd ${WRKSRC}/test && ${MAKE} check
 
-# Enforce the derivation of the file 'date.c' as the provided version
-# is incompatible with OpenBSD (Bug #741)
 post-extract:
 	@rm ${WRKSRC}/src/libanoubisui/apnvm/date.c
 
-# Get rid of obsolete profiles shipped by the pristine source
-# Add desktop file as well as profile and initial policy files
 post-install:
 	@rm ${WRKINST}/usr/local/share/xanoubis/profiles/admin
 	@rm ${WRKINST}/usr/local/share/xanoubis/profiles/high
 	@rm ${WRKINST}/usr/local/share/xanoubis/profiles/medium
 
+	@ ${INSTALL_DATA_DIR} ${PREFIX}/share/anoubisd/policy_templates/admin/
+	@ ${INSTALL_DATA_DIR} ${PREFIX}/share/anoubisd/policy_templates/user/
+	@ ${INSTALL_DATA_DIR} ${PREFIX}/share/anoubisd/policy_templates/profiles/
+
+	for a in admin user profiles ; do \
+	    for f in ${FILESDIR}/policy.$$a.* ; do \
+		cp $$f ${PREFIX}/share/anoubisd/policy_templates/$$a/$${f##*/policy.$$a.} ;\
+	    done ;\
+	done
+
 	@ ${INSTALL_DATA_DIR} ${PREFIX}/share/applications/
 	@ ${INSTALL_DATA} ${WRKSRC}/src/xanoubis/xanoubis.desktop \
 		${PREFIX}/share/applications/
-
-	@ ${INSTALL_DATA_DIR} ${PREFIX}/share/xanoubis/profiles/
-	@perl ${WRKSRC}/support/install_policy -q -n -o ${FILESDIR}/profiles \
-		${PREFIX}/share/xanoubis/profiles
-
-	@ ${INSTALL_DATA_DIR} ${PREFIX}/share/xanoubis/policies/admin/
-	@ ${INSTALL_DATA_DIR} ${PREFIX}/share/xanoubis/policies/user/
-	@perl ${WRKSRC}/support/install_policy -q -n -o \
-		${FILESDIR}/policy/admin \
-		${PREFIX}/share/xanoubis/policies/admin
-	@perl ${WRKSRC}/support/install_policy -q -n -o \
-		${FILESDIR}/policy/user \
-		${PREFIX}/share/xanoubis/policies/user
 
 .include <bsd.port.mk>

@@ -1,0 +1,34 @@
+alf {
+	/usr/sbin/ntpd @@
+	{
+		default log deny
+	}
+
+	any {
+		default allow
+	}
+}
+sandbox {
+	/usr/sbin/ntpd @@
+	{
+		allow path /etc/ntpd.conf r
+		allow path /var/db/ntpd.drift rw
+
+		allow path /etc/localtime r
+		allow path /etc/services r
+		allow path /etc/resolv.conf r
+		allow path /etc/hosts r
+		allow path /usr r
+
+		default log deny
+	}
+}
+context {
+	/usr/sbin/ntpd @@
+	{
+	}
+
+	any {
+		context new any
+	}
+}
