@@ -134,6 +134,23 @@ class AnListCtrl : public wxListCtrl, private Observer
 		unsigned int getColumnCount(void) const;
 
 		/**
+		 * Tests whether the specified column is visible.
+		 *
+		 * @param col Column to test
+		 * @return true if visible, false otherwise.
+		 */
+		bool isColumnVisible(const AnListColumn *) const;
+
+		/**
+		 * Shows/hides the specified column.
+		 *
+		 * @param col Column to show/hide
+		 * @param visible If set to true, the column is shown,
+		 *                otherwise it is hidden.
+		 */
+		void setColumnVisible(AnListColumn *, bool);
+
+		/**
 		 * Returns a list with all assigned rows.
 		 *
 		 * @return All available rows.
@@ -266,6 +283,13 @@ class AnListCtrl : public wxListCtrl, private Observer
 		std::vector<AnListColumn *> columnList_;
 
 		/**
+		 * Lists all visible columns.
+		 *
+		 * Contains indexes pointing into the columnList_-attribute.
+		 */
+		std::vector<unsigned int> visibleColumns_;
+
+		/**
 		 * List of rows.
 		 *
 		 * Used for selecting a row of the list in constant time.
@@ -295,6 +319,29 @@ class AnListCtrl : public wxListCtrl, private Observer
 		 * Removes the object from the list.
 		 */
 		void updateDelete(Subject *);
+
+		/**
+		 * Inserts a new entry into the list of visible columns
+		 * (visibleColumns_).
+		 *
+		 * @param value Value to be inserted. Usually
+		 *              AnListColumn::getIndex().
+		 * @return Index in visibleColumns_, where the value was
+		 *         inserted.
+		 */
+		unsigned int insertVisible(unsigned int);
+
+		/**
+		 * Removes an entry from the list of visible columns
+		 * (visibleColumns_).
+		 *
+		 * @param value Value to be removed. Usually
+		 *              AnListColumn::getIndex().
+		 * @return Index in visibleColumns_, where the value was
+		 *         previously stored. A return-value of -1 means, that
+		 *         value is not stored in the list.
+		 */
+		int removeVisible(unsigned int);
 
 		/**
 		 * Returns the selected index or -1 if nothing is selected.

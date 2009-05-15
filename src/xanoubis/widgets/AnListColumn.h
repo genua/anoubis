@@ -67,6 +67,21 @@ class AnListColumn
 		AnListProperty *getProperty(void) const;
 
 		/**
+		 * Tests whether the column is visible.
+		 *
+		 * @return true if visible, false otherwise.
+		 */
+		bool isVisible(void) const;
+
+		/**
+		 * Shows/hides the column.
+		 *
+		 * @param visible If set to true, the column is shown,
+		 *                otherwise it is hidden.
+		 */
+		void setVisible(bool);
+
+		/**
 		 * Returns the width of the column.
 		 *
 		 * @return Width of the column

@@ -41,6 +41,22 @@ AnListColumn::getProperty(void) const
 	return (property_);
 }
 
+bool
+AnListColumn::isVisible(void) const
+{
+	if (parent_ != 0)
+		return (parent_->isColumnVisible(this));
+	else
+		return (false);
+}
+
+void
+AnListColumn::setVisible(bool visible)
+{
+	if (parent_ != 0)
+		parent_->setColumnVisible(this, visible);
+}
+
 int
 AnListColumn::getWidth(void) const
 {
@@ -76,11 +92,12 @@ AnListColumn::AnListColumn(AnListProperty *property, AnListCtrl *parent)
 	columnInfo_.SetAlign(wxLIST_FORMAT_LEFT);
 	columnInfo_.SetText(property->getHeader());
 
-	if (parent_ != 0) {
+	if (parent_ != 0)
 		columnIdx_ = parent->GetColumnCount();
-		parent->InsertColumn(columnIdx_, columnInfo_);
-	} else
+	else
 		columnIdx_ = 0;
+
+	setVisible(true);
 }
 
 AnListColumn::~AnListColumn(void)

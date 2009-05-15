@@ -101,6 +101,41 @@ AnListCtrl::getRowData(void) const
 	return (this->rows_);
 }
 
+bool
+AnListCtrl::isColumnVisible(const AnListColumn *col) const
+{
+	for (unsigned int idx = 0; idx < visibleColumns_.size(); idx++) {
+		if (visibleColumns_[idx] == col->getIndex())
+			return (true);
+	}
+
+	return (false);
+}
+
+void
+AnListCtrl::setColumnVisible(AnListColumn *col, bool visible)
+{
+	if (isColumnVisible(col) == visible) {
+		/* Nothing to do */
+		return;
+	}
+
+	if (visible) {
+		/* Insert into list of visible columns */
+		unsigned int idx = insertVisible(col->getIndex());
+
+		/* Insert column into view */
+		InsertColumn(idx, col->columnInfo_);
+	} else {
+		/* Remove from list of visible columns */
+		int idx = removeVisible(col->getIndex());
+
+		/* Remove column from view */
+		if (idx >= 0)
+			DeleteColumn(idx);
+	}
+}
+
 void
 AnListCtrl::setRowData(const std::vector<AnListClass *> &rowData)
 {
@@ -292,7 +327,8 @@ AnListCtrl::refreshVisible(void)
 wxString
 AnListCtrl::OnGetItemText(long item, long column) const
 {
-	AnListColumn *col = getColumn(column);
+	unsigned int columnIndex = visibleColumns_[column];
+	AnListColumn *col = getColumn(columnIndex);
 
 	if (col != 0) {
 		AnListProperty *property = col->getProperty();
@@ -309,7 +345,8 @@ AnListCtrl::OnGetItemText(long item, long column) const
 int
 AnListCtrl::OnGetItemColumnImage(long item, long column) const
 {
-	AnListColumn *col = getColumn(column);
+	unsigned int columnIndex = visibleColumns_[column];
+	AnListColumn *col = getColumn(columnIndex);
 
 	if (col != 0) {
 		AnListProperty *property = col->getProperty();
@@ -349,6 +386,43 @@ AnListCtrl::updateDelete(Subject *subject)
 			removeRow(idx);
 		}
 	}
+}
+
+unsigned int
+AnListCtrl::insertVisible(unsigned int value)
+{
+	/* Insert into list of visible columns. Take care of correct order! */
+	for (unsigned int idx = 0; idx < visibleColumns_.size(); idx++) {
+		if (visibleColumns_[idx] > value) {
+			std::vector<unsigned int>::iterator it =
+			    visibleColumns_.begin();
+			it += idx;
+
+			visibleColumns_.insert(it, value);
+			return (idx);
+		}
+	}
+
+	visibleColumns_.push_back(value);
+	return (visibleColumns_.size() - 1);
+}
+
+int
+AnListCtrl::removeVisible(unsigned int value)
+{
+	for (unsigned int idx = 0; idx < visibleColumns_.size(); idx++) {
+		if (visibleColumns_[idx] == value) {
+			std::vector<unsigned int>::iterator it =
+			    visibleColumns_.begin();
+			it += idx;
+
+			visibleColumns_.erase(it);
+
+			return (idx);
+		}
+	}
+
+	return (-1);
 }
 
 long
