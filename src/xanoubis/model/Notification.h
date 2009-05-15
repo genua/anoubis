@@ -33,6 +33,7 @@
 #endif
 
 #include <anoubis_msg.h>
+#include <wx/hashmap.h>
 #include <wx/list.h>
 #include <wx/string.h>
 
@@ -85,8 +86,29 @@ class Notification {
 		virtual bool isExec(void);
 		int getSfsmatch(void);
 		int getType(void);
+
+		/**
+		 */
+		long getId(void) const;
+
+	private:
+		/**
+		 */
+		long id_;
 };
 
+/**
+ * This declares a wxList of Notifications as new typ NotifyList.
+ */
 WX_DECLARE_LIST(Notification, NotifyList);
+
+/**
+ * This declares a wxHash with\n
+ *	key:	long\n
+ *	value:	Notification *\n
+ *	name:	NotifyHash
+ */
+WX_DECLARE_HASH_MAP(long, Notification*, wxIntegerHash, wxIntegerEqual,
+    NotifyHash);
 
 #endif	/* _NOTIFICATION_H_ */

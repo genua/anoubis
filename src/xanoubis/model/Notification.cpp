@@ -63,6 +63,7 @@ Notification::Notification(struct anoubis_msg *msg)
 	timeStamp_ = wxEmptyString;
 	logMessage_ = wxEmptyString;
 	notify_ = msg;
+	id_ = wxNewId();
 }
 
 Notification::~Notification(void)
@@ -529,4 +530,10 @@ int
 Notification::getType(void)
 {
 	return get_value(notify_->u.general->type);
+}
+
+long
+Notification::getId(void) const
+{
+	return (id_);
 }

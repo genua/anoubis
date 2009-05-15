@@ -41,8 +41,12 @@
  *
  *   o You have to include the source file Singleton.cpp in your source file.
  *
- *   o Please see the following example:
+ *   o Please see the following examples:
  * @code
+ *	Test.h:
+ *
+ *	#include "Singleton.h"
+ *
  *	class Test : public Singleton<Test>
  *	{
  *		public:
@@ -55,7 +59,13 @@
  *
  *		friend class Singleton<Test>;
  *	};
+ * @endcode
+ * @code
+ *	Test.cpp:
  *
+ *	#include "Singeton.cpp"
+ *
+ *	Test *
  *	Test::instance(void) {
  *		return Singleton<Test>::instance();
  *	}

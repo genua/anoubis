@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 GeNUA mbH <info@genua.de>
+ * Copyright (c) 2009 GeNUA mbH <info@genua.de>
  *
  * All rights reserved.
  *
@@ -25,38 +25,56 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _SINGLETON_CPP_
-#define _SINGLETON_CPP_
+#include "NotificationPerspective.h"
 
-#include "Singleton.h"
+#include <wx/arrimpl.cpp>
 
-template <typename T> T* Singleton<T>::instance_ = 0;
-
-template <typename T>
-Singleton<T>::Singleton(void)
+NotificationPerspective::NotificationPerspective(void)
 {
-	instance_ = 0;
+	ids_.Empty();
 }
 
-template <typename T>
-Singleton<T>::~Singleton(void)
+long
+NotificationPerspective::getSize(void) const
 {
-	/*
-	 * Because the instance_ will point to ourself, we can not call
-	 * delete here (deadlock). We reach this point by the destructor
-	 * of a derived class.
-	 */
-	instance_ = 0;
+	return (ids_.GetCount());
 }
 
-template <typename T> T*
-Singleton<T>::instance(void)
+long
+NotificationPerspective::getId(long index) const
 {
-	if (instance_ == 0) {
-		instance_ = new T();
-	}
-
-	return (instance_);
+	return (ids_.Item(index));
 }
 
-#endif /* _SINGLETON_CPP_ */
+wxArrayLong::const_iterator
+NotificationPerspective::begin(void) const
+{
+	return (ids_.begin());
+}
+
+wxArrayLong::const_iterator
+NotificationPerspective::end(void) const
+{
+	return (ids_.end());
+}
+
+NotificationPerspective::~NotificationPerspective(void)
+{
+	ids_.Clear();
+}
+
+void
+NotificationPerspective::addId(long id)
+{
+	startChange();
+	ids_.Add(id);
+	finishChange();
+}
+
+void
+NotificationPerspective::removeId(long id)
+{
+	startChange();
+	ids_.Remove(id);
+	finishChange();
+}

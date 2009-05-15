@@ -25,38 +25,20 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _SINGLETON_CPP_
-#define _SINGLETON_CPP_
+#include <check.h>
 
-#include "Singleton.h"
+extern TCase *getTc_NotificationCtrl(void);
 
-template <typename T> T* Singleton<T>::instance_ = 0;
-
-template <typename T>
-Singleton<T>::Singleton(void)
+Suite *
+getTestSuite(void)
 {
-	instance_ = 0;
+	Suite *testSuite;
+	TCase *tc_NotificationCtrl;
+
+	testSuite = suite_create("Notifications");
+	tc_NotificationCtrl = getTc_NotificationCtrl();
+
+	suite_add_tcase(testSuite, tc_NotificationCtrl);
+
+	return (testSuite);
 }
-
-template <typename T>
-Singleton<T>::~Singleton(void)
-{
-	/*
-	 * Because the instance_ will point to ourself, we can not call
-	 * delete here (deadlock). We reach this point by the destructor
-	 * of a derived class.
-	 */
-	instance_ = 0;
-}
-
-template <typename T> T*
-Singleton<T>::instance(void)
-{
-	if (instance_ == 0) {
-		instance_ = new T();
-	}
-
-	return (instance_);
-}
-
-#endif /* _SINGLETON_CPP_ */

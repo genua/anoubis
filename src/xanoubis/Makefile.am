@@ -225,6 +225,8 @@ xanoubis_SOURCES= \
 	model/Module.h \
 	model/Notification.cpp \
 	model/Notification.h \
+	model/NotificationPerspective.cpp \
+	model/NotificationPerspective.h \
 	model/NotifyAnswer.cpp \
 	model/NotifyAnswer.h \
 	model/PrivKey.cpp \
@@ -403,6 +405,8 @@ xanoubis_SOURCES= \
 	control/ModSbAddPolicyVisitor.h \
 	control/ModSfsAddPolicyVisitor.cpp \
 	control/ModSfsAddPolicyVisitor.h \
+	control/NotificationCtrl.cpp \
+	control/NotificationCtrl.h \
 	control/RuleSetClearModifiedVisitor.cpp \
 	control/RuleSetClearModifiedVisitor.h \
 	control/RuleSetSearchPolicyVisitor.cpp \

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 GeNUA mbH <info@genua.de>
+ * Copyright (c) 2009 GeNUA mbH <info@genua.de>
  *
  * All rights reserved.
  *
@@ -25,38 +25,63 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _SINGLETON_CPP_
-#define _SINGLETON_CPP_
+#include "NotificationCtrl.h"
+#include "Singleton.cpp"
 
-#include "Singleton.h"
-
-template <typename T> T* Singleton<T>::instance_ = 0;
-
-template <typename T>
-Singleton<T>::Singleton(void)
+NotificationCtrl::~NotificationCtrl(void)
 {
-	instance_ = 0;
+	notificationHash_.clear();
 }
 
-template <typename T>
-Singleton<T>::~Singleton(void)
+NotificationCtrl *
+NotificationCtrl::instance(void)
+{
+	return Singleton<NotificationCtrl>::instance();
+}
+
+void
+NotificationCtrl::addNotification(Notification *notification)
+{
+	long id;
+
+	id = notification->getId();
+
+	notificationHashMutex_.Lock();
+	notificationHash_[id] = notification;
+	allNotifications_.addId(id);
+	/* XXX ch: still missing: typ check and add to other lists */
+	notificationHashMutex_.Unlock();
+}
+
+NotificationPerspective *
+NotificationCtrl::getPerspective(enum ListPerspectives list)
 {
 	/*
-	 * Because the instance_ will point to ourself, we can not call
-	 * delete here (deadlock). We reach this point by the destructor
-	 * of a derived class.
+	 * XXX ch: Only allPerspective gets filled by addNotification()
+	 * XXX ch: thus returning other perspectives is disabled for now.
 	 */
-	instance_ = 0;
-}
-
-template <typename T> T*
-Singleton<T>::instance(void)
-{
-	if (instance_ == 0) {
-		instance_ = new T();
+	switch (list) {
+	case LIST_NONE:
+		return (NULL);
+		break;
+	case LIST_NOTANSWERED:
+		//return (&escalationsNotAnswered_);
+		break;
+	case LIST_ANSWERED:
+		//return (&escalationsAnswered_);
+		break;
+	case LIST_ALERTS:
+		//return (&alerts_);
+		break;
+	case LIST_ALL:
+		return (&allNotifications_);
+		break;
 	}
 
-	return (instance_);
+	return (NULL);
 }
 
-#endif /* _SINGLETON_CPP_ */
+NotificationCtrl::NotificationCtrl(void) : Singleton<NotificationCtrl>()
+{
+	notificationHash_.clear();
+}
