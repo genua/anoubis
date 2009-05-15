@@ -33,7 +33,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: anoubis 0.1.10.D023.970.D004.C117\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-05-14 09:39+0200\n"
+"POT-Creation-Date: 2009-05-15 10:48+0200\n"
 "PO-Revision-Date: 2009-05-12 09:46+0100\n"
 "Last-Translator: Robin <robin_doer@genua.de>\n"
 "Language-Team: German <de@li.org>\n"
@@ -976,7 +976,7 @@ msgid "Couldn't import policy file: it has errors."
 msgstr "Konnte Regeldatei nicht importieren: Sie enthält Fehler."
 
 #: view/DlgRuleEditor.cpp:1238 view/MainFrame.cpp:391
-#: view/ModAnoubisMainPanelImpl.cpp:1441
+#: view/ModAnoubisMainPanelImpl.cpp:1447
 #: view/RuleWizardContextExceptionPage.cpp:92 main.cpp:393 main.cpp:401
 msgid "Error"
 msgstr "Fehler"
@@ -1056,7 +1056,7 @@ msgid "calculating..."
 msgstr "Berechne..."
 
 #: view/DlgRuleEditorAppPage.cpp:322 view/RuleWizardProgramPage.cpp:135
-#: control/SfsCtrl.cpp:610 control/SfsCtrl.cpp:789
+#: control/SfsCtrl.cpp:621 control/SfsCtrl.cpp:800
 #, c-format
 msgid "Failed to calculate the checksum for %ls: %hs"
 msgstr "Konnte Prüfsumme für %ls nicht berechnen: %hs"
@@ -1321,7 +1321,7 @@ msgstr "(Konnte Versionsinforamtion nicht abrufen.)"
 
 #: view/ModAnoubisMainPanelImpl.cpp:540
 msgid "(No versioning information available.)"
-msgstr "(Keine Versionsinformation verfÜgbar.)"
+msgstr "(Keine Versionsinformation verfügbar.)"
 
 #: view/ModAnoubisMainPanelImpl.cpp:580
 msgid "Time:"
@@ -1396,15 +1396,15 @@ msgstr "Konnte Version nicht exportieren!"
 msgid "Export version"
 msgstr "Schreibe Version"
 
-#: view/ModAnoubisMainPanelImpl.cpp:1192
+#: view/ModAnoubisMainPanelImpl.cpp:1196
 msgid "Failed to remove the selected version!"
 msgstr "Konnte ausgewählte Version nicht entfernen!"
 
-#: view/ModAnoubisMainPanelImpl.cpp:1193
+#: view/ModAnoubisMainPanelImpl.cpp:1198
 msgid "Remove version"
 msgstr "Entferne Version"
 
-#: view/ModAnoubisMainPanelImpl.cpp:1440
+#: view/ModAnoubisMainPanelImpl.cpp:1446
 msgid "Failed to create a rule from escalation"
 msgstr "Auf Basis der Eskalation konnte die Regel nicht erzeugt werden!"
 
@@ -2193,7 +2193,7 @@ msgid ""
 "Options for restricted network access\n"
 "of application \"%ls\":"
 msgstr ""
-"Optionen fÜr eingeschänkten Netzwerkzugriff\n"
+"Optionen für eingeschänkten Netzwerkzugriff\n"
 "der Anwendung \"%ls\":"
 
 #: view/RuleWizardAlfDlgAddService.cpp:150
@@ -2237,7 +2237,7 @@ msgid ""
 "of EXECUTING file access:"
 msgstr ""
 "Berechtigungen der Anwendung \"%ls\"\n"
-"fÜr AUSFÜHRENDEN Dateizugriff auswählen:"
+"für AUSFÜHRENDEN Dateizugriff auswählen:"
 
 #: view/RuleWizardSandboxExecuteFilesPage.cpp:34
 #: view/RuleWizardSandboxReadFilesPage.cpp:34
@@ -2248,7 +2248,7 @@ msgstr "(alle Dateien)"
 #: view/RuleWizardSandboxExecuteFilesPage.cpp:66
 #, c-format
 msgid "Options for EXECUTING access of application \"%ls\":"
-msgstr "Optionen fÜr AUSFÜHRENDEN Zugriff der Anwendung \"%ls\":"
+msgstr "Optionen für AUSFÜHRENDEN Zugriff der Anwendung \"%ls\":"
 
 #: view/RuleWizardSandboxExecuteFilesPage.cpp:70
 msgid "Grand EXECUTING access:"
@@ -2261,12 +2261,12 @@ msgid ""
 "of READING file access:"
 msgstr ""
 "Berechtigungen der Anwendung \"%ls\"\n"
-"fÜr LESENDEN Dateizugriff auswählen:"
+"für LESENDEN Dateizugriff auswählen:"
 
 #: view/RuleWizardSandboxReadFilesPage.cpp:66
 #, c-format
 msgid "Options for READING access of application \"%ls\":"
-msgstr "Optionen fÜr LESENDEN Zugriff der Anwendung \"%ls\":"
+msgstr "Optionen für LESENDEN Zugriff der Anwendung \"%ls\":"
 
 #: view/RuleWizardSandboxReadFilesPage.cpp:70
 msgid "Grand READING access:"
@@ -2279,7 +2279,7 @@ msgid ""
 "of WRITING file access:"
 msgstr ""
 "Berechtigunngen der Anwendung \"%ls\"\n"
-"fÜr SCHREIBENDEN Dateizugriff auswählen:"
+"für SCHREIBENDEN Dateizugriff auswählen:"
 
 #: view/RuleWizardSandboxWriteFilesPage.cpp:57
 msgid "always deny access on valid checksum / signature"
@@ -2288,7 +2288,7 @@ msgstr "Bei gültigen Signaturen/Prüfsummen Zugriff immer erlauben"
 #: view/RuleWizardSandboxWriteFilesPage.cpp:68
 #, c-format
 msgid "Options for WRITING access of application \"%ls\":"
-msgstr "Optionen fÜr SCHREIBENDEN Zugriff der Anwendung \"%ls\":"
+msgstr "Optionen für SCHREIBENDEN Zugriff der Anwendung \"%ls\":"
 
 #: view/RuleWizardSandboxWriteFilesPage.cpp:72
 msgid "Grand WRITING access:"
@@ -2570,7 +2570,7 @@ msgstr ""
 "Der Kontext einer Anwendung ist die Verbindung ihrer aufrufenden Umgebung. "
 "Dies ist das Programm welches das andere ausführt.\n"
 "\n"
-"Wenn Sie Regeln fÜr eine Starter-Anwendung oder einer Befehls-Shell "
+"Wenn Sie Regeln für eine Starter-Anwendung oder einer Befehls-Shell "
 "erstellen, raten wir zur Antwort: \"nein\".\n"
 "\n"
 "In den meisten Fällen jedoch scheint \"ja\" am besten zu passen."
@@ -2668,7 +2668,7 @@ msgid ""
 "Options for restricted network access\n"
 "for application \"...\":"
 msgstr ""
-"Optionen fÜr eingeschränkten Netzwerkzugriff\n"
+"Optionen für eingeschränkten Netzwerkzugriff\n"
 "der Anwendung \"...\":"
 
 #: view/RuleWizardPanelsBase.cpp:597
@@ -2920,137 +2920,137 @@ msgstr ""
 "Ein unerwarteter Fehler (%i) ist beim Abfragen der Liste der signierten "
 "Dateien von %ls aufgetreten."
 
-#: control/SfsCtrl.cpp:601 control/SfsCtrl.cpp:650 control/SfsCtrl.cpp:776
-#: control/SfsCtrl.cpp:884
+#: control/SfsCtrl.cpp:612 control/SfsCtrl.cpp:661 control/SfsCtrl.cpp:787
+#: control/SfsCtrl.cpp:895
 #, c-format
 msgid "%ls not found in file-list!"
 msgstr "%ls nicht in der Dateilisten gefunden!"
 
-#: control/SfsCtrl.cpp:677
+#: control/SfsCtrl.cpp:688
 #, c-format
 msgid "Got error from daemon (%hs) while fetching the checksum for %ls."
 msgstr "Fehler vom Daemon (%hs) beim Abfragen der Prüfsumme für %ls."
 
-#: control/SfsCtrl.cpp:681
+#: control/SfsCtrl.cpp:692
 #, c-format
 msgid "Got error from daemon (%hs) while fetching the signature for %ls."
 msgstr "Fehler vom Daemon (%hs) beim Abfragen der Signatur für %ls."
 
-#: control/SfsCtrl.cpp:694
+#: control/SfsCtrl.cpp:705
 #, c-format
 msgid "Communication error while fetching the checksum for %ls."
-msgstr "Kommunikationsfehler beim Abfragen der Prüfsumme fÜr %ls."
+msgstr "Kommunikationsfehler beim Abfragen der Prüfsumme für %ls."
 
-#: control/SfsCtrl.cpp:698
+#: control/SfsCtrl.cpp:709
 #, c-format
 msgid "Communication error while fetching the signature for %ls."
 msgstr "Kommunikationsfehler beim Abfragen der Signatur von %ls."
 
-#: control/SfsCtrl.cpp:706
+#: control/SfsCtrl.cpp:717
 #, c-format
 msgid "Failed to resolve %ls"
 msgstr "Konnte \"%ls\" nicht auslösen."
 
-#: control/SfsCtrl.cpp:714
+#: control/SfsCtrl.cpp:725
 #, c-format
 msgid "An unexpected error occured (%hs) while fetching the checksum for %ls."
 msgstr ""
-"Unerwarteter Fehler (%hs) ist beim Abfragen der Prüfsumme fÜr %ls "
+"Unerwarteter Fehler (%hs) ist beim Abfragen der Prüfsumme für %ls "
 "aufgetreten."
 
-#: control/SfsCtrl.cpp:719
+#: control/SfsCtrl.cpp:730
 #, c-format
 msgid "An unexpected error occured (%hs) while fetching the signature for %ls."
 msgstr ""
-"Unerwarteter Fehler (%hs) ist beim Abfragen der Signatur fÜr %ls aufgetreten."
+"Unerwarteter Fehler (%hs) ist beim Abfragen der Signatur für %ls aufgetreten."
 
-#: control/SfsCtrl.cpp:744
+#: control/SfsCtrl.cpp:755
 msgid "An unexpected checksum was fetched."
 msgstr "Unerwartete Prüfrumme wurde abgefragt."
 
-#: control/SfsCtrl.cpp:746
+#: control/SfsCtrl.cpp:757
 msgid "An unexpected signature was fetched."
 msgstr "Unerwartete Signatur wurde abgefragt."
 
-#: control/SfsCtrl.cpp:793
+#: control/SfsCtrl.cpp:804
 #, c-format
 msgid "Failed to calculate the signature for %ls: %hs"
 msgstr "Konnte Signatur für %ls nicht berechnen: %hs"
 
-#: control/SfsCtrl.cpp:803
+#: control/SfsCtrl.cpp:814
 #, c-format
 msgid "Communication error while register the checksum for %ls."
-msgstr "Kommunikationsfehler beim Registrieren der Prüfsumme fÜr %ls."
+msgstr "Kommunikationsfehler beim Registrieren der Prüfsumme für %ls."
 
-#: control/SfsCtrl.cpp:807
+#: control/SfsCtrl.cpp:818
 #, c-format
 msgid "Communication error while register the signature for %ls."
-msgstr "Kommunikationsfehler beim Registrieren der Signatur fÜr %ls."
+msgstr "Kommunikationsfehler beim Registrieren der Signatur für %ls."
 
-#: control/SfsCtrl.cpp:817
+#: control/SfsCtrl.cpp:828
 #, c-format
 msgid "Got error from daemon (%hs) while register the checksum for %ls."
 msgstr "Fehler vom Daemon (%hs) beim Registrieren der Prüfsumme für %ls."
 
-#: control/SfsCtrl.cpp:822
+#: control/SfsCtrl.cpp:833
 #, c-format
 msgid "Got error from daemon (%hs) while register the signature for %ls."
 msgstr "Fehler vom Daemon (%hs) beim Registrieren der Signatur für %ls."
 
-#: control/SfsCtrl.cpp:833
+#: control/SfsCtrl.cpp:844
 #, c-format
 msgid "An unexpected error occured (%hs) while register the checksum for %ls."
 msgstr ""
-"Unerwarteter Fehler (%hs) ist beim Registrieren der Prüfsumme fÜr %ls "
+"Unerwarteter Fehler (%hs) ist beim Registrieren der Prüfsumme für %ls "
 "aufgetreten."
 
-#: control/SfsCtrl.cpp:838
+#: control/SfsCtrl.cpp:849
 #, c-format
 msgid "An unexpected error occured (%hs) while register the signature for %ls."
 msgstr ""
-"Unerwarteter Fehler (%hs) ist beim Registrieren der Signatur fÜr %ls "
+"Unerwarteter Fehler (%hs) ist beim Registrieren der Signatur für %ls "
 "aufgetreten."
 
-#: control/SfsCtrl.cpp:897
+#: control/SfsCtrl.cpp:908
 #, c-format
 msgid "Communication error while removing the checksum for %ls."
-msgstr "Kommunikationsfehler beim Entfernen der Prüfsumme fÜr %ls."
+msgstr "Kommunikationsfehler beim Entfernen der Prüfsumme für %ls."
 
-#: control/SfsCtrl.cpp:901
+#: control/SfsCtrl.cpp:912
 #, c-format
 msgid "Communication error while removing the signature for %ls."
-msgstr "Kommunikationsfehler beim Entfernen der Signatur fÜr %ls."
+msgstr "Kommunikationsfehler beim Entfernen der Signatur für %ls."
 
-#: control/SfsCtrl.cpp:910
+#: control/SfsCtrl.cpp:921
 #, c-format
 msgid "Got error from daemon (%hs) while removing the checksum for %ls."
 msgstr "Fehler vom Daemon (%hs) beim Entfernen der Prüfsumme für %ls."
 
-#: control/SfsCtrl.cpp:915
+#: control/SfsCtrl.cpp:926
 #, c-format
 msgid "Got error from daemon (%hs) while removing the signature for %ls."
 msgstr "Fehler vom Daemon (%hs) beim Entfernen der Signatur für %ls."
 
-#: control/SfsCtrl.cpp:925
+#: control/SfsCtrl.cpp:936
 #, c-format
 msgid "An unexpected error occured (%hs) while removing the checksum for %ls."
 msgstr ""
-"Unerwarteter Fehler (%hs) ist beim Entfernen der Prüfsumme fÜr %ls "
+"Unerwarteter Fehler (%hs) ist beim Entfernen der Prüfsumme für %ls "
 "aufgetreten."
 
-#: control/SfsCtrl.cpp:930
+#: control/SfsCtrl.cpp:941
 #, c-format
 msgid "An unexpected error occured (%hs) while removing the signature for %ls."
 msgstr ""
-"Unerwarteter Fehler (%hs) ist beim Entfernen der Signatur fÜr %ls "
+"Unerwarteter Fehler (%hs) ist beim Entfernen der Signatur für %ls "
 "aufgetreten."
 
-#: control/SfsCtrl.cpp:1220
+#: control/SfsCtrl.cpp:1238
 #, c-format
 msgid "Failed to open %ls for writing: %hs"
 msgstr "Konnte %ls nicht zum Schreiben öffnen: %hs"
 
-#: control/SfsCtrl.cpp:1229
+#: control/SfsCtrl.cpp:1247
 #, c-format
 msgid "Failed to flush the content of %ls: %hs"
 msgstr "Konnte Inhalt von %ls nicht zurückschreiben: %hs"
@@ -3257,7 +3257,7 @@ msgstr "Passphrase Eingabe"
 #~ msgstr "Datei mit Zerifikat auswählen."
 
 #~ msgid "Selects a private key"
-#~ msgstr "Privaten SchlÜssel auswählen"
+#~ msgstr "Privaten Schlüssel auswählen"
 
 #~ msgid "Selects a certificate"
 #~ msgstr "Auswahl eines Zertifikates"
