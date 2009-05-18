@@ -1,6 +1,9 @@
 @comment $OpenBSD$
 @newgroup _anoubisd:593
 @newuser _anoubisd:593:_anoubisd:daemon:anoubisd user:/var/empty:/sbin/nologin
+@bin sbin/anoubisctl
+@bin sbin/anoubisd
+@bin sbin/sfssig
 @man man/man9/anoubis_kernel.9
 @man man/man9/eventdev.9
 @man man/man8/anoubisctl.8
@@ -39,7 +42,3 @@ share/anoubisd/policy_templates/profiles/medium
 @exec perl %D/share/anoubisd/install_policy -q %D/share/anoubisd/policy_templates/user /etc/anoubis/policy/user
 @exec perl %D/share/anoubisd/install_policy -q -n -o %D/share/anoubisd/policy_templates/profiles /etc/anoubis/profiles
 @exec chmod -R 700 /etc/anoubis/policy
-@unexec rm -rf /etc/anoubis/profiles
-sbin/anoubisd
-sbin/anoubisctl
-sbin/sfssig
