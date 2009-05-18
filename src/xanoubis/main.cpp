@@ -61,6 +61,7 @@
 #include "PolicyRuleSet.h"
 #include "TrayIcon.h"
 #include "VersionCtrl.h"
+#include "ProcCtrl.h"
 
 IMPLEMENT_APP(AnoubisGuiApp)
 
@@ -116,6 +117,12 @@ bool AnoubisGuiApp::OnInit()
 
 	if (!wxApp::OnInit())
 		return false;
+
+	/*
+	 * Make sure that a ProcCtrl Instance exists before we start any
+	 * helper threads.
+	 */
+	(void)ProcCtrl::getInstance();
 
 	hasLocale = language_.Init(wxLANGUAGE_DEFAULT, wxLOCALE_CONV_ENCODING);
 	if (hasLocale) {

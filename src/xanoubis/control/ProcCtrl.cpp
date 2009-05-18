@@ -25,34 +25,66 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _APNCMD_H_
-#define _APNCMD_H_
-
 #include <sys/types.h>
 #include <unistd.h>
 
-#include "apnvm.h"
+#include "ProcCtrl.h"
+#include "Singleton.cpp"
 
-#define APNCMD_MAXARGS		20
+ProcCtrl::ProcCtrl(void) : mutex_(), pids_(0)
+{
+	mutex_.Lock();
+	pids_.push_back(getpid());
+	mutex_.Unlock();
+}
 
-struct apncmd {
-	pid_t	 pid;		/* PID of child process. */
-	char	*workdir;	/* NULL if not chdir required. */
-	char	*fullpath;	/* Full path to binary. */
-	int	 argc;		/* Number of arguments. */
-	char	*argv[APNCMD_MAXARGS];	/* Argument vector. */
-	apnvm_pidcallback_t	pidcallback;
-};
+ProcCtrl *
+ProcCtrl::getInstance(void)
+{
+	return Singleton<ProcCtrl>::instance();
+}
 
-extern struct apncmd	*apncmd_create(const char *workdir,
-			     const char *fullpath, const char *cmdarg, ...)
-			     __attribute__((sentinel));
-extern void		 apncmd_set_pidcallback(struct apncmd *,
-			     apnvm_pidcallback_t);
-extern void		 apncmd_free(struct apncmd *);
+void
+ProcCtrl::addPid(pid_t pid)
+{
+	mutex_.Lock();
+	pids_.push_back(pid);
+	mutex_.Unlock();
+}
 
-extern int		 apncmd_start(struct apncmd *);
-extern int		 apncmd_start_pipe(struct apncmd *);
-extern int		 apncmd_wait(struct apncmd *);
+void
+ProcCtrl::removePid(pid_t pid)
+{
+	std::vector<int>::iterator	it;
+	mutex_.Lock();
+	for (it=pids_.begin(); it != pids_.end(); ++it) {
+		if (*it == pid) {
+			pids_.erase(it);
+			break;
+		}
+	}
+	mutex_.Unlock();
+}
 
-#endif	/* _APNCMD_H_ */
+bool
+ProcCtrl::findPid(pid_t pid)
+{
+	std::vector<int>::iterator	it;
+	mutex_.Lock();
+	for (it=pids_.begin(); it != pids_.end(); ++it) {
+		if (*it == pid)
+			break;
+	}
+	mutex_.Unlock();
+	return (it != pids_.end());
+}
+
+void
+procctrl_pidcallback(pid_t pid, int add)
+{
+	if (add) {
+		ProcCtrl::getInstance()->addPid(pid);
+	} else {
+		ProcCtrl::getInstance()->removePid(pid);
+	}
+}

@@ -575,7 +575,7 @@ make_version(struct apn_ruleset *ruleset)
 		return (0);
 	}
 
-	vm = apnvm_init(cvsroot, user);
+	vm = apnvm_init(cvsroot, user, NULL);
 	if (vm == NULL) {
 		fprintf(stderr, "Failed to initialize version management\n");
 		return (0);

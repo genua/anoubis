@@ -32,6 +32,8 @@
 
 #include "../../libapn/apn.h"
 
+typedef void (*apnvm_pidcallback_t)(pid_t, int);
+
 struct _apnvm;
 typedef struct _apnvm apnvm;
 
@@ -79,7 +81,7 @@ __BEGIN_DECLS
  *
  * A library-handle is returned.
  */
-apnvm *apnvm_init(const char *, const char *);
+apnvm *apnvm_init(const char *, const char *, apnvm_pidcallback_t);
 
 /**
  * Destroys the library-handle.

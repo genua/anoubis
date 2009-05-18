@@ -35,6 +35,8 @@
 
 #include "ModAnoubis.h"
 #include "VersionCtrl.h"
+#include "ProcCtrl.h"
+
 #include "main.h"
 
 VersionCtrl::VersionCtrl(void)
@@ -46,14 +48,22 @@ VersionCtrl::VersionCtrl(void)
 	userName = wxGetUserId();
 
 	versionProfile_ = wxEmptyString;
-	vm_ = apnvm_init(repository.fn_str(), userName.fn_str());
+	prepared_ = false;
+	vm_ = apnvm_init(repository.fn_str(), userName.fn_str(),
+	    procctrl_pidcallback);
 
 	if (vm_ != 0) {
+		prepare();
+	}
+}
+
+void
+VersionCtrl::prepare(void)
+{
+	if (vm_ && !prepared_) {
 		apnvm_result vmrc = apnvm_prepare(vm_);
 		prepared_ = (vmrc == APNVM_OK);
 	}
-	else
-		prepared_ = false;
 }
 
 VersionCtrl::~VersionCtrl(void)
@@ -75,8 +85,10 @@ VersionCtrl::isInitialized(void) const
 }
 
 bool
-VersionCtrl::isPrepared(void) const
+VersionCtrl::isPrepared(void)
 {
+	if (!prepared_)
+		prepare();
 	return (prepared_);
 }
 
@@ -171,7 +183,7 @@ VersionCtrl::deleteVersion(unsigned int no)
 }
 
 struct apn_ruleset *
-VersionCtrl::fetchRuleSet(unsigned int no, const wxString &profile) const
+VersionCtrl::fetchRuleSet(unsigned int no, const wxString &profile)
 {
 	apnvm_result		vmrc;
 	struct apn_ruleset	*rs;

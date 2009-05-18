@@ -65,7 +65,7 @@ START_TEST(vm_tc_prepare_no_cvsroot)
 	strcpy(user, "user1");
 	s = mkdtemp(cvsroot);
 
-	vm = apnvm_init(cvsroot, user);
+	vm = apnvm_init(cvsroot, user, NULL);
 	fail_if(vm == NULL, "Initialization of apnvm failed");
 
 	vmrc = apnvm_prepare(vm);
@@ -80,7 +80,7 @@ START_TEST(vm_tc_prepare_havemodule)
 	apnvm		*vm;
 	apnvm_result	vmrc;
 
-	vm = apnvm_init(apnvm_cvsroot, apnvm_user);
+	vm = apnvm_init(apnvm_cvsroot, apnvm_user, NULL);
 	fail_if(vm == NULL, "Initialization of apnvm failed");
 
 	vmrc = apnvm_prepare(vm);
@@ -98,7 +98,7 @@ START_TEST(vm_tc_prepare_nomodule)
 	apnvm_result	vmrc;
 	int		rc;
 
-	vm = apnvm_init(apnvm_cvsroot, "anotheruser");
+	vm = apnvm_init(apnvm_cvsroot, "anotheruser", NULL);
 	fail_if(vm == NULL, "Initialization of apnvm failed");
 
 	vmrc = apnvm_prepare(vm);
@@ -132,7 +132,7 @@ START_TEST(vm_tc_count)
 	apnvm_result	vmrc;
 	int		count = 0;
 
-	vm = apnvm_init(apnvm_cvsroot, apnvm_user);
+	vm = apnvm_init(apnvm_cvsroot, apnvm_user, NULL);
 	fail_if(vm == NULL, "Initialization of apnvm failed");
 
 	vmrc = apnvm_prepare(vm);
@@ -160,7 +160,7 @@ START_TEST(vm_tc_count_unknown_user)
 	apnvm_result	vmrc;
 	int		count = 0;
 
-	vm = apnvm_init(apnvm_cvsroot, apnvm_user);
+	vm = apnvm_init(apnvm_cvsroot, apnvm_user, NULL);
 	fail_if(vm == NULL, "Initialization of apnvm failed");
 
 	vmrc = apnvm_prepare(vm);
@@ -179,7 +179,7 @@ START_TEST(vm_tc_count_nullcount)
 	apnvm		*vm;
 	apnvm_result	vmrc;
 
-	vm = apnvm_init(apnvm_cvsroot, apnvm_user);
+	vm = apnvm_init(apnvm_cvsroot, apnvm_user, NULL);
 	fail_if(vm == NULL, "Initialization of apnvm failed");
 
 	vmrc = apnvm_prepare(vm);
@@ -215,7 +215,7 @@ START_TEST(vm_tc_list)
 	int				i, j, cnt;
 
 
-	vm = apnvm_init(apnvm_cvsroot, apnvm_user);
+	vm = apnvm_init(apnvm_cvsroot, apnvm_user, NULL);
 	fail_if(vm == NULL, "Initialization of apnvm failed");
 
 	vmrc = apnvm_prepare(vm);
@@ -282,7 +282,7 @@ START_TEST(vm_tc_list_no_user)
 	struct apnvm_version_head	version_head;
 	struct apnvm_version		*version;
 
-	vm = apnvm_init(apnvm_cvsroot, apnvm_user);
+	vm = apnvm_init(apnvm_cvsroot, apnvm_user, NULL);
 	fail_if(vm == NULL, "Initialization of apnvm failed");
 
 	vmrc = apnvm_prepare(vm);
@@ -305,7 +305,7 @@ START_TEST(vm_tc_list_no_head)
 	apnvm				*vm;
 	apnvm_result			vmrc;
 
-	vm = apnvm_init(apnvm_cvsroot, apnvm_user);
+	vm = apnvm_init(apnvm_cvsroot, apnvm_user, NULL);
 	fail_if(vm == NULL, "Initialization of apnvm failed");
 
 	vmrc = apnvm_prepare(vm);
@@ -325,7 +325,7 @@ START_TEST(vm_tc_getuser)
 	struct apnvm_user_head	user_head;
 	int			have_u2, have_u3;
 
-	vm = apnvm_init(apnvm_cvsroot, apnvm_user);
+	vm = apnvm_init(apnvm_cvsroot, apnvm_user, NULL);
 	fail_if(vm == NULL, "Initialization of apnvm failed");
 
 	vmrc = apnvm_prepare(vm);
@@ -370,7 +370,7 @@ START_TEST(vm_tc_getuser_nolist)
 	apnvm			*vm;
 	apnvm_result		vmrc;
 
-	vm = apnvm_init(apnvm_cvsroot, apnvm_user);
+	vm = apnvm_init(apnvm_cvsroot, apnvm_user, NULL);
 	fail_if(vm == NULL, "Initialization of apnvm failed");
 
 	vmrc = apnvm_prepare(vm);

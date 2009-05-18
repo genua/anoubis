@@ -74,6 +74,7 @@ START_TEST(cvs_init_tc_create)
 	cvs.cvsroot = cvsroot;
 	cvs.workdir = "bla"; /* Not used */
 	cvs.module = "blubb"; /* Not used */
+	cvs.pidcallback = NULL;
 
 	result = apncvs_init(&cvs);
 	fail_if(result != 0, "Init operation failed with %i", result);
@@ -106,6 +107,7 @@ START_TEST(cvs_init_tc_no_parent)
 	cvs.cvsroot = cvsroot;
 	cvs.workdir = "bla"; /* Not used */
 	cvs.module = "blubb"; /* Not used */
+	cvs.pidcallback = NULL;
 
 	result = apncvs_init(&cvs);
 	fail_if(result != 0, "Init operation failed with %i", result);
@@ -143,6 +145,7 @@ START_TEST(cvs_init_tc_already_existing)
 	cvs.cvsroot = cvsroot;
 	cvs.workdir = "bla"; /* Not used */
 	cvs.module = "blubb"; /* Not used */
+	cvs.pidcallback = NULL;
 
 	result = apncvs_init(&cvs);
 	fail_if(result != 0, "Init operation failed with %i", result);
@@ -179,6 +182,7 @@ START_TEST(cvs_init_permission_cvsroot)
 	cvs.cvsroot = cvsroot;
 	cvs.workdir = "bla"; /* Not used */
 	cvs.module = "blubb"; /* Not used */
+	cvs.pidcallback = NULL;
 
 	result = apncvs_init(&cvs);
 	fail_if(result != 0, "Init operation failed with %i", result);
@@ -223,6 +227,7 @@ START_TEST(cvs_init_permission_cvsroot_cvsroot)
 	cvs.cvsroot = cvsroot;
 	cvs.workdir = "bla"; /* Not used */
 	cvs.module = "blubb"; /* Not used */
+	cvs.pidcallback = NULL;
 
 	result = apncvs_init(&cvs);
 	fail_if(result != 0, "Init operation failed with %i", result);

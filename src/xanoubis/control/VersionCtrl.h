@@ -77,12 +77,12 @@ class VersionCtrl : public Singleton<VersionCtrl>
 		 * Tests weather the version management library is prepared.
 		 *
 		 * Normally the preparation is performed during the
-		 * construction of the instance. If the preparation failed, you
-		 * are not able to use any of the operation of the class.
+		 * construction of the instance. If the preparation failed,
+		 * this function will try to do the preparation now.
 		 *
 		 * @return true if the preparation succeeded, false otherwise.
 		 */
-		bool isPrepared(void) const;
+		bool isPrepared(void);
 
 		/**
 		 * Rereads the list of versions from the underlaying version
@@ -147,7 +147,7 @@ class VersionCtrl : public Singleton<VersionCtrl>
 		 *         0 is returned.
 		 */
 		struct apn_ruleset *fetchRuleSet(unsigned int,
-		    const wxString &) const;
+		    const wxString &);
 
 		/**
 		 * Creates a new version.
@@ -196,6 +196,7 @@ class VersionCtrl : public Singleton<VersionCtrl>
 		std::vector<class ApnVersion> versionList_;
 		wxString	versionProfile_;
 
+		void prepare(void);
 		bool fetchVersionList(const char *user, const char *profile);
 
 	friend class Singleton<VersionCtrl>;

@@ -42,6 +42,8 @@
 
 #include <time.h>
 
+#include "apnvm.h"
+
 /**
  * Structure that holds common used information.
  */
@@ -49,6 +51,7 @@ struct apncvs {
 	char *cvsroot;	/* CVSROOT */
 	char *workdir;	/* Working directory */
 	char *module;	/* The module you are working on */
+	apnvm_pidcallback_t	pidcallback;
 };
 
 /**

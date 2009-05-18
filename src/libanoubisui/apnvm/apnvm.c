@@ -348,7 +348,7 @@ no_to_revno(int no, char *revno, size_t len)
 }
 
 apnvm *
-apnvm_init(const char *repository, const char *user)
+apnvm_init(const char *repository, const char *user, apnvm_pidcallback_t cb)
 {
 	struct _apnvm *vm;
 	char *tmpdir, *workdir;
@@ -377,6 +377,7 @@ apnvm_init(const char *repository, const char *user)
 	vm->cvs.workdir = mkdtemp(workdir);
 	if (vm->cvs.workdir == NULL)
 		goto error;
+	vm->cvs.pidcallback = cb;
 
 	return (vm);
 

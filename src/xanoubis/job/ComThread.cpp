@@ -54,6 +54,7 @@
 #include "StatusNotify.h"
 #include "JobCtrl.h"
 #include "DaemonAnswerNotify.h"
+#include "ProcCtrl.h"
 
 ComThread::ComThread(JobCtrl *jobCtrl, const wxString &socketPath)
     : JobThread(jobCtrl)
@@ -282,7 +283,7 @@ ComThread::readMessage(void)
 {
 	size_t			 size = 4096;
 	struct anoubis_msg	*msg;
-	char 			*str = NULL;
+	char			*str = NULL;
 	wxString		 message;
 
 	if ((channel_ == 0) || (client_ == 0)) {
@@ -351,7 +352,7 @@ ComThread::checkNotify(struct anoubis_msg *notifyMsg)
 
 	if (type == ANOUBIS_N_ASK) {
 		pid = get_value((notifyMsg->u.notify)->pid);
-		if (pid == getpid()) {
+		if (ProcCtrl::getInstance()->findPid(pid)) {
 			answer = new NotifyAnswer(NOTIFY_ANSWER_ONCE, true);
 			notify->setAnswer(answer);
 			pushNotification(notify);

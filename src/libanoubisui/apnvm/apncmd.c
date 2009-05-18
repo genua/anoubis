@@ -70,7 +70,6 @@ apncmd_create(const char *workdir, const char *fullpath,
 
 	if (ret == NULL)
 		return NULL;
-	ret->pid = 0;
 	memset(ret, 0, sizeof(struct apncmd));
 	if (workdir) {
 		ret->workdir = strdup(workdir);
@@ -80,7 +79,6 @@ apncmd_create(const char *workdir, const char *fullpath,
 	ret->fullpath = strdup(fullpath);
 	if (ret->fullpath == NULL)
 		goto out;
-	ret->argv[0] = NULL;
 	if (apncmd_addarg(ret, cmdarg) < 0)
 		goto out;
 	va_start(ap, cmdarg);
@@ -95,6 +93,15 @@ apncmd_create(const char *workdir, const char *fullpath,
 out:
 	apncmd_free(ret);
 	return  NULL;
+}
+
+/*
+ * Set the callback function for newly created processes.
+ */
+void
+apncmd_set_pidcallback(struct apncmd *cmd, apnvm_pidcallback_t callback)
+{
+	cmd->pidcallback = callback;
 }
 
 /*
@@ -138,16 +145,32 @@ int
 apncmd_start(struct apncmd *cmd)
 {
 	int	fd;
+	int	startpipe[2];
+	char	buf[10];
 
 	/* Cmd already running. */
 	if (cmd->pid != 0)
 		return -EINVAL;
-	cmd->pid = fork();
-	if (cmd->pid == (pid_t)-1)
+	if (pipe(startpipe) < 0)
 		return -errno;
-	if (cmd->pid > 0)
+	cmd->pid = fork();
+	if (cmd->pid == (pid_t)-1) {
+		close(startpipe[0]);
+		close(startpipe[1]);
+		return -errno;
+	}
+	if (cmd->pid > 0) {
+		if (cmd->pidcallback)
+			cmd->pidcallback(cmd->pid, 1);
+		close(startpipe[0]);
+		close(startpipe[1]);
 		return 0;
+	}
 	/* Child */
+	close(startpipe[1]);
+	while(read(startpipe[0], buf, 10) != 0)
+		;
+	close(startpipe[0]);
 	if (cmd->workdir) {
 		if (chdir(cmd->workdir) < 0)
 			exit(10);
@@ -176,25 +199,42 @@ apncmd_start(struct apncmd *cmd)
 int
 apncmd_start_pipe(struct apncmd *cmd)
 {
-	int	p[2];
+	int	p[2], startpipe[2];
+	char	buf[10];
 
 	/* Cmd alread running. */
 	if (cmd->pid != 0)
 		return -EINVAL;
-	if (pipe(p) < 0)
+	if (pipe(startpipe) < 0)
 		return -errno;
+	if (pipe(p) < 0) {
+		int ret = -errno;
+		close(startpipe[0]);
+		close(startpipe[1]);
+		return ret;
+	}
 	cmd->pid = fork();
 	if (cmd->pid == (pid_t)-1) {
 		int ret = -errno;
 		close(p[0]);
 		close(p[1]);
+		close(startpipe[0]);
+		close(startpipe[1]);
 		return ret;
 	}
 	if (cmd->pid > 0) {
+		if (cmd->pidcallback)
+			cmd->pidcallback(cmd->pid, 1);
+		close(startpipe[0]);
+		close(startpipe[1]);
 		close(p[1]);
 		return p[0];
 	}
 	/* Child */
+	close(startpipe[1]);
+	while(read(startpipe[0], buf, 10) != 0)
+		;
+	close(startpipe[0]);
 	if (cmd->workdir) {
 		if (chdir(cmd->workdir) < 0)
 			exit(1);
@@ -224,6 +264,8 @@ apncmd_wait(struct apncmd *cmd)
 		if (errno != EINTR)
 			return -errno;
 	}
+	if (cmd->pidcallback)
+		cmd->pidcallback(cmd->pid, 0);
 	cmd->pid = 0;
 	return status;
 }

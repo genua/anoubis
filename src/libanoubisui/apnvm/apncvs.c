@@ -110,6 +110,7 @@ apncvs_init(struct apncvs *cvs)
 	    (void*)NULL);
 	if (cmd == NULL)
 		return -1;
+	apncmd_set_pidcallback(cmd, cvs->pidcallback);
 
 	if (apncmd_start(cmd) < 0) {
 		apncmd_free(cmd);
@@ -153,6 +154,7 @@ apncvs_checkout(struct apncvs *cvs)
 
 	if (cmd == NULL)
 		return (-1);
+	apncmd_set_pidcallback(cmd, cvs->pidcallback);
 
 	if (apncmd_start(cmd) < 0) {
 		apncmd_free(cmd);
@@ -189,6 +191,7 @@ apncvs_update(struct apncvs *cvs, const char *file, const char *rev)
 
 	if (cmd == NULL)
 		return (-1);
+	apncmd_set_pidcallback(cmd, cvs->pidcallback);
 	if (apncmd_start(cmd) < 0) {
 		apncmd_free(cmd);
 		return -1;
@@ -230,6 +233,7 @@ apncvs_log(struct apncvs *cvs, const char *file, struct apncvs_log *log)
 	free(fullpath);
 	if (cmd == NULL)
 		return (-1);
+	apncmd_set_pidcallback(cmd, cvs->pidcallback);
 
 	fd = apncmd_start_pipe(cmd);
 	if (fd < 0) {
@@ -323,6 +327,7 @@ apncvs_commit(struct apncvs *cvs, const char *file, const char *comment)
 	free(fullpath);
 	if (cmd == NULL)
 		return -1;
+	apncmd_set_pidcallback(cmd, cvs->pidcallback);
 	if (apncmd_start(cmd) < 0) {
 		apncmd_free(cmd);
 		return -1;
@@ -352,6 +357,7 @@ apncvs_add(struct apncvs *cvs, const char *file)
 	free(fullpath);
 	if (cmd == NULL)
 		return (-1);
+	apncmd_set_pidcallback(cmd, cvs->pidcallback);
 
 	if (apncmd_start(cmd) < 0) {
 		apncmd_free(cmd);
@@ -389,6 +395,7 @@ apncvs_remrev(struct apncvs *cvs, const char *file, const char *rev)
 		free(fullpath);
 		if (cmd == NULL)
 			return (-1);
+		apncmd_set_pidcallback(cmd, cvs->pidcallback);
 		if (apncmd_start(cmd) < 0) {
 			apncmd_free(cmd);
 			return -1;

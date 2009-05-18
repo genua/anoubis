@@ -419,6 +419,8 @@ xanoubis_SOURCES= \
 	control/VersionCtrl.h \
 	control/PolicyCtrl.cpp \
 	control/PolicyCtrl.h \
+	control/ProcCtrl.cpp \
+	control/ProcCtrl.h \
 	pattern/PolicyVisitor.cpp \
 	pattern/PolicyVisitor.h \
 	pattern/Singleton.cpp \
