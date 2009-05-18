@@ -67,7 +67,6 @@ class TrayIcon : public wxTaskBarIcon
 		void OnLogViewerShow(wxCommandEvent&);
 		void OnEscalationSettingsChanged(wxCommandEvent&);
 		void OnAlertSettingsChanged(wxCommandEvent&);
-		void SetConnectedDaemon(wxString);
 		void OnLeftButtonClick(wxTaskBarIconEvent&);
 		void OnGuiRestore(wxCommandEvent&);
 		void OnGuiExit(wxCommandEvent&);

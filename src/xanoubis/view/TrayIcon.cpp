@@ -74,7 +74,14 @@ TrayIcon::TrayIcon(void)
 
 	messageAlertCount_ = 0;
 	messageEscalationCount_ = 0;
-	daemon_ = _("none");
+	daemon_ = wxEmptyString;
+	/*
+	 * This is a hack that is required in case of auto connect. In
+	 * this case the connection is already up and running before the
+	 * TrayIcon is constructed.
+	 */
+	if (JobCtrl::getInstance()->isConnected())
+		daemon_ = wxT("localhost");
 
 	/* these defaults comply with the wxforrmbuilder settings */
 	sendAlert_ = false;
@@ -137,7 +144,11 @@ TrayIcon::~TrayIcon(void)
 void
 TrayIcon::OnConnectionStateChange(wxCommandEvent& event)
 {
-	daemon_ = event.GetString();
+	if (event.GetInt() == JobCtrl::CONNECTION_CONNECTED) {
+		daemon_ = event.GetString();
+	} else {
+		daemon_ = wxEmptyString;
+	}
 	update();
 	wxGetApp().Yield(false);	/* Process pending libnotify events. */
 	event.Skip();
@@ -231,13 +242,6 @@ TrayIcon::OnAlertSettingsChanged(wxCommandEvent& event)
 	event.Skip();
 }
 
-void
-TrayIcon::SetConnectedDaemon(wxString daemon)
-{
-	daemon_ = daemon;
-	update();
-}
-
 wxMenu*
 TrayIcon::CreatePopupMenu(void)
 {
@@ -294,7 +298,7 @@ TrayIcon::update(void)
 	}
 
 	/* connection to daemon established */
-	if (!daemon_.Cmp(wxT("none"))) {
+	if (daemon_.IsEmpty()) {
 		tooltip += _("not connected");
 	} else {
 		tooltip += _("connected with ");
