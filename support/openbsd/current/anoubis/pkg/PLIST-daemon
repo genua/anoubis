@@ -21,14 +21,16 @@
 @comment man/man3/anoubis_transaction.3
 @comment man/man3/apn.3
 share/anoubisd/install_policy
-share/anoubisd/policy_templates/user/root
-share/anoubisd/policy_templates/user/_ntp
-share/anoubisd/policy_templates/admin/root
-share/anoubisd/policy_templates/admin/default
+share/anoubisd/policy_templates/admin/_dhcp
 share/anoubisd/policy_templates/admin/_ntp
+share/anoubisd/policy_templates/admin/default
+share/anoubisd/policy_templates/admin/root
 share/anoubisd/policy_templates/profiles/admin
 share/anoubisd/policy_templates/profiles/high
 share/anoubisd/policy_templates/profiles/medium
+share/anoubisd/policy_templates/user/_dhcp
+share/anoubisd/policy_templates/user/_ntp
+share/anoubisd/policy_templates/user/root
 @mode 600
 @owner _anoubisd
 @group _anoubisd
