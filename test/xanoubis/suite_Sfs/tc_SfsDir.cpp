@@ -30,11 +30,67 @@
 #include <check.h>
 #include <stdlib.h>
 
+#include <wx/app.h>
+
 #include <model/SfsDirectory.h>
 #include <model/SfsEntry.h>
 
 char		sfsdir[64];
 wxString	wxSfsDir;
+wxApp		*tcApp;
+
+class tc_SfsDir_ScanHandler : public SfsDirectoryScanHandler
+{
+	public:
+		tc_SfsDir_ScanHandler(SfsDirectory *dir, bool abort)
+		{
+			dir_ = dir;
+			abort_ = abort;
+
+			startInvocations_ = 0;
+			finishedInvocations_ = 0;
+			progressInvocations_ = 0;
+			scanAborted_ = false;
+			maxVisited_ = 0;
+			maxTotal_ = 0;
+		}
+
+		void scanStarts()
+		{
+			startInvocations_++;
+
+			if (dir_ && abort_) {
+				dir_->abortScan();
+			}
+		}
+
+		void scanFinished(bool aborted)
+		{
+			finishedInvocations_++;
+			scanAborted_ = aborted;
+		}
+
+		void scanProgress(unsigned long visited, unsigned long total)
+		{
+			progressInvocations_++;
+
+			if (visited > maxVisited_)
+				maxVisited_ = visited;
+			if (total > maxTotal_)
+				maxTotal_ = total;
+		}
+
+		unsigned int startInvocations_;
+		unsigned int finishedInvocations_;
+		unsigned int progressInvocations_;
+		bool scanAborted_;
+		unsigned long maxVisited_;
+		unsigned long maxTotal_;
+
+	private:
+		SfsDirectory *dir_;
+		bool abort_;
+};
 
 static int
 tc_exec(const char* cmd, ...)
@@ -73,11 +129,17 @@ setup()
 	tc_exec("touch \"%s/sub/file4\"", sfsdir);
 
 	wxSfsDir = wxString(sfsdir, wxConvFile);
+
+	tcApp = new wxApp;
+	wxApp::SetInstance(tcApp);
 }
 
 void
 teardown()
 {
+	wxApp::SetInstance(0);
+	delete tcApp;
+
 	tc_exec("rm -rf \"%s\"", sfsdir);
 }
 
@@ -386,6 +448,66 @@ START_TEST(SfsDir_filter_rel_path_only)
 }
 END_TEST
 
+START_TEST(SfsDir_check_handler)
+{
+	SfsDirectory		dir;
+	tc_SfsDir_ScanHandler	handler(&dir, false);
+	bool			result;
+
+	dir.setScanHandler(&handler);
+	result = dir.setPath(wxSfsDir);
+	fail_unless(result, "Path has not changed");
+
+	fail_unless(dir.getNumEntries() == 5,
+	    "Unexpected number of sfs-entries (%i)",
+	    dir.getNumEntries());
+	fail_unless(handler.startInvocations_ == 1,
+	    "Unexpected number of scanStarts()-invocations (%i)",
+	    handler.startInvocations_);
+	fail_unless(handler.finishedInvocations_ == 1,
+	    "Unexpected number of scanFinished()-invocations (%i)",
+	    handler.finishedInvocations_);
+	fail_unless(handler.scanAborted_ == false,
+	    "The filesystem-scan was aborted");
+	fail_unless(handler.maxTotal_ == 1,
+	    "Unexpected number of total directories (%li)",
+	    handler.maxTotal_);
+	fail_unless(handler.maxVisited_ == 1,
+	    "Unexpected number of visited directories (%li)",
+	    handler.maxVisited_);
+}
+END_TEST
+
+START_TEST(SfsDir_check_handler_abort)
+{
+	SfsDirectory		dir;
+	tc_SfsDir_ScanHandler	handler(&dir, true);
+	bool			result;
+
+	dir.setScanHandler(&handler);
+	result = dir.setPath(wxSfsDir);
+	fail_unless(result, "Path has not changed");
+
+	fail_unless(dir.getNumEntries() == 0,
+	    "Unexpected number of sfs-entries (%i)",
+	    dir.getNumEntries());
+	fail_unless(handler.startInvocations_ == 1,
+	    "Unexpected number of scanStarts()-invocations (%i)",
+	    handler.startInvocations_);
+	fail_unless(handler.finishedInvocations_ == 1,
+	    "Unexpected number of scanFinished()-invocations (%i)",
+	    handler.finishedInvocations_);
+	fail_unless(handler.scanAborted_ == true,
+	    "The filesystem-scan was aborted");
+	fail_unless(handler.maxTotal_ == 0,
+	    "Unexpected number of total directories (%li)",
+	    handler.maxTotal_);
+	fail_unless(handler.maxVisited_ == 0,
+	    "Unexpected number of visited directories (%li)",
+	    handler.maxVisited_);
+}
+END_TEST
+
 TCase *
 getTc_SfsDir(void)
 {
@@ -406,6 +528,8 @@ getTc_SfsDir(void)
 	tcase_add_test(testCase, SfsDir_resolve_link_ok);
 	tcase_add_test(testCase, SfsDir_resolve_link_plain_file);
 	tcase_add_test(testCase, SfsDir_filter_rel_path_only);
+	tcase_add_test(testCase, SfsDir_check_handler);
+	tcase_add_test(testCase, SfsDir_check_handler_abort);
 
 	return (testCase);
 }

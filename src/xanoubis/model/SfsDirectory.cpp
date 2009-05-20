@@ -25,8 +25,13 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <wx/dir.h>
+
+#include "main.h"
 #include "SfsEntry.h"
 #include "SfsDirectory.h"
+
+#define callHandler(method) if (scanHandler_ != 0) { scanHandler_->method; }
 
 SfsDirectory::SfsDirectory()
 {
@@ -34,11 +39,33 @@ SfsDirectory::SfsDirectory()
 	this->recursive_ = false;
 	this->filter_ = wxEmptyString;
 	this->inverseFilter_ = false;
+	this->scanHandler_ = 0;
+	this->abortScan_ = false;
+	this->totalDirectories_ = 0;
+	this->visitedDirectories_ = 0;
 }
 
 SfsDirectory::~SfsDirectory()
 {
 	clearEntryList();
+}
+
+SfsDirectoryScanHandler *
+SfsDirectory::getScanHandler(void) const
+{
+	return (this->scanHandler_);
+}
+
+void
+SfsDirectory::setScanHandler(SfsDirectoryScanHandler *scanHandler)
+{
+	this->scanHandler_ = scanHandler;
+}
+
+void
+SfsDirectory::abortScan(void)
+{
+	this->abortScan_ = true;
 }
 
 wxString
@@ -223,9 +250,25 @@ SfsDirectory::updateEntryList()
 {
 	wxDir dir(this->path_);
 
+	/* Reset variables used by the scanner */
+	abortScan_ = false;
+	totalDirectories_ = getDirectoryCount(this->path_);
+	visitedDirectories_ = 0;
+
+	/* Scan starts now */
+	callHandler(scanStarts());
+
 	/* Clear list before traversion starts */
 	clearEntryList();
 	dir.Traverse(*this);
+
+	/* Scan is finished */
+	if (!abortScan_) {
+		/* 100% is reached */
+		callHandler(
+		    scanProgress(totalDirectories_, totalDirectories_));
+	}
+	callHandler(scanFinished(abortScan_));
 }
 
 int
@@ -291,14 +334,33 @@ SfsDirectory::insertEntry(const wxString &path, unsigned int start,
 }
 
 wxDirTraverseResult
-SfsDirectory::OnDir(const wxString &)
+SfsDirectory::OnDir(const wxString &dir)
 {
+	if (abortScan_) {
+		/* Abort requested, stop traversing */
+		return (wxDIR_STOP);
+	}
+
+	if (this->recursive_) {
+		/* Number of directories, you will visit later */
+		totalDirectories_ += getDirectoryCount(dir);
+	}
+
+	/* A progress: visitedDirectories_ [0 ... totalDirectories_ - 1] */
+	callHandler(scanProgress(visitedDirectories_, totalDirectories_));
+	visitedDirectories_++;
+
 	return (this->recursive_ ? wxDIR_CONTINUE : wxDIR_IGNORE);
 }
 
 wxDirTraverseResult
 SfsDirectory::OnFile(const wxString &filename)
 {
+	if (abortScan_) {
+		/* Abort requested, stop traversing */
+		return (wxDIR_STOP);
+	}
+
 	/* Search for recursive part only  */
 	wxString path;
 
@@ -313,7 +375,26 @@ SfsDirectory::OnFile(const wxString &filename)
 		 * Entries are sorted in alphabetic order
 		 */
 		insertEntry(filename);
+		wxGetApp().ProcessPendingEvents();
 	}
 
 	return (wxDIR_CONTINUE);
+}
+
+unsigned int
+SfsDirectory::getDirectoryCount(const wxString &path)
+{
+	wxDir dir(path);
+	wxString filename;
+	unsigned int count = 0;
+
+	if (dir.GetFirst(&filename, wxEmptyString, wxDIR_DIRS|wxDIR_HIDDEN))
+		count = 1;
+	else
+		return (count);
+
+	while (dir.GetNext(&filename))
+		count++;
+
+	return (count);
 }

@@ -35,16 +35,90 @@
 class SfsEntry;
 
 /**
+ * A handler reports the progress of a filesystem-scan.
+ */
+class SfsDirectoryScanHandler
+{
+	public:
+		virtual ~SfsDirectoryScanHandler() {}
+
+		/**
+		 * A scan-operation started.
+		 */
+		virtual void scanStarts() = 0;
+
+		/**
+		 * The filesystem-scan has finished.
+		 *
+		 * @param aborted Set to true, if the filesystem-scan was
+		 *                aborted.
+		 */
+		virtual void scanFinished(bool) = 0;
+
+		/**
+		 * Reports a progress of the scan.
+		 *
+		 * The visited arguments reports the number of already scanned
+		 * directories and is increased with each invocation of the
+		 * method. The total argument tells you how many directories
+		 * are already known. This value can be greater than visited,
+		 * when there are directories, which are currently not scanned.
+		 *
+		 * @param visited Number of already visited directories
+		 * @param total Number of total known directories.
+		 */
+		virtual void scanProgress(unsigned long, unsigned long) = 0;
+};
+
+/**
  * A SfsDirectory is the root-folter for a list of SfsEntries.
  * The selection is SfsEntry-instances is configured by setting various
  * attributes in the class. Changing the attributes leads into a reload
  * of the SfsEntry-list.
+ *
+ * You can monitor the filesystem-scan by assinging a
+ * SfsDirectoryScanHandler-instance. Between
+ * SfsDirectoryScanHandler::scanStarts() and
+ * SfsDirectoryScanHandler::scanFinished() the filesystem-scan is running. You
+ * can abort the scan by calling abortScan(). When a scan is aborted, already
+ * scanned files are inserted into the model.
  */
 class SfsDirectory : private wxDirTraverser
 {
 	public:
 		SfsDirectory();
 		~SfsDirectory();
+
+		/**
+		 * Returns the assigned SfsDirectoryScanHandler.
+		 *
+		 * This handler can be used to monitor the current progress
+		 * of a filesystem-scan while the model is reloaded.
+		 *
+		 * @return Assigned SfsDirectoryScanHandler
+		 */
+		SfsDirectoryScanHandler *getScanHandler(void) const;
+
+		/**
+		 * Assigns a SfsDirectoryScanHandler.
+		 *
+		 * This handler is immediately used for monitoring a
+		 * filesystem-scan.
+		 *
+		 * @param scanHandler The handler to be assigned
+		 */
+		void setScanHandler(SfsDirectoryScanHandler *);
+
+		/**
+		 * Aborts a filesystem-scan.
+		 *
+		 * Between SfsDirectoryScanHandler::scanStarts() and
+		 * SfsDirectoryScanHandler::scanFinished() the filesystem-scan
+		 * is running. If currently a scan is running, the scan is
+		 * aborted as soon as possible. if currenty no scan is running,
+		 * an abort has no effect.
+		 */
+		void abortScan(void);
 
 		/**
 		 * Returns the root-path.
@@ -189,6 +263,10 @@ class SfsDirectory : private wxDirTraverser
 		wxString filter_;
 		bool inverseFilter_;
 		std::vector<SfsEntry *> entryList_;
+		SfsDirectoryScanHandler *scanHandler_;
+		bool abortScan_;
+		unsigned int totalDirectories_;
+		unsigned int visitedDirectories_;
 
 		/**
 		 * Removes all elements from entryList_.
@@ -228,6 +306,17 @@ class SfsDirectory : private wxDirTraverser
 		 * @see wxDirTraverser::InFile()
 		 */
 		wxDirTraverseResult OnFile(const wxString &);
+
+		/**
+		 * Returns the number of sub-directories.
+		 *
+		 * The method scans the specified directory for
+		 * sub-directories.
+		 *
+		 * @param path The directory to be scanned
+		 * @return Number of sub-directories
+		 */
+		static unsigned int getDirectoryCount(const wxString &);
 };
 
 #endif	/* _SFSDIRECTORY_H_ */
