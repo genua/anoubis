@@ -28,6 +28,29 @@
 #include "KeyCtrl.h"
 #include "Singleton.cpp"
 
+int
+xpass_cb(char *buf, int size, int, void *)
+{
+	bool ok = true;
+	int pass_len;
+	wxString result = wxEmptyString;
+	PassphraseReader *pr = KeyCtrl::getInstance()->getPassphraseReader();
+	if (pr != 0) {
+		result = pr->readPassphrase(&ok);
+		if (!ok)
+			return (0);
+	}
+
+	pass_len = result.length();
+	if (pass_len > size)
+		pass_len = size;
+
+	memcpy(buf, (const char *)result.mb_str(wxConvUTF8), pass_len);
+	result.Clear();
+
+	return (pass_len);
+}
+
 KeyCtrl::KeyCtrl(void)
 {
 	this->passphraseReader_ = 0;
@@ -77,17 +100,7 @@ bool
 KeyCtrl::loadPrivateKey(void)
 {
 	if (!privKey_.isLoaded()) {
-		wxString passphrase = wxEmptyString;
-
-		if (passphraseReader_ != 0) {
-			bool ok = true;
-			passphrase = passphraseReader_->readPassphrase(&ok);
-
-			if (!ok)
-				return (false);
-		}
-
-		return privKey_.load(passphrase);
+		return privKey_.load(xpass_cb);
 	} else
 		return (true); /* Already loaded */
 }

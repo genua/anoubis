@@ -47,8 +47,7 @@ char	*pol_prikey = NULL,
 	*pol_certfile = NULL,
 	*pol_pubkey = NULL,
 	*policy = NULL,
-	*polsig = NULL,
-	 pol_pass[] = "test";
+	*polsig = NULL;
 
 static int
 libanoubissig_tc_pol_exec(const char *cmd, ...)
@@ -166,7 +165,7 @@ START_TEST(sign_and_verify_policy_match_tc)
 	fail_if(pol_prikey == NULL || pol_pubkey == NULL || policy == NULL,
 	    "Error while setup testcase");
 
-	as = anoubis_sig_priv_init(pol_prikey, pol_certfile, pol_pass, &err);
+	as = anoubis_sig_priv_init(pol_prikey, pol_certfile, pass_cb, &err);
 	fail_if(as == NULL, "Could not load Private Key");
 
 	sign = anoubis_sign_policy(as, policy, &len);
@@ -190,7 +189,7 @@ START_TEST(sign_and_verify_policy_match_tc)
 	}
 	close(fd);
 
-	as = anoubis_sig_pub_init(pol_pubkey, pol_certfile, pol_pass, &err);
+	as = anoubis_sig_pub_init(pol_pubkey, pol_certfile, pass_cb, &err);
 	fail_if(as == NULL, "Could not load Public Key");
 
 	rc = anoubis_sig_verify_policy_file(policy, as->pkey);
@@ -209,7 +208,7 @@ START_TEST(sign_and_verify_policy_mismatch_tc)
 	fail_if(pol_prikey == NULL || pol_pubkey == NULL || policy == NULL,
 	    "Error while setup testcase");
 
-	as = anoubis_sig_priv_init(pol_prikey, pol_certfile, pol_pass, &err);
+	as = anoubis_sig_priv_init(pol_prikey, pol_certfile, pass_cb, &err);
 	fail_if(as == NULL, "Could not load Private Key");
 
 	sign = anoubis_sign_policy(as, policy, &len);
@@ -237,7 +236,7 @@ START_TEST(sign_and_verify_policy_mismatch_tc)
 	}
 	close(fd);
 
-	as = anoubis_sig_pub_init(pol_pubkey, pol_certfile, pol_pass, &err);
+	as = anoubis_sig_pub_init(pol_pubkey, pol_certfile, pass_cb, &err);
 	fail_if(as == NULL, "Could not load Public Key");
 
 	rc = anoubis_sig_verify_policy_file(policy, as->pkey);

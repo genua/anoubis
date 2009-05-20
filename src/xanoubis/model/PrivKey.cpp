@@ -31,7 +31,6 @@
 #include <bsdcompat.h>
 #endif
 
-#include <anoubis_sig.h>
 
 #include <wx/stdpaths.h>
 
@@ -88,17 +87,13 @@ PrivKey::canLoad(void) const
 }
 
 bool
-PrivKey::load(const wxString &pass)
+PrivKey::load(pem_password_cb *xpass_cb)
 {
 	int err = 0;
 	if (privKey_ == 0) {
-		/* No key is loaded, read from file */
-		char c_pass[pass.Len() + 1];
-		strlcpy(c_pass, pass.fn_str(), sizeof(c_pass));
-
 		/* XXX KM: The error handling is not finished yet */
 		privKey_ = anoubis_sig_priv_init(
-		    keyFile_.fn_str(), 0, c_pass, &err);
+		    keyFile_.fn_str(), 0, xpass_cb, &err);
 
 		if (privKey_ != 0) {
 			/*

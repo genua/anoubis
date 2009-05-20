@@ -110,12 +110,13 @@ int anoubisd_verify_csum(EVP_PKEY *pkey,
      unsigned char csum[ANOUBIS_SIG_HASH_SHA256_LEN], unsigned char *sfs_sign,
      int sfs_len);
 struct anoubis_sig *anoubis_sig_pub_init(const char *file, const char *cert,
-    char *pass, int *error);
+    pem_password_cb *passcb, int *error);
 struct anoubis_sig *anoubis_sig_priv_init(const char *file, const char *cert,
-    char *pass, int *error);
+    pem_password_cb *passcb, int *error);
 struct anoubis_sig *anoubis_sig_init(const char *file, const char *cert,
-    char *pass, const EVP_MD *type, int pub_priv, int *error);
+    pem_password_cb *passcb, const EVP_MD *type, int pub_priv, int *error);
 void anoubis_sig_free(struct anoubis_sig *as);
+int pass_cb(char *buf, int size, int rwflag, void *u);
 char *anoubis_sig_key2char(int idlen, unsigned char *keyid);
 char *anoubis_sig_cert_name(X509 *cert);
 

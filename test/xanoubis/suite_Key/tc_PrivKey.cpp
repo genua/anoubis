@@ -36,6 +36,31 @@
 
 #include <KeyCtrl.h>
 
+extern "C" int test_1234_cb(char *buf, int size, int, void *);
+extern "C" int  test_foo_cb(char *buf, int size, int, void *);
+
+int
+test_1234_cb(char *buf, int size, int, void *)
+{
+	char pw[] = "1234";
+	int len = strlen(pw);
+	if (len > size)
+		len = size;
+	memcpy(buf, pw, len);
+	return len;
+}
+
+int
+test_foo_cb(char *buf, int size, int, void *)
+{
+	char pw[] = "foobar";
+	int len = strlen(pw);
+	if (len > size)
+		len = size;
+	memcpy(buf, pw, len);
+	return len;
+}
+
 class tc_PrivKey_AppTraits : public wxGUIAppTraits
 {
 	public:
@@ -173,7 +198,7 @@ START_TEST(tc_PrivKey_load)
 	privKey.setFile(wxString::FromAscii(path_privkey));
 	fail_unless(privKey.canLoad(), "Cannot load private key");
 
-	bool success = privKey.load(wxT("1234"));
+	bool success = privKey.load(test_1234_cb);
 	fail_unless(success, "Failed to load private key");
 	fail_unless(privKey.isLoaded(), "Private key is not loaded");
 }
@@ -185,7 +210,7 @@ START_TEST(tc_PrivKey_load_MissingFile)
 
 	fail_unless(!privKey.canLoad(), "Can load private key");
 
-	bool success = privKey.load(wxT("1234"));
+	bool success = privKey.load(test_1234_cb);
 	fail_unless(!success, "Loading of private key was successful");
 	fail_unless(!privKey.isLoaded(), "Private key is loaded");
 }
@@ -198,7 +223,7 @@ START_TEST(tc_PrivKey_load_WrongFile)
 	privKey.setFile(wxString::FromAscii(path_nokey));
 	fail_unless(privKey.canLoad(), "Can load private key");
 
-	bool success = privKey.load(wxT("1234"));
+	bool success = privKey.load(test_foo_cb);
 	fail_unless(!success, "Loading of private key was successful");
 	fail_unless(!privKey.isLoaded(), "Private key is loaded");
 }
@@ -211,7 +236,7 @@ START_TEST(tc_PrivKey_load_WrongPassphrase)
 	privKey.setFile(wxString::FromAscii(path_privkey));
 	fail_unless(privKey.canLoad(), "Can load private key");
 
-	bool success = privKey.load(wxT("foobar"));
+	bool success = privKey.load(test_foo_cb);
 	fail_unless(!success, "Loading of private key was successful");
 	fail_unless(!privKey.isLoaded(), "Private key is loaded");
 }
@@ -225,7 +250,7 @@ START_TEST(tc_PrivKey_unload)
 	privKey.setFile(wxString::FromAscii(path_privkey));
 	fail_unless(privKey.canLoad(), "Cannot load private key");
 
-	success = privKey.load(wxT("1234"));
+	success = privKey.load(test_1234_cb);
 	fail_unless(success, "Failed to load private key");
 	fail_unless(privKey.isLoaded(), "Private key is not loaded");
 
@@ -243,7 +268,7 @@ START_TEST(tc_PrivKey_unload_NotLoaded)
 	privKey.setFile(wxString::FromAscii(path_privkey));
 	fail_unless(privKey.canLoad(), "Can load private key");
 
-	success = privKey.load(wxT("foobar"));
+	success = privKey.load(test_foo_cb);
 	fail_unless(!success, "Loading of private key was successful");
 	fail_unless(!privKey.isLoaded(), "Private key is loaded");
 

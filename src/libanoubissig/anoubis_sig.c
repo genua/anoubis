@@ -27,7 +27,6 @@
 
 #include "anoubis_sig.h"
 
-int pass_cb(char *buf, int size, int rwflag, void *u);
 static int cert_keyid(unsigned char **keyid, X509 *cert);
 
 /* This function returns a memory area filled with the checksum (csum)
@@ -311,23 +310,23 @@ anoubisd_verify_csum(EVP_PKEY *pkey,
 
 struct anoubis_sig *
 anoubis_sig_pub_init(const char *keyfile, const char *certfile,
-    char *pass, int *error)
+     pem_password_cb *passcb, int *error)
 {
-	return anoubis_sig_init(keyfile, certfile, pass,
+	return anoubis_sig_init(keyfile, certfile, passcb,
 	    ANOUBIS_SIG_HASH_DEFAULT, ANOUBIS_SIG_PUB, error);
 }
 
 struct anoubis_sig *
 anoubis_sig_priv_init(const char *keyfile, const char *certfile,
-    char *pass, int *error)
+    pem_password_cb *passcb, int *error)
 {
-	return anoubis_sig_init(keyfile, certfile, pass,
+	return anoubis_sig_init(keyfile, certfile, passcb,
 	    ANOUBIS_SIG_HASH_DEFAULT, ANOUBIS_SIG_PRIV, error);
 }
 
 struct anoubis_sig *
-anoubis_sig_init(const char *keyfile, const char *certfile, char *pass,
-    const EVP_MD *type, int pub_priv, int *error)
+anoubis_sig_init(const char *keyfile, const char *certfile,
+    pem_password_cb *passcb, const EVP_MD *type, int pub_priv, int *error)
 {
 
 	struct anoubis_sig *as = NULL;
@@ -352,20 +351,11 @@ anoubis_sig_init(const char *keyfile, const char *certfile, char *pass,
 
 		switch (pub_priv) {
 		case ANOUBIS_SIG_PUB:
-			if (pass)
-				pkey = PEM_read_PUBKEY(f, NULL, NULL,
-				    pass);
-			else
-				pkey = PEM_read_PUBKEY(f, NULL, pass_cb,
-				    "Public Key");
+			pkey = PEM_read_PUBKEY(f, NULL, passcb, "Public Key");
 			break;
 		case ANOUBIS_SIG_PRIV:
-			if (pass)
-				pkey = PEM_read_PrivateKey(f, NULL,
-				    NULL, pass);
-			else
-				pkey = PEM_read_PrivateKey(f, NULL,
-				    pass_cb, "Private Key");
+			pkey = PEM_read_PrivateKey(f, NULL, passcb,
+			    "Private Key");
 			break;
 		default:
 			fclose(f);

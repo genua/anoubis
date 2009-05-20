@@ -185,7 +185,7 @@ START_TEST(sign_and_verify_match_tc)
 	fail_if(prikey == NULL || pubkey == NULL || infile == NULL,
 	    "Error while setup testcase");
 
-	as = anoubis_sig_priv_init(prikey, certfile, NULL, &err);
+	as = anoubis_sig_priv_init(prikey, certfile, pass_cb, &err);
 	fail_if(as == NULL, "Could not load Private Key");
 
 	rc = libanoubis_tc_calc_sum(infile, csum);
@@ -196,7 +196,7 @@ START_TEST(sign_and_verify_match_tc)
 
 	anoubis_sig_free(as);
 
-	as = anoubis_sig_pub_init(pubkey, certfile, NULL, &err);
+	as = anoubis_sig_pub_init(pubkey, certfile, pass_cb, &err);
 	fail_if(as == NULL, "Could not load Public Key");
 
 	rc = anoubis_verify_csum(as, csum, sign + ANOUBIS_SIG_HASH_SHA256_LEN,
@@ -218,7 +218,7 @@ START_TEST(sign_and_verify_mismatch_tc)
 	fail_if(prikey == NULL || pubkey == NULL || infile == NULL,
 	    "Error while setup testcase");
 
-	as = anoubis_sig_priv_init(prikey, certfile, NULL, &err);
+	as = anoubis_sig_priv_init(prikey, certfile, pass_cb, &err);
 	fail_if(as == NULL, "Could not load Private Key");
 
 	rc = libanoubis_tc_calc_sum(infile, csum);
@@ -232,7 +232,7 @@ START_TEST(sign_and_verify_mismatch_tc)
 
 	anoubis_sig_free(as);
 
-	as = anoubis_sig_pub_init(pubkey, certfile, NULL, &err);
+	as = anoubis_sig_pub_init(pubkey, certfile, pass_cb, &err);
 	fail_if(as == NULL, "Could not load Public Key");
 
 	name = anoubis_sig_cert_name(as->cert);

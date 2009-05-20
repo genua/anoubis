@@ -53,6 +53,8 @@ class PassphraseReader
 		virtual wxString readPassphrase(bool *) = 0;
 };
 
+extern "C" int xpass_cb(char *buf, int size, int rwflag, void *u);
+
 /**
  * Controller responsible for managing keys and certificates.
  *

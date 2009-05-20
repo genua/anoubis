@@ -69,6 +69,19 @@ const wxString l1_csum =
 const wxString l2_csum =
     wxT("5a0d272136895946c76efb7c98aa0a80cff7e5811a995ac52a6899ec5b45aa26");
 
+extern "C" int test_123_cb(char *buf, int size, int, void *);
+
+int
+test_123_cb(char *buf, int size, int, void *)
+{
+	char pw[] = "1234";
+	int len = strlen(pw);
+	if (len > size)
+		len = size;
+	memcpy(buf, pw, len);
+	return len;
+}
+
 TcComTask::TcComTask()
 {
 	this->testCounter_ = 0;
@@ -393,7 +406,7 @@ TcComTask::setupTestPolicySendEmpty(void)
 
 	privKey.setFile(keyFile);
 	if (!privKey.isLoaded()) {
-		assertUnless(privKey.load(wxT("1234")),
+		assertUnless(privKey.load(test_123_cb),
 		    "Failed to load private key from %s\n",
 		    (const char *)keyFile.fn_str());
 	}
@@ -443,7 +456,7 @@ TcComTask::setupTestPolicySend(void)
 
 	privKey.setFile(keyFile);
 	if (!privKey.isLoaded()) {
-		assertUnless(privKey.load(wxT("1234")),
+		assertUnless(privKey.load(test_123_cb),
 		    "Failed to load private key from %s\n",
 		    (const char *)keyFile.fn_str());
 	}
@@ -1461,7 +1474,7 @@ TcComTask::setupTestSigAdd(void)
 	privKey.setFile(keyFile);
 
 	if (!privKey.isLoaded()) {
-		assertUnless(privKey.load(wxT("1234")),
+		assertUnless(privKey.load(test_123_cb),
 		    "Failed to load private key from %s\n",
 		    (const char *)keyFile.fn_str());
 	}

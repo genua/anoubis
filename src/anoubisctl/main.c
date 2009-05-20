@@ -298,7 +298,7 @@ main(int argc, char *argv[])
 			usage();
 			/* NOTREACHED */
 		}
-		as = anoubis_sig_priv_init(keyfile, certfile, NULL, &error);
+		as = anoubis_sig_priv_init(keyfile, certfile, pass_cb, &error);
 		if (as == NULL) {
 			fprintf(stderr, "Error while loading keyfile: %s"
 			    " or certfile %s\n", keyfile, certfile);

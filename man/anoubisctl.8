@@ -35,6 +35,8 @@
 .Sh SYNOPSIS
 .Nm anoubisctl
 .Op Fl fnv
+.Op -k keyfile
+.Op -c certificate
 .Ar command
 .Op file
 .Sh DESCRIPTION
@@ -62,6 +64,10 @@ root privileges.
 Dump/Load this user's policy, requires root privileges.
 .It Fl v
 Produce more verbose output.
+.It Fl k Ar keyfile
+Specify location of private key (default ~/.xanoubis/default.key)
+.It Fl c Ar certfile
+Specify location of certificate. (default ~/.xanoubis/default.crt)
 .It Ar command
 .Pp
 start - start the

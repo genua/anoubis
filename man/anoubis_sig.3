@@ -45,9 +45,9 @@
 .Sh SYNOPSIS
 .In anoubis_sig.h
 .Ft struct anoubis_sig *
-.Fn anoubis_sig_pub_init "const char *keyfile, const char *certfile, char *pass, int *error"
+.Fn anoubis_sig_pub_init "const char *keyfile, const char *certfile, void *passcb, int *error"
 .Ft struct anoubis_sig *
-.Fn anoubis_sig_init_priv "const char *keyfile, const char *certfile, char *pass, int *error"
+.Fn anoubis_sig_init_priv "const char *keyfile, const char *certfile, void *passcb, int *error"
 .Ft void
 .Fn anoubis_sig_free "struct anoubis_sig *as"
 .Ft char *
@@ -88,12 +88,12 @@ To verify the result use in client applications
 and within the daemon
 .Nm anoubisd_verify_csum.
 .Pp
-The function 
+The function
 .Nm anoubis_sign_policy
 provides to create a signature for a policy file. To verify this signature for
 this policy
 .Nm anoubis_verify_policy_file
-and 
+and
 .Nm anoubis_verify_policy
 are used. Where
 .Nm anoubis_verify_policy_file
@@ -112,7 +112,7 @@ returns the anoubis_struct or NULL on error. In case of a failure the value of
 error is set.
 .Pp
 .Nm anoubis_sig_key2char
-returns the char representation of the key or NULL on error 
+returns the char representation of the key or NULL on error
 .Pp
 .Nm anoubis_sign_csum
 returns a unsigned char buffer including the checksum and the signature of the

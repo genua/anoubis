@@ -29,6 +29,7 @@
 #define _PRIVKEY_H_
 
 #include <wx/timer.h>
+#include <anoubis_sig.h>
 
 /**
  * A private key.
@@ -141,7 +142,7 @@ class PrivKey : private wxTimer
 		 * @see isLoaded()
 		 * @see unload()
 		 */
-		bool load(const wxString &);
+		bool load(pem_password_cb *);
 
 		/**
 		 * Unloads the key again.
