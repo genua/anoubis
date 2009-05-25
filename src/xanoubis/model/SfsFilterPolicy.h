@@ -327,6 +327,66 @@ class SfsFilterPolicy : public FilterPolicy
 		 */
 		wxString getUnknownLogName(void) const;
 
+		/**
+		 * translate String to Action and call
+		 * the given Method to set the value
+		 * @param[in] 1st Action-String
+		 * @param[in] 2nd Funtion Pointer
+		 * @return None.
+		 */
+		void translateAction(const wxString&,
+		     bool (SfsFilterPolicy::*)(int));
+		/**
+		 * Translate String to Log-Level and
+		 * call the given Method to set the value
+		 * @param[in] 1st Action-String
+		 * @param[in] 2nd Funtion Pointer
+		 * @return None.
+		 */
+		void translateLog(const wxString&,
+		     bool (SfsFilterPolicy::*)(int));
+
+		/**
+		 * Set action in valid case by name.
+		 * @param[in] 1st The new apn action name.
+		 * @return True on success.
+		 */
+		void setValidActionName(const wxString &);
+
+		/**
+		 * Set log in valid case by name.
+		 * @param[in] 1st The new apn log level name.
+		 * @return True on success.
+		 */
+		void setValidLogName(const wxString &);
+
+		/**
+		 * Set action in invalid case by name.
+		 * @param[in] 1st The new apn action name.
+		 * @return True on success.
+		 */
+		void setInvalidActionName(const wxString &);
+
+		/**
+		 * Set log in invalid case by name.
+		 * @param[in] 1st The new apn log level name.
+		 * @return True on success.
+		 */
+		void setInvalidLogName(const wxString &);
+
+		/**
+		 * Set action in unknown case by name.
+		 * @param[in] 1st The new apn action name.
+		 * @return True on success.
+		 */
+		void setUnknownActionName(const wxString &);
+
+		/**
+		 * Set log in unknown case by name.
+		 * @param[in] 1st The new apn log level name.
+		 * @return True on success.
+		 */
+		void setUnknownLogName(const wxString &);
 	private:
 		/**
 		 * Clean the subject structure.

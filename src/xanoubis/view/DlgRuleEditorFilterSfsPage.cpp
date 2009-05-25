@@ -102,7 +102,7 @@ void
 DlgRuleEditorFilterSfsPage::onValidActionRadioBox(wxCommandEvent & event)
 {
 	if (filterPolicy_ != NULL) {
-		filterPolicy_->setValidAction((int)event.GetSelection());
+		filterPolicy_->setValidActionName(event.GetString());
 	}
 }
 
@@ -110,7 +110,7 @@ void
 DlgRuleEditorFilterSfsPage::onValidLogRadioBox(wxCommandEvent & event)
 {
 	if (filterPolicy_ != NULL) {
-		filterPolicy_->setValidLog((int)event.GetSelection());
+		filterPolicy_->setValidLogName(event.GetString());
 	}
 }
 
@@ -118,7 +118,7 @@ void
 DlgRuleEditorFilterSfsPage::onInvalidActionRadioBox(wxCommandEvent & event)
 {
 	if (filterPolicy_ != NULL) {
-		filterPolicy_->setInvalidAction((int)event.GetSelection());
+		filterPolicy_->setInvalidActionName(event.GetString());
 	}
 }
 
@@ -126,7 +126,7 @@ void
 DlgRuleEditorFilterSfsPage::onInvalidLogRadioBox(wxCommandEvent & event)
 {
 	if (filterPolicy_ != NULL) {
-		filterPolicy_->setInvalidLog((int)event.GetSelection());
+		filterPolicy_->setInvalidLogName(event.GetString());
 	}
 }
 
@@ -134,7 +134,7 @@ void
 DlgRuleEditorFilterSfsPage::onUnknownActionRadioBox(wxCommandEvent & event)
 {
 	if (filterPolicy_ != NULL) {
-		filterPolicy_->setUnknownAction((int)event.GetSelection());
+		filterPolicy_->setUnknownActionName(event.GetString());
 	}
 }
 
@@ -142,6 +142,6 @@ void
 DlgRuleEditorFilterSfsPage::onUnknownLogRadioBox(wxCommandEvent & event)
 {
 	if (filterPolicy_ != NULL) {
-		filterPolicy_->setUnknownLog((int)event.GetSelection());
+		filterPolicy_->setUnknownLogName(event.GetString());
 	}
 }

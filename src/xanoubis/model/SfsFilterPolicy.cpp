@@ -627,3 +627,67 @@ SfsFilterPolicy::cleanSubject(struct apn_rule *rule)
 		break;
 	}
 }
+
+void
+SfsFilterPolicy::translateAction(const wxString &action,
+    bool (SfsFilterPolicy::*func)(int))
+{
+	if (action.Cmp(_("allow")) == 0 ) {
+		(this->*func)(APN_ACTION_ALLOW);
+	} else if (action.Cmp(_("deny")) == 0 ) {
+		(this->*func)(APN_ACTION_DENY);
+	} else if (action.Cmp(_("ask")) == 0 ) {
+		(this->*func)(APN_ACTION_ASK);
+	} else if (action.Cmp(_("continue")) == 0 ) {
+		(this->*func)(APN_ACTION_CONTINUE);
+	}
+}
+
+void
+SfsFilterPolicy::translateLog(const wxString &log,
+    bool (SfsFilterPolicy::*func)(int))
+{
+	if (log.Cmp(_("none")) == 0 ) {
+		(this->*func)(APN_LOG_NONE);
+	} else if (log.Cmp(_("normal")) == 0 ) {
+		(this->*func)(APN_LOG_NORMAL);
+	} else if (log.Cmp(_("alert")) == 0 ) {
+		(this->*func)(APN_LOG_ALERT);
+	}
+}
+
+void
+SfsFilterPolicy::setValidActionName(const wxString &action)
+{
+	translateAction(action, &SfsFilterPolicy::setValidAction);
+}
+
+void
+SfsFilterPolicy::setValidLogName(const wxString &log)
+{
+	translateLog(log, &SfsFilterPolicy::setValidLog);
+}
+
+void
+SfsFilterPolicy::setInvalidActionName(const wxString &action)
+{
+	translateAction(action, &SfsFilterPolicy::setInvalidAction);
+}
+
+void
+SfsFilterPolicy::setInvalidLogName(const wxString &log)
+{
+	translateLog(log, &SfsFilterPolicy::setInvalidLog);
+}
+
+void
+SfsFilterPolicy::setUnknownActionName(const wxString &action)
+{
+	translateAction(action, &SfsFilterPolicy::setUnknownAction);
+}
+
+void
+SfsFilterPolicy::setUnknownLogName(const wxString &log)
+{
+	translateLog(log, &SfsFilterPolicy::setUnknownLog);
+}
