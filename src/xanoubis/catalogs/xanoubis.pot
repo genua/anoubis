@@ -1,3 +1,29 @@
+###########################################################################
+# Copyright (c) 2009 GeNUA mbH <info@genua.de>
+#
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+# OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
+# TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+# PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+# LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+###########################################################################
 # SOME DESCRIPTIVE TITLE.
 # Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the PACKAGE package.
@@ -8,7 +34,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-05-15 10:48+0200\n"
+"POT-Creation-Date: 2009-05-25 09:59+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -21,30 +47,30 @@ msgstr ""
 msgid "was asked"
 msgstr ""
 
-#: model/EscalationNotify.cpp:166 model/Notification.cpp:242
+#: model/EscalationNotify.cpp:166 model/Notification.cpp:243
 msgid "was allowed"
 msgstr ""
 
-#: model/EscalationNotify.cpp:168 model/Notification.cpp:244
+#: model/EscalationNotify.cpp:168 model/Notification.cpp:245
 msgid "was denied"
 msgstr ""
 
 #: model/Module.cpp:36 model/Module.cpp:37 model/Module.cpp:38
-#: model/Notification.cpp:285 model/Notification.cpp:483
+#: model/Notification.cpp:286 model/Notification.cpp:484
 msgid "unknown"
 msgstr ""
 
-#: model/Notification.cpp:87 model/Notification.cpp:259
-#: model/Notification.cpp:366 model/Notification.cpp:434
-#: model/Notification.cpp:462 model/Notification.cpp:496
+#: model/Notification.cpp:88 model/Notification.cpp:260
+#: model/Notification.cpp:367 model/Notification.cpp:435
+#: model/Notification.cpp:463 model/Notification.cpp:497
 msgid "no notify data available"
 msgstr ""
 
-#: model/Notification.cpp:115
+#: model/Notification.cpp:116
 msgid "unknown address type"
 msgstr ""
 
-#: model/Notification.cpp:164 model/AlfCapabilityFilterPolicy.cpp:225
+#: model/Notification.cpp:165 model/AlfCapabilityFilterPolicy.cpp:225
 #: model/AlfFilterPolicy.cpp:328 model/AlfFilterPolicy.cpp:380
 #: model/AlfFilterPolicy.cpp:431 model/AlfFilterPolicy.cpp:837
 #: model/AlfFilterPolicy.cpp:865 model/ContextFilterPolicy.cpp:180
@@ -55,38 +81,38 @@ msgstr ""
 msgid "(unknown)"
 msgstr ""
 
-#: model/Notification.cpp:190
+#: model/Notification.cpp:191
 msgid "(A): "
 msgstr ""
 
-#: model/Notification.cpp:194
+#: model/Notification.cpp:195
 #, c-format
 msgid "Rule %d: "
 msgstr ""
 
-#: model/Notification.cpp:316
+#: model/Notification.cpp:317
 msgid "unknown module"
 msgstr ""
 
-#: model/Notification.cpp:389
+#: model/Notification.cpp:390
 msgid "no path information available"
 msgstr ""
 
-#: model/Notification.cpp:397
+#: model/Notification.cpp:398
 msgid "unable to extract path information"
 msgstr ""
 
-#: model/Notification.cpp:443
+#: model/Notification.cpp:444
 #, c-format
 msgid "%ls (Pid: %d, Uid: %ls/%d)"
 msgstr ""
 
-#: model/Notification.cpp:447
+#: model/Notification.cpp:448
 #, c-format
 msgid "Pid: %d, Uid: %ls/%d"
 msgstr ""
 
-#: model/Notification.cpp:476
+#: model/Notification.cpp:477
 #, c-format
 msgid "%ls (%ls)"
 msgstr ""
@@ -363,7 +389,7 @@ msgstr ""
 #: view/DlgRuleEditorBase.cpp:852 view/DlgRuleEditorBase.cpp:881
 #: view/DlgRuleEditorBase.cpp:910 view/ModAnoubisMainPanelImpl.cpp:313
 #: view/ModAnoubisMainPanelImpl.cpp:318 view/ModAnoubisPanelsBase.cpp:432
-#: view/ModAnoubisPanelsBase.cpp:459 view/TrayIcon.cpp:77
+#: view/ModAnoubisPanelsBase.cpp:459
 msgid "none"
 msgstr ""
 
@@ -948,7 +974,7 @@ msgstr ""
 
 #: view/DlgRuleEditor.cpp:1238 view/MainFrame.cpp:391
 #: view/ModAnoubisMainPanelImpl.cpp:1447
-#: view/RuleWizardContextExceptionPage.cpp:92 main.cpp:393 main.cpp:401
+#: view/RuleWizardContextExceptionPage.cpp:92 main.cpp:400 main.cpp:408
 msgid "Error"
 msgstr ""
 
@@ -1171,7 +1197,7 @@ msgid "admin ruleset of %ls"
 msgstr ""
 
 #: view/ModAlfOverviewPanelImpl.cpp:70 view/ModSfsOverviewPanelImpl.cpp:68
-#: view/ModSbOverviewPanelImpl.cpp:69 view/TrayIcon.cpp:298
+#: view/ModSbOverviewPanelImpl.cpp:69 view/TrayIcon.cpp:302
 msgid "not connected"
 msgstr ""
 
@@ -1734,12 +1760,12 @@ msgid "not validated"
 msgstr ""
 
 #: view/ModSfsDetailsDlg.cpp:75 view/ModSfsDetailsDlg.cpp:97
-#: view/ModSfsListCtrl.cpp:210 view/ModSfsListCtrl.cpp:236
+#: view/ModSfsListCtrl.cpp:224 view/ModSfsListCtrl.cpp:250
 msgid "not registered"
 msgstr ""
 
 #: view/ModSfsDetailsDlg.cpp:78 view/ModSfsDetailsDlg.cpp:100
-#: view/ModSfsListCtrl.cpp:214 view/ModSfsListCtrl.cpp:240
+#: view/ModSfsListCtrl.cpp:228 view/ModSfsListCtrl.cpp:254
 msgid "invalid"
 msgstr ""
 
@@ -1752,7 +1778,7 @@ msgid "matching"
 msgstr ""
 
 #: view/ModSfsDetailsDlg.cpp:87 view/ModSfsDetailsDlg.cpp:109
-#: view/ModSfsListCtrl.cpp:226 view/ModSfsListCtrl.cpp:250
+#: view/ModSfsListCtrl.cpp:240 view/ModSfsListCtrl.cpp:264
 msgid "orphaned"
 msgstr ""
 
@@ -1772,8 +1798,16 @@ msgstr ""
 msgid "Jump to link target"
 msgstr ""
 
-#: view/ModSfsListCtrl.cpp:206 view/ModSfsListCtrl.cpp:232
+#: view/ModSfsListCtrl.cpp:220 view/ModSfsListCtrl.cpp:246
 msgid "???"
+msgstr ""
+
+#: view/ModSfsListCtrl.cpp:421
+msgid "Filesystem is scanned..."
+msgstr ""
+
+#: view/ModSfsListCtrl.cpp:422
+msgid "Please wait while the filesystem is scanned."
 msgstr ""
 
 #: view/ModSfsMainPanelImpl.cpp:89
@@ -2708,31 +2742,31 @@ msgstr ""
 msgid "Rule wizard add service"
 msgstr ""
 
-#: view/TrayIcon.cpp:246
+#: view/TrayIcon.cpp:250
 msgid "&Restore xanoubis"
 msgstr ""
 
-#: view/TrayIcon.cpp:247
+#: view/TrayIcon.cpp:251
 msgid "E&xit xanoubis"
 msgstr ""
 
-#: view/TrayIcon.cpp:258
+#: view/TrayIcon.cpp:262
 msgid "Messages: "
 msgstr ""
 
-#: view/TrayIcon.cpp:270
+#: view/TrayIcon.cpp:274
 msgid "Couldn't send Escalation"
 msgstr ""
 
-#: view/TrayIcon.cpp:284
+#: view/TrayIcon.cpp:288
 msgid "Couldn't send Alert"
 msgstr ""
 
-#: view/TrayIcon.cpp:287
+#: view/TrayIcon.cpp:291
 msgid "No messages\n"
 msgstr ""
 
-#: view/TrayIcon.cpp:300
+#: view/TrayIcon.cpp:304
 msgid "connected with "
 msgstr ""
 
@@ -3050,38 +3084,38 @@ msgstr ""
 msgid "Failure to resolve: "
 msgstr ""
 
-#: main.cpp:186
+#: main.cpp:193
 msgid "Language setting: "
 msgstr ""
 
-#: main.cpp:267
+#: main.cpp:274
 msgid "this help"
 msgstr ""
 
-#: main.cpp:274
+#: main.cpp:281
 msgid "communication socket of anoubis daemon"
 msgstr ""
 
-#: main.cpp:281
+#: main.cpp:288
 msgid "Debug output with 'num' als level"
 msgstr ""
 
-#: main.cpp:288
+#: main.cpp:295
 msgid "Disable TrayIcon"
 msgstr ""
 
-#: main.cpp:391 main.cpp:399
+#: main.cpp:398 main.cpp:406
 #, c-format
 msgid "Couldn't remove Autostart file: %ls"
 msgstr ""
 
-#: main.cpp:664
+#: main.cpp:671
 #, c-format
 msgid ""
 "Enter the passphrase of your private key:\n"
 "%ls"
 msgstr ""
 
-#: main.cpp:665
+#: main.cpp:672
 msgid "Enter passphrase for: "
 msgstr ""

@@ -87,10 +87,17 @@ ModSfsListCtrl::ModSfsListCtrl(wxWindow *parent, wxWindowID id,
 	Connect(wxEVT_COMMAND_LIST_ITEM_RIGHT_CLICK,
 	    wxListEventHandler(ModSfsListCtrl::OnListItemRightClicked),
 	    NULL, this);
+
+	scanProgressDlg_ = 0;
 }
 
 ModSfsListCtrl::~ModSfsListCtrl(void)
 {
+	if (sfsCtrl_ != 0) {
+		SfsDirectory &dir = sfsCtrl_->getSfsDirectory();
+		dir.setScanHandler(0);
+	}
+
 	delete okIcon_;
 	delete warnIcon_;
 	delete errorIcon_;
@@ -106,7 +113,14 @@ ModSfsListCtrl::getSfsCtrl(void) const
 void
 ModSfsListCtrl::setSfsCtrl(SfsCtrl *sfsCtrl)
 {
-	this->sfsCtrl_ = sfsCtrl;
+	if (sfsCtrl != 0) {
+		this->sfsCtrl_ = sfsCtrl;
+
+		/* Assign this class for monitoring filesystem-scans */
+		SfsDirectory &dir = sfsCtrl->getSfsDirectory();
+		dir.setScanHandler(this);
+	} else
+		this->sfsCtrl_ = 0;
 }
 
 int
@@ -374,4 +388,52 @@ ModSfsListCtrl::OnPopupResolveLinkSelected(wxCommandEvent &)
 
 	SetItemState(listIndex, wxLIST_STATE_SELECTED, wxLIST_STATE_SELECTED);
 	EnsureVisible(listIndex);
+}
+
+void
+ModSfsListCtrl::scanStarts()
+{
+}
+
+void
+ModSfsListCtrl::scanFinished(bool)
+{
+	if (scanProgressDlg_ != 0) {
+		delete scanProgressDlg_;
+		scanProgressDlg_ = 0;
+	}
+}
+
+void
+ModSfsListCtrl::scanProgress(unsigned long visited, unsigned long total)
+{
+	if (total < 40) {
+		/*
+		 * Don't display the progressbar everytime a scan is running.
+		 * You need some amount of data.
+		 */
+		return;
+	}
+
+	/* Create the progress-dialog, if not already created. */
+	if (scanProgressDlg_ == 0) {
+		scanProgressDlg_ = new wxProgressDialog(
+		    _("Filesystem is scanned..."),
+		    _("Please wait while the filesystem is scanned."),
+		    100, this, wxPD_APP_MODAL|wxPD_AUTO_HIDE|wxPD_CAN_ABORT);
+	}
+
+	/*
+	 * Calculate new value:
+	 * percentage between visited and total directories
+	 */
+	int value = visited * 100 / total;
+
+	/* Update progress-dialog */
+	bool accepted = scanProgressDlg_->Update(value);
+	if (!accepted) {
+		/* Cancel pressed, abort filesystem-scan */
+		SfsDirectory &dir = sfsCtrl_->getSfsDirectory();
+		dir.abortScan();
+	}
 }

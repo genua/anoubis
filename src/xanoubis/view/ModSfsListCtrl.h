@@ -32,9 +32,12 @@
 #include <wx/listctrl.h>
 #include <wx/menu.h>
 
+#include <SfsDirectory.h>
+
 class IndexArray;
 class SfsCtrl;
 class SfsEntry;
+class wxProgressDialog;
 
 /**
  * List-control displays SfsEntry-instances.
@@ -53,7 +56,7 @@ class SfsEntry;
  * @note Yoou need to setup the SfsCtrl after instantiation of the class
  *       (setSfsCtrl())!
  */
-class ModSfsListCtrl : public wxListCtrl
+class ModSfsListCtrl : public wxListCtrl, private SfsDirectoryScanHandler
 {
 	public:
 		/**
@@ -236,6 +239,27 @@ class ModSfsListCtrl : public wxListCtrl
 		void OnPopupResolveLinkSelected(wxCommandEvent&);
 
 		/**
+		 * Implementation of SfsDirectoryScanHandler::scanStarts().
+		 *
+		 * Not used, empty.
+		 */
+		void scanStarts();
+
+		/**
+		 * Implementation of SfsDirectoryScanHandler::scanFinished().
+		 *
+		 * Destroys scanProgressDlg_.
+		 */
+		void scanFinished(bool);
+
+		/**
+		 * Implementation of SfsDirectoryScanHandler::scanProgress().
+		 *
+		 * Creates and updates scanProgressDlg_.
+		 */
+		void scanProgress(unsigned long, unsigned long);
+
+		/**
 		 * The SfsCtrl.
 		 *
 		 * Used to get a reference to the model.
@@ -279,6 +303,11 @@ class ModSfsListCtrl : public wxListCtrl
 		 * Used by the popup-menu to select an SfsEntry.
 		 */
 		int		currentSelection_;
+
+		/**
+		 * Progress dialog displayed when a filesystem-scan is running.
+		 */
+		wxProgressDialog	*scanProgressDlg_;
 };
 
 #endif	/* _MODSFSLISTCTRL_H_ */
