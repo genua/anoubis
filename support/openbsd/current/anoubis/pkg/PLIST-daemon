@@ -39,7 +39,7 @@ share/anoubisd/policy_templates/user/root
 @exec mkdir -p /var/lib/anoubis/policy/user
 @exec mkdir -p /var/lib/anoubis/policy/pubkeys
 @exec ln -sf /var/lib/anoubis/policy /etc/anoubis/policy
-@exec chown _anoubisd:_anoubisd /var/lib/anoubis/policy/pubkeys
+@exec chown -R _anoubisd:_anoubisd /var/lib/anoubis/policy
 @exec perl %D/share/anoubisd/install_policy -q %D/share/anoubisd/policy_templates/admin /etc/anoubis/policy/admin
 @exec perl %D/share/anoubisd/install_policy -q %D/share/anoubisd/policy_templates/user /etc/anoubis/policy/user
 @exec perl %D/share/anoubisd/install_policy -q -n -o %D/share/anoubisd/policy_templates/profiles /etc/anoubis/profiles

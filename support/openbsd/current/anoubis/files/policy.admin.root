@@ -1,6 +1,10 @@
 alf {
 	/usr/sbin/ntpd @@
 	{
+		allow send udp from any to any port 123
+		allow receive udp from any port 123 to any
+		allow send udp from any to any port 53
+		allow receive udp from any port 53 to any
 		default log deny
 	}
 
@@ -12,13 +16,18 @@ sandbox {
 	/usr/sbin/ntpd @@
 	{
 		allow path /etc/ntpd.conf r
+		allow path /etc/spwd.db r
 		allow path /var/db/ntpd.drift rw
+		allow path /var/run/ld.so.hints r
 
 		allow path /etc/localtime r
+		allow path /etc/passwd r
 		allow path /etc/services r
 		allow path /etc/resolv.conf r
 		allow path /etc/hosts r
 		allow path /usr r
+
+		allow path /dev/log w
 
 		default log deny
 	}
