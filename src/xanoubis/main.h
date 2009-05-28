@@ -57,7 +57,6 @@
 #include "ComCsumGetTask.h"
 #include "ComPolicyRequestTask.h"
 #include "ComPolicySendTask.h"
-#include "ComRegistrationTask.h"
 #include "DlgLogViewer.h"
 #include "DlgRuleEditor.h"
 #include "CsumCalcTask.h"
@@ -98,14 +97,11 @@ class AnoubisGuiApp : public wxApp, private PassphraseReader
 
 		wxString readPassphrase(bool *);
 
-		ComRegistrationTask	regTask_;
 		ComCsumAddTask		csumAddTask_;
 		ComCsumGetTask		csumGetTask_;
 		CsumCalcTask		csumCalcTask_;
 
 	protected:
-		void OnConnectionStateChange(wxCommandEvent&);
-		void OnDaemonRegistration(TaskEvent &);
 		void OnAnswerEscalation(wxCommandEvent &);
 
 	public:

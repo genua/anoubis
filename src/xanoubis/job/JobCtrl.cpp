@@ -47,11 +47,17 @@ JobCtrl::JobCtrl(void)
 
 	csumCalcTaskQueue_ = new SynchronizedQueue<Task>(true);
 	comTaskQueue_ = new SynchronizedQueue<Task>(false);
+
+	Connect(anTASKEVT_REGISTER,
+	    wxTaskEventHandler(JobCtrl::onDaemonRegistration), NULL, this);
 }
 
 JobCtrl::~JobCtrl(void)
 {
 	stop();
+
+	Disconnect(anTASKEVT_REGISTER,
+	    wxTaskEventHandler(JobCtrl::onDaemonRegistration), NULL, this);
 
 	delete csumCalcTaskQueue_;
 	delete comTaskQueue_;
@@ -112,13 +118,21 @@ JobCtrl::connect(void)
 			if (t->exitThread()) {
 				t->stop();
 				delete t;
+
 				return (false);
 			} else {
 				threadList_.push_back(t);
+
+				regTask_.setAction(
+				    ComRegistrationTask::ACTION_REGISTER);
+				addTask(&regTask_);
+
 				return (true);
 			}
 		} else {
 			delete t;
+			sendComEvent(JobCtrl::CONNECTION_FAILED);
+
 			return (false);
 		}
 	} else
@@ -128,13 +142,8 @@ JobCtrl::connect(void)
 void
 JobCtrl::disconnect(void)
 {
-	ComThread *t;
-
-	while ((t = findComThread()) != 0) {
-		threadList_.DeleteObject(t);
-		t->stop();
-		delete t;
-	}
+	regTask_.setAction(ComRegistrationTask::ACTION_UNREGISTER);
+	JobCtrl::getInstance()->addTask(&regTask_);
 }
 
 bool
@@ -188,6 +197,43 @@ JobCtrl::popTask(Task::Type type)
 	return (0); /* Never reached */
 }
 
+void
+JobCtrl::onDaemonRegistration(TaskEvent &event)
+{
+	ComRegistrationTask *task =
+	    dynamic_cast<ComRegistrationTask*>(event.getTask());
+
+	if (task == 0)
+		return;
+
+	if (task->getAction() == ComRegistrationTask::ACTION_REGISTER) {
+		if (task->getComTaskResult() == ComTask::RESULT_SUCCESS) {
+			sendComEvent(JobCtrl::CONNECTION_CONNECTED);
+		} else {
+			/* Registration failed, disconnect again */
+			sendComEvent(JobCtrl::CONNECTION_FAILED);
+			disconnect();
+		}
+	} else { /* ACTION_UNREGISTER */
+		ComThread *t;
+
+		if (task->getComTaskResult() != ComTask::RESULT_SUCCESS) {
+			sendComEvent(JobCtrl::CONNECTION_FAILED);
+		}
+
+		/* Disconnect independent from unregistration-result */
+		while ((t = findComThread()) != 0) {
+			threadList_.DeleteObject(t);
+			t->stop();
+			delete t;
+		}
+
+		sendComEvent(JobCtrl::CONNECTION_DISCONNECTED);
+	}
+
+	event.Skip();
+}
+
 ComThread *
 JobCtrl::findComThread(void) const
 {
@@ -220,4 +266,15 @@ JobCtrl::findCsumCalcThread(void) const
 	}
 
 	return (0); /* No such thread */
+}
+
+void
+JobCtrl::sendComEvent(JobCtrl::ConnectionState state)
+{
+	wxCommandEvent event(anEVT_COM_CONNECTION);
+
+	event.SetInt(state);
+	event.SetString(wxT("localhost"));
+
+	wxPostEvent(JobCtrl::getInstance(), event);
 }

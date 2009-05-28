@@ -111,6 +111,7 @@ ComPolicyRequestTask::done(void)
 	if(ta_->result) {
 		setComTaskResult(RESULT_REMOTE_ERROR);
 		setResultDetails(ta_->result);
+		return (true);
 	} else {
 		setComTaskResult(RESULT_SUCCESS);
 	}

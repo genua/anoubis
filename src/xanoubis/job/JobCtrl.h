@@ -30,6 +30,7 @@
 
 #include <wx/event.h>
 
+#include "ComRegistrationTask.h"
 #include "JobThread.h"
 #include "Singleton.h"
 #include "SynchronizedQueue.h"
@@ -147,6 +148,10 @@ class JobCtrl : public wxEvtHandler, public Singleton<JobCtrl>
 
 		/**
 		 * Disconnects again from anoubisd.
+		 *
+		 * This operation is started in the background. You need to
+		 * wait for a wxCommandEvent of type anEVT_COM_CONNECTION to
+		 * test the state of the operation.
 		 */
 		void disconnect(void);
 
@@ -193,15 +198,25 @@ class JobCtrl : public wxEvtHandler, public Singleton<JobCtrl>
 		 */
 		Task *popTask(Task::Type);
 
+		/**
+		 * Invoked if a ComRegistrationTask is completed.
+		 *
+		 * The ComRegistrationTask is part of the (dis-)connection
+		 * operation and scheduled during connect() resp. disconnect().
+		 */
+		void onDaemonRegistration(TaskEvent &);
+
 	private:
 		wxString socketPath_;
 		SynchronizedQueue<Task> *csumCalcTaskQueue_;
 		SynchronizedQueue<Task> *comTaskQueue_;
 		JobThreadList threadList_;
+		ComRegistrationTask regTask_;
 
 		ComThread	*findComThread(void) const;
 		CsumCalcThread	*findCsumCalcThread(void) const;
 		void		 stopThread(JobThread *);
+		void		 sendComEvent(JobCtrl::ConnectionState);
 
 	friend class JobThread;
 	friend class Singleton<JobCtrl>;

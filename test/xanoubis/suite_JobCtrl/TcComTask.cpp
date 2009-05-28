@@ -120,7 +120,6 @@ TcComTask::nextTest()
 	JobCtrl *jobCtrl = JobCtrl::getInstance();
 
 	jobCtrl->Disconnect(anEVT_COM_CONNECTION);
-	jobCtrl->Disconnect(anTASKEVT_REGISTER);
 	jobCtrl->Disconnect(anTASKEVT_POLICY_REQUEST);
 	jobCtrl->Disconnect(anTASKEVT_POLICY_SEND);
 	jobCtrl->Disconnect(anTASKEVT_CSUM_ADD);
@@ -135,85 +134,79 @@ TcComTask::nextTest()
 		setupTestConnect();
 		break;
 	case 2:
-		setupTestRegister();
+		setupTestPolicyRequest();
 		break;
 	case 3:
-		setupTestPolicyRequest();
-		break;
-	case 4:
 		setupTestPolicySendEmpty();
 		break;
-	case 5:
+	case 4:
 		setupTestPolicySend();
 		break;
-	case 6:
+	case 5:
 		setupTestPolicyRequest();
 		break;
-	case 7:
+	case 6:
 		setupTestCsumAdd();
 		break;
-	case 8:
+	case 7:
 		setupTestCsumAddSymlink();
 		break;
-	case 9:
+	case 8:
 		setupTestCsumAddSymlinkLink();
 		break;
-	case 10:
+	case 9:
 		setupTestCsumAddPipe();
 		break;
-	case 11:
+	case 10:
 		setupTestCsumAddPipeLink();
 		break;
-	case 12:
+	case 11:
 		setupTestCsumGet();
 		break;
-	case 13:
+	case 12:
 		setupTestCsumGetNoSuchFile();
 		break;
-	case 14:
+	case 13:
 		setupTestCsumGetOrphaned();
 		break;
-	case 15:
+	case 14:
 		setupTestCsumGetSymlink();
 		break;
-	case 16:
+	case 15:
 		setupTestCsumGetSymlinkLink();
 		break;
-	case 17:
+	case 16:
 		setupTestSfsListNotEmpty();
 		break;
-	case 18:
+	case 17:
 		setupTestCsumDel();
 		break;
-	case 19:
+	case 18:
 		setupTestCsumDelSymlink();
 		break;
-	case 20:
+	case 19:
 		setupTestCsumDelSymlinkLink();
 		break;
-	case 21:
+	case 20:
 		setupTestSfsListEmpty();
 		break;
-	case 22:
+	case 21:
 		setupTestSfsListRecursive();
 		break;
-	case 23:
+	case 22:
 		setupTestSigAdd();
 		break;
-	case 24:
+	case 23:
 		setupTestSigGet();
 		break;
-	case 25:
+	case 24:
 		setupTestSigListNotEmpty();
 		break;
-	case 26:
+	case 25:
 		setupTestSigDel();
 		break;
-	case 27:
+	case 26:
 		setupTestSigListEmpty();
-		break;
-	case 28:
-		setupTestUnregister();
 		break;
 	default:
 		exit_ = true;
@@ -248,96 +241,6 @@ TcComTask::onTestConnect(wxCommandEvent &event)
 
 	event.Skip();
 	trace("Leaving TcComTask::onTestConnect\n");
-	nextTest();
-}
-
-void
-TcComTask::setupTestRegister(void)
-{
-	trace("Enter TcComTask::setupTestRegister\n");
-
-	JobCtrl::getInstance()->Connect(anTASKEVT_REGISTER,
-	    wxTaskEventHandler(TcComTask::onTestRegister), NULL, this);
-
-	ComRegistrationTask *t = new ComRegistrationTask;
-	t->setAction(ComRegistrationTask::ACTION_REGISTER);
-
-	trace("Scheduling ComRegistrationTask: %p\n", t);
-	JobCtrl::getInstance()->addTask(t);
-
-	trace("Leaving TcComTask::setupTestRegister\n");
-}
-
-void
-TcComTask::onTestRegister(TaskEvent &event)
-{
-	trace("Enter TcComTask::onTestRegister\n");
-
-	ComRegistrationTask *t =
-	    dynamic_cast<ComRegistrationTask*>(event.getTask());
-	trace("ComRegistrationTask = %p\n", t);
-
-	assertUnless(t->getAction() == ComRegistrationTask::ACTION_REGISTER,
-	    "No registration-task!\n");
-
-	assertUnless(t->getComTaskResult() == ComTask::RESULT_SUCCESS,
-	    "Registration failed!\n"
-	    " * ComTaskResult = %i\n"
-	    " * ResultDetails = %i\n",
-	    t->getComTaskResult(), t->getResultDetails());
-
-	assertUnless(t->getResultDetails() == 0,
-	    "ResultDetails: %s (%i)\n",
-	    strerror(t->getResultDetails()), t->getResultDetails());
-
-	delete t;
-
-	trace("Leaving TcComTask::onTestRegister\n");
-	nextTest();
-}
-
-void
-TcComTask::setupTestUnregister(void)
-{
-	trace("Enter TcComTask::setupTestUnregister\n");
-
-	JobCtrl::getInstance()->Connect(anTASKEVT_REGISTER,
-	    wxTaskEventHandler(TcComTask::onTestUnregister), NULL, this);
-
-	ComRegistrationTask *t = new ComRegistrationTask;
-	t->setAction(ComRegistrationTask::ACTION_UNREGISTER);
-
-	trace("Scheduling ComRegistrationTask: %p\n", t);
-	JobCtrl::getInstance()->addTask(t);
-
-	trace("Leaving TcComTask::setupTestUnregister\n");
-}
-
-void
-TcComTask::onTestUnregister(TaskEvent &event)
-{
-	trace("Enter TcComTask::onTestUnregister\n");
-
-	ComRegistrationTask *t =
-	    dynamic_cast<ComRegistrationTask*>(event.getTask());
-	trace("ComRegistrationTask = %p\n", t);
-
-	assertUnless(t->getAction() == ComRegistrationTask::ACTION_UNREGISTER,
-	    "No unregistration-task!\n");
-
-	assertUnless(t->getComTaskResult() == ComTask::RESULT_SUCCESS,
-	    "Registration failed!\n"
-	    " * ComTaskResult = %i\n"
-	    " * ResultDetails = %i\n",
-	    t->getComTaskResult(), t->getResultDetails());
-
-	assertUnless(t->getResultDetails() == 0,
-	    "ResultDetails: %s (%i)\n",
-	    strerror(t->getResultDetails()), t->getResultDetails());
-
-	delete t;
-
-	trace("TcComTask::onTestUnregister\n");
 	nextTest();
 }
 

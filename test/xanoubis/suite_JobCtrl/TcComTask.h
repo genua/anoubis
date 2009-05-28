@@ -47,12 +47,6 @@ class TcComTask : public TestHandler
 		void setupTestConnect(void);
 		void onTestConnect(wxCommandEvent &);
 
-		void setupTestRegister(void);
-		void onTestRegister(TaskEvent &);
-
-		void setupTestUnregister(void);
-		void onTestUnregister(TaskEvent &);
-
 		void setupTestPolicyRequest(void);
 		void onTestPolicyRequest(TaskEvent &);
 

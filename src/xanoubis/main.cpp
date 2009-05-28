@@ -146,13 +146,6 @@ bool AnoubisGuiApp::OnInit()
 	/* Initialization of job-controller */
 	JobCtrl *jobCtrl = JobCtrl::getInstance();
 
-	jobCtrl->Connect(anEVT_COM_CONNECTION,
-	    wxCommandEventHandler(AnoubisGuiApp::OnConnectionStateChange),
-	    NULL, this);
-	jobCtrl->Connect(anTASKEVT_REGISTER,
-	    wxTaskEventHandler(AnoubisGuiApp::OnDaemonRegistration),
-	    NULL, this);
-
 	anEvents->Connect(anEVT_ANSWER_ESCALATION,
 	    wxCommandEventHandler(AnoubisGuiApp::OnAnswerEscalation),
 	    NULL, this);
@@ -356,13 +349,9 @@ AnoubisGuiApp::connectCommunicator(bool doConnect)
 	}
 
 	if (doConnect) {
-		/* Start with establishing the connection */
 		return (JobCtrl::getInstance()->connect());
 	} else {
-		/* Start with unregistration */
-		regTask_.setAction(ComRegistrationTask::ACTION_UNREGISTER);
-		JobCtrl::getInstance()->addTask(&regTask_);
-
+		JobCtrl::getInstance()->disconnect();
 		return (true);
 	}
 }
@@ -597,53 +586,6 @@ AnoubisGuiApp::getUserNameById(uid_t uid) const
 		}
 	}
 	return lastname;
-}
-
-void
-AnoubisGuiApp::OnConnectionStateChange(wxCommandEvent &event)
-{
-	JobCtrl::ConnectionState newState =
-	    (JobCtrl::ConnectionState)event.GetInt();
-
-	switch (newState) {
-	case JobCtrl::CONNECTION_CONNECTED:
-		/* Connection established, next make registration */
-		regTask_.setAction(ComRegistrationTask::ACTION_REGISTER);
-		JobCtrl::getInstance()->addTask(&regTask_);
-		break;
-	case JobCtrl::CONNECTION_DISCONNECTED:
-		/* Nothing to do, already disconnected */
-		break;
-	case JobCtrl::CONNECTION_FAILED:
-	case JobCtrl::CONNECTION_ERROR:
-		/* Force a disconnect without deregistration */
-		JobCtrl::getInstance()->disconnect();
-		break;
-	}
-
-	event.Skip();
-}
-
-void
-AnoubisGuiApp::OnDaemonRegistration(TaskEvent &event)
-{
-	ComRegistrationTask *task =
-	    dynamic_cast<ComRegistrationTask*>(event.getTask());
-
-	if (task == 0)
-		return;
-
-	if (task->getAction() == ComRegistrationTask::ACTION_REGISTER) {
-		if (task->getComTaskResult() != ComTask::RESULT_SUCCESS) {
-			/* Registration failed, disconnect again */
-			JobCtrl::getInstance()->disconnect();
-		}
-	} else { /* ACTION_UNREGISTER */
-		/* Disconnect independent from unregistration-result */
-		JobCtrl::getInstance()->disconnect();
-	}
-
-	event.Skip();
 }
 
 void

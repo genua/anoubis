@@ -187,8 +187,6 @@ ComThread::Entry(void)
 	if (!connect()) {
 		sendComEvent(JobCtrl::CONNECTION_FAILED);
 		return (0);
-	} else {
-		sendComEvent(JobCtrl::CONNECTION_CONNECTED);
 	}
 
 	fds[0].fd = comPipe_[0];
@@ -273,7 +271,6 @@ ComThread::Entry(void)
 
 	/* Thread is short before exit, disconnect again */
 	disconnect();
-	sendComEvent(JobCtrl::CONNECTION_DISCONNECTED);
 
 	return (0);
 }

@@ -438,8 +438,13 @@ void
 PolicyCtrl::OnPolicyRequest(TaskEvent &event)
 {
 	PolicyRuleSet		*rs;
-	ComPolicyRequestTask	*task =
-	    dynamic_cast<ComPolicyRequestTask*>(event.getTask());
+	ComPolicyRequestTask	*task;
+	ComTask::ComTaskResult	taskResult;
+	wxString		message;
+	bool			isAdmin;
+	wxString		user;
+
+	task = dynamic_cast<ComPolicyRequestTask*>(event.getTask());
 
 	if (task == 0)
 		return;
@@ -449,16 +454,59 @@ PolicyCtrl::OnPolicyRequest(TaskEvent &event)
 		event.Skip();
 		return;
 	}
-	/* XXX Error-path? */
-	rs = task->getPolicy();
-	importPolicy(rs);
-	/*
-	 * If this is a new active policy, create a version for it.
-	 * XXX CEH: Also do this for admin rule sets?
-	 */
-	if (!rs->isAdmin() && rs->getUid() == geteuid()) {
-		makeBackup(wxT("active"));
+
+	isAdmin = (geteuid() == 0);
+	taskResult = task->getComTaskResult();
+	user = wxGetApp().getUserNameById(task->getUid());
+
+	if (taskResult == ComTask::RESULT_COM_ERROR) {
+		if (isAdmin && (task->getPriority() == 0))
+			message.Printf(_("Communication error while"
+			" receiving\nadmin-policy of %ls."), user.c_str());
+		else if (isAdmin && (task->getPriority() > 0))
+			message.Printf(_("Communication error while "
+			    "receiving\nuser-policy of %ls."), user.c_str());
+		else
+			message = _("Error while receiving policy.");
+	} else if (taskResult == ComTask::RESULT_REMOTE_ERROR) {
+		if (isAdmin && (task->getPriority() == 0))
+			message.Printf(_("Got error (%hs) from daemon\n"
+			    "after receiving admin-policy of %ls."),
+			    strerror(task->getResultDetails()),
+			    user.c_str());
+		else if (isAdmin && (task->getPriority() > 0))
+			message.Printf(_("Got error (%hs) from daemon\n"
+			    "after receiving user-policy of %ls."),
+			    strerror(task->getResultDetails()),
+			    user.c_str());
+		else
+			message.Printf(_("Got error (%hs) from daemon\n"
+			    "after receiving policy."),
+			    strerror(task->getResultDetails()));
+	} else if (taskResult != ComTask::RESULT_SUCCESS) {
+		message.Printf(_("An unexpected error occured.\n"
+		    "Error code: %i"), taskResult);
 	}
+
+	/* XXX: This is the wrong place to show up a message-box! */
+	if (taskResult != ComTask::RESULT_SUCCESS) {
+		wxMessageBox(message, _("Error while receiving policy"),
+		    wxICON_ERROR);
+
+	} else {
+		/* XXX Error-path? */
+		rs = task->getPolicy();
+		importPolicy(rs);
+
+		/*
+		 * If this is a new active policy, create a version for it.
+		 * XXX CEH: Also do this for admin rule sets?
+		 */
+		if ((rs != 0) && !rs->isAdmin() && rs->getUid() == geteuid()) {
+			makeBackup(wxT("active"));
+		}
+	}
+
 	requestTaskList_.remove(task);
 	delete task;
 }
