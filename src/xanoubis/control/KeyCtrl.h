@@ -53,8 +53,6 @@ class PassphraseReader
 		virtual wxString readPassphrase(bool *) = 0;
 };
 
-extern "C" int xpass_cb(char *buf, int size, int rwflag, void *u);
-
 /**
  * Controller responsible for managing keys and certificates.
  *
@@ -71,6 +69,20 @@ extern "C" int xpass_cb(char *buf, int size, int rwflag, void *u);
 class KeyCtrl : public Singleton<KeyCtrl>
 {
 	public:
+		/**
+		 * Result-Codes of loading a key.
+		 */
+		enum KeyResult
+		{
+			RESULT_KEY_OK,		/*<! Everything worked fine. */
+
+			RESULT_KEY_WRONG_PASS,	/*<! The entered passphrase was
+						 * incorrect.*/
+
+			RESULT_KEY_ERROR	/*<! An Error occured while
+						 * loading the key.*/
+		};
+
 		/**
 		 * Destructor of KeyCtrl.
 		 * This will clean up the whole mess. It needs to be public,
@@ -147,13 +159,12 @@ class KeyCtrl : public Singleton<KeyCtrl>
 		 * no passphrase reader is assigned, the method uses an empty
 		 * string (wxEmptyString) as a passphrase.
 		 *
-		 * @return true is returned, if the private key is already
-		 *         loaded, or the key was successfully loaded.
+		 * @return Is a KeyResult.
 		 *
 		 * @see getPassphraseReader()
 		 * @see PrivKey
 		 */
-		bool loadPrivateKey(void);
+		KeyResult loadPrivateKey(void);
 
 	protected:
 		/**

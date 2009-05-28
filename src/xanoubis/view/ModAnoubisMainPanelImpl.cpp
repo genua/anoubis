@@ -415,6 +415,7 @@ void
 ModAnoubisMainPanelImpl::OnProfileActivateClicked(wxCommandEvent &)
 {
 	PolicyCtrl *policyCtrl = PolicyCtrl::getInstance();
+	PolicyCtrl::PolicyResult polRes;
 	long userId;
 
 	if (!policyCtrl->importFromProfile(selectedProfile)) {
@@ -433,10 +434,16 @@ ModAnoubisMainPanelImpl::OnProfileActivateClicked(wxCommandEvent &)
 		return;
 	}
 
-	if (!policyCtrl->sendToDaemon(userId)) {
+	polRes = policyCtrl->sendToDaemon(userId);
+	if (polRes == PolicyCtrl::RESULT_POL_ERR) {
 		wxMessageBox(
 		    _("Could not activate user-policy.\n"
 		      "No connection to anoubisd."),
+		    _("Activate profile"), wxOK | wxICON_ERROR, this);
+		return;
+	} else if (polRes == PolicyCtrl::RESULT_POL_WRONG_PASS) {
+		wxMessageBox(
+		      _("The entered password is incorrect."),
 		    _("Activate profile"), wxOK | wxICON_ERROR, this);
 		return;
 	}

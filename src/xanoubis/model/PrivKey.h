@@ -47,6 +47,17 @@
 class PrivKey : private wxTimer
 {
 	public:
+
+		/**
+		 * Result-Codes of loading key
+		 */
+		enum PrivKeyResult {
+			ERR_PRIV_WRONG_PASS,	/*<! Wrong password was
+						 * entered. */
+			ERR_PRIV_ERR,		/*<! A an error occured. */
+			ERR_PRIV_OK		/*<! Everything worked fine. */
+		};
+
 		/**
 		 * Default-c'tor.
 		 *
@@ -122,6 +133,18 @@ class PrivKey : private wxTimer
 		bool canLoad(void) const;
 
 		/**
+		 * Returns the number of incorrect password tries
+		 *
+		 * @return number of incorrect password attempts
+		 */
+		int getTries(void);
+
+		/**
+		 * resets the number of tries to zero
+		 */
+		void resetTries(void);
+
+		/**
 		 * Loads a private key protected by the specified passphrase.
 		 *
 		 * The key is read from the file configured with setFile().
@@ -134,15 +157,14 @@ class PrivKey : private wxTimer
 		 * was not successful or the key was unloaded manually or
 		 * automatically, isLoaded() will return false.
 		 *
-		 * @param pass Passphrase of private key
+		 * @param call back function to request passphrase
 		 *
-		 * @return true is returned, if loading of the key was
-		 *         successful, false otherwise.
+		 * @return a PrivKeyResult.
 		 *
 		 * @see isLoaded()
 		 * @see unload()
 		 */
-		bool load(pem_password_cb *);
+		PrivKeyResult load(pem_password_cb *);
 
 		/**
 		 * Unloads the key again.
@@ -190,6 +212,11 @@ class PrivKey : private wxTimer
 		 * Key validity.
 		 */
 		int validity_;
+
+		/**
+		 * Tries to type in a correct passphrase
+		 */
+		int tries_;
 
 		/**
 		 * Starts a timer if necessary.

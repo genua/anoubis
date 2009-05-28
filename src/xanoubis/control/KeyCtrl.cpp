@@ -28,7 +28,12 @@
 #include "KeyCtrl.h"
 #include "Singleton.cpp"
 
-int
+/* This function is needed by libanoubissig to call a passphrase
+ * Reader just in need.
+ * Since libanoubissig is using openssl it has to be in this
+ * form.
+ * */
+extern "C" int
 xpass_cb(char *buf, int size, int, void *)
 {
 	bool ok = true;
@@ -96,11 +101,26 @@ KeyCtrl::canUseLocalKeys(void) const
 	return (privKey_.canLoad() && cert_.isLoaded());
 }
 
-bool
+KeyCtrl::KeyResult
 KeyCtrl::loadPrivateKey(void)
 {
+	PrivKey::PrivKeyResult keyRes;
+
 	if (!privKey_.isLoaded()) {
-		return privKey_.load(xpass_cb);
+		keyRes = privKey_.load(xpass_cb);
+		privKey_.resetTries();
+		switch (keyRes) {
+		case PrivKey::ERR_PRIV_WRONG_PASS:
+			return (RESULT_KEY_WRONG_PASS);
+			/* NOTREACHED */
+		case PrivKey::ERR_PRIV_ERR:
+			return (RESULT_KEY_ERROR);
+			/* NOTREACHED */
+		case PrivKey::ERR_PRIV_OK:
+			return (RESULT_KEY_OK);
+			/* NOTREACHED */
+		}
+		return (RESULT_KEY_ERROR);
 	} else
-		return (true); /* Already loaded */
+		return (RESULT_KEY_OK); /* Already loaded */
 }

@@ -1327,6 +1327,7 @@ DlgRuleEditor::onFooterActivateButton(wxCommandEvent &)
 	int		 answer;
 	wxString	 message;
 	PolicyCtrl	*policyCtrl;
+	PolicyCtrl::PolicyResult	 polRes;
 	PolicyRuleSet	*admin = NULL, *user = NULL;
 
 	RuleSetChecksumVisitor csumChecker;
@@ -1353,15 +1354,51 @@ DlgRuleEditor::onFooterActivateButton(wxCommandEvent &)
 			answer = wxMessageBox(message, _("RuleEditor"),
 			    wxYES_NO, this);
 		}
-	}	
+	}
 
 	if (user && (answer == wxYES)) {
 		footerStatusText->SetLabel(wxT("sending to daemon"));
-		policyCtrl->sendToDaemon(userRuleSetId_);
+		polRes = policyCtrl->sendToDaemon(userRuleSetId_);
+		switch (polRes) {
+		case PolicyCtrl::RESULT_POL_WRONG_PASS:
+			message = _("The entered password is incorrect.");
+			wxMessageBox(message, _("Key Load Error"),
+			    wxOK|wxICON_ERROR, this);
+			footerStatusText->SetLabel(wxT("Wrong password!"));
+			break;
+		case PolicyCtrl::RESULT_POL_ERR:
+			message = _("An error occured while sending policy to"
+			    " daemon.");
+			wxMessageBox(message, _("Policy Load Error"),
+			    wxOK|wxICON_ERROR, this);
+			footerStatusText->SetLabel(wxT("Error while sending "
+			    "policy to daemon!"));
+			break;
+		case PolicyCtrl::RESULT_POL_OK:
+			break;
+		}
 	}
 	if (admin && admin->isModified() && geteuid() == 0) {
 		footerStatusText->SetLabel(wxT("sending to daemon"));
-		policyCtrl->sendToDaemon(adminRuleSetId_);
+		polRes = policyCtrl->sendToDaemon(adminRuleSetId_);
+		switch (polRes) {
+		case PolicyCtrl::RESULT_POL_WRONG_PASS:
+			message = _("The entered password is incorrect.");
+			wxMessageBox(message, _("Key Load Error"),
+			    wxOK|wxICON_ERROR, this);
+			footerStatusText->SetLabel(wxT("Wrong password!"));
+			break;
+		case PolicyCtrl::RESULT_POL_ERR:
+			message = _("An error occured while sending admin"
+			    " policy to the daemon.");
+			wxMessageBox(message, _("Policy Load Error"),
+			    wxOK|wxICON_ERROR, this);
+			footerStatusText->SetLabel(wxT("Error while sending"
+			    " admin policy to daemon."));
+			break;
+		case PolicyCtrl::RESULT_POL_OK:
+			break;
+		}
 	}
 
 	/*

@@ -311,6 +311,8 @@ ModSfsMainPanelImpl::OnSfsMainApplyButtonClicked(wxCommandEvent&)
 void
 ModSfsMainPanelImpl::OnSfsMainImportClicked(wxCommandEvent&)
 {
+	wxString msg = wxEmptyString;
+
 	wxFileDialog dlg(this, _("Choose the import-file"));
 	if (dlg.ShowModal() != wxID_OK) {
 		/* Operation canceled */
@@ -337,6 +339,12 @@ ModSfsMainPanelImpl::OnSfsMainImportClicked(wxCommandEvent&)
 		wxGetApp().status(
 		 _("Error: Sfs is still busy with another operation."));
 		break;
+	case SfsCtrl::RESULT_WRONG_PASS:
+		wxGetApp().status(
+		    _("Wrong password!"));
+		msg = _("The entered password is incorrect.");
+		wxMessageBox(msg, _("SFS error"), wxOK|wxICON_ERROR, this);
+		break;
 	case SfsCtrl::RESULT_NOOP:
 	case SfsCtrl::RESULT_EXECUTE:
 		/* Success */
@@ -347,6 +355,7 @@ ModSfsMainPanelImpl::OnSfsMainImportClicked(wxCommandEvent&)
 void
 ModSfsMainPanelImpl::OnSfsMainExportClicked(wxCommandEvent&)
 {
+	wxString msg = wxEmptyString;
 	IndexArray selection = SfsMainListCtrl->getSfsIndexes();
 
 	if (selection.IsEmpty()) {
@@ -383,6 +392,12 @@ ModSfsMainPanelImpl::OnSfsMainExportClicked(wxCommandEvent&)
 		wxGetApp().status(
 		 _("Error: Sfs is still busy with another operation."));
 		break;
+	case SfsCtrl::RESULT_WRONG_PASS:
+		wxGetApp().status(
+		    _("Wrong password!"));
+		msg = _("The entered password is incorrect.");
+		wxMessageBox(msg, _("SFS error"), wxOK|wxICON_ERROR, this);
+		break;
 	case SfsCtrl::RESULT_NOOP:
 	case SfsCtrl::RESULT_EXECUTE:
 		/* Success */
@@ -393,6 +408,7 @@ ModSfsMainPanelImpl::OnSfsMainExportClicked(wxCommandEvent&)
 void
 ModSfsMainPanelImpl::applySfsAction(const IndexArray &selection)
 {
+	wxString msg = wxEmptyString;
 	SfsCtrl::CommandResult result = SfsCtrl::RESULT_EXECUTE;
 
 	switch (SfsMainActionChoice->GetCurrentSelection()) {
@@ -427,6 +443,12 @@ ModSfsMainPanelImpl::applySfsAction(const IndexArray &selection)
 		wxGetApp().status(
 		 _("Error: Sfs is still busy with another operation."));
 		break;
+	case SfsCtrl::RESULT_WRONG_PASS:
+		wxGetApp().status(
+		    _("Wrong password!"));
+		msg = _("The entered password is incorrect.");
+		wxMessageBox(msg, _("SFS error"), wxOK|wxICON_ERROR, this);
+		break;
 	case SfsCtrl::RESULT_NOOP:
 	case SfsCtrl::RESULT_EXECUTE:
 		/* Success */
@@ -437,6 +459,7 @@ ModSfsMainPanelImpl::applySfsAction(const IndexArray &selection)
 void
 ModSfsMainPanelImpl::applySfsValidateAll(bool orphaned)
 {
+	wxString msg = wxEmptyString;
 	SfsCtrl::CommandResult result = sfsCtrl_->validateAll(orphaned);
 
 	/* Controls are disabled if operation is executed */
@@ -458,6 +481,12 @@ ModSfsMainPanelImpl::applySfsValidateAll(bool orphaned)
 	case SfsCtrl::RESULT_BUSY:
 		wxGetApp().status(
 		    _("Error: Sfs is still busy with another operation."));
+		break;
+	case SfsCtrl::RESULT_WRONG_PASS:
+		wxGetApp().status(
+		    _("Wrong password!"));
+		msg = _("The entered password is incorrect.");
+		wxMessageBox(msg, _("SFS error"), wxOK|wxICON_ERROR, this);
 		break;
 	case SfsCtrl::RESULT_NOOP:
 	case SfsCtrl::RESULT_EXECUTE:

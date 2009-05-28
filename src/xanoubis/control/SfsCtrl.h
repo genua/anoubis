@@ -79,6 +79,7 @@ class SfsCtrl : public wxEvtHandler
 						     not scheduled. */
 			RESULT_NEEDKEY,	/*!< A key is required, but loading of
 					     the key failed. */
+			RESULT_WRONG_PASS, /*!< A incorrect passphrase */
 			RESULT_INVALIDARG,	/*!< You supplied an invalid
 						     argument. The command is
 						     not scheduled. */

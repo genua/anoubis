@@ -659,19 +659,31 @@ AnoubisGuiApp::readPassphrase(bool *ok)
 {
 	wxWindow *w = wxWindow::FindFocus();
 	wxString dName = wxEmptyString;
+	wxString msg = wxEmptyString;
+	wxString title = wxEmptyString;
 
 	if (w == 0)
 		w = GetTopWindow();
 
 	LocalCertificate &cert = KeyCtrl::getInstance()->getLocalCertificate();
+	PrivKey &pKey = KeyCtrl::getInstance()->getPrivateKey();
+
 	dName = cert.getDistinguishedName();
 
-	wxPasswordEntryDialog dlg(w,
-	    wxString::Format(
-	    _("Enter the passphrase of your private key:\n%ls"), dName.c_str()),
-	    _("Enter passphrase for: "));
-	dlg.CentreOnScreen();
+	if (pKey.getTries() < 1) {
+		msg = wxString::Format(
+		    _("Enter the passphrase of your private key:\n%ls"),
+		    dName.c_str());
+		title = _("Enter passphrase for: ");
+	} else {
+		msg = wxString::Format(
+		    _("The entered passphrase was wrong!\n"
+		    "Please enter the passphrase for:\n%ls"), dName.c_str());
+		title = _("Enter passphrase for: ");
+	}
 
+	wxPasswordEntryDialog dlg(w, msg, title);
+	dlg.CentreOnScreen();
 	if (dlg.ShowModal() == wxID_OK) {
 		*ok = true;
 		return (dlg.GetValue());

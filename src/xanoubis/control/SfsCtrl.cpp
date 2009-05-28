@@ -230,12 +230,15 @@ SfsCtrl::validateAll(bool orphaned)
 SfsCtrl::CommandResult
 SfsCtrl::registerChecksum(const IndexArray &arr)
 {
+	KeyCtrl::KeyResult keyRes;
+	unsigned int idx;
+
 	if (!taskList_.empty())
 		return (RESULT_BUSY);
 
 	if (comEnabled_) {
 		for (size_t i = 0; i < arr.Count(); i++) {
-			unsigned int idx = arr.Item(i);
+			idx = arr.Item(i);
 
 			if (idx >= sfsDir_.getNumEntries()) {
 				/* Out of range */
@@ -245,7 +248,10 @@ SfsCtrl::registerChecksum(const IndexArray &arr)
 			if (isSignatureEnabled()) {
 				/* Need a loaded private key */
 				KeyCtrl *keyCtrl = KeyCtrl::getInstance();
-				if (!keyCtrl->loadPrivateKey())
+				keyRes = keyCtrl->loadPrivateKey();
+				if (keyRes == KeyCtrl::RESULT_KEY_WRONG_PASS)
+					return (RESULT_WRONG_PASS);
+				else if (keyRes == KeyCtrl::RESULT_KEY_ERROR)
 					return (RESULT_NEEDKEY);
 			}
 

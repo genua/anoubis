@@ -31,7 +31,6 @@
 #include <bsdcompat.h>
 #endif
 
-
 #include <wx/stdpaths.h>
 
 #include "PrivKey.h"
@@ -43,6 +42,7 @@ PrivKey::PrivKey(void)
 
 	this->privKey_ = 0;
 	this->validity_ = 0;
+	this->tries_ = 0;
 
 	/* Assign default keyfile, if already existing */
 	if (wxFileExists(defFile))
@@ -60,6 +60,18 @@ wxString
 PrivKey::getFile(void) const
 {
 	return (keyFile_);
+}
+
+int
+PrivKey::getTries(void)
+{
+	return(tries_);
+}
+
+void
+PrivKey::resetTries(void)
+{
+	tries_ = 0;
 }
 
 void
@@ -86,14 +98,30 @@ PrivKey::canLoad(void) const
 	return (wxFileExists(keyFile_));
 }
 
-bool
+PrivKey::PrivKeyResult
 PrivKey::load(pem_password_cb *xpass_cb)
 {
 	int err = 0;
+
 	if (privKey_ == 0) {
-		/* XXX KM: The error handling is not finished yet */
-		privKey_ = anoubis_sig_priv_init(
-		    keyFile_.fn_str(), 0, xpass_cb, &err);
+		do {
+			privKey_ = anoubis_sig_priv_init(
+			    keyFile_.fn_str(), 0, xpass_cb, &err);
+			if (err != 0) {
+				if (err == EPERM)
+					tries_++;
+				else
+					break;
+			} else
+				this->resetTries();
+		} while (err && tries_ < 3);
+
+		if (err) {
+			if (tries_ >= 3)
+				return ERR_PRIV_WRONG_PASS;
+			else
+				return ERR_PRIV_ERR;
+		}
 
 		if (privKey_ != 0) {
 			/*
@@ -105,11 +133,10 @@ PrivKey::load(pem_password_cb *xpass_cb)
 				unload();
 			}
 		}
-
-		return (privKey_ != 0);
+		return ERR_PRIV_OK;
 	} else {
 		/* A key is already loaded */
-		return (false);
+		return ERR_PRIV_OK;
 	}
 }
 

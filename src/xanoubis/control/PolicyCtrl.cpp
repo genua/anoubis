@@ -384,27 +384,32 @@ PolicyCtrl::receiveOneFromDaemon(long prio, long uid)
 	}
 }
 
-bool
+PolicyCtrl::PolicyResult
 PolicyCtrl::sendToDaemon(long id)
 {
 	PolicyRuleSet		*rs = getRuleSet(id);
 	ComPolicySendTask	*task;
+	KeyCtrl::KeyResult	keyRes;
 
 	if (!rs)
-		return (false);
+		return (RESULT_POL_ERR);
 
 	task = new ComPolicySendTask;
 	if (!task->setPolicy(rs)) {
 		delete task;
-		return (false);
+		return (RESULT_POL_ERR);
 	}
 
 	KeyCtrl *keyCtrl = KeyCtrl::getInstance();
 	if (keyCtrl->canUseLocalKeys()) {
 		/* You need to sign the policy, the private key is required */
-		if (!keyCtrl->loadPrivateKey()) {
+		keyRes = keyCtrl->loadPrivateKey();
+		if (keyRes == KeyCtrl::RESULT_KEY_ERROR) {
 			delete task;
-			return (false);
+			return (RESULT_POL_ERR);
+		} else if (keyRes == KeyCtrl::RESULT_KEY_WRONG_PASS) {
+			delete task;
+			return (RESULT_POL_WRONG_PASS);
 		}
 
 		PrivKey &privKey = keyCtrl->getPrivateKey();
@@ -414,7 +419,7 @@ PolicyCtrl::sendToDaemon(long id)
 	sendTaskList_.push_back(task);
 	JobCtrl::getInstance()->addTask(task);
 
-	return (true);
+	return (RESULT_POL_OK);
 }
 
 bool

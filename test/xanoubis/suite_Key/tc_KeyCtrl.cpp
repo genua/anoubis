@@ -245,13 +245,16 @@ END_TEST
 
 START_TEST(tc_KeyCtrl_loadPrivateKey_ok)
 {
+	KeyCtrl::KeyResult kRes;
+
 	tc_KeyCtrl_PassphraseReader reader(wxT("1234"), true);
 	tc_keyCtrl->setPassphraseReader(&reader);
 
 	PrivKey &privKey = tc_keyCtrl->getPrivateKey();
 	privKey.setFile(wxString::FromAscii(path_privkey));
 
-	fail_unless(tc_keyCtrl->loadPrivateKey(),
+	kRes = tc_keyCtrl->loadPrivateKey();
+	fail_unless(kRes == KeyCtrl::RESULT_KEY_OK,
 	    "Failed to load private key");
 	fail_unless(privKey.isLoaded(), "Private key is not loaded");
 }
@@ -259,13 +262,16 @@ END_TEST
 
 START_TEST(tc_KeyCtrl_loadPrivateKey_wrongpass)
 {
+	KeyCtrl::KeyResult kRes;
+
 	tc_KeyCtrl_PassphraseReader reader(wxT("foobar"), true);
 	tc_keyCtrl->setPassphraseReader(&reader);
 
 	PrivKey &privKey = tc_keyCtrl->getPrivateKey();
 	privKey.setFile(wxString::FromAscii(path_privkey));
 
-	fail_unless(!tc_keyCtrl->loadPrivateKey(),
+	kRes = tc_keyCtrl->loadPrivateKey();
+	fail_unless(kRes == KeyCtrl::RESULT_KEY_WRONG_PASS,
 	    "Load private key was successful");
 	fail_unless(!privKey.isLoaded(), "Private key is loaded");
 }
@@ -273,13 +279,16 @@ END_TEST
 
 START_TEST(tc_KeyCtrl_loadPrivateKey_canceled)
 {
+	KeyCtrl::KeyResult kRes;
+
 	tc_KeyCtrl_PassphraseReader reader(wxT("1234"), false);
 	tc_keyCtrl->setPassphraseReader(&reader);
 
 	PrivKey &privKey = tc_keyCtrl->getPrivateKey();
 	privKey.setFile(wxString::FromAscii(path_privkey));
 
-	fail_unless(!tc_keyCtrl->loadPrivateKey(),
+	kRes = tc_keyCtrl->loadPrivateKey();
+	fail_unless(kRes == KeyCtrl::RESULT_KEY_WRONG_PASS,
 	    "Load private key was successful");
 	fail_unless(!privKey.isLoaded(), "Private key is loaded");
 }

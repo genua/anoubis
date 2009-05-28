@@ -34,7 +34,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-05-25 09:59+0200\n"
+"POT-Creation-Date: 2009-05-27 16:48+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -76,7 +76,7 @@ msgstr ""
 #: model/AlfFilterPolicy.cpp:865 model/ContextFilterPolicy.cpp:180
 #: model/FilterPolicy.cpp:95 model/FilterPolicy.cpp:121
 #: model/PolicyUtils.cpp:218 view/DlgRuleEditorBase.cpp:354
-#: view/DlgRuleEditor.cpp:1791 view/DlgRuleEditorAppPage.cpp:173
+#: view/DlgRuleEditor.cpp:1828 view/DlgRuleEditorAppPage.cpp:173
 #: view/RuleWizardProgramPage.cpp:140 view/RuleWizardHistory.cpp:281
 msgid "(unknown)"
 msgstr ""
@@ -256,6 +256,49 @@ msgstr ""
 msgid "until %ls for task %ls"
 msgstr ""
 
+#: model/SfsFilterPolicy.cpp:635 view/DlgRuleEditorBase.cpp:437
+#: view/DlgRuleEditorBase.cpp:844 view/DlgRuleEditorBase.cpp:873
+#: view/DlgRuleEditorBase.cpp:902
+msgid "allow"
+msgstr ""
+
+#: model/SfsFilterPolicy.cpp:637 view/DlgRuleEditorBase.cpp:442
+#: view/DlgRuleEditorBase.cpp:844 view/DlgRuleEditorBase.cpp:873
+#: view/DlgRuleEditorBase.cpp:902
+msgid "deny"
+msgstr ""
+
+#: model/SfsFilterPolicy.cpp:639 view/DlgRuleEditorBase.cpp:447
+#: view/DlgRuleEditorBase.cpp:844 view/DlgRuleEditorBase.cpp:873
+#: view/DlgRuleEditorBase.cpp:902
+msgid "ask"
+msgstr ""
+
+#: model/SfsFilterPolicy.cpp:641 view/DlgRuleEditorBase.cpp:844
+#: view/DlgRuleEditorBase.cpp:873 view/DlgRuleEditorBase.cpp:902
+msgid "continue"
+msgstr ""
+
+#: model/SfsFilterPolicy.cpp:650 view/DlgRuleEditorBase.cpp:231
+#: view/DlgRuleEditorBase.cpp:456 view/DlgRuleEditorBase.cpp:852
+#: view/DlgRuleEditorBase.cpp:881 view/DlgRuleEditorBase.cpp:910
+#: view/ModAnoubisMainPanelImpl.cpp:313 view/ModAnoubisMainPanelImpl.cpp:318
+#: view/ModAnoubisPanelsBase.cpp:432 view/ModAnoubisPanelsBase.cpp:459
+msgid "none"
+msgstr ""
+
+#: model/SfsFilterPolicy.cpp:652 view/DlgRuleEditorBase.cpp:461
+#: view/DlgRuleEditorBase.cpp:852 view/DlgRuleEditorBase.cpp:881
+#: view/DlgRuleEditorBase.cpp:910
+msgid "normal"
+msgstr ""
+
+#: model/SfsFilterPolicy.cpp:654 view/DlgRuleEditorBase.cpp:466
+#: view/DlgRuleEditorBase.cpp:852 view/DlgRuleEditorBase.cpp:881
+#: view/DlgRuleEditorBase.cpp:910
+msgid "alert"
+msgstr ""
+
 #: view/DlgBackupPolicyImpl.cpp:54
 #, c-format
 msgid "uid %d"
@@ -283,7 +326,7 @@ msgstr ""
 msgid "Log Viewer"
 msgstr ""
 
-#: view/DlgLogViewer.cpp:77 view/ModAnoubisMainPanelImpl.cpp:469
+#: view/DlgLogViewer.cpp:77 view/ModAnoubisMainPanelImpl.cpp:476
 msgid "Time"
 msgstr ""
 
@@ -385,19 +428,11 @@ msgstr ""
 msgid "RuleSet origin:"
 msgstr ""
 
-#: view/DlgRuleEditorBase.cpp:231 view/DlgRuleEditorBase.cpp:456
-#: view/DlgRuleEditorBase.cpp:852 view/DlgRuleEditorBase.cpp:881
-#: view/DlgRuleEditorBase.cpp:910 view/ModAnoubisMainPanelImpl.cpp:313
-#: view/ModAnoubisMainPanelImpl.cpp:318 view/ModAnoubisPanelsBase.cpp:432
-#: view/ModAnoubisPanelsBase.cpp:459
-msgid "none"
-msgstr ""
-
 #: view/DlgRuleEditorBase.cpp:238 view/DlgRuleEditorBase.cpp:348
 msgid "Status:"
 msgstr ""
 
-#: view/DlgRuleEditorBase.cpp:242 view/DlgRuleEditor.cpp:2101
+#: view/DlgRuleEditorBase.cpp:242 view/DlgRuleEditor.cpp:2138
 msgid "not modified"
 msgstr ""
 
@@ -490,27 +525,12 @@ msgstr ""
 msgid "Action:"
 msgstr ""
 
-#: view/DlgRuleEditorBase.cpp:437 view/DlgRuleEditorBase.cpp:844
-#: view/DlgRuleEditorBase.cpp:873 view/DlgRuleEditorBase.cpp:902
-msgid "allow"
-msgstr ""
-
 #: view/DlgRuleEditorBase.cpp:438
 msgid "Allow connection"
 msgstr ""
 
-#: view/DlgRuleEditorBase.cpp:442 view/DlgRuleEditorBase.cpp:844
-#: view/DlgRuleEditorBase.cpp:873 view/DlgRuleEditorBase.cpp:902
-msgid "deny"
-msgstr ""
-
 #: view/DlgRuleEditorBase.cpp:443
 msgid "Deny connection"
-msgstr ""
-
-#: view/DlgRuleEditorBase.cpp:447 view/DlgRuleEditorBase.cpp:844
-#: view/DlgRuleEditorBase.cpp:873 view/DlgRuleEditorBase.cpp:902
-msgid "ask"
 msgstr ""
 
 #: view/DlgRuleEditorBase.cpp:448
@@ -525,18 +545,8 @@ msgstr ""
 msgid "Disable logging"
 msgstr ""
 
-#: view/DlgRuleEditorBase.cpp:461 view/DlgRuleEditorBase.cpp:852
-#: view/DlgRuleEditorBase.cpp:881 view/DlgRuleEditorBase.cpp:910
-msgid "normal"
-msgstr ""
-
 #: view/DlgRuleEditorBase.cpp:462
 msgid "Enable logging"
-msgstr ""
-
-#: view/DlgRuleEditorBase.cpp:466 view/DlgRuleEditorBase.cpp:852
-#: view/DlgRuleEditorBase.cpp:881 view/DlgRuleEditorBase.cpp:910
-msgid "alert"
 msgstr ""
 
 #: view/DlgRuleEditorBase.cpp:467
@@ -715,11 +725,6 @@ msgstr ""
 msgid "Valid:"
 msgstr ""
 
-#: view/DlgRuleEditorBase.cpp:844 view/DlgRuleEditorBase.cpp:873
-#: view/DlgRuleEditorBase.cpp:902
-msgid "continue"
-msgstr ""
-
 #: view/DlgRuleEditorBase.cpp:846 view/DlgRuleEditorBase.cpp:875
 #: view/DlgRuleEditorBase.cpp:904 view/DlgRuleEditor.cpp:91
 #: view/DlgRuleEditor.cpp:147 view/ModAlfMainPanelImpl.cpp:60
@@ -825,12 +830,12 @@ msgstr ""
 
 #: view/DlgRuleEditor.cpp:80 view/DlgRuleEditor.cpp:90
 #: view/DlgRuleEditor.cpp:116 view/DlgRuleEditor.cpp:137
-#: view/DlgRuleEditor.cpp:146 view/ModAnoubisMainPanelImpl.cpp:467
+#: view/DlgRuleEditor.cpp:146 view/ModAnoubisMainPanelImpl.cpp:474
 msgid "Type"
 msgstr ""
 
 #: view/DlgRuleEditor.cpp:81 view/ModAlfMainPanelImpl.cpp:62
-#: view/ModAnoubisMainPanelImpl.cpp:470 view/ModSfsMainPanelImpl.cpp:69
+#: view/ModAnoubisMainPanelImpl.cpp:477 view/ModSfsMainPanelImpl.cpp:69
 #: view/ModSbMainPanelImpl.cpp:49
 msgid "User"
 msgstr ""
@@ -937,7 +942,7 @@ msgid "Cannot edit admin ruleset!"
 msgstr ""
 
 #: view/DlgRuleEditor.cpp:1063 view/DlgRuleEditor.cpp:1168
-#: view/DlgRuleEditor.cpp:1353 view/DlgRuleEditor.cpp:2141
+#: view/DlgRuleEditor.cpp:1354 view/DlgRuleEditor.cpp:2178
 msgid "RuleEditor"
 msgstr ""
 
@@ -973,7 +978,7 @@ msgid "Couldn't import policy file: it has errors."
 msgstr ""
 
 #: view/DlgRuleEditor.cpp:1238 view/MainFrame.cpp:391
-#: view/ModAnoubisMainPanelImpl.cpp:1447
+#: view/ModAnoubisMainPanelImpl.cpp:1454
 #: view/RuleWizardContextExceptionPage.cpp:92 main.cpp:400 main.cpp:408
 msgid "Error"
 msgstr ""
@@ -990,43 +995,66 @@ msgstr ""
 msgid "Export ruleset"
 msgstr ""
 
-#: view/DlgRuleEditor.cpp:1350
+#: view/DlgRuleEditor.cpp:1351
 msgid ""
 "There are policies with\n"
 "outdated checksum\n"
 "Shall we send the ruleset anyway?"
 msgstr ""
 
-#: view/DlgRuleEditor.cpp:1529
+#: view/DlgRuleEditor.cpp:1364 view/DlgRuleEditor.cpp:1386
+#: view/ModAnoubisMainPanelImpl.cpp:446 view/ModSfsMainPanelImpl.cpp:345
+#: view/ModSfsMainPanelImpl.cpp:398 view/ModSfsMainPanelImpl.cpp:449
+#: view/ModSfsMainPanelImpl.cpp:488
+msgid "The entered password is incorrect."
+msgstr ""
+
+#: view/DlgRuleEditor.cpp:1365 view/DlgRuleEditor.cpp:1387
+msgid "Key Load Error"
+msgstr ""
+
+#: view/DlgRuleEditor.cpp:1370
+msgid "An error occured while sending policy to daemon."
+msgstr ""
+
+#: view/DlgRuleEditor.cpp:1372 view/DlgRuleEditor.cpp:1394
+msgid "Policy Load Error"
+msgstr ""
+
+#: view/DlgRuleEditor.cpp:1392
+msgid "An error occured while sending admin policy to the daemon."
+msgstr ""
+
+#: view/DlgRuleEditor.cpp:1566
 msgid "Rule Editor filling application table (admin ruleset)"
 msgstr ""
 
-#: view/DlgRuleEditor.cpp:1532
+#: view/DlgRuleEditor.cpp:1569
 msgid "Rule Editor filling application table (user ruleset)"
 msgstr ""
 
-#: view/DlgRuleEditor.cpp:1538
+#: view/DlgRuleEditor.cpp:1575
 msgid "Loading application policy..."
 msgstr ""
 
-#: view/DlgRuleEditor.cpp:1565
+#: view/DlgRuleEditor.cpp:1602
 msgid "Rule Editor filling filter table..."
 msgstr ""
 
-#: view/DlgRuleEditor.cpp:1570
+#: view/DlgRuleEditor.cpp:1607
 msgid "Loading filter policy..."
 msgstr ""
 
-#: view/DlgRuleEditor.cpp:1706
+#: view/DlgRuleEditor.cpp:1743
 #, c-format
 msgid "loading policy with id: %d"
 msgstr ""
 
-#: view/DlgRuleEditor.cpp:2099
+#: view/DlgRuleEditor.cpp:2136
 msgid "modified"
 msgstr ""
 
-#: view/DlgRuleEditor.cpp:2140
+#: view/DlgRuleEditor.cpp:2177
 msgid "Invalid user Name"
 msgstr ""
 
@@ -1051,7 +1079,7 @@ msgid "calculating..."
 msgstr ""
 
 #: view/DlgRuleEditorAppPage.cpp:322 view/RuleWizardProgramPage.cpp:135
-#: control/SfsCtrl.cpp:621 control/SfsCtrl.cpp:800
+#: control/SfsCtrl.cpp:627 control/SfsCtrl.cpp:806
 #, c-format
 msgid "Failed to calculate the checksum for %ls: %hs"
 msgstr ""
@@ -1061,7 +1089,7 @@ msgid "Default Path:"
 msgstr ""
 
 #: view/DlgRuleEditorFilterSubjectPage.cpp:45
-#: view/ModAnoubisMainPanelImpl.cpp:587 view/ModSfsPanelsBase.cpp:409
+#: view/ModAnoubisMainPanelImpl.cpp:594 view/ModSfsPanelsBase.cpp:409
 msgid "Path:"
 msgstr ""
 
@@ -1161,7 +1189,7 @@ msgstr ""
 msgid "Choose a policy file:"
 msgstr ""
 
-#: view/MainFrame.cpp:399 view/ModAnoubisMainPanelImpl.cpp:1167
+#: view/MainFrame.cpp:399 view/ModAnoubisMainPanelImpl.cpp:1174
 msgid "Choose a file to write the policies to:"
 msgstr ""
 
@@ -1190,7 +1218,7 @@ msgstr ""
 msgid "Temporary"
 msgstr ""
 
-#: view/ModAlfMainPanelImpl.cpp:187 view/ModSfsMainPanelImpl.cpp:815
+#: view/ModAlfMainPanelImpl.cpp:187 view/ModSfsMainPanelImpl.cpp:844
 #: view/ModSbMainPanelImpl.cpp:232
 #, c-format
 msgid "admin ruleset of %ls"
@@ -1250,7 +1278,7 @@ msgstr ""
 msgid "Remove profile"
 msgstr ""
 
-#: view/ModAnoubisMainPanelImpl.cpp:378 view/ModAnoubisMainPanelImpl.cpp:422
+#: view/ModAnoubisMainPanelImpl.cpp:378 view/ModAnoubisMainPanelImpl.cpp:423
 #, c-format
 msgid "Failed to import from \"%ls\"."
 msgstr ""
@@ -1273,131 +1301,131 @@ msgstr ""
 msgid "Failed to export to \"%ls\"."
 msgstr ""
 
-#: view/ModAnoubisMainPanelImpl.cpp:424 view/ModAnoubisMainPanelImpl.cpp:432
-#: view/ModAnoubisMainPanelImpl.cpp:440
+#: view/ModAnoubisMainPanelImpl.cpp:425 view/ModAnoubisMainPanelImpl.cpp:433
+#: view/ModAnoubisMainPanelImpl.cpp:442 view/ModAnoubisMainPanelImpl.cpp:447
 msgid "Activate profile"
 msgstr ""
 
-#: view/ModAnoubisMainPanelImpl.cpp:431
+#: view/ModAnoubisMainPanelImpl.cpp:432
 msgid "Could not obtain user-policy."
 msgstr ""
 
-#: view/ModAnoubisMainPanelImpl.cpp:438
+#: view/ModAnoubisMainPanelImpl.cpp:440
 msgid ""
 "Could not activate user-policy.\n"
 "No connection to anoubisd."
 msgstr ""
 
-#: view/ModAnoubisMainPanelImpl.cpp:468
+#: view/ModAnoubisMainPanelImpl.cpp:475
 msgid "Date"
 msgstr ""
 
-#: view/ModAnoubisMainPanelImpl.cpp:471
+#: view/ModAnoubisMainPanelImpl.cpp:478
 msgid "Version"
 msgstr ""
 
-#: view/ModAnoubisMainPanelImpl.cpp:478
+#: view/ModAnoubisMainPanelImpl.cpp:485
 msgid "(Initializing version management...)"
 msgstr ""
 
-#: view/ModAnoubisMainPanelImpl.cpp:520
+#: view/ModAnoubisMainPanelImpl.cpp:527
 msgid "(Repository not initialized.)"
 msgstr ""
 
-#: view/ModAnoubisMainPanelImpl.cpp:525
+#: view/ModAnoubisMainPanelImpl.cpp:532
 msgid "(Failed to prepare versioning system.)"
 msgstr ""
 
-#: view/ModAnoubisMainPanelImpl.cpp:533
+#: view/ModAnoubisMainPanelImpl.cpp:540
 msgid "(Failed to fetch versioning information.)"
 msgstr ""
 
-#: view/ModAnoubisMainPanelImpl.cpp:540
+#: view/ModAnoubisMainPanelImpl.cpp:547
 msgid "(No versioning information available.)"
 msgstr ""
 
-#: view/ModAnoubisMainPanelImpl.cpp:580
+#: view/ModAnoubisMainPanelImpl.cpp:587
 msgid "Time:"
 msgstr ""
 
-#: view/ModAnoubisMainPanelImpl.cpp:581
+#: view/ModAnoubisMainPanelImpl.cpp:588
 msgid "Module:"
 msgstr ""
 
-#: view/ModAnoubisMainPanelImpl.cpp:582 view/RuleWizardHistory.cpp:612
+#: view/ModAnoubisMainPanelImpl.cpp:589 view/RuleWizardHistory.cpp:612
 #: view/RuleWizardPanelsBase.cpp:288
 msgid "Program:"
 msgstr ""
 
-#: view/ModAnoubisMainPanelImpl.cpp:583
+#: view/ModAnoubisMainPanelImpl.cpp:590
 msgid "On behalf of:"
 msgstr ""
 
-#: view/ModAnoubisMainPanelImpl.cpp:585
+#: view/ModAnoubisMainPanelImpl.cpp:592
 msgid "Traffic:"
 msgstr ""
 
-#: view/ModAnoubisMainPanelImpl.cpp:589
+#: view/ModAnoubisMainPanelImpl.cpp:596
 msgid "Operation:"
 msgstr ""
 
-#: view/ModAnoubisMainPanelImpl.cpp:1102
+#: view/ModAnoubisMainPanelImpl.cpp:1109
 msgid "No profile selected"
 msgstr ""
 
-#: view/ModAnoubisMainPanelImpl.cpp:1102 view/ModAnoubisMainPanelImpl.cpp:1119
-#: view/ModAnoubisMainPanelImpl.cpp:1129 view/ModAnoubisMainPanelImpl.cpp:1136
-#: view/ModAnoubisMainPanelImpl.cpp:1142
+#: view/ModAnoubisMainPanelImpl.cpp:1109 view/ModAnoubisMainPanelImpl.cpp:1126
+#: view/ModAnoubisMainPanelImpl.cpp:1136 view/ModAnoubisMainPanelImpl.cpp:1143
+#: view/ModAnoubisMainPanelImpl.cpp:1149
 msgid "Restore version"
 msgstr ""
 
-#: view/ModAnoubisMainPanelImpl.cpp:1113
+#: view/ModAnoubisMainPanelImpl.cpp:1120
 msgid "Failed to fetch the active policy."
 msgstr ""
 
-#: view/ModAnoubisMainPanelImpl.cpp:1116
+#: view/ModAnoubisMainPanelImpl.cpp:1123
 #, c-format
 msgid ""
 "Failed to fetch the policy\n"
 "of the \"%ls\" profile"
 msgstr ""
 
-#: view/ModAnoubisMainPanelImpl.cpp:1128
+#: view/ModAnoubisMainPanelImpl.cpp:1135
 msgid "Failed to import the active policy."
 msgstr ""
 
-#: view/ModAnoubisMainPanelImpl.cpp:1133
+#: view/ModAnoubisMainPanelImpl.cpp:1140
 #, c-format
 msgid ""
 "Failed to import the policy\n"
 "of the \"%ls\" profile"
 msgstr ""
 
-#: view/ModAnoubisMainPanelImpl.cpp:1140
+#: view/ModAnoubisMainPanelImpl.cpp:1147
 msgid "automatically created by restore"
 msgstr ""
 
-#: view/ModAnoubisMainPanelImpl.cpp:1141
+#: view/ModAnoubisMainPanelImpl.cpp:1148
 msgid "Old version imported but could not create a new version"
 msgstr ""
 
-#: view/ModAnoubisMainPanelImpl.cpp:1174
+#: view/ModAnoubisMainPanelImpl.cpp:1181
 msgid "Failed to export a version!"
 msgstr ""
 
-#: view/ModAnoubisMainPanelImpl.cpp:1175
+#: view/ModAnoubisMainPanelImpl.cpp:1182
 msgid "Export version"
 msgstr ""
 
-#: view/ModAnoubisMainPanelImpl.cpp:1196
+#: view/ModAnoubisMainPanelImpl.cpp:1203
 msgid "Failed to remove the selected version!"
 msgstr ""
 
-#: view/ModAnoubisMainPanelImpl.cpp:1198
+#: view/ModAnoubisMainPanelImpl.cpp:1205
 msgid "Remove version"
 msgstr ""
 
-#: view/ModAnoubisMainPanelImpl.cpp:1446
+#: view/ModAnoubisMainPanelImpl.cpp:1453
 msgid "Failed to create a rule from escalation"
 msgstr ""
 
@@ -1826,70 +1854,77 @@ msgstr ""
 msgid "Choose certificate"
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:272 view/ModSfsMainPanelImpl.cpp:484
+#: view/ModSfsMainPanelImpl.cpp:272 view/ModSfsMainPanelImpl.cpp:346
+#: view/ModSfsMainPanelImpl.cpp:399 view/ModSfsMainPanelImpl.cpp:450
+#: view/ModSfsMainPanelImpl.cpp:489 view/ModSfsMainPanelImpl.cpp:513
 msgid "SFS error"
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:314
+#: view/ModSfsMainPanelImpl.cpp:316
 msgid "Choose the import-file"
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:326 view/ModSfsMainPanelImpl.cpp:372
-#: view/ModSfsMainPanelImpl.cpp:416 view/ModSfsMainPanelImpl.cpp:448
+#: view/ModSfsMainPanelImpl.cpp:328 view/ModSfsMainPanelImpl.cpp:381
+#: view/ModSfsMainPanelImpl.cpp:432 view/ModSfsMainPanelImpl.cpp:471
 msgid "Error: xanoubis is not connected to the daemon"
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:330 view/ModSfsMainPanelImpl.cpp:376
-#: view/ModSfsMainPanelImpl.cpp:420 view/ModSfsMainPanelImpl.cpp:452
+#: view/ModSfsMainPanelImpl.cpp:332 view/ModSfsMainPanelImpl.cpp:385
+#: view/ModSfsMainPanelImpl.cpp:436 view/ModSfsMainPanelImpl.cpp:475
 msgid "Error: Failed to load the private key."
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:334 view/ModSfsMainPanelImpl.cpp:380
-#: view/ModSfsMainPanelImpl.cpp:424 view/ModSfsMainPanelImpl.cpp:456
+#: view/ModSfsMainPanelImpl.cpp:336 view/ModSfsMainPanelImpl.cpp:389
+#: view/ModSfsMainPanelImpl.cpp:440 view/ModSfsMainPanelImpl.cpp:479
 msgid "Error: An invalid argument was supplied"
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:338 view/ModSfsMainPanelImpl.cpp:384
-#: view/ModSfsMainPanelImpl.cpp:428 view/ModSfsMainPanelImpl.cpp:460
+#: view/ModSfsMainPanelImpl.cpp:340 view/ModSfsMainPanelImpl.cpp:393
+#: view/ModSfsMainPanelImpl.cpp:444 view/ModSfsMainPanelImpl.cpp:483
 msgid "Error: Sfs is still busy with another operation."
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:357
+#: view/ModSfsMainPanelImpl.cpp:344 view/ModSfsMainPanelImpl.cpp:397
+#: view/ModSfsMainPanelImpl.cpp:448 view/ModSfsMainPanelImpl.cpp:487
+msgid "Wrong password!"
+msgstr ""
+
+#: view/ModSfsMainPanelImpl.cpp:366
 msgid "Choose the export-destination"
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:478
+#: view/ModSfsMainPanelImpl.cpp:507
 msgid ""
 "Failed to enable signed checksums.\n"
 "Please check the configuration of your certificate and private key!"
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:482
+#: view/ModSfsMainPanelImpl.cpp:511
 msgid "Failed to disable signed checksums."
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:669
+#: view/ModSfsMainPanelImpl.cpp:698
 msgid ""
 "Cannot load the private key!\n"
 "The file you specified does not exist."
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:671
+#: view/ModSfsMainPanelImpl.cpp:700
 msgid "Load private key"
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:699
+#: view/ModSfsMainPanelImpl.cpp:728
 #, c-format
 msgid ""
 "Failed to load certificate from\n"
 "%ls."
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:701
+#: view/ModSfsMainPanelImpl.cpp:730
 msgid "Load certificate"
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:844
+#: view/ModSfsMainPanelImpl.cpp:873
 #, c-format
 msgid "default %ls"
 msgstr ""
@@ -2778,255 +2813,255 @@ msgstr ""
 msgid "Manual"
 msgstr ""
 
-#: control/SfsCtrl.cpp:330
+#: control/SfsCtrl.cpp:336
 #, c-format
 msgid "Failed to open %ls for reading: %hs"
 msgstr ""
 
-#: control/SfsCtrl.cpp:338
+#: control/SfsCtrl.cpp:344
 #, c-format
 msgid "Failed to parse %ls!"
 msgstr ""
 
-#: control/SfsCtrl.cpp:485
+#: control/SfsCtrl.cpp:491
 #, c-format
 msgid "Communication error while fetching list of checksumed files of %ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:490
+#: control/SfsCtrl.cpp:496
 #, c-format
 msgid "Communication error while fetching list of signed files of %ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:498
+#: control/SfsCtrl.cpp:504
 #, c-format
 msgid ""
 "Got error from daemon (%hs) while fetching the list of checksumed files of %"
 "ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:503
+#: control/SfsCtrl.cpp:509
 #, c-format
 msgid ""
 "Got error from daemon (%hs) while fetching the list of signed files of %ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:509
+#: control/SfsCtrl.cpp:515
 #, c-format
 msgid ""
 "An unexpected error occured (%i) while fetching the list of checksumed files "
 "of %ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:515
+#: control/SfsCtrl.cpp:521
 #, c-format
 msgid ""
 "An unexpected error occured (%i) while fetching the list of signed files of %"
 "ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:612 control/SfsCtrl.cpp:661 control/SfsCtrl.cpp:787
-#: control/SfsCtrl.cpp:895
+#: control/SfsCtrl.cpp:618 control/SfsCtrl.cpp:667 control/SfsCtrl.cpp:793
+#: control/SfsCtrl.cpp:901
 #, c-format
 msgid "%ls not found in file-list!"
 msgstr ""
 
-#: control/SfsCtrl.cpp:688
+#: control/SfsCtrl.cpp:694
 #, c-format
 msgid "Got error from daemon (%hs) while fetching the checksum for %ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:692
+#: control/SfsCtrl.cpp:698
 #, c-format
 msgid "Got error from daemon (%hs) while fetching the signature for %ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:705
+#: control/SfsCtrl.cpp:711
 #, c-format
 msgid "Communication error while fetching the checksum for %ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:709
+#: control/SfsCtrl.cpp:715
 #, c-format
 msgid "Communication error while fetching the signature for %ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:717
+#: control/SfsCtrl.cpp:723
 #, c-format
 msgid "Failed to resolve %ls"
 msgstr ""
 
-#: control/SfsCtrl.cpp:725
+#: control/SfsCtrl.cpp:731
 #, c-format
 msgid "An unexpected error occured (%hs) while fetching the checksum for %ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:730
+#: control/SfsCtrl.cpp:736
 #, c-format
 msgid "An unexpected error occured (%hs) while fetching the signature for %ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:755
+#: control/SfsCtrl.cpp:761
 msgid "An unexpected checksum was fetched."
 msgstr ""
 
-#: control/SfsCtrl.cpp:757
+#: control/SfsCtrl.cpp:763
 msgid "An unexpected signature was fetched."
 msgstr ""
 
-#: control/SfsCtrl.cpp:804
+#: control/SfsCtrl.cpp:810
 #, c-format
 msgid "Failed to calculate the signature for %ls: %hs"
 msgstr ""
 
-#: control/SfsCtrl.cpp:814
+#: control/SfsCtrl.cpp:820
 #, c-format
 msgid "Communication error while register the checksum for %ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:818
+#: control/SfsCtrl.cpp:824
 #, c-format
 msgid "Communication error while register the signature for %ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:828
+#: control/SfsCtrl.cpp:834
 #, c-format
 msgid "Got error from daemon (%hs) while register the checksum for %ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:833
+#: control/SfsCtrl.cpp:839
 #, c-format
 msgid "Got error from daemon (%hs) while register the signature for %ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:844
+#: control/SfsCtrl.cpp:850
 #, c-format
 msgid "An unexpected error occured (%hs) while register the checksum for %ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:849
+#: control/SfsCtrl.cpp:855
 #, c-format
 msgid "An unexpected error occured (%hs) while register the signature for %ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:908
+#: control/SfsCtrl.cpp:914
 #, c-format
 msgid "Communication error while removing the checksum for %ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:912
+#: control/SfsCtrl.cpp:918
 #, c-format
 msgid "Communication error while removing the signature for %ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:921
+#: control/SfsCtrl.cpp:927
 #, c-format
 msgid "Got error from daemon (%hs) while removing the checksum for %ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:926
+#: control/SfsCtrl.cpp:932
 #, c-format
 msgid "Got error from daemon (%hs) while removing the signature for %ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:936
+#: control/SfsCtrl.cpp:942
 #, c-format
 msgid "An unexpected error occured (%hs) while removing the checksum for %ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:941
+#: control/SfsCtrl.cpp:947
 #, c-format
 msgid "An unexpected error occured (%hs) while removing the signature for %ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:1238
+#: control/SfsCtrl.cpp:1244
 #, c-format
 msgid "Failed to open %ls for writing: %hs"
 msgstr ""
 
-#: control/SfsCtrl.cpp:1247
+#: control/SfsCtrl.cpp:1253
 #, c-format
 msgid "Failed to flush the content of %ls: %hs"
 msgstr ""
 
-#: control/PolicyCtrl.cpp:485
+#: control/PolicyCtrl.cpp:490
 msgid "The task was not executed."
 msgstr ""
 
-#: control/PolicyCtrl.cpp:487
+#: control/PolicyCtrl.cpp:492
 msgid "Out of memory."
 msgstr ""
 
-#: control/PolicyCtrl.cpp:491
+#: control/PolicyCtrl.cpp:496
 #, c-format
 msgid ""
 "Communication error while sending admin-policy\n"
 "of %ls to daemon."
 msgstr ""
 
-#: control/PolicyCtrl.cpp:494
+#: control/PolicyCtrl.cpp:499
 #, c-format
 msgid ""
 "Communication error while sending user-policy\n"
 "of %ls to daemon."
 msgstr ""
 
-#: control/PolicyCtrl.cpp:497
+#: control/PolicyCtrl.cpp:502
 msgid "Error while sending policy to daemon."
-msgstr ""
-
-#: control/PolicyCtrl.cpp:500
-#, c-format
-msgid ""
-"Got error (%hs) from daemon\n"
-"after sending admin-policy of %ls."
 msgstr ""
 
 #: control/PolicyCtrl.cpp:505
 #, c-format
 msgid ""
 "Got error (%hs) from daemon\n"
-"after sending user-policy of %ls."
+"after sending admin-policy of %ls."
 msgstr ""
 
 #: control/PolicyCtrl.cpp:510
 #, c-format
 msgid ""
 "Got error (%hs) from daemon\n"
+"after sending user-policy of %ls."
+msgstr ""
+
+#: control/PolicyCtrl.cpp:515
+#, c-format
+msgid ""
+"Got error (%hs) from daemon\n"
 "after sending policy."
 msgstr ""
 
-#: control/PolicyCtrl.cpp:516
+#: control/PolicyCtrl.cpp:521
 #, c-format
 msgid "Failed to sign the admin-policy of %ls: %hs."
 msgstr ""
 
-#: control/PolicyCtrl.cpp:520
+#: control/PolicyCtrl.cpp:525
 #, c-format
 msgid "Failed to sign the user-policy of %ls: %hs."
 msgstr ""
 
-#: control/PolicyCtrl.cpp:524
+#: control/PolicyCtrl.cpp:529
 #, c-format
 msgid "Failed to sign the policy: %hs."
 msgstr ""
 
-#: control/PolicyCtrl.cpp:527
+#: control/PolicyCtrl.cpp:532
 #, c-format
 msgid ""
 "An unexpected error occured.\n"
 "Error code: %i"
 msgstr ""
 
-#: control/PolicyCtrl.cpp:533 control/PolicyCtrl.cpp:540
+#: control/PolicyCtrl.cpp:538 control/PolicyCtrl.cpp:545
 msgid "Error while sending policy"
 msgstr ""
 
-#: control/PolicyCtrl.cpp:539
+#: control/PolicyCtrl.cpp:544
 msgid "Failed to make a backup of the policy."
 msgstr ""
 
-#: control/PolicyCtrl.cpp:609
+#: control/PolicyCtrl.cpp:614
 #, c-format
 msgid "Automatically created version while saving the %ls profile"
 msgstr ""
@@ -3109,13 +3144,21 @@ msgstr ""
 msgid "Couldn't remove Autostart file: %ls"
 msgstr ""
 
-#: main.cpp:671
+#: main.cpp:675
 #, c-format
 msgid ""
 "Enter the passphrase of your private key:\n"
 "%ls"
 msgstr ""
 
-#: main.cpp:672
+#: main.cpp:677 main.cpp:682
 msgid "Enter passphrase for: "
+msgstr ""
+
+#: main.cpp:680
+#, c-format
+msgid ""
+"The entered passphrase was wrong!\n"
+"Please enter the passphrase for:\n"
+"%ls"
 msgstr ""

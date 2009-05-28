@@ -60,6 +60,17 @@ class TaskEvent;
 class PolicyCtrl : public wxEvtHandler, public Singleton<PolicyCtrl>
 {
 	public:
+
+		/**
+		 * Result of sending policy to daemon
+		 */
+		enum PolicyResult
+		{
+			RESULT_POL_OK,		/*<! Everything worked fine. */
+			RESULT_POL_ERR,		/*<! An Error occured */
+			RESULT_POL_WRONG_PASS	/*<! RESULT_POL_WRONG_PASS */
+		};
+
 		/**
 		 * Destructor of PolicyCtrl.
 		 * This will clean up the whole mess. It needs to be public,
@@ -288,12 +299,9 @@ class PolicyCtrl : public wxEvtHandler, public Singleton<PolicyCtrl>
 		 * started.
 		 *
 		 * @param id The id of the policy to be sent
-		 * @return true is returned, if the procdure was started
-		 *         successfully. On error, false is returned. This
-		 *         might happen, if no connection to anoubisd is
-		 *         established.
+		 * @return a PolicyResult-Code
 		 */
-		bool sendToDaemon(long);
+		PolicyResult sendToDaemon(long);
 
 		/**
 		 * Tests whether the class broadcasts any events.

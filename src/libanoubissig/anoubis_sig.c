@@ -365,7 +365,25 @@ anoubis_sig_init(const char *keyfile, const char *certfile,
 		fclose(f);
 
 		if (!pkey) {
-			*error = ERR_get_error();
+			/* ERR_get_error gives us a certian amount of
+			 * errors that occurs but we want just to know
+			 * if the password ist wrong. We take the last
+			 * error code. */
+			*error = ERR_GET_REASON(ERR_peek_last_error());
+
+			/* _BAD_DECRYPT just means that the password
+			 * didn't encrypt the key -> wrong password.
+			 */
+			if (*error == PEM_R_BAD_DECRYPT)
+				*error = EPERM;
+			/*
+			 * _BAD_PASSWORD_READ for a empty passphrase
+			 * entered
+			 */
+			else if (*error == PEM_R_BAD_PASSWORD_READ)
+				*error = EPERM;
+
+			ERR_clear_error();
 			return NULL;
 		}
 	}
