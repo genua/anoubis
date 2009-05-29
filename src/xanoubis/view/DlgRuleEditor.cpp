@@ -852,6 +852,8 @@ DlgRuleEditor::onAppListDeleteClick(wxCommandEvent &)
 {
 	long	 index, top;
 	Policy	*policy;
+	int	answer;
+	wxString question;
 
 	index  = getSelectedIndex(appPolicyListCtrl);
 	top = appPolicyListCtrl->GetTopItem();
@@ -860,6 +862,11 @@ DlgRuleEditor::onAppListDeleteClick(wxCommandEvent &)
 	if (index >= 0) {
 		int	last = 0;
 		policy = getSelectedPolicy(appPolicyListCtrl);
+		question.Printf(_("Delete rule %ld?"), policy->getApnRuleId());
+		answer = wxMessageBox(question, _("Confirm"), wxYES_NO, this);
+		if (answer != wxYES) {
+			return;
+		}
 		if (appPolicyListCtrl->GetItemCount() == index + 1)
 			last = 1;
 		if (policy != NULL) {
@@ -880,6 +887,8 @@ DlgRuleEditor::onFilterListDeleteClick(wxCommandEvent &)
 	long	 appIndex, apptop;
 	long	 filterIndex, filttop;
 	Policy	*policy;
+	int	answer;
+	wxString question;
 
 	appIndex  = getSelectedIndex(appPolicyListCtrl);
 	apptop = appPolicyListCtrl->GetTopItem();
@@ -890,6 +899,11 @@ DlgRuleEditor::onFilterListDeleteClick(wxCommandEvent &)
 	if (filterIndex >= 0) {
 		int	last = 0;
 		policy = getSelectedPolicy(filterPolicyListCtrl);
+		question.Printf(_("Delete rule %ld?"), policy->getApnRuleId());
+		answer = wxMessageBox(question, _("Confirm"), wxYES_NO, this);
+		if (answer != wxYES) {
+			return;
+		}
 		if (filterPolicyListCtrl->GetItemCount() == filterIndex + 1)
 			last = 1;
 		if (policy != NULL) {

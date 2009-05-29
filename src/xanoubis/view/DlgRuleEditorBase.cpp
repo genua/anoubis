@@ -125,6 +125,9 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	
 	appListFoodSizer->Add( appListDownButton, 0, wxALL, 5 );
 	
+	
+	appListFoodSizer->Add( 50, 0, 0, wxEXPAND, 5 );
+	
 	appListDeleteButton = new wxButton( appPanel, wxID_ANY, _("delete"), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
 	appListDeleteButton->Enable( false );
 	appListDeleteButton->SetToolTip( _("Removes selected policy") );
@@ -202,6 +205,9 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	filterListDownButton->SetToolTip( _("Move down") );
 	
 	filterListFoodSizer->Add( filterListDownButton, 0, wxALL, 5 );
+	
+	
+	filterListFoodSizer->Add( 50, 0, 0, wxEXPAND, 5 );
 	
 	filterListDeleteButton = new wxButton( filterPanel, wxID_ANY, _("delete"), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
 	filterListDeleteButton->Enable( false );

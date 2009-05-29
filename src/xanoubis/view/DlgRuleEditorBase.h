@@ -87,6 +87,7 @@ class DlgRuleEditorBase : public wxFrame
 		wxStaticText* appListPolicyText;
 		wxButton* appListUpButton;
 		wxButton* appListDownButton;
+		
 		wxButton* appListDeleteButton;
 		AnPolicyNotebook* appPolicyPanels;
 		wxPanel* filterPanel;
@@ -101,6 +102,7 @@ class DlgRuleEditorBase : public wxFrame
 		wxStaticText* filterListPolicyText;
 		wxButton* filterListUpButton;
 		wxButton* filterListDownButton;
+		
 		wxButton* filterListDeleteButton;
 		AnPolicyNotebook* filterPolicyPanels;
 		wxStaticText* footerRuleSetLabel;
