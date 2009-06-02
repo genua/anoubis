@@ -523,6 +523,21 @@ class RuleWizardHistory
 		bool getSandboxExecuteValidSignature(void) const;
 
 		/**
+		 * Store the answer to the question: activate newly
+		 * created policy?
+		 * @param[in] 1st The answer.
+		 * @return Nothing.
+		 */
+		void setActivatePolicy(bool);
+
+		/**
+		 * Shall we activate the newly created policy?
+		 * @param None.
+		 * @return True or false.
+		 */
+		bool shallActivatePolicy(void) const;
+
+		/**
 		 * Fill navigation sizer with all items for a program page.
 		 * @param[in] 1st The parent (aka caller).
 		 * @param[in] 2nd The navigation sizer.
@@ -717,6 +732,11 @@ class RuleWizardHistory
 		 * Shall we allow all execute access on valid signature?
 		 */
 		bool sandboxExecuteValidSignature_;
+
+		/**
+		 * Shall we activate the newly created policy?
+		 */
+		bool shallActivatePolicy_;
 
 		/**
 		 * Push a section title to the navigation sizer.

@@ -26,6 +26,7 @@
  */
 
 #include "RuleWizardFinalPage.h"
+#include "JobCtrl.h"
 
 RuleWizardFinalPage::RuleWizardFinalPage(wxWindow *parent,
     RuleWizardHistory *history) : RuleWizardFinalPageBase(parent)
@@ -40,6 +41,21 @@ RuleWizardFinalPage::RuleWizardFinalPage(wxWindow *parent,
 void
 RuleWizardFinalPage::onPageChanged(wxWizardEvent &)
 {
+	bool connected;
+
+	connected = JobCtrl::getInstance()->isConnected();
+
+	history_->setActivatePolicy(connected);
+	activatePolicyCheckbox->SetValue(connected);
+	activatePolicyCheckbox->Enable(connected);
+
+	updateNavi();
+}
+
+void
+RuleWizardFinalPage::onActivatePolicyCheckBox(wxCommandEvent & event)
+{
+	history_->setActivatePolicy(event.GetInt());
 	updateNavi();
 }
 

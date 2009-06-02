@@ -25,6 +25,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <wx/msgdlg.h>
+
 #include "RuleWizard.h"
 
 #include "RuleWizardPage.h"
@@ -52,6 +54,9 @@
 #include "DefaultFilterPolicy.h"
 #include "PolicyCtrl.h"
 #include "PolicyRuleSet.h"
+
+#include "main.h"
+#include "JobCtrl.h"
 
 #define CREATE_PAGE(list, idx, name, history)				\
 	do {								\
@@ -349,11 +354,14 @@ void
 RuleWizard::onWizardFinished(wxWizardEvent &)
 {
 	wxCommandEvent		 newRuleSetEvent(anEVT_LOAD_RULESET);
+	wxString		message;
 	struct iovec		 iv;
 	struct apn_ruleset	*rs;
 
 	PolicyCtrl	*policyCtrl;
 	PolicyRuleSet	*ruleSet;
+
+	PolicyCtrl::PolicyResult	polRes;
 
 	policyCtrl = PolicyCtrl::getInstance();
 	/* XXX CEH: Might want to create Admin Policies as well. */
@@ -387,6 +395,30 @@ RuleWizard::onWizardFinished(wxWizardEvent &)
 	newRuleSetEvent.SetInt(ruleSet->getRuleSetId());
 	newRuleSetEvent.SetExtraLong(ruleSet->getRuleSetId());
 	ruleSet->unlock();
+
+	if(history_.shallActivatePolicy()) {
+		polRes = policyCtrl->sendToDaemon(ruleSet->getRuleSetId());
+		switch (polRes) {
+		case PolicyCtrl::RESULT_POL_WRONG_PASS:
+			message = _("The entered password is incorrect.");
+			wxMessageBox(message, _("Key Load Error"),
+			    wxOK|wxICON_ERROR, this);
+			wxGetApp().status(wxT("Wrong password!"));
+			break;
+		case PolicyCtrl::RESULT_POL_ERR:
+			message = _("An error occured while sending admin"
+			    " policy to the daemon.");
+			wxMessageBox(message, _("Policy Load Error"),
+				wxOK|wxICON_ERROR, this);
+			wxGetApp().status(wxT("Error while sending"
+			    " admin policy to daemon."));
+			break;
+		case PolicyCtrl::RESULT_POL_OK:
+			wxGetApp().status(_("policy sent to daemon"));
+			break;
+		}
+
+	}
 
 	wxPostEvent(AnEvents::getInstance(), newRuleSetEvent);
 

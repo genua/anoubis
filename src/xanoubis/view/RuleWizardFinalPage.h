@@ -58,6 +58,14 @@ class RuleWizardFinalPage : public RuleWizardFinalPageBase
 		void onPageChanged(wxWizardEvent &);
 
 		/**
+		 * Handle events from ActivatePolicy
+		 * Checkbox.
+		 * @param[in] 1st The event.
+		 * @return Nothing.
+		 */
+		void onActivatePolicyCheckBox(wxCommandEvent &);
+
+		/**
 		 * Update navigation.
 		 * @param None.
 		 * @return Nothing.

@@ -427,6 +427,11 @@ class RuleWizardFinalPageBase : public wxPanel
 		wxStaticText* headLineLabel;
 		
 		wxStaticText* finalLabel;
+		wxCheckBox* activatePolicyCheckbox;
+		
+		
+		// Virtual event handlers, overide them in your derived class
+		virtual void onActivatePolicyCheckBox( wxCommandEvent& event ){ event.Skip(); }
 		
 	
 	public:

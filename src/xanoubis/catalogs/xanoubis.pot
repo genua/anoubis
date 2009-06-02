@@ -34,7 +34,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-05-29 08:11+0200\n"
+"POT-Creation-Date: 2009-06-02 09:24+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -77,7 +77,7 @@ msgstr ""
 #: model/FilterPolicy.cpp:95 model/FilterPolicy.cpp:121
 #: model/PolicyUtils.cpp:218 view/DlgRuleEditorBase.cpp:360
 #: view/DlgRuleEditor.cpp:1842 view/DlgRuleEditorAppPage.cpp:173
-#: view/RuleWizardProgramPage.cpp:140 view/RuleWizardHistory.cpp:281
+#: view/RuleWizardProgramPage.cpp:140 view/RuleWizardHistory.cpp:283
 msgid "(unknown)"
 msgstr ""
 
@@ -1015,11 +1015,12 @@ msgstr ""
 #: view/DlgRuleEditor.cpp:1378 view/DlgRuleEditor.cpp:1400
 #: view/ModAnoubisMainPanelImpl.cpp:446 view/ModSfsMainPanelImpl.cpp:345
 #: view/ModSfsMainPanelImpl.cpp:398 view/ModSfsMainPanelImpl.cpp:449
-#: view/ModSfsMainPanelImpl.cpp:488
+#: view/ModSfsMainPanelImpl.cpp:488 view/RuleWizard.cpp:403
 msgid "The entered password is incorrect."
 msgstr ""
 
 #: view/DlgRuleEditor.cpp:1379 view/DlgRuleEditor.cpp:1401
+#: view/RuleWizard.cpp:404
 msgid "Key Load Error"
 msgstr ""
 
@@ -1028,10 +1029,11 @@ msgid "An error occured while sending policy to daemon."
 msgstr ""
 
 #: view/DlgRuleEditor.cpp:1386 view/DlgRuleEditor.cpp:1408
+#: view/RuleWizard.cpp:411
 msgid "Policy Load Error"
 msgstr ""
 
-#: view/DlgRuleEditor.cpp:1406
+#: view/DlgRuleEditor.cpp:1406 view/RuleWizard.cpp:409
 msgid "An error occured while sending admin policy to the daemon."
 msgstr ""
 
@@ -1358,7 +1360,7 @@ msgstr ""
 msgid "Module:"
 msgstr ""
 
-#: view/ModAnoubisMainPanelImpl.cpp:589 view/RuleWizardHistory.cpp:612
+#: view/ModAnoubisMainPanelImpl.cpp:589 view/RuleWizardHistory.cpp:626
 #: view/RuleWizardPanelsBase.cpp:288
 msgid "Program:"
 msgstr ""
@@ -2140,6 +2142,10 @@ msgstr ""
 msgid "open requests (SB): "
 msgstr ""
 
+#: view/RuleWizard.cpp:417
+msgid "policy sent to daemon"
+msgstr ""
+
 #: view/RuleWizardProgramPage.cpp:93
 msgid "Please choose a program first."
 msgstr ""
@@ -2293,168 +2299,168 @@ msgstr ""
 msgid "Grand WRITING access:"
 msgstr ""
 
-#: view/RuleWizardHistory.cpp:624
+#: view/RuleWizardHistory.cpp:638
 msgid "Context:"
 msgstr ""
 
-#: view/RuleWizardHistory.cpp:627 view/RuleWizardHistory.cpp:655
-#: view/RuleWizardHistory.cpp:707
+#: view/RuleWizardHistory.cpp:641 view/RuleWizardHistory.cpp:669
+#: view/RuleWizardHistory.cpp:721
 msgid "keep policies"
 msgstr ""
 
-#: view/RuleWizardHistory.cpp:632
+#: view/RuleWizardHistory.cpp:646
 msgid "same: yes"
 msgstr ""
 
-#: view/RuleWizardHistory.cpp:634
+#: view/RuleWizardHistory.cpp:648
 msgid "same: no"
 msgstr ""
 
-#: view/RuleWizardHistory.cpp:639
+#: view/RuleWizardHistory.cpp:653
 #, c-format
 msgid "exceptions (%d): yes"
 msgstr ""
 
-#: view/RuleWizardHistory.cpp:642
+#: view/RuleWizardHistory.cpp:656
 msgid "exceptions: no"
 msgstr ""
 
-#: view/RuleWizardHistory.cpp:651
+#: view/RuleWizardHistory.cpp:665
 msgid "ALF:"
 msgstr ""
 
-#: view/RuleWizardHistory.cpp:658 view/RuleWizardHistory.cpp:710
+#: view/RuleWizardHistory.cpp:672 view/RuleWizardHistory.cpp:724
 msgid "discard policies"
 msgstr ""
 
-#: view/RuleWizardHistory.cpp:664
+#: view/RuleWizardHistory.cpp:678
 msgid "client allow all"
 msgstr ""
 
-#: view/RuleWizardHistory.cpp:667
+#: view/RuleWizardHistory.cpp:681
 msgid "client defaults"
 msgstr ""
 
-#: view/RuleWizardHistory.cpp:670
+#: view/RuleWizardHistory.cpp:684
 msgid "client user defined"
 msgstr ""
 
-#: view/RuleWizardHistory.cpp:673
+#: view/RuleWizardHistory.cpp:687
 msgid "client deny all"
 msgstr ""
 
-#: view/RuleWizardHistory.cpp:683
+#: view/RuleWizardHistory.cpp:697
 msgid "client ask"
 msgstr ""
 
-#: view/RuleWizardHistory.cpp:685
+#: view/RuleWizardHistory.cpp:699
 msgid "client don't ask"
 msgstr ""
 
-#: view/RuleWizardHistory.cpp:689
+#: view/RuleWizardHistory.cpp:703
 msgid "client allow raw"
 msgstr ""
 
-#: view/RuleWizardHistory.cpp:691
+#: view/RuleWizardHistory.cpp:705
 msgid "client deny raw"
 msgstr ""
 
-#: view/RuleWizardHistory.cpp:703
+#: view/RuleWizardHistory.cpp:717
 msgid "Sandbox:"
 msgstr ""
 
-#: view/RuleWizardHistory.cpp:713
+#: view/RuleWizardHistory.cpp:727
 msgid "defaults"
 msgstr ""
 
-#: view/RuleWizardHistory.cpp:716
+#: view/RuleWizardHistory.cpp:730
 msgid "no sandbox"
 msgstr ""
 
-#: view/RuleWizardHistory.cpp:722
+#: view/RuleWizardHistory.cpp:736
 msgid "read unrestricted"
 msgstr ""
 
-#: view/RuleWizardHistory.cpp:725
+#: view/RuleWizardHistory.cpp:739
 msgid "read defaults"
 msgstr ""
 
-#: view/RuleWizardHistory.cpp:728
+#: view/RuleWizardHistory.cpp:742
 #, c-format
 msgid "read user defined (%d)"
 msgstr ""
 
-#: view/RuleWizardHistory.cpp:732
+#: view/RuleWizardHistory.cpp:746
 msgid "read access other: ask"
 msgstr ""
 
-#: view/RuleWizardHistory.cpp:734
+#: view/RuleWizardHistory.cpp:748
 msgid "read access other: deny"
 msgstr ""
 
-#: view/RuleWizardHistory.cpp:738
+#: view/RuleWizardHistory.cpp:752
 msgid "read signature: allow"
 msgstr ""
 
-#: view/RuleWizardHistory.cpp:740
+#: view/RuleWizardHistory.cpp:754
 msgid "read signature: don't care"
 msgstr ""
 
-#: view/RuleWizardHistory.cpp:753
+#: view/RuleWizardHistory.cpp:767
 msgid "write unrestricted"
 msgstr ""
 
-#: view/RuleWizardHistory.cpp:756
+#: view/RuleWizardHistory.cpp:770
 msgid "write defaults"
 msgstr ""
 
-#: view/RuleWizardHistory.cpp:759
+#: view/RuleWizardHistory.cpp:773
 #, c-format
 msgid "write user defined (%d)"
 msgstr ""
 
-#: view/RuleWizardHistory.cpp:763
+#: view/RuleWizardHistory.cpp:777
 msgid "write access other: ask"
 msgstr ""
 
-#: view/RuleWizardHistory.cpp:765
+#: view/RuleWizardHistory.cpp:779
 msgid "write access other: deny"
 msgstr ""
 
-#: view/RuleWizardHistory.cpp:769
+#: view/RuleWizardHistory.cpp:783
 msgid "write signature: deny"
 msgstr ""
 
-#: view/RuleWizardHistory.cpp:771
+#: view/RuleWizardHistory.cpp:785
 msgid "write signature: don't care"
 msgstr ""
 
-#: view/RuleWizardHistory.cpp:784
+#: view/RuleWizardHistory.cpp:798
 msgid "execute unrestricted"
 msgstr ""
 
-#: view/RuleWizardHistory.cpp:787
+#: view/RuleWizardHistory.cpp:801
 msgid "execute defaults"
 msgstr ""
 
-#: view/RuleWizardHistory.cpp:790
+#: view/RuleWizardHistory.cpp:804
 #, c-format
 msgid "execute user defined (%d)"
 msgstr ""
 
-#: view/RuleWizardHistory.cpp:794
+#: view/RuleWizardHistory.cpp:808
 msgid "execute access other: ask"
 msgstr ""
 
-#: view/RuleWizardHistory.cpp:796
+#: view/RuleWizardHistory.cpp:810
 msgid "execute access other: deny"
 msgstr ""
 
-#: view/RuleWizardHistory.cpp:800
+#: view/RuleWizardHistory.cpp:814
 msgid "execute signature: allow"
 msgstr ""
 
-#: view/RuleWizardHistory.cpp:802
+#: view/RuleWizardHistory.cpp:816
 msgid "execute signature: don't care"
 msgstr ""
 
@@ -2774,9 +2780,13 @@ msgid ""
 "This is the final page. If you click on 'finish'\n"
 "the policies will be created.\n"
 "\n"
-"To activate the newly created policies, please open the RuleEditor. Activate "
-"the policies with the button 'activate' in the lower right corner.\n"
+"To send the newly created policies directly to the Anoubis Daemon, the "
+"checkbox below have to be activated.\n"
 "(To make this work you need to be connected.)"
+msgstr ""
+
+#: view/RuleWizardPanelsBase.cpp:961
+msgid "activate newly created policies?"
 msgstr ""
 
 #: view/RuleWizardPanelsBase.h:137

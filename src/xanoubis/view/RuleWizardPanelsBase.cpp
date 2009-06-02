@@ -954,9 +954,13 @@ RuleWizardFinalPageBase::RuleWizardFinalPageBase( wxWindow* parent, wxWindowID i
 	
 	mainSizer->Add( 0, 0, 1, wxEXPAND, 5 );
 	
-	finalLabel = new wxStaticText( this, wxID_ANY, _("This is the final page. If you click on 'finish'\nthe policies will be created.\n\nTo activate the newly created policies, please open the RuleEditor. Activate the policies with the button 'activate' in the lower right corner.\n(To make this work you need to be connected.)"), wxDefaultPosition, wxDefaultSize, 0 );
+	finalLabel = new wxStaticText( this, wxID_ANY, _("This is the final page. If you click on 'finish'\nthe policies will be created.\n\nTo send the newly created policies directly to the Anoubis Daemon, the checkbox below have to be activated.\n(To make this work you need to be connected.)"), wxDefaultPosition, wxDefaultSize, 0 );
 	finalLabel->Wrap( 400 );
 	mainSizer->Add( finalLabel, 0, wxALL, 5 );
+	
+	activatePolicyCheckbox = new wxCheckBox( this, wxID_ANY, _("activate newly created policies?"), wxDefaultPosition, wxDefaultSize, 0 );
+	
+	mainSizer->Add( activatePolicyCheckbox, 0, wxALL, 5 );
 	
 	
 	mainSizer->Add( 0, 0, 1, wxEXPAND, 5 );
@@ -965,4 +969,7 @@ RuleWizardFinalPageBase::RuleWizardFinalPageBase( wxWindow* parent, wxWindowID i
 	
 	this->SetSizer( pageSizer );
 	this->Layout();
+	
+	// Connect Events
+	activatePolicyCheckbox->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( RuleWizardFinalPageBase::onActivatePolicyCheckBox ), NULL, this );
 }

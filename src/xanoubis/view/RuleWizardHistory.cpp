@@ -78,6 +78,8 @@ RuleWizardHistory::RuleWizardHistory(void)
 	sandboxExecuteFileList_.Clear();
 	sandboxExecuteAsk_	      = true;
 	sandboxExecuteValidSignature_ = false;
+
+	shallActivatePolicy_ = true;
 }
 
 void
@@ -598,6 +600,18 @@ bool
 RuleWizardHistory::getSandboxExecuteValidSignature(void) const
 {
 	return (sandboxExecuteValidSignature_);
+}
+
+void
+RuleWizardHistory::setActivatePolicy(bool activate)
+{
+	shallActivatePolicy_ = activate;
+}
+
+bool
+RuleWizardHistory::shallActivatePolicy(void) const
+{
+	return (shallActivatePolicy_);
 }
 
 /*
