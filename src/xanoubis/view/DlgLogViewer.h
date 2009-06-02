@@ -36,29 +36,89 @@
 #include "AnShortcuts.h"
 #include "DlgLogViewerBase.h"
 #include "Notification.h"
+#include "Observer.h"
 
-class DlgLogViewer : public DlgLogViewerBase
+/**
+ * This is the LogViewer.
+ *
+ * It's purpose is to show all log and escalation notifications
+ * within a list. Status notifications are not shown.
+ * By selecting a row from the list, the RuleEditor is opened,
+ * showing the selected rule that caused the log entry.
+ */
+class DlgLogViewer : public DlgLogViewerBase, private Observer
 {
-	private:
-		int		 defaultIconIdx_;
-		int		 alertIconIdx_;
-		int		 escalationIconIdx_;
-		AnShortcuts	*shortcuts_;
-
-		void OnAddNotification(wxCommandEvent&);
-		void OnShow(wxCommandEvent&);
-		void OnListItemSelected(wxListEvent&);
-
-		ANEVENTS_IDENT_BCAST_METHOD_DECLARATION;
-
-	protected:
-		void OnClose(wxCloseEvent& event);
-
 	public:
+		/**
+		 * Constructor of DlgLogViewer.
+		 * @param[in] 1st The parent window.
+		 */
 		DlgLogViewer(wxWindow *);
+
+		/**
+		 * Destructor of DlgLogViewer.
+		 * @param None.
+		 */
 		~DlgLogViewer(void);
 
+	private:
+		int defaultIconIdx_;	/**< index of default icon */
+		int alertIconIdx_;	/**> index of alert icon */
+		int escalationIconIdx_; /**< index of esc. icon */
+		long lastIdx_;		/**< index of last notify shown */
+		AnShortcuts *shortcuts_;
+
+		/**
+		 * Handle show events.
+		 * @param[in] 1st The event.
+		 * @return Nothing.
+		 */
+		void onShow(wxCommandEvent &);
+
+		/**
+		 * Handle close by window decoration.
+		 * This will not just toggle the visability of this frame.
+		 * Instead an event anEVT_LOGVIEWER_SHOW will been sent to
+		 * inform all parts of the GUI (e.g MainFrame menue or the
+		 * buttons of the status bar) about the closed LogViewer.
+		 * @param[in] 1st The event.
+		 * @return Nothing.
+		 */
+		void onClose(wxCloseEvent &);
+
+		/**
+		 * Handle selection of log entry.
+		 * @param[in] 1st The event.
+		 * @return Nothing.
+		 */
+		void onLogSelect(wxListEvent &);
+
+		/**
+		 * This is called when the observed perspective was modified.
+		 * @param[in] 1st The changed perspectilve (aka subject).
+		 * @return Nothing.
+		 */
+		void update(Subject *);
+
+		/**
+		 * This is called when the observed perspective is about to
+		 * be destroyed.
+		 * @param[in] 1st The changed perspective (aka subject).
+		 * @return Nothing.
+		 */
+		void updateDelete(Subject *);
+
+		/**
+		 * Add a new notification.
+		 * This will create a new row and fill it with the
+		 * data from the given notify. An appropriate icon
+		 * is set also.
+		 * @param[in] 1st The new notification.
+		 * @return Nothing.
+		 */
 		void addNotification(Notification *);
+
+		ANEVENTS_IDENT_BCAST_METHOD_DECLARATION;
 };
 
 #endif /* __DlgLogViewer__ */

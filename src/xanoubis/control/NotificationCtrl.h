@@ -30,9 +30,13 @@
 
 #include <wx/thread.h>
 
+#include "AnEvents.h"
 #include "Notification.h"
 #include "NotificationPerspective.h"
 #include "Singleton.h"
+#include "EscalationNotify.h"
+
+WX_DECLARE_STRING_HASH_MAP(long, Str2LongHash);
 
 /**
  * This is the notification control class.\n
@@ -42,7 +46,7 @@
  * With the class NotificationPerspective you can get a
  * special view to a subset of notifications (see getList()).
  */
-class NotificationCtrl : public Singleton<NotificationCtrl>
+class NotificationCtrl : public wxEvtHandler, public Singleton<NotificationCtrl>
 {
 	public:
 		/**
@@ -53,7 +57,8 @@ class NotificationCtrl : public Singleton<NotificationCtrl>
 			LIST_NONE = 0,		/**< no list */
 			LIST_NOTANSWERED,	/**< new escalations */
 			LIST_ANSWERED,		/**< answered escalations */
-			LIST_ALERTS,		/**< alerts */
+			LIST_MESSAGES,		/**< messages */
+			LIST_STAT,		/**< status notifies */
 			LIST_ALL,		/**< all notifies */
 		};
 
@@ -86,6 +91,15 @@ class NotificationCtrl : public Singleton<NotificationCtrl>
 		void addNotification(Notification *);
 
 		/**
+		 * Get stored notification
+		 *
+		 * Retrive a stored notification by it's id.
+		 * @param[in] 1st The id of notification.
+		 * @return The notification or NULL
+		 */
+		Notification *getNotification(long);
+
+		/**
 		 * Get notification perspective.
 		 *
 		 * This will return a special view to a subset of
@@ -94,6 +108,16 @@ class NotificationCtrl : public Singleton<NotificationCtrl>
 		 * @return The requested perspective or NULL.
 		 */
 		NotificationPerspective *getPerspective(enum ListPerspectives);
+
+		/**
+		 * Mark given escalation as been answered.
+		 * @param[in] 1st The escalation.
+		 * @param[in] 2nd The answer.
+		 * @param[in] 3rd True if the answer shall be sent.
+		 * @return Nothing.
+		 */
+		void answerEscalationNotify(EscalationNotify *, NotifyAnswer *,
+		    bool sendAnswer = true);
 
 	protected:
 		/**
@@ -114,6 +138,12 @@ class NotificationCtrl : public Singleton<NotificationCtrl>
 		wxMutex notificationHashMutex_;
 
 		/**
+		 * Cached statistics how many open escalations to a
+		 * specific type/module.
+		 */
+		Str2LongHash escalationCount_;
+
+		/**
 		 * Special perspective collecting not answered
 		 * escalation notifies.
 		 */
@@ -126,14 +156,45 @@ class NotificationCtrl : public Singleton<NotificationCtrl>
 		NotificationPerspective escalationsAnswered_;
 
 		/**
-		 * Special perspective collecting alert notifies.
+		 * Special perspective collecting log and alert notifies.
 		 */
-		NotificationPerspective alerts_;
+		NotificationPerspective messages_;
+
+		/**
+		 * Special perspective collecting status notifies.
+		 */
+		NotificationPerspective stats_;
 
 		/**
 		 * Special perspective collecting all notifies.
 		 */
 		NotificationPerspective allNotifications_;
+
+		/**
+		 * Handle events of disconnect.
+		 */
+		void onDaemonDisconnect(wxCommandEvent &);
+
+		/**
+		 * Enqueue escalation notifies.
+		 */
+		void addEscalationNotify(Notification *);
+
+		/**
+		 * Enqueue daemon answer notifies.
+		 */
+		void addDaemonAnswerNotify(Notification *notification);
+
+		/**
+		 * Enqueue alert notifies.
+		 */
+		void addAlertNotify(Notification *notification);
+
+		/**
+		 * Handle answer results.
+		 */
+		EscalationNotify *fixupEscalationAnswer(int, anoubis_token_t,
+		    int);
 
 	friend class Singleton<NotificationCtrl>;
 };

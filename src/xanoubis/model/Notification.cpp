@@ -54,6 +54,13 @@
 #include "Notification.h"
 #include "main.h"
 
+#include "AlertNotify.h"
+#include "EscalationNotify.h"
+#include "LogNotify.h"
+#include "NotifyAnswer.h"
+#include "StatusNotify.h"
+#include "DaemonAnswerNotify.h"
+
 #include <wx/listimpl.cpp>
 WX_DEFINE_LIST(NotifyList);
 
@@ -536,4 +543,59 @@ long
 Notification::getId(void) const
 {
 	return (id_);
+}
+
+Notification *
+Notification::factory(struct anoubis_msg *notifyMsg)
+{
+	int	 type;
+	int	 subsystem;
+
+	enum apn_log_level	 loglevel;
+	Notification		*notify;
+
+	type	  = get_value((notifyMsg->u.general)->type);
+	subsystem = get_value((notifyMsg->u.notify)->subsystem);
+	loglevel  = (enum apn_log_level)get_value(
+	    (notifyMsg->u.notify)->loglevel);
+	notify	  = NULL;
+
+	if (! ANOUBIS_IS_NOTIFY(type)) {
+		return (notify);
+	}
+
+	switch (type) {
+	case ANOUBIS_N_ASK:
+		notify = new EscalationNotify(notifyMsg);
+		break;
+	case ANOUBIS_N_NOTIFY:
+		if (subsystem == ANOUBIS_SOURCE_STAT) {
+			notify = new StatusNotify(notifyMsg);
+		} else {
+			notify = new LogNotify(notifyMsg);
+		}
+		break;
+	case ANOUBIS_N_RESYOU:
+		/* FALLTHROUGH */
+	case ANOUBIS_N_RESOTHER:
+		notify = new DaemonAnswerNotify(notifyMsg);
+		break;
+	case ANOUBIS_N_LOGNOTIFY:
+		switch (loglevel) {
+		case APN_LOG_NONE:
+			/* don't show notifies of loglevel 0/none */
+			break;
+		case APN_LOG_NORMAL:
+			notify = new LogNotify(notifyMsg);
+			break;
+		case APN_LOG_ALERT:
+			notify = new AlertNotify(notifyMsg);
+			break;
+		}
+		break;
+	default:
+		break;
+	}
+
+	return (notify);
 }

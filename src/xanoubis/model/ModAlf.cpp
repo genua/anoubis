@@ -28,16 +28,20 @@
 #include <wx/stdpaths.h>
 #include <wx/string.h>
 
-#include "AnEvents.h"
 #include "Module.h"
 #include "ModAlf.h"
 #include "ModAlfMainPanelImpl.h"
 #include "ModAlfOverviewPanelImpl.h"
 #include "Notification.h"
+#include "NotificationCtrl.h"
 #include "StatusNotify.h"
 
-ModAlf::ModAlf(wxWindow *parent) : Module()
+ModAlf::ModAlf(wxWindow *parent) : Module(), Observer(NULL)
 {
+	NotificationCtrl	*notifyCtrl;
+
+	notifyCtrl = NotificationCtrl::instance();
+
 	name_ = wxString(wxT("Application level firewall"));
 	nick_ = wxString(wxT("ALF"));
 	mainPanel_ = new ModAlfMainPanelImpl(parent,
@@ -51,15 +55,13 @@ ModAlf::ModAlf(wxWindow *parent) : Module()
 	mainPanel_->Hide();
 	overviewPanel_->Hide();
 
-	AnEvents::getInstance()->Connect(anEVT_ADD_NOTIFICATION,
-	    wxCommandEventHandler(ModAlf::OnAddNotification), NULL, this);
+	addSubject(notifyCtrl->getPerspective(NotificationCtrl::LIST_STAT));
 }
 
 ModAlf::~ModAlf(void)
 {
-	AnEvents::getInstance()->Disconnect(anEVT_ADD_NOTIFICATION,
-	    wxCommandEventHandler(ModAlf::OnAddNotification), NULL, this);
-
+	removeSubject(NotificationCtrl::instance()->getPerspective(
+	    NotificationCtrl::LIST_STAT));
 	delete mainPanel_;
 	delete overviewPanel_;
 	delete icon_;
@@ -88,17 +90,35 @@ ModAlf::update(void)
 }
 
 void
-ModAlf::OnAddNotification(wxCommandEvent& event)
+ModAlf::update(Subject *subject)
 {
-	Notification *notify;
+	wxArrayLong::const_iterator it;
 
-	notify = (Notification *)(event.GetClientObject());
-	if (IS_STATUSOBJ(notify)) {
+	Notification		*notify;
+	NotificationCtrl	*notifyCtrl;
+	NotificationPerspective	*perspective;
+
+	perspective = wxDynamicCast(subject, NotificationPerspective);
+	if (perspective == NULL) {
+		return;
+	}
+
+	notifyCtrl = NotificationCtrl::instance();
+	it = perspective->begin();
+	notify = notifyCtrl->getNotification(*it);
+	if (notify && IS_STATUSOBJ(notify)) {
 		isActive_ = ((StatusNotify *)notify)->hasAlfLoadtime();
 	}
-	update();
 
-	event.Skip();
+	update();
+}
+
+void
+ModAlf::updateDelete(Subject *subject)
+{
+	removeSubject(subject);
+	isActive_ = false;
+	update();
 }
 
 bool

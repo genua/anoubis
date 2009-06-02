@@ -58,6 +58,7 @@
 #include "ModSb.h"
 #include "ModSfs.h"
 #include "Module.h"
+#include "NotificationCtrl.h"
 #include "PolicyRuleSet.h"
 #include "TrayIcon.h"
 #include "VersionCtrl.h"
@@ -222,38 +223,27 @@ AnoubisGuiApp::status(wxString msg)
 void
 AnoubisGuiApp::log(wxString msg)
 {
-	LogNotify	*notify;
-	wxCommandEvent	 event(anEVT_ADD_NOTIFICATION);
+	LogNotify		*notify;
+	NotificationCtrl	*notifyCtrl;
 
 	notify = new LogNotify(msg);
+	notifyCtrl = NotificationCtrl::instance();
+
 	Debug::instance()->log(msg, DEBUG_LOG);
-
-	event.SetClientObject((wxClientData*)notify);
-	wxPostEvent(AnEvents::getInstance(), event);
-	/*
-	 * The created AlertNotify object must not been destroyed here, so
-	 * it's still alive for the receiver. The notify will be stored by
-	 * ModAnoubis and been deleted by it.
-	 */
-
+	notifyCtrl->addNotification(notify);
 }
 
 void
 AnoubisGuiApp::alert(wxString msg)
 {
-	AlertNotify	*notify;
-	wxCommandEvent	 event(anEVT_ADD_NOTIFICATION);
+	AlertNotify		*notify;
+	NotificationCtrl	*notifyCtrl;
 
 	notify = new AlertNotify(msg);
-	Debug::instance()->log(msg, DEBUG_ALERT);
+	notifyCtrl = NotificationCtrl::instance();
 
-	event.SetClientObject((wxClientData*)notify);
-	wxPostEvent(AnEvents::getInstance(), event);
-	/*
-	 * The created AlertNotify object must not been destroyed here, so
-	 * it's still alive for the receiver. The notify will be stored by
-	 * ModAnoubis and been deleted by it.
-	 */
+	Debug::instance()->log(msg, DEBUG_ALERT);
+	notifyCtrl->addNotification(notify);
 }
 
 void

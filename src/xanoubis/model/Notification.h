@@ -58,13 +58,13 @@ class Notification {
 		wxString		 logMessage_;
 		struct anoubis_msg	*notify_;
 
+		Notification(struct anoubis_msg *);
 		wxString	assembleAddress(bool);
 		wxString	localAlfAddress(void);
 		wxString	remoteAlfAddress(void);
 		virtual bool	isRwx(unsigned long);
 
 	public:
-		Notification(struct anoubis_msg *);
 		virtual ~Notification(void);
 
 		virtual wxString getModule(void);
@@ -90,6 +90,10 @@ class Notification {
 		/**
 		 */
 		long getId(void) const;
+
+		/**
+		 */
+		static Notification *factory(struct anoubis_msg *);
 
 	private:
 		/**

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 GeNUA mbH <info@genua.de>
+ * Copyright (c) 2009 GeNUA mbH <info@genua.de>
  *
  * All rights reserved.
  *
@@ -54,12 +54,12 @@ class DlgLogViewerBase : public wxFrame
 	private:
 	
 	protected:
-		wxListCtrl* lc_logList;
+		wxListCtrl* logListCtrl;
 		
 		// Virtual event handlers, overide them in your derived class
 		virtual void OnKeyPressed( wxKeyEvent& event ){ event.Skip(); }
-		virtual void OnClose( wxCloseEvent& event ){ event.Skip(); }
-		virtual void OnListItemSelected( wxListEvent& event ){ event.Skip(); }
+		virtual void onClose( wxCloseEvent& event ){ event.Skip(); }
+		virtual void onLogSelect( wxListEvent& event ){ event.Skip(); }
 		
 	
 	public:

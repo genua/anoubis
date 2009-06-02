@@ -25,16 +25,20 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "AnEvents.h"
 #include "Module.h"
 #include "ModSb.h"
 #include "ModSbMainPanelImpl.h"
 #include "ModSbOverviewPanelImpl.h"
 #include "Notification.h"
+#include "NotificationCtrl.h"
 #include "StatusNotify.h"
 
-ModSb::ModSb(wxWindow *parent) : Module()
+ModSb::ModSb(wxWindow *parent) : Module(), Observer(NULL)
 {
+	NotificationCtrl	*notifyCtrl;
+
+	notifyCtrl = NotificationCtrl::instance();
+
 	name_ = wxString(wxT("Sandbox"));
 	nick_ = wxString(wxT("SB"));
 	mainPanel_ = new ModSbMainPanelImpl(parent, MODSB_ID_MAINPANEL);
@@ -47,15 +51,13 @@ ModSb::ModSb(wxWindow *parent) : Module()
 	mainPanel_->Hide();
 	overviewPanel_->Hide();
 
-	AnEvents::getInstance()->Connect(anEVT_ADD_NOTIFICATION,
-	    wxCommandEventHandler(ModSb::OnAddNotification), NULL, this);
+	addSubject(notifyCtrl->getPerspective(NotificationCtrl::LIST_STAT));
 }
 
 ModSb::~ModSb()
 {
-	AnEvents::getInstance()->Disconnect(anEVT_ADD_NOTIFICATION,
-	    wxCommandEventHandler(ModSb::OnAddNotification), NULL, this);
-
+	removeSubject(NotificationCtrl::instance()->getPerspective(
+	    NotificationCtrl::LIST_STAT));
 	delete mainPanel_;
 	mainPanel_ = NULL;
 	delete overviewPanel_;
@@ -85,21 +87,35 @@ ModSb::update(void)
 }
 
 void
-ModSb::OnAddNotification(wxCommandEvent& event)
+ModSb::update(Subject *subject)
 {
-	Notification *notify;
+	wxArrayLong::const_iterator it;
 
-	notify = (Notification *)(event.GetClientObject());
+	Notification		*notify;
+	NotificationCtrl	*notifyCtrl;
+	NotificationPerspective	*perspective;
 
-	/*
-	 * ModSB is considered to be running when ModSFS does.
-	 */
-	if (IS_STATUSOBJ(notify)) {
+	perspective = wxDynamicCast(subject, NotificationPerspective);
+	if (perspective == NULL) {
+		return;
+	}
+
+	notifyCtrl = NotificationCtrl::instance();
+	it = perspective->begin();
+	notify = notifyCtrl->getNotification(*it);
+	if (notify && IS_STATUSOBJ(notify)) {
 		isActive_ = ((StatusNotify *)notify)->hasSfsLoadtime();
 	}
-	update();
 
-	event.Skip();
+	update();
+}
+
+void
+ModSb::updateDelete(Subject *subject)
+{
+	removeSubject(subject);
+	isActive_ = false;
+	update();
 }
 
 bool

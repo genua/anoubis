@@ -27,9 +27,22 @@
 
 #include "NotificationCtrl.h"
 #include "Singleton.cpp"
+#include "StatusNotify.h"
+#include "EscalationNotify.h"
+#include "LogNotify.h"
+#include "AlertNotify.h"
+#include "JobCtrl.h"
+#include "PolicyCtrl.h"
+#include "PolicyRuleSet.h"
+#include "DaemonAnswerNotify.h"
+#include "main.h"
 
 NotificationCtrl::~NotificationCtrl(void)
 {
+	JobCtrl::getInstance()->Disconnect(anEVT_COM_CONNECTION,
+	    wxCommandEventHandler(NotificationCtrl::onDaemonDisconnect),
+	    NULL, this);
+
 	notificationHash_.clear();
 }
 
@@ -48,30 +61,61 @@ NotificationCtrl::addNotification(Notification *notification)
 
 	notificationHashMutex_.Lock();
 	notificationHash_[id] = notification;
-	allNotifications_.addId(id);
-	/* XXX ch: still missing: typ check and add to other lists */
 	notificationHashMutex_.Unlock();
+
+	/* sorted enqueueing of notifications */
+	if (IS_ESCALATIONOBJ(notification)) {
+		addEscalationNotify(notification);
+	} else if (IS_DAEMONANSWEROBJ(notification)) {
+		addDaemonAnswerNotify(notification);
+	} else if (IS_ALERTOBJ(notification)) {
+		addAlertNotify(notification);
+	} else if (IS_STATUSOBJ(notification)) {
+		/* remove the old status message */
+		if (stats_.getSize() > 0) {
+			stats_.removeId(stats_.getId(0));
+		}
+		stats_.addId(id);
+	} else {
+		/* Imho we shouldn't reach this point. */
+		allNotifications_.addId(id);
+	}
+}
+
+Notification *
+NotificationCtrl::getNotification(long id)
+{
+	NotifyHash::const_iterator it;
+
+	notificationHashMutex_.Lock();
+	it = notificationHash_.find(id);
+	notificationHashMutex_.Unlock();
+
+	if (it != notificationHash_.end()) {
+		return ((*it).second);
+	}
+
+	return (NULL);
 }
 
 NotificationPerspective *
 NotificationCtrl::getPerspective(enum ListPerspectives list)
 {
-	/*
-	 * XXX ch: Only allPerspective gets filled by addNotification()
-	 * XXX ch: thus returning other perspectives is disabled for now.
-	 */
 	switch (list) {
 	case LIST_NONE:
 		return (NULL);
 		break;
 	case LIST_NOTANSWERED:
-		//return (&escalationsNotAnswered_);
+		return (&escalationsNotAnswered_);
 		break;
 	case LIST_ANSWERED:
-		//return (&escalationsAnswered_);
+		return (&escalationsAnswered_);
 		break;
-	case LIST_ALERTS:
-		//return (&alerts_);
+	case LIST_MESSAGES:
+		return (&messages_);
+		break;
+	case LIST_STAT:
+		return (&stats_);
 		break;
 	case LIST_ALL:
 		return (&allNotifications_);
@@ -81,7 +125,237 @@ NotificationCtrl::getPerspective(enum ListPerspectives list)
 	return (NULL);
 }
 
+void
+NotificationCtrl::answerEscalationNotify(EscalationNotify *notify,
+    NotifyAnswer *answer, bool sendAnswer)
+{
+	long		 id;
+	wxString	 module;
+	AnEvents	*anEvents;
+
+	anEvents = AnEvents::getInstance();
+
+	if ((notify != NULL) && IS_ESCALATIONOBJ(notify)) {
+		id = notify->getId();
+		escalationsNotAnswered_.removeId(id);
+		escalationsAnswered_.addId(id);
+		if (sendAnswer) {
+			notify->answer(answer);
+		} else {
+			notify->setAnswer(answer);
+		}
+
+		module = notify->getModule();
+		escalationCount_[module] -= 1;
+
+		if (module.IsSameAs(wxT("ALF"))){
+			wxCommandEvent showEvent(anEVT_OPEN_ALF_ESCALATIONS);
+			showEvent.SetInt(escalationCount_[module]);
+			wxPostEvent(anEvents, showEvent);
+		} else if (module.IsSameAs(wxT("SFS"))) {
+			wxCommandEvent showEvent(anEVT_OPEN_SFS_ESCALATIONS);
+			showEvent.SetInt(escalationCount_[module]);
+			wxPostEvent(anEvents, showEvent);
+		} else if (module.IsSameAs(wxT("SANDBOX"))) {
+			wxCommandEvent showEvent(anEVT_OPEN_SB_ESCALATIONS);
+			showEvent.SetInt(escalationCount_[module]);
+			wxPostEvent(anEvents, showEvent);
+		} else {
+			/* Default do nothing */
+		}
+		wxCommandEvent  showEvent(anEVT_OPEN_ESCALATIONS);
+		showEvent.SetInt(escalationsNotAnswered_.getSize());
+		wxPostEvent(anEvents, showEvent);
+	}
+}
+
+
 NotificationCtrl::NotificationCtrl(void) : Singleton<NotificationCtrl>()
 {
 	notificationHash_.clear();
+
+	JobCtrl::getInstance()->Connect(anEVT_COM_CONNECTION,
+	    wxCommandEventHandler(NotificationCtrl::onDaemonDisconnect),
+	    NULL, this);
+}
+
+void
+NotificationCtrl::onDaemonDisconnect(wxCommandEvent & event)
+{
+	wxArrayLong::const_iterator it;
+
+	NotifyAnswer		*answer;
+	Notification		*notify;
+	EscalationNotify	*escalation;
+
+	event.Skip();
+
+	if (event.GetInt() != JobCtrl::CONNECTION_CONNECTED) {
+		it = escalationsNotAnswered_.begin();
+		while (it != escalationsNotAnswered_.end()) {
+			notify = getNotification(*it);
+			escalation = dynamic_cast<EscalationNotify *>(notify);
+			if (escalation == NULL) {
+				/* Should never happen, but let's play safe. */
+				escalationsNotAnswered_.removeId(*it);
+			} else {
+				answer = new NotifyAnswer(NOTIFY_ANSWER_ONCE,
+				    false);
+				answerEscalationNotify(escalation, answer,
+				    false);
+			}
+			it = escalationsNotAnswered_.begin();
+		}
+	}
+
+	/* remove the old status messages */
+	while (stats_.getSize() > 0) {
+		stats_.removeId(stats_.getId(0));
+	}
+	//XXX ch: fix this while cleaning MVC-pattern
+	wxGetApp().getModule(ALF)->update();
+	wxGetApp().getModule(SFS)->update();
+	wxGetApp().getModule(SB)->update();
+	wxGetApp().getModule(ANOUBIS)->update();
+}
+
+void
+NotificationCtrl::addEscalationNotify(Notification *notification)
+{
+	wxString		 module;
+	AnEvents		*anEvents;
+	PolicyCtrl		*policyCtrl;
+	PolicyRuleSet		*rs;
+	EscalationNotify	*escalation;
+
+	module = wxEmptyString;
+	anEvents = AnEvents::getInstance();
+	policyCtrl = PolicyCtrl::getInstance();
+	rs = NULL;
+	escalation = NULL;
+
+	if (geteuid() == notification->getUid()) {
+		if (notification->isAdmin()) {
+			rs = policyCtrl->getRuleSet(
+			    policyCtrl->getAdminId(geteuid()));
+		} else {
+			rs = policyCtrl->getRuleSet(policyCtrl->getUserId());
+		}
+	}
+
+	escalation = dynamic_cast<EscalationNotify *>(notification);
+	if (escalation && rs) {
+		rs->addRuleInformation(escalation);
+	}
+
+	escalationsNotAnswered_.addId(notification->getId());
+	allNotifications_.addId(notification->getId());
+
+	module = notification->getModule();
+	escalationCount_[module] += 1;
+
+	if(module.IsSameAs(wxT("ALF"))) {
+		wxCommandEvent showEvent(anEVT_OPEN_ALF_ESCALATIONS);
+		showEvent.SetInt(escalationCount_[module]);
+		wxPostEvent(anEvents, showEvent);
+	} else if(module.IsSameAs(wxT("SFS"))) {
+		wxCommandEvent showEvent(anEVT_OPEN_SFS_ESCALATIONS);
+		showEvent.SetInt(escalationCount_[module]);
+		wxPostEvent(anEvents, showEvent);
+	} else if (module.IsSameAs(wxT("SANDBOX"))) {
+		wxCommandEvent showEvent(anEVT_OPEN_SB_ESCALATIONS);
+		showEvent.SetInt(escalationCount_[module]);
+		wxPostEvent(anEvents, showEvent);
+	} else {
+		/* Default do nothing */
+	}
+
+	wxCommandEvent  showEvent(anEVT_OPEN_ESCALATIONS);
+	showEvent.SetInt(escalationsNotAnswered_.getSize());
+	wxPostEvent(anEvents, showEvent);
+}
+
+void
+NotificationCtrl::addDaemonAnswerNotify(Notification *notification)
+{
+	DaemonAnswerNotify	*dNotify;
+	EscalationNotify	*origNotify;
+
+	dNotify = dynamic_cast<DaemonAnswerNotify *>(notification);
+	origNotify = fixupEscalationAnswer(dNotify->getType(),
+	    dNotify->getToken(), dNotify->getError());
+
+	if (origNotify) {
+		wxCommandEvent	event(anEVT_ADD_NOTIFYANSWER);
+		event.SetClientObject((wxClientData*)origNotify);
+		wxPostEvent(AnEvents::instance(), event);
+	}
+}
+
+void
+NotificationCtrl::addAlertNotify(Notification *notification)
+{
+	wxCommandEvent  showEvent(anEVT_OPEN_ALERTS);
+
+	messages_.addId(notification->getId());
+	allNotifications_.addId(notification->getId());
+
+	showEvent.SetInt(messages_.getSize());
+	wxPostEvent(AnEvents::instance(), showEvent);
+}
+
+EscalationNotify *
+NotificationCtrl::fixupEscalationAnswer(int type, anoubis_token_t token,
+    int error)
+{
+	wxArrayLong::const_iterator	 it;
+	bool				 allow = (error == 0);
+	NotifyAnswer			*answer;
+	Notification			*notify;
+	EscalationNotify		*escalation;
+
+	if (type == ANOUBIS_N_RESOTHER) {
+		/* Search it in the list of unanswered requests. */
+		for (it = escalationsNotAnswered_.begin();
+		     it != escalationsNotAnswered_.end(); it++) {
+			notify = getNotification(*it);
+			escalation = dynamic_cast<EscalationNotify *>(notify);
+			if ((escalation != NULL) &&
+			    (escalation->getToken() == token)) {
+				answer = new NotifyAnswer(NOTIFY_ANSWER_ONCE,
+				    allow);
+				answerEscalationNotify(escalation, answer);
+				return (escalation);
+			}
+		}
+	}
+	/*
+	 * RESYOU or not a reply to an unanswered request. Find the request
+	 * in the list of answerd requests. Search backwards because the
+	 * request is likely to be at the end of the list and the list can
+	 * get long over time.
+	 */
+	it = escalationsNotAnswered_.end();
+	while (it != escalationsNotAnswered_.begin()) {
+		it--;
+		notify = getNotification(*it);
+		escalation = dynamic_cast<EscalationNotify *>(notify);
+		if ((escalation != NULL) && (escalation->getToken() == token)) {
+			answer = escalation->getAnswer();
+			if (answer && (answer->wasAllowed() != allow)) {
+				/*
+				 * XXX ch: extend NotifyAnswer for an easyer
+				 * XXX ch: way to overwrite an answer...
+				 */
+				escalation->setAnswer(NULL);
+				delete answer;
+				answer = new NotifyAnswer(NOTIFY_ANSWER_ONCE,
+				    allow);
+				escalation->setAnswer(answer);
+			}
+			return (escalation);
+		}
+	}
+
+	return NULL;
 }

@@ -28,16 +28,20 @@
 #include <wx/stdpaths.h>
 #include <wx/string.h>
 
-#include "AnEvents.h"
 #include "Module.h"
 #include "ModSfs.h"
 #include "ModSfsMainPanelImpl.h"
 #include "ModSfsOverviewPanelImpl.h"
 #include "Notification.h"
+#include "NotificationCtrl.h"
 #include "StatusNotify.h"
 
-ModSfs::ModSfs(wxWindow *parent) : Module()
+ModSfs::ModSfs(wxWindow *parent) : Module(), Observer(NULL)
 {
+	NotificationCtrl	*notifyCtrl;
+
+	notifyCtrl = NotificationCtrl::instance();
+
 	name_ = wxString(wxT("Secure File System"));
 	nick_ = wxString(wxT("SFS"));
 	mainPanel_ = new ModSfsMainPanelImpl(parent,
@@ -51,15 +55,13 @@ ModSfs::ModSfs(wxWindow *parent) : Module()
 	mainPanel_->Hide();
 	overviewPanel_->Hide();
 
-	AnEvents::getInstance()->Connect(anEVT_ADD_NOTIFICATION,
-	    wxCommandEventHandler(ModSfs::OnAddNotification), NULL, this);
+	addSubject(notifyCtrl->getPerspective(NotificationCtrl::LIST_STAT));
 }
 
 ModSfs::~ModSfs(void)
 {
-	AnEvents::getInstance()->Disconnect(anEVT_ADD_NOTIFICATION,
-	    wxCommandEventHandler(ModSfs::OnAddNotification), NULL, this);
-
+	removeSubject(NotificationCtrl::instance()->getPerspective(
+	    NotificationCtrl::LIST_STAT));
 	delete mainPanel_;
 	mainPanel_ = NULL;
 	delete overviewPanel_;
@@ -89,17 +91,35 @@ ModSfs::update(void)
 }
 
 void
-ModSfs::OnAddNotification(wxCommandEvent& event)
+ModSfs::update(Subject *subject)
 {
-	Notification *notify;
+	wxArrayLong::const_iterator it;
 
-	notify = (Notification *)(event.GetClientObject());
-	if (IS_STATUSOBJ(notify)) {
+	Notification		*notify;
+	NotificationCtrl	*notifyCtrl;
+	NotificationPerspective	*perspective;
+
+	perspective = wxDynamicCast(subject, NotificationPerspective);
+	if (perspective == NULL) {
+		return;
+	}
+
+	notifyCtrl = NotificationCtrl::instance();
+	it = perspective->begin();
+	notify = notifyCtrl->getNotification(*it);
+	if (notify && IS_STATUSOBJ(notify)) {
 		isActive_ = ((StatusNotify *)notify)->hasSfsLoadtime();
 	}
-	update();
 
-	event.Skip();
+	update();
+}
+
+void
+ModSfs::updateDelete(Subject *subject)
+{
+	removeSubject(subject);
+	isActive_ = false;
+	update();
 }
 
 bool

@@ -43,17 +43,13 @@
 #include <anoubis_transaction.h>
 #include <anoubis_dump.h>
 
-#include "AlertNotify.h"
 #include "AnEvents.h"
 #include "ComTask.h"
 #include "ComThread.h"
-#include "EscalationNotify.h"
-#include "LogNotify.h"
 #include "main.h"
 #include "NotifyAnswer.h"
-#include "StatusNotify.h"
+#include "NotificationCtrl.h"
 #include "JobCtrl.h"
-#include "DaemonAnswerNotify.h"
 #include "ProcCtrl.h"
 
 ComThread::ComThread(JobCtrl *jobCtrl, const wxString &socketPath)
@@ -363,58 +359,25 @@ ComThread::checkNotify(struct anoubis_msg *notifyMsg)
 void
 ComThread::sendNotify(struct anoubis_msg *notifyMsg)
 {
-	wxCommandEvent		 addEvent(anEVT_ADD_NOTIFICATION);
 	int			 type;
-	int			 subsystem;
-	Notification		*notify = 0;
+	wxCommandEvent		 pce(anEVT_POLICY_CHANGE);
+	Notification		*notify;
+	NotificationCtrl	*notifyCtrl;
 
 	type = get_value((notifyMsg->u.general)->type);
-	subsystem = get_value((notifyMsg->u.notify)->subsystem);
-	if (type == ANOUBIS_N_POLICYCHANGE) {
-		wxCommandEvent	pchange(anEVT_POLICY_CHANGE);
-		pchange.SetInt(get_value(notifyMsg->u.policychange->prio));
-		pchange.SetExtraLong(get_value(notifyMsg->u.policychange->uid));
-		if (dynamic_cast<AnoubisGuiApp*>(wxTheApp)) {
-			wxPostEvent(AnEvents::getInstance(), pchange);
-		}
-	} else if (ANOUBIS_IS_NOTIFY(type)) {
-		switch (type) {
-		case ANOUBIS_N_ASK:
-			notify = new EscalationNotify(notifyMsg);
-			break;
-		case ANOUBIS_N_NOTIFY:
-			if (subsystem == ANOUBIS_SOURCE_STAT) {
-				notify = new StatusNotify(notifyMsg);
-			} else {
-				notify = new LogNotify(notifyMsg);
-			}
-			break;
-		case ANOUBIS_N_RESYOU:
-		case ANOUBIS_N_RESOTHER:
-			notify = new DaemonAnswerNotify(notifyMsg);
-			break;
-		case ANOUBIS_N_LOGNOTIFY:
-			switch (get_value((notifyMsg->u.notify)->loglevel)) {
-			case APN_LOG_NONE:
-				/* don't show notifies of loglevel 0/none */
-				break;
-			case APN_LOG_NORMAL:
-				notify = new LogNotify(notifyMsg);
-				break;
-			case APN_LOG_ALERT:
-				notify = new AlertNotify(notifyMsg);
-				break;
-			default:
-				break;
-			}
-			break;
-		default:
-			break;
-		}
+	notify = NULL;
+	notifyCtrl = NotificationCtrl::instance();
 
+	if (type == ANOUBIS_N_POLICYCHANGE) {
+		pce.SetInt(get_value(notifyMsg->u.policychange->prio));
+		pce.SetExtraLong(get_value(notifyMsg->u.policychange->uid));
 		if (dynamic_cast<AnoubisGuiApp*>(wxTheApp)) {
-			addEvent.SetClientObject((wxClientData*)notify);
-			wxPostEvent(AnEvents::getInstance(), addEvent);
+			wxPostEvent(AnEvents::getInstance(), pce);
+		}
+	} else {
+		notify = Notification::factory(notifyMsg);
+		if (notify != NULL) {
+			notifyCtrl->addNotification(notify);
 		}
 	}
 }

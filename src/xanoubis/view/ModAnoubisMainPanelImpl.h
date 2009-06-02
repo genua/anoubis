@@ -33,6 +33,8 @@
 #include "main.h"
 #include "ModAnoubisPanelsBase.h"
 #include "Notification.h"
+#include "NotificationCtrl.h"
+#include "Observer.h"
 
 enum modAnoubisVersionListColumns {
 	MODANOUBIS_VMLIST_COLUMN_TYPE = 0,
@@ -43,10 +45,12 @@ enum modAnoubisVersionListColumns {
 	MODANOUBIS_VMLIST_COLUMN_EOL
 };
 
-class ModAnoubisMainPanelImpl : public ModAnoubisMainPanelBase
+class ModAnoubisMainPanelImpl : public ModAnoubisMainPanelBase,
+    private Observer
 {
 	private:
-		enum notifyListTypes	 list_;
+		NotificationPerspective *listPerspective_;
+		wxArrayLong::const_iterator it_;
 
 		Notification	*currentNotify_;
 		Notification	*savedNotify_;
@@ -80,6 +84,9 @@ class ModAnoubisMainPanelImpl : public ModAnoubisMainPanelBase
 		void setAlfOptions(EscalationNotify *, NotifyAnswer *);
 		void setSfsOptions(EscalationNotify *, NotifyAnswer *);
 		void setSbOptions(EscalationNotify *, NotifyAnswer *);
+
+		void update(Subject *);
+		void updateDelete(Subject *);
 
 	protected:
 		void OnLoadRuleSet(wxCommandEvent&);

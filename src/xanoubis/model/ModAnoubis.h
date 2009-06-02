@@ -29,9 +29,7 @@
 #define __MODANOUBIS_H__
 
 #include "Module.h"
-#include "Notification.h"
-#include "EscalationNotify.h"
-#include "NotifyAnswer.h"
+#include "Observer.h"
 
 enum ModAnoubisId {
 	MODANOUBIS_ID_BASE = 14000,
@@ -40,24 +38,9 @@ enum ModAnoubisId {
 	MODULE_ID_ENTRY(ANOUBIS,TOOLBAR)
 };
 
-class ModAnoubis : public Module, public wxEvtHandler
+class ModAnoubis : public Module, private Observer
 {
 	private:
-		size_t		notAnsweredListIdx_;
-		int		notAnsweredAlf_;
-		int		notAnsweredSfs_;
-		int		notAnsweredSb_;
-		size_t		logListIdx_;
-		size_t		alertListIdx_;
-		size_t		answeredListIdx_;
-		size_t		allListIdx_;
-		NotifyList	notAnsweredList_;
-		NotifyList	alertList_;
-		NotifyList	logList_;
-		NotifyList	answeredList_;
-		NotifyList	allList_;
-		EscalationNotify *
-		    fixupEscalationAnswer(int, anoubis_token_t, int);
 
 	public:
 		ModAnoubis(wxWindow *);
@@ -67,18 +50,8 @@ class ModAnoubis : public Module, public wxEvtHandler
 		int	getToolbarId(void);
 		void	update(void);
 
-		void	OnAddNotification(wxCommandEvent&);
-		void	OnDaemonDisconnect(wxCommandEvent&);
-		void	insertNotification(Notification *);
-		void	answerEscalationNotify(EscalationNotify *,
-			    NotifyAnswer *, bool sendAnswer = true);
-		size_t	getElementNo(enum notifyListTypes);
-		size_t	getListSize(enum notifyListTypes);
-
-		Notification *getFirst(enum notifyListTypes);
-		Notification *getPrevious(enum notifyListTypes);
-		Notification *getNext(enum notifyListTypes);
-		Notification *getLast(enum notifyListTypes);
+		void update(Subject *);
+		void updateDelete(Subject *);
 };
 
 #endif /* __MODANOUBIS_H__ */

@@ -43,24 +43,31 @@
 #include "EscalationNotify.h"
 #include "StatusNotify.h"
 #include "DaemonAnswerNotify.h"
+#include "NotificationCtrl.h"
 
 #define LOGVIEWER_COLUMN_ICON		0
 #define LOGVIEWER_COLUMN_TIME		1
 #define LOGVIEWER_COLUMN_MODULE		2
 #define LOGVIEWER_COLUMN_MESSAGE	3
 
-DlgLogViewer::DlgLogViewer(wxWindow* parent) : DlgLogViewerBase(parent)
+DlgLogViewer::DlgLogViewer(wxWindow* parent) : DlgLogViewerBase(parent),
+    Observer(NULL)
 {
-	wxIcon		*icon;
-	wxImageList	*imgList;
-	AnEvents	*anEvents;
+	wxIcon			*icon;
+	wxImageList		*imgList;
+	AnEvents		*anEvents;
+	NotificationCtrl	*notifyCtrl;
 
 	anEvents = AnEvents::getInstance();
+	notifyCtrl = NotificationCtrl::instance();
 
 	imgList = new wxImageList(16, 16);
 	shortcuts_  = new AnShortcuts(this);
 	this->GetSizer()->Layout();
 
+	lastIdx_ = 0;
+
+	/* load icons */
 	icon = wxGetApp().loadIcon(wxT("ModAnoubis_black_16.png"));
 	defaultIconIdx_ = imgList->Add(*icon);
 
@@ -69,26 +76,25 @@ DlgLogViewer::DlgLogViewer(wxWindow* parent) : DlgLogViewerBase(parent)
 
 	icon = wxGetApp().loadIcon(wxT("ModAnoubis_question_16.png"));
 	escalationIconIdx_ = imgList->Add(*icon);
-	lc_logList->AssignImageList(imgList, wxIMAGE_LIST_SMALL);
 
-	lc_logList->InsertColumn(LOGVIEWER_COLUMN_ICON, wxT(""),
+	logListCtrl->AssignImageList(imgList, wxIMAGE_LIST_SMALL);
+
+	/* create columns */
+	logListCtrl->InsertColumn(LOGVIEWER_COLUMN_ICON, wxT(""),
 	    wxLIST_FORMAT_LEFT, 24);
 
-	lc_logList->InsertColumn(LOGVIEWER_COLUMN_TIME, _("Time"),
+	logListCtrl->InsertColumn(LOGVIEWER_COLUMN_TIME, _("Time"),
 	    wxLIST_FORMAT_LEFT, wxLIST_AUTOSIZE);
 
-	lc_logList->InsertColumn(LOGVIEWER_COLUMN_MODULE, _("Module"),
+	logListCtrl->InsertColumn(LOGVIEWER_COLUMN_MODULE, _("Module"),
 	    wxLIST_FORMAT_CENTER, wxLIST_AUTOSIZE);
 
-	lc_logList->InsertColumn(LOGVIEWER_COLUMN_MESSAGE, _("Message"),
+	logListCtrl->InsertColumn(LOGVIEWER_COLUMN_MESSAGE, _("Message"),
 	    wxLIST_FORMAT_LEFT, wxLIST_AUTOSIZE);
 
-	anEvents->Connect(anEVT_ADD_NOTIFICATION,
-	    wxCommandEventHandler(DlgLogViewer::OnAddNotification), NULL, this);
-	anEvents->Connect(anEVT_ADD_NOTIFYANSWER,
-	    wxCommandEventHandler(DlgLogViewer::OnAddNotification), NULL, this);
 	anEvents->Connect(anEVT_LOGVIEWER_SHOW,
-	    wxCommandEventHandler(DlgLogViewer::OnShow), NULL, this);
+	    wxCommandEventHandler(DlgLogViewer::onShow), NULL, this);
+	addSubject(notifyCtrl->getPerspective(NotificationCtrl::LIST_ALL));
 
 	ANEVENTS_IDENT_BCAST_REGISTRATION(DlgLogViewer);
 }
@@ -98,13 +104,8 @@ DlgLogViewer::~DlgLogViewer(void)
 	AnEvents	*anEvents;
 
 	anEvents = AnEvents::getInstance();
-
-	anEvents->Disconnect(anEVT_ADD_NOTIFICATION,
-	    wxCommandEventHandler(DlgLogViewer::OnAddNotification), NULL, this);
-	anEvents->Disconnect(anEVT_ADD_NOTIFYANSWER,
-	    wxCommandEventHandler(DlgLogViewer::OnAddNotification), NULL, this);
 	anEvents->Disconnect(anEVT_LOGVIEWER_SHOW,
-	    wxCommandEventHandler(DlgLogViewer::OnShow), NULL, this);
+	    wxCommandEventHandler(DlgLogViewer::onShow), NULL, this);
 
 	ANEVENTS_IDENT_BCAST_DEREGISTRATION(DlgLogViewer);
 
@@ -112,22 +113,75 @@ DlgLogViewer::~DlgLogViewer(void)
 }
 
 void
-DlgLogViewer::OnAddNotification(wxCommandEvent& event)
+DlgLogViewer::onShow(wxCommandEvent &event)
 {
-	Notification *notify;
-
-	notify = (Notification *)(event.GetClientObject());
-	if (IS_DAEMONANSWEROBJ(notify)) {
-		/* Nothing */
-	} else if (!IS_STATUSOBJ(notify)) {
-		/* show all other notifies than a StatusNotify */
-		addNotification(notify);
-	}
-	/*
-	 * The notify was also received by ModAnoubis, which stores
-	 * and destroys it. Thus we must not delete it.
-	 */
+	this->Show(event.GetInt());
 	event.Skip();
+}
+
+void
+DlgLogViewer::onClose(wxCloseEvent &)
+{
+	wxCommandEvent	showEvent(anEVT_LOGVIEWER_SHOW);
+
+	showEvent.SetInt(false);
+	wxPostEvent(AnEvents::getInstance(), showEvent);
+}
+
+void
+DlgLogViewer::onLogSelect(wxListEvent &event)
+{
+	wxCommandEvent		 showEvent(anEVT_SHOW_RULE);
+	Notification		*notify;
+	NotificationCtrl	*notifyCtrl;
+
+	notifyCtrl = NotificationCtrl::instance();
+	notify = notifyCtrl->getNotification(event.GetData());
+
+	if (!notify)
+		return;
+
+	if (notify->getRuleId() > 0) {
+		showEvent.SetInt(notify->isAdmin());
+		showEvent.SetExtraLong(notify->getRuleId());
+		wxPostEvent(AnEvents::getInstance(), showEvent);
+	}
+}
+
+void
+DlgLogViewer::update(Subject *subject)
+{
+	wxArrayLong::const_iterator	 it;
+	Notification			*notify;
+	NotificationCtrl		*notifyCtrl;
+	NotificationPerspective		*perspective;
+
+	perspective = wxDynamicCast(subject, NotificationPerspective);
+	if (perspective == NULL) {
+		return;
+	}
+
+	notifyCtrl = NotificationCtrl::instance();
+	it = perspective->begin();
+	it += lastIdx_;
+	while (it != perspective->end()) {
+		notify = notifyCtrl->getNotification(*it);
+		/* XXX ch: this should be done at notifyCtrl */
+		if (notify && IS_DAEMONANSWEROBJ(notify)) {
+			/* Nothing */
+		} else if (notify && ! IS_STATUSOBJ(notify)) {
+			/* show all other notifies than a StatusNotify */
+			addNotification(notify);
+		}
+		it++;
+	}
+	lastIdx_ = perspective->getSize();
+}
+
+void
+DlgLogViewer::updateDelete(Subject *subject)
+{
+	removeSubject(subject);
 }
 
 void
@@ -136,7 +190,7 @@ DlgLogViewer::addNotification(Notification *notify)
 	int listIdx;
 	int iconIdx;
 
-	listIdx = lc_logList->GetItemCount();
+	listIdx = logListCtrl->GetItemCount();
 	if (typeid(*notify) == typeid(class EscalationNotify)) {
 		iconIdx = escalationIconIdx_;
 	} else if (typeid(*notify) == typeid(class AlertNotify)) {
@@ -145,58 +199,24 @@ DlgLogViewer::addNotification(Notification *notify)
 		iconIdx = defaultIconIdx_;
 	}
 
-	lc_logList->InsertItem(listIdx, wxEmptyString, iconIdx);
-	lc_logList->SetItem(listIdx, LOGVIEWER_COLUMN_TIME, notify->getTime());
-	lc_logList->SetItem(listIdx, LOGVIEWER_COLUMN_MODULE,
+	logListCtrl->InsertItem(listIdx, wxEmptyString, iconIdx);
+	logListCtrl->SetItem(listIdx, LOGVIEWER_COLUMN_TIME,
+	    notify->getTime());
+	logListCtrl->SetItem(listIdx, LOGVIEWER_COLUMN_MODULE,
 	    notify->getModule());
-	lc_logList->SetItem(listIdx, LOGVIEWER_COLUMN_MESSAGE,
+	logListCtrl->SetItem(listIdx, LOGVIEWER_COLUMN_MESSAGE,
 	    notify->getLogMessage());
-	lc_logList->SetItemPtrData(listIdx, (wxUIntPtr)notify);
+	logListCtrl->SetItemData(listIdx, notify->getId());
 
 	if (notify->isAdmin()) {
-		lc_logList->SetItemBackgroundColour(listIdx,
+		logListCtrl->SetItemBackgroundColour(listIdx,
 		    wxTheColourDatabase->Find(wxT("LIGHT GREY")));
 	}
 
 	/* trigger new calculation of column width (all icons has same size) */
-	lc_logList->SetColumnWidth(LOGVIEWER_COLUMN_TIME, wxLIST_AUTOSIZE);
-	lc_logList->SetColumnWidth(LOGVIEWER_COLUMN_MODULE, wxLIST_AUTOSIZE);
-	lc_logList->SetColumnWidth(LOGVIEWER_COLUMN_MESSAGE, wxLIST_AUTOSIZE);
-}
-
-void
-DlgLogViewer::OnClose(wxCloseEvent&)
-{
-	wxCommandEvent	showEvent(anEVT_LOGVIEWER_SHOW);
-
-	showEvent.SetInt(false);
-
-	wxPostEvent(AnEvents::getInstance(), showEvent);
-}
-
-void
-DlgLogViewer::OnShow(wxCommandEvent& event)
-{
-	this->Show(event.GetInt());
-	event.Skip();
-}
-
-void
-DlgLogViewer::OnListItemSelected(wxListEvent& event)
-{
-	Notification	*notify;
-
-	notify = (Notification*)event.GetData();
-
-	if (!notify)
-		return;
-
-	if (notify->getRuleId() > 0) {
-		wxCommandEvent  showEvent(anEVT_SHOW_RULE);
-		showEvent.SetInt(notify->isAdmin());
-		showEvent.SetExtraLong(notify->getRuleId());
-		wxPostEvent(AnEvents::getInstance(), showEvent);
-	}
+	logListCtrl->SetColumnWidth(LOGVIEWER_COLUMN_TIME, wxLIST_AUTOSIZE);
+	logListCtrl->SetColumnWidth(LOGVIEWER_COLUMN_MODULE, wxLIST_AUTOSIZE);
+	logListCtrl->SetColumnWidth(LOGVIEWER_COLUMN_MESSAGE, wxLIST_AUTOSIZE);
 }
 
 ANEVENTS_IDENT_BCAST_METHOD_DEFINITION(DlgLogViewer)

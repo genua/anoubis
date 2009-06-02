@@ -86,14 +86,17 @@
 	} while (0)
 
 ModAnoubisMainPanelImpl::ModAnoubisMainPanelImpl(wxWindow* parent,
-    wxWindowID id) : ModAnoubisMainPanelBase(parent, id)
+    wxWindowID id) : ModAnoubisMainPanelBase(parent, id), Observer(NULL)
 {
 	AnEvents *anEvents;
 
-	list_ = NOTIFY_LIST_NOTANSWERED;
+	//list_ = NOTIFY_LIST_NOTANSWERED;
 	currentNotify_ = NULL;
 	userOptions_ = wxGetApp().getUserOptions();
 	anEvents = AnEvents::getInstance();
+
+	it_ = 0;
+	listPerspective_ = NULL;
 
 	/* read and restore Escalations Settings */
 	readOptions();
@@ -130,6 +133,10 @@ ModAnoubisMainPanelImpl::~ModAnoubisMainPanelImpl(void)
 	AnEvents *anEvents;
 
 	anEvents = AnEvents::getInstance();
+
+	if (listPerspective_ != NULL) {
+		removeSubject(listPerspective_);
+	}
 
 	/* write Escalations Settings */
 	userOptions_->Write(wxT("/Options/SendEscalations"),
@@ -636,9 +643,19 @@ ModAnoubisMainPanelImpl::sendNotifierOptions(void)
 }
 
 void
+ModAnoubisMainPanelImpl::update(Subject *)
+{
+	update();
+}
+
+void
+ModAnoubisMainPanelImpl::updateDelete(Subject *)
+{
+}
+
+void
 ModAnoubisMainPanelImpl::update(void)
 {
-	ModAnoubis		*module;
 	wxString		 s;
 	size_t			 maxElementNo;
 	size_t			 elementNo;
@@ -651,19 +668,26 @@ ModAnoubisMainPanelImpl::update(void)
 		 */
 		eNotify = dynamic_cast<EscalationNotify *>(currentNotify_);
 		if (eNotify && eNotify->isAnswered()
-		    && list_ == NOTIFY_LIST_NOTANSWERED)
+		    //&& list_ == NOTIFY_LIST_NOTANSWERED
+		    )
 			currentNotify_ = NULL;
 	}
 
-	module = (ModAnoubis *)(wxGetApp().getModule(ANOUBIS));
-	maxElementNo = module->getListSize(list_);
+	if (listPerspective_) {
+		maxElementNo = listPerspective_->getSize();
+	} else {
+		maxElementNo = 0;
+	}
 	elementNo = 0;
 
 	if (maxElementNo > 0) {
 		if (currentNotify_ == NULL) {
-			currentNotify_ = module->getFirst(list_);
+			it_ = listPerspective_->begin();
+			NotificationCtrl *notifyCtrl;
+			notifyCtrl = NotificationCtrl::instance();
+			currentNotify_ = notifyCtrl->getNotification(*it_);
 		}
-		elementNo = module->getElementNo(list_);
+		elementNo = it_ - listPerspective_->begin();
 	} else {
 		currentNotify_ = NULL;
 	}
@@ -753,36 +777,57 @@ ModAnoubisMainPanelImpl::update(void)
 void
 ModAnoubisMainPanelImpl::OnTypeChoosen(wxCommandEvent& event)
 {
+	NotificationCtrl::ListPerspectives	 perspectiveType;
+	NotificationCtrl			*notifyCtrl;
+
+	notifyCtrl = NotificationCtrl::instance();
 	currentNotify_ = NULL;
 
 	/* keep this in sync with ch_type elements */
 	switch (event.GetSelection()) {
 	case 0:
-		list_ = NOTIFY_LIST_NOTANSWERED;
+		perspectiveType = NotificationCtrl::LIST_NOTANSWERED;
 		break;
 	case 1:
-		list_ = NOTIFY_LIST_MESSAGE;
+		perspectiveType = NotificationCtrl::LIST_MESSAGES;
 		break;
 	case 2:
-		list_ = NOTIFY_LIST_ANSWERED;
+		perspectiveType = NotificationCtrl::LIST_ANSWERED;
 		break;
 	case 3:
-		list_ = NOTIFY_LIST_ALL;
+		perspectiveType = NotificationCtrl::LIST_ALL;
 		break;
 	default:
-		list_ = NOTIFY_LIST_NONE;
+		perspectiveType = NotificationCtrl::LIST_NONE;
 		break;
 	}
+
+	removeSubject(listPerspective_);
+
+	listPerspective_ = notifyCtrl->getPerspective(perspectiveType);
+	if (listPerspective_ != NULL) {
+		it_ = listPerspective_->begin();
+	} else {
+		it_ = 0;
+	}
+
+	addSubject(listPerspective_);
 	update();
 }
 
 void
 ModAnoubisMainPanelImpl::OnFirstBtnClick(wxCommandEvent&)
 {
-	ModAnoubis *module;
+	NotificationCtrl	*notifyCtlr;
 
-	module = (ModAnoubis *)(wxGetApp().getModule(ANOUBIS));
-	currentNotify_ = module->getFirst(list_);
+	notifyCtlr = NotificationCtrl::instance();
+	if (listPerspective_ != NULL) {
+		it_ = listPerspective_->begin();
+		currentNotify_ = notifyCtlr->getNotification(*it_);
+	} else {
+		it_ = 0;
+		currentNotify_ = NULL;
+	}
 
 	update();
 }
@@ -790,10 +835,15 @@ ModAnoubisMainPanelImpl::OnFirstBtnClick(wxCommandEvent&)
 void
 ModAnoubisMainPanelImpl::OnPreviousBtnClick(wxCommandEvent&)
 {
-	ModAnoubis *module;
+	NotificationCtrl	*notifyCtlr;
 
-	module = (ModAnoubis *)(wxGetApp().getModule(ANOUBIS));
-	currentNotify_ = module->getPrevious(list_);
+	notifyCtlr = NotificationCtrl::instance();
+	if (it_ != 0) {
+		it_--;
+		currentNotify_ = notifyCtlr->getNotification(*it_);
+	} else {
+		currentNotify_ = NULL;
+	}
 
 	update();
 }
@@ -801,10 +851,15 @@ ModAnoubisMainPanelImpl::OnPreviousBtnClick(wxCommandEvent&)
 void
 ModAnoubisMainPanelImpl::OnNextBtnClick(wxCommandEvent&)
 {
-	ModAnoubis *module;
+	NotificationCtrl	*notifyCtlr;
 
-	module = (ModAnoubis *)(wxGetApp().getModule(ANOUBIS));
-	currentNotify_ = module->getNext(list_);
+	notifyCtlr = NotificationCtrl::instance();
+	if (it_ != 0) {
+		it_++;
+		currentNotify_ = notifyCtlr->getNotification(*it_);
+	} else {
+		currentNotify_ = NULL;
+	}
 
 	update();
 }
@@ -812,10 +867,19 @@ ModAnoubisMainPanelImpl::OnNextBtnClick(wxCommandEvent&)
 void
 ModAnoubisMainPanelImpl::OnLastBtnClick(wxCommandEvent&)
 {
-	ModAnoubis *module;
+	NotificationCtrl	*notifyCtlr;
 
-	module = (ModAnoubis *)(wxGetApp().getModule(ANOUBIS));
-	currentNotify_ = module->getLast(list_);
+	notifyCtlr = NotificationCtrl::instance();
+
+	if (listPerspective_ != NULL) {
+		/* get last */
+		it_ = listPerspective_->end();
+		it_--;
+		currentNotify_ = notifyCtlr->getNotification(*it_);
+	} else {
+		it_ = 0;
+		currentNotify_ = NULL;
+	}
 
 	update();
 }
@@ -917,7 +981,8 @@ ModAnoubisMainPanelImpl::answer(bool permission)
 				setSbOptions(current, answer);
 			}
 		}
-		module->answerEscalationNotify(current, answer);
+		NotificationCtrl::instance()->answerEscalationNotify(
+		    current, answer);
 	}
 	currentNotify_ = NULL;
 	update();
@@ -1014,19 +1079,23 @@ ModAnoubisMainPanelImpl::OnEscalationsShow(wxCommandEvent& event)
 	if (event.GetString().Cmp(wxT("ESCALATIONS")) == 0) {
 		/* select "current requests" */
 		ch_type->SetSelection(0);
+		/* XXX ch
 		if (list_ != NOTIFY_LIST_NOTANSWERED) {
 			currentNotify_ = NULL;
 			list_ = NOTIFY_LIST_NOTANSWERED;
-		}
+			}*/
 	}
 
 	if (event.GetString().Cmp(wxT("ALERTS")) == 0) {
 		/* select "current messages" */
 		ch_type->SetSelection(1);
+		/*
+		  XXX ch:
 		if (list_ != NOTIFY_LIST_MESSAGE) {
 			list_ = NOTIFY_LIST_MESSAGE;
 			currentNotify_ = NULL;
 		}
+		*/
 	}
 	update();
 

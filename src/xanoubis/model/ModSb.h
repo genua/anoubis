@@ -29,6 +29,8 @@
 #define _MODSB_H_
 
 #include "Module.h"
+#include "Notification.h"
+#include "Observer.h"
 
 /**
  * Base and relative Ids of ModSb.
@@ -43,7 +45,7 @@ enum ModSbId {
 /**
  * Class implementing Sandbox module (SB)
  */
-class ModSb : public Module, public wxEvtHandler
+class ModSb : public Module, private Observer
 {
 	public:
 		/**
@@ -80,12 +82,12 @@ class ModSb : public Module, public wxEvtHandler
 		void    update(void);
 
 		/**
-		 * Handle new Notify event.
-		 * This just receives the event and updates the view.
-		 * @param[in] 1st The event.
+		 * Handle update notification from subject.
+		 * @param Subject.
 		 * @return Nothing.
 		 */
-		void    OnAddNotification(wxCommandEvent&);
+		void update(Subject *);
+		void updateDelete(Subject *);
 
 		/**
 		 * Returns the state of ModSb.

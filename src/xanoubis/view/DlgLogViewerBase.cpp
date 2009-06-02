@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 GeNUA mbH <info@genua.de>
+ * Copyright (c) 2009 GeNUA mbH <info@genua.de>
  *
  * All rights reserved.
  *
@@ -39,18 +39,18 @@ DlgLogViewerBase::DlgLogViewerBase( wxWindow* parent, wxWindowID id, const wxStr
 {
 	this->SetSizeHints( wxSize( 700,400 ), wxDefaultSize );
 	
-	wxBoxSizer* sz_main;
-	sz_main = new wxBoxSizer( wxVERTICAL );
+	wxBoxSizer* mainSizer;
+	mainSizer = new wxBoxSizer( wxVERTICAL );
 	
-	lc_logList = new wxListCtrl( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLC_HRULES|wxLC_REPORT|wxLC_SINGLE_SEL );
-	sz_main->Add( lc_logList, 1, wxALL|wxEXPAND, 5 );
+	logListCtrl = new wxListCtrl( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLC_HRULES|wxLC_REPORT|wxLC_SINGLE_SEL );
+	mainSizer->Add( logListCtrl, 1, wxALL|wxEXPAND, 5 );
 	
-	this->SetSizer( sz_main );
+	this->SetSizer( mainSizer );
 	this->Layout();
-	sz_main->Fit( this );
+	mainSizer->Fit( this );
 	
 	// Connect Events
 	this->Connect( wxEVT_CHAR, wxKeyEventHandler( DlgLogViewerBase::OnKeyPressed ) );
-	this->Connect( wxEVT_CLOSE_WINDOW, wxCloseEventHandler( DlgLogViewerBase::OnClose ) );
-	lc_logList->Connect( wxEVT_COMMAND_LIST_ITEM_SELECTED, wxListEventHandler( DlgLogViewerBase::OnListItemSelected ), NULL, this );
+	this->Connect( wxEVT_CLOSE_WINDOW, wxCloseEventHandler( DlgLogViewerBase::onClose ) );
+	logListCtrl->Connect( wxEVT_COMMAND_LIST_ITEM_SELECTED, wxListEventHandler( DlgLogViewerBase::onLogSelect ), NULL, this );
 }
