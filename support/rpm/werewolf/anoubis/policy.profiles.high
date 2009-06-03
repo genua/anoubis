@@ -5,7 +5,7 @@ alf {
 		default allow
 	}
 
-	@xanoubis@ @@ {
+	/usr/bin/xanoubis @@ {
 		# allow all because of NFS, X, etc.
 		default allow
 	}
@@ -268,7 +268,7 @@ sandbox {
 		default allow
 	}
 
-	@xanoubis@ @@ {
+	/usr/bin/xanoubis @@ {
 		# allow all in order to access/write profiles, etc
 		default allow
 	}
@@ -278,7 +278,7 @@ context {
 		# no context new for cvs
 	}
 
-	@xanoubis@ @@ {
+	/usr/bin/xanoubis @@ {
 		# no context new for cvs
 	}
 
