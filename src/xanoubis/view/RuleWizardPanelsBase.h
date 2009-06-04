@@ -90,7 +90,7 @@ class RuleWizardOverwritePolicyPageBase : public wxPanel
 		
 	
 	public:
-		RuleWizardOverwritePolicyPageBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 800,600 ), long style = wxTAB_TRAVERSAL );
+		RuleWizardOverwritePolicyPageBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 980,600 ), long style = wxTAB_TRAVERSAL );
 	
 };
 
@@ -134,7 +134,7 @@ class RuleWizardAlfDlgAddServiceBase : public wxDialog
 		
 	
 	public:
-		RuleWizardAlfDlgAddServiceBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Rule wizard add service"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 640,480 ), long style = wxDEFAULT_DIALOG_STYLE|wxRESIZE_BORDER|wxSTAY_ON_TOP );
+		RuleWizardAlfDlgAddServiceBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Rule wizard add service"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 800,600 ), long style = wxDEFAULT_DIALOG_STYLE|wxRESIZE_BORDER|wxSTAY_ON_TOP );
 	
 };
 
@@ -159,7 +159,7 @@ class RuleWizardProgramPageBase : public wxPanel
 		
 	
 	public:
-		RuleWizardProgramPageBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 800,600 ), long style = wxTAB_TRAVERSAL );
+		RuleWizardProgramPageBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 980,600 ), long style = wxTAB_TRAVERSAL );
 	
 };
 
@@ -193,7 +193,7 @@ class RuleWizardContextPageBase : public wxPanel
 		
 	
 	public:
-		RuleWizardContextPageBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 800,600 ), long style = wxTAB_TRAVERSAL );
+		RuleWizardContextPageBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 980,600 ), long style = wxTAB_TRAVERSAL );
 	
 };
 
@@ -224,7 +224,7 @@ class RuleWizardContextExceptionPageBase : public wxPanel
 		
 	
 	public:
-		RuleWizardContextExceptionPageBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 800,600 ), long style = wxTAB_TRAVERSAL );
+		RuleWizardContextExceptionPageBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 980,600 ), long style = wxTAB_TRAVERSAL );
 	
 };
 
@@ -260,7 +260,7 @@ class RuleWizardAlfPermissionPageBase : public wxPanel
 		
 	
 	public:
-		RuleWizardAlfPermissionPageBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 800,600 ), long style = wxTAB_TRAVERSAL );
+		RuleWizardAlfPermissionPageBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 980,600 ), long style = wxTAB_TRAVERSAL );
 	
 };
 
@@ -300,7 +300,7 @@ class RuleWizardAlfServicePageBase : public wxPanel
 		
 	
 	public:
-		RuleWizardAlfServicePageBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 800,600 ), long style = wxTAB_TRAVERSAL );
+		RuleWizardAlfServicePageBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 980,600 ), long style = wxTAB_TRAVERSAL );
 	
 };
 
@@ -333,7 +333,7 @@ class RuleWizardSandboxPageBase : public wxPanel
 		
 	
 	public:
-		RuleWizardSandboxPageBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 800,600 ), long style = wxTAB_TRAVERSAL );
+		RuleWizardSandboxPageBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 980,600 ), long style = wxTAB_TRAVERSAL );
 	
 };
 
@@ -367,7 +367,7 @@ class RuleWizardSandboxPermissionPageBase : public wxPanel
 		
 	
 	public:
-		RuleWizardSandboxPermissionPageBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 800,600 ), long style = wxTAB_TRAVERSAL );
+		RuleWizardSandboxPermissionPageBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 980,600 ), long style = wxTAB_TRAVERSAL );
 	
 };
 
@@ -387,9 +387,9 @@ class RuleWizardSandboxFilesPageBase : public wxPanel
 		wxStaticText* questionLabel;
 		wxStaticText* fileListLabel;
 		wxListCtrl* fileListCtrl;
+		wxStaticText* add_label;
 		wxButton* addFileButton;
 		wxButton* addDirectoryButton;
-		
 		wxButton* defaultsButton;
 		
 		wxButton* deleteButton;
@@ -409,7 +409,7 @@ class RuleWizardSandboxFilesPageBase : public wxPanel
 		
 	
 	public:
-		RuleWizardSandboxFilesPageBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 800,600 ), long style = wxTAB_TRAVERSAL );
+		RuleWizardSandboxFilesPageBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 980,600 ), long style = wxTAB_TRAVERSAL );
 	
 };
 
@@ -435,7 +435,7 @@ class RuleWizardFinalPageBase : public wxPanel
 		
 	
 	public:
-		RuleWizardFinalPageBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 800,600 ), long style = wxTAB_TRAVERSAL );
+		RuleWizardFinalPageBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 980,600 ), long style = wxTAB_TRAVERSAL );
 	
 };
 

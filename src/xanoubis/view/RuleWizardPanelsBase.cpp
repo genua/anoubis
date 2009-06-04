@@ -863,27 +863,28 @@ RuleWizardSandboxFilesPageBase::RuleWizardSandboxFilesPageBase( wxWindow* parent
 	wxBoxSizer* buttonSizer;
 	buttonSizer = new wxBoxSizer( wxHORIZONTAL );
 	
-	addFileButton = new wxButton( this, wxID_ANY, _(" add file..."), wxDefaultPosition, wxDefaultSize, 0 );
+	add_label = new wxStaticText( this, wxID_ANY, _("Add:"), wxDefaultPosition, wxDefaultSize, wxST_NO_AUTORESIZE );
+	add_label->Wrap( -1 );
+	buttonSizer->Add( add_label, 0, wxALIGN_CENTER|wxALL, 5 );
+	
+	addFileButton = new wxButton( this, wxID_ANY, _("file"), wxDefaultPosition, wxDefaultSize, 0 );
 	addFileButton->SetToolTip( _("opens a file-choose-dialog\nand adds the result to the list") );
 	
 	buttonSizer->Add( addFileButton, 0, wxALL, 5 );
 	
-	addDirectoryButton = new wxButton( this, wxID_ANY, _(" add directory..."), wxDefaultPosition, wxDefaultSize, 0 );
+	addDirectoryButton = new wxButton( this, wxID_ANY, _("directory"), wxDefaultPosition, wxDefaultSize, 0 );
 	addDirectoryButton->SetToolTip( _("opens a directory-choose-dialog\nand adds the result to the list") );
 	
 	buttonSizer->Add( addDirectoryButton, 0, wxALL, 5 );
 	
-	
-	buttonSizer->Add( 0, 0, 1, wxEXPAND, 5 );
-	
-	defaultsButton = new wxButton( this, wxID_ANY, _("add default permissions"), wxDefaultPosition, wxDefaultSize, 0 );
+	defaultsButton = new wxButton( this, wxID_ANY, _("default permissions"), wxDefaultPosition, wxDefaultSize, 0 );
 	defaultsButton->Enable( false );
 	defaultsButton->SetToolTip( _("adds the default services to the list") );
 	
 	buttonSizer->Add( defaultsButton, 0, wxALL, 5 );
 	
 	
-	buttonSizer->Add( 0, 0, 1, wxEXPAND, 5 );
+	buttonSizer->Add( 40, 0, 1, wxEXPAND, 5 );
 	
 	deleteButton = new wxButton( this, wxID_ANY, _("delete"), wxDefaultPosition, wxDefaultSize, 0 );
 	deleteButton->Enable( false );
