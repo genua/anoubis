@@ -30,9 +30,10 @@ WANTLIB-main =		c m pthread stdc++ event glib-2.0 pixman-1 \
 			intl pango-1.0 pangocairo-1.0 pangoft2-1.0 png z \
 			crypto ssl
 
-PROFILESDIR =		/etc/anoubis/profiles
-POLICYDIR =		/etc/anoubis/policy
-SUBST_VARS =		PROFILESDIR POLICYDIR
+ANOUBISDIR =		/etc/anoubis
+PROFILESDIR =		${ANOUBISDIR}/profiles
+POLICYDIR =		${ANOUBISDIR}/policy
+SUBST_VARS =		ANOUBISDIR PROFILESDIR POLICYDIR
 
 MULTI_PACKAGES =	-main -daemon
 
