@@ -181,7 +181,7 @@ pe_proc_alloc(uid_t uid, anoubis_cookie_t cookie, struct pe_proc_ident *pident)
 		goto oom;
 	proc->task_cookie = cookie;
 	proc->borrow_cookie = 0;
-	proc->pid = -1;
+	proc->pid = (pid_t)-1;
 	proc->uid = uid;
 	proc->sfsdisable_pid = (pid_t)-1;
 	proc->sfsdisable_uid = (uid_t)-1;
@@ -281,6 +281,11 @@ void pe_proc_set_pid(struct pe_proc *proc, pid_t pid)
 {
 	if (!proc)
 		return;
+
+	DEBUG(DBG_PE_PROC, "pe_proc_set_pid: proc %p pid %d -> %d "
+	    "cookie 0x%08llx", proc, (int)proc->pid, (int)pid,
+	    (unsigned long long)proc->task_cookie);
+
 	proc->pid = pid;
 	if (proc->pid != proc->sfsdisable_pid) {
 		proc->sfsdisable_pid = (pid_t)-1;
@@ -446,8 +451,6 @@ pe_proc_set_sfsdisable(pid_t pid, uid_t uid)
 		DEBUG(DBG_PE_TRACKER, "pe_proc_set_sfsdisable: Trying proc %p "
 		    "pid %d cookie 0x%08llx", proc, (int)proc->pid,
 		    (unsigned long long)proc->task_cookie);
-		if (proc->sfsdisable_uid != (uid_t)-1)
-			continue;
 		if (proc->uid != uid)
 			continue;
 		if (proc->pid != (pid_t)-1 && proc->pid != pid)

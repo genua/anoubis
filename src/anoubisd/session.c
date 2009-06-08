@@ -507,7 +507,7 @@ dispatch_checksum(struct anoubis_server *server, struct anoubis_msg *m,
 	if (((flags != ANOUBIS_CSUM_NONE) && (uid != 0)) ||
 	    ((opp == ANOUBIS_CHECKSUM_OP_KEYID_LIST) && (uid != 0)) ||
 	    ((opp == ANOUBIS_CHECKSUM_OP_UID_LIST) && (uid != 0))) {
-		log_warn("Dropping checksum request missing privilegs uid: %d",
+		log_warn("Dropping checksum request missing privileges uid: %d",
 		    uid);
 		free(s2m_msg);
 		return;
