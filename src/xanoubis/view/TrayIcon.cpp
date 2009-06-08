@@ -39,6 +39,8 @@
 #include <wx/icon.h>
 #include <wx/event.h>
 #include <wx/string.h>
+#include <wx/utils.h>
+#include <wx/txtstrm.h>
 
 #include <libnotify/notify.h>
 #include "config.h"
@@ -47,6 +49,7 @@
 #endif
 
 #include "AnEvents.h"
+#include "Debug.h"
 #include "JobCtrl.h"
 #include "main.h"
 #include "TrayIcon.h"
@@ -60,7 +63,6 @@ BEGIN_EVENT_TABLE(TrayIcon, wxTaskBarIcon)
 	EVT_MENU(GUI_RESTORE, TrayIcon::OnGuiRestore)
 	EVT_TASKBAR_LEFT_DOWN(TrayIcon::OnLeftButtonClick)
 END_EVENT_TABLE()
-
 
 TrayIcon::TrayIcon(void)
 {
@@ -88,6 +90,8 @@ TrayIcon::TrayIcon(void)
 	sendEscalation_ = true;
 	escalationTimeout_ = 0;
 	alertTimeout_ = 10;
+
+	initDBus();
 
 	notify_init("Anoubis");
 	notification = notify_notification_new("Anoubis", "", NULL, NULL);
@@ -121,7 +125,14 @@ TrayIcon::~TrayIcon(void)
 
 	/* free notification object */
 	g_object_unref(G_OBJECT(notification));
+
 	notify_uninit();
+	if (dBusProc_ != NULL) {
+		dBusProc_->Detach();
+		dBusProc_->Kill(dBusProc_->GetPid(), wxSIGTERM,
+		    wxKILL_CHILDREN);
+		delete dBusProc_;
+	}
 
 	anEvents->Disconnect(anEVT_OPEN_ALERTS,
 	    wxCommandEventHandler(TrayIcon::OnOpenAlerts), NULL, this);
@@ -395,4 +406,61 @@ TrayIcon::systemNotify(const gchar *module, const gchar *message,
 	}
 
 	return true;
+}
+
+void
+TrayIcon::initDBus(void)
+{
+	wxString		 word;
+	wxString		 dBusCmd;
+	wxString		 envName;
+	wxString		 envValue;
+	wxInputStream		*input;
+	wxTextInputStream	*text;
+
+	dBusProc_ = NULL;
+	envName = wxT("DBUS_SESSION_BUS_ADDRESS");
+	if (wxGetEnv(envName, &envValue)) {
+		/* DBUS already running - nothing to do. */
+		return;
+	}
+
+	/* DBUS is not running - start it. */
+	dBusCmd = wxT("dbus-launch --sh-syntax --exit-with-session");
+	dBusProc_ = wxProcess::Open(dBusCmd,
+	    wxEXEC_MAKE_GROUP_LEADER | wxEXEC_ASYNC);
+	if (dBusProc_ == NULL) {
+		/* Couldn't start DBus */
+		Debug::instance()->log(wxT("Couldn't start DBUS!"), DEBUG_LOG);
+		return;
+	}
+
+	/*
+	 * A session DBus was just started. We make it available
+	 * by setting the appropriate environment variables.
+	 * We have to parse the following input:
+	 * DBUS_SESSION_BUS_ADDRESS='unix:abstract=/tmp/dbus-xxx,guid=xxx';
+	 * export DBUS_SESSION_BUS_ADDRESS;
+	 * DBUS_SESSION_BUS_PID=14912;
+	 */
+	input = dBusProc_->GetInputStream();
+	text = new wxTextInputStream(*input, wxT(" =\n"));
+	while (!input->Eof()) {
+		word = text->ReadWord();
+		if (word.StartsWith(wxT("DBUS_SESSION_BUS_"))) {
+			/* word == (..._ADDRESS or ..._PID) */
+			envName = word;
+			/*
+			 * Read remaining line and
+			 *   - remove trailing ';'
+			 *   - also remove ticks
+			 */
+			envValue = text->ReadLine().RemoveLast();
+			envValue.Replace(wxT("'"), wxT(""));
+			wxSetEnv(envName, envValue.c_str());
+		} else if (word == wxT("export")) {
+			word = text->ReadLine();
+			/* Do nothing with 'export' line. */
+		}
+	}
 }

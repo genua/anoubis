@@ -30,6 +30,7 @@
 
 #include <wx/icon.h>
 #include <wx/event.h>
+#include <wx/process.h>
 #include <wx/taskbar.h>
 #include <libnotify/notify.h>
 
@@ -50,10 +51,13 @@ class TrayIcon : public wxTaskBarIcon
 		unsigned int            escalationTimeout_;
 		unsigned int            alertTimeout_;
 		NotifyNotification	*notification;
+		wxProcess		*dBusProc_;
 
 		void		 update(void);
 		bool		 systemNotify(const gchar*, const gchar*,
 		    NotifyUrgency, const int);
+
+		void initDBus(void);
 
 		ANEVENTS_IDENT_BCAST_METHOD_DECLARATION;
 
