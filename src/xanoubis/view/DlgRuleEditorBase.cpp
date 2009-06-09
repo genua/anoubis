@@ -477,7 +477,7 @@ DlgRuleEditorFilterActionPageBase::DlgRuleEditorFilterActionPageBase( wxWindow* 
 	mainPage->SetSizer( mainSizer );
 	mainPage->Layout();
 	mainSizer->Fit( mainPage );
-	pageSizer->Add( mainPage, 0, wxEXPAND | wxALL, 5 );
+	pageSizer->Add( mainPage, 1, wxALL|wxEXPAND, 5 );
 	
 	wxBoxSizer* pathSizer;
 	pathSizer = new wxBoxSizer( wxHORIZONTAL );
@@ -485,7 +485,12 @@ DlgRuleEditorFilterActionPageBase::DlgRuleEditorFilterActionPageBase( wxWindow* 
 	defaultPathPicker = new AnPickFromFs( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL, wxT("Default Path:") );
 	pathSizer->Add( defaultPathPicker, 1, wxALL|wxEXPAND, 5 );
 	
-	pageSizer->Add( pathSizer, 0, wxEXPAND, 5 );
+	pageSizer->Add( pathSizer, 1, wxEXPAND, 5 );
+	
+	wxBoxSizer* spaceSizer;
+	spaceSizer = new wxBoxSizer( wxVERTICAL );
+	
+	pageSizer->Add( spaceSizer, 1, wxEXPAND, 5 );
 	
 	this->SetSizer( pageSizer );
 	this->Layout();
