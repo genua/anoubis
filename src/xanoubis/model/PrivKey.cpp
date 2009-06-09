@@ -105,6 +105,7 @@ PrivKey::load(pem_password_cb *xpass_cb)
 
 	if (privKey_ == 0) {
 		do {
+			err = 0;
 			privKey_ = anoubis_sig_priv_init(
 			    keyFile_.fn_str(), 0, xpass_cb, &err);
 			if (err != 0) {
