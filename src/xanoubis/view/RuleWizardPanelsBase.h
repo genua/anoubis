@@ -134,7 +134,7 @@ class RuleWizardAlfDlgAddServiceBase : public wxDialog
 		
 	
 	public:
-		RuleWizardAlfDlgAddServiceBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Rule wizard add service"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 800,600 ), long style = wxDEFAULT_DIALOG_STYLE|wxRESIZE_BORDER|wxSTAY_ON_TOP );
+		RuleWizardAlfDlgAddServiceBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Rule wizard add service"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 800,600 ), long style = wxDEFAULT_DIALOG_STYLE|wxRESIZE_BORDER );
 	
 };
 
