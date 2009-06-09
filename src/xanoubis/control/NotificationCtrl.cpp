@@ -39,6 +39,8 @@
 
 NotificationCtrl::~NotificationCtrl(void)
 {
+	Disconnect(anEVT_UPDATE_PERSPECTIVE, wxCommandEventHandler(
+	    NotificationCtrl::onUpdatePerspectives), NULL, this);
 	JobCtrl::getInstance()->Disconnect(anEVT_COM_CONNECTION,
 	    wxCommandEventHandler(NotificationCtrl::onDaemonDisconnect),
 	    NULL, this);
@@ -55,7 +57,8 @@ NotificationCtrl::instance(void)
 void
 NotificationCtrl::addNotification(Notification *notification)
 {
-	long id;
+	long		id;
+	wxCommandEvent	updateEvent(anEVT_UPDATE_PERSPECTIVE);
 
 	id = notification->getId();
 
@@ -63,23 +66,16 @@ NotificationCtrl::addNotification(Notification *notification)
 	notificationHash_[id] = notification;
 	notificationHashMutex_.Unlock();
 
-	/* sorted enqueueing of notifications */
-	if (IS_ESCALATIONOBJ(notification)) {
-		addEscalationNotify(notification);
-	} else if (IS_DAEMONANSWEROBJ(notification)) {
-		addDaemonAnswerNotify(notification);
-	} else if (IS_ALERTOBJ(notification)) {
-		addAlertNotify(notification);
-	} else if (IS_STATUSOBJ(notification)) {
-		/* remove the old status message */
-		if (stats_.getSize() > 0) {
-			stats_.removeId(stats_.getId(0));
-		}
-		stats_.addId(id);
-	} else {
-		/* Imho we shouldn't reach this point. */
-		allNotifications_.addId(id);
-	}
+	/*
+	 * We need to update the perspectives as well. But we can't
+	 * do it right here, because it's possible to be within the
+	 * ComThread and not in the GuiMainThread.
+	 * Thus we delay this by sending an event to ourself.
+	 * See Bug #1298 and
+	 * http://stackoverflow.com/questions/407004/notifications-in-wxwidgets
+	 */
+	updateEvent.SetExtraLong(id);
+	wxPostEvent(this, updateEvent);
 }
 
 Notification *
@@ -177,6 +173,8 @@ NotificationCtrl::NotificationCtrl(void) : Singleton<NotificationCtrl>()
 	JobCtrl::getInstance()->Connect(anEVT_COM_CONNECTION,
 	    wxCommandEventHandler(NotificationCtrl::onDaemonDisconnect),
 	    NULL, this);
+	Connect(anEVT_UPDATE_PERSPECTIVE, wxCommandEventHandler(
+	    NotificationCtrl::onUpdatePerspectives), NULL, this);
 }
 
 void
@@ -217,6 +215,39 @@ NotificationCtrl::onDaemonDisconnect(wxCommandEvent & event)
 	wxGetApp().getModule(SFS)->update();
 	wxGetApp().getModule(SB)->update();
 	wxGetApp().getModule(ANOUBIS)->update();
+}
+
+void
+NotificationCtrl::onUpdatePerspectives(wxCommandEvent & event)
+{
+	long		 id;
+	Notification	*notification;
+
+	id =  event.GetExtraLong();
+	notification = getNotification(id);
+
+	if (notification == NULL) {
+		/* This is strange and should never happen. */
+		return;
+	}
+
+	/* sorted enqueueing of notifications */
+	if (IS_ESCALATIONOBJ(notification)) {
+		addEscalationNotify(notification);
+	} else if (IS_DAEMONANSWEROBJ(notification)) {
+		addDaemonAnswerNotify(notification);
+	} else if (IS_ALERTOBJ(notification)) {
+		addAlertNotify(notification);
+	} else if (IS_STATUSOBJ(notification)) {
+		/* remove the old status message */
+		if (stats_.getSize() > 0) {
+			stats_.removeId(stats_.getId(0));
+		}
+		stats_.addId(id);
+	} else {
+		/* Imho we shouldn't reach this point. */
+		allNotifications_.addId(id);
+	}
 }
 
 void

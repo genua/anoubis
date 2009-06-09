@@ -176,6 +176,14 @@ class NotificationCtrl : public wxEvtHandler, public Singleton<NotificationCtrl>
 		void onDaemonDisconnect(wxCommandEvent &);
 
 		/**
+		 * Handle events of update perspective.
+		 * The event carries the id of the new notification.
+		 * @param[in] 1st The event.
+		 * @return Nothing.
+		 */
+		void onUpdatePerspectives(wxCommandEvent &);
+
+		/**
 		 * Enqueue escalation notifies.
 		 */
 		void addEscalationNotify(Notification *);

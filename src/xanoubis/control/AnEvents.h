@@ -555,6 +555,20 @@ BEGIN_DECLARE_EVENT_TYPES()
 	 */
 	DECLARE_LOCAL_EVENT_TYPE(anEVT_BACKUP_POLICY, wxNewEventType())
 
+	/**
+	 * Update perspectives event.
+	 * This event is sent and received by NotificationCtrl. It's sent
+	 * after a new notification was enqueued. On receipt of this event
+	 * the perspectives are updated. With this trick/split we ensure
+	 * the observers listening on the perspectives do theire update
+	 * within the main thread.\n
+	 * This event carries the id of the new notification as
+	 * ExtraLong (see SetExtraLong() and GetExtraLong()).
+	 * Also see Bug #1298 and
+	 * http://stackoverflow.com/questions/407004/notifications-in-wxwidgets
+	 */
+	DECLARE_LOCAL_EVENT_TYPE(anEVT_UPDATE_PERSPECTIVE, wxNewEventType())
+
 END_DECLARE_EVENT_TYPES()
 /**
  * @}
