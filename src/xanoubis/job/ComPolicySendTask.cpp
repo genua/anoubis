@@ -41,6 +41,7 @@
 
 #include "ComPolicySendTask.h"
 #include "PolicyRuleSet.h"
+#include "PolicyCtrl.h"
 #include "TaskEvent.h"
 
 ComPolicySendTask::ComPolicySendTask(void)
@@ -49,6 +50,7 @@ ComPolicySendTask::ComPolicySendTask(void)
 	this->uid_ = 0;
 	this->prio_ = 0;
 	this->privKey_ = 0;
+	this->ruleSetId_ = 0;
 }
 
 ComPolicySendTask::~ComPolicySendTask(void)
@@ -70,6 +72,7 @@ ComPolicySendTask::setPolicy(PolicyRuleSet *policy)
 	if (policy->toString(content)) {
 		policy_content_ = (char *)malloc(content.Len() + 1);
 		strlcpy(policy_content_, content.fn_str(), content.Len() + 1);
+		ruleSetId_ = policy->getRuleSetId();
 
 		return (true);
 	} else {
@@ -91,6 +94,7 @@ ComPolicySendTask::setPolicy(struct apn_ruleset *policy, uid_t uid, int prio)
 	if (getPolicyContent(policy, content)) {
 		policy_content_ = (char *)malloc(content.Len() + 1);
 		strlcpy(policy_content_, content.fn_str(), content.Len() + 1);
+		ruleSetId_ = 0;
 
 		return (true);
 	} else {
@@ -210,6 +214,9 @@ ComPolicySendTask::exec(void)
 bool
 ComPolicySendTask::done(void)
 {
+	PolicyCtrl	*policyCtrl;
+	PolicyRuleSet	*ruleSet;
+
 	if (ta_ == NULL)
 		return (true);
 	if ((ta_->flags & ANOUBIS_T_DONE) == 0)
@@ -221,9 +228,17 @@ ComPolicySendTask::done(void)
 		setResultDetails(ta_->result);
 	} else {
 		setComTaskResult(RESULT_SUCCESS);
+		if (ruleSetId_ != 0) {
+			policyCtrl = PolicyCtrl::getInstance();
+			ruleSet = policyCtrl->getRuleSet(ruleSetId_);
+			if (ruleSet != NULL) {
+				ruleSet->clearModified();
+			}
+		}
 	}
 	anoubis_transaction_destroy(ta_);
 	ta_ = NULL;
+	ruleSetId_ = 0;
 	return (true);
 }
 

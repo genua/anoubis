@@ -1415,15 +1415,6 @@ DlgRuleEditor::onFooterActivateButton(wxCommandEvent &)
 		}
 	}
 
-	/*
-	 * XXX ch: This will update the status imediately. If we want
-	 * XXX ch: to wait until transmission finished successfully,
-	 * XXX ch: we need to register to anTASKEVT_POLICY_SEND ...
-	 */
-	if (user)
-		user->clearModified();
-	if (admin)
-		admin->clearModified();
 	updateFooter();
 }
 

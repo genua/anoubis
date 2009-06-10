@@ -169,6 +169,11 @@ class ComPolicySendTask : public ComTask
 		struct anoubis_sig		*privKey_;
 		struct anoubis_transaction	*ta_;
 
+		/**
+		 * Store the id of the ruleset currently been sent.
+		 */
+		long ruleSetId_;
+
 		static bool getPolicyContent(struct apn_ruleset *, wxString &);
 };
 
