@@ -75,7 +75,17 @@ NotificationCtrl::addNotification(Notification *notification)
 	 * http://stackoverflow.com/questions/407004/notifications-in-wxwidgets
 	 */
 	updateEvent.SetExtraLong(id);
-	wxPostEvent(this, updateEvent);
+
+	if (wxThread::This()->IsMain()) {
+		/* You are in the main-thread, just process the event */
+		ProcessEvent(updateEvent);
+	} else {
+		/* 
+		 * You are not in the main-thread, schedule event for later
+		 * delivery.
+		 */
+		wxPostEvent(this, updateEvent);
+	}
 }
 
 Notification *

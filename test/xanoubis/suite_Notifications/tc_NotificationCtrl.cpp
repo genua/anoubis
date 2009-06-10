@@ -31,6 +31,8 @@
 #include <Subject.h>
 #include <Observer.h>
 
+#include <wx/app.h>
+
 /*
  * Define a perspectiveObserver
  */
@@ -95,6 +97,22 @@ PerspectiveObserver::updateDelete(Subject * WXUNUSED(subject))
 		} \
 	} while (0)
 
+static wxApp *tcApp = 0;
+
+static void
+setup(void)
+{
+	tcApp = new wxApp;
+	wxApp::SetInstance(tcApp);
+}
+
+static void
+teardown(void)
+{
+	wxApp::SetInstance(0);
+	delete tcApp;
+}
+
 /*
  * The unit tests itself
  */
@@ -131,6 +149,7 @@ getTc_NotificationCtrl(void)
 	TCase *testCase;
 
 	testCase = tcase_create("NotificationCtrl");
+	tcase_add_checked_fixture(testCase, setup, teardown);
 	tcase_add_test(testCase, notificationCtrl_add);
 
 	return (testCase);
