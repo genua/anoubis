@@ -243,6 +243,7 @@ exit 0
 %defattr(-,root,root)
 %{rcdir}/*
 /sbin/*
+/usr/lib/*
 /usr/share/anoubisd/*
 %{_sysconfdir}/udev/rules.d/06-anoubis.rules
 %{_sysconfdir}/anoubis

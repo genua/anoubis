@@ -1,5 +1,5 @@
 ##########################################################################
-# Copyright (c) 2008 GeNUA mbH <info@genua.de>
+# Copyright (c) 2009 GeNUA mbH <info@genua.de>
 #
 # All rights reserved.
 #
@@ -25,19 +25,20 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ##########################################################################
 
-if NEEDBSDCOMPAT
-BSDCOMPAT=bsdcompat
-endif
+TESTS = test_libanoubispreload
 
-if XANOUBIS
-GUI=xanoubis
-endif
+anoubispreloaddir = src/libanoubispreload
+libanoubispreload = $(top_builddir)/$(anoubispreloaddir)/libanoubispreload.so
+anoubischeckdir = test/libanoubischeck
+libanoubischeck = $(top_builddir)/$(anoubischeckdir)/libanoubischeck.a
 
-SUBDIRS = libanoubischeck libapn libanoubischat libanoubispreload \
-	libanoubisprotocol libanoubisui anoubisd libanoubissig $(GUI) \
-	$(BSDCOMPAT)
+noinst_PROGRAMS = test_libanoubispreload
 
-# targets must exist, but need not to do anything
-flawfinder:
-lint:
-splint:
+test_libanoubispreload_CFLAGS = @CHECK_CFLAGS@
+test_libanoubispreload_CPPFLAGS = -I$(top_srcdir)/$(anoubischeckdir)
+test_libanoubispreload_LDADD = @CHECK_LIBS@ $(libanoubischeck)
+test_libanoubispreload_DEPENDENCIES = $(libanoubispreload)
+
+test_libanoubispreload_SOURCES = \
+	testrunner.c \
+	tc_libpath.c

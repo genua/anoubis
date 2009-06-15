@@ -20,6 +20,7 @@
 @comment man/man3/anoubis_sig.3
 @comment man/man3/anoubis_transaction.3
 @comment man/man3/apn.3
+@lib lib/libanoubispreload.so
 share/anoubisd/install_policy
 share/anoubisd/policy_templates/admin/_dhcp
 share/anoubisd/policy_templates/admin/_ntp

@@ -2,4 +2,5 @@ sbin/anoubisd
 sbin/anoubisctl
 sbin/sfssig
 etc/udev/*
+usr/lib/libanoubispreload.so
 usr/share/anoubisd/*

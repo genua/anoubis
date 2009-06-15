@@ -34,8 +34,9 @@ GUI=xanoubis
 endif
 
 # Note:  Libraries must come first as applications might depend on them.
-SUBDIRS = $(BSDCOMPAT) libapn libanoubischat libanoubisprotocol \
-	libanoubisui libanoubissig anoubisd $(GUI) anoubisctl sfssig
+SUBDIRS = $(BSDCOMPAT) libanoubispreload libapn libanoubischat \
+	libanoubisprotocol libanoubisui libanoubissig anoubisd $(GUI) \
+	anoubisctl sfssig
 
 flawfinder:
 	for t in $(SUBDIRS); do cd $$t && make $@ && cd ..; done

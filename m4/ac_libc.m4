@@ -1,5 +1,5 @@
 ##########################################################################
-# Copyright (c) 2008 GeNUA mbH <info@genua.de>
+# Copyright (c) 2009 GeNUA mbH <info@genua.de>
 #
 # All rights reserved.
 #
@@ -25,19 +25,34 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ##########################################################################
 
-if NEEDBSDCOMPAT
-BSDCOMPAT=bsdcompat
-endif
+AC_DEFUN([AC_LIB_LIBC], [
+  AC_CANONICAL_HOST
+  AC_MSG_CHECKING([libc])
+  echo "int main(void) { return 0; }" > libctest.c
+  ${CC} -Wall libctest.c -o libctest
+  if [ test "x$?" != "x0" ]; then
+    rm -f libctest.c libctest
+    AC_MSG_ERROR([Failed to compile libctest])
+  fi
 
-if XANOUBIS
-GUI=xanoubis
-endif
+  case $host in
+    *-*-linux*)
+    PATH_LIBC=`ldd libctest | \
+      grep libc.so | \
+      awk '{print $(3)}'`
+      ;;
+    *-*-openbsd*)
+    PATH_LIBC=`ldd libctest | \
+      grep libc.so | \
+      awk '{print $NF}'`
+    ;;
+  esac
 
-SUBDIRS = libanoubischeck libapn libanoubischat libanoubispreload \
-	libanoubisprotocol libanoubisui anoubisd libanoubissig $(GUI) \
-	$(BSDCOMPAT)
+  if [ test ! -r "$PATH_LIBC" ]; then
+    AC_MSG_ERROR([libc path ($PATH_LIBC) is not readable])
+  fi
 
-# targets must exist, but need not to do anything
-flawfinder:
-lint:
-splint:
+  rm -f libctest.c libctest
+  AC_DEFINE_UNQUOTED([PATH_LIBC], ["$PATH_LIBC"], [Path to libc shared library])
+  AC_MSG_RESULT([$PATH_LIBC])
+])
