@@ -4,6 +4,8 @@
 @bin sbin/anoubisctl
 @bin sbin/anoubisd
 @bin sbin/sfssig
+bin/pkg_add
+bin/pkg_delete
 @man man/man9/anoubis_kernel.9
 @man man/man9/eventdev.9
 @man man/man8/anoubisctl.8
@@ -20,7 +22,7 @@
 @comment man/man3/anoubis_sig.3
 @comment man/man3/anoubis_transaction.3
 @comment man/man3/apn.3
-@lib lib/libanoubispreload.so
+lib/libanoubispreload.so
 share/anoubisd/install_policy
 share/anoubisd/policy_templates/admin/_dhcp
 share/anoubisd/policy_templates/admin/_ntp

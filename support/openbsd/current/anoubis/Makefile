@@ -72,6 +72,9 @@ post-install:
 	    done ;\
 	done
 
+	cp ${FILESDIR}/pkg_add ${WRKINST}/usr/local/bin ;
+	cp ${FILESDIR}/pkg_delete ${WRKINST}/usr/local/bin ;
+
 	@ ${INSTALL_DATA_DIR} ${PREFIX}/share/applications/
 	@ ${INSTALL_DATA} ${WRKSRC}/src/xanoubis/xanoubis.desktop \
 		${PREFIX}/share/applications/
