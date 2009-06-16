@@ -10,7 +10,7 @@ PKGNAME-daemon =	anoubis-daemon-$V
 
 CATEGORIES =		security
 
-#HOMEPAGE =		XXX [ST]: EVENTUALLY ADD URL HERE
+HOMEPAGE =		http://www.anoubis.org/
 
 MAINTAINER =		Sebastian Trahm <trahm@genua.de>
 
@@ -29,6 +29,9 @@ WANTLIB-main =		c m pthread stdc++ event glib-2.0 pixman-1 \
 			glitz gmodule-2.0 gobject-2.0 gtk-x11-2.0 iconv \
 			intl pango-1.0 pangocairo-1.0 pangoft2-1.0 png z \
 			crypto ssl
+
+# XXX [ST]: this needs sane versioning of the pristine tarball to work
+MASTER_SITES =		${HOMEPAGE}downloads/files/
 
 ANOUBISDIR =		/etc/anoubis
 PROFILESDIR =		${ANOUBISDIR}/profiles

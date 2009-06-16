@@ -1,5 +1,5 @@
 @comment $OpenBSD$
-bin/xanoubis
+@bin bin/xanoubis
 @comment include/apn.h
 @comment include/anoubischat.h
 @comment include/splint-includes.h

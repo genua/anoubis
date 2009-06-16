@@ -21,6 +21,7 @@ bin/pkg_delete
 @comment man/man3/anoubis_server.3
 @comment man/man3/anoubis_sig.3
 @comment man/man3/anoubis_transaction.3
+@comment man/man3/anoubis_ui.3
 @comment man/man3/apn.3
 lib/libanoubispreload.so
 share/anoubisd/install_policy
