@@ -4,7 +4,7 @@ set -eu
 
 POLDIR=/etc/anoubis/policy
 
-for d in user admin ; do
+for d in user admin pubkeys ; do
 	# move old dirs aside to make place for symlinks
 	if [ -e $POLDIR/$d ] && [ ! -L $POLDIR/$d ] ; then
 		mv $POLDIR/$d $POLDIR/$d.dpkg-bak
