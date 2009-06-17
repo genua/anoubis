@@ -127,6 +127,7 @@ bool AnoubisGuiApp::OnInit()
 
 	hasLocale = language_.Init(wxLANGUAGE_DEFAULT, wxLOCALE_CONV_ENCODING);
 	if (hasLocale) {
+		language_.AddCatalog(wxT("wxstd"));
 		language_.AddCatalogLookupPathPrefix(getCatalogPath());
 		language_.AddCatalog(GetAppName());
 	}
