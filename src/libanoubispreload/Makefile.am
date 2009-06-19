@@ -32,7 +32,7 @@ libbsdcompat   = $(top_builddir)/$(bsdcompatdir)/libbsdcompat.a
 mylibdir=$(libdir)
 mylib_PROGRAMS = libanoubispreload.so
 
-libanoubispreload_so_SOURCES = preload.c
+libanoubispreload_so_SOURCES = preload.c client.c
 libanoubispreload_so_CFLAGS = $(shared_AM_CFLAGS) -fPIC -shared
 libanoubispreload_so_CPPFLAGS =
 libanoubispreload_so_LDFLAGS = -nostartfiles -shared $(shared_AM_LDFLAGS)
@@ -44,14 +44,19 @@ libanoubispreload_so_LDADD += $(libbsdcompat)
 libanoubispreload_so_DEPENDENCIES = $(libbsdcompat)
 endif
 
+noinst_HEADERS = client.h
+
 libanoubispreload_so_SOURCES_lint = \
-	preload.c_lint
+	preload.c_lint \
+	client.c_lint
 
 libanoubispreload_so_SOURCES_splint = \
-	preload.c_splint
+	preload.c_splint \
+	client.c_splint
 
 libanoubispreload_so_SOURCES_flawfinder = \
-	preload.c_flawfinder
+	preload.c_flawfinder \
+	client.c_flawfinder
 
 flawfinder_FLAGS=
 splint_FLAGS=$(INCLUDES)
