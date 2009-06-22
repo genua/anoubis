@@ -15,7 +15,7 @@ Description: Central daemon of the Anoubis Security Suite
 
 Package: xanoubis
 Architecture: any
-Depends: ${shlibs:Depends}, notification-daemon, anoubisd, cvs
+Depends: ${shlibs:Depends}, notification-daemon, anoubisd, cvs, wx2.8-i18n
 Description: Graphical user interface of the Anoubis Security Suite
  XXX:  long description
 
