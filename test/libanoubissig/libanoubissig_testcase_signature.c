@@ -60,6 +60,9 @@ libanoubis_tc_calc_sum(char *file,
 	size_t		 ret;
 	FILE		*fd;
 
+	if (!file || !csum)
+		return 0;
+
 	fd = fopen(file, "r");
 	if (!fd) {
 		perror(file);
@@ -201,8 +204,13 @@ START_TEST(sign_and_verify_match_tc)
 
 	rc = anoubis_verify_csum(as, csum, sign + ANOUBIS_SIG_HASH_SHA256_LEN,
 	    len - ANOUBIS_SIG_HASH_SHA256_LEN);
-	anoubis_sig_free(as);
 	fail_if(rc == 0, "Signatures dont match");
+
+	rc = anoubisd_verify_csum(as->pkey, csum, sign +
+	    ANOUBIS_SIG_HASH_SHA256_LEN,
+	    len - ANOUBIS_SIG_HASH_SHA256_LEN);
+	fail_if(rc == 0, "Signatures dont match in daemon");
+	anoubis_sig_free(as);
 }
 END_TEST
 
@@ -240,8 +248,49 @@ START_TEST(sign_and_verify_mismatch_tc)
 
 	rc = anoubis_verify_csum(as, csum, sign + ANOUBIS_SIG_HASH_SHA256_LEN,
 	    len - ANOUBIS_SIG_HASH_SHA256_LEN);
-	anoubis_sig_free(as);
 	fail_if(rc == 1, "Signatures match");
+	rc = anoubisd_verify_csum(as->pkey, csum, sign +
+	    ANOUBIS_SIG_HASH_SHA256_LEN, len - ANOUBIS_SIG_HASH_SHA256_LEN);
+	fail_if(rc == 1, "Signatures match in daemon %d", rc);
+	anoubis_sig_free(as);
+}
+END_TEST
+
+START_TEST(t_anoubis_sign_csum)
+{
+	struct anoubis_sig	*as = NULL;
+	int			 rc = 0;
+	unsigned		 len;
+	unsigned char		*sign = NULL,
+				 csum[ANOUBIS_SIG_HASH_SHA256_LEN];
+
+	fail_if(prikey == NULL || pubkey == NULL || infile == NULL,
+	    "Error while setup testcase");
+
+	rc = libanoubis_tc_calc_sum(infile, csum);
+	fail_if(rc == 0, "Could not calculate checksum");
+
+	sign = anoubis_sign_csum(as, csum, &len);
+	fail_if(sign != NULL, "anoubis_sign_csum didn't return NULL");
+
+	sign = anoubis_sign_csum(as, NULL, NULL);
+	fail_if(sign != NULL, "anoubis_sign_csum didn't return NULL");
+
+	/* Test behavior of anoubis_sig_free with NULL */
+	anoubis_sig_free(as);
+}
+END_TEST
+
+START_TEST(t_anoubis_verify_policy)
+{
+	int rc;
+
+	rc = anoubis_sig_verify_policy_file(NULL, NULL);
+	fail_if (rc != -1, "anoubis_sig_verify_policy_file should return -1");
+
+	rc = anoubis_sig_verify_policy(NULL, NULL, rc, NULL);
+	fail_if (rc != -6, "anoubis_sig_verify_policy should return -6 not %d",
+	    rc);
 }
 END_TEST
 
@@ -255,6 +304,8 @@ libanoubissig_testcase_signature(void)
 	    libanoubissig_tc_teardown);
 	tcase_add_test(testcase, sign_and_verify_match_tc);
 	tcase_add_test(testcase, sign_and_verify_mismatch_tc);
+	tcase_add_test(testcase, t_anoubis_sign_csum);
+	tcase_add_test(testcase, t_anoubis_verify_policy);
 
 	return (testcase);
 }

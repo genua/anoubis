@@ -212,10 +212,14 @@ anoubis_keyid_list(struct anoubis_msg *m, int **idlen_list, int *list_cnt)
 		return NULL;
 
 	if ((tmp_res = anoubis_csum_list(m, &cnt)) == NULL) {
-		*list_cnt = 0;
+		if (cnt < 0)
+			*list_cnt = cnt;
+		else
+			*list_cnt = -1;
 		return NULL;
 	}
-	if (cnt <= 0) {
+	if (cnt == 0) {
+		free(tmp_res);
 		*list_cnt = 0;
 		return NULL;
 	}
@@ -261,6 +265,7 @@ anoubis_csum_list(struct anoubis_msg *m, int *listcnt)
 	char	**result = NULL;
 	char	**tmp = NULL;
 	int	  cnt,
+		  error = 0,
 		  end,
 		  msg_end,
 		  name_size = 0;
@@ -271,36 +276,49 @@ anoubis_csum_list(struct anoubis_msg *m, int *listcnt)
 	/* Return Message from Daemon cannot return partial names */
 	end = cnt = 0;
 	while (m) {
-		if (!VERIFY_LENGTH(m, sizeof(Anoubis_ChecksumPayloadMessage)))
+		if (!VERIFY_LENGTH(m, sizeof(Anoubis_ChecksumPayloadMessage))) {
+			error = -2;
 			goto err;
+		}
 
 		msg_end = m->length - sizeof(Anoubis_ChecksumPayloadMessage)
 		    - CSUM_LEN;
 
 		/* Check if messeag is empty. Yes? We are done */
-		if (msg_end == 0)
+		if (msg_end == 0) {
+			error = 0;
 			break;
+		}
 
 		/* This should let reach the end of the message */
 		msg_end -= 1;
 		if (msg_end < 1 ||
-		    m->u.checksumpayload->payload[msg_end] != '\0')
+		    m->u.checksumpayload->payload[msg_end] != '\0') {
+			error = -3;
 			goto err;
+		}
 
 		end = 0;
 		while (end <= msg_end) {
 			name_size = strlen(
 			    (char *)&m->u.checksumpayload->payload[end]) + 1;
+			if (name_size == 0) {
+				end++;
+				continue;
+			}
 			cnt++;
 			tmp = (char **)realloc(result, cnt * sizeof(char *));
 			if (!tmp) {
 				cnt--;
+				error = -4;
 				goto err;
 			}
 			result = tmp;
 			result[cnt-1] = calloc(name_size, sizeof(char));
-			if (!result)
+			if (!result) {
+				error = -5;
 				goto err;
+			}
 			strlcpy(result[cnt-1],
 			    (char *)&m->u.checksumpayload->payload[end],
 			    name_size);
@@ -321,7 +339,7 @@ err:
 		free(result);
 	}
 
-	*listcnt = -1;
+	*listcnt = error;
 	return NULL;
 }
 

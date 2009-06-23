@@ -90,9 +90,11 @@ anoubis_sig_verify_policy_file(const char *filename, EVP_PKEY *sigkey)
 	unsigned char	*sigbuf = NULL;
 	int		 siglen, fd, ret;
 
-	if (asprintf(&sigfile, "%s.sig", filename) == -1) {
+	if (!filename || !sigkey)
 		return (-1);
-	}
+
+	if (asprintf(&sigfile, "%s.sig", filename) == -1)
+		return (-1);
 
 	if ((fd = open(sigfile, O_RDONLY)) == -1) {
 		free(sigfile);

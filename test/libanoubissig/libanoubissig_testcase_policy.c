@@ -155,6 +155,39 @@ libanoubissig_tc_pol_teardown(void)
 	free(pol_pubkey);
 }
 
+START_TEST(sign_and_verify_policy_buf_match_tc)
+{
+	int			 rc, fd, err = 0;
+	unsigned int		 len = 0, n = 0;
+	char			 buf[4096];
+	struct anoubis_sig	*as = NULL;
+	unsigned char		*sign = NULL;
+
+	fail_if(pol_prikey == NULL || pol_pubkey == NULL || policy == NULL,
+	    "Error while setup testcase");
+
+	bzero(buf, sizeof(buf));
+	as = anoubis_sig_priv_init(pol_prikey, pol_certfile, pass_cb, &err);
+	fail_if(as == NULL, "Could not load Private Key");
+
+	fd = open(policy, O_RDONLY);
+	fail_if (fd == -1, "Couldn't open file");
+
+	n = read(fd, buf, sizeof(buf));
+	fail_if (n >= sizeof(buf), "Could not whole read file");
+	fail_if (n <= 0, "Error while read file");
+	close(fd);
+
+	len = strlen(buf);
+	sign = anoubis_sign_policy_buf(as, buf, &len);
+	fail_if(sign == NULL, "Could not sign buf: %s", strerror(-len));
+
+	rc = anoubis_sig_verify_policy(policy, sign, len, as->pkey);
+	anoubis_sig_free(as);
+	fail_if(rc != 1, "Signatures dont match from %s", strerror(-rc));
+}
+END_TEST
+
 START_TEST(sign_and_verify_policy_match_tc)
 {
 	int			 rc, fd, err = 0;
@@ -254,6 +287,7 @@ libanoubissig_testcase_policy(void)
 	tcase_add_checked_fixture(testcase, libanoubissig_tc_pol_setup,
 	    libanoubissig_tc_pol_teardown);
 	tcase_add_test(testcase, sign_and_verify_policy_match_tc);
+	tcase_add_test(testcase, sign_and_verify_policy_buf_match_tc);
 	tcase_add_test(testcase, sign_and_verify_policy_mismatch_tc);
 
 	return (testcase);
