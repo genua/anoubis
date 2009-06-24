@@ -253,6 +253,29 @@ class AnListCtrl : public wxListCtrl, private Observer
 		 */
 		void refreshVisible(void);
 
+		/**
+		 * Returns the index of the first selected row.
+		 *
+		 * If nothing is selected, -1 is returned.
+		 *
+		 * @return Index of first selected row.
+		 */
+		int getFirstSelection(void) const;
+
+		/**
+		 * Returns the index of a selected row starting at the given
+		 * index.
+		 *
+		 * Searches for an selected item, starting from previous but
+		 * excluding the item itself. If previous is -1, the first
+		 * selected item will be returned.
+		 *
+		 * @param previous Previous index. Where to start searching
+		 * @return Index of next selection or -1 if no selection was
+		 *         found.
+		 */
+		int getNextSelection(int) const;
+
 	protected:
 		/**
 		 * Overloaded wxListCtrl::OnGetItemText().

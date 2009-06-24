@@ -29,66 +29,122 @@
 #include "VersionCtrl.h"
 #include "ApnVersion.h"
 #include "ModAnoubisMainPanelImpl.h"
+#include "VersionCtrl.h"
 
 VersionListCtrl::VersionListCtrl(wxWindow *w, wxWindowID id,
     const wxPoint &p, const wxSize &sz, long type)
-    : wxListCtrl(w, id, p, sz, type)
+    : AnListCtrl(w, id, p, sz, type | wxLC_VIRTUAL)
 {
-	error_ = wxEmptyString;
-	savedWidth_ = 0;
+	/* Setup properties of the view */
+	addColumn(new VersionTypeProperty);
+	addColumn(new VersionDateProperty);
+	addColumn(new VersionTimeProperty);
+	addColumn(new VersionUsernameProperty);
+	addColumn(new VersionNoProperty);
 }
 
 void
-VersionListCtrl::setError(const wxString &error)
+VersionListCtrl::update(void)
 {
-	if (error != wxEmptyString) {
-		SetItemCount(1);
-		if (savedWidth_ == 0) {
-			savedWidth_ =
-			    GetColumnWidth(MODANOUBIS_VMLIST_COLUMN_DATE);
-			SetColumnWidth(MODANOUBIS_VMLIST_COLUMN_DATE, 350);
-		}
-	} else {
-		if (savedWidth_) {
-			SetColumnWidth(MODANOUBIS_VMLIST_COLUMN_DATE,
-			    savedWidth_);
-			savedWidth_ = 0;
-		}
+	VersionCtrl *ctrl = VersionCtrl::getInstance();
+
+	/* Remove and... */
+	clearRows();
+
+	/* reassign versions to view */
+	unsigned int count = ctrl->getNumVersions();
+	for (unsigned int i = 0; i < count; i++) {
+		addRow(ctrl->getVersion(i));
 	}
-	error_ = error;
-	RefreshItem(0);
+}
+
+AnIconList::IconId
+ApnVersionProperty::getIcon(AnListClass *) const
+{
+	return (AnIconList::ICON_NONE);
 }
 
 wxString
-VersionListCtrl::OnGetItemText(long idx, long col) const
+VersionTypeProperty::getHeader(void) const
 {
-	VersionCtrl		*versionCtrl = VersionCtrl::getInstance();
-	const ApnVersion	&version = versionCtrl->getVersion(idx);
-	wxString		 res = wxEmptyString;
+	return _("Type");
+}
 
-	if (error_ != wxEmptyString) {
-		if (idx == 0 && col == MODANOUBIS_VMLIST_COLUMN_DATE) {
-			res = error_;
-		}
-	} else {
-		switch(col) {
-		case MODANOUBIS_VMLIST_COLUMN_TYPE:
-			res =  version.isAutoStore() ? _("Auto") : _("Manual");
-			break;
-		case MODANOUBIS_VMLIST_COLUMN_DATE:
-			res =  version.getTimestamp().FormatDate();
-			break;
-		case MODANOUBIS_VMLIST_COLUMN_TIME:
-			res = version.getTimestamp().FormatTime();
-			break;
-		case MODANOUBIS_VMLIST_COLUMN_USER:
-			res = version.getUsername();
-			break;
-		case MODANOUBIS_VMLIST_COLUMN_VERSION:
-			res = wxString::Format(wxT("%d"),
-			    version.getVersionNo());
-			break;
-		}
-	}
-	return res;
+wxString
+VersionTypeProperty::getText(AnListClass *obj) const
+{
+	ApnVersion *version = dynamic_cast<ApnVersion *>(obj);
+
+	if (version != 0)
+		return (version->isAutoStore() ? _("Auto") : _("Manual"));
+	else
+		return _("???");
+}
+
+wxString
+VersionDateProperty::getHeader(void) const
+{
+	return _("Date");
+}
+
+wxString
+VersionDateProperty::getText(AnListClass *obj) const
+{
+	ApnVersion *version = dynamic_cast<ApnVersion *>(obj);
+
+	if (version != 0)
+		return (version->getTimestamp().FormatDate());
+	else
+		return _("???");
+}
+
+wxString
+VersionTimeProperty::getHeader(void) const
+{
+	return _("Time");
+}
+
+wxString
+VersionTimeProperty::getText(AnListClass *obj) const
+{
+	ApnVersion *version = dynamic_cast<ApnVersion *>(obj);
+
+	if (version != 0)
+		return (version->getTimestamp().FormatTime());
+	else
+		return _("???");
+}
+
+wxString
+VersionUsernameProperty::getHeader(void) const
+{
+	return _("User");
+}
+
+wxString
+VersionUsernameProperty::getText(AnListClass *obj) const
+{
+	ApnVersion *version = dynamic_cast<ApnVersion *>(obj);
+
+	if (version != 0)
+		return (version->getUsername());
+	else
+		return _("???");
+}
+
+wxString
+VersionNoProperty::getHeader(void) const
+{
+	return _("Version");
+}
+
+wxString
+VersionNoProperty::getText(AnListClass *obj) const
+{
+	ApnVersion *version = dynamic_cast<ApnVersion *>(obj);
+
+	if (version != 0)
+		return (wxString::Format(wxT("%d"), version->getVersionNo()));
+	else
+		return _("???");
 }

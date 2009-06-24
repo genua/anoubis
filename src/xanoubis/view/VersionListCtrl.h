@@ -28,18 +28,99 @@
 #ifndef _VERSIONLISTCTRL_H_
 #define _VERSIONLISTCTRL_H_
 
-#include <wx/listctrl.h>
+#include "AnListCtrl.h"
+#include "AnListProperty.h"
 
-class VersionListCtrl : public wxListCtrl {
-public:
-	VersionListCtrl(wxWindow *, wxWindowID, const wxPoint&,
-	    const wxSize&, long);
-	void setError(const wxString &);
-protected:
-	wxString OnGetItemText(long item, long column) const;
-private:
-	wxString	error_;
-	int		savedWidth_;
+/**
+ * A list-control displays versions fetched from VersionCtrl.
+ *
+ * Used to display ApnVersion instances. The update() method can be used
+ * to reassign ApnVersion instances to the list. The view does not change the
+ * profile (VersionCtrl::fetchVersionList() is not invoked)! If you want to
+ * change the profile, you need to call VersionCtrl::fetchVersionList() and
+ * then update() again.
+ */
+class VersionListCtrl : public AnListCtrl {
+	public:
+		VersionListCtrl(wxWindow *, wxWindowID, const wxPoint&,
+		    const wxSize&, long);
+
+		/**
+		 * Updates the view with version-information fetched from
+		 * VersionCtrl.
+		 *
+		 * You need to call this method, if another version-list was
+		 * fetched by VersionCtrl::fetchVersionList().
+		 */
+		void update(void);
+};
+
+/**
+ * Basic ApnVersion property.
+ *
+ * getIcon() is already implemented because ApnVersion does not use icons.
+ * The class is still abstract!
+ *
+ * @see VersionTypeProperty
+ * @see VersionDateProperty
+ * @see VersionTimeProperty
+ * @see VersionUsernameProperty
+ * @see VersionNoProperty
+ */
+class ApnVersionProperty : public AnListProperty
+{
+	public:
+		AnIconList::IconId getIcon(AnListClass *) const;
+};
+
+/**
+ * Property for ApnVersion::isAutoStore().
+ */
+class VersionTypeProperty : public ApnVersionProperty
+{
+	public:
+		wxString getHeader(void) const;
+		wxString getText(AnListClass *c) const;
+};
+
+/**
+ * Property for the date of ApnVersion::getTimestamp() 
+ */
+class VersionDateProperty : public ApnVersionProperty
+{
+	public:
+		wxString getHeader(void) const;
+		wxString getText(AnListClass *c) const;
+};
+
+/**
+ * Property for the time of ApnVersion::getTimestamp() 
+ */
+class VersionTimeProperty : public ApnVersionProperty
+{
+	public:
+		wxString getHeader(void) const;
+		wxString getText(AnListClass *c) const;
+};
+
+/**
+ * Property of ApnVersion::getUsername().
+ */
+class VersionUsernameProperty : public ApnVersionProperty
+{
+	public:
+		wxString getHeader(void) const;
+		wxString getText(AnListClass *c) const;
+};
+
+/**
+ * Property of ApnVersion::getVersionNo().
+ */
+class VersionNoProperty : public ApnVersionProperty
+{
+	public:
+		wxString getHeader(void) const;
+		wxString getText(AnListClass *c) const;
 };
 
 #endif	/* _VERSIONLISTCTRL_H_ */

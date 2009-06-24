@@ -324,6 +324,18 @@ AnListCtrl::refreshVisible(void)
 		EnsureVisible(index);
 }
 
+int
+AnListCtrl::getFirstSelection(void) const
+{
+	return (GetNextItem(-1, wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED));
+}
+
+int
+AnListCtrl::getNextSelection(int previous) const
+{
+	return (GetNextItem(previous, wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED));
+}
+
 wxString
 AnListCtrl::OnGetItemText(long item, long column) const
 {

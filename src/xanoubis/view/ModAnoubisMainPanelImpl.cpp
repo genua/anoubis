@@ -51,6 +51,7 @@
 
 #include "main.h"
 #include "AnEvents.h"
+#include "ApnVersion.h"
 #include "DlgProfileSelection.h"
 #include "KeyCtrl.h"
 #include "ModAnoubis.h"
@@ -106,7 +107,6 @@ ModAnoubisMainPanelImpl::ModAnoubisMainPanelImpl(wxWindow* parent,
 	profileTabUpdate();
 
 	/* Initialize list of versions */
-	versionListInit();
 	versionListUpdate();
 
 	anEvents->Connect(anEVT_ESCALATIONS_SHOW,
@@ -475,24 +475,6 @@ ModAnoubisMainPanelImpl::OnProfileSelectionChanged(wxListEvent &event)
 }
 
 void
-ModAnoubisMainPanelImpl::versionListInit(void)
-{
-	/* Initialize table */
-	columnNames_[MODANOUBIS_VMLIST_COLUMN_TYPE] = _("Type");
-	columnNames_[MODANOUBIS_VMLIST_COLUMN_DATE] = _("Date");
-	columnNames_[MODANOUBIS_VMLIST_COLUMN_TIME] = _("Time");
-	columnNames_[MODANOUBIS_VMLIST_COLUMN_USER] = _("User");
-	columnNames_[MODANOUBIS_VMLIST_COLUMN_VERSION] = _("Version");
-
-	for (int i=0; i<MODANOUBIS_VMLIST_COLUMN_EOL; i++) {
-		versionListCtrl->InsertColumn(i, columnNames_[i],
-		    wxLIST_FORMAT_LEFT, wxLIST_AUTOSIZE);
-	}
-
-	versionListSetMsg(_("(Initializing version management...)"));
-}
-
-void
 ModAnoubisMainPanelImpl::versionListUpdate(void)
 {
 	VersionCtrl	*versionCtrl;
@@ -519,7 +501,6 @@ ModAnoubisMainPanelImpl::versionListUpdateFromSelection(void)
 {
 	VersionCtrl	*versionCtrl;
 	PolicyCtrl	*policyCtrl;
-	unsigned int	count = 0;
 	wxString	profile;
 
 	if (VersionActivePolicyRadioButton->GetValue())
@@ -531,58 +512,26 @@ ModAnoubisMainPanelImpl::versionListUpdateFromSelection(void)
 	policyCtrl = PolicyCtrl::getInstance();
 
 	if (!versionCtrl->isInitialized()) {
-		versionListSetMsg(_("(Repository not initialized.)"));
+		wxMessageBox(_("Repository not initialized."),
+		    _("Update versions"), wxOK | wxICON_ERROR, this);
 		return;
 	}
 
 	if (!versionCtrl->isPrepared()) {
-		versionListSetMsg(_("(Failed to prepare versioning system.)"));
+		wxMessageBox(_("Failed to prepare versioning system."),
+		    _("Update versions"), wxOK | wxICON_ERROR, this);
 		return;
 	}
 
 	if (profile.IsEmpty())
 		return;
 	if (!versionCtrl->fetchVersionList(profile)) {
-		versionListSetMsg(
-		    _("(Failed to fetch versioning information.)"));
+		wxMessageBox(_("Failed to fetch versioning information."),
+		    _("Update versions"), wxOK | wxICON_ERROR, this);
 		return;
 	}
 
-	count = versionCtrl->getNumVersions();
-
-	if (count == 0) {
-		versionListSetMsg(_("(No versioning information available.)"));
-		return;
-	}
-
-	versionListCtrl->setError(wxEmptyString);
-	versionListCtrl->SetItemCount(count);
-	versionListCtrl->RefreshItems(0, count-1);
-}
-
-void
-ModAnoubisMainPanelImpl::versionListSetMsg(const wxString &msg)
-{
-	versionListCtrl->setError(msg);
-}
-
-int ModAnoubisMainPanelImpl::versionListCanAccess(bool needSelection) const
-{
-	VersionCtrl *versionCtrl = VersionCtrl::getInstance();
-
-	if (!versionCtrl->isPrepared())
-		return (needSelection ? -1 : false);
-
-	if (needSelection) {
-		if (versionCtrl->getNumVersions() == 0)
-			return (needSelection ? -1 : false);
-
-		/* Search for the selected index */
-		return versionListCtrl->GetNextItem(
-		    -1, wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED);
-	}
-	else
-		return (true);
+	versionListCtrl->update();
 }
 
 void
@@ -1141,18 +1090,18 @@ ModAnoubisMainPanelImpl::OnNotebookTabChanged(wxNotebookEvent&)
 void
 ModAnoubisMainPanelImpl::OnVersionListCtrlSelected(wxListEvent&)
 {
-	int idx;
+	int idx = versionListCtrl->getFirstSelection();
 
-	if ((idx = versionListCanAccess(true)) == -1)
+	if (idx == -1)
 		return;
 
 	VersionCtrl *versionCtrl = VersionCtrl::getInstance();
 
 	/* Selected version */
-	const ApnVersion &version = versionCtrl->getVersion(idx);
+	ApnVersion *version = versionCtrl->getVersion(idx);
 
 	/* Update comment-field with selected version*/
-	VersionShowCommentTextCtrl->SetValue(version.getComment());
+	VersionShowCommentTextCtrl->SetValue(version->getComment());
 }
 
 void
@@ -1162,9 +1111,9 @@ ModAnoubisMainPanelImpl::OnVersionRestoreButtonClick(wxCommandEvent&)
 	PolicyCtrl	*policyCtrl = PolicyCtrl::getInstance();
 	bool		useActiveProfile;
 	wxString	profile;
-	int		idx;
+	int		idx = versionListCtrl->getFirstSelection();
 
-	if ((idx = versionListCanAccess(true)) == -1)
+	if (idx == -1)
 		return;
 
 	if (VersionActivePolicyRadioButton->GetValue()) {
@@ -1226,9 +1175,9 @@ ModAnoubisMainPanelImpl::OnVersionRestoreButtonClick(wxCommandEvent&)
 void
 ModAnoubisMainPanelImpl::OnVersionExportButtonClick(wxCommandEvent&)
 {
-	int idx;
+	int idx = versionListCtrl->getFirstSelection();
 
-	if ((idx = versionListCanAccess(true)) == -1)
+	if (idx == -1)
 		return;
 
 	/* The profile */
@@ -1261,8 +1210,7 @@ ModAnoubisMainPanelImpl::OnVersionDeleteButtonClick(wxCommandEvent&)
 	int		selection = -1;
 
 	while (true) {
-		selection = versionListCtrl->GetNextItem(selection,
-		    wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED);
+		selection = versionListCtrl->getNextSelection(selection);
 
 		if (selection == -1) {
 			/* No selection */
@@ -1283,11 +1231,6 @@ ModAnoubisMainPanelImpl::OnVersionDeleteButtonClick(wxCommandEvent&)
 void
 ModAnoubisMainPanelImpl::OnVersionShowButtonClick(wxCommandEvent&)
 {
-	int idx;
-
-	if ((idx = versionListCanAccess(true)) == -1)
-		return;
-
 	/*
 	 * XXX RD
 	 *

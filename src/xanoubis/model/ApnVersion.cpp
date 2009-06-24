@@ -36,7 +36,7 @@ ApnVersion::ApnVersion(struct apnvm_version *version, const char *username)
 	this->auto_store_ = (version->auto_store != 0);
 }
 
-ApnVersion::ApnVersion(const ApnVersion &other)
+ApnVersion::ApnVersion(const ApnVersion &other) : AnListClass()
 {
 	this->no_ = other.no_;
 	this->tstamp_ = other.tstamp_;

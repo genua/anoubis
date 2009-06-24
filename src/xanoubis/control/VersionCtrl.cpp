@@ -33,6 +33,7 @@
 #include <wx/string.h>
 #include <wx/utils.h>
 
+#include "ApnVersion.h"
 #include "ModAnoubis.h"
 #include "VersionCtrl.h"
 #include "ProcCtrl.h"
@@ -68,6 +69,8 @@ VersionCtrl::prepare(void)
 
 VersionCtrl::~VersionCtrl(void)
 {
+	clearVersionList();
+
 	if (vm_ != 0)
 		apnvm_destroy(vm_);
 }
@@ -102,7 +105,7 @@ VersionCtrl::fetchVersionList(const wxString &profile)
 	if (!isPrepared())
 		return (false);
 
-	versionList_.clear();
+	clearVersionList();
 	versionProfile_ = profile;
 
 	LIST_INIT(&user_head);
@@ -140,7 +143,7 @@ VersionCtrl::fetchVersionList(const char *user, const char *profile)
 		return (false);
 
 	TAILQ_FOREACH(version, &version_head, entries) {
-		ApnVersion v(version, user);
+		ApnVersion *v = new ApnVersion(version, user);
 		versionList_.push_back(v);
 	}
 
@@ -155,10 +158,13 @@ VersionCtrl::getNumVersions(void) const
 	return (versionList_.size());
 }
 
-const ApnVersion &
+ApnVersion *
 VersionCtrl::getVersion(unsigned int idx) const
 {
-	return (versionList_[idx]);
+	if (idx < versionList_.size())
+		return (versionList_[idx]);
+	else
+		return (0);
 }
 
 bool
@@ -172,12 +178,12 @@ VersionCtrl::deleteVersion(unsigned int no)
 	if (no >= versionList_.size())
 		return (false);
 
-	const ApnVersion &version = getVersion(no);
+	ApnVersion *version = getVersion(no);
 
 	if (versionProfile_.IsEmpty())
 		return (false);
-	vmrc = apnvm_remove(vm_, version.getUsername().fn_str(),
-	    versionProfile_.fn_str(), version.getVersionNo());
+	vmrc = apnvm_remove(vm_, version->getUsername().fn_str(),
+	    versionProfile_.fn_str(), version->getVersionNo());
 
 	return (vmrc == APNVM_OK);
 }
@@ -197,10 +203,10 @@ VersionCtrl::fetchRuleSet(unsigned int no, const wxString &profile)
 	if (profile.IsEmpty())
 		return (0);
 
-	const ApnVersion &version = getVersion(no);
+	ApnVersion *version = getVersion(no);
 
-	vmrc = apnvm_fetch(vm_, version.getUsername().fn_str(),
-	    version.getVersionNo(), profile.fn_str(), &rs);
+	vmrc = apnvm_fetch(vm_, version->getUsername().fn_str(),
+	    version->getVersionNo(), profile.fn_str(), &rs);
 
 	return (vmrc == APNVM_OK) ? rs : 0;
 }
@@ -255,4 +261,15 @@ VersionCtrl::exportVersion(unsigned int no, const wxString &profile,
 	fclose(fh);
 
 	return (result == 0);
+}
+
+void
+VersionCtrl::clearVersionList(void)
+{
+	while (!versionList_.empty()) {
+		ApnVersion *version = versionList_.back();
+		versionList_.pop_back();
+
+		delete version;
+	}
 }

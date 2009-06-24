@@ -28,6 +28,8 @@
 #ifndef _APNVERSION_H_
 #define _APNVERSION_H_
 
+#include "AnListClass.h"
+
 #include <wx/datetime.h>
 
 #include <apnvm.h>
@@ -38,7 +40,7 @@
  * VersionCtrl::getVersion() is used to receive some detail information
  * about a specific version. This class holds all the information.
  */
-class ApnVersion
+class ApnVersion : public AnListClass
 {
 	public:
 		ApnVersion(const ApnVersion &);

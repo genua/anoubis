@@ -36,15 +36,6 @@
 #include "NotificationCtrl.h"
 #include "Observer.h"
 
-enum modAnoubisVersionListColumns {
-	MODANOUBIS_VMLIST_COLUMN_TYPE = 0,
-	MODANOUBIS_VMLIST_COLUMN_DATE,
-	MODANOUBIS_VMLIST_COLUMN_TIME,
-	MODANOUBIS_VMLIST_COLUMN_USER,
-	MODANOUBIS_VMLIST_COLUMN_VERSION,
-	MODANOUBIS_VMLIST_COLUMN_EOL
-};
-
 class ModAnoubisMainPanelImpl : public ModAnoubisMainPanelBase,
     private Observer
 {
@@ -55,7 +46,6 @@ class ModAnoubisMainPanelImpl : public ModAnoubisMainPanelBase,
 		Notification	*currentNotify_;
 		Notification	*savedNotify_;
 		wxConfig	*userOptions_;
-		wxString	 columnNames_[MODANOUBIS_VMLIST_COLUMN_EOL];
 		wxString	 selectedProfile;
 		wxString	 loadedProfile;
 
@@ -69,11 +59,8 @@ class ModAnoubisMainPanelImpl : public ModAnoubisMainPanelBase,
 		void sendNotifierOptions(void);
 		void readOptions(void);
 		void setOptionsWidgetsVisability(void);
-		void versionListInit(void);
 		void versionListUpdate(void);
 		void versionListUpdateFromSelection(void);
-		void versionListSetMsg(const wxString &);
-		int versionListCanAccess(bool) const;
 		void profileTabInit(void);
 		void profileTabUpdate(void);
 		void fillProfileList(void);

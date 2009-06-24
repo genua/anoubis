@@ -31,9 +31,11 @@
 #include <list>
 #include <vector>
 
-#include "ApnVersion.h"
+#include <apnvm.h>
+
 #include "Singleton.h"
 
+class ApnVersion;
 class PolicyRuleSet;
 
 /**
@@ -116,9 +118,9 @@ class VersionCtrl : public Singleton<VersionCtrl>
 		 * @param idx Index of the requested version (index-counter
 		 *            starts at 0)
 		 * @return Detail information about the requested version. If
-		 *         idx is out of range, the result is unspecified.
+		 *         idx is out of range, NULL is returned.
 		 */
-		const ApnVersion & getVersion(unsigned int) const;
+		ApnVersion* getVersion(unsigned int) const;
 
 		/**
 		 * Deletes the specified version.
@@ -193,11 +195,12 @@ class VersionCtrl : public Singleton<VersionCtrl>
 	private:
 		apnvm	*vm_;
 		bool	prepared_;
-		std::vector<class ApnVersion> versionList_;
+		std::vector<ApnVersion *> versionList_;
 		wxString	versionProfile_;
 
 		void prepare(void);
 		bool fetchVersionList(const char *user, const char *profile);
+		void clearVersionList(void);
 
 	friend class Singleton<VersionCtrl>;
 
