@@ -39,7 +39,7 @@ libanoubisprotocol = $(top_builddir)/$(protocoldir)/libanoubispc.so
 libanoubischat = $(top_builddir)/$(chatdir)/libanoubischat.so
 
 # set TESTS_ENVIRONMENT for checks
-RPATH = $(top_builddir)/$(bsdcompatdir):$(top_builddir)/$(csumdir)
+RPATH = $(top_builddir)/$(bsdcompatdir):$(top_builddir)/$(csumdir):$(top_builddir)/$(protocoldir):$(top_builddir)/$(chatdir)
 TESTS_ENVIRONMENT = LD_LIBRARY_PATH=$(RPATH)
 
 noinst_PROGRAMS = test_csum
