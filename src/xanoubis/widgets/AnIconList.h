@@ -52,6 +52,9 @@ class AnIconList : public wxImageList, public Singleton<AnIconList>
 			ICON_WARNING,		/*!< Warning icon */
 			ICON_ERROR,		/*!< Error icon */
 			ICON_SYMLINK,		/*!< Symlink icon */
+			ICON_ANOUBIS_BLACK,	/*!< Basic Anoubis icon */
+			ICON_ANOUBIS_ALERT,	/*!< Anoubis alert-icon */
+			ICON_ANOUBIS_QUESTION	/*!< Anoubis question-icon */
 		};
 
 		/**

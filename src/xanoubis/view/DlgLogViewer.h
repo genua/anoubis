@@ -33,6 +33,8 @@
 #endif
 
 #include "AnEvents.h"
+#include "AnListClassProperty.h"
+#include "AnListProperty.h"
 #include "AnShortcuts.h"
 #include "DlgLogViewerBase.h"
 #include "Notification.h"
@@ -62,10 +64,6 @@ class DlgLogViewer : public DlgLogViewerBase, private Observer
 		~DlgLogViewer(void);
 
 	private:
-		int defaultIconIdx_;	/**< index of default icon */
-		int alertIconIdx_;	/**> index of alert icon */
-		int escalationIconIdx_; /**< index of esc. icon */
-		long lastIdx_;		/**< index of last notify shown */
 		AnShortcuts *shortcuts_;
 
 		/**
@@ -108,17 +106,66 @@ class DlgLogViewer : public DlgLogViewerBase, private Observer
 		 */
 		void updateDelete(Subject *);
 
-		/**
-		 * Add a new notification.
-		 * This will create a new row and fill it with the
-		 * data from the given notify. An appropriate icon
-		 * is set also.
-		 * @param[in] 1st The new notification.
-		 * @return Nothing.
-		 */
-		void addNotification(Notification *);
-
 		ANEVENTS_IDENT_BCAST_METHOD_DECLARATION;
+};
+
+/**
+ * Notification properties.
+ *
+ * This class defines properties for the Notification class. The constructor
+ * specifies the role of the property.
+ */
+class LogViewerProperty : public AnListProperty
+{
+	public:
+		/**
+		 * Role of the property.
+		 *
+		 * The property can act in different roles. They are specified
+		 * here.
+		 */
+		enum PropertyRole
+		{
+			PROPERTY_ICON,	/*!< Depending on the type of the
+					     notification, the icon-property
+					     displays another icon. */
+			PROPERTY_TIME,	/*!< Time of notification */
+			PROPERTY_MODULE,/*!< The module of the notification */
+			PROPERY_MESSAGE	/*!< The message of the notification */
+		};
+
+		/**
+		 * Constructs a LogViewerProperty.
+		 *
+		 * @param role The role of the property.
+		 */
+		LogViewerProperty(PropertyRole);
+
+		wxString getHeader(void) const;
+		wxString getText(AnListClass *) const;
+		AnIconList::IconId getIcon(AnListClass *) const;
+		wxColour getBackgroundColor(AnListClass *) const;
+
+	private:
+		PropertyRole role_;
+};
+
+/**
+ * The property of the complete Notification.
+ *
+ * This class defines a property valid for all properties (aka AnListProperty)
+ * of a Notification.
+ */
+class NotificationProperty : public AnListClassProperty
+{
+	public:
+		/**
+		 * Setups the background color for a Notification.
+		 *
+		 * If this is a admin-notification, the background-color
+		 * switches to grey.
+		 */
+		wxColour getBackgroundColor(AnListClass *) const;
 };
 
 #endif /* __DlgLogViewer__ */

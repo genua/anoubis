@@ -26,6 +26,7 @@
  */
 
 #include "AnListClass.h"
+#include "AnListClassProperty.h"
 #include "AnListColumn.h"
 #include "AnListCtrl.h"
 #include "AnListProperty.h"
@@ -36,11 +37,19 @@ AnListCtrl::AnListCtrl(wxWindow *parent, wxWindowID id, const wxPoint &pos,
     const wxString &name)
     : wxListCtrl(parent, id, pos, size, style, validator, name), Observer(0)
 {
+	this->rowProperty_ = 0;
+	this->itemAttr_ = new wxListItemAttr;
+
 	SetImageList(AnIconList::getInstance(), wxIMAGE_LIST_SMALL);
 }
 
 AnListCtrl::~AnListCtrl(void)
 {
+	if (this->rowProperty_ != 0)
+		delete this->rowProperty_;
+
+	delete this->itemAttr_;
+
 	while (!columnList_.empty()) {
 		AnListColumn *col = columnList_.back();
 		columnList_.pop_back();
@@ -99,6 +108,12 @@ const std::vector<AnListClass *>
 AnListCtrl::getRowData(void) const
 {
 	return (this->rows_);
+}
+
+unsigned int
+AnListCtrl::getRowCount(void) const
+{
+	return (this->rows_.size());
 }
 
 bool
@@ -303,6 +318,18 @@ AnListCtrl::getRowIndex(AnListClass *row) const
 		return (-1);
 }
 
+AnListClassProperty *
+AnListCtrl::getRowProperty(void) const
+{
+	return this->rowProperty_;
+}
+
+void
+AnListCtrl::setRowProperty(AnListClassProperty *property)
+{
+	this->rowProperty_ = property;
+}
+
 void
 AnListCtrl::refreshVisible(void)
 {
@@ -370,6 +397,25 @@ AnListCtrl::OnGetItemColumnImage(long item, long column) const
 	}
 
 	return (AnIconList::ICON_NONE);
+}
+
+wxListItemAttr *
+AnListCtrl::OnGetItemAttr(long item) const
+{
+	if (rowProperty_ != 0) {
+		AnListClass *c = rows_[item];
+
+		if (c != 0) {
+			itemAttr_->SetTextColour(rowProperty_->getColor(c));
+			itemAttr_->SetBackgroundColour(
+			    rowProperty_->getBackgroundColor(c));
+			itemAttr_->SetFont(rowProperty_->getFont(c));
+
+			return itemAttr_;
+		}
+	}
+
+	return (0);
 }
 
 void

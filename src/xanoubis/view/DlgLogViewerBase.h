@@ -34,6 +34,8 @@
 #ifndef __DlgLogViewerBase__
 #define __DlgLogViewerBase__
 
+class AnListCtrl;
+
 #include <wx/listctrl.h>
 #include <wx/gdicmn.h>
 #include <wx/font.h>
@@ -54,7 +56,7 @@ class DlgLogViewerBase : public wxFrame
 	private:
 	
 	protected:
-		wxListCtrl* logListCtrl;
+		AnListCtrl* logListCtrl;
 		
 		// Virtual event handlers, overide them in your derived class
 		virtual void OnKeyPressed( wxKeyEvent& event ){ event.Skip(); }

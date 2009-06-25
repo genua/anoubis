@@ -91,6 +91,7 @@ libGUIcomponents_CPPFLAGS = \
 	-I$(top_srcdir)/$(xanoubisdir)/control \
 	-I$(top_srcdir)/$(xanoubisdir)/pattern \
 	-I$(top_srcdir)/$(xanoubisdir)/job \
+	-I$(top_srcdir)/$(xanoubisdir)/widgets \
 	-I$(top_srcdir)/$(anoubischeckdir) \
 	$(WX_CPPFLAGS)
 libGUIcomponents_CXXFLAGS = \

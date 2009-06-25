@@ -24,35 +24,29 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-///////////////////////////////////////////////////////////////////////////
-// C++ code generated with wxFormBuilder (version Sep 28 2007)
-// http://www.wxformbuilder.org/
-//
-// PLEASE DO "NOT" EDIT THIS FILE!
-///////////////////////////////////////////////////////////////////////////
 
-#include "AnListCtrl.h"
+#include <wx/cmndata.h> /* for wxNullColour, wxNullFont */
 
-#include "DlgLogViewerBase.h"
+#include "AnListClassProperty.h"
 
-///////////////////////////////////////////////////////////////////////////
-
-DlgLogViewerBase::DlgLogViewerBase( wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style, const wxString& name ) : wxFrame( parent, id, title, pos, size, style, name )
+AnListClassProperty::~AnListClassProperty(void)
 {
-	this->SetSizeHints( wxSize( 700,400 ), wxDefaultSize );
-	
-	wxBoxSizer* mainSizer;
-	mainSizer = new wxBoxSizer( wxVERTICAL );
-	
-	logListCtrl = new AnListCtrl( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLC_HRULES|wxLC_REPORT|wxLC_SINGLE_SEL|wxLC_VIRTUAL );
-	mainSizer->Add( logListCtrl, 1, wxALL|wxEXPAND, 5 );
-	
-	this->SetSizer( mainSizer );
-	this->Layout();
-	mainSizer->Fit( this );
-	
-	// Connect Events
-	this->Connect( wxEVT_CHAR, wxKeyEventHandler( DlgLogViewerBase::OnKeyPressed ) );
-	this->Connect( wxEVT_CLOSE_WINDOW, wxCloseEventHandler( DlgLogViewerBase::onClose ) );
-	logListCtrl->Connect( wxEVT_COMMAND_LIST_ITEM_SELECTED, wxListEventHandler( DlgLogViewerBase::onLogSelect ), NULL, this );
+}
+
+wxColour
+AnListClassProperty::getColor(AnListClass *) const
+{
+	return (wxNullColour);
+}
+
+wxColour
+AnListClassProperty::getBackgroundColor(AnListClass *) const
+{
+	return (wxNullColour);
+}
+
+wxFont
+AnListClassProperty::getFont(AnListClass *) const
+{
+	return (wxNullFont);
 }

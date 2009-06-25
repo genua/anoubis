@@ -32,6 +32,8 @@
 #include "config.h"
 #endif
 
+#include "AnListClass.h"
+
 #include <anoubis_msg.h>
 #include <wx/hashmap.h>
 #include <wx/list.h>
@@ -51,7 +53,7 @@ enum notifyListTypes {
 	NOTIFY_LIST_ALL
 };
 
-class Notification {
+class Notification : public AnListClass {
 	protected:
 		wxString		 module_;
 		wxString		 timeStamp_;

@@ -34,6 +34,8 @@
 #include <wx/imaglist.h>
 
 #include "AnEvents.h"
+#include "AnListColumn.h"
+#include "AnListCtrl.h"
 #include "AnShortcuts.h"
 #include "DlgLogViewer.h"
 #include "main.h"
@@ -45,52 +47,38 @@
 #include "DaemonAnswerNotify.h"
 #include "NotificationCtrl.h"
 
-#define LOGVIEWER_COLUMN_ICON		0
-#define LOGVIEWER_COLUMN_TIME		1
-#define LOGVIEWER_COLUMN_MODULE		2
-#define LOGVIEWER_COLUMN_MESSAGE	3
-
 DlgLogViewer::DlgLogViewer(wxWindow* parent) : DlgLogViewerBase(parent),
     Observer(NULL)
 {
-	wxIcon			*icon;
-	wxImageList		*imgList;
 	AnEvents		*anEvents;
 	NotificationCtrl	*notifyCtrl;
+	AnListProperty		*property;
+	AnListColumn		*col;
 
 	anEvents = AnEvents::getInstance();
 	notifyCtrl = NotificationCtrl::instance();
 
-	imgList = new wxImageList(16, 16);
 	shortcuts_  = new AnShortcuts(this);
 	this->GetSizer()->Layout();
 
-	lastIdx_ = 0;
+	property = new LogViewerProperty(LogViewerProperty::PROPERTY_ICON);
+	col = logListCtrl->addColumn(property);
+	col->setWidth(24);
+	col->setAlign(wxLIST_FORMAT_CENTRE);
 
-	/* load icons */
-	icon = wxGetApp().loadIcon(wxT("ModAnoubis_black_16.png"));
-	defaultIconIdx_ = imgList->Add(*icon);
+	property = new LogViewerProperty(LogViewerProperty::PROPERTY_TIME);
+	col = logListCtrl->addColumn(property);
+	col->setWidth(wxLIST_AUTOSIZE);
 
-	icon = wxGetApp().loadIcon(wxT("ModAnoubis_alert_16.png"));
-	alertIconIdx_ = imgList->Add(*icon);
+	property = new LogViewerProperty(LogViewerProperty::PROPERTY_MODULE);
+	col = logListCtrl->addColumn(property);
+	col->setWidth(wxLIST_AUTOSIZE);
 
-	icon = wxGetApp().loadIcon(wxT("ModAnoubis_question_16.png"));
-	escalationIconIdx_ = imgList->Add(*icon);
+	property = new LogViewerProperty(LogViewerProperty::PROPERY_MESSAGE);
+	col = logListCtrl->addColumn(property);
+	col->setWidth(wxLIST_AUTOSIZE);
 
-	logListCtrl->AssignImageList(imgList, wxIMAGE_LIST_SMALL);
-
-	/* create columns */
-	logListCtrl->InsertColumn(LOGVIEWER_COLUMN_ICON, wxT(""),
-	    wxLIST_FORMAT_LEFT, 24);
-
-	logListCtrl->InsertColumn(LOGVIEWER_COLUMN_TIME, _("Time"),
-	    wxLIST_FORMAT_LEFT, wxLIST_AUTOSIZE);
-
-	logListCtrl->InsertColumn(LOGVIEWER_COLUMN_MODULE, _("Module"),
-	    wxLIST_FORMAT_CENTER, wxLIST_AUTOSIZE);
-
-	logListCtrl->InsertColumn(LOGVIEWER_COLUMN_MESSAGE, _("Message"),
-	    wxLIST_FORMAT_LEFT, wxLIST_AUTOSIZE);
+	logListCtrl->setRowProperty(new NotificationProperty);
 
 	anEvents->Connect(anEVT_LOGVIEWER_SHOW,
 	    wxCommandEventHandler(DlgLogViewer::onShow), NULL, this);
@@ -133,10 +121,9 @@ DlgLogViewer::onLogSelect(wxListEvent &event)
 {
 	wxCommandEvent		 showEvent(anEVT_SHOW_RULE);
 	Notification		*notify;
-	NotificationCtrl	*notifyCtrl;
 
-	notifyCtrl = NotificationCtrl::instance();
-	notify = notifyCtrl->getNotification(event.GetData());
+	notify = dynamic_cast<Notification *>(
+	    logListCtrl->getRowAt(event.GetIndex()));
 
 	if (!notify)
 		return;
@@ -163,7 +150,7 @@ DlgLogViewer::update(Subject *subject)
 
 	notifyCtrl = NotificationCtrl::instance();
 	it = perspective->begin();
-	it += lastIdx_;
+	it += logListCtrl->getRowCount();
 	while (it != perspective->end()) {
 		notify = notifyCtrl->getNotification(*it);
 		/* XXX ch: this should be done at notifyCtrl */
@@ -171,11 +158,10 @@ DlgLogViewer::update(Subject *subject)
 			/* Nothing */
 		} else if (notify && ! IS_STATUSOBJ(notify)) {
 			/* show all other notifies than a StatusNotify */
-			addNotification(notify);
+			logListCtrl->addRow(notify);
 		}
 		it++;
 	}
-	lastIdx_ = perspective->getSize();
 }
 
 void
@@ -184,39 +170,68 @@ DlgLogViewer::updateDelete(Subject *subject)
 	removeSubject(subject);
 }
 
-void
-DlgLogViewer::addNotification(Notification *notify)
+ANEVENTS_IDENT_BCAST_METHOD_DEFINITION(DlgLogViewer)
+
+LogViewerProperty::LogViewerProperty(PropertyRole role)
 {
-	int listIdx;
-	int iconIdx;
-
-	listIdx = logListCtrl->GetItemCount();
-	if (typeid(*notify) == typeid(class EscalationNotify)) {
-		iconIdx = escalationIconIdx_;
-	} else if (typeid(*notify) == typeid(class AlertNotify)) {
-		iconIdx = alertIconIdx_;
-	} else {
-		iconIdx = defaultIconIdx_;
-	}
-
-	logListCtrl->InsertItem(listIdx, wxEmptyString, iconIdx);
-	logListCtrl->SetItem(listIdx, LOGVIEWER_COLUMN_TIME,
-	    notify->getTime());
-	logListCtrl->SetItem(listIdx, LOGVIEWER_COLUMN_MODULE,
-	    notify->getModule());
-	logListCtrl->SetItem(listIdx, LOGVIEWER_COLUMN_MESSAGE,
-	    notify->getLogMessage());
-	logListCtrl->SetItemData(listIdx, notify->getId());
-
-	if (notify->isAdmin()) {
-		logListCtrl->SetItemBackgroundColour(listIdx,
-		    wxTheColourDatabase->Find(wxT("LIGHT GREY")));
-	}
-
-	/* trigger new calculation of column width (all icons has same size) */
-	logListCtrl->SetColumnWidth(LOGVIEWER_COLUMN_TIME, wxLIST_AUTOSIZE);
-	logListCtrl->SetColumnWidth(LOGVIEWER_COLUMN_MODULE, wxLIST_AUTOSIZE);
-	logListCtrl->SetColumnWidth(LOGVIEWER_COLUMN_MESSAGE, wxLIST_AUTOSIZE);
+	this->role_ = role;
 }
 
-ANEVENTS_IDENT_BCAST_METHOD_DEFINITION(DlgLogViewer)
+wxString
+LogViewerProperty::getHeader(void) const
+{
+	switch (role_) {
+		case PROPERTY_ICON: return wxEmptyString;
+		case PROPERTY_TIME: return _("Time");
+		case PROPERTY_MODULE: return _("Module");
+		case PROPERY_MESSAGE: return _("Message");
+	}
+
+	return _("???");
+}
+
+wxString
+LogViewerProperty::getText(AnListClass *obj) const
+{
+	Notification *notify = dynamic_cast<Notification *>(obj);
+
+	if (notify == 0)
+		return wxT("???");
+
+	switch (role_) {
+		case PROPERTY_ICON: return wxEmptyString;
+		case PROPERTY_TIME: return notify->getTime();
+		case PROPERTY_MODULE: return notify->getModule();
+		case PROPERY_MESSAGE: return notify->getLogMessage();
+	}
+
+	return _("???");
+}
+
+AnIconList::IconId
+LogViewerProperty::getIcon(AnListClass *obj) const
+{
+	if (role_ == PROPERTY_ICON) {
+		Notification *notify = dynamic_cast<Notification *>(obj);
+
+		if (typeid(*notify) == typeid(class EscalationNotify)) {
+			return AnIconList::ICON_ANOUBIS_QUESTION;
+		} else if (typeid(*notify) == typeid(class AlertNotify)) {
+			return AnIconList::ICON_ANOUBIS_ALERT;
+		} else {
+			return AnIconList::ICON_ANOUBIS_BLACK;
+		}
+	} else
+		return AnIconList::ICON_NONE;
+}
+
+wxColour
+NotificationProperty::getBackgroundColor(AnListClass *obj) const
+{
+	Notification *notify = dynamic_cast<Notification *>(obj);
+
+	if ((notify != 0) && notify->isAdmin())
+		return wxTheColourDatabase->Find(wxT("LIGHT GREY"));
+	else
+		return (wxNullColour);
+}

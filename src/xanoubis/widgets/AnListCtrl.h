@@ -37,6 +37,7 @@
 #include "Observer.h"
 
 class AnListClass;
+class AnListClassProperty;
 class AnListColumn;
 class AnListProperty;
 
@@ -56,9 +57,14 @@ class AnListProperty;
  * AnListProperty). A column of the list displays a property. That's why, an
  * AnListProperty instance is assigned to the column.
  *
+ * A complete AnListClass is described by AnListClassProperty. This kind of
+ * property describes a single row (which contains an AnListClass).
+ *
  * When the list needs to fill a cell of the table, it selects the AnListClass
  * of the row and the AnListColumn of the column to receive the AnListProperty.
- * Then it asks the property to return information to fill out the cell.
+ * Then it asks the property to return information to fill out the cell. The
+ * formatting options of a complete row are received by asking the assigned
+ * AnListClassProperty.
  *
  * By default the list works old-fashioned, you need to fill the list manually
  * by hand. To enable all the features of the class, you needs to specify the
@@ -158,6 +164,13 @@ class AnListCtrl : public wxListCtrl, private Observer
 		const std::vector<AnListClass *> getRowData(void) const;
 
 		/**
+		 * Returns the number of assigned rows.
+		 *
+		 * @return Number of assigned rows.
+		 */
+		unsigned int getRowCount(void) const;
+
+		/**
 		 * Assigns rows to the list.
 		 *
 		 * Any previously assigns rows are removed before.
@@ -249,6 +262,28 @@ class AnListCtrl : public wxListCtrl, private Observer
 		int getRowIndex(AnListClass *) const;
 
 		/**
+		 * Returns the property used to format the rows of the table.
+		 *
+		 * @return Property used to format the rows. If NULL is
+		 *         returned, the default formatting options are used.
+		 */
+		AnListClassProperty *getRowProperty(void) const;
+
+		/**
+		 * Assigns a row-property to the table.
+		 *
+		 * This property is used to format a complete AnListClass
+		 * (aka row). If no AnListClassProperty is assigned, the
+		 * default formatting options are used.
+		 *
+		 * @param property The row-property to be assigned
+		 * @note The list-control is now the owner of the specified
+		 *       property. If the list is removed, the property is also
+		 *       destroyed.
+		 */
+		void setRowProperty(AnListClassProperty *);
+
+		/**
 		 * Refreshes the visible area of the list.
 		 */
 		void refreshVisible(void);
@@ -299,6 +334,17 @@ class AnListCtrl : public wxListCtrl, private Observer
 		 */
 		int OnGetItemColumnImage(long, long) const;
 
+		/**
+		 * Overloader wxListCtrl::OnGetItemAttr().
+		 *
+		 * Specifies item attributes the for given item.
+		 *
+		 * @note The method is defined virtual in the base-class but it
+		 *       is not practical to overwrite this method again, if
+		 *       you derivate from this class.
+		 */
+		wxListItemAttr *OnGetItemAttr(long) const;
+
 	private:
 		/**
 		 * List of columns.
@@ -328,6 +374,16 @@ class AnListCtrl : public wxListCtrl, private Observer
 		 * for an index in a map only takes logarithmical time.
 		 */
 		std::map<AnListClass *, unsigned int> reverseRows_;
+
+		/**
+		 * Row-property (if any).
+		 */
+		AnListClassProperty *rowProperty_;
+
+		/**
+		 * The item-attribute setup and returned by OnGetItemAttr().
+		 */
+		wxListItemAttr *itemAttr_;
 
 		/**
 		 * Implementation of Observer::update().
