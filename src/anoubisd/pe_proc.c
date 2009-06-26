@@ -53,10 +53,18 @@
 #include "anoubisd.h"
 #include "pe.h"
 
+#define PE_PROC_FLAGS_UPGRADE		0x0001
+#define PE_PROC_FLAGS_UPGRADE_PARENT	0x0002
+
 static void		 pe_proc_track(struct pe_proc *);
 static void		 pe_proc_untrack(struct pe_proc *);
 static struct pe_proc	*pe_proc_alloc(uid_t uid, anoubis_cookie_t,
 			     struct pe_proc_ident *);
+static unsigned int	 pe_proc_get_flag(struct pe_proc *, unsigned int);
+static void		 pe_proc_set_flag(struct pe_proc *, unsigned int);
+static void		 pe_proc_clr_flag(struct pe_proc *, unsigned int);
+static void		 pe_proc_upgrade_inherit(struct pe_proc *,
+			     unsigned int);
 
 struct pe_proc {
 	TAILQ_ENTRY(pe_proc)	 entry;
@@ -65,6 +73,7 @@ struct pe_proc {
 	uid_t			 uid;
 	uid_t			 sfsdisable_uid;
 	pid_t			 sfsdisable_pid;
+	unsigned int		 flags;
 
 	struct pe_proc_ident	 ident;
 	anoubis_cookie_t	 task_cookie;
@@ -185,6 +194,7 @@ pe_proc_alloc(uid_t uid, anoubis_cookie_t cookie, struct pe_proc_ident *pident)
 	proc->uid = uid;
 	proc->sfsdisable_pid = (pid_t)-1;
 	proc->sfsdisable_uid = (uid_t)-1;
+	proc->flags = 0;
 	proc->refcount = 1;
 	proc->ident.pathhint = NULL;
 	proc->ident.csum = NULL;
@@ -305,7 +315,7 @@ pe_proc_dump(void)
 		ctx1 = proc->context[1];
 		log_info("proc %p token 0x%08llx borrow token 0x%08llx "
 		    "pid %d csum 0x%08x pathhint \"%s\" ctx %p %p alfrules "
-		    "%p %p sbrules %p %p",
+		    "%p %p sbrules %p %p flags 0x%x",
 		    proc, (unsigned long long)proc->task_cookie,
 		    (unsigned long long)proc->borrow_cookie, (int)proc->pid,
 		    proc->ident.csum ?
@@ -313,7 +323,8 @@ pe_proc_dump(void)
 		    proc->ident.pathhint ? proc->ident.pathhint : "",
 		    ctx0, ctx1,
 		    pe_context_get_alfrule(ctx0), pe_context_get_alfrule(ctx1),
-		    pe_context_get_sbrule(ctx0), pe_context_get_sbrule(ctx1));
+		    pe_context_get_sbrule(ctx0), pe_context_get_sbrule(ctx1),
+		    proc->flags);
 	}
 }
 
@@ -331,12 +342,16 @@ pe_proc_fork(uid_t uid, anoubis_cookie_t child, anoubis_cookie_t parent_cookie)
 		return;
 	pe_proc_track(proc);
 	pe_context_fork(proc, parent);
+
+	/* Hand mark of upgrade process down. */
+	pe_proc_upgrade_inherit(proc, pe_proc_is_upgrade(parent));
+
 	DEBUG(DBG_PE_PROC, "pe_proc_fork: token 0x%08llx pid %d "
-	    "uid %u proc %p csum 0x%08x... parent token 0x%08llx",
+	    "uid %u proc %p csum 0x%08x... parent token 0x%08llx flags 0x%x",
 	    (unsigned long long)child, proc->pid, uid, proc,
 	    proc->ident.csum ?
 	    htonl(*(unsigned long *)proc->ident.csum) : 0,
-	    (unsigned long long)parent_cookie);
+	    (unsigned long long)parent_cookie, proc->flags);
 	pe_proc_put(parent);
 	pe_proc_put(proc);
 }
@@ -534,4 +549,72 @@ pe_proc_set_savedctx(struct pe_proc *proc, int prio, struct pe_context *ctx)
 	if (proc->saved_ctx[prio])
 		pe_context_put(proc->saved_ctx[prio]);
 	proc->saved_ctx[prio] = ctx;
+}
+
+unsigned int
+pe_proc_is_upgrade(struct pe_proc *proc)
+{
+	return (pe_proc_get_flag(proc, PE_PROC_FLAGS_UPGRADE));
+}
+
+unsigned int
+pe_proc_is_upgrade_parent(struct pe_proc *proc)
+{
+	return (pe_proc_get_flag(proc, PE_PROC_FLAGS_UPGRADE_PARENT));
+}
+
+void
+pe_proc_upgrade_addmark(struct pe_proc *proc)
+{
+	pe_proc_set_flag(proc, PE_PROC_FLAGS_UPGRADE);
+	pe_proc_set_flag(proc, PE_PROC_FLAGS_UPGRADE_PARENT);
+}
+
+void
+pe_proc_upgrade_clrmark(struct pe_proc *proc)
+{
+	pe_proc_clr_flag(proc, PE_PROC_FLAGS_UPGRADE);
+	pe_proc_clr_flag(proc, PE_PROC_FLAGS_UPGRADE_PARENT);
+}
+
+static unsigned int
+pe_proc_get_flag(struct pe_proc *proc, unsigned int flag)
+{
+	if (!proc) {
+		return (0);
+	}
+
+	if (proc->flags & flag) {
+		return (1);
+	} else {
+		return (0);
+	}
+}
+
+static void
+pe_proc_set_flag(struct pe_proc *proc, unsigned int flag)
+{
+	if (proc != NULL) {
+		/* Set flag */
+		proc->flags |= flag;
+	}
+}
+
+static void
+pe_proc_clr_flag(struct pe_proc *proc, unsigned int flag)
+{
+	if (proc != NULL) {
+		/* Remove flag */
+		proc->flags &= ~flag;
+	}
+}
+
+static void
+pe_proc_upgrade_inherit(struct pe_proc *proc, unsigned int flag)
+{
+	if (flag != 0) {
+		pe_proc_set_flag(proc, PE_PROC_FLAGS_UPGRADE);
+	} else {
+		pe_proc_clr_flag(proc, PE_PROC_FLAGS_UPGRADE);
+	}
 }

@@ -104,6 +104,10 @@ void			 pe_proc_restore_ctx(struct pe_proc *, int,
 struct pe_context	*pe_proc_get_savedctx(struct pe_proc *, int);
 void			 pe_proc_set_savedctx( struct pe_proc *, int,
 			     struct pe_context *);
+unsigned int		 pe_proc_is_upgrade(struct pe_proc *);
+unsigned int		 pe_proc_is_upgrade_parent(struct pe_proc *);
+void			 pe_proc_upgrade_addmark(struct pe_proc *);
+void			 pe_proc_upgrade_clrmark(struct pe_proc *);
 
 /* pe_context access functions */
 struct pe_proc_ident	*pe_context_get_ident(struct pe_context *);

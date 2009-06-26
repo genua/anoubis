@@ -28,6 +28,7 @@
 #include <check.h>
 
 extern TCase *anoubisd_testcase_sessions(void);
+extern TCase *anoubisd_testcase_pe(void);
 
 Suite *
 anoubisd_testsuite(void)
@@ -37,6 +38,10 @@ anoubisd_testsuite(void)
 	/* sessions test case */
 	TCase *tc_sessions = anoubisd_testcase_sessions();
 	suite_add_tcase(s, tc_sessions);
+
+	/* policy engine test case */
+	TCase *tc_pe = anoubisd_testcase_pe();
+	suite_add_tcase(s, tc_pe);
 
 	return (s);
 }
