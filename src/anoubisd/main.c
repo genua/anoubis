@@ -1148,6 +1148,7 @@ dispatch_checksumop(anoubisd_msg_t *msg, struct event_info_main *ev_info)
 		return;
 	case ANOUBIS_CHECKSUM_OP_ADDSIG:
 	case ANOUBIS_CHECKSUM_OP_ADDSUM:
+	case ANOUBIS_CHECKSUM_OP_UP_ALL:
 		if (!VERIFY_LENGTH(&rawmsg, sizeof(Anoubis_ChecksumAddMessage)))
 			goto out;
 		cslen = get_value(rawmsg.u.checksumadd->cslen);

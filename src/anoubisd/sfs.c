@@ -66,6 +66,9 @@
 #include "sfs.h"
 #include "cert.h"
 
+static int	 sfs_update_all(const char *sfs_path, u_int8_t *md, int len);
+static int	 sfs_writechecksum(const char *csum_file, const char *csum_path,
+		     u_int8_t *md, int len, int idlen);
 static int	 sfs_readchecksum(const char *csum_file, unsigned char *md);
 static int	 sfs_readsignature(const char *csum_file, u_int8_t **sign,
 		     int *siglen);
@@ -286,12 +289,10 @@ __sfs_checksumop(const char *path, unsigned int operation, uid_t uid,
     u_int8_t *md, u_int8_t **sign, int *siglen, int len, int idlen,
     int is_chroot)
 {
-	char *csum_path = NULL, *csum_file = NULL, *csum_tmp = NULL;
+	char *csum_path = NULL, *csum_file = NULL;
 	char *sigfile = NULL;
 	struct cert *certs = NULL;
-	int fd;
 	int vlen = 0;
-	int written = 0;
 	int ret;
 
 	if (is_chroot && operation != ANOUBIS_CHECKSUM_OP_GET
@@ -322,15 +323,18 @@ __sfs_checksumop(const char *path, unsigned int operation, uid_t uid,
 			ret = -ENOMEM;
 			goto out;
 		}
+	} else if (operation == ANOUBIS_CHECKSUM_OP_UP_ALL) {
+		if (uid != 0) {
+			ret = -EINVAL;
+			goto out;
+		}
+		ret = sfs_update_all(csum_path, md, len);
+		goto out;
 	} else {
 		if (asprintf(&csum_file, "%s/%d", csum_path, uid) == -1) {
 			ret = -ENOMEM;
 			goto out;
 		}
-	}
-	if (asprintf(&csum_tmp, "%s%s", csum_file, ".tmp") == -1) {
-		ret = -ENOMEM;
-		goto out;
 	}
 
 	if (operation == ANOUBIS_CHECKSUM_OP_ADDSIG) {
@@ -349,49 +353,7 @@ __sfs_checksumop(const char *path, unsigned int operation, uid_t uid,
 	/* And now we finally adding the signature */
 	if ((operation == ANOUBIS_CHECKSUM_OP_ADDSUM) ||
 	    (operation == ANOUBIS_CHECKSUM_OP_ADDSIG)) {
-		if (md == NULL) {
-			ret = -EINVAL;
-			goto out;
-		}
-
-		if (len < ANOUBIS_CS_LEN) {
-			ret = -EINVAL;
-			goto out;
-		}
-		ret = mkpath(csum_path);
-		if (ret < 0) {
-			goto out;
-		}
-		fd = open(csum_tmp, O_WRONLY|O_CREAT|O_TRUNC, 0640);
-		if (fd < 0) {
-			ret = -errno;
-			goto out;
-		}
-		if (fchown(fd, -1, anoubisd_gid) < 0) {
-			ret = -errno;
-			close(fd);
-			unlink(csum_tmp);
-			goto out;
-		}
-
-		while (written < len) {
-			ret = write(fd, md + idlen + written, len - written);
-			if (ret < 0) {
-				ret = -errno;
-				unlink(csum_tmp);
-				close(fd);
-				goto out;
-			}
-			written += ret;
-		}
-		if ((fsync(fd) < 0) || (rename(csum_tmp, csum_file) < 0)) {
-			ret = -errno;
-			close(fd);
-			unlink(csum_tmp);
-			goto out;
-		}
-		close(fd);
-		ret = 0;
+		ret = sfs_writechecksum(csum_file, csum_path, md, len, idlen);
 	} else if (operation == ANOUBIS_CHECKSUM_OP_DEL ||
 	    operation == ANOUBIS_CHECKSUM_OP_DELSIG) {
 		if (operation == ANOUBIS_CHECKSUM_OP_DELSIG)
@@ -440,8 +402,6 @@ out:
 		free(csum_path);
 	if (csum_file)
 		free(csum_file);
-	if (csum_tmp)
-		free(csum_tmp);
 	return ret;
 }
 
@@ -459,6 +419,112 @@ sfs_checksumop_chroot(const char *path, unsigned int operation, uid_t uid,
 {
 	return __sfs_checksumop(path, operation, uid, md, sign, siglen, len,
 	    idlen, 1);
+}
+
+/* We going through the dirctory looking for registered uids and
+ * update them
+ */
+static int
+sfs_update_all(const char *sfs_path, u_int8_t *md, int len)
+{
+	DIR *sfs_dir = NULL;
+	struct dirent *sfs_ent = NULL;
+	char testarg;
+	char *csum_file = NULL;
+	uid_t uid;
+
+	if (sfs_path == NULL || md == NULL || len != ANOUBIS_CS_LEN)
+		return -EINVAL;
+	sfs_dir = opendir(sfs_path);
+	if (!sfs_dir) {
+		/* since we just update we don't create new one */
+		if (errno == ENOENT)
+			return 0;
+		return -errno;
+	}
+
+	while ((sfs_ent = readdir(sfs_dir)) != NULL) {
+		/* since we updating checksums we skip keyid entries */
+		if (!strcmp(sfs_ent->d_name, ".") ||
+		    !strcmp(sfs_ent->d_name, "..") ||
+		    (sfs_ent->d_name[0] == 'k'))
+			continue;
+		if (sscanf(sfs_ent->d_name, "%u%c", &uid, &testarg) != 1)
+			continue;
+		if (asprintf(&csum_file, "%s/%d", sfs_path, uid) == -1) {
+			closedir(sfs_dir);
+			return -ENOMEM;
+		}
+		sfs_writechecksum(csum_file, sfs_path, md, len, 0);
+		free(csum_file);
+		csum_file = NULL;
+	}
+	closedir(sfs_dir);
+	return 0;
+}
+
+
+static int
+sfs_writechecksum(const char *csum_file, const char *csum_path, u_int8_t *md,
+    int len, int idlen)
+{
+	int ret = 0, written = 0;
+	int fd;
+	char *csum_tmp = NULL;
+
+	if (md == NULL || csum_file == NULL || csum_path == NULL) {
+		ret = -EINVAL;
+		return ret;
+	}
+	if (len < ANOUBIS_CS_LEN) {
+		ret = -EINVAL;
+		return ret;
+	}
+	ret = mkpath(csum_path);
+	if (ret < 0) {
+		return ret;
+	}
+
+	if (asprintf(&csum_tmp, "%s%s", csum_file, ".tmp") == -1) {
+		ret = -ENOMEM;
+		return ret;
+	}
+
+	fd = open(csum_tmp, O_WRONLY|O_CREAT|O_TRUNC, 0640);
+	if (fd < 0) {
+		ret = -errno;
+		free(csum_tmp);
+		return ret;
+	}
+	if (fchown(fd, -1, anoubisd_gid) < 0) {
+		ret = -errno;
+		close(fd);
+		unlink(csum_tmp);
+		free(csum_tmp);
+		return ret;;
+	}
+	while (written < len) {
+		ret = write(fd, md + idlen + written, len - written);
+		if (ret < 0) {
+			ret = -errno;
+			unlink(csum_tmp);
+			free(csum_tmp);
+			close(fd);
+			return ret;
+		}
+		written += ret;
+	}
+	if ((fsync(fd) < 0) || (rename(csum_tmp, csum_file) < 0)) {
+		ret = -errno;
+		close(fd);
+		unlink(csum_tmp);
+		free(csum_tmp);
+		return ret;
+	}
+
+	free(csum_tmp);
+	close(fd);
+	return 0;
 }
 
 static int
