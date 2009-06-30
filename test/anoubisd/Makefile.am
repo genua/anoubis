@@ -83,6 +83,7 @@ test_anoubisd_daemonobjs = \
 	$(top_builddir)/$(anoubisddir)/pe_sfscache.o \
 	$(top_builddir)/$(anoubisddir)/pe_sfs.o \
 	$(top_builddir)/$(anoubisddir)/pe_user.o \
+	$(top_builddir)/$(anoubisddir)/pe_filetree.o \
 	$(top_builddir)/$(anoubisddir)/policy.o \
 	$(top_builddir)/$(anoubisddir)/session.o \
 	$(top_builddir)/$(anoubisddir)/sfs.o
@@ -106,5 +107,6 @@ endif
 test_anoubisd_SOURCES = \
 	anoubisd_testcase_sessions.c \
 	anoubisd_testcase_pe.c \
+	anoubisd_testcase_pe_filetree.c \
 	anoubisd_testsuite.c \
 	anoubisd_testrunner.c

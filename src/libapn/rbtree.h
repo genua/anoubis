@@ -58,8 +58,8 @@
 
 #include <sys/cdefs.h>
 
-#define RB_RED		1
-#define RB_BLACK	2
+#define ARB_RED		1
+#define ARB_BLACK	2
 
 /*
  * The following restrictions apply to the access of the rb_entry fields:

@@ -147,7 +147,7 @@ rb_insert_entry(struct rb_entry **root, struct rb_entry *n)
 	(*rp) = n;
 	n->left = n->right = NULL;
 	n->parent = parent;
-	n->col = RB_RED;
+	n->col = ARB_RED;
 
 fixup:
 
@@ -158,10 +158,10 @@ fixup:
 
 	/* Try to assign a color without rotation */
 	if (!parent) {
-		n->col = RB_BLACK;
+		n->col = ARB_BLACK;
 		return 1;
 	}
-	if (parent->col == RB_BLACK) {
+	if (parent->col == ARB_BLACK) {
 		return 1;
 	}
 	/*
@@ -174,10 +174,10 @@ fixup:
 	gp = parent->parent;
 	/* gp cannot be NULL because the root is black but parent is red */
 	if (gp->left && gp->right
-	    && gp->left->col == RB_RED && gp->right->col == RB_RED) {
+	    && gp->left->col == ARB_RED && gp->right->col == ARB_RED) {
 		if (gp != *root)
-			gp->col = RB_RED;
-		gp->left->col = gp->right->col = RB_BLACK;
+			gp->col = ARB_RED;
+		gp->left->col = gp->right->col = ARB_BLACK;
 		n = gp;
 		parent = gp->parent;
 		goto fixup;
@@ -196,16 +196,16 @@ fixup:
 	 * Rotate the grand parent such that it is replaced by its red
 	 * child. Then fixup colours.
 	 */
-	if (gp->left && gp->left->col == RB_RED) {
+	if (gp->left && gp->left->col == ARB_RED) {
 		r = gp->left;
 		rotate_right(root, gp);
 	} else {
 		r = gp->right;
 		rotate_left(root, gp);
 	}
-	r->col = RB_BLACK;
-	r->left->col = r->right->col = RB_RED;
-	(*root)->col = RB_BLACK;
+	r->col = ARB_BLACK;
+	r->left->col = r->right->col = ARB_RED;
+	(*root)->col = ARB_BLACK;
 	return 1;
 }
 
@@ -292,9 +292,9 @@ rb_swap(struct rb_entry **root, struct rb_entry *e1, struct rb_entry *e2)
 static int
 children_black(struct rb_entry *rb)
 {
-	if (rb->left && rb->left->col == RB_RED)
+	if (rb->left && rb->left->col == ARB_RED)
 		return 0;
-	if (rb->right && rb->right->col == RB_RED)
+	if (rb->right && rb->right->col == ARB_RED)
 		return 0;
 	return 1;
 }
@@ -335,11 +335,11 @@ rb_remove_entry(struct rb_entry **root, struct rb_entry *e)
 	}
 	p = e->parent;
 	/* If e was red we are done. */
-	if (e->col == RB_RED)
+	if (e->col == ARB_RED)
 		return 1;
 	/* If cld is red color it black and we are done. */
-	if (cld && cld->col == RB_RED) {
-		cld->col = RB_BLACK;
+	if (cld && cld->col == ARB_RED) {
+		cld->col = ARB_BLACK;
 		return 1;
 	}
 	/* If the tree is now empty we are done. */
@@ -350,7 +350,7 @@ rb_remove_entry(struct rb_entry **root, struct rb_entry *e)
 	 * the root black and are done.
 	 */
 	if (*root == cld) {
-		cld->col = RB_BLACK;
+		cld->col = ARB_BLACK;
 		return 1;
 	}
 
@@ -373,36 +373,36 @@ fixup:
 	 * following rotations and recoloring does not change the black
 	 * depths of any path.
 	 */
-	if (pleft && p->right->col == RB_RED) {
-		p->right->col = RB_BLACK;
-		p->col = RB_RED;
+	if (pleft && p->right->col == ARB_RED) {
+		p->right->col = ARB_BLACK;
+		p->col = ARB_RED;
 		rotate_left(root, p);
-	} else if (!pleft && p->left->col == RB_RED) {
-		p->left->col = RB_BLACK;
-		p->col = RB_RED;
+	} else if (!pleft && p->left->col == ARB_RED) {
+		p->left->col = ARB_BLACK;
+		p->col = ARB_RED;
 		rotate_right(root, p);
 	}
 	/*
 	 * Case 2: The other child must be black. Handle the case where
 	 *   its children are black, too.
 	 */
-	if (pleft && p->right->col == RB_BLACK && children_black(p->right)) {
-		if (p->col == RB_BLACK) {
-			p->right->col = RB_RED;
+	if (pleft && p->right->col == ARB_BLACK && children_black(p->right)) {
+		if (p->col == ARB_BLACK) {
+			p->right->col = ARB_RED;
 			goto retry;
 		} else {
-			p->right->col = RB_RED;
-			p->col = RB_BLACK;
+			p->right->col = ARB_RED;
+			p->col = ARB_BLACK;
 			return 1;
 		}
-	} else if (!pleft && p->left->col == RB_BLACK
+	} else if (!pleft && p->left->col == ARB_BLACK
 	    && children_black(p->left)) {
-		if (p->col == RB_BLACK) {
-			p->left->col = RB_RED;
+		if (p->col == ARB_BLACK) {
+			p->left->col = ARB_RED;
 			goto retry;
 		} else {
-			p->left->col = RB_RED;
-			p->col = RB_BLACK;
+			p->left->col = ARB_RED;
+			p->col = ARB_BLACK;
 			return 1;
 		}
 	}
@@ -414,33 +414,33 @@ fixup:
 	 * Case 3a: If necessary rotate such that the red sub child faces away
 	 *   from the tree with lacking black nodes.
 	 */
-	if (pleft && (!p->right->right || p->right->right->col == RB_BLACK)) {
+	if (pleft && (!p->right->right || p->right->right->col == ARB_BLACK)) {
 		rotate_right(root, p->right);
-		p->right->col = RB_BLACK;
-		p->right->right->col = RB_RED;
+		p->right->col = ARB_BLACK;
+		p->right->right->col = ARB_RED;
 	} else if (!pleft
-	    && (!p->left->left || p->left->left->col == RB_BLACK)) {
+	    && (!p->left->left || p->left->left->col == ARB_BLACK)) {
 		rotate_left(root, p->left);
-		p->left->col = RB_BLACK;
-		p->left->left->col = RB_RED;
+		p->left->col = ARB_BLACK;
+		p->left->left->col = ARB_RED;
 	}
 	/*
 	 * Case 3b: The other child is black and has a red child facing
 	 *   away from the subtree with lacking black nodes.
 	 */
 	if (pleft) {
-		p->right->right->col = RB_BLACK;
+		p->right->right->col = ARB_BLACK;
 		p->right->col = p->col;
-		p->col = RB_BLACK;
+		p->col = ARB_BLACK;
 		rotate_left(root, p);
 	} else {
-		p->left->left->col = RB_BLACK;
+		p->left->left->col = ARB_BLACK;
 		p->left->col = p->col;
-		p->col = RB_BLACK;
+		p->col = ARB_BLACK;
 		rotate_right(root, p);
 	}
 	if (*root)
-		(*root)->col = RB_BLACK;
+		(*root)->col = ARB_BLACK;
 	return 1;
 retry:
 	if (!p->parent)

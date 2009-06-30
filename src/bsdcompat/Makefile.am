@@ -28,7 +28,7 @@
 # executables, and one suitable for including in shared objects.
 
 lib_LIBRARIES = libbsdcompat.a libbsdcompat_pic.a
-include_HEADERS = bsdcompat.h queue.h
+include_HEADERS = bsdcompat.h queue.h tree.h
 
 # for LLONG_MIN/LLONG_MAX
 AM_CFLAGS += -std=gnu99
@@ -72,7 +72,8 @@ libbsdcompat_a_SOURCES_splint = \
 	strtonum.c_splint \
 	setproctitle.c_splint \
 	bsdcompat.h_splint \
-	queue.h_splint
+	queue.h_splint \
+	tree.h_splint
 
 libbsdcompat_a_SOURCES_flawfinder = \
 	getpeereid.c_flawfinder \
@@ -82,7 +83,8 @@ libbsdcompat_a_SOURCES_flawfinder = \
 	strtonum.c_flawfinder \
 	setproctitle.c_flawfinder \
 	bsdcompat.h_flawfinder \
-	queue.h_flawfinder
+	queue.h_flawfinder \
+	tree.h_flawfinder
 
 
 flawfinder_FLAGS=

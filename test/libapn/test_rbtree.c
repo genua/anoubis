@@ -37,19 +37,19 @@ verify_one(struct rb_entry *t, unsigned long mi, unsigned long ma)
 	if (!t)
 		return 1;
 	assert(mi <= t->key && t->key <= ma);
-	assert(t->col == RB_RED || t->col == RB_BLACK);
+	assert(t->col == ARB_RED || t->col == ARB_BLACK);
 	if (t->left)
 		assert(t->left->parent == t);
 	if (t->right)
 		assert(t->right->parent == t);
-	if (t->col == RB_RED) {
-		assert(!t->left || t->left->col == RB_BLACK);
-		assert(!t->right || t->right->col == RB_BLACK);
+	if (t->col == ARB_RED) {
+		assert(!t->left || t->left->col == ARB_BLACK);
+		assert(!t->right || t->right->col == ARB_BLACK);
 	}
 	d1 = verify_one(t->left, mi, t->key-1);
 	d2 = verify_one(t->right, t->key+1, ma);
 	assert(d1 == d2);
-	if (t->col == RB_BLACK)
+	if (t->col == ARB_BLACK)
 		d1++;
 	return d1;
 }
@@ -60,7 +60,7 @@ rb_verify(struct rb_entry *root)
 	if (!root)
 		return;
 	assert(root->parent == NULL);
-	assert(root->col == RB_BLACK);
+	assert(root->col == ARB_BLACK);
 	verify_one(root, 0, (unsigned long)-1);
 }
 

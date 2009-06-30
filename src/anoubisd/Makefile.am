@@ -53,12 +53,12 @@ CPPFLAGS += \
 	   -I$(top_srcdir)/$(anoubissigdir) \
 	   -I$(top_srcdir)/$(anoubispsdir) \
 	   -I$(top_srcdir)/$(anoubispsdir)/server \
-	   -I$(top_srcdir)/$(libapndir)
+	   -I$(top_srcdir)/$(libapndir) \
+	   -I$(top_srcdir)/$(bsdcompatdir)
 
 anoubisd_LDADD = $(libanoubisps) $(libanoubischat) $(libapn) $(libanoubissig)
 
 if NEEDBSDCOMPAT
-CPPFLAGS += -I$(top_srcdir)/$(bsdcompatdir)
 anoubisd_LDADD    += $(libbsdcompat)
 endif
 
@@ -77,6 +77,8 @@ anoubisd_SOURCES= \
 	pe_sfscache.c \
 	pe_prefixhash.c \
 	pe_sandbox.c \
+	pe_filetree.c \
+	pe_filetree.h \
 	cert.c \
 	session.c \
 	log.c \
@@ -102,6 +104,8 @@ anoubisd_SOURCES_flawfinder= \
 	pe_sfscache.c_flawfinder \
 	pe_prefixhash.c_flawfinder \
 	pe_sandbox.c_flawfinder \
+	pe_filetree.c_flawfinder \
+	pe_filetree.h_flawfinder \
 	cert.c_flawfinder \
 	session.c_flawfinder \
 	log.c_flawfinder \
@@ -126,6 +130,8 @@ anoubisd_SOURCES_lint= \
 	pe_sfscache.c_lint \
 	pe_prefixhash.c_lint \
 	pe_sandbox.c_lint \
+	pe_filetree.c_lint \
+	pe_filetree.h_lint \
 	cert.c_lint \
 	session.c_lint \
 	log.c_lint \
@@ -143,6 +149,8 @@ anoubisd_SOURCES_splint= \
 	pe_sfscache.c_splint \
 	pe_prefixhash.c_splint \
 	pe_sandbox.c_splint \
+	pe_filetree.c_splint \
+	pe_filetree.h_splint \
 	cert.c_splint \
 	session.c_splint \
 	log.c_splint \

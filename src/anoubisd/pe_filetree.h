@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 GeNUA mbH <info@genua.de>
+ * Copyright (c) 2009 GeNUA mbH <info@genua.de>
  *
  * All rights reserved.
  *
@@ -25,28 +25,30 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <check.h>
+#ifndef _PE_FILETREE_H_
+#define _PE_FILETREE_H_
 
-extern TCase *anoubisd_testcase_sessions(void);
-extern TCase *anoubisd_testcase_pe(void);
-extern TCase *anoubisd_testcase_pe_filetree(void);
+#include <tree.h>
+#include "pe.h"
 
-Suite *
-anoubisd_testsuite(void)
-{
-	Suite *s = suite_create("Suite");
+struct pe_file_node {
+	RB_ENTRY(pe_file_node)	 entry;
+	char			*path;
+	anoubis_cookie_t	 task_cookie;
+	unsigned long		 idx;
+};
 
-	/* sessions test case */
-	TCase *tc_sessions = anoubisd_testcase_sessions();
-	suite_add_tcase(s, tc_sessions);
+struct pe_file_tree {
+	RB_HEAD(rb_file_tree, pe_file_node) head;
+};
 
-	/* file tree test cases */
-	TCase *tc_filetree = anoubisd_testcase_pe_filetree();
-	suite_add_tcase(s, tc_filetree);
+struct pe_file_tree *pe_init_filetree(void);
+int pe_insert_node(struct pe_file_tree *, char *, anoubis_cookie_t);
+struct pe_file_node *pe_find_file(struct pe_file_tree *, char *);
+struct pe_file_node *pe_get_next(struct pe_file_tree *, struct pe_file_node *);
+struct pe_file_node *pe_get_start(struct pe_file_tree *);
+void pe_delete_file(struct pe_file_tree *, char *);
+void pe_delete_node(struct pe_file_tree *, struct pe_file_node *);
+void pe_filetree_destroy(struct pe_file_tree *);
 
-	/* policy engine test case */
-	TCase *tc_pe = anoubisd_testcase_pe();
-	suite_add_tcase(s, tc_pe);
-
-	return (s);
-}
+#endif	/* _PE_FILETREE_H_ */
