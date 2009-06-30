@@ -66,4 +66,10 @@ rm -f /etc/anoubis/profiles/high
 	/usr/share/anoubisd/policy_templates/profiles \
 	/etc/anoubis/profiles
 
+# our udev rules file is only effective starting with the next reboot.
+# Therefore update permissions manually now.
+if [ -e /dev/anoubis ] ; then
+	chmod 644 /dev/anoubis
+fi
+
 #DEBHELPER#

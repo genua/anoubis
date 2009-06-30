@@ -195,6 +195,11 @@ chown _anoubisd: /var/lib/anoubis/policy/pubkeys
 if [ ! -e /dev/eventdev ] ; then
 	mknod /dev/eventdev c 10 62
 fi
+# our udev rules file is only effective starting with the next reboot.
+# Therefore update permissions manually now.
+if [ -e /dev/anoubis ] ; then
+	chmod 644 /dev/anoubis
+fi
 # execute only on new installs (i.e. exactly 1 version installed)
 if [ "$1" = 1 ]; then
     %{rcdir}/anoubisd start
