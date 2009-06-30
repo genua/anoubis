@@ -86,6 +86,7 @@ void			 pe_proc_fork(uid_t, anoubis_cookie_t,
 void			 pe_proc_exec(anoubis_cookie_t, uid_t, pid_t,
 			     const u_int8_t *csum, const char *pathhint);
 void			 pe_proc_exit(anoubis_cookie_t);
+void			 pe_proc_addinstance(anoubis_cookie_t);
 struct pe_context	*pe_proc_get_context(struct pe_proc *, int);
 void			 pe_proc_set_context(struct pe_proc *, int,
 			     struct pe_context *);

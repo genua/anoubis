@@ -58,9 +58,14 @@
 #include <bsdcompat.h>
 #include <linux/anoubis_sfs.h>
 #include <openssl/sha.h>
+#define ANOUBISCORE_MIN_VERSION	0x00010002UL
 #else
 #include <dev/anoubis_sfs.h>
 #include <sha2.h>
+#endif
+
+#ifndef ANOUBISCORE_MIN_VERSION
+#define ANOUBISCORE_MIN_VERSION ANOUBISCORE_VERSION
 #endif
 
 /* on glibc 2.6+, event.h uses non C89 types :/ */
@@ -367,10 +372,12 @@ main(int argc, char *argv[])
 			early_err(3, "ANOUBIS_GETVERSION: Cannot retrieve "
 			    "version number");
 
-		if (version != ANOUBISCORE_VERSION) {
+		if (version < ANOUBISCORE_MIN_VERSION
+		    || version > ANOUBISCORE_VERSION) {
 			char *msg;
 			if (asprintf(&msg, "Anoubis Version mismatch: real=%lx "
-			    "expected=%lx", version, ANOUBISCORE_VERSION) < 0 )
+			    "expected=%lx min=%lx", version,
+			    ANOUBISCORE_VERSION, ANOUBISCORE_MIN_VERSION) < 0 )
 				msg = NULL;
 			early_errx(4, msg);
 		}
@@ -544,9 +551,11 @@ main(int argc, char *argv[])
 		close(eventfds[1]);
 		main_shutdown(1);
 	}
-	if (version != ANOUBISCORE_VERSION) {
-		log_warnx("Anoubis Version mismatch: real=%lx expected=%lx",
-		    version, ANOUBISCORE_VERSION);
+	if (version < ANOUBISCORE_MIN_VERSION ||
+	    version > ANOUBISCORE_VERSION) {
+		log_warnx("Anoubis Version mismatch: real=%lx "
+		    "expected=%lx min=%lx", version, ANOUBISCORE_VERSION,
+		    ANOUBISCORE_MIN_VERSION);
 		close(eventfds[0]);
 		close(eventfds[1]);
 		main_shutdown(1);

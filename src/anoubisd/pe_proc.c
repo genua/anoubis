@@ -69,6 +69,7 @@ static void		 pe_proc_upgrade_inherit(struct pe_proc *,
 struct pe_proc {
 	TAILQ_ENTRY(pe_proc)	 entry;
 	int			 refcount;
+	int			 instances;
 	pid_t			 pid;
 	uid_t			 uid;
 	uid_t			 sfsdisable_uid;
@@ -196,6 +197,7 @@ pe_proc_alloc(uid_t uid, anoubis_cookie_t cookie, struct pe_proc_ident *pident)
 	proc->sfsdisable_uid = (uid_t)-1;
 	proc->flags = 0;
 	proc->refcount = 1;
+	proc->instances = 1;
 	proc->ident.pathhint = NULL;
 	proc->ident.csum = NULL;
 	if (pident)
@@ -357,6 +359,16 @@ pe_proc_fork(uid_t uid, anoubis_cookie_t child, anoubis_cookie_t parent_cookie)
 }
 
 /*
+ * Add another credentials instance to this process.
+ */
+void pe_proc_addinstance(anoubis_cookie_t cookie)
+{
+	struct pe_proc *proc = pe_proc_get(cookie);
+	if (proc)
+		proc->instances++;
+}
+
+/*
  * Remove a process upon exit.
  */
 void pe_proc_exit(anoubis_cookie_t cookie)
@@ -365,6 +377,8 @@ void pe_proc_exit(anoubis_cookie_t cookie)
 
 	proc = pe_proc_get(cookie);
 	if (!proc)
+		return;
+	if (--proc->instances)
 		return;
 	pe_proc_untrack(proc);
 	DEBUG(DBG_PE_PROC, "pe_proc_exit: token 0x%08llx pid %d "

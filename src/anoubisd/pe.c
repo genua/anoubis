@@ -246,6 +246,12 @@ pe_handle_process(struct eventdev_hdr *hdr)
 		/* NOTE: Do NOT use msg->common.task_cookie here! */
 		pe_proc_exit(msg->task_cookie);
 		break;
+#ifdef ANOUBIS_PROCESS_OP_REPLACE
+	case ANOUBIS_PROCESS_OP_REPLACE:
+		pe_proc_addinstance(msg->common.task_cookie);
+		pe_proc_exit(msg->task_cookie);
+		break;
+#endif
 	default:
 		log_warnx("pe_handle_process: undefined operation %ld",
 		    msg->op);
