@@ -223,11 +223,15 @@ check_pid(void)
 	FILE *fp;
 
 	fp = fopen(pid_file_name, "a+");
-	if (fp == NULL)
+	if (fp == NULL) {
+		log_warn("%s", pid_file_name);
 		return NULL;
+	}
 
 	if (flock(fileno(fp), LOCK_EX|LOCK_NB) != 0) {
+		int errno_save = errno;
 		fclose(fp);
+		errno = errno_save;
 		return NULL;
 	}
 	return fp;
@@ -236,11 +240,6 @@ check_pid(void)
 static void
 save_pid(FILE *fp, pid_t pid)
 {
-	if (fp == NULL) {
-		log_warn("%s", pid_file_name);
-		fatal("cannot write pid file");
-	}
-
 	rewind(fp);
 	if (ftruncate(fileno(fp), 0) != 0) {
 		log_warn("%s", pid_file_name);
@@ -384,9 +383,9 @@ main(int argc, char *argv[])
 		conf.unixsocket = PACKAGE_SOCKET;
 
 	if ((pw = getpwnam(ANOUBISD_USER)) == NULL)
-		fatal("getpwnam");
+		early_errx(1, "User " ANOUBISD_USER " does not exist");
 	if (pw->pw_gid == 0)
-		fatal("Group ID of " ANOUBISD_USER " must not be 0");
+		early_errx(1, "Group ID of " ANOUBISD_USER " must not be 0");
 	anoubisd_gid = pw->pw_gid;
 
 	if (geteuid() != 0)
@@ -395,8 +394,12 @@ main(int argc, char *argv[])
 	if (getpwnam(ANOUBISD_USER) == NULL)
 		early_errx(1, "unkown user " ANOUBISD_USER);
 
-	if ((pidfp = check_pid()) == NULL)
-		early_errx(1, "anoubisd is already running");
+	if ((pidfp = check_pid()) == NULL) {
+		if (errno == EWOULDBLOCK || errno == EAGAIN)
+			early_errx(1, "anoubisd is already running");
+		else
+			early_errx(1, "cannot write pid file");
+	}
 	if (debug_stderr == 0)
 		if (daemon(1, 0) !=0)
 			early_errx(1, "daemonize failed");
