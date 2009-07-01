@@ -1,4 +1,4 @@
-.\"	$Id: 56550e,v 1.16 2009/02/19 14:50:45 ehrhardt Exp $
+.\"	$Id: 56550e,v 1.17 2009/07/01 12:09:24 hiesl Exp $
 .\"	$OpenBSD: mdoc.template,v 1.10 2007/05/31 22:10:19 jmc Exp $
 .\"
 .\" Copyright (c) 2008 GeNUA mbH <info@genua.de>
@@ -40,6 +40,7 @@
 .Op Fl D Ar flags
 .Op Fl dnv
 .Op Fl s Ar socket
+.Op Fl f Ar conffile
 .Sh DESCRIPTION
 .Nm
 is the user land daemon of the Anoubis Security Suite.
@@ -120,6 +121,10 @@ Produce more verbose output.
 Use the
 .Ar socket
 for communication.
+.It Fl f Ar conffile
+Use
+.Ar conffile
+to configure anoubisd.
 .El
 .Pp
 The daemon processes implements a reliable queuing and messaging
@@ -162,6 +167,10 @@ results in a negative reply to the request.
 .\" .Sh ENVIRONMENT
 .Sh FILES
 .Bl -tag -width Ds
+.It Pa /etc/anoubis/anoubisd.conf
+The default configuration file. See
+.Xr anoubisd.conf 5
+for more information.
 .It Pa /dev/anoubis
 The
 .Ar ioctl
@@ -201,6 +210,7 @@ libaries.
 .Sh SEE ALSO
 .Xr anoubisctl 8
 .Xr sfssig 8
+.Xr anoubisd.conf 5
 .\" .Xr foobar 1
 .\" .Sh STANDARDS
 .\" .Sh HISTORY

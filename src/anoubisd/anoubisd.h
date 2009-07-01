@@ -78,7 +78,7 @@
 
 struct anoubisd_config {
 	int	opts;
-	const char * unixsocket;        /* defaults to ANOUBISD_SOCKETNAME */
+	char * unixsocket;        /* defaults to ANOUBISD_SOCKETNAME */
 };
 
 struct session_reg {

@@ -85,12 +85,14 @@ anoubisd_SOURCES= \
 	amsg.c \
 	aqueue.c \
 	sfs.c \
+	cfg.c \
 	anoubisd.h \
 	amsg.h \
 	aqueue.h \
 	sfs.h \
 	pe.h \
-	cert.h
+	cert.h \
+	cfg.h
 
 anoubisd_SOURCES_flawfinder= \
 	main.c_flawfinder \
@@ -112,11 +114,13 @@ anoubisd_SOURCES_flawfinder= \
 	amsg.c_flawfinder \
 	aqueue.c_flawfinder \
 	sfs.c_flawfinder \
+	cfg.c_flawfinder \
 	anoubisd.h_flawfinder \
 	amsg.h_flawfinder \
 	aqueue.h_flawfinder \
 	sfs.h_flawfinder \
-	cert.h_flawfinder
+	cert.h_flawfinder \
+	cfg.h_flawfinder
 
 anoubisd_SOURCES_lint= \
 	main.c_lint \
@@ -135,7 +139,8 @@ anoubisd_SOURCES_lint= \
 	cert.c_lint \
 	session.c_lint \
 	log.c_lint \
-	sfs.c_lint
+	sfs.c_lint \
+	cfg.c_lint
 
 anoubisd_SOURCES_splint= \
 	main.c_splint \
@@ -156,7 +161,8 @@ anoubisd_SOURCES_splint= \
 	log.c_splint \
 	amsg.c_splint \
 	aqueue.c_splint \
-	sfs.c_splint
+	sfs.c_splint \
+	cfg.c_splint
 
 
 flawfinder_FLAGS=
