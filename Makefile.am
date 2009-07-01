@@ -56,7 +56,7 @@ man_MANS = \
 	man/anoubis_notify.3 man/anoubis_server.3 man/anoubis_sig.3 \
 	man/anoubis_transaction.3 man/anoubis_ui.3 man/apn.3 man/sfssig.8 \
 	man/dev-anoubis.4 man/eventdev.4 man/eventdev.9 man/anoubis_kernel.9 \
-	$(xanoubis_mans)
+	man/anoubisd.conf.5 $(xanoubis_mans)
 
 EXTRA_DIST = $(man_MANS) @WXFB_PROJECT_FILES@ autogen.sh VERSION \
 	split_config_h_in.pl
