@@ -431,12 +431,12 @@ sfs_update_all(const char *sfs_path, u_int8_t *md, int len)
 	struct dirent *sfs_ent = NULL;
 	char testarg;
 	char *csum_file = NULL;
-	uid_t uid;
+	unsigned int uid;
 
 	if (sfs_path == NULL || md == NULL || len != ANOUBIS_CS_LEN)
 		return -EINVAL;
 	sfs_dir = opendir(sfs_path);
-	if (!sfs_dir) {
+	if (sfs_dir == NULL) {
 		/* since we just update we don't create new one */
 		if (errno == ENOENT)
 			return 0;
@@ -445,8 +445,8 @@ sfs_update_all(const char *sfs_path, u_int8_t *md, int len)
 
 	while ((sfs_ent = readdir(sfs_dir)) != NULL) {
 		/* since we updating checksums we skip keyid entries */
-		if (!strcmp(sfs_ent->d_name, ".") ||
-		    !strcmp(sfs_ent->d_name, "..") ||
+		if (strcmp(sfs_ent->d_name, ".") == 0 ||
+		    strcmp(sfs_ent->d_name, "..") == 0 ||
 		    (sfs_ent->d_name[0] == 'k'))
 			continue;
 		if (sscanf(sfs_ent->d_name, "%u%c", &uid, &testarg) != 1)
@@ -633,6 +633,40 @@ int
 sfs_getchecksum_chroot(const char *path, uid_t uid, unsigned char *md)
 {
 	return __sfs_getchecksum(path, uid, md, 1);
+}
+
+int
+sfs_has_checksum_chroot(const char *path)
+{
+	DIR *dir = NULL;
+	struct dirent *sfs_ent = NULL;
+	unsigned int uid;
+	char testarg;
+	char *csum_path = NULL;
+	int ret;
+
+	ret = __convert_user_path(path, &csum_path, 0, 1);
+	if (ret < 0)
+		return ret;
+
+	dir = opendir(csum_path);
+	if (dir == NULL) {
+		free(csum_path);
+		return -1;
+	}
+	while ((sfs_ent = readdir(dir)) != NULL) {
+		if (strcmp(sfs_ent->d_name, ".") == 0 ||
+		    strcmp(sfs_ent->d_name, "..") == 0) 
+			continue;
+		if (sscanf(sfs_ent->d_name, "%u%c", &uid, &testarg) == 1) {
+			closedir(dir);
+			free(csum_path);
+			return 1;
+		}
+	}
+	closedir(dir);
+	free(csum_path);
+	return 0;
 }
 
 static int
