@@ -61,6 +61,7 @@
 #include <anoubis_protocol.h>
 #include "anoubisd.h"
 #include "pe.h"
+#include "pe_filetree.h"
 #include "sfs.h"
 #include "cert.h"
 
@@ -72,9 +73,15 @@ static anoubisd_reply_t	*pe_handle_sfsexec(struct eventdev_hdr *);
 static anoubisd_reply_t	*pe_handle_alf(struct eventdev_hdr *);
 static anoubisd_reply_t	*pe_handle_ipc(struct eventdev_hdr *);
 static anoubisd_reply_t	*pe_handle_sfs(struct eventdev_hdr *);
+
+static struct pe_file_event *pe_parse_file_event(struct eventdev_hdr *hdr);
 #ifdef ANOUBIS_SOURCE_SFSPATH
 static anoubisd_reply_t	*pe_handle_sfspath(struct eventdev_hdr *);
+static struct pe_path_event *pe_parse_path_event(struct eventdev_hdr *hdr);
 #endif
+
+static struct pe_file_tree *upgrade_tree = NULL;
+static int upgrade_counter = 0;
 
 void
 pe_init(void)
@@ -98,6 +105,82 @@ pe_reconfigure(void)
 	sfshash_flush();
 	cert_reconfigure(1);
 	pe_user_reconfigure();
+}
+
+void
+pe_upgrade_start(struct pe_proc *proc)
+{
+	/* Nothing to do if the process is already an upgrader. */
+	if (pe_proc_is_upgrade_parent(proc))
+		return;
+	/* Initialize the tree if we currently have none. */
+	if (upgrade_tree == NULL) {
+		upgrade_tree = pe_init_filetree();
+		if (upgrade_tree == NULL)
+			return;
+	} else if (upgrade_counter == 0) {
+		/*
+		 * XXX CEH: The previous upgrade is finished but we
+		 * XXX CEH: did not yet complete the checksum update.
+		 * XXX CEH: See what we need to do in this case. For now
+		 * XXX CEH: we just return.
+		 */
+		return;
+	}
+	/* Mark the process as an upgrade parent and increase the counter. */
+	pe_proc_upgrade_addmark(proc);
+	upgrade_counter++;
+}
+
+void
+pe_upgrade_end(struct pe_proc *proc)
+{
+	struct pe_file_node	*it, *next;
+	struct pe_proc		*tmp;
+	anoubis_cookie_t	 last_cookie = 0;
+	int			 isparent = pe_proc_is_upgrade_parent(proc);
+
+	/*
+	 * Clear the upgrade mark. If the process is not an upgrade parent
+	 * we are done.
+	 */
+	pe_proc_upgrade_clrmark(proc);
+	if (!isparent)
+		return;
+	/* Reduce the number of active upgrade parents. */
+	if (--upgrade_counter > 0)
+		return;
+	/*
+	 * If this was the last upgrade parent prune the tree. Files
+	 * modified by an upgrade parent (it->task_cookie == 0) are kept
+	 * unconditionally. Files modified by an upgrade child are kept if
+	 * that child is no longer alive.
+	 */
+	for (it=pe_get_start(upgrade_tree); it; it = next) {
+		next = pe_get_next(upgrade_tree, it);
+		if (it->task_cookie == 0 || it->task_cookie == last_cookie)
+			continue;
+		if ((tmp=pe_proc_get(it->task_cookie))) {
+			pe_proc_put(tmp);
+			last_cookie = it->task_cookie;
+			continue;
+		}
+		pe_delete_node(upgrade_tree, it);
+	}
+	pe_proc_upgrade_clrallmarks();
+	/*
+	 * XXX CEH: Trigger actual end of upgrade handling, i.e. checksum
+	 * XXX CEH: update.
+	 */
+}
+
+void
+pe_upgrade_finish(void)
+{
+	if (upgrade_tree) {
+		pe_filetree_destroy(upgrade_tree);
+		upgrade_tree = NULL;
+	}
 }
 
 /*
@@ -387,6 +470,30 @@ pe_handle_sfs(struct eventdev_hdr *hdr)
 		pe_proc_set_pid(proc, hdr->msg_pid);
 
 	pe_context_open(proc, hdr);
+	if (pe_proc_is_upgrade(proc) && (fevent->amask & APN_SBA_WRITE)) {
+		if (fevent->path && sfs_haschecksum_chroot(fevent->path) > 0) {
+			anoubis_cookie_t	cookie = fevent->cookie;
+
+			/*
+			 * Use the special value 0 for th cookie if the
+			 * modifying process is an upgrade parent. This
+			 * makes sure that modifications of an upgrade parent
+			 * are not pruned even if the upgrade parent still
+			 * lives at the end of the upgrade.
+			 */
+			if (pe_proc_is_upgrade_parent(proc))
+				cookie = 0;
+			pe_insert_node(upgrade_tree, fevent->path, cookie);
+			fevent->upgrade_flags |= PE_UPGRADE_TOUCHED;
+		}
+	} else {
+		if (fevent->path && pe_find_file(upgrade_tree, fevent->path))
+			fevent->upgrade_flags |= PE_UPGRADE_TOUCHED;
+	}
+	if ((fevent->upgrade_flags & PE_UPGRADE_TOUCHED)
+	    && pe_proc_is_upgrade(proc))
+		fevent->upgrade_flags |= PE_UPGRADE_WRITEOK;
+
 	reply = pe_decide_sfs(proc, fevent, hdr);
 	reply2 = pe_decide_sandbox(proc, fevent, hdr);
 
@@ -395,7 +502,7 @@ pe_handle_sfs(struct eventdev_hdr *hdr)
 	/* XXX CEH: This might need more thought. */
 	reply = reply_merge(hdr, reply, reply2);
 
-	/* we don't have conf yet ...
+	/* XXX SSP: we don't have conf yet ...
 	if (version >= ANOUBISCORE_LOCK_VERSION)
 		if (strcmp(fevent->path, conf->pkgdblock) == 0)
 			reply->reply |= ANOUBIS_OPEN_RET_LOCKWATCH;
@@ -462,10 +569,11 @@ pe_handle_sfspath(struct eventdev_hdr *hdr)
 				reply->reply = EPERM;
 			break;
 		case ANOUBIS_PATH_OP_LOCK:
-			/* XXX: insert upgrade switch here */
+			pe_upgrade_start(proc);
 			break;
 	}
 
+	pe_proc_put(proc);
 	free(pevent->path[0]);
 	if (pevent->path[1])
 		free(pevent->path[1]);
@@ -495,7 +603,7 @@ pe_in_scope(struct apn_scope *scope, anoubis_cookie_t task,
 	return 1;
 }
 
-struct pe_file_event *
+static struct pe_file_event *
 pe_parse_file_event(struct eventdev_hdr *hdr)
 {
 	struct pe_file_event	*ret = NULL;
@@ -546,6 +654,7 @@ pe_parse_file_event(struct eventdev_hdr *hdr)
 		    ret->path, kernmsg->flags);
 	}
 	ret->uid = hdr->msg_uid;
+	ret->upgrade_flags = 0;
 	return ret;
 err:
 	if (ret)
@@ -554,7 +663,7 @@ err:
 }
 
 #ifdef ANOUBIS_SOURCE_SFSPATH
-struct pe_path_event *
+static struct pe_path_event *
 pe_parse_path_event(struct eventdev_hdr *hdr)
 {
 	struct pe_path_event	*ret = NULL;
@@ -588,7 +697,7 @@ pe_parse_path_event(struct eventdev_hdr *hdr)
 		/* having an empty path is an error for certain operations */
 		if (kernmsg->pathlen[i] == 0)
 			if ((kernmsg->op == ANOUBIS_PATH_OP_LINK) ||
-		    	    (kernmsg->op == ANOUBIS_PATH_OP_LINK))
+			    (kernmsg->op == ANOUBIS_PATH_OP_LINK))
 				goto err;
 
 		pathptr = kernmsg->paths;
@@ -611,7 +720,7 @@ pe_parse_path_event(struct eventdev_hdr *hdr)
 	ret->path[0] = strdup(kernmsg->paths);
 	if (ret->path[0] == NULL)
 		goto err;
-	
+
 	if (kernmsg->pathlen[1]) {
 		ret->path[1] = strdup((kernmsg->paths) + kernmsg->pathlen[0]);
 		if (ret->path[1] == NULL)

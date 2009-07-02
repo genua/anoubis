@@ -636,7 +636,7 @@ sfs_getchecksum_chroot(const char *path, uid_t uid, unsigned char *md)
 }
 
 int
-sfs_has_checksum_chroot(const char *path)
+sfs_haschecksum_chroot(const char *path)
 {
 	DIR *dir = NULL;
 	struct dirent *sfs_ent = NULL;
@@ -656,7 +656,7 @@ sfs_has_checksum_chroot(const char *path)
 	}
 	while ((sfs_ent = readdir(dir)) != NULL) {
 		if (strcmp(sfs_ent->d_name, ".") == 0 ||
-		    strcmp(sfs_ent->d_name, "..") == 0) 
+		    strcmp(sfs_ent->d_name, "..") == 0)
 			continue;
 		if (sscanf(sfs_ent->d_name, "%u%c", &uid, &testarg) == 1) {
 			closedir(dir);

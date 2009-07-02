@@ -54,6 +54,9 @@ struct pe_proc_ident {
 	char *pathhint;
 };
 
+#define PE_UPGRADE_TOUCHED	0x0001
+#define PE_UPGRADE_WRITEOK	0x0002
+
 struct pe_file_event {
 	anoubis_cookie_t	 cookie;
 	char			*path;
@@ -61,6 +64,7 @@ struct pe_file_event {
 	unsigned int		 amask;
 	int			 cslen;
 	int			 uid;
+	unsigned int		 upgrade_flags;
 };
 
 struct pe_path_event {
@@ -109,6 +113,7 @@ unsigned int		 pe_proc_is_upgrade(struct pe_proc *);
 unsigned int		 pe_proc_is_upgrade_parent(struct pe_proc *);
 void			 pe_proc_upgrade_addmark(struct pe_proc *);
 void			 pe_proc_upgrade_clrmark(struct pe_proc *);
+void			 pe_proc_upgrade_clrallmarks(void);
 
 /* pe_context access functions */
 struct pe_proc_ident	*pe_context_get_ident(struct pe_context *);
@@ -156,13 +161,14 @@ int			 pe_pubkey_verifysig(const char *, uid_t);
 /* General policy evaluation functions */
 int			 pe_in_scope(struct apn_scope *,
 			     anoubis_cookie_t, time_t);
-struct pe_file_event	*pe_parse_file_event(struct eventdev_hdr *hdr);
-struct pe_path_event	*pe_parse_path_event(struct eventdev_hdr *hdr);
 int			 pe_compare(struct pe_proc *proc,
 			     struct pe_path_event *, int, time_t);
 int			 pe_compare_path(struct apn_rule **, int,
 			     struct pe_path_event *, time_t);
-
+/* Upgrade related functions. */
+void			 pe_upgrade_start(struct pe_proc *);
+void			 pe_upgrade_end(struct pe_proc *);
+void			 pe_upgrade_finish(void);
 
 /* Subsystem entry points for Policy decisions. */
 anoubisd_reply_t	*pe_decide_alf(struct pe_proc *, struct eventdev_hdr *);

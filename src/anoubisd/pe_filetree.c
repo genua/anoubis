@@ -81,11 +81,15 @@ pe_init_filetree(void)
 	return tree;
 }
 
-/* insert a node to the tree */
+/*
+ * insert a node to the tree. If a node with the same path already exists
+ * the node is not inserted. However, if the cookie of the new node has the
+ * special value 0, the cookie in the existing node is modified.
+ */
 int
 pe_insert_node(struct pe_file_tree *f, char *path, anoubis_cookie_t cookie)
 {
-	struct pe_file_node *n = NULL;
+	struct pe_file_node *n = NULL, *other;
 
 	if (f == NULL || path == NULL)
 		return -EINVAL;
@@ -99,9 +103,12 @@ pe_insert_node(struct pe_file_tree *f, char *path, anoubis_cookie_t cookie)
 	}
 	n->idx = hash_fn(path, strlen(path));
 	n->task_cookie = cookie;
-	if (RB_INSERT(rb_file_tree, &f->head, n) != NULL) {
+	other = RB_INSERT(rb_file_tree, &f->head, n);
+	if (other) {
 		free(n->path);
 		free(n);
+		if (cookie == 0)
+			other->task_cookie = 0;
 		return -EINVAL;
 	}
 	return 0;

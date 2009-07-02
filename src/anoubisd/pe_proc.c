@@ -53,15 +53,18 @@
 #include "anoubisd.h"
 #include "pe.h"
 
-static void		 pe_proc_track(struct pe_proc *);
-static void		 pe_proc_untrack(struct pe_proc *);
-static struct pe_proc	*pe_proc_alloc(uid_t uid, anoubis_cookie_t,
-			     struct pe_proc_ident *);
-static unsigned int	 pe_proc_get_flag(struct pe_proc *, unsigned int);
-static void		 pe_proc_set_flag(struct pe_proc *, unsigned int);
-static void		 pe_proc_clr_flag(struct pe_proc *, unsigned int);
-static void		 pe_proc_upgrade_inherit(struct pe_proc *,
-			     unsigned int);
+static void			 pe_proc_track(struct pe_proc *);
+static void			 pe_proc_untrack(struct pe_proc *);
+static struct pe_proc		*pe_proc_alloc(uid_t uid, anoubis_cookie_t,
+				    struct pe_proc_ident *);
+static inline unsigned int	 pe_proc_get_flag(struct pe_proc *,
+				     unsigned int);
+static inline void		 pe_proc_set_flag(struct pe_proc *,
+				     unsigned int);
+static inline void		 pe_proc_clr_flag(struct pe_proc *,
+				     unsigned int);
+static inline void		 pe_proc_upgrade_inherit(struct pe_proc *,
+				     unsigned int);
 
 #define _PE_PROC_INTERNALS_H_
 #include "pe_proc_internals.h"
@@ -313,7 +316,7 @@ pe_proc_dump(void)
 }
 
 /*
- * Insert a newly forked processes and set its context.
+ * Insert a newly forked process and set its context.
  */
 void
 pe_proc_fork(uid_t uid, anoubis_cookie_t child, anoubis_cookie_t parent_cookie)
@@ -363,6 +366,7 @@ void pe_proc_exit(anoubis_cookie_t cookie)
 	if (--proc->instances)
 		return;
 	pe_proc_untrack(proc);
+	pe_upgrade_end(proc);
 	DEBUG(DBG_PE_PROC, "pe_proc_exit: token 0x%08llx pid %d "
 	    "uid %u proc %p", (unsigned long long)cookie, proc->pid, proc->uid,
 	    proc);
@@ -573,7 +577,7 @@ pe_proc_upgrade_clrmark(struct pe_proc *proc)
 	pe_proc_clr_flag(proc, PE_PROC_FLAGS_UPGRADE_PARENT);
 }
 
-static unsigned int
+static inline unsigned int
 pe_proc_get_flag(struct pe_proc *proc, unsigned int flag)
 {
 	if (!proc) {
@@ -587,7 +591,7 @@ pe_proc_get_flag(struct pe_proc *proc, unsigned int flag)
 	}
 }
 
-static void
+static inline void
 pe_proc_set_flag(struct pe_proc *proc, unsigned int flag)
 {
 	if (proc != NULL) {
@@ -596,7 +600,7 @@ pe_proc_set_flag(struct pe_proc *proc, unsigned int flag)
 	}
 }
 
-static void
+static inline void
 pe_proc_clr_flag(struct pe_proc *proc, unsigned int flag)
 {
 	if (proc != NULL) {
@@ -605,12 +609,22 @@ pe_proc_clr_flag(struct pe_proc *proc, unsigned int flag)
 	}
 }
 
-static void
+static inline void
 pe_proc_upgrade_inherit(struct pe_proc *proc, unsigned int flag)
 {
 	if (flag != 0) {
 		pe_proc_set_flag(proc, PE_PROC_FLAGS_UPGRADE);
 	} else {
 		pe_proc_clr_flag(proc, PE_PROC_FLAGS_UPGRADE);
+	}
+}
+
+void
+pe_proc_upgrade_clrallmarks(void)
+{
+	struct pe_proc	*proc;
+
+	TAILQ_FOREACH(proc, &tracker, entry) {
+		pe_proc_upgrade_clrmark(proc);
 	}
 }

@@ -145,6 +145,21 @@ pe_sfs_match_one(struct apn_rule *rule, struct pe_file_event *fevent,
 		(*matchp) = ANOUBIS_SFS_UNKNOWN;
 		return &rule->rule.sfsaccess.unknown;
 	}
+	/*
+	 * Special case checksum handling during an upgrade:
+	 * - If a checksum with the correct length is present
+	 *   assume that it matches.
+	 * - Additionally, assume a checksum match if the process is
+	 *   an upgrader (PE_UPGRADE_WRITEOK).
+	 * In all other cases continue with normal processing.
+	 */
+	if (fevent->upgrade_flags & PE_UPGRADE_TOUCHED) {
+		if ((fevent->cslen == ANOUBIS_CS_LEN)
+		    || (fevent->upgrade_flags & PE_UPGRADE_WRITEOK)) {
+			(*matchp) = ANOUBIS_SFS_VALID;
+			return &rule->rule.sfsaccess.valid;
+		}
+	}
 	if ((fevent->cslen != ANOUBIS_CS_LEN) ||
 	    (memcmp(cs, fevent->cs, ANOUBIS_CS_LEN) != 0)) {
 		(*matchp) = ANOUBIS_SFS_INVALID;

@@ -128,9 +128,10 @@ pe_sb_evaluate(struct apn_rule **rulelist, int rulecnt,
 		}
 		/*
 		 * No match if checksum required but no checksum present
-		 * in event.
+		 * in event. Special case during upgrade.
 		 */
-		if (sbevent->cslen != ANOUBIS_CS_LEN)
+		if ((sbevent->cslen != ANOUBIS_CS_LEN)
+		    && (sbevent->upgrade_flags & PE_UPGRADE_TOUCHED) == 0)
 			continue;
 		cs = NULL;
 		ret = 0;
@@ -174,6 +175,15 @@ pe_sb_evaluate(struct apn_rule **rulelist, int rulecnt,
 			log_warnx("sfshash_get: Error %d", -ret);
 		if (!cs)
 			continue;
+		/* Special upgrade handling. */
+		if (sbevent->upgrade_flags & PE_UPGRADE_TOUCHED) {
+			if ((sbevent->upgrade_flags & PE_UPGRADE_WRITEOK)
+			    || sbevent->cslen == ANOUBIS_CS_LEN) {
+				match = sbrule;
+				goto have_match;
+			}
+			continue;
+		}
 		if (bcmp(cs, sbevent->cs, ANOUBIS_CS_LEN) != 0)
 			continue;
 		match = sbrule;
