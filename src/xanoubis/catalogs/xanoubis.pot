@@ -34,7 +34,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-06-18 14:56+0200\n"
+"POT-Creation-Date: 2009-07-02 15:29+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -322,20 +322,28 @@ msgstr ""
 msgid "Save ruleset"
 msgstr ""
 
-#: view/DlgLogViewerBase.h:66 view/MainFrameBase.cpp:66
+#: view/DlgLogViewerBase.h:68 view/MainFrameBase.cpp:66
 msgid "Log Viewer"
 msgstr ""
 
-#: view/DlgLogViewer.cpp:86 view/VersionListCtrl.cpp:104
+#: view/DlgLogViewer.cpp:185 view/VersionListCtrl.cpp:104
 msgid "Time"
 msgstr ""
 
-#: view/DlgLogViewer.cpp:89
+#: view/DlgLogViewer.cpp:186
 msgid "Module"
 msgstr ""
 
-#: view/DlgLogViewer.cpp:92
+#: view/DlgLogViewer.cpp:187
 msgid "Message"
+msgstr ""
+
+#: view/DlgLogViewer.cpp:190 view/DlgLogViewer.cpp:208
+#: view/ModSfsListCtrl.cpp:220 view/ModSfsListCtrl.cpp:246
+#: view/VersionListCtrl.cpp:81 view/VersionListCtrl.cpp:98
+#: view/VersionListCtrl.cpp:115 view/VersionListCtrl.cpp:132
+#: view/VersionListCtrl.cpp:149
+msgid "???"
 msgstr ""
 
 #: view/DlgRuleEditorBase.cpp:53
@@ -1821,13 +1829,6 @@ msgstr ""
 
 #: view/ModSfsListCtrl.cpp:73
 msgid "Jump to link target"
-msgstr ""
-
-#: view/ModSfsListCtrl.cpp:220 view/ModSfsListCtrl.cpp:246
-#: view/VersionListCtrl.cpp:81 view/VersionListCtrl.cpp:98
-#: view/VersionListCtrl.cpp:115 view/VersionListCtrl.cpp:132
-#: view/VersionListCtrl.cpp:149
-msgid "???"
 msgstr ""
 
 #: view/ModSfsListCtrl.cpp:421
