@@ -49,6 +49,15 @@
 #endif
 #include <assert.h>
 
+#ifdef LINUX
+#define ANOUBISCORE_MIN_VERSION	0x00010002UL
+#elif defined OPENBSD
+#define ANOUBISCORE_MIN_VERSION	0x00010001UL
+#else
+#define ANOUBISCORE_MIN_VERSION ANOUBISCORE_VERSION
+#endif
+#define ANOUBISCORE_LOCK_VERSION 0x00010004UL
+
 #include <anoubis_protocol.h>
 
 #define ANOUBISD_OPT_VERBOSE		0x0001

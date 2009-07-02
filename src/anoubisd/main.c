@@ -58,14 +58,9 @@
 #include <bsdcompat.h>
 #include <linux/anoubis_sfs.h>
 #include <openssl/sha.h>
-#define ANOUBISCORE_MIN_VERSION	0x00010002UL
 #else
 #include <dev/anoubis_sfs.h>
 #include <sha2.h>
-#endif
-
-#ifndef ANOUBISCORE_MIN_VERSION
-#define ANOUBISCORE_MIN_VERSION ANOUBISCORE_VERSION
 #endif
 
 /* on glibc 2.6+, event.h uses non C89 types :/ */
@@ -109,6 +104,7 @@ gid_t		anoubisd_gid;
 
 extern char	*__progname;
 char		*logname;
+unsigned long	version;
 
 static Queue eventq_m2p;
 static Queue eventq_m2s;
@@ -306,7 +302,6 @@ main(int argc, char *argv[])
 	int			loggers[3];
 	struct timeval		tv;
 	char		       *endptr;
-	unsigned long		version;
 	struct passwd		*pw;
 	FILE			*pidfp;
 

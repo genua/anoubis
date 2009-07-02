@@ -64,6 +64,8 @@
 #include "sfs.h"
 #include "cert.h"
 
+extern unsigned long	version;
+
 static anoubisd_reply_t	*pe_dispatch_event(struct eventdev_hdr *);
 static anoubisd_reply_t	*pe_handle_process(struct eventdev_hdr *);
 static anoubisd_reply_t	*pe_handle_sfsexec(struct eventdev_hdr *);
@@ -389,12 +391,21 @@ pe_handle_sfs(struct eventdev_hdr *hdr)
 	reply2 = pe_decide_sandbox(proc, fevent, hdr);
 
 	pe_proc_put(proc);
+
+	/* XXX CEH: This might need more thought. */
+	reply = reply_merge(hdr, reply, reply2);
+
+	/* we don't have conf yet ...
+	if (version >= ANOUBISCORE_LOCK_VERSION)
+		if (strcmp(fevent->path, conf->pkgdblock) == 0)
+			reply->reply |= ANOUBIS_OPEN_RET_LOCKWATCH;
+	*/
+
 	if (fevent->path)
 		free(fevent->path);
 	free(fevent);
 
-	/* XXX CEH: This might need more thought. */
-	return reply_merge(hdr, reply, reply2);
+	return(reply);
 }
 
 #ifdef ANOUBIS_SOURCE_SFSPATH
@@ -431,6 +442,7 @@ pe_handle_sfspath(struct eventdev_hdr *hdr)
 		return NULL;
 	}
 
+	reply->reply = 0;
 	reply->ask = 0;
 	reply->rule_id = 0;
 	reply->prio = 0;
@@ -441,15 +453,22 @@ pe_handle_sfspath(struct eventdev_hdr *hdr)
 	if (proc && pe_proc_get_pid(proc) == -1)
 		pe_proc_set_pid(proc, hdr->msg_pid);
 
-	if (pe_compare(proc, pevent, APN_SFS_ACCESS, now) != 0)
-		reply->reply = EPERM;
-	else if (pe_compare(proc, pevent, APN_SB_ACCESS, now) != 0)
-		reply->reply = EPERM;
-	else
-		reply->reply = 0;
+	switch (pevent->op) {
+		case ANOUBIS_PATH_OP_LINK:
+		case ANOUBIS_PATH_OP_RENAME:
+			if (pe_compare(proc, pevent, APN_SFS_ACCESS, now))
+				reply->reply = EPERM;
+			else if (pe_compare(proc, pevent, APN_SB_ACCESS, now))
+				reply->reply = EPERM;
+			break;
+		case ANOUBIS_PATH_OP_LOCK:
+			/* XXX: insert upgrade switch here */
+			break;
+	}
 
 	free(pevent->path[0]);
-	free(pevent->path[1]);
+	if (pevent->path[1])
+		free(pevent->path[1]);
 	free(pevent);
 
 	return reply;
@@ -555,12 +574,22 @@ pe_parse_path_event(struct eventdev_hdr *hdr)
 		kernmsg->pathlen[0] + kernmsg->pathlen[1]))
 		goto err;
 
-	for (i=0; i < 2; i++) {
-
-		/* SSP: having only one path is an error for now */
-		/* future events may provide only one */
-		if (kernmsg->pathlen[i] == 0)
+	/* only support hardlink and rename operations for now */
+	switch (kernmsg->op) {
+		case ANOUBIS_PATH_OP_LINK:
+		case ANOUBIS_PATH_OP_RENAME:
+		case ANOUBIS_PATH_OP_LOCK:
+			break;
+		default:
 			goto err;
+	}
+
+	for (i=0; i < 2; i++) {
+		/* having an empty path is an error for certain operations */
+		if (kernmsg->pathlen[i] == 0)
+			if ((kernmsg->op == ANOUBIS_PATH_OP_LINK) ||
+		    	    (kernmsg->op == ANOUBIS_PATH_OP_LINK))
+				goto err;
 
 		pathptr = kernmsg->paths;
 		if (i == 1)
@@ -573,16 +602,6 @@ pe_parse_path_event(struct eventdev_hdr *hdr)
 			goto err;
 	}
 
-	/* only support hardlink and rename operations for now */
-	switch (kernmsg->op) {
-		case ANOUBIS_PATH_OP_LINK:
-			break;
-		case ANOUBIS_PATH_OP_RENAME:
-			break;
-		default:
-			goto err;
-	}
-
 	ret = malloc(sizeof(struct pe_path_event));
 	if (!ret)
 		return NULL;
@@ -592,10 +611,14 @@ pe_parse_path_event(struct eventdev_hdr *hdr)
 	ret->path[0] = strdup(kernmsg->paths);
 	if (ret->path[0] == NULL)
 		goto err;
-
-	ret->path[1] = strdup((kernmsg->paths) + kernmsg->pathlen[0]);
-	if (ret->path[1] == NULL)
-		goto err;
+	
+	if (kernmsg->pathlen[1]) {
+		ret->path[1] = strdup((kernmsg->paths) + kernmsg->pathlen[0]);
+		if (ret->path[1] == NULL)
+			goto err;
+	} else {
+		ret->path[1] = NULL;
+	}
 
 	ret->uid = hdr->msg_uid;
 	return ret;
