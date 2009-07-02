@@ -50,6 +50,12 @@
 #include <dev/anoubis.h>
 #endif
 
+#define _PE_PROC_INTERNALS_H_
+#include <pe_proc_internals.h>
+
+/* Shortcuts */
+#define BOTH (PE_PROC_FLAGS_UPGRADE|PE_PROC_FLAGS_UPGRADE_PARENT)
+
 /*
  * XXX ch: These are global variables and methods declared by main.c of
  * XXX ch: anoubisd. Can we remove/replace this by a better solution
@@ -75,24 +81,6 @@ msg_factory(int mtype, int size)
 	fail("msg_factory(%d,%d)\n", mtype, size);
 	return NULL;
 }
-
-struct pe_proc {
-	TAILQ_ENTRY(pe_proc)	 entry;
-	int			 refcount;
-	pid_t			 pid;
-	uid_t			 uid;
-	uid_t			 sfsdisable_uid;
-	pid_t			 sfsdisable_pid;
-	unsigned int		 flags;
-
-	struct pe_proc_ident	 ident;
-	anoubis_cookie_t	 task_cookie;
-	anoubis_cookie_t	 borrow_cookie;
-
-	/* Per priority contexts */
-	struct pe_context	*context[PE_PRIO_MAX];
-	struct pe_context	*saved_ctx[PE_PRIO_MAX];
-};
 
 static struct pe_proc *
 tc_PolicyEngine_proc_alloc(void)
@@ -158,8 +146,8 @@ START_TEST(tc_PolicyEngine_upgrade_unset2set_zero)
 	mark = pe_proc_is_upgrade_parent(proc);
 	fail_if(mark == 0, "Upgrade parent mark not set.");
 
-	fail_if(proc->flags != 0x03, "Unrelated flags modified! "
-	    "Expect 0x%x - got 0x%x", 0x03, proc->flags);
+	fail_if(proc->flags != BOTH, "Unrelated flags modified! "
+	    "Expect 0x%x - got 0x%x", BOTH, proc->flags);
 
 	/* cleanup */
 	free(proc);
@@ -174,7 +162,7 @@ START_TEST(tc_PolicyEngine_upgrade_unset2set_tainted)
 	/* init */
 	mark = 0;
 	proc = tc_PolicyEngine_proc_alloc();
-	proc->flags = 0x80;
+	proc->flags = ~BOTH;
 
 	/* test */
 	pe_proc_upgrade_addmark(proc);
@@ -185,8 +173,8 @@ START_TEST(tc_PolicyEngine_upgrade_unset2set_tainted)
 	mark = pe_proc_is_upgrade_parent(proc);
 	fail_if(mark == 0, "Upgrade parent mark not set.");
 
-	fail_if(proc->flags != 0x83, "Unrelated flags modified! "
-	    "Expect 0x%x - got 0x%x", 0x83, proc->flags);
+	fail_if(proc->flags != ~0UL, "Unrelated flags modified! "
+	    "Expect 0x%x - got 0x%x", ~0UL, proc->flags);
 
 	/* cleanup */
 	free(proc);
@@ -201,7 +189,7 @@ START_TEST(tc_PolicyEngine_upgrade_set2unset_zero)
 	/* init */
 	mark = 0;
 	proc = tc_PolicyEngine_proc_alloc();
-	proc->flags = 0x03;
+	proc->flags = BOTH;
 
 	/* test */
 	pe_proc_upgrade_clrmark(proc);
@@ -227,7 +215,7 @@ START_TEST(tc_PolicyEngine_upgrade_set2unset_tainted)
 	/* init */
 	mark = 0;
 	proc = tc_PolicyEngine_proc_alloc();
-	proc->flags = 0x83;
+	proc->flags = ~0UL;
 
 	/* test */
 	pe_proc_upgrade_clrmark(proc);
@@ -238,8 +226,8 @@ START_TEST(tc_PolicyEngine_upgrade_set2unset_tainted)
 	mark = pe_proc_is_upgrade_parent(proc);
 	fail_if(mark != 0, "Upgrade parent mark still set.");
 
-	fail_if(proc->flags != 0x80, "Unrelated flags modified! "
-	    "Expect 0x%x - got 0x%x", 0x80, proc->flags);
+	fail_if(proc->flags != ~BOTH, "Unrelated flags modified! "
+	    "Expect 0x%x - got 0x%x", ~BOTH, proc->flags);
 
 	/* cleanup */
 	free(proc);

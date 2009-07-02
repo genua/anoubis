@@ -91,6 +91,7 @@ anoubisd_SOURCES= \
 	aqueue.h \
 	sfs.h \
 	pe.h \
+	pe_proc_internals.h \
 	cert.h \
 	cfg.h
 

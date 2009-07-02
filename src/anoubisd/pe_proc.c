@@ -53,9 +53,6 @@
 #include "anoubisd.h"
 #include "pe.h"
 
-#define PE_PROC_FLAGS_UPGRADE		0x0001
-#define PE_PROC_FLAGS_UPGRADE_PARENT	0x0002
-
 static void		 pe_proc_track(struct pe_proc *);
 static void		 pe_proc_untrack(struct pe_proc *);
 static struct pe_proc	*pe_proc_alloc(uid_t uid, anoubis_cookie_t,
@@ -66,24 +63,9 @@ static void		 pe_proc_clr_flag(struct pe_proc *, unsigned int);
 static void		 pe_proc_upgrade_inherit(struct pe_proc *,
 			     unsigned int);
 
-struct pe_proc {
-	TAILQ_ENTRY(pe_proc)	 entry;
-	int			 refcount;
-	int			 instances;
-	pid_t			 pid;
-	uid_t			 uid;
-	uid_t			 sfsdisable_uid;
-	pid_t			 sfsdisable_pid;
-	unsigned int		 flags;
+#define _PE_PROC_INTERNALS_H_
+#include "pe_proc_internals.h"
 
-	struct pe_proc_ident	 ident;
-	anoubis_cookie_t	 task_cookie;
-	anoubis_cookie_t	 borrow_cookie;
-
-	/* Per priority contexts */
-	struct pe_context	*context[PE_PRIO_MAX];
-	struct pe_context	*saved_ctx[PE_PRIO_MAX];
-};
 TAILQ_HEAD(tracker, pe_proc) tracker;
 
 void
