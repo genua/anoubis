@@ -256,6 +256,7 @@ exit 0
 %{_sysconfdir}/anoubis
 /var/lib/anoubis/*
 %{_mandir}/man4/*
+%{_mandir}/man5/*
 %{_mandir}/man8/*
 %{_mandir}/man9/*
 
@@ -273,6 +274,9 @@ exit 0
 
 ### changelog ##############################################
 %changelog
+* Thu Jul 02 2009 Sebastian Trahm
+- add anoubisd.conf(5) to subpackage anoubisd
+
 * Thu Mar 26 2009 Sebastian Trahm
 - add install and update of wizard template files
 

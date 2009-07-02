@@ -11,6 +11,7 @@ bin/pkg_delete
 @man man/man8/anoubisctl.8
 @man man/man8/anoubisd.8
 @man man/man8/sfssig.8
+@man man/man5/anoubisd.conf.5
 @man man/man4/dev-anoubis.4
 @man man/man4/eventdev.4
 @comment man/man3/anoubis_auth.3
