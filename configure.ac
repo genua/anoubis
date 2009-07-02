@@ -296,6 +296,16 @@ AC_DEFINE(PACKAGE_PIDFILE, PACKAGE_PIDDIR "/" PACKAGE_DAEMON ".pid",
 AC_DEFINE(PACKAGE_SOCKET, PACKAGE_PIDDIR "/" PACKAGE_DAEMON ".sock",
 	[daemon socket])
 
+dnl
+dnl Specify location of anoubisd configuration file
+dnl
+anoubisd_conf="$sysconfdir/anoubis/anoubisd.conf"
+AC_ARG_WITH([conffile],
+    [AS_HELP_STRING([--with-conffile=FILE],
+      [Specifies location of configuration file.])],
+    [anoubisd_conf=$withval], [])
+AC_DEFINE_DIR(ANOUBISD_CONF, ["$anoubisd_conf"],
+    "Location of configuration file")
 
 AC_MSG_CHECKING([for number of anoubis modules])
 WXFB_PROJECT_FILES=`ls -1 ${srcdir}/src/xanoubis/view/*.fbp`
