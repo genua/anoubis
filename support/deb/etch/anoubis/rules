@@ -111,7 +111,7 @@ binary-common:
 	dh_installchangelogs
 	dh_installdocs
 	# see anoubisd.postinst for migration on upgrades
-	dh_installinit --update-rcd-params="start 37 S ." --error-handler=true -panoubisd
+	dh_installinit --update-rcd-params="start 37 S 6 ." --error-handler=true -panoubisd
 	dh_installman
 	dh_link
 	dh_desktop -pxanoubis
