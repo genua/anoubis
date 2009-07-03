@@ -131,6 +131,9 @@ install -p $RPM_BUILD_ROOT%{_datadir}/xanoubis/icons/xanoubis.png \
 install -p $RPM_BUILD_ROOT%{_datadir}/xanoubis/xanoubis.desktop \
 	$RPM_BUILD_ROOT%{_datadir}/applications
 
+# add the anoubisd configuration files
+cp $RPM_SOURCE_DIR/anoubisd.conf $RPM_BUILD_ROOT/etc/anoubis
+
 %clean
 [ "$RPM_BUILD_ROOT" != "/" ] && [ -d $RPM_BUILD_ROOT ] \
   && rm -rf $RPM_BUILD_ROOT
@@ -231,6 +234,7 @@ exit 0
 %files -n anoubisd
 %defattr(-,root,root)
 %{rcdir}/*
+/etc/anoubis/anoubisd.conf
 /sbin/*
 /usr/share/anoubisd/*
 %{_sysconfdir}/udev/rules.d/06-anoubis.rules
@@ -255,6 +259,9 @@ exit 0
 
 ### changelog ##############################################
 %changelog
+* Thu Jul 03 2009 Sebastian Trahm
+- add configuration file anoubisd.conf to subpackage anoubisd
+
 * Thu Jul 02 2009 Sebastian Trahm
 - add anoubisd.conf(5) to subpackage anoubisd
 

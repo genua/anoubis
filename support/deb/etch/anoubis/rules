@@ -100,6 +100,10 @@ install-arch:
 	cp support/udev.rules debian/tmp/etc/udev/anoubis.rules
 	ln -s /etc/udev/anoubis.rules debian/tmp/etc/udev/rules.d/021_anoubis.rules
 
+	# add the anoubisd configuration files
+	mkdir -p debian/tmp/etc/anoubis
+	cp debian/anoubisd.conf debian/tmp/etc/anoubis
+
 	dh_install -s --sourcedir=debian/tmp
 
 # Must not depend on anything. This is to be called by
