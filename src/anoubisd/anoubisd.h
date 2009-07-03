@@ -115,6 +115,7 @@ enum {
 	ANOUBISD_MSG_SFSDISABLE,
 	ANOUBISD_MSG_POLICYCHANGE,
 	ANOUBISD_MSG_SFSCACHE_INVALIDATE,
+	ANOUBISD_MSG_UPGRADE
 } anoubisd_msg;
 
 /* format of ANOUBISD_MSG_EVENTDEV is struct eventdev_hdr */
@@ -201,6 +202,24 @@ struct anoubisd_msg_pchange
 	u_int32_t	uid;
 	u_int32_t	prio;
 };
+
+enum
+{
+	ANOUBISD_UPGRADE_START,
+	ANOUBISD_UPGRADE_END,
+	ANOUBISD_UPGRADE_CHUNK_REQ,
+	ANOUBISD_UPGRADE_CHUNK_RSP,
+	ANOUBISD_UPGRADE_CHUNK_ACK,
+	ANOUBUSD_UPGRADE_CS_RSP
+} anoubisd_upgrade;
+
+struct anoubisd_msg_upgrade
+{
+	u_int8_t	mtype;
+	u_int32_t	size;
+	char		chunk[0];
+};
+typedef struct anoubisd_msg_upgrade anoubisd_msg_upgrade_t;
 
 enum {
 	PROC_MAIN,
