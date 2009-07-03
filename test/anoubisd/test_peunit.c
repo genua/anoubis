@@ -128,7 +128,6 @@ cert_reconfigure(int chroot __used)
 {
 }
 
-
 int
 sfs_checksumop_chroot(const char *path __used, unsigned int operation __used,
     uid_t uid __used, u_int8_t *md __used, u_int8_t **sign __used,
@@ -141,6 +140,40 @@ int
 sfs_haschecksum_chroot(const char *path __used)
 {
 	return 0;
+}
+
+struct apn_ruleset *
+pe_user_get_ruleset(uid_t uid __used, unsigned int prio __used,
+    struct pe_policy_db *p __used)
+{
+	return NULL;
+}
+
+void
+pe_user_dump(void)
+{
+}
+
+void
+pe_user_reconfigure(void)
+{
+}
+
+void
+pe_user_flush_db(struct pe_policy_db *ppdb __used)
+{
+}
+
+void
+pe_user_init(void)
+{
+}
+
+anoubisd_reply_t *
+pe_dispatch_policy(struct anoubisd_msg_comm *comm __used)
+{
+	fatalx("pe_dispatch_policy not supported in unit tests");
+	return NULL;
 }
 
 unsigned int debug_flags = 0;
@@ -174,6 +207,3 @@ int main()
 
 	return result;
 }
-
-
-

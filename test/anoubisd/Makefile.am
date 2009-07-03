@@ -71,8 +71,6 @@ test_peunit_CPPFLAGS = $(test_anoubisd_CPPFLAGS)
 test_anoubisd_LDFLAGS = $(shared_AM_LDFLAGS)
 
 test_peunit_objs= \
-	$(top_builddir)/$(anoubisddir)/amsg.o \
-	$(top_builddir)/$(anoubisddir)/aqueue.o \
 	$(top_builddir)/$(anoubisddir)/pe_alf.o \
 	$(top_builddir)/$(anoubisddir)/pe_context.o \
 	$(top_builddir)/$(anoubisddir)/pe_ipc.o \
@@ -82,7 +80,6 @@ test_peunit_objs= \
 	$(top_builddir)/$(anoubisddir)/pe_sandbox.o \
 	$(top_builddir)/$(anoubisddir)/pe_sfscache.o \
 	$(top_builddir)/$(anoubisddir)/pe_sfs.o \
-	$(top_builddir)/$(anoubisddir)/pe_user.o \
 	$(top_builddir)/$(anoubisddir)/pe_filetree.o
 
 test_peunit_LDADD = \
