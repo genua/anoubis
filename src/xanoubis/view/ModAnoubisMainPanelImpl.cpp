@@ -90,14 +90,20 @@ ModAnoubisMainPanelImpl::ModAnoubisMainPanelImpl(wxWindow* parent,
     wxWindowID id) : ModAnoubisMainPanelBase(parent, id), Observer(NULL)
 {
 	AnEvents *anEvents;
+	NotificationCtrl	*notifyCtrl;
 
 	//list_ = NOTIFY_LIST_NOTANSWERED;
 	currentNotify_ = NULL;
 	userOptions_ = wxGetApp().getUserOptions();
 	anEvents = AnEvents::getInstance();
 
-	it_ = 0;
-	listPerspective_ = NULL;
+	notifyCtrl = NotificationCtrl::instance();
+	listPerspective_ = notifyCtrl->getPerspective(
+		NotificationCtrl::LIST_NOTANSWERED);
+	if (listPerspective_ != NULL)
+		it_ = listPerspective_->begin();
+	else
+		it_ = 0;
 
 	/* read and restore Escalations Settings */
 	readOptions();

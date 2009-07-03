@@ -94,7 +94,7 @@ AnoubisGuiApp::~AnoubisGuiApp(void)
 
 	/* Destroy versionmanagement */
 	delete VersionCtrl::getInstance();
-
+	delete NotificationCtrl::instance();
 	delete PolicyCtrl::getInstance();
 }
 
