@@ -56,32 +56,6 @@
 /* Shortcuts */
 #define BOTH (PE_PROC_FLAGS_UPGRADE|PE_PROC_FLAGS_UPGRADE_PARENT)
 
-/*
- * XXX ch: These are global variables and methods declared by main.c of
- * XXX ch: anoubisd. Can we remove/replace this by a better solution
- * XXX ch: from sten?
- * XXX ch: Especially the struct must be kept in sync with it's definition
- * XXX ch: in the daemon. This is ugly and we need a better solution for this.
- */
-gid_t		anoubisd_gid = 0;
-u_int32_t	debug_flags = 0;
-u_int32_t	debug_stderr = 0;
-char		*logname = NULL;
-
-__dead void
-master_terminate(int error)
-{
-	fail_if(error != 0, "master_terminate with error: %d\n", error);
-	exit(error);
-}
-
-anoubisd_msg_t *
-msg_factory(int mtype, int size)
-{
-	fail("msg_factory(%d,%d)\n", mtype, size);
-	return NULL;
-}
-
 static struct pe_proc *
 tc_PolicyEngine_proc_alloc(void)
 {

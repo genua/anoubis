@@ -31,7 +31,7 @@
 #	  Nethertheless that test is quite useful and still should be shipped.
 # TESTS = test_anoubisd
 
-noinst_PROGRAMS = test_anoubisd
+noinst_PROGRAMS = test_anoubisd test_peunit
 
 anoubisddir     = src/anoubisd
 anoubischatdir  = src/libanoubischat
@@ -64,15 +64,15 @@ test_anoubisd_CPPFLAGS = \
 	-I$(top_srcdir)/$(anoubissigdir) \
 	@CHECK_CFLAGS@
 
+test_peunit_CPPFLAGS = $(test_anoubisd_CPPFLAGS)
+
 # We link with check.a which is compiled without -fPIE, therefore
 # we must use shared_AM_LDFLAGS in order not to link with -pie.
 test_anoubisd_LDFLAGS = $(shared_AM_LDFLAGS)
 
-test_anoubisd_daemonobjs = \
+test_peunit_objs= \
 	$(top_builddir)/$(anoubisddir)/amsg.o \
 	$(top_builddir)/$(anoubisddir)/aqueue.o \
-	$(top_builddir)/$(anoubisddir)/cert.o \
-	$(top_builddir)/$(anoubisddir)/log.o \
 	$(top_builddir)/$(anoubisddir)/pe_alf.o \
 	$(top_builddir)/$(anoubisddir)/pe_context.o \
 	$(top_builddir)/$(anoubisddir)/pe_ipc.o \
@@ -83,16 +83,13 @@ test_anoubisd_daemonobjs = \
 	$(top_builddir)/$(anoubisddir)/pe_sfscache.o \
 	$(top_builddir)/$(anoubisddir)/pe_sfs.o \
 	$(top_builddir)/$(anoubisddir)/pe_user.o \
-	$(top_builddir)/$(anoubisddir)/pe_filetree.o \
-	$(top_builddir)/$(anoubisddir)/policy.o \
-	$(top_builddir)/$(anoubisddir)/session.o \
-	$(top_builddir)/$(anoubisddir)/sfs.o
+	$(top_builddir)/$(anoubisddir)/pe_filetree.o
 
-test_anoubisd_LDADD = \
+test_peunit_LDADD = \
 	@CHECK_LIBS@ \
 	@LIBS@ \
 	@SSL_LIBS@ \
-	$(test_anoubisd_daemonobjs) \
+	$(test_peunit_objs) \
 	$(libanoubischeck) \
 	$(libanoubispc) \
 	$(libanoubisps) \
@@ -100,13 +97,23 @@ test_anoubisd_LDADD = \
 	$(libapn) \
 	$(libanoubischat)
 
+test_anoubisd_LDADD = \
+	@CHECK_LIBS@ \
+	$(libanoubischeck) \
+	$(libanoubispc) \
+	$(libanoubischat)
+
 if NEEDBSDCOMPAT
 test_anoubisd_LDADD += $(libbsdcompat)
+test_peunit_LDADD += $(libbsdcompat)
 endif
 
 test_anoubisd_SOURCES = \
 	anoubisd_testcase_sessions.c \
-	anoubisd_testcase_pe.c \
-	anoubisd_testcase_pe_filetree.c \
 	anoubisd_testsuite.c \
 	anoubisd_testrunner.c
+
+test_peunit_SOURCES = \
+	anoubisd_testcase_pe.c \
+	anoubisd_testcase_pe_filetree.c \
+	test_peunit.c
