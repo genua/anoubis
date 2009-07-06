@@ -304,11 +304,10 @@ logger_sighandler(int sig __used, short event __used, void *arg)
 
 pid_t
 logger_main(struct anoubisd_config *conf __used, int pipe_m2l[2],
-    int pipe_p2l[2],
-    int pipe_s2l[2])
+    int pipe_p2l[2], int pipe_s2l[2], int pipe_u2l[2])
 {
 	pid_t pid;
-	struct event	 ev_m2l, ev_p2l, ev_s2l;
+	struct event	 ev_m2l, ev_p2l, ev_s2l, ev_u2l;
 	struct event	 ev_sigterm, ev_sigint, ev_sigquit;
 	struct passwd	*pw;
 	sigset_t	 mask;
@@ -358,10 +357,12 @@ logger_main(struct anoubisd_config *conf __used, int pipe_m2l[2],
 	close(pipe_m2l[1]);
 	close(pipe_p2l[1]);
 	close(pipe_s2l[1]);
+	close(pipe_u2l[1]);
 
 	msg_init(pipe_m2l[0], "m2l");
 	msg_init(pipe_p2l[0], "p2l");
 	msg_init(pipe_s2l[0], "s2l");
+	msg_init(pipe_u2l[0], "u2l");
 
 	event_set(&ev_m2l, pipe_m2l[0], EV_READ | EV_PERSIST,
 	    &dispatch_log_read, &ev_m2l);
@@ -372,6 +373,9 @@ logger_main(struct anoubisd_config *conf __used, int pipe_m2l[2],
 	event_set(&ev_s2l, pipe_s2l[0], EV_READ | EV_PERSIST,
 	    &dispatch_log_read, &ev_s2l);
 	event_add(&ev_s2l, NULL);
+	event_set(&ev_u2l, pipe_u2l[0], EV_READ | EV_PERSIST,
+	    &dispatch_log_read, &ev_u2l);
+	event_add(&ev_u2l, NULL);
 
 	if (event_dispatch() == -1)
 		fatal("logger_main: event_dispatch");

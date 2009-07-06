@@ -310,7 +310,7 @@ session_txclient(int fd __used, short event __used, void *arg)
 
 pid_t
 session_main(struct anoubisd_config *conf, int pipe_m2s[2], int pipe_m2p[2],
-    int pipe_s2p[2], int loggers[3])
+    int pipe_s2p[2], int pipe_m2u[2], int loggers[4])
 {
 	struct event	 ev_sigterm, ev_sigint, ev_sigquit;
 	struct event	 ev_m2s, ev_p2s;
@@ -337,6 +337,7 @@ session_main(struct anoubisd_config *conf, int pipe_m2s[2], int pipe_m2p[2],
 	log_init(loggers[2]);
 	close(loggers[0]);
 	close(loggers[1]);
+	close(loggers[3]);
 
 	anoubisd_process = PROC_SESSION;
 
@@ -390,6 +391,8 @@ session_main(struct anoubisd_config *conf, int pipe_m2s[2], int pipe_m2p[2],
 	close(pipe_s2p[1]);
 	close(pipe_m2p[0]);
 	close(pipe_m2p[1]);
+	close(pipe_m2u[0]);
+	close(pipe_m2u[1]);
 
 	/* init msg_bufs - keep track of outgoing ev_info */
 	msg_init(pipe_m2s[1], "s2m");

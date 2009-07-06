@@ -92,11 +92,14 @@ static void	dispatch_m2p(int, short, void *);
 static void	dispatch_p2m(int, short, void *);
 static void	dispatch_m2dev(int, short, void *);
 static void	dispatch_dev2m(int, short, void *);
+static void	dispatch_m2u(int, short, void *);
+static void	dispatch_u2m(int, short, void *);
 
 pid_t		master_pid = 0;
 pid_t		se_pid = 0;
 pid_t		logger_pid = 0;
 pid_t		policy_pid = 0;
+pid_t		upgrade_pid = 0;
 
 u_int32_t	debug_flags = 0;
 u_int32_t	debug_stderr = 0;
@@ -108,12 +111,13 @@ unsigned long	version;
 
 static Queue eventq_m2p;
 static Queue eventq_m2s;
+static Queue eventq_m2u;
 static Queue eventq_m2dev;
 
 struct event_info_main {
 	/*@dependent@*/
-	struct event	*ev_m2s, *ev_m2p, *ev_m2dev;
-	struct event	*ev_s2m, *ev_p2m, *ev_dev2m;
+	struct event	*ev_m2s, *ev_m2p, *ev_m2u, *ev_m2dev;
+	struct event	*ev_s2m, *ev_p2m, *ev_u2m, *ev_dev2m;
 	struct event	*ev_sigs[10];
 	/*@dependent@*/
 	struct event	*ev_timer;
@@ -121,6 +125,15 @@ struct event_info_main {
 	struct timeval	*tv;
 	int anoubisfd;
 };
+
+struct upgrade_com {
+	int	pipe_m2u[2];
+	int	pipe_u2l[2];
+	struct event ev_m2u;
+	struct event ev_u2m;
+};
+
+static struct upgrade_com upgrade_pipes;
 
 static void	_send_sfs_list(u_int64_t token, const char *path,
     u_int8_t *keyid, int idlen, uid_t uid, struct event_info_main *ev_info,
@@ -177,6 +190,8 @@ sighandler(int sig, short event __used, void *arg __used)
 			sigfillset(&mask);
 			sigdelset(&mask, SIGCHLD);
 			sigprocmask(SIG_SETMASK, &mask, NULL);
+			if (upgrade_pid)
+				kill(upgrade_pid, SIGTERM);
 			kill(se_pid, SIGTERM);
 			kill(policy_pid, SIGTERM);
 			kill(logger_pid, SIGTERM);
@@ -202,6 +217,12 @@ sighandler(int sig, short event __used, void *arg __used)
 		}
 		if (check_child(logger_pid, "anoubis logger")) {
 			logger_pid = 0;
+			if (!terminate)
+				die = 1;
+		}
+		if (check_child(upgrade_pid, "anoubis upgrade")) {
+			upgrade_pid = 0;
+			/* XXX ch: shall we really terminate or die? */
 			if (!terminate)
 				die = 1;
 		}
@@ -300,7 +321,7 @@ main(int argc, char *argv[])
 	int			pipe_m2l[2];
 	int			pipe_s2l[2];
 	int			pipe_p2l[2];
-	int			loggers[3];
+	int			loggers[4];
 	struct timeval		tv;
 	char		       *endptr;
 	struct passwd		*pw;
@@ -436,13 +457,19 @@ main(int argc, char *argv[])
 		early_errx(1, "socketpair");
 	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, pipe_s2l) == -1)
 		early_errx(1, "socketpair");
-	logger_pid = logger_main(&conf, pipe_m2l, pipe_p2l, pipe_s2l);
+	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC,
+	    upgrade_pipes.pipe_u2l) == -1)
+		early_errx(1, "socketpair");
+	logger_pid = logger_main(&conf, pipe_m2l, pipe_p2l, pipe_s2l,
+	    upgrade_pipes.pipe_u2l);
 	close(pipe_m2l[0]);
 	close(pipe_p2l[0]);
 	close(pipe_s2l[0]);
+	close(upgrade_pipes.pipe_u2l[0]);
 	loggers[0] = pipe_m2l[1];
 	loggers[1] = pipe_p2l[1];
 	loggers[2] = pipe_s2l[1];
+	loggers[3] = upgrade_pipes.pipe_u2l[1];
 
 	(void)event_init();
 
@@ -461,13 +488,28 @@ main(int argc, char *argv[])
 		fatal("socketpair");
 	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, pipe_s2p) == -1)
 		fatal("socketpair");
+	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC,
+	    upgrade_pipes.pipe_m2u) == -1)
+		fatal("socketpair");
 
-	se_pid = session_main(&conf, pipe_m2s, pipe_m2p, pipe_s2p, loggers);
+	se_pid = session_main(&conf, pipe_m2s, pipe_m2p, pipe_s2p,
+	    upgrade_pipes.pipe_m2u, loggers);
 	DEBUG(DBG_TRACE, "session_pid=%d", se_pid);
-	policy_pid = policy_main(&conf, pipe_m2s, pipe_m2p, pipe_s2p, loggers);
+	policy_pid = policy_main(&conf, pipe_m2s, pipe_m2p, pipe_s2p,
+	    upgrade_pipes.pipe_m2u, loggers);
 	DEBUG(DBG_TRACE, "policy_pid=%d", policy_pid);
+	upgrade_pid = upgrade_main(&conf, upgrade_pipes.pipe_m2u, pipe_m2p,
+	    pipe_s2p, pipe_m2s, loggers);
+	DEBUG(DBG_TRACE, "upgrade_pid=%d", upgrade_pid);
 	close(loggers[1]);
 	close(loggers[2]);
+	close(loggers[3]);
+
+	close(pipe_m2s[1]);
+	close(pipe_m2p[1]);
+	close(pipe_s2p[0]);
+	close(pipe_s2p[1]);
+	close(upgrade_pipes.pipe_m2u[1]);
 
 	/* Load Public Keys */
 	cert_init(0);
@@ -507,18 +549,15 @@ main(int argc, char *argv[])
 	sigdelset(&mask, SIGCHLD);
 	sigprocmask(SIG_SETMASK, &mask, NULL);
 
-	close(pipe_m2s[1]);
-	close(pipe_m2p[1]);
-	close(pipe_s2p[0]);
-	close(pipe_s2p[1]);
-
 	queue_init(eventq_m2p);
 	queue_init(eventq_m2s);
 	queue_init(eventq_m2dev);
+	queue_init(eventq_m2u);
 
 	/* init msg_bufs - keep track of outgoing ev_info */
 	msg_init(pipe_m2s[0], "m2s");
 	msg_init(pipe_m2p[0], "m2p");
+	msg_init(upgrade_pipes.pipe_m2u[0], "m2u");
 
 	/*
 	 * Open eventdev to communicate with the kernel.
@@ -548,6 +587,14 @@ main(int argc, char *argv[])
 	    &ev_info);
 	event_add(&ev_p2m, NULL);
 
+	/* upgrade process */
+	event_set(&upgrade_pipes.ev_m2u, upgrade_pipes.pipe_m2u[0], EV_WRITE,
+	    dispatch_m2u, &ev_info);
+
+	event_set(&upgrade_pipes.ev_u2m, upgrade_pipes.pipe_m2u[0],
+	    EV_READ | EV_PERSIST, dispatch_u2m, &ev_info);
+	event_add(&upgrade_pipes.ev_u2m, NULL);
+
 	/* event device */
 	event_set(&ev_dev2m, eventfds[0], EV_READ | EV_PERSIST, dispatch_dev2m,
 	    &ev_info);
@@ -562,6 +609,8 @@ main(int argc, char *argv[])
 	ev_info.ev_dev2m = &ev_dev2m;
 	ev_info.ev_p2m = &ev_p2m;
 	ev_info.ev_s2m = &ev_s2m;
+	ev_info.ev_m2u = &upgrade_pipes.ev_m2u;
+	ev_info.ev_u2m = &upgrade_pipes.ev_u2m;
 
 	/*
 	 * Open event device to communicate with the kernel.
@@ -645,6 +694,8 @@ main_cleanup(void)
 	close(eventfds[1]);
 	close(eventfds[0]);
 
+	if (upgrade_pid)
+		kill(upgrade_pid, SIGQUIT);
 	if (se_pid)
 		kill(se_pid, SIGQUIT);
 	if (policy_pid)
@@ -656,10 +707,12 @@ main_cleanup(void)
 	 * Do NOT wait for the logger. The logger process will terminate
 	 * once we exit and close our pipe to the logger.
 	 */
-	while (se_pid && policy_pid) {
+	while (se_pid && policy_pid && upgrade_pid) {
 		if ((pid = wait(NULL)) == -1 &&
 		    errno != EINTR && errno != ECHILD)
 			fatal("wait");
+		if (pid == upgrade_pid)
+			upgrade_pid = 0;
 		if (pid == se_pid)
 			se_pid = 0;
 		if (pid == policy_pid)
@@ -1543,6 +1596,35 @@ dispatch_dev2m(int fd, short event __used, void *arg)
 			terminate = 2;
 		event_add(ev_info->ev_m2p, NULL);
 		event_add(ev_info->ev_m2s, NULL);
+		event_add(ev_info->ev_m2u, NULL);
 	}
 	DEBUG(DBG_TRACE, "<dispatch_dev2m");
+}
+
+static void
+dispatch_m2u(int fd, short event __used, void *arg)
+{
+	struct event_info_main *ev_info = (struct event_info_main*)arg;
+
+	DEBUG(DBG_TRACE, ">dispatch_m2u");
+
+	if (queue_peek(&eventq_m2u) || msg_pending(fd))
+		event_add(ev_info->ev_m2u, NULL);
+	else if (terminate >= 2) {
+		shutdown(fd, SHUT_WR);
+	}
+
+	DEBUG(DBG_TRACE, "<dispatch_m2u");
+}
+
+static void
+dispatch_u2m(int fd, short event __used, void *arg)
+{
+	struct event_info_main *ev_info = (struct event_info_main*)arg;
+
+	DEBUG(DBG_TRACE, ">dispatch_u2m");
+
+	if (msg_eof(fd))
+		event_del(ev_info->ev_u2m);
+	DEBUG(DBG_TRACE, "<dispatch_u2m");
 }

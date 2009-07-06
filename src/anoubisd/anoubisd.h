@@ -225,14 +225,20 @@ enum {
 	PROC_MAIN,
 	PROC_POLICY,
 	PROC_SESSION,
-	PROC_LOGGER
+	PROC_LOGGER,
+	PROC_UPGRADE
 } anoubisd_process;
 
-pid_t	session_main(struct anoubisd_config *, int[], int[], int[], int[]);
+pid_t	session_main(struct anoubisd_config *, int[], int[], int[], int[],
+    int[]);
 
-pid_t	policy_main(struct anoubisd_config *, int[], int[], int[], int[]);
+pid_t	policy_main(struct anoubisd_config *, int[], int[], int[], int[],
+    int[]);
 
-pid_t	logger_main(struct anoubisd_config *, int[], int[], int[]);
+pid_t	logger_main(struct anoubisd_config *, int[], int[], int[], int[]);
+
+pid_t	upgrade_main(struct anoubisd_config *, int[], int[], int[], int[],
+    int[]);
 
 void	pe_init(void);
 

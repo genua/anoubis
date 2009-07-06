@@ -92,8 +92,9 @@ anoubisd_SOURCES= \
 	sfs.h \
 	pe.h \
 	pe_proc_internals.h \
+	cfg.h \
 	cert.h \
-	cfg.h
+	upgrade.c
 
 anoubisd_SOURCES_flawfinder= \
 	main.c_flawfinder \

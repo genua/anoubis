@@ -138,7 +138,7 @@ policy_sighandler(int sig, short event __used, void *arg)
 
 pid_t
 policy_main(struct anoubisd_config *conf __used, int pipe_m2s[2],
-    int pipe_m2p[2], int pipe_s2p[2], int loggers[3])
+    int pipe_m2p[2], int pipe_s2p[2], int pipe_m2u[2], int loggers[4])
 /*@globals undef eventq_p2m, undef eventq_p2s, undef replyq@*/
 {
 	struct event	 ev_sigterm, ev_sigint, ev_sigquit, ev_sigusr1,
@@ -173,6 +173,7 @@ policy_main(struct anoubisd_config *conf __used, int pipe_m2s[2],
 	log_init(loggers[1]);
 	close(loggers[0]);
 	close(loggers[2]);
+	close(loggers[3]);
 
 	if ((pw = getpwnam(ANOUBISD_USER)) == NULL)
 		fatal("getpwnam");
@@ -222,6 +223,9 @@ policy_main(struct anoubisd_config *conf __used, int pipe_m2s[2],
 	close(pipe_s2p[0]);
 	close(pipe_m2s[0]);
 	close(pipe_m2s[1]);
+
+	close(pipe_m2u[0]);
+	close(pipe_m2u[1]);
 
 	queue_init(eventq_p2m);
 	queue_init(eventq_p2s);
@@ -855,7 +859,7 @@ policy_upgrade_fill_chunk(char *buf, int maxlen)
 		len = strlen(node->path) + 1;
 		if (reallen + len > maxlen)
 			break;
-		memcpy(buf+reallen, node->path, len); 
+		memcpy(buf+reallen, node->path, len);
 		reallen += len;
 		pe_upgrade_filelist_next();
 	}
