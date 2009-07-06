@@ -98,6 +98,7 @@ pe_shutdown(void)
 {
 	pe_proc_flush();
 	pe_user_flush_db(NULL);
+	sfshash_flush();
 }
 
 void
@@ -161,12 +162,13 @@ pe_upgrade_end(struct pe_proc *proc)
 		next = pe_filetree_next(upgrade_tree, it);
 		if (it->task_cookie == 0 || it->task_cookie == last_cookie)
 			continue;
-		if ((tmp=pe_proc_get(it->task_cookie))) {
+		tmp = pe_proc_get(it->task_cookie);
+		if (tmp) {
 			pe_proc_put(tmp);
+			pe_delete_node(upgrade_tree, it);
+		} else {
 			last_cookie = it->task_cookie;
-			continue;
 		}
-		pe_delete_node(upgrade_tree, it);
 	}
 	pe_proc_upgrade_clrallmarks();
 	upgrade_iterator = NULL;
@@ -950,4 +952,14 @@ pe_compare_path(struct apn_rule **rulelist, int rulecnt,
 
 	DEBUG(DBG_PE, "<pe_compare_path");
 	return (0);
+}
+
+/*
+ * Entry Points exported for the benefit of the policy engine unit tests.
+ * DO NOT CALL THESE FUNCTIONS FROM NORMAL CODE.
+ */
+anoubisd_reply_t
+*test_pe_handle_sfs(struct eventdev_hdr *hdr)
+{
+	return pe_handle_sfs(hdr);
 }

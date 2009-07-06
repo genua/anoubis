@@ -25,13 +25,13 @@
 #
 
 # XXX ST: #423
-#	  This test was disabled due to the fact that it heavily depends on
-#	  on a running anoubisd which can't be expected to be run during
+#	  The test "test_anoubisd is disabled due to the fact that it
+#	  depends on a running anoubisd which can't be expected during
 #	  'make distcheck'.
-#	  Nethertheless that test is quite useful and still should be shipped.
-# TESTS = test_anoubisd
+#	  Nethertheless that test is quite useful and should be shipped.
 
 noinst_PROGRAMS = test_anoubisd test_peunit
+TESTS = test_peunit
 
 anoubisddir     = src/anoubisd
 anoubischatdir  = src/libanoubischat
@@ -113,4 +113,6 @@ test_anoubisd_SOURCES = \
 test_peunit_SOURCES = \
 	anoubisd_testcase_pe.c \
 	anoubisd_testcase_pe_filetree.c \
+	anoubisd_testcase_upgrade.c \
+	anoubisd_unit.h \
 	test_peunit.c

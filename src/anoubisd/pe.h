@@ -199,4 +199,11 @@ int			 pe_prefixhash_getrules(struct pe_prefixhash *,
 			     const char *, struct apn_rule ***, int *);
 int			 pe_build_prefixhash(struct apn_rule *);
 
+/*
+ * Entry points exported for the benefit of unit tests.
+ * DO NOT USE THESE FROM NORMAL CODE.
+ */
+
+anoubisd_reply_t	*test_pe_handle_sfs(struct eventdev_hdr *hdr);
+
 #endif	/* _PE_H_ */

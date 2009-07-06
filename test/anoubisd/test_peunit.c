@@ -50,6 +50,8 @@
 #include <anoubisd.h>
 #include <cert.h>
 
+#include <anoubisd_unit.h>
+
 #ifndef __used
 #define __used __attribute__((unused))
 #endif
@@ -136,9 +138,12 @@ sfs_checksumop_chroot(const char *path __used, unsigned int operation __used,
 	return 0;
 }
 
+int (*sfs_haschecksum_chroot_p)(const char *path) = NULL;
 int
-sfs_haschecksum_chroot(const char *path __used)
+sfs_haschecksum_chroot(const char *path)
 {
+	if (sfs_haschecksum_chroot_p)
+		return sfs_haschecksum_chroot_p(path);
 	return 0;
 }
 
@@ -180,18 +185,16 @@ unsigned int debug_flags = 0;
 
 extern TCase	*anoubisd_testcase_pe(void);
 extern TCase	*anoubisd_testcase_pe_filetree(void);
+extern TCase	*anoubisd_testcase_pe_upgrade(void);
 
 Suite*
 peunit_testsuite(void)
 {
 	Suite	*s = suite_create("PEUnit");
-	TCase	*tc_filetree, *tc_pe;
 
-	tc_filetree = anoubisd_testcase_pe_filetree();
-	suite_add_tcase(s, tc_filetree);
-
-	tc_pe = anoubisd_testcase_pe();
-	suite_add_tcase(s, tc_pe);
+	suite_add_tcase(s, anoubisd_testcase_pe_filetree());
+	suite_add_tcase(s, anoubisd_testcase_pe());
+	suite_add_tcase(s, anoubisd_testcase_pe_upgrade());
 
 	return s;
 }
