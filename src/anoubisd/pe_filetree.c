@@ -153,12 +153,12 @@ pe_find_file(struct pe_file_tree *f, char *path)
 
 /* gets a first node in the tree. this can be used to
  * initlize a iterator:
- * for (np = pe_get_start(f); np != NULL; np = pe_get_next(f, np)) {
+ * for (np = pe_filetree_start(f); np != NULL; np = pe_filetree_next(f, np)) {
  *	...
  * }
  */
 struct pe_file_node *
-pe_get_start(struct pe_file_tree *f)
+pe_filetree_start(struct pe_file_tree *f)
 {
 	if (f == NULL)
 		return NULL;
@@ -169,7 +169,7 @@ pe_get_start(struct pe_file_tree *f)
  * it will return NULL if the 'last node' was the last node
  */
 struct pe_file_node *
-pe_get_next(struct pe_file_tree *f, struct pe_file_node *last)
+pe_filetree_next(struct pe_file_tree *f, struct pe_file_node *last)
 {
 	if (f == NULL || last == NULL)
 		return NULL;

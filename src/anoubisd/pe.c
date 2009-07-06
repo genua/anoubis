@@ -82,6 +82,7 @@ static struct pe_path_event *pe_parse_path_event(struct eventdev_hdr *hdr);
 
 static struct pe_file_tree *upgrade_tree = NULL;
 static int upgrade_counter = 0;
+static struct pe_file_node *upgrade_iterator = NULL;
 
 void
 pe_init(void)
@@ -156,8 +157,8 @@ pe_upgrade_end(struct pe_proc *proc)
 	 * unconditionally. Files modified by an upgrade child are kept if
 	 * that child is no longer alive.
 	 */
-	for (it=pe_get_start(upgrade_tree); it; it = next) {
-		next = pe_get_next(upgrade_tree, it);
+	for (it=pe_filetree_start(upgrade_tree); it; it = next) {
+		next = pe_filetree_next(upgrade_tree, it);
 		if (it->task_cookie == 0 || it->task_cookie == last_cookie)
 			continue;
 		if ((tmp=pe_proc_get(it->task_cookie))) {
@@ -168,10 +169,40 @@ pe_upgrade_end(struct pe_proc *proc)
 		pe_delete_node(upgrade_tree, it);
 	}
 	pe_proc_upgrade_clrallmarks();
+	upgrade_iterator = NULL;
 	/*
 	 * XXX CEH: Trigger actual end of upgrade handling, i.e. checksum
 	 * XXX CEH: update.
 	 */
+}
+
+void
+pe_upgrade_filelist_start(void)
+{
+	if (!upgrade_tree || upgrade_counter) {
+		upgrade_iterator = NULL;
+	} else {
+		upgrade_iterator = pe_filetree_start(upgrade_tree);
+	}
+}
+
+void
+pe_upgrade_filelist_next(void)
+{
+	if (!upgrade_tree || upgrade_counter || !upgrade_iterator) {
+		upgrade_iterator = NULL;
+	} else {
+		upgrade_iterator = pe_filetree_next(upgrade_tree,
+		    upgrade_iterator);
+	}
+}
+
+struct pe_file_node *
+pe_upgrade_filelist_get(void)
+{
+	if (!upgrade_tree || upgrade_counter)
+		upgrade_iterator = NULL;
+	return upgrade_iterator;
 }
 
 void
@@ -181,6 +212,7 @@ pe_upgrade_finish(void)
 		pe_filetree_destroy(upgrade_tree);
 		upgrade_tree = NULL;
 	}
+	upgrade_iterator = NULL;
 }
 
 /*

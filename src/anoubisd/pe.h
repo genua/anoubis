@@ -169,6 +169,9 @@ int			 pe_compare_path(struct apn_rule **, int,
 void			 pe_upgrade_start(struct pe_proc *);
 void			 pe_upgrade_end(struct pe_proc *);
 void			 pe_upgrade_finish(void);
+void			 pe_upgrade_filelist_start(void);
+void			 pe_upgrade_filelist_next(void);
+struct pe_file_node	*pe_upgrade_filelist_get(void);
 
 /* Subsystem entry points for Policy decisions. */
 anoubisd_reply_t	*pe_decide_alf(struct pe_proc *, struct eventdev_hdr *);

@@ -45,8 +45,9 @@ struct pe_file_tree {
 struct pe_file_tree *pe_init_filetree(void);
 int pe_insert_node(struct pe_file_tree *, char *, anoubis_cookie_t);
 struct pe_file_node *pe_find_file(struct pe_file_tree *, char *);
-struct pe_file_node *pe_get_next(struct pe_file_tree *, struct pe_file_node *);
-struct pe_file_node *pe_get_start(struct pe_file_tree *);
+struct pe_file_node *pe_filetree_next(struct pe_file_tree *,
+    struct pe_file_node *);
+struct pe_file_node *pe_filetree_start(struct pe_file_tree *);
 void pe_delete_file(struct pe_file_tree *, char *);
 void pe_delete_node(struct pe_file_tree *, struct pe_file_node *);
 void pe_filetree_destroy(struct pe_file_tree *);

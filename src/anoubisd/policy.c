@@ -60,6 +60,7 @@
 #include "aqueue.h"
 #include "amsg.h"
 #include "pe.h"
+#include "pe_filetree.h"
 
 #include <anoubis_protocol.h>
 
@@ -69,6 +70,9 @@ static void	dispatch_m2p(int, short, void *);
 static void	dispatch_p2m(int, short, void *);
 static void	dispatch_s2p(int, short, void *);
 static void	dispatch_p2s(int, short, void *);
+
+/* XXX CEH: Make this static once it is used. */
+int	policy_upgrade_fill_chunk(char *buf, int maxlen);
 
 static Queue	eventq_p2m;
 static Queue	eventq_p2s;
@@ -824,4 +828,36 @@ out:
 		shutdown(fd, SHUT_WR);
 
 	DEBUG(DBG_TRACE, "<dispatch_p2s");
+}
+
+/*
+ * Caller must call pe_upgrade_filelist_start before calling this
+ * function for the first time. Fills as many paths as possible
+ * from the upgrade filelist into buf. A path that does not fit into
+ * the buffer is not copied at all and will be reconsidered with the
+ * next chunk.
+ *
+ * Returns the number of bytes actually copied.
+ *
+ * XXX CEH: Make this static.
+ */
+int
+policy_upgrade_fill_chunk(char *buf, int maxlen)
+{
+	int	reallen = 0;
+
+	while (1) {
+		struct pe_file_node	*node = pe_upgrade_filelist_get();
+		int len;
+
+		if (!node)
+			break;
+		len = strlen(node->path) + 1;
+		if (reallen + len > maxlen)
+			break;
+		memcpy(buf+reallen, node->path, len); 
+		reallen += len;
+		pe_upgrade_filelist_next();
+	}
+	return reallen;
 }

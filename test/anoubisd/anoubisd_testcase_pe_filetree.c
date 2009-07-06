@@ -149,7 +149,7 @@ START_TEST(tc_filetree_iteration)
 	rc = pe_insert_node(f, "eu", c);
 	fail_if (rc < 0, "pe_insert_node failed");
 
-	for (n = pe_get_start(f); n != NULL; n = pe_get_next(f, n)) {
+	for (n = pe_filetree_start(f); n != NULL; n = pe_filetree_next(f, n)) {
 		fail_if(n == NULL, "Error while iteration");
 		if (!strcmp(n->path, "cy"))
 			cy++;
@@ -166,10 +166,10 @@ START_TEST(tc_filetree_iteration)
 	fail_if(dw != 1, "dw should be 1 not %d", cy);
 	fail_if(eu != 1, "eu should be 1 not %d", cy);
 
-	n = pe_get_start(NULL);
+	n = pe_filetree_start(NULL);
 	fail_if(n != NULL, "Shouldn't get a start node");
 
-	n = pe_get_next(f, NULL);
+	n = pe_filetree_next(f, NULL);
 	fail_if(n != NULL, "Shouldn't get a next node");
 
 	pe_filetree_destroy(f);
