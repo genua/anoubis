@@ -517,8 +517,9 @@ main(int argc, char *argv[])
 	setproctitle("master");
 
 	if ((omitfp = fopen(omit_pid_file, "w"))) {
-		fprintf(omitfp, "%d\n%d\n%d\n%d\n",
-		    master_pid, se_pid, policy_pid, logger_pid);
+		fprintf(omitfp, "%d\n%d\n%d\n%d\n%d\n",
+		    master_pid, se_pid, policy_pid, logger_pid,
+		        upgrade_pid);
 		fclose(omitfp);
 	} else {
 		log_warn("Cannot open %s for writing", omit_pid_file);
