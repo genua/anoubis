@@ -49,3 +49,5 @@ share/anoubisd/policy_templates/user/root
 @exec perl %D/share/anoubisd/install_policy -q %D/share/anoubisd/policy_templates/user /etc/anoubis/policy/user
 @exec perl %D/share/anoubisd/install_policy -q -n -o %D/share/anoubisd/policy_templates/profiles /etc/anoubis/profiles
 @exec chmod -R 700 /etc/anoubis/policy
+share/anoubisd/anoubisd.conf
+@sample /etc/anoubis/anoubisd.conf
