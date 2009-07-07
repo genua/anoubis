@@ -71,8 +71,7 @@ static void	dispatch_p2m(int, short, void *);
 static void	dispatch_s2p(int, short, void *);
 static void	dispatch_p2s(int, short, void *);
 
-/* XXX CEH: Make this static once it is used. */
-int	policy_upgrade_fill_chunk(char *buf, int maxlen);
+static int	policy_upgrade_fill_chunk(char *buf, int maxlen);
 
 static Queue	eventq_p2m;
 static Queue	eventq_p2s;
@@ -372,6 +371,121 @@ dispatch_sfscache_invalidate(anoubisd_msg_t *msg)
 	free(msg);
 }
 
+void
+send_upgrade_start(void)
+{
+	anoubisd_msg_t			*msg;
+	struct anoubisd_msg_upgrade	*upg;
+
+	DEBUG(DBG_UPGRADE, ">send_upgrade_start");
+
+	msg = msg_factory(ANOUBISD_MSG_UPGRADE,
+	    sizeof(struct anoubisd_msg_upgrade));
+	if (msg == NULL) {
+		log_warnx("send_upgrade_start: Out of memory");
+		return;
+	}
+
+	upg = (struct anoubisd_msg_upgrade *)msg->msg;
+	upg->upgradetype = ANOUBISD_UPGRADE_START;
+	upg->chunksize = 0;
+
+	DEBUG(DBG_UPGRADE, " send_upgrade_start: "
+	    "enqueue ANOUBISD_UPGRADE_START");
+	enqueue(&eventq_p2m, msg);
+
+	/* Prepare upgrade-iterator, used later for creation of chunks */
+	pe_upgrade_filelist_start();
+
+	DEBUG(DBG_UPGRADE, "<send_upgrade_start");
+}
+
+static void
+send_upgrade_chunk(struct event_info_policy *ev_info)
+{
+	anoubisd_msg_t			*msg;
+	struct anoubisd_msg_upgrade	*upg;
+	char				buf[PATH_MAX];
+	int				buf_size;
+
+	DEBUG(DBG_UPGRADE, ">send_upgrade_chunk");
+
+	/*
+	 * Create the next chunk.
+	 *
+	 * buf_size can be 0! It means that no more files are available.
+	 *
+	 * The buffer has a size of PATH_MAX to make sure, that at least
+	 * one big pathname can be transfered.
+	 */
+	buf_size = policy_upgrade_fill_chunk(buf, sizeof(buf));
+
+	msg = msg_factory(ANOUBISD_MSG_UPGRADE,
+	    sizeof(struct anoubisd_msg_upgrade) + buf_size);
+	if (msg == NULL) {
+		log_warnx("send_upgrade_chunk: Out of memory");
+		return;
+	}
+
+	upg = (struct anoubisd_msg_upgrade *)msg->msg;
+	upg->upgradetype = ANOUBISD_UPGRADE_CHUNK;
+	upg->chunksize = buf_size;
+	memcpy(upg->chunk, buf, buf_size);
+
+	DEBUG(DBG_UPGRADE, " send_upgrade_chunk: "
+	    "enqueue ANOUBISD_UPGRADE_CHUNK_RSP, chunksize = %i",
+	    upg->chunksize);
+	enqueue(&eventq_p2m, msg);
+	event_add(ev_info->ev_p2m, NULL);
+
+	DEBUG(DBG_UPGRADE, "<send_upgrade_chunk");
+}
+
+static void
+dispatch_upgrade(anoubisd_msg_t *msg, struct event_info_policy *ev_info)
+{
+	struct anoubisd_msg_upgrade	*upg;
+	int 				total;
+
+	DEBUG(DBG_UPGRADE, ">dispatch_upgrade");
+
+	total = sizeof(*msg) + sizeof(*upg);
+	if (msg->size < total) {
+		log_warnx("Short anoubisd_msg_upgrade message");
+		free(msg);
+		return;
+	}
+
+	upg = (struct anoubisd_msg_upgrade *)msg->msg;
+
+	if (upg->upgradetype == ANOUBISD_UPGRADE_CHUNK_REQ) {
+		DEBUG(DBG_UPGRADE, " dispatch_upgrade: "
+		    "upgradetype = ANOUBISD_UPGRADE_CHUNK_REQ");
+
+		/*
+		 * Another chunk was requested,
+		 * collect files and send them back
+		 */
+		send_upgrade_chunk(ev_info);
+	} else if (upg->upgradetype == ANOUBISD_UPGRADE_END) {
+		DEBUG(DBG_UPGRADE, " dispatch_upgrade: "
+		    "upgradetype = ANOUBISD_UPGRADE_END");
+
+		/*
+		 * All files are processed now,
+		 * you can finish the upgrade now.
+		 */
+		pe_upgrade_finish();
+	} else {
+		/* Unexpected message */
+		log_warnx("dispatch_upgrade: unexpected upgradetype (%i)",
+		    upg->upgradetype);
+	}
+
+	free(msg);
+	DEBUG(DBG_UPGRADE, "<dispatch_upgrade");
+}
+
 static int
 pident_size(struct pe_proc_ident *pident)
 {
@@ -455,6 +569,9 @@ dispatch_m2p(int fd, short sig __used, void *arg)
 		case ANOUBISD_MSG_EVENTDEV:
 			hdr = (struct eventdev_hdr *)msg->msg;
 			break;
+		case ANOUBISD_MSG_UPGRADE:
+			dispatch_upgrade(msg, ev_info);
+			continue;
 		default:
 			DEBUG(DBG_TRACE, "<dispatch_m2p (bad type %d)",
 			    msg->mtype);
@@ -473,13 +590,14 @@ dispatch_m2p(int fd, short sig __used, void *arg)
 			continue;
 		}
 		reply = policy_engine(msg);
-		if (reply == NULL) {
-			DEBUG(DBG_TRACE, "<dispatch_m2p (no reply)");
-			/*
-			 * Just in case messages have been queued. E.g.
-			 * via send_notify
-			 */
+
+		/* Dispatch event loop, if one of the queues are not empty */
+		if (queue_peek(&eventq_p2m))
+			event_add(ev_info->ev_p2m, NULL);
+		if (queue_peek(&eventq_p2s))
 			event_add(ev_info->ev_p2s, NULL);
+
+		if (reply == NULL) {
 			free(msg);
 			continue;
 		}
@@ -842,10 +960,8 @@ out:
  * next chunk.
  *
  * Returns the number of bytes actually copied.
- *
- * XXX CEH: Make this static.
  */
-int
+static int
 policy_upgrade_fill_chunk(char *buf, int maxlen)
 {
 	int	reallen = 0;

@@ -181,6 +181,11 @@ pe_dispatch_policy(struct anoubisd_msg_comm *comm __used)
 	return NULL;
 }
 
+void
+send_upgrade_start(void)
+{
+}
+
 unsigned int debug_flags = 0;
 
 extern TCase	*anoubisd_testcase_pe(void);

@@ -1,4 +1,4 @@
-.\"	$Id: 56550e,v 1.17 2009/07/01 12:09:24 hiesl Exp $
+.\"	$Id: 56550e,v 1.18 2009/07/07 11:04:43 hiesl Exp $
 .\"	$OpenBSD: mdoc.template,v 1.10 2007/05/31 22:10:19 jmc Exp $
 .\"
 .\" Copyright (c) 2008 GeNUA mbH <info@genua.de>
@@ -104,6 +104,10 @@ values (or'ed together) are:
 0x4000 - Sandbox
 .Pp
 0x8000 - SFS Caching
+.Pp
+0x10000 - Policy Engine context borrow
+.Pp
+0x20000 - Upgrade process
 .It Fl d
 Generate output to
 .Ar stderr

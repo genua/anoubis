@@ -208,15 +208,14 @@ enum
 	ANOUBISD_UPGRADE_START,
 	ANOUBISD_UPGRADE_END,
 	ANOUBISD_UPGRADE_CHUNK_REQ,
-	ANOUBISD_UPGRADE_CHUNK_RSP,
-	ANOUBISD_UPGRADE_CHUNK_ACK,
+	ANOUBISD_UPGRADE_CHUNK,
 	ANOUBUSD_UPGRADE_CS_RSP
 } anoubisd_upgrade;
 
 struct anoubisd_msg_upgrade
 {
-	u_int8_t	mtype;
-	u_int32_t	size;
+	u_int8_t	upgradetype;
+	u_int32_t	chunksize;
 	char		chunk[0];
 };
 typedef struct anoubisd_msg_upgrade anoubisd_msg_upgrade_t;
@@ -287,6 +286,8 @@ void	send_lognotify(struct eventdev_hdr *, u_int32_t, u_int32_t, u_int32_t,
 void	send_policychange(u_int32_t uid, u_int32_t prio);
 void	flush_log_queue(void);
 
+void send_upgrade_start(void);
+
 #ifndef S_SPLINT_S
 #define DEBUG(flag, ...) {if (flag & debug_flags) log_debug(__VA_ARGS__);}
 #else
@@ -315,5 +316,6 @@ extern gid_t		anoubisd_gid;
 #define DBG_SANDBOX	0x4000
 #define DBG_SFSCACHE	0x8000
 #define DBG_PE_BORROW	0x10000
+#define DBG_UPGRADE	0x20000
 
 #endif /* !_ANOUBISD_H */

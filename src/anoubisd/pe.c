@@ -172,10 +172,9 @@ pe_upgrade_end(struct pe_proc *proc)
 	}
 	pe_proc_upgrade_clrallmarks();
 	upgrade_iterator = NULL;
-	/*
-	 * XXX CEH: Trigger actual end of upgrade handling, i.e. checksum
-	 * XXX CEH: update.
-	 */
+
+	/* Trigger actual end of upgrade handling, i.e. checksum update. */
+	send_upgrade_start();
 }
 
 void
