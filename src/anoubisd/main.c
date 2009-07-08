@@ -298,6 +298,8 @@ dispatch_timer(int sig __used, short event __used, /*@dependent@*/ void * arg)
 	DEBUG(DBG_TRACE, "<dispatch_timer");
 }
 
+enum anoubisd_process_type	anoubisd_process;
+
 int
 main(int argc, char *argv[])
 /*@globals undef eventq_m2p, undef eventq_m2s, undef eventq_m2dev@*/
@@ -518,8 +520,7 @@ main(int argc, char *argv[])
 
 	if ((omitfp = fopen(omit_pid_file, "w"))) {
 		fprintf(omitfp, "%d\n%d\n%d\n%d\n%d\n",
-		    master_pid, se_pid, policy_pid, logger_pid,
-		        upgrade_pid);
+		    master_pid, se_pid, policy_pid, logger_pid, upgrade_pid);
 		fclose(omitfp);
 	} else {
 		log_warn("Cannot open %s for writing", omit_pid_file);
@@ -1243,7 +1244,6 @@ dispatch_checksumop(anoubisd_msg_t *msg, struct event_info_main *ev_info)
 		return;
 	case ANOUBIS_CHECKSUM_OP_ADDSIG:
 	case ANOUBIS_CHECKSUM_OP_ADDSUM:
-	case ANOUBIS_CHECKSUM_OP_UP_ALL:
 		if (!VERIFY_LENGTH(&rawmsg, sizeof(Anoubis_ChecksumAddMessage)))
 			goto out;
 		cslen = get_value(rawmsg.u.checksumadd->cslen);
@@ -1442,25 +1442,31 @@ static void
 dispatch_p2m(int fd, short event __used, /*@dependent@*/ void *arg)
 {
 	/*@dependent@*/
-	struct event_info_main *ev_info = (struct event_info_main*)arg;
-	anoubisd_msg_t *msg;
+	struct event_info_main	*ev_info = arg;
+	anoubisd_msg_t		*msg;
 
 	DEBUG(DBG_TRACE, ">dispatch_p2m");
 
 	for (;;) {
 		if ((msg = get_msg(fd)) == NULL)
 			break;
-		if (msg->mtype != ANOUBISD_MSG_EVENTREPLY) {
+		switch(msg->mtype) {
+		case ANOUBISD_MSG_EVENTREPLY:
+			DEBUG(DBG_QUEUE, " >p2m: eventdev msg token=%x",
+			    ((struct eventdev_reply *)msg->msg)->msg_token);
+			enqueue(&eventq_m2dev, msg);
+			DEBUG(DBG_QUEUE, " >eventq_m2dev: %x",
+			    ((struct eventdev_reply *)msg->msg)->msg_token);
+			event_add(ev_info->ev_m2dev, NULL);
+			break;
+		case ANOUBISD_MSG_UPGRADE:
+			DEBUG(DBG_QUEUE, " >p2m: upgrade msg");
+			enqueue(&eventq_m2u, msg);
+			event_add(ev_info->ev_m2u, NULL);
+			break;
+		default:
 			DEBUG(DBG_TRACE, "<dispatch_p2m (bad msg)");
-			continue;
 		}
-		DEBUG(DBG_QUEUE, " >p2m: %x",
-		    ((struct eventdev_reply *)msg->msg)->msg_token);
-
-		enqueue(&eventq_m2dev, msg);
-		DEBUG(DBG_QUEUE, " >eventq_m2dev: %x",
-		    ((struct eventdev_reply *)msg->msg)->msg_token);
-		event_add(ev_info->ev_m2dev, NULL);
 
 		DEBUG(DBG_TRACE, "<dispatch_p2m (loop)");
 	}
@@ -1619,12 +1625,67 @@ dispatch_m2u(int fd, short event __used, void *arg)
 }
 
 static void
+dispatch_sfs_update_all(anoubisd_msg_t *msg)
+{
+	anoubisd_sfs_update_all_t	*umsg;
+	size_t				 plen;
+	char				*path;
+	int				 ret;
+
+	/*
+	 * Validate the message format and extract path/checksum. The
+	 * Pathname must have space for at least one byte.
+	 */
+	if ((size_t)msg->size < sizeof(*msg) + sizeof(*umsg)
+	    + ANOUBIS_CS_LEN + 1)
+		goto bad;
+	umsg = (anoubisd_sfs_update_all_t *)msg->msg;
+	if (umsg->cslen != ANOUBIS_CS_LEN)
+		goto bad;
+	plen = msg->size - sizeof(*msg) - sizeof(*umsg) - ANOUBIS_CS_LEN;
+	path = umsg->payload + umsg->cslen;
+	/* Forcfully NUL terminate the path name. */
+	path[plen-1] = 0;
+
+	/*
+	 * Update checksums on disk.
+	 */
+	ret = sfs_update_all(path, (u_int8_t*)umsg->payload, ANOUBIS_CS_LEN);
+	if (ret < 0)
+		log_warnx("Cannot update checksums during update");
+	return;
+bad:
+	log_warnx(" dispatch_sfs_update_all: Malformed message");
+	return;
+}
+
+static void
 dispatch_u2m(int fd, short event __used, void *arg)
 {
-	struct event_info_main *ev_info = (struct event_info_main*)arg;
+	struct event_info_main		*ev_info = arg;
+	anoubisd_msg_t			*msg;
 
 	DEBUG(DBG_TRACE, ">dispatch_u2m");
+	for (;;) {
+		if ((msg = get_msg(fd)) == NULL)
+			break;
+		DEBUG(DBG_QUEUE, " >u2m: msg type=%d", msg->mtype);
+		switch(msg->mtype) {
+		case ANOUBISD_MSG_UPGRADE:
+			enqueue(&eventq_m2p, msg);
+			event_add(ev_info->ev_m2p, NULL);
+			break;
+		case ANOUBISD_MSG_SFS_UPDATE_ALL:
+			dispatch_sfs_update_all(msg);
+			free(msg);
+			break;
+		default:
+			free(msg);
+			DEBUG(DBG_TRACE, "<dispatch_p2m (bad msg)");
+		}
 
+		DEBUG(DBG_TRACE, "<dispatch_p2m (loop)");
+	}
 	if (msg_eof(fd))
 		event_del(ev_info->ev_u2m);
 	DEBUG(DBG_TRACE, "<dispatch_u2m");

@@ -66,7 +66,6 @@
 #include "sfs.h"
 #include "cert.h"
 
-static int	 sfs_update_all(const char *sfs_path, u_int8_t *md, int len);
 static int	 sfs_writechecksum(const char *csum_file, const char *csum_path,
 		     u_int8_t *md, int len, int idlen);
 static int	 sfs_readchecksum(const char *csum_file, unsigned char *md);
@@ -323,13 +322,6 @@ __sfs_checksumop(const char *path, unsigned int operation, uid_t uid,
 			ret = -ENOMEM;
 			goto out;
 		}
-	} else if (operation == ANOUBIS_CHECKSUM_OP_UP_ALL) {
-		if (uid != 0) {
-			ret = -EINVAL;
-			goto out;
-		}
-		ret = sfs_update_all(csum_path, md, len);
-		goto out;
 	} else {
 		if (asprintf(&csum_file, "%s/%d", csum_path, uid) == -1) {
 			ret = -ENOMEM;
@@ -424,24 +416,32 @@ sfs_checksumop_chroot(const char *path, unsigned int operation, uid_t uid,
 /* We going through the dirctory looking for registered uids and
  * update them
  */
-static int
-sfs_update_all(const char *sfs_path, u_int8_t *md, int len)
+int
+sfs_update_all(const char *path, u_int8_t *md, int len)
 {
-	DIR *sfs_dir = NULL;
-	struct dirent *sfs_ent = NULL;
-	char testarg;
-	char *csum_file = NULL;
-	unsigned int uid;
+	DIR		*sfs_dir = NULL;
+	struct dirent	*sfs_ent = NULL;
+	char		 testarg;
+	char		*csum_file = NULL;
+	char		*sfs_path;
+	unsigned int	 uid;
+	int		 ret;
 
-	if (sfs_path == NULL || md == NULL || len != ANOUBIS_CS_LEN)
+	if (path == NULL || md == NULL || len != ANOUBIS_CS_LEN)
 		return -EINVAL;
+	ret = convert_user_path(path, &sfs_path, 1);
+	if (ret < 0)
+		return ret;
 	sfs_dir = opendir(sfs_path);
 	if (sfs_dir == NULL) {
 		/* since we just update we don't create new one */
+		ret = errno;
 		if (errno == ENOENT)
-			return 0;
-		return -errno;
+			ret = 0;
+		free(sfs_path);
+		return -ret;
 	}
+	free(sfs_path);
 
 	while ((sfs_ent = readdir(sfs_dir)) != NULL) {
 		/* since we updating checksums we skip keyid entries */

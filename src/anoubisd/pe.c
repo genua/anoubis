@@ -213,6 +213,11 @@ pe_upgrade_finish(void)
 		pe_filetree_destroy(upgrade_tree);
 		upgrade_tree = NULL;
 	}
+	/*
+	 * Checksums might have changed and the master does not send checksum
+	 * updates for these files.
+	 */
+	sfshash_flush();
 	upgrade_iterator = NULL;
 }
 

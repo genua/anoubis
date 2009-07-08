@@ -102,7 +102,7 @@ struct anoubisd_msg {
 };
 typedef struct anoubisd_msg anoubisd_msg_t;
 
-enum {
+enum anoubisd_msg_type {
 	ANOUBISD_MSG_POLREQUEST,
 	ANOUBISD_MSG_POLREPLY,
 	ANOUBISD_MSG_EVENTDEV,
@@ -115,8 +115,9 @@ enum {
 	ANOUBISD_MSG_SFSDISABLE,
 	ANOUBISD_MSG_POLICYCHANGE,
 	ANOUBISD_MSG_SFSCACHE_INVALIDATE,
-	ANOUBISD_MSG_UPGRADE
-} anoubisd_msg;
+	ANOUBISD_MSG_UPGRADE,
+	ANOUBISD_MSG_SFS_UPDATE_ALL,
+};
 
 /* format of ANOUBISD_MSG_EVENTDEV is struct eventdev_hdr */
 
@@ -184,6 +185,12 @@ struct anoubisd_sfscache_invalidate {
 };
 typedef struct anoubisd_sfscache_invalidate anoubisd_sfscache_invalidate_t;
 
+struct anoubisd_sfs_update_all {
+	u_int32_t	cslen;
+	char		payload[0];
+};
+typedef struct anoubisd_sfs_update_all anoubisd_sfs_update_all_t;
+
 /* format of ANOUBISD_MSG_LOGREQUEST */
 struct anoubisd_msg_logrequest
 {
@@ -203,14 +210,12 @@ struct anoubisd_msg_pchange
 	u_int32_t	prio;
 };
 
-enum
-{
+enum anoubisd_upgrade {
 	ANOUBISD_UPGRADE_START,
 	ANOUBISD_UPGRADE_END,
 	ANOUBISD_UPGRADE_CHUNK_REQ,
 	ANOUBISD_UPGRADE_CHUNK,
-	ANOUBUSD_UPGRADE_CS_RSP
-} anoubisd_upgrade;
+};
 
 struct anoubisd_msg_upgrade
 {
@@ -220,13 +225,14 @@ struct anoubisd_msg_upgrade
 };
 typedef struct anoubisd_msg_upgrade anoubisd_msg_upgrade_t;
 
-enum {
+enum anoubisd_process_type {
 	PROC_MAIN,
 	PROC_POLICY,
 	PROC_SESSION,
 	PROC_LOGGER,
 	PROC_UPGRADE
-} anoubisd_process;
+};
+extern enum anoubisd_process_type	anoubisd_process;
 
 pid_t	session_main(struct anoubisd_config *, int[], int[], int[], int[],
     int[]);
