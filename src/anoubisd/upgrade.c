@@ -32,6 +32,7 @@
 #endif
 
 #include <sys/types.h>
+#include <sys/ioctl.h>
 #include <pwd.h>
 #include <signal.h>
 #include <event.h>
@@ -59,8 +60,7 @@ static void	dispatch_u2m(int, short, void *);
 static int	terminate = 0;
 static Queue    eventq_u2m;
 
-struct event_info_policy {
-	/*@dependent@*/
+struct event_info_upgrade {
 	struct event	*ev_u2m, *ev_m2u;
 	struct event	*ev_sigs[10];
 };
@@ -99,7 +99,7 @@ upgrade_main(struct anoubisd_config *conf __used, int pipe_m2u[2],
 	struct event	ev_m2u, ev_u2m;
 	struct event	ev_sigterm, ev_sigint, ev_sigquit;
 	static struct event	*sigs[10];
-	struct event_info_policy ev_info;
+	struct event_info_upgrade ev_info;
 
 	pid = fork();
 	if (pid < 0) {
@@ -169,16 +169,139 @@ upgrade_main(struct anoubisd_config *conf __used, int pipe_m2u[2],
 }
 
 static void
+send_upgrade_message(int type, struct event_info_upgrade *ev_info)
+{
+	anoubisd_msg_t		*msg;
+	anoubisd_msg_upgrade_t	*umsg;
+
+	msg = msg_factory(ANOUBISD_MSG_UPGRADE, sizeof(*umsg));
+	if (msg == NULL) {
+		log_warnx("send_upgrade_message: Out of memory");
+		master_terminate(ENOMEM);
+		return;
+	}
+	umsg = (anoubisd_msg_upgrade_t *)msg->msg;
+	umsg->chunksize = 0;
+	umsg->upgradetype = type;
+	enqueue(&eventq_u2m, msg);
+	event_add(ev_info->ev_u2m, NULL);
+}
+
+static void
+send_checksum(const char *path, struct event_info_upgrade *ev_info)
+{
+	static int			 devanoubis = -2;
+	anoubisd_msg_t			*msg;
+	anoubisd_sfs_update_all_t	*umsg;
+	struct anoubis_ioctl_csum	 cs;
+	int				 fd, len, plen;
+
+	if (devanoubis == -2) {
+		devanoubis = open("/dev/anoubis", O_RDONLY);
+		if (devanoubis < 0) {
+			log_warn("upgrade: Failed to open /dev/anoubis");
+			return;
+		}
+	}
+	if (devanoubis < 0)
+		return;
+	fd = open(path, O_RDONLY);
+	if (fd < 0) {
+		if (errno != ENOENT)
+			log_warn("upgrade: Failed to open file %s", path);
+		return;
+	}
+	cs.fd = fd;
+	if (ioctl(devanoubis, ANOUBIS_GETCSUM, &cs) < 0) {
+		log_warn("upgrade: Kernel failed to supply checksum for %s",
+		    path);
+	}
+	close(fd);
+	plen = strlen(path) + 1;
+	len = sizeof(anoubisd_sfs_update_all_t) + ANOUBIS_CS_LEN + plen;
+	msg = msg_factory(ANOUBISD_MSG_SFS_UPDATE_ALL, len);
+	if (msg == NULL) {
+		log_warnx("upgrade: Out of memory in send_checksum");
+		return;
+	}
+	umsg = (anoubisd_sfs_update_all_t *)msg->msg;
+	umsg->cslen = ANOUBIS_CS_LEN;
+	memcpy(umsg->payload, &cs.csum, ANOUBIS_CS_LEN);
+	memcpy(umsg->payload + ANOUBIS_CS_LEN, path, plen);
+	enqueue(&eventq_u2m, msg);
+	event_add(ev_info->ev_u2m, NULL);
+}
+
+static void
+dispatch_upgrade(anoubisd_msg_t *msg, struct event_info_upgrade *ev_info)
+{
+	anoubisd_msg_upgrade_t		*umsg;
+	size_t				 pos;
+
+	if (msg->size < (int)(sizeof(*msg) + sizeof(*umsg))) {
+		log_warnx("dispatch_upgrade: short message");
+		return;
+	}
+	umsg = (anoubisd_msg_upgrade_t *)msg->msg;
+	if (msg->size < (int)(sizeof(*msg) + sizeof(*umsg) + umsg->chunksize)) {
+		log_warnx("dispatch_upgrade: short message");
+		return;
+	}
+	/* Force NUL-termination of strings in umsg->chunk */
+	umsg->chunk[umsg->chunksize-1] = 0;
+	switch(umsg->upgradetype) {
+	case ANOUBISD_UPGRADE_START:
+		send_upgrade_message(ANOUBISD_UPGRADE_CHUNK_REQ, ev_info);
+		break;
+	case ANOUBISD_UPGRADE_CHUNK:
+		if (umsg->chunksize == 0) {
+			send_upgrade_message(ANOUBISD_UPGRADE_END, ev_info);
+			break;
+		}
+		pos = 0;
+		while (pos < umsg->chunksize) {
+			send_checksum(umsg->chunk + pos, ev_info);
+			pos += strlen(umsg->chunk + pos) + 1;
+		}
+		send_upgrade_message(ANOUBISD_UPGRADE_CHUNK_REQ, ev_info);
+		break;
+	default:
+		log_warnx("dispatch_upgrade: Bad upgrade message type %d",
+		    umsg->upgradetype);
+	}
+}
+
+static void
 dispatch_m2u(int fd, short sig __used, void *arg)
 {
-	struct event_info_policy *ev_info = (struct event_info_policy*)arg;
+	struct event_info_upgrade	*ev_info = arg;
+	anoubisd_msg_t			*msg;
 
 	DEBUG(DBG_TRACE, ">dispatch_m2u");
 
+	for (;;) {
+		if ((msg = get_msg(fd)) == NULL)
+			break;
+		if (msg->size < (int)sizeof(anoubisd_msg_t)) {
+			log_warnx(" dispatch_m2u: short message");
+			free(msg);
+			continue;
+		}
+		DEBUG(DBG_QUEUE, " m2u: msg->msg_type");
+		switch(msg->mtype) {
+		case ANOUBISD_MSG_UPGRADE:
+			dispatch_upgrade(msg, ev_info);
+			break;
+		default:
+			log_warnx(" dispatch_m2u: Unknown message type");
+		}
+		free(msg);
+	}
 	if (msg_eof(fd)) {
 		if (terminate < 2)
 			terminate = 2;
 		event_del(ev_info->ev_m2u);
+		event_add(ev_info->ev_u2m, NULL);
 	}
 
 	DEBUG(DBG_TRACE, "<dispatch_m2u");
@@ -187,10 +310,25 @@ dispatch_m2u(int fd, short sig __used, void *arg)
 static void
 dispatch_u2m(int fd, short sig __used, void *arg)
 {
-	struct event_info_policy *ev_info = (struct event_info_policy*)arg;
+	struct event_info_upgrade	*ev_info = arg;
+	anoubisd_msg_t			*msg;
+	int				 ret;
 
 	DEBUG(DBG_TRACE, ">dispatch_u2m");
 
+	if ((msg = queue_peek(&eventq_u2m)) == NULL) {
+		DEBUG(DBG_TRACE, "<dispatch_u2m (no msg)");
+		return;
+	}
+	/* msg was checked for non-nullness just above */
+	ret = send_msg(fd, msg);
+	if (ret != 0) {
+		msg = dequeue(&eventq_u2m);
+		if (ret < 0)
+			DEBUG(DBG_QUEUE, " dispatch_u2m: Dropping message "
+			    "(error %d)", ret);
+		free(msg);
+	}
 	/* If the queue is not empty, we want to be called again */
 	if (queue_peek(&eventq_u2m) || msg_pending(fd))
 		event_add(ev_info->ev_u2m, NULL);
