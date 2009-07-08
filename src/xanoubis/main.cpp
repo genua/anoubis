@@ -94,8 +94,14 @@ AnoubisGuiApp::~AnoubisGuiApp(void)
 
 	/* Destroy versionmanagement */
 	delete VersionCtrl::getInstance();
-	delete NotificationCtrl::instance();
 	delete PolicyCtrl::getInstance();
+
+	/* XXX KM: if we delete this instance a
+	 * segfault occured described in:
+	 * BUG 1333
+	 * for now we just don't clean up!
+	 * delete NotificationCtrl::instance();
+	 */
 }
 
 void
