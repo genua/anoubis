@@ -1297,6 +1297,7 @@ session_setupuds(struct sessionGroup *seg, struct anoubisd_config * conf)
 	if (rc != ACHAT_RC_OK) {
 		log_warn("session_setupuds: acc_settail");
 		acc_destroy(seg->keeper_uds);
+		seg->keeper_uds = NULL;
 		return;
 	}
 
@@ -1304,6 +1305,7 @@ session_setupuds(struct sessionGroup *seg, struct anoubisd_config * conf)
 	if (rc != ACHAT_RC_OK) {
 		log_warn("session_setupuds: acc_setsslmode");
 		acc_destroy(seg->keeper_uds);
+		seg->keeper_uds = NULL;
 		return;
 	}
 
@@ -1315,6 +1317,7 @@ session_setupuds(struct sessionGroup *seg, struct anoubisd_config * conf)
 	if (rc != ACHAT_RC_OK) {
 		log_warn("session_setupuds: acc_setaddr");
 		acc_destroy(seg->keeper_uds);
+		seg->keeper_uds = NULL;
 		return;
 	}
 
@@ -1322,6 +1325,7 @@ session_setupuds(struct sessionGroup *seg, struct anoubisd_config * conf)
 	if (rc != ACHAT_RC_OK) {
 		log_warn("session_setupuds: acc_prepare");
 		acc_destroy(seg->keeper_uds);
+		seg->keeper_uds = NULL;
 		return;
 	}
 
