@@ -33,9 +33,8 @@ if XANOUBIS
 GUI=xanoubis
 endif
 
-SUBDIRS = libanoubischeck libapn libanoubischat libanoubispreload \
-	libanoubisprotocol libanoubisui anoubisd libanoubissig $(GUI) \
-	$(BSDCOMPAT)
+SUBDIRS = libanoubischeck libapn libanoubischat libanoubisprotocol \
+	libanoubisui anoubisd libanoubissig $(GUI) $(BSDCOMPAT)
 
 # targets must exist, but need not to do anything
 flawfinder:

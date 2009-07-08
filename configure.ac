@@ -134,7 +134,6 @@ AC_CONFIG_FILES([
 	src/Makefile
 	src/anoubisd/Makefile
 	src/libanoubischat/Makefile
-	src/libanoubispreload/Makefile
 	src/libanoubisprotocol/Makefile
 	src/libanoubisui/Makefile
 	src/libanoubissig/Makefile
@@ -149,7 +148,6 @@ AC_CONFIG_FILES([
 	test/Makefile
 	test/libanoubischeck/Makefile
 	test/libanoubischat/Makefile
-	test/libanoubispreload/Makefile
 	test/libanoubisprotocol/Makefile
 	test/xanoubis/Makefile
 	test/libanoubissig/Makefile
@@ -365,34 +363,5 @@ AC_SUBST(shared_AM_LDFLAGS)
 AC_SUBST(AM_CFLAGS)
 AC_SUBST(AM_CXXFLAGS)
 AC_SUBST(AM_LDFLAGS)
-
-dnl
-dnl check for dlopen, dlclose, dlsym
-dnl
-DL_LIB=
-AC_CHECK_FUNCS([dlopen dlclose dlsym],
-	[have_dl_funcs="yes"], [have_dl_funcs="no"])
-AC_CHECK_LIB([dl], [dlopen],
-	[have_dlopen_lib="yes"], [have_dlopen_lib="no"])
-AC_CHECK_LIB([dl], [dlclose],
-	[have_dlclose_lib="yes"], [have_dlclose_lib="no"])
-AC_CHECK_LIB([dl], [dlsym],
-	[have_dlsym_lib="yes"], [have_dlsym_lib="no"])
-
-if [test "x$have_dl_funcs" = "xno"]; then
-	have_dl_lib="$have_dlopen_lib$have_dlclose_lib$have_dlsym_lib"
-	if [test "x$have_dl_lib" = "xyesyesyes"]; then
-		DL_LIB="-ldl"
-	else
-		AC_MSG_ERROR([Unable to detect dlopen, dlclose, dlsym])
-	fi
-fi
-
-AC_SUBST(DL_LIB)
-
-dnl
-dnl Detect path of libc
-dnl
-AC_LIB_LIBC
 
 AC_OUTPUT
