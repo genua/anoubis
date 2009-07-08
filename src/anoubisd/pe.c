@@ -540,11 +540,14 @@ pe_handle_sfs(struct eventdev_hdr *hdr)
 	/* XXX CEH: This might need more thought. */
 	reply = reply_merge(hdr, reply, reply2);
 
-	/* XXX SSP: we don't have conf yet ...
-	if (version >= ANOUBISCORE_LOCK_VERSION)
-		if (strcmp(fevent->path, conf->pkgdblock) == 0)
-			reply->reply |= ANOUBIS_OPEN_RET_LOCKWATCH;
-	*/
+#ifdef NOTYET
+	if (version >= ANOUBISCORE_LOCK_VERSION) {
+		/* XXX CEH: Debian path is hard coded here. */
+		if (fevent->uid == 0 && reply->reply == 0
+		    && strcmp(fevent->path, "/var/lib/dpkg/lock") == 0)
+			reply->reply |= ANOUBIS_RET_OPEN_LOCKWATCH;
+	}
+#endif
 
 	if (fevent->path)
 		free(fevent->path);
@@ -607,7 +610,8 @@ pe_handle_sfspath(struct eventdev_hdr *hdr)
 				reply->reply = EPERM;
 			break;
 		case ANOUBIS_PATH_OP_LOCK:
-			pe_upgrade_start(proc);
+			if (hdr->msg_uid == 0)
+				pe_upgrade_start(proc);
 			break;
 	}
 
