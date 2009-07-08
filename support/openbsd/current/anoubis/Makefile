@@ -75,9 +75,6 @@ post-install:
 	    done ;\
 	done
 
-	cp ${FILESDIR}/pkg_add ${WRKINST}/usr/local/bin ;
-	cp ${FILESDIR}/pkg_delete ${WRKINST}/usr/local/bin ;
-
 	cp ${FILESDIR}/anoubisd.conf ${PREFIX}/share/anoubisd ;
 
 	@ ${INSTALL_DATA_DIR} ${PREFIX}/share/applications/
