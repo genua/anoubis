@@ -429,7 +429,7 @@ sfs_update_all(const char *path, u_int8_t *md, int len)
 
 	if (path == NULL || md == NULL || len != ANOUBIS_CS_LEN)
 		return -EINVAL;
-	ret = convert_user_path(path, &sfs_path, 1);
+	ret = convert_user_path(path, &sfs_path, 0);
 	if (ret < 0)
 		return ret;
 	sfs_dir = opendir(sfs_path);
@@ -441,8 +441,6 @@ sfs_update_all(const char *path, u_int8_t *md, int len)
 		free(sfs_path);
 		return -ret;
 	}
-	free(sfs_path);
-
 	while ((sfs_ent = readdir(sfs_dir)) != NULL) {
 		/* since we updating checksums we skip keyid entries */
 		if (strcmp(sfs_ent->d_name, ".") == 0 ||
@@ -453,12 +451,17 @@ sfs_update_all(const char *path, u_int8_t *md, int len)
 			continue;
 		if (asprintf(&csum_file, "%s/%d", sfs_path, uid) == -1) {
 			closedir(sfs_dir);
+			free(sfs_path);
 			return -ENOMEM;
 		}
-		sfs_writechecksum(csum_file, sfs_path, md, len, 0);
+		ret = sfs_writechecksum(csum_file, sfs_path, md, len, 0);
+		if (ret)
+			log_warnx("Cannot update checksum for %s (uid %d): "
+			    "error = %d\n", path, uid, ret);
 		free(csum_file);
 		csum_file = NULL;
 	}
+	free(sfs_path);
 	closedir(sfs_dir);
 	return 0;
 }
@@ -501,7 +504,7 @@ sfs_writechecksum(const char *csum_file, const char *csum_path, u_int8_t *md,
 		close(fd);
 		unlink(csum_tmp);
 		free(csum_tmp);
-		return ret;;
+		return ret;
 	}
 	while (written < len) {
 		ret = write(fd, md + idlen + written, len - written);
