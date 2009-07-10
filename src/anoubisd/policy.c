@@ -690,23 +690,16 @@ dispatch_p2m(int fd, short sig __used, void *arg)
 	int		ret;
 
 	DEBUG(DBG_TRACE, ">dispatch_p2m");
-	if ((msg = queue_peek(&eventq_p2m)) == NULL) {
-		DEBUG(DBG_TRACE, "<dispatch_p2m (no msg)");
-		return;
-	}
-
-	/* msg was checked for non-nullness just above */
-	/*@-nullderef@*/ /*@-nullpass@*/
+	msg = queue_peek(&eventq_p2m);
 	ret = send_msg(fd, msg);
-	if (ret != 0) {
+
+	if (msg && ret != 0) {
 		msg = dequeue(&eventq_p2m);
 		DEBUG(DBG_QUEUE, " <eventq_p2m: %s%x", (ret > 0) ? "" : " "
 		    "dropping ",
 		    ((struct eventdev_reply *)msg->msg)->msg_token);
 		free(msg);
 	}
-	/*@=nullderef@*/ /*@=nullpass@*/
-
 	/* If the queue is not empty, we want to be called again */
 	if (queue_peek(&eventq_p2m) || msg_pending(fd))
 		event_add(ev_info->ev_p2m, NULL);
@@ -923,26 +916,17 @@ dispatch_p2s(int fd, short sig __used, void *arg)
 
 	DEBUG(DBG_TRACE, ">dispatch_p2s");
 
-	if ((msg = queue_peek(&eventq_p2s)) == NULL) {
-		if (terminate)
-			goto out;
-		DEBUG(DBG_TRACE, "<dispatch_p2s (no msg)");
-		return;
-	}
-
-	/* msg was checked for non-nullness just above */
-	/*@-nullderef@*/ /*@-nullpass@*/
+	msg = queue_peek(&eventq_p2s);
 	ret = send_msg(fd, msg);
-	if (ret != 0) {
+
+	if (msg && ret != 0) {
 		msg = dequeue(&eventq_p2s);
 		DEBUG(DBG_QUEUE, " <eventq_p2s: %s%x", (ret > 0) ? "" : " "
 		    "dropping ",
 		    ((struct eventdev_hdr *)msg->msg)->msg_token);
 		free(msg);
 	}
-	/*@=nullderef@*/ /*@=nullpass@*/
 
-out:
 	/* If the queue is not empty, we want to be called again */
 	if (queue_peek(&eventq_p2s) || msg_pending(fd))
 		event_add(ev_info->ev_p2s, NULL);

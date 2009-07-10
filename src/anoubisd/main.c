@@ -830,37 +830,24 @@ msg_factory(int mtype, int size)
 static void
 dispatch_m2s(int fd, short event __used, /*@dependent@*/ void *arg)
 {
-	/*@dependent@*/
-	anoubisd_msg_t *msg;
-	struct event_info_main *ev_info = (struct event_info_main*)arg;
-	int		ret;
+	anoubisd_msg_t			*msg;
+	struct event_info_main		*ev_info = arg;
+	int				 ret;
 
 	DEBUG(DBG_TRACE, ">dispatch_m2s");
 
-	if ((msg = queue_peek(&eventq_m2s)) == NULL) {
-		if (terminate)
-			goto out;
-		DEBUG(DBG_TRACE, "<dispatch_m2s (no msg) ");
-		return;
-	}
-
-	/* msg was checked for non-nullness just above */
-	/*@-nullderef@*/ /*@-nullpass@*/
+	msg = queue_peek(&eventq_m2s);
 	ret = send_msg(fd, msg);
-	if (ret != 0) {
+	if (msg && ret != 0) {
 		msg = dequeue(&eventq_m2s);
 		DEBUG(DBG_QUEUE, " <eventq_m2s: %s%x", (ret > 0) ? "" : ""
 		    " dropping ",
 		    ((struct eventdev_hdr *)msg->msg)->msg_token);
 		free(msg);
 	}
-
 	/* Write was not successful: Check if we lost one of our childs. */
 	if (ret <= 0)
 		sighandler(SIGCHLD, 0, NULL);
-	/*@=nullderef@*/ /*@=nullpass@*/
-
-out:
 	/* If the queue is not empty, to be called again */
 	if (queue_peek(&eventq_m2s) || msg_pending(fd))
 		event_add(ev_info->ev_m2s, NULL);
@@ -1404,30 +1391,20 @@ dispatch_m2p(int fd, short event __used, /*@dependent@*/ void *arg)
 
 	DEBUG(DBG_TRACE, ">dispatch_m2p");
 
-	if ((msg = queue_peek(&eventq_m2p)) == NULL) {
-		if (terminate)
-			goto out;
-		DEBUG(DBG_TRACE, "<dispatch_m2p (no msg)");
-		return;
-	}
-
-	/* msg was checked for non-nullness just above */
-	/*@-nullderef@*/ /*@-nullpass@*/
+	msg = queue_peek(&eventq_m2p);
 	ret = send_msg(fd, msg);
-	if (ret != 0) {
+
+	if (msg && ret != 0) {
 		msg = dequeue(&eventq_m2p);
 		DEBUG(DBG_QUEUE, " <eventq_m2p: %s%x", (ret > 0) ? "" :
 		    "dropping ",
 		    ((struct eventdev_hdr *)msg->msg)->msg_token);
 		free(msg);
 	}
-
 	/* Write was not successful. See if we lost one of our childs. */
 	if (ret <= 0)
 		sighandler(SIGCHLD, 0, NULL);
-	/*@=nullderef@*/ /*@=nullpass@*/
 
-out:
 	/* If the queue is not empty, we want to be called again */
 	if (queue_peek(&eventq_m2p) || msg_pending(fd))
 		event_add(ev_info->ev_m2p, NULL);
@@ -1611,10 +1588,27 @@ dispatch_dev2m(int fd, short event __used, void *arg)
 static void
 dispatch_m2u(int fd, short event __used, void *arg)
 {
-	struct event_info_main *ev_info = (struct event_info_main*)arg;
+	anoubisd_msg_t			*msg;
+	struct event_info_main		*ev_info = arg;
+	int				 ret;
 
 	DEBUG(DBG_TRACE, ">dispatch_m2u");
 
+	msg = queue_peek(&eventq_m2u);
+	ret = send_msg(fd, msg);
+
+	if (msg && ret != 0) {
+		DEBUG(DBG_QUEUE, " eventq_m2u: Message type %d", msg->mtype);
+		msg = dequeue(&eventq_m2u);
+		if (ret < 0)
+			log_warnx(" eventq_m2u: Dropping Message");
+		free(msg);
+	}
+	/* Write was not successful: Check if we lost one of our childs. */
+	if (ret <= 0)
+		sighandler(SIGCHLD, 0, NULL);
+
+	/* If the queue is not empty, to be called again */
 	if (queue_peek(&eventq_m2u) || msg_pending(fd))
 		event_add(ev_info->ev_m2u, NULL);
 	else if (terminate >= 2) {

@@ -355,15 +355,12 @@ get_client_msg(int fd, struct anoubis_msg **msgp)
 	return 1;
 }
 
+/* Just flush the buffer if msg == NULL. */
 int
 send_msg(int fd, anoubisd_msg_t *msg)
 {
 	struct msg_buf *mbp;
 
-	if (msg->size > MSG_BUF_SIZE) {
-		log_warnx("send_msg: message %p to large %d", msg, msg->size);
-		return -1;
-	}
 	if ((mbp = _get_mbp(fd)) == NULL) {
 		log_warnx("msg_buf not initialized");
 		return -1;
@@ -371,6 +368,12 @@ send_msg(int fd, anoubisd_msg_t *msg)
 	if (mbp->wtailp != mbp->wheadp) {
 		_flush_buf(mbp);
 		return 0;
+	}
+	if (!msg)
+		return 1;
+	if (msg->size > MSG_BUF_SIZE) {
+		log_warnx("send_msg: message %p to large %d", msg, msg->size);
+		return -1;
 	}
 
 	bcopy(msg, mbp->wtailp, msg->size);

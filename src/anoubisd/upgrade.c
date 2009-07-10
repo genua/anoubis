@@ -316,19 +316,17 @@ dispatch_u2m(int fd, short sig __used, void *arg)
 
 	DEBUG(DBG_TRACE, ">dispatch_u2m");
 
-	if ((msg = queue_peek(&eventq_u2m)) == NULL) {
-		DEBUG(DBG_TRACE, "<dispatch_u2m (no msg)");
-		return;
-	}
-	/* msg was checked for non-nullness just above */
+	msg = queue_peek(&eventq_u2m);
 	ret = send_msg(fd, msg);
-	if (ret != 0) {
+
+	if (msg && ret != 0) {
 		msg = dequeue(&eventq_u2m);
 		if (ret < 0)
 			DEBUG(DBG_QUEUE, " dispatch_u2m: Dropping message "
 			    "(error %d)", ret);
 		free(msg);
 	}
+
 	/* If the queue is not empty, we want to be called again */
 	if (queue_peek(&eventq_u2m) || msg_pending(fd))
 		event_add(ev_info->ev_u2m, NULL);
