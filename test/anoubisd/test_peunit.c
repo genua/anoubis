@@ -187,6 +187,8 @@ send_upgrade_start(void)
 }
 
 unsigned int debug_flags = 0;
+unsigned long version = ANOUBISCORE_VERSION;
+enum anoubisd_process_type anoubisd_process = 0;
 
 extern TCase	*anoubisd_testcase_pe(void);
 extern TCase	*anoubisd_testcase_pe_filetree(void);

@@ -294,8 +294,27 @@ void	flush_log_queue(void);
 
 void send_upgrade_start(void);
 
+extern char *logname;
+
 #ifndef S_SPLINT_S
-#define DEBUG(flag, ...) {if (flag & debug_flags) log_debug(__VA_ARGS__);}
+static inline const char	*debug_proc_name(void)
+{
+	switch (anoubisd_process) {
+	case PROC_MAIN:		return "main"; break;
+	case PROC_LOGGER:	return "logger"; break;
+	case PROC_POLICY:	return "policy"; break;
+	case PROC_SESSION:	return "session"; break;
+	case PROC_UPGRADE:	return "upgrade"; break;
+	default:		return "<unknown>"; break;
+	}
+}
+#define DEBUG(flag, fmt, ...)					\
+	do {							\
+		if (flag & debug_flags) {			\
+			log_debug("%s: " fmt,			\
+			    debug_proc_name(), ## __VA_ARGS__);	\
+		}						\
+	} while(0)
 #else
 /* Splint does not parse varadic macros */
 #define DEBUG
@@ -304,6 +323,7 @@ void send_upgrade_start(void);
 extern u_int32_t	debug_flags;
 extern u_int32_t	debug_stderr;
 extern gid_t		anoubisd_gid;
+extern unsigned long	version;
 
 #define DBG_MSG_FD	0x0001
 #define DBG_MSG_SEND	0x0002

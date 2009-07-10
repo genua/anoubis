@@ -58,7 +58,6 @@ static struct event	__log_event;
 static Queue		__eventq_log;
 static int		__logging = 0;
 
-extern char	*logname;
 static int	 terminate = 0;
 
 static void
