@@ -46,6 +46,8 @@ typedef enum {
 	key_bad,
 	key_nooption,
 	key_unixsocket,
+	key_upgrade_mode,
+	key_upgrade_trigger
 } cfg_key;
 
 static struct {
@@ -53,6 +55,8 @@ static struct {
 	cfg_key key;
 } keywords[] = {
 	{ "unixsocket", key_unixsocket },
+	{ "upgrade_mode", key_upgrade_mode },
+	{ "upgrade_trigger", key_upgrade_trigger },
 	{ NULL, key_bad }
 };
 
@@ -148,35 +152,6 @@ cfg_param_addvalue(struct cfg_param *param, const char *value, int lineno)
 }
 
 /*
- * Processes the given cfg_param structure, The anoubisd_config structure is
- * filled.
- */
-static int
-cfg_param_process(struct cfg_param *param, struct anoubisd_config *config,
-    int lineno)
-{
-	char *s;
-
-	switch (param->key) {
-		case key_unixsocket:
-			s = strdup(param->value);
-
-			if (s == NULL) {
-				log_warnx("%s: line %d: Out of memory",
-				    __FUNCTION__, lineno);
-				return (-ENOMEM);
-			}
-
-			config->unixsocket = s;
-			break;
-		default:
-			break;
-	}
-
-	return (0);
-}
-
-/*
  * Removes any leading and trailing whitespaces from the given string.
  * Note, that the string can be modified! A pointer to the modified
  * string is returned.
@@ -209,6 +184,160 @@ strip_whitespaces(char *string)
 	}
 
 	return (s);
+}
+
+/*
+ * Transforms the given string into a anoubisd_upgrade_mode value.
+ * On success, the related anoubisd_upgrade_mode is returned and *ok is set
+ * to 1. On failure, *ok is set to 0.
+ */
+static int
+cfg_parse_upgrade_mode(const char *value, int *ok, int lineno)
+{
+	if ((value == NULL) || (ok == NULL)) {
+		log_warnx("%s: line %d: Invalid argument",
+		    __FUNCTION__, lineno);
+
+		*ok = 0;
+		return (-1);
+	}
+
+	if (strcasecmp(value, "off") == 0) {
+		*ok = 1;
+		return (ANOUBISD_UPGRADE_MODE_OFF);
+	} else if (strcasecmp(value, "strictlock") == 0) {
+		*ok = 1;
+		return (ANOUBISD_UPGRADE_MODE_STRICT_LOCK);
+	} else if (strcasecmp(value, "looselock") == 0) {
+		*ok = 1;
+		return (ANOUBISD_UPGRADE_MODE_LOOSE_LOCK);
+	} else if (strcasecmp(value, "process") == 0) {
+		*ok = 1;
+		return (ANOUBISD_UPGRADE_MODE_PROCESS);
+	} else {
+		log_warnx("%s: line %d: Unexpected value (%s)",
+		    __FUNCTION__, lineno, value);
+
+		*ok = 0;
+		return (-1);
+	}
+}
+
+/*
+ * Filles the config->upgrade_trigger list with triggers enumerated in the
+ * given value.
+ */
+static int
+cfg_parse_upgrade_trigger(const char *value, struct anoubisd_config *config,
+    int lineno) {
+
+	struct anoubisd_upgrade_trigger	*trigger;
+	char				*s;
+
+	if ((value == NULL) || (config == NULL)) {
+		log_warnx("%s: line %d: Invalid argument",
+		    __FUNCTION__, lineno);
+
+		return (-EINVAL);
+	}
+
+ 	if ((s = strdup(value)) == NULL) {
+		log_warnx("%s: line %d: Out of memory",
+		    __FUNCTION__, lineno);
+
+		return (-ENOMEM);
+	}
+
+	while (1) {
+		/*
+		 * Also split at whitespaces to detect whitespaces around the
+		 * comma
+		 */
+		char *token = strsep(&s, ", \t");
+
+		if (token == NULL) /* End of string reached */
+			break;
+
+		if (strlen(token) > 0) { /* Ignore empty strings */
+			trigger = malloc(
+			    sizeof(struct anoubisd_upgrade_trigger));
+
+			if (trigger == NULL) {
+				log_warnx("%s: line %d: Out of memory",
+				    __FUNCTION__, lineno);
+
+				free(s);
+
+				return (-ENOMEM);
+			}
+
+			trigger->arg = strdup(token);
+			if (trigger->arg == NULL) {
+				log_warnx("%s: line %d: Out of memory",
+				    __FUNCTION__, lineno);
+
+				free(trigger);
+				free(s);
+
+				return (-ENOMEM);
+			}
+
+			LIST_INSERT_HEAD(&config->upgrade_trigger,
+			    trigger, entries);
+		}
+	}
+
+	free(s);
+
+	return (0);
+}
+
+/*
+ * Processes the given cfg_param structure, The anoubisd_config structure is
+ * filled.
+ */
+static int
+cfg_param_process(struct cfg_param *param, struct anoubisd_config *config,
+    int lineno)
+{
+	char *s;
+	anoubisd_upgrade_mode upgrade_mode;
+	int parse_result = 0;
+
+	switch (param->key) {
+		case key_unixsocket:
+			s = strdup(param->value);
+
+			if (s == NULL) {
+				log_warnx("%s: line %d: Out of memory",
+				    __FUNCTION__, lineno);
+				return (-ENOMEM);
+			}
+
+			config->unixsocket = s;
+			break;
+		case key_upgrade_mode:
+			upgrade_mode = cfg_parse_upgrade_mode(
+			    param->value, &parse_result, lineno);
+
+			if (parse_result) {
+				config->upgrade_mode = upgrade_mode;
+				break;
+			} else
+				return (1);
+		case key_upgrade_trigger:
+			parse_result = cfg_parse_upgrade_trigger(
+			    param->value, config, lineno);
+
+			if (parse_result != 0)
+				return (parse_result);
+
+			break;
+		default:
+			break;
+	}
+
+	return (0);
 }
 
 /*
@@ -247,6 +376,9 @@ cfg_initialize(struct anoubisd_config *config)
 	} else
 		config->unixsocket = s;
 
+	config->upgrade_mode = ANOUBISD_UPGRADE_MODE_OFF;
+	LIST_INIT(&config->upgrade_trigger);
+
 	return (0);
 }
 
@@ -257,6 +389,16 @@ void
 cfg_clear(struct anoubisd_config *config)
 {
 	free(config->unixsocket);
+
+	while (!LIST_EMPTY(&config->upgrade_trigger)) {
+		struct anoubisd_upgrade_trigger *trigger;
+
+		trigger = LIST_FIRST(&config->upgrade_trigger);
+		LIST_REMOVE(trigger, entries);
+
+		free(trigger->arg);
+		free(trigger);
+	}
 }
 
 /**
@@ -489,5 +631,35 @@ cfg_read_file(struct anoubisd_config *config, const char *file)
 void
 cfg_dump(struct anoubisd_config *config, FILE *f)
 {
+	struct anoubisd_upgrade_trigger *trigger;
+
 	fprintf(f, "unixsocket: %s\n", config->unixsocket);
+
+	/* upgrade_mode */
+	switch (config->upgrade_mode) {
+	case ANOUBISD_UPGRADE_MODE_OFF:
+		fprintf(f, "upgrade_mode: off\n");
+		break;
+	case ANOUBISD_UPGRADE_MODE_STRICT_LOCK:
+		fprintf(f, "upgrade_mode: strictlock\n");
+		break;
+	case ANOUBISD_UPGRADE_MODE_LOOSE_LOCK:
+		fprintf(f, "upgrade_mode: looselock\n");
+		break;
+	case ANOUBISD_UPGRADE_MODE_PROCESS:
+		fprintf(f, "upgrade_mode: process\n");
+		break;
+	}
+
+	/* upgrade_trigger */
+	if (!LIST_EMPTY(&config->upgrade_trigger)) {
+		fprintf(f, "upgrade_trigger: ");
+		LIST_FOREACH(trigger, &config->upgrade_trigger, entries) {
+			if (trigger->entries.le_next != NULL)
+				fprintf(f, "%s, ", trigger->arg);
+			else
+				fprintf(f, "%s\n", trigger->arg);
+		}
+	} else
+		fprintf(f, "upgrade_trigger:\n");
 }

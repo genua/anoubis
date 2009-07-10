@@ -28,6 +28,8 @@
 #ifndef _ANOUBISD_H
 #define _ANOUBISD_H
 
+#include "config.h"
+
 #include <sys/file.h>
 #include <sys/types.h>
 #include <sys/param.h>
@@ -48,6 +50,12 @@
 #include <dev/anoubis_sfs.h>
 #endif
 #include <assert.h>
+
+#ifndef NEEDBSDCOMPAT
+#include <sys/queue.h>
+#else
+#include <queue.h>
+#endif
 
 #ifdef LINUX
 #define ANOUBISCORE_MIN_VERSION	0x00010002UL
@@ -85,9 +93,28 @@
 #define UID_MAX	UINT_MAX
 #endif
 
+typedef enum
+{
+	ANOUBISD_UPGRADE_MODE_OFF,
+	ANOUBISD_UPGRADE_MODE_STRICT_LOCK,
+	ANOUBISD_UPGRADE_MODE_LOOSE_LOCK,
+	ANOUBISD_UPGRADE_MODE_PROCESS
+} anoubisd_upgrade_mode;
+
+LIST_HEAD(anoubisd_upgrade_trigger_list, anoubisd_upgrade_trigger);
+
+struct anoubisd_upgrade_trigger {
+	char *arg;
+	LIST_ENTRY(anoubisd_upgrade_trigger) entries;
+};
+
 struct anoubisd_config {
 	int	opts;
 	char * unixsocket;        /* defaults to ANOUBISD_SOCKETNAME */
+
+	/* Upgrade options */
+	anoubisd_upgrade_mode			upgrade_mode;
+	struct anoubisd_upgrade_trigger_list	upgrade_trigger;
 };
 
 struct session_reg {
