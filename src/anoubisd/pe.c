@@ -65,8 +65,6 @@
 #include "sfs.h"
 #include "cert.h"
 
-extern unsigned long	version;
-
 static anoubisd_reply_t	*pe_dispatch_event(struct eventdev_hdr *);
 static anoubisd_reply_t	*pe_handle_process(struct eventdev_hdr *);
 static anoubisd_reply_t	*pe_handle_sfsexec(struct eventdev_hdr *);
@@ -544,8 +542,11 @@ pe_handle_sfs(struct eventdev_hdr *hdr)
 	if (version >= ANOUBISCORE_LOCK_VERSION) {
 		/* XXX CEH: Debian path is hard coded here. */
 		if (fevent->uid == 0 && reply->reply == 0
-		    && strcmp(fevent->path, "/var/lib/dpkg/lock") == 0)
+		    && strcmp(fevent->path, "/var/lib/dpkg/lock") == 0) {
+			DEBUG(DBG_UPGRADE, "Enabling lockwatch on %s",
+			    fevent->path);
 			reply->reply |= ANOUBIS_RET_OPEN_LOCKWATCH;
+		}
 	}
 #endif
 
@@ -610,6 +611,8 @@ pe_handle_sfspath(struct eventdev_hdr *hdr)
 				reply->reply = EPERM;
 			break;
 		case ANOUBIS_PATH_OP_LOCK:
+			DEBUG(DBG_UPGRADE, "Lock event for task cookie %llx",
+			    pe_proc_task_cookie(proc));
 			if (hdr->msg_uid == 0)
 				pe_upgrade_start(proc);
 			break;
@@ -710,7 +713,7 @@ pe_parse_path_event(struct eventdev_hdr *hdr)
 {
 	struct pe_path_event	*ret = NULL;
 	struct sfs_path_message	*kernmsg;
-	unsigned int		 sfslen, i;
+	unsigned int		 sfslen;
 	const char		*pathptr;
 
 	if (!hdr)
@@ -725,39 +728,37 @@ pe_parse_path_event(struct eventdev_hdr *hdr)
 		kernmsg->pathlen[0] + kernmsg->pathlen[1]))
 		goto err;
 
-	/* only support hardlink and rename operations for now */
+	/* only support hardlink, rename and lock operations for now */
 	switch (kernmsg->op) {
 		case ANOUBIS_PATH_OP_LINK:
 		case ANOUBIS_PATH_OP_RENAME:
+			if (kernmsg->pathlen[1] == 0)
+				goto err;
+			break;
 		case ANOUBIS_PATH_OP_LOCK:
+			if (kernmsg->pathlen[1] != 0)
+				goto err;
 			break;
 		default:
 			goto err;
 	}
+	if (kernmsg->pathlen[0] == 0)
+		goto err;
 
-	for (i=0; i < 2; i++) {
-		/* having an empty path is an error for certain operations */
-		if (kernmsg->pathlen[i] == 0)
-			if ((kernmsg->op == ANOUBIS_PATH_OP_LINK) ||
-			    (kernmsg->op == ANOUBIS_PATH_OP_LINK))
-				goto err;
-
-		pathptr = kernmsg->paths;
-		if (i == 1)
-			pathptr += kernmsg->pathlen[0];
-
-		if (pathptr[kernmsg->pathlen[i] - 1] != 0)
-			goto err;
-
-		if (kernmsg->pathlen[i] != strlen(pathptr) + 1)
-			goto err;
-	}
+	pathptr = kernmsg->paths;
+	if (pathptr[kernmsg->pathlen[0]-1] != 0)
+		goto err;
+	pathptr += kernmsg->pathlen[0];
+	if (kernmsg->pathlen[1] && pathptr[kernmsg->pathlen[1]-1] != 0)
+		goto err;
 
 	ret = malloc(sizeof(struct pe_path_event));
 	if (!ret)
 		return NULL;
+	ret->path[0] = ret->path[1] = NULL;
 	ret->cookie = kernmsg->common.task_cookie;
 	ret->op = kernmsg->op;
+	ret->uid = hdr->msg_uid;
 
 	ret->path[0] = strdup(kernmsg->paths);
 	if (ret->path[0] == NULL)
@@ -767,11 +768,7 @@ pe_parse_path_event(struct eventdev_hdr *hdr)
 		ret->path[1] = strdup((kernmsg->paths) + kernmsg->pathlen[0]);
 		if (ret->path[1] == NULL)
 			goto err;
-	} else {
-		ret->path[1] = NULL;
 	}
-
-	ret->uid = hdr->msg_uid;
 	return ret;
 
 err:
