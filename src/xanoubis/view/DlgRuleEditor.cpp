@@ -1057,6 +1057,7 @@ DlgRuleEditor::onAppListCreateButton(wxCommandEvent &)
 	long		 top;
 	long		 index;
 	long		 indexSuggestion;
+	long		 ruleSet_id;
 	wxString	 typeSelection;
 	wxString	 message;
 	Policy		*policy;
@@ -1070,6 +1071,8 @@ DlgRuleEditor::onAppListCreateButton(wxCommandEvent &)
 	policyCtrl = PolicyCtrl::getInstance();
 	policy = getSelectedPolicy(appPolicyListCtrl);
 
+	ruleSet_id = -1;
+
 	if (policy) {
 		ruleSet = policy->getParentRuleSet();
 		if (ruleSet && ruleSet->isAdmin() && geteuid() != 0) {
@@ -1079,7 +1082,14 @@ DlgRuleEditor::onAppListCreateButton(wxCommandEvent &)
 			return;
 		}
 	} else {
-		ruleSet = policyCtrl->getRuleSet(userRuleSetId_);
+		if (rb_userSelect->GetValue()) {
+			if (!tx_userSelect->IsEmpty()) {
+				ruleSet_id = adminRuleSetId_;
+			}
+		} else {
+			ruleSet_id = userRuleSetId_;
+		}
+		ruleSet = policyCtrl->getRuleSet(ruleSet_id);
 	}
 
 	if (ruleSet == NULL) {
