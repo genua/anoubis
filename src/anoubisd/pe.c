@@ -538,7 +538,6 @@ pe_handle_sfs(struct eventdev_hdr *hdr)
 	/* XXX CEH: This might need more thought. */
 	reply = reply_merge(hdr, reply, reply2);
 
-#ifdef NOTYET
 	if (version >= ANOUBISCORE_LOCK_VERSION) {
 		/* XXX CEH: Debian path is hard coded here. */
 		if (fevent->uid == 0 && reply->reply == 0
@@ -548,7 +547,6 @@ pe_handle_sfs(struct eventdev_hdr *hdr)
 			reply->reply |= ANOUBIS_RET_OPEN_LOCKWATCH;
 		}
 	}
-#endif
 
 	if (fevent->path)
 		free(fevent->path);
@@ -736,6 +734,7 @@ pe_parse_path_event(struct eventdev_hdr *hdr)
 				goto err;
 			break;
 		case ANOUBIS_PATH_OP_LOCK:
+		case ANOUBIS_PATH_OP_UNLOCK:
 			if (kernmsg->pathlen[1] != 0)
 				goto err;
 			break;

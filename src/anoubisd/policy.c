@@ -433,7 +433,7 @@ send_upgrade_chunk(struct event_info_policy *ev_info)
 	memcpy(upg->chunk, buf, buf_size);
 
 	DEBUG(DBG_UPGRADE, " send_upgrade_chunk: "
-	    "enqueue ANOUBISD_UPGRADE_CHUNK_RSP, chunksize = %i",
+	    "enqueue ANOUBISD_UPGRADE_CHUNK, chunksize = %i",
 	    upg->chunksize);
 	enqueue(&eventq_p2m, msg);
 	event_add(ev_info->ev_p2m, NULL);
@@ -445,7 +445,7 @@ static void
 dispatch_upgrade(anoubisd_msg_t *msg, struct event_info_policy *ev_info)
 {
 	struct anoubisd_msg_upgrade	*upg;
-	int 				total;
+	int				total;
 
 	DEBUG(DBG_UPGRADE, ">dispatch_upgrade");
 

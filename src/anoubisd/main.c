@@ -107,7 +107,7 @@ gid_t		anoubisd_gid;
 
 extern char	*__progname;
 char		*logname;
-unsigned long	version;
+unsigned long	 version;
 
 static Queue eventq_m2p;
 static Queue eventq_m2s;
@@ -404,12 +404,13 @@ main(int argc, char *argv[])
 	} else
 		fatal("Unable to read configuration");
 
-	if (conf.opts & ANOUBISD_OPT_NOACTION) {
-		int fd;
-
-		if (conf.opts & ANOUBISD_OPT_VERBOSE)
-			cfg_dump(&conf, stdout);
-
+	/*
+	 * Get ANOUBISCORE Version early because this is inherited by the
+	 * child processes. Close the file descriptior again because we
+	 * do not want it to be inherited by child processes.
+	 */
+	{
+		int	fd;
 		fd = open("/dev/anoubis", O_RDWR);
 		if (fd < 0)
 			early_err(2, "Could not open /dev/anoubis");
@@ -427,7 +428,12 @@ main(int argc, char *argv[])
 				msg = NULL;
 			early_errx(4, msg);
 		}
+		close(fd);
+	}
 
+	if (conf.opts & ANOUBISD_OPT_NOACTION) {
+		if (conf.opts & ANOUBISD_OPT_VERBOSE)
+			cfg_dump(&conf, stdout);
 		exit(0);
 	}
 
@@ -621,21 +627,6 @@ main(int argc, char *argv[])
 	if (eventfds[1] < 0) {
 		log_warn("open(/dev/anoubis)");
 		close(eventfds[0]);
-		main_shutdown(1);
-	}
-	if (ioctl(eventfds[1], ANOUBIS_GETVERSION, &version) < 0) {
-		log_warn("ANOUBIS_GETVERSION: Cannot retrieve version number");
-		close(eventfds[0]);
-		close(eventfds[1]);
-		main_shutdown(1);
-	}
-	if (version < ANOUBISCORE_MIN_VERSION ||
-	    version > ANOUBISCORE_VERSION) {
-		log_warnx("Anoubis Version mismatch: real=%lx "
-		    "expected=%lx min=%lx", version, ANOUBISCORE_VERSION,
-		    ANOUBISCORE_MIN_VERSION);
-		close(eventfds[0]);
-		close(eventfds[1]);
 		main_shutdown(1);
 	}
 
@@ -1486,7 +1477,7 @@ dispatch_m2dev(int fd, short event __used, /*@dependent@*/ void *arg)
 				DEBUG(DBG_QUEUE, " <eventq_m2dev: %x%s",
 				    ((struct eventdev_reply *)
 				    msg->msg)->msg_token,
-				    (ret < 0)? "" : " (bad reply)");
+				    (ret < 0)? " (bad reply)" : "");
 				free(msg);
 			}
 			break;

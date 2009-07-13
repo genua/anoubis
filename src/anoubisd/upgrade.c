@@ -146,6 +146,7 @@ upgrade_main(struct anoubisd_config *conf __used, int pipe_m2u[2],
 	close(pipe_s2p[1]);
 	close(pipe_m2s[0]);
 	close(pipe_m2s[1]);
+	close(pipe_m2u[0]);
 
 	queue_init(eventq_u2m);
 	msg_init(pipe_m2u[1], "m2u");
@@ -183,6 +184,7 @@ send_upgrade_message(int type, struct event_info_upgrade *ev_info)
 	umsg = (anoubisd_msg_upgrade_t *)msg->msg;
 	umsg->chunksize = 0;
 	umsg->upgradetype = type;
+	DEBUG(DBG_QUEUE, " Upgrade message: type %d", type);
 	enqueue(&eventq_u2m, msg);
 	event_add(ev_info->ev_u2m, NULL);
 }
@@ -228,6 +230,7 @@ send_checksum(const char *path, struct event_info_upgrade *ev_info)
 	umsg->cslen = ANOUBIS_CS_LEN;
 	memcpy(umsg->payload, &cs.csum, ANOUBIS_CS_LEN);
 	memcpy(umsg->payload + ANOUBIS_CS_LEN, path, plen);
+	DEBUG(DBG_QUEUE, " Checksum upgrade message for %s", path);
 	enqueue(&eventq_u2m, msg);
 	event_add(ev_info->ev_u2m, NULL);
 }
@@ -287,7 +290,7 @@ dispatch_m2u(int fd, short sig __used, void *arg)
 			free(msg);
 			continue;
 		}
-		DEBUG(DBG_QUEUE, " m2u: msg->msg_type");
+		DEBUG(DBG_QUEUE, " m2u: type %d", msg->mtype);
 		switch(msg->mtype) {
 		case ANOUBISD_MSG_UPGRADE:
 			dispatch_upgrade(msg, ev_info);
