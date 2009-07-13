@@ -125,11 +125,15 @@ pe_upgrade_start(struct pe_proc *proc)
 		 * XXX CEH: See what we need to do in this case. For now
 		 * XXX CEH: we just return.
 		 */
+		DEBUG(DBG_UPGRADE, "Cannot start upgrade: Old upgrade still "
+		    "in progress");
 		return;
 	}
 	/* Mark the process as an upgrade parent and increase the counter. */
 	pe_proc_upgrade_addmark(proc);
 	upgrade_counter++;
+	DEBUG(DBG_UPGRADE, "Upgrade started on task %lld, counter now %d",
+	    pe_proc_task_cookie(proc), upgrade_counter);
 }
 
 void
@@ -147,6 +151,8 @@ pe_upgrade_end(struct pe_proc *proc)
 	pe_proc_upgrade_clrmark(proc);
 	if (!isparent)
 		return;
+	DEBUG(DBG_UPGRADE, "Upgrade end for task %lld, counter now %d",
+	    pe_proc_task_cookie(proc), upgrade_counter-1);
 	/* Reduce the number of active upgrade parents. */
 	if (--upgrade_counter > 0)
 		return;
@@ -158,12 +164,15 @@ pe_upgrade_end(struct pe_proc *proc)
 	 */
 	for (it=pe_filetree_start(upgrade_tree); it; it = next) {
 		next = pe_filetree_next(upgrade_tree, it);
+		DEBUG(DBG_UPGRADE, "Upgraded file: %s", it->path);
 		if (it->task_cookie == 0 || it->task_cookie == last_cookie)
 			continue;
 		tmp = pe_proc_get(it->task_cookie);
 		if (tmp) {
 			pe_proc_put(tmp);
 			pe_delete_node(upgrade_tree, it);
+			DEBUG(DBG_UPGRADE, "Upgraded file: %s removed",
+			    it->path);
 		} else {
 			last_cookie = it->task_cookie;
 		}
@@ -609,8 +618,9 @@ pe_handle_sfspath(struct eventdev_hdr *hdr)
 				reply->reply = EPERM;
 			break;
 		case ANOUBIS_PATH_OP_LOCK:
-			DEBUG(DBG_UPGRADE, "Lock event for task cookie %llx",
-			    pe_proc_task_cookie(proc));
+			DEBUG(DBG_UPGRADE, "Lock event for task cookie %llx "
+			    "path %s", pe_proc_task_cookie(proc),
+			    pevent->path[0]);
 			if (hdr->msg_uid == 0)
 				pe_upgrade_start(proc);
 			break;
