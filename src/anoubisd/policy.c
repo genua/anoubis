@@ -136,8 +136,8 @@ policy_sighandler(int sig, short event __used, void *arg)
 }
 
 pid_t
-policy_main(struct anoubisd_config *conf __used, int pipe_m2s[2],
-    int pipe_m2p[2], int pipe_s2p[2], int pipe_m2u[2], int loggers[4])
+policy_main(int pipe_m2s[2], int pipe_m2p[2], int pipe_s2p[2], int pipe_m2u[2],
+    int loggers[4])
 /*@globals undef eventq_p2m, undef eventq_p2s, undef replyq@*/
 {
 	struct event	 ev_sigterm, ev_sigint, ev_sigquit, ev_sigusr1,

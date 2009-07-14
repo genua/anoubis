@@ -95,6 +95,8 @@ static void	dispatch_dev2m(int, short, void *);
 static void	dispatch_m2u(int, short, void *);
 static void	dispatch_u2m(int, short, void *);
 
+struct anoubisd_config	anoubisd_config;
+
 pid_t		master_pid = 0;
 pid_t		se_pid = 0;
 pid_t		logger_pid = 0;
@@ -311,7 +313,6 @@ main(int argc, char *argv[])
 	struct event		ev_timer;
 	/*@observer@*/
 	struct event_info_main	ev_info;
-	struct anoubisd_config	conf;
 	char			*conffile;
 	char			*opt_unixsocket;
 	int			read_result;
@@ -338,7 +339,7 @@ main(int argc, char *argv[])
 	conffile = ANOUBISD_CONF;
 	opt_unixsocket = NULL;
 
-	cfg_initialize(&conf);
+	cfg_initialize();
 
 	while ((ch = getopt(argc, argv, "dD:nvs:f:")) != -1) {
 		switch (ch) {
@@ -358,12 +359,12 @@ main(int argc, char *argv[])
 			}
 			break;
 		case 'n':
-			conf.opts |= ANOUBISD_OPT_NOACTION;
+			anoubisd_config.opts |= ANOUBISD_OPT_NOACTION;
 			break;
 		case 'v':
-			if (conf.opts & ANOUBISD_OPT_VERBOSE)
-				conf.opts |= ANOUBISD_OPT_VERBOSE2;
-			conf.opts |= ANOUBISD_OPT_VERBOSE;
+			if (anoubisd_config.opts & ANOUBISD_OPT_VERBOSE)
+				anoubisd_config.opts |= ANOUBISD_OPT_VERBOSE2;
+			anoubisd_config.opts |= ANOUBISD_OPT_VERBOSE;
 			break;
 		case 's':
 			if (opt_unixsocket)
@@ -390,7 +391,7 @@ main(int argc, char *argv[])
 	}
 
 	/* Read configuration from file */
-	read_result = cfg_read_file(&conf, conffile);
+	read_result = cfg_read_file(conffile);
 
 	if (read_result == 0) {
 		if (opt_unixsocket) {
@@ -398,11 +399,17 @@ main(int argc, char *argv[])
 			 * The commandline has specified a socket,
 			 * replace it in the configuration
 			 */
-			free(conf.unixsocket);
-			conf.unixsocket = strdup(opt_unixsocket);
+			free(anoubisd_config.unixsocket);
+			anoubisd_config.unixsocket = strdup(opt_unixsocket);
 		}
 	} else
 		fatal("Unable to read configuration");
+
+	if (anoubisd_config.opts & ANOUBISD_OPT_NOACTION) {
+		/* Dump configuration if requested */
+		if (anoubisd_config.opts & ANOUBISD_OPT_VERBOSE)
+			cfg_dump(stdout);
+	}
 
 	/*
 	 * Get ANOUBISCORE Version early because this is inherited by the
@@ -431,9 +438,8 @@ main(int argc, char *argv[])
 		close(fd);
 	}
 
-	if (conf.opts & ANOUBISD_OPT_NOACTION) {
-		if (conf.opts & ANOUBISD_OPT_VERBOSE)
-			cfg_dump(&conf, stdout);
+	if (anoubisd_config.opts & ANOUBISD_OPT_NOACTION) {
+		/* Exit at this point, no further action required */
 		exit(0);
 	}
 
@@ -468,7 +474,7 @@ main(int argc, char *argv[])
 	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC,
 	    upgrade_pipes.pipe_u2l) == -1)
 		early_errx(1, "socketpair");
-	logger_pid = logger_main(&conf, pipe_m2l, pipe_p2l, pipe_s2l,
+	logger_pid = logger_main(pipe_m2l, pipe_p2l, pipe_s2l,
 	    upgrade_pipes.pipe_u2l);
 	close(pipe_m2l[0]);
 	close(pipe_p2l[0]);
@@ -500,13 +506,13 @@ main(int argc, char *argv[])
 	    upgrade_pipes.pipe_m2u) == -1)
 		fatal("socketpair");
 
-	se_pid = session_main(&conf, pipe_m2s, pipe_m2p, pipe_s2p,
+	se_pid = session_main(pipe_m2s, pipe_m2p, pipe_s2p,
 	    upgrade_pipes.pipe_m2u, loggers);
 	DEBUG(DBG_TRACE, "session_pid=%d", se_pid);
-	policy_pid = policy_main(&conf, pipe_m2s, pipe_m2p, pipe_s2p,
+	policy_pid = policy_main(pipe_m2s, pipe_m2p, pipe_s2p,
 	    upgrade_pipes.pipe_m2u, loggers);
 	DEBUG(DBG_TRACE, "policy_pid=%d", policy_pid);
-	upgrade_pid = upgrade_main(&conf, upgrade_pipes.pipe_m2u, pipe_m2p,
+	upgrade_pid = upgrade_main(upgrade_pipes.pipe_m2u, pipe_m2p,
 	    pipe_s2p, pipe_m2s, loggers);
 	DEBUG(DBG_TRACE, "upgrade_pid=%d", upgrade_pid);
 	close(loggers[1]);

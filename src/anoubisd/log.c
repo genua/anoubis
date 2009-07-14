@@ -302,8 +302,7 @@ logger_sighandler(int sig __used, short event __used, void *arg)
 }
 
 pid_t
-logger_main(struct anoubisd_config *conf __used, int pipe_m2l[2],
-    int pipe_p2l[2], int pipe_s2l[2], int pipe_u2l[2])
+logger_main(int pipe_m2l[2], int pipe_p2l[2], int pipe_s2l[2], int pipe_u2l[2])
 {
 	pid_t pid;
 	struct event	 ev_m2l, ev_p2l, ev_s2l, ev_u2l;

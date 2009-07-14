@@ -117,6 +117,8 @@ struct anoubisd_config {
 	struct anoubisd_upgrade_trigger_list	upgrade_trigger;
 };
 
+extern struct anoubisd_config anoubisd_config;
+
 struct session_reg {
 	u_int32_t	session_id;
 	int		flag;
@@ -261,16 +263,10 @@ enum anoubisd_process_type {
 };
 extern enum anoubisd_process_type	anoubisd_process;
 
-pid_t	session_main(struct anoubisd_config *, int[], int[], int[], int[],
-    int[]);
-
-pid_t	policy_main(struct anoubisd_config *, int[], int[], int[], int[],
-    int[]);
-
-pid_t	logger_main(struct anoubisd_config *, int[], int[], int[], int[]);
-
-pid_t	upgrade_main(struct anoubisd_config *, int[], int[], int[], int[],
-    int[]);
+pid_t	session_main(int[], int[], int[], int[], int[]);
+pid_t	policy_main(int[], int[], int[], int[], int[]);
+pid_t	logger_main(int[], int[], int[], int[]);
+pid_t	upgrade_main(int[], int[], int[], int[], int[]);
 
 void	pe_init(void);
 

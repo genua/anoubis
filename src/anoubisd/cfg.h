@@ -30,10 +30,10 @@
 
 #include "anoubisd.h"
 
-int cfg_initialize(struct anoubisd_config *);
-void cfg_clear(struct anoubisd_config *);
-int cfg_read(struct anoubisd_config *, FILE *);
-int cfg_read_file(struct anoubisd_config *, const char *);
-void cfg_dump(struct anoubisd_config *, FILE *);
+int cfg_initialize();
+void cfg_clear();
+int cfg_read(FILE *);
+int cfg_read_file(const char *);
+void cfg_dump(FILE *);
 
 #endif	/* _CFG_H_ */

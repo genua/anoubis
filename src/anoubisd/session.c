@@ -141,8 +141,7 @@ static void	dispatch_m2s_pol_reply(anoubisd_msg_t *msg,
 static void	session_connect(int, short, void *);
 static void	session_rxclient(int, short, void *);
 static void	session_txclient(int, short, void *);
-static void	session_setupuds(struct sessionGroup *,
-		struct anoubisd_config *);
+static void	session_setupuds(struct sessionGroup *);
 static void	session_destroy(struct session *);
 static int	dispatch_generic_reply(void *cbdata, int error,
 		    void *data, int len, int flags, int orig_opcode);
@@ -309,8 +308,8 @@ session_txclient(int fd __used, short event __used, void *arg)
 }
 
 pid_t
-session_main(struct anoubisd_config *conf, int pipe_m2s[2], int pipe_m2p[2],
-    int pipe_s2p[2], int pipe_m2u[2], int loggers[4])
+session_main(int pipe_m2s[2], int pipe_m2p[2], int pipe_s2p[2],
+    int pipe_m2u[2], int loggers[4])
 {
 	struct event	 ev_sigterm, ev_sigint, ev_sigquit;
 	struct event	 ev_m2s, ev_p2s;
@@ -342,7 +341,7 @@ session_main(struct anoubisd_config *conf, int pipe_m2s[2], int pipe_m2p[2],
 	anoubisd_process = PROC_SESSION;
 
 	/* while still privileged we install a listening socket */
-	session_setupuds(&seg, conf);
+	session_setupuds(&seg);
 
 	if ((pw = getpwnam(ANOUBISD_USER)) == NULL)
 		fatal("getpwnam");
@@ -1275,7 +1274,7 @@ session_destroy(struct session *session)
 }
 
 void
-session_setupuds(struct sessionGroup *seg, struct anoubisd_config * conf)
+session_setupuds(struct sessionGroup *seg)
 {
 	struct sockaddr_storage	 ss;
 	achat_rc		 rc = ACHAT_RC_ERROR;
@@ -1306,7 +1305,8 @@ session_setupuds(struct sessionGroup *seg, struct anoubisd_config * conf)
 
 	bzero(&ss, sizeof(ss));
 	((struct sockaddr_un *)&ss)->sun_family = AF_UNIX;
-	strlcpy(((struct sockaddr_un *)&ss)->sun_path, conf->unixsocket,
+	strlcpy(((struct sockaddr_un *)&ss)->sun_path,
+	    anoubisd_config.unixsocket,
 	    sizeof(((struct sockaddr_un *)&ss)->sun_path));
 	rc = acc_setaddr(seg->keeper_uds, &ss, sizeof(struct sockaddr_un));
 	if (rc != ACHAT_RC_OK) {
