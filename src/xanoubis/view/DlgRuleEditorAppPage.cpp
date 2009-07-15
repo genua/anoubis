@@ -241,6 +241,8 @@ DlgRuleEditorAppPage::setBinary(wxString binary)
 	if (binary != wxT("") && binary != wxT("any") &&
 	    !wxFileName::IsFileExecutable(binary)) {
 		showInfo(_("File does not exist or is not executable"));
+	} else {
+		showInfo(_(""));
 	}
 
 	if (automaticOnNew_ == true) {
