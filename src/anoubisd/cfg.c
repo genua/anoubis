@@ -662,3 +662,124 @@ cfg_dump(FILE *f)
 	} else
 		fprintf(f, "upgrade_trigger:\n");
 }
+
+/**
+ * Create a message transporting the current config.
+ */
+anoubisd_msg_t *
+cfg_msg_create(void)
+{
+	int	msgsize;
+	int	count;
+	int	currlen;
+	int	len;
+
+	anoubisd_msg_t			*msg;
+	anoubisd_msg_config_t		*confmsg;
+	struct anoubisd_upgrade_trigger *trigger;
+
+	/* Calculate needed message size. */
+	count = 0;
+	msgsize  = sizeof(anoubisd_msg_config_t);
+	msgsize += strlen(anoubisd_config.unixsocket) + 1;
+	LIST_FOREACH(trigger, &anoubisd_config.upgrade_trigger, entries) {
+		msgsize += strlen(trigger->arg) + 1;
+		count++;
+	}
+
+	/* Create message. */
+	msg = msg_factory(ANOUBISD_MSG_CONFIG, msgsize);
+	if (msg == NULL) {
+		log_warnx("cfg_transmit: Out of memory");
+		master_terminate(ENOMEM);
+		return (NULL);
+	}
+	confmsg = (anoubisd_msg_config_t *)msg->msg;
+
+	/* Fill message: options. */
+	confmsg->opts = anoubisd_config.opts;
+
+	/* Fill message: upgrade mode. */
+	confmsg->upgrade_mode = anoubisd_config.upgrade_mode;
+
+	/* Fill message: unixsocket. */
+	currlen = 0;
+	len = strlen(anoubisd_config.unixsocket) + 1;
+	memcpy(confmsg->chunk, anoubisd_config.unixsocket, len);
+	currlen += len;
+
+	/* Fill message: trigger list. */
+	confmsg->triggercount = count;
+	LIST_FOREACH(trigger, &anoubisd_config.upgrade_trigger, entries) {
+		len = strlen(trigger->arg) + 1;
+		if (currlen + len > msgsize) {
+			/* This should never happen! Extemely odd! */
+			free(msg);
+			return (NULL);
+		}
+		memcpy(confmsg->chunk + currlen, trigger->arg, len);
+		currlen += len;
+	}
+
+	return (msg);
+}
+
+/**
+ * Fill config with message content.
+ */
+int
+cfg_msg_parse(anoubisd_msg_t *msg)
+{
+	int	count;
+	int	offset;
+
+	anoubisd_msg_config_t		*confmsg;
+	struct anoubisd_upgrade_trigger *trigger;
+
+	confmsg = (anoubisd_msg_config_t *)msg->msg;
+
+	cfg_clear();
+
+	/* Extract options. */
+	anoubisd_config.opts = confmsg->opts;
+
+	/* Extract upgrade mode. */
+	anoubisd_config.upgrade_mode =
+	    (anoubisd_upgrade_mode)confmsg->upgrade_mode;
+
+	/* Extract unixsocket. */
+	offset = strlen(confmsg->chunk) + 1;
+	anoubisd_config.unixsocket = (char *)malloc(offset);
+	if (anoubisd_config.unixsocket == NULL) {
+		log_warnx("%s:%d: Out of memory", __FUNCTION__, __LINE__);
+		return (-ENOMEM);
+	}
+	memcpy(anoubisd_config.unixsocket, confmsg->chunk, offset);
+
+	/* Extract trigger list. */
+	count = confmsg->triggercount;
+	while (count > 0) {
+		trigger = malloc(sizeof(struct anoubisd_upgrade_trigger));
+		if (trigger == NULL) {
+			log_warnx("%s:%d: Out of memory", __FUNCTION__,
+			    __LINE__);
+			return (-ENOMEM);
+		}
+
+		trigger->arg = strdup(confmsg->chunk + offset);
+		if (trigger->arg == NULL) {
+			log_warnx("%s:%d: Out of memory", __FUNCTION__,
+			    __LINE__);
+			free(trigger);
+			return (-ENOMEM);
+		}
+
+		LIST_INSERT_HEAD(&anoubisd_config.upgrade_trigger,
+		    trigger, entries);
+
+		offset += strlen(trigger->arg);
+		count--;
+	}
+
+	return (0);
+}

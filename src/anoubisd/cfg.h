@@ -36,4 +36,7 @@ int cfg_read(FILE *);
 int cfg_read_file(const char *);
 void cfg_dump(FILE *);
 
+anoubisd_msg_t *cfg_msg_create(void);
+int cfg_msg_parse(anoubisd_msg_t *);
+
 #endif	/* _CFG_H_ */

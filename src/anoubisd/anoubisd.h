@@ -146,6 +146,7 @@ enum anoubisd_msg_type {
 	ANOUBISD_MSG_SFSCACHE_INVALIDATE,
 	ANOUBISD_MSG_UPGRADE,
 	ANOUBISD_MSG_SFS_UPDATE_ALL,
+	ANOUBISD_MSG_CONFIG
 };
 
 /* format of ANOUBISD_MSG_EVENTDEV is struct eventdev_hdr */
@@ -253,6 +254,15 @@ struct anoubisd_msg_upgrade
 	char		chunk[0];
 };
 typedef struct anoubisd_msg_upgrade anoubisd_msg_upgrade_t;
+
+struct anoubisd_msg_config
+{
+	u_int32_t	opts;
+	u_int8_t	upgrade_mode;
+	u_int32_t	triggercount;
+	char		chunk[0];	/* socket and trigger list */
+};
+typedef struct anoubisd_msg_config anoubisd_msg_config_t;
 
 enum anoubisd_process_type {
 	PROC_MAIN,
