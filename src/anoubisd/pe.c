@@ -548,12 +548,27 @@ pe_handle_sfs(struct eventdev_hdr *hdr)
 	reply = reply_merge(hdr, reply, reply2);
 
 	if (version >= ANOUBISCORE_LOCK_VERSION) {
-		/* XXX CEH: Debian path is hard coded here. */
-		if (fevent->uid == 0 && reply->reply == 0
-		    && strcmp(fevent->path, "/var/lib/dpkg/lock") == 0) {
-			DEBUG(DBG_UPGRADE, "Enabling lockwatch on %s",
-			    fevent->path);
-			reply->reply |= ANOUBIS_RET_OPEN_LOCKWATCH;
+		anoubisd_upgrade_mode mode;
+		struct anoubisd_upgrade_trigger_list *trigger_list;
+		struct anoubisd_upgrade_trigger *trigger;
+
+		mode = anoubisd_config.upgrade_mode;
+		trigger_list = &anoubisd_config.upgrade_trigger;
+
+		if (fevent->uid == 0 && reply->reply == 0 &&
+		    (mode == ANOUBISD_UPGRADE_MODE_STRICT_LOCK ||
+		     mode == ANOUBISD_UPGRADE_MODE_LOOSE_LOCK)) {
+
+			LIST_FOREACH(trigger, trigger_list, entries) {
+				if (strcmp(fevent->path, trigger->arg) == 0) {
+					DEBUG(DBG_UPGRADE,
+					    "Enabling lockwatch on %s",
+					    fevent->path);
+					reply->reply |=
+					    ANOUBIS_RET_OPEN_LOCKWATCH;
+					break;
+				}
+			}
 		}
 	}
 
@@ -572,6 +587,7 @@ pe_handle_sfspath(struct eventdev_hdr *hdr)
 	struct pe_path_event		*pevent;
 	struct pe_proc			*proc;
 	time_t				now;
+	anoubisd_upgrade_mode		upgrade_mode;
 
 	if (time(&now) == (time_t)-1) {
 		log_warnx("pe_handle_sfspath: Cannot get current time");
@@ -621,8 +637,22 @@ pe_handle_sfspath(struct eventdev_hdr *hdr)
 			DEBUG(DBG_UPGRADE, "Lock event for task cookie %llx "
 			    "path %s", pe_proc_task_cookie(proc),
 			    pevent->path[0]);
-			if (hdr->msg_uid == 0)
+
+			upgrade_mode = anoubisd_config.upgrade_mode;
+			if (hdr->msg_uid == 0 &&
+			    (upgrade_mode == ANOUBISD_UPGRADE_MODE_STRICT_LOCK
+			    || upgrade_mode ==
+			    ANOUBISD_UPGRADE_MODE_LOOSE_LOCK))
 				pe_upgrade_start(proc);
+			break;
+		case ANOUBIS_PATH_OP_UNLOCK:
+			DEBUG(DBG_UPGRADE, "Unlock event for task cookie %llx",
+			    pe_proc_task_cookie(proc));
+
+			upgrade_mode = anoubisd_config.upgrade_mode;
+			if (hdr->msg_uid == 0 &&
+			    upgrade_mode == ANOUBISD_UPGRADE_MODE_STRICT_LOCK)
+				pe_upgrade_end(proc);
 			break;
 	}
 

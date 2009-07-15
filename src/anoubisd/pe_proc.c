@@ -404,6 +404,24 @@ void pe_proc_exec(anoubis_cookie_t cookie, uid_t uid, pid_t pid,
 	    pe_context_get_sbrule(ctx0), pe_context_get_sbrule(ctx1),
 	    pathhint ? pathhint : "", csum ? htonl(*(unsigned long *)csum) : 0);
 	pe_proc_put(proc);
+
+	if (uid == 0 &&
+	    anoubisd_config.upgrade_mode == ANOUBISD_UPGRADE_MODE_PROCESS) {
+		struct anoubisd_upgrade_trigger_list *upgrade_trigger;
+		struct anoubisd_upgrade_trigger *trigger;
+
+		upgrade_trigger = &anoubisd_config.upgrade_trigger;
+
+		LIST_FOREACH(trigger, upgrade_trigger, entries) {
+			if (strcmp(pathhint, trigger->arg) == 0) {
+				DEBUG(DBG_UPGRADE, "Enabling upgrade for %s",
+				    pathhint);
+
+				pe_upgrade_start(proc);
+				break;
+			}
+		}
+	}
 }
 
 void
