@@ -31,15 +31,36 @@
 .Os Anoubis
 .Sh NAME
 .Nm xanoubis
-.Nd local GUI
+.Nd GUI
 .Sh SYNOPSIS
 .Nm xanoubis
-.Op Fl h
+.Op -h | --help
+.Op -s socketfile | --socket=socketfile
+.Op -d level | --debug=level
+.Op -t | --tray
 .Sh DESCRIPTION
 .Nm
-is the local GUI of the anoubis framework
+is the GUI of the anoubis security suite. 
+.Pp
+Options:
+.Pp
+.Bl -tag -width Ds
+.It Fl h | -help
+Prints a help message.
+.Pp
+.It Fl s | -socket=socketfile
+Sets the socket to which xanoubis is supposed to connect.
+.Pp
+.It Fl d | -debug=level
+Prints debug information to the console. Values from 1 to 4 are supported. 
+The larger the level, the more output will be generated.
+.Pp
+.It Fl t | -tray
+Disables the TrayIcon.
+.El
+.Pp
 .Sh AUTHORS
-Andreas Fiessler
+Andreas Fiessler and Konrad Merz
 .\" .Sh CAVEATS
 .\" .Sh BUGS
 .\" .Sh STANDARDS
