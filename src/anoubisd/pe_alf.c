@@ -176,6 +176,7 @@ pe_decide_alf(struct pe_proc *proc, struct eventdev_hdr *hdr)
 	}
 
 	reply->ask = 0;
+	reply->hold = 0;
 	reply->rule_id = rule_id;
 	reply->prio = prio;
 	reply->timeout = (time_t)0;

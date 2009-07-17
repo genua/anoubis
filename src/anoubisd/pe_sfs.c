@@ -336,6 +336,7 @@ pe_decide_sfs(struct pe_proc *proc, struct pe_file_event *fevent,
 		free(context);
 
 	reply->ask = 0;
+	reply->hold = 0;
 	reply->log = log;
 	reply->rule_id = rule_id;
 	reply->prio = prio;

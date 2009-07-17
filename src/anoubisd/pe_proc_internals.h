@@ -34,6 +34,7 @@
 
 #define PE_PROC_FLAGS_UPGRADE		0x0001UL
 #define PE_PROC_FLAGS_UPGRADE_PARENT	0x0002UL
+#define PE_PROC_FLAGS_HOLD		0x0004UL
 
 struct pe_proc {
 	TAILQ_ENTRY(pe_proc)	 entry;

@@ -444,6 +444,7 @@ pe_decide_sandbox(struct pe_proc *proc, struct pe_file_event *sbevent,
 		free(context);
 
 	reply->ask = 0;
+	reply->hold = 0;
 	reply->log = final.log;
 	reply->rule_id = final.rule_id;
 	reply->prio = final.prio;

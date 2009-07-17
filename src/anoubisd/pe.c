@@ -119,14 +119,9 @@ pe_upgrade_start(struct pe_proc *proc)
 		if (upgrade_tree == NULL)
 			return;
 	} else if (upgrade_counter == 0) {
-		/*
-		 * XXX CEH: The previous upgrade is finished but we
-		 * XXX CEH: did not yet complete the checksum update.
-		 * XXX CEH: See what we need to do in this case. For now
-		 * XXX CEH: we just return.
-		 */
-		DEBUG(DBG_UPGRADE, "Cannot start upgrade: Old upgrade still "
-		    "in progress");
+		pe_proc_hold(proc);
+		DEBUG(DBG_UPGRADE, "Need to block upgrade start. "
+		    "Old upgrade still in progress");
 		return;
 	}
 	/* Mark the process as an upgrade parent and increase the counter. */
@@ -258,6 +253,7 @@ policy_engine(anoubisd_msg_t *request)
 			break;
 		reply->token = sfsdisable->token;
 		reply->ask = 0;
+		reply->hold = 0;
 		reply->rule_id = 0;
 		reply->prio = 0;
 		reply->len = 0;
@@ -542,11 +538,9 @@ pe_handle_sfs(struct eventdev_hdr *hdr)
 	reply = pe_decide_sfs(proc, fevent, hdr);
 	reply2 = pe_decide_sandbox(proc, fevent, hdr);
 
-	pe_proc_put(proc);
-
 	/* XXX CEH: This might need more thought. */
 	reply = reply_merge(hdr, reply, reply2);
-
+	pe_proc_put(proc);
 	if (version >= ANOUBISCORE_LOCK_VERSION) {
 		anoubisd_upgrade_mode mode;
 		struct anoubisd_upgrade_trigger_list *trigger_list;
@@ -616,6 +610,7 @@ pe_handle_sfspath(struct eventdev_hdr *hdr)
 
 	reply->reply = 0;
 	reply->ask = 0;
+	reply->hold = 0;
 	reply->rule_id = 0;
 	reply->prio = 0;
 	reply->timeout = (time_t)0;
@@ -655,7 +650,8 @@ pe_handle_sfspath(struct eventdev_hdr *hdr)
 				pe_upgrade_end(proc);
 			break;
 	}
-
+	if (pe_proc_is_hold(proc))
+		reply->hold = 1;
 	pe_proc_put(proc);
 	free(pevent->path[0]);
 	if (pevent->path[1])

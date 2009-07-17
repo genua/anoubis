@@ -74,6 +74,7 @@ static void	dispatch_p2s(int, short, void *);
 static int	policy_upgrade_fill_chunk(char *buf, int maxlen);
 
 static Queue	eventq_p2m;
+static Queue	eventq_p2m_hold;
 static Queue	eventq_p2s;
 
 /*
@@ -227,6 +228,7 @@ policy_main(int pipe_m2s[2], int pipe_m2p[2], int pipe_s2p[2], int pipe_m2u[2],
 	close(pipe_m2u[1]);
 
 	queue_init(eventq_p2m);
+	queue_init(eventq_p2m_hold);
 	queue_init(eventq_p2s);
 
 	queue_init(replyq);
@@ -472,10 +474,19 @@ dispatch_upgrade(anoubisd_msg_t *msg, struct event_info_policy *ev_info)
 		    "upgradetype = ANOUBISD_UPGRADE_END");
 
 		/*
-		 * All files are processed now,
-		 * you can finish the upgrade now.
+		 * All files are processed, we can finish the upgrade, now.
 		 */
 		pe_upgrade_finish();
+		pe_proc_release();
+		while (1) {
+			anoubisd_msg_t	*msg = dequeue(&eventq_p2m_hold);
+			if (!msg)
+				break;
+			enqueue(&eventq_p2m, msg);
+			DEBUG(DBG_QUEUE, " p2m_hold->p2m: %x",
+			    ((struct eventdev_reply *)msg->msg)->msg_token);
+		}
+		event_add(ev_info->ev_p2m, NULL);
 	} else {
 		/* Unexpected message */
 		log_warnx("dispatch_upgrade: unexpected upgradetype (%i)",
@@ -655,7 +666,7 @@ dispatch_m2p(int fd, short sig __used, void *arg)
 			event_add(ev_info->ev_p2s, NULL);
 
 		} else {
-
+			int	hold = reply->hold;
 			msg_reply = msg_factory(ANOUBISD_MSG_EVENTREPLY,
 			    sizeof(struct eventdev_reply));
 			rep = (struct eventdev_reply *)msg_reply->msg;
@@ -664,9 +675,16 @@ dispatch_m2p(int fd, short sig __used, void *arg)
 
 			free(msg);
 
-			enqueue(&eventq_p2m, msg_reply);
-			DEBUG(DBG_QUEUE, " >eventq_p2m: %x", hdr->msg_token);
-			event_add(ev_info->ev_p2m, NULL);
+			if (hold) {
+				enqueue(&eventq_p2m_hold, msg_reply);
+				DEBUG(DBG_QUEUE, " >eventq_p2m_hold: %x",
+				    hdr->msg_token);
+			} else {
+				enqueue(&eventq_p2m, msg_reply);
+				DEBUG(DBG_QUEUE, " >eventq_p2m: %x",
+				    hdr->msg_token);
+				event_add(ev_info->ev_p2m, NULL);
+			}
 		}
 
 		free(reply);

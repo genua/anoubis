@@ -114,6 +114,9 @@ unsigned int		 pe_proc_is_upgrade_parent(struct pe_proc *);
 void			 pe_proc_upgrade_addmark(struct pe_proc *);
 void			 pe_proc_upgrade_clrmark(struct pe_proc *);
 void			 pe_proc_upgrade_clrallmarks(void);
+void			 pe_proc_hold(struct pe_proc *);
+int			 pe_proc_is_hold(struct pe_proc *);
+void			 pe_proc_release(void);
 
 /* pe_context access functions */
 struct pe_proc_ident	*pe_context_get_ident(struct pe_context *);

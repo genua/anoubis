@@ -191,7 +191,9 @@ struct anoubisd_msg_sfsdisable {
 typedef struct anoubisd_msg_sfsdisable anoubisd_msg_sfsdisable_t;
 
 struct anoubisd_reply {
-	short		ask;		/* flag - ask GUI */
+	char		ask;		/* flag - ask GUI */
+	char		hold;		/* Flag hold back answer until
+					 * upgrade end. */
 	time_t		timeout;	/* from policy engine, if ask GUI */
 	int		reply;		/* result code */
 	int		log;		/* Loglevel for the result of an ASK */

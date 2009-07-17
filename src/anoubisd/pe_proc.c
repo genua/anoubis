@@ -646,3 +646,28 @@ pe_proc_upgrade_clrallmarks(void)
 		pe_proc_upgrade_clrmark(proc);
 	}
 }
+
+void
+pe_proc_hold(struct pe_proc *proc)
+{
+	pe_proc_set_flag(proc, PE_PROC_FLAGS_HOLD);
+}
+
+int
+pe_proc_is_hold(struct pe_proc *proc)
+{
+	return pe_proc_get_flag(proc, PE_PROC_FLAGS_HOLD);
+}
+
+void
+pe_proc_release(void)
+{
+	struct pe_proc		*proc;
+
+	TAILQ_FOREACH(proc, &tracker, entry) {
+		if (!pe_proc_get_flag(proc, PE_PROC_FLAGS_HOLD))
+			continue;
+		pe_proc_clr_flag(proc, PE_PROC_FLAGS_HOLD);
+		pe_upgrade_start(proc);
+	}
+}
