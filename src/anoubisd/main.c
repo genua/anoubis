@@ -147,7 +147,9 @@ static void	send_entry_list(u_int64_t token, const char *path,
     int op, int for_all_ids);
 
 static char *pid_file_name = PACKAGE_PIDFILE;
+#ifdef LINUX
 static char *omit_pid_file = "/var/run/sendsigs.omit.d/anoubisd";
+#endif
 
 __dead static void
 usage(void)
@@ -328,7 +330,10 @@ main(int argc, char *argv[])
 	struct timeval		tv;
 	char		       *endptr;
 	struct passwd		*pw;
-	FILE			*pidfp, *omitfp;
+	FILE			*pidfp;
+#ifdef LINUX
+	FILE			*omitfp;
+#endif
 
 	/* Ensure that fds 0, 1 and 2 are open or directed to /dev/null */
 	sanitise_stdfd();
@@ -530,13 +535,13 @@ main(int argc, char *argv[])
 
 	setproctitle("master");
 
+#ifdef LINUX
 	if ((omitfp = fopen(omit_pid_file, "w"))) {
 		fprintf(omitfp, "%d\n%d\n%d\n%d\n%d\n",
 		    master_pid, se_pid, policy_pid, logger_pid, upgrade_pid);
 		fclose(omitfp);
-	} else {
-		log_warn("Cannot open %s for writing", omit_pid_file);
 	}
+#endif
 
 	/* We catch or block signals rather than ignore them. */
 	signal_set(&ev_sigterm, SIGTERM, sighandler, &ev_info);
@@ -676,7 +681,9 @@ main(int argc, char *argv[])
 	 * and logger will terminate after us.
 	 */
 	unlink(pid_file_name);
+#ifdef LINUX
 	unlink(omit_pid_file);
+#endif
 	log_warnx("anoubisd shutdown");
 	flush_log_queue();
 
@@ -723,7 +730,9 @@ main_cleanup(void)
 	log_warnx("anoubisd is terminating");
 	flush_log_queue();
 	unlink(pid_file_name);
+#ifdef LINUX
 	unlink(omit_pid_file);
+#endif
 }
 
 /*@noreturn@*/
