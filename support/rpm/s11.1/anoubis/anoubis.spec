@@ -80,6 +80,7 @@ export CFLAGS="$RPM_OPT_FLAGS"
  --infodir=%{_infodir} \
  --mandir=%{_mandir} \
  --sbindir=/sbin \
+ --sysconfdir=/etc \
  --disable-tests
 
 %install

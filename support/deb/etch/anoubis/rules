@@ -30,6 +30,7 @@ CONFIGURE_FLAGS := \
 	--mandir=\$${prefix}/share/man \
 	--infodir=\$${prefix}/share/info \
 	--sbindir=/sbin \
+	--sysconfdir=/etc \
 	--disable-tests \
 	CFLAGS="$(CFLAGS)" \
 	CPPFLAGS="$(CPPFLAGS)" \

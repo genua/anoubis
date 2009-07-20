@@ -412,8 +412,10 @@ main(int argc, char *argv[])
 
 	if (anoubisd_config.opts & ANOUBISD_OPT_NOACTION) {
 		/* Dump configuration if requested */
-		if (anoubisd_config.opts & ANOUBISD_OPT_VERBOSE)
+		if (anoubisd_config.opts & ANOUBISD_OPT_VERBOSE) {
+			fprintf(stdout, "conffile: %s\n", conffile);
 			cfg_dump(stdout);
+		}
 	}
 
 	/*
