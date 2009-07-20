@@ -541,7 +541,8 @@ pe_handle_sfs(struct eventdev_hdr *hdr)
 	/* XXX CEH: This might need more thought. */
 	reply = reply_merge(hdr, reply, reply2);
 	pe_proc_put(proc);
-	if (version >= ANOUBISCORE_LOCK_VERSION) {
+
+	if ((fevent->path) && (version >= ANOUBISCORE_LOCK_VERSION)) {
 		anoubisd_upgrade_mode mode;
 		struct anoubisd_upgrade_trigger_list *trigger_list;
 		struct anoubisd_upgrade_trigger *trigger;
@@ -729,7 +730,7 @@ pe_parse_file_event(struct eventdev_hdr *hdr)
 	if (kernmsg->flags & ANOUBIS_OPEN_FLAG_EXEC)
 		ret->amask |= APN_SBA_EXEC;
 	if (ret->amask == 0) {
-		log_warnx("OOPS: zero amaks for %s, flags is %lx\n",
+		log_warnx("OOPS: zero amask for %s, flags is %lx\n",
 		    ret->path, kernmsg->flags);
 	}
 	ret->uid = hdr->msg_uid;
