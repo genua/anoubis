@@ -120,8 +120,13 @@ ComRegistrationTask::done(void)
 	while (1) {
 		if (ta_ && (ta_->flags & ANOUBIS_T_DONE)) {
 			if (ta_->result) {
-				setComTaskResult(RESULT_REMOTE_ERROR);
-				setResultDetails(ta_->result);
+				if (lastState_ == STATE_SFS_DISABLE) {
+					setComTaskResult(
+					    RESULT_COM_SFS_DISABLE_ERROR);
+				} else {
+					setComTaskResult(RESULT_REMOTE_ERROR);
+					setResultDetails(ta_->result);
+				}
 				state_ = STATE_DONE;
 			} else {
 				setComTaskResult(RESULT_SUCCESS);
@@ -132,6 +137,7 @@ ComRegistrationTask::done(void)
 		if (ta_)
 			return (false);
 
+		lastState_ = state_;
 		switch (state_) {
 		case STATE_REGISTER:
 			ta_ = anoubis_client_register_start(getClient(),

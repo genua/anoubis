@@ -156,7 +156,7 @@ class JobCtrl : public wxEvtHandler, public Singleton<JobCtrl>
 		void disconnect(void);
 
 		/**
-		 * Tests weather a connection to anoubisd is already
+		 * Tests whether a connection to anoubisd is already
 		 * established.
 		 *
 		 * @return true if you have a connection, false otherwise.
@@ -187,6 +187,13 @@ class JobCtrl : public wxEvtHandler, public Singleton<JobCtrl>
 		 */
 		void addTask(Task *);
 
+		/**
+		 * Tests whether a connection has the sfs_disable active or not
+		 *
+		 * @return truee if sfs_disable is active
+		 */
+		bool isSfsDisable(void) const;
+
 	protected:
 		JobCtrl(void);
 
@@ -206,12 +213,18 @@ class JobCtrl : public wxEvtHandler, public Singleton<JobCtrl>
 		 */
 		void onDaemonRegistration(TaskEvent &);
 
+		/**
+		 * Will cleanup after a Connection Error.
+		 */
+		void onConnectionError(wxCommandEvent &);
+
 	private:
 		wxString socketPath_;
 		SynchronizedQueue<Task> *csumCalcTaskQueue_;
 		SynchronizedQueue<Task> *comTaskQueue_;
 		JobThreadList threadList_;
 		ComRegistrationTask regTask_;
+		bool sfsdisable_;
 
 		ComThread	*findComThread(void) const;
 		CsumCalcThread	*findCsumCalcThread(void) const;

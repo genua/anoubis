@@ -44,12 +44,15 @@ JobCtrl::JobCtrl(void)
 {
 	/* Default configuration */
 	this->socketPath_ = wxT(PACKAGE_SOCKET);
+	this->sfsdisable_ = false;
 
 	csumCalcTaskQueue_ = new SynchronizedQueue<Task>(true);
 	comTaskQueue_ = new SynchronizedQueue<Task>(false);
 
 	Connect(anTASKEVT_REGISTER,
 	    wxTaskEventHandler(JobCtrl::onDaemonRegistration), NULL, this);
+	Connect(anEVT_COM_CONNECTION,
+	    wxCommandEventHandler(JobCtrl::onConnectionError), NULL, this);
 }
 
 JobCtrl::~JobCtrl(void)
@@ -58,6 +61,8 @@ JobCtrl::~JobCtrl(void)
 
 	Disconnect(anTASKEVT_REGISTER,
 	    wxTaskEventHandler(JobCtrl::onDaemonRegistration), NULL, this);
+	Disconnect(anEVT_COM_CONNECTION,
+	    wxCommandEventHandler(JobCtrl::onConnectionError), NULL, this);
 
 	delete csumCalcTaskQueue_;
 	delete comTaskQueue_;
@@ -150,7 +155,15 @@ bool
 JobCtrl::isConnected(void) const
 {
 	ComThread *t = findComThread();
-	return (t != 0 ? t->isRunning() : false);
+	if (t == 0)
+		return (false);
+	return (t->isRunning());
+}
+
+bool
+JobCtrl::isSfsDisable(void) const
+{
+	return (sfsdisable_);
 }
 
 void
@@ -209,6 +222,11 @@ JobCtrl::onDaemonRegistration(TaskEvent &event)
 	if (task->getAction() == ComRegistrationTask::ACTION_REGISTER) {
 		if (task->getComTaskResult() == ComTask::RESULT_SUCCESS) {
 			sendComEvent(JobCtrl::CONNECTION_CONNECTED);
+			sfsdisable_ = true;
+		} else if (task->getComTaskResult() ==
+		    ComTask::RESULT_COM_SFS_DISABLE_ERROR) {
+			sfsdisable_ = false;
+			sendComEvent(JobCtrl::CONNECTION_CONNECTED);
 		} else {
 			/* Registration failed, disconnect again */
 			sendComEvent(JobCtrl::CONNECTION_FAILED);
@@ -231,6 +249,21 @@ JobCtrl::onDaemonRegistration(TaskEvent &event)
 		sendComEvent(JobCtrl::CONNECTION_DISCONNECTED);
 	}
 
+	event.Skip();
+}
+
+void
+JobCtrl::onConnectionError(wxCommandEvent &event)
+{
+	ComThread *t;
+
+	if (event.GetInt() == JobCtrl::CONNECTION_ERROR) {
+		while ((t = findComThread()) != 0) {
+			threadList_.DeleteObject(t);
+			t->stop();
+			delete t;
+		}
+	}
 	event.Skip();
 }
 

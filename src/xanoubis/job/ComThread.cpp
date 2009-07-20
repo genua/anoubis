@@ -261,7 +261,8 @@ ComThread::Entry(void)
 		 *         one. Then start over.
 		 */
 		if (fds[1].revents) {
-			readMessage();
+			if (!readMessage())
+				break;
 		}
 	}
 
@@ -271,7 +272,7 @@ ComThread::Entry(void)
 	return (0);
 }
 
-void
+bool
 ComThread::readMessage(void)
 {
 	size_t			 size = 4096;
@@ -280,20 +281,19 @@ ComThread::readMessage(void)
 	wxString		 message;
 
 	if ((channel_ == 0) || (client_ == 0)) {
-		return;
+		return (false);
 	}
 
 	if ((msg = anoubis_msg_new(size)) == 0)
-		return;
+		return (false);
 
 	achat_rc rc = acc_receivemsg(channel_, (char*)(msg->u.buf), &size);
 	if (rc != ACHAT_RC_OK) {
 		anoubis_msg_free(msg);
-		if (rc == ACHAT_RC_EOF) {
-			disconnect();
+		if (rc == ACHAT_RC_EOF)
 			sendComEvent(JobCtrl::CONNECTION_ERROR);
-		}
-		return;
+
+		return (false);
 	}
 
 	anoubis_msg_resize(msg, size);
@@ -308,9 +308,8 @@ ComThread::readMessage(void)
 	int result = anoubis_client_process(client_, msg);
 	if (result < 0) {
 		/* Error */
-		disconnect();
 		/* XXX CEH */
-		return;
+		return (false);
 	} else if (result == 0) {
 		/*
 		 * Message does not fit into current protocol flow.
@@ -328,6 +327,7 @@ ComThread::readMessage(void)
 			sendNotify(notifyMsg);
 		}
 	}
+	return (true);
 }
 
 bool

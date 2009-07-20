@@ -118,6 +118,7 @@ class ComRegistrationTask : public ComTask
 			STATE_DONE
 		};
 		RegState	state_;
+		RegState	lastState_;
 };
 
 #endif	/* _COMREGISTRATIONTASK_H_ */

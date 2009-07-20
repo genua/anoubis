@@ -50,8 +50,10 @@ class ComThread : public JobThread
 		/**
 		 * Synchronously wait for a new message from the
 		 * communication channel.
+		 *
+		 * @ return true on success, false otherwise.
 		 */
-		void readMessage(void);
+		bool readMessage(void);
 
 		/**
 		 * Connects to anoubisd.

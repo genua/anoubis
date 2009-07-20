@@ -33,7 +33,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: anoubis 0.1.10.D023.970.D004.C117\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-07-02 15:29+0200\n"
+"POT-Creation-Date: 2009-07-10 09:56+0200\n"
 "PO-Revision-Date: 2009-06-18 16:51+0100\n"
 "Last-Translator: Robin <robin_doer@genua.de>\n"
 "Language-Team: German <de@li.org>\n"
@@ -281,7 +281,7 @@ msgstr "fortführen"
 #: model/SfsFilterPolicy.cpp:650 view/DlgRuleEditorBase.cpp:237
 #: view/DlgRuleEditorBase.cpp:462 view/DlgRuleEditorBase.cpp:863
 #: view/DlgRuleEditorBase.cpp:892 view/DlgRuleEditorBase.cpp:921
-#: view/ModAnoubisMainPanelImpl.cpp:320 view/ModAnoubisMainPanelImpl.cpp:325
+#: view/ModAnoubisMainPanelImpl.cpp:326 view/ModAnoubisMainPanelImpl.cpp:331
 #: view/ModAnoubisPanelsBase.cpp:432 view/ModAnoubisPanelsBase.cpp:459
 msgid "none"
 msgstr "kein"
@@ -946,7 +946,7 @@ msgid "Delete rule %ld?"
 msgstr "Soll die Regel %ld gelöscht werden?"
 
 #: view/DlgRuleEditor.cpp:866 view/DlgRuleEditor.cpp:903
-#: view/MainFrame.cpp:425
+#: view/MainFrame.cpp:429
 msgid "Confirm"
 msgstr "Bestätigen"
 
@@ -994,13 +994,13 @@ msgstr "Fehler: Konnte neue Filterregel nicht erzeugen."
 msgid "Import policy file"
 msgstr "Regeldatei importieren"
 
-#: view/DlgRuleEditor.cpp:1251 view/MainFrame.cpp:390
+#: view/DlgRuleEditor.cpp:1251 view/MainFrame.cpp:394
 msgid "Couldn't import policy file: it has errors."
 msgstr "Konnte Regeldatei nicht importieren: Sie enthält Fehler."
 
-#: view/DlgRuleEditor.cpp:1252 view/MainFrame.cpp:391
-#: view/ModAnoubisMainPanelImpl.cpp:1466
-#: view/RuleWizardContextExceptionPage.cpp:92 main.cpp:380 main.cpp:388
+#: view/DlgRuleEditor.cpp:1252 view/MainFrame.cpp:395
+#: view/ModAnoubisMainPanelImpl.cpp:1472
+#: view/RuleWizardContextExceptionPage.cpp:92 main.cpp:386 main.cpp:394
 msgid "Error"
 msgstr "Fehler"
 
@@ -1008,11 +1008,11 @@ msgstr "Fehler"
 msgid "Export ruleset..."
 msgstr "Schreibe Regelsatz..."
 
-#: view/DlgRuleEditor.cpp:1329 view/MainFrame.cpp:410
+#: view/DlgRuleEditor.cpp:1329 view/MainFrame.cpp:414
 msgid "Failed to export the ruleset into a file."
 msgstr "Der Regelsatz konnte nicht exportiert werden."
 
-#: view/DlgRuleEditor.cpp:1330 view/MainFrame.cpp:411
+#: view/DlgRuleEditor.cpp:1330 view/MainFrame.cpp:415
 msgid "Export ruleset"
 msgstr "Regelsatz exportieren"
 
@@ -1026,7 +1026,7 @@ msgstr ""
 "veralteten Prüfsummen vorhanden.Soll der Regelsatz trotzdem gesendet werden?"
 
 #: view/DlgRuleEditor.cpp:1378 view/DlgRuleEditor.cpp:1400
-#: view/ModAnoubisMainPanelImpl.cpp:453 view/ModSfsMainPanelImpl.cpp:345
+#: view/ModAnoubisMainPanelImpl.cpp:459 view/ModSfsMainPanelImpl.cpp:345
 #: view/ModSfsMainPanelImpl.cpp:398 view/ModSfsMainPanelImpl.cpp:449
 #: view/ModSfsMainPanelImpl.cpp:488 view/RuleWizard.cpp:403
 msgid "The entered password is incorrect."
@@ -1114,7 +1114,7 @@ msgid "Default Path:"
 msgstr "Standard Pfad:"
 
 #: view/DlgRuleEditorFilterSubjectPage.cpp:45
-#: view/ModAnoubisMainPanelImpl.cpp:550 view/ModSfsPanelsBase.cpp:409
+#: view/ModAnoubisMainPanelImpl.cpp:556 view/ModSfsPanelsBase.cpp:409
 msgid "Path:"
 msgstr "Pfad:"
 
@@ -1194,31 +1194,35 @@ msgstr "Anoubis"
 msgid "ok"
 msgstr "OK"
 
-#: view/MainFrame.cpp:299
+#: view/MainFrame.cpp:300
 msgid "Connection established with "
 msgstr "Verbindung hergestellt mit "
 
-#: view/MainFrame.cpp:304
+#: view/MainFrame.cpp:302
+msgid " without sfsdisable!"
+msgstr " ohne sfsdisable!"
+
+#: view/MainFrame.cpp:308
 msgid "Disconnected from "
 msgstr "Verbindung getrennt von "
 
-#: view/MainFrame.cpp:308
+#: view/MainFrame.cpp:312
 msgid "Connection to "
 msgstr "Verbindung mit "
 
-#: view/MainFrame.cpp:308
+#: view/MainFrame.cpp:312
 msgid " failed!"
 msgstr " fehlgeschlagen!"
 
-#: view/MainFrame.cpp:379
+#: view/MainFrame.cpp:383
 msgid "Choose a policy file:"
 msgstr "Wähle eine Regeldatei:"
 
-#: view/MainFrame.cpp:399 view/ModAnoubisMainPanelImpl.cpp:1192
+#: view/MainFrame.cpp:403 view/ModAnoubisMainPanelImpl.cpp:1198
 msgid "Choose a file to write the policies to:"
 msgstr "Wähle eine Datei um Regeln dort hinein zu schreiben:"
 
-#: view/MainFrame.cpp:424
+#: view/MainFrame.cpp:428
 msgid "xanoubis is going to be closed."
 msgstr "xanoubis wird geschlossen werden."
 
@@ -1282,56 +1286,56 @@ msgstr "offene Anfragen (ALF):"
 msgid "everything OK"
 msgstr "alles OK"
 
-#: view/ModAnoubisMainPanelImpl.cpp:295
+#: view/ModAnoubisMainPanelImpl.cpp:301
 msgid "Profile"
 msgstr "Profil"
 
-#: view/ModAnoubisMainPanelImpl.cpp:345
+#: view/ModAnoubisMainPanelImpl.cpp:351
 msgid "read-only"
 msgstr "schreibgeschützt"
 
-#: view/ModAnoubisMainPanelImpl.cpp:369
+#: view/ModAnoubisMainPanelImpl.cpp:375
 #, c-format
 msgid "Failed to remove \"%ls\"."
 msgstr "Konnte \"%ls\" nicht entfernen."
 
-#: view/ModAnoubisMainPanelImpl.cpp:371
+#: view/ModAnoubisMainPanelImpl.cpp:377
 msgid "Remove profile"
 msgstr "Profil entfernt"
 
-#: view/ModAnoubisMainPanelImpl.cpp:385 view/ModAnoubisMainPanelImpl.cpp:430
+#: view/ModAnoubisMainPanelImpl.cpp:391 view/ModAnoubisMainPanelImpl.cpp:436
 #, c-format
 msgid "Failed to import from \"%ls\"."
 msgstr "Konnte \"%ls\" nicht importieren."
 
-#: view/ModAnoubisMainPanelImpl.cpp:387
+#: view/ModAnoubisMainPanelImpl.cpp:393
 msgid "Load profile"
 msgstr "Profil laden"
 
-#: view/ModAnoubisMainPanelImpl.cpp:403
+#: view/ModAnoubisMainPanelImpl.cpp:409
 #, c-format
 msgid "The profile \"%ls\" is not writable!"
 msgstr "Das Profil \"%ls\" ist nicht beschreibbar!"
 
-#: view/ModAnoubisMainPanelImpl.cpp:405 view/ModAnoubisMainPanelImpl.cpp:416
+#: view/ModAnoubisMainPanelImpl.cpp:411 view/ModAnoubisMainPanelImpl.cpp:422
 msgid "Save profile"
 msgstr "Profil speichern"
 
-#: view/ModAnoubisMainPanelImpl.cpp:414
+#: view/ModAnoubisMainPanelImpl.cpp:420
 #, c-format
 msgid "Failed to export to \"%ls\"."
 msgstr "Konnte nicht nach \"%ls\" exportieren."
 
-#: view/ModAnoubisMainPanelImpl.cpp:432 view/ModAnoubisMainPanelImpl.cpp:440
-#: view/ModAnoubisMainPanelImpl.cpp:449 view/ModAnoubisMainPanelImpl.cpp:454
+#: view/ModAnoubisMainPanelImpl.cpp:438 view/ModAnoubisMainPanelImpl.cpp:446
+#: view/ModAnoubisMainPanelImpl.cpp:455 view/ModAnoubisMainPanelImpl.cpp:460
 msgid "Activate profile"
 msgstr "Profil aktivieren"
 
-#: view/ModAnoubisMainPanelImpl.cpp:439
+#: view/ModAnoubisMainPanelImpl.cpp:445
 msgid "Could not obtain user-policy."
 msgstr "Benutzerprofil nicht verfügbar."
 
-#: view/ModAnoubisMainPanelImpl.cpp:447
+#: view/ModAnoubisMainPanelImpl.cpp:453
 msgid ""
 "Could not activate user-policy.\n"
 "No connection to anoubisd."
@@ -1339,105 +1343,105 @@ msgstr ""
 "Konnte Benutzerprofil nicht aktivieren.\n"
 "Keine Verbindung zu anoubisd."
 
-#: view/ModAnoubisMainPanelImpl.cpp:515
+#: view/ModAnoubisMainPanelImpl.cpp:521
 msgid "Repository not initialized."
 msgstr "Repository nicht initalisiert."
 
-#: view/ModAnoubisMainPanelImpl.cpp:516 view/ModAnoubisMainPanelImpl.cpp:522
-#: view/ModAnoubisMainPanelImpl.cpp:530
+#: view/ModAnoubisMainPanelImpl.cpp:522 view/ModAnoubisMainPanelImpl.cpp:528
+#: view/ModAnoubisMainPanelImpl.cpp:536
 msgid "Update versions"
 msgstr "Aktualisierung Versionsverwaltung"
 
-#: view/ModAnoubisMainPanelImpl.cpp:521
+#: view/ModAnoubisMainPanelImpl.cpp:527
 msgid "Failed to prepare versioning system."
 msgstr "Konnte Versionssystem nicht vorbereiten."
 
-#: view/ModAnoubisMainPanelImpl.cpp:529
+#: view/ModAnoubisMainPanelImpl.cpp:535
 msgid "Failed to fetch versioning information."
 msgstr "Konnte Versionsinforamtion nicht abrufen."
 
-#: view/ModAnoubisMainPanelImpl.cpp:543
+#: view/ModAnoubisMainPanelImpl.cpp:549
 msgid "Time:"
 msgstr "Zeit:"
 
-#: view/ModAnoubisMainPanelImpl.cpp:544
+#: view/ModAnoubisMainPanelImpl.cpp:550
 msgid "Module:"
 msgstr "Modul:"
 
-#: view/ModAnoubisMainPanelImpl.cpp:545 view/RuleWizardHistory.cpp:626
+#: view/ModAnoubisMainPanelImpl.cpp:551 view/RuleWizardHistory.cpp:626
 #: view/RuleWizardPanelsBase.cpp:288
 msgid "Program:"
 msgstr "Programm:"
 
-#: view/ModAnoubisMainPanelImpl.cpp:546
+#: view/ModAnoubisMainPanelImpl.cpp:552
 msgid "On behalf of:"
 msgstr "Im Auftrag von:"
 
-#: view/ModAnoubisMainPanelImpl.cpp:548
+#: view/ModAnoubisMainPanelImpl.cpp:554
 msgid "Traffic:"
 msgstr "Verkehr:"
 
-#: view/ModAnoubisMainPanelImpl.cpp:552
+#: view/ModAnoubisMainPanelImpl.cpp:558
 msgid "Operation:"
 msgstr "Operation:"
 
-#: view/ModAnoubisMainPanelImpl.cpp:1127
+#: view/ModAnoubisMainPanelImpl.cpp:1133
 msgid "No profile selected"
 msgstr "Kein Profil ausgewählt"
 
-#: view/ModAnoubisMainPanelImpl.cpp:1127 view/ModAnoubisMainPanelImpl.cpp:1144
-#: view/ModAnoubisMainPanelImpl.cpp:1154 view/ModAnoubisMainPanelImpl.cpp:1161
-#: view/ModAnoubisMainPanelImpl.cpp:1167
+#: view/ModAnoubisMainPanelImpl.cpp:1133 view/ModAnoubisMainPanelImpl.cpp:1150
+#: view/ModAnoubisMainPanelImpl.cpp:1160 view/ModAnoubisMainPanelImpl.cpp:1167
+#: view/ModAnoubisMainPanelImpl.cpp:1173
 msgid "Restore version"
 msgstr "Version wiederherstellen"
 
-#: view/ModAnoubisMainPanelImpl.cpp:1138
+#: view/ModAnoubisMainPanelImpl.cpp:1144
 msgid "Failed to fetch the active policy."
 msgstr "Konnte aktive Regel nicht abfragen."
 
-#: view/ModAnoubisMainPanelImpl.cpp:1141
+#: view/ModAnoubisMainPanelImpl.cpp:1147
 #, c-format
 msgid ""
 "Failed to fetch the policy\n"
 "of the \"%ls\" profile"
 msgstr "Abholen des Profils \"%ls\" fehlgeschlagen."
 
-#: view/ModAnoubisMainPanelImpl.cpp:1153
+#: view/ModAnoubisMainPanelImpl.cpp:1159
 msgid "Failed to import the active policy."
 msgstr "Konnte aktive Regel nicht importieren."
 
-#: view/ModAnoubisMainPanelImpl.cpp:1158
+#: view/ModAnoubisMainPanelImpl.cpp:1164
 #, c-format
 msgid ""
 "Failed to import the policy\n"
 "of the \"%ls\" profile"
 msgstr "Einlesen des Profils \"%ls\" fehlgeschlagen."
 
-#: view/ModAnoubisMainPanelImpl.cpp:1165
+#: view/ModAnoubisMainPanelImpl.cpp:1171
 msgid "automatically created by restore"
 msgstr "durch Wiederherstellung automatisch erzeugt"
 
-#: view/ModAnoubisMainPanelImpl.cpp:1166
+#: view/ModAnoubisMainPanelImpl.cpp:1172
 msgid "Old version imported but could not create a new version"
 msgstr "Alte Version eingelesen konnte jedoch keine Neue erzeugen"
 
-#: view/ModAnoubisMainPanelImpl.cpp:1199
+#: view/ModAnoubisMainPanelImpl.cpp:1205
 msgid "Failed to export a version!"
 msgstr "Konnte Version nicht exportieren!"
 
-#: view/ModAnoubisMainPanelImpl.cpp:1200
+#: view/ModAnoubisMainPanelImpl.cpp:1206
 msgid "Export version"
 msgstr "Schreibe Version"
 
-#: view/ModAnoubisMainPanelImpl.cpp:1220
+#: view/ModAnoubisMainPanelImpl.cpp:1226
 msgid "Failed to remove the selected version!"
 msgstr "Konnte ausgewählte Version nicht entfernen!"
 
-#: view/ModAnoubisMainPanelImpl.cpp:1222
+#: view/ModAnoubisMainPanelImpl.cpp:1228
 msgid "Remove version"
 msgstr "Entferne Version"
 
-#: view/ModAnoubisMainPanelImpl.cpp:1465
+#: view/ModAnoubisMainPanelImpl.cpp:1471
 msgid "Failed to create a rule from escalation"
 msgstr "Auf Basis der Eskalation konnte die Regel nicht erzeugt werden!"
 
@@ -3316,32 +3320,32 @@ msgstr "Verzeichnis hinzufügen"
 msgid "Failure to resolve: "
 msgstr "Konnte nicht aufgelöst werden."
 
-#: main.cpp:188
+#: main.cpp:194
 msgid "Language setting: "
 msgstr "Spracheinstellungen:"
 
-#: main.cpp:258
+#: main.cpp:264
 msgid "this help"
 msgstr "diese Hilfe"
 
-#: main.cpp:265
+#: main.cpp:271
 msgid "communication socket of anoubis daemon"
 msgstr "Kommunikationssockel des Anoubis Daemons"
 
-#: main.cpp:272
+#: main.cpp:278
 msgid "Debug output with 'num' als level"
 msgstr "Debug Ausgabe mit 'num' als Ebene"
 
-#: main.cpp:279
+#: main.cpp:285
 msgid "Disable TrayIcon"
 msgstr "TrayIcon deaktivieren"
 
-#: main.cpp:378 main.cpp:386
+#: main.cpp:384 main.cpp:392
 #, c-format
 msgid "Couldn't remove Autostart file: %ls"
 msgstr "Kann Autostart Datei nicht entfernen: %ls"
 
-#: main.cpp:608
+#: main.cpp:614
 #, c-format
 msgid ""
 "Enter the passphrase of your private key:\n"
@@ -3350,11 +3354,11 @@ msgstr ""
 "Eingabe der Passphrase zum privaten Schlüssel:\n"
 " %ls"
 
-#: main.cpp:610 main.cpp:615
+#: main.cpp:616 main.cpp:621
 msgid "Enter passphrase for: "
 msgstr "Passphrase Eingabe"
 
-#: main.cpp:613
+#: main.cpp:619
 #, c-format
 msgid ""
 "The entered passphrase was wrong!\n"

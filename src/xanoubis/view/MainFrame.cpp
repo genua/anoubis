@@ -287,6 +287,7 @@ MainFrame::OnTbModuleSelect(wxCommandEvent& event)
 void
 MainFrame::OnConnectionStateChange(wxCommandEvent& event)
 {
+	JobCtrl *instance = JobCtrl::getInstance();
 	JobCtrl::ConnectionState newState =
 	    (JobCtrl::ConnectionState)event.GetInt();
 	bool connected = (newState == JobCtrl::CONNECTION_CONNECTED);
@@ -297,6 +298,9 @@ MainFrame::OnConnectionStateChange(wxCommandEvent& event)
 	switch (newState) {
 	case JobCtrl::CONNECTION_CONNECTED:
 		logMessage = _("Connection established with ") + hostname;
+		if (instance->isSfsDisable() == false) {
+			logMessage += _(" without sfsdisable!");
+		}
 		wxGetApp().log(logMessage);
 		break;
 	case JobCtrl::CONNECTION_DISCONNECTED:
