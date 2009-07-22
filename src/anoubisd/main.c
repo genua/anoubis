@@ -777,6 +777,14 @@ msg_factory(int mtype, int size)
 	return msg;
 }
 
+void
+msg_shrink(anoubisd_msg_t *msg, int size)
+{
+	int	nsize = sizeof(anoubisd_msg_t) + size;
+	if (nsize <= msg->size)
+		msg->size = nsize;
+}
+
 static void
 dispatch_m2s(int fd, short event __used, /*@dependent@*/ void *arg)
 {
@@ -1005,6 +1013,7 @@ out:
 		}
 
 		reply->len = cnt;
+		msg_shrink(msg, sizeof(anoubisd_reply_t) + cnt);
 		cnt = 0;
 
 		if (sfs_ent == NULL)
@@ -1021,7 +1030,7 @@ out:
 	return;
 
 err:
-	msg = msg_factory(ANOUBISD_MSG_POLREPLY, size);
+	msg = msg_factory(ANOUBISD_MSG_POLREPLY, sizeof(anoubisd_reply_t));
 	if (!msg) {
 		log_warn("send_checksum_list: can't allocate memory");
 		master_terminate(ENOMEM);
@@ -1032,6 +1041,7 @@ err:
 	reply->flags = flags;
 	reply->reply = error;
 	reply->flags |= POLICY_FLAG_END;
+	reply->len = 0;
 	enqueue(&eventq_m2s, msg);
 	event_add(ev_info->ev_m2s, NULL);
 }

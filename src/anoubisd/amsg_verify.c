@@ -1,0 +1,565 @@
+/*
+ * Copyright (c) 2009 GeNUA mbH <info@genua.de>
+ *
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
+ * TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+#include "config.h"
+
+#include <stdio.h>
+
+#ifdef S_SPLINT_S
+#include "splint-includes.h"
+#endif
+
+#include <sys/types.h>
+#ifdef LINUX
+#include <bsdcompat.h>
+#endif
+
+#include "anoubisd.h"
+#include "amsg.h"
+#include "aqueue.h"
+
+#define SIZE_LIMIT	50000
+
+typedef int (*length_fn_t)(const char *buffer, int maxlen);
+
+/*
+ * Declare a variable that tracks the size of the current data structure.
+ * Use ADD_SIZE to increase the size manually and RETURN_SIZE to return
+ * its value.
+ */
+#define DECLARE_SIZE()	int __local_size = 0;
+
+/*
+ * Check that (V) is a valid value that can be used as a size.
+ * Returns -1 from the surrounding function if this is not the case.
+ * Otherwise it is a NOOP.
+ */
+#define CHECK_SIZE(V)						\
+	do {							\
+		int ___tmp = (V);				\
+		if (___tmp < 0 || ___tmp > SIZE_LIMIT)		\
+			return -1;				\
+	} while (0)
+
+/*
+ * Check that both (V) and (L) are valid sizes using CHECK_SIZE and
+ * verify that a structure of length (V) can be contained in a buffer
+ * of length (L)
+ */
+#define CHECK_LEN(V,L)						\
+	do {							\
+		CHECK_SIZE(V);					\
+		CHECK_SIZE(L);					\
+		if ((int)(V) > (int)(L))			\
+			return -1;				\
+	} while (0)
+
+/*
+ * Return the cumulated real size of a the structure.
+ */
+#define	RETURN_SIZE()						\
+	do {							\
+		CHECK_SIZE(__local_size);			\
+		return __local_size;				\
+	} while (0)
+
+/*
+ * Add (V) bytes to the cumulated real size of the structure.
+ * Both (V) and the new value are checked using CHECK_SIZE.
+ * Returns -1 from the surrounding function if the sanity checks fail.
+ */
+#define ADD_SIZE(V)						\
+	do {							\
+		CHECK_SIZE((V));				\
+		__local_size += (V);				\
+		CHECK_SIZE(__local_size);			\
+	} while (0)
+
+/*
+ * Cast the buffer pointed to by B of length L to a message of
+ * type typeof(V). This does not modify the cumulated size of the
+ * structure.
+ * Return -1 from the surrounding function if length check fails.
+ */
+#define CAST(V,B,L)					\
+	do {						\
+		if ((int)sizeof(*V) > (L))		\
+			return -1;			\
+		(V) = (typeof(V)) (B);			\
+	} while (0);
+
+/*
+ * In a message (M) assume that FIELD is the last field of the
+ * structure and can have variable length. The message (M) must be
+ * stored at the start of the buffer defined by (B) and (L).
+ * This modifies the buffer such that (B) and (L) now point at the
+ * variable length argument. The cumulated size of the message is
+ * increase by the offset of FIELD into the structure (M).
+ * Returns -1 from the surrounding function if any length checks fail
+ * or if the offset of the variable length argument does not fit
+ * into the buffer.
+ */
+#define SHIFT_FIELD(M,FIELD,B,L)				\
+	do {							\
+		int __shift;					\
+		if ((L) <= 0 || ((void*)(M) != (void*)(B)))	\
+			return -1;				\
+		__shift = offsetof(typeof(*(M)),FIELD);		\
+		if ((L) < __shift)				\
+			return -1;				\
+		(B) = (void*)&((M)->FIELD);			\
+		(L) -= __shift;					\
+		ADD_SIZE(__shift);				\
+	} while (0)
+
+/*
+ * This works like SHIFT_FIELD except that the offset is given
+ * explicitly by (CNT).
+ */
+#define SHIFT_CNT(CNT,B,L)					\
+	do {							\
+		int __shift = (CNT);				\
+		if (__shift < 0 || (L) < __shift)		\
+			return -1;				\
+		(B) = ((void*)(B)) + __shift;			\
+		(L) -= __shift;					\
+		ADD_SIZE(__shift);				\
+	} while (0)
+
+/*
+ * Verify that the buffer defined by (B) and (L) contains one or
+ * more a NUL terminated C-Strings. Does not modify the cumulated
+ * size of the message.
+ * Returns -1 if no NUL byte is found in the buffer or if the buffer
+ * length is out of range.
+ */
+#define CHECK_STRING(B,L)					\
+	do {							\
+		int __i;					\
+		if ((L) < 1 || (L) >= SIZE_LIMIT)		\
+			return -1;				\
+		for (__i = (L)-1; __i >= 0; __i--)		\
+			if (((char*)(B))[__i] == 0)		\
+				break;				\
+		if (__i < 0)					\
+			return -1;				\
+	} while (0)
+
+/*
+ * This works like CHECK_STRING except that the cumulated size
+ * of the message is increased by the real length of the string.
+ * Buffer is not mofied in any case.
+ */
+#define STRINGS(B,L)						\
+	do {							\
+		int __i;					\
+		if ((L) < 1 || (L) >= SIZE_LIMIT)		\
+			return -1;				\
+		for (__i = (L)-1; __i >= 0; __i--)		\
+			if (((char*)(B))[__i] == 0)		\
+				break;				\
+		if (__i < 0)					\
+			return -1;				\
+		ADD_SIZE(__i+1);				\
+	} while (0)
+
+/*
+ * Find the first NUL byte in the buffer and shift the buffer
+ * to the place after that NUL byte. This increases the message
+ * size by the size of the string.
+ * Returns -1 from the surrounding function if no NUL byte is
+ * found.
+ */
+#define SHIFT_STRING(B,L)					\
+	do {							\
+		int __i;					\
+		if ((int)(L) < 1 || (L) >= SIZE_LIMIT)		\
+			return -1;				\
+		for (__i = 0; __i<(int)(L); ++__i)		\
+			if (((char*)(B))[__i] == 0)		\
+				break;				\
+		if (__i >= (L))					\
+			return -1;				\
+		__i++;						\
+		(L) -= __i;					\
+		(B) = ((void*)(B)) + __i;			\
+		ADD_SIZE(__i);					\
+	} while (0)
+
+/*
+ * This function defines a single case in a switch statement that
+ * destinguishes messages based on an embedded type.
+ * (CONST) must be a constant value for the message type. The message
+ * of that type must be contained in the buffer given by (B) and (L).
+ * The type name of the message should be given in TYPE and a function
+ * <TYPE>_size must be defined that calculates the size of the message.
+ * The length of the message is added to the cumulated size of the message.
+ * If any values are out of range -1 is returned from the surrounding function.
+ */
+#define VARIANT(CONST,TYPE, B, L)				\
+	case CONST: {						\
+		int	__tmp;					\
+		__tmp = TYPE ## _size((B), (L));		\
+		ADD_SIZE(__tmp);				\
+		break;						\
+	}
+
+/*
+ * Define a function that verifies the length of the buffer against
+ * the data type (TYPE).
+ */
+#define DEFINE_CHECK_FUNCTION(STRUCT, TYPE)				\
+static int								\
+TYPE ## _size(const char *buf __attribute__((unused)), int buflen)	\
+{									\
+	if (buflen < (int)sizeof(STRUCT TYPE))				\
+		return -1;						\
+	return sizeof(STRUCT TYPE);					\
+}
+
+/*
+ * Size of a struct anoubisd_msg_comm
+ */
+static int
+anoubisd_msg_comm_size(const char *buf, int buflen)
+{
+	struct anoubisd_msg_comm	*msg;
+	DECLARE_SIZE();
+
+	CAST(msg, buf, buflen);
+	SHIFT_FIELD(msg, msg, buf, buflen);
+	CHECK_LEN(msg->len, buflen);
+	ADD_SIZE(msg->len);
+
+	RETURN_SIZE();
+}
+
+/*
+ * Size of a struct anoubisd_reply_t.
+ * XXX CEH: This structure needs heavy cleanup.
+ */
+static int
+anoubisd_reply_size(const char *buf, int buflen)
+{
+	struct anoubisd_reply	*msg;
+	DECLARE_SIZE();
+
+	CAST(msg, buf, buflen);
+	SHIFT_FIELD(msg, msg, buf, buflen);
+	CHECK_LEN(msg->len, buflen);
+	ADD_SIZE(msg->len);
+	/* XXX CEH: Dig deeper into sub structure. */
+
+	RETURN_SIZE();
+}
+
+/*
+ * Size of an eventdev_hdr.
+ */
+static int
+eventdev_hdr_size(const char *buf, int buflen)
+{
+	struct eventdev_hdr	*hdr;
+
+	CAST(hdr, buf, buflen);
+	CHECK_LEN(hdr->msg_size, buflen);
+	/* XXX CEH: Verify eventdev hdr length */
+	return hdr->msg_size;
+}
+
+/*
+ * Size of a struct anoubisd_msg_logrequest
+ */
+static int
+anoubisd_msg_logrequest_size(const char *buf, int buflen)
+{
+	struct anoubisd_msg_logrequest	*msg;
+	DECLARE_SIZE();
+
+	CAST(msg, buf, buflen);
+	SHIFT_FIELD(msg, hdr, buf, buflen);
+	/* XXX CEH: Check length of eventdev data. */
+	CHECK_LEN(msg->hdr.msg_size, buflen);
+	ADD_SIZE(msg->hdr.msg_size);
+
+	RETURN_SIZE();
+}
+
+DEFINE_CHECK_FUNCTION(struct, eventdev_reply)
+DEFINE_CHECK_FUNCTION(,eventdev_token)
+
+static int
+anoubisd_msg_checksum_op_size(const char *buf, int buflen)
+{
+	struct anoubisd_msg_checksum_op		*msg;
+	DECLARE_SIZE()
+
+	CAST(msg, buf, buflen);
+	SHIFT_FIELD(msg, msg, buf, buflen);
+
+	ADD_SIZE(msg->len);
+	/* XXX CEH: Calculate length of sub structure. */
+
+	RETURN_SIZE();
+}
+
+struct buf_offset {
+	int	off, len;
+};
+#define ADDOFFSET(idx,prefix)					\
+	do {							\
+		offs[(idx)].off = msg->prefix##off;		\
+		offs[(idx)].len = msg->prefix##len;		\
+		CHECK_SIZE(offs[(idx)].off);			\
+		CHECK_SIZE(offs[(idx)].len);			\
+	} while (0)
+
+static int
+anoubisd_msg_eventask_size(const char *buf, int buflen)
+{
+	struct anoubisd_msg_eventask	*msg;
+	struct buf_offset		 offs[5];
+	int				 i, j, total = 0;
+	DECLARE_SIZE();
+
+	CAST(msg, buf, buflen);
+
+	/* Detect offset overlaps */
+	ADDOFFSET(0, csum);
+	ADDOFFSET(1, path);
+	ADDOFFSET(2, ctxcsum);
+	ADDOFFSET(3, ctxpath);
+	ADDOFFSET(4, ev);
+
+	for (i=0; i<5; ++i) {
+		int	s1, e1;
+		if (offs[i].len == 0)
+			continue;
+		s1 = offs[i].off;
+		e1 = s1 + offs[i].len;
+		if (e1 > total)
+			total = e1;
+		for (j=0; j<i; ++j) {
+			int	s2, e2;
+			if (offs[j].len == 0)
+				continue;
+			s2 = offs[j].off;
+			e2 = s2 + offs[j].len;
+			if (s2 < e1 && s1 < e2)
+				return -1;
+		}
+	}
+
+	SHIFT_FIELD(msg, payload, buf, buflen);
+	if (total > buflen)
+		return -1;
+	ADD_SIZE(total);
+	if (msg->pathlen)
+		CHECK_STRING(buf+msg->pathoff, msg->pathlen);
+	if (msg->ctxpathlen)
+		CHECK_STRING(buf+msg->ctxpathoff, msg->ctxpathlen);
+	if (msg->evlen) {
+		/* XXX CEH: Verify the eventdev structure at this point. */
+		struct eventdev_hdr	*hdr;
+		int			 tmpsize;
+		CAST(hdr, buf+msg->evoff, msg->evlen);
+		tmpsize = hdr->msg_size;
+		CHECK_SIZE(tmpsize);
+		if (hdr->msg_size > msg->evlen)
+			return -1;
+	}
+	RETURN_SIZE();
+}
+
+#undef ADDOFFSET
+
+DEFINE_CHECK_FUNCTION(struct, anoubisd_msg_sfsdisable);
+DEFINE_CHECK_FUNCTION(struct, anoubisd_msg_pchange);
+
+static int
+anoubisd_sfscache_invalidate_size(const char *buf, int buflen)
+{
+	struct anoubisd_sfscache_invalidate	*msg;
+	DECLARE_SIZE();
+
+	CAST(msg, buf, buflen);
+	SHIFT_FIELD(msg, payload, buf, buflen);
+	CHECK_LEN(msg->plen, buflen);
+	CHECK_STRING(buf, msg->plen);
+	SHIFT_CNT(msg->plen, buf, buflen);
+	if (msg->keylen) {
+		CHECK_LEN(msg->keylen, buflen);
+		STRINGS(buf, buflen);
+	}
+	RETURN_SIZE();
+}
+
+static int
+anoubisd_msg_upgrade_size(const char *buf, int buflen)
+{
+	struct anoubisd_msg_upgrade	*msg;
+	DECLARE_SIZE();
+
+	CAST(msg, buf, buflen);
+	SHIFT_FIELD(msg, chunk, buf, buflen);
+	CHECK_LEN(msg->chunksize, buflen);
+	if (msg->chunksize) {
+		if (msg->upgradetype != ANOUBISD_UPGRADE_CHUNK)
+			return -1;
+		STRINGS(buf, buflen);
+	}
+	RETURN_SIZE();
+}
+
+static int
+anoubisd_sfs_update_all_size(const char *buf, int buflen)
+{
+	struct anoubisd_sfs_update_all	*msg;
+	DECLARE_SIZE();
+
+	CAST(msg, buf, buflen);
+	SHIFT_FIELD(msg, payload, buf, buflen);
+	SHIFT_CNT(msg->cslen, buf, buflen);
+	STRINGS(buf, buflen);
+
+	RETURN_SIZE();
+}
+
+static int
+anoubisd_msg_config_size(const char *buf, int buflen)
+{
+	struct anoubisd_msg_config	*msg;
+	unsigned int			 i;
+	DECLARE_SIZE();
+
+	CAST(msg, buf, buflen);
+	SHIFT_FIELD(msg, chunk, buf, buflen);
+	SHIFT_STRING(buf, buflen);
+	if (msg->triggercount > SIZE_LIMIT)
+		return -1;
+	for (i=0; i<msg->triggercount; ++i) {
+		SHIFT_STRING(buf, buflen);
+	}
+
+	RETURN_SIZE();
+}
+
+static int
+anoubisd_msg_logit_size(const char *buf, int buflen)
+{
+	struct anoubisd_msg_logit	*msg;
+	DECLARE_SIZE();
+
+	CAST(msg, buf, buflen);
+	SHIFT_FIELD(msg, msg, buf, buflen);
+	STRINGS(buf, buflen);
+
+	RETURN_SIZE();
+}
+
+static int
+anoubisd_msg_size(const char *buf, int buflen)
+{
+	DECLARE_SIZE();
+	struct anoubisd_msg	*msg;
+
+	CAST(msg, buf, buflen);
+	SHIFT_FIELD(msg, msg, buf, buflen);
+	switch(msg->mtype) {
+	VARIANT(ANOUBISD_MSG_POLREQUEST, anoubisd_msg_comm, buf, buflen)
+	VARIANT(ANOUBISD_MSG_POLREPLY, anoubisd_reply, buf, buflen)
+	VARIANT(ANOUBISD_MSG_EVENTDEV, eventdev_hdr, buf, buflen)
+	VARIANT(ANOUBISD_MSG_LOGREQUEST, anoubisd_msg_logrequest, buf, buflen)
+	VARIANT(ANOUBISD_MSG_EVENTREPLY, eventdev_reply, buf, buflen)
+	VARIANT(ANOUBISD_MSG_EVENTCANCEL, eventdev_token, buf, buflen)
+	VARIANT(ANOUBISD_MSG_CHECKSUM_OP, anoubisd_msg_checksum_op, buf, buflen)
+	VARIANT(ANOUBISD_MSG_EVENTASK, anoubisd_msg_eventask, buf, buflen)
+	VARIANT(ANOUBISD_MSG_SFSDISABLE, anoubisd_msg_sfsdisable, buf, buflen)
+	VARIANT(ANOUBISD_MSG_POLICYCHANGE, anoubisd_msg_pchange, buf, buflen)
+	VARIANT(ANOUBISD_MSG_SFSCACHE_INVALIDATE, anoubisd_sfscache_invalidate,
+	    buf, buflen)
+	VARIANT(ANOUBISD_MSG_UPGRADE, anoubisd_msg_upgrade, buf, buflen)
+	VARIANT(ANOUBISD_MSG_SFS_UPDATE_ALL, anoubisd_sfs_update_all,
+	    buf, buflen)
+	VARIANT(ANOUBISD_MSG_CONFIG, anoubisd_msg_config, buf, buflen)
+	VARIANT(ANOUBISD_MSG_LOGIT, anoubisd_msg_logit, buf, buflen)
+	default:
+		log_warnx("anoubisd_msg_size: Bad message type %d",
+		    msg->mtype);
+		return -1;
+	}
+	RETURN_SIZE();
+}
+
+void
+amsg_verify(struct anoubisd_msg *msg)
+{
+	int		 buflen, tmp;
+	char		*buf = (void *)msg;
+	static char	 fill[4] = { 0xde, 0xad, 0xbe, 0xef };
+
+	if (msg->size < (int)sizeof(*msg)) {
+		log_warnx("Invalid message size: %d", msg->size);
+		master_terminate(EINVAL);
+	}
+	buflen = msg->size;
+	tmp = anoubisd_msg_size(buf, buflen);
+	if (tmp < 0 || tmp > buflen) {
+		char	msgfmt[1024];
+		int	i, pos;
+		/*
+		 * Messages that are larger than the surrounding buffer
+		 * are never valid. We terminate the daemon.
+		 */
+		log_warnx("MESSAGE SIZE ERROR: buf=%d, real=%d, type=%d",
+		    buflen, tmp, msg->mtype);
+		for (i=pos=0; i<buflen && pos<1000; ++i, pos+=2)
+			sprintf(msgfmt+pos, "%02x", (unsigned char)(buf[i]));
+		if (i<buflen) {
+			msgfmt[pos++] = '.';
+			msgfmt[pos++] = '.';
+			msgfmt[pos++] = '.';
+		}
+		msgfmt[pos] = 0;
+		log_warnx("MSG DATA: %s", msgfmt);
+		master_terminate(EINVAL);
+	} else if (tmp < buflen) {
+		/*
+		 * Fill space in messages that are smaller than the surrounding
+		 * buffer with data that is unlikely to make sense in case it
+		 * is ever accessed. Issue a warning for message that are
+		 * significantly smaller than the buffer. Minor differences
+		 * can occur due to alignment errors etc.
+		 */
+		int	i;
+		for (i=tmp; i<buflen; ++i)
+			buf[i] = fill[i%4];
+		if (tmp < buflen - 8)
+			log_warnx("Oversized message: buf=%d, real=%d, type=%d",
+			    buflen, tmp, msg->mtype);
+	}
+}

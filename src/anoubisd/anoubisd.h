@@ -138,7 +138,6 @@ enum anoubisd_msg_type {
 	ANOUBISD_MSG_LOGREQUEST,
 	ANOUBISD_MSG_EVENTREPLY,
 	ANOUBISD_MSG_EVENTCANCEL,
-	ANOUBISD_MSG_SESSION_REG,
 	ANOUBISD_MSG_CHECKSUM_OP,
 	ANOUBISD_MSG_EVENTASK,
 	ANOUBISD_MSG_SFSDISABLE,
@@ -146,7 +145,8 @@ enum anoubisd_msg_type {
 	ANOUBISD_MSG_SFSCACHE_INVALIDATE,
 	ANOUBISD_MSG_UPGRADE,
 	ANOUBISD_MSG_SFS_UPDATE_ALL,
-	ANOUBISD_MSG_CONFIG
+	ANOUBISD_MSG_CONFIG,
+	ANOUBISD_MSG_LOGIT,
 };
 
 /* format of ANOUBISD_MSG_EVENTDEV is struct eventdev_hdr */
@@ -235,6 +235,11 @@ struct anoubisd_msg_logrequest
 	/* Eventdev data follows. */
 };
 
+struct anoubisd_msg_logit {
+	u_int32_t		prio;
+	char			msg[0];
+};
+
 /* format of ANOUBISD_MSG_POLICYCHANGE */
 struct anoubisd_msg_pchange
 {
@@ -318,6 +323,7 @@ __dead void	early_err(int, const char *);
 __dead void	early_errx(int, const char *);
 
 anoubisd_msg_t *msg_factory(int, int);
+void		msg_shrink(anoubisd_msg_t *, int);
 
 void	pe_dump(void);
 int	send_policy_data(u_int64_t token, int fd);

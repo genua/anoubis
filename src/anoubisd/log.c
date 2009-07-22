@@ -94,7 +94,9 @@ flush_log_queue(void)
 	anoubisd_msg_t		*msg;
 	openlog(logname, LOG_PID | LOG_NDELAY, LOG_DAEMON);
 	while ((msg = dequeue(&__eventq_log))) {
-		syslog(msg->mtype, "%s", msg->msg);
+		struct anoubisd_msg_logit	*lmsg;
+		lmsg = (struct anoubisd_msg_logit *)msg->msg;
+		syslog(lmsg->prio, "%s", lmsg->msg);
 		free(msg);
 	}
 }
@@ -140,17 +142,21 @@ vlog(int pri, const char *fmt, va_list ap)
 	} else {
 		if (__log_fd >= 0) {
 			anoubisd_msg_t	*msg;
+			struct anoubisd_msg_logit	*lmsg;
 			if (vasprintf(&nfmt, fmt, ap) == -1) {
 				master_terminate(ENOMEM);
 				return;
 			}
-			msg = msg_factory(pri, strlen(nfmt)+1);
+			msg = msg_factory(ANOUBISD_MSG_LOGIT,
+			    sizeof(struct anoubisd_msg_logit) + strlen(nfmt)+1);
 			if (!msg) {
 				free(nfmt);
 				master_terminate(ENOMEM);
 				return;
 			}
-			strlcpy(msg->msg, nfmt, strlen(nfmt)+1);
+			lmsg = (struct anoubisd_msg_logit *)msg->msg;
+			lmsg->prio = pri;
+			strlcpy(lmsg->msg, nfmt, strlen(nfmt)+1);
 			free(nfmt);
 			enqueue(&__eventq_log, msg);
 			event_add(&__log_event, NULL);
@@ -274,7 +280,14 @@ void dispatch_log_read(int fd, short sig __used, void *arg)
 		msg = get_msg(fd);
 		if (msg == NULL)
 			break;
-		syslog(msg->mtype, "%s", msg->msg);
+		if (msg->mtype == ANOUBISD_MSG_LOGIT) {
+			struct anoubisd_msg_logit	*lmsg;
+			lmsg = (struct anoubisd_msg_logit *)msg->msg;
+			syslog(lmsg->prio, "%s", lmsg->msg);
+		} else {
+			syslog(LOG_CRIT, "Bad message type %d in logger",
+			    msg->mtype);
+		}
 		free(msg);
 	}
 	if (msg_eof(fd))

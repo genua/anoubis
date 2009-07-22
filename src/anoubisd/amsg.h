@@ -66,5 +66,6 @@ extern int get_client_msg(int, struct anoubis_msg **);
 extern int send_msg(int, anoubisd_msg_t *);
 extern int msg_pending(int);
 extern int msg_eof(int);
+extern void amsg_verify(struct anoubisd_msg *);
 
 #endif /* !_AMSG_H */

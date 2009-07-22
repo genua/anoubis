@@ -265,6 +265,7 @@ get_msg(int fd)
 	bcopy(msg, msg_r, msg->size);
 	mbp->rheadp += msg->size;
 	DEBUG(DBG_MSG_RECV, "get_msg: fd:%d size:%d", mbp->fd, msg->size);
+	amsg_verify(msg_r);
 	return msg_r;
 eof:
 	return NULL;
@@ -313,6 +314,7 @@ get_event(int fd)
 	bcopy(evt, msg_r->msg, evt->msg_size);
 	mbp->rheadp += evt->msg_size;
 	DEBUG(DBG_MSG_RECV, "get_event: fd:%d size:%d", mbp->fd, evt->msg_size);
+	amsg_verify(msg_r);
 	return msg_r;
 eof:
 	log_warnx("get_event: Unexpected end of file");
@@ -376,6 +378,7 @@ send_msg(int fd, anoubisd_msg_t *msg)
 		return -1;
 	}
 
+	amsg_verify(msg);
 	bcopy(msg, mbp->wtailp, msg->size);
 	mbp->wtailp += msg->size;
 	DEBUG(DBG_MSG_RECV, "send_msg: fd:%d size:%d", mbp->fd, msg->size);

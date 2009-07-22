@@ -809,6 +809,7 @@ int send_policy_data(u_int64_t token, int fd)
 			free(msg);
 			return ret;
 		}
+		msg_shrink(msg, sizeof(struct anoubisd_reply) + comm->len);
 		if (comm->len == 0) {
 			comm->flags |= POLICY_FLAG_END;
 			enqueue(&eventq_p2s, msg);
@@ -842,15 +843,6 @@ dispatch_s2p(int fd, short sig __used, void *arg)
 			break;
 
 		switch (msg->mtype) {
-
-		case ANOUBISD_MSG_SESSION_REG:
-
-			/* XXX RD - handle session registration */
-
-			DEBUG(DBG_QUEUE, " <eventq_s2p");
-			free(msg);
-			break;
-
 		case ANOUBISD_MSG_POLREQUEST:
 		case ANOUBISD_MSG_SFSDISABLE:
 			reply = policy_engine(msg);

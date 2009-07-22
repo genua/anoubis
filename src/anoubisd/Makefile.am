@@ -83,6 +83,7 @@ anoubisd_SOURCES= \
 	session.c \
 	log.c \
 	amsg.c \
+	amsg_verify.c \
 	aqueue.c \
 	sfs.c \
 	cfg.c \
