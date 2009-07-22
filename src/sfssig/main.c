@@ -1014,8 +1014,14 @@ sfs_list(char *file)
 	if (!file)
 		return 1;
 
+	/*
+	 * If file is regular there is no need to use
+	 * the sfs_list function.
+	 */
 	ret = stat(file, &sb);
 	if (ret != 0) {
+		if (errno == ENOENT)
+			return 1;
 		perror(file);
 		return 1;
 	}
@@ -1023,6 +1029,10 @@ sfs_list(char *file)
 		return sfs_get(file);
 	}
 
+	/*
+	 * For all cases where we have to
+	 * lookup in the sfs_tree.
+	 */
 	if (!(opts & (SFSSIG_OPT_FILTER|
 	    SFSSIG_OPT_NOTFILE|
 	    SFSSIG_OPT_ORPH|
@@ -1050,8 +1060,12 @@ sfs_list(char *file)
 			    as->keyid, 0, as->idlen);
 
 		} else {
-			t = sfs_sumop(file, ANOUBIS_CHECKSUM_OP_LIST, NULL, 0,
-			    0);
+			if (checksum_flag & ANOUBIS_CSUM_ALL)
+				t = sfs_sumop(file,
+				    ANOUBIS_CHECKSUM_OP_LIST_ALL, NULL, 0, 0);
+			else
+				t = sfs_sumop(file, ANOUBIS_CHECKSUM_OP_LIST,
+				    NULL, 0, 0);
 		}
 		if (!t) {
 			if (opts & SFSSIG_OPT_DEBUG)
@@ -1335,8 +1349,12 @@ sfs_tree(char *path, int op)
 			t = sfs_sumop(tmp, ANOUBIS_CHECKSUM_OP_SIG_LIST,
 			    as->keyid, 0, as->idlen);
 		} else {
-			t = sfs_sumop(tmp, ANOUBIS_CHECKSUM_OP_LIST, NULL,
-			    0, 0);
+			if (checksum_flag & ANOUBIS_CSUM_ALL)
+				t = sfs_sumop(tmp, ANOUBIS_CHECKSUM_OP_LIST_ALL,
+				    NULL, 0, 0);
+			else
+				t = sfs_sumop(tmp, ANOUBIS_CHECKSUM_OP_LIST,
+				    NULL, 0, 0);
 		}
 		if (!t) {
 			if (SFSSIG_OPT_DEBUG)
