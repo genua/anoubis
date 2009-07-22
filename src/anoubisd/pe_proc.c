@@ -53,6 +53,12 @@
 #include "anoubisd.h"
 #include "pe.h"
 
+/*
+ * The flag is true if we have seen at least one process create or
+ * process destroy messsage. This affects the behaviour of proc_is_running.
+ */
+static int			 have_task_tracking = 0;
+
 static void			 pe_proc_track(struct pe_proc *);
 static void			 pe_proc_untrack(struct pe_proc *);
 static struct pe_proc		*pe_proc_alloc(uid_t uid, anoubis_cookie_t,
@@ -183,6 +189,11 @@ pe_proc_alloc(uid_t uid, anoubis_cookie_t cookie, struct pe_proc_ident *pident)
 	proc->flags = 0;
 	proc->refcount = 1;
 	proc->instances = 1;
+#ifdef ANOUBIS_PROCESS_OP_CREATE
+	proc->threads = 0;
+#else
+	proc->threads = 1;
+#endif
 	proc->ident.pathhint = NULL;
 	proc->ident.csum = NULL;
 	if (pident)
@@ -349,8 +360,10 @@ pe_proc_fork(uid_t uid, anoubis_cookie_t child, anoubis_cookie_t parent_cookie)
 void pe_proc_addinstance(anoubis_cookie_t cookie)
 {
 	struct pe_proc *proc = pe_proc_get(cookie);
-	if (proc)
+	if (proc) {
 		proc->instances++;
+		pe_proc_put(proc);
+	}
 }
 
 /*
@@ -370,6 +383,51 @@ void pe_proc_exit(anoubis_cookie_t cookie)
 	DEBUG(DBG_PE_PROC, "pe_proc_exit: token 0x%08llx pid %d "
 	    "uid %u proc %p", (unsigned long long)cookie, proc->pid, proc->uid,
 	    proc);
+	pe_proc_put(proc);
+}
+
+/*
+ * Return true if the process is in fact running.
+ */
+int
+pe_proc_is_running(anoubis_cookie_t cookie)
+{
+	int ret;
+	struct pe_proc	*proc = pe_proc_get(cookie);
+	ret = proc && (proc->threads > 0 || have_task_tracking == 0);
+	pe_proc_put(proc);
+	return ret;
+}
+
+/*
+ * Account for a new thread that is part of the process.
+ */
+void
+pe_proc_add_thread(anoubis_cookie_t cookie)
+{
+	struct pe_proc	*proc = pe_proc_get(cookie);
+
+	have_task_tracking = 1;
+	if (proc) {
+		proc->threads++;
+		pe_proc_put(proc);
+	}
+}
+
+/*
+ * Account for a terminated thread that is part of the process.
+ */
+void
+pe_proc_remove_thread(anoubis_cookie_t cookie)
+{
+	struct pe_proc	*proc = pe_proc_get(cookie);
+
+	have_task_tracking = 1;
+	if (proc && proc->threads > 0) {
+		proc->threads--;
+		if (proc->threads == 0)
+			pe_upgrade_end(proc);
+	}
 	pe_proc_put(proc);
 }
 

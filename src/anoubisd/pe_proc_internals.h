@@ -40,6 +40,7 @@ struct pe_proc {
 	TAILQ_ENTRY(pe_proc)	 entry;
 	int			 refcount;
 	int			 instances;
+	int			 threads;
 	pid_t			 pid;
 	uid_t			 uid;
 	uid_t			 sfsdisable_uid;

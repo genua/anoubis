@@ -135,7 +135,6 @@ void
 pe_upgrade_end(struct pe_proc *proc)
 {
 	struct pe_file_node	*it, *next;
-	struct pe_proc		*tmp;
 	anoubis_cookie_t	 last_cookie = 0;
 	int			 isparent = pe_proc_is_upgrade_parent(proc);
 
@@ -162,9 +161,7 @@ pe_upgrade_end(struct pe_proc *proc)
 		DEBUG(DBG_UPGRADE, "Upgraded file: %s", it->path);
 		if (it->task_cookie == 0 || it->task_cookie == last_cookie)
 			continue;
-		tmp = pe_proc_get(it->task_cookie);
-		if (tmp) {
-			pe_proc_put(tmp);
+		if (pe_proc_is_running(it->task_cookie)) {
 			pe_delete_node(upgrade_tree, it);
 			DEBUG(DBG_UPGRADE, "Upgraded file: %s removed",
 			    it->path);
@@ -376,6 +373,14 @@ pe_handle_process(struct eventdev_hdr *hdr)
 	case ANOUBIS_PROCESS_OP_REPLACE:
 		pe_proc_addinstance(msg->common.task_cookie);
 		pe_proc_exit(msg->task_cookie);
+		break;
+#endif
+#ifdef ANOUBIS_PROCESS_OP_CREATE
+	case ANOUBIS_PROCESS_OP_CREATE:
+		pe_proc_add_thread(msg->task_cookie);
+		break;
+	case ANOUBIS_PROCESS_OP_DESTROY:
+		pe_proc_remove_thread(msg->task_cookie);
 		break;
 #endif
 	default:
