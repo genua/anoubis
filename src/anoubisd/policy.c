@@ -61,6 +61,7 @@
 #include "amsg.h"
 #include "pe.h"
 #include "pe_filetree.h"
+#include "cfg.h"
 
 #include <anoubis_protocol.h>
 
@@ -110,10 +111,6 @@ policy_sighandler(int sig, short event __used, void *arg)
 	case SIGUSR1:
 		pe_dump();
 		break;
-	case SIGHUP:
-		cert_reconfigure(1);
-		pe_reconfigure();
-		break;
 	case SIGINT:
 	case SIGTERM: {
 		sigset_t			 mask;
@@ -141,8 +138,7 @@ policy_main(int pipe_m2s[2], int pipe_m2p[2], int pipe_s2p[2], int pipe_m2u[2],
     int loggers[4])
 /*@globals undef eventq_p2m, undef eventq_p2s, undef replyq@*/
 {
-	struct event	 ev_sigterm, ev_sigint, ev_sigquit, ev_sigusr1,
-			     ev_sighup;
+	struct event	 ev_sigterm, ev_sigint, ev_sigquit, ev_sigusr1;
 	struct event	 ev_m2p, ev_s2p;
 	struct event	 ev_p2m, ev_p2s;
 	struct event	 ev_timer;
@@ -198,25 +194,21 @@ policy_main(int pipe_m2s[2], int pipe_m2p[2], int pipe_s2p[2], int pipe_m2u[2],
 	signal_set(&ev_sigint, SIGINT, policy_sighandler, &ev_info);
 	signal_set(&ev_sigquit, SIGQUIT, policy_sighandler, NULL);
 	signal_set(&ev_sigusr1, SIGUSR1, policy_sighandler, NULL);
-	signal_set(&ev_sighup, SIGHUP, policy_sighandler, NULL);
 	signal_add(&ev_sigterm, NULL);
 	signal_add(&ev_sigint, NULL);
 	signal_add(&ev_sigquit, NULL);
 	signal_add(&ev_sigusr1, NULL);
-	signal_add(&ev_sighup, NULL);
 	ev_info.ev_sigs[0] = &ev_sigterm;
 	ev_info.ev_sigs[1] = &ev_sigint;
 	ev_info.ev_sigs[2] = &ev_sigquit;
 	ev_info.ev_sigs[3] = &ev_sigusr1;
-	ev_info.ev_sigs[4] = &ev_sighup;
-	ev_info.ev_sigs[5] = NULL;
+	ev_info.ev_sigs[4] = NULL;
 
 	sigfillset(&mask);
 	sigdelset(&mask, SIGTERM);
 	sigdelset(&mask, SIGINT);
 	sigdelset(&mask, SIGQUIT);
 	sigdelset(&mask, SIGUSR1);
-	sigdelset(&mask, SIGHUP);
 	sigprocmask(SIG_SETMASK, &mask, NULL);
 
 	close(pipe_m2p[0]);
@@ -582,6 +574,17 @@ dispatch_m2p(int fd, short sig __used, void *arg)
 			break;
 		case ANOUBISD_MSG_UPGRADE:
 			dispatch_upgrade(msg, ev_info);
+			continue;
+		case ANOUBISD_MSG_CONFIG:
+			cert_reconfigure(1);
+			pe_reconfigure();
+			if (cfg_msg_parse(msg) == 0) {
+				log_info("policy: reconfigure");
+				/* XXX ch: do we need to do more? */
+			} else {
+				log_warn("policy: reconfigure failed");
+			}
+			free(msg);
 			continue;
 		default:
 			DEBUG(DBG_TRACE, "<dispatch_m2p (bad type %d)",

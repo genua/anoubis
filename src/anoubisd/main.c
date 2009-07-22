@@ -73,16 +73,12 @@
 #include "cert.h"
 #include "cfg.h"
 
-/*@noreturn@*/
-static void	usage(void) __dead;
-
 static int	terminate = 0;
 static int	eventfds[2];
 static void	main_cleanup(void);
 /*@noreturn@*/
 static void	main_shutdown(int) __dead;
 static void	sanitise_stdfd(void);
-static void	reconfigure(void);
 
 static void	sighandler(int, short, void *);
 static int	check_child(pid_t, const char *);
@@ -145,21 +141,12 @@ static void	send_id_list(u_int64_t token, const char *entry,
 static void	send_entry_list(u_int64_t token, const char *path,
     u_int8_t *keyid, int idlen, uid_t uid, struct event_info_main *ev_info,
     int op, int for_all_ids);
+static void	reconfigure(struct event_info_main *);
 
 static char *pid_file_name = PACKAGE_PIDFILE;
 #ifdef LINUX
 static char *omit_pid_file = "/var/run/sendsigs.omit.d/anoubisd";
 #endif
-
-__dead static void
-usage(void)
-{
-	extern char *__progname;
-
-	fprintf(stderr, "usage: %s [-D <flags>] [-dnv] [-f <conffile>]"
-	    " [-s <socket> ]\n", __progname);
-	exit(1);
-}
 
 /*
  * Note:  Signalhandler managed by libevent are _not_ run in signal
@@ -169,20 +156,21 @@ static void
 sighandler(int sig, short event __used, void *arg __used)
 {
 	int			 die = 0;
+	struct event_info_main	*info;
 
 	DEBUG(DBG_TRACE, ">sighandler: %d", sig);
+
+	info = arg;
 
 	switch (sig) {
 	case SIGTERM:
 	case SIGINT: {
-		struct event_info_main	*info;
 		int			 i;
 		sigset_t		 mask;
 
 		if (terminate < 1)
 			terminate = 1;
 		log_warnx("anoubisd: Shutdown requested by signal");
-		info = arg;
 		if (ioctl(eventfds[1], ANOUBIS_UNDECLARE_FD,
 		    eventfds[0]) == 0) {
 			struct timeval tv;
@@ -238,7 +226,7 @@ sighandler(int sig, short event __used, void *arg __used)
 		}
 		break;
 	case SIGHUP:
-		reconfigure();
+		reconfigure(info);
 		break;
 	}
 
@@ -315,11 +303,7 @@ main(int argc, char *argv[])
 	struct event		ev_timer;
 	/*@observer@*/
 	struct event_info_main	ev_info;
-	char			*conffile;
-	char			*opt_unixsocket;
-	int			read_result;
 	sigset_t		mask;
-	int			ch;
 	int			pipe_m2s[2];
 	int			pipe_m2p[2];
 	int			pipe_s2p[2];
@@ -328,7 +312,6 @@ main(int argc, char *argv[])
 	int			pipe_p2l[2];
 	int			loggers[4];
 	struct timeval		tv;
-	char		       *endptr;
 	struct passwd		*pw;
 	FILE			*pidfp;
 #ifdef LINUX
@@ -340,49 +323,9 @@ main(int argc, char *argv[])
 
 	anoubisd_process = PROC_MAIN;
 
-	/* Initialize configuration with defaults */
-	conffile = ANOUBISD_CONF;
-	opt_unixsocket = NULL;
-
-	cfg_initialize();
-
-	while ((ch = getopt(argc, argv, "dD:nvs:f:")) != -1) {
-		switch (ch) {
-		case 'd':
-			debug_stderr = 1;
-			break;
-		case 'D':
-			errno = 0;    /* To distinguish success/failure */
-			debug_flags = strtol(optarg, &endptr, 0);
-			if (errno) {
-				perror("strtol");
-				usage();
-			}
-			if (endptr == optarg) {
-				fprintf(stderr, "No digits were found\n");
-				usage();
-			}
-			break;
-		case 'n':
-			anoubisd_config.opts |= ANOUBISD_OPT_NOACTION;
-			break;
-		case 'v':
-			if (anoubisd_config.opts & ANOUBISD_OPT_VERBOSE)
-				anoubisd_config.opts |= ANOUBISD_OPT_VERBOSE2;
-			anoubisd_config.opts |= ANOUBISD_OPT_VERBOSE;
-			break;
-		case 's':
-			if (opt_unixsocket)
-				usage();
-			opt_unixsocket = optarg;
-			break;
-		case 'f':
-			conffile = optarg;
-			break;
-		default:
-			usage();
-			/*NOTREACHED*/
-		}
+	cfg_initialize(argc, argv);
+	if (cfg_read() != 0) {
+		fatal("Unable to read configuration");
 	}
 
 #ifndef HAVE_SETPROCTITLE
@@ -395,25 +338,9 @@ main(int argc, char *argv[])
 		fatal("can't copy progname");
 	}
 
-	/* Read configuration from file */
-	read_result = cfg_read_file(conffile);
-
-	if (read_result == 0) {
-		if (opt_unixsocket) {
-			/*
-			 * The commandline has specified a socket,
-			 * replace it in the configuration
-			 */
-			free(anoubisd_config.unixsocket);
-			anoubisd_config.unixsocket = strdup(opt_unixsocket);
-		}
-	} else
-		fatal("Unable to read configuration");
-
 	if (anoubisd_config.opts & ANOUBISD_OPT_NOACTION) {
 		/* Dump configuration if requested */
 		if (anoubisd_config.opts & ANOUBISD_OPT_VERBOSE) {
-			fprintf(stdout, "conffile: %s\n", conffile);
 			cfg_dump(stdout);
 		}
 	}
@@ -549,7 +476,7 @@ main(int argc, char *argv[])
 	signal_set(&ev_sigterm, SIGTERM, sighandler, &ev_info);
 	signal_set(&ev_sigint, SIGINT, sighandler, &ev_info);
 	signal_set(&ev_sigquit, SIGQUIT, sighandler, NULL);
-	signal_set(&ev_sighup, SIGHUP, sighandler, NULL);
+	signal_set(&ev_sighup, SIGHUP, sighandler, &ev_info);
 	signal_set(&ev_sigchld, SIGCHLD, sighandler, &ev_sigchld);
 	signal_add(&ev_sigterm, NULL);
 	signal_add(&ev_sigint, NULL);
@@ -809,14 +736,29 @@ sanitise_stdfd(void)
 }
 
 static void
-reconfigure(void)
+reconfigure(struct event_info_main *info)
 {
+	anoubisd_msg_t	*msg;
+
 	/* Reload Public Keys */
 	cert_reconfigure(0);
 
-	/* Forward SIGHUP to policy process */
-	if (kill(policy_pid, SIGHUP) != 0)
-		log_warn("sending SIGHUP to child %u failed", policy_pid);
+	if (cfg_reread() != 0) {
+		log_warn("re-read of configuration failed.");
+	} else {
+		msg = cfg_msg_create();
+
+		if (msg != NULL) {
+			enqueue(&eventq_m2s, msg);
+			event_add(info->ev_m2s, NULL);
+		}
+
+		msg = cfg_msg_create();
+		if (msg != NULL) {
+			enqueue(&eventq_m2p, msg);
+			event_add(info->ev_m2p, NULL);
+		}
+	}
 }
 
 anoubisd_msg_t *

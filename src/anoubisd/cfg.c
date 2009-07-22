@@ -67,6 +67,101 @@ struct cfg_param
 	size_t value_size;
 };
 
+struct cfg_data
+{
+	int			 cmdlineopts;
+	char			*conffile;
+	char			*optsocket;
+};
+static struct cfg_data data_store = {
+	0,
+	ANOUBISD_CONF,
+	NULL,
+};
+
+/*@noreturn@*/
+static void	 usage(void) __dead;
+static char	*strip_whitespaces(char *);
+static cfg_key	 parse_key(const char *);
+
+static void cfg_param_initialize(struct cfg_param *);
+static void cfg_param_clear(struct cfg_param *);
+static void cfg_param_reset(struct cfg_param *);
+static int  cfg_param_addvalue(struct cfg_param *, const char *, int);
+
+static int cfg_parse_file(FILE *);
+static int cfg_parse_upgrade_mode(const char *, int *, int);
+static int cfg_parse_upgrade_trigger(const char *, int);
+static int cfg_param_process(struct cfg_param *, int);
+
+static int cfg_read_cmdline(int, char * const *);
+static int cfg_read_file(const char *);
+
+/*
+ * Say how to use and exits.
+ */
+__dead static void
+usage(void)
+{
+	extern char *__progname;
+
+	fprintf(stderr, "usage: %s [-D <flags>] [-dnv] [-f <conffile>]"
+	    " [-s <socket> ]\n", __progname);
+	exit(1);
+}
+
+/*
+ * Removes any leading and trailing whitespaces from the given string.
+ * Note, that the string can be modified! A pointer to the modified
+ * string is returned.
+ */
+static char *
+strip_whitespaces(char *string)
+{
+	unsigned int i;
+	char *s;
+
+	if ((string == NULL) || (strlen(string) == 0)) {
+		/* Nothing to do */
+		return (string);
+	}
+
+	/* Strip trailing whitespace */
+	for (i = strlen(string) - 1; i > 0; i--) {
+		if (!isspace(string[i]))
+			break;
+		string[i] = '\0';
+	}
+
+	/* Strip leading whitespaces */
+	s = string;
+	while (*s != '\0') {
+		if (isspace(*s))
+			s++;
+		else
+			break;
+	}
+
+	return (s);
+}
+
+/*
+ * Searches the keywords array for the given string. The assigned cfg_key is
+ * returned. If the name is not registered, key_bad is returned.
+ */
+static cfg_key
+parse_key(const char *s)
+{
+	unsigned int i;
+
+	for (i = 0; keywords[i].name; i++) {
+		if (strcasecmp(s, keywords[i].name) == 0)
+			return keywords[i].key;
+	}
+
+	return (key_bad);
+}
+
 /* Initializes the given cfg_param structure */
 static void
 cfg_param_initialize(struct cfg_param *param)
@@ -151,254 +246,6 @@ cfg_param_addvalue(struct cfg_param *param, const char *value, int lineno)
 	return (0);
 }
 
-/*
- * Removes any leading and trailing whitespaces from the given string.
- * Note, that the string can be modified! A pointer to the modified
- * string is returned.
- */
-static char *
-strip_whitespaces(char *string)
-{
-	unsigned int i;
-	char *s;
-
-	if ((string == NULL) || (strlen(string) == 0)) {
-		/* Nothing to do */
-		return (string);
-	}
-
-	/* Strip trailing whitespace */
-	for (i = strlen(string) - 1; i > 0; i--) {
-		if (!isspace(string[i]))
-			break;
-		string[i] = '\0';
-	}
-
-	/* Strip leading whitespaces */
-	s = string;
-	while (*s != '\0') {
-		if (isspace(*s))
-			s++;
-		else
-			break;
-	}
-
-	return (s);
-}
-
-/*
- * Transforms the given string into a anoubisd_upgrade_mode value.
- * On success, the related anoubisd_upgrade_mode is returned and *ok is set
- * to 1. On failure, *ok is set to 0.
- */
-static int
-cfg_parse_upgrade_mode(const char *value, int *ok, int lineno)
-{
-	if ((value == NULL) || (ok == NULL)) {
-		log_warnx("%s: line %d: Invalid argument",
-		    __FUNCTION__, lineno);
-
-		*ok = 0;
-		return (-1);
-	}
-
-	if (strcasecmp(value, "off") == 0) {
-		*ok = 1;
-		return (ANOUBISD_UPGRADE_MODE_OFF);
-	} else if (strcasecmp(value, "strictlock") == 0) {
-		*ok = 1;
-		return (ANOUBISD_UPGRADE_MODE_STRICT_LOCK);
-	} else if (strcasecmp(value, "looselock") == 0) {
-		*ok = 1;
-		return (ANOUBISD_UPGRADE_MODE_LOOSE_LOCK);
-	} else if (strcasecmp(value, "process") == 0) {
-		*ok = 1;
-		return (ANOUBISD_UPGRADE_MODE_PROCESS);
-	} else {
-		log_warnx("%s: line %d: Unexpected value (%s)",
-		    __FUNCTION__, lineno, value);
-
-		*ok = 0;
-		return (-1);
-	}
-}
-
-/*
- * Filles the config->upgrade_trigger list with triggers enumerated in the
- * given value.
- */
-static int
-cfg_parse_upgrade_trigger(const char *value, int lineno) {
-
-	struct anoubisd_upgrade_trigger	*trigger;
-	char				*s;
-
-	if (value == NULL) {
-		log_warnx("%s: line %d: Invalid argument",
-		    __FUNCTION__, lineno);
-
-		return (-EINVAL);
-	}
-
-	if ((s = strdup(value)) == NULL) {
-		log_warnx("%s: line %d: Out of memory",
-		    __FUNCTION__, lineno);
-
-		return (-ENOMEM);
-	}
-
-	while (1) {
-		/*
-		 * Also split at whitespaces to detect whitespaces around the
-		 * comma
-		 */
-		char *token = strsep(&s, ", \t");
-
-		if (token == NULL) /* End of string reached */
-			break;
-
-		if (strlen(token) > 0) { /* Ignore empty strings */
-			trigger = malloc(
-			    sizeof(struct anoubisd_upgrade_trigger));
-
-			if (trigger == NULL) {
-				log_warnx("%s: line %d: Out of memory",
-				    __FUNCTION__, lineno);
-
-				free(s);
-
-				return (-ENOMEM);
-			}
-
-			trigger->arg = strdup(token);
-			if (trigger->arg == NULL) {
-				log_warnx("%s: line %d: Out of memory",
-				    __FUNCTION__, lineno);
-
-				free(trigger);
-				free(s);
-
-				return (-ENOMEM);
-			}
-
-			LIST_INSERT_HEAD(&anoubisd_config.upgrade_trigger,
-			    trigger, entries);
-		}
-	}
-
-	free(s);
-
-	return (0);
-}
-
-/*
- * Processes the given cfg_param structure, The anoubisd_config structure is
- * filled.
- */
-static int
-cfg_param_process(struct cfg_param *param, int lineno)
-{
-	char *s;
-	anoubisd_upgrade_mode upgrade_mode;
-	int parse_result = 0;
-
-	switch (param->key) {
-		case key_unixsocket:
-			s = strdup(param->value);
-
-			if (s == NULL) {
-				log_warnx("%s: line %d: Out of memory",
-				    __FUNCTION__, lineno);
-				return (-ENOMEM);
-			}
-
-			anoubisd_config.unixsocket = s;
-			break;
-		case key_upgrade_mode:
-			upgrade_mode = cfg_parse_upgrade_mode(
-			    param->value, &parse_result, lineno);
-
-			if (parse_result) {
-				anoubisd_config.upgrade_mode = upgrade_mode;
-				break;
-			} else
-				return (1);
-		case key_upgrade_trigger:
-			parse_result = cfg_parse_upgrade_trigger(
-			    param->value, lineno);
-
-			if (parse_result != 0)
-				return (parse_result);
-
-			break;
-		default:
-			break;
-	}
-
-	return (0);
-}
-
-/*
- * Searches the keywords array for the given string. The assigned cfg_key is
- * returned. If the name is not registered, key_bad is returned.
- */
-static cfg_key
-parse_key(const char *s)
-{
-	unsigned int i;
-
-	for (i = 0; keywords[i].name; i++) {
-		if (strcasecmp(s, keywords[i].name) == 0)
-			return keywords[i].key;
-	}
-
-	return (key_bad);
-}
-
-/**
- * Initializes the given anoubisd_config structure.
- *
- * The fields of the structure are filled with default-values (if specified).
- */
-int
-cfg_initialize()
-{
-	char *s;
-
-	memset(&anoubisd_config, 0, sizeof(struct anoubisd_config));
-
-	s = strdup(PACKAGE_SOCKET);
-	if (s == NULL) {
-		log_warnx("%s: Out of memory", __FUNCTION__);
-		return (-1);
-	} else
-		anoubisd_config.unixsocket = s;
-
-	anoubisd_config.upgrade_mode = ANOUBISD_UPGRADE_MODE_OFF;
-	LIST_INIT(&anoubisd_config.upgrade_trigger);
-
-	return (0);
-}
-
-/**
- * Releases memory allocated for the given anoubisd_config structure.
- */
-void
-cfg_clear()
-{
-	free(anoubisd_config.unixsocket);
-
-	while (!LIST_EMPTY(&anoubisd_config.upgrade_trigger)) {
-		struct anoubisd_upgrade_trigger *trigger;
-
-		trigger = LIST_FIRST(&anoubisd_config.upgrade_trigger);
-		LIST_REMOVE(trigger, entries);
-
-		free(trigger->arg);
-		free(trigger);
-	}
-}
-
 /**
  * Reads out the configuration from the given file handle. The results are
  * written into the anoubisd_config structure.
@@ -421,8 +268,8 @@ cfg_clear()
  * Only keys specified in the keywords array are accepted. Otherwise an error
  * is raised. The format of the value highly depends on the key.
  */
-int
-cfg_read(FILE *f)
+static int
+cfg_parse_file(FILE *f)
 {
 	struct cfg_param param;
 	char buf[1024], *line;
@@ -590,6 +437,217 @@ cfg_read(FILE *f)
 	return (err_counter);
 }
 
+/*
+ * Transforms the given string into a anoubisd_upgrade_mode value.
+ * On success, the related anoubisd_upgrade_mode is returned and *ok is set
+ * to 1. On failure, *ok is set to 0.
+ */
+static int
+cfg_parse_upgrade_mode(const char *value, int *ok, int lineno)
+{
+	if ((value == NULL) || (ok == NULL)) {
+		log_warnx("%s: line %d: Invalid argument",
+		    __FUNCTION__, lineno);
+
+		*ok = 0;
+		return (-1);
+	}
+
+	if (strcasecmp(value, "off") == 0) {
+		*ok = 1;
+		return (ANOUBISD_UPGRADE_MODE_OFF);
+	} else if (strcasecmp(value, "strictlock") == 0) {
+		*ok = 1;
+		return (ANOUBISD_UPGRADE_MODE_STRICT_LOCK);
+	} else if (strcasecmp(value, "looselock") == 0) {
+		*ok = 1;
+		return (ANOUBISD_UPGRADE_MODE_LOOSE_LOCK);
+	} else if (strcasecmp(value, "process") == 0) {
+		*ok = 1;
+		return (ANOUBISD_UPGRADE_MODE_PROCESS);
+	} else {
+		log_warnx("%s: line %d: Unexpected value (%s)",
+		    __FUNCTION__, lineno, value);
+
+		*ok = 0;
+		return (-1);
+	}
+}
+
+/*
+ * Filles the anoubisd_config.upgrade_trigger list with triggers
+ * enumerated in the given value.
+ */
+static int
+cfg_parse_upgrade_trigger(const char *value, int lineno) {
+
+	struct anoubisd_upgrade_trigger	*trigger;
+	char				*s;
+
+	if (value == NULL) {
+		log_warnx("%s: line %d: Invalid argument",
+		    __FUNCTION__, lineno);
+
+		return (-EINVAL);
+	}
+
+	if ((s = strdup(value)) == NULL) {
+		log_warnx("%s: line %d: Out of memory",
+		    __FUNCTION__, lineno);
+
+		return (-ENOMEM);
+	}
+
+	while (1) {
+		/*
+		 * Also split at whitespaces to detect whitespaces around the
+		 * comma
+		 */
+		char *token = strsep(&s, ", \t");
+
+		if (token == NULL) /* End of string reached */
+			break;
+
+		if (strlen(token) > 0) { /* Ignore empty strings */
+			trigger = malloc(
+			    sizeof(struct anoubisd_upgrade_trigger));
+
+			if (trigger == NULL) {
+				log_warnx("%s: line %d: Out of memory",
+				    __FUNCTION__, lineno);
+
+				free(s);
+
+				return (-ENOMEM);
+			}
+
+			trigger->arg = strdup(token);
+			if (trigger->arg == NULL) {
+				log_warnx("%s: line %d: Out of memory",
+				    __FUNCTION__, lineno);
+
+				free(trigger);
+				free(s);
+
+				return (-ENOMEM);
+			}
+
+			LIST_INSERT_HEAD(&anoubisd_config.upgrade_trigger,
+			    trigger, entries);
+		}
+	}
+
+	free(s);
+
+	return (0);
+}
+
+/*
+ * Processes the given cfg_param structure, The anoubisd_config structure is
+ * filled.
+ */
+static int
+cfg_param_process(struct cfg_param *param, int lineno)
+{
+	char *s;
+	anoubisd_upgrade_mode upgrade_mode;
+	int parse_result = 0;
+
+	switch (param->key) {
+		case key_unixsocket:
+			s = strdup(param->value);
+
+			if (s == NULL) {
+				log_warnx("%s: line %d: Out of memory",
+				    __FUNCTION__, lineno);
+				return (-ENOMEM);
+			}
+
+			anoubisd_config.unixsocket = s;
+			break;
+		case key_upgrade_mode:
+			upgrade_mode = cfg_parse_upgrade_mode(
+			    param->value, &parse_result, lineno);
+
+			if (parse_result) {
+				anoubisd_config.upgrade_mode = upgrade_mode;
+				break;
+			} else
+				return (1);
+		case key_upgrade_trigger:
+			parse_result = cfg_parse_upgrade_trigger(
+			    param->value, lineno);
+
+			if (parse_result != 0)
+				return (parse_result);
+
+			break;
+		default:
+			break;
+	}
+
+	return (0);
+}
+
+/**
+ * Work on the arguments given by the command line.
+ */
+static int
+cfg_read_cmdline(int argc, char * const *argv)
+{
+	int	 ch;
+	char	*endptr;
+
+	ch = 0;
+	endptr = NULL;
+
+	while (ch != -1) {
+		ch = getopt(argc, argv, "dD:nvs:f:");
+		switch (ch) {
+		case -1:
+			/* No arguments left. */
+			break;
+		case 'd':
+			debug_stderr = 1;
+			break;
+		case 'D':
+			errno = 0;    /* To distinguish success/failure */
+			debug_flags = strtol(optarg, &endptr, 0);
+			if (errno) {
+				perror("strtol");
+				usage();
+			}
+			if (endptr == optarg) {
+				fprintf(stderr, "No digits were found\n");
+				usage();
+			}
+			break;
+		case 'n':
+			data_store.cmdlineopts |= ANOUBISD_OPT_NOACTION;
+			break;
+		case 'v':
+			if (data_store.cmdlineopts & ANOUBISD_OPT_VERBOSE)
+				data_store.cmdlineopts |= ANOUBISD_OPT_VERBOSE2;
+			data_store.cmdlineopts |= ANOUBISD_OPT_VERBOSE;
+			break;
+		case 's':
+			if (data_store.optsocket) {
+				usage();
+			}
+			data_store.optsocket = optarg;
+			break;
+		case 'f':
+			data_store.conffile = optarg;
+			break;
+		default:
+			usage();
+			/*NOTREACHED*/
+		}
+	}
+
+	return (0);
+}
+
 /**
  * Reads out the configuration from the given file. The results are written
  * into the anoubisd_config structure.
@@ -617,10 +675,108 @@ cfg_read_file(const char *file)
 		return (0);
 	}
 
-	result = cfg_read(f);
+	result = cfg_parse_file(f);
 	fclose(f);
 
 	return (result);
+}
+
+/**
+ * Load the default values.
+ */
+int
+cfg_defaults(void)
+{
+	char *s;
+
+	anoubisd_config.opts = 0;
+
+	if (anoubisd_config.unixsocket == NULL) {
+		s = strdup(PACKAGE_SOCKET);
+		if (s == NULL) {
+			log_warnx("%s: Out of memory", __FUNCTION__);
+			return (-1);
+		} else {
+			anoubisd_config.unixsocket = s;
+		}
+	}
+
+	anoubisd_config.upgrade_mode = ANOUBISD_UPGRADE_MODE_OFF;
+
+	return (0);
+}
+
+/**
+ * Initializes the given anoubisd_config structure.
+ *
+ * The fields of the structure are filled with default-values (if specified).
+ */
+int
+cfg_initialize(int argc, char * const *argv)
+{
+	memset(&anoubisd_config, 0, sizeof(struct anoubisd_config));
+	cfg_defaults();
+	LIST_INIT(&anoubisd_config.upgrade_trigger);
+
+	return (cfg_read_cmdline(argc, argv));
+}
+
+/**
+ * Releases memory allocated for the given anoubisd_config structure.
+ */
+void
+cfg_clear(void)
+{
+	free(anoubisd_config.unixsocket);
+	anoubisd_config.unixsocket = NULL;
+
+	while (!LIST_EMPTY(&anoubisd_config.upgrade_trigger)) {
+		struct anoubisd_upgrade_trigger *trigger;
+
+		trigger = LIST_FIRST(&anoubisd_config.upgrade_trigger);
+		LIST_REMOVE(trigger, entries);
+
+		free(trigger->arg);
+		free(trigger);
+	}
+}
+
+int
+cfg_read(void)
+{
+	int rc;
+
+	rc = cfg_read_file(data_store.conffile);
+
+	/* Command line options are more important than config file. */
+	if (rc == 0) {
+		/* Transfer cmdline socket. */
+		if (data_store.optsocket != NULL) {
+			free(anoubisd_config.unixsocket);
+			anoubisd_config.unixsocket = strdup(
+			    data_store.optsocket);
+		}
+
+		/* Transfer cmdline options. */
+		anoubisd_config.opts = data_store.cmdlineopts;
+	}
+
+	return (rc);
+}
+
+/**
+ * Clears the configuration and read it again.
+ */
+int
+cfg_reread(void)
+{
+	int rc = 0;
+
+	cfg_clear();
+	rc += cfg_defaults();
+	rc += cfg_read();
+
+	return (rc);
 }
 
 /**
@@ -631,6 +787,7 @@ cfg_dump(FILE *f)
 {
 	struct anoubisd_upgrade_trigger *trigger;
 
+	fprintf(f, "conffile: %s\n", data_store.conffile);
 	fprintf(f, "unixsocket: %s\n", anoubisd_config.unixsocket);
 
 	/* upgrade_mode */
@@ -777,7 +934,7 @@ cfg_msg_parse(anoubisd_msg_t *msg)
 		LIST_INSERT_HEAD(&anoubisd_config.upgrade_trigger,
 		    trigger, entries);
 
-		offset += strlen(trigger->arg);
+		offset += strlen(trigger->arg) + 1;
 		count--;
 	}
 

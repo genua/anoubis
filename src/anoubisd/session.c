@@ -67,6 +67,7 @@
 #include "anoubisd.h"
 #include "aqueue.h"
 #include "amsg.h"
+#include "cfg.h"
 
 
 /*
@@ -705,6 +706,19 @@ dispatch_m2s(int fd, short sig __used, void *arg)
 			break;
 		if (msg->mtype == ANOUBISD_MSG_POLREPLY) {
 			dispatch_m2s_pol_reply(msg, ev_info);
+			continue;
+		}
+		if (msg->mtype == ANOUBISD_MSG_CONFIG) {
+			if (cfg_msg_parse(msg) == 0) {
+				log_info("session: reconfigure");
+				/*
+				 * Because we already droped you priviledges
+				 * nothing more can be done here.
+				 */
+			} else {
+				log_warn("session: reconfigure failed");
+			}
+			free(msg);
 			continue;
 		}
 		if (msg->mtype != ANOUBISD_MSG_EVENTDEV) {

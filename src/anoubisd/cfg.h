@@ -30,13 +30,13 @@
 
 #include "anoubisd.h"
 
-int cfg_initialize();
-void cfg_clear();
-int cfg_read(FILE *);
-int cfg_read_file(const char *);
-void cfg_dump(FILE *);
-
-anoubisd_msg_t *cfg_msg_create(void);
-int cfg_msg_parse(anoubisd_msg_t *);
+int		 cfg_defaults(void);
+int		 cfg_initialize(int, char * const *);
+void		 cfg_clear(void);
+int		 cfg_read(void);
+int		 cfg_reread(void);
+void		 cfg_dump(FILE *);
+anoubisd_msg_t	*cfg_msg_create(void);
+int		 cfg_msg_parse(anoubisd_msg_t *);
 
 #endif	/* _CFG_H_ */
