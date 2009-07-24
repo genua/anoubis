@@ -125,8 +125,8 @@ struct session_reg {
 };
 
 struct anoubisd_msg {
-	short		size;
-	short		mtype;
+	int		size;
+	int		mtype;
 	char		msg[0];
 };
 typedef struct anoubisd_msg anoubisd_msg_t;
@@ -321,9 +321,6 @@ __dead void	early_err(int, const char *);
 
 /*@noreturn@*/
 __dead void	early_errx(int, const char *);
-
-anoubisd_msg_t *msg_factory(int, int);
-void		msg_shrink(anoubisd_msg_t *, int);
 
 void	pe_dump(void);
 int	send_policy_data(u_int64_t token, int fd);

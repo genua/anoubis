@@ -761,47 +761,31 @@ reconfigure(struct event_info_main *info)
 	}
 }
 
-anoubisd_msg_t *
-msg_factory(int mtype, int size)
-{
-	anoubisd_msg_t *msg;
-
-	if ((msg = malloc(sizeof(anoubisd_msg_t) + size)) == NULL) {
-		log_warn("msg_factory: cannot allocate memory");
-		master_terminate(ENOMEM);
-		return NULL;
-	}
-	bzero(msg, sizeof(anoubisd_msg_t) + size);
-	msg->mtype = mtype;
-	msg->size = sizeof(anoubisd_msg_t) + size;
-	return msg;
-}
-
-void
-msg_shrink(anoubisd_msg_t *msg, int size)
-{
-	int	nsize = sizeof(anoubisd_msg_t) + size;
-	if (nsize <= msg->size)
-		msg->size = nsize;
-}
-
 static void
 dispatch_m2s(int fd, short event __used, /*@dependent@*/ void *arg)
 {
 	anoubisd_msg_t			*msg;
 	struct event_info_main		*ev_info = arg;
 	int				 ret;
+	eventdev_token			 token = 0;
 
 	DEBUG(DBG_TRACE, ">dispatch_m2s");
 
 	msg = queue_peek(&eventq_m2s);
+	if (msg)
+		token = ((struct eventdev_hdr *)msg->msg)->msg_token;
 	ret = send_msg(fd, msg);
-	if (msg && ret != 0) {
-		msg = dequeue(&eventq_m2s);
-		DEBUG(DBG_QUEUE, " <eventq_m2s: %s%x", (ret > 0) ? "" : ""
-		    " dropping ",
-		    ((struct eventdev_hdr *)msg->msg)->msg_token);
-		free(msg);
+	if (msg) {
+		if (ret < 0) {
+			/* Error: Drop message */
+			dequeue(&eventq_m2s);
+			DEBUG(DBG_QUEUE, " <eventq_m2s: dropping %x", token);
+			free(msg);
+		} else if (ret > 0) {
+			/* Success: send_msg will free the message. */
+			dequeue(&eventq_m2s);
+			DEBUG(DBG_QUEUE, " <eventq_m2s: sent %x", token);
+		}
 	}
 	/* Write was not successful: Check if we lost one of our childs. */
 	if (ret <= 0)
@@ -1344,23 +1328,30 @@ dispatch_s2m(int fd, short event __used, void *arg)
 static void
 dispatch_m2p(int fd, short event __used, /*@dependent@*/ void *arg)
 {
-	/*@dependent@*/
-	anoubisd_msg_t *msg;
-	struct event_info_main *ev_info = (struct event_info_main*)arg;
-	int		ret;
+	anoubisd_msg_t			*msg;
+	struct event_info_main		*ev_info = arg;
+	int				 ret;
+	eventdev_token			 token = 0;
 
 	DEBUG(DBG_TRACE, ">dispatch_m2p");
 
 	msg = queue_peek(&eventq_m2p);
+	if (msg)
+		token = ((struct eventdev_hdr *)msg->msg)->msg_token;
 	ret = send_msg(fd, msg);
-
-	if (msg && ret != 0) {
-		msg = dequeue(&eventq_m2p);
-		DEBUG(DBG_QUEUE, " <eventq_m2p: %s%x", (ret > 0) ? "" :
-		    "dropping ",
-		    ((struct eventdev_hdr *)msg->msg)->msg_token);
-		free(msg);
+	if (msg) {
+		if (ret < 0) {
+			/* Error: Drop message */
+			dequeue(&eventq_m2p);
+			DEBUG(DBG_QUEUE, " <eventq_m2p: dropping %x", token);
+			free(msg);
+		} else if (ret > 0) {
+			/* Success: send_msg will free the message. */
+			dequeue(&eventq_m2p);
+			DEBUG(DBG_QUEUE, " <eventq_m2p: sent %x", token);
+		}
 	}
+
 	/* Write was not successful. See if we lost one of our childs. */
 	if (ret <= 0)
 		sighandler(SIGCHLD, 0, NULL);
@@ -1551,18 +1542,23 @@ dispatch_m2u(int fd, short event __used, void *arg)
 	anoubisd_msg_t			*msg;
 	struct event_info_main		*ev_info = arg;
 	int				 ret;
+	int				 type = 0;
 
 	DEBUG(DBG_TRACE, ">dispatch_m2u");
 
 	msg = queue_peek(&eventq_m2u);
+	if (msg)
+		type = msg->mtype;
 	ret = send_msg(fd, msg);
 
 	if (msg && ret != 0) {
-		DEBUG(DBG_QUEUE, " eventq_m2u: Message type %d", msg->mtype);
-		msg = dequeue(&eventq_m2u);
-		if (ret < 0)
+		DEBUG(DBG_QUEUE, " eventq_m2u: Message type %d", type);
+		dequeue(&eventq_m2u);
+		/* In case of success send_msg freed the message. */
+		if (ret < 0) {
 			log_warnx(" eventq_m2u: Dropping Message");
-		free(msg);
+			free(msg);
+		}
 	}
 	/* Write was not successful: Check if we lost one of our childs. */
 	if (ret <= 0)

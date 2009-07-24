@@ -36,6 +36,7 @@
 #include <string.h>
 
 #include "anoubisd.h"
+#include "amsg.h"
 #include "cfg.h"
 
 #ifdef LINUX

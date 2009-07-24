@@ -67,14 +67,13 @@ dispatch_log_write(int fd __used, short event __used, void *arg __used)
 	int			 ret;
 
 	__logging = 1;
-	if ((msg = queue_peek(&__eventq_log)) == NULL) {
-		__logging = 0;
-		return;
-	}
+	msg = queue_peek(&__eventq_log);
 	ret = send_msg(__log_fd, msg);
-	if (ret != 0) {
-		msg = dequeue(&__eventq_log);
-		free(msg);
+	if (msg && ret != 0) {
+		dequeue(&__eventq_log);
+		/* Sendmessage frees the message if sending was successful. */
+		if (ret < 0)
+			free(msg);
 	}
 	/*
 	 * Tricky:  First dequeue pending message, then log and

@@ -706,20 +706,26 @@ dispatch_m2p(int fd, short sig __used, void *arg)
 static void
 dispatch_p2m(int fd, short sig __used, void *arg)
 {
-	anoubisd_msg_t *msg;
-	struct event_info_policy *ev_info = (struct event_info_policy*)arg;
-	int		ret;
+	anoubisd_msg_t			*msg;
+	struct event_info_policy	*ev_info = arg;
+	int				 ret;
+	eventdev_token			 token = 0;
 
 	DEBUG(DBG_TRACE, ">dispatch_p2m");
 	msg = queue_peek(&eventq_p2m);
+	if (msg)
+		token = ((struct eventdev_reply *)(msg->msg))->msg_token;
 	ret = send_msg(fd, msg);
 
 	if (msg && ret != 0) {
-		msg = dequeue(&eventq_p2m);
-		DEBUG(DBG_QUEUE, " <eventq_p2m: %s%x", (ret > 0) ? "" : " "
-		    "dropping ",
-		    ((struct eventdev_reply *)msg->msg)->msg_token);
-		free(msg);
+		dequeue(&eventq_p2m);
+		if (ret < 0) {
+			DEBUG(DBG_QUEUE, " <eventq_p2m: dropping %x", token);
+			free(msg);
+		} else if (ret > 0) {
+			/* Success: send_msg frees the message. */
+			DEBUG(DBG_QUEUE, " <eventq_p2m: sent %x", token);
+		}
 	}
 	/* If the queue is not empty, we want to be called again */
 	if (queue_peek(&eventq_p2m) || msg_pending(fd))
@@ -923,21 +929,27 @@ dispatch_s2p(int fd, short sig __used, void *arg)
 static void
 dispatch_p2s(int fd, short sig __used, void *arg)
 {
-	anoubisd_msg_t *msg;
-	struct event_info_policy *ev_info = (struct event_info_policy*)arg;
-	int		ret;
+	anoubisd_msg_t			*msg;
+	struct event_info_policy	*ev_info = arg;
+	int				 ret;
+	eventdev_token			 token = 0;
 
 	DEBUG(DBG_TRACE, ">dispatch_p2s");
 
 	msg = queue_peek(&eventq_p2s);
+	if (msg)
+		token = ((struct eventdev_hdr *)msg->msg)->msg_token;
 	ret = send_msg(fd, msg);
 
 	if (msg && ret != 0) {
-		msg = dequeue(&eventq_p2s);
-		DEBUG(DBG_QUEUE, " <eventq_p2s: %s%x", (ret > 0) ? "" : " "
-		    "dropping ",
-		    ((struct eventdev_hdr *)msg->msg)->msg_token);
-		free(msg);
+		dequeue(&eventq_p2s);
+		if (ret < 0) {
+			DEBUG(DBG_QUEUE, " <eventq_p2s: dropping %x", token);
+			free(msg);
+		} else if (ret > 0) {
+			/* Success: send_msg frees the message. */
+			DEBUG(DBG_QUEUE, " <eventq_p2s: sent %x", token);
+		}
 	}
 
 	/* If the queue is not empty, we want to be called again */

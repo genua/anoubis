@@ -47,21 +47,13 @@
 
 #define MSG_BUFS 100
 struct msg_buf {
-	int fd;
-	/*@relnull@*/ /*@dependent@*/
-	char *name;
-	/*@relnull@*/ /*@owned@*/
-	void *rbufp;
-	/*@relnull@*/ /*@dependent@*/
-	void *rheadp;
-	/*@relnull@*/ /*@dependent@*/
-	void *rtailp;
-	/*@relnull@*/ /*@owned@*/
-	void *wbufp;
-	/*@relnull@*/ /*@dependent@*/
-	void *wheadp;
-	/*@relnull@*/ /*@dependent@*/
-	void *wtailp;
+	int		 fd;
+	size_t		 rmsgoff;
+	size_t		 woff;
+	char		*name;
+	void		*rbufp, *rheadp, *rtailp;
+	anoubisd_msg_t	*rmsg;
+	anoubisd_msg_t	*wmsg;
 };
 
 /*@reldef@*/
@@ -94,23 +86,11 @@ msg_init(int fd, char *name)
 				return;
 			}
 			fds[idx].rheadp = fds[idx].rtailp = fds[idx].rbufp;
+			fds[idx].rmsg = NULL;
+			fds[idx].rmsgoff = 0;
 
-			/*
-			 * We are initialising the fds msg_buf
-			 * structures. We can safely assume that we are
-			 * not running this code on already initialised
-			 * structures, because of the checks at the
-			 * beginning of the function.
-			 */
-			if ((/*@i@*/fds[idx].wbufp = malloc(MSG_BUF_SIZE))
-			    == NULL) {
-				free(fds[idx].rbufp);
-				fds[idx].rbufp = NULL;
-				log_warn("msg_init: can't allocate memory");
-				master_terminate(ENOMEM);
-				return;
-			}
-			fds[idx].wheadp = fds[idx].wtailp = fds[idx].wbufp;
+			fds[idx].wmsg = NULL;
+			fds[idx].woff = 0;
 
 			fds[idx].fd = fd;
 			fds[idx].name = name;
@@ -146,17 +126,42 @@ msg_release(int fd)
 	if (!buf)
 		return;
 	free(buf->rbufp);
-	free(buf->wbufp);
-	buf->rbufp = buf->wbufp = NULL;
+	if (buf->wmsg)
+		free(buf->wmsg);
+	if (buf->rmsg)
+		free(buf->rmsg);
+	buf->rmsg = NULL;
+	buf->rmsgoff = 0;
+	buf->wmsg = NULL;
+	buf->woff = 0;
+	buf->rbufp = NULL;
 	buf->fd = -1;
 	buf->name = NULL;
 }
 
+/*
+ * Return true if more data can be expected from the fd, zero if
+ * EOF was detected.
+ */
 static int
 _fill_buf(struct msg_buf *mbp)
 {
-	int size;
+	int size, space;
 
+	DEBUG(DBG_MSG_RECV, " _fill_buf: rmsg=%p rmsgoff=%d rheadp=%p "
+	    "rtailp=%p msgsize=%d", mbp->rmsg, (int)mbp->rmsgoff, mbp->rheadp,
+	    mbp->rtailp, (mbp->rmsg)?(int)mbp->rmsg->size:0);
+	if (mbp->rmsg) {
+		/* Message already complete. */
+		if ((int)mbp->rmsgoff == mbp->rmsg->size)
+			return 1;
+		size = read(mbp->fd, (void*)(mbp->rmsg) + mbp->rmsgoff,
+		    mbp->rmsg->size - mbp->rmsgoff);
+		if (size <= 0)
+			goto err;
+		mbp->rmsgoff += size;
+		return 1;
+	}
 	/* if empty, point to start */
 	if (mbp->rheadp == mbp->rtailp)
 		mbp->rheadp = mbp->rtailp = mbp->rbufp;
@@ -168,12 +173,10 @@ _fill_buf(struct msg_buf *mbp)
 		mbp->rheadp = mbp->rbufp;
 		mbp->rtailp = mbp->rheadp + size;
 	}
-
-	/*
-	 * We've allocated MSG_BUF_SIZE*2 in msg_init(), thus requesting
-	 * MSG_BUF_SIZE to be read is ok!
-	 */
-	size = read(mbp->fd, mbp->rtailp, MSG_BUF_SIZE);
+	space = 2*MSG_BUF_SIZE - (mbp->rtailp - mbp->rbufp);
+	if (space <= 0)
+		return 1;
+	size = read(mbp->fd, mbp->rtailp, space);
 	if (size <= 0)
 		goto err;
 	mbp->rtailp += size;
@@ -196,7 +199,7 @@ int msg_eof(int fd)
 		log_warn("msg_buf not initialized");
 		return 1;
 	}
-	if (mbp->rheadp != mbp->rtailp)
+	if (mbp->rmsg || (mbp->rheadp != mbp->rtailp))
 		return 0;
 	if (_fill_buf(mbp))
 		return 0;
@@ -208,20 +211,29 @@ _flush_buf(struct msg_buf *mbp)
 {
 	int size;
 
-	if (mbp->wheadp == mbp->wtailp)
+	if (mbp->wmsg == NULL)
 		return;
-
-	size = write(mbp->fd, mbp->wheadp, mbp->wtailp - mbp->wheadp);
+	if ((int)mbp->woff == mbp->wmsg->size) {
+		free(mbp->wmsg);
+		mbp->wmsg = NULL;
+		mbp->woff = 0;
+		return;
+	}
+	size = write(mbp->fd, ((void*)mbp->wmsg)+mbp->woff,
+	    mbp->wmsg->size - mbp->woff);
 	if (size < 0) {
 		log_warn("write error");
 		return;
 	}
-	mbp->wheadp += size;
+	mbp->woff += size;
 	DEBUG(DBG_MSG_SEND, "_flush_buf: fd:%d size:%d", mbp->fd, size);
 
 	/* if empty, point to start */
-	if (mbp->wheadp == mbp->wtailp)
-		mbp->wheadp = mbp->wtailp = mbp->wbufp;
+	if ((int)mbp->woff == mbp->wmsg->size) {
+		free(mbp->wmsg);
+		mbp->woff = 0;
+		mbp->wmsg = NULL;
+	}
 }
 
 /*
@@ -233,6 +245,7 @@ get_msg(int fd)
 	struct msg_buf *mbp;
 	anoubisd_msg_t *msg;
 	anoubisd_msg_t *msg_r;
+	int		copy;
 
 
 	if ((mbp = _get_mbp(fd)) == NULL) {
@@ -240,36 +253,56 @@ get_msg(int fd)
 		return NULL;
 	}
 
-	/* we need at least a short (check for an int) in the buffer */
-	if ((unsigned int)(mbp->rtailp - mbp->rheadp) < sizeof(int))
+	if (mbp->rmsg) {
+		if ((int)mbp->rmsgoff != mbp->rmsg->size)
+			if (!_fill_buf(mbp))
+				goto eof;
+		if ((int)mbp->rmsgoff == mbp->rmsg->size) {
+			msg_r = mbp->rmsg;
+			mbp->rmsg = NULL;
+			mbp->rmsgoff = 0;
+			goto message;
+		}
+		return NULL;
+	}
+	/* we need at least the anoubisd_msg_t structure. */
+	if ((unsigned int)(mbp->rtailp - mbp->rheadp) < sizeof(anoubisd_msg_t))
 		if (!_fill_buf(mbp))
 			goto eof;
-	if ((unsigned int)(mbp->rtailp - mbp->rheadp) < sizeof(int))
+	if ((unsigned int)(mbp->rtailp - mbp->rheadp) < sizeof(anoubisd_msg_t))
 		return NULL;
 
 	/* check for a complete message */
 	msg = (anoubisd_msg_t *)mbp->rheadp;
-	if (mbp->rtailp - mbp->rheadp < msg->size)
-		if (!_fill_buf(mbp))
-			goto eof;
-	msg = (anoubisd_msg_t *)mbp->rheadp;
-	if (mbp->rtailp - mbp->rheadp < msg->size)
+	if (msg->size > MSG_SIZE_LIMIT
+	    || msg->size < (int)sizeof(anoubisd_msg_t)) {
+		log_warnx("get_msg: Bad message size %d", msg->size);
+		master_terminate(EINVAL);
 		return NULL;
-
+	}
 	if ((msg_r = malloc(msg->size)) == NULL) {
 		log_warn("get_msg: can't allocate memory");
 		master_terminate(ENOMEM);
 		return NULL;
 	}
-
-	bcopy(msg, msg_r, msg->size);
-	mbp->rheadp += msg->size;
-	DEBUG(DBG_MSG_RECV, "get_msg: fd:%d size:%d", mbp->fd, msg->size);
+	copy = mbp->rtailp - mbp->rheadp;
+	if (copy > msg->size)
+		copy = msg->size;
+	bcopy(msg, msg_r, copy);
+	mbp->rheadp += copy;
+	if (msg_r->size != copy) {
+		mbp->rmsg = msg_r;
+		mbp->rmsgoff = copy;
+		return NULL;
+	}
+message:
 	amsg_verify(msg_r);
+	DEBUG(DBG_MSG_RECV, "get_msg: fd:%d size:%d", mbp->fd, msg_r->size);
 	return msg_r;
 eof:
 	return NULL;
 }
+
 
 /*
  * This returns a 'malloc'ed msg on success.
@@ -277,9 +310,10 @@ eof:
 anoubisd_msg_t *
 get_event(int fd)
 {
-	struct msg_buf *mbp;
-	struct eventdev_hdr *evt;
-	anoubisd_msg_t *msg_r;
+	struct msg_buf		*mbp;
+	struct eventdev_hdr	*evt;
+	anoubisd_msg_t		*msg_r;
+	int			 size;
 
 	if ((mbp = _get_mbp(fd)) == NULL) {
 		log_warn("msg_buf not initialized");
@@ -287,22 +321,26 @@ get_event(int fd)
 		return NULL;
 	}
 
-	/* we need at least a short (check for an int) in the buffer */
-	if ((unsigned int)(mbp->rtailp - mbp->rheadp) < sizeof(int))
-		if (!_fill_buf(mbp))
-			goto eof;
-	if ((unsigned int)(mbp->rtailp - mbp->rheadp) < sizeof(int))
+	/*
+	 * If we can call get_event on this fd, it cannot have
+	 * a pending message because get_event only returns a single
+	 * complete message.
+	 */
+	if (mbp->rheadp != mbp->rtailp || mbp->rmsg != NULL) {
+		log_warnx(" get_event: Invalid buffer state");
 		return NULL;
-
-	/* check for a complete message */
-	evt = (struct eventdev_hdr *)mbp->rheadp;
-	if ((mbp->rtailp - mbp->rheadp) < evt->msg_size)
-		if (!_fill_buf(mbp))
-			goto eof;
-	evt = (struct eventdev_hdr *)mbp->rheadp;
-	if ((mbp->rtailp - mbp->rheadp) < evt->msg_size)
+	}
+	size = read(fd, mbp->rbufp, 2*MSG_BUF_SIZE);
+	if (size <= 0) {
+		if (size < 0 && errno != EAGAIN)
+			log_warn(" get_event: read error");
 		return NULL;
-
+	}
+	evt = (struct eventdev_hdr *)mbp->rbufp;
+	if (size < (int)sizeof(int) || evt->msg_size != size) {
+		log_warnx(" Bad eventdev message length %d", size);
+		return NULL;
+	}
 	if ((msg_r = malloc(evt->msg_size + sizeof(anoubisd_msg_t))) == NULL) {
 		log_warn("get_event: can't allocate memory");
 		master_terminate(ENOMEM);
@@ -312,13 +350,9 @@ get_event(int fd)
 	msg_r->size = evt->msg_size + sizeof(anoubisd_msg_t);
 	msg_r->mtype = ANOUBISD_MSG_EVENTDEV;
 	bcopy(evt, msg_r->msg, evt->msg_size);
-	mbp->rheadp += evt->msg_size;
 	DEBUG(DBG_MSG_RECV, "get_event: fd:%d size:%d", mbp->fd, evt->msg_size);
 	amsg_verify(msg_r);
 	return msg_r;
-eof:
-	log_warnx("get_event: Unexpected end of file");
-	return NULL;
 }
 
 /*
@@ -337,6 +371,10 @@ get_client_msg(int fd, struct anoubis_msg **msgp)
 
 	if ((mbp = _get_mbp(fd)) == NULL)
 		return 0;
+	if (mbp->rmsg) {
+		log_warnx("get_client_msg: Bad buffer state");
+		return 0;
+	}
 	if ((unsigned int)(mbp->rtailp - mbp->rheadp) < sizeof(len))
 		if (!_fill_buf(mbp))
 			return 0;
@@ -367,20 +405,19 @@ send_msg(int fd, anoubisd_msg_t *msg)
 		log_warnx("msg_buf not initialized");
 		return -1;
 	}
-	if (mbp->wtailp != mbp->wheadp) {
+	if (mbp->wmsg) {
 		_flush_buf(mbp);
 		return 0;
 	}
 	if (!msg)
 		return 1;
-	if (msg->size > MSG_BUF_SIZE) {
+	if (msg->size > MSG_SIZE_LIMIT) {
 		log_warnx("send_msg: message %p to large %d", msg, msg->size);
 		return -1;
 	}
-
 	amsg_verify(msg);
-	bcopy(msg, mbp->wtailp, msg->size);
-	mbp->wtailp += msg->size;
+	mbp->wmsg = msg;
+	mbp->woff = 0;
 	DEBUG(DBG_MSG_RECV, "send_msg: fd:%d size:%d", mbp->fd, msg->size);
 	_flush_buf(mbp);
 	return 1;
@@ -395,5 +432,38 @@ msg_pending(int fd)
 		log_warn("msg_buf not initialized");
 		return 0;
 	}
-	return mbp->wtailp != mbp->wheadp;
+	return mbp->wmsg != NULL;
+}
+
+struct anoubisd_msg *
+msg_factory(int mtype, int size)
+{
+	struct anoubisd_msg *msg;
+
+	size += sizeof(anoubisd_msg_t);
+	if (size < (int)sizeof(anoubisd_msg_t) || size > MSG_SIZE_LIMIT) {
+		log_warnx("msg_factory: Bad message size %d", size);
+		return NULL;
+	}
+	if ((msg = malloc(size)) == NULL) {
+		log_warn("msg_factory: cannot allocate memory");
+		master_terminate(ENOMEM);
+		return NULL;
+	}
+	bzero(msg, size);
+	msg->mtype = mtype;
+	msg->size = size;
+	return msg;
+}
+
+void
+msg_shrink(struct anoubisd_msg *msg, int nsize)
+{
+	nsize += sizeof(anoubisd_msg_t);
+	if (nsize < (int)sizeof(anoubisd_msg_t) || nsize > MSG_SIZE_LIMIT) {
+		log_warnx("msg_shrink: Bad message size %d", nsize);
+		return;
+	}
+	if (nsize < msg->size)
+		msg->size = nsize;
 }

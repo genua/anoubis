@@ -323,11 +323,13 @@ dispatch_u2m(int fd, short sig __used, void *arg)
 	ret = send_msg(fd, msg);
 
 	if (msg && ret != 0) {
-		msg = dequeue(&eventq_u2m);
-		if (ret < 0)
+		dequeue(&eventq_u2m);
+		if (ret < 0) {
 			DEBUG(DBG_QUEUE, " dispatch_u2m: Dropping message "
 			    "(error %d)", ret);
-		free(msg);
+			/* send_msg frees the message in case of success. */
+			free(msg);
+		}
 	}
 
 	/* If the queue is not empty, we want to be called again */

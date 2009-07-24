@@ -1214,20 +1214,26 @@ dispatch_m2s_pol_reply(anoubisd_msg_t *msg, struct event_info_session *ev_info)
 static void
 dispatch_s2m(int fd, short sig __used, void *arg)
 {
-	struct event_info_session *ev_info = (struct event_info_session *)arg;
-	anoubisd_msg_t *msg;
-	int		ret;
+	struct event_info_session	*ev_info = arg;
+	anoubisd_msg_t			*msg;
+	int				 ret;
+	eventdev_token			 token = 0;
 
 	DEBUG(DBG_TRACE, ">dispatch_s2m");
 
 	msg = queue_peek(&eventq_s2m);
+	if (msg)
+		token = ((struct eventdev_reply *)msg->msg)->msg_token;
 	ret = send_msg(fd, msg);
 	if (msg && ret != 0) {
-		msg = dequeue(&eventq_s2m);
-		DEBUG(DBG_QUEUE, " <eventq_s2m: %s%x",
-		    (ret > 0) ? "" : "dropping ",
-		    ((struct eventdev_reply *)msg->msg)->msg_token);
-		free(msg);
+		dequeue(&eventq_s2m);
+		if (ret < 0) {
+			DEBUG(DBG_QUEUE, " <eventq_s2m: dropping %x", token);
+			free(msg);
+		} else if (ret > 0) {
+			/* Success: send_msg frees the message. */
+			DEBUG(DBG_QUEUE, " <eventq_s2m: sent %x", token);
+		}
 	}
 
 	/* If the queue is not empty, we want to be called again */
@@ -1240,21 +1246,27 @@ dispatch_s2m(int fd, short sig __used, void *arg)
 static void
 dispatch_s2p(int fd, short sig __used, void *arg)
 {
-	struct event_info_session *ev_info = (struct event_info_session *)arg;
-	anoubisd_msg_t *msg;
-	int		ret;
+	struct event_info_session	*ev_info = arg;
+	anoubisd_msg_t			*msg;
+	int				 ret;
+	eventdev_token			 token = 0;
 
 	DEBUG(DBG_TRACE, ">dispatch_s2p");
 
 	msg = queue_peek(&eventq_s2p);
+	if (msg)
+		token = ((struct eventdev_reply *)msg->msg)->msg_token;
 	ret = send_msg(fd, msg);
 
 	if (msg && ret != 0) {
-		msg = dequeue(&eventq_s2p);
-		DEBUG(DBG_QUEUE, " <eventq_s2p: %s%x",
-		    (ret > 0) ? "" : "dropping ",
-		    ((struct eventdev_reply *)msg->msg)->msg_token);
-		free(msg);
+		dequeue(&eventq_s2p);
+		if (ret < 0) {
+			DEBUG(DBG_QUEUE, " <eventq_s2p: dropping %x", token);
+			free(msg);
+		} else {
+			/* Success: send_msg frees the message. */
+			DEBUG(DBG_QUEUE, " <eventq_s2p: sent %x", token);
+		}
 	}
 
 	/* If the queue is not empty, we want to be called again */

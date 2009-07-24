@@ -50,7 +50,10 @@
  * this might not be really needed.  However, it is an additional guarantee and
  * check.
  */
-#define MSG_BUF_SIZE 4096
+#define MSG_BUF_SIZE 8192
+
+/* Maximum  size of a message. */
+#define MSG_SIZE_LIMIT	100000
 
 struct msg_bug;
 
@@ -67,5 +70,7 @@ extern int send_msg(int, anoubisd_msg_t *);
 extern int msg_pending(int);
 extern int msg_eof(int);
 extern void amsg_verify(struct anoubisd_msg *);
+extern struct anoubisd_msg *msg_factory(int, int);
+extern void msg_shrink(struct anoubisd_msg *, int);
 
 #endif /* !_AMSG_H */
