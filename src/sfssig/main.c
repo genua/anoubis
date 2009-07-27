@@ -1501,6 +1501,7 @@ out:
 	return ret;
 }
 
+
 int
 sfs_export(char *arg)
 {
@@ -1543,7 +1544,7 @@ _export(char *arg, int rec)
 	}
 	if (!as)
 		as = load_keys(0, 0, cert, keyfile);
-	if (!rec) {
+	if (!rec && (strcmp(arg, "/") != 0)) {
 		cnt = 1;
 		if ((export = calloc(1, sizeof(struct sfssig_entry *))) == NULL)
 			return 1;
