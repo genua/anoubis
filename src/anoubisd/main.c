@@ -495,6 +495,7 @@ main(int argc, char *argv[])
 	sigdelset(&mask, SIGQUIT);
 	sigdelset(&mask, SIGHUP);
 	sigdelset(&mask, SIGCHLD);
+	sigdelset(&mask, SIGSEGV);
 	sigprocmask(SIG_SETMASK, &mask, NULL);
 
 	queue_init(eventq_m2p);

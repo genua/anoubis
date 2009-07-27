@@ -138,6 +138,7 @@ upgrade_main(int pipe_m2u[2], int pipe_m2p[2], int pipe_s2p[2],
 	sigdelset(&mask, SIGTERM);
 	sigdelset(&mask, SIGINT);
 	sigdelset(&mask, SIGQUIT);
+	sigdelset(&mask, SIGSEGV);
 	sigprocmask(SIG_SETMASK, &mask, NULL);
 
 	close(pipe_m2p[0]);

@@ -362,6 +362,7 @@ logger_main(int pipe_m2l[2], int pipe_p2l[2], int pipe_s2l[2], int pipe_u2l[2])
 	sigdelset(&mask, SIGTERM);
 	sigdelset(&mask, SIGINT);
 	sigdelset(&mask, SIGQUIT);
+	sigdelset(&mask, SIGSEGV);
 	sigprocmask(SIG_SETMASK, &mask, NULL);
 
 	close(pipe_m2l[1]);
