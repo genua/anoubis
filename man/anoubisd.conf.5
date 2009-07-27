@@ -39,68 +39,79 @@ The
 .Ar anoubisd.conf
 file is the main configuration file for
 .Xr anoubisd 8 .
-The file specifies various options which are considered by the Anoubis daemon
-process.
+It specifies various configuration options for the Anoubis daemon
+process. Most of these options are Operating System specific and should
+not be changed.
 .Pp
-Configuration lines are in the format
+Entries use the following format:
 .Pp
 option = value
 .Pp
-Lines starting with a hash mark (
-.Dq #
-) and empty lines are ignored. If a line ends with a backslash
-.Dq \e ,
-the value is continued in the next line.
+Lines starting with a hash mark
+.Sq #
+and empty lines are ignored. If a line ends with a backslash
+.Sq \e
+the value is continued on the next line.
 .Pp
 The configuration options are:
 .Bl -tag -width Ds
 .It \fBunixsocket\fP
-Specifies the path of the Unix Domain Socket used for communication with client
-utilities, such as
+Specifies the Unix Domain Socket used for communication with
+clients, such as
 .Xr anoubisctl 8
 or
 .Xr xanoubis 1 .
 The default is
 .Ar /var/run/anoubisd.sock .
 .It \fBupgrade_mode\fP
-Specifies the method how the start and end of an upgrade is triggered.
+.Xr anoubisd 8
+has special support for software upgrades. During an upgrade it will automatically recalculate checksums for updated files. The upgrade_mode option specifies how the start and end of an upgrade are triggered.
 Possible values are:
 .Pp
 .Ar off
-The upgrade process is turned off, no upgrade is triggered by
-.Xr anoubisd 8 .
+- The upgrade process is disabled, no upgrade support is enabled.
 .Pp
 .Ar strictlock
-A file gets locked by
-.Xr flock 2 .
-This is the time, when the upgrade begins. When the same file is unlocked
-again, the upgrade is finished.
-You need to configure the lockfile with the \fBupgrade_trigger\fP option.
+When the file specified with the \fBupgrade_trigger\fP option is
+locked (using 
+.Xr flock 2
+or
+.Xr fcntl 2
+), the upgrade starts. When the same file is unlocked
+the upgrade ends.
+The lockfile should be configured using the \fBupgrade_trigger\fP option.
 .Pp
 .Ar looselock
-A file gets locked by
-.Xr flock 2 .
-This is the time, when the upgrade begins.
-When the process, which asks for the lock, quit, the upgrade is finished.
-You need to configure the lockfile with the \fBupgrade_trigger\fP option.
+When the file specified by the \fBupgrade_trigger\fP option is
+locked (using 
+.Xr flock 2
+or
+.Xr fcntl 2
+), the upgrade starts.
+When the process which has locked the file exits, the upgrade ends.
 .Pp
 .Ar process
-With the start of a process the upgrade begins.
-When the same process quit, the upgrade is finished.
-You need to configure the name of the process-binary with the
+The upgrade is triggered by starting a process, when it exits the
+upgrade ends. The pathname of the program is configured using the
 \fBupgrade_trigger\fP option.
 .Pp
 The default is
 .Ar off .
 .It \fBupgrade_trigger\fP
 This option specifies a comma-separated list of upgrade triggers.
-The value highly depends on the \fBupgrade_mode\fP.
-If a lock should be triggered, this option contains at least one path to a
-file, which gets locked. If the life circle of a process should be triggered,
-this option specifies the path to the process-binary. If more than one trigger
-is assigned, only one trigger must match to trigger the upgrade process.
+The correct value highly depends on the \fBupgrade_mode\fP option.
+When
+.Sq strictlock
+or
+.Sq looselock
+is configured this option should contain the pathname of 
+at least one lock file. If
+.Sq process
+is configured this option should specify
+the pathname of an upgrade program. If more than one value is
+configured then any match will trigger the upgrade process.
 .Pp
-By default no trigger is assigned.
+By default no trigger is configured.
 .El
 .Sh SEE ALSO
 .Xr anoubisd 8
