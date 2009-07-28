@@ -215,5 +215,11 @@ enum __socket_type
 #define	AF_MAX		PF_MAX
 
 
+typedef struct {
+} stack_t;
+
+typedef struct {
+} siginfo_t;
+
 #endif /* S_SPLINT_S */
 #endif	/* _SPLINT-INCLUDES_H_ */

@@ -63,6 +63,10 @@
 #include <sha2.h>
 #endif
 
+#ifndef OPENBSD
+#include <ucontext.h>
+#endif
+
 /* on glibc 2.6+, event.h uses non C89 types :/ */
 #include <event.h>
 #include <anoubis_msg.h>
@@ -147,6 +151,36 @@ static char *pid_file_name = PACKAGE_PIDFILE;
 #ifdef LINUX
 static char *omit_pid_file = "/var/run/sendsigs.omit.d/anoubisd";
 #endif
+
+/*
+ * SEGV-Handler: Send some useful information to syslog.
+ */
+void
+segvhandler(int sig __used, siginfo_t *info, void *uc)
+{
+	char	 buf[2048];
+	char	*p = buf;
+	int	 i, n, nreg;
+	void	**ucp = uc;
+
+
+	sprintf(p, "anoubisd: SEGFAULT at %p ucontext:%n",
+	    info->si_addr, &n);
+	p += n;
+	nreg = sizeof(ucontext_t)/sizeof(void*);
+	if (nreg > 100)
+		nreg = 100;
+	for (i=0; i<nreg; ++i) {
+		sprintf(" %p%n", ucp[i], &n);
+		p += n;
+	}
+	sprintf(p, "\n");
+	/* Avoid unused return value warning by using "i = write(...). */
+	i = write(1, buf, strlen(buf));
+	syslog(LOG_ALERT, "%s", buf);
+	exit(126);
+}
+
 
 /*
  * Note:  Signalhandler managed by libevent are _not_ run in signal
@@ -314,6 +348,7 @@ main(int argc, char *argv[])
 	struct timeval		tv;
 	struct passwd		*pw;
 	FILE			*pidfp;
+	struct sigaction	act;
 #ifdef LINUX
 	FILE			*omitfp;
 #endif
@@ -376,6 +411,12 @@ main(int argc, char *argv[])
 		/* Exit at this point, no further action required */
 		exit(0);
 	}
+
+	act.sa_flags = SA_SIGINFO;
+	act.sa_sigaction = segvhandler;
+	sigemptyset(&act.sa_mask);
+	if (sigaction(SIGSEGV, &act, NULL) < 0)
+		early_errx(1, "Sigaction failed");
 
 	if ((pw = getpwnam(ANOUBISD_USER)) == NULL)
 		early_errx(1, "User " ANOUBISD_USER " does not exist");
