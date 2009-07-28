@@ -135,33 +135,6 @@ START_TEST(PolicyChecks_apnDirection)
 }
 END_TEST
 
-START_TEST(PolicyChecks_apnHashType)
-{
-	unsigned int lowerBound = 2;
-
-	/* Test the valid apn_hash_type Types */
-	for (unsigned int i=APN_HASH_NONE; i <= APN_HASH_SHA256; i++) {
-		apn_hash_type type = (apn_hash_type)i;
-		switch (type) {
-		case APN_HASH_NONE:
-			if (!PolicyChecks::checkApnHashType(APN_HASH_NONE))
-				fail("APN_HASH_NONE: is a valid type.");
-			break;
-		case APN_HASH_SHA256:
-			if (!PolicyChecks::checkApnHashType(APN_HASH_SHA256))
-				fail("APN_HASH_SHA256: is a valid type.");
-			break;
-		}
-	}
-
-	/* Test invalid apn_hash_type Types which are out of range */
-	for (unsigned int i=lowerBound; i < ENUM_FAIL_UPPER_BOUND; i++) {
-		if (PolicyChecks::checkApnHashType((apn_hash_type)i))
-			fail("ERROR: accepted an invalid type.");
-	}
-}
-END_TEST
-
 TCase *
 getTc_PolicyChecks(void)
 {
@@ -171,7 +144,6 @@ getTc_PolicyChecks(void)
 	tcase_add_test(testCase, PolicyChecks_apnLogLevel);
 	tcase_add_test(testCase, PolicyChecks_apnActionType);
 	tcase_add_test(testCase, PolicyChecks_apnDirection);
-	tcase_add_test(testCase, PolicyChecks_apnHashType);
 
 	return (testCase);
 }

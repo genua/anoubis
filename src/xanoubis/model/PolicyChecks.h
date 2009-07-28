@@ -60,13 +60,6 @@ class PolicyChecks
 		 * @return True if of valid type
 		 */
 		static bool checkApnDirection(apn_direction);
-
-		/**
-		 * Check that apn_hash_type is valid
-		 * @param[in] 1st apn_hash_type
-		 * @return True if of valid type
-		 */
-		static bool checkApnHashType(apn_hash_type);
 };
 
 #endif	/* _POLICYCHECKS_H_ */

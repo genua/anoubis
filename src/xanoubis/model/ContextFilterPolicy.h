@@ -216,39 +216,6 @@ class ContextFilterPolicy : public FilterPolicy
 		bool isAny(void) const;
 
 		/**
-		 * Change the hash type to binary with given index.
-		 * @param[in] 1st The new hash type.
-		 * @param[in] 2nd The index of binary to change.
-		 * @return True on success.
-		 */
-		bool setHashTypeNo(int, unsigned int);
-
-		/**
-		 * Get the apn hash type of  binary of given index.
-		 * @param[in] 1st The index of the binary.
-		 * @return The apn hash type of that binary.
-		 * @see getHashTypeName()
-		 */
-		int getHashTypeNo(unsigned int) const;
-
-		/**
-		 * Get the string represnetation of hash type.
-		 * @param[in] 1st The index of the binary.
-		 * @return The string with the hash type.
-		 * @see getHashTypeNo()
-		 * @see getHashTypeList()
-		 */
-		wxString getHashTypeName(unsigned int) const;
-
-		/**
-		 * Get the string represnetation of hash types of all binaries.
-		 * @param None.
-		 * @return A list of all hash types.
-		 * @see getHashTypeName()
-		 */
-		wxArrayString getHashTypeList(void) const;
-
-		/**
 		 * Set the hash value to binary of given index.
 		 * @param[in] 1st The new hash value.
 		 * @param[in] 2nd The index of the binary.

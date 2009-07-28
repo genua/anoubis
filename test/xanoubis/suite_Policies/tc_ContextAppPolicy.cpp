@@ -503,77 +503,6 @@ START_TEST(ContextAppPolicy_setBinaryList)
 }
 END_TEST
 
-START_TEST(ContextAppPolicy_setHashTypeNo)
-{
-	wxArrayString	 initList;
-
-	initList.Add(wxT("/usr/bin/test"));
-	initList.Add(wxT("/usr/bin/find"));
-
-	/* afterwards add 2nd app */
-	rule->app->next = AppPolicy::createApnApp();
-	if (rule->app->next == NULL) {
-		fail("Couldn't create 2nd app.");
-	}
-
-	if (rule->app->next->name != NULL) {
-		fail("name already set.");
-	}
-	rule->app->next->name = strdup(initList.Item(1).fn_str());
-	rule->app->next->hashtype = APN_HASH_SHA256;
-
-	/* test: invalid index - expect to fail */
-	if (policy->setHashTypeNo(APN_HASH_NONE, 3)) {
-		fail("setHashTypeNo(): successfull with invalid index.");
-	}
-	CHECK_POLICY_MODIFIED(policy, false);
-	CHECK_OBSERVER_NOTIFIED(observer, false);
-	CHECK_POLICY_GETBINARYCOUNT(policy, 2);
-	CHECK_POLICY_GETBINARYNAME(policy, 0, initList.Item(0));
-	CHECK_POLICY_GETBINARYNAME(policy, 1, initList.Item(1));
-	CHECK_POLICY_GETHASHTYPENO(policy, 0, APN_HASH_SHA256);
-	CHECK_POLICY_GETHASHTYPENO(policy, 1, APN_HASH_SHA256);
-
-	/* test index 1 - expect to succeed */
-	if (!policy->setHashTypeNo(APN_HASH_NONE, 1)) {
-		fail("setHashTypeNo(): not successfull on index 1.");
-	}
-	CHECK_POLICY_MODIFIED(policy, true);
-	CHECK_OBSERVER_NOTIFIED(observer, true);
-	CHECK_POLICY_GETBINARYCOUNT(policy, 2);
-	CHECK_POLICY_GETBINARYNAME(policy, 0, initList.Item(0));
-	CHECK_POLICY_GETBINARYNAME(policy, 1, initList.Item(1));
-	CHECK_POLICY_GETHASHTYPENO(policy, 0, APN_HASH_SHA256);
-	CHECK_POLICY_GETHASHTYPENO(policy, 1, APN_HASH_NONE);
-
-	/* test index 0 - expect to succeed */
-	if (!policy->setHashTypeNo(APN_HASH_NONE, 0)) {
-		fail("setHashTypeNo(): not successfull on index 0.");
-	}
-	CHECK_POLICY_MODIFIED(policy, true);
-	CHECK_OBSERVER_NOTIFIED(observer, true);
-	CHECK_POLICY_GETBINARYCOUNT(policy, 2);
-	CHECK_POLICY_GETBINARYNAME(policy, 0, initList.Item(0));
-	CHECK_POLICY_GETBINARYNAME(policy, 1, initList.Item(1));
-	CHECK_POLICY_GETHASHTYPENO(policy, 0, APN_HASH_NONE);
-	CHECK_POLICY_GETHASHTYPENO(policy, 1, APN_HASH_NONE);
-
-	/* test to re-set all */
-	for (unsigned int i=0; i<policy->getBinaryCount(); ++i) {
-		if (!policy->setHashTypeNo(APN_HASH_SHA256, i)) {
-			fail("Cannot set hash type");
-		}
-	}
-	CHECK_POLICY_MODIFIED(policy, true);
-	CHECK_OBSERVER_NOTIFIED(observer, true);
-	CHECK_POLICY_GETBINARYCOUNT(policy, 2);
-	CHECK_POLICY_GETBINARYNAME(policy, 0, initList.Item(0));
-	CHECK_POLICY_GETBINARYNAME(policy, 1, initList.Item(1));
-	CHECK_POLICY_GETHASHTYPENO(policy, 0, APN_HASH_SHA256);
-	CHECK_POLICY_GETHASHTYPENO(policy, 1, APN_HASH_SHA256);
-}
-END_TEST
-
 /*
  * Test case
  */
@@ -591,7 +520,6 @@ getTc_ContextAppPolicy(void)
 	tcase_add_test(testCase, ContextAppPolicy_setBinaryName_one);
 	tcase_add_test(testCase, ContextAppPolicy_setBinaryName_two);
 	tcase_add_test(testCase, ContextAppPolicy_setBinaryList);
-	tcase_add_test(testCase, ContextAppPolicy_setHashTypeNo);
 
 	return (testCase);
 }

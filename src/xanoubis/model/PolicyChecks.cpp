@@ -56,13 +56,3 @@ PolicyChecks::checkApnDirection(apn_direction direction)
 
 	return (true);
 }
-
-bool
-PolicyChecks::checkApnHashType(apn_hash_type type)
-{
-	if (type < APN_HASH_NONE || type > APN_HASH_SHA256) {
-		return (false);
-	}
-
-	return (true);
-}

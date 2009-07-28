@@ -458,7 +458,6 @@ RuleWizard::createContextPolicy(PolicyRuleSet *ruleSet) const
 			    i<history_.getContextExceptionCount(); ++i) {
 				ctxFilter->addBinary(
 				    history_.getContextExceptionBinary(i));
-				ctxFilter->setHashTypeNo(APN_HASH_SHA256, i);
 				ctxFilter->setHashValueString(
 				    history_.getContextExceptionCsum(i), i);
 			}
