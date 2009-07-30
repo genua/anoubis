@@ -165,16 +165,20 @@ segvhandler(int sig __used, siginfo_t *info, void *uc)
 
 
 	sprintf(p, "anoubisd: SEGFAULT at %p ucontext:%n",
-	    info->si_addr, &n);
+	    info?info->si_addr:(void*)-1, &n);
 	p += n;
 	nreg = sizeof(ucontext_t)/sizeof(void*);
 	if (nreg > 100)
 		nreg = 100;
-	for (i=0; i<nreg; ++i) {
-		sprintf(" %p%n", ucp[i], &n);
-		p += n;
+	if (ucp) {
+		for (i=0; i<nreg; ++i) {
+			sprintf(p, " %p%n", ucp[i], &n);
+			p += n;
+		}
+		sprintf(p, "\n");
+	} else {
+		sprintf(p, " (none)\n");
 	}
-	sprintf(p, "\n");
 	/* Avoid unused return value warning by using "i = write(...). */
 	i = write(1, buf, strlen(buf));
 	syslog(LOG_ALERT, "%s", buf);
