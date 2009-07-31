@@ -57,31 +57,28 @@
 static void	dispatch_m2u(int, short, void *);
 static void	dispatch_u2m(int, short, void *);
 
-static int	terminate = 0;
 static Queue    eventq_u2m;
 
 struct event_info_upgrade {
 	struct event	*ev_u2m, *ev_m2u;
-	struct event	*ev_sigs[10];
+	struct event	*sigs[10];
 };
 
 
 static void
 upgrade_sighandler(int sig, short event __used, void *arg)
 {
-	int		  i;
-	sigset_t	  mask;
-	struct event	**sigs;
+	int				 i;
+	sigset_t			 mask;
+	struct event_info_upgrade	*ev_info = arg;
 
 	switch (sig) {
 	case SIGINT:
 	case SIGTERM:
-		terminate = 1;
 		sigfillset(&mask);
 		sigprocmask(SIG_SETMASK, &mask, NULL);
-		sigs = arg;
-		for (i=0; sigs[i]; ++i) {
-			signal_del(sigs[i]);
+		for (i=0; ev_info->sigs[i]; ++i) {
+			signal_del(ev_info->sigs[i]);
 		}
 		break;
 	case SIGQUIT:
@@ -94,12 +91,11 @@ pid_t
 upgrade_main(int pipe_m2u[2], int pipe_m2p[2], int pipe_s2p[2],
     int pipe_m2s[2], int loggers[4])
 {
-	pid_t		pid;
-	sigset_t	mask;
-	struct event	ev_m2u, ev_u2m;
-	struct event	ev_sigterm, ev_sigint, ev_sigquit;
-	static struct event	*sigs[10];
-	struct event_info_upgrade ev_info;
+	pid_t				pid;
+	sigset_t			mask;
+	struct event			ev_m2u, ev_u2m;
+	struct event			ev_sigterm, ev_sigint, ev_sigquit;
+	struct event_info_upgrade	ev_info;
 
 	pid = fork();
 	if (pid < 0) {
@@ -123,16 +119,16 @@ upgrade_main(int pipe_m2u[2], int pipe_m2p[2], int pipe_s2p[2],
 	setproctitle("upgrade");
 	log_info("upgrade started (pid %d)", getpid());
 
-	signal_set(&ev_sigterm, SIGTERM, upgrade_sighandler, sigs);
-	signal_set(&ev_sigint,  SIGINT,  upgrade_sighandler, sigs);
-	signal_set(&ev_sigquit, SIGQUIT, upgrade_sighandler, sigs);
+	signal_set(&ev_sigterm, SIGTERM, upgrade_sighandler, &ev_info);
+	signal_set(&ev_sigint,  SIGINT,  upgrade_sighandler, &ev_info);
+	signal_set(&ev_sigquit, SIGQUIT, upgrade_sighandler, &ev_info);
 	signal_add(&ev_sigterm, NULL);
 	signal_add(&ev_sigint,  NULL);
 	signal_add(&ev_sigquit, NULL);
-	sigs[0] = &ev_sigterm;
-	sigs[1] = &ev_sigint;
-	sigs[2] = &ev_sigquit;
-	sigs[3] = NULL;
+	ev_info.sigs[0] = &ev_sigterm;
+	ev_info.sigs[1] = &ev_sigint;
+	ev_info.sigs[2] = &ev_sigquit;
+	ev_info.sigs[3] = NULL;
 
 	sigfillset(&mask);
 	sigdelset(&mask, SIGTERM);
@@ -302,10 +298,8 @@ dispatch_m2u(int fd, short sig __used, void *arg)
 		free(msg);
 	}
 	if (msg_eof(fd)) {
-		if (terminate < 2)
-			terminate = 2;
+		upgrade_sighandler(SIGTERM, 0, ev_info);
 		event_del(ev_info->ev_m2u);
-		event_add(ev_info->ev_u2m, NULL);
 	}
 
 	DEBUG(DBG_TRACE, "<dispatch_m2u");

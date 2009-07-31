@@ -58,7 +58,7 @@ static struct event	__log_event;
 static Queue		__eventq_log;
 static int		__logging = 0;
 
-static int	 terminate = 0;
+static struct event	*sigs[10];
 
 static void
 dispatch_log_write(int fd __used, short event __used, void *arg __used)
@@ -271,7 +271,24 @@ early_errx(int eval, const char *emsg)
 	early_err(eval, emsg);
 }
 
-void dispatch_log_read(int fd, short sig __used, void *arg)
+static void
+logger_sighandler(int sig __used, short event __used, void *arg __used)
+{
+	int		  i;
+	sigset_t	  mask;
+
+	/*
+	 * Logger will not terminate until all other processes have closed
+	 * their log file handles.
+	 */
+	sigfillset(&mask);
+	sigprocmask(SIG_SETMASK, &mask, NULL);
+	for (i=0; sigs[i]; ++i)
+		signal_del(sigs[i]);
+}
+
+void
+dispatch_log_read(int fd, short sig __used, void *arg)
 {
 	anoubisd_msg_t * msg;
 	__logging = 1;
@@ -289,28 +306,11 @@ void dispatch_log_read(int fd, short sig __used, void *arg)
 		}
 		free(msg);
 	}
-	if (msg_eof(fd))
+	if (msg_eof(fd)) {
+		logger_sighandler(SIGTERM, 0, NULL);
 		event_del(arg);
+	}
 	__logging = 0;
-}
-
-static void
-logger_sighandler(int sig __used, short event __used, void *arg)
-{
-	int		  i;
-	struct event	**sigs;
-	sigset_t	  mask;
-
-	/*
-	 * Logger will not terminate until all other processes have closed
-	 * their log file handles.
-	 */
-	terminate = 1;
-	sigfillset(&mask);
-	sigprocmask(SIG_SETMASK, &mask, NULL);
-	sigs = arg;
-	for (i=0; sigs[i]; ++i)
-		signal_del(sigs[i]);
 }
 
 pid_t
@@ -321,7 +321,6 @@ logger_main(int pipe_m2l[2], int pipe_p2l[2], int pipe_s2l[2], int pipe_u2l[2])
 	struct event	 ev_sigterm, ev_sigint, ev_sigquit;
 	struct passwd	*pw;
 	sigset_t	 mask;
-	static struct event *	sigs[10];
 
 	if ((pw = getpwnam(ANOUBISD_USER)) == NULL)
 		fatal("getpwnam");
@@ -347,9 +346,9 @@ logger_main(int pipe_m2l[2], int pipe_p2l[2], int pipe_s2l[2], int pipe_u2l[2])
 
 	(void)event_init();
 
-	signal_set(&ev_sigterm, SIGTERM, logger_sighandler, sigs);
-	signal_set(&ev_sigint, SIGINT, logger_sighandler, sigs);
-	signal_set(&ev_sigquit, SIGQUIT, logger_sighandler, sigs);
+	signal_set(&ev_sigterm, SIGTERM, logger_sighandler, NULL);
+	signal_set(&ev_sigint, SIGINT, logger_sighandler, NULL);
+	signal_set(&ev_sigquit, SIGQUIT, logger_sighandler, NULL);
 	signal_add(&ev_sigterm, NULL);
 	signal_add(&ev_sigint, NULL);
 	signal_add(&ev_sigquit, NULL);

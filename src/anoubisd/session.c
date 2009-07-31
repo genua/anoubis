@@ -156,8 +156,6 @@ static Queue requestq;
 
 static Queue headq;
 
-static int terminate = 0;
-
 static void
 session_sighandler(int sig, short event __used, void *arg)
 {
@@ -170,7 +168,6 @@ session_sighandler(int sig, short event __used, void *arg)
 		sigset_t			 mask;
 		int				 i;
 
-		terminate = 1;
 		info = arg;
 		event_del(&info->seg->ev_connect);
 		while ((sess = LIST_FIRST(&info->seg->sessionList)))
@@ -799,8 +796,10 @@ dispatch_m2s(int fd, short sig __used, void *arg)
 
 		DEBUG(DBG_TRACE, "<dispatch_m2s (loop)");
 	}
-	if (msg_eof(fd))
+	if (msg_eof(fd)) {
+		session_sighandler(SIGTERM, 0, ev_info);
 		event_del(ev_info->ev_m2s);
+	}
 
 	DEBUG(DBG_TRACE, "<dispatch_m2s");
 }
@@ -857,8 +856,10 @@ dispatch_p2s(int fd, short sig __used, void *arg)
 
 		DEBUG(DBG_TRACE, "<dispatch_p2s (loop)");
 	}
-	if (msg_eof(fd))
+	if (msg_eof(fd)) {
+		session_sighandler(SIGTERM, 0, ev_info);
 		event_del(ev_info->ev_p2s);
+	}
 	DEBUG(DBG_TRACE, "<dispatch_p2s");
 }
 

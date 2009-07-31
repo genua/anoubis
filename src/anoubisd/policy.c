@@ -103,6 +103,36 @@ struct event_info_policy {
 
 static int terminate = 0;
 
+static void
+set_terminate(int n, struct event_info_policy *info)
+{
+	while (terminate < n) {
+		++terminate;
+		switch (terminate) {
+		case 1: {
+			sigset_t			 mask;
+			int				 i;
+
+			sigfillset(&mask);
+			sigprocmask(SIG_SETMASK, &mask, NULL);
+			for (i=0; info->ev_sigs[i]; ++i)
+				signal_del(info->ev_sigs[i]);
+			if (terminate < 1)
+				terminate = 1;
+			event_del(info->ev_timer);
+			break;
+		}
+		case 2:
+			/* No special action required. */
+			break;
+		case 3:
+			dispatch_timer(0, 0, info);
+			break;
+		}
+	}
+}
+
+
 /* ARGSUSED */
 static void
 policy_sighandler(int sig, short event __used, void *arg)
@@ -112,21 +142,9 @@ policy_sighandler(int sig, short event __used, void *arg)
 		pe_dump();
 		break;
 	case SIGINT:
-	case SIGTERM: {
-		sigset_t			 mask;
-		int				 i;
-		struct event_info_policy	*info;
-
-		info = arg;
-		sigfillset(&mask);
-		sigprocmask(SIG_SETMASK, &mask, NULL);
-		for (i=0; info->ev_sigs[i]; ++i)
-			signal_del(info->ev_sigs[i]);
-		if (terminate < 1)
-			terminate = 1;
-		event_del(info->ev_timer);
+	case SIGTERM:
+		set_terminate(1, arg);
 		break;
-	}
 	case SIGQUIT:
 		(void)event_loopexit(NULL);
 		/* FALLTRHOUGH */
@@ -696,8 +714,7 @@ dispatch_m2p(int fd, short sig __used, void *arg)
 		DEBUG(DBG_TRACE, "<dispatch_m2p (loop)");
 	}
 	if (msg_eof(fd)) {
-		if (terminate < 2)
-			terminate = 2;
+		set_terminate(2, ev_info);
 		event_del(ev_info->ev_m2p);
 		event_add(ev_info->ev_p2s, NULL);
 	}
@@ -920,9 +937,7 @@ dispatch_s2p(int fd, short sig __used, void *arg)
 	}
 	if (msg_eof(fd)) {
 		event_del(ev_info->ev_s2p);
-		if (terminate < 3)
-			terminate = 3;
-		dispatch_timer(0, 0, ev_info);
+		set_terminate(3, ev_info);
 	}
 	DEBUG(DBG_TRACE, "<dispatch_s2p");
 }
