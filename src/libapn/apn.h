@@ -355,6 +355,9 @@ void	apn_free_host(struct apn_host *);
 void	apn_free_port(struct apn_port *);
 void	apn_free_app(struct apn_app *);
 
+/* NOTE: Only frees the contents of the subject, not the subject itself. */
+void   apn_free_subject(struct apn_subject *subject);
+
 /*
  * Searching, Copying cleaning
  */

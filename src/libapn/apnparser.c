@@ -1476,7 +1476,7 @@ apn_free_filter(struct apn_afiltspec *filtspec)
  * NOTE: Does _not_ free the apn_subject structure itself because
  * NOTE: it is usually embedded in the surrounding sturcture!
  */
-static void
+void
 apn_free_subject(struct apn_subject *subject)
 {
 	switch(subject->type) {
@@ -1493,6 +1493,7 @@ apn_free_subject(struct apn_subject *subject)
 		}
 		break;
 	}
+	subject->type = APN_CS_NONE;	/* Paranoia */
 }
 
 /*

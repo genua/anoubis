@@ -236,6 +236,9 @@ typedef struct {
 %type	<v.sfsaccess>		sfsaccessrule
 %type	<v.dfltrule>		sfsvalid sfsinvalid sfsunknown
 %type	<v.subject>		sfssubject
+%destructor {
+	apn_free_subject(&$$);
+}				sfssubject
 %type	<v.sfsaction>		sfsaction
 %type	<v.sfsdefault>		sfsdefaultrule
 %type	<v.timeout>		statetimeout
