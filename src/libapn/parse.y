@@ -106,8 +106,6 @@ int		 portbyname(const char *, u_int16_t *);
 int		 portbynumber(int64_t, u_int16_t *);
 int		 validate_alffilterspec(struct apn_afiltspec *);
 int		 validate_hostlist(struct apn_host *);
-void		 freehost(struct apn_host *);
-void		 freeport(struct apn_port *);
 char		*normalize_path(char *);
 
 static struct apn_ruleset	*apnrsp = NULL;
@@ -182,58 +180,85 @@ typedef struct {
 %token	RECEIVE TIMEOUT STATEFUL TASK UNTIL COLON PATH KEY UID CSUM
 %token	SELF SIGNEDSELF VALID INVALID UNKNOWN CONTINUE BORROW
 %token	<v.string>		STRING
-%destructor { free($$); }	STRING
+%destructor {
+	free($$);
+}				STRING
 %token	<v.number>		NUMBER
 %type	<v.app>			app apps
 %destructor {
 	apn_free_app($$);
 }				app apps
 %type	<v.apphead>		app_l
+%destructor {
+	apn_free_app($$.head);
+}				app_l
 %type	<v.hashtype>		hashtype
 %type	<v.hashspec>		hashspec
 %type	<v.addr>		address
 %type	<v.host>		host hostspec
-%destructor { freehost($$); }	host hostspec
+%destructor {
+	apn_free_host($$);
+}				host hostspec
 %type	<v.hosthead>		host_l
+%destructor {
+	apn_free_host($$.head);
+}				host_l
 %type	<v.port>		port ports portspec
-%destructor { freeport($$); }	port ports portspec
+%destructor {
+	apn_free_port($$);
+}				port ports portspec
 %type	<v.porthead>		port_l
 %destructor {
-	freeport($$.head);
+	apn_free_port($$.head);
 }				port_l
 %type	<v.hosts>		hosts
 %destructor {
-	freeport($$.fromport);
-	freehost($$.fromhost);
-	freeport($$.toport);
-	freehost($$.tohost);
+	apn_free_port($$.fromport);
+	apn_free_host($$.fromhost);
+	apn_free_port($$.toport);
+	apn_free_host($$.tohost);
 }				hosts
 %type	<v.number>		not capability defaultspec ruleid sbrwx
 %type	<v.string>		sfspath
-%destructor { free($$); }	sfspath
+%destructor {
+	free($$);
+}				sfspath
 %type	<v.netaccess>		netaccess
 %type	<v.af>			af
 %type	<v.proto>		proto
 %type	<v.afspec>		alffilterspec
+%destructor {
+	apn_free_filter(&$$);
+}				alffilterspec
 %type	<v.action>		action
 %type	<v.log>			log
-%type	<v.rule>		alfrule sfsrule sbrule
+%type	<v.rule>		alfrule sfsrule sbrule ctxrule
 %destructor {
 	apn_free_one_rule($$, NULL);
-}				alfrule sfsrule sbrule
-%type	<v.rule>		ctxrule
-%destructor { free($$); }	ctxrule
+}				alfrule sfsrule sbrule ctxrule
 %type	<v.rulehead>		alfrule_l sfsrule_l sbrule_l ctxrule_l
 %destructor {
 	apn_free_chain($$, NULL);
 	free($$);
 }				alfrule_l sfsrule_l sbrule_l ctxrule_l
 %type	<v.afrule>		alffilterrule
+%destructor {
+	apn_free_filter(&$$.filtspec);
+}				alffilterrule
 %type	<v.acaprule>		alfcaprule
 %type	<v.sbaccess>		sbaccess sbpred sbpath sbuid sbkey sbcsum
+%destructor {
+	apn_free_sbaccess(&$$);
+}				sbaccess sbpred sbpath sbuid sbkey sbcsum
 %type	<v.dfltrule>		defaultrule alfdefault sbdefault
 %type	<v.ctxruleapps>		ctxruleapps
+%destructor {
+	apn_free_app($$.application);
+}				ctxruleapps
 %type	<v.sfsaccess>		sfsaccessrule
+%destructor {
+	apn_free_sfsaccess(&$$);
+}				sfsaccessrule
 %type	<v.dfltrule>		sfsvalid sfsinvalid sfsunknown
 %type	<v.subject>		sfssubject
 %destructor {
@@ -241,9 +266,14 @@ typedef struct {
 }				sfssubject
 %type	<v.sfsaction>		sfsaction
 %type	<v.sfsdefault>		sfsdefaultrule
+%destructor {
+	apn_free_sfsdefault(&$$);
+}				sfsdefaultrule
 %type	<v.timeout>		statetimeout
 %type	<v.scope>		scope
-%destructor { free($$); }	scope
+%destructor {
+	free($$);
+}				scope
 %%
 
 grammar		: /* empty */
@@ -1099,9 +1129,9 @@ sbrwx		: STRING {
 					YYERROR;
 				}
 				if ($$ & nm) {
-					free($1);
-					yyerror("Duplicate character % "
+					yyerror("Duplicate character %c "
 					    "in permission string", $1[i]);
+					free($1);
 					YYERROR;
 				}
 				$$ |= nm;
@@ -1186,6 +1216,7 @@ ctxrule		: ruleid ctxruleapps scope			{
 			rule = calloc(1, sizeof(struct apn_rule));
 			if (rule == NULL) {
 				free($3);
+				apn_free_app($2.application);
 				yyerror("Out of memory");
 				YYERROR;
 			}
@@ -2131,38 +2162,6 @@ validate_hostlist(struct apn_host *hostlist)
 		return (AF_INET);
 	else
 		return (AF_INET6);
-}
-
-void
-freehost(struct apn_host *host)
-{
-	struct apn_host *hp, *tmp;
-
-	if (host == NULL)
-		return;
-
-	hp = host;
-	while (hp) {
-		tmp = hp->next;
-		free(hp);
-		hp = tmp;
-	}
-}
-
-void
-freeport(struct apn_port *port)
-{
-	struct apn_port *hp, *tmp;
-
-	if (port == NULL)
-		return;
-
-	hp = port;
-	while (hp) {
-		tmp = hp->next;
-		free(hp);
-		hp = tmp;
-	}
 }
 
 char *

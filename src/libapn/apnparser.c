@@ -320,11 +320,12 @@ __apn_add_block_common(struct apn_ruleset *ruleset, struct apn_chain *chain,
 		if (subrule->apn_id)
 			apn_insert_id(ruleset, &subrule->_rbentry, subrule);
 	}
-	TAILQ_INSERT_TAIL(chain, block, entry);
-	block->pchain = chain;
-
 	if (ruleset->flags & APN_FLAG_VERBOSE)
 		ret = apn_print_rule(block, ruleset->flags, stdout);
+	if (ret == 0) {
+		TAILQ_INSERT_TAIL(chain, block, entry);
+		block->pchain = chain;
+	}
 
 	return (ret);
 duplicate:
