@@ -236,10 +236,6 @@ class DlgRuleEditorFilterNetworkPageBase : public wxPanel
 		wxRadioButton* inRadioButton;
 		wxRadioButton* outRadioButton;
 		wxRadioButton* bothRadioButton;
-		wxStaticText* addressFamilyLabel;
-		wxRadioButton* inetRadioButton;
-		wxRadioButton* inet6RadioButton;
-		wxRadioButton* anyRadioButton;
 		wxStaticText* protocolLabel;
 		wxRadioButton* tcpRadioButton;
 		wxRadioButton* udpRadioButton;
@@ -249,9 +245,6 @@ class DlgRuleEditorFilterNetworkPageBase : public wxPanel
 		virtual void onInRadioButton( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onOutRadioButton( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onBothRadioButton( wxCommandEvent& event ){ event.Skip(); }
-		virtual void onInetRadioButton( wxCommandEvent& event ){ event.Skip(); }
-		virtual void onInet6RadioButton( wxCommandEvent& event ){ event.Skip(); }
-		virtual void onAnyRadioButton( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onTcpRadioButton( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onUdpRadioButton( wxCommandEvent& event ){ event.Skip(); }
 		

@@ -98,7 +98,6 @@ DlgRuleEditor::DlgRuleEditor(wxWindow* parent)
 	    wxT("DIR"));
 	alfColumns_[ALF_PROT]	= new ListCtrlColumn(_("Protocol"),
 	    wxT("PROT"));
-	alfColumns_[ALF_AF]	= new ListCtrlColumn(_("AF"), wxT("AF"));
 	alfColumns_[ALF_FHOST]	= new ListCtrlColumn(_("from host"),
 	    wxT("FHOST"));
 	alfColumns_[ALF_FPORT]	= new ListCtrlColumn(_("from port"),
@@ -1908,10 +1907,6 @@ DlgRuleEditor::updateListAlfFilterPolicy(long rowIdx)
 		/* Fill protocol column */
 		updateColumnText(list, rowIdx, alfColumns_[ALF_PROT],
 		    alfPolicy->getProtocolName());
-
-		/* Fill address family column */
-		updateColumnText(list, rowIdx, alfColumns_[ALF_AF],
-		    alfPolicy->getAddrFamilyName());
 
 		/* Fill from host column */
 		updateColumnText(list, rowIdx, alfColumns_[ALF_FHOST],

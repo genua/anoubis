@@ -132,7 +132,6 @@ typedef struct {
 		unsigned int		 timeout;
 		int			 hashtype;
 		int			 netaccess;
-		int			 af;
 		int			 proto;
 		int			 action;
 		int			 sfsaction;
@@ -224,7 +223,6 @@ typedef struct {
 	free($$);
 }				sfspath
 %type	<v.netaccess>		netaccess
-%type	<v.af>			af
 %type	<v.proto>		proto
 %type	<v.afspec>		alffilterspec
 %destructor {
@@ -525,16 +523,15 @@ alffilterrule	: action alffilterspec		{
 		}
 		;
 
-alffilterspec	: netaccess log af proto hosts statetimeout	{
+alffilterspec	: netaccess log proto hosts statetimeout	{
 			$$.netaccess = $1;
 			$$.log = $2;
-			$$.af = $3;
-			$$.proto = $4;
-			$$.fromhost = $5.fromhost;
-			$$.fromport = $5.fromport;
-			$$.tohost = $5.tohost;
-			$$.toport = $5.toport;
-			$$.statetimeout = $6;
+			$$.proto = $3;
+			$$.fromhost = $4.fromhost;
+			$$.fromport = $4.fromport;
+			$$.tohost = $4.tohost;
+			$$.toport = $4.toport;
+			$$.statetimeout = $5;
 
 			if (validate_alffilterspec(&$$) == -1) {
 				apn_free_filter(&$$);
@@ -565,11 +562,6 @@ netaccess	: CONNECT			{ $$ = APN_CONNECT; }
 		| SEND				{ $$ = APN_SEND; }
 		| RECEIVE			{ $$ = APN_RECEIVE; }
 		| BOTH				{ $$ = APN_BOTH; }
-		;
-
-af		: INET				{ $$ = AF_INET; }
-		| INET6				{ $$ = AF_INET6; }
-		| /* empty */			{ $$ = AF_UNSPEC; }
 		;
 
 proto		: UDP				{ $$ = IPPROTO_UDP; }
@@ -1984,22 +1976,22 @@ validate_host(const struct apn_host *host)
 	switch (host->addr.af) {
 	case AF_INET:
 		if (host->addr.len > 32)
-			return (-1);
+			return -1;
 		break;
 
 	case AF_INET6:
 		if (host->addr.len > 128)
-			return (-1);
+			return -1;
 		break;
 
 	default:
-		return (-1);
+		return -1;
 	}
 
 	if (!(0 <= host->negate && host->negate <= 1))
-		return (-1);
+		return -1;
 
-	return (0);
+	return 0;
 }
 
 int
@@ -2041,24 +2033,12 @@ portbynumber(int64_t port, u_int16_t *portp)
 int
 validate_alffilterspec(struct apn_afiltspec *afspec)
 {
-	int	affrom, afto;
-
 	if (!(APN_LOG_NONE <= afspec->log && afspec->log <= APN_LOG_ALERT))
 		return (-1);
 
 	if (!(APN_CONNECT <= afspec->netaccess && afspec->netaccess <=
 	    APN_BOTH))
 		return (-1);
-
-	switch (afspec->af) {
-	case AF_INET:
-	case AF_INET6:
-	case AF_UNSPEC:
-		break;
-	default:
-		yyerror("invalid address family");
-		return (-1);
-	}
 
 	switch (afspec->proto) {
 	case IPPROTO_UDP:
@@ -2081,87 +2061,32 @@ validate_alffilterspec(struct apn_afiltspec *afspec)
 		return (-1);
 	}
 
-	if ((affrom = validate_hostlist(afspec->fromhost)) == -1) {
-		yyerror("invalid host");
-		return (-1);
+	if (validate_hostlist(afspec->fromhost) < 0) {
+		yyerror("invalid source host");
+		return -1;
 	}
-	if ((afto = validate_hostlist(afspec->tohost)) == -1) {
-		yyerror("invalid host");
-		return (-1);
+	if (validate_hostlist(afspec->tohost) < 0) {
+		yyerror("invalid destination host");
+		return -1;
 	}
-
-	switch (afspec->af) {
-	case AF_UNSPEC:
-		if (affrom == AF_UNSPEC || afto == AF_UNSPEC)
-			break;
-		if (affrom != afto) {
-			yyerror("address family mismatch");
-			return (-1);
-		}
-		break;
-	case AF_INET:
-		if (affrom == AF_INET6 || afto == AF_INET6) {
-			yyerror("address family mismatch");
-			return (-1);
-		}
-		break;
-	case AF_INET6:
-		if (affrom == AF_INET || afto == AF_INET) {
-			yyerror("address family mismatch");
-			return (-1);
-		}
-		break;
-	default:
-		/* NOTREACHED */
-		return (-1);
-	}
-
 	return (0);
 }
 
 /*
- * Verfiy that a list of hosts is of the same address family, ie. either
- * only AF_INET or AF_INET6.  An empty list is allowed.  The list may be
- * just one single host.
+ * Verfiy that all hosts in a list have valid adress family and netmask.
  *
- * Returns -1 on failure, otherwise the address family is returned.
+ * Returns -1 on failure, zero otherwise.
  */
 int
 validate_hostlist(struct apn_host *hostlist)
 {
 	struct apn_host	*hp;
-	int		 inet, inet6;
 
-	/* In case of "any". */
-	if (hostlist == NULL)
-		return (AF_UNSPEC);
-
-	inet = inet6 = 0;
 	for (hp = hostlist; hp; hp = hp->next) {
 		if (validate_host(hp) == -1)
-			return (-1);
-
-		switch (hp->addr.af) {
-		case AF_INET:
-			inet++;
-			break;
-
-		case AF_INET6:
-			inet6++;
-			break;
-
-		default:
-			return (-1);
-		}
+			return -1;
 	}
-
-	if (inet != 0 && inet6 != 0) {
-		yyerror("address family mismatch");
-		return (-1);
-	} else if (inet != 0)
-		return (AF_INET);
-	else
-		return (AF_INET6);
+	return 0;
 }
 
 char *

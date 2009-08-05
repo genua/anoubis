@@ -100,13 +100,6 @@ class DlgRuleEditorFilterNetworkPage : public DlgRuleEditorPage,
 		void showDirection(void);
 
 		/**
-		 * Update address family widgets.
-		 * @param None.
-		 * @return Nothing.
-		 */
-		void showAddressFamily(void);
-
-		/**
 		 * Update protocol widgets.
 		 * @param None.
 		 * @return Nothing.
@@ -138,30 +131,6 @@ class DlgRuleEditorFilterNetworkPage : public DlgRuleEditorPage,
 		 * @return Nothing.
 		 */
 		virtual void onBothRadioButton(wxCommandEvent &);
-
-		/**
-		 * Handle events from inetRadioButton.
-		 * This will set AF_INET to the policy.
-		 * @param[in] 1st The event.
-		 * @return Nothing.
-		 */
-		virtual void onInetRadioButton(wxCommandEvent &);
-
-		/**
-		 * Handle events from inet6RadioButton.
-		 * This will set AF_INET6 to the policy.
-		 * @param[in] 1st The event.
-		 * @return Nothing.
-		 */
-		virtual void onInet6RadioButton(wxCommandEvent &);
-
-		/**
-		 * Handle events from anyRadioButton.
-		 * This will set 0 (aka any) to the policy.
-		 * @param[in] 1st The event.
-		 * @return Nothing.
-		 */
-		virtual void onAnyRadioButton(wxCommandEvent &);
 
 		/**
 		 * Handle events from tcpRadioButton.

@@ -41,7 +41,6 @@ DlgRuleEditorFilterNetworkPage::update(Subject *subject)
 	if (subject == filterPolicy_) {
 		/* This is our policy. */
 		showDirection();
-		showAddressFamily();
 		showProtocol();
 	}
 }
@@ -107,30 +106,6 @@ DlgRuleEditorFilterNetworkPage::showDirection(void)
 }
 
 void
-DlgRuleEditorFilterNetworkPage::showAddressFamily(void)
-{
-	if (filterPolicy_ == NULL) {
-		return;
-	}
-
-	switch (filterPolicy_->getAddrFamilyNo()) {
-	case AF_INET:
-		inetRadioButton->SetValue(true);
-		break;
-	case AF_INET6:
-		inet6RadioButton->SetValue(true);
-		break;
-	case 0: /* ANY */
-		anyRadioButton->SetValue(true);
-		break;
-	default:
-		inetRadioButton->SetValue(false);
-		inet6RadioButton->SetValue(false);
-		anyRadioButton->SetValue(false);
-	}
-}
-
-void
 DlgRuleEditorFilterNetworkPage::showProtocol(void)
 {
 	if (filterPolicy_ == NULL) {
@@ -173,30 +148,6 @@ DlgRuleEditorFilterNetworkPage::onBothRadioButton(wxCommandEvent &)
 {
 	if (filterPolicy_ != NULL) {
 		filterPolicy_->setDirectionNo(APN_BOTH);
-	}
-}
-
-void
-DlgRuleEditorFilterNetworkPage::onInetRadioButton(wxCommandEvent &)
-{
-	if (filterPolicy_ != NULL) {
-		filterPolicy_->setAddrFamilyNo(AF_INET);
-	}
-}
-
-void
-DlgRuleEditorFilterNetworkPage::onInet6RadioButton(wxCommandEvent &)
-{
-	if (filterPolicy_ != NULL) {
-		filterPolicy_->setAddrFamilyNo(AF_INET6);
-	}
-}
-
-void
-DlgRuleEditorFilterNetworkPage::onAnyRadioButton(wxCommandEvent &)
-{
-	if (filterPolicy_ != NULL) {
-		filterPolicy_->setAddrFamilyNo(0);
 	}
 }
 

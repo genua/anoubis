@@ -189,7 +189,6 @@ class DlgRuleEditor : public Observer, public DlgRuleEditorBase
 			ALF_CAP,	/**< capability type */
 			ALF_DIR,	/**< direction */
 			ALF_PROT,	/**< protocol */
-			ALF_AF,		/**< address family */
 			ALF_FHOST,	/**< from host */
 			ALF_FPORT,	/**< from port */
 			ALF_THOST,	/**< to host */
@@ -253,8 +252,8 @@ class DlgRuleEditor : public Observer, public DlgRuleEditorBase
 		long adminRuleSetId_; /**< Id of our admin ruleSet. */
 
 		bool isConnected_; /**< connectiion state of gui */
-		bool isAutoChecksumCheck_; /**< state of Checksums before send 
-					    * to Daemon 
+		bool isAutoChecksumCheck_; /**< state of Checksums before send
+					    * to Daemon
 					    */
 
 		int appPolicyLoadProgIdx_; /**< current progress position */

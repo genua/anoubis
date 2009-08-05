@@ -294,20 +294,8 @@ pe_decide_alffilt(struct apn_rule *rule, struct alf_event *msg,
 		    || !pe_in_scope(hp->scope, msg->common.task_cookie, now))
 			continue;
 
-		DEBUG(DBG_PE_DECALF, "pe_decide_alffilt: family %d == %d/%p?",
-		    msg->family, hp->rule.afilt.filtspec.af, hp);
-		/*
-		 * Address family:
-		 * If the rule does not specify a certain family (ie.
-		 * AF_UNSPEC), we accept any address family.  Otherwise,
-		 * families have to match.
-		 */
-		if (msg->family != hp->rule.afilt.filtspec.af &&
-		    hp->rule.afilt.filtspec.af != AF_UNSPEC)
-			continue;
-
-		DEBUG(DBG_PE_DECALF, "pe_decide_alffilt: operation %d",
-		    msg->op);
+		DEBUG(DBG_PE_DECALF, "pe_decide_alffilt: msg family %d, "
+		    "msg operation %d", msg->family, msg->op);
 		/*
 		 * Operation
 		 * NOTE CEH: Currently TCP SEND and TCP RECEIVE events
@@ -844,8 +832,8 @@ pe_addrmatch_host(struct apn_host *host, void *addr, unsigned short af)
 	struct sockaddr_in	*in;
 	struct sockaddr_in6	*in6;
 	in_addr_t		 mask;
-	int			 match;
-	int			 negate;
+	int			 match = 0;
+	int			 negate = 0;
 
 	DEBUG(DBG_PE_DECALF, "pe_addrmatch_host: host %p addr %p af %d", host,
 	    addr, af);
@@ -859,12 +847,18 @@ pe_addrmatch_host(struct apn_host *host, void *addr, unsigned short af)
 		return (0);
 	}
 
-	if (host->addr.af != af)
-		return (0);
-
 	hp = host;
 	while (hp) {
+		/*
+		 * Do not consider addresses of the wrong family even
+		 * in case of negate.
+		 */
+		if (hp->addr.af != af) {
+			hp = hp->next;
+			continue;
+		}
 		negate = hp->negate;
+		match = 0;
 		switch (af) {
 		case AF_INET:
 			in = (struct sockaddr_in *)addr;
@@ -882,7 +876,6 @@ pe_addrmatch_host(struct apn_host *host, void *addr, unsigned short af)
 		default:
 			log_warnx("pe_addrmatch_host: unknown address family "
 			    "%d", af);
-			match = negate = 0;
 		}
 		if ((!negate && match) || (negate && !match))
 			break;
@@ -893,9 +886,9 @@ pe_addrmatch_host(struct apn_host *host, void *addr, unsigned short af)
 	    negate);
 
 	if (negate)
-	    return (!match);
+		return !match;
 	else
-	    return (match);
+		return match;
 }
 
 static int

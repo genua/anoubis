@@ -86,7 +86,6 @@ create_empty_filter(int type)
 	case APN_ALF:
 		filter->apn_type = APN_ALF_FILTER;
 		filter->rule.afilt.filtspec.proto = IPPROTO_TCP;
-		filter->rule.afilt.filtspec.af = AF_INET;
 		filter->rule.afilt.filtspec.netaccess = APN_CONNECT;
 		break;
 	case APN_SFS:

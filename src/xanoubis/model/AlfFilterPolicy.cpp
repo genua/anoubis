@@ -385,57 +385,6 @@ AlfFilterPolicy::getProtocolName(void) const
 }
 
 bool
-AlfFilterPolicy::setAddrFamilyNo(int af)
-{
-	if (getApnRule() == NULL) {
-		return (false);
-	}
-
-	startChange();
-	getApnRule()->rule.afilt.filtspec.af = af;
-	setModified();
-	finishChange();
-
-	return (true);
-
-}
-
-int
-AlfFilterPolicy::getAddrFamilyNo(void) const
-{
-	int af = -1;
-
-	if (getApnRule() != NULL) {
-		af = getApnRule()->rule.afilt.filtspec.af;
-	}
-
-	return (af);
-}
-
-wxString
-AlfFilterPolicy::getAddrFamilyName(void) const
-{
-	wxString af;
-
-	switch (getAddrFamilyNo()) {
-	case 0:
-		af = wxT("any");
-		break;
-	case AF_INET:
-		af = wxT("inet");
-		break;
-	case AF_INET6:
-		af = wxT("inet6");
-		break;
-	default:
-		af = _("(unknown)");
-		break;
-	}
-
-	return (af);
-}
-
-bool
 AlfFilterPolicy::setFromHostName(wxString fromHost)
 {
 	return (setFromHostList(PolicyUtils::stringToList(fromHost)));
@@ -445,7 +394,6 @@ bool
 AlfFilterPolicy::setFromHostList(wxArrayString hostList)
 {
 	struct apn_host **fromHostPtr;
-	int		  af = getAddrFamilyNo();
 
 	if (getApnRule() == NULL) {
 		return (false);
@@ -468,16 +416,9 @@ AlfFilterPolicy::setFromHostList(wxArrayString hostList)
 		for (size_t i = 0; i < hostList.GetCount(); i++) {
 			struct apn_host		*tmp = NULL;
 
-			switch (af) {
-			case AF_UNSPEC:
-			case AF_INET:
-				tmp = createApnHost(hostList.Item(i), AF_INET);
-				if (tmp || af == AF_INET)
-					break;
-			case AF_INET6:
+			tmp = createApnHost(hostList.Item(i), AF_INET);
+			if (!tmp)
 				tmp = createApnHost(hostList.Item(i), AF_INET6);
-				break;
-			}
 			if (tmp == NULL) {
 				setModified();
 				finishChange();
@@ -615,7 +556,6 @@ bool
 AlfFilterPolicy::setToHostList(wxArrayString hostList)
 {
 	struct apn_host **toHostPtr;
-	int		  af = getAddrFamilyNo();
 
 	if (getApnRule() == NULL) {
 		return (false);
@@ -638,16 +578,9 @@ AlfFilterPolicy::setToHostList(wxArrayString hostList)
 		for (size_t i = 0; i < hostList.GetCount(); i++) {
 			struct apn_host		*tmp = NULL;
 
-			switch (af) {
-			case AF_UNSPEC:
-			case AF_INET:
-				tmp = createApnHost(hostList.Item(i), AF_INET);
-				if (tmp || af == AF_INET)
-					break;
-			case AF_INET6:
+			tmp = createApnHost(hostList.Item(i), AF_INET);
+			if (!tmp)
 				tmp = createApnHost(hostList.Item(i), AF_INET6);
-				break;
-			}
 			if (tmp == NULL) {
 				setModified();
 				finishChange();

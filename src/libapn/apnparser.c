@@ -70,7 +70,6 @@ static int	apn_print_sfsdefaultrule(struct apn_sfsdefault *, FILE *);
 static int	apn_print_action(int, int, FILE *);
 static int	apn_print_netaccess(int, FILE *);
 static int	apn_print_log(int, FILE *);
-static int	apn_print_af(int, FILE *);
 static int	apn_print_proto(int, FILE *);
 static void	apn_free_errq(struct apnerr_queue *);
 static struct apn_rule	*apn_search_rule(struct apn_ruleset *rs,
@@ -1006,8 +1005,6 @@ apn_print_afiltrule(struct apn_afiltrule *rule, FILE *file)
 		return (1);
 	if (apn_print_log(rule->filtspec.log, file) == 1)
 		return (1);
-	if (apn_print_af(rule->filtspec.af, file) == 1)
-		return (1);
 	if (apn_print_proto(rule->filtspec.proto, file) == 1)
 		return (1);
 
@@ -1331,26 +1328,6 @@ apn_print_log(int log, FILE *file)
 		break;
 	default:
 		return (1);
-	}
-
-	return (0);
-}
-
-static int
-apn_print_af(int af, FILE *file)
-{
-	if (file == NULL)
-		return (1);
-
-	switch (af) {
-	case AF_INET:
-		fprintf(file, "inet ");
-		break;
-	case AF_INET6:
-		fprintf(file, "inet6 ");
-		break;
-	default:
-		break;
 	}
 
 	return (0);

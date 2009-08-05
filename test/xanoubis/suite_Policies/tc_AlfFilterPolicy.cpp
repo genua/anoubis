@@ -287,44 +287,6 @@ START_TEST(AlfFilterPolicy_DirectionNo)
 }
 END_TEST
 
-START_TEST(AlfFilterPolicy_AddrFamilyNo)
-{
-	wxString addrFamilyName;
-
-	/* Check initialization. */
-	addrFamilyName = wxT("any");
-	CHECK_POLICY_GETADDRFAMILYNO(policy, 0);
-	CHECK_POLICY_GETADDRFAMILYNAME(policy, addrFamilyName);
-
-	addrFamilyName = wxT("inet");
-	if (!policy->setAddrFamilyNo(AF_INET)) {
-		fail("setAddrFamilyNo(AF_INET): not successful.");
-	}
-	CHECK_POLICY_MODIFIED(policy, true);
-	CHECK_OBSERVER_NOTIFIED(observer, true);
-	CHECK_POLICY_GETADDRFAMILYNO(policy, AF_INET);
-	CHECK_POLICY_GETADDRFAMILYNAME(policy, addrFamilyName);
-
-	addrFamilyName = wxT("inet6");
-	if (!policy->setAddrFamilyNo(AF_INET6)) {
-		fail("setAddrFamilyNo(AF_INET6): not successful.");
-	}
-	CHECK_POLICY_MODIFIED(policy, true);
-	CHECK_OBSERVER_NOTIFIED(observer, true);
-	CHECK_POLICY_GETADDRFAMILYNO(policy, AF_INET6);
-	CHECK_POLICY_GETADDRFAMILYNAME(policy, addrFamilyName);
-
-	addrFamilyName = wxT("any");
-	if (!policy->setAddrFamilyNo(0)) {
-		fail("setAddrFamilyNo(0): not successful.");
-	}
-	CHECK_POLICY_MODIFIED(policy, true);
-	CHECK_OBSERVER_NOTIFIED(observer, true);
-	CHECK_POLICY_GETADDRFAMILYNO(policy, 0);
-	CHECK_POLICY_GETADDRFAMILYNAME(policy, addrFamilyName);
-}
-END_TEST
-
 TCase *
 getTc_AlfFilterPolicy(void)
 {
@@ -338,7 +300,6 @@ getTc_AlfFilterPolicy(void)
 	tcase_add_test(testCase, AlfFilterPolicy_ActionNo);
 	tcase_add_test(testCase, AlfFilterPolicy_Protocol);
 	tcase_add_test(testCase, AlfFilterPolicy_DirectionNo);
-	tcase_add_test(testCase, AlfFilterPolicy_AddrFamilyNo);
 
 	return (testCase);
 }

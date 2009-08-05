@@ -178,27 +178,6 @@ class AlfFilterPolicy : public FilterPolicy
 		wxString getProtocolName(void) const;
 
 		/**
-		 * Set the apn address family type.
-		 * @param[in] 1st The apn address family type.
-		 * @return True on success.
-		 */
-		bool setAddrFamilyNo(int);
-
-		/**
-		 * Get the apn address family type.
-		 * @param None.
-		 * @return The apn address family type.
-		 */
-		int getAddrFamilyNo(void) const;
-
-		/**
-		 * Get the string representation of address family type.
-		 * @param None.
-		 * @return The string of address family type.
-		 */
-		wxString getAddrFamilyName(void) const;
-
-		/**
 		 * Set IP of from host.
 		 * @param[in] 1st String with ip address.
 		 * @return True on success.

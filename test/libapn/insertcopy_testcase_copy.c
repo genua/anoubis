@@ -127,7 +127,6 @@ generate_alfrule(void)
 	alf->apn_type = APN_ALF_FILTER;
 	alf->rule.afilt.action = APN_ACTION_ALLOW;
 	alf->rule.afilt.filtspec.log = 0;
-	alf->rule.afilt.filtspec.af = AF_INET;
 	alf->rule.afilt.filtspec.proto = IPPROTO_TCP;
 	alf->rule.afilt.filtspec.netaccess = APN_CONNECT;
 

@@ -536,25 +536,6 @@ DlgRuleEditorFilterNetworkPageBase::DlgRuleEditorFilterNetworkPageBase( wxWindow
 	
 	mainSizer->Add( bothRadioButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	addressFamilyLabel = new wxStaticText( mainPage, wxID_ANY, _("Address family:"), wxDefaultPosition, wxDefaultSize, 0 );
-	addressFamilyLabel->Wrap( -1 );
-	mainSizer->Add( addressFamilyLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
-	
-	inetRadioButton = new wxRadioButton( mainPage, wxID_ANY, _("inet"), wxDefaultPosition, wxSize( -1,-1 ), wxRB_GROUP );
-	inetRadioButton->SetToolTip( _("Filter IPv4 connections") );
-	
-	mainSizer->Add( inetRadioButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
-	
-	inet6RadioButton = new wxRadioButton( mainPage, wxID_ANY, _("inet6"), wxDefaultPosition, wxSize( -1,-1 ), 0 );
-	inet6RadioButton->SetToolTip( _("Filter IPv6 connections") );
-	
-	mainSizer->Add( inet6RadioButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
-	
-	anyRadioButton = new wxRadioButton( mainPage, wxID_ANY, _("any"), wxDefaultPosition, wxDefaultSize, 0 );
-	anyRadioButton->SetToolTip( _("Allow any family") );
-	
-	mainSizer->Add( anyRadioButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
-	
 	protocolLabel = new wxStaticText( mainPage, wxID_ANY, _("Protocol:"), wxDefaultPosition, wxDefaultSize, 0 );
 	protocolLabel->Wrap( -1 );
 	mainSizer->Add( protocolLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
@@ -584,9 +565,6 @@ DlgRuleEditorFilterNetworkPageBase::DlgRuleEditorFilterNetworkPageBase( wxWindow
 	inRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorFilterNetworkPageBase::onInRadioButton ), NULL, this );
 	outRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorFilterNetworkPageBase::onOutRadioButton ), NULL, this );
 	bothRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorFilterNetworkPageBase::onBothRadioButton ), NULL, this );
-	inetRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorFilterNetworkPageBase::onInetRadioButton ), NULL, this );
-	inet6RadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorFilterNetworkPageBase::onInet6RadioButton ), NULL, this );
-	anyRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorFilterNetworkPageBase::onAnyRadioButton ), NULL, this );
 	tcpRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorFilterNetworkPageBase::onTcpRadioButton ), NULL, this );
 	udpRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorFilterNetworkPageBase::onUdpRadioButton ), NULL, this );
 }

@@ -116,7 +116,6 @@ struct apn_port {
 
 struct apn_afiltspec {
 	int			 log;
-	int			 af;
 	int			 proto;
 	int			 netaccess;
 	unsigned int		 statetimeout;
