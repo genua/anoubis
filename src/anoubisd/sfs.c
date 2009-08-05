@@ -73,7 +73,6 @@ static int	 sfs_readsignature(const char *csum_file, u_int8_t **sign,
 		     int *siglen);
 static int	 sfs_deletechecksum(const char *csum_file);
 static int	 check_empty_dir(const char *path);
-char		*insert_escape_seq(const char *path, int dir);
 
 int
 check_if_exist(const char *path)
@@ -86,7 +85,7 @@ check_if_exist(const char *path)
 		return 0;
 }
 
-int
+static int
 mkpath(const char *path)
 {
 	char *tmppath;
@@ -129,7 +128,7 @@ mkpath(const char *path)
 	return 0;
 }
 
-char *
+static char *
 insert_escape_seq(const char *path, int dir)
 {
 	char *newpath = NULL;
@@ -600,42 +599,6 @@ sfs_readchecksum(const char *csum_file, unsigned char *md)
 	if (ret < 0)
 		return ret;
 	return 0;
-}
-
-int
-__sfs_getchecksum(const char *path, uid_t uid, unsigned char *md, int is_chroot)
-{
-	char	*abspath;
-	char	*newpath;
-	int	 ret;
-
-	newpath = insert_escape_seq(path, 0);
-	if (newpath == NULL)
-		return -ENOMEM;
-
-	if (asprintf(&abspath, "%s%s/%d",
-	    is_chroot ? SFS_CHECKSUMCHROOT : SFS_CHECKSUMROOT,
-	    newpath, uid) == -1) {
-		free(newpath);
-		return -ENOMEM;
-	}
-
-	ret = sfs_readchecksum(abspath, md);
-	free(abspath);
-	free(newpath);
-	return ret;
-}
-
-int
-sfs_getchecksum(const char *path, uid_t uid, unsigned char *md)
-{
-	return __sfs_getchecksum(path, uid, md, 0);
-}
-
-int
-sfs_getchecksum_chroot(const char *path, uid_t uid, unsigned char *md)
-{
-	return __sfs_getchecksum(path, uid, md, 1);
 }
 
 int

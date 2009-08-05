@@ -33,11 +33,9 @@
 
 #ifdef LINUX
 #include <queue.h>
-#include <linux/anoubis_sfs.h>
 #include <bsdcompat.h>
 #else
 #include <sys/queue.h>
-#include <dev/anoubis_sfs.h>
 #endif
 
 #include <openssl/evp.h>
