@@ -63,11 +63,13 @@ createApnRule(const char *name)
 
 	fail_if(rule->app->name != NULL, "name already set.");
 	rule->app->name = strdup(name);
-	rule->app->hashtype = APN_HASH_SHA256;
+	rule->app->subject.type = APN_CS_CSUM;
+	rule->app->subject.value.csum =
+	    (u_int8_t *)calloc(APN_HASH_SHA256_LEN, sizeof(u_int8_t));
 
 	/* Create fake csum */
 	for (size_t i=0; i<APN_HASH_SHA256_LEN; i++) {
-		rule->app->hashvalue[i] = 1;
+		rule->app->subject.value.csum[i] = 1;
 	}
 
 	return (rule);
@@ -92,7 +94,7 @@ setup(void)
 	rule = createApnRule(initName.fn_str());
 	FAIL_IFZERO(rule, "Couldn't create apn filter rule.");
 
-	rc = PolicyUtils::csumToString(rule->app->hashvalue,
+	rc = PolicyUtils::csumToString(rule->app->subject.value.csum,
 	    APN_HASH_SHA256_LEN, initCsum);
 	fail_if(rc != true, "Couldn't convert native csum.");
 
@@ -313,6 +315,7 @@ START_TEST(AlfAppPolicy_setBinaryName_two)
 	wxString	 setName;
 	wxString	 getName;
 	wxString	 initName1;
+	struct apn_app	*napp;
 
 	initName1 = wxT("/usr/bin/find");
 
@@ -325,8 +328,11 @@ START_TEST(AlfAppPolicy_setBinaryName_two)
 	if (rule->app->next->name != NULL) {
 		fail("name already set.");
 	}
-	rule->app->next->name = strdup(initName1.fn_str());
-	rule->app->next->hashtype = APN_HASH_SHA256;
+	napp = rule->app->next;
+	napp->name = strdup(initName1.fn_str());
+	napp->subject.type = APN_CS_CSUM;
+	napp->subject.value.csum =
+	    (u_int8_t *)calloc(APN_HASH_SHA256_LEN, sizeof(u_int8_t));
 
 	/* test: index 2 - expect to fail */
 	setName = wxT("/usr/bin/fooobaaa");

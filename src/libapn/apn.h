@@ -82,12 +82,26 @@ enum apn_log_level {
 	APN_LOG_NONE, APN_LOG_NORMAL, APN_LOG_ALERT
 };
 
-struct apn_app {
-	char		*name;
-	int		 hashtype;
-	u_int8_t	 hashvalue[MAX_APN_HASH_LEN];
+#define		APN_CS_NONE	0
+#define		APN_CS_CSUM	1
+#define		APN_CS_UID	2
+#define		APN_CS_KEY	3
+#define		APN_CS_UID_SELF	4
+#define		APN_CS_KEY_SELF	5
 
-	struct apn_app	*next;
+struct apn_subject {
+	int			 type;
+	union {
+		char		*keyid;
+		uid_t		 uid;
+		u_int8_t	*csum;
+	} value;
+};
+
+struct apn_app {
+	char			*name;
+	struct apn_subject	 subject;
+	struct apn_app		*next;
 };
 
 struct apn_addr {
@@ -153,22 +167,6 @@ enum {
 struct apn_context {
 	struct apn_app		*application;
 	int			 type;
-};
-
-#define		APN_CS_NONE	0
-#define		APN_CS_CSUM	1
-#define		APN_CS_UID	2
-#define		APN_CS_KEY	3
-#define		APN_CS_UID_SELF	4
-#define		APN_CS_KEY_SELF	5
-
-struct apn_subject {
-	int			 type;
-	union {
-		char		*keyid;
-		uid_t		 uid;
-		u_int8_t	*csum;
-	} value;
 };
 
 #define		APN_SBA_READ	0x0001
@@ -330,20 +328,20 @@ int	apn_insert_ctxrule(struct apn_ruleset *, struct apn_rule *,
 /*
  * Analyse and modifiy application lists of application blocks.
  */
-int		 apn_add_app(struct apn_rule *, const char *, const u_int8_t *);
-struct apn_rule	*apn_match_app(struct apn_chain *, const char *,
-		     const u_int8_t *);
+int		 apn_add_app(struct apn_rule *, const char *,
+		     const struct apn_subject *);
+struct apn_rule	*apn_match_appname(struct apn_chain *, const char *);
 
 /*
  * Use these functions to copy an application block and simultaneously
  * add a new rule to that block.
  */
 int	apn_copyinsert_alf(struct apn_ruleset *, struct apn_rule *,
-	    unsigned int, const char *, const u_int8_t *, int);
+	    unsigned int, const char *, const struct apn_subject *);
 int	apn_copyinsert_ctx(struct apn_ruleset *, struct apn_rule *,
-	    unsigned int, const char *, const u_int8_t *, int);
+	    unsigned int, const char *, const struct apn_subject *);
 int	apn_copyinsert_sb(struct apn_ruleset *, struct apn_rule *,
-	    unsigned int, const char *, const u_int8_t *, int);
+	    unsigned int, const char *, const struct apn_subject *);
 
 /*
  * Functions used to free misc. rule structures
@@ -355,7 +353,7 @@ void	apn_free_port(struct apn_port *);
 void	apn_free_app(struct apn_app *);
 
 /* NOTE: Only frees the contents of the subject, not the subject itself. */
-void   apn_free_subject(struct apn_subject *subject);
+void	apn_free_subject(struct apn_subject *subject);
 
 /*
  * Searching, Copying cleaning

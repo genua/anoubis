@@ -52,7 +52,7 @@ AppPolicy::createApnApp(void)
 
 	app = (struct apn_app *)calloc(1, sizeof(struct apn_app));
 	if (app != NULL) {
-		app->hashtype = APN_HASH_NONE;
+		app->subject.type = APN_CS_NONE;
 	}
 
 	return (app);
@@ -137,7 +137,11 @@ AppPolicy::setBinaryName(wxString binary, unsigned int idx)
 	startChange();
 	free(app->name);
 	app->name = strdup(binary.To8BitData());
-	app->hashtype = APN_HASH_SHA256;
+	if (app->subject.type == APN_CS_NONE) {
+		app->subject.type = APN_CS_CSUM;
+		app->subject.value.csum = (u_int8_t *)calloc(ANOUBIS_CS_LEN,
+		    sizeof(u_int8_t));
+	}
 	setModified();
 	finishChange();
 
@@ -277,43 +281,31 @@ bool
 AppPolicy::setHashValueNo(unsigned char csum[MAX_APN_HASH_LEN],
     unsigned int idx)
 {
-	bool		 rc;
-	int		 len;
 	struct apn_app	*app;
 	struct apn_rule *rule;
+	u_int8_t	*csbuf;
 
 	rule = getApnRule();
-
-	if (rule == NULL) {
-		return (false);
-	}
+	if (rule == NULL)
+		return false;
 
 	app = seekAppByIndex(idx);
-	if (app == NULL) {
-		return (false);
-	}
+	if (app == NULL)
+		return false;
 
-	switch (app->hashtype) {
-	case APN_HASH_SHA256:
-	case APN_HASH_NONE:
-		len = APN_HASH_SHA256_LEN;
-		break;
-	default:
-		len = 0;
-		rc  = false;
-		break;
-	}
+	csbuf = (u_int8_t *)calloc(APN_HASH_SHA256_LEN, sizeof(u_int8_t));
+	if (csbuf == NULL)
+		return false;
+	memcpy(csbuf, csum, APN_HASH_SHA256_LEN);
 
-	if (len > 0) {
-		startChange();
-		memcpy(app->hashvalue, csum, len);
-		app->hashtype = APN_HASH_SHA256;
-		setModified();
-		finishChange();
-		rc = true;
-	}
+	startChange();
+	apn_free_subject(&app->subject);
+	app->subject.type = APN_CS_CSUM;
+	app->subject.value.csum = csbuf;
+	setModified();
+	finishChange();
 
-	return (rc);
+	return true;
 }
 
 bool
@@ -334,39 +326,26 @@ AppPolicy::setHashValueString(const wxString & csumString, unsigned int idx)
 bool
 AppPolicy::getHashValueNo(unsigned int idx, unsigned char *csum, int len) const
 {
-	int		 needLength;
 	struct apn_app	*app;
 	struct apn_rule *rule;
 
 	rule = getApnRule();
 
-	if (rule == NULL) {
-		return (false);
-	}
+	if (rule == NULL)
+		return false;
 
 	app = seekAppByIndex(idx);
-	if (app == NULL) {
-		return (false);
-	}
+	if (app == NULL)
+		return false;
 
-	switch (app->hashtype) {
-	case APN_HASH_SHA256:
-		needLength = APN_HASH_SHA256_LEN;
-		break;
-	case APN_HASH_NONE:
-		/* FALLTHROUGH */
-	default:
-		needLength = 0;
-		return (false);
-		break;
-	}
+	if (app->subject.type != APN_CS_CSUM)
+		return false;
 
-	if (len >= needLength) {
-		memcpy(csum, app->hashvalue, needLength);
-		return (true);
-	} else {
-		return (false);
-	}
+	if (len < APN_HASH_SHA256_LEN)
+		return false;
+	memcpy(csum, app->subject.value.csum, APN_HASH_SHA256_LEN);
+
+	return  true;
 }
 
 wxString

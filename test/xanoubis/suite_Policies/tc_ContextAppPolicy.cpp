@@ -63,7 +63,9 @@ createApnRule(const char *name)
 
 	fail_if(rule->app->name != NULL, "name already set.");
 	rule->app->name = strdup(name);
-	rule->app->hashtype = APN_HASH_SHA256;
+	rule->app->subject.type = APN_CS_CSUM;
+	rule->app->subject.value.csum =
+	    (u_int8_t *)calloc(APN_HASH_SHA256_LEN, sizeof(u_int8_t));
 
 	return (rule);
 }
@@ -301,6 +303,7 @@ START_TEST(ContextAppPolicy_setBinaryName_two)
 	wxString	 setName;
 	wxString	 getName;
 	wxString	 initName1;
+	struct apn_app	*napp;
 
 	initName1 = wxT("/usr/bin/find");
 
@@ -313,8 +316,11 @@ START_TEST(ContextAppPolicy_setBinaryName_two)
 	if (rule->app->next->name != NULL) {
 		fail("name already set.");
 	}
-	rule->app->next->name = strdup(initName1.fn_str());
-	rule->app->next->hashtype = APN_HASH_SHA256;
+	napp = rule->app->next;
+	napp->name = strdup(initName1.fn_str());
+	napp->subject.type = APN_CS_CSUM;
+	napp->subject.value.csum =
+	    (u_int8_t *)calloc(APN_HASH_SHA256_LEN, sizeof(u_int8_t));
 
 	/* test: index 2 - expect to fail */
 	setName = wxT("/usr/bin/fooobaaa");

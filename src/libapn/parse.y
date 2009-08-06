@@ -1308,16 +1308,23 @@ app_l		: app_l comma optnl app		{
 
 app		: STRING hashspec		{
 			struct apn_app	*app;
+			u_int8_t	*csum;
 
 			app = calloc(1, sizeof(struct apn_app));
-			if (app == NULL) {
+			csum = calloc(MAX_APN_HASH_LEN, sizeof(u_int8_t));
+			if (app == NULL || csum == NULL) {
+				if (app)
+					free(app);
+				if (csum)
+					free(csum);
 				free($1);
 				yyerror("Out of memory");
 				YYERROR;
 			}
 			app->name = normalize_path($1);
-			app->hashtype = $2.type;
-			bcopy($2.value, app->hashvalue, sizeof(app->hashvalue));
+			app->subject.type = APN_CS_CSUM;
+			app->subject.value.csum = csum;
+			bcopy($2.value, csum, MAX_APN_HASH_LEN);
 
 			$$ = app;
 		}

@@ -370,7 +370,7 @@ PolicyRuleSet::searchAlfAppPolicy(wxString binary) const
 
 	result = NULL;
 
-	rule = apn_match_app(&(ruleSet_->alf_queue), binary.To8BitData(), NULL);
+	rule = apn_match_appname(&(ruleSet_->alf_queue), binary.To8BitData());
 	if (rule != NULL) {
 		result = wxDynamicCast(rule->userdata, AlfAppPolicy);
 	}
@@ -393,7 +393,7 @@ PolicyRuleSet::searchContextAppPolicy(wxString binary) const
 
 	result = NULL;
 
-	rule = apn_match_app(&(ruleSet_->ctx_queue), binary.To8BitData(), NULL);
+	rule = apn_match_appname(&(ruleSet_->ctx_queue), binary.To8BitData());
 	if (rule != NULL) {
 		result = wxDynamicCast(rule->userdata, ContextAppPolicy);
 	}
@@ -416,7 +416,7 @@ PolicyRuleSet::searchSandboxAppPolicy(wxString binary) const
 
 	result = NULL;
 
-	rule = apn_match_app(&(ruleSet_->sb_queue), binary.To8BitData(), NULL);
+	rule = apn_match_appname(&(ruleSet_->sb_queue), binary.To8BitData());
 	if (rule != NULL) {
 		result = wxDynamicCast(rule->userdata, SbAppPolicy);
 	}
@@ -670,8 +670,9 @@ PolicyRuleSet::createAnswerPolicy(EscalationNotify *escalation)
 		return;
 	if (parentPolicy->isAnyBlock() && module != wxT("SFS")) {
 		wxString		 filename;
-		unsigned char		 csum[APN_HASH_SHA256_LEN];
+		u_int8_t		 csum[APN_HASH_SHA256_LEN];
 		struct apn_rule		*tmp;
+		struct apn_subject	 tmpsubject;
 
 		filename = escalation->getCtxBinaryName();
 		if (filename.IsEmpty())
@@ -681,8 +682,9 @@ PolicyRuleSet::createAnswerPolicy(EscalationNotify *escalation)
 		newblock = apn_find_rule(rs, parentPolicy->getApnRuleId());
 		if (!newblock)
 			goto err;
-		tmp = apn_match_app(newblock->pchain, filename.To8BitData(),
-		    csum);
+		/* XXX CEH: This check might need more thought. */
+		tmp = apn_match_appname(newblock->pchain,
+		    filename.To8BitData());
 		if (tmp != newblock) {
 			newblock = NULL;
 			goto err;
@@ -695,7 +697,10 @@ PolicyRuleSet::createAnswerPolicy(EscalationNotify *escalation)
 				break;
 		if (!triggerrule)
 			goto err;
-		if (apn_add_app(newblock, filename.To8BitData(), csum) != 0)
+		tmpsubject.type = APN_CS_CSUM;
+		tmpsubject.value.csum = csum;
+		if (apn_add_app(newblock, filename.To8BitData(),
+		    &tmpsubject) != 0)
 			goto err;
 	}
 	msg = escalation->rawMsg();

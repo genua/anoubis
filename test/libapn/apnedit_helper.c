@@ -327,6 +327,7 @@ cmd_copyinsert(struct apn_ruleset *rs, char *args)
 	char			 typestr[100], cstxt[256], path[1024];
 	u_int8_t		 cs[ANOUBIS_CS_LEN];
 	struct apn_rule		*src;
+	struct apn_subject	 subject;
 
 	if (sscanf(args, "%s %d %d %s %s%c",
 	    typestr, &triggerid, &srcid, path, cstxt, &ch) != 5) {
@@ -352,18 +353,17 @@ cmd_copyinsert(struct apn_ruleset *rs, char *args)
 		    line);
 		return 0;
 	}
+	subject.type = APN_CS_CSUM;
+	subject.value.csum = cs;
 	switch(type) {
 	case APN_ALF:
-		ret = apn_copyinsert_alf(rs, src, triggerid, path, cs,
-		    APN_HASH_SHA256);
+		ret = apn_copyinsert_alf(rs, src, triggerid, path, &subject);
 		break;
 	case APN_SB:
-		ret = apn_copyinsert_sb(rs, src, triggerid, path, cs,
-		    APN_HASH_SHA256);
+		ret = apn_copyinsert_sb(rs, src, triggerid, path, &subject);
 		break;
 	case APN_CTX:
-		ret = apn_copyinsert_ctx(rs, src, triggerid, path, cs,
-		    APN_HASH_SHA256);
+		ret = apn_copyinsert_ctx(rs, src, triggerid, path, &subject);
 		break;
 	default:
 		fprintf(output, "cmd_copyinsert(%d): Bad type %s/%d\n",

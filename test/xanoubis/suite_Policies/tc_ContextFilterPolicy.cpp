@@ -55,6 +55,7 @@ static struct apn_rule *
 createApnRule(const char *name)
 {
 	struct apn_rule *rule;
+	struct apn_app	*app;
 
 	rule = ContextFilterPolicy::createApnRule();
 	FAIL_IFZERO(rule, "Couldn't create apn rule.");
@@ -68,8 +69,11 @@ createApnRule(const char *name)
 	if (rule->rule.apncontext.application->name != NULL) {
 		fail("name already set.");
 	}
-	rule->rule.apncontext.application->name = strdup(name);
-	rule->rule.apncontext.application->hashtype = APN_HASH_SHA256;
+	app = rule->rule.apncontext.application;
+	app->name = strdup(name);
+	app->subject.type = APN_CS_CSUM;
+	app->subject.value.csum =
+	    (u_int8_t *)calloc(APN_HASH_SHA256_LEN, sizeof(u_int8_t));
 
 	return (rule);
 }
@@ -301,6 +305,7 @@ START_TEST(ContextFilterPolicy_setBinaryName_two)
 	wxString	 setName;
 	wxString	 getName;
 	wxString	 initName1;
+	struct apn_app	*app;
 
 	initName1 = wxT("/usr/bin/find");
 
@@ -313,10 +318,11 @@ START_TEST(ContextFilterPolicy_setBinaryName_two)
 	if (rule->rule.apncontext.application->next->name != NULL) {
 		fail("name already set.");
 	}
-	rule->rule.apncontext.application->next->name = strdup(
-	    initName1.fn_str());
-	rule->rule.apncontext.application->next->hashtype = APN_HASH_SHA256;
-
+	app = rule->rule.apncontext.application->next;
+	app->name = strdup(initName1.fn_str());
+	app->subject.type = APN_CS_CSUM;
+	app->subject.value.csum =
+	    (u_int8_t *)calloc(APN_HASH_SHA256_LEN, sizeof(u_int8_t));
 
 	/* test: index 2 - expect to fail */
 	setName = wxT("/usr/bin/fooobaaa");

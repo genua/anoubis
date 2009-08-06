@@ -362,6 +362,48 @@ pe_context_fork(struct pe_proc *proc, struct pe_proc *parent)
 	pe_dump_dbgctx("pe_context_fork", proc);
 }
 
+static int
+pe_context_subject_match(const struct apn_subject *subject,
+    const struct pe_proc_ident *pident)
+{
+	if (!subject)
+		return 1;
+	switch(subject->type) {
+	case APN_CS_NONE:
+		return 1;
+	case APN_CS_CSUM:
+		if (!pident->csum)
+			return 0;
+		return (memcmp(subject->value.csum, pident->csum,
+		    ANOUBIS_CS_LEN) == 0);
+	default:
+		/* XXX CEH: Add other APN_CS_* cases here. */
+		return 0;
+	}
+}
+
+static int
+pe_context_app_match(const struct apn_app *app,
+    const struct pe_proc_ident *pident)
+{
+	if (!app)
+		return 1;
+#ifdef NOTYET
+	/*
+	 * XXX CEH: We should probably do this some time in the future but
+	 * XXX CEH: we never did and currently it breaks tests. Furthermore,
+	 * XXX CEH: we get into huge trouble with regard to symlinks.
+	 */
+	if (app->name) {
+		if (!pident->pathhint)
+			return 0;
+		if (strcmp(app->name, pident->pathhint) != 0)
+			return 0;
+	}
+#endif
+	return pe_context_subject_match(&app->subject, pident);
+}
+
 /*
  * Select a new context for priority prio of the process proc based on the
  * pident and uid given as parameters.
@@ -538,15 +580,14 @@ pe_context_search_chain(struct apn_chain *chain, struct pe_proc_ident *pident)
 		 */
 		if (r->app == NULL)
 			return r;
-		if (!pident || pident->csum == NULL)
+		if (!pident)
 			continue;
 		/*
 		 * If we have a valid checksum walk chain of applications
 		 * and check against hashvalue.
 		 */
 		for (hp = r->app; hp; hp = hp->next) {
-			if (bcmp(hp->hashvalue, pident->csum,
-			    sizeof(hp->hashvalue)) == 0)
+			if (pe_context_app_match(hp, pident))
 				return r;
 		}
 	}
@@ -685,9 +726,8 @@ pe_context_decide(struct pe_proc *proc, int type, int prio,
 			break;
 		}
 		while (hp) {
-			if (bcmp(hp->hashvalue, pident->csum,
-			    sizeof(hp->hashvalue)) == 0) {
-				ret = 1;	/* allow */
+			if (pe_context_app_match(hp, pident)) {
+				ret = 1;
 				break;
 			}
 			hp = hp->next;
@@ -699,10 +739,10 @@ pe_context_decide(struct pe_proc *proc, int type, int prio,
 		return 0;
 	/* If we reach this point context switching is allowed. */
 	DEBUG(DBG_PE_CTX,
-	    "pe_context_decide: found \"%s\" csm 0x%08x... for "
+	    "pe_context_decide: found \"%s\" csum 0x%08x... for "
 	    "type %d priority %d", (hp && hp->name) ? hp->name : "any",
-	    (hp && hp->hashvalue) ?
-	    htonl(*(unsigned long *)hp->hashvalue) : 0, type, prio);
+	    (pident && pident->csum) ?
+	    htonl(*(unsigned long *)pident->csum) : 0, type, prio);
 	return 1;
 }
 

@@ -83,12 +83,12 @@ static int	 apn_copy_apndefault(struct apn_default *,
 		     struct apn_default *);
 static int	 apn_copy_sbaccess(struct apn_sbaccess *,
 		     struct apn_sbaccess *);
-static int	 apn_copy_subject(struct apn_subject *,
+static int	 apn_copy_subject(const struct apn_subject *,
 		     struct apn_subject *);
 static struct apn_app	*apn_copy_app(struct apn_app *app);
 static struct apn_port *apn_copy_ports(struct apn_port *);
 static int	 apn_set_application(struct apn_rule *, const char *,
-		     const u_int8_t *, int);
+		     const struct apn_subject *);
 static void	apn_assign_ids_chain(struct apn_ruleset *, struct apn_chain *);
 static void	apn_assign_ids_one(struct apn_ruleset *, struct apn_rule *);
 static void	apn_insert_id(struct apn_ruleset *, struct rb_entry *, void *);
@@ -220,22 +220,6 @@ apn_parse_iovec(const char *filename, struct iovec *vec, int count,
 }
 
 static int
-apn_hash_equal(int type, const u_int8_t *h1, const u_int8_t *h2)
-{
-	int len;
-	switch(type) {
-	case APN_HASH_NONE:
-		return 1;
-	case APN_HASH_SHA256:
-		len = APN_HASH_SHA256_LEN;
-		break;
-	default:
-		return 0;
-	}
-	return (memcmp(h1, h2, len) == 0);
-}
-
-static int
 apn_duplicate_ids(struct apn_rule *rule)
 {
 	struct rb_entry *root = NULL;
@@ -276,31 +260,10 @@ __apn_add_block_common(struct apn_ruleset *ruleset, struct apn_chain *chain,
     struct apn_rule *block, const char *filename, int lineno)
 {
 	int ret = 0;
-	struct apn_rule *tmp;
 	struct apn_rule *subrule;
 
 	if (ruleset == NULL || block == NULL)
 		return (1);
-
-	/*
-	 * Issue an error if the ruleset appears after an any rule or
-	 * another application rule for the same application.
-	 */
-	TAILQ_FOREACH(tmp, chain, entry) {
-		if (tmp->app == NULL)
-			goto duplicate;
-		if (block->app == NULL)
-			continue;
-		if (strcmp(block->app->name, tmp->app->name) != 0)
-			continue;
-		if (block->app->hashtype != tmp->app->hashtype)
-			continue;
-		if (!apn_hash_equal(block->app->hashtype, block->app->hashvalue,
-		    tmp->app->hashvalue))
-			continue;
-		goto duplicate;
-	}
-
 	/*
 	 * Issue an error if the ruleset has non-zero IDs that are already
 	 * in use or if the ruleset contains duplicate IDs.
@@ -327,10 +290,6 @@ __apn_add_block_common(struct apn_ruleset *ruleset, struct apn_chain *chain,
 	}
 
 	return (ret);
-duplicate:
-	if (filename)
-		apn_error(ruleset, filename, lineno, "Rule will never match!");
-	return (1);
 invalidid:
 	if (filename)
 		apn_error(ruleset, filename, lineno, "Duplicate rule IDs");
@@ -597,7 +556,7 @@ apn_insert_ctxrule(struct apn_ruleset *rs, struct apn_rule *ctxrule,
  */
 static int
 apn_copyinsert_common(struct apn_ruleset *rs, struct apn_rule *nrule,
-    unsigned int id, const char *filename, const u_int8_t *csum, int type,
+    unsigned int id, const char *filename, const struct apn_subject *subject,
     int chaintype)
 {
 	struct apn_chain	*queue;
@@ -637,7 +596,7 @@ apn_copyinsert_common(struct apn_ruleset *rs, struct apn_rule *nrule,
 	}
 
 	/* set applications */
-	if (apn_set_application(newrule, filename, csum, type) != 0) {
+	if (apn_set_application(newrule, filename, subject) != 0) {
 		apn_free_one_rule(newrule, NULL);
 		return (1);
 	}
@@ -673,28 +632,25 @@ apn_copyinsert_common(struct apn_ruleset *rs, struct apn_rule *nrule,
 /* ALF wrapper for apn_copyinsert_common */
 int
 apn_copyinsert_alf(struct apn_ruleset *rs, struct apn_rule *nrule,
-    unsigned int id, const char *filename, const u_int8_t *csum, int type)
+    unsigned int id, const char *filename, const struct apn_subject *subject)
 {
-	return apn_copyinsert_common(rs, nrule, id, filename, csum, type,
-	    APN_ALF);
+	return apn_copyinsert_common(rs, nrule, id, filename, subject, APN_ALF);
 }
 
 /* CTX wrapper for apn_copyinsert_common */
 int
 apn_copyinsert_ctx(struct apn_ruleset *rs, struct apn_rule *nrule,
-    unsigned int id, const char *filename, const u_int8_t *csum, int type)
+    unsigned int id, const char *filename, const struct apn_subject *subject)
 {
-	return apn_copyinsert_common(rs, nrule, id, filename, csum, type,
-	    APN_CTX);
+	return apn_copyinsert_common(rs, nrule, id, filename, subject, APN_CTX);
 }
 
 /* SANDBOX wrapper for apn_copyinsert_common */
 int
 apn_copyinsert_sb(struct apn_ruleset *rs, struct apn_rule *nrule,
-    unsigned int id, const char *filename, const u_int8_t *csum, int type)
+    unsigned int id, const char *filename, const struct apn_subject *subject)
 {
-	return apn_copyinsert_common(rs, nrule, id, filename, csum, type,
-	    APN_SB);
+	return apn_copyinsert_common(rs, nrule, id, filename, subject, APN_SB);
 }
 
 static int
@@ -958,18 +914,14 @@ apn_print_app(struct apn_app *app, FILE *file)
 		if (hp->name == NULL)
 			return (1);
 		fprintf(file, "%s ", hp->name);
-
-		switch (hp->hashtype) {
-		case APN_HASH_NONE:
-			break;
-		case APN_HASH_SHA256:
+		switch (hp->subject.type) {
+		case APN_CS_CSUM:
 			fprintf(file, "sha256 \\\n");
-			apn_print_hash(hp->hashvalue, 256 / 8, file);
+			apn_print_hash(hp->subject.value.csum, 256/8, file);
 			break;
 		default:
-			return (1);
+			return 1;
 		}
-
 		hp = hp->next;
 		if (hp)
 			fprintf(file, ",\n");
@@ -1610,6 +1562,7 @@ apn_free_app(struct apn_app *app)
 	while (hp) {
 		next = hp->next;
 		free(hp->name);
+		apn_free_subject(&hp->subject);
 		free(hp);
 		hp = next;
 	}
@@ -1902,7 +1855,7 @@ errout:
 }
 
 static int
-apn_copy_subject(struct apn_subject *src, struct apn_subject *dst)
+apn_copy_subject(const struct apn_subject *src, struct apn_subject *dst)
 {
 	dst->type = src->type;
 	switch(src->type) {
@@ -1971,20 +1924,25 @@ apn_copy_app(struct apn_app *app)
 		*napp = *hp;
 		napp->name = NULL;
 		napp->next = NULL;
+		if (apn_copy_subject(&app->subject, &napp->subject) < 0) {
+			free(napp);
+			goto errout;
+		}
 		if (hp->name) {
 			napp->name = strdup(hp->name);
 			if (napp->name == NULL) {
+				apn_free_subject(&napp->subject);
 				free(napp);
 				goto errout;
 			}
-			if (ntail) {
-				ntail->next = napp;
-			} else {
-				nhead = napp;
-			}
-			ntail = napp;
-			hp = hp->next;
 		}
+		if (ntail) {
+			ntail->next = napp;
+		} else {
+			nhead = napp;
+		}
+		ntail = napp;
+		hp = hp->next;
 	}
 	return nhead;
 errout:
@@ -2017,38 +1975,24 @@ errout:
 
 static int
 apn_set_application(struct apn_rule *rule, const char *filename,
-    const u_int8_t *csum, int type)
+    const struct apn_subject *subject)
 {
 	struct apn_app	*app;
-	size_t		 len;
 
 	if (rule == NULL || rule->app != NULL)
-		return (1);
-
-	/*
-	 * Empty filename _and_ empty checksum is ok, ie. this means
-	 * "any".
-	 */
-	if (filename == NULL && csum == NULL)
-		return (0);
-
-	switch (type) {
-	case APN_HASH_SHA256:
-		len = APN_HASH_SHA256_LEN;
-		break;
-	default:
-		return (-1);
-	}
+		return 1;
 
 	if ((app = calloc(1, sizeof(struct apn_app))) == NULL)
-		return (-1);
-	if ((app->name = strdup(filename)) == NULL) {
+		return -1;
+	if (apn_copy_subject(subject, &app->subject) < 0) {
 		free(app);
-		return (-1);
+		return -1;
 	}
-	bcopy(csum, app->hashvalue, len);
-	app->hashtype = type;
-
+	if ((app->name = strdup(filename)) == NULL) {
+		apn_free_subject(&app->subject);
+		free(app);
+		return -1;
+	}
 	rule->app = app;
 
 	return (0);
@@ -2335,7 +2279,8 @@ apn_move_down(struct apn_rule *rule)
 }
 
 int
-apn_add_app(struct apn_rule *rule, const char *name, const u_int8_t *csum)
+apn_add_app(struct apn_rule *rule, const char *name,
+    const struct apn_subject *subject)
 {
 	struct apn_app		*napp;
 
@@ -2345,10 +2290,12 @@ apn_add_app(struct apn_rule *rule, const char *name, const u_int8_t *csum)
 	napp->name = strdup(name);
 	if (!napp->name)
 		goto err;
-	napp->hashtype = APN_HASH_SHA256;
-	memcpy(napp->hashvalue, csum, APN_HASH_SHA256_LEN);
+	if (apn_copy_subject(subject, &napp->subject) < 0)
+		goto err;
+
 	napp->next = rule->app;
 	rule->app = napp;
+
 	return 0;
 err:
 	if (napp->name)
@@ -2358,7 +2305,7 @@ err:
 }
 
 struct apn_rule *
-apn_match_app(struct apn_chain *chain, const char *name, const u_int8_t *csum)
+apn_match_appname(struct apn_chain *chain, const char *name)
 {
 	struct apn_rule		*tmp;
 	TAILQ_FOREACH(tmp, chain, entry) {
@@ -2370,23 +2317,8 @@ apn_match_app(struct apn_chain *chain, const char *name, const u_int8_t *csum)
 			app = napp;
 			napp = app->next;
 			if (name && app->name) {
-				if (strcmp(app->name, name) != 0)
-					continue;
-				if (!csum)
-					return tmp;		/* Match */
-			}
-			if (csum) {
-				switch (app->hashtype) {
-				case APN_HASH_NONE:
-					return tmp;		/* Match */
-				case APN_HASH_SHA256:
-					if (memcmp(csum, app->hashvalue,
-					    APN_HASH_SHA256_LEN) == 0)
-						return tmp;	/* Match */
-					break;
-				default:
-					break;
-				}
+				if (strcmp(app->name, name) == 0)
+					return tmp;
 			}
 		}
 	}

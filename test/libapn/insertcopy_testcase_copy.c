@@ -159,8 +159,9 @@ generate_rule(void)
 		free(app);
 		return (NULL);
 	}
-	app->hashtype = APN_HASH_SHA256;
-	*(unsigned long *)app->hashvalue = htonl(0xdeadbeef);
+	app->subject.type = APN_CS_CSUM;
+	app->subject.value.csum = calloc(APN_HASH_SHA256_LEN, sizeof(u_int8_t));
+	*(unsigned long *)app->subject.value.csum = htonl(0xdeadbeef);
 
 	rule->apn_type = APN_ALF;
 	rule->apn_id = 0;
@@ -324,6 +325,7 @@ START_TEST(tc_Copy1)
 	struct apn_ruleset	*rs;
 	char			*file;
 	int			 ret;
+	struct apn_subject	subject;
 
 	file = generate_file();
 	ret = apn_parse(file, &rs, 0);
@@ -350,9 +352,10 @@ START_TEST(tc_Copy1)
 	rule = generate_alfrule();
 	fail_if(rule == NULL, "generate_rule() failed");
 
+	subject.type = APN_CS_CSUM;
+	subject.value.csum = fakecs;
 	memset(fakecs, 0xaa, sizeof(fakecs));
-	ret = apn_copyinsert_alf(rs, rule, 7, "/bin/foobar", fakecs,
-	    APN_HASH_SHA256);
+	ret = apn_copyinsert_alf(rs, rule, 7, "/bin/foobar", &subject);
 	if (ret != 0)
 		apn_print_errors(rs, stderr);
 	fail_if(ret != 0, "Copy + insert failed with %d", ret);
@@ -365,9 +368,7 @@ START_TEST(tc_Copy1)
 	rule = generate_alfrule();
 	fail_if(rule == NULL, "generate_rule() failed");
 
-	memset(fakecs, 0xaa, sizeof(fakecs));
-	ret = apn_copyinsert_alf(rs, rule, 11, "/bin/foobar", fakecs,
-	    APN_HASH_SHA256);
+	ret = apn_copyinsert_alf(rs, rule, 11, "/bin/foobar", &subject);
 	if (ret != 0)
 		apn_print_errors(rs, stderr);
 	fail_if(ret != 0, "Copy + insert failed");
@@ -384,8 +385,7 @@ START_TEST(tc_Copy1)
 
 
 	/* Try to copy+insert using the bogus ID 1234 */
-	ret = apn_copyinsert_alf(rs, rule, 1234, "/bin/foobar", fakecs,
-	    APN_HASH_SHA256);
+	ret = apn_copyinsert_alf(rs, rule, 1234, "/bin/foobar", &subject);
 	fail_if(ret == 0, "Copy+insert did not fail, but should have!");
 	fail_if(ret < 0, "Copy+insert should fail with ret > 0 but returned %d",
 	    ret);
