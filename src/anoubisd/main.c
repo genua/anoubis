@@ -1177,7 +1177,6 @@ dispatch_checksumop(anoubisd_msg_t *msg, struct event_info_main *ev_info)
 	l_all = (flags & ANOUBIS_CSUM_ALL);
 
 	switch (op) {
-	case ANOUBIS_CHECKSUM_OP_SIG_LIST:
 	case ANOUBIS_CHECKSUM_OP_LIST:
 	case ANOUBIS_CHECKSUM_OP_LIST_ALL:
 	case ANOUBIS_CHECKSUM_OP_UID_LIST:
@@ -1185,7 +1184,7 @@ dispatch_checksumop(anoubisd_msg_t *msg, struct event_info_main *ev_info)
 		plen = rawmsg.length - CSUM_LEN
 		    - sizeof(Anoubis_ChecksumRequestMessage);
 		path = rawmsg.u.checksumrequest->payload + idlen;
-		if (idlen > 0 && ((op == ANOUBIS_CHECKSUM_OP_SIG_LIST) ||
+		if (idlen > 0 && ((op == ANOUBIS_CHECKSUM_OP_LIST) ||
 		    (op == ANOUBIS_CHECKSUM_OP_LIST_ALL))) {
 			if ((key = calloc(idlen, sizeof(u_int8_t))) == NULL)
 				goto out;
@@ -1199,8 +1198,7 @@ dispatch_checksumop(anoubisd_msg_t *msg, struct event_info_main *ev_info)
 			goto out;
 
 		if ((op == ANOUBIS_CHECKSUM_OP_LIST) ||
-		    (op == ANOUBIS_CHECKSUM_OP_LIST_ALL) ||
-		    (op == ANOUBIS_CHECKSUM_OP_SIG_LIST)) {
+		    (op == ANOUBIS_CHECKSUM_OP_LIST_ALL)) {
 			err = convert_user_path(path, &result, 1);
 			if (err < 0)
 				goto out;

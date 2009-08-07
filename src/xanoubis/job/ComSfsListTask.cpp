@@ -164,12 +164,6 @@ ComSfsListTask::exec(void)
 	resetComTaskResult();
 	ta_ = NULL;
 
-	/* Operation depends on key-id. If set assume signature-operation */
-	if ((this->keyId_ != 0) && (this->keyIdLen_ > 0))
-		req_op_ = ANOUBIS_CHECKSUM_OP_SIG_LIST;
-	else
-		req_op_ = ANOUBIS_CHECKSUM_OP_LIST;
-
 	if (uid_ == cur_uid) {
 		/* Ask for your own list */
 		req_uid_ = 0;
@@ -224,8 +218,9 @@ ComSfsListTask::fetchSfsList(const char *path)
 	}
 
 	/* Create request */
-	ta_ = anoubis_client_csumrequest_start(getClient(), req_op_, fullpath,
-	    this->keyId_, 0, this->keyIdLen_, req_uid_, req_flags_);
+	ta_ = anoubis_client_csumrequest_start(getClient(),
+	    ANOUBIS_CHECKSUM_OP_LIST, fullpath, this->keyId_, 0,
+	    this->keyIdLen_, req_uid_, req_flags_);
 	free(fullpath);
 
 	if(!ta_) {

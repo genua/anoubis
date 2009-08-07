@@ -236,7 +236,6 @@ class ComSfsListTask : public ComTask
 		u_int8_t			*keyId_;
 		int				 keyIdLen_;
 		struct anoubis_transaction	*ta_;
-		int				 req_op_;
 		uid_t				 req_uid_;
 		int				 req_flags_;
 		char				*basepath_;

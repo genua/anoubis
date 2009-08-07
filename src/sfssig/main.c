@@ -1056,7 +1056,7 @@ sfs_list(char *file)
 				    " certifcate\n");
 				return 1;
 			}
-			t = sfs_sumop(file, ANOUBIS_CHECKSUM_OP_SIG_LIST,
+			t = sfs_sumop(file, ANOUBIS_CHECKSUM_OP_LIST,
 			    as->keyid, 0, as->idlen);
 
 		} else {
@@ -1346,7 +1346,7 @@ sfs_tree(char *path, int op)
 				    certifcate\n");
 				return 1;
 			}
-			t = sfs_sumop(tmp, ANOUBIS_CHECKSUM_OP_SIG_LIST,
+			t = sfs_sumop(tmp, ANOUBIS_CHECKSUM_OP_LIST,
 			    as->keyid, 0, as->idlen);
 		} else {
 			if (checksum_flag & ANOUBIS_CSUM_ALL)

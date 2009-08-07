@@ -520,7 +520,6 @@ dispatch_checksum(struct anoubis_server *server, struct anoubis_msg *m,
 		return;
 	}
 	if (opp == ANOUBIS_CHECKSUM_OP_LIST ||
-	    opp == ANOUBIS_CHECKSUM_OP_SIG_LIST ||
 	    opp == ANOUBIS_CHECKSUM_OP_KEYID_LIST ||
 	    opp == ANOUBIS_CHECKSUM_OP_LIST_ALL ||
 	    opp == ANOUBIS_CHECKSUM_OP_UID_LIST) {
