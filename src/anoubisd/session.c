@@ -490,12 +490,19 @@ dispatch_checksum(struct anoubis_server *server, struct anoubis_msg *m,
 	anoubisd_msg_checksum_op_t	*msg_csum;
 	struct achat_channel		*chan;
 	int				 flags;
-	int err, opp;
+	int				 err, opp = 0, reallen;
 
 	struct event_info_session *ev_info = (struct event_info_session*)arg;
 
 	DEBUG(DBG_TRACE, ">dispatch_checksum");
-	DEBUG(DBG_TRACE, "%s\n", m->u.checksumrequest->payload);
+	if (!VERIFY_FIELD(m, checksumrequest, operation))
+		goto invalid;
+	opp = get_value(m->u.checksumrequest->operation);
+	reallen = amsg_sfs_checksumop_size(m->u.buf, m->length);
+	if (reallen < 0 || reallen > (int)m->length)
+		goto invalid;
+	if (reallen + 8 < (int)m->length)
+		goto invalid;
 	chan = anoubis_server_getchannel(server);
 	s2m_msg = msg_factory(ANOUBISD_MSG_CHECKSUM_OP,
 	    sizeof(anoubisd_msg_checksum_op_t) + m->length);
@@ -503,13 +510,12 @@ dispatch_checksum(struct anoubis_server *server, struct anoubis_msg *m,
 	msg_csum->uid = uid;
 	msg_csum->len = m->length;
 	memcpy(msg_csum->msg, m->u.checksumrequest, m->length);
-	opp = get_value(m->u.checksumrequest->operation);
 	flags = get_value(m->u.checksumrequest->flags);
 	if (((flags != ANOUBIS_CSUM_NONE) && (uid != 0)) ||
 	    ((opp == ANOUBIS_CHECKSUM_OP_KEYID_LIST) && (uid != 0)) ||
 	    ((opp == ANOUBIS_CHECKSUM_OP_UID_LIST) && (uid != 0))) {
-		log_warn("Dropping checksum request missing privileges uid: %d",
-		    uid);
+		dispatch_generic_reply(server, EPERM, NULL, 0,
+		    POLICY_FLAG_START|POLICY_FLAG_END, opp);
 		free(s2m_msg);
 		return;
 	}
@@ -519,15 +525,15 @@ dispatch_checksum(struct anoubis_server *server, struct anoubis_msg *m,
 	    opp == ANOUBIS_CHECKSUM_OP_LIST_ALL ||
 	    opp == ANOUBIS_CHECKSUM_OP_UID_LIST) {
 		err = anoubis_policy_comm_addrequest(ev_info->policy, chan,
-		POLICY_FLAG_START | POLICY_FLAG_END,
-		&dispatch_checksum_list_reply, server, &msg_csum->token);
+		    POLICY_FLAG_START | POLICY_FLAG_END,
+		    &dispatch_checksum_list_reply, server, &msg_csum->token);
 	} else {
 		err = anoubis_policy_comm_addrequest(ev_info->policy, chan,
-		POLICY_FLAG_START | POLICY_FLAG_END, &dispatch_checksum_reply,
-		server, &msg_csum->token);
+		    POLICY_FLAG_START | POLICY_FLAG_END,
+		    &dispatch_checksum_reply, server, &msg_csum->token);
 	}
 	if (err < 0) {
-		log_warn("Dropping checksum request (error %d)", err);
+		log_warnx("Dropping checksum request (error %d)", err);
 		free(s2m_msg);
 		return;
 	}
@@ -536,6 +542,10 @@ dispatch_checksum(struct anoubis_server *server, struct anoubis_msg *m,
 	event_add(ev_info->ev_s2m, NULL);
 
 	DEBUG(DBG_TRACE, "<dispatch_checksum");
+	return;
+invalid:
+	dispatch_generic_reply(server, EINVAL, NULL, 0,
+	    POLICY_FLAG_START|POLICY_FLAG_END, opp);
 }
 
 static void

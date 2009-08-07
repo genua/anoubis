@@ -70,6 +70,7 @@ extern int send_msg(int, anoubisd_msg_t *);
 extern int msg_pending(int);
 extern int msg_eof(int);
 extern void amsg_verify(struct anoubisd_msg *);
+extern int amsg_sfs_checksumop_size(const char *buf, int maxlen);
 extern struct anoubisd_msg *msg_factory(int, int);
 extern void msg_shrink(struct anoubisd_msg *, int);
 

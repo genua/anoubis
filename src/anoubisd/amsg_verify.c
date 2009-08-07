@@ -36,15 +36,19 @@
 #include <sys/types.h>
 #ifdef LINUX
 #include <bsdcompat.h>
+#include <openssl/sha.h>
 #endif
+#ifdef OPENBSD
+#include <sha2.h>
+#endif
+
+#include <anoubis_protocol.h>
 
 #include "anoubisd.h"
 #include "amsg.h"
 #include "aqueue.h"
 
 #define SIZE_LIMIT	50000
-
-typedef int (*length_fn_t)(const char *buffer, int maxlen);
 
 /*
  * Declare a variable that tracks the size of the current data structure.
@@ -151,8 +155,24 @@ typedef int (*length_fn_t)(const char *buffer, int maxlen);
 	} while (0)
 
 /*
+ * Similar to SHIFT_CNT, but takes the bytes from the end without
+ * changing the buffer itself. The cumulated size of the structure
+ * is increased by (CNT).
+ * Returns -1 from the surrounding function if any length checks fail
+ * or if the buffer size is smaller than (CNT).
+ */
+#define POP_CNT(CNT, L)						\
+	do {							\
+		int __pop = (CNT);				\
+		if (__pop < 0 || (L) < __pop)			\
+			return -1;				\
+		(L) -= __pop;					\
+		ADD_SIZE(__pop);				\
+	} while (0)
+
+/*
  * Verify that the buffer defined by (B) and (L) contains one or
- * more a NUL terminated C-Strings. Does not modify the cumulated
+ * more NUL terminated C-Strings. Does not modify the cumulated
  * size of the message.
  * Returns -1 if no NUL byte is found in the buffer or if the buffer
  * length is out of range.
@@ -242,6 +262,40 @@ TYPE ## _size(const char *buf __attribute__((unused)), int buflen)	\
 }
 
 /*
+ * Size of an sfs_checksumop payload.
+ */
+int
+amsg_sfs_checksumop_size(const char *buf, int buflen)
+{
+	Anoubis_ChecksumRequestMessage	*msg;
+	Anoubis_ChecksumAddMessage	*addmsg;
+	int				 idlen = 0, cslen = 0;
+	int				 op;
+	DECLARE_SIZE();
+
+	/* Space for the anoubis protocol Checksum message at the end. */
+	POP_CNT(CSUM_LEN, buflen);
+	CAST(msg, buf, buflen);
+	op = get_value(msg->operation);
+	if (op == ANOUBIS_CHECKSUM_OP_ADDSUM
+	    || op == ANOUBIS_CHECKSUM_OP_ADDSIG) {
+		CAST(addmsg, buf, buflen);
+		cslen = get_value(addmsg->cslen);
+		if (cslen < SHA256_DIGEST_LENGTH)
+			return -1;
+		SHIFT_FIELD(addmsg, payload, buf, buflen);
+	} else {
+		SHIFT_FIELD(msg, payload, buf, buflen);
+	}
+	idlen = get_value(msg->idlen);
+	SHIFT_CNT(idlen, buf, buflen);
+	SHIFT_CNT(cslen, buf, buflen);
+	SHIFT_STRING(buf, buflen);
+
+	RETURN_SIZE();
+}
+
+/*
  * Size of a struct anoubisd_msg_comm
  */
 static int
@@ -316,13 +370,16 @@ static int
 anoubisd_msg_checksum_op_size(const char *buf, int buflen)
 {
 	struct anoubisd_msg_checksum_op		*msg;
+	int					 sfsoplen;
 	DECLARE_SIZE()
 
 	CAST(msg, buf, buflen);
 	SHIFT_FIELD(msg, msg, buf, buflen);
 
 	ADD_SIZE(msg->len);
-	/* XXX CEH: Calculate length of sub structure. */
+	sfsoplen = amsg_sfs_checksumop_size(buf, buflen);
+	if (sfsoplen < 0 || sfsoplen > msg->len || sfsoplen > buflen)
+		return -1;
 
 	RETURN_SIZE();
 }
