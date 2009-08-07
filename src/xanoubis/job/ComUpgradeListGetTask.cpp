@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 GeNUA mbH <info@genua.de>
+ * Copyright (c) 2009 GeNUA mbH <info@genua.de>
  *
  * All rights reserved.
  *
@@ -25,45 +25,75 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "Task.h"
-#include "TaskEvent.h"
+#include "ComUpgradeListGetTask.h"
 
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_DUMMY)
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_CSUMCALC)
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_REGISTER)
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_POLICY_SEND)
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_POLICY_REQUEST)
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_CSUM_ADD)
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_CSUM_GET)
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_CSUM_DEL)
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_SFS_LIST)
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_UPGRADE_LIST)
-
-TaskEvent::TaskEvent(Task *task, int id)
-    : wxEvent(id, task->getEventType())
+ComUpgradeListGetTask::ComUpgradeListGetTask(void)
 {
-	this->m_propagationLevel = wxEVENT_PROPAGATE_MAX;
-	this->task_ = task;
+	uid_ = 0 - 1;
+	fileList_.Clear();
 }
 
-TaskEvent::TaskEvent(const TaskEvent &other)
-    : wxEvent(other.GetId(), other.GetEventType())
+ComUpgradeListGetTask::ComUpgradeListGetTask(uid_t uid)
 {
-	SetEventObject(other.GetEventObject());
-	SetTimestamp(other.GetTimestamp());
-
-	this->m_propagationLevel = wxEVENT_PROPAGATE_MAX;
-	this->task_ = other.task_;
+	uid_ = uid;
+	fileList_.Clear();
 }
 
-wxEvent *
-TaskEvent::Clone(void) const
+ComUpgradeListGetTask::~ComUpgradeListGetTask(void)
 {
-	return new TaskEvent(*this);
+	/* XXX ch: Currently nothing needs to be done here. */
 }
 
-Task *
-TaskEvent::getTask(void) const
+uid_t
+ComUpgradeListGetTask::getUid(void) const
 {
-	return (this->task_);
+	return (uid_);
+}
+
+void
+ComUpgradeListGetTask::setRequestParameter(uid_t uid)
+{
+	uid_ = uid;
+}
+
+wxEventType
+ComUpgradeListGetTask::getEventType(void) const
+{
+	return (anTASKEVT_UPGRADE_LIST);
+}
+
+void
+ComUpgradeListGetTask::exec(void)
+{
+	resetComTaskResult();
+}
+
+bool
+ComUpgradeListGetTask::done(void)
+{
+	/*
+	 * XXX ch: Currently we are not talking to the daemon,
+	 * XXX ch: because the protocol is not implemented.
+	 * XXX ch: To proceed development we generate a fake list.
+	 */
+	fileList_.Add(wxT("/usr/bin/mutt"));
+	fileList_.Add(wxT("/usr/bin/vim"));
+	fileList_.Add(wxT("/usr/sbin/lvm"));
+	fileList_.Add(wxT("/etc/no-real-file"));
+	setComTaskResult(RESULT_SUCCESS);
+
+	return (true);
+}
+
+wxArrayString
+ComUpgradeListGetTask::getFileList(void) const
+{
+	return (fileList_);
+}
+
+void
+ComUpgradeListGetTask::resetComTaskResult(void)
+{
+	ComTask::resetComTaskResult();
+	fileList_.Clear();
 }

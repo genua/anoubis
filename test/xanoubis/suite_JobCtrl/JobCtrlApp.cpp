@@ -78,7 +78,12 @@ JobCtrlApp::OnRun()
 	}
 
 	int result = getResult();
-	if (testcase_ == wxT("tc_jobctrl_nodaemon") && result == 240) {
+	/*
+	 * Within the nodaemon testcase the connection test failed.
+	 * The result is the line number of the check at onTestConnect().
+	 * On modifications of TcComTask.cpp, this value must be adjusted.
+	 */
+	if (testcase_ == wxT("tc_jobctrl_nodaemon") && result == 245) {
 		/*
 		 * Expected result for nodaemon-testcase because establishing
 		 * of the connection failed.

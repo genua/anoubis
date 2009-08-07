@@ -42,6 +42,7 @@
 #include <ComPolicySendTask.h>
 #include <ComRegistrationTask.h>
 #include <ComSfsListTask.h>
+#include <ComUpgradeListGetTask.h>
 #include <JobCtrl.h>
 #include <KeyCtrl.h>
 
@@ -126,6 +127,7 @@ TcComTask::nextTest()
 	jobCtrl->Disconnect(anTASKEVT_CSUM_GET);
 	jobCtrl->Disconnect(anTASKEVT_CSUM_DEL);
 	jobCtrl->Disconnect(anTASKEVT_SFS_LIST);
+	jobCtrl->Disconnect(anTASKEVT_UPGRADE_LIST);
 
 	testCounter_++;
 
@@ -194,18 +196,21 @@ TcComTask::nextTest()
 		setupTestSfsListRecursive();
 		break;
 	case 22:
-		setupTestSigAdd();
+		setupTestUpgradeList();
 		break;
 	case 23:
-		setupTestSigGet();
+		setupTestSigAdd();
 		break;
 	case 24:
-		setupTestSigListNotEmpty();
+		setupTestSigGet();
 		break;
 	case 25:
-		setupTestSigDel();
+		setupTestSigListNotEmpty();
 		break;
 	case 26:
+		setupTestSigDel();
+		break;
+	case 27:
 		setupTestSigListEmpty();
 		break;
 	default:
@@ -1344,6 +1349,68 @@ TcComTask::onTestSfsListRecursive(TaskEvent &event)
 	    "Is: %i\n", result.Count());
 
 	trace("Leaving TcComTask::onTestSfsListRecursive\n");
+	nextTest();
+}
+
+void
+TcComTask::setupTestUpgradeList(void)
+{
+	trace("Enter TcComTask::setupTestUpgradeList\n");
+
+	JobCtrl::getInstance()->Connect(anTASKEVT_UPGRADE_LIST,
+	    wxTaskEventHandler(TcComTask::onTestUpgradeList), NULL, this);
+
+	ComUpgradeListGetTask *next = new ComUpgradeListGetTask();
+
+	trace("Scheduling ComUpgradeListGetTask: %p\n", next);
+	JobCtrl::getInstance()->addTask(next);
+
+	trace("Leaving TcComTask::setupTestUpgradeList\n");
+}
+
+void
+TcComTask::onTestUpgradeList(TaskEvent &event)
+{
+	trace("Enter TcComTask::onTestUpgradeList\n");
+
+	ComUpgradeListGetTask *t =
+	    dynamic_cast<ComUpgradeListGetTask*>(event.getTask());
+	trace("ComUpgradeListGetTask = %p\n", t);
+
+	assertUnless(t->getComTaskResult() == ComTask::RESULT_SUCCESS,
+	    "Failed to receive upgrade list: %i\n", t->getComTaskResult());
+
+	wxArrayString result = t->getFileList();
+	trace("upgrade-list-size: %i\n", result.Count());
+	assertUnless((result.Count() == 4), "Result count mismatch!\n");
+
+	delete t;
+
+	int idx;
+
+	idx = result.Index(wxT("/usr/bin/mutt"));
+	assertUnless((idx != wxNOT_FOUND),
+	    "Entry \'/usr/bin/mutt\' not found in upgrade-list\n");
+	result.RemoveAt(idx);
+
+	idx = result.Index(wxT("/usr/bin/vim"));
+	assertUnless((idx != wxNOT_FOUND),
+	    "Entry \'/usr/bin/vim\' not found in upgrade-list\n");
+	result.RemoveAt(idx);
+
+	idx = result.Index(wxT("/usr/sbin/lvm"));
+	assertUnless((idx != wxNOT_FOUND),
+	    "Entry \'/usr/sbin/lvm\' not found in upgrade-list\n");
+	result.RemoveAt(idx);
+
+	idx = result.Index(wxT("/etc/no-real-file"));
+	assertUnless((idx != wxNOT_FOUND),
+	    "Entry \'/etc/no-real-file\' not found in upgrade-list\n");
+	result.RemoveAt(idx);
+
+	assertUnless((result.Count() == 0), "Result count not zero!\n");
+
+	trace("Leaving TcComTask::onTestUpgradeList\n");
 	nextTest();
 }
 

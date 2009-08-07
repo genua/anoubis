@@ -104,6 +104,9 @@ class TcComTask : public TestHandler
 		void setupTestSfsListRecursive(void);
 		void onTestSfsListRecursive(TaskEvent &);
 
+		void setupTestUpgradeList(void);
+		void onTestUpgradeList(TaskEvent &);
+
 		void setupTestSigAdd(void);
 		void onTestSigAdd(TaskEvent &);
 
