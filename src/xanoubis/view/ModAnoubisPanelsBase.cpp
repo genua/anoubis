@@ -671,6 +671,25 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	
 	bSizer13->Add( sbSizer4, 0, wxEXPAND, 5 );
 	
+	wxStaticBoxSizer* sbSizer10;
+	sbSizer10 = new wxStaticBoxSizer( new wxStaticBox( tb_MainAnoubisOptions, -1, _("Upgrade") ), wxVERTICAL );
+	
+	wxFlexGridSizer* fgSizer6;
+	fgSizer6 = new wxFlexGridSizer( 2, 2, 0, 0 );
+	fgSizer6->SetFlexibleDirection( wxBOTH );
+	fgSizer6->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+	
+	cb_ShowUpgradeMsg = new wxCheckBox( tb_MainAnoubisOptions, wxID_ANY, _("Enable Upgrade Message"), wxDefaultPosition, wxDefaultSize, 0 );
+	cb_ShowUpgradeMsg->SetValue(true);
+	
+	cb_ShowUpgradeMsg->SetToolTip( _("Check to be notified when upgrade event had taken place") );
+	
+	fgSizer6->Add( cb_ShowUpgradeMsg, 0, wxALL, 5 );
+	
+	sbSizer10->Add( fgSizer6, 1, wxEXPAND, 5 );
+	
+	bSizer13->Add( sbSizer10, 0, wxEXPAND, 5 );
+	
 	wxStaticBoxSizer* sbSizer8;
 	sbSizer8 = new wxStaticBoxSizer( new wxStaticBox( tb_MainAnoubisOptions, -1, _("Autostart") ), wxVERTICAL );
 	

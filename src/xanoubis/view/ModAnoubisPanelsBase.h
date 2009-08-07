@@ -189,6 +189,7 @@ class ModAnoubisMainPanelBase : public wxPanel
 		
 		wxSpinCtrl* m_spinAlertNotifyTimeout;
 		wxStaticText* tx_AlertNotifyTimeoutLabel;
+		wxCheckBox* cb_ShowUpgradeMsg;
 		wxCheckBox* cb_DoAutostart;
 		
 		wxCheckBox* controlAutoCheck;

@@ -172,6 +172,10 @@ ModAnoubisMainPanelImpl::~ModAnoubisMainPanelImpl(void)
 	userOptions_->Write(wxT("/Options/Autostart"),
 	    cb_DoAutostart->IsChecked());
 
+	/* write Notification of Upgrade Settings */
+	userOptions_->Write(wxT("/Options/ShowUpgradeMessage"),
+	    cb_ShowUpgradeMsg->GetValue());
+
 	/* write ToolTip Settings */
 	userOptions_->Write(wxT("/Options/EnableToolTips"),
 	    toolTipCheckBox->GetValue());
@@ -194,26 +198,30 @@ ModAnoubisMainPanelImpl::~ModAnoubisMainPanelImpl(void)
 void
 ModAnoubisMainPanelImpl::readOptions(void)
 {
-	bool SendEscalation = true;
-	bool NoEscalationTimeout = true;
-	int EscalationTimeout = 0;
-	bool SendAlert = false;
-	bool NoAlertTimeout = false;
-	bool DoAutostart = false;
-	int AlertTimeout = 10;
 	bool AutoChecksum = false;
 	bool AutoConnect = false;
+	bool DoAutostart = false;
 	bool EnableToolTips = true;
+	bool NoAlertTimeout = false;
+	bool NoEscalationTimeout = true;
+	bool SendAlert = false;
+	bool SendEscalation = true;
+	bool ShowUpgradeMessage = true;
+
+	int AlertTimeout = 10;
+	int EscalationTimeout = 0;
 	int ToolTipTimeout = 1;
 
 	/* read the stored Option Settings */
+	userOptions_->Read(wxT("/Options/SendAlerts"), &SendAlert);
 	userOptions_->Read(wxT("/Options/SendEscalations"), &SendEscalation);
+	userOptions_->Read(wxT("/Options/ShowUpgradeMessage"), &ShowUpgradeMessage);
+
 	userOptions_->Read(wxT("/Options/NoEscalationsTimeout"),
 	    &NoEscalationTimeout);
 	userOptions_->Read(wxT("/Options/EscalationTimeout"),
 	    &EscalationTimeout);
 
-	userOptions_->Read(wxT("/Options/SendAlerts"), &SendAlert);
 	userOptions_->Read(wxT("/Options/NoAlertTimeout"), &NoAlertTimeout);
 	userOptions_->Read(wxT("/Options/AlertTimeout"), &AlertTimeout);
 
@@ -228,6 +236,7 @@ ModAnoubisMainPanelImpl::readOptions(void)
 
 	/* restore the stored Notifications Options */
 	cb_SendEscalations->SetValue(SendEscalation);
+	cb_ShowUpgradeMsg->SetValue(ShowUpgradeMessage);
 	cb_NoEscalationTimeout->SetValue(NoEscalationTimeout);
 	m_spinEscalationNotifyTimeout->SetValue(EscalationTimeout);
 
