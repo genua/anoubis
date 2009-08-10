@@ -1142,6 +1142,179 @@ send_sfscache_invalidate_key(const char *path, u_int8_t *keyid, int keylen,
  * idlen is in this the length of the keyid. rawmsg.length is the total
  * length of the message excluding the path length.
  */
+
+struct sfs_checksumop {
+	int		 op;
+	int		 allflag;
+	uid_t		 uid;		/* Requested UID */
+	uid_t		 auth_uid;	/* UID of requesting user */
+	int		 idlen;
+	u_int8_t	*keyid;
+	int		 siglen;
+	u_int8_t	*sigdata;
+	char		*path;
+};
+
+static int
+sfs_op_is_add(int op)
+{
+	return (op == ANOUBIS_CHECKSUM_OP_ADDSUM
+	    || op == ANOUBIS_CHECKSUM_OP_ADDSIG);
+}
+
+static int
+parse_sfs_checksumop(struct sfs_checksumop *dst, struct anoubis_msg *m,
+    uid_t auth_uid)
+{
+	char		*payload = NULL;
+	int		 curlen, plen, error;
+	unsigned int	 flags;
+
+	if (!VERIFY_LENGTH(m, sizeof(Anoubis_ChecksumRequestMessage)))
+		return -EINVAL;
+	memset(dst, 0, sizeof(struct sfs_checksumop));
+	dst->op = get_value(m->u.checksumrequest->operation);
+	flags = get_value(m->u.checksumrequest->flags);
+	dst->auth_uid = auth_uid;
+	if (flags & ANOUBIS_CSUM_UID)
+		dst->uid = get_value(m->u.checksumrequest->uid);
+	else
+		dst->uid = auth_uid;
+	dst->idlen = get_value(m->u.checksumrequest->idlen);
+	if (sfs_op_is_add(dst->op)) {
+		if (!VERIFY_LENGTH(m, sizeof(Anoubis_ChecksumAddMessage)))
+			return -EINVAL;
+		payload = (void*)m->u.checksumadd->payload;
+		dst->siglen = get_value(m->u.checksumadd->cslen);
+		dst->sigdata = (u_int8_t*)payload + dst->idlen;
+	} else {
+		payload = (void*)m->u.checksumrequest->payload;
+	}
+	if (dst->idlen) {
+		dst->keyid = (void*)payload;
+		/*
+		 * ANOUBIS_CSUM_UID is not permitted together with a key ID.
+		 * Exception (*sigh*): ANOUBIS_CHECKSUM_OP_LIST_ALL
+		 */
+		if (flags & ANOUBIS_CSUM_UID
+		    && dst->op != ANOUBIS_CHECKSUM_OP_LIST_ALL)
+			return -EINVAL;
+	}
+	dst->path = payload + dst->idlen + dst->siglen;
+	curlen = (char*)payload - (char*)m->u.buf;
+	if (curlen < 0 || curlen > (int)m->length - CSUM_LEN)
+		return -EFAULT;
+	plen = m->length - curlen - CSUM_LEN;
+	/* XXX CEH: We should reject any flags that we do not handle. */
+	if (dst->op == ANOUBIS_CHECKSUM_OP_LIST_ALL)
+		dst->allflag = !!(flags & ANOUBIS_CSUM_ALL);
+
+	error = -EINVAL;
+	for (curlen = 0; curlen < plen; ++curlen) {
+		if (dst->path[curlen] == 0) {
+			error = 0;
+			break;
+		}
+	}
+	return error;
+}
+
+static int
+validate_sfs_checksumop(struct sfs_checksumop *csop)
+{
+	struct cert		*cert = NULL;
+
+	if (!csop->path)
+		return -EINVAL;
+	if (csop->allflag && csop->op != ANOUBIS_CHECKSUM_OP_LIST_ALL)
+		return -EINVAL;
+	/* Requests for another user's uid are only allowed for root. */
+	if (csop->uid != csop->auth_uid && csop->auth_uid != 0)
+		return -EPERM;
+	if (csop->keyid) {
+		cert = cert_get_by_keyid(csop->keyid, csop->idlen);
+		if (cert == NULL)
+			return -EPERM;
+		/*
+		 * If the requesting user is not root, the certificate
+		 * must belong to the authenticated user.
+		 */
+		if (cert->uid != csop->auth_uid && csop->auth_uid != 0)
+			return -EPERM;
+		/*
+		 * If the requested uid is different from the authenticated
+		 * user it must be the same as the uid in the cert.
+		 */
+		if (csop->auth_uid != csop->uid && csop->uid != cert->uid)
+			return -EPERM;
+	}
+
+	switch(csop->op) {
+	case ANOUBIS_CHECKSUM_OP_DEL:
+	case ANOUBIS_CHECKSUM_OP_GET:
+	case ANOUBIS_CHECKSUM_OP_ADDSUM:
+		if (cert != NULL)
+			return -EINVAL;
+		if (csop->op == ANOUBIS_CHECKSUM_OP_ADDSUM) {
+			if (!csop->sigdata || csop->siglen != ANOUBIS_CS_LEN)
+				return -EINVAL;
+		} else {
+			if (csop->sigdata)
+				return -EINVAL;
+		}
+		break;
+	case ANOUBIS_CHECKSUM_OP_GETSIG:
+	case ANOUBIS_CHECKSUM_OP_DELSIG:
+	case ANOUBIS_CHECKSUM_OP_ADDSIG:
+		if (cert == NULL)
+			return -EPERM;
+		if (csop->op == ANOUBIS_CHECKSUM_OP_ADDSIG) {
+			if (!csop->sigdata || csop->siglen < ANOUBIS_CS_LEN)
+				return -EINVAL;
+		} else {
+			if (csop->sigdata)
+				return -EINVAL;
+		}
+		break;
+	case ANOUBIS_CHECKSUM_OP_LIST:
+		if (csop->sigdata)
+			return -EINVAL;
+		break;
+	case ANOUBIS_CHECKSUM_OP_UID_LIST:
+	case ANOUBIS_CHECKSUM_OP_KEYID_LIST:
+		if (csop->auth_uid != 0)
+			return -EPERM;
+		if (csop->auth_uid != csop->uid) {
+			/*
+			 * XXX CEH: We should return an error but sfssig
+			 * XXX CEH: sends request like this.
+			 */
+			csop->uid = 0;
+		}
+		if (csop->keyid)
+			return -EINVAL;
+		if (csop->sigdata)
+			return -EINVAL;
+		break;
+	case ANOUBIS_CHECKSUM_OP_LIST_ALL:
+		if (csop->sigdata)
+			return -EINVAL;
+		if (csop->allflag && csop->auth_uid != 0)
+			return -EPERM;
+		break;
+	case ANOUBIS_CHECKSUM_OP_VALIDATE:
+		/*
+		 * This operation is only used by sfssig internally and
+		 * should go away. The daemon does not handle validate
+		 * requests at all.
+		 */
+		return -EINVAL;
+	default:
+		return -EINVAL;
+	}
+	return 0;
+}
+
 static void
 dispatch_checksumop(anoubisd_msg_t *msg, struct event_info_main *ev_info)
 {
@@ -1162,9 +1335,31 @@ dispatch_checksumop(anoubisd_msg_t *msg, struct event_info_main *ev_info)
 	u_int8_t *key = NULL;
 	u_int8_t *sign = NULL;
 	int i, plen;
+	struct sfs_checksumop	csop;
 
 	rawmsg.length = msg_comm->len;
 	rawmsg.u.buf = msg_comm->msg;
+	if (parse_sfs_checksumop(&csop, &rawmsg, msg_comm->uid) < 0) {
+		err = -EINVAL;
+		goto out;
+	}
+	if (validate_sfs_checksumop(&csop) < 0) {
+		/*
+		 * XXX CEH: These log messages are temporary and should
+		 * XXX CEH: go away once the normal user land no longer
+		 * XXX CEH: sends invalid message.
+		 */
+		log_warnx("CHECKSUM OP VALIDATION FAILED");
+		log_warnx("checksumop: op=%d, allflag=%d uid=%d auth_uid=%d",
+		    csop.op, csop.allflag, csop.uid, csop.auth_uid);
+		log_warnx("checksumop: idlen=%d siglen=%d", csop.idlen,
+		    csop.siglen);
+		log_warnx("checksumop: path=%s", csop.path);
+		err = -EINVAL;
+		goto out;
+	}
+
+
 	if (!VERIFY_LENGTH(&rawmsg, sizeof(Anoubis_ChecksumRequestMessage)))
 		goto out;
 	op = get_value(rawmsg.u.checksumrequest->operation);
