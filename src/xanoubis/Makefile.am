@@ -309,6 +309,10 @@ xanoubis_SOURCES= \
 	view/DlgRuleEditorFilterSubjectPage.h \
 	view/DlgRuleEditorPage.cpp \
 	view/DlgRuleEditorPage.h \
+	view/DlgUpgradeAskBase.cpp \
+	view/DlgUpgradeAskBase.h \
+	view/DlgUpgradeAsk.cpp \
+	view/DlgUpgradeAsk.h \
 	view/MainFrameBase.cpp \
 	view/MainFrameBase.h \
 	view/MainFrame.cpp \
