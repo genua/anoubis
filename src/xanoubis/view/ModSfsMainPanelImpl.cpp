@@ -537,6 +537,13 @@ ModSfsMainPanelImpl::OnSfsMainShowChangedClicked(wxCommandEvent&)
 }
 
 void
+ModSfsMainPanelImpl::OnSfsMainShowUpgradedClicked(wxCommandEvent&)
+{
+	/* XXX [ST]: to be filled */
+}
+
+
+void
 ModSfsMainPanelImpl::OnSfsMainKeyLoaded(wxCommandEvent&)
 {
 	bool keysUsable = KeyCtrl::getInstance()->canUseLocalKeys();

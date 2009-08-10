@@ -293,6 +293,13 @@ class ModSfsMainPanelImpl : public Observer, public ModSfsMainPanelBase
 		void OnSfsMainShowChangedClicked(wxCommandEvent&);
 
 		/**
+		 * Handle the event when show upgraded files is clicked.
+		 * @param[in] 1st The event.
+		 * @return Nothing.
+		 */
+		void OnSfsMainShowUpgradedClicked(wxCommandEvent&);
+
+		/**
 		 * Handle the event when Sfs key is loaded.
 		 * @param[in] 1st The event.
 		 * @return Nothing.

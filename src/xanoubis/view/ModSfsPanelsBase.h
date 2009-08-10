@@ -86,21 +86,21 @@ class ModSfsMainPanelBase : public wxPanel
 		wxButton* SfsMainFilterButton;
 		wxCheckBox* SfsMainFilterInvertCheckBox;
 		
-		wxButton* SfsMainFilterValidateButton;
+		wxButton* SfsMainShowChecksumButton;
+		wxButton* SfsMainShowChangedButton;
+		wxButton* SfsMainSearchOrphanedButton;
+		wxButton* SfsMainShowUpgradedButton;
 		ModSfsListCtrl* SfsMainListCtrl;
 		AnDetails* SfsMainDetailsPanel;
 		wxCheckBox* SfsMainSignFilesCheckBox;
-		wxButton* SfsMainSearchOrphanedButton;
-		wxButton* SfsMainShowChecksumButton;
+		
 		wxButton* SfsMainImportButton;
-		
-		
-		wxButton* SfsMainShowChangedButton;
 		wxButton* SfsMainExportButton;
-		
 		wxStaticText* m_staticText101;
 		wxChoice* SfsMainActionChoice;
 		wxButton* SfsMainActionButton;
+		
+		wxButton* SfsMainFilterValidateButton;
 		wxPanel* pan_Options;
 		AnPickFromFs* keyPicker;
 		wxStaticText* m_staticText13;
@@ -118,16 +118,17 @@ class ModSfsMainPanelBase : public wxPanel
 		virtual void OnSfsMainDirTraversalChecked( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnSfsMainFilterButtonClicked( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnSfsMainInverseCheckboxClicked( wxCommandEvent& event ){ event.Skip(); }
-		virtual void OnSfsMainValidateButtonClicked( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnSfsMainShowAllChecksumsClicked( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnSfsMainShowChangedClicked( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnSfsMainShowUpgradedClicked( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnSfsMainSearchOrphanedClicked( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnSfsListDeselected( wxListEvent& event ){ event.Skip(); }
 		virtual void OnSfsListSelected( wxListEvent& event ){ event.Skip(); }
 		virtual void OnSfsMainSigEnabledClicked( wxCommandEvent& event ){ event.Skip(); }
-		virtual void OnSfsMainSearchOrphanedClicked( wxCommandEvent& event ){ event.Skip(); }
-		virtual void OnSfsMainShowAllChecksumsClicked( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnSfsMainImportClicked( wxCommandEvent& event ){ event.Skip(); }
-		virtual void OnSfsMainShowChangedClicked( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnSfsMainExportClicked( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnSfsMainApplyButtonClicked( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnSfsMainValidateButtonClicked( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnPrivKeyValidityChanged( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnPrivKeyValidityPeriodChanged( wxSpinEvent& event ){ event.Skip(); }
 		
