@@ -35,6 +35,19 @@
 #define ANOUBISD_CSUM_USER	1
 #define ANOUBISD_CSUM_ROOT	2
 
+struct sfs_checksumop {
+	int		 op;		/* Checksum Operation */
+	int		 allflag;	/* ANOUBIS_CSUM_ALL was given */
+	uid_t		 uid;		/* Requested UID */
+	uid_t		 auth_uid;	/* UID of requesting user */
+	int		 idlen;		/* Length of key id (if any) */
+	u_int8_t	*keyid;		/* The Key ID in binary form */
+	int		 siglen;	/* Length of csum/signature data */
+	u_int8_t	*sigdata;	/* Signature data */
+	char		*path;		/* NUL-terminated path name. */
+
+};
+
 int	 sfs_checksumop(const char *path, unsigned int operation, uid_t uid,
 	     unsigned char *md, u_int8_t **sign, int *siglen, int len,
 	     int idlen);

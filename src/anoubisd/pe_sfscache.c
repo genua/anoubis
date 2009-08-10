@@ -323,7 +323,7 @@ sfshash_readsum(const char *path, int cstype, const char *key, uid_t uid,
 			hexkey[i] = 16*c1 + c2;
 		}
 		ret = sfs_checksumop_chroot(path, ANOUBIS_CHECKSUM_OP_GETSIG,
-		    uid, hexkey, &sigdata, &siglen, ANOUBIS_CS_LEN, len);
+		    0 /* uid */, hexkey, &sigdata, &siglen, 0, len);
 		free(hexkey);
 		if (ret < 0)
 			break;

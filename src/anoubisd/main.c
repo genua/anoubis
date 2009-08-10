@@ -1143,18 +1143,6 @@ send_sfscache_invalidate_key(const char *path, u_int8_t *keyid, int keylen,
  * length of the message excluding the path length.
  */
 
-struct sfs_checksumop {
-	int		 op;
-	int		 allflag;
-	uid_t		 uid;		/* Requested UID */
-	uid_t		 auth_uid;	/* UID of requesting user */
-	int		 idlen;
-	u_int8_t	*keyid;
-	int		 siglen;
-	u_int8_t	*sigdata;
-	char		*path;
-};
-
 static int
 sfs_op_is_add(int op)
 {

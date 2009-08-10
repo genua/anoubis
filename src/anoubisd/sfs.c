@@ -68,9 +68,7 @@
 
 static int	 sfs_writechecksum(const char *csum_file, const char *csum_path,
 		     u_int8_t *md, int len, int idlen);
-static int	 sfs_readchecksum(const char *csum_file, unsigned char *md);
-static int	 sfs_readsignature(const char *csum_file, u_int8_t **sign,
-		     int *siglen);
+static int	 sfs_readsigdata(const char *csum_file, void *buffer, int);
 static int	 sfs_deletechecksum(const char *csum_file);
 static int	 check_empty_dir(const char *path);
 
@@ -283,116 +281,165 @@ convert_user_path(const char * path, char **dir, int is_dir)
 }
 
 static int
-__sfs_checksumop(const char *path, unsigned int operation, uid_t uid,
-    u_int8_t *md, u_int8_t **sign, int *siglen, int len, int idlen,
-    int is_chroot)
+__sfs_checksumop(const struct sfs_checksumop *csop, void **bufptr,
+    int * buflen, int is_chroot)
 {
-	char *csum_path = NULL, *csum_file = NULL;
-	char *sigfile = NULL;
-	struct cert *certs = NULL;
-	int vlen = 0;
-	int ret;
+	char		*csum_path = NULL, *csum_file, *keystring;
+	int		 realsiglen = 0;
+	int		 error = -EINVAL;
+	struct cert	*cert = NULL;
+	void		*sigdata = NULL;
+	int		 siglen = 0;
 
-	if (is_chroot && operation != ANOUBIS_CHECKSUM_OP_GET
-	    && operation != ANOUBIS_CHECKSUM_OP_GETSIG)
+	if (is_chroot && csop->op != ANOUBIS_CHECKSUM_OP_GET
+	    && csop->op != ANOUBIS_CHECKSUM_OP_GETSIG)
 		return -EPERM;
 
-	ret = __convert_user_path(path, &csum_path, 0, is_chroot);
-	if (ret < 0)
+	error = __convert_user_path(csop->path, &csum_path, 0, is_chroot);
+	if (error < 0)
+		return error;
+
+	switch(csop->op) {
+	case ANOUBIS_CHECKSUM_OP_ADDSUM:
+	case ANOUBIS_CHECKSUM_OP_GET:
+	case ANOUBIS_CHECKSUM_OP_DEL:
+		error = -EPERM;
+		if (csop->uid != csop->auth_uid && csop->auth_uid != 0)
+			goto err1;
+		error = -EINVAL;
+		if (csop->op == ANOUBIS_CHECKSUM_OP_ADDSUM) {
+			if (csop->sigdata == NULL
+			    || csop->siglen != ANOUBIS_CS_LEN)
+				goto err1;
+		}
+		error = -ENOMEM;
+		if (asprintf(&csum_file, "%s/%d", csum_path, csop->uid) < 0)
+			goto err1;
+		break;
+	case ANOUBIS_CHECKSUM_OP_ADDSIG:
+	case ANOUBIS_CHECKSUM_OP_GETSIG:
+	case ANOUBIS_CHECKSUM_OP_DELSIG:
+		error = -EINVAL;
+		if (csop->keyid == NULL)
+			goto err1;
+		error = -EPERM;
+		cert = cert_get_by_keyid(csop->keyid, csop->idlen);
+		if (cert == NULL)
+			goto err1;
+		if (cert->uid != csop->auth_uid && csop->auth_uid != 0)
+			goto err1;
+		realsiglen = EVP_PKEY_size(cert->pkey);
+		error = -EINVAL;
+		if (csop->op == ANOUBIS_CHECKSUM_OP_ADDSIG) {
+			int ret;
+			if (realsiglen + ANOUBIS_CS_LEN != csop->siglen)
+				goto err1;
+			ret = anoubisd_verify_csum(cert->pkey, csop->sigdata,
+			    csop->sigdata + ANOUBIS_CS_LEN, realsiglen);
+			if (ret != 1) {
+				error = -EPERM;
+				goto err1;
+			}
+		}
+		error = -ENOMEM;
+		keystring = anoubis_sig_key2char(csop->idlen, csop->keyid);
+		if (keystring == NULL)
+			goto err1;
+		if (asprintf(&csum_file, "%s/k%s", csum_path, keystring) < 0) {
+			free(keystring);
+			goto err1;
+		}
+		free(keystring);
+		break;
+	default:
+		error = -EINVAL;
+		goto err1;
+	}
+	switch(csop->op) {
+	case ANOUBIS_CHECKSUM_OP_ADDSUM:
+	case ANOUBIS_CHECKSUM_OP_ADDSIG:
+		error = sfs_writechecksum(csum_file, csum_path, csop->sigdata,
+		    csop->siglen, 0);
+		break;
+	case ANOUBIS_CHECKSUM_OP_GET:
+	case ANOUBIS_CHECKSUM_OP_GETSIG:
+		error = -ENOMEM;
+		siglen = ANOUBIS_CS_LEN + realsiglen;
+		sigdata = malloc(siglen);
+		if (sigdata == NULL)
+			goto err2;
+		error = sfs_readsigdata(csum_file, sigdata, siglen);
+		if (error == 0 && csop->op == ANOUBIS_CHECKSUM_OP_GETSIG) {
+			int ret;
+			ret = anoubisd_verify_csum(cert->pkey, sigdata,
+			    sigdata + ANOUBIS_CS_LEN, realsiglen);
+			if (ret != 1)
+				error = -EPERM;
+		}
+		break;
+	case ANOUBIS_CHECKSUM_OP_DEL:
+	case ANOUBIS_CHECKSUM_OP_DELSIG:
+		error = sfs_deletechecksum(csum_file);
+		break;
+	}
+	if (error < 0)
+		goto err3;
+	(*bufptr) = sigdata;
+	(*buflen) = siglen;
+	free(csum_file);
+	free(csum_path);
+	return 0;
+err3:
+	if (sigdata)
+		free(sigdata);
+err2:
+	free(csum_file);
+err1:
+	free(csum_path);
+	return error;
+}
+
+int
+__sfs_checksumop_wrapper(const char *path, unsigned int operation, uid_t uid,
+    u_int8_t *md, u_int8_t **sign, int *siglen, int len, int idlen, int chroot)
+{
+	struct sfs_checksumop		 csop;
+	int				 ret;
+	void				*buffer = NULL;
+	int				 buflen = 0;
+
+	csop.op = operation;
+	csop.uid = uid;
+	csop.auth_uid = uid;
+	csop.path = (void*)path;
+	csop.idlen = idlen;
+	if (idlen) {
+		csop.keyid = md;
+	} else {
+		csop.keyid = NULL;
+	}
+	csop.siglen = len;
+	csop.sigdata = md + idlen;
+	ret = __sfs_checksumop(&csop, &buffer, &buflen, chroot);
+	log_warnx(" checksumop_wrapper: op=%d uid=%d auth_uid=%d idlen=%d siglen=%d path=%s error=%d", csop.op, csop.uid, csop.auth_uid, csop.idlen, csop.siglen, csop.path, ret);
+	if (ret != 0)
 		return ret;
-
-	if (operation == ANOUBIS_CHECKSUM_OP_ADDSIG ||
-	    operation == ANOUBIS_CHECKSUM_OP_GETSIG ||
-	    operation == ANOUBIS_CHECKSUM_OP_DELSIG) {
-		if (idlen <= 0) {
-			ret = -EINVAL;
-			goto out;
+	switch(operation) {
+	case ANOUBIS_CHECKSUM_OP_GET:
+		if (buflen != len || buflen != ANOUBIS_CS_LEN) {
+			free(buffer);
+			return -EFAULT;
 		}
-		if ((certs = cert_get_by_keyid(md, idlen))
-		    == NULL) {
-			ret = -EINVAL;
-			goto out;
+		memcpy(md, buffer, ANOUBIS_CS_LEN);
+		free(buffer);
+		break;
+	default:
+		if (sign && siglen) {
+			(*sign) = buffer;
+			(*siglen) = buflen;
 		}
-		if ((sigfile = anoubis_sig_key2char(idlen, md)) == NULL) {
-			ret = -ENOMEM;
-			goto out;
-		}
-		if (asprintf(&csum_file, "%s/k%s", csum_path, sigfile) == -1) {
-			ret = -ENOMEM;
-			goto out;
-		}
-	} else {
-		if (asprintf(&csum_file, "%s/%d", csum_path, uid) == -1) {
-			ret = -ENOMEM;
-			goto out;
-		}
+		break;
 	}
-
-	if (operation == ANOUBIS_CHECKSUM_OP_ADDSIG) {
-		if (uid != 0)
-			if (certs->uid != uid)
-				return -EPERM;
-		/* Before we add the signature we should verify it */
-		vlen = len - ANOUBIS_CS_LEN;
-		if ((ret = anoubisd_verify_csum(certs->pkey, md + idlen, md +
-		    ANOUBIS_CS_LEN + idlen, vlen)) != 1) {
-			log_warn("could not verify %d", ret);
-			ret =-EINVAL;
-			goto out;
-		}
-	}
-	/* And now we finally adding the signature */
-	if ((operation == ANOUBIS_CHECKSUM_OP_ADDSUM) ||
-	    (operation == ANOUBIS_CHECKSUM_OP_ADDSIG)) {
-		ret = sfs_writechecksum(csum_file, csum_path, md, len, idlen);
-	} else if (operation == ANOUBIS_CHECKSUM_OP_DEL ||
-	    operation == ANOUBIS_CHECKSUM_OP_DELSIG) {
-		if (operation == ANOUBIS_CHECKSUM_OP_DELSIG)
-			if (uid != 0)
-				if (certs->uid != uid)
-					return -EPERM;
-		ret = sfs_deletechecksum(csum_file);
-		if (ret < 0)
-			ret = -errno;
-	} else if (operation == ANOUBIS_CHECKSUM_OP_GET) {
-		ret = sfs_readchecksum(csum_file, md);
-	} else if (operation == ANOUBIS_CHECKSUM_OP_GETSIG) {
-		if (idlen <= 0) {
-			ret = -EINVAL;
-			goto out;
-		}
-		*siglen = EVP_PKEY_size(certs->pkey) + ANOUBIS_CS_LEN;
-		if ((*sign = calloc(*siglen, sizeof(u_int8_t))) == NULL) {
-			ret = -ENOMEM;
-			goto out;
-		}
-		ret = sfs_readsignature(csum_file, sign, siglen);
-		if (ret < 0) {
-			goto out;
-		}
-		/* Before we send the signature we should verify it */
-		vlen = *siglen - ANOUBIS_CS_LEN;
-		if ((ret = anoubisd_verify_csum(certs->pkey, *sign, *sign
-		    + ANOUBIS_CS_LEN, vlen)) != 1) {
-			log_warn("could not verify %d", ret);
-			ret =-EPERM;
-			free(*sign);
-			*sign = NULL;
-			*siglen = 0;
-			goto out;
-		} else {
-			ret = 0;
-		}
-	} else {
-		ret = -ENOSYS;
-	}
-out:
-	if (sigfile)
-		free(sigfile);
-	if (csum_path)
-		free(csum_path);
-	if (csum_file)
-		free(csum_file);
 	return ret;
 }
 
@@ -400,16 +447,16 @@ int
 sfs_checksumop(const char *path, unsigned int operation, uid_t uid,
     u_int8_t *md, u_int8_t **sign, int *siglen, int len, int idlen)
 {
-	return __sfs_checksumop(path, operation, uid, md, sign, siglen, len,
-	    idlen, 0);
+	return __sfs_checksumop_wrapper(path, operation, uid, md, sign,
+	    siglen, len, idlen, 0);
 }
 
 int
 sfs_checksumop_chroot(const char *path, unsigned int operation, uid_t uid,
     u_int8_t *md, u_int8_t **sign, int *siglen, int len, int idlen)
 {
-	return __sfs_checksumop(path, operation, uid, md, sign, siglen, len,
-	    idlen, 1);
+	return __sfs_checksumop_wrapper(path, operation, uid, md, sign,
+	    siglen, len, idlen, 1);
 }
 
 /* We going through the dirctory looking for registered uids and
@@ -530,62 +577,21 @@ sfs_writechecksum(const char *csum_file, const char *csum_path, u_int8_t *md,
 }
 
 static int
-sfs_readsignature(const char *csum_file, u_int8_t **sign, int *siglen)
+sfs_readsigdata(const char *csum_file, void *sigdata, int siglen)
 {
 	int fd;
 	int ret = 0;
 	int bytes_read = 0;
-	int size;
 
-	if (csum_file == NULL || sign == NULL || siglen == NULL) {
-		return -EINVAL;
-	}
-
-	size = *siglen;
-	if (size <= ANOUBIS_CS_LEN)
+	if (csum_file == NULL || sigdata == NULL || siglen < ANOUBIS_CS_LEN)
 		return -EINVAL;
 
 	fd = open(csum_file, O_RDONLY);
 	if (fd < 0)
 		return -errno;
 
-
-	while (bytes_read < size) {
-		ret = read(fd, *sign + bytes_read, size - bytes_read);
-		if (ret < 0) {
-			ret = -errno;
-			*siglen = 0;
-			break;
-		} else if (ret == 0) {
-			ret = -EIO;
-			*siglen = 0;
-			break;
-		}
-		bytes_read += ret;
-	}
-	close(fd);
-	if (ret < 0) {
-		return ret;
-	}
-	return 0;
-}
-
-static int
-sfs_readchecksum(const char *csum_file, unsigned char *md)
-{
-	int fd;
-	int ret = 0;
-	int bytes_read = 0;
-
-	if (!csum_file || !md)
-		return -EINVAL;
-
-	fd = open(csum_file, O_RDONLY);
-	if (fd < 0)
-		return -errno;
-
-	while (bytes_read < ANOUBIS_CS_LEN) {
-		ret = read(fd, md + bytes_read, ANOUBIS_CS_LEN - bytes_read);
+	while (bytes_read < siglen) {
+		ret = read(fd, sigdata + bytes_read, siglen - bytes_read);
 		if (ret < 0) {
 			ret = -errno;
 			break;
@@ -645,6 +651,7 @@ sfs_deletechecksum(const char *csum_file)
 
 	ret = unlink(csum_file);
 	if (ret < 0) {
+		ret = -errno;
 		free(tmppath);
 		return ret;
 	}
@@ -655,13 +662,17 @@ sfs_deletechecksum(const char *csum_file)
 		if (tmppath[k] == '/') {
 			tmppath[k] = '\0';
 			ret = check_empty_dir(tmppath);
-			if (ret < 0)
+			if (ret < 0) {
+				ret = -errno;
+				free(tmppath);
 				return ret;
+			}
 
 			if (ret == 1)
 				break;
 			ret = rmdir(tmppath);
 			if (ret < 0) {
+				ret = -errno;
 				free(tmppath);
 				return ret;
 			}
@@ -681,7 +692,7 @@ check_empty_dir(const char *path)
 
 	dir = opendir(path);
 	if (dir == NULL)
-		return -1;
+		return -ENOENT;
 
 	while (readdir(dir) != NULL) {
 		cnt++;
