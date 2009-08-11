@@ -288,8 +288,8 @@ anoubis_verify_csum(struct anoubis_sig *as,
 /* This function will be used inside of the daemon */
 int
 anoubisd_verify_csum(EVP_PKEY *pkey,
-     unsigned char csum[ANOUBIS_SIG_HASH_SHA256_LEN], unsigned char *sfs_sign,
-     int sfs_len)
+     const unsigned char csum[ANOUBIS_SIG_HASH_SHA256_LEN],
+     const unsigned char *sfs_sign, int sfs_len)
 {
 	int result = 0;
 	EVP_MD_CTX ctx;

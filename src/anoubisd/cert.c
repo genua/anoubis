@@ -263,7 +263,7 @@ cert_get_by_uid(uid_t uid)
 }
 
 struct cert *
-cert_get_by_keyid(unsigned char *keyid, int klen)
+cert_get_by_keyid(const unsigned char *keyid, int klen)
 {
 	struct cert *p;
 

@@ -107,8 +107,8 @@ int anoubis_verify_csum(struct anoubis_sig *as,
     unsigned char csum[ANOUBIS_SIG_HASH_SHA256_LEN], unsigned char *sfs_sign,
     int sfs_len);
 int anoubisd_verify_csum(EVP_PKEY *pkey,
-     unsigned char csum[ANOUBIS_SIG_HASH_SHA256_LEN], unsigned char *sfs_sign,
-     int sfs_len);
+     const unsigned char csum[ANOUBIS_SIG_HASH_SHA256_LEN],
+     const unsigned char *sfs_sign, int sfs_len);
 struct anoubis_sig *anoubis_sig_pub_init(const char *file, const char *cert,
     pem_password_cb *passcb, int *error);
 struct anoubis_sig *anoubis_sig_priv_init(const char *file, const char *cert,

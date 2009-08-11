@@ -131,9 +131,8 @@ cert_reconfigure(int chroot __used)
 }
 
 int
-sfs_checksumop_chroot(const char *path __used, unsigned int operation __used,
-    uid_t uid __used, u_int8_t *md __used, u_int8_t **sign __used,
-    int *siglen __used, int len __used, int idlen __used)
+sfs_checksumop_chroot(const struct sfs_checksumop *csop __used,
+    void **bufptr __used, int *buflen __used)
 {
 	return 0;
 }

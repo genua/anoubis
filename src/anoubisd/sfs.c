@@ -67,7 +67,7 @@
 #include "cert.h"
 
 static int	 sfs_writechecksum(const char *csum_file, const char *csum_path,
-		     u_int8_t *md, int len, int idlen);
+		     const u_int8_t *md, int len, int idlen);
 static int	 sfs_readsigdata(const char *csum_file, void *buffer, int);
 static int	 sfs_deletechecksum(const char *csum_file);
 static int	 check_empty_dir(const char *path);
@@ -373,8 +373,13 @@ __sfs_checksumop(const struct sfs_checksumop *csop, void **bufptr,
 	}
 	if (error < 0)
 		goto err3;
-	(*bufptr) = sigdata;
-	(*buflen) = siglen;
+	if (bufptr) {
+		(*bufptr) = sigdata;
+	} else {
+		free(sigdata);
+	}
+	if (buflen)
+		(*buflen) = siglen;
 	free(csum_file);
 	free(csum_path);
 	return 0;
@@ -389,66 +394,20 @@ err1:
 }
 
 int
-__sfs_checksumop_wrapper(const char *path, unsigned int operation, uid_t uid,
-    u_int8_t *md, u_int8_t **sign, int *siglen, int len, int idlen, int chroot)
+sfs_checksumop(const struct sfs_checksumop *csop, void **buf, int *buflen)
 {
-	struct sfs_checksumop		 csop;
-	int				 ret;
-	void				*buffer = NULL;
-	int				 buflen = 0;
-
-	csop.op = operation;
-	csop.uid = uid;
-	csop.auth_uid = uid;
-	csop.path = (void*)path;
-	csop.idlen = idlen;
-	if (idlen) {
-		csop.keyid = md;
-	} else {
-		csop.keyid = NULL;
-	}
-	csop.siglen = len;
-	csop.sigdata = md + idlen;
-	ret = __sfs_checksumop(&csop, &buffer, &buflen, chroot);
-	if (ret != 0)
-		return ret;
-	switch(operation) {
-	case ANOUBIS_CHECKSUM_OP_GET:
-		if (buflen != len || buflen != ANOUBIS_CS_LEN) {
-			free(buffer);
-			return -EFAULT;
-		}
-		memcpy(md, buffer, ANOUBIS_CS_LEN);
-		free(buffer);
-		break;
-	default:
-		if (sign && siglen) {
-			(*sign) = buffer;
-			(*siglen) = buflen;
-		}
-		break;
-	}
-	return ret;
+	return __sfs_checksumop(csop, buf, buflen, 0);
 }
 
 int
-sfs_checksumop(const char *path, unsigned int operation, uid_t uid,
-    u_int8_t *md, u_int8_t **sign, int *siglen, int len, int idlen)
+sfs_checksumop_chroot(const struct sfs_checksumop *csop, void **buf,
+    int *buflen)
 {
-	return __sfs_checksumop_wrapper(path, operation, uid, md, sign,
-	    siglen, len, idlen, 0);
+	return __sfs_checksumop(csop, buf, buflen, 1);
 }
 
-int
-sfs_checksumop_chroot(const char *path, unsigned int operation, uid_t uid,
-    u_int8_t *md, u_int8_t **sign, int *siglen, int len, int idlen)
-{
-	return __sfs_checksumop_wrapper(path, operation, uid, md, sign,
-	    siglen, len, idlen, 1);
-}
-
-/* We going through the dirctory looking for registered uids and
- * update them
+/*
+ * We go through the dirctory looking for registered uids and update them.
  */
 int
 sfs_update_all(const char *path, u_int8_t *md, int len)
@@ -502,8 +461,8 @@ sfs_update_all(const char *path, u_int8_t *md, int len)
 
 
 static int
-sfs_writechecksum(const char *csum_file, const char *csum_path, u_int8_t *md,
-    int len, int idlen)
+sfs_writechecksum(const char *csum_file, const char *csum_path,
+    const u_int8_t *md, int len, int idlen)
 {
 	int ret = 0, written = 0;
 	int fd;

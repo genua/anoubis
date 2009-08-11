@@ -893,8 +893,8 @@ send_sfscache_invalidate_uid(const char *path, uid_t uid,
 
 
 static void
-send_sfscache_invalidate_key(const char *path, u_int8_t *keyid, int keylen,
-    struct event_info_main *ev_info)
+send_sfscache_invalidate_key(const char *path, const u_int8_t *keyid,
+    int keylen, struct event_info_main *ev_info)
 {
 	struct anoubisd_msg			*msg;
 	struct anoubisd_sfscache_invalidate	*invmsg;
@@ -1334,18 +1334,15 @@ out:
 static void
 dispatch_checksumop(anoubisd_msg_t *msg, struct event_info_main *ev_info)
 {
-	struct anoubis_msg rawmsg;
-	anoubisd_msg_checksum_op_t *msg_comm =
-	    (anoubisd_msg_checksum_op_t *)msg->msg;
-	struct sfs_checksumop	csop;
+	struct anoubis_msg		 rawmsg;
+	anoubisd_msg_checksum_op_t	*msg_comm;
+	struct sfs_checksumop		 csop;
+	anoubisd_reply_t		*reply;
+	void				*sigbuf = NULL;
+	int				 siglen = 0;
+	int				 err = -EFAULT;
 
-	int	cslen = 0,
-		siglen = 0;		/* Length of Signature and csum */
-	int err = -EFAULT, extra = 0;
-	anoubisd_reply_t * reply;
-	u_int8_t *digest = NULL;
-	u_int8_t *sign = NULL;
-
+	msg_comm = (anoubisd_msg_checksum_op_t *)msg->msg;
 	rawmsg.length = msg_comm->len;
 	rawmsg.u.buf = msg_comm->msg;
 	if (parse_sfs_checksumop(&csop, &rawmsg, msg_comm->uid) < 0) {
@@ -1353,17 +1350,6 @@ dispatch_checksumop(anoubisd_msg_t *msg, struct event_info_main *ev_info)
 		goto out;
 	}
 	if (validate_sfs_checksumop(&csop) < 0) {
-		/*
-		 * XXX CEH: These log messages are temporary and should
-		 * XXX CEH: go away once the normal user land no longer
-		 * XXX CEH: sends invalid messages.
-		 */
-		log_warnx("CHECKSUM OP VALIDATION FAILED");
-		log_warnx("checksumop: op=%d, allflag=%d uid=%d auth_uid=%d",
-		    csop.op, csop.allflag, csop.uid, csop.auth_uid);
-		log_warnx("checksumop: idlen=%d siglen=%d", csop.idlen,
-		    csop.siglen);
-		log_warnx("checksumop: path=%s", csop.path);
 		err = -EINVAL;
 		goto out;
 	}
@@ -1378,63 +1364,31 @@ dispatch_checksumop(anoubisd_msg_t *msg, struct event_info_main *ev_info)
 	case ANOUBIS_CHECKSUM_OP_ADDSIG:
 	case ANOUBIS_CHECKSUM_OP_ADDSUM:
 	case ANOUBIS_CHECKSUM_OP_GETSIG:
+	case ANOUBIS_CHECKSUM_OP_GET:
 	case ANOUBIS_CHECKSUM_OP_DELSIG:
-		digest = malloc(csop.idlen + csop.siglen);
-		if (!digest) {
-			err = -ENOMEM;
+	case ANOUBIS_CHECKSUM_OP_DEL:
+		err = sfs_checksumop(&csop, &sigbuf, &siglen);
+		if (err < 0)
 			goto out;
-		}
-		if (csop.keyid)
-			memcpy(digest, csop.keyid, csop.idlen);
-		if (csop.sigdata) {
-			memcpy(digest + csop.idlen, csop.sigdata, csop.siglen);
-			cslen = csop.siglen;
-		}
 		break;
 	default:
-		digest = calloc(SHA256_DIGEST_LENGTH, sizeof(u_int8_t));
-		if (!digest) {
-			err = -ENOMEM;
-			goto out;
-		}
-		cslen = SHA256_DIGEST_LENGTH;
-		break;
+		err = -EINVAL;
+		goto out;
 	}
 
-	DEBUG(DBG_TRACE, " checksumop: op=%d path=%s uid=%d, cslen=%d idlen=%d",
-	    csop.op, csop.path, csop.uid, cslen, csop.idlen);
-	err = sfs_checksumop(csop.path, csop.op, csop.uid, digest,
-	    &sign, &siglen, cslen, csop.idlen);
-	extra = 0;
-	if (err == 0) {
-		switch (csop.op) {
-		case ANOUBIS_CHECKSUM_OP_GET:
-			extra = SHA256_DIGEST_LENGTH;
-			break;
-		case ANOUBIS_CHECKSUM_OP_GETSIG:
-			/* siglen is the length of signature and the
-			 * regarding checksum */
-			extra = siglen;
-			break;
-		case ANOUBIS_CHECKSUM_OP_ADDSUM:
-		case ANOUBIS_CHECKSUM_OP_DEL:
-			extra = 0;
-			send_sfscache_invalidate_uid(csop.path, csop.uid,
-			    ev_info);
-			break;
-		case ANOUBIS_CHECKSUM_OP_ADDSIG:
-		case ANOUBIS_CHECKSUM_OP_DELSIG:
-			extra = 0;
-			send_sfscache_invalidate_key(csop.path, csop.keyid,
-			    csop.idlen, ev_info);
-		default:
-			extra = 0;
-			break;
-		}
+	switch (csop.op) {
+	case ANOUBIS_CHECKSUM_OP_ADDSUM:
+	case ANOUBIS_CHECKSUM_OP_DEL:
+		send_sfscache_invalidate_uid(csop.path, csop.uid, ev_info);
+		break;
+	case ANOUBIS_CHECKSUM_OP_ADDSIG:
+	case ANOUBIS_CHECKSUM_OP_DELSIG:
+		send_sfscache_invalidate_key(csop.path, csop.keyid,
+		    csop.idlen, ev_info);
 	}
 out:
 	msg = msg_factory(ANOUBISD_MSG_POLREPLY,
-	    sizeof(anoubisd_reply_t) + extra);
+	    sizeof(anoubisd_reply_t) + siglen);
 	if (!msg) {
 		master_terminate(ENOMEM);
 		return;
@@ -1444,14 +1398,11 @@ out:
 	reply->timeout = 0;
 	reply->reply = -err;
 	reply->flags = POLICY_FLAG_START | POLICY_FLAG_END;
-	reply->len = extra;
-	if (sign) {
-		memcpy(reply->msg, sign, extra);
-		free(sign);
-	} else if (extra)
-		memcpy(reply->msg, digest, extra);
-	if (digest)
-		free(digest);
+	reply->len = siglen;
+	if (siglen) {
+		memcpy(reply->msg, sigbuf, siglen);
+		free(sigbuf);
+	}
 	enqueue(&eventq_m2s, msg);
 	DEBUG(DBG_QUEUE, " >eventq_m2s: %llx",
 	    (unsigned long long)reply->token);

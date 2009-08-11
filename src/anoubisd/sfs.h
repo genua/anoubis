@@ -41,19 +41,16 @@ struct sfs_checksumop {
 	uid_t		 uid;		/* Requested UID */
 	uid_t		 auth_uid;	/* UID of requesting user */
 	int		 idlen;		/* Length of key id (if any) */
-	u_int8_t	*keyid;		/* The Key ID in binary form */
+	const u_int8_t	*keyid;		/* The Key ID in binary form */
 	int		 siglen;	/* Length of csum/signature data */
-	u_int8_t	*sigdata;	/* Signature data */
-	char		*path;		/* NUL-terminated path name. */
-
+	const u_int8_t	*sigdata;	/* Signature data */
+	const char	*path;		/* NUL-terminated path name. */
 };
 
-int	 sfs_checksumop(const char *path, unsigned int operation, uid_t uid,
-	     unsigned char *md, u_int8_t **sign, int *siglen, int len,
-	     int idlen);
-int	 sfs_checksumop_chroot(const char *path, unsigned int operation,
-	     uid_t uid, unsigned char *md, u_int8_t **sign, int *siglen,
-	     int len, int idlen);
+int	 sfs_checksumop(const struct sfs_checksumop *csop,
+	     void **buffer, int *buflen);
+int	 sfs_checksumop_chroot(const struct sfs_checksumop *csop,
+	     void **buffer, int *buflen);
 int	 sfs_haschecksum_chroot(const char *path);
 int	 sfs_update_all(const char *path, u_int8_t *md, int len);
 int	 convert_user_path(const char *path, char **dir, int is_dir);
