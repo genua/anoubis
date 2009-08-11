@@ -450,7 +450,7 @@ anoubis_sig_free(struct anoubis_sig *as)
 }
 
 char *
-anoubis_sig_key2char(int idlen, unsigned char *keyid)
+anoubis_sig_key2char(int idlen, const unsigned char *keyid)
 {
 	int i;
 	char *res = NULL;

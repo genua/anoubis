@@ -57,7 +57,6 @@ int	 sfs_checksumop_chroot(const char *path, unsigned int operation,
 int	 sfs_haschecksum_chroot(const char *path);
 int	 sfs_update_all(const char *path, u_int8_t *md, int len);
 int	 convert_user_path(const char *path, char **dir, int is_dir);
-int	 check_if_exist(const char *path);
 char	*remove_escape_seq(const char *name);
 
 /* Public SFS-Cache functions */

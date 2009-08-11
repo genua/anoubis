@@ -182,6 +182,7 @@ static inline u_int64_t __ntohll(u_int64_t arg)
 #define		ANOUBIS_CSUM_UID_ALL	0x0004
 #define		ANOUBIS_CSUM_KEY_ALL	0x0008
 #define		ANOUBIS_CSUM_ALL	0x0010
+#define		ANOUBIS_CSUM_WANTIDS	0x0020
 
 #define ANOUBIS_IS_NOTIFY(X) ((ANOUBIS_N_MIN)<=(X) && (X) <= (ANOUBIS_N_MAX))
 #define ANOUBIS_IS_POLICY(X) ((ANOUBIS_P_MIN)<=(X) && (X) <= (ANOUBIS_P_MAX))

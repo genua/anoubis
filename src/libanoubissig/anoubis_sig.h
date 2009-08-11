@@ -117,7 +117,7 @@ struct anoubis_sig *anoubis_sig_init(const char *file, const char *cert,
     pem_password_cb *passcb, const EVP_MD *type, int pub_priv, int *error);
 void anoubis_sig_free(struct anoubis_sig *as);
 int pass_cb(char *buf, int size, int rwflag, void *u);
-char *anoubis_sig_key2char(int idlen, unsigned char *keyid);
+char *anoubis_sig_key2char(int idlen, const unsigned char *keyid);
 char *anoubis_sig_cert_name(X509 *cert);
 
 __END_DECLS

@@ -52,6 +52,7 @@
 #include <string.h>
 #include <syslog.h>
 #include <time.h>
+#include <ctype.h>
 #include <unistd.h>
 
 #ifdef LINUX
@@ -70,6 +71,7 @@
 /* on glibc 2.6+, event.h uses non C89 types :/ */
 #include <event.h>
 #include <anoubis_msg.h>
+#include <anoubis_sig.h>
 #include "anoubisd.h"
 #include "aqueue.h"
 #include "amsg.h"
@@ -137,14 +139,6 @@ struct upgrade_com {
 
 static struct upgrade_com upgrade_pipes;
 
-static void	_send_sfs_list(u_int64_t token, const char *path,
-    u_int8_t *keyid, int idlen, uid_t uid, struct event_info_main *ev_info,
-    int search_for_uid, int op, int search_all_ids);
-static void	send_id_list(u_int64_t token, const char *entry,
-    struct event_info_main *ev_info, int op);
-static void	send_entry_list(u_int64_t token, const char *path,
-    u_int8_t *keyid, int idlen, uid_t uid, struct event_info_main *ev_info,
-    int op, int for_all_ids);
 static void	reconfigure(struct event_info_main *);
 
 static char *pid_file_name = PACKAGE_PIDFILE;
@@ -876,236 +870,6 @@ dispatch_m2s(int fd, short event __used, /*@dependent@*/ void *arg)
 	DEBUG(DBG_TRACE, "<dispatch_m2s");
 }
 
-/*
- * Search in entries of the shadowtree for uids/keyid that registered a
- * checksum/signautre of the entry.
- */
-static void
-send_id_list(u_int64_t token, const char *entry,
-    struct event_info_main *ev_info, int op)
-{
-	_send_sfs_list(token, entry, NULL, 0, 0, ev_info, 1, op, 0);
-}
-
-/*
- * Send registered entries of a directory. Also send directorys which
- * contain further entries.
- */
-static void
-send_entry_list(u_int64_t token, const char *path, u_int8_t *keyid,
-    int idlen, uid_t uid, struct event_info_main *ev_info, int op,
-    int for_all_ids)
-{
-	if (keyid)
-		if (idlen <= 0)
-			return;
-
-	_send_sfs_list(token, path, keyid, idlen, uid, ev_info, 0, op,
-	    for_all_ids);
-}
-
-static int
-check_for_entry(const char *path, const char *entry, unsigned char *keyid,
-    int idlen, uid_t uid)
-{
-	char *sigfile = NULL,
-	     *tmp = NULL;
-	int i, ret = -1;
-
-	if (!entry)
-		return -1;
-
-	if (keyid != NULL) {
-		sigfile = calloc((2*idlen)+1, sizeof(char));
-		if (sigfile == NULL) {
-			log_warn("check_for_entry: can't allocate memory");
-			master_terminate(ENOMEM);
-			return -1;
-		}
-		for (i = 0; i < idlen; i++)
-			sprintf(&sigfile[2*i], "%2.2x", keyid[i]);
-		sigfile[2*i] = '\0';
-		ret = asprintf(&tmp, "%s/%s/k%s", path, entry, sigfile);
-		if (ret < 0)
-			return -1;
-		ret = check_if_exist(tmp);
-		free(tmp);
-		free(sigfile);
-	} else {
-		ret = asprintf(&tmp, "%s/%s/%d", path, entry, uid);
-		if (ret < 0) {
-			log_warn("check_for_entry: can't allocate memory");
-			master_terminate(ENOMEM);
-			return -1;
-		}
-		ret = check_if_exist(tmp);
-		free(tmp);
-	}
-	return ret;
-}
-
-static void
-_send_sfs_list(u_int64_t token, const char *path, u_int8_t *keyid,
-    int idlen, uid_t uid, struct event_info_main *ev_info, int search_for_id,
-    int op, int for_all_ids)
-{
-	/* Since only pathname components are transferred, it is sufficient
-	 * that the payload size (3000) is larger than NAME_MAX (255),
-	 * it does not need to be larger than PATH_MAX (4096)
-	 */
-	DIR			*sfs_dir;
-	struct dirent		*sfs_ent = NULL;
-	anoubisd_reply_t	*reply;
-	anoubisd_msg_t		*msg;
-	char			*tmp = NULL;
-	int			 flags = POLICY_FLAG_START;
-	int			 size = sizeof(struct anoubisd_reply) + 3000;
-	int			 cnt = 0, error = 0, len = 0, stars, i, ret = 0;
-
-	sfs_dir = opendir(path);
-	if (!sfs_dir) {
-		if (errno == ENOENT)
-			error = 0;
-		else
-			error = errno;
-		goto err;
-	}
-
-	sfs_ent = readdir(sfs_dir);
-	while (1) {
-		msg = msg_factory(ANOUBISD_MSG_POLREPLY, size);
-		if (!msg) {
-			log_warn("send_checksum_list: can't allocate memory");
-			master_terminate(ENOMEM);
-			return;
-		}
-		reply = (anoubisd_reply_t*)msg->msg;
-		reply->flags = flags;
-		reply->token = token;
-		reply->timeout = 0;
-		reply->reply = 0;
-
-		while (sfs_ent != NULL) {
-			if ((strcmp(sfs_ent->d_name, ".") == 0) ||
-			    (strcmp(sfs_ent->d_name, "..") == 0)) {
-			    sfs_ent = readdir(sfs_dir);
-				continue;
-			}
-			len = strlen(sfs_ent->d_name);
-			for (i = 0, stars = 0; i < len; i++) {
-				if (sfs_ent->d_name[i] == '*')
-					stars++;
-			}
-			/* If the ammount of stars is odd its an sfsentry
-			 * if its even its an directory. If the ammount of
-			 * stars is 0 we and we are checking for
-			 * uids/keyids we are going to the next if.
-			 */
-			if (stars%2 && !search_for_id) {
-				if (op == ANOUBIS_CHECKSUM_OP_LIST_ALL) {
-					/* The user root try to export for
-					 * all users so we don't check for
-					 * correctness
-					 */
-					if (for_all_ids)
-						goto out;
-					/* Check the keyid */
-					if (keyid) {
-						ret = check_for_entry(path,
-						    sfs_ent->d_name,
-						    keyid, idlen, 0);
-					}
-					if (ret == 0) {
-						ret = check_for_entry(path,
-						    sfs_ent->d_name,
-						    NULL, 0, uid);
-					}
-				} else {
-					ret = check_for_entry(path,
-					    sfs_ent->d_name, keyid, idlen, uid);
-				}
-				/* It is not our searched entry */
-				if (ret == 0) {
-					sfs_ent = readdir(sfs_dir);
-					continue;
-				/* An error occured */
-				} else if (ret < 0) {
-					goto err;
-				}
-				/* We found our entry */
-			}
-out:
-			if (search_for_id) {
-				if (op == ANOUBIS_CHECKSUM_OP_KEYID_LIST) {
-					if (sfs_ent->d_name[0] != 'k') {
-						sfs_ent = readdir(sfs_dir);
-						continue;
-					}
-					tmp = strdup(&sfs_ent->d_name[1]);
-				} else {
-					if (sfs_ent->d_name[0] == 'k') {
-						sfs_ent = readdir(sfs_dir);
-						continue;
-					}
-					tmp = strdup(sfs_ent->d_name);
-				}
-			} else {
-				tmp = remove_escape_seq(sfs_ent->d_name);
-			}
-			if (!tmp) {
-				log_warn("send_checksum_list: "
-				    "can't allocate memory");
-				master_terminate(ENOMEM);
-				return;
-			}
-
-			/* Now we pack and ship */
-			len = strlen(tmp) + 1;
-			cnt += len;
-			if (cnt > 3000) {
-				cnt -= len;
-				free(tmp);
-				break;
-			}
-			memcpy(&reply->msg[cnt - len], tmp, len);
-			free(tmp);
-			sfs_ent = readdir(sfs_dir);
-		}
-
-		reply->len = cnt;
-		msg_shrink(msg, sizeof(anoubisd_reply_t) + cnt);
-		cnt = 0;
-
-		if (sfs_ent == NULL)
-			reply->flags |= POLICY_FLAG_END;
-
-		enqueue(&eventq_m2s, msg);
-		event_add(ev_info->ev_m2s, NULL);
-		flags = 0;
-
-		if (sfs_ent == NULL)
-			break;
-	}
-	closedir(sfs_dir);
-	return;
-
-err:
-	msg = msg_factory(ANOUBISD_MSG_POLREPLY, sizeof(anoubisd_reply_t));
-	if (!msg) {
-		log_warn("send_checksum_list: can't allocate memory");
-		master_terminate(ENOMEM);
-	}
-	reply = (anoubisd_reply_t*)msg->msg;
-	reply->token = token;
-	reply->timeout = 0;
-	reply->flags = flags;
-	reply->reply = error;
-	reply->flags |= POLICY_FLAG_END;
-	reply->len = 0;
-	enqueue(&eventq_m2s, msg);
-	event_add(ev_info->ev_m2s, NULL);
-}
-
 static void
 send_sfscache_invalidate_uid(const char *path, uid_t uid,
     struct event_info_main *ev_info)
@@ -1184,7 +948,7 @@ static int
 parse_sfs_checksumop(struct sfs_checksumop *dst, struct anoubis_msg *m,
     uid_t auth_uid)
 {
-	char		*payload = NULL;
+	void		*payload = NULL;
 	int		 curlen, plen, error;
 	unsigned int	 flags;
 
@@ -1199,17 +963,21 @@ parse_sfs_checksumop(struct sfs_checksumop *dst, struct anoubis_msg *m,
 	else
 		dst->uid = auth_uid;
 	dst->idlen = get_value(m->u.checksumrequest->idlen);
+	if (dst->idlen < 0)
+		return -EFAULT;
 	if (sfs_op_is_add(dst->op)) {
 		if (!VERIFY_LENGTH(m, sizeof(Anoubis_ChecksumAddMessage)))
 			return -EINVAL;
-		payload = (void*)m->u.checksumadd->payload;
+		payload = m->u.checksumadd->payload;
 		dst->siglen = get_value(m->u.checksumadd->cslen);
+		if (dst->siglen < 0)
+			return -EFAULT;
 		dst->sigdata = (u_int8_t*)payload + dst->idlen;
 	} else {
-		payload = (void*)m->u.checksumrequest->payload;
+		payload = m->u.checksumrequest->payload;
 	}
 	if (dst->idlen) {
-		dst->keyid = (void*)payload;
+		dst->keyid = payload;
 		/*
 		 * ANOUBIS_CSUM_UID is not permitted together with a key ID.
 		 * Exception (*sigh*): ANOUBIS_CHECKSUM_OP_LIST_ALL
@@ -1277,7 +1045,7 @@ validate_sfs_checksumop(struct sfs_checksumop *csop)
 			if (!csop->sigdata || csop->siglen != ANOUBIS_CS_LEN)
 				return -EINVAL;
 		} else {
-			if (csop->sigdata)
+			if (csop->sigdata || csop->siglen)
 				return -EINVAL;
 		}
 		break;
@@ -1333,27 +1101,250 @@ validate_sfs_checksumop(struct sfs_checksumop *csop)
 	return 0;
 }
 
+static anoubisd_msg_t *
+create_polreply_msg(u_int64_t token, int payloadlen)
+{
+	anoubisd_msg_t		*msg;
+	anoubisd_reply_t	*reply;
+	msg = msg_factory(ANOUBISD_MSG_POLREPLY,
+	    sizeof(anoubisd_reply_t) + payloadlen);
+	if (!msg) {
+		master_terminate(ENOMEM);
+		return 0;
+	}
+	reply = (anoubisd_reply_t *)msg->msg;
+	memset(reply, 0, sizeof(anoubisd_reply_t));
+	reply->flags = 0;
+	reply->len = payloadlen;
+	reply->token = token;
+	return msg;
+}
+
+static int
+sfs_check_for_uid(const char *sfs_path, const char *entryname, uid_t uid)
+{
+	char		*file;
+	int		 ret;
+	struct stat	 statbuf;
+
+	if (asprintf(&file, "%s/%s/%d", sfs_path, entryname, uid) < 0) {
+		master_terminate(ENOMEM);
+		return 0;
+	}
+	ret = lstat(file, &statbuf);
+	free(file);
+	return (ret == 0) && S_ISREG(statbuf.st_mode);
+}
+
+static int
+sfs_check_for_key(const char *sfs_path, const char *entryname,
+    const unsigned char *key, int keylen)
+{
+	char		*keystr, *file;
+	int		 ret;
+	struct stat	 statbuf;
+
+	if ((keystr = anoubis_sig_key2char(keylen, key)) == NULL) {
+		master_terminate(ENOMEM);
+		return 0;
+	}
+	if (asprintf(&file, "%s/%s/k%s", sfs_path, entryname, keystr) < 0) {
+		master_terminate(ENOMEM);
+		return 0;
+	}
+	ret = lstat(file, &statbuf);
+	free(keystr);
+	free(file);
+	return (ret == 0) && S_ISREG(statbuf.st_mode);
+}
+
+/*
+ * Possible combinations for localflags:
+ *      WANTIDS   ALL     UID      KEY
+ *      true      true    *        *
+ *      false     true    true     true
+ *      false     false   *        *
+ */
+static int
+sfs_wantentry(const struct sfs_checksumop *csop, const char *sfs_path,
+    const char *entryname, unsigned int localflags)
+{
+	int		stars;
+
+	/* Never report "." and ".." */
+	if (strcmp(entryname, ".") == 0 || strcmp(entryname, "..") == 0)
+		return 0;
+
+	/* ANOUBIS_CSUM_WANTIDS is not allowed without ANOUBIS_CSUM_ALL. */
+	if (localflags & ANOUBIS_CSUM_WANTIDS) {
+		if (isdigit(entryname[0]) && (localflags & ANOUBIS_CSUM_UID))
+			return 1;
+		if (entryname[0] == 'k' && (localflags & ANOUBIS_CSUM_KEY))
+			return 1;
+		return 0;
+	}
+
+	/*
+	 * We do not support ANOUBIS_CSUM_ALL for uids and signatures
+	 * separately.
+	 */
+	if (localflags & ANOUBIS_CSUM_ALL)
+		return 1;
+
+	/*
+	 * At this point we know that we are listing directory contents for
+	 * a specific user ID and/or Key.
+	 */
+	stars = 0;
+	while (entryname[stars] == '*')
+		stars++;
+
+	/* Non-leaf directory entries are always interesting. */
+	if (stars % 2 == 0)
+		return 1;
+
+	if ((localflags & ANOUBIS_CSUM_UID)
+	    && sfs_check_for_uid(sfs_path, entryname, csop->uid))
+		return 1;
+	if ((localflags & ANOUBIS_CSUM_KEY) && sfs_check_for_key(sfs_path,
+	    entryname, csop->keyid, csop->idlen))
+		return 1;
+	return 0;
+}
+
+static void
+sfs_checksumop_list(struct sfs_checksumop *csop, u_int64_t token,
+    struct event_info_main *ev_info)
+{
+	char			*sfs_path = NULL;
+	int			 error = EINVAL;
+	anoubisd_msg_t		*msg = NULL;
+	anoubisd_reply_t	*reply = NULL;
+	DIR			*sfs_dir = NULL;
+	struct dirent		*entry;
+	unsigned int		 localflags;
+	int			 offset;
+
+
+/*
+ * Meaning of Flags:
+ *    - ANOUBIS_CSUM_UID: Apply command to unsigned signature(s) only
+ *    - ANOUBIS_CSUM_KEY: Apply command to signed signature(s) only
+ *    - ANOUBIS_CSUM_ALL: Command does not contain a specific UID/KEY.
+ *        Apply command to all IDs (requires root privileges).
+ *    - ANOUBIS_CSUM_WANTIDS: The path refers to a single file not to
+ *        a directory. List User/Key IDs instead of files.
+ */
+
+	switch(csop->op) {
+	case ANOUBIS_CHECKSUM_OP_LIST:
+		if (csop->keyid) {
+			localflags = ANOUBIS_CSUM_KEY;
+		} else {
+			localflags = ANOUBIS_CSUM_UID;
+		}
+		break;
+	case ANOUBIS_CHECKSUM_OP_LIST_ALL:
+		if (csop->allflag) {
+			localflags = (ANOUBIS_CSUM_UID | ANOUBIS_CSUM_KEY
+			    | ANOUBIS_CSUM_ALL);
+		} else {
+			localflags = (ANOUBIS_CSUM_UID | ANOUBIS_CSUM_KEY);
+		}
+		break;
+	case ANOUBIS_CHECKSUM_OP_UID_LIST:
+		localflags = (ANOUBIS_CSUM_WANTIDS | ANOUBIS_CSUM_UID
+		    | ANOUBIS_CSUM_ALL);
+		break;
+	case ANOUBIS_CHECKSUM_OP_KEYID_LIST:
+		localflags = (ANOUBIS_CSUM_WANTIDS | ANOUBIS_CSUM_KEY
+		    | ANOUBIS_CSUM_ALL);
+		break;
+	default:
+		goto out;
+	}
+	error = -convert_user_path(csop->path, &sfs_path,
+	    !(localflags & ANOUBIS_CSUM_WANTIDS));
+	if (error)
+		goto out;
+	sfs_dir = opendir(sfs_path);
+	if (sfs_dir == NULL) {
+		error = errno;
+		if (error == ENOENT || error == ENOTDIR)
+			error = 0;
+		goto out;
+	}
+	msg = create_polreply_msg(token, 8000);
+	reply = (anoubisd_reply_t *)msg->msg;
+	reply->flags |= POLICY_FLAG_START;
+	offset = 0;
+
+	while((entry = readdir(sfs_dir)) != NULL) {
+		char		*tmp;
+		int		 tmplen;
+		if (!sfs_wantentry(csop, sfs_path, entry->d_name, localflags))
+			continue;
+		tmp = remove_escape_seq(entry->d_name);
+		tmplen = strlen(tmp) + 1;
+		if (offset + tmplen > reply->len) {
+			reply->len = offset;
+			msg_shrink(msg, sizeof(anoubisd_reply_t) + offset);
+			enqueue(&eventq_m2s, msg);
+			event_add(ev_info->ev_m2s, NULL);
+			msg = create_polreply_msg(token, 8000);
+			reply = (anoubisd_reply_t*)msg->msg;
+			offset = 0;
+		}
+		if (offset + tmplen > reply->len) {
+			free(tmp);
+			error = ENAMETOOLONG;
+			goto out;
+		}
+		memcpy(reply->msg + offset, tmp, tmplen);
+		offset += tmplen;
+		free(tmp);
+	}
+	free(sfs_path);
+	closedir(sfs_dir);
+	reply->len = offset;
+	reply->flags |= POLICY_FLAG_END;
+	msg_shrink(msg, sizeof(anoubisd_reply_t) + offset);
+	enqueue(&eventq_m2s, msg);
+	event_add(ev_info->ev_m2s, NULL);
+	return;
+out:
+	if (sfs_dir)
+		closedir(sfs_dir);
+	if (sfs_path)
+		free(sfs_path);
+	if (msg) {
+		msg_shrink(msg, sizeof(anoubisd_reply_t));
+		reply->len = 0;
+		reply->flags |= POLICY_FLAG_END;
+	} else {
+		msg = create_polreply_msg(token, 0);
+		reply = (anoubisd_reply_t *)msg->msg;
+		reply->flags = (POLICY_FLAG_START | POLICY_FLAG_END);
+	}
+	reply->reply = error;
+	enqueue(&eventq_m2s, msg);
+	event_add(ev_info->ev_m2s, NULL);
+}
+
 static void
 dispatch_checksumop(anoubisd_msg_t *msg, struct event_info_main *ev_info)
 {
 	struct anoubis_msg rawmsg;
 	anoubisd_msg_checksum_op_t *msg_comm =
 	    (anoubisd_msg_checksum_op_t *)msg->msg;
-	char * path = NULL;
-	char *result = NULL;
-	int	flags;
+	struct sfs_checksumop	csop;
+
 	int	cslen = 0,
-		l_all = 0,
-		idlen = 0,		/* Length of KeyID		*/
 		siglen = 0;		/* Length of Signature and csum */
-	uid_t	req_uid;
-	int err = -EFAULT, op = 0, extra = 0;
+	int err = -EFAULT, extra = 0;
 	anoubisd_reply_t * reply;
 	u_int8_t *digest = NULL;
-	u_int8_t *key = NULL;
 	u_int8_t *sign = NULL;
-	int i, plen;
-	struct sfs_checksumop	csop;
 
 	rawmsg.length = msg_comm->len;
 	rawmsg.u.buf = msg_comm->msg;
@@ -1365,7 +1356,7 @@ dispatch_checksumop(anoubisd_msg_t *msg, struct event_info_main *ev_info)
 		/*
 		 * XXX CEH: These log messages are temporary and should
 		 * XXX CEH: go away once the normal user land no longer
-		 * XXX CEH: sends invalid message.
+		 * XXX CEH: sends invalid messages.
 		 */
 		log_warnx("CHECKSUM OP VALIDATION FAILED");
 		log_warnx("checksumop: op=%d, allflag=%d uid=%d auth_uid=%d",
@@ -1377,125 +1368,46 @@ dispatch_checksumop(anoubisd_msg_t *msg, struct event_info_main *ev_info)
 		goto out;
 	}
 
-
-	if (!VERIFY_LENGTH(&rawmsg, sizeof(Anoubis_ChecksumRequestMessage)))
-		goto out;
-	op = get_value(rawmsg.u.checksumrequest->operation);
-	req_uid = get_value(rawmsg.u.checksumrequest->uid);
-	flags = get_value(rawmsg.u.checksumrequest->flags);
-	idlen = get_value(rawmsg.u.checksumrequest->idlen);
-
-	if (!(flags & ANOUBIS_CSUM_UID))
-		req_uid = msg_comm->uid;
-	l_all = (flags & ANOUBIS_CSUM_ALL);
-
-	switch (op) {
+	switch (csop.op) {
 	case ANOUBIS_CHECKSUM_OP_LIST:
 	case ANOUBIS_CHECKSUM_OP_LIST_ALL:
 	case ANOUBIS_CHECKSUM_OP_UID_LIST:
 	case ANOUBIS_CHECKSUM_OP_KEYID_LIST:
-		plen = rawmsg.length - CSUM_LEN
-		    - sizeof(Anoubis_ChecksumRequestMessage);
-		path = rawmsg.u.checksumrequest->payload + idlen;
-		if (idlen > 0 && ((op == ANOUBIS_CHECKSUM_OP_LIST) ||
-		    (op == ANOUBIS_CHECKSUM_OP_LIST_ALL))) {
-			if ((key = calloc(idlen, sizeof(u_int8_t))) == NULL)
-				goto out;
-			memcpy(key, rawmsg.u.checksumrequest->payload, idlen);
-		}
-		for (i=0; i<plen; ++i) {
-			if (path[i] == 0)
-				break;
-		}
-		if (i >= plen)
-			goto out;
-
-		if ((op == ANOUBIS_CHECKSUM_OP_LIST) ||
-		    (op == ANOUBIS_CHECKSUM_OP_LIST_ALL)) {
-			err = convert_user_path(path, &result, 1);
-			if (err < 0)
-				goto out;
-			send_entry_list(msg_comm->token, result, key,
-			    idlen, req_uid, ev_info, op, l_all);
-		} else {
-			err = convert_user_path(path, &result, 0);
-			if (err < 0) {
-				log_warn("Error while converting user path");
-				goto out;
-			}
-			send_id_list(msg_comm->token, result, ev_info, op);
-		}
-		if (result)
-			free(result);
-		if (key)
-			free(key);
+		sfs_checksumop_list(&csop, msg_comm->token, ev_info);
 		return;
 	case ANOUBIS_CHECKSUM_OP_ADDSIG:
 	case ANOUBIS_CHECKSUM_OP_ADDSUM:
-		if (!VERIFY_LENGTH(&rawmsg, sizeof(Anoubis_ChecksumAddMessage)))
-			goto out;
-		cslen = get_value(rawmsg.u.checksumadd->cslen);
-		if ((cslen != SHA256_DIGEST_LENGTH) &&
-		    (op == ANOUBIS_CHECKSUM_OP_ADDSUM)) {
-			err = -EINVAL;
-			goto out;
-		}
-		if (!VERIFY_LENGTH(&rawmsg,
-		    sizeof(Anoubis_ChecksumAddMessage) + idlen + cslen))
-			goto out;
-		digest = (u_int8_t *)calloc(idlen + cslen, sizeof(u_int8_t));
-		if (!digest) {
-			err = -ENOMEM;
-			goto out;
-		}
-		memcpy(digest, rawmsg.u.checksumadd->payload, idlen + cslen);
-		path = rawmsg.u.checksumadd->payload + cslen + idlen;
-		plen = rawmsg.length - CSUM_LEN - cslen - idlen
-		    - sizeof(Anoubis_ChecksumAddMessage);
-		break;
 	case ANOUBIS_CHECKSUM_OP_GETSIG:
 	case ANOUBIS_CHECKSUM_OP_DELSIG:
-		idlen = get_value(rawmsg.u.checksumrequest->idlen);
-		cslen = 0;
-		path = rawmsg.u.checksumrequest->payload + idlen;
-		plen = rawmsg.length - CSUM_LEN - idlen
-		    - sizeof(Anoubis_ChecksumRequestMessage);
-		digest = (u_int8_t *)calloc(idlen, sizeof(u_int8_t));
+		digest = malloc(csop.idlen + csop.siglen);
 		if (!digest) {
 			err = -ENOMEM;
 			goto out;
 		}
-		memcpy(digest, rawmsg.u.checksumrequest->payload, idlen);
+		if (csop.keyid)
+			memcpy(digest, csop.keyid, csop.idlen);
+		if (csop.sigdata) {
+			memcpy(digest + csop.idlen, csop.sigdata, csop.siglen);
+			cslen = csop.siglen;
+		}
 		break;
 	default:
-		digest = (u_int8_t *)calloc(SHA256_DIGEST_LENGTH,
-		    sizeof(u_int8_t));
+		digest = calloc(SHA256_DIGEST_LENGTH, sizeof(u_int8_t));
 		if (!digest) {
 			err = -ENOMEM;
 			goto out;
 		}
 		cslen = SHA256_DIGEST_LENGTH;
-		path = rawmsg.u.checksumrequest->payload;
-		plen = rawmsg.length - CSUM_LEN
-		    - sizeof(Anoubis_ChecksumRequestMessage);
 		break;
 	}
 
-	if (plen < 0)
-		goto out;
-
-	for (i=0; i<plen; ++i) {
-		if (path[i] == 0)
-			break;
-	}
-	if (i >= plen)
-		goto out;
-
-	err = sfs_checksumop(path, op, req_uid, digest, &sign, &siglen, cslen,
-	    idlen);
+	DEBUG(DBG_TRACE, " checksumop: op=%d path=%s uid=%d, cslen=%d idlen=%d",
+	    csop.op, csop.path, csop.uid, cslen, csop.idlen);
+	err = sfs_checksumop(csop.path, csop.op, csop.uid, digest,
+	    &sign, &siglen, cslen, csop.idlen);
 	extra = 0;
 	if (err == 0) {
-		switch (op) {
+		switch (csop.op) {
 		case ANOUBIS_CHECKSUM_OP_GET:
 			extra = SHA256_DIGEST_LENGTH;
 			break;
@@ -1507,13 +1419,14 @@ dispatch_checksumop(anoubisd_msg_t *msg, struct event_info_main *ev_info)
 		case ANOUBIS_CHECKSUM_OP_ADDSUM:
 		case ANOUBIS_CHECKSUM_OP_DEL:
 			extra = 0;
-			send_sfscache_invalidate_uid(path, req_uid, ev_info);
+			send_sfscache_invalidate_uid(csop.path, csop.uid,
+			    ev_info);
 			break;
 		case ANOUBIS_CHECKSUM_OP_ADDSIG:
 		case ANOUBIS_CHECKSUM_OP_DELSIG:
 			extra = 0;
-			send_sfscache_invalidate_key(path, digest, idlen,
-			    ev_info);
+			send_sfscache_invalidate_key(csop.path, csop.keyid,
+			    csop.idlen, ev_info);
 		default:
 			extra = 0;
 			break;

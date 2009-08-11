@@ -72,17 +72,6 @@ static int	 sfs_readsigdata(const char *csum_file, void *buffer, int);
 static int	 sfs_deletechecksum(const char *csum_file);
 static int	 check_empty_dir(const char *path);
 
-int
-check_if_exist(const char *path)
-{
-	struct stat sb;
-
-	if (stat(path, &sb) == 0)
-		return 1;
-	else
-		return 0;
-}
-
 static int
 mkpath(const char *path)
 {
@@ -421,7 +410,6 @@ __sfs_checksumop_wrapper(const char *path, unsigned int operation, uid_t uid,
 	csop.siglen = len;
 	csop.sigdata = md + idlen;
 	ret = __sfs_checksumop(&csop, &buffer, &buflen, chroot);
-	log_warnx(" checksumop_wrapper: op=%d uid=%d auth_uid=%d idlen=%d siglen=%d path=%s error=%d", csop.op, csop.uid, csop.auth_uid, csop.idlen, csop.siglen, csop.path, ret);
 	if (ret != 0)
 		return ret;
 	switch(operation) {
