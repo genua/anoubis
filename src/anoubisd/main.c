@@ -352,6 +352,8 @@ main(int argc, char *argv[])
 	struct timeval		tv;
 	struct passwd		*pw;
 	FILE			*pidfp;
+	FILE			*sfsversionfp;
+	int			sfsversion;
 	struct sigaction	act;
 #ifdef LINUX
 	FILE			*omitfp;
@@ -409,6 +411,34 @@ main(int argc, char *argv[])
 			early_errx(4, msg);
 		}
 		close(fd);
+	}
+
+	sfsversionfp = fopen(ANOUBISD_SFS_TREE_VERSIONFILE, "r");
+	if (sfsversionfp) {
+		int ret, err;
+		ret = fscanf(sfsversionfp, "%d\n", &sfsversion);
+		err = errno;
+		fclose(sfsversionfp);
+		if (ret != 1) {
+			sfsversion = -1;
+			errno = err;
+		}
+	} else if (errno == ENOENT) {
+		sfsversion = 0;
+	} else {
+		sfsversion = -1;
+	}
+
+	if (sfsversion < 0) {
+		early_err(5, "Could not read " ANOUBISD_SFS_TREE_VERSIONFILE);
+	} else if (sfsversion != ANOUBISD_SFS_TREE_FORMAT_VERSION) {
+		char *msg;
+		if (asprintf(&msg, "Layout version of " SFS_CHECKSUMROOT
+		    " is %i, but we only support %i.\n"
+		    "You need to upgrade anoubisd.",
+		    sfsversion, ANOUBISD_SFS_TREE_FORMAT_VERSION) == -1)
+			msg = NULL;
+		early_errx(6, msg);
 	}
 
 	if (anoubisd_config.opts & ANOUBISD_OPT_NOACTION) {
