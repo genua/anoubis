@@ -64,8 +64,8 @@ class DlgUpgradeAskBase : public wxDialog
 		wxCheckBox* showAgainCheckBox;
 		
 		// Virtual event handlers, overide them in your derived class
-		virtual void close( wxCommandEvent& event ){ event.Skip(); }
-		virtual void openSFS( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onClose( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onSfsBrowserShow( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onUpgradeNotifyCheck( wxCommandEvent& event ){ event.Skip(); }
 		
 	

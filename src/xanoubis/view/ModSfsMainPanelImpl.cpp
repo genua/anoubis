@@ -80,6 +80,9 @@ ModSfsMainPanelImpl::ModSfsMainPanelImpl(wxWindow* parent,
 	AnEvents::getInstance()->Connect(anEVT_LOAD_RULESET,
 	    wxCommandEventHandler(ModSfsMainPanelImpl::onLoadRuleSet),
 	    NULL, this);
+	AnEvents::getInstance()->Connect(anEVT_SFSBROWSER_SHOW,
+	    wxCommandEventHandler(ModSfsMainPanelImpl::onSfsBrowserShow),
+	    NULL, this);
 	JobCtrl::getInstance()->Connect(anTASKEVT_REGISTER,
 	    wxTaskEventHandler(ModSfsMainPanelImpl::OnDaemonRegistration),
 	    NULL, this);
@@ -106,6 +109,9 @@ ModSfsMainPanelImpl::~ModSfsMainPanelImpl(void)
 	    NULL, this);
 	AnEvents::getInstance()->Disconnect(anEVT_LOAD_RULESET,
 	    wxCommandEventHandler(ModSfsMainPanelImpl::onLoadRuleSet),
+	    NULL, this);
+	AnEvents::getInstance()->Disconnect(anEVT_SFSBROWSER_SHOW,
+	    wxCommandEventHandler(ModSfsMainPanelImpl::onSfsBrowserShow),
 	    NULL, this);
 
 	saveSfsOptions();
@@ -827,6 +833,14 @@ ModSfsMainPanelImpl::onLoadRuleSet(wxCommandEvent& event)
 		lst_Rules->SetColumnWidth(i, wxLIST_AUTOSIZE_USEHEADER);
 	}
 
+	event.Skip();
+}
+
+void
+ModSfsMainPanelImpl::onSfsBrowserShow(wxCommandEvent& event)
+{
+	/* select Browser tab of ModSfs */
+	note_MainSfs->SetSelection(1);
 	event.Skip();
 }
 

@@ -64,6 +64,7 @@ class MainFrame : public MainFrameBase
 		void onLogViewerShow(wxCommandEvent&);
 		void onWizardShow(wxCommandEvent&);
 		void onMainFrameShow(wxCommandEvent&);
+		void onSfsBrowserShow(wxCommandEvent&);
 		void onBackupPolicy(wxCommandEvent&);
 
 		ANEVENTS_IDENT_BCAST_METHOD_DECLARATION;

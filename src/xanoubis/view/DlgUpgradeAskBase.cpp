@@ -72,7 +72,7 @@ DlgUpgradeAskBase::DlgUpgradeAskBase( wxWindow* parent, wxWindowID id, const wxS
 	mainSizer->Fit( this );
 	
 	// Connect Events
-	closeButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgUpgradeAskBase::close ), NULL, this );
-	openButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgUpgradeAskBase::openSFS ), NULL, this );
+	closeButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgUpgradeAskBase::onClose ), NULL, this );
+	openButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgUpgradeAskBase::onSfsBrowserShow ), NULL, this );
 	showAgainCheckBox->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DlgUpgradeAskBase::onUpgradeNotifyCheck ), NULL, this );
 }

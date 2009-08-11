@@ -32,6 +32,7 @@
 #include <wx/config.h>
 
 #include "DlgUpgradeAskBase.h"
+class DlgUpgradeAsk;
 #include "main.h"
 
 
@@ -61,7 +62,7 @@ class DlgUpgradeAsk : public DlgUpgradeAskBase
 		 * @param[in] 1st The event of the button
 		 * @return Nothing.
 		 */
-		virtual void close(wxCommandEvent &);
+		virtual void onClose(wxCommandEvent &);
 
 		/**
 		 * This is called when the button
@@ -70,7 +71,7 @@ class DlgUpgradeAsk : public DlgUpgradeAskBase
 		 * @param[in] 1st The event of the button
 		 * @return Nothing.
 		 * */
-		virtual void openSFS(wxCommandEvent &);
+		virtual void onSfsBrowserShow(wxCommandEvent &);
 
 		/**
 		 * This is called when the checkbox 'cb_showAgain' is modified

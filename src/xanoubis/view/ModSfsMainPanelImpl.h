@@ -408,6 +408,15 @@ class ModSfsMainPanelImpl : public Observer, public ModSfsMainPanelBase
 		void onLoadRuleSet(wxCommandEvent&);
 
 		/**
+		 * Handle the event on show SFS browser.
+		 * This just receives the event and selects the SFS browser tab
+		 * and selects the 'show upgraded' button.
+		 * @param[in] 1st The event.
+		 * @return Nothing.
+		 */
+		void onSfsBrowserShow(wxCommandEvent&);
+
+		/**
 		 * Appends a new policy to the RuleSet.
 		 * Updates Columns regarding the policy and additionally
 		 * registers the policy for observation

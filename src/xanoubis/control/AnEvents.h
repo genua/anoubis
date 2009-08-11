@@ -560,7 +560,7 @@ BEGIN_DECLARE_EVENT_TYPES()
 	 * This event is sent and received by NotificationCtrl. It's sent
 	 * after a new notification was enqueued. On receipt of this event
 	 * the perspectives are updated. With this trick/split we ensure
-	 * the observers listening on the perspectives do theire update
+	 * the observers listening on the perspectives do their update
 	 * within the main thread.\n
 	 * This event carries the id of the new notification as
 	 * ExtraLong (see SetExtraLong() and GetExtraLong()).
@@ -568,6 +568,14 @@ BEGIN_DECLARE_EVENT_TYPES()
 	 * http://stackoverflow.com/questions/407004/notifications-in-wxwidgets
 	 */
 	DECLARE_LOCAL_EVENT_TYPE(anEVT_UPDATE_PERSPECTIVE, wxNewEventType())
+
+	/**
+	 * Show SFSBrowser event and automatically select upgraded files.
+	 * @param GetInt() Visability of SFSBrowser:
+	 *      - = 0 : hide
+	 *      - > 0 : show
+	 */
+	DECLARE_LOCAL_EVENT_TYPE(anEVT_SFSBROWSER_SHOW, wxNewEventType())
 
 END_DECLARE_EVENT_TYPES()
 /**

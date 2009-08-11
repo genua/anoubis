@@ -42,6 +42,7 @@
 #include "MainFrameBase.h"
 #include "Module.h"
 #include "ModAnoubis.h"
+#include "ModSfs.h"
 #include "ModAnoubisMainPanelImpl.h"
 #include "RuleWizard.h"
 #include "DlgBackupPolicyImpl.h"
@@ -80,6 +81,8 @@ MainFrame::MainFrame(wxWindow *parent) : MainFrameBase(parent)
 	    wxCommandEventHandler(MainFrame::onRuleEditorShow), NULL, this);
 	anEvents->Connect(anEVT_MAINFRAME_SHOW,
 	    wxCommandEventHandler(MainFrame::onMainFrameShow), NULL, this);
+	anEvents->Connect(anEVT_SFSBROWSER_SHOW,
+	    wxCommandEventHandler(MainFrame::onSfsBrowserShow), NULL, this);
 	anEvents->Connect(anEVT_OPEN_ALERTS,
 	    wxCommandEventHandler(MainFrame::OnOpenAlerts), NULL, this);
 	anEvents->Connect(anEVT_OPEN_ESCALATIONS,
@@ -109,6 +112,8 @@ MainFrame::~MainFrame()
 	    wxCommandEventHandler(MainFrame::onRuleEditorShow), NULL, this);
 	anEvents->Disconnect(anEVT_MAINFRAME_SHOW,
 	    wxCommandEventHandler(MainFrame::onMainFrameShow), NULL, this);
+	anEvents->Disconnect(anEVT_SFSBROWSER_SHOW,
+	    wxCommandEventHandler(MainFrame::onSfsBrowserShow), NULL, this);
 	anEvents->Disconnect(anEVT_OPEN_ALERTS,
 	    wxCommandEventHandler(MainFrame::OnOpenAlerts), NULL, this);
 	anEvents->Disconnect(anEVT_OPEN_ESCALATIONS,
@@ -215,6 +220,25 @@ MainFrame::onMainFrameShow(wxCommandEvent& event)
 		this->Hide();
 		show_ = false;
 	}
+	event.Skip();
+}
+
+void
+MainFrame::onSfsBrowserShow(wxCommandEvent& event)
+{
+	this->Show(event.GetInt());
+	Module *module = wxGetApp().getModule(SFS);
+	int id = module->getToolbarId();
+
+	/*
+	 * Select the corresponding Modul Tab in the Toolbar
+	 */
+	tb_LeftToolbarModule->ToggleTool(MODSFS_ID_TOOLBAR, true);
+
+	wxCommandEvent selectEvent(wxEVT_COMMAND_MENU_SELECTED, id);
+	selectEvent.SetInt(id);
+	this->AddPendingEvent(selectEvent);
+
 	event.Skip();
 }
 

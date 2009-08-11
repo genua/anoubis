@@ -25,9 +25,10 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "DlgUpgradeAsk.h"
 #include <wx/msgdlg.h>
 
+#include "AnEvents.h"
+#include "DlgUpgradeAsk.h"
 
 DlgUpgradeAsk::DlgUpgradeAsk(wxWindow *) : DlgUpgradeAskBase(NULL)
 {
@@ -44,16 +45,17 @@ DlgUpgradeAsk::~DlgUpgradeAsk(void)
 }
 
 void
-DlgUpgradeAsk::close(wxCommandEvent& WXUNUSED(event))
+DlgUpgradeAsk::onClose(wxCommandEvent& WXUNUSED(event))
 {
 	Close(TRUE);
 }
 
 void
-DlgUpgradeAsk::openSFS(wxCommandEvent& WXUNUSED(event))
+DlgUpgradeAsk::onSfsBrowserShow(wxCommandEvent& WXUNUSED(event))
 {
-	/* XXX DZ: Further work has to be done here; Switch to SfsBrowser */
-	wxMessageBox(_("SFS Browser"),_("SFS Browser"), wxOK, this);
+	wxCommandEvent event(anEVT_SFSBROWSER_SHOW);
+	event.SetInt(1);
+	wxPostEvent(AnEvents::getInstance(), event);
 }
 
 void
