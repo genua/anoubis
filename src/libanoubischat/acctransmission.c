@@ -94,8 +94,9 @@ acc_write(int fd, void *buf, size_t nbyte)
 achat_rc
 acc_flush(struct achat_channel *chan)
 {
-	void	*buf;
-	size_t	bsize, bwritten;
+	void		*buf;
+	size_t		 bsize, bwritten;
+	achat_rc	 ret;
 
 	ACC_CHKPARAM(chan != NULL);
 
@@ -120,9 +121,12 @@ acc_flush(struct achat_channel *chan)
 	}
 
 	if (bwritten == (unsigned int)-1)
-		return (errno == EAGAIN) ? ACHAT_RC_PENDING : ACHAT_RC_ERROR;
+		ret = (errno == EAGAIN) ? ACHAT_RC_PENDING : ACHAT_RC_ERROR;
 	else /* bwritten > 0 */
-		return (bwritten == bsize) ? ACHAT_RC_OK : ACHAT_RC_PENDING;
+		ret = (bwritten == bsize) ? ACHAT_RC_OK : ACHAT_RC_PENDING;
+	if (ret == ACHAT_RC_PENDING && chan->event)
+		event_add(chan->event, NULL);
+	return ret;
 }
 
 achat_rc
