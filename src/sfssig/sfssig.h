@@ -108,9 +108,9 @@
 #define SYSSIGNAME "security.anoubis_syssig"
 #define SKIPSUMNAME "security.anoubis_skipsum"
 
-char **filter_args(int *argc, char **argv, char *path,
+int filter_one_file(char *path, char *prefix, uid_t uid,
     struct anoubis_sig *as);
-int	filter_hassum(char *arg);
+int	filter_hassum(char *arg, uid_t uid);
 int	filter_hassig(char *arg, struct anoubis_sig *as);
 struct anoubis_sig *load_keys(int priv_key, int show_err, char *cert,
     char *keyfile);
@@ -127,7 +127,7 @@ int syssig_remove(int argc, char *argv[]);
 int skipsum_update(char *file, int op);
 int str2hash(const char *s, unsigned char dest[SHA256_DIGEST_LENGTH]);
 struct anoubis_transaction	*sfs_sumop(char *file, int operation,
-    u_int8_t *cs, int cslen, int idlen);
+    u_int8_t *cs, int cslen, int idlen, uid_t uid);
 
 extern unsigned int opts;
 

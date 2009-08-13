@@ -34,16 +34,18 @@
 .Nd manage checksums for the Anoubis Daemon
 .Sh SYNOPSIS
 .Nm sfssig
-.Op dvlir
+.Op dvi
+.Op --link | -l
+.Op --recursiv | -r
 .Op -f listfile
 .Op -o exportfile
-.Op -u uid
-.Op -k keyfile
-.Op --cert certfile
+.Op --uid uid | -u uid
+.Op --key keyfile | -k keyfile
+.Op --cert certfile | -c keyfile
 .Op --sum
 .Op --sig
 .Ar command
-.Op file
+.Op file...
 .Sh DESCRIPTION
 The
 .Nm
@@ -72,9 +74,9 @@ Specify the output of the command export. Default is stdout.
 Path specification:
 .Pp
 .Bl -tag -width Ds
-.It Fl r
+.It Fl r Fl -recursive
 Apply command to all files under each directory, recursively.
-.It Fl l
+.It Fl l Fl -link
 Apply command to a symlink, not to the referenced file.
 .It Fl f Ar listfile
 Accept input from file
@@ -85,7 +87,7 @@ Use "-" for stdin.
 Type specification:
 .Pp
 .Bl -tag -width Ds
-.It Fl u
+.It Fl u Ar uid Fl -uid Ar uid
 Apply command to checksums with owner
 .Ar uid .
 If the argument is
@@ -97,13 +99,13 @@ This requires root privileges.
 Key files (needed for some operations):
 .Pp
 .Bl -tag -width Ds
-.It Fl k Ar keyfile
+.It Fl k Ar keyfile Fl -key Ar keyfile
 Load private key from
 .Ar keyfile .
 If not specified,
 .Pa ~/.xanoubis/private.pem
 is used.
-.It Fl -cert Ar certfile
+.It Fl c Ar certfile Fl -cert Ar certfile
 Load certificate from
 .Ar certfile .
 If not specified,
@@ -126,8 +128,7 @@ Apply command on files which have no signatures.
 Apply command on checksums or signatures which have no representation in the
 filesystem.
 .It Fl -notfile
-Apply command on checksums or signatures which are no regular files.
-.It Fl -notfile
+Apply command to checksums or signatures which are not regular files.
 .El
 .Pp
 Command specification:
@@ -154,8 +155,18 @@ as found in the shadow tree.
 .Pp
 list - list all entries in the shadow tree for
 .Ar file.
-.El
 .Pp
+validate - checks the checksum of
+.Ar file
+.Pp
+export - exports the checksums and signatures of all files
+in
+.Ar directory
+.Pp
+import - imports checksums and signatures from
+.Ar file
+.Pp
+.El
 .Nm
 connects via the
 .Em libanoubischat

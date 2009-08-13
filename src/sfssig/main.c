@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 GeNUA mbH <info@genua.de>
+ * Copyright (c) 2008 - 2009 GeNUA mbH <info@genua.de>
  *
  * All rights reserved.
  *
@@ -33,57 +33,56 @@
 
 #include "sfssig.h"
 
-void					 usage(void) __dead;
-static int				 sfs_add(char *file);
-static int				 sfs_del(char *file);
-static int				 sfs_get(char *file);
-static int				 sfs_list(char *file);
-static int				 sfs_validate(char *file);
-static int				 sfs_export(char *directory);
-static int				 sfs_import(char *directory);
-static int				 _export(char *directory, int rec);
-static int				 sfs_tree(char *path, int op);
-static int				 sfs_add_tree(char *path, int op);
-static int				 add_entry(struct sfs_entry *entry);
-static uid_t				*request_uids(char *file, int *count);
-static int				 __sfs_get(char *file, int flag);
-static int				 create_channel(void);
-static void				 destroy_channel(void);
-static struct sfs_entry			*get_entry(char *file,
-    unsigned char *keyid, int len);
-static unsigned char			**request_keyids(char *file, int **ids,
-    int *cont);
+/* These are the functions to the sfs commandos */
+static int	 sfs_add(char *, uid_t, struct anoubis_sig *);
+static int	 sfs_del(char *, uid_t, struct anoubis_sig *);
+static int	 sfs_get(char *, uid_t, struct anoubis_sig *);
+static int	 sfs_list(char *, uid_t, struct anoubis_sig *);
+static int	 sfs_validate(char *, uid_t, struct anoubis_sig *);
+static int	 sfs_export(char *, uid_t, struct anoubis_sig *);
+static int	 sfs_import(char *, uid_t, struct anoubis_sig *);
+static int	 sfs_tree(char *, int op, uid_t, struct anoubis_sig *);
+static int	 sfs_add_tree(char *, int op, uid_t, struct anoubis_sig *);
+
+/* These are helper functions for the sfs commandos */
+static int			 _export(char *, FILE *, int,
+				     uid_t, struct anoubis_sig *);
+static int			 __sfs_get(char *, int, uid_t,
+				     struct anoubis_sig *);
+static int			 create_channel(void);
+static void			 destroy_channel(void);
+static int			 add_entry(struct sfs_entry *);
+static struct sfs_entry		*get_entry(char *, unsigned char *, int, uid_t,
+				     struct anoubis_sig *);
+static uid_t			*request_uids(char *, int *);
+static unsigned char		**request_keyids(char *, int **, int *);
+void				 usage(void) __dead;
 
 typedef int (*func_int_t)(void);
-typedef int (*func_char_t)(char *);
+typedef int (*func_char_t)(char *, uid_t, struct anoubis_sig *);
 
 struct cmd {
 	char		*command;
 	func_int_t	 func;
-	int		 file;
 	int		 opt;
 } commands[] = {
-	{ "add",   (func_int_t)sfs_add, 1, ANOUBIS_CHECKSUM_OP_ADDSUM},
-	{ "del",   (func_int_t)sfs_del, 1, ANOUBIS_CHECKSUM_OP_DEL},
-	{ "list",  (func_int_t)sfs_list, 1, ANOUBIS_CHECKSUM_OP_LIST},
-	{ "get",  (func_int_t)sfs_get, 1, ANOUBIS_CHECKSUM_OP_GET},
-	{ "export",  (func_int_t)sfs_export, 1, 0},
-	{ "import",  (func_int_t)sfs_import, 1, 0},
-	{ "validate",  (func_int_t)sfs_validate, 1,
-	    ANOUBIS_CHECKSUM_OP_VALIDATE},
+	{ "add", (func_int_t)sfs_add, ANOUBIS_CHECKSUM_OP_ADDSUM},
+	{ "del", (func_int_t)sfs_del, ANOUBIS_CHECKSUM_OP_DEL},
+	{ "list", (func_int_t)sfs_list, ANOUBIS_CHECKSUM_OP_LIST},
+	{ "get", (func_int_t)sfs_get, ANOUBIS_CHECKSUM_OP_GET},
+	{ "export", (func_int_t)sfs_export, 0},
+	{ "import", (func_int_t)sfs_import, 0},
+	{ "validate", (func_int_t)sfs_validate, ANOUBIS_CHECKSUM_OP_VALIDATE},
 };
 
-static FILE			*exim_fd = NULL;
 static struct achat_channel	*channel;
 struct anoubis_client		*client;
 static const char		*anoubis_socket = PACKAGE_SOCKET;
-static char			*exim_file = NULL;
-static char			*cert = NULL;
-static char			*keyfile = NULL;
-static uid_t			 uid = 0;
+static char			*out_file = NULL;
+static char			*sfs_cert = NULL;
+static char			*sfs_key = NULL;
 static int			 checksum_flag = ANOUBIS_CSUM_NONE;
 
-struct anoubis_sig	*as = NULL;
 unsigned int		 opts = 0;
 
 __dead void
@@ -96,39 +95,83 @@ usage(void)
 	 * NOTE: Capitalized options are used for extended attributes
 	 * NOTE: other options will be used for signed checksums.
 	 */
-	fprintf(stderr, "usage: %s [-dvinlr] [-f <fileset> ]\n", __progname);
-	fprintf(stderr, "       [-o exporttofile]\n");
-	fprintf(stderr, "       [--sig | --sum] [--cert <certificate>] \n");
-	fprintf(stderr, "       [--hassig | --hasnossig] [--hassum |"
-	    " --hasnosum] \n");
-	fprintf(stderr, "       [--orphaned | --notfile]\n");
-	fprintf(stderr, "       [-k <keyfile>] command [<file>]\n");
-
+	fprintf(stderr, "usage: %s [-dhvin]\n", __progname);
+	fprintf(stderr, "   [-f <fileset> ]\n");
+	fprintf(stderr, "   [--sig]\n");
+	fprintf(stderr, "   [--sum]\n");
+	fprintf(stderr, "   [-r | --recursive]\n");
+	fprintf(stderr, "   [-l | --link]\n");
+	fprintf(stderr, "   [-c | --cert <certificate>] \n");
+	fprintf(stderr, "   [-k | --key <keyfile>]\n");
+	fprintf(stderr, "   [-u | --uid <uid>] \n");
+	fprintf(stderr, "   [-o exporttofile]\n");
+	fprintf(stderr, "   [--hassig]\n");
+	fprintf(stderr, "   [--hasnossig]\n");
+	fprintf(stderr, "   [--hassum]\n");
+	fprintf(stderr, "   [--hasnosum]\n");
+	fprintf(stderr, "   [--orphaned]\n");
+	fprintf(stderr, "   [--notfile]\n");
+	fprintf(stderr, "   command [file...]\n");
 	/* Add checksum xattr*/
-	fprintf(stderr, "       %s -A checksum file\n", __progname);
+	fprintf(stderr, "   %s -A checksum file\n", __progname);
 	/* Update or add checksum xattr matching current file contents */
-	fprintf(stderr, "       %s -U file...\n", __progname);
+	fprintf(stderr, "   %s -U file...\n", __progname);
 	/* Remove checksum xattr from files */
-	fprintf(stderr, "       %s -R file...\n", __progname);
+	fprintf(stderr, "   %s -R file...\n", __progname);
 	/* Show checksum xattr */
-	fprintf(stderr, "       %s -L file...\n", __progname);
+	fprintf(stderr, "   %s -L file...\n", __progname);
 	/* Add skipsum xattr */
-	fprintf(stderr, "       %s -S file...\n", __progname);
+	fprintf(stderr, "   %s -S file...\n", __progname);
 	/* Clear skipsum xattr */
-	fprintf(stderr, "       %s -C file...\n", __progname);
+	fprintf(stderr, "   %s -C file...\n", __progname);
 
 	for (i = 0; i < sizeof(commands)/sizeof(struct cmd); i++) {
-		if (commands[i].file) {
-			fprintf(stderr,
-			    "       %s %s file...\n", __progname,
-			    commands[i].command);
-		} else {
-			fprintf(stderr,
-			    "       %s %s\n", __progname,
-			    commands[i].command);
-		}
+		fprintf(stderr, "       %s %s file...\n", __progname,
+		    commands[i].command);
 	}
 	exit(1);
+}
+
+#define		OPTSIG		256
+#define		OPTSUM		257
+#define		OPTORPHANED	258
+#define		OPTNOTFILE	259
+#define		OPTHASSUM	260
+#define		OPTNOSUM	261
+#define		OPTHASSIG	262
+#define		OPTNOSIG	263
+
+static void
+set_flag_opt(int opt)
+{
+	unsigned int		flag;
+
+	switch(opt) {
+	case OPTHASSIG:		flag = SFSSIG_OPT_HASSIG; break;
+	case OPTNOSIG:		flag = SFSSIG_OPT_NOSIG; break;
+	case OPTHASSUM:		flag = SFSSIG_OPT_HASSUM; break;
+	case OPTNOSUM:		flag = SFSSIG_OPT_NOSUM; break;
+	case OPTNOTFILE:	flag = SFSSIG_OPT_NOTFILE; break;
+	case OPTORPHANED:	flag = SFSSIG_OPT_ORPH; break;
+	case OPTSUM:		flag = SFSSIG_OPT_SUM; break;
+	case OPTSIG:		flag = SFSSIG_OPT_SIG; break;
+	case 'n':		flag = SFSSIG_OPT_NOACTION; break;
+	case 'l':		flag = SFSSIG_OPT_LN; break;
+	case 'r':		flag = SFSSIG_OPT_TREE; break;
+	case 'i':		flag = SFSSIG_OPT_FORCE; break;
+	default:
+		usage();
+	}
+	if (opts & flag)
+		usage();
+	opts |= flag;
+	if ((opts & SFSSIG_OPT_HASSIG) && (opts & SFSSIG_OPT_NOSIG))
+		usage();
+	if ((opts & SFSSIG_OPT_HASSUM) && (opts & SFSSIG_OPT_NOSUM))
+		usage();
+	if ((opts & SFSSIG_OPT_NOTFILE) && (opts & SFSSIG_OPT_ORPH))
+		usage();
+	/* XXX CEH: Do we really want to allow --sig _and_ --sum? */
 }
 
 /*
@@ -147,127 +190,53 @@ usage(void)
 int
 main(int argc, char *argv[])
 {
-	unsigned char	 argcsum[SHA256_DIGEST_LENGTH];
-	struct passwd	*pw = NULL;
+	struct anoubis_sig	*as = NULL;
+	uid_t			 sfs_uid = 0;
+	struct passwd	*sfs_pw = NULL;
+	unsigned char	 sys_argcsum[SHA256_DIGEST_LENGTH];
 	unsigned int	 i = 0, k;
-	const char	*name = NULL;
-	char		*argcsumstr = NULL;
-	char		*file = NULL;
-	char		*command = NULL;
-	char		*arg = NULL;
-	char		 realarg[PATH_MAX];
-	char		 linkpath[PATH_MAX];
+	char		*sys_argcsumstr = NULL;
+	char		*sfs_infile = NULL;
+	char		*sfs_command = NULL;
+	char		*sfs_cmdarg = NULL;
 	char		*linkfile = NULL;
-	char		**args = NULL;
+	char		 linkpath[PATH_MAX];
+	char		 realarg[PATH_MAX];
+	char		**sfs_argv = NULL;
 	char		 testarg;
-	char		 ch;
+	int		 ch;
 	int		 j;
-	int		 file_cnt = 0;
 	int		 syssigmode = 0;
-	int		 ret = 0;
-	int		 options_index = 0;
-	int		 done = 0;
+	int		 sfs_argc = 0;
 	int		 error = 0;
+	int		 done = 0;
+	int		 ret = 0;
+	int		 got_uid = 0;
+	int		 got_cert = 0;
+	int		 dofilter = 0;
 
 	struct option options [] = {
-		{ "sig", 0, 0, 0 },
-		{ "sum", 0, 0, 0 },
-		{ "orphaned", 0, 0, 0 },
-		{ "notfile", 0, 0, 0 },
-		{ "hassum", 0, 0, 0 },
-		{ "hasnosum", 0, 0, 0 },
-		{ "hassig", 0, 0, 0 },
-		{ "hasnosig", 0, 0, 0 },
-		{ "cert", 1, 0, 0 },
+		{ "sig", no_argument, NULL, OPTSIG },
+		{ "sum", no_argument, NULL, OPTSUM },
+		{ "orphaned", no_argument, NULL, OPTORPHANED },
+		{ "notfile", no_argument, NULL, OPTNOTFILE },
+		{ "hassum", no_argument, NULL, OPTHASSUM },
+		{ "hasnosum", no_argument, NULL, OPTNOSUM },
+		{ "hassig", no_argument, NULL, OPTHASSIG },
+		{ "hasnosig", no_argument, NULL, OPTNOSIG },
+		{ "recursive", no_argument, NULL, 'r' },
+		{ "cert", required_argument, NULL, 'c' },
+		{ "key", required_argument, NULL, 'k' },
+		{ "uid", required_argument, NULL, 'u' },
 		{ 0, 0, 0, 0 }
 	};
 
-	while ((ch = getopt_long(argc, argv, "A:URLCSFf:k:u:o:nlidvr",
-	    options, &options_index)) != -1) {
+	while ((ch = getopt_long(argc, argv, "A:URLCSf:c:k:u:o:nlidvr",
+	    options, NULL)) != -1) {
+		/* No more options are allowed after a syssig option. */
+		if (syssigmode > 0)
+			usage();
 		switch (ch) {
-		case 0:
-			name = options[options_index].name;
-			if (!name)
-				return 1;
-			if (!strcmp(name, "sig"))
-				opts |= SFSSIG_OPT_SIG;
-			else if (!strcmp(name, "sum"))
-				opts |= SFSSIG_OPT_SUM;
-			else if (!strcmp(name, "cert")) {
-				if (!strcmp(optarg, "all") &&
-				    (geteuid() == 0)) {
-					checksum_flag |= (ANOUBIS_CSUM_KEY_ALL|
-					    ANOUBIS_CSUM_KEY|ANOUBIS_CSUM_ALL);
-				} else {
-					cert = strdup(optarg);
-					if (!cert) {
-						perror(optarg);
-						return 1;
-					}
-				}
-			} else if (!strcmp(name, "orphaned")) {
-				if (opts & SFSSIG_OPT_NOTFILE) {
-					fprintf(stderr, "You can use orphaned "
-					    "or notfile not both\n");
-					usage();
-					/* NOTREACHED */
-				}
-				opts |= (SFSSIG_OPT_FILTER|SFSSIG_OPT_ORPH);
-			} else if (!strcmp(name, "notfile")) {
-				if (opts & SFSSIG_OPT_ORPH) {
-					fprintf(stderr, "You can use orphaned "
-					    "or notfile not both\n");
-					usage();
-					/* NOTREACHED */
-				}
-				opts |= (SFSSIG_OPT_FILTER|SFSSIG_OPT_NOTFILE);
-			} else if (!strcmp(name, "hassum")) {
-				if (opts & SFSSIG_OPT_NOSUM) {
-					fprintf(stderr, "You can use hassum "
-					    "or hasnosum not both\n");
-					usage();
-					/* NOTREACHED */
-				}
-				opts |= (SFSSIG_OPT_FILTER|SFSSIG_OPT_HASSUM);
-			} else if (!strcmp(name, "hasnosum")) {
-				if (opts & SFSSIG_OPT_HASSUM) {
-					fprintf(stderr, "You can use hassum "
-					    "or hasnosum not both\n");
-					usage();
-					/* NOTREACHED */
-				}
-				opts |= (SFSSIG_OPT_FILTER|SFSSIG_OPT_NOSUM);
-			} else if (!strcmp(name, "hassig")) {
-				if (opts & SFSSIG_OPT_NOSIG) {
-					fprintf(stderr, "You can use hassig "
-					    "or hasnosig not both\n");
-					usage();
-					/* NOTREACHED */
-				}
-				opts |= (SFSSIG_OPT_FILTER|SFSSIG_OPT_HASSIG);
-			} else if (!strcmp(name, "hasnosig")) {
-				if (opts & SFSSIG_OPT_HASSIG) {
-					fprintf(stderr, "You can use hassig or "
-					    "hasnosig not both\n");
-					usage();
-					/* NOTREACHED */
-				}
-				opts |= (SFSSIG_OPT_FILTER|SFSSIG_OPT_NOSIG);
-
-			}
-			break;
-		case 'n':
-			opts |= SFSSIG_OPT_NOACTION;
-			break;
-		case 'r':
-			opts |= SFSSIG_OPT_TREE;
-			break;
-		case 'i':
-			opts |= SFSSIG_OPT_FORCE;
-			break;
-		case 'l':
-			opts |= SFSSIG_OPT_LN;
-			break;
 		case 'v':
 			if (opts & SFSSIG_OPT_VERBOSE)
 				opts |= SFSSIG_OPT_VERBOSE2;
@@ -278,35 +247,54 @@ main(int argc, char *argv[])
 				opts |= SFSSIG_OPT_DEBUG2;
 			opts |= SFSSIG_OPT_DEBUG;
 			break;
+		case OPTORPHANED:
+		case OPTNOTFILE:
+		case OPTHASSUM:
+		case OPTNOSUM:
+		case OPTHASSIG:
+		case OPTNOSIG:
+			opts |= SFSSIG_OPT_FILTER;
+			set_flag_opt(ch);
+			break;
+		case OPTSUM:
+		case OPTSIG:
+		case 'n':
+		case 'r':
+		case 'i':
+		case 'l':
+			set_flag_opt(ch);
+			break;
 		case 'o':
-			exim_file = optarg;
+			if (out_file)
+				usage();
+			out_file = optarg;
 			break;
 		case 'k':
-			keyfile = strdup(optarg);
-			if (!keyfile) {
-				perror(optarg);
-				return 1;
-			}
+			if (sfs_key)
+				usage();
+			sfs_key = optarg;
 			break;
 		case 'f':
-			file = optarg;
+			if (sfs_infile)
+				usage();
+			sfs_infile = optarg;
 			break;
+		/* uid */
 		case 'u':
-			if (geteuid() != 0) {
-				fprintf(stderr,
-				    "You need root privilegs to do this.\n");
-				return 1;
-			}
+			if (got_uid)
+				usage();
+			got_uid = 1;
 			if (strcmp(optarg, "all") == 0) {
 				checksum_flag |= (ANOUBIS_CSUM_UID_ALL|
 				    ANOUBIS_CSUM_UID|ANOUBIS_CSUM_ALL);
-				uid = 0;
+				sfs_uid = 0;
 			} else {
 				checksum_flag |= ANOUBIS_CSUM_UID;
-				if (sscanf(optarg, "%u%c", &uid, &testarg)
+				if (sscanf(optarg, "%u%c", &sfs_uid, &testarg)
 				    != 1) {
-					if ((pw = getpwnam(optarg)) != NULL) {
-						uid = pw->pw_uid;
+					if ((sfs_pw = getpwnam(optarg))
+					    != NULL) {
+						sfs_uid = sfs_pw->pw_uid;
 					} else {
 						fprintf(stderr, "Unknown "
 						    "Username: %s\n", optarg);
@@ -315,14 +303,26 @@ main(int argc, char *argv[])
 				}
 			}
 			break;
+		case 'c':
+			if (got_cert)
+				usage();
+			got_cert = 1;
+			if (strcmp(optarg, "all") == 0) {
+				checksum_flag |= (ANOUBIS_CSUM_KEY_ALL
+				    | ANOUBIS_CSUM_KEY | ANOUBIS_CSUM_ALL);
+			} else {
+				sfs_cert = optarg;
+			}
+			break;
 		case 'A':
-			argcsumstr = optarg;
+			sys_argcsumstr = optarg;
 			/* FALLTROUGH */
 		case 'U':
 		case 'R':
 		case 'L':
 		case 'S':
 		case 'C':
+			/* Only one syssig options is allowd. */
 			if (syssigmode)
 				usage();
 			syssigmode = ch;
@@ -331,25 +331,31 @@ main(int argc, char *argv[])
 			usage();
 			/* NOTREACHED */
 		}
+		/*
+		 * We managed to parse an option that is not a syssig
+		 * option. This means that syssig options are not allowed
+		 * for now on.
+		 */
+		if (syssigmode == 0)
+			syssigmode = -1;
 	}
 
 	argc -= optind;
 	argv += optind;
 
-	if (argc <= 0 && !file) {
+	if (argc <= 0 && sfs_infile == NULL)
 		usage();
-	}
 
-	if (syssigmode != 0) {
+	if (syssigmode > 0) {
 		switch(syssigmode) {
 		case 'A':
 			if (argc > 1)
 				usage();
-			if (strlen(argcsumstr) != 2 * SHA256_DIGEST_LENGTH)
+			if (strlen(sys_argcsumstr) != 2 * SHA256_DIGEST_LENGTH)
 				usage();
-			if (str2hash(argcsumstr, argcsum) < 0)
+			if (str2hash(sys_argcsumstr, sys_argcsum) < 0)
 				usage();
-			return syssig_add(argv[0], argcsum);
+			return syssig_add(argv[0], sys_argcsum);
 		case 'R':
 			return syssig_remove(argc, argv);
 		case 'L':
@@ -366,127 +372,116 @@ main(int argc, char *argv[])
 		}
 		return 1;
 	}
-	command = *argv++;
+	sfs_command = *argv++;
 	argc--;
 
-	if (command == NULL || argc < 0) {
+	if (sfs_command == NULL || argc < 0) {
 		fprintf(stderr, "No command specified\n");
 		usage();
 		/* NOTREACHED */
 	}
 
-	if (file) {
-		args = file_input(&file_cnt, file);
+	if (sfs_infile) {
+		sfs_argv = file_input(&sfs_argc, sfs_infile);
 	} else {
-		args = argv;
-		file_cnt = argc;
+		sfs_argv = argv;
+		sfs_argc = argc;
 	}
 
+	/* In case of export we try to load a key quitely */
+	if (strcmp(sfs_command, "export") == 0) {
+		if (opts & SFSSIG_OPT_TREE)
+			opts &= ~SFSSIG_OPT_TREE;
+		as = load_keys(0, 0, sfs_cert, sfs_key);
+	}
+
+	/* XXX CEH: This is incorrect at least for the --cert all case */
 	if (opts & (SFSSIG_OPT_SIG|SFSSIG_OPT_HASSIG|SFSSIG_OPT_NOSIG)) {
-		if (!strcmp(command, "add"))
-			as = load_keys(1, 1, cert, keyfile);
-		else
-			as = load_keys(0, 1, cert, keyfile);
-		if (!as) {
-			fprintf(stderr, "Couldn't load keys\n");
-			return 1;
-		}
-	}
-
-	if (opts & SFSSIG_OPT_FILTER && !(opts & SFSSIG_OPT_TREE)
-	    && strcmp(command, "list")) {
-		ret = file_cnt;
-		args = filter_args(&ret, args, NULL, as);
-		if (args == NULL && ret != 0) {
-			fprintf(stderr, "Error while procceeding filter\n");
-			return -ret;
-		} else if (args == NULL && ret == 0) {
-			if (opts & SFSSIG_OPT_DEBUG)
-				fprintf(stderr, "No result after filter \n");
-			return 0;
-		}
-		file_cnt = ret;
-	}
-	if ((!strcmp(command, "export")) && (opts & SFSSIG_OPT_TREE))
-		opts &= ~SFSSIG_OPT_TREE;
-
-	ret = 0;
-	for (i = 0; i < sizeof(commands)/sizeof(struct cmd); i++) {
-		if(strcmp(command, commands[i].command) == 0) {
-			for (j = 0; j < file_cnt; j++) {
-				arg = args[j];
-				if (opts & SFSSIG_OPT_LN) {
-					for (k = strlen(arg); k > 0; k--) {
-						if (arg[k] == '/')
-							break;
-					}
-					if (k == 0 && arg[0] != '/') {
-						linkpath[0] = '.';
-						linkpath[1] = '/';
-						linkpath[2] = '\0';
-						linkfile = arg;
-					} else {
-						k++;
-						strlcpy(linkpath, arg,
-						    PATH_MAX);
-						linkpath[k] = '\0';
-						linkfile = arg + k;
-					}
-					if (sfs_realpath(linkpath, realarg)
-					    == NULL) {
-						perror(linkpath);
-						return 1;
-					}
-					if ((arg = build_path(realarg,
-					    linkfile)) == NULL)
-						return 1;
-				} else
-					arg = sfs_realpath(arg, realarg);
-				if (!arg) {
-					perror(args[j]);
-					continue;
-				}
-				if (commands[i].file) {
-					if (arg == NULL) {
-						fprintf(stderr, "No file "
-						    "specified\n");
-						error = 4;
-					} else if (opts & SFSSIG_OPT_TREE) {
-						error = sfs_tree(arg,
-						    commands[i].opt);
-						done = 1;
-					} else {
-						error = ((func_char_t)
-						    commands[i].func)(arg);
-						done = 1;
-					}
-				} else {
-					if (arg != NULL) {
-						fprintf(stderr,
-						    "too many arguments\n");
-						error = 4;
-					} else {
-						error = commands[i].func();
-						done = 1;
-					}
-				}
-				if (error > 0)
-					ret = error;
+		/* We need the private key for 'add' operations only */
+		if (strcmp(sfs_command, "add") == 0) {
+			as = load_keys(1, 1, sfs_cert, sfs_key);
+			if (as == NULL) {
+				fprintf(stderr, "Couldn't load private key"
+				    " or certificate\n");
+				return 1;
+			}
+		} else {
+			as = load_keys(0, 1, sfs_cert, sfs_key);
+			if (as == NULL) {
+				fprintf(stderr, "Couldn't load certificate\n");
+				return 1;
 			}
 		}
 	}
 
-	if (keyfile)
-		free(keyfile);
-	if (cert)
-		free(cert);
+	/*
+	 * If we have to filter for a gerneral command (e.g add)
+	 * we do it here.
+	 */
+	if (opts & SFSSIG_OPT_FILTER && !(opts & SFSSIG_OPT_TREE)
+	    && strcmp(sfs_command, "list") != 0) {
+		dofilter = 1;
+	}
+
+	ret = 0;
+	for (i = 0; i < sizeof(commands)/sizeof(struct cmd); i++) {
+		if(strcmp(sfs_command, commands[i].command) != 0)
+			continue;
+		for (j = 0; j < sfs_argc; j++) {
+			sfs_cmdarg = sfs_argv[j];
+			if (dofilter && !filter_one_file(sfs_cmdarg,
+			    NULL, sfs_uid, as))
+				continue;
+			if (opts & SFSSIG_OPT_LN) {
+				for (k = strlen(sfs_cmdarg); k > 0; k--) {
+					if (sfs_cmdarg[k] == '/')
+						break;
+				}
+				if (k == 0 && sfs_cmdarg[0] != '/') {
+					linkpath[0] = '.';
+					linkpath[1] = '/';
+					linkpath[2] = '\0';
+					linkfile = sfs_cmdarg;
+				} else {
+					k++;
+					strlcpy(linkpath, sfs_cmdarg, PATH_MAX);
+					linkpath[k] = '\0';
+					linkfile = sfs_cmdarg + k;
+				}
+				if (sfs_realpath(linkpath, realarg) == NULL) {
+					perror(linkpath);
+					return 1;
+				}
+				sfs_cmdarg = build_path(realarg, linkfile);
+				errno = ENOMEM;
+			} else {
+				sfs_cmdarg = sfs_realpath(sfs_cmdarg, realarg);
+			}
+			if (!sfs_cmdarg) {
+				perror(sfs_argv[j]);
+				continue;
+			}
+			if (opts & SFSSIG_OPT_TREE) {
+				error = sfs_tree(sfs_cmdarg, commands[i].opt,
+				    sfs_uid, as);
+				done = 1;
+			} else {
+				error = ((func_char_t) commands[i].func)(
+				    sfs_cmdarg, sfs_uid, as);
+				done = 1;
+			}
+			if (error > 0)
+				ret = error;
+		}
+	}
+
 	if (as)
 		anoubis_sig_free(as);
 
 	if (client)
 		destroy_channel();
 
-	if (!done)
+	if (done == 0)
 		usage();
 
 	return ret;
@@ -507,7 +502,8 @@ main(int argc, char *argv[])
  *	------------------
  */
 struct anoubis_transaction *
-sfs_sumop(char *file, int operation, u_int8_t *cs, int cslen, int idlen)
+sfs_sumop(char *file, int operation, u_int8_t *cs, int cslen, int idlen,
+    uid_t uid)
 {
 	struct anoubis_transaction	*t;
 	int				 error = 0;
@@ -515,7 +511,7 @@ sfs_sumop(char *file, int operation, u_int8_t *cs, int cslen, int idlen)
 
 	if (opts & SFSSIG_OPT_DEBUG)
 		fprintf(stderr, ">sfs_sumop\n");
-	if (!client) {
+	if (client == NULL) {
 		error = create_channel();
 		if (error) {
 			fprintf(stderr, "Cannot connect to anoubis daemon\n");
@@ -533,7 +529,7 @@ sfs_sumop(char *file, int operation, u_int8_t *cs, int cslen, int idlen)
 		fprintf(stderr, "start checksum request\n");
 	t = anoubis_client_csumrequest_start(client, operation, file, cs, len,
 	    idlen, uid, checksum_flag);
-	if (!t) {
+	if (t == NULL) {
 		fprintf(stderr, "%s: Cannot send checksum request\n", file);
 		return NULL;
 	}
@@ -564,14 +560,14 @@ request_uids(char *file, int *count)
 	if (opts & SFSSIG_OPT_DEBUG)
 		fprintf(stderr, ">request_uids\n");
 
-	if (!file || !count || !(checksum_flag & ANOUBIS_CSUM_UID_ALL)) {
+	if (!count || !(checksum_flag & ANOUBIS_CSUM_UID_ALL)) {
 		if (opts & SFSSIG_OPT_DEBUG)
 			fprintf(stderr, "internal error in requesting uids\n");
 		return NULL;
 	}
 
-	t = sfs_sumop(file, ANOUBIS_CHECKSUM_OP_UID_LIST, NULL, 0, 0);
-	if (!t)
+	t = sfs_sumop(file, ANOUBIS_CHECKSUM_OP_UID_LIST, NULL, 0, 0, 0);
+	if (t == NULL)
 		return NULL;
 	if (t->result) {
 		fprintf(stderr, "%s Checksum Request failed: %d (%s)\n", file,
@@ -581,14 +577,14 @@ request_uids(char *file, int *count)
 	}
 
 	result = anoubis_csum_list(t->msg, &cnt);
-	if (!result || cnt <= 0) {
+	if (result == NULL || cnt <= 0) {
 		if (opts & SFSSIG_OPT_DEBUG2)
 			fprintf(stderr, "no result.\n");
 		anoubis_transaction_destroy(t);
 		return NULL;
 	}
 	uids = calloc(cnt, sizeof(uid_t));
-	if (!uids) {
+	if (uids == NULL) {
 		perror(file);
 		anoubis_transaction_destroy(t);
 		return NULL;
@@ -607,7 +603,7 @@ request_uids(char *file, int *count)
 
 
 static int
-sfs_add(char *file)
+sfs_add(char *file, uid_t sfs_uid, struct anoubis_sig *as)
 {
 	struct anoubis_transaction	*t = NULL;
 	unsigned int			 siglen = 0, k;
@@ -624,15 +620,8 @@ sfs_add(char *file)
 	if (opts & SFSSIG_OPT_DEBUG)
 		fprintf(stderr, ">sfs_add\n");
 
-	if ((opts & SFSSIG_OPT_SIG)) {
-		if ((as == NULL) || (as->pkey == NULL) ||
-		    (as->cert == NULL)) {
-			fprintf(stderr, "You must specify a keyfile to add a"
-			    " signature\n");
-			return 1;
-		}
-	}
-	if (!client) {
+	/* We need a create_channel to perform a sfsdisable */
+	if (client == NULL) {
 		error = create_channel();
 		if (error) {
 			perror("sfs_add");
@@ -646,10 +635,7 @@ sfs_add(char *file)
 	}
 	if (ret < 0) {
 		errno = -ret;
-		if (opts & SFSSIG_OPT_DEBUG) {
-			fprintf(stderr, "%s: ", file);
-			perror("anoubis_csum_calc");
-		}
+		perror(file);
 		return 1;
 	}
 	if (len != ANOUBIS_CS_LEN) {
@@ -662,8 +648,8 @@ sfs_add(char *file)
 			fprintf(stderr, "Error while anoubis_sign_csum\n");
 			return 1;
 		}
-		if ((msg = calloc((siglen + as->idlen), sizeof(u_int8_t)))
-		    == NULL) {
+		msg = calloc((siglen + as->idlen), sizeof(u_int8_t));
+		if (msg == NULL) {
 			perror("sfs_add");
 			free(sig);
 			return 1;
@@ -677,28 +663,19 @@ sfs_add(char *file)
 			return 1;
 		}
 	} else {
-		result = calloc(1, sizeof(uid_t));
-		if (!result) {
-			perror("sfs_add");
-			return 1;
-		}
-		result[0] = uid;
+		result = &sfs_uid;
 		cnt = 1;
 	}
 	for (i = 0; i < cnt; i++) {
-		uid = result[i];
 		if (opts & SFSSIG_OPT_SIG) {
 			t = sfs_sumop(file, ANOUBIS_CHECKSUM_OP_ADDSIG, msg,
-			    siglen, as->idlen);
+			    siglen, as->idlen, result[i]);
 		} else {
 			t = sfs_sumop(file, ANOUBIS_CHECKSUM_OP_ADDSUM, cs,
-			    len, 0);
+			    len, 0, result[i]);
 		}
-		if (!t) {
-			if (opts & SFSSIG_OPT_DEBUG)
-				fprintf(stderr, "sfs_sumop: returned NULL\n");
+		if (t == NULL)
 			return 1;
-		}
 		if (t->result) {
 			fprintf(stderr, "Checksum Request failed: %d (%s)\n",
 			t->result, strerror(t->result));
@@ -722,10 +699,9 @@ sfs_add(char *file)
 			printf("\n");
 		}
 	}
-
 	if (msg)
 		free(msg);
-	if (result)
+	if (result && result != &sfs_uid)
 		free(result);
 
 	if (opts & SFSSIG_OPT_DEBUG)
@@ -735,7 +711,7 @@ sfs_add(char *file)
 }
 
 static int
-sfs_del(char *file)
+sfs_del(char *file, uid_t sfs_uid, struct anoubis_sig *as)
 {
 	struct anoubis_transaction	*t;
 	uid_t				*result = NULL;
@@ -747,42 +723,23 @@ sfs_del(char *file)
 	if (opts & SFSSIG_OPT_DEBUG2)
 		fprintf(stderr, "%s\n", file);
 
-	if (opts & SFSSIG_OPT_SIG) {
-		if ((as == NULL) || (as->keyid == NULL)) {
-			fprintf(stderr, "You need to specify a\
-			    certifcate\n");
-			return 1;
-		}
-	}
-
 	if (checksum_flag & ANOUBIS_CSUM_UID_ALL) {
 		result = request_uids(file, &cnt);
-		if (!result) {
+		if (result == NULL)
 			return 1;
-		}
 	} else {
-		result = calloc(1, sizeof(uid_t));
-		if (!result) {
-			perror("sfs_del");
-			return 1;
-		}
-		result[0] = uid;
+		result = &sfs_uid;
 		cnt = 1;
 	}
-	for ( i = 0; i < cnt; i++) {
-		uid = result[i];
+	for (i = 0; i < cnt; i++) {
 		if (opts & SFSSIG_OPT_SIG)
 			t = sfs_sumop(file, ANOUBIS_CHECKSUM_OP_DELSIG,
-			    as->keyid, 0, as->idlen);
+			    as->keyid, 0, as->idlen, result[i]);
 		else
 			t = sfs_sumop(file, ANOUBIS_CHECKSUM_OP_DEL, NULL,
-			    0, 0);
-
-		if (!t) {
-			if (opts & SFSSIG_OPT_DEBUG)
-				fprintf(stderr, "sfs_sumop returned NULL\n");
+			    0, 0, result[i]);
+		if (t == NULL)
 			return 1;
-		}
 		if (t->result) {
 			if (t->result == ENOENT) {
 				if (opts & SFSSIG_OPT_VERBOSE)
@@ -797,10 +754,8 @@ sfs_del(char *file)
 			return 1;
 		}
 	}
-
-	if (result)
+	if (result && result != &sfs_uid)
 		free(result);
-
 	if (opts & SFSSIG_OPT_VERBOSE2)
 		printf("del: ");
 	if (opts & SFSSIG_OPT_VERBOSE)
@@ -812,19 +767,19 @@ sfs_del(char *file)
 }
 
 static int
-sfs_get(char *file)
+sfs_get(char *file, uid_t uid, struct anoubis_sig *as)
 {
-	return __sfs_get(file, 0);
+	return __sfs_get(file, 0, uid, as);
 }
 
 static int
-sfs_validate(char *file)
+sfs_validate(char *file, uid_t uid, struct anoubis_sig *as)
 {
-	return __sfs_get(file, 1);
+	return __sfs_get(file, 1, uid, as);
 }
 
 static int
-__sfs_get(char *file, int vflag)
+__sfs_get(char *file, int vflag, uid_t sfs_uid, struct anoubis_sig *as)
 {
 	struct anoubis_transaction	*t;
 	int				 i, j;
@@ -838,21 +793,18 @@ __sfs_get(char *file, int vflag)
 
 	if (opts & SFSSIG_OPT_DEBUG) {
 		fprintf(stderr, ">sfs_get\n");
-		fprintf(stderr, " >path %s\n", file);
-	}
-
-	if (opts & SFSSIG_OPT_SIG) {
-		if ((as == NULL) || (as->keyid == NULL)) {
-			fprintf(stderr, "You need to specify a "
-			    "certifcate\n");
-			return 1;
-		}
+		fprintf(stderr, "path %s\n", file);
 	}
 
 	user = geteuid();
 
+	/*
+	 * If vflag is set we validate so we first need to
+	 * calculate the actual checksum of the file
+	 */
 	if (vflag) {
-		if (!client) {
+		/* We need a create_channel to perform a sfsdisable */
+		if (client == NULL) {
 			error = create_channel();
 			if (error) {
 				perror("sfs_validate");
@@ -866,7 +818,6 @@ __sfs_get(char *file, int vflag)
 				perror("anoubis_csum_calc");
 			return 1;
 		}
-
 		if (len != ANOUBIS_CS_LEN) {
 			fprintf(stderr, "Bad csum length from"
 			    "anoubis_csum_calc\n");
@@ -875,34 +826,23 @@ __sfs_get(char *file, int vflag)
 	}
 	if (checksum_flag & ANOUBIS_CSUM_UID_ALL) {
 		result = request_uids(file, &cnt);
-		if (!result) {
+		if (result == NULL)
 			return 1;
-		}
 	} else {
-		result = calloc(1, sizeof(uid_t));
-		if (!result) {
-			perror("sfs_get");
-			return 1;
-		}
-		result[0] = uid;
+		result = &sfs_uid;
 		cnt = 1;
 	}
-	for ( j = 0; j < cnt; j++) {
+	for (j = 0; j < cnt; j++) {
 		if (opts & SFSSIG_OPT_DEBUG2)
 			fprintf(stderr, "sfs_get for uid %d\n", result[j]);
-		uid = result[j];
-
 		if (opts & SFSSIG_OPT_SIG)
 			t = sfs_sumop(file, ANOUBIS_CHECKSUM_OP_GETSIG,
-			    as->keyid, 0, as->idlen);
+			    as->keyid, 0, as->idlen, result[j]);
 		else
 			t = sfs_sumop(file, ANOUBIS_CHECKSUM_OP_GET, NULL, 0,
-			    0);
-		if (!t) {
-			if (opts & SFSSIG_OPT_DEBUG2)
-				fprintf(stderr, "sfs_sumop returned NULL");
+			    0, result[j]);
+		if (t == NULL)
 			return 1;
-		}
 		if (t->result) {
 			if (t->result == ENOENT) {
 				if (opts & SFSSIG_OPT_VERBOSE)
@@ -916,16 +856,14 @@ __sfs_get(char *file, int vflag)
 			anoubis_transaction_destroy(t);
 			return 1;
 		}
+		if (!VERIFY_LENGTH(t->msg, sizeof(Anoubis_AckPayloadMessage)
+		    + SHA256_DIGEST_LENGTH)) {
+			fprintf(stderr, "Short checksum in reply (len=%d)\n",
+			    t->msg->length);
+			anoubis_transaction_destroy(t);
+			return 1;
+		}
 		if (opts & SFSSIG_OPT_SIG) {
-			if (!VERIFY_LENGTH(t->msg,
-			    sizeof(Anoubis_AckPayloadMessage)
-			    + SHA256_DIGEST_LENGTH)) {
-				fprintf(stderr,
-				    "Short checksum in reply (len=%d)\n",
-				    t->msg->length);
-				anoubis_transaction_destroy(t);
-				return 1;
-			}
 			if (vflag) {
 				if (memcmp(t->msg->u.ackpayload->payload,
 				    val_check, ANOUBIS_CS_LEN))
@@ -945,23 +883,13 @@ __sfs_get(char *file, int vflag)
 			for (i=0; i<SHA256_DIGEST_LENGTH; ++i)
 				printf("%02x",
 				    t->msg->u.ackpayload->payload[i]);
-				printf("\n");
-
+			printf("\n");
 			for (i = SHA256_DIGEST_LENGTH; i
 			    <(SHA256_DIGEST_LENGTH + siglen); i++)
 				printf("%02x",
 				    t->msg->u.ackpayload->payload[i]);
 			printf("\n");
 		} else {
-			if (!VERIFY_LENGTH(t->msg,
-			    sizeof(Anoubis_AckPayloadMessage)
-			    + SHA256_DIGEST_LENGTH)) {
-				fprintf(stderr,
-				    "Short checksum in reply (len=%d)\n",
-				    t->msg->length);
-				anoubis_transaction_destroy(t);
-				return 1;
-			}
 			if (vflag) {
 				if (memcmp(t->msg->u.ackpayload->payload,
 				    val_check, ANOUBIS_CS_LEN))
@@ -982,18 +910,15 @@ __sfs_get(char *file, int vflag)
 		}
 		anoubis_transaction_destroy(t);
 	}
-
-	if (result)
+	if (result && result != &sfs_uid)
 		free(result);
-
 	if (opts & SFSSIG_OPT_DEBUG)
 		fprintf(stderr, "<sfs_get\n");
-
 	return 0;
 }
 
 static int
-sfs_list(char *file)
+sfs_list(char *file, uid_t sfs_uid, struct anoubis_sig *as)
 {
 	struct anoubis_transaction	 *t;
 	struct dirent			 *d_ent;
@@ -1003,16 +928,12 @@ sfs_list(char *file)
 	char				 *tmp = NULL;
 	DIR				 *dirp;
 	int				  sfs_cnt = 0;
-	int				  fil_cnt = 0;
 	int				  len;
 	int				  i;
 	int				  ret;
 
 	if (opts & SFSSIG_OPT_DEBUG)
 		fprintf(stderr, ">sfs_list\n");
-
-	if (!file)
-		return 1;
 
 	/*
 	 * If file is regular there is no need to use
@@ -1025,9 +946,9 @@ sfs_list(char *file)
 		perror(file);
 		return 1;
 	}
-	if (S_ISREG(sb.st_mode)) {
-		return sfs_get(file);
-	}
+	/* If this is a regular file we just doing a sfs_get */
+	if (S_ISREG(sb.st_mode))
+		return sfs_get(file, sfs_uid, as);
 
 	/*
 	 * For all cases where we have to
@@ -1038,11 +959,9 @@ sfs_list(char *file)
 	    SFSSIG_OPT_ORPH|
 	    SFSSIG_OPT_HASSIG|
 	    SFSSIG_OPT_HASSUM))) {
-
 		len = strlen(file) - 1;
 		if (len < 0)
 			return 1;
-
 		/*
 		 * Remove trailing slash but leave the slash if file is the
 		 * root-directory.
@@ -1051,31 +970,22 @@ sfs_list(char *file)
 			file[len] = '\0';
 
 		if (opts & SFSSIG_OPT_SIG) {
-			if ((as == NULL) || (as->keyid == NULL)) {
-				fprintf(stderr, "You need to specify a"
-				    " certifcate\n");
-				return 1;
-			}
 			t = sfs_sumop(file, ANOUBIS_CHECKSUM_OP_LIST,
-			    as->keyid, 0, as->idlen);
-
+			    as->keyid, 0, as->idlen, sfs_uid);
 		} else {
 			if (checksum_flag & ANOUBIS_CSUM_ALL)
 				t = sfs_sumop(file,
-				    ANOUBIS_CHECKSUM_OP_LIST_ALL, NULL, 0, 0);
+				    ANOUBIS_CHECKSUM_OP_LIST_ALL, NULL, 0, 0,
+				    0);
 			else
 				t = sfs_sumop(file, ANOUBIS_CHECKSUM_OP_LIST,
-				    NULL, 0, 0);
+				    NULL, 0, 0, sfs_uid);
 		}
-		if (!t) {
-			if (opts & SFSSIG_OPT_DEBUG)
-				fprintf(stderr, "sfs_sumop returned NULL\n");
+		if (t == NULL)
 			return 1;
-		}
 		if (t->result) {
 			if (t->result == ENOENT && (opts & SFSSIG_OPT_TREE))
 				return 1;
-
 			fprintf(stderr, "%s: Checksum Request failed: %d "
 			    "(%s)\n", file, t->result, strerror(t->result));
 			anoubis_transaction_destroy(t);
@@ -1083,11 +993,11 @@ sfs_list(char *file)
 		}
 		result = anoubis_csum_list(t->msg, &sfs_cnt);
 		if (!result) {
+			/* XXX KM: this code has to be tested */
 			fprintf(stderr, "anoubis_csum_list: no result\n");
 			anoubis_transaction_destroy(t);
 			return 1;
 		}
-
 		anoubis_transaction_destroy(t);
 	} else {
 		dirp = opendir(file);
@@ -1107,7 +1017,7 @@ sfs_list(char *file)
 					continue;
 				}
 			} else {
-				if (!filter_hassum(tmp)) {
+				if (!filter_hassum(tmp, sfs_uid)) {
 					free(tmp);
 					continue;
 				}
@@ -1126,27 +1036,25 @@ sfs_list(char *file)
 		}
 		closedir(dirp);
 	}
-
 	if (opts & SFSSIG_OPT_FILTER) {
-		fil_cnt = sfs_cnt;
-		filter = filter_args(&fil_cnt, result, file, as);
-		if (!filter && fil_cnt < 0) {
-			fprintf(stderr, "Error while filter\n");
-			goto err;
+		int src, dst;
+		for (src=dst=0; src < sfs_cnt; ++src) {
+			if (!filter_one_file(result[src], file, sfs_uid, as)) {
+				free(result[src]);
+				continue;
+			}
+			result[dst++] = result[src];
 		}
-		for (i = 0; i < sfs_cnt; i++)
-			free(result[i]);
-		free(result);
-		result = filter;
-		sfs_cnt = fil_cnt;
+		sfs_cnt = dst;
 	}
-
+	/* XXX KM: as [CEH] showed we should have an sfs_get here
+	 * XXX KM: to have similar output
+	 */
 	for (i = 0; i < sfs_cnt; i++) {
 		len = strlen(result[i]) - 1;
 		if (result[i][len] == '/')
 			continue;
-
-		/* Avoid double slash at the beginning */
+		/* Avoid double slash at the beginning from root-dir */
 		if (strcmp(file, "/") != 0)
 			printf("%s/%s\n", file, result[i]);
 		else
@@ -1165,15 +1073,13 @@ err:
 }
 
 static int
-sfs_add_tree(char *path, int op)
+sfs_add_tree(char *path, int op, uid_t sfs_uid, struct anoubis_sig *as)
 {
 	struct dirent	*d_ent;
 	struct stat	 sb;
 	char		*tmp = NULL;
 	DIR		*dirp;
 	int		 ret = 0;
-	int		 fil = 1;
-	char		 *filter[1];
 	int		 len;
 
 	if (opts & SFSSIG_OPT_DEBUG)
@@ -1202,7 +1108,7 @@ sfs_add_tree(char *path, int op)
 		case ENOENT:
 		case ENOMEM:
 		case ENOTDIR:
-			return sfs_add(path);
+			return sfs_add(path, sfs_uid, as);
 		default:
 			return 0;
 		}
@@ -1213,69 +1119,35 @@ sfs_add_tree(char *path, int op)
 			continue;
 
 		if ((tmp = build_path(path, d_ent->d_name)) == NULL) {
-				perror("asprintf");
-				ret = 1;
-				goto out;
+			perror("asprintf");
+			ret = 1;
+			goto out;
 		}
 
+		if (d_ent->d_type == DT_UNKNOWN) {
+			if (stat(tmp, &sb) == 0) {
+				if (S_ISREG(sb.st_mode)) {
+					d_ent->d_type = DT_REG;
+				} else if (S_ISDIR(sb.st_mode)) {
+					d_ent->d_type = DT_DIR;
+				}
+			}
+		}
 		switch (d_ent->d_type) {
 		case DT_DIR:
-			ret = sfs_add_tree(tmp, op);
-			if (ret != 0) {
+			ret = sfs_add_tree(tmp, op, sfs_uid, as);
+			if (ret != 0)
 				goto out;
-			}
 			break;
 		case DT_REG:
 			if (opts & SFSSIG_OPT_FILTER) {
-				fil = 1;
-				filter[0] = strdup(tmp);
-				if (!filter[0])
-					return -1;
-				filter_args(&fil, filter, NULL, as);
-				if (fil == 0) {
-					if (tmp)
-						free(tmp);
-					tmp = NULL;
-					ret = 0;
+				if (!filter_one_file(tmp, NULL, sfs_uid, as))
 					break;
-				}
 			}
-			ret = sfs_add(tmp);
-			break;
-		case DT_UNKNOWN:
-			ret = stat(tmp, &sb);
-			if (ret < 0) {
-				if (tmp)
-					free(tmp);
-				tmp = NULL;
-				ret = 0;
-				break;
-			}
-			if (S_ISDIR(sb.st_mode)) {
-				ret = sfs_add_tree(tmp, op);
-				if (ret != 0) {
-					goto out;
-				}
-			}
-			else if (S_ISREG(sb.st_mode)) {
-				if (opts & SFSSIG_OPT_FILTER) {
-					fil = 1;
-					filter[0] = strdup(tmp);
-					if (!filter[0])
-						return -1;
-					filter_args (&fil, filter, NULL, as);
-					if (fil == 0) {
-						if (tmp)
-							free(tmp);
-						tmp = NULL;
-						ret = 0;
-						break;
-					}
-				}
-				ret = sfs_add(tmp);
-			}
+			ret = sfs_add(tmp, sfs_uid, as);
 			break;
 		default:
+			ret = 0;
 			break;
 		}
 		if (tmp)
@@ -1294,7 +1166,7 @@ out:
 }
 
 static int
-sfs_tree(char *path, int op)
+sfs_tree(char *path, int op, uid_t sfs_uid, struct anoubis_sig *as)
 {
 	struct anoubis_transaction *t = NULL;
 	struct dirent	*d_ent = NULL;
@@ -1303,7 +1175,6 @@ sfs_tree(char *path, int op)
 	char		*tmp = NULL;
 	char		**result = NULL;
 	char		**tmpalloc = NULL;
-	char		 *filter[1];
 	int		 ret = 0;
 	int		 len;
 	int		 k = 0;
@@ -1315,7 +1186,7 @@ sfs_tree(char *path, int op)
 		fprintf(stderr, "path: %s\nop: %d\n", path, op);
 
 	if (op == ANOUBIS_CHECKSUM_OP_ADDSUM)
-		return sfs_add_tree(path, op);
+		return sfs_add_tree(path, op, sfs_uid, as);
 
 	if (!path)
 		return 1;
@@ -1341,28 +1212,18 @@ sfs_tree(char *path, int op)
 		tmp = strdup(path);
 
 		if (opts & SFSSIG_OPT_SIG) {
-			if ((as == NULL) || (as->keyid == NULL)) {
-				fprintf(stderr, "You need to specify a\
-				    certifcate\n");
-				return 1;
-			}
 			t = sfs_sumop(tmp, ANOUBIS_CHECKSUM_OP_LIST,
-			    as->keyid, 0, as->idlen);
+			    as->keyid, 0, as->idlen, 0);
 		} else {
 			if (checksum_flag & ANOUBIS_CSUM_ALL)
 				t = sfs_sumop(tmp, ANOUBIS_CHECKSUM_OP_LIST_ALL,
-				    NULL, 0, 0);
+				    NULL, 0, 0, sfs_uid);
 			else
 				t = sfs_sumop(tmp, ANOUBIS_CHECKSUM_OP_LIST,
-				    NULL, 0, 0);
+				    NULL, 0, 0, sfs_uid);
 		}
-		if (!t) {
-			if (SFSSIG_OPT_DEBUG)
-				fprintf(stderr, "sfs_sumop returned NULL: %s",
-				    tmp);
+		if (t == NULL)
 			return 1;
-		}
-
 		if (t->result) {
 			if (t->result == ENOENT && (opts & SFSSIG_OPT_TREE))
 				return 1;
@@ -1395,13 +1256,13 @@ sfs_tree(char *path, int op)
 			if ((tmp = build_path(path, d_ent->d_name)) == NULL)
 				goto out;
 			if (opts & SFSSIG_OPT_SIG) {
-				if (!filter_hassig(tmp,as)) {
+				if (!filter_hassig(tmp, as)) {
 					free(tmp);
 					tmp = NULL;
 					continue;
 				}
 			} else {
-				if (!filter_hassum(tmp)) {
+				if (!filter_hassum(tmp, sfs_uid)) {
 					free(tmp);
 					tmp = NULL;
 					continue;
@@ -1427,8 +1288,7 @@ sfs_tree(char *path, int op)
 		free(tmp);
 	tmp = NULL;
 
-	for (j = 0; j < k; j++)
-	{
+	for (j = 0; j < k; j++) {
 		ret = 0;
 		if ((tmp = build_path(path, result[j])) == NULL) {
 			ret = 1;
@@ -1440,7 +1300,7 @@ sfs_tree(char *path, int op)
 
 		cnt = strlen(result[j]) - 1;
 		if (ret || (result[j][cnt] == '/')) {
-			sfs_tree(tmp, op);
+			sfs_tree(tmp, op, sfs_uid, as);
 			ret = 0;
 			free(tmp);
 			tmp = NULL;
@@ -1449,29 +1309,23 @@ sfs_tree(char *path, int op)
 		ret = 0;
 
 		if (opts & SFSSIG_OPT_FILTER) {
-			cnt = 1;
-			filter[0] = strdup(result[j]);
-			filter_args(&cnt, filter, path, as);
-			if (cnt == 0) {
+			if (!filter_one_file(result[j], path, sfs_uid, as))
 				continue;
-			}
-			free(filter[0]);
-			filter[0] = NULL;
 		}
 
 		switch (op) {
 		case ANOUBIS_CHECKSUM_OP_DEL:
-			ret = sfs_del(tmp);
+			ret = sfs_del(tmp, sfs_uid, as);
 			if (ret)
 				goto out;
 			break;
 		case ANOUBIS_CHECKSUM_OP_GET:
-			ret = sfs_get(tmp);
+			ret = sfs_get(tmp, sfs_uid, as);
 			if (ret)
 				goto out;
 			break;
 		case ANOUBIS_CHECKSUM_OP_VALIDATE:
-			ret = sfs_validate(tmp);
+			ret = sfs_validate(tmp, sfs_uid, as);
 			if (ret)
 				goto out;
 			break;
@@ -1494,22 +1348,34 @@ out:
 			free(result[j]);
 		free(result);
 	}
-
 	if (opts & SFSSIG_OPT_DEBUG)
 		fprintf(stderr, "<sfs_tree\n");
 
 	return ret;
 }
 
-
 int
-sfs_export(char *arg)
+sfs_export(char *arg, uid_t uid, struct anoubis_sig *as)
 {
-	return _export(arg, 0);
+	static FILE	*out_fd = NULL;
+
+	if (opts & SFSSIG_OPT_DEBUG)
+		fprintf(stderr, ">sfs_export\n");
+	if (!out_file) {
+		out_fd = stdout;
+	} else {
+		out_fd = fopen(out_file, "w+");
+		if (!out_fd) {
+			perror(out_file);
+			return 1;
+		}
+	}
+	return _export(arg, out_fd, 0, uid, as);
 }
 
 int
-_export(char *arg, int rec)
+_export(char *arg, FILE *out_fd, int rec, uid_t sfs_uid,
+    struct anoubis_sig *as)
 {
 	struct anoubis_transaction	*t = NULL;
 	struct sfs_entry		**export = NULL;
@@ -1525,30 +1391,15 @@ _export(char *arg, int rec)
 	int				 keyid_cnt = 0, idlen = 0;
 	int				 *ids = NULL, ret = 0;
 
-	if (opts & SFSSIG_OPT_DEBUG)
-		fprintf(stderr, ">sfs_export\n");
 	if (arg == NULL)
 		return 1;
 	if (opts & SFSSIG_OPT_DEBUG2)
 		fprintf(stderr, "arg: %s\n", arg);
-	if (exim_fd == NULL) {
-		if (!exim_file) {
-			exim_fd = stdout;
-		} else {
-			exim_fd = fopen(exim_file, "w+");
-			if (!exim_fd) {
-				perror(exim_file);
-				return 1;
-			}
-		}
-	}
-	if (!as)
-		as = load_keys(0, 0, cert, keyfile);
 	if (!rec && (strcmp(arg, "/") != 0)) {
 		cnt = 1;
 		if ((export = calloc(1, sizeof(struct sfssig_entry *))) == NULL)
 			return 1;
-		export[0] = get_entry(arg, NULL, 0);
+		export[0] = get_entry(arg, NULL, 0, sfs_uid, as);
 		if (!export[0]) {
 			cnt = 0;
 			free(export);
@@ -1557,10 +1408,11 @@ _export(char *arg, int rec)
 	}
 	if (as != NULL)
 		t = sfs_sumop(arg, ANOUBIS_CHECKSUM_OP_LIST_ALL, as->keyid, 0,
-		    as->idlen);
+		    as->idlen, 0);
 	else
-		t = sfs_sumop(arg, ANOUBIS_CHECKSUM_OP_LIST_ALL, NULL, 0, 0);
-	if (!t)
+		t = sfs_sumop(arg, ANOUBIS_CHECKSUM_OP_LIST_ALL, NULL, 0, 0,
+		    sfs_uid);
+	if (t == NULL)
 		return 1;
 	if (t->result) {
 		if (t->result != ENOENT) {
@@ -1581,7 +1433,7 @@ _export(char *arg, int rec)
 			goto err;
 		len = strlen(result[i]);
 		if (result[i][len-1] == '/') {
-			ret = _export(path, 1);
+			ret = _export(path, out_fd, 1, sfs_uid, as);
 			free(path);
 			continue;
 		}
@@ -1589,8 +1441,9 @@ _export(char *arg, int rec)
 			uid_result = request_uids(path, &uid_cnt);
 			if (uid_result) {
 				for (j = 0; j < uid_cnt; j++) {
-					uid = uid_result[j];
-					tmp = get_entry(path, NULL, 0);
+					sfs_uid = uid_result[j];
+					tmp = get_entry(path, NULL, 0, sfs_uid,
+					    as);
 					if (!tmp)
 						continue;
 					cnt++;
@@ -1610,7 +1463,8 @@ _export(char *arg, int rec)
 				for (j = 0; j < keyid_cnt; j++) {
 					keyid = keyid_result[j];
 					idlen = ids[j];
-					tmp = get_entry(path, keyid, idlen);
+					tmp = get_entry(path, keyid, idlen,
+					    sfs_uid, as);
 					if (!tmp)
 						continue;
 					cnt++;
@@ -1631,7 +1485,7 @@ _export(char *arg, int rec)
 		if ((checksum_flag == ANOUBIS_CSUM_NONE) ||
 		    ((checksum_flag & ANOUBIS_CSUM_UID) &&
 		    !(checksum_flag & ANOUBIS_CSUM_UID_ALL))){
-			tmp = get_entry(path, NULL, 0);
+			tmp = get_entry(path, NULL, 0, sfs_uid, as);
 			if (!tmp)
 				continue;
 			cnt++;
@@ -1646,7 +1500,7 @@ _export(char *arg, int rec)
 		free(path);
 	}
 	if (export) {
-		if ((ret = anoubis_print_entries(exim_fd, export, cnt)) != 0) {
+		if ((ret = anoubis_print_entries(out_fd, export, cnt)) != 0) {
 			fprintf(stderr, "Error in export entries: %s\n",
 			    strerror(ret));
 			goto err;
@@ -1679,7 +1533,8 @@ err:
 }
 
 int
-sfs_import(char *filename)
+sfs_import(char *filename, uid_t sfs_uid __used,
+     struct anoubis_sig *as __used)
 {
 	struct sfs_entry *head = NULL;
 	struct sfs_entry *next = NULL;
@@ -1696,7 +1551,6 @@ sfs_import(char *filename)
 		perror("filename");
 		return 1;
 	}
-	as = load_keys(0, 0, cert, keyfile);
 	head = import_csum(file);
 	fclose(file);
 	if (!head) {
@@ -1717,7 +1571,7 @@ add_entry(struct sfs_entry *entry)
 {
 	unsigned char *payload;
 	struct anoubis_transaction *t = NULL;
-	uid_t self;
+	uid_t self, sfs_uid;
 
 	if (opts & SFSSIG_OPT_DEBUG)
 		fprintf(stderr, ">add_entry\n");
@@ -1727,12 +1581,12 @@ add_entry(struct sfs_entry *entry)
 		self = geteuid();
 		if (self == 0) {
 			checksum_flag |= ANOUBIS_CSUM_UID;
-			uid = entry->uid;
+			sfs_uid = entry->uid;
 		} else {
 			if (entry->uid != self && (opts & SFSSIG_OPT_FORCE))
-				uid = self;
+				sfs_uid = self;
 			else if (entry->uid == self)
-				uid = 0;
+				sfs_uid = 0;
 			else {
 				fprintf(stderr, "%s: Incorrect uid\n",
 				    entry->name);
@@ -1740,7 +1594,7 @@ add_entry(struct sfs_entry *entry)
 			}
 		}
 		t = sfs_sumop(entry->name, ANOUBIS_CHECKSUM_OP_ADDSUM,
-		    entry->checksum, ANOUBIS_CS_LEN, 0);
+		    entry->checksum, ANOUBIS_CS_LEN, 0, sfs_uid);
 		if (!t)
 			return EINVAL;
 		if (t->result) {
@@ -1768,12 +1622,9 @@ add_entry(struct sfs_entry *entry)
 		memcpy(payload + entry->keylen, entry->signature,
 		    entry->siglen);
 		t = sfs_sumop(entry->name, ANOUBIS_CHECKSUM_OP_ADDSIG, payload,
-		    entry->siglen, entry->keylen);
-		if (!t) {
-			if (opts & SFSSIG_OPT_DEBUG)
-				fprintf(stderr, "sfs_sumop returned NULL\n");
+		    entry->siglen, entry->keylen, 0);
+		if (t == NULL)
 			return EINVAL;
-		}
 		if (t->result) {
 			if (opts & SFSSIG_OPT_DEBUG)
 				fprintf(stderr, "Signature Request failed: "
@@ -1794,7 +1645,8 @@ add_entry(struct sfs_entry *entry)
 }
 
 static struct sfs_entry *
-get_entry(char *file, unsigned char *keyid_p, int idlen_p)
+get_entry(char *file, unsigned char *keyid_p, int idlen_p, uid_t sfs_uid,
+    struct anoubis_sig *as)
 {
 	struct anoubis_transaction	*t_sig = NULL,
 					*t_sum = NULL;
@@ -1822,10 +1674,9 @@ get_entry(char *file, unsigned char *keyid_p, int idlen_p)
 	}
 	if (keyid) {
 		t_sig = sfs_sumop(file, ANOUBIS_CHECKSUM_OP_GETSIG, keyid,
-		    0, idlen);
-		if (!t_sig) {
-			if (opts & SFSSIG_OPT_DEBUG2)
-				fprintf(stderr, "sfs_sumop returned NULL");
+		    0, idlen, 0);
+		if (t_sig == NULL) {
+			return NULL;
 		} else if (t_sig->result) {
 			if (t_sig->result == ENOENT) {
 				if (opts & SFSSIG_OPT_VERBOSE)
@@ -1847,10 +1698,8 @@ get_entry(char *file, unsigned char *keyid_p, int idlen_p)
 			sig = t_sig->msg->u.ackpayload->payload;
 		}
 	}
-	t_sum = sfs_sumop(file, ANOUBIS_CHECKSUM_OP_GET, NULL, 0, 0);
-	if (!t_sum) {
-		if (opts & SFSSIG_OPT_DEBUG2)
-			fprintf(stderr, "sfs_sumop returned NULL");
+	t_sum = sfs_sumop(file, ANOUBIS_CHECKSUM_OP_GET, NULL, 0, 0, sfs_uid);
+	if (t_sum == NULL) {
 		if (t_sig)
 			anoubis_transaction_destroy(t_sig);
 		return NULL;
@@ -1878,10 +1727,10 @@ get_entry(char *file, unsigned char *keyid_p, int idlen_p)
 		csum = t_sum->msg->u.ackpayload->payload;
 	}
 out:
-	if (uid == 0)
-		uid = geteuid();
+	if (sfs_uid == 0)
+		sfs_uid = geteuid();
 	se = anoubis_build_entry(file, csum, SHA256_DIGEST_LENGTH,
-	    sig, siglen, uid, keyid, idlen);
+	    sig, siglen, sfs_uid, keyid, idlen);
 
 	if (t_sum)
 		anoubis_transaction_destroy(t_sum);
@@ -1912,8 +1761,8 @@ request_keyids(char *file, int **ids, int *count)
 		return NULL;
 	}
 
-	t = sfs_sumop(file, ANOUBIS_CHECKSUM_OP_KEYID_LIST, NULL, 0, 0);
-	if (!t)
+	t = sfs_sumop(file, ANOUBIS_CHECKSUM_OP_KEYID_LIST, NULL, 0, 0, 0);
+	if (t == NULL)
 		return NULL;
 	if (t->result) {
 		fprintf(stderr, "%s Checksum Request failed: %d (%s)\n", file,

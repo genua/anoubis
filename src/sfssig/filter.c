@@ -31,10 +31,10 @@
 
 static int	filter_orphaned(char *arg);
 static int	filter_notfile(char *arg);
-static int	filter_hasnosum(char *arg);
+static int	filter_hasnosum(char *arg, uid_t uid);
 static int	filter_hasnosig(char *arg, struct anoubis_sig *as);
 static int	filter_sumsig(char *arg, int op, unsigned int idlen, unsigned
-		    char *keyid);
+		    char *keyid, uid_t uid);
 
 
 static int
@@ -69,9 +69,9 @@ filter_notfile(char *arg)
 }
 
 int
-filter_hassum(char *arg)
+filter_hassum(char *arg, uid_t uid)
 {
-	return filter_sumsig(arg, ANOUBIS_CHECKSUM_OP_GET, 0, NULL);
+	return filter_sumsig(arg, ANOUBIS_CHECKSUM_OP_GET, 0, NULL, uid);
 }
 
 int
@@ -83,14 +83,14 @@ filter_hassig(char *arg, struct anoubis_sig *as)
 			return 0;
 	}
 	return filter_sumsig(arg, ANOUBIS_CHECKSUM_OP_GETSIG, as->idlen,
-	    as->keyid);
+	    as->keyid, 0);
 }
 
 static int
-filter_hasnosum(char *arg)
+filter_hasnosum(char *arg, uid_t uid)
 {
 	int rc = 0;
-	rc = filter_sumsig(arg, ANOUBIS_CHECKSUM_OP_GET, 0, NULL);
+	rc = filter_sumsig(arg, ANOUBIS_CHECKSUM_OP_GET, 0, NULL, uid);
 	if (rc)
 		return 0;
 	else
@@ -107,7 +107,7 @@ filter_hasnosig(char *arg, struct anoubis_sig *as)
 			return 0;
 	}
 	rc =  filter_sumsig(arg, ANOUBIS_CHECKSUM_OP_GETSIG, as->idlen,
-	    as->keyid);
+	    as->keyid, 0);
 	if (rc)
 		return 0;
 	else
@@ -115,7 +115,8 @@ filter_hasnosig(char *arg, struct anoubis_sig *as)
 }
 
 static int
-filter_sumsig(char *arg, int op, unsigned int idlen, unsigned char *keyid)
+filter_sumsig(char *arg, int op, unsigned int idlen, unsigned char *keyid,
+    uid_t uid)
 {
 	struct anoubis_transaction	*t = NULL;
 	char				 tmp[PATH_MAX];
@@ -123,7 +124,7 @@ filter_sumsig(char *arg, int op, unsigned int idlen, unsigned char *keyid)
 	if (sfs_realpath(arg, tmp) == NULL)
 		return 0;
 
-	t = sfs_sumop(tmp, op, keyid, 0, idlen);
+	t = sfs_sumop(tmp, op, keyid, 0, idlen, uid);
 	if (!t) {
 		if (opts & SFSSIG_OPT_DEBUG)
 			fprintf(stderr, "filter_sumsig: failed transaction\n");
@@ -139,75 +140,40 @@ filter_sumsig(char *arg, int op, unsigned int idlen, unsigned char *keyid)
 	}
 }
 
-char **
-filter_args(int *argc, char **argv, char *path, struct anoubis_sig *as)
+int
+filter_one_file(char *arg, char *prefix, uid_t uid, struct anoubis_sig *as)
 {
-	int ret, i;
-	int cnt = 0;
-	char				**result = NULL;
-	char				*altpath;
+	int		 ret = 1;
+	char		*altpath;
 
 	if (opts & SFSSIG_OPT_DEBUG)
-		fprintf(stderr, ">filter_args\n");
+		fprintf(stderr, ">filter_one_file: %s\n", arg);
 
-	if (argc == NULL || *argc <= 0)
-		return NULL;
-	if (argv == NULL) {
-		*argc = -1;
-		return NULL;
+	if (!arg)
+		return 0;
+
+	if (prefix) {
+		altpath = build_path(prefix, arg);
+	} else {
+		altpath = arg;
 	}
-
-	for (i = 0; i < *argc; i++) {
-		ret = 1;
-
-		if (path) {
-			if ((altpath = build_path(path, argv[i])) == NULL) {
-				*argc = -1;
-				return NULL;
-			}
-		} else {
-			 altpath = strdup(argv[i]);
-			 if (!altpath) {
-				 *argc = -1;
-				 return NULL;
-			 }
-		}
-		if (opts & SFSSIG_OPT_ORPH && ret)
-			ret = filter_orphaned(altpath);
-		if (opts & SFSSIG_OPT_NOTFILE && ret)
-			ret = filter_notfile(altpath);
-		if (opts & SFSSIG_OPT_HASSUM && ret)
-			ret = filter_hassum(altpath);
-		if (opts & SFSSIG_OPT_NOSUM && ret)
-			ret = filter_hasnosum(altpath);
-		if (opts & SFSSIG_OPT_HASSIG && ret)
-			ret = filter_hassig(altpath, as);
-		if (opts & SFSSIG_OPT_NOSIG && ret)
-			ret = filter_hasnosig(altpath, as);
-
-		if (ret) {
-			cnt++;
-			if ((result = realloc(result, cnt * sizeof(char *)))
-			    == NULL) {
-				*argc = -1;
-				return NULL;
-			}
-			result[cnt-1] = strdup(argv[i]);
-			if (!result[cnt-1]) {
-				*argc = -1;
-				return NULL;
-			}
-		}
-
-		if (altpath) {
-			free(altpath);
-			altpath = NULL;
-		}
-	}
-
+	assert(altpath);
+	if (opts & SFSSIG_OPT_ORPH && ret)
+		ret = filter_orphaned(altpath);
+	if (opts & SFSSIG_OPT_NOTFILE && ret)
+		ret = filter_notfile(altpath);
+	if (opts & SFSSIG_OPT_HASSUM && ret)
+		ret = filter_hassum(altpath, uid);
+	if (opts & SFSSIG_OPT_NOSUM && ret)
+		ret = filter_hasnosum(altpath, uid);
+	if (opts & SFSSIG_OPT_HASSIG && ret)
+		ret = filter_hassig(altpath, as);
+	if (opts & SFSSIG_OPT_NOSIG && ret)
+		ret = filter_hasnosig(altpath, as);
+	if (prefix)
+		free(altpath);
 	if (opts & SFSSIG_OPT_DEBUG)
-		fprintf(stderr, "<filter_args\n");
+		fprintf(stderr, "<filter_args: %d\n", ret);
 
-	*argc = cnt;
-	return result;
+	return ret;
 }
