@@ -35,6 +35,9 @@
 #define ANOUBISD_CSUM_USER	1
 #define ANOUBISD_CSUM_ROOT	2
 
+#define SFSDATA_FORMAT_VERSION		1
+#define SFSDATA_MAX_FIELD_LENGTH	4096
+
 struct sfs_checksumop {
 	int		 op;		/* Checksum Operation */
 	int		 allflag;	/* ANOUBIS_CSUM_ALL was given */

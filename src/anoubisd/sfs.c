@@ -66,11 +66,57 @@
 #include "sfs.h"
 #include "cert.h"
 
-static int	 sfs_writechecksum(const char *csum_file, const char *csum_path,
-		     const u_int8_t *md, int len, int idlen);
-static int	 sfs_readsigdata(const char *csum_file, void *buffer, int);
+struct sfs_data {
+	int		 siglen;
+	u_int8_t	*sigdata;
+	int		 cslen;
+	u_int8_t        *csdata;
+	int		 upgradecslen;
+	u_int8_t        *upgradecsdata;
+};
+
+/*
+ * sfsdata file format in sfs checksumroot:
+ *
+ * First the file version (SFSDATA_FORMAT_VERSION):
+ *	u_int32_t	version
+ *
+ * Then the table of contents which consists of entries with:
+ *	u_int32_t	type	(one of the SFSDATA_TYPE_*)
+ *	u_int32_t	offset  (data offset from the start of the file)
+ *	u_int32_t	length  (data length)
+ *
+ * The table of contents ends with an entry with type = SFSDATA_TYPE_EOT.
+ *
+ * After that, the data parts are appended. One data part cannot be longer
+ * than SFSDATA_MAX_FIELD_LENGTH bytes. Currently, only one entry per
+ * type may appear.
+ */
+
+#define	SFSDATA_TYPE_EOT	0
+#define	SFSDATA_TYPE_CS		1
+#define	SFSDATA_TYPE_SIG	2
+#define	SFSDATA_TYPE_UPGRADE_CS 3
+#define	NUM_SFSDATA_TYPES	4
+
+static int	 sfs_writesfsdata(const char *csum_file, const char *csum_path,
+		     const struct sfs_data *sfsdata);
+static int	 sfs_readsfsdata(const char *csum_file,
+		     struct sfs_data *sfsdata);
 static int	 sfs_deletechecksum(const char *csum_file);
 static int	 check_empty_dir(const char *path);
+
+static void
+sfs_freesfsdata(struct sfs_data *sfsdata) {
+	if (sfsdata == NULL)
+		return;
+	free(sfsdata->csdata);
+	sfsdata->csdata = NULL;
+	free(sfsdata->sigdata);
+	sfsdata->sigdata = NULL;
+	free(sfsdata->upgradecsdata);
+	sfsdata->upgradecsdata = NULL;
+}
 
 static int
 mkpath(const char *path)
@@ -277,8 +323,9 @@ __sfs_checksumop(const struct sfs_checksumop *csop, void **bufptr,
 	int		 realsiglen = 0;
 	int		 error = -EINVAL;
 	struct cert	*cert = NULL;
-	void		*sigdata = NULL;
+	u_int8_t	*sigdata = NULL;
 	int		 siglen = 0;
+	struct sfs_data	 sfsdata;
 
 	if (is_chroot && csop->op != ANOUBIS_CHECKSUM_OP_GET
 	    && csop->op != ANOUBIS_CHECKSUM_OP_GETSIG)
@@ -287,6 +334,8 @@ __sfs_checksumop(const struct sfs_checksumop *csop, void **bufptr,
 	error = __convert_user_path(csop->path, &csum_path, 0, is_chroot);
 	if (error < 0)
 		return error;
+
+	memset(&sfsdata, 0, sizeof(sfsdata));
 
 	switch(csop->op) {
 	case ANOUBIS_CHECKSUM_OP_ADDSUM:
@@ -346,19 +395,34 @@ __sfs_checksumop(const struct sfs_checksumop *csop, void **bufptr,
 	}
 	switch(csop->op) {
 	case ANOUBIS_CHECKSUM_OP_ADDSUM:
+		sfsdata.csdata = (u_int8_t *)csop->sigdata;
+		sfsdata.cslen  = csop->siglen;
+		error = sfs_writesfsdata(csum_file, csum_path, &sfsdata);
+		sfsdata.csdata = NULL;
+		break;
 	case ANOUBIS_CHECKSUM_OP_ADDSIG:
-		error = sfs_writechecksum(csum_file, csum_path, csop->sigdata,
-		    csop->siglen, 0);
+		sfsdata.sigdata = (u_int8_t *)csop->sigdata;
+		sfsdata.siglen  = csop->siglen;
+		error = sfs_writesfsdata(csum_file, csum_path, &sfsdata);
+		sfsdata.sigdata = NULL;
 		break;
 	case ANOUBIS_CHECKSUM_OP_GET:
 	case ANOUBIS_CHECKSUM_OP_GETSIG:
-		error = -ENOMEM;
-		siglen = ANOUBIS_CS_LEN + realsiglen;
-		sigdata = malloc(siglen);
-		if (sigdata == NULL)
+		error = sfs_readsfsdata(csum_file, &sfsdata);
+		if (error < 0)
 			goto err2;
-		error = sfs_readsigdata(csum_file, sigdata, siglen);
-		if (error == 0 && csop->op == ANOUBIS_CHECKSUM_OP_GETSIG) {
+		if (csop->op == ANOUBIS_CHECKSUM_OP_GETSIG) {
+			sigdata = sfsdata.sigdata;
+			siglen  = sfsdata.siglen;
+		} else {
+			sigdata = sfsdata.csdata;
+			siglen  = sfsdata.cslen;
+		}
+		if (siglen != ANOUBIS_CS_LEN + realsiglen || sigdata == NULL) {
+			error = -EINVAL;
+			goto err3;
+		}
+		if (csop->op == ANOUBIS_CHECKSUM_OP_GETSIG) {
 			int ret;
 			ret = anoubisd_verify_csum(cert->pkey, sigdata,
 			    sigdata + ANOUBIS_CS_LEN, realsiglen);
@@ -375,8 +439,14 @@ __sfs_checksumop(const struct sfs_checksumop *csop, void **bufptr,
 		goto err3;
 	if (bufptr) {
 		(*bufptr) = sigdata;
+		if (sfsdata.csdata && sfsdata.csdata != sigdata)
+			free(sfsdata.csdata);
+		if (sfsdata.sigdata && sfsdata.sigdata != sigdata)
+			free(sfsdata.sigdata);
+		if (sfsdata.upgradecsdata && sfsdata.upgradecsdata != sigdata)
+			free(sfsdata.upgradecsdata);
 	} else {
-		free(sigdata);
+		sfs_freesfsdata(&sfsdata);
 	}
 	if (buflen)
 		(*buflen) = siglen;
@@ -384,8 +454,7 @@ __sfs_checksumop(const struct sfs_checksumop *csop, void **bufptr,
 	free(csum_path);
 	return 0;
 err3:
-	if (sigdata)
-		free(sigdata);
+	sfs_freesfsdata(&sfsdata);
 err2:
 	free(csum_file);
 err1:
@@ -419,12 +488,18 @@ sfs_update_all(const char *path, u_int8_t *md, int len)
 	char		*sfs_path;
 	unsigned int	 uid;
 	int		 ret;
+	struct sfs_data	 sfsdata;
 
 	if (path == NULL || md == NULL || len != ANOUBIS_CS_LEN)
 		return -EINVAL;
 	ret = convert_user_path(path, &sfs_path, 0);
 	if (ret < 0)
 		return ret;
+
+	memset(&sfsdata, 0, sizeof(sfsdata));
+	sfsdata.cslen = len;
+	sfsdata.csdata = md;
+
 	sfs_dir = opendir(sfs_path);
 	if (sfs_dir == NULL) {
 		/* since we just update we don't create new one */
@@ -447,7 +522,7 @@ sfs_update_all(const char *path, u_int8_t *md, int len)
 			free(sfs_path);
 			return -ENOMEM;
 		}
-		ret = sfs_writechecksum(csum_file, sfs_path, md, len, 0);
+		ret = sfs_writesfsdata(csum_file, sfs_path, &sfsdata);
 		if (ret)
 			log_warnx("Cannot update checksum for %s (uid %d): "
 			    "error = %d\n", path, uid, ret);
@@ -459,87 +534,188 @@ sfs_update_all(const char *path, u_int8_t *md, int len)
 	return 0;
 }
 
+static int
+write_bytes(int fd, void *buf, size_t bytes) {
+	int ret = 0;
+	size_t bytes_written = 0;
+	while (bytes_written < bytes) {
+		ret = write(fd, buf + bytes_written, bytes - bytes_written);
+		if (ret < 0) {
+			if (errno == EINTR)
+				continue;
+			ret = -errno;
+			break;
+		} else if (ret == 0) {
+			ret = -EIO;
+			break;
+		}
+		bytes_written += ret;
+	}
+	if (ret < 0)
+		return ret;
+	return bytes_written;
+}
+
 
 static int
-sfs_writechecksum(const char *csum_file, const char *csum_path,
-    const u_int8_t *md, int len, int idlen)
+sfs_writesfsdata(const char *csum_file, const char *csum_path,
+    const struct sfs_data *sfsdata)
 {
-	int ret = 0, written = 0;
+	int ret = 0;
 	int fd;
 	char *csum_tmp = NULL;
+	u_int32_t version = SFSDATA_FORMAT_VERSION;
+	u_int32_t toc_entry[3] = { 0, 0, 0 };
+	int offset = 0;
+	int num_entries = 0;
 
-	if (md == NULL || csum_file == NULL || csum_path == NULL) {
-		ret = -EINVAL;
-		return ret;
+
+	if (sfsdata == NULL || csum_file == NULL || csum_path == NULL)
+		return -EINVAL;
+
+	if (sfsdata->csdata != NULL) {
+		num_entries++;
+		if (sfsdata->cslen == 0 ||
+		    sfsdata->cslen > SFSDATA_MAX_FIELD_LENGTH)
+			return -EINVAL;
 	}
-	if (len < ANOUBIS_CS_LEN) {
-		ret = -EINVAL;
-		return ret;
+	if (sfsdata->sigdata != NULL) {
+		num_entries++;
+		if (sfsdata->siglen == 0 ||
+		    sfsdata->siglen > SFSDATA_MAX_FIELD_LENGTH)
+			return -EINVAL;
 	}
+	if (sfsdata->upgradecsdata != NULL) {
+		num_entries++;
+		if (sfsdata->upgradecslen == 0 ||
+		    sfsdata->upgradecslen > SFSDATA_MAX_FIELD_LENGTH)
+			return -EINVAL;
+	}
+
+	if (num_entries == 0)
+		return -EINVAL;
+
+
 	ret = mkpath(csum_path);
-	if (ret < 0) {
+	if (ret < 0)
 		return ret;
-	}
 
-	if (asprintf(&csum_tmp, "%s%s", csum_file, ".tmp") == -1) {
-		ret = -ENOMEM;
-		return ret;
-	}
+	if (asprintf(&csum_tmp, "%s%s", csum_file, ".tmp") == -1)
+		return -ENOMEM;
 
 	fd = open(csum_tmp, O_WRONLY|O_CREAT|O_TRUNC, 0640);
 	if (fd < 0) {
 		ret = -errno;
+		log_warn("sfsdata: Could not write %s:", csum_tmp);
 		free(csum_tmp);
 		return ret;
 	}
 	if (fchown(fd, -1, anoubisd_gid) < 0) {
+		log_warn("sfsdata: Could not chown %s:", csum_tmp);
 		ret = -errno;
-		close(fd);
-		unlink(csum_tmp);
-		free(csum_tmp);
-		return ret;
-	}
-	while (written < len) {
-		ret = write(fd, md + idlen + written, len - written);
-		if (ret < 0) {
-			ret = -errno;
-			unlink(csum_tmp);
-			free(csum_tmp);
-			close(fd);
-			return ret;
-		}
-		written += ret;
-	}
-	if ((fsync(fd) < 0) || (rename(csum_tmp, csum_file) < 0)) {
-		ret = -errno;
-		close(fd);
-		unlink(csum_tmp);
-		free(csum_tmp);
-		return ret;
+		goto err;
 	}
 
+
+	ret = write_bytes(fd, &version, sizeof(version));
+	if (ret < 0)
+		goto err;
+	offset = ret + (num_entries + 1) * sizeof(toc_entry);
+
+	if (sfsdata->csdata) {
+		if (sfsdata->cslen == 0) {
+			ret = -EINVAL;
+			goto err;
+		}
+		toc_entry[0] = SFSDATA_TYPE_CS;
+		toc_entry[1] = offset;
+		toc_entry[2] = sfsdata->cslen;
+		offset += sfsdata->cslen;
+		ret = write_bytes(fd, toc_entry, sizeof(toc_entry));
+		if (ret < 0)
+			goto err;
+	}
+
+	if (sfsdata->sigdata) {
+		if (sfsdata->siglen == 0) {
+			ret = -EINVAL;
+			goto err;
+		}
+		toc_entry[0] = SFSDATA_TYPE_SIG;
+		toc_entry[1] = offset;
+		toc_entry[2] = sfsdata->siglen;
+		offset += sfsdata->siglen;
+		ret = write_bytes(fd, toc_entry, sizeof(toc_entry));
+		if (ret < 0)
+			goto err;
+	}
+
+	if (sfsdata->upgradecsdata) {
+		if (sfsdata->upgradecslen == 0) {
+			ret = -EINVAL;
+			goto err;
+		}
+		toc_entry[0] = SFSDATA_TYPE_UPGRADE_CS;
+		toc_entry[1] = offset;
+		toc_entry[2] = sfsdata->upgradecslen;
+		offset += sfsdata->upgradecslen;
+		ret = write_bytes(fd, toc_entry, sizeof(toc_entry));
+		if (ret < 0)
+			goto err;
+	}
+
+	toc_entry[0] = SFSDATA_TYPE_EOT;
+	toc_entry[1] = toc_entry[2] = 0;
+	ret = write_bytes(fd, toc_entry, sizeof(toc_entry));
+	if (ret < 0)
+		goto err;
+
+	if (sfsdata->csdata) {
+		ret = write_bytes(fd, sfsdata->csdata, sfsdata->cslen);
+		if (ret < 0)
+			goto err;
+	}
+
+	if (sfsdata->sigdata) {
+		ret = write_bytes(fd, sfsdata->sigdata, sfsdata->siglen);
+		if (ret < 0)
+			goto err;
+	}
+
+	if (sfsdata->upgradecsdata) {
+		ret = write_bytes(fd, sfsdata->upgradecsdata,
+		    sfsdata->upgradecslen);
+		if (ret < 0)
+			goto err;
+	}
+
+	if ((fsync(fd) < 0) || (rename(csum_tmp, csum_file) < 0)) {
+		ret = -errno;
+		goto err;
+	}
+
+	goto out;
+
+err:
+	log_warn("sfsdata %s: Write error", csum_tmp);
+	unlink(csum_tmp);
+out:
 	free(csum_tmp);
 	close(fd);
+	if (ret < 0)
+		return ret;
 	return 0;
 }
 
 static int
-sfs_readsigdata(const char *csum_file, void *sigdata, int siglen)
-{
-	int fd;
+read_bytes(int fd, void *buf, size_t bytes) {
 	int ret = 0;
-	int bytes_read = 0;
-
-	if (csum_file == NULL || sigdata == NULL || siglen < ANOUBIS_CS_LEN)
-		return -EINVAL;
-
-	fd = open(csum_file, O_RDONLY);
-	if (fd < 0)
-		return -errno;
-
-	while (bytes_read < siglen) {
-		ret = read(fd, sigdata + bytes_read, siglen - bytes_read);
+	size_t bytes_read = 0;
+	while (bytes_read < bytes) {
+		ret = read(fd, buf + bytes_read, bytes - bytes_read);
 		if (ret < 0) {
+			if (errno == EINTR)
+				continue;
 			ret = -errno;
 			break;
 		} else if (ret == 0) {
@@ -548,6 +724,161 @@ sfs_readsigdata(const char *csum_file, void *sigdata, int siglen)
 		}
 		bytes_read += ret;
 	}
+	if (ret < 0)
+		return ret;
+	return bytes_read;
+}
+
+static void *
+memdup(const void *src, size_t size)
+{
+	void *buf = malloc(size);
+	if (buf == NULL)
+		return NULL;
+	return memcpy(buf, src, size);
+}
+
+static int
+sfs_readsfsdata(const char *csum_file, struct sfs_data *sfsdata)
+{
+	int fd;
+	/* every toc entry consists of three values: type, offset, length */
+	u_int32_t toc[NUM_SFSDATA_TYPES][3];
+	int version, i, ret = 0;
+	unsigned int total_length = 0, offset = 0, data_size;
+	int last_entry;
+	u_int8_t *buf = NULL;
+
+
+	if (csum_file == NULL || sfsdata == NULL)
+		return -EINVAL;
+
+	memset(sfsdata, 0, sizeof(*sfsdata));
+
+	fd = open(csum_file, O_RDONLY);
+	if (fd < 0)
+		return -errno;
+
+	ret = read_bytes(fd, &version, sizeof(version));
+	if (ret < 0)
+		goto err;
+	offset += ret;
+	if (version != SFSDATA_FORMAT_VERSION) {
+		log_warnx("sfsdata %s: Format version %i not supported",
+		    csum_file, version);
+		ret = -EOPNOTSUPP;
+	}
+
+	for (i = 0; i < NUM_SFSDATA_TYPES ; i++) {
+		unsigned int end;
+		ret = read_bytes(fd, &toc[i], sizeof(toc[0]));
+		if (ret < 0 )
+			goto err;
+		offset += ret;
+
+		if (toc[i][0] == SFSDATA_TYPE_EOT)
+			break;
+
+		if (toc[i][0] >= NUM_SFSDATA_TYPES || toc[i][1] == 0 ||
+		    toc[i][2] == 0) {
+			ret = -EINVAL;
+			log_warnx("sfsdata %s: TOC error", csum_file);
+			goto err;
+		}
+		if (toc[i][2] > SFSDATA_MAX_FIELD_LENGTH) {
+			log_warnx("sfsdata %s: field too long", csum_file);
+			ret = -EMSGSIZE;
+			goto err;
+		}
+
+		end = toc[i][1] + toc[i][2];
+		if (end > total_length)
+			total_length = end;
+	}
+	if (i == NUM_SFSDATA_TYPES) {
+		log_warnx("sfsdata %s: TOC too long", csum_file);
+		ret = -E2BIG;
+		goto err;
+	}
+	if (i == 0) {
+		log_warnx("sfsdata %s: TOC empty", csum_file);
+		ret = -EINVAL;
+		goto err;
+	}
+	last_entry = i - 1;
+	data_size = total_length - offset;
+
+	buf = malloc(data_size);
+	if (buf == NULL) {
+		ret = -ENOMEM;
+		goto err;
+	}
+	ret = read_bytes(fd, buf, data_size);
+	if (ret < 0 )
+		goto err;
+
+	for (i = 0; i <= last_entry; i++) {
+		switch (toc[i][0]) {
+		case SFSDATA_TYPE_CS:
+			if (sfsdata->cslen != 0) {
+				log_warnx("sfsdata %s: invalid cslen",
+				    csum_file);
+				ret = -EINVAL;
+				goto err;
+			}
+			sfsdata->cslen  = toc[i][2];
+			sfsdata->csdata = memdup(buf + toc[i][1] - offset,
+			    toc[i][2]);
+			if (sfsdata->csdata == NULL) {
+				ret = -ENOMEM;
+				goto err;
+			}
+			break;
+		case SFSDATA_TYPE_SIG:
+			if (sfsdata->siglen != 0) {
+				log_warnx("sfsdata %s: invalid siglen",
+				    csum_file);
+				ret = -EINVAL;
+				goto err;
+			}
+			sfsdata->siglen  = toc[i][2];
+			sfsdata->sigdata = memdup(buf + toc[i][1] - offset,
+			    toc[i][2]);
+			if (sfsdata->sigdata == NULL) {
+				ret = -ENOMEM;
+				goto err;
+			}
+			break;
+		case SFSDATA_TYPE_UPGRADE_CS:
+			if (sfsdata->upgradecslen != 0) {
+				log_warnx("sfsdata %s: invalid upgradecdlen",
+				    csum_file);
+				ret = -EINVAL;
+				goto err;
+			}
+			sfsdata->upgradecslen  = toc[i][2];
+			sfsdata->upgradecsdata =
+			    memdup(buf + toc[i][1] - offset, toc[i][2]);
+			if (sfsdata->upgradecsdata == NULL) {
+				ret = -ENOMEM;
+				goto err;
+			}
+			break;
+		default:
+			ret = -EINVAL;
+			log_warnx("sfsdata %s: invalid TOC entry %i",
+			    csum_file, toc[i][0]);
+			goto err;
+		}
+	}
+
+
+	goto out;
+
+err:
+	sfs_freesfsdata(sfsdata);
+out:
+	free(buf);
 	close(fd);
 	if (ret < 0)
 		return ret;

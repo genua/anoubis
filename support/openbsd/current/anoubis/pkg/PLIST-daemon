@@ -23,6 +23,7 @@
 @comment man/man3/anoubis_ui.3
 @comment man/man3/apn.3
 share/anoubisd/install_policy
+share/anoubisd/upgrade_sfs.pl
 share/anoubisd/policy_templates/admin/_dhcp
 share/anoubisd/policy_templates/admin/_ntp
 share/anoubisd/policy_templates/admin/default

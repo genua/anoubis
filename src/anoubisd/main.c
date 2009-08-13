@@ -324,6 +324,64 @@ dispatch_timer(int sig __used, short event __used, /*@dependent@*/ void * arg)
 
 enum anoubisd_process_type	anoubisd_process;
 
+static int
+read_sfsversion(void)
+{
+	FILE	*fp;
+	int ret, err, version;
+
+	fp = fopen(ANOUBISD_SFS_TREE_VERSIONFILE, "r");
+	if (!fp) {
+		if (errno == ENOENT)
+			return 0;
+		return -errno;
+	}
+
+	ret = fscanf(fp, "%d\n", &version);
+	err = errno;
+	fclose(fp);
+	if (ret != 1)
+		return -err;
+	if (version < 0)
+		return -EINVAL;
+	return version;
+}
+
+static int
+is_sfstree_empty()
+{
+	struct dirent	*dirent;
+	int		 empty = 1;
+	DIR		*dirh  = opendir(SFS_CHECKSUMROOT);
+	if (dirh == NULL) {
+		if (errno == ENOENT)
+			return 1;
+		else
+			return -errno;
+	}
+	while ((dirent = readdir(dirh)) != NULL) {
+		if (strcmp(dirent->d_name, ".")  != 0 ||
+		    strcmp(dirent->d_name, "..") != 0) {
+			empty = 0;
+			break;
+		}
+	}
+	closedir(dirh);
+	return empty;
+}
+
+static int
+write_sfsversion()
+{
+	FILE *fp = fopen(ANOUBISD_SFS_TREE_VERSIONFILE, "w");
+	if (!fp ||
+	    fprintf(fp, "%d\n", ANOUBISD_SFS_TREE_FORMAT_VERSION) < 0 ||
+	    fclose(fp) == EOF) {
+		return -errno;
+	}
+	return ANOUBISD_SFS_TREE_FORMAT_VERSION;
+}
+
 int
 main(int argc, char *argv[])
 /*@globals undef eventq_m2p, undef eventq_m2s, undef eventq_m2dev@*/
@@ -346,7 +404,6 @@ main(int argc, char *argv[])
 	struct timeval		tv;
 	struct passwd		*pw;
 	FILE			*pidfp;
-	FILE			*sfsversionfp;
 	int			sfsversion;
 	struct sigaction	act;
 #ifdef LINUX
@@ -407,25 +464,33 @@ main(int argc, char *argv[])
 		close(fd);
 	}
 
-	sfsversionfp = fopen(ANOUBISD_SFS_TREE_VERSIONFILE, "r");
-	if (sfsversionfp) {
-		int ret, err;
-		ret = fscanf(sfsversionfp, "%d\n", &sfsversion);
-		err = errno;
-		fclose(sfsversionfp);
-		if (ret != 1) {
-			sfsversion = -1;
-			errno = err;
+	sfsversion = read_sfsversion();
+	if (sfsversion == 0) {
+		/*
+		 * check if sfs tree is empty. If yes, everything is ok and
+		 * we can just set the sfs.version. If no, the upgrade script
+		 * needs to run.
+		 */
+		int empty = is_sfstree_empty();
+		if (empty < 0) {
+			early_err(5, "Could not read " SFS_CHECKSUMROOT);
 		}
-	} else if (errno == ENOENT) {
-		sfsversion = 0;
-	} else {
-		sfsversion = -1;
+		if (empty) {
+			if (anoubisd_config.opts & ANOUBISD_OPT_NOACTION) {
+				/* No further action required */
+				exit(0);
+			}
+			sfsversion = write_sfsversion();
+			if (sfsversion < 0) {
+				early_err(5, "Could not write "
+				    ANOUBISD_SFS_TREE_VERSIONFILE);
+			}
+		}
 	}
 
 	if (sfsversion < 0) {
 		early_err(5, "Could not read " ANOUBISD_SFS_TREE_VERSIONFILE);
-	} else if (sfsversion != ANOUBISD_SFS_TREE_FORMAT_VERSION) {
+	} else if (sfsversion > ANOUBISD_SFS_TREE_FORMAT_VERSION) {
 		char *msg;
 		if (asprintf(&msg, "Layout version of " SFS_CHECKSUMROOT
 		    " is %i, but we only support %i.\n"
@@ -433,10 +498,21 @@ main(int argc, char *argv[])
 		    sfsversion, ANOUBISD_SFS_TREE_FORMAT_VERSION) == -1)
 			msg = NULL;
 		early_errx(6, msg);
+	} else if (sfsversion < ANOUBISD_SFS_TREE_FORMAT_VERSION) {
+		char *msg;
+		if (asprintf(&msg, "Layout version of " SFS_CHECKSUMROOT
+		    " is %i, but we only support %i.\n"
+		    "You need to run the upgrade script.",
+		    sfsversion, ANOUBISD_SFS_TREE_FORMAT_VERSION) == -1)
+			msg = NULL;
+		early_errx(6, msg);
 	}
 
 	if (anoubisd_config.opts & ANOUBISD_OPT_NOACTION) {
-		/* Exit at this point, no further action required */
+		/* Exit at this point, no further action required.
+		 * Note that there is another exit(0) above in the
+		 * case of an empty sfs tree.
+		 * */
 		exit(0);
 	}
 

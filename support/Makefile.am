@@ -27,7 +27,7 @@
 
 utildir = $(datadir)/anoubisd
 
-dist_util_SCRIPTS = install_policy
+dist_util_SCRIPTS = install_policy upgrade_sfs.pl
 
 EXTRA_DIST = udev.rules
 

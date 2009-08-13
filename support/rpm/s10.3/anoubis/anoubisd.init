@@ -48,6 +48,10 @@ start() {
 	    chown _anoubisd:_anoubisd /var/run/anoubisd
 	fi
 
+	if [ -x /usr/share/anoubisd/upgrade_sfs.pl ]; then
+		/usr/share/anoubisd/upgrade_sfs.pl
+	fi
+
 	# XXX: MG: We need a better way to load our modules so early (Bug 262)
 	modprobe alf || true
 	modprobe sfs || true
