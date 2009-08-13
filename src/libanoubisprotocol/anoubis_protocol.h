@@ -175,14 +175,42 @@ static inline u_int64_t __ntohll(u_int64_t arg)
 
 #define		ANOUBIS_N_MAX		0x4FFF
 
-/* Checksum Request Flags */
+/*
+ * Checksum Request Flags:
+ * The flags marked as _Deprecated_ must not be used in new code.
+ * Meaning of individual flags:
+ *   - ANOUBIS_CSUM_UID: Apply command to user IDS/unsigend checksums
+ *   - ANOBUIS_CSUM_KEY: Apply command to key IDS/signed checksums
+ *   - ANOUBIS_CSUM_ALL: Apply command to all user/key IDs not just to
+ * 	a single ID. This requires root privileges.
+ *   - ANOUBIS_CSUM_WANTIDS: List available signatures/checksums for a single
+ *	file instead of listing contents of a directory.
+ *   - ANOUBIS_CSUM_UPGRADED: Report only files/directories that contain
+ *      upgraded checksums that differ from an existing checksum.
+ *
+ * Only certain combinations of flags are allowed:
+ *    WANTIDS     ALL         UID           KEY            UPGRADED
+ *    true        true        true/false    true/false     false
+ *    false       true        true          true           false
+ *    false       false       true/false    true/false     false
+ *    false       false       false         true           true
+ *
+ * Non-List operations only support three values:
+ *    ANOUBIS_CSUM_NONE, ANOUBIS_CSUM_UID, ANOUBIS_CSUM_KEY.
+ * UID and KEY cannot be combined, ANOUBIS_CSUM_NONE is equivalent
+ * ot ANOUBIS_CSUM_UID with the current user ID.
+ */
+
 #define		ANOUBIS_CSUM_NONE	0x0000
 #define		ANOUBIS_CSUM_UID	0x0001
 #define		ANOUBIS_CSUM_KEY	0x0002
-#define		ANOUBIS_CSUM_UID_ALL	0x0004
-#define		ANOUBIS_CSUM_KEY_ALL	0x0008
+#define		_ANOUBIS_CSUM_UID_ALL	0x0004		/* Deprecated */
+#define		_ANOUBIS_CSUM_KEY_ALL	0x0008		/* Deprecated */
 #define		ANOUBIS_CSUM_ALL	0x0010
 #define		ANOUBIS_CSUM_WANTIDS	0x0020
+#define		ANOUBIS_CSUM_UPGRADED	0x0040
+
+#define		ANOUBIS_CSUM_FLAG_MASK	(0x0073UL)
 
 #define ANOUBIS_IS_NOTIFY(X) ((ANOUBIS_N_MIN)<=(X) && (X) <= (ANOUBIS_N_MAX))
 #define ANOUBIS_IS_POLICY(X) ((ANOUBIS_P_MIN)<=(X) && (X) <= (ANOUBIS_P_MAX))
@@ -331,17 +359,24 @@ typedef struct {
 	char	payload[0];
 } __attribute__((packed)) Policy_SetByUid;
 
-#define ANOUBIS_CHECKSUM_OP_DEL		0x0002UL
-#define ANOUBIS_CHECKSUM_OP_GET		0x0003UL
-#define ANOUBIS_CHECKSUM_OP_ADDSUM	0x0005UL
-#define ANOUBIS_CHECKSUM_OP_LIST	0x0006UL
-#define ANOUBIS_CHECKSUM_OP_UID_LIST	0x0007UL
-#define ANOUBIS_CHECKSUM_OP_ADDSIG	0x0008UL
-#define ANOUBIS_CHECKSUM_OP_GETSIG	0x0009UL
-#define ANOUBIS_CHECKSUM_OP_DELSIG	0x000BUL
-#define ANOUBIS_CHECKSUM_OP_LIST_ALL	0x000CUL
-#define ANOUBIS_CHECKSUM_OP_KEYID_LIST	0x000DUL
-#define ANOUBIS_CHECKSUM_OP_VALIDATE	0x000EUL
+/*
+ * The list functions that are marked as _Deprecated_ are only defined
+ * here for backwards compatibility with older versions. All new code
+ * must use ANOUBIS_CHECKSUM_OP_GENERIC_LIST.
+ */
+
+#define ANOUBIS_CHECKSUM_OP_DEL			0x0002UL
+#define ANOUBIS_CHECKSUM_OP_GET			0x0003UL
+#define ANOUBIS_CHECKSUM_OP_ADDSUM		0x0005UL
+#define _ANOUBIS_CHECKSUM_OP_LIST		0x0006UL	/* Deprecated */
+#define _ANOUBIS_CHECKSUM_OP_UID_LIST		0x0007UL	/* Deprecated */
+#define ANOUBIS_CHECKSUM_OP_ADDSIG		0x0008UL
+#define ANOUBIS_CHECKSUM_OP_GETSIG		0x0009UL
+#define ANOUBIS_CHECKSUM_OP_DELSIG		0x000BUL
+#define _ANOUBIS_CHECKSUM_OP_LIST_ALL		0x000CUL	/* Deprecated */
+#define _ANOUBIS_CHECKSUM_OP_KEYID_LIST		0x000DUL	/* Deprecated */
+#define _ANOUBIS_CHECKSUM_OP_VALIDATE		0x000EUL	/* Deprecated */
+#define ANOUBIS_CHECKSUM_OP_GENERIC_LIST	0x000FUL
 
 typedef struct {
 	u32n	type;

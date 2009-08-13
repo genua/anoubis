@@ -71,12 +71,6 @@ ComSfsListTask::~ComSfsListTask(void)
 	}
 }
 
-uid_t
-ComSfsListTask::getUid(void) const
-{
-	return (this->uid_);
-}
-
 wxString
 ComSfsListTask::getDirectory(void) const
 {
@@ -87,6 +81,7 @@ void
 ComSfsListTask::setRequestParameter(uid_t uid, const wxString &dir)
 {
 	this->uid_ = uid;
+	this->req_flags_ = ANOUBIS_CSUM_UID;
 
 	/*
 	 * Remove the trailing slash
@@ -144,6 +139,7 @@ ComSfsListTask::setKeyId(const u_int8_t *keyId, int len)
 
 		this->keyId_ = newKeyId;
 		this->keyIdLen_ = len;
+		this->req_flags_ = ANOUBIS_CSUM_KEY;
 
 		return (true);
 	} else
@@ -159,23 +155,17 @@ ComSfsListTask::getEventType(void) const
 void
 ComSfsListTask::exec(void)
 {
-	const uid_t	cur_uid = getuid();
-
+	if (req_flags_ & ANOUBIS_CSUM_UID) {
+		const uid_t	cur_uid = getuid();
+		if (uid_ != cur_uid && cur_uid != 0)
+			return;
+		req_uid_ = uid_;
+	} else {
+		req_uid_ = 0;
+	}
 	resetComTaskResult();
 	ta_ = NULL;
 
-	if (uid_ == cur_uid) {
-		/* Ask for your own list */
-		req_uid_ = 0;
-		req_flags_ = ANOUBIS_CSUM_NONE;
-	} else if (cur_uid == 0) {
-		/* root is allowed to request list for another user, too */
-		req_uid_ = uid_;
-		req_flags_ = ANOUBIS_CSUM_UID;
-	} else {
-		/* Non-root user is requesting the list for another user */
-		return;
-	}
 	dirqueue_.push(strdup(""));
 	done();
 }
@@ -198,6 +188,7 @@ bool
 ComSfsListTask::fetchSfsList(const char *path)
 {
 	char				*fullpath;
+	unsigned int			 flags = ANOUBIS_CSUM_UID;
 
 	int result;
 	if (directory_ != wxT("/"))
@@ -218,8 +209,10 @@ ComSfsListTask::fetchSfsList(const char *path)
 	}
 
 	/* Create request */
+	if (this->keyIdLen_)
+		flags = ANOUBIS_CSUM_KEY;
 	ta_ = anoubis_client_csumrequest_start(getClient(),
-	    ANOUBIS_CHECKSUM_OP_LIST, fullpath, this->keyId_, 0,
+	    ANOUBIS_CHECKSUM_OP_GENERIC_LIST, fullpath, this->keyId_, 0,
 	    this->keyIdLen_, req_uid_, req_flags_);
 	free(fullpath);
 

@@ -304,7 +304,7 @@ sfshash_readsum(const char *path, int cstype, const char *key, uid_t uid,
 	csop.path = path;
 	csop.siglen = 0;
 	csop.sigdata = NULL;
-	csop.allflag = 0;
+	csop.listflags = 0;
 	csop.auth_uid = 0;
 
 	switch(cstype) {

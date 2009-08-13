@@ -94,19 +94,6 @@ class ComSfsListTask : public ComTask
 		~ComSfsListTask(void);
 
 		/**
-		 * Returns the requested uid.
-		 *
-		 * The checksum-tree of the user with the returned uid is
-		 * scanned.
-		 *
-		 * @note An unprivileged (non-root) user is only allowed to
-		 *       request its own sfs-list. If he tries to fetch the
-		 *       sfs-list of another user, the task exited with
-		 *       ComTask::RESULT_INIT (not executed).
-		 */
-		uid_t getUid(void) const;
-
-		/**
 		 * Returns the base-directory.
 		 *
 		 * The Anoubis daemon scans this directory for registered
@@ -127,7 +114,6 @@ class ComSfsListTask : public ComTask
 		 *            uid is scanned.
 		 * @param dir The base-directory. This is the directory, which
 		 *            is scanned for checksums.
-		 * @see getUid()
 		 * @see getDirectory()
 		 */
 		void setRequestParameter(uid_t, const wxString &);

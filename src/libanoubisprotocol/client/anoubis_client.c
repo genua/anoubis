@@ -29,6 +29,7 @@
 #include <string.h>
 #include <errno.h>
 #include <sys/types.h>
+#include <unistd.h>
 #ifdef LINUX
 #include <bsdcompat.h>
 #endif
@@ -956,13 +957,14 @@ anoubis_client_policyrequest_start(struct anoubis_client * client,
 struct anoubis_transaction *
 anoubis_client_csumrequest_start(struct anoubis_client *client,
     int op, char *path, u_int8_t *payload, short cslen, short idlen, uid_t uid,
-    int flags)
+    unsigned int flags)
 {
 	struct anoubis_msg * m;
 	struct anoubis_transaction * t = NULL;
 	static const u_int32_t generalops[] = { ANOUBIS_REPLY, -1 };
 	static const u_int32_t listops[] = { ANOUBIS_P_CSUM_LIST, -1 };
 	char * dstpath = NULL;
+	char * dstid = NULL;
 
 	if ((client->proto & ANOUBIS_PROTO_POLICY) == 0)
 		return NULL;
@@ -985,14 +987,44 @@ anoubis_client_csumrequest_start(struct anoubis_client *client,
 		break;
 	case ANOUBIS_CHECKSUM_OP_DEL:
 	case ANOUBIS_CHECKSUM_OP_GET:
-	case ANOUBIS_CHECKSUM_OP_UID_LIST:
-	case ANOUBIS_CHECKSUM_OP_KEYID_LIST:
 		if (idlen != 0)
 			return NULL;
 		break;
-	/* In this case you may OR may not have a keyid or payload */
-	case ANOUBIS_CHECKSUM_OP_LIST_ALL:
-	case ANOUBIS_CHECKSUM_OP_LIST:
+	case _ANOUBIS_CHECKSUM_OP_UID_LIST:		/* Deprecated */
+	case _ANOUBIS_CHECKSUM_OP_KEYID_LIST:		/* Deprecated */
+		if (idlen != 0)
+			return NULL;
+		flags = (ANOUBIS_CSUM_WANTIDS | ANOUBIS_CSUM_ALL);
+		if (op == _ANOUBIS_CHECKSUM_OP_UID_LIST) {
+			flags |= ANOUBIS_CSUM_UID;
+		} else {
+			flags |= ANOUBIS_CSUM_KEY;
+		}
+		uid = 0;
+		op = ANOUBIS_CHECKSUM_OP_GENERIC_LIST;
+		break;
+	case _ANOUBIS_CHECKSUM_OP_LIST_ALL:		/* Deprecated */
+		if (flags & ANOUBIS_CSUM_ALL) {
+			flags = ( ANOUBIS_CSUM_ALL | ANOUBIS_CSUM_UID
+			    | ANOUBIS_CSUM_KEY);
+		} else {
+			if ((flags & ANOUBIS_CSUM_UID) == 0)
+				uid = getuid();
+			flags = ANOUBIS_CSUM_UID;
+			if (idlen)
+				flags |= ANOUBIS_CSUM_KEY;
+		}
+		op = ANOUBIS_CHECKSUM_OP_GENERIC_LIST;
+		break;
+	case _ANOUBIS_CHECKSUM_OP_LIST:			/* Deprecated */
+		if (idlen) {
+			flags = ANOUBIS_CSUM_KEY;
+		} else {
+			flags = ANOUBIS_CSUM_UID;
+		}
+		op = ANOUBIS_CHECKSUM_OP_GENERIC_LIST;
+		break;
+	case ANOUBIS_CHECKSUM_OP_GENERIC_LIST:
 		break;
 	default:
 		/* UNKNOWN PROTOCOL */
@@ -1010,24 +1042,23 @@ anoubis_client_csumrequest_start(struct anoubis_client *client,
 			return NULL;
 		m = anoubis_msg_new(sizeof(Anoubis_ChecksumAddMessage)
 		    + cslen + idlen + strlen(path) + 1);
+		if (!m)
+			return NULL;
 		dstpath = m->u.checksumadd->payload + cslen + idlen;
+		dstid = NULL;
 		set_value(m->u.checksumadd->uid, uid);
 		set_value(m->u.checksumadd->flags, flags);
+		set_value(m->u.checksumadd->cslen, cslen);
+		memcpy(m->u.checksumadd->payload, payload, cslen + idlen);
 	} else {
 		m = anoubis_msg_new(sizeof(Anoubis_ChecksumRequestMessage)
 		    + strlen(path) + idlen + 1);
-		dstpath = m->u.checksumrequest->payload;
+		if (!m)
+			return NULL;
+		dstid = m->u.checksumrequest->payload;
+		dstpath = m->u.checksumrequest->payload + idlen;
 	}
-	if (!m)
-		return NULL;
-	if (payload) {
-		set_value(m->u.checksumadd->cslen, cslen);
-		memcpy(m->u.checksumadd->payload, payload, cslen + idlen);
-	}
-	if (op == ANOUBIS_CHECKSUM_OP_LIST ||
-	    op == ANOUBIS_CHECKSUM_OP_LIST_ALL ||
-	    op == ANOUBIS_CHECKSUM_OP_KEYID_LIST ||
-	    op == ANOUBIS_CHECKSUM_OP_UID_LIST) {
+	if (op == ANOUBIS_CHECKSUM_OP_GENERIC_LIST) {
 		t = anoubis_transaction_create(0,
 		ANOUBIS_T_INITSELF|ANOUBIS_T_WANT_ALL,
 		&anoubis_client_list_ack_steps, NULL, client);
@@ -1047,24 +1078,19 @@ anoubis_client_csumrequest_start(struct anoubis_client *client,
 	set_value(m->u.checksumrequest->operation, op);
 
 	if (op == ANOUBIS_CHECKSUM_OP_GETSIG ||
-	    op == ANOUBIS_CHECKSUM_OP_LIST_ALL ||
-	    op == ANOUBIS_CHECKSUM_OP_LIST ||
+	    op == ANOUBIS_CHECKSUM_OP_GENERIC_LIST ||
 	    op == ANOUBIS_CHECKSUM_OP_DELSIG) {
-		memcpy(dstpath, payload, idlen);
-		strlcpy(dstpath + idlen, path, strlen(path)+1);
-	} else {
-		strlcpy(dstpath, path, strlen(path)+1);
+		if (idlen && dstid)
+			memcpy(dstid, payload, idlen);
 	}
+	strlcpy(dstpath, path, strlen(path)+1);
 	if (anoubis_client_send(client, m) < 0) {
 		anoubis_msg_free(m);
 		anoubis_transaction_destroy(t);
 		return NULL;
 	}
 
-	if (op == ANOUBIS_CHECKSUM_OP_LIST ||
-	    op == ANOUBIS_CHECKSUM_OP_LIST_ALL ||
-	    op == ANOUBIS_CHECKSUM_OP_KEYID_LIST ||
-	    op == ANOUBIS_CHECKSUM_OP_UID_LIST)
+	if (op == ANOUBIS_CHECKSUM_OP_GENERIC_LIST)
 		anoubis_transaction_setopcodes(t, listops);
 	else
 		anoubis_transaction_setopcodes(t, generalops);

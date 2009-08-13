@@ -40,7 +40,7 @@
 
 struct sfs_checksumop {
 	int		 op;		/* Checksum Operation */
-	int		 allflag;	/* ANOUBIS_CSUM_ALL was given */
+	unsigned int	 listflags;	/* Flags for list operations */
 	uid_t		 uid;		/* Requested UID */
 	uid_t		 auth_uid;	/* UID of requesting user */
 	int		 idlen;		/* Length of key id (if any) */

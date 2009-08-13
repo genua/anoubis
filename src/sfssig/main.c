@@ -68,11 +68,11 @@ struct cmd {
 } commands[] = {
 	{ "add", (func_int_t)sfs_add, ANOUBIS_CHECKSUM_OP_ADDSUM},
 	{ "del", (func_int_t)sfs_del, ANOUBIS_CHECKSUM_OP_DEL},
-	{ "list", (func_int_t)sfs_list, ANOUBIS_CHECKSUM_OP_LIST},
+	{ "list", (func_int_t)sfs_list, _ANOUBIS_CHECKSUM_OP_LIST},
 	{ "get", (func_int_t)sfs_get, ANOUBIS_CHECKSUM_OP_GET},
 	{ "export", (func_int_t)sfs_export, 0},
 	{ "import", (func_int_t)sfs_import, 0},
-	{ "validate", (func_int_t)sfs_validate, ANOUBIS_CHECKSUM_OP_VALIDATE},
+	{ "validate", (func_int_t)sfs_validate, _ANOUBIS_CHECKSUM_OP_VALIDATE},
 };
 
 static struct achat_channel	*channel;
@@ -285,7 +285,7 @@ main(int argc, char *argv[])
 				usage();
 			got_uid = 1;
 			if (strcmp(optarg, "all") == 0) {
-				checksum_flag |= (ANOUBIS_CSUM_UID_ALL|
+				checksum_flag |= (_ANOUBIS_CSUM_UID_ALL|
 				    ANOUBIS_CSUM_UID|ANOUBIS_CSUM_ALL);
 				sfs_uid = 0;
 			} else {
@@ -308,7 +308,7 @@ main(int argc, char *argv[])
 				usage();
 			got_cert = 1;
 			if (strcmp(optarg, "all") == 0) {
-				checksum_flag |= (ANOUBIS_CSUM_KEY_ALL
+				checksum_flag |= (_ANOUBIS_CSUM_KEY_ALL
 				    | ANOUBIS_CSUM_KEY | ANOUBIS_CSUM_ALL);
 			} else {
 				sfs_cert = optarg;
@@ -560,13 +560,13 @@ request_uids(char *file, int *count)
 	if (opts & SFSSIG_OPT_DEBUG)
 		fprintf(stderr, ">request_uids\n");
 
-	if (!count || !(checksum_flag & ANOUBIS_CSUM_UID_ALL)) {
+	if (!count || !(checksum_flag & _ANOUBIS_CSUM_UID_ALL)) {
 		if (opts & SFSSIG_OPT_DEBUG)
 			fprintf(stderr, "internal error in requesting uids\n");
 		return NULL;
 	}
 
-	t = sfs_sumop(file, ANOUBIS_CHECKSUM_OP_UID_LIST, NULL, 0, 0, 0);
+	t = sfs_sumop(file, _ANOUBIS_CHECKSUM_OP_UID_LIST, NULL, 0, 0, 0);
 	if (t == NULL)
 		return NULL;
 	if (t->result) {
@@ -657,7 +657,7 @@ sfs_add(char *file, uid_t sfs_uid, struct anoubis_sig *as)
 		memcpy(msg, as->keyid, as->idlen);
 		memcpy(msg + as->idlen, sig, siglen);
 	}
-	if (checksum_flag & ANOUBIS_CSUM_UID_ALL) {
+	if (checksum_flag & _ANOUBIS_CSUM_UID_ALL) {
 		result = request_uids(file, &cnt);
 		if (!result) {
 			return 1;
@@ -723,7 +723,7 @@ sfs_del(char *file, uid_t sfs_uid, struct anoubis_sig *as)
 	if (opts & SFSSIG_OPT_DEBUG2)
 		fprintf(stderr, "%s\n", file);
 
-	if (checksum_flag & ANOUBIS_CSUM_UID_ALL) {
+	if (checksum_flag & _ANOUBIS_CSUM_UID_ALL) {
 		result = request_uids(file, &cnt);
 		if (result == NULL)
 			return 1;
@@ -824,7 +824,7 @@ __sfs_get(char *file, int vflag, uid_t sfs_uid, struct anoubis_sig *as)
 			return 1;
 		}
 	}
-	if (checksum_flag & ANOUBIS_CSUM_UID_ALL) {
+	if (checksum_flag & _ANOUBIS_CSUM_UID_ALL) {
 		result = request_uids(file, &cnt);
 		if (result == NULL)
 			return 1;
@@ -970,15 +970,15 @@ sfs_list(char *file, uid_t sfs_uid, struct anoubis_sig *as)
 			file[len] = '\0';
 
 		if (opts & SFSSIG_OPT_SIG) {
-			t = sfs_sumop(file, ANOUBIS_CHECKSUM_OP_LIST,
+			t = sfs_sumop(file, _ANOUBIS_CHECKSUM_OP_LIST,
 			    as->keyid, 0, as->idlen, sfs_uid);
 		} else {
 			if (checksum_flag & ANOUBIS_CSUM_ALL)
 				t = sfs_sumop(file,
-				    ANOUBIS_CHECKSUM_OP_LIST_ALL, NULL, 0, 0,
+				    _ANOUBIS_CHECKSUM_OP_LIST_ALL, NULL, 0, 0,
 				    0);
 			else
-				t = sfs_sumop(file, ANOUBIS_CHECKSUM_OP_LIST,
+				t = sfs_sumop(file, _ANOUBIS_CHECKSUM_OP_LIST,
 				    NULL, 0, 0, sfs_uid);
 		}
 		if (t == NULL)
@@ -1212,14 +1212,15 @@ sfs_tree(char *path, int op, uid_t sfs_uid, struct anoubis_sig *as)
 		tmp = strdup(path);
 
 		if (opts & SFSSIG_OPT_SIG) {
-			t = sfs_sumop(tmp, ANOUBIS_CHECKSUM_OP_LIST,
+			t = sfs_sumop(tmp, _ANOUBIS_CHECKSUM_OP_LIST,
 			    as->keyid, 0, as->idlen, 0);
 		} else {
 			if (checksum_flag & ANOUBIS_CSUM_ALL)
-				t = sfs_sumop(tmp, ANOUBIS_CHECKSUM_OP_LIST_ALL,
+				t = sfs_sumop(tmp,
+				    _ANOUBIS_CHECKSUM_OP_LIST_ALL,
 				    NULL, 0, 0, sfs_uid);
 			else
-				t = sfs_sumop(tmp, ANOUBIS_CHECKSUM_OP_LIST,
+				t = sfs_sumop(tmp, _ANOUBIS_CHECKSUM_OP_LIST,
 				    NULL, 0, 0, sfs_uid);
 		}
 		if (t == NULL)
@@ -1324,12 +1325,12 @@ sfs_tree(char *path, int op, uid_t sfs_uid, struct anoubis_sig *as)
 			if (ret)
 				goto out;
 			break;
-		case ANOUBIS_CHECKSUM_OP_VALIDATE:
+		case _ANOUBIS_CHECKSUM_OP_VALIDATE:
 			ret = sfs_validate(tmp, sfs_uid, as);
 			if (ret)
 				goto out;
 			break;
-		case ANOUBIS_CHECKSUM_OP_LIST:
+		case _ANOUBIS_CHECKSUM_OP_LIST:
 			printf("%s/%s\n", path, result[j]);
 			break;
 		default:
@@ -1407,10 +1408,10 @@ _export(char *arg, FILE *out_fd, int rec, uid_t sfs_uid,
 		}
 	}
 	if (as != NULL)
-		t = sfs_sumop(arg, ANOUBIS_CHECKSUM_OP_LIST_ALL, as->keyid, 0,
+		t = sfs_sumop(arg, _ANOUBIS_CHECKSUM_OP_LIST_ALL, as->keyid, 0,
 		    as->idlen, 0);
 	else
-		t = sfs_sumop(arg, ANOUBIS_CHECKSUM_OP_LIST_ALL, NULL, 0, 0,
+		t = sfs_sumop(arg, _ANOUBIS_CHECKSUM_OP_LIST_ALL, NULL, 0, 0,
 		    sfs_uid);
 	if (t == NULL)
 		return 1;
@@ -1437,7 +1438,7 @@ _export(char *arg, FILE *out_fd, int rec, uid_t sfs_uid,
 			free(path);
 			continue;
 		}
-		if (checksum_flag & ANOUBIS_CSUM_UID_ALL) {
+		if (checksum_flag & _ANOUBIS_CSUM_UID_ALL) {
 			uid_result = request_uids(path, &uid_cnt);
 			if (uid_result) {
 				for (j = 0; j < uid_cnt; j++) {
@@ -1457,7 +1458,7 @@ _export(char *arg, FILE *out_fd, int rec, uid_t sfs_uid,
 				}
 			}
 		}
-		if (checksum_flag & ANOUBIS_CSUM_KEY_ALL) {
+		if (checksum_flag & _ANOUBIS_CSUM_KEY_ALL) {
 			keyid_result = request_keyids(path, &ids, &keyid_cnt);
 			if (keyid_result) {
 				for (j = 0; j < keyid_cnt; j++) {
@@ -1484,7 +1485,7 @@ _export(char *arg, FILE *out_fd, int rec, uid_t sfs_uid,
 		}
 		if ((checksum_flag == ANOUBIS_CSUM_NONE) ||
 		    ((checksum_flag & ANOUBIS_CSUM_UID) &&
-		    !(checksum_flag & ANOUBIS_CSUM_UID_ALL))){
+		    !(checksum_flag & _ANOUBIS_CSUM_UID_ALL))){
 			tmp = get_entry(path, NULL, 0, sfs_uid, as);
 			if (!tmp)
 				continue;
@@ -1754,14 +1755,14 @@ request_keyids(char *file, int **ids, int *count)
 	if (opts & SFSSIG_OPT_DEBUG)
 		fprintf(stderr, ">request_keyids\n");
 
-	if (!file || !count || !(checksum_flag & ANOUBIS_CSUM_KEY_ALL)) {
+	if (!file || !count || !(checksum_flag & _ANOUBIS_CSUM_KEY_ALL)) {
 		if (opts & SFSSIG_OPT_DEBUG)
 			fprintf(stderr, "internal error in requesting "
 			    "keyids\n");
 		return NULL;
 	}
 
-	t = sfs_sumop(file, ANOUBIS_CHECKSUM_OP_KEYID_LIST, NULL, 0, 0, 0);
+	t = sfs_sumop(file, _ANOUBIS_CHECKSUM_OP_KEYID_LIST, NULL, 0, 0, 0);
 	if (t == NULL)
 		return NULL;
 	if (t->result) {

@@ -489,7 +489,6 @@ dispatch_checksum(struct anoubis_server *server, struct anoubis_msg *m,
 	anoubisd_msg_t			*s2m_msg;
 	anoubisd_msg_checksum_op_t	*msg_csum;
 	struct achat_channel		*chan;
-	int				 flags;
 	int				 err, opp = 0, reallen;
 
 	struct event_info_session *ev_info = (struct event_info_session*)arg;
@@ -510,19 +509,11 @@ dispatch_checksum(struct anoubis_server *server, struct anoubis_msg *m,
 	msg_csum->uid = uid;
 	msg_csum->len = m->length;
 	memcpy(msg_csum->msg, m->u.checksumrequest, m->length);
-	flags = get_value(m->u.checksumrequest->flags);
-	if (((flags != ANOUBIS_CSUM_NONE) && (uid != 0)) ||
-	    ((opp == ANOUBIS_CHECKSUM_OP_KEYID_LIST) && (uid != 0)) ||
-	    ((opp == ANOUBIS_CHECKSUM_OP_UID_LIST) && (uid != 0))) {
-		dispatch_generic_reply(server, EPERM, NULL, 0,
-		    POLICY_FLAG_START|POLICY_FLAG_END, opp);
-		free(s2m_msg);
-		return;
-	}
-	if (opp == ANOUBIS_CHECKSUM_OP_LIST ||
-	    opp == ANOUBIS_CHECKSUM_OP_KEYID_LIST ||
-	    opp == ANOUBIS_CHECKSUM_OP_LIST_ALL ||
-	    opp == ANOUBIS_CHECKSUM_OP_UID_LIST) {
+	if (opp == _ANOUBIS_CHECKSUM_OP_LIST ||
+	    opp == _ANOUBIS_CHECKSUM_OP_KEYID_LIST ||
+	    opp == _ANOUBIS_CHECKSUM_OP_LIST_ALL ||
+	    opp == _ANOUBIS_CHECKSUM_OP_UID_LIST ||
+	    opp == ANOUBIS_CHECKSUM_OP_GENERIC_LIST) {
 		err = anoubis_policy_comm_addrequest(ev_info->policy, chan,
 		    POLICY_FLAG_START | POLICY_FLAG_END,
 		    &dispatch_checksum_list_reply, server, &msg_csum->token);
