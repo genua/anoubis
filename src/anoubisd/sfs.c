@@ -110,11 +110,14 @@ static void
 sfs_freesfsdata(struct sfs_data *sfsdata) {
 	if (sfsdata == NULL)
 		return;
-	free(sfsdata->csdata);
+	if (sfsdata->csdata)
+		free(sfsdata->csdata);
 	sfsdata->csdata = NULL;
-	free(sfsdata->sigdata);
+	if (sfsdata->sigdata)
+		free(sfsdata->sigdata);
 	sfsdata->sigdata = NULL;
-	free(sfsdata->upgradecsdata);
+	if (sfsdata->upgradecsdata)
+		free(sfsdata->upgradecsdata);
 	sfsdata->upgradecsdata = NULL;
 }
 
@@ -398,13 +401,11 @@ __sfs_checksumop(const struct sfs_checksumop *csop, void **bufptr,
 		sfsdata.csdata = (u_int8_t *)csop->sigdata;
 		sfsdata.cslen  = csop->siglen;
 		error = sfs_writesfsdata(csum_file, csum_path, &sfsdata);
-		sfsdata.csdata = NULL;
 		break;
 	case ANOUBIS_CHECKSUM_OP_ADDSIG:
 		sfsdata.sigdata = (u_int8_t *)csop->sigdata;
 		sfsdata.siglen  = csop->siglen;
 		error = sfs_writesfsdata(csum_file, csum_path, &sfsdata);
-		sfsdata.sigdata = NULL;
 		break;
 	case ANOUBIS_CHECKSUM_OP_GET:
 	case ANOUBIS_CHECKSUM_OP_GETSIG:
@@ -414,10 +415,13 @@ __sfs_checksumop(const struct sfs_checksumop *csop, void **bufptr,
 		if (csop->op == ANOUBIS_CHECKSUM_OP_GETSIG) {
 			sigdata = sfsdata.sigdata;
 			siglen  = sfsdata.siglen;
+			sfsdata.sigdata = NULL;
 		} else {
 			sigdata = sfsdata.csdata;
 			siglen  = sfsdata.cslen;
+			sfsdata.csdata = NULL;
 		}
+		sfs_freesfsdata(&sfsdata);
 		if (siglen != ANOUBIS_CS_LEN + realsiglen || sigdata == NULL) {
 			error = -EINVAL;
 			goto err3;
@@ -439,14 +443,8 @@ __sfs_checksumop(const struct sfs_checksumop *csop, void **bufptr,
 		goto err3;
 	if (bufptr) {
 		(*bufptr) = sigdata;
-		if (sfsdata.csdata && sfsdata.csdata != sigdata)
-			free(sfsdata.csdata);
-		if (sfsdata.sigdata && sfsdata.sigdata != sigdata)
-			free(sfsdata.sigdata);
-		if (sfsdata.upgradecsdata && sfsdata.upgradecsdata != sigdata)
-			free(sfsdata.upgradecsdata);
-	} else {
-		sfs_freesfsdata(&sfsdata);
+	} else if (sigdata) {
+		free(sigdata);
 	}
 	if (buflen)
 		(*buflen) = siglen;
@@ -454,7 +452,8 @@ __sfs_checksumop(const struct sfs_checksumop *csop, void **bufptr,
 	free(csum_path);
 	return 0;
 err3:
-	sfs_freesfsdata(&sfsdata);
+	if (sigdata)
+		free(sigdata);
 err2:
 	free(csum_file);
 err1:
@@ -535,7 +534,8 @@ sfs_update_all(const char *path, u_int8_t *md, int len)
 }
 
 static int
-write_bytes(int fd, void *buf, size_t bytes) {
+write_bytes(int fd, void *buf, size_t bytes)
+{
 	int ret = 0;
 	size_t bytes_written = 0;
 	while (bytes_written < bytes) {
@@ -556,7 +556,6 @@ write_bytes(int fd, void *buf, size_t bytes) {
 	return bytes_written;
 }
 
-
 static int
 sfs_writesfsdata(const char *csum_file, const char *csum_path,
     const struct sfs_data *sfsdata)
@@ -568,7 +567,6 @@ sfs_writesfsdata(const char *csum_file, const char *csum_path,
 	u_int32_t toc_entry[3] = { 0, 0, 0 };
 	int offset = 0;
 	int num_entries = 0;
-
 
 	if (sfsdata == NULL || csum_file == NULL || csum_path == NULL)
 		return -EINVAL;
