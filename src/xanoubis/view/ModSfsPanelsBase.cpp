@@ -339,8 +339,8 @@ ModSfsMainPanelBase::ModSfsMainPanelBase( wxWindow* parent, wxWindowID id, const
 	SfsMainFilterInvertCheckBox->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( ModSfsMainPanelBase::OnSfsMainInverseCheckboxClicked ), NULL, this );
 	SfsMainShowChecksumButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModSfsMainPanelBase::OnSfsMainShowAllChecksumsClicked ), NULL, this );
 	SfsMainShowChangedButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModSfsMainPanelBase::OnSfsMainShowChangedClicked ), NULL, this );
-	SfsMainSearchOrphanedButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModSfsMainPanelBase::OnSfsMainShowUpgradedClicked ), NULL, this );
-	SfsMainShowUpgradedButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModSfsMainPanelBase::OnSfsMainSearchOrphanedClicked ), NULL, this );
+	SfsMainSearchOrphanedButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModSfsMainPanelBase::OnSfsMainSearchOrphanedClicked ), NULL, this );
+	SfsMainShowUpgradedButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModSfsMainPanelBase::OnSfsMainShowUpgradedClicked ), NULL, this );
 	SfsMainListCtrl->Connect( wxEVT_COMMAND_LIST_ITEM_DESELECTED, wxListEventHandler( ModSfsMainPanelBase::OnSfsListDeselected ), NULL, this );
 	SfsMainListCtrl->Connect( wxEVT_COMMAND_LIST_ITEM_SELECTED, wxListEventHandler( ModSfsMainPanelBase::OnSfsListSelected ), NULL, this );
 	SfsMainSignFilesCheckBox->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( ModSfsMainPanelBase::OnSfsMainSigEnabledClicked ), NULL, this );

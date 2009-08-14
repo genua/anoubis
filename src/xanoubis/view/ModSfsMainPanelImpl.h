@@ -36,6 +36,7 @@
 #include "SfsAppPolicy.h"
 #include "SfsDefaultFilterPolicy.h"
 #include "SfsFilterPolicy.h"
+#include "ComUpgradeListGetTask.h"
 
 class IndexArray;
 class SfsCtrl;
@@ -138,6 +139,11 @@ class ModSfsMainPanelImpl : public Observer, public ModSfsMainPanelBase
 		bool comEnabled_; /**< Current communicator status. */
 
 		/**
+		 * Task to fetch UpgradeList
+		 */
+		ComUpgradeListGetTask upgradeTask_;
+
+		/**
 		 * Handle the event when main directory of Sfs tree is changed.
 		 * Sets show all and updates the view.
 		 * @param[in] 1st The event.
@@ -167,6 +173,11 @@ class ModSfsMainPanelImpl : public Observer, public ModSfsMainPanelBase
 		 * @param[in] 1st The event.
 		 */
 		void OnDaemonRegistration(TaskEvent &);
+
+		/**
+		 * Handle UpgradeListGet task events.
+		 */
+		void OnUpgradeListGetTask(TaskEvent &);
 
 		/**
 		 * Handle the event when Sfs operation finished.

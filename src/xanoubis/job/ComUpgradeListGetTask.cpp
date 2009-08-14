@@ -56,6 +56,34 @@ ComUpgradeListGetTask::setRequestParameter(uid_t uid)
 	uid_ = uid;
 }
 
+bool
+ComUpgradeListGetTask::haveKeyId(void) const
+{
+	return ((keyId_ != 0) && (keyIdLen_ > 0));
+}
+
+bool
+ComUpgradeListGetTask::setKeyId(const u_int8_t *keyId, int len)
+{
+	if ((keyId != 0) && (len > 0)) {
+		u_int8_t *newKeyId = (u_int8_t *)malloc(len);
+
+		if (newKeyId != 0)
+			memcpy(newKeyId, keyId, len);
+		else
+			return (false);
+
+		if (this->keyId_ != 0)
+			free(this->keyId_);
+
+		this->keyId_ = newKeyId;
+		this->keyIdLen_ = len;
+
+		return (true);
+	} else
+		return (false);
+}
+
 wxEventType
 ComUpgradeListGetTask::getEventType(void) const
 {
@@ -76,10 +104,11 @@ ComUpgradeListGetTask::done(void)
 	 * XXX ch: because the protocol is not implemented.
 	 * XXX ch: To proceed development we generate a fake list.
 	 */
-	fileList_.Add(wxT("/usr/bin/mutt"));
-	fileList_.Add(wxT("/usr/bin/vim"));
-	fileList_.Add(wxT("/usr/sbin/lvm"));
-	fileList_.Add(wxT("/etc/no-real-file"));
+	fileList_.Add(wxT("/home/obaum/fileA"));
+	fileList_.Add(wxT("/home/obaum/fileB"));
+	fileList_.Add(wxT("/home/obaum/fileC"));
+	fileList_.Add(wxT("/home/obaum/fileD"));
+	fileList_.Add(wxT("/home/obaum/foo.pl"));
 	setComTaskResult(RESULT_SUCCESS);
 
 	return (true);

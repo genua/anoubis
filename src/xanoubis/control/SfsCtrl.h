@@ -100,7 +100,7 @@ class SfsCtrl : public wxEvtHandler
 		 * @return The root-directory
 		 * @see SfsDirectory::getPath()
 		 */
-		wxString getPath() const;
+		wxString getPath(void) const;
 
 		/**
 		 * Updates the root-directory of the model.
@@ -122,7 +122,7 @@ class SfsCtrl : public wxEvtHandler
 		 * @return The filename-filter
 		 * @see SfsDirectory::getFilter()
 		 */
-		wxString getFilter() const;
+		wxString getFilter(void) const;
 
 		/**
 		 * Update sthe filename-filter.
@@ -145,7 +145,7 @@ class SfsCtrl : public wxEvtHandler
 		 * @return true, if the inverse-flag is set, false otherwise.
 		 * @see SfsDirectory::isFilterInversed()
 		 */
-		bool isFilterInversed() const;
+		bool isFilterInversed(void) const;
 
 		/**
 		 * Updates the filter-inverse-flag.
@@ -404,6 +404,13 @@ class SfsCtrl : public wxEvtHandler
 		    const wxString &);
 
 		/**
+		 * Requests the list of upgraded files from the daemon. 
+		 * @param None.
+		 * @return The result of the command.
+		 */
+		CommandResult fetchUpgradeList(void);
+
+		/**
 		 * Returns the instance of the SfsDirectory.
 		 *
 		 * This is the entry-point of the model.
@@ -435,6 +442,7 @@ class SfsCtrl : public wxEvtHandler
 		void OnCsumGet(TaskEvent &);
 		void OnCsumAdd(TaskEvent &);
 		void OnCsumDel(TaskEvent &);
+		void OnUpgradeListArrived(TaskEvent &);
 
 	private:
 		SfsDirectory	sfsDir_;
@@ -494,6 +502,7 @@ class SfsCtrl : public wxEvtHandler
 		int createComCsumDelTasks(SfsEntry *);
 
 		void createSfsListTasks(uid_t, const wxString &, bool);
+		void createUpgradeListGetTask(void);
 		void createCsumCalcTask(const wxString &);
 
 		/**
@@ -551,7 +560,9 @@ class SfsCtrl : public wxEvtHandler
 		{
 			public:
 				PopTaskHelper(SfsCtrl *, Task *);
+				PopTaskHelper(SfsCtrl *);
 				~PopTaskHelper();
+				void setTask(Task *);
 
 			private:
 				SfsCtrl *sfsCtrl_;

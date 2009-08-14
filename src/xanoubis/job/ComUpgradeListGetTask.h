@@ -84,6 +84,28 @@ class ComUpgradeListGetTask : public ComTask
 		void setRequestParameter(uid_t);
 
 		/**
+		 * Tests whether a key-id is assigned to the task.
+		 * @return true is returned, if a key-id is assigned, false
+		 *         otherwise.
+		 */
+		bool haveKeyId(void) const;
+
+		/**
+		 * Provides a key-id used by the list-operation.
+		 *
+		 * Once configured, the checksum-tree of the certificate behind
+		 * the key-id is scanned.
+		 *
+		 * @param keyId The key-id of the certificate
+		 * @param keyIdLen Length of keyId
+		 * @return true if you specified a correct key-id, false
+		 *         otherwise.
+		 *
+		 * @see LocalCertificate
+		 */
+		bool setKeyId(const u_int8_t *, int);
+
+		/**
 		 * Implementation of Task::getEventType().
 		 */
 		wxEventType getEventType(void) const;
@@ -122,6 +144,16 @@ class ComUpgradeListGetTask : public ComTask
 		 * Compile the list of files.
 		 */
 		wxArrayString fileList_;
+
+		/**
+		 * Store id of key.
+		 */
+		u_int8_t *keyId_;
+
+		/**
+		 * Cache length of key.
+		 */
+		int keyIdLen_;
 };
 
 #endif	/* _COMUPGRADELISTGETTASK_H_ */

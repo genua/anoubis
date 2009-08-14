@@ -396,7 +396,7 @@
                                 <event name="OnSetFocus"></event>
                                 <event name="OnSize"></event>
                                 <event name="OnUpdateUI"></event>
-                                <object class="wxBoxSizer" expanded="0">
+                                <object class="wxBoxSizer" expanded="1">
                                     <property name="minimum_size"></property>
                                     <property name="name">bSizer10</property>
                                     <property name="orient">wxHORIZONTAL</property>
@@ -1035,7 +1035,7 @@
                                                                     <property name="window_extra_style"></property>
                                                                     <property name="window_name"></property>
                                                                     <property name="window_style"></property>
-                                                                    <event name="OnButtonClick">OnSfsMainShowUpgradedClicked</event>
+                                                                    <event name="OnButtonClick">OnSfsMainSearchOrphanedClicked</event>
                                                                     <event name="OnChar"></event>
                                                                     <event name="OnEnterWindow"></event>
                                                                     <event name="OnEraseBackground"></event>
@@ -1087,7 +1087,7 @@
                                                                     <property name="window_extra_style"></property>
                                                                     <property name="window_name"></property>
                                                                     <property name="window_style"></property>
-                                                                    <event name="OnButtonClick">OnSfsMainSearchOrphanedClicked</event>
+                                                                    <event name="OnButtonClick">OnSfsMainShowUpgradedClicked</event>
                                                                     <event name="OnChar"></event>
                                                                     <event name="OnEnterWindow"></event>
                                                                     <event name="OnEraseBackground"></event>

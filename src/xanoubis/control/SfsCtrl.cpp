@@ -36,6 +36,7 @@
 #include "ComCsumGetTask.h"
 #include "ComRegistrationTask.h"
 #include "ComSfsListTask.h"
+#include "ComUpgradeListGetTask.h"
 #include "CsumCalcTask.h"
 #include "JobCtrl.h"
 #include "KeyCtrl.h"
@@ -59,7 +60,7 @@ SfsCtrl::~SfsCtrl(void)
 }
 
 wxString
-SfsCtrl::getPath() const
+SfsCtrl::getPath(void) const
 {
 	return (sfsDir_.getPath());
 }
@@ -72,7 +73,7 @@ SfsCtrl::setPath(const wxString &path)
 }
 
 wxString
-SfsCtrl::getFilter() const
+SfsCtrl::getFilter(void) const
 {
 	return (sfsDir_.getFilter());
 }
@@ -85,7 +86,7 @@ SfsCtrl::setFilter(const wxString &filter)
 }
 
 bool
-SfsCtrl::isFilterInversed() const
+SfsCtrl::isFilterInversed(void) const
 {
 	return (sfsDir_.isFilterInversed());
 }
@@ -406,6 +407,21 @@ SfsCtrl::exportChecksums(const IndexArray &arr, const wxString &path)
 		return (RESULT_EXECUTE);
 	} else
 		return (RESULT_NOTCONNECTED);
+}
+
+SfsCtrl::CommandResult
+SfsCtrl::fetchUpgradeList(void)
+{
+	if (!taskList_.empty()) {
+		return (RESULT_BUSY);
+	}
+
+	if (comEnabled_) {
+		createUpgradeListGetTask();
+		return (RESULT_EXECUTE);
+	} else {
+		return (RESULT_NOTCONNECTED);
+	}
 }
 
 SfsCtrl::CommandResult
@@ -966,6 +982,70 @@ SfsCtrl::OnCsumDel(TaskEvent &event)
 }
 
 void
+SfsCtrl::OnUpgradeListArrived(TaskEvent &event)
+{
+	ComUpgradeListGetTask	*task;
+	PopTaskHelper		 taskHelper(this);
+	ComTask::ComTaskResult	 comResult;
+	SfsEntry::ChecksumType	 type;
+	wxArrayString		 fileList;
+	wxString		 errMsg;
+
+	task = dynamic_cast<ComUpgradeListGetTask*>(event.getTask());
+	comResult = ComTask::RESULT_LOCAL_ERROR;
+	type = SfsEntry::SFSENTRY_CHECKSUM;
+	fileList.Clear();
+	errMsg = wxEmptyString;
+
+	if (task == 0) {
+		/* No ComUpgradeListGetTask -> stop propagating */
+		event.Skip(false);
+		return;
+	}
+
+	if (taskList_.IndexOf(task) == wxNOT_FOUND) {
+		/* Belongs to someone other, ignore it */
+		event.Skip();
+		return;
+	}
+
+	event.Skip(false); /* "My" task -> stop propagating */
+	comResult = task->getComTaskResult();
+	taskHelper.setTask(task);
+	type = task->haveKeyId() ?
+	    SfsEntry::SFSENTRY_SIGNATURE : SfsEntry::SFSENTRY_CHECKSUM;
+
+	if (comResult != ComTask::RESULT_SUCCESS) {
+		if (comResult == ComTask::RESULT_COM_ERROR) {
+			errMsg = wxString::Format(_("Communication "
+			    "error while fetching list of upgraded "
+			    "files."));
+		} else if (comResult == ComTask::RESULT_REMOTE_ERROR) {
+			errMsg = wxString::Format(_("Got error "
+			    "(%hs) from daemon while fetching list"
+			    "of upgraded files."),
+			    strerror(task->getResultDetails()));
+		} else {
+			errMsg = wxString::Format(_("An unexpected "
+			    "error (%i) occured while while fetching list"
+			    "of upgraded files."), task->getComTaskResult());
+		}
+		errorList_.Add(errMsg);
+	} else {
+		/*
+		 * XXX ch: As first step, just add the list to the sfsDir.
+		 * XXX ch: More needs to be done here, but implemented
+		 * XXX ch: in another change for another blue card.
+		 */
+		fileList = task->getFileList();
+		for (unsigned int idx = 0; idx < fileList.Count(); idx++) {
+			sfsDir_.insertEntry(fileList.Item(idx));
+		}
+		sendDirChangedEvent();
+	}
+}
+
+void
 SfsCtrl::enableCommunication(void)
 {
 	comEnabled_ = true;
@@ -973,13 +1053,15 @@ SfsCtrl::enableCommunication(void)
 	JobCtrl::getInstance()->Connect(anTASKEVT_SFS_LIST,
 	    wxTaskEventHandler(SfsCtrl::OnSfsListArrived), NULL, this);
 	JobCtrl::getInstance()->Connect(anTASKEVT_CSUMCALC,
-		    wxTaskEventHandler(SfsCtrl::OnCsumCalc), NULL, this);
+	    wxTaskEventHandler(SfsCtrl::OnCsumCalc), NULL, this);
 	JobCtrl::getInstance()->Connect(anTASKEVT_CSUM_GET,
-		    wxTaskEventHandler(SfsCtrl::OnCsumGet), NULL, this);
+	    wxTaskEventHandler(SfsCtrl::OnCsumGet), NULL, this);
 	JobCtrl::getInstance()->Connect(anTASKEVT_CSUM_ADD,
-		    wxTaskEventHandler(SfsCtrl::OnCsumAdd), NULL, this);
+	    wxTaskEventHandler(SfsCtrl::OnCsumAdd), NULL, this);
 	JobCtrl::getInstance()->Connect(anTASKEVT_CSUM_DEL,
-		    wxTaskEventHandler(SfsCtrl::OnCsumDel), NULL, this);
+	    wxTaskEventHandler(SfsCtrl::OnCsumDel), NULL, this);
+	JobCtrl::getInstance()->Connect(anTASKEVT_UPGRADE_LIST,
+	    wxTaskEventHandler(SfsCtrl::OnUpgradeListArrived), NULL, this);
 }
 
 void
@@ -990,13 +1072,15 @@ SfsCtrl::disableCommunication(void)
 	JobCtrl::getInstance()->Disconnect(anTASKEVT_SFS_LIST,
 	    wxTaskEventHandler(SfsCtrl::OnSfsListArrived), NULL, this);
 	JobCtrl::getInstance()->Disconnect(anTASKEVT_CSUMCALC,
-		    wxTaskEventHandler(SfsCtrl::OnCsumCalc), NULL, this);
+	    wxTaskEventHandler(SfsCtrl::OnCsumCalc), NULL, this);
 	JobCtrl::getInstance()->Disconnect(anTASKEVT_CSUM_GET,
-		    wxTaskEventHandler(SfsCtrl::OnCsumGet), NULL, this);
+	    wxTaskEventHandler(SfsCtrl::OnCsumGet), NULL, this);
 	JobCtrl::getInstance()->Disconnect(anTASKEVT_CSUM_ADD,
-		    wxTaskEventHandler(SfsCtrl::OnCsumAdd), NULL, this);
+	    wxTaskEventHandler(SfsCtrl::OnCsumAdd), NULL, this);
 	JobCtrl::getInstance()->Disconnect(anTASKEVT_CSUM_DEL,
-		    wxTaskEventHandler(SfsCtrl::OnCsumDel), NULL, this);
+	    wxTaskEventHandler(SfsCtrl::OnCsumDel), NULL, this);
+	JobCtrl::getInstance()->Disconnect(anTASKEVT_UPGRADE_LIST,
+	    wxTaskEventHandler(SfsCtrl::OnUpgradeListArrived), NULL, this);
 }
 
 void
@@ -1184,6 +1268,16 @@ SfsCtrl::createSfsListTasks(uid_t uid, const wxString &path, bool orphaned)
 }
 
 void
+SfsCtrl::createUpgradeListGetTask(void)
+{
+	ComUpgradeListGetTask *task = new ComUpgradeListGetTask();
+	task->setRequestParameter(geteuid());
+
+	pushTask(task);
+	JobCtrl::getInstance()->addTask(task);
+}
+
+void
 SfsCtrl::createCsumCalcTask(const wxString &path)
 {
 	CsumCalcTask *task = new CsumCalcTask;
@@ -1356,4 +1450,16 @@ SfsCtrl::PopTaskHelper::~PopTaskHelper()
 		if (sfsCtrl_->popTask(task_))
 			delete task_;
 	}
+}
+
+SfsCtrl::PopTaskHelper::PopTaskHelper(SfsCtrl *sfsCtrl)
+{
+		sfsCtrl_ = sfsCtrl;
+		task_ = NULL;
+}
+
+void
+SfsCtrl::PopTaskHelper::setTask(Task *task)
+{
+	task_ = task;
 }

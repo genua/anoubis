@@ -86,6 +86,9 @@ ModSfsMainPanelImpl::ModSfsMainPanelImpl(wxWindow* parent,
 	JobCtrl::getInstance()->Connect(anTASKEVT_REGISTER,
 	    wxTaskEventHandler(ModSfsMainPanelImpl::OnDaemonRegistration),
 	    NULL, this);
+	JobCtrl::getInstance()->Connect(anTASKEVT_UPGRADE_LIST,
+	    wxTaskEventHandler(ModSfsMainPanelImpl::OnUpgradeListGetTask),
+	    NULL, this);
 	Hide();
 
 	addSubject(keyPicker);
@@ -98,6 +101,7 @@ ModSfsMainPanelImpl::ModSfsMainPanelImpl(wxWindow* parent,
 	certificatePicker->setButtonLabel(_("Choose certificate"));
 	certificatePicker->setMode(AnPickFromFs::MODE_FILE);
 
+	upgradeTask_.setRequestParameter(geteuid());
 	initSfsOptions();
 	initSfsMain();
 }
@@ -106,6 +110,9 @@ ModSfsMainPanelImpl::~ModSfsMainPanelImpl(void)
 {
 	JobCtrl::getInstance()->Disconnect(anTASKEVT_REGISTER,
 	    wxTaskEventHandler(ModSfsMainPanelImpl::OnDaemonRegistration),
+	    NULL, this);
+	JobCtrl::getInstance()->Disconnect(anTASKEVT_UPGRADE_LIST,
+	    wxTaskEventHandler(ModSfsMainPanelImpl::OnUpgradeListGetTask),
 	    NULL, this);
 	AnEvents::getInstance()->Disconnect(anEVT_LOAD_RULESET,
 	    wxCommandEventHandler(ModSfsMainPanelImpl::onLoadRuleSet),
@@ -205,11 +212,37 @@ ModSfsMainPanelImpl::OnDaemonRegistration(TaskEvent &event)
 	if (task != 0) {
 		comEnabled_ =
 		   (task->getAction() == ComRegistrationTask::ACTION_REGISTER);
+		JobCtrl::getInstance()->addTask(&upgradeTask_);
 		event.Skip();
 	} else
 		comEnabled_ = false;
 
 	enableSfsControls(false); /* false: No operation running */
+}
+
+void
+ModSfsMainPanelImpl::OnUpgradeListGetTask(TaskEvent &event)
+{
+	ComUpgradeListGetTask	*task;
+	ComTask::ComTaskResult	 comResult;
+
+	task = dynamic_cast<ComUpgradeListGetTask*>(event.getTask());
+	if (&upgradeTask_ != task) {
+		/* This is not our task. */
+		event.Skip();
+		return;
+	}
+
+	comResult = upgradeTask_.getComTaskResult();
+	if (comEnabled_
+	    && (comResult == ComTask::RESULT_SUCCESS)
+	    && (upgradeTask_.getFileList().Count() > 0)) {
+		SfsMainShowUpgradedButton->Enable();
+	} else {
+		SfsMainShowUpgradedButton->Disable();
+	}
+
+	Refresh();
 }
 
 void
@@ -545,7 +578,9 @@ ModSfsMainPanelImpl::OnSfsMainShowChangedClicked(wxCommandEvent&)
 void
 ModSfsMainPanelImpl::OnSfsMainShowUpgradedClicked(wxCommandEvent&)
 {
-	/* XXX [ST]: to be filled */
+	sfsCtrl_->fetchUpgradeList();
+	/* XXX ch: updating the view is done within other change */
+	SfsMainListCtrl->refreshList(ModSfsListCtrl::SHOW_ALL);
 }
 
 
