@@ -35,8 +35,8 @@
 .Sh SYNOPSIS
 .Nm sfssig
 .Op dvi
-.Op --link | -l
 .Op --recursiv | -r
+.Op --link | -l
 .Op -f listfile
 .Op -o exportfile
 .Op --uid uid | -u uid
@@ -67,27 +67,27 @@ Prints debug information to the console.
 Produce more verbose output.
 .It Fl i
 Accept checksums created by other users during import.
-.It Fl o Ar exportfile
-Specify the output of the command export. Default is stdout.
 .El
 .Pp
 Path specification:
 .Pp
 .Bl -tag -width Ds
-.It Fl r Fl -recursive
+.It Fl r , Fl -recursive
 Apply command to all files under each directory, recursively.
-.It Fl l Fl -link
+.It Fl l , Fl -link
 Apply command to a symlink, not to the referenced file.
 .It Fl f Ar listfile
 Accept input from file
 .Ar listfile .
 Use "-" for stdin.
+.It Fl o Ar exportfile
+Specify the output of the command export. Default is stdout.
 .El
 .Pp
 Type specification:
 .Pp
 .Bl -tag -width Ds
-.It Fl u Ar uid Fl -uid Ar uid
+.It Fl u Ar uid , Fl -uid Ar uid
 Apply command to checksums with owner
 .Ar uid .
 If the argument is
@@ -99,13 +99,13 @@ This requires root privileges.
 Key files (needed for some operations):
 .Pp
 .Bl -tag -width Ds
-.It Fl k Ar keyfile Fl -key Ar keyfile
+.It Fl k Ar keyfile , Fl -key Ar keyfile
 Load private key from
 .Ar keyfile .
 If not specified,
 .Pa ~/.xanoubis/private.pem
 is used.
-.It Fl c Ar certfile Fl -cert Ar certfile
+.It Fl c Ar certfile , Fl -cert Ar certfile
 Load certificate from
 .Ar certfile .
 If not specified,
@@ -149,22 +149,22 @@ del - delete checksum of
 .Ar file
 from the shadow tree.
 .Pp
+list - list all entries in the shadow tree for
+.Ar file .
+.Pp
 get - returns the checksum of
 .Ar file
 as found in the shadow tree.
 .Pp
-list - list all entries in the shadow tree for
-.Ar file.
-.Pp
-validate - checks the checksum of
-.Ar file
-.Pp
 export - exports the checksums and signatures of all files
 in
-.Ar directory
+.Ar directory .
 .Pp
 import - imports checksums and signatures from
-.Ar file
+.Ar file .
+.Pp
+validate - checks the checksum of
+.Ar file .
 .Pp
 .El
 .Nm
@@ -194,7 +194,7 @@ usage.
 Add checksum
 .Ar checksum
 to
-.Ar file
+.Ar file .
 .It Fl U Ar file
 Update the system checksum using the current file contents.
 .It Fl R Ar file

@@ -95,38 +95,38 @@ usage(void)
 	 * NOTE: Capitalized options are used for extended attributes
 	 * NOTE: other options will be used for signed checksums.
 	 */
-	fprintf(stderr, "usage: %s [-dhvin]\n", __progname);
-	fprintf(stderr, "   [-f <fileset> ]\n");
-	fprintf(stderr, "   [--sig]\n");
-	fprintf(stderr, "   [--sum]\n");
+	fprintf(stderr, "usage: %s [-dvi]\n", __progname);
 	fprintf(stderr, "   [-r | --recursive]\n");
 	fprintf(stderr, "   [-l | --link]\n");
-	fprintf(stderr, "   [-c | --cert <certificate>] \n");
-	fprintf(stderr, "   [-k | --key <keyfile>]\n");
+	fprintf(stderr, "   [-f <listfile> ]\n");
+	fprintf(stderr, "   [-o <exportfile>]\n");
 	fprintf(stderr, "   [-u | --uid <uid>] \n");
-	fprintf(stderr, "   [-o exporttofile]\n");
-	fprintf(stderr, "   [--hassig]\n");
-	fprintf(stderr, "   [--hasnossig]\n");
+	fprintf(stderr, "   [-k | --key <keyfile>]\n");
+	fprintf(stderr, "   [-c | --cert <certificate>] \n");
 	fprintf(stderr, "   [--hassum]\n");
 	fprintf(stderr, "   [--hasnosum]\n");
+	fprintf(stderr, "   [--hassig]\n");
+	fprintf(stderr, "   [--hasnossig]\n");
 	fprintf(stderr, "   [--orphaned]\n");
 	fprintf(stderr, "   [--notfile]\n");
+	fprintf(stderr, "   [--sum]\n");
+	fprintf(stderr, "   [--sig]\n");
 	fprintf(stderr, "   command [file...]\n");
 	/* Add checksum xattr*/
 	fprintf(stderr, "   %s -A checksum file\n", __progname);
 	/* Update or add checksum xattr matching current file contents */
-	fprintf(stderr, "   %s -U file...\n", __progname);
+	fprintf(stderr, "   %s -U file\n", __progname);
 	/* Remove checksum xattr from files */
-	fprintf(stderr, "   %s -R file...\n", __progname);
+	fprintf(stderr, "   %s -R file\n", __progname);
 	/* Show checksum xattr */
-	fprintf(stderr, "   %s -L file...\n", __progname);
+	fprintf(stderr, "   %s -L file\n", __progname);
 	/* Add skipsum xattr */
-	fprintf(stderr, "   %s -S file...\n", __progname);
+	fprintf(stderr, "   %s -S file\n", __progname);
 	/* Clear skipsum xattr */
-	fprintf(stderr, "   %s -C file...\n", __progname);
+	fprintf(stderr, "   %s -C file\n", __progname);
 
 	for (i = 0; i < sizeof(commands)/sizeof(struct cmd); i++) {
-		fprintf(stderr, "       %s %s file...\n", __progname,
+		fprintf(stderr, "       %s %s file\n", __progname,
 		    commands[i].command);
 	}
 	exit(1);
