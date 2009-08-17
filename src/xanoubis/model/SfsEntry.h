@@ -79,6 +79,7 @@ class SfsEntry
 			SFSENTRY_MATCH,		/*!< The checksum matches */
 			SFSENTRY_ORPHANED,	/*!< There is a checksum but
 						     not corresponding file */
+			SFSENTRY_UPGRADED,	/*!< The file was upgraded. */
 		};
 
 		/**
@@ -223,7 +224,22 @@ class SfsEntry
 		 *         changed, false otherwise.
 		 * @see isChecksumChanged(ChecksumType)
 		 */
-		bool isChecksumChanged() const;
+		bool isChecksumChanged(void) const;
+
+		/**
+		 * Test if file was upgraded.
+		 * @param None.
+		 * @return True is returned, if file was upgraded.
+		 */
+		bool wasUpgraded(void) const;
+
+		/**
+		 * Set upgrade flag.
+		 * Mark this entry as be upgraded.
+		 * @param None.
+		 * @return True on success.
+		 */
+		bool setUpgraded(void);
 
 		/**
 		 * Returns the length of a checksum.

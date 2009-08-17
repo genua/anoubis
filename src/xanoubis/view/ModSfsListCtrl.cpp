@@ -239,6 +239,11 @@ ModSfsListCtrl::refreshEntry(unsigned int idx)
 	case SfsEntry::SFSENTRY_ORPHANED:
 		checksumInfo = _("orphaned");
 		checksumIconIndex = 2;
+		break;
+	case SfsEntry::SFSENTRY_UPGRADED:
+		checksumInfo = _("upgraded");
+		checksumIconIndex = 2;
+		break;
 	}
 
 	switch (entry->getChecksumState(SfsEntry::SFSENTRY_SIGNATURE)) {
@@ -263,6 +268,11 @@ ModSfsListCtrl::refreshEntry(unsigned int idx)
 	case SfsEntry::SFSENTRY_ORPHANED:
 		signatureInfo = _("orphaned");
 		signatureIconIndex = 2;
+		break;
+	case SfsEntry::SFSENTRY_UPGRADED:
+		signatureInfo = _("upgraded");
+		signatureIconIndex = 2;
+		break;
 	}
 
 	SetItem(idx, COLUMN_FILE,
@@ -287,6 +297,8 @@ ModSfsListCtrl::canDisplay(SfsEntry *entry, DisplayOption option) const
 		return (entry->haveChecksum());
 	case SHOW_ORPHANED:
 		return (!entry->fileExists());
+	case SHOW_UPGRADED:
+		return (entry->wasUpgraded());
 	}
 
 	/* Never reached */

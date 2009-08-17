@@ -257,6 +257,8 @@ ModSfsMainPanelImpl::OnSfsOperationFinished(wxCommandEvent&)
 		SfsMainListCtrl->refreshList(ModSfsListCtrl::SHOW_CHECKSUM);
 	else if (currentOperation_ == OP_SHOW_ORPHANED)
 		SfsMainListCtrl->refreshList(ModSfsListCtrl::SHOW_ORPHANED);
+	else if (currentOperation_ == OP_SHOW_UPGRADED)
+		SfsMainListCtrl->refreshList(ModSfsListCtrl::SHOW_UPGRADED);
 }
 
 void
@@ -578,11 +580,9 @@ ModSfsMainPanelImpl::OnSfsMainShowChangedClicked(wxCommandEvent&)
 void
 ModSfsMainPanelImpl::OnSfsMainShowUpgradedClicked(wxCommandEvent&)
 {
+	currentOperation_ = OP_SHOW_UPGRADED;
 	sfsCtrl_->fetchUpgradeList();
-	/* XXX ch: updating the view is done within other change */
-	SfsMainListCtrl->refreshList(ModSfsListCtrl::SHOW_ALL);
 }
-
 
 void
 ModSfsMainPanelImpl::OnSfsMainKeyLoaded(wxCommandEvent&)

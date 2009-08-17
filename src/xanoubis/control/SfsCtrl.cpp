@@ -984,12 +984,14 @@ SfsCtrl::OnCsumDel(TaskEvent &event)
 void
 SfsCtrl::OnUpgradeListArrived(TaskEvent &event)
 {
-	ComUpgradeListGetTask	*task;
 	PopTaskHelper		 taskHelper(this);
 	ComTask::ComTaskResult	 comResult;
 	SfsEntry::ChecksumType	 type;
+	int			 upgradeIdx;
 	wxArrayString		 fileList;
 	wxString		 errMsg;
+	SfsEntry		*entry;
+	ComUpgradeListGetTask	*task;
 
 	task = dynamic_cast<ComUpgradeListGetTask*>(event.getTask());
 	comResult = ComTask::RESULT_LOCAL_ERROR;
@@ -1032,15 +1034,19 @@ SfsCtrl::OnUpgradeListArrived(TaskEvent &event)
 		}
 		errorList_.Add(errMsg);
 	} else {
-		/*
-		 * XXX ch: As first step, just add the list to the sfsDir.
-		 * XXX ch: More needs to be done here, but implemented
-		 * XXX ch: in another change for another blue card.
-		 */
 		fileList = task->getFileList();
-		for (unsigned int idx = 0; idx < fileList.Count(); idx++) {
+		for (unsigned int idx=0; idx<sfsDir_.getNumEntries(); idx++) {
+			entry = sfsDir_.getEntry(idx);
+			upgradeIdx = fileList.Index(entry->getPath());
+			if (upgradeIdx != wxNOT_FOUND) {
+				entry->setUpgraded();
+				fileList.RemoveAt(upgradeIdx);
+			}
+		}
+		for (unsigned int idx=0; idx<fileList.Count(); idx++) {
 			sfsDir_.insertEntry(fileList.Item(idx));
 		}
+		sfsDir_.cleanup();
 		sendDirChangedEvent();
 	}
 }
@@ -1454,8 +1460,8 @@ SfsCtrl::PopTaskHelper::~PopTaskHelper()
 
 SfsCtrl::PopTaskHelper::PopTaskHelper(SfsCtrl *sfsCtrl)
 {
-		sfsCtrl_ = sfsCtrl;
-		task_ = NULL;
+	sfsCtrl_ = sfsCtrl;
+	task_ = NULL;
 }
 
 void

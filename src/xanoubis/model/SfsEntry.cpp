@@ -187,10 +187,23 @@ SfsEntry::isChecksumChanged(ChecksumType type) const
 }
 
 bool
-SfsEntry::isChecksumChanged() const
+SfsEntry::isChecksumChanged(void) const
 {
 	return isChecksumChanged(SFSENTRY_CHECKSUM) ||
 	    isChecksumChanged(SFSENTRY_SIGNATURE);
+}
+
+bool
+SfsEntry::wasUpgraded(void) const
+{
+	return (state_[SFSENTRY_SIGNATURE] == SFSENTRY_UPGRADED);
+}
+
+bool
+SfsEntry::setUpgraded(void)
+{
+	state_[SFSENTRY_SIGNATURE] = SFSENTRY_UPGRADED;
+	return true;
 }
 
 size_t

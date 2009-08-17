@@ -122,6 +122,8 @@ class ModSfsMainPanelImpl : public Observer, public ModSfsMainPanelBase
 			OP_SHOW_CHECKSUMS,	/*!< Show checksums only */
 			OP_SHOW_ORPHANED,	/*!< Show orphaned files
 						     only */
+			OP_SHOW_UPGRADED,	/*!< Show upgraded files
+						     only */
 			OP_APPLY	/*!< Apply was clicked to perform an
 					     operation on the current
 					     selection */

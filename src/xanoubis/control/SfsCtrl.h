@@ -404,7 +404,7 @@ class SfsCtrl : public wxEvtHandler
 		    const wxString &);
 
 		/**
-		 * Requests the list of upgraded files from the daemon. 
+		 * Requests the list of upgraded files from the daemon.
 		 * @param None.
 		 * @return The result of the command.
 		 */

@@ -86,6 +86,9 @@ ModSfsDetailsDlg::ModSfsDetailsDlg(SfsEntry *entry, wxWindow *parent)
 	case SfsEntry::SFSENTRY_ORPHANED:
 		checksumStateLabel->SetLabel(_("orphaned"));
 		break;
+	case SfsEntry::SFSENTRY_UPGRADED:
+		checksumStateLabel->SetLabel(_("upgraded"));
+		break;
 	}
 
 	/* Signature state */
@@ -107,6 +110,9 @@ ModSfsDetailsDlg::ModSfsDetailsDlg(SfsEntry *entry, wxWindow *parent)
 		break;
 	case SfsEntry::SFSENTRY_ORPHANED:
 		signatureStateLabel->SetLabel(_("orphaned"));
+		break;
+	case SfsEntry::SFSENTRY_UPGRADED:
+		signatureStateLabel->SetLabel(_("upgraded"));
 		break;
 	}
 }
