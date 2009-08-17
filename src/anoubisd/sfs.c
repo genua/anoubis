@@ -66,15 +66,6 @@
 #include "sfs.h"
 #include "cert.h"
 
-struct sfs_data {
-	int		 siglen;
-	u_int8_t	*sigdata;
-	int		 cslen;
-	u_int8_t        *csdata;
-	int		 upgradecslen;
-	u_int8_t        *upgradecsdata;
-};
-
 /*
  * sfsdata file format in sfs checksumroot:
  *
@@ -106,7 +97,7 @@ static int	 sfs_readsfsdata(const char *csum_file,
 static int	 sfs_deletechecksum(const char *csum_file);
 static int	 check_empty_dir(const char *path);
 
-static void
+void
 sfs_freesfsdata(struct sfs_data *sfsdata) {
 	if (sfsdata == NULL)
 		return;
@@ -319,20 +310,30 @@ convert_user_path(const char * path, char **dir, int is_dir)
 }
 
 static int
-__sfs_checksumop(const struct sfs_checksumop *csop, void **bufptr,
-    int * buflen, int is_chroot)
+__sfs_checksumop(const struct sfs_checksumop *csop, struct sfs_data *data,
+    int is_chroot)
 {
 	char		*csum_path = NULL, *csum_file, *keystring;
 	int		 realsiglen = 0;
 	int		 error = -EINVAL;
 	struct cert	*cert = NULL;
-	u_int8_t	*sigdata = NULL;
-	int		 siglen = 0;
 	struct sfs_data	 sfsdata;
 
-	if (is_chroot && csop->op != ANOUBIS_CHECKSUM_OP_GET
-	    && csop->op != ANOUBIS_CHECKSUM_OP_GETSIG)
-		return -EPERM;
+	switch(csop->op) {
+	case ANOUBIS_CHECKSUM_OP_GET2:
+	case _ANOUBIS_CHECKSUM_OP_GET_OLD:
+	case ANOUBIS_CHECKSUM_OP_GETSIG2:
+	case _ANOUBIS_CHECKSUM_OP_GETSIG_OLD:
+		if (!data)
+			return -EINVAL;
+		break;
+	default:
+		if (is_chroot)
+			return -EPERM;
+		if (data)
+			return -EINVAL;
+		break;
+	}
 
 	error = __convert_user_path(csop->path, &csum_path, 0, is_chroot);
 	if (error < 0)
@@ -342,7 +343,8 @@ __sfs_checksumop(const struct sfs_checksumop *csop, void **bufptr,
 
 	switch(csop->op) {
 	case ANOUBIS_CHECKSUM_OP_ADDSUM:
-	case ANOUBIS_CHECKSUM_OP_GET:
+	case _ANOUBIS_CHECKSUM_OP_GET_OLD:
+	case ANOUBIS_CHECKSUM_OP_GET2:
 	case ANOUBIS_CHECKSUM_OP_DEL:
 		error = -EPERM;
 		if (csop->uid != csop->auth_uid && csop->auth_uid != 0)
@@ -358,7 +360,8 @@ __sfs_checksumop(const struct sfs_checksumop *csop, void **bufptr,
 			goto err1;
 		break;
 	case ANOUBIS_CHECKSUM_OP_ADDSIG:
-	case ANOUBIS_CHECKSUM_OP_GETSIG:
+	case _ANOUBIS_CHECKSUM_OP_GETSIG_OLD:
+	case ANOUBIS_CHECKSUM_OP_GETSIG2:
 	case ANOUBIS_CHECKSUM_OP_DELSIG:
 		error = -EINVAL;
 		if (csop->keyid == NULL)
@@ -407,32 +410,43 @@ __sfs_checksumop(const struct sfs_checksumop *csop, void **bufptr,
 		sfsdata.siglen  = csop->siglen;
 		error = sfs_writesfsdata(csum_file, csum_path, &sfsdata);
 		break;
-	case ANOUBIS_CHECKSUM_OP_GET:
-	case ANOUBIS_CHECKSUM_OP_GETSIG:
+	case _ANOUBIS_CHECKSUM_OP_GET_OLD:
+	case ANOUBIS_CHECKSUM_OP_GET2:
+	case _ANOUBIS_CHECKSUM_OP_GETSIG_OLD:
+	case ANOUBIS_CHECKSUM_OP_GETSIG2:
 		error = sfs_readsfsdata(csum_file, &sfsdata);
 		if (error < 0)
 			goto err2;
-		if (csop->op == ANOUBIS_CHECKSUM_OP_GETSIG) {
-			sigdata = sfsdata.sigdata;
-			siglen  = sfsdata.siglen;
-			sfsdata.sigdata = NULL;
-		} else {
-			sigdata = sfsdata.csdata;
-			siglen  = sfsdata.cslen;
-			sfsdata.csdata = NULL;
-		}
-		sfs_freesfsdata(&sfsdata);
-		if (siglen != ANOUBIS_CS_LEN + realsiglen || sigdata == NULL) {
+		if (sfsdata.cslen && sfsdata.cslen != ANOUBIS_CS_LEN) {
 			error = -EINVAL;
 			goto err3;
 		}
-		if (csop->op == ANOUBIS_CHECKSUM_OP_GETSIG) {
-			int ret;
-			ret = anoubisd_verify_csum(cert->pkey, sigdata,
-			    sigdata + ANOUBIS_CS_LEN, realsiglen);
-			if (ret != 1)
-				error = -EPERM;
+		if (sfsdata.siglen && realsiglen && cert) {
+			int	ret;
+
+			if (sfsdata.siglen != ANOUBIS_CS_LEN + realsiglen) {
+				error = -ENOENT;
+				goto err3;
+			}
+			ret = anoubisd_verify_csum(cert->pkey, sfsdata.sigdata,
+			    sfsdata.sigdata + ANOUBIS_CS_LEN, realsiglen);
+			if (ret != 1) {
+				error = -ENOENT;
+				goto err3;
+			}
+		} else {
+			if (sfsdata.sigdata) {
+				free(sfsdata.sigdata);
+				sfsdata.sigdata = NULL;
+				sfsdata.siglen = 0;
+			}
 		}
+		if (data) {
+			(*data) = sfsdata;
+		} else {
+			sfs_freesfsdata(&sfsdata);
+		}
+		error = 0;
 		break;
 	case ANOUBIS_CHECKSUM_OP_DEL:
 	case ANOUBIS_CHECKSUM_OP_DELSIG:
@@ -440,20 +454,12 @@ __sfs_checksumop(const struct sfs_checksumop *csop, void **bufptr,
 		break;
 	}
 	if (error < 0)
-		goto err3;
-	if (bufptr) {
-		(*bufptr) = sigdata;
-	} else if (sigdata) {
-		free(sigdata);
-	}
-	if (buflen)
-		(*buflen) = siglen;
+		goto err2;
 	free(csum_file);
 	free(csum_path);
 	return 0;
 err3:
-	if (sigdata)
-		free(sigdata);
+	sfs_freesfsdata(&sfsdata);
 err2:
 	free(csum_file);
 err1:
@@ -461,17 +467,108 @@ err1:
 	return error;
 }
 
-int
-sfs_checksumop(const struct sfs_checksumop *csop, void **buf, int *buflen)
+static int
+sfs_copy_one_sig_type(void *dst, const void *src, int len, int type)
 {
-	return __sfs_checksumop(csop, buf, buflen, 0);
+	int	off = 0;
+
+	if (!len)
+		return 0;
+	set_value(*(u32n*)(dst + off), type);
+	off += sizeof(u32n);
+	set_value(*(u32n*)(dst + off), len);
+	off += sizeof(u32n);
+	memcpy(dst + off, src, len);
+	off += len;
+	return off;
 }
 
 int
-sfs_checksumop_chroot(const struct sfs_checksumop *csop, void **buf,
-    int *buflen)
+sfs_checksumop(const struct sfs_checksumop *csop, void **buf, int *buflen)
 {
-	return __sfs_checksumop(csop, buf, buflen, 1);
+	int		 ret, off;
+	struct sfs_data	 tmpdata;
+	int		 siglen;
+	void		*sigbuf;
+
+	switch(csop->op) {
+	case _ANOUBIS_CHECKSUM_OP_GET_OLD:
+	case ANOUBIS_CHECKSUM_OP_GET2:
+	case _ANOUBIS_CHECKSUM_OP_GETSIG_OLD:
+	case ANOUBIS_CHECKSUM_OP_GETSIG2:
+		ret = __sfs_checksumop(csop, &tmpdata, 0);
+		if (ret < 0)
+			return ret;
+		break;
+	default:
+		return __sfs_checksumop(csop, NULL, 0);
+	}
+	switch(csop->op) {
+	case _ANOUBIS_CHECKSUM_OP_GET_OLD:
+		if (tmpdata.cslen == 0) {
+			sfs_freesfsdata(&tmpdata);
+			return -ENOENT;
+		}
+		(*buflen) = tmpdata.cslen;
+		(*buf) = tmpdata.csdata;
+		tmpdata.csdata = NULL;
+		break;
+	case _ANOUBIS_CHECKSUM_OP_GETSIG_OLD:
+		if (tmpdata.siglen == 0) {
+			sfs_freesfsdata(&tmpdata);
+			return -ENOENT;
+		}
+		(*buflen) = tmpdata.siglen;
+		(*buf) = tmpdata.sigdata;
+		tmpdata.sigdata = NULL;
+		break;
+	case ANOUBIS_CHECKSUM_OP_GET2:
+	case ANOUBIS_CHECKSUM_OP_GETSIG2:
+		if ((csop->op == ANOUBIS_CHECKSUM_OP_GET2 && tmpdata.cslen == 0)
+		    || (csop->op == ANOUBIS_CHECKSUM_OP_GETSIG2
+		    && tmpdata.siglen == 0)) {
+			sfs_freesfsdata(&tmpdata);
+			return -ENOENT;
+		}
+		siglen = 2 * sizeof(u32n);
+		if (tmpdata.cslen)
+			siglen += tmpdata.cslen + 2 * sizeof(u32n);
+		if (tmpdata.siglen)
+			siglen += tmpdata.siglen + 2 * sizeof(u32n);
+		if (tmpdata.upgradecslen)
+			siglen += tmpdata.upgradecslen + 2 * sizeof(u32n);
+		sigbuf = malloc(siglen);
+		if (!sigbuf) {
+			sfs_freesfsdata(&tmpdata);
+			return -ENOMEM;
+		}
+		off = 0;
+		off += sfs_copy_one_sig_type(sigbuf+off,
+		    tmpdata.csdata, tmpdata.cslen, ANOUBIS_SIG_TYPE_CS);
+		off += sfs_copy_one_sig_type(sigbuf+off,
+		    tmpdata.sigdata, tmpdata.siglen, ANOUBIS_SIG_TYPE_SIG);
+		off += sfs_copy_one_sig_type(sigbuf+off,
+		    tmpdata.upgradecsdata, tmpdata.upgradecslen,
+		    ANOUBIS_SIG_TYPE_UPGRADECS);
+		set_value(*(u32n*)(sigbuf + off), ANOUBIS_SIG_TYPE_EOT);
+		off += sizeof(u32n);
+		set_value(*(u32n*)(sigbuf + off), 0);
+		if (buf) {
+			(*buf) = sigbuf;
+		} else {
+			free(sigbuf);
+		}
+		if (buflen)
+			(*buflen) = siglen;
+	}
+	sfs_freesfsdata(&tmpdata);
+	return 0;
+}
+
+int
+sfs_checksumop_chroot(const struct sfs_checksumop *csop, struct sfs_data *data)
+{
+	return __sfs_checksumop(csop, data, 1);
 }
 
 /*
@@ -979,4 +1076,17 @@ check_empty_dir(const char *path)
 	}
 	closedir(dir);
 	return 0;
+}
+
+int
+sfs_upgraded(const char *csum_file)
+{
+	struct sfs_data		sfsdata;
+	int			len;
+
+	if (sfs_readsfsdata(csum_file, &sfsdata) < 0)
+		return 0;
+	len = sfsdata.upgradecslen;
+	sfs_freesfsdata(&sfsdata);
+	return len != 0;
 }

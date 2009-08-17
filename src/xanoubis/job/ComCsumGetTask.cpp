@@ -73,9 +73,9 @@ ComCsumGetTask::exec(void)
 	ta_ = NULL;
 
 	if (haveKeyId())
-		req_op = ANOUBIS_CHECKSUM_OP_GETSIG;
+		req_op = ANOUBIS_CHECKSUM_OP_GETSIG2;
 	else
-		req_op = ANOUBIS_CHECKSUM_OP_GET;
+		req_op = ANOUBIS_CHECKSUM_OP_GET2;
 
 	/*
 	 * Receive path to be send to anoubisd
@@ -100,6 +100,8 @@ bool
 ComCsumGetTask::done(void)
 {
 	struct anoubis_msg		*reqmsg;
+	int				 len;
+	const void			*sigdata = NULL;
 
 	if (ta_ == NULL)
 		return (true);
@@ -120,23 +122,31 @@ ComCsumGetTask::done(void)
 	anoubis_transaction_destroy(ta_);
 	ta_ = NULL;
 
-	if(!reqmsg || !VERIFY_LENGTH(reqmsg,
-	    sizeof(Anoubis_PolicyReplyMessage) + ANOUBIS_CS_LEN) ||
-	    get_value(reqmsg->u.policyreply->error) != 0) {
-		setComTaskResult(RESULT_REMOTE_ERROR);
+	if (haveKeyId()) {
+		len = anoubis_extract_sig_type(reqmsg, ANOUBIS_SIG_TYPE_SIG,
+		    &sigdata);
+		if (len > 0 && len != ANOUBIS_CS_LEN)
+			goto err;
 	} else {
-		if (haveKeyId())
-			this->cs_len_ = reqmsg->length - CSUM_LEN
-			    - sizeof(Anoubis_AckPayloadMessage);
-		else
-			this->cs_len_ = ANOUBIS_CS_LEN;
-
+		/*
+		 * XXX CEH: Might want to look at ANOUBIS_SIG_TYPE_UPGRADE
+		 * XXX CEH: as well. It should just be there.
+		 */
+		len = anoubis_extract_sig_type(reqmsg, ANOUBIS_SIG_TYPE_CS,
+		    &sigdata);
+	}
+	if (len < 0)
+		goto err;
+	this->cs_len_ = len;
+	if (len) {
 		this->cs_ = (u_int8_t *)malloc(this->cs_len_);
-		memcpy(cs_, reqmsg->u.ackpayload->payload, cs_len_);
-
-		anoubis_msg_free(reqmsg);
+		memcpy(cs_, sigdata, len);
 	}
 	setComTaskResult(RESULT_SUCCESS);
+	anoubis_msg_free(reqmsg);
+	return (true);
+err:
+	anoubis_msg_free(reqmsg);
 	return (true);
 }
 

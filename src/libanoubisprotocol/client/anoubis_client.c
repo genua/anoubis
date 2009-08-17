@@ -977,7 +977,7 @@ anoubis_client_csumrequest_start(struct anoubis_client *client,
 	switch (op) {
 	case ANOUBIS_CHECKSUM_OP_ADDSIG:
 	case ANOUBIS_CHECKSUM_OP_DELSIG:
-	case ANOUBIS_CHECKSUM_OP_GETSIG:
+	case ANOUBIS_CHECKSUM_OP_GETSIG2:
 		if (idlen == 0)
 			return NULL;
 		/* FALL TROUGH */
@@ -986,7 +986,7 @@ anoubis_client_csumrequest_start(struct anoubis_client *client,
 			return NULL;
 		break;
 	case ANOUBIS_CHECKSUM_OP_DEL:
-	case ANOUBIS_CHECKSUM_OP_GET:
+	case ANOUBIS_CHECKSUM_OP_GET2:
 		if (idlen != 0)
 			return NULL;
 		break;
@@ -1077,7 +1077,7 @@ anoubis_client_csumrequest_start(struct anoubis_client *client,
 	set_value(m->u.checksumrequest->idlen, idlen);
 	set_value(m->u.checksumrequest->operation, op);
 
-	if (op == ANOUBIS_CHECKSUM_OP_GETSIG ||
+	if (op == ANOUBIS_CHECKSUM_OP_GETSIG2 ||
 	    op == ANOUBIS_CHECKSUM_OP_GENERIC_LIST ||
 	    op == ANOUBIS_CHECKSUM_OP_DELSIG) {
 		if (idlen && dstid)

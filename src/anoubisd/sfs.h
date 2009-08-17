@@ -50,11 +50,22 @@ struct sfs_checksumop {
 	const char	*path;		/* NUL-terminated path name. */
 };
 
+struct sfs_data {
+	int		 siglen;
+	u_int8_t	*sigdata;
+	int		 cslen;
+	u_int8_t        *csdata;
+	int		 upgradecslen;
+	u_int8_t        *upgradecsdata;
+};
+
 int	 sfs_checksumop(const struct sfs_checksumop *csop,
-	     void **buffer, int *buflen);
+	     void **buftpr, int *buflen);
 int	 sfs_checksumop_chroot(const struct sfs_checksumop *csop,
-	     void **buffer, int *buflen);
+	     struct sfs_data *data);
+void	 sfs_freesfsdata(struct sfs_data *);
 int	 sfs_haschecksum_chroot(const char *path);
+int	 sfs_upgraded(const char *convertedpath);
 int	 sfs_update_all(const char *path, u_int8_t *md, int len);
 int	 convert_user_path(const char *path, char **dir, int is_dir);
 char	*remove_escape_seq(const char *name);

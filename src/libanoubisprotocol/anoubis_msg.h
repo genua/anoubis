@@ -101,7 +101,6 @@ __BEGIN_DECLS
 /*@null@*/ struct anoubis_msg * anoubis_msg_clone(struct anoubis_msg * m);
 int anoubis_msg_resize(struct anoubis_msg * m, size_t len);
 void anoubis_msg_free(/*@only@*/ struct anoubis_msg * m);
-__END_DECLS
 
 void stringlist_iterator_init(/*@out@*/ struct stringlist_iterator * it,
     struct anoubis_msg * m, struct proto_opt * opts);
@@ -109,6 +108,10 @@ int stringlist_iterator_get(struct stringlist_iterator * it);
 struct anoubis_msg * anoubis_stringlist_msg(u_int32_t type,
     struct proto_opt * opts, int * ovals);
 
+int anoubis_extract_sig_type(const struct anoubis_msg *m, int type,
+    const void **data);
+
 int anoubis_msg_send(struct achat_channel * chan, struct anoubis_msg * m);
+__END_DECLS
 
 #endif

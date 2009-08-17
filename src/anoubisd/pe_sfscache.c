@@ -299,6 +299,7 @@ sfshash_readsum(const char *path, int cstype, const char *key, uid_t uid,
 	int			 ret, siglen = 0;
 	void			*sigdata = NULL;
 	struct sfs_checksumop	 csop;
+	struct sfs_data		 tmpdata;
 	u_int8_t		*keybuf = NULL;
 
 	csop.path = path;
@@ -310,7 +311,7 @@ sfshash_readsum(const char *path, int cstype, const char *key, uid_t uid,
 	switch(cstype) {
 	case CSTYPE_UID:
 		csop.uid = uid;
-		csop.op = ANOUBIS_CHECKSUM_OP_GET;
+		csop.op = ANOUBIS_CHECKSUM_OP_GET2;
 		csop.idlen = 0;
 		csop.keyid = NULL;
 		break;
@@ -318,7 +319,7 @@ sfshash_readsum(const char *path, int cstype, const char *key, uid_t uid,
 		int		 i, j, len = strlen(key);
 
 		csop.uid = 0;
-		csop.op = ANOUBIS_CHECKSUM_OP_GETSIG;
+		csop.op = ANOUBIS_CHECKSUM_OP_GETSIG2;
 		if (len % 2)
 			return -ENOENT;
 		csop.idlen = len / 2;
@@ -339,13 +340,29 @@ sfshash_readsum(const char *path, int cstype, const char *key, uid_t uid,
 	} default:
 		return -EINVAL;
 	}
-	ret = sfs_checksumop_chroot(&csop, &sigdata, &siglen);
+	ret = sfs_checksumop_chroot(&csop, &tmpdata);
 	if (keybuf)
 		free(keybuf);
 	if (ret < 0)
 		return ret;
+	if (cstype == CSTYPE_UID) {
+		siglen = tmpdata.cslen;
+		sigdata = tmpdata.csdata;
+		tmpdata.csdata = NULL;
+	} else {
+		/*
+		 * XXX CEH: Use upgrade signature if present and upgrade
+		 * XXX CEH: in progress?
+		 * XXX CEH: What if signature is cached?
+		 */
+		siglen = tmpdata.siglen;
+		sigdata = tmpdata.sigdata;
+		tmpdata.sigdata = NULL;
+	}
+	sfs_freesfsdata(&tmpdata);
 	if (siglen < ANOUBIS_CS_LEN) {
-		free(sigdata);
+		if (sigdata)
+			free(sigdata);
 		return -ENOENT;
 	}
 	memcpy(csum, sigdata, ANOUBIS_CS_LEN);

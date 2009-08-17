@@ -433,9 +433,9 @@ anoubis_print_entries(FILE *fd, struct sfs_entry **list, int cnt)
 }
 
 struct sfs_entry *
-anoubis_build_entry(const char *name, unsigned char *checksum, int csumlen,
-    unsigned char *signature, int siglen, uid_t uid, unsigned char *keyid,
-    int keylen)
+anoubis_build_entry(const char *name, const unsigned char *checksum,
+    int csumlen, const unsigned char *signature, int siglen, uid_t uid,
+    const unsigned char *keyid, int keylen)
 {
 	struct sfs_entry	*se = NULL;
 

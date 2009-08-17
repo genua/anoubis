@@ -1139,7 +1139,8 @@ validate_sfs_checksumop(struct sfs_checksumop *csop)
 
 	switch(csop->op) {
 	case ANOUBIS_CHECKSUM_OP_DEL:
-	case ANOUBIS_CHECKSUM_OP_GET:
+	case _ANOUBIS_CHECKSUM_OP_GET_OLD:
+	case ANOUBIS_CHECKSUM_OP_GET2:
 	case ANOUBIS_CHECKSUM_OP_ADDSUM:
 		if (csop->listflags)
 			return  -EINVAL;
@@ -1153,7 +1154,8 @@ validate_sfs_checksumop(struct sfs_checksumop *csop)
 				return -EINVAL;
 		}
 		break;
-	case ANOUBIS_CHECKSUM_OP_GETSIG:
+	case _ANOUBIS_CHECKSUM_OP_GETSIG_OLD:
+	case ANOUBIS_CHECKSUM_OP_GETSIG2:
 	case ANOUBIS_CHECKSUM_OP_DELSIG:
 	case ANOUBIS_CHECKSUM_OP_ADDSIG:
 		if (csop->listflags)
@@ -1234,14 +1236,6 @@ create_polreply_msg(u_int64_t token, int payloadlen)
 	reply->len = payloadlen;
 	reply->token = token;
 	return msg;
-}
-
-static int
-sfs_upgraded(const char *path)
-{
-	/* XXX CEH: Needs implementation. */
-	path = path;
-	return 0;
 }
 
 static int
@@ -1465,8 +1459,10 @@ dispatch_checksumop(anoubisd_msg_t *msg, struct event_info_main *ev_info)
 		return;
 	case ANOUBIS_CHECKSUM_OP_ADDSIG:
 	case ANOUBIS_CHECKSUM_OP_ADDSUM:
-	case ANOUBIS_CHECKSUM_OP_GETSIG:
-	case ANOUBIS_CHECKSUM_OP_GET:
+	case _ANOUBIS_CHECKSUM_OP_GETSIG_OLD:
+	case ANOUBIS_CHECKSUM_OP_GETSIG2:
+	case _ANOUBIS_CHECKSUM_OP_GET_OLD:
+	case ANOUBIS_CHECKSUM_OP_GET2:
 	case ANOUBIS_CHECKSUM_OP_DELSIG:
 	case ANOUBIS_CHECKSUM_OP_DEL:
 		err = sfs_checksumop(&csop, &sigbuf, &siglen);

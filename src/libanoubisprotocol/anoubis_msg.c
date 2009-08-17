@@ -148,6 +148,45 @@ struct anoubis_msg * anoubis_stringlist_msg(u_int32_t type,
 	return m;
 }
 
+int
+anoubis_extract_sig_type(const struct anoubis_msg *m, int reqtype,
+    const void **data)
+{
+	int		 error;
+	int		 payloadlen, off = 0, type, len;
+	const void	*payload;
+
+	if (!m || !VERIFY_LENGTH(m, sizeof(Anoubis_AckPayloadMessage)))
+		return -EFAULT;
+	error = get_value(m->u.ackpayload->error);
+	if (error != 0)
+		return -error;
+	payloadlen = m->length - sizeof(Anoubis_AckPayloadMessage) - CSUM_LEN;
+	if (payloadlen < 0)
+		return -EFAULT;
+	payload = m->u.ackpayload->payload;
+	while(1) {
+		if (off + (int)sizeof(u32n) > payloadlen)
+			return -EFAULT;
+		type = get_value(*(u32n*)(payload + off));
+		if (type == ANOUBIS_SIG_TYPE_EOT)
+			return 0;
+		off += sizeof(u32n);
+		if (off + (int)sizeof(u32n) > payloadlen)
+			return -EFAULT;
+		len = get_value(*(u32n*)(payload + off));
+		off += sizeof(u32n);
+		if (len < 0 || off + len > payloadlen)
+			return -EFAULT;
+		if (type == reqtype)
+			break;
+	}
+	if (data) {
+		(*data) = payload + off;
+	}
+	return len;
+}
+
 /* Does NOT free the message! */
 int anoubis_msg_send(struct achat_channel * chan, struct anoubis_msg * m)
 {

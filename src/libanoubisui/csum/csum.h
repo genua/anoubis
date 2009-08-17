@@ -64,8 +64,8 @@ int	  anoubis_print_entries(FILE *fd, struct sfs_entry **list,
     int cnt);
 void	  anoubis_entry_free(struct sfs_entry *se);
 struct sfs_entry *anoubis_build_entry(const char *name,
-    unsigned char *checksum, int csumlen, unsigned char *signature, int siglen,
-    uid_t uid, unsigned char *keyid, int keylen);
+    const unsigned char *checksum, int csumlen, const unsigned char *signature,
+    int siglen, uid_t uid, const unsigned char *keyid, int keylen);
 unsigned char ** anoubis_keyid_list(struct anoubis_msg *m, int **idlen_list,
     int *list_cnt);
 unsigned char *string2hex(const char *hex, int *cnt);

@@ -71,7 +71,7 @@ filter_notfile(char *arg)
 int
 filter_hassum(char *arg, uid_t uid)
 {
-	return filter_sumsig(arg, ANOUBIS_CHECKSUM_OP_GET, 0, NULL, uid);
+	return filter_sumsig(arg, ANOUBIS_CHECKSUM_OP_GET2, 0, NULL, uid);
 }
 
 int
@@ -82,7 +82,7 @@ filter_hassig(char *arg, struct anoubis_sig *as)
 			    "certifcate\n");
 			return 0;
 	}
-	return filter_sumsig(arg, ANOUBIS_CHECKSUM_OP_GETSIG, as->idlen,
+	return filter_sumsig(arg, ANOUBIS_CHECKSUM_OP_GETSIG2, as->idlen,
 	    as->keyid, 0);
 }
 
@@ -90,7 +90,7 @@ static int
 filter_hasnosum(char *arg, uid_t uid)
 {
 	int rc = 0;
-	rc = filter_sumsig(arg, ANOUBIS_CHECKSUM_OP_GET, 0, NULL, uid);
+	rc = filter_sumsig(arg, ANOUBIS_CHECKSUM_OP_GET2, 0, NULL, uid);
 	if (rc)
 		return 0;
 	else
@@ -106,7 +106,7 @@ filter_hasnosig(char *arg, struct anoubis_sig *as)
 			    "certifcate\n");
 			return 0;
 	}
-	rc =  filter_sumsig(arg, ANOUBIS_CHECKSUM_OP_GETSIG, as->idlen,
+	rc =  filter_sumsig(arg, ANOUBIS_CHECKSUM_OP_GETSIG2, as->idlen,
 	    as->keyid, 0);
 	if (rc)
 		return 0;
@@ -120,6 +120,8 @@ filter_sumsig(char *arg, int op, unsigned int idlen, unsigned char *keyid,
 {
 	struct anoubis_transaction	*t = NULL;
 	char				 tmp[PATH_MAX];
+	int				 len;
+	const void			*data;
 
 	if (sfs_realpath(arg, tmp) == NULL)
 		return 0;
@@ -135,9 +137,16 @@ filter_sumsig(char *arg, int op, unsigned int idlen, unsigned char *keyid,
 			fprintf(stderr, "%s: Has no entry\n", arg);
 		anoubis_transaction_destroy(t);
 		return 0;
-	} else {
-		return 1;
 	}
+	if (op == ANOUBIS_CHECKSUM_OP_GET2) {
+		len = anoubis_extract_sig_type(t->msg, ANOUBIS_SIG_TYPE_CS,
+		    &data);
+	} else {
+		len = anoubis_extract_sig_type(t->msg, ANOUBIS_SIG_TYPE_SIG,
+		    &data);
+	}
+	anoubis_transaction_destroy(t);
+	return (len > 0);
 }
 
 int

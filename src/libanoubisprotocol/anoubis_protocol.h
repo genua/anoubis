@@ -182,7 +182,7 @@ static inline u_int64_t __ntohll(u_int64_t arg)
  *   - ANOUBIS_CSUM_UID: Apply command to user IDS/unsigend checksums
  *   - ANOBUIS_CSUM_KEY: Apply command to key IDS/signed checksums
  *   - ANOUBIS_CSUM_ALL: Apply command to all user/key IDs not just to
- * 	a single ID. This requires root privileges.
+ *	a single ID. This requires root privileges.
  *   - ANOUBIS_CSUM_WANTIDS: List available signatures/checksums for a single
  *	file instead of listing contents of a directory.
  *   - ANOUBIS_CSUM_UPGRADED: Report only files/directories that contain
@@ -366,17 +366,19 @@ typedef struct {
  */
 
 #define ANOUBIS_CHECKSUM_OP_DEL			0x0002UL
-#define ANOUBIS_CHECKSUM_OP_GET			0x0003UL
+#define _ANOUBIS_CHECKSUM_OP_GET_OLD		0x0003UL	/* Deprecated */
 #define ANOUBIS_CHECKSUM_OP_ADDSUM		0x0005UL
 #define _ANOUBIS_CHECKSUM_OP_LIST		0x0006UL	/* Deprecated */
 #define _ANOUBIS_CHECKSUM_OP_UID_LIST		0x0007UL	/* Deprecated */
 #define ANOUBIS_CHECKSUM_OP_ADDSIG		0x0008UL
-#define ANOUBIS_CHECKSUM_OP_GETSIG		0x0009UL
+#define _ANOUBIS_CHECKSUM_OP_GETSIG_OLD		0x0009UL	/* Deprecated */
 #define ANOUBIS_CHECKSUM_OP_DELSIG		0x000BUL
 #define _ANOUBIS_CHECKSUM_OP_LIST_ALL		0x000CUL	/* Deprecated */
 #define _ANOUBIS_CHECKSUM_OP_KEYID_LIST		0x000DUL	/* Deprecated */
 #define _ANOUBIS_CHECKSUM_OP_VALIDATE		0x000EUL	/* Deprecated */
 #define ANOUBIS_CHECKSUM_OP_GENERIC_LIST	0x000FUL
+#define ANOUBIS_CHECKSUM_OP_GET2		0x0010UL
+#define ANOUBIS_CHECKSUM_OP_GETSIG2		0x0011UL
 
 typedef struct {
 	u32n	type;
@@ -386,6 +388,12 @@ typedef struct {
 	u16n	idlen;
 	char	payload[0];
 } __attribute__((packed)) Anoubis_ChecksumRequestMessage;
+
+/* Types of signatures in a GET message */
+#define ANOUBIS_SIG_TYPE_EOT		0	/* End of data */
+#define ANOUBIS_SIG_TYPE_CS		1	/* An unsigned checksum */
+#define ANOUBIS_SIG_TYPE_SIG		2	/* A signed checksum */
+#define ANOUBIS_SIG_TYPE_UPGRADECS	3	/* Upgrade marker */
 
 typedef struct {
 	u32n	type;

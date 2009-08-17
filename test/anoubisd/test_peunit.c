@@ -132,9 +132,14 @@ cert_reconfigure(int chroot __used)
 
 int
 sfs_checksumop_chroot(const struct sfs_checksumop *csop __used,
-    void **bufptr __used, int *buflen __used)
+    struct sfs_data *data __used)
 {
 	return 0;
+}
+
+void
+sfs_freesfsdata(struct sfs_data *data __used)
+{
 }
 
 int (*sfs_haschecksum_chroot_p)(const char *path) = NULL;
