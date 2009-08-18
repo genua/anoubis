@@ -592,10 +592,6 @@ sfs_update_all(const char *path, u_int8_t *md, int len)
 	if (ret < 0)
 		return ret;
 
-	memset(&sfsdata, 0, sizeof(sfsdata));
-	sfsdata.cslen = len;
-	sfsdata.csdata = md;
-
 	sfs_dir = opendir(sfs_path);
 	if (sfs_dir == NULL) {
 		/* since we just update we don't create new one */
@@ -606,24 +602,57 @@ sfs_update_all(const char *path, u_int8_t *md, int len)
 		return -ret;
 	}
 	while ((sfs_ent = readdir(sfs_dir)) != NULL) {
+		int		need_sfsfree;
 		/* since we updating checksums we skip keyid entries */
 		if (strcmp(sfs_ent->d_name, ".") == 0 ||
-		    strcmp(sfs_ent->d_name, "..") == 0 ||
-		    (sfs_ent->d_name[0] == 'k'))
+		    strcmp(sfs_ent->d_name, "..") == 0)
 			continue;
-		if (sscanf(sfs_ent->d_name, "%u%c", &uid, &testarg) != 1)
-			continue;
-		if (asprintf(&csum_file, "%s/%d", sfs_path, uid) == -1) {
+		if (asprintf(&csum_file, "%s/%s", sfs_path,
+		    sfs_ent->d_name) < 0) {
 			closedir(sfs_dir);
 			free(sfs_path);
 			return -ENOMEM;
 		}
-		ret = sfs_writesfsdata(csum_file, sfs_path, &sfsdata);
-		if (ret)
-			log_warnx("Cannot update checksum for %s (uid %d): "
-			    "error = %d\n", path, uid, ret);
+		need_sfsfree = 0;
+		if (sscanf(sfs_ent->d_name, "%u%c", &uid, &testarg) == 1) {
+			memset(&sfsdata, 0, sizeof(sfsdata));
+			sfsdata.cslen = len;
+			sfsdata.csdata = md;
+		} else if (sfs_ent->d_name[0] == 'k') {
+			memset(&sfsdata, 0, sizeof(sfsdata));
+			ret = sfs_readsfsdata(csum_file, &sfsdata);
+			if (ret < 0) {
+				log_warnx("Cannot update checksum for %s "
+				    "(key %s)", csum_file, sfs_ent->d_name+1);
+				free(csum_file);
+				continue;
+			}
+			if (sfsdata.siglen == 0) {
+				free(csum_file);
+				sfs_freesfsdata(&sfsdata);
+				continue;
+			}
+			need_sfsfree = 1;
+			if (sfsdata.upgradecsdata) {
+				free(sfsdata.upgradecsdata);
+			}
+			sfsdata.upgradecslen = len;
+			sfsdata.upgradecsdata = md;
+		} else {
+			free(csum_file);
+			continue;
+		}
+		ret = sfs_writesfsdata(csum_file,  sfs_path, &sfsdata);
+		if (need_sfsfree) {
+			/* The upgrade signature is not malloced */
+			sfsdata.upgradecslen = 0;
+			sfsdata.upgradecsdata = NULL;
+			sfs_freesfsdata(&sfsdata);
+		}
+		if (ret < 0)
+			log_warnx("Cannot update checksum for %s "
+			    "(file=%s, error=%d)", path, sfs_ent->d_name, ret);
 		free(csum_file);
-		csum_file = NULL;
 	}
 	free(sfs_path);
 	closedir(sfs_dir);
@@ -1003,7 +1032,8 @@ sfs_haschecksum_chroot(const char *path)
 		if (strcmp(sfs_ent->d_name, ".") == 0 ||
 		    strcmp(sfs_ent->d_name, "..") == 0)
 			continue;
-		if (sscanf(sfs_ent->d_name, "%u%c", &uid, &testarg) == 1) {
+		if (sscanf(sfs_ent->d_name, "%u%c", &uid, &testarg) == 1
+		    || sfs_ent->d_name[0] == 'k') {
 			closedir(dir);
 			free(csum_path);
 			return 1;
