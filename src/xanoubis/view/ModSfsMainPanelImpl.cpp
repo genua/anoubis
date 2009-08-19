@@ -86,9 +86,6 @@ ModSfsMainPanelImpl::ModSfsMainPanelImpl(wxWindow* parent,
 	JobCtrl::getInstance()->Connect(anTASKEVT_REGISTER,
 	    wxTaskEventHandler(ModSfsMainPanelImpl::OnDaemonRegistration),
 	    NULL, this);
-	JobCtrl::getInstance()->Connect(anTASKEVT_UPGRADE_LIST,
-	    wxTaskEventHandler(ModSfsMainPanelImpl::OnUpgradeListGetTask),
-	    NULL, this);
 	Hide();
 
 	addSubject(keyPicker);
@@ -101,7 +98,6 @@ ModSfsMainPanelImpl::ModSfsMainPanelImpl(wxWindow* parent,
 	certificatePicker->setButtonLabel(_("Choose certificate"));
 	certificatePicker->setMode(AnPickFromFs::MODE_FILE);
 
-	upgradeTask_.setRequestParameter(geteuid());
 	initSfsOptions();
 	initSfsMain();
 }
@@ -110,9 +106,6 @@ ModSfsMainPanelImpl::~ModSfsMainPanelImpl(void)
 {
 	JobCtrl::getInstance()->Disconnect(anTASKEVT_REGISTER,
 	    wxTaskEventHandler(ModSfsMainPanelImpl::OnDaemonRegistration),
-	    NULL, this);
-	JobCtrl::getInstance()->Disconnect(anTASKEVT_UPGRADE_LIST,
-	    wxTaskEventHandler(ModSfsMainPanelImpl::OnUpgradeListGetTask),
 	    NULL, this);
 	AnEvents::getInstance()->Disconnect(anEVT_LOAD_RULESET,
 	    wxCommandEventHandler(ModSfsMainPanelImpl::onLoadRuleSet),
@@ -212,37 +205,11 @@ ModSfsMainPanelImpl::OnDaemonRegistration(TaskEvent &event)
 	if (task != 0) {
 		comEnabled_ =
 		   (task->getAction() == ComRegistrationTask::ACTION_REGISTER);
-		JobCtrl::getInstance()->addTask(&upgradeTask_);
 		event.Skip();
 	} else
 		comEnabled_ = false;
 
 	enableSfsControls(false); /* false: No operation running */
-}
-
-void
-ModSfsMainPanelImpl::OnUpgradeListGetTask(TaskEvent &event)
-{
-	ComUpgradeListGetTask	*task;
-	ComTask::ComTaskResult	 comResult;
-
-	task = dynamic_cast<ComUpgradeListGetTask*>(event.getTask());
-	if (&upgradeTask_ != task) {
-		/* This is not our task. */
-		event.Skip();
-		return;
-	}
-
-	comResult = upgradeTask_.getComTaskResult();
-	if (comEnabled_
-	    && (comResult == ComTask::RESULT_SUCCESS)
-	    && (upgradeTask_.getFileList().Count() > 0)) {
-		SfsMainShowUpgradedButton->Enable();
-	} else {
-		SfsMainShowUpgradedButton->Disable();
-	}
-
-	Refresh();
 }
 
 void
@@ -557,31 +524,29 @@ ModSfsMainPanelImpl::OnSfsMainSigEnabledClicked(wxCommandEvent&)
 }
 
 void
-ModSfsMainPanelImpl::OnSfsMainSearchOrphanedClicked(wxCommandEvent&)
+ModSfsMainPanelImpl::OnSfsMainDirViewChoiceSelected(wxCommandEvent &event)
 {
-	currentOperation_ = OP_SHOW_ORPHANED;
-	applySfsValidateAll(true);
-}
-
-void
-ModSfsMainPanelImpl::OnSfsMainShowAllChecksumsClicked(wxCommandEvent&)
-{
-	currentOperation_ = OP_SHOW_CHECKSUMS;
-	applySfsValidateAll(false);
-}
-
-void
-ModSfsMainPanelImpl::OnSfsMainShowChangedClicked(wxCommandEvent&)
-{
-	currentOperation_ = OP_SHOW_CHANGED;
-	applySfsValidateAll(false);
-}
-
-void
-ModSfsMainPanelImpl::OnSfsMainShowUpgradedClicked(wxCommandEvent&)
-{
-	currentOperation_ = OP_SHOW_UPGRADED;
-	sfsCtrl_->fetchUpgradeList();
+	switch (event.GetSelection()) {
+	case 0:
+		SfsMainListCtrl->refreshList(ModSfsListCtrl::SHOW_ALL);
+		break;
+	case 1:
+		currentOperation_ = OP_SHOW_CHECKSUMS;
+		applySfsValidateAll(false);
+		break;
+	case 2:
+		currentOperation_ = OP_SHOW_CHANGED;
+		applySfsValidateAll(false);
+		break;
+	case 3:
+		currentOperation_ = OP_SHOW_ORPHANED;
+		applySfsValidateAll(true);
+		break;
+	case 4:
+		currentOperation_ = OP_SHOW_UPGRADED;
+		sfsCtrl_->fetchUpgradeList();
+		break;
+	}
 }
 
 void
@@ -662,9 +627,7 @@ ModSfsMainPanelImpl::enableSfsControls(bool sfsOpRunning)
 	bool haveSelection = (SfsMainListCtrl->GetSelectedItemCount() > 0);
 
 	SfsMainFilterValidateButton->Enable(comEnabled_ && !sfsOpRunning);
-	SfsMainSearchOrphanedButton->Enable(comEnabled_ && !sfsOpRunning);
-	SfsMainShowChecksumButton->Enable(comEnabled_ && !sfsOpRunning);
-	SfsMainShowChangedButton->Enable(comEnabled_ && !sfsOpRunning);
+	SfsMainDirViewChoice->Enable(comEnabled_ && !sfsOpRunning);
 	SfsMainImportButton->Enable(comEnabled_ && !sfsOpRunning);
 	SfsMainExportButton->Enable(
 	    comEnabled_ && !sfsOpRunning && haveSelection);

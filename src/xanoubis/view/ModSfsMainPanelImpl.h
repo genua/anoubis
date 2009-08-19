@@ -141,11 +141,6 @@ class ModSfsMainPanelImpl : public Observer, public ModSfsMainPanelBase
 		bool comEnabled_; /**< Current communicator status. */
 
 		/**
-		 * Task to fetch UpgradeList
-		 */
-		ComUpgradeListGetTask upgradeTask_;
-
-		/**
 		 * Handle the event when main directory of Sfs tree is changed.
 		 * Sets show all and updates the view.
 		 * @param[in] 1st The event.
@@ -175,11 +170,6 @@ class ModSfsMainPanelImpl : public Observer, public ModSfsMainPanelBase
 		 * @param[in] 1st The event.
 		 */
 		void OnDaemonRegistration(TaskEvent &);
-
-		/**
-		 * Handle UpgradeListGet task events.
-		 */
-		void OnUpgradeListGetTask(TaskEvent &);
 
 		/**
 		 * Handle the event when Sfs operation finished.
@@ -285,32 +275,11 @@ class ModSfsMainPanelImpl : public Observer, public ModSfsMainPanelBase
 		void OnSfsMainSigEnabledClicked(wxCommandEvent&);
 
 		/**
-		 * Handle the event when search for orphaned files is clicked.
+		 * Handle the event when a view choice is selected.
 		 * @param[in] 1st The event.
 		 * @return Nothing.
 		 */
-		void OnSfsMainSearchOrphanedClicked(wxCommandEvent&);
-
-		/**
-		 * Handle the event when show all checksums is clicked.
-		 * @param[in] 1st The event.
-		 * @return Nothing.
-		 */
-		void OnSfsMainShowAllChecksumsClicked(wxCommandEvent&);
-
-		/**
-		 * Handle the event when show changed files is clicked.
-		 * @param[in] 1st The event.
-		 * @return Nothing.
-		 */
-		void OnSfsMainShowChangedClicked(wxCommandEvent&);
-
-		/**
-		 * Handle the event when show upgraded files is clicked.
-		 * @param[in] 1st The event.
-		 * @return Nothing.
-		 */
-		void OnSfsMainShowUpgradedClicked(wxCommandEvent&);
+		void OnSfsMainDirViewChoiceSelected(wxCommandEvent &);
 
 		/**
 		 * Handle the event when Sfs key is loaded.

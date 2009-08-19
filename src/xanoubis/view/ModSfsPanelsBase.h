@@ -50,10 +50,10 @@ class ModSfsListCtrl;
 #include <wx/bitmap.h>
 #include <wx/image.h>
 #include <wx/dirctrl.h>
+#include <wx/choice.h>
 #include <wx/checkbox.h>
 #include <wx/textctrl.h>
 #include <wx/button.h>
-#include <wx/choice.h>
 #include <wx/spinctrl.h>
 #include <wx/statbox.h>
 #include <wx/notebook.h>
@@ -80,16 +80,13 @@ class ModSfsMainPanelBase : public wxPanel
 		wxStaticText* m_staticText12;
 		wxStaticText* SfsMainCurrPathLabel;
 		wxGenericDirCtrl* SfsMainDirCtrl;
+		wxStaticText* SfsMainDirViewLabel;
+		wxChoice* SfsMainDirViewChoice;
 		wxCheckBox* SfsMainDirTraversalCheckbox;
-		wxStaticText* m_staticText10;
+		wxStaticText* SfsMainDirFilterLabel;
 		wxTextCtrl* SfsMainFilterTextCtrl;
 		wxButton* SfsMainFilterButton;
 		wxCheckBox* SfsMainFilterInvertCheckBox;
-		
-		wxButton* SfsMainShowChecksumButton;
-		wxButton* SfsMainShowChangedButton;
-		wxButton* SfsMainSearchOrphanedButton;
-		wxButton* SfsMainShowUpgradedButton;
 		ModSfsListCtrl* SfsMainListCtrl;
 		AnDetails* SfsMainDetailsPanel;
 		wxCheckBox* SfsMainSignFilesCheckBox;
@@ -115,13 +112,10 @@ class ModSfsMainPanelBase : public wxPanel
 		
 		// Virtual event handlers, overide them in your derived class
 		virtual void OnSfsMainDirCtrlSelChanged( wxTreeEvent& event ){ event.Skip(); }
+		virtual void OnSfsMainDirViewChoiceSelected( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnSfsMainDirTraversalChecked( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnSfsMainFilterButtonClicked( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnSfsMainInverseCheckboxClicked( wxCommandEvent& event ){ event.Skip(); }
-		virtual void OnSfsMainShowAllChecksumsClicked( wxCommandEvent& event ){ event.Skip(); }
-		virtual void OnSfsMainShowChangedClicked( wxCommandEvent& event ){ event.Skip(); }
-		virtual void OnSfsMainSearchOrphanedClicked( wxCommandEvent& event ){ event.Skip(); }
-		virtual void OnSfsMainShowUpgradedClicked( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnSfsListDeselected( wxListEvent& event ){ event.Skip(); }
 		virtual void OnSfsListSelected( wxListEvent& event ){ event.Skip(); }
 		virtual void OnSfsMainSigEnabledClicked( wxCommandEvent& event ){ event.Skip(); }
