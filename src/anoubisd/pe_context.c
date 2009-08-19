@@ -31,12 +31,13 @@
  * Each process has two completely separate contexts:
  * - the Administrator context at priority 0 (PE_PRIO_ADMIN)   and
  * - the User context at priority 1 (PE_PRIO_USER).
- * Additionally each process known the pathname and checksum of the
+ * Additionally each process knowns the pathname and checksum of the
  * file that it currently executes.
  *
  * Each context contains the following information:
  * - The ruleset that this context refers to.
  * - ALF rules from that ruleset.
+ * - SANDBOX rules from that ruleset.
  * - Context switching rules from that ruleset.
  * - The path and checksum that was used to search for the current
  *   ALF and context switching rules in the ruleset.
@@ -48,7 +49,7 @@
  * There are four interesting operations. Each of these is applied to
  * the admin and the user context separately:
  * - FORK: In case of a fork the child process simply inherits the
- *         context of its parents. Additionally the process itself
+ *         context of its parents. Additionally, the process itself
  *         inherits the the pathname and checksum of the running binary
  *         from its parent.
  *         SPECIAL CASES:
@@ -56,7 +57,7 @@
  *         - The parent process is tracked but has no context. (B)
  * - EXEC: In case of an exec system call the process's pathname and checksum
  *         are always set to the values that correspond to the new binary.
- *         Additionally context switch might happen:
+ *         Additionally, a context switch might happen:
  *         If the current context switching rules do not permit a context
  *         switch to the new binary the old context including its rules
  *         is retained. Otherwise a new context is created. This context
@@ -92,7 +93,7 @@
  * (B) Processes without a context: If a process has no context, it never
  *     had one before. In case of a fork, rule reload or open, this is
  *     not changed. In case of an exec there are two possibilities:
- *     - If there is no ruleset for that is applicable to the process and the
+ *     - If there is no ruleset that is applicable to the process and the
  *       given priority. Nothing is changed.
  *     - If there is a ruleset a new context for the process is created based
  *       on the checksum and pathname of the current process. This context
@@ -142,6 +143,8 @@
 #include <apn.h>
 #include "anoubisd.h"
 #include "pe.h"
+#include "sfs.h"
+#include "cert.h"
 
 struct pe_context {
 	int			 refcount;
@@ -155,9 +158,9 @@ struct pe_context {
 
 static void			 pe_dump_dbgctx(const char *, struct pe_proc *);
 static struct pe_context	*pe_context_search(struct apn_ruleset *,
-				     struct pe_proc_ident *);
+				     struct pe_proc_ident *, uid_t uid);
 static int			 pe_context_decide(struct pe_proc *, int, int,
-				     struct pe_proc_ident *);
+				     struct pe_proc_ident *, uid_t uid);
 static struct pe_context	*pe_context_alloc(struct apn_ruleset *,
 				     struct pe_proc_ident *);
 static void			 pe_context_switch(struct pe_proc *, int,
@@ -258,9 +261,11 @@ pe_context_refresh(struct pe_proc *proc, int prio, struct pe_policy_db *pdb)
 	}
 	oldctx = pe_proc_get_context(proc, prio);
 	if (oldctx) {
-		context = pe_context_search(newrules, &oldctx->ident);
+		context = pe_context_search(newrules, &oldctx->ident,
+		    pe_proc_get_uid(proc));
 	} else {
-		context = pe_context_search(newrules, pe_proc_ident(proc));
+		context = pe_context_search(newrules, pe_proc_ident(proc),
+		    pe_proc_get_uid(proc));
 	}
 	DEBUG(DBG_PE_POLICY, "pe_context_refresh: context %p alfrule %p "
 	    "sbrule %p ctxrule %p", context, context ? context->alfrule : NULL,
@@ -271,7 +276,8 @@ pe_context_refresh(struct pe_proc *proc, int prio, struct pe_policy_db *pdb)
 
 	oldctx = pe_proc_get_savedctx(proc, prio);
 	if (oldctx) {
-		context = pe_context_search(newrules, &oldctx->ident);
+		context = pe_context_search(newrules, &oldctx->ident,
+		    pe_proc_get_uid(proc));
 		pe_proc_set_savedctx(proc, prio, context);
 		pe_context_put(context);
 	}
@@ -363,45 +369,83 @@ pe_context_fork(struct pe_proc *proc, struct pe_proc *parent)
 }
 
 static int
-pe_context_subject_match(const struct apn_subject *subject,
-    const struct pe_proc_ident *pident)
+pe_context_subject_match(const struct apn_app *app,
+    const struct pe_proc_ident *pident, uid_t uid)
 {
-	if (!subject)
-		return 1;
+	const struct apn_subject	*subject;
+	u_int8_t			*csptr = NULL;
+	u_int8_t			 csbuf[ANOUBIS_CS_LEN];
+	char				*keyid;
+	int				 ret;
+	
+	if (!app)
+		return 0;
+	subject = &app->subject;
+	if (uid == (uid_t)-1 && (subject->type == APN_CS_UID_SELF
+	    || subject->type == APN_CS_KEY_SELF))
+		return 0;
 	switch(subject->type) {
 	case APN_CS_NONE:
 		return 1;
 	case APN_CS_CSUM:
 		if (!pident->csum)
 			return 0;
-		return (memcmp(subject->value.csum, pident->csum,
-		    ANOUBIS_CS_LEN) == 0);
+		csptr = subject->value.csum;
+		break;
+	case APN_CS_UID:
+		uid = subject->value.uid;
+		/* FALLTRHOUGH */
+	case APN_CS_UID_SELF:
+		if (uid == (uid_t)-1)
+			return 0;
+		if (!app->name)
+			return 0;
+		ret = sfshash_get_uid(app->name, uid, csbuf);
+		if (ret != 0)
+			return 0;
+		csptr = csbuf;
+		break;
+	case APN_CS_KEY:
+	case APN_CS_KEY_SELF:
+		if (subject->type == APN_CS_KEY_SELF) {
+			keyid = cert_keyid_for_uid(uid);
+			if (!keyid)
+				return 0;
+		} else {
+			keyid = subject->value.keyid;
+		}
+		ret = sfshash_get_key(app->name, keyid, csbuf);
+		if (subject->type == APN_CS_KEY_SELF)
+			free(keyid);
+		if (ret != 0)
+			return 0;
+		csptr = csbuf;
+		break;
 	default:
-		/* XXX CEH: Add other APN_CS_* cases here. */
 		return 0;
 	}
+	if (!csptr)
+		return 0;
+	return (memcmp(csptr, pident->csum, ANOUBIS_CS_LEN) == 0);
 }
 
 static int
 pe_context_app_match(const struct apn_app *app,
-    const struct pe_proc_ident *pident)
+    const struct pe_proc_ident *pident, uid_t uid)
 {
-	if (!app)
+	if (!app || !app->name)
 		return 1;
-#ifdef NOTYET
 	/*
-	 * XXX CEH: We should probably do this some time in the future but
-	 * XXX CEH: we never did and currently it breaks tests. Furthermore,
-	 * XXX CEH: we get into huge trouble with regard to symlinks.
+	 * Only compare the pathhint if no checksum is given. If a checksum
+	 * is given we use app->name only to search for the checksum
 	 */
-	if (app->name) {
+	if (app->subject.type == APN_CS_NONE) {
 		if (!pident->pathhint)
 			return 0;
 		if (strcmp(app->name, pident->pathhint) != 0)
 			return 0;
 	}
-#endif
-	return pe_context_subject_match(&app->subject, pident);
+	return pe_context_subject_match(app, pident, uid);
 }
 
 /*
@@ -420,7 +464,7 @@ pe_context_switch(struct pe_proc *proc, int prio,
 		pe_context_norules(proc, prio);
 		return;
 	}
-	tmpctx = pe_context_search(ruleset, pident);
+	tmpctx = pe_context_search(ruleset, pident, uid);
 	pe_proc_set_context(proc, prio, tmpctx);
 	DEBUG(DBG_PE_CTX, "pe_context_switch: proc %p 0x%08llx prio %d "
 	    "got context %p alfrule %p sbrule %p ctxrule %p", proc,
@@ -459,7 +503,7 @@ pe_context_exec(struct pe_proc *proc, uid_t uid, struct pe_proc_ident *pident)
 	 */
 	for (i = 0; i < PE_PRIO_MAX; i++) {
 		/* Do not switch if are rules forbid it. */
-		if (pe_context_decide(proc, APN_CTX_NEW, i, pident) == 0)
+		if (pe_context_decide(proc, APN_CTX_NEW, i, pident, uid) == 0)
 			continue;
 		DEBUG(DBG_PE_CTX,
 		    "pe_context_exec: prio %d switching context", i);
@@ -512,7 +556,8 @@ pe_context_open(struct pe_proc *proc, struct eventdev_hdr *hdr)
 	pident.csum = sfsmsg->csum;
 
 	for (i = 0; i < PE_PRIO_MAX; i++) {
-		if (pe_context_decide(proc, APN_CTX_OPEN, i, &pident) == 0)
+		if (pe_context_decide(proc, APN_CTX_OPEN, i, &pident,
+		    pe_proc_get_uid(proc)) == 0)
 			continue;
 
 		DEBUG(DBG_PE_CTX,
@@ -537,8 +582,8 @@ pe_context_borrow(struct pe_proc *proc, struct pe_proc *procp,
 		ctx = pe_proc_get_context(proc, i);
 		if (ctx == NULL)
 			continue;
-		if (pe_context_decide(procp, APN_CTX_BORROW, i, &ctx->ident)
-		    == 0)
+		if (pe_context_decide(procp, APN_CTX_BORROW, i, &ctx->ident,
+		    pe_proc_get_uid(proc)) == 0)
 			continue;
 		ctxp = pe_proc_get_context(procp, i);
 		if (ctx->ruleset != ctxp->ruleset)
@@ -567,7 +612,8 @@ pe_context_restore(struct pe_proc *proc, anoubis_cookie_t cookie)
 }
 
 static struct apn_rule *
-pe_context_search_chain(struct apn_chain *chain, struct pe_proc_ident *pident)
+pe_context_search_chain(struct apn_chain *chain, struct pe_proc_ident *pident,
+    uid_t uid)
 {
 	struct apn_rule		*r;
 	struct apn_app		*hp;
@@ -587,7 +633,7 @@ pe_context_search_chain(struct apn_chain *chain, struct pe_proc_ident *pident)
 		 * and check against hashvalue.
 		 */
 		for (hp = r->app; hp; hp = hp->next) {
-			if (pe_context_app_match(hp, pident))
+			if (pe_context_app_match(hp, pident, uid))
 				return r;
 		}
 	}
@@ -602,7 +648,8 @@ pe_context_search_chain(struct apn_chain *chain, struct pe_proc_ident *pident)
  * to the ruleset.
  */
 static struct pe_context *
-pe_context_search(struct apn_ruleset *rs, struct pe_proc_ident *pident)
+pe_context_search(struct apn_ruleset *rs, struct pe_proc_ident *pident,
+    uid_t uid)
 {
 	struct pe_context	*context;
 
@@ -624,9 +671,9 @@ pe_context_search(struct apn_ruleset *rs, struct pe_proc_ident *pident)
 		master_terminate(ENOMEM);
 		return NULL;
 	}
-	context->alfrule = pe_context_search_chain(&rs->alf_queue, pident);
-	context->sbrule = pe_context_search_chain(&rs->sb_queue, pident);
-	context->ctxrule = pe_context_search_chain(&rs->ctx_queue, pident);
+	context->alfrule = pe_context_search_chain(&rs->alf_queue, pident, uid);
+	context->sbrule = pe_context_search_chain(&rs->sb_queue, pident, uid);
+	context->ctxrule = pe_context_search_chain(&rs->ctx_queue, pident, uid);
 
 	DEBUG(DBG_PE_CTX, "pe_context_search: context %p alfrule %p sbrule %p "
 	    "ctxrule %p", context, context->alfrule, context->sbrule,
@@ -689,7 +736,7 @@ pe_context_reference(struct pe_context *ctx)
  */
 static int
 pe_context_decide(struct pe_proc *proc, int type, int prio,
-    struct pe_proc_ident *pident)
+    struct pe_proc_ident *pident, uid_t uid)
 {
 	struct apn_app		*hp = NULL;
 	struct apn_rule		*rule;
@@ -726,7 +773,7 @@ pe_context_decide(struct pe_proc *proc, int type, int prio,
 			break;
 		}
 		while (hp) {
-			if (pe_context_app_match(hp, pident)) {
+			if (pe_context_app_match(hp, pident, uid)) {
 				ret = 1;
 				break;
 			}

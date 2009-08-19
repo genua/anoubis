@@ -915,9 +915,23 @@ apn_print_app(struct apn_app *app, FILE *file)
 			return (1);
 		fprintf(file, "%s ", hp->name);
 		switch (hp->subject.type) {
+		case APN_CS_NONE:
+			break;
 		case APN_CS_CSUM:
 			fprintf(file, "sha256 \\\n");
 			apn_print_hash(hp->subject.value.csum, 256/8, file);
+			break;
+		case APN_CS_UID_SELF:
+			fprintf(file, "self");
+			break;
+		case APN_CS_UID:
+			fprintf(file, "uid %d", (int)hp->subject.value.uid);
+			break;
+		case APN_CS_KEY_SELF:
+			fprintf(file, "signed-self");
+			break;
+		case APN_CS_KEY:
+			fprintf(file, "key \"%s\"", hp->subject.value.keyid);
 			break;
 		default:
 			return 1;

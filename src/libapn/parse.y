@@ -1328,6 +1328,31 @@ app		: STRING hashspec		{
 
 			$$ = app;
 		}
+		| STRING sfssubject		{
+			struct apn_app	*app;
+			app = calloc(1, sizeof(struct apn_app));
+			if (app == NULL) {
+				free($1);
+				apn_free_subject(&$2);
+				yyerror("Out of memory");
+				YYERROR;
+			}
+			app->name = normalize_path($1);
+			app->subject = $2;
+			$$ = app;
+		}
+		| STRING			{
+			struct apn_app	*app;
+			app = calloc(1, sizeof(struct apn_app));
+			if (app == NULL) {
+				free($1);
+				yyerror("Out of memory");
+				YYERROR;
+			}
+			app->name = normalize_path($1);
+			app->subject.type = APN_CS_NONE;
+			$$ = app;
+		}
 		;
 
 hashspec	: hashtype STRING		{
