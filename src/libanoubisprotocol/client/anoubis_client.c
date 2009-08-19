@@ -990,40 +990,6 @@ anoubis_client_csumrequest_start(struct anoubis_client *client,
 		if (idlen != 0)
 			return NULL;
 		break;
-	case _ANOUBIS_CHECKSUM_OP_UID_LIST:		/* Deprecated */
-	case _ANOUBIS_CHECKSUM_OP_KEYID_LIST:		/* Deprecated */
-		if (idlen != 0)
-			return NULL;
-		flags = (ANOUBIS_CSUM_WANTIDS | ANOUBIS_CSUM_ALL);
-		if (op == _ANOUBIS_CHECKSUM_OP_UID_LIST) {
-			flags |= ANOUBIS_CSUM_UID;
-		} else {
-			flags |= ANOUBIS_CSUM_KEY;
-		}
-		uid = 0;
-		op = ANOUBIS_CHECKSUM_OP_GENERIC_LIST;
-		break;
-	case _ANOUBIS_CHECKSUM_OP_LIST_ALL:		/* Deprecated */
-		if (flags & ANOUBIS_CSUM_ALL) {
-			flags = ( ANOUBIS_CSUM_ALL | ANOUBIS_CSUM_UID
-			    | ANOUBIS_CSUM_KEY);
-		} else {
-			if ((flags & ANOUBIS_CSUM_UID) == 0)
-				uid = getuid();
-			flags = ANOUBIS_CSUM_UID;
-			if (idlen)
-				flags |= ANOUBIS_CSUM_KEY;
-		}
-		op = ANOUBIS_CHECKSUM_OP_GENERIC_LIST;
-		break;
-	case _ANOUBIS_CHECKSUM_OP_LIST:			/* Deprecated */
-		if (idlen) {
-			flags = ANOUBIS_CSUM_KEY;
-		} else {
-			flags = ANOUBIS_CSUM_UID;
-		}
-		op = ANOUBIS_CHECKSUM_OP_GENERIC_LIST;
-		break;
 	case ANOUBIS_CHECKSUM_OP_GENERIC_LIST:
 		break;
 	default:

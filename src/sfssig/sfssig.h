@@ -90,20 +90,23 @@
 #define SFSSIG_OPT_VERBOSE		0x00002
 #define SFSSIG_OPT_VERBOSE2		0x00004
 #define SFSSIG_OPT_TREE			0x00008
-#define SFSSIG_OPT_FILE			0x00010
 #define SFSSIG_OPT_DEBUG		0x00020
 #define SFSSIG_OPT_DEBUG2		0x00040
 #define SFSSIG_OPT_SIG			0x00080
 #define SFSSIG_OPT_SUM			0x00100
+
 #define SFSSIG_OPT_HASSUM		0x00200
 #define SFSSIG_OPT_NOSUM		0x00400
 #define SFSSIG_OPT_HASSIG		0x00800
 #define SFSSIG_OPT_NOSIG		0x01000
 #define SFSSIG_OPT_ORPH			0x02000
 #define SFSSIG_OPT_NOTFILE		0x04000
-#define SFSSIG_OPT_FILTER		0x08000
+#define SFSSIG_OPT_FILTER		0x07e00
+
 #define SFSSIG_OPT_LN			0x10000
 #define SFSSIG_OPT_FORCE		0x20000
+#define SFSSIG_OPT_ALLUID		0x40000
+#define SFSSIG_OPT_ALLCERT		0x80000
 
 #define SYSSIGNAME "security.anoubis_syssig"
 #define SKIPSUMNAME "security.anoubis_skipsum"
@@ -126,8 +129,8 @@ int syssig_update(int argc, char *argv[]);
 int syssig_remove(int argc, char *argv[]);
 int skipsum_update(char *file, int op);
 int str2hash(const char *s, unsigned char dest[SHA256_DIGEST_LENGTH]);
-struct anoubis_transaction	*sfs_sumop(char *file, int operation,
-    u_int8_t *cs, int cslen, int idlen, uid_t uid);
+struct anoubis_transaction	*sfs_sumop_flags(char *file, int operation,
+    u_int8_t *cs, int cslen, int idlen, uid_t uid, unsigned int);
 
 extern unsigned int opts;
 
