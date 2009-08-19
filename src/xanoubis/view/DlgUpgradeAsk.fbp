@@ -61,7 +61,7 @@
             <property name="name">DlgUpgradeAskBase</property>
             <property name="pos"></property>
             <property name="size">-1,-1</property>
-            <property name="style">wxDEFAULT_DIALOG_STYLE|wxRESIZE_BORDER</property>
+            <property name="style">wxDEFAULT_DIALOG_STYLE</property>
             <property name="subclass"></property>
             <property name="title">Anoubis - System Update</property>
             <property name="tooltip"></property>
@@ -115,7 +115,7 @@
                         <property name="font"></property>
                         <property name="hidden">0</property>
                         <property name="id">wxID_ANY</property>
-                        <property name="label">The system has been updated. Therefore the&#x0A;checksums of all related files have changed. Please&#x0A;check the checksums of your signed files in the SFS&#x0A;Browser!</property>
+                        <property name="label">The system has been upgraded. Therefore the&#x0A;checksums of all related files have changed. Please&#x0A;check the checksums of your signed files in the SFS&#x0A;Browser!</property>
                         <property name="maximum_size"></property>
                         <property name="minimum_size"></property>
                         <property name="name">warningLabel</property>

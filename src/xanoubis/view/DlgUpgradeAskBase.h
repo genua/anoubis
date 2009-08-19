@@ -70,7 +70,7 @@ class DlgUpgradeAskBase : public wxDialog
 		
 	
 	public:
-		DlgUpgradeAskBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Anoubis - System Update"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( -1,-1 ), long style = wxDEFAULT_DIALOG_STYLE|wxRESIZE_BORDER, const wxString& name = wxT("Warning") );
+		DlgUpgradeAskBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Anoubis - System Update"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( -1,-1 ), long style = wxDEFAULT_DIALOG_STYLE, const wxString& name = wxT("Warning") );
 	
 };
 
