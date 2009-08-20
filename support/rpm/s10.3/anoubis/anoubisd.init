@@ -31,12 +31,20 @@ ANOUBISD_CTRL=/sbin/anoubisctl
 # Check if anoubisd is executable
 test -x $ANOUBISD_BIN || exit 1
 rc_reset
+do_test()
+{
+	if [ -x /usr/share/anoubisd/upgrade_sfs.pl ]; then
+		/usr/share/anoubisd/upgrade_sfs.pl
+	fi
 
-do_test() {
-	if $ANOUBISD_BIN -n >/dev/null 2>&1 ; then
-		return 0
+	msg=$($DAEMON -n 2>&1);
+	RC=$?
+	if [ "$RC" != "0" ]; then
+		log_end_msg 1
+		log_failure_msg $msg
+		return $RC
 	else
-		return $?
+		return 0;
 	fi
 }
 
@@ -46,10 +54,6 @@ start() {
 	    mkdir /var/run/anoubisd
 	    chmod 0755 /var/run/anoubisd
 	    chown _anoubisd:_anoubisd /var/run/anoubisd
-	fi
-
-	if [ -x /usr/share/anoubisd/upgrade_sfs.pl ]; then
-		/usr/share/anoubisd/upgrade_sfs.pl
 	fi
 
 	# XXX: MG: We need a better way to load our modules so early (Bug 262)
@@ -78,8 +82,6 @@ reload() {
 case "$1" in
 start)
 	if ! do_test ; then
-		echo "This anoubisd is not compatible with the running kernel."
-		echo "Reboot with a (newer) anoubis kernel."
 		exit 3
 	fi
 
@@ -90,49 +92,49 @@ stop)
 	;;
 configtest)
 	if ! do_test ; then
-		echo "This anoubisd is not compatible with the running kernel."
 		exit 3
 	fi
 	exit 0
 	;;
 try-restart)
-        ## Stop the service and if this succeeds (i.e. the
-        ## service was running before), start it again.
-        $0 status >/dev/null &&  $0 restart
+	## Stop the service and if this succeeds (i.e. the
+	## service was running before), start it again.
+	$0 status >/dev/null &&  $0 restart
 
-        # Remember status and be quiet
-        rc_status
-        ;;
+	# Remember status and be quiet
+	rc_status
+	;;
 restart)
-        ## Stop the service and regardless of whether it was
-        ## running or not, start it again.
-        $0 stop
-        $0 start
+	## Stop the service and regardless of whether it was
+	## running or not, start it again.
+	$0 stop
+	$0 start
 
-        # Remember status and be quiet
-        rc_status
-        ;;
+	# Remember status and be quiet
+	rc_status
+	;;
 force-reload|reload)
 	reload
 	;;
 status)
-        echo -n "Checking for service anoubisd "
-        ## Check status with checkproc(8), if process is running
-        ## checkproc will return with exit status 0.
+	echo -n "Checking for service anoubisd "
+	## Check status with checkproc(8), if process is running
+	## checkproc will return with exit status 0.
 
-        # Status has a slightly different for the status command:
-        # 0 - service running
-        # 1 - service dead, but /var/run/  pid  file exists
-        # 2 - service dead, but /var/lock/ lock file exists
-        # 3 - service not running
+	# Status has a slightly different for the status command:
+	# 0 - service running
+	# 1 - service dead, but /var/run/  pid  file exists
+	# 2 - service dead, but /var/lock/ lock file exists
+	# 3 - service not running
 
-        checkproc -p $ANOUBISD_PIDFILE $ANOUBISD_BIN
+	checkproc -p $ANOUBISD_PIDFILE $ANOUBISD_BIN
 
-        rc_status -v
-        ;;
+	rc_status -v
+	;;
 *)
-        echo "Usage: $0 {start|stop|status|try-restart|restart|force-reload|reload|probe}"
-        exit 1
-        ;;
+	echo "Usage: $0"\
+	    "{start|stop|status|try-restart|restart|force-reload|reload|probe}"
+	exit 1
+	;;
 esac
 rc_exit

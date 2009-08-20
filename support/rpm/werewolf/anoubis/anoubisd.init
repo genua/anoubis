@@ -30,11 +30,20 @@ test -x /sbin/anoubisd || exit 1
 RETVAL=0
 CTRL=/sbin/anoubisctl
 
-do_test() {
-	if /sbin/anoubisd -n >/dev/null 2>&1 ; then
-		return 0
+do_test()
+{
+	if [ -x /usr/share/anoubisd/upgrade_sfs.pl ]; then
+		/usr/share/anoubisd/upgrade_sfs.pl
+	fi
+
+	msg=$($DAEMON -n 2>&1);
+	RC=$?
+	if [ "$RC" != "0" ]; then
+		log_end_msg 1
+		log_failure_msg $msg
+		return $RC
 	else
-		return $?
+		return 0;
 	fi
 }
 
@@ -47,11 +56,8 @@ start() {
 		chown _anoubisd:_anoubisd /var/run/anoubisd
 	    fi
 
-	    if [ -x /usr/share/anoubisd/upgrade_sfs.pl ]; then
-		/usr/share/anoubisd/upgrade_sfs.pl
-	    fi
-
-	    # XXX: MG: We need a better way to load our modules so early (Bug 262)
+	    # XXX: MG: We need a better way to load our modules so early
+	    # (Bug 262)
 	    modprobe alf || true
 	    modprobe sfs || true
 	    modprobe ipc || true
@@ -78,7 +84,7 @@ stop() {
 restart() {
 	stop
 	start $@
-}	
+}
 
 reload() {
 	echo -n $"Reloading anoubis daemon: "
@@ -86,13 +92,11 @@ reload() {
 	RETVAL=$?
 	echo
 	return $RETVAL
-}	
+}
 
 case "$1" in
 start)
 	if ! do_test ; then
-		echo "This anoubisd is not compatible with the running kernel."
-		echo "Reboot with a (newer) anoubis kernel."
 		exit 3
 	fi
 
@@ -124,7 +128,8 @@ status)
 	RETVAL=$?
 	;;
 *)
-	echo $"Usage: $0 {start|stop|status|restart|condrestart|reload|force-reload}"
+	echo $"Usage: $0"\
+	"{start|stop|status|restart|condrestart|reload|force-reload}"
 	RETVAL=2
 esac
 
