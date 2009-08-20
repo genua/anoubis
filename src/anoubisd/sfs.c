@@ -1153,29 +1153,24 @@ sfs_deletechecksum(const char *csum_file)
 	while (k > root_len) {
 		if (tmppath[k] == '/') {
 			tmppath[k] = '\0';
-			ret = check_empty_dir(tmppath);
-			if (ret < 0) {
-				ret = -errno;
-				free(tmppath);
-				return ret;
-			}
-
-			if (ret == 1)
+			if (!check_empty_dir(tmppath))
 				break;
-			ret = rmdir(tmppath);
-			if (ret < 0) {
-				ret = -errno;
-				free(tmppath);
-				return ret;
-			}
+			if (rmdir(tmppath) < 0)
+				break;
 		}
 		k--;
 	}
-
 	free(tmppath);
 	return 0;
 }
 
+/*
+ * Currently this function returns true even if the directory
+ * containis only index files but no real entry. This is because
+ * otherwise we would have to remove the index files manually before
+ * the rmdir for the directory. The directory will be removed only after the
+ * user asks for a checksum list that deletes the index.
+ */
 static int
 check_empty_dir(const char *path)
 {
@@ -1185,22 +1180,17 @@ check_empty_dir(const char *path)
 
 	dir = opendir(path);
 	if (dir == NULL)
-		return -ENOENT;
+		return 0;
 
 	while ((entry = readdir(dir)) != NULL) {
-		if (entry->d_name[0] != '.') {
-			empty = 0;
-			break;
-		}
-		if (entry->d_name[1] == 0 || entry->d_name[1] == '*')
-			continue;
-		if (entry->d_name[1] == '.' && entry->d_name[2] == 0)
+		if (strcmp(entry->d_name, ".") == 0
+		    || strcmp(entry->d_name, "..") == 0)
 			continue;
 		empty = 0;
 		break;
 	}
 	closedir(dir);
-	return 0;
+	return empty;
 }
 
 static int
