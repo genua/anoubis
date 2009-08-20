@@ -738,6 +738,19 @@ sfs_create_upgradeindex(const char *csum_path, const char *csum_file)
 }
 
 static int
+sfs_need_upgrade_data(const void *updata, int uplen, const void *cmpdata,
+    int cmplen)
+{
+	if (!updata || !cmpdata)
+		return 0;
+	if (uplen > cmplen)
+		return 1;
+	if (memcmp(updata, cmpdata, uplen) != 0)
+		return 1;
+	return 0;
+}
+
+static int
 sfs_writesfsdata(const char *csum_file, const char *csum_path,
     const struct sfs_data *sfsdata)
 {
@@ -748,10 +761,18 @@ sfs_writesfsdata(const char *csum_file, const char *csum_path,
 	u_int32_t toc_entry[3] = { 0, 0, 0 };
 	int offset = 0;
 	int num_entries = 0;
+	int write_upgrade_data = 0;
 
 	if (sfsdata == NULL || csum_file == NULL || csum_path == NULL)
 		return -EINVAL;
 
+	if (sfsdata->upgradecsdata) {
+		if (sfs_need_upgrade_data(sfsdata->upgradecsdata,
+		    sfsdata->upgradecslen, sfsdata->csdata, sfsdata->cslen)
+		    || sfs_need_upgrade_data(sfsdata->upgradecsdata,
+		    sfsdata->upgradecslen, sfsdata->sigdata, sfsdata->siglen))
+			write_upgrade_data = 1;
+	}
 	if (sfsdata->csdata != NULL) {
 		num_entries++;
 		if (sfsdata->cslen == 0 ||
@@ -764,7 +785,7 @@ sfs_writesfsdata(const char *csum_file, const char *csum_path,
 		    sfsdata->siglen > SFSDATA_MAX_FIELD_LENGTH)
 			return -EINVAL;
 	}
-	if (sfsdata->upgradecsdata != NULL) {
+	if (write_upgrade_data && sfsdata->upgradecsdata != NULL) {
 		num_entries++;
 		if (sfsdata->upgradecslen == 0 ||
 		    sfsdata->upgradecslen > SFSDATA_MAX_FIELD_LENGTH)
@@ -829,7 +850,7 @@ sfs_writesfsdata(const char *csum_file, const char *csum_path,
 			goto err;
 	}
 
-	if (sfsdata->upgradecsdata) {
+	if (write_upgrade_data && sfsdata->upgradecsdata) {
 		if (sfsdata->upgradecslen == 0) {
 			ret = -EINVAL;
 			goto err;
