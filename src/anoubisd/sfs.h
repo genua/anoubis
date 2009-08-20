@@ -30,6 +30,7 @@
 
 #include <sys/types.h>
 #include <anoubisd.h>
+#include <anoubis_msg.h>
 
 #define ANOUBISD_CSUM_NONE	0
 #define ANOUBISD_CSUM_USER	1
@@ -65,10 +66,14 @@ int	 sfs_checksumop_chroot(const struct sfs_checksumop *csop,
 	     struct sfs_data *data);
 void	 sfs_freesfsdata(struct sfs_data *);
 int	 sfs_haschecksum_chroot(const char *path);
-int	 sfs_upgraded(const char *convertedpath);
 int	 sfs_update_all(const char *path, u_int8_t *md, int len);
 int	 convert_user_path(const char *path, char **dir, int is_dir);
 char	*remove_escape_seq(const char *name);
+void	 sfs_remove_index(const char *, struct sfs_checksumop *);
+int	 sfs_wantentry(const struct sfs_checksumop *, const char *sfs_path,
+	     const char *entryname);
+int	 sfs_parse_checksumop(struct sfs_checksumop *dst,
+	     struct anoubis_msg *m, uid_t auth_uid);
 
 /* Public SFS-Cache functions */
 void	 sfshash_init(void);

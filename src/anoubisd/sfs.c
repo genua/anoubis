@@ -43,6 +43,7 @@
 #include <limits.h>
 #include <string.h>
 #include <strings.h>
+#include <ctype.h>
 
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
@@ -61,6 +62,7 @@
 
 #include <anoubis_sig.h>
 #include <anoubis_protocol.h>
+#include <anoubis_msg.h>
 
 #include "anoubisd.h"
 #include "sfs.h"
@@ -683,6 +685,59 @@ write_bytes(int fd, void *buf, size_t bytes)
 }
 
 static int
+sfs_create_upgradeindex(const char *csum_path, const char *csum_file)
+{
+	char		*thisfile;
+	const char	*suffix;
+	int		 min = strlen(SFS_CHECKSUMROOT);
+	int		 i;
+
+	/*
+	 * First determine the suffix of the csum file, i.e. uid or
+	 * 'k' followed by the key ID.
+	 */
+	for (i=strlen(csum_file)-1; i >= 0; i--)
+		if (csum_file[i] == '/')
+			break;
+	if (i < 0 || csum_file[i] != '/')
+		return -EFAULT;
+	suffix = csum_file + i + 1;
+	if ((*suffix) == 0)
+		return -EINVAL;
+	/* Make sure that csum_path is below the checksum root. */
+	if (strncmp(csum_path, SFS_CHECKSUMROOT, min) != 0)
+		return -EINVAL;
+	if (csum_path[min] != '/')
+		return -EINVAL;
+	/* Allocate enough memory for all path names that we'll need. */
+	if (asprintf(&thisfile, "%s/.*u_%s", csum_path, suffix) < 0)
+		return -ENOMEM;
+	i = strlen(csum_path) - 1;
+	while(i > min) {
+		int	fd;
+		/* Strip trailing slashes. */
+		if (thisfile[i] == '/') {
+			i--;
+			continue;
+		}
+		/* Remove the trailing path component. */
+		while (thisfile[i] != '/')
+			i--;
+		/* Add the suffix prefixed by ".*u_" */
+		sprintf(thisfile+i, "/.*u_%s", suffix);
+		/* Create the index file if possible. */
+		fd = open(thisfile, O_RDWR | O_CREAT | O_EXCL);
+		if (fd < 0) {
+			if (errno == EEXIST)
+				return 0;
+			return -errno;
+		}
+		close(fd);
+	}
+	return 0;
+}
+
+static int
 sfs_writesfsdata(const char *csum_file, const char *csum_path,
     const struct sfs_data *sfsdata)
 {
@@ -813,7 +868,16 @@ sfs_writesfsdata(const char *csum_file, const char *csum_path,
 			goto err;
 	}
 
-	if ((fsync(fd) < 0) || (rename(csum_tmp, csum_file) < 0)) {
+	if (fsync(fd) < 0) {
+		ret = -errno;
+		goto err;
+	}
+	if (sfsdata->upgradecsdata) {
+		ret = sfs_create_upgradeindex(csum_path, csum_file);
+		if (ret < 0)
+			goto err;
+	}
+	if (rename(csum_tmp, csum_file) < 0) {
 		ret = -errno;
 		goto err;
 	}
@@ -1052,6 +1116,11 @@ sfs_deletechecksum(const char *csum_file)
 	int	 k, path_len;
 	char	*tmppath = strdup(csum_file);
 
+	path_len = strlen(tmppath);
+	if (path_len < root_len || tmppath[root_len] != '/') {
+		free(tmppath);
+		return -EINVAL;
+	}
 	ret = unlink(csum_file);
 	if (ret < 0) {
 		ret = -errno;
@@ -1059,7 +1128,6 @@ sfs_deletechecksum(const char *csum_file)
 		return ret;
 	}
 
-	path_len = strlen(tmppath);
 	k = path_len;
 	while (k > root_len) {
 		if (tmppath[k] == '/') {
@@ -1090,25 +1158,31 @@ sfs_deletechecksum(const char *csum_file)
 static int
 check_empty_dir(const char *path)
 {
-	DIR	*dir = NULL;
-	int	 cnt = 0;
+	DIR		*dir = NULL;
+	struct dirent	*entry;
+	int		 empty = 1;
 
 	dir = opendir(path);
 	if (dir == NULL)
 		return -ENOENT;
 
-	while (readdir(dir) != NULL) {
-		cnt++;
-		if (cnt > 2) {
-			closedir(dir);
-			return 1;
+	while ((entry = readdir(dir)) != NULL) {
+		if (entry->d_name[0] != '.') {
+			empty = 0;
+			break;
 		}
+		if (entry->d_name[1] == 0 || entry->d_name[1] == '*')
+			continue;
+		if (entry->d_name[1] == '.' && entry->d_name[2] == 0)
+			continue;
+		empty = 0;
+		break;
 	}
 	closedir(dir);
 	return 0;
 }
 
-int
+static int
 sfs_upgraded(const char *csum_file)
 {
 	struct sfs_data		sfsdata;
@@ -1119,4 +1193,398 @@ sfs_upgraded(const char *csum_file)
 	len = sfsdata.upgradecslen;
 	sfs_freesfsdata(&sfsdata);
 	return len != 0;
+}
+
+/* If a message arrives regarding a signature the payload of the message
+ * should be including at least the keyid and the regarding path.
+ *	---------------------------------
+ *	|	keyid	|	path	|
+ *	---------------------------------
+ * futhermore should the message include the signature and the checksum
+ * if the requested operation is ADDSIG
+ *	-----------------------------------------------------------------
+ *	|	keyid	|	csum	|	sigbuf	|	path	|
+ *	-----------------------------------------------------------------
+ * idlen is in this the length of the keyid. rawmsg.length is the total
+ * length of the message excluding the path length.
+ */
+
+static int
+sfs_validate_checksumop(struct sfs_checksumop *csop)
+{
+	struct cert		*cert = NULL;
+
+	if (!csop->path)
+		return -EINVAL;
+	/* Requests for another user's uid are only allowed for root. */
+	if (csop->uid != csop->auth_uid && csop->auth_uid != 0)
+		return -EPERM;
+	if (csop->keyid) {
+		cert = cert_get_by_keyid(csop->keyid, csop->idlen);
+		if (cert == NULL)
+			return -EPERM;
+		/*
+		 * If the requesting user is not root, the certificate
+		 * must belong to the authenticated user.
+		 */
+		if (cert->uid != csop->auth_uid && csop->auth_uid != 0)
+			return -EPERM;
+		/*
+		 * If the requested uid is different from the authenticated
+		 * user it must be the same as the uid in the cert.
+		 */
+		if (csop->auth_uid != csop->uid && csop->uid != cert->uid)
+			return -EPERM;
+	}
+
+	switch(csop->op) {
+	case ANOUBIS_CHECKSUM_OP_DEL:
+	case _ANOUBIS_CHECKSUM_OP_GET_OLD:
+	case ANOUBIS_CHECKSUM_OP_GET2:
+	case ANOUBIS_CHECKSUM_OP_ADDSUM:
+		if (csop->listflags)
+			return  -EINVAL;
+		if (cert != NULL)
+			return -EINVAL;
+		if (csop->op == ANOUBIS_CHECKSUM_OP_ADDSUM) {
+			if (!csop->sigdata || csop->siglen != ANOUBIS_CS_LEN)
+				return -EINVAL;
+		} else {
+			if (csop->sigdata || csop->siglen)
+				return -EINVAL;
+		}
+		break;
+	case _ANOUBIS_CHECKSUM_OP_GETSIG_OLD:
+	case ANOUBIS_CHECKSUM_OP_GETSIG2:
+	case ANOUBIS_CHECKSUM_OP_DELSIG:
+	case ANOUBIS_CHECKSUM_OP_ADDSIG:
+		if (csop->listflags)
+			return  -EINVAL;
+		if (cert == NULL)
+			return -EPERM;
+		if (csop->op == ANOUBIS_CHECKSUM_OP_ADDSIG) {
+			if (!csop->sigdata || csop->siglen < ANOUBIS_CS_LEN)
+				return -EINVAL;
+		} else {
+			if (csop->sigdata)
+				return -EINVAL;
+		}
+		break;
+	case ANOUBIS_CHECKSUM_OP_GENERIC_LIST:
+		if (csop->listflags & ~(ANOUBIS_CSUM_FLAG_MASK))
+			return -EINVAL;
+		if (csop->sigdata || csop->siglen)
+			return -EINVAL;
+		if (csop->listflags & ANOUBIS_CSUM_UPGRADED) {
+			if (csop->listflags
+			    != (ANOUBIS_CSUM_UPGRADED | ANOUBIS_CSUM_KEY))
+				return -EINVAL;
+			if (csop->idlen == 0 || csop->keyid == NULL)
+				return -EINVAL;
+			if  (csop->sigdata || csop->siglen)
+				return -EINVAL;
+		} else if (csop->listflags & ANOUBIS_CSUM_WANTIDS) {
+			/* WANTIDS implies ALL */
+			if ((csop->listflags & ANOUBIS_CSUM_ALL) == 0)
+				return -EINVAL;
+			/* WANTIDS requires root privileges */
+			if (csop->auth_uid != 0)
+				return -EPERM;
+			if (csop->keyid || csop->idlen)
+				return -EINVAL;
+			if (csop->uid)
+				return -EINVAL;
+		} else if (csop->listflags & ANOUBIS_CSUM_ALL) {
+			if ((csop->listflags & ANOUBIS_CSUM_UID) == 0)
+				return -EINVAL;
+			if ((csop->listflags & ANOUBIS_CSUM_KEY) == 0)
+				return -EINVAL;
+			if (csop->auth_uid != 0)
+				return -EPERM;
+			if (csop->keyid)
+				return -EINVAL;
+		} else {
+			if (csop->listflags & ANOUBIS_CSUM_KEY) {
+				if (csop->idlen == 0 || csop->keyid == NULL)
+					return -EINVAL;
+			} else {
+				if (csop->idlen || csop->keyid)
+					return -EINVAL;
+			}
+		}
+		break;
+	default:
+		return -EINVAL;
+	}
+	return 0;
+}
+
+static int
+sfs_op_is_add(int op)
+{
+	return (op == ANOUBIS_CHECKSUM_OP_ADDSUM
+	    || op == ANOUBIS_CHECKSUM_OP_ADDSIG);
+}
+
+int
+sfs_parse_checksumop(struct sfs_checksumop *dst, struct anoubis_msg *m,
+    uid_t auth_uid)
+{
+	void		*payload = NULL;
+	int		 curlen, plen, error;
+	unsigned int	 flags;
+
+	if (!VERIFY_LENGTH(m, sizeof(Anoubis_ChecksumRequestMessage)))
+		return -EINVAL;
+	memset(dst, 0, sizeof(struct sfs_checksumop));
+	dst->op = get_value(m->u.checksumrequest->operation);
+	flags = get_value(m->u.checksumrequest->flags);
+	dst->auth_uid = auth_uid;
+	if ((flags & ANOUBIS_CSUM_UID) && !(flags & ANOUBIS_CSUM_ALL))
+		dst->uid = get_value(m->u.checksumrequest->uid);
+	else
+		dst->uid = auth_uid;
+	dst->idlen = get_value(m->u.checksumrequest->idlen);
+	if (dst->idlen < 0)
+		return -EFAULT;
+	if (sfs_op_is_add(dst->op)) {
+		if (!VERIFY_LENGTH(m, sizeof(Anoubis_ChecksumAddMessage)))
+			return -EINVAL;
+		payload = m->u.checksumadd->payload;
+		dst->siglen = get_value(m->u.checksumadd->cslen);
+		if (dst->siglen < 0)
+			return -EFAULT;
+		dst->sigdata = (u_int8_t*)payload + dst->idlen;
+	} else {
+		payload = m->u.checksumrequest->payload;
+	}
+	if (dst->idlen)
+		dst->keyid = payload;
+	dst->path = payload + dst->idlen + dst->siglen;
+	curlen = (char*)payload - (char*)m->u.buf;
+	if (curlen < 0 || curlen > (int)m->length - CSUM_LEN)
+		return -EFAULT;
+	plen = m->length - curlen - CSUM_LEN;
+	switch (dst->op) {
+	case ANOUBIS_CHECKSUM_OP_GENERIC_LIST:
+		dst->listflags = flags;
+		break;
+	case _ANOUBIS_CHECKSUM_OP_LIST:			/* Deprecated */
+		dst->op = ANOUBIS_CHECKSUM_OP_GENERIC_LIST;
+		if (dst->keyid) {
+			dst->listflags = ANOUBIS_CSUM_KEY;
+		} else {
+			dst->listflags = ANOUBIS_CSUM_UID;
+		}
+		break;
+	case _ANOUBIS_CHECKSUM_OP_LIST_ALL:		/* Deprecated */
+		dst->op = ANOUBIS_CHECKSUM_OP_GENERIC_LIST;
+		if (flags & ANOUBIS_CSUM_ALL) {
+			dst->listflags = ( ANOUBIS_CSUM_ALL
+			    | ANOUBIS_CSUM_UID | ANOUBIS_CSUM_KEY );
+		} else {
+			dst->listflags = ANOUBIS_CSUM_UID;
+			if (dst->idlen)
+				dst->listflags |= ANOUBIS_CSUM_KEY;
+		}
+		break;
+	case _ANOUBIS_CHECKSUM_OP_UID_LIST:		/* Deprecated */
+	case _ANOUBIS_CHECKSUM_OP_KEYID_LIST:		/* Deprecated */
+		dst->op = ANOUBIS_CHECKSUM_OP_GENERIC_LIST;
+		dst->listflags = (ANOUBIS_CSUM_WANTIDS | ANOUBIS_CSUM_ALL );
+		if (dst->op == _ANOUBIS_CHECKSUM_OP_UID_LIST)
+			dst->listflags |= ANOUBIS_CSUM_UID;
+		else
+			dst->listflags |= ANOUBIS_CSUM_KEY;
+		/* XXX CEH: Fixup for deprecated messages from sfssig */
+		if (dst->uid != dst->auth_uid && dst->auth_uid == 0)
+			dst->uid = 0;
+		break;
+	default:
+		if (dst->idlen == 0 && (flags & ANOUBIS_CSUM_UID))
+			dst->uid = get_value(m->u.checksumrequest->uid);
+		dst->listflags = 0;
+	}
+	error = -EINVAL;
+	for (curlen = 0; curlen < plen; ++curlen) {
+		if (dst->path[curlen] == 0) {
+			error = 0;
+			break;
+		}
+	}
+	return sfs_validate_checksumop(dst);
+}
+
+static int
+sfs_check_for_uid(const char *sfs_path, const char *entryname, uid_t uid,
+    unsigned int listflags, int check_for_index)
+{
+	char		*file;
+	int		 ret;
+	struct stat	 statbuf;
+	const char	*idxstr = "";
+	int		 upgrade_only = !!(listflags & ANOUBIS_CSUM_UPGRADED);
+
+	/* We only support indices for upgrade only for now. */
+	if (check_for_index) {
+		if (!upgrade_only)
+			return 1;
+		idxstr = ".*u_";
+	}
+	ret = asprintf(&file, "%s/%s/%s%d", sfs_path, entryname, idxstr, uid);
+	if (ret < 0) {
+		master_terminate(ENOMEM);
+		return 0;
+	}
+	ret = lstat(file, &statbuf);
+	if (ret < 0 || !S_ISREG(statbuf.st_mode)) {
+		free(file);
+		return 0;
+	}
+	if (check_for_index) {
+		free(file);
+		return 1;
+	}
+	if (upgrade_only && !sfs_upgraded(file)) {
+		free(file);
+		return 0;
+	}
+	free(file);
+	return 1;
+}
+
+static int
+sfs_check_for_key(const char *sfs_path, const char *entryname,
+    const unsigned char *key, int keylen, unsigned int listflags,
+    int check_for_index)
+{
+	char		*keystr, *file;
+	int		 ret;
+	struct stat	 statbuf;
+	const char	*idxstr = "";
+	int		 upgrade_only = !!(listflags & ANOUBIS_CSUM_UPGRADED);
+
+	if (check_for_index) {
+		/* We only support indices for upgrade_only for now. */
+		if (!upgrade_only)
+			return 1;
+		idxstr = ".*u_";
+	}
+	if ((keystr = anoubis_sig_key2char(keylen, key)) == NULL) {
+		master_terminate(ENOMEM);
+		return 0;
+	}
+	if (asprintf(&file, "%s/%s/%sk%s", sfs_path, entryname, idxstr,
+	    keystr) < 0) {
+		master_terminate(ENOMEM);
+		return 0;
+	}
+	free(keystr);
+	ret = lstat(file, &statbuf);
+	if (ret < 0 || !S_ISREG(statbuf.st_mode)) {
+		free(file);
+		return 0;
+	}
+	if (check_for_index) {
+		free(file);
+		return 1;
+	}
+	if (upgrade_only && !sfs_upgraded(file)) {
+		free(file);
+		return 0;
+	}
+	free(file);
+	return 1;
+}
+
+int
+sfs_wantentry(const struct sfs_checksumop *csop, const char *sfs_path,
+    const char *entryname)
+{
+	int		stars;
+	int		check_for_index = 0;
+
+	/* Never report "." and ".." */
+	if (entryname[0] == '.') {
+		switch (entryname[1]) {
+		case '*':
+		case 0:
+			return 0;
+		case '.':
+			if (entryname[2] == 0)
+				return 0;
+		}
+	}
+
+	/* ANOUBIS_CSUM_WANTIDS is not allowed without ANOUBIS_CSUM_ALL. */
+	if (csop->listflags & ANOUBIS_CSUM_WANTIDS) {
+		if (isdigit(entryname[0])
+		    && (csop->listflags & ANOUBIS_CSUM_UID))
+			return 1;
+		if (entryname[0] == 'k' && (csop->listflags & ANOUBIS_CSUM_KEY))
+			return 1;
+		return 0;
+	}
+
+	/*
+	 * We do not support ANOUBIS_CSUM_ALL for uids and signatures
+	 * separately.
+	 */
+	if (csop->listflags & ANOUBIS_CSUM_ALL)
+		return 1;
+
+	/*
+	 * At this point we know that we are listing directory contents for
+	 * a specific user ID and/or Key.
+	 */
+	stars = 0;
+	while (entryname[stars] == '*')
+		stars++;
+
+	/* Non-leaf directory entries are always interesting. */
+	if (stars % 2 == 0)
+		check_for_index = 1;
+
+	if ((csop->listflags & ANOUBIS_CSUM_UID)
+	    && sfs_check_for_uid(sfs_path, entryname, csop->uid,
+	    csop->listflags, check_for_index))
+		return 1;
+	if ((csop->listflags & ANOUBIS_CSUM_KEY) && sfs_check_for_key(
+	    sfs_path, entryname, csop->keyid, csop->idlen, csop->listflags,
+	    check_for_index))
+		return 1;
+	return 0;
+}
+
+void
+sfs_remove_index(const char *path, struct sfs_checksumop *csop)
+{
+	char	*idxfile;
+	if ((csop->listflags & ANOUBIS_CSUM_UPGRADED) == 0)
+		return;
+	if (csop->listflags & (ANOUBIS_CSUM_ALL | ANOUBIS_CSUM_WANTIDS))
+		return;
+	if (csop->listflags & ANOUBIS_CSUM_UID) {
+		if (asprintf(&idxfile, "%s/.*u_%d", path, csop->uid) < 0) {
+			master_terminate(ENOMEM);
+			return;
+		}
+		sfs_deletechecksum(idxfile);
+		free(idxfile);
+	}
+	if (csop->listflags & ANOUBIS_CSUM_KEY) {
+		char	*keystr;
+		keystr = anoubis_sig_key2char(csop->idlen, csop->keyid);
+		if (keystr == NULL) {
+			master_terminate(ENOMEM);
+			return;
+		}
+		if (asprintf(&idxfile, "%s/.*u_k%s", path, keystr) < 0) {
+			master_terminate(ENOMEM);
+			return;
+		}
+		sfs_deletechecksum(idxfile);
+		free(keystr);
+		free(idxfile);
+	}
 }

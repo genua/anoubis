@@ -999,226 +999,6 @@ send_sfscache_invalidate_key(const char *path, const u_int8_t *keyid,
 
 }
 
-/* If a message arrives regarding a signature the payload of the message
- * should be including at least the keyid and the regarding path.
- *	---------------------------------
- *	|	keyid	|	path	|
- *	---------------------------------
- * futhermore should the message include the signature and the checksum
- * if the requested operation is ADDSIG
- *	-----------------------------------------------------------------
- *	|	keyid	|	csum	|	sigbuf	|	path	|
- *	-----------------------------------------------------------------
- * idlen is in this the length of the keyid. rawmsg.length is the total
- * length of the message excluding the path length.
- */
-
-static int
-sfs_op_is_add(int op)
-{
-	return (op == ANOUBIS_CHECKSUM_OP_ADDSUM
-	    || op == ANOUBIS_CHECKSUM_OP_ADDSIG);
-}
-
-static int
-parse_sfs_checksumop(struct sfs_checksumop *dst, struct anoubis_msg *m,
-    uid_t auth_uid)
-{
-	void		*payload = NULL;
-	int		 curlen, plen, error;
-	unsigned int	 flags;
-
-	if (!VERIFY_LENGTH(m, sizeof(Anoubis_ChecksumRequestMessage)))
-		return -EINVAL;
-	memset(dst, 0, sizeof(struct sfs_checksumop));
-	dst->op = get_value(m->u.checksumrequest->operation);
-	flags = get_value(m->u.checksumrequest->flags);
-	dst->auth_uid = auth_uid;
-	if ((flags & ANOUBIS_CSUM_UID) && !(flags & ANOUBIS_CSUM_ALL))
-		dst->uid = get_value(m->u.checksumrequest->uid);
-	else
-		dst->uid = auth_uid;
-	dst->idlen = get_value(m->u.checksumrequest->idlen);
-	if (dst->idlen < 0)
-		return -EFAULT;
-	if (sfs_op_is_add(dst->op)) {
-		if (!VERIFY_LENGTH(m, sizeof(Anoubis_ChecksumAddMessage)))
-			return -EINVAL;
-		payload = m->u.checksumadd->payload;
-		dst->siglen = get_value(m->u.checksumadd->cslen);
-		if (dst->siglen < 0)
-			return -EFAULT;
-		dst->sigdata = (u_int8_t*)payload + dst->idlen;
-	} else {
-		payload = m->u.checksumrequest->payload;
-	}
-	if (dst->idlen)
-		dst->keyid = payload;
-	dst->path = payload + dst->idlen + dst->siglen;
-	curlen = (char*)payload - (char*)m->u.buf;
-	if (curlen < 0 || curlen > (int)m->length - CSUM_LEN)
-		return -EFAULT;
-	plen = m->length - curlen - CSUM_LEN;
-	switch (dst->op) {
-	case ANOUBIS_CHECKSUM_OP_GENERIC_LIST:
-		dst->listflags = flags;
-		break;
-	case _ANOUBIS_CHECKSUM_OP_LIST:			/* Deprecated */
-		dst->op = ANOUBIS_CHECKSUM_OP_GENERIC_LIST;
-		if (dst->keyid) {
-			dst->listflags = ANOUBIS_CSUM_KEY;
-		} else {
-			dst->listflags = ANOUBIS_CSUM_UID;
-		}
-		break;
-	case _ANOUBIS_CHECKSUM_OP_LIST_ALL:		/* Deprecated */
-		dst->op = ANOUBIS_CHECKSUM_OP_GENERIC_LIST;
-		if (flags & ANOUBIS_CSUM_ALL) {
-			dst->listflags = ( ANOUBIS_CSUM_ALL
-			    | ANOUBIS_CSUM_UID | ANOUBIS_CSUM_KEY );
-		} else {
-			dst->listflags = ANOUBIS_CSUM_UID;
-			if (dst->idlen)
-				dst->listflags |= ANOUBIS_CSUM_KEY;
-		}
-		break;
-	case _ANOUBIS_CHECKSUM_OP_UID_LIST:		/* Deprecated */
-	case _ANOUBIS_CHECKSUM_OP_KEYID_LIST:		/* Deprecated */
-		dst->op = ANOUBIS_CHECKSUM_OP_GENERIC_LIST;
-		dst->listflags = (ANOUBIS_CSUM_WANTIDS | ANOUBIS_CSUM_ALL );
-		if (dst->op == _ANOUBIS_CHECKSUM_OP_UID_LIST)
-			dst->listflags |= ANOUBIS_CSUM_UID;
-		else
-			dst->listflags |= ANOUBIS_CSUM_KEY;
-		/* XXX CEH: Fixup for deprecated messages from sfssig */
-		if (dst->uid != dst->auth_uid && dst->auth_uid == 0)
-			dst->uid = 0;
-		break;
-	default:
-		if (dst->idlen == 0 && (flags & ANOUBIS_CSUM_UID))
-			dst->uid = get_value(m->u.checksumrequest->uid);
-		dst->listflags = 0;
-	}
-	error = -EINVAL;
-	for (curlen = 0; curlen < plen; ++curlen) {
-		if (dst->path[curlen] == 0) {
-			error = 0;
-			break;
-		}
-	}
-	return error;
-}
-
-static int
-validate_sfs_checksumop(struct sfs_checksumop *csop)
-{
-	struct cert		*cert = NULL;
-
-	if (!csop->path)
-		return -EINVAL;
-	/* Requests for another user's uid are only allowed for root. */
-	if (csop->uid != csop->auth_uid && csop->auth_uid != 0)
-		return -EPERM;
-	if (csop->keyid) {
-		cert = cert_get_by_keyid(csop->keyid, csop->idlen);
-		if (cert == NULL)
-			return -EPERM;
-		/*
-		 * If the requesting user is not root, the certificate
-		 * must belong to the authenticated user.
-		 */
-		if (cert->uid != csop->auth_uid && csop->auth_uid != 0)
-			return -EPERM;
-		/*
-		 * If the requested uid is different from the authenticated
-		 * user it must be the same as the uid in the cert.
-		 */
-		if (csop->auth_uid != csop->uid && csop->uid != cert->uid)
-			return -EPERM;
-	}
-
-	switch(csop->op) {
-	case ANOUBIS_CHECKSUM_OP_DEL:
-	case _ANOUBIS_CHECKSUM_OP_GET_OLD:
-	case ANOUBIS_CHECKSUM_OP_GET2:
-	case ANOUBIS_CHECKSUM_OP_ADDSUM:
-		if (csop->listflags)
-			return  -EINVAL;
-		if (cert != NULL)
-			return -EINVAL;
-		if (csop->op == ANOUBIS_CHECKSUM_OP_ADDSUM) {
-			if (!csop->sigdata || csop->siglen != ANOUBIS_CS_LEN)
-				return -EINVAL;
-		} else {
-			if (csop->sigdata || csop->siglen)
-				return -EINVAL;
-		}
-		break;
-	case _ANOUBIS_CHECKSUM_OP_GETSIG_OLD:
-	case ANOUBIS_CHECKSUM_OP_GETSIG2:
-	case ANOUBIS_CHECKSUM_OP_DELSIG:
-	case ANOUBIS_CHECKSUM_OP_ADDSIG:
-		if (csop->listflags)
-			return  -EINVAL;
-		if (cert == NULL)
-			return -EPERM;
-		if (csop->op == ANOUBIS_CHECKSUM_OP_ADDSIG) {
-			if (!csop->sigdata || csop->siglen < ANOUBIS_CS_LEN)
-				return -EINVAL;
-		} else {
-			if (csop->sigdata)
-				return -EINVAL;
-		}
-		break;
-	case ANOUBIS_CHECKSUM_OP_GENERIC_LIST:
-		if (csop->listflags & ~(ANOUBIS_CSUM_FLAG_MASK))
-			return -EINVAL;
-		if (csop->sigdata || csop->siglen)
-			return -EINVAL;
-		if (csop->listflags & ANOUBIS_CSUM_UPGRADED) {
-			if (csop->listflags
-			    != (ANOUBIS_CSUM_UPGRADED | ANOUBIS_CSUM_KEY))
-				return -EINVAL;
-			if (csop->idlen == 0 || csop->keyid == NULL)
-				return -EINVAL;
-			if  (csop->sigdata || csop->siglen)
-				return -EINVAL;
-		} else if (csop->listflags & ANOUBIS_CSUM_WANTIDS) {
-			/* WANTIDS implies ALL */
-			if ((csop->listflags & ANOUBIS_CSUM_ALL) == 0)
-				return -EINVAL;
-			/* WANTIDS requires root privileges */
-			if (csop->auth_uid != 0)
-				return -EPERM;
-			if (csop->keyid || csop->idlen)
-				return -EINVAL;
-			if (csop->uid)
-				return -EINVAL;
-		} else if (csop->listflags & ANOUBIS_CSUM_ALL) {
-			if ((csop->listflags & ANOUBIS_CSUM_UID) == 0)
-				return -EINVAL;
-			if ((csop->listflags & ANOUBIS_CSUM_KEY) == 0)
-				return -EINVAL;
-			if (csop->auth_uid != 0)
-				return -EPERM;
-			if (csop->keyid)
-				return -EINVAL;
-		} else {
-			if (csop->listflags & ANOUBIS_CSUM_KEY) {
-				if (csop->idlen == 0 || csop->keyid == NULL)
-					return -EINVAL;
-			} else {
-				if (csop->idlen || csop->keyid)
-					return -EINVAL;
-			}
-		}
-		break;
-	default:
-		return -EINVAL;
-	}
-	return 0;
-}
-
 static anoubisd_msg_t *
 create_polreply_msg(u_int64_t token, int payloadlen)
 {
@@ -1238,110 +1018,6 @@ create_polreply_msg(u_int64_t token, int payloadlen)
 	return msg;
 }
 
-static int
-sfs_check_for_uid(const char *sfs_path, const char *entryname, uid_t uid,
-    int upgrade_only)
-{
-	char		*file;
-	int		 ret;
-	struct stat	 statbuf;
-
-	if (asprintf(&file, "%s/%s/%d", sfs_path, entryname, uid) < 0) {
-		master_terminate(ENOMEM);
-		return 0;
-	}
-	ret = lstat(file, &statbuf);
-	if (ret < 0 || !S_ISREG(statbuf.st_mode)) {
-		free(file);
-		return 0;
-	}
-	if (upgrade_only && !sfs_upgraded(file)) {
-		free(file);
-		return 0;
-	}
-	free(file);
-	return 1;
-}
-
-static int
-sfs_check_for_key(const char *sfs_path, const char *entryname,
-    const unsigned char *key, int keylen, int upgrade_only)
-{
-	char		*keystr, *file;
-	int		 ret;
-	struct stat	 statbuf;
-
-	if ((keystr = anoubis_sig_key2char(keylen, key)) == NULL) {
-		master_terminate(ENOMEM);
-		return 0;
-	}
-	if (asprintf(&file, "%s/%s/k%s", sfs_path, entryname, keystr) < 0) {
-		master_terminate(ENOMEM);
-		return 0;
-	}
-	free(keystr);
-	ret = lstat(file, &statbuf);
-	if (ret < 0 || !S_ISREG(statbuf.st_mode)) {
-		free(file);
-		return 0;
-	}
-	if (upgrade_only && !sfs_upgraded(file)) {
-		free(file);
-		return 0;
-	}
-	free(file);
-	return 1;
-}
-
-static int
-sfs_wantentry(const struct sfs_checksumop *csop, const char *sfs_path,
-    const char *entryname)
-{
-	int		stars;
-	int		upgrade_only = csop->listflags & ANOUBIS_CSUM_UPGRADED;
-
-	/* Never report "." and ".." */
-	if (strcmp(entryname, ".") == 0 || strcmp(entryname, "..") == 0)
-		return 0;
-
-	/* ANOUBIS_CSUM_WANTIDS is not allowed without ANOUBIS_CSUM_ALL. */
-	if (csop->listflags & ANOUBIS_CSUM_WANTIDS) {
-		if (isdigit(entryname[0])
-		    && (csop->listflags & ANOUBIS_CSUM_UID))
-			return 1;
-		if (entryname[0] == 'k' && (csop->listflags & ANOUBIS_CSUM_KEY))
-			return 1;
-		return 0;
-	}
-
-	/*
-	 * We do not support ANOUBIS_CSUM_ALL for uids and signatures
-	 * separately.
-	 */
-	if (csop->listflags & ANOUBIS_CSUM_ALL)
-		return 1;
-
-	/*
-	 * At this point we know that we are listing directory contents for
-	 * a specific user ID and/or Key.
-	 */
-	stars = 0;
-	while (entryname[stars] == '*')
-		stars++;
-
-	/* Non-leaf directory entries are always interesting. */
-	if (stars % 2 == 0)
-		return 1;
-
-	if ((csop->listflags & ANOUBIS_CSUM_UID)
-	    && sfs_check_for_uid(sfs_path, entryname, csop->uid, upgrade_only))
-		return 1;
-	if ((csop->listflags & ANOUBIS_CSUM_KEY) && sfs_check_for_key(
-	    sfs_path, entryname, csop->keyid, csop->idlen, upgrade_only))
-		return 1;
-	return 0;
-}
-
 static void
 sfs_checksumop_list(struct sfs_checksumop *csop, u_int64_t token,
     struct event_info_main *ev_info)
@@ -1353,6 +1029,7 @@ sfs_checksumop_list(struct sfs_checksumop *csop, u_int64_t token,
 	DIR			*sfs_dir = NULL;
 	struct dirent		*entry;
 	int			 offset;
+	int			 found = 0;
 
 	if (csop->op != ANOUBIS_CHECKSUM_OP_GENERIC_LIST) {
 		error = EINVAL;
@@ -1379,6 +1056,7 @@ sfs_checksumop_list(struct sfs_checksumop *csop, u_int64_t token,
 		int		 tmplen;
 		if (!sfs_wantentry(csop, sfs_path, entry->d_name))
 			continue;
+		found = 1;
 		tmp = remove_escape_seq(entry->d_name);
 		tmplen = strlen(tmp) + 1;
 		if (offset + tmplen > reply->len) {
@@ -1399,13 +1077,16 @@ sfs_checksumop_list(struct sfs_checksumop *csop, u_int64_t token,
 		offset += tmplen;
 		free(tmp);
 	}
-	free(sfs_path);
 	closedir(sfs_dir);
 	reply->len = offset;
 	reply->flags |= POLICY_FLAG_END;
 	msg_shrink(msg, sizeof(anoubisd_reply_t) + offset);
 	enqueue(&eventq_m2s, msg);
 	event_add(ev_info->ev_m2s, NULL);
+	if (!found) {
+		sfs_remove_index(sfs_path, csop);
+	}
+	free(sfs_path);
 	return;
 out:
 	if (sfs_dir)
@@ -1440,11 +1121,7 @@ dispatch_checksumop(anoubisd_msg_t *msg, struct event_info_main *ev_info)
 	msg_comm = (anoubisd_msg_checksum_op_t *)msg->msg;
 	rawmsg.length = msg_comm->len;
 	rawmsg.u.buf = msg_comm->msg;
-	if (parse_sfs_checksumop(&csop, &rawmsg, msg_comm->uid) < 0) {
-		err = -EINVAL;
-		goto out;
-	}
-	if (validate_sfs_checksumop(&csop) < 0) {
+	if (sfs_parse_checksumop(&csop, &rawmsg, msg_comm->uid) < 0) {
 		err = -EINVAL;
 		goto out;
 	}
