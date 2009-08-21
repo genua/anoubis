@@ -33,6 +33,7 @@ SfsEntry::SfsEntry()
 {
 	this->csum_[SFSENTRY_CHECKSUM] = 0;
 	this->csum_[SFSENTRY_SIGNATURE] = 0;
+	this->csum_[SFSENTRY_UPGRADE] = 0;
 
 	setPath(wxEmptyString);
 	reset();
@@ -42,6 +43,7 @@ SfsEntry::SfsEntry(const wxString &path)
 {
 	this->csum_[SFSENTRY_CHECKSUM] = 0;
 	this->csum_[SFSENTRY_SIGNATURE] = 0;
+	this->csum_[SFSENTRY_UPGRADE] = 0;
 
 	setPath(path);
 	reset();
@@ -51,6 +53,7 @@ SfsEntry::~SfsEntry(void)
 {
 	releaseChecksum(SFSENTRY_CHECKSUM);
 	releaseChecksum(SFSENTRY_SIGNATURE);
+	releaseChecksum(SFSENTRY_UPGRADE);
 }
 
 wxString
@@ -314,7 +317,7 @@ SfsEntry::reset(void)
 
 	c1 = haveLocalCsum_;
 	c2 = reset(SFSENTRY_CHECKSUM);
-	c3 = reset(SFSENTRY_SIGNATURE);
+	c3 = reset(SFSENTRY_SIGNATURE) || reset(SFSENTRY_UPGRADE);
 
 	haveLocalCsum_ = false;
 	memset(localCsum_, 0, ANOUBIS_CS_LEN);

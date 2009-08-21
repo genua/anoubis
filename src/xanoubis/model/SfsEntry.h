@@ -56,9 +56,9 @@ class SfsEntry
 		 */
 		enum ChecksumType
 		{
-			SFSENTRY_CHECKSUM = 0,	/*!< Denotes a plain
-						     checksum. */
-			SFSENTRY_SIGNATURE /*!< Denotes a signed checksum */
+			SFSENTRY_CHECKSUM = 0,	/*!< A plain checksum. */
+			SFSENTRY_SIGNATURE,	/*!< A signed checksum */
+			SFSENTRY_UPGRADE,	/*!< An upgrade checksum */ 
 		};
 
 		/**

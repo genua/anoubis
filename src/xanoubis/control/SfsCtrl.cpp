@@ -769,6 +769,14 @@ SfsCtrl::OnCsumGet(TaskEvent &event)
 		if (exportEnabled_) {
 			/* Export is enabled, push entry into export-list */
 			pushExportEntry(entry, type);
+		} else if (type == SfsEntry::SFSENTRY_SIGNATURE) {
+			if (task->getUpgradeCsum(cs, csumLen) == csumLen) {
+				entry->setChecksum(
+				    SfsEntry::SFSENTRY_UPGRADE, cs, csumLen);
+			} else {
+				entry->reset(SfsEntry::SFSENTRY_UPGRADE);
+			}
+			sendEntryChangedEvent(idx);
 		}
 	} else {
 		wxString message;

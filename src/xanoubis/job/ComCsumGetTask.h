@@ -121,6 +121,15 @@ class ComCsumGetTask : public ComTask, public ComCsumHandler
 		size_t getCsumLen(void) const;
 
 		/**
+		 * Returns the size of the upgrade checksum if present.
+		 * The size should always be ANOUBIS_CS_LEN if the upgrade
+		 * marker is present or 0 if no upgrade marker was found.
+		 *
+		 * @return Size of requested checksum/signature.
+		 */
+		size_t getUpgradeCsumLen(void) const;
+
+		/**
 		 * Returns the requested checksum.
 		 *
 		 * If the request-operation was successful, you can use this
@@ -141,6 +150,22 @@ class ComCsumGetTask : public ComTask, public ComCsumHandler
 		size_t getCsum(u_int8_t *, size_t) const;
 
 		/**
+		 * Returns the upgrade checksum if present.
+		 *
+		 * If the request-operation was successful and contained an
+		 * upgrade checksum, you can use this method to receive the
+		 * upgrade checksum.
+		 *
+		 * @param csum Destination buffer, where the resulting checksum
+		 *             is written.
+		 * @param size Size of destination buffer <code>csum</code>.
+		 * @return On success, the length of the checksum is
+		 *         returned. Otherwise 0 is returned.
+		 * @see getUpgradeCsumLen()
+		 */
+		size_t getUpgradeCsum(u_int8_t *, size_t) const;
+
+		/**
 		 * Returns an hex-string representation of getCsum().
 		 * @return Hex-string of getCsum(). An empty string is
 		 *         returned, if the requested file foes not have a
@@ -158,8 +183,8 @@ class ComCsumGetTask : public ComTask, public ComCsumHandler
 		void resetComTaskResult(void);
 
 	private:
-		u_int8_t			*cs_;
-		size_t				cs_len_;
+		u_int8_t			*cs_, *upcs_;
+		size_t				cs_len_, upcs_len_;
 		struct anoubis_transaction	*ta_;
 
 		void resetCsum(void);

@@ -42,12 +42,16 @@ ComCsumGetTask::ComCsumGetTask(void)
 {
 	this->cs_ = 0;
 	this->cs_len_ = 0;
+	upcs_ = NULL;
+	upcs_len_ = 0;
 }
 
 ComCsumGetTask::ComCsumGetTask(const wxString &file)
 {
-	this->cs_ = 0;
-	this->cs_len_ = 0;
+	cs_ = 0;
+	cs_len_ = 0;
+	upcs_ = NULL;
+	upcs_len_ = 0;
 
 	setPath(file);
 }
@@ -100,8 +104,8 @@ bool
 ComCsumGetTask::done(void)
 {
 	struct anoubis_msg		*reqmsg;
-	int				 len;
-	const void			*sigdata = NULL;
+	int				 len, uplen = 0;
+	const void			*sigdata = NULL, *updata = NULL;
 
 	if (ta_ == NULL)
 		return (true);
@@ -127,11 +131,13 @@ ComCsumGetTask::done(void)
 		    &sigdata);
 		if (len > 0 && len != ANOUBIS_CS_LEN)
 			goto err;
+		uplen = anoubis_extract_sig_type(reqmsg,
+		    ANOUBIS_SIG_TYPE_UPGRADECS, &updata);
+		if (uplen < 0)
+			goto err;
+		if (uplen > 0 && uplen != ANOUBIS_CS_LEN)
+			goto err;
 	} else {
-		/*
-		 * XXX CEH: Might want to look at ANOUBIS_SIG_TYPE_UPGRADE
-		 * XXX CEH: as well. It should just be there.
-		 */
 		len = anoubis_extract_sig_type(reqmsg, ANOUBIS_SIG_TYPE_CS,
 		    &sigdata);
 	}
@@ -141,6 +147,11 @@ ComCsumGetTask::done(void)
 	if (len) {
 		this->cs_ = (u_int8_t *)malloc(this->cs_len_);
 		memcpy(cs_, sigdata, len);
+	}
+	if (uplen) {
+		upcs_len_ = uplen;
+		upcs_ = (u_int8_t*)malloc(uplen);
+		memcpy(upcs_, updata, uplen);
 	}
 	setComTaskResult(RESULT_SUCCESS);
 	anoubis_msg_free(reqmsg);
@@ -154,6 +165,26 @@ size_t
 ComCsumGetTask::getCsumLen(void) const
 {
 	return (this->cs_len_);
+}
+
+size_t
+ComCsumGetTask::getUpgradeCsumLen(void) const
+{
+	return (this->upcs_len_);
+}
+
+wxString
+ComCsumGetTask::getCsumStr(void) const
+{
+	if (getComTaskResult() == RESULT_SUCCESS && getResultDetails() == 0) {
+		wxString str;
+
+		for (unsigned int i = 0; i < cs_len_; i++)
+			str += wxString::Format(wxT("%.2x"), this->cs_[i]);
+
+		return (str);
+	} else
+		return (wxEmptyString);
 }
 
 size_t
@@ -173,18 +204,16 @@ ComCsumGetTask::getCsum(u_int8_t *csum, size_t size) const
 	return (0);
 }
 
-wxString
-ComCsumGetTask::getCsumStr(void) const
+size_t
+ComCsumGetTask::getUpgradeCsum(u_int8_t *csum, size_t size) const
 {
 	if (getComTaskResult() == RESULT_SUCCESS && getResultDetails() == 0) {
-		wxString str;
-
-		for (unsigned int i = 0; i < cs_len_; i++)
-			str += wxString::Format(wxT("%.2x"), this->cs_[i]);
-
-		return (str);
-	} else
-		return (wxEmptyString);
+		if (size >= upcs_len_) {
+			memcpy(csum, upcs_, upcs_len_);
+			return upcs_len_;
+		}
+	}
+	return 0;
 }
 
 void
@@ -203,5 +232,10 @@ ComCsumGetTask::resetCsum(void)
 		this->cs_ = 0;
 		this->cs_len_ = 0;
 
+	}
+	if (upcs_ != NULL) {
+		free(upcs_);
+		upcs_ = NULL;
+		upcs_len_ = 0;
 	}
 }
