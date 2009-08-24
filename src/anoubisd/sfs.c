@@ -801,11 +801,16 @@ sfs_create_upgradeindex(const char *csum_path, const char *csum_file)
 		/* Add the suffix prefixed by ".*u_" */
 		sprintf(thisfile+i, "/.*u_%s", suffix);
 		/* Create the index file if possible. */
-		fd = open(thisfile, O_RDWR | O_CREAT | O_EXCL);
+		fd = open(thisfile, O_RDWR | O_CREAT | O_EXCL, 0640);
 		if (fd < 0) {
 			if (errno == EEXIST)
 				return 0;
 			return -errno;
+		}
+		if (fchown(fd, -1, anoubisd_gid) < 0) {
+			int err = errno;
+			close(fd);
+			return -err;
 		}
 		close(fd);
 	}
