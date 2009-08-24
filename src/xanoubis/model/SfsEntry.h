@@ -58,7 +58,9 @@ class SfsEntry
 		{
 			SFSENTRY_CHECKSUM = 0,	/*!< A plain checksum. */
 			SFSENTRY_SIGNATURE,	/*!< A signed checksum */
-			SFSENTRY_UPGRADE,	/*!< An upgrade checksum */ 
+			SFSENTRY_UPGRADE,	/*!< An upgrade checksum */
+
+			SFSENTRY_MAX		/*!< Total Number of types. */
 		};
 
 		/**
@@ -385,9 +387,9 @@ class SfsEntry
 		wxString	filename_;
 		bool		haveLocalCsum_;
 		u_int8_t	localCsum_[ANOUBIS_CS_LEN];
-		size_t		csumLen_[2];
-		u_int8_t	*csum_[2];
-		ChecksumState	state_[2];
+		size_t		csumLen_[SFSENTRY_MAX];
+		u_int8_t	*csum_[SFSENTRY_MAX];
+		ChecksumState	state_[SFSENTRY_MAX];
 
 		/**
 		 * Default-c'tor.
