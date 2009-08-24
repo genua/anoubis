@@ -140,6 +140,7 @@ struct upgrade_com {
 static struct upgrade_com upgrade_pipes;
 
 static void	reconfigure(struct event_info_main *);
+static void	init_root_key(char *, struct event_info_main *);
 
 static char *pid_file_name = PACKAGE_PIDFILE;
 #ifdef LINUX
@@ -606,7 +607,6 @@ main(int argc, char *argv[])
 
 	/* Load Public Keys */
 	cert_init(0);
-
 	setproctitle("master");
 
 #ifdef LINUX
@@ -744,6 +744,8 @@ main(int argc, char *argv[])
 	ev_info.tv = &tv;
 	evtimer_set(&ev_timer, &dispatch_timer, &ev_info);
 	event_add(&ev_timer, &tv);
+
+	init_root_key(NULL, &ev_info);
 
 	DEBUG(DBG_TRACE, "master event loop");
 	if (event_dispatch() == -1)
@@ -904,6 +906,7 @@ reconfigure(struct event_info_main *info)
 			enqueue(&eventq_m2p, msg);
 			event_add(info->ev_m2p, NULL);
 		}
+		init_root_key(NULL, info);
 	}
 }
 
@@ -996,7 +999,81 @@ send_sfscache_invalidate_key(const char *path, const u_int8_t *keyid,
 	invmsg->payload[i] = 0;
 	enqueue(&eventq_m2p, msg);
 	event_add(ev_info->ev_m2p, NULL);
+}
 
+static void
+send_upgrade_ok(int value, struct event_info_main *ev_info)
+{
+	struct anoubisd_msg		*msg;
+	struct anoubisd_msg_upgrade	*upg;
+
+	msg = msg_factory(ANOUBISD_MSG_UPGRADE,
+	    sizeof(struct anoubisd_msg_upgrade) + 1);
+	if (!msg) {
+		master_terminate(ENOMEM);
+		return;
+	}
+	upg = (struct anoubisd_msg_upgrade*)msg->msg;
+	upg->upgradetype = ANOUBISD_UPGRADE_OK;
+	upg->chunksize = 1;
+	upg->chunk[0] = !!value;
+	enqueue(&eventq_m2p, msg);
+	event_add(ev_info->ev_m2p, NULL);
+}
+
+static void
+init_root_key(char *passphrase, struct event_info_main *ev_info)
+{
+	struct cert	*cert;
+
+	cert = cert_get_by_uid(0);
+	/*
+	 * Log error conditions if a passphrase is given, i.e. we deal
+	 * with a direct request from the user.
+	 */
+	if (passphrase) {
+		if (!cert) {
+			log_warnx("Got Passphrase but no public rootkey "
+			    "is configured");
+		} else if (anoubisd_config.rootkey == NULL) {
+			log_warnx("Passphrase but no private rootkey "
+			    "is configured");
+		}
+	}
+	/*
+	 * If no rootkey is configured, upgrades are allowed but no
+	 * signature upgrades will be performed. Any previously configured
+	 * private key must be delted.
+	 */
+	if (anoubisd_config.rootkey == NULL) {
+		/* Clear existing rootkey if any. */
+		if (cert)
+			cert_load_priv_key(cert, NULL, NULL);
+		/* Update is allowed but will not do signature upgrades */
+		send_upgrade_ok(1, ev_info);
+		return;
+	}
+	/*
+	 * If a rootkey is configured but root does not have a public key
+	 * we ignore the root key and allow upgrades.
+	 */
+	if (!cert) {
+		log_warnx("Ignoring rootkey because root has no public key.");
+		send_upgrade_ok(1, ev_info);
+		return;
+	}
+	/*
+	 * Try to load the new private key into the root certificate. If
+	 * a rootkey is required but it failed to load upgrades are denied.
+	 */
+	cert_load_priv_key(cert, anoubisd_config.rootkey, passphrase);
+	if (anoubisd_config.rootkey_required && cert->pubkey == NULL) {
+		log_warnx("Upgrades will be denied due to missing root key");
+		send_upgrade_ok(0, ev_info);
+		return;
+	}
+	/* Upgrades are allowed. */
+	send_upgrade_ok(1, ev_info);
 }
 
 static anoubisd_msg_t *
@@ -1471,7 +1548,7 @@ dispatch_m2u(int fd, short event __used, void *arg)
 }
 
 static void
-dispatch_sfs_update_all(anoubisd_msg_t *msg)
+dispatch_sfs_update_all(anoubisd_msg_t *msg, struct event_info_main *ev_info)
 {
 	anoubisd_sfs_update_all_t	*umsg;
 	size_t				 plen;
@@ -1499,6 +1576,21 @@ dispatch_sfs_update_all(anoubisd_msg_t *msg)
 	ret = sfs_update_all(path, (u_int8_t*)umsg->payload, ANOUBIS_CS_LEN);
 	if (ret < 0)
 		log_warnx("Cannot update checksums during update");
+	if (anoubisd_config.rootkey) {
+		struct cert	*cert = cert_get_by_uid(0);
+
+		if (cert && cert->privkey) {
+			ret = sfs_update_signature(path, cert,
+			    (u_int8_t*)umsg->payload, ANOUBIS_CS_LEN);
+			if (ret < 0)
+				log_warnx("Cannot update root signature "
+				    "during update");
+		} else if (anoubisd_config.rootkey_required) {
+			log_warnx("ERROR: Upgrade in progress but rootkey "
+			    "is not available");
+			send_upgrade_ok(0, ev_info);
+		}
+	}
 	return;
 bad:
 	log_warnx(" dispatch_sfs_update_all: Malformed message");
@@ -1522,7 +1614,7 @@ dispatch_u2m(int fd, short event __used, void *arg)
 			event_add(ev_info->ev_m2p, NULL);
 			break;
 		case ANOUBISD_MSG_SFS_UPDATE_ALL:
-			dispatch_sfs_update_all(msg);
+			dispatch_sfs_update_all(msg, ev_info);
 			free(msg);
 			break;
 		default:

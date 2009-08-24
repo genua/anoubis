@@ -172,6 +172,7 @@ int			 pe_compare(struct pe_proc *proc,
 int			 pe_compare_path(struct apn_rule **, int,
 			     struct pe_path_event *, time_t);
 /* Upgrade related functions. */
+void			 pe_set_upgrade_ok(int);
 void			 pe_upgrade_start(struct pe_proc *);
 void			 pe_upgrade_end(struct pe_proc *);
 void			 pe_upgrade_finish(void);

@@ -115,6 +115,9 @@ struct anoubisd_upgrade_trigger {
 struct anoubisd_config {
 	int	opts;
 	char * unixsocket;        /* defaults to ANOUBISD_SOCKETNAME */
+	char * rootkey;		  /* Path to root private key. */
+	int    rootkey_required;  /* If true, deny upgrade if rootkey is
+				     not usable. */
 
 	/* Upgrade options */
 	anoubisd_upgrade_mode			upgrade_mode;
@@ -256,6 +259,7 @@ enum anoubisd_upgrade {
 	ANOUBISD_UPGRADE_END,
 	ANOUBISD_UPGRADE_CHUNK_REQ,
 	ANOUBISD_UPGRADE_CHUNK,
+	ANOUBISD_UPGRADE_OK,	/* Chunk is a character: true or false */
 };
 
 struct anoubisd_msg_upgrade

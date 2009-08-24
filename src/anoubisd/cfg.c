@@ -48,7 +48,9 @@ typedef enum {
 	key_nooption,
 	key_unixsocket,
 	key_upgrade_mode,
-	key_upgrade_trigger
+	key_upgrade_trigger,
+	key_rootkey,
+	key_rootkey_required,
 } cfg_key;
 
 static struct {
@@ -58,6 +60,8 @@ static struct {
 	{ "unixsocket", key_unixsocket },
 	{ "upgrade_mode", key_upgrade_mode },
 	{ "upgrade_trigger", key_upgrade_trigger },
+	{ "rootkey", key_rootkey },
+	{ "rootkey_required", key_rootkey_required },
 	{ NULL, key_bad }
 };
 
@@ -93,6 +97,7 @@ static int  cfg_param_addvalue(struct cfg_param *, const char *, int);
 static int cfg_parse_file(FILE *);
 static int cfg_parse_upgrade_mode(const char *, int *, int);
 static int cfg_parse_upgrade_trigger(const char *, int);
+static int cfg_parse_bool(char *, int, int *targetptr);
 static int cfg_param_process(struct cfg_param *, int);
 
 static int cfg_read_cmdline(int, char * const *);
@@ -480,8 +485,8 @@ cfg_parse_upgrade_mode(const char *value, int *ok, int lineno)
  * enumerated in the given value.
  */
 static int
-cfg_parse_upgrade_trigger(const char *value, int lineno) {
-
+cfg_parse_upgrade_trigger(const char *value, int lineno)
+{
 	struct anoubisd_upgrade_trigger	*trigger;
 	char				*s;
 
@@ -543,6 +548,47 @@ cfg_parse_upgrade_trigger(const char *value, int lineno) {
 	return (0);
 }
 
+static int
+cfg_parse_bool(char *str, int lineno, int *boolptr)
+{
+	int	len;
+
+	if (boolptr)
+		(*boolptr) = 0;
+	while((*str) && isspace(*str))
+		str++;
+	len = strlen(str);
+	while(len > 0 && isspace(str[len-1]))
+		len--;
+	str[len] = 0;
+	if (strcasecmp(str, "yes") == 0 || strcasecmp(str, "true") == 0
+	    || strcasecmp(str, "1") == 0) {
+		(*boolptr) = 1;
+		return 0;
+	}
+	if (strcasecmp(str, "no") == 0 || strcasecmp(str, "false") == 0
+	    || strcasecmp(str, "0") == 0) {
+		(*boolptr) = 0;
+		return 0;
+	}
+	log_warnx("%s: line %d: Not a boolean", __FUNCTION__, lineno);
+	return 1;
+}
+
+static int
+cfg_parse_string(char *str, int lineno, char **strptr)
+{
+	char	*s = strdup(str);
+
+	if (s == NULL) {
+		log_warnx("%s: line %d: Out of memory", __FUNCTION__, lineno);
+		(*strptr) = NULL;
+		return (-ENOMEM);
+	}
+	(*strptr) = s;
+	return 0;
+}
+
 /*
  * Processes the given cfg_param structure, The anoubisd_config structure is
  * filled.
@@ -550,21 +596,14 @@ cfg_parse_upgrade_trigger(const char *value, int lineno) {
 static int
 cfg_param_process(struct cfg_param *param, int lineno)
 {
-	char *s;
 	anoubisd_upgrade_mode upgrade_mode;
 	int parse_result = 0;
 
 	switch (param->key) {
 		case key_unixsocket:
-			s = strdup(param->value);
-
-			if (s == NULL) {
-				log_warnx("%s: line %d: Out of memory",
-				    __FUNCTION__, lineno);
-				return (-ENOMEM);
-			}
-
-			anoubisd_config.unixsocket = s;
+			if (cfg_parse_string(param->value, lineno,
+			    &anoubisd_config.unixsocket) != 0)
+				return 1;
 			break;
 		case key_upgrade_mode:
 			upgrade_mode = cfg_parse_upgrade_mode(
@@ -582,6 +621,17 @@ cfg_param_process(struct cfg_param *param, int lineno)
 			if (parse_result != 0)
 				return (parse_result);
 
+			break;
+		case key_rootkey:
+			if (cfg_parse_string(param->value, lineno,
+			    &anoubisd_config.rootkey) != 0)
+				return 1;
+			break;
+		case key_rootkey_required:
+			parse_result = cfg_parse_bool(param->value, lineno,
+			    &anoubisd_config.rootkey_required);
+			if (parse_result != 0)
+				return parse_result;
 			break;
 		default:
 			break;
@@ -742,13 +792,36 @@ cfg_clear(void)
 	}
 }
 
+/*
+ * Report inconsitencies in the configuration.
+ */
+static int
+cfg_verify(void)
+{
+	if (anoubisd_config.rootkey_required) {
+		if (!anoubisd_config.rootkey) {
+			log_warnx("Configuration error: rootkey_required but "
+			    "no rootekey");
+			return 1;
+		}
+		if (anoubisd_config.upgrade_mode
+		    == ANOUBISD_UPGRADE_MODE_PROCESS) {
+			log_warnx("Configuration error: upgrade_mode "
+			    "'process' is not support with rootkey_required");
+			return 1;
+		}
+	}
+	return 0;
+}
+
 int
 cfg_read(void)
 {
 	int rc;
 
 	rc = cfg_read_file(data_store.conffile);
-
+	if (rc == 0)
+		rc = cfg_verify();
 	/* Command line options are more important than config file. */
 	if (rc == 0) {
 		/* Transfer cmdline socket. */
@@ -761,7 +834,6 @@ cfg_read(void)
 		/* Transfer cmdline options. */
 		anoubisd_config.opts = data_store.cmdlineopts;
 	}
-
 	return (rc);
 }
 
@@ -819,6 +891,11 @@ cfg_dump(FILE *f)
 		}
 	} else
 		fprintf(f, "upgrade_trigger:\n");
+	if (anoubisd_config.rootkey) {
+		fprintf(f, "rootkey: %s\n", anoubisd_config.rootkey);
+		fprintf(f, "rootkey_required: %s\n",
+		    anoubisd_config.rootkey_required?"true":"false");
+	}
 }
 
 /**

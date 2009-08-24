@@ -81,6 +81,7 @@ static struct pe_path_event *pe_parse_path_event(struct eventdev_hdr *hdr);
 static struct pe_file_tree *upgrade_tree = NULL;
 static int upgrade_counter = 0;
 static struct pe_file_node *upgrade_iterator = NULL;
+static int upgrade_ok = 1;
 
 void
 pe_init(void)
@@ -105,6 +106,12 @@ pe_reconfigure(void)
 	sfshash_flush();
 	cert_reconfigure(1);
 	pe_user_reconfigure();
+}
+
+void
+pe_set_upgrade_ok(int value)
+{
+	upgrade_ok = value;
 }
 
 void
@@ -643,8 +650,15 @@ pe_handle_sfspath(struct eventdev_hdr *hdr)
 			if (hdr->msg_uid == 0 &&
 			    (upgrade_mode == ANOUBISD_UPGRADE_MODE_STRICT_LOCK
 			    || upgrade_mode ==
-			    ANOUBISD_UPGRADE_MODE_LOOSE_LOCK))
-				pe_upgrade_start(proc);
+			    ANOUBISD_UPGRADE_MODE_LOOSE_LOCK)) {
+				if (upgrade_ok || upgrade_counter) {
+					pe_upgrade_start(proc);
+				} else {
+					log_warnx("Upgrade denied due to "
+					    "missing root key");
+					reply->reply = EPERM;
+				}
+			}
 			break;
 		case ANOUBIS_PATH_OP_UNLOCK:
 			DEBUG(DBG_UPGRADE, "Unlock event for task cookie %llx",

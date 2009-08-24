@@ -498,6 +498,10 @@ dispatch_upgrade(anoubisd_msg_t *msg, struct event_info_policy *ev_info)
 			    ((struct eventdev_reply *)msg->msg)->msg_token);
 		}
 		event_add(ev_info->ev_p2m, NULL);
+	} else if (upg->upgradetype == ANOUBISD_UPGRADE_OK) {
+		DEBUG(DBG_UPGRADE, " dispatch_upgrade: "
+		    "type = ANOUBISD_UPGRADE_OK arg = %d", upg->chunk[0]);
+		pe_set_upgrade_ok(upg->chunk[0]);
 	} else {
 		/* Unexpected message */
 		log_warnx("dispatch_upgrade: unexpected upgradetype (%i)",

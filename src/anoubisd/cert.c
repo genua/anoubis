@@ -151,6 +151,7 @@ cert_load_db(const char *dirname, struct cert_db *certs)
 			free(filename);
 			continue;
 		}
+		sc->privkey = NULL;
 		if ((fp = fopen(filename, "r")) == NULL) {
 			log_warn("fopen %s", filename);
 			free(sc);
@@ -164,7 +165,7 @@ cert_load_db(const char *dirname, struct cert_db *certs)
 			continue;
 		}
 		fclose(fp);
-		if ((sc->pkey = X509_get_pubkey(sc->req)) == NULL) {
+		if ((sc->pubkey = X509_get_pubkey(sc->req)) == NULL) {
 			log_warn("X509_get_pubkey: %s", filename);
 			X509_free(sc->req);
 			free(sc);
@@ -175,7 +176,7 @@ cert_load_db(const char *dirname, struct cert_db *certs)
 		if (sc->kidlen == -1) {
 			log_warn("Error while loading key from uid %d", uid);
 			X509_free(sc->req);
-			EVP_PKEY_free(sc->pkey);
+			EVP_PKEY_free(sc->pubkey);
 			free(sc);
 			free(filename);
 			continue;
@@ -242,7 +243,9 @@ cert_flush_db(struct cert_db *sc)
 		next = TAILQ_NEXT(p, entry);
 		TAILQ_REMOVE(sc, p, entry);
 
-		EVP_PKEY_free(p->pkey);
+		EVP_PKEY_free(p->pubkey);
+		if (p->privkey)
+			EVP_PKEY_free(p->privkey);
 		X509_free(p->req);
 		free(p->keyid);
 		free(p);
@@ -301,4 +304,46 @@ cert_keyid_for_uid(uid_t uid)
 	}
 	ret[j] = 0;
 	return ret;
+}
+
+static int
+cert_pass_cb(char *buf, int size, int rwflag __attribute__((unused)),
+    void *data)
+{
+	int	plen = strlen((char*)data);
+
+	if (size < plen + 1)
+		return 0;
+	memcpy(buf, data, plen + 1);
+	return plen;
+}
+
+void
+cert_load_priv_key(struct cert *cert, const char *path, char *passphrase)
+{
+	EVP_PKEY	*priv;
+	FILE		*file;
+
+	if (cert && cert->privkey) {
+		EVP_PKEY_free(cert->privkey);
+		cert->privkey = NULL;
+	}
+
+	if (!cert || !path)
+		return;
+	if (passphrase == NULL)
+		passphrase = "";
+	if ((file = fopen(path, "r")) == NULL) {
+		log_warnx("Cannot open rootkey file %s", path);
+		return;
+	}
+	priv = PEM_read_PrivateKey(file, NULL, &cert_pass_cb, passphrase);
+	fclose(file);
+	if (!priv) {
+		if (passphrase)
+			log_warnx("Failed to read private rootkey %s", path);
+		return;
+	}
+	/* XXX CEH: Make sure that private and public keys match! */
+	cert->privkey = priv;
 }

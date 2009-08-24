@@ -374,13 +374,13 @@ __sfs_checksumop(const struct sfs_checksumop *csop, struct sfs_data *data,
 			goto err1;
 		if (cert->uid != csop->auth_uid && csop->auth_uid != 0)
 			goto err1;
-		realsiglen = EVP_PKEY_size(cert->pkey);
+		realsiglen = EVP_PKEY_size(cert->pubkey);
 		error = -EINVAL;
 		if (csop->op == ANOUBIS_CHECKSUM_OP_ADDSIG) {
 			int ret;
 			if (realsiglen + ANOUBIS_CS_LEN != csop->siglen)
 				goto err1;
-			ret = anoubisd_verify_csum(cert->pkey, csop->sigdata,
+			ret = anoubisd_verify_csum(cert->pubkey, csop->sigdata,
 			    csop->sigdata + ANOUBIS_CS_LEN, realsiglen);
 			if (ret != 1) {
 				error = -EPERM;
@@ -430,8 +430,9 @@ __sfs_checksumop(const struct sfs_checksumop *csop, struct sfs_data *data,
 				error = -ENOENT;
 				goto err3;
 			}
-			ret = anoubisd_verify_csum(cert->pkey, sfsdata.sigdata,
-			    sfsdata.sigdata + ANOUBIS_CS_LEN, realsiglen);
+			ret = anoubisd_verify_csum(cert->pubkey,
+			    sfsdata.sigdata, sfsdata.sigdata + ANOUBIS_CS_LEN,
+			    realsiglen);
 			if (ret != 1) {
 				error = -ENOENT;
 				goto err3;
@@ -659,6 +660,80 @@ sfs_update_all(const char *path, u_int8_t *md, int len)
 	free(sfs_path);
 	closedir(sfs_dir);
 	return 0;
+}
+
+
+/*
+ * Update the signature assocated with @cert for the file @path.
+ * The signature is updated if the corresponding file in the sfs tree
+ * exists. The return value is zero in case of success (either the
+ * signature file did not exist or it could be updated successfully).
+ * If an error occurs a negative errno value is returned.
+ */
+int
+sfs_update_signature(const char *path, struct cert *cert,
+    u_int8_t *md, int len)
+{
+	int		 ret;
+	char		*sfs_path = NULL, *sfs_file = NULL, *keystr = NULL;
+	struct sfs_data	 sfs_data;
+	unsigned int	 keylen, siglen;
+	struct stat	 statbuf;
+	EVP_MD_CTX	 ctx;
+
+	if (path == NULL || md == NULL || len != ANOUBIS_CS_LEN)
+		return -EINVAL;
+	if (!cert->privkey || !cert->kidlen)
+		return -EINVAL;
+	ret = convert_user_path(path, &sfs_path, 0);
+	if (ret < 0)
+		return ret;
+	ret = -ENOMEM;
+	keystr = anoubis_sig_key2char(cert->kidlen, cert->keyid);
+	if (keystr == NULL)
+		goto out;
+	if (asprintf(&sfs_file, "%s/k%s", sfs_path, keystr) < 0) {
+		sfs_file = NULL;
+		goto out;
+	}
+	if (stat(sfs_file, &statbuf) < 0) {
+		ret = -errno;
+		if (ret == -ENOTDIR || ret == -ENOENT)
+			ret = 0;
+		goto out;
+	}
+	memset(&sfs_data, 0, sizeof(sfs_data));
+	keylen = EVP_PKEY_size(cert->privkey);
+	sfs_data.siglen = len + keylen;
+	sfs_data.sigdata = malloc(sfs_data.siglen);
+	if (sfs_data.sigdata == NULL)
+		goto out;
+	ret = -EINVAL;
+	memcpy(sfs_data.sigdata, md, len);
+	EVP_MD_CTX_init(&ctx);
+	if (EVP_SignInit(&ctx, ANOUBIS_SIG_HASH_DEFAULT) == 0) {
+		EVP_MD_CTX_cleanup(&ctx);
+		sfs_freesfsdata(&sfs_data);
+		goto out;
+	}
+	EVP_SignUpdate(&ctx, md, len);
+	if (EVP_SignFinal(&ctx, sfs_data.sigdata + len, &siglen,
+	    cert->privkey) == 0 || siglen != keylen) {
+		EVP_MD_CTX_cleanup(&ctx);
+		sfs_freesfsdata(&sfs_data);
+		goto out;
+	}
+	EVP_MD_CTX_cleanup(&ctx);
+	ret = sfs_writesfsdata(sfs_file, sfs_path, &sfs_data);
+	sfs_freesfsdata(&sfs_data);
+out:
+	if (sfs_path)
+		free(sfs_path);
+	if (keystr)
+		free(keystr);
+	if (sfs_file)
+		free(sfs_file);
+	return ret;
 }
 
 static int

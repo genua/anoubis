@@ -484,10 +484,19 @@ anoubisd_msg_upgrade_size(const char *buf, int buflen)
 	CAST(msg, buf, buflen);
 	SHIFT_FIELD(msg, chunk, buf, buflen);
 	CHECK_LEN(msg->chunksize, buflen);
-	if (msg->chunksize) {
-		if (msg->upgradetype != ANOUBISD_UPGRADE_CHUNK)
+	switch(msg->upgradetype) {
+	case ANOUBISD_UPGRADE_OK:
+		if (msg->chunksize != 1)
 			return -1;
-		STRINGS(buf, buflen);
+		ADD_SIZE(msg->chunksize);
+		break;
+	case ANOUBISD_UPGRADE_CHUNK:
+		if (msg->chunksize)
+			STRINGS(buf, buflen);
+		break;
+	default:
+		if (msg->chunksize)
+			return -1;
 	}
 	RETURN_SIZE();
 }

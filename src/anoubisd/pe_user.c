@@ -270,7 +270,7 @@ pe_user_load_dir(const char *dirname, unsigned int prio, struct pe_policy_db *p)
 		if (prio != PE_PRIO_ADMIN) {
 			if ((pub = cert_get_by_uid(uid)) != NULL) {
 				if (anoubis_sig_verify_policy_file(filename,
-				    pub->pkey) != 1)  {
+				    pub->pubkey) != 1)  {
 					log_warnx("not loading \"%s\", invalid "
 					    "signature", filename);
 					free(filename);
@@ -827,7 +827,7 @@ pe_dispatch_policy(struct anoubisd_msg_comm *comm)
 				key = cert_get_by_uid(req->uid);
 			if (key) {
 				ret = anoubis_sig_verify_policy_file(
-				    req->tmpname, key->pkey);
+				    req->tmpname, key->pubkey);
 				if (ret != 1) {
 					log_warnx("pe_dispatch_policy: "
 					    "Coudn\'t verify policy for uid: "

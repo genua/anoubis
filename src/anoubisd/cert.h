@@ -43,7 +43,8 @@
 struct cert {
 	TAILQ_ENTRY(cert)	 entry;
 	uid_t			 uid;
-	EVP_PKEY		*pkey;
+	EVP_PKEY		*pubkey;
+	EVP_PKEY		*privkey;
 	unsigned char		*keyid;
 	int			 kidlen;
 	X509			*req;
@@ -55,5 +56,6 @@ char *	 cert_keyid_for_uid(uid_t uid);
 
 struct cert	*cert_get_by_uid(uid_t u);
 struct cert	*cert_get_by_keyid(const unsigned char *keyid, int klen);
+void		 cert_load_priv_key(struct cert *, const char *, char *);
 
 #endif	/* _CERT_H_ */
