@@ -127,6 +127,15 @@ class ModAnoubisMainPanelImpl : public ModAnoubisMainPanelBase,
 		void OnEscalationSbPathLeft(wxCommandEvent &);
 		void OnEscalationSbPathRight(wxCommandEvent &);
 
+		/**
+		 * This is called when the checkbox of the upgrade-dialog
+		 * is modified.
+		 * The dialog is sending an event (anEVT_ANOUBISOPTIONS_UPDATE)
+		 * @param[in] 1st The event which is thrown in the dialog
+		 * @return Nothing
+		 */
+		void OnAnoubisOptionsUpdate(wxCommandEvent &);
+
 	public:
 		ModAnoubisMainPanelImpl(wxWindow*, wxWindowID);
 		~ModAnoubisMainPanelImpl(void);

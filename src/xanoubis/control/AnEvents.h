@@ -577,6 +577,12 @@ BEGIN_DECLARE_EVENT_TYPES()
 	 */
 	DECLARE_LOCAL_EVENT_TYPE(anEVT_SFSBROWSER_SHOW, wxNewEventType())
 
+	/**
+	 * Update Anoubisoptions event.
+	 * Updates only the option 'Enable Upgrade Message'
+	 */
+	DECLARE_LOCAL_EVENT_TYPE(anEVT_ANOUBISOPTIONS_UPDATE, wxNewEventType())
+
 END_DECLARE_EVENT_TYPES()
 /**
  * @}

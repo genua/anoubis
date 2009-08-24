@@ -73,6 +73,12 @@ MainFrame::MainFrame(wxWindow *parent) : MainFrameBase(parent)
 	    wxCommandEventHandler(MainFrame::OnConnectionStateChange),
 	    NULL, this);
 
+	jobCtrl->Connect(anTASKEVT_UPGRADE_LIST,
+	    wxTaskEventHandler(MainFrame::onUpgradeListArrived),
+	    NULL, this);
+
+	upgradeTask_.setRequestParameter(geteuid());
+
 	anEvents->Connect(anEVT_WIZARD_SHOW,
 	    wxCommandEventHandler(MainFrame::onWizardShow), NULL, this);
 	anEvents->Connect(anEVT_LOGVIEWER_SHOW,
@@ -100,9 +106,11 @@ MainFrame::MainFrame(wxWindow *parent) : MainFrameBase(parent)
 
 MainFrame::~MainFrame()
 {
-	AnEvents *anEvents;
+	AnEvents	*anEvents;
+	JobCtrl		*jobCtrl;
 
 	anEvents = AnEvents::getInstance();
+	jobCtrl = JobCtrl::getInstance();
 
 	anEvents->Disconnect(anEVT_WIZARD_SHOW,
 	    wxCommandEventHandler(MainFrame::onWizardShow), NULL, this);
@@ -124,6 +132,9 @@ MainFrame::~MainFrame()
 	    wxCommandEventHandler(MainFrame::OnAnoubisOptionShow), NULL, this);
 	anEvents->Disconnect(anEVT_BACKUP_POLICY,
 	    wxCommandEventHandler(MainFrame::onBackupPolicy), NULL, this);
+
+	jobCtrl->Disconnect(anTASKEVT_UPGRADE_LIST,
+	    wxTaskEventHandler(MainFrame::onUpgradeListArrived), NULL, this);
 
 	ANEVENTS_IDENT_BCAST_DEREGISTRATION(MainFrame);
 
@@ -326,6 +337,7 @@ MainFrame::OnConnectionStateChange(wxCommandEvent& event)
 			logMessage += _(" without sfsdisable!");
 		}
 		wxGetApp().log(logMessage);
+		instance->addTask(&upgradeTask_);
 		break;
 	case JobCtrl::CONNECTION_DISCONNECTED:
 	case JobCtrl::CONNECTION_ERROR:
@@ -581,6 +593,63 @@ bool
 MainFrame::isShowing(void)
 {
 	return (show_);
+}
+
+void
+MainFrame::onUpgradeListArrived(TaskEvent &event)
+{
+	ComUpgradeListGetTask	*task;
+	ComTask::ComTaskResult	comResult;
+	wxConfig *userOptions = wxGetApp().getUserOptions();
+	wxString		errMsg;
+	wxArrayString		result;
+	DlgUpgradeAsk		askDlg(this);
+	bool			showUpgradeMessage;
+
+	showUpgradeMessage = true;
+
+	task = dynamic_cast<ComUpgradeListGetTask*>(event.getTask());
+	comResult = ComTask::RESULT_LOCAL_ERROR;
+
+	if (task == 0) {
+		/* No ComUpgradeListGetTask -> stop propagating */
+		event.Skip(false);
+		return;
+	}
+
+	if (&upgradeTask_ != task) {
+		/* Belongs to someone other, ignore it */
+		event.Skip();
+		return;
+	}
+
+	event.Skip(false); /* "My" task -> stop propagating */
+	comResult = task->getComTaskResult();
+
+	if (comResult != ComTask::RESULT_SUCCESS) {
+		if (comResult == ComTask::RESULT_COM_ERROR) {
+			errMsg = wxString::Format(_("Communication "
+			    "error while fetching list of upgraded "
+			    "files."));
+		} else if (comResult == ComTask::RESULT_REMOTE_ERROR) {
+			errMsg = wxString::Format(_("Got error "
+			    "(%hs) from daemon while fetching list "
+			    "of upgraded files."),
+			strerror(task->getResultDetails()));
+		} else {
+			errMsg = wxString::Format(_("An unexpected "
+			    "error (%i) occured while while fetching list "
+			    "of upgraded files."), task->getComTaskResult());
+		}
+		wxMessageBox(errMsg, _("Error"), wxICON_ERROR);
+	} else {
+		result = task->getFileList();
+		userOptions->Read(wxT("/Options/ShowUpgradeMessage"),
+		    &showUpgradeMessage);
+		if (result.Count() > 0 && showUpgradeMessage == true) {
+			askDlg.ShowModal();
+		}
+	}
 }
 
 ANEVENTS_IDENT_BCAST_METHOD_DEFINITION(MainFrame)

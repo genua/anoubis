@@ -81,9 +81,7 @@ class DlgUpgradeAsk : public DlgUpgradeAskBase
 		virtual void onUpgradeNotifyCheck(wxCommandEvent &);
 
 	private:
-		bool		ShowUpgradeMessage_;
 		wxConfig	*userOptions_;
-		bool		upgradeMessage_;
 };
 
 #endif	/* _DLGUPGRADEASK_H_ */

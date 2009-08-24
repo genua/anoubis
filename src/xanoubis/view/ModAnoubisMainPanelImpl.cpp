@@ -126,6 +126,8 @@ ModAnoubisMainPanelImpl::ModAnoubisMainPanelImpl(wxWindow* parent,
 	    NULL, this);
 	anEvents->Connect(anEVT_ESCALATION_RULE_ERROR, wxCommandEventHandler(
 	    ModAnoubisMainPanelImpl::OnEscalationRuleError), NULL, this);
+	anEvents->Connect(anEVT_ANOUBISOPTIONS_UPDATE, wxCommandEventHandler(
+	    ModAnoubisMainPanelImpl::OnAnoubisOptionsUpdate), NULL, this);
 	tb_MainAnoubisNotify->Connect(wxEVT_COMMAND_NOTEBOOK_PAGE_CHANGED,
 	    wxNotebookEventHandler(
 	       ModAnoubisMainPanelImpl::OnNotebookTabChanged),
@@ -193,6 +195,8 @@ ModAnoubisMainPanelImpl::~ModAnoubisMainPanelImpl(void)
 	    NULL, this);
 	anEvents->Disconnect(anEVT_ESCALATION_RULE_ERROR, wxCommandEventHandler(
 	    ModAnoubisMainPanelImpl::OnEscalationRuleError), NULL, this);
+	anEvents->Disconnect(anEVT_ANOUBISOPTIONS_UPDATE, wxCommandEventHandler(
+	    ModAnoubisMainPanelImpl::OnAnoubisOptionsUpdate), NULL, this);
 }
 
 void
@@ -215,7 +219,8 @@ ModAnoubisMainPanelImpl::readOptions(void)
 	/* read the stored Option Settings */
 	userOptions_->Read(wxT("/Options/SendAlerts"), &SendAlert);
 	userOptions_->Read(wxT("/Options/SendEscalations"), &SendEscalation);
-	userOptions_->Read(wxT("/Options/ShowUpgradeMessage"), &ShowUpgradeMessage);
+	userOptions_->Read(wxT("/Options/ShowUpgradeMessage"),
+	    &ShowUpgradeMessage);
 
 	userOptions_->Read(wxT("/Options/NoEscalationsTimeout"),
 	    &NoEscalationTimeout);
@@ -1519,4 +1524,14 @@ ModAnoubisMainPanelImpl::setPathLabel(void)
 		bt_EscalationSbPathRight->Enable(canright);
 		pn_EscalationSb->Layout();
 	}
+}
+
+void
+ModAnoubisMainPanelImpl::OnAnoubisOptionsUpdate(wxCommandEvent& event)
+{
+	bool showUpgradeMessage = true;
+	userOptions_->Read(wxT
+	    ("/Options/ShowUpgradeMessage"),&showUpgradeMessage);
+	cb_ShowUpgradeMsg->SetValue(showUpgradeMessage);
+	event.Skip();
 }

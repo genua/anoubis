@@ -37,6 +37,10 @@
 #include "AnStatusBar.h"
 #include "MainFrameBase.h"
 #include "Module.h"
+#include "ComUpgradeListGetTask.h"
+#include "SfsCtrl.h"
+class MainFrame;
+#include "DlgUpgradeAsk.h"
 
 class TaskEvent;
 
@@ -56,6 +60,7 @@ class MainFrame : public MainFrameBase
 		wxIcon		*errorIcon_;
 		wxIcon		*alertIcon_;
 		wxIcon		*escalationIcon_;
+		ComUpgradeListGetTask upgradeTask_;
 
 		void setConnectionString(bool, const wxString &);
 		void setMessageString(void);
@@ -66,6 +71,16 @@ class MainFrame : public MainFrameBase
 		void onMainFrameShow(wxCommandEvent&);
 		void onSfsBrowserShow(wxCommandEvent&);
 		void onBackupPolicy(wxCommandEvent&);
+
+		/**
+		 * This is called when there is a list of signed, upgraded
+		 * files.
+		 * This methode is caused by the event anTASKEVT_UPGRADE_LIST.
+		 * The dialogbox is opened in the methode.
+		 * @param[in] 1st The event
+		 * @return Nothing
+		 */
+		void onUpgradeListArrived(TaskEvent &);
 
 		ANEVENTS_IDENT_BCAST_METHOD_DECLARATION;
 

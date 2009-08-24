@@ -30,13 +30,14 @@
 #include "AnEvents.h"
 #include "DlgUpgradeAsk.h"
 
-DlgUpgradeAsk::DlgUpgradeAsk(wxWindow *) : DlgUpgradeAskBase(NULL)
+DlgUpgradeAsk::DlgUpgradeAsk(wxWindow *parent) : DlgUpgradeAskBase(parent)
 {
 	/* Constructor */
+	bool showUpgradeMessage = true;
 	userOptions_ = wxGetApp().getUserOptions();
-	upgradeMessage_ = userOptions_->Read(wxT
-	    ("/Options/ShowUpgradeMessage"),&ShowUpgradeMessage_);
-	showAgainCheckBox->SetValue(upgradeMessage_);
+	userOptions_->Read(wxT
+	    ("/Options/ShowUpgradeMessage"), &showUpgradeMessage);
+	showAgainCheckBox->SetValue(!showUpgradeMessage);
 }
 
 DlgUpgradeAsk::~DlgUpgradeAsk(void)
@@ -47,7 +48,7 @@ DlgUpgradeAsk::~DlgUpgradeAsk(void)
 void
 DlgUpgradeAsk::onClose(wxCommandEvent& WXUNUSED(event))
 {
-	Close(TRUE);
+	EndModal(true);
 }
 
 void
@@ -56,11 +57,16 @@ DlgUpgradeAsk::onSfsBrowserShow(wxCommandEvent& WXUNUSED(event))
 	wxCommandEvent event(anEVT_SFSBROWSER_SHOW);
 	event.SetInt(1);
 	wxPostEvent(AnEvents::getInstance(), event);
+	EndModal(true);
 }
 
 void
 DlgUpgradeAsk::onUpgradeNotifyCheck(wxCommandEvent& WXUNUSED(event))
 {
-	 userOptions_->Write(wxT("/Options/ShowUpgradeMessage"),
-	     showAgainCheckBox->IsChecked());
+	userOptions_->Write(wxT("/Options/ShowUpgradeMessage"),
+	    !showAgainCheckBox->IsChecked());
+	userOptions_->Flush();
+	/* Event: Updating the options */
+	wxCommandEvent event(anEVT_ANOUBISOPTIONS_UPDATE);
+	wxPostEvent(AnEvents::getInstance(), event);
 }
