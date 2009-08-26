@@ -37,11 +37,10 @@ do_test()
 		/usr/share/anoubisd/upgrade_sfs.pl
 	fi
 
-	msg=$($DAEMON -n 2>&1);
+	msg=$($ANOUBISD_BIN -n 2>&1);
 	RC=$?
 	if [ "$RC" != "0" ]; then
-		log_end_msg 1
-		log_failure_msg $msg
+		echo $msg
 		return $RC
 	else
 		return 0;

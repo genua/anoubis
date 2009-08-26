@@ -29,6 +29,7 @@ test -x /sbin/anoubisd || exit 1
 
 RETVAL=0
 CTRL=/sbin/anoubisctl
+DAEMON=/sbin/anoubisd
 
 do_test()
 {
@@ -39,8 +40,7 @@ do_test()
 	msg=$($DAEMON -n 2>&1);
 	RC=$?
 	if [ "$RC" != "0" ]; then
-		log_end_msg 1
-		log_failure_msg $msg
+		echo $msg
 		return $RC
 	else
 		return 0;
