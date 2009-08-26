@@ -75,6 +75,7 @@ class KeyCtrl : public Singleton<KeyCtrl>
 		enum KeyResult
 		{
 			RESULT_KEY_OK,		/*<! Everything worked fine. */
+			RESULT_KEY_ABORT,	/*<! Abort entering password */
 
 			RESULT_KEY_WRONG_PASS,	/*<! The entered passphrase was
 						 * incorrect.*/

@@ -228,7 +228,7 @@ START_TEST(tc_PrivKey_load_WrongFile)
 	fail_unless(privKey.canLoad(), "Can load private key");
 
 	pRes = privKey.load(test_foo_cb);
-	fail_unless(pRes == PrivKey::ERR_PRIV_ERR,
+	fail_if(pRes == PrivKey::ERR_PRIV_OK,
 	    "Loading of private key was successful");
 	fail_unless(!privKey.isLoaded(), "Private key is loaded");
 }

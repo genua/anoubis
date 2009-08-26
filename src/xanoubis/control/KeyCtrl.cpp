@@ -34,16 +34,20 @@
  * form.
  * */
 extern "C" int
-xpass_cb(char *buf, int size, int, void *)
+xpass_cb(char *buf, int size, int, void *err)
 {
+	wxString result = wxEmptyString;
 	bool ok = true;
 	int pass_len;
-	wxString result = wxEmptyString;
+	int *error = (int *)err;
+
 	PassphraseReader *pr = KeyCtrl::getInstance()->getPassphraseReader();
 	if (pr != 0) {
 		result = pr->readPassphrase(&ok);
-		if (!ok)
+		if (!ok) {
+			*error = 1;
 			return (0);
+		}
 	}
 
 	pass_len = result.length();
@@ -115,6 +119,9 @@ KeyCtrl::loadPrivateKey(void)
 			/* NOTREACHED */
 		case PrivKey::ERR_PRIV_ERR:
 			return (RESULT_KEY_ERROR);
+			/* NOTREACHED */
+		case PrivKey::ERR_PRIV_ABORT:
+			return (RESULT_KEY_ABORT);
 			/* NOTREACHED */
 		case PrivKey::ERR_PRIV_OK:
 			return (RESULT_KEY_OK);

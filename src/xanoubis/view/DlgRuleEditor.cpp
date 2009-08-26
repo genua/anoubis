@@ -1397,6 +1397,7 @@ DlgRuleEditor::onFooterActivateButton(wxCommandEvent &)
 			footerStatusText->SetLabel(wxT("Error while sending "
 			    "policy to daemon!"));
 			break;
+		case PolicyCtrl::RESULT_POL_ABORT:
 		case PolicyCtrl::RESULT_POL_OK:
 			break;
 		}
@@ -1419,6 +1420,7 @@ DlgRuleEditor::onFooterActivateButton(wxCommandEvent &)
 			footerStatusText->SetLabel(wxT("Error while sending"
 			    " admin policy to daemon."));
 			break;
+		case PolicyCtrl::RESULT_POL_ABORT:
 		case PolicyCtrl::RESULT_POL_OK:
 			break;
 		}

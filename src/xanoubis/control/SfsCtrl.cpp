@@ -254,6 +254,8 @@ SfsCtrl::registerChecksum(const IndexArray &arr)
 					return (RESULT_WRONG_PASS);
 				else if (keyRes == KeyCtrl::RESULT_KEY_ERROR)
 					return (RESULT_NEEDKEY);
+				else if (keyRes == KeyCtrl::RESULT_KEY_ABORT)
+					return (RESULT_NOOP);
 			}
 
 			SfsEntry *entry = sfsDir_.getEntry(idx);

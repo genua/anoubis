@@ -335,6 +335,7 @@ anoubis_sig_init(const char *keyfile, const char *certfile,
 	EVP_PKEY *pkey = NULL;
 	FILE *f = NULL;
 	X509	*cert = NULL;
+	int err = 0;
 
 	OpenSSL_add_all_algorithms();
 
@@ -357,7 +358,7 @@ anoubis_sig_init(const char *keyfile, const char *certfile,
 			break;
 		case ANOUBIS_SIG_PRIV:
 			pkey = PEM_read_PrivateKey(f, NULL, passcb,
-			    "Private Key");
+			    &err);
 			break;
 		default:
 			fclose(f);
@@ -367,6 +368,14 @@ anoubis_sig_init(const char *keyfile, const char *certfile,
 		fclose(f);
 
 		if (!pkey) {
+			/* if pkey is empty and err == 0 no password was
+			 * entered
+			 */
+			if (err == 0) {
+				*error = EPERM;
+				return NULL;
+			}
+
 			/* ERR_get_error gives us a certian amount of
 			 * errors that occurs but we want just to know
 			 * if the password ist wrong. We take the last
@@ -383,7 +392,7 @@ anoubis_sig_init(const char *keyfile, const char *certfile,
 			 * entered
 			 */
 			else if (*error == PEM_R_BAD_PASSWORD_READ)
-				*error = EPERM;
+				*error = ECANCELED;
 
 			ERR_clear_error();
 			return NULL;
@@ -465,17 +474,19 @@ anoubis_sig_key2char(int idlen, const unsigned char *keyid)
 }
 
 int
-pass_cb(char *buf, int size, int rwflag __used, void *text)
+pass_cb(char *buf, int size, int rwflag __used, void *err __used)
 {
 	int len;
 	char *tmp;
 
-	printf("Enter pass phrase for \"%s\"\n", (char *)text);
+	printf("Enter pass phrase for Private Key\n");
 
-	tmp = getpass("Password\n");
+	tmp = getpass("Password:");
+	if (tmp == NULL)
+		return 0;
 	len = strlen(tmp);
-
-	if (len <= 0) return 0;
+	if (len <= 0)
+		return 0;
 
 	if (len > size) len = size;
 

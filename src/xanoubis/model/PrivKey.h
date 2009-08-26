@@ -54,6 +54,7 @@ class PrivKey : private wxTimer
 		enum PrivKeyResult {
 			ERR_PRIV_WRONG_PASS,	/*<! Wrong password was
 						 * entered. */
+			ERR_PRIV_ABORT,		/*<! Abort entering password */
 			ERR_PRIV_ERR,		/*<! A an error occured. */
 			ERR_PRIV_OK		/*<! Everything worked fine. */
 		};

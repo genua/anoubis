@@ -413,6 +413,7 @@ RuleWizard::onWizardFinished(wxWizardEvent &)
 			wxGetApp().status(wxT("Error while sending"
 			    " admin policy to daemon."));
 			break;
+		case PolicyCtrl::RESULT_POL_ABORT:
 		case PolicyCtrl::RESULT_POL_OK:
 			wxGetApp().status(_("policy sent to daemon"));
 			break;

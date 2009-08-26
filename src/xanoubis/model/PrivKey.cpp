@@ -111,6 +111,8 @@ PrivKey::load(pem_password_cb *xpass_cb)
 			if (err != 0) {
 				if (err == EPERM)
 					tries_++;
+				else if (err == ECANCELED)
+					break;
 				else
 					break;
 			} else
@@ -120,6 +122,8 @@ PrivKey::load(pem_password_cb *xpass_cb)
 		if (err) {
 			if (tries_ >= 3)
 				return ERR_PRIV_WRONG_PASS;
+			else if (err == ECANCELED)
+				return ERR_PRIV_ABORT;
 			else
 				return ERR_PRIV_ERR;
 		}

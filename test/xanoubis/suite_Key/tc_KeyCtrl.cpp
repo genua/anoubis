@@ -288,7 +288,7 @@ START_TEST(tc_KeyCtrl_loadPrivateKey_canceled)
 	privKey.setFile(wxString::FromAscii(path_privkey));
 
 	kRes = tc_keyCtrl->loadPrivateKey();
-	fail_unless(kRes == KeyCtrl::RESULT_KEY_WRONG_PASS,
+	fail_unless(kRes == KeyCtrl::RESULT_KEY_ABORT,
 	    "Load private key was successful");
 	fail_unless(!privKey.isLoaded(), "Private key is loaded");
 }

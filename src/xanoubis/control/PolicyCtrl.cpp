@@ -407,6 +407,9 @@ PolicyCtrl::sendToDaemon(long id)
 		if (keyRes == KeyCtrl::RESULT_KEY_ERROR) {
 			delete task;
 			return (RESULT_POL_ERR);
+		} else if (keyRes == KeyCtrl::RESULT_KEY_ABORT) {
+			delete task;
+			return (RESULT_POL_ABORT);
 		} else if (keyRes == KeyCtrl::RESULT_KEY_WRONG_PASS) {
 			delete task;
 			return (RESULT_POL_WRONG_PASS);

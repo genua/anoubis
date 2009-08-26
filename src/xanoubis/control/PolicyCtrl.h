@@ -68,6 +68,7 @@ class PolicyCtrl : public wxEvtHandler, public Singleton<PolicyCtrl>
 		{
 			RESULT_POL_OK,		/*<! Everything worked fine. */
 			RESULT_POL_ERR,		/*<! An Error occured */
+			RESULT_POL_ABORT,	/*<! Abort operation */
 			RESULT_POL_WRONG_PASS	/*<! RESULT_POL_WRONG_PASS */
 		};
 
