@@ -306,18 +306,6 @@ cert_keyid_for_uid(uid_t uid)
 	return ret;
 }
 
-static int
-cert_pass_cb(char *buf, int size, int rwflag __attribute__((unused)),
-    void *data)
-{
-	int	plen = strlen((char*)data);
-
-	if (size < plen + 1)
-		return 0;
-	memcpy(buf, data, plen + 1);
-	return plen;
-}
-
 void
 cert_load_priv_key(struct cert *cert, const char *path, char *passphrase)
 {
@@ -337,7 +325,8 @@ cert_load_priv_key(struct cert *cert, const char *path, char *passphrase)
 		log_warnx("Cannot open rootkey file %s", path);
 		return;
 	}
-	priv = PEM_read_PrivateKey(file, NULL, &cert_pass_cb, passphrase);
+	OpenSSL_add_all_algorithms();
+	priv = PEM_read_PrivateKey(file, NULL, NULL, passphrase);
 	fclose(file);
 	if (!priv) {
 		if (passphrase)

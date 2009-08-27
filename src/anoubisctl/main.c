@@ -85,6 +85,7 @@ static int	daemon_start(void);
 static int	daemon_stop(void);
 static int	daemon_status(void);
 static int	daemon_reload(void);
+static int	send_passphrase(void);
 static int	monitor(int argc, char **argv);
 static int	load(char *, uid_t, unsigned int);
 static int	dump(char *, uid_t, unsigned int);
@@ -107,18 +108,20 @@ struct cmd {
 	 */
 	int		args;
 } commands[] = {
-	{ "start",   daemon_start,   0 },
-	{ "stop",    daemon_stop,    0 },
-	{ "status",  daemon_status,  0 },
-	{ "reload",  daemon_reload,  0 },
-	{ "load",    (func_int_t)load, 1 },
-	{ "dump",    (func_int_t)dump, 2 },
+	{ "start",	daemon_start,		0 },
+	{ "stop",	daemon_stop,		0 },
+	{ "status",	daemon_status,		0 },
+	{ "reload",	daemon_reload,		0 },
+	{ "passphrase",	send_passphrase,	0 },
+	{ "load",	(func_int_t)load,	1 },
+	{ "dump",	(func_int_t)dump,	2 },
 };
 
 static const char	 def_cert[] = ".xanoubis/default.crt";
 static const char	 def_pri[] =  ".xanoubis/default.key";
 static int	opts = 0;
 static struct anoubis_sig *as = NULL;
+static int		 passfd = -1;
 
 static struct achat_channel	*channel;
 struct anoubis_client		*client = NULL;
@@ -131,7 +134,7 @@ usage(void)
 	extern char	*__progname;
 
 	fprintf(stderr, "usage: %s [-fnv] [-k key] [-c cert] [-p <prio>] "
-	    "[-u uid] <command> [<file>]\n", __progname);
+	    "[-u uid] [-i fd] <command> [<file>]\n", __progname);
 	fprintf(stderr, "    <command>:\n");
 	for (i=0; i < sizeof(commands)/sizeof(struct cmd); i++) {
 		if (commands[i].args)
@@ -161,19 +164,20 @@ usage(void)
 int
 main(int argc, char *argv[])
 {
-	struct stat	sb;
-	int		ch, done;
-	unsigned int	i, prio = 1;
-	int		error = 0;
+	struct stat	 sb;
+	int		 ch, done;
+	unsigned int	 i, prio = 1;
+	int		 error = 0;
 	char		*command = NULL;
 	char		*rulesopt = NULL;
 	char		*keyfile = NULL;
 	char		*homepath = NULL;
 	char		*certfile = NULL;
-	char		buf[PATH_MAX];
+	char		 buf[PATH_MAX];
 	struct passwd	*pwd = NULL;
-	uid_t		uid = geteuid();
+	uid_t		 uid = geteuid();
 	char		*prios[] = { "admin", "user", NULL };
+	char		 tmp;
 
 	if (argc < 2)
 		usage();
@@ -182,7 +186,7 @@ main(int argc, char *argv[])
 	if (uid == 0)
 		prio = 0;
 
-	while ((ch = getopt(argc, argv, "fnc:k:p:u:v")) != -1) {
+	while ((ch = getopt(argc, argv, "fnc:k:p:u:vi:")) != -1) {
 		switch (ch) {
 		case 'p':
 			for (i=0; prios[i] != NULL; i++) {
@@ -236,6 +240,12 @@ main(int argc, char *argv[])
 				return 1;
 			}
 			break;
+		case 'i':
+			if (passfd >= 0)
+				usage();
+			if (sscanf(optarg, "%d%c", &passfd, &tmp) != 1)
+				usage();
+			break;
 		default:
 			usage();
 			/* NOTREACHED */
@@ -283,6 +293,12 @@ main(int argc, char *argv[])
 			free(keyfile);
 			keyfile = NULL;
 		}
+	}
+	if (passfd >= 0 && strcmp(command, "passphrase") != 0) {
+		fprintf(stderr, "Command %s does not support option -i\n",
+		    command);
+		close(passfd);
+		usage();
 	}
 	if ((!strcmp(command, "load")) &&
 	    (opts & ANOUBISCTL_OPT_SIGN) && (prio != ANOUBISCTL_PRIO_ADMIN)) {
@@ -861,6 +877,85 @@ static int monitor(int argc, char **argv)
 		}
 		if (maxcount > 0 && count >= maxcount)
 			break;
+	}
+	destroy_channel();
+	return 0;
+}
+
+static int
+send_passphrase(void)
+{
+	char				*pass;
+	int				 error;
+	struct anoubis_transaction	*t;
+	char				 passbuf[1024];
+
+	error = create_channel();
+	if (error) {
+		fprintf(stderr, "Cannot create channel\n");
+		return error;
+	}
+	if (getuid() != 0) {
+		fprintf(stderr, "Need root privileges to do this\n");
+		return 5;
+	}
+	if (passfd < 0) {
+		pass = getpass("Enter Passphrase for root's private key: ");
+		if (!pass) {
+			fprintf(stderr, "Failed to read password\n");
+			return 5;
+		}
+	} else {
+		int	off=0, ret;
+		while(off < (int)sizeof(passbuf)) {
+			ret = read(passfd, passbuf + off, sizeof(passbuf)-off);
+			if (ret == 0)
+				break;
+			if (ret < 0) {
+				memset(passbuf, 0, sizeof(passbuf));
+				fprintf(stderr, "Failed to read passphrase");
+				return 5;
+			}
+			off += ret;
+		}
+		/*
+		 * Accept at most 1023 bytes of NUL and non-NUL terminated
+		 * data from a passfd
+		 */
+		if (off >= (int)sizeof(passbuf))
+			off = sizeof(passbuf)-1;
+		passbuf[off] = 0;
+		pass = passbuf;
+		close(passfd);
+	}
+	t = anoubis_client_passphrase_start(client, pass);
+	if (passfd < 0) {
+		memset(pass, 0, strlen(pass));
+	} else {
+		memset(passbuf, 0, sizeof(passbuf));
+	}
+	if (!t) {
+		fprintf(stderr, "Out of memory?");
+		return 5;
+	}
+	while(1) {
+		int ret = anoubis_client_wait(client);
+		if (ret <= 0) {
+			fprintf(stderr, "Communication error\n");
+			anoubis_transaction_destroy(t);
+			destroy_channel();
+			return 5;
+		}
+		if (t->flags & ANOUBIS_T_DONE)
+			break;
+	}
+	error = t->result;
+	anoubis_transaction_destroy(t);
+	if (error) {
+		destroy_channel();
+		errno = error;
+		perror("Communication error");
+		return 5;
 	}
 	destroy_channel();
 	return 0;

@@ -152,6 +152,7 @@ static inline u_int64_t __ntohll(u_int64_t arg)
 #define		ANOUBIS_P_CSUM_LIST	0x3101
 
 #define		ANOUBIS_P_SFSDISABLE	0x3200
+#define		ANOUBIS_P_PASSPHRASE	0x3201
 
 #define		ANOUBIS_P_REQUEST	0x3800
 #define		ANOUBIS_P_REPLY		0x3801
@@ -409,5 +410,10 @@ typedef struct {
 	u32n	type;
 	u32n	pid;
 } __attribute__((packed)) Anoubis_SfsDisableMessage;
+
+typedef struct {
+	u32n	type;
+	char	payload[0];
+} __attribute__((packed)) Anoubis_PassphraseMessage;
 
 #endif

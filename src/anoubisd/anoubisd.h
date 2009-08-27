@@ -154,6 +154,7 @@ enum anoubisd_msg_type {
 	ANOUBISD_MSG_SFS_UPDATE_ALL,
 	ANOUBISD_MSG_CONFIG,
 	ANOUBISD_MSG_LOGIT,
+	ANOUBISD_MSG_PASSPHRASE,
 };
 
 /* format of ANOUBISD_MSG_EVENTDEV is struct eventdev_hdr */
@@ -269,6 +270,12 @@ struct anoubisd_msg_upgrade
 	char		chunk[0];
 };
 typedef struct anoubisd_msg_upgrade anoubisd_msg_upgrade_t;
+
+struct anoubisd_msg_passphrase
+{
+	char		payload[0];
+};
+typedef struct anoubisd_msg_passphrase anoubisd_msg_passphrase_t;
 
 struct anoubisd_msg_config
 {

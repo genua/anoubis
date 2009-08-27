@@ -65,11 +65,23 @@ The default is
 .Ar /var/run/anoubisd.sock .
 .It \fBupgrade_mode\fP
 .Xr anoubisd 8
-has special support for software upgrades. During an upgrade it will automatically recalculate checksums for updated files. The upgrade_mode option specifies how the start and end of an upgrade are triggered.
+has special support for software upgrades.
+During an upgrade it will automatically recalculate checksums for
+updated files.
+Unsigned checksums are automatically set to the new value.
+Signed checksums cannot be updated because the private keys are not available.
+However, all signed checksums are marked and the new value is stored together
+with the signature.
+.Xr sfssig 1
+or
+.Xr xanoubis 1
+can be used to update signed checksums after an upgrade.
+The upgrade_mode option specifies how the start and end of an upgrade are
+triggered.
 Possible values are:
 .Pp
 .Ar off
-- The upgrade process is disabled, no upgrade support is enabled.
+- No upgrade support is enabled.
 .Pp
 .Ar strictlock
 When the file specified with the \fBupgrade_trigger\fP option is
@@ -112,6 +124,28 @@ the pathname of an upgrade program. If more than one value is
 configured then any match will trigger the upgrade process.
 .Pp
 By default no trigger is configured.
+.Pp
+.It \fBrootkey\fP
+This option can be used to provide the private key of root to the daemon.
+If present this key will be used to update signed checksums transparently
+during an update.
+If the key is protected with a passphrase,
+.Xr anoubisctl 1
+must be used to unlock the key prior to the upgrade.
+.It \fBrootkey_required\fP
+This option specifies what happens if an upgrade starts and the private
+key of root is not available, e.g. because the file does not exist or
+because the key is protected by a passphrase and has not been unlocked.
+Possible values are
+.Sq true
+or
+.Sq false,
+The default is
+.Sq false.
+If the root key is required the upgrading process will not be allowed
+to acquire the file lock and the upgrade will fail.
+Otherwise, the upgrade proceeds as normal and signed checksums of root
+will be marked in the same way as user checksums.
 .El
 .Sh SEE ALSO
 .Xr anoubisd 8

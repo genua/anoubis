@@ -37,6 +37,7 @@
 .Op Fl fnv
 .Op -k keyfile
 .Op -c certificate
+.Op -i fd
 .Ar command
 .Op file
 .Sh DESCRIPTION
@@ -68,44 +69,59 @@ Produce more verbose output.
 Specify location of private key (default ~/.xanoubis/default.key)
 .It Fl c Ar certfile
 Specify location of certificate. (default ~/.xanoubis/default.crt)
+.It Fl i Ar fd
+This option is only supported with the passphrase command.
+The argument is a file descriptor where the passphrase is read from.
+The default is to read the passphrase from the tty.
 .It Ar command
 .Pp
-start - start the
+.Bl -tag -width Ds
+.It start
+start the
 .Xr anoubisd 8
 if not running.
-.Pp
-stop - stop the
+.It stop
+stop the
 .Xr anoubisd 8
 if running.
-.Pp
-status - show the running state of the
+.It status
+show the running state of the
 .Xr anoubisd 8 .
-.Pp
-reload - reload the current rules to the
+.It reload
+reload the current rules to the
 .Xr anoubisd 8 .
-.Pp
-load - load the rules
+.It load
+load the rules
 .Op file
 to the
 .Xr anoubisd 8 .
-.Pp
-dump - dump rules from the
+.It dump
+dump rules from the
 .Xr anoubisd 8
 daemon to the
 .Ar file .
+.It passphrase
+Unlock the private key of root in the daemon.
 .Pp
-monitor - shows live information on notifications being sent and received.
-.Bl -tag -width Ds
-.It
+This command is reserved for the root user. It is only useful if
+.Xr anoubisd 8
+is configured with the C<rootkey> option and the key is protected by
+a passphrase.
+It sends the passphrase to the daemon and the daemon will then unlock
+and read the private key of the root user into memory.
+The key is used to keep signed checksums up to date during an upgrade.
 .Pp
-[ all ]
-Display notifications for all users.
+Depending on your environment this feature can be a security concern.
+.It monitor
+shows live information on notifications being sent and received.
 .Pp
-[ error=<num> ]
-specifies the return value that will be sent in response to ASK events.
+[ all ] Display notifications for all users.
 .Pp
-[ count=<num> ]
-specifies the amount of messages being shown.
+[ error=<num> ] specifies the return value that will be sent in response
+to ASK events.
+.Pp
+[ count=<num> ] specifies the amount of messages being shown.
+.El
 .El
 .Pp
 .Nm

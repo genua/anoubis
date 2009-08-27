@@ -145,10 +145,12 @@ static void	session_txclient(int, short, void *);
 static void	session_setupuds(struct sessionGroup *);
 static void	session_destroy(struct session *);
 static int	dispatch_generic_reply(void *cbdata, int error,
-		    void *data, int len, int flags, int orig_opcode);
+		    void *data, int len, int orig_opcode);
 static void	dispatch_sfsdisable(struct anoubis_server *,
 		    struct anoubis_msg *, uid_t, void *);
 static int	dispatch_sfsdisable_reply(void *, int, void *, int, int);
+static void	dispatch_passphrase(struct anoubis_server *,
+		    struct anoubis_msg *, uid_t, void *);
 
 static Queue eventq_s2p;
 static Queue eventq_s2m;
@@ -223,9 +225,11 @@ session_connect(int fd __used, short event __used, void *arg)
 		return;
 	}
 	anoubis_dispatch_create(session->proto, ANOUBIS_P_CSUMREQUEST,
-	       dispatch_checksum, info);
+	    &dispatch_checksum, info);
 	anoubis_dispatch_create(session->proto, ANOUBIS_P_SFSDISABLE,
-		dispatch_sfsdisable, info);
+	    &dispatch_sfsdisable, info);
+	anoubis_dispatch_create(session->proto, ANOUBIS_P_PASSPHRASE,
+	    &dispatch_passphrase, info);
 	LIST_INSERT_HEAD(&(seg->sessionList), session, nextSession);
 	if (anoubis_server_start(session->proto) < 0) {
 		log_warn("Failed to send initial hello");
@@ -534,8 +538,7 @@ dispatch_checksum(struct anoubis_server *server, struct anoubis_msg *m,
 	DEBUG(DBG_TRACE, "<dispatch_checksum");
 	return;
 invalid:
-	dispatch_generic_reply(server, EINVAL, NULL, 0,
-	    POLICY_FLAG_START|POLICY_FLAG_END, opp);
+	dispatch_generic_reply(server, EINVAL, NULL, 0, opp);
 }
 
 static void
@@ -545,14 +548,13 @@ dispatch_sfsdisable(struct anoubis_server *server, struct anoubis_msg *m,
 	anoubisd_msg_t			*s2p_msg;
 	anoubisd_msg_sfsdisable_t	*msg_disable;
 	struct achat_channel		*chan;
-	struct event_info_session	*ev_info;
+	struct event_info_session	*ev_info = arg;
 	int err;
 
-	ev_info = (struct event_info_session*)arg;
 	DEBUG(DBG_TRACE, ">dispatch_sfsdisable");
 	if (!VERIFY_LENGTH(m, sizeof(Anoubis_SfsDisableMessage))) {
 		dispatch_generic_reply(server, EINVAL, NULL, 0,
-		    POLICY_FLAG_START|POLICY_FLAG_END, ANOUBIS_P_SFSDISABLE);
+		    ANOUBIS_P_SFSDISABLE);
 		return;
 	}
 	chan = anoubis_server_getchannel(server);
@@ -566,7 +568,7 @@ dispatch_sfsdisable(struct anoubis_server *server, struct anoubis_msg *m,
 	    server, &msg_disable->token);
 	if (err < 0) {
 		dispatch_generic_reply(server, EAGAIN, NULL, 0,
-		    POLICY_FLAG_START|POLICY_FLAG_END, ANOUBIS_P_SFSDISABLE);
+		    ANOUBIS_P_SFSDISABLE);
 		free(msg_disable);
 		return;
 	}
@@ -577,8 +579,61 @@ dispatch_sfsdisable(struct anoubis_server *server, struct anoubis_msg *m,
 	DEBUG(DBG_TRACE, "<dispatch_sfsdisable");
 }
 
+static void
+dispatch_passphrase(struct anoubis_server *server, struct anoubis_msg *m,
+    uid_t auth_uid, void *arg)
+{
+	int				 plen;
+	struct event_info_session	*ev_info = arg;
+	anoubisd_msg_t			*msg;
+	anoubisd_msg_passphrase_t	*pass;
+
+	DEBUG(DBG_TRACE, ">dispatch_passphrase");
+	if (auth_uid != 0) {
+		dispatch_generic_reply(server, EPERM, NULL, 0,
+		    ANOUBIS_P_PASSPHRASE);
+		log_warnx("Non root user %d tried to set passphrase", auth_uid);
+		return;
+	}
+	if (!VERIFY_LENGTH(m, sizeof(Anoubis_PassphraseMessage))) {
+		dispatch_generic_reply(server, EFAULT, NULL, 0,
+		    ANOUBIS_P_PASSPHRASE);
+		DEBUG(DBG_TRACE, "<dispatch_passphrase(error): verify length");
+		return;
+	}
+	plen = m->length - CSUM_LEN - sizeof(Anoubis_PassphraseMessage);
+	if (plen < 1) {
+		dispatch_generic_reply(server, EFAULT, NULL, 0,
+		    ANOUBIS_P_PASSPHRASE);
+		DEBUG(DBG_TRACE, "<dispatch_passphrase(error): plen < 1");
+		return;
+	}
+	m->u.passphrase->payload[plen-1] = 0;
+	plen = strlen(m->u.passphrase->payload) + 1;
+	/*
+	 * NOTE: We report success at this point and do not try to send an
+	 * NOTE: error message back to the user if anything else fails in
+	 * NOTE: the master. This prevents stuff like brute force attacks
+	 * NOTE: on the passphrase.
+	 */
+	dispatch_generic_reply(server, 0, NULL, 0, ANOUBIS_P_PASSPHRASE);
+	msg = msg_factory(ANOUBISD_MSG_PASSPHRASE,
+	    sizeof(anoubisd_msg_passphrase_t) + plen);
+	if (!msg) {
+		master_terminate(ENOMEM);
+		return;
+	}
+	pass = (anoubisd_msg_passphrase_t *)msg->msg;
+	memcpy(pass->payload, m->u.passphrase->payload, plen);
+
+	enqueue(&eventq_s2m, msg);
+	DEBUG(DBG_QUEUE, " >eventq_s2m");
+	event_add(ev_info->ev_s2m, NULL);
+	DEBUG(DBG_TRACE, "<dispatch_passphrase");
+}
+
 static int
-dispatch_generic_reply(void *cbdata, int error, void *data, int len, int flags,
+dispatch_generic_reply(void *cbdata, int error, void *data, int len,
     int orig_opcode)
 {
 	struct anoubis_server	*server = cbdata;
@@ -588,10 +643,6 @@ dispatch_generic_reply(void *cbdata, int error, void *data, int len, int flags,
 	m = anoubis_msg_new(sizeof(Anoubis_AckPayloadMessage)+len);
 	if (!m)
 		return -ENOMEM;
-	if (flags != (POLICY_FLAG_START|POLICY_FLAG_END)) {
-		log_warn("dispatch_generic_reply: flags is %x", flags);
-		return -EINVAL;
-	}
 	set_value(m->u.ackpayload->type, ANOUBIS_REPLY);
 	set_value(m->u.ackpayload->error, error);
 	set_value(m->u.ackpayload->opcode, orig_opcode);
@@ -631,7 +682,9 @@ dispatch_checksum_list_reply(void *cbdata, int error, void *data, int len,
 static int
 dispatch_checksum_reply(void *cbdata, int error, void *data, int len, int flags)
 {
-	return dispatch_generic_reply(cbdata, error, data, len, flags,
+	if (flags != (POLICY_FLAG_START | POLICY_FLAG_END))
+		log_warnx("Wrong flags value in dispatch_checksum_reply");
+	return dispatch_generic_reply(cbdata, error, data, len,
 	    ANOUBIS_P_CSUMREQUEST);
 }
 
@@ -639,7 +692,9 @@ static int
 dispatch_sfsdisable_reply(void *cbdata, int error, void *data, int len,
     int flags)
 {
-	return dispatch_generic_reply(cbdata, error, data, len, flags,
+	if (flags != (POLICY_FLAG_START | POLICY_FLAG_END))
+		log_warnx("Wrong flags value in dispatch_sfsdisable_reply");
+	return dispatch_generic_reply(cbdata, error, data, len,
 	    ANOUBIS_P_SFSDISABLE);
 }
 

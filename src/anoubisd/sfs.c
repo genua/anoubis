@@ -703,7 +703,7 @@ sfs_update_signature(const char *path, struct cert *cert,
 		goto out;
 	}
 	memset(&sfs_data, 0, sizeof(sfs_data));
-	keylen = EVP_PKEY_size(cert->privkey);
+	siglen = keylen = EVP_PKEY_size(cert->privkey);
 	sfs_data.siglen = len + keylen;
 	sfs_data.sigdata = malloc(sfs_data.siglen);
 	if (sfs_data.sigdata == NULL)

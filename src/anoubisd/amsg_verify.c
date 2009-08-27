@@ -548,6 +548,19 @@ anoubisd_msg_logit_size(const char *buf, int buflen)
 }
 
 static int
+anoubisd_msg_passphrase_size(const char *buf, int buflen)
+{
+	struct anoubisd_msg_passphrase	*msg;
+	DECLARE_SIZE();
+
+	CAST(msg, buf, buflen);
+	SHIFT_FIELD(msg, payload, buf, buflen);
+	SHIFT_STRING(buf, buflen);
+
+	RETURN_SIZE();
+}
+
+static int
 anoubisd_msg_size(const char *buf, int buflen)
 {
 	DECLARE_SIZE();
@@ -573,6 +586,7 @@ anoubisd_msg_size(const char *buf, int buflen)
 	    buf, buflen)
 	VARIANT(ANOUBISD_MSG_CONFIG, anoubisd_msg_config, buf, buflen)
 	VARIANT(ANOUBISD_MSG_LOGIT, anoubisd_msg_logit, buf, buflen)
+	VARIANT(ANOUBISD_MSG_PASSPHRASE, anoubisd_msg_passphrase, buf, buflen);
 	default:
 		log_warnx("anoubisd_msg_size: Bad message type %d",
 		    msg->mtype);

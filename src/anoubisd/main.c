@@ -1262,6 +1262,20 @@ out:
 }
 
 static void
+dispatch_passphrase(anoubisd_msg_t *msg, struct event_info_main *ev_info)
+{
+	anoubisd_msg_passphrase_t	*pass;
+	int				 len;
+
+	pass = (anoubisd_msg_passphrase_t *)msg->msg;
+	len = msg->size - sizeof(anoubisd_msg_t);
+	if (len < (int)sizeof(anoubisd_msg_passphrase_t) + 1)
+		return;
+	pass->payload[len-1] = 0;
+	init_root_key(pass->payload, ev_info);
+}
+
+static void
 dispatch_s2m(int fd, short event __used, void *arg)
 {
 	/*@dependent@*/
@@ -1277,6 +1291,9 @@ dispatch_s2m(int fd, short event __used, void *arg)
 		switch(msg->mtype) {
 		case ANOUBISD_MSG_CHECKSUM_OP:
 			dispatch_checksumop(msg, ev_info);
+			break;
+		case ANOUBISD_MSG_PASSPHRASE:
+			dispatch_passphrase(msg, ev_info);
 			break;
 		default:
 			DEBUG(DBG_QUEUE, " >s2m: %x",

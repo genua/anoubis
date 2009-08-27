@@ -169,9 +169,9 @@ pe_upgrade_end(struct pe_proc *proc)
 		if (it->task_cookie == 0 || it->task_cookie == last_cookie)
 			continue;
 		if (pe_proc_is_running(it->task_cookie)) {
-			pe_delete_node(upgrade_tree, it);
 			DEBUG(DBG_UPGRADE, "Upgraded file: %s removed",
 			    it->path);
+			pe_delete_node(upgrade_tree, it);
 		} else {
 			last_cookie = it->task_cookie;
 		}
