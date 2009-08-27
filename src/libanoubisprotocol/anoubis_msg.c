@@ -180,6 +180,7 @@ anoubis_extract_sig_type(const struct anoubis_msg *m, int reqtype,
 			return -EFAULT;
 		if (type == reqtype)
 			break;
+		off += len;
 	}
 	if (data) {
 		(*data) = payload + off;

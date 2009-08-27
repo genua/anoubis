@@ -29,17 +29,18 @@
 
 #include "sfssig.h"
 
+static int	filter_isupgraded(char *arg, struct anoubis_sig *as);
 static int	filter_hasnosum(char *arg, uid_t uid);
 static int	filter_hasnosig(char *arg, struct anoubis_sig *as);
 static int	filter_sumsig(char *arg, int op, unsigned int idlen, unsigned
-		    char *keyid, uid_t uid);
+		    char *keyid, uid_t uid, int upgraded);
 
 int
 filter_hassum(char *arg, uid_t uid)
 {
 	if (opts & SFSSIG_OPT_DEBUG2)
 		fprintf(stderr, " filter_hassum");
-	return filter_sumsig(arg, ANOUBIS_CHECKSUM_OP_GET2, 0, NULL, uid);
+	return filter_sumsig(arg, ANOUBIS_CHECKSUM_OP_GET2, 0, NULL, uid, 0);
 }
 
 int
@@ -52,7 +53,7 @@ filter_hassig(char *arg, struct anoubis_sig *as)
 		return 0;
 	}
 	return filter_sumsig(arg, ANOUBIS_CHECKSUM_OP_GETSIG2, as->idlen,
-	    as->keyid, 0);
+	    as->keyid, 0, 0);
 }
 
 static int
@@ -62,7 +63,7 @@ filter_hasnosum(char *arg, uid_t uid)
 
 	if (opts & SFSSIG_OPT_DEBUG2)
 		fprintf(stderr, " filter_hasnosum");
-	rc = filter_sumsig(arg, ANOUBIS_CHECKSUM_OP_GET2, 0, NULL, uid);
+	rc = filter_sumsig(arg, ANOUBIS_CHECKSUM_OP_GET2, 0, NULL, uid, 0);
 	if (rc)
 		return 0;
 	else
@@ -75,14 +76,14 @@ filter_hasnosig(char *arg, struct anoubis_sig *as)
 	int rc = 0;
 
 	if (opts & SFSSIG_OPT_DEBUG2)
-		fprintf(stderr, " filter_hasnosig");
+		fprintf(stderr, " filter_hasnosig\n");
 	if ((as == NULL) || (as->keyid == NULL)) {
 			fprintf(stderr, "You need to specify a "
 			    "certifcate\n");
 			return 0;
 	}
 	rc =  filter_sumsig(arg, ANOUBIS_CHECKSUM_OP_GETSIG2, as->idlen,
-	    as->keyid, 0);
+	    as->keyid, 0, 0);
 	if (rc)
 		return 0;
 	else
@@ -90,8 +91,22 @@ filter_hasnosig(char *arg, struct anoubis_sig *as)
 }
 
 static int
+filter_isupgraded(char *arg, struct anoubis_sig *as)
+{
+	if (opts & SFSSIG_OPT_DEBUG2)
+		fprintf(stderr, " filter_isupgraded\n");
+	if ((as == NULL) || (as->keyid == NULL)) {
+			fprintf(stderr, "You need to specify a "
+			    "certifcate\n");
+			return 0;
+	}
+	return filter_sumsig(arg, ANOUBIS_CHECKSUM_OP_GETSIG2, as->idlen,
+	    as->keyid, 0, 1);
+}
+
+static int
 filter_sumsig(char *arg, int op, unsigned int idlen, unsigned char *keyid,
-    uid_t uid)
+    uid_t uid, int upgraded)
 {
 	struct anoubis_transaction	*t = NULL;
 	char				 tmp[PATH_MAX];
@@ -121,6 +136,9 @@ filter_sumsig(char *arg, int op, unsigned int idlen, unsigned char *keyid,
 	if (op == ANOUBIS_CHECKSUM_OP_GET2) {
 		len = anoubis_extract_sig_type(t->msg, ANOUBIS_SIG_TYPE_CS,
 		    &data);
+	} else if (upgraded) {
+		len = anoubis_extract_sig_type(t->msg,
+		    ANOUBIS_SIG_TYPE_UPGRADECS, &data);
 	} else {
 		len = anoubis_extract_sig_type(t->msg, ANOUBIS_SIG_TYPE_SIG,
 		    &data);
@@ -175,6 +193,8 @@ filter_one_file(char *arg, char *prefix, uid_t uid, struct anoubis_sig *as)
 		ret = filter_hassig(altpath, as);
 	if ((opts & SFSSIG_OPT_NOSIG) && ret)
 		ret = filter_hasnosig(altpath, as);
+	if ((opts & SFSSIG_OPT_UPGRADED) && ret)
+		ret = filter_isupgraded(altpath, as);
 	if (prefix)
 		free(altpath);
 	if (opts & SFSSIG_OPT_DEBUG)

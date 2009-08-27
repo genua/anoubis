@@ -790,6 +790,8 @@ cfg_clear(void)
 		free(trigger->arg);
 		free(trigger);
 	}
+	anoubisd_config.rootkey = NULL;
+	anoubisd_config.rootkey_required = 0;
 }
 
 /*

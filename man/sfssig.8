@@ -94,7 +94,6 @@ If the argument is
 .Ar all ,
 all registered uids will be used.
 This requires root privileges.
-.El
 .Pp
 Key files (needed for some operations):
 .Pp
@@ -129,6 +128,8 @@ Apply command on checksums or signatures which have no representation in the
 filesystem.
 .It Fl -notfile
 Apply command to checksums or signatures which are not regular files.
+.It Fl -upgraded
+Apply command just on upgraded Signatures. This option requires a certificate.
 .El
 .Pp
 Command specification:

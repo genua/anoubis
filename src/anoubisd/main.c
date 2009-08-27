@@ -1027,6 +1027,8 @@ init_root_key(char *passphrase, struct event_info_main *ev_info)
 	struct cert	*cert;
 
 	cert = cert_get_by_uid(0);
+	DEBUG(DBG_UPGRADE, ">init_root_key: passphrase: %s cert: %p",
+	    passphrase?"yes":"no", cert);
 	/*
 	 * Log error conditions if a passphrase is given, i.e. we deal
 	 * with a direct request from the user.
@@ -1060,6 +1062,8 @@ init_root_key(char *passphrase, struct event_info_main *ev_info)
 	if (!cert) {
 		log_warnx("Ignoring rootkey because root has no public key.");
 		send_upgrade_ok(1, ev_info);
+		DEBUG(DBG_UPGRADE, "<init_root_key: no rootkey cert: %p %p",
+		    cert, cert?cert->privkey:NULL);
 		return;
 	}
 	/*
@@ -1074,6 +1078,8 @@ init_root_key(char *passphrase, struct event_info_main *ev_info)
 	}
 	/* Upgrades are allowed. */
 	send_upgrade_ok(1, ev_info);
+	DEBUG(DBG_UPGRADE, "<init_root_key: cert: %p %p", cert,
+	    cert?cert->privkey:NULL);
 }
 
 static anoubisd_msg_t *
@@ -1596,6 +1602,8 @@ dispatch_sfs_update_all(anoubisd_msg_t *msg, struct event_info_main *ev_info)
 	if (anoubisd_config.rootkey) {
 		struct cert	*cert = cert_get_by_uid(0);
 
+		DEBUG(DBG_UPGRADE, " signature update for %s, cert %p %p",
+		    path, cert, cert?cert->privkey:NULL);
 		if (cert && cert->privkey) {
 			ret = sfs_update_signature(path, cert,
 			    (u_int8_t*)umsg->payload, ANOUBIS_CS_LEN);

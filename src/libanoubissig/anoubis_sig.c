@@ -481,9 +481,7 @@ pass_cb(char *buf, int size, int rwflag __used, void *err __used)
 
 	printf("Enter pass phrase for Private Key\n");
 
-	tmp = getpass("Password:");
-	if (tmp == NULL)
-		return 0;
+	tmp = getpass("Password\n");
 	len = strlen(tmp);
 	if (len <= 0)
 		return 0;

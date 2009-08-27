@@ -282,8 +282,10 @@ build_path(const char *path, const char *file)
 		ret = asprintf(&res, "%s%s", path, file);
 	else
 		ret = asprintf(&res, "%s/%s", path, file);
-	if (ret < 0)
+	if (ret < 0) {
 		perror(path);
+		return NULL;
+	}
 
 	len = strlen(res);
 	if ((len > 1) && res[len - 1] == '/')

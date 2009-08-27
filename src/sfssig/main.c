@@ -53,6 +53,8 @@ static int			 __sfs_get(char *, int, uid_t,
 static int			 create_channel(void);
 static void			 destroy_channel(void);
 static int			 add_entry(struct sfs_entry *);
+static int			 list(char *arg, uid_t sfs_uid,
+				     struct anoubis_sig *as);
 static struct sfs_entry		*get_entry(char *, unsigned char *, int, uid_t,
 				     struct anoubis_sig *);
 static uid_t			*request_uids(char *, int *);
@@ -109,10 +111,18 @@ usage(void)
 	fprintf(stderr, "   [--hassig]\n");
 	fprintf(stderr, "   [--hasnossig]\n");
 	fprintf(stderr, "   [--orphaned]\n");
+	fprintf(stderr, "   [--upgraded]\n");
 	fprintf(stderr, "   [--notfile]\n");
 	fprintf(stderr, "   [--sum]\n");
 	fprintf(stderr, "   [--sig]\n");
 	fprintf(stderr, "   command [file...]\n");
+
+	for (i = 0; i < sizeof(commands)/sizeof(struct cmd); i++) {
+		fprintf(stderr, "   %s %s file\n", __progname,
+		    commands[i].command);
+	}
+
+	fprintf(stderr, "commands for extended Attributes:\n");
 	/* Add checksum xattr*/
 	fprintf(stderr, "   %s -A checksum file\n", __progname);
 	/* Update or add checksum xattr matching current file contents */
@@ -125,11 +135,6 @@ usage(void)
 	fprintf(stderr, "   %s -S file\n", __progname);
 	/* Clear skipsum xattr */
 	fprintf(stderr, "   %s -C file\n", __progname);
-
-	for (i = 0; i < sizeof(commands)/sizeof(struct cmd); i++) {
-		fprintf(stderr, "       %s %s file\n", __progname,
-		    commands[i].command);
-	}
 	exit(1);
 }
 
@@ -141,6 +146,7 @@ usage(void)
 #define		OPTNOSUM	261
 #define		OPTHASSIG	262
 #define		OPTNOSIG	263
+#define		OPTUPGRADED	264
 
 static void
 set_flag_opt(int opt)
@@ -154,6 +160,7 @@ set_flag_opt(int opt)
 	case OPTNOSUM:		flag = SFSSIG_OPT_NOSUM; break;
 	case OPTNOTFILE:	flag = SFSSIG_OPT_NOTFILE; break;
 	case OPTORPHANED:	flag = SFSSIG_OPT_ORPH; break;
+	case OPTUPGRADED:	flag = SFSSIG_OPT_UPGRADED; break;
 	case OPTSUM:		flag = SFSSIG_OPT_SUM; break;
 	case OPTSIG:		flag = SFSSIG_OPT_SIG; break;
 	case 'n':		flag = SFSSIG_OPT_NOACTION; break;
@@ -166,13 +173,6 @@ set_flag_opt(int opt)
 	if (opts & flag)
 		usage();
 	opts |= flag;
-	if ((opts & SFSSIG_OPT_HASSIG) && (opts & SFSSIG_OPT_NOSIG))
-		usage();
-	if ((opts & SFSSIG_OPT_HASSUM) && (opts & SFSSIG_OPT_NOSUM))
-		usage();
-	if ((opts & SFSSIG_OPT_NOTFILE) && (opts & SFSSIG_OPT_ORPH))
-		usage();
-	/* XXX CEH: Do we really want to allow --sig _and_ --sum? */
 }
 
 /*
@@ -224,6 +224,8 @@ main(int argc, char *argv[])
 		{ "hasnosum", no_argument, NULL, OPTNOSUM },
 		{ "hassig", no_argument, NULL, OPTHASSIG },
 		{ "hasnosig", no_argument, NULL, OPTNOSIG },
+		{ "upgraded", no_argument, NULL, OPTUPGRADED },
+		{ "link", no_argument, NULL, 'l' },
 		{ "recursive", no_argument, NULL, 'r' },
 		{ "cert", required_argument, NULL, 'c' },
 		{ "key", required_argument, NULL, 'k' },
@@ -253,6 +255,7 @@ main(int argc, char *argv[])
 		case OPTNOSUM:
 		case OPTHASSIG:
 		case OPTNOSIG:
+		case OPTUPGRADED:
 			set_flag_opt(ch);
 			break;
 		case OPTSUM:
@@ -278,7 +281,6 @@ main(int argc, char *argv[])
 				usage();
 			sfs_infile = optarg;
 			break;
-		/* uid */
 		case 'u':
 			if (got_uid)
 				usage();
@@ -339,6 +341,19 @@ main(int argc, char *argv[])
 		if (syssigmode == 0)
 			syssigmode = -1;
 	}
+
+	if ((opts & SFSSIG_OPT_HASSIG) && (opts & SFSSIG_OPT_NOSIG))
+		usage();
+	if ((opts & SFSSIG_OPT_HASSUM) && (opts & SFSSIG_OPT_NOSUM))
+		usage();
+	if ((opts & SFSSIG_OPT_NOTFILE) && (opts & SFSSIG_OPT_ORPH))
+		usage();
+	if ((opts & SFSSIG_OPT_SIG) && (opts & SFSSIG_OPT_SUM))
+		usage();
+	if (!(opts & SFSSIG_OPT_SIG) && (opts & SFSSIG_OPT_UPGRADED))
+		usage();
+	if ((opts & SFSSIG_OPT_UPGRADED) && (opts & SFSSIG_OPT_ALLCERT))
+		usage();
 
 	argc -= optind;
 	argv += optind;
@@ -405,7 +420,8 @@ main(int argc, char *argv[])
 	}
 
 	/* XXX CEH: This is incorrect at least for the --cert all case */
-	if (opts & (SFSSIG_OPT_SIG|SFSSIG_OPT_HASSIG|SFSSIG_OPT_NOSIG)) {
+	if (opts & (SFSSIG_OPT_SIG|SFSSIG_OPT_HASSIG|SFSSIG_OPT_NOSIG|
+	    SFSSIG_OPT_UPGRADED)) {
 		/* We need the private key for 'add' operations only */
 		if (strcmp(sfs_command, "add") == 0) {
 			as = load_keys(1, 1, sfs_cert, sfs_key);
@@ -415,7 +431,7 @@ main(int argc, char *argv[])
 				return 1;
 			}
 		} else {
-			as = load_keys(0, 1, sfs_cert, sfs_key);
+			as = load_keys(0, 1, sfs_cert, NULL);
 			if (as == NULL) {
 				fprintf(stderr, "Couldn't load certificate\n");
 				return 1;
@@ -472,7 +488,8 @@ main(int argc, char *argv[])
 				perror(sfs_argv[j]);
 				continue;
 			}
-			if (opts & SFSSIG_OPT_TREE) {
+			if (opts & SFSSIG_OPT_TREE &&
+			    (strcmp(sfs_command, "list") != 0)) {
 				error = sfs_tree(sfs_cmdarg, commands[i].opt,
 				    sfs_uid, as);
 				done = 1;
@@ -824,26 +841,35 @@ sfs_del(char *file, uid_t sfs_uid, struct anoubis_sig *as)
 	return 0;
 }
 
+/*
+ * We use __sfs_get in diffrent variarions:
+ */
+#define GET_DEFAULT	0x00	/* A normal get operation */
+#define GET_VALIDATE	0x01	/* Validate returned checksums */
+#define GET_NOSUM	0x02	/* Print name if in tree */
+
 static int
 sfs_get(char *file, uid_t uid, struct anoubis_sig *as)
 {
-	return __sfs_get(file, 0, uid, as);
+	return __sfs_get(file, GET_DEFAULT, uid, as);
 }
 
 static int
 sfs_validate(char *file, uid_t uid, struct anoubis_sig *as)
 {
-	return __sfs_get(file, 1, uid, as);
+	return __sfs_get(file, GET_VALIDATE, uid, as);
 }
 
 static int
-__sfs_get(char *file, int vflag, uid_t sfs_uid, struct anoubis_sig *as)
+__sfs_get(char *file, int getmode, uid_t sfs_uid, struct anoubis_sig *as)
 {
 	struct anoubis_transaction	*t;
 	int				 i, j;
 	int				 cnt = 0;
 	int				 siglen = 0;
+	int				 upcslen = 0;
 	const void			*sigdata;
+	const void			*upcsdata;
 	int				 error = 0;
 	int				 len = ANOUBIS_CS_LEN;
 	u_int8_t			 val_check[ANOUBIS_CS_LEN];
@@ -859,10 +885,10 @@ __sfs_get(char *file, int vflag, uid_t sfs_uid, struct anoubis_sig *as)
 	user = geteuid();
 
 	/*
-	 * If vflag is set we validate so we first need to
+	 * If getmode is set to validate we validate so we first need to
 	 * calculate the actual checksum of the file
 	 */
-	if (vflag) {
+	if (getmode == GET_VALIDATE) {
 		/* We need a create_channel to perform a sfsdisable */
 		if (client == NULL) {
 			error = create_channel();
@@ -926,6 +952,8 @@ __sfs_get(char *file, int vflag, uid_t sfs_uid, struct anoubis_sig *as)
 		if (opts & SFSSIG_OPT_SIG) {
 			siglen = anoubis_extract_sig_type(t->msg,
 			    ANOUBIS_SIG_TYPE_SIG, &sigdata);
+			upcslen = anoubis_extract_sig_type(t->msg,
+			    ANOUBIS_SIG_TYPE_UPGRADECS, &upcsdata);
 			sigtype = "Signature";
 		} else {
 			siglen = anoubis_extract_sig_type(t->msg,
@@ -939,11 +967,17 @@ __sfs_get(char *file, int vflag, uid_t sfs_uid, struct anoubis_sig *as)
 			anoubis_transaction_destroy(t);
 			return 1;
 		}
-		if (vflag) {
+		if (getmode == GET_VALIDATE) {
 			if (memcmp(sigdata, val_check, ANOUBIS_CS_LEN))
 				printf("%s: %s Mismatch\n", file, sigtype);
 			else
 				printf("%s: %s Match\n", file, sigtype);
+
+			anoubis_transaction_destroy(t);
+			continue;
+		} else if (getmode == GET_NOSUM) {
+			printf("%s\n", file);
+			anoubis_transaction_destroy(t);
 			continue;
 		}
 		if (user == 0)
@@ -954,10 +988,16 @@ __sfs_get(char *file, int vflag, uid_t sfs_uid, struct anoubis_sig *as)
 			printf("%02x", ((u_int8_t*)sigdata)[i]);
 		printf("\n");
 		if (opts & SFSSIG_OPT_SIG) {
-			for (i = SHA256_DIGEST_LENGTH; i
-			    <(SHA256_DIGEST_LENGTH + siglen); i++)
+			for (i = SHA256_DIGEST_LENGTH; i < siglen; i++)
 				printf("%02x", ((u_int8_t*)sigdata)[i]);
 			printf("\n");
+			if (upcslen > 0 && upcslen <= SHA256_DIGEST_LENGTH) {
+				printf("* Upgraded * New Checksum: ");
+				for (i = 0; i < (SHA256_DIGEST_LENGTH); i++)
+					printf("%02x",
+					    ((u_int8_t*)upcsdata)[i]);
+				printf("\n");
+			}
 		}
 		anoubis_transaction_destroy(t);
 	}
@@ -969,14 +1009,28 @@ __sfs_get(char *file, int vflag, uid_t sfs_uid, struct anoubis_sig *as)
 }
 
 static int
-sfs_list(char *file, uid_t sfs_uid, struct anoubis_sig *as)
+sfs_list(char *arg, uid_t sfs_uid, struct anoubis_sig *as)
+{
+	int ret = 1;
+
+	/* sfs_get with / produces Invalid Argument */
+	if (strcmp(arg, "/") != 0)
+		ret = __sfs_get(arg, GET_NOSUM, sfs_uid, as);
+
+	if (list(arg, sfs_uid, as) == 0)
+		return 0;
+	else
+		return ret;
+}
+
+static int
+list(char *arg, uid_t sfs_uid, struct anoubis_sig *as)
 {
 	struct anoubis_transaction	 *t;
-	struct stat			  sb;
 	char				**result = NULL;
+	char				 *new_dir = NULL;
 	int				  sfs_cnt = 0;
 	int				  len;
-	int				  ret;
 	uid_t				  thisuid;
 	struct anoubis_sig		 *thisas;
 	unsigned int			  flags;
@@ -985,31 +1039,20 @@ sfs_list(char *file, uid_t sfs_uid, struct anoubis_sig *as)
 	if (opts & SFSSIG_OPT_DEBUG)
 		fprintf(stderr, ">sfs_list\n");
 
-	/*
-	 * If file is regular there is no need to use
-	 * the sfs_list function.
-	 */
-	ret = stat(file, &sb);
-	if (ret != 0) {
-		if (errno == ENOENT)
-			return 1;
-		perror(file);
-		return 1;
-	}
-	/* If this is a regular file we just doing a sfs_get */
-	if (S_ISREG(sb.st_mode))
-		return sfs_get(file, sfs_uid, as);
-
 	/* Remove trailing slashes but never the initial slash at idx 0 */
-	len = strlen(file);
-	while(len >= 2 && file[len-1] == '/')
+	len = strlen(arg);
+	while(len >= 2 && arg[len-1] == '/')
 		len--;
-	file[len] = 0;
+	arg[len] = 0;
 
 	if (opts & (SFSSIG_OPT_ALLUID | SFSSIG_OPT_ALLCERT)) {
 		/* XXX CEH: We do not support ALL for either uid of key */
 		flags = ANOUBIS_CSUM_ALL | ANOUBIS_CSUM_UID | ANOUBIS_CSUM_KEY;
 		thisas = NULL;
+		thisuid = 0;
+	} else if (opts & SFSSIG_OPT_UPGRADED) {
+		flags = ANOUBIS_CSUM_KEY | ANOUBIS_CSUM_UPGRADED;
+		thisas = as;
 		thisuid = 0;
 	} else if (opts & SFSSIG_OPT_SIG) {
 		flags = ANOUBIS_CSUM_KEY;
@@ -1020,51 +1063,48 @@ sfs_list(char *file, uid_t sfs_uid, struct anoubis_sig *as)
 		thisas = NULL;
 		thisuid = sfs_uid;
 	}
-	t = sfs_listop(file, thisuid, thisas, flags);
-	if (t == NULL) {
-		if (opts & SFSSIG_OPT_DEBUG)
+	t = sfs_listop(arg, thisuid, thisas, flags);
+	if (t == NULL)
 		return 1;
-	}
+
 	if (t->result) {
-		if (t->result == ENOENT && (opts & SFSSIG_OPT_TREE)) {
+		if (t->result == ENOENT) {
 			anoubis_transaction_destroy(t);
-			return 1;
+			return 0;
 		}
 		fprintf(stderr, "%s: Checksum Request failed: %d "
-			    "(%s)\n", file, t->result, strerror(t->result));
+			    "(%s)\n", arg, t->result, strerror(t->result));
 		anoubis_transaction_destroy(t);
 		return 1;
 	}
 	result = anoubis_csum_list(t->msg, &sfs_cnt);
 	if (!result) {
-		/* XXX KM: this code has to be tested */
-		fprintf(stderr, "anoubis_csum_list: no result\n");
+		if (opts & SFSSIG_OPT_DEBUG)
+			fprintf(stderr, "anoubis_csum_list: no result\n");
 		anoubis_transaction_destroy(t);
-		return 1;
+		return 0;
 	}
 	anoubis_transaction_destroy(t);
 
-	/*
-	 * XXX KM: as [CEH] showed we should have an sfs_get here
-	 * XXX KM: to have similar output
-	 */
 	for (i = 0; i < sfs_cnt; i++) {
 		len = strlen(result[i]) - 1;
 		if (opts & SFSSIG_OPT_DEBUG2)
 			fprintf(stderr, "sfs_list: got file %s\n", result[i]);
 		if (result[i][len] == '/') {
-			/*
-			 * XXX CEH: Just call sfs_list recursively here in
-			 * XXX CEH: case of SFSSIG_OPT_TREE and do not use
-			 * XXX CEH: sfs_tree for this case?
-			 */
+			if (opts & SFSSIG_OPT_TREE) {
+				new_dir = build_path(arg,result[i]);
+				if (new_dir == NULL)
+					return 1;
+				list(new_dir, sfs_uid, as);
+				free(new_dir);
+			}
 			continue;
 		}
-		if (!filter_one_file(result[i], file, sfs_uid, as))
+		if (!filter_one_file(result[i], arg, sfs_uid, as))
 			continue;
 		/* Avoid double slash at the beginning of root-dir */
-		if (strcmp(file, "/") != 0)
-			printf("%s/%s\n", file, result[i]);
+		if (strcmp(arg, "/") != 0)
+			printf("%s/%s\n", arg, result[i]);
 		else
 			printf("/%s\n", result[i]);
 	}
@@ -1339,9 +1379,6 @@ sfs_tree(char *path, int op, uid_t sfs_uid, struct anoubis_sig *as)
 			ret = sfs_validate(tmp, sfs_uid, as);
 			if (ret)
 				goto out;
-			break;
-		case ANOUBIS_CHECKSUM_OP_GENERIC_LIST:
-			printf("%s/%s\n", path, result[j]);
 			break;
 		default:
 			if (opts & SFSSIG_OPT_DEBUG)
