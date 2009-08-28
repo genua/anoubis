@@ -42,7 +42,6 @@
 #include <ComPolicySendTask.h>
 #include <ComRegistrationTask.h>
 #include <ComSfsListTask.h>
-#include <ComUpgradeListGetTask.h>
 #include <JobCtrl.h>
 #include <KeyCtrl.h>
 
@@ -68,7 +67,7 @@ const wxString l1_csum =
     wxT("b66a213422e0bd251d5d900018086fcaa23581c2e46ca3ccf586ac8db32d0854");
 
 const wxString l2_csum =
-    wxT("5a0d272136895946c76efb7c98aa0a80cff7e5811a995ac52a6899ec5b45aa26");
+    wxT("0693cb1af0d491cbf2c6d1154a425c8c09c3281bc729b2373bbedfd6e793b58d");
 
 extern "C" int test_123_cb(char *buf, int size, int, void *);
 
@@ -127,7 +126,6 @@ TcComTask::nextTest()
 	jobCtrl->Disconnect(anTASKEVT_CSUM_GET);
 	jobCtrl->Disconnect(anTASKEVT_CSUM_DEL);
 	jobCtrl->Disconnect(anTASKEVT_SFS_LIST);
-	jobCtrl->Disconnect(anTASKEVT_UPGRADE_LIST);
 
 	testCounter_++;
 
@@ -1356,11 +1354,34 @@ void
 TcComTask::setupTestUpgradeList(void)
 {
 	trace("Enter TcComTask::setupTestUpgradeList\n");
+	wxString path = wxT("/tests");
+	wxString certFile = wxFileName::GetHomeDir() + wxT("/pubkey");
 
-	JobCtrl::getInstance()->Connect(anTASKEVT_UPGRADE_LIST,
+	JobCtrl::getInstance()->Connect(anTASKEVT_SFS_LIST,
 	    wxTaskEventHandler(TcComTask::onTestUpgradeList), NULL, this);
 
-	ComUpgradeListGetTask *next = new ComUpgradeListGetTask();
+	KeyCtrl *keyCtrl = KeyCtrl::getInstance();
+
+	LocalCertificate &cert = keyCtrl->getLocalCertificate();
+	cert.setFile(certFile);
+
+	assertUnless(cert.load(),
+	    "Failed to load certificate from %s\n",
+	    (const char *)certFile.fn_str());
+
+	trace(" * KeyId: %s\n", (const char *)cert.getKeyId().fn_str());
+	trace(" * Fingerprint: %s\n",
+	    (const char *)cert.getFingerprint().fn_str());
+	trace(" * DN: %s\n",
+	    (const char *)cert.getDistinguishedName().fn_str());
+
+	struct anoubis_sig *raw_cert = cert.getCertificate();
+
+	ComSfsListTask *next = new ComSfsListTask;
+	next->setRequestParameter(getuid(), path);
+	next->setFetchUpgraded(true);
+	assertUnless(next->setKeyId(raw_cert->keyid, raw_cert->idlen),
+	    "Failed to setup task with key-id.");
 
 	trace("Scheduling ComUpgradeListGetTask: %p\n", next);
 	JobCtrl::getInstance()->addTask(next);
@@ -1373,8 +1394,8 @@ TcComTask::onTestUpgradeList(TaskEvent &event)
 {
 	trace("Enter TcComTask::onTestUpgradeList\n");
 
-	ComUpgradeListGetTask *t =
-	    dynamic_cast<ComUpgradeListGetTask*>(event.getTask());
+	ComSfsListTask *t =
+	    dynamic_cast<ComSfsListTask*>(event.getTask());
 	trace("ComUpgradeListGetTask = %p\n", t);
 
 	assertUnless(t->getComTaskResult() == ComTask::RESULT_SUCCESS,
@@ -1382,30 +1403,26 @@ TcComTask::onTestUpgradeList(TaskEvent &event)
 
 	wxArrayString result = t->getFileList();
 	trace("upgrade-list-size: %i\n", result.Count());
-	assertUnless((result.Count() == 4), "Result count mismatch!\n");
+
+	assertUnless((result.Count() == 3), "Result count mismatch!\n");
 
 	delete t;
 
 	int idx;
 
-	idx = result.Index(wxT("/usr/bin/mutt"));
+	idx = result.Index(wxT("upgrade_file_1"));
 	assertUnless((idx != wxNOT_FOUND),
-	    "Entry \'/usr/bin/mutt\' not found in upgrade-list\n");
+	    "Entry \'upgrade_file_1\' not found in upgrade-list\n");
 	result.RemoveAt(idx);
 
-	idx = result.Index(wxT("/usr/bin/vim"));
+	idx = result.Index(wxT("upgrade_file_2"));
 	assertUnless((idx != wxNOT_FOUND),
-	    "Entry \'/usr/bin/vim\' not found in upgrade-list\n");
+	    "Entry \'upgrade_file_2\' not found in upgrade-list\n");
 	result.RemoveAt(idx);
 
-	idx = result.Index(wxT("/usr/sbin/lvm"));
+	idx = result.Index(wxT("upgrade_file_3"));
 	assertUnless((idx != wxNOT_FOUND),
-	    "Entry \'/usr/sbin/lvm\' not found in upgrade-list\n");
-	result.RemoveAt(idx);
-
-	idx = result.Index(wxT("/etc/no-real-file"));
-	assertUnless((idx != wxNOT_FOUND),
-	    "Entry \'/etc/no-real-file\' not found in upgrade-list\n");
+	    "Entry \'upgrade_file_3\' not found in upgrade-list\n");
 	result.RemoveAt(idx);
 
 	assertUnless((result.Count() == 0), "Result count not zero!\n");

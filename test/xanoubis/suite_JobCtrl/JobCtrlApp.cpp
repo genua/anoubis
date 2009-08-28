@@ -83,7 +83,7 @@ JobCtrlApp::OnRun()
 	 * The result is the line number of the check at onTestConnect().
 	 * On modifications of TcComTask.cpp, this value must be adjusted.
 	 */
-	if (testcase_ == wxT("tc_jobctrl_nodaemon") && result == 245) {
+	if (testcase_ == wxT("tc_jobctrl_nodaemon") && result == 243) {
 		/*
 		 * Expected result for nodaemon-testcase because establishing
 		 * of the connection failed.

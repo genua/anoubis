@@ -46,6 +46,7 @@ ComSfsListTask::ComSfsListTask(void) : dirqueue_()
 	this->keyId_ = 0;
 	this->keyIdLen_ = 0;
 	basepath_ = NULL;
+	this->upgraded_ = false;
 }
 
 ComSfsListTask::ComSfsListTask(uid_t uid, const wxString &dir) : dirqueue_()
@@ -55,6 +56,7 @@ ComSfsListTask::ComSfsListTask(uid_t uid, const wxString &dir) : dirqueue_()
 	this->keyId_ = 0;
 	this->keyIdLen_ = 0;
 	basepath_ = NULL;
+	this->upgraded_ = false;
 
 	setRequestParameter(uid, dir);
 }
@@ -146,6 +148,18 @@ ComSfsListTask::setKeyId(const u_int8_t *keyId, int len)
 		return (false);
 }
 
+void
+ComSfsListTask::setFetchUpgraded(bool upgrade)
+{
+	this->upgraded_ = upgrade;
+}
+
+bool
+ComSfsListTask::fetchUpgraded(void) const
+{
+	return this->upgraded_;
+}
+
 wxEventType
 ComSfsListTask::getEventType(void) const
 {
@@ -209,11 +223,17 @@ ComSfsListTask::fetchSfsList(const char *path)
 	}
 
 	/* Create request */
-	if (this->keyIdLen_)
+	if (this->keyIdLen_) {
 		flags = ANOUBIS_CSUM_KEY;
+		if (this->upgraded_) {
+			flags |= ANOUBIS_CSUM_UPGRADED;
+			this->uid_ = 0;
+		}
+	}
+
 	ta_ = anoubis_client_csumrequest_start(getClient(),
 	    ANOUBIS_CHECKSUM_OP_GENERIC_LIST, fullpath, this->keyId_, 0,
-	    this->keyIdLen_, req_uid_, req_flags_);
+	    this->keyIdLen_, this->uid_, flags);
 	free(fullpath);
 
 	if(!ta_) {

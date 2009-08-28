@@ -182,6 +182,23 @@ class ComSfsListTask : public ComTask
 		bool setKeyId(const u_int8_t *, int);
 
 		/**
+		 * Tests whether the upgraded fetch is activated.
+		 *
+		 * If disabled, you will get every file.
+		 * @return true if the upgraded fetch is activated, false
+		 *         otherwise.
+		 */
+		bool fetchUpgraded(void) const;
+
+		/**
+		 * Enables or disables the upgraded fetch.
+		 *
+		 * @param enabled Set to true, if you want to activate the
+		 *               feature.
+		 */
+		void setFetchUpgraded(bool);
+
+		/**
 		 * Implementation of Task::getEventType().
 		 */
 		wxEventType getEventType(void) const;
@@ -226,6 +243,7 @@ class ComSfsListTask : public ComTask
 		int				 req_flags_;
 		char				*basepath_;
 		std::queue<char *>		 dirqueue_;
+		bool				 upgraded_;
 
 		/**
 		 * Performs a single fetch-operation.

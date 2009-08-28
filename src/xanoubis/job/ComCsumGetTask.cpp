@@ -129,7 +129,7 @@ ComCsumGetTask::done(void)
 	if (haveKeyId()) {
 		len = anoubis_extract_sig_type(reqmsg, ANOUBIS_SIG_TYPE_SIG,
 		    &sigdata);
-		if (len > 0 && len != ANOUBIS_CS_LEN)
+		if (len < ANOUBIS_CS_LEN)
 			goto err;
 		uplen = anoubis_extract_sig_type(reqmsg,
 		    ANOUBIS_SIG_TYPE_UPGRADECS, &updata);
