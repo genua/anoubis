@@ -51,7 +51,6 @@
 
 #define ANOUBIS_PROTO_VERSION		1
 
-#define ALLOCLEN 4000
 #define SENDLEN  3000
 
 static struct proto_opt anoubis_protos[] = {
@@ -126,18 +125,23 @@ int anoubis_client_hasnotifies(struct anoubis_client * client)
 	return (client->notify != NULL);
 }
 
-static struct anoubis_msg * anoubis_client_rcv(struct anoubis_client * client,
-    size_t alloclen)
+static struct anoubis_msg * anoubis_client_rcv(struct anoubis_client * client)
 {
-	struct anoubis_msg * m = NULL;
-	achat_rc rc;
+	struct anoubis_msg	*m = NULL;
+	achat_rc		 rc;
+	size_t			 alloclen = 4096;
 
-	if (alloclen < CSUM_LEN)
-		goto err;
 	m = anoubis_msg_new(alloclen);
 	if (!m)
 		return NULL;
-	rc = acc_receivemsg(client->chan, m->u.buf, &alloclen);
+	while (1) {
+		rc = acc_receivemsg(client->chan, m->u.buf, &alloclen);
+		if (rc != ACHAT_RC_NOSPACE)
+			break;
+		alloclen *= 2;
+		if (anoubis_msg_resize(m, alloclen) < 0)
+			rc = ACHAT_RC_ERROR;
+	}
 	if (rc != ACHAT_RC_OK)
 		goto err;
 	anoubis_msg_resize(m, alloclen);
@@ -1141,7 +1145,7 @@ int anoubis_client_connect(struct anoubis_client * client, unsigned int proto)
 	if (!t)
 		return -EINVAL;
 	while(1) {
-		m = anoubis_client_rcv(client, ALLOCLEN);
+		m = anoubis_client_rcv(client);
 		if (!m)
 			return -EPROTO;
 		/* Will free the message. */
@@ -1166,7 +1170,7 @@ void anoubis_client_close(struct anoubis_client * client)
 		client->state = ANOUBIS_STATE_ERROR;
 		return;
 	}
-	while((m = anoubis_client_rcv(client, ALLOCLEN))) {
+	while((m = anoubis_client_rcv(client))) {
 		int opcode = get_value(m->u.general->type);
 		switch (opcode) {
 		case ANOUBIS_C_CLOSEREQ:
@@ -1186,7 +1190,7 @@ void anoubis_client_close(struct anoubis_client * client)
 
 int anoubis_client_wait(struct anoubis_client * client)
 {
-	struct anoubis_msg * m = anoubis_client_rcv(client, ALLOCLEN);
+	struct anoubis_msg * m = anoubis_client_rcv(client);
 	if (!m)
 		return 0;
 	return anoubis_client_process(client, m);

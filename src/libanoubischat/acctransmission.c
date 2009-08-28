@@ -171,11 +171,12 @@ acc_fillrecvbuffer(struct achat_channel *acc, size_t size)
 	unsigned int	needcnt;
 
 	if (acc->blocking == ACC_NON_BLOCKING) {
-		/* Read as much as possible */
-		mincnt = 4096;
+		/* Read at least 4k */
+		if (mincnt < 4096)
+			mincnt = 4096;
 	}
 
-	ACC_CHKPARAM(mincnt <= 4096);
+	ACC_CHKPARAM(mincnt <= ACHAT_MAX_MSGSIZE);
 
 	needcnt = mincnt - bsize;
 	if (needcnt <= 0) {

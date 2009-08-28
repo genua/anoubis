@@ -218,6 +218,8 @@ specifies the size of your buffer
 .Fa "char *"
 .Pc
 which will be filled with the received messages.
+If your buffer is too small to hold the entire message the return
+value will be ACHAT_RC_NOSPACE.
 .Sh EXAMPLES
 .Pp
 The following example code may give you an idea of using the communication
@@ -317,6 +319,8 @@ if (rc != ACHAT_RC_OK)
 /* a client has connected - do your service */
 bzero(buffer, sizeof(buffer));
 rc = acc_receivemsg(s, buffer, sizeof(buffer));
+if (rc == ACHAT_RC_NOSPACE)
+	/* Increase buffer size and retry */
 if (rc != ACHAT_RC_OK)
 	...
 
@@ -359,6 +363,8 @@ while (rc != ACHAT_RC_OK) {
 	/**
 	 * rc == ACHAT_RC_OK
 	 *  if you have a complete message
+	 * rc == ACHAT_RC_NOSPACE
+	 *  Buffer size too small for message
 	 * rc == ACHAT_RC_PENDING
 	 *  if still some data are missing
 	 *  to complete a message

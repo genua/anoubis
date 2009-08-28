@@ -279,6 +279,7 @@ ComThread::readMessage(void)
 	struct anoubis_msg	*msg;
 	char			*str = NULL;
 	wxString		 message;
+	achat_rc		 rc;
 
 	if ((channel_ == 0) || (client_ == 0)) {
 		return (false);
@@ -286,8 +287,14 @@ ComThread::readMessage(void)
 
 	if ((msg = anoubis_msg_new(size)) == 0)
 		return (false);
-
-	achat_rc rc = acc_receivemsg(channel_, (char*)(msg->u.buf), &size);
+	while(1) {
+		rc = acc_receivemsg(channel_, (char*)(msg->u.buf), &size);
+		if (rc != ACHAT_RC_NOSPACE)
+			break;
+		size *= 2;
+		if (anoubis_msg_resize(msg, size) < 0)
+			rc = ACHAT_RC_ERROR;
+	}
 	if (rc != ACHAT_RC_OK) {
 		anoubis_msg_free(msg);
 		if (rc == ACHAT_RC_EOF)
