@@ -42,13 +42,7 @@ class wxProgressDialog;
 /**
  * List-control displays SfsEntry-instances.
  *
- * A list-control prepared to display SfsEntry-instances. You can setup an
- * filter (ModSfsListCtrl::DisplayOption) to specify what kind of entries
- * should be displayed.
- *
- * The row-index does not necessarily correspond to the index of the SfsEntry
- * in the SfsDirectory! But you can use getSfsIndexAt() resp. getListIndexOf()
- * to map the indexes to each other.
+ * A list-control prepared to display SfsEntry-instances.
  *
  * The complete list is refreshed with refreshList(), an individual row is
  * refreshed by calling refreshEntry().
@@ -59,34 +53,6 @@ class wxProgressDialog;
 class ModSfsListCtrl : public wxListCtrl, private SfsDirectoryScanHandler
 {
 	public:
-		/**
-		 * Display options.
-		 *
-		 * Describes which SfsEntry-instances should be displayed.
-		 *
-		 * @see refreshList()
-		 */
-		enum DisplayOption
-		{
-			SHOW_ALL = 0,	/*!< All entries of the model are
-					     displayed. On filter is
-					     applied. */
-			SHOW_EXISTING,	/*!< Only existing files are displayed.
-					     @see SfsEntry::fileExists() */
-			SHOW_CHANGED,	/*!< Only entries with a non-matching
-					     checksum are displayed.
-					  @see SfsEntry::isChecksumChanged() */
-			SHOW_CHECKSUM,	/*!< Only entries with a registered
-					     checksum are displayed.
-					     @see SfsEntry::haveChecksum() */
-			SHOW_ORPHANED,	/*!< Only orphaned files are displayed.
-					     @see SfsEntry::fileExists() */
-			SHOW_UPGRADED	/*!< Only entries with a registered
-					     checksum and upgrade flag are
-					     displayed.
-					     @see SfsEnty::wasUpgraded() */
-		};
-
 		/**
 		 * Constructs the sfs-list.
 		 *
@@ -126,58 +92,18 @@ class ModSfsListCtrl : public wxListCtrl, private SfsDirectoryScanHandler
 		void setSfsCtrl(SfsCtrl *);
 
 		/**
-		 * Returns the index of the SfsEntry at the specified
-		 * list-index.
-		 *
-		 * This method is used to map an list-entry to an SfsEntry.
-		 * The resulting index can be used to fetch an SfsEntry
-		 * (SfsDirectory::getEntry()).
-		 *
-		 * @param listIdx Row-index of the list. The method returns
-		 *                the index of the SfsEntry, which is displayed
-		 *                at the row.
-		 * @return Index of SfsEntry in SfsDirectory. If the specified
-		 *         list-index is out of range (no such row), -1 is
-		 *         returned.
-		 */
-		int getSfsIndexAt(unsigned int) const;
-
-		/**
-		 * Returns the list-index, where the SfsEntry at the specified
-		 * index is displayed.
-		 *
-		 * This method is used to map an SfsEntry to a list-entry. Use
-		 * the method, if you want to know, where an SfsEntry is
-		 * displayed.
-		 *
-		 * @param sfsIdx Index of requested SfSEntry in the
-		 *               SfsDirectory.
-		 * @return Row-index of the view, where the requested SfsEntry
-		 *         is displayed. If the SfsEntry is not displayed, -1
-		 *         is returned.
-		 */
-		int getListIndexOf(unsigned int) const;
-
-		/**
-		 * Returns sfs-indexes of selected rows.
-		 *
-		 * This function returns SfsEntry indicies. Most of the
-		 * time these are not identical to list indices.
+		 * Returns indexes of selected rows.
 		 *
 		 * @return Indexes of selected SfsEntry-instances.
 		 */
-		IndexArray getSfsIndexes(void) const;
+		IndexArray getSelectedIndexes(void) const;
 
 		/**
 		 * Refreshes the complete list.
 		 *
-		 * All rows are removed and, according to the specified
-		 * view-filter, re-created.
-		 *
-		 * @param option Specifies which entries from the model should
-		 *               be displayed.
+		 * All rows are removed and re-created.
 		 */
-		void refreshList(DisplayOption);
+		void refreshList(void);
 
 		/**
 		 * Refreshes a single row of the list.
@@ -199,19 +125,6 @@ class ModSfsListCtrl : public wxListCtrl, private SfsDirectoryScanHandler
 			COLUMN_SIGNATURE,	/*!<  signaure column */
 			COLUMN_EOL		/*!<  Behind last column */
 		};
-
-		/**
-		 * Tests whether the specified SfsEntry can be displayed.
-		 *
-		 * The SfsEntry can be displayed, if it matches with the
-		 * specified DisplayOption.
-		 *
-		 * @param entry SfsEntry to be checked
-		 * @param option The display filter to check against
-		 * @return true is returned, if the SfsEntry can be displayed,
-		 *         false otherwise.
-		 */
-		bool canDisplay(SfsEntry *, DisplayOption) const;
 
 		/**
 		 * Invoked if a row is activated (aka double-click).

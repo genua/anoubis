@@ -123,28 +123,8 @@ ModSfsListCtrl::setSfsCtrl(SfsCtrl *sfsCtrl)
 		this->sfsCtrl_ = 0;
 }
 
-int
-ModSfsListCtrl::getSfsIndexAt(unsigned int listIdx) const
-{
-	if ((int)listIdx < GetItemCount())
-		return (GetItemData(listIdx));
-	else
-		return (-1);
-}
-
-int
-ModSfsListCtrl::getListIndexOf(unsigned int sfsIdx) const
-{
-	for (int listIdx = 0; listIdx < GetItemCount(); listIdx++) {
-		if (GetItemData(listIdx) == sfsIdx)
-			return listIdx;
-	}
-
-	return (-1);
-}
-
 IndexArray
-ModSfsListCtrl::getSfsIndexes(void) const
+ModSfsListCtrl::getSelectedIndexes(void) const
 {
 	int		selection = -1;
 	IndexArray	selectionArray;
@@ -158,14 +138,14 @@ ModSfsListCtrl::getSfsIndexes(void) const
 			break;
 		}
 
-		selectionArray.Add(getSfsIndexAt(selection));
+		selectionArray.Add(selection);
 	}
 
 	return (selectionArray);
 }
 
 void
-ModSfsListCtrl::refreshList(DisplayOption option)
+ModSfsListCtrl::refreshList(void)
 {
 	if (sfsCtrl_ == 0)
 		return;
@@ -175,22 +155,10 @@ ModSfsListCtrl::refreshList(DisplayOption option)
 	DeleteAllItems();
 
 	for (unsigned int i = 0; i < dir.getNumEntries(); i++) {
-		SfsEntry *entry = dir.getEntry(i);
+		int idx = GetItemCount();
 
-		if (canDisplay(entry, option)) {
-			int listIdx = GetItemCount();
-
-			InsertItem(listIdx, wxEmptyString);
-
-			/*
-			 * Remember the position, where the entry is displayed
-			 * in the list. Index of list is not necessarily index
-			 * of model!
-			 */
-			SetItemData(listIdx, i);
-
-			refreshEntry(listIdx);
-		}
+		InsertItem(idx, wxEmptyString);
+		refreshEntry(idx);
 	}
 }
 
@@ -205,11 +173,8 @@ ModSfsListCtrl::refreshEntry(unsigned int idx)
 	int		fileIconIndex = 0, checksumIconIndex = 0,
 			signatureIconIndex = 0;
 
-	/* Receive index of model, which is displayed at the list-index */
-	int		modelIndex = getSfsIndexAt(idx);
-
 	/* Receive entry */
-	SfsEntry	*entry = dir.getEntry(modelIndex);
+	SfsEntry	*entry = dir.getEntry(idx);
 	wxString	baseDir = dir.getPath();
 
 	if (entry->isSymlink())
@@ -283,41 +248,16 @@ ModSfsListCtrl::refreshEntry(unsigned int idx)
 	    signatureInfo, signatureIconIndex);
 }
 
-bool
-ModSfsListCtrl::canDisplay(SfsEntry *entry, DisplayOption option) const
-{
-	switch (option) {
-	case SHOW_ALL:
-		return (true);
-	case SHOW_EXISTING:
-		return (entry->fileExists());
-	case SHOW_CHANGED:
-		return (entry->isChecksumChanged());
-	case SHOW_CHECKSUM:
-		return (entry->haveChecksum());
-	case SHOW_ORPHANED:
-		return (!entry->fileExists());
-	case SHOW_UPGRADED:
-		return (entry->wasUpgraded());
-	}
-
-	/* Never reached */
-	return (false);
-}
-
 void
 ModSfsListCtrl::OnListItemActivated(wxListEvent &event)
 {
 	if (sfsCtrl_ == 0)
 		return;
 
-	/* Receive index in model */
-	int modelIndex = getSfsIndexAt(event.GetIndex());
-	if (modelIndex == -1)
-		return;
+	int idx = event.GetIndex();
 
 	SfsDirectory &dir = sfsCtrl_->getSfsDirectory();
-	SfsEntry *entry = dir.getEntry(modelIndex);
+	SfsEntry *entry = dir.getEntry(idx);
 
 	/* Display details-dialog */
 	ModSfsDetailsDlg dlg(entry, this);
@@ -332,13 +272,10 @@ ModSfsListCtrl::OnListItemRightClicked(wxListEvent &event)
 		return;
 
 	currentSelection_ = event.GetIndex();
-	/* Map to model-index* */
-	int modelIndex = getSfsIndexAt(event.GetIndex());
-	if (modelIndex == -1)
-		return;
+	int idx = event.GetIndex();
 
 	SfsDirectory &dir = sfsCtrl_->getSfsDirectory();
-	SfsEntry *entry = dir.getEntry(modelIndex);
+	SfsEntry *entry = dir.getEntry(idx);
 
 	wxMenuItemList &menuItems = popupMenu_.GetMenuItems();
 
@@ -354,13 +291,11 @@ ModSfsListCtrl::OnPopupShowDetailsSelected(wxCommandEvent &)
 	if (sfsCtrl_ == 0)
 		return;
 
-	/* Map to model-index */
-	int modelIndex = getSfsIndexAt(currentSelection_);
-	if (modelIndex == -1)
+	if (currentSelection_ == -1)
 		return;
 
 	SfsDirectory &dir = sfsCtrl_->getSfsDirectory();
-	SfsEntry *entry = dir.getEntry(modelIndex);
+	SfsEntry *entry = dir.getEntry(currentSelection_);
 
 	/* Display details-dialog */
 	ModSfsDetailsDlg dlg(entry, this);
@@ -373,13 +308,11 @@ ModSfsListCtrl::OnPopupResolveLinkSelected(wxCommandEvent &)
 	if (sfsCtrl_ == 0)
 		return;
 
-	/* Map to model-index */
-	int modelIndex = getSfsIndexAt(currentSelection_);
-	if (modelIndex == -1)
+	if (currentSelection_ == -1)
 		return;
 
 	SfsDirectory &dir = sfsCtrl_->getSfsDirectory();
-	SfsEntry *entry = dir.getEntry(modelIndex);
+	SfsEntry *entry = dir.getEntry(currentSelection_);
 
 	wxString path = entry->resolve();
 	if (path.IsEmpty())
@@ -390,16 +323,12 @@ ModSfsListCtrl::OnPopupResolveLinkSelected(wxCommandEvent &)
 	sfsCtrl_->setPath(fn.GetPath());
 
 	/* At least select the filename in the list */
-	modelIndex = dir.getIndexOf(path);
-	if (modelIndex == -1)
+	int idx = dir.getIndexOf(path);
+	if (idx == -1)
 		return;
 
-	int listIndex = getListIndexOf(modelIndex);
-	if (listIndex == -1)
-		return;
-
-	SetItemState(listIndex, wxLIST_STATE_SELECTED, wxLIST_STATE_SELECTED);
-	EnsureVisible(listIndex);
+	SetItemState(idx, wxLIST_STATE_SELECTED, wxLIST_STATE_SELECTED);
+	EnsureVisible(idx);
 }
 
 void

@@ -1017,11 +1017,6 @@ TcComTask::onTestSfsListNotEmpty(TaskEvent &event)
 	    "Entry \"symlink_del_11\" not found in sfs-list\n");
 	result.RemoveAt(idx);
 
-	idx = result.Index(wxT("csums/"));
-	assertUnless((idx != wxNOT_FOUND),
-	    "Entry \"csums/\" not found in sfs-list\n");
-	result.RemoveAt(idx);
-
 	if (result.Count() > 0) {
 		for (unsigned int i = 0; i < result.Count(); i++)
 			trace("Unexpected #%i: %ls\n", i, result[i].c_str());
@@ -1303,11 +1298,6 @@ TcComTask::onTestSfsListRecursive(TaskEvent &event)
 	    "Entry \"3\" not found in sfs-list\n");
 	result.RemoveAt(idx);
 
-	idx = result.Index(wxT("sub1/"));
-	assertUnless((idx != wxNOT_FOUND),
-	    "Entry \"sub1/\" not found in sfs-list\n");
-	result.RemoveAt(idx);
-
 	idx = result.Index(wxT("sub1/1"));
 	assertUnless((idx != wxNOT_FOUND),
 	    "Entry \"sub1/1\" not found in sfs-list\n");
@@ -1316,11 +1306,6 @@ TcComTask::onTestSfsListRecursive(TaskEvent &event)
 	idx = result.Index(wxT("sub1/2"));
 	assertUnless((idx != wxNOT_FOUND),
 	    "Entry \"sub1/2\" not found in sfs-list\n");
-	result.RemoveAt(idx);
-
-	idx = result.Index(wxT("sub2/"));
-	assertUnless((idx != wxNOT_FOUND),
-	    "Entry \"sub2/\" not found in sfs-list\n");
 	result.RemoveAt(idx);
 
 	idx = result.Index(wxT("sub2/1"));
@@ -1647,11 +1632,6 @@ TcComTask::onTestSigListNotEmpty(TaskEvent &event)
 	idx = result.Index(wxT("policy"));
 	assertUnless((idx != wxNOT_FOUND),
 	    "Entry \"policy\" not found in sfs-list\n");
-	result.RemoveAt(idx);
-
-	idx = result.Index(wxT("csums/"));
-	assertUnless((idx != wxNOT_FOUND),
-	    "Entry \"csums/\" not found in sfs-list\n");
 	result.RemoveAt(idx);
 
 	assertUnless((result.Count() == 0),

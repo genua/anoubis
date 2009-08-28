@@ -118,6 +118,8 @@ ModSfsMainPanelBase::ModSfsMainPanelBase( wxWindow* parent, wxWindowID id, const
 	wxString SfsMainDirViewChoiceChoices[] = { _("Standard file browsing"), _("Files with checksum"), _("Changed files"), _("Orphaned checksums"), _("Upgraded files") };
 	int SfsMainDirViewChoiceNChoices = sizeof( SfsMainDirViewChoiceChoices ) / sizeof( wxString );
 	SfsMainDirViewChoice = new wxChoice( pan_SfsMain, wxID_ANY, wxDefaultPosition, wxDefaultSize, SfsMainDirViewChoiceNChoices, SfsMainDirViewChoiceChoices, 0 );
+	SfsMainDirViewChoice->Enable( false );
+	
 	SfsMainDirListHeadSizer->Add( SfsMainDirViewChoice, 0, wxALL|wxEXPAND|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	SfsMainDirTraversalCheckbox = new wxCheckBox( pan_SfsMain, wxID_ANY, _("Recursive traversal"), wxDefaultPosition, wxDefaultSize, 0 );
@@ -197,6 +199,8 @@ ModSfsMainPanelBase::ModSfsMainPanelBase( wxWindow* parent, wxWindowID id, const
 	wxString SfsMainActionChoiceChoices[] = { _("Register"), _("Unregister"), _("Validate") };
 	int SfsMainActionChoiceNChoices = sizeof( SfsMainActionChoiceChoices ) / sizeof( wxString );
 	SfsMainActionChoice = new wxChoice( pan_SfsMain, wxID_ANY, wxDefaultPosition, wxDefaultSize, SfsMainActionChoiceNChoices, SfsMainActionChoiceChoices, 0 );
+	SfsMainActionChoice->Enable( false );
+	
 	browserListFootSizer->Add( SfsMainActionChoice, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
 	
 	SfsMainActionButton = new wxButton( pan_SfsMain, wxID_ANY, _("Apply"), wxDefaultPosition, wxDefaultSize, 0 );

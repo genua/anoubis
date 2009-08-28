@@ -679,7 +679,7 @@
                                                             <property name="bg"></property>
                                                             <property name="choices">&apos;Standard file browsing&apos; &apos;Files with checksum&apos; &apos;Changed files&apos; &apos;Orphaned checksums&apos; &apos;Upgraded files&apos;</property>
                                                             <property name="context_help"></property>
-                                                            <property name="enabled">1</property>
+                                                            <property name="enabled">0</property>
                                                             <property name="fg"></property>
                                                             <property name="font"></property>
                                                             <property name="hidden">0</property>
@@ -1353,7 +1353,7 @@
                                                             <property name="bg"></property>
                                                             <property name="choices">&apos;Register&apos; &apos;Unregister&apos; &apos;Validate&apos;</property>
                                                             <property name="context_help"></property>
-                                                            <property name="enabled">1</property>
+                                                            <property name="enabled">0</property>
                                                             <property name="fg"></property>
                                                             <property name="font"></property>
                                                             <property name="hidden">0</property>

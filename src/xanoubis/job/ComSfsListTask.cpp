@@ -327,14 +327,19 @@ bool
 ComSfsListTask::canFetch(const wxString &file) const
 {
 	wxString path = wxT("/") + file;
+	struct stat fstat;
+	int result;
+
+	if (file.EndsWith(wxT("/")))
+		return (false);
 
 	if (directory_ != wxT("/"))
 		path.Prepend(directory_);
 
-	if (!orphaned_) {
-		/* Orphaned fetch disabled, thus only fetch exising files */
-		struct stat fstat;
-		return (stat(path.fn_str(), &fstat) == 0);
-	} else
-		return (true);
+	result = stat(path.fn_str(), &fstat);
+
+	if (orphaned_)
+		return (result != 0);
+	else
+		return (result == 0);
 }

@@ -35,6 +35,7 @@
 #include "SfsEntry.h"
 #include "SfsDirectory.h"
 #include "Task.h"
+#include "TaskEvent.h"
 
 /**
  * Array is a list of indexes.
@@ -64,6 +65,26 @@ WX_DEFINE_ARRAY_INT(unsigned int, IndexArray);
 class SfsCtrl : public wxEvtHandler
 {
 	public:
+		/**
+		 * Type of SfsEntries controlled by the class.
+		 */
+		enum EntryFilter
+		{
+			FILTER_STD = 0,	/*!< List of SfsEntries are build by
+					     scanning the local filesystem. */
+			FILTER_CHECKSUMS,	/*!< Only files with a
+						     registered checksum are
+						     displayed. */
+			FILTER_CHANGED,	/*!< Only files with a checksum which
+					     differs from from local checksum
+					     are displayed. */
+			FILTER_ORPHANED,	/*!< Only non-existing files
+						     with a still registered
+						     checksum are displayed. */
+			FILTER_UPGRADED	/*!< Only upgraded files are
+					     displayed. */
+		};
+
 		/**
 		 * Result-codes of a command.
 		 */
@@ -187,6 +208,26 @@ class SfsCtrl : public wxEvtHandler
 		void setRecursive(bool);
 
 		/**
+		 * Returns the entry-filter of the controller.
+		 *
+		 * This filter defines a type of SfsEntry-instances controlled
+		 * by the class. The default is SfsCtrl::FILTER_STD.
+		 *
+		 * @return Entry-filter of the controller.
+		 */
+		EntryFilter getEntryFilter(void) const;
+
+		/**
+		 * Assignes a new entry-filter to the controller.
+		 *
+		 * If the filter changes, the model is refreshed and a
+		 * wxCommandEvent of type anEVT_SFSDIR_CHANGED is fired.
+		 *
+		 * @param filter The new filter-type
+		 */
+		void setEntryFilter(EntryFilter);
+
+		/**
 		 * Tests whether signature-support is enabled.
 		 *
 		 * If it is enabled, the checksums are automatically signed.
@@ -223,6 +264,22 @@ class SfsCtrl : public wxEvtHandler
 		 * @see KeyCtrl::canUseLocalKeys()
 		 */
 		bool setSignatureEnabled(bool);
+
+		/**
+		 * Refreshes the model behind the controller.
+		 *
+		 * Depending on the settings of getEntryFilter() the local
+		 * filesystem is scanned or a Anoubis daemon communication is
+		 * established to re-fetch a list of files.
+		 *
+		 * Note: If a daemon communication is established, this is a
+		 * non-blocking procedure. It means that method leaves at soon
+		 * as possible. But you can rely on the
+		 * anEVT_SFSENTRY_CHANGED-event.
+		 *
+		 * @return The result of the command.
+		 */
+		CommandResult refresh(void);
 
 		/**
 		 * Validates the SfsEntries at the specified indexes.
@@ -267,24 +324,14 @@ class SfsCtrl : public wxEvtHandler
 		 * In this case a wxCommandEvent of type anEVT_SFSDIR_CHANGED
 		 * is fired.
 		 *
-		 * You can specify, if orphaned files should be fetched from
-		 * anoubisd. A file is orphaned, if it was removed from the
-		 * local filesystem, but anoubisd has still a registered
-		 * checksum for it. If enabled, the list of orphaned files is
-		 * fetched from anoubisd and is inserted into the model. You
-		 * can distinguish them from local files by calling
-		 * SfsEntry::fileExists().
-		 *
 		 * Note: This is a non-blocking procedure. It means that method
 		 * leaves at soon as possible. But you can monitor the
 		 * anEVT_SFSOPERATION_FINISHED-event to know, when the
 		 * background-operation is finished.
 		 *
-		 * @param orphaned Set to true, if you want to fetch orphaned
-		 *                 files.
 		 * @return The result of the command.
 		 */
-		CommandResult validateAll(bool);
+		CommandResult validateAll(void);
 
 		/**
 		 * Registers the checksums of the SfsEntries at the specified
@@ -404,13 +451,6 @@ class SfsCtrl : public wxEvtHandler
 		    const wxString &);
 
 		/**
-		 * Requests the list of upgraded files from the daemon.
-		 * @param None.
-		 * @return The result of the command.
-		 */
-		CommandResult fetchUpgradeList(void);
-
-		/**
 		 * Returns the instance of the SfsDirectory.
 		 *
 		 * This is the entry-point of the model.
@@ -442,10 +482,10 @@ class SfsCtrl : public wxEvtHandler
 		void OnCsumGet(TaskEvent &);
 		void OnCsumAdd(TaskEvent &);
 		void OnCsumDel(TaskEvent &);
-		void OnUpgradeListArrived(TaskEvent &);
 
 	private:
 		SfsDirectory	sfsDir_;
+		EntryFilter	entryFilter_;
 		TaskList	taskList_;
 		wxArrayString	errorList_;
 		bool		comEnabled_;
@@ -501,8 +541,7 @@ class SfsCtrl : public wxEvtHandler
 		 */
 		int createComCsumDelTasks(SfsEntry *);
 
-		void createSfsListTasks(uid_t, const wxString &, bool);
-		void createUpgradeListGetTask(void);
+		void createSfsListTasks(uid_t, const wxString &);
 		void createCsumCalcTask(const wxString &);
 
 		/**

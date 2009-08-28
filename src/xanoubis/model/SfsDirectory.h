@@ -239,23 +239,17 @@ class SfsDirectory : private wxDirTraverser
 		void removeEntry(unsigned int);
 
 		/**
-		 * Cleans the model.
-		 *
-		 * Entries, which match one of the following conditions, are
-		 * removed from the model:
-		 *
-		 * - The corresponding file does not exist in the local
-		 *   filesystem
-		 * - Recursive traversal is disabled, but the entry belongs to
-		 *   a sub-directory.
-		 *
-		 * Cleaning up the model might be necessary, if you inserted
-		 * by yourself using insertEntry().
-		 *
-		 * @return true is returned, if the model has changed (at least
-		 *         one SfsEntry was removed from the model).
+		 * Removes all entries from the directory.
 		 */
-		bool cleanup(void);
+		void removeAllEntries(void);
+
+		/**
+		 * Scans the local filesystem.
+		 *
+		 * The model is refreshed. The filesystem-scan is monitored by
+		 * the assinged SfsDirectoryScanHandler-instance.
+		 */
+		void scanLocalFilesystem();
 
 	private:
 		wxString path_;
@@ -269,14 +263,12 @@ class SfsDirectory : private wxDirTraverser
 		unsigned int visitedDirectories_;
 
 		/**
-		 * Removes all elements from entryList_.
+		 * Tests whether a SfsEntry can be inserted into the directory.
+		 *
+		 * This method is called by insertEntry() to ensure that the
+		 * new entry fits to the assigned filter options.
 		 */
-		void clearEntryList();
-
-		/**
-		 * Re-fills entryList_
-		 */
-		void updateEntryList();
+		bool canInsert(const wxString &) const;
 
 		/**
 		 * Inserts a new SfsEntry into the SfsDirectory.

@@ -152,6 +152,8 @@ START_TEST(SfsDir_existing)
 	result = dir.setPath(wxSfsDir);
 	fail_if(result == false, "Path has not changed");
 
+	dir.scanLocalFilesystem();
+
 	num = dir.getNumEntries();
 	fail_if(num != 5, "Five entries expected, but have %i", num);
 }
@@ -165,6 +167,8 @@ START_TEST(SfsDir_non_existing)
 
 	result = dir.setPath(wxSfsDir + wxT("/baz"));
 	fail_if(result == false, "Path has not changed");
+
+	dir.scanLocalFilesystem();
 
 	num = dir.getNumEntries();
 	fail_if(num > 0, "No entries expected, but have %i", num);
@@ -183,6 +187,8 @@ START_TEST(SfsDir_filter_match)
 	result = dir.setFilter(wxT("file"));
 	fail_if(result == false, "Filter has not changed");
 
+	dir.scanLocalFilesystem();
+
 	num = dir.getNumEntries();
 	fail_if(num != 4, "Four entries expected, but have %i", num);
 }
@@ -199,6 +205,8 @@ START_TEST(SfsDir_filter_no_match)
 
 	result = dir.setFilter(wxT("jhasfas"));
 	fail_if(result == false, "Filter has not changed");
+
+	dir.scanLocalFilesystem();
 
 	num = dir.getNumEntries();
 	fail_if(num != 0, "No entries expected, but have %i", num);
@@ -220,6 +228,8 @@ START_TEST(SfsDir_inverse_filter_match)
 	result = dir.setFilterInversed(true);
 	fail_if(result == false, "Filter-inverse-setting has not changed");
 
+	dir.scanLocalFilesystem();
+
 	num = dir.getNumEntries();
 	fail_if(num != 1, "One entry expected, but have %i", num);
 }
@@ -240,6 +250,8 @@ START_TEST(SfsDir_inverse_filter_no_match)
 	result = dir.setFilterInversed(true);
 	fail_if(result == false, "Filter-inverse-setting has not changed");
 
+	dir.scanLocalFilesystem();
+
 	num = dir.getNumEntries();
 	fail_if(num != 0, "No entries expected, but have %i", num);
 }
@@ -254,6 +266,8 @@ START_TEST(SfsDir_entry_order)
 
 	result = dir.setPath(wxSfsDir);
 	fail_if(result == false, "Path has not changed");
+
+	dir.scanLocalFilesystem();
 
 	for (i = 0; i < dir.getNumEntries(); i++) {
 		SfsEntry *entry = dir.getEntry(i);
@@ -277,6 +291,8 @@ START_TEST(SfsDir_recursive)
 
 	result = dir.setDirTraversal(true);
 	fail_unless(result, "Failed to enabled dir-traversal");
+
+	dir.scanLocalFilesystem();
 
 	fail_unless(dir.getNumEntries() == 9,
 	    "Unexpected number of entries\n"
@@ -332,6 +348,8 @@ START_TEST(SfsDir_recursive_filtered)
 	result = dir.setFilter(wxT("1"));
 	fail_unless(result, "Failed to update the filter");
 
+	dir.scanLocalFilesystem();
+
 	fail_unless(dir.getNumEntries() == 3,
 	    "Unexpected number of entries\n"
 	    "Is: %i\n"
@@ -367,6 +385,8 @@ START_TEST(SfsDir_resolve_link_ok)
 	result = dir.setPath(wxSfsDir);
 	fail_unless(result, "Path has not changed");
 
+	dir.scanLocalFilesystem();
+
 	int idx = dir.getIndexOf(wxSfsDir + wxT("/link_file1"));
 	fail_unless(idx >= 0, "File not found in model");
 
@@ -389,6 +409,8 @@ START_TEST(SfsDir_resolve_link_plain_file)
 
 	result = dir.setPath(wxSfsDir);
 	fail_unless(result, "Path has not changed");
+
+	dir.scanLocalFilesystem();
 
 	int idx = dir.getIndexOf(wxSfsDir + wxT("/file1"));
 	fail_unless(idx >= 0, "File not found in model");
@@ -418,6 +440,8 @@ START_TEST(SfsDir_filter_rel_path_only)
 
 	result = dir.setFilter(wxT("s"));
 	fail_unless(result, "Failed to update the filter");
+
+	dir.scanLocalFilesystem();
 
 	fail_unless(dir.getNumEntries() == 4,
 	    "Unexpected number of entries\n"
@@ -458,6 +482,8 @@ START_TEST(SfsDir_check_handler)
 	result = dir.setPath(wxSfsDir);
 	fail_unless(result, "Path has not changed");
 
+	dir.scanLocalFilesystem();
+
 	fail_unless(dir.getNumEntries() == 5,
 	    "Unexpected number of sfs-entries (%i)",
 	    dir.getNumEntries());
@@ -488,6 +514,8 @@ START_TEST(SfsDir_check_handler_abort)
 	result = dir.setPath(wxSfsDir);
 	fail_unless(result, "Path has not changed");
 
+	dir.scanLocalFilesystem();
+
 	fail_unless(dir.getNumEntries() == 0,
 	    "Unexpected number of sfs-entries (%i)",
 	    dir.getNumEntries());
@@ -505,6 +533,130 @@ START_TEST(SfsDir_check_handler_abort)
 	fail_unless(handler.maxVisited_ == 0,
 	    "Unexpected number of visited directories (%li)",
 	    handler.maxVisited_);
+}
+END_TEST
+
+START_TEST(SfsDir_insert_entry)
+{
+	SfsDirectory	dir;
+	SfsEntry	*entry;
+
+	entry = dir.insertEntry(wxT("foo"));
+	fail_unless(entry != 0, "Failed to insert path");
+	fail_unless(entry->getPath() == wxT("foo"),
+	    "Unexptected path (%ls)", entry->getPath().c_str());
+
+	entry = dir.insertEntry(wxT("bar"));
+	fail_unless(entry != 0, "Failed to insert path");
+	fail_unless(entry->getPath() == wxT("bar"),
+	    "Unexptected path (%ls)", entry->getPath().c_str());
+
+	fail_unless(dir.getNumEntries() == 2,
+	    "Unexpected number of entries (%i)", dir.getNumEntries());
+
+	entry = dir.getEntry(0);
+	fail_unless(entry != 0, "Failed to fetch entry");
+	fail_unless(entry->getPath() == wxT("bar"),
+	    "Unexptected path (%ls)", entry->getPath().c_str());
+
+	entry = dir.getEntry(1);
+	fail_unless(entry != 0, "Failed to fetch entry");
+	fail_unless(entry->getPath() == wxT("foo"),
+	    "Unexptected path (%ls)", entry->getPath().c_str());
+}
+END_TEST
+
+START_TEST(SfsDir_insert_double_entry)
+{
+	SfsDirectory	dir;
+	SfsEntry	*entry, *foo_entry;
+
+	foo_entry = dir.insertEntry(wxT("foo"));
+	fail_unless(foo_entry != 0, "Failed to insert path");
+	fail_unless(foo_entry->getPath() == wxT("foo"),
+	    "Unexptected path (%ls)", foo_entry->getPath().c_str());
+
+	entry = dir.insertEntry(wxT("bar"));
+	fail_unless(entry != 0, "Failed to insert path");
+	fail_unless(entry->getPath() == wxT("bar"),
+	    "Unexptected path (%ls)", entry->getPath().c_str());
+
+	entry = dir.insertEntry(wxT("foo"));
+	fail_unless(entry != 0, "Failed to insert path");
+	fail_unless(entry->getPath() == wxT("foo"),
+	    "Unexptected path (%ls)", entry->getPath().c_str());
+
+	fail_unless(entry == foo_entry, "Wrong entry fetched");
+
+	fail_unless(dir.getNumEntries() == 2,
+	    "Unexpected number of entries (%i)", dir.getNumEntries());
+
+	entry = dir.getEntry(0);
+	fail_unless(entry != 0, "Failed to fetch entry");
+	fail_unless(entry->getPath() == wxT("bar"),
+	    "Unexptected path (%ls)", entry->getPath().c_str());
+
+	entry = dir.getEntry(1);
+	fail_unless(entry != 0, "Failed to fetch entry");
+	fail_unless(entry->getPath() == wxT("foo"),
+	    "Unexptected path (%ls)", entry->getPath().c_str());
+}
+END_TEST
+
+START_TEST(SfsDir_remove_entry)
+{
+	SfsDirectory	dir;
+	SfsEntry	*entry;
+
+	entry = dir.insertEntry(wxT("foo"));
+	fail_unless(entry != 0, "Failed to insert path");
+	fail_unless(entry->getPath() == wxT("foo"),
+	    "Unexptected path (%ls)", entry->getPath().c_str());
+
+	entry = dir.insertEntry(wxT("bar"));
+	fail_unless(entry != 0, "Failed to insert path");
+	fail_unless(entry->getPath() == wxT("bar"),
+	    "Unexptected path (%ls)", entry->getPath().c_str());
+
+	fail_unless(dir.getNumEntries() == 2,
+	    "Unexpected number of entries (%i)", dir.getNumEntries());
+
+	dir.removeEntry(0);
+
+	fail_unless(dir.getNumEntries() == 1,
+	    "Unexpected number of entries (%i)", dir.getNumEntries());
+
+	entry = dir.getEntry(0);
+	fail_unless(entry != 0, "Failed to fetch entry");
+	fail_unless(entry->getPath() == wxT("foo"),
+	    "Unexptected path (%ls)", entry->getPath().c_str());
+
+	
+}
+END_TEST
+
+START_TEST(SfsDir_removeall_entries)
+{
+	SfsDirectory	dir;
+	SfsEntry	*entry;
+
+	entry = dir.insertEntry(wxT("foo"));
+	fail_unless(entry != 0, "Failed to insert path");
+	fail_unless(entry->getPath() == wxT("foo"),
+	    "Unexptected path (%ls)", entry->getPath().c_str());
+
+	entry = dir.insertEntry(wxT("bar"));
+	fail_unless(entry != 0, "Failed to insert path");
+	fail_unless(entry->getPath() == wxT("bar"),
+	    "Unexptected path (%ls)", entry->getPath().c_str());
+
+	fail_unless(dir.getNumEntries() == 2,
+	    "Unexpected number of entries (%i)", dir.getNumEntries());
+
+	dir.removeAllEntries();
+
+	fail_unless(dir.getNumEntries() == 0,
+	    "Unexpected number of entries (%i)", dir.getNumEntries());
 }
 END_TEST
 
@@ -530,6 +682,10 @@ getTc_SfsDir(void)
 	tcase_add_test(testCase, SfsDir_filter_rel_path_only);
 	tcase_add_test(testCase, SfsDir_check_handler);
 	tcase_add_test(testCase, SfsDir_check_handler_abort);
+	tcase_add_test(testCase, SfsDir_insert_entry);
+	tcase_add_test(testCase, SfsDir_insert_double_entry);
+	tcase_add_test(testCase, SfsDir_remove_entry);
+	tcase_add_test(testCase, SfsDir_removeall_entries);
 
 	return (testCase);
 }

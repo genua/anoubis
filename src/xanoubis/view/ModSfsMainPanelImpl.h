@@ -34,6 +34,7 @@
 #include "DefaultFilterPolicy.h"
 #include "ModSfsPanelsBase.h"
 #include "SfsAppPolicy.h"
+#include "SfsCtrl.h"
 #include "SfsDefaultFilterPolicy.h"
 #include "SfsFilterPolicy.h"
 #include "ComUpgradeListGetTask.h"
@@ -105,38 +106,12 @@ class ModSfsMainPanelImpl : public Observer, public ModSfsMainPanelBase
 			COLUMN_EOL
 		};
 
-		/**
-		 * An Sfs-operation.
-		 *
-		 * Post-processing on the view might differ from operation to
-		 * operation. That's why you have to keep in mind the
-		 * operation, which was initiated.
-		 */
-		enum SfSOperation {
-			OP_NOP,	/*!< No operation. The view is in initial
-				     state. */
-			OP_SHOW_ALL,	/*!< A new directory, filter ect. was
-					     selected, which forces an update
-					     of the complete entry-list. */
-			OP_SHOW_CHANGED,	/*!< Show changed checksums. */
-			OP_SHOW_CHECKSUMS,	/*!< Show checksums only */
-			OP_SHOW_ORPHANED,	/*!< Show orphaned files
-						     only */
-			OP_SHOW_UPGRADED,	/*!< Show upgraded files
-						     only */
-			OP_APPLY	/*!< Apply was clicked to perform an
-					     operation on the current
-					     selection */
-		};
-
 		wxString columnNames_[COLUMN_EOL]; /** < the header line. */
 
 		long userRuleSetId_;	/**< Id of our ruleSet. */
 		long adminRuleSetId_;	/**< Id of our admin ruleSet. */
 
 		SfsCtrl		*sfsCtrl_;
-
-		SfSOperation	currentOperation_; /**< current operation. */
 
 		bool comEnabled_; /**< Current communicator status. */
 
@@ -253,19 +228,7 @@ class ModSfsMainPanelImpl : public Observer, public ModSfsMainPanelBase
 		 */
 		void OnSfsMainExportClicked(wxCommandEvent&);
 
-		/**
-		 * Applies the Sfs actions via SfsCtrl.
-		 * @param[in] 1st IndexArray containing actions selections.
-		 * @return Nothing.
-		 */
-		void applySfsAction(const IndexArray &);
-
-		/**
-		 * Applies validate via SfsCtrl.
-		 * @param[in] 1st States to include orphaned files.
-		 * @return Nothing.
-		 */
-		void applySfsValidateAll(bool);
+		void handleSfsCommandResult(SfsCtrl::CommandResult);
 
 		/**
 		 * Handle the event when the Sfs sign is enabled.

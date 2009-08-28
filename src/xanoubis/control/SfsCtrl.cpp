@@ -44,6 +44,7 @@
 
 SfsCtrl::SfsCtrl(void)
 {
+	this->entryFilter_ = FILTER_STD;
 	this->comEnabled_ = false; /* Communication disabled */
 	this->sigEnabled_ = true; /* Signature support enabled */
 	this->exportEnabled_ = false;
@@ -69,7 +70,7 @@ void
 SfsCtrl::setPath(const wxString &path)
 {
 	if (sfsDir_.setPath(path))
-		sendDirChangedEvent();
+		refresh();
 }
 
 wxString
@@ -82,7 +83,7 @@ void
 SfsCtrl::setFilter(const wxString &filter)
 {
 	if (sfsDir_.setFilter(filter))
-		sendDirChangedEvent();
+		refresh();
 }
 
 bool
@@ -95,7 +96,7 @@ void
 SfsCtrl::setFilterInversed(bool inversed)
 {
 	if (sfsDir_.setFilterInversed(inversed))
-		sendDirChangedEvent();
+		refresh();
 }
 
 bool
@@ -108,7 +109,22 @@ void
 SfsCtrl::setRecursive(bool recursive)
 {
 	if (sfsDir_.setDirTraversal(recursive))
-		sendDirChangedEvent();
+		refresh();
+}
+
+SfsCtrl::EntryFilter
+SfsCtrl::getEntryFilter(void) const
+{
+	return (this->entryFilter_);
+}
+
+void
+SfsCtrl::setEntryFilter(EntryFilter filter)
+{
+	if (this->entryFilter_ != filter) {
+		this->entryFilter_ = filter;
+		refresh();
+	}
 }
 
 bool
@@ -137,6 +153,34 @@ SfsCtrl::setSignatureEnabled(bool enable)
 		this->sigEnabled_ = false;
 		return (true);
 	}
+}
+
+SfsCtrl::CommandResult
+SfsCtrl::refresh(void)
+{
+	if (!taskList_.empty())
+		return (RESULT_BUSY);
+
+	sfsDir_.removeAllEntries();
+
+	switch (entryFilter_) {
+	case FILTER_STD:
+		sfsDir_.scanLocalFilesystem();
+		break;
+	case FILTER_CHECKSUMS:
+	case FILTER_CHANGED:
+	case FILTER_ORPHANED:
+	case FILTER_UPGRADED:
+		/* Fetch sfslist from daemon */
+		if (!comEnabled_)
+			return (RESULT_NOTCONNECTED);
+
+		createSfsListTasks(getuid(), sfsDir_.getPath());
+		break;
+	}
+
+	sendDirChangedEvent();
+	return (RESULT_EXECUTE);
 }
 
 SfsCtrl::CommandResult
@@ -190,42 +234,15 @@ SfsCtrl::validate(unsigned int idx)
 }
 
 SfsCtrl::CommandResult
-SfsCtrl::validateAll(bool orphaned)
+SfsCtrl::validateAll(void)
 {
-	if (!taskList_.empty())
-		return (RESULT_BUSY);
+	/* Validate all entries in model */
+	IndexArray arr;
 
-	if (comEnabled_) {
-		if (!orphaned) {
-			/*
-			 * Switch back from orphaned to "normal" list.
-			 * There might be entries in the model (non-existing
-			 * files), which needs to be removed now.
-			 */
-			if (sfsDir_.cleanup())
-				sendDirChangedEvent();
-		}
+	for (unsigned int idx = 0; idx < sfsDir_.getNumEntries(); idx++)
+		arr.Add(idx);
 
-		if (!isSignatureEnabled()) {
-			/* Reset signed checksums in model */
-			for (unsigned int idx = 0;
-			    idx < sfsDir_.getNumEntries(); idx++) {
-				SfsEntry *entry = sfsDir_.getEntry(idx);
-
-				if (entry->setChecksumMissing(
-				    SfsEntry::SFSENTRY_SIGNATURE))
-					sendEntryChangedEvent(idx);
-			}
-
-		}
-
-		/* Ask for sfs-list */
-		createSfsListTasks(getuid(), sfsDir_.getPath(), orphaned);
-
-		return (RESULT_EXECUTE);
-	}
-	else
-		return (RESULT_NOTCONNECTED);
+	return (validate(arr));
 }
 
 SfsCtrl::CommandResult
@@ -412,21 +429,6 @@ SfsCtrl::exportChecksums(const IndexArray &arr, const wxString &path)
 }
 
 SfsCtrl::CommandResult
-SfsCtrl::fetchUpgradeList(void)
-{
-	if (!taskList_.empty()) {
-		return (RESULT_BUSY);
-	}
-
-	if (comEnabled_) {
-		createUpgradeListGetTask();
-		return (RESULT_EXECUTE);
-	} else {
-		return (RESULT_NOTCONNECTED);
-	}
-}
-
-SfsCtrl::CommandResult
 SfsCtrl::unregisterChecksum(unsigned int idx)
 {
 	IndexArray arr;
@@ -547,27 +549,16 @@ SfsCtrl::OnSfsListArrived(TaskEvent &event)
 	} else
 		result = task->getFileList();
 
-	/* Go though each file in the model, each file needs to be updated */
-	for (unsigned int idx = 0; idx < sfsDir_.getNumEntries(); idx++) {
-		SfsEntry *entry = sfsDir_.getEntry(idx);
+	wxString basePath = task->getDirectory();
+	if (!basePath.EndsWith(wxT("/")))
+		basePath += wxT("/");
 
-		/* Has file a checksum? */
-		int csumIdx = result.Index(
-		    entry->getRelativePath(sfsDir_.getPath()));
+	for (unsigned int idx = 0; idx < result.Count(); idx++) {
+		SfsEntry *entry = sfsDir_.insertEntry(basePath + result[idx]);
 
-		if (csumIdx != wxNOT_FOUND) {
-			/*
-			 * Model-entry has a registered checksum, fetch it now
-			 */
-			createComCsumGetTasks(entry->getPath(),
-			    !task->haveKeyId(), task->haveKeyId());
-
-			/* Processed, remove from result-list */
-			result.RemoveAt(csumIdx);
-		} else {
-			/* Model-entry has no checksum */
-			if (entry->setChecksumMissing(type))
-				sendEntryChangedEvent(idx);
+		if (entry == 0) {
+			/* Not inserted into the model */
+			continue;
 		}
 
 		if (entry->canHaveChecksum(false)) {
@@ -584,29 +575,14 @@ SfsCtrl::OnSfsListArrived(TaskEvent &event)
 			if (entry->setLocalCsum(0))
 				sendEntryChangedEvent(idx);
 		}
+
+		/* Fetch the checksum(s) */
+		createComCsumGetTasks(entry->getPath(),
+		    !task->haveKeyId(), task->haveKeyId());
 	}
 
-	if (task->fetchOrphaned()) {
-		/*
-		 * If fetching of orphaned files was enabled, the remaining
-		 * entries of the result-list are orphaned files, which needs
-		 * to be inserted into the model.
-		 */
-		wxString basePath = task->getDirectory();
-
-		if (!basePath.EndsWith(wxT("/")))
-			basePath += wxT("/");
-
-		for (unsigned int idx = 0; idx < result.Count(); idx++) {
-			if (!result[idx].EndsWith(wxT("/"))) {
-				SfsEntry *e = sfsDir_.insertEntry(
-				    basePath + result[idx]);
-
-				createComCsumGetTasks(e->getPath(),
-				    !task->haveKeyId(), task->haveKeyId());
-			}
-		}
-	}
+	/* Directory listing is complete */
+	sendDirChangedEvent();
 }
 
 void
@@ -688,7 +664,7 @@ SfsCtrl::OnCsumGet(TaskEvent &event)
 		return;
 	}
 
-	/* Recieve checksum from task */
+	/* Receive checksum from task */
 	SfsEntry *entry = sfsDir_.getEntry(idx);
 	ComTask::ComTaskResult taskResult = task->getComTaskResult();
 	SfsEntry::ChecksumType type = task->haveKeyId() ?
@@ -992,76 +968,6 @@ SfsCtrl::OnCsumDel(TaskEvent &event)
 }
 
 void
-SfsCtrl::OnUpgradeListArrived(TaskEvent &event)
-{
-	PopTaskHelper		 taskHelper(this);
-	ComTask::ComTaskResult	 comResult;
-	SfsEntry::ChecksumType	 type;
-	int			 upgradeIdx;
-	wxArrayString		 fileList;
-	wxString		 errMsg;
-	SfsEntry		*entry;
-	ComUpgradeListGetTask	*task;
-
-	task = dynamic_cast<ComUpgradeListGetTask*>(event.getTask());
-	comResult = ComTask::RESULT_LOCAL_ERROR;
-	type = SfsEntry::SFSENTRY_CHECKSUM;
-	fileList.Clear();
-	errMsg = wxEmptyString;
-
-	if (task == 0) {
-		/* No ComUpgradeListGetTask -> stop propagating */
-		event.Skip(false);
-		return;
-	}
-
-	if (taskList_.IndexOf(task) == wxNOT_FOUND) {
-		/* Belongs to someone other, ignore it */
-		event.Skip();
-		return;
-	}
-
-	event.Skip(false); /* "My" task -> stop propagating */
-	comResult = task->getComTaskResult();
-	taskHelper.setTask(task);
-	type = task->haveKeyId() ?
-	    SfsEntry::SFSENTRY_SIGNATURE : SfsEntry::SFSENTRY_CHECKSUM;
-
-	if (comResult != ComTask::RESULT_SUCCESS) {
-		if (comResult == ComTask::RESULT_COM_ERROR) {
-			errMsg = wxString::Format(_("Communication "
-			    "error while fetching list of upgraded "
-			    "files."));
-		} else if (comResult == ComTask::RESULT_REMOTE_ERROR) {
-			errMsg = wxString::Format(_("Got error "
-			    "(%hs) from daemon while fetching list"
-			    "of upgraded files."),
-			    strerror(task->getResultDetails()));
-		} else {
-			errMsg = wxString::Format(_("An unexpected "
-			    "error (%i) occured while while fetching list"
-			    "of upgraded files."), task->getComTaskResult());
-		}
-		errorList_.Add(errMsg);
-	} else {
-		fileList = task->getFileList();
-		for (unsigned int idx=0; idx<sfsDir_.getNumEntries(); idx++) {
-			entry = sfsDir_.getEntry(idx);
-			upgradeIdx = fileList.Index(entry->getPath());
-			if (upgradeIdx != wxNOT_FOUND) {
-				entry->setUpgraded();
-				fileList.RemoveAt(upgradeIdx);
-			}
-		}
-		for (unsigned int idx=0; idx<fileList.Count(); idx++) {
-			sfsDir_.insertEntry(fileList.Item(idx));
-		}
-		sfsDir_.cleanup();
-		sendDirChangedEvent();
-	}
-}
-
-void
 SfsCtrl::enableCommunication(void)
 {
 	comEnabled_ = true;
@@ -1076,8 +982,6 @@ SfsCtrl::enableCommunication(void)
 	    wxTaskEventHandler(SfsCtrl::OnCsumAdd), NULL, this);
 	JobCtrl::getInstance()->Connect(anTASKEVT_CSUM_DEL,
 	    wxTaskEventHandler(SfsCtrl::OnCsumDel), NULL, this);
-	JobCtrl::getInstance()->Connect(anTASKEVT_UPGRADE_LIST,
-	    wxTaskEventHandler(SfsCtrl::OnUpgradeListArrived), NULL, this);
 }
 
 void
@@ -1095,8 +999,6 @@ SfsCtrl::disableCommunication(void)
 	    wxTaskEventHandler(SfsCtrl::OnCsumAdd), NULL, this);
 	JobCtrl::getInstance()->Disconnect(anTASKEVT_CSUM_DEL,
 	    wxTaskEventHandler(SfsCtrl::OnCsumDel), NULL, this);
-	JobCtrl::getInstance()->Disconnect(anTASKEVT_UPGRADE_LIST,
-	    wxTaskEventHandler(SfsCtrl::OnUpgradeListArrived), NULL, this);
 }
 
 void
@@ -1257,15 +1159,17 @@ SfsCtrl::createComCsumDelTasks(SfsEntry *entry)
 }
 
 void
-SfsCtrl::createSfsListTasks(uid_t uid, const wxString &path, bool orphaned)
+SfsCtrl::createSfsListTasks(uid_t uid, const wxString &path)
 {
-	ComSfsListTask *csTask = new ComSfsListTask;
-	csTask->setRequestParameter(uid, path);
-	csTask->setRecursive(isRecursive());
-	csTask->setFetchOrphaned(orphaned);
+	if (entryFilter_ != FILTER_UPGRADED) {
+		ComSfsListTask *csTask = new ComSfsListTask;
+		csTask->setRequestParameter(uid, path);
+		csTask->setRecursive(isRecursive());
+		csTask->setFetchOrphaned(entryFilter_ == FILTER_ORPHANED);
 
-	pushTask(csTask);
-	JobCtrl::getInstance()->addTask(csTask);
+		pushTask(csTask);
+		JobCtrl::getInstance()->addTask(csTask);
+	}
 
 	if (isSignatureEnabled()) {
 		KeyCtrl *keyCtrl = KeyCtrl::getInstance();
@@ -1275,22 +1179,13 @@ SfsCtrl::createSfsListTasks(uid_t uid, const wxString &path, bool orphaned)
 		ComSfsListTask *sigTask = new ComSfsListTask;
 		sigTask->setRequestParameter(uid, path);
 		sigTask->setRecursive(isRecursive());
-		sigTask->setFetchOrphaned(orphaned);
+		sigTask->setFetchOrphaned(entryFilter_ == FILTER_ORPHANED);
+		sigTask->setFetchUpgraded(entryFilter_ == FILTER_UPGRADED);
 		sigTask->setKeyId(raw_cert->keyid, raw_cert->idlen);
 
 		pushTask(sigTask);
 		JobCtrl::getInstance()->addTask(sigTask);
 	}
-}
-
-void
-SfsCtrl::createUpgradeListGetTask(void)
-{
-	ComUpgradeListGetTask *task = new ComUpgradeListGetTask();
-	task->setRequestParameter(geteuid());
-
-	pushTask(task);
-	JobCtrl::getInstance()->addTask(task);
 }
 
 void
@@ -1430,6 +1325,24 @@ SfsCtrl::popTask(Task *task)
 		/*
 		 * This was the last task in the list -> the operation finished
 		 */
+
+		if (entryFilter_ == FILTER_CHANGED) {
+			/*
+			 * Remove all entries from model which has not
+			 * changed
+			 */
+			unsigned int idx = 0;
+
+			while (idx < sfsDir_.getNumEntries()) {
+				SfsEntry *entry = sfsDir_.getEntry(idx);
+				if (!entry->isChecksumChanged())
+					sfsDir_.removeEntry(idx);
+				else
+					idx++;
+			}
+
+			sendDirChangedEvent();
+		}
 
 		if (exportEnabled_) {
 			/*

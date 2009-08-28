@@ -55,7 +55,6 @@
 #include "ModSfsAddPolicyVisitor.h"
 #include "ModSfsListCtrl.h"
 #include "ModSfsMainPanelImpl.h"
-#include "SfsCtrl.h"
 
 ModSfsMainPanelImpl::ModSfsMainPanelImpl(wxWindow* parent,
     wxWindowID id) : Observer(NULL), ModSfsMainPanelBase(parent, id)
@@ -178,7 +177,6 @@ void
 ModSfsMainPanelImpl::OnSfsMainDirCtrlSelChanged(wxTreeEvent &)
 {
 	/* Update controller */
-	currentOperation_ = OP_SHOW_ALL;
 	wxBeginBusyCursor();
 	sfsCtrl_->setPath(SfsMainDirCtrl->GetPath());
 	wxEndBusyCursor();
@@ -217,15 +215,6 @@ ModSfsMainPanelImpl::OnSfsOperationFinished(wxCommandEvent&)
 {
 	/* Enable the controls again */
 	enableSfsControls(false); /* false: No operation running */
-
-	if (currentOperation_ == OP_SHOW_CHANGED)
-		SfsMainListCtrl->refreshList(ModSfsListCtrl::SHOW_CHANGED);
-	else if (currentOperation_ == OP_SHOW_CHECKSUMS)
-		SfsMainListCtrl->refreshList(ModSfsListCtrl::SHOW_CHECKSUM);
-	else if (currentOperation_ == OP_SHOW_ORPHANED)
-		SfsMainListCtrl->refreshList(ModSfsListCtrl::SHOW_ORPHANED);
-	else if (currentOperation_ == OP_SHOW_UPGRADED)
-		SfsMainListCtrl->refreshList(ModSfsListCtrl::SHOW_UPGRADED);
 }
 
 void
@@ -239,7 +228,7 @@ ModSfsMainPanelImpl::OnSfsDirChanged(wxCommandEvent&)
 		SfsMainDirCtrl->SetPath(sfsCtrl_->getPath());
 
 	/* Display changes */
-	SfsMainListCtrl->refreshList(ModSfsListCtrl::SHOW_EXISTING);
+	SfsMainListCtrl->refreshList();
 
 	/* Update CurrPathLabel accordingly */
 	SfsMainCurrPathLabel->SetLabel(SfsMainDirCtrl->GetPath());
@@ -256,9 +245,7 @@ ModSfsMainPanelImpl::OnSfsMainDirTraversalChecked(wxCommandEvent&)
 void
 ModSfsMainPanelImpl::OnSfsEntryChanged(wxCommandEvent &event)
 {
-	int sfsIndex = event.GetInt();
-	int listIndex = SfsMainListCtrl->getListIndexOf(sfsIndex);
-	SfsMainListCtrl->refreshEntry(listIndex);
+	SfsMainListCtrl->refreshEntry(event.GetInt());
 }
 
 void
@@ -299,28 +286,41 @@ ModSfsMainPanelImpl::OnSfsMainInverseCheckboxClicked(wxCommandEvent&)
 void
 ModSfsMainPanelImpl::OnSfsMainValidateButtonClicked(wxCommandEvent&)
 {
-	currentOperation_ = OP_SHOW_ALL;
+	SfsCtrl::CommandResult result = sfsCtrl_->validateAll();
 
-	SfsDirectory &dir = sfsCtrl_->getSfsDirectory();
-	unsigned int listSize = SfsMainListCtrl->GetItemCount();
+	/* Controls are disabled if operation is executed */
+	enableSfsControls(result == SfsCtrl::RESULT_EXECUTE);
 
-	if (listSize < dir.getNumEntries())
-		SfsMainListCtrl->refreshList(ModSfsListCtrl::SHOW_EXISTING);
-
-	applySfsValidateAll(false);
+	handleSfsCommandResult(result);
 }
 
 void
 ModSfsMainPanelImpl::OnSfsMainApplyButtonClicked(wxCommandEvent&)
 {
-	applySfsAction(SfsMainListCtrl->getSfsIndexes());
+	SfsCtrl::CommandResult result = SfsCtrl::RESULT_EXECUTE;
+	IndexArray selection = SfsMainListCtrl->getSelectedIndexes();
+
+	switch (SfsMainActionChoice->GetCurrentSelection()) {
+	case 0:
+		result = sfsCtrl_->registerChecksum(selection);
+		break;
+	case 1:
+		result = sfsCtrl_->unregisterChecksum(selection);
+		break;
+	case 2:
+		result = sfsCtrl_->validate(selection);
+		break;
+	}
+
+	/* Controls are disabled if operation is executed */
+	enableSfsControls(result == SfsCtrl::RESULT_EXECUTE);
+
+	handleSfsCommandResult(result);
 }
 
 void
 ModSfsMainPanelImpl::OnSfsMainImportClicked(wxCommandEvent&)
 {
-	wxString msg = wxEmptyString;
-
 	wxFileDialog dlg(this, _("Choose the import-file"));
 	if (dlg.ShowModal() != wxID_OK) {
 		/* Operation canceled */
@@ -330,41 +330,13 @@ ModSfsMainPanelImpl::OnSfsMainImportClicked(wxCommandEvent&)
 	SfsCtrl::CommandResult result =
 	    sfsCtrl_->importChecksums(dlg.GetPath());
 
-	switch (result) {
-	case SfsCtrl::RESULT_NOTCONNECTED:
-		wxGetApp().status(
-		  _("Error: xanoubis is not connected to the daemon"));
-		break;
-	case SfsCtrl::RESULT_NEEDKEY:
-		wxGetApp().status(
-		  _("Error: Failed to load the private key."));
-		break;
-	case SfsCtrl::RESULT_INVALIDARG:
-		wxGetApp().status(
-		  _("Error: An invalid argument was supplied"));
-		break;
-	case SfsCtrl::RESULT_BUSY:
-		wxGetApp().status(
-		 _("Error: Sfs is still busy with another operation."));
-		break;
-	case SfsCtrl::RESULT_WRONG_PASS:
-		wxGetApp().status(
-		    _("Wrong password!"));
-		msg = _("The entered password is incorrect.");
-		wxMessageBox(msg, _("SFS error"), wxOK|wxICON_ERROR, this);
-		break;
-	case SfsCtrl::RESULT_NOOP:
-	case SfsCtrl::RESULT_EXECUTE:
-		/* Success */
-		break;
-	}
+	handleSfsCommandResult(result);
 }
 
 void
 ModSfsMainPanelImpl::OnSfsMainExportClicked(wxCommandEvent&)
 {
-	wxString msg = wxEmptyString;
-	IndexArray selection = SfsMainListCtrl->getSfsIndexes();
+	IndexArray selection = SfsMainListCtrl->getSelectedIndexes();
 
 	if (selection.IsEmpty()) {
 		/* No selection -> no export */
@@ -383,56 +355,13 @@ ModSfsMainPanelImpl::OnSfsMainExportClicked(wxCommandEvent&)
 	SfsCtrl::CommandResult result =
 	    sfsCtrl_->exportChecksums(selection, dlg.GetPath());
 
-	switch (result) {
-	case SfsCtrl::RESULT_NOTCONNECTED:
-		wxGetApp().status(
-		  _("Error: xanoubis is not connected to the daemon"));
-		break;
-	case SfsCtrl::RESULT_NEEDKEY:
-		wxGetApp().status(
-		  _("Error: Failed to load the private key."));
-		break;
-	case SfsCtrl::RESULT_INVALIDARG:
-		wxGetApp().status(
-		  _("Error: An invalid argument was supplied"));
-		break;
-	case SfsCtrl::RESULT_BUSY:
-		wxGetApp().status(
-		 _("Error: Sfs is still busy with another operation."));
-		break;
-	case SfsCtrl::RESULT_WRONG_PASS:
-		wxGetApp().status(
-		    _("Wrong password!"));
-		msg = _("The entered password is incorrect.");
-		wxMessageBox(msg, _("SFS error"), wxOK|wxICON_ERROR, this);
-		break;
-	case SfsCtrl::RESULT_NOOP:
-	case SfsCtrl::RESULT_EXECUTE:
-		/* Success */
-		break;
-	}
+	handleSfsCommandResult(result);
 }
 
 void
-ModSfsMainPanelImpl::applySfsAction(const IndexArray &selection)
+ModSfsMainPanelImpl::handleSfsCommandResult(SfsCtrl::CommandResult result)
 {
 	wxString msg = wxEmptyString;
-	SfsCtrl::CommandResult result = SfsCtrl::RESULT_EXECUTE;
-
-	switch (SfsMainActionChoice->GetCurrentSelection()) {
-	case 0:
-		result = sfsCtrl_->registerChecksum(selection);
-		break;
-	case 1:
-		result = sfsCtrl_->unregisterChecksum(selection);
-		break;
-	case 2:
-		result = sfsCtrl_->validate(selection);
-		break;
-	}
-
-	/* Controls are disabled if operation is executed */
-	enableSfsControls(result == SfsCtrl::RESULT_EXECUTE);
 
 	switch (result) {
 	case SfsCtrl::RESULT_NOTCONNECTED:
@@ -450,45 +379,6 @@ ModSfsMainPanelImpl::applySfsAction(const IndexArray &selection)
 	case SfsCtrl::RESULT_BUSY:
 		wxGetApp().status(
 		 _("Error: Sfs is still busy with another operation."));
-		break;
-	case SfsCtrl::RESULT_WRONG_PASS:
-		wxGetApp().status(
-		    _("Wrong password!"));
-		msg = _("The entered password is incorrect.");
-		wxMessageBox(msg, _("SFS error"), wxOK|wxICON_ERROR, this);
-		break;
-	case SfsCtrl::RESULT_NOOP:
-	case SfsCtrl::RESULT_EXECUTE:
-		/* Success */
-		break;
-	}
-}
-
-void
-ModSfsMainPanelImpl::applySfsValidateAll(bool orphaned)
-{
-	wxString msg = wxEmptyString;
-	SfsCtrl::CommandResult result = sfsCtrl_->validateAll(orphaned);
-
-	/* Controls are disabled if operation is executed */
-	enableSfsControls(result == SfsCtrl::RESULT_EXECUTE);
-
-	switch (result) {
-	case SfsCtrl::RESULT_NOTCONNECTED:
-		wxGetApp().status(
-		    _("Error: xanoubis is not connected to the daemon"));
-		break;
-	case SfsCtrl::RESULT_NEEDKEY:
-		wxGetApp().status(
-		    _("Error: Failed to load the private key."));
-		break;
-	case SfsCtrl::RESULT_INVALIDARG:
-		wxGetApp().status(
-		    _("Error: An invalid argument was supplied"));
-		break;
-	case SfsCtrl::RESULT_BUSY:
-		wxGetApp().status(
-		    _("Error: Sfs is still busy with another operation."));
 		break;
 	case SfsCtrl::RESULT_WRONG_PASS:
 		wxGetApp().status(
@@ -528,23 +418,19 @@ ModSfsMainPanelImpl::OnSfsMainDirViewChoiceSelected(wxCommandEvent &event)
 {
 	switch (event.GetSelection()) {
 	case 0:
-		SfsMainListCtrl->refreshList(ModSfsListCtrl::SHOW_ALL);
+		sfsCtrl_->setEntryFilter(SfsCtrl::FILTER_STD);
 		break;
 	case 1:
-		currentOperation_ = OP_SHOW_CHECKSUMS;
-		applySfsValidateAll(false);
+		sfsCtrl_->setEntryFilter(SfsCtrl::FILTER_CHECKSUMS);
 		break;
 	case 2:
-		currentOperation_ = OP_SHOW_CHANGED;
-		applySfsValidateAll(false);
+		sfsCtrl_->setEntryFilter(SfsCtrl::FILTER_CHANGED);
 		break;
 	case 3:
-		currentOperation_ = OP_SHOW_ORPHANED;
-		applySfsValidateAll(true);
+		sfsCtrl_->setEntryFilter(SfsCtrl::FILTER_ORPHANED);
 		break;
 	case 4:
-		currentOperation_ = OP_SHOW_UPGRADED;
-		sfsCtrl_->fetchUpgradeList();
+		sfsCtrl_->setEntryFilter(SfsCtrl::FILTER_UPGRADED);
 		break;
 	}
 }
@@ -584,8 +470,6 @@ ModSfsMainPanelImpl::initSfsMain(void)
 {
 	sfsCtrl_ = new SfsCtrl;
 	SfsMainListCtrl->setSfsCtrl(sfsCtrl_);
-
-	currentOperation_ = OP_NOP;
 
 	sfsCtrl_->Connect(anEVT_SFSOPERATION_FINISHED,
 	    wxCommandEventHandler(ModSfsMainPanelImpl::OnSfsOperationFinished),
@@ -631,8 +515,15 @@ ModSfsMainPanelImpl::enableSfsControls(bool sfsOpRunning)
 	SfsMainImportButton->Enable(comEnabled_ && !sfsOpRunning);
 	SfsMainExportButton->Enable(
 	    comEnabled_ && !sfsOpRunning && haveSelection);
+	SfsMainActionChoice->Enable(
+	    comEnabled_ && !sfsOpRunning && haveSelection);
 	SfsMainActionButton->Enable(
 	    comEnabled_ && !sfsOpRunning && haveSelection);
+
+	SfsMainFilterTextCtrl->Enable(!sfsOpRunning);
+	SfsMainFilterButton->Enable(!sfsOpRunning);
+	SfsMainDirTraversalCheckbox->Enable(!sfsOpRunning);
+	SfsMainFilterInvertCheckBox->Enable(!sfsOpRunning);
 }
 
 void

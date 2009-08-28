@@ -47,7 +47,7 @@ SfsDirectory::SfsDirectory()
 
 SfsDirectory::~SfsDirectory()
 {
-	clearEntryList();
+	removeAllEntries();
 }
 
 SfsDirectoryScanHandler *
@@ -79,7 +79,6 @@ SfsDirectory::setPath(const wxString &path)
 {
 	if (path != this->path_) {
 		this->path_ = path;
-		updateEntryList();
 
 		return (true);
 	}
@@ -98,7 +97,6 @@ SfsDirectory::setDirTraversal(bool enabled)
 {
 	if (enabled != this->recursive_) {
 		this->recursive_ = enabled;
-		updateEntryList();
 
 		return (true);
 	} else
@@ -116,7 +114,6 @@ SfsDirectory::setFilter(const wxString &filter)
 {
 	if (filter != this->filter_) {
 		this->filter_ = filter;
-		updateEntryList();
 
 		return (true);
 	}
@@ -135,7 +132,6 @@ SfsDirectory::setFilterInversed(bool inverse)
 {
 	if (inverse != this->inverseFilter_) {
 		this->inverseFilter_ = inverse;
-		updateEntryList();
 
 		return (true);
 	}
@@ -171,6 +167,9 @@ SfsDirectory::insertEntry(const wxString &path)
 {
 	int idx;
 
+	if (!canInsert(path))
+		return (0);
+
 	if (entryList_.empty()) {
 		/*
 		 * An empty list. This is easy. Append the new SfsEntry to the
@@ -201,41 +200,8 @@ SfsDirectory::removeEntry(unsigned int idx)
 	}
 }
 
-bool
-SfsDirectory::cleanup(void)
-{
-	std::vector<SfsEntry *>::iterator it = entryList_.begin();
-	int numRemoved = 0;
-
-	while (it != entryList_.end()) {
-		SfsEntry *e = (*it);
-
-		if (!e->fileExists()) {
-			/* File does not exist */
-			entryList_.erase(it);
-			numRemoved++;
-			delete e;
-		} else if (!isDirTraversalEnabled() &&
-		    e->getRelativePath(path_).Find(wxT("/")) != wxNOT_FOUND) {
-			/*
-			 * Directory traversal is disabled but this entry comes
-			 * from a sub-directory.
-			 */
-			entryList_.erase(it);
-			numRemoved++;
-			delete e;
-		} else {
-			/* All tests passed, skip to next entry */
-			it++;
-		}
-	}
-
-	/* Model has changed, if at least one entry was removed */
-	return (numRemoved > 0);
-}
-
 void
-SfsDirectory::clearEntryList()
+SfsDirectory::removeAllEntries(void)
 {
 	while (!entryList_.empty()) {
 		SfsEntry *e = entryList_.back();
@@ -246,7 +212,7 @@ SfsDirectory::clearEntryList()
 }
 
 void
-SfsDirectory::updateEntryList()
+SfsDirectory::scanLocalFilesystem()
 {
 	wxDir dir(this->path_);
 
@@ -259,7 +225,7 @@ SfsDirectory::updateEntryList()
 	callHandler(scanStarts());
 
 	/* Clear list before traversion starts */
-	clearEntryList();
+	removeAllEntries();
 	dir.Traverse(*this);
 
 	/* Scan is finished */
@@ -269,6 +235,21 @@ SfsDirectory::updateEntryList()
 		    scanProgress(totalDirectories_, totalDirectories_));
 	}
 	callHandler(scanFinished(abortScan_));
+}
+
+bool
+SfsDirectory::canInsert(const wxString &filename) const
+{
+	/* Search for recursive part only  */
+	wxString path;
+
+	/* ::StartsWith puts the remaining part (after path_) into path */
+	filename.StartsWith(this->path_, &path);
+	if (path.StartsWith(wxT("/")))
+		path = path.Mid(1);
+
+	return (this->inverseFilter_ ^
+	    (path.Find(this->filter_) != wxNOT_FOUND));
 }
 
 int
@@ -361,22 +342,12 @@ SfsDirectory::OnFile(const wxString &filename)
 		return (wxDIR_STOP);
 	}
 
-	/* Search for recursive part only  */
-	wxString path;
-
-	/* ::StartsWith puts the remaining part (after path_) into path */
-	filename.StartsWith(this->path_, &path);
-	if (path.StartsWith(wxT("/")))
-		path = path.Mid(1);
-
-	if (this->inverseFilter_ ^ (path.Find(this->filter_) != wxNOT_FOUND)) {
-		/*
-		 * Insert into directory
-		 * Entries are sorted in alphabetic order
-		 */
-		insertEntry(filename);
-		wxGetApp().ProcessPendingEvents();
-	}
+	/*
+	 * Insert into directory
+	 * Entries are sorted in alphabetic order
+	 */
+	insertEntry(filename);
+	wxGetApp().ProcessPendingEvents();
 
 	return (wxDIR_CONTINUE);
 }
