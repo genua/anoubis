@@ -897,7 +897,11 @@ __sfs_get(char *file, int getmode, uid_t sfs_uid, struct anoubis_sig *as)
 				return 1;
 			}
 		}
-		error = anoubis_csum_calc(file, val_check, &len);
+		if (opts & SFSSIG_OPT_LN) {
+			error = anoubis_csum_link_calc(file, val_check, &len);
+		} else {
+			error = anoubis_csum_calc(file, val_check, &len);
+		}
 		if (error < 0) {
 			errno = -error;
 			if (opts & SFSSIG_OPT_DEBUG)

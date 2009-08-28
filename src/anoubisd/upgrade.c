@@ -33,9 +33,11 @@
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
+#include <sys/stat.h>
 #include <pwd.h>
 #include <signal.h>
 #include <event.h>
+#include <openssl/sha.h>
 #ifdef LINUX
 #include <grp.h>
 #include <bsdcompat.h>
@@ -194,6 +196,7 @@ send_checksum(const char *path, struct event_info_upgrade *ev_info)
 	anoubisd_sfs_update_all_t	*umsg;
 	struct anoubis_ioctl_csum	 cs;
 	int				 fd, len, plen;
+	struct stat			 statbuf;
 
 	if (devanoubis == -2) {
 		devanoubis = open("/dev/anoubis", O_RDONLY);
@@ -204,18 +207,48 @@ send_checksum(const char *path, struct event_info_upgrade *ev_info)
 	}
 	if (devanoubis < 0)
 		return;
-	fd = open(path, O_RDONLY);
-	if (fd < 0) {
-		if (errno != ENOENT)
-			log_warn("upgrade: Failed to open file %s", path);
+	if (lstat(path, &statbuf) < 0) {
+		log_warnx("upgrade: Failed to stat file %s", path);
 		return;
 	}
-	cs.fd = fd;
-	if (ioctl(devanoubis, ANOUBIS_GETCSUM, &cs) < 0) {
-		log_warn("upgrade: Kernel failed to supply checksum for %s",
+	if (S_ISLNK(statbuf.st_mode)) {
+		char		*buf = malloc(PATH_MAX);
+		int		 len;
+		SHA256_CTX	 shaCtx;
+
+		if (!buf) {
+			log_warnx("upgrade: Out of memory");
+			return;
+		}
+		len = readlink(path, buf, PATH_MAX);
+		if (len < 0) {
+			free(buf);
+			log_warn("upgrade: Readlink failed");
+			return;
+		}
+		SHA256_Init(&shaCtx);
+		SHA256_Update(&shaCtx, buf, len);
+		SHA256_Final(cs.csum, &shaCtx);
+		free(buf);
+	} else if (S_ISREG(statbuf.st_mode)) {
+		fd = open(path, O_RDONLY);
+		if (fd < 0) {
+			if (errno != ENOENT)
+				log_warn("upgrade: Failed to open file %s",
+				    path);
+			return;
+		}
+		cs.fd = fd;
+		if (ioctl(devanoubis, ANOUBIS_GETCSUM, &cs) < 0) {
+			log_warn("upgrade: Kernel failed to supply checksum "
+			    "for %s", path);
+		}
+		close(fd);
+	} else {
+		log_warnx("upgrade: Upgraded file %s is not a regular file",
 		    path);
+		return;
 	}
-	close(fd);
 	plen = strlen(path) + 1;
 	len = sizeof(anoubisd_sfs_update_all_t) + ANOUBIS_CS_LEN + plen;
 	msg = msg_factory(ANOUBISD_MSG_SFS_UPDATE_ALL, len);
