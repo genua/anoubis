@@ -143,7 +143,7 @@ class ModSfsMainPanelImpl : public Observer, public ModSfsMainPanelBase
 		 * information is used to enable/disable buttons the view.
 		 * @param[in] 1st The event.
 		 */
-		void OnDaemonRegistration(TaskEvent &);
+		void OnConnectionStateChange(wxCommandEvent &);
 
 		/**
 		 * Handle the event when Sfs operation finished.

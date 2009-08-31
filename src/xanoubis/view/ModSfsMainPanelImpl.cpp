@@ -82,9 +82,9 @@ ModSfsMainPanelImpl::ModSfsMainPanelImpl(wxWindow* parent,
 	AnEvents::getInstance()->Connect(anEVT_SFSBROWSER_SHOW,
 	    wxCommandEventHandler(ModSfsMainPanelImpl::onSfsBrowserShow),
 	    NULL, this);
-	JobCtrl::getInstance()->Connect(anTASKEVT_REGISTER,
-	    wxTaskEventHandler(ModSfsMainPanelImpl::OnDaemonRegistration),
-	    NULL, this);
+	JobCtrl::getInstance()->Connect(anEVT_COM_CONNECTION,
+	   wxCommandEventHandler(ModSfsMainPanelImpl::OnConnectionStateChange),
+	   NULL, this);
 	Hide();
 
 	addSubject(keyPicker);
@@ -103,9 +103,9 @@ ModSfsMainPanelImpl::ModSfsMainPanelImpl(wxWindow* parent,
 
 ModSfsMainPanelImpl::~ModSfsMainPanelImpl(void)
 {
-	JobCtrl::getInstance()->Disconnect(anTASKEVT_REGISTER,
-	    wxTaskEventHandler(ModSfsMainPanelImpl::OnDaemonRegistration),
-	    NULL, this);
+	JobCtrl::getInstance()->Disconnect(anEVT_COM_CONNECTION,
+	   wxCommandEventHandler(ModSfsMainPanelImpl::OnConnectionStateChange),
+	   NULL, this);
 	AnEvents::getInstance()->Disconnect(anEVT_LOAD_RULESET,
 	    wxCommandEventHandler(ModSfsMainPanelImpl::onLoadRuleSet),
 	    NULL, this);
@@ -195,19 +195,35 @@ ModSfsMainPanelImpl::OnSfsListDeselected(wxListEvent &)
 }
 
 void
-ModSfsMainPanelImpl::OnDaemonRegistration(TaskEvent &event)
+ModSfsMainPanelImpl::OnConnectionStateChange(wxCommandEvent &event)
 {
-	ComRegistrationTask *task =
-	    dynamic_cast<ComRegistrationTask*>(event.getTask());
-
-	if (task != 0) {
-		comEnabled_ =
-		   (task->getAction() == ComRegistrationTask::ACTION_REGISTER);
-		event.Skip();
-	} else
-		comEnabled_ = false;
+	JobCtrl::ConnectionState state =
+	    (JobCtrl::ConnectionState)event.GetInt();
+	comEnabled_ = (state == JobCtrl::CONNECTION_CONNECTED);
 
 	enableSfsControls(false); /* false: No operation running */
+
+	if (!comEnabled_ &&
+	    (sfsCtrl_->getEntryFilter() != SfsCtrl::FILTER_STD)) {
+		/*
+		 * You are disconnected and the current selected filter cannot
+		 * be used in disconnected state! Switch back to local
+		 * filesystem.
+		 */
+		wxMessageBox(_("The SFS Browser currently displays an invalid "
+		    "view because no daemon connection is established. The "
+		    "selection is switched back to the "
+		    "\"Standard File Browsing\" view."),
+		    _("SFS warning"), wxOK | wxICON_EXCLAMATION, this);
+
+		SfsMainDirViewChoice->SetSelection(0);
+		SfsMainDirTraversalCheckbox->SetValue(false);
+
+		sfsCtrl_->setEntryFilter(SfsCtrl::FILTER_STD);
+		sfsCtrl_->setRecursive(false);
+	}
+
+	event.Skip();
 }
 
 void
