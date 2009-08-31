@@ -282,11 +282,14 @@ ComThread::readMessage(void)
 	achat_rc		 rc;
 
 	if ((channel_ == 0) || (client_ == 0)) {
+		sendComEvent(JobCtrl::CONNECTION_ERROR);
 		return (false);
 	}
 
-	if ((msg = anoubis_msg_new(size)) == 0)
+	if ((msg = anoubis_msg_new(size)) == 0) {
+		sendComEvent(JobCtrl::CONNECTION_ERROR);
 		return (false);
+	}
 	while(1) {
 		rc = acc_receivemsg(channel_, (char*)(msg->u.buf), &size);
 		if (rc != ACHAT_RC_NOSPACE)
@@ -297,8 +300,7 @@ ComThread::readMessage(void)
 	}
 	if (rc != ACHAT_RC_OK) {
 		anoubis_msg_free(msg);
-		if (rc == ACHAT_RC_EOF)
-			sendComEvent(JobCtrl::CONNECTION_ERROR);
+		sendComEvent(JobCtrl::CONNECTION_ERROR);
 
 		return (false);
 	}
@@ -316,6 +318,7 @@ ComThread::readMessage(void)
 	if (result < 0) {
 		/* Error */
 		/* XXX CEH */
+		sendComEvent(JobCtrl::CONNECTION_ERROR);
 		return (false);
 	} else if (result == 0) {
 		/*
