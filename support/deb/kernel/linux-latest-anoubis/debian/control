@@ -1,0 +1,12 @@
+Source: linux-latest-anoubis
+Section: base
+Priority: extra
+Maintainer: Stefan Fritsch <fritsch@anoubis.genua.de>
+Build-Depends: debhelper (>= 5)
+Standards-Version: 3.7.2
+
+Package: linux-image-anoubis
+Architecture: any
+Depends: linux-image-${kernel:Version}-anoubis-${source:Version}
+Description: Anoubis Linux Kernel meta package
+ This package depends on the latest Anoubis version of linux-image-*.
