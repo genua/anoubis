@@ -73,11 +73,14 @@ MainFrame::MainFrame(wxWindow *parent) : MainFrameBase(parent)
 	    wxCommandEventHandler(MainFrame::OnConnectionStateChange),
 	    NULL, this);
 
-	jobCtrl->Connect(anTASKEVT_UPGRADE_LIST,
-	    wxTaskEventHandler(MainFrame::onUpgradeListArrived),
+	jobCtrl->Connect(anTASKEVT_SFS_LIST,
+	    wxTaskEventHandler(MainFrame::onSfsListArrived),
 	    NULL, this);
 
-	upgradeTask_.setRequestParameter(geteuid());
+	upgradeTask_.setRequestParameter(0, wxT("/"));
+	upgradeTask_.setFetchUpgraded(true);
+	upgradeTask_.setOneFile(true);
+	upgradeTask_.setRecursive(true);
 
 	anEvents->Connect(anEVT_WIZARD_SHOW,
 	    wxCommandEventHandler(MainFrame::onWizardShow), NULL, this);
@@ -133,8 +136,8 @@ MainFrame::~MainFrame()
 	anEvents->Disconnect(anEVT_BACKUP_POLICY,
 	    wxCommandEventHandler(MainFrame::onBackupPolicy), NULL, this);
 
-	jobCtrl->Disconnect(anTASKEVT_UPGRADE_LIST,
-	    wxTaskEventHandler(MainFrame::onUpgradeListArrived), NULL, this);
+	jobCtrl->Disconnect(anTASKEVT_SFS_LIST,
+	    wxTaskEventHandler(MainFrame::onSfsListArrived), NULL, this);
 
 	ANEVENTS_IDENT_BCAST_DEREGISTRATION(MainFrame);
 
@@ -331,14 +334,23 @@ MainFrame::OnConnectionStateChange(wxCommandEvent& event)
 
 	/* XXX Evil i18n-style */
 	switch (newState) {
-	case JobCtrl::CONNECTION_CONNECTED:
+	case JobCtrl::CONNECTION_CONNECTED: {
+		KeyCtrl			*keyCtrl = KeyCtrl::getInstance();
+		LocalCertificate	&cert = keyCtrl->getLocalCertificate();
+		struct anoubis_sig	*raw_cert;
+
 		logMessage = _("Connection established with ") + hostname;
 		if (instance->isSfsDisable() == false) {
 			logMessage += _(" without sfsdisable!");
 		}
 		wxGetApp().log(logMessage);
-		instance->addTask(&upgradeTask_);
+		if (cert.isLoaded()) {
+			raw_cert = cert.getCertificate();
+			upgradeTask_.setKeyId(raw_cert->keyid, raw_cert->idlen);
+			instance->addTask(&upgradeTask_);
+		}
 		break;
+	}
 	case JobCtrl::CONNECTION_DISCONNECTED:
 	case JobCtrl::CONNECTION_ERROR:
 		logMessage = _("Disconnected from ") + hostname;
@@ -596,9 +608,9 @@ MainFrame::isShowing(void)
 }
 
 void
-MainFrame::onUpgradeListArrived(TaskEvent &event)
+MainFrame::onSfsListArrived(TaskEvent &event)
 {
-	ComUpgradeListGetTask	*task;
+	ComSfsListTask		*task;
 	ComTask::ComTaskResult	comResult;
 	wxConfig *userOptions = wxGetApp().getUserOptions();
 	wxString		errMsg;
@@ -608,7 +620,7 @@ MainFrame::onUpgradeListArrived(TaskEvent &event)
 
 	showUpgradeMessage = true;
 
-	task = dynamic_cast<ComUpgradeListGetTask*>(event.getTask());
+	task = dynamic_cast<ComSfsListTask*>(event.getTask());
 	comResult = ComTask::RESULT_LOCAL_ERROR;
 
 	if (task == 0) {

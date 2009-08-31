@@ -199,6 +199,16 @@ class ComSfsListTask : public ComTask
 		void setFetchUpgraded(bool);
 
 		/**
+		 * Enables or disables a special list mode that aborts
+		 * the listing once the first real file has been added
+		 * to the list. This is useful if we only need to know if
+		 * the list is empty or not.
+		 * @param enabled Set to ture if you want to activate the
+		 * 		feature.
+		 */
+		void setOneFile(bool);
+
+		/**
 		 * Implementation of Task::getEventType().
 		 */
 		wxEventType getEventType(void) const;
@@ -244,6 +254,7 @@ class ComSfsListTask : public ComTask
 		char				*basepath_;
 		std::queue<char *>		 dirqueue_;
 		bool				 upgraded_;
+		bool				 oneFile_;
 
 		/**
 		 * Performs a single fetch-operation.

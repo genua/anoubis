@@ -91,12 +91,6 @@ BEGIN_DECLARE_EVENT_TYPES()
 	 */
 	DECLARE_LOCAL_EVENT_TYPE(anTASKEVT_SFS_LIST, wxNewEventType())
 
-	/**
-	 * Event-type of TaskEvent when a upgrade-list was answered
-	 * by anoubisd.
-	 * @see ComUpgradeListGetTask
-	 */
-	DECLARE_LOCAL_EVENT_TYPE(anTASKEVT_UPGRADE_LIST, wxNewEventType())
 END_DECLARE_EVENT_TYPES()
 //@}
 

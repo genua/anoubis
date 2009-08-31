@@ -47,6 +47,7 @@ ComSfsListTask::ComSfsListTask(void) : dirqueue_()
 	this->keyIdLen_ = 0;
 	basepath_ = NULL;
 	this->upgraded_ = false;
+	this->oneFile_ = false;
 }
 
 ComSfsListTask::ComSfsListTask(uid_t uid, const wxString &dir) : dirqueue_()
@@ -57,6 +58,7 @@ ComSfsListTask::ComSfsListTask(uid_t uid, const wxString &dir) : dirqueue_()
 	this->keyIdLen_ = 0;
 	basepath_ = NULL;
 	this->upgraded_ = false;
+	this->oneFile_ = false;
 
 	setRequestParameter(uid, dir);
 }
@@ -160,6 +162,12 @@ ComSfsListTask::fetchUpgraded(void) const
 	return this->upgraded_;
 }
 
+void
+ComSfsListTask::setOneFile(bool onefile)
+{
+	this->oneFile_ = onefile;
+}
+
 wxEventType
 ComSfsListTask::getEventType(void) const
 {
@@ -203,8 +211,10 @@ ComSfsListTask::fetchSfsList(const char *path)
 {
 	char				*fullpath;
 	unsigned int			 flags = ANOUBIS_CSUM_UID;
-
 	int result;
+
+	if (oneFile_ && fileList_.Count() > 0)
+		return true;
 	if (directory_ != wxT("/"))
 		result = asprintf(&fullpath, "%s/%s",
 		    (const char *)directory_.fn_str(), path);

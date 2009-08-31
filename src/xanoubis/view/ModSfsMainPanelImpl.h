@@ -37,7 +37,6 @@
 #include "SfsCtrl.h"
 #include "SfsDefaultFilterPolicy.h"
 #include "SfsFilterPolicy.h"
-#include "ComUpgradeListGetTask.h"
 
 class IndexArray;
 class SfsCtrl;

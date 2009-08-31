@@ -468,8 +468,6 @@ xanoubis_SOURCES= \
 	job/ComRegistrationTask.h \
 	job/ComSfsListTask.cpp \
 	job/ComSfsListTask.h \
-	job/ComUpgradeListGetTask.cpp \
-	job/ComUpgradeListGetTask.h \
 	job/DummyTask.h \
 	job/DummyTask.cpp \
 	job/ComTask.cpp \

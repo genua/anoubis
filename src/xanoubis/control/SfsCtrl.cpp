@@ -36,7 +36,6 @@
 #include "ComCsumGetTask.h"
 #include "ComRegistrationTask.h"
 #include "ComSfsListTask.h"
-#include "ComUpgradeListGetTask.h"
 #include "CsumCalcTask.h"
 #include "JobCtrl.h"
 #include "KeyCtrl.h"
