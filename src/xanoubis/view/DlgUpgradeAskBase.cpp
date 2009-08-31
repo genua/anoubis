@@ -37,35 +37,35 @@
 
 DlgUpgradeAskBase::DlgUpgradeAskBase( wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style, const wxString& name ) : wxDialog( parent, id, title, pos, size, style, name )
 {
-	this->SetSizeHints( wxDefaultSize, wxDefaultSize );
+	this->SetSizeHints( wxDefaultSize, wxSize( -1,-1 ) );
 	
 	wxBoxSizer* mainSizer;
 	mainSizer = new wxBoxSizer( wxVERTICAL );
 	
-	warningLabel = new wxStaticText( this, wxID_ANY, _("The system has been upgraded. Therefore the\nchecksums of all related files have changed. Please\ncheck the checksums of your signed files in the SFS\nBrowser!"), wxPoint( -1,-1 ), wxSize( -1,-1 ), 0 );
-	warningLabel->Wrap( -1 );
-	mainSizer->Add( warningLabel, 0, wxALL|wxEXPAND, 20 );
+	warningLabel = new wxStaticText( this, wxID_ANY, _("The system has been upgraded. Therefore the checksums of all related files have changed. Please check the checksums of your signed files in the SFS Browser!"), wxPoint( -1,-1 ), wxSize( -1,-1 ), 0 );
+	warningLabel->Wrap( 350 );
+	mainSizer->Add( warningLabel, 0, wxALL, 10 );
+	
+	
+	mainSizer->Add( 0, 15, 0, 0, 0 );
 	
 	wxBoxSizer* buttonSizer;
 	buttonSizer = new wxBoxSizer( wxHORIZONTAL );
 	
+	closeButton = new wxButton( this, wxID_ANY, _("Close"), wxDefaultPosition, wxDefaultSize, 0 );
+	buttonSizer->Add( closeButton, 0, wxALIGN_CENTER|wxALIGN_CENTER_HORIZONTAL|wxALL, 10 );
+	
 	
 	buttonSizer->Add( 0, 0, 1, wxEXPAND, 5 );
-	
-	closeButton = new wxButton( this, wxID_ANY, _("Close"), wxDefaultPosition, wxDefaultSize, 0 );
-	buttonSizer->Add( closeButton, 0, wxALIGN_CENTER|wxALIGN_CENTER_HORIZONTAL|wxALL, 15 );
 	
 	openButton = new wxButton( this, wxID_ANY, _("Open SFS Browser now!"), wxDefaultPosition, wxDefaultSize, 0 );
-	buttonSizer->Add( openButton, 0, wxALIGN_CENTER|wxALIGN_CENTER_HORIZONTAL|wxALL, 15 );
-	
-	
-	buttonSizer->Add( 0, 0, 1, wxEXPAND, 5 );
+	buttonSizer->Add( openButton, 0, wxALIGN_CENTER|wxALIGN_CENTER_HORIZONTAL|wxALL, 10 );
 	
 	mainSizer->Add( buttonSizer, 1, wxEXPAND, 5 );
 	
 	showAgainCheckBox = new wxCheckBox( this, wxID_ANY, _("Don't show this message again!"), wxDefaultPosition, wxDefaultSize, 0 );
 	
-	mainSizer->Add( showAgainCheckBox, 0, wxALL|wxEXPAND, 20 );
+	mainSizer->Add( showAgainCheckBox, 0, wxALL|wxEXPAND, 10 );
 	
 	this->SetSizer( mainSizer );
 	this->Layout();

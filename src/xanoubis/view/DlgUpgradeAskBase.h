@@ -59,8 +59,8 @@ class DlgUpgradeAskBase : public wxDialog
 		wxStaticText* warningLabel;
 		
 		wxButton* closeButton;
-		wxButton* openButton;
 		
+		wxButton* openButton;
 		wxCheckBox* showAgainCheckBox;
 		
 		// Virtual event handlers, overide them in your derived class

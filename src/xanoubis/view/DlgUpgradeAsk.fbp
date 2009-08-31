@@ -56,7 +56,7 @@
             <property name="font"></property>
             <property name="hidden">0</property>
             <property name="id">wxID_ANY</property>
-            <property name="maximum_size"></property>
+            <property name="maximum_size">-1,-1</property>
             <property name="minimum_size"></property>
             <property name="name">DlgUpgradeAskBase</property>
             <property name="pos"></property>
@@ -104,8 +104,8 @@
                 <property name="orient">wxVERTICAL</property>
                 <property name="permission">none</property>
                 <object class="sizeritem" expanded="1">
-                    <property name="border">20</property>
-                    <property name="flag">wxALL|wxEXPAND</property>
+                    <property name="border">10</property>
+                    <property name="flag">wxALL</property>
                     <property name="proportion">0</property>
                     <object class="wxStaticText" expanded="1">
                         <property name="bg"></property>
@@ -115,8 +115,8 @@
                         <property name="font"></property>
                         <property name="hidden">0</property>
                         <property name="id">wxID_ANY</property>
-                        <property name="label">The system has been upgraded. Therefore the&#x0A;checksums of all related files have changed. Please&#x0A;check the checksums of your signed files in the SFS&#x0A;Browser!</property>
-                        <property name="maximum_size"></property>
+                        <property name="label">The system has been upgraded. Therefore the checksums of all related files have changed. Please check the checksums of your signed files in the SFS Browser!</property>
+                        <property name="maximum_size">-1,-1</property>
                         <property name="minimum_size"></property>
                         <property name="name">warningLabel</property>
                         <property name="permission">protected</property>
@@ -128,7 +128,7 @@
                         <property name="window_extra_style"></property>
                         <property name="window_name"></property>
                         <property name="window_style"></property>
-                        <property name="wrap">-1</property>
+                        <property name="wrap">350</property>
                         <event name="OnChar"></event>
                         <event name="OnEnterWindow"></event>
                         <event name="OnEraseBackground"></event>
@@ -155,6 +155,16 @@
                     </object>
                 </object>
                 <object class="sizeritem" expanded="1">
+                    <property name="border">0</property>
+                    <property name="flag"></property>
+                    <property name="proportion">0</property>
+                    <object class="spacer" expanded="1">
+                        <property name="height">15</property>
+                        <property name="permission">protected</property>
+                        <property name="width">0</property>
+                    </object>
+                </object>
+                <object class="sizeritem" expanded="1">
                     <property name="border">5</property>
                     <property name="flag">wxEXPAND</property>
                     <property name="proportion">1</property>
@@ -164,17 +174,7 @@
                         <property name="orient">wxHORIZONTAL</property>
                         <property name="permission">none</property>
                         <object class="sizeritem" expanded="1">
-                            <property name="border">5</property>
-                            <property name="flag">wxEXPAND</property>
-                            <property name="proportion">1</property>
-                            <object class="spacer" expanded="1">
-                                <property name="height">0</property>
-                                <property name="permission">protected</property>
-                                <property name="width">0</property>
-                            </object>
-                        </object>
-                        <object class="sizeritem" expanded="1">
-                            <property name="border">15</property>
+                            <property name="border">10</property>
                             <property name="flag">wxALIGN_CENTER|wxALIGN_CENTER_HORIZONTAL|wxALL</property>
                             <property name="proportion">0</property>
                             <object class="wxButton" expanded="1">
@@ -226,7 +226,17 @@
                             </object>
                         </object>
                         <object class="sizeritem" expanded="1">
-                            <property name="border">15</property>
+                            <property name="border">5</property>
+                            <property name="flag">wxEXPAND</property>
+                            <property name="proportion">1</property>
+                            <object class="spacer" expanded="1">
+                                <property name="height">0</property>
+                                <property name="permission">protected</property>
+                                <property name="width">0</property>
+                            </object>
+                        </object>
+                        <object class="sizeritem" expanded="1">
+                            <property name="border">10</property>
                             <property name="flag">wxALIGN_CENTER|wxALIGN_CENTER_HORIZONTAL|wxALL</property>
                             <property name="proportion">0</property>
                             <object class="wxButton" expanded="1">
@@ -277,20 +287,10 @@
                                 <event name="OnUpdateUI"></event>
                             </object>
                         </object>
-                        <object class="sizeritem" expanded="1">
-                            <property name="border">5</property>
-                            <property name="flag">wxEXPAND</property>
-                            <property name="proportion">1</property>
-                            <object class="spacer" expanded="1">
-                                <property name="height">0</property>
-                                <property name="permission">protected</property>
-                                <property name="width">0</property>
-                            </object>
-                        </object>
                     </object>
                 </object>
                 <object class="sizeritem" expanded="1">
-                    <property name="border">20</property>
+                    <property name="border">10</property>
                     <property name="flag">wxALL|wxEXPAND</property>
                     <property name="proportion">0</property>
                     <object class="wxCheckBox" expanded="1">
