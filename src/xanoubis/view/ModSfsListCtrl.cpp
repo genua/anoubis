@@ -205,10 +205,6 @@ ModSfsListCtrl::refreshEntry(unsigned int idx)
 		checksumInfo = _("orphaned");
 		checksumIconIndex = 2;
 		break;
-	case SfsEntry::SFSENTRY_UPGRADED:
-		checksumInfo = _("upgraded");
-		checksumIconIndex = 2;
-		break;
 	}
 
 	switch (entry->getChecksumState(SfsEntry::SFSENTRY_SIGNATURE)) {
@@ -225,17 +221,20 @@ ModSfsListCtrl::refreshEntry(unsigned int idx)
 		signatureIconIndex = 2;
 		break;
 	case SfsEntry::SFSENTRY_NOMATCH:
-		signatureIconIndex = 3;
+		switch(entry->getChecksumState(SfsEntry::SFSENTRY_UPGRADE)) {
+		case SfsEntry::SFSENTRY_MATCH:
+			signatureIconIndex = 2;
+			signatureInfo = _("upgraded");
+			break;
+		default:
+			signatureIconIndex = 3;
+		}
 		break;
 	case SfsEntry::SFSENTRY_MATCH:
 		signatureIconIndex = 1;
 		break;
 	case SfsEntry::SFSENTRY_ORPHANED:
 		signatureInfo = _("orphaned");
-		signatureIconIndex = 2;
-		break;
-	case SfsEntry::SFSENTRY_UPGRADED:
-		signatureInfo = _("upgraded");
 		signatureIconIndex = 2;
 		break;
 	}

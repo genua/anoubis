@@ -196,19 +196,6 @@ SfsEntry::isChecksumChanged(void) const
 	    isChecksumChanged(SFSENTRY_SIGNATURE);
 }
 
-bool
-SfsEntry::wasUpgraded(void) const
-{
-	return (state_[SFSENTRY_SIGNATURE] == SFSENTRY_UPGRADED);
-}
-
-bool
-SfsEntry::setUpgraded(void)
-{
-	state_[SFSENTRY_SIGNATURE] = SFSENTRY_UPGRADED;
-	return true;
-}
-
 size_t
 SfsEntry::getChecksumLength(ChecksumType type) const
 {
@@ -247,25 +234,33 @@ SfsEntry::setChecksum(ChecksumType type, const u_int8_t *cs, size_t size)
 bool
 SfsEntry::setChecksumMissing(ChecksumType type)
 {
+	bool	ret = false;
+
+	if (type == SFSENTRY_SIGNATURE)
+		ret = setChecksumMissing(SFSENTRY_UPGRADE);
 	releaseChecksum(type);
 
 	if (state_[type] != SFSENTRY_MISSING) {
 		state_[type] = SFSENTRY_MISSING;
 		return (true);
 	} else
-		return (false);
+		return ret;
 }
 
 bool
 SfsEntry::setChecksumInvalid(ChecksumType type)
 {
+	bool	ret = false;
+
+	if (type == SFSENTRY_SIGNATURE)
+		ret = setChecksumInvalid(SFSENTRY_UPGRADE);
 	releaseChecksum(type);
 
 	if (state_[type] != SFSENTRY_INVALID) {
 		state_[type] = SFSENTRY_INVALID;
 		return (true);
 	} else
-		return (false);
+		return ret;
 }
 
 bool
@@ -288,7 +283,7 @@ SfsEntry::getLocalCsum(void) const
 bool
 SfsEntry::setLocalCsum(const u_int8_t *cs)
 {
-	bool c1, c2, c3;
+	bool c1, c2, c3, c4;
 
 	if (cs != 0) {
 		int result = memcmp(localCsum_, cs, ANOUBIS_CS_LEN);
@@ -306,8 +301,9 @@ SfsEntry::setLocalCsum(const u_int8_t *cs)
 
 	c2 = validateChecksum(SFSENTRY_CHECKSUM);
 	c3 = validateChecksum(SFSENTRY_SIGNATURE);
+	c4 = validateChecksum(SFSENTRY_UPGRADE);
 
-	return (c1 || c2 || c3);
+	return (c1 || c2 || c3 || c4);
 }
 
 bool
@@ -317,7 +313,7 @@ SfsEntry::reset(void)
 
 	c1 = haveLocalCsum_;
 	c2 = reset(SFSENTRY_CHECKSUM);
-	c3 = reset(SFSENTRY_SIGNATURE) || reset(SFSENTRY_UPGRADE);
+	c3 = reset(SFSENTRY_SIGNATURE);
 
 	haveLocalCsum_ = false;
 	memset(localCsum_, 0, ANOUBIS_CS_LEN);
@@ -328,13 +324,17 @@ SfsEntry::reset(void)
 bool
 SfsEntry::reset(ChecksumType type)
 {
+	bool	ret = false;
+
+	if (type == SFSENTRY_SIGNATURE)
+		ret = reset(SFSENTRY_UPGRADE);
 	releaseChecksum(type);
 
 	if (state_[type] != SFSENTRY_NOT_VALIDATED) {
 		state_[type] = SFSENTRY_NOT_VALIDATED;
 		return (true);
 	} else
-		return (false);
+		return ret;
 }
 
 void

@@ -66,6 +66,13 @@ ModSfsDetailsDlg::ModSfsDetailsDlg(SfsEntry *entry, wxWindow *parent)
 	else
 		regChecksumTextCtrl->SetValue(_("n/a"));
 
+	/* Remote signature */
+	wxString remoteSig = entry->getChecksum(SfsEntry::SFSENTRY_SIGNATURE);
+	if (!remoteSig.IsEmpty())
+		regSigTextCtrl->SetValue(remoteSig);
+	else
+		regSigTextCtrl->SetValue(_("n/a"));
+
 	/* Checksum state */
 	switch (entry->getChecksumState(SfsEntry::SFSENTRY_CHECKSUM)) {
 	case SfsEntry::SFSENTRY_NOT_VALIDATED:
@@ -86,9 +93,6 @@ ModSfsDetailsDlg::ModSfsDetailsDlg(SfsEntry *entry, wxWindow *parent)
 	case SfsEntry::SFSENTRY_ORPHANED:
 		checksumStateLabel->SetLabel(_("orphaned"));
 		break;
-	case SfsEntry::SFSENTRY_UPGRADED:
-		checksumStateLabel->SetLabel(_("upgraded"));
-		break;
 	}
 
 	/* Signature state */
@@ -103,16 +107,20 @@ ModSfsDetailsDlg::ModSfsDetailsDlg(SfsEntry *entry, wxWindow *parent)
 		signatureStateLabel->SetLabel(_("invalid"));
 		break;
 	case SfsEntry::SFSENTRY_NOMATCH:
-		signatureStateLabel->SetLabel(_("not matching"));
+		switch(entry->getChecksumState(SfsEntry::SFSENTRY_UPGRADE)) {
+		case SfsEntry::SFSENTRY_MATCH:
+			signatureStateLabel->SetLabel(_("upgraded"));
+			break;
+		default:
+			signatureStateLabel->SetLabel(_("not matching"));
+			break;
+		}
 		break;
 	case SfsEntry::SFSENTRY_MATCH:
 		signatureStateLabel->SetLabel(_("matching"));
 		break;
 	case SfsEntry::SFSENTRY_ORPHANED:
 		signatureStateLabel->SetLabel(_("orphaned"));
-		break;
-	case SfsEntry::SFSENTRY_UPGRADED:
-		signatureStateLabel->SetLabel(_("upgraded"));
 		break;
 	}
 }

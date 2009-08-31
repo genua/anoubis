@@ -170,6 +170,8 @@ class ModSfsDetailsDlgBase : public wxDialog
 		wxTextCtrl* checksumTextCtrl;
 		wxStaticText* m_staticText23;
 		wxTextCtrl* regChecksumTextCtrl;
+		wxStaticText* regSigLabel;
+		wxTextCtrl* regSigTextCtrl;
 		wxStaticText* m_staticText24;
 		wxStaticText* checksumStateLabel;
 		wxStaticText* m_staticText26;

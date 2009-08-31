@@ -747,9 +747,12 @@ SfsCtrl::OnCsumGet(TaskEvent &event)
 			/* Export is enabled, push entry into export-list */
 			pushExportEntry(entry, type);
 		} else if (type == SfsEntry::SFSENTRY_SIGNATURE) {
-			if (task->getUpgradeCsum(cs, csumLen) == csumLen) {
+			size_t		upcsLen = task->getUpgradeCsumLen();
+			u_int8_t	upcs[upcsLen];
+
+			if (task->getUpgradeCsum(upcs, upcsLen) == upcsLen) {
 				entry->setChecksum(
-				    SfsEntry::SFSENTRY_UPGRADE, cs, csumLen);
+				    SfsEntry::SFSENTRY_UPGRADE, upcs, upcsLen);
 			} else {
 				entry->reset(SfsEntry::SFSENTRY_UPGRADE);
 			}

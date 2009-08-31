@@ -81,7 +81,6 @@ class SfsEntry
 			SFSENTRY_MATCH,		/*!< The checksum matches */
 			SFSENTRY_ORPHANED,	/*!< There is a checksum but
 						     not corresponding file */
-			SFSENTRY_UPGRADED,	/*!< The file was upgraded. */
 		};
 
 		/**
@@ -229,21 +228,6 @@ class SfsEntry
 		bool isChecksumChanged(void) const;
 
 		/**
-		 * Test if file was upgraded.
-		 * @param None.
-		 * @return True is returned, if file was upgraded.
-		 */
-		bool wasUpgraded(void) const;
-
-		/**
-		 * Set upgrade flag.
-		 * Mark this entry as be upgraded.
-		 * @param None.
-		 * @return True on success.
-		 */
-		bool setUpgraded(void);
-
-		/**
 		 * Returns the length of a checksum.
 		 *
 		 * A plain checksum has a length of ANOUBIS_CS_LEN, but the
@@ -299,6 +283,8 @@ class SfsEntry
 		 * Removes an assigned checksum from the SfsEntry.
 		 *
 		 * The checksum-state is updated to SfsEntry::SFSENTRY_MISSING.
+		 * If the checksum type SFSENTRY_SIGNATURE, the operation
+		 * applies to SFSENTRY_UPGRADE, too.
 		 *
 		 * @param type Type of requested checksum
 		 * @return true is returned, if the checksum-state has changed.
@@ -311,7 +297,9 @@ class SfsEntry
 		 * Invalidates an assigned checksum.
 		 *
 		 * The checksum is removed and the checksum-state is updated to
-		 * SfsEntry::SFSENTRY_INVALID.
+		 * SfsEntry::SFSENTRY_INVALID. If the checksum type is
+		 * SFSENTTRY_SIGNATURE the operation applies to
+		 * SFSENTRY_UPGRADE, too.
 		 *
 		 * @param type Type of requested checksum
 		 * @return true is returned, if the checksum-state has changed.
@@ -374,6 +362,8 @@ class SfsEntry
 		 * The assigned checksum (if any) is removed and the
 		 * checksum-state is updated to
 		 * SfsEntry::SFSENTRY_NOT_VALIDATED.
+		 * If the reset affects a signature, the corresponding
+		 * upgrade signature is reset, too.
 		 *
 		 * @param type Type of requested checksum
 		 * @return true is returned, if the checksum-state has changed.
