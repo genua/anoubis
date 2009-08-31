@@ -216,7 +216,6 @@ class SfsCtrl : public wxEvtHandler
 		 * @return Entry-filter of the controller.
 		 */
 		EntryFilter getEntryFilter(void) const;
-
 		/**
 		 * Assignes a new entry-filter to the controller.
 		 *
@@ -226,6 +225,21 @@ class SfsCtrl : public wxEvtHandler
 		 * @param filter The new filter-type
 		 */
 		void setEntryFilter(EntryFilter);
+
+		/**
+		 * Assignes a new entry-filter to the controller
+		 * and enables/disables recursive traversal
+		 * through the filesystem.
+		 *
+		 * If the filter or recursive changes,
+		 * the model is refreshed.
+		 *
+		 * @param filter The new filter-type
+		 * @param recursive Set recursiv true or false
+		 *
+		 * @return Nothing
+		 */
+		void setEntryFilter(EntryFilter, bool);
 
 		/**
 		 * Tests whether signature-support is enabled.

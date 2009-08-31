@@ -35,7 +35,7 @@
 
 SfsDirectory::SfsDirectory()
 {
-	this->path_ = wxEmptyString;
+	this->path_ = wxT("/");
 	this->recursive_ = false;
 	this->filter_ = wxEmptyString;
 	this->inverseFilter_ = false;

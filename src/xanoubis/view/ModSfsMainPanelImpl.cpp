@@ -201,8 +201,6 @@ ModSfsMainPanelImpl::OnConnectionStateChange(wxCommandEvent &event)
 	    (JobCtrl::ConnectionState)event.GetInt();
 	comEnabled_ = (state == JobCtrl::CONNECTION_CONNECTED);
 
-	enableSfsControls(false); /* false: No operation running */
-
 	if (!comEnabled_ &&
 	    (sfsCtrl_->getEntryFilter() != SfsCtrl::FILTER_STD)) {
 		/*
@@ -219,9 +217,10 @@ ModSfsMainPanelImpl::OnConnectionStateChange(wxCommandEvent &event)
 		SfsMainDirViewChoice->SetSelection(0);
 		SfsMainDirTraversalCheckbox->SetValue(false);
 
-		sfsCtrl_->setEntryFilter(SfsCtrl::FILTER_STD);
-		sfsCtrl_->setRecursive(false);
+		sfsCtrl_->setEntryFilter(SfsCtrl::FILTER_STD, false);
 	}
+
+	enableSfsControls(false); /* false: No operation running */
 
 	event.Skip();
 }
@@ -746,6 +745,10 @@ ModSfsMainPanelImpl::onSfsBrowserShow(wxCommandEvent& event)
 {
 	/* select Browser tab of ModSfs */
 	note_MainSfs->SetSelection(1);
+
+	sfsCtrl_->setEntryFilter(SfsCtrl::FILTER_UPGRADED, true);
+	SfsMainDirTraversalCheckbox->SetValue(true);
+	SfsMainDirViewChoice->SetSelection(4);
 	event.Skip();
 }
 

@@ -126,6 +126,16 @@ SfsCtrl::setEntryFilter(EntryFilter filter)
 	}
 }
 
+void
+SfsCtrl::setEntryFilter(EntryFilter filter, bool recursive)
+{
+	if (sfsDir_.setDirTraversal(recursive)||
+	    this->entryFilter_ != filter) {
+		this->entryFilter_ = filter;
+		refresh();
+	}
+}
+
 bool
 SfsCtrl::isSignatureEnabled(void) const
 {
