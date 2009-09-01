@@ -77,4 +77,5 @@ Debug::checkLevel(int level)
 
 Debug::Debug(void) : Singleton<Debug>()
 {
+	level_ = 0;
 }
