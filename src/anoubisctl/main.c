@@ -91,6 +91,7 @@ static int	load(char *, uid_t, unsigned int);
 static int	dump(char *, uid_t, unsigned int);
 static int	create_channel(void);
 static void	destroy_channel(void);
+static int	moo(void);
 
 typedef int (*func_int_t)(void);
 typedef int (*func_arg_t)(char *, uid_t, unsigned int);
@@ -108,6 +109,7 @@ struct cmd {
 	 */
 	int		args;
 } commands[] = {
+	{ "moo",	moo,			0 },
 	{ "start",	daemon_start,		0 },
 	{ "stop",	daemon_stop,		0 },
 	{ "status",	daemon_status,		0 },
@@ -136,7 +138,7 @@ usage(void)
 	fprintf(stderr, "usage: %s [-fnv] [-k key] [-c cert] [-p <prio>] "
 	    "[-u uid] [-i fd] <command> [<file>]\n", __progname);
 	fprintf(stderr, "    <command>:\n");
-	for (i=0; i < sizeof(commands)/sizeof(struct cmd); i++) {
+	for (i=1; i < sizeof(commands)/sizeof(struct cmd); i++) {
 		if (commands[i].args)
 			fprintf(stderr, "	%s <file>\n",
 				commands[i].command);
@@ -1095,4 +1097,19 @@ destroy_channel(void)
 	}
 	if (channel)
 		acc_destroy(channel);
+}
+
+static int
+moo(void)
+{
+	fprintf(stderr,
+	"\n"
+	" _ __ ___   ___   ___\n"
+	"| '_ ` _ \\ / _ \\ / _ \\\n"
+	"| | | | | | (_) | (_) |\n"
+	"|_| |_| |_|\\___/ \\___/\n"
+	"\n\n"
+	"P.S. no real cows were harmed for this moo\n");
+
+	return 0;
 }
