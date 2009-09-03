@@ -102,7 +102,7 @@ libapnvm_a_SOURCES_flawfinder =	\
 # built with -fPIC.
 #
 noinst_PROGRAMS = libapnvm.so
-libapnvm_so_CFLAGS = -fPIC -shared -std=gnu99 $(shared_AM_CFLAGS) -Wno-error
+libapnvm_so_CFLAGS = -fPIC -shared -std=gnu99 $(shared_AM_CFLAGS)
 libapnvm_so_CPPFLAGS = $(libapnvm_a_CPPFLAGS)
 libapnvm_so_SOURCES = $(libapnvm_a_SOURCES)
 libapnvm_so_LDFLAGS = -nostartfiles -shared $(shared_AM_LDFLAGS) \

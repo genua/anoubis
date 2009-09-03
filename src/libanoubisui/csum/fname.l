@@ -14,6 +14,7 @@ O	[0-7]
 
 %option	noyywrap
 %option nounput
+%option noinput
 %option prefix="csum"
 	/*
 	 * C-Source code in the header sections is wrapped in %{ ... %}
