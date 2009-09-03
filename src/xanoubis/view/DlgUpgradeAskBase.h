@@ -34,14 +34,17 @@
 #ifndef __DlgUpgradeAskBase__
 #define __DlgUpgradeAskBase__
 
-#include <wx/string.h>
-#include <wx/stattext.h>
+#include <wx/bitmap.h>
+#include <wx/image.h>
+#include <wx/statbmp.h>
 #include <wx/gdicmn.h>
 #include <wx/font.h>
 #include <wx/colour.h>
 #include <wx/settings.h>
-#include <wx/button.h>
+#include <wx/string.h>
+#include <wx/stattext.h>
 #include <wx/sizer.h>
+#include <wx/button.h>
 #include <wx/checkbox.h>
 #include <wx/dialog.h>
 
@@ -56,6 +59,7 @@ class DlgUpgradeAskBase : public wxDialog
 	private:
 	
 	protected:
+		wxStaticBitmap* warningIcon;
 		wxStaticText* warningLabel;
 		
 		wxButton* closeButton;

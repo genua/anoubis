@@ -38,6 +38,9 @@ DlgUpgradeAsk::DlgUpgradeAsk(wxWindow *parent) : DlgUpgradeAskBase(parent)
 	userOptions_->Read(wxT
 	    ("/Options/ShowUpgradeMessage"), &showUpgradeMessage);
 	showAgainCheckBox->SetValue(!showUpgradeMessage);
+
+	AnIconList *iconList = AnIconList::getInstance();
+	warningIcon->SetIcon(iconList->GetIcon(AnIconList::ICON_WARNING_48));
 }
 
 DlgUpgradeAsk::~DlgUpgradeAsk(void)

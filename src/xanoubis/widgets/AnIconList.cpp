@@ -34,6 +34,9 @@ AnIconList::AnIconList(void)
 	addIcon(wxT("General_ok_16.png"));
 	addIcon(wxT("General_problem_16.png"));
 	addIcon(wxT("General_error_16.png"));
+	addIcon(wxT("General_ok_48.png"));
+	addIcon(wxT("General_problem_48.png"));
+	addIcon(wxT("General_error_48.png"));
 	addIcon(wxT("General_symlink_16.png"));
 	addIcon(wxT("ModAnoubis_black_16.png"));
 	addIcon(wxT("ModAnoubis_alert_16.png"));

@@ -42,9 +42,17 @@ DlgUpgradeAskBase::DlgUpgradeAskBase( wxWindow* parent, wxWindowID id, const wxS
 	wxBoxSizer* mainSizer;
 	mainSizer = new wxBoxSizer( wxVERTICAL );
 	
+	wxBoxSizer* warningSizer;
+	warningSizer = new wxBoxSizer( wxHORIZONTAL );
+	
+	warningIcon = new wxStaticBitmap( this, wxID_ANY, wxNullBitmap, wxDefaultPosition, wxSize( 48,48 ), 0 );
+	warningSizer->Add( warningIcon, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
+	
 	warningLabel = new wxStaticText( this, wxID_ANY, _("The system has been upgraded. Therefore the checksums of all related files have changed. Please check the checksums of your signed files in the SFS Browser!"), wxPoint( -1,-1 ), wxSize( -1,-1 ), 0 );
 	warningLabel->Wrap( 350 );
-	mainSizer->Add( warningLabel, 0, wxALL, 10 );
+	warningSizer->Add( warningLabel, 1, wxALL, 5 );
+	
+	mainSizer->Add( warningSizer, 0, wxALL|wxEXPAND, 0 );
 	
 	
 	mainSizer->Add( 0, 15, 0, 0, 0 );
