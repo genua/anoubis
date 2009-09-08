@@ -26,8 +26,8 @@ WANTLIB-main =		c m pthread stdc++ event glib-2.0 pixman-1 \
 			Xrandr Xcomposite Xdamage Xrender atk-1.0 cairo \
 			Xrender atk-1.0 dbus-1 dbus-glib-1 expat \
 			fontconfig freetype gdk-x11-2.0 gdk_pixbuf-2.0 \
-			glitz gmodule-2.0 gobject-2.0 gtk-x11-2.0 iconv \
-			intl pango-1.0 pangocairo-1.0 pangoft2-1.0 png z \
+			glitz gmodule-2.0 gio-2.0 gobject-2.0 gtk-x11-2.0 \
+			iconv intl pango-1.0 pangocairo-1.0 pangoft2-1.0 png z \
 			crypto ssl
 
 # XXX [ST]: this needs sane versioning of the pristine tarball to work
