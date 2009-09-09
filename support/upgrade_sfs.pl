@@ -65,8 +65,10 @@ if (! defined $gid) {
 	die "User _anoubisd not found\n";
 }
 
-my @dirs = ($sfsdir);
-find(\&wanted, @dirs);
+if ( -d $sfsdir) {
+	my @dirs = ($sfsdir);
+	find(\&wanted, @dirs);
+}
 
 write_sfsversion($sfsversionfile, $sfsversion);
 print STDERR "Set sfs.version to $sfsversion.\n" if $Debug;
