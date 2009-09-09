@@ -787,8 +787,8 @@ dispatch_m2s(int fd, short sig __used, void *arg)
 			log_warn("dispatch_m2s: bad flags %x", hdr->msg_flags);
 		}
 
-		DEBUG(DBG_QUEUE, " >m2s: %x",
-		    ((struct eventdev_hdr *)msg->msg)->msg_token);
+		hdr = (struct eventdev_hdr *)msg->msg;
+		DEBUG(DBG_QUEUE, " >m2s: %x", hdr->msg_token);
 
 		extra = hdr->msg_size -  sizeof(struct eventdev_hdr);
 		task = 0;
@@ -864,6 +864,8 @@ static void
 dispatch_p2s(int fd, short sig __used, void *arg)
 {
 	struct event_info_session *ev_info = (struct event_info_session*)arg;
+	struct eventdev_hdr *hdr;
+	struct anoubisd_msg_logrequest *log;
 	anoubisd_msg_t *msg;
 
 	DEBUG(DBG_TRACE, ">dispatch_p2s");
@@ -886,9 +888,9 @@ dispatch_p2s(int fd, short sig __used, void *arg)
 			break;
 
 		case ANOUBISD_MSG_LOGREQUEST:
+			log = (struct anoubisd_msg_logrequest*)msg->msg;
 			DEBUG(DBG_QUEUE, " >p2s: log %x",
-			    ((struct anoubisd_msg_logrequest*)msg->msg)
-				->hdr.msg_token);
+				log->hdr.msg_token);
 			dispatch_p2s_log_request(msg, ev_info);
 			break;
 		case ANOUBISD_MSG_POLICYCHANGE:
@@ -897,8 +899,9 @@ dispatch_p2s(int fd, short sig __used, void *arg)
 			break;
 
 		case ANOUBISD_MSG_EVENTCANCEL:
+			hdr = (struct eventdev_hdr *)msg->msg;
 			DEBUG(DBG_QUEUE, " >p2s: %x",
-			    ((struct eventdev_hdr *)msg->msg)->msg_token);
+			    hdr->msg_token);
 			dispatch_p2s_evt_cancel(msg, ev_info);
 			break;
 
@@ -1187,12 +1190,14 @@ dispatch_p2s_evt_cancel(anoubisd_msg_t *msg,
     struct event_info_session *ev_info __used)
 {
 	struct anoubis_notify_head *head;
+	eventdev_token *token;
 	struct cbdata	*cbdata;
 	struct cbdata	cbdatatmp;
 
 	DEBUG(DBG_TRACE, ">dispatch_p2s_evt_cancel");
 
-	cbdatatmp.ev_token = *(eventdev_token*)msg->msg;
+	token = (eventdev_token*)msg->msg;
+	cbdatatmp.ev_token = *token;
 	if ((cbdata = queue_find(&headq, &cbdatatmp, cbdata_cmp))) {
 		head = cbdata->ev_head;
 		anoubis_notify_sendreply(head, EPERM /* XXX RD */,
@@ -1272,6 +1277,7 @@ static void
 dispatch_s2m(int fd, short sig __used, void *arg)
 {
 	struct event_info_session	*ev_info = arg;
+	struct eventdev_reply		*ev_rep;
 	anoubisd_msg_t			*msg;
 	int				 ret;
 	eventdev_token			 token = 0;
@@ -1279,8 +1285,10 @@ dispatch_s2m(int fd, short sig __used, void *arg)
 	DEBUG(DBG_TRACE, ">dispatch_s2m");
 
 	msg = queue_peek(&eventq_s2m);
-	if (msg)
-		token = ((struct eventdev_reply *)msg->msg)->msg_token;
+	if (msg) {
+		ev_rep = (struct eventdev_reply *)msg->msg;
+		token = ev_rep->msg_token;
+	}
 	ret = send_msg(fd, msg);
 	if (msg && ret != 0) {
 		dequeue(&eventq_s2m);
@@ -1304,6 +1312,7 @@ static void
 dispatch_s2p(int fd, short sig __used, void *arg)
 {
 	struct event_info_session	*ev_info = arg;
+	struct eventdev_reply		*ev_rep;
 	anoubisd_msg_t			*msg;
 	int				 ret;
 	eventdev_token			 token = 0;
@@ -1311,8 +1320,10 @@ dispatch_s2p(int fd, short sig __used, void *arg)
 	DEBUG(DBG_TRACE, ">dispatch_s2p");
 
 	msg = queue_peek(&eventq_s2p);
-	if (msg)
-		token = ((struct eventdev_reply *)msg->msg)->msg_token;
+	if (msg) {
+		ev_rep = (struct eventdev_reply *)msg->msg;
+		token = ev_rep->msg_token;
+	}
 	ret = send_msg(fd, msg);
 
 	if (msg && ret != 0) {
@@ -1359,7 +1370,7 @@ session_destroy(struct session *session)
 void
 session_setupuds(struct sessionGroup *seg)
 {
-	struct sockaddr_storage	 ss;
+	struct sockaddr_un	 ss;
 	achat_rc		 rc = ACHAT_RC_ERROR;
 
 	DEBUG(DBG_TRACE, ">session_setupuds");
@@ -1387,11 +1398,12 @@ session_setupuds(struct sessionGroup *seg)
 	}
 
 	bzero(&ss, sizeof(ss));
-	((struct sockaddr_un *)&ss)->sun_family = AF_UNIX;
-	strlcpy(((struct sockaddr_un *)&ss)->sun_path,
+	(&ss)->sun_family = AF_UNIX;
+	strlcpy((&ss)->sun_path,
 	    anoubisd_config.unixsocket,
-	    sizeof(((struct sockaddr_un *)&ss)->sun_path));
-	rc = acc_setaddr(seg->keeper_uds, &ss, sizeof(struct sockaddr_un));
+	    sizeof((&ss)->sun_path));
+	rc = acc_setaddr(seg->keeper_uds, (struct sockaddr_storage *)&ss,
+	    sizeof(struct sockaddr_un));
 	if (rc != ACHAT_RC_OK) {
 		log_warn("session_setupuds: acc_setaddr");
 		acc_destroy(seg->keeper_uds);

@@ -915,14 +915,17 @@ dispatch_m2s(int fd, short event __used, /*@dependent@*/ void *arg)
 {
 	anoubisd_msg_t			*msg;
 	struct event_info_main		*ev_info = arg;
+	struct eventdev_hdr		*ev_hdr;
 	int				 ret;
 	eventdev_token			 token = 0;
 
 	DEBUG(DBG_TRACE, ">dispatch_m2s");
 
 	msg = queue_peek(&eventq_m2s);
-	if (msg)
-		token = ((struct eventdev_hdr *)msg->msg)->msg_token;
+	if (msg) {
+		ev_hdr = (struct eventdev_hdr *)msg->msg;
+		token = ev_hdr->msg_token;
+	}
 	ret = send_msg(fd, msg);
 	if (msg) {
 		if (ret < 0) {
@@ -1287,6 +1290,7 @@ dispatch_s2m(int fd, short event __used, void *arg)
 	/*@dependent@*/
 	anoubisd_msg_t *msg;
 	struct event_info_main *ev_info = (struct event_info_main*)arg;
+	struct eventdev_hdr *ev_hdr;
 
 	DEBUG(DBG_TRACE, ">dispatch_s2m");
 
@@ -1302,8 +1306,8 @@ dispatch_s2m(int fd, short event __used, void *arg)
 			dispatch_passphrase(msg, ev_info);
 			break;
 		default:
-			DEBUG(DBG_QUEUE, " >s2m: %x",
-			    ((struct eventdev_hdr *)msg->msg)->msg_token);
+			ev_hdr = (struct eventdev_hdr *)msg->msg;
+			DEBUG(DBG_QUEUE, " >s2m: %x", ev_hdr->msg_token);
 
 			/* This should be a sessionid registration message */
 			log_warn("dispatch_s2m: bad mtype %d", msg->mtype);
@@ -1326,14 +1330,17 @@ dispatch_m2p(int fd, short event __used, /*@dependent@*/ void *arg)
 {
 	anoubisd_msg_t			*msg;
 	struct event_info_main		*ev_info = arg;
+	struct eventdev_hdr		*ev_hdr;
 	int				 ret;
 	eventdev_token			 token = 0;
 
 	DEBUG(DBG_TRACE, ">dispatch_m2p");
 
 	msg = queue_peek(&eventq_m2p);
-	if (msg)
-		token = ((struct eventdev_hdr *)msg->msg)->msg_token;
+	if (msg) {
+		ev_hdr = (struct eventdev_hdr *)msg->msg;
+		token = ev_hdr->msg_token;
+	}
 	ret = send_msg(fd, msg);
 	if (msg) {
 		if (ret < 0) {
@@ -1367,6 +1374,7 @@ dispatch_p2m(int fd, short event __used, /*@dependent@*/ void *arg)
 {
 	/*@dependent@*/
 	struct event_info_main	*ev_info = arg;
+	struct eventdev_reply	*ev_rep;
 	anoubisd_msg_t		*msg;
 
 	DEBUG(DBG_TRACE, ">dispatch_p2m");
@@ -1376,11 +1384,12 @@ dispatch_p2m(int fd, short event __used, /*@dependent@*/ void *arg)
 			break;
 		switch(msg->mtype) {
 		case ANOUBISD_MSG_EVENTREPLY:
+			ev_rep = (struct eventdev_reply *)msg->msg;
 			DEBUG(DBG_QUEUE, " >p2m: eventdev msg token=%x",
-			    ((struct eventdev_reply *)msg->msg)->msg_token);
+			    ev_rep->msg_token);
 			enqueue(&eventq_m2dev, msg);
 			DEBUG(DBG_QUEUE, " >eventq_m2dev: %x",
-			    ((struct eventdev_reply *)msg->msg)->msg_token);
+			    ev_rep->msg_token);
 			event_add(ev_info->ev_m2dev, NULL);
 			break;
 		case ANOUBISD_MSG_UPGRADE:
@@ -1404,6 +1413,7 @@ dispatch_m2dev(int fd, short event __used, /*@dependent@*/ void *arg)
 {
 	/*@dependent@*/
 	anoubisd_msg_t *msg;
+	struct eventdev_reply *ev_rep;
 	struct event_info_main *ev_info = (struct event_info_main*)arg;
 	ssize_t			ret;
 
@@ -1430,9 +1440,9 @@ dispatch_m2dev(int fd, short event __used, /*@dependent@*/ void *arg)
 			if (ret > 0 ||
 			    (ret < 0 && (errno == EINVAL || errno == ESRCH))) {
 				msg = dequeue(&eventq_m2dev);
+				ev_rep = (struct eventdev_reply *)msg->msg;
 				DEBUG(DBG_QUEUE, " <eventq_m2dev: %x%s",
-				    ((struct eventdev_reply *)
-				    msg->msg)->msg_token,
+				    ev_rep->msg_token,
 				    (ret < 0)? " (bad reply)" : "");
 				free(msg);
 			}
@@ -1454,11 +1464,11 @@ static void
 dispatch_dev2m(int fd, short event __used, void *arg)
 {
 	struct eventdev_hdr * hdr;
+	struct eventdev_reply * rep;
 	/*@dependent@*/
 	anoubisd_msg_t *msg;
 	/*@dependent@*/
 	anoubisd_msg_t *msg_reply;
-	struct eventdev_reply *rep;
 	struct event_info_main *ev_info = (struct event_info_main*)arg;
 
 	DEBUG(DBG_TRACE, ">dispatch_dev2m");
@@ -1485,9 +1495,9 @@ dispatch_dev2m(int fd, short event __used, void *arg)
 
 			/* this should be queued, so as to not get lost */
 			enqueue(&eventq_m2dev, msg_reply);
+			rep = (struct eventdev_reply *)msg_reply->msg;
 			DEBUG(DBG_QUEUE, " >eventq_m2dev: %x",
-			    ((struct eventdev_reply *)msg_reply->msg)->
-				msg_token);
+				rep->msg_token);
 			event_add(ev_info->ev_m2dev, NULL);
 
 			free(msg);

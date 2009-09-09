@@ -1862,8 +1862,7 @@ static int
 create_channel(void)
 {
 	struct anoubis_transaction	*t;
-	struct sockaddr_storage		 ss;
-	struct sockaddr_un		*ss_sun = (struct sockaddr_un *)&ss;
+	struct sockaddr_un		 ss;
 	achat_rc			 rc;
 	int				 error = 0;
 
@@ -1897,14 +1896,15 @@ create_channel(void)
 	}
 
 	bzero(&ss, sizeof(ss));
-	ss_sun->sun_family = AF_UNIX;
+	ss.sun_family = AF_UNIX;
 
-	strlcpy(ss_sun->sun_path, anoubis_socket,
-	    sizeof(ss_sun->sun_path));
+	strlcpy((&ss)->sun_path, anoubis_socket,
+	    sizeof((&ss)->sun_path));
 
 	if (opts & SFSSIG_OPT_DEBUG2)
 		fprintf(stderr, "acc_setaddr\n");
-	rc = acc_setaddr(channel, &ss, sizeof(struct sockaddr_un));
+	rc = acc_setaddr(channel,(struct sockaddr_storage *)&ss,
+	    sizeof(struct sockaddr_un));
 	if (rc != ACHAT_RC_OK) {
 		acc_destroy(channel);
 	channel = NULL;

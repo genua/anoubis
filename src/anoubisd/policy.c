@@ -458,6 +458,7 @@ static void
 dispatch_upgrade(anoubisd_msg_t *msg, struct event_info_policy *ev_info)
 {
 	struct anoubisd_msg_upgrade	*upg;
+	struct eventdev_reply		*rep;
 	int				total;
 
 	DEBUG(DBG_UPGRADE, ">dispatch_upgrade");
@@ -494,8 +495,9 @@ dispatch_upgrade(anoubisd_msg_t *msg, struct event_info_policy *ev_info)
 			if (!msg)
 				break;
 			enqueue(&eventq_p2m, msg);
+			rep = (struct eventdev_reply *)msg->msg;
 			DEBUG(DBG_QUEUE, " p2m_hold->p2m: %x",
-			    ((struct eventdev_reply *)msg->msg)->msg_token);
+			    rep->msg_token);
 		}
 		event_add(ev_info->ev_p2m, NULL);
 	} else if (upg->upgradetype == ANOUBISD_UPGRADE_OK) {
@@ -585,8 +587,8 @@ dispatch_m2p(int fd, short sig __used, void *arg)
 	for (;;) {
 		if ((msg = get_msg(fd)) == NULL)
 			break;
-		DEBUG(DBG_QUEUE, " >m2p: %x",
-		    ((struct eventdev_hdr *)msg->msg)->msg_token);
+		hdr = (struct eventdev_hdr *)msg->msg;
+		DEBUG(DBG_QUEUE, " >m2p: %x", hdr->msg_token);
 
 		switch(msg->mtype) {
 		case ANOUBISD_MSG_SFSCACHE_INVALIDATE:
@@ -730,13 +732,16 @@ dispatch_p2m(int fd, short sig __used, void *arg)
 {
 	anoubisd_msg_t			*msg;
 	struct event_info_policy	*ev_info = arg;
+	struct eventdev_reply		*rep;
 	int				 ret;
 	eventdev_token			 token = 0;
 
 	DEBUG(DBG_TRACE, ">dispatch_p2m");
 	msg = queue_peek(&eventq_p2m);
-	if (msg)
-		token = ((struct eventdev_reply *)(msg->msg))->msg_token;
+	if (msg) {
+		rep = (struct eventdev_reply *)msg->msg;
+		token = rep->msg_token;
+	}
 	ret = send_msg(fd, msg);
 
 	if (msg && ret != 0) {
@@ -923,8 +928,7 @@ dispatch_s2p(int fd, short sig __used, void *arg)
 				free(rep_wait);
 				enqueue(&eventq_p2m, msg);
 				DEBUG(DBG_QUEUE, " >eventq_p2m: %x",
-				    ((struct eventdev_reply *)msg->msg)
-					->msg_token);
+					evrep->msg_token);
 				event_add(ev_info->ev_p2m, NULL);
 			} else {
 				free(msg);
@@ -951,14 +955,17 @@ dispatch_p2s(int fd, short sig __used, void *arg)
 {
 	anoubisd_msg_t			*msg;
 	struct event_info_policy	*ev_info = arg;
+	struct eventdev_hdr		*ev_hdr;
 	int				 ret;
 	eventdev_token			 token = 0;
 
 	DEBUG(DBG_TRACE, ">dispatch_p2s");
 
 	msg = queue_peek(&eventq_p2s);
-	if (msg)
-		token = ((struct eventdev_hdr *)msg->msg)->msg_token;
+	if (msg) {
+		ev_hdr = (struct eventdev_hdr *)msg->msg;
+		token = ev_hdr->msg_token;
+	}
 	ret = send_msg(fd, msg);
 
 	if (msg && ret != 0) {
