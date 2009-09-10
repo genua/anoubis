@@ -200,9 +200,7 @@ alf {
 		default log deny
 	}
 
-	{ /usr/lib/firefox/firefox-bin @@,
-	  /usr/lib/firefox/firefox.sh @@,
-	  @firefox@ @@ } {
+	@firefox@ @@ {
 		# NFS/portmap
 		allow connect tcp from any                to 127.0.0.1 port 111
 		allow send    udp from any                to 127.0.0.1 port 111
@@ -355,10 +353,7 @@ context {
 		context new any
 	}
 
-	{ /usr/lib/firefox/firefox-bin @@,
-	  /usr/lib/firefox/firefox.sh @@,
-	  @firefox@ @@ } {
-		context new any
+	@firefox@ @@ {
 	}
 
 	@epiphany@ @@ {
