@@ -200,7 +200,7 @@ alf {
 		default log deny
 	}
 
-	{ /usr/lib/firefox/firefox-bin @@,
+	{ /usr/lib/firefox/firefox @@,
 	  /usr/lib/firefox/firefox.sh @@,
 	  @firefox@ @@ } {
 		# NFS/portmap
@@ -355,7 +355,7 @@ context {
 		context new any
 	}
 
-	{ /usr/lib/firefox/firefox-bin @@,
+	{ /usr/lib/firefox/firefox @@,
 	  /usr/lib/firefox/firefox.sh @@,
 	  @firefox@ @@ } {
 		context new any

@@ -197,7 +197,7 @@ alf {
 		default log deny
 	}
 
-	{ /usr/lib/firefox/firefox-bin @@,
+	{ /usr/lib/firefox/firefox @@,
 	  /usr/lib/firefox/firefox.sh @@,
 	  @firefox@ @@ } {
 		# NFS/portmap
@@ -345,7 +345,7 @@ context {
 		context open /usr/lib/kde3/kio_sftp.so @@
 	}
 
-	{ /usr/lib/firefox/firefox-bin @@,
+	{ /usr/lib/firefox/firefox @@,
 	  /usr/lib/firefox/firefox.sh @@,
 	  @firefox@ @@ } {
 	}
