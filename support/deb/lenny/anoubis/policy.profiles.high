@@ -197,9 +197,8 @@ alf {
 		default log deny
 	}
 
-	{ /usr/lib/iceweasel/firefox-bin @@,
-	  /usr/lib/firefox-3.0.5/firefox.sh @@,
-	  /usr/lib/iceweasel/iceweasel @@ } {
+	{ /usr/bin/firefox @@,
+	  /usr/lib/xulrunner-1.9/xulrunner-stub @@ } {
 		# NFS/portmap
 		allow connect tcp from any                to 127.0.0.1 port 111
 		allow send    udp from any                to 127.0.0.1 port 111
@@ -345,9 +344,8 @@ context {
 		context open /usr/lib/kde3/kio_sftp.so @@
 	}
 
-	{ /usr/lib/iceweasel/firefox-bin @@,
-	  /usr/lib/firefox-3.0.5/firefox.sh @@,
-	  /usr/lib/iceweasel/iceweasel @@ } {
+	{ /usr/bin/firefox @@,
+	  /usr/lib/xulrunner-1.9/xulrunner-stub @@ } {
 	}
 
 	any
