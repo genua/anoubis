@@ -134,6 +134,8 @@ ModAnoubisMainPanelImpl::ModAnoubisMainPanelImpl(wxWindow* parent,
 	    NULL, this);
 	pathcomp_.clear();
 	pathKeep_ = minPathKeep_ = 0;
+	addSubject(listPerspective_);
+	update();
 }
 
 ModAnoubisMainPanelImpl::~ModAnoubisMainPanelImpl(void)
