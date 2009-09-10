@@ -239,6 +239,54 @@ class AppPolicy : public Policy
 		 */
 		wxArrayString calculateCurrentChecksums(void) const;
 
+		/**
+		 * Get the subject type.
+		 * @param[in] 1st The application index.
+		 * @return The type of subject.
+		 */
+		int getSubjectTypeNo(unsigned int) const;
+
+		/**
+		 * Get readable subject type.
+		 * @param[in] 1st The application index.
+		 * @return The type of subject.
+		 */
+		wxString getSubjectName(unsigned int) const;
+
+		/**
+		 * Set subject of an application to none.
+		 * This also modifies the subject type.
+		 * @param[in] 1st Index of the application.
+		 * @return True on success.
+		 */
+		bool setSubjectNone(unsigned int);
+		/**
+		 * Set subject of an application to self.
+		 * This also modifies the subject type.
+		 * @param[in] 1st The index of the application.
+		 * @param[in] 2nd True if you want to set SELF-SIGNED (default)
+		 * @return True on success.
+		 */
+		bool setSubjectSelf(unsigned int, bool);
+
+		/**
+		 * Set the subject user id of an application.
+		 * This also modifies the subject type.
+		 * @param[in] 1st The index of the application.
+		 * @param[in] 2nd ID of user.
+		 * @return True on success.
+		 */
+		bool setSubjectUid(unsigned int, uid_t);
+
+		/**
+		 * Set the subject key of an application.
+		 * This also modifies the subject type.
+		 * @param[in] 1st The index of the application.
+		 * @param[in] 2nd The key.
+		 * @return True on success.
+		 */
+		bool setSubjectKey(unsigned int, wxString);
+
 	protected:
 		PolicyList filterList_;	/**< List of our filter policies. */
 

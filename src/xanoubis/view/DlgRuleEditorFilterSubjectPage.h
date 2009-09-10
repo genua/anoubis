@@ -33,6 +33,7 @@
 #include "FilterPolicy.h"
 #include "SfsFilterPolicy.h"
 #include "SbAccessFilterPolicy.h"
+#include "ContextFilterPolicy.h"
 
 /**
  * This is the filter subject page.
@@ -87,16 +88,37 @@ class DlgRuleEditorFilterSubjectPage : public DlgRuleEditorPage,
 		 */
 		virtual void deselect(void);
 
+		/**
+		 * Set binary index.
+		 * This page is responsible for handling the binary
+		 * with the given index.
+		 * @param[in] 1st Bianry index.
+		 * @return Nothing.
+		 */
+		void setBinaryIndex(unsigned int);
+
+
 	private:
 		/**
-		 * This holds the sfs policy been edited by this page.
+		 * This holds the sfs policy being edited by this page.
 		 */
 		SfsFilterPolicy *sfsPolicy_;
 
 		/**
-		 * This holds the sb policy been edited by this page.
+		 * This holds the sb policy being edited by this page.
 		 */
 		SbAccessFilterPolicy *sbPolicy_;
+
+		/**
+		 * This holds the app policy being edited by this page.
+		 */
+		AppPolicy *appPolicy_;
+
+		/**
+		 * This holds the context filter policy being edited by
+		 * this page.
+		 */
+		ContextFilterPolicy *ctxPolicy_;
 
 		/**
 		 * Update path widgets.
@@ -113,6 +135,22 @@ class DlgRuleEditorFilterSubjectPage : public DlgRuleEditorPage,
 		 * @return Nothing.
 		 */
 		void showSbPath(void);
+
+		/**
+		 * Update path widgets.
+		 * This will take the value from the app policy.
+		 * @param None.
+		 * @return Nothing.
+		 */
+		void showAppPath(void);
+
+		/**
+		 * Update path widgets.
+		 * This will take the value from the ctx filter policy.
+		 * @param None.
+		 * @return Nothing.
+		 */
+		void showCtxPath(void);
 
 		/**
 		 * Update subject widgets.
@@ -216,6 +254,34 @@ class DlgRuleEditorFilterSubjectPage : public DlgRuleEditorPage,
 		 * @return Nothing.
 		 */
 		virtual void onCsumTextKillFocus(wxFocusEvent &);
+
+		/**
+		 * This is the index of the app displayed in this page
+		 * for app and ctx-filter Policies.
+		 */
+		unsigned int binaryIndex_;
+
+	private:
+		/**
+		 * Set the subject to SELF/SELF-SIGNED.
+		 * @param[in] 1st True if SELF_SIGNED is desired.
+		 * @return None.
+		 */
+		void setSubjectSelf(bool);
+
+		/**
+		 * Set the subject UID. This also changes the subject type.
+		 * @param[in] 1st The user ID.
+		 * @return None.
+		 */
+		void setSubjectUid(uid_t uid);
+
+		/**
+		 * Set the subject KEY. This also changes the subject type.
+		 * @param[in] 1st The Key ID.
+		 * @return None.
+		 */
+		void setSubjectKey(wxString);
 };
 
 #endif	/* _DLGRULEEDITORFILTERSUBJECTPAGE_H_ */

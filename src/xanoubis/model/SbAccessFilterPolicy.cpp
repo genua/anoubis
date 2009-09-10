@@ -219,7 +219,7 @@ SbAccessFilterPolicy::setSubjectNone(void)
 	}
 
 	startChange();
-	cleanSubject(rule);
+	PolicyUtils::cleanSubject(&rule->rule.sbaccess.cs);
 	setModified();
 	finishChange();
 
@@ -237,7 +237,7 @@ SbAccessFilterPolicy::setSubjectSelf(bool selfSigned)
 	}
 
 	startChange();
-	cleanSubject(rule);
+	PolicyUtils::cleanSubject(&rule->rule.sbaccess.cs);
 
 	if (selfSigned) {
 		rule->rule.sbaccess.cs.type = APN_CS_KEY_SELF;
@@ -262,7 +262,7 @@ SbAccessFilterPolicy::setSubjectUid(uid_t uid)
 	}
 
 	startChange();
-	cleanSubject(rule);
+	PolicyUtils::cleanSubject(&rule->rule.sbaccess.cs);
 
 	rule->rule.sbaccess.cs.type = APN_CS_UID;
 	rule->rule.sbaccess.cs.value.uid = uid;
@@ -284,7 +284,7 @@ SbAccessFilterPolicy::setSubjectKey(wxString key)
 	}
 
 	startChange();
-	cleanSubject(rule);
+	PolicyUtils::cleanSubject(&rule->rule.sbaccess.cs);
 
 	rule->rule.sbaccess.cs.type = APN_CS_KEY;
 	rule->rule.sbaccess.cs.value.keyid = strdup(key.fn_str());
@@ -310,7 +310,7 @@ SbAccessFilterPolicy::setSubjectCsum(wxString csumString)
 	PolicyUtils::stringToCsum(csumString, csum, MAX_APN_HASH_LEN);
 
 	startChange();
-	cleanSubject(rule);
+	PolicyUtils::cleanSubject(&rule->rule.sbaccess.cs);
 
 	rule->rule.sbaccess.cs.type = APN_CS_CSUM;
 	/* A previous value was freed by cleanSubject() */
@@ -348,34 +348,8 @@ SbAccessFilterPolicy::getSubjectName(void) const
 	subjectName = wxEmptyString;
 	rule = getApnRule();
 	if (rule != NULL) {
-		switch (rule->rule.sbaccess.cs.type) {
-		case APN_CS_KEY_SELF:
-			subjectName = wxT("signed-self");
-			break;
-		case APN_CS_UID_SELF:
-			subjectName = wxT("self");
-			break;
-		case APN_CS_KEY:
-			subjectName = wxString::From8BitData(
-			    rule->rule.sbaccess.cs.value.keyid);
-			subjectName.Prepend(wxT("key "));
-			break;
-		case APN_CS_UID:
-			subjectName.Printf(wxT("uid %d"),
-			    rule->rule.sbaccess.cs.value.uid);
-			break;
-		case APN_CS_NONE:
-			subjectName = wxT("none");
-			break;
-		case APN_CS_CSUM:
-			PolicyUtils::csumToString(
-			    rule->rule.sbaccess.cs.value.csum,
-			    MAX_APN_HASH_LEN, subjectName);
-			subjectName.Prepend(wxT("csum "));
-			break;
-		default:
-			break;
-		}
+		struct apn_subject	*subj= &rule->rule.sbaccess.cs;
+		subjectName = PolicyUtils::getSubjectName(subj);
 	}
 
 	return (subjectName);
@@ -432,31 +406,6 @@ SbAccessFilterPolicy::getAccessMaskName(void) const
 	}
 
 	return (maskName);
-}
-
-void
-SbAccessFilterPolicy::cleanSubject(struct apn_rule *rule)
-{
-	if (rule == NULL) {
-		return;
-	}
-
-	switch (rule->rule.sbaccess.cs.type) {
-	case APN_CS_KEY:
-		free(rule->rule.sbaccess.cs.value.keyid);
-		rule->rule.sbaccess.cs.value.keyid = NULL;
-		break;
-	case APN_CS_UID:
-		rule->rule.sbaccess.cs.value.uid = 0 - 1;
-		break;
-	case APN_CS_CSUM:
-		free(rule->rule.sbaccess.cs.value.csum);
-		rule->rule.sbaccess.cs.value.csum = NULL;
-		break;
-	default:
-		break;
-	}
-	rule->rule.sbaccess.cs.type = APN_CS_NONE;
 }
 
 wxString

@@ -387,13 +387,6 @@ class SfsFilterPolicy : public FilterPolicy
 		 * @return True on success.
 		 */
 		void setUnknownLogName(const wxString &);
-	private:
-		/**
-		 * Clean the subject structure.
-		 * @param[in] 1st The structure to clean.
-		 * @return Nothing.
-		 */
-		void cleanSubject(struct apn_rule *);
 };
 
 #endif	/* _SFSFILTERPOLICY_H_ */

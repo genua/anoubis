@@ -29,6 +29,7 @@
 #include <wx/filename.h>
 #include <wx/string.h>
 
+#include "ContextFilterPolicy.h"
 #include "AnPickFromFs.h"
 #include "DlgRuleEditorFilterSubjectPage.h"
 
@@ -39,6 +40,8 @@ DlgRuleEditorFilterSubjectPage::DlgRuleEditorFilterSubjectPage(wxWindow *parent,
 {
 	sfsPolicy_ = NULL;
 	sbPolicy_  = NULL;
+	appPolicy_ = NULL;
+	ctxPolicy_ = NULL;
 
 	addSubject(pathPicker);
 	pathPicker->setMode(AnPickFromFs::MODE_BOTH);
@@ -58,12 +61,34 @@ DlgRuleEditorFilterSubjectPage::update(Subject *subject)
 		showSbPath();
 		showSubject();
 	}
+	if (subject == appPolicy_) {
+		/* This is our app policy. */
+		showAppPath();
+		showSubject();
+		if (!appPolicy_->isAnyBlock())
+			Enable(enable_);
+	}
+	if (subject == ctxPolicy_) {
+		/* This is our ctx policy */
+		showCtxPath();
+		showSubject();
+		if (!ctxPolicy_->isAny())
+			Enable(enable_);
+	}
 	if (subject == pathPicker) {
 		if (sfsPolicy_ != NULL) {
 			sfsPolicy_->setPath(pathPicker->getFileName());
 		}
 		if (sbPolicy_ != NULL) {
 			sbPolicy_->setPath(pathPicker->getFileName());
+		}
+		if (appPolicy_ != NULL) {
+			appPolicy_->setBinaryName(pathPicker->getFileName(),
+			    binaryIndex_);
+		}
+		if (ctxPolicy_ != NULL) {
+			ctxPolicy_->setBinaryName(pathPicker->getFileName(),
+			    binaryIndex_);
 		}
 	}
 }
@@ -74,13 +99,41 @@ DlgRuleEditorFilterSubjectPage::select(Policy *policy)
 	if (policy->IsKindOf(CLASSINFO(SfsFilterPolicy))) {
 		sfsPolicy_ = wxDynamicCast(policy, SfsFilterPolicy);
 		DlgRuleEditorPage::select(policy);
+		pathPicker->setMode(AnPickFromFs::MODE_BOTH);
+		pathPicker->setTitle(_("Path:"));
 		Enable(enable_);
 		Show();
 	}
 	if (policy->IsKindOf(CLASSINFO(SbAccessFilterPolicy))) {
 		sbPolicy_ = wxDynamicCast(policy, SbAccessFilterPolicy);
 		DlgRuleEditorPage::select(policy);
+		pathPicker->setMode(AnPickFromFs::MODE_BOTH);
+		pathPicker->setTitle(_("Path:"));
 		Enable(enable_);
+		Show();
+	}
+	if (policy->IsKindOf(CLASSINFO(AppPolicy))) {
+		appPolicy_ = wxDynamicCast(policy, AppPolicy);
+		DlgRuleEditorPage::select(policy);
+		pathPicker->setMode(AnPickFromFs::MODE_FILE);
+		pathPicker->setTitle(_("Binary:"));
+		/* Do not allow entries in an any Policy. Must use "Add". */
+		if (appPolicy_->isAnyBlock())
+			Enable(false);
+		else
+			Enable(enable_);
+		Show();
+	}
+	if (policy->IsKindOf(CLASSINFO(ContextFilterPolicy))) {
+		ctxPolicy_ = wxDynamicCast(policy, ContextFilterPolicy);
+		DlgRuleEditorPage::select(policy);
+		pathPicker->setMode(AnPickFromFs::MODE_FILE);
+		pathPicker->setTitle(_("Binary:"));
+		/* Do not allow entries in an any Policy. Must use "Add". */
+		if (ctxPolicy_->isAny())
+			Enable(false);
+		else
+			Enable(enable_);
 		Show();
 	}
 }
@@ -90,6 +143,8 @@ DlgRuleEditorFilterSubjectPage::deselect(void)
 {
 	sfsPolicy_ = NULL;
 	sbPolicy_  = NULL;
+	appPolicy_ = NULL;
+	ctxPolicy_ = NULL;
 	DlgRuleEditorPage::deselect();
 	Hide();
 }
@@ -110,6 +165,22 @@ DlgRuleEditorFilterSubjectPage::showSbPath(void)
 		return;
 	}
 	pathPicker->setFileName(sbPolicy_->getPath());
+}
+
+void
+DlgRuleEditorFilterSubjectPage::showAppPath(void)
+{
+	if (appPolicy_ == NULL)
+		return;
+	pathPicker->setFileName(appPolicy_->getBinaryName(binaryIndex_));
+}
+
+void
+DlgRuleEditorFilterSubjectPage::showCtxPath(void)
+{
+	if (ctxPolicy_ == NULL)
+		return;
+	pathPicker->setFileName(ctxPolicy_->getBinaryName(binaryIndex_));
 }
 
 void
@@ -136,8 +207,19 @@ DlgRuleEditorFilterSubjectPage::showSubject(void)
 		if (!csumTextCtrl->IsShown()) {
 			csumTextCtrl->Show();
 		}
+	} else if (appPolicy_ != NULL) {
+		anyRadioButton->Show();
+		csumRadioButton->Hide();
+		csumTextCtrl->Hide();
+		type = appPolicy_->getSubjectTypeNo(binaryIndex_);
+		value = appPolicy_->getSubjectName(binaryIndex_);
+	} else if (ctxPolicy_ != NULL) {
+		anyRadioButton->Show();
+		csumRadioButton->Hide();
+		csumTextCtrl->Hide();
+		type = ctxPolicy_->getSubjectTypeNo(binaryIndex_);
+		value = ctxPolicy_->getSubjectName(binaryIndex_);
 	} else {
-		/* Neither sfs nor sb - abort */
 		return;
 	}
 
@@ -236,27 +318,57 @@ DlgRuleEditorFilterSubjectPage::onAnyRadioButton(wxCommandEvent &)
 	if (sbPolicy_ != NULL) {
 		sbPolicy_->setSubjectNone();
 	}
+	if (appPolicy_ != NULL) {
+		appPolicy_->setSubjectNone(binaryIndex_);
+	}
+	if (ctxPolicy_ != NULL) {
+		ctxPolicy_->setSubjectNone(binaryIndex_);
+	}
+}
+
+void
+DlgRuleEditorFilterSubjectPage::setSubjectSelf(bool sign)
+{
+	if (sfsPolicy_ != NULL) {
+		sfsPolicy_->setSubjectSelf(sign);
+	}
+	if (sbPolicy_ != NULL) {
+		sbPolicy_->setSubjectSelf(sign);
+	}
+	if (appPolicy_ != NULL) {
+		appPolicy_->setSubjectSelf(binaryIndex_, sign);
+	}
+	if (ctxPolicy_ != NULL) {
+		ctxPolicy_->setSubjectSelf(binaryIndex_, sign);
+	}
 }
 
 void
 DlgRuleEditorFilterSubjectPage::onSelfRadioButton(wxCommandEvent &)
 {
-	if (sfsPolicy_ != NULL) {
-		sfsPolicy_->setSubjectSelf(false);
-	}
-	if (sbPolicy_ != NULL) {
-		sbPolicy_->setSubjectSelf(false);
-	}
+	setSubjectSelf(false);
 }
 
 void
 DlgRuleEditorFilterSubjectPage::onSelfSignedRadioButton(wxCommandEvent &)
 {
+	setSubjectSelf(true);
+}
+
+void
+DlgRuleEditorFilterSubjectPage::setSubjectUid(uid_t uid)
+{
 	if (sfsPolicy_ != NULL) {
-		sfsPolicy_->setSubjectSelf(true);
+		sfsPolicy_->setSubjectUid(uid);
 	}
 	if (sbPolicy_ != NULL) {
-		sbPolicy_->setSubjectSelf(true);
+		sbPolicy_->setSubjectUid(uid);
+	}
+	if (appPolicy_ != NULL) {
+		appPolicy_->setSubjectUid(binaryIndex_, uid);
+	}
+	if (ctxPolicy_ != NULL) {
+		ctxPolicy_->setSubjectUid(binaryIndex_, uid);
 	}
 }
 
@@ -264,12 +376,7 @@ void
 DlgRuleEditorFilterSubjectPage::onUidRadioButton(wxCommandEvent &)
 {
 	uidTextCtrl->Enable();
-	if (sfsPolicy_ != NULL) {
-		sfsPolicy_->setSubjectUid(geteuid());
-	}
-	if (sbPolicy_ != NULL) {
-		sbPolicy_->setSubjectUid(geteuid());
-	}
+	setSubjectUid(geteuid());
 }
 
 void
@@ -278,13 +385,7 @@ DlgRuleEditorFilterSubjectPage::onUidTextEnter(wxCommandEvent & event)
 	unsigned long uid;
 
 	event.GetString().ToULong(&uid);
-
-	if (sfsPolicy_ != NULL) {
-		sfsPolicy_->setSubjectUid((uid_t)uid);
-	}
-	if (sbPolicy_ != NULL) {
-		sbPolicy_->setSubjectUid((uid_t)uid);
-	}
+	setSubjectUid((uid_t)uid);
 }
 
 void
@@ -296,13 +397,24 @@ DlgRuleEditorFilterSubjectPage::onUidTextKillFocus(wxFocusEvent &)
 		/* Mark as clean */
 		uidTextCtrl->DiscardEdits();
 		uidTextCtrl->GetValue().ToULong(&uid);
+		setSubjectUid((uid_t)uid);
+	}
+}
 
-		if (sfsPolicy_ != NULL) {
-			sfsPolicy_->setSubjectUid(uid);
-		}
-		if (sbPolicy_ != NULL) {
-			sbPolicy_->setSubjectUid(uid);
-		}
+void
+DlgRuleEditorFilterSubjectPage::setSubjectKey(wxString key)
+{
+	if (sfsPolicy_ != NULL) {
+		sfsPolicy_->setSubjectKey(key);
+	}
+	if (sbPolicy_ != NULL) {
+		sbPolicy_->setSubjectKey(key);
+	}
+	if (appPolicy_ != NULL) {
+		appPolicy_->setSubjectKey(binaryIndex_, key);
+	}
+	if (ctxPolicy_ != NULL) {
+		ctxPolicy_->setSubjectKey(binaryIndex_, key);
 	}
 }
 
@@ -310,23 +422,13 @@ void
 DlgRuleEditorFilterSubjectPage::onKeyRadioButton(wxCommandEvent &)
 {
 	keyTextCtrl->Enable();
-	if (sfsPolicy_ != NULL) {
-		sfsPolicy_->setSubjectKey(wxEmptyString);
-	}
-	if (sbPolicy_ != NULL) {
-		sbPolicy_->setSubjectKey(wxEmptyString);
-	}
+	setSubjectKey(wxEmptyString);
 }
 
 void
 DlgRuleEditorFilterSubjectPage::onKeyTextEnter(wxCommandEvent & event)
 {
-	if (sfsPolicy_ != NULL) {
-		sfsPolicy_->setSubjectKey(event.GetString());
-	}
-	if (sbPolicy_ != NULL) {
-		sbPolicy_->setSubjectKey(event.GetString());
-	}
+	setSubjectKey(event.GetString());
 }
 
 void
@@ -335,12 +437,7 @@ DlgRuleEditorFilterSubjectPage::onKeyTextKillFocus(wxFocusEvent &)
 	if (keyTextCtrl->IsModified()) {
 		/* Mark as clean */
 		keyTextCtrl->DiscardEdits();
-		if (sfsPolicy_ != NULL) {
-			sfsPolicy_->setSubjectKey(keyTextCtrl->GetValue());
-		}
-		if (sbPolicy_ != NULL) {
-			sbPolicy_->setSubjectKey(keyTextCtrl->GetValue());
-		}
+		setSubjectKey(keyTextCtrl->GetValue());
 	}
 }
 
@@ -371,4 +468,10 @@ DlgRuleEditorFilterSubjectPage::onCsumTextKillFocus(wxFocusEvent &)
 			sbPolicy_->setSubjectCsum(csumTextCtrl->GetValue());
 		}
 	}
+}
+
+void
+DlgRuleEditorFilterSubjectPage::setBinaryIndex(unsigned int idx)
+{
+	binaryIndex_ = idx;
 }

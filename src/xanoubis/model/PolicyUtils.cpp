@@ -237,3 +237,65 @@ PolicyUtils::fileToCsum(const wxString file, wxString &csum)
 	}
 	return false;
 }
+
+wxString
+PolicyUtils::getSubjectName(const struct apn_subject *subject)
+{
+	wxString	 subjectName = wxEmptyString;
+
+	subjectName = wxEmptyString;
+	if (subject != NULL) {
+		switch (subject->type) {
+		case APN_CS_KEY_SELF:
+			subjectName = wxT("signed-self");
+			break;
+		case APN_CS_UID_SELF:
+			subjectName = wxT("self");
+			break;
+		case APN_CS_KEY:
+			subjectName = wxString::From8BitData(
+			    subject->value.keyid);
+			subjectName.Prepend(wxT("key "));
+			break;
+		case APN_CS_UID:
+			subjectName.Printf(wxT("uid %d"),
+			    subject->value.uid);
+			break;
+		case APN_CS_NONE:
+			subjectName = wxT("none");
+			break;
+		case APN_CS_CSUM:
+			PolicyUtils::csumToString(subject->value.csum,
+			    MAX_APN_HASH_LEN, subjectName);
+			subjectName.Prepend(wxT("csum "));
+			break;
+		default:
+			break;
+		}
+	}
+
+	return (subjectName);
+}
+
+void
+PolicyUtils::cleanSubject(struct apn_subject *subject)
+{
+	if (!subject)
+		return;
+	switch (subject->type) {
+	case APN_CS_KEY:
+		free(subject->value.keyid);
+		subject->value.keyid = NULL;
+		break;
+	case APN_CS_UID:
+		subject->value.uid = 0 - 1;
+		break;
+	case APN_CS_CSUM:
+		free(subject->value.csum);
+		subject->value.csum = NULL;
+		break;
+	default:
+		break;
+	}
+	subject->type = APN_CS_NONE;
+}

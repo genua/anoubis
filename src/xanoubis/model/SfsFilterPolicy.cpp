@@ -186,7 +186,7 @@ SfsFilterPolicy::setSubjectSelf(bool selfSigned)
 	}
 
 	startChange();
-	cleanSubject(rule);
+	PolicyUtils::cleanSubject(&rule->rule.sfsaccess.subject);
 
 	if (selfSigned) {
 		rule->rule.sfsaccess.subject.type = APN_CS_KEY_SELF;
@@ -211,7 +211,7 @@ SfsFilterPolicy::setSubjectUid(uid_t uid)
 	}
 
 	startChange();
-	cleanSubject(rule);
+	PolicyUtils::cleanSubject(&rule->rule.sfsaccess.subject);
 
 	rule->rule.sfsaccess.subject.type = APN_CS_UID;
 	rule->rule.sfsaccess.subject.value.uid = uid;
@@ -233,7 +233,7 @@ SfsFilterPolicy::setSubjectKey(wxString key)
 	}
 
 	startChange();
-	cleanSubject(rule);
+	PolicyUtils::cleanSubject(&rule->rule.sfsaccess.subject);
 
 	rule->rule.sfsaccess.subject.type = APN_CS_KEY;
 	rule->rule.sfsaccess.subject.value.keyid = strdup(key.fn_str());
@@ -268,31 +268,8 @@ SfsFilterPolicy::getSubjectName(void) const
 	subjectName = wxEmptyString;
 	rule = getApnRule();
 	if (rule != NULL) {
-		switch (rule->rule.sfsaccess.subject.type) {
-		case APN_CS_KEY_SELF:
-			subjectName = wxT("signed-self");
-			break;
-		case APN_CS_UID_SELF:
-			subjectName = wxT("self");
-			break;
-		case APN_CS_KEY:
-			subjectName = wxString::From8BitData(
-			    rule->rule.sfsaccess.subject.value.keyid);
-			subjectName.Prepend(wxT("key "));
-			break;
-		case APN_CS_UID:
-			subjectName.Printf(wxT("uid %d"),
-			    rule->rule.sfsaccess.subject.value.uid);
-			break;
-		case APN_CS_NONE:
-			subjectName = wxT("none");
-			break;
-		case APN_CS_CSUM:
-			/* Not used by sfs policies. */
-			/* FALLTHROUGH */
-		default:
-			break;
-		}
+		struct apn_subject	*subj = &rule->rule.sfsaccess.subject;
+		subjectName = PolicyUtils::getSubjectName(subj);
 	}
 
 	return (subjectName);
@@ -602,30 +579,6 @@ wxString
 SfsFilterPolicy::getUnknownLogName(void) const
 {
 	return (logToString(getUnknownLogNo()));
-}
-
-void
-SfsFilterPolicy::cleanSubject(struct apn_rule *rule)
-{
-	if (rule == NULL) {
-		return;
-	}
-
-	switch (rule->rule.sfsaccess.subject.type) {
-	case APN_CS_KEY:
-		free(rule->rule.sfsaccess.subject.value.keyid);
-		rule->rule.sfsaccess.subject.value.keyid = NULL;
-		break;
-	case APN_CS_UID:
-		rule->rule.sfsaccess.subject.value.uid = 0 - 1;
-		break;
-	case APN_CS_CSUM:
-		free(rule->rule.sfsaccess.subject.value.csum);
-		rule->rule.sfsaccess.subject.value.csum = NULL;
-		break;
-	default:
-		break;
-	}
 }
 
 void

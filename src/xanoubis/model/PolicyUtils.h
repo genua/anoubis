@@ -132,6 +132,21 @@ class PolicyUtils
 		 * @return True on success.
 		 */
 		static bool fileToCsum(const wxString, wxString &);
+
+		/**
+		 * Get readable subject type.
+		 * @param[in] 1st A pointer to the subject.
+		 * @return The type of subject.
+		 */
+		static wxString getSubjectName(const struct apn_subject *);
+
+		/**
+		 * Clean a subject data structure and set its type to
+		 * APN_CS_NONE.
+		 * @param[in] 1st A pointer to the subject.
+		 * @return None.
+		 */
+		static void cleanSubject(struct apn_subject *);
 };
 
 #endif	/* _POLICYUTILS_H_ */

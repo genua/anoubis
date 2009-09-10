@@ -486,6 +486,104 @@ ContextFilterPolicy::calculateCurrentChecksums(void) const
 	return (csumList);
 }
 
+int
+ContextFilterPolicy::getSubjectTypeNo(unsigned int idx) const
+{
+	struct apn_app		*app = seekAppByIndex(idx);
+
+	if (!app)
+		return APN_CS_NONE;
+	return app->subject.type;
+}
+
+wxString
+ContextFilterPolicy::getSubjectName(unsigned int idx) const
+{
+	struct apn_app		*app = seekAppByIndex(idx);
+
+	if (!app)
+		return wxEmptyString;
+	return PolicyUtils::getSubjectName(&app->subject);
+}
+
+bool
+ContextFilterPolicy::setSubjectNone(unsigned int idx)
+{
+	struct apn_app *app = seekAppByIndex(idx);
+
+	if (!app)
+		return false;
+	startChange();
+	PolicyUtils::cleanSubject(&app->subject);
+	setModified();
+	finishChange();
+
+	return true;
+}
+
+bool
+ContextFilterPolicy::setSubjectSelf(unsigned int idx, bool selfSigned)
+{
+	struct apn_app *app = seekAppByIndex(idx);
+
+	if (!app)
+		return false;
+
+	startChange();
+	PolicyUtils::cleanSubject(&app->subject);
+
+	if (selfSigned) {
+		app->subject.type = APN_CS_KEY_SELF;
+	} else {
+		app->subject.type = APN_CS_UID_SELF;
+	}
+
+	setModified();
+	finishChange();
+
+	return true;
+}
+
+bool
+ContextFilterPolicy::setSubjectUid(unsigned int idx, uid_t uid)
+{
+	struct apn_app *app = seekAppByIndex(idx);
+
+	if (!app)
+		return false;
+
+	startChange();
+	PolicyUtils::cleanSubject(&app->subject);
+
+	app->subject.type = APN_CS_UID;
+	app->subject.value.uid = uid;
+
+	setModified();
+	finishChange();
+
+	return true;
+}
+
+bool
+ContextFilterPolicy::setSubjectKey(unsigned int idx, wxString key)
+{
+	struct apn_app *app = seekAppByIndex(idx);
+
+	if (!app)
+		return false;
+
+	startChange();
+	PolicyUtils::cleanSubject(&app->subject);
+
+	app->subject.type = APN_CS_KEY;
+	app->subject.value.keyid = strdup(key.fn_str());
+
+	setModified();
+	finishChange();
+
+	return true;
+}
+
 struct apn_app *
 ContextFilterPolicy::seekAppByIndex(unsigned int idx) const
 {

@@ -216,13 +216,6 @@ class SbAccessFilterPolicy : public FilterPolicy
 		 */
 		wxString getRulePrefix(void) const;
 
-	private:
-		/**
-		 * Clean the subject structure.
-		 * @param[in] 1st The structure to clean.
-		 * @return Nothing.
-		 */
-		void cleanSubject(struct apn_rule *);
 };
 
 #endif	/* _SBACCESSFILTERPOLICY_H_ */
