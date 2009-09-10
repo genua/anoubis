@@ -47,6 +47,9 @@ RUN_DEPENDS-main =	:notification-daemon->=0.3.7:sysutils/notification-daemon \
 LIB_DEPENDS-main =	notify::devel/libnotify \
 			wx_base_xml,wx_gtk2_aui,wx_gtk2_qa,wx_base_odbc,wx_gtk2_html,wx_base,wx_gtk2_adv,wx_gtk2_xrc,wx_gtk2_core,wx_base_net,wx_gtk2_richtext,wx_gtk2_dbgrid:wxWidgets-gtk2->=2.8.6:x11/wxWidgets
 
+# explicitly unset WRKOBJDIR to create it within port directory
+WRKOBJDIR =
+
 USE_X11 =		YES
 
 CONFIGURE_STYLE =	gnu
