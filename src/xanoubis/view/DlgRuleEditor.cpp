@@ -1075,10 +1075,13 @@ DlgRuleEditor::onAppListCreateButton(wxCommandEvent &)
 	if (policy) {
 		ruleSet = policy->getParentRuleSet();
 		if (ruleSet && ruleSet->isAdmin() && geteuid() != 0) {
-			message = _("Cannot edit admin ruleset!");
-			wxMessageBox(message, _("RuleEditor"),
-			    wxOK | wxICON_ERROR, this);
-			return;
+			/*
+			 * A non-admin user has selected an admin policy, but
+			 * he is not allowed to create a new admin policy!
+			 * Thus, fetch the user ruleset.
+			 */
+			ruleSet = policyCtrl->getRuleSet(userRuleSetId_);
+			policy = NULL; /* "Clear" selection */
 		}
 	} else {
 		if (rb_userSelect->GetValue()) {
