@@ -99,7 +99,7 @@ install-arch:
 	# add udev rules for correct devices permissions
 	mkdir -p debian/tmp/etc/udev/rules.d
 	cp support/udev.rules debian/tmp/etc/udev/anoubis.rules
-	ln -s /etc/udev/anoubis.rules debian/tmp/etc/udev/rules.d/021_anoubis.rules
+	ln -s /etc/udev/anoubis.rules debian/tmp/etc/udev/rules.d/21-anoubis.rules
 
 	# add the anoubisd configuration files
 	mkdir -p debian/tmp/etc/anoubis
