@@ -37,6 +37,7 @@
 class AnPickFromFs;
 class AnPolicyNotebook;
 class DlgRuleEditorAppPage;
+class DlgRuleEditorFilterSubjectPage;
 
 #include <wx/string.h>
 #include <wx/radiobut.h>
@@ -143,7 +144,7 @@ class DlgRuleEditorBase : public wxFrame
 		
 	
 	public:
-		DlgRuleEditorBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Anoubis Rule Editor"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 1000,700 ), long style = wxDEFAULT_FRAME_STYLE|wxTAB_TRAVERSAL );
+		DlgRuleEditorBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Anoubis Rule Editor"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 1000,900 ), long style = wxDEFAULT_FRAME_STYLE|wxTAB_TRAVERSAL );
 		void splitterWindowOnIdle( wxIdleEvent& )
 		{
 		splitterWindow->SetSashPosition( 482 );
@@ -162,31 +163,18 @@ class DlgRuleEditorAppPageBase : public wxPanel
 	
 	protected:
 		wxScrolledWindow* mainPage;
-		AnPickFromFs* binaryPicker;
-		wxStaticText* csumRegisteredLabel;
-		wxStaticText* csumRegisteredText;
-		wxStaticText* csumCurrentLabel;
-		wxStaticText* csumCurrentText;
-		wxStaticText* statusLabel;
-		wxStaticText* statusText;
-		wxButton* validateButton;
-		wxButton* updateButton;
-		wxStaticText* infoLeft;
-		wxStaticText* infoRight;
-		
+		DlgRuleEditorFilterSubjectPage* subjPage;
 		wxButton* addButton;
 		wxButton* deleteButton;
 		
 		
 		// Virtual event handlers, overide them in your derived class
-		virtual void onValidateButton( wxCommandEvent& event ){ event.Skip(); }
-		virtual void onUpdateButton( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onAddButton( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onDeleteButton( wxCommandEvent& event ){ event.Skip(); }
 		
 	
 	public:
-		DlgRuleEditorAppPageBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 500,300 ), long style = wxTAB_TRAVERSAL );
+		DlgRuleEditorAppPageBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 500,320 ), long style = wxTAB_TRAVERSAL );
 	
 };
 
@@ -219,7 +207,7 @@ class DlgRuleEditorFilterActionPageBase : public wxPanel
 		
 	
 	public:
-		DlgRuleEditorFilterActionPageBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 500,300 ), long style = wxTAB_TRAVERSAL );
+		DlgRuleEditorFilterActionPageBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 500,320 ), long style = wxTAB_TRAVERSAL );
 	
 };
 
@@ -250,7 +238,7 @@ class DlgRuleEditorFilterNetworkPageBase : public wxPanel
 		
 	
 	public:
-		DlgRuleEditorFilterNetworkPageBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 500,300 ), long style = wxTAB_TRAVERSAL );
+		DlgRuleEditorFilterNetworkPageBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 500,320 ), long style = wxTAB_TRAVERSAL );
 	
 };
 
@@ -285,7 +273,7 @@ class DlgRuleEditorFilterAddressPageBase : public wxPanel
 		
 	
 	public:
-		DlgRuleEditorFilterAddressPageBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 500,300 ), long style = wxTAB_TRAVERSAL );
+		DlgRuleEditorFilterAddressPageBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 500,320 ), long style = wxTAB_TRAVERSAL );
 	
 };
 
@@ -310,7 +298,7 @@ class DlgRuleEditorFilterCapabilityPageBase : public wxPanel
 		
 	
 	public:
-		DlgRuleEditorFilterCapabilityPageBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 500,300 ), long style = wxTAB_TRAVERSAL );
+		DlgRuleEditorFilterCapabilityPageBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 500,320 ), long style = wxTAB_TRAVERSAL );
 	
 };
 
@@ -322,7 +310,6 @@ class DlgRuleEditorFilterSubjectPageBase : public wxPanel
 	private:
 	
 	protected:
-		wxScrolledWindow* mainPage;
 		AnPickFromFs* pathPicker;
 		wxStaticText* subjectLabel;
 		wxRadioButton* anyRadioButton;
@@ -361,7 +348,7 @@ class DlgRuleEditorFilterSubjectPageBase : public wxPanel
 		
 	
 	public:
-		DlgRuleEditorFilterSubjectPageBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 500,300 ), long style = wxTAB_TRAVERSAL );
+		DlgRuleEditorFilterSubjectPageBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 500,320 ), long style = wxTAB_TRAVERSAL );
 	
 };
 
@@ -403,7 +390,7 @@ class DlgRuleEditorFilterSfsPageBase : public wxPanel
 		
 	
 	public:
-		DlgRuleEditorFilterSfsPageBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 500,300 ), long style = wxTAB_TRAVERSAL );
+		DlgRuleEditorFilterSfsPageBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 500,320 ), long style = wxTAB_TRAVERSAL );
 	
 };
 
@@ -415,7 +402,6 @@ class DlgRuleEditorFilterContextPageBase : public wxPanel
 	private:
 	
 	protected:
-		wxScrolledWindow* mainPage;
 		wxStaticText* typeLabel;
 		wxRadioButton* newRadioButton;
 		wxRadioButton* openRadioButton;
@@ -427,7 +413,7 @@ class DlgRuleEditorFilterContextPageBase : public wxPanel
 		
 	
 	public:
-		DlgRuleEditorFilterContextPageBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 500,300 ), long style = wxTAB_TRAVERSAL );
+		DlgRuleEditorFilterContextPageBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 500,320 ), long style = wxTAB_TRAVERSAL );
 	
 };
 
@@ -452,7 +438,7 @@ class DlgRuleEditorFilterPermissionPageBase : public wxPanel
 		
 	
 	public:
-		DlgRuleEditorFilterPermissionPageBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 500,300 ), long style = wxTAB_TRAVERSAL );
+		DlgRuleEditorFilterPermissionPageBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 500,320 ), long style = wxTAB_TRAVERSAL );
 	
 };
 

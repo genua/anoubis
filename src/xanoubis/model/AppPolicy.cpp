@@ -137,11 +137,6 @@ AppPolicy::setBinaryName(wxString binary, unsigned int idx)
 	startChange();
 	free(app->name);
 	app->name = strdup(binary.To8BitData());
-	if (app->subject.type == APN_CS_NONE) {
-		app->subject.type = APN_CS_CSUM;
-		app->subject.value.csum = (u_int8_t *)calloc(ANOUBIS_CS_LEN,
-		    sizeof(u_int8_t));
-	}
 	setModified();
 	finishChange();
 

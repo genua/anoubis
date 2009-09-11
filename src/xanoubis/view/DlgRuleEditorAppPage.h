@@ -117,21 +117,6 @@ class DlgRuleEditorAppPage : public DlgRuleEditorPage,
 		unsigned int binaryIndex_;
 
 		/**
-		 * In case of new binary to automatic validate/update.
-		 */
-		bool automaticOnNew_;
-
-		/**
-		 * Cache the checksum of this binary.
-		 */
-		wxString csumCache_;
-
-		/**
-		 * The task to calculate the checksum.
-		 */
-		CsumCalcTask calcTask_;
-
-		/**
 		 * Store the application policy of this page.
 		 */
 		AppPolicy *appPolicy_;
@@ -142,83 +127,16 @@ class DlgRuleEditorAppPage : public DlgRuleEditorPage,
 		ContextFilterPolicy *ctxPolicy_;
 
 		/**
-		 * Fill the widgets showing the binary.
+		 * Binary name that is currently displayed in the page header.
+		 */
+		wxString pageHeader_;
+
+		/**
+		 * Write the binary to page header.
 		 * @param None.
 		 * @return Nothing.
 		 */
-		void showBinary(void);
-
-		/**
-		 * Fill the widgets showing the checksum.
-		 * @param None.
-		 * @return Nothing.
-		 */
-		void showCsum(void);
-
-		/**
-		 * Update the widgets of the status.
-		 * @param None.
-		 * @return Nothing.
-		 */
-		void showStatus(void);
-
-		/**
-		 * Write the binary to the policy.
-		 * @param[in] 1st The new binary.
-		 * @return Nothind.
-		 */
-		void setBinary(wxString);
-
-		/**
-		 * Start calculation of current csum.
-		 * This will start the calculation of the current checksum.
-		 * The result is cached in csumCache_.
-		 * @param None.
-		 * @return Nothing.
-		 */
-		void startCalculation(void);
-
-		/**
-		 * Update the csum of the policy.
-		 * This will write the cached current checksum from csumCache_
-		 * to the policy.
-		 * @param None.
-		 * @return Nothing.
-		 */
-		void doCsumUpdate();
-
-		/**
-		 * Handle events from validateButton.
-		 * This will start the calculation of the current checksum.
-		 * @param[in] 1st The event.
-		 * @return Nothing.
-		 */
-		virtual void onValidateButton(wxCommandEvent &);
-
-		/**
-		 * Handle events from updateButton.
-		 * This will write the cached current checksum from csumCache_
-		 * to the policy.
-		 * @param[in] 1st The event.
-		 * @return Nothing.
-		 */
-		virtual void onUpdateButton(wxCommandEvent &);
-
-		/**
-		 * Handle events from checksum calculation task.
-		 * This will extract the result of the calculation from
-		 * the task and store it in csumCache_.
-		 * @param[in] 1st The event.
-		 * @return Nothing.
-		 */
-		void onCsumCalcTask(TaskEvent &);
-
-		/**
-		 * Set the text of the Info label. An empty text hides
-		 * the label.
-		 * @param[in] 1st The new text.
-		 */
-		void showInfo(const wxString &);
+		void setBinary(void);
 };
 
 #endif	/* _DLGRULEEDITORAPPPAGE_H_ */
