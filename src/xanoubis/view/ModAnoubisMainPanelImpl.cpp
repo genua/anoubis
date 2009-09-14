@@ -1083,6 +1083,14 @@ ModAnoubisMainPanelImpl::OnAnoubisOptionShow(wxCommandEvent& event)
 }
 
 void
+ModAnoubisMainPanelImpl::OnEnableUpgradeMsg(wxCommandEvent&)
+{
+	userOptions_->Write(wxT("/Options/ShowUpgradeMessage"),
+	    cb_ShowUpgradeMsg->GetValue());
+	userOptions_->Flush();
+}
+
+void
 ModAnoubisMainPanelImpl::OnAutoCheck(wxCommandEvent& event)
 {
 	wxCommandEvent showEvent(anEVT_SEND_AUTO_CHECK);

@@ -345,9 +345,23 @@ MainFrame::OnConnectionStateChange(wxCommandEvent& event)
 		}
 		wxGetApp().log(logMessage);
 		if (cert.isLoaded()) {
-			raw_cert = cert.getCertificate();
-			upgradeTask_.setKeyId(raw_cert->keyid, raw_cert->idlen);
-			instance->addTask(&upgradeTask_);
+			bool showUpgradeMessage = true;
+
+			wxGetApp().getUserOptions()->Read(
+			    wxT("/Options/ShowUpgradeMessage"),
+			    &showUpgradeMessage);
+
+			/*
+			 * You only need to fetch the upgrade-list, if the
+			 * related dialog should be displayed.
+			 */
+			if (showUpgradeMessage == true) {
+				raw_cert = cert.getCertificate();
+				upgradeTask_.setKeyId(
+				    raw_cert->keyid, raw_cert->idlen);
+
+				instance->addTask(&upgradeTask_);
+			}
 		}
 		break;
 	}
@@ -612,13 +626,9 @@ MainFrame::onSfsListArrived(TaskEvent &event)
 {
 	ComSfsListTask		*task;
 	ComTask::ComTaskResult	comResult;
-	wxConfig *userOptions = wxGetApp().getUserOptions();
 	wxString		errMsg;
 	wxArrayString		result;
 	DlgUpgradeAsk		askDlg(this);
-	bool			showUpgradeMessage;
-
-	showUpgradeMessage = true;
 
 	task = dynamic_cast<ComSfsListTask*>(event.getTask());
 	comResult = ComTask::RESULT_LOCAL_ERROR;
@@ -656,9 +666,7 @@ MainFrame::onSfsListArrived(TaskEvent &event)
 		wxMessageBox(errMsg, _("Error"), wxICON_ERROR);
 	} else {
 		result = task->getFileList();
-		userOptions->Read(wxT("/Options/ShowUpgradeMessage"),
-		    &showUpgradeMessage);
-		if (result.Count() > 0 && showUpgradeMessage == true) {
+		if (result.Count() > 0) {
 			askDlg.ShowModal();
 		}
 	}
