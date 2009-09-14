@@ -696,22 +696,6 @@ DlgRuleEditorFilterSubjectPageBase::DlgRuleEditorFilterSubjectPageBase( wxWindow
 	
 	subjectSizer->Add( 0, 0, 1, wxEXPAND, 5 );
 	
-	
-	subjectSizer->Add( 0, 0, 1, wxEXPAND, 5 );
-	
-	wxBoxSizer* csumSizer;
-	csumSizer = new wxBoxSizer( wxHORIZONTAL );
-	
-	csumRadioButton = new wxRadioButton( this, wxID_ANY, _("csum"), wxDefaultPosition, wxSize( 60,-1 ), 0 );
-	csumRadioButton->SetToolTip( _("Trust specified checksum") );
-	
-	csumSizer->Add( csumRadioButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
-	
-	csumTextCtrl = new wxTextCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER );
-	csumSizer->Add( csumTextCtrl, 1, wxALL|wxALIGN_CENTER_VERTICAL|wxEXPAND, 5 );
-	
-	subjectSizer->Add( csumSizer, 1, wxEXPAND, 5 );
-	
 	mainSizer->Add( subjectSizer, 1, wxEXPAND, 5 );
 	
 	pageSizer->Add( mainSizer, 1, wxEXPAND, 5 );
@@ -729,9 +713,6 @@ DlgRuleEditorFilterSubjectPageBase::DlgRuleEditorFilterSubjectPageBase( wxWindow
 	keyRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorFilterSubjectPageBase::onKeyRadioButton ), NULL, this );
 	keyTextCtrl->Connect( wxEVT_KILL_FOCUS, wxFocusEventHandler( DlgRuleEditorFilterSubjectPageBase::onKeyTextKillFocus ), NULL, this );
 	keyTextCtrl->Connect( wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler( DlgRuleEditorFilterSubjectPageBase::onKeyTextEnter ), NULL, this );
-	csumRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorFilterSubjectPageBase::onCsumRadioButton ), NULL, this );
-	csumTextCtrl->Connect( wxEVT_KILL_FOCUS, wxFocusEventHandler( DlgRuleEditorFilterSubjectPageBase::onCsumTextKillFocus ), NULL, this );
-	csumTextCtrl->Connect( wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler( DlgRuleEditorFilterSubjectPageBase::onCsumTextEnter ), NULL, this );
 }
 
 DlgRuleEditorFilterSfsPageBase::DlgRuleEditorFilterSfsPageBase( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size, long style ) : wxPanel( parent, id, pos, size, style )

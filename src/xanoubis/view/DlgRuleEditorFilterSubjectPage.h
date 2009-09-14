@@ -232,30 +232,6 @@ class DlgRuleEditorFilterSubjectPage : public DlgRuleEditorPage,
 		virtual void onKeyTextKillFocus(wxFocusEvent &);
 
 		/**
-		 * Handle events from csumRadioButton.
-		 * This will set the path to the policy.
-		 * @param[in] 1st The event.
-		 * @return Nothing.
-		 */
-		virtual void onCsumRadioButton(wxCommandEvent &);
-
-		/**
-		 * Handle events from csumTextCtrl (on hit <enter>).
-		 * This will set the csum to the policy.
-		 * @param[in] 1st The event.
-		 * @return Nothing.
-		 */
-		virtual void onCsumTextEnter(wxCommandEvent &);
-
-		/**
-		 * Handle focus events from csumTextCtrl (e.g on hit <tab>).
-		 * This will set the csum to the policy.
-		 * @param[in] 1st The event.
-		 * @return Nothing.
-		 */
-		virtual void onCsumTextKillFocus(wxFocusEvent &);
-
-		/**
 		 * This is the index of the app displayed in this page
 		 * for app and ctx-filter Policies.
 		 */

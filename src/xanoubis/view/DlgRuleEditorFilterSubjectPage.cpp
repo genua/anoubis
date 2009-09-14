@@ -193,30 +193,18 @@ DlgRuleEditorFilterSubjectPage::showSubject(void)
 		type  = sfsPolicy_->getSubjectTypeNo();
 		value = sfsPolicy_->getSubjectName();
 		anyRadioButton->Hide();
-		csumRadioButton->Hide();
-		csumTextCtrl->Hide();
 	} else if (sbPolicy_ != NULL) {
 		type  = sbPolicy_->getSubjectTypeNo();
 		value = sbPolicy_->getSubjectName();
 		if (!anyRadioButton->IsShown()) {
 			anyRadioButton->Show();
 		}
-		if (!csumRadioButton->IsShown()) {
-			csumRadioButton->Show();
-		}
-		if (!csumTextCtrl->IsShown()) {
-			csumTextCtrl->Show();
-		}
 	} else if (appPolicy_ != NULL) {
 		anyRadioButton->Show();
-		csumRadioButton->Hide();
-		csumTextCtrl->Hide();
 		type = appPolicy_->getSubjectTypeNo(binaryIndex_);
 		value = appPolicy_->getSubjectName(binaryIndex_);
 	} else if (ctxPolicy_ != NULL) {
 		anyRadioButton->Show();
-		csumRadioButton->Hide();
-		csumTextCtrl->Hide();
 		type = ctxPolicy_->getSubjectTypeNo(binaryIndex_);
 		value = ctxPolicy_->getSubjectName(binaryIndex_);
 	} else {
@@ -236,8 +224,6 @@ DlgRuleEditorFilterSubjectPage::showSubject(void)
 		uidTextCtrl->Disable();
 		keyTextCtrl->Clear();
 		keyTextCtrl->Disable();
-		csumTextCtrl->Clear();
-		csumTextCtrl->Disable();
 		selfRadioButton->SetValue(true);
 		break;
 	case APN_CS_KEY_SELF:
@@ -245,15 +231,11 @@ DlgRuleEditorFilterSubjectPage::showSubject(void)
 		uidTextCtrl->Disable();
 		keyTextCtrl->Clear();
 		keyTextCtrl->Disable();
-		csumTextCtrl->Clear();
-		csumTextCtrl->Disable();
 		selfSignedRadioButton->SetValue(true);
 		break;
 	case APN_CS_UID:
 		keyTextCtrl->Clear();
 		keyTextCtrl->Disable();
-		csumTextCtrl->Clear();
-		csumTextCtrl->Disable();
 		value.Replace(wxT("uid "), wxEmptyString);
 		if (value.Cmp(uidTextCtrl->GetValue()) != 0) {
 			uidTextCtrl->ChangeValue(value);
@@ -268,8 +250,6 @@ DlgRuleEditorFilterSubjectPage::showSubject(void)
 	case APN_CS_KEY:
 		uidTextCtrl->Clear();
 		uidTextCtrl->Disable();
-		csumTextCtrl->Clear();
-		csumTextCtrl->Disable();
 		value.Replace(wxT("key "), wxEmptyString);
 		if (value.Cmp(keyTextCtrl->GetValue()) != 0) {
 			keyTextCtrl->ChangeValue(value);
@@ -281,29 +261,11 @@ DlgRuleEditorFilterSubjectPage::showSubject(void)
 			keyTextCtrl->Enable();
 		}
 		break;
-	case APN_CS_CSUM:
-		uidTextCtrl->Clear();
-		uidTextCtrl->Disable();
-		keyTextCtrl->Clear();
-		keyTextCtrl->Disable();
-		value.Replace(wxT("csum "), wxEmptyString);
-		if (value.Cmp(csumTextCtrl->GetValue()) != 0) {
-			csumTextCtrl->ChangeValue(value);
-		}
-		if (csumRadioButton->GetValue() != true) {
-			csumRadioButton->SetValue(true);
-		}
-		if (!csumTextCtrl->IsEnabled()) {
-			csumTextCtrl->Enable();
-		}
-		break;
 	case APN_CS_NONE:
 		uidTextCtrl->Clear();
 		uidTextCtrl->Disable();
 		keyTextCtrl->Clear();
 		keyTextCtrl->Disable();
-		csumTextCtrl->Clear();
-		csumTextCtrl->Disable();
 		anyRadioButton->SetValue(true);
 		break;
 	}
@@ -438,35 +400,6 @@ DlgRuleEditorFilterSubjectPage::onKeyTextKillFocus(wxFocusEvent &)
 		/* Mark as clean */
 		keyTextCtrl->DiscardEdits();
 		setSubjectKey(keyTextCtrl->GetValue());
-	}
-}
-
-void
-DlgRuleEditorFilterSubjectPage::onCsumRadioButton(wxCommandEvent &)
-{
-	csumTextCtrl->Enable();
-	if (sbPolicy_ != NULL) {
-		sbPolicy_->setSubjectCsum(wxEmptyString);
-	}
-}
-
-void
-DlgRuleEditorFilterSubjectPage::onCsumTextEnter(wxCommandEvent & event)
-{
-	if (sbPolicy_ != NULL) {
-		sbPolicy_->setSubjectCsum(event.GetString());
-	}
-}
-
-void
-DlgRuleEditorFilterSubjectPage::onCsumTextKillFocus(wxFocusEvent &)
-{
-	if (csumTextCtrl->IsModified()) {
-		/* Mark as clean */
-		csumTextCtrl->DiscardEdits();
-		if (sbPolicy_ != NULL) {
-			sbPolicy_->setSubjectCsum(csumTextCtrl->GetValue());
-		}
 	}
 }
 

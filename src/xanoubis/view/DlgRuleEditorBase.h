@@ -329,9 +329,6 @@ class DlgRuleEditorFilterSubjectPageBase : public wxPanel
 		wxTextCtrl* keyTextCtrl;
 		
 		
-		wxRadioButton* csumRadioButton;
-		wxTextCtrl* csumTextCtrl;
-		
 		// Virtual event handlers, overide them in your derived class
 		virtual void onAnyRadioButton( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onSelfRadioButton( wxCommandEvent& event ){ event.Skip(); }
@@ -342,9 +339,6 @@ class DlgRuleEditorFilterSubjectPageBase : public wxPanel
 		virtual void onKeyRadioButton( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onKeyTextKillFocus( wxFocusEvent& event ){ event.Skip(); }
 		virtual void onKeyTextEnter( wxCommandEvent& event ){ event.Skip(); }
-		virtual void onCsumRadioButton( wxCommandEvent& event ){ event.Skip(); }
-		virtual void onCsumTextKillFocus( wxFocusEvent& event ){ event.Skip(); }
-		virtual void onCsumTextEnter( wxCommandEvent& event ){ event.Skip(); }
 		
 	
 	public:
