@@ -387,11 +387,6 @@ pe_context_subject_match(const struct apn_app *app,
 	switch(subject->type) {
 	case APN_CS_NONE:
 		return 1;
-	case APN_CS_CSUM:
-		if (!pident->csum)
-			return 0;
-		csptr = subject->value.csum;
-		break;
 	case APN_CS_UID:
 		uid = subject->value.uid;
 		/* FALLTRHOUGH */

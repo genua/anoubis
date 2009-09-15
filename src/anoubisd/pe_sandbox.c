@@ -136,11 +136,6 @@ pe_sb_evaluate(struct apn_rule **rulelist, int rulecnt,
 		cs = NULL;
 		ret = 0;
 		switch (cstype) {
-		case APN_CS_CSUM:
-			cs = sbrule->rule.sbaccess.cs.value.csum;
-			if (!cs)
-				goto err;
-			break;
 		case APN_CS_UID_SELF:
 			ret = sfshash_get_uid(sbevent->path,
 			    sbevent->uid, csum);
