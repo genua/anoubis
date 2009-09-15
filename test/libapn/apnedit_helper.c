@@ -45,6 +45,8 @@ FILE	*output = NULL;
 
 void usage(const char *progname)
 {
+	if (!output)
+		output = stderr;
 	fprintf(output, "usage: %s cmdfile input\n", progname);
 	exit(1);
 }
@@ -302,40 +304,83 @@ xdigit(char ch)
 	return -1;
 }
 
-static int
-parse_csum(char *string, u_int8_t cs[ANOUBIS_CS_LEN])
+char *
+parse_keyid(char *string)
 {
-	int i;
-	for (i=0; i<ANOUBIS_CS_LEN; ++i) {
+	int		 i;
+
+	for (i=0; string[2*i] && string[2*i+1]; ++i) {
 		int d1, d2;
 		if ((d1 = xdigit(string[2*i])) < 0)
-			return 0;
+			return NULL;
 		if ((d2 = xdigit(string[2*i+1])) < 0)
-			return 0;
-		cs[i] = d1*16 + d2;
+			return NULL;
 	}
 	if (string[2*i])
+		return NULL;
+	return strdup(string);
+}
+
+static int
+parse_subject(char *args, struct apn_subject *subject)
+{
+	int	ret = -1;
+	int 	uid;
+	char	keyid[200];
+
+	while(isspace(*args))
+		args++;
+	memset(subject, 0, sizeof(struct apn_subject));
+	subject->type = APN_CS_NONE;
+	if (strncasecmp(args, "signed-self", 11) == 0) {
+		ret = 11;
+		subject->type = APN_CS_UID_SELF;
+	} else if (strncasecmp(args, "self", 4) == 0) {
+		ret = 4;
+		subject->type = APN_CS_KEY_SELF;
+	} else if (sscanf(args, "uid %d%n", &uid, &ret) >= 1) {
+		subject->type = APN_CS_UID;
+		subject->value.uid = uid;
+	} else if (sscanf(args, "key %s%n", keyid, &ret) >= 1) {
+		subject->type = APN_CS_KEY;
+		subject->value.keyid = parse_keyid(keyid);
+		if (subject->value.keyid == NULL)
+			return -1;
+	} else {
+		subject->type = APN_CS_NONE;
 		return 0;
-	return 1;
+	}
+	if (ret < 0 || (args[ret] && !isspace(args[ret])))
+		return -1;
+	return ret;
 }
 
 static int
 cmd_copyinsert(struct apn_ruleset *rs, char *args)
 {
 	int			 triggerid, srcid, type, ret;
-	char			 ch;
-	char			 typestr[100], cstxt[256], path[1024];
-	u_int8_t		 cs[ANOUBIS_CS_LEN];
+	char			 typestr[100], path[1024];
 	struct apn_rule		*src;
 	struct apn_subject	 subject;
+	int			 len;
 
-	if (sscanf(args, "%s %d %d %s %s%c",
-	    typestr, &triggerid, &srcid, path, cstxt, &ch) != 5) {
+	if (sscanf(args, "%s %d %d %s %n",
+	    typestr, &triggerid, &srcid, path, &len) < 4) {
 		fprintf(output, "cmd_copyinsert(%d): Invald syntax\n", line);
 		return 0;
 	}
-	if (!parse_csum(cstxt, cs)) {
-		fprintf(output, "cmd_copyinsert(%d): Invalid csum\n", line);
+	args += len;
+	len = parse_subject(args, &subject);
+	if (len < 0) {
+		fprintf(output, "cmd_copyinsert(%d): Invalid subject\n", line);
+		return 0;
+	}
+	args += len;
+	while(isspace(*args))
+		args++;
+	if (*args) {
+		fprintf(output, "cmd_copyinsert(%d): Garbage after subject\n",
+		    line);
 		return 0;
 	}
 	type = get_type(typestr);
@@ -353,8 +398,6 @@ cmd_copyinsert(struct apn_ruleset *rs, char *args)
 		    line);
 		return 0;
 	}
-	subject.type = APN_CS_CSUM;
-	subject.value.csum = cs;
 	switch(type) {
 	case APN_ALF:
 		ret = apn_copyinsert_alf(rs, src, triggerid, path, &subject);

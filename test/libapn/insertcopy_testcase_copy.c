@@ -61,9 +61,7 @@ generate_file(void)
 	/* To avoid races, we keep the file open. */
 
 	fprintf(sfp, "alf {\n");
-	fprintf(sfp, "9: /bin/sh sha256 \\\n");
-	fprintf(sfp, "a123456789abcdef0123456789abcdef0123456789abcdef"
-	    "0123456789abcdef {\n");
+	fprintf(sfp, "9: /bin/sh {\n");
 	fprintf(sfp, "1: allow connect tcp all\n");
 	fprintf(sfp, "2: allow accept tcp from any to any\n");
 	fprintf(sfp, "3: allow connect tcp from any to 1.2.3.4\n");
@@ -73,35 +71,25 @@ generate_file(void)
 	fprintf(sfp, "7: allow connect tcp from 1.2.3.0/24 to 4.0.0.0/8\n");
 	fprintf(sfp, "8: default deny\n");
 	fprintf(sfp, "}\n");
-	fprintf(sfp, "12: /usr/bin/ssh sha256 \\\n");
-	fprintf(sfp, "b123456789abcdef0123456789abcdef0123456789abcdef"
-	    "0123456789abcdef {\n");
+	fprintf(sfp, "12: /usr/bin/ssh {\n");
 	fprintf(sfp, "10: default deny\n");
 	fprintf(sfp, "11: allow connect tcp all\n");
 	fprintf(sfp, "}\n");
-	fprintf(sfp, "16: /sbin/dhclient sha256 \\\n");
-	fprintf(sfp, "c123456789abcdef0123456789abcdef0123456789abcdef"
-	    "0123456789abcdef {\n");
+	fprintf(sfp, "16: /sbin/dhclient {\n");
 	fprintf(sfp, "13: default deny\n");
 	fprintf(sfp, "14: allow raw\n");
 	fprintf(sfp, "15: allow send udp all\n");
 	fprintf(sfp, "}\n");
 	fprintf(sfp, "\n");
-	fprintf(sfp, "19: /bin/sh \\\n");
-	fprintf(sfp, "d123456789abcdef0123456789abcdef0123456789abcdef"
-	    "0123456789abcdef {\n");
+	fprintf(sfp, "19: /bin/sh uid 10 {\n");
 	fprintf(sfp, "17: default deny\n");
 	fprintf(sfp, "18: allow connect tcp from any to 1.2.3.4 port www\n");
 	fprintf(sfp, "}\n");
-	fprintf(sfp, "22: /usr/bin/ssh \\\n");
-	fprintf(sfp, "e123456789abcdef0123456789abcdef0123456789abcdef"
-	    "0123456789abcdef {\n");
+	fprintf(sfp, "22: /usr/bin/ssh self {\n");
 	fprintf(sfp, "20: default deny\n");		/* This is rule 20 */
 	fprintf(sfp, "21: allow connect alert tcp all\n"); /* This is rule 21 */
 	fprintf(sfp, "}\n");
-	fprintf(sfp, "26: /sbin/dhclient \\\n");
-	fprintf(sfp, "f123456789abcdef0123456789abcdef0123456789abcdef"
-	    "0123456789abcdef {\n");
+	fprintf(sfp, "26: /sbin/dhclient uid 20 {\n");
 	fprintf(sfp, "23: default deny\n");
 	fprintf(sfp, "24: allow raw\n");
 	fprintf(sfp, "25: allow send log udp all\n");
@@ -159,9 +147,8 @@ generate_rule(void)
 		free(app);
 		return (NULL);
 	}
-	app->subject.type = APN_CS_CSUM;
-	app->subject.value.csum = calloc(APN_HASH_SHA256_LEN, sizeof(u_int8_t));
-	*(unsigned long *)app->subject.value.csum = htonl(0xdeadbeef);
+	app->subject.type = APN_CS_UID;
+	app->subject.value.uid = 4711;
 
 	rule->apn_type = APN_ALF;
 	rule->apn_id = 0;
@@ -320,7 +307,6 @@ END_TEST
 
 START_TEST(tc_Copy1)
 {
-	u_int8_t		 fakecs[APN_HASH_SHA256_LEN];
 	struct apn_rule		*rule;
 	struct apn_ruleset	*rs;
 	char			*file;
@@ -352,9 +338,8 @@ START_TEST(tc_Copy1)
 	rule = generate_alfrule();
 	fail_if(rule == NULL, "generate_rule() failed");
 
-	subject.type = APN_CS_CSUM;
-	subject.value.csum = fakecs;
-	memset(fakecs, 0xaa, sizeof(fakecs));
+	subject.type = APN_CS_UID;
+	subject.value.uid = 4712;
 	ret = apn_copyinsert_alf(rs, rule, 7, "/bin/foobar", &subject);
 	if (ret != 0)
 		apn_print_errors(rs, stderr);

@@ -66,9 +66,7 @@ generate_file(FILE **infp)
 	/* To avoid races, we keep the file open. */
 
 	fprintf(sfp, "alf {\n");
-	fprintf(sfp, "/bin/sh sha256 \\\n");
-	fprintf(sfp, "a123456789abcdef0123456789abcdef0123456789abcdef"
-	    "0123456789abcdef {\n");
+	fprintf(sfp, "/bin/sh {\n");
 	fprintf(sfp, "allow connect tcp all until 10\n");
 	fprintf(sfp, "allow accept tcp from any to any\n");
 	fprintf(sfp, "allow connect tcp from any to 1.2.3.4 task 20 until 30\n");
@@ -78,35 +76,25 @@ generate_file(FILE **infp)
 	fprintf(sfp, "allow connect tcp from 1.2.3.0/24 to 4.0.0.0/8\n");
 	fprintf(sfp, "default deny\n");
 	fprintf(sfp, "}\n");
-	fprintf(sfp, "/usr/bin/ssh sha256 \\\n");
-	fprintf(sfp, "b123456789abcdef0123456789abcdef0123456789abcdef"
-	    "0123456789abcdef {\n");
+	fprintf(sfp, "/usr/bin/ssh {\n");
 	fprintf(sfp, "default deny\n");
 	fprintf(sfp, "allow connect tcp all\n");
 	fprintf(sfp, "}\n");
-	fprintf(sfp, "/sbin/dhclient sha256 \\\n");
-	fprintf(sfp, "c123456789abcdef0123456789abcdef0123456789abcdef"
-	    "0123456789abcdef {\n");
+	fprintf(sfp, "/sbin/dhclient {\n");
 	fprintf(sfp, "default deny\n");
 	fprintf(sfp, "allow raw\n");
 	fprintf(sfp, "allow send udp all\n");
 	fprintf(sfp, "}\n");
 	fprintf(sfp, "\n");
-	fprintf(sfp, "/bin/sh \\\n");
-	fprintf(sfp, "d123456789abcdef0123456789abcdef0123456789abcdef"
-	    "0123456789abcdef {\n");
+	fprintf(sfp, "/bin/sh uid 10 {\n");
 	fprintf(sfp, "default deny\n");
 	fprintf(sfp, "allow connect tcp from any to 1.2.3.4 port www\n");
 	fprintf(sfp, "}\n");
-	fprintf(sfp, "/usr/bin/ssh \\\n");	/* This rule has ID 24 */
-	fprintf(sfp, "e123456789abcdef0123456789abcdef0123456789abcdef"
-	    "0123456789abcdef {\n");
+	fprintf(sfp, "/usr/bin/ssh self {\n");	/* This rule has ID 24 */
 	fprintf(sfp, "default deny\n");		/* This is rule 22 */
 	fprintf(sfp, "allow connect alert tcp all\n"); /* This is rule 23 */
 	fprintf(sfp, "}\n");
-	fprintf(sfp, "/sbin/dhclient \\\n");
-	fprintf(sfp, "f123456789abcdef0123456789abcdef0123456789abcdef"
-	    "0123456789abcdef {\n");
+	fprintf(sfp, "/sbin/dhclient uid 20 {\n");
 	fprintf(sfp, "default deny\n");
 	fprintf(sfp, "allow raw\n");
 	fprintf(sfp, "allow send log udp all\n");
