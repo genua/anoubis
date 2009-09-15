@@ -294,22 +294,6 @@ RuleWizardProgramPageBase::RuleWizardProgramPageBase( wxWindow* parent, wxWindow
 	programPicker = new AnPickFromFs( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
 	mainSizer->Add( programPicker, 0, wxEXPAND | wxALL, 5 );
 	
-	csumLabel = new wxStaticText( this, wxID_ANY, _("Checksum:"), wxDefaultPosition, wxDefaultSize, 0 );
-	csumLabel->Wrap( -1 );
-	csumLabel->SetMinSize( wxSize( 90,-1 ) );
-	
-	mainSizer->Add( csumLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
-	
-	csumValue = new wxStaticText( this, wxID_ANY, _("..."), wxDefaultPosition, wxDefaultSize, 0 );
-	csumValue->Wrap( -1 );
-	csumValue->SetFont( wxFont( 8, 70, 90, 90, false, wxEmptyString ) );
-	
-	mainSizer->Add( csumValue, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
-	
-	programInfo = new wxStaticText( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
-	programInfo->Wrap( -1 );
-	mainSizer->Add( programInfo, 0, wxALL, 5 );
-	
 	
 	mainSizer->Add( 0, 0, 1, wxEXPAND, 5 );
 	

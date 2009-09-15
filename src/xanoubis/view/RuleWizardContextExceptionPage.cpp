@@ -77,20 +77,14 @@ RuleWizardContextExceptionPage::onAddButton(wxCommandEvent &)
 
 	if (fileDlg.ShowModal() == wxID_OK) {
 		wxString	path = fileDlg.GetPath();
-		wxString	csstr;
 
 		wxBeginBusyCursor();
-		if (PolicyUtils::fileToCsum(path, csstr)) {
-			history_->addContextException(path, csstr);
-			selection = exceptionListBox->Append(path);
-			exceptionListBox->Select(selection);
-			updateNavi();
-			wxEndBusyCursor();
-		} else {
-			wxEndBusyCursor();
-			wxMessageBox(_("Failed to calculate checksum"),
-			    _("Error"), wxOK, NULL);
-		}
+
+		history_->addContextException(path);
+		selection = exceptionListBox->Append(path);
+		exceptionListBox->Select(selection);
+		updateNavi();
+		wxEndBusyCursor();
 	}
 }
 

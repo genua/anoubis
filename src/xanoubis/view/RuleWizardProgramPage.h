@@ -32,14 +32,12 @@
 
 #include "RuleWizardPanelsBase.h"
 #include "RuleWizardHistory.h"
-#include "CsumCalcTask.h"
-#include "JobCtrl.h"
 
 /**
  * This is the first page of the wizard.
  * The user is asked for the name of the program this wizard should work for.
  * After the user made his choice, the checksum of the given program is
- * calculated.\n
+ * calculated.
  *
  * The next page is only reached if the program exists and calculating the
  * checksum was successfull.
@@ -80,11 +78,6 @@ class RuleWizardProgramPage : public Observer, public RuleWizardProgramPageBase
 		RuleWizardHistory *history_;
 
 		/**
-		 * The task to calculate the checksum.
-		 */
-		CsumCalcTask calcTask_;
-
-		/**
 		 * Handle events from wizard.
 		 * The page change is in progress we block this
 		 * if no program was set.
@@ -100,15 +93,6 @@ class RuleWizardProgramPage : public Observer, public RuleWizardProgramPageBase
 		 * @return Nothing.
 		 */
 		void onPageChanged(wxWizardEvent &);
-
-		/**
-		 * Handle events from checksum calculation task.
-		 * This will extract the result of the calculation from
-		 * the task and store it in csumCache_.
-		 * @param[in] 1st The event.
-		 * @return Nothing.
-		 */
-		void onCsumCalcTask(TaskEvent &);
 
 		/**
 		 * Store the chosen program.

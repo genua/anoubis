@@ -47,13 +47,11 @@ RuleWizardHistory::RuleWizardHistory(void)
 	 * Set page defaults here.
 	 */
 	program_ = wxEmptyString;
-	csum_	 = wxEmptyString;
 
 	haveContextPolicy_ = false;
 	isSameContext_	   = true;
 	haveContextException_ = false;
 	contextExceptionBinaryList_.Clear();
-	contextExceptionCsumList_.Clear();
 
 	haveAlfPolicy_	     = false;
 	overwriteAlfPolicy_  = OVERWRITE_NO;
@@ -133,18 +131,6 @@ RuleWizardHistory::getProgram(void) const
 	return (program_);
 }
 
-void
-RuleWizardHistory::setChecksum(const wxString & csum)
-{
-	csum_ = csum;
-}
-
-wxString
-RuleWizardHistory::getChecksum(void) const
-{
-	return (csum_);
-}
-
 /*
  * Context methods
  */
@@ -172,7 +158,6 @@ RuleWizardHistory::setContextException(bool exception)
 	haveContextException_ = exception;
 	if (!haveContextException_) {
 		contextExceptionBinaryList_.Clear();
-		contextExceptionCsumList_.Clear();
 	}
 }
 
@@ -183,10 +168,9 @@ RuleWizardHistory::haveContextException(void) const
 }
 
 bool
-RuleWizardHistory::addContextException(wxString bin, wxString csum)
+RuleWizardHistory::addContextException(const wxString &bin)
 {
 	contextExceptionBinaryList_.Add(bin);
-	contextExceptionCsumList_.Add(csum);
 	return true;
 }
 
@@ -195,7 +179,6 @@ RuleWizardHistory::delContextException(unsigned int idx)
 {
 	if (idx < contextExceptionBinaryList_.GetCount()) {
 		contextExceptionBinaryList_.RemoveAt(idx);
-		contextExceptionCsumList_.RemoveAt(idx);
 		return true;
 	}
 	return false;
@@ -216,16 +199,6 @@ RuleWizardHistory::getContextExceptionBinary(unsigned int index) const
 	if (haveContextException_
 	    && index < contextExceptionBinaryList_.GetCount()) {
 		return contextExceptionBinaryList_[index];
-	}
-	return wxT("");
-}
-
-const wxString
-RuleWizardHistory::getContextExceptionCsum(unsigned int index) const
-{
-	if (haveContextException_
-	    && index < contextExceptionCsumList_.GetCount()) {
-		return contextExceptionCsumList_[index];
 	}
 	return wxT("");
 }

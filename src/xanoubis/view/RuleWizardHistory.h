@@ -83,21 +83,6 @@ class RuleWizardHistory
 		wxString getProgram(void) const;
 
 		/**
-		 * Store the given checksum.
-		 * This will store the given checksum.
-		 * @param[in] 1st The checksum to store.
-		 * @return Nothing.
-		 */
-		void setChecksum(const wxString &);
-
-		/**
-		 * Get the stored checksum.
-		 * @param None.
-		 * @return The stored checksum.
-		 */
-		wxString getChecksum(void) const;
-
-		/**
 		 * Does context policies exist for the stored program?
 		 * @param None.
 		 * @return True if policies already exist, false otherwise.
@@ -140,10 +125,9 @@ class RuleWizardHistory
 		/**
 		 * Add a context exception.
 		 * @param[in] 1st The name of the application
-		 * @param[in] 2nd The checksum of the application
 		 * @return True on success.
 		 */
-		bool addContextException(wxString, wxString);
+		bool addContextException(const wxString &);
 
 		/**
 		 * Delete a context exception.
@@ -163,13 +147,6 @@ class RuleWizardHistory
 		 * @return The binary.
 		 */
 		const wxString getContextExceptionBinary(unsigned int) const;
-
-		/**
-		 * Return the context exception csum at a given index.
-		 * @param[in] 1st The index.
-		 * @return The checksum.
-		 */
-		const wxString getContextExceptionCsum(unsigned int) const;
 
 		/**
 		 * Are defaults for alf available?
@@ -592,11 +569,6 @@ class RuleWizardHistory
 		wxString program_;
 
 		/**
-		 * This is the current checksum of the given program.
-		 */
-		wxString csum_;
-
-		/**
 		 * Does the given program already has context policies?
 		 */
 		bool haveContextPolicy_;
@@ -617,11 +589,6 @@ class RuleWizardHistory
 		 * The list of context exceptions binaries.
 		 */
 		wxArrayString contextExceptionBinaryList_;
-
-		/**
-		 * The list of context exception checksums.
-		 */
-		wxArrayString contextExceptionCsumList_;
 
 		/**
 		 * Does the given program already has alf policies?
