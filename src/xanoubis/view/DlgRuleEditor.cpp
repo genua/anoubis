@@ -43,7 +43,6 @@
 #include "FilterPolicy.h"
 #include "PolicyRuleSet.h"
 #include "PolicyCtrl.h"
-#include "RuleSetChecksumVisitor.h"
 #include "RuleEditorAddPolicyVisitor.h"
 #include "DlgRuleEditorPage.h"
 #include "DlgRuleEditorAppPage.h"
@@ -1350,13 +1349,10 @@ DlgRuleEditor::onFooterExportButton(wxCommandEvent &)
 void
 DlgRuleEditor::onFooterActivateButton(wxCommandEvent &)
 {
-	int		 answer;
 	wxString	 message;
 	PolicyCtrl	*policyCtrl;
 	PolicyCtrl::PolicyResult	 polRes;
 	PolicyRuleSet	*admin = NULL, *user = NULL;
-
-	RuleSetChecksumVisitor csumChecker;
 
 	policyCtrl = PolicyCtrl::getInstance();
 
@@ -1370,19 +1366,7 @@ DlgRuleEditor::onFooterActivateButton(wxCommandEvent &)
 		return;
 	}
 
-	answer = wxYES;
-	if (user != NULL && isAutoChecksumCheck_) {
-		user->accept(csumChecker);
-		if (csumChecker.havePolicyMismatch()) {
-			message = _("There are policies with\n"
-			    "outdated checksum\n"
-			    "Shall we send the ruleset anyway?");
-			answer = wxMessageBox(message, _("RuleEditor"),
-			    wxYES_NO, this);
-		}
-	}
-
-	if (user && (answer == wxYES)) {
+	if (user) {
 		footerStatusText->SetLabel(wxT("sending to daemon"));
 		polRes = policyCtrl->sendToDaemon(userRuleSetId_);
 		switch (polRes) {

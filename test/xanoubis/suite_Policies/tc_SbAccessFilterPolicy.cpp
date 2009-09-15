@@ -250,18 +250,6 @@ START_TEST(SbAccessFilterPolicy_Subject)
 	CHECK_OBSERVER_NOTIFIED(observer, true);
 	CHECK_POLICY_GETSUBJECTTYPENO(policy, APN_CS_UID);
 	CHECK_POLICY_GETSUBJECTNAME(policy, subject);
-
-	/* CSUM */
-	subject = wxT(
-	    "00024aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
-	if (!policy->setSubjectCsum(subject)) {
-		fail("setSubjectCsum(): not successful.");
-	}
-	subject.Prepend(wxT("csum "));
-	CHECK_POLICY_MODIFIED(policy, true);
-	CHECK_OBSERVER_NOTIFIED(observer, true);
-	CHECK_POLICY_GETSUBJECTTYPENO(policy, APN_CS_CSUM);
-	CHECK_POLICY_GETSUBJECTNAME(policy, subject);
 }
 END_TEST
 

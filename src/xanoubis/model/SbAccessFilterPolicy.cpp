@@ -295,35 +295,6 @@ SbAccessFilterPolicy::setSubjectKey(wxString key)
 	return (true);
 }
 
-bool
-SbAccessFilterPolicy::setSubjectCsum(wxString csumString)
-{
-	unsigned char	 csum[MAX_APN_HASH_LEN];
-	struct apn_rule *rule;
-
-	rule = getApnRule();
-	if (rule == NULL) {
-		return (false);
-	}
-
-	memset(csum, 0, MAX_APN_HASH_LEN);
-	PolicyUtils::stringToCsum(csumString, csum, MAX_APN_HASH_LEN);
-
-	startChange();
-	PolicyUtils::cleanSubject(&rule->rule.sbaccess.cs);
-
-	rule->rule.sbaccess.cs.type = APN_CS_CSUM;
-	/* A previous value was freed by cleanSubject() */
-	rule->rule.sbaccess.cs.value.csum = (u_int8_t *)calloc(
-	    MAX_APN_HASH_LEN, sizeof(unsigned char));
-	memcpy(rule->rule.sbaccess.cs.value.csum, csum, MAX_APN_HASH_LEN);
-
-	setModified();
-	finishChange();
-
-	return (true);
-}
-
 int
 SbAccessFilterPolicy::getSubjectTypeNo(void) const
 {

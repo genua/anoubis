@@ -32,8 +32,6 @@
 #include "config.h"
 #endif
 
-#include <csum/csum.h>
-
 #include "FilterPolicy.h"
 #include "PolicyUtils.h"
 class ContextAppPolicy;
@@ -214,58 +212,6 @@ class ContextFilterPolicy : public FilterPolicy
 		 * @return True if it's an any-policy.
 		 */
 		bool isAny(void) const;
-
-		/**
-		 * Set the hash value to binary of given index.
-		 * @param[in] 1st The new hash value.
-		 * @param[in] 2nd The index of the binary.
-		 * @return True on success.
-		 */
-		bool setHashValueNo(unsigned char *, unsigned int);
-
-		/**
-		 * Set the hash value to binary of given index.
-		 * @param[in] 1st The new hash value.
-		 * @param[in] 2nd The index of the binary.
-		 * @return True on success.
-		 */
-		bool setHashValueString(const wxString &, unsigned int);
-
-		/**
-		 * Get the apn hash value of binary of given index.
-		 * @param[in] 1st The index of binary in question.
-		 * @param[out] 2nd The place where to put the apn hash value.
-		 * @param[in] 3rd The size of the given place.
-		 * @return True on success.
-		 * @see getHashValueName()
-		 */
-		bool getHashValueNo(unsigned int, unsigned char *, int) const;
-
-		/**
-		 * Get the string representation of hash value.
-		 * @param[in] 1st The index of binary in quesiton.
-		 * @return The value as string on success or an empyt string.
-		 * @see getHashValueNo()
-		 * @see getHashValueList()
-		 */
-		wxString getHashValueName(unsigned int) const;
-
-		/**
-		 * Get the entire list of hash values.
-		 * @param None.
-		 * @return The list of hash values (maybe empty).
-		 */
-		wxArrayString getHashValueList(void) const;
-
-		/**
-		 * Calculate the current checksums of all binaris.
-		 * This method blocks until all checksums are calculated.
-		 * The result is returned as list with as may entries as
-		 * binaries of this policy.
-		 * @param None.
-		 * @return List of current checksums.
-		 */
-		wxArrayString calculateCurrentChecksums(void) const;
 
 		/**
 		 * Get the subject type.

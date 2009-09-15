@@ -30,14 +30,6 @@
 RuleSetSearchPolicyVisitor::RuleSetSearchPolicyVisitor(int id)
 {
 	seekId_ = id;
-	seekHash_ = wxEmptyString;
-	matchingPolicy_ = NULL;
-}
-
-RuleSetSearchPolicyVisitor::RuleSetSearchPolicyVisitor(wxString hash)
-{
-	seekId_ = 0;
-	seekHash_ = hash;
 	matchingPolicy_ = NULL;
 }
 
@@ -57,7 +49,6 @@ void
 RuleSetSearchPolicyVisitor::visitAlfAppPolicy(AlfAppPolicy *policy)
 {
 	compare(policy);
-	compareHash(policy);
 }
 
 void
@@ -77,7 +68,6 @@ void
 RuleSetSearchPolicyVisitor::visitContextAppPolicy(ContextAppPolicy *policy)
 {
 	compare(policy);
-	compareHash(policy);
 }
 
 void
@@ -85,7 +75,6 @@ RuleSetSearchPolicyVisitor::visitContextFilterPolicy(
     ContextFilterPolicy *policy)
 {
 	compare(policy);
-	// XXX ch: do we have to compareHash((AppPolicy *)policy);
 }
 
 void
@@ -106,14 +95,12 @@ void
 RuleSetSearchPolicyVisitor::visitSbAppPolicy(SbAppPolicy *policy)
 {
 	compare(policy);
-	compareHash(policy);
 }
 
 void
 RuleSetSearchPolicyVisitor::visitSfsAppPolicy(SfsAppPolicy *policy)
 {
 	compare(policy);
-	compareHash(policy);
 }
 
 void
@@ -138,20 +125,6 @@ RuleSetSearchPolicyVisitor::compare(Policy *policy)
 	if (matchingPolicy_ == NULL) {
 		if (policy->getApnRuleId() == seekId_) {
 			matchingPolicy_ = policy;
-		}
-	}
-}
-
-void
-RuleSetSearchPolicyVisitor::compareHash(AppPolicy *appPolicy)
-{
-	/* first match strategy */
-	/* XXX ch: does not work for lists */
-	if (seekId_)
-		return;
-	if (matchingPolicy_ == NULL) {
-		if (appPolicy->getHashValueName(0).Cmp(seekHash_) == 0) {
-			matchingPolicy_ = appPolicy;
 		}
 	}
 }

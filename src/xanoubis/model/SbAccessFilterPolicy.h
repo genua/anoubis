@@ -167,14 +167,6 @@ class SbAccessFilterPolicy : public FilterPolicy
 		bool setSubjectKey(wxString);
 
 		/**
-		 * Set the subject csum.
-		 * This also modifies the subject type.
-		 * @param[in] 1st The csum.
-		 * @return True on success.
-		 */
-		bool setSubjectCsum(wxString);
-
-		/**
 		 * Get the subject type.
 		 * @param None.
 		 * @return The type of subject.

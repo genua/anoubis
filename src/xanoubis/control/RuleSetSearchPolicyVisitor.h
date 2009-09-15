@@ -52,7 +52,7 @@
 /**
  * PolicyVisitor for PolicyRuleSet.
  * Use this visitor for searching a special policy within a PolicyRuleSet.
- * You can search for a special id or a checksum.
+ * You can search for a special id.
  */
 class RuleSetSearchPolicyVisitor : public PolicyVisitor
 {
@@ -64,14 +64,6 @@ class RuleSetSearchPolicyVisitor : public PolicyVisitor
 		 * @return Nothing.
 		 */
 		RuleSetSearchPolicyVisitor(int);
-
-		/**
-		 * Constructor of RuleSetSearchPolicyVisitor.
-		 * Use this to search for a policy with the given checksum.
-		 * @param[in] 1st The checksum to search for.
-		 * @return Nothing.
-		 */
-		RuleSetSearchPolicyVisitor(wxString);
 
 		/**
 		 * Get found policy.
@@ -164,7 +156,6 @@ class RuleSetSearchPolicyVisitor : public PolicyVisitor
 
 	private:
 		int		 seekId_;	/**< Search for this id */
-		wxString	 seekHash_;	/**< Search for this checksum */
 		Policy		*matchingPolicy_;	/**< Search result. */
 
 		/**
@@ -177,18 +168,6 @@ class RuleSetSearchPolicyVisitor : public PolicyVisitor
 		 * @return Nothing.
 		 */
 		void	compare(Policy *);
-
-		/**
-		 * Search for checksum.
-		 * This method does the work of comparing the checksum of a
-		 * (given) policy with the checksum to search for. If they
-		 * match the policy is stored for later access. If a policy
-		 * was found no further comparison is done - first match
-		 * strategy.
-		 * @param[in] 1st The policy to query for it's checksum.
-		 * @return Nothing.
-		 */
-		void	compareHash(AppPolicy *);
 };
 
 #endif	/* _RULESETSEARCHPOLICYVISITOR_H_ */

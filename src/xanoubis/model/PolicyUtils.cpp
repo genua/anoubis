@@ -31,45 +31,6 @@
 #include <wx/tokenzr.h>
 
 bool
-PolicyUtils::stringToCsum(wxString str,
-    unsigned char csum[MAX_APN_HASH_LEN], size_t len)
-{
-	wxString workOn;
-	wxChar c;
-	unsigned char d;
-
-	memset(csum, 0, len);
-
-	/* Ensure no leading '0x' or '0X' */
-	if (!str.StartsWith(wxT("0x"), &workOn) &&
-	    !str.StartsWith(wxT("0X"), &workOn)) {
-		workOn = str;
-	}
-
-	/* XXX ch: this is a quick-hack and should been improved */
-	for (size_t i=0; i<len*2 && i<workOn.length(); i++) {
-		c = workOn.GetChar(i);
-
-		if (('0' <= c) && (c <= '9')) {
-			d = c - '0';
-		} else if (('A' <= c) && (c <= 'F')) {
-			d = c - 'A' + 10;
-		} else if (('a' <= c) && (c <= 'f')) {
-			d = c - 'a' + 10;
-		} else {
-			d = 0;
-		}
-		if ((i%2) == 0) {
-			csum[i/2] = d << 4;
-		} else {
-			csum[i/2] += d;
-		}
-	}
-
-	return (true);
-}
-
-bool
 PolicyUtils::csumToString(unsigned char csum[MAX_APN_HASH_LEN],
     size_t len, wxString &str)
 {
@@ -203,42 +164,6 @@ PolicyUtils::stringToList(wxString str)
 }
 
 wxString
-PolicyUtils::hashTypeToString(int hashType)
-{
-	wxString hashTypeString;
-
-	switch (hashType) {
-	case APN_HASH_SHA256:
-		hashTypeString = wxT("SHA256");
-		break;
-	case APN_HASH_NONE:
-		hashTypeString = wxT("NONE");
-		break;
-	default:
-		hashTypeString = _("(unknown)");
-		break;
-	}
-
-	return (hashTypeString);
-}
-
-bool
-PolicyUtils::fileToCsum(const wxString file, wxString &csum)
-{
-	u_int8_t	csraw[MAX_APN_HASH_LEN];
-	int		cslen = MAX_APN_HASH_LEN;
-
-	csum = wxT("");
-	if (anoubis_csum_calc(file.fn_str(), csraw, &cslen) == 0) {
-		return csumToString(csraw, cslen, csum);
-	}
-	if (anoubis_csum_calc_userspace(file.fn_str(), csraw, &cslen) == 0) {
-		return csumToString(csraw, cslen, csum);
-	}
-	return false;
-}
-
-wxString
 PolicyUtils::getSubjectName(const struct apn_subject *subject)
 {
 	wxString	 subjectName = wxEmptyString;
@@ -264,11 +189,6 @@ PolicyUtils::getSubjectName(const struct apn_subject *subject)
 		case APN_CS_NONE:
 			subjectName = wxT("none");
 			break;
-		case APN_CS_CSUM:
-			PolicyUtils::csumToString(subject->value.csum,
-			    MAX_APN_HASH_LEN, subjectName);
-			subjectName.Prepend(wxT("csum "));
-			break;
 		default:
 			break;
 		}
@@ -289,10 +209,6 @@ PolicyUtils::cleanSubject(struct apn_subject *subject)
 		break;
 	case APN_CS_UID:
 		subject->value.uid = 0 - 1;
-		break;
-	case APN_CS_CSUM:
-		free(subject->value.csum);
-		subject->value.csum = NULL;
 		break;
 	default:
 		break;

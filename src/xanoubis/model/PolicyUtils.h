@@ -53,15 +53,6 @@ class PolicyUtils
 {
 	public:
 		/**
-		 * Convert string to checksum.
-		 * @param[in] 1st String with checksum.
-		 * @param[out] 2nd Place to put apn checkum.
-		 * @param[in] 3rd Size of place to put checksum.
-		 * @return True on success.
-		 */
-		static bool stringToCsum(wxString, unsigned char *, size_t);
-
-		/**
 		 * Convert checksum to string.
 		 * @param[in] 1st Checksum to convert.
 		 * @param[in] 2nd Size of checksum.
@@ -114,24 +105,6 @@ class PolicyUtils
 		 * @return The list with the elements of the string.
 		 */
 		static wxArrayString stringToList(wxString);
-
-		/**
-		 * Translate apn hash type number to name string.
-		 * @param[in] 1st The apn hash type number.
-		 * @return The string with the name.
-		 */
-		static wxString hashTypeToString(int);
-
-		/**
-		 * Calculate the checksum of a file given by name.
-		 * Try to use the kernel based checksum caculation
-		 * if available but use user space calculation if this
-		 * fails. Follow any symbolic links encountered along the way.
-		 * @param[in] 1st The file name.
-		 * @param[in] 2nd The checksum as a string.
-		 * @return True on success.
-		 */
-		static bool fileToCsum(const wxString, wxString &);
 
 		/**
 		 * Get readable subject type.

@@ -77,30 +77,6 @@ START_TEST(PolicyUtils_csumToString)
 }
 END_TEST
 
-/* XXX ch: this test is a quick-hack and should be extended */
-START_TEST(PolicyUtils_stringToCsum)
-{
-	unsigned char	csum[MAX_APN_HASH_LEN];
-	wxString	csumString;
-	wxString	csumPrinted;
-
-	csumString = wxT(
-	    "0aabbccccc1aabbcdefc2aABBCDEFc3aabb012cc4aabb456cc5aabb789cc6aab");
-
-	PolicyUtils::stringToCsum(csumString, csum, MAX_APN_HASH_LEN);
-
-	for (size_t i=0; i< MAX_APN_HASH_LEN; i++) {
-		csumPrinted += wxString::Format(wxT("%2.2x"),
-		    (unsigned char)csum[i]);
-	}
-
-	if (csumString.CmpNoCase(csumPrinted) != 0) {
-		fail("converted checksum mismatch:\n%ls\n%ls\n",
-		    csumString.c_str(), csumPrinted.c_str());
-	}
-}
-END_TEST
-
 TCase *
 getTc_PolicyUtils(void)
 {
@@ -108,7 +84,6 @@ getTc_PolicyUtils(void)
 
 	testCase = tcase_create("PolicyUtils");
 	tcase_add_test(testCase, PolicyUtils_csumToString);
-	tcase_add_test(testCase, PolicyUtils_stringToCsum);
 
 	return (testCase);
 }
