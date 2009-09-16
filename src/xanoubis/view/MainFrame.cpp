@@ -332,17 +332,22 @@ MainFrame::OnConnectionStateChange(wxCommandEvent& event)
 	wxString hostname = event.GetString();
 	wxString logMessage;
 
-	/* XXX Evil i18n-style */
 	switch (newState) {
 	case JobCtrl::CONNECTION_CONNECTED: {
 		KeyCtrl			*keyCtrl = KeyCtrl::getInstance();
 		LocalCertificate	&cert = keyCtrl->getLocalCertificate();
 		struct anoubis_sig	*raw_cert;
 
-		logMessage = _("Connection established with ") + hostname;
-		if (instance->isSfsDisable() == false) {
-			logMessage += _(" without sfsdisable!");
-		}
+		if (instance->isSfsDisable())
+			logMessage = wxString::Format(
+			    _("Connection established with %ls"),
+			    hostname.c_str());
+		else
+			logMessage = wxString::Format(
+			    _("Connection established with %ls "
+			    "without sfsdisable!"),
+			    hostname.c_str());
+
 		wxGetApp().log(logMessage);
 		if (cert.isLoaded()) {
 			bool showUpgradeMessage = true;
@@ -367,11 +372,13 @@ MainFrame::OnConnectionStateChange(wxCommandEvent& event)
 	}
 	case JobCtrl::CONNECTION_DISCONNECTED:
 	case JobCtrl::CONNECTION_ERROR:
-		logMessage = _("Disconnected from ") + hostname;
+		logMessage = wxString::Format(
+		    _("Disconnected from %ls"), hostname.c_str());
 		wxGetApp().log(logMessage);
 		break;
 	case JobCtrl::CONNECTION_FAILED:
-		logMessage = _("Connection to ") + hostname + _(" failed!");
+		logMessage = wxString::Format(
+		    _("Connection to %ls failed!"), hostname.c_str());
 		wxGetApp().alert(logMessage);
 		break;
 	}
