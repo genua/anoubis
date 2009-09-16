@@ -11,17 +11,22 @@ Package: anoubisd
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}, adduser, perl-modules, cvs
 Description: Central daemon of the Anoubis Security Suite
- XXX: long description
+ anoubisd is the user land daemon of the Anoubis Security Suite.  Together
+ with a kernel security module it implements an Application Level Firewall
+ (ALF), Filesystem Signatures (SFS) and sandboxing.
 
 Package: xanoubis
 Architecture: any
 Depends: ${shlibs:Depends}, notification-daemon, anoubisd, cvs, wx2.8-i18n
 Description: Graphical user interface of the Anoubis Security Suite
- XXX:  long description
+ xanoubis is the GUI of the anoubis security suite. Users can use xanoubis
+ to create rules and signatures for the Application Level Firewall
+ (ALF), Filesystem Signatures (SFS) and sandboxing.
 
 Package: anoubis-dbg
 Section: libdevel
 Architecture: any
 Depends: anoubisd (= ${binary:Version})
 Description: Debugging symbols for anoubisd/xanoubis
- XXX:  long description
+ This package contains the debug symbols of all the Anoubis Security Suite
+ components.
