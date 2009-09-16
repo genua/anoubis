@@ -529,7 +529,7 @@ i18n-format:
 	$(MSGFMT) -vc -o $$mo $$po; \
 	done
 
-i18n-install:
+i18n-install: i18n-check
 	cd $(top_srcdir)/$(xanoubisdir) && \
 	for mo in `ls -1 catalogs/*/xanoubis.mo 2>/dev/null`; do \
 	bn=`basename $$mo`; \
@@ -553,6 +553,13 @@ i18n-info:
 	echo "cd <xanoubis-src-dir>/catalogs"; \
 	echo "mkdir <lang-code>"; \
 	echo "msginit -o <lang-code>/xanoubis.po -l <lang-code>"
+
+i18n-check:
+	cd $(top_srcdir)/$(xanoubisdir) && \
+	for po in catalogs/*/*.po; do \
+	echo "Checking $$po"; \
+	[ "`msggrep -T -e ".*" -v -o- $$po;`xxx" = "xxx" ] || exit 1; \
+	done
 
 flawfinder_FLAGS=\
 	--dataonly \
