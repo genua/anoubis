@@ -1,16 +1,16 @@
 alf {
 
-	/sbin/anoubisctl @@ {
+	/sbin/anoubisctl {
 		# allow all because of NFS, X, etc.
 		default allow
 	}
 
-	/usr/bin/xanoubis @@ {
+	/usr/bin/xanoubis {
 		# allow all because of NFS, X, etc.
 		default allow
 	}
 
-	/usr/sbin/sshd @@ {
+	/usr/sbin/sshd {
 		allow accept  tcp all
 
 		# connect required for port forwarding
@@ -18,7 +18,7 @@ alf {
 		default log deny
 	}
 
-	/usr/bin/ssh @@ {
+	/usr/bin/ssh {
 		# DNS
 		allow connect tcp from any	   to any port 53
 		allow send    udp from any	   to any port 53
@@ -41,7 +41,7 @@ alf {
 		default log deny
 	}
 
-	/usr/bin/evolution @@ {
+	/usr/bin/evolution {
 		# DNS
 		allow connect tcp from any	   to any port 53
 		allow send    udp from any	   to any port 53
@@ -71,8 +71,8 @@ alf {
 		default log ask
 	}
 
-	{ /usr/lib/kde3/konqueror.so @@,
-	  /usr/bin/konqueror @@ } {
+	{ /usr/lib/kde3/konqueror.so,
+	  /usr/bin/konqueror } {
 		# X
 		allow connect tcp from any to 127.0.0.1 port 6000 - 6099
 		allow connect tcp from any to ::1       port 6000 - 6099
@@ -85,7 +85,7 @@ alf {
 		default log ask
 	}
 
-	  /usr/bin/kmail @@ {
+	  /usr/bin/kmail {
 		# X
 		allow connect tcp from any to 127.0.0.1 port 6000 - 6099
 		allow connect tcp from any to ::1       port 6000 - 6099
@@ -98,7 +98,7 @@ alf {
 		default log ask
 	}
 
-	/usr/lib/kde3/kio_http.so @@ {
+	/usr/lib/kde3/kio_http.so {
 		# NFS/portmap
 		allow connect tcp from any                to 127.0.0.1 port 111
 		allow send    udp from any                to 127.0.0.1 port 111
@@ -116,7 +116,7 @@ alf {
 		default log ask
 	}
 
-	/usr/lib/kde3/kio_imap4.so @@ {
+	/usr/lib/kde3/kio_imap4.so {
 		# NFS/portmap
 		allow connect tcp from any                to 127.0.0.1 port 111
 		allow send    udp from any                to 127.0.0.1 port 111
@@ -132,7 +132,7 @@ alf {
 		default log ask
 	}
 
-	/usr/lib/kde3/kio_ftp.so @@ {
+	/usr/lib/kde3/kio_ftp.so {
 		# NFS/portmap
 		allow connect tcp from any                to 127.0.0.1 port 111
 		allow send    udp from any                to 127.0.0.1 port 111
@@ -152,7 +152,7 @@ alf {
 		default log ask
 	}
 
-	/usr/lib/kde3/kio_sftp.so @@ {
+	/usr/lib/kde3/kio_sftp.so {
 		# NFS/portmap
 		allow connect tcp from any                to 127.0.0.1 port 111
 		allow send    udp from any                to 127.0.0.1 port 111
@@ -167,7 +167,7 @@ alf {
 		default log ask
 	}
 
-	/usr/lib/kde3/kio_pop3.so @@ {
+	/usr/lib/kde3/kio_pop3.so {
 		# NFS/portmap
 		allow connect tcp from any                to 127.0.0.1 port 111
 		allow send    udp from any                to 127.0.0.1 port 111
@@ -183,7 +183,7 @@ alf {
 		default log ask
 	}
 
-	/usr/lib/kde3/kio_smtp.so @@ {
+	/usr/lib/kde3/kio_smtp.so {
 		# NFS/portmap
 		allow connect tcp from any                to 127.0.0.1 port 111
 		allow send    udp from any                to 127.0.0.1 port 111
@@ -200,8 +200,8 @@ alf {
 		default log deny
 	}
 
-	{ /usr/bin/firefox @@,
-	  /usr/lib/xulrunner-1.9/xulrunner-stub @@ } {
+	{ /usr/bin/firefox,
+	  /usr/lib/xulrunner-1.9/xulrunner-stub } {
 		# NFS/portmap
 		allow connect tcp from any                to 127.0.0.1 port 111
 		allow send    udp from any                to 127.0.0.1 port 111
@@ -225,7 +225,7 @@ alf {
 		default log ask
 	}
 
-	/usr/bin/epiphany-gecko @@ {
+	/usr/bin/epiphany-gecko {
 		# NFS/portmap
 		allow connect tcp from any                to 127.0.0.1 port 111
 		allow send    udp from any                to 127.0.0.1 port 111
@@ -269,93 +269,93 @@ alf {
 	}
 }
 sandbox {
-	/sbin/anoubisctl @@ {
+	/sbin/anoubisctl {
 		# allow all in order to access/write profiles, etc
 		default allow
 	}
 
-	/usr/bin/xanoubis @@ {
+	/usr/bin/xanoubis {
 		# allow all in order to access/write profiles, etc
 		default allow
 	}
 }
 context {
-	/sbin/anoubisctl @@ {
+	/sbin/anoubisctl {
 		# no context new for cvs
 	}
 
-	/usr/bin/xanoubis @@ {
+	/usr/bin/xanoubis {
 		# no context new for cvs
 	}
 
-	/usr/sbin/sshd @@ {
+	/usr/sbin/sshd {
 		context new any
 	}
 
-	/usr/bin/ssh @@ {
+	/usr/bin/ssh {
 		context new any
 	}
 
-	/usr/bin/evolution @@ {
+	/usr/bin/evolution {
 		context new any
 	}
 
-	/usr/bin/kdeinit @@ {
-		context open /usr/lib/kde3/konqueror.so @@
-		context open /usr/lib/kde3/kio_http.so @@
-		context open /usr/lib/kde3/kio_imap4.so @@
-		context open /usr/lib/kde3/kio_pop3.so @@
-		context open /usr/lib/kde3/kio_ftp.so @@
-		context open /usr/lib/kde3/kio_sftp.so @@
-		context open /usr/lib/kde3/kio_smtp.so @@
+	/usr/bin/kdeinit {
+		context open /usr/lib/kde3/konqueror.so
+		context open /usr/lib/kde3/kio_http.so
+		context open /usr/lib/kde3/kio_imap4.so
+		context open /usr/lib/kde3/kio_pop3.so
+		context open /usr/lib/kde3/kio_ftp.so
+		context open /usr/lib/kde3/kio_sftp.so
+		context open /usr/lib/kde3/kio_smtp.so
 		context new any
 	}
 
-	{ /usr/bin/kioslave @@,
-	  /usr/bin/kioexec @@ } {
-		context open /usr/lib/kde3/konqueror.so @@
-		context open /usr/lib/kde3/kio_http.so @@
-		context open /usr/lib/kde3/kio_imap4.so @@
-		context open /usr/lib/kde3/kio_pop3.so @@
-		context open /usr/lib/kde3/kio_ftp.so @@
-		context open /usr/lib/kde3/kio_sftp.so @@
-		context open /usr/lib/kde3/kio_smtp.so @@
+	{ /usr/bin/kioslave,
+	  /usr/bin/kioexec } {
+		context open /usr/lib/kde3/konqueror.so
+		context open /usr/lib/kde3/kio_http.so
+		context open /usr/lib/kde3/kio_imap4.so
+		context open /usr/lib/kde3/kio_pop3.so
+		context open /usr/lib/kde3/kio_ftp.so
+		context open /usr/lib/kde3/kio_sftp.so
+		context open /usr/lib/kde3/kio_smtp.so
 	}
 
-	/usr/bin/kmail @@ {
+	/usr/bin/kmail {
 		# not used in default kde configuration
 		# kio slaves are spawned by kdeinit
-		context open /usr/lib/kde3/kio_imap4.so @@
-		context open /usr/lib/kde3/kio_pop3.so @@
-		context open /usr/lib/kde3/kio_smtp.so @@
+		context open /usr/lib/kde3/kio_imap4.so
+		context open /usr/lib/kde3/kio_pop3.so
+		context open /usr/lib/kde3/kio_smtp.so
 		context new any
 	}
 
-	/usr/lib/kde3/kio_http.so @@ {
+	/usr/lib/kde3/kio_http.so {
 	}
-	/usr/lib/kde3/kio_imap4.so @@ {
+	/usr/lib/kde3/kio_imap4.so {
 	}
-	/usr/lib/kde3/kio_ftp.so @@ {
+	/usr/lib/kde3/kio_ftp.so {
 	}
-	/usr/lib/kde3/kio_sftp.so @@ {
+	/usr/lib/kde3/kio_sftp.so {
 	}
-	/usr/lib/kde3/kio_smtp.so @@ {
+	/usr/lib/kde3/kio_smtp.so {
 	}
-	/usr/lib/kde3/kio_pop3.so @@ {
+	/usr/lib/kde3/kio_pop3.so {
 	}
 
-	{ /usr/lib/kde3/konqueror.so @@,
-	  /usr/bin/konqueror @@ } {
+	{ /usr/lib/kde3/konqueror.so,
+	  /usr/bin/konqueror } {
 		# not used in default kde configuration
 		# kio slaves are spawned by kdeinit
-		context open /usr/lib/kde3/kio_http.so @@
-		context open /usr/lib/kde3/kio_ftp.so @@
-		context open /usr/lib/kde3/kio_sftp.so @@
+		context open /usr/lib/kde3/kio_http.so
+		context open /usr/lib/kde3/kio_ftp.so
+		context open /usr/lib/kde3/kio_sftp.so
 		context new any
 	}
 
-	{ /usr/bin/firefox @@,
-	  /usr/lib/xulrunner-1.9/xulrunner-stub @@ } {
+	{ /usr/bin/firefox,
+	  /usr/lib/xulrunner-1.9/xulrunner-stub } {
 		context new any
 	}
 

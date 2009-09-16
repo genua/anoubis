@@ -1,12 +1,12 @@
 alf {
-	/usr/sbin/avahi-daemon @@
+	/usr/sbin/avahi-daemon
 	{
 		allow send    udp from any port 5353 to any
 		allow receive udp from any           to any port 5353
 		default log deny
 	}
 
-	/usr/sbin/ntpd @@
+	/usr/sbin/ntpd
 	{
 		default log deny
 	}
@@ -16,7 +16,7 @@ alf {
 	}
 }
 sandbox {
-	/usr/sbin/ntpd @@
+	/usr/sbin/ntpd
 	{
 		allow path /etc/ntp.conf r
 		allow path /var/run/ntpd.pid rw
@@ -36,11 +36,11 @@ sandbox {
 	}
 }
 context {
-	/usr/sbin/ntpd @@
+	/usr/sbin/ntpd
 	{
 	}
 
-	/usr/sbin/avahi-daemon @@
+	/usr/sbin/avahi-daemon
 	{
 	}
 

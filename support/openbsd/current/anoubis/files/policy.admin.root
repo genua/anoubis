@@ -1,5 +1,5 @@
 alf {
-	/usr/sbin/ntpd @@
+	/usr/sbin/ntpd
 	{
 		allow send udp from any to any port 123
 		allow receive udp from any port 123 to any
@@ -13,7 +13,7 @@ alf {
 	}
 }
 sandbox {
-	/usr/sbin/ntpd @@
+	/usr/sbin/ntpd
 	{
 		allow path /etc/ntpd.conf r
 		allow path /etc/spwd.db r
@@ -33,7 +33,7 @@ sandbox {
 	}
 }
 context {
-	/usr/sbin/ntpd @@
+	/usr/sbin/ntpd
 	{
 	}
 
