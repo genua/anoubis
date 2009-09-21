@@ -33,6 +33,8 @@ if XANOUBIS
 GUI=xanoubis
 endif
 
+dist_bin_SCRIPTS = anoubis_keygen/anoubis-keygen
+
 # Note:  Libraries must come first as applications might depend on them.
 SUBDIRS = $(BSDCOMPAT) libapn libanoubischat libanoubisprotocol \
 	libanoubisui libanoubissig anoubisd $(GUI) anoubisctl sfssig

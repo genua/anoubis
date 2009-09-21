@@ -1,0 +1,147 @@
+#!/usr/bin/env perl
+
+##########################################################################
+# Copyright (c) 2009 GeNUA mbH <info@genua.de>
+#
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+# OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
+# TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+# PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+# LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+##########################################################################
+
+use strict;
+use warnings FATAL => "all";
+use File::Basename;
+use File::Path;
+use Getopt::Std;
+
+my $interactive = 1;
+my $keydir = $ENV{'HOME'} . "/.xanoubis";
+my $pubkeydir = "/var/lib/anoubis/policy/pubkeys";
+my $crypto = "aes256";
+my $numbits = 2048;
+# use gecos for DN
+my ($name, $gcos) = (getpwuid($<))[0,6];
+if (defined($gcos) and length($gcos)) {
+	$name = $gcos;
+	$name =~ s!,.*!!;
+}
+my $cn = "-subj '/C=DE/CN=$name'";
+
+my %path = (
+	"key"		=> "$keydir/default.key",
+	"certificate"	=> "$keydir/default.crt",
+);
+
+my %cmd = (
+	"key"		=> "openssl genrsa -out ",
+	"certificate"	=> "openssl req -new -x509 -days 999 -batch $cn -out ",
+);
+
+my $opts = {};
+getopts("bh", $opts) || HELP_MESSAGE();
+HELP_MESSAGE() if $opts->{h};
+$interactive = 0 if $opts->{b};
+
+foreach my $type ("key", "certificate") {
+	my $short = $path{$type};
+	$short =~ s!^$ENV{'HOME'}!~!;
+
+	if ($interactive) {
+		print "Enter file in which to save the $type ($short): ";
+		my $input = <STDIN>;
+		chomp($input);
+
+		$path{$type} = $input if (length($input));
+	}
+
+	if (! -d dirname($path{$type})) {
+		print "creating directory for $type\n";
+		mkpath(dirname($path{$type}))
+			or die "mkdir failed: $!";
+	}
+
+	if (-e $path{$type}) {
+		print $path{$type} . " already exists\n";
+		exit(1);
+	}
+}
+
+#encrypt or not to encrypt, that is the question.
+my $pass;
+while($interactive and !defined($pass)) {
+	print "Enter passphrase (empty for no passphrase): ";
+	system("stty -echo");
+	my $fpass = <STDIN>;
+	print "\nEnter same passphrase again: ";
+	my $spass = <STDIN>;
+	print "\n";
+	system("stty echo");
+
+	chomp ($fpass);
+	chomp ($spass);
+
+	if ($fpass eq $spass) {
+		$pass = $fpass;
+	} else {
+		print "Passphrases do not match.  Try again.\n";
+	}
+}
+
+$cmd{"key"} .= $path{"key"};
+$cmd{"certificate"} .= $path{"certificate"} . " -key " . $path{"key"};
+
+if (defined($pass) and length($pass)) {
+	$ENV{"PASSWORD"} = $pass;
+	$cmd{"key"} .= " -$crypto -passout env:PASSWORD";
+	$cmd{"certificate"} .= " -passin env:PASSWORD";
+}
+
+$cmd{"key"} .= " $numbits";
+
+foreach my $type ("key", "certificate") {
+	die ucfirst($type) . " generation failed: $!"
+		unless (system($cmd{$type}) == 0);
+	print "Your $type has been saved in ", $path{$type}, ".\n";
+}
+
+if (defined($pass) and length($pass)) {
+	$ENV{"PASSWORD"} = undef;
+}
+
+if ($interactive) {
+	my $short = $path{"certificate"};
+	$short =~ s!^$ENV{'HOME'}!~!;
+	print "Please run the following command to install the certificate: \n",
+		"  sudo cp $short $pubkeydir/$<\n";
+}
+
+
+# Subroutine help
+sub HELP_MESSAGE {
+	print	"usage: $0 [-b] [-h | --help]\n",
+		"Creates a key and certificate for Anoubis.\n",
+		"Options:\n",
+		"  -b\t\tnon-interactive mode\n",
+		"  -h or --help\tprint this message.\n",
+		"\n";
+	exit(1);
+}
