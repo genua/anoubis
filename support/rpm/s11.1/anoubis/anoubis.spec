@@ -237,10 +237,12 @@ exit 0
 %{rcdir}/*
 /etc/anoubis/anoubisd.conf
 /sbin/*
+%{_prefix}/bin/anoubis-keygen
 /usr/share/anoubisd/*
 %{_sysconfdir}/udev/rules.d/06-anoubis.rules
 %{_sysconfdir}/anoubis
 /var/lib/anoubis/*
+%{_mandir}/man1/anoubis-keygen.1.gz
 %{_mandir}/man4/*
 %{_mandir}/man5/*
 %{_mandir}/man8/*
@@ -260,6 +262,9 @@ exit 0
 
 ### changelog ##############################################
 %changelog
+* Mon Sep 21 2009 Sten Spans
+- add anoubis-keygen
+
 * Thu Jul 03 2009 Sebastian Trahm
 - add configuration file anoubisd.conf to subpackage anoubisd
 
