@@ -67,6 +67,8 @@ MainFrameBase::MainFrameBase( wxWindow* parent, wxWindowID id, const wxString& t
 	me_menubarTools->Append( mi_mbToolsLogViewer );
 	wxMenuItem* mi_mbToolsWizard = new wxMenuItem( me_menubarTools, ID_MITOOLSWIZARD, wxString( _("Wizard") ) , wxEmptyString, wxITEM_CHECK );
 	me_menubarTools->Append( mi_mbToolsWizard );
+	mi_mbToolsWizard->Enable( false );
+	
 	an_menubar->Append( me_menubarTools, _("Tools") );
 	
 	me_menubarHelp = new wxMenu();

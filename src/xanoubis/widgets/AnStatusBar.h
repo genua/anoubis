@@ -81,6 +81,8 @@ class AnStatusBar : public wxStatusBar
 		void onLogViewerShow(wxCommandEvent&);
 		void onRuleEditorShow(wxCommandEvent&);
 
+		void onConnectionStateChange(wxCommandEvent &);
+
 		ANEVENTS_IDENT_BCAST_METHOD_DECLARATION;
 
 	public:

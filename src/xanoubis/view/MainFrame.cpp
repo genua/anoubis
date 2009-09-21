@@ -385,6 +385,7 @@ MainFrame::OnConnectionStateChange(wxCommandEvent& event)
 
 	setConnectionString(connected, hostname);
 	an_menubar->Check(ID_MIFILECONNECT, connected);
+	an_menubar->Enable(ID_MITOOLSWIZARD, connected);
 	wxGetApp().status(logMessage);
 
 	event.Skip();
