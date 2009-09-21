@@ -443,7 +443,6 @@ RuleWizard::createContextPolicy(PolicyRuleSet *ruleSet) const
 
 	ruleSet->prependAppPolicy(ctxApp);
 	ctxApp->addBinary(history_.getProgram());
-	/* TODO Which checksum/signature should be trustable? */
 	ctxApp->setSubjectSelf(0, false);
 
 	if (!history_.isSameContext()) {
@@ -460,10 +459,6 @@ RuleWizard::createContextPolicy(PolicyRuleSet *ruleSet) const
 			    i<history_.getContextExceptionCount(); ++i) {
 				ctxFilter->addBinary(
 				    history_.getContextExceptionBinary(i));
-				/*
-				 * TODO
-				 * Which checksum/signature should be trustable?
-				 */
 				ctxFilter->setSubjectSelf(i, false);
 			}
 		}
@@ -509,7 +504,6 @@ RuleWizard::createAlfPolicy(PolicyRuleSet *ruleSet) const
 	alfApp = new AlfAppPolicy(ruleSet);
 	ruleSet->prependAppPolicy(alfApp);
 	alfApp->addBinary(history_.getProgram());
-	/* TODO Which checksum/signature should be trustable? */
 	alfApp->setSubjectSelf(0, false);
 
 	dflFilter = new DefaultFilterPolicy(alfApp);
@@ -580,7 +574,6 @@ RuleWizard::createSandboxPolicy(PolicyRuleSet *ruleSet) const
 	sbApp = new SbAppPolicy(ruleSet);
 	ruleSet->prependAppPolicy(sbApp);
 	sbApp->addBinary(history_.getProgram());
-	/* TODO Which checksum/signature should be trustable? */
 	sbApp->setSubjectSelf(0, false);
 
 	/* Create a default ASK policy just to be sure. */

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-09-16 15:15+0200\n"
+"POT-Creation-Date: 2009-09-18 14:27+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -2074,12 +2074,62 @@ msgstr ""
 msgid "policy sent to daemon"
 msgstr ""
 
-#: view/RuleWizardProgramPage.cpp:83
+#: view/RuleWizardProgramPage.cpp:115
 msgid "Please choose a program first."
 msgstr ""
 
-#: view/RuleWizardProgramPage.cpp:87
+#: view/RuleWizardProgramPage.cpp:119 view/RuleWizardProgramPage.cpp:188
+#: view/RuleWizardProgramPage.cpp:243 view/RuleWizardProgramPage.cpp:268
+#: view/RuleWizardProgramPage.cpp:299
 msgid "Rule Wizard"
+msgstr ""
+
+#: view/RuleWizardProgramPage.cpp:169 control/SfsCtrl.cpp:697
+#, c-format
+msgid "Got error from daemon (%hs) while fetching the checksum for %ls."
+msgstr ""
+
+#: view/RuleWizardProgramPage.cpp:174 control/SfsCtrl.cpp:714
+#, c-format
+msgid "Communication error while fetching the checksum for %ls."
+msgstr ""
+
+#: view/RuleWizardProgramPage.cpp:178 control/SfsCtrl.cpp:726
+#, c-format
+msgid "Failed to resolve %ls"
+msgstr ""
+
+#: view/RuleWizardProgramPage.cpp:182 control/SfsCtrl.cpp:734
+#, c-format
+msgid "An unexpected error occured (%hs) while fetching the checksum for %ls."
+msgstr ""
+
+#: view/RuleWizardProgramPage.cpp:224 view/RuleWizardProgramPage.cpp:264
+#: control/SfsCtrl.cpp:630 control/SfsCtrl.cpp:820
+#, c-format
+msgid "Failed to calculate the checksum for %ls: %hs"
+msgstr ""
+
+#: view/RuleWizardProgramPage.cpp:228 control/SfsCtrl.cpp:834
+#, c-format
+msgid "Communication error while register the checksum for %ls."
+msgstr ""
+
+#: view/RuleWizardProgramPage.cpp:232 control/SfsCtrl.cpp:848
+#, c-format
+msgid "Got error from daemon (%hs) while register the checksum for %ls."
+msgstr ""
+
+#: view/RuleWizardProgramPage.cpp:237 control/SfsCtrl.cpp:864
+#, c-format
+msgid "An unexpected error occured (%hs) while register the checksum for %ls."
+msgstr ""
+
+#: view/RuleWizardProgramPage.cpp:295
+#, c-format
+msgid ""
+"The checksum for %ls does not match! Please go to the SFS Browser and update "
+"the checksum."
 msgstr ""
 
 #: view/RuleWizardAlfOverwritePage.cpp:46
@@ -2814,39 +2864,14 @@ msgstr ""
 msgid "%ls not found in file-list!"
 msgstr ""
 
-#: control/SfsCtrl.cpp:630 control/SfsCtrl.cpp:820
-#, c-format
-msgid "Failed to calculate the checksum for %ls: %hs"
-msgstr ""
-
-#: control/SfsCtrl.cpp:697
-#, c-format
-msgid "Got error from daemon (%hs) while fetching the checksum for %ls."
-msgstr ""
-
 #: control/SfsCtrl.cpp:701
 #, c-format
 msgid "Got error from daemon (%hs) while fetching the signature for %ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:714
-#, c-format
-msgid "Communication error while fetching the checksum for %ls."
-msgstr ""
-
 #: control/SfsCtrl.cpp:718
 #, c-format
 msgid "Communication error while fetching the signature for %ls."
-msgstr ""
-
-#: control/SfsCtrl.cpp:726
-#, c-format
-msgid "Failed to resolve %ls"
-msgstr ""
-
-#: control/SfsCtrl.cpp:734
-#, c-format
-msgid "An unexpected error occured (%hs) while fetching the checksum for %ls."
 msgstr ""
 
 #: control/SfsCtrl.cpp:739
@@ -2867,29 +2892,14 @@ msgstr ""
 msgid "Failed to calculate the signature for %ls: %hs"
 msgstr ""
 
-#: control/SfsCtrl.cpp:834
-#, c-format
-msgid "Communication error while register the checksum for %ls."
-msgstr ""
-
 #: control/SfsCtrl.cpp:838
 #, c-format
 msgid "Communication error while register the signature for %ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:848
-#, c-format
-msgid "Got error from daemon (%hs) while register the checksum for %ls."
-msgstr ""
-
 #: control/SfsCtrl.cpp:853
 #, c-format
 msgid "Got error from daemon (%hs) while register the signature for %ls."
-msgstr ""
-
-#: control/SfsCtrl.cpp:864
-#, c-format
-msgid "An unexpected error occured (%hs) while register the checksum for %ls."
 msgstr ""
 
 #: control/SfsCtrl.cpp:869

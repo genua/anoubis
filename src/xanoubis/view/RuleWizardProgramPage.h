@@ -30,8 +30,13 @@
 
 #include <wx/wizard.h>
 
+#include "CsumCalcTask.h"
+#include "ComCsumAddTask.h"
+#include "ComCsumGetTask.h"
 #include "RuleWizardPanelsBase.h"
 #include "RuleWizardHistory.h"
+
+class TaskEvent;
 
 /**
  * This is the first page of the wizard.
@@ -78,6 +83,21 @@ class RuleWizardProgramPage : public Observer, public RuleWizardProgramPageBase
 		RuleWizardHistory *history_;
 
 		/**
+		 * Tasks fetches a checksum from the daemon.
+		 */
+		ComCsumGetTask csumGetTask_;
+
+		/**
+		 * Task registers a checksum at the daemon.
+		 */
+		ComCsumAddTask csumAddTask_;
+
+		/**
+		 * Task calculates a checksum.
+		 */
+		CsumCalcTask csumCalcTask_;
+
+		/**
 		 * Handle events from wizard.
 		 * The page change is in progress we block this
 		 * if no program was set.
@@ -95,6 +115,35 @@ class RuleWizardProgramPage : public Observer, public RuleWizardProgramPageBase
 		void onPageChanged(wxWizardEvent &);
 
 		/**
+		 * Handles events from daemon - a checksum was requested.
+		 * A checksum needs to be registered, ff the requested file
+		 * does not have a checksum. If the file has a checksum, you
+		 * need to verify it.
+		 * @param[in] 1st The event.
+		 * @return Nothing.
+		 */
+		void onCsumGet(TaskEvent &);
+
+		/**
+		 * Handles events from daemon - a checksum appended to the
+		 * shadowtree.
+		 * If the operation was successful, you are are allowed to
+		 * continue with the wizard.
+		 * @param[in] 1st The event.
+		 * @return Nothing.
+		 */
+		void onCsumAdd(TaskEvent &);
+
+		/**
+		 * Handles events from checksum-calculation.
+		 * If the operation was successful, you are allowed to continue
+		 * with the wizard.
+		 * @param[in] 1st The event.
+		 * @return Nothing.
+		 */
+		void onCsumCalc(TaskEvent &);
+
+		/**
 		 * Store the chosen program.
 		 * This will store the given program to the history and
 		 * start the calculation of the checksum.
@@ -109,6 +158,13 @@ class RuleWizardProgramPage : public Observer, public RuleWizardProgramPageBase
 		 * @return Nothing.
 		 */
 		void updateNavi(void);
+
+		/**
+		 * Returns the parent RuleWizardPage.
+		 * @param None.
+		 * @return Parent RuleWizardPage
+		 */
+		RuleWizardPage *getWizardPage(void) const;
 };
 
 #endif	/* _RULEWIZARDPROGRAMPAGE_H_ */

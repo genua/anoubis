@@ -33,6 +33,18 @@ RuleWizardPage::RuleWizardPage(wxWizard *wizard, RuleWizard::wizardPages page)
 	pageNo_ = page;
 }
 
+bool
+RuleWizardPage::isNextEnabled(void) const
+{
+	return (isButtonEnabled(wxID_FORWARD));
+}
+
+void
+RuleWizardPage::setNextEnabled(bool enabled)
+{
+	setButtonEnabled(wxID_FORWARD, enabled);
+}
+
 wxWizardPage *
 RuleWizardPage::GetNext(void) const
 {
@@ -51,6 +63,18 @@ RuleWizardPage::GetNext(void) const
 	return (nextPage);
 }
 
+bool
+RuleWizardPage::isPreviousEnabled(void) const
+{
+	return (isButtonEnabled(wxID_BACKWARD));
+}
+
+void
+RuleWizardPage::setPreviousEnabled(bool enabled)
+{
+	setButtonEnabled(wxID_BACKWARD, enabled);
+}
+
 wxWizardPage *
 RuleWizardPage::GetPrev(void) const
 {
@@ -67,4 +91,40 @@ RuleWizardPage::GetPrev(void) const
 	}
 
 	return (previousPage);
+}
+
+bool
+RuleWizardPage::isButtonEnabled(long id) const
+{
+	wxWizard *wizard = wxDynamicCast(GetParent(), RuleWizard);
+	if (wizard == NULL) {
+		/* Wrong parent, rarely possible */
+		return (false);
+	}
+
+	wxWindow *button = wizard->FindWindow(id);
+	if (button == NULL) {
+		/* No such button */
+		return (false);
+	}
+
+	return (button->IsEnabled());
+}
+
+void
+RuleWizardPage::setButtonEnabled(long id, bool enabled)
+{
+	wxWizard *wizard = wxDynamicCast(GetParent(), RuleWizard);
+	if (wizard == NULL) {
+		/* Wrong parent, rarely possible */
+		return;
+	}
+
+	wxWindow *button = wizard->FindWindow(id);
+	if (button == NULL) {
+		/* No such button */
+		return;
+	}
+
+	button->Enable(enabled);
 }

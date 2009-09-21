@@ -43,12 +43,44 @@ class RuleWizardPage : public wxWizardPage
 		RuleWizardPage(wxWizard *, RuleWizard::wizardPages);
 
 		/**
+		 * Tests whether the [Next] button is enabled in this page.
+		 * @param None.
+		 * @return True, if the [Next] button is enabled.
+		 */
+		bool isNextEnabled(void) const;
+
+		/**
+		 * Enables/disables the [Next] button in this page.
+		 * If disabled, the [Next] button is still displayed but cannot
+		 * be selected.
+		 * @param[in] 1st Set tu true, if the button should be enabled.
+		 * @return Nothing.
+		 */
+		void setNextEnabled(bool);
+
+		/**
 		 * Get next page.
 		 * This will deliver the next page (after next button was hit).
 		 * @param None.
 		 * @return The next wizard page.
 		 */
 		virtual wxWizardPage* GetNext(void) const;
+
+		/**
+		 * Tests whether the [Previous] button is enabled in this page.
+		 * @param None.
+		 * @return True, if the [Previous] button is enabled.
+		 */
+		bool isPreviousEnabled(void) const;
+
+		/**
+		 * Enables/disables the [Previous] button in this page.
+		 * If disabled, the [Previous] button is still displayed but
+		 * cannot be selected.
+		 * @param[in] 1st Set tu true, if the button should be enabled.
+		 * @return Nothing.
+		 */
+		void setPreviousEnabled(bool);
 
 		/**
 		 * Get previous page.
@@ -65,6 +97,24 @@ class RuleWizardPage : public wxWizardPage
 		 * and previous page.
 		 */
 		RuleWizard::wizardPages pageNo_;
+
+		/**
+		 * Tests whether the button with the given id is enabled in
+		 * this page.
+		 * @param[in] 1st The internal id of the button
+		 * @return True, if the button is enabled.
+		 */
+		bool isButtonEnabled(long) const;
+
+		/**
+		 * Enables/disables the button with the given in this page.
+		 * If disabled, the button is still displayed but cannot be
+		 * selected.
+		 * @param[in] 1st The internal id of the button
+		 * @param[in] 2nd Set tu true, if the button should be enabled.
+		 * @return Nothing.
+		 */
+		void setButtonEnabled(long, bool);
 };
 
 #endif	/* _RULEWIZARDPAGE_H_ */

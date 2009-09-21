@@ -32,6 +32,8 @@
 #include <wx/msgdlg.h>
 
 #include "AnPickFromFs.h"
+#include "JobCtrl.h"
+#include "RuleWizardPage.h"
 #include "RuleWizardProgramPage.h"
 
 RuleWizardProgramPage::RuleWizardProgramPage(wxWindow *parent,
@@ -44,24 +46,54 @@ RuleWizardProgramPage::RuleWizardProgramPage(wxWindow *parent,
 	programPicker->setTitle(wxT("")); /* Title shown as extra label. */
 	programPicker->setMode(AnPickFromFs::MODE_FILE);
 
-	parent->Connect(wxEVT_WIZARD_PAGE_CHANGING,
+	RuleWizardPage *page = wxDynamicCast(parent, RuleWizardPage);
+
+	page->Connect(wxEVT_WIZARD_PAGE_CHANGING,
 	    wxWizardEventHandler(RuleWizardProgramPage::onPageChanging),
 	    NULL, this);
-	parent->Connect(wxEVT_WIZARD_PAGE_CHANGED,
+	page->Connect(wxEVT_WIZARD_PAGE_CHANGED,
 	    wxWizardEventHandler(RuleWizardProgramPage::onPageChanged),
 	    NULL, this);
+
+	/* Disabled until a valid program was selected */
+	page->setNextEnabled(false);
+
+	JobCtrl::getInstance()->Connect(anTASKEVT_CSUM_GET,
+	    wxTaskEventHandler(RuleWizardProgramPage::onCsumGet), NULL, this);
+	JobCtrl::getInstance()->Connect(anTASKEVT_CSUM_ADD,
+	    wxTaskEventHandler(RuleWizardProgramPage::onCsumAdd), NULL, this);
+	JobCtrl::getInstance()->Connect(anTASKEVT_CSUMCALC,
+	    wxTaskEventHandler(RuleWizardProgramPage::onCsumCalc), NULL, this);
 }
 
 RuleWizardProgramPage::~RuleWizardProgramPage(void)
 {
+	JobCtrl::getInstance()->Disconnect(anTASKEVT_CSUM_GET,
+	    wxTaskEventHandler(RuleWizardProgramPage::onCsumGet), NULL, this);
+	JobCtrl::getInstance()->Disconnect(anTASKEVT_CSUM_ADD,
+	    wxTaskEventHandler(RuleWizardProgramPage::onCsumAdd), NULL, this);
+	JobCtrl::getInstance()->Disconnect(anTASKEVT_CSUMCALC,
+	    wxTaskEventHandler(RuleWizardProgramPage::onCsumCalc), NULL, this);
 }
 
 void
 RuleWizardProgramPage::update(Subject *subject)
 {
 	if (subject == programPicker) {
-		setProgram(programPicker->getFileName());
-		updateNavi();
+		if (wxFileExists(programPicker->getFileName())) {
+			setProgram(programPicker->getFileName());
+			updateNavi();
+
+			/*
+			 * A binary is selected, you need to fetch the checksum
+			 * because maybe a checksum needs to be registered for
+			 * the selected binary.
+			 */
+			csumGetTask_.setPath(programPicker->getFileName());
+			JobCtrl::getInstance()->addTask(&csumGetTask_);
+		} else {
+			getWizardPage()->setNextEnabled(false);
+		}
 	}
 }
 
@@ -97,6 +129,179 @@ RuleWizardProgramPage::onPageChanged(wxWizardEvent &)
 }
 
 void
+RuleWizardProgramPage::onCsumGet(TaskEvent &event)
+{
+	if (event.getTask() != &csumGetTask_) {
+		/* Not "my" task, skip it */
+		event.Skip();
+		return;
+	}
+
+	event.Skip(false); /* "My" task -> stop propagating */
+
+	ComTask::ComTaskResult result = csumGetTask_.getComTaskResult();
+
+	if (result == ComTask::RESULT_SUCCESS) {
+		/*
+		 * A checksum is registered. Next, compare with local checksum.
+		 * If the checksums does not match, the rule is useable.
+		 */
+		csumCalcTask_.setPath(programPicker->getFileName());
+		JobCtrl::getInstance()->addTask(&csumCalcTask_);
+	} else if (result == ComTask::RESULT_REMOTE_ERROR &&
+	    csumGetTask_.getResultDetails() == ENOENT) {
+		/*
+		 * No checksum registered. Next, register a checksum for the
+		 * selected binary. Otherwise the rule is not useable.
+		 */
+		csumAddTask_.setPath(programPicker->getFileName());
+		JobCtrl::getInstance()->addTask(&csumAddTask_);
+	} else {
+		/* An error occured while fetching the checksum */
+		getWizardPage()->setNextEnabled(false);
+
+		wxString message;
+		wxString path = csumGetTask_.getPath();
+		const char *err = strerror(csumGetTask_.getResultDetails());
+
+		switch (result) {
+		case ComTask::RESULT_REMOTE_ERROR:
+			message.Printf(_("Got error from daemon (%hs) while "
+			    "fetching the checksum for %ls."),
+			    err, path.c_str());
+			break;
+		case ComTask::RESULT_COM_ERROR:
+			message.Printf(_("Communication error while fetching "
+			"the checksum for %ls."), path.c_str());
+			break;
+		case ComTask::RESULT_LOCAL_ERROR:
+			message.Printf(_("Failed to resolve %ls"),
+			    path.c_str());
+			break;
+		default:
+			message.Printf(_("An unexpected error occured (%hs) "
+			    "while fetching the checksum for %ls."),
+			    err, path.c_str());
+			break;
+		}
+
+		wxMessageBox(message, _("Rule Wizard"), wxOK | wxICON_ERROR,
+		    this);
+	}
+}
+
+void
+RuleWizardProgramPage::onCsumAdd(TaskEvent &event)
+{
+	if (event.getTask() != &csumAddTask_) {
+		/* Not "my" task, skip it */
+		event.Skip();
+		return;
+	}
+
+	event.Skip(false); /* "My" task -> stop propagating */
+
+	ComTask::ComTaskResult result = csumAddTask_.getComTaskResult();
+
+	if (result == ComTask::RESULT_SUCCESS) {
+		/*
+		 * Checksum was successfully added to the shadowtree, allow
+		 * to continue with the wizard.
+		 */
+		getWizardPage()->setNextEnabled(true);
+	} else {
+		/*
+		 * An error occured while adding the checksum to the shadowtree
+		 */
+		getWizardPage()->setNextEnabled(false);
+
+		wxString message;
+		wxString path = csumAddTask_.getPath();
+		const char *err = strerror(csumAddTask_.getResultDetails());
+
+		switch (result) {
+		case ComTask::RESULT_LOCAL_ERROR:
+			message.Printf(_("Failed to calculate the checksum "
+			    "for %ls: %hs"), path.c_str(), err);
+			break;
+		case ComTask::RESULT_COM_ERROR:
+			message.Printf(_("Communication error while register "
+			    "the checksum for %ls."), path.c_str());
+			break;
+		case ComTask::RESULT_REMOTE_ERROR:
+			message.Printf(_("Got error from daemon (%hs) while "
+			    "register the checksum for %ls."),
+			    err, path.c_str());
+			break;
+		default:
+			message.Printf(_("An unexpected error occured (%hs) "
+			    "while register the checksum for %ls."),
+			    err, path.c_str());
+			break;
+		}
+
+		wxMessageBox(message, _("Rule Wizard"), wxOK | wxICON_ERROR,
+		    this);
+	}
+}
+
+void
+RuleWizardProgramPage::onCsumCalc(TaskEvent &event)
+{
+	if (event.getTask() != &csumCalcTask_) {
+		/* Not "my" task, skip it */
+		event.Skip();
+		return;
+	}
+
+	event.Skip(false); /* "My" task -> stop propagating */
+
+	if (csumCalcTask_.getResult() != 0) {
+		/* Calculation failed */
+		getWizardPage()->setNextEnabled(false);
+
+		wxString message = wxString::Format(
+		    _("Failed to calculate the checksum for %ls: %hs"),
+		    csumCalcTask_.getPath().c_str(),
+		    strerror(csumCalcTask_.getResult()));
+
+		wxMessageBox(message, _("Rule Wizard"), wxOK | wxICON_ERROR,
+		    this);
+
+		return;
+	}
+
+	/* Compare with daemon-checksum */
+	const u_int8_t *localCsum = csumCalcTask_.getCsum();
+	u_int8_t daemonCsum[ANOUBIS_CS_LEN];
+
+	/* Daemon-checksum still stored in comCsumGetTask_ */
+	csumGetTask_.getCsum(daemonCsum, ANOUBIS_CS_LEN);
+
+	if (memcmp(localCsum, daemonCsum, ANOUBIS_CS_LEN) == 0) {
+		/*
+		 * Checksum matches with checksum from shadowtree, allow to
+		 * continue with the wizard.
+		 */
+		getWizardPage()->setNextEnabled(true);
+	} else {
+		/*
+		 * Checksum does not match with checksum from shadowtree.
+		 * Cannot continue with wizard because the policy will not
+		 * work.
+		 */
+		getWizardPage()->setNextEnabled(false);
+
+		wxString message = wxString::Format(_("The checksum for %ls "
+		    "does not match! Please go to the SFS Browser and update "
+		    "the checksum."), csumCalcTask_.getPath().c_str());
+
+		wxMessageBox(message, _("Rule Wizard"), wxOK | wxICON_ERROR,
+		    this);
+	}
+}
+
+void
 RuleWizardProgramPage::setProgram(const wxString &binary)
 {
 	/* Store binary */
@@ -120,4 +325,10 @@ RuleWizardProgramPage::updateNavi(void)
 	history_->fillSandboxNavi(this, naviSizer, false);
 	Layout();
 	Refresh();
+}
+
+inline RuleWizardPage *
+RuleWizardProgramPage::getWizardPage(void) const
+{
+	return (wxDynamicCast(GetParent(), RuleWizardPage));
 }
