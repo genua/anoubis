@@ -83,7 +83,6 @@ enum apn_log_level {
 };
 
 #define		APN_CS_NONE	0
-#define		APN_CS_CSUM	1
 #define		APN_CS_UID	2
 #define		APN_CS_KEY	3
 #define		APN_CS_UID_SELF	4
@@ -94,7 +93,6 @@ struct apn_subject {
 	union {
 		char		*keyid;
 		uid_t		 uid;
-		u_int8_t	*csum;
 	} value;
 };
 

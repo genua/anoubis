@@ -130,16 +130,11 @@ typedef struct {
 		int64_t			 number;
 		char			*string;
 		unsigned int		 timeout;
-		int			 hashtype;
 		int			 netaccess;
 		int			 proto;
 		int			 action;
 		int			 sfsaction;
 		int			 log;
-		struct {
-			int		 type;
-			u_int8_t	 value[MAX_APN_HASH_LEN];
-		} hashspec;
 		struct {
 			struct apn_host	*fromhost;
 			struct apn_port	*fromport;
@@ -191,8 +186,6 @@ typedef struct {
 %destructor {
 	apn_free_app($$.head);
 }				app_l
-%type	<v.hashtype>		hashtype
-%type	<v.hashspec>		hashspec
 %type	<v.addr>		address
 %type	<v.host>		host hostspec
 %destructor {
@@ -244,10 +237,10 @@ typedef struct {
 	apn_free_filter(&$$.filtspec);
 }				alffilterrule
 %type	<v.acaprule>		alfcaprule
-%type	<v.sbaccess>		sbaccess sbpred sbpath sbuid sbkey sbcsum
+%type	<v.sbaccess>		sbaccess sbpred sbpath sbuid sbkey
 %destructor {
 	apn_free_sbaccess(&$$);
-}				sbaccess sbpred sbpath sbuid sbkey sbcsum
+}				sbaccess sbpred sbpath sbuid sbkey
 %type	<v.dfltrule>		defaultrule alfdefault sbdefault
 %type	<v.ctxruleapps>		ctxruleapps
 %destructor {
@@ -1030,9 +1023,6 @@ sbpred		: ANY {
 		| sbuid {
 			$$ = $1;
 		}
-		| sbcsum {
-			$$ = $1;
-		}
 		| sbpath sbkey {
 			$$ = $1;
 			$$.cs.type = $2.cs.type;
@@ -1042,11 +1032,6 @@ sbpred		: ANY {
 			$$ = $1;
 			$$.cs.type = $2.cs.type;
 			$$.cs.value.uid = $2.cs.value.uid;
-		}
-		| sbpath sbcsum {
-			$$ = $1;
-			$$.cs.type = $2.cs.type;
-			$$.cs.value.csum = $2.cs.value.csum;
 		}
 		;
 
@@ -1082,20 +1067,6 @@ sbuid		: UID NUMBER {
 			$$.path = NULL;
 			$$.cs.type = APN_CS_UID_SELF;
 			$$.cs.value.uid = 0;
-		}
-		;
-
-sbcsum		: CSUM hashspec {
-			$$.path = NULL;
-			assert(sizeof($2.value) == ANOUBIS_CS_LEN);
-			$$.cs.value.csum = malloc(sizeof($2.value));
-			if (!$$.cs.value.csum) {
-				$$.cs.type = APN_CS_NONE;
-			} else {
-				$$.cs.type = APN_CS_CSUM;
-				bcopy($2.value, $$.cs.value.csum,
-				    sizeof($2.value));
-			}
 		}
 		;
 
@@ -1306,29 +1277,7 @@ app_l		: app_l comma optnl app		{
 		}
 		;
 
-app		: STRING hashspec		{
-			struct apn_app	*app;
-			u_int8_t	*csum;
-
-			app = calloc(1, sizeof(struct apn_app));
-			csum = calloc(MAX_APN_HASH_LEN, sizeof(u_int8_t));
-			if (app == NULL || csum == NULL) {
-				if (app)
-					free(app);
-				if (csum)
-					free(csum);
-				free($1);
-				yyerror("Out of memory");
-				YYERROR;
-			}
-			app->name = normalize_path($1);
-			app->subject.type = APN_CS_CSUM;
-			app->subject.value.csum = csum;
-			bcopy($2.value, csum, MAX_APN_HASH_LEN);
-
-			$$ = app;
-		}
-		| STRING sfssubject		{
+app		: STRING sfssubject		{
 			struct apn_app	*app;
 			app = calloc(1, sizeof(struct apn_app));
 			if (app == NULL) {
@@ -1353,26 +1302,6 @@ app		: STRING hashspec		{
 			app->subject.type = APN_CS_NONE;
 			$$ = app;
 		}
-		;
-
-hashspec	: hashtype STRING		{
-			if (validate_hash($1, $2) == -1) {
-				free($2);
-				YYERROR;
-			}
-			$$.type = $1;
-
-			if (str2hash($2, $$.value, sizeof($$.value)) == -1) {
-				free($2);
-				YYERROR;
-			}
-
-			free($2);
-		}
-		;
-
-hashtype	: SHA256			{ $$ = APN_HASH_SHA256; }
-		| /* empty */			{ $$ = APN_HASH_SHA256; }
 		;
 
 action		: ALLOW				{ $$ = APN_ACTION_ALLOW; }

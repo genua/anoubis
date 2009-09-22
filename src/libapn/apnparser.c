@@ -53,7 +53,6 @@
 
 /* Only for internal use */
 static int	apn_print_app(struct apn_app *, FILE *);
-static void	apn_print_hash(u_int8_t *, int, FILE *);
 static int	apn_print_scope(struct apn_scope *scope, FILE * file);
 static int	apn_print_afiltrule(struct apn_afiltrule *, FILE *);
 static int	apn_print_host(struct apn_host *, FILE *);
@@ -548,7 +547,7 @@ apn_insert_ctxrule(struct apn_ruleset *rs, struct apn_rule *ctxrule,
 /*
  * Copy a full application rule and insert the provided rule @nrule before
  * the original rule with ID @id in the copy. The application of the copy
- * is set to the value corresponding to @filename, @csum and @type
+ * is set to the value corresponding to @filename and @subject.
  * Return codes:
  * -1: a systemcall failed and errno is set
  *  0: rule was inserted
@@ -916,10 +915,6 @@ apn_print_app(struct apn_app *app, FILE *file)
 		fprintf(file, "%s ", hp->name);
 		switch (hp->subject.type) {
 		case APN_CS_NONE:
-			break;
-		case APN_CS_CSUM:
-			fprintf(file, "sha256 \\\n");
-			apn_print_hash(hp->subject.value.csum, 256/8, file);
 			break;
 		case APN_CS_UID_SELF:
 			fprintf(file, "self");
@@ -1319,26 +1314,9 @@ apn_print_proto(int proto, FILE *file)
 	return (0);
 }
 
-static void
-apn_print_hash(u_int8_t *hash, int len, FILE *file)
-{
-	int	i;
-
-	if (hash == NULL || file == NULL)
-		return;
-
-	fprintf(file, "\"");
-
-	for (i = 0; i < len; i++)
-		fprintf(file, "%2.2x", (unsigned char)hash[i]);
-
-	fprintf(file, "\"");
-}
-
 static int
 apn_print_sbaccess(struct apn_sbaccess *sba, FILE *file)
 {
-	int i;
 	if ((sba->amask & APN_SBA_ALL) == 0)
 		return 1;
 	if (apn_print_action(sba->action, 1, file))
@@ -1363,13 +1341,6 @@ apn_print_sbaccess(struct apn_sbaccess *sba, FILE *file)
 			if (sba->cs.value.uid == (uid_t)-1)
 				return 1;
 			fprintf(file, " uid %d", sba->cs.value.uid);
-			break;
-		case APN_CS_CSUM:
-			if (!sba->cs.value.csum)
-				return 1;
-			fprintf(file, " csum ");
-			for (i=0; i<ANOUBIS_CS_LEN; ++i)
-				fprintf(file, "%02x", sba->cs.value.csum[i]);
 			break;
 		case APN_CS_KEY:
 			if (!sba->cs.value.keyid)
@@ -1428,12 +1399,6 @@ apn_free_subject(struct apn_subject *subject)
 		if (subject->value.keyid) {
 			free(subject->value.keyid);
 			subject->value.keyid = NULL;
-		}
-		break;
-	case APN_CS_CSUM:
-		if (subject->value.csum) {
-			free(subject->value.csum);
-			subject->value.csum = NULL;
 		}
 		break;
 	}
@@ -1880,12 +1845,6 @@ apn_copy_subject(const struct apn_subject *src, struct apn_subject *dst)
 		break;
 	case APN_CS_UID:
 		dst->value.uid = src->value.uid;
-		break;
-	case APN_CS_CSUM:
-		dst->value.csum = malloc(ANOUBIS_CS_LEN);
-		if (!dst->value.csum)
-			return -1;
-		memcpy(dst->value.csum, src->value.csum, ANOUBIS_CS_LEN);
 		break;
 	case APN_CS_KEY:
 		dst->value.keyid = strdup(src->value.keyid);

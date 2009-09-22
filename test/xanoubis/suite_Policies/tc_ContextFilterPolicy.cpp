@@ -71,9 +71,7 @@ createApnRule(const char *name)
 	}
 	app = rule->rule.apncontext.application;
 	app->name = strdup(name);
-	app->subject.type = APN_CS_CSUM;
-	app->subject.value.csum =
-	    (u_int8_t *)calloc(APN_HASH_SHA256_LEN, sizeof(u_int8_t));
+	app->subject.type = APN_CS_NONE;
 
 	return (rule);
 }
@@ -320,9 +318,7 @@ START_TEST(ContextFilterPolicy_setBinaryName_two)
 	}
 	app = rule->rule.apncontext.application->next;
 	app->name = strdup(initName1.fn_str());
-	app->subject.type = APN_CS_CSUM;
-	app->subject.value.csum =
-	    (u_int8_t *)calloc(APN_HASH_SHA256_LEN, sizeof(u_int8_t));
+	app->subject.type = APN_CS_NONE;
 
 	/* test: index 2 - expect to fail */
 	setName = wxT("/usr/bin/fooobaaa");
