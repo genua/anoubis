@@ -30,6 +30,11 @@
 #endif
 #include "version.h"
 
+#ifdef HAVE_SYS_INOTIFY_H
+#include <sys/inotify.h>
+#include <time.h>
+#endif
+
 #include <wx/app.h>
 #include <wx/filedlg.h>
 #include <wx/msgdlg.h>
@@ -627,6 +632,29 @@ bool
 MainFrame::isShowing(void)
 {
 	return (show_);
+}
+
+void
+MainFrame::OnIdle(wxIdleEvent &event)
+{
+#ifdef HAVE_SYS_INOTIFY_H
+	struct inotify_event	ievent;
+	wxString		msg;
+	int			iNotifyFd = -1;
+
+	iNotifyFd = wxGetApp().getINotify();
+	if (iNotifyFd == -1)
+		return;
+
+	if (read(iNotifyFd, &ievent, sizeof(ievent)) > 0) {
+		wxGetApp().getUserOptions()->Write(
+		    wxT("/Options/GrubModifiedTime"), time(NULL));
+		msg = _("The Boot Loader configuration has been updated."
+			"Please make sure to boot an Anoubis Kernel.");
+		wxMessageBox(msg, _("Warning"), wxICON_ERROR);
+	}
+#endif
+	event.Skip(false);
 }
 
 void

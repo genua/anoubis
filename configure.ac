@@ -112,6 +112,7 @@ AC_HEADER_STDC
 AC_HEADER_SYS_WAIT
 AC_CHECK_HEADERS([stdlib.h strings.h unistd.h])
 AC_CHECK_HEADERS([arpa/inet.h netinet/in.h stdlib.h string.h sys/socket.h])
+AC_CHECK_HEADERS([sys/inotify.h])
 
 dnl checks for libraries
 PKG_CHECK_MODULES([CHECK], [check >= 0.9.4])

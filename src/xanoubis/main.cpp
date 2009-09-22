@@ -29,6 +29,15 @@
 #include "config.h"
 #endif
 
+#ifdef HAVE_SYS_INOTIFY_H
+#include <sys/inotify.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <time.h>
+
+#include <wx/utils.h>
+#endif
+
 #include <sys/types.h>
 #include <pwd.h>
 
@@ -75,6 +84,7 @@ AnoubisGuiApp::AnoubisGuiApp(void)
 	userOptions_ = NULL;
 	onInitProfile_ = true;
 	trayVisible_ = true;
+	iNotifyFd_ = -1;
 
 	SetAppName(wxT("xanoubis"));
 	wxInitAllImageHandlers();
@@ -201,6 +211,54 @@ bool AnoubisGuiApp::OnInit()
 	if (trayVisible_)
 		trayIcon = new TrayIcon();
 
+#ifdef HAVE_SYS_INOTIFY_H
+	/*
+	 * Do initilize inotify for IdleEvents.
+	 * If inotify_add_watch doesnot work we do not need to bother
+	 * to read from it
+	 */
+	wxString	grubPath = wxT("/boot/grub/menu.lst");
+	int		ret = 0;
+
+	userOptions_->Read(wxT("/Options/GrubConfigPath"), &grubPath);
+
+	iNotifyFd_ = inotify_init();
+	if (iNotifyFd_ != -1) {
+		ret = inotify_add_watch(iNotifyFd_, grubPath.fn_str(),
+		    IN_MODIFY);
+		if (ret != -1) {
+			int flags = fcntl(iNotifyFd_, F_GETFL);
+			flags |= O_NONBLOCK;
+			ret = fcntl(iNotifyFd_, F_SETFL, flags);
+		}
+	}
+	if (ret == -1) {
+		close(iNotifyFd_);
+		iNotifyFd_ = -1;
+	}
+
+	/*
+	 * Now check if a new kernel could be installed since the last
+	 * start of xanoubis.
+	 */
+	time_t		savedTime = 0, lastTime = 0;
+	wxString	msg;
+
+	userOptions_->Read(wxT("/Options/GrubModifiedTime"), &savedTime);
+	if (savedTime) {
+		lastTime = wxFileModificationTime(grubPath);
+		if (savedTime < lastTime) {
+			msg = _("The Boot Loader configuration has been"
+			    " updated. Please make sure to boot an Anoubis"
+			    " Kernel.");
+			wxMessageBox(msg, _("Warning"), wxICON_ERROR);
+			userOptions_->Write(
+			    wxT("/Options/GrubModifiedTime"), time(NULL));
+		}
+	}
+
+#endif
+	wxWakeUpIdle();
 	return (true);
 }
 
@@ -591,6 +649,12 @@ AnoubisGuiApp::OnAnswerEscalation(wxCommandEvent &event)
 	Notification *notify = (Notification*)event.GetClientObject();
 	JobCtrl::getInstance()->answerNotification(notify);
 	event.Skip();
+}
+
+int
+AnoubisGuiApp::getINotify(void)
+{
+	return iNotifyFd_;
 }
 
 wxString

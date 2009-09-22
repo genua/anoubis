@@ -71,6 +71,7 @@ class MainFrame : public MainFrameBase
 		void onMainFrameShow(wxCommandEvent&);
 		void onSfsBrowserShow(wxCommandEvent&);
 		void onBackupPolicy(wxCommandEvent&);
+		void OnIdle(wxIdleEvent&);
 
 		/**
 		 * This is called when there is a list of sfs files. The

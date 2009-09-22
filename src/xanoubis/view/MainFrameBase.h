@@ -95,6 +95,7 @@ class MainFrameBase : public wxFrame
 		
 		// Virtual event handlers, overide them in your derived class
 		virtual void OnClose( wxCloseEvent& event ){ event.Skip(); }
+		virtual void OnIdle( wxIdleEvent& event ){ event.Skip(); }
 		virtual void OnMbFileConnectSelect( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnMbFileImportSelect( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnMbFileExportSelect( wxCommandEvent& event ){ event.Skip(); }

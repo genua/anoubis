@@ -94,6 +94,7 @@ class AnoubisGuiApp : public wxApp, private PassphraseReader
 		TrayIcon		*trayIcon;
 		Module			*modules_[ANOUBIS_MODULESNO];
 		wxConfig		*userOptions_;
+		int			 iNotifyFd_;
 
 		wxString readPassphrase(bool *);
 
@@ -135,6 +136,7 @@ class AnoubisGuiApp : public wxApp, private PassphraseReader
 		wxConfig	*getUserOptions(void);
 		bool		 showingMainFrame(void);
 		void		 autoStart(bool);
+		int		 getINotify(void);
 
 		uid_t		 getUserIdByName(wxString) const;
 		wxString	 getUserNameById(uid_t) const;
