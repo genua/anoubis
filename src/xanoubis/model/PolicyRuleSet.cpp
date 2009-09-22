@@ -653,14 +653,11 @@ PolicyRuleSet::createAnswerPolicy(EscalationNotify *escalation)
 		return;
 	if (parentPolicy->isAnyBlock() && module != wxT("SFS")) {
 		wxString		 filename;
-		u_int8_t		 csum[APN_HASH_SHA256_LEN];
 		struct apn_rule		*tmp;
 		struct apn_subject	 tmpsubject;
 
 		filename = escalation->getCtxBinaryName();
 		if (filename.IsEmpty())
-			goto err;
-		if (!escalation->getCtxChecksum(csum))
 			goto err;
 		newblock = apn_find_rule(rs, parentPolicy->getApnRuleId());
 		if (!newblock)
@@ -680,8 +677,7 @@ PolicyRuleSet::createAnswerPolicy(EscalationNotify *escalation)
 				break;
 		if (!triggerrule)
 			goto err;
-		tmpsubject.type = APN_CS_CSUM;
-		tmpsubject.value.csum = csum;
+		tmpsubject.type = APN_CS_NONE;
 		if (apn_add_app(newblock, filename.To8BitData(),
 		    &tmpsubject) != 0)
 			goto err;

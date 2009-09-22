@@ -28,6 +28,10 @@
 #ifndef _COMCSUMADDTASK_H_
 #define _COMCSUMADDTASK_H_
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #ifdef LINUX
 #include <linux/anoubis.h>
 #endif
