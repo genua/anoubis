@@ -138,6 +138,9 @@ AnMessageDialog::onNotifyCheck(const wxString &userOption)
 	} else
 		dontShowMessageAgain->Hide();
 
+	this->Layout();
+	GetSizer()->Fit(this);
+
 	return (showMessage);
 }
 

@@ -55,6 +55,7 @@
 #include "AlertNotify.h"
 #include "AnEvents.h"
 #include "AnIconList.h"
+#include "AnMessageDialog.h"
 #include "DlgLogViewer.h"
 #include "DlgRuleEditor.h"
 #include "JobCtrl.h"
@@ -251,7 +252,11 @@ bool AnoubisGuiApp::OnInit()
 			msg = _("The Boot Loader configuration has been"
 			    " updated. Please make sure to boot an Anoubis"
 			    " Kernel.");
-			wxMessageBox(msg, _("Warning"), wxICON_ERROR);
+			AnMessageDialog dlg(mainFrame, msg, _("Warning"),
+			    wxOK | wxICON_WARNING);
+			dlg.onNotifyCheck(
+			    wxT("/Options/ShowKernelUpgradeMessage"));
+			dlg.ShowModal();
 			userOptions_->Write(
 			    wxT("/Options/GrubModifiedTime"), time(NULL));
 		}

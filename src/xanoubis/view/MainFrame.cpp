@@ -41,6 +41,7 @@
 #include <wx/aboutdlg.h>
 
 #include "AnEvents.h"
+#include "AnMessageDialog.h"
 #include "AnShortcuts.h"
 #include "AnStatusBar.h"
 #include "JobCtrl.h"
@@ -651,7 +652,10 @@ MainFrame::OnIdle(wxIdleEvent &event)
 		    wxT("/Options/GrubModifiedTime"), time(NULL));
 		msg = _("The Boot Loader configuration has been updated."
 			"Please make sure to boot an Anoubis Kernel.");
-		wxMessageBox(msg, _("Warning"), wxICON_ERROR);
+		AnMessageDialog dlg(this, msg, _("Warning"),
+		    wxOK | wxICON_WARNING);
+		dlg.onNotifyCheck(wxT("/Options/ShowKernelUpgradeMessage"));
+		dlg.ShowModal();
 	}
 #endif
 	event.Skip(false);
