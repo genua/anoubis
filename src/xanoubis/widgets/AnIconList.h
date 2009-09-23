@@ -54,6 +54,9 @@ class AnIconList : public wxImageList, public Singleton<AnIconList>
 			ICON_OK_48,		/*!< Big ok icon */
 			ICON_WARNING_48,	/*!< Big warning icon */
 			ICON_ERROR_48,		/*!< Big error icon */
+			ICON_ALERT_48,		/*!< Big alert icon */
+			ICON_QUESTION_48,	/*!< Big question icon */
+			ICON_PROBLEM_48,	/*!< Big exclamation icon */
 			ICON_SYMLINK,		/*!< Symlink icon */
 			ICON_ANOUBIS_BLACK,	/*!< Basic Anoubis icon */
 			ICON_ANOUBIS_ALERT,	/*!< Anoubis alert-icon */

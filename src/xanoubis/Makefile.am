@@ -444,6 +444,8 @@ xanoubis_SOURCES= \
 	widgets/AnListCtrl.cpp \
 	widgets/AnListCtrl.h \
 	widgets/AnListProperty.h \
+	widgets/AnMessageDialog.cpp \
+	widgets/AnMessageDialog.h \
 	widgets/AnPolicyNotebook.cpp \
 	widgets/AnPolicyNotebook.h \
 	widgets/AnPickFromFs.cpp \
