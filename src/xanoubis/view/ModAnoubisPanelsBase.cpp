@@ -674,19 +674,17 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	wxStaticBoxSizer* sbSizer10;
 	sbSizer10 = new wxStaticBoxSizer( new wxStaticBox( tb_MainAnoubisOptions, -1, _("Upgrade") ), wxVERTICAL );
 	
-	wxFlexGridSizer* fgSizer6;
-	fgSizer6 = new wxFlexGridSizer( 2, 2, 0, 0 );
-	fgSizer6->SetFlexibleDirection( wxBOTH );
-	fgSizer6->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
-	
 	cb_ShowUpgradeMsg = new wxCheckBox( tb_MainAnoubisOptions, wxID_ANY, _("Enable Upgrade Message"), wxDefaultPosition, wxDefaultSize, 0 );
 	cb_ShowUpgradeMsg->SetValue(true);
 	
 	cb_ShowUpgradeMsg->SetToolTip( _("Check to be notified when upgrade event had taken place") );
 	
-	fgSizer6->Add( cb_ShowUpgradeMsg, 0, wxALL, 5 );
+	sbSizer10->Add( cb_ShowUpgradeMsg, 0, wxALL, 5 );
 	
-	sbSizer10->Add( fgSizer6, 1, wxEXPAND, 5 );
+	cb_ShowKernelMsg = new wxCheckBox( tb_MainAnoubisOptions, wxID_ANY, _("Enable Kernel Upgrade Message"), wxDefaultPosition, wxDefaultSize, 0 );
+	cb_ShowKernelMsg->SetValue(true);
+	
+	sbSizer10->Add( cb_ShowKernelMsg, 0, wxALL, 5 );
 	
 	bSizer13->Add( sbSizer10, 0, wxEXPAND, 5 );
 	
@@ -818,6 +816,7 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	cb_NoAlertTimeout->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( ModAnoubisMainPanelBase::OnAlertNoTimeout ), NULL, this );
 	m_spinAlertNotifyTimeout->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( ModAnoubisMainPanelBase::OnAlertTimeout ), NULL, this );
 	cb_ShowUpgradeMsg->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( ModAnoubisMainPanelBase::OnEnableUpgradeMsg ), NULL, this );
+	cb_ShowKernelMsg->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( ModAnoubisMainPanelBase::OnEnableKernelMsg ), NULL, this );
 	cb_DoAutostart->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( ModAnoubisMainPanelBase::OnDoAutostart ), NULL, this );
 	controlAutoCheck->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( ModAnoubisMainPanelBase::OnAutoCheck ), NULL, this );
 	toolTipCheckBox->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( ModAnoubisMainPanelBase::OnToolTipCheckBox ), NULL, this );

@@ -190,6 +190,7 @@ class ModAnoubisMainPanelBase : public wxPanel
 		wxSpinCtrl* m_spinAlertNotifyTimeout;
 		wxStaticText* tx_AlertNotifyTimeoutLabel;
 		wxCheckBox* cb_ShowUpgradeMsg;
+		wxCheckBox* cb_ShowKernelMsg;
 		wxCheckBox* cb_DoAutostart;
 		
 		wxCheckBox* controlAutoCheck;
@@ -234,6 +235,7 @@ class ModAnoubisMainPanelBase : public wxPanel
 		virtual void OnAlertNoTimeout( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnAlertTimeout( wxSpinEvent& event ){ event.Skip(); }
 		virtual void OnEnableUpgradeMsg( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnEnableKernelMsg( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnDoAutostart( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnAutoCheck( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnToolTipCheckBox( wxCommandEvent& event ){ event.Skip(); }

@@ -179,6 +179,9 @@ ModAnoubisMainPanelImpl::~ModAnoubisMainPanelImpl(void)
 	/* write Notification of Upgrade Settings */
 	userOptions_->Write(wxT("/Options/ShowUpgradeMessage"),
 	    cb_ShowUpgradeMsg->GetValue());
+	userOptions_->Write(wxT("/Options/ShowKernelUpgradeMessage"),
+	    cb_ShowKernelMsg->GetValue());
+
 
 	/* write ToolTip Settings */
 	userOptions_->Write(wxT("/Options/EnableToolTips"),
@@ -213,6 +216,7 @@ ModAnoubisMainPanelImpl::readOptions(void)
 	bool SendAlert = false;
 	bool SendEscalation = true;
 	bool ShowUpgradeMessage = true;
+	bool ShowKernelUpgradeMessage = true;
 
 	int AlertTimeout = 10;
 	int EscalationTimeout = 0;
@@ -223,6 +227,8 @@ ModAnoubisMainPanelImpl::readOptions(void)
 	userOptions_->Read(wxT("/Options/SendEscalations"), &SendEscalation);
 	userOptions_->Read(wxT("/Options/ShowUpgradeMessage"),
 	    &ShowUpgradeMessage);
+	userOptions_->Read(wxT("/Options/ShowKernelUpgradeMessage"),
+	    &ShowKernelUpgradeMessage);
 
 	userOptions_->Read(wxT("/Options/NoEscalationsTimeout"),
 	    &NoEscalationTimeout);
@@ -244,6 +250,7 @@ ModAnoubisMainPanelImpl::readOptions(void)
 	/* restore the stored Notifications Options */
 	cb_SendEscalations->SetValue(SendEscalation);
 	cb_ShowUpgradeMsg->SetValue(ShowUpgradeMessage);
+	cb_ShowKernelMsg->SetValue(ShowKernelUpgradeMessage);
 	cb_NoEscalationTimeout->SetValue(NoEscalationTimeout);
 	m_spinEscalationNotifyTimeout->SetValue(EscalationTimeout);
 
@@ -1091,6 +1098,14 @@ ModAnoubisMainPanelImpl::OnEnableUpgradeMsg(wxCommandEvent&)
 }
 
 void
+ModAnoubisMainPanelImpl::OnEnableKernelMsg(wxCommandEvent&)
+{
+	userOptions_->Write(wxT("/Options/ShowKernelUpgradeMessage"),
+	    cb_ShowKernelMsg->GetValue());
+	userOptions_->Flush();
+}
+
+void
 ModAnoubisMainPanelImpl::OnAutoCheck(wxCommandEvent& event)
 {
 	wxCommandEvent showEvent(anEVT_SEND_AUTO_CHECK);
@@ -1540,8 +1555,13 @@ void
 ModAnoubisMainPanelImpl::OnAnoubisOptionsUpdate(wxCommandEvent& event)
 {
 	bool showUpgradeMessage = true;
+	bool showKernelUpgradeMessage = true;
+
 	userOptions_->Read(wxT
 	    ("/Options/ShowUpgradeMessage"),&showUpgradeMessage);
+	userOptions_->Read(wxT
+	    ("/Options/ShowKernelUpgradeMessage"),&showKernelUpgradeMessage);
 	cb_ShowUpgradeMsg->SetValue(showUpgradeMessage);
+	cb_ShowKernelMsg->SetValue(showKernelUpgradeMessage);
 	event.Skip();
 }
