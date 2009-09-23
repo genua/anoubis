@@ -176,6 +176,9 @@ ContextFilterPolicy::getContextTypeName (void) const
 	case APN_CTX_OPEN:
 		contextType = wxT("open");
 		break;
+	case APN_CTX_BORROW:
+		contextType = wxT("borrow");
+		break;
 	default:
 		contextType = _("(unknown)");
 		break;
