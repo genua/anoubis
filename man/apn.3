@@ -218,7 +218,7 @@ If that particular rule is not found, the rule is not added to the rule set.
 Otherwise, it is inserted and the ID of the rule is updated according
 to the IDs already used in the rule set.
 .Pp
-.It Fn apn_copyinsert ruleset rule id filename checksum type
+.It Fn apn_copyinsert ruleset rule id filename subject
 The function
 .Fn apn_copyinsert
 copies the full application rule from the rule set
@@ -230,19 +230,13 @@ and inserts the provided ALF rule
 in the new rule set before that particular rule.
 The application specification is derived from the provided filename
 .Em filename
-and the checksum
-.Em checksum
-of type
-.Em type .
-The only valid value is
-.Em APN_HASH_SHA256 .
-Note, that context rules are not copied!
+and the subject
+.Em subject .
 .Pp
 As an example, consider the following rule set with a single application rule:
 .Bd -literal
-2: foobar 0xdeadbeef {
+2: /foobar {
 0:	default ask
-1:	context new any
 }
 .Ed
 .Pp
@@ -255,9 +249,8 @@ following rule set:
 4:	<new rule>
 5:	default ask
 }
-3: foobar 0xdeadbeef {
+3: /foobar {
 1:	default ask
-2:	context new any
 }
 .Ed
 .Pp

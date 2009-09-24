@@ -97,7 +97,6 @@ int		 llgetc(struct file *);
 int		 lungetc(int);
 int		 findeol(void);
 int		 str2hash(const char *, u_int8_t *, size_t);
-int		 validate_hash(int, const char *);
 int		 host(const char *, struct apn_addr *);
 int		 host_v4(const char *, struct apn_addr *);
 int		 host_v6(const char *, struct apn_addr *);
@@ -1814,27 +1813,6 @@ str2hash(const char *s, u_int8_t *dest, size_t max_len)
 			return (-1);
 		}
 		dest[i] = strtoul(t, NULL, 16);
-	}
-
-	return (0);
-}
-
-/*
- * Verify a hash has a size matching its type.
- */
-int
-validate_hash(int type, const char *s)
-{
-	switch (type) {
-	case APN_HASH_SHA256:
-		if (strlen(s) != APN_HASH_SHA256_LEN * 2) {
-			yyerror("wrong hash length");
-			return (-1);
-		}
-		break;
-	default:
-		yyerror("unknown hash type %d", type);
-		return (-1);
 	}
 
 	return (0);
