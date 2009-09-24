@@ -419,7 +419,7 @@ pe_context_subject_match(const struct apn_app *app,
 	default:
 		return 0;
 	}
-	if (!csptr)
+	if (!csptr || !pident->csum)
 		return 0;
 	return (memcmp(csptr, pident->csum, ANOUBIS_CS_LEN) == 0);
 }
