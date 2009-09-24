@@ -71,6 +71,7 @@ class ModAnoubisMainPanelImpl : public ModAnoubisMainPanelBase,
 		void setAlfOptions(EscalationNotify *, NotifyAnswer *);
 		void setSfsOptions(EscalationNotify *, NotifyAnswer *);
 		void setSbOptions(EscalationNotify *, NotifyAnswer *);
+		void setPerspective(NotificationCtrl::ListPerspectives);
 
 		void update(Subject *);
 		void updateDelete(Subject *);

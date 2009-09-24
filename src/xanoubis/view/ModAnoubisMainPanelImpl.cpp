@@ -92,7 +92,6 @@ ModAnoubisMainPanelImpl::ModAnoubisMainPanelImpl(wxWindow* parent,
 	AnEvents *anEvents;
 	NotificationCtrl	*notifyCtrl;
 
-	//list_ = NOTIFY_LIST_NOTANSWERED;
 	currentNotify_ = NULL;
 	userOptions_ = wxGetApp().getUserOptions();
 	anEvents = AnEvents::getInstance();
@@ -638,16 +637,16 @@ ModAnoubisMainPanelImpl::update(void)
 	size_t			 maxElementNo;
 	size_t			 elementNo;
 	EscalationNotify	*eNotify = NULL;
-
+	NotificationCtrl	*notifyCtrl = NotificationCtrl::instance();
 	if (currentNotify_) {
 		/*
 		 * A DaemonAnswerNotify can remove an Escalation from
 		 * the list. Reset currentNotify_ in this case.
 		 */
 		eNotify = dynamic_cast<EscalationNotify *>(currentNotify_);
-		if (eNotify && eNotify->isAnswered()
-		    //&& list_ == NOTIFY_LIST_NOTANSWERED
-		    )
+		if (eNotify && eNotify->isAnswered() &&
+		    listPerspective_ == notifyCtrl->getPerspective(
+		    NotificationCtrl::LIST_NOTANSWERED))
 			currentNotify_ = NULL;
 	}
 
@@ -661,8 +660,6 @@ ModAnoubisMainPanelImpl::update(void)
 	if (maxElementNo > 0) {
 		if (currentNotify_ == NULL) {
 			it_ = listPerspective_->begin();
-			NotificationCtrl *notifyCtrl;
-			notifyCtrl = NotificationCtrl::instance();
 			currentNotify_ = notifyCtrl->getNotification(*it_);
 		}
 		elementNo = it_ - listPerspective_->begin();
@@ -753,13 +750,35 @@ ModAnoubisMainPanelImpl::update(void)
 }
 
 void
-ModAnoubisMainPanelImpl::OnTypeChoosen(wxCommandEvent& event)
+ModAnoubisMainPanelImpl::setPerspective(NotificationCtrl::ListPerspectives p)
 {
-	NotificationCtrl::ListPerspectives	 perspectiveType;
 	NotificationCtrl			*notifyCtrl;
 
 	notifyCtrl = NotificationCtrl::instance();
 	currentNotify_ = NULL;
+
+	removeSubject(listPerspective_);
+
+	listPerspective_ = notifyCtrl->getPerspective(p);
+	if (listPerspective_ != NULL) {
+		it_ = listPerspective_->begin();
+	} else {
+		it_ = 0;
+	}
+	if (it_) {
+		currentNotify_ = notifyCtrl->getNotification(*it_);
+	} else {
+		currentNotify_ = NULL;
+	}
+
+	addSubject(listPerspective_);
+	update();
+}
+
+void
+ModAnoubisMainPanelImpl::OnTypeChoosen(wxCommandEvent& event)
+{
+	NotificationCtrl::ListPerspectives	perspectiveType;
 
 	/* keep this in sync with ch_type elements */
 	switch (event.GetSelection()) {
@@ -779,18 +798,7 @@ ModAnoubisMainPanelImpl::OnTypeChoosen(wxCommandEvent& event)
 		perspectiveType = NotificationCtrl::LIST_NONE;
 		break;
 	}
-
-	removeSubject(listPerspective_);
-
-	listPerspective_ = notifyCtrl->getPerspective(perspectiveType);
-	if (listPerspective_ != NULL) {
-		it_ = listPerspective_->begin();
-	} else {
-		it_ = 0;
-	}
-
-	addSubject(listPerspective_);
-	update();
+	setPerspective(perspectiveType);
 }
 
 void
@@ -1057,23 +1065,13 @@ ModAnoubisMainPanelImpl::OnEscalationsShow(wxCommandEvent& event)
 	if (event.GetString().Cmp(wxT("ESCALATIONS")) == 0) {
 		/* select "current requests" */
 		ch_type->SetSelection(0);
-		/* XXX ch
-		if (list_ != NOTIFY_LIST_NOTANSWERED) {
-			currentNotify_ = NULL;
-			list_ = NOTIFY_LIST_NOTANSWERED;
-			}*/
+		setPerspective(NotificationCtrl::LIST_NOTANSWERED);
 	}
 
 	if (event.GetString().Cmp(wxT("ALERTS")) == 0) {
 		/* select "current messages" */
 		ch_type->SetSelection(1);
-		/*
-		  XXX ch:
-		if (list_ != NOTIFY_LIST_MESSAGE) {
-			list_ = NOTIFY_LIST_MESSAGE;
-			currentNotify_ = NULL;
-		}
-		*/
+		setPerspective(NotificationCtrl::LIST_MESSAGES);
 	}
 	update();
 
