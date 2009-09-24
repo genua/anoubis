@@ -52,6 +52,7 @@ class TrayIcon : public wxTaskBarIcon
 		unsigned int            alertTimeout_;
 		NotifyNotification	*notification;
 		wxProcess		*dBusProc_;
+		bool			acceptActions_;
 
 		void		 update(void);
 		bool		 systemNotify(const gchar*, const gchar*,

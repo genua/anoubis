@@ -68,6 +68,7 @@ TrayIcon::TrayIcon(void)
 {
 	AnEvents	*anEvents;
 	JobCtrl		*jobCtrl;
+	GList		*capabilities;
 
 	iconNormal_    = wxGetApp().loadIcon(wxT("ModAnoubis_black_48.png"));
 	iconMsgProblem_ = wxGetApp().loadIcon(wxT("ModAnoubis_alert_48.png"));
@@ -90,10 +91,25 @@ TrayIcon::TrayIcon(void)
 	sendEscalation_ = true;
 	escalationTimeout_ = 0;
 	alertTimeout_ = 10;
+	acceptActions_ = false;
 
 	initDBus();
 
 	notify_init("Anoubis");
+	/*
+	 * NOTE: See https://wiki.ubuntu.com/NotificationDevelopmentGuidelines
+	 */
+	capabilities = notify_get_server_caps();
+	if(capabilities != NULL) {
+		for(GList *c = capabilities; c != NULL; c = c->next) {
+			if(strcmp((char*)c->data, "actions") == 0 ) {
+				acceptActions_ = true;
+				break;
+			}
+		}
+		g_list_foreach(capabilities, (GFunc)g_free, NULL);
+		g_list_free(capabilities);
+	}
 	notification = notify_notification_new("Anoubis", "", NULL, NULL);
 	anEvents = AnEvents::getInstance();
 	jobCtrl = JobCtrl::getInstance();
@@ -319,7 +335,6 @@ TrayIcon::update(void)
 	SetIcon(*icon, tooltip);
 }
 
-
 static void
 callback(NotifyNotification *notification, const char *action,
     void *user_data)
@@ -359,12 +374,26 @@ TrayIcon::systemNotify(const gchar *module, const gchar *message,
 	int timeShown = (timeout * ONE_SECOND);
 
 	NotifyUrgency messagePriority = priority;
-
+	
+	/*
+	 * A timeout of 0 used to mean that the notification is shown
+	 * indefinitely. notify-osd no longer supports timeouts at all except
+	 * for the special value 0. In this case a message box is displayed
+	 * instead of a bubble. Using one hour instead of 0 to avoids this
+	 * and one hour should be enough for notification-daemon.
+	 */
+	if (timeShown == 0)
+		timeShown = 3600 * ONE_SECOND;
 	notify_notification_set_timeout(notification, timeShown);
-	notify_notification_add_action(notification, "default", "default cb",
-	    (NotifyActionCallback)callback, this, NULL);
+	if (acceptActions_)
+		notify_notification_add_action(notification, "default",
+		    "default cb", (NotifyActionCallback)callback, this, NULL);
 #ifdef __WXGTK__
 	{
+		/*
+		 * NOTE: notify-osd will ignore this but notification-daemon
+		 * NOTE: accepts the position hints.
+		 */
 		wxWindow	*win = (wxWindow*)m_iconWnd;
 		if (win) {
 			notify_notification_attach_to_widget(notification,
@@ -372,13 +401,6 @@ TrayIcon::systemNotify(const gchar *module, const gchar *message,
 		}
 	}
 #endif
-
-	/* XXX ST: we disable the setting of the corresponding urgency level
-	 *	   as it only renders the color area covered by the
-	 *	   urgency icon (it's a libnotify bug)
-	 *
-	 * notify_notification_set_urgency(notification, messagePriority);
-	 */
 
 	/* determine the icon used for systemNotify */
 	if (messagePriority == NOTIFY_URGENCY_LOW)
