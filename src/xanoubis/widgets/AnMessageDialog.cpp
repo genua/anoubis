@@ -27,6 +27,7 @@
 
 #include <wx/button.h>
 #include <wx/checkbox.h>
+#include <wx/config.h>
 #include <wx/sizer.h>
 #include <wx/statbmp.h>
 #include <wx/stattext.h>
@@ -34,6 +35,7 @@
 
 #include "AnIconList.h"
 #include "AnMessageDialog.h"
+#include "main.h"
 
 AnMessageDialog::AnMessageDialog(wxWindow *parent, const wxString &message,
     const wxString &caption, long style, const wxPoint &pos)
@@ -48,19 +50,20 @@ AnMessageDialog::AnMessageDialog(wxWindow *parent, const wxString &message,
 	configString_ = wxEmptyString;
 
 	/* Icon is part of messageSizer */
-	wxStaticBitmap *icon = createIcon(style);
-	messageSizer->Add(icon, 0,
+	iconCtrl_ = createIcon(style);
+	messageSizer->Add(iconCtrl_, 0,
 	    wxALIGN_CENTER_VERTICAL | wxALL | wxEXPAND, 5);
 
 	/* Text is part of messageSizer */
-	wxStaticText *text = createText(message);
-	messageSizer->Add(text, 1, wxALL | wxEXPAND | wxFIXED_MINSIZE, 5);
+	textCtrl_ = createText(message);
+	messageSizer->Add(textCtrl_, 1, wxALL | wxEXPAND, 5);
 
 	/* messageSizer is part of mainSizer */
 	mainSizer->Add(messageSizer, 1, wxALL | wxEXPAND, 5);
 
 	/* Buttons are part of mainSizer */
-	mainSizer->Add(CreateButtonSizer(style), 0, wxALL | wxEXPAND, 5);
+	buttonSizer_ = CreateButtonSizer(style);
+	mainSizer->Add(buttonSizer_, 0, wxALL | wxEXPAND, 5);
 
 	/* Checkbox is part of mainSizer */
 	dontShowMessageAgain = new wxCheckBox(this, wxID_ANY,
@@ -86,7 +89,12 @@ AnMessageDialog::ShowModal(void)
 	bool showDialog = false;
 	userOptions_->Read(configString_, &showDialog);
 
-	if (showDialog)
+	/*
+	 * Display the dialog, if configString_ does not exist
+	 * (Read()-operation will fail) or the dialog is configured to be
+	 * displayed (showDialog set to true by Read()).
+	 */
+	if (!userOptions_->Read(configString_, &showDialog) || showDialog)
 		return (wxDialog::ShowModal());
 	else
 		return (GetAffirmativeId());

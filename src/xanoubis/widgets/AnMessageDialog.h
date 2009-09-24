@@ -31,10 +31,9 @@
 #include <wx/dialog.h>
 
 class wxCheckBox;
+class wxConfig;
 class wxStaticBitmap;
 class wxStaticText;
-class AnMessageDialog;
-#include "main.h"
 
 /**
  * This is the AnMessageDialog widget class
@@ -78,6 +77,22 @@ class AnMessageDialog : public wxDialog
 		 * @return boolean
 		 */
 		bool onNotifyCheck(const wxString &);
+
+	protected:
+		/**
+		 * The control, where the icon is displayed.
+		 */
+		wxStaticBitmap *iconCtrl_;
+
+		/**
+		 * The control, where the text is displayed.
+		 */
+		wxStaticText *textCtrl_;
+
+		/**
+		 * The sizer contains all buttons of the dialog.
+		 */
+		wxSizer *buttonSizer_;
 
 	private:
 		/**

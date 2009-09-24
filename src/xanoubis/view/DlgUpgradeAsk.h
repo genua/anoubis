@@ -28,42 +28,29 @@
 #ifndef _DLGUPGRADEASK_H_
 #define _DLGUPGRADEASK_H_
 
-#include <wx/progdlg.h>
-#include <wx/config.h>
-
-#include "DlgUpgradeAskBase.h"
-class DlgUpgradeAsk;
-#include "main.h"
-
+#include "AnMessageDialog.h"
 
 /**
  * This is the upgrade-messagebox.
  * This is shown if there has been an upgrade of the system
  * and there are signed files.
  */
-class DlgUpgradeAsk : public DlgUpgradeAskBase
+class DlgUpgradeAsk : public AnMessageDialog
 {
 	public:
-		/*
+		/**
 		 * Constructor of DlgUpgradeAsk
 		 * @param[in] 1st The parent window
 		 */
 		DlgUpgradeAsk(wxWindow *);
 
-		/*
+		/**
 		 * Destructor of DlgUpgradeAsk
 		 * @param None.
 		 */
 		~DlgUpgradeAsk(void);
 
-		/**
-		 * This is called when the button 'Close' is clicked.
-		 * The messagebox is going to be closed.
-		 * @param[in] 1st The event of the button
-		 * @return Nothing.
-		 */
-		virtual void onClose(wxCommandEvent &);
-
+	private:
 		/**
 		 * This is called when the button
 		 * 'Open SFS Browser now' is clicked.
@@ -72,16 +59,6 @@ class DlgUpgradeAsk : public DlgUpgradeAskBase
 		 * @return Nothing.
 		 * */
 		virtual void onSfsBrowserShow(wxCommandEvent &);
-
-		/**
-		 * This is called when the checkbox 'cb_showAgain' is modified
-		 * @param[in] 1st The event of the checkbox
-		 * @return Nothing.
-		 * */
-		virtual void onUpgradeNotifyCheck(wxCommandEvent &);
-
-	private:
-		wxConfig	*userOptions_;
 };
 
 #endif	/* _DLGUPGRADEASK_H_ */

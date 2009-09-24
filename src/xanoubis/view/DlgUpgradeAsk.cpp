@@ -25,33 +25,35 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <wx/msgdlg.h>
+#include <wx/button.h>
+#include <wx/sizer.h>
 
 #include "AnEvents.h"
 #include "DlgUpgradeAsk.h"
 
-DlgUpgradeAsk::DlgUpgradeAsk(wxWindow *parent) : DlgUpgradeAskBase(parent)
+DlgUpgradeAsk::DlgUpgradeAsk(wxWindow *parent)
+    : AnMessageDialog(parent, _("The system has been upgraded. Therefore the "
+    "checksums of all related files have changed. Please check the checksums "
+    "of your signed files in the SFS Browser!"),
+    _("Anoubis - System Update"), wxOK | wxICON_INFORMATION)
 {
-	/* Constructor */
-	bool showUpgradeMessage = true;
-	userOptions_ = wxGetApp().getUserOptions();
-	userOptions_->Read(wxT
-	    ("/Options/ShowUpgradeMessage"), &showUpgradeMessage);
-	showAgainCheckBox->SetValue(!showUpgradeMessage);
+	/* Insert a new button */
+	wxButton *sfsButton = new wxButton(
+	    this, -1, _("Open SFS Browser now!"));
+	sfsButton->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(
+	    DlgUpgradeAsk::onSfsBrowserShow), NULL, this);
+	sfsButton->SetFocus();
+	buttonSizer_->Add(sfsButton, 0, wxALL, 5);
 
-	AnIconList *iconList = AnIconList::getInstance();
-	warningIcon->SetIcon(iconList->GetIcon(AnIconList::ICON_WARNING_48));
+	onNotifyCheck(wxT("/Options/ShowUpgradeMessage"));
+
+	this->Layout();
+	GetSizer()->Fit(this);
 }
 
 DlgUpgradeAsk::~DlgUpgradeAsk(void)
 {
 	/* Destructor */
-}
-
-void
-DlgUpgradeAsk::onClose(wxCommandEvent& WXUNUSED(event))
-{
-	EndModal(true);
 }
 
 void
@@ -61,15 +63,4 @@ DlgUpgradeAsk::onSfsBrowserShow(wxCommandEvent& WXUNUSED(event))
 	event.SetInt(1);
 	wxPostEvent(AnEvents::getInstance(), event);
 	EndModal(true);
-}
-
-void
-DlgUpgradeAsk::onUpgradeNotifyCheck(wxCommandEvent& WXUNUSED(event))
-{
-	userOptions_->Write(wxT("/Options/ShowUpgradeMessage"),
-	    !showAgainCheckBox->IsChecked());
-	userOptions_->Flush();
-	/* Event: Updating the options */
-	wxCommandEvent event(anEVT_ANOUBISOPTIONS_UPDATE);
-	wxPostEvent(AnEvents::getInstance(), event);
 }
