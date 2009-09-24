@@ -88,13 +88,6 @@ AnStatusBar::AnStatusBar(wxWindow *parent) : wxStatusBar(parent, ID_STATUSBAR)
 	sunkenWizardPanel_ = new wxPanel(this, wxID_ANY, wxDefaultPosition,
 	    wxSize(70, 18), wxSUNKEN_BORDER);
 
-	/*
-	 * Wizard not selectable by default, will be enabled as soon as
-	 * connected with the daemon.
-	 */
-	raisedWizardPanel_->Disable();
-	sunkenWizardPanel_->Disable();
-
 	raisedWizardLabel = new wxStaticText(raisedWizardPanel_,
 	    wxID_ANY, wxT("Wizard..."));
 	raisedWizardLabel->Wrap(-1);
@@ -269,10 +262,6 @@ AnStatusBar::AnStatusBar(wxWindow *parent) : wxStatusBar(parent, ID_STATUSBAR)
 	anEvents->Connect(anEVT_RULEEDITOR_SHOW,
 	    wxCommandEventHandler(AnStatusBar::onRuleEditorShow), NULL, this);
 
-	JobCtrl::getInstance()->Connect(anEVT_COM_CONNECTION,
-	    wxCommandEventHandler(AnStatusBar::onConnectionStateChange),
-	    NULL, this);
-
 	ANEVENTS_IDENT_BCAST_REGISTRATION(AnStatusBar);
 }
 
@@ -288,10 +277,6 @@ AnStatusBar::~AnStatusBar(void)
 	    wxCommandEventHandler(AnStatusBar::onLogViewerShow), NULL, this);
 	anEvents->Disconnect(anEVT_RULEEDITOR_SHOW,
 	    wxCommandEventHandler(AnStatusBar::onRuleEditorShow), NULL, this);
-
-	JobCtrl::getInstance()->Disconnect(anEVT_COM_CONNECTION,
-	    wxCommandEventHandler(AnStatusBar::onConnectionStateChange),
-	    NULL, this);
 
 	ANEVENTS_IDENT_BCAST_DEREGISTRATION(AnStatusBar);
 
@@ -512,20 +497,6 @@ AnStatusBar::onRuleEditorShow(wxCommandEvent& event)
 {
 	isRuleEditorPressed_ = event.GetInt();
 	redrawRuleEditorPanel();
-	event.Skip();
-}
-
-void
-AnStatusBar::onConnectionStateChange(wxCommandEvent &event)
-{
-	JobCtrl::ConnectionState state =
-	    (JobCtrl::ConnectionState)event.GetInt();
-	bool connected = (state == JobCtrl::CONNECTION_CONNECTED);
-
-	/* Make wizard (not) selectable */
-	raisedWizardPanel_->Enable(connected);
-	sunkenWizardPanel_->Enable(connected);
-
 	event.Skip();
 }
 

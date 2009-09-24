@@ -42,6 +42,7 @@ RuleWizardProgramPage::RuleWizardProgramPage(wxWindow *parent,
 {
 	history_ = history;
 
+	history_->setChecksumType(APN_CS_NONE);
 	addSubject(programPicker);
 	programPicker->setTitle(wxT("")); /* Title shown as extra label. */
 	programPicker->setMode(AnPickFromFs::MODE_FILE);
@@ -81,7 +82,8 @@ RuleWizardProgramPage::update(Subject *subject)
 {
 	if (subject == programPicker) {
 		if (wxFileExists(programPicker->getFileName())) {
-			setProgram(programPicker->getFileName());
+			wxString	path = programPicker->getFileName();
+			setProgram(path);
 			updateNavi();
 
 			/*
@@ -89,8 +91,12 @@ RuleWizardProgramPage::update(Subject *subject)
 			 * because maybe a checksum needs to be registered for
 			 * the selected binary.
 			 */
-			csumGetTask_.setPath(programPicker->getFileName());
-			JobCtrl::getInstance()->addTask(&csumGetTask_);
+			if (JobCtrl::getInstance()->isConnected()) {
+				csumGetTask_.setPath(path);
+				JobCtrl::getInstance()->addTask(&csumGetTask_);
+			} else {
+				getWizardPage()->setNextEnabled(true);
+			}
 		} else {
 			getWizardPage()->setNextEnabled(false);
 		}
@@ -114,7 +120,12 @@ RuleWizardProgramPage::onPageChanging(wxWizardEvent &event)
 	if (history_->getProgram().IsEmpty()) {
 		message = _("Please choose a program first.");
 	}
-
+	if (JobCtrl::getInstance()->isConnected()
+	    && history_->getChecksumType() == APN_CS_NONE) {
+		message = wxString::Format(_("The checksum for %ls "
+		    "does not match! Please go to the SFS Browser and update "
+		    "the checksum."), history_->getProgram().c_str());
+	}
 	if (!message.IsEmpty()) {
 		wxMessageBox(message, _("Rule Wizard"), wxOK | wxICON_ERROR,
 		    this);
@@ -209,6 +220,7 @@ RuleWizardProgramPage::onCsumAdd(TaskEvent &event)
 		 * to continue with the wizard.
 		 */
 		getWizardPage()->setNextEnabled(true);
+		history_->setChecksumType(APN_CS_UID_SELF);
 	} else {
 		/*
 		 * An error occured while adding the checksum to the shadowtree
@@ -283,6 +295,7 @@ RuleWizardProgramPage::onCsumCalc(TaskEvent &event)
 		 * Checksum matches with checksum from shadowtree, allow to
 		 * continue with the wizard.
 		 */
+		history_->setChecksumType(APN_CS_UID_SELF);
 		getWizardPage()->setNextEnabled(true);
 	} else {
 		/*
@@ -310,7 +323,7 @@ RuleWizardProgramPage::setProgram(const wxString &binary)
 	}
 
 	history_->setProgram(binary);
-
+	history_->setChecksumType(APN_CS_NONE);
 	Layout();
 	Refresh();
 }

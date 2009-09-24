@@ -76,6 +76,7 @@ RuleWizardHistory::RuleWizardHistory(void)
 	sandboxExecuteFileList_.Clear();
 	sandboxExecuteAsk_	      = true;
 	sandboxExecuteValidSignature_ = false;
+	cstype_			      = APN_CS_NONE;
 
 	shallActivatePolicy_ = true;
 }
@@ -129,6 +130,18 @@ wxString
 RuleWizardHistory::getProgram(void) const
 {
 	return (program_);
+}
+
+void
+RuleWizardHistory::setChecksumType(int type)
+{
+	cstype_ = type;
+}
+
+int
+RuleWizardHistory::getChecksumType(void) const
+{
+	return cstype_;
 }
 
 /*

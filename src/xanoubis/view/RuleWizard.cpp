@@ -443,7 +443,11 @@ RuleWizard::createContextPolicy(PolicyRuleSet *ruleSet) const
 
 	ruleSet->prependAppPolicy(ctxApp);
 	ctxApp->addBinary(history_.getProgram());
-	ctxApp->setSubjectSelf(0, false);
+	if (history_.getChecksumType() == APN_CS_NONE) {
+		ctxApp->setSubjectNone(0);
+	} else {
+		ctxApp->setSubjectSelf(0, false);
+	}
 
 	if (!history_.isSameContext()) {
 		/* Create 'context new any' */
@@ -459,7 +463,7 @@ RuleWizard::createContextPolicy(PolicyRuleSet *ruleSet) const
 			    i<history_.getContextExceptionCount(); ++i) {
 				ctxFilter->addBinary(
 				    history_.getContextExceptionBinary(i));
-				ctxFilter->setSubjectSelf(i, false);
+				ctxFilter->setSubjectNone(i);
 			}
 		}
 	}
@@ -504,7 +508,11 @@ RuleWizard::createAlfPolicy(PolicyRuleSet *ruleSet) const
 	alfApp = new AlfAppPolicy(ruleSet);
 	ruleSet->prependAppPolicy(alfApp);
 	alfApp->addBinary(history_.getProgram());
-	alfApp->setSubjectSelf(0, false);
+	if (history_.getChecksumType() == APN_CS_NONE) {
+		alfApp->setSubjectNone(0);
+	} else {
+		alfApp->setSubjectSelf(0, false);
+	}
 
 	dflFilter = new DefaultFilterPolicy(alfApp);
 	alfApp->prependFilterPolicy(dflFilter);
@@ -574,7 +582,11 @@ RuleWizard::createSandboxPolicy(PolicyRuleSet *ruleSet) const
 	sbApp = new SbAppPolicy(ruleSet);
 	ruleSet->prependAppPolicy(sbApp);
 	sbApp->addBinary(history_.getProgram());
-	sbApp->setSubjectSelf(0, false);
+	if (history_.getChecksumType() == APN_CS_NONE) {
+		sbApp->setSubjectNone(0);
+	} else {
+		sbApp->setSubjectSelf(0, false);
+	}
 
 	/* Create a default ASK policy just to be sure. */
 	dflFilter = new DefaultFilterPolicy(sbApp);
