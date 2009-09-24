@@ -290,27 +290,6 @@ class AlfFilterPolicy : public FilterPolicy
 		wxArrayString getToPortList(void) const;
 
 		/**
-		 * Set the state timeout.
-		 * @param[in] 1st The value of the timeout
-		 * @return True on success.
-		 */
-		bool setStateTimeout(int);
-
-		/**
-		 * Get the state timeout (number value).
-		 * @param None.
-		 * @return Number value of timeout.
-		 */
-		int getStateTimeoutNo(void) const;
-
-		/**
-		 * Get the state timeout (string value).
-		 * @param None.
-		 * @return String value of timeout.
-		 */
-		wxString getStateTimeoutName(void) const;
-
-		/**
 		 * Get the role of this policy.
 		 * Easy representation of direction (client/server).
 		 * @param None.

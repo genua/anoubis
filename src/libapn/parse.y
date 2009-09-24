@@ -170,7 +170,7 @@ typedef struct {
 %token	ALLOW DENY ALF SFS SB VS CAP CONTEXT RAW ALL OTHER LOG CONNECT ACCEPT
 %token	INET INET6 FROM TO PORT ANY SHA256 TCP UDP DEFAULT NEW ASK ALERT OPEN
 %token	READ WRITE EXEC CHMOD ERROR APPLICATION RULE HOST TFILE BOTH SEND
-%token	RECEIVE TIMEOUT STATEFUL TASK UNTIL COLON PATH KEY UID CSUM
+%token	RECEIVE TASK UNTIL COLON PATH KEY UID CSUM
 %token	SELF SIGNEDSELF VALID INVALID UNKNOWN CONTINUE BORROW
 %token	<v.string>		STRING
 %destructor {
@@ -259,7 +259,6 @@ typedef struct {
 %destructor {
 	apn_free_sfsdefault(&$$);
 }				sfsdefaultrule
-%type	<v.timeout>		statetimeout
 %type	<v.scope>		scope
 %destructor {
 	free($$);
@@ -515,7 +514,7 @@ alffilterrule	: action alffilterspec		{
 		}
 		;
 
-alffilterspec	: netaccess log proto hosts statetimeout	{
+alffilterspec	: netaccess log proto hosts {
 			$$.netaccess = $1;
 			$$.log = $2;
 			$$.proto = $3;
@@ -523,30 +522,12 @@ alffilterspec	: netaccess log proto hosts statetimeout	{
 			$$.fromport = $4.fromport;
 			$$.tohost = $4.tohost;
 			$$.toport = $4.toport;
-			$$.statetimeout = $5;
 
 			if (validate_alffilterspec(&$$) == -1) {
 				apn_free_filter(&$$);
 				YYERROR;
 			}
 		}
-		;
-
-statetimeout	: STATEFUL			{
-			$$ = APN_DFLT_STATETIMEOUT;
-		}
-		| TIMEOUT NUMBER		{
-			if ($2 < 0) {
-				yyerror("negative timeout");
-				YYERROR;
-			}
-			if ($2 > UINT_MAX) {
-				yyerror("number %lld too large", (long long)$2);
-				YYERROR;
-			}
-			$$ = $2;
-		}
-		| /* empty */			{ $$ = 0; }
 		;
 
 netaccess	: CONNECT			{ $$ = APN_CONNECT; }
@@ -1397,10 +1378,8 @@ lookup(char *s)
 		{ "sfs",	SFS },
 		{ "sha256",	SHA256 },
 		{ "signed-self",	SIGNEDSELF },
-		{ "stateful",	STATEFUL },
 		{ "task",	TASK },
 		{ "tcp",	TCP },
-		{ "timeout",	TIMEOUT },
 		{ "to",		TO },
 		{ "udp",	UDP },
 		{ "uid",	UID },

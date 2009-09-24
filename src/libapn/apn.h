@@ -64,8 +64,6 @@
 #define APN_HASH_SHA256_LEN	32
 #define MAX_APN_HASH_LEN	APN_HASH_SHA256_LEN
 
-#define APN_DFLT_STATETIMEOUT	600
-
 enum apn_direction {
 	APN_CONNECT, APN_ACCEPT, APN_SEND, APN_RECEIVE, APN_BOTH
 };
@@ -126,7 +124,6 @@ struct apn_afiltspec {
 	int			 log;
 	int			 proto;
 	int			 netaccess;
-	unsigned int		 statetimeout;
 
 	struct apn_host		*fromhost;
 	struct apn_port		*fromport;

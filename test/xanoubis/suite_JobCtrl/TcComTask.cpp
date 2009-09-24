@@ -58,7 +58,7 @@
 	}
 
 const wxString policyCsum =
-    wxT("09c2012a32bb5b776c8e0adc186df5b45279dd87dda249e877ec876b33d190f9");
+    wxT("2b16d3b985595183e599e10684036ca87cbbe096af20c6c41d6945ea82777df2");
 
 const wxString symlink_get_1_csum =
     wxT("750f16659ec9fd87a2951f7538233b6d6bb2f4b285c9666c918de1af87a07465");

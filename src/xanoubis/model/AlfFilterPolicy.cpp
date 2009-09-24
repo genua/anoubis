@@ -708,45 +708,6 @@ AlfFilterPolicy::getToPortList(void) const
 	return (portList);
 }
 
-bool
-AlfFilterPolicy::setStateTimeout(int timeout)
-{
-	struct apn_rule *rule;
-
-	rule = getApnRule();
-	if (rule == NULL) {
-		return (false);
-	}
-
-	startChange();
-	rule->rule.afilt.filtspec.statetimeout = timeout;
-	setModified();
-	finishChange();
-
-	return (true);
-}
-
-int
-AlfFilterPolicy::getStateTimeoutNo(void) const
-{
-	int		 timeout;
-	struct apn_rule	*rule;
-
-	timeout = -1;
-	rule = getApnRule();
-	if (rule != NULL) {
-		timeout = rule->rule.afilt.filtspec.statetimeout;
-	}
-
-	return (timeout);
-}
-
-wxString
-AlfFilterPolicy::getStateTimeoutName(void) const
-{
-	return (wxString::Format(wxT("%d"), getStateTimeoutNo()));
-}
-
 wxString
 AlfFilterPolicy::getRoleName(void) const
 {

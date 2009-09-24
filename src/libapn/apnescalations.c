@@ -255,7 +255,6 @@ alf_filter_rule(struct apn_default *action, int access,
 	afilt->filtspec.log = action->log;
 	afilt->filtspec.proto = proto;
 	afilt->filtspec.netaccess = access;
-	afilt->filtspec.statetimeout = 0;
 	afilt->filtspec.fromhost = NULL;
 	afilt->filtspec.fromport = NULL;
 	afilt->filtspec.tohost = NULL;
