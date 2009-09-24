@@ -176,7 +176,7 @@ AnPolicyNotebook::onDeleteButton(wxCommandEvent &)
 void
 AnPolicyNotebook::selectAppPolicy(AppPolicy *policy)
 {
-	int			 index;
+	unsigned int		 index;
 	wxString		 pageName;
 	wxFileName		 baseName;
 	DlgRuleEditorAppPage	*page;
@@ -185,13 +185,8 @@ AnPolicyNotebook::selectAppPolicy(AppPolicy *policy)
 		return;
 	}
 
-	index = policy->getBinaryCount() - 1;
-	do {
-		/* Adjust index for case 'any'. */
-		if (index < 0) {
-			index = 0;
-		}
-
+	/* Always iterate at least once for index 0 to handle "any". */
+	for (index=0; !index || index < policy->getBinaryCount(); ++index) {
 		/* Assemble page name (aka text on tab). */
 		baseName.Assign(policy->getBinaryName(index));
 		pageName = baseName.GetFullName();
@@ -203,10 +198,8 @@ AnPolicyNotebook::selectAppPolicy(AppPolicy *policy)
 		page = new DlgRuleEditorAppPage(this);
 		page->setBinaryIndex(index);
 		page->select(policy);
-		InsertPage(0, page, pageName);
-
-		index--;
-	} while (index >= 0);
+		AddPage(page, pageName);
+	}
 }
 
 void
@@ -282,7 +275,7 @@ AnPolicyNotebook::selectSfsDefaultFilterPolicy(Policy *policy)
 void
 AnPolicyNotebook::selectContextFilterPolicy(Policy *policy)
 {
-	int		 index;
+	unsigned int	 idx;
 	wxString	 pageName;
 	wxFileName	 baseName;
 
@@ -298,15 +291,10 @@ AnPolicyNotebook::selectContextFilterPolicy(Policy *policy)
 		return;
 	}
 
-	index = filterPolicy->getBinaryCount() - 1;
-	do {
-		/* Adjust index for case 'any'. */
-		if (index < 0) {
-			index = 0;
-		}
-
+	/* Always iterate at least once to handle the "any" case. */
+	for (idx=0; !idx || idx < filterPolicy->getBinaryCount(); ++idx) {
 		/* Assemble page name (aka text on tab). */
-		baseName.Assign(filterPolicy->getBinaryName(index));
+		baseName.Assign(filterPolicy->getBinaryName(idx));
 		pageName = baseName.GetFullName();
 		if (pageName.IsEmpty()) {
 			pageName = _("(new)");
@@ -314,12 +302,10 @@ AnPolicyNotebook::selectContextFilterPolicy(Policy *policy)
 
 		/* Create page. */
 		page = new DlgRuleEditorFilterContextPage(this);
-		page->setBinaryIndex(index);
+		page->setBinaryIndex(idx);
 		page->select(filterPolicy);
-		InsertPage(0, page, pageName);
-
-		index--;
-	} while (index >= 0);
+		AddPage(page, pageName);
+	}
 }
 
 void
