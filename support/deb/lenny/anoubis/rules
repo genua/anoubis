@@ -121,14 +121,6 @@ binary-common:
 	dh_link
 	dh_desktop -pxanoubis
 	dh_strip --dbg-package=anoubis-dbg
-	# Must put xanoubis's checksum into the anoubisd package because
-	# xanoubis is not yet installed when anoubisd's postinst runs.
-	# The checksum must be calculated after dh_strip's debugging symbol
-	# magic.
-	SUM_XANOUBIS=`sha256sum $(CURDIR)/debian/xanoubis/usr/bin/xanoubis|cut -d' '  -f 1`; \
-	for f in `grep -rl xanoubis $(CURDIR)/debian/anoubisd/$(DEFPOLICYDIR)` ; do \
-	perl -p -i -e 's{/usr/bin/xanoubis \@\@}{/usr/bin/xanoubis '$$SUM_XANOUBIS'}g' $$f ; \
-	done
 	dh_compress
 	dh_fixperms -X var/lib/anoubis/policy/admin \
 	    -X var/lib/anoubis/policy/user

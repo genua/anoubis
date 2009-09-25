@@ -85,29 +85,6 @@ exit(0);
 ##########################################################################
 # Subroutines
 ##########################################################################
-sub get_sha256 {
-	my $file = shift;
-	if ($^O eq 'linux') {
-		my $output = `sha256sum $file 2> /dev/null`;
-		if ($? == 0 && $output =~ /^([\da-f]{64}) /i) {
-			return "$file " . lc($1);
-		}
-		else {
-			info("could not checksum '$file'\n");
-			return "$file " . sprintf("ffff%060d", $dummy++);
-		}
-	}
-	else {
-		my $output = `cksum -a sha256 $file 2> /dev/null`;
-		if ($? == 0 && $output =~ /^SHA256 .*? = ([\da-f]{64})\s*$/i) {
-			return "$file " . lc($1);
-		}
-		else {
-			info("could not checksum '$file'\n");
-			return "$file " . sprintf("ffff%060d", $dummy++);
-		}
-	}
-}
 
 sub get_pathname {
 	my $file = shift;
@@ -115,15 +92,18 @@ sub get_pathname {
 	my $output;
 	if ($file =~ /^\$([A-Za-z0-9_]+)(.*)$/ && exists $ENV{$1} ) {
 		$output = "$ENV{$1}$2";
-	}
-	else {
+	} else {
 		$output = `which $file 2>/dev/null`;
 		chomp $output;
 	}
 	if ($output =~ m{^/}) {
-		return $output;
-	}
-	else {
+		my $real_path = `readlink -n -f $output`;
+		if ($real_path =~ m{^/}) {
+			return $real_path;
+		} else {
+			return $output;
+		}
+	} else {
 		info("could not find '$file'\n");
 		return "/usr/bin/$file";
 	}
@@ -154,9 +134,6 @@ sub process_file {
 		# replace "@prog@" by filename
 		$line =~ s{\@(\S+)\@}{get_pathname($1)}ge;
 
-		# replace "/file/name @@" by "/file/name 01234..."
-		$line =~ s{(/\S+)\s*\@\@}{get_sha256($1)}ge;
-
 		print $outh "$line\n";
 	}
 
@@ -178,7 +155,6 @@ EOF
 Copies policy directory tree and:
 - renames files from "username" to "numerical uid" (unless -n is given)
 - replaces "@prog@" placeholders by full path to program
-- replaces "@@" placeholders in files by sha256 sums
 - chowns the resulting files to $user (unless -o is given)
 
 Options:
