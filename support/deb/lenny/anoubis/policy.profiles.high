@@ -1,359 +1,220 @@
 alf {
-
-	/sbin/anoubisctl {
+	/sbin/anoubisctl  {
 		# allow all because of NFS, X, etc.
 		default allow
 	}
-
-	/usr/bin/xanoubis {
+	/usr/bin/xanoubis  {
 		# allow all because of NFS, X, etc.
 		default allow
 	}
-
-	/usr/sbin/sshd {
-		allow accept  tcp all
+	/usr/sbin/sshd  {
+		allow accept tcp all
 
 		# connect required for port forwarding
 		ask connect log tcp all
 		default log deny
 	}
 
-	/usr/bin/ssh {
+	@ssh@  {
 		# DNS
-		allow connect tcp from any	   to any port 53
-		allow send    udp from any	   to any port 53
-		allow receive udp from any port 53 to any
+		allow connect	tcp from any to any port 53
+		allow send	udp from any to any port 53
+		allow receive	udp from any port 53 to any
 
 		# NFS/portmap
-		allow connect tcp from any                to 127.0.0.1 port 111
-		allow send    udp from any                to 127.0.0.1 port 111
+		allow send udp from any	to 127.0.0.1 port 111
 		allow receive udp from 127.0.0.1 port 111 to any
+		allow connect tcp from any to 127.0.0.1 port 111
 
 		# allow port forwarding only from localhost
-		ask accept  tcp from 127.0.0.1 to any
-		ask accept  tcp from ::1       to any
+		ask accept tcp from 127.0.0.1 to any
+		ask accept tcp from ::1 to any
 
-		# ssh outbound connections:
+		# ssh outbound conections
 		allow connect tcp from any to any port 22
+
 		# for non-standard ports, ask
-		ask   connect tcp from any to any
+		ask connect tcp all
 
 		default log deny
 	}
 
-	/usr/bin/evolution {
+	# Mail
+	{ @evolution@, @kmail@ }  {
 		# DNS
-		allow connect tcp from any	   to any port 53
-		allow send    udp from any	   to any port 53
+		allow connect tcp from any to any port 53
+		allow send udp from any to any port 53
 		allow receive udp from any port 53 to any
 
 		# NFS/portmap
-		allow connect tcp from any                to 127.0.0.1 port 111
-		allow send    udp from any                to 127.0.0.1 port 111
+		allow send udp from any to 127.0.0.1 port 111
 		allow receive udp from 127.0.0.1 port 111 to any
+		allow connect tcp from any to 127.0.0.1 port 111
 
 		# X
 		allow connect tcp from any to 127.0.0.1 port 6000 - 6099
-		allow connect tcp from any to ::1       port 6000 - 6099
+		allow connect tcp from any to ::1 port 6000 - 6099
 
 		# pulseaudio
 		deny connect log tcp from any to any port 16001
 
-		# mail protocols
+		### mail protocols
+		# smtp
 		ask connect tcp from any to any port 25
+		# pop
+		ask connect tcp from any to any port { 110, 995 }
+		# imap
+		ask connect tcp from any to any port { 143, 993 }
+		# msa
 		ask connect tcp from any to any port 587
-		ask connect tcp from any to any port 143
-		ask connect tcp from any to any port 993
-		ask connect tcp from any to any port 110
-		ask connect tcp from any to any port 995
 
 		default log deny
 	}
 
-	{ /usr/lib/kde3/konqueror.so,
-	  /usr/bin/konqueror } {
-		# X
-		allow connect tcp from any to 127.0.0.1 port 6000 - 6099
-		allow connect tcp from any to ::1       port 6000 - 6099
-
-		# NFS/portmap
-		allow connect tcp from any                to 127.0.0.1 port 111
-		allow send    udp from any                to 127.0.0.1 port 111
-		allow receive udp from 127.0.0.1 port 111 to any
-
-		default log ask
-	}
-
-	  /usr/bin/kmail {
-		# X
-		allow connect tcp from any to 127.0.0.1 port 6000 - 6099
-		allow connect tcp from any to ::1       port 6000 - 6099
-
-		# NFS/portmap
-		allow connect tcp from any                to 127.0.0.1 port 111
-		allow send    udp from any                to 127.0.0.1 port 111
-		allow receive udp from 127.0.0.1 port 111 to any
-
-		default log ask
-	}
-
-	/usr/lib/kde3/kio_http.so {
-		# NFS/portmap
-		allow connect tcp from any                to 127.0.0.1 port 111
-		allow send    udp from any                to 127.0.0.1 port 111
-		allow receive udp from 127.0.0.1 port 111 to any
-
+	# Internet-Browser
+	{ @epiphany@, @epiphany-geck@,
+	@firefox@, @xulrunner@,
+	@konqueror@, /usr/lib/kde3/konqueror.so} {
 		# DNS
-		allow connect tcp from any	   to any port 53
-		allow send    udp from any	   to any port 53
+		allow connect tcp from any to any port 53
+		allow send udp from any to any port 53
 		allow receive udp from any port 53 to any
 
-		ask connect tcp from any to any port 80
-		ask connect tcp from any to any port 443
-		default log ask
-	}
-
-	/usr/lib/kde3/kio_imap4.so {
 		# NFS/portmap
-		allow connect tcp from any                to 127.0.0.1 port 111
-		allow send    udp from any                to 127.0.0.1 port 111
+		allow connect tcp from any to 127.0.0.1 port 111
+		allow send udp from any to 127.0.0.1 port 111
 		allow receive udp from 127.0.0.1 port 111 to any
-
-		# DNS
-		allow connect tcp from any	   to any port 53
-		allow send    udp from any	   to any port 53
-		allow receive udp from any port 53 to any
-
-		ask connect tcp from any to any port 143
-		ask connect tcp from any to any port 993
-		default log deny
-	}
-
-	/usr/lib/kde3/kio_ftp.so {
-		# NFS/portmap
-		allow connect tcp from any                to 127.0.0.1 port 111
-		allow send    udp from any                to 127.0.0.1 port 111
-		allow receive udp from 127.0.0.1 port 111 to any
-
-		# DNS
-		allow connect tcp from any	   to any port 53
-		allow send    udp from any	   to any port 53
-		allow receive udp from any port 53 to any
-
-		ask connect tcp from any to any port 21
-		ask connect tcp from any to any port 20
-		ask connect tcp from any to any port 990
-		ask connect tcp from any to any port 989
-		ask accept tcp from any port 20 to any
-		ask accept tcp from any port 989 to any
-		default log deny
-	}
-
-	/usr/lib/kde3/kio_sftp.so {
-		# NFS/portmap
-		allow connect tcp from any                to 127.0.0.1 port 111
-		allow send    udp from any                to 127.0.0.1 port 111
-		allow receive udp from 127.0.0.1 port 111 to any
-
-		# DNS
-		allow connect tcp from any	   to any port 53
-		allow send    udp from any	   to any port 53
-		allow receive udp from any port 53 to any
-
-		ask connect tcp from any to any port 22
-		default log deny
-	}
-
-	/usr/lib/kde3/kio_pop3.so {
-		# NFS/portmap
-		allow connect tcp from any                to 127.0.0.1 port 111
-		allow send    udp from any                to 127.0.0.1 port 111
-		allow receive udp from 127.0.0.1 port 111 to any
-
-		# DNS
-		allow connect tcp from any	   to any port 53
-		allow send    udp from any	   to any port 53
-		allow receive udp from any port 53 to any
-
-		ask connect tcp from any to any port 110
-		ask connect tcp from any to any port 995
-		default log deny
-	}
-
-	/usr/lib/kde3/kio_smtp.so {
-		# NFS/portmap
-		allow connect tcp from any                to 127.0.0.1 port 111
-		allow send    udp from any                to 127.0.0.1 port 111
-		allow receive udp from 127.0.0.1 port 111 to any
-
-		# DNS
-		allow connect tcp from any	   to any port 53
-		allow send    udp from any	   to any port 53
-		allow receive udp from any port 53 to any
-
-		ask connect tcp from any to any port 25
-		ask connect tcp from any to any port 587
-		ask connect tcp from any to any port 465
-		default log deny
-	}
-
-	{ /usr/bin/firefox,
-	  /usr/lib/xulrunner-1.9/xulrunner-stub } {
-		# NFS/portmap
-		allow connect tcp from any                to 127.0.0.1 port 111
-		allow send    udp from any                to 127.0.0.1 port 111
-		allow receive udp from 127.0.0.1 port 111 to any
-
-		# DNS
-		allow connect tcp from any	   to any port 53
-		allow send    udp from any	   to any port 53
-		allow receive udp from any port 53 to any
 
 		# X
 		allow connect tcp from any to 127.0.0.1 port 6000 - 6099
-		allow connect tcp from any to ::1       port 6000 - 6099
+		allow connect tcp from any to ::1 port 6000 - 6099
 
-		# web
+		# Http
 		ask connect tcp from any to any port 80
 		ask connect tcp from any to any port 443
 
-		default log deny
-	}
-
-	/usr/bin/epiphany-gecko {
-		# NFS/portmap
-		allow connect tcp from any                to 127.0.0.1 port 111
-		allow send    udp from any                to 127.0.0.1 port 111
-		allow receive udp from 127.0.0.1 port 111 to any
-
-		# DNS
-		allow connect tcp from any	   to any port 53
-		allow send    udp from any	   to any port 53
-		allow receive udp from any port 53 to any
-
-		# X
-		allow connect tcp from any to 127.0.0.1 port 6000 - 6099
-		allow connect tcp from any to ::1       port 6000 - 6099
-
-		# web
-		ask connect tcp from any to any port 80
-		ask connect tcp from any to any port 443
-
-		default log deny
-	}
-
-	any
-	{
-		# NFS/portmap
-		allow connect tcp from any                to 127.0.0.1 port 111
-		allow send    udp from any                to 127.0.0.1 port 111
-		allow receive udp from 127.0.0.1 port 111 to any
-
-		# DNS
-		allow connect tcp from any	   to any port 53
-		allow send    udp from any	   to any port 53
-		allow receive udp from any port 53 to any
-
-		# X
-		allow connect tcp from any to 127.0.0.1 port 6000 - 6099
-		allow connect tcp from any to ::1       port 6000 - 6099
-
 		default log ask
 	}
-}
-sandbox {
-	/sbin/anoubisctl {
-		# allow all in order to access/write profiles, etc
-		default allow
-	}
 
-	/usr/bin/xanoubis {
-		# allow all in order to access/write profiles, etc
-		default allow
-	}
-}
-context {
-	/sbin/anoubisctl {
-		# no context new for cvs
-	}
+	any {
+		# NFS/portmap
+		allow send udp from any to 127.0.0.1 port 111
+		allow receive udp from 127.0.0.1 port 111 to any
+		allow connect tcp from any to 127.0.0.1 port 111
 
-	/usr/bin/xanoubis {
-		# no context new for cvs
-	}
+		# DNS
+		allow connect tcp from any to any port 53
+		allow send udp from any to any port 53
+		allow receive udp from any port 53  to any
 
-	/usr/sbin/sshd {
-		context new any
-	}
+		# X
+		allow connect tcp from any to 127.0.0.1 port 6000 - 6099
+		allow connect tcp from any to ::1 port 6000 - 6099
 
-	/usr/bin/ssh {
-		context new any
-	}
-
-	/usr/bin/evolution {
-	}
-
-	/usr/bin/kdeinit {
-		context open /usr/lib/kde3/konqueror.so
-		context open /usr/lib/kde3/kio_http.so
-		context open /usr/lib/kde3/kio_imap4.so
-		context open /usr/lib/kde3/kio_pop3.so
-		context open /usr/lib/kde3/kio_ftp.so
-		context open /usr/lib/kde3/kio_sftp.so
-		context open /usr/lib/kde3/kio_smtp.so
-		context new any
-	}
-
-	{ /usr/bin/kioslave,
-	  /usr/bin/kioexec } {
-		context open /usr/lib/kde3/konqueror.so
-		context open /usr/lib/kde3/kio_http.so
-		context open /usr/lib/kde3/kio_imap4.so
-		context open /usr/lib/kde3/kio_pop3.so
-		context open /usr/lib/kde3/kio_ftp.so
-		context open /usr/lib/kde3/kio_sftp.so
-		context open /usr/lib/kde3/kio_smtp.so
-	}
-
-	/usr/bin/kmail {
-		# not used in default kde configuration
-		# kio slaves are spawned by kdeinit
-		context open /usr/lib/kde3/kio_imap4.so
-		context open /usr/lib/kde3/kio_pop3.so
-		context open /usr/lib/kde3/kio_smtp.so
-	}
-
-	/usr/lib/kde3/kio_http.so {
-	}
-	/usr/lib/kde3/kio_imap4.so {
-	}
-	/usr/lib/kde3/kio_ftp.so {
-	}
-	/usr/lib/kde3/kio_sftp.so {
-	}
-	/usr/lib/kde3/kio_smtp.so {
-	}
-	/usr/lib/kde3/kio_pop3.so {
-	}
-
-	{ /usr/lib/kde3/konqueror.so,
-	  /usr/bin/konqueror } {
-		# not used in default kde configuration
-		# kio slaves are spawned by kdeinit
-		context open /usr/lib/kde3/kio_http.so
-		context open /usr/lib/kde3/kio_ftp.so
-		context open /usr/lib/kde3/kio_sftp.so
-	}
-
-	{ /usr/bin/firefox,
-	  /usr/lib/xulrunner-1.9/xulrunner-stub } {
-	}
-
-	any
-	{
-		context new any
+		default log ask
 	}
 }
 sfs {
-	path /home self valid allow invalid log deny unknown continue
-	path /home signed-self valid allow invalid log deny unknown continue
+	path "/home" self valid allow invalid log deny unknown continue
+	path "/home" signed-self valid allow invalid log deny unknown continue
+}
+sandbox {
+	/sbin/anoubisctl  {
+		default allow
+	}
+	/usr/bin/xanoubis  {
+		default allow
+	}
+	@kdeinit4@  {
+		allow path "/tmp" rw
+		allow path "/var/tmp" rw
+		allow path "/var" r
+		allow path "/usr" rx
+		allow path "/lib" rx
+		allow path "/bin" rx
+		allow path "/home" r
+		allow path "/etc" r
+		default ask
+	}
+}
+context {
+	/sbin/anoubisctl  {
+		# no context new for cvs
+	}
+
+	/usr/bin/xanoubis  {
+		# no context new for cvs
+	}
+
+	/usr/sbin/sshd  {
+		context new any
+	}
+
+	@ssh@ {
+		context new any
+	}
+
+	{ @kdeinit4@, @kioslave@, @klauncher@,
+	@kdeinit@ }  {
+		context borrow /usr/bin/konqueror
+		context borrow /usr/lib/kde3/konqueror.so
+		context borrow /usr/bin/kmail
+		context open /usr/lib/kde3/konqueror.so
+		context open /usr/lib/kde4/kio_http.so
+		context open /usr/lib/kde4/kio_imap4.so
+		context open /usr/lib/kde4/kio_pop3.so
+		context open /usr/lib/kde4/kio_ftp.so
+		context open /usr/lib/kde4/kio_sftp.so
+		context open /usr/lib/kde4/kio_smtp.so
+		context open /usr/lib/kde3/kio_http.so
+		context open /usr/lib/kde3/kio_imap4.so
+		context open /usr/lib/kde3/kio_pop3.so
+		context open /usr/lib/kde3/kio_ftp.so
+		context open /usr/lib/kde3/kio_sftp.so
+		context open /usr/lib/kde3/kio_smtp.so
+	}
+
+	@kmail@ {
+		context open /usr/lib/kde4/kio_imap4.so
+		context open /usr/lib/kde4/kio_pop3.so
+		context open /usr/lib/kde4/kio_smtp.so
+		context open /usr/lib/kde3/kio_imap4.so
+		context open /usr/lib/kde3/kio_pop3.so
+		context open /usr/lib/kde3/kio_smtp.so
+	}
+
+	{ /usr/lib/kde4/kio_http.so, /usr/lib/kde3/kio_http.so } {
+		context borrow /usr/bin/konqueror
+		context borrow /usr/lib/kde3/konqueror.so
+	}
+
+	{ /usr/lib/kde4/kio_imap4.so, /usr/lib/kde3/kio_imap4.so } {
+		context borrow /usr/bin/kmail
+	}
+
+	{ /usr/lib/kde4/kio_ftp.so, /usr/lib/kde3/kio_ftp.so } {
+		context borrow /usr/bin/konqueror
+		context borrow /usr/lib/kde3/konqueror.so
+	}
+
+	{ /usr/lib/kde4/kio_sftp.so, /usr/lib/kde3/kio_sftp.so } {
+		context borrow /usr/bin/konqueror
+		context borrow /usr/lib/kde3/konqueror.so
+	}
+
+	{ /usr/lib/kde4/kio_smtp.so, /usr/lib/kde3/kio_smtp.so } {
+		context borrow /usr/bin/kmail
+	}
+
+	{ /usr/lib/kde4/kio_pop3.so, /usr/lib/kde3/kio_pop3.so } {
+		context borrow /usr/bin/kmail
+	}
+
+	{ @firefox@ , @xulrunner@,
+	@konqueror@, /usr/lib/kde3/konqueror.so } {
+	}
+
+	any {
+		context new any
+	}
 }
