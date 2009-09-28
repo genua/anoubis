@@ -72,7 +72,7 @@ alf {
 	}
 
 	# Internet-Browser
-	{ @epiphany@, @epiphany-geck@,
+	{ @epiphany@, @epiphany-gecko@,
 	@firefox@, @xulrunner@,
 	@konqueror@, /usr/lib/kde3/konqueror.so} {
 		# DNS
