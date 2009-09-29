@@ -162,7 +162,6 @@ __apn_parse_common(const char *filename, struct apn_ruleset **rsp, int flags)
 	TAILQ_INIT(&rs->ctx_queue);
 	TAILQ_INIT(&rs->err_queue);
 	rs->flags = flags;
-	rs->compatids = 1;
 	rs->maxid = 1;
 	rs->idtree = NULL;
 	rs->destructor = NULL;
@@ -2119,12 +2118,8 @@ apn_assign_ids(struct apn_ruleset *rs)
 static void
 apn_insert_id(struct apn_ruleset *rs, struct rb_entry *e, void *data)
 {
-	/* Explicitly specified ID in ruleset. Turn off compat IDs */
-	if (rs->compatids) {
-		rs->compatids = 0;
-		if (rs->maxid < 10)
-			rs->maxid = 10;
-	}
+	if (rs->maxid < 10)
+		rs->maxid = 10;
 	e->data = data;
 	rb_insert_entry(&rs->idtree, e);
 	/* NOTE: e->key must be the same as data->apn_id */
@@ -2136,40 +2131,32 @@ void
 apn_assign_id(struct apn_ruleset *rs, struct rb_entry *e, void *data)
 {
 	unsigned long nid;
-	if (rs->compatids) {
-		/*
-		 * Keep old number scheme as long as there is no support
-		 * for explicit rule numbers in xanoubis.
-		 */
-		nid = rs->maxid++;
-	} else {
-		while (1) {
-			int i;
-			/* Try to find a random free ID below maxid 20 times */
-			for (i=0; i<20; ++i) {
-				nid = 1 + rand() % rs->maxid;
-				if (rb_find(rs->idtree, nid) == NULL)
-					break;
-			}
-			if (i < 20)
+	while (1) {
+		int i;
+		/* Try to find a random free ID below maxid 20 times */
+		for (i=0; i<20; ++i) {
+			nid = 1 + rand() % rs->maxid;
+			if (rb_find(rs->idtree, nid) == NULL)
 				break;
-			/* No random ID found. Increase maxid and retry */
-			if (2 * rs->maxid > rs->maxid) {
-				rs->maxid = 2*rs->maxid;
-				continue;
-			}
-			/*
-			 * No suitable ID found and cannot increase maxid
-			 * anymore, try a linear search as a last resort.
-			 * The chance that this happens with INT_MAX/2 rule
-			 * IDs is still less than one in a million.
-			 */
-			nid = ((unsigned long )e) % rs->maxid;
-			while (rb_find(rs->idtree, nid)) {
-				nid = (nid + 1) % rs->maxid;
-			}
-			break;
 		}
+		if (i < 20)
+			break;
+		/* No random ID found. Increase maxid and retry */
+		if (2 * rs->maxid > rs->maxid) {
+			rs->maxid = 2*rs->maxid;
+			continue;
+		}
+		/*
+		 * No suitable ID found and cannot increase maxid
+		 * anymore, try a linear search as a last resort.
+		 * The chance that this happens with INT_MAX/2 rule
+		 * IDs is still less than one in a million.
+		 */
+		nid = ((unsigned long )e) % rs->maxid;
+		while (rb_find(rs->idtree, nid)) {
+			nid = (nid + 1) % rs->maxid;
+		}
+		break;
 	}
 	/* NOTE: e->key must be the same as data->apn_id */
 	e->data = data;

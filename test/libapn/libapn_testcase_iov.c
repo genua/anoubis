@@ -48,7 +48,7 @@
 #endif
 
 static char *
-generate_file(FILE **infp)
+generate_file(void)
 {
 	char	*sfn;
 	FILE	*sfp;
@@ -105,7 +105,7 @@ generate_file(FILE **infp)
 	fprintf(sfp, "}\n");
 
 	fflush(sfp);
-	(*infp) = sfp;
+	fclose(sfp);
 	return(sfn);
 }
 
@@ -149,12 +149,11 @@ START_TEST(tc_iovec)
 	struct apn_ruleset	*rs;
 	char			*file;
 	int			 ret;
-	FILE			*fp;
 	char			*ref;
 	int			 reflen, i, j;
 	struct iovec		*iov;
 
-	file = generate_file(&fp);
+	file = generate_file();
 	ret = apn_parse(file, &rs, 0);
 	unlink(file);
 	if (ret != 0)
@@ -168,21 +167,20 @@ START_TEST(tc_iovec)
 		int	 this, iovcnt, total;
 		char	*buf;
 
-		rewind(fp);
 		iovcnt = 0;
 		iov = NULL;
 		total = 0;
 		rs = NULL;
 
 		/* Read file into an iovec with random sized chunks. */
-		while(1)  {
+		while(total < reflen)  {
 			this = rand() % 100;
+			if (total + this > reflen)
+				this = reflen - total;
 			if (this) {
 				buf = malloc(this);
 				fail_if(buf == NULL, "malloc");
-				this = fread(buf, 1, this, fp);
-				if (this == 0)
-					break;
+				memcpy(buf, ref + total, this);
 			}
 			iovcnt++;
 			iov = realloc(iov, sizeof(struct iovec)*iovcnt);

@@ -240,7 +240,6 @@ TAILQ_HEAD(apnerr_queue, apn_errmsg);
 /* Complete APN ruleset. */
 struct apn_ruleset {
 	int			 flags;
-	int			 compatids;
 	unsigned int		 maxid;
 	struct rb_entry		*idtree;
 
