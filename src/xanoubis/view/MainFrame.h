@@ -42,6 +42,8 @@
 class MainFrame;
 #include "DlgUpgradeAsk.h"
 
+#include  <wx/timer.h>
+
 class TaskEvent;
 
 class MainFrame : public MainFrameBase
@@ -61,6 +63,7 @@ class MainFrame : public MainFrameBase
 		wxIcon		*alertIcon_;
 		wxIcon		*escalationIcon_;
 		ComSfsListTask	 upgradeTask_;
+		wxTimer		 timer_;
 
 		void setConnectionString(bool, const wxString &);
 		void setMessageString(void);
@@ -71,7 +74,7 @@ class MainFrame : public MainFrameBase
 		void onMainFrameShow(wxCommandEvent&);
 		void onSfsBrowserShow(wxCommandEvent&);
 		void onBackupPolicy(wxCommandEvent&);
-		void OnIdle(wxIdleEvent&);
+		void OnTimer(wxTimerEvent&);
 
 		/**
 		 * This is called when there is a list of sfs files. The

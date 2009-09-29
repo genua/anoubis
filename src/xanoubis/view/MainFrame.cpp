@@ -32,6 +32,9 @@
 
 #ifdef HAVE_SYS_INOTIFY_H
 #include <sys/inotify.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
 #include <time.h>
 #endif
 
@@ -72,6 +75,8 @@ MainFrame::MainFrame(wxWindow *parent) : MainFrameBase(parent)
 	alertIcon_ = wxGetApp().loadIcon(wxT("General_alert_16.png"));
 	escalationIcon_ = wxGetApp().loadIcon(wxT("General_question_16.png"));
 
+	timer_.Start(5000);
+
 	anEvents = AnEvents::getInstance();
 	jobCtrl = JobCtrl::getInstance();
 
@@ -108,7 +113,9 @@ MainFrame::MainFrame(wxWindow *parent) : MainFrameBase(parent)
 	    wxCommandEventHandler(MainFrame::OnAnoubisOptionShow), NULL, this);
 	anEvents->Connect(anEVT_BACKUP_POLICY,
 	    wxCommandEventHandler(MainFrame::onBackupPolicy), NULL, this);
-
+	anEvents->Connect(wxEVT_TIMER, wxTimerEventHandler(MainFrame::OnTimer),
+	    NULL, this);
+	timer_.SetOwner(anEvents);
 
 	ANEVENTS_IDENT_BCAST_REGISTRATION(MainFrame);
 }
@@ -635,18 +642,31 @@ MainFrame::isShowing(void)
 }
 
 void
-MainFrame::OnIdle(wxIdleEvent &event)
+MainFrame::OnTimer(wxTimerEvent &event)
 {
 #ifdef HAVE_SYS_INOTIFY_H
 	struct inotify_event	ievent;
 	wxString		msg;
-	int			iNotifyFd = -1;
+	bool			warn = false;
+	int			ret, iNotifyFd = -1;
+	time_t			modTime = 0, savedTime = 0;
+	struct stat		sbuf;
 
 	iNotifyFd = wxGetApp().getINotify();
-	if (iNotifyFd == -1)
-		return;
+	if (iNotifyFd == -1) {
+		wxGetApp().getUserOptions()->Read(
+		     wxT("/Options/GrubModifiedTime"), &savedTime);
+		ret = stat(wxGetApp().getGrubPath().fn_str(), &sbuf);
+		if (ret != -1)
+			modTime = sbuf.st_mtime;
+		if (savedTime < modTime)
+			warn = true;
+	} else {
+		if (read(iNotifyFd, &ievent, sizeof(ievent)) > 0)
+			warn = true;
+	}
 
-	if (read(iNotifyFd, &ievent, sizeof(ievent)) > 0) {
+	if (warn) {
 		wxGetApp().getUserOptions()->Write(
 		    wxT("/Options/GrubModifiedTime"), time(NULL));
 		msg = _("The Boot Loader configuration has been updated."

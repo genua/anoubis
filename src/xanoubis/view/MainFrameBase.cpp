@@ -153,7 +153,6 @@ MainFrameBase::MainFrameBase( wxWindow* parent, wxWindowID id, const wxString& t
 	
 	// Connect Events
 	this->Connect( wxEVT_CLOSE_WINDOW, wxCloseEventHandler( MainFrameBase::OnClose ) );
-	this->Connect( wxEVT_IDLE, wxIdleEventHandler( MainFrameBase::OnIdle ) );
 	this->Connect( mi_mbFileConnect->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnMbFileConnectSelect ) );
 	this->Connect( mi_mbFileImport->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnMbFileImportSelect ) );
 	this->Connect( mi_mbFileExport->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( MainFrameBase::OnMbFileExportSelect ) );

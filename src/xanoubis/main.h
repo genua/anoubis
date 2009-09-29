@@ -95,6 +95,7 @@ class AnoubisGuiApp : public wxApp, private PassphraseReader
 		Module			*modules_[ANOUBIS_MODULESNO];
 		wxConfig		*userOptions_;
 		int			 iNotifyFd_;
+		wxString		 grubPath_;
 
 		wxString readPassphrase(bool *);
 
@@ -137,6 +138,7 @@ class AnoubisGuiApp : public wxApp, private PassphraseReader
 		bool		 showingMainFrame(void);
 		void		 autoStart(bool);
 		int		 getINotify(void);
+		wxString	 getGrubPath(void);
 
 		uid_t		 getUserIdByName(wxString) const;
 		wxString	 getUserNameById(uid_t) const;

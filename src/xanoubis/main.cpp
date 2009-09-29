@@ -31,11 +31,11 @@
 
 #ifdef HAVE_SYS_INOTIFY_H
 #include <sys/inotify.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <time.h>
-
-#include <wx/utils.h>
 #endif
 
 #include <sys/types.h>
@@ -86,6 +86,7 @@ AnoubisGuiApp::AnoubisGuiApp(void)
 	onInitProfile_ = true;
 	trayVisible_ = true;
 	iNotifyFd_ = -1;
+	grubPath_ = wxT("/boot/grub/menu.lst");
 
 	SetAppName(wxT("xanoubis"));
 	wxInitAllImageHandlers();
@@ -218,14 +219,14 @@ bool AnoubisGuiApp::OnInit()
 	 * If inotify_add_watch doesnot work we do not need to bother
 	 * to read from it
 	 */
-	wxString	grubPath = wxT("/boot/grub/menu.lst");
 	int		ret = 0;
 
-	userOptions_->Read(wxT("/Options/GrubConfigPath"), &grubPath);
+
+	userOptions_->Read(wxT("/Options/GrubConfigPath"), &grubPath_);
 
 	iNotifyFd_ = inotify_init();
 	if (iNotifyFd_ != -1) {
-		ret = inotify_add_watch(iNotifyFd_, grubPath.fn_str(),
+		ret = inotify_add_watch(iNotifyFd_, grubPath_.fn_str(),
 		    IN_MODIFY);
 		if (ret != -1) {
 			int flags = fcntl(iNotifyFd_, F_GETFL);
@@ -244,10 +245,13 @@ bool AnoubisGuiApp::OnInit()
 	 */
 	time_t		savedTime = 0, lastTime = 0;
 	wxString	msg;
+	struct stat	sbuf;
 
 	userOptions_->Read(wxT("/Options/GrubModifiedTime"), &savedTime);
 	if (savedTime) {
-		lastTime = wxFileModificationTime(grubPath);
+		ret = stat(grubPath_.fn_str(), &sbuf);
+		if (ret != -1)
+			lastTime = sbuf.st_mtime;
 		if (savedTime < lastTime) {
 			msg = _("The Boot Loader configuration has been"
 			    " updated. Please make sure to boot an Anoubis"
@@ -260,10 +264,12 @@ bool AnoubisGuiApp::OnInit()
 			userOptions_->Write(
 			    wxT("/Options/GrubModifiedTime"), time(NULL));
 		}
+	} else {
+		userOptions_->Write(
+		    wxT("/Options/GrubModifiedTime"), time(NULL));
 	}
 
 #endif
-	wxWakeUpIdle();
 	return (true);
 }
 
@@ -660,6 +666,12 @@ int
 AnoubisGuiApp::getINotify(void)
 {
 	return iNotifyFd_;
+}
+
+wxString
+AnoubisGuiApp::getGrubPath(void)
+{
+	return grubPath_;
 }
 
 wxString
