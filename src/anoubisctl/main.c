@@ -652,9 +652,9 @@ load(char *rulesopt, uid_t uid, unsigned int prio)
 		return 3;
 	}
 	if (opts & ANOUBISCTL_OPT_VERBOSE)
-		flags |= (APN_FLAG_VERBOSE|APN_FLAG_NOPERMCHECK);
+		flags |= APN_FLAG_VERBOSE;
 	if (opts & ANOUBISCTL_OPT_VERBOSE2)
-		flags |= (APN_FLAG_VERBOSE2|APN_FLAG_NOPERMCHECK);
+		flags |= APN_FLAG_VERBOSE2;
 	if (prio == ANOUBISCTL_PRIO_ADMIN)
 		flags |= APN_FLAG_NOASK;
 	if (apn_parse(rulesopt, &ruleset, flags)) {

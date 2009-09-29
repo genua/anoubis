@@ -709,7 +709,7 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
-	ret = apn_parse(argv[2], &rs, APN_FLAG_NOPERMCHECK);
+	ret = apn_parse(argv[2], &rs, 0);
 	if (ret != 0) {
 		apn_print_errors(rs, stderr);
 		fprintf(stderr, "Could not parse %s\n", argv[2]);

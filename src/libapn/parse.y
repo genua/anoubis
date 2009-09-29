@@ -83,7 +83,7 @@ int		 parse_rules(const char *, struct apn_ruleset *);
 int		 parse_rules_iovec(const char *, struct iovec *, int count,
 		     struct apn_ruleset *);
 int		 __parse_rules_common(struct apn_ruleset *apnrspx);
-struct file	*pushfile(const char *, int);
+struct file	*pushfile(const char *);
 struct file	*pushiov(const char *, struct iovec *, int count);
 int		 popfile(void);
 int		 check_file_secrecy(int);
@@ -1638,23 +1638,8 @@ nodigits:
 	return (c);
 }
 
-int
-check_file_secrecy(int fd)
-{
-	struct stat	st;
-
-	if (fstat(fd, &st))
-		return (-errno);
-	if (st.st_uid != 0 && st.st_uid != getuid())
-		return (-EPERM);
-	if (st.st_mode & (S_IRWXG | S_IRWXO)) {
-		return (-EPERM);
-	}
-	return (0);
-}
-
 struct file *
-pushfile(const char *name, int secret)
+pushfile(const char *name)
 {
 	struct file	*nfile;
 
@@ -1671,11 +1656,6 @@ pushfile(const char *name, int secret)
 			return (NULL);
 		}
 	} else if ((nfile->u.u_stream = fopen(nfile->name, "r")) == NULL) {
-		free(nfile->name);
-		free(nfile);
-		return (NULL);
-	} else if (secret && check_file_secrecy(fileno(nfile->u.u_stream))) {
-		fclose(nfile->u.u_stream);
 		free(nfile->name);
 		free(nfile);
 		return (NULL);
@@ -1725,9 +1705,8 @@ popfile(void)
 int
 parse_rules(const char *filename, struct apn_ruleset *apnrspx)
 {
-	int doPermCheck = !(apnrspx->flags & APN_FLAG_NOPERMCHECK);
 	TAILQ_INIT(&files);
-	if ((file = pushfile(filename, doPermCheck)) == NULL) {
+	if ((file = pushfile(filename)) == NULL) {
 		apn_error(apnrspx, filename, 0, "couldn't read file");
 		return (1);
 	}

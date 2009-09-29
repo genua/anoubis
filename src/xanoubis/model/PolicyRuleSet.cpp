@@ -56,8 +56,7 @@ PolicyRuleSet::PolicyRuleSet(int priority, uid_t uid,
 	create(ruleSet);
 }
 
-PolicyRuleSet::PolicyRuleSet(int priority, uid_t uid, const wxString &fileName,
-    bool checkPerm)
+PolicyRuleSet::PolicyRuleSet(int priority, uid_t uid, const wxString &fileName)
 {
 	refCnt_     = 0;
 	ruleSetId_  = wxNewId();
@@ -69,7 +68,7 @@ PolicyRuleSet::PolicyRuleSet(int priority, uid_t uid, const wxString &fileName,
 	isModified_ = false;
 	isDaemonRuleSet_ = false;
 
-	create(fileName, checkPerm);
+	create(fileName);
 }
 
 PolicyRuleSet::~PolicyRuleSet(void)
@@ -521,7 +520,7 @@ PolicyRuleSet::clean(void)
 }
 
 void
-PolicyRuleSet::create(wxString fileName, bool checkPerm)
+PolicyRuleSet::create(wxString fileName)
 {
 	wxString		 logEntry;
 	int			 rc;
@@ -531,10 +530,6 @@ PolicyRuleSet::create(wxString fileName, bool checkPerm)
 
 	ruleSet = NULL;
 	flags = 0;
-
-	if (!checkPerm) {
-		flags |= APN_FLAG_NOPERMCHECK;
-	}
 
 	rc = apn_parse(fileName.fn_str(), &ruleSet, flags);
 

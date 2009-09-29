@@ -119,12 +119,12 @@ PolicyCtrl::getRuleSet(const wxString &name) const
 	/* Try user-profile */
 	file = getProfileFile(name, USER_PROFILE);
 	if (wxFileExists(file))
-		return (new PolicyRuleSet(1, geteuid(), file, true));
+		return (new PolicyRuleSet(1, geteuid(), file));
 
 	/* Try default-profile */
 	file = getProfileFile(name, DEFAULT_PROFILE);
 	if (wxFileExists(file))
-		return (new PolicyRuleSet(1, geteuid(), file, false));
+		return (new PolicyRuleSet(1, geteuid(), file));
 
 	/* No such profile */
 	return (0);
@@ -247,13 +247,13 @@ PolicyCtrl::importFromProfile(const wxString &name)
 	/* Try user-profile */
 	file = getProfileFile(name, USER_PROFILE);
 	if (wxFileExists(file))
-		rs = new PolicyRuleSet(1, geteuid(), file, true);
+		rs = new PolicyRuleSet(1, geteuid(), file);
 
 	if (rs == 0) {
 		/* Try default-profile */
 		file = getProfileFile(name, DEFAULT_PROFILE);
 		if (wxFileExists(file))
-			rs = new PolicyRuleSet(1, geteuid(), file, false);
+			rs = new PolicyRuleSet(1, geteuid(), file);
 	}
 
 	if (rs != 0) {
@@ -275,7 +275,7 @@ PolicyCtrl::importFromFile(const wxString &file)
 	PolicyRuleSet	*rs;
 	bool		success;
 
-	rs = new PolicyRuleSet(1, geteuid(), file, false);
+	rs = new PolicyRuleSet(1, geteuid(), file);
 	success = importPolicy(rs);
 
 	if (!success)

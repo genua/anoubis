@@ -73,10 +73,9 @@ class PolicyRuleSet : public Subject
 		 * @param[in] 1st Priority of ruleset (admin or user ruleset).
 		 * @param[in] 2nd UserId of ruleset.
 		 * @param[in] 3rd Filename where to read policies from.
-		 * @param[in] 4th If true check access permissions.
 		 * @return Nothing.
 		 */
-		PolicyRuleSet(int, uid_t, const wxString &, bool);
+		PolicyRuleSet(int, uid_t, const wxString &);
 
 		/**
 		 * Destructor of PolicyRuleSet.
@@ -348,9 +347,8 @@ class PolicyRuleSet : public Subject
 		/**
 		 * Create ruleset from file.
 		 * @param[in] 1st Name of file to be parsed.
-		 * @param[in] 2nd Shall check permissions of file.
 		 */
-		void create(wxString, bool);
+		void create(wxString);
 
 		/**
 		 * Create policies from parsed ruleset.
