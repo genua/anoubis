@@ -159,14 +159,14 @@ cert_load_db(const char *dirname, struct cert_db *certs)
 			continue;
 		}
 		if((sc->req = PEM_read_X509(fp, NULL, NULL, NULL)) == NULL) {
-			log_warn("PEM_read_X509: %s", filename);
+			log_warnx("PEM_read_X509: %s", filename);
 			free(sc);
 			fclose(fp);
 			continue;
 		}
 		fclose(fp);
 		if ((sc->pubkey = X509_get_pubkey(sc->req)) == NULL) {
-			log_warn("X509_get_pubkey: %s", filename);
+			log_warnx("X509_get_pubkey: %s", filename);
 			X509_free(sc->req);
 			free(sc);
 			continue;
@@ -174,7 +174,7 @@ cert_load_db(const char *dirname, struct cert_db *certs)
 		sc->uid = uid;
 		sc->kidlen = cert_keyid(&sc->keyid, sc->req);
 		if (sc->kidlen == -1) {
-			log_warn("Error while loading key from uid %d", uid);
+			log_warnx("Error while loading key from uid %d", uid);
 			X509_free(sc->req);
 			EVP_PKEY_free(sc->pubkey);
 			free(sc);
