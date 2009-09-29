@@ -323,7 +323,12 @@ SfsDirectory::OnDir(const wxString &dir)
 	}
 
 	if (this->recursive_) {
-		/* Number of directories, you will visit later */
+		struct stat fstat;
+		/* Skip symlinks pointing to directories to avoid loops */
+		if (lstat(dir.fn_str(), &fstat) == 0
+		    && S_ISLNK(fstat.st_mode))
+			return wxDIR_IGNORE;
+		/* Total number of directories to scan. */
 		totalDirectories_ += getDirectoryCount(dir);
 	}
 
