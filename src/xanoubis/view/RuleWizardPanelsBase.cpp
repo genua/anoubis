@@ -285,6 +285,10 @@ RuleWizardProgramPageBase::RuleWizardProgramPageBase( wxWindow* parent, wxWindow
 	
 	mainSizer->Add( 0, 0, 1, wxEXPAND, 5 );
 	
+	staticTextCsum = new wxStaticText( this, wxID_ANY, _("By choosing a program on this page, a checksum will be registered at\nthe SFS module to determine the program during the policy evaluation."), wxDefaultPosition, wxDefaultSize, 0 );
+	staticTextCsum->Wrap( -1 );
+	mainSizer->Add( staticTextCsum, 0, wxALL, 5 );
+	
 	programLabel = new wxStaticText( this, wxID_ANY, _("Program:"), wxDefaultPosition, wxDefaultSize, 0 );
 	programLabel->Wrap( -1 );
 	programLabel->SetMinSize( wxSize( 90,-1 ) );
@@ -939,7 +943,7 @@ RuleWizardFinalPageBase::RuleWizardFinalPageBase( wxWindow* parent, wxWindowID i
 	
 	mainSizer->Add( 0, 0, 1, wxEXPAND, 5 );
 	
-	finalLabel = new wxStaticText( this, wxID_ANY, _("This is the final page. If you click on 'finish'\nthe policies will be created.\n\nTo send the newly created policies directly to the Anoubis Daemon, the checkbox below have to be activated.\n(To make this work you need to be connected.)"), wxDefaultPosition, wxDefaultSize, 0 );
+	finalLabel = new wxStaticText( this, wxID_ANY, _("This is the final page. If you click on 'finish'\nthe policies will be created.\n\nTo send the newly created policies directly to the Anoubis Daemon, the checkbox below has to be activated.\n(To make this work you need to be connected.)"), wxDefaultPosition, wxDefaultSize, 0 );
 	finalLabel->Wrap( 400 );
 	mainSizer->Add( finalLabel, 0, wxALL, 5 );
 	

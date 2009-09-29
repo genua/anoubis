@@ -151,6 +151,7 @@ class RuleWizardProgramPageBase : public wxPanel
 		
 		wxStaticText* headLineLabel;
 		
+		wxStaticText* staticTextCsum;
 		wxStaticText* programLabel;
 		AnPickFromFs* programPicker;
 		
