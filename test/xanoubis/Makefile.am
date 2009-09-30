@@ -44,6 +44,7 @@ TESTS = \
 	testSuite_Sfs \
 	testSuite_Key \
 	testSuite_Notifications \
+	testSuite_Config \
 	pidtest
 noinst_PROGRAMS = test_xanoubis_server testSuite_JobCtrl $(TESTS)
 endif
@@ -339,6 +340,31 @@ testSuite_Notifications_SOURCES = \
 	testrunner.cpp \
 	suite_Notifications/testSuite.cpp \
 	suite_Notifications/tc_NotificationCtrl.cpp
+
+#
+# Testsuite: Config
+#
+testSuite_Config_CPPFLAGS = $(libGUIcomponents_CPPFLAGS)
+testSuite_Config_CXXFLAGS = $(libGUIcomponents_CXXFLAGS) @CHECK_CFLAGS@
+testSuite_Config_LDFLAGS = $(shared_AM_LDFLAGS) -dynamic -L $(RPATH)
+testSuite_Config_DEPENDENCIES = $(libGUIcomponents_DEPENDS)
+testSuite_Config_LDADD = \
+	-lGUIcomponents \
+	$(libGUIcomponents_LDADD) \
+	@CHECK_LIBS@
+
+if NEEDBSDCOMPAT
+testSuite_Config_CPPFLAGS += -I$(top_srcdir)/$(bsdcompatdir)
+testSuite_Config_DEPENDENCIES += $(libbsdcompat)
+testSuite_Config_LDADD += $(libbsdcompat)
+endif
+
+testSuite_Config_SOURCES = \
+	testrunner.cpp \
+	suite_Config/testSuite.cpp \
+	suite_Config/tc_Config.cpp \
+	suite_Config/AnEventsSpy.cpp \
+	suite_Config/AnEventsSpy.h
 
 #
 # pidtest

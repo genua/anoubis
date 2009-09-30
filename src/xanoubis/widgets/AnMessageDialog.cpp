@@ -46,7 +46,6 @@ AnMessageDialog::AnMessageDialog(wxWindow *parent, const wxString &message,
 	wxBoxSizer* mainSizer = new wxBoxSizer(wxVERTICAL);
 	wxBoxSizer* messageSizer = new wxBoxSizer(wxHORIZONTAL);
 
-	userOptions_ = wxGetApp().getUserOptions();
 	configString_ = wxEmptyString;
 
 	/* Icon is part of messageSizer */
@@ -87,14 +86,14 @@ int
 AnMessageDialog::ShowModal(void)
 {
 	bool showDialog = false;
-	userOptions_->Read(configString_, &showDialog);
+	wxConfig::Get()->Read(configString_, &showDialog);
 
 	/*
 	 * Display the dialog, if configString_ does not exist
 	 * (Read()-operation will fail) or the dialog is configured to be
 	 * displayed (showDialog set to true by Read()).
 	 */
-	if (!userOptions_->Read(configString_, &showDialog) || showDialog)
+	if (!wxConfig::Get()->Read(configString_, &showDialog) || showDialog)
 		return (wxDialog::ShowModal());
 	else
 		return (GetAffirmativeId());
@@ -138,7 +137,7 @@ AnMessageDialog::onNotifyCheck(const wxString &userOption)
 	bool showMessage = false;
 	configString_ = userOption;
 
-	userOptions_->Read(userOption, &showMessage);
+	wxConfig::Get()->Read(userOption, &showMessage);
 
 	if (showMessage) {
 		dontShowMessageAgain->SetValue(!showMessage);
@@ -155,9 +154,6 @@ AnMessageDialog::onNotifyCheck(const wxString &userOption)
 void
 AnMessageDialog::OnDontShowMessageAgain(wxCommandEvent& WXUNUSED(event))
 {
-	userOptions_->Write(configString_, !dontShowMessageAgain->IsChecked());
-	userOptions_->Flush();
-
-	wxCommandEvent event(anEVT_ANOUBISOPTIONS_UPDATE);
-	wxPostEvent(AnEvents::getInstance(), event);
+	wxConfig::Get()->Write(configString_,
+	    !dontShowMessageAgain->IsChecked());
 }

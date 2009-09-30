@@ -30,7 +30,6 @@
 
 #include <vector>
 
-#include "main.h"
 #include "ModAnoubisPanelsBase.h"
 #include "Notification.h"
 #include "NotificationCtrl.h"
@@ -45,7 +44,6 @@ class ModAnoubisMainPanelImpl : public ModAnoubisMainPanelBase,
 
 		Notification	*currentNotify_;
 		Notification	*savedNotify_;
-		wxConfig	*userOptions_;
 		wxString	 selectedProfile;
 		wxString	 loadedProfile;
 

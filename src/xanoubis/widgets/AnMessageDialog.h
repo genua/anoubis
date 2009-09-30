@@ -101,11 +101,6 @@ class AnMessageDialog : public wxDialog
 		wxCheckBox*	dontShowMessageAgain;
 
 		/**
-		 * The userOptions object provided by the config file
-		 */
-		wxConfig*	userOptions_;
-
-		/**
 		 * The userOptions config string
 		 */
 		wxString	configString_;

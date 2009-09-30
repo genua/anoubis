@@ -391,6 +391,8 @@ xanoubis_SOURCES= \
 	view/TrayIcon.h \
 	view/VersionListCtrl.h \
 	view/VersionListCtrl.cpp \
+	control/AnConfig.cpp \
+	control/AnConfig.h \
 	control/AnShortcuts.cpp \
 	control/AnShortcuts.h \
 	control/AnEvents.cpp \

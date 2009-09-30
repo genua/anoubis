@@ -221,40 +221,40 @@ DlgRuleEditor::readOptions(void)
 	for (size_t i=1; i<APP_EOL; i++) {
 		name = wxT("/Options/Columns/App/") +
 		    appColumns_[i]->getConfKey();
-		wxGetApp().getUserOptions()->Read(name, &isVisible, true);
+		wxConfig::Get()->Read(name, &isVisible, true);
 		appColumns_[i]->setVisability(isVisible);
 	}
 
 	for (size_t i=1; i<ALF_EOL; i++) {
 		name = wxT("/Options/Columns/Alf/") +
 		    alfColumns_[i]->getConfKey();
-		wxGetApp().getUserOptions()->Read(name, &isVisible, true);
+		wxConfig::Get()->Read(name, &isVisible, true);
 		alfColumns_[i]->setVisability(isVisible);
 	}
 
 	for (size_t i=1; i<SFS_EOL; i++) {
 		name = wxT("/Options/Columns/Sfs/") +
 		    sfsColumns_[i]->getConfKey();
-		wxGetApp().getUserOptions()->Read(name, &isVisible, true);
+		wxConfig::Get()->Read(name, &isVisible, true);
 		sfsColumns_[i]->setVisability(isVisible);
 	}
 
 	for (size_t i=1; i<CTX_EOL; i++) {
 		name = wxT("/Options/Columns/Ctx/") +
 		    ctxColumns_[i]->getConfKey();
-		wxGetApp().getUserOptions()->Read(name, &isVisible, true);
+		wxConfig::Get()->Read(name, &isVisible, true);
 		ctxColumns_[i]->setVisability(isVisible);
 	}
 
 	for (size_t i=1; i<SB_EOL; i++) {
 		name = wxT("/Options/Columns/Sb/")
 		    + sbColumns_[i]->getConfKey();
-		wxGetApp().getUserOptions()->Read(name, &isVisible, true);
+		wxConfig::Get()->Read(name, &isVisible, true);
 		sbColumns_[i]->setVisability(isVisible);
 	}
 
 	name = wxT("/Options/AutoChecksumCheck");
-	wxGetApp().getUserOptions()->Read(name, &isAutoChecksumCheck_, true);
+	wxConfig::Get()->Read(name, &isAutoChecksumCheck_, true);
 
 	updateListColumns(appPolicyListCtrl,    appColumns_, APP_EOL);
 	updateListColumns(filterPolicyListCtrl, alfColumns_, ALF_EOL);
@@ -272,36 +272,31 @@ DlgRuleEditor::writeOptions(void)
 	for (size_t i=1; i<APP_EOL; i++) {
 		name = wxT("/Options/Columns/App/") +
 		    appColumns_[i]->getConfKey();
-		wxGetApp().getUserOptions()->Write(name,
-		    appColumns_[i]->isVisible());
+		wxConfig::Get()->Write(name, appColumns_[i]->isVisible());
 	}
 
 	for (size_t i=1; i<ALF_EOL; i++) {
 		name = wxT("/Options/Columns/Alf/") +
 		    alfColumns_[i]->getConfKey();
-		wxGetApp().getUserOptions()->Write(name,
-		    alfColumns_[i]->isVisible());
+		wxConfig::Get()->Write(name, alfColumns_[i]->isVisible());
 	}
 
 	for (size_t i=1; i<SFS_EOL; i++) {
 		name = wxT("/Options/Columns/Sfs/") +
 		    sfsColumns_[i]->getConfKey();
-		wxGetApp().getUserOptions()->Write(name,
-		    sfsColumns_[i]->isVisible());
+		wxConfig::Get()->Write(name, sfsColumns_[i]->isVisible());
 	}
 
 	for (size_t i=1; i<CTX_EOL; i++) {
 		name = wxT("/Options/Columns/Ctx/") +
 		    ctxColumns_[i]->getConfKey();
-		wxGetApp().getUserOptions()->Write(name,
-		    ctxColumns_[i]->isVisible());
+		wxConfig::Get()->Write(name, ctxColumns_[i]->isVisible());
 	}
 
 	for (size_t i=1; i<SB_EOL; i++) {
 		name = wxT("/Options/Columns/Sb/") +
 		    sbColumns_[i]->getConfKey();
-		wxGetApp().getUserOptions()->Write(name,
-		    sbColumns_[i]->isVisible());
+		wxConfig::Get()->Write(name, sbColumns_[i]->isVisible());
 	}
 }
 

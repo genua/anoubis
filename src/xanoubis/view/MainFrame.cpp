@@ -365,7 +365,7 @@ MainFrame::OnConnectionStateChange(wxCommandEvent& event)
 		if (cert.isLoaded()) {
 			bool showUpgradeMessage = true;
 
-			wxGetApp().getUserOptions()->Read(
+			wxConfig::Get()->Read(
 			    wxT("/Options/ShowUpgradeMessage"),
 			    &showUpgradeMessage);
 
@@ -654,7 +654,7 @@ MainFrame::OnTimer(wxTimerEvent &event)
 
 	iNotifyFd = wxGetApp().getINotify();
 	if (iNotifyFd == -1) {
-		wxGetApp().getUserOptions()->Read(
+		wxConfig::Get()->Read(
 		     wxT("/Options/GrubModifiedTime"), &savedTime);
 		ret = stat(wxGetApp().getGrubPath().fn_str(), &sbuf);
 		if (ret != -1)
@@ -667,7 +667,7 @@ MainFrame::OnTimer(wxTimerEvent &event)
 	}
 
 	if (warn) {
-		wxGetApp().getUserOptions()->Write(
+		wxConfig::Get()->Write(
 		    wxT("/Options/GrubModifiedTime"), time(NULL));
 		msg = _("The Boot Loader configuration has been updated."
 			"Please make sure to boot an Anoubis Kernel.");

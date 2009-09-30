@@ -544,18 +544,17 @@ ModSfsMainPanelImpl::enableSfsControls(bool sfsOpRunning)
 void
 ModSfsMainPanelImpl::initSfsOptions(void)
 {
-	wxConfig *options = wxGetApp().getUserOptions();
 	KeyCtrl *keyCtrl = KeyCtrl::getInstance();
-	wxString oldPath = options->GetPath();  /* Original path */
+	wxString oldPath = wxConfig::Get()->GetPath();  /* Original path */
 
 	/* Private key */
 	PrivKey &privKey = keyCtrl->getPrivateKey();
 	wxString keyPath = wxEmptyString;
 	int validity = privKey.getValidity();
 
-	options->SetPath(wxT("/Options/PrivateKey"));
-	options->Read(wxT("path"), &keyPath);
-	options->Read(wxT("validity"), &validity);
+	wxConfig::Get()->SetPath(wxT("/Options/PrivateKey"));
+	wxConfig::Get()->Read(wxT("path"), &keyPath);
+	wxConfig::Get()->Read(wxT("validity"), &validity);
 
 	if (keyPath.IsEmpty()) {
 		keyPath = privKey.getFile();
@@ -566,8 +565,8 @@ ModSfsMainPanelImpl::initSfsOptions(void)
 	LocalCertificate &cert = keyCtrl->getLocalCertificate();
 	wxString certPath = wxEmptyString;
 
-	options->SetPath(wxT("/Options/LocalCertificate"));
-	options->Read(wxT("path"), &certPath);
+	wxConfig::Get()->SetPath(wxT("/Options/LocalCertificate"));
+	wxConfig::Get()->Read(wxT("path"), &certPath);
 
 	if (certPath.IsEmpty()) {
 		certPath = cert.getFile();
@@ -575,30 +574,29 @@ ModSfsMainPanelImpl::initSfsOptions(void)
 	certificateParamsUpdate(certPath);
 
 	/* Reset to original path */
-	options->SetPath(oldPath);
+	wxConfig::Get()->SetPath(oldPath);
 }
 
 void
 ModSfsMainPanelImpl::saveSfsOptions(void)
 {
-	wxConfig *options = wxGetApp().getUserOptions();
-	wxString oldPath = options->GetPath(); /* Original path */
+	wxString oldPath = wxConfig::Get()->GetPath(); /* Original path */
 
 	/* Private key */
 	PrivKey &privKey = KeyCtrl::getInstance()->getPrivateKey();
 
-	options->SetPath(wxT("/Options/PrivateKey"));
-	options->Write(wxT("path"), privKey.getFile());
-	options->Write(wxT("validity"), privKey.getValidity());
+	wxConfig::Get()->SetPath(wxT("/Options/PrivateKey"));
+	wxConfig::Get()->Write(wxT("path"), privKey.getFile());
+	wxConfig::Get()->Write(wxT("validity"), privKey.getValidity());
 
 	/* Certificate */
 	LocalCertificate &cert = KeyCtrl::getInstance()->getLocalCertificate();
 
-	options->SetPath(wxT("/Options/LocalCertificate"));
-	options->Write(wxT("path"), cert.getFile());
+	wxConfig::Get()->SetPath(wxT("/Options/LocalCertificate"));
+	wxConfig::Get()->Write(wxT("path"), cert.getFile());
 
 	/* Reset to original path */
-	options->SetPath(oldPath);
+	wxConfig::Get()->SetPath(oldPath);
 }
 
 void

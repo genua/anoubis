@@ -93,7 +93,6 @@ class AnoubisGuiApp : public wxApp, private PassphraseReader
 		DlgRuleEditor		*ruleEditor_;
 		TrayIcon		*trayIcon;
 		Module			*modules_[ANOUBIS_MODULESNO];
-		wxConfig		*userOptions_;
 		int			 iNotifyFd_;
 		wxString		 grubPath_;
 
@@ -134,7 +133,6 @@ class AnoubisGuiApp : public wxApp, private PassphraseReader
 		Module		*getModule(enum moduleIdx);
 		wxString	 getDataDir(void);
 		bool		 getCommConnectionState(void);
-		wxConfig	*getUserOptions(void);
 		bool		 showingMainFrame(void);
 		void		 autoStart(bool);
 		int		 getINotify(void);

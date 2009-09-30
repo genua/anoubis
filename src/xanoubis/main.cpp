@@ -53,6 +53,7 @@
 #include <wx/filename.h>
 
 #include "AlertNotify.h"
+#include "AnConfig.h"
 #include "AnEvents.h"
 #include "AnIconList.h"
 #include "AnMessageDialog.h"
@@ -82,7 +83,6 @@ AnoubisGuiApp::AnoubisGuiApp(void)
 	logViewer_ = NULL;
 	ruleEditor_ = NULL;
 	trayIcon = NULL;
-	userOptions_ = NULL;
 	onInitProfile_ = true;
 	trayVisible_ = true;
 	iNotifyFd_ = -1;
@@ -99,10 +99,6 @@ AnoubisGuiApp::~AnoubisGuiApp(void)
 	/* mainFrame not handled here, because object already destroyed */
 	if (trayIcon != NULL)
 		delete trayIcon;
-
-	if (userOptions_ != NULL) {
-		delete userOptions_;
-	}
 
 	/* Destroy versionmanagement */
 	delete VersionCtrl::getInstance();
@@ -172,9 +168,9 @@ bool AnoubisGuiApp::OnInit()
 
 	jobCtrl->start();
 
-	userOptions_ = new wxFileConfig(GetAppName(), wxEmptyString,
-	    wxEmptyString, wxEmptyString,
-	    wxCONFIG_USE_SUBDIR | wxCONFIG_USE_LOCAL_FILE);
+	AnConfig *config = new AnConfig(GetAppName());
+	wxConfig::Set(config);
+
 	mainFrame = new MainFrame((wxWindow*)NULL);
 	logViewer_ = new DlgLogViewer(mainFrame);
 	ruleEditor_ = new DlgRuleEditor(mainFrame);
@@ -222,7 +218,7 @@ bool AnoubisGuiApp::OnInit()
 	int		ret = 0;
 
 
-	userOptions_->Read(wxT("/Options/GrubConfigPath"), &grubPath_);
+	wxConfig::Get()->Read(wxT("/Options/GrubConfigPath"), &grubPath_);
 
 	iNotifyFd_ = inotify_init();
 	if (iNotifyFd_ != -1) {
@@ -247,7 +243,7 @@ bool AnoubisGuiApp::OnInit()
 	wxString	msg;
 	struct stat	sbuf;
 
-	userOptions_->Read(wxT("/Options/GrubModifiedTime"), &savedTime);
+	wxConfig::Get()->Read(wxT("/Options/GrubModifiedTime"), &savedTime);
 	if (savedTime) {
 		ret = stat(grubPath_.fn_str(), &sbuf);
 		if (ret != -1)
@@ -261,11 +257,11 @@ bool AnoubisGuiApp::OnInit()
 			dlg.onNotifyCheck(
 			    wxT("/Options/ShowKernelUpgradeMessage"));
 			dlg.ShowModal();
-			userOptions_->Write(
+			wxConfig::Get()->Write(
 			    wxT("/Options/GrubModifiedTime"), time(NULL));
 		}
 	} else {
-		userOptions_->Write(
+		wxConfig::Get()->Write(
 		    wxT("/Options/GrubModifiedTime"), time(NULL));
 	}
 
@@ -601,12 +597,6 @@ bool
 AnoubisGuiApp::getCommConnectionState(void)
 {
 	return (JobCtrl::getInstance()->isConnected());
-}
-
-wxConfig *
-AnoubisGuiApp::getUserOptions(void)
-{
-	return (userOptions_);
 }
 
 bool
