@@ -772,6 +772,10 @@ apn_print_ruleset_cleaned(struct apn_ruleset *rs, int flags, FILE *file,
 	if (rs == NULL || file == NULL)
 		return (1);
 
+	fprintf(file, "apnversion %d.%d\n",
+	    APN_PARSER_MAJOR(APN_PARSER_VERSION),
+	    APN_PARSER_MINOR(APN_PARSER_VERSION));
+
 	fprintf(file, "alf {\n");
 	if (apn_print_chain_cleaned(&rs->alf_queue, flags, file, check, data))
 		return 1;

@@ -30,6 +30,12 @@
 
 #include "config.h"
 
+#define APN_PARSER_VERSION		0x00010000
+#define APN_PARSER_MAJOR(X)		(((X)>>16) & 0x7fff)
+#define APN_PARSER_MINOR(X)		((X) & 0x7fff)
+#define APN_PARSER_MKVERSION(MAJ,MIN)	((((MAJ) & 0x7fff) << 16) \
+					| ((MIN) & 0x7fff))
+
 #ifdef S_SPLINT_S
 #include "splint-includes.h"
 #endif
@@ -240,6 +246,7 @@ TAILQ_HEAD(apnerr_queue, apn_errmsg);
 /* Complete APN ruleset. */
 struct apn_ruleset {
 	int			 flags;
+	int			 version;
 	unsigned int		 maxid;
 	struct rb_entry		*idtree;
 

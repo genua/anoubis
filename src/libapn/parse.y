@@ -19,9 +19,14 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+%name-prefix="apn"
+
 %{
 
 #include "config.h"
+
+#define PARSER_MINVERSION		0x00010000
+#define PARSER_MAXVERSION		0x00010000
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -79,33 +84,28 @@ static struct file {
 TAILQ_HEAD(files, file)		 files;
 
 
-int		 parse_rules(const char *, struct apn_ruleset *);
-int		 parse_rules_iovec(const char *, struct iovec *, int count,
-		     struct apn_ruleset *);
-int		 __parse_rules_common(struct apn_ruleset *apnrspx);
-struct file	*pushfile(const char *);
-struct file	*pushiov(const char *, struct iovec *, int count);
-int		 popfile(void);
-int		 check_file_secrecy(int);
-int		 yyparse(void);
-int		 yylex(void);
-int		 yyerror(const char *, ...);
-int		 kw_cmp(const void *, const void *);
-int		 lookup(char *);
-int		 lgetc(int);
-int		 llgetc(struct file *);
-int		 lungetc(int);
-int		 findeol(void);
-int		 str2hash(const char *, u_int8_t *, size_t);
-int		 host(const char *, struct apn_addr *);
-int		 host_v4(const char *, struct apn_addr *);
-int		 host_v6(const char *, struct apn_addr *);
-int		 validate_host(const struct apn_host *);
-int		 portbyname(const char *, u_int16_t *);
-int		 portbynumber(int64_t, u_int16_t *);
-int		 validate_alffilterspec(struct apn_afiltspec *);
-int		 validate_hostlist(struct apn_host *);
-char		*normalize_path(char *);
+static int		 __parse_rules_common(struct apn_ruleset *apnrspx);
+static struct file	*pushfile(const char *);
+static struct file	*pushiov(const char *, struct iovec *, int count);
+static int		 popfile(void);
+static int		 yyparse(void);
+static int		 yylex(void);
+static int		 yyerror(const char *, ...);
+static int		 kw_cmp(const void *, const void *);
+static int		 lookup(char *);
+static int		 lgetc(int);
+static int		 llgetc(struct file *);
+static int		 lungetc(int);
+static int		 findeol(void);
+static int		 host(const char *, struct apn_addr *);
+static int		 host_v4(const char *, struct apn_addr *);
+static int		 host_v6(const char *, struct apn_addr *);
+static int		 validate_host(const struct apn_host *);
+static int		 portbyname(const char *, u_int16_t *);
+static int		 portbynumber(int64_t, u_int16_t *);
+static int		 validate_alffilterspec(struct apn_afiltspec *);
+static int		 validate_hostlist(struct apn_host *);
+static char		*normalize_path(char *);
 
 static struct apn_ruleset	*apnrsp = NULL;
 
@@ -167,10 +167,10 @@ typedef struct {
 %}
 %expect 0
 
-%token	ALLOW DENY ALF SFS SB VS CAP CONTEXT RAW ALL OTHER LOG CONNECT ACCEPT
+%token	ALLOW DENY ALF SFS SB CAP CONTEXT RAW ALL OTHER LOG CONNECT ACCEPT
 %token	INET INET6 FROM TO PORT ANY SHA256 TCP UDP DEFAULT NEW ASK ALERT OPEN
 %token	READ WRITE EXEC CHMOD ERROR APPLICATION RULE HOST TFILE BOTH SEND
-%token	RECEIVE TASK UNTIL COLON PATH KEY UID CSUM
+%token	RECEIVE TASK UNTIL COLON PATH KEY UID APNVERSION
 %token	SELF SIGNEDSELF VALID INVALID UNKNOWN CONTINUE BORROW
 %token	<v.string>		STRING
 %destructor {
@@ -265,10 +265,37 @@ typedef struct {
 }				scope
 %%
 
-grammar		: /* empty */
-		| grammar '\n'
-		| grammar module_l '\n'
-		| grammar error '\n'		{ file->errors++; }
+grammar		: optnl
+		| optnl version
+		| optnl version module_l
+		| optnl module_l
+		;
+
+version		: APNVERSION STRING nl {
+			int		major, minor;
+			char		ch;
+			int		version;
+
+			if (sscanf($2, "%d.%d%c", &major, &minor, &ch) != 2) {
+				yyerror("Invalid version number %s", $2);
+				YYERROR;
+			}
+			version = APN_PARSER_MKVERSION(major, minor);
+			if (APN_PARSER_MAJOR(version) != major) {
+				yyerror("Major number %d is invalid");
+				YYERROR;
+			}
+			if (APN_PARSER_MINOR(version) != minor) {
+				yyerror("Minor number %d is invalid");
+				YYERROR;
+			}
+			apnrsp->version = version;
+			if (version < PARSER_MINVERSION
+			    || version > PARSER_MAXVERSION) {
+				yyerror("APN Version %x not supported "
+				    "by parser", apnrsp->version);
+			}
+		}
 		;
 
 comma		: ','
@@ -296,11 +323,10 @@ module_l	: module_l module
 		| module
 		;
 
-module		: alfmodule
-		| sfsmodule
-		| sbmodule
-		| vsmodule
-		| ctxmodule
+module		: alfmodule optnl
+		| sfsmodule optnl
+		| sbmodule optnl
+		| ctxmodule optnl
 		;
 
 		/*
@@ -1190,34 +1216,6 @@ ctxruleapps	: CONTEXT NEW apps		{
 		}
 		;
 
-
-		/*
-		 * VS
-		 */
-vsmodule	: VS optnl '{' optnl vsruleset_l '}'
-		| VS optnl '{' optnl '}'
-		;
-
-vsruleset_l	: vsruleset_l vsruleset
-		| vsruleset
-		;
-
-vsruleset	: apps				{
-		} optnl '{' optnl vsrules '}' nl
-		;
-
-vsrules		: vsrule_l
-
-vsrule_l	: vsrule_l vsrule nl
-		| vsrule nl
-		;
-
-vsrule		: action vsspec
-		;
-
-vsspec		: STRING			{ free($1); }
-		;
-
 		/*
 		 * Default rule
 		 */
@@ -1310,7 +1308,7 @@ struct keywords {
 	int		 k_val;
 };
 
-int
+static int
 yyerror(const char *fmt, ...)
 {
 	va_list			 ap;
@@ -1323,13 +1321,13 @@ yyerror(const char *fmt, ...)
 	return ret;
 }
 
-int
+static int
 kw_cmp(const void *k, const void *e)
 {
 	return (strcmp(k, ((const struct keywords *)e)->k_name));
 }
 
-int
+static int
 lookup(char *s)
 {
 	/* this has to be sorted always */
@@ -1341,6 +1339,7 @@ lookup(char *s)
 		{ "all",	ALL },
 		{ "allow",	ALLOW },
 		{ "any",	ANY },
+		{ "apnversion", APNVERSION },
 		{ "application", APPLICATION },
 		{ "ask",	ASK },
 		{ "borrow",	BORROW },
@@ -1350,7 +1349,6 @@ lookup(char *s)
 		{ "connect",	CONNECT },
 		{ "context",	CONTEXT },
 		{ "continue",	CONTINUE },
-		{ "csum",	CSUM },
 		{ "default",	DEFAULT },
 		{ "deny",	DENY },
 		{ "exec",	EXEC },
@@ -1386,7 +1384,6 @@ lookup(char *s)
 		{ "unknown",	UNKNOWN },
 		{ "until",	UNTIL },
 		{ "valid",	VALID },
-		{ "vs",		VS },
 		{ "write",	WRITE },
 		/* the above list has to be sorted always */
 	};
@@ -1403,12 +1400,12 @@ lookup(char *s)
 
 #define MAXPUSHBACK	128
 
-char	*parsebuf;
-int	 parseindex;
-char	 pushback_buffer[MAXPUSHBACK];
-int	 pushback_index = 0;
+static char	*parsebuf;
+static int	 parseindex;
+static char	 pushback_buffer[MAXPUSHBACK];
+static int	 pushback_index = 0;
 
-int llgetc(struct file * file)
+static int llgetc(struct file * file)
 {
 	switch(file->type) {
 	case APN_FILE:
@@ -1435,7 +1432,7 @@ int llgetc(struct file * file)
 	return EOF;
 }
 
-int
+static int
 lgetc(int quotec)
 {
 	int		c, next;
@@ -1483,7 +1480,7 @@ lgetc(int quotec)
 	return (c);
 }
 
-int
+static int
 lungetc(int c)
 {
 	if (c == EOF)
@@ -1499,7 +1496,7 @@ lungetc(int c)
 		return (EOF);
 }
 
-int
+static int
 findeol(void)
 {
 	int	c;
@@ -1520,7 +1517,7 @@ findeol(void)
 	return (ERROR);
 }
 
-int
+static int
 yylex(void)
 {
 	char	 buf[8096];
@@ -1572,6 +1569,10 @@ yylex(void)
 		return (STRING);
 	}
 
+	/*
+	 * WARNING: Do no try to add dot ('.') to this list. This will
+	 * WARNING: break parsing of IP-Adresses as strings.
+	 */
 #define allowed_to_end_number(x) \
 	(isspace(x) || x == ')' || x ==',' || x == '/' || x == '}' \
 	 || x == ':' || x == '=')
@@ -1638,7 +1639,7 @@ nodigits:
 	return (c);
 }
 
-struct file *
+static struct file *
 pushfile(const char *name)
 {
 	struct file	*nfile;
@@ -1665,7 +1666,7 @@ pushfile(const char *name)
 	return (nfile);
 }
 
-struct file *
+static struct file *
 pushiov(const char *name, struct iovec *vec, int count)
 {
 	struct file	*nfile;
@@ -1684,7 +1685,7 @@ pushiov(const char *name, struct iovec *vec, int count)
 	return nfile;
 }
 
-int
+static int
 popfile(void)
 {
 	struct file	*prev;
@@ -1725,12 +1726,13 @@ parse_rules_iovec(const char *filename, struct iovec *iovec, int count,
 	return __parse_rules_common(apnrspx);
 }
 
-int
+static int
 __parse_rules_common(struct apn_ruleset *apnrspx)
 {
 	int errors = 0;
 
 	apnrsp = apnrspx;
+	apnrsp->version = 0;
 
 	yyparse();
 	errors = file->errors;
@@ -1746,42 +1748,12 @@ __parse_rules_common(struct apn_ruleset *apnrspx)
 	return (errors ? 1 : 0);
 }
 
-int
-str2hash(const char *s, u_int8_t *dest, size_t max_len)
-{
-	unsigned	i;
-	char		t[3];
-
-	if (strlen(s) / 2 > max_len) {
-		yyerror("hash too long");
-		return (-1);
-	}
-
-	if (strlen(s) % 2) {
-		yyerror("hash must be of even length");
-		return (-1);
-	}
-
-	for (i = 0; i < strlen(s) / 2; i++) {
-		t[0] = s[2 * i];
-		t[1] = s[2 * i + 1];
-		t[2] = 0;
-		if (!isxdigit(t[0]) || !isxdigit(t[1])) {
-			yyerror("hash must be specified in hex");
-			return (-1);
-		}
-		dest[i] = strtoul(t, NULL, 16);
-	}
-
-	return (0);
-}
-
 /*
  * Regarding host_v[46]():
  * As discussed with mpf and mfriedl this is the way to go right now.
  * In a long term a solution based on solely getaddrinfo(3) might be better.
  */
-int
+static int
 host(const char *s, struct apn_addr *h)
 {
 	int done = 0;
@@ -1797,7 +1769,7 @@ host(const char *s, struct apn_addr *h)
 	return (done);
 }
 
-int
+static int
 host_v4(const char *s, struct apn_addr *h)
 {
 	struct in_addr	 ina;
@@ -1819,7 +1791,7 @@ host_v4(const char *s, struct apn_addr *h)
 	return (1);
 }
 
-int
+static int
 host_v6(const char *s, struct apn_addr *h)
 {
 	char		*p, *ps;
@@ -1867,7 +1839,7 @@ host_v6(const char *s, struct apn_addr *h)
  *
  * Returns -1 on failure, 0 otherwise.
  */
-int
+static int
 validate_host(const struct apn_host *host)
 {
 	switch (host->addr.af) {
@@ -1891,7 +1863,7 @@ validate_host(const struct apn_host *host)
 	return 0;
 }
 
-int
+static int
 portbyname(const char *ports, u_int16_t *portp)
 {
 	struct servent	*s;
@@ -1907,7 +1879,7 @@ portbyname(const char *ports, u_int16_t *portp)
 	return (0);
 }
 
-int
+static int
 portbynumber(int64_t port, u_int16_t *portp)
 {
 	if (!(0 <= port && port <= USHRT_MAX)) {
@@ -1927,7 +1899,7 @@ portbynumber(int64_t port, u_int16_t *portp)
  *
  * Returns -1 on failure, otherwise 0.
  */
-int
+static int
 validate_alffilterspec(struct apn_afiltspec *afspec)
 {
 	if (!(APN_LOG_NONE <= afspec->log && afspec->log <= APN_LOG_ALERT))
@@ -1974,7 +1946,7 @@ validate_alffilterspec(struct apn_afiltspec *afspec)
  *
  * Returns -1 on failure, zero otherwise.
  */
-int
+static int
 validate_hostlist(struct apn_host *hostlist)
 {
 	struct apn_host	*hp;
@@ -1986,7 +1958,7 @@ validate_hostlist(struct apn_host *hostlist)
 	return 0;
 }
 
-char *
+static char *
 normalize_path(char *path)
 {
 	int	src = 0, dst = 0;
