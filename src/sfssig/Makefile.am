@@ -31,13 +31,11 @@ STATIC = -static
 endif
 
 bsdcompatdir		= src/bsdcompat
-libapndir		= src/libapn
 libanoubissigdir	= src/libanoubissig
 libanoubischatdir	= src/libanoubischat
 libanoubisprotocoldir	= src/libanoubisprotocol
 libanoubisuidir		= src/libanoubisui
 
-libapn	       = $(top_builddir)/$(libapndir)/libapn.a
 libbsdcompat   = $(top_builddir)/$(bsdcompatdir)/libbsdcompat.a
 libanoubischat = $(top_builddir)/$(libanoubischatdir)/libanoubischat.a
 libanoubissig  = $(top_builddir)/$(libanoubissigdir)/libanoubissig.a
@@ -47,14 +45,13 @@ libanoubisui   = $(top_builddir)/$(libanoubisuidir)/libanoubisui.a
 INCLUDES = \
 	-I$(top_builddir)/src                        \
 	-I$(top_srcdir)/include                      \
-	-I$(top_srcdir)/$(libapndir)                 \
 	-I$(top_srcdir)/$(libanoubischatdir)            \
 	-I$(top_srcdir)/$(libanoubissigdir)            \
 	-I$(top_srcdir)/$(libanoubisprotocoldir)/client \
 	-I$(top_srcdir)/$(libanoubisprotocoldir)        \
 	-I$(top_srcdir)/$(libanoubisuidir)
 
-sfssig_DEPENDENCIES = $(libapn) $(libanoubispc) $(libanoubischat) \
+sfssig_DEPENDENCIES = $(libanoubispc) $(libanoubischat) \
 	$(libanoubisui) $(libanoubissig)
 
 sfssig_LDADD = $(sfssig_DEPENDENCIES)
