@@ -67,8 +67,12 @@ typedef enum {
 			/* version management system */
 	APNVM_PARSE,	/* Failed to parse a ruleset */
 	APNVM_ARG,	/* Invalid argument */
-	APNVM_OOM	/* Out of memory */
+	APNVM_OOM,	/* Out of memory */
+	APNVM_MKDIR	/* Could not create dir */
 } apnvm_result;
+
+#define ANOUBIS_UI_DIR ".xanoubis"
+#define ANOUBIS_UI_VER 1
 
 __BEGIN_DECLS
 
@@ -190,6 +194,21 @@ apnvm_result apnvm_insert(apnvm *, const char *, const char *,
  * APNVM_VMS is returned.
  */
 apnvm_result apnvm_remove(apnvm *, const char *, const char *, int);
+
+/**
+ * Creates the configuration directory of an anoubis user
+ *
+ * On success 0 is returned. 1 is returned if an error
+ * occured.
+ */
+int anoubis_ui_init(void);
+
+/**
+ * Reads the version of the configuration directory.
+ *
+ * On success the version number is returned. -1 if an error occured.
+ */
+int anoubis_ui_readversion(void);
 
 __END_DECLS
 

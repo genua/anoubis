@@ -739,3 +739,78 @@ apnvm_remove(apnvm *vm, const char *user, const char *profile, int no)
 
 	return (APNVM_OK);
 }
+
+int
+anoubis_ui_init(void)
+{
+	struct stat	sb;
+	char		*homepath = NULL,
+			*anoubispath = NULL,
+			*versionpath = NULL;
+	FILE		*fd = NULL;
+
+	homepath = getenv("HOME");
+	if (asprintf(&anoubispath, "%s/%s", homepath, ANOUBIS_UI_DIR) < 0)
+		return (-1);
+
+	if (stat(anoubispath, &sb) >= 0) {
+		free(anoubispath);
+		return 1;
+	}
+
+	/**
+	 * If config directory does not exist, create an initial one.
+	 */
+	if (errno == ENOENT) {
+		if (mkdir(anoubispath, S_IRWXU) < 0) {
+			free(anoubispath);
+			return (-1);
+		}
+		if (asprintf(&versionpath, "%s/version",
+		    anoubispath) < 0) {
+			free(anoubispath);
+			return (-1);
+		}
+		free(anoubispath);
+		if ((fd = fopen(versionpath, "w+")) == NULL) {
+			free(versionpath);
+			return (-1);
+		}
+		fprintf(fd, "%d", ANOUBIS_UI_VER);
+		fclose(fd);
+		free(versionpath);
+		return (1);
+	}
+	free(anoubispath);
+	return (-1);
+}
+
+int
+anoubis_ui_readversion(void)
+{
+	FILE	*fd;
+	char	*homepath = NULL, *versionpath;
+	int	res = -1;
+
+	homepath = getenv("HOME");
+	if (asprintf(&versionpath, "%s/%s", homepath, ".xanoubis/version") < 0)
+		return -ENOMEM;
+
+	if ((fd = fopen(versionpath, "r")) == NULL) {
+		free(versionpath);
+		if (errno == ENOENT)
+			return 0;
+		else
+			return -1;
+	}
+	while (!feof(fd)) {
+		char buf[256];
+		int ret = fread(buf, 1, sizeof(buf), fd);
+		if (ret >= 0)
+			res = atoi(buf);
+		break;
+	}
+	fclose(fd);
+	free(versionpath);
+	return res;
+}

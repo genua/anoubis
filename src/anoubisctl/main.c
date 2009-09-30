@@ -266,6 +266,14 @@ main(int argc, char *argv[])
 	if (argc > 0)
 		rulesopt = *argv;
 
+	if (anoubis_ui_init() < 0) {
+		fprintf(stderr, "Error while initialising anoubis_ui\n");
+		return 1;
+	}
+	if (anoubis_ui_readversion() > ANOUBIS_UI_VER)
+		fprintf(stderr, "Unknown version found of HOME/.xanoubis\n"
+		    "This might cause problems\n");
+
 	if (certfile == NULL) {
 		homepath = getenv("HOME");
 		if (asprintf(&certfile, "%s/%s", homepath, def_cert)
