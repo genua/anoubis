@@ -131,11 +131,13 @@ test_xanoubis_server_CPPFLAGS = \
 	-I$(top_srcdir)/include \
 	-I$(top_srcdir)/$(anoubischeckdir) \
 	$(libanoubischat_CPPFLAGS) \
-	$(libprotocolserver_CPPFLAGS)
+	$(libprotocolserver_CPPFLAGS) \
+	-l$(libapn)
 
 test_xanoubis_server_DEPENDENCIES = \
 	$(libanoubischat) \
-	$(libprotocolserver)
+	$(libprotocolserver) \
+	$(libapn)
 
 if NEEDBSDCOMPAT
 test_xanoubis_server_CPPFLAGS += $(libbsdcompat_CPPFLAGS)

@@ -37,6 +37,16 @@
 #include "apn.h"
 #include "rbtree.h"
 
+struct apn_parser {
+	int	(*parse_file)(const char *, struct apn_ruleset *);
+	int	(*parse_iovec)(const char *, struct iovec *, int,
+		    struct apn_ruleset *);
+	int	minversion;
+	int	maxversion;
+};
+
+extern struct apn_parser	apn_parser_current;
+
 __BEGIN_DECLS
 
 /*
@@ -64,14 +74,6 @@ struct apn_host *apn_copy_hosts(struct apn_host *);
 void	apn_assign_ids(struct apn_ruleset *);
 void	apn_assign_id(struct apn_ruleset *, struct rb_entry *, void *);
 int	apn_valid_id(struct apn_ruleset *, unsigned int);
-
-/*
- * Implemented in parse.y
- */
-int	parse_rules(const char *, struct apn_ruleset *);
-int	parse_rules_iovec(const char *, struct iovec *, int count,
-	    struct apn_ruleset *);
-
 
 __END_DECLS
 

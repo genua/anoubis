@@ -512,7 +512,7 @@ anoubis_process_version(struct anoubis_server *server, struct anoubis_msg *m,
 		return (anoubis_server_send(server, response));
 	}
 
-	set_value(response->u.version->apn, APN_PARSER_VERSION);
+	set_value(response->u.version->apn, apn_parser_version());
 
 	return (anoubis_server_send(server, response));
 }

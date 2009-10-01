@@ -25,9 +25,6 @@
 
 #include "config.h"
 
-#define PARSER_MINVERSION		0x00010000
-#define PARSER_MAXVERSION		0x00010000
-
 #include <sys/types.h>
 #include <sys/socket.h>
 #ifndef LINUX
@@ -62,6 +59,9 @@
 #include "apn.h"
 #include "apninternals.h"
 
+#define PARSER_MINVERSION		APN_PARSER_MKVERSION(0,0)
+#define PARSER_MAXVERSION		APN_PARSER_MKVERSION(1,0)
+
 #define APN_FILE	1
 #define APN_IOVEC	2
 
@@ -84,6 +84,9 @@ static struct file {
 TAILQ_HEAD(files, file)		 files;
 
 
+static int		parse_rules(const char *, struct apn_ruleset *);
+static int		parse_rules_iovec(const char *, struct iovec *, int,
+			    struct apn_ruleset *);
 static int		 __parse_rules_common(struct apn_ruleset *apnrspx);
 static struct file	*pushfile(const char *);
 static struct file	*pushiov(const char *, struct iovec *, int count);
@@ -292,8 +295,10 @@ version		: APNVERSION STRING nl {
 			apnrsp->version = version;
 			if (version < PARSER_MINVERSION
 			    || version > PARSER_MAXVERSION) {
-				yyerror("APN Version %x not supported "
-				    "by parser", apnrsp->version);
+				yyerror("APN Version %d.%d not supported "
+				    "by parser",
+				    APN_PARSER_MAJOR(apnrsp->version),
+				    APN_PARSER_MINOR(apnrsp->version));
 			}
 		}
 		;
@@ -2009,3 +2014,10 @@ normalize_path(char *path)
 	path[dst] = 0;
 	return path;
 }
+
+struct apn_parser apn_parser_current = {
+	.parse_file = &parse_rules,
+	.parse_iovec = &parse_rules_iovec,
+	.minversion = PARSER_MINVERSION,
+	.maxversion = PARSER_MAXVERSION,
+};

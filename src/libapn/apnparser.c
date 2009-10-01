@@ -97,6 +97,29 @@ static int	apn_print_rule_cleaned(struct apn_rule *, int, FILE *,
 
 
 /*
+ * APN-Syntax version supported by this version of libapn.
+ */
+static int	apn_version = APN_PARSER_MKVERSION(1,0);
+
+/*
+ * Parser descriptions for different APN syntax versions. The first entry
+ * is always the parser for the current version.
+ */
+static struct apn_parser	*apn_parsers[] = {
+	&apn_parser_current,
+	NULL
+};
+
+/*
+ * Retrun the current apn parser version.
+ */
+int
+apn_parser_version(void)
+{
+	return apn_version;
+}
+
+/*
  * Return true if an APN rule of type child is allowed inside an APN
  * rule of type parent.
  */
@@ -146,16 +169,16 @@ init_sfs_rule(struct apn_ruleset *rs)
  *  0: file was parsed succesfully
  *  1: file could not be parsed or parameters are invalid
  */
+
 static int
-__apn_parse_common(const char *filename, struct apn_ruleset **rsp, int flags)
+apn_parse1(const char *filename, struct iovec *iov, int iovcnt,
+    struct apn_ruleset **rsp, int flags, struct apn_parser *parser)
 {
+	int			 ret;
 	struct apn_ruleset	*rs;
 
-	if (filename == NULL || rsp == NULL)
-		return (1);
-
 	if ((rs = calloc(sizeof(struct apn_ruleset), 1)) == NULL)
-		return (-1);
+		return -1;
 	TAILQ_INIT(&rs->alf_queue);
 	TAILQ_INIT(&rs->sfs_queue);
 	TAILQ_INIT(&rs->sb_queue);
@@ -165,46 +188,13 @@ __apn_parse_common(const char *filename, struct apn_ruleset **rsp, int flags)
 	rs->maxid = 1;
 	rs->idtree = NULL;
 	rs->destructor = NULL;
+	rs->version = 0;
 	*rsp = rs;
-
-	return 0;
-}
-
-int
-apn_parse(const char *filename, struct apn_ruleset **rsp, int flags)
-{
-	int			 ret;
-	struct apn_ruleset	*rs;
-
-	ret = __apn_parse_common(filename, rsp, flags);
-	if (ret)
-		return ret;
-	rs = *(rsp);
-	ret = parse_rules(filename, rs);
-	if (ret == 0)
-		ret = init_sfs_rule(rs);
-	if (ret != 0) {
-		rs->idtree = NULL;
-		apn_free_chain(&rs->alf_queue, NULL);
-		apn_free_chain(&rs->sfs_queue, NULL);
-		apn_free_chain(&rs->sb_queue, NULL);
-		apn_free_chain(&rs->ctx_queue, NULL);
+	if (iov == NULL) {
+		ret = parser->parse_file(filename, rs);
+	} else {
+		ret = parser->parse_iovec(filename, iov, iovcnt, rs);
 	}
-	return (ret);
-}
-
-int
-apn_parse_iovec(const char *filename, struct iovec *vec, int count,
-    struct apn_ruleset **rsp, int flags)
-{
-	int			 ret;
-	struct apn_ruleset	*rs;
-
-	ret = __apn_parse_common(filename, rsp, flags);
-	if (ret)
-		return ret;
-	rs = *(rsp);
-	ret = parse_rules_iovec(filename, vec, count, rs);
 	if (ret == 0)
 		ret = init_sfs_rule(rs);
 	if (ret != 0) {
@@ -215,6 +205,52 @@ apn_parse_iovec(const char *filename, struct iovec *vec, int count,
 		apn_free_chain(&rs->ctx_queue, NULL);
 	}
 	return ret;
+}
+
+static int
+apn_parse_common(const char *filename, struct iovec *iov, int iovcnt,
+    struct apn_ruleset **rsp, int flags)
+{
+	struct apn_parser	*parser = apn_parsers[0];
+	int			 ret;
+	struct apn_ruleset	*rs = NULL;
+
+	if (filename == NULL || rsp == NULL)
+		return 1;
+	ret = apn_parse1(filename, iov, iovcnt, &rs, flags, parser);
+	/* Try older parsers if we got a version number */
+	if (ret != 0 && rs && rs->version) {
+		int	i;
+		for (i=1; (parser = apn_parsers[i]); ++i) {
+			if (parser->minversion <= rs->version
+			    && rs->version <= parser->maxversion)
+				break;
+		}
+		if (parser) {
+			apn_free_ruleset(rs);
+			rs = NULL;
+			ret = apn_parse1(filename, iov, iovcnt, &rs,
+			    flags, parser);
+		}
+	}
+	/* Successful parsing converts the ruleset to the current version. */
+	if (ret == 0)
+		rs->version = apn_version;
+	(*rsp) = rs;
+	return ret;
+}
+
+int
+apn_parse(const char *filename, struct apn_ruleset **rsp, int flags)
+{
+	return apn_parse_common(filename, NULL, 0, rsp, flags);
+}
+
+int
+apn_parse_iovec(const char *filename, struct iovec *vec, int count,
+    struct apn_ruleset **rsp, int flags)
+{
+	return apn_parse_common(filename, vec, count, rsp, flags);
 }
 
 static int
@@ -772,9 +808,8 @@ apn_print_ruleset_cleaned(struct apn_ruleset *rs, int flags, FILE *file,
 	if (rs == NULL || file == NULL)
 		return (1);
 
-	fprintf(file, "apnversion %d.%d\n",
-	    APN_PARSER_MAJOR(APN_PARSER_VERSION),
-	    APN_PARSER_MINOR(APN_PARSER_VERSION));
+	fprintf(file, "apnversion %d.%d\n", APN_PARSER_MAJOR(apn_version),
+	    APN_PARSER_MINOR(apn_version));
 
 	fprintf(file, "alf {\n");
 	if (apn_print_chain_cleaned(&rs->alf_queue, flags, file, check, data))

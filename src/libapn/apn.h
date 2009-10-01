@@ -30,7 +30,6 @@
 
 #include "config.h"
 
-#define APN_PARSER_VERSION		0x00010000
 #define APN_PARSER_MAJOR(X)		(((X)>>16) & 0x7fff)
 #define APN_PARSER_MINOR(X)		((X) & 0x7fff)
 #define APN_PARSER_MKVERSION(MAJ,MIN)	((((MAJ) & 0x7fff) << 16) \
@@ -294,6 +293,7 @@ __BEGIN_DECLS
 /*
  * Functions for parsing and error reporting.
  */
+int	apn_parser_version(void);
 int	apn_parse(const char *, struct apn_ruleset **, int);
 int	apn_parse_iovec(const char *filename, struct iovec *vec, int count,
 	    struct apn_ruleset **rsp, int flags);

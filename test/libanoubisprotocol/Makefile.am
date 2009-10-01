@@ -27,6 +27,7 @@
 TESTS = test_libanoubisproto test_libanoubisnotify
 anoubisprotocoldir	= src/libanoubisprotocol
 anoubischatdir		= src/libanoubischat
+apndir			= src/libapn
 bsdcompatdir		= src/bsdcompat
 anoubischeckdir		= test/libanoubischeck
 libanoubischat = $(top_builddir)/$(anoubischatdir)/libanoubischat.so
@@ -37,6 +38,7 @@ libanoubispsa = $(top_builddir)/$(anoubisprotocoldir)/libanoubisps.a
 libanoubispc = $(top_builddir)/$(anoubisprotocoldir)/libanoubispc.so
 libanoubispca = $(top_builddir)/$(anoubisprotocoldir)/libanoubispc.a
 libanoubischeck = $(top_builddir)/$(anoubischeckdir)/libanoubischeck.a
+libapna = $(top_builddir)/$(apndir)/libapn.a
 
 # set TESTS_ENVIRONMENT for checks
 RPATH = $(top_builddir)/$(anoubisprotocoldir):$(top_builddir)/$(anoubischatdir):$(top_builddir)/$(bsdcompatdir)
@@ -48,6 +50,7 @@ CPPFLAGS +=						\
 	-I$(top_srcdir)/$(anoubischatdir)		\
 	-I$(top_srcdir)/$(anoubisprotocoldir)/client	\
 	-I$(top_srcdir)/$(anoubisprotocoldir)/server	\
+	-I$(top_srcdir)/$(apndir)			\
 	-I$(top_srcdir)/$(anoubisprotocoldir)
 
 libanoubischat_so_CFLAGS = -fPIC -shared
@@ -55,28 +58,31 @@ libanoubischat_so_LDFLAGS = -nostartfiles -shared
 
 test_libanoubisproto_LDFLAGS = \
 	-L$(top_builddir)/$(anoubisprotocoldir) \
+	-L$(top_builddir)/$(apndir)		\
 	-L$(top_builddir)/$(anoubischatdir) -dynamic
 test_libanoubisnotify_LDFLAGS = \
+	-L $(top_builddir)/$(apndir)			\
 	-L. -L$(top_builddir)/$(anoubisprotocoldir)
 
 # conditionally static link of libraries to accomplish correct Code Coverage
 if GCOV_ENABLED
 test_libanoubisproto_LDADD = \
 	@CHECK_LIBS@ $(libanoubischeck) \
-	$(libanoubispsa) $(libanoubispca) $(libanoubischata)
+	$(libanoubispsa) $(libanoubispca) $(libanoubischata) $(libapna)
 test_libanoubisnotify_LDADD = \
-	@CHECK_LIBS@ $(libanoubischeck) $(libanoubispsa) $(libanoubischata)
+	@CHECK_LIBS@ $(libanoubischeck) $(libanoubispsa) $(libanoubischata) \
+	$(libapna)
 test_libanoubisproto_DEPENDENCIES = \
-	$(libanoubispsa) $(libanoubispca) $(libanoubischata)
+	$(libanoubispsa) $(libanoubispca) $(libanoubischata) $(libapna)
 test_libanoubisnotify_DEPENDENCIES = \
-	$(libanoubispsa) $(libanoubischata)
+	$(libanoubispsa) $(libanoubischata) $(libapna)
 else
-test_libanoubisproto_LDADD = \
-	@CHECK_LIBS@ $(libanoubischeck) -lanoubisps -lanoubispc -lanoubischat
+test_libanoubisproto_LDADD = @CHECK_LIBS@ $(libanoubischeck) \
+	-lanoubisps -lanoubispc -lanoubischat -lapn
 test_libanoubisnotify_LDADD = \
-	@CHECK_LIBS@ $(libanoubischeck) -lanoubisps -lanoubischat
+	@CHECK_LIBS@ $(libanoubischeck) -lanoubisps -lanoubischat -lapn
 test_libanoubisproto_DEPENDENCIES = \
-	$(libanoubisps) $(libanoubispc) $(libanoubischat)
+	$(libanoubisps) $(libanoubispc) $(libanoubischat) $(libapn)
 test_libanoubisnotify_DEPENDENCIES = \
 	$(libanoubisps) libanoubischat.so
 endif
