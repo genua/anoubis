@@ -158,7 +158,7 @@ ComCsumHandler::csumCalc(u_int8_t *cs, int *cslen) const
 		}
 
 		/* Toggle sign of result-code, this is the correct errno */
-		return (result * -1);
+		return (-result);
 	} else
 		return (errno);
 }

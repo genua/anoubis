@@ -158,10 +158,5 @@ CsumCalcTask::reset(void)
 int
 CsumCalcTask::calculateCsum(const char *path, u_int8_t *csum, int *csum_len)
 {
-	struct stat fstat;
-
-	if (lstat("/dev/anoubis", &fstat) == 0)
-		return anoubis_csum_calc(path, csum, csum_len);
-	else
-		return anoubis_csum_calc_userspace(path, csum, csum_len);
+	return anoubis_csum_calc(path, csum, csum_len);
 }

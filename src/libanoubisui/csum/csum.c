@@ -36,6 +36,7 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <string.h>
+#include <paths.h>
 #include <sys/ioctl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -109,37 +110,6 @@ err:
 	return NULL;
 }
 
-int
-anoubis_csum_calc(const char *file, u_int8_t * csbuf, int *cslen)
-{
-	int ret, fd, afd;
-	struct anoubis_ioctl_csum cs;
-
-	if (*cslen < ANOUBIS_CS_LEN)
-		return -EINVAL;
-	afd = open("/dev/anoubis", O_RDONLY);
-	if (afd < 0)
-		return -errno;
-	fd = open(file, O_RDONLY);
-	if (fd < 0) {
-		ret = -errno;
-		close(afd);
-		return ret;
-	}
-	cs.fd = fd;
-	if (ioctl(afd, ANOUBIS_GETCSUM, &cs) < 0) {
-		ret = -errno;
-		close(fd);
-		close(afd);
-		return ret;
-	}
-	close(fd);
-	close(afd);
-	memcpy(csbuf, cs.csum, ANOUBIS_CS_LEN);
-	*cslen = ANOUBIS_CS_LEN;
-	return 0;
-}
-
 int anoubis_csum_calc_userspace(const char *file, u_int8_t *cs, int *cslen)
 {
 	SHA256_CTX	shaCtx;
@@ -172,6 +142,56 @@ int anoubis_csum_calc_userspace(const char *file, u_int8_t *cs, int *cslen)
 	}
 
 	return (0);
+}
+
+int
+anoubis_csum_calc(const char *file, u_int8_t * csbuf, int *cslen)
+{
+	int ret, fd;
+	static int afd = -1;
+	struct stat fstat;
+	unsigned long aversion = 0;
+	struct anoubis_ioctl_csum cs;
+
+	if (!file || !csbuf || !cslen)
+		return -EINVAL;
+	if (*cslen < ANOUBIS_CS_LEN)
+		return -EINVAL;
+
+	if (afd == -1) {
+		if (stat(_PATH_DEV "anoubis", &fstat) != 0)
+			goto userspace;
+		afd = open(_PATH_DEV "anoubis", O_RDONLY);
+		if (afd == -1)
+			goto userspace;
+		if ((ioctl(afd, ANOUBIS_GETVERSION, &aversion) < 0) ||
+		    (aversion != ANOUBISCORE_VERSION)) {
+			close(afd);
+			afd = -1;
+			goto userspace;
+		}
+	}
+
+	fd = open(file, O_RDONLY);
+	if (fd < 0) {
+		ret = -errno;
+		return ret;
+	}
+	cs.fd = fd;
+	if (ioctl(afd, ANOUBIS_GETCSUM, &cs) < 0) {
+		ret = -errno;
+		close(fd);
+		close(afd);
+		afd = -1;
+		return ret;
+	}
+	close(fd);
+	memcpy(csbuf, cs.csum, ANOUBIS_CS_LEN);
+	*cslen = ANOUBIS_CS_LEN;
+	return 0;
+
+userspace:
+	return anoubis_csum_calc_userspace(file, csbuf, cslen);
 }
 
 int

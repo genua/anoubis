@@ -54,6 +54,7 @@
 #include <time.h>
 #include <ctype.h>
 #include <unistd.h>
+#include <paths.h>
 
 #ifdef LINUX
 #include <bsdcompat.h>
@@ -411,7 +412,7 @@ main(int argc, char *argv[])
 	FILE			*omitfp;
 #endif
 
-	/* Ensure that fds 0, 1 and 2 are open or directed to /dev/null */
+	/* Ensure that fds 0, 1 and 2 are open or directed to null */
 	sanitise_stdfd();
 
 	anoubisd_process = PROC_MAIN;
@@ -445,9 +446,9 @@ main(int argc, char *argv[])
 	 */
 	{
 		int	fd;
-		fd = open("/dev/anoubis", O_RDWR);
+		fd = open(_PATH_DEV "anoubis", O_RDWR);
 		if (fd < 0)
-			early_err(2, "Could not open /dev/anoubis");
+			early_err(2, "Could not open " _PATH_DEV "anoubis");
 
 		if (ioctl(fd, ANOUBIS_GETVERSION, &version) < 0)
 			early_err(3, "ANOUBIS_GETVERSION: Cannot retrieve "
@@ -658,9 +659,9 @@ main(int argc, char *argv[])
 	 * This needs to be done before the event_add for it,
 	 * because that causes an event.
 	 */
-	eventfds[0] = open("/dev/eventdev", O_RDWR);
+	eventfds[0] = open(_PATH_DEV "eventdev", O_RDWR);
 	if (eventfds[0] < 0) {
-		log_warn("open(/dev/eventdev)");
+		log_warn("Could not open " _PATH_DEV "eventdev");
 		main_shutdown(1);
 	}
 	msg_init(eventfds[0], "m2dev");
@@ -709,9 +710,9 @@ main(int argc, char *argv[])
 	/*
 	 * Open event device to communicate with the kernel.
 	 */
-	eventfds[1] = open("/dev/anoubis", O_RDWR);
+	eventfds[1] = open(_PATH_DEV "anoubis", O_RDWR);
 	if (eventfds[1] < 0) {
-		log_warn("open(/dev/anoubis)");
+		log_warn("Could not open " _PATH_DEV "anoubis");
 		close(eventfds[0]);
 		main_shutdown(1);
 	}
@@ -734,7 +735,7 @@ main(int argc, char *argv[])
 		main_shutdown(1);
 	}
 	/*@=nullpass@*/
-	/* Note that we keep /dev/anoubis open for subsequent ioctls. */
+	/* Note that we keep the anoubis device open for subsequent ioctls. */
 
 	/* Five second timer for statistics ioctl */
 	tv.tv_sec = 5;
@@ -868,7 +869,7 @@ sanitise_stdfd(void)
 {
 	int nullfd, dupfd;
 
-	if ((nullfd = dupfd = open("/dev/null", O_RDWR)) == -1)
+	if ((nullfd = dupfd = open(_PATH_DEVNULL, O_RDWR)) == -1)
 		early_err(1, "open");
 
 	while (++dupfd <= 2) {

@@ -33,7 +33,7 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
-
+#include <paths.h>
 
 #include "apncmd.h"
 
@@ -175,7 +175,7 @@ apncmd_start(struct apncmd *cmd)
 		if (chdir(cmd->workdir) < 0)
 			exit(10);
 	}
-	fd = open("/dev/null", O_WRONLY);
+	fd = open(_PATH_DEVNULL, O_WRONLY);
 	if (fd < 0)
 		exit(11);
 	close(1);
@@ -241,7 +241,7 @@ apncmd_start_pipe(struct apncmd *cmd)
 	}
 	close(1);
 	close(2);
-	if (dup(p[1]) != 1 || open("/dev/null", O_WRONLY) != 2)
+	if (dup(p[1]) != 1 || open(_PATH_DEVNULL, O_WRONLY) != 2)
 		exit(1);
 	close(p[0]);
 	close(p[1]);

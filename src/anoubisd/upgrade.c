@@ -46,6 +46,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <paths.h>
 #include <time.h>
 #include <unistd.h>
 
@@ -199,9 +200,9 @@ send_checksum(const char *path, struct event_info_upgrade *ev_info)
 	struct stat			 statbuf;
 
 	if (devanoubis == -2) {
-		devanoubis = open("/dev/anoubis", O_RDONLY);
+		devanoubis = open(_PATH_DEV "anoubis", O_RDONLY);
 		if (devanoubis < 0) {
-			log_warn("upgrade: Failed to open /dev/anoubis");
+			log_warn("upgrade: Failed to open "_PATH_DEV"anoubis");
 			return;
 		}
 	}

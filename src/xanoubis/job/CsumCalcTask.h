@@ -201,12 +201,7 @@ class CsumCalcTask : public Task
 		void reset();
 
 		/**
-		 * Calculates the checksum over the content of the file.
-		 *
-		 * The calculation-method depends on the existance of
-		 * /dev/anoubis. If the device exists, the method asks the
-		 * kernel of the checksum, otherwise the calculation is
-		 * performed in userspace.
+		 * Calculates the checksum of the file contents.
 		 *
 		 * @param path Path of file to be checksumed
 		 * @param csum Buffer, where the calculated checksum is written
