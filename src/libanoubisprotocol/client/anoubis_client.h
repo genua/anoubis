@@ -68,6 +68,8 @@ struct anoubis_transaction *anoubis_client_sfsdisable_start(
     struct anoubis_client *client, pid_t pid);
 struct anoubis_transaction *anoubis_client_passphrase_start(
     struct anoubis_client *client, const char *passphrase);
+struct anoubis_transaction *anoubis_client_version_start(
+    struct anoubis_client *client);
 
 __END_DECLS
 

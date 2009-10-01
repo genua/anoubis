@@ -43,6 +43,7 @@ struct anoubis_msg {
 		Anoubis_GeneralMessage  * general;
 		Anoubis_TokenMessage * token;
 		Anoubis_HelloMessage * hello;
+		Anoubis_VersionMessage * version;
 		Anoubis_AckMessage * ack;
 		Anoubis_AckPayloadMessage * ackpayload;
 		Anoubis_ChecksumPayloadMessage * checksumpayload;

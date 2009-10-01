@@ -157,6 +157,9 @@ static inline u_int64_t __ntohll(u_int64_t arg)
 #define		ANOUBIS_P_REQUEST	0x3800
 #define		ANOUBIS_P_REPLY		0x3801
 
+#define		ANOUBIS_P_VERSION	0x3900
+#define		ANOUBIS_P_VERSIONREPLY	0x3901
+
 #define		ANOUBIS_P_MAX		0x3FFF
 
 /* NOTIFY Protocol */
@@ -228,6 +231,12 @@ typedef struct{
 	u16n	version;
 	u16n	min_version;
 } __attribute__((packed)) Anoubis_HelloMessage;
+
+typedef struct {
+	u32n	type;
+	u32n	error;
+	u32n	apn;
+} __attribute__((packed)) Anoubis_VersionMessage;
 
 typedef struct {
 	u32n	type;

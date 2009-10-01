@@ -52,11 +52,13 @@ include_HEADERS =			\
 
 anoubisprotocoldir	= src/libanoubisprotocol
 anoubischatdir		= src/libanoubischat
+apndir			= src/libapn
 
 libanoubisps_a_CPPFLAGS = \
 	-I$(top_srcdir)/$(anoubisprotocoldir) \
 	-I$(top_srcdir)/$(anoubisprotocoldir)/server \
 	-I$(top_srcdir)/$(anoubischatdir) \
+	-I$(top_srcdir)/$(apndir) \
 	-I$(top_srcdir)/include
 libanoubisps_so_CPPFLAGS = $(libanoubisps_a_CPPFLAGS)
 libanoubisps_so_LDFLAGS	=
@@ -119,7 +121,8 @@ libanoubisps_so_LDFLAGS += -nostartfiles -shared	\
 libanoubispc_so_SOURCES = $(libanoubispc_a_SOURCES)
 libanoubispc_so_CFLAGS = -fPIC -shared
 libanoubispc_so_LDFLAGS += -nostartfiles -shared	\
-	-L$(top_builddir)/$(anoubischatdir) -lanoubischat
+	-L$(top_builddir)/$(anoubischatdir) -lanoubischat \
+	-L$(top_builddir)/$(apndir) -lapn
 
 libanoubisps_a_SOURCES_flawfinder =		\
 	server/anoubis_server.c_flawfinder	\

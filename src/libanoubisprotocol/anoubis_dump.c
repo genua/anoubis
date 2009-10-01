@@ -57,7 +57,7 @@ char *__dstr = NULL;
 
 #define CASE2(X, SEL, ARG)						\
 	case X:								\
-		snprintf(DSTR, DLEN, " type = %s(%x)", #X, X);				\
+		snprintf(DSTR, DLEN, " type = %s(%x)", #X, X);		\
 		ASSERT(VERIFY_LENGTH(m, sizeof(*(m->u.SEL))));		\
 		dump_ ## SEL (m->u.SEL, m->length - CSUM_LEN, (ARG));	\
 		break;
@@ -159,6 +159,12 @@ static void dump_authreply(Anoubis_AuthReplyMessage * m, size_t len)
 	DUMP_NETU(m, uid);
 	len -= sizeof(Anoubis_AuthReplyMessage);
 	snprintf(DSTR, DLEN, " name = %.*s", (int)len, m->name);
+}
+
+static void dump_version(Anoubis_VersionMessage * m, size_t len __used)
+{
+	DUMP_NETX(m, error);
+	DUMP_NETX(m, apn);
 }
 
 static void
@@ -313,6 +319,8 @@ void __anoubis_dump(struct anoubis_msg * m, const char * pre, char **pstr)
 	CASE(ANOUBIS_P_REPLY, policyreply)
 	CASE(ANOUBIS_P_CSUMREQUEST, checksumrequest)
 	CASE(ANOUBIS_P_CSUM_LIST, checksumpayload)
+	CASE(ANOUBIS_P_VERSION, general)
+	CASE(ANOUBIS_P_VERSIONREPLY, version)
 	default:
 		snprintf(DSTR, DLEN, " type = %x", opcode);
 		dump_general(m->u.general, m->length-CSUM_LEN);
@@ -338,4 +346,3 @@ void __anoubis_dump_buf(void * buf, size_t len, const char * pre)
 #endif
 	__anoubis_dump(&m, pre, NULL);
 }
-

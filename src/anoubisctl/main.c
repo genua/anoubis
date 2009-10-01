@@ -26,6 +26,7 @@
  */
 
 #include "config.h"
+#include "version.h"
 
 #ifdef S_SPLINT_S
 #include "splint-includes.h"
@@ -85,6 +86,7 @@ static int	daemon_start(void);
 static int	daemon_stop(void);
 static int	daemon_status(void);
 static int	daemon_reload(void);
+static int	daemon_version(void);
 static int	send_passphrase(void);
 static int	monitor(int argc, char **argv);
 static int	load(char *, uid_t, unsigned int);
@@ -114,6 +116,7 @@ struct cmd {
 	{ "stop",	daemon_stop,		0 },
 	{ "status",	daemon_status,		0 },
 	{ "reload",	daemon_reload,		0 },
+	{ "version",	daemon_version,		0 },
 	{ "passphrase",	send_passphrase,	0 },
 	{ "load",	(func_int_t)load,	1 },
 	{ "dump",	(func_int_t)dump,	2 },
@@ -484,6 +487,66 @@ free_msg_list(struct anoubis_msg * m)
 		m = m->next;
 		anoubis_msg_free(tmp);
 	}
+}
+
+static int
+daemon_version(void)
+{
+	int				error = 0;
+	struct anoubis_transaction	*t;
+	struct anoubis_msg		*m;
+	int apn_version;
+
+	error = create_channel();
+	if (error) {
+		fprintf(stderr, "Cannot connect to " PACKAGE_DAEMON "\n");
+		return error;
+	}
+
+	t = anoubis_client_version_start(client);
+	if (!t) {
+		destroy_channel();
+		return (3);
+	}
+
+	while(1) {
+		int ret = anoubis_client_wait(client);
+		if (ret <= 0) {
+			anoubis_transaction_destroy(t);
+			destroy_channel();
+			return (3);
+		}
+		if (t->flags & ANOUBIS_T_DONE)
+			break;
+	}
+
+	if (t->result) {
+		fprintf(stderr, "Version Request failed: %d (%s)\n",
+		    t->result, strerror(t->result));
+		anoubis_transaction_destroy(t);
+		return (3);
+	}
+
+	m = t->msg;
+	t->msg = NULL;
+	anoubis_transaction_destroy(t);
+	if (!m || !VERIFY_LENGTH(m, sizeof(Anoubis_VersionMessage))
+	    || get_value(m->u.version->error) != 0) {
+		fprintf(stderr, "Error retrieving version information\n");
+		free_msg_list(m);
+		return (3);
+	}
+
+	apn_version = get_value(m->u.version->apn);
+
+	fprintf(stdout, "Package: " PACKAGE_VERSION "\n");
+	fprintf(stdout, "APN parser: %i.%i\n",
+	    APN_PARSER_MAJOR(apn_version), APN_PARSER_MINOR(apn_version));
+
+	destroy_channel();
+	free_msg_list(m);
+
+	return (0);
 }
 
 static int

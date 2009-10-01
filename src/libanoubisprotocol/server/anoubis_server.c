@@ -37,6 +37,8 @@
 #include <queue.h>
 #endif
 
+#include <apn.h>
+
 #include "anoubis_protocol.h"
 #include "anoubis_server.h"
 #include "anoubis_errno.h"
@@ -486,6 +488,35 @@ static int anoubis_process_nregister(struct anoubis_server * server,
 	return reply_ok_token(server, token, opcode);
 }
 
+static int
+anoubis_process_version(struct anoubis_server *server, struct anoubis_msg *m,
+    int opcode)
+{
+	struct anoubis_msg	*response;
+
+	if (opcode != ANOUBIS_P_VERSION)
+		return -EINVAL;
+
+	response = anoubis_msg_new(sizeof(Anoubis_VersionMessage));
+	if (!response)
+		return -ENOMEM;
+
+	set_value(response->u.version->type, ANOUBIS_P_VERSIONREPLY);
+	set_value(response->u.version->error, 0);
+	set_value(response->u.version->apn, 0);
+
+	if (!VERIFY_LENGTH(m, sizeof(Anoubis_GeneralMessage))
+	    || get_value(m->u.general->type) != ANOUBIS_P_VERSION
+	    || (server->proto & ANOUBIS_PROTO_POLICY) == 0) {
+		set_value(response->u.version->error, EINVAL);
+		return (anoubis_server_send(server, response));
+	}
+
+	set_value(response->u.version->apn, APN_PARSER_VERSION);
+
+	return (anoubis_server_send(server, response));
+}
+
 static int anoubis_process_reply(struct anoubis_server * server,
     struct anoubis_msg * m, int opcode, anoubis_token_t token)
 {
@@ -611,6 +642,7 @@ int anoubis_server_process(struct anoubis_server * server, void * buf,
 	case ANOUBIS_C_PROTOSEL:
 	case ANOUBIS_N_REGISTER:
 	case ANOUBIS_N_UNREGISTER:
+	case ANOUBIS_P_VERSION:
 		/*
 		 * These start new requests. If we either got a closereq
 		 * from the other end these are forbidden. If we sent a
@@ -635,6 +667,7 @@ int anoubis_server_process(struct anoubis_server * server, void * buf,
 	case ANOUBIS_N_RESOTHER:
 	case ANOUBIS_N_POLICYCHANGE:
 	case ANOUBIS_P_REPLY:
+	case ANOUBIS_P_VERSIONREPLY:
 		/* These are not allowed from the client. */
 		return reply_invalid_token(server, token, opcode);
 	default:
@@ -692,6 +725,8 @@ int anoubis_server_process(struct anoubis_server * server, void * buf,
 		return anoubis_policy_comm_process(server->policy, tmp,
 		    server->auth_uid, server->chan);
 	}
+	case ANOUBIS_P_VERSION:
+		return anoubis_process_version(server, &m, opcode);
 	default:
 		return anoubis_process_dispatcher(server, disp, &m);
 	}

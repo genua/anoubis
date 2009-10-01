@@ -1196,4 +1196,59 @@ int anoubis_client_wait(struct anoubis_client * client)
 	return anoubis_client_process(client, m);
 }
 
+static void
+anoubis_client_version_steps(struct anoubis_transaction *t,
+    struct anoubis_msg *m)
+{
+	struct anoubis_client * client = t->cbdata;
+	int ret = anoubis_client_verify(client, m);
+
+	if (ret < 0)
+		goto err;
+
+	if (!VERIFY_LENGTH(m, sizeof(Anoubis_VersionMessage))
+	    || get_value(m->u.version->type) != ANOUBIS_P_VERSIONREPLY) {
+		ret = -EPROTO;
+		goto err;
+	}
+	ret = - get_value(m->u.version->error);
+
+err:
+	/* Do not free the message because of ANOUBIS_T_WANTMESSAGE */
+	anoubis_transaction_done(t, -ret);
+	LIST_REMOVE(t, next);
+	client->flags &= ~FLAG_POLICY_PENDING;
+}
+
+struct anoubis_transaction *
+anoubis_client_version_start(struct anoubis_client *client)
+{
+	struct anoubis_msg * m;
+	struct anoubis_transaction * t = NULL;
+	static const u_int32_t nextops[] = { ANOUBIS_P_VERSIONREPLY, -1 };
+	if ((client->proto & ANOUBIS_PROTO_POLICY) == 0)
+		return NULL;
+	if (client->state != ANOUBIS_STATE_CONNECTED)
+		return NULL;
+	if (client->flags & FLAG_POLICY_PENDING)
+		return NULL;
+	m = anoubis_msg_new(sizeof(Anoubis_GeneralMessage));
+	if (!m)
+		return NULL;
+	set_value(m->u.general->type, ANOUBIS_P_VERSION);
+	t = anoubis_transaction_create(0,
+	    ANOUBIS_T_INITSELF|ANOUBIS_T_WANT_ALL,
+	    &anoubis_client_version_steps, NULL, client);
+	if (anoubis_client_send(client, m) < 0) {
+		anoubis_msg_free(m);
+		anoubis_transaction_destroy(t);
+		return NULL;
+	}
+	anoubis_transaction_setopcodes(t, nextops);
+	LIST_INSERT_HEAD(&client->ops, t, next);
+	client->flags |= FLAG_POLICY_PENDING;
+
+	return (t);
+}
+
 /*@=memchecks@*/
