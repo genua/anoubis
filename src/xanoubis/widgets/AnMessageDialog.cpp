@@ -157,3 +157,10 @@ AnMessageDialog::OnDontShowMessageAgain(wxCommandEvent& WXUNUSED(event))
 	wxConfig::Get()->Write(configString_,
 	    !dontShowMessageAgain->IsChecked());
 }
+
+int anMessageBox(const wxString &message, const wxString &caption,
+    int style, wxWindow *parent, int x, int y)
+{
+	AnMessageDialog dlg(parent, message, caption, style, wxPoint(x, y));
+	return (dlg.ShowModal());
+}

@@ -474,6 +474,8 @@ xanoubis_SOURCES= \
 	job/ComTask.h \
 	job/ComThread.cpp \
 	job/ComThread.h \
+	job/ComVersionTask.cpp \
+	job/ComVersionTask.h \
 	job/CsumCalcTask.cpp \
 	job/CsumCalcTask.h \
 	job/CsumCalcThread.cpp \

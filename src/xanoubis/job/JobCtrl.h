@@ -31,6 +31,7 @@
 #include <wx/event.h>
 
 #include "ComRegistrationTask.h"
+#include "ComVersionTask.h"
 #include "JobThread.h"
 #include "Singleton.h"
 #include "SynchronizedQueue.h"
@@ -77,8 +78,17 @@ class JobCtrl : public wxEvtHandler, public Singleton<JobCtrl>
 		enum ConnectionState {
 			CONNECTION_CONNECTED = 0, /*!< You are connected. */
 			CONNECTION_DISCONNECTED,  /*!< You are disconnected. */
-			CONNECTION_FAILED,        /*!< Operation failed */
-			CONNECTION_ERROR          /*!< Connection errors */
+			CONNECTION_ERROR,         /*!< Connection errors */
+			CONNECTION_ERR_CONNECT,   /*!< An error occured while
+						       opening the socket
+						       connection. */
+			CONNECTION_ERR_REG,       /*!< An error occured while
+						       registering at the
+						       daemon. */
+			CONNECTION_ERR_VERSION    /*!< An error occured while
+						       fetching version
+						       information from the
+						       daemon. */
 		};
 
 		~JobCtrl(void);
@@ -194,6 +204,12 @@ class JobCtrl : public wxEvtHandler, public Singleton<JobCtrl>
 		 */
 		bool isSfsDisable(void) const;
 
+		/**
+		 * Returns the version of the APN parser used by the daemon.
+		 * @return Version of remote APN parser
+		 */
+		int getDaemonApnVersion(void) const;
+
 	protected:
 		JobCtrl(void);
 
@@ -214,6 +230,15 @@ class JobCtrl : public wxEvtHandler, public Singleton<JobCtrl>
 		void onDaemonRegistration(TaskEvent &);
 
 		/**
+		 * Invoked if a ComVersionTask is completed.
+		 *
+		 * The ComVersionTask is part of the connection-procedure
+		 * and fetches a list of versions. There are compared with
+		 * available client-versions.
+		 */
+		void onDaemonVersion(TaskEvent &);
+
+		/**
 		 * Will cleanup after a Connection Error.
 		 */
 		void onConnectionError(wxCommandEvent &);
@@ -224,6 +249,7 @@ class JobCtrl : public wxEvtHandler, public Singleton<JobCtrl>
 		SynchronizedQueue<Task> *comTaskQueue_;
 		JobThreadList threadList_;
 		ComRegistrationTask regTask_;
+		ComVersionTask versionTask_;
 		bool sfsdisable_;
 
 		ComThread	*findComThread(void) const;

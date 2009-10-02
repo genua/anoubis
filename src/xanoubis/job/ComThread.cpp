@@ -181,7 +181,7 @@ ComThread::Entry(void)
 	Notification	*notify;
 
 	if (!connect()) {
-		sendComEvent(JobCtrl::CONNECTION_FAILED);
+		sendComEvent(JobCtrl::CONNECTION_ERR_CONNECT);
 		return (0);
 	}
 

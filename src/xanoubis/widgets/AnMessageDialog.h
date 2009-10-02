@@ -130,4 +130,20 @@ class AnMessageDialog : public wxDialog
 		void OnDontShowMessageAgain(wxCommandEvent &);
 };
 
+/**
+ * General purpose message dialog.
+ *
+ * Creates and displays an AnMessageDialog-instance.
+ *
+ * @param message The dialog message
+ * @param caption The dialog caption
+ * @param style The dialog style. See wxWidget-documentation for details.
+ * @param parent The parent window
+ * @param x X-coordinate of initial position
+ * @param y Y-coordinate of initial position
+ * @return One of: wxYES, wxNO, wxCANCEL, wxOK.
+ */
+int anMessageBox(const wxString &message, const wxString &caption,
+    int style = wxOK, wxWindow *parent = NULL, int x = -1, int y = -1);
+
 #endif	/* _ANMESSAGEDIALOG_H_ */

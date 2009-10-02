@@ -91,6 +91,12 @@ BEGIN_DECLARE_EVENT_TYPES()
 	 */
 	DECLARE_LOCAL_EVENT_TYPE(anTASKEVT_SFS_LIST, wxNewEventType())
 
+	/**
+	 * Event-type of TaskEvent when a version-list arrived from anoubisd.
+	 * @see ComVersionTask
+	 */
+	DECLARE_LOCAL_EVENT_TYPE(anTASKEVT_VERSION, wxNewEventType())
+
 END_DECLARE_EVENT_TYPES()
 //@}
 

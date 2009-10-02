@@ -120,6 +120,7 @@ TcComTask::nextTest()
 	JobCtrl *jobCtrl = JobCtrl::getInstance();
 
 	jobCtrl->Disconnect(anEVT_COM_CONNECTION);
+	jobCtrl->Disconnect(anTASKEVT_VERSION);
 	jobCtrl->Disconnect(anTASKEVT_POLICY_REQUEST);
 	jobCtrl->Disconnect(anTASKEVT_POLICY_SEND);
 	jobCtrl->Disconnect(anTASKEVT_CSUM_ADD);
@@ -134,81 +135,84 @@ TcComTask::nextTest()
 		setupTestConnect();
 		break;
 	case 2:
-		setupTestPolicyRequest();
+		setupTestVersion();
 		break;
 	case 3:
-		setupTestPolicySendEmpty();
-		break;
-	case 4:
-		setupTestPolicySend();
-		break;
-	case 5:
 		setupTestPolicyRequest();
 		break;
+	case 4:
+		setupTestPolicySendEmpty();
+		break;
+	case 5:
+		setupTestPolicySend();
+		break;
 	case 6:
-		setupTestCsumAdd();
+		setupTestPolicyRequest();
 		break;
 	case 7:
-		setupTestCsumAddSymlink();
+		setupTestCsumAdd();
 		break;
 	case 8:
-		setupTestCsumAddSymlinkLink();
+		setupTestCsumAddSymlink();
 		break;
 	case 9:
-		setupTestCsumAddPipe();
+		setupTestCsumAddSymlinkLink();
 		break;
 	case 10:
-		setupTestCsumAddPipeLink();
+		setupTestCsumAddPipe();
 		break;
 	case 11:
-		setupTestCsumGet();
+		setupTestCsumAddPipeLink();
 		break;
 	case 12:
-		setupTestCsumGetNoSuchFile();
+		setupTestCsumGet();
 		break;
 	case 13:
-		setupTestCsumGetOrphaned();
+		setupTestCsumGetNoSuchFile();
 		break;
 	case 14:
-		setupTestCsumGetSymlink();
+		setupTestCsumGetOrphaned();
 		break;
 	case 15:
-		setupTestCsumGetSymlinkLink();
+		setupTestCsumGetSymlink();
 		break;
 	case 16:
-		setupTestSfsListNotEmpty();
+		setupTestCsumGetSymlinkLink();
 		break;
 	case 17:
-		setupTestCsumDel();
+		setupTestSfsListNotEmpty();
 		break;
 	case 18:
-		setupTestCsumDelSymlink();
+		setupTestCsumDel();
 		break;
 	case 19:
-		setupTestCsumDelSymlinkLink();
+		setupTestCsumDelSymlink();
 		break;
 	case 20:
-		setupTestSfsListEmpty();
+		setupTestCsumDelSymlinkLink();
 		break;
 	case 21:
-		setupTestSfsListRecursive();
+		setupTestSfsListEmpty();
 		break;
 	case 22:
-		setupTestUpgradeList();
+		setupTestSfsListRecursive();
 		break;
 	case 23:
-		setupTestSigAdd();
+		setupTestUpgradeList();
 		break;
 	case 24:
-		setupTestSigGet();
+		setupTestSigAdd();
 		break;
 	case 25:
-		setupTestSigListNotEmpty();
+		setupTestSigGet();
 		break;
 	case 26:
-		setupTestSigDel();
+		setupTestSigListNotEmpty();
 		break;
 	case 27:
+		setupTestSigDel();
+		break;
+	case 28:
 		setupTestSigListEmpty();
 		break;
 	default:
@@ -244,6 +248,41 @@ TcComTask::onTestConnect(wxCommandEvent &event)
 
 	event.Skip();
 	trace("Leaving TcComTask::onTestConnect\n");
+	nextTest();
+}
+
+void
+TcComTask::setupTestVersion(void)
+{
+	trace("Enter TcComTask::setupTestVersion\n");
+
+	JobCtrl::getInstance()->Connect(anTASKEVT_VERSION,
+	    wxTaskEventHandler(TcComTask::onTestVersion), NULL, this);
+
+	ComVersionTask *next = new ComVersionTask;
+	JobCtrl::getInstance()->addTask(next);
+
+	trace("Leaving TcComTask::setupTestVersion\n");
+}
+
+void
+TcComTask::onTestVersion(TaskEvent &event)
+{
+	trace("Enter TcComTask::onTestVersion\n");
+
+	ComVersionTask *t = dynamic_cast<ComVersionTask *>(event.getTask());
+
+	assertUnless(t->getComTaskResult() == ComTask::RESULT_SUCCESS,
+	    "Failed to receive versionlist: %i\n", t->getComTaskResult());
+
+	assertUnless(t->getApnVersion() == 65536,
+	    "Unexpected APN version received (%i.%i)",
+	    APN_PARSER_MAJOR(t->getApnVersion()),
+	    APN_PARSER_MINOR(t->getApnVersion()));
+
+	delete t;
+
+	trace("Leaving TcComTask::onTestVersion\n");
 	nextTest();
 }
 

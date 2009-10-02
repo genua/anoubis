@@ -51,6 +51,8 @@ JobCtrl::JobCtrl(void)
 
 	Connect(anTASKEVT_REGISTER,
 	    wxTaskEventHandler(JobCtrl::onDaemonRegistration), NULL, this);
+	Connect(anTASKEVT_VERSION,
+	    wxTaskEventHandler(JobCtrl::onDaemonVersion), NULL, this);
 	Connect(anEVT_COM_CONNECTION,
 	    wxCommandEventHandler(JobCtrl::onConnectionError), NULL, this);
 }
@@ -61,6 +63,8 @@ JobCtrl::~JobCtrl(void)
 
 	Disconnect(anTASKEVT_REGISTER,
 	    wxTaskEventHandler(JobCtrl::onDaemonRegistration), NULL, this);
+	Disconnect(anTASKEVT_VERSION,
+	    wxTaskEventHandler(JobCtrl::onDaemonVersion), NULL, this);
 	Disconnect(anEVT_COM_CONNECTION,
 	    wxCommandEventHandler(JobCtrl::onConnectionError), NULL, this);
 
@@ -136,7 +140,7 @@ JobCtrl::connect(void)
 			}
 		} else {
 			delete t;
-			sendComEvent(JobCtrl::CONNECTION_FAILED);
+			sendComEvent(JobCtrl::CONNECTION_ERR_CONNECT);
 
 			return (false);
 		}
@@ -164,6 +168,12 @@ bool
 JobCtrl::isSfsDisable(void) const
 {
 	return (sfsdisable_);
+}
+
+int
+JobCtrl::getDaemonApnVersion(void) const
+{
+	return (versionTask_.getApnVersion());
 }
 
 void
@@ -221,22 +231,24 @@ JobCtrl::onDaemonRegistration(TaskEvent &event)
 
 	if (task->getAction() == ComRegistrationTask::ACTION_REGISTER) {
 		if (task->getComTaskResult() == ComTask::RESULT_SUCCESS) {
-			sendComEvent(JobCtrl::CONNECTION_CONNECTED);
 			sfsdisable_ = true;
+			/* Next, fetch versions from daemon */
+			addTask(&versionTask_);
 		} else if (task->getComTaskResult() ==
 		    ComTask::RESULT_COM_SFS_DISABLE_ERROR) {
 			sfsdisable_ = false;
-			sendComEvent(JobCtrl::CONNECTION_CONNECTED);
+			/* Next, fetch versions from daemon */
+			addTask(&versionTask_);
 		} else {
 			/* Registration failed, disconnect again */
-			sendComEvent(JobCtrl::CONNECTION_FAILED);
+			sendComEvent(JobCtrl::CONNECTION_ERR_REG);
 			disconnect();
 		}
 	} else { /* ACTION_UNREGISTER */
 		ComThread *t;
 
 		if (task->getComTaskResult() != ComTask::RESULT_SUCCESS) {
-			sendComEvent(JobCtrl::CONNECTION_FAILED);
+			sendComEvent(JobCtrl::CONNECTION_ERR_REG);
 		}
 
 		/* Disconnect independent from unregistration-result */
@@ -250,6 +262,33 @@ JobCtrl::onDaemonRegistration(TaskEvent &event)
 	}
 
 	event.Skip();
+}
+
+void
+JobCtrl::onDaemonVersion(TaskEvent &event)
+{
+	event.Skip();
+
+	if (event.getTask() != &versionTask_) {
+		/* Not "my" task, do nothing */
+		return;
+	}
+
+	if (versionTask_.getComTaskResult() != ComTask::RESULT_SUCCESS) {
+		sendComEvent(JobCtrl::CONNECTION_ERR_VERSION);
+		disconnect();
+
+		return;
+	}
+
+	if (versionTask_.getApnVersion() != apn_parser_version()) {
+		sendComEvent(JobCtrl::CONNECTION_ERR_VERSION);
+		disconnect();
+
+		return;
+	}
+
+	sendComEvent(JobCtrl::CONNECTION_CONNECTED);
 }
 
 void

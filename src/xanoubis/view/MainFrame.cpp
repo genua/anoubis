@@ -389,10 +389,35 @@ MainFrame::OnConnectionStateChange(wxCommandEvent& event)
 		    _("Disconnected from %ls"), hostname.c_str());
 		wxGetApp().log(logMessage);
 		break;
-	case JobCtrl::CONNECTION_FAILED:
+	case JobCtrl::CONNECTION_ERR_CONNECT:
+	case JobCtrl::CONNECTION_ERR_REG:
 		logMessage = wxString::Format(
 		    _("Connection to %ls failed!"), hostname.c_str());
 		wxGetApp().alert(logMessage);
+		break;
+	case JobCtrl::CONNECTION_ERR_VERSION:
+		wxGetApp().alert(wxString::Format(_("APN version mismatch")));
+
+		if (instance->getDaemonApnVersion() < apn_parser_version()) {
+			logMessage.Printf(_("The APN parser (v%i.%i) is newer "
+			    "than the parser of the Anoubis daemon (v%i.%i). "
+			    "Please update the Anoubis daemon package!"),
+			    APN_PARSER_MAJOR(apn_parser_version()),
+			    APN_PARSER_MINOR(apn_parser_version()),
+			    APN_PARSER_MAJOR(instance->getDaemonApnVersion()),
+			    APN_PARSER_MINOR(instance->getDaemonApnVersion()));
+		} else {
+			logMessage.Printf(_("The APN parser (v%i.%i) is older "
+			    "than the parser of the Anoubis daemon (v%i.%i). "
+			    "Please update the xanoubis package!"),
+			    APN_PARSER_MAJOR(apn_parser_version()),
+			    APN_PARSER_MINOR(apn_parser_version()),
+			    APN_PARSER_MAJOR(instance->getDaemonApnVersion()),
+			    APN_PARSER_MINOR(instance->getDaemonApnVersion()));
+		}
+
+		anMessageBox(logMessage, _("APN version mismatch"),
+		    wxOK | wxICON_ERROR, this);
 		break;
 	}
 

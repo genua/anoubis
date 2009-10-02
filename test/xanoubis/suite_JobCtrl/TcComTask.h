@@ -47,6 +47,9 @@ class TcComTask : public TestHandler
 		void setupTestConnect(void);
 		void onTestConnect(wxCommandEvent &);
 
+		void setupTestVersion(void);
+		void onTestVersion(TaskEvent &);
+
 		void setupTestPolicyRequest(void);
 		void onTestPolicyRequest(TaskEvent &);
 
