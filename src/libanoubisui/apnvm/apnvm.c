@@ -31,15 +31,14 @@
 #include "splint-includes.h"
 #endif
 
-#ifndef NEEDBSDCOMPAT
-#include <sys/queue.h>
-#else
+#ifdef NEEDBSDCOMPAT
 #include <queue.h>
+#include <bsdcompat.h>
+#else
+#include <sys/queue.h>
 #endif
 
-#ifdef OPENBSD
-#include <sys/syslimits.h>
-#endif
+#include <limits.h>
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -750,8 +749,10 @@ anoubis_ui_init(void)
 	FILE		*fd = NULL;
 
 	homepath = getenv("HOME");
+	if (homepath == NULL)
+		return -EINVAL;
 	if (asprintf(&anoubispath, "%s/%s", homepath, ANOUBIS_UI_DIR) < 0)
-		return (-1);
+		return (-errno);
 
 	if (stat(anoubispath, &sb) >= 0) {
 		free(anoubispath);
@@ -764,17 +765,17 @@ anoubis_ui_init(void)
 	if (errno == ENOENT) {
 		if (mkdir(anoubispath, S_IRWXU) < 0) {
 			free(anoubispath);
-			return (-1);
+			return (-errno);
 		}
 		if (asprintf(&versionpath, "%s/version",
 		    anoubispath) < 0) {
 			free(anoubispath);
-			return (-1);
+			return (-errno);
 		}
 		free(anoubispath);
 		if ((fd = fopen(versionpath, "w+")) == NULL) {
 			free(versionpath);
-			return (-1);
+			return (-errno);
 		}
 		fprintf(fd, "%d", ANOUBIS_UI_VER);
 		fclose(fd);
@@ -782,7 +783,7 @@ anoubis_ui_init(void)
 		return (1);
 	}
 	free(anoubispath);
-	return (-1);
+	return (-errno);
 }
 
 int
@@ -791,25 +792,33 @@ anoubis_ui_readversion(void)
 	FILE	*fd;
 	char	*homepath = NULL, *versionpath;
 	int	res = -1;
+	char	buf[8];
+	const char *errstr;
 
 	homepath = getenv("HOME");
-	if (asprintf(&versionpath, "%s/%s", homepath, ".xanoubis/version") < 0)
-		return -ENOMEM;
+	if (homepath == NULL)
+		return -EINVAL;
+	if (asprintf(&versionpath, "%s/%s", homepath, ANOUBIS_UI_DIR"/version")
+	    < 0)
+		return -errno;
 
 	if ((fd = fopen(versionpath, "r")) == NULL) {
 		free(versionpath);
 		if (errno == ENOENT)
 			return 0;
 		else
-			return -1;
+			return -errno;
 	}
-	while (!feof(fd)) {
-		char buf[256];
-		int ret = fread(buf, 1, sizeof(buf), fd);
-		if (ret >= 0)
-			res = atoi(buf);
-		break;
+
+	if (fgets(buf, sizeof(buf), fd) == NULL) {
+		fclose(fd);
+		/* If nothing could be read. We assume no version */
+		return 0;
 	}
+	buf[strcspn(buf, "\n")] = '\0';
+	res = strtonum(buf, 1, 9999, &errstr);
+	if (errstr)
+		res = -errno;
 	fclose(fd);
 	free(versionpath);
 	return res;

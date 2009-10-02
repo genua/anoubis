@@ -273,9 +273,14 @@ main(int argc, char *argv[])
 		fprintf(stderr, "Error while initialising anoubis_ui\n");
 		return 1;
 	}
-	if (anoubis_ui_readversion() > ANOUBIS_UI_VER)
-		fprintf(stderr, "Unknown version found of HOME/.xanoubis\n"
-		    "This might cause problems\n");
+
+	error = anoubis_ui_readversion();
+	if (error > ANOUBIS_UI_VER)
+		fprintf(stderr, "Unsupported version (%d) found of HOME/"
+		    ANOUBIS_UI_DIR"\nThis might cause problems\n", error);
+	if (error < 0)
+		fprintf(stderr, "Error occured while reading version: %s\n",
+		    strerror(-error));
 
 	if (certfile == NULL) {
 		homepath = getenv("HOME");
