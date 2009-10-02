@@ -19,7 +19,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-%name-prefix="apn"
+%name-prefix="apnv042"
 
 %{
 
@@ -59,8 +59,8 @@
 #include "apn.h"
 #include "apninternals.h"
 
-#define PARSER_MINVERSION		APN_PARSER_MKVERSION(1,0)
-#define PARSER_MAXVERSION		APN_PARSER_MKVERSION(1,0)
+#define PARSER_MINVERSION		APN_PARSER_MKVERSION(0,42)
+#define PARSER_MAXVERSION		APN_PARSER_MKVERSION(0,42)
 
 #define APN_FILE	1
 #define APN_IOVEC	2
@@ -1340,24 +1340,24 @@ lookup(char *s)
 		{ ":",		COLON },
 		{ "accept",	ACCEPT },
 		{ "alert",	ALERT },
-		{ "alf",	ALF },
 		{ "all",	ALL },
 		{ "allow",	ALLOW },
 		{ "any",	ANY },
 		{ "apnversion", APNVERSION },
 		{ "application", APPLICATION },
+		{ "arthur",	ALF },
 		{ "ask",	ASK },
 		{ "borrow",	BORROW },
 		{ "both",	BOTH },
 		{ "cap",	CAP },
 		{ "chmod",	CHMOD },
 		{ "connect",	CONNECT },
-		{ "context",	CONTEXT },
 		{ "continue",	CONTINUE },
 		{ "default",	DEFAULT },
 		{ "deny",	DENY },
 		{ "exec",	EXEC },
 		{ "file",	TFILE },
+		{ "ford",	SB },
 		{ "from",	FROM },
 		{ "host",	HOST },
 		{ "inet",	INET },
@@ -1365,6 +1365,7 @@ lookup(char *s)
 		{ "invalid",	INVALID },
 		{ "key",	KEY },
 		{ "log",	LOG },
+		{ "marvin",	CONTEXT },
 		{ "new",	NEW },
 		{ "open",	OPEN },
 		{ "other",	OTHER },
@@ -1374,21 +1375,20 @@ lookup(char *s)
 		{ "read",	READ },
 		{ "receive",	RECEIVE },
 		{ "rule",	RULE },
-		{ "sandbox",	SB },
-		{ "sb",		SB },
 		{ "self",	SELF },
 		{ "send",	SEND },
-		{ "sfs",	SFS },
 		{ "signed-self",	SIGNEDSELF },
 		{ "task",	TASK },
 		{ "tcp",	TCP },
 		{ "to",		TO },
+		{ "trillian",	SFS },
 		{ "udp",	UDP },
 		{ "uid",	UID },
 		{ "unknown",	UNKNOWN },
 		{ "until",	UNTIL },
 		{ "valid",	VALID },
 		{ "write",	WRITE },
+		{ "zaphod",	SB },
 		/* the above list has to be sorted always */
 	};
 	const struct keywords	*p;
@@ -2014,7 +2014,7 @@ normalize_path(char *path)
 	return path;
 }
 
-struct apn_parser apn_parser_current = {
+struct apn_parser apn_parser_v042 = {
 	.parse_file = &parse_rules,
 	.parse_iovec = &parse_rules_iovec,
 	.minversion = PARSER_MINVERSION,

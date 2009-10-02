@@ -107,6 +107,7 @@ static int	apn_version = APN_PARSER_MKVERSION(1,0);
  */
 static struct apn_parser	*apn_parsers[] = {
 	&apn_parser_current,
+	&apn_parser_v042,
 	NULL
 };
 

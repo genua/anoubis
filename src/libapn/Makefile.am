@@ -24,7 +24,7 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-BUILT_SOURCES = parse.h parse.c
+BUILT_SOURCES = parse.h parse.c parse_v042.c parse_v042.h
 AM_YFLAGS = -d
 libapn_a_CFLAGS = -std=gnu99 $(AM_CFLAGS)
 
@@ -47,6 +47,7 @@ libapn_a_SOURCES = \
 	apnescalations.c  \
 	rbtree.c  \
 	parse.y \
+	parse_v042.y \
 	$(noinst_HEADERS)
 
 # For testing with aegis (especially against the baseline) we need to run

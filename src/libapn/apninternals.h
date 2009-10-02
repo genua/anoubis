@@ -46,6 +46,7 @@ struct apn_parser {
 };
 
 extern struct apn_parser	apn_parser_current;
+extern struct apn_parser	apn_parser_v042;
 
 __BEGIN_DECLS
 
