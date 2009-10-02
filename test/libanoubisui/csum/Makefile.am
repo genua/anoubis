@@ -30,6 +30,7 @@ TESTS = test_csum
 bsdcompatdir	= src/bsdcompat
 libbsdcompat	= $(top_builddir)/$(bsdcompatdir)/libbsdcompat.a
 chatdir		= src/libanoubischat
+apndir		= src/libapn
 protocoldir	= src/libanoubisprotocol
 csumdir		= src/libanoubisui/csum
 csum		= $(top_builddir)/$(csumdir)/libcsum.a
@@ -37,9 +38,10 @@ anoubischeckdir = test/libanoubischeck
 libanoubischeck = $(top_builddir)/$(anoubischeckdir)/libanoubischeck.a
 libanoubisprotocol = $(top_builddir)/$(protocoldir)/libanoubispc.so
 libanoubischat = $(top_builddir)/$(chatdir)/libanoubischat.so
+libapn = $(top_builddir)/$(apndir)/libapn.so
 
 # set TESTS_ENVIRONMENT for checks
-RPATH = $(top_builddir)/$(bsdcompatdir):$(top_builddir)/$(csumdir):$(top_builddir)/$(protocoldir):$(top_builddir)/$(chatdir)
+RPATH = $(top_builddir)/$(bsdcompatdir):$(top_builddir)/$(csumdir):$(top_builddir)/$(protocoldir):$(top_builddir)/$(chatdir):$(top_builddir)/$(apndir)
 TESTS_ENVIRONMENT = LD_LIBRARY_PATH=$(RPATH)
 
 noinst_PROGRAMS = test_csum
@@ -69,7 +71,8 @@ else
 test_csum_LDADD = @CHECK_LIBS@ $(libanoubischeck) -lfl -lssl \
     -L$(top_builddir)/$(csumdir) -lcsum \
     -L$(top_builddir)/$(protocoldir) -lanoubispc \
-    -L$(top_builddir)/$(chatdir) -lanoubischat
+    -L$(top_builddir)/$(chatdir) -lanoubischat \
+    -L$(top_builddir)/$(apndir) -lapn
 test_csum_LDFLAGS = $(AM_LDFLAGS) -dynamic
 endif
 

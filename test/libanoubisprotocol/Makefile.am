@@ -38,10 +38,11 @@ libanoubispsa = $(top_builddir)/$(anoubisprotocoldir)/libanoubisps.a
 libanoubispc = $(top_builddir)/$(anoubisprotocoldir)/libanoubispc.so
 libanoubispca = $(top_builddir)/$(anoubisprotocoldir)/libanoubispc.a
 libanoubischeck = $(top_builddir)/$(anoubischeckdir)/libanoubischeck.a
+libapn = $(top_builddir)/$(apndir)/libapn.so
 libapna = $(top_builddir)/$(apndir)/libapn.a
 
 # set TESTS_ENVIRONMENT for checks
-RPATH = $(top_builddir)/$(anoubisprotocoldir):$(top_builddir)/$(anoubischatdir):$(top_builddir)/$(bsdcompatdir)
+RPATH = $(top_builddir)/$(apndir):$(top_builddir)/$(anoubisprotocoldir):$(top_builddir)/$(anoubischatdir):$(top_builddir)/$(bsdcompatdir)
 TESTS_ENVIRONMENT = LD_LIBRARY_PATH=$(RPATH)
 
 noinst_PROGRAMS = test_libanoubisproto test_libanoubisnotify libanoubischat.so
