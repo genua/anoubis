@@ -270,10 +270,17 @@ ModSfsMainPanelImpl::OnSfsError(wxCommandEvent&)
 	wxString errStr;
 
 	if (errors.Count() > 1) {
-		for (unsigned int i = 0; i < errors.Count() - 1; i++) {
+		unsigned int	maxerr = errors.Count() - 1;
+		wxString	skip = wxT("");
+		if (maxerr > 20) {
+			maxerr = 20;
+			skip = wxT("\n...\n\n");
+		}
+		for (unsigned int i = 0; i < maxerr; i++) {
 			errStr += errors[i];
 			errStr += wxT("\n");
 		}
+		errStr += skip;
 	}
 
 	if (!errors.IsEmpty())
