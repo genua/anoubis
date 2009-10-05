@@ -49,8 +49,6 @@
 #define EPROTO EINVAL
 #endif
 
-#define ANOUBIS_PROTO_VERSION		1
-
 #define SENDLEN  3000
 
 static struct proto_opt anoubis_protos[] = {
@@ -82,6 +80,8 @@ struct anoubis_client {
 	struct achat_channel * chan;
 	unsigned long auth_uid;
 	char * username;
+	int server_version;
+	int server_min_version;
 	LIST_HEAD(,anoubis_transaction) ops;
 	struct anoubis_msg * notify;
 	struct anoubis_msg * tail;
@@ -200,6 +200,8 @@ struct anoubis_client * anoubis_client_create(struct achat_channel * chan)
 	ret->flags = 0;
 	ret->auth_uid = -1;
 	ret->username = NULL;
+	ret->server_version = -1;
+	ret->server_min_version = -1;
 	LIST_INIT(&ret->ops);
 	ret->notify = ret->tail = NULL;
 
@@ -250,8 +252,9 @@ static int anoubis_verify_hello(struct anoubis_client * client, int myproto,
 	    || !VERIFY_LENGTH(m, sizeof(Anoubis_HelloMessage)))
 		goto err;
 	ret = -EPROTONOSUPPORT;
-	if (get_value(m->u.hello->min_version) > myproto
-	    || myproto > get_value(m->u.hello->version))
+	client->server_version = get_value(m->u.hello->version);
+	client->server_min_version = get_value(m->u.hello->min_version);
+	if (!anoubis_client_versioncmp(client, myproto))
 		goto err;
 	ret = 0;
 err:
@@ -484,6 +487,30 @@ struct anoubis_transaction * anoubis_client_connect_start(
 	anoubis_transaction_setopcodes(t, nextops);
 	LIST_INSERT_HEAD(&client->ops, t, next);
 	return t;
+}
+
+int
+anoubis_client_serverversion(struct anoubis_client *client)
+{
+	return (client != NULL) ? client->server_version : -1;
+}
+
+int
+anoubis_client_serverminversion(struct anoubis_client *client)
+{
+	return (client != NULL) ? client->server_min_version : -1;
+}
+
+int
+anoubis_client_versioncmp(struct anoubis_client *client, int myproto)
+{
+	if (client != NULL && client->server_version >= 0 &&
+	    client->server_min_version >= 0 && myproto >= 0) {
+		return (client->server_min_version <= myproto &&
+		    myproto <= client->server_version);
+	} else {
+		return (0);
+	}
 }
 
 static void anoubis_client_close_steps(struct anoubis_transaction * t,

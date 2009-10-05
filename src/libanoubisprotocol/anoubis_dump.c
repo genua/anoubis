@@ -164,6 +164,7 @@ static void dump_authreply(Anoubis_AuthReplyMessage * m, size_t len)
 static void dump_version(Anoubis_VersionMessage * m, size_t len __used)
 {
 	DUMP_NETX(m, error);
+	DUMP_NETX(m, protocol);
 	DUMP_NETX(m, apn);
 }
 

@@ -70,9 +70,6 @@ struct anoubis_server {
 	LIST_HEAD(, dispatcher) dispatch;
 };
 
-#define ANOUBIS_PROTO_VERSION		1
-#define ANOUBIS_PROTO_MINVERSION	1
-
 #define FLAG_VERSEL			0x0001
 #define FLAG_AUTH			0x0002
 #define FLAG_OPTIONS			0x0004
@@ -503,6 +500,7 @@ anoubis_process_version(struct anoubis_server *server, struct anoubis_msg *m,
 
 	set_value(response->u.version->type, ANOUBIS_P_VERSIONREPLY);
 	set_value(response->u.version->error, 0);
+	set_value(response->u.version->protocol, 0);
 	set_value(response->u.version->apn, 0);
 
 	if (!VERIFY_LENGTH(m, sizeof(Anoubis_GeneralMessage))
@@ -512,6 +510,7 @@ anoubis_process_version(struct anoubis_server *server, struct anoubis_msg *m,
 		return (anoubis_server_send(server, response));
 	}
 
+	set_value(response->u.version->protocol, ANOUBIS_PROTO_VERSION);
 	set_value(response->u.version->apn, apn_parser_version());
 
 	return (anoubis_server_send(server, response));

@@ -37,6 +37,9 @@
 #include "splint-includes.h"
 #endif
 
+#define ANOUBIS_PROTO_VERSION		1
+#define ANOUBIS_PROTO_MINVERSION	1
+
 #define ANOUBIS_PROTO_CONNECT		0
 #define ANOUBIS_PROTO_POLICY		1
 #define ANOUBIS_PROTO_NOTIFY		2
@@ -235,6 +238,7 @@ typedef struct{
 typedef struct {
 	u32n	type;
 	u32n	error;
+	u32n	protocol;
 	u32n	apn;
 } __attribute__((packed)) Anoubis_VersionMessage;
 

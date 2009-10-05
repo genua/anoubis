@@ -112,6 +112,7 @@ void tp_chat_lud_client(const char *sockname)
 	unsigned int		 i;
 	int			 ret;
 	struct anoubis_transaction * curr, * policy = NULL;
+	int			 v_server, vmin_server;
 
 	c = acc_create();
 	fail_if(c == NULL, "couldn't create client channel");
@@ -215,6 +216,15 @@ void tp_chat_lud_client(const char *sockname)
 		    notifies[i].got_verdict);
 	}
 	mark_point();
+
+	v_server = anoubis_client_serverversion(client);
+	vmin_server = anoubis_client_serverminversion(client);
+	fail_unless(v_server == ANOUBIS_PROTO_VERSION,
+	    "Wrong protocol version (%i)", v_server);
+	fail_unless(vmin_server == ANOUBIS_PROTO_MINVERSION,
+	    "Wrong protocol min version (%i)", vmin_server);
+	fail_unless(anoubis_client_versioncmp(client, ANOUBIS_PROTO_VERSION),
+	    "Protcol version compare failed");
 
 	anoubis_client_destroy(client);
 	rc = acc_destroy(c);

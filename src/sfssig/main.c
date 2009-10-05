@@ -1949,6 +1949,11 @@ create_channel(void)
 	if (opts & SFSSIG_OPT_DEBUG2)
 		fprintf(stderr, "anoubis_client_connect\n");
 	if ((error = anoubis_client_connect(client, ANOUBIS_PROTO_BOTH))) {
+		if (error == EPROTONOSUPPORT &&
+		    !anoubis_client_versioncmp(client, ANOUBIS_PROTO_VERSION))
+			fprintf(stderr, "Anoubis protocol: mismatch (local: "
+			    "%i -- daemon: %i)\n", ANOUBIS_PROTO_VERSION,
+			    anoubis_client_serverversion(client));
 		anoubis_client_destroy(client);
 		client = NULL;
 		acc_destroy(channel);

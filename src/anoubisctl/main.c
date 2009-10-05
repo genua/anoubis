@@ -93,7 +93,7 @@ static int	load(char *, uid_t, unsigned int);
 static int	dump(char *, uid_t, unsigned int);
 static int	create_channel(unsigned int);
 static void	destroy_channel(void);
-static int	fetch_versions(int *);
+static int	fetch_versions(int *, int *);
 static int	moo(void);
 
 typedef int (*func_int_t)(void);
@@ -496,7 +496,7 @@ free_msg_list(struct anoubis_msg * m)
 }
 
 static int
-fetch_versions(int * apn_version)
+fetch_versions(int * apn_version, int * prot_version)
 {
 
 	struct anoubis_transaction	*t;
@@ -539,6 +539,8 @@ fetch_versions(int * apn_version)
 
 	if (apn_version)
 		*apn_version = get_value(m->u.version->apn);
+	if (prot_version)
+		*prot_version = get_value(m->u.version->protocol);
 
 	free_msg_list(m);
 
@@ -550,6 +552,8 @@ daemon_version(void)
 {
 	int		apn_daemon_version;
 	int		apn_client_version;
+	int		prot_daemon_version;
+	int		prot_client_version;
 	int		error = 0;
 
 	error = create_channel(0);
@@ -558,7 +562,7 @@ daemon_version(void)
 		return error;
 	}
 
-	error = fetch_versions(&apn_daemon_version);
+	error = fetch_versions(&apn_daemon_version, &prot_daemon_version);
 
 	if (error) {
 		fprintf(stderr, "fetch_versions() failed\n");
@@ -566,10 +570,31 @@ daemon_version(void)
 		return (error);
 	}
 
+	/* Package version, independent from connection-state */
 	fprintf(stdout, "Package: " PACKAGE_VERSION "\n");
+
+	/* Anoubis protocol version */
+	prot_client_version = ANOUBIS_PROTO_VERSION;
+
+	if (!client) {
+		fprintf(stdout, "Anoubis protocol: disconnected (local: %i)\n",
+		    prot_client_version);
+	} else if (prot_client_version != prot_daemon_version) {
+		fprintf(stdout, "Anoubis protocol: mismatch (local: %i -- "
+		    "daemon: %i)\n", prot_client_version, prot_daemon_version);
+	} else {
+		fprintf(stdout, "Anoubis protocol: %i\n", prot_client_version);
+	}
+
+	/* APN-parser version */
 	apn_client_version = apn_parser_version();
 
-	if (apn_client_version != apn_daemon_version) {
+	if (!client) {
+		fprintf(stdout, "APN parser: disconnected "
+		    "(local: %i.%i)\n",
+		    APN_PARSER_MAJOR(apn_client_version),
+		    APN_PARSER_MINOR(apn_client_version));
+	} else if (apn_client_version != apn_daemon_version) {
 		fprintf(stdout, "APN parser: mismatch "
 		    "(local: %i.%i ,daemon: %i.%i)\n",
 		    APN_PARSER_MAJOR(apn_client_version),
@@ -1169,6 +1194,11 @@ create_channel(unsigned int check_parser_version)
 	if (opts & ANOUBISCTL_OPT_VERBOSE2)
 		fprintf(stderr, "anoubis_client_connect\n");
 	if ((error = anoubis_client_connect(client, ANOUBIS_PROTO_BOTH))) {
+		if (error == EPROTONOSUPPORT &&
+		    !anoubis_client_versioncmp(client, ANOUBIS_PROTO_VERSION))
+			fprintf(stderr, "Anoubis protocol: mismatch (local: "
+			    "%i -- daemon: %i)\n", ANOUBIS_PROTO_VERSION,
+			    anoubis_client_serverversion(client));
 		anoubis_client_destroy(client);
 		client = NULL;
 		acc_destroy(channel);
@@ -1186,7 +1216,7 @@ create_channel(unsigned int check_parser_version)
 	if (check_parser_version) {
 
 		apn_client_version = apn_parser_version();
-		error = fetch_versions(&apn_daemon_version);
+		error = fetch_versions(&apn_daemon_version, NULL);
 
 		if (error) {
 			destroy_channel();
