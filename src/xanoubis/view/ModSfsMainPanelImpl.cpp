@@ -530,7 +530,51 @@ ModSfsMainPanelImpl::destroySfsMain(void)
 void
 ModSfsMainPanelImpl::enableSfsControls(bool sfsOpRunning)
 {
-	bool haveSelection = (SfsMainListCtrl->GetSelectedItemCount() > 0);
+	static int	lastSelection = 0;
+	int		nextSelection;
+	bool		haveSelection;
+
+	/**
+	 * NOTE: This code is performance critical:
+	 * We get a "line selected" event for every new line in a selection
+	 * and at least some wxWidgets versions have linear implemenations
+	 * of GetNextItem and/or GetSelectedItemCount. Thus we must not start
+	 * the search for selected Items at the beginning of the list but
+	 * at the last element that was found to be selected. This is stored
+	 * in the static variable lastSelection. GetNextItem starts its
+	 * search at the item immediately _after_ the index given as the
+	 * first parameter.
+	 */
+
+	/*
+	 * First make sure that the start point is less than the number of
+	 * elements in the list.
+	 */
+	if (lastSelection >= SfsMainListCtrl->GetItemCount()-1)
+		lastSelection = 0;
+	/*
+	 * Start the search at the last element that we found to be
+	 * selected. The -1 is neccessary because the search only starts
+	 * after the index given as the first parameter to GetNextIndex.
+	 */
+	nextSelection = SfsMainListCtrl->GetNextItem(lastSelection - 1,
+	    wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED);
+	/*
+	 * If we did not find a selected Item and did not start at the
+	 * beginning, do a search that starts at the beginning, now.
+	 */
+	if (nextSelection == -1 && lastSelection != 0) {
+		lastSelection = 0;
+		nextSelection = SfsMainListCtrl->GetNextItem(lastSelection - 1,
+		    wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED);
+	}
+	/* Update lastSelection and set haveSelection. */
+	if (nextSelection >= 0) {
+		lastSelection = nextSelection;
+		haveSelection = true;
+	} else {
+		haveSelection = false;
+	}
 
 	SfsMainFilterValidateButton->Enable(comEnabled_ && !sfsOpRunning);
 	SfsMainDirViewChoice->Enable(comEnabled_ && !sfsOpRunning);
