@@ -239,10 +239,10 @@ typedef struct {
 	apn_free_filter(&$$.filtspec);
 }				alffilterrule
 %type	<v.acaprule>		alfcaprule
-%type	<v.sbaccess>		sbaccess sbpred sbpath sbuid sbkey
+%type	<v.sbaccess>		sbaccess sbpred sbpath
 %destructor {
 	apn_free_sbaccess(&$$);
-}				sbaccess sbpred sbpath sbuid sbkey
+}				sbaccess sbpred sbpath
 %type	<v.dfltrule>		defaultrule alfdefault sbdefault
 %type	<v.ctxruleapps>		ctxruleapps
 %destructor {
@@ -1028,21 +1028,13 @@ sbpred		: ANY {
 		| sbpath {
 			$$ = $1;
 		}
-		| sbkey {
-			$$ = $1;
+		| sfssubject {
+			$$.path = NULL;
+			$$.cs = $1;
 		}
-		| sbuid {
+		| sbpath sfssubject {
 			$$ = $1;
-		}
-		| sbpath sbkey {
-			$$ = $1;
-			$$.cs.type = $2.cs.type;
-			$$.cs.value.keyid = $2.cs.value.keyid;
-		}
-		| sbpath sbuid {
-			$$ = $1;
-			$$.cs.type = $2.cs.type;
-			$$.cs.value.uid = $2.cs.value.uid;
+			$$.cs = $2;
 		}
 		;
 
@@ -1050,34 +1042,6 @@ sbpath		: PATH STRING {
 			$$.path = normalize_path($2);
 			$$.cs.type = APN_CS_NONE;
 			$$.cs.value.keyid = NULL;
-		}
-		;
-
-sbkey		: KEY STRING {
-			$$.path = NULL;
-			$$.cs.type = APN_CS_KEY;
-			$$.cs.value.keyid = $2;
-		}
-		| SIGNEDSELF {
-			$$.path = NULL;
-			$$.cs.type = APN_CS_KEY_SELF;
-			$$.cs.value.keyid = NULL;
-		}
-		;
-
-sbuid		: UID NUMBER {
-			if ($2 < 0) {
-				yyerror("Invalid uid %d", $2);
-				YYERROR;
-			}
-			$$.path = NULL;
-			$$.cs.type = APN_CS_UID;
-			$$.cs.value.uid = $2;
-		}
-		| SELF {
-			$$.path = NULL;
-			$$.cs.type = APN_CS_UID_SELF;
-			$$.cs.value.uid = 0;
 		}
 		;
 

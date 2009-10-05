@@ -60,13 +60,13 @@ static int	apn_print_address(struct apn_addr *, FILE *);
 static int	apn_print_port(struct apn_port *, FILE *);
 static int	apn_print_acaprule(struct apn_acaprule *, FILE *);
 static int	apn_print_defaultrule(struct apn_default *, FILE *);
-static int	apn_print_defaultrule2(struct apn_default *, const char *, int,
+static int	apn_print_defaultrule2(struct apn_default *, const char *,
 		    FILE *);
 static int	apn_print_sbaccess(struct apn_sbaccess *, FILE *);
 static int	apn_print_contextrule(struct apn_context *, FILE *);
 static int	apn_print_sfsaccessrule(struct apn_sfsaccess *, FILE *);
 static int	apn_print_sfsdefaultrule(struct apn_sfsdefault *, FILE *);
-static int	apn_print_action(int, int, FILE *);
+static int	apn_print_action(int, FILE *);
 static int	apn_print_netaccess(int, FILE *);
 static int	apn_print_log(int, FILE *);
 static int	apn_print_proto(int, FILE *);
@@ -933,6 +933,34 @@ apn_free_ruleset(struct apn_ruleset *rs)
 }
 
 static int
+apn_print_subject(struct apn_subject *subject, FILE * file)
+{
+	switch(subject->type) {
+	case APN_CS_NONE:
+		break;
+	case APN_CS_UID_SELF:
+		fprintf(file, "self");
+		break;
+	case APN_CS_UID:
+		if (subject->value.uid == (uid_t)-1)
+			return 1;
+		fprintf(file, "uid %d", (int)subject->value.uid);
+		break;
+	case APN_CS_KEY_SELF:
+		fprintf(file, "signed-self");
+		break;
+	case APN_CS_KEY:
+		if (!subject->value.keyid)
+			return 1;
+		fprintf(file, "key \"%s\"", subject->value.keyid);
+		break;
+	default:
+		return 1;
+	}
+	return 0;
+}
+
+static int
 apn_print_app(struct apn_app *app, FILE *file)
 {
 	struct apn_app *hp = app;
@@ -951,25 +979,9 @@ apn_print_app(struct apn_app *app, FILE *file)
 	while (hp) {
 		if (hp->name == NULL)
 			return (1);
-		fprintf(file, "%s ", hp->name);
-		switch (hp->subject.type) {
-		case APN_CS_NONE:
-			break;
-		case APN_CS_UID_SELF:
-			fprintf(file, "self");
-			break;
-		case APN_CS_UID:
-			fprintf(file, "uid %d", (int)hp->subject.value.uid);
-			break;
-		case APN_CS_KEY_SELF:
-			fprintf(file, "signed-self");
-			break;
-		case APN_CS_KEY:
-			fprintf(file, "key \"%s\"", hp->subject.value.keyid);
-			break;
-		default:
+		fprintf(file, "\"%s\" ", hp->name);
+		if (apn_print_subject(&hp->subject, file))
 			return 1;
-		}
 		hp = hp->next;
 		if (hp)
 			fprintf(file, ",\n");
@@ -999,8 +1011,9 @@ apn_print_afiltrule(struct apn_afiltrule *rule, FILE *file)
 	if (rule == NULL || file == NULL)
 		return (1);
 
-	if (apn_print_action(rule->action, 1, file) == 1)
+	if (apn_print_action(rule->action, file) == 1)
 		return (1);
+	fprintf(file, " ");
 	if (apn_print_netaccess(rule->filtspec.netaccess, file) == 1)
 		return (1);
 	if (apn_print_log(rule->filtspec.log, file) == 1)
@@ -1033,8 +1046,9 @@ apn_print_acaprule(struct apn_acaprule *rule, FILE *file)
 	if (rule == NULL || file == NULL)
 		return (1);
 
-	if (apn_print_action(rule->action, 1, file) == 1)
+	if (apn_print_action(rule->action, file) == 1)
 		return (1);
+	fprintf(file, " ");
 	if (apn_print_log(rule->log, file) == 1)
 		return (1);
 
@@ -1056,7 +1070,7 @@ apn_print_acaprule(struct apn_acaprule *rule, FILE *file)
 }
 
 static int
-apn_print_defaultrule2(struct apn_default *rule, const char *prefix, int space,
+apn_print_defaultrule2(struct apn_default *rule, const char *prefix,
     FILE *file)
 {
 	if (rule == NULL || file == NULL)
@@ -1067,7 +1081,7 @@ apn_print_defaultrule2(struct apn_default *rule, const char *prefix, int space,
 
 	if (apn_print_log(rule->log, file) == 1)
 		return (1);
-	if (apn_print_action(rule->action, space, file) == 1)
+	if (apn_print_action(rule->action, file) == 1)
 		return (1);
 
 	return (0);
@@ -1076,7 +1090,7 @@ apn_print_defaultrule2(struct apn_default *rule, const char *prefix, int space,
 static int
 apn_print_defaultrule(struct apn_default *rule, FILE *file)
 {
-	return apn_print_defaultrule2(rule, "default", 0, file);
+	return apn_print_defaultrule2(rule, "default", file);
 }
 
 static int
@@ -1118,32 +1132,21 @@ apn_print_sfsaccessrule(struct apn_sfsaccess *rule, FILE *file)
 	else
 		fprintf(file, "any ");
 
-	switch (rule->subject.type) {
-	case APN_CS_UID_SELF:
-		fprintf(file, "self ");
-		break;
-	case APN_CS_KEY_SELF:
-		fprintf(file, "signed-self ");
-		break;
-	case APN_CS_UID:
-		fprintf(file, "uid %d ", rule->subject.value.uid);
-		break;
-	case APN_CS_KEY:
-		if (!rule->subject.value.keyid)
-			return 1;
-		fprintf(file, "key \"%s\" ", rule->subject.value.keyid);
-		break;
-	default:
+	if (rule->subject.type == APN_CS_NONE)
 		return 1;
-	}
-
-	if (apn_print_defaultrule2(&rule->valid, "valid", 1, file) == 1)
+	if (apn_print_subject(&rule->subject, file))
 		return 1;
 
-	if (apn_print_defaultrule2(&rule->invalid, "invalid", 1, file) == 1)
+	fprintf(file, " ");
+	if (apn_print_defaultrule2(&rule->valid, "valid", file) == 1)
 		return 1;
 
-	if (apn_print_defaultrule2(&rule->unknown, "unknown", 0, file) == 1)
+	fprintf(file, " ");
+	if (apn_print_defaultrule2(&rule->invalid, "invalid", file) == 1)
+		return 1;
+
+	fprintf(file, " ");
+	if (apn_print_defaultrule2(&rule->unknown, "unknown", file) == 1)
 		return 1;
 
 	return (0);
@@ -1165,7 +1168,7 @@ apn_print_sfsdefaultrule(struct apn_sfsdefault *rule, FILE *file)
 	if (apn_print_log(rule->log, file) == 1)
 		return 1;
 
-	return apn_print_action(rule->action, 0, file);
+	return apn_print_action(rule->action, file);
 }
 
 static int
@@ -1252,7 +1255,7 @@ apn_print_port(struct apn_port *port, FILE *file)
 }
 
 static int
-apn_print_action(int action, int space, FILE *file)
+apn_print_action(int action, FILE *file)
 {
 	if (file == NULL)
 		return (1);
@@ -1273,9 +1276,6 @@ apn_print_action(int action, int space, FILE *file)
 	default:
 		return (1);
 	}
-
-	if (space)
-		fprintf(file, " ");
 
 	return (0);
 }
@@ -1356,37 +1356,18 @@ apn_print_sbaccess(struct apn_sbaccess *sba, FILE *file)
 {
 	if ((sba->amask & APN_SBA_ALL) == 0)
 		return 1;
-	if (apn_print_action(sba->action, 1, file))
+	if (apn_print_action(sba->action, file))
 		return 1;
+	fprintf(file, " ");
 	if (apn_print_log(sba->log, file))
 		return 1;
 	if (!sba->path && sba->cs.type == APN_CS_NONE) {
 		fprintf(file, " any");
 	} else {
 		if (sba->path)
-			fprintf(file, " path %s", sba->path);
-		switch (sba->cs.type) {
-		case APN_CS_NONE:
-			break;
-		case APN_CS_UID_SELF:
-			fprintf(file, " self");
-			break;
-		case APN_CS_KEY_SELF:
-			fprintf(file, " signed-self");
-			break;
-		case APN_CS_UID:
-			if (sba->cs.value.uid == (uid_t)-1)
-				return 1;
-			fprintf(file, " uid %d", sba->cs.value.uid);
-			break;
-		case APN_CS_KEY:
-			if (!sba->cs.value.keyid)
-				return  1;
-			fprintf(file, " key %s ", sba->cs.value.keyid);
-			break;
-		default:
+			fprintf(file, " path \"%s\" ", sba->path);
+		if (apn_print_subject(&sba->cs, file))
 			return 1;
-		}
 	}
 	fprintf(file, " ");
 	if (sba->amask & APN_SBA_READ)
