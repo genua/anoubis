@@ -79,7 +79,7 @@
 #include "anoubisctl.h"
 #include "apn.h"
 
-#define ANOUBISCTL_PRIO_ADMIN 0
+#define ANOUBISCTL_PRIO_ADMIN	0
 
 void		usage(void) __dead;
 static int	daemon_start(void);
@@ -91,8 +91,9 @@ static int	send_passphrase(void);
 static int	monitor(int argc, char **argv);
 static int	load(char *, uid_t, unsigned int);
 static int	dump(char *, uid_t, unsigned int);
-static int	create_channel(void);
+static int	create_channel(unsigned int);
 static void	destroy_channel(void);
+static int	fetch_versions(int *);
 static int	moo(void);
 
 typedef int (*func_int_t)(void);
@@ -447,7 +448,7 @@ daemon_status(void)
 {
 	int	error = 0;
 
-	error = create_channel();
+	error = create_channel(0);
 	if (error == 0)
 		printf(PACKAGE_DAEMON " is running\n");
 	else
@@ -495,22 +496,17 @@ free_msg_list(struct anoubis_msg * m)
 }
 
 static int
-daemon_version(void)
+fetch_versions(int * apn_version)
 {
-	int				error = 0;
+
 	struct anoubis_transaction	*t;
 	struct anoubis_msg		*m;
-	int apn_version;
 
-	error = create_channel();
-	if (error) {
-		fprintf(stderr, "Cannot connect to " PACKAGE_DAEMON "\n");
-		return error;
-	}
+	if (!client)
+		return (3);
 
 	t = anoubis_client_version_start(client);
 	if (!t) {
-		destroy_channel();
 		return (3);
 	}
 
@@ -518,7 +514,6 @@ daemon_version(void)
 		int ret = anoubis_client_wait(client);
 		if (ret <= 0) {
 			anoubis_transaction_destroy(t);
-			destroy_channel();
 			return (3);
 		}
 		if (t->flags & ANOUBIS_T_DONE)
@@ -542,14 +537,52 @@ daemon_version(void)
 		return (3);
 	}
 
-	apn_version = get_value(m->u.version->apn);
+	if (apn_version)
+		*apn_version = get_value(m->u.version->apn);
+
+	free_msg_list(m);
+
+	return (0);
+}
+
+static int
+daemon_version(void)
+{
+	int		apn_daemon_version;
+	int		apn_client_version;
+	int		error = 0;
+
+	error = create_channel(0);
+	if (error) {
+		fprintf(stderr, "Cannot connect to " PACKAGE_DAEMON "\n");
+		return error;
+	}
+
+	error = fetch_versions(&apn_daemon_version);
+
+	if (error) {
+		fprintf(stderr, "fetch_versions() failed\n");
+		destroy_channel();
+		return (error);
+	}
 
 	fprintf(stdout, "Package: " PACKAGE_VERSION "\n");
-	fprintf(stdout, "APN parser: %i.%i\n",
-	    APN_PARSER_MAJOR(apn_version), APN_PARSER_MINOR(apn_version));
+	apn_client_version = apn_parser_version();
+
+	if (apn_client_version != apn_daemon_version) {
+		fprintf(stdout, "APN parser: mismatch "
+		    "(local: %i.%i ,daemon: %i.%i)\n",
+		    APN_PARSER_MAJOR(apn_client_version),
+		    APN_PARSER_MINOR(apn_client_version),
+		    APN_PARSER_MAJOR(apn_daemon_version),
+		    APN_PARSER_MINOR(apn_daemon_version));
+	} else {
+		fprintf(stdout, "APN parser: %i.%i\n",
+		    APN_PARSER_MAJOR(apn_client_version),
+		    APN_PARSER_MINOR(apn_client_version));
+	}
 
 	destroy_channel();
-	free_msg_list(m);
 
 	return (0);
 }
@@ -564,7 +597,7 @@ dump(char *file, uid_t uid, unsigned int prio)
 	Policy_GetByUid req;
 	size_t	len;
 
-	error = create_channel();
+	error = create_channel(1);
 	if (error) {
 		fprintf(stderr, "Cannot connect to " PACKAGE_DAEMON "\n");
 		return error;
@@ -750,7 +783,7 @@ load(char *rulesopt, uid_t uid, unsigned int prio)
 		return 0;
 	}
 
-	error = create_channel();
+	error = create_channel(1);
 	if (error) {
 		fprintf(stderr, "Cannot connect to " PACKAGE_DAEMON "\n");
 		apn_free_ruleset(ruleset);
@@ -892,7 +925,7 @@ static int monitor(int argc, char **argv)
 	if (maxcount < 0)
 		maxcount = 0;
 
-	error = create_channel();
+	error = create_channel(0);
 	if (error) {
 		fprintf(stderr, "Cannot create channel\n");
 		return error;
@@ -968,7 +1001,7 @@ send_passphrase(void)
 	struct anoubis_transaction	*t;
 	char				 passbuf[1024];
 
-	error = create_channel();
+	error = create_channel(0);
 	if (error) {
 		fprintf(stderr, "Cannot create channel\n");
 		return error;
@@ -1039,13 +1072,19 @@ send_passphrase(void)
 	return 0;
 }
 
+/*
+ * If check_parser_version was passed create_channel() does an implicit
+ * comparison of APN versions
+ */
 static int
-create_channel(void)
+create_channel(unsigned int check_parser_version)
 {
-	achat_rc		rc;
-	struct sockaddr_un	ss;
-	int			error = 0;
-	struct anoubis_transaction *t;
+	int				error = 0;
+	int				apn_daemon_version;
+	int				apn_client_version;
+	achat_rc			rc;
+	struct sockaddr_un		ss;
+	struct anoubis_transaction	*t;
 
 	if (opts & ANOUBISCTL_OPT_VERBOSE)
 		fprintf(stderr, ">create_channel\n");
@@ -1138,6 +1177,40 @@ create_channel(void)
 		error = 5;
 		goto err;
 	}
+
+	/*
+	 * Compare the version of the daemon to our own one, so we can bailout
+	 * in case of incompatible versions.
+	 */
+
+	if (check_parser_version) {
+
+		apn_client_version = apn_parser_version();
+		error = fetch_versions(&apn_daemon_version);
+
+		if (error) {
+			destroy_channel();
+			errno = error;
+			fprintf(stderr, "fetch_versions() failed\n");
+			return (error);
+		}
+
+		if ((apn_daemon_version) != apn_client_version) {
+			destroy_channel();
+			fprintf(stderr, "APN parser: mismatch "
+			    "(local: %i.%i ,daemon: %i.%i)\n",
+			    APN_PARSER_MAJOR(apn_client_version),
+			    APN_PARSER_MINOR(apn_client_version),
+			    APN_PARSER_MAJOR(apn_daemon_version),
+			    APN_PARSER_MINOR(apn_daemon_version));
+			return 5;
+		}
+	}
+
+	/*
+	 * Exclude ourselves from the SFS list of apps as we need free access to
+	 * files and the likes.
+	 */
 	t = anoubis_client_sfsdisable_start(client, getpid());
 	while(1) {
 		int ret = anoubis_client_wait(client);
