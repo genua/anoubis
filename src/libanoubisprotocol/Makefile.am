@@ -63,15 +63,20 @@ libanoubisps_a_CPPFLAGS = \
 libanoubisps_so_CPPFLAGS = $(libanoubisps_a_CPPFLAGS)
 libanoubisps_so_LDFLAGS	=
 libanoubispc_so_LDFLAGS	=
+libanoubisps_so_LDADD =
+libanoubisps_so_DEPENDENCIES =
 if NEEDBSDCOMPAT
 libanoubisps_a_CPPFLAGS  += -I$(bsdcompatdir)
 libanoubisps_so_CPPFLAGS += -I$(bsdcompatdir)
 libanoubisps_so_LDFLAGS	 += -L$(top_builddir)/src/bsdcompat
 libanoubisps_a_LIBADD	 = $(libbsdcompat)
-libanoubisps_so_LDADD	 = -lbsdcompat
+libanoubisps_so_LDADD	 += -lbsdcompat
 libanoubisps_a_DEPENDENCIES = $(libbsdcompat)
-libanoubisps_so_DEPENDENCIES = $(libbsdcompat)
+libanoubisps_so_DEPENDENCIES += $(libbsdcompat)
 endif
+libanoubisps_so_LDADD += -lapn
+libanoubisps_so_DEPENDENCIES += $(libapn)
+libanoubisps_so_LDFLAGS += -L$(top_builddir)/src/libapn
 
 libanoubisps_a_SOURCES =		\
 	server/anoubis_server.c		\

@@ -106,8 +106,15 @@ libapnvm_so_CFLAGS = -fPIC -shared -std=gnu99 $(shared_AM_CFLAGS)
 libapnvm_so_CPPFLAGS = $(libapnvm_a_CPPFLAGS)
 libapnvm_so_SOURCES = $(libapnvm_a_SOURCES)
 libapnvm_so_LDFLAGS = -nostartfiles -shared $(shared_AM_LDFLAGS) \
-	-L$(top_builddir)/$(libapndir) -lapn
+	-L$(top_builddir)/$(libapndir)
+libapnvm_so_DEPENDENCIES = $(top_builddir)/$(libapndir)/libapn.so
+libapnvm_so_LDADD = -lapn
 
+if NEEDBSDCOMPAT
+libapnvm_so_LDFLAGS += -L$(top_builddir)/$(bsdcompatdir)
+libapnvm_so_DEPENDENCIES += $(top_builddir)/$(bsdcompatdir)/libbsdcompat.so
+libapnvm_so_LDADD += -lbsdcompat
+endif
 
 flawfinder_FLAGS=
 splint_FLAGS=$(libapnvm_a_CPPFLAGS)
