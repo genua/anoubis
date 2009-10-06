@@ -566,6 +566,7 @@ PolicyRuleSet::create(wxString fileName)
 			log(logEntry);
 		}
 		hasErrors_ = true;
+		// XXX: do we need an apn_free_ruleset here ?
 		break;
 	default:
 		logEntry = wxString::Format(

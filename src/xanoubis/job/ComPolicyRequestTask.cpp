@@ -151,12 +151,12 @@ ComPolicyRequestTask::getPolicyApn(void) const
 	}
 
 	/* Parse apn */
-	struct apn_ruleset *ruleset = 0;
+	struct apn_ruleset *ruleset = NULL;
 	int result = apn_parse_iovec("com", iov, iovcnt, &ruleset, 0);
 
-	if ((result != 0) && (ruleset != 0)) {
+	if ((result != 0) && (ruleset != NULL)) {
 		apn_free_ruleset(ruleset);
-		ruleset = 0;
+		ruleset = NULL;
 	}
 
 	return (ruleset);

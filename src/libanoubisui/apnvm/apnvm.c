@@ -644,6 +644,8 @@ apnvm_fetch(apnvm *vm, const char *user, int no, const char *profile,
 
 	/* Parse ruleset */
 	result = apn_parse_iovec("<iov>", &iov, 1, rs, 0);
+	if (result)
+		apn_free_ruleset(*rs);
 
 	/* Close file again */
 	apnvm_closefile(&frs);

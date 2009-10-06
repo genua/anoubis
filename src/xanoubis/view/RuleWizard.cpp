@@ -356,7 +356,7 @@ RuleWizard::onWizardFinished(wxWizardEvent &)
 	wxCommandEvent		 newRuleSetEvent(anEVT_LOAD_RULESET);
 	wxString		message;
 	struct iovec		 iv;
-	struct apn_ruleset	*rs;
+	struct apn_ruleset	*rs = NULL;
 
 	PolicyCtrl	*policyCtrl;
 	PolicyRuleSet	*ruleSet;
@@ -372,6 +372,8 @@ RuleWizard::onWizardFinished(wxWizardEvent &)
 		iv.iov_len  = strlen((char *)iv.iov_base) - 1;
 		if (apn_parse_iovec("<iov>", &iv, 1, &rs, 0) == 0) {
 			ruleSet = new PolicyRuleSet(1, geteuid(), rs);
+		} else {
+			apn_free_ruleset(rs);
 		}
 		if (ruleSet != NULL) {
 			ruleSet->lock();

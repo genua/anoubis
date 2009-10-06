@@ -364,7 +364,7 @@ PolicyCtrl::receiveOneFromDaemon(long prio, long uid)
 {
 	ComPolicyRequestTask	*task = new ComPolicyRequestTask(prio, uid);
 	struct iovec		 iov;
-	struct apn_ruleset	*apnrs;
+	struct apn_ruleset	*apnrs = NULL;
 
 	requestTaskList_.push_back(task);
 	JobCtrl::getInstance()->addTask(task);
@@ -380,6 +380,7 @@ PolicyCtrl::receiveOneFromDaemon(long prio, long uid)
 	if (apn_parse_iovec("<iov>", &iov, 1, &apnrs, 0) == 0) {
 		return importPolicy(new PolicyRuleSet(prio, uid, apnrs));
 	} else {
+		apn_free_ruleset(apnrs);
 		return false;
 	}
 }

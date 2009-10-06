@@ -1707,7 +1707,7 @@ PolicyRuleSet *
 DlgRuleEditor::createEmptyPolicyRuleSet(void)
 {
 	struct iovec		 iv;
-	struct apn_ruleset	*rs;
+	struct apn_ruleset	*rs = NULL;
 	PolicyRuleSet		*ruleSet;
 
 	iv.iov_base = (void *)" ";
@@ -1715,6 +1715,7 @@ DlgRuleEditor::createEmptyPolicyRuleSet(void)
 
 	if (apn_parse_iovec("<iov>", &iv, 1, &rs, 0) != 0) {
 		/* This should never happen! */
+		apn_free_ruleset(rs);
 		ruleSet = NULL;
 	} else {
 		ruleSet = new PolicyRuleSet(1, geteuid(), rs);

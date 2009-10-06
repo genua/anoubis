@@ -334,6 +334,7 @@ pe_user_load_policy(const char *name, int flags)
 	struct apn_ruleset	*rs;
 	time_t			 now = 0;
 	int			 ret;
+	char			*errstr;
 
 	DEBUG(DBG_PE_POLICY, "pe_user_load_policy: %s", name);
 
@@ -342,8 +343,13 @@ pe_user_load_policy(const char *name, int flags)
 		log_warn("could not parse \"%s\"", name);
 		return (NULL);
 	}
-	if (ret == 1) {
-		log_warnx("could not parse \"%s\"", name);
+	if (ret != 0) {
+		errstr = apn_one_error(rs);
+		if (errstr)
+			log_warnx("could not parse %s", errstr);
+		else
+			log_warnx("could not parse \"%s\"", name);
+		apn_free_ruleset(rs);
 		return (NULL);
 	}
 	apn_clean_ruleset(rs, &pe_user_scope_check, &now);
@@ -840,7 +846,7 @@ pe_dispatch_policy(struct anoubisd_msg_comm *comm)
 			if (apn_parse(req->tmpname, &ruleset,
 			    (req->prio != PE_PRIO_USER1)?APN_FLAG_NOASK:0)) {
 				if (ruleset)
-					free(ruleset);
+					apn_free_ruleset(ruleset);
 				log_warnx("pe_dispatch_policy: "
 				    "Could not parse ruleset for uid: %u",
 				    req->uid);
