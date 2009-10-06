@@ -1,3 +1,29 @@
+###########################################################################
+# Copyright (c) 2009 GeNUA mbH <info@genua.de>
+#
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+# OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
+# TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+# PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+# LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+###########################################################################
 # SOME DESCRIPTIVE TITLE.
 # Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the PACKAGE package.
@@ -8,7 +34,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-10-02 10:06+0200\n"
+"POT-Creation-Date: 2009-10-05 17:10+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -888,7 +914,8 @@ msgid "Couldn't import policy file: it has errors."
 msgstr ""
 
 #: view/DlgRuleEditor.cpp:1258 view/MainFrame.cpp:502 view/MainFrame.cpp:750
-#: view/ModAnoubisMainPanelImpl.cpp:1505 main.cpp:451 main.cpp:459
+#: view/ModAnoubisMainPanelImpl.cpp:1505 main.cpp:157 main.cpp:474
+#: main.cpp:482
 msgid "Error"
 msgstr ""
 
@@ -905,7 +932,7 @@ msgid "Export ruleset"
 msgstr ""
 
 #: view/DlgRuleEditor.cpp:1369 view/DlgRuleEditor.cpp:1392
-#: view/ModAnoubisMainPanelImpl.cpp:479 view/ModSfsMainPanelImpl.cpp:401
+#: view/ModAnoubisMainPanelImpl.cpp:479 view/ModSfsMainPanelImpl.cpp:408
 #: view/RuleWizard.cpp:403
 msgid "The entered password is incorrect."
 msgstr ""
@@ -1132,7 +1159,7 @@ msgid ""
 "Anoubis Kernel."
 msgstr ""
 
-#: view/MainFrame.cpp:699 main.cpp:255
+#: view/MainFrame.cpp:699 main.cpp:228 main.cpp:278
 msgid "Warning"
 msgstr ""
 
@@ -1168,7 +1195,7 @@ msgstr ""
 msgid "Temporary"
 msgstr ""
 
-#: view/ModAlfMainPanelImpl.cpp:187 view/ModSfsMainPanelImpl.cpp:771
+#: view/ModAlfMainPanelImpl.cpp:187 view/ModSfsMainPanelImpl.cpp:778
 #: view/ModSbMainPanelImpl.cpp:232
 #, c-format
 msgid "admin ruleset of %ls"
@@ -1820,71 +1847,71 @@ msgstr ""
 msgid "SFS warning"
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:282 view/ModSfsMainPanelImpl.cpp:402
-#: view/ModSfsMainPanelImpl.cpp:426
+#: view/ModSfsMainPanelImpl.cpp:289 view/ModSfsMainPanelImpl.cpp:409
+#: view/ModSfsMainPanelImpl.cpp:433
 msgid "SFS error"
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:339
+#: view/ModSfsMainPanelImpl.cpp:346
 msgid "Choose the import-file"
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:361
+#: view/ModSfsMainPanelImpl.cpp:368
 msgid "Choose the export-destination"
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:384
+#: view/ModSfsMainPanelImpl.cpp:391
 msgid "Error: xanoubis is not connected to the daemon"
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:388
+#: view/ModSfsMainPanelImpl.cpp:395
 msgid "Error: Failed to load the private key."
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:392
+#: view/ModSfsMainPanelImpl.cpp:399
 msgid "Error: An invalid argument was supplied"
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:396
+#: view/ModSfsMainPanelImpl.cpp:403
 msgid "Error: Sfs is still busy with another operation."
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:400
+#: view/ModSfsMainPanelImpl.cpp:407
 msgid "Wrong password!"
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:420
+#: view/ModSfsMainPanelImpl.cpp:427
 msgid ""
 "Failed to enable signed checksums.\n"
 "Please check the configuration of your certificate and private key!"
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:424
+#: view/ModSfsMainPanelImpl.cpp:431
 msgid "Failed to disable signed checksums."
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:613
+#: view/ModSfsMainPanelImpl.cpp:620
 msgid ""
 "Cannot load the private key!\n"
 "The file you specified does not exist."
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:615
+#: view/ModSfsMainPanelImpl.cpp:622
 msgid "Load private key"
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:643
+#: view/ModSfsMainPanelImpl.cpp:650
 #, c-format
 msgid ""
 "Failed to load certificate from\n"
 "%ls."
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:645
+#: view/ModSfsMainPanelImpl.cpp:652
 msgid "Load certificate"
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:800
+#: view/ModSfsMainPanelImpl.cpp:807
 #, c-format
 msgid "default %ls"
 msgstr ""
@@ -3167,49 +3194,60 @@ msgstr ""
 msgid "Failure to resolve: "
 msgstr ""
 
-#: main.cpp:202
+#: main.cpp:156
+msgid "Error while initialising anoubis_ui"
+msgstr ""
+
+#: main.cpp:214
 msgid "Language setting: "
 msgstr ""
 
-#: main.cpp:252
+#: main.cpp:225
+#, c-format
+msgid ""
+"Unsupported version (%d) found of HOME/.xanoubis\n"
+"This might cause problems\n"
+msgstr ""
+
+#: main.cpp:275
 msgid ""
 "The Boot Loader configuration has been updated. Please make sure to boot an "
 "Anoubis Kernel."
 msgstr ""
 
-#: main.cpp:329
+#: main.cpp:352
 msgid "this help"
 msgstr ""
 
-#: main.cpp:336
+#: main.cpp:359
 msgid "communication socket of anoubis daemon"
 msgstr ""
 
-#: main.cpp:343
+#: main.cpp:366
 msgid "Debug output with 'num' als level"
 msgstr ""
 
-#: main.cpp:350
+#: main.cpp:373
 msgid "Disable TrayIcon"
 msgstr ""
 
-#: main.cpp:449 main.cpp:457
+#: main.cpp:472 main.cpp:480
 #, c-format
 msgid "Couldn't remove Autostart file: %ls"
 msgstr ""
 
-#: main.cpp:685
+#: main.cpp:708
 #, c-format
 msgid ""
 "Enter the passphrase of your private key:\n"
 "%ls"
 msgstr ""
 
-#: main.cpp:687 main.cpp:692
+#: main.cpp:710 main.cpp:715
 msgid "Enter passphrase for: "
 msgstr ""
 
-#: main.cpp:690
+#: main.cpp:713
 #, c-format
 msgid ""
 "The entered passphrase was wrong!\n"

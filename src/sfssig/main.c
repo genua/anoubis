@@ -33,6 +33,7 @@
 
 #include "sfssig.h"
 #include <anoubis_msg.h>
+#include <apnvm/apnvm.h>
 
 /* These are the functions to the sfs commandos */
 static int	 sfs_add(char *, uid_t, struct anoubis_sig *);
@@ -389,6 +390,18 @@ main(int argc, char *argv[])
 	}
 	sfs_command = *argv++;
 	argc--;
+
+	if (anoubis_ui_init() < 0) {
+		fprintf(stderr, "Error while initialising anoubis_ui\n");
+		return 1;
+	}
+	error = anoubis_ui_readversion();
+	if (error > ANOUBIS_UI_VER)
+		fprintf(stderr, "Unsupported version (%d) found of HOME/"
+		    ANOUBIS_UI_DIR"\nThis might cause problems\n", error);
+	if (error < 0)
+		fprintf(stderr, "Error occured while reading version: %s\n",
+		    strerror(-error));
 
 	if (sfs_command == NULL || argc < 0) {
 		fprintf(stderr, "No command specified\n");

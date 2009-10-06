@@ -40,6 +40,7 @@
 
 #include <sys/types.h>
 #include <pwd.h>
+#include <apnvm.h>
 
 #include <wx/cmdline.h>
 #include <wx/fileconf.h>
@@ -128,7 +129,8 @@ AnoubisGuiApp::quit(void)
 
 bool AnoubisGuiApp::OnInit()
 {
-	bool hasLocale;
+	bool	hasLocale;
+	int	versionError;
 
 	if (!wxApp::OnInit())
 		return false;
@@ -145,6 +147,17 @@ bool AnoubisGuiApp::OnInit()
 		language_.AddCatalogLookupPathPrefix(getCatalogPath());
 		language_.AddCatalog(GetAppName());
 	}
+
+	/*
+	 * Initilize config dirctory and check version of the config
+	 * directory.
+	 */
+	if (anoubis_ui_init() < 0) {
+		wxString msg = _("Error while initialising anoubis_ui");
+		AnMessageDialog dlg(mainFrame, msg, _("Error"), wxICON_ERROR);
+		dlg.ShowModal();
+	}
+	versionError = anoubis_ui_readversion();
 
 	if (!wxDirExists(paths_.GetUserDataDir())) {
 		wxMkdir(paths_.GetUserDataDir());
@@ -208,6 +221,15 @@ bool AnoubisGuiApp::OnInit()
 	 */
 	if (trayVisible_)
 		trayIcon = new TrayIcon();
+
+	if (versionError > ANOUBIS_UI_VER) {
+		wxString msg = wxString::Format(_("Unsupported version (%d) "
+		    "found of HOME/.xanoubis\nThis might cause problems\n"),
+		    versionError);
+		AnMessageDialog dlg(mainFrame, msg, _("Warning"),
+		    wxOK | wxICON_WARNING);
+		dlg.ShowModal();
+	}
 
 #ifdef HAVE_SYS_INOTIFY_H
 	/*
