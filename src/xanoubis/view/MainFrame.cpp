@@ -669,26 +669,43 @@ MainFrame::isShowing(void)
 void
 MainFrame::OnTimer(wxTimerEvent &event)
 {
-#ifdef HAVE_SYS_INOTIFY_H
-	struct inotify_event	ievent;
 	wxString		msg;
 	bool			warn = false;
 	int			ret, iNotifyFd = -1;
 	time_t			modTime = 0, savedTime = 0;
 	struct stat		sbuf;
-
+	
+	if (wxGetApp().getGrubPath() == wxEmptyString)
+		return;
+#ifdef HAVE_SYS_INOTIFY_H
 	iNotifyFd = wxGetApp().getINotify();
+#endif
 	if (iNotifyFd == -1) {
-		wxConfig::Get()->Read(
-		     wxT("/Options/GrubModifiedTime"), &savedTime);
+		wxConfig::Get()->Read(wxT("/Options/GrubModifiedTime"),
+		    &savedTime, 0 /* Default */);
 		ret = stat(wxGetApp().getGrubPath().fn_str(), &sbuf);
-		if (ret != -1)
+		if (ret != -1) {
 			modTime = sbuf.st_mtime;
-		if (savedTime < modTime)
-			warn = true;
+			if (savedTime == 0) {
+				/*
+				 * No previous time: Do not warn but update
+				 * Konfiguration.
+				 */
+				wxConfig::Get()->Write(
+		    		    wxT("/Options/GrubModifiedTime"), modTime);
+			} else if (savedTime < modTime) {
+				warn = true;
+			}
+		}
 	} else {
-		if (read(iNotifyFd, &ievent, sizeof(ievent)) > 0)
+#ifdef HAVE_SYS_INOTIFY_H
+		struct inotify_event	ievent;
+		/* Make sure that we consume all pending events. */
+		while(read(iNotifyFd, &ievent, sizeof(ievent)) > 0)
 			warn = true;
+		if (warn)
+			wxGetApp().refreshINotify();
+#endif
 	}
 
 	if (warn) {
@@ -701,7 +718,6 @@ MainFrame::OnTimer(wxTimerEvent &event)
 		dlg.onNotifyCheck(wxT("/Options/ShowKernelUpgradeMessage"));
 		dlg.ShowModal();
 	}
-#endif
 	event.Skip(false);
 }
 

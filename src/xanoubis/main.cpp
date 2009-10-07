@@ -87,8 +87,12 @@ AnoubisGuiApp::AnoubisGuiApp(void)
 	onInitProfile_ = true;
 	trayVisible_ = true;
 	iNotifyFd_ = -1;
+	oldhandle_ = -1;
+#ifdef LINUX
 	grubPath_ = wxT("/boot/grub/menu.lst");
-
+#else
+	grubPath_ = wxT("");
+#endif
 	SetAppName(wxT("xanoubis"));
 	wxInitAllImageHandlers();
 
@@ -231,43 +235,52 @@ bool AnoubisGuiApp::OnInit()
 		dlg.ShowModal();
 	}
 
+	wxConfig::Get()->Read(wxT("/Options/GrubConfigPath"), &grubPath_);
+	initINotify();
+
+	return (true);
+}
+
+void
+AnoubisGuiApp::initINotify(void)
+{
+	if (grubPath_.IsEmpty())
+		return;
+
 #ifdef HAVE_SYS_INOTIFY_H
 	/*
 	 * Do initilize inotify for IdleEvents.
 	 * If inotify_add_watch doesnot work we do not need to bother
 	 * to read from it
 	 */
-	int		ret = 0;
-
-
-	wxConfig::Get()->Read(wxT("/Options/GrubConfigPath"), &grubPath_);
 
 	iNotifyFd_ = inotify_init();
 	if (iNotifyFd_ != -1) {
-		ret = inotify_add_watch(iNotifyFd_, grubPath_.fn_str(),
-		    IN_MODIFY);
+		int ret = inotify_add_watch(iNotifyFd_, grubPath_.fn_str(),
+		    IN_ALL_EVENTS);
 		if (ret != -1) {
 			int flags = fcntl(iNotifyFd_, F_GETFL);
 			flags |= O_NONBLOCK;
 			ret = fcntl(iNotifyFd_, F_SETFL, flags);
 		}
+		if (ret == -1) {
+			close(iNotifyFd_);
+			iNotifyFd_ = -1;
+		}
 	}
-	if (ret == -1) {
-		close(iNotifyFd_);
-		iNotifyFd_ = -1;
-	}
+#endif
 
 	/*
-	 * Now check if a new kernel could be installed since the last
+	 * Now check if a new kernel has been installed since the last
 	 * start of xanoubis.
 	 */
 	time_t		savedTime = 0, lastTime = 0;
 	wxString	msg;
 	struct stat	sbuf;
 
-	wxConfig::Get()->Read(wxT("/Options/GrubModifiedTime"), &savedTime);
+	wxConfig::Get()->Read(wxT("/Options/GrubModifiedTime"), &savedTime, 0);
 	if (savedTime) {
-		ret = stat(grubPath_.fn_str(), &sbuf);
+		int ret = stat(grubPath_.fn_str(), &sbuf);
 		if (ret != -1)
 			lastTime = sbuf.st_mtime;
 		if (savedTime < lastTime) {
@@ -286,9 +299,6 @@ bool AnoubisGuiApp::OnInit()
 		wxConfig::Get()->Write(
 		    wxT("/Options/GrubModifiedTime"), time(NULL));
 	}
-
-#endif
-	return (true);
 }
 
 int
@@ -678,6 +688,21 @@ int
 AnoubisGuiApp::getINotify(void)
 {
 	return iNotifyFd_;
+}
+
+void
+AnoubisGuiApp::refreshINotify(void)
+{
+#ifdef HAVE_SYS_INOTIFY_H
+	if (iNotifyFd_ < 0)
+		return;
+	if (oldhandle_ >= 0)
+		inotify_rm_watch(iNotifyFd_, oldhandle_);
+	oldhandle_ = inotify_add_watch(iNotifyFd_, grubPath_.fn_str(),
+	    IN_ALL_EVENTS);
+	if (oldhandle_ < 0)
+		iNotifyFd_ = -1;
+#endif
 }
 
 wxString

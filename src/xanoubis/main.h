@@ -83,6 +83,8 @@ compile_time_assert((LAST_MODULE_INDEX == ANOUBIS_MODULESNO), \
 class AnoubisGuiApp : public wxApp, private PassphraseReader
 {
 	private:
+		void			 initINotify(void);
+
 		wxStandardPaths		 paths_;
 		wxLocale		 language_;
 		bool			 onInitProfile_;
@@ -94,6 +96,7 @@ class AnoubisGuiApp : public wxApp, private PassphraseReader
 		TrayIcon		*trayIcon;
 		Module			*modules_[ANOUBIS_MODULESNO];
 		int			 iNotifyFd_;
+		int			 oldhandle_;
 		wxString		 grubPath_;
 
 		wxString readPassphrase(bool *);
@@ -136,6 +139,7 @@ class AnoubisGuiApp : public wxApp, private PassphraseReader
 		bool		 showingMainFrame(void);
 		void		 autoStart(bool);
 		int		 getINotify(void);
+		void		 refreshINotify(void);
 		wxString	 getGrubPath(void);
 
 		uid_t		 getUserIdByName(wxString) const;
