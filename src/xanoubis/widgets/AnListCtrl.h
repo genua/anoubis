@@ -289,7 +289,22 @@ class AnListCtrl : public wxListCtrl, private Observer
 		void refreshVisible(void);
 
 		/**
+		 * Returns true if at least one line in the list is
+		 * selected, false otherwise. This function has an
+		 * average runtime that should be constant. However,
+		 * individual invocations can still have linear runtime.
+		 * @param None.
+		 * @return True if a selection exists.
+		 */
+		bool hasSelection(void);
+
+		/**
 		 * Returns the index of the first selected row.
+		 *
+		 * Do not use this function to test if a selection exists.
+		 * This can cause severe Hangs with large lists because the
+		 * average runtime of this function is linear in the number
+		 * of elements in the list.
 		 *
 		 * If nothing is selected, -1 is returned.
 		 *
@@ -304,6 +319,9 @@ class AnListCtrl : public wxListCtrl, private Observer
 		 * Searches for an selected item, starting from previous but
 		 * excluding the item itself. If previous is -1, the first
 		 * selected item will be returned.
+		 *
+		 * The search is linear in the number of elements in the
+		 * list.
 		 *
 		 * @param previous Previous index. Where to start searching
 		 * @return Index of next selection or -1 if no selection was
@@ -384,6 +402,14 @@ class AnListCtrl : public wxListCtrl, private Observer
 		 * The item-attribute setup and returned by OnGetItemAttr().
 		 */
 		wxListItemAttr *itemAttr_;
+
+		/**
+		 * The last element that was found to be selected by
+		 * hasSelection(). The function hasSelection() optimizes
+		 * its search by starting at this element instead of the
+		 * beginning of the list.
+		 */
+		int	hasSelectionResult_;
 
 		/**
 		 * Implementation of Observer::update().

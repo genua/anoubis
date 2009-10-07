@@ -39,6 +39,7 @@ AnListCtrl::AnListCtrl(wxWindow *parent, wxWindowID id, const wxPoint &pos,
 {
 	this->rowProperty_ = 0;
 	this->itemAttr_ = new wxListItemAttr;
+	hasSelectionResult_ = 0;
 
 	SetImageList(AnIconList::getInstance(), wxIMAGE_LIST_SMALL);
 }
@@ -349,6 +350,38 @@ AnListCtrl::refreshVisible(void)
 
 	if (index != -1)
 		EnsureVisible(index);
+}
+
+bool
+AnListCtrl::hasSelection(void)
+{
+	int	result;
+
+	/*
+	 * Search for a selected item starting immediately before the
+	 * last item that was found to be selected but do not start after
+	 * the end of the list.
+	 */
+	if (hasSelectionResult_ >= GetItemCount())
+		hasSelectionResult_ = 0;
+	result = getNextSelection(hasSelectionResult_ - 1);
+	/*
+	 * If no selected item was found and the search did not start
+	 * at the beginning of the list, restart from the beginning and
+	 * erase the saved value in hasSelectionResult_.
+	 */
+	if (result == -1 && hasSelectionResult_ != 0) {
+		hasSelectionResult_ = 0;
+		result = getFirstSelection();
+	}
+	/*
+	 * If we found a selected item save its index in hasSelectionResult_.
+	 */
+	if (result >= 0) {
+		hasSelectionResult_ = result;
+		return true;
+	}
+	return false;
 }
 
 int
