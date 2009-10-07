@@ -350,6 +350,14 @@ get_event(int fd)
 	msg_r->size = evt->msg_size + sizeof(anoubisd_msg_t);
 	msg_r->mtype = ANOUBISD_MSG_EVENTDEV;
 	bcopy(evt, msg_r->msg, evt->msg_size);
+	if (version < ANOUBISCORE_VERSION) {
+		msg_r = compat_get_event(msg_r, version);
+		if (!msg_r) {
+			log_warnx("Cannot convert Message from version %ld",
+			    version);
+			master_terminate(ENOMEM);
+		}
+	}
 	DEBUG(DBG_MSG_RECV, "get_event: fd:%d size:%d", mbp->fd, evt->msg_size);
 	amsg_verify(msg_r);
 	return msg_r;

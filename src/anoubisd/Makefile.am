@@ -83,6 +83,7 @@ anoubisd_SOURCES= \
 	session.c \
 	log.c \
 	amsg.c \
+	kernel_compat.c \
 	amsg_verify.c \
 	aqueue.c \
 	sfs.c \
@@ -115,6 +116,7 @@ anoubisd_SOURCES_flawfinder= \
 	session.c_flawfinder \
 	log.c_flawfinder \
 	amsg.c_flawfinder \
+	kernel_compat.c_flawfinder \
 	aqueue.c_flawfinder \
 	sfs.c_flawfinder \
 	cfg.c_flawfinder \
@@ -163,6 +165,7 @@ anoubisd_SOURCES_splint= \
 	session.c_splint \
 	log.c_splint \
 	amsg.c_splint \
+	kernel_compat.c_splint \
 	aqueue.c_splint \
 	sfs.c_splint \
 	cfg.c_splint
