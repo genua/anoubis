@@ -51,7 +51,8 @@ print $versout "/* src/version.h.in. */\n\n";
 	my $par;
 
 	while ( defined ($par = <$in>) ) {
-		if ($par =~ /\b(?:PACKAGE_STRING|PACKAGE_VERSION|VERSION)\b/) {
+		if ($par =~ /\b(?:VERSION|PACKAGE_(?:STRING|VERSION|BUILD))\b/)
+		{
 			print $versout $par;
 			$found_version = 1;
 		}
