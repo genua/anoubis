@@ -35,6 +35,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <paths.h>
 #include <unistd.h>
 
 #include <apncvs.h>
@@ -65,8 +66,9 @@ START_TEST(cvs_init_tc_create)
 	int		result;
 	struct stat	fstat;
 
-	strcpy(cvsroot, "/tmp/tc_cvs_init_XXXXXX");
+	strcpy(cvsroot, _PATH_TMP "tc_cvs_init_XXXXXX");
 	s = mkdtemp(cvsroot);
+	fail_if(s == NULL, "failed to create cvsroot");
 
 	strcpy(cvsroot2, cvsroot);
 	strcat(cvsroot2, "/CVSROOT");
@@ -93,15 +95,18 @@ END_TEST
 
 START_TEST(cvs_init_tc_no_parent)
 {
-	char		foobar[64];
+	char		template[64], *tmpdir;
 	char		cvsroot[64];
 	char		cvsroot2[64];
 	struct apncvs	cvs;
 	int		result;
 	struct stat	fstat;
 
-	strcpy(foobar, "/tmp/foobar");
-	snprintf(cvsroot, sizeof(cvsroot), "%s/cvsroot_%i", foobar, getpid());
+	strcpy(template, _PATH_TMP "tc_cvs_init_XXXXXX");
+	tmpdir = mkdtemp(template);
+	fail_if(tmpdir == NULL, "failed to create tempdir");
+
+	snprintf(cvsroot, sizeof(cvsroot), "%s/cvsroot_%i", tmpdir, getpid());
 	snprintf(cvsroot2, sizeof(cvsroot2), "%s/CVSROOT", cvsroot);
 
 	cvs.cvsroot = cvsroot;
@@ -121,7 +126,7 @@ START_TEST(cvs_init_tc_no_parent)
 	fail_if(!S_ISDIR(fstat.st_mode), "No such directory: %s", cvsroot2);
 
 	cvs_init_tc_exec("rm -rf \"%s\"", cvsroot);
-	cvs_init_tc_exec("rm -rf \"%s\"", foobar);
+	cvs_init_tc_exec("rm -rf \"%s\"", tmpdir);
 }
 END_TEST
 
@@ -134,8 +139,9 @@ START_TEST(cvs_init_tc_already_existing)
 	int		result;
 	struct stat	fstat;
 
-	strcpy(cvsroot, "/tmp/tc_cvs_init_XXXXXX");
+	strcpy(cvsroot, _PATH_TMP "tc_cvs_init_XXXXXX");
 	s = mkdtemp(cvsroot);
+	fail_if(s == NULL, "failed to create cvsroot");
 
 	strcpy(cvsroot2, cvsroot);
 	strcat(cvsroot2, "/CVSROOT");
@@ -218,8 +224,9 @@ START_TEST(cvs_init_permission_cvsroot_cvsroot)
 	int		result;
 	struct stat	fstat;
 
-	strcpy(cvsroot, "/tmp/tc_cvs_init_XXXXXX");
+	strcpy(cvsroot, _PATH_TMP "tc_cvs_init_XXXXXX");
 	s = mkdtemp(cvsroot);
+	fail_if(s == NULL, "failed to create cvsroot");
 
 	strcpy(cvsroot2, cvsroot);
 	strcat(cvsroot2, "/CVSROOT");
