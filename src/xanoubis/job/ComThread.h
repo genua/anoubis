@@ -48,10 +48,20 @@ class ComThread : public JobThread
 
 	protected:
 		/**
+		 * Result codes returned by connect().
+		 */
+		enum ConnectResult {
+			Success,	/*!< Operation was successful. */
+			Failure,	/*!< Operation failed. */
+			VersionMismatch	/*!< Operation failed because of a
+					     protocol version mismatch. */
+		};
+
+		/**
 		 * Synchronously wait for a new message from the
 		 * communication channel.
 		 *
-		 * @ return true on success, false otherwise.
+		 * @return true on success, false otherwise.
 		 */
 		bool readMessage(void);
 
@@ -59,9 +69,9 @@ class ComThread : public JobThread
 		 * Connects to anoubisd.
 		 * This method needs to be called before the thread is started!
 		 *
-		 * @return true on success, false otherwise.
+		 * @return Result-code of the operation
 		 */
-		bool connect(void);
+		ConnectResult connect(void);
 
 		/**
 		 * Disconnects from anoubisd.

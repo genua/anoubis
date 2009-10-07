@@ -341,12 +341,12 @@ MainFrame::OnConnectionStateChange(wxCommandEvent& event)
 	JobCtrl *instance = JobCtrl::getInstance();
 	JobCtrl::ConnectionState newState =
 	    (JobCtrl::ConnectionState)event.GetInt();
-	bool connected = (newState == JobCtrl::CONNECTION_CONNECTED);
+	bool connected = (newState == JobCtrl::CONNECTED);
 	wxString hostname = event.GetString();
 	wxString logMessage;
 
 	switch (newState) {
-	case JobCtrl::CONNECTION_CONNECTED: {
+	case JobCtrl::CONNECTED: {
 		KeyCtrl			*keyCtrl = KeyCtrl::getInstance();
 		LocalCertificate	&cert = keyCtrl->getLocalCertificate();
 		struct anoubis_sig	*raw_cert;
@@ -383,20 +383,42 @@ MainFrame::OnConnectionStateChange(wxCommandEvent& event)
 		}
 		break;
 	}
-	case JobCtrl::CONNECTION_DISCONNECTED:
-	case JobCtrl::CONNECTION_ERROR:
+	case JobCtrl::DISCONNECTED:
+	case JobCtrl::ERR_RW:
 		logMessage = wxString::Format(
 		    _("Disconnected from %ls"), hostname.c_str());
 		wxGetApp().log(logMessage);
 		break;
-	case JobCtrl::CONNECTION_ERR_CONNECT:
-	case JobCtrl::CONNECTION_ERR_REG:
+	case JobCtrl::ERR_CONNECT:
+	case JobCtrl::ERR_REG:
 		logMessage = wxString::Format(
 		    _("Connection to %ls failed!"), hostname.c_str());
 		wxGetApp().alert(logMessage);
 		break;
-	case JobCtrl::CONNECTION_ERR_VERSION:
-		wxGetApp().alert(wxString::Format(_("APN version mismatch")));
+	case JobCtrl::ERR_VERSION_PROT:
+		wxGetApp().alert(_("Anoubis protocol version mismatch"));
+
+		if (instance->getDaemonProtocolVersion() <
+		    ANOUBIS_PROTO_VERSION) {
+			logMessage.Printf(_("Because of an incompatible "
+			    "protocol version (xanoubis: %i, Anoubis daemon: "
+			    "%i) the connection was rejected. Please update "
+			    "the Anoubis daemon package!"),
+			    ANOUBIS_PROTO_VERSION,
+			    instance->getDaemonProtocolVersion());
+		} else {
+			logMessage.Printf(_("Because of an incompatible "
+			    "protocol version (xanoubis: %i, Anoubis daemon: "
+			    "%i) the connection was rejected. Please update "
+			    "the xanoubis package!"), ANOUBIS_PROTO_VERSION,
+			    instance->getDaemonProtocolVersion());
+		}
+
+		anMessageBox(logMessage, _("Protocol version mismatch"),
+		    wxOK | wxICON_ERROR, this);
+		break;
+	case JobCtrl::ERR_VERSION_APN:
+		wxGetApp().alert(_("APN version mismatch"));
 
 		if (instance->getDaemonApnVersion() < apn_parser_version()) {
 			logMessage.Printf(_("The APN parser (v%i.%i) is newer "
@@ -674,7 +696,7 @@ MainFrame::OnTimer(wxTimerEvent &event)
 	int			ret, iNotifyFd = -1;
 	time_t			modTime = 0, savedTime = 0;
 	struct stat		sbuf;
-	
+
 	if (wxGetApp().getGrubPath() == wxEmptyString)
 		return;
 #ifdef HAVE_SYS_INOTIFY_H
@@ -692,7 +714,7 @@ MainFrame::OnTimer(wxTimerEvent &event)
 				 * Konfiguration.
 				 */
 				wxConfig::Get()->Write(
-		    		    wxT("/Options/GrubModifiedTime"), modTime);
+				    wxT("/Options/GrubModifiedTime"), modTime);
 			} else if (savedTime < modTime) {
 				warn = true;
 			}

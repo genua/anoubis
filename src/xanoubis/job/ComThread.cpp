@@ -78,12 +78,13 @@ ComThread::~ComThread()
 	delete answerQueue_;
 }
 
-bool
+ComThread::ConnectResult
 ComThread::connect(void)
 {
 	struct sockaddr_storage	 ss;
 	struct sockaddr_un	*ss_sun = (struct sockaddr_un *)&ss;
 	achat_rc		 rc = ACHAT_RC_ERROR;
+	int			 result;
 
 	struct sigaction        act;
 
@@ -98,18 +99,18 @@ ComThread::connect(void)
 
 	channel_ = acc_create();
 	if (channel_ == 0)
-		return (false);
+		return (Failure);
 
 	rc = acc_settail(channel_, ACC_TAIL_CLIENT);
 	if (rc != ACHAT_RC_OK) {
 		disconnect();
-		return (false);
+		return (Failure);
 	}
 
 	rc = acc_setsslmode(channel_, ACC_SSLMODE_CLEAR);
 	if (rc != ACHAT_RC_OK) {
 		disconnect();
-		return (false);
+		return (Failure);
 	}
 
 	bzero(&ss, sizeof(ss));
@@ -119,19 +120,19 @@ ComThread::connect(void)
 	rc = acc_setaddr(channel_, &ss, sizeof(struct sockaddr_un));
 	if (rc != ACHAT_RC_OK) {
 		disconnect();
-		return (false);
+		return (Failure);
 	}
 
 	rc = acc_prepare(channel_);
 	if (rc != ACHAT_RC_OK) {
 		disconnect();
-		return (false);
+		return (Failure);
 	}
 
 	rc = acc_open(channel_);
 	if (rc != ACHAT_RC_OK) {
 		disconnect();
-		return (false);
+		return (Failure);
 	}
 
 	/*
@@ -141,15 +142,25 @@ ComThread::connect(void)
 	client_ = anoubis_client_create(channel_);
 	if (client_ == 0) {
 		disconnect();
-		return (false);
+		return (Failure);
 	}
 
-	if (anoubis_client_connect(client_, ANOUBIS_PROTO_BOTH) != 0) {
+	result = anoubis_client_connect(client_, ANOUBIS_PROTO_BOTH);
+
+	/* Pass protocol version back to the JobCtrl */
+	JobCtrl::getInstance()->protocolVersion_ =
+	    anoubis_client_serverversion(client_);
+
+	if (result == EPROTONOSUPPORT &&
+	    !anoubis_client_versioncmp(client_, ANOUBIS_PROTO_VERSION)) {
 		disconnect();
-		return (false);
+		return (VersionMismatch);
+	} else if (result != 0) {
+		disconnect();
+		return (Failure);
 	}
 
-	return (true);
+	return (Success);
 }
 
 void
@@ -179,9 +190,14 @@ ComThread::Entry(void)
 	struct pollfd	 fds[2];
 	ComTask		*current = NULL;
 	Notification	*notify;
+	ConnectResult	 connectResult;
 
-	if (!connect()) {
-		sendComEvent(JobCtrl::CONNECTION_ERR_CONNECT);
+	connectResult = connect();
+	if (connectResult == VersionMismatch) {
+		sendComEvent(JobCtrl::ERR_VERSION_PROT);
+		return (0);
+	} else if (connectResult != Success) {
+		sendComEvent(JobCtrl::ERR_CONNECT);
 		return (0);
 	}
 
@@ -282,12 +298,12 @@ ComThread::readMessage(void)
 	achat_rc		 rc;
 
 	if ((channel_ == 0) || (client_ == 0)) {
-		sendComEvent(JobCtrl::CONNECTION_ERROR);
+		sendComEvent(JobCtrl::ERR_RW);
 		return (false);
 	}
 
 	if ((msg = anoubis_msg_new(size)) == 0) {
-		sendComEvent(JobCtrl::CONNECTION_ERROR);
+		sendComEvent(JobCtrl::ERR_RW);
 		return (false);
 	}
 	while(1) {
@@ -300,7 +316,7 @@ ComThread::readMessage(void)
 	}
 	if (rc != ACHAT_RC_OK) {
 		anoubis_msg_free(msg);
-		sendComEvent(JobCtrl::CONNECTION_ERROR);
+		sendComEvent(JobCtrl::ERR_RW);
 
 		return (false);
 	}
@@ -318,7 +334,7 @@ ComThread::readMessage(void)
 	if (result < 0) {
 		/* Error */
 		/* XXX CEH */
-		sendComEvent(JobCtrl::CONNECTION_ERROR);
+		sendComEvent(JobCtrl::ERR_RW);
 		return (false);
 	} else if (result == 0) {
 		/*

@@ -76,19 +76,21 @@ class JobCtrl : public wxEvtHandler, public Singleton<JobCtrl>
 		 * State of connection to anoubisd.
 		 */
 		enum ConnectionState {
-			CONNECTION_CONNECTED = 0, /*!< You are connected. */
-			CONNECTION_DISCONNECTED,  /*!< You are disconnected. */
-			CONNECTION_ERROR,         /*!< Connection errors */
-			CONNECTION_ERR_CONNECT,   /*!< An error occured while
-						       opening the socket
-						       connection. */
-			CONNECTION_ERR_REG,       /*!< An error occured while
-						       registering at the
-						       daemon. */
-			CONNECTION_ERR_VERSION    /*!< An error occured while
-						       fetching version
-						       information from the
-						       daemon. */
+			CONNECTED = 0,    /*!< You are connected. */
+			DISCONNECTED,     /*!< You are disconnected. */
+			ERR_RW,           /*!< An error occured while
+					       reading/writing the socket. */
+			ERR_CONNECT,      /*!< An error occured while opening
+					       the socket connection. */
+			ERR_REG,          /*!< An error occured while
+					       registering at the daemon. */
+			ERR_VERSION_PROT, /*!< The connection could not be
+					       established because of an
+					       Anoubis protocol version
+					       mismatch. */
+			ERR_VERSION_APN   /*!< The connection could not be
+					       established because of an APN
+					       parser version mismatch. */
 		};
 
 		~JobCtrl(void);
@@ -205,6 +207,13 @@ class JobCtrl : public wxEvtHandler, public Singleton<JobCtrl>
 		bool isSfsDisable(void) const;
 
 		/**
+		 * Returns the version of the Anoubis protocol used by the
+		 * daemon.
+		 * @return Remove Anoubis protocol version
+		 */
+		int getDaemonProtocolVersion(void) const;
+
+		/**
 		 * Returns the version of the APN parser used by the daemon.
 		 * @return Version of remote APN parser
 		 */
@@ -241,7 +250,7 @@ class JobCtrl : public wxEvtHandler, public Singleton<JobCtrl>
 		/**
 		 * Will cleanup after a Connection Error.
 		 */
-		void onConnectionError(wxCommandEvent &);
+		void onConnectionStateChange(wxCommandEvent &);
 
 	private:
 		wxString socketPath_;
@@ -251,12 +260,15 @@ class JobCtrl : public wxEvtHandler, public Singleton<JobCtrl>
 		ComRegistrationTask regTask_;
 		ComVersionTask versionTask_;
 		bool sfsdisable_;
+		int protocolVersion_;
+		int apnVersion_;
 
 		ComThread	*findComThread(void) const;
 		CsumCalcThread	*findCsumCalcThread(void) const;
 		void		 stopThread(JobThread *);
 		void		 sendComEvent(JobCtrl::ConnectionState);
 
+	friend class ComThread;
 	friend class JobThread;
 	friend class Singleton<JobCtrl>;
 };

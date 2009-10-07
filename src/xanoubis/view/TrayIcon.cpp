@@ -171,7 +171,7 @@ TrayIcon::~TrayIcon(void)
 void
 TrayIcon::OnConnectionStateChange(wxCommandEvent& event)
 {
-	if (event.GetInt() == JobCtrl::CONNECTION_CONNECTED) {
+	if (event.GetInt() == JobCtrl::CONNECTED) {
 		daemon_ = event.GetString();
 	} else {
 		daemon_ = wxEmptyString;
@@ -374,7 +374,7 @@ TrayIcon::systemNotify(const gchar *module, const gchar *message,
 	int timeShown = (timeout * ONE_SECOND);
 
 	NotifyUrgency messagePriority = priority;
-	
+
 	/*
 	 * A timeout of 0 used to mean that the notification is shown
 	 * indefinitely. notify-osd no longer supports timeouts at all except

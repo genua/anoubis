@@ -513,7 +513,7 @@ DlgRuleEditor::onConnectionStateChange(wxCommandEvent& event)
 	PolicyCtrl			*policyCtrl;
 
 	newState = (JobCtrl::ConnectionState)event.GetInt();
-	isConnected_ = (newState == JobCtrl::CONNECTION_CONNECTED);
+	isConnected_ = (newState == JobCtrl::CONNECTED);
 
 	if (isConnected_) {
 		policyCtrl = PolicyCtrl::getInstance();

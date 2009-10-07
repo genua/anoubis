@@ -52,6 +52,13 @@ class ComVersionTask : public ComTask
 		ComVersionTask(void);
 
 		/**
+		 * Returns the version of the Anoubis protocol used by the
+		 * daemon.
+		 * @return Version of remote Anoubis protocol
+		 */
+		int getProtocolVersion(void) const;
+
+		/**
 		 * Returns the version of the APN parser used by the daemon.
 		 * @return Version of remote APN parser
 		 */
@@ -83,6 +90,11 @@ class ComVersionTask : public ComTask
 		 * The transaction.
 		 */
 		struct anoubis_transaction *ta_;
+
+		/**
+		 * The Anoubis protocol version of the daemon.
+		 */
+		int protocolVersion_;
 
 		/**
 		 * The APN parser version of the daemon.

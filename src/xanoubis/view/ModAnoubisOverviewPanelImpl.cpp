@@ -62,7 +62,7 @@ ModAnoubisOverviewPanelImpl::OnConnectionStateChange(wxCommandEvent& event)
 	JobCtrl::ConnectionState newState =
 	    (JobCtrl::ConnectionState)event.GetInt();
 
-	setConnectionState(newState == JobCtrl::CONNECTION_CONNECTED);
+	setConnectionState(newState == JobCtrl::CONNECTED);
 
 	event.Skip();
 }

@@ -199,7 +199,7 @@ ModSfsMainPanelImpl::OnConnectionStateChange(wxCommandEvent &event)
 {
 	JobCtrl::ConnectionState state =
 	    (JobCtrl::ConnectionState)event.GetInt();
-	comEnabled_ = (state == JobCtrl::CONNECTION_CONNECTED);
+	comEnabled_ = (state == JobCtrl::CONNECTED);
 
 	if (!comEnabled_ &&
 	    (sfsCtrl_->getEntryFilter() != SfsCtrl::FILTER_STD)) {

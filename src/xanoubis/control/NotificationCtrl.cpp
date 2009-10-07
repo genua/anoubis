@@ -80,7 +80,7 @@ NotificationCtrl::addNotification(Notification *notification)
 		/* You are in the main-thread, just process the event */
 		ProcessEvent(updateEvent);
 	} else {
-		/* 
+		/*
 		 * You are not in the main-thread, schedule event for later
 		 * delivery.
 		 */
@@ -198,7 +198,7 @@ NotificationCtrl::onDaemonDisconnect(wxCommandEvent & event)
 
 	event.Skip();
 
-	if (event.GetInt() != JobCtrl::CONNECTION_CONNECTED) {
+	if (event.GetInt() != JobCtrl::CONNECTED) {
 		it = escalationsNotAnswered_.begin();
 		while (it != escalationsNotAnswered_.end()) {
 			notify = getNotification(*it);

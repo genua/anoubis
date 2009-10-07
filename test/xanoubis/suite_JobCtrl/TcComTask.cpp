@@ -243,7 +243,7 @@ TcComTask::onTestConnect(wxCommandEvent &event)
 	JobCtrl::ConnectionState newState =
 	    (JobCtrl::ConnectionState)event.GetInt();
 
-	assertUnless((newState == JobCtrl::CONNECTION_CONNECTED),
+	assertUnless((newState == JobCtrl::CONNECTED),
 	    "Connection failed with state %i\n", newState);
 
 	event.Skip();
@@ -275,6 +275,9 @@ TcComTask::onTestVersion(TaskEvent &event)
 	assertUnless(t->getComTaskResult() == ComTask::RESULT_SUCCESS,
 	    "Failed to receive versionlist: %i\n", t->getComTaskResult());
 
+	assertUnless(t->getProtocolVersion() == 1,
+	    "Unexpected protocol version received (%i)\n",
+	    t->getProtocolVersion());
 	assertUnless(t->getApnVersion() == 65536,
 	    "Unexpected APN version received (%i.%i)",
 	    APN_PARSER_MAJOR(t->getApnVersion()),

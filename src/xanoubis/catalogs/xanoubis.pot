@@ -34,7 +34,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-10-05 17:10+0200\n"
+"POT-Creation-Date: 2009-10-07 10:09+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -74,7 +74,7 @@ msgstr ""
 #: model/AlfFilterPolicy.cpp:328 model/AlfFilterPolicy.cpp:380
 #: model/AlfFilterPolicy.cpp:731 model/AlfFilterPolicy.cpp:759
 #: model/ContextFilterPolicy.cpp:183 model/FilterPolicy.cpp:95
-#: model/FilterPolicy.cpp:121 view/DlgRuleEditor.cpp:1826
+#: model/FilterPolicy.cpp:121 view/DlgRuleEditor.cpp:1827
 #: view/RuleWizardHistory.cpp:269
 msgid "(unknown)"
 msgstr ""
@@ -219,7 +219,7 @@ msgstr ""
 msgid "Failed import of policy file %hs"
 msgstr ""
 
-#: model/PolicyRuleSet.cpp:572
+#: model/PolicyRuleSet.cpp:573
 #, c-format
 msgid "Unknown error during import of policy file %ls"
 msgstr ""
@@ -437,7 +437,7 @@ msgstr ""
 msgid "Status:"
 msgstr ""
 
-#: view/DlgRuleEditorBase.cpp:249 view/DlgRuleEditor.cpp:2132
+#: view/DlgRuleEditorBase.cpp:249 view/DlgRuleEditor.cpp:2133
 msgid "not modified"
 msgstr ""
 
@@ -863,7 +863,7 @@ msgid "Delete rule %ld?"
 msgstr ""
 
 #: view/DlgRuleEditor.cpp:859 view/DlgRuleEditor.cpp:896
-#: view/MainFrame.cpp:536
+#: view/MainFrame.cpp:558
 msgid "Confirm"
 msgstr ""
 
@@ -897,7 +897,7 @@ msgstr ""
 msgid "Cannot edit admin ruleset!"
 msgstr ""
 
-#: view/DlgRuleEditor.cpp:1188 view/DlgRuleEditor.cpp:2172
+#: view/DlgRuleEditor.cpp:1188 view/DlgRuleEditor.cpp:2173
 msgid "RuleEditor"
 msgstr ""
 
@@ -909,13 +909,13 @@ msgstr ""
 msgid "Import policy file"
 msgstr ""
 
-#: view/DlgRuleEditor.cpp:1257 view/MainFrame.cpp:501
+#: view/DlgRuleEditor.cpp:1257 view/MainFrame.cpp:523
 msgid "Couldn't import policy file: it has errors."
 msgstr ""
 
-#: view/DlgRuleEditor.cpp:1258 view/MainFrame.cpp:502 view/MainFrame.cpp:750
-#: view/ModAnoubisMainPanelImpl.cpp:1505 main.cpp:157 main.cpp:474
-#: main.cpp:482
+#: view/DlgRuleEditor.cpp:1258 view/MainFrame.cpp:524 view/MainFrame.cpp:788
+#: view/ModAnoubisMainPanelImpl.cpp:1505 main.cpp:161 main.cpp:483
+#: main.cpp:491
 msgid "Error"
 msgstr ""
 
@@ -923,22 +923,22 @@ msgstr ""
 msgid "Export ruleset..."
 msgstr ""
 
-#: view/DlgRuleEditor.cpp:1335 view/MainFrame.cpp:521
+#: view/DlgRuleEditor.cpp:1335 view/MainFrame.cpp:543
 msgid "Failed to export the ruleset into a file."
 msgstr ""
 
-#: view/DlgRuleEditor.cpp:1336 view/MainFrame.cpp:522
+#: view/DlgRuleEditor.cpp:1336 view/MainFrame.cpp:544
 msgid "Export ruleset"
 msgstr ""
 
 #: view/DlgRuleEditor.cpp:1369 view/DlgRuleEditor.cpp:1392
 #: view/ModAnoubisMainPanelImpl.cpp:479 view/ModSfsMainPanelImpl.cpp:408
-#: view/RuleWizard.cpp:403
+#: view/RuleWizard.cpp:405
 msgid "The entered password is incorrect."
 msgstr ""
 
 #: view/DlgRuleEditor.cpp:1370 view/DlgRuleEditor.cpp:1393
-#: view/RuleWizard.cpp:404
+#: view/RuleWizard.cpp:406
 msgid "Key Load Error"
 msgstr ""
 
@@ -947,11 +947,11 @@ msgid "An error occured while sending policy to daemon."
 msgstr ""
 
 #: view/DlgRuleEditor.cpp:1377 view/DlgRuleEditor.cpp:1400
-#: view/RuleWizard.cpp:411
+#: view/RuleWizard.cpp:413
 msgid "Policy Load Error"
 msgstr ""
 
-#: view/DlgRuleEditor.cpp:1398 view/RuleWizard.cpp:409
+#: view/DlgRuleEditor.cpp:1398 view/RuleWizard.cpp:411
 msgid "An error occured while sending admin policy to the daemon."
 msgstr ""
 
@@ -975,16 +975,16 @@ msgstr ""
 msgid "Loading filter policy..."
 msgstr ""
 
-#: view/DlgRuleEditor.cpp:1741
+#: view/DlgRuleEditor.cpp:1742
 #, c-format
 msgid "loading policy with id: %d"
 msgstr ""
 
-#: view/DlgRuleEditor.cpp:2130
+#: view/DlgRuleEditor.cpp:2131
 msgid "modified"
 msgstr ""
 
-#: view/DlgRuleEditor.cpp:2171
+#: view/DlgRuleEditor.cpp:2172
 msgid "Invalid user Name"
 msgstr ""
 
@@ -1123,56 +1123,78 @@ msgstr ""
 msgid "Connection to %ls failed!"
 msgstr ""
 
-#: view/MainFrame.cpp:399 view/MainFrame.cpp:419
+#: view/MainFrame.cpp:399
+msgid "Anoubis protocol version mismatch"
+msgstr ""
+
+#: view/MainFrame.cpp:403
+#, c-format
+msgid ""
+"Because of an incompatible protocol version (xanoubis: %i, Anoubis daemon: %"
+"i) the connection was rejected. Please update the Anoubis daemon package!"
+msgstr ""
+
+#: view/MainFrame.cpp:410
+#, c-format
+msgid ""
+"Because of an incompatible protocol version (xanoubis: %i, Anoubis daemon: %"
+"i) the connection was rejected. Please update the xanoubis package!"
+msgstr ""
+
+#: view/MainFrame.cpp:417
+msgid "Protocol version mismatch"
+msgstr ""
+
+#: view/MainFrame.cpp:421 view/MainFrame.cpp:441
 msgid "APN version mismatch"
 msgstr ""
 
-#: view/MainFrame.cpp:402
+#: view/MainFrame.cpp:424
 #, c-format
 msgid ""
 "The APN parser (v%i.%i) is newer than the parser of the Anoubis daemon (v%i.%"
 "i). Please update the Anoubis daemon package!"
 msgstr ""
 
-#: view/MainFrame.cpp:410
+#: view/MainFrame.cpp:432
 #, c-format
 msgid ""
 "The APN parser (v%i.%i) is older than the parser of the Anoubis daemon (v%i.%"
 "i). Please update the xanoubis package!"
 msgstr ""
 
-#: view/MainFrame.cpp:490
+#: view/MainFrame.cpp:512
 msgid "Choose a policy file:"
 msgstr ""
 
-#: view/MainFrame.cpp:510 view/ModAnoubisMainPanelImpl.cpp:1231
+#: view/MainFrame.cpp:532 view/ModAnoubisMainPanelImpl.cpp:1231
 msgid "Choose a file to write the policies to:"
 msgstr ""
 
-#: view/MainFrame.cpp:535
+#: view/MainFrame.cpp:557
 msgid "xanoubis is going to be closed."
 msgstr ""
 
-#: view/MainFrame.cpp:697
+#: view/MainFrame.cpp:736
 msgid ""
 "The Boot Loader configuration has been updated.Please make sure to boot an "
 "Anoubis Kernel."
 msgstr ""
 
-#: view/MainFrame.cpp:699 main.cpp:228 main.cpp:278
+#: view/MainFrame.cpp:738 main.cpp:233 main.cpp:290
 msgid "Warning"
 msgstr ""
 
-#: view/MainFrame.cpp:737
+#: view/MainFrame.cpp:775
 msgid "Communication error while fetching list of upgraded files."
 msgstr ""
 
-#: view/MainFrame.cpp:741
+#: view/MainFrame.cpp:779
 #, c-format
 msgid "Got error (%hs) from daemon while fetching list of upgraded files."
 msgstr ""
 
-#: view/MainFrame.cpp:746
+#: view/MainFrame.cpp:784
 #, c-format
 msgid ""
 "An unexpected error (%i) occured while while fetching list of upgraded files."
@@ -1195,7 +1217,7 @@ msgstr ""
 msgid "Temporary"
 msgstr ""
 
-#: view/ModAlfMainPanelImpl.cpp:187 view/ModSfsMainPanelImpl.cpp:778
+#: view/ModAlfMainPanelImpl.cpp:187 view/ModSfsMainPanelImpl.cpp:822
 #: view/ModSbMainPanelImpl.cpp:232
 #, c-format
 msgid "admin ruleset of %ls"
@@ -1890,28 +1912,28 @@ msgstr ""
 msgid "Failed to disable signed checksums."
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:620
+#: view/ModSfsMainPanelImpl.cpp:664
 msgid ""
 "Cannot load the private key!\n"
 "The file you specified does not exist."
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:622
+#: view/ModSfsMainPanelImpl.cpp:666
 msgid "Load private key"
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:650
+#: view/ModSfsMainPanelImpl.cpp:694
 #, c-format
 msgid ""
 "Failed to load certificate from\n"
 "%ls."
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:652
+#: view/ModSfsMainPanelImpl.cpp:696
 msgid "Load certificate"
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:807
+#: view/ModSfsMainPanelImpl.cpp:851
 #, c-format
 msgid "default %ls"
 msgstr ""
@@ -2125,7 +2147,7 @@ msgstr ""
 msgid "open requests (SB): "
 msgstr ""
 
-#: view/RuleWizard.cpp:418
+#: view/RuleWizard.cpp:420
 msgid "policy sent to daemon"
 msgstr ""
 
@@ -3008,127 +3030,127 @@ msgstr ""
 msgid "Failed to flush the content of %ls: %hs"
 msgstr ""
 
-#: control/PolicyCtrl.cpp:467
+#: control/PolicyCtrl.cpp:468
 #, c-format
 msgid ""
 "Communication error while receiving\n"
 "admin-policy of %ls."
 msgstr ""
 
-#: control/PolicyCtrl.cpp:470
+#: control/PolicyCtrl.cpp:471
 #, c-format
 msgid ""
 "Communication error while receiving\n"
 "user-policy of %ls."
 msgstr ""
 
-#: control/PolicyCtrl.cpp:473
+#: control/PolicyCtrl.cpp:474
 msgid "Error while receiving policy."
 msgstr ""
 
-#: control/PolicyCtrl.cpp:476
+#: control/PolicyCtrl.cpp:477
 #, c-format
 msgid ""
 "Got error (%hs) from daemon\n"
 "after receiving admin-policy of %ls."
 msgstr ""
 
-#: control/PolicyCtrl.cpp:481
+#: control/PolicyCtrl.cpp:482
 #, c-format
 msgid ""
 "Got error (%hs) from daemon\n"
 "after receiving user-policy of %ls."
 msgstr ""
 
-#: control/PolicyCtrl.cpp:486
+#: control/PolicyCtrl.cpp:487
 #, c-format
 msgid ""
 "Got error (%hs) from daemon\n"
 "after receiving policy."
 msgstr ""
 
-#: control/PolicyCtrl.cpp:490 control/PolicyCtrl.cpp:583
+#: control/PolicyCtrl.cpp:491 control/PolicyCtrl.cpp:584
 #, c-format
 msgid ""
 "An unexpected error occured.\n"
 "Error code: %i"
 msgstr ""
 
-#: control/PolicyCtrl.cpp:496
+#: control/PolicyCtrl.cpp:497
 msgid "Error while receiving policy"
 msgstr ""
 
-#: control/PolicyCtrl.cpp:541
+#: control/PolicyCtrl.cpp:542
 msgid "The task was not executed."
 msgstr ""
 
-#: control/PolicyCtrl.cpp:543
+#: control/PolicyCtrl.cpp:544
 msgid "Out of memory."
 msgstr ""
 
-#: control/PolicyCtrl.cpp:547
+#: control/PolicyCtrl.cpp:548
 #, c-format
 msgid ""
 "Communication error while sending admin-policy\n"
 "of %ls to daemon."
 msgstr ""
 
-#: control/PolicyCtrl.cpp:550
+#: control/PolicyCtrl.cpp:551
 #, c-format
 msgid ""
 "Communication error while sending user-policy\n"
 "of %ls to daemon."
 msgstr ""
 
-#: control/PolicyCtrl.cpp:553
+#: control/PolicyCtrl.cpp:554
 msgid "Error while sending policy to daemon."
 msgstr ""
 
-#: control/PolicyCtrl.cpp:556
+#: control/PolicyCtrl.cpp:557
 #, c-format
 msgid ""
 "Got error (%hs) from daemon\n"
 "after sending admin-policy of %ls."
 msgstr ""
 
-#: control/PolicyCtrl.cpp:561
+#: control/PolicyCtrl.cpp:562
 #, c-format
 msgid ""
 "Got error (%hs) from daemon\n"
 "after sending user-policy of %ls."
 msgstr ""
 
-#: control/PolicyCtrl.cpp:566
+#: control/PolicyCtrl.cpp:567
 #, c-format
 msgid ""
 "Got error (%hs) from daemon\n"
 "after sending policy."
 msgstr ""
 
-#: control/PolicyCtrl.cpp:572
+#: control/PolicyCtrl.cpp:573
 #, c-format
 msgid "Failed to sign the admin-policy of %ls: %hs."
 msgstr ""
 
-#: control/PolicyCtrl.cpp:576
+#: control/PolicyCtrl.cpp:577
 #, c-format
 msgid "Failed to sign the user-policy of %ls: %hs."
 msgstr ""
 
-#: control/PolicyCtrl.cpp:580
+#: control/PolicyCtrl.cpp:581
 #, c-format
 msgid "Failed to sign the policy: %hs."
 msgstr ""
 
-#: control/PolicyCtrl.cpp:589 control/PolicyCtrl.cpp:596
+#: control/PolicyCtrl.cpp:590 control/PolicyCtrl.cpp:597
 msgid "Error while sending policy"
 msgstr ""
 
-#: control/PolicyCtrl.cpp:595
+#: control/PolicyCtrl.cpp:596
 msgid "Failed to make a backup of the policy."
 msgstr ""
 
-#: control/PolicyCtrl.cpp:665
+#: control/PolicyCtrl.cpp:666
 #, c-format
 msgid "Automatically created version while saving the %ls profile"
 msgstr ""
@@ -3194,60 +3216,60 @@ msgstr ""
 msgid "Failure to resolve: "
 msgstr ""
 
-#: main.cpp:156
+#: main.cpp:160
 msgid "Error while initialising anoubis_ui"
 msgstr ""
 
-#: main.cpp:214
+#: main.cpp:219
 msgid "Language setting: "
 msgstr ""
 
-#: main.cpp:225
+#: main.cpp:230
 #, c-format
 msgid ""
 "Unsupported version (%d) found of HOME/.xanoubis\n"
 "This might cause problems\n"
 msgstr ""
 
-#: main.cpp:275
+#: main.cpp:287
 msgid ""
 "The Boot Loader configuration has been updated. Please make sure to boot an "
 "Anoubis Kernel."
 msgstr ""
 
-#: main.cpp:352
+#: main.cpp:361
 msgid "this help"
 msgstr ""
 
-#: main.cpp:359
+#: main.cpp:368
 msgid "communication socket of anoubis daemon"
 msgstr ""
 
-#: main.cpp:366
+#: main.cpp:375
 msgid "Debug output with 'num' als level"
 msgstr ""
 
-#: main.cpp:373
+#: main.cpp:382
 msgid "Disable TrayIcon"
 msgstr ""
 
-#: main.cpp:472 main.cpp:480
+#: main.cpp:481 main.cpp:489
 #, c-format
 msgid "Couldn't remove Autostart file: %ls"
 msgstr ""
 
-#: main.cpp:708
+#: main.cpp:732
 #, c-format
 msgid ""
 "Enter the passphrase of your private key:\n"
 "%ls"
 msgstr ""
 
-#: main.cpp:710 main.cpp:715
+#: main.cpp:734 main.cpp:739
 msgid "Enter passphrase for: "
 msgstr ""
 
-#: main.cpp:713
+#: main.cpp:737
 #, c-format
 msgid ""
 "The entered passphrase was wrong!\n"

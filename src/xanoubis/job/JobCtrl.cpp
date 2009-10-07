@@ -44,6 +44,8 @@ JobCtrl::JobCtrl(void)
 {
 	/* Default configuration */
 	this->socketPath_ = wxT(PACKAGE_SOCKET);
+	this->protocolVersion_ = -1;
+	this->apnVersion_ = -1;
 	this->sfsdisable_ = false;
 
 	csumCalcTaskQueue_ = new SynchronizedQueue<Task>(true);
@@ -54,7 +56,8 @@ JobCtrl::JobCtrl(void)
 	Connect(anTASKEVT_VERSION,
 	    wxTaskEventHandler(JobCtrl::onDaemonVersion), NULL, this);
 	Connect(anEVT_COM_CONNECTION,
-	    wxCommandEventHandler(JobCtrl::onConnectionError), NULL, this);
+	    wxCommandEventHandler(JobCtrl::onConnectionStateChange),
+	    NULL, this);
 }
 
 JobCtrl::~JobCtrl(void)
@@ -66,7 +69,8 @@ JobCtrl::~JobCtrl(void)
 	Disconnect(anTASKEVT_VERSION,
 	    wxTaskEventHandler(JobCtrl::onDaemonVersion), NULL, this);
 	Disconnect(anEVT_COM_CONNECTION,
-	    wxCommandEventHandler(JobCtrl::onConnectionError), NULL, this);
+	    wxCommandEventHandler(JobCtrl::onConnectionStateChange),
+	    NULL, this);
 
 	delete csumCalcTaskQueue_;
 	delete comTaskQueue_;
@@ -140,7 +144,7 @@ JobCtrl::connect(void)
 			}
 		} else {
 			delete t;
-			sendComEvent(JobCtrl::CONNECTION_ERR_CONNECT);
+			sendComEvent(JobCtrl::ERR_CONNECT);
 
 			return (false);
 		}
@@ -171,9 +175,15 @@ JobCtrl::isSfsDisable(void) const
 }
 
 int
+JobCtrl::getDaemonProtocolVersion(void) const
+{
+	return (protocolVersion_);
+}
+
+int
 JobCtrl::getDaemonApnVersion(void) const
 {
-	return (versionTask_.getApnVersion());
+	return (apnVersion_);
 }
 
 void
@@ -241,14 +251,14 @@ JobCtrl::onDaemonRegistration(TaskEvent &event)
 			addTask(&versionTask_);
 		} else {
 			/* Registration failed, disconnect again */
-			sendComEvent(JobCtrl::CONNECTION_ERR_REG);
+			sendComEvent(JobCtrl::ERR_REG);
 			disconnect();
 		}
 	} else { /* ACTION_UNREGISTER */
 		ComThread *t;
 
 		if (task->getComTaskResult() != ComTask::RESULT_SUCCESS) {
-			sendComEvent(JobCtrl::CONNECTION_ERR_REG);
+			sendComEvent(JobCtrl::ERR_REG);
 		}
 
 		/* Disconnect independent from unregistration-result */
@@ -258,7 +268,7 @@ JobCtrl::onDaemonRegistration(TaskEvent &event)
 			delete t;
 		}
 
-		sendComEvent(JobCtrl::CONNECTION_DISCONNECTED);
+		sendComEvent(JobCtrl::DISCONNECTED);
 	}
 
 	event.Skip();
@@ -275,34 +285,41 @@ JobCtrl::onDaemonVersion(TaskEvent &event)
 	}
 
 	if (versionTask_.getComTaskResult() != ComTask::RESULT_SUCCESS) {
-		sendComEvent(JobCtrl::CONNECTION_ERR_VERSION);
+		sendComEvent(JobCtrl::ERR_REG);
 		disconnect();
 
 		return;
 	}
 
-	if (versionTask_.getApnVersion() != apn_parser_version()) {
-		sendComEvent(JobCtrl::CONNECTION_ERR_VERSION);
+	protocolVersion_ = versionTask_.getProtocolVersion();
+	apnVersion_ = versionTask_.getApnVersion();
+
+	if (apnVersion_ != apn_parser_version()) {
+		sendComEvent(JobCtrl::ERR_VERSION_APN);
 		disconnect();
 
 		return;
 	}
 
-	sendComEvent(JobCtrl::CONNECTION_CONNECTED);
+	sendComEvent(JobCtrl::CONNECTED);
 }
 
 void
-JobCtrl::onConnectionError(wxCommandEvent &event)
+JobCtrl::onConnectionStateChange(wxCommandEvent &event)
 {
-	ComThread *t;
+	JobCtrl::ConnectionState state =
+	    (JobCtrl::ConnectionState)event.GetInt();
 
-	if (event.GetInt() == JobCtrl::CONNECTION_ERROR) {
+	if (state == JobCtrl::ERR_RW || state == JobCtrl::ERR_VERSION_PROT) {
+		/* Cleanup */
+		ComThread *t;
 		while ((t = findComThread()) != 0) {
 			threadList_.DeleteObject(t);
 			t->stop();
 			delete t;
 		}
 	}
+
 	event.Skip();
 }
 

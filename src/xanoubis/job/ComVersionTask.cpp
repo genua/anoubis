@@ -36,6 +36,12 @@ ComVersionTask::ComVersionTask(void)
 }
 
 int
+ComVersionTask::getProtocolVersion(void) const
+{
+	return (this->protocolVersion_);
+}
+
+int
 ComVersionTask::getApnVersion(void) const
 {
 	return (this->apnVersion_);
@@ -83,6 +89,7 @@ void
 ComVersionTask::resetComTaskResult(void)
 {
 	ComTask::resetComTaskResult();
+	this->protocolVersion_ = 0;
 	this->apnVersion_ = 0;
 }
 
@@ -102,6 +109,7 @@ ComVersionTask::processVersionMessage(struct anoubis_msg *m)
 		return (false);
 	}
 
+	this->protocolVersion_ = get_value(m->u.version->protocol);
 	this->apnVersion_ = get_value(m->u.version->apn);
 
 	return (true);
