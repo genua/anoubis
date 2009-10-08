@@ -1,29 +1,3 @@
-###########################################################################
-# Copyright (c) 2009 GeNUA mbH <info@genua.de>
-#
-# All rights reserved.
-#
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions
-# are met:
-# 1. Redistributions of source code must retain the above copyright
-#    notice, this list of conditions and the following disclaimer.
-# 2. Redistributions in binary form must reproduce the above copyright
-#    notice, this list of conditions and the following disclaimer in the
-#    documentation and/or other materials provided with the distribution.
-#
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-# OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
-# TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-# PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-# LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-###########################################################################
 # SOME DESCRIPTIVE TITLE.
 # Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the PACKAGE package.
@@ -34,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-10-07 10:09+0200\n"
+"POT-Creation-Date: 2009-10-07 15:07+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1181,7 +1155,7 @@ msgid ""
 "Anoubis Kernel."
 msgstr ""
 
-#: view/MainFrame.cpp:738 main.cpp:233 main.cpp:290
+#: view/MainFrame.cpp:738 main.cpp:169 main.cpp:290
 msgid "Warning"
 msgstr ""
 
@@ -3220,15 +3194,15 @@ msgstr ""
 msgid "Error while initialising anoubis_ui"
 msgstr ""
 
-#: main.cpp:219
-msgid "Language setting: "
-msgstr ""
-
-#: main.cpp:230
+#: main.cpp:166
 #, c-format
 msgid ""
 "Unsupported version (%d) found of HOME/.xanoubis\n"
-"This might cause problems\n"
+"Xanoubis will terminate now.\n"
+msgstr ""
+
+#: main.cpp:228
+msgid "Language setting: "
 msgstr ""
 
 #: main.cpp:287

@@ -162,6 +162,15 @@ bool AnoubisGuiApp::OnInit()
 		dlg.ShowModal();
 	}
 	versionError = anoubis_ui_readversion();
+	if (versionError > ANOUBIS_UI_VER) {
+		wxString msg = wxString::Format(_("Unsupported version (%d) "
+		    "found of HOME/.xanoubis\nXanoubis will terminate now.\n"),
+		    versionError);
+		AnMessageDialog dlg(mainFrame, msg, _("Warning"),
+		    wxOK | wxICON_WARNING);
+		dlg.ShowModal();
+		return (false);
+	}
 
 	if (!wxDirExists(paths_.GetUserDataDir())) {
 		wxMkdir(paths_.GetUserDataDir());
@@ -225,15 +234,6 @@ bool AnoubisGuiApp::OnInit()
 	 */
 	if (trayVisible_)
 		trayIcon = new TrayIcon();
-
-	if (versionError > ANOUBIS_UI_VER) {
-		wxString msg = wxString::Format(_("Unsupported version (%d) "
-		    "found of HOME/.xanoubis\nThis might cause problems\n"),
-		    versionError);
-		AnMessageDialog dlg(mainFrame, msg, _("Warning"),
-		    wxOK | wxICON_WARNING);
-		dlg.ShowModal();
-	}
 
 	wxConfig::Get()->Read(wxT("/Options/GrubConfigPath"), &grubPath_);
 	initINotify();

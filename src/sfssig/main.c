@@ -396,12 +396,16 @@ main(int argc, char *argv[])
 		return 1;
 	}
 	error = anoubis_ui_readversion();
-	if (error > ANOUBIS_UI_VER)
+	if (error > ANOUBIS_UI_VER) {
 		fprintf(stderr, "Unsupported version (%d) found of HOME/"
-		    ANOUBIS_UI_DIR"\nThis might cause problems\n", error);
-	if (error < 0)
+		    ANOUBIS_UI_DIR"\nsfssig will terminate now.\n", error);
+		return 1;
+	}
+	if (error < 0) {
 		fprintf(stderr, "Error occured while reading version: %s\n",
 		    strerror(-error));
+		return 1;
+	}
 
 	if (sfs_command == NULL || argc < 0) {
 		fprintf(stderr, "No command specified\n");
