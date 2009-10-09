@@ -476,7 +476,7 @@ MainFrame::OnMbHelpAboutSelect(wxCommandEvent&)
 	info.SetCopyright(wxT("(C) 2007-2009 GeNUA mbH"));
 	// info.SetWebSite(wxT("www.anoubis.org"));
 	info.SetIcon(*aboutIcon_);
-	// info.SetDescription(wxT(""));
+	info.SetDescription(wxT("Build Id: " PACKAGE_BUILD));
 
 	info.AddDeveloper(wxT("Alexander von Gernler"));
 	info.AddDeveloper(wxT("Andreas Fiessler"));

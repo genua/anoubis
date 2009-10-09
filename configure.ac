@@ -30,7 +30,7 @@ dnl      see #311 for details.
 dnl Define version as provided by VERSION
 AC_INIT(anoubis, esyscmd([echo -n `head -1 VERSION`]), info@genua.de)
 
-AC_DEFINE(PACKAGE_BUILD, esyscmd([echo -n `head -2 VERSION|tail -1`]), \
+AC_DEFINE(PACKAGE_BUILD, esyscmd([echo -n "\"`head -2 VERSION|tail -1`\""]), \
 	"Package build number")
 
 AM_INIT_AUTOMAKE

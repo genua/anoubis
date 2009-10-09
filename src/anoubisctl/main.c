@@ -576,6 +576,7 @@ daemon_version(void)
 
 	/* Package version, independent from connection-state */
 	fprintf(stdout, "Package: " PACKAGE_VERSION "\n");
+	fprintf(stdout, "Build: " PACKAGE_BUILD "\n");
 
 	/* Anoubis protocol version */
 	prot_client_version = ANOUBIS_PROTO_VERSION;

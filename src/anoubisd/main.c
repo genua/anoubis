@@ -26,6 +26,7 @@
  */
 
 #include "config.h"
+#include "version.h"
 
 #ifdef S_SPLINT_S
 #include "splint-includes.h"
@@ -572,6 +573,7 @@ main(int argc, char *argv[])
 	DEBUG(DBG_TRACE, "logger_pid=%d", logger_pid);
 
 	log_info("master start");
+	log_info("Package: " PACKAGE_VERSION " (build " PACKAGE_BUILD ")");
 	DEBUG(DBG_TRACE, "debug=%x", debug_flags);
 	master_pid = getpid();
 	DEBUG(DBG_TRACE, "master_pid=%d", master_pid);
