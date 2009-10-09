@@ -67,7 +67,7 @@ class AnMessageDialog : public wxDialog
 		 * Gets called by the callee and decides if the message dialog
 		 * should be shown or not.
 		 * @param None.
-		 * @return int
+		 * @return One of wxOK, wxCANCEL, wxYES, wxNO.
 		 */
 		int ShowModal(void);
 
@@ -119,6 +119,13 @@ class AnMessageDialog : public wxDialog
 		 * @return wxStaticText
 		 */
 		wxStaticText *createText(const wxString &);
+
+		/**
+		 * Handle click-events from the buttons of the dialog.
+		 * @param[in] 1st The event.
+		 * @return Nothing.
+		 */
+		void onButton(wxCommandEvent &);
 
 		/**
 		 * Handle events from checkBox

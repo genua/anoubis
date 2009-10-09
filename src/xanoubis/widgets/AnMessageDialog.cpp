@@ -64,6 +64,11 @@ AnMessageDialog::AnMessageDialog(wxWindow *parent, const wxString &message,
 	buttonSizer_ = CreateButtonSizer(style);
 	mainSizer->Add(buttonSizer_, 0, wxALL | wxEXPAND, 5);
 
+	if (style & wxNO)
+		SetEscapeId(wxID_NO);
+	if (style & wxCANCEL)
+		SetEscapeId(wxID_CANCEL);
+
 	/* Checkbox is part of mainSizer */
 	dontShowMessageAgain = new wxCheckBox(this, wxID_ANY,
 	    _("Don't show this message again!"),
@@ -71,6 +76,8 @@ AnMessageDialog::AnMessageDialog(wxWindow *parent, const wxString &message,
 	dontShowMessageAgain->Hide();
 	mainSizer->Add(dontShowMessageAgain, 0, wxALL | wxEXPAND, 5);
 
+	Connect(wxEVT_COMMAND_BUTTON_CLICKED,
+	    wxCommandEventHandler(AnMessageDialog::onButton), NULL, this);
 	dontShowMessageAgain->Connect(wxEVT_COMMAND_CHECKBOX_CLICKED,
 	    wxCommandEventHandler(AnMessageDialog::OnDontShowMessageAgain),
 	    NULL, this );
@@ -86,17 +93,31 @@ int
 AnMessageDialog::ShowModal(void)
 {
 	bool showDialog = false;
-	wxConfig::Get()->Read(configString_, &showDialog);
 
 	/*
 	 * Display the dialog, if configString_ does not exist
 	 * (Read()-operation will fail) or the dialog is configured to be
 	 * displayed (showDialog set to true by Read()).
 	 */
+	int buttonId;
 	if (!wxConfig::Get()->Read(configString_, &showDialog) || showDialog)
-		return (wxDialog::ShowModal());
+		buttonId = wxDialog::ShowModal();
 	else
-		return (GetAffirmativeId());
+		buttonId = GetAffirmativeId();
+
+	switch (buttonId) {
+	case wxID_OK:
+		return (wxOK);
+	case wxID_YES:
+		return (wxYES);
+	case wxID_NO:
+		return (wxNO);
+	case wxID_CANCEL:
+		return (wxCANCEL);
+	default:
+		fprintf(stderr, "Unexpected return-code: %i\n", buttonId);
+		return (wxCANCEL);
+	}
 }
 
 wxStaticBitmap *
@@ -152,6 +173,21 @@ AnMessageDialog::onNotifyCheck(const wxString &userOption)
 }
 
 void
+AnMessageDialog::onButton(wxCommandEvent &event)
+{
+	const int id = event.GetId();
+
+	/*
+	 * Hide dialog, if NO or CANCEL was clicked. The remaining buttons
+	 * are already handled by wxDialog.
+	 */
+	if (id == wxID_NO || id == wxID_CANCEL)
+		EndModal(id);
+	else
+		event.Skip();
+}
+
+void
 AnMessageDialog::OnDontShowMessageAgain(wxCommandEvent& WXUNUSED(event))
 {
 	wxConfig::Get()->Write(configString_,
@@ -161,6 +197,17 @@ AnMessageDialog::OnDontShowMessageAgain(wxCommandEvent& WXUNUSED(event))
 int anMessageBox(const wxString &message, const wxString &caption,
     int style, wxWindow *parent, int x, int y)
 {
-	AnMessageDialog dlg(parent, message, caption, style, wxPoint(x, y));
+	long decorated_style = style;
+
+	if ((style &
+	    (wxICON_EXCLAMATION | wxICON_HAND | wxICON_INFORMATION |
+	    wxICON_QUESTION)) == 0)
+	{
+		decorated_style |= ( style & wxYES )
+		    ? wxICON_QUESTION : wxICON_INFORMATION ;
+	}
+
+	AnMessageDialog dlg(parent, message, caption, decorated_style,
+	    wxPoint(x, y));
 	return (dlg.ShowModal());
 }
