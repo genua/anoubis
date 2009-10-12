@@ -33,7 +33,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: anoubis 0.1.10.D023.970.D004.C117\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-10-07 15:07+0200\n"
+"POT-Creation-Date: 2009-10-12 14:54+0200\n"
 "PO-Revision-Date: 2009-10-07 10:16+0100\n"
 "Last-Translator: Robin <robin_doer@genua.de>\n"
 "Language-Team: German <de@li.org>\n"
@@ -1548,7 +1548,7 @@ msgid "this port on this host"
 msgstr "dieser Port auf diesem Rechner"
 
 #: view/ModAnoubisPanelsBase.cpp:242
-msgid "this port on every host"
+msgid "this port on any host"
 msgstr "dieser Port auf jedem Rechner"
 
 #: view/ModAnoubisPanelsBase.cpp:245
@@ -3321,7 +3321,7 @@ msgstr "Version wurde automatisch mit dem Speichern des Profils %ls erstellt."
 msgid "hide"
 msgstr "Verbergen"
 
-#: widgets/AnMessageDialog.cpp:69
+#: widgets/AnMessageDialog.cpp:74
 msgid "Don't show this message again!"
 msgstr "Diese Nachricht nicht mehr anzeigen!"
 

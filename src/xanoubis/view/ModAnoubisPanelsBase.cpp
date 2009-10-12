@@ -239,7 +239,7 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	rb_EscalationAlf1 = new wxRadioButton( pn_EscalationAlf, wxID_ANY, _("this port on this host"), wxDefaultPosition, wxDefaultSize, wxRB_GROUP );
 	sz_EscalationAlf->Add( rb_EscalationAlf1, 0, wxALL, 5 );
 	
-	rb_EscalationAlf2 = new wxRadioButton( pn_EscalationAlf, wxID_ANY, _("this port on every host"), wxDefaultPosition, wxDefaultSize, 0 );
+	rb_EscalationAlf2 = new wxRadioButton( pn_EscalationAlf, wxID_ANY, _("this port on any host"), wxDefaultPosition, wxDefaultSize, 0 );
 	sz_EscalationAlf->Add( rb_EscalationAlf2, 0, wxALL, 5 );
 	
 	rb_EscalationAlf3 = new wxRadioButton( pn_EscalationAlf, wxID_ANY, _("all ports on this host"), wxDefaultPosition, wxDefaultSize, 0 );

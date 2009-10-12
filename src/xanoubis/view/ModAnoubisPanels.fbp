@@ -2081,7 +2081,7 @@
                                                                                         <property name="font"></property>
                                                                                         <property name="hidden">0</property>
                                                                                         <property name="id">wxID_ANY</property>
-                                                                                        <property name="label">this port on every host</property>
+                                                                                        <property name="label">this port on any host</property>
                                                                                         <property name="maximum_size"></property>
                                                                                         <property name="minimum_size"></property>
                                                                                         <property name="name">rb_EscalationAlf2</property>
