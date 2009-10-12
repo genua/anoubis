@@ -19,7 +19,7 @@
 	$AUTOHEADER --force
 	perl split_config_h_in.pl
 } && {
-	touch AUTHORS INSTALL NEWS COPYING README ChangeLog
+	touch AUTHORS INSTALL NEWS COPYING README
 	echo "running automake" >&2
 	$AUTOMAKE --foreign -a -c --add-missing
 } && {
