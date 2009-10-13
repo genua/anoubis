@@ -175,7 +175,7 @@ pe_sfs_getrules(uid_t uid, int prio, const char *path,
 {
 	struct apn_ruleset	*rs;
 	struct apn_rule		*sfsrules;
-	int			 rulecnt;
+	int			 rulecnt, error;
 
 	rs = pe_user_get_ruleset(uid, prio, NULL);
 	if (rs == NULL)
@@ -190,15 +190,15 @@ pe_sfs_getrules(uid_t uid, int prio, const char *path,
 	if (TAILQ_EMPTY(&sfsrules->rule.chain))
 		return 0;
 	if (sfsrules->userdata == NULL) {
-		if (pe_build_prefixhash(sfsrules) < 0) {
-			return (-1);
-		}
+		error = pe_build_prefixhash(sfsrules);
+		if (error < 0)
+			return error;
 	}
 
-	if (pe_prefixhash_getrules(sfsrules->userdata, path,
-		rulelist, &rulecnt) < 0) {
-		return (-1);
-	}
+	error = pe_prefixhash_getrules(sfsrules->userdata, path,
+	    rulelist, &rulecnt);
+	if (error < 0)
+		return error;
 
 	if (rulecnt == 0)
 		free(*rulelist);
@@ -250,7 +250,6 @@ pe_decide_sfs(struct pe_proc *proc, struct pe_file_event *fevent,
 		if (rulecnt == 0)
 			continue;
 		else if (rulecnt < 0) {
-			master_terminate(ENOMEM);
 			decision = APN_ACTION_DENY;
 			break;
 		}

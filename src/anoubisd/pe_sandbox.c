@@ -82,6 +82,8 @@ pe_sb_evaluate(struct apn_rule **rulelist, int rulecnt,
 		res->decision = APN_ACTION_ALLOW;
 		return;
 	}
+	DEBUG(DBG_SANDBOX, "pe_sandbox_evaluate: path %s, atype=%d",
+	    sbevent->path, atype);
 	if (time(&now) == (time_t)-1) {
 		log_warn("pe_sb_evaluate: Cannot get current time");
 		goto err;
@@ -184,8 +186,10 @@ pe_sb_evaluate(struct apn_rule **rulelist, int rulecnt,
 		match = sbrule;
 		goto have_match;
 	}
-	if (!match)
+	if (!match) {
+		DEBUG(DBG_SANDBOX, "pe_sandbox_evaluate: no match");
 		return;
+	}
 have_match:
 	/*
 	 * Matching rule is in @match. This might be a default rule
@@ -220,7 +224,7 @@ pe_sb_getrules (struct pe_proc *proc, uid_t uid, int prio, const char *path,
     struct apn_rule	***rulelist)
 {
 	struct apn_rule	 *sbrules;
-	int		  rulecnt;
+	int		  rulecnt, error;
 
 	/*
 	 * If we do not have a process, find the default rules
@@ -254,17 +258,15 @@ pe_sb_getrules (struct pe_proc *proc, uid_t uid, int prio, const char *path,
 		return (0);
 
 	if (!sbrules->userdata) {
-		if (pe_build_prefixhash(sbrules) < 0) {
-			master_terminate(ENOMEM);
-			return (-1);
-		}
+		error = pe_build_prefixhash(sbrules);
+		if (error < 0)
+			return error;
 	}
 
-	if (pe_prefixhash_getrules(sbrules->userdata, path,
-				rulelist, &rulecnt) < 0) {
-		master_terminate(ENOMEM);
-		return (-1);
-	}
+	error = pe_prefixhash_getrules(sbrules->userdata, path,
+	    rulelist, &rulecnt);
+	if (error < 0)
+		return error;
 
 	if (rulecnt == 0)
 		free(*rulelist);
@@ -311,7 +313,7 @@ pe_decide_sandbox(struct pe_proc *proc, struct pe_file_event *sbevent,
 	if (!sbevent)
 		return NULL;
 
-	DEBUG(DBG_SANDBOX, ">pe_decide_sandbox");
+	DEBUG(DBG_SANDBOX, ">pe_decide_sandbox: %s", sbevent->path);
 	for (i=0; i<3; ++i) {
 		res[i].rule_id = 0;
 		res[i].prio = 0;
@@ -456,6 +458,7 @@ pe_decide_sandbox(struct pe_proc *proc, struct pe_file_event *sbevent,
 		reply->ctxident = pe_context_get_ident(
 		    pe_proc_get_context(proc, reply->prio));
 	}
-	DEBUG(DBG_SANDBOX, "<pe_decide_sandbox");
+	DEBUG(DBG_SANDBOX, "<pe_decide_sandbox: reply=%d ask=%d", reply->reply,
+	    reply->ask);
 	return reply;
 }
