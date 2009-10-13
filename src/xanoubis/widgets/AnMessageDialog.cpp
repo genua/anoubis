@@ -64,6 +64,11 @@ AnMessageDialog::AnMessageDialog(wxWindow *parent, const wxString &message,
 	buttonSizer_ = CreateButtonSizer(style);
 	mainSizer->Add(buttonSizer_, 0, wxALL | wxEXPAND, 5);
 
+	if (wxGetEnv(wxT("TNT_COMPATIBILITY"), NULL)) {
+		wxButton *b = new wxButton(this, -1, _("Don't understand"));
+		buttonSizer_->Add(b, 0, wxALL, 5);
+	}
+
 	if (style & wxNO)
 		SetEscapeId(wxID_NO);
 	if (style & wxCANCEL)

@@ -34,7 +34,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-10-12 17:54+0200\n"
+"POT-Creation-Date: 2009-10-13 17:18+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -3155,7 +3155,11 @@ msgstr ""
 msgid "hide"
 msgstr ""
 
-#: widgets/AnMessageDialog.cpp:74
+#: widgets/AnMessageDialog.cpp:68
+msgid "Don't understand"
+msgstr ""
+
+#: widgets/AnMessageDialog.cpp:79
 msgid "Don't show this message again!"
 msgstr ""
 
