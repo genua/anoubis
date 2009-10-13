@@ -39,7 +39,7 @@ ModSbMainPanelBase::ModSbMainPanelBase( wxWindow* parent, wxWindowID id, const w
 {
 	sz_MainSbMain = new wxBoxSizer( wxVERTICAL );
 	
-	tx_MainHeadline = new wxStaticText( this, wxID_ANY, _("Main Panel of Module SB"), wxDefaultPosition, wxDefaultSize, 0 );
+	tx_MainHeadline = new wxStaticText( this, wxID_ANY, _("SB - Sandbox"), wxDefaultPosition, wxDefaultSize, 0 );
 	tx_MainHeadline->Wrap( -1 );
 	tx_MainHeadline->SetFont( wxFont( 16, 70, 90, 90, false, wxEmptyString ) );
 	

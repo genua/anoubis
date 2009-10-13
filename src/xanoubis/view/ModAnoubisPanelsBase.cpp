@@ -41,7 +41,7 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 {
 	sz_MainAnoubisMain = new wxBoxSizer( wxVERTICAL );
 	
-	tx_MainHeadline = new wxStaticText( this, wxID_ANY, _("Main Panel of Module Anoubis"), wxDefaultPosition, wxDefaultSize, wxALIGN_CENTRE );
+	tx_MainHeadline = new wxStaticText( this, wxID_ANY, _("Anoubis"), wxDefaultPosition, wxDefaultSize, wxALIGN_CENTRE );
 	tx_MainHeadline->Wrap( -1 );
 	tx_MainHeadline->SetFont( wxFont( 16, 70, 90, 90, false, wxEmptyString ) );
 	

@@ -43,7 +43,7 @@ ModSfsMainPanelBase::ModSfsMainPanelBase( wxWindow* parent, wxWindowID id, const
 {
 	sz_MainSFSMain = new wxBoxSizer( wxVERTICAL );
 	
-	tx_MainHeadline = new wxStaticText( this, wxID_ANY, _("Main Panel of Module SFS"), wxDefaultPosition, wxDefaultSize, 0 );
+	tx_MainHeadline = new wxStaticText( this, wxID_ANY, _("SFS - Secure File System"), wxDefaultPosition, wxDefaultSize, 0 );
 	tx_MainHeadline->Wrap( -1 );
 	tx_MainHeadline->SetFont( wxFont( 16, 70, 90, 90, false, wxEmptyString ) );
 	

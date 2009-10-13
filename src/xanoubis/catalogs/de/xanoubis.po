@@ -33,9 +33,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: anoubis 0.1.10.D023.970.D004.C117\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-10-12 14:54+0200\n"
-"PO-Revision-Date: 2009-10-07 10:16+0100\n"
-"Last-Translator: Robin <robin_doer@genua.de>\n"
+"POT-Creation-Date: 2009-10-12 17:54+0200\n"
+"PO-Revision-Date: 2009-10-12 10:05+0100\n"
+"Last-Translator: Sebastian Schwarzfischer <sschwarz@genua.de>\n"
 "Language-Team: German <de@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=iso-8859-1\n"
@@ -1100,7 +1100,7 @@ msgstr "Verbunden:"
 msgid "no"
 msgstr "Nein"
 
-#: view/MainFrameBase.h:111
+#: view/MainFrameBase.h:111 view/ModAnoubisPanelsBase.cpp:44
 msgid "Anoubis"
 msgstr "Anoubis"
 
@@ -1258,8 +1258,8 @@ msgid "not active"
 msgstr "Nicht aktiv"
 
 #: view/ModAlfPanelsBase.cpp:42
-msgid "Main Panel of Module ALF"
-msgstr "Modul ALF"
+msgid "ALF - Application Level Firewall"
+msgstr "ALF - Application Level Firewall"
 
 #: view/ModAlfPanelsBase.cpp:64 view/ModSfsPanelsBase.cpp:78
 #: view/ModSbPanelsBase.cpp:64
@@ -1442,10 +1442,6 @@ msgstr "Entferne Version"
 #: view/ModAnoubisMainPanelImpl.cpp:1504
 msgid "Failed to create a rule from escalation"
 msgstr "Auf Basis der Eskalation konnte die Regel nicht erzeugt werden!"
-
-#: view/ModAnoubisPanelsBase.cpp:44
-msgid "Main Panel of Module Anoubis"
-msgstr "Modul Anoubis"
 
 #: view/ModAnoubisPanelsBase.cpp:62
 msgid "current requests"
@@ -1980,8 +1976,8 @@ msgid "default %ls"
 msgstr "Standard %ls"
 
 #: view/ModSfsPanelsBase.cpp:46
-msgid "Main Panel of Module SFS"
-msgstr "Modul SFS"
+msgid "SFS - Secure File System"
+msgstr "SFS - Secure File System"
 
 #: view/ModSfsPanelsBase.cpp:89
 msgid "Directory:"
@@ -2174,8 +2170,8 @@ msgid "Signature status:"
 msgstr "Signatur-Status:"
 
 #: view/ModSbPanelsBase.cpp:42
-msgid "Main Panel of Module SB"
-msgstr "Modul SB"
+msgid "SB - Sandbox"
+msgstr "SB - Sandbox"
 
 #: view/ModSbPanelsBase.cpp:74
 msgid "Displays the status of the Sandbox (SB) while connected."

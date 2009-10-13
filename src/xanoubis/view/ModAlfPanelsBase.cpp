@@ -39,7 +39,7 @@ ModAlfMainPanelBase::ModAlfMainPanelBase( wxWindow* parent, wxWindowID id, const
 {
 	sz_MainALFMain = new wxBoxSizer( wxVERTICAL );
 	
-	tx_MainHeadline = new wxStaticText( this, wxID_ANY, _("Main Panel of Module ALF"), wxDefaultPosition, wxDefaultSize, 0 );
+	tx_MainHeadline = new wxStaticText( this, wxID_ANY, _("ALF - Application Level Firewall"), wxDefaultPosition, wxDefaultSize, 0 );
 	tx_MainHeadline->Wrap( -1 );
 	tx_MainHeadline->SetFont( wxFont( 16, 70, 90, 90, false, wxEmptyString ) );
 	

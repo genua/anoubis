@@ -42,7 +42,7 @@ ModAlf::ModAlf(wxWindow *parent) : Module(), Observer(NULL)
 
 	notifyCtrl = NotificationCtrl::instance();
 
-	name_ = wxString(wxT("Application level firewall"));
+	name_ = wxString(wxT("Application Level Firewall"));
 	nick_ = wxString(wxT("ALF"));
 	mainPanel_ = new ModAlfMainPanelImpl(parent,
 	    MODALF_ID_MAINPANEL);

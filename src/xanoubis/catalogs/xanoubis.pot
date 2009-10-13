@@ -34,7 +34,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-10-12 15:44+0200\n"
+"POT-Creation-Date: 2009-10-12 17:54+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1094,7 +1094,7 @@ msgstr ""
 msgid "no"
 msgstr ""
 
-#: view/MainFrameBase.h:111
+#: view/MainFrameBase.h:111 view/ModAnoubisPanelsBase.cpp:44
 msgid "Anoubis"
 msgstr ""
 
@@ -1234,7 +1234,7 @@ msgid "not active"
 msgstr ""
 
 #: view/ModAlfPanelsBase.cpp:42
-msgid "Main Panel of Module ALF"
+msgid "ALF - Application Level Firewall"
 msgstr ""
 
 #: view/ModAlfPanelsBase.cpp:64 view/ModSfsPanelsBase.cpp:78
@@ -1415,10 +1415,6 @@ msgstr ""
 
 #: view/ModAnoubisMainPanelImpl.cpp:1504
 msgid "Failed to create a rule from escalation"
-msgstr ""
-
-#: view/ModAnoubisPanelsBase.cpp:44
-msgid "Main Panel of Module Anoubis"
 msgstr ""
 
 #: view/ModAnoubisPanelsBase.cpp:62
@@ -1939,7 +1935,7 @@ msgid "default %ls"
 msgstr ""
 
 #: view/ModSfsPanelsBase.cpp:46
-msgid "Main Panel of Module SFS"
+msgid "SFS - Secure File System"
 msgstr ""
 
 #: view/ModSfsPanelsBase.cpp:89
@@ -2132,7 +2128,7 @@ msgid "Signature status:"
 msgstr ""
 
 #: view/ModSbPanelsBase.cpp:42
-msgid "Main Panel of Module SB"
+msgid "SB - Sandbox"
 msgstr ""
 
 #: view/ModSbPanelsBase.cpp:74
