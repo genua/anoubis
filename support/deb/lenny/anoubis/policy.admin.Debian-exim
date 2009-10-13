@@ -2,16 +2,16 @@ apnversion 1.0
 alf {
 	any {
 		# DNS
-		allow connect tcp from any	   to any port 53
-		allow send    udp from any	   to any port 53
-		allow receive udp from any port 53 to any
+		allow connect tcp from any	   to any port domain
+		allow send    udp from any	   to any port domain
+		allow receive udp from any port domain to any
 
 		# SMTP
-		allow accept  tcp from any to any port 25
-		allow connect tcp from any to any port 25
+		allow accept  tcp from any to any port { smtp, smtps }
+		allow connect tcp from any to any port { smtp, smtps }
 
 		# ident
-		allow connect tcp from any to any port 113
+		allow connect tcp from any to any port ident
 
 		default log deny
 	}

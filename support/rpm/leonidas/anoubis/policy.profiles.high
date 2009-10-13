@@ -18,21 +18,21 @@ alf {
 
 	@ssh@  {
 		# DNS
-		allow connect	tcp from any to any port 53
-		allow send	udp from any to any port 53
-		allow receive	udp from any port 53 to any
+		allow connect	tcp from any to any port domain
+		allow send	udp from any to any port domain
+		allow receive	udp from any port domain to any
 
 		# NFS/portmap
-		allow send udp from any	to 127.0.0.1 port 111
-		allow receive udp from 127.0.0.1 port 111 to any
-		allow connect tcp from any to 127.0.0.1 port 111
+		allow send udp from any	to 127.0.0.1 port sunrpc
+		allow receive udp from 127.0.0.1 port sunrpc to any
+		allow connect tcp from any to 127.0.0.1 port sunrpc
 
 		# allow port forwarding only from localhost
 		ask accept tcp from 127.0.0.1 to any
 		ask accept tcp from ::1 to any
 
 		# ssh outbound conections
-		allow connect tcp from any to any port 22
+		allow connect tcp from any to any port ssh
 
 		# for non-standard ports, ask
 		ask connect tcp all
@@ -43,14 +43,14 @@ alf {
 	# Mail
 	{ @evolution@, @kmail@ }  {
 		# DNS
-		allow connect tcp from any to any port 53
-		allow send udp from any to any port 53
-		allow receive udp from any port 53 to any
+		allow connect tcp from any to any port domain
+		allow send udp from any to any port domain
+		allow receive udp from any port domain to any
 
 		# NFS/portmap
-		allow send udp from any to 127.0.0.1 port 111
-		allow receive udp from 127.0.0.1 port 111 to any
-		allow connect tcp from any to 127.0.0.1 port 111
+		allow send udp from any to 127.0.0.1 port sunrpc
+		allow receive udp from 127.0.0.1 port sunrpc to any
+		allow connect tcp from any to 127.0.0.1 port sunrpc
 
 		# X
 		allow connect tcp from any to 127.0.0.1 port 6000 - 6099
@@ -61,13 +61,13 @@ alf {
 
 		### mail protocols
 		# smtp
-		ask connect tcp from any to any port 25
-		# pop
-		ask connect tcp from any to any port { 110, 995 }
-		# imap
-		ask connect tcp from any to any port { 143, 993 }
+		ask connect tcp from any to any port { smtp, smtps }
 		# msa
-		ask connect tcp from any to any port 587
+		ask connect tcp from any to any port submission
+		# pop
+		ask connect tcp from any to any port { pop3, pop3s }
+		# imap
+		ask connect tcp from any to any port { imap, imaps }
 
 		default log deny
 	}
@@ -77,36 +77,36 @@ alf {
 	@firefox@, @xulrunner@,
 	@konqueror@, /usr/lib/kde3/konqueror.so} {
 		# DNS
-		allow connect tcp from any to any port 53
-		allow send udp from any to any port 53
-		allow receive udp from any port 53 to any
+		allow connect tcp from any to any port domain
+		allow send udp from any to any port domain
+		allow receive udp from any port domain to any
 
 		# NFS/portmap
-		allow connect tcp from any to 127.0.0.1 port 111
-		allow send udp from any to 127.0.0.1 port 111
-		allow receive udp from 127.0.0.1 port 111 to any
+		allow connect tcp from any to 127.0.0.1 port sunrpc
+		allow send udp from any to 127.0.0.1 port sunrpc
+		allow receive udp from 127.0.0.1 port sunrpc to any
 
 		# X
 		allow connect tcp from any to 127.0.0.1 port 6000 - 6099
 		allow connect tcp from any to ::1 port 6000 - 6099
 
 		# Http
-		ask connect tcp from any to any port 80
-		ask connect tcp from any to any port 443
+		ask connect tcp from any to any port { http, https }
+		ask connect tcp from any to any port { 8000, 8080 }
 
 		default log ask
 	}
 
 	any {
 		# NFS/portmap
-		allow send udp from any to 127.0.0.1 port 111
-		allow receive udp from 127.0.0.1 port 111 to any
-		allow connect tcp from any to 127.0.0.1 port 111
+		allow send udp from any to 127.0.0.1 port sunrpc
+		allow receive udp from 127.0.0.1 port sunrpc to any
+		allow connect tcp from any to 127.0.0.1 port sunrpc
 
 		# DNS
-		allow connect tcp from any to any port 53
-		allow send udp from any to any port 53
-		allow receive udp from any port 53  to any
+		allow connect tcp from any to any port domain
+		allow send udp from any to any port domain
+		allow receive udp from any port domain  to any
 
 		# X
 		allow connect tcp from any to 127.0.0.1 port 6000 - 6099

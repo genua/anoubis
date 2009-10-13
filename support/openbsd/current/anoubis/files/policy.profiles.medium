@@ -21,21 +21,21 @@ alf {
 
 	/usr/bin/ssh {
 		# DNS
-		allow connect tcp from any	   to any port 53
-		allow send    udp from any	   to any port 53
-		allow receive udp from any port 53 to any
+		allow connect tcp from any to any port domain
+		allow send    udp from any to any port domain
+		allow receive udp from any port domain to any
 
 		# NFS/portmap
-		allow connect tcp from any                to 127.0.0.1 port 111
-		allow send    udp from any                to 127.0.0.1 port 111
-		allow receive udp from 127.0.0.1 port 111 to any
+		allow connect tcp from any to 127.0.0.1 port sunrpc
+		allow send    udp from any to 127.0.0.1 port sunrpc
+		allow receive udp from 127.0.0.1 port sunrpc to any
 
 		# allow port forwarding only from localhost
 		allow accept tcp from 127.0.0.1 to any
 		allow accept tcp from ::1       to any
 
 		# ssh outbound connections:
-		allow connect tcp from any to any port 22
+		allow connect tcp from any to any port ssh
 		# for non-standard ports, ask
 		ask   connect tcp from any to any
 
@@ -43,117 +43,109 @@ alf {
 	}
 
 	  /usr/local/bin/kmail {
+		# NFS/portmap
+		allow connect tcp from any to 127.0.0.1 port sunrpc
+		allow send    udp from any to 127.0.0.1 port sunrpc
+		allow receive udp from 127.0.0.1 port sunrpc to any
+
 		# X
 		allow connect tcp from any to 127.0.0.1 port 6000 - 6099
 		allow connect tcp from any to ::1       port 6000 - 6099
-
-		# NFS/portmap
-		allow connect tcp from any                to 127.0.0.1 port 111
-		allow send    udp from any                to 127.0.0.1 port 111
-		allow receive udp from 127.0.0.1 port 111 to any
 
 		default log ask
 	}
 
 	/usr/local/lib/kde3/kio_http.so {
 		# NFS/portmap
-		allow connect tcp from any                to 127.0.0.1 port 111
-		allow send    udp from any                to 127.0.0.1 port 111
-		allow receive udp from 127.0.0.1 port 111 to any
+		allow connect tcp from any to 127.0.0.1 port sunrpc
+		allow send    udp from any to 127.0.0.1 port sunrpc
+		allow receive udp from 127.0.0.1 port sunrpc to any
 
 		# DNS
-		allow connect tcp from any	   to any port 53
-		allow send    udp from any	   to any port 53
-		allow receive udp from any port 53 to any
+		allow connect tcp from any to any port domain
+		allow send    udp from any to any port domain
+		allow receive udp from any port domain to any
 
-		allow connect tcp from any to any port 80
-		allow connect tcp from any to any port 443
-		ask connect log tcp from any to any port 8000
-		ask connect log tcp from any to any port 8080
+		allow connect tcp from any to any port { http, https }
+		ask connect log tcp from any to any port { 8000, 8080 }
 		default log ask
 	}
 
 	/usr/local/lib/kde3/kio_imap4.so {
 		# NFS/portmap
-		allow connect tcp from any                to 127.0.0.1 port 111
-		allow send    udp from any                to 127.0.0.1 port 111
-		allow receive udp from 127.0.0.1 port 111 to any
+		allow connect tcp from any to 127.0.0.1 port sunrpc
+		allow send    udp from any to 127.0.0.1 port sunrpc
+		allow receive udp from 127.0.0.1 port sunrpc to any
 
 		# DNS
-		allow connect tcp from any	   to any port 53
-		allow send    udp from any	   to any port 53
-		allow receive udp from any port 53 to any
+		allow connect tcp from any to any port domain
+		allow send    udp from any to any port domain
+		allow receive udp from any port domain to any
 
-		allow connect tcp from any to any port 143
-		allow connect tcp from any to any port 993
+		allow connect tcp from any to any port { imap, imaps }
 		default log ask
 	}
 
 	/usr/local/lib/kde3/kio_ftp.so {
 		# NFS/portmap
-		allow connect tcp from any                to 127.0.0.1 port 111
-		allow send    udp from any                to 127.0.0.1 port 111
-		allow receive udp from 127.0.0.1 port 111 to any
+		allow connect tcp from any to 127.0.0.1 port sunrpc
+		allow send    udp from any to 127.0.0.1 port sunrpc
+		allow receive udp from 127.0.0.1 port sunrpc to any
 
 		# DNS
-		allow connect tcp from any	   to any port 53
-		allow send    udp from any	   to any port 53
-		allow receive udp from any port 53 to any
+		allow connect tcp from any to any port domain
+		allow send    udp from any to any port domain
+		allow receive udp from any port domain to any
 
-		allow connect tcp from any to any port 21
-		allow connect tcp from any to any port 20
-		allow connect tcp from any to any port 990
-		allow connect tcp from any to any port 989
-		allow accept tcp from any port 20 to any
-		allow accept tcp from any port 989 to any
+		allow connect tcp from any to any port { ftp, ftp-data }
+		allow connect tcp from any to any port { 990, 989 }
+		allow accept tcp from any port { ftp-data, 989 } to any
 		default log ask
 	}
 
 	/usr/local/lib/kde3/kio_sftp.so {
 		# NFS/portmap
-		allow connect tcp from any                to 127.0.0.1 port 111
-		allow send    udp from any                to 127.0.0.1 port 111
-		allow receive udp from 127.0.0.1 port 111 to any
+		allow connect tcp from any to 127.0.0.1 port sunrpc
+		allow send    udp from any to 127.0.0.1 port sunrpc
+		allow receive udp from 127.0.0.1 port sunrpc to any
 
 		# DNS
-		allow connect tcp from any	   to any port 53
-		allow send    udp from any	   to any port 53
-		allow receive udp from any port 53 to any
+		allow connect tcp from any to any port domain
+		allow send    udp from any to any port domain
+		allow receive udp from any port domain to any
 
-		allow connect tcp from any to any port 22
+		allow connect tcp from any to any port ssh
 		default log ask
 	}
 
 	/usr/local/lib/kde3/kio_pop3.so {
 		# NFS/portmap
-		allow connect tcp from any                to 127.0.0.1 port 111
-		allow send    udp from any                to 127.0.0.1 port 111
-		allow receive udp from 127.0.0.1 port 111 to any
+		allow connect tcp from any to 127.0.0.1 port sunrpc
+		allow send    udp from any to 127.0.0.1 port sunrpc
+		allow receive udp from 127.0.0.1 port sunrpc to any
 
 		# DNS
-		allow connect tcp from any	   to any port 53
-		allow send    udp from any	   to any port 53
-		allow receive udp from any port 53 to any
+		allow connect tcp from any to any port domain
+		allow send    udp from any to any port domain
+		allow receive udp from any port domain to any
 
-		allow connect tcp from any to any port 110
-		allow connect tcp from any to any port 995
+		allow connect tcp from any to any port { pop3, pop3s }
 		default log ask
 	}
 
 	/usr/local/lib/kde3/kio_smtp.so {
 		# NFS/portmap
-		allow connect tcp from any                to 127.0.0.1 port 111
-		allow send    udp from any                to 127.0.0.1 port 111
-		allow receive udp from 127.0.0.1 port 111 to any
+		allow connect tcp from any to 127.0.0.1 port sunrpc
+		allow send    udp from any to 127.0.0.1 port sunrpc
+		allow receive udp from 127.0.0.1 port sunrpc to any
 
 		# DNS
-		allow connect tcp from any	   to any port 53
-		allow send    udp from any	   to any port 53
-		allow receive udp from any port 53 to any
+		allow connect tcp from any to any port domain
+		allow send    udp from any to any port domain
+		allow receive udp from any port domain to any
 
-		allow connect tcp from any to any port 25
-		allow connect tcp from any to any port 587
-		allow connect tcp from any to any port 465
+		allow connect tcp from any to any port { smtp, smtps }
+		allow connect tcp from any to any port submission
 		default log deny
 	}
 
@@ -161,48 +153,44 @@ alf {
 	  /usr/local/mozilla-firefox/run-mozilla.sh,
 	  /usr/local/bin/firefox } {
 		# NFS/portmap
-		allow connect tcp from any                to 127.0.0.1 port 111
-		allow send    udp from any                to 127.0.0.1 port 111
-		allow receive udp from 127.0.0.1 port 111 to any
+		allow connect tcp from any to 127.0.0.1 port sunrpc
+		allow send    udp from any to 127.0.0.1 port sunrpc
+		allow receive udp from 127.0.0.1 port sunrpc to any
 
 		# DNS
-		allow connect tcp from any	   to any port 53
-		allow send    udp from any	   to any port 53
-		allow receive udp from any port 53 to any
+		allow connect tcp from any to any port domain
+		allow send    udp from any to any port domain
+		allow receive udp from any port domain to any
 
 		# X
 		allow connect tcp from any to 127.0.0.1 port 6000 - 6099
 		allow connect tcp from any to ::1       port 6000 - 6099
 
 		# web
-		allow connect tcp from any to any port 80
-		allow connect tcp from any to any port 443
-		ask connect tcp from any to any port 8000
-		ask connect tcp from any to any port 8080
+		allow connect tcp from any to any port { http, https }
+		ask connect tcp from any to any port { 8000, 8080 }
 
 		default log ask
 	}
 
 	/usr/local/bin/epiphany {
 		# NFS/portmap
-		allow connect tcp from any                to 127.0.0.1 port 111
-		allow send    udp from any                to 127.0.0.1 port 111
-		allow receive udp from 127.0.0.1 port 111 to any
+		allow connect tcp from any to 127.0.0.1 port sunrpc
+		allow send    udp from any to 127.0.0.1 port sunrpc
+		allow receive udp from 127.0.0.1 port sunrpc to any
 
 		# DNS
-		allow connect tcp from any	   to any port 53
-		allow send    udp from any	   to any port 53
-		allow receive udp from any port 53 to any
+		allow connect tcp from any to any port domain
+		allow send    udp from any to any port domain
+		allow receive udp from any port domain to any
 
 		# X
 		allow connect tcp from any to 127.0.0.1 port 6000 - 6099
 		allow connect tcp from any to ::1       port 6000 - 6099
 
 		# web
-		allow connect tcp from any to any port 80
-		allow connect tcp from any to any port 443
-		ask connect tcp from any to any port 8000
-		ask connect tcp from any to any port 8080
+		allow connect tcp from any to any port { http, https }
+		ask connect tcp from any to any port { 8000, 8080 }
 
 		default log ask
 	}
@@ -210,14 +198,14 @@ alf {
 	any
 	{
 		# NFS/portmap
-		allow connect tcp from any                to 127.0.0.1 port 111
-		allow send    udp from any                to 127.0.0.1 port 111
-		allow receive udp from 127.0.0.1 port 111 to any
+		allow connect tcp from any to 127.0.0.1 port sunrpc
+		allow send    udp from any to 127.0.0.1 port sunrpc
+		allow receive udp from 127.0.0.1 port sunrpc to any
 
 		# DNS
-		allow connect tcp from any	   to any port 53
-		allow send    udp from any	   to any port 53
-		allow receive udp from any port 53 to any
+		allow connect tcp from any to any port domain
+		allow send    udp from any to any port domain
+		allow receive udp from any port domain to any
 
 		# X
 		allow connect tcp from any to 127.0.0.1 port 6000 - 6099

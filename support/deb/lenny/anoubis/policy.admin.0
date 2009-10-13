@@ -2,8 +2,8 @@ apnversion 1.0
 alf {
 	/usr/sbin/avahi-daemon
 	{
-		allow send    udp from any port 5353 to any
-		allow receive udp from any           to any port 5353
+		allow send    udp from any port mdns to any
+		allow receive udp from any           to any port mdns
 		default log deny
 	}
 

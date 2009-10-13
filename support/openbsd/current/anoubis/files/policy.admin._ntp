@@ -3,8 +3,8 @@ apnversion 1.0
 
 alf {
 	any {
-		allow send udp from any to any port 123
-		allow receive udp from any port 123 to any
+		allow send udp from any to any port ntp
+		allow receive udp from any port ntp to any
 		default log deny
 	}
 }

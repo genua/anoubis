@@ -2,10 +2,10 @@ apnversion 1.0
 alf {
 	/usr/sbin/ntpd
 	{
-		allow send udp from any to any port 123
-		allow receive udp from any port 123 to any
-		allow send udp from any to any port 53
-		allow receive udp from any port 53 to any
+		allow send udp from any to any port ntp
+		allow receive udp from any port ntp to any
+		allow send udp from any to any port domain
+		allow receive udp from any port domain to any
 		default log deny
 	}
 
