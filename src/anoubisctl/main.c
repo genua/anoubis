@@ -131,6 +131,7 @@ static int		 passfd = -1;
 
 static struct achat_channel	*channel;
 struct anoubis_client		*client = NULL;
+char				*sigfile = NULL;
 
 
 __dead void
@@ -140,7 +141,7 @@ usage(void)
 	extern char	*__progname;
 
 	fprintf(stderr, "usage: %s [-fnv] [-k key] [-c cert] [-p <prio>] "
-	    "[-u uid] [-i fd] <command> [<file>]\n", __progname);
+	    "[-u uid] [-i fd] [-o sigfile] <command> [<file>]\n", __progname);
 	fprintf(stderr, "    <command>:\n");
 	for (i=1; i < sizeof(commands)/sizeof(struct cmd); i++) {
 		if (commands[i].args)
@@ -192,7 +193,7 @@ main(int argc, char *argv[])
 	if (uid == 0)
 		prio = 0;
 
-	while ((ch = getopt(argc, argv, "fnc:k:p:u:vi:")) != -1) {
+	while ((ch = getopt(argc, argv, "fnc:k:p:u:vi:o:")) != -1) {
 		switch (ch) {
 		case 'p':
 			for (i=0; prios[i] != NULL; i++) {
@@ -238,10 +239,17 @@ main(int argc, char *argv[])
 			}
 			break;
 		case 'k':
-			opts |= ANOUBISCTL_OPT_KEY;
 			opts |= ANOUBISCTL_OPT_SIGN;
 			keyfile = strdup(optarg);
 			if (!keyfile) {
+				perror(optarg);
+				return 1;
+			}
+			break;
+		case 'o':
+			opts |= ANOUBISCTL_OPT_SIGNONLY;
+			sigfile = strdup(optarg);
+			if (!sigfile) {
 				perror(optarg);
 				return 1;
 			}
@@ -324,7 +332,8 @@ main(int argc, char *argv[])
 		usage();
 	}
 	if ((!strcmp(command, "load")) &&
-	    (opts & ANOUBISCTL_OPT_SIGN) && (prio != ANOUBISCTL_PRIO_ADMIN)) {
+	    (opts & ANOUBISCTL_OPT_SIGN) &&
+	    (prio != ANOUBISCTL_PRIO_ADMIN || opts & ANOUBISCTL_OPT_SIGNONLY)) {
 		if (keyfile == NULL) {
 			fprintf(stderr, "To load signed policies to the daemon "
 			    "you need to specify a keyfile\n");
@@ -778,7 +787,7 @@ load(char *rulesopt, uid_t uid, unsigned int prio)
 		return 3;
 	}
 
-	if (prio == ANOUBISCTL_PRIO_ADMIN)
+	if (prio == ANOUBISCTL_PRIO_ADMIN && !(opts & ~ANOUBISCTL_OPT_SIGNONLY))
 		opts &= ~ANOUBISCTL_OPT_SIGN;
 	if ((opts & ANOUBISCTL_OPT_SIGN) && (as == NULL)) {
 		fprintf(stderr, "To load signed policies to the daemon you "
@@ -813,18 +822,21 @@ load(char *rulesopt, uid_t uid, unsigned int prio)
 		return 0;
 	}
 
-	error = create_channel(1);
-	if (error) {
-		fprintf(stderr, "Cannot connect to " PACKAGE_DAEMON "\n");
-		apn_free_ruleset(ruleset);
-		return error;
-	}
+	if (!(opts & ANOUBISCTL_OPT_SIGNONLY)) {
+		error = create_channel(1);
+		if (error) {
+			fprintf(stderr, "Cannot connect to " PACKAGE_DAEMON
+			    "\n");
+			apn_free_ruleset(ruleset);
+			return error;
+		}
 
-	/*
-	 * Do NOT abort on failure. make_version will print an error
-	 * message but we should load the rule set anyway.
-	 */
-	make_version(ruleset);
+		/*
+		 * Do NOT abort on failure. make_version will print an error
+		 * message but we should load the rule set anyway.
+		 */
+		make_version(ruleset);
+	}
 	apn_free_ruleset(ruleset);
 
 	if (opts & ANOUBISCTL_OPT_SIGN) {
@@ -833,6 +845,36 @@ load(char *rulesopt, uid_t uid, unsigned int prio)
 			fprintf(stderr, "Error while signing policy\n");
 			return 3;
 		}
+	}
+
+	if (opts & ANOUBISCTL_OPT_SIGNONLY) {
+		size_t written = 0;
+		if (!signature || siglen == 0) {
+			fprintf(stderr, "BUG: No signature.\n");
+			return 4;
+		}
+		if (strcmp("-", sigfile) != 0)
+			fd = open(sigfile, O_WRONLY|O_CREAT|O_TRUNC,
+			    S_IRUSR|S_IWUSR);
+		else
+			fd = 1;
+		if (fd < 0) {
+			perror("open");
+			return 3;
+		}
+		while (written < siglen) {
+			ssize_t count;
+			count = write(fd, signature, siglen);
+			if (count <= 0) {
+				perror("write");
+				return 3;
+			}
+			written += count;
+		}
+		if (fd != 1)
+			return close(fd);
+		else
+			return 0;
 	}
 
 	fd = open(rulesopt, O_RDONLY);

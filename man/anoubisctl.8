@@ -38,6 +38,7 @@
 .Op -k keyfile
 .Op -c certificate
 .Op -i fd
+.Op -o sigfile
 .Ar command
 .Op file
 .Sh DESCRIPTION
@@ -73,6 +74,10 @@ Specify location of certificate. (default ~/.xanoubis/default.crt)
 This option is only supported with the passphrase command.
 The argument is a file descriptor where the passphrase is read from.
 The default is to read the passphrase from the tty.
+.It Fl o Ar sigfile
+This option is only supported with the load command.
+The argument is a file where the signature for the policy is stored.
+The policy will not be sent to the daemon.
 .It Ar command
 .Pp
 .Bl -tag -width Ds
