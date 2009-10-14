@@ -183,7 +183,10 @@ anoubis_csum_calc(const char *file, u_int8_t * csbuf, int *cslen)
 		close(fd);
 		close(afd);
 		afd = -1;
-		return ret;
+		if (ret == -ETXTBSY || ret == -EBUSY)
+			goto userspace;
+		else
+			return ret;
 	}
 	close(fd);
 	memcpy(csbuf, cs.csum, ANOUBIS_CS_LEN);
