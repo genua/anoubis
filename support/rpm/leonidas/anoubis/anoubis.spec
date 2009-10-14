@@ -56,7 +56,7 @@ Central daemon of the Anoubis Security Suite.
 %package -n xanoubis
 Summary:	GUI of the Anoubis Security Suite
 Group:		User Interface/X
-Requires:	anoubisd
+Requires:	anoubisd >= 0.9.1
 Requires:	wxGTK >= 2.8
 Requires:	libevent
 Requires:	libnotify
@@ -280,6 +280,9 @@ exit 0
 
 ### changelog ##############################################
 %changelog
+* Wed Oct 14 2009 Sebastian Trahm
+- xanoubis package has to depend on a minimal version of anoubisd
+
 * Mon Sep 21 2009 Sten Spans
 - add anoubis-keygen
 
