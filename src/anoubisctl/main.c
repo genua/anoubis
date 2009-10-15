@@ -42,6 +42,7 @@
 #include <fcntl.h>
 #include <signal.h>
 #include <sys/ioctl.h>
+#include <syslog.h>
 
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -86,6 +87,7 @@ static int	daemon_start(void);
 static int	daemon_stop(void);
 static int	daemon_status(void);
 static int	daemon_reload(void);
+static int	daemon_restart(void);
 static int	daemon_version(void);
 static int	send_passphrase(void);
 static int	monitor(int argc, char **argv);
@@ -117,6 +119,7 @@ struct cmd {
 	{ "stop",	daemon_stop,		0 },
 	{ "status",	daemon_status,		0 },
 	{ "reload",	daemon_reload,		0 },
+	{ "restart",	daemon_restart,		0 },
 	{ "version",	daemon_version,		0 },
 	{ "passphrase",	send_passphrase,	0 },
 	{ "load",	(func_int_t)load,	1 },
@@ -496,6 +499,74 @@ daemon_reload(void)
 	return 0;
 }
 
+static int
+daemon_restart(void)
+{
+	FILE	*fp = fopen(PACKAGE_PIDFILE, "r");
+	int	 pid, child;
+	int	 sfsfd, i;
+
+	if (!fp) {
+		fprintf(stderr, "Couldn't open " PACKAGE_PIDFILE ": %s. "
+		    "Starting a new daemon", strerror(errno));
+		return daemon_start();
+	}
+	if (flock(fileno(fp), LOCK_EX|LOCK_NB) != -1) {
+		fprintf(stderr, "Unused " PACKAGE_PIDFILE " found. "
+		    "Starint a new daemon\n");
+		return daemon_start();
+	}
+	if (fscanf(fp, "%d", &pid) != 1) {
+		fprintf(stderr, "No valid pid found in " PACKAGE_PIDFILE "\n");
+		return 2;
+	}
+	sfsfd = open(PACKAGE_POLICYDIR "/sfs.version", O_RDONLY);
+	if (sfsfd < 0) {
+		perror("Failed to open " PACKAGE_POLICYDIR "/sfs.version");
+		goto kill;
+	}
+	if (flock(sfsfd, LOCK_EX | LOCK_NB) == 0)
+		goto kill;
+	if (errno != EWOULDBLOCK) {
+		perror("flock for " PACKAGE_POLICYDIR "/sfs.version failed");
+		goto kill;
+	}
+	fprintf(stderr,
+	    "Warning: Upgrade in progress. anoubisd restart delayed");
+	child = fork();
+	if (child < 0) {
+		perror("fork");
+		goto kill;
+	}
+	if (child >= 0) {
+		/* This is the parent process. Just idicate success. */
+		return 0;
+	}
+	while (1) {
+		if (flock(sfsfd, LOCK_EX) == 0)
+			break;
+		if (errno != EINTR && errno != EAGAIN) {
+			syslog(LOG_CRIT,
+			    "flock failed. Will restart Anoubis Daemon NOW\n");
+			break;
+		}
+	}
+kill:
+	if (kill(pid, SIGTERM) != 0) {
+		fprintf(stderr, "Couldn't send signal: %s\n", strerror(errno));
+		return 2;
+	}
+	/* Wait at most 10 seconds for termination. */
+	for(i=0; i<10; ++i) {
+		if (kill(pid, 0) < 0 && errno == ESRCH)
+			return daemon_start();
+		sleep(1);
+	}
+	if (kill(pid, 0) < 0 && errno == ESRCH)
+		return daemon_start();
+	fprintf(stderr, "Anoubis Daemon failed to terminate\n");
+	return 2;
+}
 
 static void
 free_msg_list(struct anoubis_msg * m)
