@@ -45,6 +45,7 @@
 
 #include "wx/utils.h"
 #include <wx/filedlg.h>
+#include <wx/log.h>
 #include <wx/msgdlg.h>
 #include <wx/textdlg.h>
 
@@ -267,26 +268,10 @@ void
 ModSfsMainPanelImpl::OnSfsError(wxCommandEvent&)
 {
 	const wxArrayString &errors = sfsCtrl_->getErrors();
-	wxString errStr;
 
-	if (errors.Count() > 1) {
-		unsigned int	maxerr = errors.Count() - 1;
-		wxString	skip = wxT("");
-		if (maxerr > 20) {
-			maxerr = 20;
-			skip = wxT("\n...\n\n");
-		}
-		for (unsigned int i = 0; i < maxerr; i++) {
-			errStr += errors[i];
-			errStr += wxT("\n");
-		}
-		errStr += skip;
+	for (unsigned int i = 0; i < errors.Count(); i++) {
+		wxLogError(errors[i]);
 	}
-
-	if (!errors.IsEmpty())
-		errStr += errors.Last();
-
-	wxMessageBox(errStr, _("SFS error"), wxOK|wxICON_ERROR, this);
 }
 
 void
