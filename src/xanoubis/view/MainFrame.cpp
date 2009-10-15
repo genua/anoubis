@@ -396,7 +396,6 @@ MainFrame::OnConnectionStateChange(wxCommandEvent& event)
 		Debug::err(logMessage);
 		break;
 	case JobCtrl::ERR_VERSION_PROT:
-		Debug::err(_("Anoubis protocol version mismatch"));
 
 		if (instance->getDaemonProtocolVersion() <
 		    ANOUBIS_PROTO_VERSION) {
@@ -416,9 +415,9 @@ MainFrame::OnConnectionStateChange(wxCommandEvent& event)
 
 		anMessageBox(logMessage, _("Protocol version mismatch"),
 		    wxOK | wxICON_ERROR, this);
+		Debug::info(logMessage);
 		break;
 	case JobCtrl::ERR_VERSION_APN:
-		Debug::err(_("APN version mismatch"));
 
 		if (instance->getDaemonApnVersion() < apn_parser_version()) {
 			logMessage.Printf(_("The APN parser (v%i.%i) is newer "
@@ -440,12 +439,12 @@ MainFrame::OnConnectionStateChange(wxCommandEvent& event)
 
 		anMessageBox(logMessage, _("APN version mismatch"),
 		    wxOK | wxICON_ERROR, this);
+		Debug::info(logMessage);
 		break;
 	}
 
 	setConnectionString(connected, hostname);
 	an_menubar->Check(ID_MIFILECONNECT, connected);
-	wxGetApp().status(logMessage);
 
 	event.Skip();
 }
@@ -474,7 +473,7 @@ MainFrame::OnMbHelpAboutSelect(wxCommandEvent&)
 	info.SetName(wxT("Anoubis GUI"));
 	info.SetVersion(wxT(VERSION));
 	info.SetCopyright(wxT("(C) 2007-2009 GeNUA mbH"));
-	// info.SetWebSite(wxT("www.anoubis.org"));
+	info.SetWebSite(wxT("www.anoubis.org"));
 	info.SetIcon(*aboutIcon_);
 	info.SetDescription(wxT("Build Id: " PACKAGE_BUILD));
 
@@ -491,6 +490,7 @@ MainFrame::OnMbHelpAboutSelect(wxCommandEvent&)
 	info.AddDeveloper(wxT("Robin Doer"));
 	info.AddDeveloper(wxT("Sebastian Trahm"));
 	info.AddDeveloper(wxT("Stefan Fritsch"));
+	info.AddDeveloper(wxT("Stefan Rinkes"));
 	info.AddDeveloper(wxT("Sten Spans"));
 
 	info.AddTranslator(wxT("Christian Wehrle"));

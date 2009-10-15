@@ -383,7 +383,8 @@ AnoubisGuiApp::OnCmdLineParsed(wxCmdLineParser& parser)
 
 	if (parser.Found(wxT("d"), &debug_level)) {
 		Debug::setLevel(debug_level);
-		Debug::trace(wxT("Debug enabled with level %ld"), Debug::getLevel());
+		Debug::trace(wxT("Debug enabled with level %ld"),
+		    Debug::getLevel());
 	}
 
 	if (parser.Found(wxT("t")))
