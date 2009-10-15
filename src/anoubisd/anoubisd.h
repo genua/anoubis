@@ -88,6 +88,7 @@
 
 /* This file is outside the SFS_CHECKSUMROOT dir to avoid filename collisions */
 #define ANOUBISD_SFS_TREE_VERSIONFILE		PACKAGE_POLICYDIR "/sfs.version"
+#define ANOUBISD_SFS_TREE_VERSIONFILE_CHROOT	"/sfs.version"
 #define ANOUBISD_SFS_TREE_FORMAT_VERSION	1
 
 #define __used __attribute__((unused))

@@ -114,6 +114,8 @@ pe_set_upgrade_ok(int value)
 	upgrade_ok = value;
 }
 
+static int	sfsversionfd = -1;
+
 void
 pe_upgrade_start(struct pe_proc *proc)
 {
@@ -133,6 +135,19 @@ pe_upgrade_start(struct pe_proc *proc)
 	}
 	/* Mark the process as an upgrade parent and increase the counter. */
 	pe_proc_upgrade_addmark(proc);
+	if (sfsversionfd < 0) {
+		sfsversionfd = open(ANOUBISD_SFS_TREE_VERSIONFILE_CHROOT,
+		    O_RDONLY);
+		if (sfsversionfd < 0) {
+			log_warn("Cannot open "
+			    ANOUBISD_SFS_TREE_VERSIONFILE_CHROOT);
+		} else if (flock(sfsversionfd, LOCK_EX|LOCK_NB) < 0) {
+			log_warn("Cannot flock "
+			    ANOUBISD_SFS_TREE_VERSIONFILE_CHROOT);
+			close(sfsversionfd);
+			sfsversionfd = -1;
+		}
+	}
 	upgrade_counter++;
 	DEBUG(DBG_UPGRADE, "Upgrade started on task %lld, counter now %d",
 	    pe_proc_task_cookie(proc), upgrade_counter);
@@ -225,6 +240,11 @@ pe_upgrade_finish(void)
 	 */
 	sfshash_flush();
 	upgrade_iterator = NULL;
+	if (sfsversionfd >= 0) {
+		/* Close releases the flock. */
+		close(sfsversionfd);
+		sfsversionfd = -1;
+	}
 }
 
 /*
