@@ -361,7 +361,7 @@ MainFrame::OnConnectionStateChange(wxCommandEvent& event)
 			    "without sfsdisable!"),
 			    hostname.c_str());
 
-		wxGetApp().log(logMessage);
+		Debug::info(logMessage);
 		if (cert.isLoaded()) {
 			bool showUpgradeMessage = true;
 
@@ -387,16 +387,16 @@ MainFrame::OnConnectionStateChange(wxCommandEvent& event)
 	case JobCtrl::ERR_RW:
 		logMessage = wxString::Format(
 		    _("Disconnected from %ls"), hostname.c_str());
-		wxGetApp().log(logMessage);
+		Debug::info(logMessage);
 		break;
 	case JobCtrl::ERR_CONNECT:
 	case JobCtrl::ERR_REG:
 		logMessage = wxString::Format(
 		    _("Connection to %ls failed!"), hostname.c_str());
-		wxGetApp().alert(logMessage);
+		Debug::err(logMessage);
 		break;
 	case JobCtrl::ERR_VERSION_PROT:
-		wxGetApp().alert(_("Anoubis protocol version mismatch"));
+		Debug::err(_("Anoubis protocol version mismatch"));
 
 		if (instance->getDaemonProtocolVersion() <
 		    ANOUBIS_PROTO_VERSION) {
@@ -418,7 +418,7 @@ MainFrame::OnConnectionStateChange(wxCommandEvent& event)
 		    wxOK | wxICON_ERROR, this);
 		break;
 	case JobCtrl::ERR_VERSION_APN:
-		wxGetApp().alert(_("APN version mismatch"));
+		Debug::err(_("APN version mismatch"));
 
 		if (instance->getDaemonApnVersion() < apn_parser_version()) {
 			logMessage.Printf(_("The APN parser (v%i.%i) is newer "

@@ -298,7 +298,7 @@ TrayIcon::update(void)
 		if (sendEscalation_) {
 			if (!systemNotify("ESCALATION", message,
 			    NOTIFY_URGENCY_CRITICAL, escalationTimeout_))
-				wxGetApp().log(_("Couldn't send Escalation"));
+				Debug::err(_("Couldn't send Escalation"));
 		}
 	} else {
 		if (messageAlertCount_ > 0) {
@@ -311,8 +311,7 @@ TrayIcon::update(void)
 				if (!systemNotify("ALERT", message,
 				    NOTIFY_URGENCY_NORMAL,
 				    alertTimeout_))
-					wxGetApp().log(
-					    _("Couldn't send Alert"));
+					Debug::err(_("Couldn't send Alert"));
 			}
 		} else {
 			tooltip = _("No messages\n");
@@ -453,7 +452,7 @@ TrayIcon::initDBus(void)
 	    wxEXEC_MAKE_GROUP_LEADER | wxEXEC_ASYNC);
 	if (dBusProc_ == NULL) {
 		/* Couldn't start DBus */
-		Debug::instance()->log(wxT("Couldn't start DBUS!"), DEBUG_LOG);
+		Debug::err(wxT("Couldn't start DBUS!"));
 		return;
 	}
 

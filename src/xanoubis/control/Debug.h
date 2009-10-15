@@ -28,15 +28,7 @@
 #ifndef _DEBUG_H_
 #define _DEBUG_H_
 
-#include <stdio.h>
-
 #include <wx/string.h>
-#include "Singleton.cpp"
-
-#define DEBUG_ALERT 1
-#define DEBUG_LOG 2
-#define DEBUG_STATUS 3
-#define DEBUG_CHAT 4
 
 /**
  * Debug Messages
@@ -46,34 +38,57 @@
  * The print function gets an level which represent the priority level
  * of the Debug Message.
  */
-class Debug : public Singleton<Debug>
+class Debug
 {
-	friend class Singleton<Debug>;
 	public:
 		/**
-		 * Deconstrutor of the Debug Messages
-		 * Nothing happens till, now.
-		 * @param None.
-		 * @return Nothing.
+		 * Enumeration of possible debugging-levels.
 		 */
-		~Debug(void);
+		enum Level {
+			FATAL = 0,	/*!< A fatal (non recoverable) error
+					     occured. A message is printed to
+					     stderr and to syslog. The
+					     application is terminated. */
+			ERR,		/*!< A recoverable error occured. The
+					     message is send to the log-viewer
+					     and to syslog. */
+			WARN,		/*!< A warning. The message is send to
+					     the log-viewer and to syslog. */
+			INFO,		/*!< An information message. The
+					     message is send to the
+					     log-viewer. */
+			CHAT,		/*!< Prints messages exchanged between
+					     daemon and client */
+			TRACE		/*!< An arbitrary trace-message. */
+		};
 
 		/**
-		 * Instance for singelton
-		 * @param None.
-		 * @return self.
+		 * Initializes the debugging-utility.
+		 *
+		 * This method needs to be called before the first debug-entry
+		 * is created.
+		 *
+		 * @return Nothing
 		 */
-		static Debug* instance(void);
+		static void initialize(void);
 
 		/**
-		 * Print function
-		 * Prints the debug message to the console
-		 * @param 1st Message for debugging
-		 * @param 2nd Level of the message
-		 * @return Nothing.
+		 * Uninitializes the debugging-utility.
+		 *
+		 * This method needs to be called before the application
+		 * exists.
+		 *
+		 * @return Nothing
 		 */
-		void	log(wxString, int);
+		static void uninitialize(void);
 
+		/**
+		 * Returns the debugging-level.
+		 * @return Debugging-level
+		 */
+		static Level getLevel(void);
+
+		//@{
 		/**
 		 * Set Debug level
 		 * Set the level of debug output to the console
@@ -82,7 +97,9 @@ class Debug : public Singleton<Debug>
 		 * @param 1st level of debug output
 		 * @return Nothing.
 		 */
-		void	setLevel(int);
+		static void setLevel(Level);
+		static void setLevel(long);
+		//@}
 
 		/**
 		 * Check Debug level
@@ -90,20 +107,77 @@ class Debug : public Singleton<Debug>
 		 * @param 1st level of debug output
 		 * @return true if the output would be logged, false otherwise.
 		 */
-		int	checkLevel(int);
+		static bool checkLevel(Level);
 
-	protected:
 		/**
-		 * Constructor of the Debug Messages
-		 * This will set the level of debug output to the console.
-		 * @param None.
-		 * @reutrn Nothing;
+		 * Debugs a fatal error.
+		 *
+		 * The error is not recoverable. The message is printed to
+		 * stderr and to syslog. The application is terminated.
+		 *
+		 * @param 1st Message format
+		 * @param 2nd...n Arguments for the message
+		 * @return Nothing
 		 */
-		Debug(void);
+		static void fatal(const wxChar *, ...);
+
+		/**
+		 * Debugs a recoverable error.
+		 *
+		 * The message is send to the log-viewer and to syslog.
+		 *
+		 * @param 1st Message format
+		 * @param 2nd...n Arguments for the message
+		 * @return Nothing
+		 */
+		static void err(const wxChar *, ...);
+
+		/**
+		 * Debugs a warning message.
+		 *
+		 * The message is send to the log-viewer and to syslog.
+		 *
+		 * @param 1st Message format
+		 * @param 2nd...n Arguments for the message
+		 * @return Nothing
+		 */
+		static void warn(const wxChar *, ...);
+
+		/**
+		 * Debugs an information message.
+		 *
+		 * The message is send to the log-viewer.
+		 *
+		 * @param 1st Message format
+		 * @param 2nd...n Arguments for the message
+		 * @return Nothing
+		 */
+		static void info(const wxChar *, ...);
+
+		/**
+		 * Debugs messages exchanged between daemon and client.
+		 *
+		 * @param 1st Message format
+		 * @param 2nd...n Arguments for the message
+		 * @return Nothing
+		 */
+		static void chat(const wxChar *, ...);
+
+		/**
+		 * Debugs an arbitrary trace-message.
+		 *
+		 * @param 1st Message format
+		 * @param 2nd...n Arguments for the message
+		 * @return Nothing
+		 */
+		static void trace(const wxChar *, ...);
 
 	private:
-		int	level_;		/**< Level of Debug ouput */
+		Debug(void) {}
+		Debug(const Debug &) {}
+		~Debug(void) {}
 
+		static Level level_;	/**< Level of Debug ouput */
 };
 
 #endif	/* _DEBUG_H_ */

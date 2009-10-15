@@ -323,9 +323,9 @@ ComThread::readMessage(void)
 
 	anoubis_msg_resize(msg, size);
 
-	if (Debug::instance()->checkLevel(DEBUG_CHAT)) {
+	if (Debug::checkLevel(Debug::CHAT)) {
 		anoubis_dump_str(msg, NULL, &str);
-		Debug::instance()->log(wxString::FromAscii(str), DEBUG_CHAT);
+		Debug::chat(wxString::FromAscii(str));
 		free(str);
 	}
 

@@ -538,7 +538,7 @@ PolicyRuleSet::create(wxString fileName)
 		logEntry = wxString::Format(_("System error during import of "
 		    "policy file %ls: %hs"),
 		    fileName.c_str(), strerror(errno));
-		log(logEntry);
+		Debug::err(logEntry);
 		status(logEntry);
 		hasErrors_ = true;
 		break;
@@ -546,7 +546,7 @@ PolicyRuleSet::create(wxString fileName)
 		logEntry = wxString::Format(
 		    _("Successfully imported policy file %ls"),
 		    fileName.c_str());
-		log(logEntry);
+		Debug::info(logEntry);
 		status(logEntry);
 		create(ruleSet);
 		break;
@@ -555,7 +555,7 @@ PolicyRuleSet::create(wxString fileName)
 			logEntry = wxString::Format(
 			    _("Failed import of policy file %ls"),
 			    fileName.c_str());
-			log(logEntry);
+			Debug::err(logEntry);
 			break;
 		}
 		status(logEntry);
@@ -563,7 +563,7 @@ PolicyRuleSet::create(wxString fileName)
 			logEntry = wxString::Format(
 			    _("Failed import of policy file %hs"),
 			    errMsg->msg);
-			log(logEntry);
+			Debug::err(logEntry);
 		}
 		hasErrors_ = true;
 		// XXX: do we need an apn_free_ruleset here ?
@@ -572,7 +572,7 @@ PolicyRuleSet::create(wxString fileName)
 		logEntry = wxString::Format(
 		    _("Unknown error during import of policy file %ls"),
 		    fileName.c_str());
-		log(logEntry);
+		Debug::err(logEntry);
 		hasErrors_ = true;
 		break;
 	}
@@ -760,17 +760,6 @@ err:
 	if (newblock)
 		apn_free_one_rule(newblock, NULL);
 	return;
-}
-
-void
-PolicyRuleSet::log(const wxString &msg)
-{
-	/*
-	 * Enable logging if AnoubisGuiApp is available.
-	 * You don't have a AnoubisGuiApp in case of a unit-test.
-	 */
-	if (dynamic_cast<AnoubisGuiApp*>(wxTheApp))
-		wxGetApp().log(msg);
 }
 
 void

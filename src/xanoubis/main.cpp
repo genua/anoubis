@@ -97,6 +97,8 @@ AnoubisGuiApp::AnoubisGuiApp(void)
 	wxInitAllImageHandlers();
 
 	paths_.SetInstallPrefix(wxT(PACKAGE_PREFIX));
+
+	Debug::initialize();
 }
 
 AnoubisGuiApp::~AnoubisGuiApp(void)
@@ -108,6 +110,7 @@ AnoubisGuiApp::~AnoubisGuiApp(void)
 	/* Destroy versionmanagement */
 	delete VersionCtrl::getInstance();
 	delete PolicyCtrl::getInstance();
+	Debug::uninitialize();
 
 	/* XXX KM: if we delete this instance a
 	 * segfault occured described in:
@@ -321,33 +324,6 @@ void
 AnoubisGuiApp::status(wxString msg)
 {
 	mainFrame->SetStatusText(msg, 0);
-	Debug::instance()->log(msg, DEBUG_STATUS);
-}
-
-void
-AnoubisGuiApp::log(wxString msg)
-{
-	LogNotify		*notify;
-	NotificationCtrl	*notifyCtrl;
-
-	notify = new LogNotify(msg);
-	notifyCtrl = NotificationCtrl::instance();
-
-	Debug::instance()->log(msg, DEBUG_LOG);
-	notifyCtrl->addNotification(notify);
-}
-
-void
-AnoubisGuiApp::alert(wxString msg)
-{
-	AlertNotify		*notify;
-	NotificationCtrl	*notifyCtrl;
-
-	notify = new AlertNotify(msg);
-	notifyCtrl = NotificationCtrl::instance();
-
-	Debug::instance()->log(msg, DEBUG_ALERT);
-	notifyCtrl->addNotification(notify);
 }
 
 void
@@ -400,16 +376,14 @@ bool
 AnoubisGuiApp::OnCmdLineParsed(wxCmdLineParser& parser)
 {
 	long int	debug_level = 0;
-	wxString	socketPath, mesg;
+	wxString	socketPath;
 
 	if (parser.Found(wxT("s"), &socketPath))
 		JobCtrl::getInstance()->setSocketPath(socketPath);
 
 	if (parser.Found(wxT("d"), &debug_level)) {
-		Debug::instance()->setLevel(debug_level);
-		mesg = wxT("Debug enabled with level ");
-		mesg += wxString::Format(_T("%ld"), debug_level);
-		Debug::instance()->log(mesg, DEBUG_ALERT);
+		Debug::setLevel(debug_level);
+		Debug::trace(wxT("Debug enabled with level %ld"), Debug::getLevel());
 	}
 
 	if (parser.Found(wxT("t")))

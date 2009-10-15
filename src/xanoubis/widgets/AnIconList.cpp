@@ -27,6 +27,7 @@
 
 #include "AnIconList.h"
 #include "main.h"
+#include "Singleton.cpp"
 
 AnIconList::AnIconList(void)
 {

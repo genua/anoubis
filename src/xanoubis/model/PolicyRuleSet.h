@@ -358,7 +358,6 @@ class PolicyRuleSet : public Subject
 		struct apn_rule *assembleAlfPolicy(AlfFilterPolicy *,
 		   EscalationNotify *);
 
-		void log(const wxString &);
 		void status(const wxString &);
 };
 

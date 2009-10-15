@@ -116,8 +116,6 @@ class AnoubisGuiApp : public wxApp, private PassphraseReader
 		int	OnExit(void);
 		void	quit(void);
 		void	status(wxString);
-		void	log(wxString);
-		void	alert(wxString);
 
 		void	OnInitCmdLine(wxCmdLineParser&);
 		bool	OnCmdLineParsed(wxCmdLineParser&);

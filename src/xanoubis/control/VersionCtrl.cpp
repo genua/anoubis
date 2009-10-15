@@ -35,6 +35,7 @@
 
 #include "ApnVersion.h"
 #include "ModAnoubis.h"
+#include "Singleton.cpp"
 #include "VersionCtrl.h"
 #include "ProcCtrl.h"
 

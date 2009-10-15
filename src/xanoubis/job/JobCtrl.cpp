@@ -33,6 +33,8 @@
 #include "JobCtrl.h"
 #include "main.h"
 
+#include "Singleton.cpp"
+
 #include <wx/listimpl.cpp>
 WX_DEFINE_LIST(JobThreadList);
 

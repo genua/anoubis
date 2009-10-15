@@ -39,6 +39,7 @@
 #include "JobCtrl.h"
 #include "PolicyRuleSet.h"
 #include "PolicyCtrl.h"
+#include "Singleton.cpp"
 #include "VersionCtrl.h"
 
 PolicyCtrl::~PolicyCtrl(void)
