@@ -88,11 +88,11 @@ static char			*sfs_key = NULL;
 static int			 checksum_flag = ANOUBIS_CSUM_NONE;
 
 unsigned int		 opts = 0;
+extern char		*__progname;
 
 __dead void
 usage(void)
 {
-	extern char	*__progname;
 	unsigned int	i;
 
 	/*
@@ -362,6 +362,8 @@ main(int argc, char *argv[])
 	if (argc <= 0 && sfs_infile == NULL)
 		usage();
 
+	openlog(__progname, LOG_ODELAY|LOG_PERROR, LOG_USER);
+
 	if (syssigmode > 0) {
 		switch(syssigmode) {
 		case 'A':
@@ -397,7 +399,7 @@ main(int argc, char *argv[])
 	}
 	error = anoubis_ui_readversion();
 	if (error > ANOUBIS_UI_VER) {
-		fprintf(stderr, "Unsupported version (%d) found of HOME/"
+		syslog(LOG_WARNING, "Unsupported version (%d) found of HOME/"
 		    ANOUBIS_UI_DIR"\nsfssig will terminate now.\n", error);
 		return 1;
 	}
@@ -520,6 +522,8 @@ main(int argc, char *argv[])
 		}
 	}
 
+	closelog();
+
 	if (as)
 		anoubis_sig_free(as);
 
@@ -559,7 +563,8 @@ sfs_sumop_flags(char *file, int operation, u_int8_t *cs, int cslen, int idlen,
 	if (client == NULL) {
 		error = create_channel();
 		if (error) {
-			fprintf(stderr, "Cannot connect to anoubis daemon\n");
+			syslog(LOG_WARNING, "Cannot connect to anoubis"
+			    " daemon\n");
 			return NULL;
 		}
 	}
@@ -582,7 +587,7 @@ sfs_sumop_flags(char *file, int operation, u_int8_t *cs, int cslen, int idlen,
 		int ret = anoubis_client_wait(client);
 		if (ret <= 0) {
 			anoubis_transaction_destroy(t);
-			fprintf(stderr, "Checksum request interrupted\n");
+			syslog(LOG_WARNING, "Checksum request interrupted\n");
 			return NULL;
 		}
 		if (t->flags & ANOUBIS_T_DONE)
@@ -613,7 +618,8 @@ sfs_listop(char *file, uid_t uid, struct anoubis_sig *as,
 	if (client == NULL) {
 		error = create_channel();
 		if (error) {
-			fprintf(stderr, "Cannot connect to anoubis daemon\n");
+			syslog(LOG_WARNING, "Cannot connect to anoubis "
+			    "daemon\n");
 			return NULL;
 		}
 	}
@@ -627,7 +633,7 @@ sfs_listop(char *file, uid_t uid, struct anoubis_sig *as,
 		int ret= anoubis_client_wait(client);
 		if (ret <= 0) {
 			anoubis_transaction_destroy(t);
-			fprintf(stderr, "Checksum request interrupted\n");
+			syslog(LOG_WARNING, "Checksum request interrupted\n");
 			return NULL;
 		}
 		if (t->flags & ANOUBIS_T_DONE)
@@ -1924,7 +1930,7 @@ create_channel(void)
 	    sizeof(struct sockaddr_un));
 	if (rc != ACHAT_RC_OK) {
 		acc_destroy(channel);
-	channel = NULL;
+		channel = NULL;
 		fprintf(stderr, "client setaddr failed\n");
 		error = 5;
 		goto err;
@@ -1968,8 +1974,8 @@ create_channel(void)
 	if ((error = anoubis_client_connect(client, ANOUBIS_PROTO_BOTH))) {
 		if (error == EPROTONOSUPPORT &&
 		    !anoubis_client_versioncmp(client, ANOUBIS_PROTO_VERSION))
-			fprintf(stderr, "Anoubis protocol: mismatch (local: "
-			    "%i -- daemon: %i)\n", ANOUBIS_PROTO_VERSION,
+			syslog(LOG_WARNING, "Anoubis protocol: mismatch (local:"
+			    " %i -- daemon: %i)\n", ANOUBIS_PROTO_VERSION,
 			    anoubis_client_serverversion(client));
 		anoubis_client_destroy(client);
 		client = NULL;

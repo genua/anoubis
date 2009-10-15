@@ -41,6 +41,7 @@
 #include <dirent.h>
 #include <getopt.h>
 #include <pwd.h>
+#include <syslog.h>
 
 #include <sys/un.h>
 #include <sys/mman.h>
