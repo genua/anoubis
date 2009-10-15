@@ -50,6 +50,7 @@ class VersionListCtrl;
 #include <wx/statline.h>
 #include <wx/panel.h>
 #include <wx/checkbox.h>
+#include <wx/scrolwin.h>
 #include <wx/bitmap.h>
 #include <wx/image.h>
 #include <wx/listctrl.h>
@@ -74,7 +75,7 @@ class ModAnoubisMainPanelBase : public wxPanel
 		wxBoxSizer* sz_MainAnoubisMain;
 		wxStaticText* tx_MainHeadline;
 		wxNotebook* tb_MainAnoubisNotify;
-		wxPanel* tb_MainAnoubisNotification;
+		wxScrolledWindow* tb_MainAnoubisNotification;
 		wxStaticText* tx_type;
 		wxChoice* ch_type;
 		
@@ -149,7 +150,7 @@ class ModAnoubisMainPanelBase : public wxPanel
 		
 		wxButton* bt_EscalationDeny;
 		
-		wxPanel* tb_Profiles;
+		wxScrolledWindow* tb_Profiles;
 		wxListCtrl* profileList;
 		wxStaticText* m_staticText35;
 		wxStaticText* selectedProfileText;
@@ -163,7 +164,7 @@ class ModAnoubisMainPanelBase : public wxPanel
 		wxStaticLine* m_staticline1;
 		wxStaticText* m_staticText40;
 		wxButton* profileActivateButton;
-		wxPanel* tb_MainAnoubisVersions;
+		wxScrolledWindow* tb_MainAnoubisVersions;
 		wxStaticText* m_staticText41;
 		wxRadioButton* VersionActivePolicyRadioButton;
 		wxRadioButton* VersionProfilePolicyRadioButton;
@@ -176,7 +177,7 @@ class ModAnoubisMainPanelBase : public wxPanel
 		wxButton* VersionDeleteButton;
 		wxButton* VersionShowButton;
 		
-		wxPanel* tb_MainAnoubisOptions;
+		wxScrolledWindow* tb_MainAnoubisOptions;
 		wxCheckBox* cb_SendEscalations;
 		
 		wxCheckBox* cb_NoEscalationTimeout;

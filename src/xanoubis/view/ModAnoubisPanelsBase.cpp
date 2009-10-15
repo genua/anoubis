@@ -48,7 +48,8 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	sz_MainAnoubisMain->Add( tx_MainHeadline, 0, wxALIGN_CENTER_HORIZONTAL|wxALL|wxEXPAND, 5 );
 	
 	tb_MainAnoubisNotify = new wxNotebook( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0 );
-	tb_MainAnoubisNotification = new wxPanel( tb_MainAnoubisNotify, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	tb_MainAnoubisNotification = new wxScrolledWindow( tb_MainAnoubisNotify, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxTAB_TRAVERSAL|wxVSCROLL );
+	tb_MainAnoubisNotification->SetScrollRate( 5, 5 );
 	wxBoxSizer* sz_MainAnoubisNotify;
 	sz_MainAnoubisNotify = new wxBoxSizer( wxVERTICAL );
 	
@@ -412,7 +413,8 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	tb_MainAnoubisNotification->Layout();
 	sz_MainAnoubisNotify->Fit( tb_MainAnoubisNotification );
 	tb_MainAnoubisNotify->AddPage( tb_MainAnoubisNotification, _("Notifications"), true );
-	tb_Profiles = new wxPanel( tb_MainAnoubisNotify, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	tb_Profiles = new wxScrolledWindow( tb_MainAnoubisNotify, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxTAB_TRAVERSAL|wxVSCROLL );
+	tb_Profiles->SetScrollRate( 5, 5 );
 	wxBoxSizer* bSizer25;
 	bSizer25 = new wxBoxSizer( wxHORIZONTAL );
 	
@@ -495,7 +497,8 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	tb_Profiles->Layout();
 	bSizer25->Fit( tb_Profiles );
 	tb_MainAnoubisNotify->AddPage( tb_Profiles, _("Profiles"), false );
-	tb_MainAnoubisVersions = new wxPanel( tb_MainAnoubisNotify, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	tb_MainAnoubisVersions = new wxScrolledWindow( tb_MainAnoubisNotify, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxTAB_TRAVERSAL|wxVSCROLL );
+	tb_MainAnoubisVersions->SetScrollRate( 5, 5 );
 	wxBoxSizer* MainAnoubisVersionsSizer;
 	MainAnoubisVersionsSizer = new wxBoxSizer( wxHORIZONTAL );
 	
@@ -524,7 +527,7 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	VersionListSizer->Add( bSizer31, 0, wxALL|wxEXPAND, 5 );
 	
 	versionListCtrl = new VersionListCtrl( tb_MainAnoubisVersions, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLC_HRULES|wxLC_REPORT|wxLC_VIRTUAL );
-	VersionListSizer->Add( versionListCtrl, 80, wxALL|wxEXPAND, 5 );
+	VersionListSizer->Add( versionListCtrl, 3, wxALL|wxEXPAND, 5 );
 	
 	wxStaticBoxSizer* VersionCommentSizer;
 	VersionCommentSizer = new wxStaticBoxSizer( new wxStaticBox( tb_MainAnoubisVersions, -1, _("Comment of selected version:") ), wxVERTICAL );
@@ -534,9 +537,9 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	
 	VersionCommentSizer->Add( VersionShowCommentTextCtrl, 1, wxALL|wxEXPAND, 5 );
 	
-	VersionListSizer->Add( VersionCommentSizer, 20, wxEXPAND, 5 );
+	VersionListSizer->Add( VersionCommentSizer, 0, wxEXPAND, 5 );
 	
-	MainAnoubisVersionsSizer->Add( VersionListSizer, 1, 0, 5 );
+	MainAnoubisVersionsSizer->Add( VersionListSizer, 1, wxEXPAND, 5 );
 	
 	wxBoxSizer* VersionButtonSizer;
 	VersionButtonSizer = new wxBoxSizer( wxVERTICAL );
@@ -573,7 +576,8 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	tb_MainAnoubisVersions->Layout();
 	MainAnoubisVersionsSizer->Fit( tb_MainAnoubisVersions );
 	tb_MainAnoubisNotify->AddPage( tb_MainAnoubisVersions, _("Version control"), false );
-	tb_MainAnoubisOptions = new wxPanel( tb_MainAnoubisNotify, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	tb_MainAnoubisOptions = new wxScrolledWindow( tb_MainAnoubisNotify, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxTAB_TRAVERSAL|wxVSCROLL );
+	tb_MainAnoubisOptions->SetScrollRate( 5, 5 );
 	wxBoxSizer* sz_MainAnoubisOptions;
 	sz_MainAnoubisOptions = new wxBoxSizer( wxVERTICAL );
 	

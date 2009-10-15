@@ -103,6 +103,8 @@ ModSfsMainPanelBase::ModSfsMainPanelBase( wxWindow* parent, wxWindowID id, const
 	
 	browserMainSizer->Add( browserDirSizer, 2, wxEXPAND, 5 );
 	
+	browserListPanel = new wxScrolledWindow( pan_SfsMain, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxTAB_TRAVERSAL|wxVSCROLL );
+	browserListPanel->SetScrollRate( 5, 5 );
 	wxBoxSizer* browserListSizer;
 	browserListSizer = new wxBoxSizer( wxVERTICAL );
 	
@@ -111,41 +113,41 @@ ModSfsMainPanelBase::ModSfsMainPanelBase( wxWindow* parent, wxWindowID id, const
 	SfsMainDirListHeadSizer->SetFlexibleDirection( wxBOTH );
 	SfsMainDirListHeadSizer->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
 	
-	SfsMainDirViewLabel = new wxStaticText( pan_SfsMain, wxID_ANY, _("View:"), wxDefaultPosition, wxDefaultSize, 0 );
+	SfsMainDirViewLabel = new wxStaticText( browserListPanel, wxID_ANY, _("View:"), wxDefaultPosition, wxDefaultSize, 0 );
 	SfsMainDirViewLabel->Wrap( -1 );
 	SfsMainDirListHeadSizer->Add( SfsMainDirViewLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	wxString SfsMainDirViewChoiceChoices[] = { _("Standard file browsing"), _("Files with checksum"), _("Changed files"), _("Orphaned checksums"), _("Upgraded files") };
 	int SfsMainDirViewChoiceNChoices = sizeof( SfsMainDirViewChoiceChoices ) / sizeof( wxString );
-	SfsMainDirViewChoice = new wxChoice( pan_SfsMain, wxID_ANY, wxDefaultPosition, wxDefaultSize, SfsMainDirViewChoiceNChoices, SfsMainDirViewChoiceChoices, 0 );
+	SfsMainDirViewChoice = new wxChoice( browserListPanel, wxID_ANY, wxDefaultPosition, wxDefaultSize, SfsMainDirViewChoiceNChoices, SfsMainDirViewChoiceChoices, 0 );
 	SfsMainDirViewChoice->Enable( false );
 	
 	SfsMainDirListHeadSizer->Add( SfsMainDirViewChoice, 0, wxALL|wxEXPAND|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	SfsMainDirTraversalCheckbox = new wxCheckBox( pan_SfsMain, wxID_ANY, _("Recursive traversal"), wxDefaultPosition, wxDefaultSize, 0 );
+	SfsMainDirTraversalCheckbox = new wxCheckBox( browserListPanel, wxID_ANY, _("Recursive traversal"), wxDefaultPosition, wxDefaultSize, 0 );
 	
 	SfsMainDirTraversalCheckbox->SetToolTip( _("Enables recursive traversal through filesystem") );
 	
 	SfsMainDirListHeadSizer->Add( SfsMainDirTraversalCheckbox, 0, wxALL, 5 );
 	
-	SfsMainDirFilterLabel = new wxStaticText( pan_SfsMain, wxID_ANY, _("Filter:"), wxDefaultPosition, wxDefaultSize, 0 );
+	SfsMainDirFilterLabel = new wxStaticText( browserListPanel, wxID_ANY, _("Filter:"), wxDefaultPosition, wxDefaultSize, 0 );
 	SfsMainDirFilterLabel->Wrap( -1 );
 	SfsMainDirListHeadSizer->Add( SfsMainDirFilterLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	wxBoxSizer* SfsMainDirFilterSizer;
 	SfsMainDirFilterSizer = new wxBoxSizer( wxHORIZONTAL );
 	
-	SfsMainFilterTextCtrl = new wxTextCtrl( pan_SfsMain, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER );
+	SfsMainFilterTextCtrl = new wxTextCtrl( browserListPanel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER );
 	SfsMainDirFilterSizer->Add( SfsMainFilterTextCtrl, 1, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
 	
-	SfsMainFilterButton = new wxButton( pan_SfsMain, wxID_ANY, _("Filter"), wxDefaultPosition, wxDefaultSize, 0 );
+	SfsMainFilterButton = new wxButton( browserListPanel, wxID_ANY, _("Filter"), wxDefaultPosition, wxDefaultSize, 0 );
 	SfsMainFilterButton->SetToolTip( _("Apply the filter") );
 	
 	SfsMainDirFilterSizer->Add( SfsMainFilterButton, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
 	
 	SfsMainDirListHeadSizer->Add( SfsMainDirFilterSizer, 1, wxEXPAND, 5 );
 	
-	SfsMainFilterInvertCheckBox = new wxCheckBox( pan_SfsMain, wxID_ANY, _("Invert"), wxDefaultPosition, wxDefaultSize, 0 );
+	SfsMainFilterInvertCheckBox = new wxCheckBox( browserListPanel, wxID_ANY, _("Invert"), wxDefaultPosition, wxDefaultSize, 0 );
 	
 	SfsMainFilterInvertCheckBox->SetToolTip( _("Invert the filter") );
 	
@@ -153,12 +155,10 @@ ModSfsMainPanelBase::ModSfsMainPanelBase( wxWindow* parent, wxWindowID id, const
 	
 	browserListSizer->Add( SfsMainDirListHeadSizer, 0, wxEXPAND, 5 );
 	
-	SfsMainListCtrl = new ModSfsListCtrl( pan_SfsMain, wxID_ANY, wxDefaultPosition, wxSize( -1,-1 ), wxLC_HRULES|wxLC_REPORT );
-	SfsMainListCtrl->SetMinSize( wxSize( 500,280 ) );
-	
+	SfsMainListCtrl = new ModSfsListCtrl( browserListPanel, wxID_ANY, wxDefaultPosition, wxSize( -1,-1 ), wxLC_HRULES|wxLC_REPORT );
 	browserListSizer->Add( SfsMainListCtrl, 1, wxALL|wxEXPAND, 5 );
 	
-	SfsMainDetailsPanel = new AnDetails( pan_SfsMain, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxRAISED_BORDER|wxTAB_TRAVERSAL, wxT("Details") );
+	SfsMainDetailsPanel = new AnDetails( browserListPanel, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxFULL_REPAINT_ON_RESIZE|wxRAISED_BORDER|wxTAB_TRAVERSAL, wxT("Details") );
 	wxBoxSizer* bSizer20;
 	bSizer20 = new wxBoxSizer( wxHORIZONTAL );
 	
@@ -167,10 +167,10 @@ ModSfsMainPanelBase::ModSfsMainPanelBase( wxWindow* parent, wxWindowID id, const
 	SfsMainSignFilesCheckBox->Enable( false );
 	SfsMainSignFilesCheckBox->SetToolTip( _("Enables signature support") );
 	
-	bSizer20->Add( SfsMainSignFilesCheckBox, 1, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
+	bSizer20->Add( SfsMainSignFilesCheckBox, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
 	
 	
-	bSizer20->Add( 0, 0, 2, wxEXPAND|wxALIGN_CENTER_VERTICAL, 5 );
+	bSizer20->Add( 0, 0, 1, wxALIGN_CENTER_VERTICAL|wxEXPAND, 5 );
 	
 	SfsMainImportButton = new wxButton( SfsMainDetailsPanel, wxID_ANY, _("Import..."), wxDefaultPosition, wxDefaultSize, 0 );
 	SfsMainImportButton->Enable( false );
@@ -192,18 +192,18 @@ ModSfsMainPanelBase::ModSfsMainPanelBase( wxWindow* parent, wxWindowID id, const
 	wxBoxSizer* browserListFootSizer;
 	browserListFootSizer = new wxBoxSizer( wxHORIZONTAL );
 	
-	m_staticText101 = new wxStaticText( pan_SfsMain, wxID_ANY, _("Current selection:"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText101 = new wxStaticText( browserListPanel, wxID_ANY, _("Current selection:"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_staticText101->Wrap( -1 );
 	browserListFootSizer->Add( m_staticText101, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
 	
 	wxString SfsMainActionChoiceChoices[] = { _("Register"), _("Unregister"), _("Validate") };
 	int SfsMainActionChoiceNChoices = sizeof( SfsMainActionChoiceChoices ) / sizeof( wxString );
-	SfsMainActionChoice = new wxChoice( pan_SfsMain, wxID_ANY, wxDefaultPosition, wxDefaultSize, SfsMainActionChoiceNChoices, SfsMainActionChoiceChoices, 0 );
+	SfsMainActionChoice = new wxChoice( browserListPanel, wxID_ANY, wxDefaultPosition, wxDefaultSize, SfsMainActionChoiceNChoices, SfsMainActionChoiceChoices, 0 );
 	SfsMainActionChoice->Enable( false );
 	
 	browserListFootSizer->Add( SfsMainActionChoice, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
 	
-	SfsMainActionButton = new wxButton( pan_SfsMain, wxID_ANY, _("Apply"), wxDefaultPosition, wxDefaultSize, 0 );
+	SfsMainActionButton = new wxButton( browserListPanel, wxID_ANY, _("Apply"), wxDefaultPosition, wxDefaultSize, 0 );
 	SfsMainActionButton->Enable( false );
 	SfsMainActionButton->SetToolTip( _("Executes the selected action") );
 	
@@ -212,7 +212,7 @@ ModSfsMainPanelBase::ModSfsMainPanelBase( wxWindow* parent, wxWindowID id, const
 	
 	browserListFootSizer->Add( 0, 0, 1, wxEXPAND, 5 );
 	
-	SfsMainFilterValidateButton = new wxButton( pan_SfsMain, wxID_ANY, _("Validate all"), wxDefaultPosition, wxDefaultSize, 0 );
+	SfsMainFilterValidateButton = new wxButton( browserListPanel, wxID_ANY, _("Validate all"), wxDefaultPosition, wxDefaultSize, 0 );
 	SfsMainFilterValidateButton->Enable( false );
 	SfsMainFilterValidateButton->SetToolTip( _("Validates all displayed files") );
 	
@@ -220,13 +220,17 @@ ModSfsMainPanelBase::ModSfsMainPanelBase( wxWindow* parent, wxWindowID id, const
 	
 	browserListSizer->Add( browserListFootSizer, 0, wxEXPAND, 5 );
 	
-	browserMainSizer->Add( browserListSizer, 5, wxEXPAND, 5 );
+	browserListPanel->SetSizer( browserListSizer );
+	browserListPanel->Layout();
+	browserListSizer->Fit( browserListPanel );
+	browserMainSizer->Add( browserListPanel, 5, wxEXPAND | wxALL, 5 );
 	
 	pan_SfsMain->SetSizer( browserMainSizer );
 	pan_SfsMain->Layout();
 	browserMainSizer->Fit( pan_SfsMain );
 	note_MainSfs->AddPage( pan_SfsMain, _("Browser"), false );
-	pan_Options = new wxPanel( note_MainSfs, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	pan_Options = new wxScrolledWindow( note_MainSfs, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxTAB_TRAVERSAL|wxVSCROLL );
+	pan_Options->SetScrollRate( 5, 5 );
 	wxBoxSizer* bSizer16;
 	bSizer16 = new wxBoxSizer( wxVERTICAL );
 	

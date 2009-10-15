@@ -54,6 +54,7 @@ class ModSfsListCtrl;
 #include <wx/checkbox.h>
 #include <wx/textctrl.h>
 #include <wx/button.h>
+#include <wx/scrolwin.h>
 #include <wx/spinctrl.h>
 #include <wx/statbox.h>
 #include <wx/notebook.h>
@@ -80,6 +81,7 @@ class ModSfsMainPanelBase : public wxPanel
 		wxStaticText* m_staticText12;
 		wxStaticText* SfsMainCurrPathLabel;
 		wxGenericDirCtrl* SfsMainDirCtrl;
+		wxScrolledWindow* browserListPanel;
 		wxStaticText* SfsMainDirViewLabel;
 		wxChoice* SfsMainDirViewChoice;
 		wxCheckBox* SfsMainDirTraversalCheckbox;
@@ -98,7 +100,7 @@ class ModSfsMainPanelBase : public wxPanel
 		wxButton* SfsMainActionButton;
 		
 		wxButton* SfsMainFilterValidateButton;
-		wxPanel* pan_Options;
+		wxScrolledWindow* pan_Options;
 		AnPickFromFs* keyPicker;
 		wxStaticText* m_staticText13;
 		wxChoice* PrivKeyValidityChoice;

@@ -84,7 +84,7 @@ AnDetails::SetSizer(wxSizer *sizer, bool deleteOld)
 				delete contentSizer_;
 			}
 		}
-		mainSizer->Add(sizer);
+		mainSizer->Add(sizer, 1, wxEXPAND, 0);
 		contentSizer_ = sizer;
 	}
 
