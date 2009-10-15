@@ -399,8 +399,10 @@ main(int argc, char *argv[])
 	}
 	error = anoubis_ui_readversion();
 	if (error > ANOUBIS_UI_VER) {
-		syslog(LOG_WARNING, "Unsupported version (%d) found of HOME/"
-		    ANOUBIS_UI_DIR"\nsfssig will terminate now.\n", error);
+		char *home = getenv("HOME");
+		syslog(LOG_WARNING, 
+		    "Unsupported version (%d) of %s/" ANOUBIS_UI_DIR " found.",
+		    error, (home)? home:"HOME");
 		return 1;
 	}
 	if (error < 0) {
@@ -563,8 +565,8 @@ sfs_sumop_flags(char *file, int operation, u_int8_t *cs, int cslen, int idlen,
 	if (client == NULL) {
 		error = create_channel();
 		if (error) {
-			syslog(LOG_WARNING, "Cannot connect to anoubis"
-			    " daemon\n");
+			syslog(LOG_WARNING,
+			    "Cannot connect to the Anoubis daemon");
 			return NULL;
 		}
 	}
@@ -587,7 +589,7 @@ sfs_sumop_flags(char *file, int operation, u_int8_t *cs, int cslen, int idlen,
 		int ret = anoubis_client_wait(client);
 		if (ret <= 0) {
 			anoubis_transaction_destroy(t);
-			syslog(LOG_WARNING, "Checksum request interrupted\n");
+			syslog(LOG_WARNING, "Checksum request interrupted");
 			return NULL;
 		}
 		if (t->flags & ANOUBIS_T_DONE)
@@ -618,8 +620,8 @@ sfs_listop(char *file, uid_t uid, struct anoubis_sig *as,
 	if (client == NULL) {
 		error = create_channel();
 		if (error) {
-			syslog(LOG_WARNING, "Cannot connect to anoubis "
-			    "daemon\n");
+			syslog(LOG_WARNING,
+			    "Cannot connect to the Anoubis daemon");
 			return NULL;
 		}
 	}
@@ -633,7 +635,7 @@ sfs_listop(char *file, uid_t uid, struct anoubis_sig *as,
 		int ret= anoubis_client_wait(client);
 		if (ret <= 0) {
 			anoubis_transaction_destroy(t);
-			syslog(LOG_WARNING, "Checksum request interrupted\n");
+			syslog(LOG_WARNING, "Checksum request interrupted");
 			return NULL;
 		}
 		if (t->flags & ANOUBIS_T_DONE)
@@ -1974,8 +1976,8 @@ create_channel(void)
 	if ((error = anoubis_client_connect(client, ANOUBIS_PROTO_BOTH))) {
 		if (error == EPROTONOSUPPORT &&
 		    !anoubis_client_versioncmp(client, ANOUBIS_PROTO_VERSION))
-			syslog(LOG_WARNING, "Anoubis protocol: mismatch (local:"
-			    " %i -- daemon: %i)\n", ANOUBIS_PROTO_VERSION,
+			syslog(LOG_WARNING, "Anoubis protocol mismatch: "
+			    " local: %i -- daemon: %i", ANOUBIS_PROTO_VERSION,
 			    anoubis_client_serverversion(client));
 		anoubis_client_destroy(client);
 		client = NULL;

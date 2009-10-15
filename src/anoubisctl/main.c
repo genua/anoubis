@@ -55,6 +55,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <syslog.h>
 
 #ifdef LINUX
 #include <bsdcompat.h>
@@ -136,12 +137,12 @@ static struct achat_channel	*channel;
 struct anoubis_client		*client = NULL;
 char				*sigfile = NULL;
 
+extern char	*__progname;
 
 __dead void
 usage(void)
 {
 	unsigned int	i;
-	extern char	*__progname;
 
 	fprintf(stderr, "usage: %s [-fnv] [-k key] [-c cert] [-p <prio>] "
 	    "[-u uid] [-i fd] [-o sigfile] <command> [<file>]\n", __progname);
@@ -281,6 +282,13 @@ main(int argc, char *argv[])
 	if (argc > 0)
 		rulesopt = *argv;
 
+	openlog(__progname, LOG_ODELAY|LOG_PERROR, LOG_USER);
+
+	if ((homepath = getenv("HOME")) == NULL) {
+		fprintf(stderr, "Error: HOME environment variable not set\n");
+		return 1;
+	}
+
 	if (anoubis_ui_init() < 0) {
 		fprintf(stderr, "Error while initialising anoubis_ui\n");
 		return 1;
@@ -288,18 +296,18 @@ main(int argc, char *argv[])
 
 	error = anoubis_ui_readversion();
 	if (error > ANOUBIS_UI_VER) {
-		fprintf(stderr, "Unsupported version (%d) found of HOME/"
-		    ANOUBIS_UI_DIR"\nanoubisctl will terminate now.\n", error);
+		syslog(LOG_WARNING,
+		    "Unsupported version (%d) of %s/" ANOUBIS_UI_DIR " found.",
+		    error, homepath);
 		return 1;
 	}
 	if (error < 0) {
-		fprintf(stderr, "Error occured while reading version: %s\n",
-		    strerror(-error));
+		syslog(LOG_WARNING, "Error reading %s/" ANOUBIS_UI_DIR
+		    " version: %s\n", homepath, strerror(-error));
 		return 1;
 	}
 
 	if (certfile == NULL) {
-		homepath = getenv("HOME");
 		if (asprintf(&certfile, "%s/%s", homepath, def_cert)
 		    < 0){
 			fprintf(stderr, "Error while allocating"
@@ -315,7 +323,6 @@ main(int argc, char *argv[])
 	}
 	/* You also need a keyfile if you want to sign a policy */
 	if (keyfile == NULL) {
-		homepath = getenv("HOME");
 		if (asprintf(&keyfile, "%s/%s", homepath, def_pri) < 0){
 			fprintf(stderr, "Error while allocating"
 			    "memory\n");
@@ -508,12 +515,12 @@ daemon_restart(void)
 
 	if (!fp) {
 		fprintf(stderr, "Couldn't open " PACKAGE_PIDFILE ": %s. "
-		    "Starting a new daemon", strerror(errno));
+		    "Starting a new daemon\n", strerror(errno));
 		return daemon_start();
 	}
 	if (flock(fileno(fp), LOCK_EX|LOCK_NB) != -1) {
 		fprintf(stderr, "Unused " PACKAGE_PIDFILE " found. "
-		    "Starint a new daemon\n");
+		    "Starting a new daemon\n");
 		return daemon_start();
 	}
 	if (fscanf(fp, "%d", &pid) != 1) {
@@ -532,14 +539,14 @@ daemon_restart(void)
 		goto kill;
 	}
 	fprintf(stderr,
-	    "Warning: Upgrade in progress. anoubisd restart delayed");
+	    "Warning: Upgrade in progress. anoubisd restart delayed\n");
 	child = fork();
 	if (child < 0) {
 		perror("fork");
 		goto kill;
 	}
 	if (child >= 0) {
-		/* This is the parent process. Just idicate success. */
+		/* This is the parent process. Just indicate success. */
 		return 0;
 	}
 	while (1) {
@@ -547,7 +554,7 @@ daemon_restart(void)
 			break;
 		if (errno != EINTR && errno != EAGAIN) {
 			syslog(LOG_CRIT,
-			    "flock failed. Will restart Anoubis Daemon NOW\n");
+			    "flock failed. Restarting Anoubis Daemon NOW\n");
 			break;
 		}
 	}
@@ -1216,8 +1223,8 @@ send_passphrase(void)
 }
 
 /*
- * If check_parser_version was passed create_channel() does an implicit
- * comparison of APN versions
+ * If check_parser_version is passed to create_channel() then
+ * a check of APN versions is performed
  */
 static int
 create_channel(unsigned int check_parser_version)
@@ -1314,8 +1321,8 @@ create_channel(unsigned int check_parser_version)
 	if ((error = anoubis_client_connect(client, ANOUBIS_PROTO_BOTH))) {
 		if (error == EPROTONOSUPPORT &&
 		    !anoubis_client_versioncmp(client, ANOUBIS_PROTO_VERSION))
-			fprintf(stderr, "Anoubis protocol: mismatch (local: "
-			    "%i -- daemon: %i)\n", ANOUBIS_PROTO_VERSION,
+			syslog(LOG_WARNING, "Anoubis protocol mismatch: "
+			    "local: %i -- daemon: %i", ANOUBIS_PROTO_VERSION,
 			    anoubis_client_serverversion(client));
 		anoubis_client_destroy(client);
 		client = NULL;
@@ -1339,14 +1346,15 @@ create_channel(unsigned int check_parser_version)
 		if (error) {
 			destroy_channel();
 			errno = error;
-			fprintf(stderr, "fetch_versions() failed\n");
+			syslog(LOG_WARNING,
+			    "Error fetching Anoubis daemon version");
 			return (error);
 		}
 
 		if ((apn_daemon_version) != apn_client_version) {
 			destroy_channel();
-			fprintf(stderr, "APN parser: mismatch "
-			    "(local: %i.%i ,daemon: %i.%i)\n",
+			syslog(LOG_WARNING, "APN parser version mismatch: "
+			    "local: %i.%i, daemon: %i.%i",
 			    APN_PARSER_MAJOR(apn_client_version),
 			    APN_PARSER_MINOR(apn_client_version),
 			    APN_PARSER_MAJOR(apn_daemon_version),
