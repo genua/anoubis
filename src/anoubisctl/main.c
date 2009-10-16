@@ -417,6 +417,12 @@ main(int argc, char *argv[])
 	exit(error);
 }
 
+/*
+ * NOTE: This function might be called from the background via
+ * NOTE: daemon_restart. Do not use fprintf, instead use syslog for
+ * NOTE: error reporting. Using perror will make sure that error message
+ * NOTE: are also seen on stderr by the user.
+ */
 static int
 daemon_start(void)
 {
@@ -425,7 +431,8 @@ daemon_start(void)
 	static const char	*command = PACKAGE_SBINDIR "/" PACKAGE_DAEMON;
 
 	if ((err = system(command))) {
-		perror(command);
+		syslog(LOG_ERR, "%s: %s", command,
+		    strerror(errno));
 		error = 2;
 	}
 
@@ -545,10 +552,12 @@ daemon_restart(void)
 		perror("fork");
 		goto kill;
 	}
-	if (child >= 0) {
-		/* This is the parent process. Just indicate success. */
+	if (child > 0) {
+		/* This is the parent process. Just idicate success. */
 		return 0;
 	}
+	if (daemon(0, 0) < 0)
+		perror("Daemonizing failed");
 	while (1) {
 		if (flock(sfsfd, LOCK_EX) == 0)
 			break;
@@ -560,9 +569,13 @@ daemon_restart(void)
 	}
 kill:
 	if (kill(pid, SIGTERM) != 0) {
-		fprintf(stderr, "Couldn't send signal: %s\n", strerror(errno));
+		syslog(LOG_CRIT,
+		    "Couldn't send signal to anoubisd: %s\n", strerror(errno));
 		return 2;
 	}
+	/* Make sure the the new anoubisd does not inherit this fd! */
+	if (sfsfd >= 0)
+		close(sfsfd);
 	/* Wait at most 10 seconds for termination. */
 	for(i=0; i<10; ++i) {
 		if (kill(pid, 0) < 0 && errno == ESRCH)
@@ -571,7 +584,8 @@ kill:
 	}
 	if (kill(pid, 0) < 0 && errno == ESRCH)
 		return daemon_start();
-	fprintf(stderr, "Anoubis Daemon failed to terminate\n");
+	syslog(LOG_CRIT,
+	    "Anoubis Daemon failed to terminate\n");
 	return 2;
 }
 
