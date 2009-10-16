@@ -342,6 +342,12 @@ read_sfsversion(void)
 
 	ret = fscanf(fp, "%d\n", &version);
 	err = errno;
+	/* The policy engine needs access to this file. */
+	if (fchown(fileno(fp), 0, anoubisd_gid) < 0
+	    || fchmod(fileno(fp), 0640) < 0) {
+		log_warn("Cannot modify owner/permissions on "
+		    ANOUBISD_SFS_TREE_VERSIONFILE);
+	}
 	fclose(fp);
 	if (ret != 1)
 		return -err;
@@ -381,6 +387,12 @@ write_sfsversion()
 	    fprintf(fp, "%d\n", ANOUBISD_SFS_TREE_FORMAT_VERSION) < 0 ||
 	    fclose(fp) == EOF) {
 		return -errno;
+	}
+	/* The policy engine needs access to this file. */
+	if (fchown(fileno(fp), 0, anoubisd_gid) < 0
+	    || fchmod(fileno(fp), 0640) < 0) {
+		log_warn("Cannot modify owner/permissions on "
+		    ANOUBISD_SFS_TREE_VERSIONFILE);
 	}
 	return ANOUBISD_SFS_TREE_FORMAT_VERSION;
 }
@@ -467,6 +479,13 @@ main(int argc, char *argv[])
 		close(fd);
 	}
 
+	/* Get anoubisd gid early. This is used by read/write_sfsversion */
+	if ((pw = getpwnam(ANOUBISD_USER)) == NULL)
+		early_errx(1, "User " ANOUBISD_USER " does not exist");
+	if (pw->pw_gid == 0)
+		early_errx(1, "Group ID of " ANOUBISD_USER " must not be 0");
+	anoubisd_gid = pw->pw_gid;
+
 	sfsversion = read_sfsversion();
 	if (sfsversion == 0) {
 		/*
@@ -524,12 +543,6 @@ main(int argc, char *argv[])
 	sigemptyset(&act.sa_mask);
 	if (sigaction(SIGSEGV, &act, NULL) < 0)
 		early_errx(1, "Sigaction failed");
-
-	if ((pw = getpwnam(ANOUBISD_USER)) == NULL)
-		early_errx(1, "User " ANOUBISD_USER " does not exist");
-	if (pw->pw_gid == 0)
-		early_errx(1, "Group ID of " ANOUBISD_USER " must not be 0");
-	anoubisd_gid = pw->pw_gid;
 
 	if (geteuid() != 0)
 		early_errx(1, "need root privileges");

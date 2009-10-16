@@ -106,10 +106,7 @@ try-restart)
 	rc_status
 	;;
 restart)
-	## Stop the service and regardless of whether it was
-	## running or not, start it again.
-	$0 stop
-	$0 start
+	$ANOUBISD_CTRL restart
 
 	# Remember status and be quiet
 	rc_status

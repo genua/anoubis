@@ -141,10 +141,7 @@ cp $RPM_SOURCE_DIR/anoubisd.conf $RPM_BUILD_ROOT/etc/anoubis
 
 ### package scripts ########################################
 %pre -n anoubisd
-if [ "$1" -gt 1 ]; then
-    # when upgrading, stop old anoubisd
-    %{rcdir}/anoubisd stop
-fi
+# Do not stop the anoubisd. Restart it after the upgrade.
 if ! getent passwd _anoubisd >/dev/null; then
 	groupadd -f -r _anoubisd
 	useradd -M -r -s /sbin/nologin -d /var/run/anoubisd \
@@ -226,7 +223,7 @@ exit 0
 %postun -n anoubisd
 # execute only on upgrades (i.e. at least 1 version left)
 if [ "$1" -ge 1 ]; then
-    %{rcdir}/anoubisd start
+    %{rcdir}/anoubisd restart
 fi
 exit 0
 

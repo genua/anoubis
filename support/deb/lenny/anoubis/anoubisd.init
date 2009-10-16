@@ -92,6 +92,11 @@ do_reload() {
 	$CTRL reload
 }
 
+# Function that restarts the daemon/service
+do_restart() {
+	$CTRL restart
+}
+
 case "$1" in
   start)
 	log_daemon_msg "Starting $DESC" "$NAME"
@@ -134,21 +139,8 @@ case "$1" in
 	# 'force-reload' alias
 	#
 	log_daemon_msg "Restarting $DESC" "$NAME"
-	do_stop
-	case "$?" in
-	  0|1)
-		do_start
-		case "$?" in
-			0) log_end_msg 0 ;;
-			1) log_end_msg 1 ;; # Old process is still running
-			*) log_end_msg 1 ;; # Failed to start
-		esac
-		;;
-	  *)
-		# Failed to stop
-		log_end_msg 1
-		;;
-	esac
+	do_restart
+	log_end_msg $?
 	;;
   *)
 	#echo "Usage: $SCRIPTNAME {start|stop|restart|reload|force-reload}" >&2

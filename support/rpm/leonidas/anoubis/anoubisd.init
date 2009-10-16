@@ -82,8 +82,11 @@ stop() {
 
 
 restart() {
-	stop
-	start $@
+	echo -n $"Restarting anoubis daemon: "
+	$CTRL restart
+	RETVAL=$?
+	echo
+	return $RETVAL
 }
 
 reload() {
