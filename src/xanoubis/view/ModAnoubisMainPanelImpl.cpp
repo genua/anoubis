@@ -93,6 +93,7 @@ ModAnoubisMainPanelImpl::ModAnoubisMainPanelImpl(wxWindow* parent,
 	NotificationCtrl	*notifyCtrl;
 
 	currentNotify_ = NULL;
+	savedNotify_ = NULL;
 	anEvents = AnEvents::getInstance();
 
 	notifyCtrl = NotificationCtrl::instance();
@@ -697,8 +698,27 @@ ModAnoubisMainPanelImpl::update(void)
 	 * Only update the escalation window if the escalation actually
 	 * changed.
 	 */
-	if (currentNotify_ == savedNotify_)
+	if (currentNotify_ == savedNotify_) {
+		/*
+		 * Fix for bug #1363:
+		 * Escalation view not properly initialized
+		 * If current notify == saved notify == NULL
+		 * we have to hide all concerning widgets.
+		 */
+		if (currentNotify_ == NULL) {
+			HIDESLOT(1);
+			HIDESLOT(2);
+			HIDESLOT(3);
+			HIDESLOT(4);
+			HIDESLOT(5);
+			HIDESLOT(6);
+			pn_Escalation->Hide();
+			tx_answerValue->Hide();
+			Layout();
+			Refresh();
+		}
 		return;
+	}
 	savedNotify_ = currentNotify_;
 	if (currentNotify_ != NULL) {
 		displayMessage();
