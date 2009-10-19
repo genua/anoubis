@@ -1396,6 +1396,11 @@ ModAnoubisMainPanelImpl::editOptionsEnable(void)
 	} else if (!current->allowOptions()) {
 		enableright = false;
 	}
+	if (current->getBinaryName() == wxEmptyString) {
+		enabledurationbuttons = false;
+		enableeditor = false;
+		enableright = false;
+	}
 	if (module == wxT("ALF")) {
 		pn_EscalationAlf->Enable(enableright);
 	} else if (module == wxT("SFS")) {
