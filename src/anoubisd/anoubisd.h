@@ -261,12 +261,13 @@ enum anoubisd_upgrade {
 	ANOUBISD_UPGRADE_END,
 	ANOUBISD_UPGRADE_CHUNK_REQ,
 	ANOUBISD_UPGRADE_CHUNK,
-	ANOUBISD_UPGRADE_OK,	/* Chunk is a character: true or false */
+	ANOUBISD_UPGRADE_OK,	 /* Chunk is a character: true or false */
+	ANOUBISD_UPGRADE_NOTIFY, /* chunksize == number of upgraded files */
 };
 
 struct anoubisd_msg_upgrade
 {
-	u_int8_t	upgradetype;
+	u_int32_t	upgradetype;
 	u_int32_t	chunksize;
 	char		chunk[0];
 };

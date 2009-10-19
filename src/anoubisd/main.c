@@ -115,6 +115,8 @@ extern char	*__progname;
 char		*logname;
 unsigned long	 version;
 
+static unsigned long	upgraded_files = 0;
+
 static Queue eventq_m2p;
 static Queue eventq_m2s;
 static Queue eventq_m2u;
@@ -1041,6 +1043,25 @@ send_upgrade_ok(int value, struct event_info_main *ev_info)
 }
 
 static void
+send_upgrade_notification(struct event_info_main *ev_info)
+{
+	struct anoubisd_msg		*msg;
+	struct anoubisd_msg_upgrade	*upg;
+
+	msg = msg_factory(ANOUBISD_MSG_UPGRADE,
+	    sizeof(struct anoubisd_msg_upgrade));
+	if (!msg) {
+		master_terminate(ENOMEM);
+		return;
+	}
+	upg = (struct anoubisd_msg_upgrade*)msg->msg;
+	upg->upgradetype = ANOUBISD_UPGRADE_NOTIFY;
+	upg->chunksize = upgraded_files;
+	enqueue(&eventq_m2s, msg);
+	event_add(ev_info->ev_m2s, NULL);
+}
+
+static void
 init_root_key(char *passphrase, struct event_info_main *ev_info)
 {
 	struct cert	*cert;
@@ -1660,12 +1681,21 @@ dispatch_u2m(int fd, short event __used, void *arg)
 			break;
 		DEBUG(DBG_QUEUE, " >u2m: msg type=%d", msg->mtype);
 		switch(msg->mtype) {
-		case ANOUBISD_MSG_UPGRADE:
+		case ANOUBISD_MSG_UPGRADE: {
+			struct anoubisd_msg_upgrade	*umsg;
+
+			umsg = (struct anoubisd_msg_upgrade *)msg->msg;
+			if (umsg->upgradetype == ANOUBISD_UPGRADE_END) {
+				send_upgrade_notification(ev_info);
+				upgraded_files = 0;
+			}
 			enqueue(&eventq_m2p, msg);
 			event_add(ev_info->ev_m2p, NULL);
 			break;
+		}
 		case ANOUBISD_MSG_SFS_UPDATE_ALL:
 			dispatch_sfs_update_all(msg, ev_info);
+			upgraded_files++;
 			free(msg);
 			break;
 		default:

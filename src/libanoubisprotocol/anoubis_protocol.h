@@ -37,8 +37,13 @@
 #include "splint-includes.h"
 #endif
 
-#define ANOUBIS_PROTO_VERSION		1
-#define ANOUBIS_PROTO_MINVERSION	1
+/*
+ * History of ANOUBIS_PROTO_VERSIONS:
+ *     Version 1: Historic (pre 0.9.1)
+ *     Version 2: Added ANOUBIS_N_STATUSNOTIFY messages (Version 0.9.[12]).
+ */
+#define ANOUBIS_PROTO_VERSION		2
+#define ANOUBIS_PROTO_MINVERSION	2
 
 #define ANOUBIS_PROTO_CONNECT		0
 #define ANOUBIS_PROTO_POLICY		1
@@ -177,10 +182,21 @@ static inline u_int64_t __ntohll(u_int64_t arg)
 #define		ANOUBIS_N_NOTIFY	0x4014
 #define		ANOUBIS_N_LOGNOTIFY	0x4015
 #define		ANOUBIS_N_POLICYCHANGE	0x4016
+#define		ANOUBIS_N_STATUSNOTIFY	0x4017
 #define		ANOUBIS_N_CTXREQ	0x4020
 #define		ANOUBIS_N_CTXREPLY	0x4021
 
 #define		ANOUBIS_N_MAX		0x4FFF
+
+/*
+ * Status notify keys. These are here to simplify exchange of status
+ * notify messages. UIs should ignore status notify message if they do
+ * do not understand the key.
+ */
+
+#define ANOUBIS_STATUS_UPGRADE		0x1000UL
+		/* Upgrade end. Value: Number of upgraded files */
+
 
 /*
  * Checksum Request Flags:
@@ -319,6 +335,12 @@ typedef struct {
 	u16n	evoff, evlen;
 	char	payload[0];
 } __attribute__((packed)) Anoubis_NotifyMessage;
+
+typedef struct {
+	u32n	type;
+	u32n	statuskey;
+	u32n	statusvalue;
+} __attribute__((packed)) Anoubis_StatusNotifyMessage;
 
 typedef struct {
 	u32n	type;

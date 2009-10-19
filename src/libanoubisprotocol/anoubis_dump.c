@@ -282,6 +282,14 @@ dump_policychange(Anoubis_PolicyChangeMessage *m, size_t len __used)
 	DUMP_NETU(m, prio);
 }
 
+static void
+dump_statusnotify(Anoubis_StatusNotifyMessage *m, size_t len __used)
+{
+	DUMP_NETX(m, statuskey);
+	DUMP_NETU(m, statusvalue);
+}
+
+
 void __anoubis_dump(struct anoubis_msg * m, const char * pre, char **pstr)
 {
 	u_int32_t opcode;
@@ -312,6 +320,7 @@ void __anoubis_dump(struct anoubis_msg * m, const char * pre, char **pstr)
 	CASE2(ANOUBIS_N_ASK, notify, 0)
 	CASE2(ANOUBIS_N_LOGNOTIFY, notify, 1)
 	CASE(ANOUBIS_N_POLICYCHANGE, policychange)
+	CASE(ANOUBIS_N_STATUSNOTIFY, statusnotify)
 	CASE(ANOUBIS_N_REGISTER, notifyreg)
 	CASE(ANOUBIS_N_UNREGISTER, notifyreg)
 	CASE(ANOUBIS_N_RESYOU, notifyresult)

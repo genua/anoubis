@@ -60,6 +60,7 @@ struct anoubis_msg {
 		Anoubis_ChecksumAddMessage * checksumadd;
 		Anoubis_SfsDisableMessage * sfsdisable;
 		Anoubis_PolicyChangeMessage * policychange;
+		Anoubis_StatusNotifyMessage * statusnotify;
 		Anoubis_PassphraseMessage *passphrase;
 		void * buf;
 	} u;

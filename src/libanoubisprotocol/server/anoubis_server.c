@@ -665,6 +665,7 @@ int anoubis_server_process(struct anoubis_server * server, void * buf,
 	case ANOUBIS_N_RESYOU:
 	case ANOUBIS_N_RESOTHER:
 	case ANOUBIS_N_POLICYCHANGE:
+	case ANOUBIS_N_STATUSNOTIFY:
 	case ANOUBIS_P_REPLY:
 	case ANOUBIS_P_VERSIONREPLY:
 		/* These are not allowed from the client. */

@@ -400,6 +400,8 @@ ComThread::sendNotify(struct anoubis_msg *notifyMsg)
 		if (dynamic_cast<AnoubisGuiApp*>(wxTheApp)) {
 			wxPostEvent(AnEvents::getInstance(), pce);
 		}
+	} else if (type == ANOUBIS_N_STATUSNOTIFY) {
+		/* XXX CEH: Generate event and handle in master process. */
 	} else {
 		notify = Notification::factory(notifyMsg);
 		if (notify != NULL) {

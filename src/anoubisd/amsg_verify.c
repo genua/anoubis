@@ -483,12 +483,19 @@ anoubisd_msg_upgrade_size(const char *buf, int buflen)
 
 	CAST(msg, buf, buflen);
 	SHIFT_FIELD(msg, chunk, buf, buflen);
-	CHECK_LEN(msg->chunksize, buflen);
+	if (msg->upgradetype != ANOUBISD_UPGRADE_NOTIFY)
+		CHECK_LEN(msg->chunksize, buflen);
 	switch(msg->upgradetype) {
 	case ANOUBISD_UPGRADE_OK:
 		if (msg->chunksize != 1)
 			return -1;
 		ADD_SIZE(msg->chunksize);
+		break;
+	case ANOUBISD_UPGRADE_NOTIFY:
+		/*
+		 * chunksize is the number of upgraded files. No data in
+		 * in chunk.
+		 */
 		break;
 	case ANOUBISD_UPGRADE_CHUNK:
 		if (msg->chunksize)

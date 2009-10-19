@@ -139,6 +139,8 @@ static void	dispatch_p2s_pol_reply(anoubisd_msg_t *,
 		    struct event_info_session *);
 static void	dispatch_m2s_pol_reply(anoubisd_msg_t *msg,
 		    struct event_info_session *ev_info);
+static void	dispatch_m2s_upgrade_notify(anoubisd_msg_t *msg,
+		    struct event_info_session *);
 static void	session_connect(int, short, void *);
 static void	session_rxclient(int, short, void *);
 static void	session_txclient(int, short, void *);
@@ -441,7 +443,7 @@ session_main(int pipe_m2s[2], int pipe_m2p[2], int pipe_s2p[2],
 	event_del(&(seg.ev_connect));
 	while (!LIST_EMPTY(&(seg.sessionList))) {
 		struct session *session = LIST_FIRST(&(seg.sessionList));
-		log_warn("session_main: close remaining session by force");
+		log_warnx("session_main: close remaining session by force");
 		/* session_destroy will call LIST_REMOVE. */
 		session_destroy(session);
 	}
@@ -484,6 +486,35 @@ notify_callback(struct anoubis_notify_head *head, int verdict, void *cbdata)
 	free(cbdata);
 
 	DEBUG(DBG_TRACE, "<notify_callback");
+}
+
+static void
+__send_notify(struct anoubis_msg *m, struct event_info_session *ev_info)
+{
+	struct session			*sess;
+	struct anoubis_notify_head	*head;
+
+	head = anoubis_notify_create_head(m, NULL, NULL);
+	if (!head) {
+		/* malloc failure, then we don't send the message */
+		anoubis_msg_free(m);
+		DEBUG(DBG_TRACE, "<__send_notify (free)");
+		return;
+	}
+	DEBUG(DBG_TRACE, " >anoubis_notify_create_head");
+
+	LIST_FOREACH(sess, &ev_info->seg->sessionList, nextSession) {
+		struct anoubis_notify_group * ng;
+
+		if (sess->proto == NULL)
+			continue;
+		ng = anoubis_server_getnotify(sess->proto);
+		if (!ng)
+			continue;
+		anoubis_notify(ng, head);
+	}
+	anoubis_notify_destroy_head(head);
+	DEBUG(DBG_TRACE, " >anoubis_notify_destroy_head");
 }
 
 static void
@@ -743,13 +774,11 @@ dispatch_policy(struct anoubis_policy_comm *comm, u_int64_t token,
 static void
 dispatch_m2s(int fd, short sig __used, void *arg)
 {
-	struct event_info_session *ev_info = (struct event_info_session*)arg;
-	struct anoubis_notify_head * head;
-	struct anoubis_msg * m;
-	anoubisd_msg_t *msg;
-	struct eventdev_hdr *hdr;
-	struct session * sess;
-	unsigned int extra;
+	struct event_info_session	*ev_info = arg;
+	struct anoubis_msg		*m;
+	anoubisd_msg_t			*msg;
+	struct eventdev_hdr		*hdr;
+	unsigned int			 extra;
 
 	DEBUG(DBG_TRACE, ">dispatch_m2s");
 
@@ -759,6 +788,10 @@ dispatch_m2s(int fd, short sig __used, void *arg)
 			break;
 		if (msg->mtype == ANOUBISD_MSG_POLREPLY) {
 			dispatch_m2s_pol_reply(msg, ev_info);
+			continue;
+		}
+		if (msg->mtype == ANOUBISD_MSG_UPGRADE) {
+			dispatch_m2s_upgrade_notify(msg, ev_info);
 			continue;
 		}
 		if (msg->mtype == ANOUBISD_MSG_CONFIG) {
@@ -822,32 +855,8 @@ dispatch_m2s(int fd, short sig __used, void *arg)
 		set_value(m->u.notify->evoff, 0);
 		set_value(m->u.notify->evlen, extra);
 		memcpy(m->u.notify->payload, &hdr[1], extra);
-		head = anoubis_notify_create_head(m, NULL, NULL);
-		if (!head) {
-			/* malloc failure, then we don't send the message */
-			anoubis_msg_free(m);
-			free(msg);
-			DEBUG(DBG_TRACE, "<dispatch_m2s (free)");
-			continue;
-		}
-		DEBUG(DBG_TRACE, " >anoubis_notify_create_head");
-
 		free(msg);
-
-		LIST_FOREACH(sess, &ev_info->seg->sessionList, nextSession) {
-			struct anoubis_notify_group * ng;
-
-			if (sess->proto == NULL)
-				continue;
-			ng = anoubis_server_getnotify(sess->proto);
-			if (!ng)
-				continue;
-			anoubis_notify(ng, head);
-			DEBUG(DBG_TRACE, " >anoubis_notify: %x",
-			    hdr->msg_token);
-		}
-		anoubis_notify_destroy_head(head);
-		DEBUG(DBG_TRACE, " >anoubis_notify_destroy_head");
+		__send_notify(m, ev_info);
 
 		DEBUG(DBG_TRACE, "<dispatch_m2s (loop)");
 	}
@@ -919,35 +928,6 @@ dispatch_p2s(int fd, short sig __used, void *arg)
 		event_del(ev_info->ev_p2s);
 	}
 	DEBUG(DBG_TRACE, "<dispatch_p2s");
-}
-
-static void
-__send_notify(struct anoubis_msg *m, struct event_info_session *ev_info)
-{
-	struct session			*sess;
-	struct anoubis_notify_head	*head;
-
-	head = anoubis_notify_create_head(m, NULL, NULL);
-	if (!head) {
-		/* malloc failure, then we don't send the message */
-		anoubis_msg_free(m);
-		DEBUG(DBG_TRACE, "<dispatch_p2s (free)");
-		return;
-	}
-	DEBUG(DBG_TRACE, " >anoubis_notify_create_head");
-
-	LIST_FOREACH(sess, &ev_info->seg->sessionList, nextSession) {
-		struct anoubis_notify_group * ng;
-
-		if (sess->proto == NULL)
-			continue;
-		ng = anoubis_server_getnotify(sess->proto);
-		if (!ng)
-			continue;
-		anoubis_notify(ng, head);
-	}
-	anoubis_notify_destroy_head(head);
-	DEBUG(DBG_TRACE, " >anoubis_notify_destroy_head");
 }
 
 void
@@ -1271,6 +1251,36 @@ dispatch_m2s_pol_reply(anoubisd_msg_t *msg, struct event_info_session *ev_info)
 		errno = -ret;
 		log_warn("dispatch_m2s_pol_reply: Failed to process answer");
 	}
+}
+
+static void
+dispatch_m2s_upgrade_notify(anoubisd_msg_t *msg,
+    struct event_info_session *ev_info)
+{
+	struct anoubisd_msg_upgrade	*umsg;
+	int				 count;
+	struct anoubis_msg		*m;
+
+	DEBUG(DBG_TRACE, ">dispatch_m2s_upgrade_notify");
+	umsg = (struct anoubisd_msg_upgrade *)msg->msg;
+	if (umsg->upgradetype != ANOUBISD_UPGRADE_NOTIFY) {
+		log_warnx("Bad upgrade message type=%d in session engine",
+		    umsg->upgradetype);
+		free(msg);
+		return;
+	}
+	count = umsg->chunksize;
+	free(msg);
+	m = anoubis_msg_new(sizeof(Anoubis_StatusNotifyMessage));
+	if (!m) {
+		DEBUG(DBG_TRACE, "<dispatch_m2s_upgrade_notify (oom)");
+		return;
+	}
+	set_value(m->u.statusnotify->type, ANOUBIS_N_STATUSNOTIFY);
+	set_value(m->u.statusnotify->statuskey, ANOUBIS_STATUS_UPGRADE);
+	set_value(m->u.statusnotify->statusvalue, count);
+	__send_notify(m, ev_info);
+	DEBUG(DBG_TRACE, "<dispatch_m2s_upgrade_notify");
 }
 
 static void

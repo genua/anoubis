@@ -184,7 +184,9 @@ or
 .Em ANOUBIS_N_LOGNOTIFY
 for notifications or
 .Em ANOUBIS_N_POLICYCHANGE
-for policy change messages.
+for policy change messages or
+.Em ANOUBIS_N_STATUSNOTIFY
+for generic status change messages.
 If the function returns non-NULL the message will be destroyed together
 with the head and caller must no longer use this message.
 In case of an error, i.e. NULL is returned, the caller must free the message.
