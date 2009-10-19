@@ -33,8 +33,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: anoubis 0.1.10.D023.970.D004.C117\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-10-13 17:18+0200\n"
-"PO-Revision-Date: 2009-10-13 17:19+0100\n"
+"POT-Creation-Date: 2009-10-19 11:09+0200\n"
+"PO-Revision-Date: 2009-10-19 11:11+0100\n"
 "Last-Translator: Robin <robin_doer@genua.de>\n"
 "Language-Team: German <de@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -307,10 +307,10 @@ msgstr "fortführen"
 #: view/DlgRuleEditorBase.cpp:748
 #: view/DlgRuleEditorBase.cpp:777
 #: view/DlgRuleEditorBase.cpp:806
-#: view/ModAnoubisMainPanelImpl.cpp:346
-#: view/ModAnoubisMainPanelImpl.cpp:351
-#: view/ModAnoubisPanelsBase.cpp:432
-#: view/ModAnoubisPanelsBase.cpp:459
+#: view/ModAnoubisMainPanelImpl.cpp:347
+#: view/ModAnoubisMainPanelImpl.cpp:352
+#: view/ModAnoubisPanelsBase.cpp:434
+#: view/ModAnoubisPanelsBase.cpp:461
 msgid "none"
 msgstr "kein"
 
@@ -419,10 +419,10 @@ msgstr "Erzeugt eine neue Regel"
 
 #: view/DlgRuleEditorBase.cpp:92
 #: view/DlgRuleEditorBase.cpp:173
-#: view/ModSfsPanelsBase.cpp:290
-#: view/ModSfsPanelsBase.cpp:298
-#: view/ModSfsPanelsBase.cpp:445
-#: view/ModSfsPanelsBase.cpp:453
+#: view/ModSfsPanelsBase.cpp:294
+#: view/ModSfsPanelsBase.cpp:302
+#: view/ModSfsPanelsBase.cpp:449
+#: view/ModSfsPanelsBase.cpp:457
 msgid "..."
 msgstr "..."
 
@@ -457,7 +457,7 @@ msgstr "Verschiebe abwärts"
 #: view/DlgRuleEditorBase.cpp:132
 #: view/DlgRuleEditorBase.cpp:213
 #: view/DlgRuleEditorBase.cpp:335
-#: view/ModAnoubisPanelsBase.cpp:557
+#: view/ModAnoubisPanelsBase.cpp:560
 #: view/RuleWizardPanelsBase.cpp:450
 #: view/RuleWizardPanelsBase.cpp:612
 #: view/RuleWizardPanelsBase.cpp:877
@@ -478,7 +478,7 @@ msgid "customise columns of filter-rules list"
 msgstr "individualisieren der Spalten der Filter-Regeln Liste"
 
 #: view/DlgRuleEditorBase.cpp:190
-#: view/ModSfsPanelsBase.cpp:131
+#: view/ModSfsPanelsBase.cpp:133
 msgid "Filter:"
 msgstr "Filter:"
 
@@ -658,7 +658,7 @@ msgid "Allow access to other sockets"
 msgstr "Zugriff auf sonstige Sockets erlauben"
 
 #: view/DlgRuleEditorBase.cpp:590
-#: view/ModAnoubisPanelsBase.cpp:62
+#: view/ModAnoubisPanelsBase.cpp:63
 msgid "all"
 msgstr "Alle"
 
@@ -767,7 +767,7 @@ msgid "Logging configuration if checksum is missing"
 msgstr "Protokollierung falls keine Prüfsumme vorhanden"
 
 #: view/DlgRuleEditorBase.cpp:848
-#: view/ModAnoubisPanelsBase.cpp:58
+#: view/ModAnoubisPanelsBase.cpp:59
 msgid "Type:"
 msgstr "Typ:"
 
@@ -792,7 +792,7 @@ msgid "Permission:"
 msgstr "Berechtigung:"
 
 #: view/DlgRuleEditorBase.cpp:893
-#: view/ModAnoubisPanelsBase.cpp:299
+#: view/ModAnoubisPanelsBase.cpp:300
 msgid "read"
 msgstr "read"
 
@@ -801,7 +801,7 @@ msgid "Read permission"
 msgstr "Lese-Rechte"
 
 #: view/DlgRuleEditorBase.cpp:899
-#: view/ModAnoubisPanelsBase.cpp:306
+#: view/ModAnoubisPanelsBase.cpp:307
 msgid "write"
 msgstr "write"
 
@@ -810,7 +810,7 @@ msgid "Write permission"
 msgstr "Schreib-Rechte"
 
 #: view/DlgRuleEditorBase.cpp:905
-#: view/ModAnoubisPanelsBase.cpp:313
+#: view/ModAnoubisPanelsBase.cpp:314
 msgid "execute"
 msgstr "execute"
 
@@ -841,7 +841,7 @@ msgstr "Typ"
 
 #: view/DlgRuleEditor.cpp:80
 #: view/ModAlfMainPanelImpl.cpp:62
-#: view/ModSfsMainPanelImpl.cpp:68
+#: view/ModSfsMainPanelImpl.cpp:69
 #: view/ModSbMainPanelImpl.cpp:49
 #: view/VersionListCtrl.cpp:121
 msgid "User"
@@ -891,7 +891,7 @@ msgstr "Zielport"
 
 #: view/DlgRuleEditor.cpp:115
 #: view/DlgRuleEditor.cpp:149
-#: view/ModSfsMainPanelImpl.cpp:62
+#: view/ModSfsMainPanelImpl.cpp:63
 #: view/ModSbMainPanelImpl.cpp:44
 #: view/RuleWizardSandboxExecuteFilesPage.cpp:45
 #: view/RuleWizardSandboxReadFilesPage.cpp:44
@@ -902,7 +902,7 @@ msgstr "Pfad"
 # Absolut unklar. Was ist ein Subject genau in deutsch?
 #: view/DlgRuleEditor.cpp:116
 #: view/DlgRuleEditor.cpp:150
-#: view/ModSfsMainPanelImpl.cpp:63
+#: view/ModSfsMainPanelImpl.cpp:64
 #: view/ModSbMainPanelImpl.cpp:45
 #: widgets/AnPolicyNotebook.cpp:262
 #: widgets/AnPolicyNotebook.cpp:324
@@ -911,7 +911,7 @@ msgid "Subject"
 msgstr "Subject"
 
 #: view/DlgRuleEditor.cpp:118
-#: view/ModSfsMainPanelImpl.cpp:64
+#: view/ModSfsMainPanelImpl.cpp:65
 msgid "Valid action"
 msgstr "Aktion (gültig)"
 
@@ -920,7 +920,7 @@ msgid "Valid log"
 msgstr "Valid log"
 
 #: view/DlgRuleEditor.cpp:121
-#: view/ModSfsMainPanelImpl.cpp:65
+#: view/ModSfsMainPanelImpl.cpp:66
 msgid "Invalid action"
 msgstr "Aktion (ungültig)"
 
@@ -929,7 +929,7 @@ msgid "Invalid log"
 msgstr "Invalid log"
 
 #: view/DlgRuleEditor.cpp:125
-#: view/ModSfsMainPanelImpl.cpp:66
+#: view/ModSfsMainPanelImpl.cpp:67
 msgid "Unknown action"
 msgstr "Aktion (unbekannt)"
 
@@ -978,7 +978,7 @@ msgstr "Neuer Regelsatz kann nicht erzeugt werden!"
 #: view/DlgRuleEditor.cpp:1139
 #: view/DlgRuleEditor.cpp:1229
 #: view/MainFrameBase.cpp:64
-#: view/ModAnoubisPanelsBase.cpp:714
+#: view/ModAnoubisPanelsBase.cpp:718
 msgid "Rule Editor"
 msgstr "RuleEditor"
 
@@ -1015,10 +1015,10 @@ msgstr "Konnte Regeldatei nicht importieren: Sie enthält Fehler."
 #: view/DlgRuleEditor.cpp:1258
 #: view/MainFrame.cpp:524
 #: view/MainFrame.cpp:788
-#: view/ModAnoubisMainPanelImpl.cpp:1505
-#: main.cpp:161
-#: main.cpp:483
-#: main.cpp:491
+#: view/ModAnoubisMainPanelImpl.cpp:1525
+#: main.cpp:164
+#: main.cpp:458
+#: main.cpp:466
 msgid "Error"
 msgstr "Fehler"
 
@@ -1038,8 +1038,8 @@ msgstr "Regelsatz exportieren"
 
 #: view/DlgRuleEditor.cpp:1369
 #: view/DlgRuleEditor.cpp:1392
-#: view/ModAnoubisMainPanelImpl.cpp:479
-#: view/ModSfsMainPanelImpl.cpp:408
+#: view/ModAnoubisMainPanelImpl.cpp:480
+#: view/ModSfsMainPanelImpl.cpp:393
 #: view/RuleWizard.cpp:405
 msgid "The entered password is incorrect."
 msgstr "Das eingegebene Passwort ist nicht korrekt."
@@ -1105,8 +1105,8 @@ msgstr "Standard Pfad:"
 #: view/DlgRuleEditorFilterSubjectPage.cpp:48
 #: view/DlgRuleEditorFilterSubjectPage.cpp:103
 #: view/DlgRuleEditorFilterSubjectPage.cpp:111
-#: view/ModAnoubisMainPanelImpl.cpp:576
-#: view/ModSfsPanelsBase.cpp:399
+#: view/ModAnoubisMainPanelImpl.cpp:577
+#: view/ModSfsPanelsBase.cpp:403
 msgid "Path:"
 msgstr "Pfad:"
 
@@ -1128,7 +1128,7 @@ msgid "Open SFS Browser now!"
 msgstr "SFS Browser jetzt öffnen!"
 
 #: view/MainFrameBase.cpp:44
-#: view/ModAnoubisPanelsBase.cpp:861
+#: view/ModAnoubisPanelsBase.cpp:865
 msgid "Connect"
 msgstr "Verbinden"
 
@@ -1190,13 +1190,13 @@ msgstr "Meldungen:"
 
 #: view/MainFrameBase.cpp:99
 #: view/ModAlfPanelsBase.cpp:110
-#: view/ModAnoubisPanelsBase.cpp:130
-#: view/ModAnoubisPanelsBase.cpp:138
-#: view/ModAnoubisPanelsBase.cpp:146
-#: view/ModAnoubisPanelsBase.cpp:154
-#: view/ModAnoubisPanelsBase.cpp:162
-#: view/ModAnoubisPanelsBase.cpp:170
-#: view/ModSfsPanelsBase.cpp:373
+#: view/ModAnoubisPanelsBase.cpp:131
+#: view/ModAnoubisPanelsBase.cpp:139
+#: view/ModAnoubisPanelsBase.cpp:147
+#: view/ModAnoubisPanelsBase.cpp:155
+#: view/ModAnoubisPanelsBase.cpp:163
+#: view/ModAnoubisPanelsBase.cpp:171
+#: view/ModSfsPanelsBase.cpp:377
 #: view/ModSbPanelsBase.cpp:110
 msgid "0"
 msgstr "0"
@@ -1242,45 +1242,40 @@ msgstr "Verbindung von %ls getrennt"
 msgid "Connection to %ls failed!"
 msgstr "Verbindung mit %ls ist fehlgeschlagen!"
 
-#: view/MainFrame.cpp:399
-msgid "Anoubis protocol version mismatch"
-msgstr "Falsche Anoubis-Protokoll-Version"
-
-#: view/MainFrame.cpp:403
+#: view/MainFrame.cpp:402
 #, c-format
 msgid "Because of an incompatible protocol version (xanoubis: %i, Anoubis daemon: %i) the connection was rejected. Please update the Anoubis daemon package!"
 msgstr "Die Verbindung konnte wegen einer Inkompabilität im Anoubis-Protokoll (xanoubis: v%i, Anoubis-Daemon: v%i) nicht aufgebaut werden. Bitte aktualisieren Sie das Anoubis-Daemon-Paket!"
 
-#: view/MainFrame.cpp:410
+#: view/MainFrame.cpp:409
 #, c-format
 msgid "Because of an incompatible protocol version (xanoubis: %i, Anoubis daemon: %i) the connection was rejected. Please update the xanoubis package!"
 msgstr "Die Verbindung konnte wegen einer Inkompabilität im Anoubis-Protokoll (xanoubis: v%i, Anoubis-Daemon: v%i) nicht aufgebaut werden. Bitte aktualisieren Sie das xanoubis-Paket!"
 
-#: view/MainFrame.cpp:417
+#: view/MainFrame.cpp:416
 msgid "Protocol version mismatch"
 msgstr "Falsche Anoubis-Protokoll-Version"
 
-#: view/MainFrame.cpp:421
-#: view/MainFrame.cpp:441
-msgid "APN version mismatch"
-msgstr "Falsche APN-Version"
-
-#: view/MainFrame.cpp:424
+#: view/MainFrame.cpp:423
 #, c-format
 msgid "The APN parser (v%i.%i) is newer than the parser of the Anoubis daemon (v%i.%i). Please update the Anoubis daemon package!"
 msgstr "Der APN-Parser (v%i.%i) ist neuer als der Parser des Anoubis Daemons (v%i.%i). Bitte aktualisieren Sie das Daemon-Paket!"
 
-#: view/MainFrame.cpp:432
+#: view/MainFrame.cpp:431
 #, c-format
 msgid "The APN parser (v%i.%i) is older than the parser of the Anoubis daemon (v%i.%i). Please update the xanoubis package!"
 msgstr "Der APN-Parser (v%i.%i) ist älter als der Parser des Anoubis Daemons (v%i.%i). Bitte aktualisieren Sie das xanoubis-Paket!"
+
+#: view/MainFrame.cpp:440
+msgid "APN version mismatch"
+msgstr "Falsche APN-Version"
 
 #: view/MainFrame.cpp:512
 msgid "Choose a policy file:"
 msgstr "Wähle eine Regeldatei:"
 
 #: view/MainFrame.cpp:532
-#: view/ModAnoubisMainPanelImpl.cpp:1231
+#: view/ModAnoubisMainPanelImpl.cpp:1251
 msgid "Choose a file to write the policies to:"
 msgstr "Wähle eine Datei um Regeln dort hinein zu schreiben:"
 
@@ -1293,8 +1288,8 @@ msgid "The Boot Loader configuration has been updated.Please make sure to boot a
 msgstr "Die Konfiguration ihres Boot-Loaders hat sich geändert. Bitte vergewissern sie sich, dass ein Anoubis-Kernel beim Start geladen wird."
 
 #: view/MainFrame.cpp:738
-#: main.cpp:169
-#: main.cpp:290
+#: main.cpp:172
+#: main.cpp:293
 msgid "Warning"
 msgstr "Warnung"
 
@@ -1326,13 +1321,13 @@ msgid "Role"
 msgstr "Rolle"
 
 #: view/ModAlfMainPanelImpl.cpp:61
-#: view/ModSfsMainPanelImpl.cpp:67
+#: view/ModSfsMainPanelImpl.cpp:68
 #: view/ModSbMainPanelImpl.cpp:48
 msgid "Temporary"
 msgstr "Temporär"
 
 #: view/ModAlfMainPanelImpl.cpp:187
-#: view/ModSfsMainPanelImpl.cpp:822
+#: view/ModSfsMainPanelImpl.cpp:807
 #: view/ModSbMainPanelImpl.cpp:232
 #, c-format
 msgid "admin ruleset of %ls"
@@ -1341,7 +1336,7 @@ msgstr "Administrator-Regelsatz von %ls"
 #: view/ModAlfOverviewPanelImpl.cpp:70
 #: view/ModSfsOverviewPanelImpl.cpp:68
 #: view/ModSbOverviewPanelImpl.cpp:69
-#: view/TrayIcon.cpp:329
+#: view/TrayIcon.cpp:328
 msgid "not connected"
 msgstr "Nicht verbunden"
 
@@ -1374,65 +1369,65 @@ msgid "open requests (ALF):"
 msgstr "offene Anfragen (ALF):"
 
 #: view/ModAlfPanelsBase.cpp:106
-#: view/ModSfsPanelsBase.cpp:369
+#: view/ModSfsPanelsBase.cpp:373
 #: view/ModSbPanelsBase.cpp:106
 msgid "everything OK"
 msgstr "alles OK"
 
-#: view/ModAnoubisMainPanelImpl.cpp:321
+#: view/ModAnoubisMainPanelImpl.cpp:322
 msgid "Profile"
 msgstr "Profil"
 
-#: view/ModAnoubisMainPanelImpl.cpp:371
+#: view/ModAnoubisMainPanelImpl.cpp:372
 msgid "read-only"
 msgstr "schreibgeschützt"
 
-#: view/ModAnoubisMainPanelImpl.cpp:395
+#: view/ModAnoubisMainPanelImpl.cpp:396
 #, c-format
 msgid "Failed to remove \"%ls\"."
 msgstr "Konnte \"%ls\" nicht entfernen."
 
-#: view/ModAnoubisMainPanelImpl.cpp:397
+#: view/ModAnoubisMainPanelImpl.cpp:398
 msgid "Remove profile"
 msgstr "Profil entfernt"
 
-#: view/ModAnoubisMainPanelImpl.cpp:411
-#: view/ModAnoubisMainPanelImpl.cpp:456
+#: view/ModAnoubisMainPanelImpl.cpp:412
+#: view/ModAnoubisMainPanelImpl.cpp:457
 #, c-format
 msgid "Failed to import from \"%ls\"."
 msgstr "Konnte \"%ls\" nicht importieren."
 
-#: view/ModAnoubisMainPanelImpl.cpp:413
+#: view/ModAnoubisMainPanelImpl.cpp:414
 msgid "Load profile"
 msgstr "Profil laden"
 
-#: view/ModAnoubisMainPanelImpl.cpp:429
+#: view/ModAnoubisMainPanelImpl.cpp:430
 #, c-format
 msgid "The profile \"%ls\" is not writable!"
 msgstr "Das Profil \"%ls\" ist nicht beschreibbar!"
 
-#: view/ModAnoubisMainPanelImpl.cpp:431
-#: view/ModAnoubisMainPanelImpl.cpp:442
+#: view/ModAnoubisMainPanelImpl.cpp:432
+#: view/ModAnoubisMainPanelImpl.cpp:443
 msgid "Save profile"
 msgstr "Profil speichern"
 
-#: view/ModAnoubisMainPanelImpl.cpp:440
+#: view/ModAnoubisMainPanelImpl.cpp:441
 #, c-format
 msgid "Failed to export to \"%ls\"."
 msgstr "Konnte nicht nach \"%ls\" exportieren."
 
-#: view/ModAnoubisMainPanelImpl.cpp:458
-#: view/ModAnoubisMainPanelImpl.cpp:466
-#: view/ModAnoubisMainPanelImpl.cpp:475
-#: view/ModAnoubisMainPanelImpl.cpp:480
+#: view/ModAnoubisMainPanelImpl.cpp:459
+#: view/ModAnoubisMainPanelImpl.cpp:467
+#: view/ModAnoubisMainPanelImpl.cpp:476
+#: view/ModAnoubisMainPanelImpl.cpp:481
 msgid "Activate profile"
 msgstr "Profil aktivieren"
 
-#: view/ModAnoubisMainPanelImpl.cpp:465
+#: view/ModAnoubisMainPanelImpl.cpp:466
 msgid "Could not obtain user-policy."
 msgstr "Benutzerprofil nicht verfügbar."
 
-#: view/ModAnoubisMainPanelImpl.cpp:473
+#: view/ModAnoubisMainPanelImpl.cpp:474
 msgid ""
 "Could not activate user-policy.\n"
 "No connection to anoubisd."
@@ -1440,473 +1435,473 @@ msgstr ""
 "Konnte Benutzerprofil nicht aktivieren.\n"
 "Keine Verbindung zu anoubisd."
 
-#: view/ModAnoubisMainPanelImpl.cpp:541
+#: view/ModAnoubisMainPanelImpl.cpp:542
 msgid "Repository not initialized."
 msgstr "Repository nicht initalisiert."
 
-#: view/ModAnoubisMainPanelImpl.cpp:542
-#: view/ModAnoubisMainPanelImpl.cpp:548
-#: view/ModAnoubisMainPanelImpl.cpp:556
+#: view/ModAnoubisMainPanelImpl.cpp:543
+#: view/ModAnoubisMainPanelImpl.cpp:549
+#: view/ModAnoubisMainPanelImpl.cpp:557
 msgid "Update versions"
 msgstr "Aktualisierung Versionsverwaltung"
 
-#: view/ModAnoubisMainPanelImpl.cpp:547
+#: view/ModAnoubisMainPanelImpl.cpp:548
 msgid "Failed to prepare versioning system."
 msgstr "Konnte Versionssystem nicht vorbereiten."
 
-#: view/ModAnoubisMainPanelImpl.cpp:555
+#: view/ModAnoubisMainPanelImpl.cpp:556
 msgid "Failed to fetch versioning information."
 msgstr "Konnte Versionsinforamtion nicht abrufen."
 
-#: view/ModAnoubisMainPanelImpl.cpp:569
+#: view/ModAnoubisMainPanelImpl.cpp:570
 msgid "Time:"
 msgstr "Zeit:"
 
-#: view/ModAnoubisMainPanelImpl.cpp:570
+#: view/ModAnoubisMainPanelImpl.cpp:571
 msgid "Module:"
 msgstr "Modul:"
 
-#: view/ModAnoubisMainPanelImpl.cpp:571
+#: view/ModAnoubisMainPanelImpl.cpp:572
 #: view/RuleWizardHistory.cpp:612
 #: view/RuleWizardPanelsBase.cpp:292
 msgid "Program:"
 msgstr "Programm:"
 
-#: view/ModAnoubisMainPanelImpl.cpp:572
+#: view/ModAnoubisMainPanelImpl.cpp:573
 msgid "On behalf of:"
 msgstr "Im Auftrag von:"
 
-#: view/ModAnoubisMainPanelImpl.cpp:574
+#: view/ModAnoubisMainPanelImpl.cpp:575
 msgid "Traffic:"
 msgstr "Verkehr:"
 
-#: view/ModAnoubisMainPanelImpl.cpp:578
+#: view/ModAnoubisMainPanelImpl.cpp:579
 msgid "Operation:"
 msgstr "Operation:"
 
-#: view/ModAnoubisMainPanelImpl.cpp:1166
+#: view/ModAnoubisMainPanelImpl.cpp:1186
 msgid "No profile selected"
 msgstr "Kein Profil ausgewählt"
 
-#: view/ModAnoubisMainPanelImpl.cpp:1166
-#: view/ModAnoubisMainPanelImpl.cpp:1183
-#: view/ModAnoubisMainPanelImpl.cpp:1193
-#: view/ModAnoubisMainPanelImpl.cpp:1200
-#: view/ModAnoubisMainPanelImpl.cpp:1206
+#: view/ModAnoubisMainPanelImpl.cpp:1186
+#: view/ModAnoubisMainPanelImpl.cpp:1203
+#: view/ModAnoubisMainPanelImpl.cpp:1213
+#: view/ModAnoubisMainPanelImpl.cpp:1220
+#: view/ModAnoubisMainPanelImpl.cpp:1226
 msgid "Restore version"
 msgstr "Version wiederherstellen"
 
-#: view/ModAnoubisMainPanelImpl.cpp:1177
+#: view/ModAnoubisMainPanelImpl.cpp:1197
 msgid "Failed to fetch the active policy."
 msgstr "Konnte aktive Regel nicht abfragen."
 
-#: view/ModAnoubisMainPanelImpl.cpp:1180
+#: view/ModAnoubisMainPanelImpl.cpp:1200
 #, c-format
 msgid ""
 "Failed to fetch the policy\n"
 "of the \"%ls\" profile"
 msgstr "Abholen des Profils \"%ls\" fehlgeschlagen."
 
-#: view/ModAnoubisMainPanelImpl.cpp:1192
+#: view/ModAnoubisMainPanelImpl.cpp:1212
 msgid "Failed to import the active policy."
 msgstr "Konnte aktive Regel nicht importieren."
 
-#: view/ModAnoubisMainPanelImpl.cpp:1197
+#: view/ModAnoubisMainPanelImpl.cpp:1217
 #, c-format
 msgid ""
 "Failed to import the policy\n"
 "of the \"%ls\" profile"
 msgstr "Einlesen des Profils \"%ls\" fehlgeschlagen."
 
-#: view/ModAnoubisMainPanelImpl.cpp:1204
+#: view/ModAnoubisMainPanelImpl.cpp:1224
 msgid "automatically created by restore"
 msgstr "durch Wiederherstellung automatisch erzeugt"
 
-#: view/ModAnoubisMainPanelImpl.cpp:1205
+#: view/ModAnoubisMainPanelImpl.cpp:1225
 msgid "Old version imported but could not create a new version"
 msgstr "Alte Version eingelesen konnte jedoch keine Neue erzeugen"
 
-#: view/ModAnoubisMainPanelImpl.cpp:1238
+#: view/ModAnoubisMainPanelImpl.cpp:1258
 msgid "Failed to export a version!"
 msgstr "Konnte Version nicht exportieren!"
 
-#: view/ModAnoubisMainPanelImpl.cpp:1239
+#: view/ModAnoubisMainPanelImpl.cpp:1259
 msgid "Export version"
 msgstr "Schreibe Version"
 
-#: view/ModAnoubisMainPanelImpl.cpp:1259
+#: view/ModAnoubisMainPanelImpl.cpp:1279
 msgid "Failed to remove the selected version!"
 msgstr "Konnte ausgewählte Version nicht entfernen!"
 
-#: view/ModAnoubisMainPanelImpl.cpp:1261
+#: view/ModAnoubisMainPanelImpl.cpp:1281
 msgid "Remove version"
 msgstr "Entferne Version"
 
-#: view/ModAnoubisMainPanelImpl.cpp:1504
+#: view/ModAnoubisMainPanelImpl.cpp:1524
 msgid "Failed to create a rule from escalation"
 msgstr "Auf Basis der Eskalation konnte die Regel nicht erzeugt werden!"
 
-#: view/ModAnoubisPanelsBase.cpp:62
+#: view/ModAnoubisPanelsBase.cpp:63
 msgid "current requests"
 msgstr "Aktuelle Anfragen"
 
-#: view/ModAnoubisPanelsBase.cpp:62
+#: view/ModAnoubisPanelsBase.cpp:63
 msgid "messages"
 msgstr "Nachrichten"
 
-#: view/ModAnoubisPanelsBase.cpp:62
+#: view/ModAnoubisPanelsBase.cpp:63
 msgid "closed requests"
 msgstr "Geschlossene Anfragen"
 
-#: view/ModAnoubisPanelsBase.cpp:75
+#: view/ModAnoubisPanelsBase.cpp:76
 msgid "<<"
 msgstr "<<"
 
-#: view/ModAnoubisPanelsBase.cpp:77
+#: view/ModAnoubisPanelsBase.cpp:78
 msgid "Jump first"
 msgstr "Anfang"
 
-#: view/ModAnoubisPanelsBase.cpp:81
-#: view/ModAnoubisPanelsBase.cpp:275
-#: view/ModAnoubisPanelsBase.cpp:346
+#: view/ModAnoubisPanelsBase.cpp:82
+#: view/ModAnoubisPanelsBase.cpp:276
+#: view/ModAnoubisPanelsBase.cpp:347
 msgid "<"
 msgstr "<"
 
-#: view/ModAnoubisPanelsBase.cpp:83
+#: view/ModAnoubisPanelsBase.cpp:84
 msgid "Jump previous"
 msgstr "Zurück"
 
-#: view/ModAnoubisPanelsBase.cpp:87
-#: view/ModAnoubisPanelsBase.cpp:95
+#: view/ModAnoubisPanelsBase.cpp:88
+#: view/ModAnoubisPanelsBase.cpp:96
 msgid "00000000"
 msgstr "00000000"
 
-#: view/ModAnoubisPanelsBase.cpp:91
+#: view/ModAnoubisPanelsBase.cpp:92
 msgid " / "
 msgstr " / "
 
-#: view/ModAnoubisPanelsBase.cpp:99
-#: view/ModAnoubisPanelsBase.cpp:288
-#: view/ModAnoubisPanelsBase.cpp:359
+#: view/ModAnoubisPanelsBase.cpp:100
+#: view/ModAnoubisPanelsBase.cpp:289
+#: view/ModAnoubisPanelsBase.cpp:360
 msgid ">"
 msgstr ">"
 
-#: view/ModAnoubisPanelsBase.cpp:101
+#: view/ModAnoubisPanelsBase.cpp:102
 msgid "Jump next"
 msgstr "Weiter"
 
-#: view/ModAnoubisPanelsBase.cpp:105
+#: view/ModAnoubisPanelsBase.cpp:106
 msgid ">>"
 msgstr ">>"
 
-#: view/ModAnoubisPanelsBase.cpp:107
+#: view/ModAnoubisPanelsBase.cpp:108
 msgid "Jump last"
 msgstr "Ende"
 
-#: view/ModAnoubisPanelsBase.cpp:126
-#: view/ModAnoubisPanelsBase.cpp:134
-#: view/ModAnoubisPanelsBase.cpp:142
-#: view/ModAnoubisPanelsBase.cpp:150
-#: view/ModAnoubisPanelsBase.cpp:158
-#: view/ModAnoubisPanelsBase.cpp:166
+#: view/ModAnoubisPanelsBase.cpp:127
+#: view/ModAnoubisPanelsBase.cpp:135
+#: view/ModAnoubisPanelsBase.cpp:143
+#: view/ModAnoubisPanelsBase.cpp:151
+#: view/ModAnoubisPanelsBase.cpp:159
+#: view/ModAnoubisPanelsBase.cpp:167
 msgid ":"
 msgstr ":"
 
-#: view/ModAnoubisPanelsBase.cpp:178
+#: view/ModAnoubisPanelsBase.cpp:179
 msgid "This message was answered."
 msgstr "Diese Nachricht wurde beantwortet."
 
-#: view/ModAnoubisPanelsBase.cpp:196
+#: view/ModAnoubisPanelsBase.cpp:197
 msgid "Once"
 msgstr "Einmalig"
 
-#: view/ModAnoubisPanelsBase.cpp:199
+#: view/ModAnoubisPanelsBase.cpp:200
 msgid "Until Process Ends"
 msgstr "bis Prozessende"
 
-#: view/ModAnoubisPanelsBase.cpp:205
+#: view/ModAnoubisPanelsBase.cpp:206
 msgid "for"
 msgstr "für"
 
-#: view/ModAnoubisPanelsBase.cpp:211
-#: view/ModAnoubisPanelsBase.cpp:762
+#: view/ModAnoubisPanelsBase.cpp:212
+#: view/ModAnoubisPanelsBase.cpp:766
 msgid "Seconds"
 msgstr "Sekunden"
 
-#: view/ModAnoubisPanelsBase.cpp:211
+#: view/ModAnoubisPanelsBase.cpp:212
 msgid "Minutes"
 msgstr "Minuten"
 
-#: view/ModAnoubisPanelsBase.cpp:211
+#: view/ModAnoubisPanelsBase.cpp:212
 msgid "Hours"
 msgstr "Stunden"
 
-#: view/ModAnoubisPanelsBase.cpp:211
+#: view/ModAnoubisPanelsBase.cpp:212
 msgid "Days"
 msgstr "Tage"
 
-#: view/ModAnoubisPanelsBase.cpp:218
+#: view/ModAnoubisPanelsBase.cpp:219
 msgid "Always"
 msgstr "Immer"
 
-#: view/ModAnoubisPanelsBase.cpp:239
+#: view/ModAnoubisPanelsBase.cpp:240
 msgid "this port on this host"
 msgstr "dieser Port auf diesem Rechner"
 
-#: view/ModAnoubisPanelsBase.cpp:242
+#: view/ModAnoubisPanelsBase.cpp:243
 msgid "this port on any host"
 msgstr "dieser Port auf jedem Rechner"
 
-#: view/ModAnoubisPanelsBase.cpp:245
+#: view/ModAnoubisPanelsBase.cpp:246
 msgid "all ports on this host"
 msgstr "alle Ports auf diesem Rechner"
 
-#: view/ModAnoubisPanelsBase.cpp:248
+#: view/ModAnoubisPanelsBase.cpp:249
 msgid "all ports on all hosts"
 msgstr "alle Ports auf jedem Rechner"
 
-#: view/ModAnoubisPanelsBase.cpp:268
+#: view/ModAnoubisPanelsBase.cpp:269
 msgid "Path prefix and permissions for new rule"
 msgstr "Pfadpräfix und Berechtigungen für neue Regel"
 
-#: view/ModAnoubisPanelsBase.cpp:281
-#: view/ModAnoubisPanelsBase.cpp:352
+#: view/ModAnoubisPanelsBase.cpp:282
+#: view/ModAnoubisPanelsBase.cpp:353
 msgid "/"
 msgstr "/"
 
-#: view/ModAnoubisPanelsBase.cpp:339
+#: view/ModAnoubisPanelsBase.cpp:340
 msgid "Path prefix and Checksum Options for"
 msgstr "Pfadpräfix und Optionen der Prüfsumme für"
 
-#: view/ModAnoubisPanelsBase.cpp:385
+#: view/ModAnoubisPanelsBase.cpp:386
 msgid "open rule editor"
 msgstr "Öffne RegelEditor"
 
-#: view/ModAnoubisPanelsBase.cpp:392
+#: view/ModAnoubisPanelsBase.cpp:393
 msgid "Allow"
 msgstr "Erlauben"
 
-#: view/ModAnoubisPanelsBase.cpp:398
+#: view/ModAnoubisPanelsBase.cpp:399
 msgid "Deny"
 msgstr "Verbieten"
 
-#: view/ModAnoubisPanelsBase.cpp:414
+#: view/ModAnoubisPanelsBase.cpp:415
 msgid "Notifications"
 msgstr "Benachrichtigungen"
 
-#: view/ModAnoubisPanelsBase.cpp:428
+#: view/ModAnoubisPanelsBase.cpp:430
 msgid "Profile:"
 msgstr "Profil:"
 
-#: view/ModAnoubisPanelsBase.cpp:439
+#: view/ModAnoubisPanelsBase.cpp:441
 msgid "Delete"
 msgstr "Löschen"
 
-#: view/ModAnoubisPanelsBase.cpp:441
+#: view/ModAnoubisPanelsBase.cpp:443
 msgid "Removes the selected profile"
 msgstr "Entfernt das selektierte Profil"
 
-#: view/ModAnoubisPanelsBase.cpp:455
+#: view/ModAnoubisPanelsBase.cpp:457
 msgid "Last loaded profile:"
 msgstr "Zuletzt geladenes Profil:"
 
-#: view/ModAnoubisPanelsBase.cpp:465
+#: view/ModAnoubisPanelsBase.cpp:467
 msgid "Load"
 msgstr "Laden"
 
-#: view/ModAnoubisPanelsBase.cpp:467
+#: view/ModAnoubisPanelsBase.cpp:469
 msgid "Load the selected profile into the rule editor."
 msgstr "Lade ausgewähltes Profil in den RuleEditor."
 
-#: view/ModAnoubisPanelsBase.cpp:471
+#: view/ModAnoubisPanelsBase.cpp:473
 msgid "Save..."
 msgstr "Speichern..."
 
-#: view/ModAnoubisPanelsBase.cpp:472
+#: view/ModAnoubisPanelsBase.cpp:474
 msgid "Save the rule set that is currently loaded into the rule editor as a profile."
 msgstr "Speichere den Regelsatz welcher gerade im RuleEditor geladen ist als Profil."
 
-#: view/ModAnoubisPanelsBase.cpp:482
+#: view/ModAnoubisPanelsBase.cpp:484
 msgid "Saving a profile only creates a new Version. The ruleset is not sent to the daemon. Use \"Activate\" to achieve this."
 msgstr "Speichern eines Profils erzeugt nur eine neue Version. Der Regelsatz wird nicht an den Daemon gesandt. Benutze \"Aktivieren\" um dies zu erreichen."
 
-#: view/ModAnoubisPanelsBase.cpp:486
+#: view/ModAnoubisPanelsBase.cpp:488
 msgid "Activate"
 msgstr "Aktivieren"
 
-#: view/ModAnoubisPanelsBase.cpp:488
+#: view/ModAnoubisPanelsBase.cpp:490
 msgid "Send the selected Profile to the Daemon"
 msgstr "Sende ausgewähltes Profil zum Daemon"
 
-#: view/ModAnoubisPanelsBase.cpp:497
+#: view/ModAnoubisPanelsBase.cpp:499
 msgid "Profiles"
 msgstr "Profile"
 
-#: view/ModAnoubisPanelsBase.cpp:508
+#: view/ModAnoubisPanelsBase.cpp:511
 msgid "Choose policy:"
 msgstr "Wähle Regel:"
 
-#: view/ModAnoubisPanelsBase.cpp:512
+#: view/ModAnoubisPanelsBase.cpp:515
 msgid "Active policy"
 msgstr "Aktive Regel"
 
-#: view/ModAnoubisPanelsBase.cpp:515
+#: view/ModAnoubisPanelsBase.cpp:518
 msgid "Policy from profile"
 msgstr "Regel aus Profil"
 
-#: view/ModAnoubisPanelsBase.cpp:530
+#: view/ModAnoubisPanelsBase.cpp:533
 msgid "Comment of selected version:"
 msgstr "Kommentar der ausgewählten Version:"
 
-#: view/ModAnoubisPanelsBase.cpp:547
+#: view/ModAnoubisPanelsBase.cpp:550
 msgid "restore"
 msgstr "Wiederherstellen"
 
-#: view/ModAnoubisPanelsBase.cpp:548
+#: view/ModAnoubisPanelsBase.cpp:551
 msgid "Restore the selected version of the profile."
 msgstr "Ausgewählte Version des Profils wiederherstellen."
 
-#: view/ModAnoubisPanelsBase.cpp:552
+#: view/ModAnoubisPanelsBase.cpp:555
 msgid "export ..."
 msgstr "Exportieren ..."
 
-#: view/ModAnoubisPanelsBase.cpp:553
+#: view/ModAnoubisPanelsBase.cpp:556
 msgid "Export the selected Version of the profile to a file."
 msgstr "Ausgewählte Version des Profils in Datei exportieren."
 
-#: view/ModAnoubisPanelsBase.cpp:558
+#: view/ModAnoubisPanelsBase.cpp:561
 msgid "Delete the selected version of the profile."
 msgstr "Ausgewählte Version des Profils löschen."
 
-#: view/ModAnoubisPanelsBase.cpp:562
+#: view/ModAnoubisPanelsBase.cpp:565
 #: widgets/AnDetails.cpp:119
 #: widgets/AnDetails.cpp:120
 msgid "show"
 msgstr "Zeige"
 
-#: view/ModAnoubisPanelsBase.cpp:575
+#: view/ModAnoubisPanelsBase.cpp:578
 msgid "Version control"
 msgstr "Versionskontrolle"
 
-#: view/ModAnoubisPanelsBase.cpp:584
+#: view/ModAnoubisPanelsBase.cpp:588
 msgid "Escalation Notifier Settings"
 msgstr "Einstellungen zur Eskalationsbenachrichtigung"
 
-#: view/ModAnoubisPanelsBase.cpp:591
+#: view/ModAnoubisPanelsBase.cpp:595
 msgid "Send Escalations"
 msgstr "Sende Eskalationen"
 
-#: view/ModAnoubisPanelsBase.cpp:594
-#: view/ModAnoubisPanelsBase.cpp:642
+#: view/ModAnoubisPanelsBase.cpp:598
+#: view/ModAnoubisPanelsBase.cpp:646
 msgid "Check to disable the messaging via Notifier"
 msgstr "Auswählen um Benachrichtigung durch Anzeiger zu unterbinden"
 
-#: view/ModAnoubisPanelsBase.cpp:601
-#: view/ModAnoubisPanelsBase.cpp:649
+#: view/ModAnoubisPanelsBase.cpp:605
+#: view/ModAnoubisPanelsBase.cpp:653
 msgid "No Timeout"
 msgstr "Keine Zeitüberschreitung"
 
-#: view/ModAnoubisPanelsBase.cpp:604
-#: view/ModAnoubisPanelsBase.cpp:651
+#: view/ModAnoubisPanelsBase.cpp:608
+#: view/ModAnoubisPanelsBase.cpp:655
 msgid "Check to let the Notifier never timeout"
 msgstr "Auswählen um Zeitüberschreitung des Benachrichtiger zu verhindern"
 
-#: view/ModAnoubisPanelsBase.cpp:619
-#: view/ModAnoubisPanelsBase.cpp:664
+#: view/ModAnoubisPanelsBase.cpp:623
+#: view/ModAnoubisPanelsBase.cpp:668
 msgid "Timeout in Seconds"
 msgstr "Zeitüberschreitung in Sekunden"
 
-#: view/ModAnoubisPanelsBase.cpp:632
+#: view/ModAnoubisPanelsBase.cpp:636
 msgid "Alert Notifier Settings"
 msgstr "Einstellungen zur Alarmbenachrichtigung"
 
-#: view/ModAnoubisPanelsBase.cpp:639
+#: view/ModAnoubisPanelsBase.cpp:643
 msgid "Send Alerts"
 msgstr "Sende Alarme"
 
-#: view/ModAnoubisPanelsBase.cpp:675
+#: view/ModAnoubisPanelsBase.cpp:679
 msgid "Upgrade"
 msgstr "Upgrade"
 
-#: view/ModAnoubisPanelsBase.cpp:677
+#: view/ModAnoubisPanelsBase.cpp:681
 msgid "Enable Upgrade Message"
 msgstr "Upgrade Nachricht aktivieren"
 
-#: view/ModAnoubisPanelsBase.cpp:680
+#: view/ModAnoubisPanelsBase.cpp:684
 msgid "Check to be notified when upgrade event had taken place"
 msgstr "Anhaken, wenn Sie benachrichtigt werden wollen, wenn Upgrade  stattgefunden hat"
 
-#: view/ModAnoubisPanelsBase.cpp:684
+#: view/ModAnoubisPanelsBase.cpp:688
 msgid "Enable Kernel Upgrade Message"
 msgstr "Kernel-Upgrade Nachricht aktivieren"
 
-#: view/ModAnoubisPanelsBase.cpp:692
-#: view/ModAnoubisPanelsBase.cpp:699
+#: view/ModAnoubisPanelsBase.cpp:696
+#: view/ModAnoubisPanelsBase.cpp:703
 msgid "Autostart"
 msgstr "Autostart"
 
-#: view/ModAnoubisPanelsBase.cpp:702
+#: view/ModAnoubisPanelsBase.cpp:706
 msgid "Check to enable Autostart of xanoubis"
 msgstr "Auswählen um Autostart von xanoubis zu aktivieren"
 
-#: view/ModAnoubisPanelsBase.cpp:719
+#: view/ModAnoubisPanelsBase.cpp:723
 msgid "Auto Checksum Check"
 msgstr "Automatische Prüfsummenüberprüfung"
 
-#: view/ModAnoubisPanelsBase.cpp:721
+#: view/ModAnoubisPanelsBase.cpp:725
 msgid "Check to automatically validate updated application rules"
 msgstr "Auswählen um automatisch erneuerte Anwendungsregeln zu überprüfen"
 
-#: view/ModAnoubisPanelsBase.cpp:730
+#: view/ModAnoubisPanelsBase.cpp:734
 msgid "Connection"
 msgstr "Verbindung"
 
-#: view/ModAnoubisPanelsBase.cpp:735
+#: view/ModAnoubisPanelsBase.cpp:739
 msgid "Auto Connect to Daemon"
 msgstr "Automatisches Verbinden zum Daemon"
 
-#: view/ModAnoubisPanelsBase.cpp:738
+#: view/ModAnoubisPanelsBase.cpp:742
 msgid "Check to auto-connect at startup"
 msgstr "Auswählen um die Verbindung automatisch herzustellen"
 
-#: view/ModAnoubisPanelsBase.cpp:747
+#: view/ModAnoubisPanelsBase.cpp:751
 msgid "Tool Tips"
 msgstr "Tool Tips"
 
-#: view/ModAnoubisPanelsBase.cpp:752
+#: view/ModAnoubisPanelsBase.cpp:756
 msgid "Enable Tool Tips after"
 msgstr "Ermögliche Tool Tips nach"
 
-#: view/ModAnoubisPanelsBase.cpp:755
+#: view/ModAnoubisPanelsBase.cpp:759
 msgid "Check to enable tooltips"
 msgstr "Auswählen um Tooltips zu aktivieren"
 
-#: view/ModAnoubisPanelsBase.cpp:775
-#: view/ModSfsPanelsBase.cpp:309
+#: view/ModAnoubisPanelsBase.cpp:779
+#: view/ModSfsPanelsBase.cpp:313
 msgid "Options"
 msgstr "Einstellungen"
 
-#: view/ModAnoubisPanelsBase.cpp:851
+#: view/ModAnoubisPanelsBase.cpp:855
 msgid "Connection to localhost:"
 msgstr "Verbindung zu localhost:"
 
-#: view/ModAnoubisPanelsBase.cpp:862
+#: view/ModAnoubisPanelsBase.cpp:866
 msgid "Establishes a connection to the Anoubis daemon"
 msgstr "Stellt Verbindung mit dem Anoubis-Daemon her"
 
-#: view/ModAnoubisPanelsBase.cpp:866
+#: view/ModAnoubisPanelsBase.cpp:870
 msgid "Disconnect"
 msgstr "Trennen"
 
-#: view/ModAnoubisPanelsBase.cpp:867
+#: view/ModAnoubisPanelsBase.cpp:871
 msgid "Disconnects from the Anoubis daemon"
 msgstr "Trennt die Verbindung vom Anoubis-Daemon"
 
-#: view/ModAnoubisPanelsBase.cpp:891
+#: view/ModAnoubisPanelsBase.cpp:895
 msgid "Select a profile from the list below or enter a new profile."
 msgstr "Auswahl eines Profils aus unterer Liste oder Eingabe eines neuen Profils."
 
-#: view/ModAnoubisPanelsBase.h:296
+#: view/ModAnoubisPanelsBase.h:297
 msgid "Select a profile"
 msgstr "Auswahl eines Profils"
 
@@ -1991,65 +1986,64 @@ msgstr "Dateisystem wird durchsucht..."
 msgid "Please wait while the filesystem is scanned."
 msgstr "Das Dateisystem wird durchsucht. Bitte warten."
 
-#: view/ModSfsMainPanelImpl.cpp:91
+#: view/ModSfsMainPanelImpl.cpp:92
 msgid "Configure private key:"
 msgstr "Privaten Schlüssel einrichten:"
 
-#: view/ModSfsMainPanelImpl.cpp:92
+#: view/ModSfsMainPanelImpl.cpp:93
 msgid "Choose Key"
 msgstr "Schlüssel wählen"
 
-#: view/ModSfsMainPanelImpl.cpp:96
+#: view/ModSfsMainPanelImpl.cpp:97
 msgid "Configure certificate:"
 msgstr "Zertifikat einrichten:"
 
-#: view/ModSfsMainPanelImpl.cpp:97
+#: view/ModSfsMainPanelImpl.cpp:98
 msgid "Choose certificate"
 msgstr "Zertifikat wählen"
 
-#: view/ModSfsMainPanelImpl.cpp:211
+#: view/ModSfsMainPanelImpl.cpp:212
 msgid "The SFS Browser currently displays an invalid view because no daemon connection is established. The selection is switched back to the \"Standard File Browsing\" view."
 msgstr "Der SFS Browser stellt eine ungültige Ansicht dar, da derzeit keine Daemon-Verbindung vorhanden ist. Es wird nun in die \"Standard Dateiansicht\" gewechselt."
 
-#: view/ModSfsMainPanelImpl.cpp:215
+#: view/ModSfsMainPanelImpl.cpp:216
 msgid "SFS warning"
 msgstr "SFS Warnung"
 
-#: view/ModSfsMainPanelImpl.cpp:289
-#: view/ModSfsMainPanelImpl.cpp:409
-#: view/ModSfsMainPanelImpl.cpp:433
-msgid "SFS error"
-msgstr "SFS Fehler"
-
-#: view/ModSfsMainPanelImpl.cpp:346
+#: view/ModSfsMainPanelImpl.cpp:331
 msgid "Choose the import-file"
 msgstr "Wähle die Importdatei"
 
-#: view/ModSfsMainPanelImpl.cpp:368
+#: view/ModSfsMainPanelImpl.cpp:353
 msgid "Choose the export-destination"
 msgstr "Wähle das Exportziel"
 
-#: view/ModSfsMainPanelImpl.cpp:391
+#: view/ModSfsMainPanelImpl.cpp:376
 msgid "Error: xanoubis is not connected to the daemon"
 msgstr "Fehler: xanoubis ist nicht mit dem Daemon verbunden"
 
-#: view/ModSfsMainPanelImpl.cpp:395
+#: view/ModSfsMainPanelImpl.cpp:380
 msgid "Error: Failed to load the private key."
 msgstr "Fehler: Laden des privaten Schlüssels fehlgeschlagen."
 
-#: view/ModSfsMainPanelImpl.cpp:399
+#: view/ModSfsMainPanelImpl.cpp:384
 msgid "Error: An invalid argument was supplied"
 msgstr "Fehler: Ein ungültiges Argument wurde übergeben"
 
-#: view/ModSfsMainPanelImpl.cpp:403
+#: view/ModSfsMainPanelImpl.cpp:388
 msgid "Error: Sfs is still busy with another operation."
 msgstr "Fehler: SFS ist noch mit einem anderen Vorgang beschäftigt."
 
-#: view/ModSfsMainPanelImpl.cpp:407
+#: view/ModSfsMainPanelImpl.cpp:392
 msgid "Wrong password!"
 msgstr "Falsches Passwort!"
 
-#: view/ModSfsMainPanelImpl.cpp:427
+#: view/ModSfsMainPanelImpl.cpp:394
+#: view/ModSfsMainPanelImpl.cpp:418
+msgid "SFS error"
+msgstr "SFS Fehler"
+
+#: view/ModSfsMainPanelImpl.cpp:412
 msgid ""
 "Failed to enable signed checksums.\n"
 "Please check the configuration of your certificate and private key!"
@@ -2057,11 +2051,11 @@ msgstr ""
 "Fehler beim Einschalten von signierten Prüfsummen.\n"
 "Bitte die Konfiguration des Zertifikats und des privaten Schlüssels prüfen!"
 
-#: view/ModSfsMainPanelImpl.cpp:431
+#: view/ModSfsMainPanelImpl.cpp:416
 msgid "Failed to disable signed checksums."
 msgstr "Fehler beim Abschalten von signierten Prüfsummen."
 
-#: view/ModSfsMainPanelImpl.cpp:664
+#: view/ModSfsMainPanelImpl.cpp:649
 msgid ""
 "Cannot load the private key!\n"
 "The file you specified does not exist."
@@ -2069,11 +2063,11 @@ msgstr ""
 "Konnte privaten Schlüssel nicht laden!\n"
 "Die angegebene Datei existiert nicht."
 
-#: view/ModSfsMainPanelImpl.cpp:666
+#: view/ModSfsMainPanelImpl.cpp:651
 msgid "Load private key"
 msgstr "Lade privaten Schlüssel"
 
-#: view/ModSfsMainPanelImpl.cpp:694
+#: view/ModSfsMainPanelImpl.cpp:679
 #, c-format
 msgid ""
 "Failed to load certificate from\n"
@@ -2082,11 +2076,11 @@ msgstr ""
 "Konnte Zertifikat nicht von\n"
 "%ls laden."
 
-#: view/ModSfsMainPanelImpl.cpp:696
+#: view/ModSfsMainPanelImpl.cpp:681
 msgid "Load certificate"
 msgstr "Lade Zertifikat"
 
-#: view/ModSfsMainPanelImpl.cpp:851
+#: view/ModSfsMainPanelImpl.cpp:836
 #, c-format
 msgid "default %ls"
 msgstr "Standard %ls"
@@ -2103,57 +2097,57 @@ msgstr "Verzeichnis:"
 msgid "/usr/local/bin/"
 msgstr "/usr/local/bin/"
 
-#: view/ModSfsPanelsBase.cpp:114
+#: view/ModSfsPanelsBase.cpp:116
 msgid "View:"
 msgstr "Ansicht:"
 
-#: view/ModSfsPanelsBase.cpp:118
+#: view/ModSfsPanelsBase.cpp:120
 msgid "Standard file browsing"
 msgstr "Standard Dateiansicht"
 
-#: view/ModSfsPanelsBase.cpp:118
+#: view/ModSfsPanelsBase.cpp:120
 msgid "Files with checksum"
 msgstr "Dateien mit Prüfsumme"
 
-#: view/ModSfsPanelsBase.cpp:118
+#: view/ModSfsPanelsBase.cpp:120
 msgid "Changed files"
 msgstr "Veränderte Dateien"
 
-#: view/ModSfsPanelsBase.cpp:118
+#: view/ModSfsPanelsBase.cpp:120
 msgid "Orphaned checksums"
 msgstr "Verwaiste Prüfsummen"
 
-#: view/ModSfsPanelsBase.cpp:118
+#: view/ModSfsPanelsBase.cpp:120
 msgid "Upgraded files"
 msgstr "Durch ein Upgrade veränderte Dateien"
 
-#: view/ModSfsPanelsBase.cpp:125
+#: view/ModSfsPanelsBase.cpp:127
 msgid "Recursive traversal"
 msgstr "Rekursiv"
 
-#: view/ModSfsPanelsBase.cpp:127
+#: view/ModSfsPanelsBase.cpp:129
 msgid "Enables recursive traversal through filesystem"
 msgstr "Zeigt Dateien aller Unterverzeichnisse an"
 
-#: view/ModSfsPanelsBase.cpp:141
+#: view/ModSfsPanelsBase.cpp:143
 msgid "Filter"
 msgstr "Filter"
 
-#: view/ModSfsPanelsBase.cpp:142
+#: view/ModSfsPanelsBase.cpp:144
 msgid "Apply the filter"
 msgstr "Den Filter anwenden"
 
-#: view/ModSfsPanelsBase.cpp:148
+#: view/ModSfsPanelsBase.cpp:150
 msgid "Invert"
 msgstr "Invertieren"
 
-#: view/ModSfsPanelsBase.cpp:150
+#: view/ModSfsPanelsBase.cpp:152
 msgid "Invert the filter"
 msgstr "Den Filter umkehren"
 
 #: view/ModSfsPanelsBase.cpp:165
-msgid "Sign Files"
-msgstr "Signiere Dateien"
+msgid "Sign Files / Check Signatures"
+msgstr "Signiere Dateien / Überprüfe Signaturen"
 
 #: view/ModSfsPanelsBase.cpp:168
 msgid "Enables signature support"
@@ -2207,79 +2201,79 @@ msgstr "Überprüfen (alle)"
 msgid "Validates all displayed files"
 msgstr "Alle angezeigten Dateien überprüfen"
 
-#: view/ModSfsPanelsBase.cpp:228
+#: view/ModSfsPanelsBase.cpp:231
 msgid "Browser"
 msgstr "Browser"
 
-#: view/ModSfsPanelsBase.cpp:234
+#: view/ModSfsPanelsBase.cpp:238
 msgid "Private Key"
 msgstr "Privater Schlüssel"
 
-#: view/ModSfsPanelsBase.cpp:245
+#: view/ModSfsPanelsBase.cpp:249
 msgid "Passphrase validity:"
 msgstr "Gültigkeit Passphrase:"
 
-#: view/ModSfsPanelsBase.cpp:252
+#: view/ModSfsPanelsBase.cpp:256
 msgid "Until end of session"
 msgstr "Bis zum Ende der Sitzung"
 
-#: view/ModSfsPanelsBase.cpp:252
+#: view/ModSfsPanelsBase.cpp:256
 msgid "Until specified time"
 msgstr "Bis zur angegebene Zeit"
 
-#: view/ModSfsPanelsBase.cpp:262
+#: view/ModSfsPanelsBase.cpp:266
 msgid "Validity end in seconds"
 msgstr "Gültigkeit in Sekunden"
 
-#: view/ModSfsPanelsBase.cpp:275
+#: view/ModSfsPanelsBase.cpp:279
 msgid "Certificate"
 msgstr "Zertifikat"
 
-#: view/ModSfsPanelsBase.cpp:286
+#: view/ModSfsPanelsBase.cpp:290
 msgid "Fingerprint:"
 msgstr "Fingerprint:"
 
-#: view/ModSfsPanelsBase.cpp:294
+#: view/ModSfsPanelsBase.cpp:298
 msgid "Distinguished Name:"
 msgstr "Distinguished Name:"
 
-#: view/ModSfsPanelsBase.cpp:337
+#: view/ModSfsPanelsBase.cpp:341
 msgid "Displays the status of the Secure File System Module (SFS) while connected."
 msgstr "Zeigt den Status des Secure File System Moduls (SFS) solange verbunden."
 
-#: view/ModSfsPanelsBase.cpp:356
+#: view/ModSfsPanelsBase.cpp:360
 msgid "status (SFS):"
 msgstr "Status (SFS):"
 
-#: view/ModSfsPanelsBase.cpp:360
+#: view/ModSfsPanelsBase.cpp:364
 msgid "open requests (SFS):"
 msgstr "offene Anfragen (SFS):"
 
-#: view/ModSfsPanelsBase.cpp:406
+#: view/ModSfsPanelsBase.cpp:410
 msgid "Link Target:"
 msgstr "Linkziel:"
 
-#: view/ModSfsPanelsBase.cpp:413
+#: view/ModSfsPanelsBase.cpp:417
 msgid "Last modified:"
 msgstr "Zuletzt geändert:"
 
-#: view/ModSfsPanelsBase.cpp:420
+#: view/ModSfsPanelsBase.cpp:424
 msgid "Checksum:"
 msgstr "Prüfsumme:"
 
-#: view/ModSfsPanelsBase.cpp:427
+#: view/ModSfsPanelsBase.cpp:431
 msgid "Registered checksum:"
 msgstr "Registrierte Prüfsumme:"
 
-#: view/ModSfsPanelsBase.cpp:434
+#: view/ModSfsPanelsBase.cpp:438
 msgid "Signature:"
 msgstr "Signatur:"
 
-#: view/ModSfsPanelsBase.cpp:441
+#: view/ModSfsPanelsBase.cpp:445
 msgid "Checksum status:"
 msgstr "Prüfsummen-Status:"
 
-#: view/ModSfsPanelsBase.cpp:449
+#: view/ModSfsPanelsBase.cpp:453
 msgid "Signature status:"
 msgstr "Signatur-Status:"
 
@@ -3089,15 +3083,15 @@ msgstr "Nachrichten: "
 msgid "Couldn't send Escalation"
 msgstr "Konnte Eskalation nicht verschicken"
 
-#: view/TrayIcon.cpp:315
+#: view/TrayIcon.cpp:314
 msgid "Couldn't send Alert"
 msgstr "Konnte Alarm nicht verschicken"
 
-#: view/TrayIcon.cpp:318
+#: view/TrayIcon.cpp:317
 msgid "No messages\n"
 msgstr "Keine Nachrichten\n"
 
-#: view/TrayIcon.cpp:331
+#: view/TrayIcon.cpp:330
 msgid "connected with "
 msgstr "Verbunden mit "
 
@@ -3248,7 +3242,7 @@ msgstr "Konnte %ls nicht zum Schreiben öffnen: %hs"
 msgid "Failed to flush the content of %ls: %hs"
 msgstr "Konnte Inhalt von %ls nicht zurückschreiben: %hs"
 
-#: control/PolicyCtrl.cpp:468
+#: control/PolicyCtrl.cpp:469
 #, c-format
 msgid ""
 "Communication error while receiving\n"
@@ -3257,7 +3251,7 @@ msgstr ""
 "Kommunikationsfehler beim Empfangen der Administrator-Regeln\n"
 "von %ls."
 
-#: control/PolicyCtrl.cpp:471
+#: control/PolicyCtrl.cpp:472
 #, c-format
 msgid ""
 "Communication error while receiving\n"
@@ -3266,11 +3260,11 @@ msgstr ""
 "Kommunikationsfehler beim Empfangen der Benutzer-Regeln\n"
 "von %ls."
 
-#: control/PolicyCtrl.cpp:474
+#: control/PolicyCtrl.cpp:475
 msgid "Error while receiving policy."
 msgstr "Fehler beim Empfangen der Regeln"
 
-#: control/PolicyCtrl.cpp:477
+#: control/PolicyCtrl.cpp:478
 #, c-format
 msgid ""
 "Got error (%hs) from daemon\n"
@@ -3279,7 +3273,7 @@ msgstr ""
 "Fehler vom Daemon  (%hs) nachdem\n"
 "die Administrator-Regeln von %ls empfangen wurde."
 
-#: control/PolicyCtrl.cpp:482
+#: control/PolicyCtrl.cpp:483
 #, c-format
 msgid ""
 "Got error (%hs) from daemon\n"
@@ -3288,7 +3282,7 @@ msgstr ""
 "Fehler vom Daemon (%hs) nachdem\n"
 "die Benutzer-Regeln von %ls empfangen wurde."
 
-#: control/PolicyCtrl.cpp:487
+#: control/PolicyCtrl.cpp:488
 #, c-format
 msgid ""
 "Got error (%hs) from daemon\n"
@@ -3297,8 +3291,8 @@ msgstr ""
 "Fehler vom Daemon (%hs)\n"
 "nachdem die Regel empfangen wurde."
 
-#: control/PolicyCtrl.cpp:491
-#: control/PolicyCtrl.cpp:584
+#: control/PolicyCtrl.cpp:492
+#: control/PolicyCtrl.cpp:585
 #, c-format
 msgid ""
 "An unexpected error occured.\n"
@@ -3307,19 +3301,19 @@ msgstr ""
 "Ein unerwarteter Fehler ist aufgetreten.\n"
 "Fehlernummer: %i"
 
-#: control/PolicyCtrl.cpp:497
+#: control/PolicyCtrl.cpp:498
 msgid "Error while receiving policy"
 msgstr "Fehler beim Empfangen der Regeln"
 
-#: control/PolicyCtrl.cpp:542
+#: control/PolicyCtrl.cpp:543
 msgid "The task was not executed."
 msgstr "Die Aufgabe wurde nicht ausgeführt."
 
-#: control/PolicyCtrl.cpp:544
+#: control/PolicyCtrl.cpp:545
 msgid "Out of memory."
 msgstr "Kein Speicher verfügbar."
 
-#: control/PolicyCtrl.cpp:548
+#: control/PolicyCtrl.cpp:549
 #, c-format
 msgid ""
 "Communication error while sending admin-policy\n"
@@ -3328,7 +3322,7 @@ msgstr ""
 "Kommunikationsfehler beim Senden der Administrator-Regeln\n"
 "von %ls zum Daemon."
 
-#: control/PolicyCtrl.cpp:551
+#: control/PolicyCtrl.cpp:552
 #, c-format
 msgid ""
 "Communication error while sending user-policy\n"
@@ -3337,11 +3331,11 @@ msgstr ""
 "Kommunikationsfehler beim Senden der Benutzer-Regeln\n"
 "von %ls zum Daemon."
 
-#: control/PolicyCtrl.cpp:554
+#: control/PolicyCtrl.cpp:555
 msgid "Error while sending policy to daemon."
 msgstr "Fehler beim Senden der Regeln zum Daemon."
 
-#: control/PolicyCtrl.cpp:557
+#: control/PolicyCtrl.cpp:558
 #, c-format
 msgid ""
 "Got error (%hs) from daemon\n"
@@ -3350,7 +3344,7 @@ msgstr ""
 "Fehler vom Daemon  (%hs) nachdem\n"
 "die Administrator-Regeln von %ls gesendet wurde."
 
-#: control/PolicyCtrl.cpp:562
+#: control/PolicyCtrl.cpp:563
 #, c-format
 msgid ""
 "Got error (%hs) from daemon\n"
@@ -3359,38 +3353,38 @@ msgstr ""
 "Fehler vom Daemon (%hs) nachdem\n"
 "die Benutzer-Regeln von %ls gesendet wurde."
 
-#: control/PolicyCtrl.cpp:567
+#: control/PolicyCtrl.cpp:568
 #, c-format
 msgid ""
 "Got error (%hs) from daemon\n"
 "after sending policy."
 msgstr "Fehler vom Daemon (%hs) nachdem die Regel gesendet wurde."
 
-#: control/PolicyCtrl.cpp:573
+#: control/PolicyCtrl.cpp:574
 #, c-format
 msgid "Failed to sign the admin-policy of %ls: %hs."
 msgstr "Der Administrator-Regelsatz von %ls konnte nicht signiert werden: %hs."
 
-#: control/PolicyCtrl.cpp:577
+#: control/PolicyCtrl.cpp:578
 #, c-format
 msgid "Failed to sign the user-policy of %ls: %hs."
 msgstr "Der Benutzer-Regelsatz von %ls konnte nicht signiert werden: %hs."
 
-#: control/PolicyCtrl.cpp:581
+#: control/PolicyCtrl.cpp:582
 #, c-format
 msgid "Failed to sign the policy: %hs."
 msgstr "Der Regelsatz konnte nicht signiert werden: %hs."
 
-#: control/PolicyCtrl.cpp:590
-#: control/PolicyCtrl.cpp:597
+#: control/PolicyCtrl.cpp:591
+#: control/PolicyCtrl.cpp:598
 msgid "Error while sending policy"
 msgstr "Fehler beim Senden der Regeln"
 
-#: control/PolicyCtrl.cpp:596
+#: control/PolicyCtrl.cpp:597
 msgid "Failed to make a backup of the policy."
 msgstr "Fehler beim Erstellen eines Backups der Regeln."
 
-#: control/PolicyCtrl.cpp:666
+#: control/PolicyCtrl.cpp:667
 #, c-format
 msgid "Automatically created version while saving the %ls profile"
 msgstr "Version wurde automatisch mit dem Speichern des Profils %ls erstellt."
@@ -3467,11 +3461,11 @@ msgstr "Symbolischer Link wurde aufgelöst"
 msgid "Failure to resolve: "
 msgstr "Konnte nicht aufgelöst werden."
 
-#: main.cpp:160
+#: main.cpp:163
 msgid "Error while initialising anoubis_ui"
 msgstr "Konnte anoubis_ui-Bibliothek nicht initialisieren."
 
-#: main.cpp:166
+#: main.cpp:169
 #, c-format
 msgid ""
 "Unsupported version (%d) found of HOME/.xanoubis\n"
@@ -3480,37 +3474,37 @@ msgstr ""
 "Es wurde eine nicht unterstützte Version (%d) von HOME/.xanoubis gefunden.\n"
 "Xanoubis wird sich nun beenden.\n"
 
-#: main.cpp:228
+#: main.cpp:231
 msgid "Language setting: "
 msgstr "Spracheinstellungen:"
 
-#: main.cpp:287
+#: main.cpp:290
 msgid "The Boot Loader configuration has been updated. Please make sure to boot an Anoubis Kernel."
 msgstr "Die Konfiguration des Boot-Loaders hat sich geändert. Bitte stellen sie sicher, dass der Anoubis-Kernel beim Start geladen wird."
 
-#: main.cpp:361
+#: main.cpp:337
 msgid "this help"
 msgstr "diese Hilfe"
 
-#: main.cpp:368
+#: main.cpp:344
 msgid "communication socket of anoubis daemon"
 msgstr "Kommunikationssockel des Anoubis Daemons"
 
-#: main.cpp:375
+#: main.cpp:351
 msgid "Debug output with 'num' als level"
 msgstr "Debug Ausgabe mit 'num' als Ebene"
 
-#: main.cpp:382
+#: main.cpp:358
 msgid "Disable TrayIcon"
 msgstr "TrayIcon deaktivieren"
 
-#: main.cpp:481
-#: main.cpp:489
+#: main.cpp:456
+#: main.cpp:464
 #, c-format
 msgid "Couldn't remove Autostart file: %ls"
 msgstr "Kann Autostart Datei nicht entfernen: %ls"
 
-#: main.cpp:732
+#: main.cpp:707
 #, c-format
 msgid ""
 "Enter the passphrase of your private key:\n"
@@ -3519,12 +3513,12 @@ msgstr ""
 "Eingabe der Passphrase zum privaten Schlüssel:\n"
 " %ls"
 
-#: main.cpp:734
-#: main.cpp:739
+#: main.cpp:709
+#: main.cpp:714
 msgid "Enter passphrase for: "
 msgstr "Passphrase Eingabe"
 
-#: main.cpp:737
+#: main.cpp:712
 #, c-format
 msgid ""
 "The entered passphrase was wrong!\n"
@@ -3535,6 +3529,10 @@ msgstr ""
 "Eingabe des Passwortes für:\n"
 "%ls"
 
+#~ msgid "Anoubis protocol version mismatch"
+#~ msgstr "Falsche Anoubis-Protokoll-Version"
+#~ msgid "Sign Files"
+#~ msgstr "Signiere Dateien"
 #~ msgid ""
 #~ "There are policies with\n"
 #~ "outdated checksum\n"

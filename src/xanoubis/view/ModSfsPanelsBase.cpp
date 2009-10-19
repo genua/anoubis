@@ -162,7 +162,7 @@ ModSfsMainPanelBase::ModSfsMainPanelBase( wxWindow* parent, wxWindowID id, const
 	wxBoxSizer* bSizer20;
 	bSizer20 = new wxBoxSizer( wxHORIZONTAL );
 	
-	SfsMainSignFilesCheckBox = new wxCheckBox( SfsMainDetailsPanel, wxID_ANY, _("Sign Files"), wxDefaultPosition, wxDefaultSize, 0 );
+	SfsMainSignFilesCheckBox = new wxCheckBox( SfsMainDetailsPanel, wxID_ANY, _("Sign Files / Check Signatures"), wxDefaultPosition, wxDefaultSize, 0 );
 	
 	SfsMainSignFilesCheckBox->Enable( false );
 	SfsMainSignFilesCheckBox->SetToolTip( _("Enables signature support") );
