@@ -585,9 +585,16 @@ SfsCtrl::OnSfsListArrived(TaskEvent &event)
 				sendEntryChangedEvent(idx);
 		}
 
-		/* Fetch the checksum(s) */
-		createComCsumGetTasks(entry->getPath(),
-		    !task->haveKeyId(), task->haveKeyId());
+		/*
+		 * Fetch the checksum(s). In Upgrade-mode fetch all checksums
+		 * because this method is triggered only once.
+		 */
+		if (task->fetchUpgraded()) {
+			createComCsumGetTasks(entry->getPath(), true, true);
+		} else {
+			createComCsumGetTasks(entry->getPath(),
+			    !task->haveKeyId(), task->haveKeyId());
+		}
 	}
 
 	/* Directory listing is complete */
