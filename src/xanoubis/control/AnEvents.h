@@ -583,6 +583,12 @@ BEGIN_DECLARE_EVENT_TYPES()
 	 */
 	DECLARE_LOCAL_EVENT_TYPE(anEVT_ANOUBISOPTIONS_UPDATE, wxNewEventType())
 
+	/**
+	 * End of an Upgrade. This message is sent if the daemon notifies
+	 * xanoubis of an upgrade with at least one upgraded file.
+	 */
+	DECLARE_LOCAL_EVENT_TYPE(anEVT_UPGRADENOTIFY, wxNewEventType())
+
 END_DECLARE_EVENT_TYPES()
 /**
  * @}

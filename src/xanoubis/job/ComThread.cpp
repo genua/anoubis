@@ -386,7 +386,6 @@ void
 ComThread::sendNotify(struct anoubis_msg *notifyMsg)
 {
 	int			 type;
-	wxCommandEvent		 pce(anEVT_POLICY_CHANGE);
 	Notification		*notify;
 	NotificationCtrl	*notifyCtrl;
 
@@ -395,13 +394,34 @@ ComThread::sendNotify(struct anoubis_msg *notifyMsg)
 	notifyCtrl = NotificationCtrl::instance();
 
 	if (type == ANOUBIS_N_POLICYCHANGE) {
+		wxCommandEvent		 pce(anEVT_POLICY_CHANGE);
 		pce.SetInt(get_value(notifyMsg->u.policychange->prio));
 		pce.SetExtraLong(get_value(notifyMsg->u.policychange->uid));
 		if (dynamic_cast<AnoubisGuiApp*>(wxTheApp)) {
 			wxPostEvent(AnEvents::getInstance(), pce);
 		}
 	} else if (type == ANOUBIS_N_STATUSNOTIFY) {
-		/* XXX CEH: Generate event and handle in master process. */
+		unsigned int		key, value;
+
+		if (!VERIFY_FIELD(notifyMsg, statusnotify, statuskey)
+		    || !VERIFY_FIELD(notifyMsg, statusnotify, statusvalue)) {
+			Debug::err(_("Dropping short message from Daemon"));
+			return;
+		}
+		key = get_value(notifyMsg->u.statusnotify->statuskey);
+		value = get_value(notifyMsg->u.statusnotify->statusvalue);
+		switch(key) {
+		case ANOUBIS_STATUS_UPGRADE: {
+			if (dynamic_cast<AnoubisGuiApp*>(wxTheApp)) {
+				wxCommandEvent	upg(anEVT_UPGRADENOTIFY);
+				wxPostEvent(AnEvents::getInstance(), upg);
+			}
+			break;
+		}
+		default:
+			Debug::info(_("Unkown status message key=%x value=%d"),
+			    key, value);
+		}
 	} else {
 		notify = Notification::factory(notifyMsg);
 		if (notify != NULL) {

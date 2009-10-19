@@ -115,6 +115,8 @@ MainFrame::MainFrame(wxWindow *parent) : MainFrameBase(parent)
 	    wxCommandEventHandler(MainFrame::onBackupPolicy), NULL, this);
 	anEvents->Connect(wxEVT_TIMER, wxTimerEventHandler(MainFrame::OnTimer),
 	    NULL, this);
+	anEvents->Connect(anEVT_UPGRADENOTIFY,
+	    wxCommandEventHandler(MainFrame::onUpgradeNotify), NULL, this);
 	timer_.SetOwner(anEvents);
 
 	ANEVENTS_IDENT_BCAST_REGISTRATION(MainFrame);
@@ -346,11 +348,7 @@ MainFrame::OnConnectionStateChange(wxCommandEvent& event)
 	wxString logMessage;
 
 	switch (newState) {
-	case JobCtrl::CONNECTED: {
-		KeyCtrl			*keyCtrl = KeyCtrl::getInstance();
-		LocalCertificate	&cert = keyCtrl->getLocalCertificate();
-		struct anoubis_sig	*raw_cert;
-
+	case JobCtrl::CONNECTED:
 		if (instance->isSfsDisable())
 			logMessage = wxString::Format(
 			    _("Connection established with %ls"),
@@ -362,27 +360,8 @@ MainFrame::OnConnectionStateChange(wxCommandEvent& event)
 			    hostname.c_str());
 
 		Debug::info(logMessage);
-		if (cert.isLoaded()) {
-			bool showUpgradeMessage = true;
-
-			wxConfig::Get()->Read(
-			    wxT("/Options/ShowUpgradeMessage"),
-			    &showUpgradeMessage);
-
-			/*
-			 * You only need to fetch the upgrade-list, if the
-			 * related dialog should be displayed.
-			 */
-			if (showUpgradeMessage == true) {
-				raw_cert = cert.getCertificate();
-				upgradeTask_.setKeyId(
-				    raw_cert->keyid, raw_cert->idlen);
-
-				instance->addTask(&upgradeTask_);
-			}
-		}
+		doUpgradeNotify();
 		break;
-	}
 	case JobCtrl::DISCONNECTED:
 	case JobCtrl::ERR_RW:
 		logMessage = wxString::Format(
@@ -680,6 +659,39 @@ MainFrame::onBackupPolicy(wxCommandEvent &event)
 		dlg.ShowModal();
 		rs->unlock();
 	}
+}
+
+void
+MainFrame::doUpgradeNotify(void)
+{
+	JobCtrl			*instance = JobCtrl::getInstance();
+	KeyCtrl			*keyCtrl = KeyCtrl::getInstance();
+	LocalCertificate	&cert = keyCtrl->getLocalCertificate();
+	struct anoubis_sig	*raw_cert;
+
+	if (cert.isLoaded()) {
+		bool showUpgradeMessage = true;
+
+		wxConfig::Get()->Read(wxT("/Options/ShowUpgradeMessage"),
+		    &showUpgradeMessage);
+
+		/*
+		 * You only need to fetch the upgrade-list, if the
+		 * related dialog should be displayed.
+		 */
+		if (showUpgradeMessage == true) {
+			raw_cert = cert.getCertificate();
+			upgradeTask_.setKeyId(raw_cert->keyid, raw_cert->idlen);
+
+			instance->addTask(&upgradeTask_);
+		}
+	}
+}
+
+void
+MainFrame::onUpgradeNotify(wxCommandEvent &)
+{
+	doUpgradeNotify();
 }
 
 bool
