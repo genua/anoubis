@@ -353,7 +353,8 @@ int anoubis_notify(struct anoubis_notify_group * ng,
 	}
 	/* In these cases there is no need to wait for a reply */
 	if (opcode == ANOUBIS_N_NOTIFY || opcode == ANOUBIS_N_LOGNOTIFY
-	    || opcode == ANOUBIS_N_POLICYCHANGE || ANOUBIS_N_STATUSNOTIFY) {
+	    || opcode == ANOUBIS_N_POLICYCHANGE
+	    || opcode == ANOUBIS_N_STATUSNOTIFY) {
 		ret = anoubis_msg_send(ng->chan, m);
 		if (ret < 0)
 			return ret;
