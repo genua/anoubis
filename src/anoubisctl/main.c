@@ -879,7 +879,7 @@ load(char *rulesopt, uid_t uid, unsigned int prio)
 		return 3;
 	}
 
-	if (prio == ANOUBISCTL_PRIO_ADMIN && !(opts & ~ANOUBISCTL_OPT_SIGNONLY))
+	if (prio == ANOUBISCTL_PRIO_ADMIN && !(opts & ANOUBISCTL_OPT_SIGNONLY))
 		opts &= ~ANOUBISCTL_OPT_SIGN;
 	if ((opts & ANOUBISCTL_OPT_SIGN) && (as == NULL)) {
 		fprintf(stderr, "To load signed policies to the daemon you "
