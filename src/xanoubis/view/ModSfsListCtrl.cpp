@@ -63,7 +63,8 @@ ModSfsListCtrl::ModSfsListCtrl(wxWindow *parent, wxWindowID id,
 	    wxLIST_FORMAT_CENTRE, wxLIST_AUTOSIZE_USEHEADER);
 
 	/* Adjust initial width of COLUMN_FILE */
-	SetColumnWidth(COLUMN_FILE, 200);
+	/* Adjust column width to fill space. (Bug #1321). */
+	SetColumnWidth(COLUMN_FILE, 360);
 
 	/* Initialize popup-menu */
 

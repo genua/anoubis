@@ -56,6 +56,19 @@ ModSbMainPanelImpl::ModSbMainPanelImpl(wxWindow* parent,
 		     wxLIST_AUTOSIZE);
 	}
 
+	/*
+	 * Adjust column width (Bug #1321).
+	 * Tablewidth - sum of fix columns = remaining size.
+	 * 758 - (90 + 70 + 50 + 90 + 50) = 408 / 2 = 204
+	 */
+	lst_Rules->SetColumnWidth(COLUMN_PROG,		204);
+	lst_Rules->SetColumnWidth(COLUMN_PATH,		204);
+	lst_Rules->SetColumnWidth(COLUMN_SUB,		 90);
+	lst_Rules->SetColumnWidth(COLUMN_ACTION,	 70);
+	lst_Rules->SetColumnWidth(COLUMN_MASK,		 50);
+	lst_Rules->SetColumnWidth(COLUMN_SCOPE,		 90);
+	lst_Rules->SetColumnWidth(COLUMN_USER,		 50);
+
 	AnEvents::getInstance()->Connect(anEVT_LOAD_RULESET,
 	    wxCommandEventHandler(ModSbMainPanelImpl::onLoadRuleSet),
 	    NULL, this);

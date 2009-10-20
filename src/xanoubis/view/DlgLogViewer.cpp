@@ -68,7 +68,7 @@ DlgLogViewer::DlgLogViewer(wxWindow* parent) : DlgLogViewerBase(parent),
 
 	property = new LogViewerProperty(LogViewerProperty::PROPERTY_TIME);
 	col = logListCtrl->addColumn(property);
-	col->setWidth(wxLIST_AUTOSIZE);
+	col->setWidth(200); /* Adjust column width (Bug #1321). */
 
 	property = new LogViewerProperty(LogViewerProperty::PROPERTY_MODULE);
 	col = logListCtrl->addColumn(property);
@@ -76,7 +76,7 @@ DlgLogViewer::DlgLogViewer(wxWindow* parent) : DlgLogViewerBase(parent),
 
 	property = new LogViewerProperty(LogViewerProperty::PROPERY_MESSAGE);
 	col = logListCtrl->addColumn(property);
-	col->setWidth(wxLIST_AUTOSIZE);
+	col->setWidth(385); /* Adjust column width (Bug #1321). */
 
 	logListCtrl->setRowProperty(new NotificationProperty);
 

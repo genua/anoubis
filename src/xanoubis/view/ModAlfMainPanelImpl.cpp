@@ -65,9 +65,21 @@ ModAlfMainPanelImpl::ModAlfMainPanelImpl(wxWindow* parent,
 	adminRuleSetId_ = -1;
 
 	for (int i=0; i<COLUMN_EOL; i++) {
-		lst_Rules->InsertColumn(i, columnNames_[i], wxLIST_FORMAT_LEFT,
-		    wxLIST_AUTOSIZE);
+		lst_Rules->InsertColumn(i, columnNames_[i],
+		    wxLIST_FORMAT_LEFT, wxLIST_AUTOSIZE);
 	}
+
+	/*
+	 * Adjust column width (Bug #1321).
+	 * Tablewidth - sum of fix columns = remaining size.
+	 * 758 - (170 + 55 + 70 + 90 + 50) = 323
+	 */
+	lst_Rules->SetColumnWidth(COLUMN_PROG,		323);
+	lst_Rules->SetColumnWidth(COLUMN_SERVICE,	170);
+	lst_Rules->SetColumnWidth(COLUMN_ROLE,		 55);
+	lst_Rules->SetColumnWidth(COLUMN_ACTION,	 70);
+	lst_Rules->SetColumnWidth(COLUMN_SCOPE,		 90);
+	lst_Rules->SetColumnWidth(COLUMN_USER,		 50);
 
 	AnEvents::getInstance()->Connect(anEVT_LOAD_RULESET,
 	    wxCommandEventHandler(ModAlfMainPanelImpl::onLoadRuleSet),

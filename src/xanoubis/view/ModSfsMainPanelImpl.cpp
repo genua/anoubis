@@ -77,6 +77,19 @@ ModSfsMainPanelImpl::ModSfsMainPanelImpl(wxWindow* parent,
 		    wxLIST_AUTOSIZE_USEHEADER);
 	}
 
+	/*
+	 * Adjust column width (Bug #1321).
+	 * Tablewidth - sum of fix columns = remaining size.
+	 * 758 - (95 + 95 + 105 + 125 + 90 + 50) = 198
+	 */
+	lst_Rules->SetColumnWidth(COLUMN_PATH,		198);
+	lst_Rules->SetColumnWidth(COLUMN_SUB,		 95);
+	lst_Rules->SetColumnWidth(COLUMN_VA,		 95);
+	lst_Rules->SetColumnWidth(COLUMN_IA,		105);
+	lst_Rules->SetColumnWidth(COLUMN_UA,		125);
+	lst_Rules->SetColumnWidth(COLUMN_SCOPE,		 90);
+	lst_Rules->SetColumnWidth(COLUMN_USER,		 50);
+
 	AnEvents::getInstance()->Connect(anEVT_LOAD_RULESET,
 	    wxCommandEventHandler(ModSfsMainPanelImpl::onLoadRuleSet),
 	    NULL, this);
@@ -764,11 +777,6 @@ ModSfsMainPanelImpl::onLoadRuleSet(wxCommandEvent& event)
 	if (ruleSet != NULL) {
 		ruleSet->lock();
 		ruleSet->accept(addVisitor);
-	}
-
-	/* trigger new calculation of column width */
-	for (int i=0; i<COLUMN_EOL; i++) {
-		lst_Rules->SetColumnWidth(i, wxLIST_AUTOSIZE_USEHEADER);
 	}
 
 	event.Skip();

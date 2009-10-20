@@ -114,6 +114,10 @@ ModAnoubisMainPanelImpl::ModAnoubisMainPanelImpl(wxWindow* parent,
 	/* Initialize list of versions */
 	versionListUpdate();
 
+	/* Adjust column width (Bug #1321). */
+	versionListCtrl->SetColumnWidth(1, 205);
+	versionListCtrl->SetColumnWidth(2, 205);
+
 	anEvents->Connect(anEVT_ESCALATIONS_SHOW,
 	    wxCommandEventHandler(ModAnoubisMainPanelImpl::OnEscalationsShow),
 	    NULL, this);
@@ -332,6 +336,8 @@ ModAnoubisMainPanelImpl::profileTabInit(void)
 	width -= profileList->GetColumnWidth(0);
 	profileList->SetColumnWidth(1, width);
 
+	/* Adjust column width (Bug #1321). */
+	profileList->SetColumnWidth(1, 420);
 }
 
 void

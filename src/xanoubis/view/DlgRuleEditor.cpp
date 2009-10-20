@@ -49,7 +49,8 @@
 #include "JobCtrl.h"
 #include "AnPolicyNotebook.h"
 
-#define	BINARY_COLUMN_WIDTH	200
+/* Adjust column width (Bug #1321). */
+#define	BINARY_COLUMN_WIDTH	325
 
 DlgRuleEditor::DlgRuleEditor(wxWindow* parent)
     : Observer(NULL), DlgRuleEditorBase(parent)
@@ -134,7 +135,7 @@ DlgRuleEditor::DlgRuleEditor(wxWindow* parent)
 	ctxColumns_[CTX_ID]	= new ListCtrlColumn(_("ID"), wxT("ID"));
 	ctxColumns_[CTX_TYPE]	= new ListCtrlColumn(_("Type"), wxT("TYPE"));
 	ctxColumns_[CTX_BINARY]	= new ListCtrlColumn(_("Binary"),
-	    wxT("BINARY"));
+	    wxT("BINARY"), 410); /* Adjust column width (Bug #1321). */
 
 	for (size_t i=0; i<CTX_EOL; i++) {
 		ctxColumns_[i]->setIndex(i);
@@ -146,7 +147,8 @@ DlgRuleEditor::DlgRuleEditor(wxWindow* parent)
 	    wxT("ACTION"));
 	sbColumns_[SB_LOG]	= new ListCtrlColumn(_("Log"), wxT("LOG"));
 	sbColumns_[SB_SCOPE]	= new ListCtrlColumn(_("Scope"), wxT("SCOPE"));
-	sbColumns_[SB_PATH]	= new ListCtrlColumn(_("Path"), wxT("PATH"));
+	sbColumns_[SB_PATH]	= new ListCtrlColumn(_("Path"), wxT("PATH"),
+	    100); /* Adjust column width (Bug #1321). */
 	sbColumns_[SB_SUB]	= new ListCtrlColumn(_("Subject"), wxT("SUB"));
 	sbColumns_[SB_MASK]	= new ListCtrlColumn(_("Mask"), wxT("MASK"));
 
