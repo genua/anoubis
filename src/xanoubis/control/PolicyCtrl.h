@@ -296,8 +296,11 @@ class PolicyCtrl : public wxEvtHandler, public Singleton<PolicyCtrl>
 		 * getAdminId().
 		 *
 		 * The method runs asynchronous and does not block until the
-		 * policy was sent.When the method leaves, the procedure is
+		 * policy was sent. When the method leaves, the procedure is
 		 * started.
+		 *
+		 * When the policy was successfully send, an wxCommandEvent
+		 * of type anEVT_SEND_RULESET is fired.
 		 *
 		 * @param id The id of the policy to be sent
 		 * @return a PolicyResult-Code

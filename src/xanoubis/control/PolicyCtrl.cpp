@@ -599,6 +599,12 @@ PolicyCtrl::OnPolicySend(TaskEvent &event)
 		}
 	}
 
+	if (eventBroadcastEnabled_) {
+		wxCommandEvent event(anEVT_SEND_RULESET);
+		event.SetInt(seekId(isAdmin, task->getUid()));
+		wxPostEvent(AnEvents::getInstance(), event);
+	}
+
 	sendTaskList_.remove(task);
 	delete(task);
 }

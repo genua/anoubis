@@ -63,6 +63,8 @@ DlgRuleEditor::DlgRuleEditor(wxWindow* parent)
 	    wxCommandEventHandler(DlgRuleEditor::onShow), NULL, this);
 	anEvents->Connect(anEVT_LOAD_RULESET,
 	    wxCommandEventHandler(DlgRuleEditor::onLoadNewRuleSet), NULL, this);
+	anEvents->Connect(anEVT_SEND_RULESET,
+	    wxCommandEventHandler(DlgRuleEditor::onSendRuleSet), NULL, this);
 	anEvents->Connect(anEVT_SHOW_RULE,
 	    wxCommandEventHandler(DlgRuleEditor::onShowRule), NULL, this);
 	anEvents->Connect(anEVT_SEND_AUTO_CHECK,
@@ -186,6 +188,8 @@ DlgRuleEditor::~DlgRuleEditor(void)
 	    wxCommandEventHandler(DlgRuleEditor::onShow), NULL, this);
 	anEvents->Disconnect(anEVT_LOAD_RULESET,
 	    wxCommandEventHandler(DlgRuleEditor::onLoadNewRuleSet), NULL, this);
+	anEvents->Disconnect(anEVT_SEND_RULESET,
+	    wxCommandEventHandler(DlgRuleEditor::onSendRuleSet), NULL, this);
 	anEvents->Disconnect(anEVT_SHOW_RULE,
 	    wxCommandEventHandler(DlgRuleEditor::onShowRule), NULL, this);
 
@@ -521,8 +525,6 @@ DlgRuleEditor::onConnectionStateChange(wxCommandEvent& event)
 		policyCtrl = PolicyCtrl::getInstance();
 		policyCtrl->receiveOneFromDaemon(0, geteuid());
 		policyCtrl->receiveOneFromDaemon(1, geteuid());
-		switchRuleSet(policyCtrl->getAdminId(geteuid()),
-		    policyCtrl->getUserId());
 	}
 	rb_userMe->SetValue(true);
 	updateFooter();
@@ -556,6 +558,14 @@ DlgRuleEditor::onLoadNewRuleSet(wxCommandEvent &event)
 		 */
 		loadRuleSet();
 	}
+	event.Skip();
+}
+
+void
+DlgRuleEditor::onSendRuleSet(wxCommandEvent &event)
+{
+	updateFooter();
+
 	event.Skip();
 }
 
@@ -1409,8 +1419,6 @@ DlgRuleEditor::onFooterActivateButton(wxCommandEvent &)
 			break;
 		}
 	}
-
-	updateFooter();
 }
 
 long
@@ -2154,7 +2162,6 @@ DlgRuleEditor::setUser(long uid)
 		policyCtrl->receiveOneFromDaemon(0, uid);
 		admin = policyCtrl->getAdminId(uid);
 	}
-	switchRuleSet(admin, user);
 }
 
 void

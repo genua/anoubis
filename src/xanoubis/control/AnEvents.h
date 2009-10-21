@@ -481,13 +481,21 @@ BEGIN_DECLARE_EVENT_TYPES()
 
 	/**
 	 * Load ruleset event.
-	 * A new rule set was loaded/stored to the profile manager.
+	 * A new rule set was loaded/stored to the policy controller.
 	 * Your current one may be out of date.
 	 *
 	 * @param GetInt() The id of the old ruleset.
 	 * @param GetExtraLong() The id of the new ruleset.
 	 */
 	DECLARE_LOCAL_EVENT_TYPE(anEVT_LOAD_RULESET, wxNewEventType())
+
+	/**
+	 * Send ruleset event.
+	 * The policy controler sent a ruleset to the daemon.
+	 *
+	 * @param GetInt() The id of the ruleset.
+	 */
+	DECLARE_LOCAL_EVENT_TYPE(anEVT_SEND_RULESET, wxNewEventType())
 
 	/**
 	 * An error occured while we tried to generate a new escalation rule.

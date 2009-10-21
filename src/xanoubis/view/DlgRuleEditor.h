@@ -307,6 +307,16 @@ class DlgRuleEditor : public Observer, public DlgRuleEditorBase
 		void onLoadNewRuleSet(wxCommandEvent &);
 
 		/**
+		 * Handle situation, where a ruleset was send to the daemon.
+		 *
+		 * Used to update the view.
+		 *
+		 * @param[in] 1st The event.
+		 * @return Nothing.
+		 */
+		void onSendRuleSet(wxCommandEvent &);
+
+		/**
 		 * Handle Show rule events from the log viewer and the
 		 * escalation handling.
 		 * @param[in] 1st The command event.
