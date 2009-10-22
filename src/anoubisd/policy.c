@@ -44,6 +44,7 @@
 #ifdef OPENBSD
 #include <sha2.h>
 #endif
+#include <netdb.h>
 #include <pwd.h>
 #include <signal.h>
 #include <stdlib.h>
@@ -189,6 +190,9 @@ policy_main(int pipe_m2s[2], int pipe_m2p[2], int pipe_s2p[2], int pipe_m2u[2],
 	close(loggers[2]);
 	close(loggers[3]);
 
+	/* open /etc/services before chroot */
+	setservent(1);
+
 	if ((pw = getpwnam(ANOUBISD_USER)) == NULL)
 		fatal("getpwnam");
 
@@ -196,6 +200,10 @@ policy_main(int pipe_m2s[2], int pipe_m2p[2], int pipe_s2p[2], int pipe_m2u[2],
 		fatal("chroot");
 	if (chdir(ANOUBISD_POLICYCHROOT) == -1)
 		fatal("chdir");
+
+	/* XXX: glibc forgets about stayopen after chroot,
+		solved by adding another setservent */
+	setservent(1);
 
 	setproctitle("policy engine");
 
@@ -205,7 +213,8 @@ policy_main(int pipe_m2s[2], int pipe_m2p[2], int pipe_s2p[2], int pipe_m2u[2],
 		fatal("can't drop privileges");
 
 	/* From now on, this is an unprivileged child process. */
-	log_info("policy started (pid %d)", getpid());
+	log_info("policy started (pid %d root %s)",
+	    getpid(), PACKAGE_POLICYDIR);
 
 	/* We catch or block signals rather than ignoring them. */
 	signal_set(&ev_sigterm, SIGTERM, policy_sighandler, &ev_info);
