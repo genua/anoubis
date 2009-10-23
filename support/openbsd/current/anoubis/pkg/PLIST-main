@@ -89,10 +89,9 @@ share/xanoubis/icons/ModSfs_problem_48.png
 share/xanoubis/icons/ModSfs_question_16.png
 share/xanoubis/icons/ModSfs_question_48.png
 share/xanoubis/icons/xanoubis.png
+@exec ln -sf  ${PROFILESDIR} %D/share/xanoubis/profiles
 share/xanoubis/profiles/wizard/alf
 share/xanoubis/profiles/wizard/sandbox
-@sample ${PROFILESDIR}/
-@exec ln -sf /etc/anoubis/profiles /usr/local/share/xanoubis/profiles
-@unexec rm -rf /usr/local/share/xanoubis/profiles
+@unexec rm -rf %D/share/xanoubis/profiles
 @exec %D/bin/update-desktop-database
 @unexec %D/bin/update-desktop-database
