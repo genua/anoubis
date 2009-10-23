@@ -524,6 +524,8 @@ daemon_restart(void)
 		fprintf(stderr, "Couldn't open " PACKAGE_PIDFILE ": %s. "
 		    "Starting a new daemon\n", strerror(errno));
 		return daemon_start();
+	} else {
+		fcntl(fileno(fp), F_SETFD, FD_CLOEXEC);
 	}
 	if (flock(fileno(fp), LOCK_EX|LOCK_NB) != -1) {
 		fprintf(stderr, "Unused " PACKAGE_PIDFILE " found. "
