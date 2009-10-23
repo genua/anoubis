@@ -34,7 +34,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-10-19 11:09+0200\n"
+"POT-Creation-Date: 2009-10-20 16:33+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -863,7 +863,7 @@ msgid "Delete rule %ld?"
 msgstr ""
 
 #: view/DlgRuleEditor.cpp:859 view/DlgRuleEditor.cpp:896
-#: view/MainFrame.cpp:558
+#: view/MainFrame.cpp:537
 msgid "Confirm"
 msgstr ""
 
@@ -909,12 +909,12 @@ msgstr ""
 msgid "Import policy file"
 msgstr ""
 
-#: view/DlgRuleEditor.cpp:1257 view/MainFrame.cpp:523
+#: view/DlgRuleEditor.cpp:1257 view/MainFrame.cpp:502
 msgid "Couldn't import policy file: it has errors."
 msgstr ""
 
-#: view/DlgRuleEditor.cpp:1258 view/MainFrame.cpp:524 view/MainFrame.cpp:788
-#: view/ModAnoubisMainPanelImpl.cpp:1525 main.cpp:164 main.cpp:458
+#: view/DlgRuleEditor.cpp:1258 view/MainFrame.cpp:503 view/MainFrame.cpp:800
+#: view/ModAnoubisMainPanelImpl.cpp:1530 main.cpp:164 main.cpp:458
 #: main.cpp:466
 msgid "Error"
 msgstr ""
@@ -923,11 +923,11 @@ msgstr ""
 msgid "Export ruleset..."
 msgstr ""
 
-#: view/DlgRuleEditor.cpp:1335 view/MainFrame.cpp:543
+#: view/DlgRuleEditor.cpp:1335 view/MainFrame.cpp:522
 msgid "Failed to export the ruleset into a file."
 msgstr ""
 
-#: view/DlgRuleEditor.cpp:1336 view/MainFrame.cpp:544
+#: view/DlgRuleEditor.cpp:1336 view/MainFrame.cpp:523
 msgid "Export ruleset"
 msgstr ""
 
@@ -1090,7 +1090,7 @@ msgstr ""
 msgid "Connected:"
 msgstr ""
 
-#: view/MainFrameBase.cpp:112 view/MainFrame.cpp:282
+#: view/MainFrameBase.cpp:112 view/MainFrame.cpp:284
 msgid "no"
 msgstr ""
 
@@ -1098,99 +1098,99 @@ msgstr ""
 msgid "Anoubis"
 msgstr ""
 
-#: view/MainFrame.cpp:279 view/ModAlfOverviewPanelImpl.cpp:74
+#: view/MainFrame.cpp:281 view/ModAlfOverviewPanelImpl.cpp:74
 #: view/ModSfsOverviewPanelImpl.cpp:72 view/ModSbOverviewPanelImpl.cpp:73
 msgid "ok"
 msgstr ""
 
-#: view/MainFrame.cpp:356
+#: view/MainFrame.cpp:354
 #, c-format
 msgid "Connection established with %ls"
 msgstr ""
 
-#: view/MainFrame.cpp:360
+#: view/MainFrame.cpp:358
 #, c-format
 msgid "Connection established with %ls without sfsdisable!"
 msgstr ""
 
-#: view/MainFrame.cpp:389
+#: view/MainFrame.cpp:368
 #, c-format
 msgid "Disconnected from %ls"
 msgstr ""
 
-#: view/MainFrame.cpp:395
+#: view/MainFrame.cpp:374
 #, c-format
 msgid "Connection to %ls failed!"
 msgstr ""
 
-#: view/MainFrame.cpp:402
+#: view/MainFrame.cpp:381
 #, c-format
 msgid ""
 "Because of an incompatible protocol version (xanoubis: %i, Anoubis daemon: %"
 "i) the connection was rejected. Please update the Anoubis daemon package!"
 msgstr ""
 
-#: view/MainFrame.cpp:409
+#: view/MainFrame.cpp:388
 #, c-format
 msgid ""
 "Because of an incompatible protocol version (xanoubis: %i, Anoubis daemon: %"
 "i) the connection was rejected. Please update the xanoubis package!"
 msgstr ""
 
-#: view/MainFrame.cpp:416
+#: view/MainFrame.cpp:395
 msgid "Protocol version mismatch"
 msgstr ""
 
-#: view/MainFrame.cpp:423
+#: view/MainFrame.cpp:402
 #, c-format
 msgid ""
 "The APN parser (v%i.%i) is newer than the parser of the Anoubis daemon (v%i.%"
 "i). Please update the Anoubis daemon package!"
 msgstr ""
 
-#: view/MainFrame.cpp:431
+#: view/MainFrame.cpp:410
 #, c-format
 msgid ""
 "The APN parser (v%i.%i) is older than the parser of the Anoubis daemon (v%i.%"
 "i). Please update the xanoubis package!"
 msgstr ""
 
-#: view/MainFrame.cpp:440
+#: view/MainFrame.cpp:419
 msgid "APN version mismatch"
 msgstr ""
 
-#: view/MainFrame.cpp:512
+#: view/MainFrame.cpp:491
 msgid "Choose a policy file:"
 msgstr ""
 
-#: view/MainFrame.cpp:532 view/ModAnoubisMainPanelImpl.cpp:1251
+#: view/MainFrame.cpp:511 view/ModAnoubisMainPanelImpl.cpp:1251
 msgid "Choose a file to write the policies to:"
 msgstr ""
 
-#: view/MainFrame.cpp:557
+#: view/MainFrame.cpp:536
 msgid "xanoubis is going to be closed."
 msgstr ""
 
-#: view/MainFrame.cpp:736
+#: view/MainFrame.cpp:748
 msgid ""
 "The Boot Loader configuration has been updated.Please make sure to boot an "
 "Anoubis Kernel."
 msgstr ""
 
-#: view/MainFrame.cpp:738 main.cpp:172 main.cpp:293
+#: view/MainFrame.cpp:750 main.cpp:172 main.cpp:293
 msgid "Warning"
 msgstr ""
 
-#: view/MainFrame.cpp:775
+#: view/MainFrame.cpp:787
 msgid "Communication error while fetching list of upgraded files."
 msgstr ""
 
-#: view/MainFrame.cpp:779
+#: view/MainFrame.cpp:791
 #, c-format
 msgid "Got error (%hs) from daemon while fetching list of upgraded files."
 msgstr ""
 
-#: view/MainFrame.cpp:784
+#: view/MainFrame.cpp:796
 #, c-format
 msgid ""
 "An unexpected error (%i) occured while while fetching list of upgraded files."
@@ -1409,7 +1409,7 @@ msgstr ""
 msgid "Remove version"
 msgstr ""
 
-#: view/ModAnoubisMainPanelImpl.cpp:1524
+#: view/ModAnoubisMainPanelImpl.cpp:1529
 msgid "Failed to create a rule from escalation"
 msgstr ""
 
@@ -2074,7 +2074,7 @@ msgid "Certificate"
 msgstr ""
 
 #: view/ModSfsPanelsBase.cpp:290
-msgid "Fingerprint:"
+msgid "KeyID:"
 msgstr ""
 
 #: view/ModSfsPanelsBase.cpp:298
@@ -2159,43 +2159,43 @@ msgstr ""
 msgid "Rule Wizard"
 msgstr ""
 
-#: view/RuleWizardProgramPage.cpp:180 control/SfsCtrl.cpp:697
+#: view/RuleWizardProgramPage.cpp:180 control/SfsCtrl.cpp:704
 #, c-format
 msgid "Got error from daemon (%hs) while fetching the checksum for %ls."
 msgstr ""
 
-#: view/RuleWizardProgramPage.cpp:185 control/SfsCtrl.cpp:714
+#: view/RuleWizardProgramPage.cpp:185 control/SfsCtrl.cpp:721
 #, c-format
 msgid "Communication error while fetching the checksum for %ls."
 msgstr ""
 
-#: view/RuleWizardProgramPage.cpp:189 control/SfsCtrl.cpp:726
+#: view/RuleWizardProgramPage.cpp:189 control/SfsCtrl.cpp:733
 #, c-format
 msgid "Failed to resolve %ls"
 msgstr ""
 
-#: view/RuleWizardProgramPage.cpp:193 control/SfsCtrl.cpp:734
+#: view/RuleWizardProgramPage.cpp:193 control/SfsCtrl.cpp:741
 #, c-format
 msgid "An unexpected error occured (%hs) while fetching the checksum for %ls."
 msgstr ""
 
 #: view/RuleWizardProgramPage.cpp:236 view/RuleWizardProgramPage.cpp:276
-#: control/SfsCtrl.cpp:630 control/SfsCtrl.cpp:820
+#: control/SfsCtrl.cpp:637 control/SfsCtrl.cpp:827
 #, c-format
 msgid "Failed to calculate the checksum for %ls: %hs"
 msgstr ""
 
-#: view/RuleWizardProgramPage.cpp:240 control/SfsCtrl.cpp:834
+#: view/RuleWizardProgramPage.cpp:240 control/SfsCtrl.cpp:841
 #, c-format
 msgid "Communication error while register the checksum for %ls."
 msgstr ""
 
-#: view/RuleWizardProgramPage.cpp:244 control/SfsCtrl.cpp:848
+#: view/RuleWizardProgramPage.cpp:244 control/SfsCtrl.cpp:855
 #, c-format
 msgid "Got error from daemon (%hs) while register the checksum for %ls."
 msgstr ""
 
-#: view/RuleWizardProgramPage.cpp:249 control/SfsCtrl.cpp:864
+#: view/RuleWizardProgramPage.cpp:249 control/SfsCtrl.cpp:871
 #, c-format
 msgid "An unexpected error occured (%hs) while register the checksum for %ls."
 msgstr ""
@@ -2932,91 +2932,91 @@ msgid ""
 "ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:621 control/SfsCtrl.cpp:670 control/SfsCtrl.cpp:807
-#: control/SfsCtrl.cpp:915
+#: control/SfsCtrl.cpp:628 control/SfsCtrl.cpp:677 control/SfsCtrl.cpp:814
+#: control/SfsCtrl.cpp:922
 #, c-format
 msgid "%ls not found in file-list!"
 msgstr ""
 
-#: control/SfsCtrl.cpp:701
+#: control/SfsCtrl.cpp:708
 #, c-format
 msgid "Got error from daemon (%hs) while fetching the signature for %ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:718
+#: control/SfsCtrl.cpp:725
 #, c-format
 msgid "Communication error while fetching the signature for %ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:739
+#: control/SfsCtrl.cpp:746
 #, c-format
 msgid "An unexpected error occured (%hs) while fetching the signature for %ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:775
+#: control/SfsCtrl.cpp:782
 msgid "An unexpected checksum was fetched."
 msgstr ""
 
-#: control/SfsCtrl.cpp:777
+#: control/SfsCtrl.cpp:784
 msgid "An unexpected signature was fetched."
 msgstr ""
 
-#: control/SfsCtrl.cpp:824
+#: control/SfsCtrl.cpp:831
 #, c-format
 msgid "Failed to calculate the signature for %ls: %hs"
 msgstr ""
 
-#: control/SfsCtrl.cpp:838
+#: control/SfsCtrl.cpp:845
 #, c-format
 msgid "Communication error while register the signature for %ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:853
+#: control/SfsCtrl.cpp:860
 #, c-format
 msgid "Got error from daemon (%hs) while register the signature for %ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:869
+#: control/SfsCtrl.cpp:876
 #, c-format
 msgid "An unexpected error occured (%hs) while register the signature for %ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:928
+#: control/SfsCtrl.cpp:935
 #, c-format
 msgid "Communication error while removing the checksum for %ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:932
+#: control/SfsCtrl.cpp:939
 #, c-format
 msgid "Communication error while removing the signature for %ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:941
+#: control/SfsCtrl.cpp:948
 #, c-format
 msgid "Got error from daemon (%hs) while removing the checksum for %ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:946
+#: control/SfsCtrl.cpp:953
 #, c-format
 msgid "Got error from daemon (%hs) while removing the signature for %ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:956
+#: control/SfsCtrl.cpp:963
 #, c-format
 msgid "An unexpected error occured (%hs) while removing the checksum for %ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:961
+#: control/SfsCtrl.cpp:968
 #, c-format
 msgid "An unexpected error occured (%hs) while removing the signature for %ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:1261
+#: control/SfsCtrl.cpp:1268
 #, c-format
 msgid "Failed to open %ls for writing: %hs"
 msgstr ""
 
-#: control/SfsCtrl.cpp:1270
+#: control/SfsCtrl.cpp:1277
 #, c-format
 msgid "Failed to flush the content of %ls: %hs"
 msgstr ""
@@ -3209,6 +3209,15 @@ msgstr ""
 
 #: widgets/AnPickFromFs.cpp:185
 msgid "Failure to resolve: "
+msgstr ""
+
+#: job/ComThread.cpp:408
+msgid "Dropping short message from Daemon"
+msgstr ""
+
+#: job/ComThread.cpp:422
+#, c-format
+msgid "Unkown status message key=%x value=%d"
 msgstr ""
 
 #: main.cpp:163
