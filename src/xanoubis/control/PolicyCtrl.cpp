@@ -30,7 +30,6 @@
 #endif
 
 #include <wx/dir.h>
-#include <wx/msgdlg.h> /* XXX Used by bad AnoubisGuiApp::OnPolicySend */
 #include <wx/stdpaths.h>
 
 #include "main.h"
@@ -495,7 +494,7 @@ PolicyCtrl::OnPolicyRequest(TaskEvent &event)
 
 	/* XXX: This is the wrong place to show up a message-box! */
 	if (taskResult != ComTask::RESULT_SUCCESS) {
-		wxMessageBox(message, _("Error while receiving policy"),
+		anMessageBox(message, _("Error while receiving policy"),
 		    wxICON_ERROR);
 
 	} else {
@@ -588,12 +587,12 @@ PolicyCtrl::OnPolicySend(TaskEvent &event)
 
 	/* XXX: This is the wrong place to show up a message-box! */
 	if (taskResult != ComTask::RESULT_SUCCESS) {
-		wxMessageBox(message, _("Error while sending policy"),
+		anMessageBox(message, _("Error while sending policy"),
 		    wxICON_ERROR);
 	} else {
 		/* The policy was successfully activated, now make a backup */
 		if (!makeBackup(wxT("active"))) {
-			wxMessageBox(
+			anMessageBox(
 			    _("Failed to make a backup of the policy."),
 			    _("Error while sending policy"), wxICON_ERROR);
 		}

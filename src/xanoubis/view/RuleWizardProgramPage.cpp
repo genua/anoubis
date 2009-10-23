@@ -29,8 +29,8 @@
 
 #include <wx/filedlg.h>
 #include <wx/filename.h>
-#include <wx/msgdlg.h>
 
+#include "AnMessageDialog.h"
 #include "AnPickFromFs.h"
 #include "JobCtrl.h"
 #include "RuleWizardPage.h"
@@ -127,7 +127,7 @@ RuleWizardProgramPage::onPageChanging(wxWizardEvent &event)
 		    "the checksum."), history_->getProgram().c_str());
 	}
 	if (!message.IsEmpty()) {
-		wxMessageBox(message, _("Rule Wizard"), wxOK | wxICON_ERROR,
+		anMessageBox(message, _("Rule Wizard"), wxOK | wxICON_ERROR,
 		    this);
 		event.Veto();
 	}
@@ -196,7 +196,7 @@ RuleWizardProgramPage::onCsumGet(TaskEvent &event)
 			break;
 		}
 
-		wxMessageBox(message, _("Rule Wizard"), wxOK | wxICON_ERROR,
+		anMessageBox(message, _("Rule Wizard"), wxOK | wxICON_ERROR,
 		    this);
 	}
 }
@@ -252,7 +252,7 @@ RuleWizardProgramPage::onCsumAdd(TaskEvent &event)
 			break;
 		}
 
-		wxMessageBox(message, _("Rule Wizard"), wxOK | wxICON_ERROR,
+		anMessageBox(message, _("Rule Wizard"), wxOK | wxICON_ERROR,
 		    this);
 	}
 }
@@ -277,7 +277,7 @@ RuleWizardProgramPage::onCsumCalc(TaskEvent &event)
 		    csumCalcTask_.getPath().c_str(),
 		    strerror(csumCalcTask_.getResult()));
 
-		wxMessageBox(message, _("Rule Wizard"), wxOK | wxICON_ERROR,
+		anMessageBox(message, _("Rule Wizard"), wxOK | wxICON_ERROR,
 		    this);
 
 		return;
@@ -309,7 +309,7 @@ RuleWizardProgramPage::onCsumCalc(TaskEvent &event)
 		    "does not match! Please go to the SFS Browser and update "
 		    "the checksum."), csumCalcTask_.getPath().c_str());
 
-		wxMessageBox(message, _("Rule Wizard"), wxOK | wxICON_ERROR,
+		anMessageBox(message, _("Rule Wizard"), wxOK | wxICON_ERROR,
 		    this);
 	}
 }

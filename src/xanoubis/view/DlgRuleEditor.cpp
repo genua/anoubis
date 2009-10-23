@@ -28,7 +28,6 @@
 #include <wx/defs.h>	/* mandatory but missing in choicdlg.h */
 #include <wx/choicdlg.h>
 #include <wx/dynarray.h>
-#include <wx/msgdlg.h>
 
 #include <wx/arrimpl.cpp>
 #include <wx/filedlg.h>
@@ -868,7 +867,7 @@ DlgRuleEditor::onAppListDeleteClick(wxCommandEvent &)
 		int	last = 0;
 		policy = getSelectedPolicy(appPolicyListCtrl);
 		question.Printf(_("Delete rule %ld?"), policy->getApnRuleId());
-		answer = wxMessageBox(question, _("Confirm"), wxYES_NO, this);
+		answer = anMessageBox(question, _("Confirm"), wxYES_NO, this);
 		if (answer != wxYES) {
 			return;
 		}
@@ -905,7 +904,7 @@ DlgRuleEditor::onFilterListDeleteClick(wxCommandEvent &)
 		int	last = 0;
 		policy = getSelectedPolicy(filterPolicyListCtrl);
 		question.Printf(_("Delete rule %ld?"), policy->getApnRuleId());
-		answer = wxMessageBox(question, _("Confirm"), wxYES_NO, this);
+		answer = anMessageBox(question, _("Confirm"), wxYES_NO, this);
 		if (answer != wxYES) {
 			return;
 		}
@@ -1104,12 +1103,12 @@ DlgRuleEditor::onAppListCreateButton(wxCommandEvent &)
 		ruleSet = createEmptyPolicyRuleSet();
 		if (ruleSet == NULL) {
 			message = _("Couldn't create new ruleset!");
-			wxMessageBox(message, _("Rule Editor"),
+			anMessageBox(message, _("Rule Editor"),
 			    wxOK | wxICON_ERROR, this);
 			return;
 		} else {
 			message = _("Created new ruleset.");
-			wxMessageBox(message, _("Rule Editor"),
+			anMessageBox(message, _("Rule Editor"),
 			    wxOK | wxICON_INFORMATION, this);
 			switchRuleSet(adminRuleSetId_,
 			    policyCtrl->getUserId());
@@ -1148,7 +1147,7 @@ DlgRuleEditor::onAppListCreateButton(wxCommandEvent &)
 
 	if (indexSuggestion < 0) {
 		message = _("Error: Couldn't create new application rule.");
-		wxMessageBox(message, _("Rule Editor"), wxOK | wxICON_ERROR,
+		anMessageBox(message, _("Rule Editor"), wxOK | wxICON_ERROR,
 		    this);
 	}
 	if (index < 0) {
@@ -1197,7 +1196,7 @@ DlgRuleEditor::onFilterListCreateButton(wxCommandEvent &)
 	}
 	if (ruleSet->isAdmin() && geteuid() != 0) {
 		wxString message = _("Cannot edit admin ruleset!");
-		wxMessageBox(message, _("RuleEditor"),
+		anMessageBox(message, _("RuleEditor"),
 		    wxOK | wxICON_ERROR, this);
 		return;
 	}
@@ -1236,7 +1235,7 @@ DlgRuleEditor::onFilterListCreateButton(wxCommandEvent &)
 
 	wipeAppList();
 	if (ruleSet->createPolicy(type, id, parent) < 0) {
-		wxMessageBox(
+		anMessageBox(
 		    _("Error: Couldn't create new filter rule."),
 		    _("Rule Editor"), wxOK | wxICON_ERROR, this);
 	}
@@ -1265,7 +1264,7 @@ DlgRuleEditor::onFooterImportButton(wxCommandEvent &)
 
 	if (fileDlg.ShowModal() == wxID_OK) {
 		if (!policyCtrl->importFromFile(fileDlg.GetPath())) {
-			wxMessageBox(
+			anMessageBox(
 			    _("Couldn't import policy file: it has errors."),
 			    _("Error"), wxICON_ERROR);
 		}
@@ -1343,7 +1342,7 @@ DlgRuleEditor::onFooterExportButton(wxCommandEvent &)
 		if (policyCtrl->exportToFile(ruleSet->getOrigin()))
 			ruleSet->clearModified();
 		else
-			wxMessageBox(
+			anMessageBox(
 			    _("Failed to export the ruleset into a file."),
 			    _("Export ruleset"), wxOK|wxICON_ERROR, this);
 	}
@@ -1379,14 +1378,14 @@ DlgRuleEditor::onFooterActivateButton(wxCommandEvent &)
 		switch (polRes) {
 		case PolicyCtrl::RESULT_POL_WRONG_PASS:
 			message = _("The entered password is incorrect.");
-			wxMessageBox(message, _("Key Load Error"),
+			anMessageBox(message, _("Key Load Error"),
 			    wxOK|wxICON_ERROR, this);
 			footerStatusText->SetLabel(wxT("Wrong password!"));
 			break;
 		case PolicyCtrl::RESULT_POL_ERR:
 			message = _("An error occured while sending policy to"
 			    " daemon.");
-			wxMessageBox(message, _("Policy Load Error"),
+			anMessageBox(message, _("Policy Load Error"),
 			    wxOK|wxICON_ERROR, this);
 			footerStatusText->SetLabel(wxT("Error while sending "
 			    "policy to daemon!"));
@@ -1402,14 +1401,14 @@ DlgRuleEditor::onFooterActivateButton(wxCommandEvent &)
 		switch (polRes) {
 		case PolicyCtrl::RESULT_POL_WRONG_PASS:
 			message = _("The entered password is incorrect.");
-			wxMessageBox(message, _("Key Load Error"),
+			anMessageBox(message, _("Key Load Error"),
 			    wxOK|wxICON_ERROR, this);
 			footerStatusText->SetLabel(wxT("Wrong password!"));
 			break;
 		case PolicyCtrl::RESULT_POL_ERR:
 			message = _("An error occured while sending admin"
 			    " policy to the daemon.");
-			wxMessageBox(message, _("Policy Load Error"),
+			anMessageBox(message, _("Policy Load Error"),
 			    wxOK|wxICON_ERROR, this);
 			footerStatusText->SetLabel(wxT("Error while sending"
 			    " admin policy to daemon."));
@@ -2179,7 +2178,7 @@ DlgRuleEditor::setUser(wxString user)
 		wxString	msg;
 
 		msg = _("Invalid user Name");
-		wxMessageBox(msg, _("RuleEditor"), wxOK | wxICON_ERROR, this);
+		anMessageBox(msg, _("RuleEditor"), wxOK | wxICON_ERROR, this);
 	} else {
 		setUser(uid);
 	}

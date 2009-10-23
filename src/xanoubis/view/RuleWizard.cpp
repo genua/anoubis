@@ -25,8 +25,6 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <wx/msgdlg.h>
-
 #include "RuleWizard.h"
 
 #include "RuleWizardPage.h"
@@ -403,14 +401,14 @@ RuleWizard::onWizardFinished(wxWizardEvent &)
 		switch (polRes) {
 		case PolicyCtrl::RESULT_POL_WRONG_PASS:
 			message = _("The entered password is incorrect.");
-			wxMessageBox(message, _("Key Load Error"),
+			anMessageBox(message, _("Key Load Error"),
 			    wxOK|wxICON_ERROR, this);
 			wxGetApp().status(wxT("Wrong password!"));
 			break;
 		case PolicyCtrl::RESULT_POL_ERR:
 			message = _("An error occured while sending admin"
 			    " policy to the daemon.");
-			wxMessageBox(message, _("Policy Load Error"),
+			anMessageBox(message, _("Policy Load Error"),
 				wxOK|wxICON_ERROR, this);
 			wxGetApp().status(wxT("Error while sending"
 			    " admin policy to daemon."));

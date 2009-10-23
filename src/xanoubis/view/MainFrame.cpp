@@ -40,7 +40,6 @@
 
 #include <wx/app.h>
 #include <wx/filedlg.h>
-#include <wx/msgdlg.h>
 #include <wx/aboutdlg.h>
 
 #include "AnEvents.h"
@@ -498,7 +497,7 @@ MainFrame::OnMbFileImportSelect(wxCommandEvent&)
 
 	if (fileDlg.ShowModal() == wxID_OK) {
 		if (!policyCtrl->importFromFile(fileDlg.GetPath())) {
-			wxMessageBox(
+			anMessageBox(
 			    _("Couldn't import policy file: it has errors."),
 			    _("Error"), wxICON_ERROR);
 		}
@@ -518,7 +517,7 @@ MainFrame::OnMbFileExportSelect(wxCommandEvent&)
 	if (fileDlg.ShowModal() == wxID_OK) {
 		PolicyCtrl *policyCtrl = PolicyCtrl::getInstance();
 		if (!policyCtrl->exportToFile(fileDlg.GetPath()))
-			wxMessageBox(
+			anMessageBox(
 			    _("Failed to export the ruleset into a file."),
 			    _("Export ruleset"), wxOK|wxICON_ERROR, this);
 	}
@@ -797,7 +796,7 @@ MainFrame::onSfsListArrived(TaskEvent &event)
 			    "error (%i) occured while while fetching list "
 			    "of upgraded files."), task->getComTaskResult());
 		}
-		wxMessageBox(errMsg, _("Error"), wxICON_ERROR);
+		anMessageBox(errMsg, _("Error"), wxICON_ERROR);
 	} else {
 		result = task->getFileList();
 		if (result.Count() > 0) {

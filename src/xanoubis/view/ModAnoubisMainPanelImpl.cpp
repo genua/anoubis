@@ -46,7 +46,6 @@
 #endif
 
 #include <wx/filedlg.h>
-#include <wx/msgdlg.h>
 #include <wx/tooltip.h>
 
 #include "main.h"
@@ -398,7 +397,7 @@ ModAnoubisMainPanelImpl::OnProfileDeleteClicked(wxCommandEvent &)
 		fillProfileList();
 		profileTabUpdate();
 	} else {
-		wxMessageBox(
+		anMessageBox(
 		    wxString::Format(_("Failed to remove \"%ls\"."),
 		       selectedProfile.c_str()),
 		    _("Remove profile"), wxOK | wxICON_ERROR, this);
@@ -414,7 +413,7 @@ ModAnoubisMainPanelImpl::OnProfileLoadClicked(wxCommandEvent &)
 		loadedProfile = selectedProfile;
 		profileTabUpdate();
 	} else {
-		wxMessageBox(
+		anMessageBox(
 		    wxString::Format(_("Failed to import from \"%ls\"."),
 		       selectedProfile.c_str()),
 		    _("Load profile"), wxOK | wxICON_ERROR, this);
@@ -431,7 +430,7 @@ ModAnoubisMainPanelImpl::OnProfileSaveClicked(wxCommandEvent &)
 		wxString profile = dlg.getSelectedProfile();
 
 		if (!policyCtrl->isProfileWritable(profile)) {
-			wxMessageBox(
+			anMessageBox(
 			    wxString::Format(
 			       _("The profile \"%ls\" is not writable!"),
 			       profile.c_str()),
@@ -443,7 +442,7 @@ ModAnoubisMainPanelImpl::OnProfileSaveClicked(wxCommandEvent &)
 			fillProfileList();
 			profileTabUpdate();
 		} else {
-			wxMessageBox(
+			anMessageBox(
 			    wxString::Format(_("Failed to export to \"%ls\"."),
 			       profile.c_str()),
 			    _("Save profile"), wxOK | wxICON_ERROR, this);
@@ -459,7 +458,7 @@ ModAnoubisMainPanelImpl::OnProfileActivateClicked(wxCommandEvent &)
 	long userId;
 
 	if (!policyCtrl->importFromProfile(selectedProfile)) {
-		wxMessageBox(
+		anMessageBox(
 		    wxString::Format(_("Failed to import from \"%ls\"."),
 		       selectedProfile.c_str()),
 		    _("Activate profile"), wxOK | wxICON_ERROR, this);
@@ -468,7 +467,7 @@ ModAnoubisMainPanelImpl::OnProfileActivateClicked(wxCommandEvent &)
 
 	userId = policyCtrl->getUserId();
 	if (userId == -1) {
-		wxMessageBox(
+		anMessageBox(
 		    _("Could not obtain user-policy."),
 		    _("Activate profile"), wxOK | wxICON_ERROR, this);
 		return;
@@ -476,13 +475,13 @@ ModAnoubisMainPanelImpl::OnProfileActivateClicked(wxCommandEvent &)
 
 	polRes = policyCtrl->sendToDaemon(userId);
 	if (polRes == PolicyCtrl::RESULT_POL_ERR) {
-		wxMessageBox(
+		anMessageBox(
 		    _("Could not activate user-policy.\n"
 		      "No connection to anoubisd."),
 		    _("Activate profile"), wxOK | wxICON_ERROR, this);
 		return;
 	} else if (polRes == PolicyCtrl::RESULT_POL_WRONG_PASS) {
-		wxMessageBox(
+		anMessageBox(
 		      _("The entered password is incorrect."),
 		    _("Activate profile"), wxOK | wxICON_ERROR, this);
 		return;
@@ -545,13 +544,13 @@ ModAnoubisMainPanelImpl::versionListUpdateFromSelection(void)
 	policyCtrl = PolicyCtrl::getInstance();
 
 	if (!versionCtrl->isInitialized()) {
-		wxMessageBox(_("Repository not initialized."),
+		anMessageBox(_("Repository not initialized."),
 		    _("Update versions"), wxOK | wxICON_ERROR, this);
 		return;
 	}
 
 	if (!versionCtrl->isPrepared()) {
-		wxMessageBox(_("Failed to prepare versioning system."),
+		anMessageBox(_("Failed to prepare versioning system."),
 		    _("Update versions"), wxOK | wxICON_ERROR, this);
 		return;
 	}
@@ -559,7 +558,7 @@ ModAnoubisMainPanelImpl::versionListUpdateFromSelection(void)
 	if (profile.IsEmpty())
 		return;
 	if (!versionCtrl->fetchVersionList(profile)) {
-		wxMessageBox(_("Failed to fetch versioning information."),
+		anMessageBox(_("Failed to fetch versioning information."),
 		    _("Update versions"), wxOK | wxICON_ERROR, this);
 		return;
 	}
@@ -1189,7 +1188,7 @@ ModAnoubisMainPanelImpl::OnVersionRestoreButtonClick(wxCommandEvent&)
 		profile = VersionProfileChoice->GetStringSelection();
 	}
 	if (profile.IsEmpty()) {
-		wxMessageBox(_("No profile selected"), _("Restore version"),
+		anMessageBox(_("No profile selected"), _("Restore version"),
 		    wxOK | wxICON_ERROR, this);
 		return;
 	}
@@ -1206,7 +1205,7 @@ ModAnoubisMainPanelImpl::OnVersionRestoreButtonClick(wxCommandEvent&)
 			    "Failed to fetch the policy\n"
 			    "of the \"%ls\" profile"), profile.c_str());
 
-		wxMessageBox(msg, _("Restore version"),
+		anMessageBox(msg, _("Restore version"),
 		    wxOK | wxICON_ERROR, this);
 		return;
 	}
@@ -1215,7 +1214,7 @@ ModAnoubisMainPanelImpl::OnVersionRestoreButtonClick(wxCommandEvent&)
 	PolicyRuleSet *rs = new PolicyRuleSet(1, geteuid(), apn_rs);
 	if (useActiveProfile) {
 		if (!policyCtrl->importPolicy(rs))
-			wxMessageBox(_("Failed to import the active policy."),
+			anMessageBox(_("Failed to import the active policy."),
 			    _("Restore version"), wxOK | wxICON_ERROR, this);
 	} else {
 		if (!policyCtrl->importPolicy(rs, profile)) {
@@ -1223,12 +1222,12 @@ ModAnoubisMainPanelImpl::OnVersionRestoreButtonClick(wxCommandEvent&)
 			    "Failed to import the policy\n"
 			    "of the \"%ls\" profile"), profile.c_str());
 
-			wxMessageBox(msg, _("Restore version"),
+			anMessageBox(msg, _("Restore version"),
 			    wxOK | wxICON_ERROR, this);
 		}
 		if (!versionCtrl->createVersion(rs, profile,
 		    _("automatically created by restore"), true)) {
-			wxMessageBox(_("Old version imported but could not "
+			anMessageBox(_("Old version imported but could not "
 			    "create a new version"), _("Restore version"),
 			    wxOK | wxICON_ERROR, this);
 		}
@@ -1264,7 +1263,7 @@ ModAnoubisMainPanelImpl::OnVersionExportButtonClick(wxCommandEvent&)
 		wxString msg = _("Failed to export a version!");
 		wxString title = _("Export version");
 
-		wxMessageBox(msg, title, wxOK | wxICON_ERROR, this);
+		anMessageBox(msg, title, wxOK | wxICON_ERROR, this);
 	}
 }
 
@@ -1286,7 +1285,7 @@ ModAnoubisMainPanelImpl::OnVersionDeleteButtonClick(wxCommandEvent&)
 			    " version!");
 			wxString title = _("Remove version");
 
-			wxMessageBox(msg, title, wxOK | wxICON_ERROR, this);
+			anMessageBox(msg, title, wxOK | wxICON_ERROR, this);
 		}
 
 	}
@@ -1532,7 +1531,7 @@ ModAnoubisMainPanelImpl::OnEscalationSbPathRight(wxCommandEvent &)
 void
 ModAnoubisMainPanelImpl::OnEscalationRuleError(wxCommandEvent &)
 {
-	wxMessageBox(_("Failed to create a rule from escalation"),
+	anMessageBox(_("Failed to create a rule from escalation"),
 	    _("Error"), wxICON_ERROR);
 }
 

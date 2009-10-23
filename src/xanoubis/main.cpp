@@ -45,7 +45,6 @@
 #include <wx/cmdline.h>
 #include <wx/fileconf.h>
 #include <wx/icon.h>
-#include <wx/msgdlg.h> /* XXX Used by bad AnoubisGuiApp::OnPolicySend */
 #include <wx/stdpaths.h>
 #include <wx/string.h>
 #include <wx/textdlg.h>
@@ -160,18 +159,16 @@ bool AnoubisGuiApp::OnInit()
 	 * directory.
 	 */
 	if (anoubis_ui_init() < 0) {
-		wxString msg = _("Error while initialising anoubis_ui");
-		AnMessageDialog dlg(mainFrame, msg, _("Error"), wxICON_ERROR);
-		dlg.ShowModal();
+		anMessageBox(_("Error while initialising anoubis_ui"),
+		    _("Error"), wxOK | wxICON_ERROR, mainFrame);
 	}
 	versionError = anoubis_ui_readversion();
 	if (versionError > ANOUBIS_UI_VER) {
 		wxString msg = wxString::Format(_("Unsupported version (%d) "
 		    "found of HOME/.xanoubis\nXanoubis will terminate now.\n"),
 		    versionError);
-		AnMessageDialog dlg(mainFrame, msg, _("Warning"),
-		    wxOK | wxICON_WARNING);
-		dlg.ShowModal();
+		anMessageBox(msg, _("Warning"), wxOK | wxICON_WARNING,
+		    mainFrame);
 		return (false);
 	}
 
@@ -455,7 +452,7 @@ AnoubisGuiApp::autoStart(bool autostart)
 				wxString msg = wxString::Format(_
 				    ("Couldn't remove Autostart file: %ls"),
 				    kAutoFile.c_str());
-				wxMessageBox(msg, _("Error"), wxICON_ERROR);
+				anMessageBox(msg, _("Error"), wxICON_ERROR);
 			}
 		}
 		if (wxFileExists(gAutoFile) == true) {
@@ -463,7 +460,7 @@ AnoubisGuiApp::autoStart(bool autostart)
 				wxString msg = wxString::Format(_
 				    ("Couldn't remove Autostart file: %ls"),
 				    gAutoFile.c_str());
-				wxMessageBox(msg, _("Error"), wxICON_ERROR);
+				anMessageBox(msg, _("Error"), wxICON_ERROR);
 			}
 		}
 	}

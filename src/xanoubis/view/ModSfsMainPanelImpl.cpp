@@ -46,7 +46,6 @@
 #include "wx/utils.h"
 #include <wx/filedlg.h>
 #include <wx/log.h>
-#include <wx/msgdlg.h>
 #include <wx/textdlg.h>
 
 #include "AnPickFromFs.h"
@@ -222,7 +221,7 @@ ModSfsMainPanelImpl::OnConnectionStateChange(wxCommandEvent &event)
 		 * be used in disconnected state! Switch back to local
 		 * filesystem.
 		 */
-		wxMessageBox(_("The SFS Browser currently displays an invalid "
+		anMessageBox(_("The SFS Browser currently displays an invalid "
 		    "view because no daemon connection is established. The "
 		    "selection is switched back to the "
 		    "\"Standard File Browsing\" view."),
@@ -404,7 +403,7 @@ ModSfsMainPanelImpl::handleSfsCommandResult(SfsCtrl::CommandResult result)
 		wxGetApp().status(
 		    _("Wrong password!"));
 		msg = _("The entered password is incorrect.");
-		wxMessageBox(msg, _("SFS error"), wxOK|wxICON_ERROR, this);
+		anMessageBox(msg, _("SFS error"), wxOK|wxICON_ERROR, this);
 		break;
 	case SfsCtrl::RESULT_NOOP:
 	case SfsCtrl::RESULT_EXECUTE:
@@ -428,7 +427,7 @@ ModSfsMainPanelImpl::OnSfsMainSigEnabledClicked(wxCommandEvent&)
 		else
 			msg = _("Failed to disable signed checksums.");
 
-		wxMessageBox(msg, _("SFS error"), wxOK|wxICON_ERROR, this);
+		anMessageBox(msg, _("SFS error"), wxOK|wxICON_ERROR, this);
 		SfsMainSignFilesCheckBox->SetValue(!enable); /* Toggle back */
 	}
 }
@@ -658,7 +657,7 @@ ModSfsMainPanelImpl::privKeyParamsUpdate(const wxString &path, bool sessionEnd,
 	privKey.setValidity(validity);
 
 	if (!path.IsEmpty() && !privKey.canLoad()) {
-		wxMessageBox(
+		anMessageBox(
 		    _("Cannot load the private key!\n"
 		      "The file you specified does not exist."),
 		    _("Load private key"), wxOK | wxICON_ERROR, this);
@@ -688,7 +687,7 @@ ModSfsMainPanelImpl::certificateParamsUpdate(const wxString &path)
 
 	if (!path.IsEmpty()) {
 		if (!cert.load()) {
-			wxMessageBox(wxString::Format(
+			anMessageBox(wxString::Format(
 			    _("Failed to load certificate from\n%ls."),
 			    cert.getFile().c_str()),
 			    _("Load certificate"), wxOK | wxICON_ERROR, this);
