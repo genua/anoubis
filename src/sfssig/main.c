@@ -400,7 +400,7 @@ main(int argc, char *argv[])
 	error = anoubis_ui_readversion();
 	if (error > ANOUBIS_UI_VER) {
 		char *home = getenv("HOME");
-		syslog(LOG_WARNING, 
+		syslog(LOG_WARNING,
 		    "Unsupported version (%d) of %s/" ANOUBIS_UI_DIR " found.",
 		    error, (home)? home:"HOME");
 		return 1;
@@ -1764,7 +1764,6 @@ get_entry(char *file, unsigned char *keyid_p, int idlen_p, uid_t sfs_uid,
 				fprintf(stderr, "Checksum Request failed: %s\n",
 				    strerror(t_sig->result));
 		} else {
-			int		 siglen;
 			const void	*sigdata = NULL;
 
 			siglen = anoubis_extract_sig_type(t_sig->msg,
