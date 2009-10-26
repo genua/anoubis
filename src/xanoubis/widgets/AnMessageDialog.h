@@ -121,6 +121,13 @@ class AnMessageDialog : public wxDialog
 		wxStaticText *createText(const wxString &);
 
 		/**
+		 * Creates the button-bar for the dialog.
+		 * @param[in] 1st the dialog style FLAG.
+		 * @return The resulting sizer
+		 */
+		wxSizer *createButtons(long);
+
+		/**
 		 * Handle click-events from the buttons of the dialog.
 		 * @param[in] 1st The event.
 		 * @return Nothing.

@@ -61,7 +61,7 @@ AnMessageDialog::AnMessageDialog(wxWindow *parent, const wxString &message,
 	mainSizer->Add(messageSizer, 1, wxALL | wxEXPAND, 5);
 
 	/* Buttons are part of mainSizer */
-	buttonSizer_ = CreateButtonSizer(style);
+	buttonSizer_ = createButtons(style);
 	mainSizer->Add(buttonSizer_, 0, wxALL | wxEXPAND, 5);
 
 	if (wxGetEnv(wxT("TNT_COMPATIBILITY"), NULL)) {
@@ -155,6 +155,19 @@ AnMessageDialog::createText(const wxString &message)
 	text->Wrap(350);
 
 	return (text);
+}
+
+wxSizer *
+AnMessageDialog::createButtons(long style)
+{
+	long decorated_style = style;
+
+	if ((style & (wxOK | wxCANCEL | wxYES_NO)) == 0) {
+		/* No button-style passed */
+		decorated_style |= (style & wxICON_QUESTION) ? wxYES_NO : wxOK;
+	}
+
+	return (CreateButtonSizer(decorated_style));
 }
 
 bool
