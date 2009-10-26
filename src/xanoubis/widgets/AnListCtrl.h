@@ -66,6 +66,11 @@ class AnListProperty;
  * formatting options of a complete row are received by asking the assigned
  * AnListClassProperty.
  *
+ * The list can save its state. The feature is enabled by providing a
+ * configuration key (setStateKey()). Properties, such as width of columns,
+ * are dumped below this key and restored again, when the application is
+ * restarted.
+ *
  * By default the list works old-fashioned, you need to fill the list manually
  * by hand. To enable all the features of the class, you needs to specify the
  * wxLC_VIRTUAL-flag as a window-style!
@@ -98,6 +103,26 @@ class AnListCtrl : public wxListCtrl, private Observer
 		 * D'tor.
 		 */
 		~AnListCtrl(void);
+
+		/**
+		 * Returns the configuration key of the list.
+		 *
+		 * The list dumps its state-information below this key. If the
+		 * application is restarted, the state is restored.
+		 *
+		 * @return Configuration key containing state-information
+		 */
+		wxString getStateKey(void) const;
+
+		/**
+		 * Assigns a configuration key to the list.
+		 *
+		 * If assigned, dumping/restoring of state-information is
+		 * enabled.
+		 *
+		 * @param key Path of key
+		 */
+		void setStateKey(const wxString &);
 
 		/**
 		 * Appends a column to the list.
@@ -364,6 +389,11 @@ class AnListCtrl : public wxListCtrl, private Observer
 		wxListItemAttr *OnGetItemAttr(long) const;
 
 	private:
+		/**
+		 * Path of key, where state-information are dumped.
+		 */
+		wxString stateKey_;
+
 		/**
 		 * List of columns.
 		 */

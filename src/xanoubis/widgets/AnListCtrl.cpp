@@ -37,6 +37,7 @@ AnListCtrl::AnListCtrl(wxWindow *parent, wxWindowID id, const wxPoint &pos,
     const wxString &name)
     : wxListCtrl(parent, id, pos, size, style, validator, name), Observer(0)
 {
+	this->stateKey_ = wxEmptyString;
 	this->rowProperty_ = 0;
 	this->itemAttr_ = new wxListItemAttr;
 	hasSelectionResult_ = 0;
@@ -57,6 +58,18 @@ AnListCtrl::~AnListCtrl(void)
 
 		delete col;
 	}
+}
+
+wxString
+AnListCtrl::getStateKey(void) const
+{
+	return (this->stateKey_);
+}
+
+void
+AnListCtrl::setStateKey(const wxString &key)
+{
+	this->stateKey_ = key;
 }
 
 AnListColumn *

@@ -91,12 +91,16 @@ class AnListColumn
 		/**
 		 * Updates the width of the column.
 		 *
+		 * If the list has saved the width of the column, the new width
+		 * is ignored unless force is set to true.
+		 *
 		 * @param width Can be a width in pixels or wxLIST_AUTOSIZE
 		 *              (-1) or wxLIST_AUTOSIZE_USEHEADER (-2).
 		 *              wxLIST_AUTOSIZE will resize the column to the
 		 *              length of its longest item.
+		 * @param force If set to true, the saved width is ignored
 		 */
-		void setWidth(int);
+		void setWidth(int, bool force = false);
 
 		/**
 		 * Returns the alignment of the column.
@@ -150,6 +154,34 @@ class AnListColumn
 		 */
 		void updateColumn(void);
 
+		/**
+		 * Tests whether the list has saved the given property.
+		 *
+		 * @param property The property to test
+		 * @return true if the property is saved, false otherwise.
+		 */
+		bool haveState(const wxString &) const;
+
+		/**
+		 * Returns the saved value of the given property.
+		 *
+		 * @param property The name of the property
+		 * @param def Default value to be returned, if no value exists
+		 * @return Value of saved property
+		 */
+		long getState(const wxString &, long) const;
+
+		/**
+		 * Saves the value of a property.
+		 *
+		 * With the next start of the application, the property is
+		 * restored.
+		 *
+		 * @param property Name of property
+		 * @param value Value of property
+		 */
+		void putState(const wxString &, long);
+		
 		/**
 		 * The parent list.
 		 */

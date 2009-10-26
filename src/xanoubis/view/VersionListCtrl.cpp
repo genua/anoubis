@@ -35,6 +35,8 @@ VersionListCtrl::VersionListCtrl(wxWindow *w, wxWindowID id,
     const wxPoint &p, const wxSize &sz, long type)
     : AnListCtrl(w, id, p, sz, type | wxLC_VIRTUAL)
 {
+	setStateKey(wxT("/State/VersionListCtrl"));
+
 	/* Setup properties of the view */
 	addColumn(new VersionTypeProperty);
 	addColumn(new VersionDateProperty);

@@ -61,6 +61,8 @@ DlgLogViewer::DlgLogViewer(wxWindow* parent) : DlgLogViewerBase(parent),
 	shortcuts_  = new AnShortcuts(this);
 	this->GetSizer()->Layout();
 
+	logListCtrl->setStateKey(wxT("/State/DlgLogViewer"));
+
 	property = new LogViewerProperty(LogViewerProperty::PROPERTY_ICON);
 	col = logListCtrl->addColumn(property);
 	col->setWidth(24);

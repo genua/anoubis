@@ -25,6 +25,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <wx/config.h>
+
 #include "AnListColumn.h"
 #include "AnListCtrl.h"
 #include "AnListProperty.h"
@@ -64,10 +66,12 @@ AnListColumn::getWidth(void) const
 }
 
 void
-AnListColumn::setWidth(int width)
+AnListColumn::setWidth(int width, bool force)
 {
-	columnInfo_.SetWidth(width);
-	updateColumn();
+	if (!haveState(wxT("width")) || force) {
+		columnInfo_.SetWidth(width);
+		updateColumn();
+	}
 }
 
 wxListColumnFormat
@@ -88,20 +92,25 @@ AnListColumn::AnListColumn(AnListProperty *property, AnListCtrl *parent)
 	this->parent_ = parent;
 	this->property_ = property;
 
-	columnInfo_.SetWidth(wxLIST_AUTOSIZE);
-	columnInfo_.SetAlign(wxLIST_FORMAT_LEFT);
-	columnInfo_.SetText(property->getHeader());
-
 	if (parent_ != 0)
 		columnIdx_ = parent->GetColumnCount();
 	else
 		columnIdx_ = 0;
+
+	columnInfo_.SetWidth(getState(wxT("width"), wxLIST_AUTOSIZE));
+	columnInfo_.SetAlign(wxLIST_FORMAT_LEFT);
+	columnInfo_.SetText(property->getHeader());
 
 	setVisible(true);
 }
 
 AnListColumn::~AnListColumn(void)
 {
+	/* Save state of column */
+	if (parent_ != 0) {
+		putState(wxT("width"), parent_->GetColumnWidth(columnIdx_));
+	}
+
 	if (property_ != 0)
 		delete property_;
 }
@@ -117,4 +126,42 @@ AnListColumn::updateColumn(void)
 {
 	if (parent_ != 0)
 		parent_->SetColumn(columnIdx_, columnInfo_);
+}
+
+bool
+AnListColumn::haveState(const wxString &property) const
+{
+	if ((parent_ != 0) && !parent_->getStateKey().IsEmpty()) {
+		wxString key = wxString::Format(wxT("%ls/%i/%ls"),
+		    parent_->getStateKey().c_str(), columnIdx_,
+		    property.c_str());
+		return (wxConfig::Get()->HasEntry(key));
+	} else
+		return (false);
+}
+
+long
+AnListColumn::getState(const wxString &property, long def) const
+{
+	long value = def;
+
+	if ((parent_ != 0) && !parent_->getStateKey().IsEmpty()) {
+		wxString key = wxString::Format(wxT("%ls/%i/%ls"),
+		    parent_->getStateKey().c_str(), columnIdx_,
+		    property.c_str());
+		wxConfig::Get()->Read(key, &value);
+	}
+
+	return (value);
+}
+
+void
+AnListColumn::putState(const wxString &property, long value)
+{
+	if ((parent_ != 0) && !parent_->getStateKey().IsEmpty()) {
+		wxString key = wxString::Format(wxT("%ls/%i/%ls"),
+		    parent_->getStateKey().c_str(), columnIdx_,
+		    property.c_str());
+		wxConfig::Get()->Write(key, value);
+	}
 }

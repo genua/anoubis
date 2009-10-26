@@ -48,6 +48,7 @@
 #include <wx/filedlg.h>
 #include <wx/tooltip.h>
 
+#include "AnListColumn.h"
 #include "main.h"
 #include "AnEvents.h"
 #include "ApnVersion.h"
@@ -114,8 +115,8 @@ ModAnoubisMainPanelImpl::ModAnoubisMainPanelImpl(wxWindow* parent,
 	versionListUpdate();
 
 	/* Adjust column width (Bug #1321). */
-	versionListCtrl->SetColumnWidth(1, 205);
-	versionListCtrl->SetColumnWidth(2, 205);
+	versionListCtrl->getColumn(1)->setWidth(205);
+	versionListCtrl->getColumn(2)->setWidth(205);
 
 	anEvents->Connect(anEVT_ESCALATIONS_SHOW,
 	    wxCommandEventHandler(ModAnoubisMainPanelImpl::OnEscalationsShow),
