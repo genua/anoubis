@@ -41,6 +41,7 @@
 #include <wx/app.h>
 #include <wx/filedlg.h>
 #include <wx/aboutdlg.h>
+#include <wx/gdicmn.h>
 
 #include "AnEvents.h"
 #include "AnMessageDialog.h"
@@ -226,11 +227,21 @@ MainFrame::onWizardShow(wxCommandEvent& event)
 {
 	RuleWizard	wizard;
 	wxCommandEvent	showEvent(anEVT_WIZARD_SHOW);
+	wxSize		displaySize;
+	wxString	displayMsg;
 
+	displaySize = wxGetDisplaySize();
+	displayMsg = wxString::Format(_("Display size of %dx%d is too small "
+	    "for the wizard.\nPresentation may be broken!"),
+	    displaySize.GetWidth(), displaySize.GetHeight());
 	an_menubar->Check(ID_MITOOLSWIZARD, event.GetInt());
 	event.Skip();
 
 	if (event.GetInt() != 0) {
+		if (displaySize.GetWidth() < 1024) {
+			anMessageBox(displayMsg, _("Wizard warning"),
+			    wxOK|wxICON_EXCLAMATION, this);
+		}
 		wizard.RunWizard(wizard.getPage(RuleWizard::PAGE_PROGRAM));
 		/* After finishing wizard, we uncheck menu and statusbar. */
 		showEvent.SetInt(0);
