@@ -78,7 +78,7 @@ class ModSfsMainPanelBase : public wxPanel
 		wxPanel* pan_Rules;
 		wxListCtrl* lst_Rules;
 		wxPanel* pan_SfsMain;
-		wxStaticText* m_staticText12;
+		wxStaticText* SfsMainDirectoryLabel;
 		wxStaticText* SfsMainCurrPathLabel;
 		wxGenericDirCtrl* SfsMainDirCtrl;
 		wxScrolledWindow* browserListPanel;

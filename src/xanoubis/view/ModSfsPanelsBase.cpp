@@ -78,30 +78,28 @@ ModSfsMainPanelBase::ModSfsMainPanelBase( wxWindow* parent, wxWindowID id, const
 	note_MainSfs->AddPage( pan_Rules, _("Rules"), true );
 	pan_SfsMain = new wxPanel( note_MainSfs, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
 	wxBoxSizer* browserMainSizer;
-	browserMainSizer = new wxBoxSizer( wxHORIZONTAL );
+	browserMainSizer = new wxBoxSizer( wxVERTICAL );
 	
-	wxBoxSizer* browserDirSizer;
-	browserDirSizer = new wxBoxSizer( wxVERTICAL );
+	wxBoxSizer* pathSizer;
+	pathSizer = new wxBoxSizer( wxHORIZONTAL );
 	
-	wxBoxSizer* bSizer11;
-	bSizer11 = new wxBoxSizer( wxHORIZONTAL );
-	
-	m_staticText12 = new wxStaticText( pan_SfsMain, wxID_ANY, _("Directory:"), wxDefaultPosition, wxDefaultSize, 0 );
-	m_staticText12->Wrap( -1 );
-	bSizer11->Add( m_staticText12, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
+	SfsMainDirectoryLabel = new wxStaticText( pan_SfsMain, wxID_ANY, _("Directory:"), wxDefaultPosition, wxDefaultSize, 0 );
+	SfsMainDirectoryLabel->Wrap( -1 );
+	pathSizer->Add( SfsMainDirectoryLabel, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
 	
 	SfsMainCurrPathLabel = new wxStaticText( pan_SfsMain, wxID_ANY, _("/usr/local/bin/"), wxDefaultPosition, wxDefaultSize, 0 );
 	SfsMainCurrPathLabel->Wrap( -1 );
-	bSizer11->Add( SfsMainCurrPathLabel, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
+	pathSizer->Add( SfsMainCurrPathLabel, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
 	
-	browserDirSizer->Add( bSizer11, 0, wxEXPAND, 5 );
+	browserMainSizer->Add( pathSizer, 0, wxEXPAND, 5 );
+	
+	wxBoxSizer* controlSizer;
+	controlSizer = new wxBoxSizer( wxHORIZONTAL );
 	
 	SfsMainDirCtrl = new wxGenericDirCtrl( pan_SfsMain, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxDIRCTRL_DIR_ONLY|wxDIRCTRL_SHOW_FILTERS|wxSUNKEN_BORDER, wxEmptyString, 0 );
 	
 	SfsMainDirCtrl->ShowHidden( false );
-	browserDirSizer->Add( SfsMainDirCtrl, 1, wxEXPAND | wxALL, 5 );
-	
-	browserMainSizer->Add( browserDirSizer, 2, wxEXPAND, 5 );
+	controlSizer->Add( SfsMainDirCtrl, 2, wxEXPAND | wxALL, 5 );
 	
 	browserListPanel = new wxScrolledWindow( pan_SfsMain, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxTAB_TRAVERSAL|wxVSCROLL );
 	browserListPanel->SetScrollRate( 5, 5 );
@@ -223,7 +221,9 @@ ModSfsMainPanelBase::ModSfsMainPanelBase( wxWindow* parent, wxWindowID id, const
 	browserListPanel->SetSizer( browserListSizer );
 	browserListPanel->Layout();
 	browserListSizer->Fit( browserListPanel );
-	browserMainSizer->Add( browserListPanel, 5, wxEXPAND | wxALL, 5 );
+	controlSizer->Add( browserListPanel, 5, wxEXPAND | wxALL, 5 );
+	
+	browserMainSizer->Add( controlSizer, 1, wxEXPAND, 5 );
 	
 	pan_SfsMain->SetSizer( browserMainSizer );
 	pan_SfsMain->Layout();
