@@ -75,8 +75,6 @@ MainFrame::MainFrame(wxWindow *parent) : MainFrameBase(parent)
 	alertIcon_ = wxGetApp().loadIcon(wxT("General_alert_16.png"));
 	escalationIcon_ = wxGetApp().loadIcon(wxT("General_question_16.png"));
 
-	timer_.Start(5000);
-
 	anEvents = AnEvents::getInstance();
 	jobCtrl = JobCtrl::getInstance();
 
@@ -113,11 +111,8 @@ MainFrame::MainFrame(wxWindow *parent) : MainFrameBase(parent)
 	    wxCommandEventHandler(MainFrame::OnAnoubisOptionShow), NULL, this);
 	anEvents->Connect(anEVT_BACKUP_POLICY,
 	    wxCommandEventHandler(MainFrame::onBackupPolicy), NULL, this);
-	anEvents->Connect(wxEVT_TIMER, wxTimerEventHandler(MainFrame::OnTimer),
-	    NULL, this);
 	anEvents->Connect(anEVT_UPGRADENOTIFY,
 	    wxCommandEventHandler(MainFrame::onUpgradeNotify), NULL, this);
-	timer_.SetOwner(anEvents);
 
 	ANEVENTS_IDENT_BCAST_REGISTRATION(MainFrame);
 }
@@ -701,6 +696,7 @@ MainFrame::doUpgradeNotify(void)
 void
 MainFrame::onUpgradeNotify(wxCommandEvent &)
 {
+	wxGetApp().checkBootConf();
 	doUpgradeNotify();
 }
 
@@ -708,61 +704,6 @@ bool
 MainFrame::isShowing(void)
 {
 	return (show_);
-}
-
-void
-MainFrame::OnTimer(wxTimerEvent &event)
-{
-	wxString		msg;
-	bool			warn = false;
-	int			ret, iNotifyFd = -1;
-	time_t			modTime = 0, savedTime = 0;
-	struct stat		sbuf;
-
-	if (wxGetApp().getGrubPath() == wxEmptyString)
-		return;
-#ifdef HAVE_SYS_INOTIFY_H
-	iNotifyFd = wxGetApp().getINotify();
-#endif
-	if (iNotifyFd == -1) {
-		wxConfig::Get()->Read(wxT("/Options/GrubModifiedTime"),
-		    &savedTime, 0 /* Default */);
-		ret = stat(wxGetApp().getGrubPath().fn_str(), &sbuf);
-		if (ret != -1) {
-			modTime = sbuf.st_mtime;
-			if (savedTime == 0) {
-				/*
-				 * No previous time: Do not warn but update
-				 * Konfiguration.
-				 */
-				wxConfig::Get()->Write(
-				    wxT("/Options/GrubModifiedTime"), modTime);
-			} else if (savedTime < modTime) {
-				warn = true;
-			}
-		}
-	} else {
-#ifdef HAVE_SYS_INOTIFY_H
-		struct inotify_event	ievent;
-		/* Make sure that we consume all pending events. */
-		while(read(iNotifyFd, &ievent, sizeof(ievent)) > 0)
-			warn = true;
-		if (warn)
-			wxGetApp().refreshINotify();
-#endif
-	}
-
-	if (warn) {
-		wxConfig::Get()->Write(
-		    wxT("/Options/GrubModifiedTime"), time(NULL));
-		msg = _("The Boot Loader configuration has been updated."
-			"Please make sure to boot an Anoubis Kernel.");
-		AnMessageDialog dlg(this, msg, _("Warning"),
-		    wxOK | wxICON_WARNING);
-		dlg.onNotifyCheck(wxT("/Options/ShowKernelUpgradeMessage"));
-		dlg.ShowModal();
-	}
-	event.Skip(false);
 }
 
 void

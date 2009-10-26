@@ -39,10 +39,7 @@
 #include "Module.h"
 #include "ComSfsListTask.h"
 #include "SfsCtrl.h"
-class MainFrame;
 #include "DlgUpgradeAsk.h"
-
-#include  <wx/timer.h>
 
 class TaskEvent;
 
@@ -63,7 +60,6 @@ class MainFrame : public MainFrameBase
 		wxIcon		*alertIcon_;
 		wxIcon		*escalationIcon_;
 		ComSfsListTask	 upgradeTask_;
-		wxTimer		 timer_;
 
 		void setConnectionString(bool, const wxString &);
 		void setMessageString(void);
@@ -74,7 +70,6 @@ class MainFrame : public MainFrameBase
 		void onMainFrameShow(wxCommandEvent&);
 		void onSfsBrowserShow(wxCommandEvent&);
 		void onBackupPolicy(wxCommandEvent&);
-		void OnTimer(wxTimerEvent&);
 		void doUpgradeNotify(void);
 		void onUpgradeNotify(wxCommandEvent &);
 
