@@ -339,6 +339,8 @@ __dead void	early_err(int, const char *);
 /*@noreturn@*/
 __dead void	early_errx(int, const char *);
 
+int	dazukofs_ignore(void);
+
 void	pe_dump(void);
 int	send_policy_data(u_int64_t token, int fd);
 

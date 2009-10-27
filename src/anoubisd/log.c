@@ -321,6 +321,9 @@ logger_main(int pipe_m2l[2], int pipe_p2l[2], int pipe_s2l[2], int pipe_u2l[2])
 	struct event	 ev_sigterm, ev_sigint, ev_sigquit;
 	struct passwd	*pw;
 	sigset_t	 mask;
+#ifdef LINUX
+	int		 dazukofd;
+#endif
 
 	if ((pw = getpwnam(ANOUBISD_USER)) == NULL)
 		fatal("getpwnam");
@@ -332,7 +335,11 @@ logger_main(int pipe_m2l[2], int pipe_p2l[2], int pipe_s2l[2], int pipe_u2l[2])
 	if (pid)
 		return pid;
 	anoubisd_process = PROC_LOGGER;
+
 	setproctitle("logger");
+#ifdef LINUX
+	dazukofd = dazukofs_ignore();
+#endif
 
 	if (setgroups(1, &pw->pw_gid) ||
 	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||

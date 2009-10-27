@@ -424,6 +424,7 @@ main(int argc, char *argv[])
 	int			sfsversion;
 	struct sigaction	act;
 #ifdef LINUX
+	int			 dazukofd;
 	FILE			*omitfp;
 #endif
 
@@ -625,9 +626,11 @@ main(int argc, char *argv[])
 
 	/* Load Public Keys */
 	cert_init(0);
-	setproctitle("master");
 
+	setproctitle("master");
 #ifdef LINUX
+	dazukofd = dazukofs_ignore();
+
 	if ((omitfp = fopen(omit_pid_file, "w"))) {
 		fprintf(omitfp, "%d\n%d\n%d\n%d\n%d\n",
 		    master_pid, se_pid, policy_pid, logger_pid, upgrade_pid);
@@ -880,6 +883,19 @@ check_child(pid_t pid, const char *pname)
 
 	return (0);
 }
+
+#ifdef LINUX
+int
+dazukofs_ignore(void)
+{
+	int fd = -1;
+
+	fd = open(_PATH_DEV "dazukofs.ign", O_RDONLY);
+	if ((fd == -1) && (errno != ENOENT))
+		log_warn("Could not open dazukofs: %s", strerror(errno));
+	return(fd);
+}
+#endif
 
 static void
 sanitise_stdfd(void)

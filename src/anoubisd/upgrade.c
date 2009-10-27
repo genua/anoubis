@@ -99,6 +99,9 @@ upgrade_main(int pipe_m2u[2], int pipe_m2p[2], int pipe_s2p[2],
 	struct event			ev_m2u, ev_u2m;
 	struct event			ev_sigterm, ev_sigint, ev_sigquit;
 	struct event_info_upgrade	ev_info;
+#ifdef LINUX
+	int				dazukofd;
+#endif
 
 	pid = fork();
 	if (pid < 0) {
@@ -119,8 +122,12 @@ upgrade_main(int pipe_m2u[2], int pipe_m2p[2], int pipe_s2p[2],
 
 	close(pipe_m2u[0]);
 
-	setproctitle("upgrade");
 	log_info("upgrade started (pid %d)", getpid());
+
+	setproctitle("upgrade");
+#ifdef LINUX
+	dazukofd = dazukofs_ignore();
+#endif
 
 	signal_set(&ev_sigterm, SIGTERM, upgrade_sighandler, &ev_info);
 	signal_set(&ev_sigint,  SIGINT,  upgrade_sighandler, &ev_info);

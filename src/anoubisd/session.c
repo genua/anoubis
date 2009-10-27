@@ -323,6 +323,9 @@ session_main(int pipe_m2s[2], int pipe_m2p[2], int pipe_s2p[2],
 	struct passwd	*pw;
 	sigset_t	 mask;
 	pid_t		 pid;
+#ifdef LINUX
+	int		 dazukofd;
+#endif
 
 
 	switch (pid = fork()) {
@@ -346,6 +349,9 @@ session_main(int pipe_m2s[2], int pipe_m2p[2], int pipe_s2p[2],
 
 	/* while still privileged we install a listening socket */
 	session_setupuds(&seg);
+#ifdef LINUX
+	dazukofd = dazukofs_ignore();
+#endif
 
 	if ((pw = getpwnam(ANOUBISD_USER)) == NULL)
 		fatal("getpwnam");
