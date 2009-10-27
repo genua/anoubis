@@ -279,11 +279,15 @@ ModSfsMainPanelImpl::OnSfsEntryChanged(wxCommandEvent &event)
 void
 ModSfsMainPanelImpl::OnSfsError(wxCommandEvent&)
 {
-	const wxArrayString &errors = sfsCtrl_->getErrors();
+	const wxArrayString	&errors = sfsCtrl_->getErrors();
+	int			 needSummary = (errors.Count() > 1);
 
 	for (unsigned int i = 0; i < errors.Count(); i++) {
 		wxLogError(errors[i]);
 	}
+	if (needSummary)
+		wxLogError(_("Multiple errors occured "
+		    "while processing the SFS request"));
 }
 
 void
