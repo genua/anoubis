@@ -310,6 +310,7 @@ class DlgRuleEditorFilterSubjectPageBase : public wxPanel
 	private:
 	
 	protected:
+		wxScrolledWindow* scrollPanel;
 		AnPickFromFs* pathPicker;
 		wxStaticText* subjectLabel;
 		wxRadioButton* anyRadioButton;
@@ -342,7 +343,7 @@ class DlgRuleEditorFilterSubjectPageBase : public wxPanel
 		
 	
 	public:
-		DlgRuleEditorFilterSubjectPageBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 500,320 ), long style = wxTAB_TRAVERSAL );
+		DlgRuleEditorFilterSubjectPageBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( -1,-1 ), long style = wxTAB_TRAVERSAL );
 	
 };
 
@@ -396,6 +397,7 @@ class DlgRuleEditorFilterContextPageBase : public wxPanel
 	private:
 	
 	protected:
+		wxScrolledWindow* scrollPanel;
 		wxStaticText* typeLabel;
 		wxRadioButton* newRadioButton;
 		wxRadioButton* openRadioButton;
@@ -407,7 +409,7 @@ class DlgRuleEditorFilterContextPageBase : public wxPanel
 		
 	
 	public:
-		DlgRuleEditorFilterContextPageBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 500,320 ), long style = wxTAB_TRAVERSAL );
+		DlgRuleEditorFilterContextPageBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( -1,-1 ), long style = wxTAB_TRAVERSAL );
 	
 };
 

@@ -322,7 +322,7 @@ DlgRuleEditorAppPageBase::DlgRuleEditorAppPageBase( wxWindow* parent, wxWindowID
 	mainSizer = new wxBoxSizer( wxVERTICAL );
 	
 	subjPage = new DlgRuleEditorFilterSubjectPage( mainPage, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
-	mainSizer->Add( subjPage, 1, wxEXPAND | wxALL, 5 );
+	mainSizer->Add( subjPage, 1, wxALL|wxEXPAND, 5 );
 	
 	wxBoxSizer* footerSizer;
 	footerSizer = new wxBoxSizer( wxHORIZONTAL );
@@ -362,6 +362,9 @@ DlgRuleEditorFilterActionPageBase::DlgRuleEditorFilterActionPageBase( wxWindow* 
 	
 	mainPage = new wxScrolledWindow( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxTAB_TRAVERSAL|wxVSCROLL );
 	mainPage->SetScrollRate( 5, 5 );
+	wxBoxSizer* scrollSizer;
+	scrollSizer = new wxBoxSizer( wxVERTICAL );
+	
 	wxFlexGridSizer* mainSizer;
 	mainSizer = new wxFlexGridSizer( 3, 4, 0, 0 );
 	mainSizer->SetFlexibleDirection( wxBOTH );
@@ -405,23 +408,15 @@ DlgRuleEditorFilterActionPageBase::DlgRuleEditorFilterActionPageBase( wxWindow* 
 	
 	mainSizer->Add( alertRadioButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	mainPage->SetSizer( mainSizer );
+	scrollSizer->Add( mainSizer, 0, wxEXPAND, 5 );
+	
+	defaultPathPicker = new AnPickFromFs( mainPage, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL, wxT("Default Path:") );
+	scrollSizer->Add( defaultPathPicker, 0, wxALL|wxEXPAND, 5 );
+	
+	mainPage->SetSizer( scrollSizer );
 	mainPage->Layout();
-	mainSizer->Fit( mainPage );
+	scrollSizer->Fit( mainPage );
 	pageSizer->Add( mainPage, 1, wxALL|wxEXPAND, 5 );
-	
-	wxBoxSizer* pathSizer;
-	pathSizer = new wxBoxSizer( wxHORIZONTAL );
-	
-	defaultPathPicker = new AnPickFromFs( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL, wxT("Default Path:") );
-	pathSizer->Add( defaultPathPicker, 1, wxALL|wxEXPAND, 5 );
-	
-	pageSizer->Add( pathSizer, 1, wxEXPAND, 5 );
-	
-	wxBoxSizer* spaceSizer;
-	spaceSizer = new wxBoxSizer( wxVERTICAL );
-	
-	pageSizer->Add( spaceSizer, 1, wxEXPAND, 5 );
 	
 	this->SetSizer( pageSizer );
 	this->Layout();
@@ -611,10 +606,12 @@ DlgRuleEditorFilterSubjectPageBase::DlgRuleEditorFilterSubjectPageBase( wxWindow
 	wxBoxSizer* pageSizer;
 	pageSizer = new wxBoxSizer( wxVERTICAL );
 	
+	scrollPanel = new wxScrolledWindow( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxVSCROLL );
+	scrollPanel->SetScrollRate( 5, 5 );
 	wxBoxSizer* mainSizer;
 	mainSizer = new wxBoxSizer( wxVERTICAL );
 	
-	pathPicker = new AnPickFromFs( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	pathPicker = new AnPickFromFs( scrollPanel, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
 	mainSizer->Add( pathPicker, 0, wxEXPAND | wxALL, 5 );
 	
 	wxFlexGridSizer* subjectSizer;
@@ -623,11 +620,11 @@ DlgRuleEditorFilterSubjectPageBase::DlgRuleEditorFilterSubjectPageBase( wxWindow
 	subjectSizer->SetFlexibleDirection( wxBOTH );
 	subjectSizer->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
 	
-	subjectLabel = new wxStaticText( this, wxID_ANY, _("Subject:"), wxDefaultPosition, wxDefaultSize, 0 );
+	subjectLabel = new wxStaticText( scrollPanel, wxID_ANY, _("Subject:"), wxDefaultPosition, wxDefaultSize, 0 );
 	subjectLabel->Wrap( -1 );
 	subjectSizer->Add( subjectLabel, 0, wxALL, 5 );
 	
-	anyRadioButton = new wxRadioButton( this, wxID_ANY, _("any"), wxDefaultPosition, wxDefaultSize, wxRB_GROUP );
+	anyRadioButton = new wxRadioButton( scrollPanel, wxID_ANY, _("any"), wxDefaultPosition, wxDefaultSize, wxRB_GROUP );
 	anyRadioButton->Hide();
 	anyRadioButton->SetToolTip( _("Not specified") );
 	
@@ -639,7 +636,7 @@ DlgRuleEditorFilterSubjectPageBase::DlgRuleEditorFilterSubjectPageBase( wxWindow
 	
 	subjectSizer->Add( 0, 0, 1, wxEXPAND, 5 );
 	
-	selfRadioButton = new wxRadioButton( this, wxID_ANY, _("self"), wxDefaultPosition, wxDefaultSize, 0 );
+	selfRadioButton = new wxRadioButton( scrollPanel, wxID_ANY, _("self"), wxDefaultPosition, wxDefaultSize, 0 );
 	selfRadioButton->SetToolTip( _("Trust own checksum") );
 	
 	subjectSizer->Add( selfRadioButton, 0, wxALL, 5 );
@@ -650,7 +647,7 @@ DlgRuleEditorFilterSubjectPageBase::DlgRuleEditorFilterSubjectPageBase( wxWindow
 	
 	subjectSizer->Add( 0, 0, 1, wxEXPAND, 5 );
 	
-	selfSignedRadioButton = new wxRadioButton( this, wxID_ANY, _("self-signed"), wxDefaultPosition, wxDefaultSize, 0 );
+	selfSignedRadioButton = new wxRadioButton( scrollPanel, wxID_ANY, _("self-signed"), wxDefaultPosition, wxDefaultSize, 0 );
 	selfSignedRadioButton->SetToolTip( _("Trust own signature") );
 	
 	subjectSizer->Add( selfSignedRadioButton, 0, wxALL, 5 );
@@ -664,12 +661,12 @@ DlgRuleEditorFilterSubjectPageBase::DlgRuleEditorFilterSubjectPageBase( wxWindow
 	wxBoxSizer* uidSizer;
 	uidSizer = new wxBoxSizer( wxHORIZONTAL );
 	
-	uidRadioButton = new wxRadioButton( this, wxID_ANY, _("uid"), wxDefaultPosition, wxSize( 60,-1 ), 0 );
+	uidRadioButton = new wxRadioButton( scrollPanel, wxID_ANY, _("uid"), wxDefaultPosition, wxSize( 60,-1 ), 0 );
 	uidRadioButton->SetToolTip( _("Trust the specified user") );
 	
 	uidSizer->Add( uidRadioButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	uidTextCtrl = new wxTextCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER );
+	uidTextCtrl = new wxTextCtrl( scrollPanel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER );
 	uidSizer->Add( uidTextCtrl, 1, wxALL|wxEXPAND|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	subjectSizer->Add( uidSizer, 1, wxEXPAND, 5 );
@@ -683,12 +680,12 @@ DlgRuleEditorFilterSubjectPageBase::DlgRuleEditorFilterSubjectPageBase( wxWindow
 	wxBoxSizer* keySizer;
 	keySizer = new wxBoxSizer( wxHORIZONTAL );
 	
-	keyRadioButton = new wxRadioButton( this, wxID_ANY, _("key"), wxDefaultPosition, wxSize( 60,-1 ), 0 );
+	keyRadioButton = new wxRadioButton( scrollPanel, wxID_ANY, _("key"), wxDefaultPosition, wxSize( 60,-1 ), 0 );
 	keyRadioButton->SetToolTip( _("Trust certificate with specified keyid") );
 	
 	keySizer->Add( keyRadioButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	keyTextCtrl = new wxTextCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER );
+	keyTextCtrl = new wxTextCtrl( scrollPanel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER );
 	keySizer->Add( keyTextCtrl, 1, wxALL|wxEXPAND|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	subjectSizer->Add( keySizer, 1, wxEXPAND, 5 );
@@ -696,12 +693,16 @@ DlgRuleEditorFilterSubjectPageBase::DlgRuleEditorFilterSubjectPageBase( wxWindow
 	
 	subjectSizer->Add( 0, 0, 1, wxEXPAND, 5 );
 	
-	mainSizer->Add( subjectSizer, 1, wxEXPAND, 5 );
+	mainSizer->Add( subjectSizer, 0, wxEXPAND, 5 );
 	
-	pageSizer->Add( mainSizer, 1, wxEXPAND, 5 );
+	scrollPanel->SetSizer( mainSizer );
+	scrollPanel->Layout();
+	mainSizer->Fit( scrollPanel );
+	pageSizer->Add( scrollPanel, 1, wxEXPAND | wxALL, 5 );
 	
 	this->SetSizer( pageSizer );
 	this->Layout();
+	pageSizer->Fit( this );
 	
 	// Connect Events
 	anyRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorFilterSubjectPageBase::onAnyRadioButton ), NULL, this );
@@ -839,35 +840,41 @@ DlgRuleEditorFilterContextPageBase::DlgRuleEditorFilterContextPageBase( wxWindow
 	wxBoxSizer* pageSizer;
 	pageSizer = new wxBoxSizer( wxVERTICAL );
 	
+	scrollPanel = new wxScrolledWindow( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxVSCROLL );
+	scrollPanel->SetScrollRate( 5, 5 );
 	wxBoxSizer* mainSizer;
 	mainSizer = new wxBoxSizer( wxVERTICAL );
 	
 	wxBoxSizer* typeSizer;
 	typeSizer = new wxBoxSizer( wxHORIZONTAL );
 	
-	typeLabel = new wxStaticText( this, wxID_ANY, _("Type:"), wxDefaultPosition, wxDefaultSize, 0 );
+	typeLabel = new wxStaticText( scrollPanel, wxID_ANY, _("Type:"), wxDefaultPosition, wxDefaultSize, 0 );
 	typeLabel->Wrap( -1 );
 	typeSizer->Add( typeLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	newRadioButton = new wxRadioButton( this, wxID_ANY, _("new"), wxDefaultPosition, wxDefaultSize, wxRB_GROUP );
+	newRadioButton = new wxRadioButton( scrollPanel, wxID_ANY, _("new"), wxDefaultPosition, wxDefaultSize, wxRB_GROUP );
 	newRadioButton->SetToolTip( _("Switch to context") );
 	
 	typeSizer->Add( newRadioButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	openRadioButton = new wxRadioButton( this, wxID_ANY, _("open"), wxDefaultPosition, wxDefaultSize, 0 );
+	openRadioButton = new wxRadioButton( scrollPanel, wxID_ANY, _("open"), wxDefaultPosition, wxDefaultSize, 0 );
 	openRadioButton->SetToolTip( _("Switch to context on open") );
 	
 	typeSizer->Add( openRadioButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	mainSizer->Add( typeSizer, 0, wxEXPAND, 5 );
 	
-	appPage = new DlgRuleEditorAppPage( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
-	mainSizer->Add( appPage, 1, wxEXPAND | wxALL, 0 );
+	appPage = new DlgRuleEditorAppPage( scrollPanel, wxID_ANY, wxDefaultPosition, wxSize( 400,200 ), wxTAB_TRAVERSAL );
+	mainSizer->Add( appPage, 1, wxALL|wxEXPAND|wxFIXED_MINSIZE, 5 );
 	
-	pageSizer->Add( mainSizer, 1, wxEXPAND, 5 );
+	scrollPanel->SetSizer( mainSizer );
+	scrollPanel->Layout();
+	mainSizer->Fit( scrollPanel );
+	pageSizer->Add( scrollPanel, 1, wxEXPAND | wxALL, 5 );
 	
 	this->SetSizer( pageSizer );
 	this->Layout();
+	pageSizer->Fit( this );
 	
 	// Connect Events
 	newRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorFilterContextPageBase::onNewRadioButton ), NULL, this );
