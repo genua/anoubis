@@ -673,6 +673,7 @@ MainFrame::doUpgradeNotify(void)
 	KeyCtrl			*keyCtrl = KeyCtrl::getInstance();
 	LocalCertificate	&cert = keyCtrl->getLocalCertificate();
 	struct anoubis_sig	*raw_cert;
+	static time_t		 last_message = 0, now;
 
 	if (cert.isLoaded()) {
 		bool showUpgradeMessage = true;
@@ -685,10 +686,19 @@ MainFrame::doUpgradeNotify(void)
 		 * related dialog should be displayed.
 		 */
 		if (showUpgradeMessage == true) {
-			raw_cert = cert.getCertificate();
-			upgradeTask_.setKeyId(raw_cert->keyid, raw_cert->idlen);
+			now = time(NULL);
+			/*
+			 * Only do this if we didn't do it within the last
+			 * minute.
+			 */
+			if (now >= last_message + 60) {
+				last_message = now;
+				raw_cert = cert.getCertificate();
+				upgradeTask_.setKeyId(raw_cert->keyid,
+				    raw_cert->idlen);
 
-			instance->addTask(&upgradeTask_);
+				instance->addTask(&upgradeTask_);
+			}
 		}
 	}
 }
