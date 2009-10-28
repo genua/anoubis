@@ -62,5 +62,5 @@ DlgUpgradeAsk::onSfsBrowserShow(wxCommandEvent& WXUNUSED(event))
 	wxCommandEvent event(anEVT_SFSBROWSER_SHOW);
 	event.SetInt(1);
 	wxPostEvent(AnEvents::getInstance(), event);
-	EndModal(true);
+	EndModal(wxID_OK);
 }
