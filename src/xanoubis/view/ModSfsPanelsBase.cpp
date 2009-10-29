@@ -87,9 +87,8 @@ ModSfsMainPanelBase::ModSfsMainPanelBase( wxWindow* parent, wxWindowID id, const
 	SfsMainDirectoryLabel->Wrap( -1 );
 	pathSizer->Add( SfsMainDirectoryLabel, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
 	
-	SfsMainCurrPathLabel = new wxStaticText( pan_SfsMain, wxID_ANY, _("/usr/local/bin/"), wxDefaultPosition, wxDefaultSize, 0 );
-	SfsMainCurrPathLabel->Wrap( -1 );
-	pathSizer->Add( SfsMainCurrPathLabel, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
+	SfsMainPathCtrl = new wxTextCtrl( pan_SfsMain, wxID_ANY, _("/usr/local/bin"), wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER );
+	pathSizer->Add( SfsMainPathCtrl, 1, wxALIGN_CENTER|wxALL, 5 );
 	
 	browserMainSizer->Add( pathSizer, 0, wxEXPAND, 5 );
 	
@@ -319,6 +318,7 @@ ModSfsMainPanelBase::ModSfsMainPanelBase( wxWindow* parent, wxWindowID id, const
 	sz_MainSFSMain->Fit( this );
 	
 	// Connect Events
+	SfsMainPathCtrl->Connect( wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler( ModSfsMainPanelBase::OnSfsPathChanged ), NULL, this );
 	SfsMainDirCtrl->Connect( wxEVT_COMMAND_TREE_SEL_CHANGED, wxTreeEventHandler( ModSfsMainPanelBase::OnSfsMainDirCtrlSelChanged ), NULL, this );
 	SfsMainDirViewChoice->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( ModSfsMainPanelBase::OnSfsMainDirViewChoiceSelected ), NULL, this );
 	SfsMainDirTraversalCheckbox->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( ModSfsMainPanelBase::OnSfsMainDirTraversalChecked ), NULL, this );

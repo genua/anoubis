@@ -187,6 +187,30 @@ ModSfsMainPanelImpl::updateDelete(Subject *subject)
 }
 
 void
+ModSfsMainPanelImpl::OnSfsPathChanged(wxCommandEvent &)
+{
+	wxString enteredPath = SfsMainPathCtrl->GetValue();
+	wxString message = wxEmptyString;
+
+	/* Remove whitespaces from both sides */
+	enteredPath.Trim();
+	enteredPath.Trim(false);
+
+	if (wxDirExists(enteredPath) == true) {
+		/* Update tree */
+		wxBeginBusyCursor();
+		sfsCtrl_->setPath(enteredPath);
+		wxEndBusyCursor();
+	} else {
+		/* stay in old directory */
+		SfsMainPathCtrl->ChangeValue(SfsMainDirCtrl->GetPath());
+		/* Errormessage */
+		message = _("The given path does not exist.");
+		anMessageBox(message, _("SFS error"), wxOK|wxICON_ERROR, this);
+	}
+}
+
+void
 ModSfsMainPanelImpl::OnSfsMainDirCtrlSelChanged(wxTreeEvent &)
 {
 	/* Update controller */
@@ -259,7 +283,7 @@ ModSfsMainPanelImpl::OnSfsDirChanged(wxCommandEvent&)
 	SfsMainListCtrl->refreshList();
 
 	/* Update CurrPathLabel accordingly */
-	SfsMainCurrPathLabel->SetLabel(SfsMainDirCtrl->GetPath());
+	SfsMainPathCtrl->ChangeValue(SfsMainDirCtrl->GetPath());
 }
 
 void
@@ -511,7 +535,7 @@ ModSfsMainPanelImpl::initSfsMain(void)
 	    NULL, this);
 
 	/* Setting up CurrPathLabel with initial path */
-	SfsMainCurrPathLabel->SetLabel(SfsMainDirCtrl->GetPath());
+	SfsMainPathCtrl->ChangeValue(SfsMainDirCtrl->GetPath());
 	wxBeginBusyCursor();
 	sfsCtrl_->setPath(SfsMainDirCtrl->GetPath());
 	wxEndBusyCursor();

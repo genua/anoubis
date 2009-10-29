@@ -49,10 +49,10 @@ class ModSfsListCtrl;
 #include <wx/panel.h>
 #include <wx/bitmap.h>
 #include <wx/image.h>
+#include <wx/textctrl.h>
 #include <wx/dirctrl.h>
 #include <wx/choice.h>
 #include <wx/checkbox.h>
-#include <wx/textctrl.h>
 #include <wx/button.h>
 #include <wx/scrolwin.h>
 #include <wx/spinctrl.h>
@@ -79,7 +79,7 @@ class ModSfsMainPanelBase : public wxPanel
 		wxListCtrl* lst_Rules;
 		wxPanel* pan_SfsMain;
 		wxStaticText* SfsMainDirectoryLabel;
-		wxStaticText* SfsMainCurrPathLabel;
+		wxTextCtrl* SfsMainPathCtrl;
 		wxGenericDirCtrl* SfsMainDirCtrl;
 		wxScrolledWindow* browserListPanel;
 		wxStaticText* SfsMainDirViewLabel;
@@ -113,6 +113,7 @@ class ModSfsMainPanelBase : public wxPanel
 		wxStaticText* CertDnText;
 		
 		// Virtual event handlers, overide them in your derived class
+		virtual void OnSfsPathChanged( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnSfsMainDirCtrlSelChanged( wxTreeEvent& event ){ event.Skip(); }
 		virtual void OnSfsMainDirViewChoiceSelected( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnSfsMainDirTraversalChecked( wxCommandEvent& event ){ event.Skip(); }

@@ -123,6 +123,14 @@ class ModSfsMainPanelImpl : public Observer, public ModSfsMainPanelBase
 		void OnSfsMainDirCtrlSelChanged(wxTreeEvent&);
 
 		/**
+		 * Handle the event when main directory of Sfs is changed.
+		 * Sets show all and updates the tree
+		 * @param[in] 1st The event.
+		 * @return Nothing.
+		 */
+		void OnSfsPathChanged(wxCommandEvent &);
+
+		/**
 		 * Handle the event when a row is selected in the SfsList.
 		 * Enable/disables buttons of the view accordingly.
 		 * @param[in] 1st The event.
