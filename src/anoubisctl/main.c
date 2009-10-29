@@ -217,6 +217,8 @@ main(int argc, char *argv[])
 				uid = pwd->pw_uid;
 			else if (strspn(optarg, "0123456789") == strlen(optarg))
 				uid = strtoul(optarg, NULL, 10);
+			else if (!strcasecmp(optarg, "default"))
+				uid = (uid_t)-1;
 			else {
 				fprintf(stderr, "invalid username\n");
 				usage();
@@ -342,8 +344,7 @@ main(int argc, char *argv[])
 		usage();
 	}
 	if ((!strcmp(command, "load")) &&
-	    (opts & ANOUBISCTL_OPT_SIGN) &&
-	    (prio != ANOUBISCTL_PRIO_ADMIN || opts & ANOUBISCTL_OPT_SIGNONLY)) {
+	    (opts & ANOUBISCTL_OPT_SIGN) ) {
 		if (keyfile == NULL) {
 			fprintf(stderr, "To load signed policies to the daemon "
 			    "you need to specify a keyfile\n");
@@ -881,8 +882,6 @@ load(char *rulesopt, uid_t uid, unsigned int prio)
 		return 3;
 	}
 
-	if (prio == ANOUBISCTL_PRIO_ADMIN && !(opts & ANOUBISCTL_OPT_SIGNONLY))
-		opts &= ~ANOUBISCTL_OPT_SIGN;
 	if ((opts & ANOUBISCTL_OPT_SIGN) && (as == NULL)) {
 		fprintf(stderr, "To load signed policies to the daemon you "
 		    "need to specify a keyfile and a certficate\n");

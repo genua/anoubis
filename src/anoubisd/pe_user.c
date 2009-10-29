@@ -263,19 +263,18 @@ pe_user_load_dir(const char *dirname, unsigned int prio, struct pe_policy_db *p)
 			log_warnx("asprintf: Out of memory");
 			continue;
 		}
-		/* If root placed a certificate for the user there
-		 * the policy should be signed and verified.
-		 * For now we just support User policies.
+		/* If root configured a certificate for the user, the policy
+		 * must be signed and verified.
+		 * For admin policies, root's certificate is used.
 		 */
-		if (prio != PE_PRIO_ADMIN) {
-			if ((pub = cert_get_by_uid(uid)) != NULL) {
-				if (anoubis_sig_verify_policy_file(filename,
-				    pub->pubkey) != 1)  {
-					log_warnx("not loading \"%s\", invalid "
-					    "signature", filename);
-					free(filename);
-					continue;
-				}
+		pub = cert_get_by_uid_prio(uid, prio);
+		if (pub != NULL) {
+			if (anoubis_sig_verify_policy_file(filename,
+			    pub->pubkey) != 1)  {
+				log_warnx("not loading \"%s\", invalid "
+				    "signature", filename);
+				free(filename);
+				continue;
 			}
 		}
 		rs = pe_user_load_policy(filename, flags);
@@ -485,8 +484,15 @@ pe_policy_filename(uid_t uid, unsigned int prio, char *pre)
 		return NULL;
 	}
 
-	if (asprintf(&name, "/%s/%s%d", prio_to_string[prio], pre, uid) == -1)
-		return NULL;
+	if (uid == (uid_t)-1) {
+		if (asprintf(&name, "/%s/%s" ANOUBISD_DEFAULTNAME,
+		    prio_to_string[prio], pre) == -1)
+			return NULL;
+	} else {
+		if (asprintf(&name, "/%s/%s%d", prio_to_string[prio], pre, uid)
+		    == -1)
+			return NULL;
+	}
 
 	return name;
 }
@@ -723,18 +729,13 @@ pe_dispatch_policy(struct anoubisd_msg_comm *comm)
 			req->uid = uid;
 			req->prio = prio;
 			req->siglen = get_value(setbyuid->siglen);
-			if (prio == PE_PRIO_ADMIN) {
-				buf += req->siglen;
-				req->siglen = 0;
-			} else {
-				key = cert_get_by_uid(req->uid);
-				if (key && req->siglen <= 0) {
-					log_warnx("pe_dispatch_policy: Found "
-					    "public-key for uid %u and "
-					    "expecting signature", req->uid);
-					error = EINVAL;
-					goto reply;
-				}
+			key = cert_get_by_uid_prio(req->uid, req->prio);
+			if (key && req->siglen <= 0) {
+				log_warnx("pe_dispatch_policy: Found "
+				    "public-key for uid %u and "
+				    "expecting signature", req->uid);
+				error = EINVAL;
+				goto reply;
 			}
 			if (!req->realname)
 				goto reply;
@@ -827,17 +828,21 @@ pe_dispatch_policy(struct anoubisd_msg_comm *comm)
 			int	 ret;
 			struct apn_ruleset * ruleset = NULL;
 
-			/* Only accept verified signatures if a key is
-			 * avaible */
+			/*
+			 * The case that a signature is required but
+			 * req->siglen == 0 has been dealt with above.
+			 * Here we only need to check the signature if
+			 * req->siglen > 0 and only if a key is available.
+			 */
 			if (req->siglen > 0)
-				key = cert_get_by_uid(req->uid);
+				key = cert_get_by_uid_prio(req->uid, req->prio);
 			if (key) {
 				ret = anoubis_sig_verify_policy_file(
 				    req->tmpname, key->pubkey);
 				if (ret != 1) {
 					log_warnx("pe_dispatch_policy: "
 					    "Coudn\'t verify policy for uid: "
-					    "%u", req->uid);
+					    "%u prio: %d", req->uid, req->prio);
 					error = EINVAL;
 					goto reply;
 				}

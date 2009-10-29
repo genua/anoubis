@@ -55,6 +55,7 @@ void	 cert_reconfigure(int);
 char *	 cert_keyid_for_uid(uid_t uid);
 
 struct cert	*cert_get_by_uid(uid_t u);
+struct cert	*cert_get_by_uid_prio(uid_t uid, int prio);
 struct cert	*cert_get_by_keyid(const unsigned char *keyid, int klen);
 void		 cert_load_priv_key(struct cert *, const char *, char *);
 

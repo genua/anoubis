@@ -32,6 +32,7 @@
 #endif
 
 #include "cert.h"
+#include "pe.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -263,6 +264,15 @@ cert_get_by_uid(uid_t uid)
 	}
 
 	return NULL;
+}
+
+struct cert *
+cert_get_by_uid_prio(uid_t uid, int prio)
+{
+	if (prio == PE_PRIO_ADMIN || uid == (uid_t)-1)
+		return cert_get_by_uid(0);
+	else
+		return cert_get_by_uid(uid);
 }
 
 struct cert *
