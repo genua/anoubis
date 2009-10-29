@@ -134,18 +134,10 @@ struct event_info_main {
 	int anoubisfd;
 };
 
-struct upgrade_com {
-	int	pipe_m2u[2];
-	int	pipe_u2l[2];
-	struct event ev_m2u;
-	struct event ev_u2m;
-};
-
-static struct upgrade_com upgrade_pipes;
-
 static void	reconfigure(struct event_info_main *);
 static void	init_root_key(char *, struct event_info_main *);
 
+FILE	    *pidfp;
 static char *pid_file_name = PACKAGE_PIDFILE;
 #ifdef LINUX
 static char *omit_pid_file = "/var/run/sendsigs.omit.d/anoubisd";
@@ -403,24 +395,21 @@ int
 main(int argc, char *argv[])
 /*@globals undef eventq_m2p, undef eventq_m2s, undef eventq_m2dev@*/
 {
+
+	int			pipes[PIPE_MAX * 2];
+	int			loggers[PROC_LOGGER * 2];
+	int			logfd, policyfd, sessionfd, upgradefd;
 	struct event		ev_sigterm, ev_sigint, ev_sigquit, ev_sighup,
 				    ev_sigchld;
-	struct event		ev_s2m, ev_p2m, ev_dev2m;
-	struct event		ev_m2s, ev_m2p, ev_m2dev;
+	struct event		ev_s2m, ev_p2m, ev_u2m, ev_dev2m;
+	struct event		ev_m2s, ev_m2p, ev_m2u, ev_m2dev;
 	struct event		ev_timer;
 	/*@observer@*/
 	struct event_info_main	ev_info;
+	int			p;
 	sigset_t		mask;
-	int			pipe_m2s[2];
-	int			pipe_m2p[2];
-	int			pipe_s2p[2];
-	int			pipe_m2l[2];
-	int			pipe_s2l[2];
-	int			pipe_p2l[2];
-	int			loggers[4];
 	struct timeval		tv;
 	struct passwd		*pw;
-	FILE			*pidfp;
 	int			sfsversion;
 	struct sigaction	act;
 #ifdef LINUX
@@ -563,66 +552,45 @@ main(int argc, char *argv[])
 		if (daemon(1, 0) !=0)
 			early_errx(1, "daemonize failed");
 
-	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, pipe_m2l) == -1)
-		early_errx(1, "socketpair");
-	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, pipe_p2l) == -1)
-		early_errx(1, "socketpair");
-	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, pipe_s2l) == -1)
-		early_errx(1, "socketpair");
-	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC,
-	    upgrade_pipes.pipe_u2l) == -1)
-		early_errx(1, "socketpair");
-	logger_pid = logger_main(pipe_m2l, pipe_p2l, pipe_s2l,
-	    upgrade_pipes.pipe_u2l);
-	close(pipe_m2l[0]);
-	close(pipe_p2l[0]);
-	close(pipe_s2l[0]);
-	close(upgrade_pipes.pipe_u2l[0]);
-	loggers[0] = pipe_m2l[1];
-	loggers[1] = pipe_p2l[1];
-	loggers[2] = pipe_s2l[1];
-	loggers[3] = upgrade_pipes.pipe_u2l[1];
+	for (p = 0; p < PROC_LOGGER; p += 2) {
+		if (socketpair(AF_UNIX, SOCK_STREAM,
+		    PF_UNSPEC, &loggers[p]) == -1)
+			early_errx(1, "socketpair");
+	}
+
+	for (p = 0; p < PIPE_MAX; p += 2) {
+		if (socketpair(AF_UNIX, SOCK_STREAM,
+		    PF_UNSPEC, &pipes[p]) == -1)
+			early_errx(1, "socketpair");
+	}
+
+	logger_pid = logger_main(pipes, loggers);
 
 	(void)event_init();
 
-	log_init(loggers[0]);
+	log_init(loggers[anoubisd_process]);
 	DEBUG(DBG_TRACE, "logger_pid=%d", logger_pid);
 
-	log_info("master start");
+	log_info("master started (pid %d)", getpid());
 	log_info("Package: " PACKAGE_VERSION " (build " PACKAGE_BUILD ")");
 	DEBUG(DBG_TRACE, "debug=%x", debug_flags);
 	master_pid = getpid();
 	DEBUG(DBG_TRACE, "master_pid=%d", master_pid);
 	save_pid(pidfp, master_pid);
 
-	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, pipe_m2s) == -1)
-		fatal("socketpair");
-	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, pipe_m2p) == -1)
-		fatal("socketpair");
-	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, pipe_s2p) == -1)
-		fatal("socketpair");
-	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC,
-	    upgrade_pipes.pipe_m2u) == -1)
-		fatal("socketpair");
-
-	se_pid = session_main(pipe_m2s, pipe_m2p, pipe_s2p,
-	    upgrade_pipes.pipe_m2u, loggers);
+	se_pid = session_main(pipes, loggers);
 	DEBUG(DBG_TRACE, "session_pid=%d", se_pid);
-	policy_pid = policy_main(pipe_m2s, pipe_m2p, pipe_s2p,
-	    upgrade_pipes.pipe_m2u, loggers);
+	policy_pid = policy_main(pipes, loggers);
 	DEBUG(DBG_TRACE, "policy_pid=%d", policy_pid);
-	upgrade_pid = upgrade_main(upgrade_pipes.pipe_m2u, pipe_m2p,
-	    pipe_s2p, pipe_m2s, loggers);
+	upgrade_pid = upgrade_main(pipes, loggers);
 	DEBUG(DBG_TRACE, "upgrade_pid=%d", upgrade_pid);
-	close(loggers[1]);
-	close(loggers[2]);
-	close(loggers[3]);
 
-	close(pipe_m2s[1]);
-	close(pipe_m2p[1]);
-	close(pipe_s2p[0]);
-	close(pipe_s2p[1]);
-	close(upgrade_pipes.pipe_m2u[1]);
+	policyfd = sessionfd = upgradefd = logfd = -1;
+	SWAP(policyfd, pipes[PIPE_MAIN_POLICY]);
+	SWAP(sessionfd, pipes[PIPE_MAIN_SESSION]);
+	SWAP(upgradefd, pipes[PIPE_MAIN_UPGRADE]);
+	SWAP(logfd, loggers[anoubisd_process]);
+	cleanup_fds(pipes, loggers);
 
 	/* Load Public Keys */
 	cert_init(0);
@@ -670,9 +638,9 @@ main(int argc, char *argv[])
 	queue_init(eventq_m2u);
 
 	/* init msg_bufs - keep track of outgoing ev_info */
-	msg_init(pipe_m2s[0], "m2s");
-	msg_init(pipe_m2p[0], "m2p");
-	msg_init(upgrade_pipes.pipe_m2u[0], "m2u");
+	msg_init(sessionfd, "m2s");
+	msg_init(policyfd, "m2p");
+	msg_init(upgradefd, "m2u");
 
 	/*
 	 * Open eventdev to communicate with the kernel.
@@ -687,28 +655,22 @@ main(int argc, char *argv[])
 	msg_init(eventfds[0], "m2dev");
 
 	/* session process */
-	event_set(&ev_m2s, pipe_m2s[0], EV_WRITE, dispatch_m2s,
-	    &ev_info);
-
-	event_set(&ev_s2m, pipe_m2s[0], EV_READ | EV_PERSIST, dispatch_s2m,
+	event_set(&ev_m2s, sessionfd, EV_WRITE, dispatch_m2s, &ev_info);
+	event_set(&ev_s2m, sessionfd, EV_READ | EV_PERSIST, dispatch_s2m,
 	    &ev_info);
 	event_add(&ev_s2m, NULL);
 
 	/* policy process */
-	event_set(&ev_m2p, pipe_m2p[0], EV_WRITE, dispatch_m2p,
-	    &ev_info);
-
-	event_set(&ev_p2m, pipe_m2p[0], EV_READ | EV_PERSIST, dispatch_p2m,
+	event_set(&ev_m2p, policyfd, EV_WRITE, dispatch_m2p, &ev_info);
+	event_set(&ev_p2m, policyfd, EV_READ | EV_PERSIST, dispatch_p2m,
 	    &ev_info);
 	event_add(&ev_p2m, NULL);
 
 	/* upgrade process */
-	event_set(&upgrade_pipes.ev_m2u, upgrade_pipes.pipe_m2u[0], EV_WRITE,
-	    dispatch_m2u, &ev_info);
-
-	event_set(&upgrade_pipes.ev_u2m, upgrade_pipes.pipe_m2u[0],
-	    EV_READ | EV_PERSIST, dispatch_u2m, &ev_info);
-	event_add(&upgrade_pipes.ev_u2m, NULL);
+	event_set(&ev_m2u, upgradefd, EV_WRITE, dispatch_m2u, &ev_info);
+	event_set(&ev_u2m, upgradefd, EV_READ | EV_PERSIST, dispatch_u2m,
+	    &ev_info);
+	event_add(&ev_u2m, NULL);
 
 	/* event device */
 	event_set(&ev_dev2m, eventfds[0], EV_READ | EV_PERSIST, dispatch_dev2m,
@@ -724,8 +686,8 @@ main(int argc, char *argv[])
 	ev_info.ev_dev2m = &ev_dev2m;
 	ev_info.ev_p2m = &ev_p2m;
 	ev_info.ev_s2m = &ev_s2m;
-	ev_info.ev_m2u = &upgrade_pipes.ev_m2u;
-	ev_info.ev_u2m = &upgrade_pipes.ev_u2m;
+	ev_info.ev_m2u = &ev_m2u;
+	ev_info.ev_u2m = &ev_u2m;
 
 	/*
 	 * Open event device to communicate with the kernel.
@@ -915,6 +877,31 @@ sanitise_stdfd(void)
 	}
 	if (nullfd > 2)
 		close(nullfd);
+}
+
+void
+cleanup_fds(int pipes[], int loggers[])
+{
+	unsigned int p;
+
+	/* only the main process should lock the pidfile */
+	if (anoubisd_process != PROC_MAIN)
+		fclose(pidfp);
+
+	/* close all the remaining valid loggers and pipes */
+	for (p=0; p < PIPE_MAX; p++) {
+		if (pipes[p] == -1)
+			continue;
+		msg_release(pipes[p]);
+		close(pipes[p]);
+	}
+
+	for (p=0; p < PROC_LOGGER; p++) {
+		if (loggers[p] == -1)
+			continue;
+		msg_release(loggers[p]);
+		close(loggers[p]);
+	}
 }
 
 static void

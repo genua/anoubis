@@ -312,9 +312,9 @@ session_txclient(int fd __used, short event __used, void *arg)
 }
 
 pid_t
-session_main(int pipe_m2s[2], int pipe_m2p[2], int pipe_s2p[2],
-    int pipe_m2u[2], int loggers[4])
+session_main(int pipes[], int loggers[])
 {
+	int		 masterfd, policyfd, logfd;
 	struct event	 ev_sigterm, ev_sigint, ev_sigquit;
 	struct event	 ev_m2s, ev_p2s;
 	struct event	 ev_s2m, ev_s2p;
@@ -328,24 +328,24 @@ session_main(int pipe_m2s[2], int pipe_m2p[2], int pipe_s2p[2],
 #endif
 
 
-	switch (pid = fork()) {
-	case -1:
+	pid = fork();
+	if (pid == -1)
 		fatal("fork");
 		/* NOTREACHED */
-	case 0:
-		break;
-	default:
+	if (pid)
 		return (pid);
-	}
 
 	(void)event_init();
 
-	log_init(loggers[2]);
-	close(loggers[0]);
-	close(loggers[1]);
-	close(loggers[3]);
-
 	anoubisd_process = PROC_SESSION;
+
+	masterfd = policyfd = logfd = -1;
+	SWAP(masterfd, pipes[PIPE_MAIN_SESSION + 1]);
+	SWAP(policyfd, pipes[PIPE_SESSION_POLICY]);
+	SWAP(logfd, loggers[anoubisd_process]);
+	cleanup_fds(pipes, loggers);
+
+	log_init(logfd);
 
 	/* while still privileged we install a listening socket */
 	session_setupuds(&seg);
@@ -397,31 +397,24 @@ session_main(int pipe_m2s[2], int pipe_m2p[2], int pipe_s2p[2],
 	sigdelset(&mask, SIGSEGV);
 	sigprocmask(SIG_SETMASK, &mask, NULL);
 
-	close(pipe_m2s[0]);
-	close(pipe_s2p[1]);
-	close(pipe_m2p[0]);
-	close(pipe_m2p[1]);
-	close(pipe_m2u[0]);
-	close(pipe_m2u[1]);
-
 	/* init msg_bufs - keep track of outgoing ev_info */
-	msg_init(pipe_m2s[1], "s2m");
-	msg_init(pipe_s2p[0], "s2p");
+	msg_init(masterfd, "s2m");
+	msg_init(policyfd, "s2p");
 
 	/* master process */
-	event_set(&ev_m2s, pipe_m2s[1], EV_READ | EV_PERSIST, dispatch_m2s,
+	event_set(&ev_m2s, masterfd, EV_READ | EV_PERSIST, dispatch_m2s,
 	    &ev_info);
 	event_add(&ev_m2s, NULL);
 
-	event_set(&ev_s2m, pipe_m2s[1], EV_WRITE, dispatch_s2m,
+	event_set(&ev_s2m, masterfd, EV_WRITE, dispatch_s2m,
 	    &ev_info);
 
 	/* policy process */
-	event_set(&ev_p2s, pipe_s2p[0], EV_READ | EV_PERSIST, dispatch_p2s,
+	event_set(&ev_p2s, policyfd, EV_READ | EV_PERSIST, dispatch_p2s,
 	    &ev_info);
 	event_add(&ev_p2s, NULL);
 
-	event_set(&ev_s2p, pipe_s2p[0], EV_WRITE, dispatch_s2p,
+	event_set(&ev_s2p, policyfd, EV_WRITE, dispatch_s2p,
 	    &ev_info);
 
 	ev_info.ev_m2s = &ev_m2s;

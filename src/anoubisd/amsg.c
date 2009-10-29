@@ -115,7 +115,7 @@ _get_mbp(int fd)
 			return &fds[idx];
 		}
 
-	log_warn("buffer not found");
+	DEBUG(DBG_MSG_FD, "buffer not found: %d", fd);
 	return NULL;
 }
 

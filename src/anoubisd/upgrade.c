@@ -91,10 +91,10 @@ upgrade_sighandler(int sig, short event __used, void *arg)
 }
 
 pid_t
-upgrade_main(int pipe_m2u[2], int pipe_m2p[2], int pipe_s2p[2],
-    int pipe_m2s[2], int loggers[4])
+upgrade_main(int pipes[], int loggers[])
 {
 	pid_t				pid;
+	int				masterfd, logfd;
 	sigset_t			mask;
 	struct event			ev_m2u, ev_u2m;
 	struct event			ev_sigterm, ev_sigint, ev_sigquit;
@@ -104,23 +104,22 @@ upgrade_main(int pipe_m2u[2], int pipe_m2p[2], int pipe_s2p[2],
 #endif
 
 	pid = fork();
-	if (pid < 0) {
+	if (pid == -1)
 		fatal("fork");
 		/*NOTREACHED*/
-	}
-	if (pid) {
+	if (pid)
 		return (pid);
-	}
-	anoubisd_process = PROC_UPGRADE;
 
 	(void)event_init();
 
-	log_init(loggers[3]);
-	close(loggers[0]);
-	close(loggers[1]);
-	close(loggers[2]);
+	anoubisd_process = PROC_UPGRADE;
 
-	close(pipe_m2u[0]);
+	masterfd = logfd = -1;
+	SWAP(masterfd, pipes[PIPE_MAIN_UPGRADE + 1]);
+	SWAP(logfd, loggers[anoubisd_process]);
+	cleanup_fds(pipes, loggers);
+
+	log_init(logfd);
 
 	log_info("upgrade started (pid %d)", getpid());
 
@@ -147,23 +146,15 @@ upgrade_main(int pipe_m2u[2], int pipe_m2p[2], int pipe_s2p[2],
 	sigdelset(&mask, SIGSEGV);
 	sigprocmask(SIG_SETMASK, &mask, NULL);
 
-	close(pipe_m2p[0]);
-	close(pipe_m2p[1]);
-	close(pipe_s2p[0]);
-	close(pipe_s2p[1]);
-	close(pipe_m2s[0]);
-	close(pipe_m2s[1]);
-	close(pipe_m2u[0]);
-
 	queue_init(eventq_u2m);
-	msg_init(pipe_m2u[1], "m2u");
+	msg_init(masterfd, "m2u");
 
 	/* master process */
-	event_set(&ev_m2u, pipe_m2u[1], EV_READ | EV_PERSIST, dispatch_m2u,
+	event_set(&ev_m2u, masterfd, EV_READ | EV_PERSIST, dispatch_m2u,
 	    &ev_info);
 	event_add(&ev_m2u, NULL);
 
-	event_set(&ev_u2m, pipe_m2u[1], EV_WRITE, dispatch_u2m,
+	event_set(&ev_u2m, masterfd, EV_WRITE, dispatch_u2m,
 	    &ev_info);
 
 	ev_info.ev_u2m = &ev_u2m;

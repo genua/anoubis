@@ -45,9 +45,7 @@
 #include "aqueue.h"
 
 static const char * const procnames[] = {
-	"parent",
-	"policy",
-	"session"
+	"main", NULL, "policy", NULL, "session", NULL, "upgrade", NULL
 };
 
 static void	logit(int, const char *, ...);
@@ -314,10 +312,11 @@ dispatch_log_read(int fd, short sig __used, void *arg)
 }
 
 pid_t
-logger_main(int pipe_m2l[2], int pipe_p2l[2], int pipe_s2l[2], int pipe_u2l[2])
+logger_main(int pipes[], int loggers[])
 {
-	pid_t pid;
-	struct event	 ev_m2l, ev_p2l, ev_s2l, ev_u2l;
+	int		 p;
+	pid_t		 pid;
+	struct event	*ev_logger;
 	struct event	 ev_sigterm, ev_sigint, ev_sigquit;
 	struct passwd	*pw;
 	sigset_t	 mask;
@@ -329,11 +328,14 @@ logger_main(int pipe_m2l[2], int pipe_p2l[2], int pipe_s2l[2], int pipe_u2l[2])
 		fatal("getpwnam");
 
 	pid = fork();
-	if (pid < 0)
+	if (pid == -1)
 		fatal("fork");
 		/*NOTREACHED*/
 	if (pid)
 		return pid;
+
+	(void)event_init();
+
 	anoubisd_process = PROC_LOGGER;
 
 	setproctitle("logger");
@@ -350,8 +352,6 @@ logger_main(int pipe_m2l[2], int pipe_p2l[2], int pipe_s2l[2], int pipe_u2l[2])
 	tzset();
 	__log_fd = -1;
 	log_info("logger started (pid %d)", getpid());
-
-	(void)event_init();
 
 	signal_set(&ev_sigterm, SIGTERM, logger_sighandler, NULL);
 	signal_set(&ev_sigint, SIGINT, logger_sighandler, NULL);
@@ -371,28 +371,24 @@ logger_main(int pipe_m2l[2], int pipe_p2l[2], int pipe_s2l[2], int pipe_u2l[2])
 	sigdelset(&mask, SIGSEGV);
 	sigprocmask(SIG_SETMASK, &mask, NULL);
 
-	close(pipe_m2l[1]);
-	close(pipe_p2l[1]);
-	close(pipe_s2l[1]);
-	close(pipe_u2l[1]);
+	msg_init(loggers[PROC_MAIN + 1], "m2l");
+	msg_init(loggers[PROC_POLICY + 1], "p2l");
+	msg_init(loggers[PROC_SESSION + 1], "s2l");
+	msg_init(loggers[PROC_UPGRADE + 1], "u2l");
 
-	msg_init(pipe_m2l[0], "m2l");
-	msg_init(pipe_p2l[0], "p2l");
-	msg_init(pipe_s2l[0], "s2l");
-	msg_init(pipe_u2l[0], "u2l");
+	for (p = 0; p < PROC_LOGGER; p += 2) {
+		if ((ev_logger = malloc(sizeof(struct event))) == NULL)
+			fatal("logger_main: event malloc");
+		event_set(ev_logger, loggers[p + 1], EV_READ|EV_PERSIST,
+		    &dispatch_log_read, ev_logger);
+		event_add(ev_logger, NULL);
+	}
 
-	event_set(&ev_m2l, pipe_m2l[0], EV_READ | EV_PERSIST,
-	    &dispatch_log_read, &ev_m2l);
-	event_add(&ev_m2l, NULL);
-	event_set(&ev_p2l, pipe_p2l[0], EV_READ | EV_PERSIST,
-	    &dispatch_log_read, &ev_p2l);
-	event_add(&ev_p2l, NULL);
-	event_set(&ev_s2l, pipe_s2l[0], EV_READ | EV_PERSIST,
-	    &dispatch_log_read, &ev_s2l);
-	event_add(&ev_s2l, NULL);
-	event_set(&ev_u2l, pipe_u2l[0], EV_READ | EV_PERSIST,
-	    &dispatch_log_read, &ev_u2l);
-	event_add(&ev_u2l, NULL);
+	loggers[PROC_MAIN + 1] = -1;
+	loggers[PROC_POLICY + 1] = -1;
+	loggers[PROC_SESSION + 1] = -1;
+	loggers[PROC_UPGRADE + 1] = -1;
+	cleanup_fds(pipes, loggers);
 
 	if (event_dispatch() == -1)
 		fatal("logger_main: event_dispatch");

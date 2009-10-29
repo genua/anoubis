@@ -153,10 +153,10 @@ policy_sighandler(int sig, short event __used, void *arg)
 }
 
 pid_t
-policy_main(int pipe_m2s[2], int pipe_m2p[2], int pipe_s2p[2], int pipe_m2u[2],
-    int loggers[4])
+policy_main(int pipes[], int loggers[])
 /*@globals undef eventq_p2m, undef eventq_p2s, undef replyq@*/
 {
+	int		 masterfd, sessionfd, logfd;
 	struct event	 ev_sigterm, ev_sigint, ev_sigquit, ev_sigusr1;
 	struct event	 ev_m2p, ev_s2p;
 	struct event	 ev_p2m, ev_p2s;
@@ -170,28 +170,24 @@ policy_main(int pipe_m2s[2], int pipe_m2p[2], int pipe_s2p[2], int pipe_m2u[2],
 	int		 dazukofd;
 #endif
 
-	switch (pid = fork()) {
-	case -1:
+	pid = fork();
+	if (pid == -1)
 		fatal("fork");
 		/*NOTREACHED*/
-	case 0:
-		break;
-	default:
-		/*
-		 * eventq_p2m and eventq_p2s do not need to
-		 * be defined in the child process.
-		 */
-		/*@i@*/return (pid);
-	}
-
-	anoubisd_process = PROC_POLICY;
+	if (pid)
+		return (pid);
 
 	(void)event_init();
 
-	log_init(loggers[1]);
-	close(loggers[0]);
-	close(loggers[2]);
-	close(loggers[3]);
+	anoubisd_process = PROC_POLICY;
+
+	masterfd = sessionfd = logfd = -1;
+	SWAP(masterfd, pipes[PIPE_MAIN_POLICY + 1]);
+	SWAP(sessionfd, pipes[PIPE_SESSION_POLICY + 1]);
+	SWAP(logfd, loggers[anoubisd_process]);
+	cleanup_fds(pipes, loggers);
+
+	log_init(logfd);
 
 	/* open /etc/services before chroot */
 	setservent(1);
@@ -245,14 +241,6 @@ policy_main(int pipe_m2s[2], int pipe_m2p[2], int pipe_s2p[2], int pipe_m2u[2],
 	sigdelset(&mask, SIGSEGV);
 	sigprocmask(SIG_SETMASK, &mask, NULL);
 
-	close(pipe_m2p[0]);
-	close(pipe_s2p[0]);
-	close(pipe_m2s[0]);
-	close(pipe_m2s[1]);
-
-	close(pipe_m2u[0]);
-	close(pipe_m2u[1]);
-
 	queue_init(eventq_p2m);
 	queue_init(eventq_p2m_hold);
 	queue_init(eventq_p2s);
@@ -260,23 +248,23 @@ policy_main(int pipe_m2s[2], int pipe_m2p[2], int pipe_s2p[2], int pipe_m2u[2],
 	queue_init(replyq);
 
 	/* init msg_bufs - keep track of outgoing ev_info */
-	msg_init(pipe_m2p[1], "m2p");
-	msg_init(pipe_s2p[1], "s2p");
+	msg_init(masterfd, "m2p");
+	msg_init(sessionfd, "s2p");
 
 	/* master process */
-	event_set(&ev_m2p, pipe_m2p[1], EV_READ | EV_PERSIST, dispatch_m2p,
+	event_set(&ev_m2p, masterfd, EV_READ | EV_PERSIST, dispatch_m2p,
 	    &ev_info);
 	event_add(&ev_m2p, NULL);
 
-	event_set(&ev_p2m, pipe_m2p[1], EV_WRITE, dispatch_p2m,
+	event_set(&ev_p2m, masterfd, EV_WRITE, dispatch_p2m,
 	    &ev_info);
 
 	/* session process */
-	event_set(&ev_s2p, pipe_s2p[1], EV_READ | EV_PERSIST, dispatch_s2p,
+	event_set(&ev_s2p, sessionfd, EV_READ | EV_PERSIST, dispatch_s2p,
 	    &ev_info);
 	event_add(&ev_s2p, NULL);
 
-	event_set(&ev_p2s, pipe_s2p[1], EV_WRITE, dispatch_p2s,
+	event_set(&ev_p2s, sessionfd, EV_WRITE, dispatch_p2s,
 	    &ev_info);
 
 	ev_info.ev_p2m = &ev_p2m;

@@ -288,19 +288,35 @@ struct anoubisd_msg_config
 };
 typedef struct anoubisd_msg_config anoubisd_msg_config_t;
 
+/* These are used to populate the logger socketpairs and should
+   be even numbers to leave room for the odd endpoints.
+   Changes to this array should be propagated to procnames in log.c */
 enum anoubisd_process_type {
-	PROC_MAIN,
-	PROC_POLICY,
-	PROC_SESSION,
-	PROC_LOGGER,
-	PROC_UPGRADE
+	PROC_MAIN		= 0,
+	PROC_POLICY		= 2,
+	PROC_SESSION		= 4,
+	PROC_UPGRADE		= 6,
+	PROC_LOGGER		= 8	/* logger should be last */
 };
 extern enum anoubisd_process_type	anoubisd_process;
 
-pid_t	session_main(int[], int[], int[], int[], int[]);
-pid_t	policy_main(int[], int[], int[], int[], int[]);
-pid_t	logger_main(int[], int[], int[], int[]);
-pid_t	upgrade_main(int[], int[], int[], int[], int[]);
+/* These are used to populate the pipes socketpairs and should
+   be even numbers to leave room for the odd endpoints */
+enum anoubisd_pipes {
+	PIPE_MAIN_SESSION	= 0,
+	PIPE_MAIN_POLICY	= 2,
+	PIPE_SESSION_POLICY	= 4,
+	PIPE_MAIN_UPGRADE	= 6,
+	PIPE_MAX		= 8	/* should be last */
+};
+
+#define SWAP(a, b) do { int t; t = a; a = b; b = t; } while(0)
+void	cleanup_fds(int[], int[]);
+
+pid_t	session_main(int[], int[]);
+pid_t	policy_main(int[], int[]);
+pid_t	upgrade_main(int[], int[]);
+pid_t	logger_main(int[], int[]);
 
 void	pe_init(void);
 
