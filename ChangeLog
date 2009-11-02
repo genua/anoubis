@@ -1,3 +1,50 @@
+2009-11-02 - Changes between 0.9.1 and 0.9.2
+
+New features:
+
+  o Initial support for dazukoFS: Make sure anoubisd is unaffected by dazukoFS
+  o Handle OS upgrades correctly even if anoubisd is restarted in the process.
+    This is done by delaying the restart until after the upgrade finished.
+  o Anoubisctl/sfssig/xanoubis will now also log errors to the syslog that may
+    be interesting for the administrator.
+
+Bug fixes:
+
+  o OpenBSD kernel: Fix an OpenBSD bug that can cause crashes in nfs_reply.
+  o xanoubis: Fix directory path interfering with filter/invert options.
+    BUG #1168
+  o anoubisd/anoubisctl: Do not leak pid filehandle to childs.
+  o xanoubis: Various fixes for operating at low screen resolutions. BUG #893
+  o sfssig: Fix exporting of signatures.
+  o anoubisd: Fix /etc/services not being available to anoubisd childs.
+  o xanoubis: Fix 'Unexpected return-code: 1' error message. BUG #1373
+  o xanoubis: Fix the Status field in the rule editor being updated too
+    late. BUG #1369
+  o xanoubis: Display correct state in Upgrade view.
+  o xanoubis: Don't try to create a rule for an unknown binary after an
+    ask event.
+  o xanoubis: Make large SFS error messages scrollable. BUG #1352
+  o Linux kernel: Fix EBADF when writing to a raw socket. This sometimes
+    prevented dhclient from working.
+  o sfssig: Fix 'add' failing if file is open for writing. BUG #1342
+  o Linux kernel: Make sure a new file is not created if write access was
+    denied.
+
+Other changes:
+
+  o Send upgrade-notify events to all attached UIs. Show the upgrade dialogue
+    in xanoubis when such an event is received. Also use this to get rid of
+    INotify.
+  o xanoubis: Give a general overview message for SFS errors.
+  o xanoubis: Save table column widths in xanoubis.conf.
+  o xanoubis: Adjust column witdths to window/table size. BUG #1321
+  o xanoubis: Create Anoubis specific MessageBox class.
+  o xanoubis: Various text improvements.
+  o anoubisd: Return EXDEV instead of EPERM when rename restrictions apply.
+    This makes programs like mv and patch copy the file instead. BUG #1353
+  o Handle mknod calls in kernel sfs and generate SFS-write events.
+
+
 2009-10-12 - Changes between 0.1.10.D023.970.D170 and 0.9.1
 
 New features:
