@@ -170,6 +170,7 @@ DlgRuleEditor::DlgRuleEditor(wxWindow* parent)
 	editorUid_ = geteuid();
 	if (editorUid_ != 0) {
 		rb_userSelect->Disable();
+		rb_userDefault->Disable();
 	}
 	tx_userSelect->Disable();
 }
@@ -543,6 +544,8 @@ DlgRuleEditor::onLoadNewRuleSet(wxCommandEvent &event)
 	admin = policyCtrl->getAdminId(editorUid_);
 	if (editorUid_ == (int)geteuid()) {
 		user = policyCtrl->getUserId();
+	} else if (editorUid_ == (long)-1) {
+		user = policyCtrl->getUserId((long)-1);
 	} else {
 		user = -1;
 	}
@@ -1835,7 +1838,12 @@ DlgRuleEditor::updateListAppPolicy(long rowIdx)
 	/* Fill user column */
 	columnText = _("(unknown)");
 	if (ruleset != NULL) {
-		columnText = wxGetApp().getUserNameById(ruleset->getUid());
+		long uid = ruleset->getUid();
+		if (uid == (long)-1)
+			columnText = wxT("default");
+		else
+			columnText =
+			    wxGetApp().getUserNameById(ruleset->getUid());
 	}
 	updateColumnText(appPolicyListCtrl, rowIdx, appColumns_[APP_USER],
 	    columnText);
@@ -2155,6 +2163,10 @@ DlgRuleEditor::setUser(long uid)
 	editorUid_ = uid;
 	if (rb_userMe->GetValue()) {
 		user = policyCtrl->getUserId();
+	} else if (rb_userDefault->GetValue()) {
+		user = policyCtrl->getUserId((uid_t)-1);
+		if (user < 0)
+			policyCtrl->receiveOneFromDaemon(1, (uid_t)-1);
 	}
 	admin = policyCtrl->getAdminId(uid);
 	if (admin < 0) {
@@ -2197,6 +2209,13 @@ DlgRuleEditor::onRbUserMe(wxCommandEvent &)
 {
 	tx_userSelect->Disable();
 	setUser(geteuid());
+}
+
+void
+DlgRuleEditor::onRbUserDefault(wxCommandEvent &)
+{
+	tx_userSelect->Disable();
+	setUser((long)-1);
 }
 
 void

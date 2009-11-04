@@ -78,6 +78,12 @@ PolicyCtrl::getInstance(void)
 }
 
 long
+PolicyCtrl::getUserId(uid_t uid) const
+{
+	return (seekId(false, uid));
+}
+
+long
 PolicyCtrl::getUserId(void) const
 {
 	return (seekId(false, geteuid()));

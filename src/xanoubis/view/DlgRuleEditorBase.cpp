@@ -60,6 +60,9 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	tx_userSelect = new wxTextCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER );
 	sz_user->Add( tx_userSelect, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
+	rb_userDefault = new wxRadioButton( this, wxID_ANY, _("Show default rules"), wxDefaultPosition, wxDefaultSize, 0 );
+	sz_user->Add( rb_userDefault, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	
 	mainSizer->Add( sz_user, 0, wxEXPAND, 5 );
 	
 	splitterWindow = new wxSplitterWindow( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxSP_3D|wxSP_LIVE_UPDATE );
@@ -291,6 +294,7 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	rb_userSelect->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorBase::onRbUserSelect ), NULL, this );
 	tx_userSelect->Connect( wxEVT_KILL_FOCUS, wxFocusEventHandler( DlgRuleEditorBase::onUserSelectKillFocus ), NULL, this );
 	tx_userSelect->Connect( wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler( DlgRuleEditorBase::onUserSelectTextEnter ), NULL, this );
+	rb_userDefault->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorBase::onRbUserDefault ), NULL, this );
 	appListCreateButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::onAppListCreateButton ), NULL, this );
 	appListColumnsButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::onAppListColumnsButtonClick ), NULL, this );
 	appPolicyListCtrl->Connect( wxEVT_COMMAND_LIST_ITEM_DESELECTED, wxListEventHandler( DlgRuleEditorBase::onAppPolicyDeSelect ), NULL, this );

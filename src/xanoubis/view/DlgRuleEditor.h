@@ -711,6 +711,12 @@ class DlgRuleEditor : public Observer, public DlgRuleEditorBase
 		void onRbUserMe(wxCommandEvent &);
 
 		/**
+		 * Event handler for the "show default rules" radio button.
+		 * @param None.
+		 */
+		void onRbUserDefault(wxCommandEvent &);
+
+		/**
 		 * Event handler for text entered into the user select field
 		 * @param None.
 		 */

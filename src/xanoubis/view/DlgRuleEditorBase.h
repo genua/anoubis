@@ -75,6 +75,7 @@ class DlgRuleEditorBase : public wxFrame
 		wxRadioButton* rb_userMe;
 		wxRadioButton* rb_userSelect;
 		wxTextCtrl* tx_userSelect;
+		wxRadioButton* rb_userDefault;
 		wxSplitterWindow* splitterWindow;
 		wxPanel* appPanel;
 		wxStaticText* appListTypeLabel;
@@ -123,6 +124,7 @@ class DlgRuleEditorBase : public wxFrame
 		virtual void onRbUserSelect( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onUserSelectKillFocus( wxFocusEvent& event ){ event.Skip(); }
 		virtual void onUserSelectTextEnter( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onRbUserDefault( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onAppListCreateButton( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onAppListColumnsButtonClick( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onAppPolicyDeSelect( wxListEvent& event ){ event.Skip(); }

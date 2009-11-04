@@ -100,6 +100,15 @@ class PolicyCtrl : public wxEvtHandler, public Singleton<PolicyCtrl>
 		long getUserId(void) const;
 
 		/**
+		 * Get user rule set id.
+		 * Get the id of the user rule set mapped to the specified user.
+		 * Use the id to fetch the policy with getRuleSet().
+		 * @param[in] 1st The uid of the user in question.
+		 * @return The id of the rule set or -1 if nothing found.
+		 */
+		long getUserId(uid_t) const;
+
+		/**
 		 * Get admin rule set id.
 		 * Get the id of the current admin rule set mapped to the
 		 * specified user. Use the id to fetch the policy with
