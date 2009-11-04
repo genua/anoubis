@@ -98,8 +98,12 @@ static int	apn_print_rule_cleaned(struct apn_rule *, int, FILE *,
 
 /*
  * APN-Syntax version supported by this version of libapn.
+ *
+ * History:
+ * - 1.0  Initial version
+ * - 1.1  nosfs-flag appended to context-block
  */
-static int	apn_version = APN_PARSER_MKVERSION(1,0);
+static int	apn_version = APN_PARSER_MKVERSION(1,1);
 
 /*
  * Parser descriptions for different APN syntax versions. The first entry
@@ -157,6 +161,7 @@ init_sfs_rule(struct apn_ruleset *rs)
 	nrule->app = NULL;
 	nrule->userdata = NULL;
 	nrule->pchain = NULL;
+	nrule->flags = 0;
 	TAILQ_INIT(&nrule->rule.chain);
 	return apn_insert(rs, nrule, 0);
 }
@@ -744,6 +749,12 @@ apn_print_rule_cleaned(struct apn_rule *rule, int flags, FILE *file,
 	case APN_CTX:
 		if ((ret = apn_print_app(rule->app, file)) != 0)
 			return (ret);
+		if (rule->flags & APN_RULE_NOSFS) {
+			if (apn_version >= APN_PARSER_MKVERSION(1, 1))
+				fprintf(file, " nosfs");
+			else
+				return (1);
+		}
 		fprintf(file, " {\n");
 		ret = apn_print_chain_cleaned(&rule->rule.chain, flags, file,
 		    check, data);
@@ -1682,6 +1693,7 @@ apn_copy_one_rule(struct apn_rule *old)
 	newrule->scope = NULL;
 	newrule->userdata = NULL;
 	newrule->pchain = NULL;
+	newrule->flags = 0;
 	if (old->scope) {
 		newrule->scope = calloc(1, sizeof(struct apn_scope));
 		if (newrule->scope == NULL)

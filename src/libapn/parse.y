@@ -60,7 +60,7 @@
 #include "apninternals.h"
 
 #define PARSER_MINVERSION		APN_PARSER_MKVERSION(1,0)
-#define PARSER_MAXVERSION		APN_PARSER_MKVERSION(1,0)
+#define PARSER_MAXVERSION		APN_PARSER_MKVERSION(1,1)
 
 #define APN_FILE	1
 #define APN_IOVEC	2
@@ -174,7 +174,7 @@ typedef struct {
 %token	INET INET6 FROM TO PORT ANY TCP UDP DEFAULT NEW ASK ALERT OPEN
 %token	READ WRITE EXEC CHMOD ERROR APPLICATION RULE HOST TFILE BOTH SEND
 %token	RECEIVE TASK UNTIL COLON PATH KEY UID APNVERSION
-%token	SELF SIGNEDSELF VALID INVALID UNKNOWN CONTINUE BORROW
+%token	SELF SIGNEDSELF VALID INVALID UNKNOWN CONTINUE BORROW NOSFS
 %token	<v.string>		STRING
 %destructor {
 	free($$);
@@ -213,6 +213,7 @@ typedef struct {
 	apn_free_host($$.tohost);
 }				hosts
 %type	<v.number>		not capability defaultspec ruleid sbrwx
+%type	<v.number>		ctxnosfs
 %type	<v.string>		sfspath
 %destructor {
 	free($$);
@@ -363,6 +364,7 @@ alfruleset	: ruleid apps optnl '{' optnl alfrule_l '}' nl {
 			rule->apn_id = $1;
 			rule->userdata = NULL;
 			rule->pchain = NULL;
+			rule->flags = 0;
 			TAILQ_INIT(&rule->rule.chain);
 			while(!TAILQ_EMPTY($6)) {
 				struct apn_rule *arule;
@@ -494,6 +496,7 @@ alfrule		: ruleid alffilterrule	scope		{
 			rule->userdata = NULL;
 			rule->pchain = NULL;
 			rule->app = NULL;
+			rule->flags = 0;
 
 			$$ = rule;
 		}
@@ -514,6 +517,7 @@ alfrule		: ruleid alffilterrule	scope		{
 			rule->userdata = NULL;
 			rule->pchain = NULL;
 			rule->app = NULL;
+			rule->flags = 0;
 
 			$$ = rule;
 		}
@@ -534,6 +538,7 @@ alfrule		: ruleid alffilterrule	scope		{
 			rule->userdata = NULL;
 			rule->pchain = NULL;
 			rule->app = NULL;
+			rule->flags = 0;
 
 			$$ = rule;
 		}
@@ -754,6 +759,7 @@ sfsmodule	: SFS optnl '{' optnl sfsrule_l '}'	{
 			rule->app = NULL;
 			rule->userdata = NULL;
 			rule->pchain = NULL;
+			rule->flags = 0;
 			TAILQ_INIT(&rule->rule.chain);
 			while (!TAILQ_EMPTY($5)) {
 				struct apn_rule *srule;
@@ -806,6 +812,7 @@ sfsrule		: ruleid sfsaccessrule scope {
 			rule->userdata = NULL;
 			rule->pchain = NULL;
 			rule->apn_id = $1;
+			rule->flags = 0;
 
 			$$ = rule;
 		}
@@ -825,6 +832,7 @@ sfsrule		: ruleid sfsaccessrule scope {
 			rule->userdata = NULL;
 			rule->pchain = NULL;
 			rule->apn_id = $1;
+			rule->flags = 0;
 
 			$$ = rule;
 		}
@@ -929,6 +937,7 @@ sbruleset	: ruleid apps optnl '{' optnl sbrule_l '}' nl {
 			rule->apn_id = $1;
 			rule->userdata = NULL;
 			rule->pchain = NULL;
+			rule->flags = 0;
 			TAILQ_INIT(&rule->rule.chain);
 			while(!TAILQ_EMPTY($6)) {
 				struct apn_rule *sbrule;
@@ -987,6 +996,7 @@ sbrule		: ruleid sbaccess scope {
 			rule->userdata = NULL;
 			rule->pchain = NULL;
 			rule->app = NULL;
+			rule->flags = 0;
 
 			$$ = rule;
 		}
@@ -1007,6 +1017,7 @@ sbrule		: ruleid sbaccess scope {
 			rule->userdata = NULL;
 			rule->pchain = NULL;
 			rule->app = NULL;
+			rule->flags = 0;
 
 			$$ = rule;
 		}
@@ -1090,14 +1101,30 @@ ctxruleset_l	: ctxruleset_l ctxruleset
 		| ctxruleset
 		;
 
-ctxruleset	: ruleid apps optnl '{' optnl ctxrule_l '}' nl {
+ctxnosfs	: NOSFS {
+			if (apnrsp->version < APN_PARSER_MKVERSION(1, 1)) {
+				/* nosfs-flag not supported for this version */
+				yyerror("The flag nosfs is not supported in "
+				    "v%i.%i! At least v1.1 expected.",
+				    APN_PARSER_MAJOR(apnrsp->version),
+				    APN_PARSER_MINOR(apnrsp->version));
+				YYERROR;
+			}
+			$$ = APN_RULE_NOSFS;
+		}
+		| /* Empty */ {
+			$$ = 0;
+		}
+		;
+
+ctxruleset	: ruleid apps ctxnosfs optnl '{' optnl ctxrule_l '}' nl {
 			struct apn_rule	*rule;
 
 			rule = calloc(1, sizeof(struct apn_rule));
 			if (rule == NULL) {
 				apn_free_app($2);
-				apn_free_chain($6, NULL);
-				free($6);
+				apn_free_chain($7, NULL);
+				free($7);
 				yyerror("Out of memory");
 				YYERROR;
 			}
@@ -1108,16 +1135,17 @@ ctxruleset	: ruleid apps optnl '{' optnl ctxrule_l '}' nl {
 			rule->userdata = NULL;
 			rule->pchain = NULL;
 			rule->apn_id = $1;
+			rule->flags = $3;
 			TAILQ_INIT(&rule->rule.chain);
-			while(!TAILQ_EMPTY($6)) {
+			while(!TAILQ_EMPTY($7)) {
 				struct apn_rule *arule;
-				arule = TAILQ_FIRST($6);
-				TAILQ_REMOVE($6, arule, entry);
+				arule = TAILQ_FIRST($7);
+				TAILQ_REMOVE($7, arule, entry);
 				TAILQ_INSERT_TAIL(&rule->rule.chain,
 				    arule, entry);
 				arule->pchain = &rule->rule.chain;
 			}
-			free($6);
+			free($7);
 
 			if (apn_add_ctxblock(apnrsp, rule, file->name,
 			    yylval.lineno) != 0) {
@@ -1166,6 +1194,7 @@ ctxrule		: ruleid ctxruleapps scope			{
 			rule->userdata = NULL;
 			rule->pchain = NULL;
 			rule->app = NULL;
+			rule->flags = 0;
 
 			$$ = rule;
 		}
@@ -1330,6 +1359,7 @@ lookup(char *s)
 		{ "key",	KEY },
 		{ "log",	LOG },
 		{ "new",	NEW },
+		{ "nosfs",	NOSFS },
 		{ "open",	OPEN },
 		{ "other",	OTHER },
 		{ "path",	PATH },

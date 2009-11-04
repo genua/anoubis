@@ -60,6 +60,7 @@ generate_file(void)
 
 	/* To avoid races, we keep the file open. */
 
+	fprintf(sfp, "apnversion 1.1\n");
 	fprintf(sfp, "alf {\n");
 	fprintf(sfp, "/bin/sh {\n");
 	fprintf(sfp, "allow connect tcp all\n");
@@ -101,6 +102,17 @@ generate_file(void)
 	fprintf(sfp, "sfs{\n");
 	fprintf(sfp, "path /tmp/blah uid 0 valid allow invalid alert deny "
 	    "unknown log continue\n");
+	fprintf(sfp, "}\n");
+	fprintf(sfp, "context{\n");
+	fprintf(sfp, "/usr/bin/dings {\n");
+	fprintf(sfp, "context new any\n");
+	fprintf(sfp, "}\n");
+	fprintf(sfp, "/bin/bums nosfs {\n");
+	fprintf(sfp, "context open any\n");
+	fprintf(sfp, "}\n");
+	fprintf(sfp, "{ /bin/bu, /bin/ms } nosfs {\n");
+	fprintf(sfp, "context open any\n");
+	fprintf(sfp, "}\n");
 	fprintf(sfp, "}\n");
 
 	fflush(sfp);

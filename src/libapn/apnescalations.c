@@ -191,6 +191,7 @@ empty_rule(int type)
 	rule->scope = NULL;
 	rule->app = NULL;
 	rule->pchain = NULL;
+	rule->flags = 0;
 	switch(type) {
 	case APN_ALF:
 	case APN_SFS:

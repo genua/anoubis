@@ -58,7 +58,7 @@
 	}
 
 const wxString policyCsum =
-    wxT("61f4ae0d6a36129b99e96afe7994d5da010133c145f8e45cd285a67ab0db6e22");
+    wxT("c7dfac019f9222466804088884ae49953b508525117cb1b757bf1c558a0047d7");
 
 const wxString symlink_get_1_csum =
     wxT("750f16659ec9fd87a2951f7538233b6d6bb2f4b285c9666c918de1af87a07465");
@@ -278,8 +278,8 @@ TcComTask::onTestVersion(TaskEvent &event)
 	assertUnless(t->getProtocolVersion() == 2,
 	    "Unexpected protocol version received (%i)\n",
 	    t->getProtocolVersion());
-	assertUnless(t->getApnVersion() == 65536,
-	    "Unexpected APN version received (%i.%i)",
+	assertUnless(t->getApnVersion() == 65537,
+	    "Unexpected APN version received (%i.%i)\n",
 	    APN_PARSER_MAJOR(t->getApnVersion()),
 	    APN_PARSER_MINOR(t->getApnVersion()));
 

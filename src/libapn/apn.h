@@ -206,6 +206,8 @@ enum {
 	APN_SB_ACCESS,		/* rule.sbaccess, app = NULL */
 };
 
+#define APN_RULE_NOSFS 1
+
 #define apn_type	_rbentry.dtype
 #define apn_id		_rbentry.key
 
@@ -217,6 +219,7 @@ struct apn_rule {
 	struct apn_scope		*scope;
 	struct apn_app			*app;
 	struct apn_chain		*pchain;
+	unsigned int			 flags;
 	union {
 		struct apn_afiltrule	afilt;
 		struct apn_acaprule	acap;
