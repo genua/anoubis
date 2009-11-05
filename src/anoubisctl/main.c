@@ -190,6 +190,14 @@ main(int argc, char *argv[])
 	char		*prios[] = { "admin", "user", NULL };
 	char		 tmp;
 
+	/*
+	 * Drop privileges immediately. No need for setgid and it hurts
+	 * anoubisctl start on OpenBSD.
+	 */
+	if (setresgid(getgid(), getgid(), getgid()) < 0) {
+		perror("Failed to drop privileges");
+		return 2;
+	}
 	if (argc < 2)
 		usage();
 
@@ -312,8 +320,7 @@ main(int argc, char *argv[])
 	if (certfile == NULL) {
 		if (asprintf(&certfile, "%s/%s", homepath, def_cert)
 		    < 0){
-			fprintf(stderr, "Error while allocating"
-			    "memory\n");
+			fprintf(stderr, "Error while allocating memory\n");
 			return 1;
 		}
 		if (stat(certfile, &sb) == 0) {
