@@ -1,29 +1,3 @@
-###########################################################################
-# Copyright (c) 2009 GeNUA mbH <info@genua.de>
-#
-# All rights reserved.
-#
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions
-# are met:
-# 1. Redistributions of source code must retain the above copyright
-#    notice, this list of conditions and the following disclaimer.
-# 2. Redistributions in binary form must reproduce the above copyright
-#    notice, this list of conditions and the following disclaimer in the
-#    documentation and/or other materials provided with the distribution.
-#
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-# OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
-# TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-# PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-# LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-###########################################################################
 # SOME DESCRIPTIVE TITLE.
 # Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the PACKAGE package.
@@ -34,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-11-05 13:38+0100\n"
+"POT-Creation-Date: 2009-11-05 14:42+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -946,7 +920,7 @@ msgid "Export ruleset"
 msgstr ""
 
 #: view/DlgRuleEditor.cpp:1383 view/DlgRuleEditor.cpp:1406
-#: view/ModAnoubisMainPanelImpl.cpp:486 view/ModSfsMainPanelImpl.cpp:433
+#: view/ModAnoubisMainPanelImpl.cpp:486 view/ModSfsMainPanelImpl.cpp:427
 #: view/RuleWizard.cpp:403
 msgid "The entered password is incorrect."
 msgstr ""
@@ -1228,7 +1202,7 @@ msgstr ""
 msgid "Temporary"
 msgstr ""
 
-#: view/ModAlfMainPanelImpl.cpp:199 view/ModSfsMainPanelImpl.cpp:842
+#: view/ModAlfMainPanelImpl.cpp:199 view/ModSfsMainPanelImpl.cpp:836
 #: view/ModSbMainPanelImpl.cpp:245
 #, c-format
 msgid "admin ruleset of %ls"
@@ -1869,8 +1843,8 @@ msgstr ""
 msgid "The given path does not exist."
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:209 view/ModSfsMainPanelImpl.cpp:434
-#: view/ModSfsMainPanelImpl.cpp:458
+#: view/ModSfsMainPanelImpl.cpp:209 view/ModSfsMainPanelImpl.cpp:428
+#: view/ModSfsMainPanelImpl.cpp:452
 msgid "SFS error"
 msgstr ""
 
@@ -1889,66 +1863,66 @@ msgstr ""
 msgid "Multiple errors occured while processing the SFS request"
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:371
+#: view/ModSfsMainPanelImpl.cpp:365
 msgid "Choose the import-file"
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:393
+#: view/ModSfsMainPanelImpl.cpp:387
 msgid "Choose the export-destination"
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:416
+#: view/ModSfsMainPanelImpl.cpp:410
 msgid "Error: xanoubis is not connected to the daemon"
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:420
+#: view/ModSfsMainPanelImpl.cpp:414
 msgid "Error: Failed to load the private key."
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:424
+#: view/ModSfsMainPanelImpl.cpp:418
 msgid "Error: An invalid argument was supplied"
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:428
+#: view/ModSfsMainPanelImpl.cpp:422
 msgid "Error: Sfs is still busy with another operation."
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:432
+#: view/ModSfsMainPanelImpl.cpp:426
 msgid "Wrong password!"
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:452
+#: view/ModSfsMainPanelImpl.cpp:446
 msgid ""
 "Failed to enable signed checksums.\n"
 "Please check the configuration of your certificate and private key!"
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:456
+#: view/ModSfsMainPanelImpl.cpp:450
 msgid "Failed to disable signed checksums."
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:689
+#: view/ModSfsMainPanelImpl.cpp:683
 msgid ""
 "Cannot load the private key!\n"
 "The file you specified does not exist."
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:691
+#: view/ModSfsMainPanelImpl.cpp:685
 msgid "Load private key"
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:719
+#: view/ModSfsMainPanelImpl.cpp:713
 #, c-format
 msgid ""
 "Failed to load certificate from\n"
 "%ls."
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:721
+#: view/ModSfsMainPanelImpl.cpp:715
 msgid "Load certificate"
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:871
+#: view/ModSfsMainPanelImpl.cpp:865
 #, c-format
 msgid "default %ls"
 msgstr ""
@@ -2183,43 +2157,43 @@ msgstr ""
 msgid "Rule Wizard"
 msgstr ""
 
-#: view/RuleWizardProgramPage.cpp:180 control/SfsCtrl.cpp:704
+#: view/RuleWizardProgramPage.cpp:180 control/SfsCtrl.cpp:741
 #, c-format
 msgid "Got error from daemon (%hs) while fetching the checksum for %ls."
 msgstr ""
 
-#: view/RuleWizardProgramPage.cpp:185 control/SfsCtrl.cpp:721
+#: view/RuleWizardProgramPage.cpp:185 control/SfsCtrl.cpp:758
 #, c-format
 msgid "Communication error while fetching the checksum for %ls."
 msgstr ""
 
-#: view/RuleWizardProgramPage.cpp:189 control/SfsCtrl.cpp:733
+#: view/RuleWizardProgramPage.cpp:189 control/SfsCtrl.cpp:770
 #, c-format
 msgid "Failed to resolve %ls"
 msgstr ""
 
-#: view/RuleWizardProgramPage.cpp:193 control/SfsCtrl.cpp:741
+#: view/RuleWizardProgramPage.cpp:193 control/SfsCtrl.cpp:778
 #, c-format
 msgid "An unexpected error occured (%hs) while fetching the checksum for %ls."
 msgstr ""
 
 #: view/RuleWizardProgramPage.cpp:236 view/RuleWizardProgramPage.cpp:276
-#: control/SfsCtrl.cpp:637 control/SfsCtrl.cpp:827
+#: control/SfsCtrl.cpp:674 control/SfsCtrl.cpp:864
 #, c-format
 msgid "Failed to calculate the checksum for %ls: %hs"
 msgstr ""
 
-#: view/RuleWizardProgramPage.cpp:240 control/SfsCtrl.cpp:841
+#: view/RuleWizardProgramPage.cpp:240 control/SfsCtrl.cpp:878
 #, c-format
 msgid "Communication error while register the checksum for %ls."
 msgstr ""
 
-#: view/RuleWizardProgramPage.cpp:244 control/SfsCtrl.cpp:855
+#: view/RuleWizardProgramPage.cpp:244 control/SfsCtrl.cpp:892
 #, c-format
 msgid "Got error from daemon (%hs) while register the checksum for %ls."
 msgstr ""
 
-#: view/RuleWizardProgramPage.cpp:249 control/SfsCtrl.cpp:871
+#: view/RuleWizardProgramPage.cpp:249 control/SfsCtrl.cpp:908
 #, c-format
 msgid "An unexpected error occured (%hs) while register the checksum for %ls."
 msgstr ""
@@ -2909,140 +2883,148 @@ msgstr ""
 msgid "Version"
 msgstr ""
 
-#: control/SfsCtrl.cpp:365
+#: control/SfsCtrl.cpp:387
 #, c-format
 msgid "Failed to open %ls for reading: %hs"
 msgstr ""
 
-#: control/SfsCtrl.cpp:373
+#: control/SfsCtrl.cpp:396
 #, c-format
 msgid "Failed to parse %ls!"
 msgstr ""
 
-#: control/SfsCtrl.cpp:520
+#: control/SfsCtrl.cpp:552
 #, c-format
 msgid "Communication error while fetching list of checksumed files of %ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:525
+#: control/SfsCtrl.cpp:557
 #, c-format
 msgid "Communication error while fetching list of signed files of %ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:533
+#: control/SfsCtrl.cpp:565
 #, c-format
 msgid ""
 "Got error from daemon (%hs) while fetching the list of checksumed files of %"
 "ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:538
+#: control/SfsCtrl.cpp:570
 #, c-format
 msgid ""
 "Got error from daemon (%hs) while fetching the list of signed files of %ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:544
+#: control/SfsCtrl.cpp:576
 #, c-format
 msgid ""
 "An unexpected error occured (%i) while fetching the list of checksumed files "
 "of %ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:550
+#: control/SfsCtrl.cpp:582
 #, c-format
 msgid ""
 "An unexpected error occured (%i) while fetching the list of signed files of %"
 "ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:628 control/SfsCtrl.cpp:677 control/SfsCtrl.cpp:814
-#: control/SfsCtrl.cpp:922
+#: control/SfsCtrl.cpp:665 control/SfsCtrl.cpp:714 control/SfsCtrl.cpp:851
+#: control/SfsCtrl.cpp:959
 #, c-format
 msgid "%ls not found in file-list!"
 msgstr ""
 
-#: control/SfsCtrl.cpp:708
+#: control/SfsCtrl.cpp:745
 #, c-format
 msgid "Got error from daemon (%hs) while fetching the signature for %ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:725
+#: control/SfsCtrl.cpp:762
 #, c-format
 msgid "Communication error while fetching the signature for %ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:746
+#: control/SfsCtrl.cpp:783
 #, c-format
 msgid "An unexpected error occured (%hs) while fetching the signature for %ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:782
+#: control/SfsCtrl.cpp:819
 msgid "An unexpected checksum was fetched."
 msgstr ""
 
-#: control/SfsCtrl.cpp:784
+#: control/SfsCtrl.cpp:821
 msgid "An unexpected signature was fetched."
 msgstr ""
 
-#: control/SfsCtrl.cpp:831
+#: control/SfsCtrl.cpp:868
 #, c-format
 msgid "Failed to calculate the signature for %ls: %hs"
 msgstr ""
 
-#: control/SfsCtrl.cpp:845
+#: control/SfsCtrl.cpp:882
 #, c-format
 msgid "Communication error while register the signature for %ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:860
+#: control/SfsCtrl.cpp:897
 #, c-format
 msgid "Got error from daemon (%hs) while register the signature for %ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:876
+#: control/SfsCtrl.cpp:913
 #, c-format
 msgid "An unexpected error occured (%hs) while register the signature for %ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:935
+#: control/SfsCtrl.cpp:972
 #, c-format
 msgid "Communication error while removing the checksum for %ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:939
+#: control/SfsCtrl.cpp:976
 #, c-format
 msgid "Communication error while removing the signature for %ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:948
+#: control/SfsCtrl.cpp:985
 #, c-format
 msgid "Got error from daemon (%hs) while removing the checksum for %ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:953
+#: control/SfsCtrl.cpp:990
 #, c-format
 msgid "Got error from daemon (%hs) while removing the signature for %ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:963
+#: control/SfsCtrl.cpp:1000
 #, c-format
 msgid "An unexpected error occured (%hs) while removing the checksum for %ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:968
+#: control/SfsCtrl.cpp:1005
 #, c-format
 msgid "An unexpected error occured (%hs) while removing the signature for %ls."
 msgstr ""
 
-#: control/SfsCtrl.cpp:1268
+#: control/SfsCtrl.cpp:1305
 #, c-format
 msgid "Failed to open %ls for writing: %hs"
 msgstr ""
 
-#: control/SfsCtrl.cpp:1277
+#: control/SfsCtrl.cpp:1314
 #, c-format
 msgid "Failed to flush the content of %ls: %hs"
+msgstr ""
+
+#: control/SfsCtrl.cpp:1469
+msgid "SFS operation"
+msgstr ""
+
+#: control/SfsCtrl.cpp:1470
+msgid "SFS operation in Progress. Please wait ..."
 msgstr ""
 
 #: control/PolicyCtrl.cpp:474

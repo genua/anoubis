@@ -29,6 +29,7 @@
 #define _SFSCTRL_H_
 
 #include <wx/event.h>
+#include <wx/progdlg.h>
 
 #include <list>
 
@@ -504,6 +505,11 @@ class SfsCtrl : public wxEvtHandler
 		wxArrayString	errorList_;
 		bool		comEnabled_;
 		bool		sigEnabled_;
+		int		inProgress_;
+		wxProgressDialog	*progress_;
+		int		progressMax_;
+		int		progressDone_;
+		bool		progressAbort_;
 
 		/**
 		 * The export-flag.
@@ -600,6 +606,33 @@ class SfsCtrl : public wxEvtHandler
 		void sendDirChangedEvent(void);
 		void sendEntryChangedEvent(int);
 		void sendErrorEvent(void);
+
+		/**
+		 * Start an SFS-Operation with a given number of steps.
+		 * If an SFS-Operation is already in progress the steps
+		 * are added to the ongoing operation.
+		 *
+		 * @param[in] 1st Number of steps for the progress bar.
+		 */
+		void startSfsOp(int steps);
+
+		/**
+		 * End an SFS-Operation.
+		 * @param None.
+		 */
+		void endSfsOp(void);
+
+		/**
+		 * Indicate Progress of an SFS-Operation.
+		 * @param[in] 1st The number of steps that have beed done
+		 *		since the last call to updateSfsOp.
+		 * @return False if the operation should be aborted.
+		 *
+		 * NOTE: The parameter to updateSfsOp is incremental, i.e.
+		 * NOTE: the value is added to the internal counter of steps
+		 * NOTE: already done. The value is not absolute.
+		 */
+		bool updateSfsOp(int done);
 
 		/**
 		 * Internal utility class, which helps to pop tasks from

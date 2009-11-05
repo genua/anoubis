@@ -26,6 +26,7 @@
  */
 
 #include <wx/intl.h>
+#include <wx/progdlg.h>
 
 #include <anoubis_sig.h>
 #include <csum/csum.h>
@@ -40,11 +41,14 @@
 #include "JobCtrl.h"
 #include "KeyCtrl.h"
 #include "SfsCtrl.h"
+#include "main.h"	/* For wxGetApp().ProcessPendingEvents() */
 
 SfsCtrl::SfsCtrl(void)
 {
 	this->entryFilter_ = FILTER_STD;
 	this->comEnabled_ = false; /* Communication disabled */
+	this->inProgress_ = 0; /* No SFS-Operation in Progress. */
+	this->progress_ = NULL;
 	this->sigEnabled_ = true; /* Signature support enabled */
 	this->exportEnabled_ = false;
 	this->importList_ = 0;
@@ -167,7 +171,7 @@ SfsCtrl::setSignatureEnabled(bool enable)
 SfsCtrl::CommandResult
 SfsCtrl::refresh(void)
 {
-	if (!taskList_.empty())
+	if (!taskList_.empty() || inProgress_)
 		return (RESULT_BUSY);
 
 	sfsDir_.removeAllEntries();
@@ -183,8 +187,9 @@ SfsCtrl::refresh(void)
 		/* Fetch sfslist from daemon */
 		if (!comEnabled_)
 			return (RESULT_NOTCONNECTED);
-
+		startSfsOp(1);
 		createSfsListTasks(getuid(), sfsDir_.getPath());
+		endSfsOp();
 		break;
 	}
 
@@ -195,17 +200,19 @@ SfsCtrl::refresh(void)
 SfsCtrl::CommandResult
 SfsCtrl::validate(const IndexArray &arr)
 {
-	if (!taskList_.empty())
+	if (!taskList_.empty() || inProgress_)
 		return (RESULT_BUSY);
 
 	if (comEnabled_) {
 		int numScheduled = 0;
 
+		startSfsOp(arr.Count());
 		for (size_t i = 0; i < arr.Count(); i++) {
 			unsigned int idx = arr.Item(i);
 
 			if (idx >= sfsDir_.getNumEntries()) {
 				/* Out of range */
+				endSfsOp();
 				return (RESULT_INVALIDARG);
 			}
 
@@ -224,9 +231,11 @@ SfsCtrl::validate(const IndexArray &arr)
 				/* Ask for the local checksum */
 				createCsumCalcTask(entry->getPath());
 			}
-
+			if (!updateSfsOp(1))
+				break;
 			numScheduled++;
 		}
+		endSfsOp();
 
 		return (numScheduled > 0) ? RESULT_EXECUTE : RESULT_NOOP;
 	} else
@@ -260,15 +269,17 @@ SfsCtrl::registerChecksum(const IndexArray &arr)
 	KeyCtrl::KeyResult keyRes;
 	unsigned int idx;
 
-	if (!taskList_.empty())
+	if (!taskList_.empty() || inProgress_)
 		return (RESULT_BUSY);
 
 	if (comEnabled_) {
+		startSfsOp(arr.Count());
 		for (size_t i = 0; i < arr.Count(); i++) {
 			idx = arr.Item(i);
 
 			if (idx >= sfsDir_.getNumEntries()) {
 				/* Out of range */
+				endSfsOp();
 				return (RESULT_INVALIDARG);
 			}
 
@@ -296,8 +307,10 @@ SfsCtrl::registerChecksum(const IndexArray &arr)
 				 */
 				createCsumCalcTask(entry->getPath());
 			}
+			if (!updateSfsOp(1))
+				break;
 		}
-
+		endSfsOp();
 		return (RESULT_EXECUTE);
 	} else
 		return (RESULT_NOTCONNECTED);
@@ -315,17 +328,19 @@ SfsCtrl::registerChecksum(unsigned int idx)
 SfsCtrl::CommandResult
 SfsCtrl::unregisterChecksum(const IndexArray &arr)
 {
-	if (!taskList_.empty())
+	if (!taskList_.empty() || inProgress_)
 		return (RESULT_BUSY);
 
 	if (comEnabled_) {
 		int numScheduled = 0;
 
+		startSfsOp(arr.Count());
 		for (size_t i = 0; i < arr.Count(); i++) {
 			unsigned int idx = arr.Item(i);
 
 			if (idx >= sfsDir_.getNumEntries()) {
 				/* Out of range */
+				endSfsOp();
 				return (RESULT_INVALIDARG);
 			}
 
@@ -340,8 +355,10 @@ SfsCtrl::unregisterChecksum(const IndexArray &arr)
 				    SfsEntry::SFSENTRY_SIGNATURE))
 					sendEntryChangedEvent(idx);
 			}
+			if (!updateSfsOp(1))
+				break;
 		}
-
+		endSfsOp();
 		return (numScheduled == 0) ? RESULT_NOOP : RESULT_EXECUTE;
 	} else
 		return (RESULT_NOTCONNECTED);
@@ -350,14 +367,19 @@ SfsCtrl::unregisterChecksum(const IndexArray &arr)
 SfsCtrl::CommandResult
 SfsCtrl::importChecksums(const wxString &path)
 {
-	if (!taskList_.empty())
+	if (!taskList_.empty() || inProgress_)
 		return (RESULT_BUSY);
 
 	if (comEnabled_) {
 		FILE *fh;
 		struct sfs_entry *entries, *entry;
+		int total = 0;
 
-		errorList_.Clear();
+		/*
+		 * Wrap the file read in a dummy SfsOp because the caller
+		 * relies on the "Done" event.
+		 */
+		startSfsOp(1);
 		clearImportEntries();
 
 		if ((fh = fopen(path.fn_str(), "r")) == 0) {
@@ -365,6 +387,7 @@ SfsCtrl::importChecksums(const wxString &path)
 			    _("Failed to open %ls for reading: %hs"),
 			    path.c_str(), strerror(errno)));
 			sendErrorEvent();
+			endSfsOp();
 			return (RESULT_INVALIDARG);
 		}
 
@@ -373,13 +396,17 @@ SfsCtrl::importChecksums(const wxString &path)
 			    _("Failed to parse %ls!"), path.c_str()));
 			sendErrorEvent();
 			fclose(fh);
+			endSfsOp();
 			return (RESULT_INVALIDARG);
 		}
-
+		endSfsOp();
 		fclose(fh);
 
 		entry = entries;
+		for (entry = entries; entry; entry = entry->next)
+			total++;
 
+		startSfsOp(total);
 		while (entry != 0) {
 			createComCsumAddTasks(entry);
 
@@ -395,10 +422,11 @@ SfsCtrl::importChecksums(const wxString &path)
 				createComCsumGetTasks(
 				    e->getPath(), true, true);
 			}
-
 			entry = entry->next;
+			if (!updateSfsOp(1))
+				break;
 		}
-
+		endSfsOp();
 		return (RESULT_EXECUTE);
 	} else
 		return (RESULT_NOTCONNECTED);
@@ -407,7 +435,7 @@ SfsCtrl::importChecksums(const wxString &path)
 SfsCtrl::CommandResult
 SfsCtrl::exportChecksums(const IndexArray &arr, const wxString &path)
 {
-	if (!taskList_.empty())
+	if (!taskList_.empty() || inProgress_)
 		return (RESULT_BUSY);
 
 	if (comEnabled_) {
@@ -415,11 +443,13 @@ SfsCtrl::exportChecksums(const IndexArray &arr, const wxString &path)
 		exportEnabled_ = true;
 		exportFile_ = path;
 
+		startSfsOp(arr.Count());
 		for (size_t i = 0; i < arr.Count(); i++) {
 			unsigned int idx = arr.Item(i);
 
 			if (idx >= sfsDir_.getNumEntries()) {
 				/* Out of range */
+				endSfsOp();
 				return (RESULT_INVALIDARG);
 			}
 
@@ -430,8 +460,10 @@ SfsCtrl::exportChecksums(const IndexArray &arr, const wxString &path)
 			SfsEntry *entry = sfsDir_.getEntry(idx);
 			createCsumCalcTask(entry->getPath());
 			createComCsumGetTasks(entry->getPath(), true, true);
+			if (!updateSfsOp(1))
+				break;
 		}
-
+		endSfsOp();
 		return (RESULT_EXECUTE);
 	} else
 		return (RESULT_NOTCONNECTED);
@@ -562,11 +594,14 @@ SfsCtrl::OnSfsListArrived(TaskEvent &event)
 	if (!basePath.EndsWith(wxT("/")))
 		basePath += wxT("/");
 
+	startSfsOp(result.Count());
 	for (unsigned int idx = 0; idx < result.Count(); idx++) {
 		SfsEntry *entry = sfsDir_.insertEntry(basePath + result[idx]);
 
 		if (entry == 0) {
 			/* Not inserted into the model */
+			if (!updateSfsOp(1))
+				break;
 			continue;
 		}
 
@@ -595,8 +630,10 @@ SfsCtrl::OnSfsListArrived(TaskEvent &event)
 			createComCsumGetTasks(entry->getPath(),
 			    !task->haveKeyId(), task->haveKeyId());
 		}
+		if (!updateSfsOp(1))
+			break;
 	}
-
+	endSfsOp();
 	/* Directory listing is complete */
 	sendDirChangedEvent();
 }
@@ -1324,23 +1361,28 @@ SfsCtrl::setChecksumMissing(SfsEntry *entry)
 void
 SfsCtrl::pushTask(Task *task)
 {
-	if (taskList_.size() == 0) {
+	if (taskList_.size() == 0 && !inProgress_) {
 		/*
 		 * This is the first task in the list -> an operation began.
-		 * Clear the error-list
+		 * Clear the error-list.
+		 * NOTE: This has been replaced in most cases by startSfsOp()
 		 */
 		errorList_.Clear();
 	}
 
 	taskList_.push_back(task);
+	if (taskList_.size() > 20)
+		wxGetApp().ProcessPendingEvents();
 }
 
 bool
 SfsCtrl::popTask(Task *task)
 {
-	bool result = taskList_.DeleteObject(task);
+	bool result = true;
+	if (task)
+		result = taskList_.DeleteObject(task);
 
-	if (taskList_.size() == 0) {
+	if (taskList_.size() == 0 && !inProgress_) {
 		/*
 		 * This was the last task in the list -> the operation finished
 		 */
@@ -1410,4 +1452,53 @@ void
 SfsCtrl::PopTaskHelper::setTask(Task *task)
 {
 	task_ = task;
+}
+
+void
+SfsCtrl::startSfsOp(int steps)
+{
+	if (inProgress_++) {
+		progressMax_ += steps;
+	} else {
+		errorList_.Clear();
+		progressMax_ = steps;
+		progressDone_ = 0;
+		progressAbort_ = false;
+	}
+	if (!progress_ && progressMax_ > 40)
+		progress_ = new wxProgressDialog(_("SFS operation"),
+		    _("SFS operation in Progress. Please wait ..."),
+		    1000, NULL, wxPD_APP_MODAL|wxPD_AUTO_HIDE|wxPD_CAN_ABORT);
+}
+
+bool
+SfsCtrl::updateSfsOp(int done)
+{
+	bool	ret = true;
+
+	if (!inProgress_ || progressAbort_)
+		return false;
+	progressDone_ += done;
+	if (progress_ && progressMax_) {
+		int	reldone = (1000LL * progressDone_) / progressMax_;
+		ret =  progress_->Update(reldone);
+	}
+	if (!ret)
+		progressAbort_ = true;
+	return ret;
+}
+
+void
+SfsCtrl::endSfsOp(void)
+{
+	if (--inProgress_)
+		return;
+	if (progress_) {
+		/* The Yield is required to avoid a BadWindow warning from X */
+		progress_->Hide();
+		wxSafeYield(false);
+		delete progress_;
+		progress_ = NULL;
+	}
+	popTask(NULL);
 }

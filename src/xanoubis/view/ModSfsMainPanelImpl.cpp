@@ -333,11 +333,8 @@ ModSfsMainPanelImpl::OnSfsMainInverseCheckboxClicked(wxCommandEvent&)
 void
 ModSfsMainPanelImpl::OnSfsMainValidateButtonClicked(wxCommandEvent&)
 {
+	enableSfsControls(true);
 	SfsCtrl::CommandResult result = sfsCtrl_->validateAll();
-
-	/* Controls are disabled if operation is executed */
-	enableSfsControls(result == SfsCtrl::RESULT_EXECUTE);
-
 	handleSfsCommandResult(result);
 }
 
@@ -347,6 +344,7 @@ ModSfsMainPanelImpl::OnSfsMainApplyButtonClicked(wxCommandEvent&)
 	SfsCtrl::CommandResult result = SfsCtrl::RESULT_EXECUTE;
 	IndexArray selection = SfsMainListCtrl->getSelectedIndexes();
 
+	enableSfsControls(true);
 	switch (SfsMainActionChoice->GetCurrentSelection()) {
 	case 0:
 		result = sfsCtrl_->registerChecksum(selection);
@@ -358,10 +356,6 @@ ModSfsMainPanelImpl::OnSfsMainApplyButtonClicked(wxCommandEvent&)
 		result = sfsCtrl_->validate(selection);
 		break;
 	}
-
-	/* Controls are disabled if operation is executed */
-	enableSfsControls(result == SfsCtrl::RESULT_EXECUTE);
-
 	handleSfsCommandResult(result);
 }
 

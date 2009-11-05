@@ -317,6 +317,7 @@ ComSfsListTask::done(void)
 			}
 			free(list);
 		}
+		free(basepath_);
 	}
 	/*
 	 * We only reach this point in case of an error and the error
@@ -346,7 +347,7 @@ ComSfsListTask::canFetch(const wxString &file) const
 	if (directory_ != wxT("/"))
 		path.Prepend(directory_);
 
-	result = stat(path.fn_str(), &fstat);
+	result = lstat(path.fn_str(), &fstat);
 
 	if (orphaned_)
 		return (result != 0);

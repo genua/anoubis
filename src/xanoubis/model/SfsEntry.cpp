@@ -98,8 +98,8 @@ SfsEntry::fileExists(void) const
 {
 	struct stat fstat;
 
-	if (stat(this->path_.fn_str(), &fstat) == 0)
-		return (!S_ISDIR(fstat.st_mode));
+	if (lstat(this->path_.fn_str(), &fstat) == 0)
+		return (S_ISREG(fstat.st_mode) || S_ISLNK(fstat.st_mode));
 	else
 		return (false);
 }
