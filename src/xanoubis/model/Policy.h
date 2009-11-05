@@ -137,6 +137,27 @@ class Policy : public Subject
 		wxString getScopeName(void) const;
 
 		/**
+		 * Returns the value of the given flag.
+		 *
+		 * The flags are defined in apn.h.
+		 *
+		 * @param[in] 1st The flag to test
+		 * @return true if the flag is set, false if unset.
+		 */
+		bool getFlag(unsigned int) const;
+
+		/**
+		 * Updates the value of the given flag.
+		 *
+		 * The flags are defined in apn.h.
+		 *
+		 * @param[in] 1st The flag to update
+		 * @param[in] 2nd The new value
+		 * @return Nothing
+		 */
+		void setFlag(unsigned int, bool);
+
+		/**
 		 * Return true if the rule can be moved up
 		 * @param None.
 		 * @return True if the rule can be moved upwards

@@ -34,6 +34,7 @@
 #include <wx/string.h>
 
 #include "AnPickFromFs.h"
+#include "ContextAppPolicy.h"
 #include "DlgRuleEditorAppPage.h"
 #include "DlgRuleEditorFilterSubjectPage.h"
 
@@ -57,6 +58,10 @@ DlgRuleEditorAppPage::update(Subject *subject)
 {
 	if (subject == appPolicy_ || subject == ctxPolicy_)
 		setBinary();
+
+	if (subject && subject->IsKindOf(CLASSINFO(ContextAppPolicy))) {
+		setDisableSFS();
+	}
 }
 
 void
@@ -77,6 +82,13 @@ DlgRuleEditorAppPage::select(Policy *policy)
 		subjPage->select(policy);
 		Enable(enable_);
 	}
+
+	/*
+	 * The "Disable SFS" checkbox is only displayed for
+	 * Context applications
+	 */
+	noSfsCheckbox->Show(policy &&
+	    policy->IsKindOf(CLASSINFO(ContextAppPolicy)));
 }
 
 void
@@ -92,6 +104,17 @@ DlgRuleEditorAppPage::setBinaryIndex(unsigned int index)
 {
 	binaryIndex_ = index;
 	subjPage->setBinaryIndex(index);
+}
+
+void
+DlgRuleEditorAppPage::onNoSfsClicked(wxCommandEvent &event)
+{
+	if (appPolicy_ != 0 &&
+	    appPolicy_->IsKindOf(CLASSINFO(ContextAppPolicy))) {
+		appPolicy_->setFlag(APN_RULE_NOSFS, event.IsChecked());
+	}
+
+	event.Skip();
 }
 
 void
@@ -131,4 +154,10 @@ DlgRuleEditorAppPage::setBinary(void)
 			pageHeader_ = current;
 		}
 	}
+}
+
+void
+DlgRuleEditorAppPage::setDisableSFS(void)
+{
+	noSfsCheckbox->SetValue(appPolicy_->getFlag(APN_RULE_NOSFS));
 }

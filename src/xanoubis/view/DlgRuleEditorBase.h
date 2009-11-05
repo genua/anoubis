@@ -55,9 +55,9 @@ class DlgRuleEditorFilterSubjectPage;
 #include <wx/panel.h>
 #include <wx/splitter.h>
 #include <wx/frame.h>
+#include <wx/checkbox.h>
 #include <wx/scrolwin.h>
 #include <wx/radiobox.h>
-#include <wx/checkbox.h>
 
 ///////////////////////////////////////////////////////////////////////////
 
@@ -166,11 +166,13 @@ class DlgRuleEditorAppPageBase : public wxPanel
 	protected:
 		wxScrolledWindow* mainPage;
 		DlgRuleEditorFilterSubjectPage* subjPage;
+		wxCheckBox* noSfsCheckbox;
 		wxButton* addButton;
 		wxButton* deleteButton;
 		
 		
 		// Virtual event handlers, overide them in your derived class
+		virtual void onNoSfsClicked( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onAddButton( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onDeleteButton( wxCommandEvent& event ){ event.Skip(); }
 		

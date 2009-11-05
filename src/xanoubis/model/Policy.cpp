@@ -141,6 +141,32 @@ Policy::getScopeName(void) const
 }
 
 bool
+Policy::getFlag(unsigned int flag) const
+{
+	return ((rule_ != 0) ? (rule_->flags & flag) : false);
+}
+
+void
+Policy::setFlag(unsigned int flag, bool value)
+{
+	if ((rule_ == 0) || (getFlag(flag) == value)) {
+		/* Nothing to do */
+		return;
+	}
+
+	startChange();
+
+	if (value)
+		rule_->flags |= flag;
+	else
+		rule_->flags &= ~flag;
+
+	setModified();
+
+	finishChange();
+}
+
+bool
 Policy::canMoveUp(void) const
 {
 	if (apn_can_move_up(getApnRule()))

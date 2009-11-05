@@ -110,6 +110,14 @@ class DlgRuleEditorAppPage : public DlgRuleEditorPage,
 		 */
 		void setBinaryIndex(unsigned int);
 
+	protected:
+		/**
+		 * Handles selection events from the "Disable SFS" checkbox.
+		 * Updates the model.
+		 * @param[in] 1st The event.
+		 */
+		void onNoSfsClicked(wxCommandEvent &);
+
 	private:
 		/**
 		 * This page is responsible for the binary with this index.
@@ -137,6 +145,11 @@ class DlgRuleEditorAppPage : public DlgRuleEditorPage,
 		 * @return Nothing.
 		 */
 		void setBinary(void);
+
+		/**
+		 * Puts the value of the nosfs-Flag into the checkbox.
+		 */
+		void setDisableSFS(void);
 };
 
 #endif	/* _DLGRULEEDITORAPPPAGE_H_ */

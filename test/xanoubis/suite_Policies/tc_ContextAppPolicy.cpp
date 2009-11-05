@@ -505,6 +505,23 @@ START_TEST(ContextAppPolicy_setBinaryList)
 }
 END_TEST
 
+START_TEST(ContextAppPolicy_setNoSfs)
+{
+	fail_unless(!policy->getFlag(APN_RULE_NOSFS),
+	    "nosfs-flag is already set");
+
+	policy->setFlag(APN_RULE_NOSFS, false);
+	fail_unless(!policy->getFlag(APN_RULE_NOSFS), "nosfs-flag is set");
+	CHECK_POLICY_MODIFIED(policy, false);
+	CHECK_OBSERVER_NOTIFIED(observer, false);
+
+	policy->setFlag(APN_RULE_NOSFS, true);
+	fail_unless(policy->getFlag(APN_RULE_NOSFS), "nosfs-flag is not set");
+	CHECK_POLICY_MODIFIED(policy, true);
+	CHECK_OBSERVER_NOTIFIED(observer, true);
+}
+END_TEST
+
 /*
  * Test case
  */
@@ -522,6 +539,7 @@ getTc_ContextAppPolicy(void)
 	tcase_add_test(testCase, ContextAppPolicy_setBinaryName_one);
 	tcase_add_test(testCase, ContextAppPolicy_setBinaryName_two);
 	tcase_add_test(testCase, ContextAppPolicy_setBinaryList);
+	tcase_add_test(testCase, ContextAppPolicy_setNoSfs);
 
 	return (testCase);
 }

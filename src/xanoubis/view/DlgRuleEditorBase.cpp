@@ -328,6 +328,12 @@ DlgRuleEditorAppPageBase::DlgRuleEditorAppPageBase( wxWindow* parent, wxWindowID
 	subjPage = new DlgRuleEditorFilterSubjectPage( mainPage, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
 	mainSizer->Add( subjPage, 1, wxALL|wxEXPAND, 5 );
 	
+	noSfsCheckbox = new wxCheckBox( mainPage, wxID_ANY, _("Disable SFS"), wxDefaultPosition, wxDefaultSize, 0 );
+	
+	noSfsCheckbox->SetToolTip( _("Activate it, if SFS should be disabled for this policy (and all of it's binaries).") );
+	
+	mainSizer->Add( noSfsCheckbox, 0, wxALL, 5 );
+	
 	wxBoxSizer* footerSizer;
 	footerSizer = new wxBoxSizer( wxHORIZONTAL );
 	
@@ -355,6 +361,7 @@ DlgRuleEditorAppPageBase::DlgRuleEditorAppPageBase( wxWindow* parent, wxWindowID
 	this->Layout();
 	
 	// Connect Events
+	noSfsCheckbox->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DlgRuleEditorAppPageBase::onNoSfsClicked ), NULL, this );
 	addButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorAppPageBase::onAddButton ), NULL, this );
 	deleteButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorAppPageBase::onDeleteButton ), NULL, this );
 }
