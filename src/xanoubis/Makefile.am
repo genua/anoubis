@@ -275,6 +275,8 @@ xanoubis_SOURCES= \
 	model/PolicyUtils.h \
 	model/ListCtrlColumn.cpp \
 	model/ListCtrlColumn.h \
+	model/SimpleOverviewRow.cpp \
+	model/SimpleOverviewRow.h \
 	view/DlgBackupPolicyBase.h \
 	view/DlgBackupPolicyBase.cpp \
 	view/DlgBackupPolicyImpl.h \
