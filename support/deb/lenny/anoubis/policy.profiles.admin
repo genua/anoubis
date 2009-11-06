@@ -1,10 +1,70 @@
-apnversion 1.0
+apnversion 1.1
 alf {
+	# Anoubis software
+	/sbin/anoubisctl {
+		# allow all because of NFS, X, etc.
+		default allow
+	}
+	/sbin/sfssig {
+		# allow all because of NFS, X, etc.
+		default allow
+	}
+	/usr/bin/xanoubis {
+		# allow all because of NFS, X, etc.
+		default allow
+	}
+
+	# AntiVirus software
+	@avupdate@ {
+		default ask
+	}
+	@freshclam@ {
+		default ask
+	}
+
 	any {
 		default allow
 	}
 }
+sandbox {
+	# Anoubis software
+	/sbin/anoubisctl {
+		default allow
+	}
+	/sbin/sfssig {
+		default allow
+	}
+	/usr/bin/xanoubis {
+		default allow
+	}
+
+	# AntiVirus software
+	{ @antivir@, @avguard@, @avscan@ } {
+		allow path "/" r
+		default ask
+	}
+	{ @clamscan@, @clamdscan@ } {
+		allow path "/" r
+		default ask
+	}
+}
 context {
+	# Anoubis software
+	/sbin/anoubisctl nosfs {
+		# no context new for cvs
+	}
+	/sbin/sfssig nosfs {
+	}
+	/usr/bin/xanoubis nosfs {
+		# no context new for cvs
+	}
+
+	# AntiVirus software
+	{ @antivir@, @avguard@, @avscan@ } nosfs {
+	}
+	{ @clamscan@, @clamdscan@ } nosfs {
+	}
+
 	any {
 		context new any
 	}

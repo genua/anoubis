@@ -1,12 +1,15 @@
-apnversion 1.0
+apnversion 1.1
 alf {
-
+	# Anoubis software
 	/sbin/anoubisctl {
 		# allow all because of NFS, X, etc.
 		default allow
 	}
-
-	/usr/local/bin/xanoubis {
+	/sbin/sfssig {
+		# allow all because of NFS, X, etc.
+		default allow
+	}
+	/usr/bin/xanoubis {
 		# allow all because of NFS, X, etc.
 		default allow
 	}
@@ -215,22 +218,25 @@ alf {
 	}
 }
 sandbox {
+	# Anoubis software
 	/sbin/anoubisctl {
-		# allow all in order to access/write profiles, etc
 		default allow
 	}
-
-	/usr/local/bin/xanoubis {
-		# allow all in order to access/write profiles, etc
+	/sbin/sfssig {
+		default allow
+	}
+	/usr/bin/xanoubis {
 		default allow
 	}
 }
 context {
-	/sbin/anoubisctl {
+	# Anoubis software
+	/sbin/anoubisctl nosfs {
 		# no context new for cvs
 	}
-
-	/usr/local/bin/xanoubis {
+	/sbin/sfssig nosfs {
+	}
+	/usr/bin/xanoubis nosfs {
 		# no context new for cvs
 	}
 

@@ -1,13 +1,27 @@
-apnversion 1.0
+apnversion 1.1
 alf {
-	/sbin/anoubisctl  {
+	# Anoubis software
+	/sbin/anoubisctl {
 		# allow all because of NFS, X, etc.
 		default allow
 	}
-	/usr/bin/xanoubis  {
+	/sbin/sfssig {
 		# allow all because of NFS, X, etc.
 		default allow
 	}
+	/usr/bin/xanoubis {
+		# allow all because of NFS, X, etc.
+		default allow
+	}
+
+	# AntiVirus software
+	@avupdate@ {
+		default ask
+	}
+	@freshclam@ {
+		default ask
+	}
+
 	/usr/sbin/sshd  {
 		allow accept tcp all
 
@@ -122,12 +136,27 @@ sfs {
 	path "/home" signed-self valid allow invalid log deny unknown continue
 }
 sandbox {
-	/sbin/anoubisctl  {
+	# Anoubis software
+	/sbin/anoubisctl {
 		default allow
 	}
-	/usr/bin/xanoubis  {
+	/sbin/sfssig {
 		default allow
 	}
+	/usr/bin/xanoubis {
+		default allow
+	}
+
+	# AntiVirus software
+	{ @antivir@, @avguard@, @avscan@ } {
+		allow path "/" r
+		default ask
+	}
+	{ @clamscan@, @clamdscan@ } {
+		allow path "/" r
+		default ask
+	}
+
 	@kdeinit4@  {
 		allow path "/tmp" rw
 		allow path "/var/tmp" rw
@@ -141,12 +170,20 @@ sandbox {
 	}
 }
 context {
-	/sbin/anoubisctl  {
+	# Anoubis software
+	/sbin/anoubisctl nosfs {
+		# no context new for cvs
+	}
+	/sbin/sfssig nosfs {
+	}
+	/usr/bin/xanoubis nosfs {
 		# no context new for cvs
 	}
 
-	/usr/bin/xanoubis  {
-		# no context new for cvs
+	# AntiVirus software
+	{ @antivir@, @avguard@, @avscan@ } nosfs {
+	}
+	{ @clamscan@, @clamdscan@ } nosfs {
 	}
 
 	/usr/sbin/sshd  {
