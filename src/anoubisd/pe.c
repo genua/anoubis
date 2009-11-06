@@ -365,7 +365,8 @@ pe_handle_sfsexec(struct eventdev_hdr *hdr)
 	pe_proc_exec(msg->common.task_cookie,
 	    hdr->msg_uid, hdr->msg_pid,
 	    (msg->flags & ANOUBIS_OPEN_FLAG_CSUM) ? msg->csum : NULL,
-	    (msg->flags & ANOUBIS_OPEN_FLAG_PATHHINT) ? msg->pathhint : NULL);
+	    (msg->flags & ANOUBIS_OPEN_FLAG_PATHHINT) ? msg->pathhint : NULL,
+	    (msg->flags & ANOUBIS_OPEN_FLAG_SECUREEXEC));
 
 	return (NULL);
 }

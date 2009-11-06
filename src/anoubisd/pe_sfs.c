@@ -212,7 +212,7 @@ pe_decide_sfs(struct pe_proc *proc, struct pe_file_event *fevent,
 {
 	static const char	*verdict[3] = { "allowed", "denied", "asked" };
 	anoubisd_reply_t	*reply = NULL;
-	int			 do_disable = 0;
+	int			 do_disable = 0, secure = 0;
 	int			 decision = -1;
 	int			 sfsmatch = ANOUBIS_SFS_NONE;
 	int			 rule_id = 0;
@@ -230,6 +230,8 @@ pe_decide_sfs(struct pe_proc *proc, struct pe_file_event *fevent,
 	}
 	if (proc && pe_proc_is_sfsdisable(proc, fevent->uid))
 		do_disable = 1;
+	if (proc && pe_proc_is_secure(proc))
+		secure = 1;
 	if (time(&now) == (time_t)-1) {
 		log_warn("pe_decide_sfs: Cannot get current time");
 		goto err;
@@ -242,6 +244,11 @@ pe_decide_sfs(struct pe_proc *proc, struct pe_file_event *fevent,
 		if (i == PE_PRIO_USER1 && do_disable) {
 			decision = APN_ACTION_ALLOW;
 			break;
+		}
+		if (secure
+		    && pe_context_is_nosfs(pe_proc_get_context(proc, i))) {
+			/* NOSFS enforced by the context. Do nothing. */
+			continue;
 		}
 
 		rulecnt = pe_sfs_getrules(fevent->uid, i, fevent->path,

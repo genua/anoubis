@@ -377,7 +377,7 @@ pe_context_subject_match(const struct apn_app *app,
 	u_int8_t			 csbuf[ANOUBIS_CS_LEN];
 	char				*keyid;
 	int				 ret;
-	
+
 	if (!app)
 		return 0;
 	subject = &app->subject;
@@ -497,7 +497,7 @@ pe_context_exec(struct pe_proc *proc, uid_t uid, struct pe_proc_ident *pident)
 	 * or if we are not tracked. Actually, the latter should not happen.
 	 */
 	for (i = 0; i < PE_PRIO_MAX; i++) {
-		/* Do not switch if are rules forbid it. */
+		/* Do not switch if rules forbid it. */
 		if (pe_context_decide(proc, APN_CTX_NEW, i, pident, uid) == 0)
 			continue;
 		DEBUG(DBG_PE_CTX,
@@ -835,4 +835,12 @@ pe_context_get_ident(struct pe_context *ctx)
 	if (!ctx)
 		return NULL;
 	return &ctx->ident;
+}
+
+int
+pe_context_is_nosfs(struct pe_context *ctx)
+{
+	if (ctx == NULL || ctx->ctxrule == NULL)
+		return 0;
+	return !!(ctx->ctxrule->flags & APN_RULE_NOSFS);
 }

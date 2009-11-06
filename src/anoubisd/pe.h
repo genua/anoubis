@@ -88,7 +88,8 @@ void			 pe_proc_put(struct pe_proc *proc);
 void			 pe_proc_fork(uid_t, anoubis_cookie_t,
 			     anoubis_cookie_t);
 void			 pe_proc_exec(anoubis_cookie_t, uid_t, pid_t,
-			     const u_int8_t *csum, const char *pathhint);
+			     const u_int8_t *csum, const char *pathhint,
+			     int secure);
 void			 pe_proc_exit(anoubis_cookie_t);
 void			 pe_proc_addinstance(anoubis_cookie_t);
 void			 pe_proc_add_thread(anoubis_cookie_t);
@@ -105,6 +106,7 @@ void			 pe_proc_set_pid(struct pe_proc *, pid_t);
 struct pe_proc_ident	*pe_proc_ident(struct pe_proc *);
 int			 pe_proc_set_sfsdisable(pid_t, uid_t);
 int			 pe_proc_is_sfsdisable(struct pe_proc *, uid_t);
+int			 pe_proc_is_secure(struct pe_proc *);
 void			 pe_proc_save_ctx(struct pe_proc *, int,
 			     anoubis_cookie_t);
 void			 pe_proc_restore_ctx(struct pe_proc *, int,
@@ -129,6 +131,7 @@ void			 pe_context_reference(struct pe_context *);
 void			 pe_context_put(struct pe_context *);
 int			 pe_context_uses_rs(struct pe_context *,
 			     struct apn_ruleset *);
+int			 pe_context_is_nosfs(struct pe_context *);
 
 /* Context change functions */
 void			 pe_context_refresh(struct pe_proc *, int,

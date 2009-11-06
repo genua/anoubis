@@ -435,7 +435,7 @@ pe_proc_remove_thread(anoubis_cookie_t cookie)
  * Update process attributes after an exec system call.
  */
 void pe_proc_exec(anoubis_cookie_t cookie, uid_t uid, pid_t pid,
-    const u_int8_t *csum, const char *pathhint)
+    const u_int8_t *csum, const char *pathhint, int secure)
 {
 	struct pe_proc		*proc = pe_proc_get(cookie);
 	struct pe_context	*ctx0, *ctx1;
@@ -452,6 +452,19 @@ void pe_proc_exec(anoubis_cookie_t cookie, uid_t uid, pid_t pid,
 	pe_proc_ident_set(&proc->ident, csum, pathhint);
 	pe_proc_set_pid(proc, pid);
 	pe_context_exec(proc, uid, &proc->ident);
+	if (secure) {
+		pe_proc_set_flag(proc, PE_PROC_FLAGS_SECUREEXEC);
+	} else {
+		int i;
+		pe_proc_clr_flag(proc, PE_PROC_FLAGS_SECUREEXEC);
+		for (i = 0; i < PE_PRIO_MAX; i++) {
+			if (pe_context_is_nosfs(pe_proc_get_context(proc, i))) {
+				log_warnx("%s did not do a secure exec, "
+				    "NOSFS flag will be ignored.", pathhint);
+				break;
+			}
+		}
+	}
 
 	ctx0 = pe_proc_get_context(proc, 0);
 	ctx1 = pe_proc_get_context(proc, 1);
@@ -728,4 +741,12 @@ pe_proc_release(void)
 		pe_proc_clr_flag(proc, PE_PROC_FLAGS_HOLD);
 		pe_upgrade_start(proc);
 	}
+}
+
+int
+pe_proc_is_secure(struct pe_proc *proc)
+{
+	if (!proc)
+		return 0;
+	return pe_proc_get_flag(proc, PE_PROC_FLAGS_SECUREEXEC);
 }
