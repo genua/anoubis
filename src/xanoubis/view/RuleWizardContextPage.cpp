@@ -42,6 +42,8 @@ RuleWizardContextPage::RuleWizardContextPage(wxWindow *parent,
 		exceptionsCheckBox->Disable();
 	}
 
+	noSfsCheckbox->SetValue(history_->isSfsDisabled());
+
 	parent->Connect(wxEVT_WIZARD_PAGE_CHANGED,
 	    wxWizardEventHandler(RuleWizardContextPage::onPageChanged),
 	    NULL, this);
@@ -77,6 +79,12 @@ RuleWizardContextPage::onNoRadioButton(wxCommandEvent &)
 	exceptionsCheckBox->SetValue(false);
 	exceptionsCheckBox->Disable();
 	updateNavi();
+}
+
+void
+RuleWizardContextPage::onSfsDisable(wxCommandEvent &event)
+{
+	history_->setSfsDisabled(event.IsChecked());
 }
 
 void

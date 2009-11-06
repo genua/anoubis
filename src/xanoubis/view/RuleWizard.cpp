@@ -449,6 +449,8 @@ RuleWizard::createContextPolicy(PolicyRuleSet *ruleSet) const
 		ctxApp->setSubjectSelf(0, false);
 	}
 
+	ctxApp->setFlag(APN_RULE_NOSFS, history_.isSfsDisabled());
+
 	if (!history_.isSameContext()) {
 		/* Create 'context new any' */
 		ctxFilter = new ContextFilterPolicy(ctxApp);

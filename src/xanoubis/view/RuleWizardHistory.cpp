@@ -52,6 +52,7 @@ RuleWizardHistory::RuleWizardHistory(void)
 	isSameContext_	   = true;
 	haveContextException_ = false;
 	contextExceptionBinaryList_.Clear();
+	noSfs_ = false;
 
 	haveAlfPolicy_	     = false;
 	overwriteAlfPolicy_  = OVERWRITE_NO;
@@ -214,6 +215,18 @@ RuleWizardHistory::getContextExceptionBinary(unsigned int index) const
 		return contextExceptionBinaryList_[index];
 	}
 	return wxT("");
+}
+
+bool
+RuleWizardHistory::isSfsDisabled(void) const
+{
+	return (noSfs_);
+}
+
+void
+RuleWizardHistory::setSfsDisabled(bool value)
+{
+	noSfs_ = value;
 }
 
 /*

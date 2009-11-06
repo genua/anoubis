@@ -83,6 +83,14 @@ class RuleWizardContextPage : public RuleWizardContextPageBase
 		virtual void onNoRadioButton(wxCommandEvent &);
 
 		/**
+		 * Handles events from noSfsCheckbox.
+		 * Updates history.
+		 * @param[in] 1st The event.
+		 * @return Nothing.
+		 */
+		virtual void onSfsDisable(wxCommandEvent &);
+
+		/**
 		 * Update navigation.
 		 * @param None.
 		 * @return Nothing.

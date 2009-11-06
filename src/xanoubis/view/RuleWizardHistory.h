@@ -163,6 +163,23 @@ class RuleWizardHistory
 		const wxString getContextExceptionBinary(unsigned int) const;
 
 		/**
+		 * Returns the value of the nosfs-flag.
+		 *
+		 * The flag is assigned to the context-rule, If set, SFS is
+		 * disabled for the context.
+		 *
+		 * @return Value of nosfs-flag.
+		 */
+		bool isSfsDisabled(void) const;
+
+		/**
+		 * Updates the value of the nosfs-flag.
+		 *
+		 * @param[in] The new value of the nosfs-flag.
+		 */
+		void setSfsDisabled(bool);
+
+		/**
 		 * Are defaults for alf available?
 		 * @param None.
 		 * @return True if there are defaults.
@@ -609,6 +626,11 @@ class RuleWizardHistory
 		 * The list of context exceptions binaries.
 		 */
 		wxArrayString contextExceptionBinaryList_;
+
+		/**
+		 * Value of the nosfs-flag.
+		 */
+		bool noSfs_;
 
 		/**
 		 * Does the given program already has alf policies?

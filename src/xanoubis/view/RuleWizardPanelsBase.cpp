@@ -384,6 +384,21 @@ RuleWizardContextPageBase::RuleWizardContextPageBase( wxWindow* parent, wxWindow
 	
 	mainSizer->Add( 0, 0, 2, wxEXPAND, 5 );
 	
+	detailsPanel = new AnDetails( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL, wxT("Details...") );
+	wxBoxSizer* bSizer56;
+	bSizer56 = new wxBoxSizer( wxVERTICAL );
+	
+	noSfsCheckbox = new wxCheckBox( detailsPanel, wxID_ANY, _("Disable SFS"), wxDefaultPosition, wxDefaultSize, 0 );
+	
+	noSfsCheckbox->SetToolTip( _("Activate it, if SFS should be disabled for this binary.") );
+	
+	bSizer56->Add( noSfsCheckbox, 0, wxALL, 5 );
+	
+	detailsPanel->SetSizer( bSizer56 );
+	detailsPanel->Layout();
+	bSizer56->Fit( detailsPanel );
+	mainSizer->Add( detailsPanel, 1, wxEXPAND | wxALL, 5 );
+	
 	pageSizer->Add( mainSizer, 7, wxEXPAND, 5 );
 	
 	this->SetSizer( pageSizer );
@@ -393,6 +408,7 @@ RuleWizardContextPageBase::RuleWizardContextPageBase( wxWindow* parent, wxWindow
 	yesRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( RuleWizardContextPageBase::onYesRadioButton ), NULL, this );
 	exceptionsCheckBox->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( RuleWizardContextPageBase::onExceptionsCheckBox ), NULL, this );
 	noRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( RuleWizardContextPageBase::onNoRadioButton ), NULL, this );
+	noSfsCheckbox->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( RuleWizardContextPageBase::onSfsDisable ), NULL, this );
 }
 
 RuleWizardContextExceptionPageBase::RuleWizardContextExceptionPageBase( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size, long style ) : wxPanel( parent, id, pos, size, style )

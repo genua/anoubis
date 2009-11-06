@@ -183,11 +183,14 @@ class RuleWizardContextPageBase : public wxPanel
 		wxCheckBox* exceptionsCheckBox;
 		wxRadioButton* noRadioButton;
 		
+		AnDetails* detailsPanel;
+		wxCheckBox* noSfsCheckbox;
 		
 		// Virtual event handlers, overide them in your derived class
 		virtual void onYesRadioButton( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onExceptionsCheckBox( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onNoRadioButton( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onSfsDisable( wxCommandEvent& event ){ event.Skip(); }
 		
 	
 	public:
