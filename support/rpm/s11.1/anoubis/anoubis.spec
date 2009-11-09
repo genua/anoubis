@@ -152,7 +152,7 @@ if ! getent group _nosfs >/dev/null; then
 fi
 exit 0
 
-%pre -n anoubisd
+%pre -n xanoubis
 if ! getent group _nosfs >/dev/null; then
 	groupadd -f -r _nosfs
 fi
