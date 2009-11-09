@@ -1103,37 +1103,6 @@ anoubis_client_csumrequest_start(struct anoubis_client *client,
 }
 
 struct anoubis_transaction *
-anoubis_client_sfsdisable_start(struct anoubis_client *client, pid_t pid)
-{
-	struct anoubis_msg		*m;
-	struct anoubis_transaction	*t = NULL;
-	static const u_int32_t nextops[] = { ANOUBIS_REPLY, -1 };
-
-	if ((client->proto & ANOUBIS_PROTO_POLICY) == 0)
-		return  NULL;
-	if (client->state != ANOUBIS_STATE_CONNECTED)
-		return NULL;
-	if (client->flags & FLAG_POLICY_PENDING)
-		return NULL;
-	m = anoubis_msg_new(sizeof(Anoubis_SfsDisableMessage));
-	if (!m)
-		return NULL;
-	set_value(m->u.sfsdisable->type, ANOUBIS_P_SFSDISABLE);
-	set_value(m->u.sfsdisable->pid, pid);
-	t = anoubis_transaction_create(0, ANOUBIS_T_INITSELF|ANOUBIS_T_DEQUEUE,
-	    &anoubis_client_ack_steps, NULL, client);
-	if (anoubis_client_send(client, m) < 0) {
-		anoubis_msg_free(m);
-		anoubis_transaction_destroy(t);
-		return NULL;
-	}
-	anoubis_transaction_setopcodes(t, nextops);
-	LIST_INSERT_HEAD(&client->ops, t, next);
-	client->flags |= FLAG_POLICY_PENDING;
-	return t;
-}
-
-struct anoubis_transaction *
 anoubis_client_passphrase_start(struct anoubis_client *client,
     const char *passphrase)
 {

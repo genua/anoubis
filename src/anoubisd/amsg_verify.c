@@ -454,7 +454,6 @@ anoubisd_msg_eventask_size(const char *buf, int buflen)
 
 #undef ADDOFFSET
 
-DEFINE_CHECK_FUNCTION(struct, anoubisd_msg_sfsdisable);
 DEFINE_CHECK_FUNCTION(struct, anoubisd_msg_pchange);
 
 static int
@@ -584,7 +583,6 @@ anoubisd_msg_size(const char *buf, int buflen)
 	VARIANT(ANOUBISD_MSG_EVENTCANCEL, eventdev_token, buf, buflen)
 	VARIANT(ANOUBISD_MSG_CHECKSUM_OP, anoubisd_msg_checksum_op, buf, buflen)
 	VARIANT(ANOUBISD_MSG_EVENTASK, anoubisd_msg_eventask, buf, buflen)
-	VARIANT(ANOUBISD_MSG_SFSDISABLE, anoubisd_msg_sfsdisable, buf, buflen)
 	VARIANT(ANOUBISD_MSG_POLICYCHANGE, anoubisd_msg_pchange, buf, buflen)
 	VARIANT(ANOUBISD_MSG_SFSCACHE_INVALIDATE, anoubisd_sfscache_invalidate,
 	    buf, buflen)

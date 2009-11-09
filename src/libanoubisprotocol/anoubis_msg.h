@@ -58,7 +58,6 @@ struct anoubis_msg {
 		Anoubis_PolicyReplyMessage * policyreply;
 		Anoubis_ChecksumRequestMessage * checksumrequest;
 		Anoubis_ChecksumAddMessage * checksumadd;
-		Anoubis_SfsDisableMessage * sfsdisable;
 		Anoubis_PolicyChangeMessage * policychange;
 		Anoubis_StatusNotifyMessage * statusnotify;
 		Anoubis_PassphraseMessage *passphrase;

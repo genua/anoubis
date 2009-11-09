@@ -44,8 +44,6 @@ struct pe_proc {
 	int			 threads;
 	pid_t			 pid;
 	uid_t			 uid;
-	uid_t			 sfsdisable_uid;
-	pid_t			 sfsdisable_pid;
 	unsigned int		 flags;
 
 	struct pe_proc_ident	 ident;

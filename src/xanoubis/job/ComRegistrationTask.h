@@ -114,7 +114,6 @@ class ComRegistrationTask : public ComTask
 			STATE_UNREGISTER,
 			STATE_STAT_REGISTER,
 			STATE_STAT_UNREGISTER,
-			STATE_SFS_DISABLE,
 			STATE_DONE
 		};
 		RegState	state_;

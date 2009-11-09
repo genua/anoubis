@@ -354,16 +354,8 @@ MainFrame::OnConnectionStateChange(wxCommandEvent& event)
 
 	switch (newState) {
 	case JobCtrl::CONNECTED:
-		if (instance->isSfsDisable())
-			logMessage = wxString::Format(
-			    _("Connection established with %ls"),
-			    hostname.c_str());
-		else
-			logMessage = wxString::Format(
-			    _("Connection established with %ls "
-			    "without sfsdisable!"),
-			    hostname.c_str());
-
+		logMessage = wxString::Format(
+		    _("Connection established with %ls"), hostname.c_str());
 		Debug::info(logMessage);
 		doUpgradeNotify();
 		break;

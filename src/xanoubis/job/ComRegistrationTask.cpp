@@ -108,7 +108,6 @@ ComRegistrationTask::done(void)
 	 * ACTION_REGISTER:
 	 *  -> STATE_REGISTER
 	 *  -> STATE_STAT_REGISTER
-	 *  -> STATE_SFS_DISABLE
 	 *  -> STATE_DONE
 	 *
 	 * ACTION_UNREGISTER:
@@ -120,13 +119,8 @@ ComRegistrationTask::done(void)
 	while (1) {
 		if (ta_ && (ta_->flags & ANOUBIS_T_DONE)) {
 			if (ta_->result) {
-				if (lastState_ == STATE_SFS_DISABLE) {
-					setComTaskResult(
-					    RESULT_COM_SFS_DISABLE_ERROR);
-				} else {
-					setComTaskResult(RESULT_REMOTE_ERROR);
-					setResultDetails(ta_->result);
-				}
+				setComTaskResult(RESULT_REMOTE_ERROR);
+				setResultDetails(ta_->result);
 				state_ = STATE_DONE;
 			} else {
 				setComTaskResult(RESULT_SUCCESS);
@@ -152,16 +146,11 @@ ComRegistrationTask::done(void)
 		case STATE_STAT_REGISTER:
 			ta_ = anoubis_client_register_start(getClient(),
 			    getToken(), 0, 0, ANOUBIS_SOURCE_STAT);
-			state_ = STATE_SFS_DISABLE;
+			state_ = STATE_DONE;
 			break;
 		case STATE_STAT_UNREGISTER:
 			ta_ = anoubis_client_unregister_start(getClient(),
 			    getToken(), 0, 0, ANOUBIS_SOURCE_STAT);
-			state_ = STATE_DONE;
-			break;
-		case STATE_SFS_DISABLE:
-			ta_ = anoubis_client_sfsdisable_start(getClient(),
-			    getpid());
 			state_ = STATE_DONE;
 			break;
 		case STATE_DONE:

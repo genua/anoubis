@@ -77,22 +77,6 @@ int policy_dispatch(struct anoubis_policy_comm * policy, u_int64_t token,
 	return anoubis_policy_comm_answer(policy, token, 0, NULL, 0, 1);
 }
 
-static void
-dispatch_ok(struct anoubis_server *server, struct anoubis_msg *m,
-    uid_t uid __used, void *arg __used)
-{
-	struct anoubis_msg	*reply;
-
-	reply = anoubis_msg_new(sizeof(Anoubis_AckPayloadMessage));
-	fail_if(reply == NULL, "Out of memory");
-	set_value(reply->u.ack->type, ANOUBIS_REPLY);
-	set_value(reply->u.ack->error, 0);
-	set_value(reply->u.ack->opcode, get_value(m->u.general->type));
-	reply->u.ack->token = 0;
-	anoubis_msg_send(anoubis_server_getchannel(server), reply);
-	anoubis_msg_free(reply);
-}
-
 void
 tc_Communicator_lud_server(const char *sockname)
 {
@@ -136,8 +120,6 @@ tc_Communicator_lud_server(const char *sockname)
 	policy = anoubis_policy_comm_create(&policy_dispatch, NULL);
 	server = anoubis_server_create(s, policy);
 	fail_if(server == NULL, "Failed to create server protocol");
-	anoubis_dispatch_create(server, ANOUBIS_P_SFSDISABLE,
-	    dispatch_ok, NULL);
 	mark_point();
 
 	/* assemble status notify */

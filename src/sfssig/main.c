@@ -720,7 +720,6 @@ sfs_add(char *file, uid_t sfs_uid, struct anoubis_sig *as)
 	if (opts & SFSSIG_OPT_DEBUG)
 		fprintf(stderr, ">sfs_add\n");
 
-	/* We need a create_channel to perform a sfsdisable */
 	if (client == NULL) {
 		error = create_channel();
 		if (error) {
@@ -914,7 +913,6 @@ __sfs_get(char *file, int getmode, uid_t sfs_uid, struct anoubis_sig *as)
 	 * calculate the actual checksum of the file
 	 */
 	if (getmode == GET_VALIDATE) {
-		/* We need a create_channel to perform a sfsdisable */
 		if (client == NULL) {
 			error = create_channel();
 			if (error) {
@@ -1885,7 +1883,6 @@ request_keyids(char *file, int **ids, int *count)
 static int
 create_channel(void)
 {
-	struct anoubis_transaction	*t;
 	struct sockaddr_un		 ss;
 	achat_rc			 rc;
 	int				 error = 0;
@@ -1987,26 +1984,6 @@ create_channel(void)
 		goto err;
 	}
 
-	if (opts & SFSSIG_OPT_DEBUG2)
-		fprintf(stderr, "anoubis_client_sfsdisable\n");
-	t = anoubis_client_sfsdisable_start(client, getpid());
-	while(1) {
-		int ret = anoubis_client_wait(client);
-		if (ret <= 0) {
-			perror("sfsdisable");
-			anoubis_transaction_destroy(t);
-			return 5;
-		}
-		if (t->flags & ANOUBIS_T_DONE)
-			break;
-	}
-	error = t->result;
-	anoubis_transaction_destroy(t);
-	if (error) {
-		perror("Cannot disable SFS checks");
-		errno = error;
-		return 5;
-	}
 err:
 	if (opts & SFSSIG_OPT_DEBUG)
 		fprintf(stderr, "<create_channel\n");

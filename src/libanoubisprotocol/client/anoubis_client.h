@@ -67,8 +67,6 @@ int anoubis_client_wait(struct anoubis_client * client);
 struct anoubis_transaction *anoubis_client_csumrequest_start(
     struct anoubis_client *client, int op, char *path, u_int8_t *, short, short,
     uid_t, unsigned int flags);
-struct anoubis_transaction *anoubis_client_sfsdisable_start(
-    struct anoubis_client *client, pid_t pid);
 struct anoubis_transaction *anoubis_client_passphrase_start(
     struct anoubis_client *client, const char *passphrase);
 struct anoubis_transaction *anoubis_client_version_start(

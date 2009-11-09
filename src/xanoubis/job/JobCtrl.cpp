@@ -48,7 +48,6 @@ JobCtrl::JobCtrl(void)
 	this->socketPath_ = wxT(PACKAGE_SOCKET);
 	this->protocolVersion_ = -1;
 	this->apnVersion_ = -1;
-	this->sfsdisable_ = false;
 
 	csumCalcTaskQueue_ = new SynchronizedQueue<Task>(true);
 	comTaskQueue_ = new SynchronizedQueue<Task>(false);
@@ -170,12 +169,6 @@ JobCtrl::isConnected(void) const
 	return (t->isRunning());
 }
 
-bool
-JobCtrl::isSfsDisable(void) const
-{
-	return (sfsdisable_);
-}
-
 int
 JobCtrl::getDaemonProtocolVersion(void) const
 {
@@ -243,12 +236,6 @@ JobCtrl::onDaemonRegistration(TaskEvent &event)
 
 	if (task->getAction() == ComRegistrationTask::ACTION_REGISTER) {
 		if (task->getComTaskResult() == ComTask::RESULT_SUCCESS) {
-			sfsdisable_ = true;
-			/* Next, fetch versions from daemon */
-			addTask(&versionTask_);
-		} else if (task->getComTaskResult() ==
-		    ComTask::RESULT_COM_SFS_DISABLE_ERROR) {
-			sfsdisable_ = false;
 			/* Next, fetch versions from daemon */
 			addTask(&versionTask_);
 		} else {

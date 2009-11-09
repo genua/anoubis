@@ -150,7 +150,6 @@ static int	dispatch_generic_reply(void *cbdata, int error,
 		    void *data, int len, int orig_opcode);
 static void	dispatch_sfsdisable(struct anoubis_server *,
 		    struct anoubis_msg *, uid_t, void *);
-static int	dispatch_sfsdisable_reply(void *, int, void *, int, int);
 static void	dispatch_passphrase(struct anoubis_server *,
 		    struct anoubis_msg *, uid_t, void *);
 
@@ -228,7 +227,7 @@ session_connect(int fd __used, short event __used, void *arg)
 	}
 	anoubis_dispatch_create(session->proto, ANOUBIS_P_CSUMREQUEST,
 	    &dispatch_checksum, info);
-	anoubis_dispatch_create(session->proto, ANOUBIS_P_SFSDISABLE,
+	anoubis_dispatch_create(session->proto, _ANOUBIS_P_SFSDISABLE,
 	    &dispatch_sfsdisable, info);
 	anoubis_dispatch_create(session->proto, ANOUBIS_P_PASSPHRASE,
 	    &dispatch_passphrase, info);
@@ -571,41 +570,13 @@ invalid:
 	dispatch_generic_reply(server, EINVAL, NULL, 0, opp);
 }
 
+/* Give EINVAL vor deprecated SFSDISABLE messages. */
 static void
-dispatch_sfsdisable(struct anoubis_server *server, struct anoubis_msg *m,
-    uid_t uid, void *arg)
+dispatch_sfsdisable(struct anoubis_server *server,
+    struct anoubis_msg *m __used, uid_t uid __used, void *arg __used)
 {
-	anoubisd_msg_t			*s2p_msg;
-	anoubisd_msg_sfsdisable_t	*msg_disable;
-	struct achat_channel		*chan;
-	struct event_info_session	*ev_info = arg;
-	int err;
-
 	DEBUG(DBG_TRACE, ">dispatch_sfsdisable");
-	if (!VERIFY_LENGTH(m, sizeof(Anoubis_SfsDisableMessage))) {
-		dispatch_generic_reply(server, EINVAL, NULL, 0,
-		    ANOUBIS_P_SFSDISABLE);
-		return;
-	}
-	chan = anoubis_server_getchannel(server);
-	s2p_msg = msg_factory(ANOUBISD_MSG_SFSDISABLE,
-	    sizeof(anoubisd_msg_sfsdisable_t));
-	msg_disable = (anoubisd_msg_sfsdisable_t *)s2p_msg->msg;
-	msg_disable->uid = uid;
-	msg_disable->pid = get_value(m->u.sfsdisable->pid);
-	err = anoubis_policy_comm_addrequest(ev_info->policy, chan,
-	    POLICY_FLAG_START|POLICY_FLAG_END, &dispatch_sfsdisable_reply,
-	    server, &msg_disable->token);
-	if (err < 0) {
-		dispatch_generic_reply(server, EAGAIN, NULL, 0,
-		    ANOUBIS_P_SFSDISABLE);
-		free(msg_disable);
-		return;
-	}
-	enqueue(&eventq_s2p, s2p_msg);
-	DEBUG(DBG_QUEUE, " >eventq_s2p");
-	event_add(ev_info->ev_s2p, NULL);
-
+	dispatch_generic_reply(server, EINVAL, NULL, 0, _ANOUBIS_P_SFSDISABLE);
 	DEBUG(DBG_TRACE, "<dispatch_sfsdisable");
 }
 
@@ -716,16 +687,6 @@ dispatch_checksum_reply(void *cbdata, int error, void *data, int len, int flags)
 		log_warnx("Wrong flags value in dispatch_checksum_reply");
 	return dispatch_generic_reply(cbdata, error, data, len,
 	    ANOUBIS_P_CSUMREQUEST);
-}
-
-static int
-dispatch_sfsdisable_reply(void *cbdata, int error, void *data, int len,
-    int flags)
-{
-	if (flags != (POLICY_FLAG_START | POLICY_FLAG_END))
-		log_warnx("Wrong flags value in dispatch_sfsdisable_reply");
-	return dispatch_generic_reply(cbdata, error, data, len,
-	    ANOUBIS_P_SFSDISABLE);
 }
 
 static int

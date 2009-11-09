@@ -1256,7 +1256,6 @@ create_channel(unsigned int check_parser_version)
 	int				apn_client_version;
 	achat_rc			rc;
 	struct sockaddr_un		ss;
-	struct anoubis_transaction	*t;
 
 	if (opts & ANOUBISCTL_OPT_VERBOSE)
 		fprintf(stderr, ">create_channel\n");
@@ -1385,29 +1384,6 @@ create_channel(unsigned int check_parser_version)
 		}
 	}
 
-	/*
-	 * Exclude ourselves from the SFS list of apps as we need free access to
-	 * files and the likes.
-	 */
-	t = anoubis_client_sfsdisable_start(client, getpid());
-	while(1) {
-		int ret = anoubis_client_wait(client);
-		if (ret <= 0) {
-			anoubis_transaction_destroy(t);
-			destroy_channel();
-			return 5;
-		}
-		if (t->flags & ANOUBIS_T_DONE)
-			break;
-	}
-	error = t->result;
-	anoubis_transaction_destroy(t);
-	if (error) {
-		destroy_channel();
-		errno = error;
-		perror("Cannot disable SFS checks");
-		return 5;
-	}
 err:
 	if (opts & ANOUBISCTL_OPT_VERBOSE)
 		fprintf(stderr, "<create_channel\n");

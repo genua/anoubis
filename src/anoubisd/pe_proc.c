@@ -184,8 +184,6 @@ pe_proc_alloc(uid_t uid, anoubis_cookie_t cookie, struct pe_proc_ident *pident)
 	proc->borrow_cookie = 0;
 	proc->pid = (pid_t)-1;
 	proc->uid = uid;
-	proc->sfsdisable_pid = (pid_t)-1;
-	proc->sfsdisable_uid = (uid_t)-1;
 	proc->flags = 0;
 	proc->refcount = 1;
 	proc->instances = 1;
@@ -295,10 +293,6 @@ void pe_proc_set_pid(struct pe_proc *proc, pid_t pid)
 	    (unsigned long long)proc->task_cookie);
 
 	proc->pid = pid;
-	if (proc->pid != proc->sfsdisable_pid) {
-		proc->sfsdisable_pid = (pid_t)-1;
-		proc->sfsdisable_uid = (uid_t)-1;
-	}
 }
 
 void
@@ -537,46 +531,6 @@ pe_proc_update_db_one(struct apn_ruleset *oldrs, int prio, uid_t uid)
 		}
 	}
 	DEBUG(DBG_TRACE, "<pe_proc_update_db_one");
-}
-
-/*
- * HACK ALERT:
- * We do set sfsdisable_uid and sfsdisable_pid even if proc->pid == -1.
- * However, this will not disable sfs for this process/thread right now.
- * It will only do so once proc->pid has been set proc->sfsdisable_pid.
- */
-int
-pe_proc_set_sfsdisable(pid_t pid, uid_t uid)
-{
-	int found = 0;
-	struct pe_proc	*proc;
-
-	TAILQ_FOREACH(proc, &tracker, entry) {
-		DEBUG(DBG_PE_TRACKER, "pe_proc_set_sfsdisable: Trying proc %p "
-		    "pid %d cookie 0x%08llx", proc, (int)proc->pid,
-		    (unsigned long long)proc->task_cookie);
-		if (proc->uid != uid)
-			continue;
-		if (proc->pid != (pid_t)-1 && proc->pid != pid)
-			continue;
-		DEBUG(DBG_PE_TRACKER, "pe_proc_set_sfsdisable: proc %p pid %d "
-		    "cookie 0x%08llx", proc, (int)proc->pid,
-		    (unsigned long long)proc->task_cookie);
-		proc->sfsdisable_pid = pid;
-		proc->sfsdisable_uid = uid;
-		found = 1;
-	}
-	return found;
-}
-
-int
-pe_proc_is_sfsdisable(struct pe_proc *proc, uid_t uid)
-{
-	if (!proc)
-		return 0;
-	return (uid != (uid_t)-1) && (proc->pid != (pid_t)-1)
-	    && (proc->sfsdisable_pid == proc->pid)
-	    && (proc->sfsdisable_uid == uid);
 }
 
 void

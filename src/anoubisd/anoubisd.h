@@ -148,7 +148,6 @@ enum anoubisd_msg_type {
 	ANOUBISD_MSG_EVENTCANCEL,
 	ANOUBISD_MSG_CHECKSUM_OP,
 	ANOUBISD_MSG_EVENTASK,
-	ANOUBISD_MSG_SFSDISABLE,
 	ANOUBISD_MSG_POLICYCHANGE,
 	ANOUBISD_MSG_SFSCACHE_INVALIDATE,
 	ANOUBISD_MSG_UPGRADE,
@@ -191,13 +190,6 @@ struct anoubisd_msg_checksum_op {
 	char		msg[0];
 };
 typedef struct anoubisd_msg_checksum_op anoubisd_msg_checksum_op_t;
-
-struct anoubisd_msg_sfsdisable {
-	u_int64_t	token;
-	u_int32_t	uid;
-	u_int32_t	pid;
-};
-typedef struct anoubisd_msg_sfsdisable anoubisd_msg_sfsdisable_t;
 
 struct anoubisd_reply {
 	char		ask;		/* flag - ask GUI */

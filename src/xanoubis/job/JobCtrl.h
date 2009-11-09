@@ -200,13 +200,6 @@ class JobCtrl : public wxEvtHandler, public Singleton<JobCtrl>
 		void addTask(Task *);
 
 		/**
-		 * Tests whether a connection has the sfs_disable active or not
-		 *
-		 * @return truee if sfs_disable is active
-		 */
-		bool isSfsDisable(void) const;
-
-		/**
 		 * Returns the version of the Anoubis protocol used by the
 		 * daemon.
 		 * @return Remove Anoubis protocol version
@@ -259,7 +252,6 @@ class JobCtrl : public wxEvtHandler, public Singleton<JobCtrl>
 		JobThreadList threadList_;
 		ComRegistrationTask regTask_;
 		ComVersionTask versionTask_;
-		bool sfsdisable_;
 		int protocolVersion_;
 		int apnVersion_;
 

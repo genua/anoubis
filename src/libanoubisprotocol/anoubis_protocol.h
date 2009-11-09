@@ -41,9 +41,10 @@
  * History of ANOUBIS_PROTO_VERSIONS:
  *     Version 1: Historic (pre 0.9.1)
  *     Version 2: Added ANOUBIS_N_STATUSNOTIFY messages (Version 0.9.[12]).
+ *     Version 3: Removed SFSDISABLE messages.
  */
-#define ANOUBIS_PROTO_VERSION		2
-#define ANOUBIS_PROTO_MINVERSION	2
+#define ANOUBIS_PROTO_VERSION		3
+#define ANOUBIS_PROTO_MINVERSION	3
 
 #define ANOUBIS_PROTO_CONNECT		0
 #define ANOUBIS_PROTO_POLICY		1
@@ -159,7 +160,7 @@ static inline u_int64_t __ntohll(u_int64_t arg)
 #define		ANOUBIS_P_CSUMREQUEST	0x3100
 #define		ANOUBIS_P_CSUM_LIST	0x3101
 
-#define		ANOUBIS_P_SFSDISABLE	0x3200
+#define		_ANOUBIS_P_SFSDISABLE	0x3200		/* Deprecated */
 #define		ANOUBIS_P_PASSPHRASE	0x3201
 
 #define		ANOUBIS_P_REQUEST	0x3800
@@ -440,11 +441,6 @@ typedef struct {
 	u16n	cslen;
 	char payload[0];	/* cslen bytes checksum followed by path. */
 } __attribute__((packed)) Anoubis_ChecksumAddMessage;
-
-typedef struct {
-	u32n	type;
-	u32n	pid;
-} __attribute__((packed)) Anoubis_SfsDisableMessage;
 
 typedef struct {
 	u32n	type;

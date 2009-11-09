@@ -880,7 +880,6 @@ dispatch_s2p(int fd, short sig __used, void *arg)
 
 		switch (msg->mtype) {
 		case ANOUBISD_MSG_POLREQUEST:
-		case ANOUBISD_MSG_SFSDISABLE:
 			reply = policy_engine(msg);
 			if (!reply) {
 				/*

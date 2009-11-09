@@ -275,7 +275,7 @@ TcComTask::onTestVersion(TaskEvent &event)
 	assertUnless(t->getComTaskResult() == ComTask::RESULT_SUCCESS,
 	    "Failed to receive versionlist: %i\n", t->getComTaskResult());
 
-	assertUnless(t->getProtocolVersion() == 2,
+	assertUnless(t->getProtocolVersion() == 3,
 	    "Unexpected protocol version received (%i)\n",
 	    t->getProtocolVersion());
 	assertUnless(t->getApnVersion() == 65537,

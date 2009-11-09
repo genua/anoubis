@@ -269,25 +269,6 @@ policy_engine(anoubisd_msg_t *request)
 		anoubisd_msg_comm_t *comm = (anoubisd_msg_comm_t *)request->msg;
 		reply = pe_dispatch_policy(comm);
 		break;
-	} case ANOUBISD_MSG_SFSDISABLE: {
-		anoubisd_msg_sfsdisable_t *sfsdisable;
-		sfsdisable = (anoubisd_msg_sfsdisable_t *)request->msg;
-		reply = calloc(1, sizeof(struct anoubisd_reply));
-		if (reply == NULL)
-			break;
-		reply->token = sfsdisable->token;
-		reply->ask = 0;
-		reply->hold = 0;
-		reply->rule_id = 0;
-		reply->prio = 0;
-		reply->len = 0;
-		reply->flags = POLICY_FLAG_START|POLICY_FLAG_END;
-		reply->timeout = 0;
-		reply->sfsmatch = ANOUBIS_SFS_NONE;
-		reply->reply = EPERM;
-		if (pe_proc_set_sfsdisable(sfsdisable->pid, sfsdisable->uid))
-			reply->reply = 0;
-		break;
 	} default:
 		reply = NULL;
 		break;
