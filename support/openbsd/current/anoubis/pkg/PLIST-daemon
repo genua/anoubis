@@ -1,16 +1,20 @@
 @comment $OpenBSD$
 @newgroup _anoubisd:593
+@newgroup _nosfs:594
 @newuser _anoubisd:593:_anoubisd:daemon:anoubisd user:/var/empty:/sbin/nologin
 @mode 0755
-@bin sbin/anoubisctl
-@sample /sbin/anoubisctl
 @bin sbin/anoubisd
 @sample /sbin/anoubisd
-@bin sbin/sfssig
-@sample /sbin/sfssig
 @bin bin/anoubis-keygen
 @sample /usr/bin/anoubis-keygen
+@mode 2755
+@group _nosfs
+@bin sbin/anoubisctl
+@sample /sbin/anoubisctl
+@bin sbin/sfssig
+@sample /sbin/sfssig
 @mode
+@group
 @man man/man9/anoubis_kernel.9
 @man man/man9/eventdev.9
 @man man/man8/anoubisctl.8

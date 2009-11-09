@@ -6,6 +6,20 @@ if [ "$1" != configure ]
 	exit 0
 fi
 
+NOSFS_GROUP=_nosfs
+
+if ! getent group $NOSFS_GROUP >/dev/null; then
+	addgroup --force-badname $NOSFS_GROUP
+fi
+
+setperms () {
+	if ! dpkg-statoverride --list $4 > /dev/null 2>&1 ; then
+	    dpkg-statoverride --update --add $1 $2 $3 $4
+	fi
+}
+
+setperms root $NOSFS_GROUP 2755 /usr/bin/xanoubis
+
 # update xanoubis wizard profiles
 # we just overwrite the old files until we have a better mechanism
 # for updates

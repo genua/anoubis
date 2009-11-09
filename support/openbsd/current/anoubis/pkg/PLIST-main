@@ -1,5 +1,9 @@
 @comment $OpenBSD$
+@mode 2755
+@group _nosfs
 @bin bin/xanoubis
+@mode
+@group
 @comment include/apn.h
 @comment include/anoubischat.h
 @comment include/splint-includes.h

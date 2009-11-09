@@ -147,6 +147,15 @@ if ! getent passwd _anoubisd >/dev/null; then
 	useradd -M -r -s /sbin/nologin -d /var/run/anoubisd \
 	    -g _anoubisd _anoubisd
 fi
+if ! getent group _nosfs >/dev/null; then
+	groupadd -f -r _nosfs
+fi
+exit 0
+
+%pre -n anoubisd
+if ! getent group _nosfs >/dev/null; then
+	groupadd -f -r _nosfs
+fi
 exit 0
 
 %posttrans -n xanoubis
@@ -164,12 +173,14 @@ exit 0
 %post -n anoubisd
 chkconfig --add anoubisd
 chkconfig anoubisd on
-mkdir -p /var/lib/anoubis/policy/admin
-mkdir -p /var/lib/anoubis/policy/user
-mkdir -p /var/lib/anoubis/policy/pubkeys
-chmod 700 /var/lib/anoubis/policy
-chmod 700 /var/lib/anoubis/policy/admin /var/lib/anoubis/policy/user
-chmod 700 /var/lib/anoubis/policy/pubkeys
+mkdir -p /var/lib/anoubis/policy/{admin,user,pubkeys}
+chmod -R 700 /var/lib/anoubis/policy
+
+if getent group _nosfs >/dev/null; then
+	chown root:_nosfs /sbin/{anoubisctl,sfssig} && \
+	chmod 2755 /sbin/{anoubisctl,sfssig}
+fi
+
 # copy new default policy
 export PATH=$PATH:/opt/kde3/bin
 /usr/share/anoubisd/install_policy -q\
@@ -190,9 +201,7 @@ rm -f /etc/anoubis/profiles/high
 	/usr/share/anoubisd/policy_templates/profiles \
 	/etc/anoubis/profiles
 
-chown _anoubisd: /var/lib/anoubis/policy
-chown _anoubisd: /var/lib/anoubis/policy/admin /var/lib/anoubis/policy/user
-chown _anoubisd: /var/lib/anoubis/policy/pubkeys
+chown -R _anoubisd: /var/lib/anoubis/policy
 if [ ! -e /dev/eventdev ] ; then
 	mknod /dev/eventdev c 10 62
 fi
@@ -207,15 +216,19 @@ if [ "$1" = 1 ]; then
 fi
 exit 0
 
+%post -n xanoubis
+if getent group _nosfs >/dev/null; then
+	chown root:_nosfs /usr/bin/xanoubis && \
+	chmod 2755 /usr/bin/xanoubis
+fi
+
 %preun -n anoubisd
 # execute only on package removal,
 # i.e. if last version is removed (0 versions left)
 if [ "$1" = 0 ] ; then
     %{rcdir}/anoubisd stop
     chkconfig --del anoubisd
-    rmdir /var/lib/anoubis/policy/admin \
-	/var/lib/anoubis/policy/user 2>/dev/null || true
-    rmdir /var/lib/anoubis/policy/pubkeys 2>/dev/null || true
+    rmdir /var/lib/anoubis/policy/{admin,user,pubkeys} 2>/dev/null || true
     rmdir /var/lib/anoubis/policy /var/lib/anoubis 2>/dev/null || true
 fi
 exit 0
@@ -233,7 +246,9 @@ exit 0
 %defattr(-,root,root)
 %{rcdir}/*
 /etc/anoubis/anoubisd.conf
-/sbin/*
+/sbin/anoubisd
+/sbin/anoubisctl
+/sbin/sfssig
 %{_prefix}/bin/anoubis-keygen
 /usr/share/anoubisd/*
 %{_sysconfdir}/udev/rules.d/06-anoubis.rules

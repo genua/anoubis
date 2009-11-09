@@ -156,6 +156,15 @@ if ! getent passwd _anoubisd >/dev/null; then
 	useradd -M -r -s /sbin/nologin -d /var/run/anoubisd \
 	    -g _anoubisd _anoubisd
 fi
+if ! getent group _nosfs >/dev/null; then
+	groupadd -f -r _nosfs
+fi
+exit 0
+
+%pre -n xanoubis
+if ! getent group _nosfs >/dev/null; then
+	groupadd -f -r _nosfs
+fi
 exit 0
 
 %posttrans -n xanoubis
@@ -180,15 +189,22 @@ cp /usr/share/xanoubis/policy_templates/wizard/* \
 	/etc/anoubis/profiles/wizard
 chmod 644 /etc/anoubis/profiles/wizard/*
 
+if getent group _nosfs >/dev/null; then
+	chown root:_nosfs /usr/bin/xanoubis && \
+	chmod 2755 /usr/bin/xanoubis
+fi
+
 %post -n anoubisd
 chkconfig --add anoubisd
 chkconfig anoubisd on
-mkdir -p /var/lib/anoubis/policy/admin
-mkdir -p /var/lib/anoubis/policy/user
-mkdir -p /var/lib/anoubis/policy/pubkeys
-chmod 700 /var/lib/anoubis/policy
-chmod 700 /var/lib/anoubis/policy/admin /var/lib/anoubis/policy/user
-chmod 700 /var/lib/anoubis/policy/pubkeys
+mkdir -p /var/lib/anoubis/policy/{admin,user,pubkeys}
+chmod -R 700 /var/lib/anoubis/policy
+
+if getent group _nosfs >/dev/null; then
+	chown root:_nosfs /sbin/sfssig /sbin/anoubisctl && \
+	chmod 2755 /sbin/sfssig /sbin/anoubisctl
+fi
+
 # copy new default policy
 /usr/share/anoubisd/install_policy -q\
 	/usr/share/anoubisd/policy_templates/admin \
@@ -208,9 +224,8 @@ rm -f /etc/anoubis/profiles/high
 	/usr/share/anoubisd/policy_templates/profiles \
 	/etc/anoubis/profiles
 
-chown _anoubisd: /var/lib/anoubis/policy
-chown _anoubisd: /var/lib/anoubis/policy/admin /var/lib/anoubis/policy/user
-chown _anoubisd: /var/lib/anoubis/policy/pubkeys
+chown -R _anoubisd: /var/lib/anoubis/policy
+
 if [ ! -e /dev/eventdev ] ; then
 	mknod /dev/eventdev c 10 62
 fi
@@ -231,9 +246,7 @@ exit 0
 if [ "$1" = 0 ] ; then
     %{rcdir}/anoubisd stop
     chkconfig --del anoubisd
-    rmdir /var/lib/anoubis/policy/admin \
-	/var/lib/anoubis/policy/user 2>/dev/null || true
-    rmdir /var/lib/anoubis/policy/pubkeys 2>/dev/null || true
+    rmdir /var/lib/anoubis/policy/{admin,user,pubkeys} 2>/dev/null || true
     rmdir /var/lib/anoubis/policy /var/lib/anoubis 2>/dev/null || true
 fi
 exit 0
@@ -251,7 +264,9 @@ exit 0
 %defattr(-,root,root)
 %{rcdir}/*
 /etc/anoubis/anoubisd.conf
-/sbin/*
+/sbin/anoubisd
+/sbin/anoubisctl
+/sbin/sfssig
 %{_prefix}/bin/anoubis-keygen
 /usr/share/anoubisd/*
 %{_sysconfdir}/udev/rules.d/06-anoubis.rules
@@ -277,6 +292,9 @@ exit 0
 
 ### changelog ##############################################
 %changelog
+* Thu Nov 05 2009 Sten Spans
+- add setgid group and permissions to the anoubis client utilities
+
 * Wed Oct 14 2009 Sebastian Trahm
 - xanoubis package has to depend on a minimal version of anoubisd
 
