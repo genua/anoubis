@@ -32,6 +32,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <time.h>
+#include <unistd.h>
 
 #include <sys/types.h>
 #include <pwd.h>
@@ -70,7 +71,8 @@
 #include "VersionCtrl.h"
 #include "ProcCtrl.h"
 
-IMPLEMENT_APP(AnoubisGuiApp)
+IMPLEMENT_APP_NO_MAIN(AnoubisGuiApp)
+IMPLEMENT_WX_THEME_SUPPORT
 
 AnoubisGuiApp::AnoubisGuiApp(void)
 {
@@ -669,4 +671,14 @@ AnoubisGuiApp::readPassphrase(bool *ok)
 		*ok = false;
 		return (wxEmptyString);
 	}
+}
+
+int
+main(int argc, char **argv)
+{
+	if (setresgid(getgid(), getgid(), getgid()) < 0) {
+		perror("setresgid");
+		/* Try it anyway, but GTK will complain! */
+	}
+	return wxEntry(argc, argv);
 }
