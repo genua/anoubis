@@ -16,10 +16,10 @@ alf {
 
 	# AntiVirus software
 	@avupdate@ {
-		default ask
+		default allow
 	}
 	@freshclam@ {
-		default ask
+		default allow
 	}
 
 	any {
@@ -40,12 +40,12 @@ sandbox {
 
 	# AntiVirus software
 	{ @antivir@, @avguard@, @avscan@ } {
-		allow path "/" r
-		default ask
+		allow path "/" rw
+		default deny
 	}
 	{ @clamscan@, @clamdscan@ } {
-		allow path "/" r
-		default ask
+		allow path "/" rw
+		default deny
 	}
 }
 context {

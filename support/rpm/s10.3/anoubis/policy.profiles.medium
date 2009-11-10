@@ -295,11 +295,11 @@ sandbox {
 
 	# AntiVirus software
 	{ @antivir@, @avguard@, @avscan@ } {
-		allow path "/" r
+		allow path "/" rw
 		default ask
 	}
 	{ @clamscan@, @clamdscan@ } {
-		allow path "/" r
+		allow path "/" rw
 		default ask
 	}
 }
