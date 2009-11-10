@@ -112,12 +112,6 @@ install -p $RPM_BUILD_ROOT/%{_datadir}/xanoubis/profiles/wizard/{alf,sandbox} \
 
 rm -rf $RPM_BUILD_ROOT/usr/share/xanoubis/profiles
 mkdir -p $RPM_BUILD_ROOT/etc/anoubis/profiles/wizard
-# Must put xanoubis's checksum into the anoubisd package because
-# xanoubis is not yet installed when anoubisd's postinst runs.
-SUM_XANOUBIS=`sha256sum $RPM_BUILD_ROOT/usr/bin/xanoubis|cut -d' '  -f 1`
-for f in `grep -rl xanoubis $DEF_POLICY_DIR` ; do
-    perl -p -i -e 's{/usr/bin/xanoubis \@\@}{/usr/bin/xanoubis '$SUM_XANOUBIS'}g' $f
-done
 
 # install symlink in /etc/anoubis
 mkdir -p $RPM_BUILD_ROOT/etc/anoubis
