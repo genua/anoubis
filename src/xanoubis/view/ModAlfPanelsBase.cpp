@@ -53,7 +53,31 @@ ModAlfMainPanelBase::ModAlfMainPanelBase( wxWindow* parent, wxWindowID id, const
 	wxBoxSizer* sz_Rules;
 	sz_Rules = new wxBoxSizer( wxVERTICAL );
 	
-	lst_Rules = new wxListCtrl( pan_Rules, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLC_HRULES|wxLC_REPORT|wxLC_SINGLE_SEL );
+	lst_Rules = new wxGrid( pan_Rules, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0 );
+	
+	// Grid
+	lst_Rules->CreateGrid( 5, 5 );
+	lst_Rules->EnableEditing( false );
+	lst_Rules->EnableGridLines( false );
+	lst_Rules->EnableDragGridSize( false );
+	lst_Rules->SetMargins( 0, 0 );
+	
+	// Columns
+	lst_Rules->EnableDragColMove( false );
+	lst_Rules->EnableDragColSize( true );
+	lst_Rules->SetColLabelSize( 30 );
+	lst_Rules->SetColLabelAlignment( wxALIGN_LEFT, wxALIGN_CENTRE );
+	
+	// Rows
+	lst_Rules->EnableDragRowSize( true );
+	lst_Rules->SetRowLabelSize( 0 );
+	lst_Rules->SetRowLabelAlignment( wxALIGN_CENTRE, wxALIGN_CENTRE );
+	
+	// Label Appearance
+	lst_Rules->SetLabelFont( wxFont( wxNORMAL_FONT->GetPointSize(), 70, 90, 90, false, wxEmptyString ) );
+	
+	// Cell Defaults
+	lst_Rules->SetDefaultCellAlignment( wxALIGN_LEFT, wxALIGN_TOP );
 	sz_Rules->Add( lst_Rules, 1, wxALL|wxEXPAND, 5 );
 	
 	sz_AlfRules->Add( sz_Rules, 66, wxEXPAND, 5 );

@@ -474,8 +474,8 @@ PolicyRuleSet::createPolicy(unsigned int type, unsigned int id,
 	}
 
 	if (success) {
-		setModified();
 		refresh();
+		setModified();
 	}
 
 	return (index);

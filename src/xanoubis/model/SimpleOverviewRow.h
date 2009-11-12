@@ -28,17 +28,18 @@
 #ifndef _SIMPLEOVERVIEWROW_H_
 #define _SIMPLEOVERVIEWROW_H_
 
-#include "AnListClass.h"
+#include "Observer.h"
 
 class AppPolicy;
 class FilterPolicy;
+class PolicyRuleSet;
 
 /**
  * This class contains all informations for the AnListCtrl
  * to build the lists in the overviews. Every row is represented
  * by an instance of this class.
  */
-class SimpleOverviewRow : public AnListClass
+class SimpleOverviewRow : private Observer
 {
 	public:
 		/**
@@ -49,7 +50,22 @@ class SimpleOverviewRow : public AnListClass
 		 * @param int The Index of the filter policy.
 		 * @param FilterPolicy The filter Policy itself.
 		 */
-		SimpleOverviewRow(int, AppPolicy *, int, FilterPolicy *);
+		SimpleOverviewRow(PolicyRuleSet *, unsigned int, AppPolicy *,
+		    unsigned int, FilterPolicy *);
+
+		/**
+		 * D'tor.
+		 */
+		~SimpleOverviewRow(void);
+
+		/**
+		 * Returns the ruleset.
+		 *
+		 * This is the parent of all policies assigned to this class.
+		 *
+		 * @return The parent ruleset
+		 */
+		PolicyRuleSet *getRuleSet(void) const;
 
 		/**
 		 * Returns the policy of one specific filter.
@@ -63,7 +79,7 @@ class SimpleOverviewRow : public AnListClass
 		 *
 		 * @return The Index of the filter.
 		 */
-		int getFilterPolicyIndex(void) const;
+		unsigned int getFilterPolicyIndex(void) const;
 
 		/**
 		 * Returns one specific application policy.
@@ -77,18 +93,23 @@ class SimpleOverviewRow : public AnListClass
 		 *
 		 * @return The Index of an application policy.
 		 */
-		int getApplicationPolicyIndex(void) const;
+		unsigned int getApplicationPolicyIndex(void) const;
 
 	private:
 		/**
 		 * Index of a filter policy.
 		 */
-		int		filterIndex_;
+		unsigned int	filterIndex_;
 
 		/**
 		 * Index of an application policy
 		 */
-		int		applicationIndex_;
+		unsigned int	applicationIndex_;
+
+		/**
+		 * The ruleset
+		 */
+		PolicyRuleSet	*ruleSet_;
 
 		/**
 		 * Policy of an application.
@@ -99,5 +120,21 @@ class SimpleOverviewRow : public AnListClass
 		 * Policy of a filter.
 		 */
 		FilterPolicy	*filterPolicy_;
+
+		/**
+		 * Invoked, if the assigned AppPolicy or FilterPolicy is
+		 * changed.
+		 */
+		void update(Subject *);
+
+		/**
+		 * Invoked, if the assigned AppPolicy or FilterPolicy is
+		 * changed.
+		 *
+		 * Resets the related associations to NULL, to still have
+		 * a valid reference.
+		 */
+		void updateDelete(Subject *);
 };
+
 #endif	/* _SIMPLEOVERVIEWROW_H_ */

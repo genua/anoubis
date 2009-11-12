@@ -203,6 +203,8 @@ install-data-local: i18n-install
 xanoubis_SOURCES= \
 	model/AlertNotify.cpp \
 	model/AlertNotify.h \
+	model/AlfOverviewTable.cpp \
+	model/AlfOverviewTable.h \
 	model/ApnVersion.cpp \
 	model/ApnVersion.h \
 	model/EscalationNotify.cpp \
@@ -277,6 +279,8 @@ xanoubis_SOURCES= \
 	model/ListCtrlColumn.h \
 	model/SimpleOverviewRow.cpp \
 	model/SimpleOverviewRow.h \
+	model/SimpleOverviewTable.cpp \
+	model/SimpleOverviewTable.h \
 	view/DlgBackupPolicyBase.h \
 	view/DlgBackupPolicyBase.cpp \
 	view/DlgBackupPolicyImpl.h \
@@ -349,6 +353,8 @@ xanoubis_SOURCES= \
 	view/ModSbOverviewPanelImpl.h \
 	view/ModSbPanelsBase.cpp \
 	view/ModSbPanelsBase.h \
+	view/OverviewAttrProvider.cpp \
+	view/OverviewAttrProvider.h \
 	view/RuleWizard.cpp \
 	view/RuleWizard.h \
 	view/RuleWizardPage.cpp \
@@ -405,8 +411,6 @@ xanoubis_SOURCES= \
 	control/KeyCtrl.h \
 	control/RuleEditorAddPolicyVisitor.cpp \
 	control/RuleEditorAddPolicyVisitor.h \
-	control/ModAlfAddPolicyVisitor.cpp \
-	control/ModAlfAddPolicyVisitor.h \
 	control/ModSbAddPolicyVisitor.cpp \
 	control/ModSbAddPolicyVisitor.h \
 	control/ModSfsAddPolicyVisitor.cpp \
@@ -419,6 +423,8 @@ xanoubis_SOURCES= \
 	control/RuleSetSearchPolicyVisitor.h \
 	control/SfsCtrl.cpp \
 	control/SfsCtrl.h \
+	control/SimpleOverviewVisitor.cpp \
+	control/SimpleOverviewVisitor.h \
 	control/VersionCtrl.cpp \
 	control/VersionCtrl.h \
 	control/PolicyCtrl.cpp \

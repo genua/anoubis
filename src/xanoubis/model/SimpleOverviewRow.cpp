@@ -25,18 +25,43 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "SimpleOverviewRow.h"
 #include "AnListClass.h"
 #include "AppPolicy.h"
 #include "FilterPolicy.h"
+#include "PolicyRuleSet.h"
+#include "SimpleOverviewRow.h"
 
-SimpleOverviewRow::SimpleOverviewRow(int appIdx, AppPolicy *appPol,
-	int filterIdx, FilterPolicy *filterPol)
+SimpleOverviewRow::SimpleOverviewRow(PolicyRuleSet *ruleSet,
+    unsigned int appIdx, AppPolicy *appPol,
+    unsigned int filterIdx, FilterPolicy *filterPol)
+    : Observer(0)
 {
+	ruleSet_ = ruleSet;
 	applicationIndex_ = appIdx;
 	applicationPolicy_ = appPol;
 	filterIndex_ = filterIdx;
 	filterPolicy_ = filterPol;
+
+	if (ruleSet != 0)
+		addSubject(ruleSet);
+	if (appPol != 0)
+		addSubject(appPol);
+	if (filterPol != 0)
+		addSubject(filterPol);
+}
+
+SimpleOverviewRow::~SimpleOverviewRow(void)
+{
+	if (applicationPolicy_ != 0)
+		removeSubject(applicationPolicy_);
+	if (filterPolicy_ != 0)
+		removeSubject(filterPolicy_);
+}
+
+PolicyRuleSet *
+SimpleOverviewRow::getRuleSet(void) const
+{
+	return ruleSet_;
 }
 
 FilterPolicy *
@@ -45,7 +70,7 @@ SimpleOverviewRow::getFilterPolicy(void) const
 	return filterPolicy_;
 }
 
-int
+unsigned int
 SimpleOverviewRow::getFilterPolicyIndex(void) const
 {
 	return filterIndex_;
@@ -57,8 +82,24 @@ SimpleOverviewRow::getApplicationPolicy(void) const
 	return applicationPolicy_;
 }
 
-int
+unsigned int
 SimpleOverviewRow::getApplicationPolicyIndex(void) const
 {
 	return applicationIndex_;
+}
+
+void
+SimpleOverviewRow::update(Subject *)
+{
+}
+
+void
+SimpleOverviewRow::updateDelete(Subject *subject)
+{
+	if (subject == ruleSet_)
+		ruleSet_ = 0;
+	else if (subject == applicationPolicy_)
+		applicationPolicy_ = 0;
+	else if (subject == filterPolicy_)
+		filterPolicy_ = 0;
 }
