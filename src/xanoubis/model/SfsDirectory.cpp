@@ -148,12 +148,7 @@ SfsDirectory::getNumEntries() const
 int
 SfsDirectory::getIndexOf(const wxString &filename) const
 {
-	for (unsigned int i = 0; i < entryList_.size(); i++) {
-		if (entryList_[i]->getPath() == filename)
-			return (i);
-	}
-
-	return (-1);
+	return (getIndexOf(filename, 0, entryList_.size() - 1));
 }
 
 SfsEntry *
@@ -250,6 +245,36 @@ SfsDirectory::canInsert(const wxString &filename) const
 
 	return (this->inverseFilter_ ^
 	    (path.Find(this->filter_) != wxNOT_FOUND));
+}
+
+int
+SfsDirectory::getIndexOf(const wxString &filename, unsigned int start,
+    unsigned int end) const
+{
+	if (start == end) {
+		if (entryList_[start]->getPath() == filename)
+			return (start);
+		else
+			return (-1);
+	}
+
+	unsigned int mid = start + (unsigned int)((end - start) / 2);
+	wxString midPath = entryList_[mid]->getPath();
+	int cmpResult = midPath.Cmp(filename);
+
+	if (cmpResult == 0) {
+		/* You found the correct path */
+		return (mid);
+	} else if (cmpResult < 0) {
+		/*
+		* midPath is less than filename. Search can be continued
+		* behind mid
+		*/
+		return (getIndexOf(filename, mid + 1, end));
+	} else { /* cmpResult > 0 */
+		/* midPath is greater than filename. Search ends with mid. */
+		return (getIndexOf(filename, start, mid));
+	}
 }
 
 int

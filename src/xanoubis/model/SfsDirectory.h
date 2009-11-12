@@ -271,6 +271,23 @@ class SfsDirectory : private wxDirTraverser
 		bool canInsert(const wxString &) const;
 
 		/**
+		 * Returns the index of the SfsEntry with the specified
+		 * filename.
+		 *
+		 * A binary search is performed. This method is used by the
+		 * public getIndexOf()-method.
+		 *
+		 * @param filename The absolute path the SfsEntry you are
+		 *                 searching for.
+		 * @param start Index where to start searching
+		 * @param end Index where to stop searching
+		 * @return The index of the SfsEntry you are looking for. If
+		 *         no such entry exists, -1 is returned.
+		 */
+		int getIndexOf(const wxString &, unsigned int,
+		    unsigned int) const;
+
+		/**
 		 * Inserts a new SfsEntry into the SfsDirectory.
 		 *
 		 * A binary search is used to find the position, where the
