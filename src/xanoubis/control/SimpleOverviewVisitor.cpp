@@ -25,6 +25,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "Debug.h"
 #include "SimpleOverviewRow.h"
 #include "SimpleOverviewVisitor.h"
 
@@ -142,6 +143,10 @@ void
 SimpleOverviewVisitor::visitAppPolicy(AppPolicy *policy)
 {
 	if (policy->IsKindOf(classInfo_)) {
+		Debug::trace(wxT("(%ls) Visiting application %ls"),
+		    classInfo_->GetClassName(),
+		    policy->GetClassInfo()->GetClassName());
+
 		/* This is an application-policies you are looking for */
 		currentApp_ = policy;
 		appIndex_++;
@@ -161,6 +166,10 @@ SimpleOverviewVisitor::visitAppPolicy(AppPolicy *policy)
 			}
 
 			for (unsigned int i = 0; i < count; i++) {
+				Debug::trace(
+				    wxT("(%ls) Appending application"),
+				    classInfo_->GetClassName());
+
 				SimpleOverviewRow *row = new SimpleOverviewRow(
 				    currentRuleSet_, appIndex_ - 1,
 				    currentApp_, filterIndex_ + i, 0);
@@ -172,6 +181,10 @@ SimpleOverviewVisitor::visitAppPolicy(AppPolicy *policy)
 		 * You are not interested in such an app-policies. Ignore the
 		 * corresponding filter.
 		 */
+		Debug::trace(wxT("(%ls) Skipping application %ls"),
+		    classInfo_->GetClassName(),
+		    policy->GetClassInfo()->GetClassName());
+
 		setPropagation(false);
 	}
 }
@@ -179,9 +192,15 @@ SimpleOverviewVisitor::visitAppPolicy(AppPolicy *policy)
 void
 SimpleOverviewVisitor::visitFilterPolicy(FilterPolicy *policy)
 {
+	Debug::trace(wxT("(%ls) Visiting filter %ls"),
+	    classInfo_->GetClassName(),
+	    policy->GetClassInfo()->GetClassName());
+
 	SimpleOverviewRow *row = new SimpleOverviewRow(currentRuleSet_,
 	    appIndex_ - 1, currentApp_, filterIndex_, policy);
 	filterList_.push_back(row);
+	Debug::trace(wxT("(%ls) Appending filter"),
+	    classInfo_->GetClassName());
 
 	filterIndex_++;
 
@@ -196,6 +215,9 @@ SimpleOverviewVisitor::visitFilterPolicy(FilterPolicy *policy)
 			    currentRuleSet_, appIndex_ - 1, currentApp_,
 			    filterIndex_, 0);
 			filterList_.push_back(row);
+
+			Debug::trace(wxT("(%ls) Appending extra filter"),
+			    classInfo_->GetClassName());
 
 			filterIndex_++;
 		}

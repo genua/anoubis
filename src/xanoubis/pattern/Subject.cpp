@@ -100,8 +100,16 @@ Subject::notifyChange(void)
 {
 	ObserverList::iterator	it;
 
-	it = observers_.begin();
-	while (it != observers_.end()) {
+	/*
+	 * Create a copy of the observer-list to freeze the current list.
+	 * The list can be altered while this method is running. And this
+	 * is not what you want!
+	 */
+	ObserverList copy;
+	copy.insert(copy.begin(), observers_.begin(), observers_.end());
+
+	it = copy.begin();
+	while (it != copy.end()) {
 		(*it)->update(this);
 		it++;
 	}

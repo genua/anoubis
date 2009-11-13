@@ -237,6 +237,8 @@ xanoubis_SOURCES= \
 	model/StatusNotify.h \
 	model/DaemonAnswerNotify.cpp \
 	model/DaemonAnswerNotify.h \
+	model/SbOverviewTable.cpp \
+	model/SbOverviewTable.h \
 	model/SfsDirectory.cpp \
 	model/SfsDirectory.h \
 	model/SfsEntry.cpp \
@@ -411,8 +413,6 @@ xanoubis_SOURCES= \
 	control/KeyCtrl.h \
 	control/RuleEditorAddPolicyVisitor.cpp \
 	control/RuleEditorAddPolicyVisitor.h \
-	control/ModSbAddPolicyVisitor.cpp \
-	control/ModSbAddPolicyVisitor.h \
 	control/ModSfsAddPolicyVisitor.cpp \
 	control/ModSfsAddPolicyVisitor.h \
 	control/NotificationCtrl.cpp \
