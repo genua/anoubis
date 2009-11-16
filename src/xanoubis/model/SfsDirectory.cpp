@@ -31,6 +31,12 @@
 #include "SfsEntry.h"
 #include "SfsDirectory.h"
 
+int
+SfsEntryList::Cmp(const SfsEntry *a, const SfsEntry *b) const
+{
+	return a->getPath().Cmp(b->getPath());
+}
+
 #define callHandler(method) if (scanHandler_ != 0) { scanHandler_->method; }
 
 SfsDirectory::SfsDirectory()
@@ -148,49 +154,39 @@ SfsDirectory::getNumEntries() const
 int
 SfsDirectory::getIndexOf(const wxString &filename) const
 {
-	return (getIndexOf(filename, 0, entryList_.size() - 1));
+	SfsEntry tmp(filename);
+	return entryList_.index_of(&tmp);
 }
 
 SfsEntry *
 SfsDirectory::getEntry(unsigned int idx)
 {
-	return (entryList_[idx]);
+	return entryList_.get(idx);
 }
 
 SfsEntry *
 SfsDirectory::insertEntry(const wxString &path)
 {
-	int idx;
-
 	if (!canInsert(path))
 		return (0);
 
-	if (entryList_.empty()) {
-		/*
-		 * An empty list. This is easy. Append the new SfsEntry to the
-		 * empty list. A list with one item is always in correct order.
-		 */
-		SfsEntry *newEntry = new SfsEntry(path);
-		entryList_.push_back(newEntry);
-		idx = 0;
+	SfsEntry *newEntry = new SfsEntry(path);
+	if (entryList_.insert(newEntry)) {
+		return newEntry;
 	} else {
-		/* Find the correct position and insert the item. */
-		idx = insertEntry(path, 0, entryList_.size() - 1);
+		SfsEntry	*ret = entryList_.find(newEntry);
+		delete newEntry;
+		return ret;
 	}
-
-	return (entryList_[idx]);
 }
 
 void
 SfsDirectory::removeEntry(unsigned int idx)
 {
-	if (idx < entryList_.size()) {
-		std::vector<SfsEntry *>::iterator it = entryList_.begin();
-		it += idx;
+	SfsEntry *entry = entryList_.get(idx);
 
-		SfsEntry *entry = (*it);
-
-		entryList_.erase(it);
+	if (entry) {
+		entryList_.remove(entry);
 		delete entry;
 	}
 }
@@ -198,11 +194,12 @@ SfsDirectory::removeEntry(unsigned int idx)
 void
 SfsDirectory::removeAllEntries(void)
 {
-	while (!entryList_.empty()) {
-		SfsEntry *e = entryList_.back();
-		entryList_.pop_back();
-
-		delete e;
+	SfsEntryList::iterator	it = entryList_.begin();
+	while (it != entryList_.end()) {
+		SfsEntry	*e = *it;
+		++it;
+		entryList_.remove(e);
+		delete(e);
 	}
 }
 
@@ -245,98 +242,6 @@ SfsDirectory::canInsert(const wxString &filename) const
 
 	return (this->inverseFilter_ ^
 	    (path.Find(this->filter_) != wxNOT_FOUND));
-}
-
-int
-SfsDirectory::getIndexOf(const wxString &filename, unsigned int start,
-    unsigned int end) const
-{
-	if (start == end) {
-		if (entryList_[start]->getPath() == filename)
-			return (start);
-		else
-			return (-1);
-	}
-
-	unsigned int mid = start + (unsigned int)((end - start) / 2);
-	wxString midPath = entryList_[mid]->getPath();
-	int cmpResult = midPath.Cmp(filename);
-
-	if (cmpResult == 0) {
-		/* You found the correct path */
-		return (mid);
-	} else if (cmpResult < 0) {
-		/*
-		* midPath is less than filename. Search can be continued
-		* behind mid
-		*/
-		return (getIndexOf(filename, mid + 1, end));
-	} else { /* cmpResult > 0 */
-		/* midPath is greater than filename. Search ends with mid. */
-		return (getIndexOf(filename, start, mid));
-	}
-}
-
-int
-SfsDirectory::insertEntry(const wxString &path, unsigned int start,
-    unsigned int end)
-{
-	unsigned int mid = start + (unsigned int)((end - start) / 2);
-	int result = entryList_[mid]->getPath().Cmp(path);
-
-	/*
-	 * Try to insert an already existing path, abort. Do this before
-	 * we insert because we might not have compared the new string to
-	 * entryList_[mid] yet (we do know that start == 0 or that the new
-	 * element is strictly greater than start, though.
-	 */
-	if (result == 0)
-		return mid;
-
-	if (start == end) {
-		/*
-		 * This is the position, where the SfSEntry should be inserted.
-		 */
-		SfsEntry *newEntry = new SfsEntry(path);
-
-		if (result > 0) {
-			/*
-			 * The entry at start is "greater" that the new entry.
-			 * Insert it before the item at start.
-			 */
-			std::vector<SfsEntry *>::iterator it =
-			    entryList_.begin();
-			it += start; /* Advance to the correct position */
-
-			entryList_.insert(it, newEntry);
-			/* This is the position, where the item was inserted */
-			return start;
-		} else {
-			/*
-			 * This special case can happen, if the end of the list
-			 * is reached. The new item is "greater" than the last
-			 * item in the list. In this case simply append the new
-			 * SfsEntry to the list.
-			 */
-			entryList_.push_back(newEntry);
-			/* This is the position, where the item was inserted */
-			return  entryList_.size() - 1;
-		}
-	}
-
-	if (result < 0) {
-		/*
-		 * The new item is "greater" than the middle item.
-		 * Continue the search right to mid.
-		 */
-		return insertEntry(path, mid + 1, end);
-	} else {	/* result > 0 */
-		/*
-		 * The middle item is "greater" than the middle item.
-		 * Continue the search left to mid.
-		 */
-		return insertEntry(path, start, mid);
-	}
 }
 
 wxDirTraverseResult

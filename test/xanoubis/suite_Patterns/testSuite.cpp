@@ -29,6 +29,7 @@
 
 extern TCase *getTc_Singleton(void);
 extern TCase *getTc_Observer(void);
+extern TCase *getTc_IndexTree(void);
 
 Suite *
 getTestSuite(void)
@@ -43,6 +44,7 @@ getTestSuite(void)
 
 	suite_add_tcase(testSuite, tc_Singleton);
 	suite_add_tcase(testSuite, tc_Observer);
+	suite_add_tcase(testSuite, getTc_IndexTree());
 
 	return (testSuite);
 }

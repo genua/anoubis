@@ -442,6 +442,8 @@ xanoubis_SOURCES= \
 	pattern/Subject.h \
 	pattern/Observer.cpp \
 	pattern/Observer.h \
+	pattern/IndexTree.h \
+	pattern/IndexTree_Impl.h \
 	widgets/AnDetails.cpp \
 	widgets/AnDetails.h \
 	widgets/AnIconList.cpp \

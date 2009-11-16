@@ -31,8 +31,13 @@
 #include <vector>
 
 #include <wx/dir.h>
+#include <IndexTree.h>
 
 class SfsEntry;
+
+class SfsEntryList : public IndexTree<SfsEntry> {
+	int Cmp(const SfsEntry *, const SfsEntry *) const;
+};
 
 /**
  * A handler reports the progress of a filesystem-scan.
@@ -256,7 +261,7 @@ class SfsDirectory : private wxDirTraverser
 		bool recursive_;
 		wxString filter_;
 		bool inverseFilter_;
-		std::vector<SfsEntry *> entryList_;
+		SfsEntryList entryList_;
 		SfsDirectoryScanHandler *scanHandler_;
 		bool abortScan_;
 		unsigned int totalDirectories_;
@@ -269,42 +274,6 @@ class SfsDirectory : private wxDirTraverser
 		 * new entry fits to the assigned filter options.
 		 */
 		bool canInsert(const wxString &) const;
-
-		/**
-		 * Returns the index of the SfsEntry with the specified
-		 * filename.
-		 *
-		 * A binary search is performed. This method is used by the
-		 * public getIndexOf()-method.
-		 *
-		 * @param filename The absolute path the SfsEntry you are
-		 *                 searching for.
-		 * @param start Index where to start searching
-		 * @param end Index where to stop searching
-		 * @return The index of the SfsEntry you are looking for. If
-		 *         no such entry exists, -1 is returned.
-		 */
-		int getIndexOf(const wxString &, unsigned int,
-		    unsigned int) const;
-
-		/**
-		 * Inserts a new SfsEntry into the SfsDirectory.
-		 *
-		 * A binary search is used to find the position, where the
-		 * SfsEntry should be inserted. If the correct position is
-		 * found, the SfsEntry is created from the path-information
-		 * and inserted into entryList_.
-		 *
-		 * @param path The path of the file to be inserted
-		 * @param start First index in entryList_. Search operation
-		 *              will start here.
-		 * @param end Last index in entryList_. Search operation will
-		 *            end here.
-		 * @return Index in entryList_, where the SfsEntry was
-		 *         inserted.
-		 * @pre entryList_ is not empty!
-		 */
-		int insertEntry(const wxString &, unsigned int, unsigned int);
 
 		/**
 		 * @see wxDirTraverser::InDir()

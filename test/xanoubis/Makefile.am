@@ -179,6 +179,7 @@ testSuite_Patterns_SOURCES = \
 	testrunner.cpp \
 	suite_Patterns/testSuite.cpp \
 	suite_Patterns/tc_Singleton.cpp \
+	suite_Patterns/tc_IndexTree.cpp \
 	suite_Patterns/tc_Observer.cpp
 
 #
