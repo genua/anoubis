@@ -279,6 +279,8 @@ xanoubis_SOURCES= \
 	model/PolicyUtils.h \
 	model/ListCtrlColumn.cpp \
 	model/ListCtrlColumn.h \
+	model/SfsOverviewTable.cpp \
+	model/SfsOverviewTable.h \
 	model/SimpleOverviewRow.cpp \
 	model/SimpleOverviewRow.h \
 	model/SimpleOverviewTable.cpp \
@@ -397,6 +399,8 @@ xanoubis_SOURCES= \
 	view/RuleWizardHistory.h \
 	view/RuleWizardPanelsBase.cpp \
 	view/RuleWizardPanelsBase.h \
+	view/SfsOverviewAttrProvider.cpp \
+	view/SfsOverviewAttrProvider.h \
 	view/TrayIcon.cpp \
 	view/TrayIcon.h \
 	view/VersionListCtrl.h \
@@ -413,8 +417,6 @@ xanoubis_SOURCES= \
 	control/KeyCtrl.h \
 	control/RuleEditorAddPolicyVisitor.cpp \
 	control/RuleEditorAddPolicyVisitor.h \
-	control/ModSfsAddPolicyVisitor.cpp \
-	control/ModSfsAddPolicyVisitor.h \
 	control/NotificationCtrl.cpp \
 	control/NotificationCtrl.h \
 	control/RuleSetClearModifiedVisitor.cpp \

@@ -28,21 +28,13 @@
 #ifndef __ModSfsMainPanelImpl__
 #define __ModSfsMainPanelImpl__
 
-#include "AnEvents.h"
-#include "Observer.h"
-
-#include "DefaultFilterPolicy.h"
 #include "ModSfsPanelsBase.h"
-#include "SfsAppPolicy.h"
+#include "Observer.h"
 #include "SfsCtrl.h"
-#include "SfsDefaultFilterPolicy.h"
-#include "SfsFilterPolicy.h"
 
-class IndexArray;
-class SfsCtrl;
-class TaskEvent;
+class Policy;
 
-class ModSfsMainPanelImpl : public Observer, public ModSfsMainPanelBase
+class ModSfsMainPanelImpl : public ModSfsMainPanelBase, private Observer
 {
 
 	public:
@@ -60,22 +52,6 @@ class ModSfsMainPanelImpl : public Observer, public ModSfsMainPanelBase
 		~ModSfsMainPanelImpl(void);
 
 		/**
-		 * Adds a Sfs default filter policy.
-		 * This should be used by ModSfsAddPolicyVisitor only.
-		 * @param[in] 1st Concerning Sfs default filter policy.
-		 * @return Nothing.
-		 */
-		void addSfsDefaultFilterPolicy(SfsDefaultFilterPolicy*);
-
-		/**
-		 * Adds a Sfs filter policy.
-		 * This should be used by ModSfsAddPolicyVisitor only.
-		 * @param[in] 1st Concerning Sfs filter policy.
-		 * @return Nothing.
-		 */
-		void addSfsFilterPolicy(SfsFilterPolicy*);
-
-		/**
 		 * This is called when an observed policy was modified.
 		 * @param[in] 1st The changed policy (aka subject).
 		 * @return Nothing.
@@ -91,25 +67,6 @@ class ModSfsMainPanelImpl : public Observer, public ModSfsMainPanelBase
 		virtual void updateDelete(Subject *);
 
 	private:
-		/**
-		 * The columns used within ModSfs
-		 */
-		enum modSfsListColumns {
-			COLUMN_PATH = 0,	/**< path to binary. */
-			COLUMN_SUB,		/**< the subject. */
-			COLUMN_VA,		/**< valid action. */
-			COLUMN_IA,		/**< invalid action. */
-			COLUMN_UA,		/**< unknown action. */
-			COLUMN_SCOPE,		/**< the scope. */
-			COLUMN_USER,		/**< the user. */
-			COLUMN_EOL
-		};
-
-		wxString columnNames_[COLUMN_EOL]; /** < the header line. */
-
-		long userRuleSetId_;	/**< Id of our ruleSet. */
-		long adminRuleSetId_;	/**< Id of our admin ruleSet. */
-
 		SfsCtrl		*sfsCtrl_;
 
 		bool comEnabled_; /**< Current communicator status. */
@@ -324,7 +281,8 @@ class ModSfsMainPanelImpl : public Observer, public ModSfsMainPanelBase
 		/**
 		 * Update the private key parameters.
 		 * @param[in] 1st The path to the private key file.
-		 * @param[in] 2nd Boolean which states validity til session end.
+		 * @param[in] 2nd Boolean which states validity til session
+		 *            end.
 		 * @param[in] 3rd Time period for validity.
 		 */
 		void privKeyParamsUpdate(const wxString &, bool, int);
@@ -337,29 +295,6 @@ class ModSfsMainPanelImpl : public Observer, public ModSfsMainPanelBase
 		void certificateParamsUpdate(const wxString &);
 
 		/**
-		 * Find the row of a given policy.
-		 * @param[in] 1st The policy to search for.
-		 * @return The index of found row or -1.
-		 */
-		long findListRow(Policy*);
-
-		/**
-		 * Remove a given row from the list.
-		 * @param[in] 1st The index of the row in question.
-		 * @return Nothing.
-		 */
-		void removeListRow(long);
-
-		/**
-		 * Handle the event on loading RuleSet.
-		 * This just receives the event and updates the id's of
-		 * user and admin ruleset.
-		 * @param[in] 1st The event.
-		 * @return Nothing.
-		 */
-		void onLoadRuleSet(wxCommandEvent&);
-
-		/**
 		 * Handle the event on show SFS browser.
 		 * This just receives the event and selects the SFS browser tab
 		 * and selects the 'show upgraded' button.
@@ -367,30 +302,6 @@ class ModSfsMainPanelImpl : public Observer, public ModSfsMainPanelBase
 		 * @return Nothing.
 		 */
 		void onSfsBrowserShow(wxCommandEvent&);
-
-		/**
-		 * Appends a new policy to the RuleSet.
-		 * Updates Columns regarding the policy and additionally
-		 * registers the policy for observation
-		 */
-		long ruleListAppend(Policy*);
-
-		/**
-		 * Update row.
-		 * Updates the values of a row showing an Sfs
-		 * DefaultFilterPolicy.
-		 * @param[in] 1st The index of row in question.
-		 * @return Nothing.
-		 */
-		void updateSfsDefaultFilterPolicy(long);
-
-		/**
-		 * Update row.
-		 * Updates the values of a row showing an Sfs FilterPolicy.
-		 * @param[in] 1st The index of row in question.
-		 * @return Nothing.
-		 */
-		void updateSfsFilterPolicy(long);
 };
 
 #endif /* __ModSfsMainPanelImpl__ */

@@ -44,7 +44,7 @@ class ModSfsListCtrl;
 #include <wx/font.h>
 #include <wx/colour.h>
 #include <wx/settings.h>
-#include <wx/listctrl.h>
+#include <wx/grid.h>
 #include <wx/sizer.h>
 #include <wx/panel.h>
 #include <wx/bitmap.h>
@@ -54,6 +54,7 @@ class ModSfsListCtrl;
 #include <wx/choice.h>
 #include <wx/checkbox.h>
 #include <wx/button.h>
+#include <wx/listctrl.h>
 #include <wx/scrolwin.h>
 #include <wx/spinctrl.h>
 #include <wx/statbox.h>
@@ -76,7 +77,7 @@ class ModSfsMainPanelBase : public wxPanel
 		wxStaticText* tx_MainHeadline;
 		wxNotebook* note_MainSfs;
 		wxPanel* pan_Rules;
-		wxListCtrl* lst_Rules;
+		wxGrid* lst_Rules;
 		wxPanel* pan_SfsMain;
 		wxStaticText* SfsMainDirectoryLabel;
 		wxTextCtrl* SfsMainPathCtrl;

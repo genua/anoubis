@@ -29,69 +29,35 @@
 #include "config.h"
 #endif
 
-#include <sys/param.h>
-#include <sys/socket.h>
-
-#ifndef LINUX
-#include <sys/queue.h>
-#else
-#include <queue.h>
-#endif
-
-#include <netinet/in.h>
-#include <arpa/inet.h>
-
-#include <apn.h>
-
-#include "wx/utils.h"
-#include <wx/filedlg.h>
 #include <wx/log.h>
-#include <wx/textdlg.h>
 
+#include "AnEvents.h"
 #include "AnPickFromFs.h"
-#include "main.h"
+#include "AnMessageDialog.h"
 #include "JobCtrl.h"
-#include "KeyCtrl.h"
-#include "ModSfsAddPolicyVisitor.h"
+#include "main.h"
 #include "ModSfsListCtrl.h"
 #include "ModSfsMainPanelImpl.h"
+#include "SfsOverviewAttrProvider.h"
+#include "SfsOverviewTable.h"
 
-ModSfsMainPanelImpl::ModSfsMainPanelImpl(wxWindow* parent,
-    wxWindowID id) : Observer(NULL), ModSfsMainPanelBase(parent, id)
+ModSfsMainPanelImpl::ModSfsMainPanelImpl(wxWindow* parent, wxWindowID id)
+    : ModSfsMainPanelBase(parent, id), Observer(NULL)
 {
-	columnNames_[COLUMN_PATH] = _("Path");
-	columnNames_[COLUMN_SUB] = _("Subject");
-	columnNames_[COLUMN_VA] = _("Valid action");
-	columnNames_[COLUMN_IA] = _("Invalid action");
-	columnNames_[COLUMN_UA] = _("Unknown action");
-	columnNames_[COLUMN_SCOPE] = _("Temporary");
-	columnNames_[COLUMN_USER] = _("User");
-
-	userRuleSetId_  = -1;
-	adminRuleSetId_ = -1;
 	comEnabled_ = false;
 
-	for (int i=0; i<COLUMN_EOL; i++) {
-		lst_Rules->InsertColumn(i, columnNames_[i], wxLIST_FORMAT_LEFT,
-		    wxLIST_AUTOSIZE_USEHEADER);
-	}
+	SfsOverviewTable *table = new SfsOverviewTable;
+	table->SetAttrProvider(new SfsOverviewAttrProvider);
+	lst_Rules->SetTable(table, true, wxGrid::wxGridSelectRows);
 
-	/*
-	 * Adjust column width (Bug #1321).
-	 * Tablewidth - sum of fix columns = remaining size.
-	 * 758 - (95 + 95 + 105 + 125 + 90 + 50) = 198
-	 */
-	lst_Rules->SetColumnWidth(COLUMN_PATH,		198);
-	lst_Rules->SetColumnWidth(COLUMN_SUB,		 95);
-	lst_Rules->SetColumnWidth(COLUMN_VA,		 95);
-	lst_Rules->SetColumnWidth(COLUMN_IA,		105);
-	lst_Rules->SetColumnWidth(COLUMN_UA,		125);
-	lst_Rules->SetColumnWidth(COLUMN_SCOPE,		 90);
-	lst_Rules->SetColumnWidth(COLUMN_USER,		 50);
+	lst_Rules->SetColSize(0, 198);
+	lst_Rules->SetColSize(1, 95);
+	lst_Rules->SetColSize(2, 95);
+	lst_Rules->SetColSize(3, 105);
+	lst_Rules->SetColSize(4, 125);
+	lst_Rules->SetColSize(5, 90);
+	lst_Rules->SetColSize(6, 50);
 
-	AnEvents::getInstance()->Connect(anEVT_LOAD_RULESET,
-	    wxCommandEventHandler(ModSfsMainPanelImpl::onLoadRuleSet),
-	    NULL, this);
 	AnEvents::getInstance()->Connect(anEVT_SFSBROWSER_SHOW,
 	    wxCommandEventHandler(ModSfsMainPanelImpl::onSfsBrowserShow),
 	    NULL, this);
@@ -119,9 +85,6 @@ ModSfsMainPanelImpl::~ModSfsMainPanelImpl(void)
 	JobCtrl::getInstance()->Disconnect(anEVT_COM_CONNECTION,
 	   wxCommandEventHandler(ModSfsMainPanelImpl::OnConnectionStateChange),
 	   NULL, this);
-	AnEvents::getInstance()->Disconnect(anEVT_LOAD_RULESET,
-	    wxCommandEventHandler(ModSfsMainPanelImpl::onLoadRuleSet),
-	    NULL, this);
 	AnEvents::getInstance()->Disconnect(anEVT_SFSBROWSER_SHOW,
 	    wxCommandEventHandler(ModSfsMainPanelImpl::onSfsBrowserShow),
 	    NULL, this);
@@ -131,39 +94,9 @@ ModSfsMainPanelImpl::~ModSfsMainPanelImpl(void)
 }
 
 void
-ModSfsMainPanelImpl::addSfsDefaultFilterPolicy(SfsDefaultFilterPolicy *policy)
-{
-	long    idx;
-
-	idx = ruleListAppend(policy);
-	updateSfsDefaultFilterPolicy(idx);
-}
-
-void
-ModSfsMainPanelImpl::addSfsFilterPolicy(SfsFilterPolicy *policy)
-{
-	long    idx;
-
-	idx = ruleListAppend(policy);
-	updateSfsFilterPolicy(idx);
-}
-
-void
 ModSfsMainPanelImpl::update(Subject *subject)
 {
-	long	idx;
-
-	if (subject->IsKindOf(CLASSINFO(SfsFilterPolicy))) {
-		idx = findListRow((Policy *)subject);
-		if (idx != -1) {
-			updateSfsFilterPolicy(idx);
-		}
-	} else if (subject->IsKindOf(CLASSINFO(SfsDefaultFilterPolicy))) {
-		idx = findListRow((Policy *)subject);
-		if (idx != -1) {
-			updateSfsDefaultFilterPolicy(idx);
-		}
-	} else if (subject == keyPicker) {
+	if (subject == keyPicker) {
 		privKeyParamsUpdate(
 		    keyPicker->getFileName(),
 		    PrivKeyValidityChoice->GetCurrentSelection() == 0,
@@ -176,14 +109,8 @@ ModSfsMainPanelImpl::update(Subject *subject)
 }
 
 void
-ModSfsMainPanelImpl::updateDelete(Subject *subject)
+ModSfsMainPanelImpl::updateDelete(Subject *)
 {
-	long    idx = -1;
-
-	idx = findListRow((Policy *)subject);
-	if (idx != -1) {
-		lst_Rules->SetItemPtrData(idx, (wxUIntPtr)0);
-	}
 }
 
 void
@@ -731,78 +658,6 @@ ModSfsMainPanelImpl::certificateParamsUpdate(const wxString &path)
 	wxPostEvent(AnEvents::getInstance(), event);
 }
 
-long
-ModSfsMainPanelImpl::findListRow(Policy *policy)
-{
-	for (int i = lst_Rules->GetItemCount(); i >= 0; i--) {
-		if (policy == (Policy *)lst_Rules->GetItemData(i)) {
-			return (i);
-		}
-	}
-
-	return (-1);
-}
-
-void
-ModSfsMainPanelImpl::removeListRow(long idx)
-{
-	Policy	*policy;
-
-	policy = wxDynamicCast((void*)lst_Rules->GetItemData(idx), Policy);
-	if (policy != NULL) {
-		/* deregister for observing policy */
-		removeSubject(policy);
-	}
-
-	lst_Rules->DeleteItem(idx);
-}
-
-void
-ModSfsMainPanelImpl::onLoadRuleSet(wxCommandEvent& event)
-{
-	ModSfsAddPolicyVisitor	 addVisitor(this);
-	PolicyRuleSet		*ruleSet;
-	PolicyCtrl		*policyCtrl;
-
-	policyCtrl = PolicyCtrl::getInstance();
-
-	/* clear the whole list */
-	for (int i = lst_Rules->GetItemCount() - 1; i >= 0; i--) {
-		removeListRow(i);
-	}
-
-	/* release old ones */
-	ruleSet = policyCtrl->getRuleSet(userRuleSetId_);
-	if (ruleSet != NULL) {
-		ruleSet->unlock();
-		removeSubject(ruleSet);
-	}
-
-	ruleSet = policyCtrl->getRuleSet(adminRuleSetId_);
-	if (ruleSet != NULL) {
-		ruleSet->unlock();
-		removeSubject(ruleSet);
-	}
-
-	userRuleSetId_ = policyCtrl->getUserId();
-	adminRuleSetId_ = policyCtrl->getAdminId(geteuid());
-
-	/* get the new ones */
-	ruleSet = policyCtrl->getRuleSet(userRuleSetId_);
-	if (ruleSet != NULL) {
-		ruleSet->lock();
-		ruleSet->accept(addVisitor);
-	}
-
-	ruleSet = policyCtrl->getRuleSet(adminRuleSetId_);
-	if (ruleSet != NULL) {
-		ruleSet->lock();
-		ruleSet->accept(addVisitor);
-	}
-
-	event.Skip();
-}
-
 void
 ModSfsMainPanelImpl::onSfsBrowserShow(wxCommandEvent& event)
 {
@@ -813,82 +668,4 @@ ModSfsMainPanelImpl::onSfsBrowserShow(wxCommandEvent& event)
 	SfsMainDirTraversalCheckbox->SetValue(true);
 	SfsMainDirViewChoice->SetSelection(4);
 	event.Skip();
-}
-
-long
-ModSfsMainPanelImpl::ruleListAppend(Policy *policy)
-{
-	long		idx;
-	wxString	ruleType;
-	wxString	userName;
-	PolicyRuleSet	*ruleset;
-
-	idx = lst_Rules->GetItemCount();
-	lst_Rules->InsertItem(idx, wxEmptyString, idx);
-	lst_Rules->SetItemPtrData(idx, (wxUIntPtr)policy);
-
-	/* register for observing policy */
-	addSubject(policy);
-
-	ruleset = policy->getParentRuleSet();
-	if (ruleset->isAdmin()) {
-		userName = wxGetApp().getUserNameById(ruleset->getUid());
-		ruleType.Printf(_("admin ruleset of %ls"), userName.c_str());
-		lst_Rules->SetItemBackgroundColour(idx,
-		    wxTheColourDatabase->Find(wxT("LIGHT GREY")));
-	} else {
-		ruleType = wxGetUserId();
-	}
-	lst_Rules->SetItem(idx, COLUMN_USER, ruleType);
-
-	if (policy->hasScope()) {
-		lst_Rules->SetItem(idx, COLUMN_SCOPE, wxT("T"));
-	}
-
-	return (idx);
-}
-
-void
-ModSfsMainPanelImpl::updateSfsDefaultFilterPolicy(long idx)
-{
-	void			*data;
-	SfsDefaultFilterPolicy	*dftPolicy;
-
-	data = (void*)lst_Rules->GetItemData(idx);
-	dftPolicy = wxDynamicCast(data, SfsDefaultFilterPolicy);
-
-	if (dftPolicy == NULL) {
-		return;
-	}
-
-	lst_Rules->SetItem(idx, COLUMN_PATH, dftPolicy->getPath());
-	lst_Rules->SetItem(idx, COLUMN_VA, wxString::Format(_("default %ls"),
-	    dftPolicy->getActionName().c_str()));
-	/* COLUMN_USER is handled by ruleListAppend */
-}
-
-void
-ModSfsMainPanelImpl::updateSfsFilterPolicy(long idx)
-{
-	void			*data;
-	SfsFilterPolicy		*sfsPolicy;
-
-	data = (void*)lst_Rules->GetItemData(idx);
-	sfsPolicy = wxDynamicCast(data, SfsFilterPolicy);
-
-	if (sfsPolicy == NULL) {
-		return;
-	}
-
-	lst_Rules->SetItem(idx, COLUMN_PATH,
-	    sfsPolicy->getPath());
-	lst_Rules->SetItem(idx, COLUMN_SUB,
-	    sfsPolicy->getSubjectName());
-	lst_Rules->SetItem(idx, COLUMN_VA,
-	    sfsPolicy->getValidActionName());
-	lst_Rules->SetItem(idx, COLUMN_IA,
-	    sfsPolicy->getInvalidActionName());
-	lst_Rules->SetItem(idx, COLUMN_UA,
-	    sfsPolicy->getUnknownActionName());
-	/* COLUMN_USER and COLUMN_SCOPE is handled by ruleListAppend */
 }
