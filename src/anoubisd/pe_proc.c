@@ -71,6 +71,8 @@ static inline void		 pe_proc_clr_flag(struct pe_proc *,
 				     unsigned int);
 static inline void		 pe_proc_upgrade_inherit(struct pe_proc *,
 				     unsigned int);
+static inline void		 pe_proc_secure_inherit(struct pe_proc *,
+				     unsigned int);
 
 #define _PE_PROC_INTERNALS_H_
 #include "pe_proc_internals.h"
@@ -337,6 +339,7 @@ pe_proc_fork(uid_t uid, anoubis_cookie_t child, anoubis_cookie_t parent_cookie)
 
 	/* Hand mark of upgrade process down. */
 	pe_proc_upgrade_inherit(proc, pe_proc_is_upgrade(parent));
+	pe_proc_secure_inherit(proc, pe_proc_is_secure(parent));
 
 	DEBUG(DBG_PE_PROC, "pe_proc_fork: token 0x%08llx pid %d "
 	    "uid %u proc %p csum 0x%08x... parent token 0x%08llx flags 0x%x",
@@ -659,6 +662,16 @@ pe_proc_upgrade_inherit(struct pe_proc *proc, unsigned int flag)
 		pe_proc_set_flag(proc, PE_PROC_FLAGS_UPGRADE);
 	} else {
 		pe_proc_clr_flag(proc, PE_PROC_FLAGS_UPGRADE);
+	}
+}
+
+static inline void
+pe_proc_secure_inherit(struct pe_proc *proc, unsigned int flag)
+{
+	if (flag) {
+		pe_proc_set_flag(proc, PE_PROC_FLAGS_SECUREEXEC);
+	} else {
+		pe_proc_clr_flag(proc, PE_PROC_FLAGS_SECUREEXEC);
 	}
 }
 
