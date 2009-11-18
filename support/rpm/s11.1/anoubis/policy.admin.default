@@ -15,9 +15,6 @@ alf {
 	}
 
 	# AntiVirus software
-	@avupdate@ {
-		default allow
-	}
 	@freshclam@ {
 		default allow
 	}
@@ -60,8 +57,6 @@ context {
 	}
 
 	# AntiVirus software
-	{ @antivir@, @avguard@, @avscan@ } nosfs {
-	}
 	{ @clamscan@, @clamdscan@ } nosfs {
 	}
 

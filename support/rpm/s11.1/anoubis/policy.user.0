@@ -1,10 +1,20 @@
-apnversion 1.0
+apnversion 1.1
 alf {
+	# AntiVirus software
+	@avupdate@ {
+		default allow
+	}
+
 	any {
 		default allow
 	}
 }
 context {
+	# AntiVirus software
+	"/usr/lib/AntiVir/savapi" nosfs {
+		context new any
+	}
+
 	any {
 		context new any
 	}

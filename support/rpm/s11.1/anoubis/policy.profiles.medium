@@ -15,9 +15,6 @@ alf {
 	}
 
 	# AntiVirus software
-	@avupdate@ {
-		default ask
-	}
 	@freshclam@ {
 		default ask
 	}
@@ -181,8 +178,6 @@ context {
 	}
 
 	# AntiVirus software
-	{ @antivir@, @avguard@, @avscan@ } nosfs {
-	}
 	{ @clamscan@, @clamdscan@ } nosfs {
 	}
 
