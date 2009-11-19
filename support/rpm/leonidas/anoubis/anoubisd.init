@@ -48,26 +48,24 @@ do_test()
 }
 
 start() {
-	# Check if it is already running
-	if [ ! -f /var/lock/subsys/anoubisd ]; then
-	    if [ ! -d /var/run/anoubisd ]; then
-		mkdir /var/run/anoubisd
-		chmod 0755 /var/run/anoubisd
-		chown _anoubisd:_anoubisd /var/run/anoubisd
-	    fi
-
-	    # XXX: MG: We need a better way to load our modules so early
-	    # (Bug 262)
-	    modprobe alf || true
-	    modprobe sfs || true
-	    modprobe ipc || true
-
-		echo -n $"Starting anoubis daemon: "
-	    daemon /sbin/anoubisd $@
-	    RETVAL=$?
-	    [ $RETVAL -eq 0 ] && touch /var/lock/subsys/anoubisd
-	    echo
+	if [ ! -d /var/run/anoubisd ]; then
+	    mkdir /var/run/anoubisd
+	    chmod 0755 /var/run/anoubisd
+	    chown _anoubisd:_anoubisd /var/run/anoubisd
 	fi
+
+	# XXX: MG: We need a better way to load our modules so early
+	# (Bug 262)
+	modprobe alf || true
+	modprobe sfs || true
+	modprobe ipc || true
+
+	echo -n $"Starting anoubis daemon: "
+	daemon /sbin/anoubisd $@
+	RETVAL=$?
+	[ $RETVAL -eq 0 ] && touch /var/lock/subsys/anoubisd
+	echo
+
 	return $RETVAL
 }
 
