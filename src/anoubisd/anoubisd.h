@@ -68,6 +68,8 @@
 
 #include <anoubis_protocol.h>
 
+#define ANOUBISD_MAX_CONNS_PER_USER	20
+
 #define ANOUBISD_OPT_VERBOSE		0x0001
 #define ANOUBISD_OPT_VERBOSE2		0x0002
 #define ANOUBISD_OPT_NOACTION		0x0004

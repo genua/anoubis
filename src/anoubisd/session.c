@@ -216,6 +216,25 @@ session_connect(int fd __used, short event __used, void *arg)
 		DEBUG(DBG_TRACE, "<session_connect (opendup)");
 		return;
 	}
+	if (session->channel->euid != 0 &&
+	    session->channel->euid != (uid_t) -1) {
+		int conn_count = 0;
+		struct session *sp;
+		LIST_FOREACH(sp, &seg->sessionList, nextSession) {
+			if (sp->channel->euid != session->channel->euid)
+				continue;
+			if (++conn_count > ANOUBISD_MAX_CONNS_PER_USER) {
+				log_warn("Connection limit reached for uid %d",
+				    session->channel->euid);
+				acc_close(session->channel);
+				acc_destroy(session->channel);
+				free(session);
+				DEBUG(DBG_TRACE, "<session_connect (create)");
+				return;
+			}
+		}
+	}
+
 	session->proto = anoubis_server_create(session->channel, info->policy);
 	if (session->proto == NULL) {
 		log_warn("cannot create server protocol handler");
