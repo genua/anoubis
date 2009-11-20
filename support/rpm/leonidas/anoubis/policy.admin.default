@@ -19,6 +19,11 @@ alf {
 		default allow
 	}
 
+	# TrueCrypt
+	@truecrypt@ {
+		default allow
+	}
+
 	any {
 		default allow
 	}
@@ -44,6 +49,15 @@ sandbox {
 		allow path "/" rw
 		default deny
 	}
+
+	# TrueCrypt
+	@truecrypt@ {
+		allow path "/" rw
+		allow path "@sudo@" rx
+		allow path "@mkfs.ext2@" rx
+		allow path "@mkfs.ext3@" rx
+		default deny
+	}
 }
 context {
 	# Anoubis software
@@ -58,6 +72,11 @@ context {
 
 	# AntiVirus software
 	{ @clamscan@, @clamdscan@ } nosfs {
+	}
+
+	# TrueCrypt
+	@truecrypt@ {
+		# No context new for sudo
 	}
 
 	any {
