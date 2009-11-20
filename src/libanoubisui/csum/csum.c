@@ -213,8 +213,9 @@ anoubis_csum_link_calc(const char *link, u_int8_t * csbuf, int *cslen)
 	if (!S_ISLNK(sb.st_mode))
 		return anoubis_csum_calc(link, csbuf, cslen);
 
-	if ((ret = readlink(link, buf, PATH_MAX)) != -1)
-		buf[ret] = '\0';
+	if ((ret = readlink(link, buf, PATH_MAX)) < 0) {
+		return -errno;
+	}
 	SHA256_Init(&shaCtx);
 	SHA256_Update(&shaCtx, buf, ret);
 	SHA256_Final(csbuf, &shaCtx);
