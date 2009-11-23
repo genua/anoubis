@@ -59,6 +59,8 @@ start() {
 	modprobe alf || true
 	modprobe sfs || true
 	modprobe ipc || true
+	# make sure dazukofs is loaded before anoubisd
+	modprobe -q dazukofs || true
 
 	echo -n $"Starting anoubis daemon: "
 	daemon /sbin/anoubisd $@
