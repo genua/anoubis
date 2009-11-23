@@ -195,7 +195,6 @@ enum {
 	APN_ALF,		/* rule.chain, scope == NULL */
 	APN_SFS,		/* rule.chain, scope == NULL */
 	APN_SB,			/* rule.chain, scope == NULL */
-	APN_VS,			/* rule.chain, scope == NULL */
 	APN_CTX,		/* rule.chain, scope = NULL */
 	APN_ALF_FILTER,		/* rule.afilt, app == NULL */
 	APN_ALF_CAPABILITY,	/* rule.acap, app == NULL */

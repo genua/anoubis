@@ -79,7 +79,6 @@ static struct file {
 	} u;
 	char			*name;
 	int			 lineno;
-	int			 errors;
 } *file;
 TAILQ_HEAD(files, file)		 files;
 
@@ -378,8 +377,6 @@ alfruleset	: ruleid apps optnl '{' optnl alfrule_l '}' nl {
 
 			if (apn_add_alfblock(apnrsp, rule, file->name,
 			    yylval.lineno) != 0) {
-				/* Account for errors in apn_add_alfblock */
-				file->errors++;
 				apn_free_one_rule(rule, NULL);
 				YYERROR;
 			}
@@ -561,6 +558,7 @@ alffilterspec	: netaccess log proto hosts {
 
 			if (validate_alffilterspec(&$$) == -1) {
 				apn_free_filter(&$$);
+				yyerror("Invalid filter specification");
 				YYERROR;
 			}
 		}
@@ -672,17 +670,19 @@ port		: NUMBER minus NUMBER		{
 
 			if (portbynumber($1, &port->port) == -1) {
 				free(port);
+				yyerror("Invalid port");
 				YYERROR;
 			}
 
 			if (portbynumber($3, &port->port2) == -1) {
 				free(port);
+				yyerror("Invalid port");
 				YYERROR;
 			}
 
 			if ($3 < $1) {
-				yyerror("portrange invalid: %ld-%ld", $1, $3);
 				free(port);
+				yyerror("portrange invalid: %ld-%ld", $1, $3);
 				YYERROR;
 			}
 
@@ -701,6 +701,7 @@ port		: NUMBER minus NUMBER		{
 			if (portbyname($1, &port->port) == -1) {
 				free($1);
 				free(port);
+				yyerror("Invalid port");
 				YYERROR;
 			}
 			free($1);
@@ -718,6 +719,7 @@ port		: NUMBER minus NUMBER		{
 
 			if (portbynumber($1, &port->port) == -1) {
 				free(port);
+				yyerror("Invalid port");
 				YYERROR;
 			}
 
@@ -951,8 +953,6 @@ sbruleset	: ruleid apps optnl '{' optnl sbrule_l '}' nl {
 
 			if (apn_add_sbblock(apnrsp, rule, file->name,
 			    yylval.lineno) != 0) {
-				/* Account for errors in apn_add_sbblock */
-				file->errors++;
 				apn_free_one_rule(rule, NULL);
 				YYERROR;
 			}
@@ -1149,8 +1149,6 @@ ctxruleset	: ruleid apps ctxnosfs optnl '{' optnl ctxrule_l '}' nl {
 
 			if (apn_add_ctxblock(apnrsp, rule, file->name,
 			    yylval.lineno) != 0) {
-				/* Account for errors in apn_add_alfblock */
-				file->errors++;
 				apn_free_one_rule(rule, NULL);
 				YYERROR;
 			}
@@ -1312,7 +1310,6 @@ yyerror(const char *fmt, ...)
 	va_list			 ap;
 	int ret;
 
-	file->errors++;
 	va_start(ap, fmt);
 	ret = apn_verror(apnrsp, file->name, yylval.lineno, fmt, ap);
 	va_end(ap);
@@ -1689,7 +1686,6 @@ popfile(void)
 	struct file	*prev;
 
 	if ((prev = TAILQ_PREV(file, files, entry)) != NULL) {
-		prev->errors += file->errors;
 		TAILQ_REMOVE(&files, file, entry);
 		if (file->type == APN_FILE)
 			fclose(file->u.u_stream);
@@ -1727,13 +1723,10 @@ parse_rules_iovec(const char *filename, struct iovec *iovec, int count,
 static int
 __parse_rules_common(struct apn_ruleset *apnrspx)
 {
-	int errors = 0;
-
 	apnrsp = apnrspx;
 	apnrsp->version = 0;
 
 	yyparse();
-	errors = file->errors;
 	popfile();
 
 	if (file->type == APN_FILE)
@@ -1743,7 +1736,7 @@ __parse_rules_common(struct apn_ruleset *apnrspx)
 
 	apn_assign_ids(apnrspx);
 
-	return (errors ? 1 : 0);
+	return (TAILQ_EMPTY(&apnrsp->err_queue) ? 0 : 1);
 }
 
 /*

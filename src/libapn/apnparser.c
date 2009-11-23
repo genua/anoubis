@@ -271,7 +271,7 @@ apn_duplicate_ids(struct apn_rule *rule)
 	case APN_ALF:
 	case APN_SFS:
 	case APN_SB:
-	case APN_VS:
+	case APN_CTX:
 		TAILQ_FOREACH(tmp, &rule->rule.chain, entry) {
 			if (tmp->apn_id == 0)
 				continue;
@@ -279,6 +279,7 @@ apn_duplicate_ids(struct apn_rule *rule)
 				return 1;
 			rb_insert_entry(&root, &tmp->_rbentry);
 		}
+		break;
 	default:
 		break;
 	}
@@ -1520,7 +1521,6 @@ apn_free_one_rule(struct apn_rule *rule, struct apn_ruleset *rs)
 	case APN_ALF:
 	case APN_SFS:
 	case APN_SB:
-	case APN_VS:
 	case APN_CTX:
 		apn_free_chain(&rule->rule.chain, rs);
 		break;
@@ -1631,7 +1631,6 @@ apn_update_ids(struct apn_rule *rule, struct apn_ruleset *rs)
 	switch (rule->apn_type) {
 	case APN_ALF:
 	case APN_SFS:
-	case APN_VS:
 	case APN_SB:
 	case APN_CTX:
 		TAILQ_FOREACH(r, &rule->rule.chain, entry)
@@ -2037,7 +2036,6 @@ apn_clean_rule(struct apn_ruleset *rs, struct apn_rule *block,
 	switch(block->apn_type) {
 	case APN_ALF:
 	case APN_SFS:
-	case APN_VS:
 	case APN_SB:
 	case APN_CTX:
 		break;
@@ -2142,7 +2140,6 @@ apn_assign_ids_one(struct apn_ruleset *rs, struct apn_rule *r)
 	case APN_ALF:
 	case APN_SFS:
 	case APN_SB:
-	case APN_VS:
 	case APN_CTX:
 		apn_assign_ids_chain(rs, &r->rule.chain);
 		break;
