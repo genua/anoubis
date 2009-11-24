@@ -628,7 +628,7 @@ host		: not address			{
 address		: STRING			{
 			if (!host($1, &$$)) {
 				free($1);
-				yyerror("could not parse address");
+				yyerror("Could not parse address");
 				YYERROR;
 			}
 			free($1);
@@ -682,7 +682,7 @@ port		: NUMBER minus NUMBER		{
 
 			if ($3 < $1) {
 				free(port);
-				yyerror("portrange invalid: %ld-%ld", $1, $3);
+				yyerror("Portrange invalid: %ld-%ld", $1, $3);
 				YYERROR;
 			}
 
@@ -1448,7 +1448,7 @@ lgetc(int quotec)
 
 	if (quotec) {
 		if ((c = llgetc(file)) == EOF) {
-			yyerror("reached end of file while parsing quoted "
+			yyerror("Reached end of file while parsing quoted "
 			    "string");
 			if (popfile() == EOF)
 				return (EOF);
@@ -1553,7 +1553,7 @@ yylex(void)
 				break;
 			}
 			if (p + 1 >= buf + sizeof(buf) - 1) {
-				yyerror("string too long");
+				yyerror("String too long");
 				return (findeol());
 			}
 			*p++ = (char)c;
@@ -1576,7 +1576,7 @@ yylex(void)
 		do {
 			*p++ = c;
 			if ((unsigned)(p-buf) >= sizeof(buf)) {
-				yyerror("string too long");
+				yyerror("String too long");
 				return (findeol());
 			}
 		} while ((c = lgetc(0)) != EOF && isdigit(c));
@@ -1614,7 +1614,7 @@ nodigits:
 		do {
 			*p++ = c;
 			if ((unsigned)(p-buf) >= sizeof(buf)) {
-				yyerror("string too long");
+				yyerror("String too long");
 				return (findeol());
 			}
 		} while ((c = lgetc(0)) != EOF && (allowed_in_string(c)));
@@ -1793,7 +1793,7 @@ host_v6(const char *s, struct apn_addr *h)
 	if ((p = strrchr(s, '/')) != NULL) {
 		bits = strtonum(p + 1, 0, 128, &errstr);
 		if (errstr) {
-			yyerror("prefixlen is %s: %s", errstr, p + 1);
+			yyerror("Prefixlen is %s: %s", errstr, p + 1);
 			return (-1);
 		}
 		if ((ps = malloc(strlen(s) - strlen(p) + 1)) == NULL)
@@ -1861,7 +1861,7 @@ portbyname(const char *ports, u_int16_t *portp)
 
 	if ((s = getservbyname(ports, "tcp")) == NULL &&
 	    (s = getservbyname(ports, "udp")) == NULL) {
-		yyerror("could not parse port: %s", ports);
+		yyerror("Could not parse port: %s", ports);
 		return (-1);
 	}
 
@@ -1874,7 +1874,7 @@ static int
 portbynumber(int64_t port, u_int16_t *portp)
 {
 	if (!(0 <= port && port <= USHRT_MAX)) {
-		yyerror("port out of range: %ld", port);
+		yyerror("Port out of range: %ld", port);
 		return (-1);
 	}
 
@@ -1904,7 +1904,7 @@ validate_alffilterspec(struct apn_afiltspec *afspec)
 	case IPPROTO_UDP:
 		if (afspec->netaccess != APN_SEND && afspec->netaccess !=
 		    APN_RECEIVE && afspec->netaccess != APN_BOTH) {
-			yyerror("invalid connection state");
+			yyerror("Invalid connection state");
 			return (-1);
 		}
 		break;
@@ -1912,7 +1912,7 @@ validate_alffilterspec(struct apn_afiltspec *afspec)
 	case IPPROTO_TCP:
 		if (afspec->netaccess != APN_CONNECT && afspec->netaccess !=
 		    APN_ACCEPT && afspec->netaccess != APN_BOTH) {
-			yyerror("invalid connection state");
+			yyerror("Invalid connection state");
 			return (-1);
 		}
 		break;
@@ -1922,11 +1922,11 @@ validate_alffilterspec(struct apn_afiltspec *afspec)
 	}
 
 	if (validate_hostlist(afspec->fromhost) < 0) {
-		yyerror("invalid source host");
+		yyerror("Invalid source host");
 		return -1;
 	}
 	if (validate_hostlist(afspec->tohost) < 0) {
-		yyerror("invalid destination host");
+		yyerror("Invalid destination host");
 		return -1;
 	}
 	return (0);
