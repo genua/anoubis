@@ -140,7 +140,12 @@ static void	init_root_key(char *, struct event_info_main *);
 FILE	    *pidfp;
 static char *pid_file_name = PACKAGE_PIDFILE;
 #ifdef LINUX
-static char *omit_pid_file = "/var/run/sendsigs.omit.d/anoubisd";
+static char *omit_pid_files[] = {
+	"/lib/init/rw/sendsigs.omit.d/" PACKAGE_DAEMON,
+	"/var/run/sendsigs.omit.d/" PACKAGE_DAEMON,
+	NULL
+};
+static char *omit_pid_file = NULL;
 #endif
 
 /*
@@ -155,7 +160,7 @@ segvhandler(int sig __used, siginfo_t *info, void *uc)
 	void	**ucp = uc;
 
 
-	sprintf(p, "anoubisd: SEGFAULT at %p ucontext:%n",
+	sprintf(p, PACKAGE_DAEMON ": SEGFAULT at %p ucontext:%n",
 	    info?info->si_addr:(void*)-1, &n);
 	p += n;
 	nreg = sizeof(ucontext_t)/sizeof(void*);
@@ -199,7 +204,7 @@ sighandler(int sig, short event __used, void *arg __used)
 
 		if (terminate < 1)
 			terminate = 1;
-		log_warnx("anoubisd: Shutdown requested by signal");
+		log_warnx(PACKAGE_DAEMON ": Shutdown requested by signal");
 		if (ioctl(eventfds[1], ANOUBIS_UNDECLARE_FD,
 		    eventfds[0]) == 0) {
 			struct timeval tv;
@@ -544,7 +549,7 @@ main(int argc, char *argv[])
 
 	if ((pidfp = check_pid()) == NULL) {
 		if (errno == EWOULDBLOCK || errno == EAGAIN)
-			early_errx(1, "anoubisd is already running");
+			early_errx(1, PACKAGE_DAEMON " is already running");
 		else
 			early_errx(1, "cannot write pid file");
 	}
@@ -599,10 +604,14 @@ main(int argc, char *argv[])
 #ifdef LINUX
 	dazukofd = dazukofs_ignore();
 
-	if ((omitfp = fopen(omit_pid_file, "w"))) {
+	for (p=0; omit_pid_files[p]; p++) {
+		if ((omitfp = fopen(omit_pid_files[p], "w")) == NULL)
+			continue;
 		fprintf(omitfp, "%d\n%d\n%d\n%d\n%d\n",
 		    master_pid, se_pid, policy_pid, logger_pid, upgrade_pid);
 		fclose(omitfp);
+		omit_pid_file = omit_pid_files[p];
+		break;
 	}
 #endif
 
@@ -742,9 +751,10 @@ main(int argc, char *argv[])
 	 */
 	unlink(pid_file_name);
 #ifdef LINUX
-	unlink(omit_pid_file);
+	if (omit_pid_file)
+		unlink(omit_pid_file);
 #endif
-	log_warnx("anoubisd shutdown");
+	log_warnx(PACKAGE_DAEMON " shutdown");
 	flush_log_queue();
 
 	exit(0);
@@ -787,11 +797,12 @@ main_cleanup(void)
 			logger_pid = 0;
 	}
 
-	log_warnx("anoubisd is terminating");
+	log_warnx(PACKAGE_DAEMON " is terminating");
 	flush_log_queue();
 	unlink(pid_file_name);
 #ifdef LINUX
-	unlink(omit_pid_file);
+	if (omit_pid_file)
+		unlink(omit_pid_file);
 #endif
 }
 
