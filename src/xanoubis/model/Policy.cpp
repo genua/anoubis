@@ -230,6 +230,7 @@ Policy::remove(void)
 	PolicyRuleSet	*prs = getParentRuleSet();
 	if (!prs || apn_remove(prs->getApnRuleSet(), id) != 0)
 		return (false);
+	rule_ = NULL;
 	prs->refresh();
 	prs->setModified();
 	return (true);

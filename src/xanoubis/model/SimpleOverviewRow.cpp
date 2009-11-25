@@ -52,6 +52,8 @@ SimpleOverviewRow::SimpleOverviewRow(PolicyRuleSet *ruleSet,
 
 SimpleOverviewRow::~SimpleOverviewRow(void)
 {
+	if (ruleSet_ != 0)
+		removeSubject(ruleSet_);
 	if (applicationPolicy_ != 0)
 		removeSubject(applicationPolicy_);
 	if (filterPolicy_ != 0)

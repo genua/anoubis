@@ -26,6 +26,7 @@
  */
 
 #include "Subject.h"
+#include <vector>
 
 #include <wx/listimpl.cpp>
 WX_DEFINE_LIST(SubjectList);
@@ -98,19 +99,19 @@ Subject::finishChange(void)
 void
 Subject::notifyChange(void)
 {
-	ObserverList::iterator	it;
+	ObserverList::iterator		it;
+	std::vector<Observer *>		todo;
 
 	/*
 	 * Create a copy of the observer-list to freeze the current list.
 	 * The list can be altered while this method is running. And this
 	 * is not what you want!
 	 */
-	ObserverList copy;
-	copy.insert(copy.begin(), observers_.begin(), observers_.end());
-
-	it = copy.begin();
-	while (it != copy.end()) {
-		(*it)->update(this);
-		it++;
+	for (it = observers_.begin(); it != observers_.end(); ++it) {
+		todo.push_back(*it);
+	}
+	for (int i=0; i<(int)todo.size(); ++i) {
+		if (observers_.IndexOf(todo[i]) != wxNOT_FOUND)
+			todo[i]->update(this);
 	}
 }
