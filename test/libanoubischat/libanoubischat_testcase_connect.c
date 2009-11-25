@@ -49,8 +49,10 @@
 void
 tc_connect_lud_client(const char *sockname)
 {
-	struct sockaddr_storage	 ss;
-	struct sockaddr_un	*ss_sun = (struct sockaddr_un *)&ss;
+	union {
+		struct sockaddr_storage	ss;
+		struct sockaddr_un	un;
+	} sa;
 	struct achat_channel    *c  = NULL;
 	achat_rc		 rc = ACHAT_RC_ERROR;
 
@@ -66,10 +68,10 @@ tc_connect_lud_client(const char *sockname)
 	fail_if(rc != ACHAT_RC_OK, "client setsslmode failed with rc=%d", rc);
 	mark_point();
 
-	bzero(&ss, sizeof(ss));
-	ss_sun->sun_family = AF_UNIX;
-	strlcpy(ss_sun->sun_path, sockname, sizeof(ss_sun->sun_path));
-	rc = acc_setaddr(c, &ss, sizeof(struct sockaddr_un));
+	bzero(&sa.ss, sizeof(sa.ss));
+	sa.un.sun_family = AF_UNIX;
+	strlcpy(sa.un.sun_path, sockname, sizeof(sa.un.sun_path));
+	rc = acc_setaddr(c, &sa.ss, sizeof(struct sockaddr_un));
 	if (rc != ACHAT_RC_OK)
 		fail("client setaddr failed with rc=%d", rc);
 	mark_point();
@@ -95,8 +97,10 @@ tc_connect_lud_client(const char *sockname)
 void
 tc_connect_lud_server(const char *sockname)
 {
-	struct sockaddr_storage	 ss;
-	struct sockaddr_un	*ss_sun = (struct sockaddr_un *)&ss;
+	union {
+		struct sockaddr_storage	ss;
+		struct sockaddr_un	un;
+	} sa;
 	struct achat_channel    *s  = NULL;
 	achat_rc		 rc = ACHAT_RC_ERROR;
 
@@ -111,10 +115,10 @@ tc_connect_lud_server(const char *sockname)
 	fail_if(rc != ACHAT_RC_OK, "server setsslmode failed with rc=%d", rc);
 	mark_point();
 
-	bzero(&ss, sizeof(ss));
-	ss_sun->sun_family = AF_UNIX;
-	strlcpy(ss_sun->sun_path, sockname, sizeof(ss_sun->sun_path));
-	rc = acc_setaddr(s, &ss, sizeof(struct sockaddr_un));
+	bzero(&sa.ss, sizeof(sa.ss));
+	sa.un.sun_family = AF_UNIX;
+	strlcpy(sa.un.sun_path, sockname, sizeof(sa.un.sun_path));
+	rc = acc_setaddr(s, &sa.ss, sizeof(struct sockaddr_un));
 	if (rc != ACHAT_RC_OK)
 		fail("server setaddr failed with rc=%d", rc);
 	mark_point();
@@ -139,8 +143,10 @@ tc_connect_lud_server(const char *sockname)
 void
 tc_connect_lud_serverdup(const char *sockname)
 {
-	struct sockaddr_storage	 ss;
-	struct sockaddr_un	*ss_sun = (struct sockaddr_un *)&ss;
+	union {
+		struct sockaddr_storage	ss;
+		struct sockaddr_un	un;
+	} sa;
 	struct achat_channel    *s  = NULL;
 	struct achat_channel    *s2 = NULL;
 	achat_rc		 rc = ACHAT_RC_ERROR;
@@ -156,10 +162,10 @@ tc_connect_lud_serverdup(const char *sockname)
 	fail_if(rc != ACHAT_RC_OK, "server setsslmode failed with rc=%d", rc);
 	mark_point();
 
-	bzero(&ss, sizeof(ss));
-	ss_sun->sun_family = AF_UNIX;
-	strlcpy(ss_sun->sun_path, sockname, sizeof(ss_sun->sun_path));
-	rc = acc_setaddr(s, &ss, sizeof(struct sockaddr_un));
+	bzero(&sa.ss, sizeof(sa.ss));
+	sa.un.sun_family = AF_UNIX;
+	strlcpy(sa.un.sun_path, sockname, sizeof(sa.un.sun_path));
+	rc = acc_setaddr(s, &sa.ss, sizeof(struct sockaddr_un));
 	if (rc != ACHAT_RC_OK)
 		fail("server setaddr failed with rc=%d", rc);
 	mark_point();
@@ -187,8 +193,10 @@ tc_connect_lud_serverdup(const char *sockname)
 void
 tc_connect_lip_client(short port)
 {
-	struct sockaddr_storage  ss;
-	struct sockaddr_in	*ss_sin = (struct sockaddr_in *)&ss;
+	union {
+		struct sockaddr_storage	ss;
+		struct sockaddr_in	in;
+	} sa;
 	struct achat_channel    *c  = NULL;
 	achat_rc		 rc = ACHAT_RC_ERROR;
 
@@ -203,11 +211,11 @@ tc_connect_lip_client(short port)
 	fail_if(rc != ACHAT_RC_OK, "client setsslmode failed with rc=%d", rc);
 	mark_point();
 
-	bzero(&ss, sizeof(ss));
-	ss_sin->sin_family = AF_INET;
-	ss_sin->sin_port = htons(port);
-	inet_aton("127.0.0.1", &(ss_sin->sin_addr));
-	rc = acc_setaddr(c, &ss, sizeof(struct sockaddr_in));
+	bzero(&sa.ss, sizeof(sa.ss));
+	sa.in.sin_family = AF_INET;
+	sa.in.sin_port = htons(port);
+	inet_aton("127.0.0.1", &(sa.in.sin_addr));
+	rc = acc_setaddr(c, &sa.ss, sizeof(struct sockaddr_in));
 	if (rc != ACHAT_RC_OK)
 		fail("client setaddr failed with rc=%d", rc);
 	mark_point();
@@ -304,8 +312,10 @@ END_TEST
 START_TEST(tc_connect_localunixdomain_clientclose)
 {
 	char *sockname;
-	struct sockaddr_storage	 ss;
-	struct sockaddr_un	*ss_sun = (struct sockaddr_un *)&ss;
+	union {
+		struct sockaddr_storage	ss;
+		struct sockaddr_un	un;
+	} sa;
 	struct achat_channel    *s  = NULL;
 	struct achat_channel    *c  = NULL;
 	achat_rc		 rc = ACHAT_RC_ERROR;
@@ -323,10 +333,10 @@ START_TEST(tc_connect_localunixdomain_clientclose)
 	fail_if(rc != ACHAT_RC_OK, "client setsslmode failed with rc=%d", rc);
 	mark_point();
 
-	bzero(&ss, sizeof(ss));
-	ss_sun->sun_family = AF_UNIX;
-	strlcpy(ss_sun->sun_path, sockname, sizeof(ss_sun->sun_path));
-	rc = acc_setaddr(c, &ss, sizeof(struct sockaddr_un));
+	bzero(&sa.ss, sizeof(sa.ss));
+	sa.un.sun_family = AF_UNIX;
+	strlcpy(sa.un.sun_path, sockname, sizeof(sa.un.sun_path));
+	rc = acc_setaddr(c, &sa.ss, sizeof(struct sockaddr_un));
 	if (rc != ACHAT_RC_OK)
 		fail("client setaddr failed with rc=%d", rc);
 	mark_point();
@@ -347,7 +357,7 @@ START_TEST(tc_connect_localunixdomain_clientclose)
 	fail_if(rc != ACHAT_RC_OK, "server setsslmode failed with rc=%d", rc);
 	mark_point();
 
-	rc = acc_setaddr(s, &ss, sizeof(struct sockaddr_un));
+	rc = acc_setaddr(s, &sa.ss, sizeof(struct sockaddr_un));
 	if (rc != ACHAT_RC_OK)
 		fail("server setaddr failed with rc=%d", rc);
 	mark_point();
@@ -406,8 +416,10 @@ END_TEST
 
 START_TEST(tc_connect_localip)
 {
-	struct sockaddr_storage  ss;
-	struct sockaddr_in	*ss_sin = (struct sockaddr_in *)&ss;
+	union {
+		struct sockaddr_storage	ss;
+		struct sockaddr_in	in;
+	} sa;
 	struct achat_channel    *s  = NULL;
 	achat_rc		 rc = ACHAT_RC_ERROR;
 	pid_t			 childpid;
@@ -424,11 +436,11 @@ START_TEST(tc_connect_localip)
 	fail_if(rc != ACHAT_RC_OK, "server setsslmode failed with rc=%d", rc);
 	mark_point();
 
-	bzero(&ss, sizeof(ss));
-	ss_sin->sin_family = AF_INET;
-	ss_sin->sin_port = 0;
-	inet_aton("127.0.0.1", &(ss_sin->sin_addr));
-	rc = acc_setaddr(s, &ss, sizeof(struct sockaddr_in));
+	bzero(&sa.ss, sizeof(sa.ss));
+	sa.in.sin_family = AF_INET;
+	sa.in.sin_port = 0;
+	inet_aton("127.0.0.1", &(sa.in.sin_addr));
+	rc = acc_setaddr(s, &sa.ss, sizeof(struct sockaddr_in));
 	if (rc != ACHAT_RC_OK)
 		fail("server setaddr failed with rc=%d", rc);
 	mark_point();
@@ -438,12 +450,12 @@ START_TEST(tc_connect_localip)
 	    rc, strerror(errno));
 	mark_point();
 
-	bzero(&ss, sizeof(ss));
-	sslen = sizeof(ss);
-	if (getsockname(s->fd, (struct sockaddr *)&ss, &sslen) == -1)
+	bzero(&sa.ss, sizeof(sa.ss));
+	sslen = sizeof(sa.ss);
+	if (getsockname(s->fd, (struct sockaddr *)&sa.ss, &sslen) == -1)
 		fail("error while asking about server socket name [%s]",
 		    strerror(errno));
-	fail_if(ss_sin->sin_port == 0,
+	fail_if(sa.in.sin_port == 0,
 	    "couldn't determine port of server socket");
 	mark_point();
 
@@ -453,7 +465,7 @@ START_TEST(tc_connect_localip)
 		break;
 	case 0:
 		/* child / client */
-		tc_connect_lip_client(ntohs(ss_sin->sin_port));
+		tc_connect_lip_client(ntohs(sa.in.sin_port));
 		check_waitpid_and_exit(0);
 		break;
 	default:

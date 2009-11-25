@@ -172,9 +172,11 @@ END_TEST
 START_TEST(tc_core_addr)
 {
 	struct achat_channel    *c = NULL;
-	struct sockaddr_storage	 sa;
-	struct sockaddr_un	*sa_un = (struct sockaddr_un *)&sa;
-	struct sockaddr_in	*sa_in = (struct sockaddr_in *)&sa;
+	union {
+		struct sockaddr_storage	 st;
+		struct sockaddr_un	 un;
+		struct sockaddr_in	 in;
+	} sa;
 	char			 testpath[] = "The road goes ever on and on";
 	achat_rc                 rc = ACHAT_RC_ERROR;
 
@@ -194,30 +196,30 @@ START_TEST(tc_core_addr)
 	    ACHAT_RC_INVALPARAM, rc);
 	mark_point();
 
-	bzero(&sa, sizeof(sa));
-	sa_un->sun_family = AF_UNIX;
-	strlcpy(sa_un->sun_path, testpath, sizeof(sa_un->sun_path));
+	bzero(&sa.st, sizeof(sa.st));
+	sa.un.sun_family = AF_UNIX;
+	strlcpy(sa.un.sun_path, testpath, sizeof(sa.un.sun_path));
 #ifdef OPENBSD
-	sa_un->sun_len = SUN_LEN(sa_un);
+	sa.un.sun_len = SUN_LEN(&sa.un);
 #endif
-	rc = acc_setaddr(c, &sa, sizeof(struct sockaddr_un));
+	rc = acc_setaddr(c, &sa.st, sizeof(struct sockaddr_un));
 	fail_if(rc != ACHAT_RC_OK, "setaddr failed with rc=%d", rc);
-	if (memcmp(&c->addr, &sa, sizeof(sa)) != 0)
+	if (memcmp(&c->addr, &sa.st, sizeof(sa.st)) != 0)
 		fail("socket address not set correctly");
 	fail_if(c->addrsize != sizeof(struct sockaddr_un),
 		"socket address not set correctly");
 	mark_point();
 
-	bzero(&sa, sizeof(sa));
-	sa_in->sin_family = AF_INET;
-	sa_in->sin_port = htons(ACHAT_SERVER_PORT);
-	inet_aton("127.0.0.1", &(sa_in->sin_addr));
+	bzero(&sa.st, sizeof(sa.st));
+	sa.in.sin_family = AF_INET;
+	sa.in.sin_port = htons(ACHAT_SERVER_PORT);
+	inet_aton("127.0.0.1", &(sa.in.sin_addr));
 #ifdef OPENBSD
-	sa_in->sin_len = sizeof(struct sockaddr_in);
+	sa.in.sin_len = sizeof(struct sockaddr_in);
 #endif
-	rc = acc_setaddr(c, &sa, sizeof(struct sockaddr_in));
+	rc = acc_setaddr(c, &sa.st, sizeof(struct sockaddr_in));
 	fail_if(rc != ACHAT_RC_OK, "setaddr failed with rc=%d", rc);
-	if (memcmp(&c->addr, &sa, sizeof(sa)) != 0)
+	if (memcmp(&c->addr, &sa.st, sizeof(sa.st)) != 0)
 		fail("socket address not set correctly");
 	fail_if(c->addrsize != sizeof(struct sockaddr_in),
 		"socket address not set correctly");
@@ -233,25 +235,27 @@ END_TEST
 START_TEST(tc_core_state_initialised)
 {
 	struct achat_channel    *c = NULL;
-	struct sockaddr_storage	 sa;
-	struct sockaddr_in	*sa_in = (struct sockaddr_in *)&sa;
+	union {
+		struct sockaddr_storage	st;
+		struct sockaddr_in	in;
+	} sa;
 	achat_rc                 rc = ACHAT_RC_ERROR;
 
 	c = acc_create();
 	fail_if(c == NULL, "couldn't create channel");
 	mark_point();
 
-	bzero(&sa, sizeof(sa));
-	sa_in->sin_family = AF_INET;
-	sa_in->sin_port = htons(ACHAT_SERVER_PORT);
-	inet_aton("127.0.0.1", &(sa_in->sin_addr));
+	bzero(&sa.st, sizeof(sa.st));
+	sa.in.sin_family = AF_INET;
+	sa.in.sin_port = htons(ACHAT_SERVER_PORT);
+	inet_aton("127.0.0.1", &(sa.in.sin_addr));
 #ifdef OPENBSD
-	sa_in->sin_len = sizeof(struct sockaddr_in);
+	sa.in.sin_len = sizeof(struct sockaddr_in);
 #endif
 
-	rc = acc_setaddr(c, &sa, sizeof(struct sockaddr_in));
+	rc = acc_setaddr(c, &sa.st, sizeof(struct sockaddr_in));
 	fail_if(rc != ACHAT_RC_OK, "setaddr failed with rc=%d", rc);
-	if (memcmp(&c->addr, &sa, sizeof(sa)) != 0)
+	if (memcmp(&c->addr, &sa.st, sizeof(sa.st)) != 0)
 		fail("socket address not set correctly");
 	fail_if(c->addrsize != sizeof(struct sockaddr_in),
 		"socket address not set correctly");

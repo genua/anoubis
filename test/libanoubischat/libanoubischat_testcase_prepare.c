@@ -90,23 +90,25 @@ END_TEST
 START_TEST(tc_set_addr)
 {
 	struct achat_channel	*c  = NULL;
-	struct sockaddr_storage	 sa;
-	struct sockaddr_in	*sa_in = (struct sockaddr_in *)&sa;
+	union {
+		struct sockaddr_storage	ss;
+		struct sockaddr_in	in;
+	} sa;
 	achat_rc		rc;
 
 	c = acc_create();
 	fail_if(c == NULL, "Couldn't create channel");
 	mark_point();
 
-	memset(&sa, 0, sizeof(sa));
-	sa_in->sin_family = AF_INET;
-	sa_in->sin_port = htons(ACHAT_SERVER_PORT);
-	inet_aton("127.0.0.1", &(sa_in->sin_addr));
+	memset(&sa.ss, 0, sizeof(sa.ss));
+	sa.in.sin_family = AF_INET;
+	sa.in.sin_port = htons(ACHAT_SERVER_PORT);
+	inet_aton("127.0.0.1", &(sa.in.sin_addr));
 #ifdef OPENBSD
-	sa_in->sin_len = sizeof(struct sockaddr_in);
+	sa.in.sin_len = sizeof(struct sockaddr_in);
 #endif
 
-	rc = acc_setaddr(c, &sa, sizeof(struct sockaddr_in));
+	rc = acc_setaddr(c, &sa.ss, sizeof(struct sockaddr_in));
 	fail_if(rc != ACHAT_RC_OK, "Couldn't set addr");
 	mark_point();
 
@@ -148,8 +150,10 @@ END_TEST
 START_TEST(tc_set_tail_addr)
 {
 	struct achat_channel	*c  = NULL;
-	struct sockaddr_storage	 sa;
-	struct sockaddr_in	*sa_in = (struct sockaddr_in *)&sa;
+	union {
+		struct sockaddr_storage	ss;
+		struct sockaddr_in	in;
+	} sa;
 	achat_rc		rc;
 
 	c = acc_create();
@@ -160,15 +164,15 @@ START_TEST(tc_set_tail_addr)
 	fail_if(rc != ACHAT_RC_OK, "Couldn't set tail");
 	mark_point();
 
-	memset(&sa, 0, sizeof(sa));
-	sa_in->sin_family = AF_INET;
-	sa_in->sin_port = htons(ACHAT_SERVER_PORT);
-	inet_aton("127.0.0.1", &(sa_in->sin_addr));
+	memset(&sa.ss, 0, sizeof(sa.ss));
+	sa.in.sin_family = AF_INET;
+	sa.in.sin_port = htons(ACHAT_SERVER_PORT);
+	inet_aton("127.0.0.1", &(sa.in.sin_addr));
 #ifdef OPENBSD
-	sa_in->sin_len = sizeof(struct sockaddr_in);
+	sa.in.sin_len = sizeof(struct sockaddr_in);
 #endif
 
-	rc = acc_setaddr(c, &sa, sizeof(struct sockaddr_in));
+	rc = acc_setaddr(c, &sa.ss, sizeof(struct sockaddr_in));
 	fail_if(rc != ACHAT_RC_OK, "Couldn't set addr");
 	mark_point();
 
@@ -184,8 +188,10 @@ END_TEST
 START_TEST(tc_set_sslmode_addr)
 {
 	struct achat_channel	*c  = NULL;
-	struct sockaddr_storage	 sa;
-	struct sockaddr_in	*sa_in = (struct sockaddr_in *)&sa;
+	union {
+		struct sockaddr_storage	ss;
+		struct sockaddr_in	in;
+	} sa;
 	achat_rc		rc;
 
 	c = acc_create();
@@ -196,15 +202,15 @@ START_TEST(tc_set_sslmode_addr)
 	fail_if(rc != ACHAT_RC_OK, "Couldn't set sslmode");
 	mark_point();
 
-	memset(&sa, 0, sizeof(sa));
-	sa_in->sin_family = AF_INET;
-	sa_in->sin_port = htons(ACHAT_SERVER_PORT);
-	inet_aton("127.0.0.1", &(sa_in->sin_addr));
+	memset(&sa.ss, 0, sizeof(sa.ss));
+	sa.in.sin_family = AF_INET;
+	sa.in.sin_port = htons(ACHAT_SERVER_PORT);
+	inet_aton("127.0.0.1", &(sa.in.sin_addr));
 #ifdef OPENBSD
-	sa_in->sin_len = sizeof(struct sockaddr_in);
+	sa.in.sin_len = sizeof(struct sockaddr_in);
 #endif
 
-	rc = acc_setaddr(c, &sa, sizeof(struct sockaddr_in));
+	rc = acc_setaddr(c, &sa.ss, sizeof(struct sockaddr_in));
 	fail_if(rc != ACHAT_RC_OK, "Couldn't set addr");
 	mark_point();
 
@@ -220,8 +226,10 @@ END_TEST
 START_TEST(tc_set_tail_sslmode_addr)
 {
 	struct achat_channel	*c  = NULL;
-	struct sockaddr_storage	 sa;
-	struct sockaddr_in	*sa_in = (struct sockaddr_in *)&sa;
+	union {
+		struct sockaddr_storage	ss;
+		struct sockaddr_in	in;
+	} sa;
 	achat_rc		rc;
 
 	c = acc_create();
@@ -236,15 +244,15 @@ START_TEST(tc_set_tail_sslmode_addr)
 	fail_if(rc != ACHAT_RC_OK, "Couldn't set sslmode");
 	mark_point();
 
-	memset(&sa, 0, sizeof(sa));
-	sa_in->sin_family = AF_INET;
-	sa_in->sin_port = htons(ACHAT_SERVER_PORT);
-	inet_aton("127.0.0.1", &(sa_in->sin_addr));
+	memset(&sa.ss, 0, sizeof(sa.ss));
+	sa.in.sin_family = AF_INET;
+	sa.in.sin_port = htons(ACHAT_SERVER_PORT);
+	inet_aton("127.0.0.1", &(sa.in.sin_addr));
 #ifdef OPENBSD
-	sa_in->sin_len = sizeof(struct sockaddr_in);
+	sa.in.sin_len = sizeof(struct sockaddr_in);
 #endif
 
-	rc = acc_setaddr(c, &sa, sizeof(struct sockaddr_in));
+	rc = acc_setaddr(c, &sa.ss, sizeof(struct sockaddr_in));
 	fail_if(rc != ACHAT_RC_OK, "Couldn't set addr");
 	mark_point();
 

@@ -51,8 +51,10 @@ static struct achat_channel*
 tc_chatnb_channel_init(int *port)
 {
 	struct achat_channel	*acc;
-	struct sockaddr_storage  ss;
-	struct sockaddr_in	*ss_sin = (struct sockaddr_in *)&ss;
+	union {
+		struct sockaddr_storage ss;
+		struct sockaddr_in	in;
+	} sa;
 	socklen_t		sslen;
 
 	if ((acc = acc_create()) == NULL)
@@ -73,12 +75,13 @@ tc_chatnb_channel_init(int *port)
 		return (NULL);
 	}
 
-	bzero(&ss, sizeof(ss));
-	ss_sin->sin_family = AF_INET;
-	ss_sin->sin_port = 0;
-	inet_aton("127.0.0.1", &(ss_sin->sin_addr));
+	bzero(&sa.ss, sizeof(sa.ss));
+	sa.in.sin_family = AF_INET;
+	sa.in.sin_port = 0;
+	inet_aton("127.0.0.1", &(sa.in.sin_addr));
 
-	if (acc_setaddr(acc, &ss, sizeof(struct sockaddr_in)) != ACHAT_RC_OK) {
+	if (acc_setaddr(acc, &sa.ss, sizeof(struct sockaddr_in)) !=
+	    ACHAT_RC_OK) {
 		acc_destroy(acc);
 		return (NULL);
 	}
@@ -88,14 +91,14 @@ tc_chatnb_channel_init(int *port)
 		return (NULL);
 	}
 
-	bzero(&ss, sizeof(ss));
-	sslen = sizeof(ss);
-	if (getsockname(acc->fd, (struct sockaddr *)&ss, &sslen) == -1) {
+	bzero(&sa.ss, sizeof(sa.ss));
+	sslen = sizeof(sa.ss);
+	if (getsockname(acc->fd, (struct sockaddr *)&sa.ss, &sslen) == -1) {
 		acc_destroy(acc);
 		return (NULL);
 	}
 
-	*port = ntohs(ss_sin->sin_port);
+	*port = ntohs(sa.in.sin_port);
 	return (acc);
 }
 
@@ -109,20 +112,22 @@ tc_chatnb_channel_destroy(struct achat_channel *acc)
 static int
 tc_chatnb_socket_init(int port)
 {
-	struct sockaddr_storage  ss;
-	struct sockaddr_in	*ss_sin = (struct sockaddr_in *)&ss;
+	union {
+		struct sockaddr_storage ss;
+		struct sockaddr_in	in;
+	} sa;
 	int			so;
 
-	bzero(&ss, sizeof(ss));
-	ss_sin->sin_family = AF_INET;
-	ss_sin->sin_port = htons(port);
-	inet_aton("127.0.0.1", &(ss_sin->sin_addr));
+	bzero(&sa.ss, sizeof(sa.ss));
+	sa.in.sin_family = AF_INET;
+	sa.in.sin_port = htons(port);
+	inet_aton("127.0.0.1", &(sa.in.sin_addr));
 
-	so = socket(ss.ss_family, SOCK_STREAM, 0);
+	so = socket(sa.ss.ss_family, SOCK_STREAM, 0);
 	if (so == -1)
 		return (-1);
 
-	if (connect(so, (struct sockaddr *)&ss,
+	if (connect(so, (struct sockaddr *)&sa.ss,
 		sizeof(struct sockaddr_in)) == -1)
 		return (-1);
 

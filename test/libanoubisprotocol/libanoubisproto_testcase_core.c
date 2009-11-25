@@ -104,8 +104,10 @@ char * trans = "reg";
 
 void tp_chat_lud_client(const char *sockname)
 {
-	struct sockaddr_storage	 ss;
-	struct sockaddr_un	*ss_sun = (struct sockaddr_un *)&ss;
+	union {
+		struct sockaddr_storage	ss;
+		struct sockaddr_un	un;
+	} sa;
 	struct achat_channel    *c  = NULL;
 	achat_rc		 rc = ACHAT_RC_ERROR;
 	struct anoubis_client	*client;
@@ -122,10 +124,10 @@ void tp_chat_lud_client(const char *sockname)
 	fail_if(rc != ACHAT_RC_OK, "client setsslmode failed");
 	mark_point();
 
-	bzero(&ss, sizeof(ss));
-	ss_sun->sun_family = AF_UNIX;
-	strlcpy(ss_sun->sun_path, sockname, sizeof(ss_sun->sun_path));
-	rc = acc_setaddr(c, &ss, sizeof(struct sockaddr_un));
+	bzero(&sa.ss, sizeof(sa.ss));
+	sa.un.sun_family = AF_UNIX;
+	strlcpy(sa.un.sun_path, sockname, sizeof(sa.un.sun_path));
+	rc = acc_setaddr(c, &sa.ss, sizeof(struct sockaddr_un));
 	if (rc != ACHAT_RC_OK)
 		fail("client setaddr failed", __LINE__);
 	mark_point();
@@ -279,8 +281,10 @@ int policy_dispatch(struct anoubis_policy_comm * policy, u_int64_t token,
 
 void tp_chat_lud_server(const char *sockname)
 {
-	struct sockaddr_storage	 ss;
-	struct sockaddr_un	*ss_sun = (struct sockaddr_un *)&ss;
+	union {
+		struct sockaddr_storage	ss;
+		struct sockaddr_un	un;
+	} sa;
 	struct achat_channel    *s  = NULL;
 	achat_rc		 rc = ACHAT_RC_ERROR;
 	struct anoubis_server	*server;
@@ -294,10 +298,10 @@ void tp_chat_lud_server(const char *sockname)
 	fail_if(rc != ACHAT_RC_OK, "server setsslmode failed");
 	mark_point();
 
-	bzero(&ss, sizeof(ss));
-	ss_sun->sun_family = AF_UNIX;
-	strlcpy(ss_sun->sun_path, sockname, sizeof(ss_sun->sun_path));
-	rc = acc_setaddr(s, &ss, sizeof(struct sockaddr_un));
+	bzero(&sa.ss, sizeof(sa.ss));
+	sa.un.sun_family = AF_UNIX;
+	strlcpy(sa.un.sun_path, sockname, sizeof(sa.un.sun_path));
+	rc = acc_setaddr(s, &sa.ss, sizeof(struct sockaddr_un));
 	if (rc != ACHAT_RC_OK)
 		fail("server setaddr failed", __LINE__);
 	mark_point();
