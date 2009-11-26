@@ -172,6 +172,7 @@ class DlgRuleEditor : public Observer, public DlgRuleEditorBase
 			APP_ID = 0,	/**< apn rule id. */
 			APP_TYPE,	/**< type of policy. */
 			APP_USER,	/**< user of ruleset. */
+			APP_NOSFS,	/**< NOSFS flag. */
 			APP_BINARY,	/**< name of concerning binary. */
 			APP_EOL		/**< End - Of - List */
 		};

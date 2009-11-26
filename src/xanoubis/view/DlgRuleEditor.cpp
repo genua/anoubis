@@ -80,6 +80,8 @@ DlgRuleEditor::DlgRuleEditor(wxWindow* parent)
 	appColumns_[APP_ID]	= new ListCtrlColumn(_("ID"), wxT("ID"));
 	appColumns_[APP_TYPE]	= new ListCtrlColumn(_("Type"), wxT("TYPE"));
 	appColumns_[APP_USER]	= new ListCtrlColumn(_("User"), wxT("USER"));
+	appColumns_[APP_NOSFS]	= new ListCtrlColumn(_("NOSFS"),
+	    wxT("NOSFS"));
 	appColumns_[APP_BINARY]	= new ListCtrlColumn(_("Binary"),
 	    wxT("BINARY"), BINARY_COLUMN_WIDTH);
 
@@ -1846,6 +1848,14 @@ DlgRuleEditor::updateListAppPolicy(long rowIdx)
 			    wxGetApp().getUserNameById(ruleset->getUid());
 	}
 	updateColumnText(appPolicyListCtrl, rowIdx, appColumns_[APP_USER],
+	    columnText);
+
+	/* Fill NOSFS column */
+	columnText = wxEmptyString;
+	if (policy->getFlag(APN_RULE_NOSFS)) {
+		columnText = wxT("nosfs");
+	}
+	updateColumnText(appPolicyListCtrl, rowIdx, appColumns_[APP_NOSFS],
 	    columnText);
 
 	/* Fill binary column */
