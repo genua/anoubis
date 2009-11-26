@@ -32,11 +32,12 @@ rmoverride () {
 	fi
 }
 
-for dir in ${POLICY_DIR}{,/user,/admin,/pubkeys}; do
+for dir in ${POLICY_DIR} ${POLICY_DIR}/user ${POLICY_DIR}/admin \
+    ${POLICY_DIR}/pubkeys; do
 	setperms $ANOUBIS_USER $ANOUBIS_USER 0700 $dir
 done
 
-for bin in /sbin/{anoubisctl,sfssig}; do
+for bin in /sbin/anoubisctl /sbin/sfssig; do
 	setperms root $NOSFS_GROUP 2755 $bin
 done
 
