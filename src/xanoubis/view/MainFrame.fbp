@@ -250,7 +250,7 @@
                         <property name="kind">wxITEM_CHECK</property>
                         <property name="label">Rule Editor</property>
                         <property name="name">mi_mbToolsRuleEditor</property>
-                        <property name="shortcut"></property>
+                        <property name="shortcut">ALT+r</property>
                         <property name="unchecked_bitmap"></property>
                         <event name="OnMenuSelection">OnMbToolsRuleEditorSelect</event>
                         <event name="OnUpdateUI"></event>
@@ -264,7 +264,7 @@
                         <property name="kind">wxITEM_CHECK</property>
                         <property name="label">Log Viewer</property>
                         <property name="name">mi_mbToolsLogViewer</property>
-                        <property name="shortcut"></property>
+                        <property name="shortcut">ALT+l</property>
                         <property name="unchecked_bitmap"></property>
                         <event name="OnMenuSelection">OnMbToolsLogViewerSelect</event>
                         <event name="OnUpdateUI"></event>
@@ -278,7 +278,7 @@
                         <property name="kind">wxITEM_CHECK</property>
                         <property name="label">Wizard</property>
                         <property name="name">mi_mbToolsWizard</property>
-                        <property name="shortcut"></property>
+                        <property name="shortcut">ALT+w</property>
                         <property name="unchecked_bitmap"></property>
                         <event name="OnMenuSelection">onMbToolsWizardSelect</event>
                         <event name="OnUpdateUI"></event>

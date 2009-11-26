@@ -77,9 +77,6 @@ IMPLEMENT_WX_THEME_SUPPORT
 AnoubisGuiApp::AnoubisGuiApp(void)
 {
 	mainFrame = NULL;
-	logViewer_ = NULL;
-	ruleEditor_ = NULL;
-	trayIcon = NULL;
 	onInitProfile_ = true;
 	trayVisible_ = true;
 	oldhandle_ = -1;
@@ -98,10 +95,6 @@ AnoubisGuiApp::AnoubisGuiApp(void)
 
 AnoubisGuiApp::~AnoubisGuiApp(void)
 {
-	/* mainFrame not handled here, because object already destroyed */
-	if (trayIcon != NULL)
-		delete trayIcon;
-
 	/* Destroy versionmanagement */
 	delete VersionCtrl::getInstance();
 	delete PolicyCtrl::getInstance();
@@ -113,20 +106,6 @@ AnoubisGuiApp::~AnoubisGuiApp(void)
 	 * for now we just don't clean up!
 	 * delete NotificationCtrl::instance();
 	 */
-}
-
-void
-AnoubisGuiApp::quit(void)
-{
-	bool result = mainFrame->OnQuit();
-
-	if(result) {
-		if (trayIcon != NULL)
-			trayIcon->RemoveIcon();
-		mainFrame->Destroy();
-		delete logViewer_;
-		delete ruleEditor_;
-	}
 }
 
 bool AnoubisGuiApp::OnInit()
@@ -193,9 +172,7 @@ bool AnoubisGuiApp::OnInit()
 	AnConfig *config = new AnConfig(GetAppName());
 	wxConfig::Set(config);
 
-	mainFrame = new MainFrame((wxWindow*)NULL);
-	logViewer_ = new DlgLogViewer(mainFrame);
-	ruleEditor_ = new DlgRuleEditor(mainFrame);
+	mainFrame = new MainFrame((wxWindow*)NULL, trayVisible_);
 
 	SetTopWindow(mainFrame);
 	mainFrame->OnInit();
@@ -223,13 +200,6 @@ bool AnoubisGuiApp::OnInit()
 	if (hasLocale) {
 		status(_("Language setting: ") + language_.GetCanonicalName());
 	}
-
-	/*
-	 * Do this last. This increases the probability that the system tray
-	 * is already up and running.
-	 */
-	if (trayVisible_)
-		trayIcon = new TrayIcon();
 
 	wxConfig::Get()->Read(wxT("/Options/GrubConfigPath"), &grubPath_);
 
@@ -360,22 +330,6 @@ AnoubisGuiApp::OnCmdLineParsed(wxCmdLineParser& parser)
 		trayVisible_ = false;
 
 	return (true);
-}
-
-void
-AnoubisGuiApp::toggleRuleEditorVisability(void)
-{
-	wxCommandEvent  showEvent(anEVT_RULEEDITOR_SHOW);
-	showEvent.SetInt(!ruleEditor_->IsShown());
-	wxPostEvent(AnEvents::getInstance(), showEvent);
-}
-
-void
-AnoubisGuiApp::toggleLogViewerVisability(void)
-{
-	wxCommandEvent  showEvent(anEVT_LOGVIEWER_SHOW);
-	showEvent.SetInt(!logViewer_->IsShown());
-	wxPostEvent(AnEvents::getInstance(), showEvent);
 }
 
 bool
@@ -575,12 +529,6 @@ AnoubisGuiApp::getCommConnectionState(void)
 	return (JobCtrl::getInstance()->isConnected());
 }
 
-bool
-AnoubisGuiApp::showingMainFrame(void)
-{
-	return (mainFrame->isShowing());
-}
-
 uid_t
 AnoubisGuiApp::getUserIdByName(wxString name) const
 {
@@ -662,15 +610,21 @@ AnoubisGuiApp::readPassphrase(bool *ok)
 		title = _("Enter passphrase for: ");
 	}
 
-	wxPasswordEntryDialog dlg(w, msg, title);
-	dlg.CentreOnScreen();
-	if (dlg.ShowModal() == wxID_OK) {
+	wxPasswordEntryDialog *dlg = new wxPasswordEntryDialog(w, msg, title);
+	dlg->CentreOnScreen();
+
+	wxString result;
+	if (dlg->ShowModal() == wxID_OK) {
 		*ok = true;
-		return (dlg.GetValue());
+		result = dlg->GetValue();
 	} else {
 		*ok = false;
-		return (wxEmptyString);
+		result = wxEmptyString;
 	}
+
+	dlg->Destroy();
+
+	return (result);
 }
 
 int

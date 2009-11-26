@@ -89,9 +89,6 @@ class AnoubisGuiApp : public wxApp, private PassphraseReader
 		bool			 trayVisible_;
 		std::map<wxString,wxString> userList_;
 		MainFrame		*mainFrame;
-		DlgLogViewer		*logViewer_;
-		DlgRuleEditor		*ruleEditor_;
-		TrayIcon		*trayIcon;
 		Module			*modules_[ANOUBIS_MODULESNO];
 		int			 oldhandle_;
 		wxString		 grubPath_;
@@ -111,15 +108,12 @@ class AnoubisGuiApp : public wxApp, private PassphraseReader
 
 		bool	OnInit(void);
 		int	OnExit(void);
-		void	quit(void);
 		void	status(wxString);
 		void	checkBootConf(void);
 
 		void	OnInitCmdLine(wxCmdLineParser&);
 		bool	OnCmdLineParsed(wxCmdLineParser&);
 
-		void		 toggleLogViewerVisability(void);
-		void		 toggleRuleEditorVisability(void);
 		bool		 connectCommunicator(bool);
 		void		 sendChecksum(const wxString &);
 		void		 getChecksum(const wxString &);
@@ -132,7 +126,6 @@ class AnoubisGuiApp : public wxApp, private PassphraseReader
 		Module		*getModule(enum moduleIdx);
 		wxString	 getDataDir(void);
 		bool		 getCommConnectionState(void);
-		bool		 showingMainFrame(void);
 		void		 autoStart(bool);
 		wxString	 getGrubPath(void);
 

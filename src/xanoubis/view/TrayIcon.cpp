@@ -218,31 +218,23 @@ TrayIcon::OnLeftButtonClick(wxTaskBarIconEvent&)
 	if (messageEscalationCount_ > 0 || messageAlertCount_ > 0) {
 		this->systemNotifyCallback();
 	} else {
-		wxCommandEvent  showEvent(anEVT_MAINFRAME_SHOW);
-
-		if (wxGetApp().showingMainFrame())
-			showEvent.SetInt(false);
-		else
-			showEvent.SetInt(true);
-
-		wxPostEvent(AnEvents::getInstance(), showEvent);
+		wxWindow *topWindow = wxGetApp().GetTopWindow();
+		topWindow->Show(!topWindow->IsShown());
 	}
 }
 
 void
 TrayIcon::OnGuiRestore(wxCommandEvent&)
 {
-	wxCommandEvent  showEvent(anEVT_MAINFRAME_SHOW);
-
-	showEvent.SetInt(true);
-
-	wxPostEvent(AnEvents::getInstance(), showEvent);
+	wxGetApp().GetTopWindow()->Show();
 }
 
 void
 TrayIcon::OnGuiExit(wxCommandEvent&)
 {
-	wxGetApp().quit();
+	MainFrame *mf = wxDynamicCast(wxGetApp().GetTopWindow(), MainFrame);
+	if (mf != 0)
+		mf->exitApp();
 }
 
 void

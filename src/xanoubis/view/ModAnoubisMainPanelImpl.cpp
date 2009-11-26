@@ -424,11 +424,12 @@ ModAnoubisMainPanelImpl::OnProfileLoadClicked(wxCommandEvent &)
 void
 ModAnoubisMainPanelImpl::OnProfileSaveClicked(wxCommandEvent &)
 {
-	DlgProfileSelection dlg(loadedProfile, this);
+	DlgProfileSelection *dlg =
+	    new DlgProfileSelection(loadedProfile, this);
 
-	if (dlg.ShowModal() == wxID_OK) {
+	if (dlg->ShowModal() == wxID_OK) {
 		PolicyCtrl *policyCtrl = PolicyCtrl::getInstance();
-		wxString profile = dlg.getSelectedProfile();
+		wxString profile = dlg->getSelectedProfile();
 
 		if (!policyCtrl->isProfileWritable(profile)) {
 			anMessageBox(
@@ -436,6 +437,7 @@ ModAnoubisMainPanelImpl::OnProfileSaveClicked(wxCommandEvent &)
 			       _("The profile \"%ls\" is not writable!"),
 			       profile.c_str()),
 			    _("Save profile"), wxOK | wxICON_ERROR, this);
+			dlg->Destroy();
 			return;
 		}
 
@@ -449,6 +451,8 @@ ModAnoubisMainPanelImpl::OnProfileSaveClicked(wxCommandEvent &)
 			    _("Save profile"), wxOK | wxICON_ERROR, this);
 		}
 	}
+
+	dlg->Destroy();
 }
 
 void

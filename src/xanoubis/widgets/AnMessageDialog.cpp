@@ -225,7 +225,10 @@ int anMessageBox(const wxString &message, const wxString &caption,
 		    ? wxICON_QUESTION : wxICON_INFORMATION ;
 	}
 
-	AnMessageDialog dlg(parent, message, caption, decorated_style,
-	    wxPoint(x, y));
-	return (dlg.ShowModal());
+	AnMessageDialog *dlg = new AnMessageDialog(parent, message, caption,
+	    decorated_style, wxPoint(x, y));
+	int result = dlg->ShowModal();
+	dlg->Destroy();
+
+	return (result);
 }

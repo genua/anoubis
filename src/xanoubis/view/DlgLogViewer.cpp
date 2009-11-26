@@ -36,7 +36,6 @@
 #include "AnEvents.h"
 #include "AnListColumn.h"
 #include "AnListCtrl.h"
-#include "AnShortcuts.h"
 #include "DlgLogViewer.h"
 #include "main.h"
 #include "Notification.h"
@@ -58,7 +57,6 @@ DlgLogViewer::DlgLogViewer(wxWindow* parent) : DlgLogViewerBase(parent),
 	anEvents = AnEvents::getInstance();
 	notifyCtrl = NotificationCtrl::instance();
 
-	shortcuts_  = new AnShortcuts(this);
 	this->GetSizer()->Layout();
 
 	logListCtrl->setStateKey(wxT("/State/DlgLogViewer"));
@@ -98,8 +96,6 @@ DlgLogViewer::~DlgLogViewer(void)
 	    wxCommandEventHandler(DlgLogViewer::onShow), NULL, this);
 
 	ANEVENTS_IDENT_BCAST_DEREGISTRATION(DlgLogViewer);
-
-	delete shortcuts_;
 }
 
 void

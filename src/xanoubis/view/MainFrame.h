@@ -33,7 +33,6 @@
 #endif
 
 #include "AnEvents.h"
-#include "AnShortcuts.h"
 #include "AnStatusBar.h"
 #include "MainFrameBase.h"
 #include "Module.h"
@@ -42,6 +41,7 @@
 #include "DlgUpgradeAsk.h"
 
 class TaskEvent;
+class TrayIcon;
 
 class MainFrame : public MainFrameBase
 {
@@ -50,10 +50,12 @@ class MainFrame : public MainFrameBase
 		 * In wxGTK, frames can't get the focus and thus will not
 		 * receive key events; but a (this) panel can.
 		 */
-		AnShortcuts *shortcuts_;
+		DlgLogViewer	*logViewer_;
+		DlgRuleEditor	*ruleEditor_;
+		TrayIcon	*trayIcon_;
 		unsigned int     messageAlertCount_;
 		unsigned int     messageEscalationCount_;
-		bool		 show_;
+		bool		 exit_;
 		wxIcon		*aboutIcon_;
 		wxIcon		*okIcon_;
 		wxIcon		*errorIcon_;
@@ -67,7 +69,6 @@ class MainFrame : public MainFrameBase
 		void onRuleEditorShow(wxCommandEvent&);
 		void onLogViewerShow(wxCommandEvent&);
 		void onWizardShow(wxCommandEvent&);
-		void onMainFrameShow(wxCommandEvent&);
 		void onSfsBrowserShow(wxCommandEvent&);
 		void onBackupPolicy(wxCommandEvent&);
 		void doUpgradeNotify(void);
@@ -107,14 +108,19 @@ class MainFrame : public MainFrameBase
 		void OnAnoubisOptionShow(wxCommandEvent&);
 
 	public:
-		MainFrame(wxWindow*);
+		MainFrame(wxWindow*, bool);
 		~MainFrame();
 
 		void OnInit(void);
-		bool OnQuit(void);
 		void addModules(Module* []);
 
-		bool isShowing();
+		/**
+		 * Call this method to exit the application.
+		 *
+		 * Invoking Close() will only hide the main-window but the
+		 * application is still running!
+		 */
+		void exitApp(void);
 };
 
 #endif /* __MAINFRAME_H__ */

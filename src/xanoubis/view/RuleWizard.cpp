@@ -62,9 +62,9 @@
 		new name(list[idx], &history);				\
 	} while (0)
 
-RuleWizard::RuleWizard(void)
+RuleWizard::RuleWizard(wxWindow *parent)
 {
-	Create(NULL, wxID_ANY, wxT("Rule Wizard"));
+	Create(parent, wxID_ANY, wxT("Rule Wizard"));
 
 	/* Program */
 	CREATE_PAGE(pages_, PAGE_PROGRAM, RuleWizardProgramPage, history_);

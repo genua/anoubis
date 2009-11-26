@@ -35,7 +35,6 @@
 #include "AnEvents.h"
 #include "AnListClassProperty.h"
 #include "AnListProperty.h"
-#include "AnShortcuts.h"
 #include "DlgLogViewerBase.h"
 #include "Notification.h"
 #include "Observer.h"
@@ -64,8 +63,6 @@ class DlgLogViewer : public DlgLogViewerBase, private Observer
 		~DlgLogViewer(void);
 
 	private:
-		AnShortcuts *shortcuts_;
-
 		/**
 		 * Handle show events.
 		 * @param[in] 1st The event.

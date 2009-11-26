@@ -177,7 +177,7 @@ class RuleWizard : public wxWizard
 		 * Constructor of Wizard.
 		 * @param None.
 		 */
-		RuleWizard(void);
+		RuleWizard(wxWindow *);
 
 		/**
 		 * Get a special page.

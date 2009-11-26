@@ -325,14 +325,6 @@ BEGIN_DECLARE_EVENT_TYPES()
 	DECLARE_LOCAL_EVENT_TYPE(anEVT_RULEEDITOR_SHOW, wxNewEventType())
 
 	/**
-	 * Show MainFrame event.
-	 * @param GetInt() Visability of MainFrame:
-	 *	- = 0 : hide
-	 *	- > 0 : show
-	 */
-	DECLARE_LOCAL_EVENT_TYPE(anEVT_MAINFRAME_SHOW, wxNewEventType())
-
-	/**
 	 * Show escalation event.
 	 * Request the View of the current Notifications due to user interaction
 	 * caused by clicking on the TrayIcon or Notification Popup when

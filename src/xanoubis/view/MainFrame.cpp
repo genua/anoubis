@@ -45,7 +45,6 @@
 
 #include "AnEvents.h"
 #include "AnMessageDialog.h"
-#include "AnShortcuts.h"
 #include "AnStatusBar.h"
 #include "JobCtrl.h"
 #include "MainFrameBase.h"
@@ -60,13 +59,14 @@
 
 #include "MainFrame.h"
 
-MainFrame::MainFrame(wxWindow *parent) : MainFrameBase(parent)
+MainFrame::MainFrame(wxWindow *parent, bool trayVisible)
+    : MainFrameBase(parent)
 {
 	AnEvents	*anEvents;
 	JobCtrl		*jobCtrl;
 
-	shortcuts_ = new AnShortcuts(this);
-	show_ = true;
+	exit_ = false;
+
 	messageAlertCount_ = 0;
 	messageEscalationCount_ = 0;
 	aboutIcon_ = wxGetApp().loadIcon(wxT("ModAnoubis_black_48.png"));
@@ -91,14 +91,16 @@ MainFrame::MainFrame(wxWindow *parent) : MainFrameBase(parent)
 	upgradeTask_.setOneFile(true);
 	upgradeTask_.setRecursive(true);
 
+	logViewer_ = new DlgLogViewer(this);
+	ruleEditor_ = new DlgRuleEditor(this);
+	trayIcon_ = trayVisible ? new TrayIcon : 0;
+
 	anEvents->Connect(anEVT_WIZARD_SHOW,
 	    wxCommandEventHandler(MainFrame::onWizardShow), NULL, this);
 	anEvents->Connect(anEVT_LOGVIEWER_SHOW,
 	    wxCommandEventHandler(MainFrame::onLogViewerShow), NULL, this);
 	anEvents->Connect(anEVT_RULEEDITOR_SHOW,
 	    wxCommandEventHandler(MainFrame::onRuleEditorShow), NULL, this);
-	anEvents->Connect(anEVT_MAINFRAME_SHOW,
-	    wxCommandEventHandler(MainFrame::onMainFrameShow), NULL, this);
 	anEvents->Connect(anEVT_SFSBROWSER_SHOW,
 	    wxCommandEventHandler(MainFrame::onSfsBrowserShow), NULL, this);
 	anEvents->Connect(anEVT_OPEN_ALERTS,
@@ -131,8 +133,6 @@ MainFrame::~MainFrame()
 	    wxCommandEventHandler(MainFrame::onLogViewerShow), NULL, this);
 	anEvents->Disconnect(anEVT_RULEEDITOR_SHOW,
 	    wxCommandEventHandler(MainFrame::onRuleEditorShow), NULL, this);
-	anEvents->Disconnect(anEVT_MAINFRAME_SHOW,
-	    wxCommandEventHandler(MainFrame::onMainFrameShow), NULL, this);
 	anEvents->Disconnect(anEVT_SFSBROWSER_SHOW,
 	    wxCommandEventHandler(MainFrame::onSfsBrowserShow), NULL, this);
 	anEvents->Disconnect(anEVT_OPEN_ALERTS,
@@ -154,6 +154,9 @@ MainFrame::~MainFrame()
 	SetStatusBar(NULL);
 	delete an_statusbar;
 	delete aboutIcon_;
+
+	if (trayIcon_ != 0)
+		delete trayIcon_;
 }
 
 void
@@ -220,7 +223,7 @@ MainFrame::onLogViewerShow(wxCommandEvent& event)
 void
 MainFrame::onWizardShow(wxCommandEvent& event)
 {
-	RuleWizard	wizard;
+	RuleWizard	*wizard = new RuleWizard(this);
 	wxCommandEvent	showEvent(anEVT_WIZARD_SHOW);
 	wxSize		displaySize;
 	wxString	displayMsg;
@@ -237,24 +240,13 @@ MainFrame::onWizardShow(wxCommandEvent& event)
 			anMessageBox(displayMsg, _("Wizard warning"),
 			    wxOK|wxICON_EXCLAMATION, this);
 		}
-		wizard.RunWizard(wizard.getPage(RuleWizard::PAGE_PROGRAM));
+		wizard->RunWizard(wizard->getPage(RuleWizard::PAGE_PROGRAM));
 		/* After finishing wizard, we uncheck menu and statusbar. */
 		showEvent.SetInt(0);
 		wxPostEvent(AnEvents::getInstance(), showEvent);
 	}
-}
 
-void
-MainFrame::onMainFrameShow(wxCommandEvent& event)
-{
-	if (event.GetInt()) {
-		this->Show();
-		show_ = true;
-	} else {
-		this->Hide();
-		show_ = false;
-	}
-	event.Skip();
+	wizard->Destroy();
 }
 
 void
@@ -479,7 +471,6 @@ void
 MainFrame::OnMbFileCloseSelect(wxCommandEvent&)
 {
 	this->Hide();
-	show_ = false;
 }
 
 void
@@ -489,7 +480,7 @@ MainFrame::OnMbFileImportSelect(wxCommandEvent&)
 	wxString	wildcard = wxT("*");
 	wxString	defaultDir = wxGetApp().getDataDir();
 	wxString	defaultFilename = wxEmptyString;
-	wxFileDialog	fileDlg(NULL, caption, defaultDir, defaultFilename,
+	wxFileDialog	fileDlg(this, caption, defaultDir, defaultFilename,
 			    wildcard, wxOPEN);
 	PolicyCtrl	*policyCtrl = PolicyCtrl::getInstance();
 
@@ -509,7 +500,7 @@ MainFrame::OnMbFileExportSelect(wxCommandEvent&)
 	wxString	wildcard = wxT("*");
 	wxString	defaultDir = wxGetApp().getDataDir();
 	wxString	defaultFilename = wxEmptyString;
-	wxFileDialog	fileDlg(NULL, caption, defaultDir, defaultFilename,
+	wxFileDialog	fileDlg(this, caption, defaultDir, defaultFilename,
 			    wildcard, wxFD_SAVE);
 
 	if (fileDlg.ShowModal() == wxID_OK) {
@@ -524,20 +515,7 @@ MainFrame::OnMbFileExportSelect(wxCommandEvent&)
 void
 MainFrame::OnMbFileQuitSelect(wxCommandEvent&)
 {
-	wxGetApp().quit();
-}
-
-bool
-MainFrame::OnQuit(void)
-{
-	uint8_t answer = anMessageBox(_("xanoubis is going to be closed."),
-	    _("Confirm"), wxYES_NO, this);
-
-	if (answer == wxYES) {
-		return true;
-	} else {
-		return false;
-	}
+	exitApp();
 }
 
 void
@@ -593,10 +571,31 @@ MainFrame::OnMbEditPreferencesSelect(wxCommandEvent&)
 }
 
 void
-MainFrame::OnClose(wxCloseEvent&)
+MainFrame::OnClose(wxCloseEvent &event)
 {
-	this->Hide();
-	show_ = false;
+	if (exit_) {
+		/* Really close the window */
+		uint8_t answer = anMessageBox(
+		    _("xanoubis is going to be closed."), _("Confirm"),
+		    wxYES_NO, this);
+
+		if (answer == wxYES) {
+			event.Skip();
+		} else {
+			if (event.CanVeto())
+				event.Veto();
+			else
+				Destroy();
+		}
+	} else {
+		/* Hide the window */
+		if (event.CanVeto())
+			event.Veto();
+		else
+			Destroy();
+
+		this->Hide();
+	}
 }
 
 void
@@ -702,10 +701,11 @@ MainFrame::onUpgradeNotify(wxCommandEvent &)
 	doUpgradeNotify();
 }
 
-bool
-MainFrame::isShowing(void)
+void
+MainFrame::exitApp()
 {
-	return (show_);
+	exit_ = true;
+	Close();
 }
 
 void
@@ -715,7 +715,6 @@ MainFrame::onSfsListArrived(TaskEvent &event)
 	ComTask::ComTaskResult	comResult;
 	wxString		errMsg;
 	wxArrayString		result;
-	DlgUpgradeAsk		askDlg(this);
 
 	task = dynamic_cast<ComSfsListTask*>(event.getTask());
 	comResult = ComTask::RESULT_LOCAL_ERROR;
@@ -750,11 +749,13 @@ MainFrame::onSfsListArrived(TaskEvent &event)
 			    "error (%i) occured while while fetching list "
 			    "of upgraded files."), task->getComTaskResult());
 		}
-		anMessageBox(errMsg, _("Error"), wxICON_ERROR);
+		anMessageBox(errMsg, _("Error"), wxICON_ERROR, this);
 	} else {
 		result = task->getFileList();
 		if (result.Count() > 0) {
-			askDlg.ShowModal();
+			DlgUpgradeAsk *askDlg = new DlgUpgradeAsk(this);
+			askDlg->ShowModal();
+			askDlg->Destroy();
 		}
 	}
 }

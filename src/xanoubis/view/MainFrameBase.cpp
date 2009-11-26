@@ -61,11 +61,11 @@ MainFrameBase::MainFrameBase( wxWindow* parent, wxWindowID id, const wxString& t
 	an_menubar->Append( me_menubarEdit, _("Edit") );
 	
 	me_menubarTools = new wxMenu();
-	wxMenuItem* mi_mbToolsRuleEditor = new wxMenuItem( me_menubarTools, ID_MITOOLSRULEEDITOR, wxString( _("Rule Editor") ) , wxEmptyString, wxITEM_CHECK );
+	wxMenuItem* mi_mbToolsRuleEditor = new wxMenuItem( me_menubarTools, ID_MITOOLSRULEEDITOR, wxString( _("Rule Editor") ) + wxT('\t') + wxT("ALT+r"), wxEmptyString, wxITEM_CHECK );
 	me_menubarTools->Append( mi_mbToolsRuleEditor );
-	wxMenuItem* mi_mbToolsLogViewer = new wxMenuItem( me_menubarTools, ID_MITOOLSLOGVIEWER, wxString( _("Log Viewer") ) , wxEmptyString, wxITEM_CHECK );
+	wxMenuItem* mi_mbToolsLogViewer = new wxMenuItem( me_menubarTools, ID_MITOOLSLOGVIEWER, wxString( _("Log Viewer") ) + wxT('\t') + wxT("ALT+l"), wxEmptyString, wxITEM_CHECK );
 	me_menubarTools->Append( mi_mbToolsLogViewer );
-	wxMenuItem* mi_mbToolsWizard = new wxMenuItem( me_menubarTools, ID_MITOOLSWIZARD, wxString( _("Wizard") ) , wxEmptyString, wxITEM_CHECK );
+	wxMenuItem* mi_mbToolsWizard = new wxMenuItem( me_menubarTools, ID_MITOOLSWIZARD, wxString( _("Wizard") ) + wxT('\t') + wxT("ALT+w"), wxEmptyString, wxITEM_CHECK );
 	me_menubarTools->Append( mi_mbToolsWizard );
 	an_menubar->Append( me_menubarTools, _("Tools") );
 	

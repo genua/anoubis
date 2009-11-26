@@ -407,8 +407,6 @@ xanoubis_SOURCES= \
 	view/VersionListCtrl.cpp \
 	control/AnConfig.cpp \
 	control/AnConfig.h \
-	control/AnShortcuts.cpp \
-	control/AnShortcuts.h \
 	control/AnEvents.cpp \
 	control/AnEvents.h \
 	control/Debug.h \

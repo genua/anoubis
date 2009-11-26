@@ -1271,7 +1271,7 @@ DlgRuleEditor::onFooterImportButton(wxCommandEvent &)
 		if (!policyCtrl->importFromFile(fileDlg.GetPath())) {
 			anMessageBox(
 			    _("Couldn't import policy file: it has errors."),
-			    _("Error"), wxICON_ERROR);
+			    _("Error"), wxICON_ERROR, this);
 		}
 		switchRuleSet(-1, policyCtrl->getUserId());
 	}
