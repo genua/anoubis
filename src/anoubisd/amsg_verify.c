@@ -37,9 +37,17 @@
 #ifdef LINUX
 #include <bsdcompat.h>
 #include <openssl/sha.h>
+#include <linux/eventdev.h>
+#include <linux/anoubis.h>
+#include <linux/anoubis_alf.h>
+#include <linux/anoubis_sfs.h>
 #endif
 #ifdef OPENBSD
 #include <sha2.h>
+#include <dev/eventdev.h>
+#include <dev/anoubis.h>
+#include <dev/anoubis_alf.h>
+#include <dev/anoubis_sfs.h>
 #endif
 
 #include <anoubis_protocol.h>
@@ -297,6 +305,7 @@ amsg_sfs_checksumop_size(const char *buf, int buflen)
 
 /*
  * Size of a struct anoubisd_msg_comm
+ * XXX Dig depper into substructures.
  */
 static int
 anoubisd_msg_comm_size(const char *buf, int buflen)
@@ -331,17 +340,100 @@ anoubisd_reply_size(const char *buf, int buflen)
 	RETURN_SIZE();
 }
 
+DEFINE_CHECK_FUNCTION(struct, alf_event)
+DEFINE_CHECK_FUNCTION(struct, ac_process_message)
+DEFINE_CHECK_FUNCTION(struct, ac_ipc_message)
+
+/*
+ * Size of an sfs_open_message.
+ */
+static int
+sfs_open_message_size(const char *buf, int buflen)
+{
+	struct sfs_open_message	*sfs;
+	DECLARE_SIZE();
+
+	CAST(sfs, buf, buflen);
+	SHIFT_FIELD(sfs, pathhint, buf, buflen);
+	SHIFT_STRING(buf, buflen);
+
+	RETURN_SIZE();
+}
+
+#ifdef ANOUBIS_SOURCE_SFSPATH
+/*
+ * Size of an sfs_path_message structure.
+ */
+static int
+sfs_path_message_size(const char *buf, int buflen)
+{
+	struct sfs_path_message		*msg;
+	DECLARE_SIZE();
+
+	CAST(msg, buf, buflen);
+	SHIFT_FIELD(msg, paths, buf, buflen);
+	if (msg->pathlen[0])
+		SHIFT_STRING(buf, buflen);
+	if (msg->pathlen[1])
+		SHIFT_STRING(buf, buflen);
+	RETURN_SIZE();
+}
+#endif
+
+/*
+ * Size of an anoubis_stat_message.
+ * NOTE: We return the buffer size here because the actual length is
+ *       only determined by the surrounding buffer. We do verify that
+ *       at least the header fits into the buffer.
+ */
+static int
+anoubis_stat_message_size(const char *buf, int buflen)
+{
+	struct anoubis_stat_message	*msg;
+	CAST(msg, buf, buflen);
+	/*
+	 * Length of the stat message is determined by the
+	 * size of the surrounding buffer.
+	 */
+	return buflen;
+}
+
 /*
  * Size of an eventdev_hdr.
  */
-static int
+int
 eventdev_hdr_size(const char *buf, int buflen)
 {
 	struct eventdev_hdr	*hdr;
+	DECLARE_SIZE();
 
 	CAST(hdr, buf, buflen);
 	CHECK_LEN(hdr->msg_size, buflen);
-	/* XXX CEH: Verify eventdev hdr length */
+	CHECK_SIZE(hdr->msg_size);
+	SHIFT_CNT(sizeof(*hdr), buf, buflen);
+	switch(hdr->msg_source) {
+	VARIANT(ANOUBIS_SOURCE_ALF, alf_event, buf, buflen);
+	VARIANT(ANOUBIS_SOURCE_SANDBOX, sfs_open_message, buf, buflen);
+	VARIANT(ANOUBIS_SOURCE_SFS, sfs_open_message, buf, buflen);
+	VARIANT(ANOUBIS_SOURCE_SFSEXEC, sfs_open_message, buf, buflen);
+#ifdef ANOUBIS_SOURCE_SFSPATH
+	VARIANT(ANOUBIS_SOURCE_SFSPATH, sfs_path_message, buf, buflen);
+#endif
+	VARIANT(ANOUBIS_SOURCE_PROCESS, ac_process_message, buf, buflen);
+	VARIANT(ANOUBIS_SOURCE_STAT, anoubis_stat_message, buf, buflen);
+	VARIANT(ANOUBIS_SOURCE_IPC, ac_ipc_message, buf, buflen);
+	default:
+		return -1;
+	}
+	if (__local_size > hdr->msg_size)
+		return -1;
+	if (__local_size + 8 < hdr->msg_size)
+		return -1;
+	/*
+	 * NOTE: Do NOT return the calculated size here because this
+	 * NOTE: is usually used within a container and that container
+	 * NOTE: must treat the padding space as part of the message.
+	 */
 	return hdr->msg_size;
 }
 
@@ -353,12 +445,12 @@ anoubisd_msg_logrequest_size(const char *buf, int buflen)
 {
 	struct anoubisd_msg_logrequest	*msg;
 	DECLARE_SIZE();
+	int	evsize;
 
 	CAST(msg, buf, buflen);
 	SHIFT_FIELD(msg, hdr, buf, buflen);
-	/* XXX CEH: Check length of eventdev data. */
-	CHECK_LEN(msg->hdr.msg_size, buflen);
-	ADD_SIZE(msg->hdr.msg_size);
+	evsize = eventdev_hdr_size(buf, buflen);
+	ADD_SIZE(evsize);
 
 	RETURN_SIZE();
 }
@@ -440,14 +532,8 @@ anoubisd_msg_eventask_size(const char *buf, int buflen)
 	if (msg->ctxpathlen)
 		CHECK_STRING(buf+msg->ctxpathoff, msg->ctxpathlen);
 	if (msg->evlen) {
-		/* XXX CEH: Verify the eventdev structure at this point. */
-		struct eventdev_hdr	*hdr;
-		int			 tmpsize;
-		CAST(hdr, buf+msg->evoff, msg->evlen);
-		tmpsize = hdr->msg_size;
-		CHECK_SIZE(tmpsize);
-		if (hdr->msg_size > msg->evlen)
-			return -1;
+		int	size = eventdev_hdr_size(buf+msg->evoff, msg->evlen);
+		CHECK_SIZE(size);
 	}
 	RETURN_SIZE();
 }

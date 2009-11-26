@@ -357,6 +357,13 @@ get_event(int fd)
 			    version);
 			master_terminate(ENOMEM);
 		}
+		evt = (struct eventdev_hdr *)msg_r->msg;
+	}
+	if (eventdev_hdr_size(msg_r->msg, evt->msg_size) < 0) {
+		log_warnx("Dropping malformed kernel event, src=%d, size=%d",
+		    evt->msg_source, evt->msg_size);
+		free(msg_r);
+		return NULL;
 	}
 	DEBUG(DBG_MSG_RECV, "get_event: fd:%d size:%d", mbp->fd, evt->msg_size);
 	amsg_verify(msg_r);
