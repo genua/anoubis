@@ -125,6 +125,13 @@ and read the private key of the root user into memory.
 The key is used to keep signed checksums up to date during an upgrade.
 .Pp
 Depending on your environment this feature can be a security concern.
+.It verify <file> <signature>
+Assume that the second file given by <signature> contains a signature for
+the first file <file> and verify that the signature is ok.
+The result of the verification is printed to stdout and indicated by the
+return value.
+Uses the certificate given by the -c option or the default value if -c was
+omitted.
 .It monitor
 shows live information on notifications being sent and received.
 .Pp

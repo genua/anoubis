@@ -98,6 +98,7 @@ static int	create_channel(unsigned int);
 static void	destroy_channel(void);
 static int	fetch_versions(int *, int *);
 static int	moo(void);
+static int	verify(const char *file, const char *signature);
 
 typedef int (*func_int_t)(void);
 typedef int (*func_arg_t)(char *, uid_t, unsigned int);
@@ -155,6 +156,7 @@ usage(void)
 			fprintf(stderr, "	%s\n", commands[i].command);
 
 	}
+	fprintf(stderr, "       verify file signature\n");
 	fprintf(stderr, "	monitor [ all ] [ delegate ] [ error=<num> ] "
 	    "[ count=<num> ]\n");
 	exit(1);
@@ -350,8 +352,7 @@ main(int argc, char *argv[])
 		close(passfd);
 		usage();
 	}
-	if ((!strcmp(command, "load")) &&
-	    (opts & ANOUBISCTL_OPT_SIGN) ) {
+	if (strcmp(command, "load") == 0 && (opts & ANOUBISCTL_OPT_SIGN) ) {
 		if (keyfile == NULL) {
 			fprintf(stderr, "To load signed policies to the daemon "
 			    "you need to specify a keyfile\n");
@@ -378,6 +379,22 @@ main(int argc, char *argv[])
 			free(keyfile);
 		if (certfile)
 			free(certfile);
+	} else if (strcmp(command, "verify") == 0) {
+		if (certfile == NULL) {
+			fprintf(stderr, "The verify commands requires a "
+			    "ceritificate file\n");
+			usage();
+		}
+		as = anoubis_sig_pub_init(NULL, certfile, NULL, &error);
+		if (as == NULL) {
+			fprintf(stderr, "Error while loading keyfile: %s\n",
+			    keyfile);
+			if (keyfile)
+				free(keyfile);
+			if (certfile)
+				free(certfile);
+			return 1;
+		}
 	}
 
 	done = 0;
@@ -412,6 +429,12 @@ main(int argc, char *argv[])
 		}
 	}
 
+	if (!done && strcmp(command, "verify") == 0) {
+		done = 1;
+		if (argc != 2)
+			usage();
+		error = verify(argv[0], argv[1]);
+	}
 	if (as)
 		anoubis_sig_free(as);
 
@@ -1414,5 +1437,57 @@ moo(void)
 	"\n\n"
 	"P.S. no real cows were harmed for this moo\n");
 
+	return 0;
+}
+
+static int
+verify(const char *filename, const char *signature)
+{
+	int		 fd, off = 0, ret;
+	EVP_PKEY	*pubkey = X509_get_pubkey(as->cert);
+	void		*sigbuf;
+	int		 siglen;
+
+	if (!pubkey) {
+		fprintf(stderr, "Failed to read public key\n");
+		return 1;
+	}
+	siglen = EVP_PKEY_size(pubkey);
+	sigbuf = malloc(siglen);
+	if (sigbuf == NULL) {
+		fprintf(stderr, "Out of memory\n");
+		return 1;
+	}
+	fd = open(signature, O_RDONLY);
+	if (fd < 0) {
+		free(sigbuf);
+		fprintf(stderr, "Cannot open signature file %s\n", signature);
+		return 1;
+	}
+	while (off < siglen) {
+		ret = read(fd, sigbuf + off, siglen - off);
+		if (ret < 0) {
+			perror("Failed to read signature data\n");
+			close(fd);
+			free(sigbuf);
+			return 1;
+		}
+		if (ret == 0) {
+			fprintf(stderr, "Short signature file\n");
+			close(fd);
+			free(sigbuf);
+			return 1;
+		}
+		off += ret;
+	}
+	close(fd);
+	ret = anoubis_sig_verify_policy(filename, sigbuf, siglen, pubkey);
+	if (ret != 1) {
+		fprintf(stderr, "Signature verification failed\n");
+		free(sigbuf);
+		return 1;
+	}
+	free(sigbuf);
+	printf("Signature verification ok\n");
 	return 0;
 }

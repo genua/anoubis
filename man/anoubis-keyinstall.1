@@ -1,0 +1,77 @@
+.\"	$OpenBSD: mdoc.template,v 1.9 2004/07/02 10:36:57 jmc Exp $
+.\"
+.\" Copyright (c) 2007 GeNUA mbH <info@genua.de>
+.\"
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+.\" "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+.\" LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+.\" A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+.\" OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+.\" SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
+.\" TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+.\" PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+.\" LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+.\" NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+.\" SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\" The following requests are required for all man pages.
+.Dd November 23, 2009
+.Dt ANOUBIS-KEYINSTALL 1
+.Os Anoubis
+.Sh NAME
+.Nm anoubis-keyinstall
+.Nd Registers a new public key with the anoubis daemon
+.Sh SYNOPSIS
+.Nm anoubis-keyinstall
+.Op -u <user>
+.Op -k <private key>
+.Ar certificate
+.Sh DESCRIPTION
+The
+.Nm
+command installs the public key
+.Ar certificate
+and makes sure that the anoubis daemon will use the key after the next
+restart.
+The command makes sure that all signed policies affected by the key
+have an appropriate signature and refuses to install the key if these
+signatures are not present and cannot be generated.
+
+If a private key is given with the
+.Fl k
+option, the command tries to generate any missing or invalid signatures.
+.Pp
+Options:
+.Pp
+.Bl -tag -width Ds
+.It Fl d
+Print more debug messages.
+.Pp
+.It Fl u Ar user
+The user name of the user that owns the key.
+.Pp
+.It Fl k Ar private key
+The private key that should be used to generate signatures.
+.Pp
+.El
+.Pp
+.Sh AUTHORS
+Christian Ehrhardt
+.\" .Sh CAVEATS
+.\" .Sh BUGS
+.\" .Sh STANDARDS
+.\" .Sh HISTORY
+.\" .Sh CAVEATS
+.\" .Sh BUGS
+.\" .Sh HISTORY

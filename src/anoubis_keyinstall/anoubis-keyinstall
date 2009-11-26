@@ -1,0 +1,145 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+
+use File::Basename;
+use Getopt::Std;
+use File::Copy qw(copy);
+
+my $policydir = "/var/lib/anoubis/policy";
+my $anoubisduid = getpwnam("_anoubisd");
+
+my $progname = basename($0);
+sub usage
+{
+	print STDERR "usage: $progname [ -d ] [ -k private ] [ -u user ] "
+	    . "<cert>\n";
+	exit(1);
+}
+
+my $opt = {};
+getopts("du:k:", $opt);
+my $debug = $opt->{d};
+
+# Default user is root
+my $user = 0;
+if (exists($opt->{u})) {
+	if ($opt->{u} =~ m/^\d+$/) {
+		$user = $opt->{u};
+	} else {
+		$user = getpwnam($opt->{u});
+		die "Invalid user name $opt->{u}" unless defined ($user);
+	}
+}
+usage() unless (scalar @ARGV == 1);
+my $cert = shift @ARGV;
+my $privkey = $opt->{k};
+print "Installing root key $cert for uid $user\n";
+
+my @files = ();
+if (-e "$policydir/user/$user") {
+	push @files, "$policydir/user/$user";
+}
+if ($user == 0) {
+	if (-e "$policydir/user/default") {
+		push @files, "$policydir/user/default";
+	}
+	foreach my $f (glob("$policydir/admin/*")) {
+		if ($f =~ m{^\Q$policydir\E/admin/\d+$}) {
+			push @files, $f;
+		} elsif ($f =~ m{^\Q$policydir\E/admin/default$}) {
+			push @files, $f;
+		}
+	}
+}
+print "Filelist: @files\n" if ($debug);
+my @errfiles = ();
+foreach my $file (@files) {
+	print "Verifying Signature for $file\n";
+	my $ret = system("anoubisctl", "-c", $cert, "verify", $file,
+	    "${file}.sig");
+	if ($ret != 0) {
+		push @errfiles, $file;
+	}
+}
+
+my @signfiles = ();
+if (scalar @errfiles and defined($privkey) and defined($anoubisduid)) {
+	@signfiles = @errfiles;
+	@errfiles = ();
+	print "The following files had signature errors: @signfiles\n";
+	print "A private key was specified, thus I will try to sign them.\n";
+	foreach my $file (@signfiles) {
+		print "Generating signature for $file\n";
+		my $outfile = "${file}.sig.$$";
+		my $ret = system("anoubisctl", "-c", $cert, "-k", $privkey,
+		    "-o", $outfile, "load", $file);
+		if ($ret != 0) {
+			push @errfiles, $file;
+			print STDERR "Failed to sign $file\n";
+			next;
+		}
+		$ret = system("anoubisctl", "-c", $cert, "verify", $file,
+		    $outfile);
+		if ($ret != 0) {
+			push @errfiles, $file;
+			print STDERR "Generated signature does not match\n";
+			next;
+		}
+		if (!chown($anoubisduid, 0, $outfile)
+		    or !chmod(0644, $outfile)) {
+			push @errfiles, $file;
+			print STDERR "chown/chmod for $outfile failed\n";
+			next;
+		}
+	}
+	if (scalar @errfiles) {
+		foreach my $file (@signfiles) {
+			unlink("${file}.sig.$$");
+		}
+	}
+} elsif (scalar @errfiles and defined($privkey) and !defined($anoubisduid)) {
+	# No need to warn about an undefined uid if we do not try to sign
+	print STDERR
+	    "Cannot sign files because the _anoubisd User does not exist\n";
+}
+
+if (scalar @errfiles) {
+print STDERR << "EOF";
+--------------------------- ERROR -----------------------------------------
+The following files had signature errors: @errfiles
+
+Installing the new key would cause anoubisd to ignore these files completely.
+The owner of the key must generate signature for each of these files using
+the following command:
+
+     anoubisctl -o signature load <file>
+
+and the generated file must be owned by the anoubisd User and installed as
+
+     <file>.sig
+
+where <file> is replaced with the proper filename from the list above.
+---------------------------------------------------------------------------
+
+THE KEY WAS NOT INSTALLED.
+EOF
+	exit(1);
+} else {
+	print "Installing generated signatures...\n";
+	foreach my $file (@signfiles) {
+		if (!rename("${file}.sig.$$", "${file}.sig")) {
+			print STDERR "Failed to copy signature for $file!\n";
+		}
+	}
+	print "Installing key $cert as $policydir/pubkeys/$user\n";
+	if (!copy($cert, "$policydir/pubkeys/$user")) {
+		print STDERR "Failed to install key\n";
+		exit(1);
+	}
+}
+
+print "New Key successfully installed. anoubisd restart required.\n";
+
+exit(0);

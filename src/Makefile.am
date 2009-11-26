@@ -34,6 +34,7 @@ GUI=xanoubis
 endif
 
 dist_bin_SCRIPTS = anoubis_keygen/anoubis-keygen
+dist_sbin_SCRIPTS = anoubis_keyinstall/anoubis-keyinstall
 
 # Note:  Libraries must come first as applications might depend on them.
 SUBDIRS = $(BSDCOMPAT) libapn libanoubischat libanoubisprotocol \
