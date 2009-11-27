@@ -7,6 +7,8 @@
 @sample /sbin/anoubisd
 @bin bin/anoubis-keygen
 @sample /usr/bin/anoubis-keygen
+@bin sbin/anoubis-keyinstall
+@sample /sbin/anoubis-keyinstall
 @mode 2755
 @group _nosfs
 @bin sbin/anoubisctl
@@ -24,6 +26,7 @@
 @man man/man4/dev-anoubis.4
 @man man/man4/eventdev.4
 @man man/man1/anoubis-keygen.1
+@man man/man1/anoubis-keyinstall.1
 @comment man/man3/anoubis_auth.3
 @comment man/man3/anoubischat.3
 @comment man/man3/anoubis_client.3

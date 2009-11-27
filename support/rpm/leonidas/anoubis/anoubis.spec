@@ -262,11 +262,13 @@ exit 0
 /sbin/anoubisctl
 /sbin/sfssig
 %{_prefix}/bin/anoubis-keygen
+/sbin/anoubis-keyinstall
 /usr/share/anoubisd/*
 %{_sysconfdir}/udev/rules.d/06-anoubis.rules
 %{_sysconfdir}/anoubis
 /var/lib/anoubis/*
 %{_mandir}/man1/anoubis-keygen.1.gz
+%{_mandir}/man1/anoubis-keyinstall.1.gz
 %{_mandir}/man4/*
 %{_mandir}/man5/*
 %{_mandir}/man8/*
@@ -286,6 +288,9 @@ exit 0
 
 ### changelog ##############################################
 %changelog
+* Fri Nov 27 2009 Christian Ehrhardt
+- add anoubis-keyinstall
+
 * Thu Nov 05 2009 Sten Spans
 - add setgid group and permissions to the anoubis client utilities
 
