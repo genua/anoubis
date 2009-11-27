@@ -304,24 +304,6 @@ amsg_sfs_checksumop_size(const char *buf, int buflen)
 }
 
 /*
- * Size of a struct anoubisd_msg_comm
- * XXX Dig depper into substructures.
- */
-static int
-anoubisd_msg_comm_size(const char *buf, int buflen)
-{
-	struct anoubisd_msg_comm	*msg;
-	DECLARE_SIZE();
-
-	CAST(msg, buf, buflen);
-	SHIFT_FIELD(msg, msg, buf, buflen);
-	CHECK_LEN(msg->len, buflen);
-	ADD_SIZE(msg->len);
-
-	RETURN_SIZE();
-}
-
-/*
  * Size of a struct anoubisd_reply_t.
  * XXX CEH: This structure needs heavy cleanup.
  */
@@ -396,6 +378,68 @@ anoubis_stat_message_size(const char *buf, int buflen)
 	 * size of the surrounding buffer.
 	 */
 	return buflen;
+}
+
+/*
+ * Return -1 if the policy reuqest payload data is inconsistent, 0 otherwise.
+ */
+int
+verify_polrequest(const char *buf, int buflen, unsigned int flags)
+{
+	Policy_Generic		*gen;
+	Policy_GetByUid		*get;
+	Policy_SetByUid		*set;
+
+	/* If the start flag is not set, all of the data is payload. */
+	if ((flags & POLICY_FLAG_START) == 0)
+		return 0;
+	CAST(gen, buf, buflen);
+	switch(get_value(gen->ptype)) {
+	case ANOUBIS_PTYPE_GETBYUID:
+		CAST(get, buf, buflen);
+		break;
+	case ANOUBIS_PTYPE_SETBYUID:
+		CAST(set, buf, buflen);
+		/* The rest of the buffer is payload. */
+		break;
+	default:
+		return -1;
+	}
+	return 0;
+}
+
+/*
+ * Return the size of an anoubisd_msg_polrequest message.
+ */
+static int
+anoubisd_msg_polrequest_size(const char *buf, int buflen)
+{
+	DECLARE_SIZE();
+	struct anoubisd_msg_polrequest	*req;
+
+	CAST(req, buf, buflen);
+	SHIFT_FIELD(req, data, buf, buflen);
+	CHECK_LEN(req->len, buflen);
+	ADD_SIZE(req->len);
+
+	if (verify_polrequest(buf, req->len, req->flags) < 0)
+		return -1;
+
+	RETURN_SIZE();
+}
+
+static int
+anoubisd_msg_polreply_size(const char *buf, int buflen)
+{
+	DECLARE_SIZE();
+	struct anoubisd_msg_polreply	*reply;
+
+	CAST(reply, buf, buflen);
+	SHIFT_FIELD(reply, data, buf, buflen);
+	CHECK_LEN(reply->len, buflen);
+	ADD_SIZE(reply->len);
+
+	RETURN_SIZE();
 }
 
 /*
@@ -661,8 +705,9 @@ anoubisd_msg_size(const char *buf, int buflen)
 	CAST(msg, buf, buflen);
 	SHIFT_FIELD(msg, msg, buf, buflen);
 	switch(msg->mtype) {
-	VARIANT(ANOUBISD_MSG_POLREQUEST, anoubisd_msg_comm, buf, buflen)
-	VARIANT(ANOUBISD_MSG_POLREPLY, anoubisd_reply, buf, buflen)
+	VARIANT(ANOUBISD_MSG_POLREQUEST, anoubisd_msg_polrequest, buf, buflen)
+	VARIANT(ANOUBISD_MSG_POLREPLY, anoubisd_msg_polreply, buf, buflen)
+	VARIANT(ANOUBISD_MSG_CHECKSUMREPLY, anoubisd_reply, buf, buflen)
 	VARIANT(ANOUBISD_MSG_EVENTDEV, eventdev_hdr, buf, buflen)
 	VARIANT(ANOUBISD_MSG_LOGREQUEST, anoubisd_msg_logrequest, buf, buflen)
 	VARIANT(ANOUBISD_MSG_EVENTREPLY, eventdev_reply, buf, buflen)

@@ -265,11 +265,9 @@ policy_engine(anoubisd_msg_t *request)
 		struct eventdev_hdr *hdr = (struct eventdev_hdr *)request->msg;
 		reply = pe_dispatch_event(hdr);
 		break;
-	} case ANOUBISD_MSG_POLREQUEST: {
-		anoubisd_msg_comm_t *comm = (anoubisd_msg_comm_t *)request->msg;
-		reply = pe_dispatch_policy(comm);
-		break;
 	} default:
+		log_warnx(" policy_engine: Bad policy request type %d",
+		    request->mtype);
 		reply = NULL;
 		break;
 	}

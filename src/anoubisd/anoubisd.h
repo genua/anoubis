@@ -144,6 +144,7 @@ typedef struct anoubisd_msg anoubisd_msg_t;
 enum anoubisd_msg_type {
 	ANOUBISD_MSG_POLREQUEST,
 	ANOUBISD_MSG_POLREPLY,
+	ANOUBISD_MSG_CHECKSUMREPLY,
 	ANOUBISD_MSG_EVENTDEV,
 	ANOUBISD_MSG_LOGREQUEST,
 	ANOUBISD_MSG_EVENTREPLY,
@@ -176,14 +177,22 @@ struct anoubisd_msg_eventask
 typedef struct anoubisd_msg_eventask anoubisd_msg_eventask_t;
 
 /* format of ANOUBISD_MSG_POLREQUEST */
-struct anoubisd_msg_comm {
+struct anoubisd_msg_polrequest {
 	u_int64_t	token;
-	u_int32_t	uid;
-	u_int32_t	flags;		/* Only for POLREQUEST */
-	unsigned short	len;		/* of following msg */
-	char		msg[0];
+	u_int32_t	auth_uid;
+	u_int32_t	flags;
+	unsigned short	len;
+	char		data[0];
 };
-typedef struct anoubisd_msg_comm anoubisd_msg_comm_t;
+
+/* format of ANOUBISD_MSG_POLREPLY */
+struct anoubisd_msg_polreply {
+	int		reply;		/* result code */
+	u_int64_t	token;		/* only for anoubisd_msg_comm_t msgs */
+	u_int32_t	flags;		/* Only for POLREPLY */
+	short		len;		/* of following msg */
+	char		data[0];
+};
 
 struct anoubisd_msg_checksum_op {
 	u_int64_t	token;

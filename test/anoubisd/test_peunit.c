@@ -178,8 +178,8 @@ pe_user_init(void)
 {
 }
 
-anoubisd_reply_t *
-pe_dispatch_policy(struct anoubisd_msg_comm *comm __used)
+struct anoubisd_msg *
+pe_dispatch_policy(struct anoubisd_msg *msg __used)
 {
 	fatalx("pe_dispatch_policy not supported in unit tests");
 	return NULL;

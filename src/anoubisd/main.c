@@ -1137,11 +1137,11 @@ init_root_key(char *passphrase, struct event_info_main *ev_info)
 }
 
 static anoubisd_msg_t *
-create_polreply_msg(u_int64_t token, int payloadlen)
+create_checksumreply_msg(u_int64_t token, int payloadlen)
 {
 	anoubisd_msg_t		*msg;
 	anoubisd_reply_t	*reply;
-	msg = msg_factory(ANOUBISD_MSG_POLREPLY,
+	msg = msg_factory(ANOUBISD_MSG_CHECKSUMREPLY,
 	    sizeof(anoubisd_reply_t) + payloadlen);
 	if (!msg) {
 		master_terminate(ENOMEM);
@@ -1183,7 +1183,7 @@ sfs_checksumop_list(struct sfs_checksumop *csop, u_int64_t token,
 			error = 0;
 		goto out;
 	}
-	msg = create_polreply_msg(token, 8000);
+	msg = create_checksumreply_msg(token, 8000);
 	reply = (anoubisd_reply_t *)msg->msg;
 	reply->flags |= POLICY_FLAG_START;
 	offset = 0;
@@ -1201,7 +1201,7 @@ sfs_checksumop_list(struct sfs_checksumop *csop, u_int64_t token,
 			msg_shrink(msg, sizeof(anoubisd_reply_t) + offset);
 			enqueue(&eventq_m2s, msg);
 			event_add(ev_info->ev_m2s, NULL);
-			msg = create_polreply_msg(token, 8000);
+			msg = create_checksumreply_msg(token, 8000);
 			reply = (anoubisd_reply_t*)msg->msg;
 			offset = 0;
 		}
@@ -1235,7 +1235,7 @@ out:
 		reply->len = 0;
 		reply->flags |= POLICY_FLAG_END;
 	} else {
-		msg = create_polreply_msg(token, 0);
+		msg = create_checksumreply_msg(token, 0);
 		reply = (anoubisd_reply_t *)msg->msg;
 		reply->flags = (POLICY_FLAG_START | POLICY_FLAG_END);
 	}
@@ -1299,18 +1299,10 @@ dispatch_checksumop(anoubisd_msg_t *msg, struct event_info_main *ev_info)
 		    csop.idlen, ev_info);
 	}
 out:
-	msg = msg_factory(ANOUBISD_MSG_POLREPLY,
-	    sizeof(anoubisd_reply_t) + siglen);
-	if (!msg) {
-		master_terminate(ENOMEM);
-		return;
-	}
+	msg = create_checksumreply_msg(msg_comm->token, siglen);
 	reply = (anoubisd_reply_t*)msg->msg;
-	reply->token = msg_comm->token;
-	reply->timeout = 0;
 	reply->reply = -err;
 	reply->flags = POLICY_FLAG_START | POLICY_FLAG_END;
-	reply->len = siglen;
 	if (siglen) {
 		memcpy(reply->msg, sigbuf, siglen);
 		free(sigbuf);

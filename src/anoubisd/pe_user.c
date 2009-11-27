@@ -61,6 +61,7 @@
 #include "anoubisd.h"
 #include "pe.h"
 #include "cert.h"
+#include "amsg.h"
 
 struct pe_user {
 	TAILQ_ENTRY(pe_user)	 entry;
@@ -599,10 +600,12 @@ pe_user_dump(void)
 	}
 }
 
-anoubisd_reply_t *
-pe_dispatch_policy(struct anoubisd_msg_comm *comm)
+struct anoubisd_msg *
+pe_dispatch_policy(struct anoubisd_msg *msg)
 {
-	anoubisd_reply_t		*reply = NULL;
+	struct anoubisd_msg		*replymsg;
+	struct anoubisd_msg_polreply	*reply = NULL;
+	struct anoubisd_msg_polrequest	*polreq;
 	Policy_Generic			*gen;
 	Policy_GetByUid			*getbyuid;
 	Policy_SetByUid			*setbyuid;
@@ -617,9 +620,9 @@ pe_dispatch_policy(struct anoubisd_msg_comm *comm)
 	int				len;
 	struct cert			*key = NULL;
 
-	if (comm == NULL) {
-		log_warnx("pe_dispatch_policy: empty comm");
-		return (NULL);
+	if (msg == NULL) {
+		log_warnx("pe_dispatch_policy: empty message");
+		return NULL;
 	}
 
 	DEBUG(DBG_TRACE, ">pe_dispatch_policy");
@@ -628,8 +631,9 @@ pe_dispatch_policy(struct anoubisd_msg_comm *comm)
 	 *  - there is no request and POLICY_FLAG_START is clear   or
 	 *  - there is a request and POLICY_FLAG_START ist set.
 	 */
-	req = pe_policy_request_find(comm->token);
-	if ((req == NULL) == ((comm->flags & POLICY_FLAG_START) == 0)) {
+	polreq = (struct anoubisd_msg_polrequest *)msg->msg;
+	req = pe_policy_request_find(polreq->token);
+	if ((req == NULL) == ((polreq->flags & POLICY_FLAG_START) == 0)) {
 		if (req) {
 			error = EBUSY;
 		} else {
@@ -639,43 +643,47 @@ pe_dispatch_policy(struct anoubisd_msg_comm *comm)
 	}
 	/* No request yet, start one. */
 	if (req == NULL) {
-		if (comm->len < sizeof(Policy_Generic)) {
+		if (polreq->len < sizeof(Policy_Generic)) {
 			log_warnx("pe_dispatch_policy: Wrong message size");
 			error = EINVAL;
 			goto reply;
 		}
-		gen = (Policy_Generic *)comm->msg;
+		gen = (Policy_Generic *)polreq->data;
 		req = calloc(1, sizeof(struct pe_policy_request));
 		if (!req) {
 			error = ENOMEM;
 			goto reply;
 		}
-		req->token = comm->token;
+		req->token = polreq->token;
 		req->ptype = get_value(gen->ptype);
-		req->authuid = comm->uid;
+		req->authuid = polreq->auth_uid;
 		req->written = 0;
 		req->fd = -1;
 		LIST_INSERT_HEAD(&preqs, req, next);
 	}
+	if (req->authuid != polreq->auth_uid) {
+		error = EPERM;
+		goto reply;
+	}
 	DEBUG(DBG_TRACE, " pe_dispatch_policy: ptype = %d, flags = %d "
-	    "token = %llu", req->ptype, comm->flags,
+	    "token = %llu", req->ptype, polreq->flags,
 	    (unsigned long long)req->token);
 	switch (req->ptype) {
 	case ANOUBIS_PTYPE_GETBYUID:
-		if ((comm->flags & POLICY_FLAG_END) == 0
-		    || (comm->len < sizeof(Policy_GetByUid))) {
+		if ((polreq->flags & POLICY_FLAG_END) == 0
+		    || (polreq->len < sizeof(Policy_GetByUid))) {
 			error = EINVAL;
 			goto reply;
 		}
-		getbyuid = (Policy_GetByUid *)comm->msg;
+		getbyuid = (Policy_GetByUid *)polreq->data;
 		uid = get_value(getbyuid->uid);
 		prio = get_value(getbyuid->prio);
 		/*
 		 * XXX CEH: Do more/better permission checks here!
-		 * XXX CEH: Authorized user ID is in comm->uid.
+		 * XXX CEH: Authorized user ID is in polreq->uid.
 		 * XXX CEH: Currently this assumes Admin == root == uid 0
 		 */
-		if (comm->uid != uid && comm->uid != 0)
+		if (polreq->auth_uid != uid && polreq->auth_uid != 0)
 			error = EPERM;
 		if (prio >= PE_PRIO_MAX)
 			error = EINVAL;
@@ -692,29 +700,29 @@ pe_dispatch_policy(struct anoubisd_msg_comm *comm)
 				error = EIO;
 			goto reply;
 		}
-		error = - send_policy_data(comm->token, fd);
+		error = - send_policy_data(polreq->token, fd);
 		close(fd);
 		if (error)
 			goto reply;
 		break;
 	case ANOUBIS_PTYPE_SETBYUID:
-		buf = comm->msg;
-		len = comm->len;
-		if (comm->flags & POLICY_FLAG_START) {
+		buf = polreq->data;
+		len = polreq->len;
+		if (polreq->flags & POLICY_FLAG_START) {
 			char	*tmp;
-			if (comm->len < sizeof(Policy_SetByUid)) {
+			if (polreq->len < sizeof(Policy_SetByUid)) {
 				log_warnx("pe_dispatch_policy: Wrong message "
 				    "size from request");
 				error = EINVAL;
 				goto reply;
 			}
 			error = ENOMEM;
-			setbyuid = (Policy_SetByUid *)comm->msg;
+			setbyuid = (Policy_SetByUid *)polreq->data;
 			uid = get_value(setbyuid->uid);
 			prio = get_value(setbyuid->prio);
 			/*
 			 * XXX CEH: Do more/better permission checks here!
-			 * XXX CEH: Authorized user ID is in comm->uid.
+			 * XXX CEH: Authorized user ID is in polreq->uid.
 			 * XXX CEH: Currently this assumes Admin = root = uid 0
 			 */
 			if (uid != req->authuid && req->authuid != 0) {
@@ -788,7 +796,7 @@ pe_dispatch_policy(struct anoubisd_msg_comm *comm)
 			buf += sizeof(Policy_SetByUid);
 			len -= sizeof(Policy_SetByUid);
 		}
-		if (req->authuid != comm->uid) {
+		if (req->authuid != polreq->auth_uid) {
 			error = EPERM;
 			goto reply;
 		}
@@ -822,7 +830,7 @@ pe_dispatch_policy(struct anoubisd_msg_comm *comm)
 			buf += ret;
 			len -= ret;
 		}
-		if (comm->flags & POLICY_FLAG_END) {
+		if (polreq->flags & POLICY_FLAG_END) {
 			char	*bkup, *tmp;
 			time_t	 t;
 			int	 ret;
@@ -924,7 +932,7 @@ pe_dispatch_policy(struct anoubisd_msg_comm *comm)
 		error = EINVAL;
 		goto reply;
 	}
-	if (req && (comm->flags & POLICY_FLAG_END)) {
+	if (req && (polreq->flags & POLICY_FLAG_END)) {
 		LIST_REMOVE(req, next);
 		pe_policy_request_put(req);
 	}
@@ -935,22 +943,16 @@ reply:
 		LIST_REMOVE(req, next);
 		pe_policy_request_put(req);
 	}
-	reply = calloc(1, sizeof(struct anoubisd_reply));
-
-	if (!reply) {
-		log_warn("pe_dispatch_policy: calloc");
-		master_terminate(ENOMEM);	/* XXX HSH */
+	replymsg = msg_factory(ANOUBISD_MSG_POLREPLY, sizeof(*reply));
+	if (!replymsg) {
+		log_warnx("pe_dispatch_policy: Out of memory\n");
+		master_terminate(ENOMEM);
 	}
-
-	reply->token = comm->token;
-	reply->ask = 0;
-	reply->rule_id = 0;
-	reply->prio = 0;
+	reply = (struct anoubisd_msg_polreply *)replymsg->msg;
+	reply->token = polreq->token;
 	reply->len = 0;
 	reply->flags = POLICY_FLAG_START|POLICY_FLAG_END;
-	reply->timeout = 0;
 	reply->reply = error;
-	reply->sfsmatch = ANOUBIS_SFS_NONE;
 	DEBUG(DBG_TRACE, "<pe_dispatch_policy: %d", error);
-	return reply;
+	return replymsg;
 }

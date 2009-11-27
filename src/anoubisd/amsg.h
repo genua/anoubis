@@ -73,6 +73,7 @@ extern int		 msg_pending(int);
 extern int		 msg_eof(int);
 extern void		 amsg_verify(struct anoubisd_msg *);
 extern int		 eventdev_hdr_size(const char *buf, int buflen);
+extern int		 verify_polrequest(const char *, int, unsigned int);
 extern int		 amsg_sfs_checksumop_size(const char *buf, int maxlen);
 extern anoubisd_msg_t	*msg_factory(int, int);
 extern void		 msg_shrink(struct anoubisd_msg *, int);

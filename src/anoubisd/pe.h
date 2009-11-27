@@ -153,7 +153,7 @@ void			 pe_proc_update_db_one(struct apn_ruleset *, int,
 /* User and Policy Management */
 struct apn_ruleset	*pe_user_get_ruleset(uid_t, unsigned int,
 			     struct pe_policy_db *);
-anoubisd_reply_t	*pe_dispatch_policy(struct anoubisd_msg_comm *);
+struct anoubisd_msg	*pe_dispatch_policy(struct anoubisd_msg *);
 void			 pe_user_init(void);
 void			 pe_user_flush_db(struct pe_policy_db *);
 void			 pe_user_dump(void);

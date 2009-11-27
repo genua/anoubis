@@ -825,29 +825,30 @@ send_policychange(u_int32_t uid, u_int32_t prio)
 
 int send_policy_data(u_int64_t token, int fd)
 {
-	anoubisd_msg_t * msg;
-	/*@observer@*/
-	struct anoubisd_reply * comm;
-	int flags = POLICY_FLAG_START;
-	int size = sizeof(struct anoubisd_reply) + 3000;
+	anoubisd_msg_t			*msg;
+	struct anoubisd_msg_polreply	*polreply;
+	int				 flags = POLICY_FLAG_START;
+	int				 size;
 
+	size = sizeof(struct anoubisd_msg_polreply) + 3000;
 	while(1) {
 		msg = msg_factory(ANOUBISD_MSG_POLREPLY, size);
 		if (!msg)
 			goto oom;
-		comm = (struct anoubisd_reply *)msg->msg;
-		comm->token = token;
-		comm->reply = 0;
-		comm->flags = flags;
-		comm->len = read(fd, comm->msg, 3000);
-		if (comm->len < 0) {
+		polreply = (struct anoubisd_msg_polreply *)msg->msg;
+		polreply->token = token;
+		polreply->reply = 0;
+		polreply->flags = flags;
+		polreply->len = read(fd, polreply->data, 3000);
+		if (polreply->len < 0) {
 			int ret = -errno;
 			free(msg);
 			return ret;
 		}
-		msg_shrink(msg, sizeof(struct anoubisd_reply) + comm->len);
-		if (comm->len == 0) {
-			comm->flags |= POLICY_FLAG_END;
+		msg_shrink(msg,
+		    sizeof(struct anoubisd_msg_polreply) + polreply->len);
+		if (polreply->len == 0) {
+			polreply->flags |= POLICY_FLAG_END;
 			enqueue(&eventq_p2s, msg);
 			break;
 		}
@@ -866,11 +867,8 @@ dispatch_s2p(int fd, short sig __used, void *arg)
 {
 	struct event_info_policy *ev_info = (struct event_info_policy*)arg;
 	struct reply_wait rep_tmp, *rep_wait;
-	/*@observer@*/
 	struct eventdev_reply * evrep;
 	anoubisd_msg_t *msg, *msg_rep;
-	/*@observer@*/
-	anoubisd_reply_t *reply, *rep;
 
 	DEBUG(DBG_TRACE, ">dispatch_s2p");
 
@@ -880,24 +878,13 @@ dispatch_s2p(int fd, short sig __used, void *arg)
 
 		switch (msg->mtype) {
 		case ANOUBISD_MSG_POLREQUEST:
-			reply = policy_engine(msg);
-			if (!reply) {
-				/*
-				 * Messages have been queued via
-				 * send_policy_data
-				 */
-				event_add(ev_info->ev_p2s, NULL);
-				free(msg);
-				break;
-			}
-			msg_rep = msg_factory(ANOUBISD_MSG_POLREPLY,
-			    sizeof(anoubisd_reply_t) + reply->len);
-			rep = (anoubisd_reply_t *)msg_rep->msg;
-			bcopy(reply, rep, sizeof(anoubisd_reply_t)+reply->len);
-			free(reply);
-			enqueue(&eventq_p2s, msg_rep);
-			DEBUG(DBG_QUEUE, " >eventq_p2s: %llx",
-			    (unsigned long long)rep->token);
+			msg_rep = pe_dispatch_policy(msg);
+			if (msg_rep)
+				enqueue(&eventq_p2s, msg_rep);
+			/*
+			 * Always run event_add. Messages might have been
+			 * queued via send_policy_data.
+			 */
 			event_add(ev_info->ev_p2s, NULL);
 			free(msg);
 			break;

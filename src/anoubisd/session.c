@@ -107,12 +107,6 @@ struct cbdata {
 	struct anoubis_notify_head	*ev_head;
 };
 
-struct anoubisd_msg_comm_store {
-	u_int64_t	token;
-	struct anoubis_policy_comm *comm;
-};
-
-
 static void	session_sighandler(int, short, void *);
 static void	notify_callback(struct anoubis_notify_head *, int, void *);
 static int	dispatch_policy(struct anoubis_policy_comm *, u_int64_t,
@@ -137,7 +131,7 @@ static void	dispatch_p2s_evt_cancel(anoubisd_msg_t *,
 		    struct event_info_session *);
 static void	dispatch_p2s_pol_reply(anoubisd_msg_t *,
 		    struct event_info_session *);
-static void	dispatch_m2s_pol_reply(anoubisd_msg_t *msg,
+static void	dispatch_m2s_checksum_reply(anoubisd_msg_t *msg,
 		    struct event_info_session *ev_info);
 static void	dispatch_m2s_upgrade_notify(anoubisd_msg_t *msg,
 		    struct event_info_session *);
@@ -155,7 +149,6 @@ static void	dispatch_passphrase(struct anoubis_server *,
 
 static Queue eventq_s2p;
 static Queue eventq_s2m;
-static Queue requestq;
 
 static Queue headq;
 
@@ -392,7 +385,6 @@ session_main(int pipes[], int loggers[])
 	LIST_INIT(&(seg.sessionList));
 	queue_init(eventq_s2p);
 	queue_init(eventq_s2m);
-	queue_init(requestq);
 
 	queue_init(headq);
 
@@ -709,37 +701,27 @@ dispatch_checksum_reply(void *cbdata, int error, void *data, int len, int flags)
 }
 
 static int
-dispatch_policy(struct anoubis_policy_comm *comm, u_int64_t token,
-    u_int32_t uid, void *buf, size_t len, void *arg, int flags)
+dispatch_policy(struct anoubis_policy_comm *comm __attribute__((unused)),
+    u_int64_t token, u_int32_t uid, void *buf, size_t len, void *arg, int flags)
 {
-	struct event_info_session *ev_info = (struct event_info_session*)arg;
-	anoubisd_msg_t *msg;
-	anoubisd_msg_comm_t *msg_comm;
-	struct anoubisd_msg_comm_store *msg_store;
+	struct event_info_session	*ev_info = arg;
+	anoubisd_msg_t			*msg;
+	struct anoubisd_msg_polrequest	*polreq;
 
 	DEBUG(DBG_TRACE, ">dispatch_policy token = %lld", (long long)token);
 
-	msg = msg_factory(ANOUBISD_MSG_POLREQUEST,
-	    sizeof(anoubisd_msg_comm_t) + len);
-	msg_comm = (anoubisd_msg_comm_t *)msg->msg;
-	msg_comm->token = token;
-	msg_comm->uid = uid;
-	msg_comm->flags = flags;
-	msg_comm->len = len;
-	bcopy(buf, msg_comm->msg, len);
-
-	if ((msg_store = malloc(sizeof(struct anoubisd_msg_comm_store))) ==
-	    NULL) {
-		log_warn("dispatch_policy: cannot allocate memory");
-		free(msg);
-		master_terminate(ENOMEM);
-		return -ENOMEM;
+	if (verify_polrequest(buf, len, flags) < 0) {
+		log_warnx("Dropping malformed policy request");
+		return -EINVAL;
 	}
-	msg_store->token = msg_comm->token;
-	msg_store->comm = comm;
-
-	enqueue(&requestq, msg_store);
-	DEBUG(DBG_QUEUE, " >requestq: %llx", (unsigned long long)token);
+	msg = msg_factory(ANOUBISD_MSG_POLREQUEST,
+	    sizeof(struct anoubisd_msg_polrequest) + len);
+	polreq = (struct anoubisd_msg_polrequest *)msg->msg;
+	polreq->token = token;
+	polreq->auth_uid = uid;
+	polreq->flags = flags;
+	polreq->len = len;
+	bcopy(buf, polreq->data, len);
 
 	enqueue(&eventq_s2p, msg);
 	DEBUG(DBG_QUEUE, " >eventq_s2p: %llx", (unsigned long long)token);
@@ -765,8 +747,8 @@ dispatch_m2s(int fd, short sig __used, void *arg)
 		u_int64_t task;
 		if ((msg = get_msg(fd)) == NULL)
 			break;
-		if (msg->mtype == ANOUBISD_MSG_POLREPLY) {
-			dispatch_m2s_pol_reply(msg, ev_info);
+		if (msg->mtype == ANOUBISD_MSG_CHECKSUMREPLY) {
+			dispatch_m2s_checksum_reply(msg, ev_info);
 			continue;
 		}
 		if (msg->mtype == ANOUBISD_MSG_UPGRADE) {
@@ -1168,56 +1150,30 @@ dispatch_p2s_evt_cancel(anoubisd_msg_t *msg,
 	DEBUG(DBG_TRACE, "<dispatch_p2s_evt_cancel");
 }
 
-static int
-pol_reply_cmp(void *msg1, void *msg2)
-{
-	if (msg1 == NULL || msg2 == NULL) {
-		DEBUG(DBG_TRACE, "pol_reply_cmp: null msg pointer");
-		return 0;
-	}
-	if (((struct anoubisd_msg_comm_store *)msg1)->token ==
-	    ((struct anoubisd_msg_comm_store *)msg2)->token)
-		return 1;
-	return 0;
-}
-
 static void
 dispatch_p2s_pol_reply(anoubisd_msg_t *msg, struct event_info_session *ev_info)
 {
-	anoubisd_reply_t *reply;
-	struct anoubisd_msg_comm_store msg_comm_store_tmp, *msg_comm;
+	struct anoubisd_msg_polreply *reply;
 	void *buf = NULL;
 	int end, ret;
 
 	DEBUG(DBG_TRACE, ">dispatch_p2s_pol_reply");
 
-	reply = (anoubisd_reply_t *)msg->msg;
-	msg_comm_store_tmp.token = reply->token;
-	msg_comm = queue_find(&requestq, &msg_comm_store_tmp,  pol_reply_cmp);
-	if (msg_comm == NULL)
-		DEBUG(DBG_TRACE, "<dispatch_p2s_pol_reply (not found)");
-
+	reply = (struct anoubisd_msg_polreply *)msg->msg;
 	if (reply->len)
-		buf = reply->msg;
-
+		buf = reply->data;
 	end = reply->flags & POLICY_FLAG_END;
-	ret = anoubis_policy_comm_answer(
-	    msg_comm ? msg_comm->comm : ev_info->policy, reply->token,
+	ret = anoubis_policy_comm_answer(ev_info->policy, reply->token,
 	    reply->reply, buf, reply->len, end != 0);
 	DEBUG(DBG_TRACE, " >anoubis_policy_comm_answer: %lld %d %d",
 	    (long long)reply->token, ret, reply->reply);
-
-	DEBUG(DBG_QUEUE, " <requestq: %llx", (unsigned long long)reply->token);
-	if (msg_comm && end) {
-		queue_delete(&requestq, msg_comm);
-		free(msg_comm);
-	}
 
 	DEBUG(DBG_TRACE, "<dispatch_p2s_pol_reply");
 }
 
 static void
-dispatch_m2s_pol_reply(anoubisd_msg_t *msg, struct event_info_session *ev_info)
+dispatch_m2s_checksum_reply(anoubisd_msg_t *msg,
+    struct event_info_session *ev_info)
 {
 	anoubisd_reply_t	*reply;
 	int			 ret, end;
@@ -1228,9 +1184,11 @@ dispatch_m2s_pol_reply(anoubisd_msg_t *msg, struct event_info_session *ev_info)
 	    reply->reply, reply->msg, reply->len, end);
 	if (ret < 0) {
 		errno = -ret;
-		log_warn("dispatch_m2s_pol_reply: Failed to process answer");
+		log_warn("dispatch_m2s_checksum_reply: "
+		    "Failed to process answer");
 	}
 }
+
 
 static void
 dispatch_m2s_upgrade_notify(anoubisd_msg_t *msg,
