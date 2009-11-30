@@ -154,7 +154,7 @@ sandbox {
 		allow path "/" rw
 		default ask
 	}
-	{ @clamscan@, @clamdscan@ } {
+	{ @clamscan@, @clamdscan@, @clamd@ } {
 		allow path "/" rw
 		default ask
 	}
@@ -183,16 +183,18 @@ sandbox {
 context {
 	# Anoubis software
 	/sbin/anoubisctl nosfs {
-		# no context new for cvs
+		# new context for cvs
+		context new any
 	}
 	/sbin/sfssig nosfs {
 	}
 	/usr/bin/xanoubis nosfs {
-		# no context new for cvs
+		# new context for cvs
+		context new any
 	}
 
 	# AntiVirus software
-	{ @clamscan@, @clamdscan@ } nosfs {
+	{ @clamscan@, @clamdscan@, @clamd@ } nosfs {
 	}
 
 	# TrueCrypt

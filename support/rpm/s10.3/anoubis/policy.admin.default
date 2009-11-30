@@ -43,7 +43,7 @@ sandbox {
 		allow path "/" rw
 		default deny
 	}
-	{ @clamscan@, @clamdscan@ } {
+	{ @clamscan@, @clamdscan@, @clamd@ } {
 		allow path "/" rw
 		default deny
 	}
@@ -62,7 +62,7 @@ context {
 	# AntiVirus software
 	{ @antivir@, @avguard@, @avscan@ } nosfs {
 	}
-	{ @clamscan@, @clamdscan@ } nosfs {
+	{ @clamscan@, @clamdscan@, @clamd@ } nosfs {
 	}
 
 	any {
