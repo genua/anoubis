@@ -178,13 +178,6 @@ pe_user_init(void)
 {
 }
 
-struct anoubisd_msg *
-pe_dispatch_policy(struct anoubisd_msg *msg __used)
-{
-	fatalx("pe_dispatch_policy not supported in unit tests");
-	return NULL;
-}
-
 void
 send_upgrade_start(void)
 {

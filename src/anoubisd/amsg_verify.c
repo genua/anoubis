@@ -304,20 +304,18 @@ amsg_sfs_checksumop_size(const char *buf, int buflen)
 }
 
 /*
- * Size of a struct anoubisd_reply_t.
- * XXX CEH: This structure needs heavy cleanup.
+ * Size of an anobuisd_msg_csumreply structure.
  */
 static int
-anoubisd_reply_size(const char *buf, int buflen)
+anoubisd_msg_csumreply_size(const char *buf, int buflen)
 {
-	struct anoubisd_reply	*msg;
+	struct anoubisd_msg_csumreply	*msg;
 	DECLARE_SIZE();
 
 	CAST(msg, buf, buflen);
-	SHIFT_FIELD(msg, msg, buf, buflen);
+	SHIFT_FIELD(msg, data, buf, buflen);
 	CHECK_LEN(msg->len, buflen);
 	ADD_SIZE(msg->len);
-	/* XXX CEH: Dig deeper into sub structure. */
 
 	RETURN_SIZE();
 }
@@ -503,9 +501,9 @@ DEFINE_CHECK_FUNCTION(struct, eventdev_reply)
 DEFINE_CHECK_FUNCTION(,eventdev_token)
 
 static int
-anoubisd_msg_checksum_op_size(const char *buf, int buflen)
+anoubisd_msg_csumop_size(const char *buf, int buflen)
 {
-	struct anoubisd_msg_checksum_op		*msg;
+	struct anoubisd_msg_csumop		*msg;
 	int					 sfsoplen;
 	DECLARE_SIZE()
 
@@ -707,12 +705,12 @@ anoubisd_msg_size(const char *buf, int buflen)
 	switch(msg->mtype) {
 	VARIANT(ANOUBISD_MSG_POLREQUEST, anoubisd_msg_polrequest, buf, buflen)
 	VARIANT(ANOUBISD_MSG_POLREPLY, anoubisd_msg_polreply, buf, buflen)
-	VARIANT(ANOUBISD_MSG_CHECKSUMREPLY, anoubisd_reply, buf, buflen)
+	VARIANT(ANOUBISD_MSG_CHECKSUM_OP, anoubisd_msg_csumop, buf, buflen)
+	VARIANT(ANOUBISD_MSG_CHECKSUMREPLY, anoubisd_msg_csumreply, buf, buflen)
 	VARIANT(ANOUBISD_MSG_EVENTDEV, eventdev_hdr, buf, buflen)
 	VARIANT(ANOUBISD_MSG_LOGREQUEST, anoubisd_msg_logrequest, buf, buflen)
 	VARIANT(ANOUBISD_MSG_EVENTREPLY, eventdev_reply, buf, buflen)
 	VARIANT(ANOUBISD_MSG_EVENTCANCEL, eventdev_token, buf, buflen)
-	VARIANT(ANOUBISD_MSG_CHECKSUM_OP, anoubisd_msg_checksum_op, buf, buflen)
 	VARIANT(ANOUBISD_MSG_EVENTASK, anoubisd_msg_eventask, buf, buflen)
 	VARIANT(ANOUBISD_MSG_POLICYCHANGE, anoubisd_msg_pchange, buf, buflen)
 	VARIANT(ANOUBISD_MSG_SFSCACHE_INVALIDATE, anoubisd_sfscache_invalidate,

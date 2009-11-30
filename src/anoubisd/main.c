@@ -1139,16 +1139,16 @@ init_root_key(char *passphrase, struct event_info_main *ev_info)
 static anoubisd_msg_t *
 create_checksumreply_msg(u_int64_t token, int payloadlen)
 {
-	anoubisd_msg_t		*msg;
-	anoubisd_reply_t	*reply;
+	anoubisd_msg_t			*msg;
+	struct anoubisd_msg_csumreply	*reply;
 	msg = msg_factory(ANOUBISD_MSG_CHECKSUMREPLY,
-	    sizeof(anoubisd_reply_t) + payloadlen);
+	    sizeof(struct anoubisd_msg_csumreply) + payloadlen);
 	if (!msg) {
 		master_terminate(ENOMEM);
 		return 0;
 	}
-	reply = (anoubisd_reply_t *)msg->msg;
-	memset(reply, 0, sizeof(anoubisd_reply_t));
+	reply = (struct anoubisd_msg_csumreply *)msg->msg;
+	memset(reply, 0, sizeof(struct anoubisd_msg_csumreply));
 	reply->flags = 0;
 	reply->len = payloadlen;
 	reply->token = token;
@@ -1159,14 +1159,14 @@ static void
 sfs_checksumop_list(struct sfs_checksumop *csop, u_int64_t token,
     struct event_info_main *ev_info)
 {
-	char			*sfs_path = NULL;
-	int			 error = EINVAL;
-	anoubisd_msg_t		*msg = NULL;
-	anoubisd_reply_t	*reply = NULL;
-	DIR			*sfs_dir = NULL;
-	struct dirent		*entry;
-	int			 offset;
-	int			 found = 0;
+	char				*sfs_path = NULL;
+	int				 error = EINVAL;
+	anoubisd_msg_t			*msg = NULL;
+	struct anoubisd_msg_csumreply	*reply = NULL;
+	DIR				*sfs_dir = NULL;
+	struct dirent			*entry;
+	int				 offset;
+	int				 found = 0;
 
 	if (csop->op != ANOUBIS_CHECKSUM_OP_GENERIC_LIST) {
 		error = EINVAL;
@@ -1184,7 +1184,7 @@ sfs_checksumop_list(struct sfs_checksumop *csop, u_int64_t token,
 		goto out;
 	}
 	msg = create_checksumreply_msg(token, 8000);
-	reply = (anoubisd_reply_t *)msg->msg;
+	reply = (struct anoubisd_msg_csumreply *)msg->msg;
 	reply->flags |= POLICY_FLAG_START;
 	offset = 0;
 
@@ -1198,11 +1198,12 @@ sfs_checksumop_list(struct sfs_checksumop *csop, u_int64_t token,
 		tmplen = strlen(tmp) + 1;
 		if (offset + tmplen > reply->len) {
 			reply->len = offset;
-			msg_shrink(msg, sizeof(anoubisd_reply_t) + offset);
+			msg_shrink(msg,
+			    sizeof(struct anoubisd_msg_csumreply) + offset);
 			enqueue(&eventq_m2s, msg);
 			event_add(ev_info->ev_m2s, NULL);
 			msg = create_checksumreply_msg(token, 8000);
-			reply = (anoubisd_reply_t*)msg->msg;
+			reply = (struct anoubisd_msg_csumreply *)msg->msg;
 			offset = 0;
 		}
 		if (offset + tmplen > reply->len) {
@@ -1210,14 +1211,14 @@ sfs_checksumop_list(struct sfs_checksumop *csop, u_int64_t token,
 			error = ENAMETOOLONG;
 			goto out;
 		}
-		memcpy(reply->msg + offset, tmp, tmplen);
+		memcpy(reply->data + offset, tmp, tmplen);
 		offset += tmplen;
 		free(tmp);
 	}
 	closedir(sfs_dir);
 	reply->len = offset;
 	reply->flags |= POLICY_FLAG_END;
-	msg_shrink(msg, sizeof(anoubisd_reply_t) + offset);
+	msg_shrink(msg, sizeof(struct anoubisd_msg_csumreply) + offset);
 	enqueue(&eventq_m2s, msg);
 	event_add(ev_info->ev_m2s, NULL);
 	if (!found) {
@@ -1231,12 +1232,12 @@ out:
 	if (sfs_path)
 		free(sfs_path);
 	if (msg) {
-		msg_shrink(msg, sizeof(anoubisd_reply_t));
+		msg_shrink(msg, sizeof(struct anoubisd_msg_csumreply));
 		reply->len = 0;
 		reply->flags |= POLICY_FLAG_END;
 	} else {
 		msg = create_checksumreply_msg(token, 0);
-		reply = (anoubisd_reply_t *)msg->msg;
+		reply = (struct anoubisd_msg_csumreply *)msg->msg;
 		reply->flags = (POLICY_FLAG_START | POLICY_FLAG_END);
 	}
 	reply->reply = error;
@@ -1248,17 +1249,17 @@ static void
 dispatch_checksumop(anoubisd_msg_t *msg, struct event_info_main *ev_info)
 {
 	struct anoubis_msg		 rawmsg;
-	anoubisd_msg_checksum_op_t	*msg_comm;
+	struct anoubisd_msg_csumop	*msg_csum;
 	struct sfs_checksumop		 csop;
-	anoubisd_reply_t		*reply;
+	struct anoubisd_msg_csumreply	*reply;
 	void				*sigbuf = NULL;
 	int				 siglen = 0;
 	int				 err = -EFAULT;
 
-	msg_comm = (anoubisd_msg_checksum_op_t *)msg->msg;
-	rawmsg.length = msg_comm->len;
-	rawmsg.u.buf = msg_comm->msg;
-	if (sfs_parse_checksumop(&csop, &rawmsg, msg_comm->uid) < 0) {
+	msg_csum = (struct anoubisd_msg_csumop *)msg->msg;
+	rawmsg.length = msg_csum->len;
+	rawmsg.u.buf = msg_csum->msg;
+	if (sfs_parse_checksumop(&csop, &rawmsg, msg_csum->uid) < 0) {
 		err = -EINVAL;
 		goto out;
 	}
@@ -1269,7 +1270,7 @@ dispatch_checksumop(anoubisd_msg_t *msg, struct event_info_main *ev_info)
 	case _ANOUBIS_CHECKSUM_OP_UID_LIST:
 	case _ANOUBIS_CHECKSUM_OP_KEYID_LIST:
 	case ANOUBIS_CHECKSUM_OP_GENERIC_LIST:
-		sfs_checksumop_list(&csop, msg_comm->token, ev_info);
+		sfs_checksumop_list(&csop, msg_csum->token, ev_info);
 		return;
 	case ANOUBIS_CHECKSUM_OP_ADDSIG:
 	case ANOUBIS_CHECKSUM_OP_ADDSUM:
@@ -1299,12 +1300,12 @@ dispatch_checksumop(anoubisd_msg_t *msg, struct event_info_main *ev_info)
 		    csop.idlen, ev_info);
 	}
 out:
-	msg = create_checksumreply_msg(msg_comm->token, siglen);
-	reply = (anoubisd_reply_t*)msg->msg;
+	msg = create_checksumreply_msg(msg_csum->token, siglen);
+	reply = (struct anoubisd_msg_csumreply *)msg->msg;
 	reply->reply = -err;
 	reply->flags = POLICY_FLAG_START | POLICY_FLAG_END;
 	if (siglen) {
-		memcpy(reply->msg, sigbuf, siglen);
+		memcpy(reply->data, sigbuf, siglen);
 		free(sigbuf);
 	}
 	enqueue(&eventq_m2s, msg);
@@ -1330,10 +1331,8 @@ dispatch_passphrase(anoubisd_msg_t *msg, struct event_info_main *ev_info)
 static void
 dispatch_s2m(int fd, short event __used, void *arg)
 {
-	/*@dependent@*/
 	anoubisd_msg_t *msg;
 	struct event_info_main *ev_info = (struct event_info_main*)arg;
-	struct eventdev_hdr *ev_hdr;
 
 	DEBUG(DBG_TRACE, ">dispatch_s2m");
 
@@ -1349,18 +1348,10 @@ dispatch_s2m(int fd, short event __used, void *arg)
 			dispatch_passphrase(msg, ev_info);
 			break;
 		default:
-			ev_hdr = (struct eventdev_hdr *)msg->msg;
-			DEBUG(DBG_QUEUE, " >s2m: %x", ev_hdr->msg_token);
-
-			/* This should be a sessionid registration message */
 			log_warn("dispatch_s2m: bad mtype %d", msg->mtype);
 			break;
 		}
-
-/* XXX RD Session registration - optimization */
-
 		free(msg);
-
 		DEBUG(DBG_TRACE, "<dispatch_s2m (loop)");
 	}
 	if (msg_eof(fd))

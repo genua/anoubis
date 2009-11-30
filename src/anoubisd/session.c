@@ -531,7 +531,7 @@ dispatch_checksum(struct anoubis_server *server, struct anoubis_msg *m,
     uid_t uid, void *arg)
 {
 	anoubisd_msg_t			*s2m_msg;
-	anoubisd_msg_checksum_op_t	*msg_csum;
+	struct anoubisd_msg_csumop	*msg_csum;
 	struct achat_channel		*chan;
 	int				 err, opp = 0, reallen;
 
@@ -548,8 +548,8 @@ dispatch_checksum(struct anoubis_server *server, struct anoubis_msg *m,
 		goto invalid;
 	chan = anoubis_server_getchannel(server);
 	s2m_msg = msg_factory(ANOUBISD_MSG_CHECKSUM_OP,
-	    sizeof(anoubisd_msg_checksum_op_t) + m->length);
-	msg_csum = (anoubisd_msg_checksum_op_t *)s2m_msg->msg;
+	    sizeof(struct anoubisd_msg_csumop) + m->length);
+	msg_csum = (struct anoubisd_msg_csumop *)s2m_msg->msg;
 	msg_csum->uid = uid;
 	msg_csum->len = m->length;
 	memcpy(msg_csum->msg, m->u.checksumrequest, m->length);
@@ -1175,13 +1175,13 @@ static void
 dispatch_m2s_checksum_reply(anoubisd_msg_t *msg,
     struct event_info_session *ev_info)
 {
-	anoubisd_reply_t	*reply;
-	int			 ret, end;
+	struct anoubisd_msg_csumreply	*reply;
+	int				 ret, end;
 
-	reply = (anoubisd_reply_t *)msg->msg;
+	reply = (struct anoubisd_msg_csumreply *)msg->msg;
 	end = reply->flags & POLICY_FLAG_END;
 	ret = anoubis_policy_comm_answer(ev_info->policy, reply->token,
-	    reply->reply, reply->msg, reply->len, end);
+	    reply->reply, reply->data, reply->len, end);
 	if (ret < 0) {
 		errno = -ret;
 		log_warn("dispatch_m2s_checksum_reply: "

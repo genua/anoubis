@@ -187,20 +187,27 @@ struct anoubisd_msg_polrequest {
 
 /* format of ANOUBISD_MSG_POLREPLY */
 struct anoubisd_msg_polreply {
-	int		reply;		/* result code */
 	u_int64_t	token;		/* only for anoubisd_msg_comm_t msgs */
+	int		reply;		/* result code */
 	u_int32_t	flags;		/* Only for POLREPLY */
 	short		len;		/* of following msg */
 	char		data[0];
 };
 
-struct anoubisd_msg_checksum_op {
+struct anoubisd_msg_csumop {
 	u_int64_t	token;
 	u_int32_t	uid;
 	short		len;
 	char		msg[0];
 };
-typedef struct anoubisd_msg_checksum_op anoubisd_msg_checksum_op_t;
+
+struct anoubisd_msg_csumreply {
+	u_int64_t	token;
+	int		reply;
+	u_int32_t	flags;
+	short		len;
+	char		data[0];
+};
 
 struct anoubisd_reply {
 	char		ask;		/* flag - ask GUI */
@@ -209,8 +216,6 @@ struct anoubisd_reply {
 	time_t		timeout;	/* from policy engine, if ask GUI */
 	int		reply;		/* result code */
 	int		log;		/* Loglevel for the result of an ASK */
-	u_int64_t	token;		/* only for anoubisd_msg_comm_t msgs */
-	u_int32_t	flags;		/* Only for POLREPLY */
 	u_int32_t	rule_id;	/* Rule ID if ask is true */
 	u_int32_t	prio;		/* Priority of the rule. */
 	u_int32_t	sfsmatch;	/* The type of match in SFS rules. */

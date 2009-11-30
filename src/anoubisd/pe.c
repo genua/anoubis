@@ -248,33 +248,27 @@ pe_upgrade_finish(void)
 }
 
 /*
- * XXX CEH: If we want to take privilege separation seriously, we
- * XXX CEH: must check the length of each request and make sure that
- * XXX CEH: it is sufficiently large for the payload it is expected to
- * XXX CEH: contain.
+ * NOTE: Basic length verification has been done by amsg_verify.
  */
 anoubisd_reply_t *
 policy_engine(anoubisd_msg_t *request)
 {
-	anoubisd_reply_t *reply;
+	anoubisd_reply_t	*reply;
+	struct eventdev_hdr	*hdr;
 
 	DEBUG(DBG_TRACE, ">policy_engine");
 
-	switch (request->mtype) {
-	case ANOUBISD_MSG_EVENTDEV: {
-		struct eventdev_hdr *hdr = (struct eventdev_hdr *)request->msg;
-		reply = pe_dispatch_event(hdr);
-		break;
-	} default:
+	if (request->mtype != ANOUBISD_MSG_EVENTDEV) {
 		log_warnx(" policy_engine: Bad policy request type %d",
 		    request->mtype);
-		reply = NULL;
-		break;
+		return NULL;
 	}
+	hdr = (struct eventdev_hdr *)request->msg;
+	reply = pe_dispatch_event(hdr);
 
 	DEBUG(DBG_TRACE, "<policy_engine");
 
-	return (reply);
+	return reply;
 }
 
 static anoubisd_reply_t *

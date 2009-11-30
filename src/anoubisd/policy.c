@@ -621,6 +621,11 @@ dispatch_m2p(int fd, short sig __used, void *arg)
 			continue;
 		}
 
+		/*
+		 * At this point the message must be of
+		 * type ANOUBISD_MSG_EVENTDEV.
+		 */
+
 		DEBUG(DBG_PE, "dispatch_m2p: src=%d pid=%d", hdr->msg_source,
 		    hdr->msg_pid);
 		if (((hdr->msg_flags & EVENTDEV_NEED_REPLY) == 0) &&
