@@ -626,6 +626,23 @@ pe_dispatch_policy(struct anoubisd_msg *msg)
 	}
 
 	DEBUG(DBG_TRACE, ">pe_dispatch_policy");
+	if (msg->mtype == ANOUBISD_MSG_POLREQUEST_ABORT) {
+		struct anoubisd_msg_polrequest_abort	*abort;
+
+		abort = (struct anoubisd_msg_polrequest_abort *)msg->msg;
+		req = pe_policy_request_find(abort->token);
+		if (req) {
+			LIST_REMOVE(req, next);
+			pe_policy_request_put(req);
+		}
+		DEBUG(DBG_TRACE, "<pe_dispatch_policy(abort)");
+		return NULL;
+	}
+	if (msg->mtype != ANOUBISD_MSG_POLREQUEST) {
+		log_warnx("pe_dispatch_policy; Bad message type %d",
+		    msg->mtype);
+		return NULL;
+	}
 	/*
 	 * See if we have a policy request for this token. It is an error if
 	 *  - there is no request and POLICY_FLAG_START is clear   or
@@ -659,6 +676,7 @@ pe_dispatch_policy(struct anoubisd_msg *msg)
 		req->authuid = polreq->auth_uid;
 		req->written = 0;
 		req->fd = -1;
+		req->fdsig = -1;
 		LIST_INSERT_HEAD(&preqs, req, next);
 	}
 	if (req->authuid != polreq->auth_uid) {

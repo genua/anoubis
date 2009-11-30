@@ -406,6 +406,8 @@ verify_polrequest(const char *buf, int buflen, unsigned int flags)
 	return 0;
 }
 
+DEFINE_CHECK_FUNCTION(struct, anoubisd_msg_polrequest_abort)
+
 /*
  * Return the size of an anoubisd_msg_polrequest message.
  */
@@ -704,6 +706,8 @@ anoubisd_msg_size(const char *buf, int buflen)
 	SHIFT_FIELD(msg, msg, buf, buflen);
 	switch(msg->mtype) {
 	VARIANT(ANOUBISD_MSG_POLREQUEST, anoubisd_msg_polrequest, buf, buflen)
+	VARIANT(ANOUBISD_MSG_POLREQUEST_ABORT, anoubisd_msg_polrequest_abort,
+	    buf, buflen)
 	VARIANT(ANOUBISD_MSG_POLREPLY, anoubisd_msg_polreply, buf, buflen)
 	VARIANT(ANOUBISD_MSG_CHECKSUM_OP, anoubisd_msg_csumop, buf, buflen)
 	VARIANT(ANOUBISD_MSG_CHECKSUMREPLY, anoubisd_msg_csumreply, buf, buflen)

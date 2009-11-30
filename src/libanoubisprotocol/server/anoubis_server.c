@@ -106,7 +106,7 @@ static void channel_close(struct anoubis_server * server)
 	if (!server)
 		return;
 	if (server->policy && server->chan)
-		anoubis_policy_comm_abort(server->policy, server->chan);
+		anoubis_policy_comm_destroy(server->policy, server->chan);
 	if (server->chan) {
 		acc_close(server->chan);
 		server->chan = NULL;

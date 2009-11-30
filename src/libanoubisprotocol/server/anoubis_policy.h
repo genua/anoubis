@@ -50,12 +50,13 @@ int anoubis_policy_comm_process(struct anoubis_policy_comm * comm,
 
 int anoubis_policy_comm_addrequest(struct anoubis_policy_comm *comm,
     struct achat_channel *chan, int flags,
-    anoubis_policy_reply_callback_t callback, void *cbdata, u_int64_t *tokenp);
+    anoubis_policy_reply_callback_t callback,
+    anoubis_policy_comm_dispatcher_t dispatch, void *cbdata, u_int64_t *tokenp);
 
 int anoubis_policy_comm_answer(struct anoubis_policy_comm * comm,
     u_int64_t token, int error, void * data, int len, int end);
 
-void anoubis_policy_comm_abort(struct anoubis_policy_comm * comm,
+void anoubis_policy_comm_destroy(struct anoubis_policy_comm * comm,
     /*@notnull@*/ struct achat_channel * chan);
 
 #endif	/* _ANOUBIS_POLICY_H_ */

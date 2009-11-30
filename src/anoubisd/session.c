@@ -560,11 +560,12 @@ dispatch_checksum(struct anoubis_server *server, struct anoubis_msg *m,
 	    opp == ANOUBIS_CHECKSUM_OP_GENERIC_LIST) {
 		err = anoubis_policy_comm_addrequest(ev_info->policy, chan,
 		    POLICY_FLAG_START | POLICY_FLAG_END,
-		    &dispatch_checksum_list_reply, server, &msg_csum->token);
+		    &dispatch_checksum_list_reply, NULL, server,
+		    &msg_csum->token);
 	} else {
 		err = anoubis_policy_comm_addrequest(ev_info->policy, chan,
 		    POLICY_FLAG_START | POLICY_FLAG_END,
-		    &dispatch_checksum_reply, server, &msg_csum->token);
+		    &dispatch_checksum_reply, NULL, server, &msg_csum->token);
 	}
 	if (err < 0) {
 		log_warnx("Dropping checksum request (error %d)", err);
@@ -710,18 +711,31 @@ dispatch_policy(struct anoubis_policy_comm *comm __attribute__((unused)),
 
 	DEBUG(DBG_TRACE, ">dispatch_policy token = %lld", (long long)token);
 
-	if (verify_polrequest(buf, len, flags) < 0) {
-		log_warnx("Dropping malformed policy request");
-		return -EINVAL;
+	if (buf == NULL) {
+ 		/*
+		 * NOTE: buf == NULL means that the request is aborted,
+		 * NOTE: usually due to a closed client connection.
+		 */
+		struct anoubisd_msg_polrequest_abort	*abort;
+		msg = msg_factory(ANOUBISD_MSG_POLREQUEST_ABORT,
+		    sizeof(struct anoubisd_msg_polrequest_abort));
+		abort = (struct anoubisd_msg_polrequest_abort *)msg->msg;
+		abort->token = token;
+	} else {
+		if (verify_polrequest(buf, len, flags) < 0) {
+			log_warnx("Dropping malformed policy request");
+			return -EINVAL;
+		}
+		msg = msg_factory(ANOUBISD_MSG_POLREQUEST,
+		    sizeof(struct anoubisd_msg_polrequest) + len);
+		polreq = (struct anoubisd_msg_polrequest *)msg->msg;
+		polreq->token = token;
+		polreq->auth_uid = uid;
+		polreq->flags = flags;
+		polreq->len = len;
+		if (len)
+			bcopy(buf, polreq->data, len);
 	}
-	msg = msg_factory(ANOUBISD_MSG_POLREQUEST,
-	    sizeof(struct anoubisd_msg_polrequest) + len);
-	polreq = (struct anoubisd_msg_polrequest *)msg->msg;
-	polreq->token = token;
-	polreq->auth_uid = uid;
-	polreq->flags = flags;
-	polreq->len = len;
-	bcopy(buf, polreq->data, len);
 
 	enqueue(&eventq_s2p, msg);
 	DEBUG(DBG_QUEUE, " >eventq_s2p: %llx", (unsigned long long)token);

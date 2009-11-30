@@ -49,6 +49,7 @@ struct policy_request {
 	struct achat_channel * chan;
 	int flags;
 	anoubis_policy_reply_callback_t callback;
+	anoubis_policy_comm_dispatcher_t dispatch;
 	void *cbdata;
 };
 
@@ -62,8 +63,6 @@ struct anoubis_policy_comm {
 
 static int	anoubis_policy_request_callback(void *cbdata, int error,
 		    void *data, int len, int flags);
-static void	anoubis_policy_comm_destroy(struct anoubis_policy_comm *comm,
-		    struct achat_channel *chan);
 
 /*
  * The following code utilizes list functions from BSD queue.h, which
@@ -91,7 +90,8 @@ struct anoubis_policy_comm * anoubis_policy_comm_create(
 
 int anoubis_policy_comm_addrequest(struct anoubis_policy_comm *comm,
     struct achat_channel *chan, int flags,
-    anoubis_policy_reply_callback_t callback, void *cbdata, u_int64_t *tokenp)
+    anoubis_policy_reply_callback_t callback,
+    anoubis_policy_comm_dispatcher_t dispatch, void *cbdata, u_int64_t *tokenp)
 {
 	struct policy_request	*req;
 
@@ -112,6 +112,7 @@ int anoubis_policy_comm_addrequest(struct anoubis_policy_comm *comm,
 		req->chan = chan;
 		req->flags = (flags&POLICY_FLAG_END) ? REQUEST_DATAEND : 0;
 		req->callback = callback;
+		req->dispatch = dispatch;	/* Only for aborts. */
 		req->cbdata = cbdata;
 		LIST_INSERT_HEAD(&comm->req, req, link);
 	}
@@ -137,7 +138,7 @@ int anoubis_policy_comm_process(struct anoubis_policy_comm * comm,
 	}
 	flags = get_value(m->u.policyrequest->flags);
 	err = anoubis_policy_comm_addrequest(comm, chan, flags,
-	    anoubis_policy_request_callback, chan, &token);
+	    anoubis_policy_request_callback, comm->dispatch, chan, &token);
 	if (err < 0) {
 		anoubis_msg_free(m);
 		return err;
@@ -212,17 +213,7 @@ static int anoubis_policy_request_callback(void *cbdata, int error,
 	return 0;
 }
 
-void anoubis_policy_comm_abort(struct anoubis_policy_comm * comm,
-    struct achat_channel * chan)
-{
-	struct policy_request * req;
-	LIST_FOREACH(req, &comm->req, link) {
-		if (req->chan == chan)
-			req->chan = NULL;
-	}
-}
-
-static void
+void
 anoubis_policy_comm_destroy(struct anoubis_policy_comm *comm,
     struct achat_channel *chan)
 {
@@ -230,6 +221,11 @@ anoubis_policy_comm_destroy(struct anoubis_policy_comm *comm,
 	LIST_FOREACH(req, &comm->req, link) {
 		if (req->chan == chan) {
 			LIST_REMOVE(req, link);
+			if (req->dispatch) {
+				req->dispatch(comm, req->token, 0 /* uid */,
+				    NULL /* buffer */, 0 /*length */,
+				    comm->arg, 0 /* flags */);
+			}
 			free(req);
 			return;
 		}

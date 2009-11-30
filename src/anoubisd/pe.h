@@ -48,6 +48,31 @@ struct pe_policy_db;
 struct pe_user;
 struct pe_pubkey_db;
 
+/*
+ * Return type for the policy engine function. DO NOT use for anything else.
+ * In particular, this structure must not be sent to other daemon processes
+ * as an anoubisd_msg_t payload.
+ */
+struct anoubisd_reply {
+	char		ask;		/* flag - ask GUI */
+	char		hold;		/* Flag hold back answer until
+					 * upgrade end. */
+	time_t		timeout;	/* from policy engine, if ask GUI */
+	int		reply;		/* result code */
+	int		log;		/* Loglevel for the result of an ASK */
+	u_int32_t	rule_id;	/* Rule ID if ask is true */
+	u_int32_t	prio;		/* Priority of the rule. */
+	u_int32_t	sfsmatch;	/* The type of match in SFS rules. */
+	struct pe_proc_ident *pident;	/* Ident of active program */
+	struct pe_proc_ident *ctxident;	/* Ident of active context */
+	short		len;		/* of following msg */
+	char		msg[0];
+};
+typedef struct anoubisd_reply anoubisd_reply_t;
+
+/* Policy Engine main entry point. */
+struct anoubisd_reply *policy_engine(anoubisd_msg_t *request);
+
 
 struct pe_proc_ident {
 	unsigned char *csum;

@@ -883,6 +883,7 @@ dispatch_s2p(int fd, short sig __used, void *arg)
 
 		switch (msg->mtype) {
 		case ANOUBISD_MSG_POLREQUEST:
+		case ANOUBISD_MSG_POLREQUEST_ABORT:
 			msg_rep = pe_dispatch_policy(msg);
 			if (msg_rep)
 				enqueue(&eventq_p2s, msg_rep);

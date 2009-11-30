@@ -24,13 +24,12 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-# XXX ST: #423
-#	  The test "test_anoubisd is disabled due to the fact that it
-#	  depends on a running anoubisd which can't be expected during
-#	  'make distcheck'.
-#	  Nethertheless that test is quite useful and should be shipped.
+# The tests "test_anoubisd" and "anoubisd_polciy_dos" are disabled due to
+# the fact that they depends on a running anoubisd which can't be expected
+# during a 'make distcheck'.
+# Nethertheless the tests are useful and should be shipped.
 
-noinst_PROGRAMS = test_anoubisd test_peunit
+noinst_PROGRAMS = test_anoubisd test_peunit anoubisd_policy_dos
 TESTS = test_peunit
 
 anoubisddir     = src/anoubisd
@@ -65,6 +64,7 @@ test_anoubisd_CPPFLAGS = \
 	@CHECK_CFLAGS@
 
 test_peunit_CPPFLAGS = $(test_anoubisd_CPPFLAGS)
+anoubisd_policy_dos_CPPFLAGS = $(test_anoubisd_CPPFLAGS)
 
 # We link with check.a which is compiled without -fPIE, therefore
 # we must use shared_AM_LDFLAGS in order not to link with -pie.
@@ -100,9 +100,14 @@ test_anoubisd_LDADD = \
 	$(libanoubispc) \
 	$(libanoubischat)
 
+anoubisd_policy_dos_LDADD = \
+	$(libanoubispc) \
+	$(libanoubischat)
+
 if NEEDBSDCOMPAT
 test_anoubisd_LDADD += $(libbsdcompat)
 test_peunit_LDADD += $(libbsdcompat)
+anoubisd_policy_dos_LDADD += $(libbsdcompat)
 endif
 
 test_anoubisd_SOURCES = \
@@ -116,3 +121,6 @@ test_peunit_SOURCES = \
 	anoubisd_testcase_upgrade.c \
 	anoubisd_unit.h \
 	test_peunit.c
+
+anoubisd_policy_dos_SOURCES = \
+	anoubisd_policy_dos.c

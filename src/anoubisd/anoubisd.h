@@ -143,6 +143,7 @@ typedef struct anoubisd_msg anoubisd_msg_t;
 
 enum anoubisd_msg_type {
 	ANOUBISD_MSG_POLREQUEST,
+	ANOUBISD_MSG_POLREQUEST_ABORT,
 	ANOUBISD_MSG_POLREPLY,
 	ANOUBISD_MSG_CHECKSUMREPLY,
 	ANOUBISD_MSG_EVENTDEV,
@@ -185,6 +186,12 @@ struct anoubisd_msg_polrequest {
 	char		data[0];
 };
 
+/* format of ANOUBISD_MSG_POLREQUEST_ABORT */
+struct anoubisd_msg_polrequest_abort {
+	u_int64_t	token;
+};
+
+
 /* format of ANOUBISD_MSG_POLREPLY */
 struct anoubisd_msg_polreply {
 	u_int64_t	token;		/* only for anoubisd_msg_comm_t msgs */
@@ -208,23 +215,6 @@ struct anoubisd_msg_csumreply {
 	short		len;
 	char		data[0];
 };
-
-struct anoubisd_reply {
-	char		ask;		/* flag - ask GUI */
-	char		hold;		/* Flag hold back answer until
-					 * upgrade end. */
-	time_t		timeout;	/* from policy engine, if ask GUI */
-	int		reply;		/* result code */
-	int		log;		/* Loglevel for the result of an ASK */
-	u_int32_t	rule_id;	/* Rule ID if ask is true */
-	u_int32_t	prio;		/* Priority of the rule. */
-	u_int32_t	sfsmatch;	/* The type of match in SFS rules. */
-	struct pe_proc_ident *pident;	/* Ident of active program */
-	struct pe_proc_ident *ctxident;	/* Ident of active context */
-	short		len;		/* of following msg */
-	char		msg[0];
-};
-typedef struct anoubisd_reply anoubisd_reply_t;
 
 struct anoubisd_sfscache_invalidate {
 	u_int32_t	uid;
@@ -327,40 +317,18 @@ pid_t	upgrade_main(int[], int[]);
 pid_t	logger_main(int[], int[]);
 
 void	pe_init(void);
-
 void	pe_shutdown(void);
-
 void	pe_reconfigure(void);
-
-anoubisd_reply_t *policy_engine(anoubisd_msg_t *request);
-
 void	log_init(int fd);
+void	log_warn(const char *, ...) __attribute__ ((format (printf, 1, 2)));
+void	log_warnx(const char *, ...) __attribute__ ((format (printf, 1, 2)));
+void	log_info(const char *, ...) __attribute__ ((format (printf, 1, 2)));
+void	log_debug(const char *, ...) __attribute__ ((format (printf, 1, 2)));
 
-void	log_warn(const char *, ...)
-    __attribute__ ((format (printf, 1, 2)));
-
-void	log_warnx(const char *, ...)
-    __attribute__ ((format (printf, 1, 2)));
-
-void	log_info(const char *, ...)
-    __attribute__ ((format (printf, 1, 2)));
-
-void	log_debug(const char *, ...)
-    __attribute__ ((format (printf, 1, 2)));
-
-/*@noreturn@*/
 __dead void	fatalx(const char *);
-
-/*@noreturn@*/
 __dead void	fatal(const char *);
-
-/*@noreturn@*/
 __dead void	master_terminate(int);
-
-/*@noreturn@*/
 __dead void	early_err(int, const char *);
-
-/*@noreturn@*/
 __dead void	early_errx(int, const char *);
 
 int	dazukofs_ignore(void);
