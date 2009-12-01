@@ -317,6 +317,10 @@ dispatch_timer(int sig __used, short event __used, void *arg)
 		    || terminate >= 3) {
 			msg = msg_factory(ANOUBISD_MSG_EVENTREPLY,
 			    sizeof(struct eventdev_reply));
+			if (!msg) {
+				master_terminate(ENOMEM);
+				return;
+			}
 			rep = (struct eventdev_reply *)msg->msg;
 			rep->msg_token = msg_wait->token;
 			rep->reply = EPERM;
@@ -326,6 +330,10 @@ dispatch_timer(int sig __used, short event __used, void *arg)
 
 			msg = msg_factory(ANOUBISD_MSG_EVENTCANCEL,
 			    sizeof(eventdev_token));
+			if (!msg) {
+				master_terminate(ENOMEM);
+				return;
+			}
 			tk = (eventdev_token *)msg->msg;
 			*tk = msg_wait->token;
 			enqueue(&eventq_p2s, msg);
@@ -659,6 +667,10 @@ dispatch_m2p(int fd, short sig __used, void *arg)
 			extra += pident_size(reply->ctxident);
 			nmsg = msg_factory(ANOUBISD_MSG_EVENTASK,
 			    sizeof(anoubisd_msg_eventask_t) + extra);
+			if (!nmsg) {
+				master_terminate(ENOMEM);
+				return;
+			}
 			eventask = (anoubisd_msg_eventask_t *)nmsg->msg;
 			eventask->rule_id = reply->rule_id;
 			eventask->prio = reply->prio;
@@ -705,6 +717,10 @@ dispatch_m2p(int fd, short sig __used, void *arg)
 			int	hold = reply->hold;
 			msg_reply = msg_factory(ANOUBISD_MSG_EVENTREPLY,
 			    sizeof(struct eventdev_reply));
+			if (!msg_reply) {
+				master_terminate(ENOMEM);
+				return;
+			}
 			rep = (struct eventdev_reply *)msg_reply->msg;
 			rep->msg_token = hdr->msg_token;
 			rep->reply = reply->reply;

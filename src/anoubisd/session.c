@@ -478,6 +478,10 @@ notify_callback(struct anoubis_notify_head *head, int verdict, void *cbdata)
 
 	msg = msg_factory(ANOUBISD_MSG_EVENTREPLY,
 	    sizeof(struct eventdev_reply));
+	if (!msg) {
+		master_terminate(ENOMEM);
+		return;
+	}
 	rep = (struct eventdev_reply *)msg->msg;
 	rep->msg_token = ((struct cbdata *)cbdata)->ev_token;
 	rep->reply = verdict;
@@ -549,6 +553,10 @@ dispatch_checksum(struct anoubis_server *server, struct anoubis_msg *m,
 	chan = anoubis_server_getchannel(server);
 	s2m_msg = msg_factory(ANOUBISD_MSG_CHECKSUM_OP,
 	    sizeof(struct anoubisd_msg_csumop) + m->length);
+	if (!s2m_msg) {
+		master_terminate(ENOMEM);
+		return;
+	}
 	msg_csum = (struct anoubisd_msg_csumop *)s2m_msg->msg;
 	msg_csum->uid = uid;
 	msg_csum->len = m->length;
@@ -712,13 +720,17 @@ dispatch_policy(struct anoubis_policy_comm *comm __attribute__((unused)),
 	DEBUG(DBG_TRACE, ">dispatch_policy token = %lld", (long long)token);
 
 	if (buf == NULL) {
- 		/*
+		/*
 		 * NOTE: buf == NULL means that the request is aborted,
 		 * NOTE: usually due to a closed client connection.
 		 */
 		struct anoubisd_msg_polrequest_abort	*abort;
 		msg = msg_factory(ANOUBISD_MSG_POLREQUEST_ABORT,
 		    sizeof(struct anoubisd_msg_polrequest_abort));
+		if (!msg) {
+			master_terminate(ENOMEM);
+			return -ENOMEM;
+		}
 		abort = (struct anoubisd_msg_polrequest_abort *)msg->msg;
 		abort->token = token;
 	} else {
@@ -728,6 +740,10 @@ dispatch_policy(struct anoubis_policy_comm *comm __attribute__((unused)),
 		}
 		msg = msg_factory(ANOUBISD_MSG_POLREQUEST,
 		    sizeof(struct anoubisd_msg_polrequest) + len);
+		if (!msg) {
+			master_terminate(ENOMEM);
+			return -ENOMEM;
+		}
 		polreq = (struct anoubisd_msg_polrequest *)msg->msg;
 		polreq->token = token;
 		polreq->auth_uid = uid;

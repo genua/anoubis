@@ -1523,6 +1523,10 @@ dispatch_dev2m(int fd, short event __used, void *arg)
 
 			msg_reply = msg_factory(ANOUBISD_MSG_EVENTREPLY,
 			    sizeof(struct eventdev_reply));
+			if (msg_reply == NULL) {
+				master_terminate(ENOMEM);
+				return;
+			}
 			rep = (struct eventdev_reply *)msg_reply->msg;
 			rep->msg_token = hdr->msg_token;
 			rep->reply = 0;
