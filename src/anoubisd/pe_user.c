@@ -849,8 +849,6 @@ pe_dispatch_policy(struct anoubisd_msg *msg)
 			len -= ret;
 		}
 		if (polreq->flags & POLICY_FLAG_END) {
-			char	*bkup, *tmp;
-			time_t	 t;
 			int	 ret;
 			struct apn_ruleset * ruleset = NULL;
 
@@ -885,37 +883,6 @@ pe_dispatch_policy(struct anoubisd_msg *msg)
 				goto reply;
 			}
 			ruleset->destructor = (void*)&pe_prefixhash_destroy;
-			/* Backup old rules */
-			if (time(&t) == (time_t)-1) {
-				error = errno;
-				apn_free_ruleset(ruleset);
-				goto reply;
-			}
-			tmp = pe_policy_filename(req->uid, req->prio,
-			    ".save.");
-			if (tmp == NULL) {
-				error = ENOMEM;
-				apn_free_ruleset(ruleset);
-				goto reply;
-			}
-			ret = asprintf(&bkup, "%s.%lld", tmp, (long long)t);
-			free(tmp);
-			if (ret == -1) {
-				errno = ENOMEM;
-				apn_free_ruleset(ruleset);
-				goto reply;
-			}
-			DEBUG(DBG_TRACE, "    link: %s->%s", req->realname,
-			    bkup);
-			if (link(req->realname, bkup) < 0) {
-				if (errno != ENOENT && errno != EEXIST) {
-					error = errno;
-					free(bkup);
-					apn_free_ruleset(ruleset);
-					goto reply;
-				}
-			}
-			free(bkup);
 			DEBUG(DBG_TRACE, "    fsync & rename: %s->%s",
 				req->tmpname, req->realname);
 			if (fsync(req->fd) < 0 ||
