@@ -881,7 +881,6 @@ dispatch_p2s(int fd, short sig __used, void *arg)
 			dispatch_p2s_pol_reply(msg, ev_info);
 			break;
 
-		case ANOUBISD_MSG_EVENTDEV:
 		case ANOUBISD_MSG_EVENTASK:
 			DEBUG(DBG_QUEUE, ">p2s");
 			dispatch_p2s_evt_request(msg, ev_info);
@@ -1013,7 +1012,7 @@ do_copy(char *dstbuf, int *offp, const char *srcbuf, int srcoff, int srclen,
 }
 
 
-void
+static void
 dispatch_p2s_evt_request(anoubisd_msg_t	*msg,
     struct event_info_session *ev_info)
 {
@@ -1031,26 +1030,16 @@ dispatch_p2s_evt_request(anoubisd_msg_t	*msg,
 
 	DEBUG(DBG_TRACE, ">dispatch_p2s_evt_request");
 
-	switch(msg->mtype) {
-	case ANOUBISD_MSG_EVENTDEV:
-		hdr = (struct eventdev_hdr *)msg->msg;
-		break;
-	case ANOUBISD_MSG_EVENTASK:
-		eventask = (anoubisd_msg_eventask_t *)(msg->msg);
-		rule_id = eventask->rule_id;
-		prio = eventask->prio;
-		hdr = (struct eventdev_hdr *)
-		    (eventask->payload + eventask->evoff);
-		plen = eventask->pathlen;
-		cslen = eventask->csumlen;
-		ctxplen = eventask->ctxpathlen;
-		ctxcslen = eventask->ctxcsumlen;
-		sfsmatch = eventask->sfsmatch;
-		break;
-	default:
-		log_warn("dispatch_p2s_evt_request: bad mtype %d", msg->mtype);
-		return;
-	}
+	eventask = (anoubisd_msg_eventask_t *)(msg->msg);
+	rule_id = eventask->rule_id;
+	prio = eventask->prio;
+	hdr = (struct eventdev_hdr *)
+	    (eventask->payload + eventask->evoff);
+	plen = eventask->pathlen;
+	cslen = eventask->csumlen;
+	ctxplen = eventask->ctxpathlen;
+	ctxcslen = eventask->ctxcsumlen;
+	sfsmatch = eventask->sfsmatch;
 
 	if ((hdr->msg_flags & EVENTDEV_NEED_REPLY) == 0) {
 		log_warn("dispatch_p2s: bad flags %x", hdr->msg_flags);
