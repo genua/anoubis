@@ -406,6 +406,7 @@ SfsCtrl::importChecksums(const wxString &path)
 		for (entry = entries; entry; entry = entry->next)
 			total++;
 
+		entry = entries;
 		startSfsOp(total);
 		while (entry != 0) {
 			createComCsumAddTasks(entry);
