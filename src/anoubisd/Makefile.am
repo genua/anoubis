@@ -26,6 +26,8 @@
 
 sbin_PROGRAMS = anoubisd
 
+EXTRA_DIST = README.privsep
+
 bsdcompatdir = src/bsdcompat
 libbsdcompat = $(top_builddir)/$(bsdcompatdir)/libbsdcompat.a
 anoubischatdir = src/libanoubischat
