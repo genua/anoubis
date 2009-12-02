@@ -288,6 +288,9 @@ exit 0
 
 ### changelog ##############################################
 %changelog
+* Tue Dec 01 2009 Stefan Fritsch
+- adjust init script LSB dependencies
+
 * Fri Nov 27 2009 Christian Ehrhardt
 - add anoubis-keyinstall
 

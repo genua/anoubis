@@ -101,8 +101,15 @@ for a in admin user profiles ; do
 	perl -p -i -e s,/usr/lib/kde3,/opt/kde3/lib/kde3,g $tgt
     done ;
 done
+
+# install wizard templates of xanoubis
+DEF_WIZARD_DIR=$RPM_BUILD_ROOT/usr/share/xanoubis/policy_templates/wizard
+mkdir -p $DEF_WIZARD_DIR
+install -p $RPM_BUILD_ROOT/%{_datadir}/xanoubis/profiles/wizard/{alf,sandbox} \
+	$DEF_WIZARD_DIR
+
 rm -rf $RPM_BUILD_ROOT/usr/share/xanoubis/profiles
-mkdir -p $RPM_BUILD_ROOT/etc/anoubis/profiles
+mkdir -p $RPM_BUILD_ROOT/etc/anoubis/profiles/wizard
 
 # install symlink in /etc/anoubis
 mkdir -p $RPM_BUILD_ROOT/etc/anoubis
@@ -135,7 +142,7 @@ cp $RPM_SOURCE_DIR/anoubisd.conf $RPM_BUILD_ROOT/etc/anoubis
 
 ### package scripts ########################################
 %pre -n anoubisd
-# Do not stop the anoubisd. Restart it after the upgrade.
+# Do not stop anoubisd during an upgrade restart it after the upgrade
 if ! getent passwd _anoubisd >/dev/null; then
 	groupadd -f -r _anoubisd
 	useradd -M -r -s /sbin/nologin -d /var/run/anoubisd \
@@ -164,6 +171,21 @@ if [ ! -L $PROFDIR ] ; then
 fi
 exit 0
 
+%post -n xanoubis
+# update xanoubis wizard profiles
+# we just overwrite the old files until we have a better mechanism
+# for updates
+rm -f /etc/anoubis/profiles/wizard/alf
+rm -f /etc/anoubis/profiles/wizard/sandbox
+cp /usr/share/xanoubis/policy_templates/wizard/* \
+	/etc/anoubis/profiles/wizard
+chmod 644 /etc/anoubis/profiles/wizard/*
+
+if getent group _nosfs >/dev/null; then
+	chown root:_nosfs /usr/bin/xanoubis && \
+	chmod 2755 /usr/bin/xanoubis
+fi
+
 %post -n anoubisd
 chkconfig --add anoubisd
 chkconfig anoubisd on
@@ -171,8 +193,8 @@ mkdir -p /var/lib/anoubis/policy/{admin,user,pubkeys}
 chmod -R 700 /var/lib/anoubis/policy
 
 if getent group _nosfs >/dev/null; then
-	chown root:_nosfs /sbin/{anoubisctl,sfssig} && \
-	chmod 2755 /sbin/{anoubisctl,sfssig}
+	chown root:_nosfs /sbin/sfssig /sbin/anoubisctl && \
+	chmod 2755 /sbin/sfssig /sbin/anoubisctl
 fi
 
 # copy new default policy
@@ -196,6 +218,7 @@ rm -f /etc/anoubis/profiles/high
 	/etc/anoubis/profiles
 
 chown -R _anoubisd: /var/lib/anoubis/policy
+
 if [ ! -e /dev/eventdev ] ; then
 	mknod /dev/eventdev c 10 62
 fi
@@ -209,12 +232,6 @@ if [ "$1" = 1 ]; then
     %{rcdir}/anoubisd start
 fi
 exit 0
-
-%post -n xanoubis
-if getent group _nosfs >/dev/null; then
-	chown root:_nosfs /usr/bin/xanoubis && \
-	chmod 2755 /usr/bin/xanoubis
-fi
 
 %preun -n anoubisd
 # execute only on package removal,
@@ -270,8 +287,14 @@ exit 0
 
 ### changelog ##############################################
 %changelog
+* Tue Dec 01 2009 Stefan Fritsch
+- adjust init script LSB dependencies
+
 * Fri Nov 27 2009 Christian Ehrhardt
 - add anoubis-keyinstall
+
+* Thu Nov 05 2009 Sten Spans
+- add setgid group and permissions to the anoubis client utilities
 
 * Wed Oct 14 2009 Sebastian Trahm
 - xanoubis package has to depend on a minimal version of anoubisd
@@ -284,6 +307,9 @@ exit 0
 
 * Thu Jul 02 2009 Sebastian Trahm
 - add anoubisd.conf(5) to subpackage anoubisd
+
+* Thu Mar 26 2009 Sebastian Trahm
+- add install and update of wizard template files
 
 * Tue Nov 25 2008 Stefan Fritsch
 - fix install scripts deleting startlinks on upgrade
