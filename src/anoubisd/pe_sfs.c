@@ -242,11 +242,7 @@ pe_decide_sfs(struct pe_proc *proc, struct pe_file_event *fevent,
 		if (secure
 		    && pe_context_is_nosfs(pe_proc_get_context(proc, i))) {
 			/* NOSFS enforced by the context. Do nothing. */
-			continue;
-		}
-		if (secure
-		    && pe_context_is_nosfs(pe_proc_get_context(proc, i))) {
-			/* NOSFS enforced by the context. Do nothing. */
+			DEBUG(DBG_PE_SFS," pe_decide_sfs: nosfs enabled for prio %d", i);
 			continue;
 		}
 
@@ -292,6 +288,8 @@ pe_decide_sfs(struct pe_proc *proc, struct pe_file_event *fevent,
 				sfsmatch = match;
 				break;
 			}
+			DEBUG(DBG_PE_SFS," pe_decide_sfs: decision = %d rule %d prio %d",
+			    decision, rule_id, prio);
 			break;
 		}
 		free(rulelist);
@@ -359,6 +357,7 @@ pe_decide_sfs(struct pe_proc *proc, struct pe_file_event *fevent,
 		reply->ctxident = pe_context_get_ident(
 		    pe_proc_get_context(proc, reply->prio));
 	}
+	DEBUG(DBG_PE_SFS, "<pe_decide_sfs");
 	return (reply);
 err:
 	reply->reply = EPERM;
