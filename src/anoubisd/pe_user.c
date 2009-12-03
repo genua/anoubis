@@ -46,6 +46,10 @@
 #include <time.h>
 #include <unistd.h>
 #include <fcntl.h>
+#define __STDC_FORMAT_MACROS
+#include <inttypes.h>
+
+
 
 #ifdef LINUX
 #include <bsdcompat.h>
@@ -684,8 +688,7 @@ pe_dispatch_policy(struct anoubisd_msg *msg)
 		goto reply;
 	}
 	DEBUG(DBG_TRACE, " pe_dispatch_policy: ptype = %d, flags = %d "
-	    "token = %llu", req->ptype, polreq->flags,
-	    (unsigned long long)req->token);
+	    "token = %" PRIu64, req->ptype, polreq->flags, req->token);
 	switch (req->ptype) {
 	case ANOUBIS_PTYPE_GETBYUID:
 		if ((polreq->flags & POLICY_FLAG_END) == 0
@@ -768,9 +771,9 @@ pe_dispatch_policy(struct anoubisd_msg *msg)
 			tmp = pe_policy_filename(uid, prio, ".tmp.");
 			if (!tmp)
 				goto reply;
-			/* splint doesn't understand the %llu modifier */
-			if (asprintf(&req->tmpname, "%s.%llu", tmp,
-			    /*@i@*/ (unsigned long long)req->token) == -1) {
+			/* splint doesn't understand the %" PRIu64 " modifier */
+			if (asprintf(&req->tmpname, "%s.%" PRIu64, tmp,
+			    /*@i@*/ req->token) == -1) {
 				free(tmp);
 				req->tmpname = NULL;
 				goto reply;

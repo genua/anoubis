@@ -43,6 +43,9 @@
 #include <string.h>
 #include <time.h>
 #include <stddef.h>
+#define __STDC_FORMAT_MACROS
+#include <inttypes.h>
+
 
 #ifdef LINUX
 #include <queue.h>
@@ -149,8 +152,8 @@ pe_upgrade_start(struct pe_proc *proc)
 		}
 	}
 	upgrade_counter++;
-	DEBUG(DBG_UPGRADE, "Upgrade started on task %lld, counter now %d",
-	    pe_proc_task_cookie(proc), upgrade_counter);
+	DEBUG(DBG_UPGRADE, "Upgrade started on task %" PRId64
+	    ", counter now %d", pe_proc_task_cookie(proc), upgrade_counter);
 }
 
 void
@@ -167,7 +170,7 @@ pe_upgrade_end(struct pe_proc *proc)
 	pe_proc_upgrade_clrmark(proc);
 	if (!isparent)
 		return;
-	DEBUG(DBG_UPGRADE, "Upgrade end for task %lld, counter now %d",
+	DEBUG(DBG_UPGRADE, "Upgrade end for task %" PRId64 ", counter now %d",
 	    pe_proc_task_cookie(proc), upgrade_counter-1);
 	/* Reduce the number of active upgrade parents. */
 	if (--upgrade_counter > 0)
@@ -636,8 +639,8 @@ pe_handle_sfspath(struct eventdev_hdr *hdr)
 				reply->reply = EXDEV;
 			break;
 		case ANOUBIS_PATH_OP_LOCK:
-			DEBUG(DBG_UPGRADE, "Lock event for task cookie %llx "
-			    "path %s", pe_proc_task_cookie(proc),
+			DEBUG(DBG_UPGRADE, "Lock event for task cookie %" PRIx64
+			    " path %s", pe_proc_task_cookie(proc),
 			    pevent->path[0]);
 
 			upgrade_mode = anoubisd_config.upgrade_mode;
@@ -655,8 +658,8 @@ pe_handle_sfspath(struct eventdev_hdr *hdr)
 			}
 			break;
 		case ANOUBIS_PATH_OP_UNLOCK:
-			DEBUG(DBG_UPGRADE, "Unlock event for task cookie %llx",
-			    pe_proc_task_cookie(proc));
+			DEBUG(DBG_UPGRADE, "Unlock event for task cookie %"
+			    PRIx64, pe_proc_task_cookie(proc));
 
 			upgrade_mode = anoubisd_config.upgrade_mode;
 			if (hdr->msg_uid == 0 &&

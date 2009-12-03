@@ -31,6 +31,8 @@
 #include <wx/datetime.h>
 #include <wx/ffile.h>
 #include <wx/string.h>
+#define __STDC_FORMAT_MACROS
+#include <inttypes.h>
 
 #include <wx/listimpl.cpp>
 WX_DEFINE_LIST(PolicyList);
@@ -124,7 +126,7 @@ Policy::getScopeName(void) const
 			timeout = date.Format();
 		}
 		if (rule_->scope->task != 0) {
-			task.Printf(wxT("%llu"),
+			task.Printf(wxT("%" PRIu64),
 			   (unsigned long long)rule_->scope->task);
 		}
 		if (!timeout.IsEmpty() && task.IsEmpty()) {

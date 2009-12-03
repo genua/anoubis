@@ -39,6 +39,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#define __STDC_FORMAT_MACROS
+#include <inttypes.h>
 
 #ifdef LINUX
 #include <queue.h>
@@ -152,8 +154,7 @@ pe_proc_get(anoubis_cookie_t cookie)
 	}
 	if (proc) {
 		DEBUG(DBG_PE_TRACKER, "pe_proc_get: proc %p pid %d cookie "
-		    "0x%08llx", proc, (int)proc->pid,
-		    (unsigned long long)proc->task_cookie);
+		    "0x%08" PRIx64, proc, (int)proc->pid, proc->task_cookie);
 		proc->refcount++;
 	}
 	return (proc);
@@ -198,8 +199,8 @@ pe_proc_alloc(uid_t uid, anoubis_cookie_t cookie, struct pe_proc_ident *pident)
 	proc->ident.csum = NULL;
 	if (pident)
 		pe_proc_ident_set(&proc->ident, pident->csum, pident->pathhint);
-	DEBUG(DBG_PE_TRACKER, "pe_proc_alloc: proc %p uid %u cookie 0x%08llx ",
-	    proc, uid, (unsigned long long)proc->task_cookie);
+	DEBUG(DBG_PE_TRACKER, "pe_proc_alloc: proc %p uid %u cookie 0x%08"
+	    PRIx64 " ", proc, uid, proc->task_cookie);
 
 	return (proc);
 oom:
@@ -215,8 +216,8 @@ pe_proc_track(struct pe_proc *proc)
 		log_warnx("pe_proc_track: empty process");
 		return;
 	}
-	DEBUG(DBG_PE_TRACKER, "pe_proc_track: proc %p cookie 0x%08llx",
-	    proc, (unsigned long long)proc->task_cookie);
+	DEBUG(DBG_PE_TRACKER, "pe_proc_track: proc %p cookie 0x%08" PRIx64,
+	    proc, proc->task_cookie);
 	proc->refcount++;
 	TAILQ_INSERT_TAIL(&tracker, proc, entry);
 }
@@ -291,8 +292,8 @@ void pe_proc_set_pid(struct pe_proc *proc, pid_t pid)
 		return;
 
 	DEBUG(DBG_PE_PROC, "pe_proc_set_pid: proc %p pid %d -> %d "
-	    "cookie 0x%08llx", proc, (int)proc->pid, (int)pid,
-	    (unsigned long long)proc->task_cookie);
+	    "cookie 0x%08" PRIx64, proc, (int)proc->pid, (int)pid,
+	    proc->task_cookie);
 
 	proc->pid = pid;
 }
@@ -307,11 +308,11 @@ pe_proc_dump(void)
 	TAILQ_FOREACH(proc, &tracker, entry) {
 		ctx0 = proc->context[0];
 		ctx1 = proc->context[1];
-		log_info("proc %p token 0x%08llx borrow token 0x%08llx "
-		    "pid %d csum 0x%08x pathhint \"%s\" ctx %p %p alfrules "
-		    "%p %p sbrules %p %p flags 0x%x",
-		    proc, (unsigned long long)proc->task_cookie,
-		    (unsigned long long)proc->borrow_cookie, (int)proc->pid,
+		log_info("proc %p token 0x%08" PRIx64 " borrow token 0x%08"
+		    PRIx64 " pid %d csum 0x%08x pathhint \"%s\" ctx %p %p "
+		    "alfrules %p %p sbrules %p %p flags 0x%x",
+		    proc, proc->task_cookie,
+		    proc->borrow_cookie, (int)proc->pid,
 		    proc->ident.csum ?
 		    htonl(*(unsigned long *)proc->ident.csum) : 0,
 		    proc->ident.pathhint ? proc->ident.pathhint : "",
@@ -341,12 +342,12 @@ pe_proc_fork(uid_t uid, anoubis_cookie_t child, anoubis_cookie_t parent_cookie)
 	pe_proc_upgrade_inherit(proc, pe_proc_is_upgrade(parent));
 	pe_proc_secure_inherit(proc, pe_proc_is_secure(parent));
 
-	DEBUG(DBG_PE_PROC, "pe_proc_fork: token 0x%08llx pid %d "
-	    "uid %u proc %p csum 0x%08x... parent token 0x%08llx flags 0x%x",
-	    (unsigned long long)child, proc->pid, uid, proc,
+	DEBUG(DBG_PE_PROC, "pe_proc_fork: token 0x%08" PRIx64 " pid %d "
+	    "uid %u proc %p csum 0x%08x... parent token 0x%08" PRIx64
+	    " flags 0x%x", child, proc->pid, uid, proc,
 	    proc->ident.csum ?
 	    htonl(*(unsigned long *)proc->ident.csum) : 0,
-	    (unsigned long long)parent_cookie, proc->flags);
+	    parent_cookie, proc->flags);
 	pe_proc_put(parent);
 	pe_proc_put(proc);
 }
@@ -377,8 +378,8 @@ void pe_proc_exit(anoubis_cookie_t cookie)
 		return;
 	pe_proc_untrack(proc);
 	pe_upgrade_end(proc);
-	DEBUG(DBG_PE_PROC, "pe_proc_exit: token 0x%08llx pid %d "
-	    "uid %u proc %p", (unsigned long long)cookie, proc->pid, proc->uid,
+	DEBUG(DBG_PE_PROC, "pe_proc_exit: token 0x%08" PRIx64 " pid %d "
+	    "uid %u proc %p", cookie, proc->pid, proc->uid,
 	    proc);
 	pe_proc_put(proc);
 }
@@ -440,8 +441,8 @@ void pe_proc_exec(anoubis_cookie_t cookie, uid_t uid, pid_t pid,
 	if (proc == NULL) {
 		/* Previously untracked process. Track it. */
 		DEBUG(DBG_PE_PROC, "pe_proc_exec: untracked "
-		    "process %u 0x%08llx execs", pid,
-		    (unsigned long long)cookie);
+		    "process %u 0x%08" PRIx64 " execs", pid,
+		    cookie);
 		proc = pe_proc_alloc(uid, cookie, NULL);
 		pe_proc_track(proc);
 	}

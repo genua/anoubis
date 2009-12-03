@@ -30,6 +30,8 @@
 #endif
 
 #include <sys/types.h>
+#define __STDC_FORMAT_MACROS
+#include <inttypes.h>
 
 #ifdef LINUX
 #include <linux/eventdev.h>
@@ -94,7 +96,7 @@ StatusNotify::extractValue(unsigned int subsystem, unsigned int key,
 		}
 	}
 	if (wasFound) {
-		(*result) = wxString::Format(wxT("%lld"), value);
+		(*result) = wxString::Format(wxT("%" PRId64), value);
 	} else {
 		(*result) = _("no value");
 	}

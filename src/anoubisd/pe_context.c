@@ -127,6 +127,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#define __STDC_FORMAT_MACROS
+#include <inttypes.h>
 
 #ifdef LINUX
 #include <queue.h>
@@ -350,8 +352,8 @@ pe_context_fork(struct pe_proc *proc, struct pe_proc *parent)
 		return;
 	}
 
-	DEBUG(DBG_PE_CTX, "pe_context_fork: parent %p 0x%08llx", parent,
-	    (unsigned long long)pe_proc_task_cookie(parent));
+	DEBUG(DBG_PE_CTX, "pe_context_fork: parent %p 0x%08" PRIx64, parent,
+	    pe_proc_task_cookie(parent));
 	for (i = 0; i < PE_PRIO_MAX; i++) {
 		struct pe_context	*ctx = pe_proc_get_context(parent, i);
 		if (ctx) {
@@ -359,8 +361,8 @@ pe_context_fork(struct pe_proc *proc, struct pe_proc *parent)
 			continue;
 		}
 		DEBUG(DBG_PE_CTX, "pe_context_fork: parent %p "
-		    "0x%08llx has no context at prio %d",
-		    parent, (unsigned long long)pe_proc_task_cookie(parent),
+		    "0x%08" PRIx64 " has no context at prio %d",
+		    parent, pe_proc_task_cookie(parent),
 		    i);
 		pe_context_switch(proc, i, pe_proc_ident(proc),
 		    pe_proc_get_uid(proc));
@@ -461,9 +463,9 @@ pe_context_switch(struct pe_proc *proc, int prio,
 	}
 	tmpctx = pe_context_search(ruleset, pident, uid);
 	pe_proc_set_context(proc, prio, tmpctx);
-	DEBUG(DBG_PE_CTX, "pe_context_switch: proc %p 0x%08llx prio %d "
+	DEBUG(DBG_PE_CTX, "pe_context_switch: proc %p 0x%08" PRIx64 " prio %d "
 	    "got context %p alfrule %p sbrule %p ctxrule %p", proc,
-	    (unsigned long long)pe_proc_task_cookie(proc), prio, tmpctx,
+	    pe_proc_task_cookie(proc), prio, tmpctx,
 	    tmpctx ? tmpctx->alfrule : NULL, tmpctx ? tmpctx->sbrule : NULL,
 	    tmpctx ? tmpctx->ctxrule : NULL);
 	/*

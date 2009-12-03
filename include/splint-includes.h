@@ -49,12 +49,6 @@
 
 #include <unistd.h>
 
-typedef	/*@unsignedintegraltype@*/ unsigned char u_int8_t;
-typedef	/*@unsignedintegraltype@*/ unsigned short int u_int16_t;
-typedef	/*@unsignedintegraltype@*/ unsigned int u_int32_t;
-typedef	/*@unsignedintegraltype@*/ unsigned long long int u_int64_t;
-
-
 /*@-type@*/ /* These are also defined by unix.h: */
 extern void bzero (/*@out@*/ void *b1, size_t length) /*@modifies *b1@*/ ;
 /*@=type@*/
@@ -67,9 +61,15 @@ extern void bcopy (void *b1, /*@out@*/ void *b2, size_t length)
 extern int daemon(int nochdir, int noclose);
 
 /*@-skipposixheaders@*/
-#include <stdint.h>
+#define __STDC_FORMAT_MACROS
+#include <inttypes.h>
 #include <sys/types.h>
 /*@=skipposixheaders@*/
+
+#define PRIu64 "llu"
+#define PRId64 "lld"
+#define PRIx64 "llx"
+#define PRIi64 "lli"
 
 int /*@printflike@*/ asprintf(char **strp, const char *fmt, ...);
 
@@ -96,6 +96,8 @@ extern int fcntl(int fd, int cmd, /*@null@*/struct flock *lock);
 
 int /*@alt void@*/ asprintf (/*@out@*/ char **s, char *format, ...)
    /*@allocates *s@*/ ;
+int /*@alt void@*/ vasprintf(/*@out@*/ char **strp, const char *fmt, va_list)
+    /*@allocates *strp@*/ ;
 
 
 /* the following was copied from dev:usr/include/dirent.h */

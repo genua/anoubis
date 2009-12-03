@@ -45,6 +45,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#define __STDC_FORMAT_MACROS
+#include <inttypes.h>
 
 #include <sys/types.h>
 #include <limits.h>
@@ -742,7 +744,7 @@ apn_print_rule_cleaned(struct apn_rule *rule, int flags, FILE *file,
 	}
 
 	if (rule->apn_type != APN_SFS) {
-		fprintf(file, "%ld: ", rule->apn_id);
+		fprintf(file, "%lu: ", rule->apn_id);
 	}
 	switch (rule->apn_type) {
 	case APN_ALF:
@@ -1035,9 +1037,9 @@ apn_print_scope(struct apn_scope *scope, FILE * file)
 	if (!scope)
 		return 0;
 	if (scope->task)
-		fprintf(file, " task %llu", (unsigned long long)scope->task);
+		fprintf(file, " task %" PRIu64, scope->task);
 	if (scope->timeout)
-		fprintf(file, " until %lu", (long int)scope->timeout);
+		fprintf(file, " until %lu", (unsigned long int)scope->timeout);
 	return 0;
 }
 

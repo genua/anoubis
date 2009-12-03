@@ -56,6 +56,8 @@
 #include <ctype.h>
 #include <unistd.h>
 #include <paths.h>
+#define __STDC_FORMAT_MACROS
+#include <inttypes.h>
 
 #ifdef LINUX
 #include <bsdcompat.h>
@@ -1309,8 +1311,7 @@ out:
 		free(sigbuf);
 	}
 	enqueue(&eventq_m2s, msg);
-	DEBUG(DBG_QUEUE, " >eventq_m2s: %llx",
-	    (unsigned long long)reply->token);
+	DEBUG(DBG_QUEUE, " >eventq_m2s: %" PRIx64, reply->token);
 	event_add(ev_info->ev_m2s, NULL);
 }
 

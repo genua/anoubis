@@ -56,6 +56,9 @@
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+#define __STDC_FORMAT_MACROS
+#include <inttypes.h>
+
 
 #include <anoubischat.h>
 #include <anoubis_msg.h>
@@ -717,7 +720,7 @@ dispatch_policy(struct anoubis_policy_comm *comm __attribute__((unused)),
 	anoubisd_msg_t			*msg;
 	struct anoubisd_msg_polrequest	*polreq;
 
-	DEBUG(DBG_TRACE, ">dispatch_policy token = %lld", (long long)token);
+	DEBUG(DBG_TRACE, ">dispatch_policy token = %" PRId64, token);
 
 	if (buf == NULL) {
 		/*
@@ -754,7 +757,7 @@ dispatch_policy(struct anoubis_policy_comm *comm __attribute__((unused)),
 	}
 
 	enqueue(&eventq_s2p, msg);
-	DEBUG(DBG_QUEUE, " >eventq_s2p: %llx", (unsigned long long)token);
+	DEBUG(DBG_QUEUE, " >eventq_s2p: %" PRIx64, token);
 	event_add(ev_info->ev_s2p, NULL);
 
 	DEBUG(DBG_TRACE, "<dispatch_policy");
@@ -1184,8 +1187,8 @@ dispatch_p2s_pol_reply(anoubisd_msg_t *msg, struct event_info_session *ev_info)
 	end = reply->flags & POLICY_FLAG_END;
 	ret = anoubis_policy_comm_answer(ev_info->policy, reply->token,
 	    reply->reply, buf, reply->len, end != 0);
-	DEBUG(DBG_TRACE, " >anoubis_policy_comm_answer: %lld %d %d",
-	    (long long)reply->token, ret, reply->reply);
+	DEBUG(DBG_TRACE, " >anoubis_policy_comm_answer: %" PRId64 " %d %d",
+	    reply->token, ret, reply->reply);
 
 	DEBUG(DBG_TRACE, "<dispatch_p2s_pol_reply");
 }
