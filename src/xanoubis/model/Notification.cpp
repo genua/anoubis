@@ -398,7 +398,7 @@ Notification::getPath(void)
 		} else {
 			csum = getFileChecksum();
 			if (!csum.IsEmpty()) {
-				path += wxT(" (0x") + csum + wxT(")");
+				path += wxT("\n(0x") + csum + wxT(")");
 			}
 		}
 	} else {
@@ -448,7 +448,7 @@ Notification::getOrigin(void)
 	user = wxGetApp().getUserNameById(get_value(notify_->u.notify->uid));
 	if (len > 0) {
 		wxString path = wxString::From8BitData(buffer+off, len);
-		origin = wxString::Format(_("%ls (Pid: %d, Uid: %ls/%d)"),
+		origin = wxString::Format(_("%ls(Pid: %d, Uid: %ls/%d)"),
 		    path.c_str(), get_value(notify_->u.notify->pid),
 		    user.c_str(), get_value(notify_->u.notify->uid));
 	} else {
@@ -481,7 +481,7 @@ Notification::getCtxOrigin(void)
 		cslen = 0;
 	}
 	if (len > 0 && cslen > 0) {
-		origin = wxString::Format(_("%ls (%ls)"), path.c_str(),
+		origin = wxString::Format(_("%ls\n(0x%ls)"), path.c_str(),
 		    csum.c_str());
 	} else if (len > 0) {
 		origin = path;

@@ -761,7 +761,6 @@ ModAnoubisMainPanelImpl::update(void)
 			pn_EscalationOptions->Layout();
 			pn_Escalation->Layout();
 			tb_MainAnoubisNotify->Layout();
-			tb_MainAnoubisNotification->Layout();
 			tx_answerValue->Hide();
 		} else {
 			pn_Escalation->Hide();
@@ -773,6 +772,7 @@ ModAnoubisMainPanelImpl::update(void)
 		pn_Escalation->Hide();
 		tx_answerValue->Hide();
 	}
+	tb_MainAnoubisNotification->Layout();
 	Layout();
 	Refresh();
 }

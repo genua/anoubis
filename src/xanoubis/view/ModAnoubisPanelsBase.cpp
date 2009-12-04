@@ -174,11 +174,11 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	
 	bSizer10->Add( slotSizer, 0, 0, 5 );
 	
-	sz_MainAnoubisNotify->Add( bSizer10, 0, wxALL, 5 );
-	
 	tx_answerValue = new wxStaticText( tb_MainAnoubisNotification, wxID_ANY, _("This message was answered."), wxDefaultPosition, wxDefaultSize, 0 );
 	tx_answerValue->Wrap( -1 );
-	sz_MainAnoubisNotify->Add( tx_answerValue, 0, wxALL, 5 );
+	bSizer10->Add( tx_answerValue, 0, wxALL, 5 );
+	
+	sz_MainAnoubisNotify->Add( bSizer10, 0, wxALL, 5 );
 	
 	pn_Escalation = new wxPanel( tb_MainAnoubisNotification, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
 	wxBoxSizer* sz_EscalationOptions;
