@@ -146,6 +146,34 @@ If the root key is required the upgrading process will not be allowed
 to acquire the file lock and the upgrade will fail.
 Otherwise, the upgrade proceeds as normal and signed checksums of root
 will be marked in the same way as user checksums.
+.Pp
+.It \fBauth_mode\fP
+This option specifies, if an Anoubis client is authenticated, when it
+tries to open a connection to the Anoubis server.
+Authentication is performed against the user's certificate.
+It needs to be stored in the daemon certificate-directory, usually
+.Ar /var/lib/anoubis/policy/pubkeys .
+A certificate is identified by its file-name, it is the uid of the assigned
+user.
+.Pp
+Possible values of the \fBauth_mode\fP option are:
+.Pp
+.Ar enabled
+Authentication is enabled.
+The connection is accepted by the daemon, if the client tries to establishes
+the connection with the correct key.
+.Pp
+.Ar optional
+Authentication is enabled, if the certificate is stored in the
+certificate-directory of the daemon.
+If no such certificate exists, the connection is accepted everytime.
+.Pp
+.Ar off
+No authentication is performed.
+Every connection-attempt is accepted by the server.
+.Pp
+The default is
+.Ar optional .
 .El
 .Sh SEE ALSO
 .Xr anoubisd 8

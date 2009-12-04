@@ -108,6 +108,13 @@ typedef enum
 	ANOUBISD_UPGRADE_MODE_PROCESS
 } anoubisd_upgrade_mode;
 
+typedef enum
+{
+	ANOUBISD_AUTH_MODE_ENABLED,
+	ANOUBISD_AUTH_MODE_OPTIONAL,
+	ANOUBISD_AUTH_MODE_OFF
+} anoubisd_auth_mode;
+
 LIST_HEAD(anoubisd_upgrade_trigger_list, anoubisd_upgrade_trigger);
 
 struct anoubisd_upgrade_trigger {
@@ -125,6 +132,9 @@ struct anoubisd_config {
 	/* Upgrade options */
 	anoubisd_upgrade_mode			upgrade_mode;
 	struct anoubisd_upgrade_trigger_list	upgrade_trigger;
+
+	/* Authentication mode */
+	anoubisd_auth_mode			auth_mode;
 };
 
 extern struct anoubisd_config anoubisd_config;

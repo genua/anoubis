@@ -51,6 +51,7 @@ typedef enum {
 	key_upgrade_trigger,
 	key_rootkey,
 	key_rootkey_required,
+	key_auth_mode
 } cfg_key;
 
 static struct {
@@ -62,6 +63,7 @@ static struct {
 	{ "upgrade_trigger", key_upgrade_trigger },
 	{ "rootkey", key_rootkey },
 	{ "rootkey_required", key_rootkey_required },
+	{ "auth_mode", key_auth_mode } ,
 	{ NULL, key_bad }
 };
 
@@ -99,6 +101,7 @@ static int cfg_parse_upgrade_mode(const char *, int *, int);
 static int cfg_parse_upgrade_trigger(const char *, int);
 static int cfg_parse_bool(char *, int, int *targetptr);
 static int cfg_param_process(struct cfg_param *, int);
+static int cfg_parse_auth_mode(const char *, int *, int);
 
 static int cfg_read_cmdline(int, char * const *);
 static int cfg_read_file(const char *);
@@ -589,6 +592,35 @@ cfg_parse_string(char *str, int lineno, char **strptr)
 	return 0;
 }
 
+static int
+cfg_parse_auth_mode(const char *value, int *ok, int lineno)
+{
+	if ((value == NULL) || (ok == NULL)) {
+		log_warnx("%s: line %d: Invalid argument",
+		    __FUNCTION__, lineno);
+
+		*ok = 0;
+		return (-1);
+	}
+
+	if (strcasecmp(value, "enabled") == 0) {
+		*ok = 1;
+		return (ANOUBISD_AUTH_MODE_ENABLED);
+	} else if (strcasecmp(value, "optional") == 0) {
+		*ok = 1;
+		return (ANOUBISD_AUTH_MODE_OPTIONAL);
+	} else if (strcasecmp(value, "off") == 0) {
+		*ok = 1;
+		return (ANOUBISD_AUTH_MODE_OFF);
+	} else {
+		log_warnx("%s: line %d: Unexpected value (%s)",
+		    __FUNCTION__, lineno, value);
+
+		*ok = 0;
+		return (-1);
+	}
+}
+
 /*
  * Processes the given cfg_param structure, The anoubisd_config structure is
  * filled.
@@ -597,6 +629,7 @@ static int
 cfg_param_process(struct cfg_param *param, int lineno)
 {
 	anoubisd_upgrade_mode upgrade_mode;
+	anoubisd_auth_mode auth_mode;
 	int parse_result = 0;
 
 	switch (param->key) {
@@ -633,6 +666,15 @@ cfg_param_process(struct cfg_param *param, int lineno)
 			if (parse_result != 0)
 				return parse_result;
 			break;
+		case key_auth_mode:
+			auth_mode = cfg_parse_auth_mode(
+			    param->value, &parse_result, lineno);
+
+			if (parse_result) {
+				anoubisd_config.auth_mode = auth_mode;
+				break;
+			} else
+				return (1);
 		default:
 			break;
 	}
@@ -753,6 +795,7 @@ cfg_defaults(void)
 	}
 
 	anoubisd_config.upgrade_mode = ANOUBISD_UPGRADE_MODE_OFF;
+	anoubisd_config.auth_mode = ANOUBISD_AUTH_MODE_OPTIONAL;
 
 	return (0);
 }
@@ -897,6 +940,19 @@ cfg_dump(FILE *f)
 		fprintf(f, "rootkey: %s\n", anoubisd_config.rootkey);
 		fprintf(f, "rootkey_required: %s\n",
 		    anoubisd_config.rootkey_required?"true":"false");
+	}
+
+	/* authentication mode */
+	switch (anoubisd_config.auth_mode) {
+	case ANOUBISD_AUTH_MODE_ENABLED:
+		fprintf(f, "auth_mode: enabled\n");
+		break;
+	case ANOUBISD_AUTH_MODE_OPTIONAL:
+		fprintf(f, "auth_mode: optional\n");
+		break;
+	case ANOUBISD_AUTH_MODE_OFF:
+		fprintf(f, "auth_mode: off\n");
+		break;
 	}
 }
 
