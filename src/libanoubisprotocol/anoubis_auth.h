@@ -38,7 +38,8 @@ struct anoubis_msg;
 #define ANOUBIS_AUTH_FAILURE		2
 #define ANOUBIS_AUTH_INPROGRESS		3
 
-#define ANOUBIS_AUTH_TRANSPORT	0
+#define ANOUBIS_AUTH_TRANSPORT		0
+#define ANOUBIS_AUTH_TRANSPORTANDKEY	1
 
 typedef void (*anoubis_auth_callback_t)(void * caller);
 
@@ -47,13 +48,10 @@ struct anoubis_auth {
 	int auth_type;
 	int error;
 	uid_t uid;
-	/*@only@*/ /*@relnull@*/
-	char * username;
-	/*@dependent@*/
 	struct achat_channel * chan;
 	anoubis_auth_callback_t finish_callback;
-	/*@dependent@*/
 	void * cbdata;
+	void * auth_private;
 };
 
 typedef struct {
@@ -66,7 +64,5 @@ struct anoubis_auth * anoubis_auth_create(
     /*@dependent@*/ struct achat_channel * chan,
     anoubis_auth_callback_t finish, /*@dependent@*/ void * cbdata);
 void anoubis_auth_destroy(/*@only@*/ struct anoubis_auth * auth);
-int anoubis_auth_process(struct anoubis_auth * auth,
-    struct anoubis_msg * m);
 
 #endif

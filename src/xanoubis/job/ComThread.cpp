@@ -139,7 +139,7 @@ ComThread::connect(void)
 	 * *** client ***
 	 */
 
-	client_ = anoubis_client_create(channel_);
+	client_ = anoubis_client_create(channel_, ANOUBIS_AUTH_TRANSPORT, NULL);
 	if (client_ == 0) {
 		disconnect();
 		return (Failure);
@@ -151,7 +151,7 @@ ComThread::connect(void)
 	JobCtrl::getInstance()->protocolVersion_ =
 	    anoubis_client_serverversion(client_);
 
-	if (result == EPROTONOSUPPORT &&
+	if (result == -EPROTONOSUPPORT &&
 	    !anoubis_client_versioncmp(client_, ANOUBIS_PROTO_VERSION)) {
 		disconnect();
 		return (VersionMismatch);

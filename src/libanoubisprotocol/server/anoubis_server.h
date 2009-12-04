@@ -56,5 +56,6 @@ typedef void (*anoubis_dispatcher_t)(struct anoubis_server * server,
 int anoubis_dispatch_create(struct anoubis_server *server, int opcode,
     anoubis_dispatcher_t dispatch, void* arg);
 struct achat_channel *anoubis_server_getchannel(struct anoubis_server *server);
+struct anoubis_auth *anoubis_server_getauth(struct anoubis_server *server);
 
 #endif

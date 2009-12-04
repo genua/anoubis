@@ -96,7 +96,7 @@ START_TEST(tc_Sessions_one)
 	    strerror(errno));
 	mark_point();
 
-	client = anoubis_client_create(c);
+	client = anoubis_client_create(c, ANOUBIS_AUTH_TRANSPORT, NULL);
 	fail_if(!client, "Failed to create client");
 	mark_point();
 
@@ -159,7 +159,7 @@ START_TEST(tc_Sessions_two)
 	    rc, strerror(errno));
 	mark_point();
 
-	client1 = anoubis_client_create(c1);
+	client1 = anoubis_client_create(c1, ANOUBIS_AUTH_TRANSPORT, NULL);
 	fail_if(!client1, "1st client create failed");
 	mark_point();
 
@@ -170,7 +170,7 @@ START_TEST(tc_Sessions_two)
 	fail_if(rc != ACHAT_RC_OK, "2nd channel open failed with rc=%d [%s]",
 	    rc, strerror(errno));
 	mark_point();
-	client2 = anoubis_client_create(c2);
+	client2 = anoubis_client_create(c2, ANOUBIS_AUTH_TRANSPORT, NULL);
 	fail_if(!client1, "2nd client create failed");
 	mark_point();
 
@@ -226,7 +226,7 @@ START_TEST(tc_Sessions_three)
 	    strerror(errno));
 	mark_point();
 
-	client = anoubis_client_create(c);
+	client = anoubis_client_create(c, ANOUBIS_AUTH_TRANSPORT, NULL);
 	fail_if(!client, "Failed to create client");
 	mark_point();
 

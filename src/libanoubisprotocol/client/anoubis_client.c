@@ -85,6 +85,8 @@ struct anoubis_client {
 	LIST_HEAD(,anoubis_transaction) ops;
 	struct anoubis_msg * notify;
 	struct anoubis_msg * tail;
+	int auth_type;
+	anoubis_client_auth_callback_t	auth_callback;
 };
 
 /* XXX tartler: The anoubis client library is pretty challenging to
@@ -189,7 +191,8 @@ static int anoubis_client_send(struct anoubis_client * client,
 	return ret;
 }
 
-struct anoubis_client * anoubis_client_create(struct achat_channel * chan)
+struct anoubis_client * anoubis_client_create(struct achat_channel * chan,
+    int auth_type, anoubis_client_auth_callback_t auth_cb)
 {
 	struct anoubis_client * ret = malloc(sizeof(struct anoubis_client));
 	if (!ret)
@@ -204,6 +207,8 @@ struct anoubis_client * anoubis_client_create(struct achat_channel * chan)
 	ret->server_min_version = -1;
 	LIST_INIT(&ret->ops);
 	ret->notify = ret->tail = NULL;
+	ret->auth_type = auth_type;
+	ret->auth_callback = auth_cb;
 
 	return ret;
 }
@@ -383,18 +388,39 @@ static void anoubis_client_connect_steps(struct anoubis_transaction * t,
 		anoubis_transaction_progress(t, nextops);
 		return;
 	} case 3: {
-		static const u_int32_t nextops[] = { ANOUBIS_C_AUTHREPLY, 0 };
-		ret = anoubis_verify_reply(client, ANOUBIS_C_AUTH, m);
-		if (ret < 0)
-			goto err;
-		out = anoubis_msg_new(sizeof(Anoubis_AuthTransportMessage));
-		set_value(out->u.authtransport->type, ANOUBIS_C_AUTHDATA);
-		set_value(out->u.authtransport->auth_type,
-		    ANOUBIS_AUTH_TRANSPORT);
-		ret = anoubis_client_send(client, out);
-		if (ret < 0)
-			goto err;
-		anoubis_transaction_progress(t, nextops);
+		static const u_int32_t nextops[] = { ANOUBIS_C_AUTHREPLY,
+		    ANOUBIS_C_AUTHDATA, 0 };
+		int	type;
+		type = get_value(m->u.general->type);
+		if (type == ANOUBIS_C_AUTHDATA) {
+			out = NULL;
+			if (client->auth_callback != NULL) {
+				ret = client->auth_callback(client, m, &out);
+				if (ret < 0)
+					goto err;
+			}
+			ret = -EPERM;
+			if (out == NULL)
+				goto err;
+			ret = anoubis_client_send(client, out);
+			if (ret < 0)
+				goto err;
+			/* No transaction progress. */
+		} else {
+			ret = anoubis_verify_reply(client, ANOUBIS_C_AUTH, m);
+			if (ret < 0)
+				goto err;
+			out = anoubis_msg_new(
+			    sizeof(Anoubis_AuthTransportMessage));
+			set_value(out->u.authtransport->type,
+			    ANOUBIS_C_AUTHDATA);
+			set_value(out->u.authtransport->auth_type,
+			    client->auth_type);
+			ret = anoubis_client_send(client, out);
+			if (ret < 0)
+				goto err;
+			anoubis_transaction_progress(t, nextops);
+		}
 		return;
 	} case 4: {
 		static const u_int32_t nextops[] = { ANOUBIS_C_OPTACK, 0 };
@@ -1155,7 +1181,7 @@ int anoubis_client_connect(struct anoubis_client * client, unsigned int proto)
 		if (t->flags & ANOUBIS_T_DONE)
 			break;
 	}
-	ret = t->result;
+	ret = -t->result;
 	anoubis_transaction_destroy(t);
 	return ret;
 }

@@ -32,7 +32,6 @@
 .Nm struct anoubis_auth
 .Nm anoubis_auth_create
 .Nm anoubis_auth_destroy
-.Nm anoubis_auth_process
 .Nd Protocol level authentication interface
 .Sh SYNOPSIS
 .In anoubis_msg.h
@@ -41,41 +40,30 @@
 .Fn anoubis_auth_create "struct achat_channel * chan" "anoubis_auth_callback_t finish" "void * data"
 .Ft void
 .Fn anoubis_auth_destroy "struct anoubis_auth * auth"
-.Ft int
-.Fn anoubis_auth_process "struct anoubis_auth * auth" "struct anoubis_msg * m"
 .Sh DESCRIPTION
 This module is used to handle client authentication at the anoubis protocol
 level.
 Once the client requests authentication with an
 .Em ANOUBIS_C_AUTH
-message an authentication object should be created with
+message an authentication object is created with
 .Nm anoubis_auth_create.
 All of the
 .Em ANOUBIS_C_AUTHDATA
-messages that are exchanged during authentication should be passed to
-.Nm anoubis_auth_process.
-Once the authentication library detects the end of the authentication
-phase it will call the
-.Va finish
-callback function.
-.Em Only
-messages of type
-.Em ANOUBIS_C_AUTHDATA
-should be passed to
-.Nm anoubis_auth_process.
-Any messages that must be sent by the authentication
-library are sent onto the channel
+messages that are exchanged during authentication must be handled by a
+custum dispatch function in the caller.
+Once authentication is complete that dispatcher must fill in the result of
+the authentication into the
+.Nm anoubis_auth
+structure associated with the server and call the callback function
+.Va finish.
+Any messages that must be sent during authentication
+are sent directly to the channel
 .Va chan.
 .Sh RETURN VALUES
 .Nm anoubis_auth_create
 returns a pointer to the new authentication structure or
 .Em NULL
 if no memory was available.
-.Pp
-.Nm anoubis_auth_process
-returns zero if the message could be processed or a negative errno value
-of processing failed for some reason.
-In the latter case subsequent messages will also yield an error code.
 .Sh SEE ALSO
 .Xr anoubis_msg 3 ,
 .Xr anoubis_client 3 ,

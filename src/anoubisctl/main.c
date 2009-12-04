@@ -1351,7 +1351,7 @@ create_channel(unsigned int check_parser_version)
 
 	if (opts & ANOUBISCTL_OPT_VERBOSE2)
 		fprintf(stderr, "anoubis_client_create\n");
-	client = anoubis_client_create(channel);
+	client = anoubis_client_create(channel, ANOUBIS_AUTH_TRANSPORT, NULL);
 	if (client == NULL) {
 		acc_destroy(channel);
 		channel = NULL;
@@ -1363,7 +1363,7 @@ create_channel(unsigned int check_parser_version)
 	if (opts & ANOUBISCTL_OPT_VERBOSE2)
 		fprintf(stderr, "anoubis_client_connect\n");
 	if ((error = anoubis_client_connect(client, ANOUBIS_PROTO_BOTH))) {
-		if (error == EPROTONOSUPPORT &&
+		if (error == -EPROTONOSUPPORT &&
 		    !anoubis_client_versioncmp(client, ANOUBIS_PROTO_VERSION))
 			syslog(LOG_WARNING, "Anoubis protocol mismatch: "
 			    "local: %i -- daemon: %i", ANOUBIS_PROTO_VERSION,
@@ -1372,6 +1372,7 @@ create_channel(unsigned int check_parser_version)
 		client = NULL;
 		acc_destroy(channel);
 		channel = NULL;
+		errno = -error;
 		perror("anoubis_client_connect");
 		error = 5;
 		goto err;

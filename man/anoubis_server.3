@@ -35,7 +35,10 @@
 .Nm anoubis_server_start
 .Nm anoubis_server_process
 .Nm anoubis_server_eof
+.Nm anoubis_dispatch_create
 .Nm anoubis_server_getnotify
+.Nm anoubis_server_getchannel
+.Nm anoubis_server_getauth
 .Nd Server side protocol handler
 .Sh SYNOPSIS
 .In anoubis_msg.h
@@ -50,8 +53,14 @@
 .Fn anoubis_server_process "struct anoubis_server *" "void * buf" "size_t len"
 .Ft int
 .Fn anoubis_server_eof "struct anoubis_server * server"
+.Ft int
+.Fn anoubis_dispatch_create "struct anoubis_server * server" "int opcode" "void (*disp)(struct anoubis_server *, struct anoubis_msg *, uid_t, void *)" "void *arg"
 .Ft struct anoubis_notify_group *
 .Fn anoubis_server_getnotify "struct anoubis_server * server"
+.Ft struct achat_channel *
+.Fn anoubis_server_getchannel "struct anoubis_server * server"
+.Ft struct anoubis_auth *
+.Fn anoubis_server_getauth "struct anoubis_server *server"
 .Sh DESCRIPTION
 This module is used to handle the server side of the anoubis protocol.
 Messages are sent via the channel specified to
@@ -76,6 +85,22 @@ Notify request to the client should be sent through an a notify object
 that might be associated with the server handle.
 This notify object can be retrieved with
 .Nm anoubis_server_getnotify .
+.Pp
+The channel associated with the server can be retrieved by calling
+.Nm anoubis_server_getchannel
+and the authenication object can be retrieved by calling
+.Nm anoubis_server_getauth .
+.Pp
+The function
+.Nm anoubis_dispatch_create
+must be used to install handlers for message types that are not handled by
+the protocol layer directly.
+Each server must at least supply a handler for messages of type
+.Nm ANOUBIS_C_AUTHDATA .
+These messages are exchanged during the connection handshake and are used
+to handle client authentication. See
+.Xr anoubis_auth 3
+for details.
 .Sh RETURN VALUES
 .Nm anoubis_server_create
 returns the new server or NULL on error.
@@ -87,19 +112,26 @@ returns zero on success or a negative errno value on failure.
 return true if the underlying connection has been shut down and false
 otherwise.
 .Pp
-.Nm anoubis_server_getnotify
-returns the notify object associated with the server of NULL if there is
-none.
+.Nm anoubis_server_getnotify ,
+.Nm anoubis_server_getauth
+and
+.Nm anoubis_server_getchannel
+return the notify, authentication or channel object associated with the
+server or NULL if there is none.
 .Pp
 .Nm anoubis_notify_process
 returns a negative errno value on error, zero if the message is
 syntactically correct but could not be processed because it did not
 fit into the current communication and true if the message was successfully
 processed.
+.Pp
+.Nm anoubis_dispatch_create
+returns zero on success or a negative errno value in case of an error.
 .Sh SEE ALSO
 .Xr anoubis_msg 3 ,
 .Xr anoubis_transaction 3 ,
 .Xr anoubis_client 3 ,
 .Xr anoubis_server 3 ,
+.Xr anoubis_auth 3 ,
 .Sh AUTHORS
 Christian Ehrhardt <ehrhardt@genua.de>

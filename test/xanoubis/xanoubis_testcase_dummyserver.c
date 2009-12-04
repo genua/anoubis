@@ -77,6 +77,18 @@ int policy_dispatch(struct anoubis_policy_comm * policy, u_int64_t token,
 	return anoubis_policy_comm_answer(policy, token, 0, NULL, 0, 1);
 }
 
+static void
+auth_dummy(struct anoubis_server *server, struct anoubis_msg *m __used,
+    uid_t auth_uid __used, void *arg __used)
+{
+	struct anoubis_auth	*auth = anoubis_server_getauth(server);
+
+	auth->uid = auth->chan->euid;
+	auth->state = ANOUBIS_AUTH_SUCCESS;
+	auth->error = 0;
+	auth->finish_callback(auth->cbdata);
+}
+
 void
 tc_Communicator_lud_server(const char *sockname)
 {
@@ -122,6 +134,7 @@ tc_Communicator_lud_server(const char *sockname)
 	policy = anoubis_policy_comm_create(&policy_dispatch, NULL);
 	server = anoubis_server_create(s, policy);
 	fail_if(server == NULL, "Failed to create server protocol");
+	anoubis_dispatch_create(server, ANOUBIS_C_AUTHDATA, &auth_dummy, NULL);
 	mark_point();
 
 	/* assemble status notify */

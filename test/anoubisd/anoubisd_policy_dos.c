@@ -84,7 +84,7 @@ create_channel(void)
 	assert(rc == ACHAT_RC_OK);
 	rc = acc_open(channel);
 	assert(rc == ACHAT_RC_OK);
-	client = anoubis_client_create(channel);
+	client = anoubis_client_create(channel, ANOUBIS_AUTH_TRANSPORT, NULL);
 	error = anoubis_client_connect(client, ANOUBIS_PROTO_BOTH);
 	assert(error == 0);
 }

@@ -140,7 +140,7 @@ void tp_chat_lud_client(const char *sockname)
 	fail_if(rc != ACHAT_RC_OK, "client open failed");
 	mark_point();
 
-	client = anoubis_client_create(c);
+	client = anoubis_client_create(c, ANOUBIS_AUTH_TRANSPORT, NULL);
 	fail_if(client == NULL, "Cannot create client");
 	mark_point();
 
@@ -279,6 +279,17 @@ int policy_dispatch(struct anoubis_policy_comm * policy, u_int64_t token,
 	return anoubis_policy_comm_answer(policy, token, 0, NULL, 0, 1);
 }
 
+static void
+auth_dummy(struct anoubis_server *server, struct anoubis_msg *m __used,
+    uid_t auth_uid __used, void *arg __used)
+{
+	struct anoubis_auth * auth = anoubis_server_getauth(server);
+	auth->error = 0;
+	auth->uid = auth->chan->euid;
+	auth->state = ANOUBIS_AUTH_SUCCESS;
+	auth->finish_callback(auth->cbdata);
+}
+
 void tp_chat_lud_server(const char *sockname)
 {
 	union {
@@ -317,6 +328,7 @@ void tp_chat_lud_server(const char *sockname)
 	server = anoubis_server_create(s, policy);
 	fail_if(server == NULL, "Failed to create server protocol");
 	mark_point();
+	anoubis_dispatch_create(server, ANOUBIS_C_AUTHDATA, &auth_dummy, NULL);
 
 	int ret = anoubis_server_start(server);
 	mark_point();

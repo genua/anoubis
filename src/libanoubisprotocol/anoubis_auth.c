@@ -40,8 +40,7 @@ struct anoubis_auth * anoubis_auth_create(struct achat_channel * chan,
 		return NULL;
 	ret->state = ANOUBIS_AUTH_INIT;
 	ret->auth_type = -1;
-	ret->uid = 0;
-	ret->username = NULL;
+	ret->uid = -1;
 	ret->error = 0;
 	ret->chan = chan;
 	ret->finish_callback = finish;
@@ -52,29 +51,5 @@ struct anoubis_auth * anoubis_auth_create(struct achat_channel * chan,
 
 void anoubis_auth_destroy(struct anoubis_auth * auth)
 {
-	if (auth->username)
-		free(auth->username);
 	free(auth);
-}
-
-int anoubis_auth_process(struct anoubis_auth * auth,
-    struct anoubis_msg * m)
-{
-	if (!VERIFY_LENGTH(m, sizeof(Anoubis_AuthTransportMessage))
-	    || get_value(m->u.general->type) != ANOUBIS_C_AUTHDATA
-	    || !auth || !auth->chan || auth->state != ANOUBIS_AUTH_INIT) {
-		auth->error = ANOUBIS_E_INVAL;
-		auth->state = ANOUBIS_AUTH_FAILURE;
-		return -EINVAL;
-	}
-	if (auth->chan->euid == (uid_t)-1) {
-		auth->error = ANOUBIS_E_PERM;
-		auth->state = ANOUBIS_AUTH_FAILURE;
-		auth->uid = -1;
-	} else {
-		auth->uid = auth->chan->euid;
-		auth->state = ANOUBIS_AUTH_SUCCESS;
-	}
-	auth->finish_callback(auth->cbdata);
-	return 0;
 }

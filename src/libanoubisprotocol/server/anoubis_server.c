@@ -307,17 +307,6 @@ static int anoubis_process_auth(/*@dependent@*/ struct anoubis_server * server,
 	return reply_ok(server, opcode);
 }
 
-static int anoubis_process_authdata(struct anoubis_server * server,
-    struct anoubis_msg * m, int opcode)
-{
-	if (server->proto != ANOUBIS_PROTO_CONNECT
-	    || (server->connect_flags &  FLAG_HELLOSENT) == 0
-	    || (server->connect_flags & FLAG_AUTH)
-	    || server->auth == NULL)
-		return reply_invalid(server, opcode);
-	return anoubis_auth_process(server->auth, m);
-}
-
 static void anoubis_auth_finish_callback(void * data)
 {
 	struct anoubis_server * server = data;
@@ -325,10 +314,7 @@ static void anoubis_auth_finish_callback(void * data)
 
 	/* More Messages necessary. */
 	if (server->auth->state == ANOUBIS_AUTH_SUCCESS) {
-		size_t len = 0;
-		if (server->auth->username)
-			len = strlen(server->auth->username);
-		m = anoubis_msg_new(sizeof(Anoubis_AuthReplyMessage) + len);
+		m = anoubis_msg_new(sizeof(Anoubis_AuthReplyMessage));
 		if (!m) {
 			server->connect_flags |= FLAG_ERROR;
 			channel_close(server);
@@ -337,14 +323,6 @@ static void anoubis_auth_finish_callback(void * data)
 		set_value(m->u.authreply->type, ANOUBIS_C_AUTHREPLY);
 		set_value(m->u.authreply->error, ANOUBIS_E_OK);
 		set_value(m->u.authreply->uid, server->auth->uid);
-		if (len > 0)
-			/*
-			 * len contains the length of the string pointed
-			 * to server->auth->username, and thus cannot be
-			 * possibly null.
-			 */
-			strncpy(m->u.authreply->name,
-			    /*@i@*/server->auth->username, len);
 		server->connect_flags |= FLAG_AUTH;
 		server->auth_uid = server->auth->uid;
 	} else {
@@ -562,7 +540,8 @@ anoubis_find_dispatcher(struct anoubis_server *server, int opcode)
 	struct dispatcher	*disp = NULL;
 	if ((server->proto & ANOUBIS_PROTO_POLICY) == 0
 	    || (server->connect_flags & FLAG_AUTH) == 0)
-		return NULL;
+		if (opcode != ANOUBIS_C_AUTHDATA)
+			return NULL;
 	LIST_FOREACH(disp, &server->dispatch, next) {
 		if (disp->opcode == opcode)
 			break;
@@ -636,7 +615,6 @@ int anoubis_server_process(struct anoubis_server * server, void * buf,
 			break;
 	case ANOUBIS_C_VERSEL:
 	case ANOUBIS_C_AUTH:
-	case ANOUBIS_C_AUTHDATA:
 	case ANOUBIS_C_OPTREQ:
 	case ANOUBIS_C_PROTOSEL:
 	case ANOUBIS_N_REGISTER:
@@ -649,6 +627,34 @@ int anoubis_server_process(struct anoubis_server * server, void * buf,
 		 */
 		if ((server->connect_flags & FLAG_GOTCLOSEREQ)
 		    || (server->connect_flags & FLAG_SENTCLOSEREQ))
+			return reply_invalid_token(server, token, opcode);
+		break;
+	case ANOUBIS_C_AUTHDATA:
+		/*
+		 * Not allowed if we are closing the connection.
+		 */
+		if ((server->connect_flags & FLAG_GOTCLOSEREQ)
+		    || (server->connect_flags & FLAG_SENTCLOSEREQ))
+			return reply_invalid_token(server, token, opcode);
+		/*
+		 * Allow auth data only during an authentication.
+		 */
+		if (server->proto != ANOUBIS_PROTO_CONNECT
+		    || (server->connect_flags & FLAG_HELLOSENT) == 0
+		    || (server->connect_flags & FLAG_AUTH)
+		    || server->auth == NULL) {
+			return reply_invalid(server, opcode);
+		}
+		switch (server->auth->state) {
+		case ANOUBIS_AUTH_INIT:
+		case ANOUBIS_AUTH_INPROGRESS:
+			break;
+		default:
+			return reply_invalid(server, opcode);
+		}
+		/* Only allow auth data if we have a dispatcher */
+		disp = anoubis_find_dispatcher(server, opcode);
+		if (!disp)
 			return reply_invalid_token(server, token, opcode);
 		break;
 	case ANOUBIS_C_CLOSEREQ:
@@ -694,8 +700,6 @@ int anoubis_server_process(struct anoubis_server * server, void * buf,
 		return anoubis_process_versel(server, &m, opcode);
 	case ANOUBIS_C_AUTH:
 		return anoubis_process_auth(server, &m, opcode);
-	case ANOUBIS_C_AUTHDATA:
-		return anoubis_process_authdata(server, &m, opcode);
 	case ANOUBIS_C_OPTREQ:
 		return anoubis_process_optreq(server, &m, opcode);
 	case ANOUBIS_C_PROTOSEL:
@@ -750,4 +754,10 @@ struct achat_channel *
 anoubis_server_getchannel(struct anoubis_server *server)
 {
 	return server->chan;
+}
+
+struct anoubis_auth *
+anoubis_server_getauth(struct anoubis_server *server)
+{
+	return server->auth;
 }

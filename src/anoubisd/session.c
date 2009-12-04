@@ -66,6 +66,7 @@
 #include <anoubis_notify.h>
 #include <anoubis_policy.h>
 #include <anoubis_dump.h>
+#include <anoubis_errno.h>
 
 #include "anoubisd.h"
 #include "aqueue.h"
@@ -114,6 +115,8 @@ static void	session_sighandler(int, short, void *);
 static void	notify_callback(struct anoubis_notify_head *, int, void *);
 static int	dispatch_policy(struct anoubis_policy_comm *, u_int64_t,
 		    u_int32_t, void *, size_t, void *, int);
+static void	dispatch_authdata(struct anoubis_server *,
+		    struct anoubis_msg *, uid_t auth_uid, void *);
 static void	dispatch_checksum(struct anoubis_server *server,
 		    struct anoubis_msg *msg, uid_t uid, void *arg);
 static int	dispatch_checksum_reply(void *cbdata, int error, void *data,
@@ -246,6 +249,8 @@ session_connect(int fd __used, short event __used, void *arg)
 	    &dispatch_sfsdisable, info);
 	anoubis_dispatch_create(session->proto, ANOUBIS_P_PASSPHRASE,
 	    &dispatch_passphrase, info);
+	anoubis_dispatch_create(session->proto, ANOUBIS_C_AUTHDATA,
+	    &dispatch_authdata, info);
 	LIST_INSERT_HEAD(&(seg->sessionList), session, nextSession);
 	if (anoubis_server_start(session->proto) < 0) {
 		log_warn("Failed to send initial hello");
@@ -654,6 +659,87 @@ dispatch_passphrase(struct anoubis_server *server, struct anoubis_msg *m,
 	DEBUG(DBG_QUEUE, " >eventq_s2m");
 	event_add(ev_info->ev_s2m, NULL);
 	DEBUG(DBG_TRACE, "<dispatch_passphrase");
+}
+
+static void
+dispatch_authdata(struct anoubis_server *server, struct anoubis_msg *m,
+    uid_t auth_uid __used, void *arg)
+{
+	struct anoubis_auth	*auth = anoubis_server_getauth(server);
+	int			 err = ANOUBIS_E_INVAL;
+	struct ev_info_session	*ev_info __used /* XXX */ = arg;
+
+	if (!auth) {
+		log_warnx("Received invalid authentication data");
+		dispatch_generic_reply(server, err, NULL, 0,
+		    ANOUBIS_C_AUTHDATA);
+		return;
+	}
+	if (!VERIFY_LENGTH(m, sizeof(Anoubis_AuthTransportMessage))
+	    || get_value(m->u.general->type) != ANOUBIS_C_AUTHDATA
+	    || !auth->chan)
+		goto error;
+	switch(get_value(m->u.authtransport->auth_type)) {
+	case ANOUBIS_AUTH_TRANSPORT:
+		if (auth->state != ANOUBIS_AUTH_INIT)
+			goto error;
+		err = ANOUBIS_E_PERM;
+		if (auth->chan->euid == (uid_t)-1) {
+			goto error;
+		} else {
+			/*
+			 * XXX CEH: Send a key check request to the
+			 * XXX CEH: master and report success only after
+			 * XXX CEH: a successful reply.
+			 */
+			auth->uid = auth->chan->euid;
+			goto success;
+		}
+		break;
+	case ANOUBIS_AUTH_TRANSPORTANDKEY:
+		if (auth->state == ANOUBIS_AUTH_INIT) {
+			err = ANOUBIS_E_PERM;
+			if (auth->chan->euid == (uid_t)-1)
+				goto error;
+			auth->state = ANOUBIS_AUTH_INPROGRESS;
+			/*
+			 * XXX CEH: Ask the master for a challenge.
+			 * XXX CEH: The reply from the master will contain
+			 * XXX CEH: a challenge that is then stored in
+			 * XXX CEH: auth_private.
+			 */
+			goto error;
+		} else {
+			/* Invalid challenge type. */
+			if (auth->state != ANOUBIS_AUTH_INPROGRESS
+			    || !auth->auth_private)
+				goto error;
+			/*
+			 * XXX CEH: Send a validation request containing
+			 * XXX CEH: challenge and response data to the master.
+			 * XXX CEH: As part of the reply, report success to
+			 * XXX CEH: the user.
+			 */
+		}
+		break;
+	default:
+		auth->state = ANOUBIS_AUTH_FAILURE;
+		auth->error = ANOUBIS_E_INVAL;
+		auth->uid = -1;
+		auth->finish_callback(auth->cbdata);
+		break;
+	}
+	return;
+error:
+	auth->error = err;
+	auth->state = ANOUBIS_AUTH_FAILURE;
+	auth->uid = -1;
+	auth->finish_callback(auth->cbdata);
+	return;
+success:
+	auth->error = 0;
+	auth->state = ANOUBIS_AUTH_SUCCESS;
+	auth->finish_callback(auth->cbdata);
 }
 
 static int
