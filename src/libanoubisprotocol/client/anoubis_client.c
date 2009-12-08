@@ -390,8 +390,24 @@ static void anoubis_client_connect_steps(struct anoubis_transaction * t,
 	} case 3: {
 		static const u_int32_t nextops[] = { ANOUBIS_C_AUTHREPLY,
 		    ANOUBIS_C_AUTHDATA, 0 };
-		int	type;
-		type = get_value(m->u.general->type);
+		ret = anoubis_verify_reply(client, ANOUBIS_C_AUTH, m);
+		if (ret < 0)
+			goto err;
+		out = anoubis_msg_new(
+		    sizeof(Anoubis_AuthTransportMessage));
+		set_value(out->u.authtransport->type,
+		    ANOUBIS_C_AUTHDATA);
+		set_value(out->u.authtransport->auth_type,
+		    client->auth_type);
+		ret = anoubis_client_send(client, out);
+		if (ret < 0)
+			goto err;
+		anoubis_transaction_progress(t, nextops);
+		return;
+	} case 4: {
+		static const u_int32_t nextops[] = { ANOUBIS_C_OPTACK, 0 };
+		int opts[3] = { FLAG_MULTIPLEX, FLAG_PIPELINE, -1 };
+		int type = get_value(m->u.general->type);
 		if (type == ANOUBIS_C_AUTHDATA) {
 			out = NULL;
 			if (client->auth_callback != NULL) {
@@ -407,36 +423,19 @@ static void anoubis_client_connect_steps(struct anoubis_transaction * t,
 				goto err;
 			/* No transaction progress. */
 		} else {
-			ret = anoubis_verify_reply(client, ANOUBIS_C_AUTH, m);
+			ret = anoubis_verify_authreply(client, m);
 			if (ret < 0)
 				goto err;
-			out = anoubis_msg_new(
-			    sizeof(Anoubis_AuthTransportMessage));
-			set_value(out->u.authtransport->type,
-			    ANOUBIS_C_AUTHDATA);
-			set_value(out->u.authtransport->auth_type,
-			    client->auth_type);
+			ret = -ENOMEM;
+			out = anoubis_stringlist_msg(ANOUBIS_C_OPTREQ,
+			    anoubis_proto_opts, opts);
+			if (!out)
+				goto err;
 			ret = anoubis_client_send(client, out);
 			if (ret < 0)
 				goto err;
 			anoubis_transaction_progress(t, nextops);
 		}
-		return;
-	} case 4: {
-		static const u_int32_t nextops[] = { ANOUBIS_C_OPTACK, 0 };
-		int opts[3] = { FLAG_MULTIPLEX, FLAG_PIPELINE, -1 };
-		ret = anoubis_verify_authreply(client, m);
-		if (ret < 0)
-			goto err;
-		ret = -ENOMEM;
-		out = anoubis_stringlist_msg(ANOUBIS_C_OPTREQ,
-		    anoubis_proto_opts, opts);
-		if (!out)
-			goto err;
-		ret = anoubis_client_send(client, out);
-		if (ret < 0)
-			goto err;
-		anoubis_transaction_progress(t, nextops);
 		return;
 	} case 5: {
 		static const u_int32_t nextops[] = { ANOUBIS_REPLY, 0 };

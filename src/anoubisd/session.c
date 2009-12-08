@@ -661,13 +661,111 @@ dispatch_passphrase(struct anoubis_server *server, struct anoubis_msg *m,
 	DEBUG(DBG_TRACE, "<dispatch_passphrase");
 }
 
+/*
+ * Handle a challenge received from the master.
+ * Invariantes ensured by the way anoubis_policy_answer is called:
+ * - data points to an anoubis_msg_authchallenge and the length in this
+ *   message matches the lenght values in the challenge message.
+ * - error is the error code from the challenge.
+ * - end must be TRUE.
+ */
+static int
+dispatch_auth_challenge(void *cbdata, int error __used, void *data,
+    int len, int end __used)
+{
+	struct anoubis_server			*server = cbdata;
+	struct anoubis_auth			*auth;
+	struct anoubisd_msg_authchallenge	*challenge = data;
+	struct anoubis_msg			*m;
+	int					 ret;
+
+	auth = anoubis_server_getauth(server);
+	if (!auth || auth->state != ANOUBIS_AUTH_INPROGRESS) {
+		log_warnx("dispatch_auth_challenge: Received unexpected "
+		    "auth challenge from master");
+		return -EINVAL;
+	}
+	if (challenge->error || auth->chan->euid != challenge->auth_uid) {
+		auth->error = challenge->error;
+		auth->state = ANOUBIS_AUTH_FAILURE;
+		auth->uid = -1;
+		auth->finish_callback(auth->cbdata);
+		return 0;
+	}
+	if (challenge->challengelen == 0 && challenge->idlen == 0) {
+		auth->error = 0;
+		auth->state = ANOUBIS_AUTH_SUCCESS;
+		auth->uid  = auth->chan->euid;
+		auth->finish_callback(auth->cbdata);
+		return 0;
+	}
+	/*
+	 * If the master sent us a challenge but the user did not request
+	 * key based authentication, return an authentication failure.
+	 */
+	if (auth->auth_type != ANOUBIS_AUTH_TRANSPORTANDKEY) {
+		auth->error = ANOUBIS_E_PERM;
+		auth->state = ANOUBIS_AUTH_FAILURE;
+		auth->uid = -1;
+		auth->finish_callback(auth->cbdata);
+	}
+	/*
+	 * Save the challenge in auth_private. We must copy the memory
+	 * because the buffer passed to this function is part of the
+	 * anoubisd message and will be freed by the caller.
+	 */
+	auth->auth_private = malloc(len);
+	if (!auth->auth_private) {
+		master_terminate(ENOMEM);
+		return -ENOMEM;
+	}
+	memcpy(auth->auth_private, data, len);
+	m = anoubis_msg_new(sizeof(Anoubis_AuthChallengeMessage)
+	    + challenge->challengelen + challenge->idlen);
+	set_value(m->u.authchallenge->type, ANOUBIS_C_AUTHDATA);
+	set_value(m->u.authchallenge->auth_type, ANOUBISD_MSG_AUTH_CHALLENGE);
+	set_value(m->u.authchallenge->challengelen, challenge->challengelen);
+	set_value(m->u.authchallenge->idlen, challenge->idlen);
+	memcpy(m->u.authchallenge->payload, challenge->payload,
+	    challenge->challengelen + challenge->idlen);
+	ret = anoubis_msg_send(auth->chan, m);
+	anoubis_msg_free(m);
+	return ret;
+}
+
+static int
+dispatch_auth_result(void *cbdata, int error, void *data __used,
+    int len __used, int end __used)
+{
+	struct anoubis_server	*server = cbdata;
+	struct anoubis_auth	*auth = anoubis_server_getauth(server);
+
+	if (!auth || auth->state != ANOUBIS_AUTH_INPROGRESS
+	    || auth->auth_private) {
+		log_warnx("dispatch_auth_result: Received unexpected "
+		    "auth result from master");
+		return -EINVAL;
+	}
+	if (error) {
+		auth->uid = -1;
+		auth->error = error;
+		auth->state = ANOUBIS_AUTH_FAILURE;
+	} else {
+		auth->uid = auth->chan->euid;
+		auth->error = 0;
+		auth->state = ANOUBIS_AUTH_SUCCESS;
+	}
+	auth->finish_callback(auth->cbdata);
+	return 0;
+}
+
 static void
 dispatch_authdata(struct anoubis_server *server, struct anoubis_msg *m,
     uid_t auth_uid __used, void *arg)
 {
-	struct anoubis_auth	*auth = anoubis_server_getauth(server);
-	int			 err = ANOUBIS_E_INVAL;
-	struct ev_info_session	*ev_info __used /* XXX */ = arg;
+	struct anoubis_auth		*auth = anoubis_server_getauth(server);
+	int				 err = ANOUBIS_E_INVAL;
+	struct event_info_session	*ev_info = arg;
 
 	if (!auth) {
 		log_warnx("Received invalid authentication data");
@@ -681,47 +779,99 @@ dispatch_authdata(struct anoubis_server *server, struct anoubis_msg *m,
 		goto error;
 	switch(get_value(m->u.authtransport->auth_type)) {
 	case ANOUBIS_AUTH_TRANSPORT:
+	case ANOUBIS_AUTH_TRANSPORTANDKEY: {
+		struct anoubisd_msg		*msg;
+		struct anoubisd_msg_authrequest	*authreq;
+
 		if (auth->state != ANOUBIS_AUTH_INIT)
 			goto error;
+		auth->auth_type = get_value(m->u.authtransport->auth_type);
 		err = ANOUBIS_E_PERM;
-		if (auth->chan->euid == (uid_t)-1) {
+		if (auth->chan->euid == (uid_t)-1)
 			goto error;
-		} else {
-			/*
-			 * XXX CEH: Send a key check request to the
-			 * XXX CEH: master and report success only after
-			 * XXX CEH: a successful reply.
-			 */
-			auth->uid = auth->chan->euid;
-			goto success;
+
+		msg = msg_factory(ANOUBISD_MSG_AUTH_REQUEST,
+		    sizeof(struct anoubisd_msg_authrequest));
+		if (!msg) {
+			master_terminate(ENOMEM);
+			return;
 		}
-		break;
-	case ANOUBIS_AUTH_TRANSPORTANDKEY:
-		if (auth->state == ANOUBIS_AUTH_INIT) {
-			err = ANOUBIS_E_PERM;
-			if (auth->chan->euid == (uid_t)-1)
-				goto error;
-			auth->state = ANOUBIS_AUTH_INPROGRESS;
-			/*
-			 * XXX CEH: Ask the master for a challenge.
-			 * XXX CEH: The reply from the master will contain
-			 * XXX CEH: a challenge that is then stored in
-			 * XXX CEH: auth_private.
-			 */
+		authreq = (struct anoubisd_msg_authrequest *)msg->msg;
+		authreq->auth_uid = auth->chan->euid;
+		err = - anoubis_policy_comm_addrequest(ev_info->policy,
+		    auth->chan, POLICY_FLAG_START | POLICY_FLAG_END,
+		    &dispatch_auth_challenge, NULL, server,
+		    &authreq->token);
+		auth->state = ANOUBIS_AUTH_INPROGRESS;
+		if (err) {
+			free(msg);
 			goto error;
-		} else {
-			/* Invalid challenge type. */
-			if (auth->state != ANOUBIS_AUTH_INPROGRESS
-			    || !auth->auth_private)
-				goto error;
-			/*
-			 * XXX CEH: Send a validation request containing
-			 * XXX CEH: challenge and response data to the master.
-			 * XXX CEH: As part of the reply, report success to
-			 * XXX CEH: the user.
-			 */
 		}
+		enqueue(&eventq_s2m, msg);
+		DEBUG(DBG_QUEUE, " >eventq_s2m: auth request");
+		event_add(ev_info->ev_s2m, NULL);
 		break;
+	}
+	case ANOUBIS_AUTH_CHALLENGEREPLY: {
+		int					 ivlen, siglen;
+		u_int32_t				 uid;
+		struct anoubisd_msg_authchallenge	*challenge;
+		struct anoubisd_msg_authverify		*verify;
+		struct anoubisd_msg			*msg;
+
+		if (auth->auth_type != ANOUBIS_AUTH_TRANSPORTANDKEY
+		    || auth->state != ANOUBIS_AUTH_INPROGRESS
+		    || auth->auth_private == NULL)
+			goto error;
+		err = ANOUBIS_E_FAULT;
+		if (!VERIFY_FIELD(m, authchallengereply, payload))
+			goto error;
+		ivlen = get_value(m->u.authchallengereply->ivlen);
+		siglen = get_value(m->u.authchallengereply->siglen);
+		if (!VERIFY_BUFFER(m, authchallengereply, payload, 0, ivlen))
+			goto error;
+		if (!VERIFY_BUFFER(m, authchallengereply, payload, ivlen,
+		    siglen))
+			goto error;
+		err = ANOUBIS_E_PERM;
+		uid = get_value(m->u.authchallengereply->uid);
+		if (auth->chan->euid != uid)
+			goto error;
+		challenge = auth->auth_private;
+		if (challenge->auth_uid != uid)
+			goto error;
+		msg = msg_factory(ANOUBISD_MSG_AUTH_VERIFY,
+		    sizeof(struct anoubisd_msg_authverify)
+		    + challenge->challengelen + ivlen + siglen);
+		if (!msg) {
+			master_terminate(ENOMEM);
+			return;
+		}
+		verify = (struct anoubisd_msg_authverify *)msg->msg;
+		verify->auth_uid = uid;
+		verify->datalen = challenge->challengelen + ivlen;
+		verify->siglen = siglen;
+		memcpy(verify->payload, m->u.authchallengereply->payload,
+		    ivlen);
+		memcpy(verify->payload+ivlen, challenge->payload,
+		    challenge->challengelen);
+		memcpy(verify->payload + ivlen + challenge->challengelen,
+		    m->u.authchallengereply->payload + ivlen, siglen);
+		free(auth->auth_private);
+		auth->auth_private = NULL;
+		err = - anoubis_policy_comm_addrequest(ev_info->policy,
+		    auth->chan, POLICY_FLAG_START | POLICY_FLAG_END,
+		    &dispatch_auth_result, NULL, server,
+		    &verify->token);
+		if (err) {
+			free(msg);
+			goto error;
+		}
+		enqueue(&eventq_s2m, msg);
+		DEBUG(DBG_QUEUE, " >eventq_s2m: auth request");
+		event_add(ev_info->ev_s2m, NULL);
+		break;
+	}
 	default:
 		auth->state = ANOUBIS_AUTH_FAILURE;
 		auth->error = ANOUBIS_E_INVAL;
@@ -736,10 +886,6 @@ error:
 	auth->uid = -1;
 	auth->finish_callback(auth->cbdata);
 	return;
-success:
-	auth->error = 0;
-	auth->state = ANOUBIS_AUTH_SUCCESS;
-	auth->finish_callback(auth->cbdata);
 }
 
 static int
@@ -863,7 +1009,7 @@ dispatch_m2s(int fd, short sig __used, void *arg)
 	DEBUG(DBG_TRACE, ">dispatch_m2s");
 
 	for (;;) {
-		u_int64_t task;
+		u_int64_t	task;
 		if ((msg = get_msg(fd)) == NULL)
 			break;
 		if (msg->mtype == ANOUBISD_MSG_CHECKSUMREPLY) {
@@ -885,6 +1031,31 @@ dispatch_m2s(int fd, short sig __used, void *arg)
 				log_warn("session: reconfigure failed");
 			}
 			free(msg);
+			continue;
+		}
+		if (msg->mtype == ANOUBISD_MSG_AUTH_CHALLENGE) {
+			struct anoubisd_msg_authchallenge	*auth;
+			int					 ret;
+
+			auth = (struct anoubisd_msg_authchallenge *)msg->msg;
+			ret = anoubis_policy_comm_answer(ev_info->policy,
+			    auth->token, auth->error, auth,
+			    sizeof(*auth) + auth->idlen + auth->challengelen,
+			    POLICY_FLAG_START | POLICY_FLAG_END);
+			if  (ret < 0)
+				log_warnx("Dropping unexpected auth challenge");
+			continue;
+		}
+		if (msg->mtype == ANOUBISD_MSG_AUTH_RESULT) {
+			struct anoubisd_msg_authresult	*result;
+			int				 ret;
+
+			result = (struct anoubisd_msg_authresult *)msg->msg;
+			ret = anoubis_policy_comm_answer(ev_info->policy,
+			    result->token, result->error, NULL, 0,
+			    POLICY_FLAG_START | POLICY_FLAG_END);
+			if (ret < 0)
+				log_warnx("Dropping unexpected auth result");
 			continue;
 		}
 		if (msg->mtype != ANOUBISD_MSG_EVENTDEV) {

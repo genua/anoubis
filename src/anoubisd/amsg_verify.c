@@ -696,6 +696,42 @@ anoubisd_msg_passphrase_size(const char *buf, int buflen)
 	RETURN_SIZE();
 }
 
+DEFINE_CHECK_FUNCTION(struct, anoubisd_msg_authrequest)
+
+static int
+anoubisd_msg_authchallenge_size(const char *buf, int buflen)
+{
+	DECLARE_SIZE();
+	struct anoubisd_msg_authchallenge	*challenge;
+
+	CAST(challenge, buf, buflen);
+	SHIFT_FIELD(challenge, payload, buf, buflen);
+	CHECK_SIZE(challenge->challengelen);
+	CHECK_SIZE(challenge->idlen);
+	SHIFT_CNT(challenge->challengelen, buf, buflen);
+	SHIFT_CNT(challenge->idlen, buf, buflen);
+
+	RETURN_SIZE();
+}
+
+static int
+anoubisd_msg_authverify_size(const char *buf, int buflen)
+{
+	DECLARE_SIZE();
+	struct anoubisd_msg_authverify		*verify;
+
+	CAST(verify, buf, buflen);
+	SHIFT_FIELD(verify, payload, buf, buflen);
+	CHECK_SIZE(verify->datalen);
+	CHECK_SIZE(verify->siglen);
+	SHIFT_CNT(verify->datalen, buf, buflen);
+	SHIFT_CNT(verify->siglen, buf, buflen);
+
+	RETURN_SIZE();
+}
+
+DEFINE_CHECK_FUNCTION(struct, anoubisd_msg_authresult)
+
 static int
 anoubisd_msg_size(const char *buf, int buflen)
 {
@@ -725,6 +761,12 @@ anoubisd_msg_size(const char *buf, int buflen)
 	VARIANT(ANOUBISD_MSG_CONFIG, anoubisd_msg_config, buf, buflen)
 	VARIANT(ANOUBISD_MSG_LOGIT, anoubisd_msg_logit, buf, buflen)
 	VARIANT(ANOUBISD_MSG_PASSPHRASE, anoubisd_msg_passphrase, buf, buflen);
+	VARIANT(ANOUBISD_MSG_AUTH_REQUEST, anoubisd_msg_authrequest,
+	    buf, buflen);
+	VARIANT(ANOUBISD_MSG_AUTH_CHALLENGE, anoubisd_msg_authchallenge,
+	    buf, buflen);
+	VARIANT(ANOUBISD_MSG_AUTH_VERIFY, anoubisd_msg_authverify, buf, buflen);
+	VARIANT(ANOUBISD_MSG_AUTH_RESULT, anoubisd_msg_authresult, buf, buflen);
 	default:
 		log_warnx("anoubisd_msg_size: Bad message type %d",
 		    msg->mtype);

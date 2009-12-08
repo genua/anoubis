@@ -51,6 +51,8 @@ struct anoubis_msg {
 		Anoubis_AuthReplyMessage * authreply;
 		Anoubis_StringListMessage * stringlist;
 		Anoubis_AuthTransportMessage * authtransport;
+		Anoubis_AuthChallengeMessage *authchallenge;
+		Anoubis_AuthChallengeReplyMessage *authchallengereply;
 		Anoubis_NotifyRegMessage * notifyreg;
 		Anoubis_NotifyMessage * notify;
 		Anoubis_NotifyResultMessage * notifyresult;
@@ -68,18 +70,48 @@ struct anoubis_msg {
 #define ANOUBIS_MESSAGE_MAXLEN		100000UL /* Arbitrary limit for now. */
 
 #if ! defined (S_SPLINT_S) && ! defined (lint)
+/*
+ * Interpret the message M according to the union member SEL and verify that
+ * the field FIELD is entirely within the boundaries of the message.
+ * Returns true if accessing the field is ok.
+ */
 #define VERIFY_FIELD(M, SEL, FIELD)	\
     ((M)->length >= (offsetof(typeof(*((M)->u.SEL)), FIELD)	\
 			+ sizeof((M)->u.SEL->FIELD) + CSUM_LEN))
-#define VERIFY_LENGTH(M, LEN)		\
-    ((M)->length >= ((LEN) + CSUM_LEN))
+
+/*
+ * Verify that the message M is at least LEN bytes long.
+ * Returns true if the message is long enough.
+ */
+#define VERIFY_LENGTH(M, LEN)						\
+    ((int)(LEN) >= 0 && (int)(LEN) <= (int)ANOUBIS_MESSAGE_MAXLEN	\
+    && (M)->length >= ((unsigned int)(LEN) + CSUM_LEN))
+
+/*
+ * Interpret the message M according to the  union member SEL. BASE must
+ * be an element of union type. The macro verifies that LEN elements
+ * starting at array offset START are within the boundaries of the message.
+ * Returns true if all array elements can be safely accessed.
+ */
+#define VERIFY_BUFFER(M, SEL, BASE, START, LEN) ({			\
+	int __t_soff = (START);						\
+	int __t_len = (LEN);						\
+	int __t_end = offsetof(typeof(*((M)->u.SEL)),			\
+	    BASE[__t_soff+__t_len]);					\
+	(0 <= __t_soff && 0 <= __t_len					\
+	    && __t_soff <= __t_soff + __t_len				\
+	    && __t_soff + __t_len <= (int)ANOUBIS_MESSAGE_MAXLEN	\
+	    && VERIFY_LENGTH((M), __t_end)				\
+	);								\
+})
 #else
 /*
  * Define SPLINT versions that satisfy splint but will certainly not
  * work if they are accidentally compiled into a real executable.
  */
-#define VERIFY_FIELD(M, SEL, FIELD)	((M)==(void*)0x12345678)
-#define VERIFY_LENGTH(M, LEN)		((M)==(void*)0x12345678)
+#define VERIFY_FIELD(M, SEL, FIELD)		((M)==(void*)0x12345678)
+#define VERIFY_LENGTH(M, LEN)			((M)==(void*)0x12345678)
+#define VERIFY_BUFFER(M, SEL, BASE, START, END)	((M)==(void*)0x12345678)
 #endif
 
 struct proto_opt {

@@ -169,6 +169,10 @@ enum anoubisd_msg_type {
 	ANOUBISD_MSG_CONFIG,
 	ANOUBISD_MSG_LOGIT,
 	ANOUBISD_MSG_PASSPHRASE,
+	ANOUBISD_MSG_AUTH_REQUEST,
+	ANOUBISD_MSG_AUTH_CHALLENGE,
+	ANOUBISD_MSG_AUTH_VERIFY,
+	ANOUBISD_MSG_AUTH_RESULT,
 };
 
 /* format of ANOUBISD_MSG_EVENTDEV is struct eventdev_hdr */
@@ -286,6 +290,38 @@ struct anoubisd_msg_passphrase
 	char		payload[0];
 };
 typedef struct anoubisd_msg_passphrase anoubisd_msg_passphrase_t;
+
+/* Message format for messages of type ANOUBISD_MSG_AUTH_REQUEST. */
+struct anoubisd_msg_authrequest {
+	u_int64_t	token;
+	u_int32_t	auth_uid;
+};
+
+/* Message format for messages of type ANOUBISD_MSG_AUTH_CHALLENGE */
+struct anoubisd_msg_authchallenge {
+	u_int64_t	token;
+	u_int32_t	auth_uid;
+	u_int32_t	error;
+	u_int32_t	challengelen;
+	u_int32_t	idlen;
+	char		payload[0];
+};
+
+/* Message format for messages of type ANOUBISD_MSG_AUTH_VERIFY */
+struct anoubisd_msg_authverify {
+	u_int64_t	token;
+	u_int32_t	auth_uid;
+	u_int32_t	datalen;
+	u_int32_t	siglen;
+	char		payload[0];
+};
+
+/* Message format for messages of type ANOUBISD_MSG_AUTH_RESULT */
+struct anoubisd_msg_authresult {
+	u_int64_t	token;
+	u_int32_t	auth_uid;
+	u_int32_t	error;
+};
 
 struct anoubisd_msg_config
 {

@@ -128,11 +128,13 @@ struct cmd {
 	{ "dump",	(func_int_t)dump,	2 },
 };
 
-static const char	 def_cert[] = ".xanoubis/default.crt";
-static const char	 def_pri[] =  ".xanoubis/default.key";
-static int	opts = 0;
-static struct anoubis_sig *as = NULL;
-static int		 passfd = -1;
+static const char		 def_cert[] = ".xanoubis/default.crt";
+static const char		 def_pri[] =  ".xanoubis/default.key";
+static int			 opts = 0;
+static char			*keyfile = NULL;
+static char			*certfile = NULL;
+static struct anoubis_sig	*as = NULL;
+static int			 passfd = -1;
 
 static struct achat_channel	*channel;
 struct anoubis_client		*client = NULL;
@@ -183,9 +185,7 @@ main(int argc, char *argv[])
 	int		 error = 0;
 	char		*command = NULL;
 	char		*rulesopt = NULL;
-	char		*keyfile = NULL;
 	char		*homepath = NULL;
-	char		*certfile = NULL;
 	char		 buf[PATH_MAX];
 	struct passwd	*pwd = NULL;
 	uid_t		 uid = geteuid();
@@ -369,16 +369,8 @@ main(int argc, char *argv[])
 		if (as == NULL) {
 			fprintf(stderr, "Error while loading keyfile: %s"
 			    " or certfile %s\n", keyfile, certfile);
-			if (keyfile)
-				free(keyfile);
-			if (certfile)
-				free(certfile);
 			return 1;
 		}
-		if (keyfile)
-			free(keyfile);
-		if (certfile)
-			free(certfile);
 	} else if (strcmp(command, "verify") == 0) {
 		if (certfile == NULL) {
 			fprintf(stderr, "The verify commands requires a "
@@ -389,10 +381,6 @@ main(int argc, char *argv[])
 		if (as == NULL) {
 			fprintf(stderr, "Error while loading keyfile: %s\n",
 			    keyfile);
-			if (keyfile)
-				free(keyfile);
-			if (certfile)
-				free(certfile);
 			return 1;
 		}
 	}
@@ -435,13 +423,16 @@ main(int argc, char *argv[])
 			usage();
 		error = verify(argv[0], argv[1]);
 	}
-	if (as)
-		anoubis_sig_free(as);
-
 	if (!done && strcmp(command, "monitor") == 0) {
 		error = monitor(argc, argv);
 		done = 1;
 	}
+	if (as)
+		anoubis_sig_free(as);
+	if (keyfile)
+		free(keyfile);
+	if (certfile)
+		free(certfile);
 	if (!done)
 		usage();
 
@@ -1267,6 +1258,107 @@ send_passphrase(void)
 	return 0;
 }
 
+#define ANOUBIS_IV_LEN	128
+
+static int
+auth_callback(struct anoubis_client *client __used, struct anoubis_msg *in,
+    struct anoubis_msg **outp)
+{
+	void			*sig;
+	int			 siglen;
+	void			*buf;
+	int			 buflen;
+	void			*id;
+	int			 idlen;
+	struct anoubis_msg	*out;
+	char			*iv;
+	int			 ivlen = 0;
+	int			 fd;
+
+	(*outp) = NULL;
+	if (!VERIFY_FIELD(in, authchallenge, payload))
+		return -EFAULT;
+	if (as == NULL || as->pkey == NULL) {
+		int	error;
+		if (!certfile || !keyfile) {
+			fprintf(stderr, "Key based authentication required "
+			    "but no cert/key given\n");
+			return -EPERM;
+		}
+		if (as)
+			anoubis_sig_free(as);
+		as = anoubis_sig_priv_init(keyfile, certfile, pass_cb, &error);
+		if (as == NULL || as->pkey == NULL) {
+			fprintf(stderr, "Error while loading cert/key required"
+			    " for key based authentication (error=%d)\n",
+			    error);
+			return -EPERM;
+		}
+	}
+	buflen = get_value(in->u.authchallenge->challengelen);
+	idlen = get_value(in->u.authchallenge->idlen);
+	if (!VERIFY_BUFFER(in, authchallenge, payload, 0, buflen)
+	    || !VERIFY_BUFFER(in, authchallenge, payload, buflen, idlen))
+		return -EFAULT;
+	buf = in->u.authchallenge->payload;
+	id = &in->u.authchallenge->payload[buflen];
+	if ((fd = open("/dev/urandom", O_RDONLY)) < 0) {
+		perror("/dev/urandom");
+		return -EPERM;
+	}
+	if (as == NULL || as->pkey == NULL) {
+		fprintf(stderr, "No private key loaded for authentication\n");
+		return -EPERM;
+	}
+	if (as->idlen != idlen || memcmp(as->keyid, id, idlen != 0)) {
+		fprintf(stderr, "The daemon key and the key used by anoubisctl"
+		    " do not match\n");
+		return -EPERM;
+	}
+	iv = malloc(buflen + ANOUBIS_IV_LEN);
+	if (iv == NULL) {
+		fprintf(stderr, "Out of memory durint authentication\n");
+		return -EPERM;
+	}
+	while(ivlen < ANOUBIS_IV_LEN) {
+		int ret = read(fd, iv+ivlen, ANOUBIS_IV_LEN-ivlen);
+		if (ret < 0) {
+			perror("read(/dev/urandom)");
+			return -EPERM;
+		}
+		if (ret == 0) {
+			fprintf(stderr, "End of file from /dev/urandom?");
+			return -EPERM;
+		}
+		ivlen += ret;
+	}
+	memcpy(iv+ivlen, buf,  buflen);
+	if (anoubis_sig_sign_buffer(iv, ivlen+buflen, &sig, &siglen, as) < 0) {
+		fprintf(stderr, "Signing failed during authentication\n");
+		free(iv);
+		return -EPERM;
+	}
+	out = anoubis_msg_new(sizeof(Anoubis_AuthChallengeReplyMessage)
+	    + ivlen + siglen);
+	if (out == NULL) {
+		fprintf(stderr, "Out of memory during authentication\n");
+		return -ENOMEM;
+	}
+	set_value(out->u.authchallengereply->type, ANOUBIS_C_AUTHDATA);
+	set_value(out->u.authchallengereply->auth_type,
+	    ANOUBIS_AUTH_CHALLENGEREPLY);
+	set_value(out->u.authchallengereply->uid, geteuid());
+	set_value(out->u.authchallengereply->ivlen, ivlen);
+	set_value(out->u.authchallengereply->siglen, siglen);
+	memcpy(out->u.authchallengereply->payload, iv, ivlen);
+	memcpy(out->u.authchallengereply->payload+ivlen, sig, siglen);
+	(*outp) = out;
+	free(iv);
+	free(sig);
+	return 0;
+}
+
+
 /*
  * If check_parser_version is passed to create_channel() then
  * a check of APN versions is performed
@@ -1351,7 +1443,8 @@ create_channel(unsigned int check_parser_version)
 
 	if (opts & ANOUBISCTL_OPT_VERBOSE2)
 		fprintf(stderr, "anoubis_client_create\n");
-	client = anoubis_client_create(channel, ANOUBIS_AUTH_TRANSPORT, NULL);
+	client = anoubis_client_create(channel, ANOUBIS_AUTH_TRANSPORTANDKEY,
+	    &auth_callback);
 	if (client == NULL) {
 		acc_destroy(channel);
 		channel = NULL;

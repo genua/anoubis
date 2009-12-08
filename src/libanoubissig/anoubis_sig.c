@@ -122,6 +122,66 @@ anoubis_sig_verify_policy_file(const char *filename, EVP_PKEY *sigkey)
 
 	return ret;
 }
+
+int
+anoubis_sig_verify_buffer(const void *buf, int buflen, const void *sig,
+    int siglen, EVP_PKEY *key)
+{
+	EVP_MD_CTX	ctx;
+	int		result;
+
+	if (!key || !buf || !sig)
+		return -EINVAL;
+	if (siglen != EVP_PKEY_size(key))
+		return -EPERM;
+	EVP_MD_CTX_init(&ctx);
+	if (EVP_VerifyInit(&ctx, ANOUBIS_SIG_HASH_DEFAULT) == 0) {
+		EVP_MD_CTX_cleanup(&ctx);
+		return -ENOMEM;
+	}
+	EVP_VerifyUpdate(&ctx, buf, buflen);
+	result = EVP_VerifyFinal(&ctx, sig, siglen, key);
+	EVP_MD_CTX_cleanup(&ctx);
+	if (result <= 0)
+		return -EPERM;
+	return 0;
+}
+
+int
+anoubis_sig_sign_buffer(const void *buf, int buflen, void **sigp, int *siglenp,
+    struct anoubis_sig *as)
+{
+	unsigned int	 len;
+	int		 result;
+	void		*sig;
+	EVP_MD_CTX	 ctx;
+
+	if (!as || !as->pkey || !buf || !sigp || !siglenp)
+		return -EINVAL;
+	(*sigp) = NULL;
+	(*siglenp) = 0;
+	len = EVP_PKEY_size(as->pkey);
+	sig = malloc(len);
+	if (!sig)
+		return -ENOMEM;
+	EVP_MD_CTX_init(&ctx);
+	if (!EVP_SignInit(&ctx, as->type)) {
+		EVP_MD_CTX_cleanup(&ctx);
+		free(sig);
+		return -ENOMEM;
+	}
+	EVP_SignUpdate(&ctx, buf, buflen);
+	result = EVP_SignFinal(&ctx, sig, &len, as->pkey);
+	EVP_MD_CTX_cleanup(&ctx);
+	if (result != 1) {
+		free(sig);
+		return -EPERM;
+	}
+	(*sigp) = sig;
+	(*siglenp) = len;
+	return 0;
+}
+
 int
 anoubis_sig_verify_policy(const char *filename, unsigned char *sigbuf,
     int siglen, EVP_PKEY *sigkey)
@@ -473,15 +533,16 @@ anoubis_sig_key2char(int idlen, const unsigned char *keyid)
 	return res;
 }
 
+/*
+ * NOTE: NEVER write to stdout in this function. Try to use the tty instead.
+ */
 int
 pass_cb(char *buf, int size, int rwflag __used, void *err __used)
 {
 	int len;
 	char *tmp;
 
-	printf("Enter pass phrase for Private Key\n");
-
-	tmp = getpass("Password\n");
+	tmp = getpass("Enter passphrase for Private Key: ");
 	len = strlen(tmp);
 	if (len <= 0)
 		return 0;

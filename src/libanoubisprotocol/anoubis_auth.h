@@ -40,6 +40,8 @@ struct anoubis_msg;
 
 #define ANOUBIS_AUTH_TRANSPORT		0
 #define ANOUBIS_AUTH_TRANSPORTANDKEY	1
+#define ANOBUIS_AUTH_CHALLENGE		2
+#define ANOUBIS_AUTH_CHALLENGEREPLY	3
 
 typedef void (*anoubis_auth_callback_t)(void * caller);
 
@@ -58,6 +60,23 @@ typedef struct {
 	u32n	type;
 	u32n	auth_type;
 } __attribute__((packed)) Anoubis_AuthTransportMessage;
+
+typedef struct {
+	u32n	type;
+	u32n	auth_type;
+	u32n	challengelen;
+	u32n	idlen;
+	char	payload[0];
+} __attribute__((packed)) Anoubis_AuthChallengeMessage;
+
+typedef struct {
+	u32n	type;
+	u32n	auth_type;
+	u32n	uid;
+	u32n	ivlen;
+	u32n	siglen;
+	char	payload[0];
+} __attribute__((packed)) Anoubis_AuthChallengeReplyMessage;
 
 /*@null@*/ /*@only@*/
 struct anoubis_auth * anoubis_auth_create(

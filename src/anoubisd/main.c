@@ -1329,6 +1329,135 @@ dispatch_passphrase(anoubisd_msg_t *msg, struct event_info_main *ev_info)
 	init_root_key(pass->payload, ev_info);
 }
 
+#define CHALLENGE_SIZE		256
+static void
+dispatch_auth_request(struct anoubisd_msg *msg, struct event_info_main *ev_info)
+{
+	struct anoubisd_msg			*rep_msg;
+	struct anoubisd_msg_authchallenge	*challenge;
+	struct anoubisd_msg_authrequest		*auth;
+	struct cert				*cert;
+	int					 need_challenge = 0;
+	int					 error = 0;
+	static int				 urandom_fd = -1;
+	char					 cbuf[CHALLENGE_SIZE];
+
+	auth = (struct anoubisd_msg_authrequest *)msg->msg;
+	cert = cert_get_by_uid(auth->auth_uid);
+	switch(anoubisd_config.auth_mode) {
+	case ANOUBISD_AUTH_MODE_ENABLED:
+		need_challenge = 1;
+		break;
+	case ANOUBISD_AUTH_MODE_OPTIONAL:
+		if (cert)
+			need_challenge = 1;
+		break;
+	case ANOUBISD_AUTH_MODE_OFF:
+		break;
+	default:
+		error = EACCES;
+		need_challenge = 0;
+	}
+	if (need_challenge && urandom_fd < 0) {
+		urandom_fd = open("/dev/urandom", O_RDONLY);
+		if (urandom_fd < 0) {
+			error = errno;
+			need_challenge = 0;
+		}
+	}
+	if (need_challenge && cert && cert->kidlen > 0) {
+		int	cnt = 0, ret;
+		while(cnt < CHALLENGE_SIZE) {
+			ret = read(urandom_fd, cbuf + cnt, CHALLENGE_SIZE-cnt);
+			if (ret < 0) {
+				error = errno;
+				break;
+			} else if (ret == 0) {
+				error = EPERM;
+				break;
+			}
+			cnt += ret;
+		}
+	}
+	if (error || cert == NULL || need_challenge == 0 || cert->kidlen <= 0) {
+		rep_msg = msg_factory(ANOUBISD_MSG_AUTH_CHALLENGE,
+		    sizeof(struct anoubisd_msg_authchallenge));
+		if (rep_msg == NULL) {
+			master_terminate(ENOMEM);
+			return;
+		}
+		challenge = (struct anoubisd_msg_authchallenge *)rep_msg->msg;
+		challenge->token = auth->token;
+		challenge->auth_uid = auth->auth_uid;
+		if (need_challenge)
+			challenge->error = EPERM;
+		else if (error)
+			challenge->error = error;
+		else
+			challenge->error = 0;
+		challenge->idlen = challenge->challengelen = 0;
+	} else {
+		/* We do need a challenge. Create it. */
+		int	payload = cert->kidlen + CHALLENGE_SIZE;
+
+		rep_msg = msg_factory(ANOUBISD_MSG_AUTH_CHALLENGE,
+		    sizeof(struct anoubisd_msg_authchallenge) + payload);
+		if (rep_msg == NULL) {
+			master_terminate(ENOMEM);
+			return;
+		}
+		challenge = (struct anoubisd_msg_authchallenge *)rep_msg->msg;
+		challenge->token = auth->token;
+		challenge->auth_uid = auth->auth_uid;
+		challenge->idlen = cert->kidlen;
+		challenge->challengelen = CHALLENGE_SIZE;
+		challenge->error = 0;
+		memcpy(challenge->payload, cbuf, CHALLENGE_SIZE);
+		memcpy(challenge->payload + CHALLENGE_SIZE, cert->keyid,
+		    cert->kidlen);
+	}
+	enqueue(&eventq_m2s, rep_msg);
+	DEBUG(DBG_QUEUE, " >eventq_m2s: challenge %llx", auth->token);
+	event_add(ev_info->ev_m2s, NULL);
+	return;
+}
+
+static void
+dispatch_auth_verify(struct anoubisd_msg *imsg, struct event_info_main *ev_info)
+{
+	struct anoubisd_msg			*omsg;
+	struct anoubisd_msg_authverify		*verify;
+	struct anoubisd_msg_authresult		*authresult;
+	struct cert				*cert;
+	void					*data, *sig;
+	int					 datalen, siglen;
+
+	verify = (struct anoubisd_msg_authverify *)imsg->msg;
+	cert = cert_get_by_uid(verify->auth_uid);
+	data = verify->payload;
+	datalen = verify->datalen;
+	sig = verify->payload + datalen;
+	siglen = verify->siglen;
+	omsg = msg_factory(ANOUBISD_MSG_AUTH_RESULT,
+	    sizeof(struct anoubisd_msg_authresult));
+	if (omsg == NULL) {
+		master_terminate(ENOMEM);
+		return;
+	}
+	authresult = (struct anoubisd_msg_authresult *)omsg->msg;
+	authresult->token = verify->token;
+	authresult->auth_uid = verify->auth_uid;
+	if (cert == NULL || cert->pubkey == NULL || anoubis_sig_verify_buffer(
+	    data, datalen, sig, siglen, cert->pubkey) != 0)
+		authresult->error = EPERM;
+	else
+		authresult->error = 0;
+	enqueue(&eventq_m2s, omsg);
+	DEBUG(DBG_QUEUE, " >eventq_m2s: auth result token=%llx error=%d",
+	    authresult->token, authresult->error);
+	event_add(ev_info->ev_m2s, NULL);
+}
+
 static void
 dispatch_s2m(int fd, short event __used, void *arg)
 {
@@ -1347,6 +1476,12 @@ dispatch_s2m(int fd, short event __used, void *arg)
 			break;
 		case ANOUBISD_MSG_PASSPHRASE:
 			dispatch_passphrase(msg, ev_info);
+			break;
+		case ANOUBISD_MSG_AUTH_REQUEST:
+			dispatch_auth_request(msg, ev_info);
+			break;
+		case ANOUBISD_MSG_AUTH_VERIFY:
+			dispatch_auth_verify(msg, ev_info);
 			break;
 		default:
 			log_warn("dispatch_s2m: bad mtype %d", msg->mtype);

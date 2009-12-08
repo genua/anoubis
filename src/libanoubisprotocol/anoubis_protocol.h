@@ -42,9 +42,11 @@
  *     Version 1: Historic (pre 0.9.1)
  *     Version 2: Added ANOUBIS_N_STATUSNOTIFY messages (Version 0.9.[12]).
  *     Version 3: Removed SFSDISABLE messages.
+ *     Version 4: Add key based authentication.
+ *        XXX CEH: We should make this compatible with version 3 both ways.
  */
-#define ANOUBIS_PROTO_VERSION		3
-#define ANOUBIS_PROTO_MINVERSION	3
+#define ANOUBIS_PROTO_VERSION		4
+#define ANOUBIS_PROTO_MINVERSION	4	/* XXX CEH: Should be 3 */
 
 #define ANOUBIS_PROTO_CONNECT		0
 #define ANOUBIS_PROTO_POLICY		1

@@ -83,6 +83,7 @@ static struct achat_channel	*channel;
 struct anoubis_client		*client;
 static const char		*anoubis_socket = PACKAGE_SOCKET;
 static char			*out_file = NULL;
+static struct anoubis_sig	*as = NULL;
 static char			*sfs_cert = NULL;
 static char			*sfs_key = NULL;
 static int			 checksum_flag = ANOUBIS_CSUM_NONE;
@@ -192,7 +193,6 @@ set_flag_opt(int opt)
 int
 main(int argc, char *argv[])
 {
-	struct anoubis_sig	*as = NULL;
 	uid_t			 sfs_uid = 0;
 	struct passwd	*sfs_pw = NULL;
 	unsigned char	 sys_argcsum[SHA256_DIGEST_LENGTH];
@@ -1880,6 +1880,97 @@ request_keyids(char *file, int **ids, int *count)
 	return result;
 }
 
+#define ANOUBIS_IV_LEN	128
+
+static int
+auth_callback(struct anoubis_client *client __used, struct anoubis_msg *in,
+    struct anoubis_msg **outp)
+{
+	void			*sig;
+	int			 siglen;
+	void			*buf;
+	int			 buflen;
+	void			*id;
+	int			 idlen;
+	struct anoubis_msg	*out;
+	char			*iv;
+	int			 ivlen = 0;
+	int			 fd;
+
+	(*outp) = NULL;
+	if (!VERIFY_FIELD(in, authchallenge, payload))
+		return -EFAULT;
+	if (as == NULL || as->pkey == NULL) {
+		as = load_keys(1, 1, sfs_cert, sfs_key);
+		if (as == NULL) {
+			fprintf(stderr, "Couldn't load private key"
+			    " or certificate\n");
+			return -EPERM;
+		}
+	}
+	buflen = get_value(in->u.authchallenge->challengelen);
+	idlen = get_value(in->u.authchallenge->idlen);
+	if (!VERIFY_BUFFER(in, authchallenge, payload, 0, buflen)
+	    || !VERIFY_BUFFER(in, authchallenge, payload, buflen, idlen))
+		return -EFAULT;
+	buf = in->u.authchallenge->payload;
+	id = &in->u.authchallenge->payload[buflen];
+	if ((fd = open("/dev/urandom", O_RDONLY)) < 0) {
+		perror("/dev/urandom");
+		return -EPERM;
+	}
+	if (as == NULL || as->pkey == NULL) {
+		fprintf(stderr, "No private key loaded for authentication\n");
+		return -EPERM;
+	}
+	if (as->idlen != idlen || memcmp(as->keyid, id, idlen != 0)) {
+		fprintf(stderr, "The daemon key and the key used by anoubisctl"
+		    " do not match\n");
+		return -EPERM;
+	}
+	iv = malloc(buflen + ANOUBIS_IV_LEN);
+	if (iv == NULL) {
+		fprintf(stderr, "Out of memory durint authentication\n");
+		return -EPERM;
+	}
+	while(ivlen < ANOUBIS_IV_LEN) {
+		int ret = read(fd, iv+ivlen, ANOUBIS_IV_LEN-ivlen);
+		if (ret < 0) {
+			perror("read(/dev/urandom)");
+			return -EPERM;
+		}
+		if (ret == 0) {
+			fprintf(stderr, "End of file from /dev/urandom?");
+			return -EPERM;
+		}
+		ivlen += ret;
+	}
+	memcpy(iv+ivlen, buf,  buflen);
+	if (anoubis_sig_sign_buffer(iv, buflen+ivlen, &sig, &siglen, as) < 0) {
+		fprintf(stderr, "Signing failed during authentication\n");
+		free(iv);
+		return -EPERM;
+	}
+	out = anoubis_msg_new(sizeof(Anoubis_AuthChallengeReplyMessage)
+	    + ivlen + siglen);
+	if (out == NULL) {
+		fprintf(stderr, "Out of memory during authentication\n");
+		return -ENOMEM;
+	}
+	set_value(out->u.authchallengereply->type, ANOUBIS_C_AUTHDATA);
+	set_value(out->u.authchallengereply->auth_type,
+	    ANOUBIS_AUTH_CHALLENGEREPLY);
+	set_value(out->u.authchallengereply->uid, geteuid());
+	set_value(out->u.authchallengereply->ivlen, ivlen);
+	set_value(out->u.authchallengereply->siglen, siglen);
+	memcpy(out->u.authchallengereply->payload, iv, ivlen);
+	memcpy(out->u.authchallengereply->payload+ivlen, sig, siglen);
+	(*outp) = out;
+	free(iv);
+	free(sig);
+	return 0;
+}
+
 static int
 create_channel(void)
 {
@@ -1958,7 +2049,8 @@ create_channel(void)
 
 	if (opts & SFSSIG_OPT_DEBUG2)
 		fprintf(stderr, "anoubis_client_create\n");
-	client = anoubis_client_create(channel, ANOUBIS_AUTH_TRANSPORT, NULL);
+	client = anoubis_client_create(channel, ANOUBIS_AUTH_TRANSPORTANDKEY,
+	    &auth_callback);
 	if (client == NULL) {
 		acc_destroy(channel);
 		channel = NULL;

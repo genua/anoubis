@@ -106,6 +106,10 @@ int anoubis_sig_verify_policy(const char *filename,
 int anoubis_verify_csum(struct anoubis_sig *as,
     unsigned char csum[ANOUBIS_SIG_HASH_SHA256_LEN], unsigned char *sfs_sign,
     int sfs_len);
+int anoubis_sig_sign_buffer(const void *, int len, void **sigp, int *siglenp,
+    struct anoubis_sig *as);
+int anoubis_sig_verify_buffer(const void *data, int datalen,
+    const void *sig, int siglen, EVP_PKEY *key);
 int anoubisd_verify_csum(EVP_PKEY *pkey,
      const unsigned char csum[ANOUBIS_SIG_HASH_SHA256_LEN],
      const unsigned char *sfs_sign, int sfs_len);
