@@ -82,6 +82,7 @@ struct anoubis_client {
 	char * username;
 	int server_version;
 	int server_min_version;
+	int selected_version;
 	LIST_HEAD(,anoubis_transaction) ops;
 	struct anoubis_msg * notify;
 	struct anoubis_msg * tail;
@@ -205,6 +206,7 @@ struct anoubis_client * anoubis_client_create(struct achat_channel * chan,
 	ret->username = NULL;
 	ret->server_version = -1;
 	ret->server_min_version = -1;
+	ret->selected_version = -1;
 	LIST_INIT(&ret->ops);
 	ret->notify = ret->tail = NULL;
 	ret->auth_type = auth_type;
@@ -242,7 +244,7 @@ err:
 	return ret;
 }
 
-static int anoubis_verify_hello(struct anoubis_client * client, int myproto,
+static int anoubis_verify_hello(struct anoubis_client * client,
     struct anoubis_msg * m)
 {
 	int ret;
@@ -259,8 +261,27 @@ static int anoubis_verify_hello(struct anoubis_client * client, int myproto,
 	ret = -EPROTONOSUPPORT;
 	client->server_version = get_value(m->u.hello->version);
 	client->server_min_version = get_value(m->u.hello->min_version);
-	if (!anoubis_client_versioncmp(client, myproto))
+	if (client->server_min_version <= ANOUBIS_PROTO_VERSION
+	    && ANOUBIS_PROTO_VERSION <= client->server_version) {
+		client->selected_version = ANOUBIS_PROTO_VERSION;
+	} else if (ANOUBIS_PROTO_MINVERSION <= client->server_version
+	    && client->server_version <= ANOUBIS_PROTO_VERSION) {
+		client->selected_version = client->server_version;
+		/* Handle compatibility for older server versions. */
+		switch(client->selected_version) {
+		case 4:
+			break;
+		case 3:
+			/* No support for key base authentication */
+			client->auth_callback = NULL;
+			client->auth_type = ANOUBIS_AUTH_TRANSPORT;
+			break;
+		default:
+			goto err;
+		}
+	} else {
 		goto err;
+	}
 	ret = 0;
 err:
 	anoubis_msg_free(m);
@@ -362,7 +383,7 @@ static void anoubis_client_connect_steps(struct anoubis_transaction * t,
 	switch(t->stage) {
 	case 1: {
 		static const u_int32_t nextops[] = { ANOUBIS_REPLY, 0 };
-		ret = anoubis_verify_hello(client, ANOUBIS_PROTO_VERSION, m);
+		ret = anoubis_verify_hello(client, m);
 		if (ret < 0)
 			goto err;
 		ret = -ENOMEM;
@@ -370,7 +391,7 @@ static void anoubis_client_connect_steps(struct anoubis_transaction * t,
 		if (!out)
 			goto err;
 		set_value(out->u.versel->type, ANOUBIS_C_VERSEL);
-		set_value(out->u.versel->version, ANOUBIS_PROTO_VERSION);
+		set_value(out->u.versel->version, client->selected_version);
 		set_value(out->u.versel->_pad, 0);
 		ret = anoubis_client_send(client, out);
 		if (ret < 0)
@@ -527,15 +548,9 @@ anoubis_client_serverminversion(struct anoubis_client *client)
 }
 
 int
-anoubis_client_versioncmp(struct anoubis_client *client, int myproto)
+anoubis_client_selectedversion(struct anoubis_client *client)
 {
-	if (client != NULL && client->server_version >= 0 &&
-	    client->server_min_version >= 0 && myproto >= 0) {
-		return (client->server_min_version <= myproto &&
-		    myproto <= client->server_version);
-	} else {
-		return (0);
-	}
+	return (client != NULL) ? client->selected_version : -1;
 }
 
 static void anoubis_client_close_steps(struct anoubis_transaction * t,

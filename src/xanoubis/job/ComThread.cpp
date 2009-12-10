@@ -151,8 +151,7 @@ ComThread::connect(void)
 	JobCtrl::getInstance()->protocolVersion_ =
 	    anoubis_client_serverversion(client_);
 
-	if (result == -EPROTONOSUPPORT &&
-	    !anoubis_client_versioncmp(client_, ANOUBIS_PROTO_VERSION)) {
+	if (result == -EPROTONOSUPPORT) {
 		disconnect();
 		return (VersionMismatch);
 	} else if (result != 0) {

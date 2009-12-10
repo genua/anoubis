@@ -48,7 +48,7 @@ struct anoubis_transaction * anoubis_client_connect_start(
     struct anoubis_client *, unsigned int);
 int anoubis_client_serverversion(struct anoubis_client *);
 int anoubis_client_serverminversion(struct anoubis_client *);
-int anoubis_client_versioncmp(struct anoubis_client *, int);
+int anoubis_client_selectedversion(struct anoubis_client *);
 void anoubis_client_close(struct anoubis_client *);
 struct anoubis_transaction * anoubis_client_close_start(
     struct anoubis_client *);
