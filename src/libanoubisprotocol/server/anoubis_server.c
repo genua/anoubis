@@ -581,13 +581,12 @@ int anoubis_server_process(struct anoubis_server * server, void * buf,
 #endif
 	int opcode;
 
+	if (!anoubis_msg_verify(&m) || !crc32_check(m.u.buf, m.length))
+		return -EFAULT;
 	/* Return an error if the partner sent data over a dead channel. */
 	if (!server->chan
 	    || (server->connect_flags & (FLAG_GOTCLOSEACK|FLAG_ERROR)))
 		return -EBADF;
-	/* Protocol data stream corrupt! */
-	if (!VERIFY_LENGTH(&m, 0) || !crc32_check(m.u.buf, m.length))
-		return -EIO;
 	/* Message too short. */
 	if (!VERIFY_FIELD(&m, general, type))
 		return -EIO;

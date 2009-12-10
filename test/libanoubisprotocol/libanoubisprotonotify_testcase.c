@@ -94,6 +94,16 @@ START_TEST(tp_notify_reg)
 		set_value(m->u.notify->uid, UID+off[UIDX]);
 		set_value(m->u.notify->subsystem, SUBSYS+off[SIDX]);
 		set_value(m->u.notify->rule_id, RULE+off[RIDX]);
+		set_value(m->u.notify->csumoff, 0);
+		set_value(m->u.notify->csumlen, 0);
+		set_value(m->u.notify->pathoff, 0);
+		set_value(m->u.notify->pathlen, 0);
+		set_value(m->u.notify->ctxcsumoff, 0);
+		set_value(m->u.notify->ctxcsumlen, 0);
+		set_value(m->u.notify->ctxpathoff, 0);
+		set_value(m->u.notify->ctxpathlen, 0);
+		set_value(m->u.notify->evoff, 0);
+		set_value(m->u.notify->evlen, 0);
 		m->u.notify->token = ++token;
 		head = anoubis_notify_create_head(m, NULL, NULL);
 		for(j=0; j<NRCLIENT; ++j) {
@@ -163,6 +173,16 @@ START_TEST(tp_ask)
 	for (k=0; k<5; ++k) {
 		m = anoubis_msg_new(sizeof(Anoubis_NotifyMessage));
 		fail_if(m == NULL, "Cannot allocate message");
+		set_value(m->u.notify->csumoff, 0);
+		set_value(m->u.notify->csumlen, 0);
+		set_value(m->u.notify->pathoff, 0);
+		set_value(m->u.notify->pathlen, 0);
+		set_value(m->u.notify->ctxcsumoff, 0);
+		set_value(m->u.notify->ctxcsumlen, 0);
+		set_value(m->u.notify->ctxpathoff, 0);
+		set_value(m->u.notify->ctxpathlen, 0);
+		set_value(m->u.notify->evoff, 0);
+		set_value(m->u.notify->evlen, 0);
 		set_value(m->u.notify->type, ANOUBIS_N_ASK);
 		set_value(m->u.notify->uid, UID);
 		set_value(m->u.notify->pid, 0x100+i);

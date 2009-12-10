@@ -40,7 +40,7 @@ struct anoubis_msg;
 
 #define ANOUBIS_AUTH_TRANSPORT		0
 #define ANOUBIS_AUTH_TRANSPORTANDKEY	1
-#define ANOBUIS_AUTH_CHALLENGE		2
+#define ANOUBIS_AUTH_CHALLENGE		2
 #define ANOUBIS_AUTH_CHALLENGEREPLY	3
 
 typedef void (*anoubis_auth_callback_t)(void * caller);

@@ -79,7 +79,6 @@ struct anoubis_client {
 	int flags;
 	struct achat_channel * chan;
 	unsigned long auth_uid;
-	char * username;
 	int server_version;
 	int server_min_version;
 	int selected_version;
@@ -148,10 +147,9 @@ static struct anoubis_msg * anoubis_client_rcv(struct anoubis_client * client)
 	if (rc != ACHAT_RC_OK)
 		goto err;
 	anoubis_msg_resize(m, alloclen);
-	anoubis_dump(m, "Client read");
-	if (!VERIFY_FIELD(m,general,type)
-	    || !crc32_check(m->u.buf, m->length))
+	if (!anoubis_msg_verify(m) || !crc32_check(m->u.buf, m->length))
 		goto err;
+	anoubis_dump(m, "Client read");
 	if (get_value(m->u.general->type) == ANOUBIS_C_CLOSEREQ) {
 		client->state = ANOUBIS_STATE_CLOSING;
 		client->flags |= FLAG_GOTCLOSEREQ;
@@ -203,7 +201,6 @@ struct anoubis_client * anoubis_client_create(struct achat_channel * chan,
 	ret->proto = ANOUBIS_PROTO_CONNECT;
 	ret->flags = 0;
 	ret->auth_uid = -1;
-	ret->username = NULL;
 	ret->server_version = -1;
 	ret->server_min_version = -1;
 	ret->selected_version = -1;
@@ -308,12 +305,7 @@ static int anoubis_verify_authreply(struct anoubis_client * client,
 		goto err;
 	slen = m->length - sizeof(Anoubis_AuthReplyMessage);
 	ret = -ENOMEM;
-	client->username = malloc(slen+1);
-	if (client->username == NULL)
-		goto err;
 	client->auth_uid = get_value(m->u.authreply->uid);
-	memcpy(client->username, m->u.authreply->name, slen);
-	client->username[slen] = 0;
 	ret = 0;
 err:
 	anoubis_msg_free(m);
@@ -713,6 +705,10 @@ int anoubis_client_process(struct anoubis_client * client,
 	int ret;
 	u_int32_t opcode;
 
+	/* Full lenth checks on the message. */
+	ret = -EFAULT;
+	if (!anoubis_msg_verify(m))
+		goto err;
 	/* First do sanity checks on the message. */
 	ret = anoubis_client_verify(client, m);
 	if (ret < 0)
@@ -764,12 +760,7 @@ int anoubis_client_process(struct anoubis_client * client,
 		case ANOUBIS_N_REGISTER:
 		case ANOUBIS_N_UNREGISTER:
 		case ANOUBIS_N_DELEGATE:
-		case ANOUBIS_N_CTXREQ:
 			/* These are not allowed from the server. */
-			ret = -EPROTO;
-			goto err;
-		case ANOUBIS_N_CTXREPLY:
-			/* This is not yet supported. */
 			ret = -EPROTO;
 			goto err;
 		default:

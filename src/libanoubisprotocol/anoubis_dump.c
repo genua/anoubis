@@ -154,12 +154,10 @@ static void dump_ack(Anoubis_AckMessage * m, size_t len __used)
 	DUMP_NETX(m, error);
 }
 
-static void dump_authreply(Anoubis_AuthReplyMessage * m, size_t len)
+static void dump_authreply(Anoubis_AuthReplyMessage * m, size_t len __used)
 {
 	DUMP_NETX(m, error);
 	DUMP_NETU(m, uid);
-	len -= sizeof(Anoubis_AuthReplyMessage);
-	snprintf(DSTR, DLEN, " name = %.*s", (int)len, m->name);
 }
 
 static void dump_version(Anoubis_VersionMessage * m, size_t len __used)

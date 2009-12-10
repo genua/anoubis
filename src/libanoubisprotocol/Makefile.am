@@ -85,6 +85,7 @@ libanoubisps_a_SOURCES =		\
 	anoubis_msg.c			\
 	anoubis_dump.c			\
 	anoubis_auth.c			\
+	anoubis_msg_verify.c		\
 	$(include_HEADERS_common)	\
 	$(include_HEADERS_server)
 
@@ -108,6 +109,7 @@ libanoubispc_a_SOURCES = \
 	client/anoubis_client.c		\
 	client/anoubis_transaction.c	\
 	anoubis_msg.c			\
+	anoubis_msg_verify.c		\
 	anoubis_dump.c			\
 	anoubis_auth.c			\
 	$(include_HEADERS_common)	\
@@ -134,6 +136,7 @@ libanoubisps_a_SOURCES_flawfinder =		\
 	server/anoubis_notify.c_flawfinder	\
 	server/anoubis_policy.c_flawfinder	\
 	anoubis_msg.c_flawfinder		\
+	anoubis_msg_verify.c_flawfinder		\
 	anoubis_dump.c_flawfinder		\
 	anoubis_auth.c_flawfinder		\
 	server/anoubis_server.h_flawfinder	\
@@ -150,6 +153,7 @@ libanoubispc_a_SOURCES_flawfinder =		\
 	client/anoubis_client.c_flawfinder	\
 	client/anoubis_transaction.c_flawfinder	\
 	anoubis_msg.c_flawfinder		\
+	anoubis_msg_verify.c_flawfinder		\
 	client/anoubis_client.h_flawfinder	\
 	client/anoubis_transaction.h_flawfinder
 
@@ -158,6 +162,7 @@ libanoubisps_a_SOURCES_lint =		\
 	server/anoubis_notify.c_lint	\
 	server/anoubis_policy.c_lint	\
 	anoubis_msg.c_lint		\
+	anoubis_msg_verify.c_lint	\
 	anoubis_dump.c_lint		\
 	anoubis_auth.c_lint
 
@@ -170,6 +175,7 @@ libanoubisps_a_SOURCES_splint =		\
 	server/anoubis_notify.c_splint	\
 	server/anoubis_policy.c_splint	\
 	anoubis_msg.c_splint		\
+	anoubis_msg_verify.c_splint	\
 	anoubis_dump.c_splint		\
 	anoubis_auth.c_splint		\
 	server/anoubis_server.h_splint	\

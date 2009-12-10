@@ -723,7 +723,7 @@ dispatch_auth_challenge(void *cbdata, int error __used, void *data,
 	m = anoubis_msg_new(sizeof(Anoubis_AuthChallengeMessage)
 	    + challenge->challengelen + challenge->idlen);
 	set_value(m->u.authchallenge->type, ANOUBIS_C_AUTHDATA);
-	set_value(m->u.authchallenge->auth_type, ANOUBISD_MSG_AUTH_CHALLENGE);
+	set_value(m->u.authchallenge->auth_type, ANOUBIS_AUTH_CHALLENGE);
 	set_value(m->u.authchallenge->challengelen, challenge->challengelen);
 	set_value(m->u.authchallenge->idlen, challenge->idlen);
 	memcpy(m->u.authchallenge->payload, challenge->payload,

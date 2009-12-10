@@ -263,6 +263,16 @@ static void do_notify(struct anoubis_notify_group * grp)
 	set_value(m->u.notify->uid, geteuid());
 	set_value(m->u.notify->subsystem, 0);
 	set_value(m->u.notify->sfsmatch, ANOUBIS_SFS_NONE);
+	set_value(m->u.notify->csumoff, 0);
+	set_value(m->u.notify->csumlen, 0);
+	set_value(m->u.notify->pathoff, 0);
+	set_value(m->u.notify->pathlen, 0);
+	set_value(m->u.notify->ctxcsumoff, 0);
+	set_value(m->u.notify->ctxcsumlen, 0);
+	set_value(m->u.notify->ctxpathoff, 0);
+	set_value(m->u.notify->ctxpathlen, 0);
+	set_value(m->u.notify->evoff, 0);
+	set_value(m->u.notify->evlen, 0);
 	head = anoubis_notify_create_head(m, &notify_callback, NULL);
 	if (!head < 0) {
 		anoubis_msg_free(m);

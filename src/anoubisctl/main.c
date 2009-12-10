@@ -1276,6 +1276,10 @@ auth_callback(struct anoubis_client *client __used, struct anoubis_msg *in,
 	int			 fd;
 
 	(*outp) = NULL;
+	if (!VERIFY_LENGTH(in, sizeof(Anoubis_AuthTransportMessage)))
+		return -EFAULT;
+	if (get_value(in->u.authtransport->auth_type) != ANOUBIS_AUTH_CHALLENGE)
+		return -EINVAL;
 	if (!VERIFY_FIELD(in, authchallenge, payload))
 		return -EFAULT;
 	if (as == NULL || as->pkey == NULL) {
@@ -1310,7 +1314,7 @@ auth_callback(struct anoubis_client *client __used, struct anoubis_msg *in,
 		fprintf(stderr, "No private key loaded for authentication\n");
 		return -EPERM;
 	}
-	if (as->idlen != idlen || memcmp(as->keyid, id, idlen != 0)) {
+	if (as->idlen != idlen || memcmp(as->keyid, id, idlen) != 0) {
 		fprintf(stderr, "The daemon key and the key used by anoubisctl"
 		    " do not match\n");
 		return -EPERM;

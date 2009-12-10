@@ -185,8 +185,6 @@ static inline u_int64_t __ntohll(u_int64_t arg)
 #define		ANOUBIS_N_LOGNOTIFY	0x4015
 #define		ANOUBIS_N_POLICYCHANGE	0x4016
 #define		ANOUBIS_N_STATUSNOTIFY	0x4017
-#define		ANOUBIS_N_CTXREQ	0x4020
-#define		ANOUBIS_N_CTXREPLY	0x4021
 
 #define		ANOUBIS_N_MAX		0x4FFF
 
@@ -205,7 +203,7 @@ static inline u_int64_t __ntohll(u_int64_t arg)
  * The flags marked as _Deprecated_ must not be used in new code.
  * Meaning of individual flags:
  *   - ANOUBIS_CSUM_UID: Apply command to user IDS/unsigend checksums
- *   - ANOBUIS_CSUM_KEY: Apply command to key IDS/signed checksums
+ *   - ANOUBIS_CSUM_KEY: Apply command to key IDS/signed checksums
  *   - ANOUBIS_CSUM_ALL: Apply command to all user/key IDs not just to
  *	a single ID. This requires root privileges.
  *   - ANOUBIS_CSUM_WANTIDS: List available signatures/checksums for a single
@@ -292,8 +290,6 @@ typedef struct {
 	u32n	type;
 	u32n	error;
 	u32n	uid;
-	char	name[0];
-
 } __attribute__((packed)) Anoubis_AuthReplyMessage;
 
 typedef struct {

@@ -104,6 +104,21 @@ struct anoubis_msg {
 	    && VERIFY_LENGTH((M), __t_end)				\
 	);								\
 })
+
+/*
+ * Interpret the message M according to the union member SEL. FIELD
+ * should be the last field of the struct and should have variable length.
+ * The macro returns the total size of the variable length vield according
+ * to the message length. Returns zero if FIELD is already out of bounds.
+ */
+#define PAYLOAD_LEN(M, SEL, FIELD) ({					\
+	int	__ret = 0;						\
+	int	__start = offsetof(typeof(*((M)->u.SEL)), FIELD);	\
+	if (__start >= 0 && VERIFY_LENGTH((M), __start)) {		\
+		__ret = m->length - __start - CSUM_LEN;			\
+	}								\
+	__ret;								\
+})
 #else
 /*
  * Define SPLINT versions that satisfy splint but will certainly not
@@ -112,7 +127,9 @@ struct anoubis_msg {
 #define VERIFY_FIELD(M, SEL, FIELD)		((M)==(void*)0x12345678)
 #define VERIFY_LENGTH(M, LEN)			((M)==(void*)0x12345678)
 #define VERIFY_BUFFER(M, SEL, BASE, START, END)	((M)==(void*)0x12345678)
+#define PAYLOAD_LEN(M, SEL, FIELD)		0x12345
 #endif
+
 
 struct proto_opt {
 	int val;
@@ -135,6 +152,7 @@ __BEGIN_DECLS
 /*@null@*/ struct anoubis_msg * anoubis_msg_clone(struct anoubis_msg * m);
 int anoubis_msg_resize(struct anoubis_msg * m, size_t len);
 void anoubis_msg_free(/*@only@*/ struct anoubis_msg * m);
+int anoubis_msg_verify(const struct anoubis_msg *m);
 
 void stringlist_iterator_init(/*@out@*/ struct stringlist_iterator * it,
     struct anoubis_msg * m, struct proto_opt * opts);
