@@ -130,8 +130,8 @@ if (defined($pass) and length($pass)) {
 if ($interactive) {
 	my $short = $path{"certificate"};
 	$short =~ s!^$ENV{'HOME'}!~!;
-	print "Please run the following command to install the certificate: \n",
-		"  sudo cp $short $pubkeydir/$<\n";
+	print "Please run the following command to activate the certificate:\n",
+		"  sudo anoubis-keyinstall -u $< $short\n";
 }
 
 

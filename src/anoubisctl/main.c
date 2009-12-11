@@ -1317,7 +1317,8 @@ auth_callback(struct anoubis_client *client __used, struct anoubis_msg *in,
 	if (as->idlen != idlen || memcmp(as->keyid, id, idlen) != 0) {
 		fprintf(stderr, "The daemon key and the key used by anoubisctl"
 		    " do not match\n");
-		return -EPERM;
+		if ((opts & ANOUBISCTL_OPT_FORCE) == 0)
+			return -EPERM;
 	}
 	iv = malloc(buflen + ANOUBIS_IV_LEN);
 	if (iv == NULL) {
