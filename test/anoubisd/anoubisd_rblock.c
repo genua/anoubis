@@ -59,38 +59,33 @@
 
 #include <anoubischat.h>
 
-static struct achat_channel	*channel = NULL;
-struct anoubis_client		*client = NULL;
+static struct achat_channel	*ch[20] = { NULL, };
+struct anoubis_client		*cl[20] = { NULL, };
 
-static void
-create_dangling_policy_request(void)
-{
-	struct anoubis_msg	*m;
-	Policy_SetByUid		 set;
-
-	set_value(set.ptype, ANOUBIS_PTYPE_SETBYUID);
-	set_value(set.siglen, 0);
-	set_value(set.uid, geteuid());
-	set_value(set.prio, 1 /* USER */);
-	m = anoubis_msg_new(sizeof(Anoubis_PolicyRequestMessage) + sizeof(set));
-	assert(m);
-	set_value(m->u.policyrequest->type, ANOUBIS_P_REQUEST);
-	set_value(m->u.policyrequest->flags, POLICY_FLAG_START);
-	memcpy(m->u.policyrequest->payload, &set, sizeof(set));
-	anoubis_msg_send(channel, m);
-	anoubis_msg_free(m);
-}
+/*
+ * Each iteration creates a new connections and then sends an imcomplete
+ * message to the peer. The peer should be able to handle this without
+ * blocking. We have to close the connections after a few iterations
+ * because the daemon has a connections limit.
+ */
 
 int main()
 {
 	int	i;
+	int	buf[10];
 
 	for (i=0; i<10000; ++i) {
-		if (i % 1000 == 0)
-			printf("Connections: %d\n", i);
-		create_channel(&channel, &client);
-		create_dangling_policy_request();
-		destroy_channel(channel, client);
+		int	ret;
+		if (i % 20 == 0) {
+			int j;
+			printf("Iterations: %d\n", i);
+			for (j=0; j<20; ++j)
+				destroy_channel(ch[j], cl[j]);
+		}
+		create_channel(&ch[i%20], &cl[i%20]);
+		buf[0] = htonl(300);
+		ret = write(ch[i%20]->fd, buf, sizeof(buf));
+		assert(ret == sizeof(buf));
 	}
 	return 0;
 }

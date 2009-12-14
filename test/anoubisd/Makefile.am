@@ -29,7 +29,9 @@
 # during a 'make distcheck'.
 # Nethertheless the tests are useful and should be shipped.
 
-noinst_PROGRAMS = test_anoubisd test_peunit anoubisd_policy_dos
+noinst_PROGRAMS = test_anoubisd test_peunit anoubisd_policy_dos \
+		  anoubisd_wblock anoubisd_rblock
+
 TESTS = test_peunit
 
 anoubisddir     = src/anoubisd
@@ -65,6 +67,8 @@ test_anoubisd_CPPFLAGS = \
 
 test_peunit_CPPFLAGS = $(test_anoubisd_CPPFLAGS)
 anoubisd_policy_dos_CPPFLAGS = $(test_anoubisd_CPPFLAGS)
+anoubisd_wblock_CPPFLAGS = $(test_anoubisd_CPPFLAGS)
+anoubisd_rblock_CPPFLAGS = $(test_anoubisd_CPPFLAGS)
 
 # We link with check.a which is compiled without -fPIE, therefore
 # we must use shared_AM_LDFLAGS in order not to link with -pie.
@@ -104,10 +108,20 @@ anoubisd_policy_dos_LDADD = \
 	$(libanoubispc) \
 	$(libanoubischat)
 
+anoubisd_wblock_LDADD = \
+	$(libanoubispc) \
+	$(libanoubischat)
+
+anoubisd_rblock_LDADD = \
+	$(libanoubispc) \
+	$(libanoubischat)
+
 if NEEDBSDCOMPAT
 test_anoubisd_LDADD += $(libbsdcompat)
 test_peunit_LDADD += $(libbsdcompat)
 anoubisd_policy_dos_LDADD += $(libbsdcompat)
+anoubisd_wblock_LDADD += $(libbsdcompat)
+anoubisd_rblock_LDADD += $(libbsdcompat)
 endif
 
 test_anoubisd_SOURCES = \
@@ -123,4 +137,13 @@ test_peunit_SOURCES = \
 	test_peunit.c
 
 anoubisd_policy_dos_SOURCES = \
-	anoubisd_policy_dos.c
+	anoubisd_policy_dos.c \
+	protocol_utils.c
+
+anoubisd_wblock_SOURCES = \
+	anoubisd_wblock.c \
+	protocol_utils.c
+
+anoubisd_rblock_SOURCES = \
+	anoubisd_rblock.c \
+	protocol_utils.c

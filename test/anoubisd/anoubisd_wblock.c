@@ -62,21 +62,24 @@
 static struct achat_channel	*channel = NULL;
 struct anoubis_client		*client = NULL;
 
+/*
+ * Each policy request will either trigger an answer from the daemon
+ * or another reply.
+ */
 static void
-create_dangling_policy_request(void)
+create_policy_get_request(void)
 {
 	struct anoubis_msg	*m;
-	Policy_SetByUid		 set;
+	Policy_GetByUid		 get;
 
-	set_value(set.ptype, ANOUBIS_PTYPE_SETBYUID);
-	set_value(set.siglen, 0);
-	set_value(set.uid, geteuid());
-	set_value(set.prio, 1 /* USER */);
-	m = anoubis_msg_new(sizeof(Anoubis_PolicyRequestMessage) + sizeof(set));
+	set_value(get.ptype, ANOUBIS_PTYPE_GETBYUID);
+	set_value(get.uid, geteuid());
+	set_value(get.prio, 1 /* USER */);
+	m = anoubis_msg_new(sizeof(Anoubis_PolicyRequestMessage) + sizeof(get));
 	assert(m);
 	set_value(m->u.policyrequest->type, ANOUBIS_P_REQUEST);
 	set_value(m->u.policyrequest->flags, POLICY_FLAG_START);
-	memcpy(m->u.policyrequest->payload, &set, sizeof(set));
+	memcpy(m->u.policyrequest->payload, &get, sizeof(get));
 	anoubis_msg_send(channel, m);
 	anoubis_msg_free(m);
 }
@@ -85,12 +88,12 @@ int main()
 {
 	int	i;
 
+	create_channel(&channel, &client);
 	for (i=0; i<10000; ++i) {
-		if (i % 1000 == 0)
-			printf("Connections: %d\n", i);
-		create_channel(&channel, &client);
-		create_dangling_policy_request();
-		destroy_channel(channel, client);
+		printf("Iterations: %d\n", i);
+		create_policy_get_request();
+		usleep(10000);
 	}
+	destroy_channel(channel, client);
 	return 0;
 }

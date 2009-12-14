@@ -25,72 +25,20 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "config.h"
-#include "version.h"
-
-#ifdef S_SPLINT_S
-#include "splint-includes.h"
-#endif
-
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/un.h>
-
-#include <err.h>
-#include <unistd.h>
-#include <syslog.h>
-
-#ifdef LINUX
-#include <bsdcompat.h>
-#endif
-#ifdef OPENBSD
-#include <sha2.h>
-#endif
-
-#include <anoubis_msg.h>
-#include <anoubis_protocol.h>
-#include <anoubis_errno.h>
-#include <anoubis_client.h>
-#include <anoubis_msg.h>
-#include <anoubis_sig.h>
-#include <anoubis_transaction.h>
-#include <anoubis_dump.h>
-#include <protocol_utils.h>
+#ifndef PROTOCOL_UTILS_H
+#define PROTOCOL_UTILS_H
 
 #include <anoubischat.h>
+#include <anoubis_protocol.h>
+#include <anoubis_client.h>
 
-static struct achat_channel	*channel = NULL;
-struct anoubis_client		*client = NULL;
+__BEGIN_DECLS
 
-static void
-create_dangling_policy_request(void)
-{
-	struct anoubis_msg	*m;
-	Policy_SetByUid		 set;
+extern void	create_channel(struct achat_channel **,
+		    struct anoubis_client **);
+extern void	destroy_channel(struct achat_channel *,
+		    struct anoubis_client *);
 
-	set_value(set.ptype, ANOUBIS_PTYPE_SETBYUID);
-	set_value(set.siglen, 0);
-	set_value(set.uid, geteuid());
-	set_value(set.prio, 1 /* USER */);
-	m = anoubis_msg_new(sizeof(Anoubis_PolicyRequestMessage) + sizeof(set));
-	assert(m);
-	set_value(m->u.policyrequest->type, ANOUBIS_P_REQUEST);
-	set_value(m->u.policyrequest->flags, POLICY_FLAG_START);
-	memcpy(m->u.policyrequest->payload, &set, sizeof(set));
-	anoubis_msg_send(channel, m);
-	anoubis_msg_free(m);
-}
+__END_DECLS
 
-int main()
-{
-	int	i;
-
-	for (i=0; i<10000; ++i) {
-		if (i % 1000 == 0)
-			printf("Connections: %d\n", i);
-		create_channel(&channel, &client);
-		create_dangling_policy_request();
-		destroy_channel(channel, client);
-	}
-	return 0;
-}
+#endif

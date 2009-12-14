@@ -208,6 +208,12 @@ session_connect(int fd __used, short event __used, void *arg)
 	session->id  = sessionid++;
 	session->uid = -1; /* this session is not authenticated */
 
+	/*
+	 * The listening channel (seg->keeper_uds) is non-blocking which
+	 * will be inherited by the new channel on opendup. Thus there is
+	 * no need to set the new channel to non-blocking. Beside this
+	 * wouldn't work anyway because after acc_opendup it is too late.
+	 */
 	session->channel = acc_opendup(seg->keeper_uds);
 	if (session->channel == NULL) {
 		log_warn("session_connect: acc_opendup");
@@ -1618,6 +1624,16 @@ session_setupuds(struct sessionGroup *seg)
 	rc = acc_setsslmode(seg->keeper_uds, ACC_SSLMODE_CLEAR);
 	if (rc != ACHAT_RC_OK) {
 		log_warn("session_setupuds: acc_setsslmode");
+		acc_destroy(seg->keeper_uds);
+		seg->keeper_uds = NULL;
+		return;
+	}
+	/*
+	 * This will affect the blocking mode of the new connections.
+	 */
+	rc = acc_setblockingmode(seg->keeper_uds, ACC_NON_BLOCKING);
+	if (rc != ACHAT_RC_OK) {
+		log_warn("session_setupuds: acc_setblockingmode");
 		acc_destroy(seg->keeper_uds);
 		seg->keeper_uds = NULL;
 		return;

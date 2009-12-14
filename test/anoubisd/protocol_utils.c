@@ -55,42 +55,49 @@
 #include <anoubis_sig.h>
 #include <anoubis_transaction.h>
 #include <anoubis_dump.h>
-#include <protocol_utils.h>
 
 #include <anoubischat.h>
+#include <protocol_utils.h>
 
-static struct achat_channel	*channel = NULL;
-struct anoubis_client		*client = NULL;
-
-static void
-create_dangling_policy_request(void)
+void
+create_channel(struct achat_channel **chanp, struct anoubis_client **clientp)
 {
-	struct anoubis_msg	*m;
-	Policy_SetByUid		 set;
+	int				 error = 0;
+	achat_rc			 rc;
+	struct sockaddr_un		 ss;
+	struct achat_channel		*channel = NULL;
+	struct anoubis_client		*client;
 
-	set_value(set.ptype, ANOUBIS_PTYPE_SETBYUID);
-	set_value(set.siglen, 0);
-	set_value(set.uid, geteuid());
-	set_value(set.prio, 1 /* USER */);
-	m = anoubis_msg_new(sizeof(Anoubis_PolicyRequestMessage) + sizeof(set));
-	assert(m);
-	set_value(m->u.policyrequest->type, ANOUBIS_P_REQUEST);
-	set_value(m->u.policyrequest->flags, POLICY_FLAG_START);
-	memcpy(m->u.policyrequest->payload, &set, sizeof(set));
-	anoubis_msg_send(channel, m);
-	anoubis_msg_free(m);
+	channel = acc_create();
+	assert(channel);
+	rc = acc_settail(channel, ACC_TAIL_CLIENT);
+	assert(rc == ACHAT_RC_OK);
+	rc = acc_setsslmode(channel, ACC_SSLMODE_CLEAR);
+	assert(rc == ACHAT_RC_OK);
+	bzero(&ss, sizeof(ss));
+	ss.sun_family = AF_UNIX;
+	strlcpy((&ss)->sun_path, PACKAGE_SOCKET, sizeof((&ss)->sun_path));
+	rc = acc_setaddr(channel, (struct sockaddr_storage *)&ss,
+	     sizeof(struct sockaddr_un));
+	assert(rc == ACHAT_RC_OK);
+	rc = acc_prepare(channel);
+	assert(rc == ACHAT_RC_OK);
+	rc = acc_open(channel);
+	assert(rc == ACHAT_RC_OK);
+	client = anoubis_client_create(channel, ANOUBIS_AUTH_TRANSPORT, NULL);
+	error = anoubis_client_connect(client, ANOUBIS_PROTO_BOTH);
+	assert(error == 0);
+	if (chanp)
+		(*chanp) = channel;
+	if (clientp)
+		(*clientp) = client;
 }
 
-int main()
+void
+destroy_channel(struct achat_channel *channel, struct anoubis_client *client)
 {
-	int	i;
-
-	for (i=0; i<10000; ++i) {
-		if (i % 1000 == 0)
-			printf("Connections: %d\n", i);
-		create_channel(&channel, &client);
-		create_dangling_policy_request();
-		destroy_channel(channel, client);
-	}
-	return 0;
+	if (client)
+		anoubis_client_destroy(client);
+	if (channel)
+		acc_destroy(channel);
 }
