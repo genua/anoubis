@@ -1762,6 +1762,11 @@ dispatch_sfs_update_all(anoubisd_msg_t *msg, struct event_info_main *ev_info)
 	char				*path;
 	int				 ret;
 
+	if (anoubisd_config.upgrade_mode == ANOUBISD_UPGRADE_MODE_OFF) {
+		log_warnx("Dropping SFS_UPDATE_ALL message. "
+		    "Upgrade mode is OFF.");
+		return;
+	}
 	/*
 	 * Validate the message format and extract path/checksum. The
 	 * Pathname must have space for at least one byte.
