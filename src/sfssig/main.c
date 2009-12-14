@@ -31,6 +31,8 @@
 #include "splint-includes.h"
 #endif
 
+#include <openssl/rand.h>
+
 #include "sfssig.h"
 #include <anoubis_msg.h>
 #include <apnvm/apnvm.h>
@@ -1880,7 +1882,7 @@ request_keyids(char *file, int **ids, int *count)
 	return result;
 }
 
-#define ANOUBIS_IV_LEN	128
+#define ANOUBIS_IV_RANDOM_BYTES        128
 
 static int
 auth_callback(struct anoubis_client *client __used, struct anoubis_msg *in,
@@ -1894,8 +1896,10 @@ auth_callback(struct anoubis_client *client __used, struct anoubis_msg *in,
 	int			 idlen;
 	struct anoubis_msg	*out;
 	char			*iv;
-	int			 ivlen = 0;
-	int			 fd;
+char				*ivprefix = "Anoubis Auth package";
+int				 ivlen = strlen(ivprefix) +
+				     ANOUBIS_IV_RANDOM_BYTES;
+
 
 	(*outp) = NULL;
 	if (!VERIFY_LENGTH(in, sizeof(Anoubis_AuthTransportMessage)))
@@ -1919,10 +1923,6 @@ auth_callback(struct anoubis_client *client __used, struct anoubis_msg *in,
 		return -EFAULT;
 	buf = in->u.authchallenge->payload;
 	id = &in->u.authchallenge->payload[buflen];
-	if ((fd = open("/dev/urandom", O_RDONLY)) < 0) {
-		perror("/dev/urandom");
-		return -EPERM;
-	}
 	if (as == NULL || as->pkey == NULL) {
 		fprintf(stderr, "No private key loaded for authentication\n");
 		return -EPERM;
@@ -1933,23 +1933,19 @@ auth_callback(struct anoubis_client *client __used, struct anoubis_msg *in,
 		if ((opts & SFSSIG_OPT_FORCE) == 0)
 			return -EPERM;
 	}
-	iv = malloc(buflen + ANOUBIS_IV_LEN);
+	iv = malloc(buflen + ivlen);
 	if (iv == NULL) {
 		fprintf(stderr, "Out of memory durint authentication\n");
 		return -EPERM;
 	}
-	while(ivlen < ANOUBIS_IV_LEN) {
-		int ret = read(fd, iv+ivlen, ANOUBIS_IV_LEN-ivlen);
-		if (ret < 0) {
-			perror("read(/dev/urandom)");
-			return -EPERM;
-		}
-		if (ret == 0) {
-			fprintf(stderr, "End of file from /dev/urandom?");
-			return -EPERM;
-		}
-		ivlen += ret;
+	if (!RAND_status()) {
+		fprintf(stderr, "No entropy available. /dev/urandom missing?");
+		return -EPERM;
 	}
+	strcpy(iv, ivprefix);
+	RAND_pseudo_bytes((unsigned char *)iv + ivlen - ANOUBIS_IV_RANDOM_BYTES,
+	    ANOUBIS_IV_RANDOM_BYTES);
+
 	memcpy(iv+ivlen, buf,  buflen);
 	if (anoubis_sig_sign_buffer(iv, buflen+ivlen, &sig, &siglen, as) < 0) {
 		fprintf(stderr, "Signing failed during authentication\n");

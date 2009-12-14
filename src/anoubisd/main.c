@@ -59,6 +59,8 @@
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
+#include <openssl/rand.h>
+
 #ifdef LINUX
 #include <bsdcompat.h>
 #include <linux/anoubis_sfs.h>
@@ -1329,7 +1331,7 @@ dispatch_passphrase(anoubisd_msg_t *msg, struct event_info_main *ev_info)
 	init_root_key(pass->payload, ev_info);
 }
 
-#define CHALLENGE_SIZE		256
+#define		RANDOM_CHALLENGE_BYTES	16
 static void
 dispatch_auth_request(struct anoubisd_msg *msg, struct event_info_main *ev_info)
 {
@@ -1339,8 +1341,12 @@ dispatch_auth_request(struct anoubisd_msg *msg, struct event_info_main *ev_info)
 	struct cert				*cert;
 	int					 need_challenge = 0;
 	int					 error = 0;
-	static int				 urandom_fd = -1;
-	char					 cbuf[CHALLENGE_SIZE];
+	static int				 rnd_initialized = 0;
+
+	struct {
+		struct timeval		time;
+		unsigned char		rnd[RANDOM_CHALLENGE_BYTES];
+	} cdata;
 
 	auth = (struct anoubisd_msg_authrequest *)msg->msg;
 	cert = cert_get_by_uid(auth->auth_uid);
@@ -1358,25 +1364,35 @@ dispatch_auth_request(struct anoubisd_msg *msg, struct event_info_main *ev_info)
 		error = EACCES;
 		need_challenge = 0;
 	}
-	if (need_challenge && urandom_fd < 0) {
-		urandom_fd = open("/dev/urandom", O_RDONLY);
-		if (urandom_fd < 0) {
-			error = errno;
-			need_challenge = 0;
+	if (need_challenge && rnd_initialized == 0) {
+		if (RAND_status()) {
+			rnd_initialized = 1;
+		} else {
+			/* openssl RAND will automatically seed from
+			 * /dev/urandom if available. If it isn't, we
+			 * have a problem.
+			 */
+			log_warnx("ERROR: No entropy available. "
+			    "/dev/urandom missing?");
+			error = EACCES;
 		}
 	}
-	if (need_challenge && cert && cert->kidlen > 0) {
-		int	cnt = 0, ret;
-		while(cnt < CHALLENGE_SIZE) {
-			ret = read(urandom_fd, cbuf + cnt, CHALLENGE_SIZE-cnt);
-			if (ret < 0) {
-				error = errno;
-				break;
-			} else if (ret == 0) {
-				error = EPERM;
-				break;
-			}
-			cnt += ret;
+	if (need_challenge && cert && cert->kidlen > 0 && rnd_initialized) {
+		int ret;
+		/*
+		 * This doesn't need to be good random data, the same value
+		 * just must not be used more than once.
+		 */
+		RAND_pseudo_bytes(&cdata.rnd[0], sizeof(cdata.rnd));
+		ret = gettimeofday(&cdata.time, NULL);
+		if (ret < 0) {
+			error = errno;
+		} else {
+			/*
+			 * let's assume the micro second timestamp contains
+			 * 4 bits of entropy
+			 */
+			RAND_add(&cdata.time, sizeof(cdata.time), 0.5);
 		}
 	}
 	if (error || cert == NULL || need_challenge == 0 || cert->kidlen <= 0) {
@@ -1398,7 +1414,7 @@ dispatch_auth_request(struct anoubisd_msg *msg, struct event_info_main *ev_info)
 		challenge->idlen = challenge->challengelen = 0;
 	} else {
 		/* We do need a challenge. Create it. */
-		int	payload = cert->kidlen + CHALLENGE_SIZE;
+		int	payload = cert->kidlen + sizeof(cdata);
 
 		rep_msg = msg_factory(ANOUBISD_MSG_AUTH_CHALLENGE,
 		    sizeof(struct anoubisd_msg_authchallenge) + payload);
@@ -1410,10 +1426,10 @@ dispatch_auth_request(struct anoubisd_msg *msg, struct event_info_main *ev_info)
 		challenge->token = auth->token;
 		challenge->auth_uid = auth->auth_uid;
 		challenge->idlen = cert->kidlen;
-		challenge->challengelen = CHALLENGE_SIZE;
+		challenge->challengelen = sizeof(cdata);
 		challenge->error = 0;
-		memcpy(challenge->payload, cbuf, CHALLENGE_SIZE);
-		memcpy(challenge->payload + CHALLENGE_SIZE, cert->keyid,
+		memcpy(challenge->payload, &cdata, sizeof(cdata));
+		memcpy(challenge->payload + sizeof(cdata), cert->keyid,
 		    cert->kidlen);
 	}
 	enqueue(&eventq_m2s, rep_msg);
