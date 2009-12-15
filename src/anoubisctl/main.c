@@ -919,7 +919,7 @@ load(char *rulesopt, uid_t uid, unsigned int prio)
 		flags |= APN_FLAG_VERBOSE;
 	if (opts & ANOUBISCTL_OPT_VERBOSE2)
 		flags |= APN_FLAG_VERBOSE2;
-	if (prio == ANOUBISCTL_PRIO_ADMIN)
+	if (prio == ANOUBISCTL_PRIO_ADMIN && !(opts & ANOUBISCTL_OPT_SIGNONLY))
 		flags |= APN_FLAG_NOASK;
 	if (apn_parse(rulesopt, &ruleset, flags)) {
 		if (ruleset) {
