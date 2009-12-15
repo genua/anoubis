@@ -21,19 +21,20 @@ BuildRoot:	%(mktemp -d %{_tmppath}/%{name}-%{version}-build.XXXX)
 
 ### dependencies ###########################################
 BuildRequires:	autoconf
+BuildRequires:	bison
+BuildRequires:	check-devel >= 0.9.4
+BuildRequires:	desktop-file-utils
+BuildRequires:	flex
 BuildRequires:	gcc
 BuildRequires:	gcc-c++
-BuildRequires:	make
-BuildRequires:	check-devel >= 0.9.4
-BuildRequires:	openssl-devel
-BuildRequires:	libnotify-devel
-BuildRequires:	libevent-devel
-BuildRequires:	wxGTK-devel >= 2.8
+BuildRequires:	gettext
 BuildRequires:	libattr-devel
+BuildRequires:	libevent-devel
+BuildRequires:	libnotify-devel
 BuildRequires:	libstdc++-devel
-BuildRequires:	flex
-BuildRequires:	bison
-BuildRequires:	desktop-file-utils
+BuildRequires:	make
+BuildRequires:	openssl-devel
+BuildRequires:	wxGTK-devel >= 2.8
 
 %define rcdir %{_sysconfdir}/rc.d/init.d
 
