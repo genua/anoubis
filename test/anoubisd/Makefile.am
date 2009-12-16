@@ -138,12 +138,15 @@ test_peunit_SOURCES = \
 
 anoubisd_policy_dos_SOURCES = \
 	anoubisd_policy_dos.c \
-	protocol_utils.c
+	protocol_utils.c \
+	protocol_utils.h
 
 anoubisd_wblock_SOURCES = \
 	anoubisd_wblock.c \
-	protocol_utils.c
+	protocol_utils.c\
+	protocol_utils.h
 
 anoubisd_rblock_SOURCES = \
 	anoubisd_rblock.c \
-	protocol_utils.c
+	protocol_utils.c\
+	protocol_utils.h
