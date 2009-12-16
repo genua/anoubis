@@ -25,14 +25,14 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ##########################################################################
 
-SUBDIRS = apnvm csum
+SUBDIRS = apnvm csum key
 
 lib_LIBRARIES = libanoubisui.a
 
 # Make auto-tooling happy!
 libanoubisui_a_SOURCES = dummy.c
-libanoubisui_a_DEPENDENCIES = apnvm/libapnvm.a csum/libcsum.a
-libanoubisui_a_LIBADD = apnvm/*.o csum/*.o
+libanoubisui_a_DEPENDENCIES = apnvm/libapnvm.a csum/libcsum.a key/libkey.a
+libanoubisui_a_LIBADD = apnvm/*.o csum/*.o key/*.o
 
 flawfinder:
 	for t in $(SUBDIRS); do cd $$t && make $@ && cd ..; done

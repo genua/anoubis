@@ -25,4 +25,16 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ##########################################################################
 
-SUBDIRS = apnvm csum key
+keydir		= src/libanoubisui/key
+key		= $(top_builddir)/$(keydir)/libkey.a
+
+noinst_PROGRAMS = libanoubisui_key_tester
+
+libanoubisui_key_tester_CPPFLAGS = \
+	-I$(top_srcdir)/$(keydir)
+
+libanoubisui_key_tester_LDADD = $(key)
+libanoubisui_key_tester_LDFLAGS = $(AM_LDFLAGS) -L$(top_builddir)/$(keydir)
+libanoubisui_key_tester_CPPFLAGS += -DGCOV
+
+libanoubisui_key_tester_SOURCES = libanoubisui_key_tester.c

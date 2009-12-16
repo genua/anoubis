@@ -25,4 +25,40 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ##########################################################################
 
-SUBDIRS = apnvm csum key
+noinst_LIBRARIES = libkey.a
+
+libkey_a_SOURCES = keygen.h keygen.c
+
+libkey_a_SOURCES_lint =	\
+	keygen.c_lint
+
+libkey_a_SOURCES_splint =	\
+	keygen.c_splint
+
+libkey_a_SOURCES_flawfinder =	\
+	keygen.c_flawfinder
+
+noinst_PROGRAMS = libkey.so
+libkey_so_CFLAGS = -fPIC -shared -std=gnu99 $(shared_AM_CFLAGS)
+libkey_so_SOURCES = $(libkey_a_SOURCES)
+libkey_so_LDFLAGS = -nostartfiles -shared $(shared_AM_LDFLAGS)
+
+flawfinder_FLAGS=
+splint_FLAGS=$(libkey_a_CPPFLAGS)
+lint_FLAGS=$(libkey_a_CPPFLAGS)
+
+lint:		$(libkey_a_SOURCES_lint)
+splint:		$(libkey_a_SOURCES_splint)
+flawfinder:	$(libkey_a_SOURCES_flawfinder)
+
+include $(top_srcdir)/lint/Makefile.lint
+
+clean-local:
+	@rm -f $(libkey_a_SOURCES_lint)
+	@rm -f $(libkey_a_SOURCES_splint)
+	@rm -f $(libkey_a_SOURCES_flawfinder)
+
+# As we're in maintainer mode we have to remove generated source files
+# manually.
+dist-hook:
+	$(MAKE) maintainer-clean-generic
