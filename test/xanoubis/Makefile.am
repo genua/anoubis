@@ -304,22 +304,23 @@ testSuite_JobCtrl_LDADD = \
 	@CHECK_LIBS@
 
 if NEEDBSDCOMPAT
-testSuite_JobCtrl_CPPFLAGS += -I$(top_srcdir)/$(bsdcompatdir)
+testSuite_JobCtrl_CPPFLAGS += -I$(top_srcdir)/$(bsdcompatdir) -DNEEDBSDCOMPAT
 testSuite_JobCtrl_DEPENDENCIES += $(libbsdcompat)
 testSuite_JobCtrl_LDADD += $(libbsdcompat)
 endif
 
 testSuite_JobCtrl_SOURCES = \
 	testrunner.cpp \
-	suite_JobCtrl/JobCtrlApp.cpp \
-	suite_JobCtrl/JobCtrlApp.h \
-	suite_JobCtrl/TestHandler.h \
-	suite_JobCtrl/TcComTask.cpp \
-	suite_JobCtrl/TcComTask.h \
-	suite_JobCtrl/TcCsumCalcTask.cpp \
-	suite_JobCtrl/TcCsumCalcTask.h \
+	suite_JobCtrl/JobCtrlEventSpy.cpp \
+	suite_JobCtrl/JobCtrlEventSpy.h \
+	suite_JobCtrl/TaskEventSpy.cpp \
+	suite_JobCtrl/TaskEventSpy.h \
+	suite_JobCtrl/tc_Disconnected.cpp \
+	suite_JobCtrl/tc_Connected.cpp \
+	suite_JobCtrl/tc_SfsList.cpp \
 	suite_JobCtrl/testSuite.cpp \
-	suite_JobCtrl/tc_JobCtrl.cpp
+	suite_JobCtrl/utils.cpp \
+	suite_JobCtrl/utils.h
 
 #
 # Testsuite: Notification

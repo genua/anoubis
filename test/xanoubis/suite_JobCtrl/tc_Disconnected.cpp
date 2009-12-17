@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 GeNUA mbH <info@genua.de>
+ * Copyright (c) 2009 GeNUA mbH <info@genua.de>
  *
  * All rights reserved.
  *
@@ -29,20 +29,72 @@
 
 #include <wx/app.h>
 #include <wx/module.h>
+
 #include <JobCtrl.h>
 
-extern TCase *getTc_JobCtrlDisconnected(void);
-extern TCase *getTc_JobCtrlConnected(void);
-extern TCase *getTc_JobCtrlSfsList(void);
+#include "JobCtrlEventSpy.h"
 
-Suite *
-getTestSuite(void)
+static wxApp *app = 0;
+static JobCtrl *jobCtrl;
+
+static void
+setup(void)
 {
-	Suite *testSuite = suite_create("JobCtrl");
+	/* wxWidgets-infrastructure */
+	app = new wxApp;
+	wxApp::SetInstance(app);
+	wxPendingEventsLocker = new wxCriticalSection;
 
-	suite_add_tcase(testSuite, getTc_JobCtrlDisconnected());
-	suite_add_tcase(testSuite, getTc_JobCtrlConnected());
-	suite_add_tcase(testSuite, getTc_JobCtrlSfsList());
+	wxModule::RegisterModules();
+	fail_unless(wxModule::InitializeModules(),
+	    "Failed to initialize wxModules");
 
-	return (testSuite);
+	/* Object to be tested */
+	jobCtrl = JobCtrl::getInstance();
+	fail_unless(jobCtrl->start(), "Failed to start JobCtrl");
+}
+
+static void
+teardown(void)
+{
+	/* Destry test-object */
+	jobCtrl->stop();
+	delete jobCtrl;
+	jobCtrl = 0;
+
+	/* Destroy wxWidgets-infrastructure */
+	wxModule::CleanUpModules();
+	wxApp::SetInstance(0);
+
+	delete app;
+	delete wxPendingEventsLocker;
+	wxPendingEventsLocker = 0;
+}
+
+START_TEST(test_noconnection)
+{
+	JobCtrlEventSpy spy(jobCtrl);
+
+	fail_if(wxFileExists(wxT("foo")), "Domain-socket already exists");
+	jobCtrl->setSocketPath(wxT("foo"));
+
+	fail_unless(jobCtrl->connect(), "Connection request failed");
+
+	spy.waitForInvocation(1);
+	fail_if(spy.getLastState() == JobCtrl::CONNECTED,
+	    "Unexpected connection-state; is: %i", spy.getLastState());
+}
+END_TEST
+
+TCase *
+getTc_JobCtrlDisconnected(void)
+{
+	TCase *tcase = tcase_create("JobCtrl_Disconnected");
+
+	tcase_set_timeout(tcase, 10);
+	tcase_add_checked_fixture(tcase, setup, teardown);
+
+	tcase_add_test(tcase, test_noconnection);
+
+	return (tcase);
 }

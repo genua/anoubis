@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 GeNUA mbH <info@genua.de>
+ * Copyright (c) 2009 GeNUA mbH <info@genua.de>
  *
  * All rights reserved.
  *
@@ -25,21 +25,43 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _TESTHANDLER_H_
-#define _TESTHANDLER_H_
+#include <JobCtrl.h>
 
-#include <wx/event.h>
+#include "TaskEventSpy.h"
 
-class TaskEvent;
-
-class TestHandler : public wxEvtHandler
+TaskEventSpy::TaskEventSpy(JobCtrl *src, int eventType)
 {
-	public:
-		virtual ~TestHandler() {}
+	this->src_ = src;
+	this->eventType_ = eventType;
+	this->invocations_ = 0;
 
-		virtual void startTest() = 0;
-		virtual bool canExitTest() const = 0;
-		virtual int getTestResult() const = 0;
-};
+	src->Connect(eventType, wxTaskEventHandler(TaskEventSpy::onEvent),
+	    NULL, this);
+}
 
-#endif	/* _TESTHANDLER_H_ */
+TaskEventSpy::~TaskEventSpy(void)
+{
+	src_->Disconnect(eventType_, wxTaskEventHandler(TaskEventSpy::onEvent),
+	    NULL, this);
+}
+
+int
+TaskEventSpy::getNumInvocations(void) const
+{
+	return (invocations_);
+}
+
+void
+TaskEventSpy::waitForInvocation(int num)
+{
+	while (invocations_ < num) {
+		src_->ProcessPendingEvents();
+	}
+}
+
+void
+TaskEventSpy::onEvent(TaskEvent &event)
+{
+	invocations_++;
+	event.Skip();
+}

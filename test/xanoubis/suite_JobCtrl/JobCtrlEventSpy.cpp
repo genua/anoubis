@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 GeNUA mbH <info@genua.de>
+ * Copyright (c) 2009 GeNUA mbH <info@genua.de>
  *
  * All rights reserved.
  *
@@ -25,58 +25,48 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <check.h>
+#include <AnEvents.h>
 
-#include "JobCtrlApp.h"
+#include "JobCtrlEventSpy.h"
 
-START_TEST(tc_jobctrl)
+JobCtrlEventSpy::JobCtrlEventSpy(JobCtrl *src)
 {
-	int argc = 3;
-	const char *argv[] = {
-		__FUNCTION__,
-		"-t", "tc_jobctrl"
-	};
+	this->src_ = src;
+	invocations_ = 0;
 
-	int result = jobCtrlAppEntry(argc, (char**)argv);
-	fail_if(result != 0, "Unexpected result: %i", result);
-}
-END_TEST
-
-START_TEST(tc_jobctrl_nodaemon)
-{
-	int argc = 3;
-	const char *argv[] = {
-		__FUNCTION__,
-		"-t", "tc_jobctrl_nodaemon"
-	};
-
-	int result = jobCtrlAppEntry(argc, (char**)argv);
-	fail_if(result != 0, "Unexpected result: %i", result);
-}
-END_TEST
-
-TCase *
-getTc_JobCtrl(void)
-{
-	TCase *testCase;
-
-	testCase = tcase_create("JobCtrl");
-	tcase_set_timeout(testCase, 10);
-
-	tcase_add_test(testCase, tc_jobctrl);
-
-	return (testCase);
+	src->Connect(anEVT_COM_CONNECTION,
+	    wxCommandEventHandler(JobCtrlEventSpy::onEvent), NULL, this);
 }
 
-TCase *
-getTc_JobCtrl_NoConnection(void)
+JobCtrlEventSpy::~JobCtrlEventSpy(void)
 {
-	TCase *testCase;
+	src_->Disconnect(anEVT_COM_CONNECTION,
+	    wxCommandEventHandler(JobCtrlEventSpy::onEvent), NULL, this);
+}
 
-	testCase = tcase_create("JobCtrlNoConnection");
-	tcase_set_timeout(testCase, 10);
+int
+JobCtrlEventSpy::getNumInvocations(void) const
+{
+	return (invocations_);
+}
 
-	tcase_add_test(testCase, tc_jobctrl_nodaemon);
+void
+JobCtrlEventSpy::waitForInvocation(int num)
+{
+	while (invocations_ < num) {
+		src_->ProcessPendingEvents();
+	}
+}
 
-	return (testCase);
+JobCtrl::ConnectionState
+JobCtrlEventSpy::getLastState()
+{
+	return (this->lastState_);
+}
+
+void
+JobCtrlEventSpy::onEvent(wxCommandEvent &event)
+{
+	lastState_ = (JobCtrl::ConnectionState)event.GetInt();
+	invocations_++;
 }

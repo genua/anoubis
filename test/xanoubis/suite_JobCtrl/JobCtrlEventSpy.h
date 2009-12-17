@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 GeNUA mbH <info@genua.de>
+ * Copyright (c) 2009 GeNUA mbH <info@genua.de>
  *
  * All rights reserved.
  *
@@ -25,24 +25,29 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <check.h>
+#ifndef _JOBCTRLEVENTSPY_H_
+#define _JOBCTRLEVENTSPY_H_
 
-#include <wx/app.h>
-#include <wx/module.h>
+#include <wx/event.h>
+
 #include <JobCtrl.h>
 
-extern TCase *getTc_JobCtrlDisconnected(void);
-extern TCase *getTc_JobCtrlConnected(void);
-extern TCase *getTc_JobCtrlSfsList(void);
-
-Suite *
-getTestSuite(void)
+class JobCtrlEventSpy : public wxEvtHandler
 {
-	Suite *testSuite = suite_create("JobCtrl");
+	public:
+		JobCtrlEventSpy(JobCtrl *);
+		~JobCtrlEventSpy(void);
 
-	suite_add_tcase(testSuite, getTc_JobCtrlDisconnected());
-	suite_add_tcase(testSuite, getTc_JobCtrlConnected());
-	suite_add_tcase(testSuite, getTc_JobCtrlSfsList());
+		int getNumInvocations(void) const;
+		void waitForInvocation(int num);
+		JobCtrl::ConnectionState getLastState();
 
-	return (testSuite);
-}
+	private:
+		void onEvent(wxCommandEvent &event);
+
+		JobCtrl *src_;
+		int invocations_;
+		JobCtrl::ConnectionState lastState_;
+};
+
+#endif	/* _JOBCTRLEVENTSPY_H_ */

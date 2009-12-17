@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 GeNUA mbH <info@genua.de>
+ * Copyright (c) 2009 GeNUA mbH <info@genua.de>
  *
  * All rights reserved.
  *
@@ -25,38 +25,14 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _JOBCTRLAPP_H_
-#define _JOBCTRLAPP_H_
+#ifndef _UTILS_H_
+#define _UTILS_H_
 
-#include <wx/app.h>
-#include <wx/list.h>
+#include <wx/string.h>
 
-class TaskEvent;
-class TestHandler;
+bool JobCtrl_execute(const char *, ...);
+bool JobCtrl_calculate_checksum(const wxString &, u_int8_t *, int);
+bool JobCtrl_calculate_checksum_buffer(const char *, int, u_int8_t *, int);
+wxString JobCtrl_tempfile(void);
 
-WX_DECLARE_LIST(TestHandler, TestHandlerList);
-
-class JobCtrlApp : public wxAppConsole
-{
-	public:
-		bool OnInit();
-		int OnRun();
-		int OnExit();
-
-		void OnInitCmdLine(wxCmdLineParser &);
-		bool OnCmdLineParsed(wxCmdLineParser &);
-
-	private:
-		TestHandlerList handlerList_;
-
-		bool canExit() const;
-		int getResult() const;
-
-		wxString testcase_;
-};
-
-DECLARE_APP(JobCtrlApp);
-
-int jobCtrlAppEntry(int, char **);
-
-#endif	/* _JOBCTRLAPP_H_ */
+#endif	/* _UTILS_H_ */

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 GeNUA mbH <info@genua.de>
+ * Copyright (c) 2009 GeNUA mbH <info@genua.de>
  *
  * All rights reserved.
  *
@@ -25,24 +25,28 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <check.h>
+#ifndef _TASKEVENTSPY_H_
+#define _TASKEVENTSPY_H_
 
-#include <wx/app.h>
-#include <wx/module.h>
-#include <JobCtrl.h>
+#include <TaskEvent.h>
 
-extern TCase *getTc_JobCtrlDisconnected(void);
-extern TCase *getTc_JobCtrlConnected(void);
-extern TCase *getTc_JobCtrlSfsList(void);
+class JobCtrl;
 
-Suite *
-getTestSuite(void)
+class TaskEventSpy : public wxEvtHandler
 {
-	Suite *testSuite = suite_create("JobCtrl");
+	public:
+		TaskEventSpy(JobCtrl *, int);
+		~TaskEventSpy(void);
 
-	suite_add_tcase(testSuite, getTc_JobCtrlDisconnected());
-	suite_add_tcase(testSuite, getTc_JobCtrlConnected());
-	suite_add_tcase(testSuite, getTc_JobCtrlSfsList());
+		int getNumInvocations(void) const;
+		void waitForInvocation(int num);
 
-	return (testSuite);
-}
+	private:
+		void onEvent(TaskEvent &);
+
+		JobCtrl *src_;
+		int eventType_;
+		int invocations_;
+};
+
+#endif	/* _TASKEVENTSPY_H_ */
