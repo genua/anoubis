@@ -27,14 +27,35 @@
 
 keydir		= src/libanoubisui/key
 key		= $(top_builddir)/$(keydir)/libkey.a
+anoubischeckdir	= test/libanoubischeck
+anoubischeck	= $(top_builddir)/$(anoubischeckdir)/libanoubischeck.a
+bsdcompatdir	= src/bsdcompat
 
-noinst_PROGRAMS = libanoubisui_key_tester
+noinst_PROGRAMS = libanoubisui_key_tester test_subject
+TESTS = test_subject
 
-libanoubisui_key_tester_CPPFLAGS = \
-	-I$(top_srcdir)/$(keydir)
+# Make sure that test find their libraries when run with make check
+RPATH = $(top_builddir)/$(bsdcompatdir)
+TESTS_ENVIRONMENT = LD_LIBRARY_PATH=$(RPATH)
+
+libanoubisui_key_tester_CPPFLAGS = -I$(top_srcdir)/$(keydir)
+test_subject_CPPFLAGS =	\
+	-I$(top_srcdir)/$(keydir) \
+	-I$(top_srcdir)/$(anoubischeckdir)
+test_subject_CFLAGS = $(AM_CFLAGS) @CHECK_CFLAGS@
 
 libanoubisui_key_tester_LDADD = $(key)
 libanoubisui_key_tester_LDFLAGS = $(AM_LDFLAGS) -L$(top_builddir)/$(keydir)
 libanoubisui_key_tester_CPPFLAGS += -DGCOV
 
+test_subject_LDADD = $(key) $(anoubischeck) @CHECK_LIBS@
+test_subject_LDFLAGS = $(AM_LDFLAGS) -L$(top_builddir)/$(keydir)
+test_subject_CPPFLAGS += -DGCOV
+
+if NEEDBSDCOMPAT
+libanoubisui_key_tester_LDFLAGS += -L$(top_builddir)/src/bsdcompat -lbsdcompat
+test_subject_LDFLAGS += -L$(top_builddir)/src/bsdcompat -lbsdcompat
+endif
+
 libanoubisui_key_tester_SOURCES = libanoubisui_key_tester.c
+test_subject_SOURCES = test_subject.c

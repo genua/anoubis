@@ -26,8 +26,11 @@
 ##########################################################################
 
 noinst_LIBRARIES = libkey.a
+noinst_PROGRAMS = libkey.so
 
+bsdcompatdir = src/bsdcompat
 libkey_a_SOURCES = keygen.h keygen.c
+libkey_so_SOURCES = $(libkey_a_SOURCES)
 
 libkey_a_SOURCES_lint =	\
 	keygen.c_lint
@@ -38,14 +41,18 @@ libkey_a_SOURCES_splint =	\
 libkey_a_SOURCES_flawfinder =	\
 	keygen.c_flawfinder
 
-noinst_PROGRAMS = libkey.so
 libkey_so_CFLAGS = -fPIC -shared -std=gnu99 $(shared_AM_CFLAGS)
-libkey_so_SOURCES = $(libkey_a_SOURCES)
 libkey_so_LDFLAGS = -nostartfiles -shared $(shared_AM_LDFLAGS)
 
+INCLUDES = -I$(top_builddir)/src -I$(top_srcdir)/src/libanoubisui/key
+if NEEDBSDCOMPAT
+INCLUDES += -I$(top_srcdir)/$(bsdcompatdir)
+LDADD = -L$(top_builddir)/$(bsdcompatdir) -lbsdcompat
+endif
+
 flawfinder_FLAGS=
-splint_FLAGS=$(libkey_a_CPPFLAGS)
-lint_FLAGS=$(libkey_a_CPPFLAGS)
+splint_FLAGS=$(libkey_a_CPPFLAGS) $(INCLUDES)
+lint_FLAGS=$(libkey_a_CPPFLAGS) $(INCLUDES)
 
 lint:		$(libkey_a_SOURCES_lint)
 splint:		$(libkey_a_SOURCES_splint)

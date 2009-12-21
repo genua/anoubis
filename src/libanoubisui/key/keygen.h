@@ -31,9 +31,44 @@
 #include <sys/types.h>
 #include <sys/cdefs.h>
 
+/**
+ * Information about a subject as used in SSL certificates. It encapsulates
+ * information about an entity (person, company, ...). Each field has a
+ * shortcut that is used in the subject string that can be generated from
+ * this structure. The keys used in subject strings that correspond to these
+ * field are given for reference purposes.
+ *
+ * Memory management: The structure it self, all fields contained within
+ * it and the string returned by anoubis_keysubject_tostring are allocated
+ * by malloc and must be freed. In particular anoubis_keysubject_destroy
+ * will free all non-NULL fields within anoubis_keysubject using free.
+ * Please keep that in mind if you change any fields in that structure.
+ */
+struct anoubis_keysubject {
+	/** The country/nation (/C=...) */
+	char		*country;
+	/** state The state or province (/ST=...) */
+	char		*state;
+	/** locality The city, street etc. within the state (/L=...) */
+	char		*locality;
+	/** organization The organization (/O=...) */
+	char		*organization;
+	/** orgunit The sub-unit with the organization (/ON=...) */
+	char		*orgunit;
+	/** name The common name of the entity (/CN=...) */
+	char		*name;
+	/** email The mail-Address of the entity (/emailAddress=...) */
+	char		*email;
+};
+
+
 __BEGIN_DECLS
 extern int	anoubis_keygen(const char *private, const char *public,
 		    const char *pass, const char *subject, int bits);
+extern struct anoubis_keysubject *anoubis_keysubject_defaults(void);
+extern struct anoubis_keysubject *anoubis_keysubject_fromstring(const char *);
+extern char *anoubis_keysubject_tostring(const struct anoubis_keysubject *);
+extern void anoubis_keysubject_destroy(struct anoubis_keysubject *);
 __END_DECLS
 
 #endif	/* _KEYGEN_H_ */

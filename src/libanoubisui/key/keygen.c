@@ -25,6 +25,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <config.h>
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
@@ -32,7 +34,270 @@
 #include <unistd.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <pwd.h>
 
+#ifdef NEEDBSDCOMPAT
+#include <bsdcompat.h>
+#endif
+
+#include "keygen.h"
+
+static const char *countryKey		= "C";
+static const char *stateKey		= "ST";
+static const char *localityKey		= "L";
+static const char *organizationKey	= "O";
+static const char *orgunitKey		= "OU";
+static const char *nameKey		= "CN";
+static const char *emailKey		= "emailAddress";
+
+
+/**
+ * Return the default value for the country. The default value are the
+ * first two capital letters in LC_CTYPE or "US" if LC_CTYPE is not set
+ * or not enough capital letters could be found.
+ *
+ * @return A malloced string containing only the capital letters.
+ */
+static char *
+default_country(void)
+{
+	char	*ctype = getenv("LC_CTYPE");
+	int	 i;
+	char	*result = strdup("US");
+
+	if (!result)
+		return NULL;
+	if (ctype) {
+		for (i=0; ctype[i]; ++i) {
+			if ('A' <= ctype[i] && ctype[i] <= 'Z'
+			    && 'A' <= ctype[i+1] && ctype[i+1] <= 'Z') {
+				result[0] = ctype[i];
+				result[1] = ctype[i+1];
+			}
+		}
+	}
+	return result;
+}
+
+
+/**
+ * Allocate a new subject structure and fill in default values derived
+ * from system settings. Defaults chosen are:
+ * Country:              Derived from LC_CTYPE or US if this is not set.
+ * State:                Empty (NULL)
+ * Locality:             Empty (NULL)
+ * Organization:         Defaults to the string "Private"
+ * Organizational Unit:  Empty (NULL)
+ * Name:		 Derived from the GCOS field in /etc/passwd
+ * Email Address:	 The login name taken from /etc/passwd
+ * @return The anoubis_keysubject structure or NULL in case of an error.
+ */
+struct anoubis_keysubject *
+anoubis_keysubject_defaults(void)
+{
+	struct anoubis_keysubject	*ret;
+	struct passwd			*pw;
+
+	ret = malloc(sizeof(struct anoubis_keysubject));
+	if (!ret)
+		return NULL;
+	ret->country = default_country();
+	ret->state = NULL;
+	ret->locality = NULL;
+	ret->organization = strdup("Private");
+	ret->orgunit = NULL;
+	ret->name = NULL;
+	ret->email = NULL;
+
+	pw = getpwuid(getuid());
+	if (pw) {
+		ret->name = strdup(pw->pw_gecos);
+		ret->email = strdup(pw->pw_name);
+	}
+	return ret;
+}
+
+/**
+ * Create a new anoubis_keysubject structure and fill it with the information
+ * contained in the first parameter.
+ *
+ * @param string_in A string that contains subject information in the format
+ *                  used for the -subj option of openssl.
+ * @return The anoubis_keysubject structure with information from the
+ *         string where available. NULL in case of an error.
+ */
+struct anoubis_keysubject *
+anoubis_keysubject_fromstring(const char *string_in)
+{
+	char				 *string;
+	struct anoubis_keysubject	 *ret;
+	char				 *p, *next;
+	char				**pp;
+
+	if (!string_in)
+		return NULL;
+	string = strdup(string_in);
+	if (!string)
+		return NULL;
+	ret = malloc(sizeof(struct anoubis_keysubject));
+	if (!ret)
+		goto err;
+	ret->country = NULL;
+	ret->state = NULL;
+	ret->locality = NULL;
+	ret->organization = NULL;
+	ret->orgunit = NULL;
+	ret->name = NULL;
+	ret->email = NULL;
+	next = string;
+	/* Skip leading bytes that do not start with a slash. */
+	while (*next && *next != '/')
+		next++;
+	if (*next == '/') {
+		*next = 0;
+		next++;
+	}
+	while(*(p = next)) {
+		char		*key, *value;
+		/*
+		 * @p points to the string that will be analyzed in this
+		 * iteration of the loop. Forward @next to the next string
+		 * and insert a NUL-Byte.
+		 */
+		while(*next && *next != '/')
+			next++;
+		if (*next == '/') {
+			*next = 0;
+			next++;
+		}
+		/*
+		 * @p is a string that should be of the form key=value.
+		 */
+		key = p;
+		while(*p && *p != '=')
+			p++;
+		/* No equal sign found. Skip this part of the string. */
+		if (*p == 0)
+			continue;
+		(*p) = 0;
+		value = p+1;
+		pp = NULL;
+
+#define CMPONE(FIELD)		\
+		if (pp == NULL && strcasecmp(key, FIELD ## Key) == 0) \
+			pp = &ret->FIELD
+
+		CMPONE(country);
+		CMPONE(state);
+		CMPONE(locality);
+		CMPONE(organization);
+		CMPONE(orgunit);
+		CMPONE(name);
+		CMPONE(email);
+#undef CMPONE
+
+		/* No matching entry, skip it. */
+		if (pp == NULL)
+			continue;
+		/* Duplicate entry: This is an error. */
+		if (*pp)
+			goto err;
+		value = strdup(value);
+		if (value == NULL)
+			goto err;
+		(*pp) = value;
+	}
+
+	if (string)
+		free(string);
+	return ret;
+err:
+	if (string)
+		free(string);
+	if (ret)
+		anoubis_keysubject_destroy(ret);
+	return NULL;
+}
+
+/**
+ * Convert an anoubis_keysubject to a subject string that can be
+ * used as an argument to the -subj option of the openssl command.
+ *
+ * @param subject The subject structure to convert.
+ * @return Returns a malloced string with the converted subject or NULL
+ *         in case of errors.
+ */
+char *
+anoubis_keysubject_tostring(const struct anoubis_keysubject *subject)
+{
+	int		 len = 0;
+	char		*ret;
+
+/* Add two more bytes for the initial slash and the equal sign. */
+#define LENONE(FIELD)				\
+	if (subject->FIELD)			\
+		len += strlen(FIELD ## Key) + strlen(subject->FIELD) + 2
+	LENONE(country);
+	LENONE(state);
+	LENONE(locality);
+	LENONE(organization);
+	LENONE(orgunit);
+	LENONE(name);
+	LENONE(email);
+#undef LENONE
+
+	if (len == 0)
+		return NULL;
+	ret = malloc(len+1);
+	if (!ret)
+		return NULL;
+	*ret = 0;
+#define COPYONE(FIELD)		if (subject->FIELD) {		\
+		strlcat(ret, "/", len + 1);			\
+		strlcat(ret, FIELD ## Key, len + 1);		\
+		strlcat(ret, "=", len + 1);			\
+		strlcat(ret, subject->FIELD, len + 1);		\
+	}
+	COPYONE(country);
+	COPYONE(state);
+	COPYONE(locality);
+	COPYONE(organization);
+	COPYONE(orgunit);
+	COPYONE(name);
+	COPYONE(email);
+#undef COPYONE
+
+	return ret;
+}
+
+/**
+ * Free the contents of an anobuis_keysubject structure.
+ * @param subject The subject.
+ * @return None.
+ */
+void
+anoubis_keysubject_destroy(struct anoubis_keysubject *subject)
+{
+	if (!subject)
+		return;
+	if (subject->country)
+		free(subject->country);
+	if (subject->state)
+		free(subject->state);
+	if (subject->locality)
+		free(subject->locality);
+	if (subject->organization)
+		free(subject->organization);
+	if (subject->orgunit)
+		free(subject->orgunit);
+	if (subject->name)
+		free(subject->name);
+	if (subject->email)
+		free(subject->email);
+	free(subject);
+}
 
 /**
  * Check if a given file exists.
