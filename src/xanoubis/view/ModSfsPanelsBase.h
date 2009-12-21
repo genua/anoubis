@@ -110,8 +110,21 @@ class ModSfsMainPanelBase : public wxPanel
 		AnPickFromFs* certificatePicker;
 		wxStaticText* m_staticText16;
 		wxStaticText* CertFingerprintText;
-		wxStaticText* m_staticText18;
-		wxStaticText* CertDnText;
+		wxStaticText* m_staticText26;
+		wxStaticText* CertCountryText;
+		wxStaticText* m_staticText28;
+		wxStaticText* CertStateText;
+		wxStaticText* m_staticText30;
+		wxStaticText* CertLocalityText;
+		wxStaticText* m_staticText32;
+		wxStaticText* CertOrgaText;
+		wxStaticText* m_staticText34;
+		wxStaticText* CertOrgaunitText;
+		wxStaticText* m_staticText36;
+		wxStaticText* CertCnText;
+		wxStaticText* m_staticText38;
+		wxStaticText* CertEmailText;
+		wxButton* btn_GenerateKeyPair;
 		
 		// Virtual event handlers, overide them in your derived class
 		virtual void OnGridCellLeftDClick( wxGridEvent& event ){ event.Skip(); }
@@ -130,6 +143,7 @@ class ModSfsMainPanelBase : public wxPanel
 		virtual void OnSfsMainValidateButtonClicked( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnPrivKeyValidityChanged( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnPrivKeyValidityPeriodChanged( wxSpinEvent& event ){ event.Skip(); }
+		virtual void OnGenerateKeyPair( wxCommandEvent& event ){ event.Skip(); }
 		
 	
 	public:

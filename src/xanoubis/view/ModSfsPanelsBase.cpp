@@ -299,21 +299,72 @@ ModSfsMainPanelBase::ModSfsMainPanelBase( wxWindow* parent, wxWindowID id, const
 	m_staticText16->Wrap( -1 );
 	fgSizer4->Add( m_staticText16, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
 	
-	CertFingerprintText = new wxStaticText( pan_Options, wxID_ANY, _("..."), wxDefaultPosition, wxDefaultSize, 0 );
+	CertFingerprintText = new wxStaticText( pan_Options, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
 	CertFingerprintText->Wrap( -1 );
 	fgSizer4->Add( CertFingerprintText, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
 	
-	m_staticText18 = new wxStaticText( pan_Options, wxID_ANY, _("Distinguished Name:"), wxDefaultPosition, wxDefaultSize, 0 );
-	m_staticText18->Wrap( -1 );
-	fgSizer4->Add( m_staticText18, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
+	m_staticText26 = new wxStaticText( pan_Options, wxID_ANY, _("Country:"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText26->Wrap( -1 );
+	fgSizer4->Add( m_staticText26, 0, wxALL, 5 );
 	
-	CertDnText = new wxStaticText( pan_Options, wxID_ANY, _("..."), wxDefaultPosition, wxDefaultSize, 0 );
-	CertDnText->Wrap( -1 );
-	fgSizer4->Add( CertDnText, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
+	CertCountryText = new wxStaticText( pan_Options, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	CertCountryText->Wrap( -1 );
+	fgSizer4->Add( CertCountryText, 0, wxALL, 5 );
+	
+	m_staticText28 = new wxStaticText( pan_Options, wxID_ANY, _("State or Province:"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText28->Wrap( -1 );
+	fgSizer4->Add( m_staticText28, 0, wxALL, 5 );
+	
+	CertStateText = new wxStaticText( pan_Options, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	CertStateText->Wrap( -1 );
+	fgSizer4->Add( CertStateText, 0, wxALL, 5 );
+	
+	m_staticText30 = new wxStaticText( pan_Options, wxID_ANY, _("Locality:"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText30->Wrap( -1 );
+	fgSizer4->Add( m_staticText30, 0, wxALL, 5 );
+	
+	CertLocalityText = new wxStaticText( pan_Options, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	CertLocalityText->Wrap( -1 );
+	fgSizer4->Add( CertLocalityText, 0, wxALL, 5 );
+	
+	m_staticText32 = new wxStaticText( pan_Options, wxID_ANY, _("Organisation:"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText32->Wrap( -1 );
+	fgSizer4->Add( m_staticText32, 0, wxALL, 5 );
+	
+	CertOrgaText = new wxStaticText( pan_Options, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	CertOrgaText->Wrap( -1 );
+	fgSizer4->Add( CertOrgaText, 0, wxALL, 5 );
+	
+	m_staticText34 = new wxStaticText( pan_Options, wxID_ANY, _("Organisational Unit:"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText34->Wrap( -1 );
+	fgSizer4->Add( m_staticText34, 0, wxALL, 5 );
+	
+	CertOrgaunitText = new wxStaticText( pan_Options, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	CertOrgaunitText->Wrap( -1 );
+	fgSizer4->Add( CertOrgaunitText, 0, wxALL, 5 );
+	
+	m_staticText36 = new wxStaticText( pan_Options, wxID_ANY, _("Common Name:"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText36->Wrap( -1 );
+	fgSizer4->Add( m_staticText36, 0, wxALL, 5 );
+	
+	CertCnText = new wxStaticText( pan_Options, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	CertCnText->Wrap( -1 );
+	fgSizer4->Add( CertCnText, 0, wxALL, 5 );
+	
+	m_staticText38 = new wxStaticText( pan_Options, wxID_ANY, _("Email Address:"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText38->Wrap( -1 );
+	fgSizer4->Add( m_staticText38, 0, wxALL, 5 );
+	
+	CertEmailText = new wxStaticText( pan_Options, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	CertEmailText->Wrap( -1 );
+	fgSizer4->Add( CertEmailText, 0, wxALL, 5 );
 	
 	sbSizer2->Add( fgSizer4, 0, wxEXPAND, 5 );
 	
 	bSizer16->Add( sbSizer2, 0, wxEXPAND, 5 );
+	
+	btn_GenerateKeyPair = new wxButton( pan_Options, wxID_ANY, _("Generate Keypair"), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer16->Add( btn_GenerateKeyPair, 0, wxALL, 5 );
 	
 	pan_Options->SetSizer( bSizer16 );
 	pan_Options->Layout();
@@ -344,6 +395,7 @@ ModSfsMainPanelBase::ModSfsMainPanelBase( wxWindow* parent, wxWindowID id, const
 	SfsMainFilterValidateButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModSfsMainPanelBase::OnSfsMainValidateButtonClicked ), NULL, this );
 	PrivKeyValidityChoice->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( ModSfsMainPanelBase::OnPrivKeyValidityChanged ), NULL, this );
 	PrivKeyValiditySpinCtrl->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( ModSfsMainPanelBase::OnPrivKeyValidityPeriodChanged ), NULL, this );
+	btn_GenerateKeyPair->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModSfsMainPanelBase::OnGenerateKeyPair ), NULL, this );
 }
 
 ModSfsOverviewPanelBase::ModSfsOverviewPanelBase( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size, long style ) : wxPanel( parent, id, pos, size, style )

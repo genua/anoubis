@@ -70,12 +70,12 @@ ModSfsMainPanelImpl::ModSfsMainPanelImpl(wxWindow* parent, wxWindowID id)
 
 	addSubject(keyPicker);
 	keyPicker->setTitle(_("Configure private key:"));
-	keyPicker->setButtonLabel(_("Choose Key"));
+	keyPicker->setButtonLabel(_("Choose Key..."));
 	keyPicker->setMode(AnPickFromFs::MODE_FILE);
 
 	addSubject(certificatePicker);
 	certificatePicker->setTitle(_("Configure certificate:"));
-	certificatePicker->setButtonLabel(_("Choose certificate"));
+	certificatePicker->setButtonLabel(_("Choose certificate..."));
 	certificatePicker->setMode(AnPickFromFs::MODE_FILE);
 
 	initSfsOptions();
@@ -469,6 +469,12 @@ ModSfsMainPanelImpl::OnPrivKeyValidityPeriodChanged(wxSpinEvent&)
 }
 
 void
+ModSfsMainPanelImpl::OnGenerateKeyPair(wxCommandEvent&)
+{
+	printf("ModSfsMainPanelImpl::OnGenerateKeyPair() pressed!\n");
+}
+
+void
 ModSfsMainPanelImpl::initSfsMain(void)
 {
 	sfsCtrl_ = new SfsCtrl;
@@ -684,7 +690,16 @@ ModSfsMainPanelImpl::certificateParamsUpdate(const wxString &path)
 	/* Update view */
 	certificatePicker->setFileName(cert.getFile());
 	CertFingerprintText->SetLabel(cert.getFingerprint());
-	CertDnText->SetLabel(cert.getDistinguishedName());
+	/*
+	 * CertDnText->SetLabel(cert.getDistinguishedName());
+	 * CertCountryText->SetLabel(_("DE"));
+	 * CertStateText->SetLabel(_("BAYERN"));
+	 * CertLocalityText->SetLabel(_("KIRCHHEIM"));
+	 * CertOrgaText->SetLabel(_("GeNUA mbH"));
+	 * CertOrgaunitText->SetLabel(_("CoDev"));
+	 * CertCnText->SetLabel(_("Olaf Baumgartner"));
+	 * CertEmailText->SetLabel(_("obaum@genua.de"));
+	 */
 
 	/* Inform any listener about change of configuration */
 	wxCommandEvent event(anEVT_LOAD_KEY);
