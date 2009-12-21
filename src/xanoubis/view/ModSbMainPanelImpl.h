@@ -28,6 +28,8 @@
 #ifndef _ModSbMainPanelImpl_
 #define _ModSbMainPanelImpl_
 
+#include "AnEvents.h"
+
 #include "ModSbPanelsBase.h"
 
 class ModSbMainPanelImpl : public ModSbMainPanelBase
@@ -44,6 +46,16 @@ class ModSbMainPanelImpl : public ModSbMainPanelBase
 		 * @param None.
 		 */
 		~ModSbMainPanelImpl(void);
+
+	private:
+
+		/**
+		 * If double click (left) on cell occurs, jump to
+		 * corresponding rule in RuleEditor
+		 * @param[in] 1st The Event
+		 * @return Nothing
+		 */
+		void OnGridCellLeftDClick(wxGridEvent&);
 };
 
 #endif	/* _ModSbMainPanelImpl_ */

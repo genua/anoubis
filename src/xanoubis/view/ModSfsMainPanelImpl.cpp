@@ -38,8 +38,10 @@
 #include "main.h"
 #include "ModSfsListCtrl.h"
 #include "ModSfsMainPanelImpl.h"
+#include "PolicyRuleSet.h"
 #include "SfsOverviewAttrProvider.h"
 #include "SfsOverviewTable.h"
+#include "SimpleOverviewRow.h"
 
 ModSfsMainPanelImpl::ModSfsMainPanelImpl(wxWindow* parent, wxWindowID id)
     : ModSfsMainPanelBase(parent, id), Observer(NULL)
@@ -111,6 +113,39 @@ ModSfsMainPanelImpl::update(Subject *subject)
 void
 ModSfsMainPanelImpl::updateDelete(Subject *)
 {
+}
+
+void
+ModSfsMainPanelImpl::OnGridCellLeftDClick(wxGridEvent& event)
+{
+	wxCommandEvent		showEvent(anEVT_SHOW_RULE);
+	SfsOverviewTable	*table;
+	SimpleOverviewRow	*tableRow;
+	FilterPolicy		*policy;
+	PolicyRuleSet		*ruleset;
+
+	table		= dynamic_cast<SfsOverviewTable *> (lst_Rules->GetTable());
+
+	if (table == NULL) {
+		return;
+	}
+
+	tableRow	= table->getRowAt(event.GetRow());
+	policy		= tableRow->getFilterPolicy();
+
+	if (policy == NULL) {
+		return;
+	}
+
+	ruleset = policy->getParentRuleSet();
+
+	if (ruleset == NULL) {
+		return;
+	}
+
+	showEvent.SetInt(ruleset->isAdmin());
+	showEvent.SetExtraLong(policy->getApnRuleId());
+	wxPostEvent(AnEvents::getInstance(), showEvent);
 }
 
 void

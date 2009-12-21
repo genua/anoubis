@@ -46,6 +46,15 @@ class ModAlfMainPanelImpl : public ModAlfMainPanelBase
 		 * @param None.
 		 */
 		~ModAlfMainPanelImpl(void);
+
+	private:
+		/**
+		 * If double click (left) on cell occurs, jump to
+		 * corresponding rule in RuleEditor
+		 * @param[in] 1st The Event
+		 * @return Nothing
+		 */
+		void OnGridCellLeftDClick(wxGridEvent&);
 };
 
 #endif /* __ModAlfMainPanelImpl__ */

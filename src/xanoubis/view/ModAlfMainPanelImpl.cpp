@@ -32,6 +32,8 @@
 #include "AlfOverviewTable.h"
 #include "ModAlfMainPanelImpl.h"
 #include "OverviewAttrProvider.h"
+#include "PolicyRuleSet.h"
+#include "SimpleOverviewRow.h"
 
 ModAlfMainPanelImpl::ModAlfMainPanelImpl(wxWindow* parent,
     wxWindowID id) : ModAlfMainPanelBase(parent, id)
@@ -51,3 +53,37 @@ ModAlfMainPanelImpl::ModAlfMainPanelImpl(wxWindow* parent,
 ModAlfMainPanelImpl::~ModAlfMainPanelImpl(void)
 {
 }
+
+void
+ModAlfMainPanelImpl::OnGridCellLeftDClick(wxGridEvent& event)
+{
+	wxCommandEvent		showEvent(anEVT_SHOW_RULE);
+	AlfOverviewTable	*table;
+	SimpleOverviewRow	*tableRow;
+	FilterPolicy		*policy;
+	PolicyRuleSet		*ruleset;
+
+	table		= dynamic_cast<AlfOverviewTable *> (lst_Rules->GetTable());
+
+	if (table == NULL) {
+		return;
+	}
+
+	tableRow	= table->getRowAt(event.GetRow());
+	policy		= tableRow->getFilterPolicy();
+
+	if (policy == NULL) {
+		return;
+	}
+
+	ruleset = policy->getParentRuleSet();
+
+	if (ruleset == NULL) {
+		return;
+	}
+
+	showEvent.SetInt(ruleset->isAdmin());
+	showEvent.SetExtraLong(policy->getApnRuleId());
+	wxPostEvent(AnEvents::getInstance(), showEvent);
+}
+

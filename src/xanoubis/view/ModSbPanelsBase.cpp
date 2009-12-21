@@ -87,6 +87,9 @@ ModSbMainPanelBase::ModSbMainPanelBase( wxWindow* parent, wxWindowID id, const w
 	
 	this->SetSizer( sz_MainSbMain );
 	this->Layout();
+	
+	// Connect Events
+	lst_Rules->Connect( wxEVT_GRID_CELL_LEFT_DCLICK, wxGridEventHandler( ModSbMainPanelBase::OnGridCellLeftDClick ), NULL, this );
 }
 
 ModSbOverviewPanelBase::ModSbOverviewPanelBase( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size, long style ) : wxPanel( parent, id, pos, size, style )

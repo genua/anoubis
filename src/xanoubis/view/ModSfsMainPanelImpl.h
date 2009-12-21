@@ -80,6 +80,14 @@ class ModSfsMainPanelImpl : public ModSfsMainPanelBase, private Observer
 		void OnSfsMainDirCtrlSelChanged(wxTreeEvent&);
 
 		/**
+		 * If double click (left) on cell occurs, jump to
+		 * corresponding rule in RuleEditor
+		 * @param[in] 1st The Event
+		 * @return Nothing
+		 */
+		void OnGridCellLeftDClick(wxGridEvent&);
+
+		/**
 		 * Handle the event when main directory of Sfs is changed.
 		 * Sets show all and updates the tree
 		 * @param[in] 1st The event.

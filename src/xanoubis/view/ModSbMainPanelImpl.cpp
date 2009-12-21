@@ -31,7 +31,9 @@
 
 #include "ModSbMainPanelImpl.h"
 #include "OverviewAttrProvider.h"
+#include "PolicyRuleSet.h"
 #include "SbOverviewTable.h"
+#include "SimpleOverviewRow.h"
 
 ModSbMainPanelImpl::ModSbMainPanelImpl(wxWindow* parent, wxWindowID id) :
     ModSbMainPanelBase(parent, id)
@@ -52,3 +54,37 @@ ModSbMainPanelImpl::ModSbMainPanelImpl(wxWindow* parent, wxWindowID id) :
 ModSbMainPanelImpl::~ModSbMainPanelImpl()
 {
 }
+
+void
+ModSbMainPanelImpl::OnGridCellLeftDClick(wxGridEvent& event)
+{
+	wxCommandEvent		showEvent(anEVT_SHOW_RULE);
+	SbOverviewTable	*table;
+	SimpleOverviewRow	*tableRow;
+	FilterPolicy		*policy;
+	PolicyRuleSet		*ruleset;
+
+	table		= dynamic_cast<SbOverviewTable *> (lst_Rules->GetTable());
+
+	if (table == NULL) {
+		return;
+	}
+
+	tableRow	= table->getRowAt(event.GetRow());
+	policy		= tableRow->getFilterPolicy();
+
+	if (policy == NULL) {
+		return;
+	}
+
+	ruleset = policy->getParentRuleSet();
+
+	if (ruleset == NULL) {
+		return;
+	}
+
+	showEvent.SetInt(ruleset->isAdmin());
+	showEvent.SetExtraLong(policy->getApnRuleId());
+	wxPostEvent(AnEvents::getInstance(), showEvent);
+}
+

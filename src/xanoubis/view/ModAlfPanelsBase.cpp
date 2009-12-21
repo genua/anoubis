@@ -91,6 +91,9 @@ ModAlfMainPanelBase::ModAlfMainPanelBase( wxWindow* parent, wxWindowID id, const
 	
 	this->SetSizer( sz_MainALFMain );
 	this->Layout();
+	
+	// Connect Events
+	lst_Rules->Connect( wxEVT_GRID_CELL_LEFT_DCLICK, wxGridEventHandler( ModAlfMainPanelBase::OnGridCellLeftDClick ), NULL, this );
 }
 
 ModAlfOverviewPanelBase::ModAlfOverviewPanelBase( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size, long style ) : wxPanel( parent, id, pos, size, style )

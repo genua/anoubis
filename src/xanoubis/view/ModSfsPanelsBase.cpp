@@ -327,6 +327,7 @@ ModSfsMainPanelBase::ModSfsMainPanelBase( wxWindow* parent, wxWindowID id, const
 	sz_MainSFSMain->Fit( this );
 	
 	// Connect Events
+	lst_Rules->Connect( wxEVT_GRID_CELL_LEFT_DCLICK, wxGridEventHandler( ModSfsMainPanelBase::OnGridCellLeftDClick ), NULL, this );
 	SfsMainPathCtrl->Connect( wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler( ModSfsMainPanelBase::OnSfsPathChanged ), NULL, this );
 	SfsMainDirCtrl->Connect( wxEVT_COMMAND_TREE_SEL_CHANGED, wxTreeEventHandler( ModSfsMainPanelBase::OnSfsMainDirCtrlSelChanged ), NULL, this );
 	SfsMainDirViewChoice->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( ModSfsMainPanelBase::OnSfsMainDirViewChoiceSelected ), NULL, this );

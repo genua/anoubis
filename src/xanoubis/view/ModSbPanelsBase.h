@@ -64,6 +64,10 @@ class ModSbMainPanelBase : public wxPanel
 		wxNotebook* note_MainSb;
 		wxPanel* pan_Rules;
 		wxGrid* lst_Rules;
+		
+		// Virtual event handlers, overide them in your derived class
+		virtual void OnGridCellLeftDClick( wxGridEvent& event ){ event.Skip(); }
+		
 	
 	public:
 		ModSbMainPanelBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 1067,-1 ), long style = wxTAB_TRAVERSAL );

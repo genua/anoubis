@@ -304,7 +304,7 @@
                                             <event name="OnEraseBackground"></event>
                                             <event name="OnGridCellChange"></event>
                                             <event name="OnGridCellLeftClick"></event>
-                                            <event name="OnGridCellLeftDClick"></event>
+                                            <event name="OnGridCellLeftDClick">OnGridCellLeftDClick</event>
                                             <event name="OnGridCellRightClick"></event>
                                             <event name="OnGridCellRightDClick"></event>
                                             <event name="OnGridCmdCellChange"></event>

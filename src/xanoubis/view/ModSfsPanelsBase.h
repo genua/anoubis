@@ -114,6 +114,7 @@ class ModSfsMainPanelBase : public wxPanel
 		wxStaticText* CertDnText;
 		
 		// Virtual event handlers, overide them in your derived class
+		virtual void OnGridCellLeftDClick( wxGridEvent& event ){ event.Skip(); }
 		virtual void OnSfsPathChanged( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnSfsMainDirCtrlSelChanged( wxTreeEvent& event ){ event.Skip(); }
 		virtual void OnSfsMainDirViewChoiceSelected( wxCommandEvent& event ){ event.Skip(); }
