@@ -98,5 +98,6 @@ test_auth_SOURCES = \
 
 authtestdir = test/libanoubisui/auth
 install-exec-hook:
-	cp $(top_srcdir)/$(authtestdir)/test.key $(top_builddir)/$(authtestdir)
-	cp $(top_srcdir)/$(authtestdir)/test.crt $(top_builddir)/$(authtestdir)
+	cp -f $(top_srcdir)/$(authtestdir)/test.key \
+	      $(top_srcdir)/$(authtestdir)/test.crt \
+	      $(top_builddir)/$(authtestdir)
