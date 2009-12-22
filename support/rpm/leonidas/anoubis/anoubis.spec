@@ -200,6 +200,12 @@ if getent group _nosfs >/dev/null; then
 	chmod 2755 /sbin/sfssig /sbin/anoubisctl
 fi
 
+# update run dir permissions from old versions
+if [ -d /var/run/anoubisd ] ; then
+	chown root:_anoubisd /var/run/anoubisd
+	chmod 0770 /var/run/anoubisd
+fi
+
 # copy new default policy
 /usr/share/anoubisd/install_policy -q\
 	/usr/share/anoubisd/policy_templates/admin \
@@ -267,6 +273,7 @@ exit 0
 /usr/share/anoubisd/*
 %{_sysconfdir}/udev/rules.d/06-anoubis.rules
 %{_sysconfdir}/anoubis
+%attr(0750,root,_anoubisd) %dir /var/lib/anoubis
 /var/lib/anoubis/*
 %{_mandir}/man1/anoubis-keygen.1.gz
 %{_mandir}/man1/anoubis-keyinstall.1.gz

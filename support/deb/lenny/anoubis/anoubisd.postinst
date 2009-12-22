@@ -41,6 +41,8 @@ for bin in /sbin/anoubisctl /sbin/sfssig; do
 	setperms root $NOSFS_GROUP 2755 $bin
 done
 
+setperms root $ANOUBIS_USER 0750 /var/lib/anoubis
+
 # remove overrides from older packages
 rmoverride /etc/anoubis/policy/admin/default
 rmoverride /etc/anoubis/policy/admin/0
@@ -55,6 +57,12 @@ if [ -n "$2" ] &&
    [ -L /etc/rcS.d/S36anoubisd ]
 then
 	mv /etc/rcS.d/S36anoubisd /etc/rcS.d/S37anoubisd
+fi
+
+# update run dir permissions from old versions
+if [ -d /var/run/anoubisd ] ; then
+	chown root:_anoubisd /var/run/anoubisd
+	chmod 0770 /var/run/anoubisd
 fi
 
 # copy new default policy
