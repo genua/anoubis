@@ -79,6 +79,7 @@
 
 #include <anoubischat.h>
 #include <apnvm/apnvm.h>
+#include <auth/auth.h>
 
 #include "anoubisctl.h"
 #include "apn.h"
@@ -1260,33 +1261,15 @@ send_passphrase(void)
 	return 0;
 }
 
-#define ANOUBIS_IV_RANDOM_BYTES		128
-
 static int
 auth_callback(struct anoubis_client *client __used, struct anoubis_msg *in,
     struct anoubis_msg **outp)
 {
-	void			*sig;
-	int			 siglen;
-	void			*buf;
-	int			 buflen;
-	void			*id;
-	int			 idlen;
-	struct anoubis_msg	*out;
-	char			*iv;
-	char			*ivprefix = "Anoubis Auth package";
-	int			 ivlen = strlen(ivprefix) +
-				    ANOUBIS_IV_RANDOM_BYTES;
+	int	rc	= -1;
+	int	flags	=  0;
 
-	(*outp) = NULL;
-	if (!VERIFY_LENGTH(in, sizeof(Anoubis_AuthTransportMessage)))
-		return -EFAULT;
-	if (get_value(in->u.authtransport->auth_type) != ANOUBIS_AUTH_CHALLENGE)
-		return -EINVAL;
-	if (!VERIFY_FIELD(in, authchallenge, payload))
-		return -EFAULT;
+	/* Try to load key if absent. */
 	if (as == NULL || as->pkey == NULL) {
-		int	error;
 		if (!certfile || !keyfile) {
 			fprintf(stderr, "Key based authentication required "
 			    "but no cert/key given\n");
@@ -1294,69 +1277,69 @@ auth_callback(struct anoubis_client *client __used, struct anoubis_msg *in,
 		}
 		if (as)
 			anoubis_sig_free(as);
-		as = anoubis_sig_priv_init(keyfile, certfile, pass_cb, &error);
+		as = anoubis_sig_priv_init(keyfile, certfile, pass_cb, &rc);
 		if (as == NULL || as->pkey == NULL) {
 			fprintf(stderr, "Error while loading cert/key required"
-			    " for key based authentication (error=%d)\n",
-			    error);
+			    " for key based authentication (error=%d)\n", rc);
 			return -EPERM;
 		}
 	}
-	buflen = get_value(in->u.authchallenge->challengelen);
-	idlen = get_value(in->u.authchallenge->idlen);
-	if (!VERIFY_BUFFER(in, authchallenge, payload, 0, buflen)
-	    || !VERIFY_BUFFER(in, authchallenge, payload, buflen, idlen))
-		return -EFAULT;
-	buf = in->u.authchallenge->payload;
-	id = &in->u.authchallenge->payload[buflen];
-	if (as == NULL || as->pkey == NULL) {
-		fprintf(stderr, "No private key loaded for authentication\n");
-		return -EPERM;
-	}
-	if (as->idlen != idlen || memcmp(as->keyid, id, idlen) != 0) {
-		fprintf(stderr, "The daemon key and the key used by anoubisctl"
-		    " do not match\n");
-		if ((opts & ANOUBISCTL_OPT_FORCE) == 0)
-			return -EPERM;
-	}
-	iv = malloc(buflen + ivlen);
-	if (iv == NULL) {
-		fprintf(stderr, "Out of memory during authentication\n");
-		return -EPERM;
-	}
-	if (!RAND_status()) {
-		fprintf(stderr, "No entropy available. /dev/urandom missing?");
-		return -EPERM;
-	}
-	strcpy(iv, ivprefix);
-	RAND_pseudo_bytes((unsigned char *)iv + ivlen - ANOUBIS_IV_RANDOM_BYTES,
-	    ANOUBIS_IV_RANDOM_BYTES);
-	memcpy(iv+ivlen, buf,  buflen);
-	if (anoubis_sig_sign_buffer(iv, ivlen+buflen, &sig, &siglen, as) < 0) {
-		fprintf(stderr, "Signing failed during authentication\n");
-		free(iv);
-		return -EPERM;
-	}
-	out = anoubis_msg_new(sizeof(Anoubis_AuthChallengeReplyMessage)
-	    + ivlen + siglen);
-	if (out == NULL) {
-		fprintf(stderr, "Out of memory during authentication\n");
-		return -ENOMEM;
-	}
-	set_value(out->u.authchallengereply->type, ANOUBIS_C_AUTHDATA);
-	set_value(out->u.authchallengereply->auth_type,
-	    ANOUBIS_AUTH_CHALLENGEREPLY);
-	set_value(out->u.authchallengereply->uid, geteuid());
-	set_value(out->u.authchallengereply->ivlen, ivlen);
-	set_value(out->u.authchallengereply->siglen, siglen);
-	memcpy(out->u.authchallengereply->payload, iv, ivlen);
-	memcpy(out->u.authchallengereply->payload+ivlen, sig, siglen);
-	(*outp) = out;
-	free(iv);
-	free(sig);
-	return 0;
-}
 
+	if ((opts & ANOUBISCTL_OPT_FORCE) != 0) {
+		flags = ANOUBIS_AUTHFLAG_IGN_KEY_MISMATCH;
+	}
+	rc = anoubis_auth_callback(as, as, in, outp, flags);
+
+	switch (-rc) {
+	case 0:
+		/* Success. Anything is fine. */
+		break;
+	case ANOUBIS_AUTHERR_INVAL:
+		fprintf(stderr,
+		    "Invalid argument passed to authentication function\n");
+		rc = -EPERM;
+		break;
+	case ANOUBIS_AUTHERR_PKG:
+		fprintf(stderr, "Invalid authentication message received\n");
+		rc = -EFAULT;
+		break;
+	case ANOUBIS_AUTHERR_KEY:
+		fprintf(stderr,
+		    "No private key available for authentication.\n");
+		rc = -EPERM;
+		break;
+	case ANOUBIS_AUTHERR_CERT:
+		fprintf(stderr,
+		    "No certificate available for authentication.\n");
+		rc = -EPERM;
+		break;
+	case ANOUBIS_AUTHERR_KEY_MISMATCH:
+		fprintf(stderr, "The daemon key and the key used by sfssig"
+		    " do not match\n");
+		rc = -EPERM;
+		break;
+	case ANOUBIS_AUTHERR_RAND:
+		fprintf(stderr, "No entropy available.\n");
+		rc = -EPERM;
+		break;
+	case ANOUBIS_AUTHERR_NOMEM:
+		fprintf(stderr, "Out of memory during authentication\n");
+		rc = -ENOMEM;
+		break;
+	case ANOUBIS_AUTHERR_SIGN:
+		fprintf(stderr, "Signing failed during authentication\n");
+		rc = -EPERM;
+		break;
+	default:
+		fprintf(stderr,
+		    "An unknown error (%i) occured during authentication\n",
+		    -rc);
+		rc = -EINVAL;
+		break;
+	}
+
+	return (rc);
+}
 
 /*
  * If check_parser_version is passed to create_channel() then

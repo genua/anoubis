@@ -25,4 +25,4 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ##########################################################################
 
-SUBDIRS = apnvm csum key
+SUBDIRS = apnvm csum auth key

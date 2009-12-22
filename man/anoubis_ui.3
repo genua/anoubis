@@ -35,6 +35,7 @@
 .Nm struct apnvm_user
 .Nm struct apnvm_md
 .Nm enum apnvm_result
+.Nm anoubis_auth_callback
 .Nm anoubis_csum_calc
 .Nm anoubis_csum_link_calc
 .Nm anoubis_csum_list
@@ -59,6 +60,11 @@
 .Sh SYNOPSIS
 .In csum.h
 .In apnvm.h
+.In auth.h
+.Ft int
+.Fn anoubis_auth_callback "struct anoubis_sig *privateKey, \
+struct anoubis_sig *publicKey, struct anoubis_msg *challengeMsg, \
+struct anoubis_msg **responceMsg, int flags"
 .Ft int
 .Fn anoubis_csum_calc "const char *file, u_int_8 *cs, int *cslen"
 .Ft int
@@ -107,6 +113,11 @@ apn_ruleset *rs, struct apnvm_md *meta"
 .Sh DESCRIPTION
 This library has essential functions for User Interfaces that are used for
 Anoubis. Its providing helper functions to work with informations from Anoubis.
+.Pp
+.Nm anoubis_auth_callback
+gets a message with an authentication challenge. A prefix and some random bytes
+are added and the whole thing is signed with the given private key. An ouput
+message is assembled as authentication responce.
 .Pp
 The function
 .Nm anoubis_csum_calc
@@ -209,6 +220,9 @@ removed. Use apnvm_list() to receive a list of versions-numbers. On success
 APNVM_OK is returned. If the user and/or version does not exist, APNVM_VMS is
 returned.
 .Sh RETURN VALUES
+.Nm anoubis_auth_callback
+returns 0 on success and a negative error code in case of a error.
+.Pp
 .Nm anoubis_csum_calc
 returns 0 on success and a negative error code in case of a error.
 .Pp

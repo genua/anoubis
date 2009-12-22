@@ -36,36 +36,33 @@
 #include "sfssig.h"
 #include <anoubis_msg.h>
 #include <apnvm/apnvm.h>
+#include <auth/auth.h>
 
 /* These are the functions to the sfs commandos */
-static int	 sfs_add(char *, uid_t, struct anoubis_sig *);
-static int	 sfs_del(char *, uid_t, struct anoubis_sig *);
-static int	 sfs_get(char *, uid_t, struct anoubis_sig *);
-static int	 sfs_list(char *, uid_t, struct anoubis_sig *);
-static int	 sfs_validate(char *, uid_t, struct anoubis_sig *);
-static int	 sfs_export(char *, uid_t, struct anoubis_sig *);
-static int	 sfs_import(char *, uid_t, struct anoubis_sig *);
-static int	 sfs_tree(char *, int op, uid_t, struct anoubis_sig *);
-static int	 sfs_add_tree(char *, int op, uid_t, struct anoubis_sig *);
+static int	 sfs_add(char *, uid_t);
+static int	 sfs_del(char *, uid_t);
+static int	 sfs_get(char *, uid_t);
+static int	 sfs_list(char *, uid_t);
+static int	 sfs_validate(char *, uid_t);
+static int	 sfs_export(char *, uid_t);
+static int	 sfs_import(char *, uid_t);
+static int	 sfs_tree(char *, int op, uid_t);
+static int	 sfs_add_tree(char *, int op, uid_t);
 
 /* These are helper functions for the sfs commandos */
-static int			 _export(char *, FILE *, int,
-				     uid_t, struct anoubis_sig *);
-static int			 __sfs_get(char *, int, uid_t,
-				     struct anoubis_sig *);
+static int			 _export(char *, FILE *, int, uid_t);
+static int			 __sfs_get(char *, int, uid_t);
 static int			 create_channel(void);
 static void			 destroy_channel(void);
 static int			 add_entry(struct sfs_entry *);
-static int			 list(char *arg, uid_t sfs_uid,
-				     struct anoubis_sig *as);
-static struct sfs_entry		*get_entry(char *, unsigned char *, int, uid_t,
-				     struct anoubis_sig *);
+static int			 list(char *arg, uid_t sfs_uid);
+static struct sfs_entry		*get_entry(char *, unsigned char *, int, uid_t);
 static uid_t			*request_uids(char *, int *);
 static unsigned char		**request_keyids(char *, int **, int *);
 void				 usage(void) __dead;
 
 typedef int (*func_int_t)(void);
-typedef int (*func_char_t)(char *, uid_t, struct anoubis_sig *);
+typedef int (*func_char_t)(char *, uid_t);
 
 struct cmd {
 	char		*command;
@@ -514,11 +511,11 @@ main(int argc, char *argv[])
 			if (opts & SFSSIG_OPT_TREE &&
 			    (strcmp(sfs_command, "list") != 0)) {
 				error = sfs_tree(sfs_cmdarg, commands[i].opt,
-				    sfs_uid, as);
+				    sfs_uid);
 				done = 1;
 			} else {
 				error = ((func_char_t) commands[i].func)(
-				    sfs_cmdarg, sfs_uid, as);
+				    sfs_cmdarg, sfs_uid);
 				done = 1;
 			}
 			if (error > 0)
@@ -705,7 +702,7 @@ request_uids(char *file, int *count)
 
 
 static int
-sfs_add(char *file, uid_t sfs_uid, struct anoubis_sig *as)
+sfs_add(char *file, uid_t sfs_uid)
 {
 	struct anoubis_transaction	*t = NULL;
 	unsigned int			 siglen = 0, k;
@@ -812,7 +809,7 @@ sfs_add(char *file, uid_t sfs_uid, struct anoubis_sig *as)
 }
 
 static int
-sfs_del(char *file, uid_t sfs_uid, struct anoubis_sig *as)
+sfs_del(char *file, uid_t sfs_uid)
 {
 	struct anoubis_transaction	*t;
 	uid_t				*result = NULL;
@@ -875,19 +872,19 @@ sfs_del(char *file, uid_t sfs_uid, struct anoubis_sig *as)
 #define GET_NOSUM	0x02	/* Print name if in tree */
 
 static int
-sfs_get(char *file, uid_t uid, struct anoubis_sig *as)
+sfs_get(char *file, uid_t uid)
 {
-	return __sfs_get(file, GET_DEFAULT, uid, as);
+	return __sfs_get(file, GET_DEFAULT, uid);
 }
 
 static int
-sfs_validate(char *file, uid_t uid, struct anoubis_sig *as)
+sfs_validate(char *file, uid_t uid)
 {
-	return __sfs_get(file, GET_VALIDATE, uid, as);
+	return __sfs_get(file, GET_VALIDATE, uid);
 }
 
 static int
-__sfs_get(char *file, int getmode, uid_t sfs_uid, struct anoubis_sig *as)
+__sfs_get(char *file, int getmode, uid_t sfs_uid)
 {
 	struct anoubis_transaction	*t;
 	int				 i, j;
@@ -1038,22 +1035,22 @@ __sfs_get(char *file, int getmode, uid_t sfs_uid, struct anoubis_sig *as)
 }
 
 static int
-sfs_list(char *arg, uid_t sfs_uid, struct anoubis_sig *as)
+sfs_list(char *arg, uid_t sfs_uid)
 {
 	int ret = 1;
 
 	/* sfs_get with / produces Invalid Argument */
 	if (strcmp(arg, "/") != 0)
-		ret = __sfs_get(arg, GET_NOSUM, sfs_uid, as);
+		ret = __sfs_get(arg, GET_NOSUM, sfs_uid);
 
-	if (list(arg, sfs_uid, as) == 0)
+	if (list(arg, sfs_uid) == 0)
 		return 0;
 	else
 		return ret;
 }
 
 static int
-list(char *arg, uid_t sfs_uid, struct anoubis_sig *as)
+list(char *arg, uid_t sfs_uid)
 {
 	struct anoubis_transaction	 *t;
 	char				**result = NULL;
@@ -1124,7 +1121,7 @@ list(char *arg, uid_t sfs_uid, struct anoubis_sig *as)
 				new_dir = build_path(arg,result[i]);
 				if (new_dir == NULL)
 					return 1;
-				list(new_dir, sfs_uid, as);
+				list(new_dir, sfs_uid);
 				free(new_dir);
 			}
 			continue;
@@ -1148,7 +1145,7 @@ list(char *arg, uid_t sfs_uid, struct anoubis_sig *as)
 }
 
 static int
-sfs_add_tree(char *path, int op, uid_t sfs_uid, struct anoubis_sig *as)
+sfs_add_tree(char *path, int op, uid_t sfs_uid)
 {
 	struct dirent	*d_ent;
 	struct stat	 sb;
@@ -1183,7 +1180,7 @@ sfs_add_tree(char *path, int op, uid_t sfs_uid, struct anoubis_sig *as)
 		case ENOENT:
 		case ENOMEM:
 		case ENOTDIR:
-			return sfs_add(path, sfs_uid, as);
+			return sfs_add(path, sfs_uid);
 		default:
 			return 0;
 		}
@@ -1210,7 +1207,7 @@ sfs_add_tree(char *path, int op, uid_t sfs_uid, struct anoubis_sig *as)
 		}
 		switch (d_ent->d_type) {
 		case DT_DIR:
-			ret = sfs_add_tree(tmp, op, sfs_uid, as);
+			ret = sfs_add_tree(tmp, op, sfs_uid);
 			if (ret != 0)
 				goto out;
 			break;
@@ -1219,7 +1216,7 @@ sfs_add_tree(char *path, int op, uid_t sfs_uid, struct anoubis_sig *as)
 				if (!filter_one_file(tmp, NULL, sfs_uid, as))
 					break;
 			}
-			ret = sfs_add(tmp, sfs_uid, as);
+			ret = sfs_add(tmp, sfs_uid);
 			break;
 		default:
 			ret = 0;
@@ -1241,7 +1238,7 @@ out:
 }
 
 static int
-sfs_tree(char *path, int op, uid_t sfs_uid, struct anoubis_sig *as)
+sfs_tree(char *path, int op, uid_t sfs_uid)
 {
 	struct anoubis_transaction *t = NULL;
 	struct dirent	*d_ent = NULL;
@@ -1261,7 +1258,7 @@ sfs_tree(char *path, int op, uid_t sfs_uid, struct anoubis_sig *as)
 		fprintf(stderr, "path: %s\nop: %d\n", path, op);
 
 	if (op == ANOUBIS_CHECKSUM_OP_ADDSUM)
-		return sfs_add_tree(path, op, sfs_uid, as);
+		return sfs_add_tree(path, op, sfs_uid);
 
 	if (!path)
 		return 1;
@@ -1380,7 +1377,7 @@ sfs_tree(char *path, int op, uid_t sfs_uid, struct anoubis_sig *as)
 
 		cnt = strlen(result[j]) - 1;
 		if (ret || (result[j][cnt] == '/')) {
-			sfs_tree(tmp, op, sfs_uid, as);
+			sfs_tree(tmp, op, sfs_uid);
 			ret = 0;
 			free(tmp);
 			tmp = NULL;
@@ -1395,17 +1392,17 @@ sfs_tree(char *path, int op, uid_t sfs_uid, struct anoubis_sig *as)
 
 		switch (op) {
 		case ANOUBIS_CHECKSUM_OP_DEL:
-			ret = sfs_del(tmp, sfs_uid, as);
+			ret = sfs_del(tmp, sfs_uid);
 			if (ret)
 				goto out;
 			break;
 		case ANOUBIS_CHECKSUM_OP_GET2:
-			ret = sfs_get(tmp, sfs_uid, as);
+			ret = sfs_get(tmp, sfs_uid);
 			if (ret)
 				goto out;
 			break;
 		case _ANOUBIS_CHECKSUM_OP_VALIDATE:
-			ret = sfs_validate(tmp, sfs_uid, as);
+			ret = sfs_validate(tmp, sfs_uid);
 			if (ret)
 				goto out;
 			break;
@@ -1432,7 +1429,7 @@ out:
 }
 
 int
-sfs_export(char *arg, uid_t uid, struct anoubis_sig *as)
+sfs_export(char *arg, uid_t uid)
 {
 	static FILE	*out_fd = NULL;
 
@@ -1447,12 +1444,11 @@ sfs_export(char *arg, uid_t uid, struct anoubis_sig *as)
 			return 1;
 		}
 	}
-	return _export(arg, out_fd, 0, uid, as);
+	return _export(arg, out_fd, 0, uid);
 }
 
 int
-_export(char *arg, FILE *out_fd, int rec, uid_t sfs_uid,
-    struct anoubis_sig *as)
+_export(char *arg, FILE *out_fd, int rec, uid_t sfs_uid)
 {
 	struct anoubis_transaction	*t = NULL;
 	struct sfs_entry		**export = NULL;
@@ -1476,7 +1472,7 @@ _export(char *arg, FILE *out_fd, int rec, uid_t sfs_uid,
 		cnt = 1;
 		if ((export = calloc(1, sizeof(struct sfssig_entry *))) == NULL)
 			return 1;
-		export[0] = get_entry(arg, NULL, 0, sfs_uid, as);
+		export[0] = get_entry(arg, NULL, 0, sfs_uid);
 		if (!export[0]) {
 			cnt = 0;
 			free(export);
@@ -1513,7 +1509,7 @@ _export(char *arg, FILE *out_fd, int rec, uid_t sfs_uid,
 			goto err;
 		len = strlen(result[i]);
 		if (result[i][len-1] == '/') {
-			ret = _export(path, out_fd, 1, sfs_uid, as);
+			ret = _export(path, out_fd, 1, sfs_uid);
 			free(path);
 			continue;
 		}
@@ -1522,8 +1518,7 @@ _export(char *arg, FILE *out_fd, int rec, uid_t sfs_uid,
 			if (uid_result) {
 				for (j = 0; j < uid_cnt; j++) {
 					sfs_uid = uid_result[j];
-					tmp = get_entry(path, NULL, 0, sfs_uid,
-					    as);
+					tmp = get_entry(path, NULL, 0, sfs_uid);
 					if (!tmp)
 						continue;
 					cnt++;
@@ -1544,7 +1539,7 @@ _export(char *arg, FILE *out_fd, int rec, uid_t sfs_uid,
 					keyid = keyid_result[j];
 					idlen = ids[j];
 					tmp = get_entry(path, keyid, idlen,
-					    sfs_uid, as);
+					    sfs_uid);
 					if (!tmp)
 						continue;
 					cnt++;
@@ -1563,7 +1558,7 @@ _export(char *arg, FILE *out_fd, int rec, uid_t sfs_uid,
 			}
 		}
 		if ((opts & (SFSSIG_OPT_ALLUID | SFSSIG_OPT_ALLCERT)) == 0) {
-			tmp = get_entry(path, NULL, 0, sfs_uid, as);
+			tmp = get_entry(path, NULL, 0, sfs_uid);
 			if (!tmp)
 				continue;
 			cnt++;
@@ -1611,8 +1606,7 @@ err:
 }
 
 int
-sfs_import(char *filename, uid_t sfs_uid __used,
-     struct anoubis_sig *as __used)
+sfs_import(char *filename, uid_t sfs_uid __used)
 {
 	struct sfs_entry *head = NULL;
 	struct sfs_entry *next = NULL;
@@ -1723,8 +1717,7 @@ add_entry(struct sfs_entry *entry)
 }
 
 static struct sfs_entry *
-get_entry(char *file, unsigned char *keyid_p, int idlen_p, uid_t sfs_uid,
-    struct anoubis_sig *as)
+get_entry(char *file, unsigned char *keyid_p, int idlen_p, uid_t sfs_uid)
 {
 	struct anoubis_transaction	*t_sig = NULL,
 					*t_sum = NULL;
@@ -1882,94 +1875,108 @@ request_keyids(char *file, int **ids, int *count)
 	return result;
 }
 
-#define ANOUBIS_IV_RANDOM_BYTES        128
-
 static int
 auth_callback(struct anoubis_client *client __used, struct anoubis_msg *in,
     struct anoubis_msg **outp)
 {
-	void			*sig;
-	int			 siglen;
-	void			*buf;
-	int			 buflen;
-	void			*id;
-	int			 idlen;
-	struct anoubis_msg	*out;
-	char			*iv;
-char				*ivprefix = "Anoubis Auth package";
-int				 ivlen = strlen(ivprefix) +
-				     ANOUBIS_IV_RANDOM_BYTES;
+	struct anoubis_sig	*as_auth;
+	int			need_priv;
+	int			rc	= -1;
+	int			flags	=  0;
 
+	if (opts & SFSSIG_OPT_DEBUG)
+		fprintf(stderr, ">auth_callback\n");
 
-	(*outp) = NULL;
-	if (!VERIFY_LENGTH(in, sizeof(Anoubis_AuthTransportMessage)))
-		return -EFAULT;
-	if (get_value(in->u.authtransport->auth_type) != ANOUBIS_AUTH_CHALLENGE)
-		return -EINVAL;
-	if (!VERIFY_FIELD(in, authchallenge, payload))
-		return -EFAULT;
-	if (as == NULL || as->pkey == NULL) {
-		as = load_keys(1, 1, sfs_cert, sfs_key);
-		if (as == NULL) {
-			fprintf(stderr, "Couldn't load private key"
-			    " or certificate\n");
-			return -EPERM;
-		}
-	}
-	buflen = get_value(in->u.authchallenge->challengelen);
-	idlen = get_value(in->u.authchallenge->idlen);
-	if (!VERIFY_BUFFER(in, authchallenge, payload, 0, buflen)
-	    || !VERIFY_BUFFER(in, authchallenge, payload, buflen, idlen))
-		return -EFAULT;
-	buf = in->u.authchallenge->payload;
-	id = &in->u.authchallenge->payload[buflen];
-	if (as == NULL || as->pkey == NULL) {
-		fprintf(stderr, "No private key loaded for authentication\n");
+	/*
+	 * Decide if you need to load the private key. If the key is already
+	 * loaded, don't do it again because then the user is asked twice for
+	 * the passphrase.
+	 */
+	need_priv = (as == NULL) || (as->pkey == NULL);
+	if (opts & SFSSIG_OPT_DEBUG2)
+		fprintf(stderr, "need_priv = %i\n", need_priv);
+
+	/*
+	 * Do not touch global anoubis_sig-structure! The variable as is used
+	 * to decide if the keyid should be passed to the daemon. If you
+	 * alter the structure here, the keyid can be passed to the daemon
+	 * and the message might be rejected.
+	 */
+	as_auth = load_keys(need_priv, 1, sfs_cert, sfs_key);
+	if (as_auth == NULL || as_auth->cert == NULL ||
+	    (need_priv && as_auth->pkey == NULL)) {
+		fprintf(stderr, "Error while loading cert/key required"
+		    " for key based authentication\n");
 		return -EPERM;
 	}
-	if (as->idlen != idlen || memcmp(as->keyid, id, idlen) != 0) {
-		fprintf(stderr, "The daemon key and the key used by anoubisctl"
+
+	if ((opts & SFSSIG_OPT_FORCE) != 0) {
+		flags = ANOUBIS_AUTHFLAG_IGN_KEY_MISMATCH;
+	}
+
+	rc = anoubis_auth_callback(need_priv ? as_auth : as, as_auth,
+	    in, outp, flags);
+
+	switch (-rc) {
+	case 0:
+		/* Success. Anything is fine. */
+		break;
+	case ANOUBIS_AUTHERR_INVAL:
+		fprintf(stderr,
+		    "Invalid argument passed to authentication function\n");
+		rc = -EPERM;
+		break;
+	case ANOUBIS_AUTHERR_PKG:
+		fprintf(stderr, "Invalid authentication message received\n");
+		rc = -EFAULT;
+		break;
+	case ANOUBIS_AUTHERR_KEY:
+		fprintf(stderr,
+		    "No private key available for authentication.\n");
+		rc = -EPERM;
+		break;
+	case ANOUBIS_AUTHERR_CERT:
+		fprintf(stderr,
+		    "No certificate available for authentication.\n");
+		rc = -EPERM;
+		break;
+	case ANOUBIS_AUTHERR_KEY_MISMATCH:
+		fprintf(stderr, "The daemon key and the key used by sfssig"
 		    " do not match\n");
-		if ((opts & SFSSIG_OPT_FORCE) == 0)
-			return -EPERM;
-	}
-	iv = malloc(buflen + ivlen);
-	if (iv == NULL) {
-		fprintf(stderr, "Out of memory durint authentication\n");
-		return -EPERM;
-	}
-	if (!RAND_status()) {
-		fprintf(stderr, "No entropy available. /dev/urandom missing?");
-		return -EPERM;
-	}
-	strcpy(iv, ivprefix);
-	RAND_pseudo_bytes((unsigned char *)iv + ivlen - ANOUBIS_IV_RANDOM_BYTES,
-	    ANOUBIS_IV_RANDOM_BYTES);
-
-	memcpy(iv+ivlen, buf,  buflen);
-	if (anoubis_sig_sign_buffer(iv, buflen+ivlen, &sig, &siglen, as) < 0) {
-		fprintf(stderr, "Signing failed during authentication\n");
-		free(iv);
-		return -EPERM;
-	}
-	out = anoubis_msg_new(sizeof(Anoubis_AuthChallengeReplyMessage)
-	    + ivlen + siglen);
-	if (out == NULL) {
+		rc = -EPERM;
+		break;
+	case ANOUBIS_AUTHERR_RAND:
+		fprintf(stderr, "No entropy available.\n");
+		rc = -EPERM;
+		break;
+	case ANOUBIS_AUTHERR_NOMEM:
 		fprintf(stderr, "Out of memory during authentication\n");
-		return -ENOMEM;
+		rc = -ENOMEM;
+		break;
+	case ANOUBIS_AUTHERR_SIGN:
+		fprintf(stderr, "Signing failed during authentication\n");
+		rc = -EPERM;
+		break;
+	default:
+		fprintf(stderr,
+		    "An unknown error (%i) occured during authentication\n",
+		    -rc);
+		rc = -EINVAL;
+		break;
 	}
-	set_value(out->u.authchallengereply->type, ANOUBIS_C_AUTHDATA);
-	set_value(out->u.authchallengereply->auth_type,
-	    ANOUBIS_AUTH_CHALLENGEREPLY);
-	set_value(out->u.authchallengereply->uid, geteuid());
-	set_value(out->u.authchallengereply->ivlen, ivlen);
-	set_value(out->u.authchallengereply->siglen, siglen);
-	memcpy(out->u.authchallengereply->payload, iv, ivlen);
-	memcpy(out->u.authchallengereply->payload+ivlen, sig, siglen);
-	(*outp) = out;
-	free(iv);
-	free(sig);
-	return 0;
+
+	if (need_priv && as != NULL) {
+		/* You can reuse the private key */
+		as->pkey = as_auth->pkey;
+		as_auth->pkey = NULL;
+	}
+
+	anoubis_sig_free(as_auth);
+
+	if (opts & SFSSIG_OPT_DEBUG)
+		fprintf(stderr, "<auth_callback\n");
+
+	return (rc);
 }
 
 static int

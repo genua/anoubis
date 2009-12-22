@@ -144,6 +144,7 @@ AC_CONFIG_FILES([
 	src/libanoubisui/apnvm/Makefile
 	src/libanoubisui/csum/Makefile
 	src/libanoubisui/key/Makefile
+	src/libanoubisui/auth/Makefile
 	src/bsdcompat/Makefile
 	src/xanoubis/Makefile
 	src/anoubisctl/Makefile
@@ -163,6 +164,7 @@ AC_CONFIG_FILES([
 	test/libanoubisui/apnvm/Makefile
 	test/libanoubisui/csum/Makefile
 	test/libanoubisui/key/Makefile
+	test/libanoubisui/auth/Makefile
 	include/Makefile
 	include/linux/Makefile
 	include/dev/Makefile
