@@ -109,17 +109,34 @@ while($interactive and !defined($pass)) {
 $cmd{"key"} .= $path{"key"};
 $cmd{"certificate"} .= $path{"certificate"} . " -key " . $path{"key"};
 
-if (defined($pass) and length($pass)) {
-	$ENV{"PASSWORD"} = $pass;
-	$cmd{"key"} .= " -$crypto -passout env:PASSWORD";
-	$cmd{"certificate"} .= " -passin env:PASSWORD";
+if ($pass) {
+	$cmd{"key"} .= " -$crypto -passout fd:0";
+	$cmd{"certificate"} .= " -passin fd:0";
 }
 
 $cmd{"key"} .= " $numbits";
 
 foreach my $type ("key", "certificate") {
-	die ucfirst($type) . " generation failed: $!"
-		unless (system($cmd{$type}) == 0);
+	eval {
+		if ($pass) {
+			local $SIG{PIPE} = sub
+			    { die "failed to write passphrase to openssl\n" };
+			open(my $pipe, "|$cmd{$type}") or
+			   die "Can't execute $cmd{$type}\n";
+			print $pipe $pass;
+			close($pipe) or die "openssl failed:" .
+			    WEXITSTATUS($?) . "\n";
+		} else {
+			if (system($cmd{$type}) != 0) {
+				die "openssl failed:" . WEXITSTATUS($?) .
+				    "\n";
+			}
+		}
+	};
+	if ($@) {
+		die ucfirst($type) . " generation failed: $@";
+	}
+
 	print "Your $type has been saved in ", $path{$type}, ".\n";
 }
 
