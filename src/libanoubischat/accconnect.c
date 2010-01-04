@@ -245,6 +245,8 @@ acc_close(struct achat_channel *acc)
 	acc_bufferclear(acc->recvbuffer);
 	acc->event = NULL;
 
+	if (acc->fd == -1)
+		return ACHAT_RC_OK;
 	close(acc->fd);
 	acc->fd = -1;
 

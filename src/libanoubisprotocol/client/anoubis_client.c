@@ -214,7 +214,10 @@ struct anoubis_client * anoubis_client_create(struct achat_channel * chan,
 
 void anoubis_client_destroy(struct anoubis_client * client)
 {
-	acc_close(client->chan);
+	if (client->chan) {
+		acc_close(client->chan);
+		client->chan = NULL;
+	}
 	free(client);
 }
 
@@ -595,11 +598,13 @@ static void anoubis_client_close_steps(struct anoubis_transaction * t,
 	    && client->flags & FLAG_SENTCLOSEACK) {
 		client->state = ANOUBIS_STATE_CLOSED;
 		acc_close(client->chan);
+		client->chan = NULL;
 		anoubis_transaction_done(t, 0);
 	}
 	return;
 err:
 	acc_close(client->chan);
+	client->chan = NULL;
 	client->state = ANOUBIS_STATE_ERROR;
 	anoubis_transaction_done(t, -ret);
 }
@@ -628,6 +633,7 @@ struct anoubis_transaction * anoubis_client_close_start(
 	return ret;
 err:
 	acc_close(client->chan);
+	client->chan = NULL;
 	client->state = ANOUBIS_STATE_ERROR;
 	if (ret)
 		free(ret);
@@ -1199,6 +1205,7 @@ void anoubis_client_close(struct anoubis_client * client)
 	t = anoubis_client_close_start(client);
 	if (!t) {
 		acc_close(client->chan);
+		client->chan = NULL;
 		client->state = ANOUBIS_STATE_ERROR;
 		return;
 	}
