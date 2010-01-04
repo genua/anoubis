@@ -42,6 +42,7 @@
 #include <anoubis_msg.h>
 #include <anoubis_transaction.h>
 #include <anoubis_dump.h>
+#include <auth/auth.h>
 
 #include "AnEvents.h"
 #include "ComTask.h"
@@ -51,6 +52,52 @@
 #include "NotificationCtrl.h"
 #include "JobCtrl.h"
 #include "ProcCtrl.h"
+
+#define X_AUTH_NOKEY		0x8001
+#define X_AUTH_KEYID		0x8002
+#define X_AUTH_GENERALERROR	0x8003
+
+extern "C" int
+x_auth_callback(struct anoubis_client *WXUNUSED(client), struct anoubis_msg *in,
+    struct anoubis_msg **outp)
+{
+	KeyCtrl *keyCtrl = KeyCtrl::getInstance();
+
+	if (!keyCtrl->canUseLocalKeys()) {
+		/* Key-pair not configured */
+		return (-X_AUTH_NOKEY);
+	}
+
+	if (keyCtrl->loadPrivateKey() != KeyCtrl::RESULT_KEY_OK) {
+		/* Failed to load the key */
+		return (-X_AUTH_NOKEY);
+	}
+
+	PrivKey &privKey = keyCtrl->getPrivateKey();
+	LocalCertificate &cert = keyCtrl->getLocalCertificate();
+
+	if (!cert.isLoaded() && !cert.load()) {
+		/* Failed to load certificate */
+		return (-X_AUTH_NOKEY);
+	}
+
+	int rc = anoubis_auth_callback(privKey.getKey(), cert.getCertificate(),
+	    in, outp, 0);
+
+	switch (-rc) {
+	case 0:
+		/* Success */
+		break;
+	case ANOUBIS_AUTHERR_KEY_MISMATCH:
+		rc = -X_AUTH_KEYID;
+		break;
+	default:
+		rc = -X_AUTH_GENERALERROR;
+		break;
+	}
+
+	return (rc);
+}
 
 ComThread::ComThread(JobCtrl *jobCtrl, const wxString &socketPath)
     : JobThread(jobCtrl)
@@ -139,7 +186,8 @@ ComThread::connect(void)
 	 * *** client ***
 	 */
 
-	client_ = anoubis_client_create(channel_, ANOUBIS_AUTH_TRANSPORT, NULL);
+	client_ = anoubis_client_create(channel_, ANOUBIS_AUTH_TRANSPORTANDKEY,
+	    &x_auth_callback);
 	if (client_ == 0) {
 		disconnect();
 		return (Failure);
@@ -154,6 +202,12 @@ ComThread::connect(void)
 	if (result == -EPROTONOSUPPORT) {
 		disconnect();
 		return (VersionMismatch);
+	} else if (result == -X_AUTH_NOKEY) {
+		disconnect();
+		return (AuthNoKey);
+	} else if (result == -X_AUTH_KEYID) {
+		disconnect();
+		return (AuthWrongKeyId);
 	} else if (result != 0) {
 		disconnect();
 		return (Failure);
@@ -192,11 +246,21 @@ ComThread::Entry(void)
 	ConnectResult	 connectResult;
 
 	connectResult = connect();
-	if (connectResult == VersionMismatch) {
+
+	switch (connectResult) {
+	case Success:
+		break;
+	case Failure:
+		sendComEvent(JobCtrl::ERR_CONNECT);
+		return (0);
+	case VersionMismatch:
 		sendComEvent(JobCtrl::ERR_VERSION_PROT);
 		return (0);
-	} else if (connectResult != Success) {
-		sendComEvent(JobCtrl::ERR_CONNECT);
+	case AuthNoKey:
+		sendComEvent(JobCtrl::ERR_NO_KEY);
+		return (0);
+	case AuthWrongKeyId:
+		sendComEvent(JobCtrl::ERR_KEYID);
 		return (0);
 	}
 

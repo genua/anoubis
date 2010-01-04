@@ -66,7 +66,7 @@ class PassphraseReader
  * Certificate::load()! Once loaded, the certificate remains in memory until
  * the application quits.
  */
-class KeyCtrl : public Singleton<KeyCtrl>
+class KeyCtrl : public Singleton<KeyCtrl>, public wxEvtHandler
 {
 	public:
 		/**
@@ -188,6 +188,41 @@ class KeyCtrl : public Singleton<KeyCtrl>
 		 * Instance of users certificate.
 		 */
 		LocalCertificate cert_;
+
+		/**
+		 * Mutex used for synchronizing private-key-loading from
+		 * another thread than the GUI-thread.
+		 */
+		wxMutex loadMutex_;
+
+		/**
+		 * Condition used for signaling the state of the
+		 * load-procedure.
+		 */
+		wxCondition *loadCondition_;
+
+		/**
+		 * Holds the result of the load-procedure in case of 
+		 * loadPrivateKey() was called from another thread than the
+		 * GUI-thread.
+		 */
+		KeyResult loadResult_;
+
+		/**
+		 * Loads the private key independent from the calling thread.
+		 *
+		 * @return The result of the operation.
+		 */
+		KeyResult doLoadPrivateKey(void);
+
+		/**
+		 * Loads the private key in the GUI-thread.
+		 *
+		 * If loadPrivateKey() was invoked from another thread than
+		 * the GUI-thread, an event is posted to the GUI-thread and
+		 * this method is invoked.
+		 */
+		void onLoadPrivateKeyRequest(wxCommandEvent &);
 
 	friend class Singleton<KeyCtrl>;
 };

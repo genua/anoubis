@@ -53,8 +53,14 @@ class ComThread : public JobThread
 		enum ConnectResult {
 			Success,	/*!< Operation was successful. */
 			Failure,	/*!< Operation failed. */
-			VersionMismatch	/*!< Operation failed because of a
+			VersionMismatch,/*!< Operation failed because of a
 					     protocol version mismatch. */
+			AuthNoKey,	/*!< Authentication failed because
+					     key is is available. */
+			AuthWrongKeyId	/*!< Authentication failed because
+					     the daemon requests for a
+					     certificate which differs from
+					     the user's certificate. */
 		};
 
 		/**

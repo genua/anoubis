@@ -29,6 +29,7 @@
 
 #include <wx/app.h>
 #include <wx/apptrait.h>
+#include <wx/module.h>
 #include <wx/stdpaths.h>
 
 #include <check.h>
@@ -88,6 +89,31 @@ class tc_KeyCtrl_PassphraseReader : public PassphraseReader
 	private:
 		wxString passphrase_;
 		bool ok_;
+};
+
+class tc_KeyCtrl_Thread : public wxThread
+{
+	public:
+		tc_KeyCtrl_Thread(KeyCtrl *ctrl)
+		    : wxThread(wxTHREAD_JOINABLE)
+		{
+			this->ctrl_ = ctrl;
+		}
+
+		void *Entry(void)
+		{
+			result_ = ctrl_->loadPrivateKey();
+			return (0);
+		}
+
+		KeyCtrl::KeyResult getResult(void) const
+		{
+			return (this->result_);
+		}
+
+	private:
+		KeyCtrl *ctrl_;
+		KeyCtrl::KeyResult result_;
 };
 
 static tc_KeyCtrl_App	*tc_App;
@@ -171,6 +197,11 @@ setup()
 	setenv("HOME", tc_dir, 1);
 	tc_App = new tc_KeyCtrl_App(wxString::FromAscii(tc_dir));
 	wxApp::SetInstance(tc_App);
+	wxPendingEventsLocker = new wxCriticalSection;
+
+	wxModule::RegisterModules();
+	fail_unless(wxModule::InitializeModules(),
+	    "Failed to initialize wxModules");
 
 	tc_keyCtrl = KeyCtrl::getInstance();
 }
@@ -194,8 +225,11 @@ teardown()
 	memset(path_cert, 0, sizeof(path_cert));
 	memset(path_cnf, 0, sizeof(path_cnf));
 
+	wxModule::CleanUpModules();
 	wxApp::SetInstance(0);
 	delete tc_App;
+	delete wxPendingEventsLocker;
+	wxPendingEventsLocker = 0;
 
 	delete tc_keyCtrl;
 	tc_keyCtrl = 0;
@@ -294,6 +328,87 @@ START_TEST(tc_KeyCtrl_loadPrivateKey_canceled)
 }
 END_TEST
 
+START_TEST(tc_KeyCtrl_loadPrivateKey_thread_ok)
+{
+	tc_KeyCtrl_PassphraseReader reader(wxT("1234"), true);
+	tc_keyCtrl->setPassphraseReader(&reader);
+
+	PrivKey &privKey = tc_keyCtrl->getPrivateKey();
+	privKey.setFile(wxString::FromAscii(path_privkey));
+
+	tc_KeyCtrl_Thread thread(tc_keyCtrl);
+
+	fail_unless(thread.Create() == wxTHREAD_NO_ERROR,
+	    "Failed to create thread");
+	fail_unless(thread.Run() == wxTHREAD_NO_ERROR,
+	    "Failed to run thread");
+
+	while (thread.IsAlive()) {
+		tc_keyCtrl->ProcessPendingEvents();
+	}
+	thread.Wait();
+
+	KeyCtrl::KeyResult kRes = thread.getResult();
+	fail_unless(kRes == KeyCtrl::RESULT_KEY_OK,
+	    "Failed to load private key (%i)", kRes);
+	fail_unless(privKey.isLoaded(), "Private key is not loaded");
+}
+END_TEST
+
+START_TEST(tc_KeyCtrl_loadPrivateKey_thread_wrongpass)
+{
+	tc_KeyCtrl_PassphraseReader reader(wxT("foobar"), true);
+	tc_keyCtrl->setPassphraseReader(&reader);
+
+	PrivKey &privKey = tc_keyCtrl->getPrivateKey();
+	privKey.setFile(wxString::FromAscii(path_privkey));
+
+	tc_KeyCtrl_Thread thread(tc_keyCtrl);
+
+	fail_unless(thread.Create() == wxTHREAD_NO_ERROR,
+	    "Failed to create thread");
+	fail_unless(thread.Run() == wxTHREAD_NO_ERROR,
+	    "Failed to run thread");
+
+	while (thread.IsAlive()) {
+		tc_keyCtrl->ProcessPendingEvents();
+	}
+	thread.Wait();
+
+	KeyCtrl::KeyResult kRes = thread.getResult();
+	fail_unless(kRes == KeyCtrl::RESULT_KEY_WRONG_PASS,
+	    "Load private key was successful (%i)", kRes);
+	fail_unless(!privKey.isLoaded(), "Private key is loaded");
+}
+END_TEST
+
+START_TEST(tc_KeyCtrl_loadPrivateKey_thread_canceled)
+{
+	tc_KeyCtrl_PassphraseReader reader(wxT("1234"), false);
+	tc_keyCtrl->setPassphraseReader(&reader);
+
+	PrivKey &privKey = tc_keyCtrl->getPrivateKey();
+	privKey.setFile(wxString::FromAscii(path_privkey));
+
+	tc_KeyCtrl_Thread thread(tc_keyCtrl);
+
+	fail_unless(thread.Create() == wxTHREAD_NO_ERROR,
+	    "Failed to create thread");
+	fail_unless(thread.Run() == wxTHREAD_NO_ERROR,
+	    "Failed to run thread");
+
+	while (thread.IsAlive()) {
+		tc_keyCtrl->ProcessPendingEvents();
+	}
+	thread.Wait();
+
+	KeyCtrl::KeyResult kRes = thread.getResult();
+	fail_unless(kRes == KeyCtrl::RESULT_KEY_ABORT,
+	    "Load private key was successful (%i)", kRes);
+	fail_unless(!privKey.isLoaded(), "Private key is loaded");
+}
+END_TEST
+
 TCase *
 getTc_KeyCtrl(void)
 {
@@ -310,6 +425,9 @@ getTc_KeyCtrl(void)
 	tcase_add_test(testCase, tc_KeyCtrl_loadPrivateKey_ok);
 	tcase_add_test(testCase, tc_KeyCtrl_loadPrivateKey_wrongpass);
 	tcase_add_test(testCase, tc_KeyCtrl_loadPrivateKey_canceled);
+	tcase_add_test(testCase, tc_KeyCtrl_loadPrivateKey_thread_ok);
+	tcase_add_test(testCase, tc_KeyCtrl_loadPrivateKey_thread_wrongpass);
+	tcase_add_test(testCase, tc_KeyCtrl_loadPrivateKey_thread_canceled);
 
 	return (testCase);
 }

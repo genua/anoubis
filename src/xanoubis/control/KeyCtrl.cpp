@@ -28,6 +28,20 @@
 #include "KeyCtrl.h"
 #include "Singleton.cpp"
 
+/*
+ * Event if only used internally. That's why, it not not part of the
+ * public interface.
+ *
+ * anEVT_LOAD_PRIVKEY is fired, when the private key should be loaded.
+ * This needs to be performed in the GUI-thread because the user might
+ * enter the passphrase of the private key.
+ */
+BEGIN_DECLARE_EVENT_TYPES()
+	DECLARE_LOCAL_EVENT_TYPE(anEVT_LOAD_PRIVKEY, wxNewEventType())
+END_DECLARE_EVENT_TYPES()
+
+DEFINE_LOCAL_EVENT_TYPE(anEVT_LOAD_PRIVKEY)
+
 /* This function is needed by libanoubissig to call a passphrase
  * Reader just in need.
  * Since libanoubissig is using openssl it has to be in this
@@ -63,10 +77,22 @@ xpass_cb(char *buf, int size, int, void *err)
 KeyCtrl::KeyCtrl(void)
 {
 	this->passphraseReader_ = 0;
+
+	this->loadCondition_ = new wxCondition(loadMutex_);
+	this->loadResult_ = RESULT_KEY_ERROR;
+
+	Connect(anEVT_LOAD_PRIVKEY,
+	    wxCommandEventHandler(KeyCtrl::onLoadPrivateKeyRequest),
+	    NULL, this);
 }
 
 KeyCtrl::~KeyCtrl(void)
 {
+	Disconnect(anEVT_LOAD_PRIVKEY,
+	    wxCommandEventHandler(KeyCtrl::onLoadPrivateKeyRequest),
+	    NULL, this);
+
+	delete this->loadCondition_;
 }
 
 KeyCtrl *
@@ -108,6 +134,34 @@ KeyCtrl::canUseLocalKeys(void) const
 KeyCtrl::KeyResult
 KeyCtrl::loadPrivateKey(void)
 {
+	if (wxIsMainThread()) {
+		/* This is the GUI-thread, simply load the key */
+		return (doLoadPrivateKey());
+	} else {
+		/*
+		 * This current thread differs from the GUI-thread, but the
+		 * private key needs to be loaded from the GUI-thread because
+		 * the user might enter the passphrase.
+		 *
+		 * Post an event to the GUI-thread.
+		 */
+		loadMutex_.Lock();
+
+		wxCommandEvent event(anEVT_LOAD_PRIVKEY);
+		wxPostEvent(this, event);
+
+		/* Wait for the load-result from the GUI-thread */
+		loadCondition_->Wait();
+
+		loadMutex_.Unlock();
+
+		return (this->loadResult_);
+	}
+}
+
+KeyCtrl::KeyResult
+KeyCtrl::doLoadPrivateKey(void)
+{
 	PrivKey::PrivKeyResult keyRes;
 
 	if (!privKey_.isLoaded()) {
@@ -130,4 +184,16 @@ KeyCtrl::loadPrivateKey(void)
 		return (RESULT_KEY_ERROR);
 	} else
 		return (RESULT_KEY_OK); /* Already loaded */
+}
+
+void
+KeyCtrl::onLoadPrivateKeyRequest(wxCommandEvent &)
+{
+	assert(wxIsMainThread());
+
+	wxMutexLocker locker(loadMutex_);
+	loadResult_ = doLoadPrivateKey();
+
+	/* Inform the calling thread that the key is loaded */
+	loadCondition_->Signal();
 }

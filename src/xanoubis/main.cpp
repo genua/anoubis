@@ -585,13 +585,13 @@ AnoubisGuiApp::getGrubPath(void)
 wxString
 AnoubisGuiApp::readPassphrase(bool *ok)
 {
-	wxWindow *w = wxWindow::FindFocus();
 	wxString dName = wxEmptyString;
 	wxString msg = wxEmptyString;
 	wxString title = wxEmptyString;
 
-	if (w == 0)
-		w = GetTopWindow();
+	assert(wxIsMainThread());
+
+	wxWindow *w = wxWindow::FindWindowById(ID_MAINFRAME);
 
 	LocalCertificate &cert = KeyCtrl::getInstance()->getLocalCertificate();
 	PrivKey &pKey = KeyCtrl::getInstance()->getPrivateKey();

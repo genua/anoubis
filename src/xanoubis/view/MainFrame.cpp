@@ -409,6 +409,28 @@ MainFrame::OnConnectionStateChange(wxCommandEvent& event)
 		    wxOK | wxICON_ERROR, this);
 		Debug::info(logMessage);
 		break;
+	case JobCtrl::ERR_NO_KEY:
+		logMessage = _("Because of missing keys the connection was "
+		    "rejected. Please check your key-configuration "
+		    "(certificate, private key).");
+
+		anMessageBox(logMessage, _("Missing key"),
+		    wxOK | wxICON_ERROR, this);
+		Debug::info(logMessage);
+
+		break;
+	case JobCtrl::ERR_KEYID:
+		logMessage.Printf(_("Your configured certificate does not "
+		    "match with the certificate requested by the daemon. "
+		    "Please check your key-configuration or ask your "
+		    "system-administrator to configure your certificate at "
+		    "the daemon."));
+
+		anMessageBox(logMessage, _("Certificate mismatch"),
+		    wxOK | wxICON_ERROR, this);
+		Debug::info(logMessage);
+
+		break;
 	}
 
 	setConnectionString(connected, hostname);

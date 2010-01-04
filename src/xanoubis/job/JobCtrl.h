@@ -88,9 +88,18 @@ class JobCtrl : public wxEvtHandler, public Singleton<JobCtrl>
 					       established because of an
 					       Anoubis protocol version
 					       mismatch. */
-			ERR_VERSION_APN   /*!< The connection could not be
+			ERR_VERSION_APN,  /*!< The connection could not be
 					       established because of an APN
 					       parser version mismatch. */
+			ERR_NO_KEY,       /*!< The daemon requests
+					       client-authentication, but the
+					       private key could not be
+					       loaded. */
+			ERR_KEYID         /*!< The daemon requests
+					       client-authentication but the
+					       daemon asks for a certificate
+					       which is not configured at the
+					       client-side. */
 		};
 
 		~JobCtrl(void);

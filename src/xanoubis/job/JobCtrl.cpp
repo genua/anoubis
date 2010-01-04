@@ -299,7 +299,8 @@ JobCtrl::onConnectionStateChange(wxCommandEvent &event)
 	JobCtrl::ConnectionState state =
 	    (JobCtrl::ConnectionState)event.GetInt();
 
-	if (state == JobCtrl::ERR_RW || state == JobCtrl::ERR_VERSION_PROT) {
+	if (state == JobCtrl::ERR_RW || state == JobCtrl::ERR_VERSION_PROT ||
+	    state == JobCtrl::ERR_NO_KEY || state == JobCtrl::ERR_KEYID) {
 		/* Cleanup */
 		ComThread *t;
 		while ((t = findComThread()) != 0) {
