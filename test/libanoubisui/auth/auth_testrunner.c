@@ -68,14 +68,20 @@ setup(void)
 {
 	int	 error		= 0;
 	int	 challengeLen	= 0;
+	int	 len;
 	void	*challengeBuf	= NULL;
+	char *keyfile = TEST_KEY_FILE;
+	char *crtfile = TEST_CRT_FILE;
+
+	if (getenv("KEYDIR")) {
+		len = asprintf(&keyfile, "%s/%s", getenv("KEYDIR"), keyfile);
+		len = asprintf(&crtfile, "%s/%s", getenv("KEYDIR"), crtfile);
+	}
 
 	/* Create / read local key. */
-	asPrivKey = anoubis_sig_priv_init(TEST_KEY_FILE, TEST_CRT_FILE,
-	    NULL, &error);
+	asPrivKey = anoubis_sig_priv_init(keyfile, crtfile, NULL, &error);
 	fail_if(asPrivKey == NULL || error != 0, "Setup error: can't load "
-	    "private key %s / %s: %s", TEST_KEY_FILE, TEST_CRT_FILE,
-	    strerror(error));
+	    "private key %s / %s: %s", keyfile, crtfile, strerror(error));
 
 	/* Create AuthChallange message as received from server. */
 	challengeLen = strlen(TEST_CHALLENGE);

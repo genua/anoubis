@@ -102,20 +102,20 @@ START_TEST(csum_calc_userspace_einval)
 	int result;
 
 	result = anoubis_csum_calc_userspace(NULL, csum, &csum_len);
-	fail_unless(result == -EINVAL, "Unexpected result: %s",
+	fail_unless(result == -ERANGE, "Unexpected result: %s",
 	    strerror(-result));
 
 	result = anoubis_csum_calc_userspace(path, NULL, &csum_len);
-	fail_unless(result == -EINVAL, "Unexpected result: %s",
+	fail_unless(result == -ERANGE, "Unexpected result: %s",
 	    strerror(-result));
 
 	result = anoubis_csum_calc_userspace(path, csum, NULL);
-	fail_unless(result == -EINVAL, "Unexpected result: %s",
+	fail_unless(result == -ERANGE, "Unexpected result: %s",
 	    strerror(-result));
 
 	csum_len -= 1;
 	result = anoubis_csum_calc_userspace(path, csum, &csum_len);
-	fail_unless(result == -EINVAL, "Unexpected result: %s",
+	fail_unless(result == -ERANGE, "Unexpected result: %s",
 	    strerror(-result));
 }
 END_TEST

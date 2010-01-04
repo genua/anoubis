@@ -41,16 +41,12 @@ libanoubisprotocol = $(top_builddir)/$(protocoldir)/libanoubispc.so
 libanoubischat = $(top_builddir)/$(chatdir)/libanoubischat.so
 libanoubissig = $(top_builddir)/$(sigdir)/libanoubisig.so
 libapn = $(top_builddir)/$(apndir)/libapn.so
+authtestdir = test/libanoubisui/auth
 
 # set TESTS_ENVIRONMENT for checks
-RPATH = \
-	$(top_builddir)/$(bsdcompatdir):\
-	$(top_builddir)/$(authdir):\
-	$(top_builddir)/$(protocoldir):\
-	$(top_builddir)/$(chatdir):\
-	$(top_builddir)/$(apndir)
+RPATH = $(top_builddir)/$(bsdcompatdir):$(top_builddir)/$(authdir):$(top_builddir)/$(protocoldir):$(top_builddir)/$(chatdir):$(top_builddir)/$(apndir)
 
-TESTS_ENVIRONMENT = LD_LIBRARY_PATH=$(RPATH)
+TESTS_ENVIRONMENT = LD_LIBRARY_PATH=$(RPATH) KEYDIR=$(top_srcdir)/$(authtestdir)
 
 noinst_PROGRAMS = test_auth
 
@@ -96,8 +92,6 @@ endif
 test_auth_SOURCES = \
 	auth_testrunner.c
 
-authtestdir = test/libanoubisui/auth
+EXTRA_DIST = test.key test.crt
+
 install-exec-hook:
-	cp -f $(top_srcdir)/$(authtestdir)/test.key \
-	      $(top_srcdir)/$(authtestdir)/test.crt \
-	      $(top_builddir)/$(authtestdir)
