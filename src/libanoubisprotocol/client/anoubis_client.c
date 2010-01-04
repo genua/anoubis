@@ -170,7 +170,7 @@ int anoubis_client_verify(struct anoubis_client * client,
 {
 	if (!VERIFY_FIELD(m,general,type)
 	    || !crc32_check(m->u.buf, m->length))
-		return -EIO;
+		return -ERANGE;
 	if (get_value(m->u.general->type) == ANOUBIS_C_CLOSEREQ) {
 		client->state = ANOUBIS_STATE_CLOSING;
 		client->flags |= FLAG_GOTCLOSEREQ;
@@ -643,20 +643,20 @@ static int anoubis_client_process_event(struct anoubis_client * client,
 	case ANOUBIS_N_NOTIFY:
 	case ANOUBIS_N_LOGNOTIFY:
 		if (!VERIFY_LENGTH(m, sizeof(Anoubis_NotifyMessage)))
-			return -EIO;
+			return -ERANGE;
 		break;
 	case ANOUBIS_N_POLICYCHANGE:
 		if (!VERIFY_LENGTH(m, sizeof(Anoubis_PolicyChangeMessage)))
-			return -EIO;
+			return -ERANGE;
 		break;
 	case ANOUBIS_N_STATUSNOTIFY:
 		if (!VERIFY_LENGTH(m, sizeof(Anoubis_StatusNotifyMessage)))
-			return -EIO;
+			return -ERANGE;
 		break;
 	case ANOUBIS_N_RESYOU:
 	case ANOUBIS_N_RESOTHER:
 		if (!VERIFY_LENGTH(m, sizeof(Anoubis_NotifyResultMessage)))
-			return -EIO;
+			return -ERANGE;
 		break;
 	default:
 		return -EINVAL;
@@ -729,7 +729,7 @@ int anoubis_client_process(struct anoubis_client * client,
 	if (client->proto == ANOUBIS_PROTO_CONNECT)
 		return anoubis_client_continue_connect(client, m, opcode);
 	if (opcode == ANOUBIS_REPLY) {
-		ret = -EIO;
+		ret = -ERANGE;
 		if (!VERIFY_LENGTH(m, sizeof(Anoubis_AckMessage)))
 			goto err;
 		return anoubis_client_continue_self(client, m, opcode,
@@ -737,7 +737,7 @@ int anoubis_client_process(struct anoubis_client * client,
 	}
 	if (ANOUBIS_IS_NOTIFY(opcode)) {
 		anoubis_token_t token;
-		ret = -EIO;
+		ret = -ERANGE;
 		if (!VERIFY_FIELD(m, token, token))
 			goto err;
 		token = m->u.token->token;

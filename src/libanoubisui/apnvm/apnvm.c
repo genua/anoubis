@@ -752,7 +752,7 @@ anoubis_ui_init(void)
 
 	homepath = getenv("HOME");
 	if (homepath == NULL)
-		return -EINVAL;
+		return -ENOENT;
 	if (asprintf(&anoubispath, "%s/%s", homepath, ANOUBIS_UI_DIR) < 0)
 		return (-errno);
 
@@ -799,7 +799,7 @@ anoubis_ui_readversion(void)
 
 	homepath = getenv("HOME");
 	if (homepath == NULL)
-		return -EINVAL;
+		return -ENOENT;
 	if (asprintf(&versionpath, "%s/%s", homepath, ANOUBIS_UI_DIR"/version")
 	    < 0)
 		return -errno;

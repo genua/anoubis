@@ -150,7 +150,7 @@ apncmd_start(struct apncmd *cmd)
 
 	/* Cmd already running. */
 	if (cmd->pid != 0)
-		return -EINVAL;
+		return -EINPROGRESS;
 	if (pipe(startpipe) < 0)
 		return -errno;
 	cmd->pid = fork();
@@ -204,7 +204,7 @@ apncmd_start_pipe(struct apncmd *cmd)
 
 	/* Cmd alread running. */
 	if (cmd->pid != 0)
-		return -EINVAL;
+		return -EINPROGRESS;
 	if (pipe(startpipe) < 0)
 		return -errno;
 	if (pipe(p) < 0) {
@@ -259,7 +259,7 @@ apncmd_wait(struct apncmd *cmd)
 	int	status;
 
 	if (cmd->pid == 0 || cmd->pid == (pid_t)-1)
-		return -EINVAL;
+		return -ESRCH;
 	while(waitpid(cmd->pid, &status, 0) < 0) {
 		if (errno != EINTR)
 			return -errno;

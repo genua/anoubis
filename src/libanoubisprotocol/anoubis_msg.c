@@ -157,7 +157,7 @@ anoubis_extract_sig_type(const struct anoubis_msg *m, int reqtype,
 	const void	*payload;
 
 	if (!m || !VERIFY_LENGTH(m, sizeof(Anoubis_AckPayloadMessage)))
-		return -EFAULT;
+		return -ERANGE;
 	error = get_value(m->u.ackpayload->error);
 	if (error != 0)
 		return -error;
@@ -194,7 +194,7 @@ int anoubis_msg_send(struct achat_channel * chan, struct anoubis_msg * m)
 	achat_rc ret;
 
 	if (!VERIFY_LENGTH(m, sizeof(Anoubis_GeneralMessage)))
-		return -EINVAL;
+		return -ERANGE;
 	crc32_set(m->u.buf, m->length);
 	anoubis_dump(m, "anoubis_msg_send");
 	ret = acc_sendmsg(chan, m->u.buf, m->length);

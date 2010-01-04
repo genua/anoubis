@@ -133,7 +133,7 @@ anoubis_sig_verify_buffer(const void *buf, int buflen, const void *sig,
 	if (!key || !buf || !sig)
 		return -EINVAL;
 	if (siglen != EVP_PKEY_size(key))
-		return -EPERM;
+		return -ERANGE;
 	EVP_MD_CTX_init(&ctx);
 	if (EVP_VerifyInit(&ctx, ANOUBIS_SIG_HASH_DEFAULT) == 0) {
 		EVP_MD_CTX_cleanup(&ctx);
@@ -236,7 +236,7 @@ anoubis_sign_policy_buf(struct anoubis_sig *as, char *buf, unsigned int *len)
 
 	buf_len = strlen(buf);
 	if (buf_len != *len) {
-		*len = -EINVAL;
+		*len = -ERANGE;
 		return NULL;
 	}
 	pkey = as->pkey;

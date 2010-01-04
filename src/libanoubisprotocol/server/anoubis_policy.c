@@ -129,7 +129,7 @@ int anoubis_policy_comm_process(struct anoubis_policy_comm * comm,
 
 	if (!VERIFY_LENGTH(m, sizeof(Anoubis_PolicyRequestMessage))) {
 		anoubis_msg_free(m);
-		return -EINVAL;
+		return -ERANGE;
 	}
 	datalen = m->length - CSUM_LEN - sizeof(Anoubis_PolicyRequestMessage);
 	if (get_value(m->u.policyrequest->type) != ANOUBIS_P_REQUEST) {

@@ -118,7 +118,7 @@ int anoubis_csum_calc_userspace(const char *file, u_int8_t *cs, int *cslen)
 
 	if ((file == NULL) || (cs == NULL) || (cslen == NULL) ||
 	    (*cslen < ANOUBIS_CS_LEN)) {
-		return -EINVAL;
+		return -ERANGE;
 	}
 
 	fd = open(file, O_RDONLY);
@@ -156,7 +156,7 @@ anoubis_csum_calc(const char *file, u_int8_t * csbuf, int *cslen)
 	if (!file || !csbuf || !cslen)
 		return -EINVAL;
 	if (*cslen < ANOUBIS_CS_LEN)
-		return -EINVAL;
+		return -ERANGE;
 
 	if (afd == -1) {
 		if (stat(_PATH_DEV "anoubis", &fstat) != 0)
@@ -206,7 +206,7 @@ anoubis_csum_link_calc(const char *link, u_int8_t * csbuf, int *cslen)
 	ssize_t		ret;
 
 	if (*cslen < ANOUBIS_CS_LEN)
-		return -EINVAL;
+		return -ERANGE;
 
 	if(lstat(link, &sb) < 0)
 		return -errno;
@@ -371,7 +371,7 @@ int
 anoubis_print_checksum(FILE *fd, unsigned char *checksum, int len)
 {
 	if (len != ANOUBIS_CS_LEN)
-		return EINVAL;
+		return ERANGE;
 	return anoubis_print_signature(fd, checksum, ANOUBIS_CS_LEN);
 }
 

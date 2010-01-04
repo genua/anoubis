@@ -468,6 +468,7 @@ anoubis_process_version(struct anoubis_server *server, struct anoubis_msg *m,
     int opcode)
 {
 	struct anoubis_msg	*response;
+	int err = 0;
 
 	if (opcode != ANOUBIS_P_VERSION)
 		return -EINVAL;
@@ -481,10 +482,14 @@ anoubis_process_version(struct anoubis_server *server, struct anoubis_msg *m,
 	set_value(response->u.version->protocol, 0);
 	set_value(response->u.version->apn, 0);
 
-	if (!VERIFY_LENGTH(m, sizeof(Anoubis_GeneralMessage))
-	    || get_value(m->u.general->type) != ANOUBIS_P_VERSION
-	    || (server->proto & ANOUBIS_PROTO_POLICY) == 0) {
-		set_value(response->u.version->error, EINVAL);
+	if (!VERIFY_LENGTH(m, sizeof(Anoubis_GeneralMessage)))
+		err = -ERANGE;
+	else if ((get_value(m->u.general->type) != ANOUBIS_P_VERSION)
+	    || (server->proto & ANOUBIS_PROTO_POLICY) == 0)
+		err = -EPROTONOSUPPORT;
+
+	if (err) {
+		set_value(response->u.version->error, err);
 		return (anoubis_server_send(server, response));
 	}
 
@@ -519,7 +524,7 @@ int anoubis_dispatch_create(struct anoubis_server *server, int opcode,
 	struct dispatcher	*disp;
 
 	if (dispatch == NULL)
-		return -EINVAL;
+		return -EFAULT;
 	LIST_FOREACH(disp, &server->dispatch, next) {
 		if (disp->opcode == opcode)
 			return -EBUSY;
@@ -554,7 +559,7 @@ anoubis_process_dispatcher(struct anoubis_server *server,
     struct dispatcher *disp, struct anoubis_msg * m)
 {
 	if (!disp)
-		return -EINVAL;
+		return -EFAULT;
 	disp->dispatch(server, m, server->auth_uid, disp->arg);
 	return 0;
 }
