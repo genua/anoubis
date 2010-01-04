@@ -28,6 +28,7 @@
 #include <wx/stdpaths.h>
 
 #include <anoubis_sig.h>
+#include <keygen.h>
 
 #include "LocalCertificate.h"
 
@@ -38,6 +39,7 @@ LocalCertificate::LocalCertificate(void)
 
 	this->disName_ = wxEmptyString;
 	this->keyId_ = wxEmptyString;
+	this->subject_ = NULL;
 	this->cert_ = 0;
 
 	/* Assign default certificate, if already existing */
@@ -99,6 +101,62 @@ LocalCertificate::getDistinguishedName(void) const
 		return (wxEmptyString);
 }
 
+wxString
+LocalCertificate::getCountry(void) const
+{
+	if (subject_ && subject_->country)
+		return wxString::FromAscii(subject_->country);
+	return wxEmptyString;
+}
+
+wxString
+LocalCertificate::getState(void) const
+{
+	if (subject_ && subject_->state)
+		return wxString::FromAscii(subject_->state);
+	return wxEmptyString;
+}
+
+wxString
+LocalCertificate::getLocality(void) const
+{
+	if (subject_ && subject_->locality)
+		return wxString::FromAscii(subject_->locality);
+	return wxEmptyString;
+}
+
+wxString
+LocalCertificate::getOrganization(void) const
+{
+	if (subject_ && subject_->organization)
+		return wxString::FromAscii(subject_->organization);
+	return wxEmptyString;
+}
+
+wxString
+LocalCertificate::getOrganizationalUnit(void) const
+{
+	if (subject_ && subject_->orgunit)
+		return wxString::FromAscii(subject_->orgunit);
+	return wxEmptyString;
+}
+
+wxString
+LocalCertificate::getCommonName(void) const
+{
+	if (subject_ && subject_->name)
+		return wxString::FromAscii(subject_->name);
+	return wxEmptyString;
+}
+
+wxString
+LocalCertificate::getEmailAddress(void) const
+{
+	if (subject_ && subject_->email)
+		return wxString::FromAscii(subject_->email);
+	return wxEmptyString;
+}
+
 struct anoubis_sig *
 LocalCertificate::getCertificate(void) const
 {
@@ -129,6 +187,7 @@ LocalCertificate::load(void)
 	struct anoubis_sig *cert = anoubis_sig_pub_init(
 	    0, certFile_.fn_str(), 0, &error);
 
+
 	unload(); /* Destroy previously loaded certificate */
 
 	if (cert != 0) {
@@ -150,6 +209,11 @@ LocalCertificate::load(void)
 		if (!dname)
 			return (false);
 		disName_ = wxString::FromAscii(dname);
+
+		/* get and assign string tokens of subject */
+		subject_ = anoubis_keysubject_fromstring(dname);
+		if (!subject_)
+			return (false);
 		free(dname);
 	} else {
 		/* Failed to load certificate */
@@ -158,7 +222,7 @@ LocalCertificate::load(void)
 	return (true);
 }
 
-bool
+void
 LocalCertificate::unload(void)
 {
 	if (this->cert_ != 0) {
@@ -166,7 +230,9 @@ LocalCertificate::unload(void)
 		this->keyId_ = wxEmptyString;
 		this->cert_ = 0;
 
-		return (true);
-	} else
-		return (false);
+		if (this->subject_ != NULL) {
+			anoubis_keysubject_destroy(this->subject_);
+			this->subject_ = NULL;
+		}
+	}
 }

@@ -73,13 +73,21 @@ class tc_LocalCertificate_App : public wxApp
 
 static tc_LocalCertificate_App	*tc_App;
 static char			*tc_dir = 0;
-static char			path_privkey[64];
-static char			path_nokey[64];
-static char			path_cert[64];
-static char			path_cnf[64];
-static const char		*dname = "/C=DE/ST=Bayern/L=Kirchheim/O=Genua/"
+static char			 path_privkey[64];
+static char			 path_nokey[64];
+static char			 path_cert[64];
+static char			 path_cnf[64];
+static const char		*dname = "/C=DE/ST=Bayern/L=Kirchheim/O=GeNUA/"
 				    "OU=CoDev/CN=Worker/"
 				    "emailAddress=info@genua.de";
+static const char		*country = "DE";
+static const char		*state = "Bayern";
+static const char		*locality = "Kirchheim";
+static const char		*org = "GeNUA";
+static const char		*orgunit = "CoDev";
+static const char		*commonname = "Worker";
+static const char		*email = "info@genua.de";
+
 static void
 setup()
 {
@@ -139,11 +147,9 @@ setup()
 	}
 
 	sprintf(cmd,
-	    "openssl req -new -x509 -config %s -key %s -out %s -days 1 -subj "
-	    "/C=DE/ST=Bayern/L=Kirchheim/O=Genua/OU=CoDev/CN=Worker"
-	    "/emailAddress=info@genua.de -passin pass:1234 "
-	    ">/dev/null 2>&1",
-	    path_cnf, path_privkey, path_cert);
+	    "openssl req -new -x509 -config %s -key %s -out %s -days 1 "
+	    "-subj %s -passin pass:1234 >/dev/null 2>&1",
+	    path_cnf, path_privkey, path_cert, dname);
 	rc = system(cmd);
 	if (!WIFEXITED(rc) || WEXITSTATUS(rc) != 0) {
 		perror("openssl");
@@ -178,18 +184,40 @@ teardown()
 	delete tc_App;
 }
 
+/*
+ * Define this as a macro instead of an inline function to make sure
+ * useful lines are reported in error message.
+ */
+#define assert_noDN(CERT) do {						\
+	fail_unless((CERT).getDistinguishedName() == wxEmptyString,	\
+	    "A DN is assigned to the certificate");			\
+	fail_unless((CERT).getCountry() == wxEmptyString,		\
+	    "A country is assigned to the certificate");		\
+	fail_unless((CERT).getState() == wxEmptyString,			\
+	    "A state is assigned to the certificate");			\
+	fail_unless((CERT).getLocality() == wxEmptyString,		\
+	    "A locality is assigned to the certificate");		\
+	fail_unless((CERT).getOrganization() == wxEmptyString,		\
+	    "An organization is assigned to the certificate");		\
+	fail_unless((CERT).getOrganizationalUnit() == wxEmptyString,	\
+	    "An organizational unit is assigned to the certificate");	\
+	fail_unless((CERT).getCommonName() == wxEmptyString,		\
+	    "A common name is assigned to the certificate");		\
+	fail_unless((CERT).getEmailAddress() == wxEmptyString,		\
+	    "An email aderess is assigned to the certificate");		\
+} while (0)
+
 START_TEST(tc_LocalCertificate_create)
 {
 	LocalCertificate cert;
 
 	fail_unless(cert.getFile() == wxEmptyString,
-	    "A file is assiged to the certificate");
+	    "A file is assigned to the certificate");
 	fail_unless(cert.getKeyId() == wxEmptyString,
-	    "A keyid is assiged to the certificate");
+	    "A keyid is assigned to the certificate");
 	fail_unless(cert.getFingerprint() == wxEmptyString,
-	    "A fingerprint is assiged to the certificate");
-	fail_unless(cert.getDistinguishedName() == wxEmptyString,
-	    "A DN is assiged to the certificate");
+	    "A fingerprint is assigned to the certificate");
+	assert_noDN(cert);
 	fail_unless(!cert.canLoad(), "The certificate can be loaded");
 	fail_unless(!cert.isLoaded(), "The certificate is loaded");
 }
@@ -208,13 +236,12 @@ START_TEST(tc_LocalCertificate_create_default_cert)
 	LocalCertificate cert;
 
 	fail_unless(cert.getFile() == defKey,
-	    "No file is assiged to the certificate");
+	    "No file is assigned to the certificate");
 	fail_unless(cert.getKeyId() == wxEmptyString,
-	    "A keyid is assiged to the certificate");
+	    "A keyid is assigned to the certificate");
 	fail_unless(cert.getFingerprint() == wxEmptyString,
-	    "A fingerprint is assiged to the certificate");
-	fail_unless(cert.getDistinguishedName() == wxEmptyString,
-	    "A DN is assiged to the certificate");
+	    "A fingerprint is assigned to the certificate");
+	assert_noDN(cert);
 	fail_unless(cert.canLoad(), "The certificate cannot be loaded");
 	fail_unless(!cert.isLoaded(), "The certificate is loaded");
 }
@@ -228,13 +255,12 @@ START_TEST(tc_LocalCertificate_setFile_ok)
 	cert.setFile(path);
 
 	fail_unless(cert.getFile() == path,
-	    "No file is assiged to the certificate");
+	    "No file is assigned to the certificate");
 	fail_unless(cert.getKeyId() == wxEmptyString,
-	    "A keyid is assiged to the certificate");
+	    "A keyid is assigned to the certificate");
 	fail_unless(cert.getFingerprint() == wxEmptyString,
-	    "A fingerprint is assiged to the certificate");
-	fail_unless(cert.getDistinguishedName() == wxEmptyString,
-	    "A DN is assiged to the certificate");
+	    "A fingerprint is assigned to the certificate");
+	assert_noDN(cert);
 	fail_unless(cert.canLoad(), "The certificate cannot be loaded");
 	fail_unless(!cert.isLoaded(), "The certificate is loaded");
 }
@@ -247,13 +273,12 @@ START_TEST(tc_LocalCertificate_setFile_empty)
 	cert.setFile(wxEmptyString);
 
 	fail_unless(cert.getFile() == wxEmptyString,
-	    "A file is assiged to the certificate");
+	    "A file is assigned to the certificate");
 	fail_unless(cert.getKeyId() == wxEmptyString,
-	    "A keyid is assiged to the certificate");
+	    "A keyid is assigned to the certificate");
 	fail_unless(cert.getFingerprint() == wxEmptyString,
-	    "A fingerprint is assiged to the certificate");
-	fail_unless(cert.getDistinguishedName() == wxEmptyString,
-	    "A DN is assiged to the certificate");
+	    "A fingerprint is assigned to the certificate");
+	assert_noDN(cert);
 	fail_unless(!cert.canLoad(), "The certificate can be loaded");
 	fail_unless(!cert.isLoaded(), "The certificate is loaded");
 }
@@ -267,13 +292,12 @@ START_TEST(tc_LocalCertificate_setFile_unknown)
 	cert.setFile(path);
 
 	fail_unless(cert.getFile() == path,
-	    "No file is assiged to the certificate");
+	    "No file is assigned to the certificate");
 	fail_unless(cert.getKeyId() == wxEmptyString,
-	    "A keyid is assiged to the certificate");
+	    "A keyid is assigned to the certificate");
 	fail_unless(cert.getFingerprint() == wxEmptyString,
-	    "A fingerprint is assiged to the certificate");
-	fail_unless(cert.getDistinguishedName() == wxEmptyString,
-	    "A DN is assiged to the certificate");
+	    "A fingerprint is assigned to the certificate");
+	assert_noDN(cert);
 	fail_unless(!cert.canLoad(), "The certificate can be loaded");
 	fail_unless(!cert.isLoaded(), "The certificate is loaded");
 }
@@ -285,17 +309,31 @@ START_TEST(tc_LocalCertificate_load_ok)
 	LocalCertificate cert;
 
 	cert.setFile(path);
-	wxString disName = wxString::FromAscii(dname);
 
 	fail_unless(cert.load(), "Failed to load the certificate");
 	fail_unless(cert.getFile() == path,
-	    "No file is assiged to the certificate");
+	    "No file is assigned to the certificate");
 	fail_unless(cert.getKeyId() != wxEmptyString,
-	    "No keyid is assiged to the certificate");
+	    "No keyid is assigned to the certificate");
 	fail_unless(cert.getFingerprint() != wxEmptyString,
-	    "No fingerprint is assiged to the certificate");
-	fail_unless(cert.getDistinguishedName() == disName,
-	    "No DN is assiged to the certificate");
+	    "No fingerprint is assigned to the certificate");
+	fail_unless(cert.getDistinguishedName() == wxString::FromAscii(dname),
+	    "Bad distinguished name assigend to the certificate");
+	fail_unless(cert.getCountry() == wxString::FromAscii(country),
+	    "Bad country assigend to the certificate");
+	fail_unless(cert.getState() == wxString::FromAscii(state),
+	    "Bad state assigend to the certificate");
+	fail_unless(cert.getLocality() == wxString::FromAscii(locality),
+	    "Bad locality assigend to the certificate");
+	fail_unless(cert.getOrganization() == wxString::FromAscii(org),
+	    "Bad organization assigend to the certificate");
+	fail_unless(cert.getOrganizationalUnit() ==
+	    wxString::FromAscii(orgunit),
+	    "Bad organizational unit assigend to the certificate");
+	fail_unless(cert.getCommonName() == wxString::FromAscii(commonname),
+	    "Bad common name assigend to the certificate");
+	fail_unless(cert.getEmailAddress() == wxString::FromAscii(email),
+	    "Bad email address assigend to the certificate");
 	fail_unless(cert.canLoad(), "The certificate cannot be loaded");
 	fail_unless(cert.isLoaded(), "The certificate is not loaded");
 }
@@ -307,13 +345,12 @@ START_TEST(tc_LocalCertificate_load_nofile)
 
 	fail_unless(!cert.load(), "Loading of the certificate succeeded");
 	fail_unless(cert.getFile() == wxEmptyString,
-	    "A file is assiged to the certificate");
+	    "A file is assigned to the certificate");
 	fail_unless(cert.getKeyId() == wxEmptyString,
-	    "A keyid is assiged to the certificate");
+	    "A keyid is assigned to the certificate");
 	fail_unless(cert.getFingerprint() == wxEmptyString,
-	    "A fingerprint is assiged to the certificate");
-	fail_unless(cert.getDistinguishedName() == wxEmptyString,
-	    "A DN is assiged to the certificate");
+	    "A fingerprint is assigned to the certificate");
+	assert_noDN(cert);
 	fail_unless(!cert.canLoad(), "The certificate can be loaded");
 	fail_unless(!cert.isLoaded(), "The certificate is loaded");
 }
@@ -328,13 +365,12 @@ START_TEST(tc_LocalCertificate_load_wrongfile)
 
 	fail_unless(!cert.load(), "Loading the certificate succeeded");
 	fail_unless(cert.getFile() == path,
-	    "No file is assiged to the certificate");
+	    "No file is assigned to the certificate");
 	fail_unless(cert.getKeyId() == wxEmptyString,
-	    "A keyid is assiged to the certificate");
+	    "A keyid is assigned to the certificate");
 	fail_unless(cert.getFingerprint() == wxEmptyString,
-	    "A fingerprint is assiged to the certificate");
-	fail_unless(cert.getDistinguishedName() == wxEmptyString,
-	    "A DN is assiged to the certificate");
+	    "A fingerprint is assigned to the certificate");
+	assert_noDN(cert);
 	fail_unless(cert.canLoad(), "The certificate cannot be loaded");
 	fail_unless(!cert.isLoaded(), "The certificate is loaded");
 }
@@ -349,38 +385,16 @@ START_TEST(tc_LocalCertificate_unload_ok)
 
 	fail_unless(cert.load(), "Failed to load the certificate");
 
-	fail_unless(cert.unload(), "Failed to unload certificate");
+	cert.unload();
 
 	fail_unless(cert.getFile() == path,
-	    "No file is assiged to the certificate");
+	    "No file is assigned to the certificate");
 	fail_unless(cert.getKeyId() == wxEmptyString,
-	    "A keyid is assiged to the certificate");
+	    "A keyid is assigned to the certificate");
 	fail_unless(cert.getFingerprint() == wxEmptyString,
-	    "A fingerprint is assiged to the certificate");
-	fail_unless(cert.getDistinguishedName() == wxEmptyString,
-	    "A DN is assiged to the certificate");
+	    "A fingerprint is assigned to the certificate");
+	assert_noDN(cert);
 	fail_unless(cert.canLoad(), "The certificate cannot be loaded");
-	fail_unless(!cert.isLoaded(), "The certificate is loaded");
-}
-END_TEST
-
-START_TEST(tc_LocalCertificate_unload_notloaded)
-{
-	LocalCertificate cert;
-
-	fail_unless(!cert.load(), "Loading the certificate succedded");
-
-	fail_unless(!cert.unload(), "Unloading the certificate succeeded");
-
-	fail_unless(cert.getFile() == wxEmptyString,
-	    "A file is assiged to the certificate");
-	fail_unless(cert.getKeyId() == wxEmptyString,
-	    "A keyid is assiged to the certificate");
-	fail_unless(cert.getFingerprint() == wxEmptyString,
-	    "A fingerprint is assiged to the certificate");
-	fail_unless(cert.getDistinguishedName() == wxEmptyString,
-	    "A DN is assiged to the certificate");
-	fail_unless(!cert.canLoad(), "The certificate can be loaded");
 	fail_unless(!cert.isLoaded(), "The certificate is loaded");
 }
 END_TEST
@@ -404,7 +418,6 @@ getTc_LocalCertificate(void)
 	tcase_add_test(testCase, tc_LocalCertificate_load_nofile);
 	tcase_add_test(testCase, tc_LocalCertificate_load_wrongfile);
 	tcase_add_test(testCase, tc_LocalCertificate_unload_ok);
-	tcase_add_test(testCase, tc_LocalCertificate_unload_notloaded);
 
 	return (testCase);
 }

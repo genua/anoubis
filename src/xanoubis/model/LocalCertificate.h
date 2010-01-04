@@ -28,6 +28,7 @@
 #ifndef _LOCALCERTIFICATE_H_
 #define _LOCALCERTIFICATE_H_
 
+#include <keygen.h>
 #include <wx/string.h>
 
 /**
@@ -113,13 +114,77 @@ class LocalCertificate
 		/**
 		 * Returns the distinguished name assigned to the certificate.
 		 *
-		 * The method only returns a valid DN of a certificate
+		 * The method only returns a valid DN if a certificate
 		 * is loaded.
 		 *
 		 * @return The DN of the currently loaded certificate.
 		 * @see load()
 		 */
 		wxString getDistinguishedName(void) const;
+
+		/**
+		 * Returns the country name of the certificate in question.
+		 *
+		 * @return The country name of the currently loaded certificate
+		 * or wxEmptyString.
+		 * @see load()
+		 */
+		wxString getCountry(void) const;
+
+		/**
+		 * Returns the state or province of the certificate in question.
+		 *
+		 * @return The state or province of the currently loaded
+		 *	   certificate or wxEmptyString.
+		 * @see load()
+		 */
+		wxString getState(void) const;
+
+		/**
+		 * Returns the locality of the certificate in question.
+		 *
+		 * @return The locality of the currently loaded certificate
+		 * or wxEmptyString.
+		 * @see load()
+		 */
+		wxString getLocality(void) const;
+
+		/**
+		 * Returns the organization of the certificate in question.
+		 *
+		 * @return The organization of the currently loaded certificate
+		 * or wxEmptyString.
+		 * @see load()
+		 */
+		wxString getOrganization(void) const;
+
+		/**
+		 * Returns the organizational unit of the certificate in
+		 * question.
+		 *
+		 * @return The organizational unit of the currently loaded
+		 *	   certificate or wxEmptyString.
+		 * @see load()
+		 */
+		wxString getOrganizationalUnit(void) const;
+
+		/**
+		 * Returns the common name of the certificate in question.
+		 *
+		 * @return The common name of the currently loaded certificate
+		 * or wxEmptyString.
+		 * @see load()
+		 */
+		wxString getCommonName(void) const;
+
+		/**
+		 * Returns the email address of the certificate in question.
+		 *
+		 * @return The email address of the currently loaded
+		 *	   certificate or wxEmptyString.
+		 * @see load()
+		 */
+		wxString getEmailAddress(void) const;
 
 		/**
 		 * Returns the raw-certificate.
@@ -168,10 +233,9 @@ class LocalCertificate
 		/**
 		 * Unloads a certificate.
 		 *
-		 * @return On success, true is returned. A return value of
-		 *         false means, that no certificate was loaded.
+		 * @return Nothing.
 		 */
-		bool unload(void);
+		void unload(void);
 
 	private:
 		/**
@@ -188,6 +252,12 @@ class LocalCertificate
 		 * Distinguished Name of certificate
 		 */
 		wxString disName_;
+
+		/**
+		 * Struct containg fields provided by Distinguished Name
+		 * of certificate
+		 */
+		struct anoubis_keysubject *subject_;
 
 		/**
 		 * The certificate itself. Can be 0.

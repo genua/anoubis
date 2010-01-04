@@ -50,6 +50,7 @@ xanoubis_CPPFLAGS = \
 	-I$(top_srcdir)/$(anoubissigdir) \
 	-I$(top_srcdir)/$(anoubisuidir) \
 	-I$(top_srcdir)/$(anoubisuidir)/apnvm \
+	-I$(top_srcdir)/$(anoubisuidir)/key \
 	-I$(top_srcdir)/$(xanoubisdir) \
 	-I$(top_srcdir)/$(xanoubisdir)/model \
 	-I$(top_srcdir)/$(xanoubisdir)/view  \
@@ -343,6 +344,8 @@ xanoubis_SOURCES= \
 	view/ModOverviewPanelsBase.h \
 	view/ModSfsDetailsDlg.cpp \
 	view/ModSfsDetailsDlg.h \
+	view/ModSfsGenerateKeyDlg.cpp \
+	view/ModSfsGenerateKeyDlg.h \
 	view/ModSfsListCtrl.cpp \
 	view/ModSfsListCtrl.h \
 	view/ModSfsMainPanelImpl.cpp \

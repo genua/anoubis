@@ -238,7 +238,8 @@ class ModSfsMainPanelImpl : public ModSfsMainPanelBase, private Observer
 		void OnPrivKeyValidityPeriodChanged(wxSpinEvent&);
 
 		/**
-		 * Handle the event when key-pair generation was requested
+		 * Handle the event when key-pair generation was requested.
+		 * Opens the modal Generate-Keypair-Dialogue.
 		 * @param[in] 1st The event.
 		 * @return Nothing.
 		 */

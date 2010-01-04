@@ -203,4 +203,53 @@ class ModSfsDetailsDlgBase : public wxDialog
 	
 };
 
+///////////////////////////////////////////////////////////////////////////////
+/// Class ModSfsGenerateKeyDlgBase
+///////////////////////////////////////////////////////////////////////////////
+class ModSfsGenerateKeyDlgBase : public wxDialog 
+{
+	private:
+	
+	protected:
+		wxStaticText* m_staticText52;
+		wxTextCtrl* pathPrivKeyTxtCtrl;
+		wxButton* pathPrivKeyBrowseBtn;
+		wxStaticText* m_staticText53;
+		wxTextCtrl* PassphrPrivKeyTxtCtrl;
+		wxStaticBitmap* PassphrMisMatchIcon;
+		wxStaticText* PassphrMismatchTxt;
+		wxTextCtrl* PassphrRepeatPrivKeyTxtCtrl;
+		wxStaticText* m_staticText55;
+		wxStaticText* m_staticText50;
+		wxTextCtrl* pathToCertTxtCtrl;
+		wxButton* pathCertBrowseBtn;
+		wxStaticText* m_staticText42;
+		wxTextCtrl* CountryOfCertTxtCtrl;
+		
+		wxStaticText* m_staticText43;
+		wxTextCtrl* StateOfCertTxtCtrl;
+		
+		wxStaticText* m_staticText44;
+		wxTextCtrl* LocalityOfCertTxtCtrl;
+		
+		wxStaticText* m_staticText45;
+		wxTextCtrl* OrgaOfCertTxtCtrl;
+		
+		wxStaticText* m_staticText46;
+		wxTextCtrl* OrgaunitOfCertTxtCtrl;
+		
+		wxStaticText* m_staticText47;
+		wxTextCtrl* ComNameOfCertTxtCtrl;
+		
+		wxStaticText* m_staticText48;
+		wxTextCtrl* EmailOfCertTxtCtrl;
+		wxStdDialogButtonSizer* m_sdbSizer4;
+		wxButton* m_sdbSizer4OK;
+		wxButton* m_sdbSizer4Cancel;
+	
+	public:
+		ModSfsGenerateKeyDlgBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Generate Keypair"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize, long style = wxDEFAULT_DIALOG_STYLE, const wxString& name = wxT("GenerateKeypair") );
+	
+};
+
 #endif //__ModSfsPanelsBase__

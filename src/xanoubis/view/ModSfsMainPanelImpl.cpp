@@ -42,6 +42,7 @@
 #include "SfsOverviewAttrProvider.h"
 #include "SfsOverviewTable.h"
 #include "SimpleOverviewRow.h"
+#include "ModSfsGenerateKeyDlg.h"
 
 ModSfsMainPanelImpl::ModSfsMainPanelImpl(wxWindow* parent, wxWindowID id)
     : ModSfsMainPanelBase(parent, id), Observer(NULL)
@@ -124,7 +125,7 @@ ModSfsMainPanelImpl::OnGridCellLeftDClick(wxGridEvent& event)
 	FilterPolicy		*policy;
 	PolicyRuleSet		*ruleset;
 
-	table		= dynamic_cast<SfsOverviewTable *> (lst_Rules->GetTable());
+	table = dynamic_cast<SfsOverviewTable *> (lst_Rules->GetTable());
 
 	if (table == NULL) {
 		return;
@@ -471,7 +472,10 @@ ModSfsMainPanelImpl::OnPrivKeyValidityPeriodChanged(wxSpinEvent&)
 void
 ModSfsMainPanelImpl::OnGenerateKeyPair(wxCommandEvent&)
 {
-	printf("ModSfsMainPanelImpl::OnGenerateKeyPair() pressed!\n");
+    /* Display Generate-Keypair-Dialogue */
+    ModSfsGenerateKeyDlg *dlg = new ModSfsGenerateKeyDlg(this);
+    dlg->ShowModal();
+    dlg->Destroy();
 }
 
 void
@@ -690,16 +694,13 @@ ModSfsMainPanelImpl::certificateParamsUpdate(const wxString &path)
 	/* Update view */
 	certificatePicker->setFileName(cert.getFile());
 	CertFingerprintText->SetLabel(cert.getFingerprint());
-	/*
-	 * CertDnText->SetLabel(cert.getDistinguishedName());
-	 * CertCountryText->SetLabel(_("DE"));
-	 * CertStateText->SetLabel(_("BAYERN"));
-	 * CertLocalityText->SetLabel(_("KIRCHHEIM"));
-	 * CertOrgaText->SetLabel(_("GeNUA mbH"));
-	 * CertOrgaunitText->SetLabel(_("CoDev"));
-	 * CertCnText->SetLabel(_("Olaf Baumgartner"));
-	 * CertEmailText->SetLabel(_("obaum@genua.de"));
-	 */
+	CertCountryText->SetLabel(cert.getCountry());
+	CertStateText->SetLabel(cert.getState());
+	CertLocalityText->SetLabel(cert.getLocality());
+	CertOrgaText->SetLabel(cert.getOrganization());
+	CertOrgaunitText->SetLabel(cert.getOrganizationalUnit());
+	CertCnText->SetLabel((cert.getCommonName()));
+	CertEmailText->SetLabel(cert.getEmailAddress());
 
 	/* Inform any listener about change of configuration */
 	wxCommandEvent event(anEVT_LOAD_KEY);

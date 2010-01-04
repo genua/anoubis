@@ -68,7 +68,11 @@ libanoubissig     = $(top_builddir)/$(anoubissigdir)/libanoubissig.a
 libGUIcomponents  = $(top_builddir)/$(xanoubisdir)/libGUIcomponents.so
 libanoubischeck   = $(top_builddir)/$(anoubischeckdir)/libanoubischeck.a
 
-libanouibisui_CPPFLAGS = -I$(top_srcdir)/$(uidir)
+libanouibisui_CPPFLAGS = \
+	-I$(top_srcdir)/$(uidir) \
+	-I$(top_srcdir)/$(uidir)/key \
+	-I$(top_srcdir)/$(uidir)/auth
+
 libapn_CPPFLAGS = -I$(top_srcdir)/$(apndir)
 libbsdcompat_CPPFLAGS = -I$(top_srcdir)/$(bsdcompatdir)
 libanoubischat_CPPFLAGS = -I$(top_srcdir)/$(anoubischatdir)
@@ -269,7 +273,7 @@ testSuite_Sfs_SOURCES = \
 #
 # Testsuite: Key
 #
-testSuite_Key_CPPFLAGS = $(libGUIcomponents_CPPFLAGS)
+testSuite_Key_CPPFLAGS = $(libGUIcomponents_CPPFLAGS) $(libanouibisui_CPPFLAGS)
 testSuite_Key_CXXFLAGS = $(libGUIcomponents_CXXFLAGS) @CHECK_CFLAGS@
 testSuite_Key_LDFLAGS = $(shared_AM_LDFLAGS) -dynamic -L $(RPATH)
 testSuite_Key_DEPENDENCIES = $(libGUIcomponents_DEPENDS)
@@ -294,7 +298,7 @@ testSuite_Key_SOURCES = \
 #
 # Testsuite: JobCtrl
 #
-testSuite_JobCtrl_CPPFLAGS = $(libGUIcomponents_CPPFLAGS)
+testSuite_JobCtrl_CPPFLAGS = $(libGUIcomponents_CPPFLAGS) $(libanouibisui_CPPFLAGS)
 testSuite_JobCtrl_CXXFLAGS = $(libGUIcomponents_CXXFLAGS) @CHECK_CFLAGS@
 testSuite_JobCtrl_LDFLAGS = $(shared_AM_LDFLAGS) -dynamic -L $(RPATH)
 testSuite_JobCtrl_DEPENDENCIES = $(libGUIcomponents_DEPENDS)

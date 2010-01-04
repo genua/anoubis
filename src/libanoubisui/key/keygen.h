@@ -63,7 +63,7 @@ struct anoubis_keysubject {
 
 
 __BEGIN_DECLS
-extern int	anoubis_keygen(const char *private, const char *public,
+extern int	anoubis_keygen(const char *priv, const char *pub,
 		    const char *pass, const char *subject, int bits);
 extern struct anoubis_keysubject *anoubis_keysubject_defaults(void);
 extern struct anoubis_keysubject *anoubis_keysubject_fromstring(const char *);
