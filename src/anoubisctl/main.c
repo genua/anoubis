@@ -1314,7 +1314,7 @@ auth_callback(struct anoubis_client *client __used, struct anoubis_msg *in,
 		rc = -EPERM;
 		break;
 	case ANOUBIS_AUTHERR_KEY_MISMATCH:
-		fprintf(stderr, "The daemon key and the key used by sfssig"
+		fprintf(stderr, "The daemon key and the key used by anoubisctl"
 		    " do not match\n");
 		rc = -EPERM;
 		break;
