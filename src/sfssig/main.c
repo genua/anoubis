@@ -468,7 +468,13 @@ main(int argc, char *argv[])
 		dofilter = 1;
 	}
 
-	ret = 0;
+	ret = create_channel();
+	if (ret != 0) {
+		syslog(LOG_WARNING, "Cannot connect to the Anoubis daemon");
+		done = 1;
+		goto finish;
+	}
+
 	for (i = 0; i < sizeof(commands)/sizeof(struct cmd); i++) {
 		if(strcmp(sfs_command, commands[i].command) != 0)
 			continue;
@@ -523,6 +529,8 @@ main(int argc, char *argv[])
 		}
 	}
 
+finish:
+
 	closelog();
 
 	if (as)
@@ -556,19 +564,10 @@ sfs_sumop_flags(char *file, int operation, u_int8_t *cs, int cslen, int idlen,
     uid_t uid, unsigned int flags)
 {
 	struct anoubis_transaction	*t;
-	int				 error = 0;
 	int				 len = 0;
 
 	if (opts & SFSSIG_OPT_DEBUG)
 		fprintf(stderr, ">sfs_sumop\n");
-	if (client == NULL) {
-		error = create_channel();
-		if (error) {
-			syslog(LOG_WARNING,
-			    "Cannot connect to the Anoubis daemon");
-			return NULL;
-		}
-	}
 
 	if (cs) {
 		if (operation == ANOUBIS_CHECKSUM_OP_ADDSUM)
@@ -612,18 +611,9 @@ sfs_listop(char *file, uid_t uid, struct anoubis_sig *as,
     unsigned int flags)
 {
 	struct anoubis_transaction	*t;
-	int				 error;
 
 	if (opts & SFSSIG_OPT_DEBUG)
 		fprintf(stderr, ">sfs_listop\n");
-	if (client == NULL) {
-		error = create_channel();
-		if (error) {
-			syslog(LOG_WARNING,
-			    "Cannot connect to the Anoubis daemon");
-			return NULL;
-		}
-	}
 	if (opts & SFSSIG_OPT_DEBUG2)
 		fprintf(stderr, "starting checksum list request: "
 		    "file=%s uid=%d as=%p flags=%u\n", file, uid, as, flags);
@@ -714,18 +704,10 @@ sfs_add(char *file, uid_t sfs_uid)
 	int				 ret;
 	int				 cnt = 0;
 	int				 i;
-	int				 error = 0;
 
 	if (opts & SFSSIG_OPT_DEBUG)
 		fprintf(stderr, ">sfs_add\n");
 
-	if (client == NULL) {
-		error = create_channel();
-		if (error) {
-			perror("sfs_add");
-			return 1;
-		}
-	}
 	if (opts & SFSSIG_OPT_LN) {
 		ret = anoubis_csum_link_calc(file, cs, &len);
 	} else {
@@ -912,13 +894,6 @@ __sfs_get(char *file, int getmode, uid_t sfs_uid)
 	 * calculate the actual checksum of the file
 	 */
 	if (getmode == GET_VALIDATE) {
-		if (client == NULL) {
-			error = create_channel();
-			if (error) {
-				perror("sfs_validate");
-				return 1;
-			}
-		}
 		if (opts & SFSSIG_OPT_LN) {
 			error = anoubis_csum_link_calc(file, val_check, &len);
 		} else {
@@ -2080,7 +2055,6 @@ create_channel(void)
 		client = NULL;
 		acc_destroy(channel);
 		channel = NULL;
-		perror("anoubis_client_connect");
 		error = 5;
 		goto err;
 	}
