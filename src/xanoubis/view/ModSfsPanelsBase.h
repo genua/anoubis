@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 GeNUA mbH <info@genua.de>
+ * Copyright (c) 2010 GeNUA mbH <info@genua.de>
  *
  * All rights reserved.
  *
@@ -217,9 +217,9 @@ class ModSfsGenerateKeyDlgBase : public wxDialog
 		wxStaticText* m_staticText53;
 		wxTextCtrl* PassphrPrivKeyTxtCtrl;
 		wxStaticBitmap* PassphrMisMatchIcon;
-		wxStaticText* PassphrMismatchTxt;
+		wxStaticText* PassphrRepeatTxt;
 		wxTextCtrl* PassphrRepeatPrivKeyTxtCtrl;
-		wxStaticText* m_staticText55;
+		wxStaticText* PassphrMismatchTxt;
 		wxStaticText* m_staticText50;
 		wxTextCtrl* pathToCertTxtCtrl;
 		wxButton* pathCertBrowseBtn;
@@ -246,6 +246,11 @@ class ModSfsGenerateKeyDlgBase : public wxDialog
 		wxStdDialogButtonSizer* m_sdbSizer4;
 		wxButton* m_sdbSizer4OK;
 		wxButton* m_sdbSizer4Cancel;
+		
+		// Virtual event handlers, overide them in your derived class
+		virtual void InitDialog( wxInitDialogEvent& event ){ event.Skip(); }
+		virtual void OnOkButton( wxCommandEvent& event ){ event.Skip(); }
+		
 	
 	public:
 		ModSfsGenerateKeyDlgBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Generate Keypair"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize, long style = wxDEFAULT_DIALOG_STYLE, const wxString& name = wxT("GenerateKeypair") );

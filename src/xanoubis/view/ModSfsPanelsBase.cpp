@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 GeNUA mbH <info@genua.de>
+ * Copyright (c) 2010 GeNUA mbH <info@genua.de>
  *
  * All rights reserved.
  *
@@ -543,48 +543,48 @@ ModSfsGenerateKeyDlgBase::ModSfsGenerateKeyDlgBase( wxWindow* parent, wxWindowID
 	wxStaticBoxSizer* sz_PrivateKey;
 	sz_PrivateKey = new wxStaticBoxSizer( new wxStaticBox( this, -1, _("Private Key") ), wxVERTICAL );
 	
-	wxFlexGridSizer* fgSizer111;
-	fgSizer111 = new wxFlexGridSizer( 1, 3, 0, 0 );
-	fgSizer111->AddGrowableCol( 1 );
-	fgSizer111->SetFlexibleDirection( wxBOTH );
-	fgSizer111->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+	wxFlexGridSizer* privkeySizer;
+	privkeySizer = new wxFlexGridSizer( 1, 3, 0, 0 );
+	privkeySizer->AddGrowableCol( 1 );
+	privkeySizer->SetFlexibleDirection( wxBOTH );
+	privkeySizer->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
 	
 	m_staticText52 = new wxStaticText( this, wxID_ANY, _("Configure private key:"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_staticText52->Wrap( -1 );
-	fgSizer111->Add( m_staticText52, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	privkeySizer->Add( m_staticText52, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	pathPrivKeyTxtCtrl = new wxTextCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
 	pathPrivKeyTxtCtrl->SetMinSize( wxSize( 220,-1 ) );
 	
-	fgSizer111->Add( pathPrivKeyTxtCtrl, 1, wxALL|wxALIGN_CENTER_VERTICAL|wxALIGN_CENTER_HORIZONTAL, 5 );
+	privkeySizer->Add( pathPrivKeyTxtCtrl, 1, wxALL|wxALIGN_CENTER_VERTICAL|wxALIGN_CENTER_HORIZONTAL, 5 );
 	
 	pathPrivKeyBrowseBtn = new wxButton( this, wxID_ANY, _("Browse..."), wxDefaultPosition, wxDefaultSize, 0 );
-	fgSizer111->Add( pathPrivKeyBrowseBtn, 0, wxALIGN_RIGHT|wxALL, 5 );
+	privkeySizer->Add( pathPrivKeyBrowseBtn, 0, wxALIGN_RIGHT|wxALL, 5 );
 	
 	m_staticText53 = new wxStaticText( this, wxID_ANY, _("Passphrase:"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_staticText53->Wrap( -1 );
-	fgSizer111->Add( m_staticText53, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	privkeySizer->Add( m_staticText53, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	PassphrPrivKeyTxtCtrl = new wxTextCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
-	fgSizer111->Add( PassphrPrivKeyTxtCtrl, 0, wxALL|wxALIGN_CENTER_VERTICAL|wxEXPAND, 5 );
+	PassphrPrivKeyTxtCtrl = new wxTextCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PASSWORD );
+	privkeySizer->Add( PassphrPrivKeyTxtCtrl, 0, wxALL|wxALIGN_CENTER_VERTICAL|wxEXPAND, 5 );
 	
 	PassphrMisMatchIcon = new wxStaticBitmap( this, wxID_ANY, wxNullBitmap, wxDefaultPosition, wxDefaultSize, 0 );
-	fgSizer111->Add( PassphrMisMatchIcon, 0, wxALL, 5 );
+	PassphrMisMatchIcon->Hide();
 	
-	PassphrMismatchTxt = new wxStaticText( this, wxID_ANY, _("Passphrase (repeat):"), wxDefaultPosition, wxDefaultSize, 0 );
+	privkeySizer->Add( PassphrMisMatchIcon, 0, wxALL, 5 );
+	
+	PassphrRepeatTxt = new wxStaticText( this, wxID_ANY, _("Passphrase (repeat):"), wxDefaultPosition, wxDefaultSize, 0 );
+	PassphrRepeatTxt->Wrap( -1 );
+	privkeySizer->Add( PassphrRepeatTxt, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	
+	PassphrRepeatPrivKeyTxtCtrl = new wxTextCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PASSWORD );
+	privkeySizer->Add( PassphrRepeatPrivKeyTxtCtrl, 1, wxALL|wxALIGN_CENTER_VERTICAL|wxEXPAND, 5 );
+	
+	PassphrMismatchTxt = new wxStaticText( this, wxID_ANY, _("Passphrase mismatch!"), wxDefaultPosition, wxDefaultSize, 0 );
 	PassphrMismatchTxt->Wrap( -1 );
-	fgSizer111->Add( PassphrMismatchTxt, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	privkeySizer->Add( PassphrMismatchTxt, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	PassphrRepeatPrivKeyTxtCtrl = new wxTextCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
-	fgSizer111->Add( PassphrRepeatPrivKeyTxtCtrl, 1, wxALL|wxALIGN_CENTER_VERTICAL|wxEXPAND, 5 );
-	
-	m_staticText55 = new wxStaticText( this, wxID_ANY, _("Passphrase mismatch!"), wxDefaultPosition, wxDefaultSize, 0 );
-	m_staticText55->Wrap( -1 );
-	m_staticText55->Enable( false );
-	
-	fgSizer111->Add( m_staticText55, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
-	
-	sz_PrivateKey->Add( fgSizer111, 1, wxEXPAND, 5 );
+	sz_PrivateKey->Add( privkeySizer, 1, wxEXPAND, 5 );
 	
 	bSizer18->Add( sz_PrivateKey, 1, wxEXPAND, 5 );
 	
@@ -691,4 +691,8 @@ ModSfsGenerateKeyDlgBase::ModSfsGenerateKeyDlgBase( wxWindow* parent, wxWindowID
 	this->SetSizer( bSizer18 );
 	this->Layout();
 	bSizer18->Fit( this );
+	
+	// Connect Events
+	this->Connect( wxEVT_INIT_DIALOG, wxInitDialogEventHandler( ModSfsGenerateKeyDlgBase::InitDialog ) );
+	m_sdbSizer4OK->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModSfsGenerateKeyDlgBase::OnOkButton ), NULL, this );
 }

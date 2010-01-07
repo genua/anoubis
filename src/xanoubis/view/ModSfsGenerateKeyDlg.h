@@ -42,8 +42,40 @@
  */
 class ModSfsGenerateKeyDlg : public ModSfsGenerateKeyDlgBase
 {
-	public:
-		ModSfsGenerateKeyDlg(wxWindow *);
+public:
+	/**
+	 * Constructor: Intialize dialog with default values.
+	 * @param[in] 1st The parent window.
+	 */
+	ModSfsGenerateKeyDlg(wxWindow *);
+
+protected:
+	/**
+	 * Handler that is called if the OK button is pressed.
+	 * @param[in] 1st The button event.
+	 * @return None.
+	 */
+	virtual void OnOkButton(wxCommandEvent& event);
+
+	/**
+	 * This is called after the construction of the dialog but
+	 * before the user inputs data. We can hide some elements of the
+	 * dialog that are only display in response to user input here.
+	 * 
+	 * @param[in] 1st The init event.
+	 * @return None.
+	 */
+	virtual void InitDialog(wxInitDialogEvent & event);
+
+private:
+	/**
+	 * Generate a name prefix for a new private/public key pair.
+	 * Make sure that neither prefix + wxT(".crt") nor
+	 * prefix + wxT(".key") exists.
+	 * @param None.
+	 * @return The new prefix.
+	 */
+	wxString	newDefaultName(void);
 };
 
 

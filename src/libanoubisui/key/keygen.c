@@ -36,6 +36,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <fcntl.h>
 #include <pwd.h>
 
 #ifdef NEEDBSDCOMPAT
@@ -376,6 +377,13 @@ anoubis_exec_openssl(char *argv[], const char *pass, mode_t umaskadd)
 		umask(nmask);
 		close(0);
 		if (dup(p[0]) != 0)
+			_exit(126);
+		close(1);
+		close(2);
+		/* Redirect output of ssl command to /dev/null. */
+		if (open("/dev/null", O_WRONLY) != 1)
+			_exit(126);
+		if (open("/dev/null", O_WRONLY) != 2)
 			_exit(126);
 		close(p[0]);
 		close(p[1]);
