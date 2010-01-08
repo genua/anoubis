@@ -49,6 +49,24 @@ public:
 	 */
 	ModSfsGenerateKeyDlg(wxWindow *);
 
+	/**
+	 * Returns the path of the file, where the private key is stored.
+	 *
+	 * The path is configured in the dialog.
+	 *
+	 * @return Path of private key
+	 */
+	wxString getPathPrivateKey(void) const;
+
+	/**
+	 * Returns the path of the file, where the certificate is stored.
+	 *
+	 * The path is configured in the dialog.
+	 *
+	 * @return Path of certificate
+	 */
+	wxString getPathCertificate(void) const;
+
 protected:
 	/**
 	 * Handler that is called if the OK button is pressed.

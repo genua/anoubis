@@ -306,9 +306,9 @@ class ModSfsMainPanelImpl : public ModSfsMainPanelBase, private Observer
 		/**
 		 * Update the certificate parameters.
 		 * @param[in] 1st The path to the certificate file.
-		 * return Nothing.
+		 * @return true if the certificate has changed
 		 */
-		void certificateParamsUpdate(const wxString &);
+		bool certificateParamsUpdate(const wxString &);
 
 		/**
 		 * Handle the event on show SFS browser.

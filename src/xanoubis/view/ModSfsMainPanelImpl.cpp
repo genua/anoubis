@@ -125,7 +125,20 @@ ModSfsMainPanelImpl::update(Subject *subject)
 		    privKeyValidityChoice->GetCurrentSelection() == 0,
 		    privKeyValiditySpinCtrl->GetValue());
 	} else if (subject == certificatePicker) {
-		certificateParamsUpdate(certificatePicker->getFileName());
+		bool changed =
+		    certificateParamsUpdate(certificatePicker->getFileName());
+
+		if (changed) {
+			AnMessageDialog *dlg = new AnMessageDialog(this,
+			    _("You have selected a new certificate. To be "
+			    "able to use the key, you need to activate it! "
+			    "Please inform your administrator (e.g. by "
+			    "email)."), _("Certificate notice"),
+			    wxOK | wxICON_INFORMATION);
+			dlg->onNotifyCheck(wxT("/Options/ShowCertMessage"));
+			dlg->ShowModal();
+			dlg->Destroy();
+		}
 	} else {
 		/* Unknown subject type - do nothing */
 	}
@@ -492,10 +505,44 @@ ModSfsMainPanelImpl::OnPrivKeyValidityPeriodChanged(wxSpinEvent&)
 void
 ModSfsMainPanelImpl::onGenerateKeyPairButton(wxCommandEvent&)
 {
-    /* Display Generate-Keypair-Dialogue */
-    ModSfsGenerateKeyDlg *dlg = new ModSfsGenerateKeyDlg(this);
-    dlg->ShowModal();
-    dlg->Destroy();
+	/* Display Generate-Keypair-Dialogue */
+	ModSfsGenerateKeyDlg *dlg = new ModSfsGenerateKeyDlg(this);
+	int result = dlg->ShowModal();
+	dlg->Destroy();
+
+	if (keyPicker->getFileName().IsEmpty() &&
+	    certificatePicker->getFileName().IsEmpty()) {
+		/* This is the first keypair, configure it */
+		privKeyParamsUpdate(dlg->getPathPrivateKey(),
+		    privKeyValidityChoice->GetCurrentSelection() == 0,
+		    privKeyValiditySpinCtrl->GetValue());
+		certificateParamsUpdate(dlg->getPathCertificate());
+
+		AnMessageDialog *dlg = new AnMessageDialog(this,
+		    _("You have created a new keypair. To be "
+		    "able to use it, you need to activate it! "
+		    "Please inform your administrator (e.g. by "
+		    "email)."), _("Certificate notice"),
+		    wxOK | wxICON_INFORMATION);
+		dlg->onNotifyCheck(wxT("/Options/ShowCertMessage"));
+		dlg->ShowModal();
+		dlg->Destroy();
+	} else {
+		result = anMessageBox(_("You have created a new keypair but "
+		    "it is not used because a keypair is already "
+		    "configured.\nDo you want to replace the currently "
+		    "configured keypair with the new one? (If you say yes "
+		    "here, you need to inform your administrator (e.g. by "
+		    "email)."), _("Certificate notice"),
+		    wxYES_NO | wxICON_QUESTION, this);
+
+		if (result == wxYES) {
+			privKeyParamsUpdate(dlg->getPathPrivateKey(),
+			    privKeyValidityChoice->GetCurrentSelection() == 0,
+			    privKeyValiditySpinCtrl->GetValue());
+			certificateParamsUpdate(dlg->getPathCertificate());
+		}
+	}
 }
 
 void
@@ -692,15 +739,17 @@ ModSfsMainPanelImpl::privKeyParamsUpdate(const wxString &path, bool sessionEnd,
 	wxPostEvent(AnEvents::getInstance(), event);
 }
 
-void
+bool
 ModSfsMainPanelImpl::certificateParamsUpdate(const wxString &path)
 {
 	LocalCertificate &cert = KeyCtrl::getInstance()->getLocalCertificate();
 
+	bool changed = cert.getFile() != path;
 	cert.setFile(path);
 
 	if (!path.IsEmpty()) {
 		if (!cert.load()) {
+			changed = false;
 			anMessageBox(wxString::Format(
 			    _("Failed to load certificate from\n%ls."),
 			    cert.getFile().c_str()),
@@ -708,6 +757,7 @@ ModSfsMainPanelImpl::certificateParamsUpdate(const wxString &path)
 		}
 	} else {
 		/* Reset certificate */
+		changed = false;
 		cert.unload();
 	}
 
@@ -728,6 +778,8 @@ ModSfsMainPanelImpl::certificateParamsUpdate(const wxString &path)
 	event.SetInt(1); /* 1 := certificate */
 
 	wxPostEvent(AnEvents::getInstance(), event);
+
+	return (changed);
 }
 
 void

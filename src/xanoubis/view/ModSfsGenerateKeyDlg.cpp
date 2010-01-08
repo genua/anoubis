@@ -116,6 +116,18 @@ ModSfsGenerateKeyDlg::ModSfsGenerateKeyDlg(wxWindow *parent)
 	passphraseMismatchIcon->SetIcon(icon);
 }
 
+wxString
+ModSfsGenerateKeyDlg::getPathPrivateKey(void) const
+{
+	return keyPicker->getFileName();
+}
+
+wxString
+ModSfsGenerateKeyDlg::getPathCertificate(void) const
+{
+	return certificatePicker->getFileName();
+}
+
 void
 ModSfsGenerateKeyDlg::OnOkButton(wxCommandEvent &event)
 {

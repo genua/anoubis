@@ -1,5 +1,5 @@
 ###########################################################################
-# Copyright (c) 2009 GeNUA mbH <info@genua.de>
+# Copyright (c) 2010 GeNUA mbH <info@genua.de>
 #
 # All rights reserved.
 #
@@ -34,7 +34,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-12-16 16:17+0100\n"
+"POT-Creation-Date: 2010-01-08 16:11+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -461,8 +461,7 @@ msgid "Creates a new rule"
 msgstr ""
 
 #: view/DlgRuleEditorBase.cpp:95 view/DlgRuleEditorBase.cpp:176
-#: view/ModSfsPanelsBase.cpp:302 view/ModSfsPanelsBase.cpp:310
-#: view/ModSfsPanelsBase.cpp:458 view/ModSfsPanelsBase.cpp:466
+#: view/ModSfsPanelsBase.cpp:511 view/ModSfsPanelsBase.cpp:519
 msgid "..."
 msgstr ""
 
@@ -969,8 +968,8 @@ msgid "Couldn't import policy file: it has errors."
 msgstr ""
 
 #: view/DlgRuleEditor.cpp:1274 view/MainFrame.cpp:513 view/MainFrame.cpp:774
-#: view/ModAnoubisMainPanelImpl.cpp:1540 main.cpp:138 main.cpp:381
-#: main.cpp:389
+#: view/ModAnoubisMainPanelImpl.cpp:1540 view/ModSfsGenerateKeyDlg.cpp:151
+#: main.cpp:138 main.cpp:381 main.cpp:389
 msgid "Error"
 msgstr ""
 
@@ -987,7 +986,7 @@ msgid "Export ruleset"
 msgstr ""
 
 #: view/DlgRuleEditor.cpp:1385 view/DlgRuleEditor.cpp:1408
-#: view/ModAnoubisMainPanelImpl.cpp:490 view/ModSfsMainPanelImpl.cpp:354
+#: view/ModAnoubisMainPanelImpl.cpp:490 view/ModSfsMainPanelImpl.cpp:403
 #: view/RuleWizard.cpp:403
 msgid "The entered password is incorrect."
 msgstr ""
@@ -1050,7 +1049,7 @@ msgstr ""
 #: view/DlgRuleEditorFilterSubjectPage.cpp:48
 #: view/DlgRuleEditorFilterSubjectPage.cpp:103
 #: view/DlgRuleEditorFilterSubjectPage.cpp:111
-#: view/ModAnoubisMainPanelImpl.cpp:587 view/ModSfsPanelsBase.cpp:412
+#: view/ModAnoubisMainPanelImpl.cpp:587 view/ModSfsPanelsBase.cpp:465
 msgid "Path:"
 msgstr ""
 
@@ -1133,11 +1132,11 @@ msgstr ""
 msgid "Messages:"
 msgstr ""
 
-#: view/MainFrameBase.cpp:99 view/ModAlfPanelsBase.cpp:134
+#: view/MainFrameBase.cpp:99 view/ModAlfPanelsBase.cpp:137
 #: view/ModAnoubisPanelsBase.cpp:131 view/ModAnoubisPanelsBase.cpp:139
 #: view/ModAnoubisPanelsBase.cpp:147 view/ModAnoubisPanelsBase.cpp:155
 #: view/ModAnoubisPanelsBase.cpp:163 view/ModAnoubisPanelsBase.cpp:171
-#: view/ModSfsPanelsBase.cpp:386 view/ModSbPanelsBase.cpp:130
+#: view/ModSfsPanelsBase.cpp:439 view/ModSbPanelsBase.cpp:133
 msgid "0"
 msgstr ""
 
@@ -1287,21 +1286,21 @@ msgstr ""
 msgid "Rules"
 msgstr ""
 
-#: view/ModAlfPanelsBase.cpp:98
+#: view/ModAlfPanelsBase.cpp:101
 msgid ""
 "Displays the status of the Application level Firewall (ALF) while connected."
 msgstr ""
 
-#: view/ModAlfPanelsBase.cpp:117
+#: view/ModAlfPanelsBase.cpp:120
 msgid "status (ALF):"
 msgstr ""
 
-#: view/ModAlfPanelsBase.cpp:121
+#: view/ModAlfPanelsBase.cpp:124
 msgid "open requests (ALF):"
 msgstr ""
 
-#: view/ModAlfPanelsBase.cpp:130 view/ModSfsPanelsBase.cpp:382
-#: view/ModSbPanelsBase.cpp:126
+#: view/ModAlfPanelsBase.cpp:133 view/ModSfsPanelsBase.cpp:435
+#: view/ModSbPanelsBase.cpp:129
 msgid "everything OK"
 msgstr ""
 
@@ -1786,7 +1785,7 @@ msgstr ""
 msgid "Check to enable tooltips"
 msgstr ""
 
-#: view/ModAnoubisPanelsBase.cpp:779 view/ModSfsPanelsBase.cpp:321
+#: view/ModAnoubisPanelsBase.cpp:779 view/ModSfsPanelsBase.cpp:372
 msgid "Options"
 msgstr ""
 
@@ -1859,6 +1858,11 @@ msgstr ""
 msgid "upgraded"
 msgstr ""
 
+#: view/ModSfsGenerateKeyDlg.cpp:148
+#, c-format
+msgid "Failed to create keypair (%hs)"
+msgstr ""
+
 #: view/ModSfsListCtrl.cpp:60
 msgid "Checksum"
 msgstr ""
@@ -1883,102 +1887,127 @@ msgstr ""
 msgid "Please wait while the filesystem is scanned."
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:70
+#: view/ModSfsMainPanelImpl.cpp:73 view/ModSfsPanelsBase.cpp:552
 msgid "Configure private key:"
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:71
-msgid "Choose Key"
+#: view/ModSfsMainPanelImpl.cpp:74
+msgid "Choose Key..."
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:75
+#: view/ModSfsMainPanelImpl.cpp:78
 msgid "Configure certificate:"
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:76
-msgid "Choose certificate"
+#: view/ModSfsMainPanelImpl.cpp:79
+msgid "Choose certificate..."
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:135
+#: view/ModSfsMainPanelImpl.cpp:113
+msgid ""
+"You have selected a new certificate. To be able to use the key, you need to "
+"activate it! Please inform your administrator (e.g. by email)."
+msgstr ""
+
+#: view/ModSfsMainPanelImpl.cpp:116 view/ModSfsMainPanelImpl.cpp:505
+#: view/ModSfsMainPanelImpl.cpp:511
+msgid "Certificate notice"
+msgstr ""
+
+#: view/ModSfsMainPanelImpl.cpp:184
 msgid "The given path does not exist."
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:136 view/ModSfsMainPanelImpl.cpp:355
-#: view/ModSfsMainPanelImpl.cpp:379
+#: view/ModSfsMainPanelImpl.cpp:185 view/ModSfsMainPanelImpl.cpp:404
+#: view/ModSfsMainPanelImpl.cpp:428
 msgid "SFS error"
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:175
+#: view/ModSfsMainPanelImpl.cpp:224
 msgid ""
 "The SFS Browser currently displays an invalid view because no daemon "
 "connection is established. The selection is switched back to the \"Standard "
 "File Browsing\" view."
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:179
+#: view/ModSfsMainPanelImpl.cpp:228
 msgid "SFS warning"
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:240
+#: view/ModSfsMainPanelImpl.cpp:289
 msgid "Multiple errors occured while processing the SFS request"
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:292
+#: view/ModSfsMainPanelImpl.cpp:341
 msgid "Choose the import-file"
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:314
+#: view/ModSfsMainPanelImpl.cpp:363
 msgid "Choose the export-destination"
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:337
+#: view/ModSfsMainPanelImpl.cpp:386
 msgid "Error: xanoubis is not connected to the daemon"
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:341
+#: view/ModSfsMainPanelImpl.cpp:390
 msgid "Error: Failed to load the private key."
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:345
+#: view/ModSfsMainPanelImpl.cpp:394
 msgid "Error: An invalid argument was supplied"
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:349
+#: view/ModSfsMainPanelImpl.cpp:398
 msgid "Error: Sfs is still busy with another operation."
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:353
+#: view/ModSfsMainPanelImpl.cpp:402
 msgid "Wrong password!"
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:373
+#: view/ModSfsMainPanelImpl.cpp:422
 msgid ""
 "Failed to enable signed checksums.\n"
 "Please check the configuration of your certificate and private key!"
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:377
+#: view/ModSfsMainPanelImpl.cpp:426
 msgid "Failed to disable signed checksums."
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:610
+#: view/ModSfsMainPanelImpl.cpp:502
+msgid ""
+"You have created a new keypair. To be able to use it, you need to activate "
+"it! Please inform your administrator (e.g. by email)."
+msgstr ""
+
+#: view/ModSfsMainPanelImpl.cpp:511
+msgid ""
+"You have created a new keypair but it is not used because a keypair is "
+"already configured.\n"
+"Do you want to replace the currently configured keypair with the new one? "
+"(If you say yes here, you need to inform your administrator (e.g. by email)."
+msgstr ""
+
+#: view/ModSfsMainPanelImpl.cpp:696
 msgid ""
 "Cannot load the private key!\n"
 "The file you specified does not exist."
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:612
+#: view/ModSfsMainPanelImpl.cpp:698
 msgid "Load private key"
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:640
+#: view/ModSfsMainPanelImpl.cpp:728
 #, c-format
 msgid ""
 "Failed to load certificate from\n"
 "%ls."
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:642
+#: view/ModSfsMainPanelImpl.cpp:730
 msgid "Load certificate"
 msgstr ""
 
@@ -2102,7 +2131,7 @@ msgstr ""
 msgid "Browser"
 msgstr ""
 
-#: view/ModSfsPanelsBase.cpp:246
+#: view/ModSfsPanelsBase.cpp:246 view/ModSfsPanelsBase.cpp:544
 msgid "Private Key"
 msgstr ""
 
@@ -2122,7 +2151,7 @@ msgstr ""
 msgid "Validity end in seconds"
 msgstr ""
 
-#: view/ModSfsPanelsBase.cpp:287
+#: view/ModSfsPanelsBase.cpp:287 view/ModSfsPanelsBase.cpp:592
 msgid "Certificate"
 msgstr ""
 
@@ -2130,64 +2159,112 @@ msgstr ""
 msgid "KeyID:"
 msgstr ""
 
-#: view/ModSfsPanelsBase.cpp:306
-msgid "Distinguished Name:"
+#: view/ModSfsPanelsBase.cpp:306 view/ModSfsPanelsBase.cpp:612
+msgid "Country:"
 msgstr ""
 
-#: view/ModSfsPanelsBase.cpp:350
+#: view/ModSfsPanelsBase.cpp:314 view/ModSfsPanelsBase.cpp:622
+msgid "State or Province:"
+msgstr ""
+
+#: view/ModSfsPanelsBase.cpp:322 view/ModSfsPanelsBase.cpp:632
+msgid "Locality:"
+msgstr ""
+
+#: view/ModSfsPanelsBase.cpp:330 view/ModSfsPanelsBase.cpp:642
+msgid "Organization:"
+msgstr ""
+
+#: view/ModSfsPanelsBase.cpp:338 view/ModSfsPanelsBase.cpp:652
+msgid "Organizational Unit:"
+msgstr ""
+
+#: view/ModSfsPanelsBase.cpp:346 view/ModSfsPanelsBase.cpp:662
+msgid "Common Name:"
+msgstr ""
+
+#: view/ModSfsPanelsBase.cpp:354 view/ModSfsPanelsBase.cpp:672
+msgid "Email Address:"
+msgstr ""
+
+#: view/ModSfsPanelsBase.cpp:366 view/ModSfsPanelsBase.h:256
+msgid "Generate Keypair"
+msgstr ""
+
+#: view/ModSfsPanelsBase.cpp:403
 msgid ""
 "Displays the status of the Secure File System Module (SFS) while connected."
 msgstr ""
 
-#: view/ModSfsPanelsBase.cpp:369
+#: view/ModSfsPanelsBase.cpp:422
 msgid "status (SFS):"
 msgstr ""
 
-#: view/ModSfsPanelsBase.cpp:373
+#: view/ModSfsPanelsBase.cpp:426
 msgid "open requests (SFS):"
 msgstr ""
 
-#: view/ModSfsPanelsBase.cpp:419
+#: view/ModSfsPanelsBase.cpp:472
 msgid "Link Target:"
 msgstr ""
 
-#: view/ModSfsPanelsBase.cpp:426
+#: view/ModSfsPanelsBase.cpp:479
 msgid "Last modified:"
 msgstr ""
 
-#: view/ModSfsPanelsBase.cpp:433
+#: view/ModSfsPanelsBase.cpp:486
 msgid "Checksum:"
 msgstr ""
 
-#: view/ModSfsPanelsBase.cpp:440
+#: view/ModSfsPanelsBase.cpp:493
 msgid "Registered checksum:"
 msgstr ""
 
-#: view/ModSfsPanelsBase.cpp:447
+#: view/ModSfsPanelsBase.cpp:500
 msgid "Signature:"
 msgstr ""
 
-#: view/ModSfsPanelsBase.cpp:454
+#: view/ModSfsPanelsBase.cpp:507
 msgid "Checksum status:"
 msgstr ""
 
-#: view/ModSfsPanelsBase.cpp:462
+#: view/ModSfsPanelsBase.cpp:515
 msgid "Signature status:"
+msgstr ""
+
+#: view/ModSfsPanelsBase.cpp:561 view/ModSfsPanelsBase.cpp:609
+msgid "Browse..."
+msgstr ""
+
+#: view/ModSfsPanelsBase.cpp:564
+msgid "Passphrase:"
+msgstr ""
+
+#: view/ModSfsPanelsBase.cpp:576
+msgid "Passphrase (repeat):"
+msgstr ""
+
+#: view/ModSfsPanelsBase.cpp:583
+msgid "Passphrase mismatch!"
+msgstr ""
+
+#: view/ModSfsPanelsBase.cpp:600
+msgid "Configure Certificate:"
 msgstr ""
 
 #: view/ModSbPanelsBase.cpp:42
 msgid "SB - Sandbox"
 msgstr ""
 
-#: view/ModSbPanelsBase.cpp:94
+#: view/ModSbPanelsBase.cpp:97
 msgid "Displays the status of the Sandbox (SB) while connected."
 msgstr ""
 
-#: view/ModSbPanelsBase.cpp:113
+#: view/ModSbPanelsBase.cpp:116
 msgid "status (SB):"
 msgstr ""
 
-#: view/ModSbPanelsBase.cpp:117
+#: view/ModSbPanelsBase.cpp:120
 msgid "open requests (SB): "
 msgstr ""
 
