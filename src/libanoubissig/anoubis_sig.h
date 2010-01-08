@@ -124,6 +124,19 @@ int pass_cb(char *buf, int size, int rwflag, void *u);
 char *anoubis_sig_key2char(int idlen, const unsigned char *keyid);
 char *anoubis_sig_cert_name(X509 *cert);
 
+/**
+ * Get certificate validity.
+ *
+ * This method returns a newly allocated buffer with the humal readable
+ * string of certificates 'notAfter'.
+ *
+ * @param[in] 1st The certificate in question.
+ * @return In case of no memory, NULL is returned.\n
+ * In case of convertion error, string "[invalid date]" is returned.\n
+ * On success returned string contains date.
+ */
+char *anoubis_sig_cert_validity(X509 *);
+
 __END_DECLS
 
 #endif	/* _ANOUBIS_SIG_H_ */

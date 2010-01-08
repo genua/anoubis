@@ -61,7 +61,7 @@ protected:
 	 * This is called after the construction of the dialog but
 	 * before the user inputs data. We can hide some elements of the
 	 * dialog that are only display in response to user input here.
-	 * 
+	 *
 	 * @param[in] 1st The init event.
 	 * @return None.
 	 */

@@ -115,6 +115,26 @@ AnPickFromFs::setTitle(const wxString & label)
 	Refresh();
 }
 
+wxSize
+AnPickFromFs::getTitleSize(void)
+{
+	return (label_->GetSize());
+}
+
+void
+AnPickFromFs::setTitleMinSize(wxSize minSize)
+{
+	label_->SetMinSize(minSize);
+	Layout();
+	Refresh();
+}
+
+wxSize
+AnPickFromFs::getTitleMinSize(void)
+{
+	return (label_->GetMinSize());
+}
+
 void
 AnPickFromFs::setButtonLabel(const wxString & label)
 {
@@ -129,6 +149,8 @@ AnPickFromFs::setMode(enum Modes mode)
 	pickerMode_ = mode;
 	switch (mode) {
 	case MODE_FILE:
+		/* FALLTHROUGH */
+	case MODE_NEWFILE:
 		pickButton_->Enable();
 		pickButtonMenu_.Check(fileMenuId_, true);
 		pickButtonMenu_.Check(dirMenuId_, false);
@@ -136,6 +158,8 @@ AnPickFromFs::setMode(enum Modes mode)
 		pickButtonMenu_.Enable(dirMenuId_, false);
 		break;
 	case MODE_DIR:
+		/* FALLTHROUGH */
+	case MODE_NEWDIR:
 		pickButton_->Enable();
 		pickButtonMenu_.Check(fileMenuId_, false);
 		pickButtonMenu_.Check(dirMenuId_, true);
@@ -202,6 +226,11 @@ AnPickFromFs::showInfo(const wxString &info)
 {
 	wxWindow	*parent;
 	wxString	 label;
+
+	if ((pickerMode_ == MODE_NEWFILE) || (pickerMode_ == MODE_NEWDIR)) {
+		/* Avoid error message. */
+		return;
+	}
 
 	label = info;
 	label.Prepend(wxT("("));

@@ -60,6 +60,8 @@
  * - The parent has to set the title with setTitle()
  * - The parent has to set the mode with setMode(). (The pickButton is
  *   disabled untill set and mode is not NONE).
+ * - In case of MODE_NEWFILE or MODE_NEWDIR, no error messages about item
+ *   is not existing, is disabled.
  */
 class AnPickFromFs : public wxPanel, public Subject
 {
@@ -70,7 +72,9 @@ class AnPickFromFs : public wxPanel, public Subject
 		enum Modes {
 			MODE_NONE = 0,
 			MODE_FILE,	/**< use FileDialog only */
+			MODE_NEWFILE,	/**< use FileDialog, no error */
 			MODE_DIR,	/**< use DirDialog only */
+			MODE_NEWDIR,	/**< use DirDialog, no error */
 			MODE_BOTH,	/**< use both (choose by menu) */
 		};
 
@@ -110,6 +114,31 @@ class AnPickFromFs : public wxPanel, public Subject
 		 * @return Nothing.
 		 */
 		void setTitle(const wxString &);
+
+		/**
+		 * Get title size.
+		 * Get the size of the title.
+		 * @param None
+		 * @return Size of title.
+		 */
+		wxSize getTitleSize(void);
+
+		/**
+		 * Set title mininal size.
+		 * Set the minimal size of the title. Use this to fix
+		 * alignment. It's not elegant but it works (somehow).
+		 * @param 1st New minimal size.
+		 * @return Nothing.
+		 */
+		void setTitleMinSize(const wxSize);
+
+		/**
+		 * Get title minimal size.
+		 * Get the minimal size of the title.
+		 * @param None
+		 * @return Minimal size of title.
+		 */
+		wxSize getTitleMinSize(void);
 
 		/**
 		 * Set button label.

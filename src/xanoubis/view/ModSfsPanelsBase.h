@@ -58,9 +58,12 @@ class ModSfsListCtrl;
 #include <wx/scrolwin.h>
 #include <wx/spinctrl.h>
 #include <wx/statbox.h>
+#include <wx/statline.h>
 #include <wx/notebook.h>
 #include <wx/statbmp.h>
 #include <wx/dialog.h>
+#include <wx/datectrl.h>
+#include <wx/dateevt.h>
 
 ///////////////////////////////////////////////////////////////////////////
 
@@ -101,30 +104,36 @@ class ModSfsMainPanelBase : public wxPanel
 		wxButton* SfsMainActionButton;
 		
 		wxButton* SfsMainFilterValidateButton;
-		wxScrolledWindow* pan_Options;
+		wxScrolledWindow* keysTab;
 		AnPickFromFs* keyPicker;
-		wxStaticText* m_staticText13;
-		wxChoice* PrivKeyValidityChoice;
-		wxSpinCtrl* PrivKeyValiditySpinCtrl;
-		wxStaticText* PrivKeyValidityText;
+		wxStaticText* passphraseValidityLabel;
+		wxChoice* privKeyValidityChoice;
+		wxSpinCtrl* privKeyValiditySpinCtrl;
+		wxStaticText* privKeyValidityText;
 		AnPickFromFs* certificatePicker;
-		wxStaticText* m_staticText16;
-		wxStaticText* CertFingerprintText;
-		wxStaticText* m_staticText26;
-		wxStaticText* CertCountryText;
-		wxStaticText* m_staticText28;
-		wxStaticText* CertStateText;
-		wxStaticText* m_staticText30;
-		wxStaticText* CertLocalityText;
-		wxStaticText* m_staticText32;
-		wxStaticText* CertOrgaText;
-		wxStaticText* m_staticText34;
-		wxStaticText* CertOrgaunitText;
-		wxStaticText* m_staticText36;
-		wxStaticText* CertCnText;
-		wxStaticText* m_staticText38;
-		wxStaticText* CertEmailText;
-		wxButton* btn_GenerateKeyPair;
+		wxStaticText* certDetailsLabel;
+		wxStaticLine* certDetailsLine;
+		wxBoxSizer* certDetailsIndentSizer;
+		
+		wxStaticText* certFingerprintLabel;
+		wxStaticText* certFingerprintText;
+		wxStaticText* certValidityLabel;
+		wxStaticText* certValidityText;
+		wxStaticText* certCountryLabel;
+		wxStaticText* certCountryText;
+		wxStaticText* certStateLabel;
+		wxStaticText* certStateText;
+		wxStaticText* certLocalityLabel;
+		wxStaticText* certLocalityText;
+		wxStaticText* certOrgaLabel;
+		wxStaticText* certOrgaText;
+		wxStaticText* certOrgaUnitLabel;
+		wxStaticText* certOrgaUnitText;
+		wxStaticText* certCnLabel;
+		wxStaticText* certCnText;
+		wxStaticText* certEmailLabel;
+		wxStaticText* certEmailText;
+		wxButton* generateKeyPairButton;
 		
 		// Virtual event handlers, overide them in your derived class
 		virtual void OnGridCellLeftDClick( wxGridEvent& event ){ event.Skip(); }
@@ -141,9 +150,9 @@ class ModSfsMainPanelBase : public wxPanel
 		virtual void OnSfsMainExportClicked( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnSfsMainApplyButtonClicked( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnSfsMainValidateButtonClicked( wxCommandEvent& event ){ event.Skip(); }
-		virtual void OnPrivKeyValidityChanged( wxCommandEvent& event ){ event.Skip(); }
-		virtual void OnPrivKeyValidityPeriodChanged( wxSpinEvent& event ){ event.Skip(); }
-		virtual void OnGenerateKeyPair( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onPrivKeyValidityChanged( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onPrivKeyValidityPeriodChanged( wxSpinEvent& event ){ event.Skip(); }
+		virtual void onGenerateKeyPairButton( wxCommandEvent& event ){ event.Skip(); }
 		
 	
 	public:
@@ -211,41 +220,39 @@ class ModSfsGenerateKeyDlgBase : public wxDialog
 	private:
 	
 	protected:
-		wxStaticText* m_staticText52;
-		wxTextCtrl* pathPrivKeyTxtCtrl;
-		wxButton* pathPrivKeyBrowseBtn;
-		wxStaticText* m_staticText53;
-		wxTextCtrl* PassphrPrivKeyTxtCtrl;
-		wxStaticBitmap* PassphrMisMatchIcon;
-		wxStaticText* PassphrRepeatTxt;
-		wxTextCtrl* PassphrRepeatPrivKeyTxtCtrl;
-		wxStaticText* PassphrMismatchTxt;
-		wxStaticText* m_staticText50;
-		wxTextCtrl* pathToCertTxtCtrl;
-		wxButton* pathCertBrowseBtn;
-		wxStaticText* m_staticText42;
-		wxTextCtrl* CountryOfCertTxtCtrl;
+		AnPickFromFs* keyPicker;
+		wxStaticText* passphraseLabel;
+		wxTextCtrl* passphraseTextCtrl;
 		
-		wxStaticText* m_staticText43;
-		wxTextCtrl* StateOfCertTxtCtrl;
 		
-		wxStaticText* m_staticText44;
-		wxTextCtrl* LocalityOfCertTxtCtrl;
+		wxStaticText* passphraseRepeatLabel;
+		wxTextCtrl* passphraseRepeatTextCtrl;
+		wxStaticBitmap* passphraseMismatchIcon;
+		wxStaticText* passphraseMismatchText;
+		AnPickFromFs* certificatePicker;
+		wxStaticText* certDetailsLabel;
+		wxStaticLine* certDetailsLine;
+		wxBoxSizer* certDetailsIndentSizer;
 		
-		wxStaticText* m_staticText45;
-		wxTextCtrl* OrgaOfCertTxtCtrl;
-		
-		wxStaticText* m_staticText46;
-		wxTextCtrl* OrgaunitOfCertTxtCtrl;
-		
-		wxStaticText* m_staticText47;
-		wxTextCtrl* ComNameOfCertTxtCtrl;
-		
-		wxStaticText* m_staticText48;
-		wxTextCtrl* EmailOfCertTxtCtrl;
-		wxStdDialogButtonSizer* m_sdbSizer4;
-		wxButton* m_sdbSizer4OK;
-		wxButton* m_sdbSizer4Cancel;
+		wxStaticText* certValidityLabel;
+		wxDatePickerCtrl* certValidityDatePicker;
+		wxStaticText* certCountryLabel;
+		wxTextCtrl* certCountryTextCtrl;
+		wxStaticText* certStateLabel;
+		wxTextCtrl* certStateTextCtrl;
+		wxStaticText* certLocalityLabel;
+		wxTextCtrl* certLocalityTextCtrl;
+		wxStaticText* certOrgaLabel;
+		wxTextCtrl* certOrgaTextCtrl;
+		wxStaticText* certOrgaUnitLabel;
+		wxTextCtrl* certOrgaUnitTextCtrl;
+		wxStaticText* certCnLabel;
+		wxTextCtrl* certCnTextCtrl;
+		wxStaticText* certEmailLabel;
+		wxTextCtrl* certEmailTextCtrl;
+		wxStdDialogButtonSizer* buttonSizer;
+		wxButton* buttonSizerOK;
+		wxButton* buttonSizerCancel;
 		
 		// Virtual event handlers, overide them in your derived class
 		virtual void InitDialog( wxInitDialogEvent& event ){ event.Skip(); }
@@ -253,7 +260,7 @@ class ModSfsGenerateKeyDlgBase : public wxDialog
 		
 	
 	public:
-		ModSfsGenerateKeyDlgBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Generate Keypair"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize, long style = wxDEFAULT_DIALOG_STYLE, const wxString& name = wxT("GenerateKeypair") );
+		ModSfsGenerateKeyDlgBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Generate Keypair"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( -1,-1 ), long style = wxDEFAULT_DIALOG_STYLE|wxRESIZE_BORDER, const wxString& name = wxT("GenerateKeypair") );
 	
 };
 

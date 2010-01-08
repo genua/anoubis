@@ -93,6 +93,15 @@ LocalCertificate::getFingerprint(void) const
 }
 
 wxString
+LocalCertificate::getValidity(void) const
+{
+	if (cert_ == NULL) {
+		return (wxEmptyString);
+	}
+	return (wxString::FromAscii(anoubis_sig_cert_validity(cert_->cert)));
+}
+
+wxString
 LocalCertificate::getDistinguishedName(void) const
 {
 	if (cert_ != 0) {

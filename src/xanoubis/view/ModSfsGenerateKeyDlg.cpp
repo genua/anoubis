@@ -36,6 +36,9 @@
 #include <wx/string.h>
 #include <AnMessageDialog.h>
 
+#include "AnIconList.h"
+#include "AnPickFromFs.h"
+
 wxString
 ModSfsGenerateKeyDlg::newDefaultName(void)
 {
@@ -60,6 +63,9 @@ ModSfsGenerateKeyDlg::ModSfsGenerateKeyDlg(wxWindow *parent)
 {
 	struct anoubis_keysubject	*defsubj;
 	wxString			 pathPrefix = newDefaultName();
+	wxSize				 indent;
+	wxIcon				 icon;
+	wxSizerItem			*spacer;
 
 	defsubj = anoubis_keysubject_defaults();
 	if (defsubj) {
@@ -69,21 +75,45 @@ ModSfsGenerateKeyDlg::ModSfsGenerateKeyDlg(wxWindow *parent)
 	if (defsubj->FIELD)						\
 		(TEXTCTRL)->ChangeValue(wxString::FromAscii(defsubj->FIELD))
 
-	SET_DEFAULT(CountryOfCertTxtCtrl, country);
-	SET_DEFAULT(StateOfCertTxtCtrl, state);
-	SET_DEFAULT(LocalityOfCertTxtCtrl, locality);
-	SET_DEFAULT(OrgaOfCertTxtCtrl, organization);
-	SET_DEFAULT(OrgaunitOfCertTxtCtrl, orgunit);
-	SET_DEFAULT(ComNameOfCertTxtCtrl, name);
-	SET_DEFAULT(EmailOfCertTxtCtrl, email);
+	SET_DEFAULT(certCountryTextCtrl, country);
+	SET_DEFAULT(certStateTextCtrl, state);
+	SET_DEFAULT(certLocalityTextCtrl, locality);
+	SET_DEFAULT(certOrgaTextCtrl, organization);
+	SET_DEFAULT(certOrgaUnitTextCtrl, orgunit);
+	SET_DEFAULT(certCnTextCtrl, name);
+	SET_DEFAULT(certEmailTextCtrl, email);
 
 #undef SET_DEFAULT
 
 		anoubis_keysubject_destroy(defsubj);
 	}
 
-	pathPrivKeyTxtCtrl->ChangeValue(pathPrefix + wxT(".key"));
-	pathToCertTxtCtrl->ChangeValue(pathPrefix + wxT(".crt"));
+	keyPicker->setTitle(_("Configure private key:"));
+	keyPicker->setButtonLabel(_("Browse ..."));
+	keyPicker->setMode(AnPickFromFs::MODE_NEWFILE);
+	keyPicker->setFileName(pathPrefix + wxT(".key"));
+
+	certificatePicker->setTitle(_("Configure certificate:"));
+	certificatePicker->setButtonLabel(_("Browse ..."));
+	certificatePicker->setMode(AnPickFromFs::MODE_NEWFILE);
+	certificatePicker->setFileName(pathPrefix + wxT(".crt"));
+
+	/* Get initial indent size. */
+	spacer = certDetailsIndentSizer->GetItem((size_t)0);
+	indent = keyPicker->getTitleSize();
+	indent.IncBy(30, 0);
+
+	/* Set indentation. */
+	keyPicker->setTitleMinSize(indent);
+	certificatePicker->setTitleMinSize(indent);
+	passphraseLabel->SetMinSize(indent);
+
+	/* Adjust indent by indentation of details block. */
+	indent.DecBy(spacer->GetSize().GetWidth(), 0);
+	certValidityLabel->SetMinSize(indent);
+
+	icon = AnIconList::getInstance()->GetIcon(AnIconList::ICON_ERROR);
+	passphraseMismatchIcon->SetIcon(icon);
 }
 
 void
@@ -95,31 +125,31 @@ ModSfsGenerateKeyDlg::OnOkButton(wxCommandEvent &event)
 	int				 error;
 
 
-	pass = PassphrPrivKeyTxtCtrl->GetValue();
-	if (pass != PassphrRepeatPrivKeyTxtCtrl->GetValue()) {
-		PassphrMismatchTxt->Show();
-		PassphrMisMatchIcon->Show();
+	pass = passphraseTextCtrl->GetValue();
+	if (pass != passphraseRepeatTextCtrl->GetValue()) {
+		passphraseMismatchText->Show();
+		passphraseMismatchIcon->Show();
 		Layout();
 		Refresh();
 		return;
 	}
-	PassphrMismatchTxt->Hide();
-	PassphrMisMatchIcon->Hide();
+	passphraseMismatchText->Hide();
+	passphraseMismatchIcon->Hide();
 	Layout();
 	Refresh();
-	subject.country = strdup(CountryOfCertTxtCtrl->GetValue().fn_str());
-	subject.state = strdup(StateOfCertTxtCtrl->GetValue().fn_str());
-	subject.locality = strdup(LocalityOfCertTxtCtrl->GetValue().fn_str());
-	subject.organization = strdup(OrgaOfCertTxtCtrl->GetValue().fn_str());
-	subject.orgunit = strdup(OrgaunitOfCertTxtCtrl->GetValue().fn_str());
-	subject.name = strdup(ComNameOfCertTxtCtrl->GetValue().fn_str());
-	subject.email = strdup(EmailOfCertTxtCtrl->GetValue().fn_str());
+	subject.country = strdup(certCountryTextCtrl->GetValue().fn_str());
+	subject.state = strdup(certStateTextCtrl->GetValue().fn_str());
+	subject.locality = strdup(certLocalityTextCtrl->GetValue().fn_str());
+	subject.organization = strdup(certOrgaTextCtrl->GetValue().fn_str());
+	subject.orgunit = strdup(certOrgaUnitTextCtrl->GetValue().fn_str());
+	subject.name = strdup(certCnTextCtrl->GetValue().fn_str());
+	subject.email = strdup(certEmailTextCtrl->GetValue().fn_str());
 	subjstr = anoubis_keysubject_tostring(&subject);
 	if (subjstr == NULL) {
 		error = -ENOMEM;
 	} else {
-		error = anoubis_keygen(pathPrivKeyTxtCtrl->GetValue().fn_str(),
-		    pathToCertTxtCtrl->GetValue().fn_str(), pass.fn_str(),
+		error = anoubis_keygen(keyPicker->getFileName().fn_str(),
+		    certificatePicker->getFileName().fn_str(), pass.fn_str(),
 		    subjstr, 2048);
 	}
 	free(subject.country);
@@ -153,8 +183,8 @@ ModSfsGenerateKeyDlg::InitDialog(wxInitDialogEvent & event)
 	event.Skip();
 
 	/* Hide the passphrase mismatch text and icon. */
-	PassphrMismatchTxt->Hide();
-	PassphrMisMatchIcon->Hide();
+	passphraseMismatchText->Hide();
+	passphraseMismatchIcon->Hide();
 	Layout();
 	Refresh();
 }

@@ -47,6 +47,9 @@
 ModSfsMainPanelImpl::ModSfsMainPanelImpl(wxWindow* parent, wxWindowID id)
     : ModSfsMainPanelBase(parent, id), Observer(NULL)
 {
+	wxSize		 indent;
+	wxSizerItem	*spacer;
+
 	comEnabled_ = false;
 
 	SfsOverviewTable *table = new SfsOverviewTable;
@@ -71,13 +74,30 @@ ModSfsMainPanelImpl::ModSfsMainPanelImpl(wxWindow* parent, wxWindowID id)
 
 	addSubject(keyPicker);
 	keyPicker->setTitle(_("Configure private key:"));
-	keyPicker->setButtonLabel(_("Choose Key..."));
+	keyPicker->setButtonLabel(_("Browse ..."));
 	keyPicker->setMode(AnPickFromFs::MODE_FILE);
 
 	addSubject(certificatePicker);
 	certificatePicker->setTitle(_("Configure certificate:"));
-	certificatePicker->setButtonLabel(_("Choose certificate..."));
+	certificatePicker->setButtonLabel(_("Browse ..."));
 	certificatePicker->setMode(AnPickFromFs::MODE_FILE);
+
+	/* Get initial indent size. */
+	spacer = certDetailsIndentSizer->GetItem((size_t)0);
+	indent = keyPicker->getTitleSize();
+	indent.IncBy(50, 0);
+
+	/* Set indentation. */
+	keyPicker->setTitleMinSize(indent);
+	certificatePicker->setTitleMinSize(indent);
+	passphraseValidityLabel->SetMinSize(indent);
+
+	/* Adjust indent by indentation of details block. */
+	indent.DecBy(spacer->GetSize().GetWidth(), 0);
+	certFingerprintLabel->SetMinSize(indent);
+
+	Layout();
+	Refresh();
 
 	initSfsOptions();
 	initSfsMain();
@@ -102,8 +122,8 @@ ModSfsMainPanelImpl::update(Subject *subject)
 	if (subject == keyPicker) {
 		privKeyParamsUpdate(
 		    keyPicker->getFileName(),
-		    PrivKeyValidityChoice->GetCurrentSelection() == 0,
-		    PrivKeyValiditySpinCtrl->GetValue());
+		    privKeyValidityChoice->GetCurrentSelection() == 0,
+		    privKeyValiditySpinCtrl->GetValue());
 	} else if (subject == certificatePicker) {
 		certificateParamsUpdate(certificatePicker->getFileName());
 	} else {
@@ -453,8 +473,8 @@ void
 ModSfsMainPanelImpl::OnPrivKeyValidityChanged(wxCommandEvent&)
 {
 	/* Test whether "Until session end" is selected */
-	bool sessionEnd = (PrivKeyValidityChoice->GetCurrentSelection() == 0);
-	int validity = !sessionEnd ? PrivKeyValiditySpinCtrl->GetValue() : 0;
+	bool sessionEnd = (privKeyValidityChoice->GetCurrentSelection() == 0);
+	int validity = !sessionEnd ? privKeyValiditySpinCtrl->GetValue() : 0;
 
 	privKeyParamsUpdate(keyPicker->getFileName(), sessionEnd, validity);
 }
@@ -465,12 +485,12 @@ ModSfsMainPanelImpl::OnPrivKeyValidityPeriodChanged(wxSpinEvent&)
 	/* Change validity settings of private key */
 	privKeyParamsUpdate(
 	    keyPicker->getFileName(),
-	    PrivKeyValidityChoice->GetCurrentSelection() == 0,
-	    PrivKeyValiditySpinCtrl->GetValue());
+	    privKeyValidityChoice->GetCurrentSelection() == 0,
+	    privKeyValiditySpinCtrl->GetValue());
 }
 
 void
-ModSfsMainPanelImpl::OnGenerateKeyPair(wxCommandEvent&)
+ModSfsMainPanelImpl::onGenerateKeyPairButton(wxCommandEvent&)
 {
     /* Display Generate-Keypair-Dialogue */
     ModSfsGenerateKeyDlg *dlg = new ModSfsGenerateKeyDlg(this);
@@ -660,11 +680,11 @@ ModSfsMainPanelImpl::privKeyParamsUpdate(const wxString &path, bool sessionEnd,
 	/* Update view */
 	keyPicker->setFileName(path);
 
-	PrivKeyValiditySpinCtrl->Enable(!sessionEnd);
-	PrivKeyValidityText->Enable(!sessionEnd);
+	privKeyValiditySpinCtrl->Enable(!sessionEnd);
+	privKeyValidityText->Enable(!sessionEnd);
 
-	PrivKeyValidityChoice->SetSelection(sessionEnd ? 0 : 1);
-	PrivKeyValiditySpinCtrl->SetValue(validity);
+	privKeyValidityChoice->SetSelection(sessionEnd ? 0 : 1);
+	privKeyValiditySpinCtrl->SetValue(validity);
 
 	/* Inform any listener about change of key-configuration */
 	wxCommandEvent event(anEVT_LOAD_KEY);
@@ -693,14 +713,15 @@ ModSfsMainPanelImpl::certificateParamsUpdate(const wxString &path)
 
 	/* Update view */
 	certificatePicker->setFileName(cert.getFile());
-	CertFingerprintText->SetLabel(cert.getFingerprint());
-	CertCountryText->SetLabel(cert.getCountry());
-	CertStateText->SetLabel(cert.getState());
-	CertLocalityText->SetLabel(cert.getLocality());
-	CertOrgaText->SetLabel(cert.getOrganization());
-	CertOrgaunitText->SetLabel(cert.getOrganizationalUnit());
-	CertCnText->SetLabel((cert.getCommonName()));
-	CertEmailText->SetLabel(cert.getEmailAddress());
+	certFingerprintText->SetLabel(cert.getFingerprint());
+	certValidityText->SetLabel(cert.getValidity());
+	certCountryText->SetLabel(cert.getCountry());
+	certStateText->SetLabel(cert.getState());
+	certLocalityText->SetLabel(cert.getLocality());
+	certOrgaText->SetLabel(cert.getOrganization());
+	certOrgaUnitText->SetLabel(cert.getOrganizationalUnit());
+	certCnText->SetLabel((cert.getCommonName()));
+	certEmailText->SetLabel(cert.getEmailAddress());
 
 	/* Inform any listener about change of configuration */
 	wxCommandEvent event(anEVT_LOAD_KEY);

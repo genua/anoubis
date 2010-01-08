@@ -609,3 +609,36 @@ anoubis_sig_cert_name(X509 *cert)
 
 	return (buf);
 }
+
+char *
+anoubis_sig_cert_validity(X509 *cert)
+{
+	int		 len = 128;
+	ASN1_TIME	*at  = NULL;
+	BIO		*bio = NULL;
+	char		*buf = NULL;
+
+	if (cert == NULL) {
+		return (NULL);
+	}
+
+	buf = calloc(len, sizeof(char));
+	if (buf == NULL) {
+		return (NULL);
+	}
+	strncpy(buf, "[invalid date]", len - 1);
+
+	at = X509_get_notAfter(cert);
+	bio = BIO_new(BIO_s_mem());
+	if (bio == NULL) {
+		free(buf);
+		return (NULL);
+	}
+
+	if (ASN1_TIME_print(bio, at)) {
+		BIO_read(bio, buf, len - 1);
+	}
+	BIO_free(bio);
+
+	return (buf);
+}

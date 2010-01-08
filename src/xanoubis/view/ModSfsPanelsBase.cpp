@@ -237,139 +237,158 @@ ModSfsMainPanelBase::ModSfsMainPanelBase( wxWindow* parent, wxWindowID id, const
 	pan_SfsMain->Layout();
 	browserMainSizer->Fit( pan_SfsMain );
 	note_MainSfs->AddPage( pan_SfsMain, _("Browser"), false );
-	pan_Options = new wxScrolledWindow( note_MainSfs, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxTAB_TRAVERSAL|wxVSCROLL );
-	pan_Options->SetScrollRate( 5, 5 );
-	wxBoxSizer* bSizer16;
-	bSizer16 = new wxBoxSizer( wxVERTICAL );
+	keysTab = new wxScrolledWindow( note_MainSfs, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxTAB_TRAVERSAL|wxVSCROLL );
+	keysTab->SetScrollRate( 5, 5 );
+	wxBoxSizer* keyTabMainSizer;
+	keyTabMainSizer = new wxBoxSizer( wxVERTICAL );
 	
-	wxStaticBoxSizer* sbSizer1;
-	sbSizer1 = new wxStaticBoxSizer( new wxStaticBox( pan_Options, -1, _("Private Key") ), wxVERTICAL );
+	wxStaticBoxSizer* privateKeySizer;
+	privateKeySizer = new wxStaticBoxSizer( new wxStaticBox( keysTab, -1, _("Private Key") ), wxVERTICAL );
 	
-	keyPicker = new AnPickFromFs( pan_Options, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
-	sbSizer1->Add( keyPicker, 0, wxEXPAND|wxALL, 5 );
+	keyPicker = new AnPickFromFs( keysTab, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	privateKeySizer->Add( keyPicker, 0, wxEXPAND, 5 );
 	
-	wxFlexGridSizer* fgSizer3;
-	fgSizer3 = new wxFlexGridSizer( 2, 2, 0, 0 );
-	fgSizer3->AddGrowableCol( 1 );
-	fgSizer3->SetFlexibleDirection( wxBOTH );
-	fgSizer3->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+	wxBoxSizer* passphraseSizer;
+	passphraseSizer = new wxBoxSizer( wxHORIZONTAL );
 	
-	m_staticText13 = new wxStaticText( pan_Options, wxID_ANY, _("Passphrase validity:"), wxDefaultPosition, wxDefaultSize, 0 );
-	m_staticText13->Wrap( -1 );
-	fgSizer3->Add( m_staticText13, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
+	passphraseValidityLabel = new wxStaticText( keysTab, wxID_ANY, _("Passphrase validity:"), wxDefaultPosition, wxSize( -1,-1 ), 0 );
+	passphraseValidityLabel->Wrap( -1 );
+	passphraseSizer->Add( passphraseValidityLabel, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
 	
-	wxBoxSizer* bSizer18;
-	bSizer18 = new wxBoxSizer( wxHORIZONTAL );
+	wxString privKeyValidityChoiceChoices[] = { _("Until end of session"), _("Until specified time") };
+	int privKeyValidityChoiceNChoices = sizeof( privKeyValidityChoiceChoices ) / sizeof( wxString );
+	privKeyValidityChoice = new wxChoice( keysTab, wxID_ANY, wxDefaultPosition, wxDefaultSize, privKeyValidityChoiceNChoices, privKeyValidityChoiceChoices, 0 );
+	passphraseSizer->Add( privKeyValidityChoice, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
 	
-	wxString PrivKeyValidityChoiceChoices[] = { _("Until end of session"), _("Until specified time") };
-	int PrivKeyValidityChoiceNChoices = sizeof( PrivKeyValidityChoiceChoices ) / sizeof( wxString );
-	PrivKeyValidityChoice = new wxChoice( pan_Options, wxID_ANY, wxDefaultPosition, wxDefaultSize, PrivKeyValidityChoiceNChoices, PrivKeyValidityChoiceChoices, 0 );
-	bSizer18->Add( PrivKeyValidityChoice, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
+	privKeyValiditySpinCtrl = new wxSpinCtrl( keysTab, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 86400, 0 );
+	privKeyValiditySpinCtrl->Enable( false );
 	
-	PrivKeyValiditySpinCtrl = new wxSpinCtrl( pan_Options, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 86400, 0 );
-	PrivKeyValiditySpinCtrl->Enable( false );
+	passphraseSizer->Add( privKeyValiditySpinCtrl, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
 	
-	bSizer18->Add( PrivKeyValiditySpinCtrl, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
+	privKeyValidityText = new wxStaticText( keysTab, wxID_ANY, _("Validity end in seconds"), wxDefaultPosition, wxDefaultSize, 0 );
+	privKeyValidityText->Wrap( -1 );
+	privKeyValidityText->Enable( false );
 	
-	PrivKeyValidityText = new wxStaticText( pan_Options, wxID_ANY, _("Validity end in seconds"), wxDefaultPosition, wxDefaultSize, 0 );
-	PrivKeyValidityText->Wrap( -1 );
-	PrivKeyValidityText->Enable( false );
+	passphraseSizer->Add( privKeyValidityText, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
 	
-	bSizer18->Add( PrivKeyValidityText, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
+	privateKeySizer->Add( passphraseSizer, 1, wxEXPAND, 5 );
 	
-	fgSizer3->Add( bSizer18, 1, wxEXPAND, 5 );
+	keyTabMainSizer->Add( privateKeySizer, 0, wxALL|wxEXPAND, 5 );
 	
-	sbSizer1->Add( fgSizer3, 0, wxEXPAND, 5 );
+	wxStaticBoxSizer* certificateSizer;
+	certificateSizer = new wxStaticBoxSizer( new wxStaticBox( keysTab, -1, _("Certificate") ), wxVERTICAL );
 	
-	bSizer16->Add( sbSizer1, 0, wxEXPAND, 5 );
+	certificatePicker = new AnPickFromFs( keysTab, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	certificateSizer->Add( certificatePicker, 1, wxEXPAND, 5 );
 	
-	wxStaticBoxSizer* sbSizer2;
-	sbSizer2 = new wxStaticBoxSizer( new wxStaticBox( pan_Options, -1, _("Certificate") ), wxVERTICAL );
+	wxBoxSizer* certDetailsLineSizer;
+	certDetailsLineSizer = new wxBoxSizer( wxHORIZONTAL );
 	
-	certificatePicker = new AnPickFromFs( pan_Options, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
-	sbSizer2->Add( certificatePicker, 1, wxEXPAND | wxALL, 5 );
+	certDetailsLabel = new wxStaticText( keysTab, wxID_ANY, _("Details"), wxDefaultPosition, wxDefaultSize, 0 );
+	certDetailsLabel->Wrap( -1 );
+	certDetailsLineSizer->Add( certDetailsLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	wxFlexGridSizer* fgSizer4;
-	fgSizer4 = new wxFlexGridSizer( 2, 2, 0, 0 );
-	fgSizer4->AddGrowableCol( 1 );
-	fgSizer4->SetFlexibleDirection( wxBOTH );
-	fgSizer4->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+	certDetailsLine = new wxStaticLine( keysTab, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLI_HORIZONTAL );
+	certDetailsLineSizer->Add( certDetailsLine, 1, wxEXPAND | wxALL, 5 );
 	
-	m_staticText16 = new wxStaticText( pan_Options, wxID_ANY, _("KeyID:"), wxDefaultPosition, wxDefaultSize, 0 );
-	m_staticText16->Wrap( -1 );
-	fgSizer4->Add( m_staticText16, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
+	certificateSizer->Add( certDetailsLineSizer, 0, wxEXPAND, 5 );
 	
-	CertFingerprintText = new wxStaticText( pan_Options, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
-	CertFingerprintText->Wrap( -1 );
-	fgSizer4->Add( CertFingerprintText, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
+	certDetailsIndentSizer = new wxBoxSizer( wxHORIZONTAL );
 	
-	m_staticText26 = new wxStaticText( pan_Options, wxID_ANY, _("Country:"), wxDefaultPosition, wxDefaultSize, 0 );
-	m_staticText26->Wrap( -1 );
-	fgSizer4->Add( m_staticText26, 0, wxALL, 5 );
 	
-	CertCountryText = new wxStaticText( pan_Options, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
-	CertCountryText->Wrap( -1 );
-	fgSizer4->Add( CertCountryText, 0, wxALL, 5 );
+	certDetailsIndentSizer->Add( 15, 0, 0, wxEXPAND, 5 );
 	
-	m_staticText28 = new wxStaticText( pan_Options, wxID_ANY, _("State or Province:"), wxDefaultPosition, wxDefaultSize, 0 );
-	m_staticText28->Wrap( -1 );
-	fgSizer4->Add( m_staticText28, 0, wxALL, 5 );
+	wxFlexGridSizer* certDetailsSizer;
+	certDetailsSizer = new wxFlexGridSizer( 2, 2, 0, 0 );
+	certDetailsSizer->AddGrowableCol( 1 );
+	certDetailsSizer->SetFlexibleDirection( wxBOTH );
+	certDetailsSizer->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
 	
-	CertStateText = new wxStaticText( pan_Options, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
-	CertStateText->Wrap( -1 );
-	fgSizer4->Add( CertStateText, 0, wxALL, 5 );
+	certFingerprintLabel = new wxStaticText( keysTab, wxID_ANY, _("KeyID:"), wxDefaultPosition, wxDefaultSize, 0 );
+	certFingerprintLabel->Wrap( -1 );
+	certDetailsSizer->Add( certFingerprintLabel, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
 	
-	m_staticText30 = new wxStaticText( pan_Options, wxID_ANY, _("Locality:"), wxDefaultPosition, wxDefaultSize, 0 );
-	m_staticText30->Wrap( -1 );
-	fgSizer4->Add( m_staticText30, 0, wxALL, 5 );
+	certFingerprintText = new wxStaticText( keysTab, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	certFingerprintText->Wrap( -1 );
+	certDetailsSizer->Add( certFingerprintText, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
 	
-	CertLocalityText = new wxStaticText( pan_Options, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
-	CertLocalityText->Wrap( -1 );
-	fgSizer4->Add( CertLocalityText, 0, wxALL, 5 );
+	certValidityLabel = new wxStaticText( keysTab, wxID_ANY, _("Validity:"), wxDefaultPosition, wxDefaultSize, 0 );
+	certValidityLabel->Wrap( -1 );
+	certDetailsSizer->Add( certValidityLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	m_staticText32 = new wxStaticText( pan_Options, wxID_ANY, _("Organization:"), wxDefaultPosition, wxDefaultSize, 0 );
-	m_staticText32->Wrap( -1 );
-	fgSizer4->Add( m_staticText32, 0, wxALL, 5 );
+	certValidityText = new wxStaticText( keysTab, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	certValidityText->Wrap( -1 );
+	certDetailsSizer->Add( certValidityText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	CertOrgaText = new wxStaticText( pan_Options, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
-	CertOrgaText->Wrap( -1 );
-	fgSizer4->Add( CertOrgaText, 0, wxALL, 5 );
+	certCountryLabel = new wxStaticText( keysTab, wxID_ANY, _("Country:"), wxDefaultPosition, wxDefaultSize, 0 );
+	certCountryLabel->Wrap( -1 );
+	certDetailsSizer->Add( certCountryLabel, 0, wxALL, 5 );
 	
-	m_staticText34 = new wxStaticText( pan_Options, wxID_ANY, _("Organizational Unit:"), wxDefaultPosition, wxDefaultSize, 0 );
-	m_staticText34->Wrap( -1 );
-	fgSizer4->Add( m_staticText34, 0, wxALL, 5 );
+	certCountryText = new wxStaticText( keysTab, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	certCountryText->Wrap( -1 );
+	certDetailsSizer->Add( certCountryText, 0, wxALL, 5 );
 	
-	CertOrgaunitText = new wxStaticText( pan_Options, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
-	CertOrgaunitText->Wrap( -1 );
-	fgSizer4->Add( CertOrgaunitText, 0, wxALL, 5 );
+	certStateLabel = new wxStaticText( keysTab, wxID_ANY, _("State or Province:"), wxDefaultPosition, wxDefaultSize, 0 );
+	certStateLabel->Wrap( -1 );
+	certDetailsSizer->Add( certStateLabel, 0, wxALL, 5 );
 	
-	m_staticText36 = new wxStaticText( pan_Options, wxID_ANY, _("Common Name:"), wxDefaultPosition, wxDefaultSize, 0 );
-	m_staticText36->Wrap( -1 );
-	fgSizer4->Add( m_staticText36, 0, wxALL, 5 );
+	certStateText = new wxStaticText( keysTab, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	certStateText->Wrap( -1 );
+	certDetailsSizer->Add( certStateText, 0, wxALL, 5 );
 	
-	CertCnText = new wxStaticText( pan_Options, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
-	CertCnText->Wrap( -1 );
-	fgSizer4->Add( CertCnText, 0, wxALL, 5 );
+	certLocalityLabel = new wxStaticText( keysTab, wxID_ANY, _("Locality:"), wxDefaultPosition, wxDefaultSize, 0 );
+	certLocalityLabel->Wrap( -1 );
+	certDetailsSizer->Add( certLocalityLabel, 0, wxALL, 5 );
 	
-	m_staticText38 = new wxStaticText( pan_Options, wxID_ANY, _("Email Address:"), wxDefaultPosition, wxDefaultSize, 0 );
-	m_staticText38->Wrap( -1 );
-	fgSizer4->Add( m_staticText38, 0, wxALL, 5 );
+	certLocalityText = new wxStaticText( keysTab, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	certLocalityText->Wrap( -1 );
+	certDetailsSizer->Add( certLocalityText, 0, wxALL, 5 );
 	
-	CertEmailText = new wxStaticText( pan_Options, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
-	CertEmailText->Wrap( -1 );
-	fgSizer4->Add( CertEmailText, 0, wxALL, 5 );
+	certOrgaLabel = new wxStaticText( keysTab, wxID_ANY, _("Organization:"), wxDefaultPosition, wxDefaultSize, 0 );
+	certOrgaLabel->Wrap( -1 );
+	certDetailsSizer->Add( certOrgaLabel, 0, wxALL, 5 );
 	
-	sbSizer2->Add( fgSizer4, 0, wxEXPAND, 5 );
+	certOrgaText = new wxStaticText( keysTab, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	certOrgaText->Wrap( -1 );
+	certDetailsSizer->Add( certOrgaText, 0, wxALL, 5 );
 	
-	bSizer16->Add( sbSizer2, 0, wxEXPAND, 5 );
+	certOrgaUnitLabel = new wxStaticText( keysTab, wxID_ANY, _("Organizational Unit:"), wxDefaultPosition, wxDefaultSize, 0 );
+	certOrgaUnitLabel->Wrap( -1 );
+	certDetailsSizer->Add( certOrgaUnitLabel, 0, wxALL, 5 );
 	
-	btn_GenerateKeyPair = new wxButton( pan_Options, wxID_ANY, _("Generate Keypair"), wxDefaultPosition, wxDefaultSize, 0 );
-	bSizer16->Add( btn_GenerateKeyPair, 0, wxALL, 5 );
+	certOrgaUnitText = new wxStaticText( keysTab, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	certOrgaUnitText->Wrap( -1 );
+	certDetailsSizer->Add( certOrgaUnitText, 0, wxALL, 5 );
 	
-	pan_Options->SetSizer( bSizer16 );
-	pan_Options->Layout();
-	bSizer16->Fit( pan_Options );
-	note_MainSfs->AddPage( pan_Options, _("Options"), false );
+	certCnLabel = new wxStaticText( keysTab, wxID_ANY, _("Common Name:"), wxDefaultPosition, wxDefaultSize, 0 );
+	certCnLabel->Wrap( -1 );
+	certDetailsSizer->Add( certCnLabel, 0, wxALL, 5 );
+	
+	certCnText = new wxStaticText( keysTab, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	certCnText->Wrap( -1 );
+	certDetailsSizer->Add( certCnText, 0, wxALL, 5 );
+	
+	certEmailLabel = new wxStaticText( keysTab, wxID_ANY, _("Email Address:"), wxDefaultPosition, wxDefaultSize, 0 );
+	certEmailLabel->Wrap( -1 );
+	certDetailsSizer->Add( certEmailLabel, 0, wxALL, 5 );
+	
+	certEmailText = new wxStaticText( keysTab, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	certEmailText->Wrap( -1 );
+	certDetailsSizer->Add( certEmailText, 0, wxALL, 5 );
+	
+	certDetailsIndentSizer->Add( certDetailsSizer, 1, wxEXPAND, 5 );
+	
+	certificateSizer->Add( certDetailsIndentSizer, 0, wxEXPAND, 5 );
+	
+	keyTabMainSizer->Add( certificateSizer, 0, wxALL|wxEXPAND, 5 );
+	
+	generateKeyPairButton = new wxButton( keysTab, wxID_ANY, _("Generate Keypair"), wxDefaultPosition, wxDefaultSize, 0 );
+	keyTabMainSizer->Add( generateKeyPairButton, 0, wxALL, 5 );
+	
+	keysTab->SetSizer( keyTabMainSizer );
+	keysTab->Layout();
+	keyTabMainSizer->Fit( keysTab );
+	note_MainSfs->AddPage( keysTab, _("Keys"), false );
 	
 	sz_MainSFSMain->Add( note_MainSfs, 1, wxEXPAND | wxALL, 5 );
 	
@@ -393,9 +412,9 @@ ModSfsMainPanelBase::ModSfsMainPanelBase( wxWindow* parent, wxWindowID id, const
 	SfsMainExportButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModSfsMainPanelBase::OnSfsMainExportClicked ), NULL, this );
 	SfsMainActionButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModSfsMainPanelBase::OnSfsMainApplyButtonClicked ), NULL, this );
 	SfsMainFilterValidateButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModSfsMainPanelBase::OnSfsMainValidateButtonClicked ), NULL, this );
-	PrivKeyValidityChoice->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( ModSfsMainPanelBase::OnPrivKeyValidityChanged ), NULL, this );
-	PrivKeyValiditySpinCtrl->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( ModSfsMainPanelBase::OnPrivKeyValidityPeriodChanged ), NULL, this );
-	btn_GenerateKeyPair->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModSfsMainPanelBase::OnGenerateKeyPair ), NULL, this );
+	privKeyValidityChoice->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( ModSfsMainPanelBase::onPrivKeyValidityChanged ), NULL, this );
+	privKeyValiditySpinCtrl->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( ModSfsMainPanelBase::onPrivKeyValidityPeriodChanged ), NULL, this );
+	generateKeyPairButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModSfsMainPanelBase::onGenerateKeyPairButton ), NULL, this );
 }
 
 ModSfsOverviewPanelBase::ModSfsOverviewPanelBase( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size, long style ) : wxPanel( parent, id, pos, size, style )
@@ -537,162 +556,160 @@ ModSfsGenerateKeyDlgBase::ModSfsGenerateKeyDlgBase( wxWindow* parent, wxWindowID
 {
 	this->SetSizeHints( wxDefaultSize, wxDefaultSize );
 	
-	wxBoxSizer* bSizer18;
-	bSizer18 = new wxBoxSizer( wxVERTICAL );
+	wxBoxSizer* mainSizer;
+	mainSizer = new wxBoxSizer( wxVERTICAL );
 	
-	wxStaticBoxSizer* sz_PrivateKey;
-	sz_PrivateKey = new wxStaticBoxSizer( new wxStaticBox( this, -1, _("Private Key") ), wxVERTICAL );
+	wxStaticBoxSizer* privateKeySizer;
+	privateKeySizer = new wxStaticBoxSizer( new wxStaticBox( this, -1, _("Private Key") ), wxVERTICAL );
 	
-	wxFlexGridSizer* privkeySizer;
-	privkeySizer = new wxFlexGridSizer( 1, 3, 0, 0 );
-	privkeySizer->AddGrowableCol( 1 );
-	privkeySizer->SetFlexibleDirection( wxBOTH );
-	privkeySizer->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+	keyPicker = new AnPickFromFs( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	privateKeySizer->Add( keyPicker, 0, wxEXPAND, 5 );
 	
-	m_staticText52 = new wxStaticText( this, wxID_ANY, _("Configure private key:"), wxDefaultPosition, wxDefaultSize, 0 );
-	m_staticText52->Wrap( -1 );
-	privkeySizer->Add( m_staticText52, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	wxFlexGridSizer* passphraseSizer;
+	passphraseSizer = new wxFlexGridSizer( 2, 4, 0, 0 );
+	passphraseSizer->AddGrowableCol( 1 );
+	passphraseSizer->SetFlexibleDirection( wxBOTH );
+	passphraseSizer->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
 	
-	pathPrivKeyTxtCtrl = new wxTextCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
-	pathPrivKeyTxtCtrl->SetMinSize( wxSize( 220,-1 ) );
+	passphraseLabel = new wxStaticText( this, wxID_ANY, _("Passphrase:"), wxDefaultPosition, wxDefaultSize, 0 );
+	passphraseLabel->Wrap( -1 );
+	passphraseSizer->Add( passphraseLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	privkeySizer->Add( pathPrivKeyTxtCtrl, 1, wxALL|wxALIGN_CENTER_VERTICAL|wxALIGN_CENTER_HORIZONTAL, 5 );
+	passphraseTextCtrl = new wxTextCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PASSWORD );
+	passphraseTextCtrl->SetMinSize( wxSize( 250,-1 ) );
 	
-	pathPrivKeyBrowseBtn = new wxButton( this, wxID_ANY, _("Browse..."), wxDefaultPosition, wxDefaultSize, 0 );
-	privkeySizer->Add( pathPrivKeyBrowseBtn, 0, wxALIGN_RIGHT|wxALL, 5 );
-	
-	m_staticText53 = new wxStaticText( this, wxID_ANY, _("Passphrase:"), wxDefaultPosition, wxDefaultSize, 0 );
-	m_staticText53->Wrap( -1 );
-	privkeySizer->Add( m_staticText53, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
-	
-	PassphrPrivKeyTxtCtrl = new wxTextCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PASSWORD );
-	privkeySizer->Add( PassphrPrivKeyTxtCtrl, 0, wxALL|wxALIGN_CENTER_VERTICAL|wxEXPAND, 5 );
-	
-	PassphrMisMatchIcon = new wxStaticBitmap( this, wxID_ANY, wxNullBitmap, wxDefaultPosition, wxDefaultSize, 0 );
-	PassphrMisMatchIcon->Hide();
-	
-	privkeySizer->Add( PassphrMisMatchIcon, 0, wxALL, 5 );
-	
-	PassphrRepeatTxt = new wxStaticText( this, wxID_ANY, _("Passphrase (repeat):"), wxDefaultPosition, wxDefaultSize, 0 );
-	PassphrRepeatTxt->Wrap( -1 );
-	privkeySizer->Add( PassphrRepeatTxt, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
-	
-	PassphrRepeatPrivKeyTxtCtrl = new wxTextCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PASSWORD );
-	privkeySizer->Add( PassphrRepeatPrivKeyTxtCtrl, 1, wxALL|wxALIGN_CENTER_VERTICAL|wxEXPAND, 5 );
-	
-	PassphrMismatchTxt = new wxStaticText( this, wxID_ANY, _("Passphrase mismatch!"), wxDefaultPosition, wxDefaultSize, 0 );
-	PassphrMismatchTxt->Wrap( -1 );
-	privkeySizer->Add( PassphrMismatchTxt, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
-	
-	sz_PrivateKey->Add( privkeySizer, 1, wxEXPAND, 5 );
-	
-	bSizer18->Add( sz_PrivateKey, 1, wxEXPAND, 5 );
-	
-	wxStaticBoxSizer* sz_Certificate;
-	sz_Certificate = new wxStaticBoxSizer( new wxStaticBox( this, -1, _("Certificate") ), wxVERTICAL );
-	
-	wxFlexGridSizer* fgSizer11;
-	fgSizer11 = new wxFlexGridSizer( 1, 3, 0, 0 );
-	fgSizer11->AddGrowableCol( 1 );
-	fgSizer11->SetFlexibleDirection( wxBOTH );
-	fgSizer11->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
-	
-	m_staticText50 = new wxStaticText( this, wxID_ANY, _("Configure Certificate:"), wxDefaultPosition, wxDefaultSize, 0 );
-	m_staticText50->Wrap( -1 );
-	fgSizer11->Add( m_staticText50, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
-	
-	pathToCertTxtCtrl = new wxTextCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
-	pathToCertTxtCtrl->SetMinSize( wxSize( 220,-1 ) );
-	
-	fgSizer11->Add( pathToCertTxtCtrl, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
-	
-	pathCertBrowseBtn = new wxButton( this, wxID_ANY, _("Browse..."), wxDefaultPosition, wxDefaultSize, 0 );
-	fgSizer11->Add( pathCertBrowseBtn, 0, wxALL|wxALIGN_RIGHT, 5 );
-	
-	m_staticText42 = new wxStaticText( this, wxID_ANY, _("Country:"), wxDefaultPosition, wxDefaultSize, 0 );
-	m_staticText42->Wrap( -1 );
-	fgSizer11->Add( m_staticText42, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
-	
-	CountryOfCertTxtCtrl = new wxTextCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize( 30,-1 ), 0 );
-	fgSizer11->Add( CountryOfCertTxtCtrl, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	passphraseSizer->Add( passphraseTextCtrl, 0, wxALL|wxALIGN_CENTER_VERTICAL|wxEXPAND, 5 );
 	
 	
-	fgSizer11->Add( 0, 0, 1, wxEXPAND, 5 );
-	
-	m_staticText43 = new wxStaticText( this, wxID_ANY, _("State or Province:"), wxDefaultPosition, wxDefaultSize, 0 );
-	m_staticText43->Wrap( -1 );
-	fgSizer11->Add( m_staticText43, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
-	
-	StateOfCertTxtCtrl = new wxTextCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
-	fgSizer11->Add( StateOfCertTxtCtrl, 1, wxALL|wxALIGN_CENTER_VERTICAL|wxEXPAND, 5 );
+	passphraseSizer->Add( 0, 0, 1, wxEXPAND, 5 );
 	
 	
-	fgSizer11->Add( 0, 0, 1, wxEXPAND, 5 );
+	passphraseSizer->Add( 0, 0, 1, wxEXPAND, 5 );
 	
-	m_staticText44 = new wxStaticText( this, wxID_ANY, _("Locality:"), wxDefaultPosition, wxDefaultSize, 0 );
-	m_staticText44->Wrap( -1 );
-	fgSizer11->Add( m_staticText44, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	passphraseRepeatLabel = new wxStaticText( this, wxID_ANY, _("Passphrase (repeat):"), wxDefaultPosition, wxDefaultSize, 0 );
+	passphraseRepeatLabel->Wrap( -1 );
+	passphraseSizer->Add( passphraseRepeatLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	LocalityOfCertTxtCtrl = new wxTextCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
-	fgSizer11->Add( LocalityOfCertTxtCtrl, 1, wxALL|wxALIGN_CENTER_VERTICAL|wxEXPAND, 5 );
+	passphraseRepeatTextCtrl = new wxTextCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PASSWORD );
+	passphraseSizer->Add( passphraseRepeatTextCtrl, 1, wxALL|wxALIGN_CENTER_VERTICAL|wxEXPAND, 5 );
+	
+	passphraseMismatchIcon = new wxStaticBitmap( this, wxID_ANY, wxNullBitmap, wxDefaultPosition, wxDefaultSize, 0 );
+	passphraseSizer->Add( passphraseMismatchIcon, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	
+	passphraseMismatchText = new wxStaticText( this, wxID_ANY, _("Passphrase mismatch!"), wxDefaultPosition, wxDefaultSize, 0 );
+	passphraseMismatchText->Wrap( -1 );
+	passphraseMismatchText->SetForegroundColour( wxColour( 255, 0, 0 ) );
+	
+	passphraseSizer->Add( passphraseMismatchText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	
+	privateKeySizer->Add( passphraseSizer, 1, wxEXPAND, 5 );
+	
+	mainSizer->Add( privateKeySizer, 1, wxALL|wxEXPAND, 5 );
+	
+	wxStaticBoxSizer* certificateSizer;
+	certificateSizer = new wxStaticBoxSizer( new wxStaticBox( this, -1, _("Certificate") ), wxVERTICAL );
+	
+	certificatePicker = new AnPickFromFs( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	certificateSizer->Add( certificatePicker, 0, wxEXPAND, 5 );
+	
+	wxBoxSizer* certDetailsLineSizer;
+	certDetailsLineSizer = new wxBoxSizer( wxHORIZONTAL );
+	
+	certDetailsLabel = new wxStaticText( this, wxID_ANY, _("Details"), wxDefaultPosition, wxDefaultSize, 0 );
+	certDetailsLabel->Wrap( -1 );
+	certDetailsLineSizer->Add( certDetailsLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	
+	certDetailsLine = new wxStaticLine( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLI_HORIZONTAL );
+	certDetailsLineSizer->Add( certDetailsLine, 1, wxEXPAND | wxALL, 5 );
+	
+	certificateSizer->Add( certDetailsLineSizer, 0, wxEXPAND, 5 );
+	
+	certDetailsIndentSizer = new wxBoxSizer( wxHORIZONTAL );
 	
 	
-	fgSizer11->Add( 0, 0, 1, wxEXPAND, 5 );
+	certDetailsIndentSizer->Add( 15, 0, 0, wxEXPAND, 5 );
 	
-	m_staticText45 = new wxStaticText( this, wxID_ANY, _("Organization:"), wxDefaultPosition, wxDefaultSize, 0 );
-	m_staticText45->Wrap( -1 );
-	fgSizer11->Add( m_staticText45, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	wxFlexGridSizer* certDetailsSizer;
+	certDetailsSizer = new wxFlexGridSizer( 1, 2, 0, 0 );
+	certDetailsSizer->AddGrowableCol( 1 );
+	certDetailsSizer->SetFlexibleDirection( wxBOTH );
+	certDetailsSizer->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
 	
-	OrgaOfCertTxtCtrl = new wxTextCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
-	fgSizer11->Add( OrgaOfCertTxtCtrl, 1, wxALL|wxALIGN_CENTER_VERTICAL|wxEXPAND, 5 );
+	certValidityLabel = new wxStaticText( this, wxID_ANY, _("Validity:"), wxDefaultPosition, wxDefaultSize, 0 );
+	certValidityLabel->Wrap( -1 );
+	certDetailsSizer->Add( certValidityLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
+	certValidityDatePicker = new wxDatePickerCtrl( this, wxID_ANY, wxDefaultDateTime, wxPoint( -1,-1 ), wxSize( 120,-1 ), wxDP_DEFAULT|wxDP_SHOWCENTURY );
+	certDetailsSizer->Add( certValidityDatePicker, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
 	
-	fgSizer11->Add( 0, 0, 1, wxEXPAND, 5 );
+	certCountryLabel = new wxStaticText( this, wxID_ANY, _("Country:"), wxDefaultPosition, wxDefaultSize, 0 );
+	certCountryLabel->Wrap( -1 );
+	certDetailsSizer->Add( certCountryLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	m_staticText46 = new wxStaticText( this, wxID_ANY, _("Organizational Unit:"), wxDefaultPosition, wxDefaultSize, 0 );
-	m_staticText46->Wrap( -1 );
-	fgSizer11->Add( m_staticText46, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	certCountryTextCtrl = new wxTextCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize( 30,-1 ), 0 );
+	certDetailsSizer->Add( certCountryTextCtrl, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	OrgaunitOfCertTxtCtrl = new wxTextCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
-	fgSizer11->Add( OrgaunitOfCertTxtCtrl, 1, wxALL|wxALIGN_CENTER_VERTICAL|wxEXPAND, 5 );
+	certStateLabel = new wxStaticText( this, wxID_ANY, _("State or Province:"), wxDefaultPosition, wxDefaultSize, 0 );
+	certStateLabel->Wrap( -1 );
+	certDetailsSizer->Add( certStateLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
+	certStateTextCtrl = new wxTextCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	certDetailsSizer->Add( certStateTextCtrl, 1, wxALL|wxALIGN_CENTER_VERTICAL|wxEXPAND, 5 );
 	
-	fgSizer11->Add( 0, 0, 1, wxEXPAND, 5 );
+	certLocalityLabel = new wxStaticText( this, wxID_ANY, _("Locality:"), wxDefaultPosition, wxDefaultSize, 0 );
+	certLocalityLabel->Wrap( -1 );
+	certDetailsSizer->Add( certLocalityLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	m_staticText47 = new wxStaticText( this, wxID_ANY, _("Common Name:"), wxDefaultPosition, wxDefaultSize, 0 );
-	m_staticText47->Wrap( -1 );
-	fgSizer11->Add( m_staticText47, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	certLocalityTextCtrl = new wxTextCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	certDetailsSizer->Add( certLocalityTextCtrl, 1, wxALL|wxALIGN_CENTER_VERTICAL|wxEXPAND, 5 );
 	
-	ComNameOfCertTxtCtrl = new wxTextCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
-	fgSizer11->Add( ComNameOfCertTxtCtrl, 1, wxALL|wxALIGN_CENTER_VERTICAL|wxEXPAND, 5 );
+	certOrgaLabel = new wxStaticText( this, wxID_ANY, _("Organization:"), wxDefaultPosition, wxDefaultSize, 0 );
+	certOrgaLabel->Wrap( -1 );
+	certDetailsSizer->Add( certOrgaLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
+	certOrgaTextCtrl = new wxTextCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	certDetailsSizer->Add( certOrgaTextCtrl, 1, wxALL|wxALIGN_CENTER_VERTICAL|wxEXPAND, 5 );
 	
-	fgSizer11->Add( 0, 0, 1, wxEXPAND, 5 );
+	certOrgaUnitLabel = new wxStaticText( this, wxID_ANY, _("Organizational Unit:"), wxDefaultPosition, wxDefaultSize, 0 );
+	certOrgaUnitLabel->Wrap( -1 );
+	certDetailsSizer->Add( certOrgaUnitLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	m_staticText48 = new wxStaticText( this, wxID_ANY, _("Email Address:"), wxDefaultPosition, wxDefaultSize, 0 );
-	m_staticText48->Wrap( -1 );
-	fgSizer11->Add( m_staticText48, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	certOrgaUnitTextCtrl = new wxTextCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	certDetailsSizer->Add( certOrgaUnitTextCtrl, 1, wxALL|wxALIGN_CENTER_VERTICAL|wxEXPAND, 5 );
 	
-	EmailOfCertTxtCtrl = new wxTextCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
-	fgSizer11->Add( EmailOfCertTxtCtrl, 1, wxALL|wxALIGN_CENTER_VERTICAL|wxEXPAND, 5 );
+	certCnLabel = new wxStaticText( this, wxID_ANY, _("Common Name:"), wxDefaultPosition, wxDefaultSize, 0 );
+	certCnLabel->Wrap( -1 );
+	certDetailsSizer->Add( certCnLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	sz_Certificate->Add( fgSizer11, 1, wxALL|wxEXPAND, 5 );
+	certCnTextCtrl = new wxTextCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	certDetailsSizer->Add( certCnTextCtrl, 1, wxALL|wxALIGN_CENTER_VERTICAL|wxEXPAND, 5 );
 	
-	bSizer18->Add( sz_Certificate, 0, wxEXPAND, 5 );
+	certEmailLabel = new wxStaticText( this, wxID_ANY, _("Email Address:"), wxDefaultPosition, wxDefaultSize, 0 );
+	certEmailLabel->Wrap( -1 );
+	certDetailsSizer->Add( certEmailLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	m_sdbSizer4 = new wxStdDialogButtonSizer();
-	m_sdbSizer4OK = new wxButton( this, wxID_OK );
-	m_sdbSizer4->AddButton( m_sdbSizer4OK );
-	m_sdbSizer4Cancel = new wxButton( this, wxID_CANCEL );
-	m_sdbSizer4->AddButton( m_sdbSizer4Cancel );
-	m_sdbSizer4->Realize();
-	bSizer18->Add( m_sdbSizer4, 0, wxEXPAND, 5 );
+	certEmailTextCtrl = new wxTextCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	certDetailsSizer->Add( certEmailTextCtrl, 1, wxALL|wxALIGN_CENTER_VERTICAL|wxEXPAND, 5 );
 	
-	this->SetSizer( bSizer18 );
+	certDetailsIndentSizer->Add( certDetailsSizer, 1, wxEXPAND, 5 );
+	
+	certificateSizer->Add( certDetailsIndentSizer, 1, wxEXPAND, 5 );
+	
+	mainSizer->Add( certificateSizer, 0, wxALL|wxEXPAND, 5 );
+	
+	buttonSizer = new wxStdDialogButtonSizer();
+	buttonSizerOK = new wxButton( this, wxID_OK );
+	buttonSizer->AddButton( buttonSizerOK );
+	buttonSizerCancel = new wxButton( this, wxID_CANCEL );
+	buttonSizer->AddButton( buttonSizerCancel );
+	buttonSizer->Realize();
+	mainSizer->Add( buttonSizer, 0, wxALL|wxEXPAND, 5 );
+	
+	this->SetSizer( mainSizer );
 	this->Layout();
-	bSizer18->Fit( this );
+	mainSizer->Fit( this );
 	
 	// Connect Events
 	this->Connect( wxEVT_INIT_DIALOG, wxInitDialogEventHandler( ModSfsGenerateKeyDlgBase::InitDialog ) );
-	m_sdbSizer4OK->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModSfsGenerateKeyDlgBase::OnOkButton ), NULL, this );
+	buttonSizerOK->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModSfsGenerateKeyDlgBase::OnOkButton ), NULL, this );
 }

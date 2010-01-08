@@ -243,7 +243,7 @@ class ModSfsMainPanelImpl : public ModSfsMainPanelBase, private Observer
 		 * @param[in] 1st The event.
 		 * @return Nothing.
 		 */
-		void OnGenerateKeyPair(wxCommandEvent&);
+		void onGenerateKeyPairButton(wxCommandEvent&);
 
 		/**
 		 * Initial setup of the Sfs module.
