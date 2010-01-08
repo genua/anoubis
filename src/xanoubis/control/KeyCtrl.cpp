@@ -25,6 +25,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <ctime>
+
 #include "KeyCtrl.h"
 #include "Singleton.cpp"
 
@@ -54,6 +56,7 @@ xpass_cb(char *buf, int size, int, void *err)
 	bool ok = true;
 	int pass_len;
 	int *error = (int *)err;
+	int random = 0;
 
 	PassphraseReader *pr = KeyCtrl::getInstance()->getPassphraseReader();
 	if (pr != 0) {
@@ -69,8 +72,15 @@ xpass_cb(char *buf, int size, int, void *err)
 		pass_len = size;
 
 	memcpy(buf, (const char *)result.mb_str(wxConvUTF8), pass_len);
-	result.Clear();
 
+	// Overwrite passphrase
+	srand((unsigned)time(0));
+	for(unsigned int i = 0; i < result.Len(); i++) {
+		random = rand()%94+32;
+		result.SetChar(i,random);
+	}
+
+	result.Clear();
 	return (pass_len);
 }
 

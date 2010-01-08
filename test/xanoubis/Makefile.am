@@ -45,7 +45,8 @@ TESTS = \
 	testSuite_Key \
 	testSuite_Notifications \
 	testSuite_Config \
-	pidtest
+	pidtest \
+	wxStringTest
 noinst_PROGRAMS = test_xanoubis_server testSuite_JobCtrl $(TESTS)
 endif
 
@@ -381,3 +382,11 @@ pidtest_SOURCES = pidtest.cpp
 pidtest__CPPFLAGS = $(WX_CPPFLAGS)
 pidtest_CXXFLAGS = $(WX_CXXFLAGS)
 pidtest_LDADD = @WX_LIBS@
+
+#
+# wxStringTest
+#
+wxStringTest_SOURCES = wxStringTest.cpp
+wxStringTest_CPPFLAGS = $(WX_CPPFLAGS)
+wxStringTest_CXXFLAGS = $(WX_CXXFLAGS)
+wxStringTest_LDADD = @WX_LIBS@
