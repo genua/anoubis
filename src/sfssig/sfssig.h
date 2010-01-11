@@ -131,7 +131,7 @@ int syssig_update(int argc, char *argv[]);
 int syssig_remove(int argc, char *argv[]);
 int skipsum_update(char *file, int op);
 int str2hash(const char *s, unsigned char dest[SHA256_DIGEST_LENGTH]);
-struct anoubis_transaction	*sfs_sumop_flags(char *file, int operation,
+struct anoubis_transaction	*sfs_sumop(const char *file, int operation,
     u_int8_t *cs, int cslen, int idlen, uid_t uid, unsigned int);
 
 extern unsigned int opts;

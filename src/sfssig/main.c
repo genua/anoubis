@@ -57,8 +57,8 @@ static void			 destroy_channel(void);
 static int			 add_entry(struct sfs_entry *);
 static int			 list(char *arg, uid_t sfs_uid);
 static struct sfs_entry		*get_entry(char *, unsigned char *, int, uid_t);
-static uid_t			*request_uids(char *, int *);
-static unsigned char		**request_keyids(char *, int **, int *);
+static uid_t			*request_uids(const char *, int *);
+static unsigned char		**request_keyids(const char *, int **, int *);
 void				 usage(void) __dead;
 
 typedef int (*func_int_t)(void);
@@ -85,7 +85,6 @@ static char			*out_file = NULL;
 static struct anoubis_sig	*as = NULL;
 static char			*sfs_cert = NULL;
 static char			*sfs_key = NULL;
-static int			 checksum_flag = ANOUBIS_CSUM_NONE;
 
 unsigned int		 opts = 0;
 extern char		*__progname;
@@ -303,7 +302,6 @@ main(int argc, char *argv[])
 					}
 				}
 			}
-			checksum_flag |= ANOUBIS_CSUM_UID;
 			break;
 		case 'c':
 			if (got_cert)
@@ -314,7 +312,6 @@ main(int argc, char *argv[])
 			} else {
 				sfs_cert = optarg;
 			}
-			checksum_flag |= ANOUBIS_CSUM_KEY;
 			break;
 		case 'A':
 			sys_argcsumstr = optarg;
@@ -560,7 +557,7 @@ finish:
  *	------------------
  */
 struct anoubis_transaction *
-sfs_sumop_flags(char *file, int operation, u_int8_t *cs, int cslen, int idlen,
+sfs_sumop(const char *file, int operation, u_int8_t *cs, int cslen, int idlen,
     uid_t uid, unsigned int flags)
 {
 	struct anoubis_transaction	*t;
@@ -598,16 +595,8 @@ sfs_sumop_flags(char *file, int operation, u_int8_t *cs, int cslen, int idlen,
 	return t;
 }
 
-static struct anoubis_transaction *
-sfs_sumop(char *file, int operation, u_int8_t *cs, int cslen, int idlen,
-    uid_t uid)
-{
-	return sfs_sumop_flags(file, operation, cs, cslen, idlen, uid,
-	    checksum_flag);
-}
-
 struct anoubis_transaction *
-sfs_listop(char *file, uid_t uid, struct anoubis_sig *as,
+sfs_listop(const char *file, uid_t uid, struct anoubis_sig *as,
     unsigned int flags)
 {
 	struct anoubis_transaction	*t;
@@ -635,9 +624,16 @@ sfs_listop(char *file, uid_t uid, struct anoubis_sig *as,
 	return t;
 }
 
-
+/*
+ * NOTE: It is possible that this function returns an emtpy list.
+ * NOTE: In this case the return value will still be non-NULL but *count
+ * NOTE: will be zero.
+ * XXX CEH: The calling conventions for request_uids and request_keys
+ * XXX CEH: need unification. The return value should be count or a
+ * XXX CEH: negative error in both cases.
+ */
 static uid_t*
-request_uids(char *file, int *count)
+request_uids(const char *file, int *count)
 {
 	int ret;
 	uid_t *uids;
@@ -666,13 +662,14 @@ request_uids(char *file, int *count)
 	}
 
 	result = anoubis_csum_list(t->msg, &cnt);
-	if (result == NULL || cnt <= 0) {
+	if (result == NULL && cnt < 0) {
 		if (opts & SFSSIG_OPT_DEBUG2)
 			fprintf(stderr, "no result.\n");
 		anoubis_transaction_destroy(t);
 		return NULL;
 	}
-	uids = calloc(cnt, sizeof(uid_t));
+	/* Make sure that we do not return NULL event if cnt == 0. */
+	uids = calloc(cnt ? cnt : 1, sizeof(uid_t));
 	if (uids == NULL) {
 		perror(file);
 		anoubis_transaction_destroy(t);
@@ -690,19 +687,342 @@ request_uids(char *file, int *count)
 	return uids;
 }
 
+/*
+ * NOTE: It is possible that this function returns an empty list.
+ * NOTE: In this case result and *ids might be zero.
+ * NOTE: *cnt will be less than zero in case of an error and zero in case
+ * NOTE: of an empty list.
+ * XXX CEH: The calling conventions for request_uids and request_keys
+ * XXX CEH: need unification. The return value should be count or a
+ * XXX CEH: negative error in both cases.
+ */
+static unsigned char **
+request_keyids(const char *file, int **ids, int *count)
+{
+	int cnt = 0;
+	int *idlens = NULL;
+	struct anoubis_transaction	*t;
+	unsigned char			**result = NULL;
+
+	if (opts & SFSSIG_OPT_DEBUG)
+		fprintf(stderr, ">request_keyids\n");
+
+	if (*count)
+		(*count) = -EINVAL;
+	if (ids)
+		(*ids) = NULL;
+	if (!file || !count || !ids) {
+		if (opts & SFSSIG_OPT_DEBUG)
+			fprintf(stderr, "internal error in requesting "
+			    "keyids\n");
+		return NULL;
+	}
+
+	(*count) = -ENOMEM;
+	t = sfs_listop(file, 0, NULL, ANOUBIS_CSUM_WANTIDS | ANOUBIS_CSUM_ALL
+	    | ANOUBIS_CSUM_KEY);
+	if (t == NULL)
+		return NULL;
+	(*count) = -t->result;
+	if (t->result) {
+		fprintf(stderr, "%s Checksum Request failed: %d (%s)\n", file,
+		    t->result, strerror(t->result));
+		anoubis_transaction_destroy(t);
+		return NULL;
+	}
+
+	result = anoubis_keyid_list(t->msg, &idlens, &cnt);
+	(*count) = cnt;
+	if (!result || cnt < 0) {
+		if (opts & SFSSIG_OPT_DEBUG2)
+			fprintf(stderr, "no result.\n");
+		anoubis_transaction_destroy(t);
+		return NULL;
+	}
+	*ids = idlens;
+	anoubis_transaction_destroy(t);
+
+	if (opts & SFSSIG_OPT_DEBUG)
+		fprintf(stderr, "<request_keyids\n");
+
+	return result;
+}
+
+typedef int (*sumop_callback_t)(const char *, struct anoubis_msg *, uid_t);
+
+static int
+sfs_get_callback(const char *file, struct anoubis_msg *m,
+    uid_t sfs_uid)
+{
+	const void		*sigdata, *upcsdata;
+	int			 siglen = 0, upcslen = 0, i;
+
+	if (opts & SFSSIG_OPT_SIG) {
+		siglen = anoubis_extract_sig_type(m,
+		    ANOUBIS_SIG_TYPE_SIG, &sigdata);
+		upcslen = anoubis_extract_sig_type(m,
+		    ANOUBIS_SIG_TYPE_UPGRADECS, &upcsdata);
+	} else {
+		siglen = anoubis_extract_sig_type(m,
+		    ANOUBIS_SIG_TYPE_CS, &sigdata);
+	}
+	if (siglen < ANOUBIS_CS_LEN) {
+		if (opts & SFSSIG_OPT_VERBOSE)
+			fprintf(stderr, "No entry found for %s\n", file);
+		return -ENOENT;
+	}
+	printf("%d: %s\t", sfs_uid, file);
+	for (i=0; i<SHA256_DIGEST_LENGTH; ++i)
+		printf("%02x", ((u_int8_t *)sigdata)[i]);
+	printf("\n");
+	if (opts & SFSSIG_OPT_SIG) {
+		for (i = SHA256_DIGEST_LENGTH; i < siglen; i++)
+			printf("%02x", ((u_int8_t *)sigdata)[i]);
+		printf("\n");
+		if (upcslen == SHA256_DIGEST_LENGTH) {
+			printf("* Upgraded * New Checksum: ");
+			for (i = 0; i < SHA256_DIGEST_LENGTH; i++)
+				printf("%02x", ((u_int8_t *)upcsdata)[i]);
+			printf("\n");
+		}
+	}
+	return 0;
+}
+
+static int
+sfs_validate_callback(const char *file, struct anoubis_msg *m,
+    uid_t sfs_uid __attribute__((unused)))
+{
+	const void		*sigdata;
+	int			 siglen;
+	char			*sigtype;
+	u_int8_t		 csum[ANOUBIS_CS_LEN];
+	int			 len = ANOUBIS_CS_LEN, error = 0;
+
+	if (opts & SFSSIG_OPT_SIG) {
+		siglen = anoubis_extract_sig_type(m,
+		    ANOUBIS_SIG_TYPE_SIG, &sigdata);
+		sigtype = "Signature";
+	} else {
+		siglen = anoubis_extract_sig_type(m,
+		    ANOUBIS_SIG_TYPE_CS, &sigdata);
+		sigtype = "Checksum";
+	}
+	if (siglen < ANOUBIS_CS_LEN)
+		return -ENOENT;
+	if (opts & SFSSIG_OPT_LN) {
+		error = anoubis_csum_link_calc(file, csum, &len);
+	} else {
+		error = anoubis_csum_calc(file, csum, &len);
+	}
+	if (error < 0) {
+		if (opts & SFSSIG_OPT_DEBUG)
+			perror("anoubis_csum_calc");
+		return error;
+	}
+	if (len != ANOUBIS_CS_LEN) {
+		fprintf(stderr, "Bad csum length from anoubis_csum_calc\n");
+		return -EIO;
+	}
+	if (memcmp(sigdata, csum, ANOUBIS_CS_LEN) == 0)
+		printf("%s: %s Match\n", file, sigtype);
+	else
+		printf("%s: %s Mismatch\n", file, sigtype);
+	return 0;
+}
+
+static int
+sfs_getnosum_callback(const char *file, struct anoubis_msg *m,
+    uid_t sfs_uid __attribute__((unused)))
+{
+	const void		*sigdata;
+	int			 siglen;
+
+	if (opts & SFSSIG_OPT_SIG) {
+		siglen = anoubis_extract_sig_type(m,
+		    ANOUBIS_SIG_TYPE_SIG, &sigdata);
+	} else {
+		siglen = anoubis_extract_sig_type(m,
+		    ANOUBIS_SIG_TYPE_CS, &sigdata);
+	}
+	if (siglen < ANOUBIS_CS_LEN)
+		return -ENOENT;
+	printf("%s\n", file);
+	return 0;
+}
+
+/**
+ * Perform a checksum operation for a single user ID.
+ *
+ * @param file The target file.
+ * @param operation The checksum operation (must not be a signature operation)
+ * @param cs The payload for the checksum operation.
+ * @param cslen Then length of the checksum operation.
+ * @param uid The uid for which to perform the operation.
+ * @callback Callback function that will be call with the result message of
+ *     the checksum request. Not called in case of an error.
+ *
+ * @return Zero in case of success or a negative error code in case of an
+ *     error.
+ */
+static int
+sfs_csumop_oneuid(const char *file, int operation, u_int8_t *cs,
+    int cslen, uid_t uid, sumop_callback_t callback)
+{
+	struct anoubis_transaction	*t;
+	int				 error;
+
+	t =  sfs_sumop(file, operation, cs, cslen, 0 /* idlen */,
+	    uid, ANOUBIS_CSUM_UID);
+	if (t == NULL)
+		return -ENOMEM;
+	error = -t->result;
+	if (error == 0 && callback) {
+		error = (*callback)(file, t->msg, uid);
+	}
+	anoubis_transaction_destroy(t);
+	return error;
+}
+
+/**
+ * Perform a checksum operation for all uids that have a registered
+ * checksum for the given file.
+ *
+ * @param file The path to the file.
+ * @param operation A checksum operation (must not be a signature operation!)
+ * @param cs The checksum operation payload or NULL.
+ * @param cslen The length of the payload.
+ * @callback Callback function that will be call with the result message of
+ *     the checksum request. Not called in case of an error.
+ *
+ * @return Zero on success, a negative error code in case of an error.
+ *
+ * NOTE: Currently, this function will abort after the first error which
+ * NOTE: might not be what you want but this is what happens in the callers
+ * NOTE: as of the writing of this function.
+ */
+static int
+sfs_csumop_alluid(const char *file, int operation, u_int8_t *cs, int cslen,
+    sumop_callback_t callback)
+{
+	int				 count, i, error = 0;
+	uid_t				*uids;
+
+	uids = request_uids(file, &count);
+	if (!uids) {
+		fprintf(stderr, "Failed to list uids for %s\n", file);
+		return -EIO;
+	}
+	for (i=0; i<count; ++i) {
+		error = sfs_csumop_oneuid(file, operation, cs, cslen, uids[i],
+		    callback);
+		if (error)
+			break;
+	}
+	free(uids);
+	return error;
+}
+
+/**
+ * Perform a signature operation on a file for a single keyid.
+ *
+ * @param file The target file.
+ * @param operation The signature operation (must not be a checksum operation).
+ * @param keyid The keyid for the signature operation.
+ * @param idlen The length of the keyid.
+ * @param sigdata The signature for ADDSIG requests.
+ * @param siglen The length of the signature.
+ * @callback Callback function that will be call with the result message of
+ *     the checksum request. Not called in case of an error.
+ *
+ * @return Zero in case of success. A negative error code in case of an
+ *     error.
+ */
+static int
+sfs_sigop_onekey(const char *file, int operation, void *keyid, int idlen,
+    void *sigdata, int siglen, sumop_callback_t callback)
+{
+	struct anoubis_transaction	*t;
+	int				 error;
+	void				*payload;
+
+	payload = malloc(idlen + siglen);
+	if (!payload)
+		return -ENOMEM;
+	if (idlen)
+		memcpy(payload, keyid, idlen);
+	if (siglen)
+		memcpy(payload + idlen, sigdata, siglen);
+	t = sfs_sumop(file, operation, payload, siglen, idlen,
+	    0 /* uid */, 0 /* flags */);
+	free(payload);
+	if (t == NULL)
+		return -ENOMEM;
+	error = -t->result;
+	/*
+	 * XXX CEH: Using euid here is in fact bogus but this is how the
+	 * XXX CEH: code used to work.
+	 */
+	if (error == 0 && callback)
+		error = (*callback)(file, t->msg, geteuid());
+	anoubis_transaction_destroy(t);
+	return error;
+}
+
+/**
+ * Perform a signature operation on a file for all keyids that have a
+ * registered checksum for the file.
+ *
+ * @param file The target file.
+ * @param operation The signature operation. This must not be a checksum
+ *     operation and ADDSIG cannot be supported, either!
+ * @callback Callback function that will be call with the result message of
+ *     the checksum request. Not called in case of an error.
+ *
+ * @return Zero in case of succes. A negative error code in case of an
+ *     error.
+ *
+ * NOTE: This function aborts after the first error encountered and does
+ * NOTE: not try to continue for rest of the keyids. This might not be
+ * NOTE: what we really want but it is at the time of this writing consistent
+ * NOTE: with the previously existing callers.
+ */
+static int
+sfs_sigop_allkeys(const char *file, int operation, sumop_callback_t callback)
+{
+	unsigned char		**keyids = NULL;
+	int			 *idlens = NULL;
+	int			  count, i, error = 0;
+
+	keyids = request_keyids(file, &idlens, &count);
+	if (count < 0) {
+		fprintf(stderr, "Failed to list keyids for %s\n", file);
+		return -EIO;
+	}
+	for (i=0; i<count; ++i) {
+		error = sfs_sigop_onekey(file, operation, as->keyid,
+		    as->idlen, NULL /* sigdata */, 0 /* siglen */, callback);
+		if (error)
+			break;
+	}
+	if (keyids) {
+		for (i=0; i<count; ++i)
+			free(keyids[i]);
+		free(keyids);
+	}
+	if (idlens)
+		free(idlens);
+	return error;
+}
 
 static int
 sfs_add(char *file, uid_t sfs_uid)
 {
-	struct anoubis_transaction	*t = NULL;
 	unsigned int			 siglen = 0, k;
 	u_int8_t			 cs[ANOUBIS_CS_LEN];
 	u_int8_t			 *sig = NULL;
-	u_int8_t			 *msg = NULL;
-	uid_t				*result = NULL;
 	int				 len = ANOUBIS_CS_LEN;
 	int				 ret;
-	int				 cnt = 0;
 	int				 i;
 
 	if (opts & SFSSIG_OPT_DEBUG)
@@ -728,46 +1048,30 @@ sfs_add(char *file, uid_t sfs_uid)
 			fprintf(stderr, "Error while anoubis_sign_csum\n");
 			return 1;
 		}
-		msg = calloc((siglen + as->idlen), sizeof(u_int8_t));
-		if (msg == NULL) {
-			perror("sfs_add");
-			free(sig);
-			return 1;
-		}
-		memcpy(msg, as->keyid, as->idlen);
-		memcpy(msg + as->idlen, sig, siglen);
 	}
-	if (opts & SFSSIG_OPT_ALLUID) {
-		result = request_uids(file, &cnt);
-		if (!result) {
-			return 1;
+	if ((opts & SFSSIG_OPT_SIG) == 0) {
+		if (opts & SFSSIG_OPT_ALLUID) {
+			ret = sfs_csumop_alluid(file,
+			    ANOUBIS_CHECKSUM_OP_ADDSUM, cs, len, NULL);
+		} else {
+			ret = sfs_csumop_oneuid(file,
+			    ANOUBIS_CHECKSUM_OP_ADDSUM, cs, len, sfs_uid, NULL);
 		}
 	} else {
-		result = &sfs_uid;
-		cnt = 1;
+		if (opts & SFSSIG_OPT_ALLCERT)
+			fprintf(stderr, "WARNING: Will ignore '--cert all "
+			    "for add operation");
+		ret = sfs_sigop_onekey(file, ANOUBIS_CHECKSUM_OP_ADDSIG,
+		    as->keyid, as->idlen, sig, siglen, NULL);
 	}
-	for (i = 0; i < cnt; i++) {
-		if (opts & SFSSIG_OPT_SIG) {
-			t = sfs_sumop(file, ANOUBIS_CHECKSUM_OP_ADDSIG, msg,
-			    siglen, as->idlen, result[i]);
-		} else {
-			t = sfs_sumop(file, ANOUBIS_CHECKSUM_OP_ADDSUM, cs,
-			    len, 0, result[i]);
-		}
-		if (t == NULL)
-			return 1;
-		if (t->result) {
-			fprintf(stderr, "Checksum Request failed: %d (%s)\n",
-			t->result, strerror(t->result));
-			anoubis_transaction_destroy(t);
-			return 1;
-		}
+	if (ret < 0) {
+		fprintf(stderr, "Checksum request failed: %s\n",
+		    strerror(-ret));
+		return 1;
 	}
 	/* Print the checksum that has been added, if verbose output activated*/
-	if (opts & SFSSIG_OPT_VERBOSE2) {
-		printf("add: ");
-		printf("%s csum:\t", file);
-	}
+	if (opts & SFSSIG_OPT_VERBOSE2)
+		printf("add: %s csum:\t", file);
 	if (opts & SFSSIG_OPT_VERBOSE) {
 		for (i = 0; i < SHA256_DIGEST_LENGTH; i++)
 			printf("%02x", cs[i]);
@@ -779,63 +1083,47 @@ sfs_add(char *file, uid_t sfs_uid)
 			printf("\n");
 		}
 	}
-	if (msg)
-		free(msg);
-	if (result && result != &sfs_uid)
-		free(result);
+	if (sig)
+		free(sig);
 
 	if (opts & SFSSIG_OPT_DEBUG)
 		fprintf(stderr, "<sfs_add\n");
-	anoubis_transaction_destroy(t);
 	return 0;
 }
 
 static int
 sfs_del(char *file, uid_t sfs_uid)
 {
-	struct anoubis_transaction	*t;
-	uid_t				*result = NULL;
-	int				 cnt = 0;
-	int				 i;
+	int	ret;
 
 	if (opts & SFSSIG_OPT_DEBUG)
 		fprintf(stderr, ">sfs_del\n");
 	if (opts & SFSSIG_OPT_DEBUG2)
 		fprintf(stderr, "%s\n", file);
 
-	if (opts & SFSSIG_OPT_ALLUID) {
-		result = request_uids(file, &cnt);
-		if (result == NULL)
-			return 1;
+	if ((opts & SFSSIG_OPT_SIG) == 0) {
+		if (opts & SFSSIG_OPT_ALLUID) {
+			ret = sfs_csumop_alluid(file,
+			    ANOUBIS_CHECKSUM_OP_DEL, NULL, 0, NULL);
+		} else {
+			ret = sfs_csumop_oneuid(file,
+			    ANOUBIS_CHECKSUM_OP_DEL, NULL, 0, sfs_uid, NULL);
+		}
 	} else {
-		result = &sfs_uid;
-		cnt = 1;
-	}
-	for (i = 0; i < cnt; i++) {
-		if (opts & SFSSIG_OPT_SIG)
-			t = sfs_sumop(file, ANOUBIS_CHECKSUM_OP_DELSIG,
-			    as->keyid, 0, as->idlen, result[i]);
-		else
-			t = sfs_sumop(file, ANOUBIS_CHECKSUM_OP_DEL, NULL,
-			    0, 0, result[i]);
-		if (t == NULL)
-			return 1;
-		if (t->result) {
-			if (t->result == ENOENT) {
-				if (opts & SFSSIG_OPT_VERBOSE)
-					fprintf(stderr,
-					    "No entry found for %s\n", file);
-				anoubis_transaction_destroy(t);
-				return 1;
-			}
-			fprintf(stderr, "Checksum Request failed: %d (%s)\n",
-			t->result, strerror(t->result));
-			anoubis_transaction_destroy(t);
-			return 1;
+		if (opts & SFSSIG_OPT_ALLCERT) {
+			ret = sfs_sigop_allkeys(file,
+			    ANOUBIS_CHECKSUM_OP_DELSIG, NULL);
+		} else {
+			ret = sfs_sigop_onekey(file,
+			    ANOUBIS_CHECKSUM_OP_DELSIG, as->keyid, as->idlen,
+			    NULL /* sigdata */, 0 /* siglen */, NULL);
 		}
 	}
-	if (result && result != &sfs_uid)
-		free(result);
+	if (ret < 0) {
+		fprintf(stderr, "Checksum request failed: %s\n",
+		    strerror(-ret));
+		return 1;
+	}
 	if (opts & SFSSIG_OPT_VERBOSE2)
 		printf("del: ");
 	if (opts & SFSSIG_OPT_VERBOSE)
@@ -868,142 +1156,57 @@ sfs_validate(char *file, uid_t uid)
 static int
 __sfs_get(char *file, int getmode, uid_t sfs_uid)
 {
-	struct anoubis_transaction	*t;
-	int				 i, j;
-	int				 cnt = 0;
-	int				 siglen = 0;
-	int				 upcslen = 0;
-	const void			*sigdata;
-	const void			*upcsdata;
 	int				 error = 0;
-	int				 len = ANOUBIS_CS_LEN;
-	u_int8_t			 val_check[ANOUBIS_CS_LEN];
-	uid_t				*result = NULL;
-	uid_t				 user;
-	const char			*sigtype = NULL;
+	sumop_callback_t		 callback = NULL;
 
 	if (opts & SFSSIG_OPT_DEBUG) {
 		fprintf(stderr, ">sfs_get\n");
 		fprintf(stderr, "path %s\n", file);
 	}
 
-	user = geteuid();
-
-	/*
-	 * If getmode is set to validate we validate so we first need to
-	 * calculate the actual checksum of the file
-	 */
-	if (getmode == GET_VALIDATE) {
-		if (opts & SFSSIG_OPT_LN) {
-			error = anoubis_csum_link_calc(file, val_check, &len);
-		} else {
-			error = anoubis_csum_calc(file, val_check, &len);
-		}
-		if (error < 0) {
-			errno = -error;
-			if (opts & SFSSIG_OPT_DEBUG)
-				perror("anoubis_csum_calc");
-			return 1;
-		}
-		if (len != ANOUBIS_CS_LEN) {
-			fprintf(stderr, "Bad csum length from"
-			    "anoubis_csum_calc\n");
-			return 1;
-		}
+	switch (getmode) {
+	case GET_DEFAULT:
+		callback = sfs_get_callback;
+		break;
+	case GET_VALIDATE:
+		callback = sfs_validate_callback;
+		break;
+	case GET_NOSUM:
+		callback = sfs_getnosum_callback;
+		break;
 	}
-	if (opts & SFSSIG_OPT_ALLUID) {
-		result = request_uids(file, &cnt);
-		if (result == NULL)
-			return 1;
+	if ((opts & SFSSIG_OPT_SIG) == 0) {
+		if (opts & SFSSIG_OPT_ALLUID) {
+			error = sfs_csumop_alluid(file,
+			    ANOUBIS_CHECKSUM_OP_GET2,
+			    NULL /* csdata */, 0 /* cslen */, callback);
+		} else {
+			error = sfs_csumop_oneuid(file,
+			    ANOUBIS_CHECKSUM_OP_GET2, NULL /* csdata */,
+			    0 /* cslen */, sfs_uid, callback);
+		}
 	} else {
-		result = &sfs_uid;
-		cnt = 1;
-	}
-	for (j = 0; j < cnt; j++) {
-		if (opts & SFSSIG_OPT_DEBUG2)
-			fprintf(stderr, "sfs_get for uid %d\n", result[j]);
-		if (opts & SFSSIG_OPT_SIG)
-			t = sfs_sumop(file, ANOUBIS_CHECKSUM_OP_GETSIG2,
-			    as->keyid, 0, as->idlen, result[j]);
-		else
-			t = sfs_sumop(file, ANOUBIS_CHECKSUM_OP_GET2, NULL, 0,
-			    0, result[j]);
-		if (t == NULL)
-			return 1;
-		if (t->result) {
-			if (t->result == ENOENT) {
-				if (opts & SFSSIG_OPT_VERBOSE)
-					fprintf(stderr, "No entry found for "
-					    "%s\n", file);
-				anoubis_transaction_destroy(t);
-				return 1;
-			}
-			fprintf(stderr, "Checksum Request failed: %d (%s)\n",
-			    t->result, strerror(t->result));
-			anoubis_transaction_destroy(t);
-			return 1;
-		}
-		if (!VERIFY_LENGTH(t->msg, sizeof(Anoubis_AckPayloadMessage)
-		    + SHA256_DIGEST_LENGTH)) {
-			fprintf(stderr, "Short checksum in reply (len=%d)\n",
-			    t->msg->length);
-			anoubis_transaction_destroy(t);
-			return 1;
-		}
-		if (opts & SFSSIG_OPT_SIG) {
-			siglen = anoubis_extract_sig_type(t->msg,
-			    ANOUBIS_SIG_TYPE_SIG, &sigdata);
-			upcslen = anoubis_extract_sig_type(t->msg,
-			    ANOUBIS_SIG_TYPE_UPGRADECS, &upcsdata);
-			sigtype = "Signature";
+		if (opts & SFSSIG_OPT_ALLCERT) {
+			error = sfs_sigop_allkeys(file,
+			    ANOUBIS_CHECKSUM_OP_GETSIG2, callback);
 		} else {
-			siglen = anoubis_extract_sig_type(t->msg,
-			    ANOUBIS_SIG_TYPE_CS, &sigdata);
-			sigtype = "Checksum";
+			error = sfs_sigop_onekey(file,
+			    ANOUBIS_CHECKSUM_OP_GETSIG2, as->keyid, as->idlen,
+			    NULL /* sigdata */, 0 /* siglen */, callback);
 		}
-		if (siglen < ANOUBIS_CS_LEN) {
-			if (opts & SFSSIG_OPT_VERBOSE)
-				fprintf(stderr, "No entry found for "
-					    "%s\n", file);
-			anoubis_transaction_destroy(t);
-			return 1;
-		}
-		if (getmode == GET_VALIDATE) {
-			if (memcmp(sigdata, val_check, ANOUBIS_CS_LEN))
-				printf("%s: %s Mismatch\n", file, sigtype);
-			else
-				printf("%s: %s Match\n", file, sigtype);
-
-			anoubis_transaction_destroy(t);
-			continue;
-		} else if (getmode == GET_NOSUM) {
-			printf("%s\n", file);
-			anoubis_transaction_destroy(t);
-			continue;
-		}
-		if (user == 0)
-			printf("%d: %s\t",result[j], file);
-		else
-			printf("%u: %s\t",user, file);
-		for (i=0; i<SHA256_DIGEST_LENGTH; ++i)
-			printf("%02x", ((u_int8_t*)sigdata)[i]);
-		printf("\n");
-		if (opts & SFSSIG_OPT_SIG) {
-			for (i = SHA256_DIGEST_LENGTH; i < siglen; i++)
-				printf("%02x", ((u_int8_t*)sigdata)[i]);
-			printf("\n");
-			if (upcslen > 0 && upcslen <= SHA256_DIGEST_LENGTH) {
-				printf("* Upgraded * New Checksum: ");
-				for (i = 0; i < (SHA256_DIGEST_LENGTH); i++)
-					printf("%02x",
-					    ((u_int8_t*)upcsdata)[i]);
-				printf("\n");
-			}
-		}
-		anoubis_transaction_destroy(t);
 	}
-	if (result && result != &sfs_uid)
-		free(result);
+	if (error < 0) {
+		if (error == -ENOENT) {
+			if (opts & SFSSIG_OPT_VERBOSE) {
+				fprintf(stderr, "No entry found for %s\n",
+				    file);
+			}
+		} else {
+			fprintf(stderr, "Checksum request failed: %s\n",
+			    strerror(-error));
+		}
+		return 1;
+	}
 	if (opts & SFSSIG_OPT_DEBUG)
 		fprintf(stderr, "<sfs_get\n");
 	return 0;
@@ -1047,7 +1250,7 @@ list(char *arg, uid_t sfs_uid)
 	arg[len] = 0;
 
 	if (opts & (SFSSIG_OPT_ALLUID | SFSSIG_OPT_ALLCERT)) {
-		/* XXX CEH: We do not support ALL for either uid of key */
+		/* XXX CEH: We do not support ALL for either uid or key */
 		flags = ANOUBIS_CSUM_ALL | ANOUBIS_CSUM_UID | ANOUBIS_CSUM_KEY;
 		thisas = NULL;
 		thisuid = 0;
@@ -1508,6 +1711,11 @@ _export(char *arg, FILE *out_fd, int rec, uid_t sfs_uid)
 			}
 		}
 		if (opts & SFSSIG_OPT_ALLCERT) {
+			/*
+			 * XXX CEH: keyid_cnt < 0 indicates an error.
+			 * XXX CEH: we should probably give some kind of
+			 * XXX CEH: message in this case.
+			 */
 			keyid_result = request_keyids(path, &ids, &keyid_cnt);
 			if (keyid_result) {
 				for (j = 0; j < keyid_cnt; j++) {
@@ -1606,19 +1814,36 @@ sfs_import(char *filename, uid_t sfs_uid __used)
 	for (next = head; next; next = next->next) {
 		rc = add_entry(next);
 		if (rc)
-			res = rc;
+			res = -rc;
 	}
 	if (opts & SFSSIG_OPT_DEBUG)
 		fprintf(stderr, "<sfs_import\n");
 	return res;
 }
 
+/**
+ * Apply an sfs_entry to the checksum tree.
+ * 
+ * Signature entries are always applied as is. This will usually fail for
+ * foreign signatures though.
+ * Checksum entries are applied for the uid given in the entry if
+ * the current user is root. Otherwise they are applied to the current uid
+ * if either the uid in the entry matches the current uid or if the force flag
+ * is given.
+ *
+ * @param entry The sfs entry.
+ * @return Zero if checksum and signature (if present) could be applied,
+ *     a negative error code in case of an error.
+ *
+ * NOTE: As opposed to the original code this function will always try to
+ * NOTE: apply the signature even if the checksum could not be applied. A
+ * NOTE: combined error value is returned.
+ */
 static int
 add_entry(struct sfs_entry *entry)
 {
-	unsigned char *payload;
-	struct anoubis_transaction *t = NULL;
-	uid_t self, sfs_uid;
+	uid_t			self, sfs_uid;
+	int			cserr = 0, sigerr = 0;
 
 	if (opts & SFSSIG_OPT_DEBUG)
 		fprintf(stderr, ">add_entry\n");
@@ -1627,68 +1852,50 @@ add_entry(struct sfs_entry *entry)
 	if (entry->checksum) {
 		self = geteuid();
 		if (self == 0) {
-			checksum_flag |= ANOUBIS_CSUM_UID;
 			sfs_uid = entry->uid;
+		} else if (entry->uid == self || (opts & SFSSIG_OPT_FORCE)) {
+			/*
+			 * If the force flag is given and we are not root
+			 * ignore the uid and import the checksum as if it
+			 * were our own.
+			 */
+			sfs_uid = self;
 		} else {
-			if (entry->uid != self && (opts & SFSSIG_OPT_FORCE))
-				sfs_uid = self;
-			else if (entry->uid == self)
-				sfs_uid = 0;
-			else {
-				fprintf(stderr, "%s: Incorrect uid\n",
-				    entry->name);
-				return EINVAL;
+			fprintf(stderr, "%s: Incorrect uid\n", entry->name);
+			cserr = EINVAL;
+		}
+		if (cserr == 0) {
+			cserr = sfs_csumop_oneuid(entry->name,
+			    ANOUBIS_CHECKSUM_OP_ADDSUM, entry->checksum,
+			    ANOUBIS_CS_LEN, sfs_uid, NULL);
+			if (cserr) {
+				fprintf(stderr, "Checksum request for "
+				    "file=%s uid=%d failed: %s\n",
+				    entry->name, entry->uid, strerror(-cserr));
 			}
 		}
-		t = sfs_sumop(entry->name, ANOUBIS_CHECKSUM_OP_ADDSUM,
-		    entry->checksum, ANOUBIS_CS_LEN, 0, sfs_uid);
-		if (!t)
-			return EINVAL;
-		if (t->result) {
-			if (opts & SFSSIG_OPT_DEBUG)
-				fprintf(stderr, "%s: Checksum Request failed: "
-				    "%d (%s)\n", entry->name, t->result,
-				     strerror(t->result));
-			anoubis_transaction_destroy(t);
-			return t->result;
-		}
-		anoubis_transaction_destroy(t);
-		t = NULL;
-
 	}
 	if (entry->signature) {
 		if (!entry->keyid) {
 			fprintf(stderr, "Parse Error\n");
-			return EINVAL;
+			sigerr = EINVAL;
+		} else {
+			sigerr = sfs_sigop_onekey(entry->name,
+			    ANOUBIS_CHECKSUM_OP_ADDSIG, entry->keyid,
+			    entry->keylen, entry->signature, entry->siglen,
+			    NULL);
+			if (sigerr) {
+				fprintf(stderr, "Signature request for "
+				    "file=%s failed: %s\n", entry->name,
+				    strerror(-sigerr));
+			}
 		}
-		payload = calloc(entry->siglen + entry->keylen,
-		    sizeof(unsigned char));
-		if (!payload)
-			return ENOMEM;
-		memcpy(payload, entry->keyid, entry->keylen);
-		memcpy(payload + entry->keylen, entry->signature,
-		    entry->siglen);
-		t = sfs_sumop(entry->name, ANOUBIS_CHECKSUM_OP_ADDSIG, payload,
-		    entry->siglen, entry->keylen, 0);
-		if (t == NULL)
-			return EINVAL;
-		if (t->result) {
-			if (opts & SFSSIG_OPT_DEBUG)
-				fprintf(stderr, "Signature Request failed: "
-				    "%d (%s)\n", t->result,
-				    strerror(t->result));
-			anoubis_transaction_destroy(t);
-			free(payload);
-			return t->result;
-		}
-		anoubis_transaction_destroy(t);
-		free(payload);
-		t = NULL;
 	}
-
 	if (opts & SFSSIG_OPT_DEBUG)
 		fprintf(stderr, "<add_entry\n");
-	return 0;
+	if (cserr)
+		return cserr;
+	return sigerr;
 }
 
 static struct sfs_entry *
@@ -1718,8 +1925,9 @@ get_entry(char *file, unsigned char *keyid_p, int idlen_p, uid_t sfs_uid)
 		idlen = 0;
 	}
 	if (keyid) {
-		t_sig = sfs_sumop(file, ANOUBIS_CHECKSUM_OP_GETSIG2, keyid,
-		    0, idlen, 0);
+		t_sig = sfs_sumop(file, ANOUBIS_CHECKSUM_OP_GETSIG2,
+		    keyid, 0 /* siglen */, idlen,
+		    0 /* sfs_uid */, 0 /* flags */);
 		if (t_sig == NULL) {
 			return NULL;
 		} else if (t_sig->result) {
@@ -1750,7 +1958,9 @@ get_entry(char *file, unsigned char *keyid_p, int idlen_p, uid_t sfs_uid)
 			}
 		}
 	}
-	t_sum = sfs_sumop(file, ANOUBIS_CHECKSUM_OP_GET2, NULL, 0, 0, sfs_uid);
+	t_sum = sfs_sumop(file, ANOUBIS_CHECKSUM_OP_GET2,
+	    NULL /* payload */, 0 /* siglen */, 0 /* idlen */,
+	    sfs_uid, ANOUBIS_CSUM_UID);
 	if (t_sum == NULL) {
 		if (t_sig)
 			anoubis_transaction_destroy(t_sig);
@@ -1802,52 +2012,6 @@ out:
 		fprintf(stderr, "<get_entry\n");
 
 	return (se);
-}
-
-static unsigned char **
-request_keyids(char *file, int **ids, int *count)
-{
-	int cnt = 0;
-	int *idlens = NULL;
-	struct anoubis_transaction	*t;
-	unsigned char			**result = NULL;
-
-	if (opts & SFSSIG_OPT_DEBUG)
-		fprintf(stderr, ">request_keyids\n");
-
-	if (!file || !count) {
-		if (opts & SFSSIG_OPT_DEBUG)
-			fprintf(stderr, "internal error in requesting "
-			    "keyids\n");
-		return NULL;
-	}
-
-	t = sfs_listop(file, 0, NULL, ANOUBIS_CSUM_WANTIDS | ANOUBIS_CSUM_ALL
-	    | ANOUBIS_CSUM_KEY);
-	if (t == NULL)
-		return NULL;
-	if (t->result) {
-		fprintf(stderr, "%s Checksum Request failed: %d (%s)\n", file,
-		    t->result, strerror(t->result));
-		anoubis_transaction_destroy(t);
-		return NULL;
-	}
-
-	result = anoubis_keyid_list(t->msg, &idlens, &cnt);
-	if (!result || cnt <= 0) {
-		if (opts & SFSSIG_OPT_DEBUG2)
-			fprintf(stderr, "no result.\n");
-		anoubis_transaction_destroy(t);
-		return NULL;
-	}
-	*count = cnt;
-	*ids = idlens;
-	anoubis_transaction_destroy(t);
-
-	if (opts & SFSSIG_OPT_DEBUG)
-		fprintf(stderr, "<request_keyids\n");
-
-	return result;
 }
 
 static int

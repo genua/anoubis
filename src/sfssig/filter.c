@@ -121,7 +121,7 @@ filter_sumsig(char *arg, int op, unsigned int idlen, unsigned char *keyid,
 		flags = ANOUBIS_CSUM_KEY;
 	else
 		flags = ANOUBIS_CSUM_UID;
-	t = sfs_sumop_flags(tmp, op, keyid, 0, idlen, uid, flags);
+	t = sfs_sumop(tmp, op, keyid, 0, idlen, uid, flags);
 	if (!t) {
 		if (opts & SFSSIG_OPT_DEBUG)
 			fprintf(stderr, "filter_sumsig: failed transaction\n");

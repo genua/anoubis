@@ -1029,8 +1029,8 @@ anoubis_client_policyrequest_start(struct anoubis_client * client,
  */
 struct anoubis_transaction *
 anoubis_client_csumrequest_start(struct anoubis_client *client,
-    int op, char *path, u_int8_t *payload, short cslen, short idlen, uid_t uid,
-    unsigned int flags)
+    int op, const char *path, u_int8_t *payload, short cslen, short idlen,
+    uid_t uid, unsigned int flags)
 {
 	struct anoubis_msg * m;
 	struct anoubis_transaction * t = NULL;
