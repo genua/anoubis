@@ -147,8 +147,8 @@ START_TEST(tc_PolicyEngine_upgrade_unset2set_tainted)
 	mark = pe_proc_is_upgrade_parent(proc);
 	fail_if(mark == 0, "Upgrade parent mark not set.");
 
-	fail_if(proc->flags != ~0UL, "Unrelated flags modified! "
-	    "Expect 0x%x - got 0x%x", ~0UL, proc->flags);
+	fail_if(proc->flags != ~0U, "Unrelated flags modified! "
+	    "Expect 0x%x - got 0x%x", ~0U, proc->flags);
 
 	/* cleanup */
 	free(proc);
@@ -189,7 +189,7 @@ START_TEST(tc_PolicyEngine_upgrade_set2unset_tainted)
 	/* init */
 	mark = 0;
 	proc = tc_PolicyEngine_proc_alloc();
-	proc->flags = ~0UL;
+	proc->flags = ~0U;
 
 	/* test */
 	pe_proc_upgrade_clrmark(proc);

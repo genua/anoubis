@@ -1433,7 +1433,7 @@ dispatch_auth_request(struct anoubisd_msg *msg, struct event_info_main *ev_info)
 		    cert->kidlen);
 	}
 	enqueue(&eventq_m2s, rep_msg);
-	DEBUG(DBG_QUEUE, " >eventq_m2s: challenge %llx", auth->token);
+	DEBUG(DBG_QUEUE, " >eventq_m2s: challenge %" PRIx64, auth->token);
 	event_add(ev_info->ev_m2s, NULL);
 	return;
 }
@@ -1469,7 +1469,7 @@ dispatch_auth_verify(struct anoubisd_msg *imsg, struct event_info_main *ev_info)
 	else
 		authresult->error = 0;
 	enqueue(&eventq_m2s, omsg);
-	DEBUG(DBG_QUEUE, " >eventq_m2s: auth result token=%llx error=%d",
+	DEBUG(DBG_QUEUE, " >eventq_m2s: auth result token=%" PRIx64 " error=%d",
 	    authresult->token, authresult->error);
 	event_add(ev_info->ev_m2s, NULL);
 }

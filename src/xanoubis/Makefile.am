@@ -30,15 +30,20 @@ apndir	= src/libapn
 libapn  = $(top_builddir)/$(apndir)/libapn.a
 bsdcompatdir   = src/bsdcompat
 libbsdcompat   = $(top_builddir)/$(bsdcompatdir)/libbsdcompat.a
+libbsdcompat_so = $(top_builddir)/$(bsdcompatdir)/libbsdcompat.so
 xanoubisdir    = src/xanoubis
 anoubischatdir = src/libanoubischat
 libanoubischat = $(top_builddir)/$(anoubischatdir)/libanoubischat.a
+libanoubischat_so = $(top_builddir)/$(anoubischatdir)/libanoubischat.so
 anoubisprotocoldir = src/libanoubisprotocol
 libanoubisprotocol = $(top_builddir)/$(anoubisprotocoldir)/libanoubispc.a
+libanoubisprotocol_so = $(top_builddir)/$(anoubisprotocoldir)/libanoubispc.so
 anoubissigdir = src/libanoubissig
 libanoubissig = $(top_builddir)/$(anoubissigdir)/libanoubissig.a
+libanoubissig_so = $(top_builddir)/$(anoubissigdir)/libanoubissig.so
 anoubisuidir = src/libanoubisui
 libanoubisui = $(top_builddir)/$(anoubisuidir)/libanoubisui.a
+libanoubisui_so = $(top_builddir)/$(anoubisuidir)/libanoubisui.so
 
 xanoubis_CPPFLAGS = \
 	-I$(top_builddir)/src \
@@ -61,14 +66,17 @@ xanoubis_CPPFLAGS = \
 	$(WX_CPPFLAGS) \
 	$(AM_CPPFLAGS)
 
-xanoubis_CXXFLAGS = \
+xanoubis_cxxflags = \
 	-fno-strict-aliasing \
-	$(AM_CXXFLAGS) \
 	$(WX_CXXFLAGS) \
 	$(GTK_CFLAGS) \
 	$(GLIB_CFLAGS) \
 	$(NOTIFY_CFLAGS) \
 	$(SSL_CFLAGS)
+
+xanoubis_CXXFLAGS = \
+	$(xanoubis_cxxflags) \
+	$(AM_CXXFLAGS)
 
 xanoubis_DEPEND_LIBS = \
 	$(libapn) \
@@ -77,9 +85,17 @@ xanoubis_DEPEND_LIBS = \
 	$(libanoubissig) \
 	$(libanoubisui)
 
+libGUIcomponents_DEPEND_LIBS = \
+	$(libapn_so) \
+	$(libanoubischat_so) \
+	$(libanoubisprotocol_so) \
+	$(libanoubissig_so) \
+	$(libanoubisui_so)
+
 if NEEDBSDCOMPAT
 xanoubis_CPPFLAGS += -I$(top_srcdir)/$(bsdcompatdir)
 xanoubis_DEPEND_LIBS += $(libbsdcompat)
+libGUIcomponents_DEPEND_LIBS += $(libbsdcompat_so)
 endif
 
 xanoubis_DEPENDENCIES = \
@@ -87,14 +103,17 @@ xanoubis_DEPENDENCIES = \
 
 xanoubis_LDFLAGS = $(AM_LDFLAGS) $(SSL_LDFLAGS)
 
-xanoubis_LDADD = \
+xanoubis_ldadd = \
 	@WX_LIBS@ \
 	@GTK_LIBS@ \
 	@GLIB_LIBS@ \
 	@NOTIFY_LIBS@ \
-	$(xanoubis_DEPEND_LIBS) \
 	$(SSL_LIBS) \
 	-lfl
+
+xanoubis_LDADD = \
+	$(xanoubis_ldadd) \
+	$(xanoubis_DEPEND_LIBS)
 
 programdir = $(datadir)/$(bin_PROGRAMS)
 utildir = $(datadir)/$(bin_PROGRAMS)/utils
@@ -517,11 +536,21 @@ xanoubis_SOURCES= \
 #
 if WITH_TESTS
 noinst_PROGRAMS = libGUIcomponents.so
+if FPIC_HACK
 libGUIcomponents_so_SOURCES =
 libGUIcomponents_so_DEPENDENCIES = $(xanoubis_OBJECTS)
 libGUIcomponents_so_LINK = \
 	$(CXX) -fstack-protector -shared -Wl,-soname,$@ \
 	    -o $@ $(xanoubis_OBJECTS)
+else
+libGUIcomponents_so_SOURCES  = $(xanoubis_SOURCES)
+libGUIcomponents_so_CPPFLAGS = $(xanoubis_CPPFLAGS)
+libGUIcomponents_so_CXXFLAGS = -fPIC $(shared_AM_CXXFLAGS) $(xanoubis_cxxflags)
+libGUIcomponents_so_LDFLAGS  = -fstack-protector -shared -Wl,-soname,$@ \
+	$(shared_AM_LDFLAGS) $(SSL_LDFLAGS) -fPIC
+libGUIcomponents_so_LDADD    = $(xanoubis_ldadd) $(libGUIcomponents_DEPEND_LIBS)
+libGUIcomponents_so_LINK     = $(CXX) $(libGUIcomponents_so_LDFLAGS) -o $@
+endif
 endif
 
 i18n-extract:

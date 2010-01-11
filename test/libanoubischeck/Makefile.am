@@ -32,30 +32,20 @@ noinst_LIBRARIES = libanoubischeck.a
 noinst_HEADERS = anoubischeck.h
 
 libanoubischeck_a_SOURCES = anoubischeck.c
-libanoubischeck_a_CFLAGS = @CHECK_CFLAGS@
+libanoubischeck_a_CFLAGS = @CHECK_CFLAGS@ $(AM_CFLAGS)
 
-#
-# For unit tests of the components, we build a shared library.
-# This library is for testing purpose only. We tear apart the unittest and
-# the test candidate. Thus we are able to run tests and baseline-tests
-# propperly.
-# To reduce the compile time and to test what's in the final product, we
-# reuse the already compiled objects. Ensure those are built with -fPIC.
-#
-noinst_PROGRAMS = libanoubischeck.so
-libanoubischeck_so_SOURCES =
-libanoubischeck_so_DEPENDENCIES = $(libanoubischeck_a_OBJECTS)
-libanoubischeck_so_LINK = \
-	$(CXX) -fstack-protector -shared -Wl,-soname,$@ \
-	    -o $@ $(libanoubischeck_a_OBJECTS)
+# A libanoubischeck.so would have to be linked with libcheck_pic.a instead of
+# libcheck.a. Unfortunately libcheck_pic.a is not available under openbsd.
+# The required autoconf/automake magic to determine if we have libcheck_pic.a
+# is not worth the hassle. We just skip libanoubischeck.so and accept that we
+# can't do real baseline tests with test_libanoubischeck.
 
 #
 # Test the library
 #
 TESTS = test_libanoubischeck
 TESTS_ENVIRONMENT = LD_LIBRARY_PATH=.
-noinst_PROGRAMS += test_libanoubischeck
-test_libanoubischeck_CFLAGS = @CHECK_CFLAGS@
-test_libanoubischeck_DEPENDENCIES = libanoubischeck.so
-test_libanoubischeck_LDADD = @CHECK_LIBS@ -L. -lanoubischeck
+noinst_PROGRAMS = test_libanoubischeck
+test_libanoubischeck_CFLAGS = @CHECK_CFLAGS@ $(AM_CFLAGS)
+test_libanoubischeck_LDADD = @CHECK_LIBS@ libanoubischeck.a
 test_libanoubischeck_SOURCES = test_libanoubischeck.c

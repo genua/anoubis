@@ -337,6 +337,18 @@ case $host in
 	;;
 esac
 
+dnl enable ugly hack to save some compile time on ix86 (32bit)
+dnl this is only used for the libGUIcomponents.so which is only
+dnl used for tests
+case $host in
+	i?86-*)
+		fpic_hack=yes
+	;;
+	*)
+		fpic_hack=no
+esac
+AM_CONDITIONAL(FPIC_HACK,[test "x$fpic_hack" = xyes ])
+
 dnl
 dnl enable some warnings and treat them as errors
 dnl
