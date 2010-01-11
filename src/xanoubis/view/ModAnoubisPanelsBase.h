@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 GeNUA mbH <info@genua.de>
+ * Copyright (c) 2010 GeNUA mbH <info@genua.de>
  *
  * All rights reserved.
  *
@@ -192,6 +192,7 @@ class ModAnoubisMainPanelBase : public wxPanel
 		wxStaticText* tx_AlertNotifyTimeoutLabel;
 		wxCheckBox* cb_ShowUpgradeMsg;
 		wxCheckBox* cb_ShowKernelMsg;
+		wxCheckBox* cb_ShowKeyGenInfoMsg;
 		wxCheckBox* cb_DoAutostart;
 		
 		wxCheckBox* controlAutoCheck;
@@ -237,6 +238,7 @@ class ModAnoubisMainPanelBase : public wxPanel
 		virtual void OnAlertTimeout( wxSpinEvent& event ){ event.Skip(); }
 		virtual void OnEnableUpgradeMsg( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnEnableKernelMsg( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnEnableInformationMsg( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnDoAutostart( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnAutoCheck( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnToolTipCheckBox( wxCommandEvent& event ){ event.Skip(); }

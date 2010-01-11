@@ -210,69 +210,74 @@ ModAnoubisMainPanelImpl::~ModAnoubisMainPanelImpl(void)
 void
 ModAnoubisMainPanelImpl::readOptions(void)
 {
-	bool AutoChecksum = false;
-	bool AutoConnect = false;
-	bool DoAutostart = false;
-	bool EnableToolTips = true;
-	bool NoAlertTimeout = false;
-	bool NoEscalationTimeout = true;
-	bool SendAlert = false;
-	bool SendEscalation = true;
-	bool ShowUpgradeMessage = true;
-	bool ShowKernelUpgradeMessage = true;
+	bool autoChecksum = false;
+	bool autoConnect = false;
+	bool doAutostart = false;
+	bool enableToolTips = true;
+	bool noAlertTimeout = false;
+	bool noEscalationTimeout = true;
+	bool sendAlert = false;
+	bool sendEscalation = true;
+	bool showUpgradeMessage = true;
+	bool showKernelUpgradeMessage = true;
+	bool showKeyGenInfoMessage = true;
 
-	int AlertTimeout = 10;
-	int EscalationTimeout = 0;
-	int ToolTipTimeout = 1;
+	int alertTimeout = 10;
+	int escalationTimeout = 0;
+	int toolTipTimeout = 1;
 
 	/* read the stored Option Settings */
-	wxConfig::Get()->Read(wxT("/Options/SendAlerts"), &SendAlert);
-	wxConfig::Get()->Read(wxT("/Options/SendEscalations"), &SendEscalation);
+	wxConfig::Get()->Read(wxT("/Options/SendAlerts"), &sendAlert);
+	wxConfig::Get()->Read(wxT("/Options/SendEscalations"), &sendEscalation);
 	wxConfig::Get()->Read(wxT("/Options/ShowUpgradeMessage"),
-	    &ShowUpgradeMessage);
+	    &showUpgradeMessage);
 	wxConfig::Get()->Read(wxT("/Options/ShowKernelUpgradeMessage"),
-	    &ShowKernelUpgradeMessage);
+	    &showKernelUpgradeMessage);
+	wxConfig::Get()->Read(wxT("/Options/ShowCertMessage"),
+	    &showKeyGenInfoMessage);
 
 	wxConfig::Get()->Read(wxT("/Options/NoEscalationsTimeout"),
-	    &NoEscalationTimeout);
+	    &noEscalationTimeout);
 	wxConfig::Get()->Read(wxT("/Options/EscalationTimeout"),
-	    &EscalationTimeout);
+	    &escalationTimeout);
 
-	wxConfig::Get()->Read(wxT("/Options/NoAlertTimeout"), &NoAlertTimeout);
-	wxConfig::Get()->Read(wxT("/Options/AlertTimeout"), &AlertTimeout);
+	wxConfig::Get()->Read(wxT("/Options/NoAlertTimeout"), &noAlertTimeout);
+	wxConfig::Get()->Read(wxT("/Options/AlertTimeout"), &alertTimeout);
 
-	wxConfig::Get()->Read(wxT("/Options/Autostart"), &DoAutostart);
-	wxGetApp().autoStart(DoAutostart);
+	wxConfig::Get()->Read(wxT("/Options/Autostart"), &doAutostart);
+	wxGetApp().autoStart(doAutostart);
 
-	wxConfig::Get()->Read(wxT("/Options/AutoChecksumCheck"), &AutoChecksum);
-	wxConfig::Get()->Read(wxT("/Options/AutoConnect"), &AutoConnect);
+	wxConfig::Get()->Read(wxT("/Options/AutoChecksumCheck"), &autoChecksum);
+	wxConfig::Get()->Read(wxT("/Options/AutoConnect"), &autoConnect);
 
-	wxConfig::Get()->Read(wxT("/Options/EnableToolTips"), &EnableToolTips);
-	wxConfig::Get()->Read(wxT("/Options/ToolTipTimeout"), &ToolTipTimeout);
+	wxConfig::Get()->Read(wxT("/Options/EnableToolTips"), &enableToolTips);
+	wxConfig::Get()->Read(wxT("/Options/ToolTipTimeout"), &toolTipTimeout);
 
 	/* restore the stored Notifications Options */
-	cb_SendEscalations->SetValue(SendEscalation);
-	cb_ShowUpgradeMsg->SetValue(ShowUpgradeMessage);
-	cb_ShowKernelMsg->SetValue(ShowKernelUpgradeMessage);
-	cb_NoEscalationTimeout->SetValue(NoEscalationTimeout);
-	m_spinEscalationNotifyTimeout->SetValue(EscalationTimeout);
+	cb_SendEscalations->SetValue(sendEscalation);
+	cb_ShowUpgradeMsg->SetValue(showUpgradeMessage);
+	cb_ShowKernelMsg->SetValue(showKernelUpgradeMessage);
+	cb_ShowKeyGenInfoMsg->SetValue(showKeyGenInfoMessage);
 
-	cb_SendAlerts->SetValue(SendAlert);
-	cb_NoAlertTimeout->SetValue(NoAlertTimeout);
-	m_spinAlertNotifyTimeout->SetValue(AlertTimeout);
+	cb_NoEscalationTimeout->SetValue(noEscalationTimeout);
+	m_spinEscalationNotifyTimeout->SetValue(escalationTimeout);
 
-	cb_DoAutostart->SetValue(DoAutostart);
+	cb_SendAlerts->SetValue(sendAlert);
+	cb_NoAlertTimeout->SetValue(noAlertTimeout);
+	m_spinAlertNotifyTimeout->SetValue(alertTimeout);
 
-	controlAutoCheck->SetValue(AutoChecksum);
+	cb_DoAutostart->SetValue(doAutostart);
+
+	controlAutoCheck->SetValue(autoChecksum);
 	wxCommandEvent showEvent(anEVT_SEND_AUTO_CHECK);
-	showEvent.SetInt(AutoChecksum);
+	showEvent.SetInt(autoChecksum);
 	wxPostEvent(AnEvents::getInstance(), showEvent);
 
-	autoConnectBox->SetValue(AutoConnect);
-	wxGetApp().connectCommunicator(AutoConnect);
+	autoConnectBox->SetValue(autoConnect);
+	wxGetApp().connectCommunicator(autoConnect);
 
-	toolTipCheckBox->SetValue(EnableToolTips);
-	toolTipSpinCtrl->SetValue(ToolTipTimeout);
+	toolTipCheckBox->SetValue(enableToolTips);
+	toolTipSpinCtrl->SetValue(toolTipTimeout);
 	toolTipParamsUpdate();
 
 	/* set widgets visability and send options event */
@@ -1130,6 +1135,13 @@ ModAnoubisMainPanelImpl::OnEnableKernelMsg(wxCommandEvent&)
 }
 
 void
+ModAnoubisMainPanelImpl::OnEnableInformationMsg(wxCommandEvent&)
+{
+	wxConfig::Get()->Write(wxT("/Options/ShowCertMessage"),
+	    cb_ShowKeyGenInfoMsg->GetValue());
+}
+
+void
 ModAnoubisMainPanelImpl::OnAutoCheck(wxCommandEvent& event)
 {
 	wxCommandEvent showEvent(anEVT_SEND_AUTO_CHECK);
@@ -1585,12 +1597,18 @@ ModAnoubisMainPanelImpl::OnAnoubisOptionsUpdate(wxCommandEvent& event)
 {
 	bool showUpgradeMessage = true;
 	bool showKernelUpgradeMessage = true;
+	bool showKeyGenInfoMessage = true;
 
 	wxConfig::Get()->Read(wxT
 	    ("/Options/ShowUpgradeMessage"),&showUpgradeMessage);
 	wxConfig::Get()->Read(wxT
 	    ("/Options/ShowKernelUpgradeMessage"),&showKernelUpgradeMessage);
+	wxConfig::Get()->Read(wxT("/Options/ShowCertMessage"),
+	    &showKeyGenInfoMessage);
+
 	cb_ShowUpgradeMsg->SetValue(showUpgradeMessage);
 	cb_ShowKernelMsg->SetValue(showKernelUpgradeMessage);
+	cb_ShowKeyGenInfoMsg->SetValue(showKeyGenInfoMessage);
+
 	event.Skip();
 }

@@ -101,6 +101,8 @@ class ModAnoubisMainPanelImpl : public ModAnoubisMainPanelBase,
 		void OnAnoubisOptionShow(wxCommandEvent&);
 		void OnEnableUpgradeMsg(wxCommandEvent&);
 		void OnEnableKernelMsg(wxCommandEvent&);
+		void OnEnableInformationMsg(wxCommandEvent&);
+
 		void OnAutoCheck(wxCommandEvent&);
 		void OnDoAutostart(wxCommandEvent&);
 

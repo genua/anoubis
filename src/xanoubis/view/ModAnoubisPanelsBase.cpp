@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 GeNUA mbH <info@genua.de>
+ * Copyright (c) 2010 GeNUA mbH <info@genua.de>
  *
  * All rights reserved.
  *
@@ -692,6 +692,16 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	
 	bSizer13->Add( sbSizer10, 0, wxEXPAND, 5 );
 	
+	wxStaticBoxSizer* sbSizer9;
+	sbSizer9 = new wxStaticBoxSizer( new wxStaticBox( tb_MainAnoubisOptions, -1, _("Key Generation") ), wxVERTICAL );
+	
+	cb_ShowKeyGenInfoMsg = new wxCheckBox( tb_MainAnoubisOptions, wxID_ANY, _("Enable Information Messages"), wxDefaultPosition, wxDefaultSize, 0 );
+	cb_ShowKeyGenInfoMsg->SetValue(true);
+	
+	sbSizer9->Add( cb_ShowKeyGenInfoMsg, 0, wxALL, 5 );
+	
+	bSizer13->Add( sbSizer9, 0, wxEXPAND, 5 );
+	
 	wxStaticBoxSizer* sbSizer8;
 	sbSizer8 = new wxStaticBoxSizer( new wxStaticBox( tb_MainAnoubisOptions, -1, _("Autostart") ), wxVERTICAL );
 	
@@ -821,6 +831,7 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	m_spinAlertNotifyTimeout->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( ModAnoubisMainPanelBase::OnAlertTimeout ), NULL, this );
 	cb_ShowUpgradeMsg->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( ModAnoubisMainPanelBase::OnEnableUpgradeMsg ), NULL, this );
 	cb_ShowKernelMsg->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( ModAnoubisMainPanelBase::OnEnableKernelMsg ), NULL, this );
+	cb_ShowKeyGenInfoMsg->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( ModAnoubisMainPanelBase::OnEnableInformationMsg ), NULL, this );
 	cb_DoAutostart->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( ModAnoubisMainPanelBase::OnDoAutostart ), NULL, this );
 	controlAutoCheck->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( ModAnoubisMainPanelBase::OnAutoCheck ), NULL, this );
 	toolTipCheckBox->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( ModAnoubisMainPanelBase::OnToolTipCheckBox ), NULL, this );
