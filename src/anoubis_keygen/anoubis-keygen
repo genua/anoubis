@@ -32,19 +32,36 @@ use warnings FATAL => "all";
 use File::Basename;
 use File::Path;
 use Getopt::Std;
+use POSIX qw(WEXITSTATUS);
 
 my $interactive = 1;
 my $keydir = $ENV{'HOME'} . "/.xanoubis";
 my $pubkeydir = "/var/lib/anoubis/policy/pubkeys";
 my $crypto = "aes256";
 my $numbits = 2048;
+
+my $country = "/C=";
+my $state = "/ST=";
+my $city = "/L=";
+my $org = "/O=";
+my $unit = "/OU=";
+my $Cname = "/CN=";
+my $mail = "/emailAddress=";
+
 # use gecos for DN
 my ($name, $gcos) = (getpwuid($<))[0,6];
 if (defined($gcos) and length($gcos)) {
 	$name = $gcos;
 	$name =~ s!,.*!!;
 }
-my $cn = "-subj '/C=DE/CN=$name'";
+my $altCountry = $ENV{'LC_ALL'} || $ENV{'LC_CTYPE'} || $ENV{'LANG'};
+if (defined($altCountry) && $altCountry =~ m/_([A-Z]{2})/) {
+    $altCountry = $1;
+} else {
+    $altCountry = "DE";
+}
+
+my $subject = "'/C=$altCountry/CN=$name'";
 
 my %path = (
 	"key"		=> "$keydir/default.key",
@@ -53,7 +70,7 @@ my %path = (
 
 my %cmd = (
 	"key"		=> "openssl genrsa -out ",
-	"certificate"	=> "openssl req -new -x509 -days 999 -batch $cn -out ",
+	"certificate"	=> "openssl req -new -x509 -days 999 -batch -out ",
 );
 
 my $opts = {};
@@ -106,8 +123,46 @@ while($interactive and !defined($pass)) {
 	}
 }
 
+if ($interactive) {
+
+	print STDOUT << 'EOF';
+----------------------------------------------------------------
+What you are about to enter is what is called Distinguished Name
+also known as "DN".
+For local usage, it may be ok to leave most fields blank.
+If you enter '.' or hit <RETURN>, the value of the field
+in question won't be considered for the "DN".
+----------------------------------------------------------------
+EOF
+
+	print "Country Name (2 letter code): ";
+	$country = get_input($country);
+
+	print "State or Province Name (full name): ";
+	$state = get_input($state);
+
+	print "Locality Name (eg, city): ";
+	$city = get_input($city);
+
+	print "Organization Name (eg, company): ";
+	$org = get_input($org);
+
+	print "Organizational Unit Name (eg. section): ";
+	$unit = get_input($unit);
+
+	print "Common Name (eg, YOUR name) [$name]: ";
+	$Cname = get_input($Cname);
+	$Cname ||= "/CN=$name";
+
+	print "Email Address :";
+	$mail = get_input($mail);
+
+	$subject = "'$country$state$city$org$unit$Cname$mail'";
+}
+
 $cmd{"key"} .= $path{"key"};
 $cmd{"certificate"} .= $path{"certificate"} . " -key " . $path{"key"};
+$cmd{"certificate"} .= " -subj $subject";
 
 if ($pass) {
 	$cmd{"key"} .= " -$crypto -passout fd:0";
@@ -161,4 +216,32 @@ sub HELP_MESSAGE {
 		"  -h or --help\tprint this message.\n",
 		"\n";
 	exit(1);
+}
+
+# Subroutine to request subject arguments input
+sub get_input {
+	my $arg = shift;
+
+	my $input = <STDIN>;
+	my $ignore = qr/^(\s*|\.)$/;
+	chomp($input);
+
+	# We need to check if country has more than two characters!
+	while (($arg eq "/C=") and ($input !~ m/^..$/)) {
+		print "The country code should be exactly two characters: ";
+		$input = <STDIN>;
+		chomp($input);
+		if ($input =~ $ignore) {
+			return "";
+		}
+	}
+
+	if (not defined($input)) {
+		return "";
+	}
+
+	if ($input =~ $ignore) {
+		return "";
+	}
+	return $arg.$input;
 }
