@@ -114,6 +114,9 @@ lcov-clean:
 	$(RM) -r $(LCOV_OUTPUT)
 endif
 
+dist-hook:
+	chmod -R u+w $(distdir)
+
 .PHONY: flawfinder lint splint flawfinder.report lint.report splint.report
 clean-local:
 	rm -f $(REPORTS)

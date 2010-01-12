@@ -337,10 +337,12 @@ case $host in
 	;;
 esac
 
-dnl enable ugly hack to save some compile time on ix86 (32bit)
+dnl Enable ugly hack to save some compile time on ix86 (32bit)
 dnl this is only used for the libGUIcomponents.so which is only
-dnl used for tests
-case $host in
+dnl used for tests.
+dnl We cannot use $host here because autoconf will always detect
+dnl x86_64 on machines with 64bit kernel and 32bit userland.
+case `$CC -dumpmachine 2>/dev/null` in
 	i?86-*)
 		fpic_hack=yes
 	;;
