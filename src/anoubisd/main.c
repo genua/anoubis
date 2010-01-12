@@ -187,7 +187,7 @@ segvhandler(int sig __used, siginfo_t *info, void *uc)
 
 
 /*
- * Note:  Signalhandler managed by libevent are _not_ run in signal
+ * Note:  Signal-handler managed by libevent are _not_ run in signal
  * context, thus any C-function can be used.
  */
 static void
@@ -455,7 +455,7 @@ main(int argc, char *argv[])
 
 	/*
 	 * Get ANOUBISCORE Version early because this is inherited by the
-	 * child processes. Close the file descriptior again because we
+	 * child processes. Close the file descriptor again because we
 	 * do not want it to be inherited by child processes.
 	 */
 	{
@@ -1103,7 +1103,7 @@ init_root_key(char *passphrase, struct event_info_main *ev_info)
 	/*
 	 * If no rootkey is configured, upgrades are allowed but no
 	 * signature upgrades will be performed. Any previously configured
-	 * private key must be delted.
+	 * private key must be deleted.
 	 */
 	if (anoubisd_config.rootkey == NULL) {
 		/* Clear existing rootkey if any. */
@@ -1349,14 +1349,16 @@ dispatch_auth_request(struct anoubisd_msg *msg, struct event_info_main *ev_info)
 	} cdata;
 
 	auth = (struct anoubisd_msg_authrequest *)msg->msg;
-	cert = cert_get_by_uid(auth->auth_uid);
+	cert = cert_get_by_uid_ignored(auth->auth_uid);
 	switch(anoubisd_config.auth_mode) {
 	case ANOUBISD_AUTH_MODE_ENABLED:
 		need_challenge = 1;
 		break;
 	case ANOUBISD_AUTH_MODE_OPTIONAL:
-		if (cert)
+		if (cert && cert->ignore == 0)
 			need_challenge = 1;
+		else if (cert && cert->ignore == 1)
+			error = EPERM;
 		break;
 	case ANOUBISD_AUTH_MODE_OFF:
 		break;
@@ -1795,7 +1797,7 @@ dispatch_sfs_update_all(anoubisd_msg_t *msg, struct event_info_main *ev_info)
 		goto bad;
 	plen = msg->size - sizeof(*msg) - sizeof(*umsg) - ANOUBIS_CS_LEN;
 	path = umsg->payload + umsg->cslen;
-	/* Forcfully NUL terminate the path name. */
+	/* Forcefully NUL terminate the path name. */
 	path[plen-1] = 0;
 
 	/*

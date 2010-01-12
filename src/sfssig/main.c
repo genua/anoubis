@@ -321,7 +321,7 @@ main(int argc, char *argv[])
 		case 'L':
 		case 'S':
 		case 'C':
-			/* Only one syssig options is allowd. */
+			/* Only one syssig options is allowed. */
 			if (syssigmode)
 				usage();
 			syssigmode = ch;
@@ -402,7 +402,7 @@ main(int argc, char *argv[])
 		return 1;
 	}
 	if (error < 0) {
-		fprintf(stderr, "Error occured while reading version: %s\n",
+		fprintf(stderr, "Error occurred while reading version: %s\n",
 		    strerror(-error));
 		return 1;
 	}
@@ -429,7 +429,7 @@ main(int argc, char *argv[])
 		sfs_argc = argc;
 	}
 
-	/* In case of export we try to load a key quitely */
+	/* In case of export we try to load a key quietly */
 	if (strcmp(sfs_command, "export") == 0) {
 		if (opts & SFSSIG_OPT_TREE)
 			opts &= ~SFSSIG_OPT_TREE;
@@ -457,7 +457,7 @@ main(int argc, char *argv[])
 	}
 
 	/*
-	 * If we have to filter for a gerneral command (e.g add)
+	 * If we have to filter for a general command (e.g add)
 	 * we do it here.
 	 */
 	if ((opts & SFSSIG_OPT_FILTER) && !(opts & SFSSIG_OPT_TREE)
@@ -1135,7 +1135,7 @@ sfs_del(char *file, uid_t sfs_uid)
 }
 
 /*
- * We use __sfs_get in diffrent variarions:
+ * We use __sfs_get in different variarions:
  */
 #define GET_DEFAULT	0x00	/* A normal get operation */
 #define GET_VALIDATE	0x01	/* Validate returned checksums */
@@ -2098,7 +2098,7 @@ auth_callback(struct anoubis_client *client __used, struct anoubis_msg *in,
 		break;
 	default:
 		fprintf(stderr,
-		    "An unknown error (%i) occured during authentication\n",
+		    "An unknown error (%i) occurred during authentication\n",
 		    -rc);
 		rc = -EINVAL;
 		break;
@@ -2219,6 +2219,8 @@ create_channel(void)
 		client = NULL;
 		acc_destroy(channel);
 		channel = NULL;
+		errno = -error;
+		perror("anoubis_client_connect");
 		error = 5;
 		goto err;
 	}
