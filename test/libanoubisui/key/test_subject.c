@@ -50,6 +50,9 @@ START_TEST(subject_default)
 		    "Invalid country in default subject");
 		fail_if(subject->name == NULL || strlen(subject->name) <= 0,
 		    "No name in default subject");
+		int len = strlen(subject->name) - 1;
+		fail_if(subject->name[len] == ',',
+		    "Unexpected comma at the end of name (%s)", subject->name);
 		fail_if(subject->email == NULL || strlen(subject->email) <= 0,
 		    "No email in default subject");
 		anoubis_keysubject_destroy(subject);
