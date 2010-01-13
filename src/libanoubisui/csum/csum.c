@@ -86,8 +86,16 @@ string2hex(const char *hex, int *cnt)
 		return NULL;
 
 	len = strlen(hex);
-	if (len%2)
-		return NULL;
+	if (len%2) {
+		/*
+		 * Old versions of anoubis used to return the data with
+		 * a trailing slash. Accept this.
+		 */
+		if (hex[len-1] == '/')
+			len--;
+		else
+			return NULL;
+	}
 
 	res = calloc(len/2, sizeof(unsigned char));
 	if (!res)
@@ -238,8 +246,6 @@ anoubis_keyid_list(struct anoubis_msg *m, int **idlen_list, int *list_cnt)
 	if ((tmp_res = anoubis_csum_list(m, &cnt)) == NULL) {
 		if (cnt < 0)
 			*list_cnt = cnt;
-		else
-			*list_cnt = -1;
 		return NULL;
 	}
 	if (cnt == 0) {
@@ -288,7 +294,7 @@ anoubis_csum_list(struct anoubis_msg *m, int *listcnt)
 {
 	char	**result = NULL;
 	char	**tmp = NULL;
-	int	  cnt,
+	int	  cnt = 0,
 		  error = 0,
 		  end,
 		  msg_end,

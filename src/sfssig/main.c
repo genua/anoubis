@@ -49,16 +49,16 @@ static int	 sfs_import(char *, uid_t);
 static int	 sfs_tree(char *, int op, uid_t);
 static int	 sfs_add_tree(char *, int op, uid_t);
 
+typedef int (*sumop_callback_t)(const char *, struct anoubis_msg *, uid_t);
+
 /* These are helper functions for the sfs commandos */
 static int			 _export(char *, FILE *, int, uid_t);
-static int			 __sfs_get(char *, int, uid_t);
+static int			 __sfs_get(char *, uid_t, sumop_callback_t);
 static int			 create_channel(void);
 static void			 destroy_channel(void);
 static int			 add_entry(struct sfs_entry *);
 static int			 list(char *arg, uid_t sfs_uid);
 static struct sfs_entry		*get_entry(char *, unsigned char *, int, uid_t);
-static uid_t			*request_uids(const char *, int *);
-static unsigned char		**request_keyids(const char *, int **, int *);
 void				 usage(void) __dead;
 
 typedef int (*func_int_t)(void);
@@ -321,7 +321,7 @@ main(int argc, char *argv[])
 		case 'L':
 		case 'S':
 		case 'C':
-			/* Only one syssig options is allowed. */
+			/* Only one syssig option is allowed. */
 			if (syssigmode)
 				usage();
 			syssigmode = ch;
@@ -573,7 +573,9 @@ sfs_sumop(const char *file, int operation, u_int8_t *cs, int cslen, int idlen,
 			len = cslen;
 	}
 	if (opts & SFSSIG_OPT_DEBUG2)
-		fprintf(stderr, "start checksum request\n");
+		fprintf(stderr, "start checksum request: op=%d file=%s "
+		    "len=%d idlen=%d uid=%d flags=%x\n",
+		    operation, file, len, idlen, uid, flags);
 	t = anoubis_client_csumrequest_start(client, operation, file, cs, len,
 	    idlen, uid, flags);
 	if (t == NULL) {
@@ -624,80 +626,117 @@ sfs_listop(const char *file, uid_t uid, struct anoubis_sig *as,
 	return t;
 }
 
-/*
- * NOTE: It is possible that this function returns an emtpy list.
- * NOTE: In this case the return value will still be non-NULL but *count
- * NOTE: will be zero.
- * XXX CEH: The calling conventions for request_uids and request_keys
- * XXX CEH: need unification. The return value should be count or a
- * XXX CEH: negative error in both cases.
+/**
+ * Return a list with the numerical user-IDs of all users that have a
+ * registered checksum for a file.
+ *
+ * @param file The target file name.
+ * @param uidp An array of uid_t values. The memory for the array will
+ *     be allocated using malloc(3) and must be freed by the caller.
+ * @return The number of user-IDs found or a negative error code in case
+ *     of an error.
+ *
+ * It is possible that this function returns an emtpy list. In this case
+ * the return value will be zero and no memory will be allocated.
  */
-static uid_t*
-request_uids(const char *file, int *count)
+static int
+request_uids(const char *file, uid_t **uidp)
 {
-	int ret;
-	uid_t *uids;
-	int cnt = 0;
-	struct anoubis_transaction	*t;
+	uid_t				 *uids;
+	int				  cnt = 0;
+	struct anoubis_transaction	 *t;
 	char				**result;
+	int				  i;
 
 	if (opts & SFSSIG_OPT_DEBUG)
 		fprintf(stderr, ">request_uids\n");
 
-	if (!count) {
-		if (opts & SFSSIG_OPT_DEBUG)
-			fprintf(stderr, "internal error in requesting uids\n");
-		return NULL;
-	}
-
+	(*uidp) = NULL;
 	t = sfs_listop(file, 0, NULL, ANOUBIS_CSUM_WANTIDS
 	    | ANOUBIS_CSUM_ALL | ANOUBIS_CSUM_UID);
 	if (t == NULL)
-		return NULL;
+		return -ENOMEM;
 	if (t->result) {
 		fprintf(stderr, "%s Checksum Request failed: %d (%s)\n", file,
 		    t->result, strerror(t->result));
 		anoubis_transaction_destroy(t);
-		return NULL;
+		return -t->result;
 	}
 
 	result = anoubis_csum_list(t->msg, &cnt);
-	if (result == NULL && cnt < 0) {
+	anoubis_transaction_destroy(t);
+	if (cnt == 0) {
+		return 0;
+	} else if (cnt < 0) {
 		if (opts & SFSSIG_OPT_DEBUG2)
-			fprintf(stderr, "no result.\n");
-		anoubis_transaction_destroy(t);
-		return NULL;
+			fprintf(stderr, "anoubis_csum_list error: %s\n",
+			    strerror(-cnt));
+		return cnt;
 	}
-	/* Make sure that we do not return NULL event if cnt == 0. */
-	uids = calloc(cnt ? cnt : 1, sizeof(uid_t));
+	uids = calloc(cnt,  sizeof(uid_t));
 	if (uids == NULL) {
 		perror(file);
-		anoubis_transaction_destroy(t);
-		return NULL;
+		for (i=0; i<cnt; ++i)
+			free(result[i]);
+		free(result);
+		return -ENOMEM;
 	}
-	for (ret = 0; ret < cnt; ret++)
-		uids[ret] = (uid_t)atoi(result[ret]);
+	for (i = 0; i < cnt; i++) {
+		char		ch1, ch2;
+		unsigned int	tmp;
+		int		ret;
 
-	*count = cnt;
-	anoubis_transaction_destroy(t);
+		/*
+		 * NOTE CEH: Old versions of the daemon used to append
+		 * NOTE CEH: a slash to the IDs in the list. Accept this
+		 * NOTE CEH: for compatibility reasons.
+		 */
+		ret = sscanf(result[i], "%u%c%c", &tmp, &ch1, &ch2);
+		if (ret != 1 && (ret != 2 || ch1 != '/')) {
+			fprintf(stderr, "Invalid data in user-ID list. %s\n",
+			    result[i]);
+			free(uids);
+			/* Free remaining elements in result list. */
+			for (; i<cnt; ++i)
+				free(result[i]);
+			free(result);
+			return -EIO;
+		}
+		uids[i] = tmp;
+		/* Free the current element of the result list. */
+		free(result[i]);
+	}
+
+	free(result);
 
 	if (opts & SFSSIG_OPT_DEBUG)
 		fprintf(stderr, "<request_uids\n");
 
-	return uids;
+	(*uidp) = uids;
+	return cnt;
 }
 
-/*
- * NOTE: It is possible that this function returns an empty list.
- * NOTE: In this case result and *ids might be zero.
- * NOTE: *cnt will be less than zero in case of an error and zero in case
- * NOTE: of an empty list.
- * XXX CEH: The calling conventions for request_uids and request_keys
- * XXX CEH: need unification. The return value should be count or a
- * XXX CEH: negative error in both cases.
+/**
+ * Return a list with all key-IDs that have a signature stored in the
+ * sfs tree for a given file.
+ *
+ * @param file The file name.
+ * @param keyidp The list of the key-IDs will be returned in this array.
+ *     Both the memory pointed to by (*ids) and each individual key-ID will
+ *     be allocated using malloc(3) and must be freed by the caller.
+ *     The key-IDs are returned as a sequence of hexadecimal digits and
+ *     are not printable.
+ * @param lenp The list of key-ID lengths will be returned in this arry.
+ *     The memory pointed to by (*lenp) will be allocated by malloc(3) and
+ *     must be freed by the caller.
+ * @return The number of entries in the key-ID list or a negative error code
+ *     in case of an error.
+ *
+ * It is possible that this function returns an empty list. In this case
+ * the return value will be zero and no memory will be allocated.
  */
-static unsigned char **
-request_keyids(const char *file, int **ids, int *count)
+static int
+request_keyids(const char *file, unsigned char *** keyidp, int **lenp)
 {
 	int cnt = 0;
 	int *idlens = NULL;
@@ -707,49 +746,44 @@ request_keyids(const char *file, int **ids, int *count)
 	if (opts & SFSSIG_OPT_DEBUG)
 		fprintf(stderr, ">request_keyids\n");
 
-	if (*count)
-		(*count) = -EINVAL;
-	if (ids)
-		(*ids) = NULL;
-	if (!file || !count || !ids) {
-		if (opts & SFSSIG_OPT_DEBUG)
-			fprintf(stderr, "internal error in requesting "
-			    "keyids\n");
-		return NULL;
-	}
-
-	(*count) = -ENOMEM;
+	(*keyidp) = NULL;
+	(*lenp) = NULL;
 	t = sfs_listop(file, 0, NULL, ANOUBIS_CSUM_WANTIDS | ANOUBIS_CSUM_ALL
 	    | ANOUBIS_CSUM_KEY);
 	if (t == NULL)
-		return NULL;
-	(*count) = -t->result;
+		return -ENOMEM;
 	if (t->result) {
+		int ret = -t->result;
 		fprintf(stderr, "%s Checksum Request failed: %d (%s)\n", file,
 		    t->result, strerror(t->result));
 		anoubis_transaction_destroy(t);
-		return NULL;
+		return ret;
 	}
 
 	result = anoubis_keyid_list(t->msg, &idlens, &cnt);
-	(*count) = cnt;
-	if (!result || cnt < 0) {
-		if (opts & SFSSIG_OPT_DEBUG2)
-			fprintf(stderr, "no result.\n");
-		anoubis_transaction_destroy(t);
-		return NULL;
-	}
-	*ids = idlens;
 	anoubis_transaction_destroy(t);
+	if (cnt <= 0)
+		return cnt;
 
+	(*lenp) = idlens;
+	(*keyidp) = result;
 	if (opts & SFSSIG_OPT_DEBUG)
 		fprintf(stderr, "<request_keyids\n");
-
-	return result;
+	return cnt;
 }
 
-typedef int (*sumop_callback_t)(const char *, struct anoubis_msg *, uid_t);
-
+/**
+ * Callback function that handles the result of GET and GETSIG request
+ * when doing an actual get operation.
+ * This function extracts the requested checksum or signature from the
+ * reply message and prints it together with the file name.
+ *
+ * @param file The file name.
+ * @param m The result message.
+ * @param sfs_uid The sfs user-ID that will be printed in front of the
+ *     checksum or signature.
+ * @return Zero in case of success. A negative error code in case of an error.
+ */
 static int
 sfs_get_callback(const char *file, struct anoubis_msg *m,
     uid_t sfs_uid)
@@ -789,6 +823,18 @@ sfs_get_callback(const char *file, struct anoubis_msg *m,
 	return 0;
 }
 
+/**
+ * Callback function that handles the result of GET and GETSIG operations
+ * when validating files.
+ * This function compares the checksum or signature in the result with
+ * the real value of the file and prints an appropriate message.
+ *
+ * @param file The file name of the request.
+ * @param m The resulting message.
+ * @param sfs_uid Unused.
+ * @return Zero in case of success, a negative error code in case of an
+ *    error.
+ */
 static int
 sfs_validate_callback(const char *file, struct anoubis_msg *m,
     uid_t sfs_uid __attribute__((unused)))
@@ -831,6 +877,16 @@ sfs_validate_callback(const char *file, struct anoubis_msg *m,
 	return 0;
 }
 
+/**
+ * Callback function to handle GET and GETSIG results when listing files.
+ * This function simply prints the file name if the result contains are
+ * checksum or signature (depending on the --sum and --sig flag).
+ *
+ * @param file The file name of the request.
+ * @param m The result message.
+ * @param sfs_uid Unused in this function.
+ * @return Zero in case of succes, a negative error code in case of an error.
+ */
 static int
 sfs_getnosum_callback(const char *file, struct anoubis_msg *m,
     uid_t sfs_uid __attribute__((unused)))
@@ -908,10 +964,14 @@ sfs_csumop_alluid(const char *file, int operation, u_int8_t *cs, int cslen,
 	int				 count, i, error = 0;
 	uid_t				*uids;
 
-	uids = request_uids(file, &count);
-	if (!uids) {
-		fprintf(stderr, "Failed to list uids for %s\n", file);
+	count = request_uids(file, &uids);
+	if (count < 0) {
+		fprintf(stderr, "Failed to list uids for %s: %s\n",
+		    file, strerror(-count));
 		return -EIO;
+	} else if (count == 0) {
+		/* No uids found at all. Return ENOENT. */
+		return -ENOENT;
 	}
 	for (i=0; i<count; ++i) {
 		error = sfs_csumop_oneuid(file, operation, cs, cslen, uids[i],
@@ -994,224 +1054,217 @@ sfs_sigop_allkeys(const char *file, int operation, sumop_callback_t callback)
 	int			 *idlens = NULL;
 	int			  count, i, error = 0;
 
-	keyids = request_keyids(file, &idlens, &count);
-	if (count < 0) {
-		fprintf(stderr, "Failed to list keyids for %s\n", file);
+	count = request_keyids(file, &keyids, &idlens);
+	if (count == 0) {
+		return -ENOENT;
+	} else if (count < 0) {
+		fprintf(stderr, "Failed to list keyids for %s: %s\n",
+		    file, strerror(-count));
 		return -EIO;
 	}
 	for (i=0; i<count; ++i) {
-		error = sfs_sigop_onekey(file, operation, as->keyid,
-		    as->idlen, NULL /* sigdata */, 0 /* siglen */, callback);
+		error = sfs_sigop_onekey(file, operation, keyids[i],
+		    idlens[i], NULL /* sigdata */, 0 /* siglen */, callback);
 		if (error)
 			break;
 	}
-	if (keyids) {
-		for (i=0; i<count; ++i)
-			free(keyids[i]);
-		free(keyids);
-	}
-	if (idlens)
-		free(idlens);
+	for (i=0; i<count; ++i)
+		free(keyids[i]);
+	free(keyids);
+	free(idlens);
+
 	return error;
 }
 
+/**
+ * Common function to perform add, del, get and validate operations.
+ *
+ * @param file The target file.
+ * @param operation The operation that should be performed.
+ * @param sfs_uid The target user-ID for a single uid checksum operation.
+ * @param callback The callback function that handles the result of a
+ *     successful get operation.
+ * @return Zero in case of success, one in case of an error. ENOENT errors
+ *     for GET and GETSIG operations are suppressed.
+ *     XXX CEH: Returning 1 for an error and zero for success is bogus.
+ *     XXX CEH: Calling conventions should be fixed.
+ */
 static int
-sfs_add(char *file, uid_t sfs_uid)
+sfs_generic_op(const char *file, int operation, uid_t sfs_uid,
+    sumop_callback_t callback)
 {
-	unsigned int			 siglen = 0, k;
-	u_int8_t			 cs[ANOUBIS_CS_LEN];
-	u_int8_t			 *sig = NULL;
-	int				 len = ANOUBIS_CS_LEN;
-	int				 ret;
-	int				 i;
+	u_int8_t	 csum[ANOUBIS_CS_LEN];
+	unsigned int	 siglen = 0;
+	int		 len = 0, ret;
+	u_int8_t	*sig = NULL;
+	void		*csp = NULL;
 
-	if (opts & SFSSIG_OPT_DEBUG)
-		fprintf(stderr, ">sfs_add\n");
-
-	if (opts & SFSSIG_OPT_LN) {
-		ret = anoubis_csum_link_calc(file, cs, &len);
-	} else {
-		ret = anoubis_csum_calc(file, cs, &len);
+	if (operation == ANOUBIS_CHECKSUM_OP_ADDSIG
+	    && (opts & SFSSIG_OPT_ALLCERT)) {
+		fprintf(stderr, "WARNING: Will ignore '--cert all "
+		    "for signature add operation");
+		opts &= ~(SFSSIG_OPT_ALLCERT);
 	}
-	if (ret < 0) {
-		errno = -ret;
-		perror(file);
-		return 1;
-	}
-	if (len != ANOUBIS_CS_LEN) {
-		fprintf(stderr, "Bad csum length from anoubis_csum_calc\n");
-		return 1;
-	}
-	if ((opts & SFSSIG_OPT_SIG) && as) {
-		sig = anoubis_sign_csum(as, cs, &siglen);
-		if (!sig) {
-			fprintf(stderr, "Error while anoubis_sign_csum\n");
+	if (operation == ANOUBIS_CHECKSUM_OP_ADDSUM
+	    || operation == ANOUBIS_CHECKSUM_OP_ADDSIG) {
+		len = ANOUBIS_CS_LEN;
+		csp = csum;
+		if (opts & SFSSIG_OPT_LN) {
+			ret = anoubis_csum_link_calc(file, csum, &len);
+		} else {
+			ret = anoubis_csum_calc(file, csum, &len);
+		}
+		if (ret < 0) {
+			fprintf(stderr, "Checksum calculation for "
+			    "%s failed: %s\n", file, strerror(-ret));
 			return 1;
+		}
+		if (opts & SFSSIG_OPT_SIG) {
+			sig = anoubis_sign_csum(as, csum, &siglen);
+			if (!sig) {
+				fprintf(stderr,
+				    "Error in anoubis_sign_csum\n");
+				return 1;
+			}
 		}
 	}
 	if ((opts & SFSSIG_OPT_SIG) == 0) {
 		if (opts & SFSSIG_OPT_ALLUID) {
-			ret = sfs_csumop_alluid(file,
-			    ANOUBIS_CHECKSUM_OP_ADDSUM, cs, len, NULL);
+			ret = sfs_csumop_alluid(file, operation, csp, len,
+			    callback);
 		} else {
-			ret = sfs_csumop_oneuid(file,
-			    ANOUBIS_CHECKSUM_OP_ADDSUM, cs, len, sfs_uid, NULL);
+			ret = sfs_csumop_oneuid(file, operation, csp, len,
+			    sfs_uid, callback);
 		}
 	} else {
-		if (opts & SFSSIG_OPT_ALLCERT)
-			fprintf(stderr, "WARNING: Will ignore '--cert all "
-			    "for add operation");
-		ret = sfs_sigop_onekey(file, ANOUBIS_CHECKSUM_OP_ADDSIG,
-		    as->keyid, as->idlen, sig, siglen, NULL);
-	}
-	if (ret < 0) {
-		fprintf(stderr, "Checksum request failed: %s\n",
-		    strerror(-ret));
-		return 1;
-	}
-	/* Print the checksum that has been added, if verbose output activated*/
-	if (opts & SFSSIG_OPT_VERBOSE2)
-		printf("add: %s csum:\t", file);
-	if (opts & SFSSIG_OPT_VERBOSE) {
-		for (i = 0; i < SHA256_DIGEST_LENGTH; i++)
-			printf("%02x", cs[i]);
-		printf("\n");
-		if (opts & SFSSIG_OPT_SIG) {
-			printf("%s signature:\t", file);
-			for (k = 0; k < siglen; k++)
-				printf("%2.2x", sig[k]);
-			printf("\n");
+		if (opts & SFSSIG_OPT_ALLCERT) {
+			ret = sfs_sigop_allkeys(file, operation, callback);
+		} else {
+			ret = sfs_sigop_onekey(file, operation, as->keyid,
+			    as->idlen, sig, siglen, callback);
 		}
 	}
 	if (sig)
 		free(sig);
-
-	if (opts & SFSSIG_OPT_DEBUG)
-		fprintf(stderr, "<sfs_add\n");
-	return 0;
+	if (ret == 0) {
+		switch (operation) {
+		case ANOUBIS_CHECKSUM_OP_ADDSUM:
+		case ANOUBIS_CHECKSUM_OP_ADDSIG:
+			if ((opts & SFSSIG_OPT_VERBOSE) && len) {
+				int		i;
+				printf("%s: ", file);
+				for (i=0; i<len; ++i)
+					printf("%02x", csum[i]);
+				printf("\n");
+			}
+			break;
+		case ANOUBIS_CHECKSUM_OP_DEL:
+		case ANOUBIS_CHECKSUM_OP_DELSIG:
+			if (opts & SFSSIG_OPT_VERBOSE)
+				printf("%s\n", file);
+			break;
+		}
+		return  0;
+	}
+	if (ret == -ENOENT && (operation == ANOUBIS_CHECKSUM_OP_GET2
+	    || operation == ANOUBIS_CHECKSUM_OP_GETSIG2)) {
+		if (opts & SFSSIG_OPT_VERBOSE)
+			fprintf(stderr, "No entry found for %s\n", file);
+		return 1;
+	}
+	fprintf(stderr, "Checksum request failed: %s\n", strerror(-ret));
+	return 1;
 }
 
+/**
+ * Perfrom an sfs add operation on a file.
+ * @param file The target file.
+ * @param sfs_uid The sfs User-ID that should be used.
+ * @return See sfs_generic_op
+ */
+static int
+sfs_add(char *file, uid_t sfs_uid)
+{
+	int	op = ANOUBIS_CHECKSUM_OP_ADDSUM;
+
+	if (opts & SFSSIG_OPT_SIG)
+		op = ANOUBIS_CHECKSUM_OP_ADDSIG;
+	return sfs_generic_op(file, op, sfs_uid, NULL);
+}
+
+/**
+ * Perform an sfs delete operation on a file.
+ *
+ * @param file The target file.
+ * @param sfs_uid The sfs User-ID that should be used for checksum operations.
+ * @return @see sfs_generic_op.
+ */
 static int
 sfs_del(char *file, uid_t sfs_uid)
 {
-	int	ret;
+	int	op = ANOUBIS_CHECKSUM_OP_DEL;
 
-	if (opts & SFSSIG_OPT_DEBUG)
-		fprintf(stderr, ">sfs_del\n");
-	if (opts & SFSSIG_OPT_DEBUG2)
-		fprintf(stderr, "%s\n", file);
-
-	if ((opts & SFSSIG_OPT_SIG) == 0) {
-		if (opts & SFSSIG_OPT_ALLUID) {
-			ret = sfs_csumop_alluid(file,
-			    ANOUBIS_CHECKSUM_OP_DEL, NULL, 0, NULL);
-		} else {
-			ret = sfs_csumop_oneuid(file,
-			    ANOUBIS_CHECKSUM_OP_DEL, NULL, 0, sfs_uid, NULL);
-		}
-	} else {
-		if (opts & SFSSIG_OPT_ALLCERT) {
-			ret = sfs_sigop_allkeys(file,
-			    ANOUBIS_CHECKSUM_OP_DELSIG, NULL);
-		} else {
-			ret = sfs_sigop_onekey(file,
-			    ANOUBIS_CHECKSUM_OP_DELSIG, as->keyid, as->idlen,
-			    NULL /* sigdata */, 0 /* siglen */, NULL);
-		}
-	}
-	if (ret < 0) {
-		fprintf(stderr, "Checksum request failed: %s\n",
-		    strerror(-ret));
-		return 1;
-	}
-	if (opts & SFSSIG_OPT_VERBOSE2)
-		printf("del: ");
-	if (opts & SFSSIG_OPT_VERBOSE)
-		printf("%s\n", file);
-	if (opts & SFSSIG_OPT_DEBUG)
-		fprintf(stderr, "<sfs_del\n");
-
-	return 0;
+	if (opts & SFSSIG_OPT_SIG)
+		op = ANOUBIS_CHECKSUM_OP_DELSIG;
+	return sfs_generic_op(file, op, sfs_uid, NULL);
 }
 
-/*
- * We use __sfs_get in different variarions:
+/**
+ * Perform an sfs get operation on a file.
+ *
+ * @param file The target file.
+ * @param sfs_uid The sfs user-ID that should be used for checksum operations.
+ * @return @see sfs_generic_op.
  */
-#define GET_DEFAULT	0x00	/* A normal get operation */
-#define GET_VALIDATE	0x01	/* Validate returned checksums */
-#define GET_NOSUM	0x02	/* Print name if in tree */
-
 static int
 sfs_get(char *file, uid_t uid)
 {
-	return __sfs_get(file, GET_DEFAULT, uid);
+	return __sfs_get(file, uid, sfs_get_callback);
 }
 
+/**
+ * Perform an sfs validate operation on a file.
+ *
+ * @param file The target file.
+ * @param sfs_uid The sfs user-ID that should be used for checksum operations.
+ * @return @see sfs_generic_op
+ */
 static int
 sfs_validate(char *file, uid_t uid)
 {
-	return __sfs_get(file, GET_VALIDATE, uid);
+	return __sfs_get(file, uid, sfs_validate_callback);
 }
 
+/**
+ * Generic wrapper for get validate and some list operations.
+ * @param file The target file of the operation.
+ * @param sfs_uid The sfs user-ID that should be used for checksum operations.
+ * @param callback The callback function that handles successful get requests.
+ * @return @see sfs_generic_op
+ */
 static int
-__sfs_get(char *file, int getmode, uid_t sfs_uid)
+__sfs_get(char *file, uid_t sfs_uid, sumop_callback_t callback)
 {
-	int				 error = 0;
-	sumop_callback_t		 callback = NULL;
+	int	op = ANOUBIS_CHECKSUM_OP_GET2;
 
-	if (opts & SFSSIG_OPT_DEBUG) {
-		fprintf(stderr, ">sfs_get\n");
-		fprintf(stderr, "path %s\n", file);
-	}
-
-	switch (getmode) {
-	case GET_DEFAULT:
-		callback = sfs_get_callback;
-		break;
-	case GET_VALIDATE:
-		callback = sfs_validate_callback;
-		break;
-	case GET_NOSUM:
-		callback = sfs_getnosum_callback;
-		break;
-	}
-	if ((opts & SFSSIG_OPT_SIG) == 0) {
-		if (opts & SFSSIG_OPT_ALLUID) {
-			error = sfs_csumop_alluid(file,
-			    ANOUBIS_CHECKSUM_OP_GET2,
-			    NULL /* csdata */, 0 /* cslen */, callback);
-		} else {
-			error = sfs_csumop_oneuid(file,
-			    ANOUBIS_CHECKSUM_OP_GET2, NULL /* csdata */,
-			    0 /* cslen */, sfs_uid, callback);
-		}
-	} else {
-		if (opts & SFSSIG_OPT_ALLCERT) {
-			error = sfs_sigop_allkeys(file,
-			    ANOUBIS_CHECKSUM_OP_GETSIG2, callback);
-		} else {
-			error = sfs_sigop_onekey(file,
-			    ANOUBIS_CHECKSUM_OP_GETSIG2, as->keyid, as->idlen,
-			    NULL /* sigdata */, 0 /* siglen */, callback);
-		}
-	}
-	if (error < 0) {
-		if (error == -ENOENT) {
-			if (opts & SFSSIG_OPT_VERBOSE) {
-				fprintf(stderr, "No entry found for %s\n",
-				    file);
-			}
-		} else {
-			fprintf(stderr, "Checksum request failed: %s\n",
-			    strerror(-error));
-		}
-		return 1;
-	}
-	if (opts & SFSSIG_OPT_DEBUG)
-		fprintf(stderr, "<sfs_get\n");
-	return 0;
+	if (opts & SFSSIG_OPT_SIG)
+		op = ANOUBIS_CHECKSUM_OP_GETSIG2;
+	return sfs_generic_op(file, op, sfs_uid, callback);
 }
 
+/**
+ * Perform an sfs list operation. This function first interprets the list
+ * operation as a file and list checksums for the file. Then the arguement
+ * is interpreted as a directory and the directory contents are listed.
+ * This is neccessary because the sfs tree might contain both kinds of
+ * objects under the same name and we have no way of knowning which one
+ * the user wants.
+ *
+ * @param arg The path name.
+ * @param sfs_uid The user-ID that should be used for checksum related
+ *     operations.
+ * @return @see sfs_generic_op
+ */
 static int
 sfs_list(char *arg, uid_t sfs_uid)
 {
@@ -1219,7 +1272,7 @@ sfs_list(char *arg, uid_t sfs_uid)
 
 	/* sfs_get with / produces Invalid Argument */
 	if (strcmp(arg, "/") != 0)
-		ret = __sfs_get(arg, GET_NOSUM, sfs_uid);
+		ret = __sfs_get(arg, sfs_uid, sfs_getnosum_callback);
 
 	if (list(arg, sfs_uid) == 0)
 		return 0;
@@ -1692,8 +1745,8 @@ _export(char *arg, FILE *out_fd, int rec, uid_t sfs_uid)
 			continue;
 		}
 		if (opts & SFSSIG_OPT_ALLUID) {
-			uid_result = request_uids(path, &uid_cnt);
-			if (uid_result) {
+			uid_cnt = request_uids(path, &uid_result);
+			if (uid_cnt > 0 && uid_result) {
 				for (j = 0; j < uid_cnt; j++) {
 					sfs_uid = uid_result[j];
 					tmp = get_entry(path, NULL, 0, sfs_uid);
@@ -1716,8 +1769,8 @@ _export(char *arg, FILE *out_fd, int rec, uid_t sfs_uid)
 			 * XXX CEH: we should probably give some kind of
 			 * XXX CEH: message in this case.
 			 */
-			keyid_result = request_keyids(path, &ids, &keyid_cnt);
-			if (keyid_result) {
+			keyid_cnt = request_keyids(path, &keyid_result, &ids);
+			if (keyid_cnt > 0) {
 				for (j = 0; j < keyid_cnt; j++) {
 					keyid = keyid_result[j];
 					idlen = ids[j];
@@ -1823,7 +1876,7 @@ sfs_import(char *filename, uid_t sfs_uid __used)
 
 /**
  * Apply an sfs_entry to the checksum tree.
- * 
+ *
  * Signature entries are always applied as is. This will usually fail for
  * foreign signatures though.
  * Checksum entries are applied for the uid given in the entry if

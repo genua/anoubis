@@ -1170,14 +1170,14 @@ sfs_checksumop_list(struct sfs_checksumop *csop, u_int64_t token,
 	DIR				*sfs_dir = NULL;
 	struct dirent			*entry;
 	int				 offset;
-	int				 found = 0;
+	int				 found = 0, wantids;
 
+	wantids = (csop->listflags & ANOUBIS_CSUM_WANTIDS);
 	if (csop->op != ANOUBIS_CHECKSUM_OP_GENERIC_LIST) {
 		error = EINVAL;
 		goto out;
 	}
-	error = -convert_user_path(csop->path, &sfs_path,
-	    !(csop->listflags & ANOUBIS_CSUM_WANTIDS));
+	error = -convert_user_path(csop->path, &sfs_path, !wantids);
 	if (error)
 		goto out;
 	sfs_dir = opendir(sfs_path);
@@ -1198,7 +1198,11 @@ sfs_checksumop_list(struct sfs_checksumop *csop, u_int64_t token,
 		if (!sfs_wantentry(csop, sfs_path, entry->d_name))
 			continue;
 		found = 1;
-		tmp = remove_escape_seq(entry->d_name);
+		if (wantids) {
+			tmp = strdup(entry->d_name);
+		} else {
+			tmp = remove_escape_seq(entry->d_name);
+		}
 		tmplen = strlen(tmp) + 1;
 		if (offset + tmplen > reply->len) {
 			reply->len = offset;
