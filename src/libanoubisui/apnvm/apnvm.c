@@ -453,7 +453,22 @@ apnvm_getuser(apnvm *vm, struct apnvm_user_head *user_list)
 
 	while ((de = readdir(dir)) != NULL) {
 		struct apnvm_user *user;
-		if (de->d_type != DT_DIR)
+		if (de->d_type == DT_UNKNOWN) {
+			char		*tmppath;
+			struct stat	 statbuf;
+
+			if (asprintf(&tmppath, "%s/%s", path, de->d_name) < 0) {
+				closedir(dir);
+				return APNVM_OOM;
+			}
+			if (lstat(tmppath, &statbuf) < 0) {
+				free(tmppath);
+				continue;
+			}
+			free(tmppath);
+			if (!S_ISDIR(statbuf.st_mode))
+				continue;
+		} else if (de->d_type != DT_DIR)
 			continue;
 		if (de->d_name[0] == '.') {
 			if (de->d_name[1] == 0)

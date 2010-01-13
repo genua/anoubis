@@ -238,12 +238,29 @@ pe_user_load_dir(const char *dirname, unsigned int prio, struct pe_policy_db *p)
 
 	/* iterate over directory entries */
 	while ((dp = readdir(dir)) != NULL) {
-		if (dp->d_type != DT_REG)
+		DEBUG(DBG_PE_POLICY, "pe_user_load_dir: entry type=%d name=%s",
+		    dp->d_type, dp->d_name);
+		if (asprintf(&filename, "%s/%s", dirname, dp->d_name) < 0) {
+			log_warnx("asprintf: Out of memory");
 			continue;
+		}
+		if (dp->d_type == DT_UNKNOWN) {
+			struct stat		statbuf;
 
-		/* Skip files starting with a dot. */
-		if (dp->d_name[0] == '.')
+			if (lstat(filename, &statbuf) < 0) {
+				log_warn("Faild to stat %s", filename);
+			} else if (S_ISREG(statbuf.st_mode)) {
+				dp->d_type = DT_REG;
+				DEBUG(DBG_PE_POLICY, "pe_user_load_dir: "
+				    "st_mode=0x%x\n", statbuf.st_mode);
+			}
+		}
+		/* Skip non-regular files and files starting with a dot. */
+		if (dp->d_type != DT_REG || dp->d_name[0] == '.') {
+			free(filename);
 			continue;
+		}
+
 		/*
 		 * Validate the file name: It has to be either
 		 * ANOUBISD_DEFAULTNAME or a numeric uid.
@@ -254,6 +271,7 @@ pe_user_load_dir(const char *dirname, unsigned int prio, struct pe_policy_db *p)
 			uid = -1;
 		else if ((t = strrchr(dp->d_name, '.')) != NULL &&
 		    strcmp(t, ".sig") == 0) {
+			free(filename);
 			continue;
 		} else {
 			uid = strtonum(dp->d_name, 0, UID_MAX, &errstr);
@@ -261,14 +279,12 @@ pe_user_load_dir(const char *dirname, unsigned int prio, struct pe_policy_db *p)
 				log_warnx("pe_user_load_dir: "
 				    "filename \"%s/%s\" %s",
 				    dirname, dp->d_name, errstr);
+				free(filename);
 				continue;
 			}
 		}
-		if (asprintf(&filename, "%s/%s", dirname, dp->d_name) == -1) {
-			log_warnx("asprintf: Out of memory");
-			continue;
-		}
-		/* If root configured a certificate for the user, the policy
+		/*
+		 * If root configured a certificate for the user, the policy
 		 * must be signed and verified.
 		 * For admin policies, root's certificate is used.
 		 */

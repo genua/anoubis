@@ -161,7 +161,7 @@ cert_load_db(const char *dirname, struct cert_db *certs)
 	count = 0;
 
 	while ((dp = readdir(dir)) != NULL) {
-		if (dp->d_type != DT_REG)
+		if (dp->d_type != DT_REG && dp->d_type != DT_UNKNOWN)
 			continue;
 		uid = strtonum(dp->d_name, 0, UID_MAX, &errstr);
 		if (errstr) {
@@ -172,6 +172,15 @@ cert_load_db(const char *dirname, struct cert_db *certs)
 		if (asprintf(&filename, "%s/%s", dirname, dp->d_name) == -1) {
 			log_warnx("asprintf: Out of memory");
 			continue;
+		}
+		if (dp->d_type == DT_UNKNOWN) {
+			struct stat	statbuf;
+			if (lstat(filename, &statbuf) < 0) {
+				log_warn("lstat: Cannot stat %s", filename);
+			} else if (!S_ISREG(statbuf.st_mode)) {
+				free(filename);
+				continue;
+			}
 		}
 		if ((sc = calloc(1, sizeof(struct cert))) == NULL) {
 			log_warnx("calloc: Out of memory");
