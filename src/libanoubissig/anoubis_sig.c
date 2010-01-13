@@ -610,35 +610,40 @@ anoubis_sig_cert_name(X509 *cert)
 	return (buf);
 }
 
-char *
+/* The idea of this code is taken from openssl ASN1_UTCTIME_print(). */
+#define GETNUM(x) (((x)[0] - '0') * 10 + (x)[1] - '0')
+struct tm *
 anoubis_sig_cert_validity(X509 *cert)
 {
-	int		 len = 128;
-	ASN1_TIME	*at  = NULL;
-	BIO		*bio = NULL;
-	char		*buf = NULL;
+	struct tm	*time = NULL;
+	ASN1_TIME	*notAfter = NULL;
 
 	if (cert == NULL) {
 		return (NULL);
 	}
 
-	buf = calloc(len, sizeof(char));
-	if (buf == NULL) {
-		return (NULL);
-	}
-	strncpy(buf, "[invalid date]", len - 1);
-
-	at = X509_get_notAfter(cert);
-	bio = BIO_new(BIO_s_mem());
-	if (bio == NULL) {
-		free(buf);
+	notAfter = X509_get_notAfter(cert);
+	if (notAfter->length < 10 || !ASN1_UTCTIME_check(notAfter)) {
 		return (NULL);
 	}
 
-	if (ASN1_TIME_print(bio, at)) {
-		BIO_read(bio, buf, len - 1);
+	time = calloc(1, sizeof(struct tm));
+	if ((time == NULL) || (notAfter == NULL)) {
+		return (NULL);
 	}
-	BIO_free(bio);
 
-	return (buf);
+	time->tm_year = GETNUM(notAfter->data);
+	if (time->tm_year <= 50) {
+		time->tm_year += 100;
+	}
+
+	/* Type and range checks already done by ASN1_UTCTIME_check(). */
+	time->tm_mon  = GETNUM(notAfter->data + 2);
+	time->tm_mday = GETNUM(notAfter->data + 4);
+	time->tm_hour = GETNUM(notAfter->data + 6);
+	time->tm_min  = GETNUM(notAfter->data + 8);
+	time->tm_sec  = GETNUM(notAfter->data + 10);
+
+	return (time);
 }
+#undef GETNUM

@@ -48,7 +48,7 @@ int main(int argc, char *argv[])
 	}
 	if (sscanf(argv[4], "%d%c", &digits, &ch) != 1)
 		return 2;
-	if (anoubis_keygen(argv[1], argv[2], argv[5], argv[3], digits) != 0)
+	if (anoubis_keygen(argv[1], argv[2], argv[5], argv[3], digits, 1) != 0)
 		return 3;
 	return 0;
 }

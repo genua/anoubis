@@ -42,60 +42,89 @@
  */
 class ModSfsGenerateKeyDlg : public ModSfsGenerateKeyDlgBase
 {
-public:
-	/**
-	 * Constructor: Intialize dialog with default values.
-	 * @param[in] 1st The parent window.
-	 */
-	ModSfsGenerateKeyDlg(wxWindow *);
+	public:
+		/**
+		 * Constructor: Intialize dialog with default values.
+		 * @param[in] 1st The parent window.
+		 */
+		ModSfsGenerateKeyDlg(wxWindow *);
 
-	/**
-	 * Returns the path of the file, where the private key is stored.
-	 *
-	 * The path is configured in the dialog.
-	 *
-	 * @return Path of private key
-	 */
-	wxString getPathPrivateKey(void) const;
+		/**
+		 * Returns the path of the file, where the private key
+		 * is stored.
+		 *
+		 * The path is configured in the dialog.
+		 *
+		 * @return Path of private key
+		 */
+		wxString getPathPrivateKey(void) const;
 
-	/**
-	 * Returns the path of the file, where the certificate is stored.
-	 *
-	 * The path is configured in the dialog.
-	 *
-	 * @return Path of certificate
-	 */
-	wxString getPathCertificate(void) const;
+		/**
+		 * Returns the path of the file, where the certificate
+		 * is stored.
+		 *
+		 * The path is configured in the dialog.
+		 *
+		 * @return Path of certificate
+		 */
+		wxString getPathCertificate(void) const;
 
-protected:
-	/**
-	 * Handler that is called if the OK button is pressed.
-	 * @param[in] 1st The button event.
-	 * @return None.
-	 */
-	virtual void OnOkButton(wxCommandEvent& event);
+	protected:
+		/**
+		 * Handler that is called if the OK button is pressed.
+		 * @param[in] 1st The button event.
+		 * @return None.
+		 */
+		virtual void onOkButton(wxCommandEvent &);
 
-	/**
-	 * This is called after the construction of the dialog but
-	 * before the user inputs data. We can hide some elements of the
-	 * dialog that are only display in response to user input here.
-	 *
-	 * @param[in] 1st The init event.
-	 * @return None.
-	 */
-	virtual void InitDialog(wxInitDialogEvent & event);
+		/**
+		 * Handler that is called if the Cancel button is pressed.
+		 * @param[in] 1st The button event.
+		 * @return None.
+		 */
+		virtual void onCancelButton(wxCommandEvent &);
 
-private:
-	/**
-	 * Generate a name prefix for a new private/public key pair.
-	 * Make sure that neither prefix + wxT(".crt") nor
-	 * prefix + wxT(".key") exists.
-	 * @param None.
-	 * @return The new prefix.
-	 */
-	wxString	newDefaultName(void);
+		/**
+		 * Handler that is called if <ENTER> is hit in
+		 * passphrase fields.
+		 * @param[1n] 1st The event.
+		 * @return None.
+		 */
+		virtual void onPassphraseEnter(wxCommandEvent &);
+
+		/**
+		 * Handler that is called if passphrase fields loose focus.
+		 * @param[in] 1st The event.
+		 * @return None.
+		 */
+		virtual void onPassphraseFocusLost(wxFocusEvent &);
+
+	private:
+		/**
+		 * Generate a name prefix for a new private/public key pair.
+		 * Make sure that neither prefix + wxT(".crt") nor
+		 * prefix + wxT(".key") exists.
+		 * @param None.
+		 * @return The new prefix.
+		 */
+		wxString newDefaultName(void);
+
+		/**
+		 * Verify passphrase and it's repeat.
+		 * @param None.
+		 * @return 0 if passphrases are equal, -1 otherwise.
+		 */
+		int verifyPassphrase(void);
+
+		/**
+		 * Calculate days of validity.
+		 *
+		 * This method takes the set date of validity and calculates
+		 * the number of days until that date.
+		 * @param None.
+		 * @return Number of days.
+		 */
+		int calculateNumberOfDays(void);
 };
-
-
 
 #endif	/* _MODSFSGENERATEKEYDLG_H_ */

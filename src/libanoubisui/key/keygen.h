@@ -63,8 +63,22 @@ struct anoubis_keysubject {
 
 
 __BEGIN_DECLS
-extern int	anoubis_keygen(const char *priv, const char *pub,
-		    const char *pass, const char *subject, int bits);
+/**
+ * Generate key.
+ *
+ * This method runs openssl to generate the key pair.
+ *
+ * param[in] 1st The private key filename.
+ * param[in] 2nd The certificate filename.
+ * param[in] 3rd The passphrase.
+ * param[in] 4tn The subject string.
+ * param[in] 5th bits.
+ * param[in] 6th The number of days to certify the certificate for.
+ * @return 0 on success.
+ */
+extern int anoubis_keygen(const char *, const char *, const char *,
+    const char *, int, int);
+
 extern struct anoubis_keysubject *anoubis_keysubject_defaults(void);
 extern struct anoubis_keysubject *anoubis_keysubject_fromstring(const char *);
 extern char *anoubis_keysubject_tostring(const struct anoubis_keysubject *);

@@ -554,7 +554,7 @@ ModSfsDetailsDlgBase::ModSfsDetailsDlgBase( wxWindow* parent, wxWindowID id, con
 
 ModSfsGenerateKeyDlgBase::ModSfsGenerateKeyDlgBase( wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style, const wxString& name ) : wxDialog( parent, id, title, pos, size, style, name )
 {
-	this->SetSizeHints( wxDefaultSize, wxDefaultSize );
+	this->SetSizeHints( wxSize( 850,-1 ), wxDefaultSize );
 	
 	wxBoxSizer* mainSizer;
 	mainSizer = new wxBoxSizer( wxVERTICAL );
@@ -568,17 +568,17 @@ ModSfsGenerateKeyDlgBase::ModSfsGenerateKeyDlgBase( wxWindow* parent, wxWindowID
 	wxFlexGridSizer* passphraseSizer;
 	passphraseSizer = new wxFlexGridSizer( 2, 4, 0, 0 );
 	passphraseSizer->AddGrowableCol( 1 );
-	passphraseSizer->SetFlexibleDirection( wxBOTH );
-	passphraseSizer->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+	passphraseSizer->SetFlexibleDirection( wxHORIZONTAL );
+	passphraseSizer->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_NONE );
 	
 	passphraseLabel = new wxStaticText( this, wxID_ANY, _("Passphrase:"), wxDefaultPosition, wxDefaultSize, 0 );
 	passphraseLabel->Wrap( -1 );
 	passphraseSizer->Add( passphraseLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	passphraseTextCtrl = new wxTextCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PASSWORD );
-	passphraseTextCtrl->SetMinSize( wxSize( 250,-1 ) );
+	passphraseTextCtrl->SetMinSize( wxSize( 350,-1 ) );
 	
-	passphraseSizer->Add( passphraseTextCtrl, 0, wxALL|wxALIGN_CENTER_VERTICAL|wxEXPAND, 5 );
+	passphraseSizer->Add( passphraseTextCtrl, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	
 	passphraseSizer->Add( 0, 0, 1, wxEXPAND, 5 );
@@ -590,8 +590,10 @@ ModSfsGenerateKeyDlgBase::ModSfsGenerateKeyDlgBase( wxWindow* parent, wxWindowID
 	passphraseRepeatLabel->Wrap( -1 );
 	passphraseSizer->Add( passphraseRepeatLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	passphraseRepeatTextCtrl = new wxTextCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PASSWORD );
-	passphraseSizer->Add( passphraseRepeatTextCtrl, 1, wxALL|wxALIGN_CENTER_VERTICAL|wxEXPAND, 5 );
+	passphraseRepeatTextCtrl = new wxTextCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize( -1,-1 ), wxTE_PASSWORD|wxTE_PROCESS_ENTER );
+	passphraseRepeatTextCtrl->SetMinSize( wxSize( 350,-1 ) );
+	
+	passphraseSizer->Add( passphraseRepeatTextCtrl, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	passphraseMismatchIcon = new wxStaticBitmap( this, wxID_ANY, wxNullBitmap, wxDefaultPosition, wxDefaultSize, 0 );
 	passphraseSizer->Add( passphraseMismatchIcon, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
@@ -602,7 +604,7 @@ ModSfsGenerateKeyDlgBase::ModSfsGenerateKeyDlgBase( wxWindow* parent, wxWindowID
 	
 	passphraseSizer->Add( passphraseMismatchText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	privateKeySizer->Add( passphraseSizer, 1, wxEXPAND, 5 );
+	privateKeySizer->Add( passphraseSizer, 1, 0, 5 );
 	
 	mainSizer->Add( privateKeySizer, 1, wxALL|wxEXPAND, 5 );
 	
@@ -654,42 +656,54 @@ ModSfsGenerateKeyDlgBase::ModSfsGenerateKeyDlgBase( wxWindow* parent, wxWindowID
 	certDetailsSizer->Add( certStateLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	certStateTextCtrl = new wxTextCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
-	certDetailsSizer->Add( certStateTextCtrl, 1, wxALL|wxALIGN_CENTER_VERTICAL|wxEXPAND, 5 );
+	certStateTextCtrl->SetMinSize( wxSize( 350,-1 ) );
+	
+	certDetailsSizer->Add( certStateTextCtrl, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	certLocalityLabel = new wxStaticText( this, wxID_ANY, _("Locality:"), wxDefaultPosition, wxDefaultSize, 0 );
 	certLocalityLabel->Wrap( -1 );
 	certDetailsSizer->Add( certLocalityLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	certLocalityTextCtrl = new wxTextCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
-	certDetailsSizer->Add( certLocalityTextCtrl, 1, wxALL|wxALIGN_CENTER_VERTICAL|wxEXPAND, 5 );
+	certLocalityTextCtrl->SetMinSize( wxSize( 350,-1 ) );
+	
+	certDetailsSizer->Add( certLocalityTextCtrl, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	certOrgaLabel = new wxStaticText( this, wxID_ANY, _("Organization:"), wxDefaultPosition, wxDefaultSize, 0 );
 	certOrgaLabel->Wrap( -1 );
 	certDetailsSizer->Add( certOrgaLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	certOrgaTextCtrl = new wxTextCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
-	certDetailsSizer->Add( certOrgaTextCtrl, 1, wxALL|wxALIGN_CENTER_VERTICAL|wxEXPAND, 5 );
+	certOrgaTextCtrl->SetMinSize( wxSize( 350,-1 ) );
+	
+	certDetailsSizer->Add( certOrgaTextCtrl, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	certOrgaUnitLabel = new wxStaticText( this, wxID_ANY, _("Organizational Unit:"), wxDefaultPosition, wxDefaultSize, 0 );
 	certOrgaUnitLabel->Wrap( -1 );
 	certDetailsSizer->Add( certOrgaUnitLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	certOrgaUnitTextCtrl = new wxTextCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
-	certDetailsSizer->Add( certOrgaUnitTextCtrl, 1, wxALL|wxALIGN_CENTER_VERTICAL|wxEXPAND, 5 );
+	certOrgaUnitTextCtrl->SetMinSize( wxSize( 350,-1 ) );
+	
+	certDetailsSizer->Add( certOrgaUnitTextCtrl, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	certCnLabel = new wxStaticText( this, wxID_ANY, _("Common Name:"), wxDefaultPosition, wxDefaultSize, 0 );
 	certCnLabel->Wrap( -1 );
 	certDetailsSizer->Add( certCnLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	certCnTextCtrl = new wxTextCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
-	certDetailsSizer->Add( certCnTextCtrl, 1, wxALL|wxALIGN_CENTER_VERTICAL|wxEXPAND, 5 );
+	certCnTextCtrl->SetMinSize( wxSize( 350,-1 ) );
+	
+	certDetailsSizer->Add( certCnTextCtrl, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	certEmailLabel = new wxStaticText( this, wxID_ANY, _("Email Address:"), wxDefaultPosition, wxDefaultSize, 0 );
 	certEmailLabel->Wrap( -1 );
 	certDetailsSizer->Add( certEmailLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	certEmailTextCtrl = new wxTextCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
-	certDetailsSizer->Add( certEmailTextCtrl, 1, wxALL|wxALIGN_CENTER_VERTICAL|wxEXPAND, 5 );
+	certEmailTextCtrl->SetMinSize( wxSize( 350,-1 ) );
+	
+	certDetailsSizer->Add( certEmailTextCtrl, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	certDetailsIndentSizer->Add( certDetailsSizer, 1, wxEXPAND, 5 );
 	
@@ -711,5 +725,10 @@ ModSfsGenerateKeyDlgBase::ModSfsGenerateKeyDlgBase( wxWindow* parent, wxWindowID
 	
 	// Connect Events
 	this->Connect( wxEVT_INIT_DIALOG, wxInitDialogEventHandler( ModSfsGenerateKeyDlgBase::InitDialog ) );
-	buttonSizerOK->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModSfsGenerateKeyDlgBase::OnOkButton ), NULL, this );
+	passphraseTextCtrl->Connect( wxEVT_KILL_FOCUS, wxFocusEventHandler( ModSfsGenerateKeyDlgBase::onPassphraseFocusLost ), NULL, this );
+	passphraseTextCtrl->Connect( wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler( ModSfsGenerateKeyDlgBase::onPassphraseEnter ), NULL, this );
+	passphraseRepeatTextCtrl->Connect( wxEVT_KILL_FOCUS, wxFocusEventHandler( ModSfsGenerateKeyDlgBase::onPassphraseFocusLost ), NULL, this );
+	passphraseRepeatTextCtrl->Connect( wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler( ModSfsGenerateKeyDlgBase::onPassphraseEnter ), NULL, this );
+	buttonSizerCancel->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModSfsGenerateKeyDlgBase::onCancelButton ), NULL, this );
+	buttonSizerOK->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModSfsGenerateKeyDlgBase::onOkButton ), NULL, this );
 }

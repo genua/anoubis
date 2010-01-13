@@ -26,9 +26,11 @@
  */
 
 #include <wx/stdpaths.h>
+#include <wx/datetime.h>
 
 #include <anoubis_sig.h>
 #include <keygen.h>
+#include <time.h>
 
 #include "LocalCertificate.h"
 
@@ -95,10 +97,21 @@ LocalCertificate::getFingerprint(void) const
 wxString
 LocalCertificate::getValidity(void) const
 {
+	wxDateTime	 wxTime;
+	struct tm	*time;
+
 	if (cert_ == NULL) {
 		return (wxEmptyString);
 	}
-	return (wxString::FromAscii(anoubis_sig_cert_validity(cert_->cert)));
+
+	time = anoubis_sig_cert_validity(cert_->cert);
+	if (time == NULL) {
+		return (wxEmptyString);
+	}
+	wxTime.Set(*time);
+	free(time);
+
+	return (wxTime.FormatDate());
 }
 
 wxString

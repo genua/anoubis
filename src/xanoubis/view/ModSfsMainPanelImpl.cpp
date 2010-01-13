@@ -85,7 +85,6 @@ ModSfsMainPanelImpl::ModSfsMainPanelImpl(wxWindow* parent, wxWindowID id)
 	/* Get initial indent size. */
 	spacer = certDetailsIndentSizer->GetItem((size_t)0);
 	indent = keyPicker->getTitleSize();
-	indent.IncBy(50, 0);
 
 	/* Set indentation. */
 	keyPicker->setTitleMinSize(indent);
@@ -509,6 +508,11 @@ ModSfsMainPanelImpl::onGenerateKeyPairButton(wxCommandEvent&)
 	ModSfsGenerateKeyDlg *dlg = new ModSfsGenerateKeyDlg(this);
 	int result = dlg->ShowModal();
 	dlg->Destroy();
+
+	if (result != wxOK) {
+		/* Cancel button was used. */
+		return;
+	}
 
 	if (keyPicker->getFileName().IsEmpty() &&
 	    certificatePicker->getFileName().IsEmpty()) {

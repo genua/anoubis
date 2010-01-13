@@ -37,6 +37,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <time.h>
 
 #include <openssl/x509.h>
 #include <openssl/evp.h>
@@ -127,15 +128,14 @@ char *anoubis_sig_cert_name(X509 *cert);
 /**
  * Get certificate validity.
  *
- * This method returns a newly allocated buffer with the humal readable
- * string of certificates 'notAfter'.
+ * This method returns a newly allocated time structure tm filled with
+ * the certificates 'notAfter' time values.
  *
  * @param[in] 1st The certificate in question.
  * @return In case of no memory, NULL is returned.\n
- * In case of convertion error, string "[invalid date]" is returned.\n
- * On success returned string contains date.
+ *	On success date as struct tm.
  */
-char *anoubis_sig_cert_validity(X509 *);
+struct tm *anoubis_sig_cert_validity(X509 *);
 
 __END_DECLS
 

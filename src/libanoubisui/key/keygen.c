@@ -447,11 +447,12 @@ anoubis_exec_openssl(char *argv[], const char *pass, mode_t umaskadd)
  */
 int
 anoubis_keygen(const char *private, const char *public, const char *pass,
-    const char *subject, int bits)
+    const char *subject, int bits, int days)
 {
 	int			 ret, k;
 	char			*argv[20];
 	char			 bitstring[30];
+	char			 daystring[30];
 
 	ret = noexist(private);
 	if (ret < 0)
@@ -465,6 +466,7 @@ anoubis_keygen(const char *private, const char *public, const char *pass,
 		pass = NULL;
 
 	sprintf(bitstring, "%d", bits);
+	sprintf(daystring, "%d", days);
 	k = 0;
 	argv[k++] = "openssl";
 	argv[k++] = "genrsa";
@@ -491,7 +493,7 @@ anoubis_keygen(const char *private, const char *public, const char *pass,
 	argv[k++] = "-new";
 	argv[k++] = "-x509";
 	argv[k++] = "-days";
-	argv[k++] = "999";
+	argv[k++] = daystring;
 	argv[k++] = "-batch";
 	argv[k++] = "-subj";
 	argv[k++] = (char *)subject;

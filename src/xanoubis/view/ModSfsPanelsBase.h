@@ -256,11 +256,14 @@ class ModSfsGenerateKeyDlgBase : public wxDialog
 		
 		// Virtual event handlers, overide them in your derived class
 		virtual void InitDialog( wxInitDialogEvent& event ){ event.Skip(); }
-		virtual void OnOkButton( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onPassphraseFocusLost( wxFocusEvent& event ){ event.Skip(); }
+		virtual void onPassphraseEnter( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onCancelButton( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onOkButton( wxCommandEvent& event ){ event.Skip(); }
 		
 	
 	public:
-		ModSfsGenerateKeyDlgBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Generate Keypair"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( -1,-1 ), long style = wxDEFAULT_DIALOG_STYLE|wxRESIZE_BORDER, const wxString& name = wxT("GenerateKeypair") );
+		ModSfsGenerateKeyDlgBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Generate Keypair"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( -1,-1 ), long style = wxDEFAULT_DIALOG_STYLE, const wxString& name = wxT("GenerateKeypair") );
 	
 };
 
