@@ -507,10 +507,10 @@ ModSfsMainPanelImpl::onGenerateKeyPairButton(wxCommandEvent&)
 	/* Display Generate-Keypair-Dialogue */
 	ModSfsGenerateKeyDlg *dlg = new ModSfsGenerateKeyDlg(this);
 	int result = dlg->ShowModal();
-	dlg->Destroy();
 
 	if (result != wxOK) {
 		/* Cancel button was used. */
+		dlg->Destroy();
 		return;
 	}
 
@@ -522,15 +522,15 @@ ModSfsMainPanelImpl::onGenerateKeyPairButton(wxCommandEvent&)
 		    privKeyValiditySpinCtrl->GetValue());
 		certificateParamsUpdate(dlg->getPathCertificate());
 
-		AnMessageDialog *dlg = new AnMessageDialog(this,
+		AnMessageDialog *infoDlg = new AnMessageDialog(this,
 		    _("You have created a new keypair. To be "
 		    "able to use it, you need to activate it! "
 		    "Please inform your administrator (e.g. by "
 		    "email)."), _("Certificate notice"),
 		    wxOK | wxICON_INFORMATION);
-		dlg->onNotifyCheck(wxT("/Options/ShowCertMessage"));
-		dlg->ShowModal();
-		dlg->Destroy();
+		infoDlg->onNotifyCheck(wxT("/Options/ShowCertMessage"));
+		infoDlg->ShowModal();
+		infoDlg->Destroy();
 	} else {
 		result = anMessageBox(_("You have created a new keypair but "
 		    "it is not used because a keypair is already "
@@ -547,6 +547,8 @@ ModSfsMainPanelImpl::onGenerateKeyPairButton(wxCommandEvent&)
 			certificateParamsUpdate(dlg->getPathCertificate());
 		}
 	}
+
+	dlg->Destroy();
 }
 
 void
