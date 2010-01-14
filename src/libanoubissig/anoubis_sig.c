@@ -612,24 +612,20 @@ anoubis_sig_cert_name(X509 *cert)
 
 /* The idea of this code is taken from openssl ASN1_UTCTIME_print(). */
 #define GETNUM(x) (((x)[0] - '0') * 10 + (x)[1] - '0')
-struct tm *
-anoubis_sig_cert_validity(X509 *cert)
+int
+anoubis_sig_cert_validity(X509 *cert, struct tm *time)
 {
-	struct tm	*time = NULL;
 	ASN1_TIME	*notAfter = NULL;
 
-	if (cert == NULL) {
-		return (NULL);
+	if ((cert == NULL) || (time == NULL)) {
+		return (-EINVAL);
 	}
 
 	notAfter = X509_get_notAfter(cert);
-	if (notAfter->length < 10 || !ASN1_UTCTIME_check(notAfter)) {
-		return (NULL);
-	}
-
-	time = calloc(1, sizeof(struct tm));
-	if ((time == NULL) || (notAfter == NULL)) {
-		return (NULL);
+	if (notAfter == NULL) {
+		return (-EINVAL);
+	} else if (notAfter->length < 10 || !ASN1_UTCTIME_check(notAfter)) {
+		return (-ERANGE);
 	}
 
 	time->tm_year = GETNUM(notAfter->data);
@@ -644,6 +640,6 @@ anoubis_sig_cert_validity(X509 *cert)
 	time->tm_min  = GETNUM(notAfter->data + 8);
 	time->tm_sec  = GETNUM(notAfter->data + 10);
 
-	return (time);
+	return (0);
 }
 #undef GETNUM

@@ -131,11 +131,13 @@ char *anoubis_sig_cert_name(X509 *cert);
  * This method returns a newly allocated time structure tm filled with
  * the certificates 'notAfter' time values.
  *
- * @param[in] 1st The certificate in question.
- * @return In case of no memory, NULL is returned.\n
- *	On success date as struct tm.
+ * @param[in]  1st The certificate in question.
+ * @param[out] 2nd The time structure to be filled.
+ * @return 0 on success.
+ *	-EINVAL in case of invalid argument.
+ *	-ERANGE in case of corrupt notAfter time.
  */
-struct tm *anoubis_sig_cert_validity(X509 *);
+int anoubis_sig_cert_validity(X509 *, struct tm *);
 
 __END_DECLS
 

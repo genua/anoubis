@@ -748,6 +748,7 @@ ModSfsMainPanelImpl::privKeyParamsUpdate(const wxString &path, bool sessionEnd,
 bool
 ModSfsMainPanelImpl::certificateParamsUpdate(const wxString &path)
 {
+	wxDateTime	  time;
 	LocalCertificate &cert = KeyCtrl::getInstance()->getLocalCertificate();
 
 	bool changed = cert.getFile() != path;
@@ -770,7 +771,12 @@ ModSfsMainPanelImpl::certificateParamsUpdate(const wxString &path)
 	/* Update view */
 	certificatePicker->setFileName(cert.getFile());
 	certFingerprintText->SetLabel(cert.getFingerprint());
-	certValidityText->SetLabel(cert.getValidity());
+	time = cert.getValidity();
+	if (time.IsValid()) {
+		certValidityText->SetLabel(time.FormatDate());
+	} else {
+		certValidityText->SetLabel(_("[invalid date]"));
+	}
 	certCountryText->SetLabel(cert.getCountry());
 	certStateText->SetLabel(cert.getState());
 	certLocalityText->SetLabel(cert.getLocality());

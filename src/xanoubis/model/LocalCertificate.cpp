@@ -94,24 +94,21 @@ LocalCertificate::getFingerprint(void) const
 	return (fingerprint);
 }
 
-wxString
+wxDateTime
 LocalCertificate::getValidity(void) const
 {
-	wxDateTime	 wxTime;
-	struct tm	*time;
+	int		rc;
+	struct tm	time;
+	wxDateTime	wxTime;
 
-	if (cert_ == NULL) {
-		return (wxEmptyString);
+	if (cert_ != NULL) {
+		rc = anoubis_sig_cert_validity(cert_->cert, &time);
+		if (rc == 0) {
+			wxTime.Set(time);
+		}
 	}
 
-	time = anoubis_sig_cert_validity(cert_->cert);
-	if (time == NULL) {
-		return (wxEmptyString);
-	}
-	wxTime.Set(*time);
-	free(time);
-
-	return (wxTime.FormatDate());
+	return (wxTime);
 }
 
 wxString

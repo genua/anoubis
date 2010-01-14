@@ -30,6 +30,7 @@
 
 #include <keygen.h>
 #include <wx/string.h>
+#include <wx/datetime.h>
 
 /**
  * A local certificate.
@@ -112,7 +113,7 @@ class LocalCertificate
 		wxString getFingerprint(void) const;
 
 		/**
-		 * Returns the validity string.
+		 * Returns the validity.
 		 *
 		 * The method only returns the validity if a certificate
 		 * is loaded.
@@ -120,7 +121,7 @@ class LocalCertificate
 		 * @return The validity of the currently loaded certificate.
 		 * @see load()
 		 */
-		wxString getValidity(void) const;
+		wxDateTime getValidity(void) const;
 
 		/**
 		 * Returns the distinguished name assigned to the certificate.

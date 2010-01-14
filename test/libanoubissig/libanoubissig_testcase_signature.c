@@ -297,7 +297,7 @@ END_TEST
 START_TEST(t_anoubis_validity_check)
 {
 	int			 err;
-	struct tm		*time = NULL;
+	struct tm		 time;
 	struct anoubis_sig	*as = NULL;
 
 	fail_if(prikey == NULL || pubkey == NULL || infile == NULL,
@@ -306,10 +306,9 @@ START_TEST(t_anoubis_validity_check)
 	as = anoubis_sig_pub_init(pubkey, certfile, pass_cb, &err);
 	fail_if(as == NULL, "Could not load Public Key");
 
-	time = anoubis_sig_cert_validity(as->cert);
-	fail_if(time == NULL, "Could not get validity time.");
+	err = anoubis_sig_cert_validity(as->cert, &time);
+	fail_if(err != 0, "Could not get validity time.");
 
-	free(time);
 	anoubis_sig_free(as);
 }
 END_TEST
