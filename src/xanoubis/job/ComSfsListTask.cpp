@@ -85,7 +85,6 @@ void
 ComSfsListTask::setRequestParameter(uid_t uid, const wxString &dir)
 {
 	this->uid_ = uid;
-	this->req_flags_ = ANOUBIS_CSUM_UID;
 
 	/*
 	 * Remove the trailing slash
@@ -143,7 +142,6 @@ ComSfsListTask::setKeyId(const u_int8_t *keyId, int len)
 
 		this->keyId_ = newKeyId;
 		this->keyIdLen_ = len;
-		this->req_flags_ = ANOUBIS_CSUM_KEY;
 
 		return (true);
 	} else
@@ -177,14 +175,6 @@ ComSfsListTask::getEventType(void) const
 void
 ComSfsListTask::exec(void)
 {
-	if (req_flags_ & ANOUBIS_CSUM_UID) {
-		const uid_t	cur_uid = getuid();
-		if (uid_ != cur_uid && cur_uid != 0)
-			return;
-		req_uid_ = uid_;
-	} else {
-		req_uid_ = 0;
-	}
 	resetComTaskResult();
 	ta_ = NULL;
 
