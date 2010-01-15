@@ -31,6 +31,82 @@
 #include "SfsEntry.h"
 #include "SfsDirectory.h"
 
+
+SfsDirectoryScanHandler::SfsDirectoryScanHandler(int limit)
+{
+	limit_ = limit;
+	total_ = 0;
+	levels_.clear();
+	curstate_.clear();
+}
+
+SfsDirectoryScanHandler::~SfsDirectoryScanHandler(void)
+{
+}
+
+void
+SfsDirectoryScanHandler::scanStarts(void)
+{
+	total_ = 0;
+	levels_.clear();
+	curstate_.clear();
+}
+
+void
+SfsDirectoryScanHandler::scanPush(unsigned long count)
+{
+	/*
+	 * The +1 is needed to compensate for the implict scanProgress that
+	 * is done when poping a level.
+	 */
+	levels_.push_back(count+1);
+	curstate_.push_back(0);
+	total_ += count;
+}
+
+void
+SfsDirectoryScanHandler::scanProgress(unsigned long count)
+{
+	/*
+	 * Advance the top level by at most count steps. The level completes
+	 * advance the lower level by the remaining number of steps and add
+	 * one for the completed level.
+	 */
+	while(count && levels_.size()) {
+		unsigned int	idx = levels_.size() - 1;
+		unsigned int	done = levels_[idx] - curstate_[idx];
+
+		if (done > count)
+			done = count;
+		curstate_[idx] += done;
+		if (curstate_[idx] >= levels_[idx]) {
+			levels_.pop_back();
+			curstate_.pop_back();
+			/*
+			 * We completed a pushed level. Advance the lower
+			 * level by one.
+			 */
+			count++;
+		}
+		count -= done;
+	}
+	/*
+	 * If progress bar updates are neccessary, calculate the current
+	 * progress and call scanUpdate.
+	 */
+	if (total_ >= limit_) {
+		double		percent = 0.0;
+		double		unit = 1.0;
+		unsigned long	steps;
+		for (unsigned int idx = 0; idx < levels_.size(); ++idx) {
+			unit /= (double)levels_[idx];
+			percent += unit * (double)curstate_[idx];
+		}
+		steps = (unsigned long)(percent * 100000.0);
+		scanUpdate(steps, 100000);
+	}
+}
+
 int
 SfsEntryList::Cmp(const SfsEntry *a, const SfsEntry *b) const
 {
@@ -47,8 +123,6 @@ SfsDirectory::SfsDirectory()
 	this->inverseFilter_ = false;
 	this->scanHandler_ = 0;
 	this->abortScan_ = false;
-	this->totalDirectories_ = 0;
-	this->visitedDirectories_ = 0;
 }
 
 SfsDirectory::~SfsDirectory()
@@ -210,22 +284,16 @@ SfsDirectory::scanLocalFilesystem()
 
 	/* Reset variables used by the scanner */
 	abortScan_ = false;
-	totalDirectories_ = getDirectoryCount(this->path_);
-	visitedDirectories_ = 0;
+	int thiscnt = getDirectoryCount(this->path_);
 
 	/* Scan starts now */
 	callHandler(scanStarts());
+	callHandler(scanPush(thiscnt));
 
 	/* Clear list before traversion starts */
 	removeAllEntries();
 	dir.Traverse(*this);
 
-	/* Scan is finished */
-	if (!abortScan_) {
-		/* 100% is reached */
-		callHandler(
-		    scanProgress(totalDirectories_, totalDirectories_));
-	}
 	callHandler(scanFinished(abortScan_));
 }
 
@@ -256,15 +324,14 @@ SfsDirectory::OnDir(const wxString &dir)
 		struct stat fstat;
 		/* Skip symlinks pointing to directories to avoid loops */
 		if (lstat(dir.fn_str(), &fstat) == 0
-		    && S_ISLNK(fstat.st_mode))
+		    && !S_ISDIR(fstat.st_mode)) {
+			callHandler(scanProgress(1));
 			return wxDIR_IGNORE;
+		}
 		/* Total number of directories to scan. */
-		totalDirectories_ += getDirectoryCount(dir);
+		callHandler(scanPush(getDirectoryCount(dir)));
 	}
-
-	/* A progress: visitedDirectories_ [0 ... totalDirectories_ - 1] */
-	callHandler(scanProgress(visitedDirectories_, totalDirectories_));
-	visitedDirectories_++;
+	callHandler(scanProgress(1));
 
 	return (this->recursive_ ? wxDIR_CONTINUE : wxDIR_IGNORE);
 }
@@ -292,15 +359,14 @@ SfsDirectory::getDirectoryCount(const wxString &path)
 {
 	wxDir dir(path);
 	wxString filename;
-	unsigned int count = 0;
+	unsigned int count;
 
-	if (dir.GetFirst(&filename, wxEmptyString, wxDIR_DIRS|wxDIR_HIDDEN))
-		count = 1;
-	else
-		return (count);
+	if (!dir.GetFirst(&filename, wxEmptyString, wxDIR_DIRS|wxDIR_HIDDEN))
+		return 0;
 
+	count = 1;
 	while (dir.GetNext(&filename))
 		count++;
 
-	return (count);
+	return count;
 }

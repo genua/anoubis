@@ -41,16 +41,36 @@ class SfsEntryList : public IndexTree<SfsEntry> {
 
 /**
  * A handler reports the progress of a filesystem-scan.
+ * Conceptually, at the toplevel a single item is scaned. However,
+ * each item may divided into several steps using scanPush.
  */
 class SfsDirectoryScanHandler
 {
 	public:
-		virtual ~SfsDirectoryScanHandler() {}
+		/**
+		 * Initialize the class.
+		 * @param limit Only call the update function if the total
+		 *     number of elements found exceed this limit.
+		 */
+		SfsDirectoryScanHandler(int limit);
 
 		/**
-		 * A scan-operation started.
+		 * Destructor.
 		 */
-		virtual void scanStarts() = 0;
+		virtual ~SfsDirectoryScanHandler();
+
+		/**
+		 * Initalize the scan handler for a new filesystem scan.
+		 */
+		void scanStarts(void);
+
+		/**
+		 * Scanning the current element of in the scan will
+		 * require the given numer of steps.
+		 * @param[in] 1st The number of steps to scan the current
+		 *     item.
+		 */
+		void scanPush(unsigned long);
 
 		/**
 		 * The filesystem-scan has finished.
@@ -63,16 +83,28 @@ class SfsDirectoryScanHandler
 		/**
 		 * Reports a progress of the scan.
 		 *
-		 * The visited arguments reports the number of already scanned
-		 * directories and is increased with each invocation of the
-		 * method. The total argument tells you how many directories
-		 * are already known. This value can be greater than visited,
-		 * when there are directories, which are currently not scanned.
-		 *
-		 * @param visited Number of already visited directories
-		 * @param total Number of total known directories.
+		 * @param[in] 1st The number of progress steps.
 		 */
-		virtual void scanProgress(unsigned long, unsigned long) = 0;
+		void scanProgress(unsigned long);
+
+	private:
+		/**
+		 * Trigger an update of the progress bar. This function is
+		 * called by the scanProgress if neccessary.
+		 *
+		 * @param Current state of the progress bar.
+		 * @param Total length of the progress bar.
+		 *
+		 * NOTE: Both values are entirely virtual and have no direct
+		 *     connection to the nubmer of times scanProgress has been
+		 *     called.
+		 */
+		virtual void scanUpdate(unsigned int, unsigned int) = 0;
+
+		std::vector<unsigned long>	levels_;
+		std::vector<unsigned long>	curstate_;
+		unsigned long			limit_;
+		unsigned long			total_;
 };
 
 /**
@@ -264,8 +296,6 @@ class SfsDirectory : private wxDirTraverser
 		SfsEntryList entryList_;
 		SfsDirectoryScanHandler *scanHandler_;
 		bool abortScan_;
-		unsigned int totalDirectories_;
-		unsigned int visitedDirectories_;
 
 		/**
 		 * Tests whether a SfsEntry can be inserted into the directory.
@@ -286,13 +316,12 @@ class SfsDirectory : private wxDirTraverser
 		wxDirTraverseResult OnFile(const wxString &);
 
 		/**
-		 * Returns the number of sub-directories.
-		 *
-		 * The method scans the specified directory for
-		 * sub-directories.
+		 * Returns the number of subdirectories in the given directory.
+		 * The method scans the specified directory and counts
+		 * the number of subdirectories.
 		 *
 		 * @param path The directory to be scanned
-		 * @return Number of sub-directories
+		 * @return The total number of entries.
 		 */
 		static unsigned int getDirectoryCount(const wxString &);
 };

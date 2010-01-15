@@ -156,11 +156,9 @@ class ModSfsListCtrl : public wxListCtrl, private SfsDirectoryScanHandler
 		void OnPopupResolveLinkSelected(wxCommandEvent&);
 
 		/**
-		 * Implementation of SfsDirectoryScanHandler::scanStarts().
-		 *
-		 * Not used, empty.
+		 * Implementation of SfsDirectoryScanHandler::scanUpdate().
 		 */
-		void scanStarts();
+		void scanUpdate(unsigned int, unsigned int);
 
 		/**
 		 * Implementation of SfsDirectoryScanHandler::scanFinished().
@@ -168,13 +166,6 @@ class ModSfsListCtrl : public wxListCtrl, private SfsDirectoryScanHandler
 		 * Destroys scanProgressDlg_.
 		 */
 		void scanFinished(bool);
-
-		/**
-		 * Implementation of SfsDirectoryScanHandler::scanProgress().
-		 *
-		 * Creates and updates scanProgressDlg_.
-		 */
-		void scanProgress(unsigned long, unsigned long);
 
 		/**
 		 * The SfsCtrl.

@@ -42,26 +42,15 @@ wxApp		*tcApp;
 class tc_SfsDir_ScanHandler : public SfsDirectoryScanHandler
 {
 	public:
-		tc_SfsDir_ScanHandler(SfsDirectory *dir, bool abort)
+		tc_SfsDir_ScanHandler(void) : SfsDirectoryScanHandler(0)
 		{
-			dir_ = dir;
-			abort_ = abort;
-
-			startInvocations_ = 0;
 			finishedInvocations_ = 0;
-			progressInvocations_ = 0;
 			scanAborted_ = false;
-			maxVisited_ = 0;
-			maxTotal_ = 0;
-		}
-
-		void scanStarts()
-		{
-			startInvocations_++;
-
-			if (dir_ && abort_) {
-				dir_->abortScan();
-			}
+			lastSteps_ = 0;
+			lastMax_ = 0;
+			thisSteps_ = 0;
+			thisMax_ = 0;
+			inconsistent_ = false;
 		}
 
 		void scanFinished(bool aborted)
@@ -70,27 +59,38 @@ class tc_SfsDir_ScanHandler : public SfsDirectoryScanHandler
 			scanAborted_ = aborted;
 		}
 
-		void scanProgress(unsigned long visited, unsigned long total)
-		{
-			progressInvocations_++;
-
-			if (visited > maxVisited_)
-				maxVisited_ = visited;
-			if (total > maxTotal_)
-				maxTotal_ = total;
+		/*
+		 * Do consistency checks here and store helpful data in
+		 * global variables that can be used by an assertion.
+		 * Once we detect an error we stop updating so that the
+		 * caller can later print the problematic case.
+		 */
+		void scanUpdate(unsigned int current, unsigned int total) {
+			if (inconsistent_)
+				return;
+			thisSteps_ = current;
+			thisMax_ = total;
+			if ((lastMax_ && lastMax_ != total)
+			    || (current < lastSteps_) || current > total) {
+				inconsistent_ = true;
+			} else {
+				lastSteps_ = current;
+				lastMax_ = total;
+			}
 		}
 
-		unsigned int startInvocations_;
 		unsigned int finishedInvocations_;
-		unsigned int progressInvocations_;
 		bool scanAborted_;
-		unsigned long maxVisited_;
-		unsigned long maxTotal_;
+		bool inconsistent_;
+		unsigned int thisSteps_, thisMax_, lastSteps_, lastMax_;
 
-	private:
-		SfsDirectory *dir_;
-		bool abort_;
 };
+
+#define ASSERT_CONSISTENT(H) do {					\
+	fail_if(H.inconsistent_, "Inconsistent scanUpdate calls: "	\
+	    " lastSteps_=%u lastMax_=%u thisSteps_=%u thisMax_=%u",	\
+	    H.lastSteps_, H.lastMax_, H.thisSteps_, H.thisMax_);	\
+} while (0)
 
 static int
 tc_exec(const char* cmd, ...)
@@ -475,7 +475,7 @@ END_TEST
 START_TEST(SfsDir_check_handler)
 {
 	SfsDirectory		dir;
-	tc_SfsDir_ScanHandler	handler(&dir, false);
+	tc_SfsDir_ScanHandler	handler;
 	bool			result;
 
 	dir.setScanHandler(&handler);
@@ -484,55 +484,15 @@ START_TEST(SfsDir_check_handler)
 
 	dir.scanLocalFilesystem();
 
+	ASSERT_CONSISTENT(handler);
 	fail_unless(dir.getNumEntries() == 5,
 	    "Unexpected number of sfs-entries (%i)",
 	    dir.getNumEntries());
-	fail_unless(handler.startInvocations_ == 1,
-	    "Unexpected number of scanStarts()-invocations (%i)",
-	    handler.startInvocations_);
 	fail_unless(handler.finishedInvocations_ == 1,
 	    "Unexpected number of scanFinished()-invocations (%i)",
 	    handler.finishedInvocations_);
 	fail_unless(handler.scanAborted_ == false,
 	    "The filesystem-scan was aborted");
-	fail_unless(handler.maxTotal_ == 1,
-	    "Unexpected number of total directories (%li)",
-	    handler.maxTotal_);
-	fail_unless(handler.maxVisited_ == 1,
-	    "Unexpected number of visited directories (%li)",
-	    handler.maxVisited_);
-}
-END_TEST
-
-START_TEST(SfsDir_check_handler_abort)
-{
-	SfsDirectory		dir;
-	tc_SfsDir_ScanHandler	handler(&dir, true);
-	bool			result;
-
-	dir.setScanHandler(&handler);
-	result = dir.setPath(wxSfsDir);
-	fail_unless(result, "Path has not changed");
-
-	dir.scanLocalFilesystem();
-
-	fail_unless(dir.getNumEntries() == 0,
-	    "Unexpected number of sfs-entries (%i)",
-	    dir.getNumEntries());
-	fail_unless(handler.startInvocations_ == 1,
-	    "Unexpected number of scanStarts()-invocations (%i)",
-	    handler.startInvocations_);
-	fail_unless(handler.finishedInvocations_ == 1,
-	    "Unexpected number of scanFinished()-invocations (%i)",
-	    handler.finishedInvocations_);
-	fail_unless(handler.scanAborted_ == true,
-	    "The filesystem-scan was aborted");
-	fail_unless(handler.maxTotal_ == 0,
-	    "Unexpected number of total directories (%li)",
-	    handler.maxTotal_);
-	fail_unless(handler.maxVisited_ == 0,
-	    "Unexpected number of visited directories (%li)",
-	    handler.maxVisited_);
 }
 END_TEST
 
@@ -630,8 +590,6 @@ START_TEST(SfsDir_remove_entry)
 	fail_unless(entry != 0, "Failed to fetch entry");
 	fail_unless(entry->getPath() == wxT("foo"),
 	    "Unexptected path (%ls)", entry->getPath().c_str());
-
-	
 }
 END_TEST
 
@@ -681,7 +639,6 @@ getTc_SfsDir(void)
 	tcase_add_test(testCase, SfsDir_resolve_link_plain_file);
 	tcase_add_test(testCase, SfsDir_filter_rel_path_only);
 	tcase_add_test(testCase, SfsDir_check_handler);
-	tcase_add_test(testCase, SfsDir_check_handler_abort);
 	tcase_add_test(testCase, SfsDir_insert_entry);
 	tcase_add_test(testCase, SfsDir_insert_double_entry);
 	tcase_add_test(testCase, SfsDir_remove_entry);

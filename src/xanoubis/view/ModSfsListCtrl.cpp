@@ -35,7 +35,7 @@
 
 ModSfsListCtrl::ModSfsListCtrl(wxWindow *parent, wxWindowID id,
     const wxPoint &pos, const wxSize &size, long style)
-    : wxListCtrl(parent, id, pos, size, style)
+    : wxListCtrl(parent, id, pos, size, style), SfsDirectoryScanHandler(40)
 {
 	sfsCtrl_ = 0;
 	currentSelection_ = -1;
@@ -332,11 +332,6 @@ ModSfsListCtrl::OnPopupResolveLinkSelected(wxCommandEvent &)
 }
 
 void
-ModSfsListCtrl::scanStarts()
-{
-}
-
-void
 ModSfsListCtrl::scanFinished(bool)
 {
 	if (scanProgressDlg_ != 0) {
@@ -346,32 +341,18 @@ ModSfsListCtrl::scanFinished(bool)
 }
 
 void
-ModSfsListCtrl::scanProgress(unsigned long visited, unsigned long total)
+ModSfsListCtrl::scanUpdate(unsigned int visited, unsigned int total)
 {
-	if (total < 40) {
-		/*
-		 * Don't display the progressbar everytime a scan is running.
-		 * You need some amount of data.
-		 */
-		return;
-	}
-
 	/* Create the progress-dialog, if not already created. */
 	if (scanProgressDlg_ == 0) {
 		scanProgressDlg_ = new wxProgressDialog(
 		    _("Filesystem is scanned..."),
 		    _("Please wait while the filesystem is scanned."),
-		    100, this, wxPD_APP_MODAL|wxPD_AUTO_HIDE|wxPD_CAN_ABORT);
+		    total, this, wxPD_APP_MODAL|wxPD_AUTO_HIDE|wxPD_CAN_ABORT);
 	}
 
-	/*
-	 * Calculate new value:
-	 * percentage between visited and total directories
-	 */
-	int value = visited * 100 / total;
-
 	/* Update progress-dialog */
-	bool accepted = scanProgressDlg_->Update(value);
+	bool accepted = scanProgressDlg_->Update(visited);
 	if (!accepted) {
 		/* Cancel pressed, abort filesystem-scan */
 		SfsDirectory &dir = sfsCtrl_->getSfsDirectory();
