@@ -87,6 +87,12 @@ AnPolicyNotebook::select(Policy *policy)
 		selectSbAccessFilterPolicy(policy);
 	} else {
 		/* Unknown policy type - nothing to do */
+		return;
+	}
+	if (selectedTab_ < GetPageCount()) {
+		ChangeSelection(selectedTab_);
+	} else {
+	    selectedTab_ = 0;
 	}
 }
 
@@ -95,6 +101,7 @@ AnPolicyNotebook::deselect(void)
 {
 	appPolicy_ = NULL;
 	ctxPolicy_ = NULL;
+	selectedTab_ = GetSelection();
 	DeleteAllPages();
 }
 

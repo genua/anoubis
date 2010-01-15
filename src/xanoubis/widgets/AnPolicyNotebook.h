@@ -94,6 +94,11 @@ class AnPolicyNotebook : public wxNotebook
 		ContextFilterPolicy *ctxPolicy_;
 
 		/**
+		 * This holds the last tab selected.
+		 */
+		unsigned int selectedTab_;
+
+		/**
 		 * Handle events from add button.
 		 * This will handle the events of the add button at the
 		 * DlgRuleEditorAppPage. This will create a new page
