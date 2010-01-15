@@ -128,106 +128,78 @@ anoubis_keysubject_defaults(void)
 	return ret;
 }
 
-/**
- * Create a new anoubis_keysubject structure and fill it with the information
- * contained in the first parameter.
- *
- * @param string_in A string that contains subject information in the format
- *                  used for the -subj option of openssl.
- * @return The anoubis_keysubject structure with information from the
- *         string where available. NULL in case of an error.
- */
-struct anoubis_keysubject *
-anoubis_keysubject_fromstring(const char *string_in)
+static char *
+anoubis_keysubject_fill(X509_NAME *name, int nid)
 {
-	char				 *string;
-	struct anoubis_keysubject	 *ret;
-	char				 *p, *next;
-	char				**pp;
+	char		*result;
+	BIO		*bio;
+	int		pos, num;
+	X509_NAME_ENTRY	*entry;
+	ASN1_STRING	*str;
 
-	if (!string_in)
-		return NULL;
-	string = strdup(string_in);
-	if (!string)
-		return NULL;
+	/* Find out position, where given nid is stored */
+	if ((pos = X509_NAME_get_index_by_NID(name, nid, -1)) == -1)
+		return (NULL);
+
+	/* The entry of the NID you asked for */
+	if ((entry = X509_NAME_get_entry(name, pos)) == NULL)
+		return (NULL);
+
+	/* Content of entry */
+	if ((str = X509_NAME_ENTRY_get_data(entry)) == NULL)
+		return (NULL);
+
+	/* Output buffer */
+	if ((result = malloc(ASN1_STRING_length(str) + 1)) == NULL)
+		return (NULL);
+
+	/* Dump ASN1-string into result-buffer */
+	if ((bio = BIO_new(BIO_s_mem())) == NULL) {
+		free(result);
+		return (NULL);
+	}
+
+	ASN1_STRING_print_ex(bio, str, 0);
+	if ((num = BIO_read(bio, result, ASN1_STRING_length(str))) < 0) {
+		free(result);
+		BIO_free(bio);
+
+		return (NULL);
+	}
+
+	result[num] = '\0';
+
+	BIO_free(bio);
+
+	return (result);
+}
+
+struct anoubis_keysubject *
+anoubis_keysubject_fromX509(X509 *cert)
+{
+	struct anoubis_keysubject	*ret;
+	X509_NAME			*name;
+
+	if (cert == NULL)
+		return (NULL);
+
+	name = X509_get_subject_name(cert);
+
 	ret = malloc(sizeof(struct anoubis_keysubject));
 	if (!ret)
-		goto err;
-	ret->country = NULL;
-	ret->state = NULL;
-	ret->locality = NULL;
-	ret->organization = NULL;
-	ret->orgunit = NULL;
-	ret->name = NULL;
-	ret->email = NULL;
-	next = string;
-	/* Skip leading bytes that do not start with a slash. */
-	while (*next && *next != '/')
-		next++;
-	if (*next == '/') {
-		*next = 0;
-		next++;
-	}
-	while(*(p = next)) {
-		char		*key, *value;
-		/*
-		 * @p points to the string that will be analyzed in this
-		 * iteration of the loop. Forward @next to the next string
-		 * and insert a NUL-Byte.
-		 */
-		while(*next && *next != '/')
-			next++;
-		if (*next == '/') {
-			*next = 0;
-			next++;
-		}
-		/*
-		 * @p is a string that should be of the form key=value.
-		 */
-		key = p;
-		while(*p && *p != '=')
-			p++;
-		/* No equal sign found. Skip this part of the string. */
-		if (*p == 0)
-			continue;
-		(*p) = 0;
-		value = p+1;
-		pp = NULL;
+		return (NULL);
 
-#define CMPONE(FIELD)		\
-		if (pp == NULL && strcasecmp(key, FIELD ## Key) == 0) \
-			pp = &ret->FIELD
+	ret->country = anoubis_keysubject_fill(name, NID_countryName);
+	ret->state = anoubis_keysubject_fill(name, NID_stateOrProvinceName);
+	ret->locality = anoubis_keysubject_fill(name, NID_localityName);
+	ret->organization =
+	    anoubis_keysubject_fill(name, NID_organizationName);
+	ret->orgunit =
+	    anoubis_keysubject_fill(name, NID_organizationalUnitName);
+	ret->name = anoubis_keysubject_fill(name, NID_commonName);
+	ret->email = anoubis_keysubject_fill(name, NID_pkcs9_emailAddress);
 
-		CMPONE(country);
-		CMPONE(state);
-		CMPONE(locality);
-		CMPONE(organization);
-		CMPONE(orgunit);
-		CMPONE(name);
-		CMPONE(email);
-#undef CMPONE
-
-		/* No matching entry, skip it. */
-		if (pp == NULL)
-			continue;
-		/* Duplicate entry: This is an error. */
-		if (*pp)
-			goto err;
-		value = strdup(value);
-		if (value == NULL)
-			goto err;
-		(*pp) = value;
-	}
-
-	if (string)
-		free(string);
-	return ret;
-err:
-	if (string)
-		free(string);
-	if (ret)
-		anoubis_keysubject_destroy(ret);
-	return NULL;
+	return (ret);
 }
 
 /**

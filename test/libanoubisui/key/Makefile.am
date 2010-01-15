@@ -42,13 +42,14 @@ libanoubisui_key_tester_CPPFLAGS = -I$(top_srcdir)/$(keydir)
 test_subject_CPPFLAGS =	\
 	-I$(top_srcdir)/$(keydir) \
 	-I$(top_srcdir)/$(anoubischeckdir)
-test_subject_CFLAGS = $(AM_CFLAGS) @CHECK_CFLAGS@
+test_subject_CFLAGS = $(AM_CFLAGS) @CHECK_CFLAGS@ @SSL_CFLAGS@
 
-libanoubisui_key_tester_LDADD = $(key)
+libanoubisui_key_tester_CFLAGS = $(AM_CFLAGS) @SSL_CFLAGS@
+libanoubisui_key_tester_LDADD = $(key) @SSL_LIBS@
 libanoubisui_key_tester_LDFLAGS = $(AM_LDFLAGS) -L$(top_builddir)/$(keydir)
 libanoubisui_key_tester_CPPFLAGS += -DGCOV
 
-test_subject_LDADD = $(key) $(anoubischeck) @CHECK_LIBS@
+test_subject_LDADD = $(key) $(anoubischeck) @CHECK_LIBS@ @SSL_LIBS@
 test_subject_LDFLAGS = $(AM_LDFLAGS) -L$(top_builddir)/$(keydir)
 test_subject_CPPFLAGS += -DGCOV
 
@@ -59,3 +60,7 @@ endif
 
 libanoubisui_key_tester_SOURCES = libanoubisui_key_tester.c
 test_subject_SOURCES = test_subject.c
+
+EXTRA_DIST = keys/complete.key keys/complete.cert \
+	keys/no_state.key keys/no_state.cert \
+	keys/umlauts.key keys/umlauts.cert

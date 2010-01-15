@@ -132,7 +132,7 @@ libanoubissig_tc_setup(void)
 	    "%s/openssl.cnf", workdir);
 	libanoubissig_tc_exec("echo \"stateOrProvinceName = BAYERN \" "
 	    ">> %s/openssl.cnf", workdir);
-	libanoubissig_tc_exec("echo \"localityName = Muenchen \" "
+	libanoubissig_tc_exec("echo \"localityName = München \" "
 	    ">> %s/openssl.cnf", workdir);
 	libanoubissig_tc_exec("echo \"0.organizationName = Example Inc"
 	    " \" >> %s/openssl.cnf", workdir);
@@ -245,6 +245,26 @@ START_TEST(sign_and_verify_mismatch_tc)
 
 	name = anoubis_sig_cert_name(as->cert);
 	fail_if(name == NULL, "Could not get DN of certificate\n");
+
+	const char expected_name[] = {
+		'C', '=', 'D', 'E', ',', ' ',
+		'S', 'T', '=', 'B', 'A', 'Y', 'E', 'R', 'N', ',', ' ',
+		'L', '=', 'M', 0xc3, 0xbc, 'n', 'c', 'h', 'e', 'n', ',', ' ',
+		'O', '=', 'E', 'x', 'a', 'm', 'p', 'l', 'e', ' ', 'I', 'n',
+		    'c', ',', ' ',
+		'C', 'N', '=', 'E', 'x', 'a', 'm', 'p', 'l', 'e', ' ', 'I',
+		    'n', 'c', ' ', 'R', 'o', 'o', 't', ' ', 'C', 'A', ',', ' ',
+		'e', 'm', 'a', 'i', 'l', 'A', 'd', 'd', 'r', 'e', 's', 's',
+		    '=', 'd', 'a', 'd', '@', 'e', 'x', 'a', 'm', 'p', 'l', 'e',
+		    '.', 'c', 'o', 'm' };
+
+	fail_unless(strlen(name) == 96 /* length(expected_name) */,
+	    "DN has wrong length");
+	for (i = 0; i < strlen(name); i++) {
+		fail_unless(name[i] == expected_name[i],
+		    "Unexpected byte at position: %i (\"%x\" <=> \"%x\"",
+		    i, name[i], expected_name[i]);
+	}
 
 	rc = anoubis_verify_csum(as, csum, sign + ANOUBIS_SIG_HASH_SHA256_LEN,
 	    len - ANOUBIS_SIG_HASH_SHA256_LEN);

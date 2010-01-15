@@ -31,6 +31,8 @@
 #include <sys/types.h>
 #include <sys/cdefs.h>
 
+#include <openssl/x509.h>
+
 /**
  * Information about a subject as used in SSL certificates. It encapsulates
  * information about an entity (person, company, ...). Each field has a
@@ -80,7 +82,23 @@ extern int anoubis_keygen(const char *, const char *, const char *,
     const char *, int, int);
 
 extern struct anoubis_keysubject *anoubis_keysubject_defaults(void);
-extern struct anoubis_keysubject *anoubis_keysubject_fromstring(const char *);
+
+/**
+ * Creates a new anoubis_keysubject structure from the given certificate.
+ *
+ * The function extracts the subject-information from the certificate and
+ * fills the resulting anoubis_keysubject structure. If one of the information
+ * cannot by extracted from the certificate, the related attributes of the
+ * structure is set to NULL.
+ *
+ * @param 1st the certificate to be read
+ * @return The structure contains subject-information from the certificate.
+ *         NULL is returned, if the certificate passed to the function is
+ *         NULL or there is not enough memory available to create the
+ *         structure.
+ */
+extern struct anoubis_keysubject *anoubis_keysubject_fromX509(X509 *);
+
 extern char *anoubis_keysubject_tostring(const struct anoubis_keysubject *);
 extern void anoubis_keysubject_destroy(struct anoubis_keysubject *);
 __END_DECLS

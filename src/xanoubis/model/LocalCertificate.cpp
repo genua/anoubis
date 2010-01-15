@@ -124,7 +124,7 @@ wxString
 LocalCertificate::getCountry(void) const
 {
 	if (subject_ && subject_->country)
-		return wxString::FromAscii(subject_->country);
+		return wxString(subject_->country, wxConvLocal);
 	return wxEmptyString;
 }
 
@@ -132,7 +132,7 @@ wxString
 LocalCertificate::getState(void) const
 {
 	if (subject_ && subject_->state)
-		return wxString::FromAscii(subject_->state);
+		return wxString(subject_->state, wxConvLocal);
 	return wxEmptyString;
 }
 
@@ -140,7 +140,7 @@ wxString
 LocalCertificate::getLocality(void) const
 {
 	if (subject_ && subject_->locality)
-		return wxString::FromAscii(subject_->locality);
+		return wxString(subject_->locality, wxConvLocal);
 	return wxEmptyString;
 }
 
@@ -148,7 +148,7 @@ wxString
 LocalCertificate::getOrganization(void) const
 {
 	if (subject_ && subject_->organization)
-		return wxString::FromAscii(subject_->organization);
+		return wxString(subject_->organization, wxConvLocal);
 	return wxEmptyString;
 }
 
@@ -156,7 +156,7 @@ wxString
 LocalCertificate::getOrganizationalUnit(void) const
 {
 	if (subject_ && subject_->orgunit)
-		return wxString::FromAscii(subject_->orgunit);
+		return wxString(subject_->orgunit, wxConvLocal);
 	return wxEmptyString;
 }
 
@@ -164,7 +164,7 @@ wxString
 LocalCertificate::getCommonName(void) const
 {
 	if (subject_ && subject_->name)
-		return wxString::FromAscii(subject_->name);
+		return wxString(subject_->name, wxConvLocal);
 	return wxEmptyString;
 }
 
@@ -172,7 +172,7 @@ wxString
 LocalCertificate::getEmailAddress(void) const
 {
 	if (subject_ && subject_->email)
-		return wxString::FromAscii(subject_->email);
+		return wxString(subject_->email, wxConvLocal);
 	return wxEmptyString;
 }
 
@@ -227,10 +227,10 @@ LocalCertificate::load(void)
 		dname = anoubis_sig_cert_name(cert_->cert);
 		if (!dname)
 			return (false);
-		disName_ = wxString::FromAscii(dname);
+		disName_ = wxString::FromUTF8(dname);
 
 		/* get and assign string tokens of subject */
-		subject_ = anoubis_keysubject_fromstring(dname);
+		subject_ = anoubis_keysubject_fromX509(cert_->cert);
 		if (!subject_)
 			return (false);
 		free(dname);

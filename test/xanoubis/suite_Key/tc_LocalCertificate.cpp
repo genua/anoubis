@@ -142,7 +142,7 @@ setup()
 	sprintf(cmd, "touch %s", path_nokey);
 	rc = system(cmd);
 	if (!WIFEXITED(rc) || WEXITSTATUS(rc) != 0) {
-		perror("openssl");
+		perror("touch");
 		return;
 	}
 
@@ -317,7 +317,9 @@ START_TEST(tc_LocalCertificate_load_ok)
 	    "No keyid is assigned to the certificate");
 	fail_unless(cert.getFingerprint() != wxEmptyString,
 	    "No fingerprint is assigned to the certificate");
-	fail_unless(cert.getDistinguishedName() == wxString::FromAscii(dname),
+	fail_unless(cert.getDistinguishedName() == wxT("C=DE, ST=Bayern, "
+	    "L=Kirchheim, O=GeNUA, OU=CoDev, CN=Worker, "
+	    "emailAddress=info@genua.de"),
 	    "Bad distinguished name assigend to the certificate");
 	fail_unless(cert.getCountry() == wxString::FromAscii(country),
 	    "Bad country assigend to the certificate");

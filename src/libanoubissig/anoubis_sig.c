@@ -598,14 +598,31 @@ cert_keyid(unsigned char **keyid, X509 *cert)
 char *
 anoubis_sig_cert_name(X509 *cert)
 {
-	char *buf = NULL;
+	BIO	*bio;
+	char	*buf = NULL;
+	int	num;
 
-	if ((buf = calloc(ANOUBIS_SIG_NAME_LEN, sizeof(char))) == NULL) {
-		return NULL;
+	if ((bio = BIO_new(BIO_s_mem())) == NULL)
+		return (NULL);
+
+	X509_NAME_print_ex(bio, X509_get_subject_name(cert), 0,
+	    XN_FLAG_ONELINE & ~XN_FLAG_SPC_EQ & ~ASN1_STRFLGS_ESC_MSB);
+
+	if ((buf = calloc(ANOUBIS_SIG_NAME_LEN + 1, sizeof(char))) == NULL) {
+		BIO_free(bio);
+		return (NULL);
 	}
 
-	X509_NAME_oneline(X509_get_subject_name(cert), buf,
-	    ANOUBIS_SIG_NAME_LEN);
+	if ((num = BIO_read(bio, buf, ANOUBIS_SIG_NAME_LEN)) < 0) {
+		BIO_free(bio);
+		free(buf);
+
+		return (NULL);
+	}
+
+	buf[num] = '\0';
+
+	BIO_free(bio);
 
 	return (buf);
 }

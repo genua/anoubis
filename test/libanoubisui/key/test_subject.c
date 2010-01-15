@@ -36,6 +36,9 @@
 #include <string.h>
 #include <keygen.h>
 
+#include <openssl/err.h>
+#include <openssl/pem.h>
+
 START_TEST(subject_default)
 {
 	struct anoubis_keysubject	*subject = NULL;
@@ -118,32 +121,116 @@ struct test_case_pair testcases[] = {
 },
 };
 
-
-START_TEST(subject_fromstring)
+static X509 *
+read_certificate(const char *name)
 {
-	int				 i, j, cnt;
-	struct anoubis_keysubject	*tmp;
-	char				*subject;
+	char	*crtfile;
+	int	len;
+	FILE	*fh;
+	X509	*cert;
 
-	cnt = sizeof(testcases) / sizeof(testcases[0]);
-	/* Try it multiple times. This should catch potential memory error. */
-	for (i=0; i<50; ++i) {
-		for (j=0; j<cnt; ++j) {
-			tmp = anoubis_keysubject_fromstring(
-			    testcases[j].str);
-			fail_if(tmp == NULL,
-			    "Cannot convert testcase %d", j);
-			assert_subject_equal(tmp, &testcases[j].key);
-			subject = anoubis_keysubject_tostring(tmp);
-			fail_if(subject == NULL,
-			    "Failed to convert tmp back string");
-			fail_if(strcmp(subject, testcases[j].str) != 0,
-			    "Result differs when converting back to string "
-			    "(%s vs %s)", subject, testcases[j].str);
-			anoubis_keysubject_destroy(tmp);
-			free(subject);
-		}
-	}
+	len = asprintf(&crtfile, "%s/%s", getenv("KEYDIR"), name);
+	fh = fopen(crtfile, "r");
+	fail_unless(fh != NULL, "Failed to open \"%s\" for reading: %s",
+	    crtfile, strerror(errno));
+
+	cert = PEM_read_X509(fh, NULL, NULL, NULL);
+	fail_unless(cert != NULL, "Failed to load certificate: %li",
+	    ERR_get_error());
+
+	fclose(fh);
+	free(crtfile);
+
+	return (cert);
+}
+
+START_TEST(subject_fromX509_complete)
+{
+	X509				*cert;
+	struct anoubis_keysubject	*subject;
+
+	cert = read_certificate("keys/complete.cert");
+	subject = anoubis_keysubject_fromX509(cert);
+	fail_unless(subject != NULL, "Failed to extract subject");
+
+	fail_unless(strcmp(subject->country, "AU") == 0,
+	    "Wrong country (\"%s\" vs. \"AU\")", subject->country);
+	fail_unless(strcmp(subject->state, "Some-State") == 0,
+	    "Wrong state (\"%s\" vs. \"Some-State\")", subject->state);
+	fail_unless(strcmp(subject->locality, "Some-City") == 0,
+	    "Wrong locality (\"%s\" vs. \"Some-City\")", subject->locality);
+	fail_unless(strcmp(subject->organization, "Some-Org") == 0,
+	    "Wrong organization (\"%s\" vs. \"Some-Org\")",
+	    subject->organization);
+	fail_unless(strcmp(subject->orgunit, "Some-OrgUnit") == 0,
+	    "Wrong orgunit (\"%s\" vs. \"Some-OrgUnit\")", subject->orgunit);
+	fail_unless(strcmp(subject->name, "Some-Name") == 0,
+	    "Wrong name (\"%s\" vs. \"Some-Name\")", subject->name);
+	fail_unless(strcmp(subject->email, "Some-Email") == 0,
+	    "Wrong email (\"%s\" vs. \"Some-Email\")", subject->email);
+
+	anoubis_keysubject_destroy(subject);
+	X509_free(cert);
+}
+END_TEST
+
+START_TEST(subject_fromX509_incomplete)
+{
+	X509				*cert;
+	struct anoubis_keysubject	*subject;
+
+	cert = read_certificate("keys/no_state.cert");
+	subject = anoubis_keysubject_fromX509(cert);
+	fail_unless(subject != NULL, "Failed to extract subject");
+
+	fail_unless(strcmp(subject->country, "AU") == 0,
+	    "Wrong country (\"%s\" vs. \"AU\")", subject->country);
+	fail_unless(subject->state == NULL,
+	    "Wrong state (\"%s\" vs. \"Some-State\")", subject->state);
+	fail_unless(strcmp(subject->locality, "Some-City") == 0,
+	    "Wrong locality (\"%s\" vs. \"Some-City\")", subject->locality);
+	fail_unless(strcmp(subject->organization, "Some-Org") == 0,
+	    "Wrong organization (\"%s\" vs. \"Some-Org\")",
+	    subject->organization);
+	fail_unless(strcmp(subject->orgunit, "Some-OrgUnit") == 0,
+	    "Wrong orgunit (\"%s\" vs. \"Some-OrgUnit\")", subject->orgunit);
+	fail_unless(strcmp(subject->name, "Some-Name") == 0,
+	    "Wrong name (\"%s\" vs. \"Some-Name\")", subject->name);
+	fail_unless(strcmp(subject->email, "Some-Email") == 0,
+	    "Wrong email (\"%s\" vs. \"Some-Email\")", subject->email);
+
+	anoubis_keysubject_destroy(subject);
+	X509_free(cert);
+}
+END_TEST
+
+START_TEST(subject_fromX509_umlauts)
+{
+	X509				*cert;
+	struct anoubis_keysubject	*subject;
+
+	cert = read_certificate("keys/umlauts.cert");
+	subject = anoubis_keysubject_fromX509(cert);
+	fail_unless(subject != NULL, "Failed to extract subject");
+
+	fail_unless(strcmp(subject->country, "AU") == 0,
+	    "Wrong country (\"%s\" vs. \"AU\")", subject->country);
+	fail_unless(strcmp(subject->state, "Some-State") == 0,
+	    "Wrong state (\"%s\" vs. \"Some-State\")", subject->state);
+	fail_unless(strcmp(subject->locality, "üüü") == 0,
+	    "Wrong locality (\"%s\" vs. \"Some-City\")", subject->locality);
+	fail_unless(strcmp(subject->organization, "Some-Org") == 0,
+	    "Wrong organization (\"%s\" vs. \"Some-Org\")",
+	    subject->organization);
+	fail_unless(strcmp(subject->orgunit, "Some-OrgUnit") == 0,
+	    "Wrong orgunit (\"%s\" vs. \"Some-OrgUnit\")", subject->orgunit);
+	fail_unless(strcmp(subject->name, "Some-Name") == 0,
+	    "Wrong name (\"%s\" vs. \"Some-Name\")", subject->name);
+	fail_unless(strcmp(subject->email, "Some-Email") == 0,
+	    "Wrong email (\"%s\" vs. \"Some-Email\")", subject->email);
+
+	anoubis_keysubject_destroy(subject);
+	X509_free(cert);
 }
 END_TEST
 
@@ -167,40 +254,17 @@ START_TEST(subject_tostring)
 }
 END_TEST
 
-static const char *error_testcases[] = {
-	NULL,
-	"/C=US/C=DE/",
-	"/ST=foo/ST=bar/",
-	"/L=foo/L=bar/",
-	"/O=foo/O=bar/",
-	"/OU=foo/OU=bar/",
-	"/CN=foo/CN=bar/",
-	"/emailAddress=foo/emailAddress=bar/",
-};
-
-START_TEST(subject_fromstring_errors)
-{
-	int				 i, cnt;
-	struct anoubis_keysubject	*subject;
-
-	cnt = sizeof(error_testcases) / sizeof(error_testcases[0]);
-	for (i=0; i<cnt; ++i) {
-		subject = anoubis_keysubject_fromstring(error_testcases[i]);
-		fail_if(subject != NULL, "String %s should not parse as a "
-		    "subject", error_testcases[i]);
-	}
-}
-END_TEST
-
 TCase *
 subject_tcase(void)
 {
 	TCase		*tc = tcase_create("SubjectTcase");
 
 	tcase_add_test(tc, subject_default);
-	tcase_add_test(tc, subject_fromstring);
+	tcase_add_test(tc, subject_fromX509_complete);
+	tcase_add_test(tc, subject_fromX509_incomplete);
+	tcase_add_test(tc, subject_fromX509_umlauts);
 	tcase_add_test(tc, subject_tostring);
-	tcase_add_test(tc, subject_fromstring_errors);
+
 	return tc;
 }
 
