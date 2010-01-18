@@ -288,6 +288,8 @@ dnl Configured datadir has to be propagated to anoubis-keygen
 AC_DEFINE_DIR(PACKAGE_DATADIR, ["$datadir"], "configured datadir")
 
 AC_DEFINE(PACKAGE_DAEMON, PACKAGE_NAME "d", "name of the daemon")
+AC_SUBST(PACKAGE_DAEMON, "${PACKAGE_NAME}d")
+
 AS_IF([test -n "$policy_dir"],
 	[AC_DEFINE_UNQUOTED(PACKAGE_POLICYDIR, "$policy_dir",
 		"location of daemon policies")],

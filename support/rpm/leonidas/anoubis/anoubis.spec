@@ -61,6 +61,7 @@ Requires:	anoubisd >= 0.9.1
 Requires:	wxGTK >= 2.8
 Requires:	libevent
 Requires:	libnotify
+Requires:	openssl
 Requires:	cvs
 
 %description -n xanoubis

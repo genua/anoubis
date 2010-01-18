@@ -62,6 +62,7 @@ Requires:	wxGTK >= 2.8
 Requires:	libevent
 Requires:	libnotify
 Requires:	xorg-x11-fonts
+Requires:	openssl
 Requires:	cvs
 
 %description -n xanoubis

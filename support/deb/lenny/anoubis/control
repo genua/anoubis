@@ -9,7 +9,8 @@ Standards-Version: 3.7.3
 
 Package: anoubisd
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, adduser, perl-modules, cvs
+Depends: ${shlibs:Depends}, ${misc:Depends}, adduser, perl-modules, cvs,
+  openssl
 Description: Central daemon of the Anoubis Security Suite
  anoubisd is the user land daemon of the Anoubis Security Suite.  Together
  with a kernel security module it implements an Application Level Firewall
@@ -18,7 +19,7 @@ Description: Central daemon of the Anoubis Security Suite
 Package: xanoubis
 Architecture: any
 Depends: ${shlibs:Depends}, notification-daemon, anoubisd (>= 0.9.1), cvs,
-  wx2.8-i18n
+  wx2.8-i18n, openssl
 Description: Graphical user interface of the Anoubis Security Suite
  xanoubis is the GUI of the anoubis security suite. Users can use xanoubis
  to create rules and signatures for the Application Level Firewall
