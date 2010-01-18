@@ -139,6 +139,22 @@ char *anoubis_sig_cert_name(X509 *cert);
  */
 int anoubis_sig_cert_validity(X509 *, struct tm *);
 
+/**
+ * Compares two keys.
+ *
+ * This method takes the pkey elements of two keys given as anoubis_sig
+ * structures and compares those with EVP_PKEY_cmp(). It works with two
+ * private keys, a key pais split in two anoubis_sig structures or with
+ * two public keys.
+ *
+ * @param[in] one key
+ * @param[in] another key
+ * @return 0 if they are equal.
+ *	-EINVAL in case of invalid argument.
+ *	-EPERM in case of not equal.
+ */
+int anoubis_sig_keycmp(struct anoubis_sig *, struct anoubis_sig *);
+
 __END_DECLS
 
 #endif	/* _ANOUBIS_SIG_H_ */

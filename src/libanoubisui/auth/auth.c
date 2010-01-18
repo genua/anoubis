@@ -94,12 +94,7 @@ int anoubis_auth_callback(struct anoubis_sig *privKey,
 	kidBuf = &in->u.authchallenge->payload[chlLen];
 
 	/* Check key from server with local key. */
-	/*
-	 * XXX ch: For now we can not ensure the given private key is
-	 * XXX ch: related with the given certificate/public key.
-	 * XXX ch: libanoubissig have to provide a compare method.
-	 */
-	if (privKey->pkey == NULL)
+	if (anoubis_sig_keycmp(privKey, pubKey) != 0)
 		return -ANOUBIS_AUTHERR_KEY;
 
 	if ((flags & ANOUBIS_AUTHFLAG_IGN_KEY_MISMATCH) == 0) {

@@ -333,6 +333,191 @@ START_TEST(t_anoubis_validity_check)
 }
 END_TEST
 
+START_TEST(t_anoubis_sig_keycmp_einval)
+{
+	int			 rc   = -1;
+	struct anoubis_sig	*keyA = NULL;
+	struct anoubis_sig	*keyB = NULL;
+
+	fail_if(prikey == NULL || pubkey == NULL || infile == NULL,
+	    "Error while setup testcase.");
+
+	keyA = anoubis_sig_priv_init(prikey, certfile, pass_cb, &rc);
+	fail_if(keyA == NULL, "Could not load private key (%d / %s).",
+	    rc, strerror(rc));
+
+	keyB = anoubis_sig_pub_init(pubkey, certfile, pass_cb, &rc);
+	fail_if(keyB == NULL, "Could not load public key (%d / %s).",
+	    rc, strerror(rc));
+
+	rc = anoubis_sig_keycmp(NULL, NULL);
+	fail_if(rc != -EINVAL, "keycmp didn't detect EINVAL.");
+
+	rc = anoubis_sig_keycmp(keyA, NULL);
+	fail_if(rc != -EINVAL, "keycmp didn't detect EINVAL.");
+
+	rc = anoubis_sig_keycmp(NULL, keyB);
+	fail_if(rc != -EINVAL, "keycmp didn't detect EINVAL.");
+}
+END_TEST
+
+/* Compare private key <-> privare key - match */
+START_TEST(t_anoubis_sig_keycmp_pp_match)
+{
+	int			 rc   = -1;
+	struct anoubis_sig	*keyA = NULL;
+	struct anoubis_sig	*keyB = NULL;
+
+	fail_if(prikey == NULL || pubkey == NULL || infile == NULL,
+	    "Error while setup testcase.");
+
+	keyA = anoubis_sig_priv_init(prikey, NULL, pass_cb, &rc);
+	fail_if(keyA == NULL, "Could not load private key (%d / %s).",
+	    rc, strerror(-rc));
+
+	keyB = anoubis_sig_priv_init(prikey, NULL, pass_cb, &rc);
+	fail_if(keyB == NULL, "Could not load private key (%d / %s).",
+	    rc, strerror(-rc));
+
+	rc = anoubis_sig_keycmp(keyA, keyB);
+	fail_if(rc != 0, "keycmp didn't detect same private keys (%d / %s).",
+	    rc, strerror(-rc));
+}
+END_TEST
+
+/* Compare private key <-> privare key - mismatch */
+START_TEST(t_anoubis_sig_keycmp_pp_mismatch)
+{
+	int			 rc   = -1;
+	struct anoubis_sig	*keyA = NULL;
+	struct anoubis_sig	*keyB = NULL;
+
+	fail_if(prikey == NULL || pubkey == NULL || infile == NULL,
+	    "Error while setup testcase.");
+
+	keyA = anoubis_sig_priv_init(prikey, NULL, pass_cb, &rc);
+	fail_if(keyA == NULL, "Could not load private key (%d / %s).",
+	    rc, strerror(-rc));
+
+	/* Create different key. */
+	libanoubissig_tc_teardown();
+	libanoubissig_tc_setup();
+
+	keyB = anoubis_sig_priv_init(prikey, NULL, pass_cb, &rc);
+	fail_if(keyB == NULL, "Could not load private key (%d / %s).",
+	    rc, strerror(-rc));
+
+	rc = anoubis_sig_keycmp(keyA, keyB);
+	fail_if(rc == 0, "keycmp didn't detect non equal private keys"
+	    " (%d / %s).", rc, strerror(-rc));
+}
+END_TEST
+
+/* Compare private key <-> certificate - match */
+START_TEST(t_anoubis_sig_keycmp_pc_match)
+{
+	int			 rc   = -1;
+	struct anoubis_sig	*keyA = NULL;
+	struct anoubis_sig	*keyB = NULL;
+
+	fail_if(prikey == NULL || pubkey == NULL || infile == NULL,
+	    "Error while setup testcase.");
+
+	keyA = anoubis_sig_priv_init(prikey, certfile, pass_cb, &rc);
+	fail_if(keyA == NULL, "Could not load private key (%d / %s).",
+	    rc, strerror(-rc));
+
+	keyB = anoubis_sig_pub_init(pubkey, certfile, pass_cb, &rc);
+	fail_if(keyB == NULL, "Could not load public key (%d / %s).",
+	    rc, strerror(-rc));
+
+	rc = anoubis_sig_keycmp(keyA, keyB);
+	fail_if(rc != 0, "keycmp didn't detect same key pair (%d / %s).",
+	    rc, strerror(-rc));
+}
+END_TEST
+
+/* Compare private key <-> certificate - mismatch */
+START_TEST(t_anoubis_sig_keycmp_pc_mismatch)
+{
+	int			 rc   = -1;
+	struct anoubis_sig	*keyA = NULL;
+	struct anoubis_sig	*keyB = NULL;
+
+	fail_if(prikey == NULL || pubkey == NULL || infile == NULL,
+	    "Error while setup testcase.");
+
+	keyA = anoubis_sig_priv_init(prikey, certfile, pass_cb, &rc);
+	fail_if(keyA == NULL, "Could not load private key (%d / %s).",
+	    rc, strerror(-rc));
+
+	/* Create different key. */
+	libanoubissig_tc_teardown();
+	libanoubissig_tc_setup();
+
+	keyB = anoubis_sig_pub_init(pubkey, certfile, pass_cb, &rc);
+	fail_if(keyB == NULL, "Could not load public key (%d / %s).",
+	    rc, strerror(-rc));
+
+	rc = anoubis_sig_keycmp(keyA, keyB);
+	fail_if(rc == 0, "keycmp didn't detect non equal key pair"
+	    " (%d / %s).", rc, strerror(-rc));
+}
+END_TEST
+
+/* Compare certificate <-> certificate - match */
+START_TEST(t_anoubis_sig_keycmp_cc_match)
+{
+	int			 rc   = -1;
+	struct anoubis_sig	*keyA = NULL;
+	struct anoubis_sig	*keyB = NULL;
+
+	fail_if(prikey == NULL || pubkey == NULL || infile == NULL,
+	    "Error while setup testcase.");
+
+	keyA = anoubis_sig_pub_init(pubkey, certfile, pass_cb, &rc);
+	fail_if(keyA == NULL, "Could not load public key (%d / %s).",
+	    rc, strerror(-rc));
+
+	keyB = anoubis_sig_pub_init(pubkey, certfile, pass_cb, &rc);
+	fail_if(keyB == NULL, "Could not load public key (%d / %s).",
+	    rc, strerror(-rc));
+
+	rc = anoubis_sig_keycmp(keyA, keyB);
+	fail_if(rc != 0, "keycmp didn't detect same key pair (%d / %s).",
+	    rc, strerror(-rc));
+}
+END_TEST
+
+/* Compare certificate <-> certificate - mismatch */
+START_TEST(t_anoubis_sig_keycmp_cc_mismatch)
+{
+	int			 rc   = -1;
+	struct anoubis_sig	*keyA = NULL;
+	struct anoubis_sig	*keyB = NULL;
+
+	fail_if(prikey == NULL || pubkey == NULL || infile == NULL,
+	    "Error while setup testcase.");
+
+	keyA = anoubis_sig_pub_init(pubkey, certfile, pass_cb, &rc);
+	fail_if(keyA == NULL, "Could not load public key (%d / %s).",
+	    rc, strerror(-rc));
+
+	/* Create different key. */
+	libanoubissig_tc_teardown();
+	libanoubissig_tc_setup();
+
+	keyB = anoubis_sig_pub_init(pubkey, certfile, pass_cb, &rc);
+	fail_if(keyB == NULL, "Could not load public key (%d / %s).",
+	    rc, strerror(-rc));
+
+	rc = anoubis_sig_keycmp(keyA, keyB);
+	fail_if(rc == 0, "keycmp didn't detect non equal key pair"
+	   " (%d / %s).", rc, strerror(-rc));
+}
+END_TEST
+
+
 TCase *
 libanoubissig_testcase_signature(void)
 {
@@ -346,6 +531,14 @@ libanoubissig_testcase_signature(void)
 	tcase_add_test(testcase, t_anoubis_sign_csum);
 	tcase_add_test(testcase, t_anoubis_verify_policy);
 	tcase_add_test(testcase, t_anoubis_validity_check);
+
+	tcase_add_test(testcase, t_anoubis_sig_keycmp_einval);
+	tcase_add_test(testcase, t_anoubis_sig_keycmp_pp_match);
+	tcase_add_test(testcase, t_anoubis_sig_keycmp_pp_mismatch);
+	tcase_add_test(testcase, t_anoubis_sig_keycmp_pc_match);
+	tcase_add_test(testcase, t_anoubis_sig_keycmp_pc_mismatch);
+	tcase_add_test(testcase, t_anoubis_sig_keycmp_cc_match);
+	tcase_add_test(testcase, t_anoubis_sig_keycmp_cc_mismatch);
 
 	return (testcase);
 }

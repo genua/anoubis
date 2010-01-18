@@ -660,3 +660,22 @@ anoubis_sig_cert_validity(X509 *cert, struct tm *time)
 	return (0);
 }
 #undef GETNUM
+
+int
+anoubis_sig_keycmp(struct anoubis_sig *keyA, struct anoubis_sig *keyB)
+{
+	int	 rc = -1;
+
+	if (keyA == NULL || keyA->pkey == NULL) {
+		return (-EINVAL);
+	}
+	if (keyB == NULL || keyB->pkey == NULL) {
+		return (-EINVAL);
+	}
+
+	rc = EVP_PKEY_cmp(keyA->pkey, keyB->pkey);
+	if (rc == 1) {
+		return (0);
+	}
+	return (-EPERM);
+}
