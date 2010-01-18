@@ -34,8 +34,9 @@
 #include <apnvm.h>
 
 #include "Singleton.h"
+#include "AnRowProvider.h"
+#include "ApnVersion.h"
 
-class ApnVersion;
 class PolicyRuleSet;
 
 /**
@@ -51,7 +52,7 @@ class PolicyRuleSet;
  * operation are relying on this result. Many operations takes an
  * index-parameter, which addresses a previously fetched version.
  */
-class VersionCtrl : public Singleton<VersionCtrl>
+class VersionCtrl : public Singleton<VersionCtrl>,  public AnRowProvider
 {
 	public:
 		~VersionCtrl(void);
@@ -188,7 +189,6 @@ class VersionCtrl : public Singleton<VersionCtrl>
 		wxString getVersionProfile() {
 			return versionProfile_;
 		}
-
 	protected:
 		VersionCtrl(void);
 
@@ -204,6 +204,19 @@ class VersionCtrl : public Singleton<VersionCtrl>
 
 	friend class Singleton<VersionCtrl>;
 
+	public:
+		/**
+		 * Implementation of AnRowProvider::getRow().
+		 * @param idx The index of the row.
+		 * @return The object associated with the index.
+		 */
+		AnListClass *getRow(unsigned int idx) const;
+
+		/**
+		 * Implementation of AnRowProvider::getSize().
+		 * @return The total number of objects in the model.
+		 */
+		int getSize(void) const;
 };
 
 #endif	/* _VERSIONCTRL_H_ */

@@ -35,6 +35,7 @@ VersionListCtrl::VersionListCtrl(wxWindow *w, wxWindowID id,
     const wxPoint &p, const wxSize &sz, long type)
     : AnListCtrl(w, id, p, sz, type | wxLC_VIRTUAL)
 {
+	setRowProvider(VersionCtrl::getInstance());
 	setStateKey(wxT("/State/VersionListCtrl"));
 
 	/* Setup properties of the view */
@@ -49,15 +50,10 @@ void
 VersionListCtrl::update(void)
 {
 	VersionCtrl *ctrl = VersionCtrl::getInstance();
+	int	nSize = ctrl->getNumVersions();
 
-	/* Remove and... */
-	clearRows();
-
-	/* reassign versions to view */
-	unsigned int count = ctrl->getNumVersions();
-	for (unsigned int i = 0; i < count; i++) {
-		addRow(ctrl->getVersion(i));
-	}
+	SetItemCount(nSize);
+	RefreshItems(0, nSize-1);
 }
 
 AnIconList::IconId

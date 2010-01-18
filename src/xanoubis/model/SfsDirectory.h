@@ -251,7 +251,7 @@ class SfsDirectory : private wxDirTraverser
 		 * @param idx The requested index (count starts at 0)
 		 * @return The SfsEntry-instance at the specified index
 		 */
-		SfsEntry *getEntry(unsigned int);
+		SfsEntry *getEntry(unsigned int) const;
 
 		/**
 		 * Inserts a new SfsEntry into the SfsDirectory.

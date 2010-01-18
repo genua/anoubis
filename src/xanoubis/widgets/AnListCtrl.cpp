@@ -30,19 +30,34 @@
 #include "AnListColumn.h"
 #include "AnListCtrl.h"
 #include "AnListProperty.h"
-#include "Subject.h"
+
+#include "AnRowProvider.h"
+#include "AnRowViewer.h"
 
 AnListCtrl::AnListCtrl(wxWindow *parent, wxWindowID id, const wxPoint &pos,
     const wxSize &size, long style, const wxValidator &validator,
     const wxString &name)
-    : wxListCtrl(parent, id, pos, size, style, validator, name), Observer(0)
+    : wxListCtrl(parent, id, pos, size, style, validator, name)
 {
 	this->stateKey_ = wxEmptyString;
 	this->rowProperty_ = 0;
 	this->itemAttr_ = new wxListItemAttr;
 	hasSelectionResult_ = 0;
+	/*
+	 * XXX CEH: Implement a default provider with the contents of the
+	 * XXX CEH: old rows_ and reverserows_ implementation.
+	 */
+	rowProvider_ = NULL;
 
 	SetImageList(AnIconList::getInstance(), wxIMAGE_LIST_SMALL);
+}
+
+void
+AnListCtrl::setRowProvider(AnRowProvider *provider)
+{
+	if (provider)
+		provider->setViewer(this);
+	rowProvider_ = provider;
 }
 
 AnListCtrl::~AnListCtrl(void)
@@ -118,16 +133,10 @@ AnListCtrl::getColumnCount(void) const
 	return (columnList_.size());
 }
 
-const std::vector<AnListClass *>
-AnListCtrl::getRowData(void) const
-{
-	return (this->rows_);
-}
-
 unsigned int
 AnListCtrl::getRowCount(void) const
 {
-	return (this->rows_.size());
+	return rowProvider_->getSize();
 }
 
 bool
@@ -165,173 +174,6 @@ AnListCtrl::setColumnVisible(AnListColumn *col, bool visible)
 	}
 }
 
-void
-AnListCtrl::setRowData(const std::vector<AnListClass *> &rowData)
-{
-	clearRows();
-
-	rows_.reserve(rowData.size());
-	std::vector<AnListClass *>::const_iterator it = rowData.begin();
-	for (; it != rowData.end(); ++it) {
-		AnListClass *c = (*it);
-		addSubject(c); /* Register at observer */
-
-		rows_.push_back(c);
-		reverseRows_[c] = rows_.size() - 1; /* Last index */
-	}
-
-	SetItemCount(rows_.size());
-	refreshVisible();
-}
-
-void
-AnListCtrl::setRowData(const std::list<AnListClass *> &rowData)
-{
-	clearRows();
-
-	rows_.reserve(rowData.size());
-	std::list<AnListClass *>::const_iterator it = rowData.begin();
-	for (; it != rowData.end(); ++it) {
-		AnListClass *c = (*it);
-		addSubject(c); /* Register at observer */
-
-		rows_.push_back(c);
-		reverseRows_[c] = rows_.size() - 1; /* Last index */
-	}
-
-	SetItemCount(rows_.size());
-	refreshVisible();
-}
-
-void
-AnListCtrl::addRow(AnListClass *row)
-{
-	rows_.push_back(row);
-	reverseRows_[row] = rows_.size() - 1; /* Last index of the vector */
-
-	addSubject(row); /* Register at observer */
-
-	SetItemCount(rows_.size());
-	refreshVisible();
-}
-
-void
-AnListCtrl::addRow(AnListClass *row, unsigned int before)
-{
-	if (before < rows_.size()) {
-		std::vector<AnListClass *>::iterator it = rows_.begin();
-		it += before;
-
-		rows_.insert(it, row);
-		reverseRows_[row] = before;
-
-		addSubject(row); /* Register at observer */
-
-		/* Any following rows are advanced by one position */
-		for (unsigned int i = before + 1; i < rows_.size(); i++) {
-			AnListClass *c = rows_[i];
-			reverseRows_[c] = reverseRows_[c] + 1;
-		}
-
-		SetItemCount(rows_.size());
-		refreshVisible();
-	} else {
-		/* Out of range, append to the end */
-		addRow(row);
-	}
-}
-
-bool
-AnListCtrl::removeRow(unsigned int idx)
-{
-	if (idx < rows_.size()) {
-		removeSubject(rows_[idx]); /* Deregister from observer */
-
-		std::vector<AnListClass *>::iterator it = rows_.begin();
-		it += idx;
-
-		rows_.erase(it);
-
-		for (unsigned int i = idx; i < rows_.size(); i++) {
-			AnListClass *c = rows_[idx];
-			reverseRows_[c] = reverseRows_[c] - 1;
-		}
-
-		SetItemCount(rows_.size());
-		refreshVisible();
-
-		return (true);
-	} else
-		return (false);
-}
-
-bool
-AnListCtrl::removeRows(unsigned int first, unsigned int last)
-{
-	if ((first <= last) && (last < rows_.size())) {
-		/* Deregister from observer */
-		for (unsigned int idx = first; idx <= last; idx++) {
-			removeSubject(rows_[idx]);
-		}
-
-		std::vector<AnListClass *>::iterator it1 = rows_.begin();
-		std::vector<AnListClass *>::iterator it2 = rows_.begin();
-
-		it1 += first;
-		it2 += last;
-
-		rows_.erase(it1, it2);
-
-		for (unsigned int idx = last; idx < rows_.size(); idx++) {
-			AnListClass *c = rows_[idx];
-			reverseRows_[c] = reverseRows_[c] - 1;
-		}
-
-		SetItemCount(rows_.size());
-		refreshVisible();
-
-		return (true);
-	} else
-		return (false);
-}
-
-void
-AnListCtrl::clearRows(void)
-{
-	while (!rows_.empty()) {
-		AnListClass *c = rows_.back();
-		rows_.pop_back();
-
-		removeSubject(c); /* Deregister from observer */
-	}
-
-	reverseRows_.clear();
-
-	SetItemCount(rows_.size());
-	refreshVisible();
-}
-
-AnListClass *
-AnListCtrl::getRowAt(unsigned int idx) const
-{
-	if (idx < rows_.size())
-		return rows_[idx];
-	else
-		return (0);
-}
-
-int
-AnListCtrl::getRowIndex(AnListClass *row) const
-{
-	if (reverseRows_.count(row) > 0) {
-		std::map<AnListClass *, unsigned int>::const_iterator it =
-		    reverseRows_.find(row);
-
-		return ((*it).second);
-	} else
-		return (-1);
-}
-
 AnListClassProperty *
 AnListCtrl::getRowProperty(void) const
 {
@@ -342,27 +184,6 @@ void
 AnListCtrl::setRowProperty(AnListClassProperty *property)
 {
 	this->rowProperty_ = property;
-}
-
-void
-AnListCtrl::refreshVisible(void)
-{
-	long first = GetTopItem();
-	long last = first + GetCountPerPage() - 1;
-	long index = getSelectedIndex();
-
-	RefreshItems(first, last);
-
-	if (index != -1) {
-		SetItemState(index, wxLIST_STATE_SELECTED,
-		    wxLIST_STATE_SELECTED);
-	}
-
-	EnsureVisible(first);
-	EnsureVisible(last);
-
-	if (index != -1)
-		EnsureVisible(index);
 }
 
 bool
@@ -410,86 +231,58 @@ AnListCtrl::getNextSelection(int previous) const
 }
 
 wxString
-AnListCtrl::OnGetItemText(long item, long column) const
+AnListCtrl::OnGetItemText(long row, long column) const
 {
 	unsigned int columnIndex = visibleColumns_[column];
 	AnListColumn *col = getColumn(columnIndex);
 
 	if (col != 0) {
 		AnListProperty *property = col->getProperty();
+		AnListClass *item = rowProvider_->getRow(row);
 
-		if (property != 0) {
-			AnListClass *c = rows_[item];
-			return (property->getText(c));
-		}
+		if (property && item)
+			return property->getText(item);
 	}
-
-	return (wxEmptyString);
+	return wxEmptyString;
 }
 
 int
-AnListCtrl::OnGetItemColumnImage(long item, long column) const
+AnListCtrl::OnGetItemColumnImage(long row, long column) const
 {
 	unsigned int columnIndex = visibleColumns_[column];
 	AnListColumn *col = getColumn(columnIndex);
 
 	if (col != 0) {
 		AnListProperty *property = col->getProperty();
+		AnListClass *item = rowProvider_->getRow(row);
 
-		if (property != 0) {
-			AnListClass *c = rows_[item];
-			return (property->getIcon(c));
-		}
+		if (property && item)
+			return property->getIcon(item);
 	}
-
 	return (AnIconList::ICON_NONE);
 }
 
 wxListItemAttr *
-AnListCtrl::OnGetItemAttr(long item) const
+AnListCtrl::OnGetItemAttr(long row) const
 {
 	if (rowProperty_ != 0) {
-		AnListClass *c = rows_[item];
+		AnListClass *item = rowProvider_->getRow(row);
 
-		if (c != 0) {
-			itemAttr_->SetTextColour(rowProperty_->getColor(c));
+		if (item != 0) {
+			/*
+			 * XXX CEH: Nur ein itemAttr fuer alle Zeilen,
+			 * XXX CEH: ob das wirklich gut geht???
+			 */
+			itemAttr_->SetTextColour(rowProperty_->getColor(item));
 			itemAttr_->SetBackgroundColour(
-			    rowProperty_->getBackgroundColor(c));
-			itemAttr_->SetFont(rowProperty_->getFont(c));
+			    rowProperty_->getBackgroundColor(item));
+			itemAttr_->SetFont(rowProperty_->getFont(item));
 
 			return itemAttr_;
 		}
 	}
 
 	return (0);
-}
-
-void
-AnListCtrl::update(Subject *subject)
-{
-	AnListClass *c = wxDynamicCast(subject, AnListClass);
-
-	if (c != 0) {
-		refreshVisible();
-	}
-}
-
-void
-AnListCtrl::updateDelete(Subject *subject)
-{
-	AnListClass *c = wxDynamicCast(subject, AnListClass);
-
-	if (c != 0) {
-		int idx = getRowIndex(c);
-
-		if (idx != -1) {
-			/*
-			 * AnListClass-instance removed,
-			 * remove also from view.
-			 */
-			removeRow(idx);
-		}
-	}
 }
 
 unsigned int
@@ -533,4 +326,31 @@ long
 AnListCtrl::getSelectedIndex(void)
 {
 	return GetNextItem(-1, wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED);
+}
+
+
+/*
+ * AnRowViewer implementation
+ */
+
+void
+AnListCtrl::changeSize(int newSize)
+{
+	SetItemCount(newSize);
+}
+
+void
+AnListCtrl::updateRows(int from, int to)
+{
+	if (to == -1) {
+		int	newSize;
+
+		if (rowProvider_ == NULL)
+			return;
+		newSize = rowProvider_->getSize();
+		changeSize(newSize);
+		to = newSize-1;
+	}
+	if (0 <= from && from <= to)
+		RefreshItems(from, to);
 }

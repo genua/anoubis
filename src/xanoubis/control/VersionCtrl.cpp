@@ -274,3 +274,15 @@ VersionCtrl::clearVersionList(void)
 		delete version;
 	}
 }
+
+int
+VersionCtrl::getSize(void) const
+{
+	return getNumVersions();
+}
+
+AnListClass *
+VersionCtrl::getRow(unsigned int idx) const
+{
+	return getVersion(idx);
+}

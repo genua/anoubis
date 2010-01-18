@@ -38,6 +38,7 @@
 #include "DlgLogViewerBase.h"
 #include "Notification.h"
 #include "Observer.h"
+#include "AnRowProvider.h"
 
 /**
  * This is the LogViewer.
@@ -47,7 +48,8 @@
  * By selecting a row from the list, the RuleEditor is opened,
  * showing the selected rule that caused the log entry.
  */
-class DlgLogViewer : public DlgLogViewerBase, private Observer
+class DlgLogViewer : public DlgLogViewerBase, private Observer,
+    public AnRowProvider
 {
 	public:
 		/**
@@ -61,6 +63,19 @@ class DlgLogViewer : public DlgLogViewerBase, private Observer
 		 * @param None.
 		 */
 		~DlgLogViewer(void);
+
+		/**
+		 * Implementation of AnRowProvider::getRow().
+		 * @param idx The index of the row.
+		 * @return The object associated with the index.
+		 */
+		AnListClass *getRow(unsigned int idx) const;
+
+		/**
+		 * Implementation of AnRowProvider::getSize().
+		 * @return The total number of entries in the model.
+		 */
+		int getSize(void) const;
 
 	private:
 		/**

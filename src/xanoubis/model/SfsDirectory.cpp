@@ -233,7 +233,7 @@ SfsDirectory::getIndexOf(const wxString &filename) const
 }
 
 SfsEntry *
-SfsDirectory::getEntry(unsigned int idx)
+SfsDirectory::getEntry(unsigned int idx) const
 {
 	return entryList_.get(idx);
 }

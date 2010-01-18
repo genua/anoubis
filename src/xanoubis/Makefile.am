@@ -469,6 +469,8 @@ xanoubis_SOURCES= \
 	widgets/AnIconList.cpp \
 	widgets/AnIconList.h \
 	widgets/AnListClass.h \
+	widgets/AnRowViewer.h \
+	widgets/AnRowProvider.h \
 	widgets/AnListClassProperty.cpp \
 	widgets/AnListClassProperty.h \
 	widgets/AnListColumn.cpp \

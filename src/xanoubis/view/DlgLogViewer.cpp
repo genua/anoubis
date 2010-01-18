@@ -59,6 +59,7 @@ DlgLogViewer::DlgLogViewer(wxWindow* parent) : DlgLogViewerBase(parent),
 
 	this->GetSizer()->Layout();
 
+	logListCtrl->setRowProvider(this);
 	logListCtrl->setStateKey(wxT("/State/DlgLogViewer"));
 
 	property = new LogViewerProperty(LogViewerProperty::PROPERTY_ICON);
@@ -96,6 +97,7 @@ DlgLogViewer::~DlgLogViewer(void)
 	    wxCommandEventHandler(DlgLogViewer::onShow), NULL, this);
 
 	ANEVENTS_IDENT_BCAST_DEREGISTRATION(DlgLogViewer);
+	logListCtrl->setRowProvider(NULL);
 }
 
 void
@@ -117,11 +119,17 @@ DlgLogViewer::onClose(wxCloseEvent &)
 void
 DlgLogViewer::onLogSelect(wxListEvent &event)
 {
-	wxCommandEvent		 showEvent(anEVT_SHOW_RULE);
-	Notification		*notify;
+	wxCommandEvent			 showEvent(anEVT_SHOW_RULE);
+	Notification			*notify;
+	wxArrayLong::const_iterator	 it;
+	NotificationCtrl		*notifyCtrl;
+	NotificationPerspective		*perspective;
 
-	notify = dynamic_cast<Notification *>(
-	    logListCtrl->getRowAt(event.GetIndex()));
+	notifyCtrl = NotificationCtrl::instance();
+	perspective = notifyCtrl->getPerspective(NotificationCtrl::LIST_ALL);
+	it = perspective->begin();
+	it += event.GetIndex();
+	notify = notifyCtrl->getNotification(*it);
 
 	if (!notify)
 		return;
@@ -136,36 +144,49 @@ DlgLogViewer::onLogSelect(wxListEvent &event)
 void
 DlgLogViewer::update(Subject *subject)
 {
-	wxArrayLong::const_iterator	 it;
-	Notification			*notify;
-	NotificationCtrl		*notifyCtrl;
 	NotificationPerspective		*perspective;
 
 	perspective = wxDynamicCast(subject, NotificationPerspective);
-	if (perspective == NULL) {
+	if (perspective == NULL)
 		return;
-	}
-
-	notifyCtrl = NotificationCtrl::instance();
-	it = perspective->begin();
-	it += logListCtrl->getRowCount();
-	while (it != perspective->end()) {
-		notify = notifyCtrl->getNotification(*it);
-		/* XXX ch: this should be done at notifyCtrl */
-		if (notify && IS_DAEMONANSWEROBJ(notify)) {
-			/* Nothing */
-		} else if (notify && ! IS_STATUSOBJ(notify)) {
-			/* show all other notifies than a StatusNotify */
-			logListCtrl->addRow(notify);
-		}
-		it++;
-	}
+	/* The log viewer list only grows and existing items never change. */
+	logListCtrl->SetItemCount(perspective->getSize());
 }
 
 void
 DlgLogViewer::updateDelete(Subject *subject)
 {
+	logListCtrl->SetItemCount(0);
 	removeSubject(subject);
+}
+
+AnListClass *
+DlgLogViewer::getRow(unsigned int idx) const
+{
+	Notification			*notify;
+	wxArrayLong::const_iterator	 it;
+	NotificationCtrl		*notifyCtrl;
+	NotificationPerspective		*perspective;
+
+	notifyCtrl = NotificationCtrl::instance();
+	perspective = notifyCtrl->getPerspective(NotificationCtrl::LIST_ALL);
+	it = perspective->begin();
+	it += idx;
+	notify = notifyCtrl->getNotification(*it);
+	return notify;
+}
+
+int
+DlgLogViewer::getSize(void) const
+{
+	NotificationCtrl		*notifyCtrl;
+	NotificationPerspective		*perspective;
+
+	notifyCtrl = NotificationCtrl::instance();
+	perspective = notifyCtrl->getPerspective(NotificationCtrl::LIST_ALL);
+	if (perspective == NULL)
+		return 0;
+	return perspective->getSize();
 }
 
 ANEVENTS_IDENT_BCAST_METHOD_DEFINITION(DlgLogViewer)
