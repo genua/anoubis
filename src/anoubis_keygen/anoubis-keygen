@@ -36,7 +36,6 @@ use POSIX qw(WEXITSTATUS);
 
 my $interactive = 1;
 my $keydir = $ENV{'HOME'} . "/.xanoubis";
-my $pubkeydir = "/var/lib/anoubis/policy/pubkeys";
 my $crypto = "aes256";
 my $numbits = 2048;
 
@@ -54,14 +53,8 @@ if (defined($gcos) and length($gcos)) {
 	$name = $gcos;
 	$name =~ s!,.*!!;
 }
-my $altCountry = $ENV{'LC_ALL'} || $ENV{'LC_CTYPE'} || $ENV{'LANG'};
-if (defined($altCountry) && $altCountry =~ m/_([A-Z]{2})/) {
-    $altCountry = $1;
-} else {
-    $altCountry = "DE";
-}
 
-my $subject = "'/C=$altCountry/CN=$name'";
+my $subject = "'/CN=$name'";
 
 my %path = (
 	"key"		=> "$keydir/default.key",
@@ -70,7 +63,7 @@ my %path = (
 
 my %cmd = (
 	"key"		=> "openssl genrsa -out ",
-	"certificate"	=> "openssl req -new -x509 -days 999 -batch -out ",
+	"certificate"	=> "openssl req -new -x509 -days 730 -batch ",
 );
 
 my $opts = {};
@@ -127,16 +120,22 @@ if ($interactive) {
 
 	print STDOUT << 'EOF';
 ----------------------------------------------------------------
-What you are about to enter is what is called Distinguished Name
-also known as "DN".
-For local usage, it may be ok to leave most fields blank.
-If you enter '.' or hit <RETURN>, the value of the field
-in question won't be considered for the "DN".
+You're about to enter the Distinguished Name also known as "DN".
+For regular usage it should be ok to leave most fields blank.
+If you enter '.' or hit <RETURN>, the value of the field in question
+will not be used.
 ----------------------------------------------------------------
 EOF
 
-	print "Country Name (2 letter code): ";
+	my $altCountry = $ENV{'LC_ALL'} || $ENV{'LC_CTYPE'} || $ENV{'LANG'};
+	if (defined($altCountry) && $altCountry =~ m/_([A-Z]{2})/) {
+	    $altCountry = $1;
+	} else {
+	    $altCountry = "US";
+	}
+	print "Country Name (2 letter code) [$altCountry]: ";
 	$country = get_input($country);
+	$country ||= "/C=$altCountry";
 
 	print "State or Province Name (full name): ";
 	$state = get_input($state);
@@ -154,15 +153,22 @@ EOF
 	$Cname = get_input($Cname);
 	$Cname ||= "/CN=$name";
 
-	print "Email Address :";
+	print "Email Address: ";
 	$mail = get_input($mail);
 
 	$subject = "'$country$state$city$org$unit$Cname$mail'";
 }
 
 $cmd{"key"} .= $path{"key"};
-$cmd{"certificate"} .= $path{"certificate"} . " -key " . $path{"key"};
-$cmd{"certificate"} .= " -subj $subject";
+
+foreach my $prefix ("/usr", "/usr/local") {
+	my $config = $prefix . "/share/anoubisd/openssl.cnf";
+	$cmd{"certificate"} .= " -config $config"
+		if (-f $config);
+}
+
+$cmd{"certificate"} .= " -out " . $path{"certificate"} .
+	" -key " . $path{"key"} . " -subj $subject";
 
 if ($pass) {
 	$cmd{"key"} .= " -$crypto -passout fd:0";
@@ -193,10 +199,6 @@ foreach my $type ("key", "certificate") {
 	}
 
 	print "Your $type has been saved in ", $path{$type}, ".\n";
-}
-
-if (defined($pass) and length($pass)) {
-	$ENV{"PASSWORD"} = undef;
 }
 
 if ($interactive) {

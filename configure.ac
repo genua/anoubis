@@ -284,6 +284,9 @@ AC_DEFINE_DIR(PACKAGE_PREFIX, ["$prefix"], "configured prefix")
 dnl Configured sbindir has to be propagated to anoubisctl
 AC_DEFINE_DIR(PACKAGE_SBINDIR, ["$sbindir"], "configured sbindir")
 
+dnl Configured datadir has to be propagated to anoubis-keygen
+AC_DEFINE_DIR(PACKAGE_DATADIR, ["$datadir"], "configured datadir")
+
 AC_DEFINE(PACKAGE_DAEMON, PACKAGE_NAME "d", "name of the daemon")
 AS_IF([test -n "$policy_dir"],
 	[AC_DEFINE_UNQUOTED(PACKAGE_POLICYDIR, "$policy_dir",

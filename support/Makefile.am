@@ -25,9 +25,10 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ##########################################################################
 
-utildir = $(datadir)/anoubisd
+utildir = $(datadir)/@PACKAGE_DAEMON@
 
 dist_util_SCRIPTS = install_policy upgrade_sfs.pl
+dist_util_DATA = openssl.cnf
 
 EXTRA_DIST = udev.rules
 

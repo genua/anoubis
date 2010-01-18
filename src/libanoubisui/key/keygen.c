@@ -118,11 +118,9 @@ anoubis_keysubject_defaults(void)
 		 * Gecos is comma seperated. Since we are only intrested
 		 * in the name we cut away everything after first comma found
 		 */
-		char *p = pw->pw_gecos;
-		while (*p != ',' && *p != '\0')
-			p++;
-		*p = '\0';
 		ret->name = strdup(pw->pw_gecos);
+		if (ret->name != NULL)
+			ret->name[strcspn(ret->name, ",")] = '\0';
 		ret->email = strdup(pw->pw_name);
 	}
 	return ret;
@@ -425,6 +423,8 @@ anoubis_keygen(const char *private, const char *public, const char *pass,
 	char			*argv[20];
 	char			 bitstring[30];
 	char			 daystring[30];
+	char			*openssl_cnf = PACKAGE_DATADIR "/"
+				     PACKAGE_DAEMON "/openssl.cnf";
 
 	ret = noexist(private);
 	if (ret < 0)
@@ -462,6 +462,10 @@ anoubis_keygen(const char *private, const char *public, const char *pass,
 	k = 0;
 	argv[k++] = "openssl";
 	argv[k++] = "req";
+	if (noexist(openssl_cnf) == -EEXIST) {
+		argv[k++] = "-config";
+		argv[k++] = openssl_cnf;
+	}
 	argv[k++] = "-new";
 	argv[k++] = "-x509";
 	argv[k++] = "-days";
