@@ -119,13 +119,6 @@ class PolicyRuleSet : public Subject
 		bool isLocked(void) const;
 
 		/**
-		 * Is ruleset empty?
-		 * @param None.
-		 * @return True if the ruleset contains no rules.
-		 */
-		bool isEmpty(void) const;
-
-		/**
 		 * Is ruleset of admin rules?
 		 * @param None.
 		 * @return True if it's the admin ruleset.

@@ -97,23 +97,6 @@ PolicyRuleSet::isLocked(void) const
 }
 
 bool
-PolicyRuleSet::isEmpty(void) const
-{
-	bool isEmpty;
-
-	if (alfList_.IsEmpty() &&
-	    sfsList_.IsEmpty() &&
-	    ctxList_.IsEmpty() &&
-	    sbList_.IsEmpty()     ) {
-		isEmpty = true;
-	} else {
-		isEmpty = false;
-	}
-
-	return (isEmpty);
-}
-
-bool
 PolicyRuleSet::isAdmin(void) const
 {
 	bool isAdmin;
