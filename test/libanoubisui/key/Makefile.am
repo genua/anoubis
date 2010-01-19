@@ -26,6 +26,7 @@
 ##########################################################################
 
 keydir		= src/libanoubisui/key
+keytestdir	= test/libanoubisui/key
 key		= $(top_builddir)/$(keydir)/libkey.a
 anoubischeckdir	= test/libanoubischeck
 anoubischeck	= $(top_builddir)/$(anoubischeckdir)/libanoubischeck.a
@@ -36,7 +37,7 @@ TESTS = test_subject
 
 # Make sure that test find their libraries when run with make check
 RPATH = $(top_builddir)/$(bsdcompatdir)
-TESTS_ENVIRONMENT = LD_LIBRARY_PATH=$(RPATH)
+TESTS_ENVIRONMENT = LD_LIBRARY_PATH=$(RPATH) KEYDIR=$(top_srcdir)/$(keytestdir)
 
 libanoubisui_key_tester_CPPFLAGS = -I$(top_srcdir)/$(keydir)
 test_subject_CPPFLAGS =	\
