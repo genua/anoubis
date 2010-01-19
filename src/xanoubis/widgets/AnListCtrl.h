@@ -35,7 +35,6 @@
 #include <wx/listctrl.h>
 
 #include "AnRowProvider.h"
-#include "AnRowViewer.h"
 
 class AnListClass;
 class AnListClassProperty;
@@ -76,7 +75,7 @@ class AnListProperty;
  * by hand. To enable all the features of the class, you needs to specify the
  * wxLC_VIRTUAL-flag as a window-style!
  */
-class AnListCtrl : public wxListCtrl, protected AnRowViewer
+class AnListCtrl : public wxListCtrl
 {
 	public:
 		/**
@@ -264,25 +263,6 @@ class AnListCtrl : public wxListCtrl, protected AnRowViewer
 		 */
 		void setRowProvider(AnRowProvider *provider);
 
-		/**
-		 * Implement AnRowViewer::changeSize().
-		 * This function is called by the row provider if the number
-		 * of items in the model changes.
-		 * @param newSize The new numbe of objects in the model.
-		 * @return None.
-		 */
-		virtual void changeSize(int newSize);
-
-		/**
-		 * Implmement AnRowViewer::updateRows().
-		 * This function is called by the model if object in the model
-		 * changed an the view needs to be updated.
-		 * @param from The index of the first element that changed.
-		 * @param to The index of the second element that changed.
-		 * @return None.
-		 */
-		virtual void updateRows(int from, int to);
-
 	protected:
 		/**
 		 * Overloaded wxListCtrl::OnGetItemText().
@@ -318,6 +298,20 @@ class AnListCtrl : public wxListCtrl, protected AnRowViewer
 		wxListItemAttr *OnGetItemAttr(long) const;
 
 	private:
+		/**
+		 * Handle anEVT_ROW_SIZECHANGE events sent by the row provider
+		 * @param event The size change event sent by the provider.
+		 * @return None.
+		 */
+		void onSizeChange(wxCommandEvent &event);
+
+		/**
+		 * Handle anEVT_ROW_UPDATE events sent by the row provider
+		 * @param event The event sent by the provider.
+		 * @return None.
+		 */
+		void onRowUpdate(wxCommandEvent &event);
+
 		/**
 		 * Path of key, where state-information are dumped.
 		 */

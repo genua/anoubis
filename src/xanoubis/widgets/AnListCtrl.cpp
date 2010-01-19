@@ -30,9 +30,8 @@
 #include "AnListColumn.h"
 #include "AnListCtrl.h"
 #include "AnListProperty.h"
-
 #include "AnRowProvider.h"
-#include "AnRowViewer.h"
+#include "AnEvents.h"
 
 AnListCtrl::AnListCtrl(wxWindow *parent, wxWindowID id, const wxPoint &pos,
     const wxSize &size, long style, const wxValidator &validator,
@@ -43,10 +42,7 @@ AnListCtrl::AnListCtrl(wxWindow *parent, wxWindowID id, const wxPoint &pos,
 	this->rowProperty_ = 0;
 	this->itemAttr_ = new wxListItemAttr;
 	hasSelectionResult_ = 0;
-	/*
-	 * XXX CEH: Implement a default provider with the contents of the
-	 * XXX CEH: old rows_ and reverserows_ implementation.
-	 */
+	SetItemCount(0);
 	rowProvider_ = NULL;
 
 	SetImageList(AnIconList::getInstance(), wxIMAGE_LIST_SMALL);
@@ -55,9 +51,27 @@ AnListCtrl::AnListCtrl(wxWindow *parent, wxWindowID id, const wxPoint &pos,
 void
 AnListCtrl::setRowProvider(AnRowProvider *provider)
 {
-	if (provider)
-		provider->setViewer(this);
+	if (rowProvider_) {
+		rowProvider_->Disconnect(anEVT_ROW_SIZECHANGE,
+		    wxCommandEventHandler(AnListCtrl::onSizeChange));
+		rowProvider_->Disconnect(anEVT_ROW_UPDATE,
+		    wxCommandEventHandler(AnListCtrl::onSizeChange));
+	}
 	rowProvider_ = provider;
+	if (provider) {
+		int	newSize;
+		provider->Connect(anEVT_ROW_SIZECHANGE,
+		    wxCommandEventHandler(AnListCtrl::onSizeChange));
+		provider->Connect(anEVT_ROW_UPDATE,
+		    wxCommandEventHandler(AnListCtrl::onSizeChange));
+		/* Provider changed, invalidate the view! */
+		newSize = provider->getSize();
+		SetItemCount(newSize);
+		RefreshItems(0, newSize-1);
+	} else {
+		/* No provider anymore. Invalidate the view. */
+		SetItemCount(0);
+	}
 }
 
 AnListCtrl::~AnListCtrl(void)
@@ -328,27 +342,35 @@ AnListCtrl::getSelectedIndex(void)
 	return GetNextItem(-1, wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED);
 }
 
-
-/*
- * AnRowViewer implementation
- */
-
 void
-AnListCtrl::changeSize(int newSize)
+AnListCtrl::onSizeChange(wxCommandEvent &event)
 {
+	int	newSize = event.GetInt();
+
 	SetItemCount(newSize);
+	event.Skip();
 }
 
 void
-AnListCtrl::updateRows(int from, int to)
+AnListCtrl::onRowUpdate(wxCommandEvent &event)
 {
+	int	from, to;
+
+	event.Skip();
+	from = event.GetInt();
+	to = event.GetExtraLong();
 	if (to == -1) {
 		int	newSize;
 
 		if (rowProvider_ == NULL)
 			return;
+		/*
+		 * If to is -1 we must also check for size changes in the
+		 * model. This allows the model to use from=0 and to=-1 to
+		 * update the whole list.
+		 */
 		newSize = rowProvider_->getSize();
-		changeSize(newSize);
+		SetItemCount(newSize);
 		to = newSize-1;
 	}
 	if (0 <= from && from <= to)

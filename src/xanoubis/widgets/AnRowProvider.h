@@ -28,43 +28,20 @@
 #ifndef _ANROWPROVIDER_H_
 #define _ANROWPROVIDER_H_
 
+#include <wx/event.h>
+
 #include <AnListClass.h>
-#include <AnRowViewer.h>
+#include <AnEvents.h>
 
 class AnListCtrl;
 
 /**
  * This interface must be implemented by a model if the data in the model
  * must be displayed in an AnListCtrl. A model implementing this interface
- * must also call the update functions of the rowViewer if the model changes.
+ * must also send appropriate events (anEVT_ROW_SIZECHANGE or
+ * anEVT_ROW_UPDATE) if the contents of the model change.
  */
-class AnRowProvider {
-	protected:
-		/*
-		 * This friend directive enables us to make the rowViewer_
-		 * variable protected.
-		 */
-		friend class AnListCtrl;
-
-		/**
-		 * The rowViewer_ (aka AnListCtrl) associated with the model.
-		 * The variable may be NULL.
-		 */
-		class AnRowViewer		*rowViewer_;
-
-		/**
-		 * Assign a viewer to the model.
-		 * Currently only a single viewer can be assigned to a model
-		 * at any point in time. Setting the viewer to NULL will
-		 * is allowed.
-		 * @param v The new viewer.
-		 * @return None.
-		 *
-		 * NOTE: This function should normally not be called
-		 *     directly. It is usually called by AnListCtrl only.
-		 */
-		void setViewer(class AnRowViewer *v) { rowViewer_ = v; };
-
+class AnRowProvider : public wxEvtHandler {
 	public:
 		/**
 		 * Return the element with index idx in the model.
@@ -79,6 +56,30 @@ class AnRowProvider {
 		 * @return The total number of items in the model.
 		 */
 		virtual int getSize(void) const = 0;
+
+	protected:
+		/**
+		 * Post a size change event.
+		 * @param newSize The new size.
+		 */
+		void sizeChangeEvent(int newSize) {
+			wxCommandEvent		event;
+			event.SetInt(newSize);
+			ProcessEvent(event);
+		}
+
+		/**
+		 * Post a row update event.
+		 * @param from The first row to update.
+		 * @param to The last row to update, -1 means up to end of list.
+		 * @return None.
+		 */
+		void rowChangeEvent(int from, int to) {
+			wxCommandEvent		event;
+			event.SetInt(from);
+			event.SetExtraLong(to);
+			ProcessEvent(event);
+		}
 };
 
 #endif	/* _ANROWPROVIDER_H_ */

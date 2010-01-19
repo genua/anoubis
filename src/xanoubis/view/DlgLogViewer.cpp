@@ -46,8 +46,65 @@
 #include "DaemonAnswerNotify.h"
 #include "NotificationCtrl.h"
 
-DlgLogViewer::DlgLogViewer(wxWindow* parent) : DlgLogViewerBase(parent),
-    Observer(NULL)
+/**
+ * Implement an AnRowProvider for the DlgLogViewer. This class simply
+ * implements the AnRowProvider and the Observer interface around the
+ * data contained in the LIST_ALL perspective.
+ */
+class LogProvider : public AnRowProvider, public Observer {
+private:
+	NotificationPerspective		*perspective_;
+public:
+	/**
+	 * Constructor: Initialize perspective_ and add observe it.
+	 */
+	LogProvider(void) : Observer(NULL) {
+		NotificationCtrl		*notifyCtrl;
+
+		notifyCtrl = NotificationCtrl::instance();
+		perspective_ = notifyCtrl->getPerspective(
+		    NotificationCtrl::LIST_ALL);
+		addSubject(perspective_);
+	};
+	/**
+	 * Implementation of AnRowProvider::getSize().
+	 */
+	int		 getSize(void) const {
+		if (!perspective_)
+			return 0;
+		return perspective_->getSize();
+	};
+	/**
+	 * Implementation of AnRowProvider::getRow()
+	 */
+	AnListClass	*getRow(unsigned int idx) const {
+		NotificationCtrl		*notifyCtrl;
+		wxArrayLong::const_iterator	 it;
+
+		if (perspective_ == NULL || (int)idx < perspective_->getSize())
+			return NULL;
+		it = perspective_->begin();
+		it += idx;
+		notifyCtrl = NotificationCtrl::instance();
+		return notifyCtrl->getNotification(*it);
+	};
+	/**
+	 * Implementation of Observer::update().
+	 */
+	void update(Subject *) {
+		rowChangeEvent(0, -1);
+	}
+	/**
+	 * Implementation of Observer::updateDelete().
+	 */
+	void updateDelete(Subject *subject) {
+		removeSubject(subject);
+		perspective_ = NULL;
+		rowChangeEvent(0, -1);
+	}
+};
+
+DlgLogViewer::DlgLogViewer(wxWindow* parent) : DlgLogViewerBase(parent)
 {
 	AnEvents		*anEvents;
 	NotificationCtrl	*notifyCtrl;
@@ -59,7 +116,7 @@ DlgLogViewer::DlgLogViewer(wxWindow* parent) : DlgLogViewerBase(parent),
 
 	this->GetSizer()->Layout();
 
-	logListCtrl->setRowProvider(this);
+	logListCtrl->setRowProvider(new LogProvider);
 	logListCtrl->setStateKey(wxT("/State/DlgLogViewer"));
 
 	property = new LogViewerProperty(LogViewerProperty::PROPERTY_ICON);
@@ -83,7 +140,6 @@ DlgLogViewer::DlgLogViewer(wxWindow* parent) : DlgLogViewerBase(parent),
 
 	anEvents->Connect(anEVT_LOGVIEWER_SHOW,
 	    wxCommandEventHandler(DlgLogViewer::onShow), NULL, this);
-	addSubject(notifyCtrl->getPerspective(NotificationCtrl::LIST_ALL));
 
 	ANEVENTS_IDENT_BCAST_REGISTRATION(DlgLogViewer);
 }
@@ -139,54 +195,6 @@ DlgLogViewer::onLogSelect(wxListEvent &event)
 		showEvent.SetExtraLong(notify->getRuleId());
 		wxPostEvent(AnEvents::getInstance(), showEvent);
 	}
-}
-
-void
-DlgLogViewer::update(Subject *subject)
-{
-	NotificationPerspective		*perspective;
-
-	perspective = wxDynamicCast(subject, NotificationPerspective);
-	if (perspective == NULL)
-		return;
-	/* The log viewer list only grows and existing items never change. */
-	logListCtrl->SetItemCount(perspective->getSize());
-}
-
-void
-DlgLogViewer::updateDelete(Subject *subject)
-{
-	logListCtrl->SetItemCount(0);
-	removeSubject(subject);
-}
-
-AnListClass *
-DlgLogViewer::getRow(unsigned int idx) const
-{
-	Notification			*notify;
-	wxArrayLong::const_iterator	 it;
-	NotificationCtrl		*notifyCtrl;
-	NotificationPerspective		*perspective;
-
-	notifyCtrl = NotificationCtrl::instance();
-	perspective = notifyCtrl->getPerspective(NotificationCtrl::LIST_ALL);
-	it = perspective->begin();
-	it += idx;
-	notify = notifyCtrl->getNotification(*it);
-	return notify;
-}
-
-int
-DlgLogViewer::getSize(void) const
-{
-	NotificationCtrl		*notifyCtrl;
-	NotificationPerspective		*perspective;
-
-	notifyCtrl = NotificationCtrl::instance();
-	perspective = notifyCtrl->getPerspective(NotificationCtrl::LIST_ALL);
-	if (perspective == NULL)
-		return 0;
-	return perspective->getSize();
 }
 
 ANEVENTS_IDENT_BCAST_METHOD_DEFINITION(DlgLogViewer)

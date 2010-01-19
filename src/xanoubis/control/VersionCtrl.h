@@ -52,7 +52,7 @@ class PolicyRuleSet;
  * operation are relying on this result. Many operations takes an
  * index-parameter, which addresses a previously fetched version.
  */
-class VersionCtrl : public Singleton<VersionCtrl>,  public AnRowProvider
+class VersionCtrl : public Singleton<VersionCtrl>, public AnRowProvider
 {
 	public:
 		~VersionCtrl(void);

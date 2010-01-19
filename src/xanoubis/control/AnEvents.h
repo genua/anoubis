@@ -589,6 +589,23 @@ BEGIN_DECLARE_EVENT_TYPES()
 	 */
 	DECLARE_LOCAL_EVENT_TYPE(anEVT_UPGRADENOTIFY, wxNewEventType())
 
+	/**
+	 * Sent by a row provider if the number of elements in the model
+	 * changes.
+	 * @param GetInt() The new Size.
+	 */
+	DECLARE_LOCAL_EVENT_TYPE(anEVT_ROW_SIZECHANGE, wxNewEventType())
+
+	/**
+	 * Sent by a row provider if one or more rows in the model changed
+	 * and need to be updated.
+	 * @param GetInt() The first row that changed.
+	 * @param GetExtraLong() The last row that changed. If this
+	 *     value is -1 the receiver should check for size changes and
+	 *     update all rows from the starting row up to the end of the list.
+	 */
+	DECLARE_LOCAL_EVENT_TYPE(anEVT_ROW_UPDATE, wxNewEventType())
+
 END_DECLARE_EVENT_TYPES()
 /**
  * @}

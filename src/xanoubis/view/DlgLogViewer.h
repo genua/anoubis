@@ -38,7 +38,6 @@
 #include "DlgLogViewerBase.h"
 #include "Notification.h"
 #include "Observer.h"
-#include "AnRowProvider.h"
 
 /**
  * This is the LogViewer.
@@ -48,8 +47,7 @@
  * By selecting a row from the list, the RuleEditor is opened,
  * showing the selected rule that caused the log entry.
  */
-class DlgLogViewer : public DlgLogViewerBase, private Observer,
-    public AnRowProvider
+class DlgLogViewer : public DlgLogViewerBase
 {
 	public:
 		/**
@@ -63,19 +61,6 @@ class DlgLogViewer : public DlgLogViewerBase, private Observer,
 		 * @param None.
 		 */
 		~DlgLogViewer(void);
-
-		/**
-		 * Implementation of AnRowProvider::getRow().
-		 * @param idx The index of the row.
-		 * @return The object associated with the index.
-		 */
-		AnListClass *getRow(unsigned int idx) const;
-
-		/**
-		 * Implementation of AnRowProvider::getSize().
-		 * @return The total number of entries in the model.
-		 */
-		int getSize(void) const;
 
 	private:
 		/**
@@ -102,21 +87,6 @@ class DlgLogViewer : public DlgLogViewerBase, private Observer,
 		 * @return Nothing.
 		 */
 		void onLogSelect(wxListEvent &);
-
-		/**
-		 * This is called when the observed perspective was modified.
-		 * @param[in] 1st The changed perspectilve (aka subject).
-		 * @return Nothing.
-		 */
-		void update(Subject *);
-
-		/**
-		 * This is called when the observed perspective is about to
-		 * be destroyed.
-		 * @param[in] 1st The changed perspective (aka subject).
-		 * @return Nothing.
-		 */
-		void updateDelete(Subject *);
 
 		ANEVENTS_IDENT_BCAST_METHOD_DECLARATION;
 };
