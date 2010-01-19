@@ -528,9 +528,9 @@ void
 PolicyRuleSet::clean(void)
 {
 #define CLEAR_VECTOR(v) \
-	while (!alfList_.empty()) { \
-		Policy *policy = alfList_.back(); \
-		alfList_.pop_back(); \
+	while (!(v).empty()) { \
+		Policy *policy = (v).back(); \
+		(v).pop_back(); \
 		delete policy; \
 	}
 
