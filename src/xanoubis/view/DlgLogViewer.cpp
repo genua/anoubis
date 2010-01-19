@@ -81,7 +81,9 @@ public:
 		NotificationCtrl		*notifyCtrl;
 		wxArrayLong::const_iterator	 it;
 
-		if (perspective_ == NULL || (int)idx < perspective_->getSize())
+		if (perspective_ == NULL)
+			return NULL;
+ 		if ((int)idx < 0 || (int)idx >= perspective_->getSize())
 			return NULL;
 		it = perspective_->begin();
 		it += idx;
