@@ -31,8 +31,8 @@
 #include <bsdcompat.h>
 #endif
 
-#include <client/anoubis_client.h>
-#include <client/anoubis_transaction.h>
+#include <anoubis_client.h>
+#include <anoubis_transaction.h>
 #include <anoubis_protocol.h>
 
 #include "ComCsumGetTask.h"

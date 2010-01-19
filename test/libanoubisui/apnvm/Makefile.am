@@ -26,54 +26,18 @@
 ##########################################################################
 
 TESTS = test_apnvm
-
-bsdcompatdir	= src/bsdcompat
-libbsdcompat	= $(top_builddir)/$(bsdcompatdir)/libbsdcompat.a
-apnvmdir	= src/libanoubisui/apnvm
-apnvm		= $(top_builddir)/$(apnvmdir)/libapnvm.a
-libapndir	= src/libapn
-libapn		= $(top_builddir)/$(libapndir)/libapn.a
-anoubischeckdir = test/libanoubischeck
-libanoubischeck = $(top_builddir)/$(anoubischeckdir)/libanoubischeck.a
-
-# set TESTS_ENVIRONMENT for checks
-RPATH = $(top_builddir)/$(apnvmdir):$(top_builddir)/$(bsdcompatdir):$(top_builddir)/$(libapndir)
-TESTS_ENVIRONMENT = LD_LIBRARY_PATH=$(RPATH)
-
 noinst_HEADERS = apnvm_tc_fixtures.h
 noinst_PROGRAMS = test_apnvm
 
-test_apnvm_CFLAGS = \
-	-I$(top_builddir)/src \
-	-I$(top_srcdir)/include \
-	$(AM_CFLAGS) \
-	@CHECK_CFLAGS@
+include $(top_srcdir)/src/Makefile.include
 
-test_apnvm_CPPFLAGS = \
-	-I$(top_srcdir)/$(apnvmdir) \
-	-I$(top_srcdir)/$(anoubischeckdir)
+TESTS_ENVIRONMENT = LD_LIBRARY_PATH=$(test_ldpath)
 
-test_apnvm_DEPENDENCIES = $(apnvm) $(libapn)
+AM_CPPFLAGS = $(test_cppflags)
+AM_LDFLAGS = $(test_ldflags)
+LDADD = $(test_ldadd)
 
-# conditionally static link of libraries to accomplish correct Code Coverage
-if GCOV_ENABLED
-test_apnvm_LDADD = @CHECK_LIBS@ $(apnvm) $(libanoubischeck) $(libapn) -lfl
-test_apnvm_LDFLAGS = \
-	$(AM_LDFLAGS) \
-	-L$(top_builddir)/$(apnvmdir)
-else
-test_apnvm_LDADD = @CHECK_LIBS@ $(libanoubischeck) $(libapn) -lfl
-test_apnvm_LDFLAGS = \
-	$(AM_LDFLAGS) -dynamic \
-	-L$(top_builddir)/$(apnvmdir) -lapnvm
-endif
-
-if NEEDBSDCOMPAT
-test_apnvm_DEPENDENCIES += $(libbsdcompat)
-test_apnvm_CPPFLAGS += -I$(top_srcdir)/$(bsdcompatdir)
-test_apnvm_LDADD += $(libbsdcompat)
-endif
-
+test_apnvm_DEPENDENCIES = $(test_dependencies)
 test_apnvm_SOURCES =		\
 	apnvm_testrunner.c	\
 	apnvm_tc_cvs.c		\

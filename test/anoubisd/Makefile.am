@@ -34,100 +34,37 @@ noinst_PROGRAMS = test_anoubisd test_peunit anoubisd_policy_dos \
 
 TESTS = test_peunit
 
-anoubisddir     = src/anoubisd
-anoubischatdir  = src/libanoubischat
-bsdcompatdir    = src/bsdcompat
-anoubisprotodir = src/libanoubisprotocol
-anoubischeckdir = test/libanoubischeck
-anoubisapn	= src/libapn
-anoubissigdir	= src/libanoubissig
-libapndir	= src/libapn
-libanoubischat  = $(top_builddir)/$(anoubischatdir)/libanoubischat.a
-libanoubispc    = $(top_builddir)/$(anoubisprotodir)/libanoubispc.a
-libanoubisps	= $(top_builddir)/$(anoubisprotodir)/libanoubisps.a
-libbsdcompat    = $(top_builddir)/$(bsdcompatdir)/libbsdcompat.a
-libanoubischeck = $(top_builddir)/$(anoubischeckdir)/libanoubischeck.a
-libanoubissig	= $(top_builddir)/$(anoubissigdir)/libanoubissig.a
-libapn		= $(top_builddir)/$(libapndir)/libapn.a
+anoubisddir = src/anoubisd
+anoubisdsrcdir   = $(top_srcdir)/$(anoubisddir)
+anoubisdbuilddir = $(top_builddir)/$(anoubisddir)
 
-test_anoubisd_CPPFLAGS = \
-	-I$(top_srcdir)/$(anoubischatdir) \
-	-I$(top_srcdir)/$(anoubisddir) \
-	-I$(top_srcdir)/$(anoubisprotodir) \
-	-I$(top_srcdir)/$(anoubisprotodir)/client \
-	-I$(top_srcdir)/$(anoubisprotodir)/server \
-	-I$(top_srcdir)/include \
-	-I$(top_srcdir)/$(bsdcompatdir) \
-	-I$(top_srcdir)/$(anoubischeckdir) \
-	-I$(top_srcdir)/$(anoubisapn) \
-	-I$(top_builddir)/src \
-	-I$(top_srcdir)/src/anoubisd \
-	-I$(top_srcdir)/$(anoubissigdir) \
-	@CHECK_CFLAGS@
+include $(top_srcdir)/src/Makefile.include
 
-test_peunit_CPPFLAGS = $(test_anoubisd_CPPFLAGS)
-anoubisd_policy_dos_CPPFLAGS = $(test_anoubisd_CPPFLAGS)
-anoubisd_wblock_CPPFLAGS = $(test_anoubisd_CPPFLAGS)
-anoubisd_rblock_CPPFLAGS = $(test_anoubisd_CPPFLAGS)
+TESTS_ENVIRONMENT = LD_LIBRARY_PATH=$(test_ldpath)
 
-# We link with check.a which is compiled without -fPIE, therefore
-# we must use shared_AM_LDFLAGS in order not to link with -pie.
-test_anoubisd_LDFLAGS = $(shared_AM_LDFLAGS)
+AM_CPPFLAGS = $(test_cppflags) -I$(anoubisdsrcdir)
+AM_LDFLAGS = $(test_ldflags)
+LDADD = $(test_ldadd)
 
 test_peunit_objs= \
-	$(top_builddir)/$(anoubisddir)/pe_alf.o \
-	$(top_builddir)/$(anoubisddir)/pe_context.o \
-	$(top_builddir)/$(anoubisddir)/pe_ipc.o \
-	$(top_builddir)/$(anoubisddir)/pe.o \
-	$(top_builddir)/$(anoubisddir)/pe_prefixhash.o \
-	$(top_builddir)/$(anoubisddir)/pe_proc.o \
-	$(top_builddir)/$(anoubisddir)/pe_sandbox.o \
-	$(top_builddir)/$(anoubisddir)/pe_sfscache.o \
-	$(top_builddir)/$(anoubisddir)/pe_sfs.o \
-	$(top_builddir)/$(anoubisddir)/pe_filetree.o
+	$(anoubisdbuilddir)/pe_alf.o \
+	$(anoubisdbuilddir)/pe_context.o \
+	$(anoubisdbuilddir)/pe_ipc.o \
+	$(anoubisdbuilddir)/pe.o \
+	$(anoubisdbuilddir)/pe_prefixhash.o \
+	$(anoubisdbuilddir)/pe_proc.o \
+	$(anoubisdbuilddir)/pe_sandbox.o \
+	$(anoubisdbuilddir)/pe_sfscache.o \
+	$(anoubisdbuilddir)/pe_sfs.o \
+	$(anoubisdbuilddir)/pe_filetree.o
 
 test_peunit_LDADD = \
-	@CHECK_LIBS@ \
-	@LIBS@ \
-	@SSL_LIBS@ \
-	$(test_peunit_objs) \
-	$(libanoubischeck) \
-	$(libanoubispc) \
-	$(libanoubisps) \
-	$(libanoubissig) \
-	$(libapn) \
-	$(libanoubischat)
+	$(test_ldadd) \
+	$(test_peunit_objs)
 
-test_anoubisd_LDADD = \
-	@CHECK_LIBS@ \
-	$(libanoubischeck) \
-	$(libanoubispc) \
-	$(libanoubischat)
-
-anoubisd_policy_dos_LDADD = \
-	$(libanoubispc) \
-	$(libanoubischat)
-
-anoubisd_wblock_LDADD = \
-	$(libanoubispc) \
-	$(libanoubischat)
-
-anoubisd_rblock_LDADD = \
-	$(libanoubispc) \
-	$(libanoubischat)
-
-if NEEDBSDCOMPAT
-test_anoubisd_LDADD += $(libbsdcompat)
-test_peunit_LDADD += $(libbsdcompat)
-anoubisd_policy_dos_LDADD += $(libbsdcompat)
-anoubisd_wblock_LDADD += $(libbsdcompat)
-anoubisd_rblock_LDADD += $(libbsdcompat)
-endif
-
-test_anoubisd_SOURCES = \
-	anoubisd_testcase_sessions.c \
-	anoubisd_testsuite.c \
-	anoubisd_testrunner.c
+test_peunit_DEPENDENCIES = \
+	$(test_dependencies) \
+	$(test_peunit_objs)
 
 test_peunit_SOURCES = \
 	anoubisd_testcase_pe.c \
@@ -136,16 +73,25 @@ test_peunit_SOURCES = \
 	anoubisd_unit.h \
 	test_peunit.c
 
+test_anoubisd_DEPENDENCIES = $(test_dependencies)
+test_anoubisd_SOURCES = \
+	anoubisd_testcase_sessions.c \
+	anoubisd_testsuite.c \
+	anoubisd_testrunner.c
+
+anoubisd_policy_dos_DEPENDENCIES = $(test_dependencies)
 anoubisd_policy_dos_SOURCES = \
 	anoubisd_policy_dos.c \
 	protocol_utils.c \
 	protocol_utils.h
 
+anoubisd_wblock_DEPENDENCIES = $(test_dependencies)
 anoubisd_wblock_SOURCES = \
 	anoubisd_wblock.c \
 	protocol_utils.c\
 	protocol_utils.h
 
+anoubisd_rblock_DEPENDENCIES = $(test_dependencies)
 anoubisd_rblock_SOURCES = \
 	anoubisd_rblock.c \
 	protocol_utils.c\

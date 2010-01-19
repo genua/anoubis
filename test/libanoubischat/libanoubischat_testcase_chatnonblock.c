@@ -40,7 +40,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#include <anoubischat.h>
+#include <anoubis_chat.h>
 
 char raw_msg[] = {
 	0x0, 0x0, 0x0, 0xE,

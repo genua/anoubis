@@ -47,11 +47,7 @@
 #include <sys/mman.h>
 #include <sys/socket.h>
 
-#ifndef NEEDBSDCOMPAT
 #include <sys/queue.h>
-#else
-#include <queue.h>
-#endif
 
 #include <sys/param.h>
 #include <sys/stat.h>
@@ -64,9 +60,9 @@
 #include <anoubis_transaction.h>
 #include <anoubis_dump.h>
 #include <anoubis_sig.h>
-#include <anoubischat.h>
+#include <anoubis_chat.h>
 
-#include "csum/csum.h"
+#include "anoubis_csum.h"
 
 #ifdef LINUX
 #include <bsdcompat.h>

@@ -79,6 +79,12 @@ done
 
 debug "using output file $OUTPUTFILE"
 
+OUTPUTDIR=${OUTPUTFILE%/*}
+
+if [ "$OUTPUTDIR" != "$OUTPUTFILE" ] && [ ! -d "$OUTPUTDIR" ] ; then
+	mkdir -p "$OUTPUTDIR"
+fi
+
 STDOUT=`mktemp` || fatal "failed to create tmpfile for stdout"
 STDERR=`mktemp` || fatal "failed to create tmpfile for stderr"
 trap 'rm -f $STDOUT $STDERR' INT QUIT TERM EXIT

@@ -30,7 +30,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <apnmd.h>
+#include <anoubis_apnvm_md.h>
 
 START_TEST(md_tc_parse)
 {

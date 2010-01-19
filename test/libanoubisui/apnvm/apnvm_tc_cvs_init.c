@@ -38,7 +38,7 @@
 #include <paths.h>
 #include <unistd.h>
 
-#include <apncvs.h>
+#include <anoubis_apnvm_cvs.h>
 
 static int
 cvs_init_tc_exec(const char* cmd, ...)

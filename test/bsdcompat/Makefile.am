@@ -25,30 +25,17 @@
 #
 
 TESTS = test_bsdcompat
-
-libbsdcompatdir	= src/bsdcompat
-libbsdcompat	= $(top_builddir)/$(libbsdcompatdir)/libbsdcompat.so
-
-libanoubischeckdir = test/libanoubischeck
-libanoubischeck    = $(top_builddir)/$(libanoubischeckdir)/libanoubischeck.a
-
-# set TESTS_ENVIRONMENT for checks
-RPATH = $(top_builddir)/$(libbsdcompatdir)
-TESTS_ENVIRONMENT = LD_LIBRARY_PATH=$(RPATH)
-
 noinst_PROGRAMS = test_bsdcompat
-INCLUDES = -I$(top_srcdir)/$(libbsdcompatdir) \
-	-I$(top_srcdir)/$(libanoubischeckdir)
 
-test_bsdcompat_CFLAGS = $(AM_CFLAGS) @CHECK_CFLAGS@
+include $(top_srcdir)/src/Makefile.include
 
-# We link with check.a which is compiled without -fPIE, therefore
-# we must use shared_AM_LDFLAGS in order not to link with -pie.
-test_bsdcompat_LDFLAGS = -L$(top_builddir)/$(libbsdcompatdir) -dynamic \
-	$(shared_AM_LDFLAGS)
-LDADD = $(libanoubischeck) @CHECK_LIBS@ -lbsdcompat
+AM_CPPFLAGS = $(test_cppflags)
+AM_LDFLAGS = $(test_ldflags)
+LDADD = $(test_ldadd)
 
-test_bsdcompat_DEPENDENCIES = $(libbsdcompat)
+TESTS_ENVIRONMENT = LD_LIBRARY_PATH=$(test_ldpath)
+
+test_bsdcompat_DEPENDENCIES = $(test_dependencies)
 test_bsdcompat_SOURCES = \
 	bsdcompat_testsuite.c \
 	bsdcompat_testrunner.c \

@@ -47,12 +47,12 @@
 #include <fcntl.h>
 
 #ifndef GCOV
-#include <anoubischat.h>
+#include <anoubis_chat.h>
 #include <anoubis_msg.h>
 #endif
 
 #include <anoubischeck.h>
-#include <csum.h>
+#include <anoubis_csum.h>
 
 /* this function is not exported normally */
 int anoubis_csum_calc_userspace(const char *file, u_int8_t *cs, int *cslen);

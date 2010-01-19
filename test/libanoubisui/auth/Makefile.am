@@ -26,72 +26,18 @@
 ##########################################################################
 
 TESTS = test_auth
-
-bsdcompatdir	= src/bsdcompat
-libbsdcompat	= $(top_builddir)/$(bsdcompatdir)/libbsdcompat.a
-chatdir		= src/libanoubischat
-apndir		= src/libapn
-protocoldir	= src/libanoubisprotocol
-authdir		= src/libanoubisui/auth
-sigdir		= src/libanoubissig
-auth		= $(top_builddir)/$(authdir)/libauth.a
-anoubischeckdir = test/libanoubischeck
-libanoubischeck = $(top_builddir)/$(anoubischeckdir)/libanoubischeck.a
-libanoubisprotocol = $(top_builddir)/$(protocoldir)/libanoubispc.so
-libanoubischat = $(top_builddir)/$(chatdir)/libanoubischat.so
-libanoubissig = $(top_builddir)/$(sigdir)/libanoubisig.so
-libapn = $(top_builddir)/$(apndir)/libapn.so
-authtestdir = test/libanoubisui/auth
-
-# set TESTS_ENVIRONMENT for checks
-RPATH = $(top_builddir)/$(bsdcompatdir):$(top_builddir)/$(authdir):$(top_builddir)/$(protocoldir):$(top_builddir)/$(chatdir):$(top_builddir)/$(apndir)
-
-TESTS_ENVIRONMENT = LD_LIBRARY_PATH=$(RPATH) KEYDIR=$(top_srcdir)/$(authtestdir)
-
 noinst_PROGRAMS = test_auth
 
-test_auth_CFLAGS = \
-	-I$(top_builddir)/src \
-	-I$(top_srcdir)/include \
-	$(AM_CFLAGS) \
-	@CHECK_CFLAGS@
+include $(top_srcdir)/src/Makefile.include
 
-test_auth_CPPFLAGS = \
-	-I$(top_srcdir)/$(authdir) \
-	-I$(top_srcdir)/$(chatdir) \
-	-I$(top_srcdir)/$(protocoldir) \
-	-I$(top_srcdir)/$(protocoldir)/client \
-	-I$(top_srcdir)/$(sigdir) \
-	-I$(top_srcdir)/$(anoubischeckdir)
+TESTS_ENVIRONMENT = LD_LIBRARY_PATH=$(test_ldpath) KEYDIR=$(srcdir)
 
-test_auth_DEPENDENCIES =
+AM_CPPFLAGS = $(test_cppflags)
+AM_LDFLAGS = $(test_ldflags)
+LDADD = $(test_ldadd)
 
-# conditionally static link of libraries to accomplish correct Code Coverage
-if GCOV_ENABLED
-test_auth_LDADD = @CHECK_LIBS@ $(auth) $(libanoubischeck) -lfl -lssl
-test_auth_LDFLAGS = \
-	$(AM_LDFLAGS) \
-	-L$(top_builddir)/$(authdir)
-test_auth_CPPFLAGS += -DGCOV
-else
-test_auth_LDADD = @CHECK_LIBS@ $(libanoubischeck) -lfl -lssl \
-    -L$(top_builddir)/$(authdir) -lauth \
-    -L$(top_builddir)/$(protocoldir) -lanoubispc \
-    -L$(top_builddir)/$(chatdir) -lanoubischat \
-    -L$(top_builddir)/$(sigdir) -lanoubissig \
-    -L$(top_builddir)/$(apndir) -lapn
-test_auth_LDFLAGS = $(AM_LDFLAGS) -dynamic
-endif
-
-if NEEDBSDCOMPAT
-test_auth_DEPENDENCIES += $(libbsdcompat)
-test_auth_CPPFLAGS += -I$(top_srcdir)/$(bsdcompatdir)
-test_auth_LDADD += $(libbsdcompat)
-endif
-
+test_auth_DEPENDENCIES = $(test_dependencies)
 test_auth_SOURCES = \
 	auth_testrunner.c
 
 EXTRA_DIST = test.key test.crt
-
-install-exec-hook:

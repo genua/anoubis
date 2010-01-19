@@ -30,33 +30,11 @@ if STATIC_LINKING
 STATIC = -static
 endif
 
-bsdcompatdir		= src/bsdcompat
-libapndir		= src/libapn
-libanoubissigdir	= src/libanoubissig
-libanoubischatdir	= src/libanoubischat
-libanoubisprotocoldir	= src/libanoubisprotocol
-libanoubisuidir		= src/libanoubisui
+include $(top_srcdir)/src/Makefile.include
 
-libbsdcompat   = $(top_builddir)/$(bsdcompatdir)/libbsdcompat.a
-libapn	       = $(top_builddir)/$(libapndir)/libapn.a
-libanoubischat = $(top_builddir)/$(libanoubischatdir)/libanoubischat.a
-libanoubissig  = $(top_builddir)/$(libanoubissigdir)/libanoubissig.a
-libanoubispc   = $(top_builddir)/$(libanoubisprotocoldir)/libanoubispc.a
-libanoubisui   = $(top_builddir)/$(libanoubisuidir)/libanoubisui.a
+INCLUDES = $(anoubis_cppflags)
 
-INCLUDES = \
-	-I$(top_builddir)/src                        \
-	-I$(top_srcdir)/include                      \
-	-I$(top_srcdir)/$(libapndir)                 \
-	-I$(top_srcdir)/$(libanoubischatdir)            \
-	-I$(top_srcdir)/$(libanoubissigdir)            \
-	-I$(top_srcdir)/$(libanoubisprotocoldir)/client \
-	-I$(top_srcdir)/$(libanoubisprotocoldir)        \
-	-I$(top_srcdir)/$(libanoubisuidir)
-
-sfssig_DEPENDENCIES = $(libanoubispc) $(libanoubischat) \
-	$(libanoubisui) $(libanoubissig) $(libapn)
-
+sfssig_DEPENDENCIES = $(libanoubis)
 sfssig_LDADD = $(sfssig_DEPENDENCIES)
 
 CFLAGS += $(SSL_CFLAGS)
@@ -65,27 +43,27 @@ LIBS += $(SSL_LIBS)
 
 sfssig_LDFLAGS = $(AM_LDFLAGS) $(SSL_LDFLAGS)
 
-sfssig_SOURCES= \
+sources = \
 	main.c \
 	syssig.c \
 	utils.c \
-	filter.c \
+	filter.c
+
+headers = \
 	sfssig.h
 
-sfssig_CPPFLAGS = -I$(top_srcdir)/include -I$(top_builddir)/src
-if NEEDBSDCOMPAT
-sfssig_CPPFLAGS += -I$(top_srcdir)/src/bsdcompat
-sfssig_LDADD += $(libbsdcompat)
-endif
+sfssig_SOURCES = $(sources) $(headers)
 
-sfssig_SOURCES_flawfinder= \
-	main.c_flawfinder
+sfssig_CPPFLAGS = $(anoubis_cppflags)
 
-sfssig_SOURCES_lint= \
-	main.c_lint
-
-sfssig_SOURCES_splint= \
-	main.c_splint
+sources_lint   = \
+	$(sources:%=%_lint)
+sources_splint = \
+	$(sources:%=%_splint) \
+	$(headers:%=%_splint)
+sources_flawfinder = \
+	$(sources:%=%_flawfinder) \
+	$(headers:%=%_flawfinder)
 
 flawfinder_FLAGS=
 
@@ -96,16 +74,7 @@ flawfinder_FLAGS=
 splint_FLAGS=+unixlib $(sfssig_CPPFLAGS) -compdef $(INCLUDES)
 lint_FLAGS=$(sfssig_CPPFLAGS) $(INCLUDES)
 
-flawfinder:	$(sfssig_SOURCES_flawfinder)
-splint:		$(sfssig_SOURCES_splint)
-lint:		$(sfssig_SOURCES_lint)
-
 include $(top_srcdir)/lint/Makefile.lint
-
-clean-local:
-	@rm -f $(sfssig_SOURCES_lint)
-	@rm -f $(sfssig_SOURCES_splint)
-	@rm -f $(sfssig_SOURCES_flawfinder)
 
 # As we're in maintainer mode we have to remove generated source files
 # manually.

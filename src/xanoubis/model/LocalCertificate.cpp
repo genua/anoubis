@@ -29,7 +29,7 @@
 #include <wx/datetime.h>
 
 #include <anoubis_sig.h>
-#include <keygen.h>
+#include <anoubis_keygen.h>
 #include <time.h>
 
 #include "LocalCertificate.h"

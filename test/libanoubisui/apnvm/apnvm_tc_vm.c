@@ -27,11 +27,7 @@
 
 #include <config.h>
 
-#ifndef NEEDBSDCOMPAT
 #include <sys/queue.h>
-#else
-#include <queue.h>
-#endif
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -41,7 +37,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include <apnvm.h>
+#include <anoubis_apnvm.h>
 
 #include "apnvm_tc_fixtures.h"
 

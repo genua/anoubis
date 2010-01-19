@@ -32,56 +32,29 @@ if STATIC_LINKING
 STATIC = -static
 endif
 
-bsdcompatdir		= src/bsdcompat
-libapndir		= src/libapn
-libanoubischatdir	= src/libanoubischat
-libanoubisprotocoldir	= src/libanoubisprotocol
-libanoubissigdir	= src/libanoubissig
-libanoubisuidir		= src/libanoubisui
+include $(top_srcdir)/src/Makefile.include
 
-libapn	       = $(top_builddir)/$(libapndir)/libapn.a
-libbsdcompat   = $(top_builddir)/$(bsdcompatdir)/libbsdcompat.a
-libanoubischat = $(top_builddir)/$(libanoubischatdir)/libanoubischat.a
-libanoubispc   = $(top_builddir)/$(libanoubisprotocoldir)/libanoubispc.a
-libanoubissig   = $(top_builddir)/$(libanoubissigdir)/libanoubissig.a
-libanoubisui   = $(top_builddir)/$(libanoubisuidir)/libanoubisui.a
+INCLUDES = $(anoubis_cppflags)
 
-INCLUDES = \
-	-I$(top_builddir)/src                        \
-	-I$(top_srcdir)/include                      \
-	-I$(top_srcdir)/$(libapndir)                 \
-	-I$(top_srcdir)/$(libanoubischatdir)            \
-	-I$(top_srcdir)/$(libanoubisprotocoldir)/client \
-	-I$(top_srcdir)/$(libanoubisprotocoldir)        \
-	-I$(top_srcdir)/$(libanoubissigdir)	        \
-	-I$(top_srcdir)/$(libanoubisuidir)
-
-
-anoubisctl_DEPENDENCIES = $(libanoubisui) $(libapn) $(libanoubispc) \
-	$(libanoubischat) $(libanoubissig)
+anoubisctl_DEPENDENCIES = $(libanoubis)
 
 anoubisctl_LDADD = $(anoubisctl_DEPENDENCIES)
 
 anoubisctl_LDFLAGS= $(AM_LDFLAGS) $(STATIC)
 
-if NEEDBSDCOMPAT
-INCLUDES += -I$(top_srcdir)/$(bsdcompatdir)
-anoubisctl_LDADD += $(libbsdcompat)
-endif
+sources= main.c
+headers = anoubisctl.h
 
-anoubisctl_SOURCES= \
-	main.c \
-	anoubisctl.h
+anoubisctl_SOURCES = $(sources) $(headers)
 
-anoubisctl_SOURCES_flawfinder= \
-	main.c_flawfinder \
-	anoubisctl.h_flawfinder
-
-anoubisctl_SOURCES_lint= \
-	main.c_lint
-
-anoubisctl_SOURCES_splint= \
-	main.c_splint
+sources_lint   = \
+	$(sources:%=%_lint)
+sources_splint = \
+	$(sources:%=%_splint) \
+	$(headers:%=%_splint)
+sources_flawfinder = \
+	$(sources:%=%_flawfinder) \
+	$(headers:%=%_flawfinder)
 
 flawfinder_FLAGS=
 # XXX tartler: the anoubisctl source needs annotations to
@@ -91,13 +64,4 @@ flawfinder_FLAGS=
 splint_FLAGS=$(INCLUDES) -memchecks
 lint_FLAGS=$(INCLUDES)
 
-flawfinder:	$(anoubisctl_SOURCES_flawfinder)
-splint:		$(anoubisctl_SOURCES_splint)
-lint:		$(anoubisctl_SOURCES_lint)
-
 include $(top_srcdir)/lint/Makefile.lint
-
-clean-local:
-	@rm -f $(anoubisctl_SOURCES_lint)
-	@rm -f $(anoubisctl_SOURCES_splint)
-	@rm -f $(anoubisctl_SOURCES_flawfinder)

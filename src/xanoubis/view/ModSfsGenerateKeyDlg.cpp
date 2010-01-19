@@ -31,7 +31,7 @@
 #include <cerrno>
 #include <cstdlib>
 
-#include <keygen.h>
+#include <anoubis_keygen.h>
 #include <wx/stdpaths.h>
 #include <wx/string.h>
 #include <AnMessageDialog.h>

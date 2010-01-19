@@ -38,7 +38,7 @@ common_flawfinder_flags=\
 	--context
 endif
 
-.c.c_flawfinder .h.h_flawfinder:
+.c.c_flawfinder .h.h_flawfinder .cpp.cpp_flawfinder:
 if HAVE_FLAWFINDER
 	@echo [FLAWFINDER] $<
 	@sh $(top_builddir)/lint/flawfinder $(DEBUG) -o $@ -- \
@@ -143,3 +143,12 @@ endif
 
 linting: flawfinder splint lint
 .PHONY: flawfinder splint lint
+
+flawfinder:	$(sources_flawfinder)
+splint:		$(sources_splint)
+lint:		$(sources_lint)
+
+clean-local:
+	@rm -f $(sources_lint)
+	@rm -f $(sources_splint)
+	@rm -f $(sources_flawfinder)

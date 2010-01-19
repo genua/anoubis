@@ -28,7 +28,7 @@
 #ifndef _PE_FILETREE_H_
 #define _PE_FILETREE_H_
 
-#include <tree.h>
+#include <sys/tree.h>
 #include "pe.h"
 
 struct pe_file_node {

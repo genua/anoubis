@@ -38,7 +38,7 @@
 #include <errno.h>
 #include <string.h>
 
-#include "anoubischat.h"
+#include "anoubis_chat.h"
 #ifdef NEEDBSDCOMPAT
 #include <bsdcompat.h>
 #endif

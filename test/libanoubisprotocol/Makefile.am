@@ -25,81 +25,39 @@
 #
 
 TESTS = test_libanoubisproto test_libanoubisnotify
-anoubisprotocoldir	= src/libanoubisprotocol
-anoubischatdir		= src/libanoubischat
-apndir			= src/libapn
-bsdcompatdir		= src/bsdcompat
-anoubischeckdir		= test/libanoubischeck
-libanoubischat = $(top_builddir)/$(anoubischatdir)/libanoubischat.so
-libanoubischata = $(top_builddir)/$(anoubischatdir)/libanoubischat.a
-libbsdcompat = $(top_builddir)/$(bsdcompatdir)/libbsdcompat.a
-libanoubisps = $(top_builddir)/$(anoubisprotocoldir)/libanoubisps.so
-libanoubispsa = $(top_builddir)/$(anoubisprotocoldir)/libanoubisps.a
-libanoubispc = $(top_builddir)/$(anoubisprotocoldir)/libanoubispc.so
-libanoubispca = $(top_builddir)/$(anoubisprotocoldir)/libanoubispc.a
-libanoubischeck = $(top_builddir)/$(anoubischeckdir)/libanoubischeck.a
-libapn = $(top_builddir)/$(apndir)/libapn.so
-libapna = $(top_builddir)/$(apndir)/libapn.a
 
-# set TESTS_ENVIRONMENT for checks
-RPATH = $(top_builddir)/$(apndir):$(top_builddir)/$(anoubisprotocoldir):$(top_builddir)/$(anoubischatdir):$(top_builddir)/$(bsdcompatdir)
-TESTS_ENVIRONMENT = LD_LIBRARY_PATH=$(RPATH)
+AM_CPPFLAGS = $(test_cppflags) -I$(top_srcdir)/test/libanoubisprotocol
+AM_LDFLAGS = $(test_ldflags) -L$(top_builddir)/test/libanoubisprotocol
 
-noinst_PROGRAMS = test_libanoubisproto test_libanoubisnotify libanoubischat.so
-CPPFLAGS +=						\
-	-I$(top_srcdir)/$(anoubischeckdir)		\
-	-I$(top_srcdir)/$(anoubischatdir)		\
-	-I$(top_srcdir)/$(anoubisprotocoldir)/client	\
-	-I$(top_srcdir)/$(anoubisprotocoldir)/server	\
-	-I$(top_srcdir)/$(apndir)			\
-	-I$(top_srcdir)/$(anoubisprotocoldir)
+include $(top_srcdir)/src/Makefile.include
 
-libanoubischat_so_CFLAGS = -fPIC -shared
-libanoubischat_so_LDFLAGS = -nostartfiles -shared
+TESTS_ENVIRONMENT = LD_LIBRARY_PATH=$(test_ldpath):.
 
-test_libanoubisproto_LDFLAGS = \
-	-L$(top_builddir)/$(anoubisprotocoldir) \
-	-L$(top_builddir)/$(apndir)		\
-	-L$(top_builddir)/$(anoubischatdir) -dynamic
-test_libanoubisnotify_LDFLAGS = \
-	-L $(top_builddir)/$(apndir)			\
-	-L. -L$(top_builddir)/$(anoubisprotocoldir)
-
-# conditionally static link of libraries to accomplish correct Code Coverage
 if GCOV_ENABLED
-test_libanoubisproto_LDADD = \
-	@CHECK_LIBS@ $(libanoubischeck) \
-	$(libanoubispsa) $(libanoubispca) $(libanoubischata) $(libapna)
-test_libanoubisnotify_LDADD = \
-	@CHECK_LIBS@ $(libanoubischeck) $(libanoubispsa) $(libanoubischata) \
-	$(libapna)
-test_libanoubisproto_DEPENDENCIES = \
-	$(libanoubispsa) $(libanoubispca) $(libanoubischata) $(libapna)
-test_libanoubisnotify_DEPENDENCIES = \
-	$(libanoubispsa) $(libanoubischata) $(libapna)
+noinst_PROGRAMS = test_libanoubisproto test_libanoubisnotify
+noinst_LIBRARIES = libanoubischat_dummy.a
+libanoubischat_dummy = libanoubischat_dummy.a
 else
-test_libanoubisproto_LDADD = @CHECK_LIBS@ $(libanoubischeck) \
-	-lanoubisps -lanoubispc -lanoubischat -lapn
-test_libanoubisnotify_LDADD = \
-	@CHECK_LIBS@ $(libanoubischeck) -lanoubisps -lanoubischat -lapn
-test_libanoubisproto_DEPENDENCIES = \
-	$(libanoubisps) $(libanoubispc) $(libanoubischat) $(libapn)
-test_libanoubisnotify_DEPENDENCIES = \
-	$(libanoubisps) libanoubischat.so
+noinst_PROGRAMS = test_libanoubisproto test_libanoubisnotify \
+	libanoubischat_dummy.so
+libanoubischat_dummy = libanoubischat_dummy.so
 endif
 
-if NEEDBSDCOMPAT
-CPPFLAGS += -I$(top_srcdir)/$(bsdcompatdir)
-test_libanoubisproto_LDFLAGS += -L$(top_builddir)/$(bsdcompatdir)
-test_libanoubisnotify_LDFLAGS += -L$(top_builddir)/$(bsdcompatdir)
-test_libanoubisproto_LDADD += -lbsdcompat
-test_libanoubisnotify_LDADD += -lbsdcompat
-test_libanoubisproto_DEPENDENCIES += $(libbsdcompat)
-test_libanoubisnotify_DEPENDENCIES += $(libbsdcompat)
-endif
 
-test_libanoubisproto_CPPFLAGS = @CHECK_CFLAGS@ $(AM_CPPFLAGS)
-test_libanoubisnotify_CPPFLAGS = @CHECK_CFLAGS@ $(AM_CPPFLAGS)
+libanoubischat_dummy_so_CFLAGS = $(shared_AM_CFLAGS)
+libanoubischat_dummy_so_LDFLAGS = $(test_so_ldflags)
+
+libanoubischat_dummy_so_SOURCES =		\
+	anoubischat_dummy.h		\
+	anoubischat_dummy.c
+
+libanoubischat_dummy_a_SOURCES = $(libanoubischat_dummy_so_SOURCES)
+
+test_libanoubisproto_LDADD = $(test_ldadd)
+test_libanoubisnotify_LDADD = $(libanoubischat_dummy) $(test_ldadd)
+test_libanoubisproto_DEPENDENCIES = $(test_dependencies)
+test_libanoubisnotify_DEPENDENCIES = $(test_dependencies) \
+	libanoubischat_dummy.so
 
 test_libanoubisproto_SOURCES = \
 	testrunner.c \
@@ -109,9 +67,4 @@ test_libanoubisproto_SOURCES = \
 test_libanoubisnotify_SOURCES = \
 	testrunner_notify.c \
 	libanoubisprotonotify_testsuite.c \
-	libanoubisprotonotify_testcase.c \
-	anoubischat_dummy.c \
-	anoubischat_dummy.h
-libanoubischat_so_SOURCES =		\
-	anoubischat_dummy.h		\
-	anoubischat_dummy.c
+	libanoubisprotonotify_testcase.c

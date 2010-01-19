@@ -40,9 +40,9 @@
 #include <bsdcompat.h>
 #endif
 
-#include <client/anoubis_client.h>
-#include <client/anoubis_transaction.h>
-#include <csum/csum.h>
+#include <anoubis_client.h>
+#include <anoubis_transaction.h>
+#include <anoubis_csum.h>
 #include <anoubis_protocol.h>
 #include <anoubis_sig.h>
 

@@ -52,13 +52,13 @@
 #include <openssl/objects.h>
 
 #ifdef LINUX
-#include <queue.h>
 #include <linux/anoubis_sfs.h>
 #include <bsdcompat.h>
 #else
-#include <sys/queue.h>
 #include <dev/anoubis_sfs.h>
 #endif
+
+#include <sys/queue.h>
 
 #include <anoubis_sig.h>
 #include <anoubis_protocol.h>

@@ -29,7 +29,7 @@
 #include <wx/progdlg.h>
 
 #include <anoubis_sig.h>
-#include <csum/csum.h>
+#include <anoubis_csum.h>
 
 #include "AnEvents.h"
 #include "ComCsumAddTask.h"

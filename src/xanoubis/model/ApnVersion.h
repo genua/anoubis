@@ -32,7 +32,7 @@
 
 #include <wx/datetime.h>
 
-#include <apnvm.h>
+#include <anoubis_apnvm.h>
 
 /**
  * Detail information about a single version.

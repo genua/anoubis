@@ -31,8 +31,15 @@
 noinst_LIBRARIES = libanoubischeck.a
 noinst_HEADERS = anoubischeck.h
 
+include $(top_srcdir)/src/Makefile.include
+
+AM_CPPFLAGS = $(test_cppflags)
+AM_LDFLAGS = $(test_ldflags)
+LDADD = $(test_ldadd)
+
+TESTS_ENVIRONMENT = LD_LIBRARY_PATH=$(test_ldpath)
+
 libanoubischeck_a_SOURCES = anoubischeck.c
-libanoubischeck_a_CFLAGS = @CHECK_CFLAGS@ $(AM_CFLAGS)
 
 # A libanoubischeck.so would have to be linked with libcheck_pic.a instead of
 # libcheck.a. Unfortunately libcheck_pic.a is not available under openbsd.
@@ -44,8 +51,10 @@ libanoubischeck_a_CFLAGS = @CHECK_CFLAGS@ $(AM_CFLAGS)
 # Test the library
 #
 TESTS = test_libanoubischeck
-TESTS_ENVIRONMENT = LD_LIBRARY_PATH=.
 noinst_PROGRAMS = test_libanoubischeck
-test_libanoubischeck_CFLAGS = @CHECK_CFLAGS@ $(AM_CFLAGS)
-test_libanoubischeck_LDADD = @CHECK_LIBS@ libanoubischeck.a
+test_libanoubischeck_LDADD = $(libanoubis_ldadd) @CHECK_LIBS@ \
+	libanoubischeck.a
 test_libanoubischeck_SOURCES = test_libanoubischeck.c
+test_libanoubischeck_DEPENDENCIES = \
+	$(libanoubis_dependencies) \
+	libanoubischeck.a

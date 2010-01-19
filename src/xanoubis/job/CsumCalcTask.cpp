@@ -38,7 +38,7 @@
 
 #include <errno.h>
 
-#include <csum/csum.h>
+#include <anoubis_csum.h>
 
 #include "CsumCalcTask.h"
 #include "JobCtrl.h"

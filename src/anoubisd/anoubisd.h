@@ -51,11 +51,7 @@
 #endif
 #include <assert.h>
 
-#ifndef NEEDBSDCOMPAT
 #include <sys/queue.h>
-#else
-#include <queue.h>
-#endif
 
 #ifdef LINUX
 #define ANOUBISCORE_MIN_VERSION	0x00010002UL

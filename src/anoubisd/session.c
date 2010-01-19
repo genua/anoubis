@@ -38,17 +38,16 @@
 #include <errno.h>
 #include <event.h>
 #ifdef OPENBSD
-#include <sys/queue.h>
 #include <dev/eventdev.h>
 #include <dev/anoubis.h>
 #endif
 #ifdef LINUX
 #include <grp.h>
 #include <bsdcompat.h>
-#include <queue.h>
 #include <linux/eventdev.h>
 #include <linux/anoubis.h>
 #endif
+#include <sys/queue.h>
 #include <pwd.h>
 #include <signal.h>
 #include <stdlib.h>
@@ -60,7 +59,7 @@
 #include <inttypes.h>
 
 
-#include <anoubischat.h>
+#include <anoubis_chat.h>
 #include <anoubis_msg.h>
 #include <anoubis_server.h>
 #include <anoubis_notify.h>

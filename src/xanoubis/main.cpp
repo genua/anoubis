@@ -36,7 +36,7 @@
 
 #include <sys/types.h>
 #include <pwd.h>
-#include <apnvm.h>
+#include <anoubis_apnvm.h>
 
 #include <wx/cmdline.h>
 #include <wx/fileconf.h>

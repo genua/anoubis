@@ -35,8 +35,8 @@
 
 #include "sfssig.h"
 #include <anoubis_msg.h>
-#include <apnvm/apnvm.h>
-#include <auth/auth.h>
+#include <anoubis_apnvm.h>
+#include <anoubis_auth.h>
 
 /* These are the functions to the sfs commandos */
 static int	 sfs_add(char *, uid_t);

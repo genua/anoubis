@@ -27,60 +27,16 @@
 
 TESTS = test_csum
 
-bsdcompatdir	= src/bsdcompat
-libbsdcompat	= $(top_builddir)/$(bsdcompatdir)/libbsdcompat.a
-chatdir		= src/libanoubischat
-apndir		= src/libapn
-protocoldir	= src/libanoubisprotocol
-csumdir		= src/libanoubisui/csum
-csum		= $(top_builddir)/$(csumdir)/libcsum.a
-anoubischeckdir = test/libanoubischeck
-libanoubischeck = $(top_builddir)/$(anoubischeckdir)/libanoubischeck.a
-libanoubisprotocol = $(top_builddir)/$(protocoldir)/libanoubispc.so
-libanoubischat = $(top_builddir)/$(chatdir)/libanoubischat.so
-libapn = $(top_builddir)/$(apndir)/libapn.so
-
-# set TESTS_ENVIRONMENT for checks
-RPATH = $(top_builddir)/$(bsdcompatdir):$(top_builddir)/$(csumdir):$(top_builddir)/$(protocoldir):$(top_builddir)/$(chatdir):$(top_builddir)/$(apndir)
-TESTS_ENVIRONMENT = LD_LIBRARY_PATH=$(RPATH)
+include $(top_srcdir)/src/Makefile.include
 
 noinst_PROGRAMS = test_csum
 
-test_csum_CFLAGS = \
-	-I$(top_builddir)/src \
-	-I$(top_srcdir)/include \
-	$(AM_CFLAGS) \
-	@CHECK_CFLAGS@
+TESTS_ENVIRONMENT = LD_LIBRARY_PATH=$(test_ldpath)
 
-test_csum_CPPFLAGS = \
-	-I$(top_srcdir)/$(csumdir) \
-	-I$(top_srcdir)/$(chatdir) \
-	-I$(top_srcdir)/$(protocoldir) \
-	-I$(top_srcdir)/$(anoubischeckdir)
+AM_CPPFLAGS = $(test_cppflags)
+AM_LDFLAGS = $(test_ldflags)
+LDADD = $(test_ldadd)
 
-test_csum_DEPENDENCIES =
-
-# conditionally static link of libraries to accomplish correct Code Coverage
-if GCOV_ENABLED
-test_csum_LDADD = @CHECK_LIBS@ $(csum) $(libanoubischeck) -lfl -lssl
-test_csum_LDFLAGS = \
-	$(AM_LDFLAGS) \
-	-L$(top_builddir)/$(csumdir)
-test_csum_CPPFLAGS += -DGCOV
-else
-test_csum_LDADD = @CHECK_LIBS@ $(libanoubischeck) -lfl -lssl \
-    -L$(top_builddir)/$(csumdir) -lcsum \
-    -L$(top_builddir)/$(protocoldir) -lanoubispc \
-    -L$(top_builddir)/$(chatdir) -lanoubischat \
-    -L$(top_builddir)/$(apndir) -lapn
-test_csum_LDFLAGS = $(AM_LDFLAGS) -dynamic
-endif
-
-if NEEDBSDCOMPAT
-test_csum_DEPENDENCIES += $(libbsdcompat)
-test_csum_CPPFLAGS += -I$(top_srcdir)/$(bsdcompatdir)
-test_csum_LDADD += $(libbsdcompat)
-endif
-
+test_csum_DEPENDENCIES = $(test_dependencies)
 test_csum_SOURCES = \
 	csum_testrunner.c

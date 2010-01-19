@@ -36,7 +36,7 @@
 
 #include <errno.h>
 
-#include <csum/csum.h>
+#include <anoubis_csum.h>
 
 #include "ComCsumHandler.h"
 

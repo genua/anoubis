@@ -30,11 +30,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifndef NEEDBSDCOMPAT
 #include <sys/queue.h>
-#else
-#include "queue.h"
-#endif
 
 #define __used __attribute__((unused))
 

@@ -28,7 +28,7 @@
 #include <check.h>
 #include <string.h>
 
-#include <apnvm.h>
+#include <anoubis_apnvm.h>
 
 #include "apnvm_tc_fixtures.h"
 

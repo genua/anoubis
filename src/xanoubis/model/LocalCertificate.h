@@ -28,7 +28,7 @@
 #ifndef _LOCALCERTIFICATE_H_
 #define _LOCALCERTIFICATE_H_
 
-#include <keygen.h>
+#include <anoubis_keygen.h>
 #include <wx/string.h>
 #include <wx/datetime.h>
 

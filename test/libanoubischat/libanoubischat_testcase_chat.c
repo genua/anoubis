@@ -38,7 +38,7 @@
 #include <unistd.h>
 #include <sys/wait.h>
 
-#include "anoubischat.h"
+#include "anoubis_chat.h"
 #include "config.h"
 #ifdef NEEDBSDCOMPAT
 #include <bsdcompat.h>

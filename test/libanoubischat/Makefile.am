@@ -26,48 +26,16 @@
 
 TESTS = test_libanoubischat
 
-bsdcompatdir	= src/bsdcompat
-libbsdcompat	= $(top_builddir)/$(bsdcompatdir)/libbsdcompat.a
-anoubischatdir	= src/libanoubischat
-libanoubischat	= $(top_builddir)/$(anoubischatdir)/libanoubischat.so
-libanoubischeckdir = test/libanoubischeck
-libanoubischeck    = $(top_builddir)/$(libanoubischeckdir)/libanoubischeck.a
+include $(top_srcdir)/src/Makefile.include
 
-# set TESTS_ENVIRONMENT for checks
-RPATH = $(top_builddir)/$(anoubischatdir):$(top_builddir)/$(bsdcompatdir)
-TESTS_ENVIRONMENT = LD_LIBRARY_PATH=$(RPATH)
+TESTS_ENVIRONMENT = LD_LIBRARY_PATH=$(test_ldpath)
+AM_CPPFLAGS = $(test_cppflags)
+AM_LDFLAGS = $(test_ldflags)
+LDADD = $(test_ldadd)
 
 noinst_PROGRAMS = test_libanoubischat
 
-test_libanoubischat_CFLAGS = $(AM_CFLAGS) @CHECK_CFLAGS@
-test_libanoubischat_CPPFLAGS = -I$(top_srcdir)/$(anoubischatdir) \
-	-I$(top_srcdir)/$(libanoubischeckdir)
-# We link with check.a which is compiled without -fPIE, therefore
-# we must use shared_AM_LDFLAGS in order not to link with -pie.
-test_libanoubischat_LDFLAGS = \
-	$(shared_AM_LDFLAGS) -dynamic \
-	-L$(top_builddir)/$(anoubischatdir)
-
-# conditionally static link of libraries to accomplish correct Code Coverage
-if GCOV_ENABLED
-test_libanoubischat_LDADD = \
-	@CHECK_LIBS@ \
-	$(libanoubischeck) \
-	$(top_builddir)/$(anoubischatdir)/libanoubischat.a
-test_libanoubischat_DEPENDENCIES = \
-	$(top_builddir)/$(anoubischatdir)/libanoubischat.a
-else
-test_libanoubischat_LDADD = @CHECK_LIBS@ $(libanoubischeck) -lanoubischat
-test_libanoubischat_DEPENDENCIES = $(libanoubischat)
-endif
-
-
-if NEEDBSDCOMPAT
-test_libanoubischat_DEPENDENCIES += $(libbsdcompat)
-test_libanoubischat_CPPFLAGS += -I$(top_srcdir)/$(bsdcompatdir)
-test_libanoubischat_LDADD += $(libbsdcompat)
-endif
-
+test_libanoubischat_DEPENDENCIES = $(test_dependencies)
 test_libanoubischat_SOURCES =                  \
 	libanoubischat_testcase_buffer.c       \
 	libanoubischat_testcase_core.c         \

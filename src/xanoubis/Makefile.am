@@ -26,36 +26,12 @@
 
 bin_PROGRAMS = xanoubis
 
-apndir	= src/libapn
-libapn  = $(top_builddir)/$(apndir)/libapn.a
-bsdcompatdir   = src/bsdcompat
-libbsdcompat   = $(top_builddir)/$(bsdcompatdir)/libbsdcompat.a
-libbsdcompat_so = $(top_builddir)/$(bsdcompatdir)/libbsdcompat.so
+include $(top_srcdir)/src/Makefile.include
+
 xanoubisdir    = src/xanoubis
-anoubischatdir = src/libanoubischat
-libanoubischat = $(top_builddir)/$(anoubischatdir)/libanoubischat.a
-libanoubischat_so = $(top_builddir)/$(anoubischatdir)/libanoubischat.so
-anoubisprotocoldir = src/libanoubisprotocol
-libanoubisprotocol = $(top_builddir)/$(anoubisprotocoldir)/libanoubispc.a
-libanoubisprotocol_so = $(top_builddir)/$(anoubisprotocoldir)/libanoubispc.so
-anoubissigdir = src/libanoubissig
-libanoubissig = $(top_builddir)/$(anoubissigdir)/libanoubissig.a
-libanoubissig_so = $(top_builddir)/$(anoubissigdir)/libanoubissig.so
-anoubisuidir = src/libanoubisui
-libanoubisui = $(top_builddir)/$(anoubisuidir)/libanoubisui.a
-libanoubisui_so = $(top_builddir)/$(anoubisuidir)/libanoubisui.so
 
 xanoubis_CPPFLAGS = \
-	-I$(top_builddir)/src \
-	-I$(top_srcdir)/include \
-	-I$(top_srcdir)/$(apndir) \
-	-I$(top_srcdir)/$(anoubischatdir) \
-	-I$(top_srcdir)/$(anoubisprotocoldir) \
-	-I$(top_srcdir)/$(anoubisprotocoldir)/client \
-	-I$(top_srcdir)/$(anoubissigdir) \
-	-I$(top_srcdir)/$(anoubisuidir) \
-	-I$(top_srcdir)/$(anoubisuidir)/apnvm \
-	-I$(top_srcdir)/$(anoubisuidir)/key \
+	$(anoubis_cppflags) \
 	-I$(top_srcdir)/$(xanoubisdir) \
 	-I$(top_srcdir)/$(xanoubisdir)/model \
 	-I$(top_srcdir)/$(xanoubisdir)/view  \
@@ -63,8 +39,7 @@ xanoubis_CPPFLAGS = \
 	-I$(top_srcdir)/$(xanoubisdir)/widgets \
 	-I$(top_srcdir)/$(xanoubisdir)/pattern \
 	-I$(top_srcdir)/$(xanoubisdir)/job \
-	$(WX_CPPFLAGS) \
-	$(AM_CPPFLAGS)
+	$(WX_CPPFLAGS)
 
 xanoubis_cxxflags = \
 	-fno-strict-aliasing \
@@ -75,31 +50,8 @@ xanoubis_cxxflags = \
 	$(SSL_CFLAGS)
 
 xanoubis_CXXFLAGS = \
-	$(xanoubis_cxxflags) \
-	$(AM_CXXFLAGS)
-
-xanoubis_DEPEND_LIBS = \
-	$(libapn) \
-	$(libanoubischat) \
-	$(libanoubisprotocol) \
-	$(libanoubissig) \
-	$(libanoubisui)
-
-libGUIcomponents_DEPEND_LIBS = \
-	$(libapn_so) \
-	$(libanoubischat_so) \
-	$(libanoubisprotocol_so) \
-	$(libanoubissig_so) \
-	$(libanoubisui_so)
-
-if NEEDBSDCOMPAT
-xanoubis_CPPFLAGS += -I$(top_srcdir)/$(bsdcompatdir)
-xanoubis_DEPEND_LIBS += $(libbsdcompat)
-libGUIcomponents_DEPEND_LIBS += $(libbsdcompat_so)
-endif
-
-xanoubis_DEPENDENCIES = \
-	$(xanoubis_DEPEND_LIBS)
+	$(AM_CXXFLAGS) \
+	$(xanoubis_cxxflags)
 
 xanoubis_LDFLAGS = $(AM_LDFLAGS) $(SSL_LDFLAGS)
 
@@ -111,9 +63,7 @@ xanoubis_ldadd = \
 	$(SSL_LIBS) \
 	-lfl
 
-xanoubis_LDADD = \
-	$(xanoubis_ldadd) \
-	$(xanoubis_DEPEND_LIBS)
+xanoubis_LDADD = $(xanoubis_ldadd) $(libanoubis)
 
 programdir = $(datadir)/$(bin_PROGRAMS)
 utildir = $(datadir)/$(bin_PROGRAMS)/utils
@@ -543,15 +493,15 @@ if FPIC_HACK
 libGUIcomponents_so_SOURCES =
 libGUIcomponents_so_DEPENDENCIES = $(xanoubis_OBJECTS)
 libGUIcomponents_so_LINK = \
-	$(CXX) -fstack-protector -shared -Wl,-soname,$@ \
+	$(CXX) $(shared_AM_LDFLAGS) -Wl,-soname,$@ \
 	    -o $@ $(xanoubis_OBJECTS)
 else
 libGUIcomponents_so_SOURCES  = $(xanoubis_SOURCES)
 libGUIcomponents_so_CPPFLAGS = $(xanoubis_CPPFLAGS)
-libGUIcomponents_so_CXXFLAGS = -fPIC $(shared_AM_CXXFLAGS) $(xanoubis_cxxflags)
-libGUIcomponents_so_LDFLAGS  = -fstack-protector -shared -Wl,-soname,$@ \
-	$(shared_AM_LDFLAGS) $(SSL_LDFLAGS) -fPIC
-libGUIcomponents_so_LDADD    = $(xanoubis_ldadd) $(libGUIcomponents_DEPEND_LIBS)
+libGUIcomponents_so_CXXFLAGS = $(shared_AM_CXXFLAGS) $(xanoubis_cxxflags)
+libGUIcomponents_so_LDFLAGS  = $(shared_AM_LDFLAGS) $(SSL_LDFLAGS) \
+	-Wl,-soname,$@
+libGUIcomponents_so_LDADD    = $(xanoubis_ldadd) $(libanoubis_so)
 libGUIcomponents_so_LINK     = $(CXX) $(libGUIcomponents_so_LDFLAGS) -o $@
 endif
 endif
@@ -618,17 +568,8 @@ flawfinder_FLAGS=\
 	--context
 
 # bsd lint and splint do not support C++ at all.
-splint lint:
-flawfinder: flawfinder_report
+sources_splint =
+sources_lint =
+sources_flawfinder = $(xanoubis_SOURCES:%=%_flawfinder)
 
 include $(top_srcdir)/lint/Makefile.lint
-
-flawfinder_report: $(xanoubis_SOURCES)
-	@sh $(top_builddir)/lint/flawfinder $(DEBUG) -o $@ -- \
-		$(flawfinder_FLAGS) $^
-
-clean-local:
-	@rm -f $(xanoubis_SOURCES_lint)
-	@rm -f $(xanoubis_SOURCES_splint)
-	@rm -f $(xanoubis_SOURCES_flawfinder)
-	@rm -f flawfinder_report

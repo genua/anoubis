@@ -100,6 +100,7 @@ int /*@alt void@*/ vasprintf(/*@out@*/ char **strp, const char *fmt, va_list)
     /*@allocates *strp@*/ ;
 
 
+#ifndef DT_UNKNOWN
 /* the following was copied from dev:usr/include/dirent.h */
 /* File types for `d_type'.  */
 enum
@@ -127,6 +128,7 @@ enum
 /* Convert between stat structure types and directory types.  */
 # define IFTODT(mode)	(((mode) & 0170000) >> 12)
 # define DTTOIF(dirtype)	((dirtype) << 12)
+#endif
 
 /* copied from /usr/include/bits/socket.h */
 

@@ -33,6 +33,7 @@
 
 #include <openssl/sha.h>
 
+#include <config.h>
 #ifdef NEEDBSDCOMPAT
 #include <linux/anoubis.h>
 #include <bsdcompat.h>

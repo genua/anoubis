@@ -36,13 +36,13 @@
 
 #include <poll.h>
 
-#include <anoubischat.h>
+#include <anoubis_chat.h>
 #include <anoubis_protocol.h>
 #include <anoubis_client.h>
 #include <anoubis_msg.h>
 #include <anoubis_transaction.h>
 #include <anoubis_dump.h>
-#include <auth/auth.h>
+#include <anoubis_auth.h>
 
 #include "AnEvents.h"
 #include "ComTask.h"

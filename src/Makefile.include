@@ -1,0 +1,96 @@
+# Copyright (c) 2007 GeNUA mbH <info@genua.de>
+#
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+# OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
+# TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+# PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+# LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+
+libanoubisdir      = src/libanoubis
+libanoubisbuilddir = $(top_builddir)/$(libanoubisdir)
+libanoubissrcdir   = $(top_srcdir)/$(libanoubisdir)
+libanoubis        = $(libanoubisbuilddir)/libanoubis.a
+libanoubis_so     = $(libanoubisbuilddir)/libanoubis.so
+libanoubisinclude = $(libanoubissrcdir)/include
+
+libanoubischeckdir      = test/libanoubischeck
+libanoubischeckbuilddir = $(top_builddir)/$(libanoubischeckdir)
+libanoubischecksrcdir   = $(top_srcdir)/$(libanoubischeckdir)
+libanoubischeck         = $(libanoubischeckbuilddir)/libanoubischeck.a
+libanoubischeck_so      = $(libanoubischeckbuilddir)/libanoubischeck.so
+libanoubischeckinclude  = $(libanoubischecksrcdir)
+
+if NEEDBSDCOMPAT
+bsdcompat_cppflags = -I$(libanoubisinclude)/bsdcompat
+else
+bsdcompat_cppflags =
+endif
+
+libanoubis_cppflags  = -I$(libanoubisinclude) $(bsdcompat_cppflags)
+
+basic_cppflags = $(prog_AM_CPPFLAGS) \
+	-I$(top_builddir)/src \
+	-I$(top_srcdir)/include
+
+anoubis_cppflags = $(libanoubis_cppflags) $(basic_cppflags)
+
+# define standard variables for test programs:
+#   test_cppflags
+#   test_ldflags
+#   test_ldadd
+#   test_dependencies
+#
+# define standard variables for test shared libraries:
+#   test_so_ldflags
+
+test_cppflags = $(anoubis_cppflags) \
+	-I$(libanoubischeckinclude) \
+	@CHECK_CFLAGS@
+
+test_ldflags = \
+	$(prog_AM_LDFLAGS) \
+	-L$(libanoubischeckbuilddir) \
+	-L$(libanoubisbuilddir) \
+	$(SSL_LIBS) \
+	-dynamic
+
+test_so_ldflags = \
+	$(shared_AM_LDFLAGS) \
+	-L$(libanoubischeckbuilddir) \
+	-L$(libanoubisbuilddir) \
+	$(SSL_LIBS) \
+	-dynamic
+
+# conditionally static link of libraries to accomplish correct Code Coverage
+if GCOV_ENABLED
+libanoubis_dependencies = $(libanoubis)
+libanoubis_ldadd = $(libanoubis)
+else
+libanoubis_dependencies = $(libanoubis_so)
+# we can't ldadd the so file directly, because then the relative path to the
+# .so file will be put into the executable :-(
+libanoubis_ldadd = -lanoubis
+endif
+test_ldadd = @CHECK_LIBS@ $(libanoubischeck) $(libanoubis_ldadd)
+# dependency must be declared manually due to automake bug
+test_dependencies = $(libanoubischeck) $(libanoubis_dependencies)
+
+test_ldpath   = $(libanoubischeckbuilddir):$(libanoubisbuilddir)

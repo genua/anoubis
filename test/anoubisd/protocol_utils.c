@@ -56,7 +56,7 @@
 #include <anoubis_transaction.h>
 #include <anoubis_dump.h>
 
-#include <anoubischat.h>
+#include <anoubis_chat.h>
 #include <protocol_utils.h>
 
 void

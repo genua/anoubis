@@ -28,7 +28,7 @@
 #include <stdlib.h>
 #include <assert.h>
 
-#include <rbtree.h>
+#include <anoubis_rbtree.h>
 
 static int
 verify_one(struct rb_entry *t, unsigned long mi, unsigned long ma)

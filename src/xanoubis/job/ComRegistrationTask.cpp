@@ -36,8 +36,8 @@
 #include <dev/anoubis.h>
 #endif
 
-#include <client/anoubis_client.h>
-#include <client/anoubis_transaction.h>
+#include <anoubis_client.h>
+#include <anoubis_transaction.h>
 
 #include "ComRegistrationTask.h"
 #include "TaskEvent.h"

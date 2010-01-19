@@ -36,8 +36,8 @@
 
 #include <anoubis_protocol.h>
 #include <anoubis_sig.h>
-#include <client/anoubis_client.h>
-#include <client/anoubis_transaction.h>
+#include <anoubis_client.h>
+#include <anoubis_transaction.h>
 
 #include "ComPolicySendTask.h"
 #include "PolicyRuleSet.h"

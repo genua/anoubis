@@ -26,7 +26,7 @@
  */
 
 #include <stdio.h>
-#include "keygen.h"
+#include "anoubis_keygen.h"
 
 /*
  * Arguments are:

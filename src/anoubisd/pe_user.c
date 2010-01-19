@@ -56,9 +56,10 @@
 #include <linux/anoubis.h>
 #endif
 #ifdef OPENBSD
-#include <sys/queue.h>
 #include <dev/anoubis.h>
 #endif
+
+#include <sys/queue.h>
 
 #include <anoubis_protocol.h>
 #include <anoubis_sig.h>

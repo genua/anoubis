@@ -33,11 +33,7 @@
 #include <ctype.h>
 #include <sys/types.h>
 
-#ifndef NEEDBSDCOMPAT
 #include <sys/queue.h>
-#else
-#include <queue.h>
-#endif
 
 #include <anoubisd.h>
 #include <sfs.h>

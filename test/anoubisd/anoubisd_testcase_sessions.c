@@ -39,7 +39,7 @@
 #include <unistd.h>
 #include <sys/wait.h>
 
-#include "anoubischat.h"
+#include "anoubis_chat.h"
 #include <anoubis_protocol.h>
 #include <anoubis_client.h>
 #include <anoubis_msg.h>

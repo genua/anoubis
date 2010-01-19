@@ -25,41 +25,21 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ##########################################################################
 
-keydir		= src/libanoubisui/key
-keytestdir	= test/libanoubisui/key
-key		= $(top_builddir)/$(keydir)/libkey.a
-anoubischeckdir	= test/libanoubischeck
-anoubischeck	= $(top_builddir)/$(anoubischeckdir)/libanoubischeck.a
-bsdcompatdir	= src/bsdcompat
-
 noinst_PROGRAMS = libanoubisui_key_tester test_subject
 TESTS = test_subject
 
-# Make sure that test find their libraries when run with make check
-RPATH = $(top_builddir)/$(bsdcompatdir)
-TESTS_ENVIRONMENT = LD_LIBRARY_PATH=$(RPATH) KEYDIR=$(top_srcdir)/$(keytestdir)
+include $(top_srcdir)/src/Makefile.include
 
-libanoubisui_key_tester_CPPFLAGS = -I$(top_srcdir)/$(keydir)
-test_subject_CPPFLAGS =	\
-	-I$(top_srcdir)/$(keydir) \
-	-I$(top_srcdir)/$(anoubischeckdir)
-test_subject_CFLAGS = $(AM_CFLAGS) @CHECK_CFLAGS@ @SSL_CFLAGS@
+TESTS_ENVIRONMENT = LD_LIBRARY_PATH=$(test_ldpath) KEYDIR=$(srcdir)
 
-libanoubisui_key_tester_CFLAGS = $(AM_CFLAGS) @SSL_CFLAGS@
-libanoubisui_key_tester_LDADD = $(key) @SSL_LIBS@
-libanoubisui_key_tester_LDFLAGS = $(AM_LDFLAGS) -L$(top_builddir)/$(keydir)
-libanoubisui_key_tester_CPPFLAGS += -DGCOV
+AM_CPPFLAGS = $(test_cppflags)
+AM_LDFLAGS = $(test_ldflags)
+LDADD = $(test_ldadd)
 
-test_subject_LDADD = $(key) $(anoubischeck) @CHECK_LIBS@ @SSL_LIBS@
-test_subject_LDFLAGS = $(AM_LDFLAGS) -L$(top_builddir)/$(keydir)
-test_subject_CPPFLAGS += -DGCOV
-
-if NEEDBSDCOMPAT
-libanoubisui_key_tester_LDFLAGS += -L$(top_builddir)/src/bsdcompat -lbsdcompat
-test_subject_LDFLAGS += -L$(top_builddir)/src/bsdcompat -lbsdcompat
-endif
-
+libanoubisui_key_tester_DEPENDENCIES = $(test_dependencies)
 libanoubisui_key_tester_SOURCES = libanoubisui_key_tester.c
+
+test_subject_DEPENDENCIES = $(test_dependencies)
 test_subject_SOURCES = test_subject.c
 
 EXTRA_DIST = keys/complete.key keys/complete.cert \

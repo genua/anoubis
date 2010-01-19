@@ -25,57 +25,17 @@
 #
 
 TESTS = test_libanoubissig
-
-bsdcompatdir	= src/bsdcompat
-libbsdcompat	= $(top_builddir)/$(bsdcompatdir)/libbsdcompat.a
-anoubissigdir	= src/libanoubissig
-libanoubissig	= $(top_builddir)/$(anoubissigdir)/libanoubissig.a
-anoubischeckdir = test/libanoubischeck
-libanoubischeck = $(top_builddir)/$(anoubischeckdir)/libanoubischeck.a
-
-# set TESTS_ENVIRONMENT for checks
-RPATH = $(top_builddir)/$(anoubissigdir):$(top_builddir)/$(bsdcompatdir)
-TESTS_ENVIRONMENT = LD_LIBRARY_PATH=$(RPATH)
-
 noinst_PROGRAMS = test_libanoubissig
 
-test_libanoubissig_CFLAGS = $(AM_CFLAGS) @CHECK_CFLAGS@ \
-			    -I$(top_srcdir)/include
-test_libanoubissig_CPPFLAGS = -I$(top_srcdir)/$(anoubissigdir) \
-			      -I$(top_srcdir)/include \
-			      -I$(top_srcdir)/$(anoubischeckdir)
+include $(top_srcdir)/src/Makefile.include
 
-# We link with check.a which is compiled without -fPIE, therefore
-# we must use shared_AM_LDFLAGS in order not to link with -pie.
-test_libanoubissig_LDFLAGS = \
-	$(shared_AM_LDFLAGS) -dynamic \
-	-L$(top_builddir)/$(anoubissigdir)
+TESTS_ENVIRONMENT = LD_LIBRARY_PATH=$(test_ldpath)
 
-# conditionally static link of libraries to accomplish correct Code Coverage
-if GCOV_ENABLED
-test_libanoubissig_LDADD = \
-	@CHECK_LIBS@ \
-	$(libanoubischeck) \
-	$(SSL_LIBS) \
-	$(top_builddir)/$(anoubissigdir)/libanoubissig.a
-test_libanoubissig_DEPENDENCIES = \
-	$(top_builddir)/$(anoubissigdir)/libanoubissig.a
-else
-test_libanoubissig_LDADD = \
-	@CHECK_LIBS@ \
-	$(libanoubischeck) \
-	-lanoubissig \
-	$(SSL_LIBS)
-test_libanoubissig_DEPENDENCIES = $(libanoubissig)
-endif
+AM_CPPFLAGS = $(test_cppflags)
+AM_LDFLAGS = $(test_ldflags)
+LDADD = $(test_ldadd)
 
-
-if NEEDBSDCOMPAT
-test_libanoubissig_DEPENDENCIES += $(libbsdcompat)
-test_libanoubissig_CPPFLAGS += -I$(top_srcdir)/$(bsdcompatdir)
-test_libanoubissig_LDADD += $(libbsdcompat)
-endif
-
+test_libanoubissig_DEPENDENCIES = $(test_dependencies)
 test_libanoubissig_SOURCES =                  \
 	libanoubissig_testcase_signature.c    \
 	libanoubissig_testcase_policy.c    \

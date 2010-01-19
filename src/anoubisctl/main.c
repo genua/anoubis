@@ -77,9 +77,9 @@
 #include <anoubis_transaction.h>
 #include <anoubis_dump.h>
 
-#include <anoubischat.h>
-#include <apnvm/apnvm.h>
-#include <auth/auth.h>
+#include <anoubis_chat.h>
+#include <anoubis_apnvm.h>
+#include <anoubis_auth.h>
 
 #include "anoubisctl.h"
 #include "apn.h"

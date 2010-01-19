@@ -25,10 +25,6 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ##########################################################################
 
-if NEEDBSDCOMPAT
-BSDCOMPAT=bsdcompat
-endif
-
 if XANOUBIS
 GUI=xanoubis
 endif
@@ -37,8 +33,7 @@ dist_bin_SCRIPTS = anoubis_keygen/anoubis-keygen
 dist_sbin_SCRIPTS = anoubis_keyinstall/anoubis-keyinstall
 
 # Note:  Libraries must come first as applications might depend on them.
-SUBDIRS = $(BSDCOMPAT) libapn libanoubischat libanoubisprotocol \
-	libanoubisui libanoubissig anoubisd $(GUI) anoubisctl sfssig
+SUBDIRS = libanoubis anoubisd $(GUI) anoubisctl sfssig
 
 flawfinder:
 	for t in $(SUBDIRS); do cd $$t && make $@ && cd ..; done

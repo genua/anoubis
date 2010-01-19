@@ -101,7 +101,12 @@ linting: $(REPORTS)
 	@echo linting done
 
 if GCOV_ENABLED
+# automake supports source files in subdirs and generating source
+# files with yacc/lex. But it does not support generating source
+# files in subdirs with yacc/lex :-(
+# As a workaround, link *.[yl] so that lcov finds them
 lcov: check
+	ln src/libanoubis/*/*.[ly] src/libanoubis/*/*/*.[ly] src/libanoubis
 	$(LCOV_LCOV) --directory . --capture \
 	    --output-file anoubis.info; \
 	LANG=C $(LCOV_GENHTML) --prefix $(CURDIR) \
@@ -112,6 +117,8 @@ lcov: check
 lcov-clean:
 	$(RM) anoubis.info
 	$(RM) -r $(LCOV_OUTPUT)
+	for f in src/libanoubis/*/*.[ly] src/libanoubis/*/*/*.[ly] ; do \
+	    rm -f src/libanoubis$${f%%*/} ; done
 endif
 
 dist-hook:

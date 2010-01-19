@@ -32,11 +32,10 @@
 #include <anoubisd.h>
 
 #ifdef LINUX
-#include <queue.h>
 #include <bsdcompat.h>
-#else
-#include <sys/queue.h>
 #endif
+
+#include <sys/queue.h>
 
 #include <openssl/evp.h>
 

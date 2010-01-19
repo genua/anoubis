@@ -50,7 +50,7 @@
 #include <anoubis_policy.h>
 #include <anoubis_dump.h>
 
-#include <anoubischat.h>
+#include <anoubis_chat.h>
 #ifdef NEEDBSDCOMPAT
 #include <bsdcompat.h>
 #endif

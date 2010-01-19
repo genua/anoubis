@@ -57,7 +57,7 @@
 #include <anoubis_dump.h>
 #include <protocol_utils.h>
 
-#include <anoubischat.h>
+#include <anoubis_chat.h>
 
 static struct achat_channel	*channel = NULL;
 struct anoubis_client		*client = NULL;

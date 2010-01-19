@@ -56,7 +56,7 @@ fi
 dnl os specific library replacements
 AC_SEARCH_LIBS([inet_net_pton], [resolv], \
 	AC_DEFINE([__USE_MISC], [1], [for inet_net_pton]))
-AC_CONFIG_LIBOBJ_DIR([src/bsdcompat])
+AC_CONFIG_LIBOBJ_DIR([src/libanoubis/bsdcompat])
 AC_REPLACE_FUNCS([strlcat strlcpy strtonum getpeereid \
 	inet_net_pton setproctitle])
 AM_CONDITIONAL([NEEDBSDCOMPAT], [test -n "$LIBOBJS"])
@@ -137,19 +137,10 @@ AC_CONFIG_FILES([
 	Makefile
 	src/Makefile
 	src/anoubisd/Makefile
-	src/libanoubischat/Makefile
-	src/libanoubisprotocol/Makefile
-	src/libanoubisui/Makefile
-	src/libanoubissig/Makefile
-	src/libanoubisui/apnvm/Makefile
-	src/libanoubisui/csum/Makefile
-	src/libanoubisui/key/Makefile
-	src/libanoubisui/auth/Makefile
-	src/bsdcompat/Makefile
+	src/libanoubis/Makefile
 	src/xanoubis/Makefile
 	src/anoubisctl/Makefile
 	src/sfssig/Makefile
-	src/libapn/Makefile
 	support/Makefile
 	test/Makefile
 	test/libanoubischeck/Makefile
@@ -368,11 +359,11 @@ dnl
 AM_LDFLAGS="-Wl,-z,now $AM_LDFLAGS"
 
 dnl
-dnl save AM_*FLAGS without -fPIE/-pie for use in shared libraries
+dnl save modified AM_*FLAGS for use in shared libraries
 dnl
-shared_AM_CFLAGS=$AM_CFLAGS
-shared_AM_CXXFLAGS=$AM_CXXFLAGS
-shared_AM_LDFLAGS=$AM_LDFLAGS
+shared_AM_CFLAGS="-fPIC -shared $AM_CFLAGS"
+shared_AM_CXXFLAGS="-fPIC -shared $AM_CXXFLAGS"
+shared_AM_LDFLAGS="-shared $AM_LDFLAGS"
 
 dnl check if compiler can create position independent executables
 dnl this must be the last change of AM_*FLAGS
@@ -384,6 +375,17 @@ AX_CHECK_COMPILER_FLAGS(-fPIE,
 	AM_LDFLAGS="-pie $AM_LDFLAGS"
 ])
 
+dnl save copy of standard compiler flags, needed for automake in some
+dnl cases to avoid recursion
+dnl
+prog_AM_CFLAGS="$AM_CFLAGS"
+prog_AM_CXXFLAGS="$AM_CXXFLAGS"
+prog_AM_LDFLAGS="$AM_LDFLAGS"
+
+
+AC_SUBST(prog_AM_CFLAGS)
+AC_SUBST(prog_AM_CXXFLAGS)
+AC_SUBST(prog_AM_LDFLAGS)
 AC_SUBST(shared_AM_CFLAGS)
 AC_SUBST(shared_AM_CXXFLAGS)
 AC_SUBST(shared_AM_LDFLAGS)

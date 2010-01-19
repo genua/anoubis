@@ -28,7 +28,7 @@
 #include <check.h>
 #include <string.h>
 
-#include "anoubischat.h"
+#include "anoubis_chat.h"
 
 START_TEST(tc_recvmsg_parameter)
 {

@@ -38,12 +38,7 @@
 
 #include <sys/param.h>
 #include <sys/socket.h>
-
-#ifndef LINUX
 #include <sys/queue.h>
-#else
-#include <queue.h>
-#endif
 
 #include <netinet/in.h>
 #include <arpa/inet.h>

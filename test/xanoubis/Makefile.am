@@ -50,56 +50,31 @@ TESTS = \
 noinst_PROGRAMS = test_xanoubis_server testSuite_JobCtrl $(TESTS)
 endif
 
-uidir		   = src/libanoubisui
-apndir		   = src/libapn
-xanoubisdir	   = src/xanoubis
-bsdcompatdir	   = src/bsdcompat
-anoubischatdir	   = src/libanoubischat
-anoubisprotocoldir = src/libanoubisprotocol
-anoubissigdir      = src/libanoubissig
-anoubischeckdir    = test/libanoubischeck
+xanoubisdir       = src/xanoubis
+xanoubisbuilddir  = $(top_builddir)/$(xanoubisdir)
+xanoubissrcdir    = $(top_srcdir)/$(xanoubisdir)
+libGUIcomponents  = $(xanoubisbuilddir)/libGUIcomponents.so
 
-libanoubisui	  = $(top_builddir)/$(uidir)/libanoubisui.a
-libapn		  = $(top_builddir)/$(apndir)/libapn.a
-libbsdcompat	  = $(top_builddir)/$(bsdcompatdir)/libbsdcompat.a
-libanoubischat	  = $(top_builddir)/$(anoubischatdir)/libanoubischat.a
-libprotocolserver = $(top_builddir)/$(anoubisprotocoldir)/libanoubisps.a
-libprotocolclient = $(top_builddir)/$(anoubisprotocoldir)/libanoubispc.a
-libanoubissig     = $(top_builddir)/$(anoubissigdir)/libanoubissig.a
-libGUIcomponents  = $(top_builddir)/$(xanoubisdir)/libGUIcomponents.so
-libanoubischeck   = $(top_builddir)/$(anoubischeckdir)/libanoubischeck.a
+include $(top_srcdir)/src/Makefile.include
 
-libanouibisui_CPPFLAGS = \
-	-I$(top_srcdir)/$(uidir) \
-	-I$(top_srcdir)/$(uidir)/key \
-	-I$(top_srcdir)/$(uidir)/auth
+RPATH = $(test_ldpath):$(xanoubisbuilddir)
+TESTS_ENVIRONMENT = LD_LIBRARY_PATH=$(RPATH)
 
-libapn_CPPFLAGS = -I$(top_srcdir)/$(apndir)
-libbsdcompat_CPPFLAGS = -I$(top_srcdir)/$(bsdcompatdir)
-libanoubischat_CPPFLAGS = -I$(top_srcdir)/$(anoubischatdir)
-libprotocolserver_CPPFLAGS = \
-	-I$(top_srcdir)/$(anoubisprotocoldir) \
-	-I$(top_srcdir)/$(anoubisprotocoldir)/server
-libprotocolclient_CPPFLAGS = \
-	-I$(top_srcdir)/$(anoubisprotocoldir) \
-	-I$(top_srcdir)/$(anoubisprotocoldir)/client
-libanoubissig_CPPFLAGS = -I$(top_srcdir)/$(anoubissigdir)
+AM_CPPFLAGS = $(test_cppflags)
+AM_LDFLAGS = $(test_ldflags) -L$(xanoubisbuilddir)
+LDADD = $(test_ldadd)
+
 libGUIcomponents_CPPFLAGS = \
-	$(libanouibisui_CPPFLAGS) \
-	$(libapn_CPPFLAGS) \
-	$(libanoubischat_CPPFLAGS) \
-	$(libprotocolclient_CPPFLAGS) \
-	$(libanoubissig_CPPFLAGS) \
-	-I$(top_srcdir)/include \
-	-I$(top_srcdir)/$(xanoubisdir) \
-	-I$(top_srcdir)/$(xanoubisdir)/model \
-	-I$(top_srcdir)/$(xanoubisdir)/view \
-	-I$(top_srcdir)/$(xanoubisdir)/control \
-	-I$(top_srcdir)/$(xanoubisdir)/pattern \
-	-I$(top_srcdir)/$(xanoubisdir)/job \
-	-I$(top_srcdir)/$(xanoubisdir)/widgets \
-	-I$(top_srcdir)/$(anoubischeckdir) \
+	$(AM_CPPFLAGS) \
+	-I$(xanoubissrcdir) \
+	-I$(xanoubissrcdir)/model \
+	-I$(xanoubissrcdir)/view \
+	-I$(xanoubissrcdir)/control \
+	-I$(xanoubissrcdir)/pattern \
+	-I$(xanoubissrcdir)/job \
+	-I$(xanoubissrcdir)/widgets \
 	$(WX_CPPFLAGS)
+
 libGUIcomponents_CXXFLAGS = \
 	-fno-strict-aliasing \
 	$(AM_CXXFLAGS) \
@@ -108,19 +83,14 @@ libGUIcomponents_CXXFLAGS = \
 	$(GLIB_CFLAGS) \
 	$(NOTIFY_CFLAGS) \
 	$(SSL_CFLAGS)
+
 libGUIcomponents_DEPENDS = \
 	$(libGUIcomponents) \
-	$(libanoubischat) \
-	$(libprotocolclient) \
-	$(libanoubissig) \
-	$(libapn) \
-	$(libanoubisui)
+	$(libanoubis_so) \
+	$(libanoubischeck)
+
 libGUIcomponents_LDADD = \
-	$(libanoubischat) \
-	$(libprotocolclient) \
-	$(libanoubissig) \
-	$(libapn) \
-	$(libanoubisui) \
+	-lanoubis \
 	$(libanoubischeck) \
 	@WX_LIBS@ \
 	@GTK_LIBS@ \
@@ -128,34 +98,6 @@ libGUIcomponents_LDADD = \
 	@NOTIFY_LIBS@ \
 	$(SSL_LIBS)
 
-RPATH = $(top_builddir)/$(xanoubisdir)
-TESTS_ENVIRONMENT = LD_LIBRARY_PATH=$(RPATH)
-
-test_xanoubis_server_CFLAGS = $(AM_CFLAGS) @CHECK_CFLAGS@
-test_xanoubis_server_CPPFLAGS = \
-	-I$(top_srcdir)/include \
-	-I$(top_srcdir)/$(anoubischeckdir) \
-	$(libanoubischat_CPPFLAGS) \
-	$(libprotocolserver_CPPFLAGS) \
-	-l$(libapn)
-
-test_xanoubis_server_DEPENDENCIES = \
-	$(libanoubischat) \
-	$(libprotocolserver) \
-	$(libapn)
-
-if NEEDBSDCOMPAT
-test_xanoubis_server_CPPFLAGS += $(libbsdcompat_CPPFLAGS)
-test_xanoubis_server_DEPENDENCIES += $(libbsdcompat)
-endif
-
-test_xanoubis_server_LDADD = \
-	$(test_xanoubis_server_DEPENDENCIES) \
-	$(libanoubischeck) @CHECK_LIBS@
-
-# We link with check.a which is compiled without -fPIE, therefore
-# we must use shared_AM_LDFLAGS in order not to link with -pie.
-test_xanoubis_server_LDFLAGS = $(shared_AM_LDFLAGS)
 
 test_xanoubis_server_SOURCES = \
 	xanoubis_dummyserver_testrunner.c \
@@ -167,18 +109,11 @@ test_xanoubis_server_SOURCES = \
 #
 testSuite_Patterns_CPPFLAGS = $(libGUIcomponents_CPPFLAGS)
 testSuite_Patterns_CXXFLAGS = $(libGUIcomponents_CXXFLAGS) @CHECK_CFLAGS@
-testSuite_Patterns_LDFLAGS = $(shared_AM_LDFLAGS) -dynamic -L $(RPATH)
 testSuite_Patterns_DEPENDENCIES = $(libGUIcomponents_DEPENDS)
 testSuite_Patterns_LDADD = \
 	-lGUIcomponents \
 	$(libGUIcomponents_LDADD) \
 	@CHECK_LIBS@
-
-if NEEDBSDCOMPAT
-testSuite_Patterns_CPPFLAGS += -I$(top_srcdir)/$(bsdcompatdir)
-testSuite_Patterns_DEPENDENCIES += $(libbsdcompat)
-testSuite_Patterns_LDADD += $(libbsdcompat)
-endif
 
 testSuite_Patterns_SOURCES = \
 	testrunner.cpp \
@@ -192,18 +127,11 @@ testSuite_Patterns_SOURCES = \
 #
 testSuite_Profiles_CPPFLAGS = $(libGUIcomponents_CPPFLAGS)
 testSuite_Profiles_CXXFLAGS = $(libGUIcomponents_CXXFLAGS) @CHECK_CFLAGS@
-testSuite_Profiles_LDFLAGS = $(shared_AM_LDFLAGS) -dynamic -L $(RPATH)
 testSuite_Profiles_DEPENDENCIES = $(libGUIcomponents_DEPENDS)
 testSuite_Profiles_LDADD = \
 	-lGUIcomponents \
 	$(libGUIcomponents_LDADD) \
 	@CHECK_LIBS@
-
-if NEEDBSDCOMPAT
-testSuite_Profiles_CPPFLAGS += -I$(top_srcdir)/$(bsdcompatdir)
-testSuite_Profiles_DEPENDENCIES += $(libbsdcompat)
-testSuite_Profiles_LDADD += $(libbsdcompat)
-endif
 
 testSuite_Profiles_SOURCES = \
 	testrunner.cpp \
@@ -215,18 +143,11 @@ testSuite_Profiles_SOURCES = \
 #
 testSuite_Policies_CPPFLAGS = $(libGUIcomponents_CPPFLAGS)
 testSuite_Policies_CXXFLAGS = $(libGUIcomponents_CXXFLAGS) @CHECK_CFLAGS@
-testSuite_Policies_LDFLAGS = $(shared_AM_LDFLAGS) -dynamic -L $(RPATH)
 testSuite_Policies_DEPENDENCIES = $(libGUIcomponents_DEPENDS)
 testSuite_Policies_LDADD = \
 	-lGUIcomponents \
 	$(libGUIcomponents_LDADD) \
 	@CHECK_LIBS@
-
-if NEEDBSDCOMPAT
-testSuite_Policies_CPPFLAGS += -I$(top_srcdir)/$(bsdcompatdir)
-testSuite_Policies_DEPENDENCIES += $(libbsdcompat)
-testSuite_Policies_LDADD += $(libbsdcompat)
-endif
 
 testSuite_Policies_SOURCES = \
 	testrunner.cpp \
@@ -254,18 +175,11 @@ testSuite_Policies_SOURCES = \
 #
 testSuite_Sfs_CPPFLAGS = $(libGUIcomponents_CPPFLAGS)
 testSuite_Sfs_CXXFLAGS = $(libGUIcomponents_CXXFLAGS) @CHECK_CFLAGS@
-testSuite_Sfs_LDFLAGS = $(shared_AM_LDFLAGS) -dynamic -L $(RPATH)
 testSuite_Sfs_DEPENDENCIES = $(libGUIcomponents_DEPENDS)
 testSuite_Sfs_LDADD = \
 	-lGUIcomponents \
 	$(libGUIcomponents_LDADD) \
 	@CHECK_LIBS@
-
-if NEEDBSDCOMPAT
-testSuite_Sfs_CPPFLAGS += -I$(top_srcdir)/$(bsdcompatdir)
-testSuite_Sfs_DEPENDENCIES += $(libbsdcompat)
-testSuite_Sfs_LDADD += $(libbsdcompat)
-endif
 
 testSuite_Sfs_SOURCES = \
 	testrunner.cpp \
@@ -277,18 +191,11 @@ testSuite_Sfs_SOURCES = \
 #
 testSuite_Key_CPPFLAGS = $(libGUIcomponents_CPPFLAGS) $(libanouibisui_CPPFLAGS)
 testSuite_Key_CXXFLAGS = $(libGUIcomponents_CXXFLAGS) @CHECK_CFLAGS@
-testSuite_Key_LDFLAGS = $(shared_AM_LDFLAGS) -dynamic -L $(RPATH)
 testSuite_Key_DEPENDENCIES = $(libGUIcomponents_DEPENDS)
 testSuite_Key_LDADD = \
 	-lGUIcomponents \
 	$(libGUIcomponents_LDADD) \
 	@CHECK_LIBS@
-
-if NEEDBSDCOMPAT
-testSuite_Key_CPPFLAGS += -I$(top_srcdir)/$(bsdcompatdir)
-testSuite_Key_DEPENDENCIES += $(libbsdcompat)
-testSuite_Key_LDADD += $(libbsdcompat)
-endif
 
 testSuite_Key_SOURCES = \
 	testrunner.cpp \
@@ -300,20 +207,17 @@ testSuite_Key_SOURCES = \
 #
 # Testsuite: JobCtrl
 #
-testSuite_JobCtrl_CPPFLAGS = $(libGUIcomponents_CPPFLAGS) $(libanouibisui_CPPFLAGS)
-testSuite_JobCtrl_CXXFLAGS = $(libGUIcomponents_CXXFLAGS) @CHECK_CFLAGS@
-testSuite_JobCtrl_LDFLAGS = $(shared_AM_LDFLAGS) -dynamic -L $(RPATH)
+testSuite_JobCtrl_CPPFLAGS = \
+	$(libGUIcomponents_CPPFLAGS) \
+	$(libanouibisui_CPPFLAGS)
+testSuite_JobCtrl_CXXFLAGS = \
+	$(libGUIcomponents_CXXFLAGS) \
+	@CHECK_CFLAGS@
 testSuite_JobCtrl_DEPENDENCIES = $(libGUIcomponents_DEPENDS)
 testSuite_JobCtrl_LDADD = \
 	-lGUIcomponents \
 	$(libGUIcomponents_LDADD) \
 	@CHECK_LIBS@
-
-if NEEDBSDCOMPAT
-testSuite_JobCtrl_CPPFLAGS += -I$(top_srcdir)/$(bsdcompatdir) -DNEEDBSDCOMPAT
-testSuite_JobCtrl_DEPENDENCIES += $(libbsdcompat)
-testSuite_JobCtrl_LDADD += $(libbsdcompat)
-endif
 
 testSuite_JobCtrl_SOURCES = \
 	testrunner.cpp \
@@ -333,18 +237,11 @@ testSuite_JobCtrl_SOURCES = \
 #
 testSuite_Notifications_CPPFLAGS = $(libGUIcomponents_CPPFLAGS)
 testSuite_Notifications_CXXFLAGS = $(libGUIcomponents_CXXFLAGS) @CHECK_CFLAGS@
-testSuite_Notifications_LDFLAGS = $(shared_AM_LDFLAGS) -dynamic -L $(RPATH)
 testSuite_Notifications_DEPENDENCIES = $(libGUIcomponents_DEPENDS)
 testSuite_Notifications_LDADD = \
 	-lGUIcomponents \
 	$(libGUIcomponents_LDADD) \
 	@CHECK_LIBS@
-
-if NEEDBSDCOMPAT
-testSuite_Notifications_CPPFLAGS += -I$(top_srcdir)/$(bsdcompatdir)
-testSuite_Notifications_DEPENDENCIES += $(libbsdcompat)
-testSuite_Notifications_LDADD += $(libbsdcompat)
-endif
 
 testSuite_Notifications_SOURCES = \
 	testrunner.cpp \
@@ -356,18 +253,11 @@ testSuite_Notifications_SOURCES = \
 #
 testSuite_Config_CPPFLAGS = $(libGUIcomponents_CPPFLAGS)
 testSuite_Config_CXXFLAGS = $(libGUIcomponents_CXXFLAGS) @CHECK_CFLAGS@
-testSuite_Config_LDFLAGS = $(shared_AM_LDFLAGS) -dynamic -L $(RPATH)
 testSuite_Config_DEPENDENCIES = $(libGUIcomponents_DEPENDS)
 testSuite_Config_LDADD = \
 	-lGUIcomponents \
 	$(libGUIcomponents_LDADD) \
 	@CHECK_LIBS@
-
-if NEEDBSDCOMPAT
-testSuite_Config_CPPFLAGS += -I$(top_srcdir)/$(bsdcompatdir)
-testSuite_Config_DEPENDENCIES += $(libbsdcompat)
-testSuite_Config_LDADD += $(libbsdcompat)
-endif
 
 testSuite_Config_SOURCES = \
 	testrunner.cpp \

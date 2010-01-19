@@ -29,52 +29,15 @@ TESTS = test_libapn test_printing test_insertcopy test_rbtree
 noinst_PROGRAMS = test_libapn test_printing test_insertcopy test_rbtree \
 	apnedit_helper
 
-libapndir       = src/libapn
-bsdcompatdir    = src/bsdcompat
-anoubischeckdir = test/libanoubischeck
-anoubisprotodir	= src/libanoubisprotocol
-libapn		= $(top_builddir)/$(libapndir)/libapn.so
-libbsdcompat    = $(top_builddir)/$(bsdcompatdir)/libbsdcompat.a
-libanoubischeck = $(top_builddir)/$(anoubischeckdir)/libanoubischeck.a
+include $(top_srcdir)/src/Makefile.include
 
-# set TESTS_ENVIRONMENT for checks
-RPATH = $(top_builddir)/$(libapndir):$(top_builddir)/$(bsdcompatdir)
-TESTS_ENVIRONMENT = LD_LIBRARY_PATH=$(RPATH)
+TESTS_ENVIRONMENT = LD_LIBRARY_PATH=$(test_ldpath)
 
-test_libapn_CPPFLAGS = \
-	-I$(top_srcdir)/$(libapndir) \
-	-I$(top_srcdir)/$(bsdcompatdir) \
-	-I$(top_srcdir)/include \
-	-I$(top_srcdir)/$(anoubischeckdir) \
-	-I$(top_srcdir)/$(anoubisprotodir) \
-	@CHECK_CFLAGS@
+AM_CPPFLAGS = $(test_cppflags)
+AM_LDFLAGS = $(test_ldflags)
+LDADD = $(test_ldadd)
 
-apnedit_helper_CPPFLAGS = $(test_libapn_CPPFLAGS)
-LDFLAGS += \
-	-L$(top_builddir)/$(libapndir) \
-	-L$(top_builddir)/$(bsdcompatdir) \
-	-dynamic
-
-# conditionally static link of libraries to accomplish correct Code Coverage
-if GCOV_ENABLED
-test_libapn_LDADD = \
-	@CHECK_LIBS@ $(libanoubischeck) \
-	$(top_builddir)/$(libapndir)/libapn.a
-test_libapn_DEPENDENCIES = \
-	$(top_builddir)/$(libapndir)/libapn.a
-else
-test_libapn_LDADD = @CHECK_LIBS@ $(libanoubischeck) -lapn
-test_libapn_DEPENDENCIES = $(libapn)
-endif
-
-if NEEDBSDCOMPAT
-test_libapn_LDADD += $(libbsdcompat)
-test_libapn_DEPENDENCIES += $(libbsdcompat)
-endif
-
-apnedit_helper_DEPENDENCIES = $(test_libapn_DEPENDENCIES)
-apnedit_helper_LDADD = $(test_libapn_LDADD)
-
+test_libapn_DEPENDENCIES = $(test_dependencies)
 test_libapn_SOURCES = \
 	libapn_testcase_errorcodes.c \
 	libapn_testcase_crash1.c \
@@ -83,58 +46,21 @@ test_libapn_SOURCES = \
 	libapn_testcase_iov.c \
 	libapn_testcase_firstinsert.c
 
+apnedit_helper_DEPENDENCIES = $(test_dependencies)
 apnedit_helper_SOURCES = \
 	apnedit_helper.c
 
-test_printing_CPPFLAGS = \
-	-I$(top_srcdir)/$(libapndir) \
-	-I$(top_srcdir)/$(bsdcompatdir) \
-	-I$(top_srcdir)/include \
-	-I$(top_srcdir)/$(anoubischeckdir) \
-	@CHECK_CFLAGS@
-
-test_printing_LDFLAGS = \
-	-L$(top_builddir)/$(libapndir) -dynamic
-test_printing_LDADD = @CHECK_LIBS@ $(libanoubischeck) -lapn
-
-test_printing_DEPENDENCIES = $(libapn)
-
-test_rbtree_DEPENDENCIES = $(libapn)
-test_rbtree_LDADD = -lapn
-
-if NEEDBSDCOMPAT
-test_printing_LDADD += $(libbsdcompat)
-test_printing_DEPENDENCIES += $(libbsdcompat)
-test_rbtree_DEPENDENCIES += $(libbsdcompat)
-test_rbtree_LDADD += -lbsdcompat
-endif
-
+test_printing_DEPENDENCIES = $(test_dependencies)
 test_printing_SOURCES = \
 	printing_testcase_ruleset.c \
 	printing_testsuite.c \
 	printing_testrunner.c
 
-test_insertcopy_CPPFLAGS = \
-	-I$(top_srcdir)/$(libapndir) \
-	-I$(top_srcdir)/$(bsdcompatdir) \
-	-I$(top_srcdir)/include \
-	-I$(top_srcdir)/$(anoubischeckdir) \
-	@CHECK_CFLAGS@
+test_rbtree_DEPENDENCIES = $(test_dependencies)
+test_rbtree_SOURCES = test_rbtree.c
 
-test_insertcopy_LDFLAGS = \
-	-L$(top_builddir)/$(libapndir) -dynamic
-test_insertcopy_LDADD = @CHECK_LIBS@ $(libanoubischeck) -lapn
-test_insertcopy_DEPENDENCIES = $(libapn)
-
-if NEEDBSDCOMPAT
-test_insertcopy_LDADD += $(libbsdcompat)
-test_insertcopy_DEPENDENCIES += $(libbsdcompat)
-endif
-
+test_insertcopy_DEPENDENCIES = $(test_dependencies)
 test_insertcopy_SOURCES = \
 	insertcopy_testcase_copy.c \
 	insertcopy_testsuite.c \
 	insertcopy_testrunner.c
-
-test_rbtree_SOURCES = test_rbtree.c
-test_rbtree_CPPFLAGS = -I$(top_srcdir)/$(libapndir)

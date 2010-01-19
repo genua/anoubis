@@ -29,6 +29,7 @@
 #define _AMSG_H
 
 #include <anoubis_msg.h>
+#include "anoubisd.h"
 
 #ifdef LINUX
 #include <linux/eventdev.h>

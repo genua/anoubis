@@ -47,12 +47,12 @@
 #include <fcntl.h>
 
 #ifndef GCOV
-#include <anoubischat.h>
+#include <anoubis_chat.h>
 #include <anoubis_msg.h>
 #endif
 
 #include <anoubischeck.h>
-#include <auth.h>
+#include <anoubis_auth.h>
 
 
 #define TEST_CHALLENGE	"bvcdertyuilkmnjbvf"

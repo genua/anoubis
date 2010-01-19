@@ -39,7 +39,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#include <apncvs.h>
+#include <anoubis_apnvm_cvs.h>
 
 #define TEST_TIMEOUT	20
 

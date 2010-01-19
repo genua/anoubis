@@ -40,7 +40,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "anoubischat.h"
+#include "anoubis_chat.h"
 #include "config.h"
 #ifdef NEEDBSDCOMPAT
 #include <bsdcompat.h>

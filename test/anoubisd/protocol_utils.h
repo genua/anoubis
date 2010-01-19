@@ -28,7 +28,7 @@
 #ifndef PROTOCOL_UTILS_H
 #define PROTOCOL_UTILS_H
 
-#include <anoubischat.h>
+#include <anoubis_chat.h>
 #include <anoubis_protocol.h>
 #include <anoubis_client.h>
 

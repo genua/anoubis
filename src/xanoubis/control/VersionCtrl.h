@@ -31,7 +31,7 @@
 #include <list>
 #include <vector>
 
-#include <apnvm.h>
+#include <anoubis_apnvm.h>
 
 #include "Singleton.h"
 #include "AnRowProvider.h"

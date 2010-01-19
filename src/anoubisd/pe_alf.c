@@ -55,16 +55,16 @@
 #endif
 
 #ifdef LINUX
-#include <queue.h>
 #include <bsdcompat.h>
 #include <linux/anoubis_alf.h>
 #include <linux/anoubis.h>
 #endif
 #ifdef OPENBSD
-#include <sys/queue.h>
 #include <dev/anoubis_alf.h>
 #include <dev/anoubis.h>
 #endif
+
+#include <sys/queue.h>
 
 #include "anoubisd.h"
 #include "pe.h"
