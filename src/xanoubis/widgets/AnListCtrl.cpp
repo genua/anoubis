@@ -53,17 +53,21 @@ AnListCtrl::setRowProvider(AnRowProvider *provider)
 {
 	if (rowProvider_) {
 		rowProvider_->Disconnect(anEVT_ROW_SIZECHANGE,
-		    wxCommandEventHandler(AnListCtrl::onSizeChange));
+		    wxCommandEventHandler(AnListCtrl::onSizeChange),
+		    NULL, this);
 		rowProvider_->Disconnect(anEVT_ROW_UPDATE,
-		    wxCommandEventHandler(AnListCtrl::onSizeChange));
+		    wxCommandEventHandler(AnListCtrl::onRowUpdate),
+		    NULL, this);
 	}
 	rowProvider_ = provider;
 	if (provider) {
 		int	newSize;
 		provider->Connect(anEVT_ROW_SIZECHANGE,
-		    wxCommandEventHandler(AnListCtrl::onSizeChange));
+		    wxCommandEventHandler(AnListCtrl::onSizeChange),
+		    NULL, this);
 		provider->Connect(anEVT_ROW_UPDATE,
-		    wxCommandEventHandler(AnListCtrl::onSizeChange));
+		    wxCommandEventHandler(AnListCtrl::onRowUpdate),
+		    NULL, this);
 		/* Provider changed, invalidate the view! */
 		newSize = provider->getSize();
 		SetItemCount(newSize);

@@ -63,7 +63,7 @@ class AnRowProvider : public wxEvtHandler {
 		 * @param newSize The new size.
 		 */
 		void sizeChangeEvent(int newSize) {
-			wxCommandEvent		event;
+			wxCommandEvent		event(anEVT_ROW_SIZECHANGE);
 			event.SetInt(newSize);
 			ProcessEvent(event);
 		}
@@ -75,7 +75,7 @@ class AnRowProvider : public wxEvtHandler {
 		 * @return None.
 		 */
 		void rowChangeEvent(int from, int to) {
-			wxCommandEvent		event;
+			wxCommandEvent		event(anEVT_ROW_UPDATE);
 			event.SetInt(from);
 			event.SetExtraLong(to);
 			ProcessEvent(event);
