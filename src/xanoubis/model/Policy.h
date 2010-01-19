@@ -32,7 +32,6 @@
 #include "config.h"
 #endif
 
-#include <wx/list.h>
 #include <wx/string.h>
 
 #include "libapn.h"
@@ -232,7 +231,5 @@ class Policy : public Subject
 		friend class ContextAppPolicy;
 		friend class SbAppPolicy;
 };
-
-WX_DECLARE_LIST(Policy, PolicyList);
 
 #endif	/* _POLICY_H_ */

@@ -34,9 +34,6 @@
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
-#include <wx/listimpl.cpp>
-WX_DEFINE_LIST(PolicyList);
-
 IMPLEMENT_CLASS(Policy, Subject);
 
 Policy::Policy(PolicyRuleSet *ruleSet, struct apn_rule *rule)

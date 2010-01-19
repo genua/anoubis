@@ -27,6 +27,7 @@
 
 #include <check.h>
 
+extern TCase *getTc_PolicyRuleSet(void);
 extern TCase *getTc_AlfAppPolicy(void);
 extern TCase *getTc_AlfCapabilityFilterPolicy(void);
 extern TCase *getTc_AlfFilterPolicy(void);
@@ -48,6 +49,7 @@ getTestSuite(void)
 
 	testSuite = suite_create("Policies");
 
+	suite_add_tcase(testSuite, getTc_PolicyRuleSet());
 	suite_add_tcase(testSuite, getTc_AlfAppPolicy());
 	suite_add_tcase(testSuite, getTc_AlfCapabilityFilterPolicy());
 	suite_add_tcase(testSuite, getTc_AlfFilterPolicy());

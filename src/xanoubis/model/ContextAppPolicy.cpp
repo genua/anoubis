@@ -43,7 +43,7 @@ ContextAppPolicy::ContextAppPolicy(PolicyRuleSet *ruleSet,
 	TAILQ_FOREACH(filter, &rule->rule.chain, entry) {
 		switch (filter->apn_type) {
 		case APN_CTX_RULE:
-			filterList_.Append(
+			filterListAppend(
 			    new ContextFilterPolicy(this, filter));
 			break;
 		default:
@@ -141,7 +141,7 @@ ContextAppPolicy::prependFilterPolicy(FilterPolicy *filter)
 	}
 
 	startChange();
-	filterList_.Insert((size_t)0, filter);
+	filterListPrepend(filter);
 	setModified();
 	finishChange();
 

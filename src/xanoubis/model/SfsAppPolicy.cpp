@@ -43,10 +43,10 @@ SfsAppPolicy::SfsAppPolicy(PolicyRuleSet *ruleSet, struct apn_rule *rule)
 	TAILQ_FOREACH(filter, &rule->rule.chain, entry) {
 		switch (filter->apn_type) {
 		case APN_SFS_ACCESS:
-			filterList_.Append(new SfsFilterPolicy(this, filter));
+			filterListAppend(new SfsFilterPolicy(this, filter));
 			break;
 		case APN_SFS_DEFAULT:
-			filterList_.Append(
+			filterListAppend(
 			    new SfsDefaultFilterPolicy(this, filter));
 			break;
 		default:
@@ -117,7 +117,7 @@ SfsAppPolicy::prependFilterPolicy(FilterPolicy *filter)
 	}
 
 	startChange();
-	filterList_.Insert((size_t)0, filter);
+	filterListPrepend(filter);
 	setModified();
 	finishChange();
 

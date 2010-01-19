@@ -32,6 +32,8 @@
 #include "config.h"
 #endif
 
+#include <vector>
+
 #include <wx/arrstr.h>
 #include <wx/string.h>
 
@@ -96,6 +98,17 @@ class AppPolicy : public Policy
 		 * @return Number of filters.
 		 */
 		size_t getFilterPolicyCount(void) const;
+
+		/**
+		 * Returns the filter-policy at the given index.
+		 *
+		 * If the index is out of range, NULL is returned.
+		 *
+		 * @param[in] 1st The requested index
+		 * @return Filter-policy at the given index or NULL if the
+		 *         index is out of range.
+		 */
+		FilterPolicy *getFilterPolicyAt(unsigned int) const;
 
 		/**
 		 * Count the binaries of this application policy.
@@ -235,7 +248,19 @@ class AppPolicy : public Policy
 		bool setSubjectKey(unsigned int, wxString);
 
 	protected:
-		PolicyList filterList_;	/**< List of our filter policies. */
+		/**
+		 * Appends a filter-policy at the policy-list.
+		 *
+		 * @param[in] 1st The policy to be appended
+		 */
+		void filterListAppend(FilterPolicy *);
+
+		/**
+		 * Prepends a filter-policy at the front of the policy-list.
+		 *
+		 * @param[in] 1st The policy to be prepended
+		 */
+		void filterListPrepend(FilterPolicy *);
 
 	private:
 		/**
@@ -244,6 +269,11 @@ class AppPolicy : public Policy
 		 * @return The found structure or NULL.
 		 */
 		struct apn_app *seekAppByIndex(unsigned int) const;
+
+		/**
+		 * List contains instances of child-filter-policies.
+		 */
+		std::vector<FilterPolicy *> filterList_;
 
 		friend class PolicyRuleSet;
 };

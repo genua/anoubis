@@ -43,11 +43,11 @@ SbAppPolicy::SbAppPolicy(PolicyRuleSet *ruleSet, struct apn_rule *rule)
 	TAILQ_FOREACH(filter, &rule->rule.chain, entry) {
 		switch (filter->apn_type) {
 		case APN_SB_ACCESS:
-			filterList_.Append(
+			filterListAppend(
 			    new SbAccessFilterPolicy(this, filter));
 			break;
 		case APN_DEFAULT:
-			filterList_.Append(
+			filterListAppend(
 			    new DefaultFilterPolicy(this, filter));
 			break;
 		default:
@@ -146,7 +146,7 @@ SbAppPolicy::prependFilterPolicy(FilterPolicy *filter)
 	}
 
 	startChange();
-	filterList_.Insert((size_t)0, filter);
+	filterListPrepend(filter);
 	setModified();
 	finishChange();
 

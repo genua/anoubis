@@ -36,13 +36,15 @@ IMPLEMENT_CLASS(AppPolicy, Policy);
 AppPolicy::AppPolicy(PolicyRuleSet *ruleSet, struct apn_rule *rule)
     : Policy(ruleSet, rule)
 {
-	filterList_.Clear();
 }
 
 AppPolicy::~AppPolicy(void)
 {
-	filterList_.DeleteContents(true);
-	filterList_.Clear();
+	while (!filterList_.empty()) {
+		FilterPolicy *policy = filterList_.back();
+		filterList_.pop_back();
+		delete policy;
+	}
 }
 
 struct apn_app *
@@ -71,7 +73,7 @@ AppPolicy::createApnRule(void)
 void
 AppPolicy::acceptOnFilter(PolicyVisitor &visitor)
 {
-	PolicyList::iterator i;
+	std::vector<FilterPolicy *>::const_iterator i;
 
 	if (visitor.shallBeenPropagated() == true) {
 		for (i=filterList_.begin(); i != filterList_.end(); i++) {
@@ -83,7 +85,16 @@ AppPolicy::acceptOnFilter(PolicyVisitor &visitor)
 size_t
 AppPolicy::getFilterPolicyCount(void) const
 {
-	return (filterList_.GetCount());
+	return (filterList_.size());
+}
+
+FilterPolicy *
+AppPolicy::getFilterPolicyAt(unsigned int index) const
+{
+	if (!filterList_.empty() && index < filterList_.size())
+		return filterList_[index];
+	else
+		return 0;
 }
 
 unsigned int
@@ -393,4 +404,16 @@ AppPolicy::seekAppByIndex(unsigned int idx) const
 	}
 
 	return (app);
+}
+
+void
+AppPolicy::filterListAppend(FilterPolicy *policy)
+{
+	filterList_.push_back(policy);
+}
+
+void
+AppPolicy::filterListPrepend(FilterPolicy *policy)
+{
+	filterList_.insert(filterList_.begin(), policy);
 }

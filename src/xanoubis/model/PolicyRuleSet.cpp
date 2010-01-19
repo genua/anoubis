@@ -202,7 +202,7 @@ PolicyRuleSet::isDaemonRuleSet(void) const
 void
 PolicyRuleSet::accept(PolicyVisitor& visitor)
 {
-	PolicyList::iterator	i;
+	std::vector<Policy *>::iterator i;
 
 	for (i=alfList_.begin(); i != alfList_.end(); i++) {
 		(*i)->accept(visitor);
@@ -318,12 +318,47 @@ PolicyRuleSet::getAppPolicyCount(void) const
 {
 	size_t count;
 
-	count  = alfList_.GetCount();
-	count += sfsList_.GetCount();
-	count += ctxList_.GetCount();
-	count += sbList_.GetCount();
+	count  = alfList_.size();
+	count += sfsList_.size();
+	count += ctxList_.size();
+	count += sbList_.size();
 
 	return (count);
+}
+
+AppPolicy *
+PolicyRuleSet::getPolicyAt(unsigned int idx) const
+{
+	Policy *policy = NULL;
+
+	if (idx < alfList_.size()) {
+		policy = alfList_[idx];
+		return (wxDynamicCast(policy, AppPolicy));
+	}
+	idx -= alfList_.size();
+
+	if (idx < sfsList_.size()) {
+		policy = sfsList_[idx];
+		return (wxDynamicCast(policy, AppPolicy));
+	}
+	idx -= sfsList_.size();
+
+	if (idx < ctxList_.size()) {
+		policy = ctxList_[idx];
+		return (wxDynamicCast(policy, AppPolicy));
+	}
+	idx -= ctxList_.size();
+
+	if (idx < sbList_.size()) {
+		policy = sbList_[idx];
+		return (wxDynamicCast(policy, AppPolicy));
+	}
+
+	if (policy == NULL) {
+		return (NULL);
+	}
+
+	return (wxDynamicCast(policy, AppPolicy));
 }
 
 AlfAppPolicy *
@@ -412,14 +447,14 @@ PolicyRuleSet::createPolicy(unsigned int type, unsigned int id,
 		break;
 	case APN_CTX:
 		success = ContextAppPolicy::createApnInserted(this, id);
-		index  = alfList_.GetCount();
-		index += sfsList_.GetCount();
+		index  = alfList_.size();
+		index += sfsList_.size();
 		break;
 	case APN_SB:
 		success = SbAppPolicy::createApnInserted(this, id);
-		index  = alfList_.GetCount();
-		index += sfsList_.GetCount();
-		index += ctxList_.GetCount();
+		index  = alfList_.size();
+		index += sfsList_.size();
+		index += ctxList_.size();
 		break;
 	case APN_ALF_FILTER:
 		success = AlfFilterPolicy::createApnInserted(parent, id);
@@ -477,11 +512,11 @@ PolicyRuleSet::prependAppPolicy(AppPolicy *app)
 	setModified();
 
 	if (app->IsKindOf(CLASSINFO(ContextAppPolicy))) {
-		ctxList_.Insert((size_t)0, app);
+		ctxList_.insert(ctxList_.begin(), app);
 	} else if (app->IsKindOf(CLASSINFO(AlfAppPolicy))) {
-		alfList_.Insert((size_t)0, app);
+		alfList_.insert(alfList_.begin(), app);
 	} else if (app->IsKindOf(CLASSINFO(SbAppPolicy))) {
-		sbList_.Insert((size_t)0, app);
+		sbList_.insert(sbList_.begin(), app);
 	} else {
 		return (false);
 	}
@@ -492,14 +527,19 @@ PolicyRuleSet::prependAppPolicy(AppPolicy *app)
 void
 PolicyRuleSet::clean(void)
 {
-	alfList_.DeleteContents(true);
-	alfList_.Clear();
-	sfsList_.DeleteContents(true);
-	sfsList_.Clear();
-	ctxList_.DeleteContents(true);
-	ctxList_.Clear();
-	sbList_.DeleteContents(true);
-	sbList_.Clear();
+#define CLEAR_VECTOR(v) \
+	while (!alfList_.empty()) { \
+		Policy *policy = alfList_.back(); \
+		alfList_.pop_back(); \
+		delete policy; \
+	}
+
+	CLEAR_VECTOR(alfList_);
+	CLEAR_VECTOR(sfsList_);
+	CLEAR_VECTOR(ctxList_);
+	CLEAR_VECTOR(sbList_);
+
+#undef CLEAR_VECTOR
 }
 
 void
@@ -569,19 +609,19 @@ PolicyRuleSet::create(struct apn_ruleset *ruleSet)
 	ruleSet_ = ruleSet;
 
 	TAILQ_FOREACH(rule, &(ruleSet->alf_queue), entry) {
-		alfList_.Append(new AlfAppPolicy(this, rule));
+		alfList_.push_back(new AlfAppPolicy(this, rule));
 	}
 
 	TAILQ_FOREACH(rule, &(ruleSet->sfs_queue), entry) {
-		sfsList_.Append(new SfsAppPolicy(this, rule));
+		sfsList_.push_back(new SfsAppPolicy(this, rule));
 	}
 
 	TAILQ_FOREACH(rule, &(ruleSet->ctx_queue), entry) {
-		ctxList_.Append(new ContextAppPolicy(this, rule));
+		ctxList_.push_back(new ContextAppPolicy(this, rule));
 	}
 
 	TAILQ_FOREACH(rule, &(ruleSet->sb_queue), entry) {
-		sbList_.Append(new SbAppPolicy(this, rule));
+		sbList_.push_back(new SbAppPolicy(this, rule));
 	}
 }
 

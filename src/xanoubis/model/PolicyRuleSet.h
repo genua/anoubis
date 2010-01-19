@@ -32,6 +32,7 @@
 #include "config.h"
 #endif
 
+#include <vector>
 #include <wx/string.h>
 
 #include "EscalationNotify.h"
@@ -275,6 +276,17 @@ class PolicyRuleSet : public Subject
 		size_t getAppPolicyCount(void) const;
 
 		/**
+		 * Returns the application policy at the given index.
+		 *
+		 * If the index is out of range, NULL is returned.
+		 *
+		 * @param[in] 1st The requested index
+		 * @return Application policy at the given index or NULL if the
+		 *         index is out of range.
+		 */
+		AppPolicy *getPolicyAt(unsigned int) const;
+
+		/**
 		 * Search for alf application policy.
 		 * @param[in] 1st The application name to search for.
 		 * @return Found policy or NULL.
@@ -327,10 +339,10 @@ class PolicyRuleSet : public Subject
 		bool			 isModified_;
 		bool			 isDaemonRuleSet_;
 		struct apn_ruleset	*ruleSet_;
-		PolicyList		 alfList_;
-		PolicyList		 sfsList_;
-		PolicyList		 ctxList_;
-		PolicyList		 sbList_;
+		std::vector<Policy *>	 alfList_;
+		std::vector<Policy *>	 sfsList_;
+		std::vector<Policy *>	 ctxList_;
+		std::vector<Policy *>	 sbList_;
 
 		/**
 		 * Clean the queues

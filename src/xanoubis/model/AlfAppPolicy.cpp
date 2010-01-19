@@ -43,14 +43,14 @@ AlfAppPolicy::AlfAppPolicy(PolicyRuleSet *ruleSet, struct apn_rule *rule)
 	TAILQ_FOREACH(filter, &rule->rule.chain, entry) {
 		switch (filter->apn_type) {
 		case APN_ALF_FILTER:
-			filterList_.Append(new AlfFilterPolicy(this, filter));
+			filterListAppend(new AlfFilterPolicy(this, filter));
 			break;
 		case APN_ALF_CAPABILITY:
-			filterList_.Append(
+			filterListAppend(
 			    new AlfCapabilityFilterPolicy(this, filter));
 			break;
 		case APN_DEFAULT:
-			filterList_.Append(
+			filterListAppend(
 			    new DefaultFilterPolicy(this, filter));
 			break;
 		default:
@@ -150,7 +150,7 @@ AlfAppPolicy::prependFilterPolicy(FilterPolicy *filter)
 	}
 
 	startChange();
-	filterList_.Insert((size_t)0, filter);
+	filterListPrepend(filter);
 	setModified();
 	finishChange();
 
