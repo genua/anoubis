@@ -660,6 +660,8 @@ DlgRuleEditor::onAppPolicySelect(wxListEvent & event)
 		filterListTypeChoice->Enable(true);
 		filterListCreateButton->Enable(true);
 
+		filterPolicyPanels->resetTabSelection();
+
 		/* Adjust type choice of filter policy creation. */
 		appListTypeChoice->SetStringSelection(
 		    policy->getTypeIdentifier());

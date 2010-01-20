@@ -82,6 +82,14 @@ class AnPolicyNotebook : public wxNotebook
 		 */
 		void deselect(void);
 
+		/**
+		 * Reset tab selection.
+		 * Selects the first tab.
+		 * @param None.
+		 * @return Nothing.
+		 */
+		void resetTabSelection(void);
+
 	private:
 		/**
 		 * This holds the policy been shown by our pages.

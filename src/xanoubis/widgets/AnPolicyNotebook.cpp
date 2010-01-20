@@ -106,6 +106,12 @@ AnPolicyNotebook::deselect(void)
 }
 
 void
+AnPolicyNotebook::resetTabSelection(void)
+{
+	selectedTab_ = 0;
+}
+
+void
 AnPolicyNotebook::onAddButton(wxCommandEvent &)
 {
 	bool wasAny;
