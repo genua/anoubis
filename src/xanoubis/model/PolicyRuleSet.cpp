@@ -51,6 +51,7 @@ PolicyRuleSet::PolicyRuleSet(int priority, uid_t uid,
 	origin_     = wxT("native apn ruleset");
 	hasErrors_  = false;
 	isModified_ = false;
+	isInProgress_ = false;
 	isDaemonRuleSet_ = false;
 
 	create(ruleSet);
@@ -66,6 +67,7 @@ PolicyRuleSet::PolicyRuleSet(int priority, uid_t uid, const wxString &fileName)
 	origin_	    = fileName;
 	hasErrors_  = false;
 	isModified_ = false;
+	isInProgress_ = false;
 	isDaemonRuleSet_ = false;
 
 	create(fileName);
@@ -311,6 +313,24 @@ bool
 PolicyRuleSet::isModified(void) const
 {
 	return (isModified_);
+}
+
+void
+PolicyRuleSet::setInProgress(void)
+{
+	isInProgress_ = true;
+}
+
+void
+PolicyRuleSet::clearInProgress(void)
+{
+	isInProgress_ = false;
+}
+
+bool
+PolicyRuleSet::isInProgress(void) const
+{
+	return isInProgress_;
 }
 
 size_t

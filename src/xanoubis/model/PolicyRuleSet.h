@@ -261,6 +261,28 @@ class PolicyRuleSet : public Subject
 		bool isModified(void) const;
 
 		/**
+		 * Set the in-progress flag. This is set while a task
+		 * to send the policy to the daemon is in progress.
+		 * @param None.
+		 * @return Nothing.
+		 */
+		void setInProgress(void);
+
+		/**
+		 * Clear the in-progress flag.
+		 * @param None.
+		 * @return Nothing.
+		 */
+		void clearInProgress(void);
+
+		/**
+		 * Return true if the in-progress flag is set.
+		 * @param None.
+		 * @return The current value of the in-progress flag.
+		 */
+		bool isInProgress(void) const;
+
+		/**
 		 * Refresh the policy ruleset after the underlying
 		 * apn_ruleset has been modified.
 		 * @param None.
@@ -337,6 +359,7 @@ class PolicyRuleSet : public Subject
 		uid_t			 uid_;
 		bool			 hasErrors_;
 		bool			 isModified_;
+		bool			 isInProgress_;
 		bool			 isDaemonRuleSet_;
 		struct apn_ruleset	*ruleSet_;
 		std::vector<Policy *>	 alfList_;

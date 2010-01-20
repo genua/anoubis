@@ -427,6 +427,7 @@ PolicyCtrl::sendToDaemon(long id)
 	}
 
 	sendTaskList_.push_back(task);
+	rs->setInProgress();
 	JobCtrl::getInstance()->addTask(task);
 
 	return (RESULT_POL_OK);
@@ -755,12 +756,16 @@ PolicyCtrl::OnPolicyChange(wxCommandEvent &event)
 	if (id >= 0) {
 		oldrs = getRuleSet(id);
 	}
-	if (oldrs && oldrs->isModified()) {
-		wxCommandEvent	backupEvent(anEVT_BACKUP_POLICY);
+	if (oldrs) {
+		if (oldrs->isInProgress()) {
+			oldrs->clearInProgress();
+		} else if (oldrs->isModified()) {
+			wxCommandEvent	backupEvent(anEVT_BACKUP_POLICY);
 
-		oldrs->lock();
-		backupEvent.SetExtraLong(id);
-		wxPostEvent(AnEvents::getInstance(), backupEvent);
+			oldrs->lock();
+			backupEvent.SetExtraLong(id);
+			wxPostEvent(AnEvents::getInstance(), backupEvent);
+		}
 	}
 	receiveOneFromDaemon(prio, uid);
 }
