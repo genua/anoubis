@@ -61,9 +61,6 @@ REGRESS_DEPENDS =	${BUILD_DEPENDS}
 do-regress:
 	cd ${WRKSRC}/test && ${MAKE} check
 
-post-extract:
-	@rm ${WRKSRC}/src/libanoubisui/apnvm/date.c
-
 post-install:
 	@rm ${WRKINST}/usr/local/share/xanoubis/profiles/admin
 	@rm ${WRKINST}/usr/local/share/xanoubis/profiles/high
