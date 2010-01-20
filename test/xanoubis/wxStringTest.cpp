@@ -29,7 +29,7 @@
 #include <stdio.h>
 #include <wx/string.h>
 
-int main(int argc, char *argv[]) {
+int main(int, char **) {
 	wxString *result = new wxString(wxT("Test-Passphrase"));
 	wxString cmp = wxT("Test-Passphrase");
 

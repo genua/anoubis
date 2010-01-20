@@ -38,6 +38,13 @@ libanoubischeck         = $(libanoubischeckbuilddir)/libanoubischeck.a
 libanoubischeck_so      = $(libanoubischeckbuilddir)/libanoubischeck.so
 libanoubischeckinclude  = $(libanoubischecksrcdir)
 
+# for tests compiled with -fPIE, we need a PIC version of libcheck.a
+if NEED_LIBCHECK_PIC
+check_ldadd = -lcheck_pic
+else
+check_ldadd = @CHECK_LIBS@
+endif
+
 if NEEDBSDCOMPAT
 bsdcompat_cppflags = -I$(libanoubisinclude)/bsdcompat
 else
@@ -89,7 +96,7 @@ libanoubis_dependencies = $(libanoubis_so)
 # .so file will be put into the executable :-(
 libanoubis_ldadd = -lanoubis
 endif
-test_ldadd = @CHECK_LIBS@ $(libanoubischeck) $(libanoubis_ldadd)
+test_ldadd = $(check_ldadd) $(libanoubischeck) $(libanoubis_ldadd)
 # dependency must be declared manually due to automake bug
 test_dependencies = $(libanoubischeck) $(libanoubis_dependencies)
 

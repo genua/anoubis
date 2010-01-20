@@ -52,7 +52,7 @@ libanoubischeck_a_SOURCES = anoubischeck.c
 #
 TESTS = test_libanoubischeck
 noinst_PROGRAMS = test_libanoubischeck
-test_libanoubischeck_LDADD = $(libanoubis_ldadd) @CHECK_LIBS@ \
+test_libanoubischeck_LDADD = $(libanoubis_ldadd) $(check_ldadd) \
 	libanoubischeck.a
 test_libanoubischeck_SOURCES = test_libanoubischeck.c
 test_libanoubischeck_DEPENDENCIES = \

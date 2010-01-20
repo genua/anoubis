@@ -60,12 +60,7 @@ include $(top_srcdir)/src/Makefile.include
 RPATH = $(test_ldpath):$(xanoubisbuilddir)
 TESTS_ENVIRONMENT = LD_LIBRARY_PATH=$(RPATH)
 
-AM_CPPFLAGS = $(test_cppflags)
-AM_LDFLAGS = $(test_ldflags) -L$(xanoubisbuilddir)
-LDADD = $(test_ldadd)
-
-libGUIcomponents_CPPFLAGS = \
-	$(AM_CPPFLAGS) \
+AM_CPPFLAGS = $(test_cppflags) \
 	-I$(xanoubissrcdir) \
 	-I$(xanoubissrcdir)/model \
 	-I$(xanoubissrcdir)/view \
@@ -75,23 +70,20 @@ libGUIcomponents_CPPFLAGS = \
 	-I$(xanoubissrcdir)/widgets \
 	$(WX_CPPFLAGS)
 
-libGUIcomponents_CXXFLAGS = \
+AM_CXXFLAGS = \
 	-fno-strict-aliasing \
-	$(AM_CXXFLAGS) \
+	$(prog_AM_CXXFLAGS) \
 	$(WX_CXXFLAGS) \
 	$(GTK_CFLAGS) \
 	$(GLIB_CFLAGS) \
 	$(NOTIFY_CFLAGS) \
 	$(SSL_CFLAGS)
 
-libGUIcomponents_DEPENDS = \
-	$(libGUIcomponents) \
-	$(libanoubis_so) \
-	$(libanoubischeck)
 
-libGUIcomponents_LDADD = \
-	-lanoubis \
-	$(libanoubischeck) \
+AM_LDFLAGS = $(test_ldflags) \
+	-L$(xanoubisbuilddir)
+
+LDADD = $(test_ldadd) \
 	@WX_LIBS@ \
 	@GTK_LIBS@ \
 	@GLIB_LIBS@ \
@@ -99,21 +91,30 @@ libGUIcomponents_LDADD = \
 	$(SSL_LIBS)
 
 
+dependencies = \
+	$(libGUIcomponents) \
+	$(test_dependencies)
+
+test_xanoubis_server_DEPENDENCIES = $(test_dependencies)
+test_xanoubis_server_LDADD = $(test_ldadd)
 test_xanoubis_server_SOURCES = \
 	xanoubis_dummyserver_testrunner.c \
 	xanoubis_dummyserver_testsuite.c \
 	xanoubis_testcase_dummyserver.c
 
 #
+# Since the source files in the sub directories have conflicting names, the
+# created object file names must be distinct. To achieve this, we set the
+# CPPFLAGS fariable for each test (which would otherwise be unnecessary).
+# An alternative would be to create a Makefile.am per subdir.
+#
+
+#
 # Testsuite: Pattern
 #
-testSuite_Patterns_CPPFLAGS = $(libGUIcomponents_CPPFLAGS)
-testSuite_Patterns_CXXFLAGS = $(libGUIcomponents_CXXFLAGS) @CHECK_CFLAGS@
-testSuite_Patterns_DEPENDENCIES = $(libGUIcomponents_DEPENDS)
-testSuite_Patterns_LDADD = \
-	-lGUIcomponents \
-	$(libGUIcomponents_LDADD) \
-	@CHECK_LIBS@
+testSuite_Patterns_CPPFLAGS = $(AM_CPPFLAGS)
+testSuite_Patterns_DEPENDENCIES = $(dependencies)
+testSuite_Patterns_LDADD = $(LDADD) -lGUIcomponents
 
 testSuite_Patterns_SOURCES = \
 	testrunner.cpp \
@@ -125,13 +126,9 @@ testSuite_Patterns_SOURCES = \
 #
 # Testsuite: Profile
 #
-testSuite_Profiles_CPPFLAGS = $(libGUIcomponents_CPPFLAGS)
-testSuite_Profiles_CXXFLAGS = $(libGUIcomponents_CXXFLAGS) @CHECK_CFLAGS@
-testSuite_Profiles_DEPENDENCIES = $(libGUIcomponents_DEPENDS)
-testSuite_Profiles_LDADD = \
-	-lGUIcomponents \
-	$(libGUIcomponents_LDADD) \
-	@CHECK_LIBS@
+testSuite_Profiles_CPPFLAGS = $(AM_CPPFLAGS)
+testSuite_Profiles_DEPENDENCIES = $(dependencies)
+testSuite_Profiles_LDADD = $(LDADD) -lGUIcomponents
 
 testSuite_Profiles_SOURCES = \
 	testrunner.cpp \
@@ -141,13 +138,9 @@ testSuite_Profiles_SOURCES = \
 #
 # Testsuite: Policy
 #
-testSuite_Policies_CPPFLAGS = $(libGUIcomponents_CPPFLAGS)
-testSuite_Policies_CXXFLAGS = $(libGUIcomponents_CXXFLAGS) @CHECK_CFLAGS@
-testSuite_Policies_DEPENDENCIES = $(libGUIcomponents_DEPENDS)
-testSuite_Policies_LDADD = \
-	-lGUIcomponents \
-	$(libGUIcomponents_LDADD) \
-	@CHECK_LIBS@
+testSuite_Policies_CPPFLAGS = $(AM_CPPFLAGS)
+testSuite_Policies_DEPENDENCIES = $(dependencies)
+testSuite_Policies_LDADD = $(LDADD) -lGUIcomponents
 
 testSuite_Policies_SOURCES = \
 	testrunner.cpp \
@@ -173,13 +166,9 @@ testSuite_Policies_SOURCES = \
 #
 # Testsuite: Sfs
 #
-testSuite_Sfs_CPPFLAGS = $(libGUIcomponents_CPPFLAGS)
-testSuite_Sfs_CXXFLAGS = $(libGUIcomponents_CXXFLAGS) @CHECK_CFLAGS@
-testSuite_Sfs_DEPENDENCIES = $(libGUIcomponents_DEPENDS)
-testSuite_Sfs_LDADD = \
-	-lGUIcomponents \
-	$(libGUIcomponents_LDADD) \
-	@CHECK_LIBS@
+testSuite_Sfs_CPPFLAGS = $(AM_CPPFLAGS)
+testSuite_Sfs_DEPENDENCIES = $(dependencies)
+testSuite_Sfs_LDADD = $(LDADD) -lGUIcomponents
 
 testSuite_Sfs_SOURCES = \
 	testrunner.cpp \
@@ -189,13 +178,9 @@ testSuite_Sfs_SOURCES = \
 #
 # Testsuite: Key
 #
-testSuite_Key_CPPFLAGS = $(libGUIcomponents_CPPFLAGS) $(libanouibisui_CPPFLAGS)
-testSuite_Key_CXXFLAGS = $(libGUIcomponents_CXXFLAGS) @CHECK_CFLAGS@
-testSuite_Key_DEPENDENCIES = $(libGUIcomponents_DEPENDS)
-testSuite_Key_LDADD = \
-	-lGUIcomponents \
-	$(libGUIcomponents_LDADD) \
-	@CHECK_LIBS@
+testSuite_Key_CPPFLAGS = $(AM_CPPFLAGS)
+testSuite_Key_DEPENDENCIES = $(dependencies)
+testSuite_Key_LDADD = $(LDADD) -lGUIcomponents
 
 testSuite_Key_SOURCES = \
 	testrunner.cpp \
@@ -207,17 +192,9 @@ testSuite_Key_SOURCES = \
 #
 # Testsuite: JobCtrl
 #
-testSuite_JobCtrl_CPPFLAGS = \
-	$(libGUIcomponents_CPPFLAGS) \
-	$(libanouibisui_CPPFLAGS)
-testSuite_JobCtrl_CXXFLAGS = \
-	$(libGUIcomponents_CXXFLAGS) \
-	@CHECK_CFLAGS@
-testSuite_JobCtrl_DEPENDENCIES = $(libGUIcomponents_DEPENDS)
-testSuite_JobCtrl_LDADD = \
-	-lGUIcomponents \
-	$(libGUIcomponents_LDADD) \
-	@CHECK_LIBS@
+testSuite_JobCtrl_CPPFLAGS = $(AM_CPPFLAGS)
+testSuite_JobCtrl_DEPENDENCIES = $(dependencies)
+testSuite_JobCtrl_LDADD = $(LDADD) -lGUIcomponents
 
 testSuite_JobCtrl_SOURCES = \
 	testrunner.cpp \
@@ -235,13 +212,9 @@ testSuite_JobCtrl_SOURCES = \
 #
 # Testsuite: Notification
 #
-testSuite_Notifications_CPPFLAGS = $(libGUIcomponents_CPPFLAGS)
-testSuite_Notifications_CXXFLAGS = $(libGUIcomponents_CXXFLAGS) @CHECK_CFLAGS@
-testSuite_Notifications_DEPENDENCIES = $(libGUIcomponents_DEPENDS)
-testSuite_Notifications_LDADD = \
-	-lGUIcomponents \
-	$(libGUIcomponents_LDADD) \
-	@CHECK_LIBS@
+testSuite_Notifications_CPPFLAGS = $(AM_CPPFLAGS)
+testSuite_Notifications_DEPENDENCIES = $(dependencies)
+testSuite_Notifications_LDADD = $(LDADD) -lGUIcomponents
 
 testSuite_Notifications_SOURCES = \
 	testrunner.cpp \
@@ -251,13 +224,9 @@ testSuite_Notifications_SOURCES = \
 #
 # Testsuite: Config
 #
-testSuite_Config_CPPFLAGS = $(libGUIcomponents_CPPFLAGS)
-testSuite_Config_CXXFLAGS = $(libGUIcomponents_CXXFLAGS) @CHECK_CFLAGS@
-testSuite_Config_DEPENDENCIES = $(libGUIcomponents_DEPENDS)
-testSuite_Config_LDADD = \
-	-lGUIcomponents \
-	$(libGUIcomponents_LDADD) \
-	@CHECK_LIBS@
+testSuite_Config_CPPFLAGS = $(AM_CPPFLAGS)
+testSuite_Config_DEPENDENCIES = $(dependencies)
+testSuite_Config_LDADD = $(LDADD) -lGUIcomponents
 
 testSuite_Config_SOURCES = \
 	testrunner.cpp \
@@ -270,14 +239,8 @@ testSuite_Config_SOURCES = \
 # pidtest
 #
 pidtest_SOURCES = pidtest.cpp
-pidtest__CPPFLAGS = $(WX_CPPFLAGS)
-pidtest_CXXFLAGS = $(WX_CXXFLAGS)
-pidtest_LDADD = @WX_LIBS@
 
 #
 # wxStringTest
 #
 wxStringTest_SOURCES = wxStringTest.cpp
-wxStringTest_CPPFLAGS = $(WX_CPPFLAGS)
-wxStringTest_CXXFLAGS = $(WX_CXXFLAGS)
-wxStringTest_LDADD = @WX_LIBS@

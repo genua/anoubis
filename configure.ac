@@ -373,7 +373,13 @@ AX_CHECK_COMPILER_FLAGS(-fPIE,
 	AM_CFLAGS="-fPIE $AM_CFLAGS"
 	AM_CXXFLAGS="-fPIE $AM_CXXFLAGS"
 	AM_LDFLAGS="-pie $AM_LDFLAGS"
+	use_pie=yes
 ])
+
+dnl If we use -fPIE, we need to link our tests with a PIC version of libcheck
+dnl (unless we are on i386).
+AM_CONDITIONAL(NEED_LIBCHECK_PIC,
+	[test "x$fpic_hack" != xyes && test "x$use_pie" = xyes])
 
 dnl save copy of standard compiler flags, needed for automake in some
 dnl cases to avoid recursion
