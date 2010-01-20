@@ -28,10 +28,9 @@
 #ifndef _MODSFSLISTCTRL_H_
 #define _MODSFSLISTCTRL_H_
 
-#include <wx/imaglist.h>
-#include <wx/listctrl.h>
 #include <wx/menu.h>
 
+#include <AnListCtrl.h>
 #include <SfsDirectory.h>
 
 class IndexArray;
@@ -50,7 +49,7 @@ class wxProgressDialog;
  * @note Yoou need to setup the SfsCtrl after instantiation of the class
  *       (setSfsCtrl())!
  */
-class ModSfsListCtrl : public wxListCtrl, private SfsDirectoryScanHandler
+class ModSfsListCtrl : public AnListCtrl, private SfsDirectoryScanHandler
 {
 	public:
 		/**
@@ -98,34 +97,7 @@ class ModSfsListCtrl : public wxListCtrl, private SfsDirectoryScanHandler
 		 */
 		IndexArray getSelectedIndexes(void) const;
 
-		/**
-		 * Refreshes the complete list.
-		 *
-		 * All rows are removed and re-created.
-		 */
-		void refreshList(void);
-
-		/**
-		 * Refreshes a single row of the list.
-		 *
-		 * The row is not removed but the SfsEntry displayed at the row
-		 * is re-read and the row is filled with refreshed data.
-		 *
-		 * @param idx Row-index to be refreshed
-		 */
-		void refreshEntry(unsigned int);
-
 	private:
-		/**
-		 * Columns of the list.
-		 */
-		enum Columns {
-			COLUMN_FILE = 0,	/*!<  File column */
-			COLUMN_CHECKSUM,	/*!<  checksum column */
-			COLUMN_SIGNATURE,	/*!<  signaure column */
-			COLUMN_EOL		/*!<  Behind last column */
-		};
-
 		/**
 		 * Invoked if a row is activated (aka double-click).
 		 *
@@ -173,32 +145,6 @@ class ModSfsListCtrl : public wxListCtrl, private SfsDirectoryScanHandler
 		 * Used to get a reference to the model.
 		 */
 		SfsCtrl		*sfsCtrl_;
-
-		/**
-		 * An ok-icon.
-		 */
-		wxIcon		*okIcon_;
-
-		/**
-		 * A warning-icon.
-		 */
-		wxIcon		*warnIcon_;
-
-		/**
-		 * An error-icon.
-		 */
-		wxIcon		*errorIcon_;
-
-		/**
-		 * An icon representing a symlink.
-		 */
-		wxIcon		*symlinkIcon_;
-
-		/**
-		 * The image-list assigned with the list contains all icons
-		 * referenced by the list.
-		 */
-		wxImageList	imageList_;
 
 		/**
 		 * The popup-menu of the list.

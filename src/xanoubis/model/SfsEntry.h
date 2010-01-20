@@ -42,13 +42,17 @@
 #include <wx/datetime.h>
 #include <wx/string.h>
 
+#include <AnListClass.h>
+
+class SfsDirectory;
+
 /**
  * A single SFS-entry.
  *
  * Represents a file with some SFS-related attributes. A file can have an
  * assigned checksum and/or signature.
  */
-class SfsEntry
+class SfsEntry : public AnListClass
 {
 	public:
 		/**
@@ -104,6 +108,14 @@ class SfsEntry
 		 * @see setPath()
 		 */
 		wxString getRelativePath(const wxString &) const;
+
+		/**
+		 * Returns the path if the SfsEntry relative to the
+		 * parent SfsDirectory.
+		 *
+		 * @return The path relative to the parent SfsDirectory.
+		 */
+		wxString getRelativePath(void) const;
 
 		/**
 		 * Returns the filename.
@@ -272,11 +284,15 @@ class SfsEntry
 		 * (if any). Depending on the compare-result, the
 		 * checksum-state can change.
 		 *
+		 * If the checksum-state has changed, the parent SfsDirectory
+		 * fires a wxCommandEvent of type anEVT_ROW_UPDATE.
+		 *
 		 * @param type Type of requested checksum
 		 * @param cs The checksum to be assigned
 		 * @return true is returned, if the checksum-state has changed.
 		 *         The return-code can be used to track changes of the
 		 *         model.
+		 * @see AnRowProvider::rowChangeEvent()
 		 */
 		bool setChecksum(ChecksumType, const u_int8_t *, size_t);
 
@@ -287,10 +303,14 @@ class SfsEntry
 		 * If the checksum type SFSENTRY_SIGNATURE, the operation
 		 * applies to SFSENTRY_UPGRADE, too.
 		 *
+		 * If the checksum-state has changed, the parent SfsDirectory
+		 * fires a wxCommandEvent of type anEVT_ROW_UPDATE.
+		 *
 		 * @param type Type of requested checksum
 		 * @return true is returned, if the checksum-state has changed.
 		 *         The return-code can be used to track changes of the
 		 *         model.
+		 * @see AnRowProvider::rowChangeEvent()
 		 */
 		bool setChecksumMissing(ChecksumType);
 
@@ -302,10 +322,14 @@ class SfsEntry
 		 * SFSENTTRY_SIGNATURE the operation applies to
 		 * SFSENTRY_UPGRADE, too.
 		 *
+		 * If the checksum-state has changed, the parent SfsDirectory
+		 * fires a wxCommandEvent of type anEVT_ROW_UPDATE.
+		 *
 		 * @param type Type of requested checksum
 		 * @return true is returned, if the checksum-state has changed.
 		 *         The return-code can be used to track changes of the
 		 *         model.
+		 * @see AnRowProvider::rowChangeEvent()
 		 */
 		bool setChecksumInvalid(ChecksumType);
 
@@ -335,6 +359,9 @@ class SfsEntry
 		 * (if any). Depending on the compare-result, the
 		 * (checksum-states can change.
 		 *
+		 * If the checksum-state has changed, the parent SfsDirectory
+		 * fires a wxCommandEvent of type anEVT_ROW_UPDATE.
+		 *
 		 * @param cs The local calculated checksum. If set to NULL, the
 		 *           assigned local checksum is reseted, thus
 		 *           haveLocalCsum() will return false.
@@ -343,6 +370,7 @@ class SfsEntry
 		 *         changes of the model.
 		 * @see setDaemonCsum()
 		 * @see getChecksumAttr()
+		 * @see AnRowProvider::rowChangeEvent()
 		 */
 		bool setLocalCsum(const u_int8_t *);
 
@@ -351,9 +379,13 @@ class SfsEntry
 		 *
 		 * Checksums are cleared, attributes are resetted.
 		 *
+		 * If the checksum-state has changed, the parent SfsDirectory
+		 * fires a wxCommandEvent of type anEVT_ROW_UPDATE.
+		 *
 		 * @return true is returned, if at least a checksum-state has
 		 *         changed. The return-code can be used to track
 		 *         changes of the model.
+		 * @see AnRowProvider::rowChangeEvent()
 		 */
 		bool reset(void);
 
@@ -366,14 +398,19 @@ class SfsEntry
 		 * If the reset affects a signature, the corresponding
 		 * upgrade signature is reset, too.
 		 *
+		 * If the checksum-state has changed, the parent SfsDirectory
+		 * fires a wxCommandEvent of type anEVT_ROW_UPDATE.
+		 *
 		 * @param type Type of requested checksum
 		 * @return true is returned, if the checksum-state has changed.
 		 *         The return-code can be used to track changes of the
 		 *         model.
+		 * @see AnRowProvider::rowChangeEvent()
 		 */
 		bool reset(ChecksumType);
 
 	private:
+		SfsDirectory	*parent_;
 		wxString	path_;
 		wxString	filename_;
 		bool		haveLocalCsum_;
@@ -386,21 +423,24 @@ class SfsEntry
 		 * Default-c'tor.
 		 *
 		 * Creates an empty, resetted SfsEntry.
+		 *
+		 * @param parent The parent SfsDirectory
 		 */
-		SfsEntry(void);
+		SfsEntry(SfsDirectory *);
 
 		/**
 		 * Creates an SfsEntry with the specified path.
 		 *
+		 * @param parent The parent SfsDirectory
 		 * @param path Path of SfsEntry
 		 * @see setPath()
 		 */
-		SfsEntry(const wxString &);
+		SfsEntry(SfsDirectory *, const wxString &);
 
 		/**
 		 * Copy-c'tor.
 		 */
-		SfsEntry(const SfsEntry &) {}
+		SfsEntry(const SfsEntry &) : AnListClass() {}
 
 		/**
 		 * D'tor.
@@ -410,6 +450,7 @@ class SfsEntry
 		void copyChecksum(ChecksumType, const u_int8_t *, size_t);
 		void releaseChecksum(ChecksumType);
 		bool validateChecksum(ChecksumType);
+		void sendRowChangeEvent(void) const;
 		static wxString cs2str(const u_int8_t *, size_t);
 
 	friend class SfsDirectory;

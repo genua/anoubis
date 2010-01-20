@@ -127,7 +127,7 @@ SfsDirectory::SfsDirectory()
 
 SfsDirectory::~SfsDirectory()
 {
-	removeAllEntries();
+	removeAllEntries(false);
 }
 
 SfsDirectoryScanHandler *
@@ -228,7 +228,7 @@ SfsDirectory::getNumEntries() const
 int
 SfsDirectory::getIndexOf(const wxString &filename) const
 {
-	SfsEntry tmp(filename);
+	SfsEntry tmp(const_cast<SfsDirectory *>(this), filename);
 	return entryList_.index_of(&tmp);
 }
 
@@ -241,11 +241,20 @@ SfsDirectory::getEntry(unsigned int idx) const
 SfsEntry *
 SfsDirectory::insertEntry(const wxString &path)
 {
+	return (insertEntry(path, true));
+}
+
+SfsEntry *
+SfsDirectory::insertEntry(const wxString &path, bool sendEvent)
+{
 	if (!canInsert(path))
 		return (0);
 
-	SfsEntry *newEntry = new SfsEntry(path);
+	SfsEntry *newEntry = new SfsEntry(this, path);
 	if (entryList_.insert(newEntry)) {
+		if (sendEvent)
+			sizeChangeEvent(entryList_.size());
+
 		return newEntry;
 	} else {
 		SfsEntry	*ret = entryList_.find(newEntry);
@@ -268,6 +277,14 @@ SfsDirectory::removeEntry(unsigned int idx)
 void
 SfsDirectory::removeAllEntries(void)
 {
+	removeAllEntries(true);
+}
+
+void
+SfsDirectory::removeAllEntries(bool sendEvent)
+{
+	bool empty = (entryList_.size() == 0);
+
 	SfsEntryList::iterator	it = entryList_.begin();
 	while (it != entryList_.end()) {
 		SfsEntry	*e = *it;
@@ -275,6 +292,9 @@ SfsDirectory::removeAllEntries(void)
 		entryList_.remove(e);
 		delete(e);
 	}
+
+	if (!empty && sendEvent)
+		sizeChangeEvent(0);
 }
 
 void
@@ -291,10 +311,25 @@ SfsDirectory::scanLocalFilesystem()
 	callHandler(scanPush(thiscnt));
 
 	/* Clear list before traversion starts */
-	removeAllEntries();
+	removeAllEntries(false);
 	dir.Traverse(*this);
 
 	callHandler(scanFinished(abortScan_));
+
+	sizeChangeEvent(entryList_.size());
+}
+
+AnListClass *
+SfsDirectory::getRow(unsigned int idx) const
+{
+	unsigned int size = entryList_.size();
+	return (size > 0 && idx < size ? entryList_.get(idx) : 0);
+}
+
+int
+SfsDirectory::getSize(void) const
+{
+	return (entryList_.size());
 }
 
 bool
@@ -348,7 +383,7 @@ SfsDirectory::OnFile(const wxString &filename)
 	 * Insert into directory
 	 * Entries are sorted in alphabetic order
 	 */
-	insertEntry(filename);
+	insertEntry(filename, false);
 	wxGetApp().ProcessPendingEvents();
 
 	return (wxDIR_CONTINUE);

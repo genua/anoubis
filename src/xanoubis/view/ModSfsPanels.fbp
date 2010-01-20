@@ -1069,7 +1069,7 @@
                                                                 <property name="permission">protected</property>
                                                                 <property name="pos"></property>
                                                                 <property name="size">-1,-1</property>
-                                                                <property name="style">wxLC_HRULES|wxLC_REPORT</property>
+                                                                <property name="style">wxLC_HRULES|wxLC_REPORT|wxLC_VIRTUAL</property>
                                                                 <property name="subclass">ModSfsListCtrl; ModSfsListCtrl.h</property>
                                                                 <property name="tooltip"></property>
                                                                 <property name="window_extra_style"></property>

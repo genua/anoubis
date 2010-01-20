@@ -274,9 +274,6 @@ ModSfsMainPanelImpl::OnSfsDirChanged(wxCommandEvent&)
 	if (SfsMainDirCtrl->GetPath() != sfsCtrl_->getPath())
 		SfsMainDirCtrl->SetPath(sfsCtrl_->getPath());
 
-	/* Display changes */
-	SfsMainListCtrl->refreshList();
-
 	/* Update CurrPathLabel accordingly */
 	SfsMainPathCtrl->ChangeValue(SfsMainDirCtrl->GetPath());
 }
@@ -287,12 +284,6 @@ ModSfsMainPanelImpl::OnSfsMainDirTraversalChecked(wxCommandEvent&)
 	wxBeginBusyCursor();
 	sfsCtrl_->setRecursive(SfsMainDirTraversalCheckbox->GetValue());
 	wxEndBusyCursor();
-}
-
-void
-ModSfsMainPanelImpl::OnSfsEntryChanged(wxCommandEvent &event)
-{
-	SfsMainListCtrl->refreshEntry(event.GetInt());
 }
 
 void
@@ -562,9 +553,6 @@ ModSfsMainPanelImpl::initSfsMain(void)
 	    NULL, this);
 	sfsCtrl_->Connect(anEVT_SFSDIR_CHANGED,
 	    wxCommandEventHandler(ModSfsMainPanelImpl::OnSfsDirChanged),
-	    NULL, this);
-	sfsCtrl_->Connect(anEVT_SFSENTRY_CHANGED,
-	    wxCommandEventHandler(ModSfsMainPanelImpl::OnSfsEntryChanged),
 	    NULL, this);
 	sfsCtrl_->Connect(anEVT_SFSENTRY_ERROR,
 	    wxCommandEventHandler(ModSfsMainPanelImpl::OnSfsError),

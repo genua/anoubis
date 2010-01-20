@@ -33,6 +33,8 @@
 #include <wx/dir.h>
 #include <IndexTree.h>
 
+#include <AnRowProvider.h>
+
 class SfsEntry;
 
 class SfsEntryList : public IndexTree<SfsEntry> {
@@ -120,7 +122,7 @@ class SfsDirectoryScanHandler
  * can abort the scan by calling abortScan(). When a scan is aborted, already
  * scanned files are inserted into the model.
  */
-class SfsDirectory : private wxDirTraverser
+class SfsDirectory : public AnRowProvider, private wxDirTraverser
 {
 	public:
 		SfsDirectory();
@@ -259,10 +261,14 @@ class SfsDirectory : private wxDirTraverser
 		 * The method does not check the path! It simply adds the new
 		 * entry in correct alphabetical order.
 		 *
+		 * If a new SfsEntry was inserted into the directory, a
+		 * wxCommandEvent of type anEVT_ROW_SIZECHANGE is fired.
+		 *
 		 * @param path The path of the file to be inserted
 		 * @return The SfsEntry, which was created. If you try to
 		 *         insert a path, which was already inserted into the
 		 *         model, the corresponding SfsEntry is returned.
+		 * @see AnRowProvider::sizeChangeEvent()
 		 */
 		SfsEntry *insertEntry(const wxString &);
 
@@ -271,12 +277,21 @@ class SfsDirectory : private wxDirTraverser
 		 *
 		 * The model is not touched, if the index is out of range.
 		 *
+		 * If the SfsEntry was successfully removed from the directory,
+		 * a wxCommandEvent of type anEVT_ROW_SIZECHANGE is fired.
+		 *
 		 * @param idx Index of SfsEntry to be removed from model.
+		 * @see AnRowProvider::sizeChangeEvent()
 		 */
 		void removeEntry(unsigned int);
 
 		/**
 		 * Removes all entries from the directory.
+		 *
+		 * If at least one entry was removed, a wxCommandEvent of type
+		 * anEVT_ROW_SIZECHANGE is fired.
+		 *
+		 * @see AnRowProvider::sizeChangeEvent()
 		 */
 		void removeAllEntries(void);
 
@@ -285,8 +300,34 @@ class SfsDirectory : private wxDirTraverser
 		 *
 		 * The model is refreshed. The filesystem-scan is monitored by
 		 * the assinged SfsDirectoryScanHandler-instance.
+		 *
+		 * At the end, a wxCommandEvent of type anEVT_ROW_SIZECHANGE
+		 * is fired.
+		 *
+		 * @see AnRowProvider::sizeChangeEvent()
 		 */
 		void scanLocalFilesystem();
+
+		/**
+		 * Implementation of AnRowProvider::getRow().
+		 *
+		 * Returns the SfsEntry at the given index.
+		 *
+		 * @param idx The index
+		 * @return The SfsEntry at the requested index. If the index is
+		 *         out of range, NULL is returned.
+		 * @see getEntry()
+		 */
+		AnListClass *getRow(unsigned int idx) const;
+
+		/**
+		 * Implementation of AnRowProvider::getSize().
+		 *
+		 * Returns the number of SfsEntry-instances of the directory.
+		 * @return Number of SfsEntries.
+		 * @see getNumEntries()
+		 */
+		int getSize(void) const;
 
 	private:
 		wxString path_;
@@ -304,6 +345,31 @@ class SfsDirectory : private wxDirTraverser
 		 * new entry fits to the assigned filter options.
 		 */
 		bool canInsert(const wxString &) const;
+
+		/**
+		 * Inserts a new SfsEntry into the SfsDirectory.
+		 *
+		 * The method does not check the path! It simply adds the new
+		 * entry in correct alphabetical order.
+		 *
+		 * @param path The path of the file to be inserted
+		 * @param sendEvent if set to true, a wxCommandEvent of type
+		 *                  anEVT_ROW_SIZECHANGE is fired.
+		 * @return The SfsEntry, which was created. If you try to
+		 *         insert a path, which was already inserted into the
+		 *         model, the corresponding SfsEntry is returned.
+		 * @see AnRowProvider::sizeChangeEvent()
+		 */
+		SfsEntry *insertEntry(const wxString &, bool);
+
+		/**
+		 * Removes all entries from the directory.
+		 *
+		 * @param sendEvent if set to true, a wxCommandEvent of type
+		 *                  anEVT_ROW_SIZECHANGE is fired.
+		 * @see AnRowProvider::sizeChangeEvent()
+		 */
+		void removeAllEntries(bool);
 
 		/**
 		 * @see wxDirTraverser::InDir()
@@ -324,6 +390,8 @@ class SfsDirectory : private wxDirTraverser
 		 * @return The total number of entries.
 		 */
 		static unsigned int getDirectoryCount(const wxString &);
+
+	friend class SfsEntry;
 };
 
 #endif	/* _SFSDIRECTORY_H_ */

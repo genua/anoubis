@@ -161,7 +161,7 @@ ModSfsMainPanelBase::ModSfsMainPanelBase( wxWindow* parent, wxWindowID id, const
 	
 	browserListSizer->Add( SfsMainDirListHeadSizer, 0, wxEXPAND, 5 );
 	
-	SfsMainListCtrl = new ModSfsListCtrl( browserListPanel, wxID_ANY, wxDefaultPosition, wxSize( -1,-1 ), wxLC_HRULES|wxLC_REPORT );
+	SfsMainListCtrl = new ModSfsListCtrl( browserListPanel, wxID_ANY, wxDefaultPosition, wxSize( -1,-1 ), wxLC_HRULES|wxLC_REPORT|wxLC_VIRTUAL );
 	browserListSizer->Add( SfsMainListCtrl, 1, wxALL|wxEXPAND, 5 );
 	
 	SfsMainDetailsPanel = new AnDetails( browserListPanel, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxFULL_REPAINT_ON_RESIZE|wxRAISED_BORDER|wxTAB_TRAVERSAL, wxT("Details") );

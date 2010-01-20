@@ -28,9 +28,11 @@
 #include <wx/filename.h>
 
 #include "SfsEntry.h"
+#include "SfsDirectory.h"
 
-SfsEntry::SfsEntry()
+SfsEntry::SfsEntry(SfsDirectory *parent)
 {
+	this->parent_ = parent;
 	this->csum_[SFSENTRY_CHECKSUM] = 0;
 	this->csum_[SFSENTRY_SIGNATURE] = 0;
 	this->csum_[SFSENTRY_UPGRADE] = 0;
@@ -39,8 +41,9 @@ SfsEntry::SfsEntry()
 	reset();
 }
 
-SfsEntry::SfsEntry(const wxString &path)
+SfsEntry::SfsEntry(SfsDirectory *parent, const wxString &path)
 {
+	this->parent_ = parent;
 	this->csum_[SFSENTRY_CHECKSUM] = 0;
 	this->csum_[SFSENTRY_SIGNATURE] = 0;
 	this->csum_[SFSENTRY_UPGRADE] = 0;
@@ -75,9 +78,19 @@ SfsEntry::getRelativePath(const wxString &basePath) const
 	return (path);
 }
 
+wxString
+SfsEntry::getRelativePath(void) const
+{
+	if (parent_ != 0)
+		return (getRelativePath(parent_->getPath()));
+	else
+		return (getPath());
+}
+
 void
 SfsEntry::setPath(const wxString &path)
 {
+	bool changed = (this->path_ != path);
 	this->path_ = path;
 
 	int pos = path.Find('/', true);
@@ -85,6 +98,9 @@ SfsEntry::setPath(const wxString &path)
 		this->filename_ = path.Mid(pos + 1);
 	else
 		this->filename_ = path;
+
+	if (changed)
+		sendRowChangeEvent();
 }
 
 wxString
@@ -228,7 +244,11 @@ SfsEntry::setChecksum(ChecksumType type, const u_int8_t *cs, size_t size)
 {
 	copyChecksum(type, cs, size);
 
-	return (validateChecksum(type));
+	if (validateChecksum(type)) {
+		sendRowChangeEvent();
+		return (true);
+	} else
+		return (false);
 }
 
 bool
@@ -242,9 +262,13 @@ SfsEntry::setChecksumMissing(ChecksumType type)
 
 	if (state_[type] != SFSENTRY_MISSING) {
 		state_[type] = SFSENTRY_MISSING;
+		sendRowChangeEvent();
 		return (true);
-	} else
+	} else {
+		if (ret)
+			sendRowChangeEvent();
 		return ret;
+	}
 }
 
 bool
@@ -258,9 +282,13 @@ SfsEntry::setChecksumInvalid(ChecksumType type)
 
 	if (state_[type] != SFSENTRY_INVALID) {
 		state_[type] = SFSENTRY_INVALID;
+		sendRowChangeEvent();
 		return (true);
-	} else
+	} else {
+		if (ret)
+			sendRowChangeEvent();
 		return ret;
+	}
 }
 
 bool
@@ -303,7 +331,11 @@ SfsEntry::setLocalCsum(const u_int8_t *cs)
 	c3 = validateChecksum(SFSENTRY_SIGNATURE);
 	c4 = validateChecksum(SFSENTRY_UPGRADE);
 
-	return (c1 || c2 || c3 || c4);
+	if (c1 || c2 || c3 || c4) {
+		sendRowChangeEvent();
+		return (true);
+	} else
+		return (false);
 }
 
 bool
@@ -318,7 +350,11 @@ SfsEntry::reset(void)
 	haveLocalCsum_ = false;
 	memset(localCsum_, 0, ANOUBIS_CS_LEN);
 
-	return (c1 || c2 || c3);
+	if (c1 || c2 || c3) {
+		sendRowChangeEvent();
+		return (true);
+	} else
+		return (false);
 }
 
 bool
@@ -332,9 +368,13 @@ SfsEntry::reset(ChecksumType type)
 
 	if (state_[type] != SFSENTRY_NOT_VALIDATED) {
 		state_[type] = SFSENTRY_NOT_VALIDATED;
+		sendRowChangeEvent();
 		return (true);
-	} else
+	} else {
+		if (ret)
+			sendRowChangeEvent();
 		return ret;
+	}
 }
 
 void
@@ -381,6 +421,15 @@ SfsEntry::validateChecksum(ChecksumType type)
 		return (true);
 	} else
 		return (false);
+}
+
+void
+SfsEntry::sendRowChangeEvent(void) const
+{
+	if (parent_) {
+		int idx = parent_->entryList_.index_of(this);
+		parent_->rowChangeEvent(idx, idx);
+	}
 }
 
 wxString

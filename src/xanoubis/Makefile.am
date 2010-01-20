@@ -317,6 +317,8 @@ xanoubis_SOURCES= \
 	view/ModSfsGenerateKeyDlg.h \
 	view/ModSfsListCtrl.cpp \
 	view/ModSfsListCtrl.h \
+	view/ModSfsListProperty.cpp \
+	view/ModSfsListProperty.h \
 	view/ModSfsMainPanelImpl.cpp \
 	view/ModSfsMainPanelImpl.h \
 	view/ModSfsOverviewPanelImpl.cpp \

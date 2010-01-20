@@ -143,14 +143,6 @@ class ModSfsMainPanelImpl : public ModSfsMainPanelBase, private Observer
 		void OnSfsMainDirTraversalChecked(wxCommandEvent&);
 
 		/**
-		 * Handle the event that Sfs entry is changed.
-		 * Updates the view.
-		 * @param[in] 1st The event.
-		 * @return Nothing.
-		 */
-		void OnSfsEntryChanged(wxCommandEvent&);
-
-		/**
 		 * Handle the event when an Sfs error occurs.
 		 * Rises message box with the correponding error.
 		 * @param[in] 1st The event.
