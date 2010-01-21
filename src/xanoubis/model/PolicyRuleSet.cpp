@@ -34,6 +34,7 @@
 
 #include "main.h"
 #include "PolicyCtrl.h"
+#include "PolicyRowProvider.h"
 #include "PolicyVisitor.h"
 #include "RuleSetSearchPolicyVisitor.h"
 #include "RuleSetClearModifiedVisitor.h"
@@ -47,6 +48,7 @@ PolicyRuleSet::PolicyRuleSet(int priority, uid_t uid,
 	ruleSetId_  = wxNewId();
 	uid_	    = uid;
 	priority_   = priority;
+	rowProvider_ = new PolicyRowProvider(this);
 	ruleSet_    = NULL; /* Set by crate() */
 	origin_     = wxT("native apn ruleset");
 	hasErrors_  = false;
@@ -63,6 +65,7 @@ PolicyRuleSet::PolicyRuleSet(int priority, uid_t uid, const wxString &fileName)
 	ruleSetId_  = wxNewId();
 	uid_	    = uid;
 	priority_   = priority;
+	rowProvider_ = new PolicyRowProvider(this);
 	ruleSet_    = NULL; /* Set by crate() */
 	origin_	    = fileName;
 	hasErrors_  = false;
@@ -77,6 +80,7 @@ PolicyRuleSet::~PolicyRuleSet(void)
 {
 	clean();
 	apn_free_ruleset(ruleSet_);
+	delete rowProvider_;
 }
 
 void
@@ -381,6 +385,59 @@ PolicyRuleSet::getPolicyAt(unsigned int idx) const
 	return (wxDynamicCast(policy, AppPolicy));
 }
 
+int
+PolicyRuleSet::getIndexOfPolicy(AppPolicy *policy) const
+{
+	int idx = 0;
+
+	if (policy == 0)
+		return (-1);
+
+	if (policy->IsKindOf(CLASSINFO(AlfAppPolicy))) {
+		for (unsigned int i = 0; i < alfList_.size(); i++) {
+			if (alfList_[i] == policy)
+				return (i);
+		}
+
+		return (-1);
+	}
+
+	idx += alfList_.size();
+
+	if (policy->IsKindOf(CLASSINFO(SfsAppPolicy))) {
+		for (unsigned int i = 0; i < sfsList_.size(); i++) {
+			if (sfsList_[i] == policy)
+				return (idx + i);
+		}
+
+		return (-1);
+	}
+
+	idx += sfsList_.size();
+
+	if (policy->IsKindOf(CLASSINFO(ContextAppPolicy))) {
+		for (unsigned int i = 0; i < ctxList_.size(); i++) {
+			if (ctxList_[i] == policy)
+				return (idx + i);
+		}
+
+		return (-1);
+	}
+
+	idx += ctxList_.size();
+
+	if (policy->IsKindOf(CLASSINFO(SbAppPolicy))) {
+		for (unsigned int i = 0; i < sbList_.size(); i++) {
+			if (sbList_[i] == policy)
+				return (idx + i);
+		}
+
+		return (-1);
+	}
+
+	return (-1);
+}
+
 AlfAppPolicy *
 PolicyRuleSet::searchAlfAppPolicy(wxString binary) const
 {
@@ -514,6 +571,7 @@ PolicyRuleSet::createPolicy(unsigned int type, unsigned int id,
 	if (success) {
 		refresh();
 		setModified();
+		rowProvider_->sizeChangeEvent(getAppPolicyCount());
 	}
 
 	return (index);
@@ -540,6 +598,8 @@ PolicyRuleSet::prependAppPolicy(AppPolicy *app)
 	} else {
 		return (false);
 	}
+
+	rowProvider_->sizeChangeEvent(getAppPolicyCount());
 
 	return (true);
 }
@@ -651,6 +711,14 @@ PolicyRuleSet::refresh(void)
 	struct apn_ruleset	*ruleset = ruleSet_;
 	clean();
 	create(ruleset);
+
+	rowProvider_->sizeChangeEvent(getAppPolicyCount());
+}
+
+AnRowProvider *
+PolicyRuleSet::getRowProvider(void) const
+{
+	return (this->rowProvider_);
 }
 
 void

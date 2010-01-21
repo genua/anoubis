@@ -231,6 +231,8 @@ xanoubis_SOURCES= \
 	model/DefaultFilterPolicy.h \
 	model/FilterPolicy.cpp \
 	model/FilterPolicy.h \
+	model/PolicyRowProvider.cpp \
+	model/PolicyRowProvider.h \
 	model/Policy.cpp \
 	model/Policy.h \
 	model/SbAccessFilterPolicy.cpp \

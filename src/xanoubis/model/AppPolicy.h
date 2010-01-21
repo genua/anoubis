@@ -37,10 +37,13 @@
 #include <wx/arrstr.h>
 #include <wx/string.h>
 
+#include "AnListClass.h"
+#include "AnRowProvider.h"
 #include "Policy.h"
 
 /* Foreward declaration for prepending filter policies. */
 class FilterPolicy;
+class PolicyRowProvider;
 
 /**
  * This is the base class of all application policies.
@@ -93,6 +96,18 @@ class AppPolicy : public Policy
 		void acceptOnFilter(PolicyVisitor &);
 
 		/**
+		 * Returns the AnRowProvider assigned to the policy.
+		 *
+		 * Use this row-provider if you want to display the app-policy.
+		 * The row-provider returns the filter-policies of the
+		 * app-policy. Thus displaying the app-policy means to list the
+		 * filter-policies.
+		 *
+		 * @return The row-provider of the app-policy
+		 */
+		AnRowProvider *getRowProvider(void) const;
+
+		/**
 		 * Count the filters of this application policy.
 		 * @param None.
 		 * @return Number of filters.
@@ -109,6 +124,15 @@ class AppPolicy : public Policy
 		 *         index is out of range.
 		 */
 		FilterPolicy *getFilterPolicyAt(unsigned int) const;
+
+		/**
+		 * Returns the index of the given policy.
+		 *
+		 * @param[in] 1st The policy you are searching for
+		 * @return The index of the policy. If the policy is not part
+		 *         of this policy, -1 is returned.
+		 */
+		int getIndexOfFilterPolicy(FilterPolicy *) const;
 
 		/**
 		 * Count the binaries of this application policy.
@@ -262,6 +286,13 @@ class AppPolicy : public Policy
 		 */
 		void filterListPrepend(FilterPolicy *);
 
+		/**
+		 * Implementation of Policy::sendPolicyChangeEvent().
+		 *
+		 * Send the event to PolicyRuleSet::getRowProvider().
+		 */
+		void sendPolicyChangeEvent(void);
+
 	private:
 		/**
 		 * Seek apn application structure by index.
@@ -274,6 +305,11 @@ class AppPolicy : public Policy
 		 * List contains instances of child-filter-policies.
 		 */
 		std::vector<FilterPolicy *> filterList_;
+
+		/**
+		 * The row-provider of the policy.
+		 */
+		PolicyRowProvider *rowProvider_;
 
 		friend class PolicyRuleSet;
 };

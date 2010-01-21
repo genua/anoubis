@@ -291,6 +291,17 @@ class PolicyRuleSet : public Subject
 		void refresh(void);
 
 		/**
+		 * Returns the AnRowProvider assigned to the ruleset.
+		 *
+		 * Use this row-provider if you want to display the ruleset.
+		 * The row-provider returns the app-policies of the ruleset.
+		 * Thus displaying the ruleset means to list the app-policies.
+		 *
+		 * @return The row-provider of the ruleset
+		 */
+		AnRowProvider *getRowProvider(void) const;
+
+		/**
 		 * Get the number of application policies.
 		 * @param None.
 		 * @return The number of application policies.
@@ -307,6 +318,15 @@ class PolicyRuleSet : public Subject
 		 *         index is out of range.
 		 */
 		AppPolicy *getPolicyAt(unsigned int) const;
+
+		/**
+		 * Returns the index of the given policy.
+		 *
+		 * @param[in] 1st The policy you are searching for
+		 * @return The index of the policy. If the policy is not part
+		 *         of the ruleset, -1 is returned.
+		 */
+		int getIndexOfPolicy(AppPolicy *) const;
 
 		/**
 		 * Search for alf application policy.
@@ -361,6 +381,7 @@ class PolicyRuleSet : public Subject
 		bool			 isModified_;
 		bool			 isInProgress_;
 		bool			 isDaemonRuleSet_;
+		PolicyRowProvider	*rowProvider_;
 		struct apn_ruleset	*ruleSet_;
 		std::vector<Policy *>	 alfList_;
 		std::vector<Policy *>	 sfsList_;

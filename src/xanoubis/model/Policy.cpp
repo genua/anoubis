@@ -34,7 +34,7 @@
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
-IMPLEMENT_CLASS(Policy, Subject);
+IMPLEMENT_CLASS(Policy, AnListClass);
 
 Policy::Policy(PolicyRuleSet *ruleSet, struct apn_rule *rule)
 {
@@ -66,6 +66,8 @@ Policy::setModified(void)
 	startChange();
 
 	modified_ = true;
+	sendPolicyChangeEvent();
+
 	if (parentRuleSet_ != NULL) {
 		parentRuleSet_->setModified();
 	}

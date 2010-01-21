@@ -29,6 +29,7 @@
 
 #include "PolicyVisitor.h"
 #include "PolicyUtils.h"
+#include "PolicyRowProvider.h"
 #include "PolicyRuleSet.h"
 
 IMPLEMENT_CLASS(AppPolicy, Policy);
@@ -36,6 +37,7 @@ IMPLEMENT_CLASS(AppPolicy, Policy);
 AppPolicy::AppPolicy(PolicyRuleSet *ruleSet, struct apn_rule *rule)
     : Policy(ruleSet, rule)
 {
+	this->rowProvider_ = new PolicyRowProvider(this);
 }
 
 AppPolicy::~AppPolicy(void)
@@ -45,6 +47,8 @@ AppPolicy::~AppPolicy(void)
 		filterList_.pop_back();
 		delete policy;
 	}
+
+	delete rowProvider_;
 }
 
 struct apn_app *
@@ -82,6 +86,12 @@ AppPolicy::acceptOnFilter(PolicyVisitor &visitor)
 	}
 }
 
+AnRowProvider *
+AppPolicy::getRowProvider(void) const
+{
+	return (this->rowProvider_);
+}
+
 size_t
 AppPolicy::getFilterPolicyCount(void) const
 {
@@ -95,6 +105,20 @@ AppPolicy::getFilterPolicyAt(unsigned int index) const
 		return filterList_[index];
 	else
 		return 0;
+}
+
+int
+AppPolicy::getIndexOfFilterPolicy(FilterPolicy *policy) const
+{
+	if (policy == 0)
+		return (-1);
+
+	for (unsigned int i = 0; i < filterList_.size(); i++) {
+		if (filterList_[i] == policy)
+			return (i);
+	}
+
+	return (-1);
 }
 
 unsigned int
@@ -410,10 +434,29 @@ void
 AppPolicy::filterListAppend(FilterPolicy *policy)
 {
 	filterList_.push_back(policy);
+	rowProvider_->sizeChangeEvent(filterList_.size());
 }
 
 void
 AppPolicy::filterListPrepend(FilterPolicy *policy)
 {
 	filterList_.insert(filterList_.begin(), policy);
+	rowProvider_->sizeChangeEvent(filterList_.size());
+}
+
+void
+AppPolicy::sendPolicyChangeEvent(void)
+{
+	PolicyRuleSet *parent = getParentRuleSet();
+
+	if (parent != 0) {
+		int idx = parent->getIndexOfPolicy(this);
+
+		if (idx != -1) {
+			wxCommandEvent event(anEVT_ROW_UPDATE);
+			event.SetInt(idx);
+			event.SetExtraLong(idx);
+			parent->getRowProvider()->ProcessEvent(event);
+		}
+	}
 }

@@ -130,3 +130,18 @@ FilterPolicy::getRulePrefix(void) const
 {
 	return wxEmptyString;
 }
+
+void
+FilterPolicy::sendPolicyChangeEvent(void)
+{
+	if (parentPolicy_ != 0) {
+		int idx = parentPolicy_->getIndexOfFilterPolicy(this);
+
+		if (idx != -1) {
+			wxCommandEvent event(anEVT_ROW_UPDATE);
+			event.SetInt(idx);
+			event.SetExtraLong(idx);
+			parentPolicy_->getRowProvider()->ProcessEvent(event);
+		}
+	}
+}

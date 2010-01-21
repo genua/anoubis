@@ -51,16 +51,28 @@ START_TEST(empty)
 	PolicyRuleSet	*rs;
 	AppPolicy	*app;
 	FilterPolicy	*filter;
+	AnRowProvider	*rp;
 
 	rs = createPolicyRuleSet("\n");
+	rp = rs->getRowProvider();
+
+	fail_unless(rp != 0);	
 	fail_unless(rs->getAppPolicyCount() == 1);
+	fail_unless(rp->getSize() == 1);
 
 	app = rs->getPolicyAt(0);
 	fail_unless(app != 0);
+	fail_unless(rs->getIndexOfPolicy(app) == 0);
+	fail_unless(rs->getIndexOfPolicy(0) == -1);
 	fail_unless(app->IsKindOf(CLASSINFO(SfsAppPolicy)));
+	fail_unless(rp->getRow(0) == app);
 
 	filter = app->getFilterPolicyAt(0);
+	rp = app->getRowProvider();
+
 	fail_unless(filter == 0);
+	fail_unless(rp->getRow(0) == 0);
+	fail_unless(rp->getSize() == 0);
 
 	app = rs->getPolicyAt(1);
 	fail_unless(app == 0);
@@ -74,28 +86,48 @@ START_TEST(alf)
 	PolicyRuleSet	*rs;
 	AppPolicy	*app;
 	FilterPolicy	*filter;
+	AnRowProvider	*rp;
 
 	rs= createPolicyRuleSet(
 	    "alf {\nany {\ndefault deny\n}\n}\n");
+	rp = rs->getRowProvider();
+
+	fail_unless(rp != 0);
 	fail_unless(rs->getAppPolicyCount() == 2);
+	fail_unless(rp->getSize() == 2);
 
 	app = rs->getPolicyAt(0);
 	fail_unless(app != 0);
+	fail_unless(rs->getIndexOfPolicy(app) == 0);
 	fail_unless(app->IsKindOf(CLASSINFO(AlfAppPolicy)));
 
 	filter = app->getFilterPolicyAt(0);
 	fail_unless(filter != 0);
+	fail_unless(app->getIndexOfFilterPolicy(filter) == 0);
+	fail_unless(app->getIndexOfFilterPolicy(0) == -1);
 	fail_unless(filter->IsKindOf(CLASSINFO(DefaultFilterPolicy)));
 
 	filter = app->getFilterPolicyAt(1);
 	fail_unless(filter == 0);
 
+	rp = app->getRowProvider();
+	fail_unless(rp != 0);
+	fail_unless(rp->getSize() == 1);
+	fail_unless(rp->getRow(0) == app->getFilterPolicyAt(0));
+	fail_unless(rp->getRow(1) == 0);
+
 	app = rs->getPolicyAt(1);
 	fail_unless(app != 0);
+	fail_unless(rs->getIndexOfPolicy(app) == 1);
 	fail_unless(app->IsKindOf(CLASSINFO(SfsAppPolicy)));
 
 	filter = app->getFilterPolicyAt(0);
 	fail_unless(filter == 0);
+
+	rp = app->getRowProvider();
+	fail_unless(rp != 0);
+	fail_unless(rp->getSize() == 0);
+	fail_unless(rp->getRow(0) == 0);
 
 	app = rs->getPolicyAt(2);
 	fail_unless(app == 0);
@@ -109,22 +141,35 @@ START_TEST(sfs)
 	PolicyRuleSet	*rs;
 	AppPolicy	*app;
 	FilterPolicy	*filter;
+	AnRowProvider	*rp;
 
 	rs = createPolicyRuleSet(
 	    "sfs {\ndefault any allow\n}\n");
+	rp = rs->getRowProvider();
 
 	fail_unless(rs->getAppPolicyCount() == 1);
+	fail_unless(rp->getSize() == 1);
+	fail_unless(rp->getRow(0) == rs->getPolicyAt(0));
+	fail_unless(rp->getRow(1) == 0);
 
 	app = rs->getPolicyAt(0);
 	fail_unless(app != 0);
+	fail_unless(rs->getIndexOfPolicy(app) == 0);
 	fail_unless(app->IsKindOf(CLASSINFO(SfsAppPolicy)));
 
 	filter = app->getFilterPolicyAt(0);
 	fail_unless(filter != 0);
+	fail_unless(app->getIndexOfFilterPolicy(filter) == 0);
 	fail_unless(filter->IsKindOf(CLASSINFO(SfsDefaultFilterPolicy)));
 
 	filter = app->getFilterPolicyAt(1);
 	fail_unless(filter == 0);
+
+	rp = app->getRowProvider();
+	fail_unless(rp != 0);
+	fail_unless(rp->getSize() == 1);
+	fail_unless(rp->getRow(0) == app->getFilterPolicyAt(0));
+	fail_unless(rp->getRow(1) == 0);
 
 	app = rs->getPolicyAt(1);
 	fail_unless(app == 0);
@@ -138,28 +183,50 @@ START_TEST(sb)
 	PolicyRuleSet	*rs;
 	AppPolicy	*app;
 	FilterPolicy	*filter;
+	AnRowProvider	*rp;
 
 	rs = createPolicyRuleSet(
 	    "sandbox {\n\"/bin/true\" {\ndefault allow\n}\n}\n");
+	rp = rs->getRowProvider();
+
 	fail_unless(rs->getAppPolicyCount() == 2);
+	fail_unless(rp != 0);
+	fail_unless(rp->getSize() == 2);
+	fail_unless(rp->getRow(0) == rs->getPolicyAt(0));
+	fail_unless(rp->getRow(1) == rs->getPolicyAt(1));
+	fail_unless(rp->getRow(2) == 0);
 
 	app = rs->getPolicyAt(0);
 	fail_unless(app != 0);
+	fail_unless(rs->getIndexOfPolicy(app) == 0);
 	fail_unless(app->IsKindOf(CLASSINFO(SfsAppPolicy)));
 
 	filter = app->getFilterPolicyAt(0);
 	fail_unless(filter == 0);
 
+	rp = app->getRowProvider();
+	fail_unless(rp != 0);
+	fail_unless(rp->getSize() == 0);
+	fail_unless(rp->getRow(0) == 0);
+
 	app = rs->getPolicyAt(1);
 	fail_unless(app != 0);
+	fail_unless(rs->getIndexOfPolicy(app) == 1);
 	fail_unless(app->IsKindOf(CLASSINFO(SbAppPolicy)));
 
 	filter = app->getFilterPolicyAt(0);
 	fail_unless(filter != 0);
+	fail_unless(app->getIndexOfFilterPolicy(filter) == 0);
 	fail_unless(filter->IsKindOf(CLASSINFO(DefaultFilterPolicy)));
 
 	filter = app->getFilterPolicyAt(1);
 	fail_unless(filter == 0);
+
+	rp = app->getRowProvider();
+	fail_unless(rp != 0);
+	fail_unless(rp->getSize() == 1);
+	fail_unless(rp->getRow(0) == app->getFilterPolicyAt(0));
+	fail_unless(rp->getRow(1) == 0);
 
 	app = rs->getPolicyAt(2);
 	fail_unless(app == 0);
@@ -173,28 +240,50 @@ START_TEST(ctx)
 	PolicyRuleSet	*rs;
 	AppPolicy	*app;
 	FilterPolicy	*filter;
+	AnRowProvider	*rp;
 
 	rs = createPolicyRuleSet(
 	    "context {\nany {\ncontext new any\n}\n}\n");
+	rp = rs->getRowProvider();
+
 	fail_unless(rs->getAppPolicyCount() == 2);
+	fail_unless(rp != 0);
+	fail_unless(rp->getSize() == 2);
+	fail_unless(rp->getRow(0) == rs->getPolicyAt(0));
+	fail_unless(rp->getRow(1) == rs->getPolicyAt(1));
+	fail_unless(rp->getRow(2) == 0);
 
 	app = rs->getPolicyAt(0);
 	fail_unless(app != 0);
+	fail_unless(rs->getIndexOfPolicy(app) == 0);
 	fail_unless(app->IsKindOf(CLASSINFO(SfsAppPolicy)));
 
 	filter = app->getFilterPolicyAt(0);
 	fail_unless(filter == 0);
 
+	rp = app->getRowProvider();
+	fail_unless(rp != 0);
+	fail_unless(rp->getSize() == 0);
+	fail_unless(rp->getRow(0) == 0);
+
 	app = rs->getPolicyAt(1);
 	fail_unless(app != 0);
+	fail_unless(rs->getIndexOfPolicy(app) == 1);
 	fail_unless(app->IsKindOf(CLASSINFO(ContextAppPolicy)));
 
 	filter = app->getFilterPolicyAt(0);
 	fail_unless(filter != 0);
+	fail_unless(app->getIndexOfFilterPolicy(filter) == 0);
 	fail_unless(filter->IsKindOf(CLASSINFO(ContextFilterPolicy)));
 
 	filter = app->getFilterPolicyAt(1);
 	fail_unless(filter == 0);
+
+	rp = app->getRowProvider();
+	fail_unless(rp != 0);
+	fail_unless(rp->getSize() == 1);
+	fail_unless(rp->getRow(0) == app->getFilterPolicyAt(0));
+	fail_unless(rp->getRow(1) == 0);
 
 	app = rs->getPolicyAt(2);
 	fail_unless(app == 0);
@@ -208,57 +297,99 @@ START_TEST(combined)
 	PolicyRuleSet	*rs;
 	AppPolicy	*app;
 	FilterPolicy	*filter;
+	AnRowProvider	*rp;
 
 	rs = createPolicyRuleSet(
 	    "alf {\nany {\ndefault deny\n}\n}\n"
 	    "sfs {\ndefault any allow\n}\n"
 	    "sandbox {\n\"/bin/true\" {\ndefault allow\n}\n}\n"
 	    "context {\nany {\ncontext new any\n}\n}\n");
+	rp = rs->getRowProvider();
+
 	fail_unless(rs->getAppPolicyCount() == 4);
+	fail_unless(rp != 0);
+	fail_unless(rp->getSize() == 4);
+	fail_unless(rp->getRow(0) == rs->getPolicyAt(0));
+	fail_unless(rp->getRow(1) == rs->getPolicyAt(1));
+	fail_unless(rp->getRow(2) == rs->getPolicyAt(2));
+	fail_unless(rp->getRow(3) == rs->getPolicyAt(3));
+	fail_unless(rp->getRow(4) == 0);
 
 	app = rs->getPolicyAt(0);
 	fail_unless(app != 0);
+	fail_unless(rs->getIndexOfPolicy(app) == 0);
 	fail_unless(app->IsKindOf(CLASSINFO(AlfAppPolicy)));
 
 	filter = app->getFilterPolicyAt(0);
 	fail_unless(filter != 0);
+	fail_unless(app->getIndexOfFilterPolicy(filter) == 0);
 	fail_unless(filter->IsKindOf(CLASSINFO(DefaultFilterPolicy)));
 
 	filter = app->getFilterPolicyAt(1);
 	fail_unless(filter == 0);
 
+	rp = app->getRowProvider();
+	fail_unless(rp != 0);
+	fail_unless(rp->getSize() == 1);
+	fail_unless(rp->getRow(0) == app->getFilterPolicyAt(0));
+	fail_unless(rp->getRow(1) == 0);
+
 	app = rs->getPolicyAt(1);
 	fail_unless(app != 0);
+	fail_unless(rs->getIndexOfPolicy(app) == 1);
 	fail_unless(app->IsKindOf(CLASSINFO(SfsAppPolicy)));
 
 	filter = app->getFilterPolicyAt(0);
 	fail_unless(filter != 0);
+	fail_unless(app->getIndexOfFilterPolicy(filter) == 0);
 	fail_unless(filter->IsKindOf(CLASSINFO(SfsDefaultFilterPolicy)));
 
 	filter = app->getFilterPolicyAt(1);
 	fail_unless(filter == 0);
 
+	rp = app->getRowProvider();
+	fail_unless(rp != 0);
+	fail_unless(rp->getSize() == 1);
+	fail_unless(rp->getRow(0) == app->getFilterPolicyAt(0));
+	fail_unless(rp->getRow(1) == 0);
+
 	app = rs->getPolicyAt(2);
 	fail_unless(app != 0);
+	fail_unless(rs->getIndexOfPolicy(app) == 2);
 	fail_unless(app->IsKindOf(CLASSINFO(ContextAppPolicy)));
 
 	filter = app->getFilterPolicyAt(0);
 	fail_unless(filter != 0);
+	fail_unless(app->getIndexOfFilterPolicy(filter) == 0);
 	fail_unless(filter->IsKindOf(CLASSINFO(ContextFilterPolicy)));
 
 	filter = app->getFilterPolicyAt(1);
 	fail_unless(filter == 0);
 
+	rp = app->getRowProvider();
+	fail_unless(rp != 0);
+	fail_unless(rp->getSize() == 1);
+	fail_unless(rp->getRow(0) == app->getFilterPolicyAt(0));
+	fail_unless(rp->getRow(1) == 0);
+
 	app = rs->getPolicyAt(3);
 	fail_unless(app != 0);
+	fail_unless(rs->getIndexOfPolicy(app) == 3);
 	fail_unless(app->IsKindOf(CLASSINFO(SbAppPolicy)));
 
 	filter = app->getFilterPolicyAt(0);
 	fail_unless(filter != 0);
+	fail_unless(app->getIndexOfFilterPolicy(filter) == 0);
 	fail_unless(filter->IsKindOf(CLASSINFO(DefaultFilterPolicy)));
 
 	filter = app->getFilterPolicyAt(1);
 	fail_unless(filter == 0);
+
+	rp = app->getRowProvider();
+	fail_unless(rp != 0);
+	fail_unless(rp->getSize() == 1);
+	fail_unless(rp->getRow(0) == app->getFilterPolicyAt(0));
+	fail_unless(rp->getRow(1) == 0);
 
 	app = rs->getPolicyAt(4);
 	fail_unless(app == 0);

@@ -141,6 +141,13 @@ class FilterPolicy : public Policy
 		 */
 		wxString actionToString(int) const;
 
+		/**
+		 * Implementation of Policy::sendPolicyChangeEvent().
+		 *
+		 * Sends the event to AppPolicy::getRowProvider().
+		 */
+		void sendPolicyChangeEvent(void);
+
 	private:
 		AppPolicy *parentPolicy_; /**< The parent application. */
 };

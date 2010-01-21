@@ -35,7 +35,7 @@
 #include <wx/string.h>
 
 #include "libapn.h"
-#include "Subject.h"
+#include "AnListClass.h"
 
 class PolicyVisitor;
 class PolicyRuleSet;
@@ -46,7 +46,7 @@ class PolicyRuleSet;
  * All policies are just proxy classes. The concerning apn_rule will be
  * handled by the apn_ruleset itself.
  */
-class Policy : public Subject
+class Policy : public AnListClass
 {
 	DECLARE_CLASS(Policy);
 
@@ -220,6 +220,17 @@ class Policy : public Subject
 		 * @return 1st The apn_rule
 		 */
 		struct apn_rule *getApnRule(void) const;
+
+		/**
+		 * Sends a wxCommandEvent of type anEVT_ROW_UPDATE.
+		 *
+		 * It means that the object has changed. This method is
+		 * pure virtual because the event-source highly depends on
+		 * the policy-type.
+		 *
+		 * @see AnRowProvider
+		 */
+		virtual void sendPolicyChangeEvent(void) = 0;
 
 	private:
 		bool		 modified_;	 /**< Modified flag. */
