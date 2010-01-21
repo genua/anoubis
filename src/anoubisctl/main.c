@@ -368,8 +368,8 @@ main(int argc, char *argv[])
 			usage();
 			/* NOTREACHED */
 		}
-		as = anoubis_sig_priv_init(keyfile, certfile, pass_cb, &error);
-		if (as == NULL) {
+		error = anoubis_sig_create(&as, keyfile, certfile, pass_cb);
+		if (error < 0) {
 			fprintf(stderr, "Error while loading keyfile: %s"
 			    " or certfile %s\n", keyfile, certfile);
 			return 1;
@@ -380,8 +380,8 @@ main(int argc, char *argv[])
 			    "ceritificate file\n");
 			usage();
 		}
-		as = anoubis_sig_pub_init(NULL, certfile, NULL, &error);
-		if (as == NULL) {
+		error = anoubis_sig_create(&as, NULL, certfile, NULL);
+		if (error < 0) {
 			fprintf(stderr, "Error while loading keyfile: %s\n",
 			    keyfile);
 			return 1;
@@ -1277,10 +1277,10 @@ auth_callback(struct anoubis_client *client __used, struct anoubis_msg *in,
 		}
 		if (as)
 			anoubis_sig_free(as);
-		as = anoubis_sig_priv_init(keyfile, certfile, pass_cb, &rc);
-		if (as == NULL || as->pkey == NULL) {
+		rc = anoubis_sig_create(&as, keyfile, certfile, pass_cb);
+		if (rc < 0 || as == NULL || as->pkey == NULL) {
 			fprintf(stderr, "Error while loading cert/key required"
-			    " for key based authentication (error=%d)\n", rc);
+			    " for key based authentication (error=%d)\n", -rc);
 			return -EPERM;
 		}
 	}
@@ -1533,12 +1533,14 @@ verify(const char *filename, const char *signature)
 	sigbuf = malloc(siglen);
 	if (sigbuf == NULL) {
 		fprintf(stderr, "Out of memory\n");
+		EVP_PKEY_free(pubkey);
 		return 1;
 	}
 	fd = open(signature, O_RDONLY);
 	if (fd < 0) {
 		free(sigbuf);
 		fprintf(stderr, "Cannot open signature file %s\n", signature);
+		EVP_PKEY_free(pubkey);
 		return 1;
 	}
 	while (off < siglen) {
@@ -1547,12 +1549,14 @@ verify(const char *filename, const char *signature)
 			perror("Failed to read signature data\n");
 			close(fd);
 			free(sigbuf);
+			EVP_PKEY_free(pubkey);
 			return 1;
 		}
 		if (ret == 0) {
 			fprintf(stderr, "Short signature file\n");
 			close(fd);
 			free(sigbuf);
+			EVP_PKEY_free(pubkey);
 			return 1;
 		}
 		off += ret;
@@ -1562,9 +1566,11 @@ verify(const char *filename, const char *signature)
 	if (ret != 1) {
 		fprintf(stderr, "Signature verification failed\n");
 		free(sigbuf);
+		EVP_PKEY_free(pubkey);
 		return 1;
 	}
 	free(sigbuf);
+	EVP_PKEY_free(pubkey);
 	printf("Signature verification ok\n");
 	return 0;
 }

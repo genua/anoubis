@@ -30,12 +30,10 @@
 .Os Anoubis
 .Sh NAME
 .Nm struct anoubis_sig
-.Nm anoubis_sig_pub_init
-.Nm anoubis_sig_priv_init
+.Nm anoubis_sig_create
 .Nm anoubis_sig_free
 .Nm anoubis_sig_key2char
 .Nm anoubis_sig_sign_csum
-.Nm anoubis_sig_verify_csum
 .Nm anoubisd_sig_verify_csum
 .Nm anoubis_sig_sign_policy
 .Nm anoubis_sig_verify_policy_file
@@ -44,10 +42,8 @@
 .Nd Signature handling of Anoubis
 .Sh SYNOPSIS
 .In anoubis_sig.h
-.Ft struct anoubis_sig *
-.Fn anoubis_sig_pub_init "const char *keyfile, const char *certfile, void *passcb, int *error"
-.Ft struct anoubis_sig *
-.Fn anoubis_sig_init_priv "const char *keyfile, const char *certfile, void *passcb, int *error"
+.Ft int
+.Fn anoubis_sig_create "struct anoubis_sig **asp, const char *keyfile, const char *certfile, void *passcb"
 .Ft void
 .Fn anoubis_sig_free "struct anoubis_sig *as"
 .Ft char *
@@ -71,21 +67,18 @@
 This library is used to sign and verify checksums or policies.
 .Pp
 The function
-.Nm anoubis_sig_pub_init
-and
-.Nm anoubis_sig_pub_init
-is used to load private or public keys and the certificate. To free the so
-created
+.Nm anoubis_sig_create
+is used to load a private and the certificate.
+To free an
 .Nm anoubis_sig
-struct the function
-.Nm anoubis_sig_free
-is needed.
+structure create by
+.Nm anoubis_sig_create
+use the function
+.Nm anoubis_sig_free.
 .Pp
 To create a signature of a calculated checksum, use
 .Nm anoubis_sign_csum.
-To verify the result use in client applications
-.Nm anoubis_verify_csum
-and within the daemon
+To verify the result use
 .Nm anoubisd_verify_csum.
 .Pp
 The function
@@ -103,13 +96,8 @@ a buffer which contains the signature of the policy.
 .Nm anoubis_cert_name
 returns the subject name of a certificate.
 .Sh RETURN VALUES
-.Nm anoubis_sig_pub_init
-returns the anoubis_struct or NULL on error. In case of a failure the value of
-error is set.
-.Pp
-.Nm anoubis_sig_priv_init
-returns the anoubis_struct or NULL on error. In case of a failure the value of
-error is set.
+.Nm anoubis_sig_create
+returns zero in case of success and a negative error code in case of an error.
 .Pp
 .Nm anoubis_sig_key2char
 returns the char representation of the key or NULL on error
@@ -118,7 +106,7 @@ returns the char representation of the key or NULL on error
 returns a unsigned char buffer including the checksum and the signature of the
 checksum or NULL on error.
 .Pp
-.Nm anoubis_verify_csum
+.Nm anoubisd_verify_csum
 returns 1 if the checksum is verified or 0 on error or not matching signature.
 .Pp
 .Nm anoubis_sign_policy

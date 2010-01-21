@@ -81,15 +81,20 @@
 #define ANOUBIS_SIG_HASH_DEFAULT	EVP_sha1()
 /* XXX KM */
 
-/* XXX KM:
+/*
  * If you add another entry into the struct
  * don't forget to free it in anoubis_sig_free
  */
 struct anoubis_sig {
+	/** The signature type that is used with these keys. */
 	const EVP_MD	*type;
+	/** The certificate that contains the public key. */
 	X509		*cert;
+	/** The keyid extracted from the certificate. */
 	unsigned char	*keyid;
+	/** The length of the keyid. */
 	int		 idlen;
+	/** The private key extracted from the private key file. */
 	EVP_PKEY	*pkey;
 };
 
@@ -104,9 +109,6 @@ unsigned char *anoubis_sign_policy_buf(struct anoubis_sig *as, char *buf,
 int anoubis_sig_verify_policy_file(const char *filename, EVP_PKEY *sigkey);
 int anoubis_sig_verify_policy(const char *filename,
    unsigned char *sigbuf, int siglen, EVP_PKEY *sigkey);
-int anoubis_verify_csum(struct anoubis_sig *as,
-    unsigned char csum[ANOUBIS_SIG_HASH_SHA256_LEN], unsigned char *sfs_sign,
-    int sfs_len);
 int anoubis_sig_sign_buffer(const void *, int len, void **sigp, int *siglenp,
     struct anoubis_sig *as);
 int anoubis_sig_verify_buffer(const void *data, int datalen,
@@ -114,16 +116,14 @@ int anoubis_sig_verify_buffer(const void *data, int datalen,
 int anoubisd_verify_csum(EVP_PKEY *pkey,
      const unsigned char csum[ANOUBIS_SIG_HASH_SHA256_LEN],
      const unsigned char *sfs_sign, int sfs_len);
-struct anoubis_sig *anoubis_sig_pub_init(const char *file, const char *cert,
-    pem_password_cb *passcb, int *error);
-struct anoubis_sig *anoubis_sig_priv_init(const char *file, const char *cert,
-    pem_password_cb *passcb, int *error);
-struct anoubis_sig *anoubis_sig_init(const char *file, const char *cert,
-    pem_password_cb *passcb, const EVP_MD *type, int pub_priv, int *error);
+int anoubis_sig_create(struct anoubis_sig **, const char *keyfile,
+    const char *certfile, pem_password_cb *passcb);
 void anoubis_sig_free(struct anoubis_sig *as);
 int pass_cb(char *buf, int size, int rwflag, void *u);
 char *anoubis_sig_key2char(int idlen, const unsigned char *keyid);
 char *anoubis_sig_cert_name(X509 *cert);
+int anoubis_sig_check_consistency(const struct anoubis_sig *);
+
 
 /**
  * Get certificate validity.

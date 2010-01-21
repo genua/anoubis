@@ -47,7 +47,6 @@ const char testfile[] = "data.txt";
 char	 workdir[WDIR_SIZE];
 char	*prikey = NULL,
 	*certfile = NULL,
-	*pubkey = NULL,
 	*infile = NULL,
 	 pass[] = "test";
 
@@ -159,8 +158,6 @@ libanoubissig_tc_setup(void)
 	libanoubissig_tc_exec("echo \"bla\" >  %s/%s", workdir, testfile);
 	if(asprintf(&prikey, "%s/%s", workdir, pri) < 0)
 		return;
-	if (asprintf(&pubkey, "%s/%s", workdir, pub) < 0)
-		return;
 	if (asprintf(&infile, "%s/%s", workdir, testfile) < 0)
 		return;
 	if (asprintf(&certfile, "%s/%s", workdir, cert) < 0)
@@ -172,7 +169,6 @@ libanoubissig_tc_teardown(void)
 {
 	libanoubissig_tc_exec("rm -rf %s", workdir);
 	free(prikey);
-	free(pubkey);
 	free(infile);
 }
 
@@ -185,11 +181,11 @@ START_TEST(sign_and_verify_match_tc)
 	unsigned char		 csum[ANOUBIS_SIG_HASH_SHA256_LEN],
 				*sign = NULL;
 
-	fail_if(prikey == NULL || pubkey == NULL || infile == NULL,
+	fail_if(prikey == NULL || infile == NULL,
 	    "Error while setup testcase");
 
-	as = anoubis_sig_priv_init(prikey, certfile, pass_cb, &err);
-	fail_if(as == NULL, "Could not load Private Key");
+	err = anoubis_sig_create(&as, prikey, certfile, pass_cb);
+	fail_if(err < 0 || as == NULL, "Could not load Private Key");
 
 	rc = libanoubis_tc_calc_sum(infile, csum);
 	fail_if(rc == 0, "Could not calculate checksum");
@@ -199,12 +195,8 @@ START_TEST(sign_and_verify_match_tc)
 
 	anoubis_sig_free(as);
 
-	as = anoubis_sig_pub_init(pubkey, certfile, pass_cb, &err);
-	fail_if(as == NULL, "Could not load Public Key");
-
-	rc = anoubis_verify_csum(as, csum, sign + ANOUBIS_SIG_HASH_SHA256_LEN,
-	    len - ANOUBIS_SIG_HASH_SHA256_LEN);
-	fail_if(rc == 0, "Signatures dont match");
+	err = anoubis_sig_create(&as, NULL, certfile, pass_cb);
+	fail_if(err < 0 || as == NULL, "Could not load Public Key");
 
 	rc = anoubisd_verify_csum(as->pkey, csum, sign +
 	    ANOUBIS_SIG_HASH_SHA256_LEN,
@@ -222,12 +214,13 @@ START_TEST(sign_and_verify_mismatch_tc)
 	struct anoubis_sig	*as = NULL;
 	unsigned char		 csum[ANOUBIS_SIG_HASH_SHA256_LEN],
 				*sign = NULL;
+	EVP_PKEY		*pubkey;
 
-	fail_if(prikey == NULL || pubkey == NULL || infile == NULL,
+	fail_if(prikey == NULL || infile == NULL,
 	    "Error while setup testcase");
 
-	as = anoubis_sig_priv_init(prikey, certfile, pass_cb, &err);
-	fail_if(as == NULL, "Could not load Private Key");
+	err = anoubis_sig_create(&as, prikey, certfile, pass_cb);
+	fail_if(err < 0 || as == NULL, "Could not load Private Key");
 
 	rc = libanoubis_tc_calc_sum(infile, csum);
 	fail_if(rc == 0, "Could not calculate checksum");
@@ -240,37 +233,29 @@ START_TEST(sign_and_verify_mismatch_tc)
 
 	anoubis_sig_free(as);
 
-	as = anoubis_sig_pub_init(pubkey, certfile, pass_cb, &err);
-	fail_if(as == NULL, "Could not load Public Key");
+	err = anoubis_sig_create(&as, NULL, certfile, pass_cb);
+	fail_if(err != 0 || as == NULL, "Could not load Public Key");
 
 	name = anoubis_sig_cert_name(as->cert);
 	fail_if(name == NULL, "Could not get DN of certificate\n");
 
-	const char expected_name[] = {
-		'C', '=', 'D', 'E', ',', ' ',
-		'S', 'T', '=', 'B', 'A', 'Y', 'E', 'R', 'N', ',', ' ',
-		'L', '=', 'M', 0xc3, 0xbc, 'n', 'c', 'h', 'e', 'n', ',', ' ',
-		'O', '=', 'E', 'x', 'a', 'm', 'p', 'l', 'e', ' ', 'I', 'n',
-		    'c', ',', ' ',
-		'C', 'N', '=', 'E', 'x', 'a', 'm', 'p', 'l', 'e', ' ', 'I',
-		    'n', 'c', ' ', 'R', 'o', 'o', 't', ' ', 'C', 'A', ',', ' ',
-		'e', 'm', 'a', 'i', 'l', 'A', 'd', 'd', 'r', 'e', 's', 's',
-		    '=', 'd', 'a', 'd', '@', 'e', 'x', 'a', 'm', 'p', 'l', 'e',
-		    '.', 'c', 'o', 'm' };
+	const char expected_name[] =
+	    "C=DE, ST=BAYERN, L=M\xc3\xbcnchen, O=Example Inc, "
+	    "CN=Example Inc Root CA, emailAddress=dad@example.com";
 
-	fail_unless(strlen(name) == 96 /* length(expected_name) */,
-	    "DN has wrong length");
+	fail_unless(strlen(name) == strlen(expected_name),
+	    "DN %s has wrong length %d should be %d", name,
+	    strlen(name), strlen(expected_name));
 	for (i = 0; i < strlen(name); i++) {
 		fail_unless(name[i] == expected_name[i],
 		    "Unexpected byte at position: %i (\"%x\" <=> \"%x\"",
 		    i, name[i], expected_name[i]);
 	}
 
-	rc = anoubis_verify_csum(as, csum, sign + ANOUBIS_SIG_HASH_SHA256_LEN,
-	    len - ANOUBIS_SIG_HASH_SHA256_LEN);
-	fail_if(rc == 1, "Signatures match");
-	rc = anoubisd_verify_csum(as->pkey, csum, sign +
+	pubkey = X509_get_pubkey(as->cert);
+	rc = anoubisd_verify_csum(pubkey, csum, sign +
 	    ANOUBIS_SIG_HASH_SHA256_LEN, len - ANOUBIS_SIG_HASH_SHA256_LEN);
+	EVP_PKEY_free(pubkey);
 	fail_if(rc == 1, "Signatures match in daemon %d", rc);
 	anoubis_sig_free(as);
 }
@@ -284,7 +269,7 @@ START_TEST(t_anoubis_sign_csum)
 	unsigned char		*sign = NULL,
 				 csum[ANOUBIS_SIG_HASH_SHA256_LEN];
 
-	fail_if(prikey == NULL || pubkey == NULL || infile == NULL,
+	fail_if(prikey == NULL || infile == NULL,
 	    "Error while setup testcase");
 
 	rc = libanoubis_tc_calc_sum(infile, csum);
@@ -320,11 +305,11 @@ START_TEST(t_anoubis_validity_check)
 	struct tm		 time;
 	struct anoubis_sig	*as = NULL;
 
-	fail_if(prikey == NULL || pubkey == NULL || infile == NULL,
+	fail_if(prikey == NULL || infile == NULL,
 	    "Error while setup testcase");
 
-	as = anoubis_sig_pub_init(pubkey, certfile, pass_cb, &err);
-	fail_if(as == NULL, "Could not load Public Key");
+	err = anoubis_sig_create(&as, NULL, certfile, pass_cb);
+	fail_if(err != 0 || as == NULL, "Could not load Public Key");
 
 	err = anoubis_sig_cert_validity(as->cert, &time);
 	fail_if(err != 0, "Could not get validity time.");
@@ -339,25 +324,25 @@ START_TEST(t_anoubis_sig_keycmp_einval)
 	struct anoubis_sig	*keyA = NULL;
 	struct anoubis_sig	*keyB = NULL;
 
-	fail_if(prikey == NULL || pubkey == NULL || infile == NULL,
+	fail_if(prikey == NULL || infile == NULL,
 	    "Error while setup testcase.");
 
-	keyA = anoubis_sig_priv_init(prikey, certfile, pass_cb, &rc);
-	fail_if(keyA == NULL, "Could not load private key (%d / %s).",
-	    rc, strerror(rc));
+	rc = anoubis_sig_create(&keyA, prikey, certfile, pass_cb);
+	fail_if(rc < 0 || keyA == NULL, "Could not load private key (%d / %s).",
+	    rc, strerror(-rc));
 
-	keyB = anoubis_sig_pub_init(pubkey, certfile, pass_cb, &rc);
-	fail_if(keyB == NULL, "Could not load public key (%d / %s).",
-	    rc, strerror(rc));
+	rc = anoubis_sig_create(&keyB, NULL, certfile, pass_cb);
+	fail_if(rc < 0 || keyB == NULL, "Could not load public key (%d / %s).",
+	    rc, strerror(-rc));
 
 	rc = anoubis_sig_keycmp(NULL, NULL);
-	fail_if(rc != -EINVAL, "keycmp didn't detect EINVAL.");
+	fail_if(rc != 0, "keycmp should work with NULL pointers.");
 
 	rc = anoubis_sig_keycmp(keyA, NULL);
-	fail_if(rc != -EINVAL, "keycmp didn't detect EINVAL.");
+	fail_if(rc != 0, "keycmp should work with NULL pointers.");
 
 	rc = anoubis_sig_keycmp(NULL, keyB);
-	fail_if(rc != -EINVAL, "keycmp didn't detect EINVAL.");
+	fail_if(rc != 0, "keycmp should work with NULL pointers.");
 }
 END_TEST
 
@@ -368,15 +353,15 @@ START_TEST(t_anoubis_sig_keycmp_pp_match)
 	struct anoubis_sig	*keyA = NULL;
 	struct anoubis_sig	*keyB = NULL;
 
-	fail_if(prikey == NULL || pubkey == NULL || infile == NULL,
+	fail_if(prikey == NULL || infile == NULL,
 	    "Error while setup testcase.");
 
-	keyA = anoubis_sig_priv_init(prikey, NULL, pass_cb, &rc);
-	fail_if(keyA == NULL, "Could not load private key (%d / %s).",
+	rc = anoubis_sig_create(&keyA, prikey, NULL, pass_cb);
+	fail_if(rc < 0 || keyA == NULL, "Could not load private key (%d / %s).",
 	    rc, strerror(-rc));
 
-	keyB = anoubis_sig_priv_init(prikey, NULL, pass_cb, &rc);
-	fail_if(keyB == NULL, "Could not load private key (%d / %s).",
+	rc = anoubis_sig_create(&keyB, prikey, NULL, pass_cb);
+	fail_if(rc < 0 || keyB == NULL, "Could not load private key (%d / %s).",
 	    rc, strerror(-rc));
 
 	rc = anoubis_sig_keycmp(keyA, keyB);
@@ -392,20 +377,20 @@ START_TEST(t_anoubis_sig_keycmp_pp_mismatch)
 	struct anoubis_sig	*keyA = NULL;
 	struct anoubis_sig	*keyB = NULL;
 
-	fail_if(prikey == NULL || pubkey == NULL || infile == NULL,
+	fail_if(prikey == NULL || infile == NULL,
 	    "Error while setup testcase.");
 
-	keyA = anoubis_sig_priv_init(prikey, NULL, pass_cb, &rc);
-	fail_if(keyA == NULL, "Could not load private key (%d / %s).",
-	    rc, strerror(-rc));
+	rc = anoubis_sig_create(&keyA, prikey, NULL, pass_cb);
+	fail_if(rc != 0 || keyA == NULL,
+	    "Could not load private key (%d / %s).", rc, strerror(-rc));
 
 	/* Create different key. */
 	libanoubissig_tc_teardown();
 	libanoubissig_tc_setup();
 
-	keyB = anoubis_sig_priv_init(prikey, NULL, pass_cb, &rc);
-	fail_if(keyB == NULL, "Could not load private key (%d / %s).",
-	    rc, strerror(-rc));
+	rc = anoubis_sig_create(&keyB, prikey, NULL, pass_cb);
+	fail_if(rc != 0 || keyB == NULL,
+	    "Could not load private key (%d / %s).", rc, strerror(-rc));
 
 	rc = anoubis_sig_keycmp(keyA, keyB);
 	fail_if(rc == 0, "keycmp didn't detect non equal private keys"
@@ -420,15 +405,15 @@ START_TEST(t_anoubis_sig_keycmp_pc_match)
 	struct anoubis_sig	*keyA = NULL;
 	struct anoubis_sig	*keyB = NULL;
 
-	fail_if(prikey == NULL || pubkey == NULL || infile == NULL,
+	fail_if(prikey == NULL || infile == NULL,
 	    "Error while setup testcase.");
 
-	keyA = anoubis_sig_priv_init(prikey, certfile, pass_cb, &rc);
-	fail_if(keyA == NULL, "Could not load private key (%d / %s).",
-	    rc, strerror(-rc));
+	rc = anoubis_sig_create(&keyA, prikey, certfile, pass_cb);
+	fail_if(rc != 0 || keyA == NULL,
+	    "Could not load private key (%d / %s).", rc, strerror(-rc));
 
-	keyB = anoubis_sig_pub_init(pubkey, certfile, pass_cb, &rc);
-	fail_if(keyB == NULL, "Could not load public key (%d / %s).",
+	rc = anoubis_sig_create(&keyB, NULL, certfile, pass_cb);
+	fail_if(rc != 0 || keyB == NULL, "Could not load public key (%d / %s).",
 	    rc, strerror(-rc));
 
 	rc = anoubis_sig_keycmp(keyA, keyB);
@@ -444,19 +429,19 @@ START_TEST(t_anoubis_sig_keycmp_pc_mismatch)
 	struct anoubis_sig	*keyA = NULL;
 	struct anoubis_sig	*keyB = NULL;
 
-	fail_if(prikey == NULL || pubkey == NULL || infile == NULL,
+	fail_if(prikey == NULL || infile == NULL,
 	    "Error while setup testcase.");
 
-	keyA = anoubis_sig_priv_init(prikey, certfile, pass_cb, &rc);
-	fail_if(keyA == NULL, "Could not load private key (%d / %s).",
-	    rc, strerror(-rc));
+	rc = anoubis_sig_create(&keyA, prikey, certfile, pass_cb);
+	fail_if(rc != 0 || keyA == NULL,
+	    "Could not load private key (%d / %s).", rc, strerror(-rc));
 
 	/* Create different key. */
 	libanoubissig_tc_teardown();
 	libanoubissig_tc_setup();
 
-	keyB = anoubis_sig_pub_init(pubkey, certfile, pass_cb, &rc);
-	fail_if(keyB == NULL, "Could not load public key (%d / %s).",
+	rc = anoubis_sig_create(&keyB, NULL, certfile, pass_cb);
+	fail_if(rc != 0 || keyB == NULL, "Could not load public key (%d / %s).",
 	    rc, strerror(-rc));
 
 	rc = anoubis_sig_keycmp(keyA, keyB);
@@ -472,15 +457,15 @@ START_TEST(t_anoubis_sig_keycmp_cc_match)
 	struct anoubis_sig	*keyA = NULL;
 	struct anoubis_sig	*keyB = NULL;
 
-	fail_if(prikey == NULL || pubkey == NULL || infile == NULL,
+	fail_if(prikey == NULL || infile == NULL,
 	    "Error while setup testcase.");
 
-	keyA = anoubis_sig_pub_init(pubkey, certfile, pass_cb, &rc);
-	fail_if(keyA == NULL, "Could not load public key (%d / %s).",
-	    rc, strerror(-rc));
+	rc = anoubis_sig_create(&keyA, NULL, certfile, pass_cb);
+	fail_if(rc != 0 || keyA == NULL,
+	    "Could not load public key (%d / %s).", rc, strerror(-rc));
 
-	keyB = anoubis_sig_pub_init(pubkey, certfile, pass_cb, &rc);
-	fail_if(keyB == NULL, "Could not load public key (%d / %s).",
+	rc = anoubis_sig_create(&keyB, NULL, certfile, pass_cb);
+	fail_if(rc != 0 || keyB == NULL, "Could not load public key (%d / %s).",
 	    rc, strerror(-rc));
 
 	rc = anoubis_sig_keycmp(keyA, keyB);
@@ -496,18 +481,18 @@ START_TEST(t_anoubis_sig_keycmp_cc_mismatch)
 	struct anoubis_sig	*keyA = NULL;
 	struct anoubis_sig	*keyB = NULL;
 
-	fail_if(prikey == NULL || pubkey == NULL || infile == NULL,
+	fail_if(prikey == NULL || infile == NULL,
 	    "Error while setup testcase.");
 
-	keyA = anoubis_sig_pub_init(pubkey, certfile, pass_cb, &rc);
-	fail_if(keyA == NULL, "Could not load public key (%d / %s).",
+	rc = anoubis_sig_create(&keyA, NULL, certfile, pass_cb);
+	fail_if(rc != 0 || keyA == NULL, "Could not load public key (%d / %s).",
 	    rc, strerror(-rc));
 
 	/* Create different key. */
 	libanoubissig_tc_teardown();
 	libanoubissig_tc_setup();
 
-	keyB = anoubis_sig_pub_init(pubkey, certfile, pass_cb, &rc);
+	rc = anoubis_sig_create(&keyB, NULL, certfile, pass_cb);
 	fail_if(keyB == NULL, "Could not load public key (%d / %s).",
 	    rc, strerror(-rc));
 

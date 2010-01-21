@@ -45,7 +45,6 @@ const char pol[] = "policy";
 char	 workdir[32];
 char	*pol_prikey = NULL,
 	*pol_certfile = NULL,
-	*pol_pubkey = NULL,
 	*policy = NULL,
 	*polsig = NULL;
 
@@ -138,8 +137,6 @@ libanoubissig_tc_pol_setup(void)
 	    workdir, pol_pri, workdir, pol_pub);
 	if(asprintf(&pol_prikey, "%s/%s", workdir, pol_pri) < 0)
 		return;
-	if (asprintf(&pol_pubkey, "%s/%s", workdir, pol_pub) < 0)
-		return;
 	if (asprintf(&pol_certfile, "%s/%s", workdir, pol_cert) < 0)
 		return;
 	if (asprintf(&polsig, "%s/%s.sig", workdir, pol) < 0)
@@ -152,7 +149,6 @@ libanoubissig_tc_pol_teardown(void)
 {
 	/*libanoubissig_tc_pol_exec("rm -rf %s", workdir);*/
 	free(pol_prikey);
-	free(pol_pubkey);
 }
 
 START_TEST(sign_and_verify_policy_buf_match_tc)
@@ -163,12 +159,12 @@ START_TEST(sign_and_verify_policy_buf_match_tc)
 	struct anoubis_sig	*as = NULL;
 	unsigned char		*sign = NULL;
 
-	fail_if(pol_prikey == NULL || pol_pubkey == NULL || policy == NULL,
+	fail_if(pol_prikey == NULL || policy == NULL,
 	    "Error while setup testcase");
 
 	bzero(buf, sizeof(buf));
-	as = anoubis_sig_priv_init(pol_prikey, pol_certfile, pass_cb, &err);
-	fail_if(as == NULL, "Could not load Private Key");
+	err = anoubis_sig_create(&as, pol_prikey, pol_certfile, pass_cb);
+	fail_if(err != 0  || as == NULL, "Could not load Private Key");
 
 	fd = open(policy, O_RDONLY);
 	fail_if (fd == -1, "Couldn't open file");
@@ -194,12 +190,13 @@ START_TEST(sign_and_verify_policy_match_tc)
 	unsigned int		 len = 0, n = 0;
 	struct anoubis_sig	*as = NULL;
 	unsigned char		*sign = NULL;
+	EVP_PKEY		*pubkey = NULL;
 
-	fail_if(pol_prikey == NULL || pol_pubkey == NULL || policy == NULL,
+	fail_if(pol_prikey == NULL || policy == NULL,
 	    "Error while setup testcase");
 
-	as = anoubis_sig_priv_init(pol_prikey, pol_certfile, pass_cb, &err);
-	fail_if(as == NULL, "Could not load Private Key");
+	err = anoubis_sig_create(&as, pol_prikey, pol_certfile, pass_cb);
+	fail_if(err != 0 || as == NULL, "Could not load Private Key");
 
 	sign = anoubis_sign_policy(as, policy, &len);
 	fail_if(sign == NULL, "Could not sign policy");
@@ -222,10 +219,12 @@ START_TEST(sign_and_verify_policy_match_tc)
 	}
 	close(fd);
 
-	as = anoubis_sig_pub_init(pol_pubkey, pol_certfile, pass_cb, &err);
-	fail_if(as == NULL, "Could not load Public Key");
+	err = anoubis_sig_create(&as, NULL, pol_certfile, pass_cb);
+	fail_if(err != 0 || as == NULL, "Could not load Public Key");
 
-	rc = anoubis_sig_verify_policy_file(policy, as->pkey);
+	pubkey = X509_get_pubkey(as->cert);
+	rc = anoubis_sig_verify_policy_file(policy, pubkey);
+	EVP_PKEY_free(pubkey);
 	anoubis_sig_free(as);
 	fail_if(rc == 0, "Signatures dont match from %s", policy);
 }
@@ -237,12 +236,13 @@ START_TEST(sign_and_verify_policy_mismatch_tc)
 	unsigned int		 len = 0, n = 0;
 	struct anoubis_sig	*as = NULL;
 	unsigned char		*sign = NULL;
+	EVP_PKEY		*pubkey;
 
-	fail_if(pol_prikey == NULL || pol_pubkey == NULL || policy == NULL,
+	fail_if(pol_prikey == NULL || policy == NULL,
 	    "Error while setup testcase");
 
-	as = anoubis_sig_priv_init(pol_prikey, pol_certfile, pass_cb, &err);
-	fail_if(as == NULL, "Could not load Private Key");
+	err = anoubis_sig_create(&as, pol_prikey, pol_certfile, pass_cb);
+	fail_if(err != 0 || as == NULL, "Could not load Private Key");
 
 	sign = anoubis_sign_policy(as, policy, &len);
 	fail_if(sign == NULL, "Could not sign policy");
@@ -269,10 +269,12 @@ START_TEST(sign_and_verify_policy_mismatch_tc)
 	}
 	close(fd);
 
-	as = anoubis_sig_pub_init(pol_pubkey, pol_certfile, pass_cb, &err);
-	fail_if(as == NULL, "Could not load Public Key");
+	err = anoubis_sig_create(&as, NULL, pol_certfile, pass_cb);
+	fail_if(err != 0 || as == NULL, "Could not load Public Key");
 
-	rc = anoubis_sig_verify_policy_file(policy, as->pkey);
+	pubkey = X509_get_pubkey(as->cert);
+	rc = anoubis_sig_verify_policy_file(policy, pubkey);
+	EVP_PKEY_free(pubkey);
 	anoubis_sig_free(as);
 	fail_if(rc == 1, "Signatures match");
 }

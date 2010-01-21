@@ -317,34 +317,6 @@ anoubis_sign_policy(struct anoubis_sig *as, char *file, unsigned int *len)
 	return sigbuf;
 }
 
-int
-anoubis_verify_csum(struct anoubis_sig *as,
-     unsigned char csum[ANOUBIS_SIG_HASH_SHA256_LEN], unsigned char *sfs_sign,
-     int sfs_len)
-{
-	int result = 0;
-	EVP_MD_CTX ctx;
-	EVP_PKEY *pkey;
-
-	if (as == NULL || csum == NULL || sfs_sign == NULL)
-		return 0;
-
-	pkey = as->pkey;
-
-	EVP_MD_CTX_init(&ctx);
-	if (EVP_VerifyInit(&ctx, as->type) == 0) {
-		EVP_MD_CTX_cleanup(&ctx);
-		return 0;
-	}
-	EVP_VerifyUpdate(&ctx, csum, ANOUBIS_SIG_HASH_SHA256_LEN);
-	if((result = EVP_VerifyFinal(&ctx, sfs_sign, sfs_len, pkey)) == -1)
-		result = 0;
-
-	EVP_MD_CTX_cleanup(&ctx);
-
-	return result;
-}
-
 /* This function will be used inside of the daemon */
 int
 anoubisd_verify_csum(EVP_PKEY *pkey,
@@ -370,25 +342,77 @@ anoubisd_verify_csum(EVP_PKEY *pkey,
 	return result;
 }
 
-struct anoubis_sig *
-anoubis_sig_pub_init(const char *keyfile, const char *certfile,
-     pem_password_cb *passcb, int *error)
+/**
+ * Compare two EVP_PKEYs assuming that they are both RSA keys.
+ * The keys are considered to be indentical if public modulus and exponent
+ * are the same, i.e. if their public parts are the same.
+ * @param key1 The first key.
+ * @param key2 The second key.
+ * @return Zero if the two keys are equal. -EINVAL if they are different.
+ */
+static int
+anoubis_sig_dorsacmp(EVP_PKEY *key1, EVP_PKEY *key2)
 {
-	return anoubis_sig_init(keyfile, certfile, passcb,
-	    ANOUBIS_SIG_HASH_DEFAULT, ANOUBIS_SIG_PUB, error);
+	/* XXX CEH: Only works for RSA keys right now. */
+	if (key1->type != key2->type || key1->type != EVP_PKEY_RSA)
+		return 0;
+	if (key1->pkey.rsa->n == NULL || key2->pkey.rsa->n == NULL)
+		return -EINVAL;
+	if (BN_cmp(key1->pkey.rsa->n, key2->pkey.rsa->n) != 0)
+		return -EINVAL;
+	if (key1->pkey.rsa->e == NULL || key2->pkey.rsa->e == NULL)
+		return -EINVAL;
+	if (BN_cmp(key1->pkey.rsa->e, key2->pkey.rsa->e) != 0)
+		return -EINVAL;
+
+	return 0;
 }
 
-struct anoubis_sig *
-anoubis_sig_priv_init(const char *keyfile, const char *certfile,
-    pem_password_cb *passcb, int *error)
+/**
+ * Verify that the anoubis signature structure contains consistent
+ * public and private keys.
+ * @param as The anoubis_sig structure.
+ * @return Zero in case of success, a negative error code in case of an error.
+ *
+ * If either no cert or no private key has been loaded, the comparison will
+ * be successful.
+ */
+int
+anoubis_sig_check_consistency(const struct anoubis_sig *as)
 {
-	return anoubis_sig_init(keyfile, certfile, passcb,
-	    ANOUBIS_SIG_HASH_DEFAULT, ANOUBIS_SIG_PRIV, error);
+	EVP_PKEY	*cert_pubkey = NULL;
+	int		 ret;
+
+	/* No private key or no certificate. This is ok. */
+	if (as->pkey == NULL || as->cert == NULL)
+		return 0;
+	cert_pubkey = X509_get_pubkey(as->cert);
+	if (!cert_pubkey)
+		return -EIO;
+	ret = anoubis_sig_dorsacmp(cert_pubkey, as->pkey);
+	EVP_PKEY_free(cert_pubkey);
+	return ret;
 }
 
-struct anoubis_sig *
-anoubis_sig_init(const char *keyfile, const char *certfile,
-    pem_password_cb *passcb, const EVP_MD *type, int pub_priv, int *error)
+/**
+ * Allocate a new anoubis_sig structure and initialize it with the givenb
+ * key and certificate.
+ *
+ * @param asp The pointer to the new structure is stored *asp.
+ * @param keyfile Read the private key from this file.
+ * @param certfile Read the certificate from this file.
+ * @param passcb Callback function to prompt the user for the password
+ *     of the private key.
+ * @return A negative error code in case of an error, zero in case of success.
+ *     If an error occured *asp will be NULL otherwise *asp will point to
+ *     the new anoubis_sig structure.
+ *
+ * NOTE: This funtion will verify that the private key (if any) matches
+ *     the public key extracted from the certificate (if any).
+ */
+int
+anoubis_sig_create(struct anoubis_sig **asp, const char *keyfile,
+    const char *certfile, pem_password_cb *passcb)
 {
 
 	struct anoubis_sig *as = NULL;
@@ -399,106 +423,79 @@ anoubis_sig_init(const char *keyfile, const char *certfile,
 
 	OpenSSL_add_all_algorithms();
 
-	if (!error)
-		return NULL;
-	if (!certfile && !keyfile) {
-		*error = EINVAL;
-		return NULL;
-	}
+	if (asp == NULL)
+		return -EINVAL;
+	*asp = NULL;
+	if (!certfile && !keyfile)
+		return -EINVAL;
 	if (keyfile) {
 		f = fopen(keyfile, "r");
-		if (f == NULL) {
-			*error = errno;
-			return NULL;
-		}
-
-		switch (pub_priv) {
-		case ANOUBIS_SIG_PUB:
-			pkey = PEM_read_PUBKEY(f, NULL, passcb, "Public Key");
-			break;
-		case ANOUBIS_SIG_PRIV:
-			pkey = PEM_read_PrivateKey(f, NULL, passcb,
-			    &err);
-			break;
-		default:
-			fclose(f);
-			*error = EINVAL;
-			return NULL;
-		}
+		if (f == NULL)
+			return -errno;
+		pkey = PEM_read_PrivateKey(f, NULL, passcb, &err);
 		fclose(f);
 
 		if (!pkey) {
-			/* if pkey is empty and err == 0 no password was
-			 * entered
-			 */
-			if (err == 0) {
-				*error = EPERM;
-				return NULL;
-			}
-
-			/* ERR_get_error gives us a certian amount of
-			 * errors that occurs but we want just to know
-			 * if the password ist wrong. We take the last
-			 * error code. */
-			*error = ERR_GET_REASON(ERR_peek_last_error());
-
-			/* _BAD_DECRYPT just means that the password
-			 * didn't encrypt the key -> wrong password.
-			 */
-			if (*error == PEM_R_BAD_DECRYPT)
-				*error = EPERM;
-			/*
-			 * _BAD_PASSWORD_READ for a empty passphrase
-			 * entered
-			 */
-			else if (*error == PEM_R_BAD_PASSWORD_READ)
-				*error = ECANCELED;
-
+			/* key == NULL and err == 0 implies a bad password */
+			if (err == 0)
+				return -EPERM;
+			/* Handle interesting errors or return -EIO */
+			err = ERR_GET_REASON(ERR_peek_last_error());
 			ERR_clear_error();
-			return NULL;
+
+			/* PEM_R_BAD_DECRYPT indicates a bad password */
+			if (err == PEM_R_BAD_DECRYPT)
+				return -EPERM;
+			if (err == PEM_R_BAD_PASSWORD_READ)
+				return -ECANCELED;
+			return -EIO;
 		}
 	}
-
 	if (certfile) {
 		if ((f = fopen(certfile, "r")) == NULL) {
-			if (pkey) {
-				EVP_PKEY_free(pkey);
-			}
-			*error = errno;
-			return NULL;
-		}
-		if ((cert = PEM_read_X509(f, NULL, NULL, NULL)) == NULL) {
+			err = -errno;
 			if (pkey)
 				EVP_PKEY_free(pkey);
-			fclose(f);
-			*error = EINVAL;
-			return NULL;
+			return err;
 		}
+		cert = PEM_read_X509(f, NULL, NULL, NULL);
 		fclose(f);
+		if (cert == NULL) {
+			if (pkey)
+				EVP_PKEY_free(pkey);
+			return -EINVAL;
+		}
 	}
 
-	if ((as = calloc(1, sizeof(struct anoubis_sig))) == NULL) {
+	as = calloc(1, sizeof(struct anoubis_sig));
+	if (as == NULL) {
 		if (pkey)
 			EVP_PKEY_free(pkey);
 		if (cert)
 			X509_free(as->cert);
-
-		*error = ENOMEM;
-		return NULL;
+		return -ENOMEM;
 	}
-	as->type = type;
+	as->type = ANOUBIS_SIG_HASH_DEFAULT;
 	as->pkey = pkey;
 	as->cert = cert;
-	if (cert)
-		as->idlen = cert_keyid(&as->keyid, cert);
-	else
+	as->keyid = NULL;
+	if (cert) {
+		err = cert_keyid(&as->keyid, cert);
+		if (err < 0) {
+			anoubis_sig_free(as);
+			return err;
+		}
+		as->idlen = err;
+	} else {
 		as->idlen = 0;
-	if (as->idlen < 0) {
-		anoubis_sig_free(as);
-		*error = -as->idlen;
-		return NULL;
 	}
-	return as;
+	err = anoubis_sig_check_consistency(as);
+	if (err < 0) {
+		anoubis_sig_free(as);
+		return err;
+	}
+	(*asp) = as;
+	return 0;
 }
 
 void
@@ -661,21 +658,59 @@ anoubis_sig_cert_validity(X509 *cert, struct tm *time)
 }
 #undef GETNUM
 
+/**
+ * Check the internal consistency of both keyA and keyB. Additionally,
+ * if both signature structures contain are non NULL make sure that they
+ * use the same private and public keys.
+ *
+ * @param keyA The first anoubis_sig structure.
+ * @param keyB The second anoubis_sig structure.
+ * @return Zero if the comparison succeeds, a negative error code if the
+ *     comparison fails.
+ */
 int
 anoubis_sig_keycmp(struct anoubis_sig *keyA, struct anoubis_sig *keyB)
 {
-	int	 rc = -1;
+	int		 rc;
+	EVP_PKEY	*certpubA = NULL, *certpubB = NULL;
 
-	if (keyA == NULL || keyA->pkey == NULL) {
-		return (-EINVAL);
-	}
-	if (keyB == NULL || keyB->pkey == NULL) {
-		return (-EINVAL);
-	}
+	if (keyA && (rc = anoubis_sig_check_consistency(keyA)) < 0)
+		return rc;
+	if (keyB && (rc = anoubis_sig_check_consistency(keyB)) < 0)
+		return rc;
+	if (!keyA || !keyB)
+		return 0;
 
-	rc = EVP_PKEY_cmp(keyA->pkey, keyB->pkey);
-	if (rc == 1) {
-		return (0);
+	rc = -EIO;
+	if (keyA->cert) {
+		certpubA = X509_get_pubkey(keyA->cert);
+		if (!certpubA)
+			goto out;
 	}
-	return (-EPERM);
+	if (keyB->cert) {
+		certpubB = X509_get_pubkey(keyB->cert);
+		if (!certpubB)
+			goto out;
+	}
+	rc = -EPERM;
+
+#define DO_KEY_CMP(X,Y) do {					\
+	if ((X) != NULL && (Y) != NULL)				\
+		if (anoubis_sig_dorsacmp((X), (Y)) != 0)	\
+			goto out;				\
+	} while (0)
+
+	DO_KEY_CMP(certpubA, certpubB);
+	DO_KEY_CMP(certpubA, keyB->pkey);
+	DO_KEY_CMP(keyA->pkey, certpubB);
+	DO_KEY_CMP(keyA->pkey, keyB->pkey);
+#undef DO_KEY_CMP
+
+	rc = 0;
+out:
+	if (certpubA)
+		EVP_PKEY_free(certpubA);
+	if (certpubB)
+		EVP_PKEY_free(certpubB);
+	return rc;
 }

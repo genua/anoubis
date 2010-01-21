@@ -79,9 +79,9 @@ setup(void)
 	}
 
 	/* Create / read local key. */
-	asPrivKey = anoubis_sig_priv_init(keyfile, crtfile, NULL, &error);
+	error = anoubis_sig_create(&asPrivKey, keyfile, crtfile, NULL);
 	fail_if(asPrivKey == NULL || error != 0, "Setup error: can't load "
-	    "private key %s / %s: %s", keyfile, crtfile, strerror(error));
+	    "private key %s / %s: %s", keyfile, crtfile, strerror(-error));
 
 	/* Create AuthChallange message as received from server. */
 	challengeLen = strlen(TEST_CHALLENGE);
@@ -244,15 +244,15 @@ END_TEST
 
 START_TEST(auth_key_local)
 {
-	int	 rc	= -1;
-	int	 expect	= -ANOUBIS_AUTHERR_KEY;
-	void	*sp	= NULL;
+	int		 rc	= -1;
+	int		 expect	= -ANOUBIS_AUTHERR_KEY;
+	EVP_PKEY	*priv = NULL;
 
-	sp = asPrivKey->pkey;
+	priv = asPrivKey->pkey;
 	asPrivKey->pkey = NULL;
 	rc = anoubis_auth_callback(asPrivKey, asPrivKey, inputMsg,
 	    &outputMsg, 0);
-	asPrivKey->pkey = sp;
+	asPrivKey->pkey = priv;
 	fail_if(rc != expect, "Failed to detect corrupted key /w "
 	    "rc 0x%x expect 0x%x", rc, expect);
 }

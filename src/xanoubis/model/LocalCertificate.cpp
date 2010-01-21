@@ -199,17 +199,16 @@ LocalCertificate::load(void)
 {
 	/* XXX Error handling? */
 	int error = 0;
-
 	char *dname = NULL;
+	struct anoubis_sig *cert;
+
 
 	/* Read certificate */
-	struct anoubis_sig *cert = anoubis_sig_pub_init(
-	    0, certFile_.fn_str(), 0, &error);
-
+	error = anoubis_sig_create(&cert, NULL, certFile_.fn_str(), NULL);
 
 	unload(); /* Destroy previously loaded certificate */
 
-	if (cert != 0) {
+	if (error == 0) {
 		/* Extract keyid from certificate */
 		char *keyid = anoubis_sig_key2char(cert->idlen, cert->keyid);
 

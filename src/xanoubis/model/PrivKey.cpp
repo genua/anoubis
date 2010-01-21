@@ -105,13 +105,12 @@ PrivKey::load(pem_password_cb *xpass_cb)
 
 	if (privKey_ == 0) {
 		do {
-			err = 0;
-			privKey_ = anoubis_sig_priv_init(
-			    keyFile_.fn_str(), 0, xpass_cb, &err);
-			if (err != 0) {
-				if (err == EPERM)
+			err = anoubis_sig_create(&privKey_, keyFile_.fn_str(),
+			    NULL, xpass_cb);
+			if (err < 0) {
+				if (err == -EPERM)
 					tries_++;
-				else if (err == ECANCELED)
+				else if (err == -ECANCELED)
 					break;
 				else
 					break;
@@ -119,10 +118,10 @@ PrivKey::load(pem_password_cb *xpass_cb)
 				this->resetTries();
 		} while (err && tries_ < 3);
 
-		if (err) {
+		if (err < 0) {
 			if (tries_ >= 3)
 				return ERR_PRIV_WRONG_PASS;
-			else if (err == ECANCELED)
+			else if (err == -ECANCELED)
 				return ERR_PRIV_ABORT;
 			else
 				return ERR_PRIV_ERR;

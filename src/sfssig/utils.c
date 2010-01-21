@@ -333,12 +333,12 @@ load_keys(int priv_key, int show_err, char *cert, char *keyfile)
 		}
 	}
 
-	ast = anoubis_sig_priv_init(priv_key ? keyfile : NULL, cert, pass_cb,
-	    &error);
-	if (ast == NULL) {
+	error = anoubis_sig_create(&ast, priv_key ? keyfile : NULL, cert,
+	    pass_cb);
+	if (error < 0) {
 		if (show_err)
 			fprintf(stderr, "Error while loading keyfile/certfile "
-			    "%s\n", strerror(error));
+			    "%s\n", strerror(-error));
 		return NULL;
 	}
 	return ast;
