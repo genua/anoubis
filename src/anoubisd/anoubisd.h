@@ -91,8 +91,11 @@
 
 #define __used __attribute__((unused))
 
+#ifndef __dead
+#define __dead __attribute__((__noreturn__))
+#endif
+
 #ifdef LINUX
-#define __dead
 #define UID_MAX	UINT_MAX
 #endif
 
