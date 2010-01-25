@@ -75,12 +75,12 @@ ModSfsMainPanelImpl::ModSfsMainPanelImpl(wxWindow* parent, wxWindowID id)
 	addSubject(keyPicker);
 	keyPicker->setTitle(_("Configure private key:"));
 	keyPicker->setButtonLabel(_("Browse ..."));
-	keyPicker->setMode(AnPickFromFs::MODE_FILE);
+	keyPicker->setMode(AnPickFromFs::MODE_NEWFILE);
 
 	addSubject(certificatePicker);
 	certificatePicker->setTitle(_("Configure certificate:"));
 	certificatePicker->setButtonLabel(_("Browse ..."));
-	certificatePicker->setMode(AnPickFromFs::MODE_FILE);
+	certificatePicker->setMode(AnPickFromFs::MODE_NEWFILE);
 
 	/* Get initial indent size. */
 	spacer = certDetailsIndentSizer->GetItem((size_t)0);
@@ -706,20 +706,37 @@ void
 ModSfsMainPanelImpl::privKeyParamsUpdate(const wxString &path, bool sessionEnd,
     int validity)
 {
-	PrivKey &privKey = KeyCtrl::getInstance()->getPrivateKey();
+	KeyCtrl *keyCtrl = KeyCtrl::getInstance();
+	PrivKey &privKey = keyCtrl->getPrivateKey();
+	wxString oldPath = privKey.getFile();
+
+	bool changed = oldPath != path;
 
 	privKey.setFile(path);
 	privKey.setValidity(validity);
 
-	if (!path.IsEmpty() && !privKey.canLoad()) {
+	if (path.IsEmpty()) {
+		/* clear key */
+		privKey.unload();
+	} else if (!privKey.canLoad()) {
 		anMessageBox(
 		    _("Cannot load the private key!\n"
 		      "The file you specified does not exist."),
 		    _("Load private key"), wxOK | wxICON_ERROR, this);
+		privKey.setFile(oldPath);
+	} else if (changed) {
+		/* We can only validate the key by loading it */
+		privKey.unload();
+		if (keyCtrl->loadPrivateKey() != KeyCtrl::RESULT_KEY_OK) {
+			anMessageBox(
+			    _("Failed to load the private key!\n"),
+			    _("Load private key"), wxOK | wxICON_ERROR, this);
+			privKey.setFile(oldPath);
+		}
 	}
 
 	/* Update view */
-	keyPicker->setFileName(path);
+	keyPicker->setFileName(privKey.getFile());
 
 	privKeyValiditySpinCtrl->Enable(!sessionEnd);
 	privKeyValidityText->Enable(!sessionEnd);
@@ -738,29 +755,41 @@ ModSfsMainPanelImpl::certificateParamsUpdate(const wxString &path)
 {
 	wxDateTime	  time;
 	LocalCertificate &cert = KeyCtrl::getInstance()->getLocalCertificate();
+	wxString oldPath = cert.getFile();
 
-	bool changed = cert.getFile() != path;
+	bool changed = oldPath != path;
 	cert.setFile(path);
 
-	if (!path.IsEmpty()) {
-		if (!cert.load()) {
-			changed = false;
-			anMessageBox(wxString::Format(
-			    _("Failed to load certificate from\n%ls."),
-			    cert.getFile().c_str()),
-			    _("Load certificate"), wxOK | wxICON_ERROR, this);
-		}
-	} else {
+	if (path.IsEmpty()) {
 		/* Reset certificate */
-		changed = false;
 		cert.unload();
+		changed = false;
+	} else if (!cert.canLoad()) {
+		anMessageBox(
+		    _("Cannot load the certificate!\n"
+		      "The file you specified does not exist."),
+		    _("Load private key"), wxOK | wxICON_ERROR, this);
+		/* revert to the old certificate */
+		changed = false;
+		cert.setFile(oldPath);
+	} else if (!cert.load()) {
+		anMessageBox(wxString::Format(
+		    _("Failed to load certificate from\n%ls."),
+		    cert.getFile().c_str()),
+		    _("Load certificate"), wxOK | wxICON_ERROR, this);
+		/* revert to the old certificate */
+		changed = false;
+		cert.setFile(oldPath);
+		cert.load();
 	}
 
 	/* Update view */
 	certificatePicker->setFileName(cert.getFile());
 	certFingerprintText->SetLabel(cert.getFingerprint());
 	time = cert.getValidity();
-	if (time.IsValid()) {
+	if (!cert.isLoaded()) {
+		certValidityText->SetLabel(wxEmptyString);
+	} else if (time.IsValid()) {
 		certValidityText->SetLabel(time.FormatDate());
 	} else {
 		certValidityText->SetLabel(_("[invalid date]"));
