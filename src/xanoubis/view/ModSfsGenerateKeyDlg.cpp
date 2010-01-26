@@ -216,16 +216,22 @@ ModSfsGenerateKeyDlg::verifyPassphrase(void)
 	wxString			 pass;
 
 	pass = passphraseTextCtrl->GetValue();
-	if ((pass != passphraseRepeatTextCtrl->GetValue()) &&
-	    (!passphraseRepeatTextCtrl->GetValue().IsEmpty())) {
-		passphraseMismatchText->Show();
-		passphraseMismatchIcon->Show();
+	if (pass != passphraseRepeatTextCtrl->GetValue()) {
+		if (passphraseRepeatTextCtrl->GetValue().IsEmpty()) {
+			passphraseMismatchText->Hide();
+			passphraseMismatchIcon->Hide();
+		} else {
+			passphraseMismatchText->Show();
+			passphraseMismatchIcon->Show();
+		}
+		buttonSizerOK->Disable();
 		Layout();
 		Refresh();
 		return (-1);
 	}
 	passphraseMismatchText->Hide();
 	passphraseMismatchIcon->Hide();
+	buttonSizerOK->Enable();
 	Layout();
 	Refresh();
 	return (0);
