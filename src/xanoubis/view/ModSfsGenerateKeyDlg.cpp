@@ -126,7 +126,7 @@ ModSfsGenerateKeyDlg::ModSfsGenerateKeyDlg(wxWindow *parent)
 	certValidityDatePicker->SetValue(time);
 	time.Add(wxDateSpan::Years(18));
 	certValidityDatePicker->SetRange(
-	   (wxDateTime::Now() + wxTimeSpan::Day()), time);
+	   (wxDateTime::Now() + wxTimeSpan::Days(31)), time);
 }
 
 wxString
