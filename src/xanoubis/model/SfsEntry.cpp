@@ -428,7 +428,8 @@ SfsEntry::sendRowChangeEvent(void) const
 {
 	if (parent_) {
 		int idx = parent_->entryList_.index_of(this);
-		parent_->rowChangeEvent(idx, idx);
+		if (idx >= 0)
+			parent_->rowChangeEvent(idx, idx);
 	}
 }
 

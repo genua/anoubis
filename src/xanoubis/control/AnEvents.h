@@ -521,14 +521,6 @@ BEGIN_DECLARE_EVENT_TYPES()
 	DECLARE_LOCAL_EVENT_TYPE(anEVT_SFSDIR_CHANGED, wxNewEventType())
 
 	/**
-	 * Sfs entry changed event.
-	 * The content of a SfsEntry has changed.
-	 *
-	 * @param GetInt() The index of the entry in a SfsDirectory.
-	 */
-	DECLARE_LOCAL_EVENT_TYPE(anEVT_SFSENTRY_CHANGED, wxNewEventType())
-
-	/**
 	 * Sfs entry error event.
 	 *
 	 * An error occured while updating one Sfs entrie(s) in a

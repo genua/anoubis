@@ -204,7 +204,8 @@ SfsCtrl::validate(const IndexArray &arr)
 		return (RESULT_BUSY);
 
 	if (comEnabled_) {
-		int numScheduled = 0;
+		int	numScheduled = 0;
+		bool	doSig = isSignatureEnabled();
 
 		startSfsOp(arr.Count());
 		for (size_t i = 0; i < arr.Count(); i++) {
@@ -225,7 +226,7 @@ SfsCtrl::validate(const IndexArray &arr)
 			entry->reset();
 
 			/* In any case fetch the remote checksums */
-			createComCsumGetTasks(entry->getPath(), true, true);
+			createComCsumGetTasks(entry->getPath(), true, doSig);
 
 			if (entry->canHaveChecksum(false)) {
 				/* Ask for the local checksum */
@@ -273,6 +274,7 @@ SfsCtrl::registerChecksum(const IndexArray &arr)
 		return (RESULT_BUSY);
 
 	if (comEnabled_) {
+		bool	doSig = isSignatureEnabled();
 		startSfsOp(arr.Count());
 		for (size_t i = 0; i < arr.Count(); i++) {
 			idx = arr.Item(i);
@@ -283,7 +285,7 @@ SfsCtrl::registerChecksum(const IndexArray &arr)
 				return (RESULT_INVALIDARG);
 			}
 
-			if (isSignatureEnabled()) {
+			if (doSig) {
 				/* Need a loaded private key */
 				KeyCtrl *keyCtrl = KeyCtrl::getInstance();
 				keyRes = keyCtrl->loadPrivateKey();
@@ -332,7 +334,8 @@ SfsCtrl::unregisterChecksum(const IndexArray &arr)
 		return (RESULT_BUSY);
 
 	if (comEnabled_) {
-		int numScheduled = 0;
+		int	numScheduled = 0;
+		bool	doSig = isSignatureEnabled();
 
 		startSfsOp(arr.Count());
 		for (size_t i = 0; i < arr.Count(); i++) {
@@ -349,11 +352,10 @@ SfsCtrl::unregisterChecksum(const IndexArray &arr)
 			/* Remove checksum from anoubisd */
 			numScheduled += createComCsumDelTasks(entry);
 
-			if (!isSignatureEnabled()) {
+			if (!doSig) {
 				/* Reset signed checksums in model */
-				if (entry->setChecksumMissing(
-				    SfsEntry::SFSENTRY_SIGNATURE))
-					sendEntryChangedEvent(idx);
+				entry->setChecksumMissing(
+				    SfsEntry::SFSENTRY_SIGNATURE);
 			}
 			if (!updateSfsOp(1))
 				break;
@@ -374,6 +376,7 @@ SfsCtrl::importChecksums(const wxString &path)
 		FILE *fh;
 		struct sfs_entry *entries, *entry;
 		int total = 0;
+		bool	doSig = isSignatureEnabled();
 
 		/*
 		 * Wrap the file read in a dummy SfsOp because the caller
@@ -421,7 +424,7 @@ SfsCtrl::importChecksums(const wxString &path)
 					createCsumCalcTask(e->getPath());
 
 				createComCsumGetTasks(
-				    e->getPath(), true, true);
+				    e->getPath(), true, doSig);
 			}
 			entry = entry->next;
 			if (!updateSfsOp(1))
@@ -440,6 +443,7 @@ SfsCtrl::exportChecksums(const IndexArray &arr, const wxString &path)
 		return (RESULT_BUSY);
 
 	if (comEnabled_) {
+		bool	doSig = isSignatureEnabled();
 		/* Enable export */
 		exportEnabled_ = true;
 		exportFile_ = path;
@@ -460,7 +464,7 @@ SfsCtrl::exportChecksums(const IndexArray &arr, const wxString &path)
 			 */
 			SfsEntry *entry = sfsDir_.getEntry(idx);
 			createCsumCalcTask(entry->getPath());
-			createComCsumGetTasks(entry->getPath(), true, true);
+			createComCsumGetTasks(entry->getPath(), true, doSig);
 			if (!updateSfsOp(1))
 				break;
 		}
@@ -532,7 +536,7 @@ SfsCtrl::OnSfsListArrived(TaskEvent &event)
 		return;
 	}
 
-	if (taskList_.IndexOf(task) == wxNOT_FOUND) {
+	if (taskList_.find(task) == taskList_.end()) {
 		/* Belongs to someone other, ignore it */
 		event.Skip();
 		return;
@@ -617,8 +621,7 @@ SfsCtrl::OnSfsListArrived(TaskEvent &event)
 			 * Remove a previous calculated local checksum, the
 			 * file might be removed in the meanwhile.
 			 */
-			if (entry->setLocalCsum(0))
-				sendEntryChangedEvent(idx);
+			entry->setLocalCsum(0);
 		}
 
 		/*
@@ -651,7 +654,7 @@ SfsCtrl::OnCsumCalc(TaskEvent &event)
 		return;
 	}
 
-	if (taskList_.IndexOf(task) == wxNOT_FOUND) {
+	if (taskList_.find(task) == taskList_.end()) {
 		/* Belongs to someone other, ignore it */
 		event.Skip();
 		return;
@@ -682,10 +685,7 @@ SfsCtrl::OnCsumCalc(TaskEvent &event)
 
 	/* Copy checksum into SfsEntry */
 	SfsEntry *entry = sfsDir_.getEntry(idx);
-	if (entry->setLocalCsum(task->getCsum())) {
-		/* Checksum attribute has changed, inform any listener */
-		sendEntryChangedEvent(idx);
-	}
+	entry->setLocalCsum(task->getCsum());
 }
 
 void
@@ -700,7 +700,7 @@ SfsCtrl::OnCsumGet(TaskEvent &event)
 		return;
 	}
 
-	if (taskList_.IndexOf(task) == wxNOT_FOUND) {
+	if (taskList_.find(task) == taskList_.end()) {
 		/* Belongs to someone other, ignore it */
 		event.Skip();
 		return;
@@ -729,11 +729,9 @@ SfsCtrl::OnCsumGet(TaskEvent &event)
 
 		if (err == ENOENT) {
 			/* No checksum registered */
-			if (entry->setChecksumMissing(type))
-				sendEntryChangedEvent(idx);
+			entry->setChecksumMissing(type);
 		} else if (err == EINVAL) {
-			if (entry->setChecksumInvalid(type))
-				sendEntryChangedEvent(idx);
+			entry->setChecksumInvalid(type);
 		} else {
 			const char *err = strerror(task->getResultDetails());
 			wxString message;
@@ -795,8 +793,7 @@ SfsCtrl::OnCsumGet(TaskEvent &event)
 
 	if (task->getCsum(cs, csumLen) == csumLen) {
 		/* File has a checksum, copy into model */
-		if (entry->setChecksum(type, cs, csumLen))
-			sendEntryChangedEvent(idx);
+		entry->setChecksum(type, cs, csumLen);
 
 		if (exportEnabled_) {
 			/* Export is enabled, push entry into export-list */
@@ -811,7 +808,6 @@ SfsCtrl::OnCsumGet(TaskEvent &event)
 			} else {
 				entry->reset(SfsEntry::SFSENTRY_UPGRADE);
 			}
-			sendEntryChangedEvent(idx);
 		}
 	} else {
 		wxString message;
@@ -837,7 +833,7 @@ SfsCtrl::OnCsumAdd(TaskEvent &event)
 		return;
 	}
 
-	if (taskList_.IndexOf(task) == wxNOT_FOUND) {
+	if (taskList_.find(task) == taskList_.end()) {
 		/* Belongs to someone other, ignore it */
 		event.Skip();
 		return;
@@ -929,8 +925,7 @@ SfsCtrl::OnCsumAdd(TaskEvent &event)
 		return;
 	}
 
-	if (entry->setChecksum(type, cs, ANOUBIS_CS_LEN))
-		sendEntryChangedEvent(idx);
+	entry->setChecksum(type, cs, ANOUBIS_CS_LEN);
 }
 
 void
@@ -945,7 +940,7 @@ SfsCtrl::OnCsumDel(TaskEvent &event)
 		return;
 	}
 
-	if (taskList_.IndexOf(task) == wxNOT_FOUND) {
+	if (taskList_.find(task) == taskList_.end()) {
 		/* Belongs to someone other, ignore it */
 		event.Skip();
 		return;
@@ -1013,8 +1008,7 @@ SfsCtrl::OnCsumDel(TaskEvent &event)
 
 	/* Update model */
 	SfsEntry *entry = sfsDir_.getEntry(idx);
-	if (entry->setChecksumMissing(type))
-		sendEntryChangedEvent(idx);
+	entry->setChecksumMissing(type);
 
 	if (!entry->fileExists()) {
 		if (!entry->haveChecksum()) {
@@ -1077,16 +1071,6 @@ SfsCtrl::sendDirChangedEvent(void)
 }
 
 void
-SfsCtrl::sendEntryChangedEvent(int idx)
-{
-	wxCommandEvent event(anEVT_SFSENTRY_CHANGED);
-	event.SetEventObject(this);
-	event.SetInt(idx);
-
-	ProcessEvent(event);
-}
-
-void
 SfsCtrl::sendErrorEvent(void)
 {
 	wxCommandEvent event(anEVT_SFSENTRY_ERROR);
@@ -1109,7 +1093,7 @@ SfsCtrl::createComCsumGetTasks(const wxString &path, bool createCsum,
 		JobCtrl::getInstance()->addTask(csTask);
 	}
 
-	if (createSig && isSignatureEnabled()) {
+	if (createSig) {
 		KeyCtrl *keyCtrl = KeyCtrl::getInstance();
 		LocalCertificate &cert = keyCtrl->getLocalCertificate();
 		struct anoubis_sig *raw_cert = cert.getCertificate();
@@ -1371,17 +1355,23 @@ SfsCtrl::pushTask(Task *task)
 		errorList_.Clear();
 	}
 
-	taskList_.push_back(task);
+	taskList_[task] = true;
 	if (taskList_.size() > 20)
 		wxGetApp().ProcessPendingEvents();
 }
 
-bool
+void
 SfsCtrl::popTask(Task *task)
 {
-	bool result = true;
-	if (task)
-		result = taskList_.DeleteObject(task);
+	if (task) {
+		std::map<Task *, bool>::iterator	it;
+
+		it = taskList_.find(task);
+		if (it != taskList_.end()) {
+			taskList_.erase(it);
+			delete task;
+		}
+	}
 
 	if (taskList_.size() == 0 && !inProgress_) {
 		/*
@@ -1425,8 +1415,6 @@ SfsCtrl::popTask(Task *task)
 		if (!errorList_.empty())
 			sendErrorEvent();
 	}
-
-	return (result);
 }
 
 SfsCtrl::PopTaskHelper::PopTaskHelper(SfsCtrl *sfsCtrl, Task *task)
@@ -1438,8 +1426,7 @@ SfsCtrl::PopTaskHelper::PopTaskHelper(SfsCtrl *sfsCtrl, Task *task)
 SfsCtrl::PopTaskHelper::~PopTaskHelper()
 {
 	if (task_ != 0) {
-		if (sfsCtrl_->popTask(task_))
-			delete task_;
+		sfsCtrl_->popTask(task_);
 	}
 }
 

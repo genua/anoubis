@@ -252,8 +252,10 @@ SfsDirectory::insertEntry(const wxString &path, bool sendEvent)
 
 	SfsEntry *newEntry = new SfsEntry(this, path);
 	if (entryList_.insert(newEntry)) {
-		if (sendEvent)
-			sizeChangeEvent(entryList_.size());
+		if (sendEvent) {
+			int	idx = entryList_.index_of(newEntry);
+			rowChangeEvent(idx, -1);
+		}
 
 		return newEntry;
 	} else {
@@ -270,6 +272,7 @@ SfsDirectory::removeEntry(unsigned int idx)
 
 	if (entry) {
 		entryList_.remove(entry);
+		rowChangeEvent(idx, -1);
 		delete entry;
 	}
 }
@@ -316,7 +319,7 @@ SfsDirectory::scanLocalFilesystem()
 
 	callHandler(scanFinished(abortScan_));
 
-	sizeChangeEvent(entryList_.size());
+	rowChangeEvent(0, -1);
 }
 
 AnListClass *

@@ -32,6 +32,7 @@
 #include <wx/progdlg.h>
 
 #include <list>
+#include <map>
 
 #include "SfsEntry.h"
 #include "SfsDirectory.h"
@@ -54,10 +55,6 @@ WX_DEFINE_ARRAY_INT(unsigned int, IndexArray);
  *
  * If the content of the assigned SfsDirectory has changed, an wxCommandEvent
  * with event-type anEVT_SFSDIR_CHANGED is created.
- *
- * If at least one of the attributes of an SfsEntry has changed, an
- * wxCommandEvent with event-type anEVT_SFSENTRY_CHANGED is created. The
- * int-attribute contains the index of the SfsEntry inside the SfsDirectory.
  *
  * If an error occured, an wxCommandEvent of type anEVT_SFSENTRY_ERROR is
  * created. The you can use SfsCtrl::getErrors() to receive the list of errors.
@@ -287,25 +284,12 @@ class SfsCtrl : public wxEvtHandler
 		 * filesystem is scanned or a Anoubis daemon communication is
 		 * established to re-fetch a list of files.
 		 *
-		 * Note: If a daemon communication is established, this is a
-		 * non-blocking procedure. It means that method leaves at soon
-		 * as possible. But you can rely on the
-		 * anEVT_SFSENTRY_CHANGED-event.
-		 *
 		 * @return The result of the command.
 		 */
 		CommandResult refresh(void);
 
 		/**
 		 * Validates the SfsEntries at the specified indexes.
-		 *
-		 * The SfsEntry-instances might be updated. For each changed
-		 * entry a wxCommandEvent of type anEVT_SFSENTRY_CHANGED is
-		 * fired.
-		 *
-		 * Note: This is a non-blocking procedure. It means that method
-		 * leaves at soon as possible. But you can rely on the
-		 * anEVT_SFSENTRY_CHANGED-event.
 		 *
 		 * @param arr The array contains indexes of SfsEntry-instances
 		 *            to be validated.
@@ -333,16 +317,10 @@ class SfsCtrl : public wxEvtHandler
 		/**
 		 * Validates all SfsEntry-instances under the directory.
 		 *
-		 * The SfsEntry-instances might be updated. For each changed
-		 * entry a wxCommandEvent of type anEVT_SFSENTRY_CHANGED is
-		 * fired. The method can also remove entries from the model!
+		 * The SfsEntry-instances might be updated. The method can
+		 * also remove entries from the model!
 		 * In this case a wxCommandEvent of type anEVT_SFSDIR_CHANGED
 		 * is fired.
-		 *
-		 * Note: This is a non-blocking procedure. It means that method
-		 * leaves at soon as possible. But you can monitor the
-		 * anEVT_SFSOPERATION_FINISHED-event to know, when the
-		 * background-operation is finished.
 		 *
 		 * @return The result of the command.
 		 */
@@ -352,9 +330,7 @@ class SfsCtrl : public wxEvtHandler
 		 * Registers the checksums of the SfsEntries at the specified
 		 * indexes at anoubisd.
 		 *
-		 * The SfsEntry-instances might be updated. For each changed
-		 * entry a wxCommandEvent of type anEVT_SFSENTRY_CHANGED is
-		 * fired.
+		 * The SfsEntry-instances might be updated.
 		 *
 		 * Note: This is a non-blocking procedure. It means that method
 		 * leaves at soon as possible. But you can monitor the
@@ -392,9 +368,7 @@ class SfsCtrl : public wxEvtHandler
 		 * Removes the checksum of the SfsEntries at the given indexes
 		 * from anoubisd.
 		 *
-		 * The SfsEntry-instances might be updated. For each changed
-		 * entry a wxCommandEvent of type anEVT_SFSENTRY_CHANGED is
-		 * fired.
+		 * The SfsEntry-instances might be updated.
 		 *
 		 * Note: This is a non-blocking procedure. It means that method
 		 * leaves at soon as possible. But you can monitor the
@@ -501,7 +475,7 @@ class SfsCtrl : public wxEvtHandler
 	private:
 		SfsDirectory	sfsDir_;
 		EntryFilter	entryFilter_;
-		TaskList	taskList_;
+		std::map<Task *, bool>	taskList_;
 		wxArrayString	errorList_;
 		bool		comEnabled_;
 		bool		sigEnabled_;
@@ -600,7 +574,7 @@ class SfsCtrl : public wxEvtHandler
 		bool setChecksumMissing(SfsEntry *);
 
 		void pushTask(Task *);
-		bool popTask(Task *);
+		void popTask(Task *);
 
 		void sendOperationFinishedEvent(void);
 		void sendDirChangedEvent(void);
