@@ -1,0 +1,13 @@
+apnversion 1.0
+# dummy user policy to disable user/default policy for this user
+
+alf {
+	any {
+		default allow
+	}
+}
+context {
+	any {
+		context new any
+	}
+}

@@ -13,6 +13,7 @@ Source1:	anoubisd.init
 Source10:	policy.admin.0
 Source11:	policy.user.0
 Source12:	policy.admin.default
+Source13:	policy.user.default
 Source20:	policy.profiles.admin
 Source21:	policy.profiles.medium
 Source22:	policy.profiles.high
@@ -297,6 +298,9 @@ exit 0
 
 ### changelog ##############################################
 %changelog
+* Wed Jan 27 2010 Sebastian Trahm
+- add default policy file for user
+
 * Tue Dec 01 2009 Stefan Fritsch
 - adjust init script LSB dependencies
 
