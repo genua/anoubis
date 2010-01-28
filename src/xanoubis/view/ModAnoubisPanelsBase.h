@@ -34,6 +34,7 @@
 #ifndef __ModAnoubisPanelsBase__
 #define __ModAnoubisPanelsBase__
 
+class ProfileListCtrl;
 class VersionListCtrl;
 
 #include <wx/string.h>
@@ -151,7 +152,7 @@ class ModAnoubisMainPanelBase : public wxPanel
 		wxButton* bt_EscalationDeny;
 		
 		wxScrolledWindow* tb_Profiles;
-		wxListCtrl* profileList;
+		ProfileListCtrl* profileListCtrl;
 		wxStaticText* m_staticText35;
 		wxStaticText* selectedProfileText;
 		

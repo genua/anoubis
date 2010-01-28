@@ -29,11 +29,14 @@
 #define _POLICYCTRL_H_
 
 #include <list>
+#include <vector>
 #include <wx/string.h>
 
 #include "AnEvents.h"
 #include "Singleton.h"
 #include "Task.h"
+#include "Profile.h"
+#include "AnRowProvider.h"
 
 class PolicyRuleSet;
 class TaskEvent;
@@ -57,7 +60,7 @@ class TaskEvent;
  * exportToProfile()). On the other hand you can im/export a policy into an
  * arbitrary file (importFromFile(), exportToFile()).
  */
-class PolicyCtrl : public wxEvtHandler, public Singleton<PolicyCtrl>
+class PolicyCtrl : public Singleton<PolicyCtrl>, public AnRowProvider
 {
 	public:
 
@@ -146,19 +149,12 @@ class PolicyCtrl : public wxEvtHandler, public Singleton<PolicyCtrl>
 		PolicyRuleSet *getRuleSet(const wxString &) const;
 
 		/**
-		 * Returns a list of available profiles.
+		 * Return a certain profile from the list of profiles
 		 *
-		 * There are two types of profiles:
-		 * - default profiles: located in the data-directory (normally
-		 *   <i>/usr/share/xanoubis/profiles</i>. These profiles are
-		 *   readonly.
-		 * - user profiles: located in the user-data-directory (
-		 *   normally <i>$HOME/.xanoubis/profiles</i>). These profiles
-		 *   are writable for the user.
-		 *
-		 * @return List of available profiles
+		 * @param Index which specifies the desired profile.
+		 * @return a specified profile.
 		 */
-		wxArrayString getProfileList(void) const;
+		Profile* getProfile(unsigned int) const;
 
 		/**
 		 * Tests whether a profile with the specified name exists.
@@ -335,6 +331,19 @@ class PolicyCtrl : public wxEvtHandler, public Singleton<PolicyCtrl>
 		 */
 		void setEventBroadcastEnabled(bool);
 
+		/**
+		 * Implementation of AnRowProvider::getRow().
+		 * @param idx The index of the row.
+		 * @return The object associated with the index.
+		 */
+		 AnListClass *getRow(unsigned int idx) const;
+
+		 /**
+		  * Implementation of AnRowProvider::getSize().
+		  * @return The total number of objects in the model.
+		  */
+		 int getSize(void) const;
+
 	protected:
 		/**
 		 * Constructor of PolicyCtrl.
@@ -342,24 +351,17 @@ class PolicyCtrl : public wxEvtHandler, public Singleton<PolicyCtrl>
 		PolicyCtrl(void);
 
 	private:
-		/**
-		 * Different types of profiles.
-		 */
-		enum ProfileSpec
-		{
-			NO_PROFILE = 0,		/*!< No valid profile */
-			DEFAULT_PROFILE,	/*!< A default profile. Visible
-						     for every user, but cannot
-						     be overwritten. */
-			USER_PROFILE		/*!< A user-specific profile.
-						     Visible only for the user
-						     and can be overwritten. */
-		};
 
 		/**
 		 * A list of ruleset-pointers.
 		 */
 		typedef std::list<PolicyRuleSet *> RuleSetList;
+
+
+		/*
+		 * A vector of profiles.
+		 */
+		std::vector<Profile *> profiles_;
 
 		/**
 		 * Flags specifies whether the controller is able to broadcast
@@ -436,7 +438,7 @@ class PolicyCtrl : public wxEvtHandler, public Singleton<PolicyCtrl>
 		 *         PolicyCtrl::NO_PROFILE is requested, en empty
 		 *         string is returned.
 		 */
-		static wxString getProfilePath(ProfileSpec);
+		static wxString getProfilePath(Profile::ProfileSpec);
 
 		/**
 		 * Returns the path to the file, where the specified profile
@@ -445,7 +447,8 @@ class PolicyCtrl : public wxEvtHandler, public Singleton<PolicyCtrl>
 		 * @param spec Type of profile
 		 * @return Path to the file, where the profile is stored.
 		 */
-		static wxString getProfileFile(const wxString &, ProfileSpec);
+		static wxString getProfileFile(const wxString &,
+		    Profile::ProfileSpec);
 
 		/**
 		 * Returns the type of the specified profile.
@@ -453,7 +456,7 @@ class PolicyCtrl : public wxEvtHandler, public Singleton<PolicyCtrl>
 		 * @return Type of profile. If no such profile exists,
 		 *         PolicyCtrl::NO_PROFILE is returned.
 		 */
-		static ProfileSpec getProfileSpec(const wxString &);
+		static Profile::ProfileSpec getProfileSpec(const wxString &);
 
 		/**
 		 * Scans a directory for files.
@@ -497,6 +500,14 @@ class PolicyCtrl : public wxEvtHandler, public Singleton<PolicyCtrl>
 		 * @return Nothring.
 		 */
 		void OnPolicyChange(wxCommandEvent &);
+
+		/**
+		 * Read profiles from disk and save in
+		 * the list used by ProfileListCtrl
+		 *
+		 * @return None
+		 */
+		void updateProfileList(void);
 
 	friend class Singleton<PolicyCtrl>;
 	friend int testPolicyCtrl(PolicyCtrl *, int);

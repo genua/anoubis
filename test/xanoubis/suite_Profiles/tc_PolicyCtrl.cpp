@@ -302,7 +302,10 @@ END_TEST
 
 START_TEST(PolicyCtrl_ProfileList)
 {
-	wxArrayString result = pc->getProfileList();
+	wxArrayString result;
+
+	for (int i = 0; i < pc->getSize(); i++)
+		result.Add(pc->getProfile(i)->getProfileName());
 	fail_unless(result.GetCount() == 10,
 	    "Unexpected # of profiles\n"
 	    "Is: %i\n"
@@ -331,52 +334,23 @@ START_TEST(PolicyCtrl_ProfileList)
 }
 END_TEST
 
-START_TEST(PolicyCtrl_ProfileListNoDefaultProfiles)
+START_TEST(PolicyCtrl_ProfileListUserRemoveProfiles)
 {
-	remove_dir("%s/share/tc_PolicyCtrl/profiles", tmp_home);
+	pc->removeProfile(wxT("user1"));
+	pc->removeProfile(wxT("user3"));
+	pc->removeProfile(wxT("user4"));
+	pc->removeProfile(wxT("user5"));
+	pc->removeProfile(wxT("user6"));
 
-	wxArrayString result = pc->getProfileList();
-	fail_unless(result.GetCount() == 6,
-	    "Unexpected # of profiles\n"
-	    "Is: %i\n"
-	    "Expected: 6", result.GetCount());
-
-	fail_if(result.Index(wxT("user1")) == wxNOT_FOUND,
-	   "Profile \"user1\" not in list");
-	fail_if(result.Index(wxT("user2")) == wxNOT_FOUND,
-	   "Profile \"user2\" not in list");
-	fail_if(result.Index(wxT("user3")) == wxNOT_FOUND,
-	   "Profile \"user3\" not in list");
-	fail_if(result.Index(wxT("user4")) == wxNOT_FOUND,
-	   "Profile \"user4\" not in list");
-	fail_if(result.Index(wxT("user5")) == wxNOT_FOUND,
-	   "Profile \"user5\" not in list");
-	fail_if(result.Index(wxT("user6")) == wxNOT_FOUND,
-	   "Profile \"user6\" not in list");
-}
-END_TEST
-
-START_TEST(PolicyCtrl_ProfileListNoProfiles)
-{
-	remove_dir(tmp_home);
-
-	wxArrayString result = pc->getProfileList();
-	fail_unless(result.GetCount() == 0,
-	    "Unexpected # of profiles\n"
-	    "Is: %i\n"
-	    "Expected: 0", result.GetCount());
-}
-END_TEST
-
-START_TEST(PolicyCtrl_ProfileListNoUserProfiles)
-{
 	remove_dir("%s/.tc_PolicyCtrl/profiles", tmp_home);
 
-	wxArrayString result = pc->getProfileList();
-	fail_unless(result.GetCount() == 4,
+	wxArrayString result;
+	for (int i = 0; i < pc->getSize(); i++)
+		result.Add(pc->getProfile(i)->getProfileName());
+	fail_unless(result.GetCount() == 5,
 	    "Unexpected # of profiles\n"
 	    "Is: %i\n"
-	    "Expected: 4", result.GetCount());
+	    "Expected: 5", result.GetCount());
 
 	fail_if(result.Index(wxT("default1")) == wxNOT_FOUND,
 	   "Profile \"default1\" not in list");
@@ -386,6 +360,8 @@ START_TEST(PolicyCtrl_ProfileListNoUserProfiles)
 	   "Profile \"default3\" not in list");
 	fail_if(result.Index(wxT("default4")) == wxNOT_FOUND,
 	   "Profile \"default4\" not in list");
+	fail_if(result.Index(wxT("user2")) == wxNOT_FOUND,
+	   "Profile \"user2\" not in list");
 }
 END_TEST
 
@@ -441,7 +417,9 @@ START_TEST(PolicyCtrl_removeUserProfile)
 	result = pc->haveProfile(wxT("user1"));
 	fail_unless(result == false, "Profile \"user1\" still exists.");
 
-	wxArrayString profileList = pc->getProfileList();
+	wxArrayString profileList;
+	for (int i = 0; i < pc->getSize(); i++)
+		profileList.Add(pc->getProfile(i)->getProfileName());
 	fail_unless(profileList.GetCount() == 9,
 	    "Unexpected # of profiles\n"
 	    "Is: %i\n"
@@ -464,7 +442,9 @@ START_TEST(PolicyCtrl_removeDefaultProfile)
 	result = pc->haveProfile(wxT("default1"));
 	fail_unless(result == true, "No such profile: \"defaull1\"");
 
-	wxArrayString profileList = pc->getProfileList();
+	wxArrayString profileList;
+	for (int i = 0; i < pc->getSize(); i++)
+		profileList.Add(pc->getProfile(i)->getProfileName());
 	fail_unless(profileList.GetCount() == 10,
 	    "Unexpected # of profiles\n"
 	    "Is: %i\n"
@@ -482,7 +462,9 @@ START_TEST(PolicyCtrl_removeUnknownProfile)
 	fail_unless(result == false,
 	    "Removing of unknown profile \"foobar\" was successful.");
 
-	wxArrayString profileList = pc->getProfileList();
+	wxArrayString profileList;
+	for (int i = 0; i < pc->getSize(); i++)
+		profileList.Add(pc->getProfile(i)->getProfileName());
 	fail_unless(profileList.GetCount() == 10,
 	    "Unexpected # of profiles\n"
 	    "Is: %i\n"
@@ -603,13 +585,6 @@ START_TEST(PolicyCtrl_exportNoProfile)
 }
 END_TEST
 
-START_TEST(PolicyCtrl_exportNewProfile)
-{
-	bool result = pc->exportToProfile(wxT("foobar"));
-	fail_unless(result == true, "Export to \"foobar\" failed.");
-}
-END_TEST
-
 START_TEST(PolicyCtrl_exportUserProfile)
 {
 	bool result = pc->exportToProfile(wxT("user1"));
@@ -624,19 +599,18 @@ START_TEST(PolicyCtrl_exportDefaultProfile)
 }
 END_TEST
 
-START_TEST(PolicyCtrl_exportProfileMissingDirectory)
+START_TEST(PolicyCtrl_exportNewProfile)
 {
-	int rm_result = remove_dir("%s/.tc_PolicyCtrl/profiles", tmp_home);
-	fail_unless(rm_result, "Failed to remove users profile dir");
-
 	bool export_result = pc->exportToProfile(wxT("foobar"));
 	fail_unless(export_result == true, "Export to \"foobar\" failed.");
 
-	wxArrayString profiles = pc->getProfileList();
-	fail_unless(profiles.GetCount() == 5,
+	wxArrayString profiles;
+	for (int i = 0; i < pc->getSize(); i++)
+		profiles.Add(pc->getProfile(i)->getProfileName());
+	fail_unless(profiles.GetCount() == 11,
 	    "Unexpected # of profiles\n"
 	    "Is: %i\n"
-	    "Expected: 5", profiles.GetCount());
+	    "Expected: 11", profiles.GetCount());
 
 	fail_if(profiles.Index(wxT("default1")) == wxNOT_FOUND,
 	   "Profile \"default1\" not in list");
@@ -646,6 +620,18 @@ START_TEST(PolicyCtrl_exportProfileMissingDirectory)
 	   "Profile \"default3\" not in list");
 	fail_if(profiles.Index(wxT("default4")) == wxNOT_FOUND,
 	   "Profile \"default4\" not in list");
+	fail_if(profiles.Index(wxT("user1")) == wxNOT_FOUND,
+	   "Profile \"user1\" not in list");
+	fail_if(profiles.Index(wxT("user2")) == wxNOT_FOUND,
+	   "Profile \"user2\" not in list");
+	fail_if(profiles.Index(wxT("user3")) == wxNOT_FOUND,
+	   "Profile \"user3\" not in list");
+	fail_if(profiles.Index(wxT("user4")) == wxNOT_FOUND,
+	   "Profile \"user4\" not in list");
+	fail_if(profiles.Index(wxT("user5")) == wxNOT_FOUND,
+	   "Profile \"user5\" not in list");
+	fail_if(profiles.Index(wxT("user6")) == wxNOT_FOUND,
+	   "Profile \"user6\" not in list");
 	fail_if(profiles.Index(wxT("foobar")) == wxNOT_FOUND,
 	   "Profile \"foobar\" not in list");
 }
@@ -733,9 +719,7 @@ getTc_PolicyCtrl(void)
 	tcase_add_test(testCase, PolicyCtrl_getAdminId);
 	tcase_add_test(testCase, PolicyCtrl_getUnknownAdminId);
 	tcase_add_test(testCase, PolicyCtrl_ProfileList);
-	tcase_add_test(testCase, PolicyCtrl_ProfileListNoDefaultProfiles);
-	tcase_add_test(testCase, PolicyCtrl_ProfileListNoUserProfiles);
-	tcase_add_test(testCase, PolicyCtrl_ProfileListNoProfiles);
+	tcase_add_test(testCase, PolicyCtrl_ProfileListUserRemoveProfiles);
 	tcase_add_test(testCase, PolicyCtrl_haveDefaultProfile);
 	tcase_add_test(testCase, PolicyCtrl_haveUserProfile);
 	tcase_add_test(testCase, PolicyCtrl_haveNoProfile);
@@ -757,7 +741,6 @@ getTc_PolicyCtrl(void)
 	tcase_add_test(testCase, PolicyCtrl_exportNoProfile);
 	tcase_add_test(testCase, PolicyCtrl_exportUserProfile);
 	tcase_add_test(testCase, PolicyCtrl_exportDefaultProfile);
-	tcase_add_test(testCase, PolicyCtrl_exportProfileMissingDirectory);
 	tcase_add_test(testCase, PolicyCtrl_getUserRuleSet);
 	tcase_add_test(testCase, PolicyCtrl_getAdminRuleSet);
 	tcase_add_test(testCase, PolicyCtrl_getUnknownRuleSet);

@@ -123,12 +123,12 @@ PolicyCtrl::getRuleSet(const wxString &name) const
 	wxString file;
 
 	/* Try user-profile */
-	file = getProfileFile(name, USER_PROFILE);
+	file = getProfileFile(name, Profile::USER_PROFILE);
 	if (wxFileExists(file))
 		return (new PolicyRuleSet(1, geteuid(), file));
 
 	/* Try default-profile */
-	file = getProfileFile(name, DEFAULT_PROFILE);
+	file = getProfileFile(name, Profile::DEFAULT_PROFILE);
 	if (wxFileExists(file))
 		return (new PolicyRuleSet(1, geteuid(), file));
 
@@ -136,25 +136,11 @@ PolicyCtrl::getRuleSet(const wxString &name) const
 	return (0);
 }
 
-wxArrayString
-PolicyCtrl::getProfileList(void) const
-{
-	wxArrayString	result;
-
-	/* Scan for default-profiles */
-	scanDirectory(getProfilePath(DEFAULT_PROFILE), result);
-
-	/* Scan for user-profiles */
-	scanDirectory(getProfilePath(USER_PROFILE), result);
-
-	return (result);
-}
-
 bool
 PolicyCtrl::haveProfile(const wxString &name) const
 {
-	return wxFileExists(getProfileFile(name, USER_PROFILE)) ||
-	    wxFileExists(getProfileFile(name, DEFAULT_PROFILE));
+	return wxFileExists(getProfileFile(name, Profile::USER_PROFILE)) ||
+	    wxFileExists(getProfileFile(name, Profile::DEFAULT_PROFILE));
 }
 
 bool
@@ -163,7 +149,7 @@ PolicyCtrl::isProfileWritable(const wxString &name) const
 	/* Do not allow writes to the "active" profile". */
 	if (name == wxString::FromAscii("active"))
 		return (false);
-	return !wxFileExists(getProfileFile(name, DEFAULT_PROFILE));
+	return !wxFileExists(getProfileFile(name, Profile::DEFAULT_PROFILE));
 }
 
 bool
@@ -173,11 +159,12 @@ PolicyCtrl::removeProfile(const wxString &name)
 	 * Only try to remove the user-profile,
 	 * a default-profile is read-only
 	 */
-	wxString file = getProfileFile(name, USER_PROFILE);
-	if (wxFileExists(file))
-		return (wxRemoveFile(file));
-	else
-		return (false);
+	wxString file = getProfileFile(name, Profile::USER_PROFILE);
+	if (wxFileExists(file) && wxRemoveFile(file)) {
+		updateProfileList();
+		return true;
+	}
+	return (false);
 }
 
 bool
@@ -191,7 +178,7 @@ PolicyCtrl::exportToProfile(const wxString &name)
 		return (false);
 	}
 
-	if (getProfileSpec(name) == DEFAULT_PROFILE) {
+	if (getProfileSpec(name) == Profile::DEFAULT_PROFILE) {
 		/* Only export to user-profile allowed */
 		return (false);
 	}
@@ -200,7 +187,7 @@ PolicyCtrl::exportToProfile(const wxString &name)
 	 * Store-operation allowed only for user-profiles,
 	 * cannot overwrite default-profiles!
 	 */
-	wxString file = getProfileFile(name, USER_PROFILE);
+	wxString file = getProfileFile(name, Profile::USER_PROFILE);
 
 	/*
 	 * Make sure, the directory exists. This is the users home-directory,
@@ -223,6 +210,8 @@ PolicyCtrl::exportToProfile(const wxString &name)
 	/* Make a backup by putting the policy into version-control */
 	if (!makeBackup(name))
 		return (false);
+
+	updateProfileList();
 
 	return (true);
 }
@@ -251,13 +240,13 @@ PolicyCtrl::importFromProfile(const wxString &name)
 	wxString	file;
 
 	/* Try user-profile */
-	file = getProfileFile(name, USER_PROFILE);
+	file = getProfileFile(name, Profile::USER_PROFILE);
 	if (wxFileExists(file))
 		rs = new PolicyRuleSet(1, geteuid(), file);
 
 	if (rs == 0) {
 		/* Try default-profile */
-		file = getProfileFile(name, DEFAULT_PROFILE);
+		file = getProfileFile(name, Profile::DEFAULT_PROFILE);
 		if (wxFileExists(file))
 			rs = new PolicyRuleSet(1, geteuid(), file);
 	}
@@ -333,7 +322,7 @@ PolicyCtrl::importPolicy(PolicyRuleSet *rs, const wxString &name)
 	if (rs == 0 || rs->hasErrors())
 		return (false);
 
-	if (getProfileSpec(name) == DEFAULT_PROFILE) {
+	if (getProfileSpec(name) == Profile::DEFAULT_PROFILE) {
 		/* Only export to user-profile allowed */
 		return (false);
 	}
@@ -342,7 +331,7 @@ PolicyCtrl::importPolicy(PolicyRuleSet *rs, const wxString &name)
 	 * Store-operation allowed only for user-profiles,
 	 * cannot overwrite default-profiles!
 	 */
-	wxString file = getProfileFile(name, USER_PROFILE);
+	wxString file = getProfileFile(name, Profile::USER_PROFILE);
 
 	/*
 	 * Make sure, the directory exists. This is the users home-directory,
@@ -361,6 +350,8 @@ PolicyCtrl::importPolicy(PolicyRuleSet *rs, const wxString &name)
 
 	if (!rs->exportToFile(file))
 		return (false);
+
+	updateProfileList();
 
 	return (true);
 }
@@ -616,16 +607,16 @@ PolicyCtrl::OnPolicySend(TaskEvent &event)
 }
 
 wxString
-PolicyCtrl::getProfilePath(ProfileSpec spec)
+PolicyCtrl::getProfilePath(Profile::ProfileSpec spec)
 {
 	switch (spec) {
-	case DEFAULT_PROFILE:
+	case Profile::DEFAULT_PROFILE:
 		return wxStandardPaths::Get().GetDataDir() +
 		    wxT("/profiles");
-	case USER_PROFILE:
+	case Profile::USER_PROFILE:
 		return wxStandardPaths::Get().GetUserDataDir() +
 		    wxT("/profiles");
-	case NO_PROFILE:
+	case Profile::NO_PROFILE:
 		return wxEmptyString;
 	}
 
@@ -633,23 +624,23 @@ PolicyCtrl::getProfilePath(ProfileSpec spec)
 }
 
 wxString
-PolicyCtrl::getProfileFile(const wxString &name, ProfileSpec spec)
+PolicyCtrl::getProfileFile(const wxString &name, Profile::ProfileSpec spec)
 {
-	if (spec != NO_PROFILE)
+	if (spec != Profile::NO_PROFILE)
 		return (getProfilePath(spec) + wxT("/") + name);
 	else
 		return wxEmptyString;
 }
 
-PolicyCtrl::ProfileSpec
+Profile::ProfileSpec
 PolicyCtrl::getProfileSpec(const wxString &name)
 {
-	if (wxFileExists(getProfileFile(name, USER_PROFILE)))
-		return (USER_PROFILE);
-	else if (wxFileExists(getProfileFile(name, DEFAULT_PROFILE)))
-		return (DEFAULT_PROFILE);
+	if (wxFileExists(getProfileFile(name, Profile::USER_PROFILE)))
+		return (Profile::USER_PROFILE);
+	else if (wxFileExists(getProfileFile(name, Profile::DEFAULT_PROFILE)))
+		return (Profile::DEFAULT_PROFILE);
 	else
-		return (NO_PROFILE);
+		return (Profile::NO_PROFILE);
 }
 
 long
@@ -775,6 +766,8 @@ PolicyCtrl::PolicyCtrl(void) : Singleton<PolicyCtrl>()
 	eventBroadcastEnabled_ = true;
 	JobCtrl *jobCtrl = JobCtrl::getInstance();
 
+	updateProfileList();
+
 	jobCtrl->Connect(anTASKEVT_POLICY_REQUEST,
 	    wxTaskEventHandler(PolicyCtrl::OnPolicyRequest), NULL, this);
 	jobCtrl->Connect(anTASKEVT_POLICY_SEND,
@@ -783,4 +776,54 @@ PolicyCtrl::PolicyCtrl(void) : Singleton<PolicyCtrl>()
 	    wxCommandEventHandler(PolicyCtrl::OnAnswerEscalation), NULL, this);
 	AnEvents::getInstance()->Connect(anEVT_POLICY_CHANGE,
 	    wxCommandEventHandler(PolicyCtrl::OnPolicyChange), NULL, this);
+}
+
+void
+PolicyCtrl::updateProfileList(void)
+{
+	Profile *profile;
+	wxArrayString result;
+
+	while(!profiles_.empty()) {
+		profile = profiles_.back();
+		delete profile;
+		profiles_.pop_back();
+	}
+
+	scanDirectory(getProfilePath(Profile::DEFAULT_PROFILE),
+	    result);
+	for (unsigned int i = 0; i < result.Count(); i++) {
+		profile = new Profile(result[i], Profile::DEFAULT_PROFILE);
+		profiles_.push_back(profile);
+	}
+
+	result.Empty();
+	scanDirectory(getProfilePath(Profile::USER_PROFILE), result);
+	for (unsigned int i = 0; i < result.Count(); i++) {
+		profile = new Profile(result[i], Profile::USER_PROFILE);
+		profiles_.push_back(profile);
+	}
+	sizeChangeEvent(profiles_.size());
+}
+
+
+Profile*
+PolicyCtrl::getProfile(unsigned int idx) const
+{
+	if (idx >= profiles_.size())
+		return NULL;
+
+	return profiles_[idx];
+}
+
+int
+PolicyCtrl::getSize(void) const
+{
+	return profiles_.size();
+}
+
+AnListClass *
+PolicyCtrl::getRow(unsigned int idx) const
+{
+	return getProfile(idx);
 }

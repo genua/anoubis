@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 GeNUA mbH <info@genua.de>
+ * Copyright (c) 2010 GeNUA mbH <info@genua.de>
  *
  * All rights reserved.
  *
@@ -25,37 +25,27 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "DlgProfileSelection.h"
-#include "PolicyCtrl.h"
+#include "Profile.h"
 
-DlgProfileSelection::DlgProfileSelection(const wxString &selection,
-    wxWindow *parent) : ModAnoubisProfileSelectionDialogBase(parent)
+Profile::Profile(const wxString &name, ProfileSpec type)
 {
-	PolicyCtrl *policyCtrl = PolicyCtrl::getInstance();
+	name_ = name;
+	type_ = type;
+}
 
-	/* Filter writeable profiles */
-	for (int i = 0; i < policyCtrl->getSize(); i++) {
-		if (policyCtrl->isProfileWritable
-		    (policyCtrl->getProfile(i)->getProfileName()))
-			profilesCombo->Append
-			    (policyCtrl->getProfile(i)->getProfileName());
-	}
+Profile::~Profile()
+{
 
-	if (policyCtrl->isProfileWritable(selection)) {
-		profilesCombo->SetValue(selection);
-		buttonSizerOK->Enable(selection != wxEmptyString);
-	} else
-		buttonSizerOK->Enable(false);
 }
 
 wxString
-DlgProfileSelection::getSelectedProfile(void) const
+Profile::getProfileName(void) const
 {
-	return (profilesCombo->GetValue());
+	return name_;
 }
 
-void
-DlgProfileSelection::OnTextChanged(wxCommandEvent &)
+Profile::ProfileSpec
+Profile::getProfileType(void) const
 {
-	buttonSizerOK->Enable(profilesCombo->GetValue() != wxEmptyString);
+	return type_;
 }

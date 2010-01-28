@@ -61,7 +61,6 @@ class ModAnoubisMainPanelImpl : public ModAnoubisMainPanelBase,
 		void versionListUpdateFromSelection(void);
 		void profileTabInit(void);
 		void profileTabUpdate(void);
-		void fillProfileList(void);
 		void toolTipParamsUpdate(void);
 		void editOptionsEnable(void);
 		void initPathLabel(void);

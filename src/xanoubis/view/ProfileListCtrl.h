@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 GeNUA mbH <info@genua.de>
+ * Copyright (c) 2010 GeNUA mbH <info@genua.de>
  *
  * All rights reserved.
  *
@@ -25,37 +25,58 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "DlgProfileSelection.h"
-#include "PolicyCtrl.h"
+#ifndef _PROFILELISTCTRL_H_
+#define _PROFILELISTCTRL_H_
 
-DlgProfileSelection::DlgProfileSelection(const wxString &selection,
-    wxWindow *parent) : ModAnoubisProfileSelectionDialogBase(parent)
+#include "AnListCtrl.h"
+#include "AnListProperty.h"
+
+/**
+ * A list-control displays profiles shipped by Anoubis or created by user.
+ */
+
+class ProfileListCtrl : public AnListCtrl
 {
-	PolicyCtrl *policyCtrl = PolicyCtrl::getInstance();
+	public:
+		ProfileListCtrl(wxWindow *, wxWindowID, const wxPoint&,
+		    const wxSize&, long);
+};
 
-	/* Filter writeable profiles */
-	for (int i = 0; i < policyCtrl->getSize(); i++) {
-		if (policyCtrl->isProfileWritable
-		    (policyCtrl->getProfile(i)->getProfileName()))
-			profilesCombo->Append
-			    (policyCtrl->getProfile(i)->getProfileName());
-	}
-
-	if (policyCtrl->isProfileWritable(selection)) {
-		profilesCombo->SetValue(selection);
-		buttonSizerOK->Enable(selection != wxEmptyString);
-	} else
-		buttonSizerOK->Enable(false);
-}
-
-wxString
-DlgProfileSelection::getSelectedProfile(void) const
+/**
+ * Basic Profile property.
+ *
+ * getIcon() is already implemented because Profile does not use icons.
+ * The class is still abstract!
+ *
+ * @see ProfileNameProperty
+ * @see ProfileTypeProperty
+ */
+class ProfileProperty : public AnListProperty
 {
-	return (profilesCombo->GetValue());
-}
+	public:
+		AnIconList::IconId getIcon(AnListClass *) const;
+};
 
-void
-DlgProfileSelection::OnTextChanged(wxCommandEvent &)
+/**
+ * Property for the name of the Profile, also used to find the
+ * profile in the directory.
+ */
+class ProfileNameProperty : public ProfileProperty
 {
-	buttonSizerOK->Enable(profilesCombo->GetValue() != wxEmptyString);
-}
+	public:
+		wxString getHeader(void) const;
+		wxString getText(AnListClass *c) const;
+};
+
+/**
+ * Property for the type of the Profile. Depending on the type
+ * the Permission of the Profile is choosed.
+ */
+class ProfilePermissionProperty : public ProfileProperty
+{
+	public:
+		wxString getHeader(void) const;
+		wxString getText(AnListClass *c) const;
+};
+
+#endif	/* _PROFILELISTCTRL_H_ */

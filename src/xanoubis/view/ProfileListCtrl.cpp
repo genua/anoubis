@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 GeNUA mbH <info@genua.de>
+ * Copyright (c) 2010 GeNUA mbH <info@genua.de>
  *
  * All rights reserved.
  *
@@ -25,37 +25,63 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "DlgProfileSelection.h"
+#include "ProfileListCtrl.h"
 #include "PolicyCtrl.h"
+#include "ModAnoubisMainPanelImpl.h"
+#include "AnListColumn.h"
 
-DlgProfileSelection::DlgProfileSelection(const wxString &selection,
-    wxWindow *parent) : ModAnoubisProfileSelectionDialogBase(parent)
+ProfileListCtrl::ProfileListCtrl(wxWindow *w, wxWindowID id,
+    const wxPoint &p, const wxSize &sz, long type)
+    : AnListCtrl(w, id, p, sz, type | wxLC_VIRTUAL)
 {
-	PolicyCtrl *policyCtrl = PolicyCtrl::getInstance();
+	setRowProvider(PolicyCtrl::getInstance());
 
-	/* Filter writeable profiles */
-	for (int i = 0; i < policyCtrl->getSize(); i++) {
-		if (policyCtrl->isProfileWritable
-		    (policyCtrl->getProfile(i)->getProfileName()))
-			profilesCombo->Append
-			    (policyCtrl->getProfile(i)->getProfileName());
-	}
+	/* Setup properties of the view */
+	addColumn(new ProfilePermissionProperty);
+	addColumn(new ProfileNameProperty);
 
-	if (policyCtrl->isProfileWritable(selection)) {
-		profilesCombo->SetValue(selection);
-		buttonSizerOK->Enable(selection != wxEmptyString);
-	} else
-		buttonSizerOK->Enable(false);
+	/* Adjust column width (Bug #1321). */
+	getColumn(0)->setWidth(140);
+	getColumn(1)->setWidth(384);
+}
+
+AnIconList::IconId
+ProfileProperty::getIcon(AnListClass *) const
+{
+	return (AnIconList::ICON_NONE);
 }
 
 wxString
-DlgProfileSelection::getSelectedProfile(void) const
+ProfileNameProperty::getHeader(void) const
 {
-	return (profilesCombo->GetValue());
+	return _("Profile");
 }
 
-void
-DlgProfileSelection::OnTextChanged(wxCommandEvent &)
+wxString
+ProfileNameProperty::getText(AnListClass *obj) const
 {
-	buttonSizerOK->Enable(profilesCombo->GetValue() != wxEmptyString);
+	Profile *profile = dynamic_cast<Profile *>(obj);
+
+	if (profile != 0)
+		return profile->getProfileName();
+	else
+		return _("???");
+}
+
+wxString
+ProfilePermissionProperty::getHeader(void) const
+{
+	return wxEmptyString;
+}
+
+wxString
+ProfilePermissionProperty::getText(AnListClass *obj) const
+{
+	Profile *profile = dynamic_cast<Profile *>(obj);
+	PolicyCtrl *ctrl = PolicyCtrl::getInstance();
+
+	if (!ctrl->isProfileWritable(profile->getProfileName()))
+		return _("read-only");
+	else
+		return wxEmptyString;
 }

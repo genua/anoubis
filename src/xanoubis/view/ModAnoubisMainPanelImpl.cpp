@@ -63,6 +63,8 @@
 #include "NotifyAnswer.h"
 #include "VersionCtrl.h"
 #include "VersionListCtrl.h"
+#include "PolicyCtrl.h"
+#include "ProfileListCtrl.h"
 
 #include "apn.h"
 
@@ -326,23 +328,9 @@ ModAnoubisMainPanelImpl::setOptionsWidgetsVisability(void)
 void
 ModAnoubisMainPanelImpl::profileTabInit(void)
 {
-	profileList->InsertColumn(0, wxT(""),
-	    wxLIST_FORMAT_LEFT, wxLIST_AUTOSIZE);
-	profileList->InsertColumn(1, _("Profile"),
-	    wxLIST_FORMAT_LEFT, wxLIST_AUTOSIZE);
-
 	selectedProfile = wxEmptyString;
 	loadedProfile = wxEmptyString;
 	wxConfig::Get()->Read(wxT("/Options/LoadedProfile"), &loadedProfile);
-	fillProfileList();
-
-	/* Adjust width of profile-column */
-	int width = profileList->GetClientSize().GetWidth();
-	width -= profileList->GetColumnWidth(0);
-	profileList->SetColumnWidth(1, width);
-
-	/* Adjust column width (Bug #1321). */
-	profileList->SetColumnWidth(1, 420);
 }
 
 void
@@ -369,24 +357,6 @@ ModAnoubisMainPanelImpl::profileTabUpdate(void)
 }
 
 void
-ModAnoubisMainPanelImpl::fillProfileList(void)
-{
-	PolicyCtrl *policyCtrl = PolicyCtrl::getInstance();
-	wxArrayString profiles = policyCtrl->getProfileList();
-
-	profileList->DeleteAllItems();
-
-	for (unsigned int i = 0; i < profiles.GetCount(); i++) {
-		profileList->InsertItem(i, wxEmptyString);
-
-		if (!policyCtrl->isProfileWritable(profiles[i]))
-			profileList->SetItem(i, 0, _("read-only"));
-
-		profileList->SetItem(i, 1, profiles[i]);
-	}
-}
-
-void
 ModAnoubisMainPanelImpl::OnLoadRuleSet(wxCommandEvent &event)
 {
 	versionListUpdateFromSelection();
@@ -400,7 +370,6 @@ ModAnoubisMainPanelImpl::OnProfileDeleteClicked(wxCommandEvent &)
 
 	if (policyCtrl->removeProfile(selectedProfile)) {
 		selectedProfile = wxEmptyString;
-		fillProfileList();
 		profileTabUpdate();
 	} else {
 		anMessageBox(
@@ -447,7 +416,6 @@ ModAnoubisMainPanelImpl::OnProfileSaveClicked(wxCommandEvent &)
 		}
 
 		if (policyCtrl->exportToProfile(profile)) {
-			fillProfileList();
 			profileTabUpdate();
 		} else {
 			anMessageBox(
@@ -510,7 +478,7 @@ ModAnoubisMainPanelImpl::OnProfileSelectionChanged(wxListEvent &event)
 
 	listItem.SetId(index);
 	listItem.SetColumn(1);
-	profileList->GetItem(listItem);
+	profileListCtrl->GetItem(listItem);
 
 	selectedProfile = listItem.GetText();
 	profileTabUpdate();
@@ -528,7 +496,11 @@ ModAnoubisMainPanelImpl::versionListUpdate(void)
 	profile = versionCtrl->getVersionProfile();
 
 	VersionProfileChoice->Clear();
-	VersionProfileChoice->Append(policyCtrl->getProfileList());
+
+	for (int i = 0; i < policyCtrl->getSize(); i++)
+		VersionProfileChoice->Append(
+		    policyCtrl->getProfile(i)->getProfileName());
+
 	if (profile.IsEmpty()) {
 		VersionProfileChoice->SetSelection(0);
 	} else {

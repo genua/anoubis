@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 GeNUA mbH <info@genua.de>
+ * Copyright (c) 2010 GeNUA mbH <info@genua.de>
  *
  * All rights reserved.
  *
@@ -25,37 +25,58 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "DlgProfileSelection.h"
-#include "PolicyCtrl.h"
+#ifndef _PROFILE_H_
+#define _PROFILE_H_
 
-DlgProfileSelection::DlgProfileSelection(const wxString &selection,
-    wxWindow *parent) : ModAnoubisProfileSelectionDialogBase(parent)
-{
-	PolicyCtrl *policyCtrl = PolicyCtrl::getInstance();
+#include "AnListClass.h"
 
-	/* Filter writeable profiles */
-	for (int i = 0; i < policyCtrl->getSize(); i++) {
-		if (policyCtrl->isProfileWritable
-		    (policyCtrl->getProfile(i)->getProfileName()))
-			profilesCombo->Append
-			    (policyCtrl->getProfile(i)->getProfileName());
-	}
+/**
+ * This is the base class for proflies. It carries the name and the type
+ * of the Profile and their getter methods.
+ */
+class Profile : public AnListClass {
+	public:
+		/**
+		 * Different types of profiles.
+		 */
+		enum ProfileSpec
+		{
+			NO_PROFILE = 0,		/*!< No valid profile */
+			DEFAULT_PROFILE,	/*!< A default profile. Visible
+						  for every user, but cannot
+						  be overwritten. */
+			USER_PROFILE		/*!< A user-specific profile.
+						  Visible only for the user
+						  and can be overwritten. */
+		};
 
-	if (policyCtrl->isProfileWritable(selection)) {
-		profilesCombo->SetValue(selection);
-		buttonSizerOK->Enable(selection != wxEmptyString);
-	} else
-		buttonSizerOK->Enable(false);
-}
+		/**
+		 * Constructor of a profile
+		 * @param[in] 1st The name of the profile
+		 * @param[in] 2nd The type of the profile
+		 */
+		Profile(const wxString &, ProfileSpec);
 
-wxString
-DlgProfileSelection::getSelectedProfile(void) const
-{
-	return (profilesCombo->GetValue());
-}
+		/**
+		 * D'tor of a profile
+		 */
+		~Profile(void);
 
-void
-DlgProfileSelection::OnTextChanged(wxCommandEvent &)
-{
-	buttonSizerOK->Enable(profilesCombo->GetValue() != wxEmptyString);
-}
+		/**
+		 * Get the name of the proflie.
+		 * @return name of the profile.
+		 */
+		wxString	getProfileName(void) const;
+
+		/**
+		 * Get the type of the proflie.
+		 * @return type of the profile.
+		 */
+		ProfileSpec	getProfileType(void) const;
+
+	private:
+		wxString	name_;	/**< Name of the profile. */
+		ProfileSpec	type_;  /**< Type of the profile. */
+};
+
+#endif	/* _PROFILE_H_ */

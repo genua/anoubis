@@ -235,6 +235,8 @@ xanoubis_SOURCES= \
 	model/PolicyRowProvider.h \
 	model/Policy.cpp \
 	model/Policy.h \
+	model/Profile.cpp \
+	model/Profile.h \
 	model/SbAccessFilterPolicy.cpp \
 	model/SbAccessFilterPolicy.h \
 	model/SbAppPolicy.cpp \
@@ -335,6 +337,8 @@ xanoubis_SOURCES= \
 	view/ModSbPanelsBase.h \
 	view/OverviewAttrProvider.cpp \
 	view/OverviewAttrProvider.h \
+	view/ProfileListCtrl.cpp \
+	view/ProfileListCtrl.h \
 	view/RuleWizard.cpp \
 	view/RuleWizard.h \
 	view/RuleWizardPage.cpp \
