@@ -63,11 +63,11 @@ RuleWizardSandboxReadFilesPage::onPageChanged(wxWizardEvent &)
 {
 	wxString text;
 
-	text.Printf(_("Options for READING access of application \"%ls\":"),
+	text.Printf(_("Options for READ access of application \"%ls\":"),
 	    history_->getProgram().c_str());
 	questionLabel->SetLabel(text);
 
-	fileListLabel->SetLabel(_("Grand READING access:"));
+	fileListLabel->SetLabel(_("Grant READ access:"));
 
 	updateNavi();
 }

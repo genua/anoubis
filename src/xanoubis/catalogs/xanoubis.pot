@@ -34,7 +34,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2010-01-14 10:56+0100\n"
+"POT-Creation-Date: 2010-01-27 11:32+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -69,7 +69,7 @@ msgstr ""
 
 #: model/AlfOverviewTable.cpp:67 model/SbOverviewTable.cpp:72
 #: model/SfsOverviewTable.cpp:72 view/DlgRuleEditor.cpp:82
-#: view/VersionListCtrl.cpp:123
+#: view/VersionListCtrl.cpp:119
 msgid "User"
 msgstr ""
 
@@ -80,11 +80,11 @@ msgstr ""
 #: model/SbOverviewTable.cpp:158 model/SbOverviewTable.cpp:168
 #: model/SfsOverviewTable.cpp:75 model/SfsOverviewTable.cpp:88
 #: model/SfsOverviewTable.cpp:93 model/SfsOverviewTable.cpp:125
-#: model/SfsOverviewTable.cpp:135 view/DlgLogViewer.cpp:188
-#: view/DlgLogViewer.cpp:206 view/ModSfsListCtrl.cpp:186
-#: view/ModSfsListCtrl.cpp:213 view/VersionListCtrl.cpp:83
-#: view/VersionListCtrl.cpp:100 view/VersionListCtrl.cpp:117
-#: view/VersionListCtrl.cpp:134 view/VersionListCtrl.cpp:151
+#: model/SfsOverviewTable.cpp:135 view/DlgLogViewer.cpp:219
+#: view/DlgLogViewer.cpp:237 view/ModSfsListProperty.cpp:105
+#: view/ModSfsListProperty.cpp:125 view/VersionListCtrl.cpp:79
+#: view/VersionListCtrl.cpp:96 view/VersionListCtrl.cpp:113
+#: view/VersionListCtrl.cpp:130 view/VersionListCtrl.cpp:147
 msgid "???"
 msgstr ""
 
@@ -125,7 +125,7 @@ msgstr ""
 #: model/AlfFilterPolicy.cpp:328 model/AlfFilterPolicy.cpp:380
 #: model/AlfFilterPolicy.cpp:731 model/AlfFilterPolicy.cpp:759
 #: model/ContextFilterPolicy.cpp:183 model/FilterPolicy.cpp:95
-#: model/FilterPolicy.cpp:121 view/DlgRuleEditor.cpp:1841
+#: model/FilterPolicy.cpp:121 view/DlgRuleEditor.cpp:1843
 #: view/RuleWizardHistory.cpp:282
 msgid "(unknown)"
 msgstr ""
@@ -262,7 +262,7 @@ msgstr ""
 
 #: model/SbOverviewTable.cpp:64 model/SfsOverviewTable.cpp:62
 #: view/DlgRuleEditor.cpp:120 view/DlgRuleEditor.cpp:155
-#: widgets/AnPolicyNotebook.cpp:262 widgets/AnPolicyNotebook.cpp:324
+#: widgets/AnPolicyNotebook.cpp:275 widgets/AnPolicyNotebook.cpp:337
 msgid "Subject"
 msgstr ""
 
@@ -270,27 +270,27 @@ msgstr ""
 msgid "Mask"
 msgstr ""
 
-#: model/PolicyRuleSet.cpp:538
+#: model/PolicyRuleSet.cpp:641
 #, c-format
 msgid "System error during import of policy file %ls: %hs"
 msgstr ""
 
-#: model/PolicyRuleSet.cpp:547
+#: model/PolicyRuleSet.cpp:650
 #, c-format
 msgid "Successfully imported policy file %ls"
 msgstr ""
 
-#: model/PolicyRuleSet.cpp:556
+#: model/PolicyRuleSet.cpp:659
 #, c-format
 msgid "Failed import of policy file %ls"
 msgstr ""
 
-#: model/PolicyRuleSet.cpp:564
+#: model/PolicyRuleSet.cpp:667
 #, c-format
 msgid "Failed import of policy file %hs"
 msgstr ""
 
-#: model/PolicyRuleSet.cpp:573
+#: model/PolicyRuleSet.cpp:676
 #, c-format
 msgid "Unknown error during import of policy file %ls"
 msgstr ""
@@ -310,17 +310,17 @@ msgstr ""
 msgid "both from %ls to %ls"
 msgstr ""
 
-#: model/Policy.cpp:133
+#: model/Policy.cpp:132
 #, c-format
 msgid "until %ls"
 msgstr ""
 
-#: model/Policy.cpp:135
+#: model/Policy.cpp:134
 #, c-format
 msgid "task %ls"
 msgstr ""
 
-#: model/Policy.cpp:137
+#: model/Policy.cpp:136
 #, c-format
 msgid "until %ls for task %ls"
 msgstr ""
@@ -412,15 +412,15 @@ msgstr ""
 msgid "Log Viewer"
 msgstr ""
 
-#: view/DlgLogViewer.cpp:183 view/VersionListCtrl.cpp:106
+#: view/DlgLogViewer.cpp:214 view/VersionListCtrl.cpp:102
 msgid "Time"
 msgstr ""
 
-#: view/DlgLogViewer.cpp:184
+#: view/DlgLogViewer.cpp:215
 msgid "Module"
 msgstr ""
 
-#: view/DlgLogViewer.cpp:185
+#: view/DlgLogViewer.cpp:216
 msgid "Message"
 msgstr ""
 
@@ -520,7 +520,7 @@ msgstr ""
 msgid "Status:"
 msgstr ""
 
-#: view/DlgRuleEditorBase.cpp:252 view/DlgRuleEditor.cpp:2160
+#: view/DlgRuleEditorBase.cpp:252 view/DlgRuleEditor.cpp:2162
 msgid "not modified"
 msgstr ""
 
@@ -848,7 +848,7 @@ msgstr ""
 
 #: view/DlgRuleEditor.cpp:81 view/DlgRuleEditor.cpp:93
 #: view/DlgRuleEditor.cpp:118 view/DlgRuleEditor.cpp:139
-#: view/DlgRuleEditor.cpp:148 view/VersionListCtrl.cpp:72
+#: view/DlgRuleEditor.cpp:148 view/VersionListCtrl.cpp:68
 msgid "Type"
 msgstr ""
 
@@ -865,7 +865,7 @@ msgstr ""
 msgid "Scope"
 msgstr ""
 
-#: view/DlgRuleEditor.cpp:98 widgets/AnPolicyNotebook.cpp:237
+#: view/DlgRuleEditor.cpp:98 widgets/AnPolicyNotebook.cpp:250
 msgid "Capability"
 msgstr ""
 
@@ -911,134 +911,134 @@ msgstr ""
 msgid "%ls %ls"
 msgstr ""
 
-#: view/DlgRuleEditor.cpp:874 view/DlgRuleEditor.cpp:911
+#: view/DlgRuleEditor.cpp:876 view/DlgRuleEditor.cpp:913
 #, c-format
 msgid "Delete rule %ld?"
 msgstr ""
 
-#: view/DlgRuleEditor.cpp:875 view/DlgRuleEditor.cpp:912
+#: view/DlgRuleEditor.cpp:877 view/DlgRuleEditor.cpp:914
 #: view/MainFrame.cpp:601
 msgid "Confirm"
 msgstr ""
 
-#: view/DlgRuleEditor.cpp:948 view/DlgRuleEditor.cpp:1033
+#: view/DlgRuleEditor.cpp:950 view/DlgRuleEditor.cpp:1035
 msgid "Table columns"
 msgstr ""
 
-#: view/DlgRuleEditor.cpp:949 view/DlgRuleEditor.cpp:1034
+#: view/DlgRuleEditor.cpp:951 view/DlgRuleEditor.cpp:1036
 msgid "Please select the columns to be shown"
 msgstr ""
 
-#: view/DlgRuleEditor.cpp:1110
+#: view/DlgRuleEditor.cpp:1112
 msgid "Couldn't create new ruleset!"
 msgstr ""
 
-#: view/DlgRuleEditor.cpp:1111 view/DlgRuleEditor.cpp:1116
-#: view/DlgRuleEditor.cpp:1155 view/DlgRuleEditor.cpp:1245
+#: view/DlgRuleEditor.cpp:1113 view/DlgRuleEditor.cpp:1118
+#: view/DlgRuleEditor.cpp:1157 view/DlgRuleEditor.cpp:1247
 #: view/MainFrameBase.cpp:64 view/ModAnoubisPanelsBase.cpp:728
 msgid "Rule Editor"
 msgstr ""
 
-#: view/DlgRuleEditor.cpp:1115
+#: view/DlgRuleEditor.cpp:1117
 msgid "Created new ruleset."
 msgstr ""
 
-#: view/DlgRuleEditor.cpp:1154
+#: view/DlgRuleEditor.cpp:1156
 msgid "Error: Couldn't create new application rule."
 msgstr ""
 
-#: view/DlgRuleEditor.cpp:1203
+#: view/DlgRuleEditor.cpp:1205
 msgid "Cannot edit admin ruleset!"
 msgstr ""
 
-#: view/DlgRuleEditor.cpp:1204 view/DlgRuleEditor.cpp:2203
+#: view/DlgRuleEditor.cpp:1206 view/DlgRuleEditor.cpp:2205
 msgid "RuleEditor"
 msgstr ""
 
-#: view/DlgRuleEditor.cpp:1244
+#: view/DlgRuleEditor.cpp:1246
 msgid "Error: Couldn't create new filter rule."
 msgstr ""
 
-#: view/DlgRuleEditor.cpp:1265
+#: view/DlgRuleEditor.cpp:1267
 msgid "Import policy file"
 msgstr ""
 
-#: view/DlgRuleEditor.cpp:1273 view/MainFrame.cpp:512
+#: view/DlgRuleEditor.cpp:1275 view/MainFrame.cpp:512
 msgid "Couldn't import policy file: it has errors."
 msgstr ""
 
-#: view/DlgRuleEditor.cpp:1274 view/MainFrame.cpp:513 view/MainFrame.cpp:774
+#: view/DlgRuleEditor.cpp:1276 view/MainFrame.cpp:513 view/MainFrame.cpp:774
 #: view/ModAnoubisMainPanelImpl.cpp:1552 view/ModSfsGenerateKeyDlg.cpp:189
 #: main.cpp:138 main.cpp:381 main.cpp:389
 msgid "Error"
 msgstr ""
 
-#: view/DlgRuleEditor.cpp:1342
+#: view/DlgRuleEditor.cpp:1344
 msgid "Export ruleset..."
 msgstr ""
 
-#: view/DlgRuleEditor.cpp:1351 view/MainFrame.cpp:532
+#: view/DlgRuleEditor.cpp:1353 view/MainFrame.cpp:532
 msgid "Failed to export the ruleset into a file."
 msgstr ""
 
-#: view/DlgRuleEditor.cpp:1352 view/MainFrame.cpp:533
+#: view/DlgRuleEditor.cpp:1354 view/MainFrame.cpp:533
 msgid "Export ruleset"
 msgstr ""
 
-#: view/DlgRuleEditor.cpp:1385 view/DlgRuleEditor.cpp:1408
-#: view/ModAnoubisMainPanelImpl.cpp:495 view/ModSfsMainPanelImpl.cpp:422
+#: view/DlgRuleEditor.cpp:1387 view/DlgRuleEditor.cpp:1410
+#: view/ModAnoubisMainPanelImpl.cpp:495 view/ModSfsMainPanelImpl.cpp:413
 #: view/RuleWizard.cpp:403
 msgid "The entered password is incorrect."
 msgstr ""
 
-#: view/DlgRuleEditor.cpp:1386 view/DlgRuleEditor.cpp:1409
+#: view/DlgRuleEditor.cpp:1388 view/DlgRuleEditor.cpp:1411
 #: view/RuleWizard.cpp:404
 msgid "Key Load Error"
 msgstr ""
 
-#: view/DlgRuleEditor.cpp:1391
+#: view/DlgRuleEditor.cpp:1393
 msgid "An error occured while sending policy to daemon."
 msgstr ""
 
-#: view/DlgRuleEditor.cpp:1393 view/DlgRuleEditor.cpp:1416
+#: view/DlgRuleEditor.cpp:1395 view/DlgRuleEditor.cpp:1418
 #: view/RuleWizard.cpp:411
 msgid "Policy Load Error"
 msgstr ""
 
-#: view/DlgRuleEditor.cpp:1414 view/RuleWizard.cpp:409
+#: view/DlgRuleEditor.cpp:1416 view/RuleWizard.cpp:409
 msgid "An error occured while sending admin policy to the daemon."
 msgstr ""
 
-#: view/DlgRuleEditor.cpp:1578
+#: view/DlgRuleEditor.cpp:1580
 msgid "Rule Editor filling application table (admin ruleset)"
 msgstr ""
 
-#: view/DlgRuleEditor.cpp:1581
+#: view/DlgRuleEditor.cpp:1583
 msgid "Rule Editor filling application table (user ruleset)"
 msgstr ""
 
-#: view/DlgRuleEditor.cpp:1587
+#: view/DlgRuleEditor.cpp:1589
 msgid "Loading application policy..."
 msgstr ""
 
-#: view/DlgRuleEditor.cpp:1614
+#: view/DlgRuleEditor.cpp:1616
 msgid "Rule Editor filling filter table..."
 msgstr ""
 
-#: view/DlgRuleEditor.cpp:1619
+#: view/DlgRuleEditor.cpp:1621
 msgid "Loading filter policy..."
 msgstr ""
 
-#: view/DlgRuleEditor.cpp:1756
+#: view/DlgRuleEditor.cpp:1758
 #, c-format
 msgid "loading policy with id: %d"
 msgstr ""
 
-#: view/DlgRuleEditor.cpp:2158
+#: view/DlgRuleEditor.cpp:2160
 msgid "modified"
 msgstr ""
 
-#: view/DlgRuleEditor.cpp:2202
+#: view/DlgRuleEditor.cpp:2204
 msgid "Invalid user Name"
 msgstr ""
 
@@ -1093,7 +1093,7 @@ msgstr ""
 msgid "Quit"
 msgstr ""
 
-#: view/MainFrameBase.cpp:56 view/ModSfsListCtrl.cpp:58
+#: view/MainFrameBase.cpp:56 view/ModSfsListProperty.cpp:44
 #: view/RuleWizardSandboxExecuteFilesPage.cpp:46
 #: view/RuleWizardSandboxReadFilesPage.cpp:45
 #: view/RuleWizardSandboxWriteFilesPage.cpp:46
@@ -1840,12 +1840,12 @@ msgid "not validated"
 msgstr ""
 
 #: view/ModSfsDetailsDlg.cpp:82 view/ModSfsDetailsDlg.cpp:104
-#: view/ModSfsListCtrl.cpp:190 view/ModSfsListCtrl.cpp:217
+#: view/ModSfsListProperty.cpp:107 view/ModSfsListProperty.cpp:127
 msgid "not registered"
 msgstr ""
 
 #: view/ModSfsDetailsDlg.cpp:85 view/ModSfsDetailsDlg.cpp:107
-#: view/ModSfsListCtrl.cpp:194 view/ModSfsListCtrl.cpp:221
+#: view/ModSfsListProperty.cpp:109 view/ModSfsListProperty.cpp:129
 msgid "invalid"
 msgstr ""
 
@@ -1858,11 +1858,11 @@ msgid "matching"
 msgstr ""
 
 #: view/ModSfsDetailsDlg.cpp:94 view/ModSfsDetailsDlg.cpp:123
-#: view/ModSfsListCtrl.cpp:206 view/ModSfsListCtrl.cpp:238
+#: view/ModSfsListProperty.cpp:114 view/ModSfsListProperty.cpp:133
 msgid "orphaned"
 msgstr ""
 
-#: view/ModSfsDetailsDlg.cpp:112 view/ModSfsListCtrl.cpp:228
+#: view/ModSfsDetailsDlg.cpp:112 view/ModSfsListProperty.cpp:137
 msgid "upgraded"
 msgstr ""
 
@@ -1884,28 +1884,33 @@ msgstr ""
 msgid "Failed to create keypair (%hs)"
 msgstr ""
 
-#: view/ModSfsListCtrl.cpp:60
-msgid "Checksum"
-msgstr ""
-
-#: view/ModSfsListCtrl.cpp:62
-msgid "Signature"
-msgstr ""
-
-#: view/ModSfsListCtrl.cpp:72
+#: view/ModSfsListCtrl.cpp:57
 msgid "Show details"
 msgstr ""
 
-#: view/ModSfsListCtrl.cpp:74
+#: view/ModSfsListCtrl.cpp:59
 msgid "Jump to link target"
 msgstr ""
 
-#: view/ModSfsListCtrl.cpp:362
+#: view/ModSfsListCtrl.cpp:233
 msgid "Filesystem is scanned..."
 msgstr ""
 
-#: view/ModSfsListCtrl.cpp:363
+#: view/ModSfsListCtrl.cpp:234
 msgid "Please wait while the filesystem is scanned."
+msgstr ""
+
+#: view/ModSfsListProperty.cpp:46
+msgid "Checksum"
+msgstr ""
+
+#: view/ModSfsListProperty.cpp:48
+msgid "Signature"
+msgstr ""
+
+#: view/ModSfsListProperty.cpp:60 view/ModSfsListProperty.cpp:117
+#: view/ModSfsListProperty.cpp:144
+msgid "(null)"
 msgstr ""
 
 #: view/ModSfsMainPanelImpl.cpp:132
@@ -1914,8 +1919,8 @@ msgid ""
 "activate it! Please inform your administrator (e.g. by email)."
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:135 view/ModSfsMainPanelImpl.cpp:529
-#: view/ModSfsMainPanelImpl.cpp:540
+#: view/ModSfsMainPanelImpl.cpp:135 view/ModSfsMainPanelImpl.cpp:520
+#: view/ModSfsMainPanelImpl.cpp:531
 msgid "Certificate notice"
 msgstr ""
 
@@ -1923,8 +1928,8 @@ msgstr ""
 msgid "The given path does not exist."
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:204 view/ModSfsMainPanelImpl.cpp:423
-#: view/ModSfsMainPanelImpl.cpp:447
+#: view/ModSfsMainPanelImpl.cpp:204 view/ModSfsMainPanelImpl.cpp:414
+#: view/ModSfsMainPanelImpl.cpp:438
 msgid "SFS error"
 msgstr ""
 
@@ -1939,55 +1944,55 @@ msgstr ""
 msgid "SFS warning"
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:308
+#: view/ModSfsMainPanelImpl.cpp:299
 msgid "Multiple errors occured while processing the SFS request"
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:360
+#: view/ModSfsMainPanelImpl.cpp:351
 msgid "Choose the import-file"
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:382
+#: view/ModSfsMainPanelImpl.cpp:373
 msgid "Choose the export-destination"
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:405
+#: view/ModSfsMainPanelImpl.cpp:396
 msgid "Error: xanoubis is not connected to the daemon"
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:409
+#: view/ModSfsMainPanelImpl.cpp:400
 msgid "Error: Failed to load the private key."
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:413
+#: view/ModSfsMainPanelImpl.cpp:404
 msgid "Error: An invalid argument was supplied"
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:417
+#: view/ModSfsMainPanelImpl.cpp:408
 msgid "Error: Sfs is still busy with another operation."
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:421
+#: view/ModSfsMainPanelImpl.cpp:412
 msgid "Wrong password!"
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:441
+#: view/ModSfsMainPanelImpl.cpp:432
 msgid ""
 "Failed to enable signed checksums.\n"
 "Please check the configuration of your certificate and private key!"
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:445
+#: view/ModSfsMainPanelImpl.cpp:436
 msgid "Failed to disable signed checksums."
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:526
+#: view/ModSfsMainPanelImpl.cpp:517
 msgid ""
 "You have created a new keypair. To be able to use it, you need to activate "
 "it! Please inform your administrator (e.g. by email)."
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:535
+#: view/ModSfsMainPanelImpl.cpp:526
 msgid ""
 "You have created a new keypair but it is not used because a keypair is "
 "already configured.\n"
@@ -1995,28 +2000,39 @@ msgid ""
 "(If you say yes here, you need to inform your administrator (e.g. by email)."
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:728
+#: view/ModSfsMainPanelImpl.cpp:723
 msgid ""
 "Cannot load the private key!\n"
 "The file you specified does not exist."
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:730
+#: view/ModSfsMainPanelImpl.cpp:725 view/ModSfsMainPanelImpl.cpp:733
+#: view/ModSfsMainPanelImpl.cpp:771
 msgid "Load private key"
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:761
+#: view/ModSfsMainPanelImpl.cpp:732
+msgid "Failed to load the private key!\n"
+msgstr ""
+
+#: view/ModSfsMainPanelImpl.cpp:769
+msgid ""
+"Cannot load the certificate!\n"
+"The file you specified does not exist."
+msgstr ""
+
+#: view/ModSfsMainPanelImpl.cpp:777
 #, c-format
 msgid ""
 "Failed to load certificate from\n"
 "%ls."
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:763
+#: view/ModSfsMainPanelImpl.cpp:779
 msgid "Load certificate"
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:778
+#: view/ModSfsMainPanelImpl.cpp:795
 msgid "[invalid date]"
 msgstr ""
 
@@ -2437,11 +2453,11 @@ msgstr ""
 
 #: view/RuleWizardSandboxExecuteFilesPage.cpp:66
 #, c-format
-msgid "Options for EXECUTING access of application \"%ls\":"
+msgid "Options for EXECUTE access of application \"%ls\":"
 msgstr ""
 
 #: view/RuleWizardSandboxExecuteFilesPage.cpp:70
-msgid "Grand EXECUTING access:"
+msgid "Grant EXECUTE access:"
 msgstr ""
 
 #: view/RuleWizardSandboxReadPage.cpp:62
@@ -2453,11 +2469,11 @@ msgstr ""
 
 #: view/RuleWizardSandboxReadFilesPage.cpp:66
 #, c-format
-msgid "Options for READING access of application \"%ls\":"
+msgid "Options for READ access of application \"%ls\":"
 msgstr ""
 
 #: view/RuleWizardSandboxReadFilesPage.cpp:70
-msgid "Grand READING access:"
+msgid "Grant READ access:"
 msgstr ""
 
 #: view/RuleWizardSandboxWritePage.cpp:62
@@ -2473,11 +2489,11 @@ msgstr ""
 
 #: view/RuleWizardSandboxWriteFilesPage.cpp:68
 #, c-format
-msgid "Options for WRITING access of application \"%ls\":"
+msgid "Options for WRITE access of application \"%ls\":"
 msgstr ""
 
 #: view/RuleWizardSandboxWriteFilesPage.cpp:72
-msgid "Grand WRITING access:"
+msgid "Grant WRITE access:"
 msgstr ""
 
 #: view/RuleWizardHistory.cpp:637
@@ -2927,7 +2943,7 @@ msgid "Options for ... access of \"...\":"
 msgstr ""
 
 #: view/RuleWizardPanelsBase.cpp:860
-msgid "... grand access:"
+msgid "... grant access:"
 msgstr ""
 
 #: view/RuleWizardPanelsBase.cpp:870
@@ -3016,19 +3032,19 @@ msgstr ""
 msgid "connected with "
 msgstr ""
 
-#: view/VersionListCtrl.cpp:81
+#: view/VersionListCtrl.cpp:77
 msgid "Auto"
 msgstr ""
 
-#: view/VersionListCtrl.cpp:81
+#: view/VersionListCtrl.cpp:77
 msgid "Manual"
 msgstr ""
 
-#: view/VersionListCtrl.cpp:89
+#: view/VersionListCtrl.cpp:85
 msgid "Date"
 msgstr ""
 
-#: view/VersionListCtrl.cpp:140
+#: view/VersionListCtrl.cpp:136
 msgid "Version"
 msgstr ""
 
@@ -3176,127 +3192,127 @@ msgstr ""
 msgid "SFS operation in Progress. Please wait ..."
 msgstr ""
 
-#: control/PolicyCtrl.cpp:474
+#: control/PolicyCtrl.cpp:475
 #, c-format
 msgid ""
 "Communication error while receiving\n"
 "admin-policy of %ls."
 msgstr ""
 
-#: control/PolicyCtrl.cpp:477
+#: control/PolicyCtrl.cpp:478
 #, c-format
 msgid ""
 "Communication error while receiving\n"
 "user-policy of %ls."
 msgstr ""
 
-#: control/PolicyCtrl.cpp:480
+#: control/PolicyCtrl.cpp:481
 msgid "Error while receiving policy."
 msgstr ""
 
-#: control/PolicyCtrl.cpp:483
+#: control/PolicyCtrl.cpp:484
 #, c-format
 msgid ""
 "Got error (%hs) from daemon\n"
 "after receiving admin-policy of %ls."
 msgstr ""
 
-#: control/PolicyCtrl.cpp:488
+#: control/PolicyCtrl.cpp:489
 #, c-format
 msgid ""
 "Got error (%hs) from daemon\n"
 "after receiving user-policy of %ls."
 msgstr ""
 
-#: control/PolicyCtrl.cpp:493
+#: control/PolicyCtrl.cpp:494
 #, c-format
 msgid ""
 "Got error (%hs) from daemon\n"
 "after receiving policy."
 msgstr ""
 
-#: control/PolicyCtrl.cpp:497 control/PolicyCtrl.cpp:590
+#: control/PolicyCtrl.cpp:498 control/PolicyCtrl.cpp:591
 #, c-format
 msgid ""
 "An unexpected error occured.\n"
 "Error code: %i"
 msgstr ""
 
-#: control/PolicyCtrl.cpp:503
+#: control/PolicyCtrl.cpp:504
 msgid "Error while receiving policy"
 msgstr ""
 
-#: control/PolicyCtrl.cpp:548
+#: control/PolicyCtrl.cpp:549
 msgid "The task was not executed."
 msgstr ""
 
-#: control/PolicyCtrl.cpp:550
+#: control/PolicyCtrl.cpp:551
 msgid "Out of memory."
 msgstr ""
 
-#: control/PolicyCtrl.cpp:554
+#: control/PolicyCtrl.cpp:555
 #, c-format
 msgid ""
 "Communication error while sending admin-policy\n"
 "of %ls to daemon."
 msgstr ""
 
-#: control/PolicyCtrl.cpp:557
+#: control/PolicyCtrl.cpp:558
 #, c-format
 msgid ""
 "Communication error while sending user-policy\n"
 "of %ls to daemon."
 msgstr ""
 
-#: control/PolicyCtrl.cpp:560
+#: control/PolicyCtrl.cpp:561
 msgid "Error while sending policy to daemon."
 msgstr ""
 
-#: control/PolicyCtrl.cpp:563
+#: control/PolicyCtrl.cpp:564
 #, c-format
 msgid ""
 "Got error (%hs) from daemon\n"
 "after sending admin-policy of %ls."
 msgstr ""
 
-#: control/PolicyCtrl.cpp:568
+#: control/PolicyCtrl.cpp:569
 #, c-format
 msgid ""
 "Got error (%hs) from daemon\n"
 "after sending user-policy of %ls."
 msgstr ""
 
-#: control/PolicyCtrl.cpp:573
+#: control/PolicyCtrl.cpp:574
 #, c-format
 msgid ""
 "Got error (%hs) from daemon\n"
 "after sending policy."
 msgstr ""
 
-#: control/PolicyCtrl.cpp:579
+#: control/PolicyCtrl.cpp:580
 #, c-format
 msgid "Failed to sign the admin-policy of %ls: %hs."
 msgstr ""
 
-#: control/PolicyCtrl.cpp:583
+#: control/PolicyCtrl.cpp:584
 #, c-format
 msgid "Failed to sign the user-policy of %ls: %hs."
 msgstr ""
 
-#: control/PolicyCtrl.cpp:587
+#: control/PolicyCtrl.cpp:588
 #, c-format
 msgid "Failed to sign the policy: %hs."
 msgstr ""
 
-#: control/PolicyCtrl.cpp:596 control/PolicyCtrl.cpp:603
+#: control/PolicyCtrl.cpp:597 control/PolicyCtrl.cpp:604
 msgid "Error while sending policy"
 msgstr ""
 
-#: control/PolicyCtrl.cpp:602
+#: control/PolicyCtrl.cpp:603
 msgid "Failed to make a backup of the policy."
 msgstr ""
 
-#: control/PolicyCtrl.cpp:678
+#: control/PolicyCtrl.cpp:679
 #, c-format
 msgid "Automatically created version while saving the %ls profile"
 msgstr ""
@@ -3313,32 +3329,32 @@ msgstr ""
 msgid "Don't show this message again!"
 msgstr ""
 
-#: widgets/AnPolicyNotebook.cpp:112 widgets/AnPolicyNotebook.cpp:120
-#: widgets/AnPolicyNotebook.cpp:122 widgets/AnPolicyNotebook.cpp:127
-#: widgets/AnPolicyNotebook.cpp:135 widgets/AnPolicyNotebook.cpp:137
-#: widgets/AnPolicyNotebook.cpp:194 widgets/AnPolicyNotebook.cpp:300
+#: widgets/AnPolicyNotebook.cpp:125 widgets/AnPolicyNotebook.cpp:133
+#: widgets/AnPolicyNotebook.cpp:135 widgets/AnPolicyNotebook.cpp:140
+#: widgets/AnPolicyNotebook.cpp:148 widgets/AnPolicyNotebook.cpp:150
+#: widgets/AnPolicyNotebook.cpp:207 widgets/AnPolicyNotebook.cpp:313
 msgid "(new)"
 msgstr ""
 
-#: widgets/AnPolicyNotebook.cpp:214 widgets/AnPolicyNotebook.cpp:233
-#: widgets/AnPolicyNotebook.cpp:247 widgets/AnPolicyNotebook.cpp:272
-#: widgets/AnPolicyNotebook.cpp:320
+#: widgets/AnPolicyNotebook.cpp:227 widgets/AnPolicyNotebook.cpp:246
+#: widgets/AnPolicyNotebook.cpp:260 widgets/AnPolicyNotebook.cpp:285
+#: widgets/AnPolicyNotebook.cpp:333
 msgid "Action / Log"
 msgstr ""
 
-#: widgets/AnPolicyNotebook.cpp:218
+#: widgets/AnPolicyNotebook.cpp:231
 msgid "Network"
 msgstr ""
 
-#: widgets/AnPolicyNotebook.cpp:222
+#: widgets/AnPolicyNotebook.cpp:235
 msgid "Address"
 msgstr ""
 
-#: widgets/AnPolicyNotebook.cpp:258
+#: widgets/AnPolicyNotebook.cpp:271
 msgid "Valid / Invalid / Unknown"
 msgstr ""
 
-#: widgets/AnPolicyNotebook.cpp:328
+#: widgets/AnPolicyNotebook.cpp:341
 msgid "Permissions"
 msgstr ""
 

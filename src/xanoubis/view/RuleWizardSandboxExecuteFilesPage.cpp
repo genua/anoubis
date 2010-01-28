@@ -63,11 +63,11 @@ RuleWizardSandboxExecuteFilesPage::onPageChanged(wxWizardEvent &)
 {
 	wxString text;
 
-	text.Printf(_("Options for EXECUTING access of application \"%ls\":"),
+	text.Printf(_("Options for EXECUTE access of application \"%ls\":"),
 	    history_->getProgram().c_str());
 	questionLabel->SetLabel(text);
 
-	fileListLabel->SetLabel(_("Grand EXECUTING access:"));
+	fileListLabel->SetLabel(_("Grant EXECUTE access:"));
 
 	updateNavi();
 }

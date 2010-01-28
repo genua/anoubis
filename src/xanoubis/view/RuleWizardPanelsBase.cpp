@@ -857,7 +857,7 @@ RuleWizardSandboxFilesPageBase::RuleWizardSandboxFilesPageBase( wxWindow* parent
 	questionLabel->Wrap( -1 );
 	mainSizer->Add( questionLabel, 0, wxALL, 5 );
 	
-	fileListLabel = new wxStaticText( this, wxID_ANY, _("... grand access:"), wxDefaultPosition, wxDefaultSize, 0 );
+	fileListLabel = new wxStaticText( this, wxID_ANY, _("... grant access:"), wxDefaultPosition, wxDefaultSize, 0 );
 	fileListLabel->Wrap( -1 );
 	mainSizer->Add( fileListLabel, 0, wxALL, 5 );
 	

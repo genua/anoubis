@@ -462,7 +462,7 @@ MainFrame::OnMbHelpAboutSelect(wxCommandEvent&)
 
 	info.SetName(wxT("Anoubis GUI"));
 	info.SetVersion(wxT(VERSION));
-	info.SetCopyright(wxT("(C) 2007-2009 GeNUA mbH"));
+	info.SetCopyright(wxT("(C) 2007-2010 GeNUA mbH"));
 	info.SetWebSite(wxT("www.anoubis.org"));
 	info.SetIcon(*aboutIcon_);
 	info.SetDescription(wxT("Build Id: " PACKAGE_BUILD));

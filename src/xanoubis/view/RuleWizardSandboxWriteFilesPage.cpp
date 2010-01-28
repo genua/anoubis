@@ -65,11 +65,11 @@ RuleWizardSandboxWriteFilesPage::onPageChanged(wxWizardEvent &)
 {
 	wxString text;
 
-	text.Printf(_("Options for WRITING access of application \"%ls\":"),
+	text.Printf(_("Options for WRITE access of application \"%ls\":"),
 	    history_->getProgram().c_str());
 	questionLabel->SetLabel(text);
 
-	fileListLabel->SetLabel(_("Grand WRITING access:"));
+	fileListLabel->SetLabel(_("Grant WRITE access:"));
 
 	updateNavi();
 }
