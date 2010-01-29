@@ -32,7 +32,7 @@ RuleWizardSandboxExecutePage::RuleWizardSandboxExecutePage(wxWindow *parent,
 {
 	history_ = history;
 
-	switch (history_->getSandboxExecutePermission()) {
+	switch (history_->getSandboxPermission(SbEntry::EXECUTE)) {
 	case RuleWizardHistory::PERM_ALLOW_ALL:
 		allowAllRadioButton->SetValue(true);
 		break;
@@ -69,7 +69,7 @@ RuleWizardSandboxExecutePage::onPageChanged(wxWizardEvent &)
 void
 RuleWizardSandboxExecutePage::onAllowAllRadioButton(wxCommandEvent &)
 {
-	history_->setSandboxExecutePermission(
+	history_->setSandboxPermission(SbEntry::EXECUTE,
 	    RuleWizardHistory::PERM_ALLOW_ALL);
 	updateNavi();
 }
@@ -77,7 +77,7 @@ RuleWizardSandboxExecutePage::onAllowAllRadioButton(wxCommandEvent &)
 void
 RuleWizardSandboxExecutePage::onDefaultRadioButton(wxCommandEvent &)
 {
-	history_->setSandboxExecutePermission(
+	history_->setSandboxPermission(SbEntry::EXECUTE,
 	    RuleWizardHistory::PERM_RESTRICT_DEFAULT);
 	updateNavi();
 }
@@ -85,7 +85,7 @@ RuleWizardSandboxExecutePage::onDefaultRadioButton(wxCommandEvent &)
 void
 RuleWizardSandboxExecutePage::onRestrictedRadioButton(wxCommandEvent &)
 {
-	history_->setSandboxExecutePermission(
+	history_->setSandboxPermission(SbEntry::EXECUTE,
 	    RuleWizardHistory::PERM_RESTRICT_USER);
 	updateNavi();
 }

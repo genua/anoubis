@@ -390,148 +390,137 @@ RuleWizardHistory::shallOverwriteSandboxPolicy(void) const
 	return (overwriteSandboxPolicy_);
 }
 
-void
-RuleWizardHistory::setSandboxReadPermission(enum permissionAnswer answer)
-{
-	sandboxReadPermission_ = answer;
-}
-
 RuleWizardHistory::permissionAnswer
-RuleWizardHistory::getSandboxReadPermission(void) const
+RuleWizardHistory::getSandboxPermission(SbEntry::Permission permission) const
 {
-	return (sandboxReadPermission_);
+	switch (permission) {
+	case SbEntry::READ:
+		return (sandboxReadPermission_);
+	case SbEntry::WRITE:
+		return (sandboxWritePermission_);
+	case SbEntry::EXECUTE:
+		return (sandboxExecutePermission_);
+	}
+
+	return (PERM_NONE); /* Not reached */
 }
 
 void
-RuleWizardHistory::setSandboxReadFileList(const wxArrayString & list)
+RuleWizardHistory::setSandboxPermission(SbEntry::Permission permission,
+    permissionAnswer answer)
 {
-	sandboxReadFileList_ = list;
+	switch (permission) {
+	case SbEntry::READ:
+		sandboxReadPermission_ = answer;
+		break;
+	case SbEntry::WRITE:
+		sandboxWritePermission_ = answer;
+		break;
+	case SbEntry::EXECUTE:
+		sandboxExecutePermission_ = answer;
+		break;
+	}
 }
 
 wxArrayString
-RuleWizardHistory::getSandboxReadFileList(void) const
+RuleWizardHistory::getSandboxFileList(SbEntry::Permission permission) const
 {
-	return (sandboxReadFileList_);
+	wxArrayString result;
+
+	switch (permission) {
+	case SbEntry::READ:
+		result = sandboxReadFileList_;
+		break;
+	case SbEntry::WRITE:
+		result = sandboxWriteFileList_;
+		break;
+	case SbEntry::EXECUTE:
+		result = sandboxExecuteFileList_;
+		break;
+	}
+
+	return (result);
 }
 
 void
-RuleWizardHistory::setSandboxReadAsk(bool ask)
+RuleWizardHistory::setSandboxFileList(SbEntry::Permission permission,
+    const wxArrayString &list)
 {
-	sandboxReadAsk_ = ask;
+	switch (permission) {
+	case SbEntry::READ:
+		sandboxReadFileList_ = list;
+		break;
+	case SbEntry::WRITE:
+		sandboxWriteFileList_ = list;
+		break;
+	case SbEntry::EXECUTE:
+		sandboxExecuteFileList_ = list;
+		break;
+	}
 }
 
 bool
-RuleWizardHistory::getSandboxReadAsk(void) const
+RuleWizardHistory::getSandboxAsk(SbEntry::Permission permission) const
 {
-	return (sandboxReadAsk_);
+	switch (permission) {
+	case SbEntry::READ:
+		return (sandboxReadAsk_);
+	case SbEntry::WRITE:
+		return (sandboxWriteAsk_);
+	case SbEntry::EXECUTE:
+		return (sandboxExecuteAsk_);
+	}
+
+	return (false); /* Not reached */
 }
 
 void
-RuleWizardHistory::setSandboxReadValidSignature(bool valid)
+RuleWizardHistory::setSandboxAsk(SbEntry::Permission permission, bool ask)
 {
-	sandboxReadValidSignature_ = valid;
+	switch (permission) {
+	case SbEntry::READ:
+		sandboxReadAsk_ = ask;
+		break;
+	case SbEntry::WRITE:
+		sandboxWriteAsk_ = ask;
+		break;
+	case SbEntry::EXECUTE:
+		sandboxExecuteAsk_ = ask;
+		break;
+	}
 }
 
 bool
-RuleWizardHistory::getSandboxReadValidSignature(void) const
+RuleWizardHistory::getSandboxValidSignature(
+    SbEntry::Permission permission) const
 {
-	return (sandboxReadValidSignature_);
+	switch (permission) {
+	case SbEntry::READ:
+		return (sandboxReadValidSignature_);
+	case SbEntry::WRITE:
+		return (sandboxWriteValidSignature_);
+	case SbEntry::EXECUTE:
+		return (sandboxExecuteValidSignature_);
+	}
+
+	return (false); /* Not reached */
 }
 
 void
-RuleWizardHistory::setSandboxWritePermission(enum permissionAnswer answer)
+RuleWizardHistory::setSandboxValidSignature(SbEntry::Permission permission,
+    bool valid)
 {
-	sandboxWritePermission_ = answer;
-}
-
-RuleWizardHistory::permissionAnswer
-RuleWizardHistory::getSandboxWritePermission(void) const
-{
-	return (sandboxWritePermission_);
-}
-
-void
-RuleWizardHistory::setSandboxWriteFileList(const wxArrayString & list)
-{
-	sandboxWriteFileList_ = list;
-}
-
-wxArrayString
-RuleWizardHistory::getSandboxWriteFileList(void) const
-{
-	return (sandboxWriteFileList_);
-}
-
-void
-RuleWizardHistory::setSandboxWriteAsk(bool ask)
-{
-	sandboxWriteAsk_ = ask;
-}
-
-bool
-RuleWizardHistory::getSandboxWriteAsk(void) const
-{
-	return (sandboxWriteAsk_);
-}
-
-void
-RuleWizardHistory::setSandboxWriteValidSignature(bool valid)
-{
-	sandboxWriteValidSignature_ = valid;
-}
-
-bool
-RuleWizardHistory::getSandboxWriteValidSignature(void) const
-{
-	return (sandboxWriteValidSignature_);
-}
-
-void
-RuleWizardHistory::setSandboxExecutePermission(enum permissionAnswer answer)
-{
-	sandboxExecutePermission_ = answer;
-}
-
-RuleWizardHistory::permissionAnswer
-RuleWizardHistory::getSandboxExecutePermission(void) const
-{
-	return (sandboxExecutePermission_);
-}
-
-void
-RuleWizardHistory::setSandboxExecuteFileList(const wxArrayString & list)
-{
-	sandboxExecuteFileList_ = list;
-}
-
-wxArrayString
-RuleWizardHistory::getSandboxExecuteFileList(void) const
-{
-	return (sandboxExecuteFileList_);
-}
-
-void
-RuleWizardHistory::setSandboxExecuteAsk(bool ask)
-{
-	sandboxExecuteAsk_ = ask;
-}
-
-bool
-RuleWizardHistory::getSandboxExecuteAsk(void) const
-{
-	return (sandboxExecuteAsk_);
-}
-
-void
-RuleWizardHistory::setSandboxExecuteValidSignature(bool valid)
-{
-	sandboxExecuteValidSignature_ = valid;
-}
-
-bool
-RuleWizardHistory::getSandboxExecuteValidSignature(void) const
-{
-	return (sandboxExecuteValidSignature_);
+	switch (permission) {
+	case SbEntry::READ:
+		sandboxReadValidSignature_ = valid;
+		break;
+	case SbEntry::WRITE:
+		sandboxWriteValidSignature_ = valid;
+		break;
+	case SbEntry::EXECUTE:
+		sandboxExecuteValidSignature_ = valid;
+		break;
+	}
 }
 
 void

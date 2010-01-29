@@ -34,6 +34,8 @@
 #include <wx/string.h>
 #include <wx/window.h>
 
+#include <SbEntry.h>
+
 class ServiceList;
 
 /**
@@ -328,184 +330,71 @@ class RuleWizardHistory
 		enum overwriteAnswer shallOverwriteSandboxPolicy(void) const;
 
 		/**
-		 * Store the answer to the question about the sandbox read
-		 * permissions.
-		 * @param[in] 1st The answer.
-		 * @return Nothing.
-		 */
-		void setSandboxReadPermission(enum permissionAnswer);
-
-		/**
-		 * Get the answer to the question about the sandbox read
-		 * permissions.
-		 * @param None.
+		 * Get the answer to the question about the given sandbox
+		 * permission.
+		 * @param[in] 1st The permission
 		 * @return The answer.
 		 */
-		enum permissionAnswer getSandboxReadPermission(void) const;
+		permissionAnswer getSandboxPermission(
+		    SbEntry::Permission) const;
 
 		/**
-		 * Store the list of sandbox read file.
-		 * @param[in] 1st The list of read file.
+		 * Store the answer to the question about the given sandbox
+		 * permission.
+		 * @param[in] 1st The permission
+		 * @param[in] 2nd The answer.
 		 * @return Nothing.
 		 */
-		void setSandboxReadFileList(const wxArrayString &);
+		void setSandboxPermission(
+		    SbEntry::Permission, permissionAnswer);
 
 		/**
-		 * Get the list of sandbox read file.
-		 * @param None.
-		 * @return The list of read file.
+		 * Get the list of sandbox files for the given permission.
+		 * @param[in] 1st The permission
+		 * @return The list of files.
 		 */
-		wxArrayString getSandboxReadFileList(void) const;
+		wxArrayString getSandboxFileList(SbEntry::Permission) const;
+
+		/**
+		 * Store the list of sandbox files for the given permission.
+		 * @param[in] 1st The permission
+		 * @param[in] 2nd The list of read file.
+		 * @return Nothing.
+		 */
+		void setSandboxFileList(SbEntry::Permission,
+		    const wxArrayString &);
+
+		/**
+		 * Shall we ask on any other read access?
+		 * @param[in] 1st The permission
+		 * @return True or false.
+		 */
+		bool getSandboxAsk(SbEntry::Permission) const;
 
 		/**
 		 * Store the answer to the question: ask on any other
 		 * read access?
-		 * @param[in] 1st The answer.
+		 * @param[in] 1st The permission
+		 * @param[in] 2nd The answer.
 		 * @return Nothing.
 		 */
-		void setSandboxReadAsk(bool);
-
-		/**
-		 * Shall we ask on any other read access?
-		 * @param None.
-		 * @return True or false.
-		 */
-		bool getSandboxReadAsk(void) const;
-
-		/**
-		 * Store the answer to the question: allow all access
-		 * on valid signature?
-		 * @param[in] 1st The answer.
-		 * @return Nothing.
-		 */
-		void setSandboxReadValidSignature(bool);
+		void setSandboxAsk(SbEntry::Permission, bool);
 
 		/**
 		 * Shall we allow all read access on valid signature?
-		 * @param None.
-		 * * @return True or false.
-		 */
-		bool getSandboxReadValidSignature(void) const;
-
-		/**
-		 * Store the answer to the question about the sandbox write
-		 * permissions.
-		 * @param[in] 1st The answer.
-		 * @return Nothing.
-		 */
-		void setSandboxWritePermission(enum permissionAnswer);
-
-		/**
-		 * Get the answer to the question about the sandbox write
-		 * permissions.
-		 * @param None.
-		 * @return The answer.
-		 */
-		enum permissionAnswer getSandboxWritePermission(void) const;
-
-		/**
-		 * Store the list of sandbox write file.
-		 * @param[in] 1st The list of write file.
-		 * @return Nothing.
-		 */
-		void setSandboxWriteFileList(const wxArrayString &);
-
-		/**
-		 * Get the list of sandbox write file.
-		 * @param None.
-		 * @return The list of write file.
-		 */
-		wxArrayString getSandboxWriteFileList(void) const;
-
-		/**
-		 * Store the answer to the question: ask on any other
-		 * write access?
-		 * @param[in] 1st The answer.
-		 * @return Nothing.
-		 */
-		void setSandboxWriteAsk(bool);
-
-		/**
-		 * Shall we ask on any other write access?
-		 * @param None.
+		 * @param[in] 1st The permission
 		 * @return True or false.
 		 */
-		bool getSandboxWriteAsk(void) const;
+		bool getSandboxValidSignature(SbEntry::Permission) const;
 
 		/**
 		 * Store the answer to the question: allow all access
 		 * on valid signature?
-		 * @param[in] 1st The answer.
+		 * @param[in] 1st The permission
+		 * @param[in] 2nd The answer.
 		 * @return Nothing.
 		 */
-		void setSandboxWriteValidSignature(bool);
-
-		/**
-		 * Shall we allow all write access on valid signature?
-		 * @param None.
-		 * * @return True or false.
-		 */
-		bool getSandboxWriteValidSignature(void) const;
-
-		/**
-		 * Store the answer to the question about the sandbox execute
-		 * permissions.
-		 * @param[in] 1st The answer.
-		 * @return Nothing.
-		 */
-		void setSandboxExecutePermission(enum permissionAnswer);
-
-		/**
-		 * Get the answer to the question about the sandbox execute
-		 * permissions.
-		 * @param None.
-		 * @return The answer.
-		 */
-		enum permissionAnswer getSandboxExecutePermission(void) const;
-
-		/**
-		 * Store the list of sandbox execute file.
-		 * @param[in] 1st The list of execute file.
-		 * @return Nothing.
-		 */
-		void setSandboxExecuteFileList(const wxArrayString &);
-
-		/**
-		 * Get the list of sandbox execute file.
-		 * @param None.
-		 * @return The list of execute file.
-		 */
-		wxArrayString getSandboxExecuteFileList(void) const;
-
-		/**
-		 * Store the answer to the question: ask on any other
-		 * execute access?
-		 * @param[in] 1st The answer.
-		 * @return Nothing.
-		 */
-		void setSandboxExecuteAsk(bool);
-
-		/**
-		 * Shall we ask on any other execute access?
-		 * @param None.
-		 * @return True or false.
-		 */
-		bool getSandboxExecuteAsk(void) const;
-
-		/**
-		 * Store the answer to the question: allow all access
-		 * on valid signature?
-		 * @param[in] 1st The answer.
-		 * @return Nothing.
-		 */
-		void setSandboxExecuteValidSignature(bool);
-
-		/**
-		 * Shall we allow all execute access on valid signature?
-		 * @param None.
-		 * * @return True or false.
-		 */
-		bool getSandboxExecuteValidSignature(void) const;
+		void setSandboxValidSignature(SbEntry::Permission, bool);
 
 		/**
 		 * Store the answer to the question: activate newly

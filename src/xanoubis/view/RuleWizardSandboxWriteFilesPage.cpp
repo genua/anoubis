@@ -185,14 +185,14 @@ RuleWizardSandboxWriteFilesPage::onFileListDeselect(wxListEvent &)
 void
 RuleWizardSandboxWriteFilesPage::onAskCheckBox(wxCommandEvent & event)
 {
-	history_->setSandboxWriteAsk(event.GetInt());
+	history_->setSandboxAsk(SbEntry::WRITE, event.GetInt());
 	updateNavi();
 }
 
 void
 RuleWizardSandboxWriteFilesPage::onValidCheckBox(wxCommandEvent & event)
 {
-	history_->setSandboxWriteValidSignature(event.GetInt());
+	history_->setSandboxValidSignature(SbEntry::WRITE, event.GetInt());
 	updateNavi();
 }
 
@@ -223,7 +223,7 @@ RuleWizardSandboxWriteFilesPage::storeFileList(void) const
 		list.Add(compound);
 	}
 
-	history_->setSandboxWriteFileList(list);
+	history_->setSandboxFileList(SbEntry::WRITE, list);
 }
 
 void

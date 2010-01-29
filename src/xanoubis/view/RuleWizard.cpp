@@ -200,7 +200,7 @@ RuleWizard::forwardTransition(enum wizardPages pageNo) const
 		}
 		break;
 	case PAGE_SB_READ:
-		if (history_.getSandboxReadPermission() ==
+		if (history_.getSandboxPermission(SbEntry::READ) ==
 		    RuleWizardHistory::PERM_RESTRICT_USER) {
 			nextPage = PAGE_SB_READ_FILES;
 		} else {
@@ -211,7 +211,7 @@ RuleWizard::forwardTransition(enum wizardPages pageNo) const
 		nextPage = PAGE_SB_WRITE;
 		break;
 	case PAGE_SB_WRITE:
-		if (history_.getSandboxWritePermission() ==
+		if (history_.getSandboxPermission(SbEntry::WRITE) ==
 		    RuleWizardHistory::PERM_RESTRICT_USER) {
 			nextPage = PAGE_SB_WRITE_FILES;
 		} else {
@@ -222,7 +222,7 @@ RuleWizard::forwardTransition(enum wizardPages pageNo) const
 		nextPage = PAGE_SB_EXECUTE;
 		break;
 	case PAGE_SB_EXECUTE:
-		if (history_.getSandboxExecutePermission() ==
+		if (history_.getSandboxPermission(SbEntry::EXECUTE) ==
 		    RuleWizardHistory::PERM_RESTRICT_USER) {
 			nextPage = PAGE_SB_EXECUTE_FILES;
 		} else {
@@ -303,7 +303,7 @@ RuleWizard::backwardTransition(enum wizardPages pageNo) const
 		previousPage = PAGE_SB_READ;
 		break;
 	case PAGE_SB_WRITE:
-		if (history_.getSandboxReadPermission() ==
+		if (history_.getSandboxPermission(SbEntry::READ) ==
 		    RuleWizardHistory::PERM_RESTRICT_USER) {
 			previousPage = PAGE_SB_READ_FILES;
 		} else {
@@ -314,7 +314,7 @@ RuleWizard::backwardTransition(enum wizardPages pageNo) const
 		previousPage = PAGE_SB_WRITE;
 		break;
 	case PAGE_SB_EXECUTE:
-		if (history_.getSandboxWritePermission() ==
+		if (history_.getSandboxPermission(SbEntry::WRITE) ==
 		    RuleWizardHistory::PERM_RESTRICT_USER) {
 			previousPage = PAGE_SB_WRITE_FILES;
 		} else {
@@ -334,7 +334,7 @@ RuleWizard::backwardTransition(enum wizardPages pageNo) const
 		} else if (history_.haveSandbox() !=
 		    RuleWizardHistory::PERM_RESTRICT_USER) {
 			previousPage = PAGE_SB;
-		} else if (history_.getSandboxExecutePermission() ==
+		} else if (history_.getSandboxPermission(SbEntry::EXECUTE) ==
 		    RuleWizardHistory::PERM_RESTRICT_USER) {
 			previousPage = PAGE_SB_EXECUTE_FILES;
 		} else {
@@ -745,13 +745,13 @@ RuleWizard::createSbPermission(SbAppPolicy *app, int section) const
 	 */
 	switch (section) {
 	case APN_SBA_READ:
-		permission = history_.getSandboxReadPermission();
+		permission = history_.getSandboxPermission(SbEntry::READ);
 		break;
 	case APN_SBA_WRITE:
-		permission = history_.getSandboxWritePermission();
+		permission = history_.getSandboxPermission(SbEntry::WRITE);
 		break;
 	case APN_SBA_EXEC:
-		permission = history_.getSandboxExecutePermission();
+		permission = history_.getSandboxPermission(SbEntry::EXECUTE);
 		break;
 	}
 
@@ -776,19 +776,19 @@ RuleWizard::createSbPermission(SbAppPolicy *app, int section) const
 	 */
 	switch (section) {
 	case APN_SBA_READ:
-		ask = history_.getSandboxReadAsk();
-		signature = history_.getSandboxReadValidSignature();
-		list = history_.getSandboxReadFileList();
+		ask = history_.getSandboxAsk(SbEntry::READ);
+		signature = history_.getSandboxValidSignature(SbEntry::READ);
+		list = history_.getSandboxFileList(SbEntry::READ);
 		break;
 	case APN_SBA_WRITE:
-		ask = history_.getSandboxWriteAsk();
-		signature = history_.getSandboxWriteValidSignature();
-		list = history_.getSandboxWriteFileList();
+		ask = history_.getSandboxAsk(SbEntry::WRITE);
+		signature = history_.getSandboxValidSignature(SbEntry::WRITE);
+		list = history_.getSandboxFileList(SbEntry::WRITE);
 		break;
 	case APN_SBA_EXEC:
-		ask = history_.getSandboxExecuteAsk();
-		signature = history_.getSandboxExecuteValidSignature();
-		list = history_.getSandboxExecuteFileList();
+		ask = history_.getSandboxAsk(SbEntry::EXECUTE);
+		signature = history_.getSandboxValidSignature(SbEntry::WRITE);
+		list = history_.getSandboxFileList(SbEntry::EXECUTE);
 		break;
 	default:
 		return;

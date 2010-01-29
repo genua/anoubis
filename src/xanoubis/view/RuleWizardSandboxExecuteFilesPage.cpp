@@ -183,14 +183,14 @@ RuleWizardSandboxExecuteFilesPage::onFileListDeselect(wxListEvent &)
 void
 RuleWizardSandboxExecuteFilesPage::onAskCheckBox(wxCommandEvent & event)
 {
-	history_->setSandboxExecuteAsk(event.GetInt());
+	history_->setSandboxAsk(SbEntry::EXECUTE, event.GetInt());
 	updateNavi();
 }
 
 void
 RuleWizardSandboxExecuteFilesPage::onValidCheckBox(wxCommandEvent & event)
 {
-	history_->setSandboxExecuteValidSignature(event.GetInt());
+	history_->setSandboxValidSignature(SbEntry::EXECUTE, event.GetInt());
 	updateNavi();
 }
 
@@ -221,7 +221,7 @@ RuleWizardSandboxExecuteFilesPage::storeFileList(void) const
 		list.Add(compound);
 	}
 
-	history_->setSandboxExecuteFileList(list);
+	history_->setSandboxFileList(SbEntry::EXECUTE, list);
 }
 
 void
