@@ -51,6 +51,7 @@ class AnIconList : public wxImageList, public Singleton<AnIconList>
 			ICON_OK = 0,		/*!< Ok icon */
 			ICON_WARNING,		/*!< Warning icon */
 			ICON_ERROR,		/*!< Error icon */
+			ICON_ALERT,		/*!< Alert icon */
 			ICON_OK_48,		/*!< Big ok icon */
 			ICON_WARNING_48,	/*!< Big warning icon */
 			ICON_ERROR_48,		/*!< Big error icon */

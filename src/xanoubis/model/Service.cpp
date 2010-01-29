@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 GeNUA mbH <info@genua.de>
+ * Copyright (c) 2010 GeNUA mbH <info@genua.de>
  *
  * All rights reserved.
  *
@@ -25,41 +25,52 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "AnIconList.h"
-#include "main.h"
-#include "Singleton.cpp"
+#include "Service.h"
+#include "ServiceList.h"
 
-AnIconList::AnIconList(void)
+Service::Service(const wxString &name, unsigned int port, Protocol protocol,
+    bool def)
 {
-	/* Add icons in correct ordner, as defined in enum IconId */
-	addIcon(wxT("General_ok_16.png"));
-	addIcon(wxT("General_problem_16.png"));
-	addIcon(wxT("General_error_16.png"));
-	addIcon(wxT("General_alert_16.png"));
-	addIcon(wxT("General_ok_48.png"));
-	addIcon(wxT("General_problem_48.png"));
-	addIcon(wxT("General_error_48.png"));
-	addIcon(wxT("General_alert_48.png"));
-	addIcon(wxT("General_question_48.png"));
-	addIcon(wxT("General_problem_48.png"));
-	addIcon(wxT("General_symlink_16.png"));
-	addIcon(wxT("ModAnoubis_black_16.png"));
-	addIcon(wxT("ModAnoubis_alert_16.png"));
-	addIcon(wxT("ModAnoubis_question_16.png"));
+	parent_ = 0;
+	name_ = name;
+	port_ = port;
+	protocol_ = protocol;
+	default_ = def;
 }
 
-AnIconList *
-AnIconList::getInstance(void)
+Service::~Service(void)
 {
-	return (Singleton<AnIconList>::instance());
+	if (parent_ != 0) {
+		parent_->removeService(this);
+	}
 }
 
-void
-AnIconList::addIcon(const wxString &name)
+ServiceList *
+Service::getParent(void) const
 {
-	wxIcon *icon = wxGetApp().loadIcon(name);
+	return (this->parent_);
+}
 
-	Add(*icon);
+wxString
+Service::getName(void) const
+{
+	return (this->name_);
+}
 
-	delete icon;
+unsigned int
+Service::getPort(void) const
+{
+	return (this->port_);
+}
+
+Service::Protocol
+Service::getProtocol(void) const
+{
+	return (this->protocol_);
+}
+
+bool
+Service::isDefault(void) const
+{
+	return (this->default_);
 }

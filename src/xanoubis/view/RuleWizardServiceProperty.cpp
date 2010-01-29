@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 GeNUA mbH <info@genua.de>
+ * Copyright (c) 2010 GeNUA mbH <info@genua.de>
  *
  * All rights reserved.
  *
@@ -25,41 +25,60 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "AnIconList.h"
-#include "main.h"
-#include "Singleton.cpp"
+#include <wx/intl.h>
 
-AnIconList::AnIconList(void)
+#include <Service.h>
+
+#include "RuleWizardServiceProperty.h"
+
+RuleWizardServiceProperty::RuleWizardServiceProperty(Type type)
 {
-	/* Add icons in correct ordner, as defined in enum IconId */
-	addIcon(wxT("General_ok_16.png"));
-	addIcon(wxT("General_problem_16.png"));
-	addIcon(wxT("General_error_16.png"));
-	addIcon(wxT("General_alert_16.png"));
-	addIcon(wxT("General_ok_48.png"));
-	addIcon(wxT("General_problem_48.png"));
-	addIcon(wxT("General_error_48.png"));
-	addIcon(wxT("General_alert_48.png"));
-	addIcon(wxT("General_question_48.png"));
-	addIcon(wxT("General_problem_48.png"));
-	addIcon(wxT("General_symlink_16.png"));
-	addIcon(wxT("ModAnoubis_black_16.png"));
-	addIcon(wxT("ModAnoubis_alert_16.png"));
-	addIcon(wxT("ModAnoubis_question_16.png"));
+	this->type_ = type;
 }
 
-AnIconList *
-AnIconList::getInstance(void)
+wxString
+RuleWizardServiceProperty::getHeader(void) const
 {
-	return (Singleton<AnIconList>::instance());
+	switch (type_) {
+	case NAME: return _("Servicename");
+	case PORT: return _("Portnumber");
+	case PROTOCOL: return _("Protocol");
+	case DEFAULT: return _("Standard");
+	}
+
+	return _("(null)");
 }
 
-void
-AnIconList::addIcon(const wxString &name)
+wxString
+RuleWizardServiceProperty::getText(AnListClass *obj) const
 {
-	wxIcon *icon = wxGetApp().loadIcon(name);
+	Service *service = dynamic_cast<Service *>(obj);
 
-	Add(*icon);
+	if (service == 0)
+		return _("(null)");
 
-	delete icon;
+	switch (type_) {
+	case NAME:
+		return (service->getName());
+	case PORT:
+		return (wxString::Format(wxT("%d"), service->getPort()));
+	case PROTOCOL:
+		return (service->getProtocol() == Service::TCP ?
+		    wxT("tcp") : wxT("udp"));
+	case DEFAULT:
+		return (wxEmptyString);
+	}
+
+	return _("(null)");
+}
+
+AnIconList::IconId
+RuleWizardServiceProperty::getIcon(AnListClass *obj) const
+{
+	Service *service = dynamic_cast<Service *>(obj);
+
+	if (service != 0 && type_ == DEFAULT && service->isDefault())
+		return (AnIconList::ICON_OK);
+	else
+		return (AnIconList::ICON_NONE);
 }

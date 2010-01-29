@@ -41,6 +41,7 @@ TESTS = \
 	testSuite_Patterns \
 	testSuite_Profiles \
 	testSuite_Policies \
+	testSuite_Services \
 	testSuite_Sfs \
 	testSuite_Key \
 	testSuite_Notifications \
@@ -162,6 +163,17 @@ testSuite_Policies_SOURCES = \
 	suite_Policies/tc_PolicyRuleSet.cpp \
 	suite_Policies/tc_PolicyUtils.cpp \
 	suite_Policies/tc_PolicyChecks.cpp
+
+#
+# Testsuite: Services
+#
+testSuite_Services_CPPFLAGS = $(AM_CPPFLAGS) -D_PATH_SERVICES=\"/tmp/foobar\"
+testSuite_Services_DEPENDENCIES = $(dependencies)
+testSuite_Services_LDADD = $(LDADD) -lGUIcomponents 
+
+testSuite_Services_SOURCES = \
+	testrunner.cpp \
+	suite_Services/testSuite.cpp
 
 #
 # Testsuite: Sfs

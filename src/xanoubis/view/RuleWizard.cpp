@@ -49,6 +49,8 @@
 #include "AlfCapabilityFilterPolicy.h"
 #include "SbAppPolicy.h"
 #include "SbAccessFilterPolicy.h"
+#include "Service.h"
+#include "ServiceList.h"
 #include "DefaultFilterPolicy.h"
 #include "PolicyCtrl.h"
 #include "PolicyRuleSet.h"
@@ -529,8 +531,8 @@ RuleWizard::createAlfPolicy(PolicyRuleSet *ruleSet) const
 		break;
 	case RuleWizardHistory::PERM_RESTRICT_DEFAULT:
 		dflFilter->setActionNo(APN_ACTION_ASK);
-		list = history_.getAlfDefaults();
-		createAlfPortList(alfApp, list, APN_CONNECT);
+		history_.getAlfClientPortList()->assignDefaultServices();
+		createAlfPortList(alfApp, APN_CONNECT);
 		break;
 	default:
 		if (history_.getAlfClientAsk()) {
@@ -546,8 +548,7 @@ RuleWizard::createAlfPolicy(PolicyRuleSet *ruleSet) const
 			alfCap->setCapabilityTypeNo(APN_ALF_CAPRAW);
 		}
 
-		list = history_.getAlfClientPortList();
-		createAlfPortList(alfApp, list, APN_CONNECT);
+		createAlfPortList(alfApp, APN_CONNECT);
 		break;
 	}
 }
@@ -601,9 +602,9 @@ RuleWizard::createSandboxPolicy(PolicyRuleSet *ruleSet) const
 }
 
 void
-RuleWizard::createAlfPortList(AlfAppPolicy *app, const wxArrayString & list,
-    int direction) const
+RuleWizard::createAlfPortList(AlfAppPolicy *app, int direction) const
 {
+	ServiceList	*list = history_.getAlfClientPortList();
 	AlfFilterPolicy	*filter;
 	static int	 dirs[2] = { APN_CONNECT, APN_ACCEPT };
 
@@ -615,12 +616,13 @@ RuleWizard::createAlfPortList(AlfAppPolicy *app, const wxArrayString & list,
 		direction = APN_ACCEPT;
 		break;
 	}
-	for (size_t i=0; i<list.GetCount(); i=i+3) {
-		int proto = IPPROTO_UDP;
+	for (size_t i = 0; i < list->getServiceCount(); i++) {
+		Service	*service = list->getServiceAt(i);
+		int	proto = IPPROTO_UDP;
 
-		if (list.Item(i+2) == wxT("tcp")) {
+		if (service->getProtocol() == Service::TCP)
 			proto = IPPROTO_TCP;
-		}
+
 		/*
 		 * For UDP generate rules for both directions.
 		 */
@@ -638,11 +640,19 @@ RuleWizard::createAlfPortList(AlfAppPolicy *app, const wxArrayString & list,
 			 * any remote port to a specific local port, thus
 			 * set to ToPortName in this case, too.
 			 */
-			if (dirs[x] == APN_CONNECT || proto == IPPROTO_TCP) {
-				filter->setToPortName(list.Item(i+1));
-			} else {
-				filter->setFromPortName(list.Item(i+1));
-			}
+
+			/*
+			 * XXX This is poor! You need a way to put a
+			 * XXX port-number into the policy (without) converting
+			 * XXX it into a string.
+			 */
+			wxString port_str =
+			    wxString::Format(wxT("%d"), service->getPort());
+
+			if (dirs[x] == APN_CONNECT || proto == IPPROTO_TCP)
+				filter->setToPortName(port_str);
+			else
+				filter->setFromPortName(port_str);
 		}
 	}
 }

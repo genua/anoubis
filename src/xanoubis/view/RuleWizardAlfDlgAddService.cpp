@@ -25,57 +25,38 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <netdb.h>
+#include <AnListColumn.h>
+#include <AnListCtrl.h>
+#include <Service.h>
+#include <ServiceList.h>
 
 #include "RuleWizardAlfDlgAddService.h"
+#include "RuleWizardServiceProperty.h"
 #include "main.h"
 
 RuleWizardAlfDlgAddService::RuleWizardAlfDlgAddService(wxWindow *parent)
     : RuleWizardAlfDlgAddServiceBase(parent)
 {
 	int		 width;
-	long		 index;
-	wxString	 text;
-	struct servent	*entry;
 
-	/* Create columns */
-	serviceListCtrl->InsertColumn(COLUMN_NAME, _("Servicename"));
-	serviceListCtrl->InsertColumn(COLUMN_PORT, _("Portnumber"));
-	serviceListCtrl->InsertColumn(COLUMN_PROT, _("Protocol"));
+	serviceListCtrl->addColumn(new RuleWizardServiceProperty(
+	    RuleWizardServiceProperty::NAME));
+	serviceListCtrl->addColumn(new RuleWizardServiceProperty(
+	    RuleWizardServiceProperty::PORT));
+	serviceListCtrl->addColumn(new RuleWizardServiceProperty(
+	    RuleWizardServiceProperty::PROTOCOL));
 
-	/* Set initial column width */
-	width = serviceListCtrl->GetClientSize().GetWidth() / 3;
-	serviceListCtrl->SetColumnWidth(COLUMN_NAME, width);
-	serviceListCtrl->SetColumnWidth(COLUMN_PORT, width);
-	serviceListCtrl->SetColumnWidth(COLUMN_PROT, width);
+	/* The model, fill with system-services */
+	serviceList_ = new ServiceList;
+	serviceList_->assignSystemServices();
+	serviceListCtrl->setRowProvider(serviceList_);
 
-	/* Open /etc/services */
-	entry = getservent();
-
-	while (entry != NULL) {
-		/* Only show protocol tcp and udp. */
-		text = wxString::From8BitData(entry->s_proto);
-		if (text == wxT("tcp") || text == wxT("udp")) {
-			index = serviceListCtrl->GetItemCount();
-			serviceListCtrl->InsertItem(index, wxEmptyString);
-
-			/* Protocol */
-			serviceListCtrl->SetItem(index, COLUMN_PROT, text);
-
-			/* Servicename */
-			text = wxString::From8BitData(entry->s_name);
-			serviceListCtrl->SetItem(index, COLUMN_NAME, text);
-
-			/* Portnumber */
-			text.Printf(wxT("%d"), ntohs(entry->s_port));
-			serviceListCtrl->SetItem(index, COLUMN_PORT, text);
-		}
-
-		entry = getservent();
-	}
-
-	/* Close /etc/services */
-	endservent();
+	/*
+	 * List of selected services. You can disable the event-handler because
+	 * the object is not used as a model. It is only a storage-container.
+	 */
+	selection_ = new ServiceList;
+	selection_->SetEvtHandlerEnabled(false);
 
 	/*
 	 * Update column width.
@@ -83,9 +64,9 @@ RuleWizardAlfDlgAddService::RuleWizardAlfDlgAddService(wxWindow *parent)
 	 * size without scrollbars.
 	 */
 	width = (serviceListCtrl->GetClientSize().GetWidth() / 3) - 10;
-	serviceListCtrl->SetColumnWidth(COLUMN_NAME, width);
-	serviceListCtrl->SetColumnWidth(COLUMN_PORT, width);
-	serviceListCtrl->SetColumnWidth(COLUMN_PROT, width);
+	serviceListCtrl->getColumn(0)->setWidth(width);
+	serviceListCtrl->getColumn(1)->setWidth(width);
+	serviceListCtrl->getColumn(2)->setWidth(width);
 
 	searchTextCtrl->SetFocus();
 	Layout();
@@ -94,10 +75,11 @@ RuleWizardAlfDlgAddService::RuleWizardAlfDlgAddService(wxWindow *parent)
 
 RuleWizardAlfDlgAddService::~RuleWizardAlfDlgAddService(void)
 {
-	selection_.Clear();
+	delete selection_;
+	delete serviceList_;
 }
 
-wxArrayString
+ServiceList *
 RuleWizardAlfDlgAddService::getSelection(void) const
 {
 	return (selection_);
@@ -106,37 +88,21 @@ RuleWizardAlfDlgAddService::getSelection(void) const
 void
 RuleWizardAlfDlgAddService::onAddButton(wxCommandEvent &)
 {
-	long		index;
-	wxListItem	line;
+	int index = -1;
 
-	selection_.Empty();
+	selection_->clearServiceList(true);
 
-	/* Get the first selection */
-	index = serviceListCtrl->GetNextItem(-1, wxLIST_NEXT_ALL,
-	    wxLIST_STATE_SELECTED);
+	while (true) {
+		if ((index = serviceListCtrl->getNextSelection(index)) == -1)
+			break;
 
-	while (index != wxNOT_FOUND) {
 		/* Get servicename */
-		line.SetId(index);
-		line.SetColumn(COLUMN_NAME);
-		serviceListCtrl->GetItem(line);
-		selection_.Add(line.GetText());
+		Service *service = serviceList_->getServiceAt(index);
+		Service *selected = new Service(service->getName(),
+		    service->getPort(), service->getProtocol(),
+		    service->isDefault());
 
-		/* Get portnumber */
-		line.SetId(index);
-		line.SetColumn(COLUMN_PORT);
-		serviceListCtrl->GetItem(line);
-		selection_.Add(line.GetText());
-
-		/* Get protocol */
-		line.SetId(index);
-		line.SetColumn(COLUMN_PROT);
-		serviceListCtrl->GetItem(line);
-		selection_.Add(line.GetText());
-
-		/* Proceed to next selection */
-		index = serviceListCtrl->GetNextItem(index, wxLIST_NEXT_ALL,
-		    wxLIST_STATE_SELECTED);
+		selection_->addService(selected);
 	};
 
 	EndModal(wxID_OK);
@@ -145,15 +111,17 @@ RuleWizardAlfDlgAddService::onAddButton(wxCommandEvent &)
 void
 RuleWizardAlfDlgAddService::onCustomAddButton(wxCommandEvent &)
 {
-	selection_.Empty();
+	long port = 0;
+	Service::Protocol protocol;
 
-	selection_.Add(_("custom"));
-	selection_.Add(portTextCtrl->GetValue());
-	if (tcpRadioButton->GetValue()) {
-		selection_.Add(wxT("tcp"));
-	} else {
-		selection_.Add(wxT("udp"));
-	}
+	portTextCtrl->GetValue().ToLong(&port);
+	protocol = tcpRadioButton->GetValue() ? Service::TCP : Service::UDP;
+
+	selection_->clearServiceList(true);
+
+	Service *custom = new Service(_("custom"), port, protocol, false);
+
+	selection_->addService(custom);
 
 	EndModal(wxID_OK);
 }
@@ -161,7 +129,7 @@ RuleWizardAlfDlgAddService::onCustomAddButton(wxCommandEvent &)
 void
 RuleWizardAlfDlgAddService::onCancelButton(wxCommandEvent &)
 {
-	selection_.Clear();
+	selection_->clearServiceList(true);
 	EndModal(wxID_CANCEL);
 }
 
@@ -175,58 +143,50 @@ void
 RuleWizardAlfDlgAddService::onServiceListDeselect(wxListEvent &)
 {
 	/* Did we deselect the last one? */
-	if (serviceListCtrl->GetSelectedItemCount() == 0) {
-		addButton->Disable();
-	}
+	addButton->Enable(serviceListCtrl->hasSelection());
 }
 
 void
 RuleWizardAlfDlgAddService::onSearchTextEnter(wxCommandEvent &event)
 {
-	long		 index;
-	wxString	 search;
-	wxListItem	 line;
-	wxIcon		*icon;
-
-	search = event.GetString();
+	wxString search = event.GetString();
 
 	/* Deselect first */
-	index = serviceListCtrl->GetNextItem(-1, wxLIST_NEXT_ALL,
-	    wxLIST_STATE_SELECTED);
-	while (index != wxNOT_FOUND) {
+	while (serviceListCtrl->hasSelection()) {
+		int index = serviceListCtrl->getFirstSelection();
 		serviceListCtrl->SetItemState(index, 0, wxLIST_STATE_SELECTED);
-		/* Proceed to next selection */
-		index = serviceListCtrl->GetNextItem(index, wxLIST_NEXT_ALL,
-		    wxLIST_STATE_SELECTED);
 	}
 
-	for (index=serviceListCtrl->GetItemCount() - 1; index>=0; index--) {
-		line.SetId(index);
+	for (unsigned int i = 0; i < serviceList_->getServiceCount(); i++) {
+		Service *service = serviceList_->getServiceAt(i);
+		wxString other;
+
 		if (search.IsNumber()) {
 			/* compare port number */
-			line.SetColumn(COLUMN_PORT);
+			other = wxString::Format(wxT("%d"),
+			    service->getPort());
 		} else {
 			/* compare service name */
-			line.SetColumn(COLUMN_NAME);
-		}
-		serviceListCtrl->GetItem(line);
-		if (search.Cmp(line.GetText()) != 0) {
-			continue;
+			other = service->getName();
 		}
 
-		serviceListCtrl->SetItemState(index, wxLIST_STATE_SELECTED,
+		if (search.Cmp(other) != 0)
+			continue;
+
+		serviceListCtrl->SetItemState(i, wxLIST_STATE_SELECTED,
 		    wxLIST_STATE_SELECTED);
-		serviceListCtrl->EnsureVisible(index);
+		serviceListCtrl->EnsureVisible(i);
 	}
 
 	/* Did we find something? */
-	if (serviceListCtrl->GetSelectedItemCount() > 0) {
-		icon = wxGetApp().loadIcon(wxT("General_ok_16.png"));
+	if (serviceListCtrl->hasSelection()) {
+		searchIcon->SetIcon(AnIconList::getInstance()->GetIcon(
+		    AnIconList::ICON_OK));
 		addButton->SetFocus();
 	} else {
-		icon = wxGetApp().loadIcon(wxT("General_alert_16.png"));
+		searchIcon->SetIcon(AnIconList::getInstance()->GetIcon(
+		    AnIconList::ICON_ALERT));
 	}
-	searchIcon->SetIcon(*icon);
 	searchIcon->Show();
 	Layout();
 	Refresh();

@@ -241,6 +241,10 @@ xanoubis_SOURCES= \
 	model/SbAccessFilterPolicy.h \
 	model/SbAppPolicy.cpp \
 	model/SbAppPolicy.h \
+	model/Service.cpp \
+	model/Service.h \
+	model/ServiceList.cpp \
+	model/ServiceList.h \
 	model/SfsAppPolicy.cpp \
 	model/SfsAppPolicy.h \
 	model/SfsFilterPolicy.cpp \
@@ -373,6 +377,8 @@ xanoubis_SOURCES= \
 	view/RuleWizardSandboxWritePage.h \
 	view/RuleWizardSandboxWriteFilesPage.cpp \
 	view/RuleWizardSandboxWriteFilesPage.h \
+	view/RuleWizardServiceProperty.cpp \
+	view/RuleWizardServiceProperty.h \
 	view/RuleWizardFinalPage.cpp \
 	view/RuleWizardFinalPage.h \
 	view/RuleWizardHistory.cpp \

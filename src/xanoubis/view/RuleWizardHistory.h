@@ -34,6 +34,8 @@
 #include <wx/string.h>
 #include <wx/window.h>
 
+class ServiceList;
+
 /**
  */
 class RuleWizardHistory
@@ -65,6 +67,7 @@ class RuleWizardHistory
 		 * @param None.
 		 */
 		RuleWizardHistory(void);
+		~RuleWizardHistory(void);
 
 		/**
 		 * Store the given program.
@@ -95,7 +98,7 @@ class RuleWizardHistory
 		 * @return The checksum type.
 		 */
 		int getChecksumType(void) const;
-		
+
 		/**
 		 * Does context policies exist for the stored program?
 		 * @param None.
@@ -180,25 +183,6 @@ class RuleWizardHistory
 		void setSfsDisabled(bool);
 
 		/**
-		 * Are defaults for alf available?
-		 * @param None.
-		 * @return True if there are defaults.
-		 */
-		bool isAlfDefaultAvailable(void) const;
-
-		/**
-		 * Get alf defaults.
-		 * If the alf defaults file exists and contains values, this
-		 * method returns them in a list. Else the list is empty.
-		 * The servicename is determinded also.
-		 * The returned list has the same layout as lists from
-		 * RuleWizardAlfDlgAddService.
-		 * @param None.
-		 * @return The list of alf defaults.
-		 */
-		wxArrayString getAlfDefaults(void) const;
-
-		/**
 		 * Does alf policies exist for the stored program?
 		 * @param None.
 		 * @return True if policies already exist, false otherwise.
@@ -238,18 +222,11 @@ class RuleWizardHistory
 		enum permissionAnswer getAlfClientPermission(void) const;
 
 		/**
-		 * Store the list of alf client port.
-		 * @param[in] 1st The list of client port.
-		 * @return Nothing.
-		 */
-		void setAlfClientPortList(const wxArrayString &);
-
-		/**
 		 * Get the list of alf client port.
 		 * @param None.
 		 * @return The list of client port.
 		 */
-		wxArrayString getAlfClientPortList(void) const;
+		ServiceList *getAlfClientPortList(void) const;
 
 		/**
 		 * Store the answer to the question: ask on any other
@@ -650,7 +627,7 @@ class RuleWizardHistory
 		/**
 		 * The list of alf client ports.
 		 */
-		wxArrayString alfClientPortList_;
+		ServiceList *alfClientPortList_;
 
 		/**
 		 * Shall we ask on any other client network access?

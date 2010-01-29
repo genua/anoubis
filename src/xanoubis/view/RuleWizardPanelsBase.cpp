@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 GeNUA mbH <info@genua.de>
+ * Copyright (c) 2010 GeNUA mbH <info@genua.de>
  *
  * All rights reserved.
  *
@@ -32,6 +32,7 @@
 ///////////////////////////////////////////////////////////////////////////
 
 #include "AnDetails.h"
+#include "AnListCtrl.h"
 #include "AnPickFromFs.h"
 
 #include "RuleWizardPanelsBase.h"
@@ -154,7 +155,7 @@ RuleWizardAlfDlgAddServiceBase::RuleWizardAlfDlgAddServiceBase( wxWindow* parent
 	
 	mainSizer->Add( headLineSizer, 0, wxEXPAND, 5 );
 	
-	serviceListCtrl = new wxListCtrl( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLC_REPORT|wxLC_VRULES );
+	serviceListCtrl = new AnListCtrl( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLC_REPORT|wxLC_VIRTUAL|wxLC_VRULES );
 	mainSizer->Add( serviceListCtrl, 1, wxALL|wxEXPAND, 5 );
 	
 	wxBoxSizer* addSizer;
@@ -602,7 +603,7 @@ RuleWizardAlfServicePageBase::RuleWizardAlfServicePageBase( wxWindow* parent, wx
 	portListLabel->Wrap( -1 );
 	mainSizer->Add( portListLabel, 0, wxALL, 5 );
 	
-	portListCtrl = new wxListCtrl( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLC_HRULES|wxLC_REPORT );
+	portListCtrl = new AnListCtrl( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLC_HRULES|wxLC_REPORT|wxLC_VIRTUAL );
 	mainSizer->Add( portListCtrl, 1, wxALL|wxEXPAND, 5 );
 	
 	wxBoxSizer* buttonSizer;

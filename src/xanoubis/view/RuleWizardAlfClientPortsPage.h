@@ -46,16 +46,6 @@ class RuleWizardAlfClientPortsPage : public RuleWizardAlfServicePageBase
 
 	private:
 		/**
-		 * Use these indices for the columns of the service list.
-		 */
-		enum portColumns {
-			COLUMN_NAME = 0,	/**< Column for Servicename */
-			COLUMN_PORT,		/**< Column for Portnumber */
-			COLUMN_PROT,		/**< Column for Protocol */
-			COLUMN_STD		/**< Column for std-flag */
-		};
-
-		/**
 		 * Store the input here.
 		 */
 		RuleWizardHistory *history_;
@@ -126,15 +116,6 @@ class RuleWizardAlfClientPortsPage : public RuleWizardAlfServicePageBase
 		 * @return Nothing.
 		 */
 		virtual void onRawCheckBox(wxCommandEvent &);
-
-		/**
-		 * Store port list.
-		 * This will take the input of the port list and stores
-		 * it to the history.
-		 * @param None.
-		 * @return Nothing.
-		 */
-		void storePortList(void) const;
 
 		/**
 		 * Update navigation.

@@ -253,12 +253,10 @@ class RuleWizard : public wxWizard
 		/**
 		 * Create the filter policies by list of services.
 		 * @param[in] 1st The alf application policy (aka parent).
-		 * @param[in] 2nd The list of services.
-		 * @param[in] 3rd The direction.
+		 * @param[in] 2nd The direction.
 		 * @return Nothing.
 		 */
-		void createAlfPortList(AlfAppPolicy *, const wxArrayString &,
-		    int) const;
+		void createAlfPortList(AlfAppPolicy *, int) const;
 
 		/**
 		 * Create the filter policies by list of files.

@@ -25,6 +25,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <ServiceList.h>
+
 #include "RuleWizardAlfClientPage.h"
 
 RuleWizardAlfClientPage::RuleWizardAlfClientPage(wxWindow *parent,
@@ -49,8 +51,10 @@ RuleWizardAlfClientPage::RuleWizardAlfClientPage(wxWindow *parent,
 		break;
 	}
 
-	defaultRadioButton->Enable(history_->isAlfDefaultAvailable());
-	defaultLabel->Enable(history_->isAlfDefaultAvailable());
+	ServiceList *serviceList = history_->getAlfClientPortList();
+
+	defaultRadioButton->Enable(serviceList->canHaveDefaultServices());
+	defaultLabel->Enable(serviceList->canHaveDefaultServices());
 
 	parent->Connect(wxEVT_WIZARD_PAGE_CHANGED,
 	    wxWizardEventHandler(RuleWizardAlfClientPage::onPageChanged),

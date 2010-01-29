@@ -28,9 +28,10 @@
 #ifndef _RULEWIZARDALFDLGADDSERVICE_H_
 #define _RULEWIZARDALFDLGADDSERVICE_H_
 
-#include <wx/arrstr.h>
-
 #include "RuleWizardPanelsBase.h"
+
+class Service;
+class ServiceList;
 
 /**
  * RuleWizard add service dialog for alf.
@@ -64,47 +65,26 @@ class RuleWizardAlfDlgAddService : public RuleWizardAlfDlgAddServiceBase
 
 		/**
 		 * Get the selected services.
-		 * The list returned by this method contains three times as
-		 * many entries as selected services. The output of this
-		 * method is valid just \bafter ShowModal() returned.\n
-		 * For each selected service, three entries are written to
-		 * this list:
-		 * - the name of service
-		 * - the port number
-		 * - the protocol
-		 * How you work with this list:\n
-		 * number of services = GetCount() / 3\n
-		 * iterate through this list:\n
-		 * \code
-		 *   for (size_t i=0; i<list.GetCount(); i=i+3) {
-		 *	name = list.Item(i);
-		 *	port = list.Item(i+1);
-		 *	prot = list.Item(i+2);
-		 *   }
-		 * \endcode
-		 * @paran None.
+		 *
+		 * @param None.
 		 * @return The list of services been selected.
 		 */
-		wxArrayString getSelection(void) const;
+		ServiceList *getSelection(void) const;
 
 	private:
 		/**
-		 * These are the indices of the columns
+		 * The internal model of the service-list
 		 */
-		enum serviceColumns {
-			COLUMN_NAME = 0,	/**< Column for servicename */
-			COLUMN_PORT,		/**< Column for portnumber */
-			COLUMN_PROT		/**< Column for protocol */
-		};
+		ServiceList *serviceList_;
 
 		/**
-		 * This is the list storing the input of this dialog.
+		 * Internal list contains all selected services.
 		 */
-		wxArrayString selection_;
+		ServiceList *selection_;
 
 		/**
 		 * Handle events from addButton.
-		 * This will claer the seleciton list and refill it with the
+		 * This will clear the selection list and refill it with the
 		 * selected service(s) from the service list. In addition this
 		 * will close the dialog with wxID_OK.
 		 * @param[in] 1st The event.
@@ -114,7 +94,7 @@ class RuleWizardAlfDlgAddService : public RuleWizardAlfDlgAddServiceBase
 
 		/**
 		 * Handle events from addCustomButton.
-		 * This will claer the seleciton list and refill it with the
+		 * This will clear the selection list and refill it with the
 		 * custom input from the user. In addition this will close
 		 * the dialog with wxID_OK.
 		 * @param[in] 1st The event.
@@ -124,7 +104,7 @@ class RuleWizardAlfDlgAddService : public RuleWizardAlfDlgAddServiceBase
 
 		/**
 		 * Handle events from cancelButton.
-		 * This will claer the seleciton list and close the dialog
+		 * This will clear the selection list and close the dialog
 		 * with wxID_CANCEL.
 		 * @param[in] 1st The event.
 		 * @return Nothing.

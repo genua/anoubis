@@ -25,7 +25,6 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <netdb.h>
 #include <wx/stattext.h>
 #include <wx/filename.h>
 #include <wx/textfile.h>
@@ -34,6 +33,7 @@
 #include "AppPolicy.h"
 #include "PolicyCtrl.h"
 #include "PolicyRuleSet.h"
+#include "ServiceList.h"
 #include "main.h"
 
 RuleWizardHistory::RuleWizardHistory(void)
@@ -57,7 +57,7 @@ RuleWizardHistory::RuleWizardHistory(void)
 	haveAlfPolicy_	     = false;
 	overwriteAlfPolicy_  = OVERWRITE_NO;
 	alfClientPermission_ = PERM_RESTRICT_DEFAULT;
-	alfClientPortList_.Clear();
+	alfClientPortList_   = new ServiceList;
 	alfClientAsk_	     = true;
 	alfClientRaw_	     = false;
 	alfServerPermission_ = PERM_DENY_ALL;
@@ -80,6 +80,11 @@ RuleWizardHistory::RuleWizardHistory(void)
 	cstype_			      = APN_CS_NONE;
 
 	shallActivatePolicy_ = true;
+}
+
+RuleWizardHistory::~RuleWizardHistory(void)
+{
+	delete alfClientPortList_;
 }
 
 void
@@ -233,72 +238,6 @@ RuleWizardHistory::setSfsDisabled(bool value)
  * Alf methods
  */
 bool
-RuleWizardHistory::isAlfDefaultAvailable(void) const
-{
-	return (!getAlfDefaults().IsEmpty());
-}
-
-wxArrayString
-RuleWizardHistory::getAlfDefaults(void) const
-{
-	long		portNr;
-	wxString	name;
-	wxString	port;
-	wxString	prot;
-	wxString	line;
-	wxTextFile	file;
-	wxArrayString	list;
-	struct servent *entry;
-
-	file.Open(wxGetApp().getWizardPath() + wxFILE_SEP_PATH + wxT("alf"));
-
-	if (!file.IsOpened()) {
-		/* alf defaults file does not exists - return empty list */
-		return (list);
-	}
-	setservent(1);
-	portNr = 0;
-
-	line = file.GetFirstLine().BeforeFirst('#');
-	line.Trim(true);
-	line.Trim(false);
-	while (!file.Eof()) {
-		if (!line.IsEmpty()) {
-			/* Slice the string */
-			prot = line.BeforeFirst('/'); /* protocol name */
-			prot.Trim(true);
-			prot.Trim(false);
-			port = line.AfterFirst('/');  /* port number */
-			port.Trim(true);
-			port.Trim(false);
-			port.ToLong(&portNr);
-
-			/* Fetch service name */
-			entry = getservbyport(htons((int)portNr),
-			    prot.fn_str());
-			if (entry != NULL) {
-				name = wxString::From8BitData(entry->s_name);
-			} else {
-				name = _("(unknown)");
-			}
-
-			/* Fill list */
-			list.Add(name);
-			list.Add(port);
-			list.Add(prot);
-		}
-		line = file.GetNextLine().BeforeFirst('#');
-		line.Trim(true);
-		line.Trim(false);
-	}
-
-	endservent();
-	file.Close();
-
-	return (list);
-}
-
-bool
 RuleWizardHistory::haveAlfPolicy(void) const
 {
 	return (haveAlfPolicy_);
@@ -328,13 +267,7 @@ RuleWizardHistory::getAlfClientPermission(void) const
 	return (alfClientPermission_);
 }
 
-void
-RuleWizardHistory::setAlfClientPortList(const wxArrayString & list)
-{
-	alfClientPortList_ = list;
-}
-
-wxArrayString
+ServiceList *
 RuleWizardHistory::getAlfClientPortList(void) const
 {
 	return (alfClientPortList_);

@@ -25,31 +25,49 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "RuleWizardAlfClientPortsPage.h"
+#include <AnListColumn.h>
+#include <AnListCtrl.h>
+#include <AnListProperty.h>
+#include <Service.h>
+#include <ServiceList.h>
 
+#include "RuleWizardAlfClientPortsPage.h"
 #include "RuleWizardAlfDlgAddService.h"
+#include "RuleWizardServiceProperty.h"
 
 RuleWizardAlfClientPortsPage::RuleWizardAlfClientPortsPage(wxWindow *parent,
     RuleWizardHistory *history) : RuleWizardAlfServicePageBase(parent)
 {
-	int	width;
+	int		width;
+	AnListColumn	*col;
 
 	history_ = history;
 
-	/* Create columns */
-	portListCtrl->InsertColumn(COLUMN_NAME, _("Servicename"));
-	portListCtrl->InsertColumn(COLUMN_PORT, _("Portnumber"));
-	portListCtrl->InsertColumn(COLUMN_PROT, _("Protocol"));
-	portListCtrl->InsertColumn(COLUMN_STD, _("Standard"));
-
-	/* Set initial column width */
+	/* Initial column width */
 	width = portListCtrl->GetClientSize().GetWidth() / 4;
-	portListCtrl->SetColumnWidth(COLUMN_NAME, width);
-	portListCtrl->SetColumnWidth(COLUMN_PORT, width);
-	portListCtrl->SetColumnWidth(COLUMN_PROT, width);
-	portListCtrl->SetColumnWidth(COLUMN_STD, width);
 
-	defaultsButton->Enable(history_->isAlfDefaultAvailable());
+	/* Create columns */
+	col = portListCtrl->addColumn(new RuleWizardServiceProperty(
+	    RuleWizardServiceProperty::NAME));
+	col->setWidth(width);
+
+	col = portListCtrl->addColumn(new RuleWizardServiceProperty(
+	    RuleWizardServiceProperty::PORT));
+	col->setWidth(width);
+
+	col = portListCtrl->addColumn(new RuleWizardServiceProperty(
+	    RuleWizardServiceProperty::PROTOCOL));
+	col->setWidth(width);
+
+	col = portListCtrl->addColumn(new RuleWizardServiceProperty(
+	    RuleWizardServiceProperty::DEFAULT));
+	col->setWidth(width);
+
+	/* Assign model */
+	portListCtrl->setRowProvider(history_->getAlfClientPortList());
+
+	defaultsButton->Enable
+	    (history_->getAlfClientPortList()->canHaveDefaultServices());
 
 	parent->Connect(wxEVT_WIZARD_PAGE_CHANGED,
 	    wxWizardEventHandler(RuleWizardAlfClientPortsPage::onPageChanged),
@@ -72,23 +90,23 @@ RuleWizardAlfClientPortsPage::onPageChanged(wxWizardEvent &)
 void
 RuleWizardAlfClientPortsPage::onAddButton(wxCommandEvent &)
 {
-	long				index;
-	wxArrayString			list;
 	RuleWizardAlfDlgAddService	dlg(this);
 
 	if (dlg.ShowModal() == wxID_OK) {
-		list = dlg.getSelection();
-		for (size_t i=0; i<list.GetCount(); i=i+3) {
-			index = portListCtrl->GetItemCount();
-			portListCtrl->InsertItem(index, wxEmptyString);
-			portListCtrl->SetItem(index, COLUMN_NAME,
-			    list.Item(i));
-			portListCtrl->SetItem(index, COLUMN_PORT,
-			    list.Item(i+1));
-			portListCtrl->SetItem(index, COLUMN_PROT,
-			    list.Item(i+2));
+		ServiceList *list = dlg.getSelection();
+
+		while (list->getServiceCount() > 0) {
+			/*
+			 * Move selected service into model.
+			 * This service-instance is moved into another model.
+			 * With each move list->getServiceCount() is decreased.
+			 * That's why you cannot iterate over list with a
+			 * for-loop.
+			 */
+			Service *service = list->getServiceAt(0);
+			history_->getAlfClientPortList()->addService(service);
 		}
-		storePortList();
+
 		updateNavi();
 	}
 }
@@ -96,36 +114,38 @@ RuleWizardAlfClientPortsPage::onAddButton(wxCommandEvent &)
 void
 RuleWizardAlfClientPortsPage::onDefaultsButton(wxCommandEvent &)
 {
-	long		index;
-	wxArrayString	list;
-
-	list = history_->getAlfDefaults();
-	for (size_t i=0; i<list.GetCount(); i=i+3) {
-		index = portListCtrl->GetItemCount();
-		portListCtrl->InsertItem(index, wxEmptyString);
-		portListCtrl->SetItem(index, COLUMN_NAME, list.Item(i));
-		portListCtrl->SetItem(index, COLUMN_PORT, list.Item(i+1));
-		portListCtrl->SetItem(index, COLUMN_PROT, list.Item(i+2));
-		portListCtrl->SetItem(index, COLUMN_STD, wxT("x"));
-	}
-	storePortList();
+	history_->getAlfClientPortList()->assignDefaultServices();
 	updateNavi();
 }
 
 void
 RuleWizardAlfClientPortsPage::onDeleteButton(wxCommandEvent &)
 {
-	long index;
+	ServiceList *list = history_->getAlfClientPortList();
+	std::list<Service *> removeList;
+	int index = -1;
 
-	index = portListCtrl->GetNextItem(-1, wxLIST_NEXT_ALL,
-	    wxLIST_STATE_SELECTED);
-	while (index != wxNOT_FOUND) {
-		portListCtrl->SetItemState(index, 0, wxLIST_STATE_SELECTED);
-		portListCtrl->DeleteItem(index);
-		index = portListCtrl->GetNextItem(index - 1, wxLIST_NEXT_ALL,
-		    wxLIST_STATE_SELECTED);
+	/*
+	 * AnListCtrl restores selected internally, if the content of the list
+	 * changes. That's why you have to collect the selected services
+	 * before removing them from the model.
+	 */
+	while (true) {
+		if ((index = portListCtrl->getNextSelection(index)) == -1)
+			break;
+		removeList.push_back(list->getServiceAt(index));
 	}
-	storePortList();
+
+	/*
+	 * Now it's save to remove the services from the model as you are
+	 * independent from the selection
+	 */
+	while (!removeList.empty()) {
+		Service *service = removeList.back();
+		removeList.pop_back();
+		delete service;
+	}
+
 	updateNavi();
 }
 
@@ -138,10 +158,7 @@ RuleWizardAlfClientPortsPage::onPortListSelect(wxListEvent &)
 void
 RuleWizardAlfClientPortsPage::onPortListDeselect(wxListEvent &)
 {
-	/* Was the last one deselected? */
-	if (portListCtrl->GetSelectedItemCount() == 0) {
-		deleteButton->Disable();
-	}
+	deleteButton->Enable(portListCtrl->hasSelection());
 }
 
 void
@@ -156,36 +173,6 @@ RuleWizardAlfClientPortsPage::onRawCheckBox(wxCommandEvent & event)
 {
 	history_->setAlfClientRaw(event.GetInt());
 	updateNavi();
-}
-
-void
-RuleWizardAlfClientPortsPage::storePortList(void) const
-{
-	long		index;
-	wxListItem	line;
-	wxArrayString	list;
-
-	for (index=0; index<portListCtrl->GetItemCount(); index++) {
-		/* Get servicename */
-		line.SetId(index);
-		line.SetColumn(COLUMN_NAME);
-		portListCtrl->GetItem(line);
-		list.Add(line.GetText());
-
-		/* Get portnumber */
-		line.SetId(index);
-		line.SetColumn(COLUMN_PORT);
-		portListCtrl->GetItem(line);
-		list.Add(line.GetText());
-
-		/* Get protocol */
-		line.SetId(index);
-		line.SetColumn(COLUMN_PROT);
-		portListCtrl->GetItem(line);
-		list.Add(line.GetText());
-	}
-
-	history_->setAlfClientPortList(list);
 }
 
 void

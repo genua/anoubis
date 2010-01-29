@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 GeNUA mbH <info@genua.de>
+ * Copyright (c) 2010 GeNUA mbH <info@genua.de>
  *
  * All rights reserved.
  *
@@ -35,6 +35,7 @@
 #define __RuleWizardPanelsBase__
 
 class AnDetails;
+class AnListCtrl;
 class AnPickFromFs;
 
 #include <wx/sizer.h>
@@ -106,7 +107,7 @@ class RuleWizardAlfDlgAddServiceBase : public wxDialog
 		
 		wxTextCtrl* searchTextCtrl;
 		wxStaticBitmap* searchIcon;
-		wxListCtrl* serviceListCtrl;
+		AnListCtrl* serviceListCtrl;
 		
 		wxButton* addButton;
 		wxStaticText* borderLabel;
@@ -280,7 +281,7 @@ class RuleWizardAlfServicePageBase : public wxPanel
 		
 		wxStaticText* questionLabel;
 		wxStaticText* portListLabel;
-		wxListCtrl* portListCtrl;
+		AnListCtrl* portListCtrl;
 		wxButton* addButton;
 		
 		wxButton* defaultsButton;
