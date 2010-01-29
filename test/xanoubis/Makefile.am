@@ -42,6 +42,7 @@ TESTS = \
 	testSuite_Profiles \
 	testSuite_Policies \
 	testSuite_Services \
+	testSuite_Sandbox \
 	testSuite_Sfs \
 	testSuite_Key \
 	testSuite_Notifications \
@@ -174,6 +175,17 @@ testSuite_Services_LDADD = $(LDADD) -lGUIcomponents
 testSuite_Services_SOURCES = \
 	testrunner.cpp \
 	suite_Services/testSuite.cpp
+
+#
+# Testsuite: Sandbox
+#
+testSuite_Sandbox_CPPFLAGS = $(AM_CPPFLAGS)
+testSuite_Sandbox_DEPENDENCIES = $(dependencies)
+testSuite_Sandbox_LDADD = $(LDADD) -lGUIcomponents
+
+testSuite_Sandbox_SOURCES = \
+	testrunner.cpp \
+	suite_Sandbox/testSuite.cpp
 
 #
 # Testsuite: Sfs

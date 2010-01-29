@@ -245,6 +245,12 @@ xanoubis_SOURCES= \
 	model/Service.h \
 	model/ServiceList.cpp \
 	model/ServiceList.h \
+	model/SbEntry.cpp \
+	model/SbEntry.h \
+	model/SbModel.cpp \
+	model/SbModel.h \
+	model/SbModelRowProvider.cpp \
+	model/SbModelRowProvider.h \
 	model/SfsAppPolicy.cpp \
 	model/SfsAppPolicy.h \
 	model/SfsFilterPolicy.cpp \
