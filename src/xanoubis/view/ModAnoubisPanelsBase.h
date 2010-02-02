@@ -196,7 +196,6 @@ class ModAnoubisMainPanelBase : public wxPanel
 		wxCheckBox* cb_ShowKeyGenInfoMsg;
 		wxCheckBox* cb_DoAutostart;
 		
-		wxCheckBox* controlAutoCheck;
 		wxCheckBox* autoConnectBox;
 		wxCheckBox* toolTipCheckBox;
 		wxSpinCtrl* toolTipSpinCtrl;
@@ -241,7 +240,6 @@ class ModAnoubisMainPanelBase : public wxPanel
 		virtual void OnEnableKernelMsg( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnEnableInformationMsg( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnDoAutostart( wxCommandEvent& event ){ event.Skip(); }
-		virtual void OnAutoCheck( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnToolTipCheckBox( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnToolTipSpinCtrl( wxSpinEvent& event ){ event.Skip(); }
 		virtual void OnToolTipSpinCtrlText( wxCommandEvent& event ){ event.Skip(); }

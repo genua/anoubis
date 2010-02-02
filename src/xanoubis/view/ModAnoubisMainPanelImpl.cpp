@@ -168,8 +168,6 @@ ModAnoubisMainPanelImpl::~ModAnoubisMainPanelImpl(void)
 	    cb_NoAlertTimeout->IsChecked());
 	wxConfig::Get()->Write(wxT("/Options/AlertTimeout"),
 	    m_spinAlertNotifyTimeout->GetValue());
-	wxConfig::Get()->Write(wxT("/Options/AutoChecksumCheck"),
-	    controlAutoCheck->IsChecked());
 	wxConfig::Get()->Write(wxT("/Options/AutoConnect"),
 	    autoConnectBox->IsChecked());
 	if (loadedProfile != wxEmptyString) {
@@ -212,7 +210,6 @@ ModAnoubisMainPanelImpl::~ModAnoubisMainPanelImpl(void)
 void
 ModAnoubisMainPanelImpl::readOptions(void)
 {
-	bool autoChecksum = false;
 	bool autoConnect = false;
 	bool doAutostart = false;
 	bool enableToolTips = true;
@@ -249,7 +246,6 @@ ModAnoubisMainPanelImpl::readOptions(void)
 	wxConfig::Get()->Read(wxT("/Options/Autostart"), &doAutostart);
 	wxGetApp().autoStart(doAutostart);
 
-	wxConfig::Get()->Read(wxT("/Options/AutoChecksumCheck"), &autoChecksum);
 	wxConfig::Get()->Read(wxT("/Options/AutoConnect"), &autoConnect);
 
 	wxConfig::Get()->Read(wxT("/Options/EnableToolTips"), &enableToolTips);
@@ -269,11 +265,6 @@ ModAnoubisMainPanelImpl::readOptions(void)
 	m_spinAlertNotifyTimeout->SetValue(alertTimeout);
 
 	cb_DoAutostart->SetValue(doAutostart);
-
-	controlAutoCheck->SetValue(autoChecksum);
-	wxCommandEvent showEvent(anEVT_SEND_AUTO_CHECK);
-	showEvent.SetInt(autoChecksum);
-	wxPostEvent(AnEvents::getInstance(), showEvent);
 
 	autoConnectBox->SetValue(autoConnect);
 	wxGetApp().connectCommunicator(autoConnect);
@@ -1111,16 +1102,6 @@ ModAnoubisMainPanelImpl::OnEnableInformationMsg(wxCommandEvent&)
 {
 	wxConfig::Get()->Write(wxT("/Options/ShowCertMessage"),
 	    cb_ShowKeyGenInfoMsg->GetValue());
-}
-
-void
-ModAnoubisMainPanelImpl::OnAutoCheck(wxCommandEvent& event)
-{
-	wxCommandEvent showEvent(anEVT_SEND_AUTO_CHECK);
-
-	showEvent.SetInt(event.IsChecked());
-
-	wxPostEvent(AnEvents::getInstance(), showEvent);
 }
 
 void ModAnoubisMainPanelImpl::OnDoAutostart(wxCommandEvent& event)

@@ -102,7 +102,6 @@ class ModAnoubisMainPanelImpl : public ModAnoubisMainPanelBase,
 		void OnEnableKernelMsg(wxCommandEvent&);
 		void OnEnableInformationMsg(wxCommandEvent&);
 
-		void OnAutoCheck(wxCommandEvent&);
 		void OnDoAutostart(wxCommandEvent&);
 
 		void OnProfileDeleteClicked(wxCommandEvent &);

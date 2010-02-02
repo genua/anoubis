@@ -66,8 +66,6 @@ DlgRuleEditor::DlgRuleEditor(wxWindow* parent)
 	    wxCommandEventHandler(DlgRuleEditor::onSendRuleSet), NULL, this);
 	anEvents->Connect(anEVT_SHOW_RULE,
 	    wxCommandEventHandler(DlgRuleEditor::onShowRule), NULL, this);
-	anEvents->Connect(anEVT_SEND_AUTO_CHECK,
-	    wxCommandEventHandler(DlgRuleEditor::onAutoCheck), NULL, this);
 
 	adminRuleSetId_ = -1;
 	userRuleSetId_ = -1;
@@ -260,9 +258,6 @@ DlgRuleEditor::readOptions(void)
 		wxConfig::Get()->Read(name, &isVisible, true);
 		sbColumns_[i]->setVisability(isVisible);
 	}
-
-	name = wxT("/Options/AutoChecksumCheck");
-	wxConfig::Get()->Read(name, &isAutoChecksumCheck_, true);
 
 	updateListColumns(appPolicyListCtrl,    appColumns_, APP_EOL);
 	updateListColumns(filterPolicyListCtrl, alfColumns_, ALF_EOL);
@@ -619,12 +614,6 @@ DlgRuleEditor::onShowRule(wxCommandEvent& event)
 		filterPolicyListCtrl->SetItemState(idx, wxLIST_STATE_SELECTED,
 		    wxLIST_STATE_SELECTED);
 	}
-}
-
-void
-DlgRuleEditor::onAutoCheck(wxCommandEvent & event)
-{
-	isAutoChecksumCheck_ = event.GetInt();
 }
 
 void

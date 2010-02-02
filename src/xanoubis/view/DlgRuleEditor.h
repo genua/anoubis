@@ -253,9 +253,6 @@ class DlgRuleEditor : public Observer, public DlgRuleEditorBase
 		long adminRuleSetId_; /**< Id of our admin ruleSet. */
 
 		bool isConnected_; /**< connectiion state of gui */
-		bool isAutoChecksumCheck_; /**< state of Checksums before send
-					    * to Daemon
-					    */
 
 		int appPolicyLoadProgIdx_; /**< current progress position */
 		wxProgressDialog *appPolicyLoadProgDlg_; /**< progress bar */
