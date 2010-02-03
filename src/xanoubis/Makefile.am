@@ -436,6 +436,12 @@ xanoubis_SOURCES= \
 	pattern/IndexTree_Impl.h \
 	widgets/AnDetails.cpp \
 	widgets/AnDetails.h \
+	widgets/AnGrid.cpp \
+	widgets/AnGrid.h \
+	widgets/AnGridColumn.cpp \
+	widgets/AnGridColumn.h \
+	widgets/AnTable.cpp \
+	widgets/AnTable.h \
 	widgets/AnIconList.cpp \
 	widgets/AnIconList.h \
 	widgets/AnListClass.h \
@@ -451,6 +457,8 @@ xanoubis_SOURCES= \
 	widgets/AnListProperty.h \
 	widgets/AnMessageDialog.cpp \
 	widgets/AnMessageDialog.h \
+	widgets/AnMultiRowProvider.cpp \
+	widgets/AnMultiRowProvider.h \
 	widgets/AnPolicyNotebook.cpp \
 	widgets/AnPolicyNotebook.h \
 	widgets/AnPickFromFs.cpp \
