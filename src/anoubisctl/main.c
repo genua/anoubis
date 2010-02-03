@@ -116,15 +116,16 @@ struct cmd {
 	 *	resolve relative path names (file must exist)
 	 * 2:	needs file, uid and prio arguments,
 	 *	don't resolve relative path names
+	 * 3:   no params required and should not need .xanoubis
 	 */
 	int		args;
 } commands[] = {
 	{ "moo",	moo,			0 },
-	{ "start",	daemon_start,		0 },
-	{ "stop",	daemon_stop,		0 },
+	{ "start",	daemon_start,		3 },
+	{ "stop",	daemon_stop,		3 },
 	{ "status",	daemon_status,		0 },
-	{ "reload",	daemon_reload,		0 },
-	{ "restart",	daemon_restart,		0 },
+	{ "reload",	daemon_reload,		3 },
+	{ "restart",	daemon_restart,		3 },
 	{ "version",	daemon_version,		0 },
 	{ "passphrase",	send_passphrase,	0 },
 	{ "load",	(func_int_t)load,	1 },
@@ -154,12 +155,17 @@ usage(void)
 	    "[-u uid] [-i fd] [-o sigfile] <command> [<file>]\n", __progname);
 	fprintf(stderr, "    <command>:\n");
 	for (i=1; i < sizeof(commands)/sizeof(struct cmd); i++) {
-		if (commands[i].args)
+		switch (commands[i].args) {
+		case 1:
+		case 2:
 			fprintf(stderr, "	%s <file>\n",
 				commands[i].command);
-		else
+			break;
+		case 3:
+		case 4:
 			fprintf(stderr, "	%s\n", commands[i].command);
-
+			break;
+		}
 	}
 	fprintf(stderr, "       verify file signature\n");
 	fprintf(stderr, "	monitor [ all ] [ delegate ] [ error=<num> ] "
@@ -194,6 +200,8 @@ main(int argc, char *argv[])
 	uid_t		 uid = geteuid();
 	char		*prios[] = { "admin", "user", NULL };
 	char		 tmp;
+	struct cmd	*cmd = NULL;
+	int		 need_xanoubis = 1;
 
 	/*
 	 * Drop privileges immediately. No need for setgid and it hurts
@@ -297,56 +305,70 @@ main(int argc, char *argv[])
 	if (argc > 0)
 		rulesopt = *argv;
 
+	for (i=0; i < sizeof(commands)/sizeof(struct cmd); i++) {
+		if (strcmp(commands[i].command, command) == 0) {
+			cmd = &commands[i];
+			break;
+		}
+	}
+	if (cmd && cmd->args == 3)
+		need_xanoubis = 0;
 	openlog(__progname, LOG_ODELAY|LOG_PERROR, LOG_USER);
 
-	if ((homepath = getenv("HOME")) == NULL) {
-		fprintf(stderr, "Error: HOME environment variable not set\n");
-		return 1;
-	}
-
-	if (anoubis_ui_init() < 0) {
-		fprintf(stderr, "Error while initialising anoubis_ui\n");
-		return 1;
-	}
-
-	error = anoubis_ui_readversion();
-	if (error > ANOUBIS_UI_VER) {
-		syslog(LOG_WARNING,
-		    "Unsupported version (%d) of %s/" ANOUBIS_UI_DIR " found.",
-		    error, homepath);
-		return 1;
-	}
-	if (error < 0) {
-		syslog(LOG_WARNING, "Error reading %s/" ANOUBIS_UI_DIR
-		    " version: %s\n", homepath, strerror(-error));
-		return 1;
-	}
-
-	if (certfile == NULL) {
-		if (asprintf(&certfile, "%s/%s", homepath, def_cert)
-		    < 0){
-			fprintf(stderr, "Error while allocating memory\n");
+	if (need_xanoubis) {
+		if ((homepath = getenv("HOME")) == NULL) {
+			fprintf(stderr,
+			    "Error: HOME environment variable not set\n");
 			return 1;
 		}
-		if (stat(certfile, &sb) == 0) {
-			opts |= ANOUBISCTL_OPT_SIGN;
-		} else {
-			free(certfile);
-			certfile = NULL;
-		}
-	}
-	/* You also need a keyfile if you want to sign a policy */
-	if (keyfile == NULL) {
-		if (asprintf(&keyfile, "%s/%s", homepath, def_pri) < 0){
-			fprintf(stderr, "Error while allocating"
-			    "memory\n");
+
+		if (anoubis_ui_init() < 0) {
+			fprintf(stderr,
+			    "Error while initialising anoubis_ui\n");
 			return 1;
 		}
-		if (stat(keyfile, &sb) == 0) {
-			opts |= ANOUBISCTL_OPT_SIGN;
-		} else {
-			free(keyfile);
-			keyfile = NULL;
+
+		error = anoubis_ui_readversion();
+		if (error > ANOUBIS_UI_VER) {
+			syslog(LOG_WARNING,
+			    "Unsupported version (%d) of %s/" ANOUBIS_UI_DIR
+			    " found.", error, homepath);
+			return 1;
+		}
+		if (error < 0) {
+			syslog(LOG_WARNING, "Error reading %s/" ANOUBIS_UI_DIR
+			    " version: %s\n", homepath, strerror(-error));
+			return 1;
+		}
+
+		if (certfile == NULL) {
+			if (asprintf(&certfile, "%s/%s", homepath,
+			    def_cert) < 0) {
+				fprintf(stderr,
+				    "Error while allocating memory\n");
+				return 1;
+			}
+			if (stat(certfile, &sb) == 0) {
+				opts |= ANOUBISCTL_OPT_SIGN;
+			} else {
+				free(certfile);
+				certfile = NULL;
+			}
+		}
+		/* You also need a keyfile if you want to sign a policy */
+		if (keyfile == NULL) {
+			if (asprintf(&keyfile, "%s/%s", homepath,
+			    def_pri) < 0) {
+				fprintf(stderr, "Error while allocating"
+				    "memory\n");
+				return 1;
+			}
+			if (stat(keyfile, &sb) == 0) {
+				opts |= ANOUBISCTL_OPT_SIGN;
+			} else {
+				free(keyfile);
+				keyfile = NULL;
+			}
 		}
 	}
 	if (passfd >= 0 && strcmp(command, "passphrase") != 0) {
@@ -389,37 +411,43 @@ main(int argc, char *argv[])
 	}
 
 	done = 0;
-	for (i=0; i < sizeof(commands)/sizeof(struct cmd); i++) {
-		if (strcmp(command, commands[i].command) != 0)
-			continue;
-		if (commands[i].args)  {
+	error = 0;
+	if (cmd) {
+		switch (cmd->args) {
+		case 1:
+		case 2:
 			if (rulesopt == NULL || argc != 1) {
 				fprintf(stderr, "no rules file\n");
 				error = 4;
 				break;
 			}
-			if (strcmp(rulesopt, "-") != 0 &&
-			    commands[i].args !=2)
+			if (strcmp(rulesopt, "-") != 0 && cmd->args != 2) {
 				rulesopt = realpath(rulesopt, buf);
+			}
 			if (rulesopt == NULL) {
-				perror(rulesopt);
+				perror("realpath");
 				error = 4;
 				break;
 			}
-			error = ((func_arg_t)commands[i].func)(
-			    rulesopt, uid, prio);
+			error = ((func_arg_t)cmd->func)(rulesopt, uid, prio);
 			done = 1;
-		} else {
+			break;
+		case 0:
+		case 3:
 			if (rulesopt != NULL) {
 				fprintf(stderr, "too many arguments\n");
 				error = 4;
 			} else {
-				error = commands[i].func();
+				error = (cmd->func)();
 				done = 1;
 			}
+			break;
+		default:
+			fprintf(stderr, "Internal error: cmd->args = %d\n",
+			    cmd->args);
+			error = 4;
 		}
 	}
-
 	if (!done && strcmp(command, "verify") == 0) {
 		done = 1;
 		if (argc != 2)
