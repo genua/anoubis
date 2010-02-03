@@ -134,6 +134,9 @@ struct anoubisd_config {
 
 	/* Authentication mode */
 	anoubisd_auth_mode			auth_mode;
+
+	/* allow anoubisd to dump core */
+	int	allow_coredumps;
 };
 
 extern struct anoubisd_config anoubisd_config;
@@ -369,6 +372,8 @@ void	log_warn(const char *, ...) __attribute__ ((format (printf, 1, 2)));
 void	log_warnx(const char *, ...) __attribute__ ((format (printf, 1, 2)));
 void	log_info(const char *, ...) __attribute__ ((format (printf, 1, 2)));
 void	log_debug(const char *, ...) __attribute__ ((format (printf, 1, 2)));
+
+void anoubisd_defaultsigset(sigset_t *);
 
 __dead void	fatalx(const char *);
 __dead void	fatal(const char *);

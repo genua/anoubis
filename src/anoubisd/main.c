@@ -38,6 +38,7 @@
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/wait.h>
+#include <sys/resource.h>
 
 #include <arpa/inet.h>
 #include <netinet/in.h>
@@ -68,6 +69,10 @@
 #else
 #include <dev/anoubis_sfs.h>
 #include <sha2.h>
+#endif
+
+#ifdef HAVE_BACKTRACE
+#include <execinfo.h>
 #endif
 
 #ifndef OPENBSD
@@ -140,6 +145,7 @@ struct event_info_main {
 
 static void	reconfigure(struct event_info_main *);
 static void	init_root_key(char *, struct event_info_main *);
+int main(int argc, char *argv[]);
 
 FILE	    *pidfp;
 static char *pid_file_name = PACKAGE_PIDFILE;
@@ -156,16 +162,33 @@ static char *omit_pid_file = NULL;
  * SEGV-Handler: Send some useful information to syslog.
  */
 void
-segvhandler(int sig __used, siginfo_t *info, void *uc)
+segvhandler(int sig, siginfo_t *info, void *uc)
 {
 	char	 buf[2048];
 	char	*p = buf;
 	int	 i, n, nreg;
 	void	**ucp = uc;
+	int	 fd;
+#if HAVE_BACKTRACE
+	void	*btbuf[30];
+	char	**btsymbols;
+	int c;
+#endif
 
+	/*
+	 * We don't have syslog in all processes.
+	 * Try to write a crash log, too.
+	 */
+	fd = open(PACKAGE_POLICYDIR "/crash.log", O_WRONLY|O_APPEND|O_CREAT,
+	    S_IRUSR|S_IWUSR|S_IRGRP);
+	if (fd == -1)
+		fd = open("/crash.log", O_WRONLY|O_APPEND|O_CREAT,
+		    S_IRUSR|S_IWUSR|S_IRGRP);
+	if (fd == -1)
+		fd = 0;
 
-	sprintf(p, PACKAGE_DAEMON ": SEGFAULT at %p ucontext:%n",
-	    info?info->si_addr:(void*)-1, &n);
+	sprintf(p, PACKAGE_DAEMON "[%d]: SIGNAL %d at %p ucontext:%n",
+	    getpid(), sig, info?info->si_addr:(void*)-1, &n);
 	p += n;
 	nreg = sizeof(ucontext_t)/sizeof(void*);
 	if (nreg > 100)
@@ -181,7 +204,28 @@ segvhandler(int sig __used, siginfo_t *info, void *uc)
 	}
 	/* Avoid unused return value warning by using "i = write(...). */
 	i = write(1, buf, strlen(buf));
+	if (fd)
+		i = write(fd, buf, strlen(buf));
 	syslog(LOG_ALERT, "%s", buf);
+
+#ifdef HAVE_BACKTRACE
+	n = backtrace(btbuf, sizeof(btbuf));
+	btsymbols = backtrace_symbols(btbuf, n);
+	for (i = 0; i < n ; i++) {
+		c = snprintf(buf, sizeof(buf), "%p (%s)\n", btbuf[i],
+		    btsymbols ? btsymbols[i] : "(unknown)");
+		syslog(LOG_ALERT, "%s", buf);
+		if (fd)
+		    c = write(fd, buf, c);
+	}
+	c = snprintf(buf, sizeof(buf), "anoubisd main(): %p\n", main);
+	syslog(LOG_ALERT, "%s", buf);
+	if (fd)
+	    c = write(fd, buf, c);
+#endif
+
+	if (fd)
+		close(fd);
 	exit(126);
 }
 
@@ -269,6 +313,19 @@ sighandler(int sig, short event __used, void *arg __used)
 	}
 
 	DEBUG(DBG_TRACE, "<sighandler: %d", sig);
+}
+
+void anoubisd_defaultsigset(sigset_t *mask)
+{
+	sigfillset(mask);
+	sigdelset(mask, SIGTERM);
+	sigdelset(mask, SIGINT);
+	sigdelset(mask, SIGQUIT);
+	sigdelset(mask, SIGSEGV);
+	sigdelset(mask, SIGILL);
+	sigdelset(mask, SIGABRT);
+	sigdelset(mask, SIGFPE);
+	sigdelset(mask, SIGBUS);
 }
 
 FILE *
@@ -539,11 +596,26 @@ main(int argc, char *argv[])
 		exit(0);
 	}
 
-	act.sa_flags = SA_SIGINFO;
-	act.sa_sigaction = segvhandler;
-	sigemptyset(&act.sa_mask);
-	if (sigaction(SIGSEGV, &act, NULL) < 0)
-		early_errx(1, "Sigaction failed");
+	if (anoubisd_config.allow_coredumps) {
+		struct rlimit limits = { RLIM_INFINITY, RLIM_INFINITY };
+		int ret = setrlimit(RLIMIT_CORE, &limits);
+		if (ret < 0)
+			early_err(1, "setrlmit RLIMIT_CORE failed");
+	}
+	else
+	{
+		act.sa_flags = SA_SIGINFO;
+		act.sa_sigaction = segvhandler;
+		sigemptyset(&act.sa_mask);
+		if (sigaction(SIGSEGV, &act, NULL) < 0 ||
+		    sigaction(SIGILL,  &act, NULL) < 0 ||
+		    sigaction(SIGFPE,  &act, NULL) < 0 ||
+		    sigaction(SIGABRT, &act, NULL) < 0 ||
+		    sigaction(SIGBUS,  &act, NULL) < 0
+		    ) {
+			early_errx(1, "Sigaction failed");
+		}
+	}
 
 	if (geteuid() != 0)
 		early_errx(1, "need root privileges");
@@ -636,13 +708,9 @@ main(int argc, char *argv[])
 	ev_info.ev_sigs[3] = &ev_sighup;
 	ev_info.ev_sigs[4] = NULL;
 
-	sigfillset(&mask);
-	sigdelset(&mask, SIGTERM);
-	sigdelset(&mask, SIGINT);
-	sigdelset(&mask, SIGQUIT);
-	sigdelset(&mask, SIGHUP);
+	anoubisd_defaultsigset(&mask);
 	sigdelset(&mask, SIGCHLD);
-	sigdelset(&mask, SIGSEGV);
+	sigdelset(&mask, SIGHUP);
 	sigprocmask(SIG_SETMASK, &mask, NULL);
 
 	queue_init(eventq_m2p);

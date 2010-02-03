@@ -413,11 +413,7 @@ session_main(int pipes[], int loggers[])
 	ev_info.ev_sigs[2] = &ev_sigquit;
 	ev_info.ev_sigs[3] = NULL;
 
-	sigfillset(&mask);
-	sigdelset(&mask, SIGTERM);
-	sigdelset(&mask, SIGINT);
-	sigdelset(&mask, SIGQUIT);
-	sigdelset(&mask, SIGSEGV);
+	anoubisd_defaultsigset(&mask);
 	sigprocmask(SIG_SETMASK, &mask, NULL);
 
 	/* init msg_bufs - keep track of outgoing ev_info */

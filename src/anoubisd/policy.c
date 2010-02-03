@@ -233,12 +233,8 @@ policy_main(int pipes[], int loggers[])
 	ev_info.ev_sigs[3] = &ev_sigusr1;
 	ev_info.ev_sigs[4] = NULL;
 
-	sigfillset(&mask);
-	sigdelset(&mask, SIGTERM);
-	sigdelset(&mask, SIGINT);
-	sigdelset(&mask, SIGQUIT);
+	anoubisd_defaultsigset(&mask);
 	sigdelset(&mask, SIGUSR1);
-	sigdelset(&mask, SIGSEGV);
 	sigprocmask(SIG_SETMASK, &mask, NULL);
 
 	queue_init(eventq_p2m);

@@ -108,7 +108,7 @@ AC_TYPE_PID_T
 
 dnl needed library functions.
 AC_FUNC_FORK
-AC_CHECK_FUNCS([bzero])
+AC_CHECK_FUNCS([bzero backtrace])
 
 dnl checks for header files.
 AC_HEADER_STDC

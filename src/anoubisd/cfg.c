@@ -51,7 +51,8 @@ typedef enum {
 	key_upgrade_trigger,
 	key_rootkey,
 	key_rootkey_required,
-	key_auth_mode
+	key_auth_mode,
+	key_coredumps
 } cfg_key;
 
 static struct {
@@ -64,6 +65,7 @@ static struct {
 	{ "rootkey", key_rootkey },
 	{ "rootkey_required", key_rootkey_required },
 	{ "auth_mode", key_auth_mode } ,
+	{ "allow_coredumps", key_coredumps } ,
 	{ NULL, key_bad }
 };
 
@@ -675,6 +677,13 @@ cfg_param_process(struct cfg_param *param, int lineno)
 				break;
 			} else
 				return (1);
+			break;
+		case key_coredumps:
+			parse_result = cfg_parse_bool(param->value, lineno,
+			    &anoubisd_config.allow_coredumps);
+			if (parse_result != 0)
+				return parse_result;
+			break;
 		default:
 			break;
 	}
@@ -835,6 +844,7 @@ cfg_clear(void)
 	}
 	anoubisd_config.rootkey = NULL;
 	anoubisd_config.rootkey_required = 0;
+	anoubisd_config.allow_coredumps = 1;
 }
 
 /*

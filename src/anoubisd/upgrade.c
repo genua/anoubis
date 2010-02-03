@@ -139,11 +139,7 @@ upgrade_main(int pipes[], int loggers[])
 	ev_info.sigs[2] = &ev_sigquit;
 	ev_info.sigs[3] = NULL;
 
-	sigfillset(&mask);
-	sigdelset(&mask, SIGTERM);
-	sigdelset(&mask, SIGINT);
-	sigdelset(&mask, SIGQUIT);
-	sigdelset(&mask, SIGSEGV);
+	anoubisd_defaultsigset(&mask);
 	sigprocmask(SIG_SETMASK, &mask, NULL);
 
 	queue_init(eventq_u2m);

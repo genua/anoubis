@@ -364,11 +364,7 @@ logger_main(int pipes[], int loggers[])
 	sigs[2] = &ev_sigquit;
 	sigs[3] = NULL;
 
-	sigfillset(&mask);
-	sigdelset(&mask, SIGTERM);
-	sigdelset(&mask, SIGINT);
-	sigdelset(&mask, SIGQUIT);
-	sigdelset(&mask, SIGSEGV);
+	anoubisd_defaultsigset(&mask);
 	sigprocmask(SIG_SETMASK, &mask, NULL);
 
 	msg_init(loggers[PROC_MAIN + 1], "m2l");
