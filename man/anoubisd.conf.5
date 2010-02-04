@@ -85,7 +85,7 @@ Possible values are:
 .Pp
 .Ar strictlock
 When the file specified with the \fBupgrade_trigger\fP option is
-locked (using 
+locked (using
 .Xr flock 2
 or
 .Xr fcntl 2
@@ -95,7 +95,7 @@ The lockfile should be configured using the \fBupgrade_trigger\fP option.
 .Pp
 .Ar looselock
 When the file specified by the \fBupgrade_trigger\fP option is
-locked (using 
+locked (using
 .Xr flock 2
 or
 .Xr fcntl 2
@@ -116,7 +116,7 @@ When
 .Sq strictlock
 or
 .Sq looselock
-is configured this option should contain the pathname of 
+is configured this option should contain the pathname of
 at least one lock file. If
 .Sq process
 is configured this option should specify
@@ -174,6 +174,13 @@ Every connection-attempt is accepted by the server.
 .Pp
 The default is
 .Ar optional .
+.Pp
+.It \fBpolicysize\fP
+Specifies the maximum size of a policy in bytes.
+Policies larger than this value are rejected by the daemon.
+If 0 is configured the check is turned off.
+.Pp
+The default is 20971520 (20MB).
 .El
 .Sh SEE ALSO
 .Xr anoubisd 8

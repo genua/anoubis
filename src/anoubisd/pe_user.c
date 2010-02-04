@@ -834,6 +834,15 @@ pe_dispatch_policy(struct anoubisd_msg *msg)
 			buf += sizeof(Policy_SetByUid);
 			len -= sizeof(Policy_SetByUid);
 		}
+		if (anoubisd_config.policysize > 0 &&
+		    req->written + len > anoubisd_config.policysize) {
+			/*
+			 * Next write-operation will exceed maximum
+			 * policy-size. Abort operation now.
+			 */
+			error = EFBIG;
+			goto reply;
+		}
 		if (req->authuid != polreq->auth_uid) {
 			error = EPERM;
 			goto reply;
@@ -866,6 +875,7 @@ pe_dispatch_policy(struct anoubisd_msg *msg)
 				goto reply;
 			}
 			buf += ret;
+			req->written += ret;
 			len -= ret;
 		}
 		if (polreq->flags & POLICY_FLAG_END) {

@@ -64,6 +64,7 @@
 
 #include <anoubis_protocol.h>
 
+#define ANOUBISD_MAX_POLICYSIZE		20971520
 #define ANOUBISD_MAX_CONNS_PER_USER	20
 
 #define ANOUBISD_OPT_VERBOSE		0x0001
@@ -137,6 +138,9 @@ struct anoubisd_config {
 
 	/* allow anoubisd to dump core */
 	int	allow_coredumps;
+
+	/* Maximum size of a policy-file */
+	int	policysize;
 };
 
 extern struct anoubisd_config anoubisd_config;

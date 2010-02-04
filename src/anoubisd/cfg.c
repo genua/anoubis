@@ -52,7 +52,8 @@ typedef enum {
 	key_rootkey,
 	key_rootkey_required,
 	key_auth_mode,
-	key_coredumps
+	key_coredumps,
+	key_policysize
 } cfg_key;
 
 static struct {
@@ -66,6 +67,7 @@ static struct {
 	{ "rootkey_required", key_rootkey_required },
 	{ "auth_mode", key_auth_mode } ,
 	{ "allow_coredumps", key_coredumps } ,
+	{ "policysize", key_policysize },
 	{ NULL, key_bad }
 };
 
@@ -101,6 +103,7 @@ static int  cfg_param_addvalue(struct cfg_param *, const char *, int);
 static int cfg_parse_file(FILE *);
 static int cfg_parse_upgrade_mode(const char *, int *, int);
 static int cfg_parse_upgrade_trigger(const char *, int);
+static int cfg_parse_int(const char *, int, int, int, int *);
 static int cfg_parse_bool(char *, int, int *targetptr);
 static int cfg_param_process(struct cfg_param *, int);
 static int cfg_parse_auth_mode(const char *, int *, int);
@@ -554,6 +557,39 @@ cfg_parse_upgrade_trigger(const char *value, int lineno)
 }
 
 static int
+cfg_parse_int(const char *str, int lineno, int min, int max, int *intptr)
+{
+	char *endptr;
+	int result;
+
+	result = (int)strtol(str, &endptr, 10);
+
+	if (endptr == str) {
+		/* No digits found */
+		log_warnx("%s: line %d: no digits found",
+		    __FUNCTION__, lineno);
+		return (1);
+	}
+
+	if (*endptr != '\0') {
+		/* Further characters found after number */
+		log_warnx("%s: line %d: further characters found after number",
+		    __FUNCTION__, lineno);
+		return (1);
+	}
+
+	/* Range-checking */
+	if (result < min || result > max) {
+		log_warnx("%s: line %d: Number out of range, min: %d, max: %d",
+		    __FUNCTION__, lineno, min, max);
+		return (1);
+	}
+
+	*intptr = result;
+	return (0);
+}
+
+static int
 cfg_parse_bool(char *str, int lineno, int *boolptr)
 {
 	int	len;
@@ -684,6 +720,12 @@ cfg_param_process(struct cfg_param *param, int lineno)
 			if (parse_result != 0)
 				return parse_result;
 			break;
+		case key_policysize:
+			parse_result = cfg_parse_int(param->value, lineno,
+			    0, INT_MAX, &anoubisd_config.policysize);
+			if (parse_result != 0)
+				return (parse_result);
+			break;
 		default:
 			break;
 	}
@@ -805,6 +847,7 @@ cfg_defaults(void)
 
 	anoubisd_config.upgrade_mode = ANOUBISD_UPGRADE_MODE_OFF;
 	anoubisd_config.auth_mode = ANOUBISD_AUTH_MODE_OPTIONAL;
+	anoubisd_config.policysize = ANOUBISD_MAX_POLICYSIZE;
 
 	return (0);
 }
@@ -964,6 +1007,9 @@ cfg_dump(FILE *f)
 		fprintf(f, "auth_mode: off\n");
 		break;
 	}
+
+	/* policysize */
+	fprintf(f, "policysize: %i\n", anoubisd_config.policysize);
 }
 
 /**
