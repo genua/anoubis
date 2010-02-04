@@ -135,7 +135,6 @@ class SfsEntry : public AnListClass
 
 		/**
 		 * Tests whether the file exists in the local filesystem.
-		 * Only regular files and symbolic links are considered.
 		 *
 		 * @return true if such a file exists, false otherwise.
 		 */
