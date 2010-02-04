@@ -29,6 +29,9 @@ sandbox {
 	/usr/bin/xanoubis {
 		default allow
 	}
+	any {
+		deny log path "/var/run/anoubisd.sock" rwx
+	}
 }
 context {
 	# Anoubis software

@@ -58,6 +58,9 @@ sandbox {
 		allow path "@mkfs.ext3@" rx
 		default deny
 	}
+	any {
+		deny log path "/var/run/anoubisd.sock" rwx
+	}
 }
 context {
 	# Anoubis software
