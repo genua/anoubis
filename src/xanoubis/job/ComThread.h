@@ -57,10 +57,15 @@ class ComThread : public JobThread
 					     protocol version mismatch. */
 			AuthNoKey,	/*!< Authentication failed because
 					     key is is available. */
-			AuthWrongKeyId	/*!< Authentication failed because
+			AuthWrongKeyId,	/*!< Authentication failed because
 					     the daemon requests for a
 					     certificate which differs from
 					     the user's certificate. */
+			AuthInvalidKey, /*!< Authentication failed because
+					     of a wrong private key */
+			AuthInvalidCert,/*!< Authentication failed because
+					     of a wrong certificate */
+			AuthSysFail	/*!< An internal system error ocuured */
 		};
 
 		/**

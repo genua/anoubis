@@ -53,9 +53,8 @@
 #include "JobCtrl.h"
 #include "ProcCtrl.h"
 
+#define X_AUTH_SUCCESS		0x0000
 #define X_AUTH_NOKEY		0x8001
-#define X_AUTH_KEYID		0x8002
-#define X_AUTH_GENERALERROR	0x8003
 
 extern "C" int
 x_auth_callback(struct anoubis_client *WXUNUSED(client), struct anoubis_msg *in,
@@ -81,22 +80,9 @@ x_auth_callback(struct anoubis_client *WXUNUSED(client), struct anoubis_msg *in,
 		return (-X_AUTH_NOKEY);
 	}
 
-	int rc = anoubis_auth_callback(privKey.getKey(), cert.getCertificate(),
-	    in, outp, 0);
+	return (anoubis_auth_callback(privKey.getKey(), cert.getCertificate(),
+	    in, outp, 0));
 
-	switch (-rc) {
-	case 0:
-		/* Success */
-		break;
-	case ANOUBIS_AUTHERR_KEY_MISMATCH:
-		rc = -X_AUTH_KEYID;
-		break;
-	default:
-		rc = -X_AUTH_GENERALERROR;
-		break;
-	}
-
-	return (rc);
 }
 
 ComThread::ComThread(JobCtrl *jobCtrl, const wxString &socketPath)
@@ -199,21 +185,48 @@ ComThread::connect(void)
 	JobCtrl::getInstance()->protocolVersion_ =
 	    anoubis_client_serverversion(client_);
 
-	if (result == -EPROTONOSUPPORT) {
+	/* Convert result to a enum */
+	switch (-result) {
+	/* In case everything is allright */
+	case X_AUTH_SUCCESS:
+		return Success;
+		/* NOTREACHED */
+	/* In case of missmatching Version */
+	case EPROTONOSUPPORT:
 		disconnect();
-		return (VersionMismatch);
-	} else if (result == -X_AUTH_NOKEY) {
+		return VersionMismatch;
+		/* NOTREACHED */
+	/* In case of error while authentication*/
+	case X_AUTH_NOKEY:
 		disconnect();
-		return (AuthNoKey);
-	} else if (result == -X_AUTH_KEYID) {
+		return AuthNoKey;
+		/* NOTREACHED */
+	case ANOUBIS_AUTHERR_KEY_MISMATCH:
 		disconnect();
-		return (AuthWrongKeyId);
-	} else if (result != 0) {
+		return AuthWrongKeyId;
+		/* NOTREACHED */
+	case ANOUBIS_AUTHERR_KEY:
 		disconnect();
-		return (Failure);
+		return AuthInvalidKey;
+		/* NOTREACHED */
+	case ANOUBIS_AUTHERR_CERT:
+		disconnect();
+		return AuthInvalidCert;
+		/* NOTREACHED */
+	/* Internal System Error */
+	case ANOUBIS_AUTHERR_PKG:
+	case ANOUBIS_AUTHERR_INVAL:
+	case ANOUBIS_AUTHERR_RAND:
+	case ANOUBIS_AUTHERR_NOMEM:
+	case ANOUBIS_AUTHERR_SIGN:
+	default:
+		disconnect();
+		return AuthSysFail;
+		/* NOTREACHED */
 	}
 
-	return (Success);
+	/* Should not happen since we handel everythin before */
+	return (Failure);
 }
 
 void
@@ -262,6 +275,15 @@ ComThread::Entry(void)
 	case AuthWrongKeyId:
 		sendComEvent(JobCtrl::ERR_KEYID);
 		return (0);
+	case AuthInvalidKey:
+		sendComEvent(JobCtrl::ERR_INV_KEY);
+		return (0);
+	case AuthInvalidCert:
+		sendComEvent(JobCtrl::ERR_INV_CERT);
+		return (0);
+	case AuthSysFail:
+		sendComEvent(JobCtrl::ERR_AUTH_SYS_FAIL);
+		return(0);
 	}
 
 	fds[0].fd = comPipe_[0];

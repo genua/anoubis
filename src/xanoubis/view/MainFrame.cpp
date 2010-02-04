@@ -431,6 +431,22 @@ MainFrame::OnConnectionStateChange(wxCommandEvent& event)
 		Debug::info(logMessage);
 
 		break;
+	case JobCtrl::ERR_INV_KEY:
+	case JobCtrl::ERR_INV_CERT:
+		logMessage.Printf(_("Your configured certificate or private "
+		    "key is missconfigured or is not supported by Anoubis. "
+		    "Please check your certificate and private key."));
+		Debug::info(logMessage);
+		anMessageBox(logMessage, _("Invalid Certificate / Private Key"),
+		    wxOK | wxICON_ERROR, this);
+		break;
+	case JobCtrl::ERR_AUTH_SYS_FAIL:
+		logMessage.Printf(_("An internal error occured while "
+		    "processing the authentication."));
+		Debug::info(logMessage);
+		anMessageBox(logMessage, _("Internal Error"),
+		    wxOK | wxICON_ERROR, this);
+		break;
 	}
 
 	setConnectionString(connected, hostname);

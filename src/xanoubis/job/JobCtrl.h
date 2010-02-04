@@ -95,11 +95,18 @@ class JobCtrl : public wxEvtHandler, public Singleton<JobCtrl>
 					       client-authentication, but the
 					       private key could not be
 					       loaded. */
-			ERR_KEYID         /*!< The daemon requests
+			ERR_KEYID,        /*!< The daemon requests
 					       client-authentication but the
 					       daemon asks for a certificate
 					       which is not configured at the
 					       client-side. */
+			ERR_INV_KEY,	  /*!< Failure because of a invalid
+					       key */
+			ERR_INV_CERT,	  /*!< Failure because of a invalid
+					       certifciate */
+			ERR_AUTH_SYS_FAIL /*!< Internal System Error while
+					       authentication */
+
 		};
 
 		~JobCtrl(void);
