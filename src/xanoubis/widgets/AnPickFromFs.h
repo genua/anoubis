@@ -60,8 +60,11 @@
  * - The parent has to set the title with setTitle()
  * - The parent has to set the mode with setMode(). (The pickButton is
  *   disabled untill set and mode is not NONE).
- * - In case of MODE_NEWFILE or MODE_NEWDIR, no error messages about item
- *   is not existing, is disabled.
+ * - In case of MODE_NEWFILE or MODE_NEWDIR, a save dialog will be presented
+ *   to the user instead of an open dialog.
+ * - Adding the flag MODE_NOINFO will prevent info messages from being shown.
+ * - Adding the flag MODE_NORESOLVE will prevent symbolic links from being
+ *   resolved.
  */
 class AnPickFromFs : public wxPanel, public Subject
 {
@@ -70,12 +73,19 @@ class AnPickFromFs : public wxPanel, public Subject
 		 * Picker Modes.
 		 */
 		enum Modes {
-			MODE_NONE = 0,
-			MODE_FILE,	/**< use FileDialog only */
-			MODE_NEWFILE,	/**< use FileDialog, no error */
-			MODE_DIR,	/**< use DirDialog only */
-			MODE_NEWDIR,	/**< use DirDialog, no error */
-			MODE_BOTH,	/**< use both (choose by menu) */
+			MODE_NONE	= 0x00,
+			MODE_FILEOK	= 0x01,	/**< support files */
+			MODE_DIROK	= 0x02,	/**< support directories */
+			MODE_NEW	= 0x04,	/**< open for writing */
+			MODE_NOINFO	= 0x10,	/**< no showInfo */
+			MODE_NORESOLVE	= 0x20,	/**< do not resolve links */
+
+			/* Compatibility values */
+			MODE_FILE	= 0x01,	/* FILE */
+			MODE_NEWFILE	= 0x05,	/* FILE + NEW */
+			MODE_DIR	= 0x02,	/* DIR */
+			MODE_NEWDIR	= 0x06,	/* DIR + NEW */
+			MODE_BOTH	= 0x03,	/* FILE + DIR */
 		};
 
 		/**
@@ -156,7 +166,7 @@ class AnPickFromFs : public wxPanel, public Subject
 		 * @param 1st The new mode.
 		 * @return Nothing.
 		 */
-		void setMode(enum Modes);
+		void setMode(int);
 
 	protected:
 		/**
@@ -192,7 +202,7 @@ class AnPickFromFs : public wxPanel, public Subject
 		/**
 		 * Keep widget mode here.
 		 */
-		enum Modes pickerMode_;
+		int pickerMode_;
 
 		/**
 		 * This is the Id of the menu entry for file.

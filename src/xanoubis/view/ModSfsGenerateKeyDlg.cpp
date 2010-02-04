@@ -91,12 +91,14 @@ ModSfsGenerateKeyDlg::ModSfsGenerateKeyDlg(wxWindow *parent)
 
 	keyPicker->setTitle(_("Configure private key:"));
 	keyPicker->setButtonLabel(_("Browse ..."));
-	keyPicker->setMode(AnPickFromFs::MODE_NEWFILE);
+	keyPicker->setMode(AnPickFromFs::MODE_NEWFILE
+	    | AnPickFromFs::MODE_NOINFO | AnPickFromFs::MODE_NORESOLVE);
 	keyPicker->setFileName(pathPrefix + wxT(".key"));
 
 	certificatePicker->setTitle(_("Configure certificate:"));
 	certificatePicker->setButtonLabel(_("Browse ..."));
-	certificatePicker->setMode(AnPickFromFs::MODE_NEWFILE);
+	certificatePicker->setMode(AnPickFromFs::MODE_NEWFILE
+	    | AnPickFromFs::MODE_NOINFO | AnPickFromFs::MODE_NORESOLVE);
 	certificatePicker->setFileName(pathPrefix + wxT(".crt"));
 
 	/* Get initial indent size. */

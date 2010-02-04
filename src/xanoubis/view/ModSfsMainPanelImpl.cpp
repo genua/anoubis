@@ -75,12 +75,14 @@ ModSfsMainPanelImpl::ModSfsMainPanelImpl(wxWindow* parent, wxWindowID id)
 	addSubject(keyPicker);
 	keyPicker->setTitle(_("Configure private key:"));
 	keyPicker->setButtonLabel(_("Browse ..."));
-	keyPicker->setMode(AnPickFromFs::MODE_NEWFILE);
+	keyPicker->setMode(AnPickFromFs::MODE_FILE
+	    | AnPickFromFs::MODE_NOINFO | AnPickFromFs::MODE_NORESOLVE);
 
 	addSubject(certificatePicker);
 	certificatePicker->setTitle(_("Configure certificate:"));
 	certificatePicker->setButtonLabel(_("Browse ..."));
-	certificatePicker->setMode(AnPickFromFs::MODE_NEWFILE);
+	certificatePicker->setMode(AnPickFromFs::MODE_FILE
+	    | AnPickFromFs::MODE_NOINFO | AnPickFromFs::MODE_NORESOLVE);
 
 	/* Get initial indent size. */
 	spacer = certDetailsIndentSizer->GetItem((size_t)0);

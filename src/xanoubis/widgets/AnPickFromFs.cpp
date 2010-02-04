@@ -144,44 +144,29 @@ AnPickFromFs::setButtonLabel(const wxString & label)
 }
 
 void
-AnPickFromFs::setMode(enum Modes mode)
+AnPickFromFs::setMode(int mode)
 {
 	pickerMode_ = mode;
-	switch (mode) {
-	case MODE_FILE:
-		/* FALLTHROUGH */
-	case MODE_NEWFILE:
+
+	if (mode & (MODE_FILEOK | MODE_DIROK)) {
 		pickButton_->Enable();
-		pickButtonMenu_.Check(fileMenuId_, true);
-		pickButtonMenu_.Check(dirMenuId_, false);
-		pickButtonMenu_.Enable(fileMenuId_, true);
-		pickButtonMenu_.Enable(dirMenuId_, false);
-		break;
-	case MODE_DIR:
-		/* FALLTHROUGH */
-	case MODE_NEWDIR:
-		pickButton_->Enable();
-		pickButtonMenu_.Check(fileMenuId_, false);
-		pickButtonMenu_.Check(dirMenuId_, true);
-		pickButtonMenu_.Enable(fileMenuId_, false);
-		pickButtonMenu_.Enable(dirMenuId_, true);
-		break;
-	case MODE_BOTH:
-		pickButton_->Enable();
-		pickButtonMenu_.Check(fileMenuId_, true);
-		pickButtonMenu_.Check(dirMenuId_, false);
-		pickButtonMenu_.Enable(fileMenuId_, true);
-		pickButtonMenu_.Enable(dirMenuId_, true);
-		break;
-	case MODE_NONE:
-		/* FALLTHROUGH */
-	default:
+	} else {
 		pickButton_->Disable();
-		pickButtonMenu_.Check(fileMenuId_, false);
-		pickButtonMenu_.Check(dirMenuId_, false);
-		pickButtonMenu_.Enable(fileMenuId_, false);
-		pickButtonMenu_.Enable(dirMenuId_, false);
-		break;
+	}
+
+	/* Defaults */
+	pickButtonMenu_.Check(fileMenuId_, false);
+	pickButtonMenu_.Check(dirMenuId_, false);
+	pickButtonMenu_.Enable(fileMenuId_, false);
+	pickButtonMenu_.Enable(dirMenuId_, false);
+	if (mode & MODE_FILEOK) {
+		pickButtonMenu_.Check(fileMenuId_, true);
+		pickButtonMenu_.Enable(fileMenuId_, true);
+	}
+	if (mode & MODE_DIROK) {
+		pickButtonMenu_.Enable(dirMenuId_, true);
+		if ((mode & MODE_FILEOK) == 0)
+			pickButtonMenu_.Check(dirMenuId_, true);
 	}
 }
 
@@ -193,7 +178,8 @@ AnPickFromFs::adoptFileName(const wxString &fileName)
 	wxString	 msg;
 
 	startChange();
-	if (fileName.IsEmpty() || fileName == wxT("any")) {
+	if (fileName.IsEmpty() || fileName == wxT("any")
+	    || (pickerMode_ & MODE_NORESOLVE)) {
 		fileName_ = fileName;
 	} else {
 		resolved = realpath(fileName.fn_str(), resolve);
@@ -227,10 +213,8 @@ AnPickFromFs::showInfo(const wxString &info)
 	wxWindow	*parent;
 	wxString	 label;
 
-	if ((pickerMode_ == MODE_NEWFILE) || (pickerMode_ == MODE_NEWDIR)) {
-		/* Avoid error message. */
+	if (pickerMode_ & MODE_NOINFO)
 		return;
-	}
 
 	label = info;
 	label.Prepend(wxT("("));
@@ -270,26 +254,48 @@ AnPickFromFs::onTextEnter(wxCommandEvent & event)
 void
 AnPickFromFs::onPickButton(wxCommandEvent &)
 {
-	wxFileName	defaultPath;
-	wxFileDialog	fileDlg(this);
-	wxDirDialog	dirDlg(this);
+	wxFileName	 defaultPath;
 
-	wxBeginBusyCursor();
 	defaultPath.Assign(fileName_);
-	fileDlg.SetDirectory(defaultPath.GetPath());
-	fileDlg.SetFilename(defaultPath.GetFullName());
-	fileDlg.SetWildcard(wxT("*"));
-	dirDlg.SetPath(defaultPath.GetPath());
-	wxEndBusyCursor();
 
 	if (pickButtonMenu_.IsChecked(dirMenuId_)) {
-		if (dirDlg.ShowModal() == wxID_OK) {
-			adoptFileName(dirDlg.GetPath());
+		wxDirDialog	*dlg;
+		long		 flags = wxDD_DEFAULT_STYLE;
+
+		if ((pickerMode_ & MODE_NEW) == 0)
+			flags |= wxDD_DIR_MUST_EXIST;
+
+		dlg = new wxDirDialog(this,wxEmptyString, wxEmptyString, flags);
+
+		wxBeginBusyCursor();
+		dlg->SetPath(defaultPath.GetPath());
+		wxEndBusyCursor();
+
+		if (dlg->ShowModal() == wxID_OK) {
+			adoptFileName(dlg->GetPath());
 		}
+		dlg->Destroy();
 	} else {
-		if (fileDlg.ShowModal() == wxID_OK) {
-			adoptFileName(fileDlg.GetPath());
+		wxFileDialog	*dlg;
+		long		 flags;
+
+		flags  = wxDD_DEFAULT_STYLE | wxFD_FILE_MUST_EXIST;
+		if (pickerMode_ & MODE_NEW)
+			flags = wxFD_SAVE;
+
+		dlg = new wxFileDialog(this,wxEmptyString, wxEmptyString,
+		    wxEmptyString, wxEmptyString, flags);
+
+		wxBeginBusyCursor();
+		dlg->SetDirectory(defaultPath.GetPath());
+		dlg->SetFilename(defaultPath.GetFullName());
+		dlg->SetWildcard(wxT("*"));
+		wxEndBusyCursor();
+
+		if (dlg->ShowModal() == wxID_OK) {
+			adoptFileName(dlg->GetPath());
 		}
+		dlg->Destroy();
 	}
 }
 
