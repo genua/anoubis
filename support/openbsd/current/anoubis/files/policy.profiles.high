@@ -213,6 +213,10 @@ sandbox {
 	/usr/bin/xanoubis {
 		default allow
 	}
+	# daemon socket
+	any {
+		deny log path "/var/run/anoubisd.sock" rwx
+	}
 }
 context {
 	# Anoubis software

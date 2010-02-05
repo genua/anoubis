@@ -177,6 +177,12 @@ sandbox {
 		allow path "/etc" r
 		default ask
 	}
+
+	# daemon socket
+	any {
+		deny log path "/var/run/anoubisd.sock" rwx
+	}
+
 }
 context {
 	# Anoubis software
