@@ -33,6 +33,7 @@
 #include <wx/font.h>
 #include <wx/colour.h>
 #include <wx/settings.h>
+#include <wx/stdpaths.h>
 
 #include "AnPickFromFs.h"
 
@@ -233,6 +234,18 @@ AnPickFromFs::showInfo(const wxString &info)
 	}
 }
 
+wxString
+AnPickFromFs::getDialogPath(void) const
+{
+	wxFileName fn(fileName_);
+	wxString path = fn.GetPath();
+
+	if (path.IsEmpty())
+		return (wxStandardPaths::Get().GetUserDataDir());
+	else
+		return (path);
+}
+
 void
 AnPickFromFs::onTextKillFocus(wxFocusEvent &)
 {
@@ -254,10 +267,6 @@ AnPickFromFs::onTextEnter(wxCommandEvent & event)
 void
 AnPickFromFs::onPickButton(wxCommandEvent &)
 {
-	wxFileName	 defaultPath;
-
-	defaultPath.Assign(fileName_);
-
 	if (pickButtonMenu_.IsChecked(dirMenuId_)) {
 		wxDirDialog	*dlg;
 		long		 flags = wxDD_DEFAULT_STYLE;
@@ -268,7 +277,7 @@ AnPickFromFs::onPickButton(wxCommandEvent &)
 		dlg = new wxDirDialog(this,wxEmptyString, wxEmptyString, flags);
 
 		wxBeginBusyCursor();
-		dlg->SetPath(defaultPath.GetPath());
+		dlg->SetPath(getDialogPath());
 		wxEndBusyCursor();
 
 		if (dlg->ShowModal() == wxID_OK) {
@@ -278,7 +287,9 @@ AnPickFromFs::onPickButton(wxCommandEvent &)
 	} else {
 		wxFileDialog	*dlg;
 		long		 flags;
+		wxFileName	 defaultPath;
 
+		defaultPath.Assign(fileName_);
 		flags  = wxDD_DEFAULT_STYLE | wxFD_FILE_MUST_EXIST;
 		if (pickerMode_ & MODE_NEW)
 			flags = wxFD_SAVE;
@@ -287,7 +298,7 @@ AnPickFromFs::onPickButton(wxCommandEvent &)
 		    wxEmptyString, wxEmptyString, flags);
 
 		wxBeginBusyCursor();
-		dlg->SetDirectory(defaultPath.GetPath());
+		dlg->SetDirectory(getDialogPath());
 		dlg->SetFilename(defaultPath.GetFullName());
 		dlg->SetWildcard(wxT("*"));
 		wxEndBusyCursor();

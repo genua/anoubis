@@ -239,6 +239,12 @@ class AnPickFromFs : public wxPanel, public Subject
 		void showInfo(const wxString &);
 
 		/**
+		 * Evaluates the initial path of the dialog.
+		 * @return The initial path
+		 */
+		wxString getDialogPath(void) const;
+
+		/**
 		 * Handle focus events from inputTextCtrl (e.g on hit <tab>).
 		 * @param[in] 1st The event.
 		 * @return Nothing.
