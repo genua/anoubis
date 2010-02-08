@@ -162,6 +162,9 @@ START_TEST(empty)
 	SbModelRowProvider x_provider(&model, SbEntry::EXECUTE);
 
 	fail_unless(model.getEntryCount() == 0);
+	fail_unless(model.getEntryCount(SbEntry::READ) == 0);
+	fail_unless(model.getEntryCount(SbEntry::WRITE) == 0);
+	fail_unless(model.getEntryCount(SbEntry::EXECUTE) == 0);
 	fail_unless(model.getEntry(0) == 0);
 	fail_unless(model.getEntry(wxT("foo")) == 0);
 	fail_unless(model.getEntry(wxT("foo"), false) == 0);
@@ -218,6 +221,9 @@ START_TEST(add)
 	rwx_entry->setPermission(SbEntry::EXECUTE, true);
 
 	fail_unless(model.getEntryCount() == 7);
+	fail_unless(model.getEntryCount(SbEntry::READ) == 4);
+	fail_unless(model.getEntryCount(SbEntry::WRITE) == 4);
+	fail_unless(model.getEntryCount(SbEntry::EXECUTE) == 4);
 	fail_unless(model.getEntry(0) == r_entry);
 	fail_unless(model.getEntry(1) == w_entry);
 	fail_unless(model.getEntry(2) == x_entry);
@@ -289,6 +295,9 @@ START_TEST(remove_idx)
 
 	fail_unless(model.removeEntry(1));
 	fail_unless(model.getEntryCount() == 2);
+	fail_unless(model.getEntryCount(SbEntry::READ) == 1);
+	fail_unless(model.getEntryCount(SbEntry::WRITE) == 0);
+	fail_unless(model.getEntryCount(SbEntry::EXECUTE) == 1);
 	fail_unless(model.getEntry(0) == r_entry);
 	fail_unless(model.getEntry(1) == x_entry);
 	fail_unless(model.getEntry(2) == 0);
@@ -328,6 +337,9 @@ START_TEST(remove_path)
 
 	fail_unless(model.removeEntry(wxT("x")));
 	fail_unless(model.getEntryCount() == 2);
+	fail_unless(model.getEntryCount(SbEntry::READ) == 1);
+	fail_unless(model.getEntryCount(SbEntry::WRITE) == 1);
+	fail_unless(model.getEntryCount(SbEntry::EXECUTE) == 0);
 	fail_unless(model.getEntry(0) == r_entry);
 	fail_unless(model.getEntry(1) == w_entry);
 	fail_unless(model.getEntry(2) == 0);
@@ -369,6 +381,9 @@ START_TEST(remove_outofrange)
 	fail_unless(!model.removeEntry(wxT("foo")));
 
 	fail_unless(model.getEntryCount() == 3);
+	fail_unless(model.getEntryCount(SbEntry::READ) == 1);
+	fail_unless(model.getEntryCount(SbEntry::WRITE) == 1);
+	fail_unless(model.getEntryCount(SbEntry::EXECUTE) == 1);
 	fail_unless(model.getEntry(0) == r_entry);
 	fail_unless(model.getEntry(1) == w_entry);
 	fail_unless(model.getEntry(2) == x_entry);
@@ -396,6 +411,9 @@ START_TEST(default_sandbox)
 
 	model.assignDefaults(SbEntry::READ);
 	fail_unless(model.getEntryCount() == 4);
+	fail_unless(model.getEntryCount(SbEntry::READ) == 4);
+	fail_unless(model.getEntryCount(SbEntry::WRITE) == 0);
+	fail_unless(model.getEntryCount(SbEntry::EXECUTE) == 0);
 	fail_unless(model.getEntry(0)->getPath() == wxT("r"));
 	fail_unless(model.getEntry(1)->getPath() == wxT("rw"));
 	fail_unless(model.getEntry(2)->getPath() == wxT("rx"));
@@ -404,6 +422,9 @@ START_TEST(default_sandbox)
 
 	model.assignDefaults(SbEntry::WRITE);
 	fail_unless(model.getEntryCount() == 6);
+	fail_unless(model.getEntryCount(SbEntry::READ) == 4);
+	fail_unless(model.getEntryCount(SbEntry::WRITE) == 4);
+	fail_unless(model.getEntryCount(SbEntry::EXECUTE) == 0);
 	fail_unless(model.getEntry(0)->getPath() == wxT("r"));
 	fail_unless(model.getEntry(1)->getPath() == wxT("rw"));
 	fail_unless(model.getEntry(2)->getPath() == wxT("rx"));
@@ -413,6 +434,9 @@ START_TEST(default_sandbox)
 
 	model.assignDefaults(SbEntry::EXECUTE);
 	fail_unless(model.getEntryCount() == 7);
+	fail_unless(model.getEntryCount(SbEntry::READ) == 4);
+	fail_unless(model.getEntryCount(SbEntry::WRITE) == 4);
+	fail_unless(model.getEntryCount(SbEntry::EXECUTE) == 4);
 	fail_unless(model.getEntry(0)->getPath() == wxT("r"));
 	fail_unless(model.getEntry(1)->getPath() == wxT("rw"));
 	fail_unless(model.getEntry(2)->getPath() == wxT("rx"));

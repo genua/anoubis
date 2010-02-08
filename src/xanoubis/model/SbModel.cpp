@@ -48,6 +48,22 @@ SbModel::getEntryCount(void) const
 	return (this->entries_.size());
 }
 
+unsigned int
+SbModel::getEntryCount(SbEntry::Permission permission) const
+{
+	unsigned int count = 0;
+
+	for (std::vector<SbEntry *>::const_iterator it = entries_.begin();
+	    it != entries_.end(); ++it) {
+		SbEntry *entry = (*it);
+
+		if (entry->hasPermission(permission))
+			count++;
+	}
+
+	return (count);
+}
+
 SbEntry *
 SbModel::getEntry(unsigned int idx) const
 {

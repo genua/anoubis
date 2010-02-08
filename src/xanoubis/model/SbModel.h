@@ -55,6 +55,15 @@ class SbModel : private wxEvtHandler
 		unsigned int getEntryCount(void) const;
 
 		/**
+		 * Returns the number of sandbox-entries, which has this given
+		 * permission.
+		 *
+		 * @param permission The requested permission
+		 * @return Number of sandbox-entries with the given permission.
+		 */
+		unsigned int getEntryCount(SbEntry::Permission) const;
+
+		/**
 		 * Returns the sandbox-entry at the given index.
 		 *
 		 * @param idx The requested index
